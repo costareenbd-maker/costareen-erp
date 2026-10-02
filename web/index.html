@@ -8306,7 +8306,7 @@ function srv(name, args, ok, bad) {
 
 var SRV_ACTIVE = 0, SRV_WRITING = false;
 // the same list the server uses to know a call changes nothing (ERP_READS)
-var SRV_READS = /^(erpBundle|erpHello|erpMe|erpCatalog|erpSales|erpDues|erpCustomers|erpPnl|erpMoney|erpToday|erpDaySales|erpProduct|erpLookupCustomer|erpCustomerAccount|erpCustomerStatement|erpCustomerCredit|erpWebOrders|erpWebOrderInvoices|erpCampaignAudience|erpCampaignList|erpCampaignGet|erpEvoStatus|erpBrandLogo|erpQuoteBoot|erpQuoteList|erpQuoteGet|erpQuoteAsset|erpExpenses|erpCapital|erpBackupStatus|erpAiKeys|erpGetTheme|erpBusinesses|erpStockHistory|erpReorderPlan|erpPoList|erpSfPayoutLines|erpBookedParcels|erpParcelPreview|erpReturnPreview|erpSettingsFull|erpSettingsLists|erpFormOptions|erpAdmin|erpPeople|erpDevices|erpCourierKeyStatus|erpPayReasons|erpDiscontinued|erpAccessWarning|erpBusinessLinks|erpLookupUsage|erpRecentInvoices|erpCourier|erpDashboardData|erpInvoice|erpCustomerPage|erpSearch|erpProductPage|erpPnlMonth|erpExpenseReceiptUrl|erpPartnership|erpPartnerStock|erpSecurity|erpCustomerList|erpAlerts|erpAccessKeys|erpListView|erpCurrencies|erpSharedStock|erpPoolCatalog|erpProductThumbs|erpProductPhotoUrl|erpFamilies|erpCashBook|erpSuppliers|erpSupplierPage)$/;
+var SRV_READS = /^(erpBundle|erpHello|erpMe|erpCatalog|erpSales|erpDues|erpCustomers|erpPnl|erpMoney|erpToday|erpDaySales|erpProduct|erpLookupCustomer|erpCustomerAccount|erpCustomerStatement|erpCustomerCredit|erpWebOrders|erpWebOrderInvoices|erpCampaignAudience|erpCampaignList|erpCampaignGet|erpEvoStatus|erpBrandLogo|erpQuoteBoot|erpQuoteList|erpQuoteGet|erpQuoteAsset|erpExpenses|erpCapital|erpBackupStatus|erpAiKeys|erpGetTheme|erpBusinesses|erpStockHistory|erpReorderPlan|erpPoList|erpSfPayoutLines|erpBookedParcels|erpParcelPreview|erpReturnPreview|erpSettingsFull|erpSettingsLists|erpFormOptions|erpAdmin|erpPeople|erpDevices|erpCourierKeyStatus|erpPayReasons|erpDiscontinued|erpAccessWarning|erpBusinessLinks|erpLookupUsage|erpRecentInvoices|erpCourier|erpDashboardData|erpInvoice|erpCustomerPage|erpSearch|erpProductPage|erpPnlMonth|erpExpenseReceiptUrl|erpPartnership|erpPartnerStock|erpSecurity|erpCustomerList|erpAlerts|erpAccessKeys|erpListView|erpCurrencies|erpSharedStock|erpPoolCatalog|erpProductThumbs|erpProductPhotoUrl|erpFamilies|erpNotes|erpNoteFileUrl|erpCashBook|erpSuppliers|erpSupplierPage)$/;
 function srvPump() {
   if (!SRV_Q.length) return;
   var isRead = SRV_READS.test(SRV_Q[0].name);
@@ -14232,6 +14232,117 @@ window.paintResults = function () {
   for (var k = 0; k < cb.length; k++) cb[k].addEventListener('click', function () { addToCart(this.getAttribute('data-pick')); repaint(); });
 };
 try { paintResults = window.paintResults; } catch (e) {}
+</script>
+
+<!-- plan D5: notes and files on a product, a customer, a supplier, an invoice -->
+<style>
+.d5 .n { padding:10px 2px; border-bottom:1px solid var(--grid); }
+.d5 .n:last-child { border-bottom:none; }
+.d5 .n .h { font-size:12px; color:var(--muted); margin-bottom:3px; display:flex; gap:8px; justify-content:space-between; }
+.d5 .n .b { white-space:pre-wrap; word-break:break-word; font-size:13.5px; }
+.d5 .n.v .b { text-decoration:line-through; opacity:.6; }
+.d5 textarea.i { width:100%; min-height:62px; resize:vertical; }
+</style>
+<script>
+var D5 = {};         // 'kind|ref' -> { data, busy, err, text, file }
+function d5St(kind, ref) { var k = kind + '|' + ref; return D5[k] || (D5[k] = { data: null, busy: false, err: '', text: '', file: null, asked: false }); }
+function d5Load(kind, ref) {
+  var st = d5St(kind, ref); st.asked = true;
+  srv('erpNotes', [{ kind: kind, ref: ref }], function (r) { st.data = r; st.err = ''; repaint(); },
+      function (e) { st.err = (e && e.message) || String(e); st.data = { notes: [] }; repaint(); });
+}
+function d5Card(kind, ref) {
+  if (!ref) return '';
+  var st = d5St(kind, ref);
+  if (!st.asked) d5Load(kind, ref);
+  var h = '<section><div class="card d5" data-d5k="' + esc(kind) + '" data-d5r="' + esc(ref) + '"><h2>Notes and files</h2>' +
+    '<div class="sub">Anything worth remembering about this ' + esc(kind) + ': what was agreed, a photo, a document. Everyone who can open this page sees it, with who wrote it and when.</div>' +
+    '<textarea class="i" data-d5text="1" maxlength="2000" placeholder="Write a note\u2026">' + esc(st.text) + '</textarea>' +
+    '<div class="row" style="margin-top:8px;gap:8px;align-items:center;flex-wrap:wrap"><input type="file" data-d5file="1" accept="image/jpeg,image/png,image/webp,application/pdf" hidden>' +
+    '<button class="btn small" type="button" data-d5pick="1">' + (st.file ? 'File: ' + esc(st.file.name) + ' \u2715' : 'Attach a photo or PDF') + '</button>' +
+    '<span style="flex:1"></span><button class="btn primary" type="button" data-d5add="1"' + (st.busy ? ' disabled' : '') + '>' + (st.busy ? 'Saving\u2026' : 'Add') + '</button></div>';
+  if (st.err) h += '<div class="note err" style="margin-top:10px"><div class="ico">\u2715</div><div>' + esc(st.err) + '</div></div>';
+  if (!st.data) h += '<div class="loading">Reading the notes&hellip;</div>';
+  else if (!st.data.notes.length) h += '<div class="empty">Nothing written yet.</div>';
+  else h += '<div style="margin-top:10px">' + st.data.notes.map(function (n) {
+    return '<div class="n' + (n.voided ? ' v' : '') + '"><div class="h"><span>' + esc(n.by || '\u2014') + ' \u00b7 ' + esc(n.when) + '</span>' +
+      (st.data.canVoid && !n.voided ? '<button class="linkbtn" type="button" data-d5void="' + esc(n.id) + '">strike out</button>' : '') + '</div>' +
+      (n.body ? '<div class="b">' + esc(n.body) + '</div>' : '') +
+      (n.file ? '<div style="margin-top:4px"><button class="btn small" type="button" data-d5open="' + esc(n.id) + '">\uD83D\uDCCE ' + esc(n.file) + '</button></div>' : '') +
+      (n.voided ? '<div class="sku" style="margin-top:3px">' + esc(n.voided) + '</div>' : '') + '</div>'; }).join('') + '</div>';
+  return h + '</div></section>';
+}
+(function () {
+  var pages = [
+    ['productPageHtml', 'product', function () { return PRODP.data ? PRODP.sku : ''; }],
+    ['customerPageHtml', 'customer', function () { return CUSP.data ? CUSP.key : ''; }],
+    ['invoicePageHtml', 'invoice', function () { return INVP.data ? INVP.no : ''; }],
+    ['supplierPageHtml', 'supplier', function () { return SUPP.data ? SUPP.name : ''; }]
+  ];
+  pages.forEach(function (p) {
+    var orig = window[p[0]];
+    if (typeof orig !== 'function') return;
+    window[p[0]] = function () {
+      var h = orig.apply(this, arguments), ref = '';
+      try { ref = p[2](); } catch (e) { ref = ''; }
+      return ref ? h + d5Card(p[1], ref) : h;
+    };
+  });
+  try { productPageHtml = window.productPageHtml; customerPageHtml = window.customerPageHtml; invoicePageHtml = window.invoicePageHtml; supplierPageHtml = window.supplierPageHtml; } catch (e) {}
+})();
+function d5Of(node) { var c = node.closest ? node.closest('.d5[data-d5k]') : null; return c ? { kind: c.getAttribute('data-d5k'), ref: c.getAttribute('data-d5r'), card: c } : null; }
+function d5Read(file) {
+  return new Promise(function (ok, bad) {
+    var fr = new FileReader();
+    fr.onload = function () { ok(String(fr.result).split(',')[1] || ''); };
+    fr.onerror = function () { bad(new Error('That file could not be read.')); };
+    fr.readAsDataURL(file);
+  });
+}
+document.addEventListener('input', function (ev) {
+  var t = ev.target; if (!t || !t.getAttribute || !t.getAttribute('data-d5text')) return;
+  var o = d5Of(t); if (o) d5St(o.kind, o.ref).text = t.value;
+});
+document.addEventListener('change', function (ev) {
+  var t = ev.target; if (!t || !t.getAttribute || !t.getAttribute('data-d5file') || !t.files || !t.files[0]) return;
+  var o = d5Of(t); if (!o) return;
+  var f = t.files[0];
+  if (f.size > 3 * 1024 * 1024 && !/^image\//.test(f.type)) { toast('That file is over 3 MB. Use a smaller one.', true); return; }
+  d5St(o.kind, o.ref).file = f; repaint();
+});
+document.addEventListener('click', async function (ev) {
+  var t = ev.target; if (!t || !t.getAttribute) return;
+  var o = d5Of(t); if (!o) return;
+  var st = d5St(o.kind, o.ref);
+  if (t.getAttribute('data-d5pick')) {
+    if (st.file) { st.file = null; repaint(); return; }
+    var inp = o.card.querySelector('input[data-d5file]'); if (inp) inp.click(); return;
+  }
+  if (t.getAttribute('data-d5add')) {
+    if (st.busy) return;
+    if (!st.text.trim() && !st.file) { toast('Write a note or attach a file.', true); return; }
+    st.busy = true; st.err = ''; repaint();
+    var send = { kind: o.kind, ref: o.ref, body: st.text };
+    try {
+      if (st.file) {
+        if (/^image\//.test(st.file.type) && typeof d3Shrink === 'function') { var x = await d3Shrink(st.file); send.file = { data: x.full, mime: 'image/jpeg', name: st.file.name }; }
+        else send.file = { data: await d5Read(st.file), mime: st.file.type, name: st.file.name };
+      }
+    } catch (e) { st.busy = false; st.err = (e && e.message) || String(e); repaint(); return; }
+    srv('erpNoteAdd', [send], function (r) { st.busy = false; st.data = r; st.text = ''; st.file = null; repaint(); },
+        function (e) { st.busy = false; st.err = (e && e.message) || String(e); repaint(); });
+    return;
+  }
+  var id = t.getAttribute('data-d5open');
+  if (id) { srv('erpNoteFileUrl', [{ id: id }], function (r) { if (r.url) window.open(r.url, '_blank', 'noopener'); }, function (e) { toast(esc(e && e.message ? e.message : e), true); }); return; }
+  id = t.getAttribute('data-d5void');
+  if (id) {
+    var why = await uiPrompt('Why is this note being struck out? It stays readable, crossed through.', '');
+    if (why === null) return;
+    if (!why.trim()) { toast('Say why.', true); return; }
+    srv('erpNoteVoid', [{ id: id, reason: why.trim() }], function (r) { st.data = r; repaint(); }, function (e) { toast(esc(e && e.message ? e.message : e), true, 10000); });
+  }
+});
 </script>
 </body>
 </html>

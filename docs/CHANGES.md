@@ -206,3 +206,10 @@
 - New invoice search shows a family as ONE row (colours, total stock, price); tap it and pick the colour (stock beside each, sold-out greyed). The Products list can be grouped by family.
 - 037_product_family.sql (products.family), goods.js erpFamilies / erpFamilyApply / erpFamilyClear, catalogue + list carry `family`; tests/d3_test.mjs (24).
 - Live: nothing grouped yet - 16 families are suggested (124 of 138 products) and wait for the owner's confirmation.
+
+2026-10-03 — Plan D5 (notes and files on every record)
+- A **Notes and files** card at the foot of every product, customer, supplier and invoice page: write a note, attach a photo or a PDF (photos are made smaller first; PDF up to 3 MB). Each line shows who wrote it and when. A manager can strike a line out with a reason - it stays readable, crossed through.
+- Supplier notes are for managers and up, like the supplier pages themselves.
+- 038_record_notes.sql (record_notes), handlers/notes.js (erpNotes, erpNoteAdd, erpNoteVoid, erpNoteFileUrl), tests/d5_test.mjs (19).
+- Not done: an automatic "who changed what" history per record (the Security activity log is per business, not per record); notes on a shipment (shipments have no page of their own - use the supplier's page).
+- Go-live wipe empties record_notes with the rest of the books.
