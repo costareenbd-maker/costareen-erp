@@ -2130,7 +2130,8 @@ async function saveInvoice() {
       paymentMethod: FORM.method,
       paymentStatus: FORM.status,
       date: FORM.date || '',
-      from: (typeof INV_FROM !== 'undefined' && INV_FROM) || ''
+      from: (typeof INV_FROM !== 'undefined' && INV_FROM) || '',
+      note: FORM.quoteRef ? 'From quotation ' + FORM.quoteRef : ''
     }],
       function (res) {
       SAVING = false;
@@ -13904,6 +13905,75 @@ document.addEventListener('click', function (ev) {
 window.addEventListener('resize', function () { try { c5Nav(); } catch (e) {} });
 window.addEventListener('hashchange', function () { setTimeout(c5Nav, 0); });
 setTimeout(c5Nav, 0); setTimeout(c5Nav, 1500);
+</script>
+
+<!-- plan D4: quotation -> invoice in one click -->
+<script>
+/** Put an agreed quotation on the New invoice screen: customer, products at the quoted rate, discount, delivery. */
+async function quoteToInvoice(q) {
+  if (!q || !q.items) return;
+  if (!CAT || !OPT) { toast('The product list is still loading \u2014 try again in a moment.', true); loadAll(); return; }
+  if (CART.length && !(await uiConfirm('The New invoice screen already holds ' + CART.length + ' product(s).\n\nReplace them with this quotation?'))) return;
+  var bySku = {}, byName = {};
+  CAT.forEach(function (p) {
+    if (String(p.status || '').toLowerCase() === 'discontinued') return;
+    bySku[String(p.sku).toLowerCase()] = p; byName[String(p.name).trim().toLowerCase()] = p;
+  });
+  var cart = [], left = [], higher = [], sub = 0;
+  q.items.forEach(function (it) {
+    var p = (it.sku && bySku[String(it.sku).trim().toLowerCase()]) || byName[String(it.name || '').trim().toLowerCase()];
+    var qty = Math.max(1, Math.round(Number(it.qty) || 1)), rate = Number(it.rate) || 0;
+    if (!p) { left.push((it.name || 'Item') + ' \u00d7 ' + (Number(it.qty) || 1) + ' @ ' + fmt(rate) + (it.kind === 'Service' ? ' (service)' : '')); return; }
+    if (!(p.sell > 0)) { left.push(p.name + ' (no selling price set)'); return; }
+    var disc = rate > 0 && rate < p.sell ? Math.round((p.sell - rate) * 100) / 100 : 0;
+    if (rate > p.sell + 0.005) higher.push(p.name + ': quoted ' + fmt(rate) + ', price list ' + fmt(p.sell));
+    var hit = null; cart.forEach(function (l) { if (l.sku === p.sku) hit = l; });
+    if (hit) hit.qty += qty;
+    else cart.push({ sku: p.sku, name: p.name, price: p.sell, qty: qty, discEach: disc, stock: p.stock, cat: p.cat });
+    sub += qty * (p.sell - disc);
+  });
+  if (!cart.length) {
+    await uiAlert('Nothing on this quotation is a product in your list, so there is nothing to invoice.\n\n' +
+      'An invoice takes stock off the shelf, so each line must be a product. Add the products to the quotation from the product list, or make the invoice by hand.');
+    return;
+  }
+  if (typeof INV_FROM !== 'undefined') INV_FROM = '';
+  CART = cart; iSearch = '';
+  var phone = String(q.phone || '').replace(/[^0-9]/g, '');
+  if (phone.length > 11) phone = phone.slice(-11);
+  FORM.name = String(q.customer || q.contact || '').trim();
+  FORM.phone = phone;
+  FORM.address = String(q.address || '').replace(/\s*\n\s*/g, ', ').trim();
+  FORM.delivery = Number(q.shipping) || 0; FORM.delTouched = true; FORM.delAuto = false;
+  FORM.invDisc = q.discountType === 'Fixed' ? Math.round(Number(q.discount) || 0) : Math.round(sub * (Number(q.discount) || 0) / 100);
+  FORM.quoteRef = String(q.number || '').trim();
+  ACCT = null;
+  try { updateCounts(); } catch (e) {}
+  go('invoice');
+  var notes = [];
+  if (left.length) notes.push('NOT carried over (not products in your list) \u2014 add them by hand if they are to be charged:\n  \u2022 ' + left.join('\n  \u2022 '));
+  if (higher.length) notes.push('Quoted ABOVE the price list \u2014 the invoice uses the price list:\n  \u2022 ' + higher.join('\n  \u2022 '));
+  if (Number(q.vat) > 0) notes.push('The quotation has ' + q.vat + '% VAT. Invoices here carry no VAT line \u2014 the total will be lower by that.');
+  if (notes.length) uiAlert('Quotation ' + (FORM.quoteRef || '') + ' is on the invoice. Check before saving:\n\n' + notes.join('\n\n'));
+  else toast('Quotation ' + esc(FORM.quoteRef || '') + ' is on the invoice. Check it and press Save.', false, 8000);
+}
+var qzDashHtmlD4 = qzDashHtml;
+qzDashHtml = function () {
+  return qzDashHtmlD4().replace(/(<button class="btn small" type="button" data-qzopen="([^"]*)">Open<\/button> )/g,
+    '$1<button class="btn small primary" type="button" data-qzinv="$2">Invoice</button> ');
+};
+var viewQuotesD4 = viewQuotes;
+viewQuotes = function () {
+  var h = viewQuotesD4();
+  if (!QZ.quote || QZ.sub !== 'new' || !(QZ.quote.items || []).length) return h;
+  return h.replace('<span class="sku" id="qz_state">', '<button class="btn small primary" type="button" id="qz_toinv" title="Put this quotation on the New invoice screen">Make invoice</button><span class="sku" id="qz_state">');
+};
+document.addEventListener('click', function (ev) {
+  var t = ev.target; if (!t || !t.getAttribute) return;
+  if (t.id === 'qz_toinv' && QZ.quote) { quoteToInvoice(QZ.quote); return; }
+  var id = t.getAttribute('data-qzinv');
+  if (id) srv('erpQuoteGet', [{ id: id }], function (q) { quoteToInvoice(q); }, function (e) { toast(esc(e && e.message ? e.message : e), true); });
+});
 </script>
 </body>
 </html>

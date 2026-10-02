@@ -188,3 +188,8 @@
 - **Short help.** An explanation longer than a line is cut to one line with a "?" beside it; "?" opens and closes it, and it stays open while you are on that screen.
 - **Phone menu.** The menu's groups fold (tap the group name). Overview and Sell start open, the group you are in is always open, the choice is remembered on the device.
 - One block "plan C5" at the end of app.html; nothing else changed. Track C complete.
+
+2026-10-03 — Plan D4 (quotation → invoice)
+- **Invoice** button on every quotation in the list, and **Make invoice** on the open quotation. One click puts it on the New invoice screen: customer name, phone and address; each product at the quoted rate (as a discount per piece under the price list); the quotation's discount; its delivery charge. Then check and Save - the invoice notes which quotation it came from.
+- It says plainly what could not be carried: lines that are not products in the list (services, free-text items), lines quoted above the price list (the invoice uses the price list), and VAT (invoices here have no VAT line).
+- Page only (block "plan D4"); createInvoice already took a note.
