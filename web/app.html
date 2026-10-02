@@ -8303,7 +8303,7 @@ function srv(name, args, ok, bad) {
 
 var SRV_ACTIVE = 0, SRV_WRITING = false;
 // the same list the server uses to know a call changes nothing (ERP_READS)
-var SRV_READS = /^(erpBundle|erpHello|erpMe|erpCatalog|erpSales|erpDues|erpCustomers|erpPnl|erpMoney|erpToday|erpDaySales|erpProduct|erpLookupCustomer|erpCustomerAccount|erpCustomerStatement|erpCustomerCredit|erpWebOrders|erpWebOrderInvoices|erpCampaignAudience|erpCampaignList|erpCampaignGet|erpEvoStatus|erpBrandLogo|erpQuoteBoot|erpQuoteList|erpQuoteGet|erpQuoteAsset|erpExpenses|erpCapital|erpBackupStatus|erpAiKeys|erpGetTheme|erpBusinesses|erpStockHistory|erpReorderPlan|erpPoList|erpSfPayoutLines|erpBookedParcels|erpParcelPreview|erpReturnPreview|erpSettingsFull|erpSettingsLists|erpFormOptions|erpAdmin|erpPeople|erpDevices|erpCourierKeyStatus|erpPayReasons|erpDiscontinued|erpAccessWarning|erpBusinessLinks|erpLookupUsage|erpRecentInvoices|erpCourier|erpDashboardData|erpInvoice|erpCustomerPage|erpSearch|erpProductPage|erpPnlMonth|erpExpenseReceiptUrl|erpPartnership|erpPartnerStock|erpSecurity|erpCustomerList|erpAlerts|erpAccessKeys|erpListView|erpCurrencies|erpCashBook|erpSuppliers|erpSupplierPage)$/;
+var SRV_READS = /^(erpBundle|erpHello|erpMe|erpCatalog|erpSales|erpDues|erpCustomers|erpPnl|erpMoney|erpToday|erpDaySales|erpProduct|erpLookupCustomer|erpCustomerAccount|erpCustomerStatement|erpCustomerCredit|erpWebOrders|erpWebOrderInvoices|erpCampaignAudience|erpCampaignList|erpCampaignGet|erpEvoStatus|erpBrandLogo|erpQuoteBoot|erpQuoteList|erpQuoteGet|erpQuoteAsset|erpExpenses|erpCapital|erpBackupStatus|erpAiKeys|erpGetTheme|erpBusinesses|erpStockHistory|erpReorderPlan|erpPoList|erpSfPayoutLines|erpBookedParcels|erpParcelPreview|erpReturnPreview|erpSettingsFull|erpSettingsLists|erpFormOptions|erpAdmin|erpPeople|erpDevices|erpCourierKeyStatus|erpPayReasons|erpDiscontinued|erpAccessWarning|erpBusinessLinks|erpLookupUsage|erpRecentInvoices|erpCourier|erpDashboardData|erpInvoice|erpCustomerPage|erpSearch|erpProductPage|erpPnlMonth|erpExpenseReceiptUrl|erpPartnership|erpPartnerStock|erpSecurity|erpCustomerList|erpAlerts|erpAccessKeys|erpListView|erpCurrencies|erpSharedStock|erpCashBook|erpSuppliers|erpSupplierPage)$/;
 function srvPump() {
   if (!SRV_Q.length) return;
   var isRead = SRV_READS.test(SRV_Q[0].name);
@@ -11376,15 +11376,22 @@ function settingsPick(h) {
 
 // ------------------------------------------------------------ a company for a partner
 var PCO = { business: '', ownerName: '', email: '', busy: false };
+var PCO_LINK = null;     // { business, ownerName, url } - shown once, right after the company is made
 function partnerCompanyHtml() {
   if (!ME || ME.role !== 'owner') return '';
   return '<section><div class="card"><h2>A company for a partner</h2>' +
-    '<div class="sub">For a partner who runs their own shop and will share a joint pool with you. They get their own company here and their own owner login. ' +
+    (PCO_LINK ? '<div class="note" style="margin-bottom:12px"><div class="ico">\u2713</div><div><strong>\u201c' + esc(PCO_LINK.business) + '\u201d is ready.</strong> ' +
+      'This is ' + esc(PCO_LINK.ownerName) + '\u2019s private link. Send it to them and to nobody else \u2014 whoever opens it is the owner of their company. <strong>It is shown only now.</strong>' +
+      '<div class="row" style="margin-top:8px;gap:8px"><input class="i" id="pc_link" readonly style="flex:1 1 260px" value="' + esc(PCO_LINK.url) + '">' +
+      '<button class="btn primary" type="button" id="pc_copy">Copy</button><button class="btn" type="button" id="pc_done">I have sent it</button></div>' +
+      '<div class="sub" style="margin-top:6px">Next: start a joint pool under Capital \u2192 Partnership and send them the invite code. They join from Capital \u2192 Partnership in their own company. ' +
+      'They can make more links for their own devices under Settings \u2192 Access links.</div></div></div>' : '') +
+    '<div class="sub">For a partner who runs their own shop and will share a joint pool with you. They get their own company here and their own private access link. ' +
     'You are <strong>not</strong> let into their company, and they are not let into yours — you meet only in the joint pool.</div>' +
     '<div class="fields">' +
     '<div><label class="f" for="pc_biz">Their company’s name</label><input class="i" id="pc_biz" maxlength="80" placeholder="e.g. ProtoReen" value="' + esc(PCO.business) + '"></div>' +
     '<div><label class="f" for="pc_owner">Owner’s name</label><input class="i" id="pc_owner" maxlength="80" value="' + esc(PCO.ownerName) + '"></div>' +
-    '<div><label class="f" for="pc_email">Owner’s e-mail</label><input class="i" id="pc_email" type="email" inputmode="email" placeholder="partner@example.com" value="' + esc(PCO.email) + '"></div></div>' +
+    '<div><label class="f" for="pc_email">Owner’s e-mail <span class="sku">(optional)</span></label><input class="i" id="pc_email" type="email" inputmode="email" placeholder="partner@example.com" value="' + esc(PCO.email) + '"></div></div>' +
     '<div class="row" style="justify-content:flex-end;margin-top:12px"><button class="btn primary" type="button" id="pc_go"' + (PCO.busy ? ' disabled' : '') + '>' + (PCO.busy ? 'Creating…' : 'Create their company') + '</button></div>' +
     '<div class="sub" style="margin-top:6px">They receive an e-mail with a link to choose a password. Then: you start a joint pool under Capital → Partnership and send them the invite code; they join with it from their own company.</div>' +
     '</div></section>';
@@ -11509,15 +11516,14 @@ function wirePhase5() {
   var go5 = el('pc_go');
   if (go5) go5.addEventListener('click', async function () {
     if (PCO.busy) return;
-    if (!PCO.business.trim() || !PCO.ownerName.trim() || !PCO.email.trim()) { toast('Fill in the company, the owner’s name and their e-mail.', true); return; }
-    if (!(await uiConfirm('Create “' + PCO.business.trim() + '” for ' + PCO.ownerName.trim() + '?\n\nA login is made for ' + PCO.email.trim() + ' and a link to choose a password is e-mailed to them. You will not have access to their company.'))) return;
+    if (!PCO.business.trim() || !PCO.ownerName.trim()) { toast('Fill in the company and the owner’s name.', true); return; }
+    if (!(await uiConfirm('Create “' + PCO.business.trim() + '” for ' + PCO.ownerName.trim() + '?\n\nThey get a private access link of their own, which you hand to them. You will not have access to their company.'))) return;
     PCO.busy = true; repaint();
     srv('erpPartnerCompany', [{ business: PCO.business, ownerName: PCO.ownerName, email: PCO.email }], function (r) {
-      PCO = { business: '', ownerName: '', email: '', busy: false }; repaint();
-      uiAlert('“' + r.business + '” is ready.\n\n' + (r.mailed
-        ? 'An e-mail with a link to choose a password is on its way to ' + r.email + '.'
-        : 'The login for ' + r.email + ' was made, but the e-mail could not be sent just now. Ask them to open erp.costareen.com, choose the Owner tab, type their e-mail and press “Forgot the password?”.') +
-        '\n\nNext: start a joint pool under Capital → Partnership and send them the invite code.');
+      PCO = { business: '', ownerName: '', email: '', busy: false };
+      PCO_LINK = r.link && r.link.key ? { business: r.business, ownerName: r.ownerName || 'the partner', url: location.origin + location.pathname + '#k=' + r.link.key } : null;
+      repaint();
+      if (!PCO_LINK) uiAlert('“' + r.business + '” is ready.');
     }, function (e) { PCO.busy = false; toast(esc(e && e.message ? e.message : e), true, 14000); repaint(); });
   });
 
@@ -13500,6 +13506,87 @@ document.addEventListener('click', function (ev) {
   var t = ev.target;
   if (t && t.id === 'ex_topool') { CAP_TAB = 'partner'; PART = null; go('capital'); }
 });
+</script>
+
+<!-- plan B1: the partner's own access link, shown once -->
+<script>
+document.addEventListener('click', function (ev) {
+  var t = ev.target;
+  if (!t) return;
+  if (t.id === 'pc_copy' && PCO_LINK) {
+    var n = el('pc_link');
+    try { navigator.clipboard.writeText(PCO_LINK.url).then(function () { toast('Link copied.'); }, function () { if (n) { n.select(); } toast('Select the link and copy it.', true); }); }
+    catch (e) { if (n) n.select(); toast('Select the link and copy it.', true); }
+  }
+  if (t.id === 'pc_done') { PCO_LINK = null; repaint(); }
+});
+</script>
+
+<!-- plan B2: one inventory screen - mine, the pool, the partner's -->
+<script>
+var SHARED = null, SHARED_BUSY = false, PROD_SCOPE = 'mine', SHARED_Q = '', SHARED_ONLY = false;
+function sharedLoad(force) {
+  if (SHARED_BUSY || (SHARED && !force)) return;
+  if (!ME || !(ME.role === 'owner' || ME.role === 'shareholder' || ME.role === 'manager')) { SHARED = { columns: [], rows: [], shared: false }; return; }
+  SHARED_BUSY = true;
+  srv('erpSharedStock', [], function (r) { SHARED_BUSY = false; SHARED = r; if (VIEW === 'products') repaint(); },
+      function () { SHARED_BUSY = false; SHARED = { columns: [], rows: [], shared: false }; });
+}
+function sharedChips() {
+  if (!SHARED || !SHARED.shared) return '';
+  var kinds = {};
+  SHARED.columns.forEach(function (c) { kinds[c.kind] = true; });
+  function chip(v, label) { return '<button type="button" class="chip ckcat' + (PROD_SCOPE === v ? ' on' : '') + '" data-pscope="' + v + '">' + label + '</button>'; }
+  return '<section><div class="chips" style="margin-bottom:2px">' + chip('mine', 'Mine') + (kinds.pool ? chip('pool', 'Joint pool') : '') +
+    (kinds.partner ? chip('partner', 'Partner\u2019s') : '') + chip('all', 'All, side by side') + '</div></section>';
+}
+function sharedHtml() {
+  var cols = SHARED.columns.filter(function (c) { return PROD_SCOPE === 'all' || c.kind === PROD_SCOPE; });
+  var q = SHARED_Q.trim().toLowerCase();
+  var rows = SHARED.rows.filter(function (r) {
+    var any = false, has = false;
+    cols.forEach(function (c) { if (r.qty[c.key] !== undefined) any = true; if (r.qty[c.key] > 0) has = true; });
+    if (!any || (SHARED_ONLY && !has)) return false;
+    return !q || (r.name + ' ' + r.sku + ' ' + r.brand + ' ' + r.category + ' ' + r.color).toLowerCase().indexOf(q) >= 0;
+  });
+  var notes = cols.filter(function (c) { return c.note; }).map(function (c) { return '<strong>' + esc(c.name) + '</strong> ' + esc(c.note); });
+  var h = '<section><div class="card"><h2>' + (PROD_SCOPE === 'pool' ? 'Joint pool stock' : PROD_SCOPE === 'partner' ? 'Partner\u2019s stock' : 'All stock, side by side') + '</h2>' +
+    '<div class="sub">Counts only. A partner\u2019s cost and prices are never shown. ' + (PROD_SCOPE !== 'partner' ? 'To sell from the joint pool, choose the pool in the business menu at the top.' : 'To sell a partner\u2019s item, agree it with them and record it under Capital \u2192 Partnership.') +
+    (notes.length ? '<br>' + notes.join(' \u00b7 ') + '.' : '') + '</div>' +
+    '<div class="row" style="align-items:flex-end;gap:10px;margin-bottom:8px"><div style="flex:1 1 240px"><input class="i" id="sh_q" type="search" placeholder="Search by name, SKU or brand" value="' + esc(SHARED_Q) + '"></div>' +
+    '<label class="chk" style="padding-bottom:9px"><input type="checkbox" id="sh_only"' + (SHARED_ONLY ? ' checked' : '') + '> In stock only</label>' +
+    '<button class="btn small" type="button" id="sh_reload">Refresh</button></div>' +
+    '<div class="scroll tall"><table><thead><tr><th>Product</th>' + cols.map(function (c) {
+      return '<th class="num">' + esc(c.name) + '<br><span class="sku">' + (c.kind === 'mine' ? 'mine' : c.kind === 'pool' ? 'joint pool' : 'partner') + '</span></th>'; }).join('') + '</tr></thead><tbody>';
+  if (!rows.length) h += '<tr><td colspan="' + (cols.length + 1) + '" class="empty">Nothing to show.</td></tr>';
+  var lastCat = null;
+  rows.slice(0, 800).forEach(function (r) {
+    var cat = r.category || 'Other';
+    if (cat !== lastCat) { h += '<tr class="grp"><td colspan="' + (cols.length + 1) + '">' + esc(cat) + '</td></tr>'; lastCat = cat; }
+    h += '<tr><td class="nm">' + esc(r.name) + (r.color ? ' <span class="sku">' + esc(r.color) + '</span>' : '') + '<br><span class="sku">' + esc(r.sku) + (r.brand ? ' \u00b7 ' + esc(r.brand) : '') + '</span></td>' +
+      cols.map(function (c) { var n = r.qty[c.key];
+        return '<td class="num">' + (n === undefined ? '<span class="sku">\u2014</span>' : n > 0 ? '<strong>' + fmt(n) + '</strong>' : '<span style="color:var(--critical)">0</span>') + '</td>'; }).join('') + '</tr>';
+  });
+  if (rows.length > 800) h += '<tr><td colspan="' + (cols.length + 1) + '" class="empty">' + fmt(rows.length - 800) + ' more \u2014 search to narrow it down.</td></tr>';
+  return h + '</tbody></table></div></div></section>';
+}
+var viewProductsB2 = viewProducts;
+viewProducts = function () {
+  if (typeof PRODP !== 'undefined' && PRODP && PRODP.sku) return viewProductsB2();
+  sharedLoad();
+  if (!SHARED || !SHARED.shared) { PROD_SCOPE = 'mine'; return viewProductsB2(); }
+  return sharedChips() + (PROD_SCOPE === 'mine' ? viewProductsB2() : sharedHtml());
+};
+var wireProductsB2 = wireProducts;
+wireProducts = function () {
+  var v = el('view'), chips = v.querySelectorAll('button[data-pscope]');
+  for (var i = 0; i < chips.length; i++) chips[i].addEventListener('click', function () { PROD_SCOPE = this.getAttribute('data-pscope'); repaint(); });
+  if (PROD_SCOPE === 'mine' || !SHARED || !SHARED.shared || (typeof PRODP !== 'undefined' && PRODP && PRODP.sku)) { wireProductsB2(); return; }
+  var q = el('sh_q');
+  if (q) q.addEventListener('input', function () { SHARED_Q = q.value; var at = q.selectionStart; repaint(); var n = el('sh_q'); if (n) { n.focus(); try { n.setSelectionRange(at, at); } catch (e) {} } });
+  var o = el('sh_only'); if (o) o.addEventListener('change', function () { SHARED_ONLY = o.checked; repaint(); });
+  var rl = el('sh_reload'); if (rl) rl.addEventListener('click', function () { SHARED = null; sharedLoad(true); toast('Reading the stock again\u2026'); });
+};
 </script>
 </body>
 </html>

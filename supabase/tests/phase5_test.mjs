@@ -39,7 +39,9 @@ check('company name required', !r.ok && /company called/.test(r.error), r);
 r = await owner('erpPartnerCompany', [{ business: 'Partner Shop', ownerName: 'Salim', email: 'not-an-email' }]);
 check('a real e-mail is required', !r.ok && /e-mail address/.test(r.error), r);
 r = await owner('erpPartnerCompany', [{ business: 'Partner Shop', ownerName: 'Salim', email: 'Salim@Partner.test' }]);
-check('partner company created, mail sent', r.ok && r.result.mailed === true && r.result.email === 'salim@partner.test' && deps.mails.includes('salim@partner.test'), r);
+check('partner company created, mail sent, and a link of their own', r.ok && r.result.mailed === true && r.result.email === 'salim@partner.test' && deps.mails.includes('salim@partner.test') &&
+  /^[A-Za-z0-9_-]{40,}$/.test(r.result.link.key) && r.result.link.label === 'Salim', r);
+const pkey = r.result.link.key;
 const pu = (await sql`select id from auth.users where email = 'salim@partner.test'`)[0];
 const pb = await sql`select b.id, b.name, m.role from memberships m join businesses b on b.id = m.business_id where m.user_id = ${pu.id}`;
 check('the partner owns it', pb.length === 1 && pb[0].name === 'Partner Shop' && pb[0].role === 'owner', pb);
@@ -49,7 +51,23 @@ r = await owner('erpBusinesses', []);
 check('...and does not see it in the menu', r.ok && !r.result.businesses.some((b) => b.id === pb[0].id), r.result);
 r = await owner('erpCatalog', []);
 check('the creator is still in their own business afterwards', r.ok && r.result.some((p) => p.sku === PLA), r);
+const { keyHash, newKey } = await import(pathToFileURL(path.join(fnDir, 'handlers', 'access.js')));
+async function ownerKey() { const k = newKey(); await sql`insert into erp_access_keys (key_hash, user_id, label) values (${await keyHash(k)}, ${FIX.U.owner}, 'Owner')`; return k; }
 const partner = (name, args) => erpCall(deps, { name, args, authHeader: 'Bearer owner:' + pu.id });
+// plan B1: with the sign-in screen off the partner gets in by a link of their own
+const live = { ...deps, linkOnly: true };
+const byKey = (key, name, args) => erpCall(live, { name, args, token: { key, device: 'partner-phone' }, authHeader: '' });
+r = await byKey(pkey, 'erpHello', []);
+check('the partner link opens THEIR company, as its owner', r.ok && r.result.ok && r.result.role === 'owner' && r.result.name === 'Salim', r);
+r = await byKey(pkey, 'erpBusinesses', []);
+check('...and shows nothing of the creator business', r.ok && r.result.businesses.length === 1 && r.result.businesses[0].id === pb[0].id, r.result);
+r = await byKey(pkey, 'erpCatalog', []);
+check('...not its products either', r.ok && r.result.length === 0, r);
+const mailsBefore = deps.mails.length;
+r = await erpCall(live, { name: 'erpPartnerCompany', args: [{ business: 'No Mail Shop', ownerName: 'Babu' }], authHeader: 'Bearer owner:' + FIX.U.owner, token: { key: (await ownerKey()), device: 'o' } });
+check('link-only: no e-mail is needed, none is sent, a link comes back', r.ok && r.result.mailed === false && r.result.email === '' && r.result.link.key.length >= 40 && deps.mails.length === mailsBefore, r);
+r = await byKey(r.result.link.key, 'erpBusinesses', []);
+check('...which opens only that company', r.ok && r.result.businesses.length === 1 && r.result.businesses[0].name === 'No Mail Shop', r.result);
 r = await partner('erpSettingsFull', []);
 check('the partner can open their company, lists seeded', r.ok && r.result.lists.categories.length > 0, r);
 r = await partner('erpCatalog', []);

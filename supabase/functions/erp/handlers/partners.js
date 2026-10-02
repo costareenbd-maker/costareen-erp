@@ -222,6 +222,62 @@ export async function erpPoolShare(ctx, payload) {
   return erpPartnership(ctx, {});
 }
 
+/**
+ * One inventory, side by side (plan B2): this business's stock, the joint
+ * pools it is in, and each partner's own shelf where they share it.
+ * Counts only for anything that is not ours - never a partner's cost or price.
+ *   -> { columns: [{ key, kind: mine|pool|partner, name, note }], rows: [{ sku, name, category, brand, color, unit, qty: { key: n } }] }
+ */
+export async function erpSharedStock(ctx) {
+  const b = await thisBusiness(ctx);
+  const columns = [{ key: 'mine', kind: b.is_pool ? 'pool' : 'mine', name: str(b.name), note: '' }];
+  const rows = {};
+  const put = (key, list) => {
+    for (const p of list) {
+      const id = str(p.sku).toLowerCase() || 'n:' + str(p.name).toLowerCase();
+      if (!id || id === 'n:') continue;
+      const r = rows[id] || (rows[id] = { sku: str(p.sku), name: str(p.name), category: str(p.category), brand: str(p.brand),
+                                          color: str(p.color), unit: str(p.unit), qty: {} });
+      r.qty[key] = (r.qty[key] || 0) + num(p.stock);
+    }
+  };
+  const shelf = (biz) => ctx.tx`
+    select p.sku, p.name, p.category, p.brand, p.color, p.unit, coalesce(ps.stock, 0) as stock
+    from products p left join product_stock ps on ps.product_id = p.id
+    where p.business_id = ${biz} and coalesce(p.status, 'Active') <> 'Discontinued'`;
+  put('mine', await shelf(ctx.biz));
+
+  if (!b.is_pool) {
+    const pools = await ctx.tx`
+      select pp.pool_id as id, coalesce(pb.name, 'Joint pool') as name
+      from pool_partners pp left join businesses pb on pb.id = pp.pool_id
+      where pp.partner_business_id = ${ctx.biz} order by 2`;
+    for (const p of pools) {
+      const key = 'pool:' + p.id;
+      // row-level security decides: someone who is not a member of the pool reads nothing
+      const list = await shelf(p.id);
+      const member = (await ctx.tx`select public.is_member(${p.id}) as ok`)[0].ok;
+      columns.push({ key, kind: 'pool', name: str(p.name), note: member ? '' : 'only people who are in the pool see its stock' });
+      put(key, list);
+    }
+    const seen = {};
+    for (const p of await ctx.tx`select * from my_partners() where my_business_id = ${ctx.biz}`) {
+      if (seen[p.partner_business_id]) continue;
+      seen[p.partner_business_id] = true;
+      const key = 'partner:' + p.partner_business_id;
+      const col = { key, kind: 'partner', name: str(p.partner_name), note: '' };
+      if (!p.shares_stock) col.note = 'does not share their stock';
+      else {
+        try { put(key, await ctx.tx.savepoint(() => ctx.tx`select * from partner_stock(${p.partner_business_id})`)); }
+        catch (_) { col.note = 'does not share their stock'; }
+      }
+      columns.push(col);
+    }
+  }
+  const list = Object.values(rows).sort((x, y) => (x.category + x.brand + x.name).localeCompare(y.category + y.brand + y.name));
+  return { columns, rows: list.slice(0, 5000), shared: columns.length > 1, isPool: !!b.is_pool };
+}
+
 /** The other side's shelf: names and counts only. */
 export async function erpPartnerStock(ctx, payload) {
   const partner = str(payload && payload.partner);
@@ -264,5 +320,5 @@ export async function erpPartnerDeal(ctx, payload) {
   return erpPartnership(ctx, {});
 }
 
-export const HANDLERS = { erpPartnership, erpPoolCreate, erpPoolInvite, erpPoolJoin, erpPoolEntryAdd, erpPoolEntryRemove,
+export const HANDLERS = { erpPartnership, erpPoolCreate, erpPoolInvite, erpPoolJoin, erpSharedStock, erpPoolEntryAdd, erpPoolEntryRemove,
                           erpPoolClose, erpPoolTier, erpPoolShare, erpPartnerStock, erpPartnerDeal };

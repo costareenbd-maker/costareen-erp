@@ -189,6 +189,16 @@ check('...and takes no shareholders of its own', !r.ok && /joint pool/.test(r.er
 // back in their own businesses: stock counts and deals
 await owner('erpSetBusiness', [A]);
 await other('erpSetBusiness', [Bz]);
+// ---- plan B2: one inventory, side by side
+r = await other('erpSharedStock', []);
+const colOf = (res, kind) => res.columns.find((c) => c.kind === kind);
+check('one screen: mine, the pool, the partner', r.ok && r.result.shared && r.result.columns.length === 3 && colOf(r.result, 'mine') && colOf(r.result, 'pool').name === 'ProtoReen JV' && colOf(r.result, 'partner').name === 'Costareen', r.result && r.result.columns);
+const jv = r.result.rows.find((x) => x.sku === SKU), pla = r.result.rows.find((x) => x.sku === PLA);
+check('pool stock counted (1000 received, 210 sold)', jv && jv.qty[colOf(r.result, 'pool').key] === 790 && jv.qty.mine === undefined, jv);
+check('the partner\'s shelf beside it, counts only', pla && pla.qty[colOf(r.result, 'partner').key] === 5 && !/cost|price|sell/.test(JSON.stringify(r.result)), pla);
+r = await mgr('erpSharedStock', []);
+check('staff who are not in the pool see their own stock, and are told why the pool is empty', r.ok && r.result.rows.some((x) => x.sku === PLA && x.qty.mine === 5) &&
+  !r.result.rows.some((x) => x.sku === SKU) && /only people who are in the pool/.test(colOf(r.result, 'pool').note), r.result && r.result.columns);
 r = await other('erpPartnerStock', [{ partner: A }]);
 check('partner sees stock counts, never cost or price', r.ok && r.result.products.some((p) => p.sku === PLA && p.stock === 5) && !/cost|price|sell/.test(JSON.stringify(r.result)), r.result);
 r = await owner('erpCapital', []);
@@ -197,6 +207,8 @@ r = await owner('erpPoolShare', [{ share: false }]);
 check('sharing switched off', r.ok && r.result.sharesStock === false, r.result);
 r = await other('erpPartnerStock', [{ partner: A }]);
 check('...and the partner no longer sees the shelf', !r.ok && /does not share/.test(r.error), r);
+r = await other('erpSharedStock', []);
+check('...and the one screen says so instead of showing it', r.ok && /does not share/.test(colOf(r.result, 'partner').note) && !r.result.rows.some((x) => x.sku === PLA), r.result && r.result.columns);
 r = await other('erpPartnerDeal', [{ action: 'record', partner: A, side: 'theirs', description: '', amount: 500 }]);
 check('deal: what was sold', !r.ok && r.error === 'What was sold? A few words is enough.', r);
 r = await other('erpPartnerDeal', [{ action: 'record', partner: A, side: 'theirs', description: '2 rolls PLA black', amount: 2500, qty: 2 }]);

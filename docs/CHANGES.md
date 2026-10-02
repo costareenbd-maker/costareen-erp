@@ -156,3 +156,8 @@
 - **Lines are struck out, never removed.** A reason is required; the line stays, crossed through, with who and why, for every partner.
 - **Capital inside a pool** shows only Partnership: no second shareholder/investor system there.
 - 034_partnership_fix.sql (pool_settlement rewritten, received_by trigger, pool_ledger.voided_*), lib/pool.js; phase4_test.mjs now 75.
+
+2026-10-03 — Plan B1 + B2 (the partner gets in; one inventory screen)
+- **B1.** "A company for a partner" (Settings) now hands back the partner's own private access link, shown once. It opens THEIR login and company only - nothing of the creator's business. E-mail is optional (the sign-in screen is off). The partner makes further links for their own devices under Settings > Access links, and joins the pool with the invite code as before.
+- **B2.** Products has a switch **Mine · Joint pool · Partner's · All, side by side** (only when the business is in a pool). Counts only for what is not ours; a partner who stopped sharing, and staff who are not in the pool, are told why a column is empty. Handler erpSharedStock (manager and up).
+- Tests: phase5_test (37), phase4_test (80).

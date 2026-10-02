@@ -8,6 +8,7 @@
 import { formatDate } from '../lib/time.js';
 import { setConfig } from '../lib/ext.js';
 import { SEED_LISTS } from './settings.js';
+import { keyHash, newKey } from './access.js';
 
 const str = (v) => String(v == null ? '' : v).trim();
 
@@ -55,16 +56,22 @@ export async function erpSecurity(ctx, payload) {
 
 /**
  * A company for a partner: its own business, its own owner login.
- * payload: { business, ownerName, email }
- * The partner gets an e-mail with a link to choose a password. Nobody from
- * this business becomes a member of theirs.
+ * payload: { business, ownerName, email? }
+ * Plan B1: the partner gets in with a private access link of their own, tied
+ * to THEIR company and login - returned here once, to hand to them. With the
+ * sign-in screen on, an e-mail to choose a password is sent as well.
+ * Nobody from this business becomes a member of theirs.
  */
 export async function erpPartnerCompany(ctx, payload) {
   payload = payload || {};
-  const business = str(payload.business), ownerName = str(payload.ownerName), email = str(payload.email).toLowerCase();
+  const business = str(payload.business), ownerName = str(payload.ownerName);
+  const typed = str(payload.email).toLowerCase(), linkOnly = !!(ctx.deps && ctx.deps.linkOnly);
+  // a login needs an address; with access by link alone it is never written to, so one is made up when none is given
+  const email = typed || (linkOnly ? 'partner-' + crypto.randomUUID().replace(/-/g, '').slice(0, 16) + '@link.erp.invalid' : '');
   if (!business) throw new Error('What is the partner’s company called?');
   if (business.length > 80) throw new Error('That name is too long.');
   if (!ownerName) throw new Error('Who is the owner? Type their name.');
+  if (ownerName.length > 60) throw new Error('That name is too long.');
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) throw new Error('Type the owner’s e-mail address.');
   if (!ctx.deps || !ctx.deps.createOwner) throw new Error('Creating a login is not available here.');
 
@@ -72,7 +79,7 @@ export async function erpPartnerCompany(ctx, payload) {
 
   // the new company is made AS its owner, so it is theirs from the first row
   const mine = JSON.stringify({ sub: ctx.s.userId, role: 'authenticated' });
-  let id;
+  let id, key = '';
   try {
     await ctx.tx`select set_config('request.jwt.claims', ${JSON.stringify({ sub: userId, role: 'authenticated' })}, true)`;
     id = (await ctx.tx`select create_business(${business}) as id`)[0].id;
@@ -86,15 +93,18 @@ export async function erpPartnerCompany(ctx, payload) {
       await setConfig(nctx, k, v);
     }
     await ctx.tx`select set_config('request.jwt.claims', ${mine}, true)`;
+    // their own key: it opens THEIR login, so it shows their company and nothing of this one
+    key = newKey();
+    await ctx.sql`insert into erp_access_keys (key_hash, user_id, label) values (${await keyHash(key)}, ${userId}, ${ownerName.slice(0, 60)})`;
   } catch (e) {
     // the transaction is rolled back by the caller; do not leave a login with no company behind
     try { if (ctx.deps.removeUser) await ctx.deps.removeUser(userId); } catch (_) { /* best effort */ }
     throw e;
   }
 
-  let mailed = true;
-  try { await ctx.deps.sendReset(email); } catch (_) { mailed = false; }
-  return { ok: true, business, email, mailed };
+  let mailed = false;
+  if (typed && !linkOnly) { try { await ctx.deps.sendReset(email); mailed = true; } catch (_) { mailed = false; } }
+  return { ok: true, business, email: typed, mailed, ownerName, link: { label: ownerName, key } };
 }
 
 export const HANDLERS = { erpSecurity, erpPartnerCompany };
