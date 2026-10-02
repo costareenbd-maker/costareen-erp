@@ -13789,5 +13789,121 @@ document.addEventListener('click', function (ev) {
   for (var j = 0; j < panes.length; j++) panes[j].hidden = panes[j].getAttribute('data-dtabp') !== DASH_TAB;
 });
 </script>
+
+<!-- plan C5: one search, short help with "?", menu groups that fold on a phone -->
+<style>
+#gs_out button.gs-list { color:var(--series-1); font-weight:600; border-bottom:1px solid var(--grid); }
+.sub.c5clip { display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:1; overflow:hidden; }
+.c5q { float:right; margin:0 0 4px 8px; width:20px; height:20px; border-radius:50%; border:1px solid var(--ring); background:var(--surface); color:var(--muted);
+  font:inherit; font-size:11.5px; font-weight:700; line-height:1; cursor:pointer; padding:0; }
+.c5q:hover, .c5q.on { color:var(--series-1); border-color:var(--series-1); }
+@media (max-width:640px) {
+  #nav .navgrp { cursor:pointer; display:flex; justify-content:space-between; align-items:center; padding-top:12px; padding-bottom:8px; }
+  #nav .navgrp::after { content:'\25BE'; font-size:12px; opacity:.7; }
+  #nav .navgrp.c5shut::after { content:'\25B8'; }
+  #nav button.c5hide { display:none !important; }
+}
+</style>
+<script>
+// ---- 1. the top search also filters the list that is open
+function c5OpenList() {
+  var w = document.querySelector('#view .o_lv[data-lv]');
+  if (!w) return null;
+  var m = w.getAttribute('data-lv'), st = lvSt(m);
+  return st && st.spec && st.spec.search && st.spec.search.length ? { m: m, st: st } : null;
+}
+var gsHtmlC5 = gsHtml;
+gsHtml = function () {
+  var h = gsHtmlC5(), L = c5OpenList(), text = (GS.q || '').trim();
+  if (!L || text.length < 2) return h;
+  return '<button type="button" class="gs-list" data-gslist="1"><span>Filter this list for \u201c' + esc(text) + '\u201d</span><small>Enter</small></button>' + h;
+};
+function c5FilterList() {
+  var L = c5OpenList(), text = (GS.q || (el('gs_q') ? el('gs_q').value : '')).trim();
+  if (!L || text.length < 2) return false;
+  L.st.q = text; L.st.sug = 0;
+  lvAddSearch(L.m, L.st.spec.search[0].field);
+  gsClose(true);
+  return true;
+}
+document.addEventListener('click', function (ev) {
+  var b = ev.target && ev.target.closest ? ev.target.closest('button[data-gslist]') : null;
+  if (b) { ev.stopPropagation(); c5FilterList(); }
+}, true);
+document.addEventListener('keydown', function (ev) {
+  if (ev.key !== 'Enter' || !ev.target || ev.target.id !== 'gs_q') return;
+  if (c5FilterList()) { ev.preventDefault(); ev.stopImmediatePropagation(); }
+}, true);
+
+// ---- 2. long help text: one line, the rest behind "?"
+var C5_OPEN = {}, C5_ALL = (function () { try { return localStorage.getItem('cz_help_open') === '1'; } catch (e) { return false; } })();
+function c5Help() {
+  var subs = document.querySelectorAll('#view .card > .sub:not([data-c5]), #view .card > .row > div > .sub:not([data-c5])');
+  for (var i = 0; i < subs.length; i++) {
+    var n = subs[i];
+    n.setAttribute('data-c5', '1');
+    var text = (n.textContent || '').trim();
+    if (text.length < 115 || n.querySelector('button, input, select, a, .pill')) continue;
+    var key = text.slice(0, 60), open = C5_ALL || !!C5_OPEN[key];
+    var q = document.createElement('button');
+    q.type = 'button'; q.className = 'c5q' + (open ? ' on' : ''); q.textContent = '?';
+    q.title = 'Show or hide the explanation'; q.setAttribute('aria-label', 'Show or hide the explanation');
+    q.setAttribute('data-c5k', key);
+    n.parentNode.insertBefore(q, n);
+    if (!open) n.classList.add('c5clip');
+  }
+}
+document.addEventListener('click', function (ev) {
+  var q = ev.target;
+  if (!q || !q.classList || !q.classList.contains('c5q')) return;
+  var n = q.nextElementSibling; if (!n) return;
+  var open = n.classList.contains('c5clip');
+  n.classList.toggle('c5clip', !open); q.classList.toggle('on', open);
+  var k = q.getAttribute('data-c5k'); if (open) C5_OPEN[k] = true; else delete C5_OPEN[k];
+});
+(function () {
+  var v = document.getElementById('view'); if (!v || !window.MutationObserver) return;
+  var due = false;
+  new MutationObserver(function () {
+    if (due) return; due = true;
+    setTimeout(function () { due = false; try { c5Help(); } catch (e) {} }, 30);
+  }).observe(v, { childList: true, subtree: true });
+})();
+
+// ---- 3. phone: the menu's groups fold; the one in use stays open
+var C5_NAV = (function () { try { return JSON.parse(localStorage.getItem('cz_nav_open') || '{}'); } catch (e) { return {}; } })();
+function c5Nav() {
+  var nav = document.getElementById('nav'); if (!nav) return;
+  var phone = window.matchMedia && window.matchMedia('(max-width:640px)').matches;
+  var kids = nav.children, grp = null, groups = [];
+  for (var i = 0; i < kids.length; i++) {
+    var k = kids[i];
+    if (k.classList.contains('navgrp')) { grp = { head: k, name: k.textContent.trim(), items: [], current: false }; groups.push(grp); }
+    else if (grp && k.tagName === 'BUTTON') { grp.items.push(k); if (k.getAttribute('aria-selected') === 'true') grp.current = true; }
+  }
+  groups.forEach(function (g) {
+    var open = !phone || g.current || C5_NAV[g.name] === true || (C5_NAV[g.name] === undefined && /^(overview|sell)$/i.test(g.name));
+    g.head.classList.toggle('c5shut', !open);
+    g.items.forEach(function (b) { b.classList.toggle('c5hide', !open); });
+  });
+}
+document.addEventListener('click', function (ev) {
+  var t = ev.target && ev.target.closest ? ev.target.closest('#nav .navgrp') : null;
+  if (t) {
+    if (!(window.matchMedia && window.matchMedia('(max-width:640px)').matches)) return;
+    var name = t.textContent.trim();
+    C5_NAV[name] = t.classList.contains('c5shut');
+    try { localStorage.setItem('cz_nav_open', JSON.stringify(C5_NAV)); } catch (e) {}
+    // the group in use cannot hide its own current screen; everything else follows the tap
+    c5Nav();
+    if (!C5_NAV[name]) { t.classList.add('c5shut'); var n = t.nextElementSibling; while (n && !n.classList.contains('navgrp')) { if (n.getAttribute('aria-selected') !== 'true') n.classList.add('c5hide'); n = n.nextElementSibling; } }
+    return;
+  }
+  if (ev.target && ev.target.closest && ev.target.closest('#nav button[data-view]')) setTimeout(c5Nav, 0);
+});
+window.addEventListener('resize', function () { try { c5Nav(); } catch (e) {} });
+window.addEventListener('hashchange', function () { setTimeout(c5Nav, 0); });
+setTimeout(c5Nav, 0); setTimeout(c5Nav, 1500);
+</script>
 </body>
 </html>

@@ -182,3 +182,9 @@
 
 2026-10-03 — Plan C4 (dashboard trimmed)
 - The dashboard keeps what needs doing, today and the month so far (with its two charts) in sight. Stock and cash, Top products / Stock health and Recent orders sit behind three tabs under them; the chosen tab is remembered on the device. Nothing was removed and no figure changed (block "plan C4" at the end of app.html).
+
+2026-10-03 — Plan C5 (small things)
+- **One search.** On a list screen (Sales, Products, Customers) the top search offers "Filter this list for …" first; Enter applies it to the list. The other results (open an invoice, customer or product) are still there to click.
+- **Short help.** An explanation longer than a line is cut to one line with a "?" beside it; "?" opens and closes it, and it stays open while you are on that screen.
+- **Phone menu.** The menu's groups fold (tap the group name). Overview and Sell start open, the group you are in is always open, the choice is remembered on the device.
+- One block "plan C5" at the end of app.html; nothing else changed. Track C complete.
