@@ -43,6 +43,19 @@ async function soft(ctx, fn, fallback) {
   try { return await ctx.tx.savepoint(() => fn()); } catch (_) { return fallback; }
 }
 
+// ------------------------------------------------------- the cost of a sale
+/**
+ * What one unit of a sold line cost (plan A1). It is the cost written on the
+ * line the day it was sold, so a later shipment at another price cannot
+ * rewrite a month that is over. Only where nothing was known that day does
+ * today's cost stand in - filling in a missing cost completes the past, it
+ * does not change it.
+ */
+export function soldCost(row, today) {
+  const then = num(row[SL.unit_cost]);
+  return then > 0 ? then : (num(today) || 0);
+}
+
 // --------------------------------------------------------------- price book
 
 /**
@@ -110,7 +123,7 @@ async function bookCostMap(ctx) {
  * Cost (fix 2): the product's own cost_price first - the weighted average of
  * what was really paid, kept up to date by receiving - then the price book.
  */
-async function products(ctx) {
+export async function products(ctx) {
   if (ctx.memo.dashProducts) return ctx.memo.dashProducts;
   const book = await bookCostMap(ctx);
   const rows = await ctx.tx`
@@ -206,6 +219,7 @@ export async function monthGross(ctx, month) {
     if (!d || monthKey(d) !== month) continue;
     const ln = { id: oid, sku: str(r[SL.sku]).toLowerCase(), qty: num(r[SL.quantity]),
                  total: num(r[SL.total]), discount: num(r[SL.discount]) };
+    ln.cost = soldCost(r, bySku[ln.sku] && bySku[ln.sku].cost);
     lines.push(ln);
     const o = inv[oid] || (inv[oid] = { lines: 0, discount: 0, gross: 0 });
     if (ln.total > 0) o.gross += ln.qty * num(r[SL.unit_price]);
@@ -218,7 +232,7 @@ export async function monthGross(ctx, month) {
     const leftI = discLeft(I.discount, I.gross, I.lines);
     const share = (I.lines > 0 && leftI > 0) ? leftI * (L.total / I.lines) : 0;
     revenue += L.total < 0 ? L.total : Math.max(0, L.total - share);
-    cogs += ((bySku[L.sku] && bySku[L.sku].cost) || 0) * L.qty;
+    cogs += L.cost * L.qty;
   }
   return { revenue: Math.round(revenue), cost: Math.round(cogs), gross: Math.round(revenue - cogs) };
 }
@@ -331,8 +345,9 @@ export async function erpDashboardData(ctx) {
     const isRtn = /^RTN-/.test(oid);
 
     const pinfo = prod[str(row[SL.sku]).toLowerCase()];
-    const lineCost = (pinfo && pinfo.cost > 0) ? pinfo.cost * qty : 0;
-    const costed = !!(pinfo && pinfo.cost > 0);
+    const unitThen = soldCost(row, pinfo && pinfo.cost);
+    const lineCost = unitThen > 0 ? unitThen * qty : 0;
+    const costed = unitThen > 0;
 
     const dayKey = formatDate(dt, 'yyyy-MM-dd');
     if (dayKey === todayKey) {
@@ -665,6 +680,7 @@ export async function erpPnl(ctx, payload) {
     let o = inv[oid];
     if (!o) { o = inv[oid] = { month: m, lines: [], sum: 0, discount: 0, grand: 0, gross: 0 }; invOrder.push(oid); }
     const ln = { sku: str(r[SL.sku]).toLowerCase(), qty: num(r[SL.quantity]), total: num(r[SL.total]) };
+    ln.cost = soldCost(r, bySku[ln.sku] && bySku[ln.sku].cost);
     o.lines.push(ln);
     if (ln.total > 0) { o.sum += ln.total; o.gross += ln.qty * num(r[SL.unit_price]); }
     o.discount = Math.max(o.discount, num(r[SL.discount]));
@@ -675,7 +691,7 @@ export async function erpPnl(ctx, payload) {
     const isReturn = /^RTN-/.test(id);
     const leftD = discLeft(I.discount, I.gross, I.sum);
     for (const L of I.lines) {
-      const unit = (bySku[L.sku] && bySku[L.sku].cost) || 0;
+      const unit = L.cost;
       if (L.total < 0 || isReturn) {
         M.returns += -L.total;
         M.cost += unit * L.qty;
@@ -763,6 +779,7 @@ export async function erpPnlMonth(ctx, payload) {
       order.push(oid);
     }
     const ln = { sku: str(r[SL.sku]).toLowerCase(), qty: num(r[SL.quantity]), total: num(r[SL.total]) };
+    ln.cost = soldCost(r, bySku[ln.sku] && bySku[ln.sku].cost);
     o.lines.push(ln);
     if (ln.total > 0) { o.sum += ln.total; o.gross += ln.qty * num(r[SL.unit_price]); }
     o.discount = Math.max(o.discount, num(r[SL.discount]));
@@ -775,7 +792,7 @@ export async function erpPnlMonth(ctx, payload) {
     const leftD = discLeft(I.discount, I.gross, I.sum);
     let sales = 0, returns = 0, cost = 0, uncosted = false;
     for (const L of I.lines) {
-      const unit = (bySku[L.sku] && bySku[L.sku].cost) || 0;
+      const unit = L.cost;
       if (L.total < 0 || isReturn) { returns += -L.total; cost += unit * L.qty; continue; }
       const share = (I.sum > 0 && leftD > 0) ? leftD * (L.total / I.sum) : 0;
       sales += Math.max(0, L.total - share);
@@ -815,6 +832,7 @@ export async function erpMoney(ctx, payload) {
     if (!when || when.getTime() < from) continue;
     const line = { id: oid, sku: str(r[SL.sku]), qty: num(r[SL.quantity]), total: num(r[SL.total]),
                    discount: num(r[SL.discount]) };
+    line.cost = soldCost(r, prod[line.sku.toLowerCase()] && prod[line.sku.toLowerCase()].cost);
     if (!line.sku || (line.qty <= 0 && line.total >= 0)) continue;
     lines.push(line);
     const inv = byInvoice[oid] || (byInvoice[oid] = { lines: 0, discount: 0, gross: 0 });
@@ -836,7 +854,7 @@ export async function erpMoney(ctx, payload) {
     const share = (inv2 && inv2.lines > 0 && left2 > 0) ? left2 * (ln.total / inv2.lines) : 0;
     const net = ln.total < 0 ? ln.total : Math.max(0, ln.total - share);
     const p = prod[ln.sku.toLowerCase()];
-    const unitCost = p ? p.cost : 0;
+    const unitCost = ln.cost;
     const lineCost = unitCost > 0 ? unitCost * ln.qty : 0;
     const known = unitCost > 0;
     revenue += net;

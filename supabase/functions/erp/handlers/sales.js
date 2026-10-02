@@ -30,6 +30,7 @@ import {
 import {
   getSecret, getConfig, httpFetch, saveFile, findFiles, deleteFile, readFile, renderPdf,
 } from '../lib/ext.js';
+import { products } from './dashboard.js';
 
 const R2 = (v) => Math.round(v * 100) / 100;
 
@@ -463,12 +464,19 @@ async function returnGoods(ctx, payload, opts = {}) {
   for (let s = 0; s < take.length; s++) {
     const t = take[s];
     const pid = await productIdOf(ctx, t.sku);
+    const sold = await ctx.tx`
+      select l.unit_cost from invoice_lines l join invoices i on i.id = l.invoice_id
+      where i.business_id = ${ctx.biz} and i.invoice_no = ${invoiceNo}
+        and lower(btrim(l.sku)) = ${String(t.sku).trim().toLowerCase()} and l.qty > 0
+      order by l.line_no limit 1`;
+    let costThen = sold[0] && num(sold[0].unit_cost) > 0 ? num(sold[0].unit_cost) : 0;
+    if (!costThen) { const pc = (await products(ctx)).bySku[String(t.sku).trim().toLowerCase()]; costThen = pc && pc.cost > 0 ? pc.cost : 0; }
     await ctx.tx`
       insert into invoice_lines (business_id, invoice_id, product_id, sku, name, qty, unit_price,
-                                 discount, line_total, line_no)
+                                 discount, line_total, line_no, unit_cost)
       values (${ctx.biz}, ${rtnId}, ${pid}, ${t.sku},
               ${t.product + (t.good ? ' (returned)' : ' (returned damaged)')},
-              ${t.good ? -t.qty : 0}, ${R2(t.unit)}, 0, ${-t.worth}, ${s + 1})`;
+              ${t.good ? -t.qty : 0}, ${R2(t.unit)}, 0, ${-t.worth}, ${s + 1}, ${costThen})`;
     if (!t.good) continue;
     if (pid) {
       await ctx.tx`

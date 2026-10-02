@@ -15,6 +15,8 @@ export const SL = {
   grand_total: 16, advance_paid: 17, due_amount: 18, customer_source: 19,
   // not sheet columns: where the row lives
   invoice_id: 20, line_id: 21,
+  // what one unit cost on the day it was sold (plan A1); 0 = not known then
+  unit_cost: 22,
 };
 
 export function forget(ctx, ...names) {
@@ -59,7 +61,7 @@ export function salesLog(ctx) {
       select i.invoice_no, i.created_at, i.customer_name, i.customer_phone, i.customer_address,
              l.sku, l.name, l.qty, l.unit_price, l.line_total, i.payment_method, i.payment_status,
              i.delivery_status, i.note, i.discount, i.delivery_charge, i.grand_total,
-             i.advance_paid, i.due_amount, i.source, i.id, l.id
+             i.advance_paid, i.due_amount, i.source, i.id, l.id, coalesce(l.unit_cost, 0)
       from invoice_lines l join invoices i on i.id = l.invoice_id
       where i.business_id = ${ctx.biz}
       order by i.seq, l.line_no, l.id`.values();

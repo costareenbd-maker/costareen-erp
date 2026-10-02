@@ -93,6 +93,7 @@ export const ERP_ALLOW = {
   // the list view (look 2); each list checks its own role as well
   erpListView: 'sales',
   erpSetLook: 'sales',
+  erpFreezeSaleCosts: 'owner',
   erpPartnership: 'shareholder', erpPartnerStock: 'shareholder',
   erpPoolCreate: 'owner', erpPoolInvite: 'owner', erpPoolJoin: 'owner', erpPoolEntryAdd: 'owner',
   erpPoolEntryRemove: 'owner', erpPoolClose: 'owner', erpPoolTier: 'owner', erpPoolShare: 'owner',

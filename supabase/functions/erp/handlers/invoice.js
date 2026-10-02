@@ -17,6 +17,7 @@ import {
   erpCustomerAccount, invoiceDiscounts, addPayment, syncInvoiceStatus, applyCredit,
   lock, stamp, who,
 } from './money.js';
+import { products } from './dashboard.js';
 
 /** erpSetInvoiceDate_ + invoiceTimestamp_: the moment the sale is logged at. */
 function saleTimestamp(wanted, now) {
@@ -202,13 +203,17 @@ export async function createInvoice(ctx, payload, opts = {}) {
     returning id`;
   const invoiceId = inv[0].id;
 
+  // plan A1: each line keeps what the product costs today - its own cost, or the price book's
+  // where it has none - so later price changes cannot rewrite this sale's profit
+  const costs = (await products(ctx)).bySku;
+  const costNow = (sku) => { const p = costs[String(sku).trim().toLowerCase()]; return p && p.cost > 0 ? p.cost : 0; };
   for (let i = 0; i < lines.length; i++) {
     const l = lines[i];
     await ctx.tx`
       insert into invoice_lines (business_id, invoice_id, product_id, sku, name, qty, unit_price,
-                                 discount, line_total, line_no)
+                                 discount, line_total, line_no, unit_cost)
       values (${ctx.biz}, ${invoiceId}, ${l.productId}, ${l.sku}, ${l.name}, ${l.qty}, ${l.unit},
-              ${l.disc}, ${l.total}, ${i + 1})`;
+              ${l.disc}, ${l.total}, ${i + 1}, ${costNow(l.sku)})`;
     await ctx.tx`
       insert into stock_movements (business_id, product_id, kind, direction, qty, unit_price, total,
                                    reference, invoice_id, created_by, created_at, txn_no, operator, product_name)

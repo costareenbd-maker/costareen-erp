@@ -186,4 +186,27 @@ export async function erpStockCount(ctx, payload) {
   return { ok: true, checked: lines.length, same, changed: changed.length, up, down, opening, lines: changed.slice(0, 200) };
 }
 
-export const HANDLERS = { erpProductPage, erpStockCount };
+/**
+ * Plan A1, once: sales made before the cost was kept on each line get today's
+ * cost written on them (the product's own, or the price book's). After this
+ * they no longer follow later price changes. Lines whose product still has no
+ * cost anywhere are left alone and are filled the next time this runs.
+ */
+export async function erpFreezeSaleCosts(ctx) {
+  const { products } = await import('./dashboard.js');
+  const { bySku } = await products(ctx);
+  const skus = [], costs = [];
+  for (const k of Object.keys(bySku)) if (bySku[k].cost > 0) { skus.push(k); costs.push(bySku[k].cost); }
+  const before = (await ctx.tx`select count(*)::int n from invoice_lines where business_id = ${ctx.biz} and coalesce(unit_cost, 0) = 0`)[0].n;
+  if (skus.length) {
+    await ctx.tx`
+      update invoice_lines l set unit_cost = v.c
+      from unnest(${skus}::text[], ${costs}::numeric[]) as v(s, c)
+      where l.business_id = ${ctx.biz} and coalesce(l.unit_cost, 0) = 0 and lower(btrim(l.sku)) = v.s`;
+  }
+  const after = (await ctx.tx`select count(*)::int n from invoice_lines where business_id = ${ctx.biz} and coalesce(unit_cost, 0) = 0`)[0].n;
+  forget(ctx, 'SALES_LOG');
+  return { ok: true, fixed: before - after, stillWithoutCost: after };
+}
+
+export const HANDLERS = { erpProductPage, erpStockCount, erpFreezeSaleCosts };
