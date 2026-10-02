@@ -14,6 +14,7 @@ import { formatDate, num, round2, DAY_MS } from '../lib/time.js';
 import { getConfig, setConfig } from '../lib/ext.js';
 import { roleAtLeast } from '../allow.js';
 import { lock, who } from './money.js';
+import { billForShipment } from './suppliers.js';
 
 // CFG.SKU_PREFIX / CFG.BRAND_CODE (Code.js:40-56)
 export const SKU_PREFIX = {
@@ -417,8 +418,18 @@ export async function receiveShipment(ctx, payload) {
     try { await ctx.tx.savepoint(() => poReceived(ctx, poId, lines)); } catch (_) { /* best effort, as original */ }
   }
 
+  // plan A4: the goods of this shipment are owed to the supplier named on it (freight is not theirs)
+  let billId = null;
+  // a shipment costed by its total, or (an order ticked off on arrival) line by line at the order's prices
+  const goods = totalBdt > 0 ? totalBdt : round2(lines.reduce((t, l) => t + num(l.unitBdt) * num(l.qty), 0));
+  if (str(payload.supplier) && goods > 0) {
+    billId = await billForShipment(ctx, { supplier: payload.supplier, reference, amount: goods,
+      fxAmount: mode === 'rmb' ? totalRmb : 0, fxCurrency: mode === 'rmb' ? 'RMB' : '', fxRate: mode === 'rmb' ? rate : 0,
+      note: lines.length + ' product(s), ' + lines.reduce((n, l) => n + num(l.qty), 0) + ' unit(s)' });
+  }
+
   return {
-    ok: true, reference, received: updated.length || lines.length,
+    ok: true, reference, billed: !!billId, received: updated.length || lines.length,
     units: lines.reduce((n, l) => n + num(l.qty), 0),
     shipping, createdProducts: created, lines: updated, totalCost: round2(totalBdt),
     rate: mode === 'rmb' ? rate : 0, rateSaved,

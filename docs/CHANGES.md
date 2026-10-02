@@ -129,3 +129,9 @@
 
 2026-10-03 — Plan C1 (row buttons back)
 - The list rows carry their most-used actions again, one click: Invoices - Pay (when something is due), Return, PDF; Products - Add (to the invoice being written), Edit; Customers - Invoice, Pay (when they owe), Statement, Edit. A click elsewhere on the row still opens its page. Hidden on phones (the row opens the page there). Server rows carry a small `act` object for this (handlers/listview.js).
+
+2026-10-03 — Plan A4 (suppliers, and what is owed to them)
+- New screen **Suppliers** (side menu, Goods): everyone the business buys from - names already used on products, orders and stock appear without any typing - with what is owed to each, and the total owed. A supplier's page: details (country, currency, phone / WeChat, note, what was owed at the start), products from them, orders on the way, and the account line by line with the balance after each.
+- A shipment received with the supplier named on it adds a bill for the goods (not the freight): from the shipment total, or line by line at the order's prices when a supplier order is ticked off. A bill can also be typed in. A payment comes out of a money account (required once accounts exist), may carry the amount in their currency and how it was sent; paying more than is owed is an advance. Struck out, never deleted - a struck-out payment gives the money back to its account.
+- A rename follows through products, stock movements, orders, bills, payments and the suppliers list.
+- 031_suppliers.sql (suppliers, supplier_bills, supplier_payments), handlers/suppliers.js, tests/a4_test.mjs (25). Money statements show "Paid to supplier …". Managers see suppliers; paying and bills are shareholder and up; striking out is the owner's.

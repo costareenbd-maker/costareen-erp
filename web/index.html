@@ -568,6 +568,7 @@ svg { display:block; width:100%; overflow:visible; }
       <div class="navgrp">Goods</div>
       <button type="button" data-view="products" aria-selected="false"><span class="ic"><svg viewBox="0 0 24 24"><path d="M21 8 12 3 3 8v8l9 5 9-5z"/><path d="M3 8l9 5 9-5M12 13v8"/></svg></span>Products<span class="count" id="cProducts"></span></button>
       <button type="button" data-view="stock" aria-selected="false"><span class="ic"><svg viewBox="0 0 24 24"><path d="M3 21V9l9-6 9 6v12"/><path d="M9 21v-6h6v6"/><path d="M3 21h18"/></svg></span>Stock entry</button>
+      <button type="button" data-view="suppliers" aria-selected="false"><span class="ic"><svg viewBox="0 0 24 24"><path d="M3 7h11v9H3zM14 10h4l3 3v3h-7z"/><circle cx="7" cy="18" r="1.800"/><circle cx="17.500" cy="18" r="1.800"/></svg></span>Suppliers<span class="count" id="cOwed"></span></button>
       <button type="button" data-view="costs" aria-selected="false"><span class="ic"><svg viewBox="0 0 24 24"><path d="M20 12l-8 8-9-9V3h8z"/><circle cx="7.5" cy="7.5" r="1.5"/></svg></span>Product cost<span class="count" id="cCosts"></span></button>
       <div class="navgrp">Money</div>
       <button type="button" data-view="profit" aria-selected="false"><span class="ic"><svg viewBox="0 0 24 24"><path d="M3 17l6-6 4 4 8-8"/><path d="M14 7h7v7"/></svg></span>Profitability</button>
@@ -8291,7 +8292,7 @@ function srv(name, args, ok, bad) {
 
 var SRV_ACTIVE = 0, SRV_WRITING = false;
 // the same list the server uses to know a call changes nothing (ERP_READS)
-var SRV_READS = /^(erpBundle|erpHello|erpMe|erpCatalog|erpSales|erpDues|erpCustomers|erpPnl|erpMoney|erpToday|erpDaySales|erpProduct|erpLookupCustomer|erpCustomerAccount|erpCustomerStatement|erpCustomerCredit|erpWebOrders|erpWebOrderInvoices|erpCampaignAudience|erpCampaignList|erpCampaignGet|erpEvoStatus|erpBrandLogo|erpQuoteBoot|erpQuoteList|erpQuoteGet|erpQuoteAsset|erpExpenses|erpCapital|erpBackupStatus|erpAiKeys|erpGetTheme|erpBusinesses|erpStockHistory|erpReorderPlan|erpPoList|erpSfPayoutLines|erpBookedParcels|erpParcelPreview|erpReturnPreview|erpSettingsFull|erpSettingsLists|erpFormOptions|erpAdmin|erpPeople|erpDevices|erpCourierKeyStatus|erpPayReasons|erpDiscontinued|erpAccessWarning|erpBusinessLinks|erpLookupUsage|erpRecentInvoices|erpCourier|erpDashboardData|erpInvoice|erpCustomerPage|erpSearch|erpProductPage|erpPnlMonth|erpExpenseReceiptUrl|erpPartnership|erpPartnerStock|erpSecurity|erpCustomerList|erpAlerts|erpAccessKeys|erpListView|erpCashBook)$/;
+var SRV_READS = /^(erpBundle|erpHello|erpMe|erpCatalog|erpSales|erpDues|erpCustomers|erpPnl|erpMoney|erpToday|erpDaySales|erpProduct|erpLookupCustomer|erpCustomerAccount|erpCustomerStatement|erpCustomerCredit|erpWebOrders|erpWebOrderInvoices|erpCampaignAudience|erpCampaignList|erpCampaignGet|erpEvoStatus|erpBrandLogo|erpQuoteBoot|erpQuoteList|erpQuoteGet|erpQuoteAsset|erpExpenses|erpCapital|erpBackupStatus|erpAiKeys|erpGetTheme|erpBusinesses|erpStockHistory|erpReorderPlan|erpPoList|erpSfPayoutLines|erpBookedParcels|erpParcelPreview|erpReturnPreview|erpSettingsFull|erpSettingsLists|erpFormOptions|erpAdmin|erpPeople|erpDevices|erpCourierKeyStatus|erpPayReasons|erpDiscontinued|erpAccessWarning|erpBusinessLinks|erpLookupUsage|erpRecentInvoices|erpCourier|erpDashboardData|erpInvoice|erpCustomerPage|erpSearch|erpProductPage|erpPnlMonth|erpExpenseReceiptUrl|erpPartnership|erpPartnerStock|erpSecurity|erpCustomerList|erpAlerts|erpAccessKeys|erpListView|erpCashBook|erpSuppliers|erpSupplierPage)$/;
 function srvPump() {
   if (!SRV_Q.length) return;
   var isRead = SRV_READS.test(SRV_Q[0].name);
@@ -9589,6 +9590,7 @@ function repaint() {
         : VIEW === 'expenses' ? viewExpenses()
         : VIEW === 'capital' ? viewCapital()
         : VIEW === 'cash' ? viewCash()
+        : VIEW === 'suppliers' ? viewSuppliers()
         : VIEW === 'sales' ? viewSales()
         : VIEW === 'quotes' ? viewQuotes()
         : VIEW === 'campaigns' ? viewCampaigns()
@@ -9623,6 +9625,7 @@ function repaint() {
     wirePhase6();
     wireAccess();
     wireCash();
+    wireSuppliers();
     // the parcel confirmation floats above whatever screen is open
     var pb = document.getElementById('parcelbox');
     if (pb && pb.parentNode) pb.parentNode.removeChild(pb);
@@ -9686,7 +9689,7 @@ function routeSet(view, param, replace) {
 window.addEventListener('popstate', function () {
   var v = routeView();
   var pm = routeParam();
-  var cur = VIEW === 'sales' ? INVP.no : VIEW === 'customers' ? CUSP.key : VIEW === 'products' ? PRODP.sku : '';
+  var cur = VIEW === 'sales' ? INVP.no : VIEW === 'customers' ? CUSP.key : VIEW === 'products' ? PRODP.sku : VIEW === 'suppliers' ? SUPP.name : '';
   if (ME && v && (v !== VIEW || pm !== cur) && routeAllowed(v)) go(v, pm);
 });
 
@@ -9716,7 +9719,8 @@ function tabbarSync() {
 function go(view, param) {
   VIEW = view;
   // a record page inside a screen: one invoice, one customer
-  param = (view === 'sales' || view === 'customers' || view === 'products') ? String(param || '') : '';
+  param = (view === 'sales' || view === 'customers' || view === 'products' || view === 'suppliers') ? String(param || '') : '';
+  if (view === 'suppliers') { if (SUPP.name !== param) SUPP = { name: param, data: null, err: null }; }
   if (view === 'products') { if (PRODP.sku !== param) { PRODP = { sku: param, data: null, err: null }; PRODUCT_FORM = null; } }
   if (view === 'sales') { if (INVP.no !== param) { INVP = { no: param, data: null, err: null }; } }
   if (view === 'customers') { if (CUSP.key !== param) { CUSP = { key: param, data: null, err: null }; CUST_FORM = null; } }
@@ -9742,6 +9746,7 @@ function go(view, param) {
   if (view === 'profit') { PNL = null; PNL_ERR = null; loadPnl(); }
   if (view === 'expenses' && !EXP && !EXP_ERR) loadExpenses();
   if (view === 'cash') { CASH_ERR = null; loadCash(); }
+  if (view === 'suppliers') { if (SUPP.name) loadSupplier(); else loadSuppliers(); }
   if (view === 'capital') { CAP_ERR = null; loadCapital(); if (CAP_TAB === 'partner') { PART_ERR = null; loadPartner(); } }
   if (view === 'settings' && SET_TAB === 'security' && !SEC) loadSecurity();
   if (view === 'sales' && INVP.no && !INVP.data) loadInvoicePage();
@@ -10156,7 +10161,7 @@ function applyRole() {
   // The dashboard is the shape of the business - the month's revenue, what
   // the stock is worth, the trend. That is not a manager's to see, so the
   // screen goes rather than being emptied out.
-  var need = { dash: 3, costs: 3, settings: 3, tools: 3, profit: 3, expenses: 3, capital: 3, cash: 3, campaigns: 2,
+  var need = { dash: 3, costs: 3, settings: 3, tools: 3, profit: 3, expenses: 3, capital: 3, cash: 3, suppliers: 2, campaigns: 2,
                weborders: 2, stock: 2 };
   var btns = document.querySelectorAll('#nav button[data-view]');
   for (var i = 0; i < btns.length; i++) {
@@ -10226,7 +10231,7 @@ function switchBusiness(id) {
     OPT = null; CART = []; RECV = { supplier:'', reference:'', notes:'', lines:[] };
     PRODUCT_FORM = null; CUST_FORM = null;
     CLIST = null; CUST_OFF = 0; ALERTS = null; loadAlerts(); LVS = {};
-    CASH = null; CASH_ACC = '';
+    CASH = null; CASH_ACC = ''; SUPS = null; SUPP = { name: '', data: null, err: null };
     PART = null; PART_STOCK = null; PART_MONTH = ''; CAPD = null; EXP = null; PNL = null; MONEY = null; SALES = null; PLAN = null; PO = null;
     PNLM = { month: '', data: null, err: null }; INVP = { no: '', data: null, err: null }; CUSP = { key: '', data: null, err: null }; PRODP = { sku: '', data: null, err: null };
     if (VIEW === 'capital' || VIEW === 'expenses' || VIEW === 'profit' || VIEW === 'sales' || VIEW === 'stock') setTimeout(function () { go(VIEW); }, 0);
@@ -12057,7 +12062,7 @@ var APPS = [
     icon: '<path d="M3 17l5-5 4 4 8-9"/><path d="M15 7h5v5"/>' },
   { id: 'contacts', name: 'Contacts', color: '#2a9d8f', views: ['customers', 'campaigns'],
     icon: '<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-7 8-7s8 3 8 7"/>' },
-  { id: 'inventory', name: 'Inventory', color: '#c8553d', views: ['products', 'stock', 'costs'],
+  { id: 'inventory', name: 'Inventory', color: '#c8553d', views: ['products', 'stock', 'suppliers', 'costs'],
     icon: '<path d="M3 8l9-5 9 5v8l-9 5-9-5z"/><path d="M3 8l9 5 9-5M12 13v8"/>' },
   { id: 'accounting', name: 'Accounting', color: '#3a86c8', views: ['profit', 'expenses', 'cash', 'capital'],
     icon: '<circle cx="12" cy="12" r="9"/><path d="M15 9.2c-.6-.8-1.7-1.2-3-1.2-1.8 0-3 .8-3 2s1 1.800 3 2 3 .8 3 2-1.200 2-3 2c-1.300 0-2.400-.4-3-1.200M12 6v2M12 16v2"/>' },
@@ -12065,7 +12070,7 @@ var APPS = [
     icon: '<circle cx="12" cy="12" r="3.2"/><path d="M12 2.500v3M12 18.500v3M2.500 12h3M18.500 12h3M5.300 5.300l2.100 2.100M16.600 16.600l2.100 2.100M5.300 18.700l2.100-2.100M16.600 7.400l2.100-2.100"/>' }
 ];
 var VIEW_NAMES = { invoice: 'New invoice', sales: 'Invoices', weborders: 'Web orders', quotes: 'Quotations', customers: 'Customers', campaigns: 'Campaigns',
-                   products: 'Products', stock: 'Stock', costs: 'Product cost', profit: 'Profitability', expenses: 'Expenses', capital: 'Capital', cash: 'Money',
+                   products: 'Products', stock: 'Stock', costs: 'Product cost', profit: 'Profitability', expenses: 'Expenses', capital: 'Capital', cash: 'Money', suppliers: 'Suppliers',
                    settings: 'Settings', tools: 'Maintenance', dash: 'Dashboard', home: 'Home' };
 var VIEW_COUNT = { invoice: 'cCart', sales: 'cSend', weborders: 'cWeb', costs: 'cCosts' };
 function appOf(view) { for (var i = 0; i < APPS.length; i++) if (APPS[i].views.indexOf(view) >= 0) return APPS[i]; return null; }
@@ -12091,6 +12096,7 @@ function crumbs() {
   if (VIEW === 'sales' && INVP.no) rec = INVP.no;
   if (VIEW === 'customers' && CUSP.key) rec = (CUSP.data && CUSP.data.name) || 'Customer';
   if (VIEW === 'products' && PRODP.sku) rec = (PRODP.data && PRODP.data.name) || PRODP.sku;
+  if (VIEW === 'suppliers' && SUPP.name) rec = SUPP.name;
   if (VIEW === 'settings') { var st = SET_TABS.filter(function (t) { return t[0] === SET_TAB; })[0]; if (st) rec = st[1]; }
   if (VIEW === 'capital' && CAP_TAB === 'partner') rec = 'Partnership';
   if (rec) out.push({ t: rec });
@@ -12671,7 +12677,7 @@ nav#nav .ic svg { width:15px; height:15px; stroke:#fff; stroke-width:2; }
 nav#nav button[data-view="dash"] { --app:#7c6bb1; }
 nav#nav button[data-view="invoice"], nav#nav button[data-view="sales"], nav#nav button[data-view="weborders"], nav#nav button[data-view="quotes"] { --app:#e39a2d; }
 nav#nav button[data-view="customers"], nav#nav button[data-view="campaigns"] { --app:#2a9d8f; }
-nav#nav button[data-view="products"], nav#nav button[data-view="stock"], nav#nav button[data-view="costs"] { --app:#c8553d; }
+nav#nav button[data-view="suppliers"], nav#nav button[data-view="products"], nav#nav button[data-view="stock"], nav#nav button[data-view="costs"] { --app:#c8553d; }
 nav#nav button[data-view="cash"], nav#nav button[data-view="profit"], nav#nav button[data-view="expenses"], nav#nav button[data-view="capital"] { --app:#3a86c8; }
 nav#nav button[data-view="settings"], nav#nav button[data-view="tools"] { --app:#5f6b7a; }
 nav#nav .count { background:#d9463e; }
@@ -13074,6 +13080,148 @@ function lvRowAct(m, act, key) {
     else if (act === 'statement') openStatement(a.phone, a.name);
     else if (act === 'edit') { CUST_FORM = { row: a.row, id: a.id, name: a.name, phone: a.phone, email: a.email, address: a.address, type: a.type, source: a.source, status: a.status }; repaint(); window.scrollTo(0, 0); }
   }
+}
+</script>
+<script>
+// =====================================================================
+// plan A4: suppliers - who the business buys from, and what it owes them
+// =====================================================================
+var SUPS = null, SUPS_ERR = null, SUPP = { name: '', data: null, err: null }, SUP_FORM = '', SUP_BUSY = false, SUP_NEW = false;
+function loadSuppliers() {
+  srv('erpSuppliers', [], function (r) {
+    SUPS = r; SUPS_ERR = null;
+    var c = el('cOwed'); if (c) c.textContent = '';
+    if (VIEW === 'suppliers' && !SUPP.name) repaint();
+  }, function (e) { SUPS_ERR = (e && e.message) || String(e); if (VIEW === 'suppliers') repaint(); });
+}
+function loadSupplier() {
+  var n = SUPP.name; if (!n) return;
+  srv('erpSupplierPage', [{ name: n }], function (r) { if (SUPP.name !== n) return; SUPP.data = r; SUPP.err = null; if (VIEW === 'suppliers') repaint(); },
+      function (e) { if (SUPP.name !== n) return; SUPP.err = (e && e.message) || String(e); if (VIEW === 'suppliers') repaint(); });
+}
+function supDo(fn, args, msg, after) {
+  if (SUP_BUSY) return;
+  SUP_BUSY = true; repaint();
+  srv(fn, args, function (r) {
+    SUP_BUSY = false; SUPS = null; CASH = null;
+    if (r && r.name) { if (r.name !== SUPP.name) { SUPP = { name: r.name, data: r, err: null }; routeSet('suppliers', r.name, true); } else SUPP.data = r; }
+    if (msg) toast(msg, false, 8000);
+    if (after) after(r);
+    if (VIEW === 'suppliers') repaint();
+  }, function (e) { SUP_BUSY = false; toast(esc((e && e.message) || e), true, 14000); repaint(); });
+}
+function owedCell(n) {
+  return n > 0 ? '<strong style="color:var(--critical)">' + fmt(n) + '</strong>' : n < 0 ? '<span style="color:var(--good)">' + fmt(-n) + ' paid ahead</span>' : '<span style="color:var(--muted)">0</span>';
+}
+function viewSuppliers() {
+  if (SUPP.name) return supplierPageHtml();
+  if (SUPS_ERR) return '<section><div class="note err"><div class="ico">✕</div><div><strong>Could not read the suppliers.</strong><br>' + esc(SUPS_ERR) + '</div></div></section>';
+  if (!SUPS) return '<div class="loading">Reading the suppliers&hellip;</div>';
+  var d = SUPS, cur = d.money, h = '<section><div class="cash_tot"><span>You owe suppliers <b>' + esc(cur) + ' ' + fmt(d.owedTotal) + '</b></span>' +
+    (d.aheadTotal ? '<span class="sub" style="margin:0">paid ahead to others: ' + fmt(d.aheadTotal) + '</span>' : '') +
+    '<span style="flex:1"></span><button class="btn primary" type="button" id="sup_new">New supplier</button></div>';
+  if (SUP_NEW) h += '<div class="cash_form"><div class="row" style="gap:8px;align-items:flex-end;flex-wrap:wrap">' +
+    '<div style="flex:2 1 200px"><label class="f" for="sn_name">Name</label><input class="i" id="sn_name" maxlength="80" placeholder="e.g. Sunlu Shenzhen"></div>' +
+    '<div style="flex:1 1 130px"><label class="f" for="sn_country">Country</label><input class="i" id="sn_country" maxlength="40" placeholder="China"></div>' +
+    '<div style="flex:0 1 110px"><label class="f" for="sn_cur">Paid in</label><input class="i" id="sn_cur" maxlength="6" placeholder="RMB"></div>' +
+    '<div style="flex:1 1 150px"><label class="f" for="sn_phone">Phone / WeChat</label><input class="i" id="sn_phone" maxlength="40"></div>' +
+    '<button class="btn primary" type="button" id="sn_save"' + (SUP_BUSY ? ' disabled' : '') + '>Add</button><button class="btn" type="button" id="sn_cancel">Cancel</button></div></div>';
+  if (!d.suppliers.length) return h + '<div class="empty">No supplier yet.</div></section>';
+  h += '<div class="o_tbl" style="margin-top:12px"><table class="o_list"><thead><tr><th>Supplier</th><th class="o_np">Country</th><th class="n o_np">Products</th><th class="n o_np">Bought</th><th class="n o_np">Paid</th><th class="n">You owe</th><th class="o_np">Last shipment</th></tr></thead><tbody>' +
+    d.suppliers.map(function (x) {
+      return '<tr class="r" data-supopen="' + esc(x.name) + '"' + (x.archived ? ' style="opacity:.55"' : '') + '><td class="m">' + esc(x.name) + (x.archived ? ' <span class="pill">not used</span>' : '') +
+        (x.phone ? '<span class="s">' + esc(x.phone) + '</span>' : '') + '</td><td class="o_np">' + esc(x.country || '—') + (x.currency ? ' · ' + esc(x.currency) : '') + '</td>' +
+        '<td class="n o_np">' + fmt(x.products) + '</td><td class="n o_np">' + fmt(x.billed) + '</td><td class="n o_np">' + fmt(x.paid) + '</td><td class="n">' + owedCell(x.owed) + '</td><td class="o_np nw">' + esc(x.lastBill || '—') + '</td></tr>'; }).join('') +
+    '</tbody></table></div><div class="sub" style="margin-top:8px">A shipment received with the supplier named on it is added to what you owe them, at the goods’ value — freight is not theirs. Paying them is done on their page.</div>';
+  return h + '</section>';
+}
+function supplierPageHtml() {
+  if (SUPP.err) return '<section><div class="note err"><div class="ico">✕</div><div><strong>Could not open that supplier.</strong><br>' + esc(SUPP.err) + '</div></div></section>';
+  if (!SUPP.data) return '<div class="loading">Opening the supplier&hellip;</div>';
+  var d = SUPP.data, cur = d.money, h = '';
+  h += '<section><div class="pagehead"><div><h2>' + esc(d.name) + '</h2><div class="meta">' + [d.country, d.currency ? 'paid in ' + d.currency : '', d.phone].filter(function (x) { return x; }).map(esc).join(' &middot; ') +
+    (d.note ? '<br>' + esc(d.note) : '') + '</div></div><div class="acts">' +
+    (d.canPay ? '<button class="btn primary" type="button" data-supform="pay">Pay</button><button class="btn" type="button" data-supform="bill">Add a bill</button>' : '') +
+    '<button class="btn" type="button" data-supform="edit">Edit</button></div></div>' +
+    '<div class="grid g-kpi">' +
+    kpiT(d.owed < 0 ? 'Paid ahead' : 'You owe', cur, fmt(Math.abs(d.owed)), '<span class="delta">' + (d.owed > 0 ? 'bills not paid yet' : d.owed < 0 ? 'they owe you goods for this' : 'nothing outstanding') + '</span>', d.owed > 0 ? 'bad' : d.owed < 0 ? 'good' : '') +
+    kpiT('Products from them', '', fmt(d.products.length), '') +
+    kpiT('On order', '', fmt(d.onOrder.length), '<span class="delta">' + (d.onOrder.length ? d.onOrder.map(function (o) { return esc(o.po) + ' (' + fmt(o.left) + ')'; }).join(' · ') : 'nothing on the way') + '</span>') + '</div>';
+  if (SUP_FORM === 'pay' && d.canPay) {
+    h += '<div class="cash_form"><strong>Pay ' + esc(d.name) + '</strong> <span class="sku">— more than is owed is fine: it is an advance</span><div class="row" style="gap:8px;align-items:flex-end;flex-wrap:wrap;margin-top:8px">' +
+      '<div style="flex:1 1 130px"><label class="f" for="sp_amt">Amount in ' + esc(cur) + '</label><input class="i" id="sp_amt" inputmode="decimal" placeholder="0" value="' + (d.owed > 0 ? d.owed : '') + '"></div>' +
+      (d.accounts.length ? '<div style="flex:1 1 160px"><label class="f" for="sp_acc">Paid from</label><select class="i" id="sp_acc">' + d.accounts.map(function (a) { return '<option value="' + esc(a.id) + '">' + esc(a.name) + '</option>'; }).join('') + '</select></div>' : '') +
+      '<div style="flex:1 1 120px"><label class="f" for="sp_fx">In their money <span class="sku">(optional)</span></label><input class="i" id="sp_fx" inputmode="decimal" placeholder="e.g. 5000"></div>' +
+      '<div style="flex:0 1 90px"><label class="f" for="sp_cur">Currency</label><input class="i" id="sp_cur" maxlength="6" value="' + esc(d.currency || '') + '"></div>' +
+      '<div style="flex:1 1 140px"><label class="f" for="sp_date">Date <span class="sku">(empty = today)</span></label><input class="i" id="sp_date" type="date" max="' + esc(d.today) + '"></div>' +
+      '<div style="flex:2 1 200px"><label class="f" for="sp_note">How it was sent <span class="sku">(optional)</span></label><input class="i" id="sp_note" maxlength="300" placeholder="bank TT, through agent, in person…"></div>' +
+      '<button class="btn primary" type="button" id="sp_go"' + (SUP_BUSY ? ' disabled' : '') + '>Record the payment</button><button class="btn" type="button" data-supform="">Cancel</button></div></div>';
+  }
+  if (SUP_FORM === 'bill' && d.canPay) {
+    h += '<div class="cash_form"><strong>Add a bill</strong> <span class="sku">— something owed that did not come through Receive stock</span><div class="row" style="gap:8px;align-items:flex-end;flex-wrap:wrap;margin-top:8px">' +
+      '<div style="flex:1 1 130px"><label class="f" for="sb_amt">Amount in ' + esc(cur) + '</label><input class="i" id="sb_amt" inputmode="decimal" placeholder="0"></div>' +
+      '<div style="flex:1 1 150px"><label class="f" for="sb_ref">Their invoice no.</label><input class="i" id="sb_ref" maxlength="80"></div>' +
+      '<div style="flex:1 1 140px"><label class="f" for="sb_date">Date <span class="sku">(empty = today)</span></label><input class="i" id="sb_date" type="date" max="' + esc(d.today) + '"></div>' +
+      '<div style="flex:2 1 220px"><label class="f" for="sb_note">What for</label><input class="i" id="sb_note" maxlength="300"></div>' +
+      '<button class="btn primary" type="button" id="sb_go"' + (SUP_BUSY ? ' disabled' : '') + '>Add the bill</button><button class="btn" type="button" data-supform="">Cancel</button></div></div>';
+  }
+  if (SUP_FORM === 'edit') {
+    h += '<div class="cash_form"><strong>Details</strong><div class="row" style="gap:8px;align-items:flex-end;flex-wrap:wrap;margin-top:8px">' +
+      '<div style="flex:2 1 200px"><label class="f" for="se_name">Name</label><input class="i" id="se_name" maxlength="80" value="' + esc(d.name) + '"></div>' +
+      '<div style="flex:1 1 130px"><label class="f" for="se_country">Country</label><input class="i" id="se_country" maxlength="40" value="' + esc(d.country) + '"></div>' +
+      '<div style="flex:0 1 110px"><label class="f" for="se_cur">Paid in</label><input class="i" id="se_cur" maxlength="6" placeholder="RMB" value="' + esc(d.currency) + '"></div>' +
+      '<div style="flex:1 1 150px"><label class="f" for="se_phone">Phone / WeChat</label><input class="i" id="se_phone" maxlength="40" value="' + esc(d.phone) + '"></div>' +
+      (d.canPay ? '<div style="flex:1 1 150px"><label class="f" for="se_open">Owed at the start</label><input class="i" id="se_open" inputmode="decimal" placeholder="0" value="' + (d.openingOwed || '') + '"></div>' : '') +
+      '<div style="flex:3 1 240px"><label class="f" for="se_note">Note</label><input class="i" id="se_note" maxlength="300" value="' + esc(d.note) + '"></div>' +
+      '<label class="chk" style="padding-bottom:9px"><input type="checkbox" id="se_arch"' + (d.archived ? ' checked' : '') + '> No longer used</label>' +
+      '<button class="btn primary" type="button" id="se_go"' + (SUP_BUSY ? ' disabled' : '') + '>Save</button><button class="btn" type="button" data-supform="">Cancel</button></div>' +
+      '<div class="sub" style="margin:8px 0 0">Changing the name changes it on their products, orders and past shipments too.</div></div>';
+  }
+  h += '</section><section><div class="card"><h2>Account</h2><div class="sub">Bills and payments, newest first, with what was owed after each.</div>';
+  if (!d.lines.length) h += '<div class="empty">Nothing yet. Receive a shipment with this supplier named on it, or add a bill.</div>';
+  else h += '<div class="scroll tall"><table><thead><tr><th>When</th><th>What</th><th class="num">Bill</th><th class="num">Paid</th><th class="num">Owed after</th><th></th></tr></thead><tbody>' + d.lines.map(function (l) {
+      var st = l.voided ? ' style="opacity:.5;text-decoration:line-through"' : '';
+      return '<tr><td' + st + ' style="white-space:nowrap">' + esc(l.when || '—') + '</td><td class="nm"' + st + '>' + esc(l.what) +
+        ((l.ref || l.fx || l.note || l.by) ? '<br><span class="sku" style="text-decoration:none">' + [l.ref, l.fx, l.note, l.by].filter(function (x) { return x; }).map(esc).join(' · ') + (l.voided ? '<br>' + esc(l.voided) : '') + '</span>' : '') + '</td>' +
+        '<td class="num"' + st + '>' + (l.amount > 0 ? fmt(l.amount) : '') + '</td><td class="num"' + st + '>' + (l.amount < 0 ? '<span style="color:var(--good)">' + fmt(-l.amount) + '</span>' : '') + '</td>' +
+        '<td class="num"><strong>' + fmt(l.after) + '</strong></td><td class="num">' + (ME && ME.role === 'owner' && !l.voided && l.id ? '<button class="btn small" type="button" data-supvoid="' + esc(l.kind) + '" data-id="' + esc(l.id) + '">Strike out</button>' : '') + '</td></tr>'; }).join('') + '</tbody></table></div>';
+  h += '</div></section>';
+  if (d.products.length) h += '<section><div class="card"><h2>Products from ' + esc(d.name) + '</h2><div class="catchips" style="margin-top:8px">' + d.products.slice(0, 80).map(function (p) {
+    return '<span style="padding-right:10px"><button class="linkbtn" type="button" style="font-weight:500" data-openprod="' + esc(p.sku) + '">' + esc(p.name) + '</button></span>'; }).join('') +
+    (d.products.length > 80 ? '<span style="padding-right:10px">+' + fmt(d.products.length - 80) + ' more</span>' : '') + '</div></div></section>';
+  return h;
+}
+function wireSuppliers() {
+  if (VIEW !== 'suppliers') return;
+  var v = el('view');
+  function val(id) { var n = el(id); return n ? n.value : ''; }
+  p4Each('tr[data-supopen]', function () { SUP_FORM = ''; go('suppliers', this.getAttribute('data-supopen')); });
+  var nb = el('sup_new'); if (nb) nb.addEventListener('click', function () { SUP_NEW = !SUP_NEW; repaint(); });
+  var nc = el('sn_cancel'); if (nc) nc.addEventListener('click', function () { SUP_NEW = false; repaint(); });
+  var ns = el('sn_save');
+  if (ns) ns.addEventListener('click', function () {
+    supDo('erpSupplierSave', [{ name: val('sn_name'), country: val('sn_country'), currency: val('sn_cur'), phone: val('sn_phone') }], 'Supplier added.', function (r) { SUP_NEW = false; go('suppliers', r.name); });
+  });
+  p4Each('[data-supform]', function () { SUP_FORM = this.getAttribute('data-supform'); repaint(); });
+  var pg = el('sp_go');
+  if (pg) pg.addEventListener('click', function () {
+    supDo('erpSupplierPay', [{ name: SUPP.name, amount: val('sp_amt'), account: val('sp_acc'), fxAmount: val('sp_fx'), fxCurrency: val('sp_cur'), date: val('sp_date'), note: val('sp_note') }], 'Payment recorded.', function () { SUP_FORM = ''; });
+  });
+  var bg = el('sb_go');
+  if (bg) bg.addEventListener('click', function () {
+    supDo('erpSupplierBill', [{ name: SUPP.name, amount: val('sb_amt'), reference: val('sb_ref'), date: val('sb_date'), note: val('sb_note') }], 'Bill added.', function () { SUP_FORM = ''; });
+  });
+  var eg = el('se_go');
+  if (eg) eg.addEventListener('click', function () {
+    supDo('erpSupplierSave', [{ name: SUPP.name, rename: val('se_name'), country: val('se_country'), currency: val('se_cur'), phone: val('se_phone'), note: val('se_note'),
+                                openingOwed: el('se_open') ? val('se_open') : SUPP.data.openingOwed, archived: el('se_arch').checked }], 'Saved.', function () { SUP_FORM = ''; });
+  });
+  p4Each('[data-supvoid]', async function () {
+    var kind = this.getAttribute('data-supvoid'), id = this.getAttribute('data-id');
+    var why = await uiPrompt('Strike this ' + (kind === 'payment' ? 'payment' : 'bill') + ' out?\n\nIt stays readable, and no longer counts.' + (kind === 'payment' ? ' The money goes back to the account it left.' : '') + ' Say why:', '');
+    if (!why) return;
+    supDo('erpSupplierVoid', [{ kind: kind, id: id, reason: why }], 'Struck out.');
+  });
 }
 </script>
 </body>
