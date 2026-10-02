@@ -13653,5 +13653,30 @@ function invFromSaved(res) {
   }
 }
 </script>
+
+<!-- plan C2: one table style everywhere - the old screens' tables look like the new lists -->
+<style>
+@media (min-width:641px) {
+  #view table:where(:not(.o_list)) { font-size:13.5px; }
+  #view table:where(:not(.o_list)) th { background:var(--thead); font-size:13px; font-weight:600; letter-spacing:0; text-transform:none;
+    color:var(--ink); padding:9px 10px; border-bottom:1px solid var(--ring); }
+  #view table:where(:not(.o_list)) td { padding:8px 10px; }
+  #view table:where(:not(.o_list)) td.num, #view table:where(:not(.o_list)) th.num { padding-right:10px; }
+  #view table:where(:not(.o_list)) td:last-child, #view table:where(:not(.o_list)) th:last-child { padding-right:10px; }
+  #view table:where(:not(.o_list)) tbody tr:hover td { background:color-mix(in srgb, var(--series-1) 5%, transparent); }
+  #view table:where(:not(.o_list)) tr.grp td, #view table:where(:not(.o_list)) tbody tr.grp:hover td { background:var(--thead); color:var(--ink); font-size:13px; font-weight:600;
+    letter-spacing:0; text-transform:none; border-bottom:1px solid var(--ring); }
+  #view .scroll:has(> table:not(.o_list)) { border:1px solid var(--ring); border-radius:4px; }
+  #view .scroll.tall > table:not(.o_list) thead th { position:sticky; top:0; z-index:1; }
+  #view .card > .scroll:has(> table:not(.o_list)) { margin-top:8px; }
+  /* document previews (invoice, quotation, statement) keep their own tables */
+  #view .doc table th, #view .doc table td, #view .paper table th, #view .paper table td { background:none; }
+}
+/* the same list look for the simple two-column lists and for section titles */
+#view .list > div { padding:9px 2px; }
+#view .list > div:hover { background:color-mix(in srgb, var(--series-1) 4%, transparent); }
+#view .card h2 { font-weight:600; }
+#view .kpi .lbl { font-weight:500; }
+</style>
 </body>
 </html>

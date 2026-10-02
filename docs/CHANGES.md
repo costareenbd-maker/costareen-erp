@@ -167,3 +167,7 @@
 - **A partner's item moves the stock.** A partner deal can name the product code. The stock owner's books then carry it as a real invoice to "<Partner> (partner)" at the agreed price: stock out, cost, revenue, a due. It is made when the stock owner acts (records it, or confirms the other side's request). "Paid" receives the money on that invoice. A deal whose stock has left cannot be withdrawn - cancel the invoice first.
 - 035_partner_deal_stock.sql (partner_deals.sku, invoice_no, partner_deal_note()). Fixed on the way: nothing. Tests: phase4_test (95).
 - Not done: the selling side has no automatic purchase/sale lines for the partner's item in its own books (it sells something it never stocked); it records its customer sale and the cost by hand.
+
+2026-10-03 — Plan C2 (one table style everywhere)
+- Every table on the older screens (Stock, Expenses, Capital, Money, Suppliers, Product cost, Web orders, Quotations, Settings...) now has the look of the new lists: shaded header in normal case, same row height, row highlight, framed, group rows like the list's groups, sticky header in long tables. Style only (one CSS block "plan C2" at the end of app.html) - no screen logic changed. Phone card layout untouched.
+- Not done: the older screens do not get the new list's search box / filters / group-by / favourites; that needs a server list model per screen.
