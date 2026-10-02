@@ -1,0 +1,122 @@
+// Minimum role for each action - copied verbatim from ERP.js ERP_ALLOW (build b261002-1321).
+// Anything not listed is refused with "Unknown action", which the page reads
+// as "this page is older than the server" (UI:8083).
+
+export const ERP_ROLES = {
+  owner:       { label: 'Owner',       rank: 4 },
+  shareholder: { label: 'Shareholder', rank: 3 },
+  manager:     { label: 'Manager',     rank: 2 },
+  sales:       { label: 'Sales',       rank: 1 },
+};
+
+export const ERP_DISCOUNT_CAP = { owner: 100, shareholder: 100, manager: 10, sales: 5 };
+
+// 001 called the lowest role `staff`; it is the sheet's `sales`.
+export function normRole(r) {
+  const v = String(r || '').trim().toLowerCase();
+  return v === 'staff' ? 'sales' : v;
+}
+
+export function roleAtLeast(role, needed) {
+  const a = ERP_ROLES[normRole(role)], b = ERP_ROLES[needed];
+  return !!(a && b && a.rank >= b.rank);
+}
+
+export const ERP_ALLOW = {
+  // everyone who is signed in at all
+  erpBundle: 'sales', erpCatalog: 'sales', erpFormOptions: 'sales',
+  erpLookupCustomer: 'sales', erpCreateInvoice: 'sales',
+  erpRecentInvoices: 'sales', erpCustomers: 'sales', erpSaveCustomer: 'sales',
+  erpDaySales: 'sales', erpProduct: 'sales', erpGetTheme: 'sales',
+  erpSetTheme: 'sales', erpToday: 'sales', erpDiscontinued: 'sales',
+
+  // running the shop
+  erpReceiveStock: 'manager', erpReceiveShipment: 'manager',
+  erpAdjustStock: 'manager', erpStockHistory: 'manager',
+  erpSaveProduct: 'manager', erpSetProductStatus: 'manager',
+  erpWebOrders: 'manager', erpEnterWebOrder: 'manager',
+  erpMarkWebOrderEntered: 'manager', erpWebOrderInvoices: 'manager', erpSettingsLists: 'manager',
+
+  // the money
+  erpCostBook: 'shareholder', erpSaveCostRows: 'shareholder',
+  erpSaveCostSettings: 'shareholder', erpVoidInvoice: 'owner',
+  erpSettingsFull: 'shareholder', erpLookupAdd: 'shareholder',
+  erpLookupRemove: 'shareholder', erpConfigSet: 'shareholder',
+  erpApplyReorderLevels: 'shareholder', erpTool: 'shareholder',
+  erpMergeCustomers: 'shareholder', erpSelfTest: 'shareholder',
+  erpBusinesses: 'sales', erpSetBusiness: 'manager',
+  erpPeople: 'shareholder', erpAddPerson: 'shareholder',
+  erpApproveDevice: 'shareholder', erpRevokePerson: 'shareholder',
+  erpDashboardData: 'shareholder', erpLookupUsage: 'shareholder',
+  erpDues: 'manager', erpRecordPayment: 'manager', erpRebuildDues: 'shareholder',
+  erpMoney: 'shareholder', erpCourier: 'manager', erpLinkWebOrder: 'manager',
+  erpReorderPlan: 'manager',
+  erpSales: 'sales', erpInvoicePdf: 'sales',
+  erpReturnPreview: 'manager', erpReturnGoods: 'manager', erpFixInvoice: 'manager',
+  erpCancelInvoice: 'manager',
+  erpPoCreate: 'manager', erpPoList: 'manager', erpPoClose: 'manager', erpPoArrive: 'manager',
+  erpPoLineClose: 'manager', erpPoDiffDecide: 'manager', erpPoSettle: 'shareholder',
+  erpPnl: 'shareholder',
+  erpSfPayouts: 'manager', erpSfPayoutLines: 'manager', erpSfConfirmMatches: 'manager',
+  erpCustomerStatement: 'sales', erpStatementPdf: 'sales', erpDueReminded: 'sales',
+  erpQuoteBoot: 'sales', erpQuoteList: 'sales', erpQuoteGet: 'sales', erpQuoteSave: 'sales',
+  erpQuoteDuplicate: 'sales', erpQuoteAsset: 'sales', erpBrandLogo: 'sales',
+  erpBrandLogoClear: 'shareholder', erpQuoteSnippetsSave: 'manager',
+  erpQuoteSettingsSave: 'shareholder', erpQuoteProfileSave: 'shareholder',
+  erpQuoteAssetUpload: 'shareholder',
+  erpQuoteItemsImport: 'shareholder', erpLetterheadSave: 'shareholder',
+  erpCampaignAudience: 'manager', erpCampaignCreate: 'manager', erpCampaignGet: 'manager',
+  erpCampaignList: 'manager', erpCampaignMark: 'manager', erpCampaignOptOut: 'manager',
+  erpWaProductPdf: 'manager',
+  erpEvoSetup: 'owner', erpEvoQr: 'owner', erpEvoLogout: 'owner', erpEvoStatus: 'manager',
+  erpProductListShare: 'manager', erpShareFile: 'manager', erpEvoUpload: 'manager',
+  erpEvoCampaignStart: 'manager', erpEvoSendBatch: 'manager',
+  // record pages and search (redesign phase 2)
+  erpInvoice: 'sales', erpCustomerPage: 'sales', erpSearch: 'sales',
+  // product page and stock count (redesign phase 3)
+  erpProductPage: 'sales', erpStockCount: 'manager',
+  erpCapital: 'shareholder', erpCapitalHolderSave: 'owner', erpCapitalHolderEnd: 'owner',
+  erpCapitalEntryAdd: 'owner', erpCapitalEntryVoid: 'owner', erpCapitalClose: 'owner',
+  erpExpenses: 'shareholder', erpExpenseAdd: 'shareholder', erpExpenseVoid: 'owner',
+  erpExpenseItemSave: 'shareholder', erpExpenseItemEnd: 'shareholder',
+  erpExpenseFixedPay: 'shareholder', erpExpenseRecurringSet: 'shareholder',
+  erpExpenseExport: 'shareholder',
+  // redesign phase 4: own categories, receipts, the month behind the P&L, partnership
+  erpExpenseCategory: 'owner', erpExpenseReceipt: 'shareholder', erpExpenseReceiptUrl: 'shareholder',
+  erpPnlMonth: 'shareholder',
+  // redesign phase 5
+  erpSecurity: 'owner', erpPartnerCompany: 'owner',
+  // redesign phase 6
+  erpCustomerList: 'sales', erpAlerts: 'shareholder', erpAlertPhone: 'owner',
+  // access by private link
+  erpAccessKeys: 'owner', erpAccessKeyNew: 'owner', erpAccessKeyRevoke: 'owner',
+  erpPartnership: 'shareholder', erpPartnerStock: 'shareholder',
+  erpPoolCreate: 'owner', erpPoolInvite: 'owner', erpPoolJoin: 'owner', erpPoolEntryAdd: 'owner',
+  erpPoolEntryRemove: 'owner', erpPoolClose: 'owner', erpPoolTier: 'owner', erpPoolShare: 'owner',
+  erpPartnerDeal: 'owner',
+  erpBookParcel: 'manager', erpParcelPreview: 'manager', erpBookedParcels: 'manager',
+  erpParcelHandled: 'manager', erpParcelPutBack: 'manager',
+  erpCourierSetKeys: 'owner', erpCourierKeyStatus: 'manager', erpCourierTest: 'owner',
+  erpBackupStatus: 'owner', erpBackupRun: 'owner', erpSfReconDecide: 'shareholder',
+  erpSettleDue: 'manager', erpCustomerAccount: 'sales', erpPayReasons: 'manager',
+  erpTakeAdvance: 'manager', erpCustomerCredit: 'sales',
+  erpResetCode: 'shareholder', erpDevices: 'shareholder',
+  erpAllowDevice: 'shareholder', erpDenyDevice: 'shareholder',
+  erpRevokeDevice: 'shareholder',
+  erpAccessWarning: 'shareholder', erpBusinessLinks: 'shareholder',
+  erpAdmin: 'shareholder',
+  erpAiKeys: 'owner', erpAiKeyCreate: 'owner', erpAiKeySet: 'owner',
+  erpLeadsAdd: 'manager', erpLeadRemove: 'manager', erpCampaignPause: 'manager',
+  erpEvoStopHook: 'owner',
+  erpCampMsgSave: 'manager', erpCampGroupSave: 'manager', erpLeadSave: 'manager',
+  erpCampaignRetry: 'manager', erpEvoSendTest: 'manager',
+
+  // ownership: creating businesses and handing out links
+  erpCreateBusiness: 'owner', erpDeployBusiness: 'owner',
+  erpCheckBusinessSheet: 'owner', erpPrepareTemplate: 'owner',
+  erpForgetBusiness: 'owner',
+};
+
+// Calls that only read (ERP_READS, ERP.js:168). Every other call is taken to
+// have changed the books, and throws the kept dashboard away.
+export const ERP_READS = /^(erpBundle|erpHello|erpMe|erpCatalog|erpSales|erpDues|erpCustomers|erpPnl|erpMoney|erpToday|erpDaySales|erpProduct|erpLookupCustomer|erpCustomerAccount|erpCustomerStatement|erpCustomerCredit|erpStatementPdf|erpWebOrders|erpWebOrderInvoices|erpCampaignAudience|erpCampaignList|erpCampaignGet|erpEvoStatus|erpEvoQr|erpBrandLogo|erpQuoteBoot|erpQuoteList|erpQuoteGet|erpQuoteAsset|erpExpenses|erpExpenseExport|erpCapital|erpBackupStatus|erpAiKeys|erpGetTheme|erpSetTheme|erpBusinesses|erpStockHistory|erpReorderPlan|erpPoList|erpSfPayouts|erpSfPayoutLines|erpBookedParcels|erpParcelPreview|erpReturnPreview|erpInvoicePdf|erpSettingsFull|erpSettingsLists|erpFormOptions|erpCostBook|erpAdmin|erpPeople|erpDevices|erpCourierKeyStatus|erpPayReasons|erpSelfTest|erpDiscontinued|erpAccessWarning|erpBusinessLinks|erpLookupUsage|erpRecentInvoices|erpCourier|erpWaProductPdf|erpProductListShare|erpShareFile|erpDashboardData|erpInvoice|erpCustomerPage|erpSearch|erpProductPage|erpPnlMonth|erpExpenseReceiptUrl|erpPartnership|erpPartnerStock|erpSecurity|erpCustomerList|erpAlerts|erpAccessKeys)$/;

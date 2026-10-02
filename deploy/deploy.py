@@ -1,0 +1,145 @@
+"""Put the web app live. Nothing here touches the sheet ERP.
+
+    set SUPABASE_ACCESS_TOKEN=sbp_...      (Supabase account token)
+    set CLOUDFLARE_API_TOKEN=...           (Pages: Edit, DNS: Edit, Zone: Read on costareen.com)
+    set CLOUDFLARE_ACCOUNT_ID=...
+    python deploy.py db          # apply supabase/0NN_*.sql in order + deploy/storage.sql
+    python deploy.py function    # deploy the `erp` Edge Function (JWT check off; it checks callers itself)
+    python deploy.py secrets RENDER_URL=... RENDER_KEY=...
+    python deploy.py web         # build web/index.html and publish to Cloudflare Pages
+    python deploy.py domain      # attach erp.costareen.com to the Pages project
+    python deploy.py cron        # nightly / 10-min campaigns / 15-min website sync timers
+
+Each step prints what it did and stops at the first error.
+"""
+import glob, json, os, shutil, subprocess, sys, tempfile, urllib.request
+
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+REF = 'oqzcuuytytqadqjlwdsh'
+PAGES_PROJECT = 'costareen-erp'
+DOMAIN = 'erp.costareen.com'
+ZONE = 'costareen.com'
+
+
+def need(var):
+    v = os.environ.get(var, '').strip()
+    if not v:
+        sys.exit('Set %s first.' % var)
+    return v
+
+
+def api(url, method='GET', body=None, token=None, headers=None):
+    h = {'Content-Type': 'application/json', 'User-Agent': 'costareen-deploy'}
+    if token:
+        h['Authorization'] = 'Bearer ' + token
+    h.update(headers or {})
+    req = urllib.request.Request(url, method=method, headers=h,
+                                 data=None if body is None else json.dumps(body).encode())
+    try:
+        with urllib.request.urlopen(req, timeout=120) as r:
+            t = r.read().decode()
+            return r.status, (json.loads(t) if t.strip() else None)
+    except urllib.error.HTTPError as e:
+        return e.code, e.read().decode()[:2000]
+
+
+def sql(query):
+    tok = need('SUPABASE_ACCESS_TOKEN')
+    code, out = api('https://api.supabase.com/v1/projects/%s/database/query' % REF, 'POST', {'query': query}, tok)
+    if code >= 300:
+        raise SystemExit('SQL failed (%s): %s' % (code, out))
+    return out
+
+
+def step_db():
+    files = sorted(glob.glob(os.path.join(ROOT, 'supabase', '[0-9][0-9][0-9]_*.sql')))
+    done = {r['name'] for r in (sql("""
+        create table if not exists public._erp_migrations (name text primary key, at timestamptz default now());
+        alter table public._erp_migrations enable row level security;
+        select name from public._erp_migrations;""") or [])}
+    # 002 changed after it was first applied (create_invoice now prices through
+    # sale_price_for). Re-apply it once, BEFORE 005, which replaces
+    # sale_price_for with the partner-aware version.
+    if '005_partnership.sql' not in done:
+        print('re-apply 002_functions.sql')
+        sql(open(os.path.join(ROOT, 'supabase', '002_functions.sql'), encoding='utf-8').read())
+    # 001-004 were applied by hand on 2026-09-20, before this log existed
+    by_hand = {'001_schema.sql', '002_functions.sql', '003_sheets.sql', '004_grants.sql'}
+    for f in files + [os.path.join(ROOT, 'supabase', 'deploy', 'storage.sql')]:
+        name = os.path.basename(f)
+        if name in done:
+            continue
+        if name in by_hand and '--all' not in sys.argv:
+            print('skip (applied by hand 2026-09-20):', name)
+            continue
+        print('apply', name)
+        sql(open(f, encoding='utf-8').read())
+        sql("insert into public._erp_migrations(name) values ('%s') on conflict do nothing" % name)
+    print('database is up to date')
+
+
+def step_function():
+    need('SUPABASE_ACCESS_TOKEN')
+    cmd = ['npx', '-y', 'supabase@latest', 'functions', 'deploy', 'erp', '--project-ref', REF,
+           '--no-verify-jwt', '--use-api']
+    print(' '.join(cmd))
+    subprocess.check_call(cmd, cwd=ROOT, shell=(os.name == 'nt'))
+
+
+def step_secrets(pairs):
+    tok = need('SUPABASE_ACCESS_TOKEN')
+    body = []
+    for p in pairs:
+        k, _, v = p.partition('=')
+        body.append({'name': k, 'value': v})
+    code, out = api('https://api.supabase.com/v1/projects/%s/secrets' % REF, 'POST', body, tok)
+    print('secrets', code, '' if code < 300 else out)
+
+
+def step_web():
+    need('CLOUDFLARE_API_TOKEN'); need('CLOUDFLARE_ACCOUNT_ID')
+    subprocess.check_call([sys.executable, os.path.join(ROOT, 'web', 'build.py')])
+    out = tempfile.mkdtemp(prefix='erp-web-')
+    for f in ['index.html', 'manifest.webmanifest', 'sw.js', '_headers']:
+        shutil.copy(os.path.join(ROOT, 'web', f), out)
+    shutil.copytree(os.path.join(ROOT, 'web', 'icons'), os.path.join(out, 'icons'))
+    # never publish web/.env.local, web/src, web/original or the old app
+    cmd = ['npx', '-y', 'wrangler@3', 'pages', 'deploy', out, '--project-name=' + PAGES_PROJECT,
+           '--branch=main', '--commit-dirty=true']
+    print(' '.join(cmd))
+    subprocess.check_call(cmd, shell=(os.name == 'nt'))
+
+
+def step_domain():
+    tok = need('CLOUDFLARE_API_TOKEN'); acct = need('CLOUDFLARE_ACCOUNT_ID')
+    base = 'https://api.cloudflare.com/client/v4'
+    code, out = api('%s/accounts/%s/pages/projects/%s/domains' % (base, acct, PAGES_PROJECT), 'POST', {'name': DOMAIN}, tok)
+    print('pages domain', code, out if code >= 300 else 'ok')
+    code, z = api('%s/zones?name=%s' % (base, ZONE), token=tok)
+    zid = z['result'][0]['id']
+    code, recs = api('%s/zones/%s/dns_records?name=%s' % (base, zid, DOMAIN), token=tok)
+    target = PAGES_PROJECT + '.pages.dev'
+    rec = {'type': 'CNAME', 'name': DOMAIN, 'content': target, 'proxied': True}
+    if recs['result']:
+        code, out = api('%s/zones/%s/dns_records/%s' % (base, zid, recs['result'][0]['id']), 'PUT', rec, tok)
+    else:
+        code, out = api('%s/zones/%s/dns_records' % (base, zid), 'POST', rec, tok)
+    print('dns', code, 'ok' if code < 300 else out)
+
+
+def step_cron():
+    import secrets as _s
+    key = _s.token_hex(24)
+    step_secrets(['CRON_KEY=' + key])
+    q = open(os.path.join(ROOT, 'supabase', 'deploy', 'cron.sql'), encoding='utf-8').read()
+    q = q.replace('__FN_URL__', 'https://%s.supabase.co/functions/v1/erp' % REF).replace('__CRON_KEY__', key)
+    sql(q)
+    print('timers installed: erp-nightly 03:00 Dhaka, erp-campaigns and erp-alerts every 10 min, erp-websync every 15 min')
+
+
+if __name__ == '__main__':
+    if len(sys.argv) < 2:
+        sys.exit(__doc__)
+    s = sys.argv[1]
+    {'db': step_db, 'function': step_function, 'web': step_web, 'domain': step_domain, 'cron': step_cron}.get(
+        s, lambda: step_secrets(sys.argv[2:]) if s == 'secrets' else sys.exit(__doc__))()

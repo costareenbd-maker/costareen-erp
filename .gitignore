@@ -1,0 +1,6 @@
+node_modules/
+desktop/dist/
+.env*
+web/index-local.html
+deploy/before-start-fresh-*.json
+__pycache__/
