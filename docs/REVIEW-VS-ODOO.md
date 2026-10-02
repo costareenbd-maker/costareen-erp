@@ -119,3 +119,16 @@ Verdict in one paragraph: the daily operations (selling, stock, couriers, dues, 
 6. **Capital corrections** (B): investor return per month on that month's balance; no "unowned" share; tied to money accounts.
 7. **Partnership corrections** (C): settle on money received; one expense system; no deleting, partner sees every line.
 8. Serial numbers for printers; quotation → invoice; variants; VAT if your accountant says so.
+
+---
+
+## J. Second review (same day): look, navigation, shared inventory, missing features
+
+**Look and navigation.** Good: side menu always on screen, coloured icons, breadcrumb, new lists, themes, phone layout. Weak: two styles mixed (only Invoices / Products / Customers have the new lists); the new lists lost their row buttons; New invoice - the most used screen - is long and slow on a phone; partner stock is hidden under Capital; the dashboard is long; search exists twice; help text is heavy once the screens are known.
+
+**Shared inventory.** The joint pool is a separate business in the switcher; a partner's own stock is view-only (counts) under Capital -> Partnership. Problems: the partner cannot sign in at all since access went to private links; pool stock can only be sold after switching business; selling a partner's item is a hand-written deal and does not move his stock; no screen shows mine + pool + partner's together.
+
+**Missing compared with Odoo, and relevant here:** serial numbers and warranty, repair jobs, product photos and variants, quotation -> invoice, supplier bills, currencies and landed cost, money accounts, notes/files on every record, Excel import, other couriers, VAT (if registered). Missing and not needed now: payroll, CRM pipeline, subscriptions, budgets, assets, several warehouses, loyalty, approval chains, report builder.
+
+The build order for all of it is in `PLAN.md`.
+
