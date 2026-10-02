@@ -270,4 +270,69 @@ export async function erpProductThumbs(ctx) {
   return { thumbs: out };
 }
 
-export const HANDLERS = { erpProductPage, erpStockCount, erpFreezeSaleCosts, erpProductPhoto, erpProductPhotoUrl, erpProductThumbs };
+// ------------------------------------------------------------------ colour families (plan D3)
+/**
+ * The families there are, and the ones that could be made: products of the
+ * same category, brand and type that differ only by colour.
+ */
+export async function erpFamilies(ctx) {
+  const rows = await ctx.tx`
+    select p.sku, p.name, p.category, p.brand, p.type, p.color, p.family, coalesce(ps.stock, 0) as stock
+    from products p left join product_stock ps on ps.product_id = p.id
+    where p.business_id = ${ctx.biz} and coalesce(p.status, 'Active') <> 'Discontinued'
+    order by p.category, p.brand, p.type, p.color, p.name`;
+  const fams = {}, props = {}, taken = {};
+  for (const r of rows) {
+    const one = { sku: str(r.sku), name: str(r.name), color: str(r.color), stock: num(r.stock) };
+    const f = str(r.family);
+    if (f) { (fams[f] = fams[f] || { name: f, products: [], stock: 0 }).products.push(one); fams[f].stock += one.stock; taken[f.toLowerCase()] = true; continue; }
+    const type = str(r.type), brand = str(r.brand);
+    if (!type) continue;                                  // nothing to tell which ones belong together
+    const key = [str(r.category), brand, type].join('|').toLowerCase();
+    (props[key] = props[key] || { key, name: (brand ? brand + ' ' : '') + type, category: str(r.category), products: [], stock: 0 }).products.push(one);
+    props[key].stock += one.stock;
+  }
+  const proposals = Object.values(props).filter((g) => g.products.length >= 2);
+  // two categories can hold the same brand and type: tell the names apart
+  const seen = {};
+  for (const g of proposals) {
+    const k = g.name.toLowerCase();
+    if (seen[k] || taken[k]) g.name = g.name + ' (' + (g.category || 'other') + ')';
+    seen[g.name.toLowerCase()] = true;
+  }
+  return { families: Object.values(fams).sort((a, b) => a.name.localeCompare(b.name)), proposals,
+           ungrouped: rows.filter((r) => !str(r.family)).length, total: rows.length };
+}
+
+/** Make (or add to) families: { groups: [{ name, skus: [...] }] }. Only the label is written. */
+export async function erpFamilyApply(ctx, payload) {
+  const groups = (payload && payload.groups) || [];
+  if (!Array.isArray(groups) || !groups.length) throw new Error('Tick at least one group.');
+  if (groups.length > 500) throw new Error('That is too many at once.');
+  let n = 0;
+  for (const g of groups) {
+    const name = str(g && g.name).slice(0, 80);
+    const skus = Array.isArray(g && g.skus) ? g.skus.map((x) => str(x).toLowerCase()).filter(Boolean).slice(0, 500) : [];
+    if (!name) throw new Error('Every family needs a name.');
+    if (!skus.length) continue;
+    const done = await ctx.tx`update products set family = ${name}, updated_at = now()
+                              where business_id = ${ctx.biz} and lower(btrim(sku)) = any(${skus}) returning id`;
+    n += done.length;
+  }
+  delete ctx.memo.catalog;
+  return { ...(await erpFamilies(ctx)), changed: n };
+}
+
+/** Take the label off: a whole family ({ name }) or one product ({ sku }). Nothing else changes. */
+export async function erpFamilyClear(ctx, payload) {
+  const name = str(payload && payload.name), sku = str(payload && payload.sku).toLowerCase();
+  if (!name && !sku) throw new Error('Which family?');
+  const done = name
+    ? await ctx.tx`update products set family = null, updated_at = now() where business_id = ${ctx.biz} and family = ${name} returning id`
+    : await ctx.tx`update products set family = null, updated_at = now() where business_id = ${ctx.biz} and lower(btrim(sku)) = ${sku} returning id`;
+  delete ctx.memo.catalog;
+  return { ...(await erpFamilies(ctx)), changed: done.length };
+}
+
+export const HANDLERS = { erpProductPage, erpStockCount, erpFreezeSaleCosts, erpProductPhoto, erpProductPhotoUrl, erpProductThumbs,
+                          erpFamilies, erpFamilyApply, erpFamilyClear };

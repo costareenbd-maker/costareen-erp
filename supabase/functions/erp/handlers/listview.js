@@ -96,7 +96,7 @@ const MODELS = {
       return (await erpCatalog(ctx)).map((p) => ({
         key: p.sku, open: { product: p.sku },
         sku: p.sku, name: p.name, line2: p.sku + (p.color ? ' · ' + p.color : ''), category: p.cat || '—', brand: p.brand || '—',
-        color: p.color, stock: p.stock, sold90: p.sold90, sold: p.sold, sell: p.sell, reorder: p.reorder, suggested: p.suggested,
+        color: p.color, family: p.family || 'Not in a family', stock: p.stock, sold90: p.sold90, sold: p.sold, sell: p.sell, reorder: p.reorder, suggested: p.suggested,
         cover: p.cover, coverText: p.cover === null ? (p.sold ? 'no recent sales' : 'never sold') : p.cover + ' days',
         lastSoldDays: p.lastSoldDays,
         state: p.state, stateText: p.state === 'out' ? 'Out of stock' : p.state === 'low' ? 'At reorder' : 'In stock',
@@ -124,6 +124,7 @@ const MODELS = {
     groups: [
       { field: 'category', label: 'Category', of: (r) => [r.category, r.category] },
       { field: 'brand', label: 'Brand', of: (r) => [r.brand, r.brand] },
+      { field: 'family', label: 'Family (colours together)', of: (r) => [r.family, r.family] },
       { field: 'state', label: 'Availability', of: (r) => [r.state, r.stateText] },
       { field: 'status', label: 'Status', of: (r) => [r.status, r.status] },
       { field: 'supplier', label: 'Supplier', of: (r) => [r.supplier, r.supplier], need: 'manager' },

@@ -8306,7 +8306,7 @@ function srv(name, args, ok, bad) {
 
 var SRV_ACTIVE = 0, SRV_WRITING = false;
 // the same list the server uses to know a call changes nothing (ERP_READS)
-var SRV_READS = /^(erpBundle|erpHello|erpMe|erpCatalog|erpSales|erpDues|erpCustomers|erpPnl|erpMoney|erpToday|erpDaySales|erpProduct|erpLookupCustomer|erpCustomerAccount|erpCustomerStatement|erpCustomerCredit|erpWebOrders|erpWebOrderInvoices|erpCampaignAudience|erpCampaignList|erpCampaignGet|erpEvoStatus|erpBrandLogo|erpQuoteBoot|erpQuoteList|erpQuoteGet|erpQuoteAsset|erpExpenses|erpCapital|erpBackupStatus|erpAiKeys|erpGetTheme|erpBusinesses|erpStockHistory|erpReorderPlan|erpPoList|erpSfPayoutLines|erpBookedParcels|erpParcelPreview|erpReturnPreview|erpSettingsFull|erpSettingsLists|erpFormOptions|erpAdmin|erpPeople|erpDevices|erpCourierKeyStatus|erpPayReasons|erpDiscontinued|erpAccessWarning|erpBusinessLinks|erpLookupUsage|erpRecentInvoices|erpCourier|erpDashboardData|erpInvoice|erpCustomerPage|erpSearch|erpProductPage|erpPnlMonth|erpExpenseReceiptUrl|erpPartnership|erpPartnerStock|erpSecurity|erpCustomerList|erpAlerts|erpAccessKeys|erpListView|erpCurrencies|erpSharedStock|erpPoolCatalog|erpProductThumbs|erpProductPhotoUrl|erpCashBook|erpSuppliers|erpSupplierPage)$/;
+var SRV_READS = /^(erpBundle|erpHello|erpMe|erpCatalog|erpSales|erpDues|erpCustomers|erpPnl|erpMoney|erpToday|erpDaySales|erpProduct|erpLookupCustomer|erpCustomerAccount|erpCustomerStatement|erpCustomerCredit|erpWebOrders|erpWebOrderInvoices|erpCampaignAudience|erpCampaignList|erpCampaignGet|erpEvoStatus|erpBrandLogo|erpQuoteBoot|erpQuoteList|erpQuoteGet|erpQuoteAsset|erpExpenses|erpCapital|erpBackupStatus|erpAiKeys|erpGetTheme|erpBusinesses|erpStockHistory|erpReorderPlan|erpPoList|erpSfPayoutLines|erpBookedParcels|erpParcelPreview|erpReturnPreview|erpSettingsFull|erpSettingsLists|erpFormOptions|erpAdmin|erpPeople|erpDevices|erpCourierKeyStatus|erpPayReasons|erpDiscontinued|erpAccessWarning|erpBusinessLinks|erpLookupUsage|erpRecentInvoices|erpCourier|erpDashboardData|erpInvoice|erpCustomerPage|erpSearch|erpProductPage|erpPnlMonth|erpExpenseReceiptUrl|erpPartnership|erpPartnerStock|erpSecurity|erpCustomerList|erpAlerts|erpAccessKeys|erpListView|erpCurrencies|erpSharedStock|erpPoolCatalog|erpProductThumbs|erpProductPhotoUrl|erpFamilies|erpCashBook|erpSuppliers|erpSupplierPage)$/;
 function srvPump() {
   if (!SRV_Q.length) return;
   var isRead = SRV_READS.test(SRV_Q[0].name);
@@ -14089,6 +14089,149 @@ document.addEventListener('change', function (ev) {
     }, function (e) { D3_BUSY = false; toast(esc(e && e.message ? e.message : e), true, 12000); repaint(); });
   }, function (e) { D3_BUSY = false; toast(esc(e && e.message ? e.message : e), true, 12000); repaint(); });
 });
+</script>
+
+<!-- plan D3: colour families - colours of one product kept together -->
+<style>
+#iresults .r.fam { border-left:3px solid var(--series-1); }
+#iresults .famc { display:flex; flex-wrap:wrap; gap:6px; padding:8px 10px 10px; border-bottom:1px solid var(--grid); }
+#iresults .famc button { border:1px solid var(--ring); background:var(--surface); color:var(--ink); border-radius:4px; padding:6px 10px; font:inherit; font-size:13px; cursor:pointer; }
+#iresults .famc button:hover { border-color:var(--series-1); background:var(--series-1-soft); }
+#iresults .famc button[disabled] { opacity:.45; cursor:default; }
+#iresults .famc button small { color:var(--muted); margin-left:6px; }
+.famtool .g { display:flex; gap:10px; align-items:flex-start; padding:8px 2px; border-bottom:1px solid var(--grid); }
+.famtool .g input[type=checkbox] { margin-top:4px; width:16px; height:16px; }
+.famtool .g input.i { max-width:320px; }
+</style>
+<script>
+var FAM = { open: false, data: null, busy: false, err: '', sel: {}, names: {} }, INV_FAM = '';
+function famLoad() {
+  FAM.busy = true; FAM.err = '';
+  srv('erpFamilies', [], function (r) { FAM.busy = false; FAM.data = r; FAM.sel = {}; FAM.names = {}; (r.proposals || []).forEach(function (g) { FAM.sel[g.key] = true; }); if (VIEW === 'products') repaint(); },
+      function (e) { FAM.busy = false; FAM.err = (e && e.message) || String(e); if (VIEW === 'products') repaint(); });
+}
+function famToolHtml() {
+  var d = FAM.data;
+  var h = '<section><div class="card famtool"><div class="row" style="justify-content:space-between;align-items:center"><h2 style="margin:0">Colour families</h2>' +
+    '<button class="btn small" type="button" id="fam_close">Close</button></div>' +
+    '<div class="sub">A family keeps the colours of one product together: one row when adding to an invoice, then pick the colour. ' +
+    'Every colour stays its own product \u2014 own code, stock, cost and history. Nothing already recorded changes, and a family can be taken apart again at any time.</div>';
+  if (FAM.err) return h + '<div class="note err"><div class="ico">\u2715</div><div>' + esc(FAM.err) + '</div></div></div></section>';
+  if (!d) return h + '<div class="loading">Looking at the products&hellip;</div></div></section>';
+  var props = d.proposals || [], fams = d.families || [];
+  h += '<h2 style="margin-top:14px">Suggested <span class="sku">' + fmt(props.length) + ' group(s) \u2014 same category, brand and type</span></h2>';
+  if (!props.length) h += '<div class="empty">Nothing more to suggest. Products need the same brand and type filled in to be suggested together.</div>';
+  else {
+    props.forEach(function (g) {
+      h += '<div class="g"><input type="checkbox" data-famsel="' + esc(g.key) + '"' + (FAM.sel[g.key] ? ' checked' : '') + ' aria-label="Group these">' +
+        '<div style="flex:1"><input class="i" data-famname="' + esc(g.key) + '" maxlength="80" value="' + esc(FAM.names[g.key] !== undefined ? FAM.names[g.key] : g.name) + '">' +
+        '<div class="sku" style="margin-top:4px">' + fmt(g.products.length) + ' products \u00b7 ' + fmt(g.stock) + ' in stock \u00b7 ' +
+        g.products.slice(0, 14).map(function (p) { return esc(p.color || p.name); }).join(', ') + (g.products.length > 14 ? ' \u2026' : '') + '</div></div></div>';
+    });
+    h += '<div class="row" style="margin-top:12px;gap:8px"><button class="btn primary" type="button" id="fam_apply"' + (FAM.busy ? ' disabled' : '') + '>' + (FAM.busy ? 'Saving\u2026' : 'Group the ticked ones') + '</button>' +
+      '<button class="btn" type="button" id="fam_none">Untick all</button></div>';
+  }
+  h += '<h2 style="margin-top:18px">Families now <span class="sku">' + fmt(fams.length) + '</span></h2>';
+  if (!fams.length) h += '<div class="empty">No family yet.</div>';
+  else h += '<div class="list">' + fams.map(function (f) {
+    return '<div><span>' + esc(f.name) + '<span class="sku">' + fmt(f.products.length) + ' products \u00b7 ' + fmt(f.stock) + ' in stock \u00b7 ' +
+      f.products.slice(0, 10).map(function (p) { return esc(p.color || p.name); }).join(', ') + (f.products.length > 10 ? ' \u2026' : '') + '</span></span>' +
+      '<button class="btn small" type="button" data-famclear="' + esc(f.name) + '">Take apart</button></div>'; }).join('') + '</div>';
+  return h + '</div></section>';
+}
+var viewProductsD3 = viewProducts;
+viewProducts = function () {
+  var h = viewProductsD3();
+  if ((typeof PRODP !== 'undefined' && PRODP && PRODP.sku) || PROD_SCOPE !== 'mine') return h;
+  if (!ME || !(ME.role === 'owner' || ME.role === 'shareholder' || ME.role === 'manager')) return h;
+  if (FAM.open) return famToolHtml() + h;
+  return '<div class="row" style="justify-content:flex-end;margin-bottom:8px"><button class="btn small" type="button" id="fam_open">Colour families\u2026</button></div>' + h;
+};
+document.addEventListener('click', async function (ev) {
+  var t = ev.target; if (!t || !t.getAttribute) return;
+  if (t.id === 'fam_open') { FAM.open = true; FAM.data = null; famLoad(); repaint(); return; }
+  if (t.id === 'fam_close') { FAM.open = false; repaint(); return; }
+  if (t.id === 'fam_none') { FAM.sel = {}; repaint(); return; }
+  if (t.id === 'fam_apply') {
+    var groups = [];
+    (FAM.data.proposals || []).forEach(function (g) {
+      if (!FAM.sel[g.key]) return;
+      groups.push({ name: String(FAM.names[g.key] !== undefined ? FAM.names[g.key] : g.name).trim(), skus: g.products.map(function (p) { return p.sku; }) });
+    });
+    if (!groups.length) { toast('Tick at least one group.', true); return; }
+    if (groups.some(function (g) { return !g.name; })) { toast('Every family needs a name.', true); return; }
+    if (!(await uiConfirm('Group ' + groups.length + ' famil' + (groups.length === 1 ? 'y' : 'ies') + '?\n\nOnly a label is added to the products. Stock, prices, codes and history stay exactly as they are. It can be undone with \u201cTake apart\u201d.'))) return;
+    FAM.busy = true; repaint();
+    srv('erpFamilyApply', [{ groups: groups }], function (r) {
+      FAM.busy = false; FAM.data = r; FAM.sel = {}; FAM.names = {}; toast(fmt(r.changed) + ' product(s) grouped.');
+      CAT = null; loadAll(); try { lvSt('products').stale = true; } catch (e) {} repaint();
+    }, function (e) { FAM.busy = false; toast(esc(e && e.message ? e.message : e), true, 12000); repaint(); });
+    return;
+  }
+  var nm = t.getAttribute('data-famclear');
+  if (nm) {
+    if (!(await uiConfirm('Take \u201c' + nm + '\u201d apart?\n\nIts products go back to separate rows. Nothing else changes.'))) return;
+    srv('erpFamilyClear', [{ name: nm }], function (r) { FAM.data = r; (r.proposals || []).forEach(function (g) { FAM.sel[g.key] = false; }); toast('Taken apart.'); CAT = null; loadAll(); try { lvSt('products').stale = true; } catch (e) {} repaint(); },
+        function (e) { toast(esc(e && e.message ? e.message : e), true, 12000); });
+  }
+});
+document.addEventListener('change', function (ev) {
+  var t = ev.target; if (!t || !t.getAttribute) return;
+  var k = t.getAttribute('data-famsel'); if (k) { FAM.sel[k] = t.checked; return; }
+});
+document.addEventListener('input', function (ev) {
+  var t = ev.target; if (!t || !t.getAttribute) return;
+  var k = t.getAttribute('data-famname'); if (k) FAM.names[k] = t.value;
+});
+
+// ---- New invoice: a family is one row in the search, then the colour
+var paintResultsD3 = window.paintResults;
+window.paintResults = function () {
+  paintResultsD3.apply(this, arguments);
+  var box = el('iresults'); if (!box) return;
+  var q = iSearch.trim().toLowerCase(); if (!q) return;
+  var cat = (typeof INV_FROM !== 'undefined' && INV_FROM && POOLCAT[INV_FROM]) || CAT || [];
+  var rows = cat.filter(function (p) {
+    if (String(p.status || '').toLowerCase() === 'discontinued') return false;
+    return (p.name + ' ' + p.sku + ' ' + p.brand + ' ' + p.color + ' ' + (p.family || '')).toLowerCase().indexOf(q) !== -1;
+  });
+  var fam = {}, order = [];
+  rows.forEach(function (p) { if (!p.family) return; if (!fam[p.family]) { fam[p.family] = []; order.push(p.family); } fam[p.family].push(p); });
+  order = order.filter(function (n) { return fam[n].length >= 2; });
+  if (!order.length) return;
+  // the whole family, not only the colours the words matched
+  var h = '';
+  order.slice(0, 12).forEach(function (n) {
+    var all = cat.filter(function (p) { return p.family === n && String(p.status || '').toLowerCase() !== 'discontinued'; });
+    var stock = 0, lo = 0, hi = 0;
+    all.forEach(function (p) { stock += Math.max(0, p.stock); if (p.sell > 0) { lo = lo ? Math.min(lo, p.sell) : p.sell; hi = Math.max(hi, p.sell); } });
+    var th = typeof thumbOf === 'function' ? (function () { for (var i = 0; i < all.length; i++) { var s = thumbOf(all[i].sku); if (s) return s; } return ''; })() : '';
+    h += '<div class="r fam" data-fam="' + esc(n) + '">' + '<div>' + (th ? '<img class="pth" alt="" src="' + esc(th) + '">' : '') +
+      '<div class="nm">' + esc(n) + '</div><div class="sku">' + fmt(all.length) + ' colours \u00b7 ' + fmt(stock) + ' in stock</div></div>' +
+      '<div style="text-align:right;white-space:nowrap"><strong>' + (lo ? (lo === hi ? fmt(lo) : fmt(lo) + '\u2013' + fmt(hi)) : '') + '</strong><div class="sku">' + (INV_FAM === n ? 'pick a colour \u25BE' : 'choose colour \u25B8') + '</div></div></div>';
+    if (INV_FAM === n) {
+      h += '<div class="famc">' + all.sort(function (a, b) { return String(a.color || a.name).localeCompare(String(b.color || b.name)); }).map(function (p) {
+        var can = p.stock > 0 && p.sell > 0;
+        return '<button type="button"' + (can ? ' data-pick="' + esc(p.sku) + '"' : ' disabled') + '>' + esc(p.color || p.name) + '<small>' + (p.stock > 0 ? fmt(p.stock) : 'out') + '</small></button>'; }).join('') + '</div>';
+    }
+  });
+  // the rest: products that are not in one of those families
+  var inFam = {}; order.forEach(function (n) { inFam[n] = true; });
+  var keep = box.querySelectorAll('.r[data-pick], .r.dis');
+  var tmp = document.createElement('div'); tmp.innerHTML = h;
+  var first = box.firstChild;
+  while (tmp.firstChild) box.insertBefore(tmp.firstChild, first);
+  var bySku = {}; cat.forEach(function (p) { bySku[p.sku] = p; });
+  for (var i = 0; i < keep.length; i++) {
+    var sku = keep[i].getAttribute('data-pick'), p = sku ? bySku[sku] : null;
+    if (p && inFam[p.family]) keep[i].parentNode.removeChild(keep[i]);
+  }
+  var fr = box.querySelectorAll('.r.fam');
+  for (var j = 0; j < fr.length; j++) fr[j].addEventListener('click', function () { var n = this.getAttribute('data-fam'); INV_FAM = INV_FAM === n ? '' : n; paintResults(); });
+  var cb = box.querySelectorAll('.famc button[data-pick]');
+  for (var k = 0; k < cb.length; k++) cb[k].addEventListener('click', function () { addToCart(this.getAttribute('data-pick')); repaint(); });
+};
+try { paintResults = window.paintResults; } catch (e) {}
 </script>
 </body>
 </html>

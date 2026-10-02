@@ -24,7 +24,7 @@ export async function erpCatalog(ctx) {
   if (ctx.memo.catalog) return ctx.memo.catalog.map((p) => ({ ...p }));
   const b = ctx.biz;
   const rows = await ctx.tx`
-    select p.sku, p.name, p.category, p.brand, p.color, p.unit, p.supplier,
+    select p.sku, p.name, p.category, p.brand, p.color, p.unit, p.supplier, p.family,
            p.sell_price, p.wholesale_price, p.reorder_level, p.lead_time_days, p.status,
            coalesce(ps.stock, 0) as stock
     from products p
@@ -80,6 +80,7 @@ export async function erpCatalog(ctx) {
       cat: String(p.category || '').trim(),
       brand: String(p.brand || '').trim(),
       color: String(p.color || '').trim(),
+      family: String(p.family || '').trim(),
       unit: String(p.unit || '').trim(),
       supplier: String(p.supplier || '').trim(),
       stock,

@@ -199,3 +199,10 @@
 - The small picture shows in the Products list, in the product search on New invoice, and in Receive stock's search. Tapping the photo on the product page opens the full picture.
 - 036_product_photos.sql (products.photo, products.thumb), goods.js erpProductPhoto / erpProductPhotoUrl / erpProductThumbs, tests/d3_test.mjs (13).
 - Not done yet: photos in the price-list PDF; colour variants (second half of D3).
+
+2026-10-03 — Plan D3, second half (colour families)
+- A **family** is a label shared by the colours of one product. Each colour stays its own product (code, stock, cost, history), so nothing recorded before changes and "Take apart" undoes it fully.
+- Products → **Colour families…** (manager and up): suggests groups from category + brand + type, names can be edited, nothing is written until "Group the ticked ones" is confirmed. Existing families are listed with "Take apart".
+- New invoice search shows a family as ONE row (colours, total stock, price); tap it and pick the colour (stock beside each, sold-out greyed). The Products list can be grouped by family.
+- 037_product_family.sql (products.family), goods.js erpFamilies / erpFamilyApply / erpFamilyClear, catalogue + list carry `family`; tests/d3_test.mjs (24).
+- Live: nothing grouped yet - 16 families are suggested (124 of 138 products) and wait for the owner's confirmation.
