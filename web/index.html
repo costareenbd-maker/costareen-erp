@@ -11930,9 +11930,6 @@ a { color:var(--accent-2); }
 .linkbtn { color:var(--accent-2); }
 
 /* ---- no side menu, no bottom bar: the home screen is the menu */
-#side, .menuBtn, #navBackdrop, #tabbar { display:none !important; }
-body.has-tabbar #view { padding-bottom:56px; }
-body.has-tabbar #toast { bottom:22px; }
 .ptitle, .stamp { display:none; }
 #view { padding:16px 20px 56px; max-width:1560px; margin:0 auto; }
 
@@ -12635,5 +12632,45 @@ document.addEventListener('mousedown', function (ev) {
   };
 })();
 </script>
+<style>
+/* =====================================================================
+   look 2 - side menu back. The owner found the apps button + top menus
+   harder to get around in than the old side menu, but liked the colours
+   and the icons. So: the side menu is the navigation again, always on
+   screen, every screen one click away - wearing the new look.
+   ===================================================================== */
+#o_home, #o_appname, #o_menu, #o_apps_dd { display:none !important; }
+#side { background:var(--surface); border-right:1px solid var(--ring); padding:10px 8px 10px; }
+.brand { padding:6px 8px 12px; }
+.brand .logo { border-radius:8px; background:var(--series-1); }
+.navgrp { padding:14px 10px 4px; font-size:10.5px; color:var(--muted); }
+nav#nav { gap:1px; }
+nav#nav button { border-radius:6px; padding:5px 8px; min-height:38px; gap:10px; font-size:13.5px; color:var(--ink); }
+nav#nav button:hover { background:var(--thead); }
+nav#nav button[aria-selected="true"] { background:var(--series-1-soft); color:var(--series-1); font-weight:600; box-shadow:inset 3px 0 0 var(--series-1); }
+/* each screen wears the colour of its app */
+nav#nav .ic { width:26px; height:26px; flex:0 0 26px; border-radius:7px; background:var(--app, #5f6b7a); color:#fff; opacity:1;
+  display:grid; place-items:center; box-shadow:inset 0 -2px 0 rgba(0,0,0,.14); }
+nav#nav .ic svg { width:15px; height:15px; stroke:#fff; stroke-width:2; }
+nav#nav button[data-view="dash"] { --app:#7c6bb1; }
+nav#nav button[data-view="invoice"], nav#nav button[data-view="sales"], nav#nav button[data-view="weborders"], nav#nav button[data-view="quotes"] { --app:#e39a2d; }
+nav#nav button[data-view="customers"], nav#nav button[data-view="campaigns"] { --app:#2a9d8f; }
+nav#nav button[data-view="products"], nav#nav button[data-view="stock"], nav#nav button[data-view="costs"] { --app:#c8553d; }
+nav#nav button[data-view="profit"], nav#nav button[data-view="expenses"], nav#nav button[data-view="capital"] { --app:#3a86c8; }
+nav#nav button[data-view="settings"], nav#nav button[data-view="tools"] { --app:#5f6b7a; }
+nav#nav .count { background:#d9463e; }
+nav#nav button[data-view="home"] { display:none !important; }
+.sidefoot { display:none; }
+.topbar { padding:0 10px 0 12px; }
+.topbar .gsearch { flex:1 1 320px; max-width:520px; }
+.topbar .menuBtn { font-size:18px; }
+@media (min-width:961px) { .topbar .menuBtn { display:none !important; } }
+@media (max-width:960px) {
+  .topbar { padding:0 6px 0 2px; min-height:46px; }
+}
+@media (max-width:760px) {
+  .topbar { flex-wrap:nowrap; }
+}
+</style>
 </body>
 </html>
