@@ -7629,7 +7629,7 @@ function custMoneyBoxes() {
         (wa ? '<a class="btn small primary" href="' + esc(wa) + '" target="_blank" rel="noopener" data-remind="' + esc(w.key) +
           '" data-rphone="' + esc(w.phone) + '" data-rname="' + esc(w.name) + '" data-rdue="' + esc(w.due) + '">WhatsApp</a> ' : '') +
         '<button class="btn small" type="button" data-stmt="1" data-sphone="' + esc(w.phone) + '" data-sname="' + esc(w.name) + '">Statement</button> ' +
-        '<button class="btn small" type="button" data-cdue="1" data-cphone="' + esc(w.phone) + '" data-cname="' + esc(w.name) + '">Receive payment</button>' +
+        '<button class="btn small" type="button" data-cdue="1" data-cphone="' + esc(w.phone) + '" data-cname="' + esc(w.name) + '">Receive / adjust due</button>' +
         '</td></tr>';
     });
     h += '</tbody></table></div></div></section>';
@@ -10425,7 +10425,7 @@ function invoicePageHtml() {
       (d.allBack ? ' <span class="pill low">all returned</span>' : d.returnedQty ? ' <span class="pill low">' + fmt(d.returnedQty) + ' returned</span>' : '');
   var acts = '<button class="btn" type="button" data-spdf="' + esc(d.id) + '">Open PDF</button>';
   if (mgr && !d.cancelled) {
-    if (d.owed > 0 && (d.phone || d.customer)) acts += '<button class="btn primary" type="button" data-spay="' + esc(d.phone) + '" data-spayname="' + esc(d.customer) + '">Receive payment</button>';
+    if (d.owed > 0 && (d.phone || d.customer)) acts += '<button class="btn primary" type="button" data-spay="' + esc(d.phone) + '" data-spayname="' + esc(d.customer) + '">Receive / adjust due</button>';
     if (d.courier && !d.parcel && !d.webOrder) acts += '<button class="btn" type="button" data-send="' + esc(d.id) + '">Send parcel</button>';
     if (!d.allBack) acts += '<button class="btn" type="button" data-sret="' + esc(d.id) + '">Return</button>';
     acts += '<button class="btn" type="button" data-sfix="' + esc(d.id) + '">Fix details</button>';
@@ -10501,7 +10501,7 @@ function customerPageHtml() {
   var wa = (typeof waLink === 'function' && c.phone) ? waLink(c.phone, '') : '';
   var acts = '<button class="btn primary" type="button" id="cp_inv">New invoice</button>' +
     '<button class="btn" type="button" data-stmt="1" data-sphone="' + esc(c.phone) + '" data-sname="' + esc(c.name) + '">Statement</button>' +
-    (mgr ? '<button class="btn" type="button" data-cdue="1" data-cphone="' + esc(c.phone) + '" data-cname="' + esc(c.name) + '">' + (c.balance > 0 ? 'Receive payment' : 'Account') + '</button>' : '') +
+    (mgr ? '<button class="btn" type="button" data-cdue="1" data-cphone="' + esc(c.phone) + '" data-cname="' + esc(c.name) + '">' + (c.balance > 0 ? 'Receive / adjust due' : 'Account') + '</button>' : '') +
     (c.onList && c.row ? '<button class="btn" type="button" data-cedit="' + esc(c.row) + '">Edit</button>' : '');
   var h = '<section>' + back + '<div class="pagehead"><div><h2>' + esc(c.name || c.phone || 'Customer') + '</h2><div class="meta">' +
       (c.phone ? '<a href="tel:' + esc(c.phone) + '">' + esc(c.phone) + '</a>' + (wa ? ' &middot; <a href="' + esc(wa) + '" target="_blank" rel="noopener">WhatsApp</a>' : '') : 'no phone') +
@@ -12913,7 +12913,7 @@ function viewCash() {
   h += '<section><div class="cash_tot"><span>In hand and at the bank <b>' + esc(cur) + ' ' + fmt(c.inHand) + '</b></span>' +
     (c.total !== c.inHand ? '<span class="sub" style="margin:0">with what the courier holds: ' + fmt(c.total) + '</span>' : '') +
     '<span style="flex:1"></span><button class="btn" type="button" data-cform="transfer">Move money</button>' +
-    (ed ? '<button class="btn" type="button" data-cform="count">Count / correct</button><button class="btn" type="button" data-cform="setup">Set up</button>' : '') + '</div>' +
+    (ed ? '<button class="btn" type="button" data-cform="count" title="The account really holds something else: bring the book to it, with a reason">Correct a balance</button><button class="btn primary" type="button" data-cform="setup" title="Add a bank account, wallet or payment gateway; rename or retire one; choose where each payment method lands">+ Add / change accounts</button>' : '') + '</div>' +
     '<div class="cash_grid">' + live.concat(CASH_FORM === 'setup' ? old : []).map(function (a) {
       return '<button type="button" class="cash_card' + (a.archived ? ' arch' : '') + '" data-cacc="' + esc(a.id) + '" aria-pressed="' + (CASH_ACC === a.id) + '"><div class="k">' + esc(a.kindLabel.replace(/ \(.*/, '')) + (a.archived ? ' · retired' : '') + '</div>' +
         '<div class="n">' + esc(a.name) + '</div><div class="b' + (a.balance < 0 ? ' neg' : '') + '">' + fmt(a.balance) + '</div></button>'; }).join('') + '</div>';

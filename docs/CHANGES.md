@@ -213,3 +213,8 @@
 - 038_record_notes.sql (record_notes), handlers/notes.js (erpNotes, erpNoteAdd, erpNoteVoid, erpNoteFileUrl), tests/d5_test.mjs (19).
 - Not done: an automatic "who changed what" history per record (the Security activity log is per business, not per record); notes on a shipment (shipments have no page of their own - use the supplier's page).
 - Go-live wipe empties record_notes with the rest of the books.
+
+2026-10-03 — Owner feedback: things that existed but could not be found
+- Money: "Set up" is now **+ Add / change accounts** (primary button) and "Count / correct" is **Correct a balance**. Nothing else changed: adding a bank, wallet or gateway, renaming, retiring and the payment-method map were already there.
+- Dues: the button "Receive payment" is now **Receive / adjust due** (it always opened the box that also reduces or increases a due, with a reason; shareholder and up).
+- Sheet ERP cross-check (read only): the live sheet is at build b261003-0358; the web app was cloned from b261002-1321. Difference: Steadfast Express (delivery method, 105 first kg, same-day Dhaka city only), a consignment number typed on the invoice or added later from Sales (erpExpressLink), "Check deliveries now" + hourly check that clears the due when a parcel is delivered (erpCheckDeliveries), dashboard line for parcels that came back. NOT yet in the web app.
