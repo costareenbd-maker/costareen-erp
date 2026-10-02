@@ -25,7 +25,21 @@ export async function erpSetTheme(ctx, t) {
 export async function erpBusinesses(ctx) {
   const list = ctx.s.memberships.map((m) => ({ id: m.business_id, name: m.name, pool: !!m.is_pool }));
   const canAdd = roleAtLeast(ctx.s.role, 'owner');
-  return { businesses: list, active: ctx.biz, canAdd, theme: await erpGetTheme(ctx) };
+  const look = await ctx.tx`select look from erp_prefs where user_id = ${ctx.s.userId}`;
+  return { businesses: list, active: ctx.biz, canAdd, theme: await erpGetTheme(ctx), look: (look[0] && look[0].look) || '' };
+}
+
+/**
+ * The theme this person picked from the library: a name, or "custom" with two colours.
+ * Kept as "name" or "custom|#rrggbb|#rrggbb"; anything else is refused, so nothing typed
+ * here can ever reach a page as markup or style.
+ */
+export async function erpSetLook(ctx, look) {
+  const v = String(look || '').trim().toLowerCase();
+  if (v && !/^[a-z]{2,16}(\|#[0-9a-f]{6}\|#[0-9a-f]{6})?$/.test(v)) throw new Error('That theme is not known.');
+  await ctx.tx`insert into erp_prefs (user_id, look) values (${ctx.s.userId}, ${v || null})
+               on conflict (user_id) do update set look = excluded.look`;
+  return { ok: true, look: v };
 }
 
 export async function erpSetBusiness(ctx, id) {

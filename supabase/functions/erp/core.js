@@ -190,7 +190,7 @@ async function hello(sql, deps, token, authHeader, ip) {
 // the server's own connection, after the call has succeeded. Only a few safe
 // words of what was touched are kept - never a whole payload, which may hold
 // a key or a code.
-const QUIET = /^(erpSetTheme|erpSetBusiness|erpHello|erpMe|erpEvo\w*|erpCampaignTick)$/;
+const QUIET = /^(erpSetTheme|erpSetLook|erpSetBusiness|erpHello|erpMe|erpEvo\w*|erpCampaignTick)$/;
 const DETAIL_KEYS = ['invoiceNo', 'invoice', 'sku', 'month', 'kind', 'business'];
 function activityDetail(args) {
   const a = Array.isArray(args) ? args[0] : null;

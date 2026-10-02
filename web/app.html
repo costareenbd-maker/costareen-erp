@@ -12672,5 +12672,127 @@ nav#nav button[data-view="home"] { display:none !important; }
   .topbar { flex-wrap:nowrap; }
 }
 </style>
+<style>
+/* =====================================================================
+   theme library. A theme is two colours: the main one (top bar, buttons,
+   the selected menu line) and the one for links. Everything else is worked
+   out from them, in light and in dark, so any pair gives a whole theme.
+   ===================================================================== */
+:root[data-pal] { --series-1:var(--pal); --nav:var(--pal); --nav-ink:var(--on-pal, #fff); --accent-2:var(--pal2);
+  --series-1-soft:color-mix(in srgb, var(--pal) 11%, var(--surface)); }
+:root[data-theme="dark"][data-pal] { --series-1:color-mix(in srgb, var(--pal) 52%, #fff); --nav:color-mix(in srgb, var(--pal) 42%, #141418); --nav-ink:#f4f4f6;
+  --accent-2:color-mix(in srgb, var(--pal2) 55%, #fff); --series-1-soft:color-mix(in srgb, var(--pal) 24%, var(--surface)); }
+:root[data-pal] .btn.primary, :root[data-pal] .btn.primary:hover { color:var(--on-pal, #fff); }
+:root[data-theme="dark"][data-pal] .btn.primary, :root[data-theme="dark"][data-pal] .btn.primary:hover { color:#16161a; }
+:root[data-pal] .o_facet b { color:var(--on-pal, #fff); }
+
+#th_back { position:fixed; inset:0; z-index:200; background:rgba(15,20,30,.45); display:flex; align-items:center; justify-content:center; padding:14px; }
+#th_box { background:var(--surface); color:var(--ink); border:1px solid var(--ring); border-radius:10px; box-shadow:var(--shadow-lg); width:min(760px, 100%); max-height:92vh; overflow:auto; padding:18px 20px 16px; }
+#th_box h2 { margin:0 0 2px; font-size:18px; }
+.th_mode { display:inline-flex; border:1px solid var(--ring); border-radius:6px; overflow:hidden; margin:12px 0 4px; }
+.th_mode button { font:inherit; font-size:13px; font-weight:600; border:none; background:var(--surface); color:var(--ink-2); padding:7px 16px; cursor:pointer; }
+.th_mode button[aria-pressed="true"] { background:var(--series-1); color:var(--on-pal, #fff); }
+:root[data-theme="dark"] .th_mode button[aria-pressed="true"] { color:#16161a; }
+.th_grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(150px, 1fr)); gap:12px; margin-top:12px; }
+.th_card { border:2px solid var(--ring); border-radius:9px; background:var(--plane); padding:0; cursor:pointer; overflow:hidden; text-align:left; font:inherit; color:var(--ink); }
+.th_card:hover { border-color:var(--baseline); }
+.th_card[aria-pressed="true"] { border-color:var(--series-1); box-shadow:0 0 0 2px color-mix(in srgb, var(--series-1) 30%, transparent); }
+.th_prev { height:74px; display:flex; flex-direction:column; background:#f5f6f8; }
+.th_prev .bar { height:16px; }
+.th_prev .body { flex:1; display:flex; gap:6px; padding:7px; }
+.th_prev .side { width:26px; background:#fff; border-radius:3px; display:flex; flex-direction:column; gap:3px; padding:4px 3px; }
+.th_prev .side i { height:4px; border-radius:2px; background:#d9dde3; display:block; }
+.th_prev .main { flex:1; background:#fff; border-radius:3px; padding:6px; display:flex; flex-direction:column; gap:4px; }
+.th_prev .main u { height:4px; width:70%; border-radius:2px; display:block; }
+.th_prev .main b { height:9px; width:34px; border-radius:2px; display:block; margin-top:auto; }
+.th_name { padding:7px 10px 8px; font-size:13px; font-weight:600; background:var(--surface); display:flex; justify-content:space-between; align-items:center; }
+.th_name span { color:var(--series-1); font-size:12px; }
+.th_own { display:flex; gap:14px; align-items:flex-end; flex-wrap:wrap; margin-top:16px; padding-top:14px; border-top:1px solid var(--ring); }
+.th_own label { font-size:12.5px; font-weight:600; color:var(--ink-2); display:flex; flex-direction:column; gap:5px; }
+.th_own input[type=color] { width:64px; height:36px; border:1px solid var(--ring); border-radius:6px; background:var(--field); padding:2px; cursor:pointer; }
+</style>
+<script>
+// =====================================================================
+// theme library: ready-made themes and "my own colours", picked from the
+// account menu. Applied at once, kept on this device, and saved with the
+// person so every other device follows.
+// =====================================================================
+var THEMES = [
+  ['plum', 'Plum', '#714B67', '#017E84'], ['ocean', 'Ocean', '#1f6feb', '#0a7ea4'], ['forest', 'Forest', '#2f7d4f', '#0e7c66'],
+  ['teal', 'Teal', '#0f766e', '#0369a1'], ['indigo', 'Indigo', '#4f46e5', '#7c3aed'], ['royal', 'Royal', '#6d28d9', '#be185d'],
+  ['rose', 'Rose', '#be185d', '#9d174d'], ['crimson', 'Crimson', '#b91c1c', '#9a3412'], ['sunset', 'Sunset', '#c2410c', '#b45309'],
+  ['gold', 'Gold', '#a16207', '#92400e'], ['slate', 'Slate', '#475569', '#0369a1'], ['midnight', 'Midnight', '#1e293b', '#2563eb']
+];
+var LOOK = '';
+function lookParse(v) {
+  v = String(v || '');
+  var m = /^custom\|(#[0-9a-f]{6})\|(#[0-9a-f]{6})$/.exec(v);
+  if (m) return { id: 'custom', main: m[1], link: m[2] };
+  var t = THEMES.filter(function (x) { return x[0] === v; })[0];
+  return t ? { id: t[0], main: t[2], link: t[3] } : null;
+}
+/** Black or white, whichever reads better on this colour. */
+function lookInk(hex) {
+  var n = parseInt(hex.slice(1), 16), r = (n >> 16) & 255, g = (n >> 8) & 255, b = n & 255;
+  return (0.299 * r + 0.587 * g + 0.114 * b) > 165 ? '#16161a' : '#ffffff';
+}
+function lookApply(v, save) {
+  var t = lookParse(v), root = document.documentElement;
+  LOOK = t ? v : '';
+  if (!t) { root.removeAttribute('data-pal'); ['--pal', '--pal2', '--on-pal'].forEach(function (k) { root.style.removeProperty(k); }); }
+  else { root.setAttribute('data-pal', t.id); root.style.setProperty('--pal', t.main); root.style.setProperty('--pal2', t.link); root.style.setProperty('--on-pal', lookInk(t.main)); }
+  try { if (LOOK) localStorage.setItem('cz_look', LOOK); else localStorage.removeItem('cz_look'); } catch (e) {}
+  if (save && ME) srv('erpSetLook', [LOOK], function () {}, function (e) { toast('The theme is set on this device, but could not be saved for your other devices: ' + esc((e && e.message) || e), true, 9000); });
+}
+try { lookApply(localStorage.getItem('cz_look') || '', false); } catch (e) {}
+
+function themeCard(id, name, main, link) {
+  var on = (LOOK || 'plum') === id || (id === 'custom' && /^custom\|/.test(LOOK));
+  return '<button type="button" class="th_card" data-th="' + id + '" aria-pressed="' + on + '"><div class="th_prev"><div class="bar" style="background:' + main + '"></div>' +
+    '<div class="body"><div class="side"><i style="background:' + main + ';opacity:.85"></i><i></i><i></i><i></i></div>' +
+    '<div class="main"><u style="background:' + link + '"></u><u style="background:#d9dde3;width:90%"></u><u style="background:#d9dde3;width:55%"></u><b style="background:' + main + '"></b></div></div></div>' +
+    '<div class="th_name">' + esc(name) + (on ? '<span>✓ in use</span>' : '') + '</div></button>';
+}
+function themeBoxHtml() {
+  var dark = document.documentElement.getAttribute('data-theme') === 'dark', t = lookParse(LOOK) || { main: '#714B67', link: '#017E84' };
+  return '<div id="th_box" role="dialog" aria-label="Themes"><div class="row" style="justify-content:space-between;align-items:flex-start"><div><h2>Themes</h2>' +
+    '<div class="sub" style="margin:0">Pick a look. It changes at once and follows you to your other devices. Only you see your choice.</div></div>' +
+    '<button class="btn small" type="button" id="th_close">Done</button></div>' +
+    '<div class="th_mode"><button type="button" data-thmode="light" aria-pressed="' + (!dark) + '">☀ Light</button><button type="button" data-thmode="dark" aria-pressed="' + dark + '">☾ Dark</button></div>' +
+    '<div class="th_grid">' + THEMES.map(function (x) { return themeCard(x[0], x[1], x[2], x[3]); }).join('') + '</div>' +
+    '<div class="th_own"><label>Main colour<input type="color" id="th_main" value="' + t.main + '"></label>' +
+    '<label>Links<input type="color" id="th_link" value="' + t.link + '"></label>' +
+    '<button class="btn primary" type="button" id="th_use">Use my colours</button>' +
+    (/^custom\|/.test(LOOK) ? '<span class="pill ok">✓ your own colours are in use</span>' : '<span class="sub" style="margin:0 0 8px">Or mix your own: top bar and buttons take the main colour.</span>') + '</div></div>';
+}
+function themeBoxPaint() { var b = el('th_back'); if (b) b.innerHTML = themeBoxHtml(); }
+function themeBoxOpen() {
+  if (el('th_back')) return;
+  var b = document.createElement('div'); b.id = 'th_back'; document.body.appendChild(b); themeBoxPaint();
+  b.addEventListener('click', function (ev) {
+    var t = ev.target, c;
+    if (t === b || t.closest('#th_close')) { b.remove(); return; }
+    if ((c = t.closest('[data-th]'))) { lookApply(c.getAttribute('data-th'), true); themeBoxPaint(); return; }
+    if ((c = t.closest('[data-thmode]'))) {
+      var mode = c.getAttribute('data-thmode'); applyTheme(mode); srv('erpSetTheme', [mode], function () {}, function () {});
+      themeBoxPaint(); try { repaint(); } catch (e) {} return;
+    }
+    if (t.closest('#th_use')) { lookApply('custom|' + el('th_main').value.toLowerCase() + '|' + el('th_link').value.toLowerCase(), true); themeBoxPaint(); }
+  });
+}
+document.addEventListener('keydown', function (ev) { if (ev.key === 'Escape') { var b = el('th_back'); if (b) b.remove(); } });
+(function () {
+  // "Themes" in the account menu, above the light / dark switch
+  var um = el('o_usermenu'), th = el('themeBtn');
+  if (um) {
+    var b = document.createElement('button'); b.type = 'button'; b.id = 'o_themes'; b.textContent = 'Themes…';
+    um.insertBefore(b, th || null);
+    b.addEventListener('click', themeBoxOpen);
+  }
+  // the choice saved with the person wins over what this device remembered
+  var biz = applyBusinesses;
+  applyBusinesses = function (b) { biz(b); if (b && typeof b.look === 'string' && b.look !== LOOK) lookApply(b.look, false); };
+})();
+</script>
 </body>
 </html>

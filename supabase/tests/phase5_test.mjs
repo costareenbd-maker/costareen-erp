@@ -75,6 +75,16 @@ check('new product keeps its wholesale price', r.ok && (await owner('erpProduct'
 r = await owner('erpProductPage', [{ sku: PLA }]);
 check('wholesale change is in the price history', r.ok && r.result.wholesale === 1200 && r.result.changes.some((c) => c.field === 'Wholesale price' && c.now === '1200'), r.result && r.result.changes);
 
+// ---------------------------------------------------------------- theme library
+r = await mgr('erpSetLook', ['ocean']);
+check('a theme is saved per person', r.ok && r.result.look === 'ocean' && (await mgr('erpBusinesses', [])).result.look === 'ocean' && (await owner('erpBusinesses', [])).result.look === '', r);
+r = await mgr('erpSetLook', ['custom|#1f6feb|#0a7ea4']);
+check('own colours are kept', r.ok && (await mgr('erpBusinesses', [])).result.look === 'custom|#1f6feb|#0a7ea4', r);
+r = await mgr('erpSetLook', ['custom|red;}</style><script>|#000000']);
+check('anything that is not a name or two colours is refused', !r.ok && r.error === 'That theme is not known.' && (await mgr('erpBusinesses', [])).result.look === 'custom|#1f6feb|#0a7ea4', r);
+r = await mgr('erpSetLook', ['']);
+check('back to the standard look', r.ok && (await mgr('erpBusinesses', [])).result.look === '', r);
+
 // ---------------------------------------------------------------- no standstill under load
 // Eight page loads at once, each reading the kept dashboard and a secret from
 // inside its own transaction. With one shared pool of three this stopped forever.
