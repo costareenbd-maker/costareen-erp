@@ -1253,84 +1253,7 @@ var pFilter = { q:'', cat:'', state:'', status:'active', move:'' };
 
 function viewProducts() {
   if (PRODP.sku) return productPageHtml();
-  if (!CAT) return '<div class="loading">Loading products&hellip;</div>';
-  var cats = {};
-  CAT.forEach(function (p) { if (p.cat) cats[p.cat] = 1; });
-
-  var h = '<section><div class="card">';
-  h += '<div class="row" style="margin-bottom:14px">';
-  h += '<div style="flex:2 1 260px"><label class="f" for="pq">Search</label>'+
-       '<input class="i" id="pq" type="search" placeholder="Name, SKU, brand or colour" value="'+esc(pFilter.q)+'"></div>';
-  h += '<div style="flex:1 1 170px"><label class="f" for="pcat">Category</label><select class="i" id="pcat"><option value="">All categories</option>';
-  Object.keys(cats).sort().forEach(function (c) {
-    h += '<option value="'+esc(c)+'"'+(pFilter.cat===c?' selected':'')+'>'+esc(c)+'</option>';
-  });
-  h += '</select></div>';
-  h += '<div style="flex:1 1 170px"><label class="f" for="pstatus">Product list</label><select class="i" id="pstatus">'+
-       '<option value="active"'+(pFilter.status==='active'?' selected':'')+'>Active products</option>'+
-       '<option value="discontinued"'+(pFilter.status==='discontinued'?' selected':'')+'>Discontinued</option>'+
-       '<option value=""'+(pFilter.status===''?' selected':'')+'>All</option>'+
-       '</select></div>';
-  h += '<div style="flex:1 1 210px"><label class="f" for="pmove">Movement</label>'+
-       '<select class="i" id="pmove">'+
-         '<option value=""'+(pFilter.move===''?' selected':'')+'>All products</option>'+
-         '<option value="urgent"'+(pFilter.move==='urgent'?' selected':'')+'>Running out (under 14 days)</option>'+
-         '<option value="cover30"'+(pFilter.move==='cover30'?' selected':'')+'>Under 30 days of stock</option>'+
-         '<option value="dead90"'+(pFilter.move==='dead90'?' selected':'')+'>Dead stock - 3 months</option>'+
-         '<option value="dead180"'+(pFilter.move==='dead180'?' selected':'')+'>Dead stock - 6 months</option>'+
-         '<option value="dead365"'+(pFilter.move==='dead365'?' selected':'')+'>Dead stock - 1 year</option>'+
-         '<option value="never"'+(pFilter.move==='never'?' selected':'')+'>Never sold</option>'+
-         '<option value="levellow"'+(pFilter.move==='levellow'?' selected':'')+'>Reorder level too LOW</option>'+
-         '<option value="levelhigh"'+(pFilter.move==='levelhigh'?' selected':'')+'>Reorder level too HIGH</option>'+
-       '</select></div>';
-  h += '<div style="flex:1 1 170px"><label class="f" for="pstate">Availability</label><select class="i" id="pstate">'+
-       '<option value="">All</option>'+
-       '<option value="ok"'+(pFilter.state==='ok'?' selected':'')+'>In stock</option>'+
-       '<option value="low"'+(pFilter.state==='low'?' selected':'')+'>At reorder</option>'+
-       '<option value="out"'+(pFilter.state==='out'?' selected':'')+'>Out of stock</option></select></div>';
-  h += '</div>';
-
-  var rows = filteredProducts();
-  h += '<div class="row" style="justify-content:space-between; align-items:center; margin-bottom:10px">'+
-       '<div class="sub" style="margin:0">'+fmt(rows.length)+' of '+fmt(CAT.length)+' products</div>'+
-       '<button class="btn primary" type="button" id="newProduct">+ New product</button></div>';
-  h += (PRODUCT_FORM && PRODUCT_FORM.returnTo) ? '' : productFormHtml();
-  h += '<div class="scroll tall"><table><thead><tr><th>Product</th><th>Category</th><th>Brand</th>'+
-       '<th class="num">In stock</th><th class="num">Sold ever</th>'+
-       '<th class="num">Sold 90d</th><th class="num">Days cover</th>'+
-       '<th class="num">Reorder at</th><th class="num">Should be</th>'+
-       '<th class="num">Price</th>'+
-       '<th>Status</th><th></th></tr></thead><tbody>';
-  if (!rows.length) {
-    h += '<tr><td colspan="10"><div class="empty">No product matches that search.</div></td></tr>';
-  }
-  rows.forEach(function (p) {
-    h += '<tr><td class="nm"><button class="linkbtn" type="button" style="color:inherit;text-align:left" data-openprod="'+esc(p.sku)+'">'+esc(p.name)+'</button><br><span class="sku">'+esc(p.sku)+
-         (p.color ? ' · '+esc(p.color) : '')+'</span></td>'+
-         '<td>'+esc(p.cat||'—')+'</td><td>'+esc(p.brand||'—')+'</td>'+
-         '<td class="num">'+fmt(p.stock)+'</td>'+
-         '<td class="num">'+fmt(p.sold||0)+'</td>'+
-         '<td class="num">'+fmt(p.sold90||0)+'</td>'+
-         '<td class="num">'+coverCell(p)+'</td>'+
-         '<td class="num">'+(p.reorder?fmt(p.reorder):'—')+'</td>'+
-         '<td class="num">'+suggestCell(p)+'</td>'+
-         '<td class="num">'+(p.sell?fmt(p.sell):'<span class="sku">no price</span>')+'</td>'+
-         '<td>'+stateBadge(p.state)+'</td>'+
-         '<td class="num" style="white-space:nowrap">'+
-           (p.stock > 0 && p.sell > 0
-             ? '<button class="btn small" type="button" data-add="'+esc(p.sku)+'">Add</button> '
-             : '')+
-           '<button class="btn small" type="button" data-edit="'+esc(p.sku)+'">Edit</button>'+
-           (String(p.status||'').toLowerCase()==='discontinued'
-             ? ' <button class="btn small" type="button" data-active="'+esc(p.sku)+'">Reactivate</button>'
-             : (p.state === 'out'
-                 ? ' <button class="btn small danger" type="button" data-disc="'+esc(p.sku)+'">Discontinue</button>'
-                 : ''))+
-         '</td></tr>';
-  });
-  h += '</tbody></table></div></div></section>';
-
-  return h;
+  return ((PRODUCT_FORM && !PRODUCT_FORM.returnTo) ? productFormHtml() : '') + lvHtml('products');
 }
 
 function filteredProducts() {
@@ -4663,72 +4586,7 @@ function campRun(fn, id, done) {
 function viewSales() {
   var cur = OPT ? OPT.currency : 'BDT';
   if (INVP.no) return dueBoxHtml() + invoicePageHtml();
-  var h = dueBoxHtml() + '<section><div class="card"><h2>Sales</h2>' +
-    '<div class="sub">Every invoice. Click an invoice number to open it.</div>' +
-    '<div class="row" style="margin:10px 0;gap:6px;align-items:center">' +
-    '<input class="i" id="sl_q" style="flex:1 1 240px;max-width:340px" ' +
-      'placeholder="Invoice number, name or phone" value="' + esc(SALES_F.q) + '">' +
-    '<button class="btn" type="button" id="sl_go">Search</button>' +
-    [['all', 'All'], ['tosend', 'To send'], ['sent', 'Sent by courier'],
-     ['due', 'With a due'], ['returned', 'With returns']].map(function (f) {
-      return '<button class="chip' + (SALES_F.filter === f[0] ? ' on' : '') +
-             '" type="button" data-sfilter="' + f[0] + '">' + f[1] + '</button>';
-    }).join('') + '</div>';
-
-  if (SALES_ERR) {
-    return h + '<div class="note err"><div class="ico">✕</div><div><strong>Could not read the sales.</strong><br>' +
-      esc(SALES_ERR) + '</div></div></div></section>';
-  }
-  if (!SALES) return h + '<div class="loading">Reading the sales&hellip;</div></div></section>';
-
-  h = salesWaitingHtml() + h;
-
-  var t = SALES.totals;
-  h += '<div class="sub" style="margin-bottom:8px">' + fmt(SALES.matched) + ' invoice(s) · sold ' +
-    esc(cur) + ' ' + fmt(t.sold) + (t.returned ? ' · returned ' + fmt(t.returned) : '') +
-    (t.due ? ' · <strong>' + fmt(t.due) + ' due</strong>' : '') +
-    '</div>';
-
-  if (!SALES.rows.length) return h + '<div class="empty">No invoice matches.</div></div></section>';
-
-  var mgr = ME && (ME.role === 'manager' || ME.role === 'shareholder' || ME.role === 'owner');
-  h += '<div class="scroll tall"><table><thead><tr><th>Invoice</th><th>Date</th><th>Customer</th>' +
-    '<th class="num">Units</th><th class="num">Total</th><th class="num">Returned</th>' +
-    '<th class="num">Net</th><th class="num">Due</th><th>Delivery</th><th></th></tr></thead><tbody>';
-  SALES.rows.forEach(function (o) {
-    h += '<tr><td class="nm"><button class="linkbtn" type="button" data-openinv="' + esc(o.id) +
-           '" title="Open this invoice">' + esc(o.id) + '</button></td>' +
-      '<td>' + esc(o.date) + '</td>' +
-      '<td class="nm">' + ((o.customer || o.phone)
-          ? '<button class="linkbtn" type="button" style="color:inherit" data-opencust="' + esc(o.phone) + '" data-opencustname="' + esc(o.customer) + '">' + esc(o.customer || '—') + '</button>'
-          : '—') +
-        (o.phone ? '<br><span class="sku">' + esc(o.phone) + '</span>' : '') + '</td>' +
-      '<td class="num">' + fmt(o.units) + '</td>' +
-      '<td class="num">' + fmt(o.total) + '</td>' +
-      '<td class="num">' + (o.returned
-        ? '<span class="pill low">' + (o.allBack ? 'all' : fmt(o.returnedQty) + ' of ' + fmt(o.units)) +
-          ' back</span><br>− ' + fmt(o.returned) : '—') + '</td>' +
-      '<td class="num"><strong>' + fmt(o.net) + '</strong></td>' +
-      '<td class="num">' + (o.due ? '<span class="pill out">' + fmt(o.due) + '</span>'
-                                  : '<span class="pill ok">paid</span>') + '</td>' +
-      '<td>' + esc(o.delivery || '—') + '<br>' + salesParcelHtml(o) + '</td>' +
-      '<td class="num" style="white-space:nowrap">' +
-        (o.cancelled ? '<span class="pill out">Cancelled</span> ' :
-         mgr ? (o.allBack
-            ? '<button class="btn small" type="button" disabled>All returned</button> '
-            : '<button class="btn small" type="button" data-sret="' + esc(o.id) + '">Return</button> ' +
-              (!o.returned && !o.consignment
-                ? '<button class="btn small" type="button" data-scancel="' + esc(o.id) + '" data-scust="' +
-                  esc(o.customer) + '" data-spaid="' + esc(o.total - o.due) + '">Cancel sale</button> ' : '')) : '') +
-        (o.due
-          ? (mgr && o.phone ? '<button class="btn small" type="button" data-spay="' + esc(o.phone) +
-               '" data-spayname="' + esc(o.customer) + '">Receive payment</button> ' : '')
-          : '<span class="pill ok">✓ Paid</span> ') +
-        (mgr && !o.cancelled ? '<button class="btn small" type="button" data-sfix="' + esc(o.id) + '">Fix details</button>' : '') +
-      '</td></tr>';
-  });
-  h += '</tbody></table></div>' + salesPagerHtml() + '</div></section>';
-  return h + courierMoneyHtml();
+  return dueBoxHtml() + salesWaitingHtml() + lvHtml('invoices') + courierMoneyHtml();
 }
 
 /**
@@ -7429,76 +7287,7 @@ function loadMoney() {
 
 function viewCustomers() {
   if (CUSP.key) return dueBoxHtml() + customerPageHtml();
-  if (!CLIST) return '<div class="loading">Loading customers&hellip;</div>';
-  var rows = CLIST.rows;
-  // the account box, when one is open
-  var h = dueBoxHtml() + '<section><div class="card">';
-  h += '<div class="row" style="align-items:flex-end; margin-bottom:12px">'+
-       '<div style="flex:2 1 220px"><label class="f" for="cq">Search customers</label>'+
-       '<input class="i" id="cq" type="search" placeholder="Name, phone or address" value="'+esc(custQ)+'"></div>'+
-       '<div style="flex:1 1 200px"><label class="f" for="clapse">Last purchase</label>'+
-       '<select class="i" id="clapse">'+
-         '<option value=""'+(custLapse===''?' selected':'')+'>Everyone</option>'+
-         '<option value="30"'+(custLapse==='30'?' selected':'')+'>Not bought in 1 month</option>'+
-         '<option value="60"'+(custLapse==='60'?' selected':'')+'>Not bought in 2 months</option>'+
-         '<option value="90"'+(custLapse==='90'?' selected':'')+'>Not bought in 3 months</option>'+
-         '<option value="180"'+(custLapse==='180'?' selected':'')+'>Not bought in 6 months</option>'+
-         '<option value="365"'+(custLapse==='365'?' selected':'')+'>Not bought in 1 year</option>'+
-         '<option value="never"'+(custLapse==='never'?' selected':'')+'>Never bought anything</option>'+
-       '</select></div>'+
-       '<div style="flex:1 1 180px"><label class="f" for="corders">Buying pattern</label>'+
-       '<select class="i" id="corders">'+
-         '<option value=""'+(custOrders===''?' selected':'')+'>Everyone</option>'+
-         '<option value="once"'+(custOrders==='once'?' selected':'')+'>Bought only once</option>'+
-         '<option value="repeat"'+(custOrders==='repeat'?' selected':'')+'>Repeat buyers (2+)</option>'+
-       '</select></div>'+
-       '<div style="flex:1 1 180px"><label class="f" for="ccontact">Contact</label>'+
-       '<select class="i" id="ccontact">'+
-         '<option value=""'+(custContact===''?' selected':'')+'>Everyone</option>'+
-         '<option value="phone"'+(custContact==='phone'?' selected':'')+'>Has a phone number</option>'+
-         '<option value="walkin"'+(custContact==='walkin'?' selected':'')+'>Walk-in (no number)</option>'+
-       '</select></div>'+
-       '<div style="flex:1 1 170px"><label class="f" for="csort">Sort by</label>'+
-       '<select class="i" id="csort">'+
-         '<option value="spent"'+(custSort==='spent'?' selected':'')+'>Most spent</option>'+
-         '<option value="units"'+(custSort==='units'?' selected':'')+'>Most units bought</option>'+
-         '<option value="lapsed"'+(custSort==='lapsed'?' selected':'')+'>Gone longest</option>'+
-         '<option value="recent"'+(custSort==='recent'?' selected':'')+'>Bought most recently</option>'+
-       '</select></div>'+
-       '<button class="btn primary" type="button" id="newCust">+ New customer</button></div>';
-  h += customerFormHtml();
-  h += '</div></section>' + custMoneyBoxes() + '<section><div class="card"><h2>All customers</h2>';
-  h += '<div class="sub">'+fmt(CLIST.matched)+' of '+fmt(CLIST.total)+' customers</div>';
-  h += '<div class="scroll tall"><table><thead><tr><th>Customer</th><th>Address</th>'+
-       '<th class="num">Orders</th><th class="num">Units</th><th class="num">Spent</th>'+
-    '<th>Last order</th><th></th></tr></thead><tbody>';
-  if (CUST_ERR) h += '<tr><td colspan="7"><div class="note err" style="margin:10px 0"><div class="ico">✕</div><div>'+
-    '<strong>Could not read the customers.</strong><br>'+esc(CUST_ERR)+'</div></div></td></tr>';
-  else if (!rows.length) h += '<tr><td colspan="7"><div class="empty">No customer matches that.</div></td></tr>';
-  rows.forEach(function (c) {
-    h += '<tr><td class="nm"><button class="linkbtn" type="button" style="color:inherit" data-opencust="'+esc(c.phone||'')+'" data-opencustname="'+esc(c.name||'')+'">'+esc(c.name||'—')+'</button>'+balBadge(c.phone, c.name)+
-         '<br><span class="sku">'+(hasMobile(c.phone)
-            ? esc(c.phone)
-            : '<span class="pill low">walk-in</span>'+(c.phone?' '+esc(c.phone):''))+'</span></td>'+
-         '<td>'+esc(c.address||'—')+'</td>'+
-         '<td class="num">'+fmt(c.orders)+'</td>'+
-         '<td class="num">'+fmt(c.units)+'</td>'+
-         '<td class="num">'+fmt(c.spent)+'</td>'+
-         '<td>'+(c.lastOrder
-            ? esc(c.lastOrder)+'<br><span class="sku">'+
-              (c.daysSince===0?'today':fmt(c.daysSince)+' days ago')+'</span>'
-            : '<span class="pill out">never bought</span>')+'</td>'+
-         '<td class="num" style="white-space:nowrap">'+
-           '<button class="btn small" type="button" data-cinv="'+esc(c.row)+'">Invoice</button> '+
-           (hasMobile(c.phone) || c.name ? '<button class="btn small" type="button" data-stmt="1" data-sphone="'+esc(c.phone||'')+'" data-sname="'+esc(c.name||'')+'">Statement</button> ' : '')+
-           '<button class="btn small" type="button" data-cdue="'+esc(c.row)+'" '+
-             'data-cphone="'+esc(c.phone||'')+'" data-cname="'+esc(c.name||'')+'">Due</button> '+
-           '<button class="btn small" type="button" data-cedit="'+esc(c.row)+'">Edit</button></td></tr>';
-  });
-  h += '</tbody></table></div>';
-  h += custPagerHtml();
-  h += '</div></section>';
-  return h;
+  return dueBoxHtml() + customerFormHtml() + lvHtml('customers') + custMoneyBoxes();
 }
 
 /**
@@ -8493,7 +8282,7 @@ function srv(name, args, ok, bad) {
 
 var SRV_ACTIVE = 0, SRV_WRITING = false;
 // the same list the server uses to know a call changes nothing (ERP_READS)
-var SRV_READS = /^(erpBundle|erpHello|erpMe|erpCatalog|erpSales|erpDues|erpCustomers|erpPnl|erpMoney|erpToday|erpDaySales|erpProduct|erpLookupCustomer|erpCustomerAccount|erpCustomerStatement|erpCustomerCredit|erpWebOrders|erpWebOrderInvoices|erpCampaignAudience|erpCampaignList|erpCampaignGet|erpEvoStatus|erpBrandLogo|erpQuoteBoot|erpQuoteList|erpQuoteGet|erpQuoteAsset|erpExpenses|erpCapital|erpBackupStatus|erpAiKeys|erpGetTheme|erpBusinesses|erpStockHistory|erpReorderPlan|erpPoList|erpSfPayoutLines|erpBookedParcels|erpParcelPreview|erpReturnPreview|erpSettingsFull|erpSettingsLists|erpFormOptions|erpAdmin|erpPeople|erpDevices|erpCourierKeyStatus|erpPayReasons|erpDiscontinued|erpAccessWarning|erpBusinessLinks|erpLookupUsage|erpRecentInvoices|erpCourier|erpDashboardData|erpInvoice|erpCustomerPage|erpSearch|erpProductPage|erpPnlMonth|erpExpenseReceiptUrl|erpPartnership|erpPartnerStock|erpSecurity|erpCustomerList|erpAlerts|erpAccessKeys)$/;
+var SRV_READS = /^(erpBundle|erpHello|erpMe|erpCatalog|erpSales|erpDues|erpCustomers|erpPnl|erpMoney|erpToday|erpDaySales|erpProduct|erpLookupCustomer|erpCustomerAccount|erpCustomerStatement|erpCustomerCredit|erpWebOrders|erpWebOrderInvoices|erpCampaignAudience|erpCampaignList|erpCampaignGet|erpEvoStatus|erpBrandLogo|erpQuoteBoot|erpQuoteList|erpQuoteGet|erpQuoteAsset|erpExpenses|erpCapital|erpBackupStatus|erpAiKeys|erpGetTheme|erpBusinesses|erpStockHistory|erpReorderPlan|erpPoList|erpSfPayoutLines|erpBookedParcels|erpParcelPreview|erpReturnPreview|erpSettingsFull|erpSettingsLists|erpFormOptions|erpAdmin|erpPeople|erpDevices|erpCourierKeyStatus|erpPayReasons|erpDiscontinued|erpAccessWarning|erpBusinessLinks|erpLookupUsage|erpRecentInvoices|erpCourier|erpDashboardData|erpInvoice|erpCustomerPage|erpSearch|erpProductPage|erpPnlMonth|erpExpenseReceiptUrl|erpPartnership|erpPartnerStock|erpSecurity|erpCustomerList|erpAlerts|erpAccessKeys|erpListView)$/;
 function srvPump() {
   if (!SRV_Q.length) return;
   var isRead = SRV_READS.test(SRV_Q[0].name);
@@ -10424,7 +10213,7 @@ function switchBusiness(id) {
     D = CAT = CUST = ORDERS = LISTS = HIST = WEB = SETTINGS = null;
     OPT = null; CART = []; RECV = { supplier:'', reference:'', notes:'', lines:[] };
     PRODUCT_FORM = null; CUST_FORM = null;
-    CLIST = null; CUST_OFF = 0; ALERTS = null; loadAlerts();
+    CLIST = null; CUST_OFF = 0; ALERTS = null; loadAlerts(); LVS = {};
     PART = null; PART_STOCK = null; PART_MONTH = ''; CAPD = null; EXP = null; PNL = null; MONEY = null; SALES = null; PLAN = null; PO = null;
     PNLM = { month: '', data: null, err: null }; INVP = { no: '', data: null, err: null }; CUSP = { key: '', data: null, err: null }; PRODP = { sku: '', data: null, err: null };
     if (VIEW === 'capital' || VIEW === 'expenses' || VIEW === 'profit' || VIEW === 'sales' || VIEW === 'stock') setTimeout(function () { go(VIEW); }, 0);
@@ -11065,9 +10854,9 @@ function p4Err(e) { return esc(e && e.message ? e.message : e); }
 // ------------------------------------------------------------ dashboard
 /** A dashboard card opens the list behind it, already filtered. */
 function dashFilter(f) {
-  if (f === 'out') pFilter = { q: '', cat: '', state: 'out', status: 'active', move: '' };
+  if (f === 'out') lvPreset('products', ['active', 'out']);
   if (f === 'plan') STOCK_TAB = 'plan';
-  if (f === 'due' || f === 'tosend') { SALES_F.filter = f; SALES_F.q = ''; SALES_F.offset = 0; SALES = null; SALES_ERR = null; }
+  if (f === 'due' || f === 'tosend') lvPreset('invoices', [f]);
 }
 function topBars(rows) {
   if (!rows || !rows.length) return '<div class="empty">Nothing sold yet this month.</div>';
@@ -12421,6 +12210,430 @@ document.addEventListener('keydown', function (ev) { if (ev.key === 'Escape') ap
 // picking an app closes the drop-down (the move itself is the existing [data-app] handler)
 document.addEventListener('click', function (ev) { if (ev.target.closest && ev.target.closest('#o_apps_dd [data-app]')) setTimeout(function () { appsMenuToggle(false); }, 0); });
 (function () { var b = el('o_home'); if (b) { b.title = 'Apps'; b.setAttribute('aria-haspopup', 'true'); b.setAttribute('aria-expanded', 'false'); } })();
+</script>
+<style>
+/* ---- look 2 - step 2: the list view */
+.o_lv { margin-bottom:18px; }
+.o_lv_bar { display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:10px; position:relative; }
+.o_sbox { flex:1 1 360px; max-width:720px; display:flex; align-items:center; flex-wrap:wrap; gap:4px; min-height:36px; padding:3px 4px 3px 8px;
+  background:var(--field); border:1px solid var(--ring); border-radius:4px; position:relative; }
+.o_sbox:focus-within { border-color:var(--accent-2); box-shadow:0 0 0 2px color-mix(in srgb, var(--accent-2) 20%, transparent); }
+.o_sbox .o_sico { color:var(--muted); font-size:13px; margin-right:2px; }
+.o_sbox input { flex:1 1 120px; min-width:90px; border:none; background:none; outline:none; font:inherit; font-size:14px; color:var(--ink); padding:4px 2px; }
+.o_facet { display:inline-flex; align-items:stretch; border:1px solid var(--ring); border-radius:3px; background:var(--thead); font-size:12.5px; overflow:hidden; max-width:100%; }
+.o_facet b { background:var(--series-1); color:#fff; padding:2px 7px; font-weight:600; display:flex; align-items:center; }
+.o_facet b.f { background:var(--accent-2); } .o_facet b.g { background:#5f6b7a; }
+.o_facet span { padding:2px 6px; display:flex; align-items:center; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.o_facet button { border:none; background:none; cursor:pointer; color:var(--muted); padding:0 6px; font-size:14px; }
+.o_facet button:hover { color:var(--critical); }
+.o_stoggle { border:none; background:none; cursor:pointer; color:var(--ink-2); padding:4px 8px; font-size:12px; margin-left:auto; border-left:1px solid var(--ring); align-self:stretch; }
+.o_stoggle:hover { color:var(--series-1); }
+.o_pager { display:flex; align-items:center; gap:6px; margin-left:auto; font-size:13px; color:var(--ink-2); white-space:nowrap; }
+.o_pager button { border:1px solid var(--ring); background:var(--surface); border-radius:4px; width:30px; height:30px; cursor:pointer; color:var(--ink); font-size:14px; }
+.o_pager button:disabled { opacity:.4; cursor:default; }
+.o_sugg, .o_fdd { position:absolute; z-index:40; top:calc(100% + 4px); background:var(--surface); border:1px solid var(--ring); border-radius:4px; box-shadow:var(--shadow-lg); }
+.o_sugg { left:0; right:0; padding:4px 0; }
+.o_sugg button { display:block; width:100%; text-align:left; border:none; background:none; font:inherit; font-size:13.5px; padding:7px 14px; cursor:pointer; color:var(--ink); }
+.o_sugg button.on, .o_sugg button:hover { background:var(--thead); }
+.o_sugg i { font-style:normal; font-weight:600; }
+.o_fdd { left:0; display:grid; grid-template-columns:repeat(3, minmax(170px, 1fr)); gap:0; width:min(720px, calc(100vw - 32px)); padding:10px 0; }
+.o_fdd > div { padding:0 12px; border-left:1px solid var(--ring); }
+.o_fdd > div:first-child { border-left:none; }
+.o_fdd h4 { margin:2px 0 6px; font-size:13px; display:flex; align-items:center; gap:6px; }
+.o_fdd h4 .dot { width:9px; height:9px; border-radius:2px; display:inline-block; }
+.o_fdd button.it { display:flex; align-items:center; gap:6px; width:100%; text-align:left; border:none; background:none; font:inherit; font-size:13.5px; padding:5px 6px; cursor:pointer; color:var(--ink); border-radius:3px; }
+.o_fdd button.it:hover { background:var(--thead); }
+.o_fdd button.it::before { content:""; width:14px; display:inline-block; color:var(--accent-2); font-weight:700; }
+.o_fdd button.it[aria-checked="true"]::before { content:"✓"; }
+.o_fdd hr { border:none; border-top:1px solid var(--ring); margin:5px 0; }
+.o_fdd .favrow { display:flex; align-items:center; }
+.o_fdd .favrow button.del { border:none; background:none; color:var(--muted); cursor:pointer; padding:0 6px; }
+.o_fdd input { width:100%; margin-top:6px; }
+.o_selbar { display:flex; align-items:center; gap:8px; flex-wrap:wrap; padding:6px 10px; margin-bottom:8px; background:var(--series-1-soft); border:1px solid color-mix(in srgb, var(--series-1) 35%, transparent); border-radius:4px; font-size:13.5px; }
+.o_selbar .linkbtn { font-weight:600; }
+.o_tbl { background:var(--surface); border:1px solid var(--ring); border-radius:4px; overflow-x:auto; }
+table.o_list { width:100%; border-collapse:collapse; font-size:13.5px; }
+table.o_list th { background:var(--thead); text-align:left; font-weight:600; font-size:13px; color:var(--ink); padding:9px 10px; border-bottom:1px solid var(--ring); white-space:nowrap; user-select:none; }
+table.o_list th[data-lv-sort] { cursor:pointer; }
+table.o_list th[data-lv-sort]:hover { background:color-mix(in srgb, var(--thead) 70%, var(--ring)); }
+table.o_list th .ar { color:var(--muted); font-size:10px; margin-left:4px; }
+table.o_list td { padding:8px 10px; border-bottom:1px solid var(--grid); vertical-align:middle; }
+table.o_list td .s { display:block; color:var(--muted); font-size:12px; }
+table.o_list .n { text-align:right; font-variant-numeric:tabular-nums; white-space:nowrap; }
+table.o_list .cb { width:34px; text-align:center; padding-left:12px; padding-right:4px; }
+table.o_list .cb input { width:15px; height:15px; cursor:pointer; accent-color:var(--series-1); vertical-align:middle; }
+table.o_list tbody tr.r { cursor:pointer; }
+table.o_list tbody tr.r:hover td { background:color-mix(in srgb, var(--series-1) 5%, transparent); }
+table.o_list tbody tr.r.sel td { background:color-mix(in srgb, var(--series-1) 9%, transparent); }
+table.o_list td.m { font-weight:500; }
+table.o_list tr.g td { background:var(--thead); font-weight:600; cursor:pointer; border-bottom:1px solid var(--ring); }
+table.o_list tr.g:hover td { background:color-mix(in srgb, var(--thead) 70%, var(--ring)); }
+table.o_list tr.g .caret { display:inline-block; width:14px; color:var(--muted); }
+table.o_list tr.g .cnt { color:var(--muted); font-weight:500; margin-left:4px; }
+table.o_list tr.more td { text-align:center; }
+table.o_list tfoot td { font-weight:700; background:var(--thead); border-top:1px solid var(--ring); border-bottom:none; }
+.o_lv .empty { padding:40px 10px; }
+.o_lv .o_ghost td { color:var(--muted); }
+@media (max-width:640px) {
+  .o_lv .o_np { display:none; }
+  .o_sbox { flex-basis:100%; max-width:none; order:2; }
+  .o_pager { order:3; margin-left:0; }
+  .o_fdd { grid-template-columns:1fr; width:calc(100vw - 24px); }
+  .o_fdd > div { border-left:none; border-top:1px solid var(--ring); padding-top:8px; margin-top:4px; }
+  .o_fdd > div:first-child { border-top:none; margin-top:0; }
+  table.o_list td, table.o_list th { padding:8px 6px; }
+}
+</style>
+<script>
+// =====================================================================
+// look 2 - step 2: the list view. One component behind Invoices, Products
+// and Customers: a search box that turns what is typed into facets, a
+// Filters / Group By / Favorites menu, columns that sort, tick boxes with
+// actions, pages and totals. The server does the searching (erpListView);
+// this draws it. Everything is wired by delegation on the document, so a
+// redraw never loses a handler.
+// =====================================================================
+var LV_CFG = {
+  invoices:  { view: 'sales', title: 'Invoices', defaults: [], what: 'invoice' },
+  products:  { view: 'products', title: 'Products', defaults: ['active'], what: 'product',
+               newBtn: function () { if (!LISTS) loadLists(); PRODUCT_FORM = blankProduct(); repaint(); window.scrollTo(0, 0); } },
+  customers: { view: 'customers', title: 'Customers', defaults: [], what: 'customer',
+               newBtn: function () { CUST_FORM = { row: 0, name: '', phone: '', email: '', address: '', type: 'Retail', source: (OPT && OPT.sources[0]) || 'Walk-in', status: 'New' }; repaint(); window.scrollTo(0, 0); } },
+};
+var LV_SUB = { phone: 'Phone', parcel: 'Parcel', line2: 'SKU', lastAgo: 'Days since' };
+var LVS = {};
+function lvSt(m) {
+  if (!LVS[m]) LVS[m] = { search: [], filters: LV_CFG[m].defaults.slice(), groupBy: '', order: null, offset: 0, data: null, err: null, busy: false,
+                          open: {}, grows: {}, sel: {}, all: false, q: '', dd: false, sug: 0, seq: 0, spec: null, rows: {} };
+  return LVS[m];
+}
+function lvModelOf(view) { for (var k in LV_CFG) if (LV_CFG[k].view === view) return k; return ''; }
+
+// ---------------------------------------------------------------- loading
+function lvArgs(st, m, extra) {
+  var a = { model: m, search: st.search, filters: st.filters, groupBy: st.groupBy, order: st.order, offset: st.offset, limit: 80 };
+  for (var k in (extra || {})) a[k] = extra[k];
+  return a;
+}
+function lvLoad(m, keepSel) {
+  var st = lvSt(m), my = ++st.seq;
+  st.busy = true; st.err = null;
+  if (!keepSel) { st.sel = {}; st.all = false; }
+  srv('erpListView', [lvArgs(st, m)], function (r) {
+    if (my !== st.seq) return;
+    st.busy = false; st.data = r; st.spec = r.spec; st.stale = false;
+    st.grows = {};
+    var open = Object.keys(st.open).filter(function (k) { return st.open[k]; });
+    lvPaint(m);
+    open.forEach(function (k) { lvLoadGroup(m, k); });
+  }, function (e) {
+    if (my !== st.seq) return;
+    st.busy = false; st.err = (e && e.message) || String(e); lvPaint(m);
+  });
+}
+function lvLoadGroup(m, key, more) {
+  var st = lvSt(m), have = more && st.grows[key] ? st.grows[key].rows.length : 0;
+  srv('erpListView', [lvArgs(st, m, { group: key, offset: have, limit: 80 })], function (r) {
+    var g = st.grows[key];
+    st.grows[key] = { rows: (more && g ? g.rows : []).concat(r.rows), total: r.total };
+    lvPaint(m);
+  }, function (e) { toast(esc((e && e.message) || e), true, 8000); });
+}
+/** Start a list from somewhere else (a dashboard card): these filters, nothing else. */
+function lvPreset(m, filters) {
+  var st = lvSt(m);
+  st.search = []; st.filters = filters.slice(); st.groupBy = ''; st.offset = 0; st.open = {}; st.data = null; st.q = '';
+}
+
+// ---------------------------------------------------------------- drawing
+function lvHtml(m) {
+  var st = lvSt(m);
+  if ((!st.data || st.stale) && !st.busy) setTimeout(function () { lvLoad(m, true); }, 0);
+  return '<div class="o_lv" id="lv_' + m + '" data-lv="' + m + '">' + lvInner(m) + '</div>';
+}
+function lvPaint(m) {
+  var w = el('lv_' + m); if (!w) return;
+  var a = document.activeElement, typing = a && a.id === 'lvq_' + m, pos = typing ? a.selectionStart : 0;
+  w.innerHTML = lvInner(m);
+  if (typing) { var q = el('lvq_' + m); if (q) { q.focus(); try { q.setSelectionRange(pos, pos); } catch (e) {} } }
+}
+function lvFacetsHtml(st, m) {
+  var sp = st.spec, h = '';
+  st.search.forEach(function (f, i) {
+    var lab = sp ? (sp.search.filter(function (x) { return x.field === f.field; })[0] || {}).label : f.field;
+    h += '<span class="o_facet"><b>' + esc(lab || f.field) + '</b><span>' + f.values.map(esc).join(' <i style="opacity:.6">or</i> ') + '</span><button type="button" data-lv-rmf="' + i + '" aria-label="Remove">×</button></span>';
+  });
+  if (st.filters.length && sp) {
+    // one facet per set: "or" inside it, the facets together are "and" - as the server reads them
+    var sets = [], bySet = {};
+    sp.filters.forEach(function (f) { if (st.filters.indexOf(f.name) < 0) return; if (!bySet[f.set]) { bySet[f.set] = []; sets.push(f.set); } bySet[f.set].push(f.label); });
+    sets.forEach(function (k) {
+      h += '<span class="o_facet"><b class="f">▼</b><span>' + bySet[k].map(esc).join(' <i style="opacity:.6">or</i> ') + '</span><button type="button" data-lv-rmset="' + esc(k) + '" aria-label="Remove">×</button></span>';
+    });
+  }
+  if (st.groupBy && sp) {
+    var g = sp.groups.filter(function (x) { return x.field === st.groupBy; })[0];
+    if (g) h += '<span class="o_facet"><b class="g">≡</b><span>' + esc(g.label) + '</span><button type="button" data-lv-rmgroup="1" aria-label="Remove">×</button></span>';
+  }
+  return h;
+}
+function lvFavs(m) { try { return JSON.parse(localStorage.getItem('cz_lv_fav_' + m) || '[]'); } catch (e) { return []; } }
+function lvSetFavs(m, list) { try { localStorage.setItem('cz_lv_fav_' + m, JSON.stringify(list)); } catch (e) {} }
+
+function lvInner(m) {
+  var st = lvSt(m), cfg = LV_CFG[m], sp = st.spec, d = st.data, h = '<div class="o_lv_bar">';
+  if (cfg.newBtn) h += '<button class="btn primary" type="button" data-lv-new="1">New</button>';
+  h += '<div class="o_sbox"><span class="o_sico">&#x1F50D;&#xFE0E;</span>' + lvFacetsHtml(st, m) +
+    '<input id="lvq_' + m + '" data-lv-q="1" type="search" autocomplete="off" placeholder="Search…" value="' + esc(st.q) + '">' +
+    '<button class="o_stoggle" type="button" data-lv-dd="1" aria-expanded="' + st.dd + '" title="Filters, group by, favourites">▼</button>';
+  // what the typed text can be searched as
+  if (st.q.trim() && sp) {
+    h += '<div class="o_sugg">' + sp.search.map(function (s, i) {
+      return '<button type="button" data-lv-sug="' + esc(s.field) + '" class="' + (i === st.sug ? 'on' : '') + '">Search <i>' + esc(s.label) + '</i> for: <i>' + esc(st.q.trim()) + '</i></button>'; }).join('') + '</div>';
+  }
+  // filters, group by, favourites
+  if (st.dd && sp) {
+    var lastSet = null;
+    h += '<div class="o_fdd"><div><h4><span class="dot" style="background:var(--accent-2)"></span>Filters</h4>' + sp.filters.map(function (f) {
+      var sep = lastSet !== null && f.set !== lastSet ? '<hr>' : ''; lastSet = f.set;
+      return sep + '<button type="button" class="it" data-lv-flt="' + esc(f.name) + '" aria-checked="' + (st.filters.indexOf(f.name) >= 0) + '">' + esc(f.label) + '</button>'; }).join('') + '</div>' +
+      '<div><h4><span class="dot" style="background:#5f6b7a"></span>Group by</h4>' + sp.groups.map(function (g) {
+        return '<button type="button" class="it" data-lv-grp="' + esc(g.field) + '" aria-checked="' + (st.groupBy === g.field) + '">' + esc(g.label) + '</button>'; }).join('') + '</div>' +
+      '<div><h4><span class="dot" style="background:#e3a62d"></span>Favourites</h4>' + lvFavs(m).map(function (f, i) {
+        return '<div class="favrow"><button type="button" class="it" data-lv-fav="' + i + '">' + esc(f.name) + '</button><button type="button" class="del" data-lv-favdel="' + i + '" title="Remove">×</button></div>'; }).join('') +
+      '<input class="i" id="lvfav_' + m + '" maxlength="40" placeholder="Name this search…"><button class="btn small" type="button" data-lv-favsave="1" style="margin-top:6px">Save current search</button></div></div>';
+  }
+  h += '</div>';
+  // pager
+  if (d && !st.groupBy && d.total > d.limit) {
+    var from = d.offset + 1, to = Math.min(d.total, d.offset + d.rows.length);
+    h += '<div class="o_pager"><span>' + fmt(from) + '–' + fmt(to) + ' / ' + fmt(d.total) + '</span>' +
+      '<button type="button" data-lv-pg="-1"' + (d.offset > 0 ? '' : ' disabled') + ' aria-label="Previous">‹</button>' +
+      '<button type="button" data-lv-pg="1"' + (to < d.total ? '' : ' disabled') + ' aria-label="Next">›</button></div>';
+  } else if (d) {
+    h += '<div class="o_pager"><span>' + fmt(d.total) + (st.groupBy && d.groups ? ' in ' + fmt(d.groups.length) + ' group' + (d.groups.length === 1 ? '' : 's') : '') + '</span></div>';
+  }
+  h += '</div>';
+
+  // selected rows
+  var nsel = Object.keys(st.sel).length;
+  if (nsel || st.all) {
+    var pageAll = d && d.rows && d.rows.length && d.rows.every(function (r) { return st.sel[r.key]; });
+    h += '<div class="o_selbar"><strong>' + (st.all ? 'All ' + fmt(d.total) : fmt(nsel)) + ' selected</strong>' +
+      (!st.all && pageAll && d.total > d.rows.length ? '<button class="linkbtn" type="button" data-lv-selallmatch="1">Select all ' + fmt(d.total) + '</button>' : '') +
+      '<button class="linkbtn" type="button" data-lv-unsel="1">Unselect</button><span style="flex:1"></span>' +
+      '<button class="btn small" type="button" data-lv-act="export">Export</button>' +
+      (m === 'products' && ME && ME.role !== 'sales' ? '<button class="btn small" type="button" data-lv-act="discontinue">Discontinue</button><button class="btn small" type="button" data-lv-act="reactivate">Reactivate</button>' : '') +
+      '</div>';
+  }
+
+  if (st.err) return h + '<div class="note err"><div class="ico">✕</div><div><strong>Could not read the ' + esc(cfg.title.toLowerCase()) + '.</strong><br>' + esc(st.err) + '</div></div>';
+  if (!d) return h + '<div class="o_tbl"><div class="loading">Loading ' + esc(cfg.title.toLowerCase()) + '&hellip;</div></div>';
+  return h + '<div class="o_tbl">' + lvTable(m) + '</div>';
+}
+
+function lvCell(c, r) {
+  var v = r[c.key], out;
+  if (c.type === 'money' || c.type === 'num') out = (v === null || v === undefined || v === '') ? '' : (c.type === 'money' && !v ? '<span style="color:var(--muted)">0</span>' : fmt(v));
+  else if (c.type === 'badge') {
+    if (c.badge === 'state') out = stateBadge(r.state);
+    else {
+      var cls = { Paid: 'ok', Due: 'out', Returned: 'low', Cancelled: '' }[v];
+      out = v ? '<span class="pill' + (cls ? ' ' + cls : '') + '">' + esc(v) + '</span>' : '';
+    }
+  } else out = esc(v == null ? '' : v);
+  if (c.sub && r[c.sub]) out += '<span class="s">' + esc(r[c.sub]) + '</span>';
+  return out;
+}
+function lvTable(m) {
+  var st = lvSt(m), sp = st.spec, d = st.data, cols = sp.columns, ord = st.order || sp.order;
+  st.rows = {};
+  var pageRows = d.rows || [], allOn = pageRows.length && pageRows.every(function (r) { return st.sel[r.key]; });
+  var h = '<table class="o_list"><thead><tr><th class="cb">' + (st.groupBy ? '' : '<input type="checkbox" data-lv-selall="1"' + (allOn || st.all ? ' checked' : '') + ' aria-label="Select all">') + '</th>' +
+    cols.map(function (c) {
+      var on = ord && ord.field === c.sort;
+      return '<th data-lv-sort="' + esc(c.sort) + '" class="' + (c.type === 'money' || c.type === 'num' ? 'n' : '') + (c.phone ? '' : ' o_np') + '">' + esc(c.label) +
+        (on ? '<span class="ar">' + (ord.dir === 'asc' ? '▲' : '▼') + '</span>' : '') + '</th>'; }).join('') + '</tr></thead><tbody>';
+  function row(r) {
+    st.rows[r.key] = r;
+    return '<tr class="r' + (st.sel[r.key] || st.all ? ' sel' : '') + '" data-lv-open="' + esc(r.key) + '"><td class="cb"><input type="checkbox" data-lv-sel="' + esc(r.key) + '"' + (st.sel[r.key] || st.all ? ' checked' : '') + ' aria-label="Select"></td>' +
+      cols.map(function (c) { return '<td class="' + (c.type === 'money' || c.type === 'num' ? 'n' : '') + (c.main ? ' m' : '') + (c.phone ? '' : ' o_np') + '">' + lvCell(c, r) + '</td>'; }).join('') + '</tr>';
+  }
+  if (st.groupBy && d.groups) {
+    if (!d.groups.length) h += '<tr><td colspan="' + (cols.length + 1) + '"><div class="empty">Nothing matches.</div></td></tr>';
+    d.groups.forEach(function (g) {
+      var open = !!st.open[g.key];
+      h += '<tr class="g" data-lv-g="' + esc(g.key) + '"><td class="cb"></td>' + cols.map(function (c, i) {
+        if (i === 0) return '<td><span class="caret">' + (open ? '▾' : '▸') + '</span>' + esc(g.label) + '<span class="cnt">(' + fmt(g.count) + ')</span></td>';
+        return '<td class="' + (c.sum ? 'n' : '') + (c.phone ? '' : ' o_np') + '">' + (c.sum ? fmt(g.sums[c.key]) : '') + '</td>'; }).join('') + '</tr>';
+      if (open) {
+        var gr = st.grows[g.key];
+        if (!gr) h += '<tr class="o_ghost"><td></td><td colspan="' + cols.length + '">Loading&hellip;</td></tr>';
+        else {
+          gr.rows.forEach(function (r) { h += row(r); });
+          if (gr.rows.length < gr.total) h += '<tr class="more"><td colspan="' + (cols.length + 1) + '"><button class="linkbtn" type="button" data-lv-more="' + esc(g.key) + '">Show ' + fmt(Math.min(80, gr.total - gr.rows.length)) + ' more of ' + fmt(gr.total - gr.rows.length) + '</button></td></tr>';
+        }
+      }
+    });
+  } else {
+    if (!pageRows.length) h += '<tr><td colspan="' + (cols.length + 1) + '"><div class="empty">Nothing matches.' + (st.search.length || st.filters.length ? ' <button class="linkbtn" type="button" data-lv-clear="1">Clear the search</button>' : '') + '</div></td></tr>';
+    pageRows.forEach(function (r) { h += row(r); });
+  }
+  h += '</tbody>';
+  if (cols.some(function (c) { return c.sum; }) && d.sums && d.total) {
+    h += '<tfoot><tr><td class="cb"></td>' + cols.map(function (c) { return '<td class="' + (c.sum ? 'n' : '') + (c.phone ? '' : ' o_np') + '">' + (c.sum ? fmt(d.sums[c.key]) : '') + '</td>'; }).join('') + '</tr></tfoot>';
+  }
+  return h + '</table>';
+}
+
+// ---------------------------------------------------------------- doing
+function lvRefresh(m) { var st = lvSt(m); st.offset = 0; lvLoad(m); lvPaint(m); }
+function lvAddSearch(m, field) {
+  var st = lvSt(m), v = st.q.trim(); if (!v) return;
+  var f = st.search.filter(function (x) { return x.field === field; })[0];
+  if (f) { if (f.values.indexOf(v) < 0) f.values.push(v); } else st.search.push({ field: field, values: [v] });
+  st.q = ''; st.sug = 0; lvRefresh(m);
+}
+function lvOpenRow(m, key) {
+  var r = lvSt(m).rows[key]; if (!r || !r.open) return;
+  if (r.open.invoice) openInvoicePage(r.open.invoice);
+  else if (r.open.product) openProductPage(r.open.product);
+  else if (r.open.customer !== undefined) openCustomerPage(r.open.customer, r.open.name);
+}
+function lvCsv(m, rows) {
+  var sp = lvSt(m).spec, cols = [];
+  sp.columns.forEach(function (c) { cols.push([c.key, c.label]); if (c.sub) cols.push([c.sub, LV_SUB[c.sub] || c.sub]); });
+  var q = function (v) { v = String(v == null ? '' : v); return /[",\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; };
+  var text = [cols.map(function (c) { return q(c[1]); }).join(',')].concat(rows.map(function (r) {
+    return cols.map(function (c) { return q(c[0] === 'state' ? r.stateText : r[c[0]]); }).join(','); })).join('\r\n');
+  downloadText(LV_CFG[m].title + ' ' + todayISO() + '.csv', text);
+}
+async function lvAction(m, act) {
+  var st = lvSt(m);
+  function chosen(done) {
+    if (!st.all) return done(Object.keys(st.sel).map(function (k) { return st.rows[k] || { key: k }; }));
+    toast('Reading every selected row…');
+    srv('erpListView', [lvArgs(st, m, { exportAll: true })], function (r) { done(r.rows); }, function (e) { toast(esc((e && e.message) || e), true, 10000); });
+  }
+  if (act === 'export') return chosen(function (rows) { lvCsv(m, rows); toast('Exported ' + fmt(rows.length) + ' row(s).'); });
+  if (m === 'products' && (act === 'discontinue' || act === 'reactivate')) {
+    chosen(async function (rows) {
+      var to = act === 'discontinue' ? 'Discontinued' : 'Active';
+      if (!(await uiConfirm((act === 'discontinue' ? 'Discontinue ' : 'Bring back ') + fmt(rows.length) + ' product(s)?' +
+            (act === 'discontinue' ? '\n\nA product that still has stock is skipped - sell or adjust it to 0 first.' : '')))) return;
+      var ok = 0, bad = [], i = 0;
+      (function next() {
+        if (i >= rows.length) {
+          toast(fmt(ok) + ' changed' + (bad.length ? ' · ' + fmt(bad.length) + ' skipped: ' + esc(bad.slice(0, 3).join('; ')) + (bad.length > 3 ? '…' : '') : ''), !!bad.length, 14000);
+          CAT = null; loadAll(); lvLoad(m); return;
+        }
+        var r = rows[i++];
+        srv('erpSetProductStatus', [r.key, to], function () { ok++; next(); }, function (e) { bad.push(r.key + ': ' + ((e && e.message) || e)); next(); });
+      })();
+    });
+  }
+}
+
+// one set of listeners for every list, now and after any redraw
+document.addEventListener('click', function (ev) {
+  var w = ev.target.closest && ev.target.closest('.o_lv[data-lv]'); if (!w) return;
+  var m = w.getAttribute('data-lv'), st = lvSt(m), t = ev.target, b;
+  if ((b = t.closest('[data-lv-new]'))) { LV_CFG[m].newBtn(); return; }
+  if ((b = t.closest('[data-lv-dd]'))) { st.dd = !st.dd; lvPaint(m); return; }
+  if ((b = t.closest('[data-lv-sug]'))) { lvAddSearch(m, b.getAttribute('data-lv-sug')); return; }
+  if ((b = t.closest('[data-lv-rmf]'))) { st.search.splice(Number(b.getAttribute('data-lv-rmf')), 1); lvRefresh(m); return; }
+  if ((b = t.closest('[data-lv-rmset]'))) {
+    var set = b.getAttribute('data-lv-rmset');
+    st.filters = st.filters.filter(function (n) { return !st.spec.filters.some(function (f) { return f.name === n && f.set === set; }); });
+    lvRefresh(m); return;
+  }
+  if ((b = t.closest('[data-lv-rmgroup]'))) { st.groupBy = ''; st.open = {}; lvRefresh(m); return; }
+  if ((b = t.closest('[data-lv-clear]'))) { st.search = []; st.filters = []; st.groupBy = ''; lvRefresh(m); return; }
+  if ((b = t.closest('[data-lv-flt]'))) {
+    var n = b.getAttribute('data-lv-flt'), i = st.filters.indexOf(n);
+    if (i >= 0) st.filters.splice(i, 1); else st.filters.push(n);
+    lvRefresh(m); return;
+  }
+  if ((b = t.closest('[data-lv-grp]'))) { var g = b.getAttribute('data-lv-grp'); st.groupBy = st.groupBy === g ? '' : g; st.open = {}; lvRefresh(m); return; }
+  if ((b = t.closest('[data-lv-fav]'))) {
+    var f = lvFavs(m)[Number(b.getAttribute('data-lv-fav'))];
+    if (f) { st.search = f.s.search || []; st.filters = f.s.filters || []; st.groupBy = f.s.groupBy || ''; st.order = f.s.order || null; st.open = {}; st.dd = false; lvRefresh(m); }
+    return;
+  }
+  if ((b = t.closest('[data-lv-favdel]'))) { var l = lvFavs(m); l.splice(Number(b.getAttribute('data-lv-favdel')), 1); lvSetFavs(m, l); lvPaint(m); return; }
+  if ((b = t.closest('[data-lv-favsave]'))) {
+    var nm = (el('lvfav_' + m) || {}).value || '';
+    if (!nm.trim()) { toast('Give the search a name first.', true); return; }
+    var l2 = lvFavs(m); l2.push({ name: nm.trim(), s: { search: st.search, filters: st.filters, groupBy: st.groupBy, order: st.order } }); lvSetFavs(m, l2);
+    toast('Saved as “' + esc(nm.trim()) + '” in Favourites.'); lvPaint(m); return;
+  }
+  if ((b = t.closest('[data-lv-pg]'))) { st.offset = Math.max(0, st.offset + Number(b.getAttribute('data-lv-pg')) * 80); lvLoad(m); window.scrollTo(0, 0); return; }
+  if ((b = t.closest('[data-lv-sort]'))) {
+    var k = b.getAttribute('data-lv-sort'), cur = st.order || st.spec.order;
+    st.order = { field: k, dir: cur && cur.field === k && cur.dir === 'desc' ? 'asc' : cur && cur.field === k ? 'desc' : (st.spec.columns.some(function (c) { return c.sort === k && (c.type === 'money' || c.type === 'num'); }) ? 'desc' : 'asc') };
+    lvRefresh(m); return;
+  }
+  if ((b = t.closest('[data-lv-more]'))) { lvLoadGroup(m, b.getAttribute('data-lv-more'), true); return; }
+  if ((b = t.closest('tr[data-lv-g]'))) {
+    var gk = b.getAttribute('data-lv-g'); st.open[gk] = !st.open[gk];
+    lvPaint(m); if (st.open[gk] && !st.grows[gk]) lvLoadGroup(m, gk); return;
+  }
+  if ((b = t.closest('[data-lv-unsel]'))) { st.sel = {}; st.all = false; lvPaint(m); return; }
+  if ((b = t.closest('[data-lv-selallmatch]'))) { st.all = true; lvPaint(m); return; }
+  if ((b = t.closest('[data-lv-act]'))) { lvAction(m, b.getAttribute('data-lv-act')); return; }
+  if (t.closest('td.cb') || t.closest('th.cb')) return;            // tick boxes are handled on change
+  if ((b = t.closest('tr[data-lv-open]'))) { lvOpenRow(m, b.getAttribute('data-lv-open')); return; }
+});
+document.addEventListener('change', function (ev) {
+  var w = ev.target.closest && ev.target.closest('.o_lv[data-lv]'); if (!w) return;
+  var m = w.getAttribute('data-lv'), st = lvSt(m), t = ev.target;
+  if (t.hasAttribute('data-lv-sel')) { var k = t.getAttribute('data-lv-sel'); if (t.checked) st.sel[k] = 1; else { delete st.sel[k]; st.all = false; } lvPaint(m); return; }
+  if (t.hasAttribute('data-lv-selall')) {
+    st.all = false;
+    (st.data.rows || []).forEach(function (r) { if (t.checked) st.sel[r.key] = 1; else delete st.sel[r.key]; });
+    lvPaint(m);
+  }
+});
+document.addEventListener('input', function (ev) {
+  var t = ev.target; if (!t.hasAttribute || !t.hasAttribute('data-lv-q')) return;
+  var m = t.closest('.o_lv').getAttribute('data-lv'), st = lvSt(m);
+  st.q = t.value; st.sug = 0; st.dd = false; lvPaint(m);
+});
+document.addEventListener('keydown', function (ev) {
+  var t = ev.target; if (!t.hasAttribute || !t.hasAttribute('data-lv-q')) return;
+  var m = t.closest('.o_lv').getAttribute('data-lv'), st = lvSt(m), n = st.spec ? st.spec.search.length : 0;
+  if (ev.key === 'ArrowDown' && st.q.trim()) { ev.preventDefault(); st.sug = (st.sug + 1) % n; lvPaint(m); }
+  else if (ev.key === 'ArrowUp' && st.q.trim()) { ev.preventDefault(); st.sug = (st.sug + n - 1) % n; lvPaint(m); }
+  else if (ev.key === 'Enter' && st.q.trim() && st.spec) { ev.preventDefault(); lvAddSearch(m, st.spec.search[st.sug].field); }
+  else if (ev.key === 'Escape') { st.q = ''; st.dd = false; lvPaint(m); }
+  else if (ev.key === 'Backspace' && !t.value) {
+    if (st.groupBy) st.groupBy = ''; else if (st.filters.length) st.filters = []; else if (st.search.length) st.search.pop(); else return;
+    st.open = {}; lvRefresh(m);
+  }
+});
+document.addEventListener('mousedown', function (ev) {
+  for (var m in LVS) {
+    var st = LVS[m]; if (!st.dd && !st.q) continue;
+    var w = el('lv_' + m); if (!w) continue;
+    if (st.dd && !ev.target.closest('#lv_' + m + ' .o_fdd') && !ev.target.closest('#lv_' + m + ' [data-lv-dd]')) { st.dd = false; lvPaint(m); }
+  }
+});
+
+// the lists follow the books: re-read after any save, and when figures refresh themselves
+(function () {
+  var after = pagesAfterWrite;
+  pagesAfterWrite = function () {
+    after();
+    for (var m in LVS) LVS[m].stale = true;
+    var on = lvModelOf(VIEW); if (on && el('lv_' + on)) lvLoad(on, true);
+  };
+  var quiet = quietRefresh;
+  quietRefresh = function () {
+    quiet();
+    var on = lvModelOf(VIEW), a = document.activeElement;
+    if (on && el('lv_' + on) && !(a && a.id === 'lvq_' + on) && !Object.keys(lvSt(on).sel).length) lvLoad(on, true);
+  };
+})();
 </script>
 </body>
 </html>
