@@ -12463,35 +12463,36 @@ function lvTable(m) {
     cols.map(function (c) {
       var on = ord && ord.field === c.sort;
       return '<th data-lv-sort="' + esc(c.sort) + '" class="' + (c.type === 'money' || c.type === 'num' ? 'n' : '') + (c.phone ? '' : ' o_np') + '">' + esc(c.label) +
-        (on ? '<span class="ar">' + (ord.dir === 'asc' ? '▲' : '▼') + '</span>' : '') + '</th>'; }).join('') + '</tr></thead><tbody>';
+        (on ? '<span class="ar">' + (ord.dir === 'asc' ? '▲' : '▼') + '</span>' : '') + '</th>'; }).join('') + '<th class="o_np o_acts"></th></tr></thead><tbody>';
   function row(r) {
     st.rows[r.key] = r;
     return '<tr class="r' + (st.sel[r.key] || st.all ? ' sel' : '') + '" data-lv-open="' + esc(r.key) + '"><td class="cb"><input type="checkbox" data-lv-sel="' + esc(r.key) + '"' + (st.sel[r.key] || st.all ? ' checked' : '') + ' aria-label="Select"></td>' +
-      cols.map(function (c) { return '<td class="' + (c.type === 'money' || c.type === 'num' ? 'n' : '') + (c.main ? ' m' : '') + (c.phone ? '' : ' o_np') + '">' + lvCell(c, r) + '</td>'; }).join('') + '</tr>';
+      cols.map(function (c) { return '<td class="' + (c.type === 'money' || c.type === 'num' ? 'n' : '') + (c.main ? ' m' : '') + (/^(date|lastOrder|coverText|stateText|status)$/.test(c.key) ? ' nw' : '') + (c.phone ? '' : ' o_np') + '">' + lvCell(c, r) + '</td>'; }).join('') +
+      '<td class="o_np o_acts">' + lvRowActs(m, r) + '</td></tr>';
   }
   if (st.groupBy && d.groups) {
-    if (!d.groups.length) h += '<tr><td colspan="' + (cols.length + 1) + '"><div class="empty">Nothing matches.</div></td></tr>';
+    if (!d.groups.length) h += '<tr><td colspan="' + (cols.length + 2) + '"><div class="empty">Nothing matches.</div></td></tr>';
     d.groups.forEach(function (g) {
       var open = !!st.open[g.key];
       h += '<tr class="g" data-lv-g="' + esc(g.key) + '"><td class="cb"></td>' + cols.map(function (c, i) {
         if (i === 0) return '<td><span class="caret">' + (open ? '▾' : '▸') + '</span>' + esc(g.label) + '<span class="cnt">(' + fmt(g.count) + ')</span></td>';
-        return '<td class="' + (c.sum ? 'n' : '') + (c.phone ? '' : ' o_np') + '">' + (c.sum ? fmt(g.sums[c.key]) : '') + '</td>'; }).join('') + '</tr>';
+        return '<td class="' + (c.sum ? 'n' : '') + (c.phone ? '' : ' o_np') + '">' + (c.sum ? fmt(g.sums[c.key]) : '') + '</td>'; }).join('') + '<td class="o_np"></td></tr>';
       if (open) {
         var gr = st.grows[g.key];
-        if (!gr) h += '<tr class="o_ghost"><td></td><td colspan="' + cols.length + '">Loading&hellip;</td></tr>';
+        if (!gr) h += '<tr class="o_ghost"><td></td><td colspan="' + (cols.length + 1) + '">Loading&hellip;</td></tr>';
         else {
           gr.rows.forEach(function (r) { h += row(r); });
-          if (gr.rows.length < gr.total) h += '<tr class="more"><td colspan="' + (cols.length + 1) + '"><button class="linkbtn" type="button" data-lv-more="' + esc(g.key) + '">Show ' + fmt(Math.min(80, gr.total - gr.rows.length)) + ' more of ' + fmt(gr.total - gr.rows.length) + '</button></td></tr>';
+          if (gr.rows.length < gr.total) h += '<tr class="more"><td colspan="' + (cols.length + 2) + '"><button class="linkbtn" type="button" data-lv-more="' + esc(g.key) + '">Show ' + fmt(Math.min(80, gr.total - gr.rows.length)) + ' more of ' + fmt(gr.total - gr.rows.length) + '</button></td></tr>';
         }
       }
     });
   } else {
-    if (!pageRows.length) h += '<tr><td colspan="' + (cols.length + 1) + '"><div class="empty">Nothing matches.' + (st.search.length || st.filters.length ? ' <button class="linkbtn" type="button" data-lv-clear="1">Clear the search</button>' : '') + '</div></td></tr>';
+    if (!pageRows.length) h += '<tr><td colspan="' + (cols.length + 2) + '"><div class="empty">Nothing matches.' + (st.search.length || st.filters.length ? ' <button class="linkbtn" type="button" data-lv-clear="1">Clear the search</button>' : '') + '</div></td></tr>';
     pageRows.forEach(function (r) { h += row(r); });
   }
   h += '</tbody>';
   if (cols.some(function (c) { return c.sum; }) && d.sums && d.total) {
-    h += '<tfoot><tr><td class="cb"></td>' + cols.map(function (c) { return '<td class="' + (c.sum ? 'n' : '') + (c.phone ? '' : ' o_np') + '">' + (c.sum ? fmt(d.sums[c.key]) : '') + '</td>'; }).join('') + '</tr></tfoot>';
+    h += '<tfoot><tr><td class="cb"></td>' + cols.map(function (c) { return '<td class="' + (c.sum ? 'n' : '') + (c.phone ? '' : ' o_np') + '">' + (c.sum ? fmt(d.sums[c.key]) : '') + '</td>'; }).join('') + '<td class="o_np"></td></tr></tfoot>';
   }
   return h + '</table>';
 }
@@ -12592,6 +12593,8 @@ document.addEventListener('click', function (ev) {
   if ((b = t.closest('[data-lv-selallmatch]'))) { st.all = true; lvPaint(m); return; }
   if ((b = t.closest('[data-lv-act]'))) { lvAction(m, b.getAttribute('data-lv-act')); return; }
   if (t.closest('td.cb') || t.closest('th.cb')) return;            // tick boxes are handled on change
+  if ((b = t.closest('[data-lva]'))) { lvRowAct(m, b.getAttribute('data-lva'), b.closest('tr').getAttribute('data-lv-open')); return; }
+  if (t.closest('td.o_acts')) return;
   if ((b = t.closest('tr[data-lv-open]'))) { lvOpenRow(m, b.getAttribute('data-lv-open')); return; }
 });
 document.addEventListener('change', function (ev) {
@@ -13013,6 +13016,65 @@ function wireCash() {
   var after = pagesAfterWrite;
   pagesAfterWrite = function () { after(); if (VIEW !== 'cash') CASH = null; };
 })();
+</script>
+<style>
+/* ---- plan C1: the buttons used all day are on each row again */
+table.o_list td.m, table.o_list td.nw { white-space:nowrap; }
+table.o_list td:has(> .s) { min-width:150px; }
+@media (max-width:640px) { table.o_list td.m { white-space:normal; } }
+table.o_list td.o_acts { text-align:right; white-space:nowrap; padding-top:4px; padding-bottom:4px; width:1%; }
+table.o_list td.o_acts .btn { min-height:28px; padding:3px 9px; font-size:12.5px; margin-left:4px; }
+table.o_list tr.r td.o_acts .btn { opacity:.75; }
+table.o_list tr.r:hover td.o_acts .btn, table.o_list tr.r td.o_acts .btn.primary { opacity:1; }
+</style>
+<script>
+// =====================================================================
+// plan C1: row buttons. The list rows open their page on a click, and carry
+// the two or three things done most often so they take one click, not two.
+// =====================================================================
+function lvRowActs(m, r) {
+  var TIP = { pay: 'Receive a payment', 'return': 'Goods coming back', pdf: 'Open the invoice PDF', add: 'Add to the invoice being written', edit: 'Change the details', invoice: 'New invoice for this customer', statement: 'Statement of account' };
+  var a = r.act || {}, mgr = pageIsManager(), b = function (act, label, cls) { return '<button class="btn small' + (cls ? ' ' + cls : '') + '" type="button" data-lva="' + act + '" title="' + TIP[act] + '">' + label + '</button>'; };
+  if (m === 'invoices') return (mgr && a.due > 0.5 ? b('pay', 'Pay', 'primary') : '') + (mgr && a.canReturn ? b('return', 'Return') : '') + b('pdf', 'PDF');
+  if (m === 'products') return (a.canAdd ? b('add', 'Add') : '') + (mgr ? b('edit', 'Edit') : '');
+  if (m === 'customers') return b('invoice', 'Invoice') + (mgr && a.owes > 0.5 ? b('pay', 'Pay', 'primary') : '') + b('statement', 'Statement') + b('edit', 'Edit');
+  return '';
+}
+function lvRowAct(m, act, key) {
+  var r = lvSt(m).rows[key]; if (!r) return;
+  var a = r.act || {};
+  if (m === 'invoices') {
+    if (act === 'pay') openDueBox(a.phone, a.name);
+    else if (act === 'return') openReturn(r.key);
+    else if (act === 'pdf') {
+      toast('Finding the PDF for ' + esc(r.key) + '…', false, 20000);
+      srv('erpInvoicePdf', [{ invoiceNo: r.key }], function (x) {
+        var links = [];
+        if (x.found) links.push('<a href="' + esc(x.url) + '" target="_blank" rel="noopener"><strong>Open ' + esc(x.name) + '</strong></a>');
+        (x.notes || []).forEach(function (n) { links.push('<a href="' + esc(n.url) + '" target="_blank" rel="noopener">' + esc(n.name) + '</a>'); });
+        if (!links.length) { toast(esc(x.why || 'No PDF was saved for this invoice.'), true, 10000); return; }
+        toast(links.join(' · '), false, 30000);
+      }, function (e) { toast(esc((e && e.message) || e), true, 12000); });
+    }
+  } else if (m === 'products') {
+    if (act === 'add') {
+      addToCart(r.key);
+      toast('Added to the invoice. <a href="#" id="goInv">Open New Invoice</a>');
+      var g = el('goInv'); if (g) g.addEventListener('click', function (e) { e.preventDefault(); go('invoice'); });
+    } else if (act === 'edit') {
+      if (!LISTS) loadLists();
+      srv('erpProduct', [r.key], function (p) {
+        if (!p) { toast('That product is no longer on the list.', true); return; }
+        p.isNew = false; PRODUCT_FORM = p; repaint(); window.scrollTo(0, 0);
+      }, function (e) { toast('Could not open that product: ' + esc((e && e.message) || e), true); });
+    }
+  } else if (m === 'customers') {
+    if (act === 'invoice') { FORM.name = a.name; FORM.phone = a.phone; FORM.address = a.address; go('invoice'); }
+    else if (act === 'pay') openDueBox(a.phone, a.name);
+    else if (act === 'statement') openStatement(a.phone, a.name);
+    else if (act === 'edit') { CUST_FORM = { row: a.row, id: a.id, name: a.name, phone: a.phone, email: a.email, address: a.address, type: a.type, source: a.source, status: a.status }; repaint(); window.scrollTo(0, 0); }
+  }
+}
 </script>
 </body>
 </html>

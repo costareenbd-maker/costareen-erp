@@ -47,6 +47,7 @@ const MODELS = {
         parcel: x.consignment || x.handled ? 'Sent' : x.canSend ? 'To send' : '',
         returned: x.returned, canSend: x.canSend, sent: !!(x.handled || x.fromSite || x.consignment),
         goods: goods[x.id] || '',
+        act: { phone: x.phone, name: x.customer || '', due: x.due, canReturn: !x.cancelled && !x.allBack },
       }));
     },
     search: [
@@ -101,6 +102,7 @@ const MODELS = {
         state: p.state, stateText: p.state === 'out' ? 'Out of stock' : p.state === 'low' ? 'At reorder' : 'In stock',
         status: String(p.status).toLowerCase() === 'discontinued' ? 'Discontinued' : 'Active',
         supplier: manager ? (p.supplier || '—') : undefined,
+        act: { canAdd: p.stock > 0 && p.sell > 0 && String(p.status).toLowerCase() !== 'discontinued' },
       }));
     },
     search: [
@@ -156,8 +158,10 @@ const MODELS = {
           orders: c.orders, units: c.units, spent: c.spent, lastOrder: c.lastOrder || 'never bought',
           lastAgo: c.daysSince === null ? '' : c.daysSince === 0 ? 'today' : c.daysSince + ' days ago', daysSince: c.daysSince,
           lastMonth, mobile,
+          act: { row: c.row, id: c.id, name: c.name || '', phone: c.phone || '', email: c.email || '', address: c.address || '',
+                 type: c.type || '', source: c.source || '', status: c.status || '' },
         };
-        if (money) { row.owes = d.due || 0; row.advance = d.credit || 0; }
+        if (money) { row.owes = d.due || 0; row.advance = d.credit || 0; row.act.owes = d.due || 0; }
         return row;
       });
     },
@@ -257,7 +261,7 @@ export async function erpListView(ctx, payload) {
 
   const sumCols = spec.columns.filter((x) => x.sum).map((x) => x.key);
   const sumOf = (list) => { const o = {}; for (const k of sumCols) { let t = 0; for (const r of list) t += num(r[k]); o[k] = Math.round(t); } return o; };
-  const strip = (r) => { const o = { key: r.key, open: r.open }; for (const x of spec.columns) { o[x.key] = r[x.key]; if (x.sub) o[x.sub] = r[x.sub]; if (x.badge) o[x.badge] = r[x.badge]; } return o; };
+  const strip = (r) => { const o = { key: r.key, open: r.open, act: r.act }; for (const x of spec.columns) { o[x.key] = r[x.key]; if (x.sub) o[x.sub] = r[x.sub]; if (x.badge) o[x.badge] = r[x.badge]; } return o; };
   const total = rows.length, sums = sumOf(rows);
 
   // grouped: the groups, or the rows of one of them

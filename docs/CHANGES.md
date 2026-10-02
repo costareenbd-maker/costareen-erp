@@ -126,3 +126,6 @@
 - Expenses: "Paid from". Capital: "Account" in place of "How".
 - Fixed on the way: courier payout dates left by the import as spreadsheet serial numbers were unreadable, so courier fees were missing from the P&L (`looseDate` in lib/time.js).
 - Go-live wipe keeps the accounts and empties their movements.
+
+2026-10-03 — Plan C1 (row buttons back)
+- The list rows carry their most-used actions again, one click: Invoices - Pay (when something is due), Return, PDF; Products - Add (to the invoice being written), Edit; Customers - Invoice, Pay (when they owe), Statement, Edit. A click elsewhere on the row still opens its page. Hidden on phones (the row opens the page there). Server rows carry a small `act` object for this (handlers/listview.js).
