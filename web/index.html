@@ -10621,7 +10621,7 @@ function gsPick(b) {
 document.addEventListener('keydown', function (ev) {
   if (ev.key !== 'Enter' || !ev.target || ev.target.id !== 'isearch' || !CAT) return;
   var text = ev.target.value.trim().toLowerCase(); if (!text) return;
-  var live = CAT.filter(function (p) { return String(p.status).toLowerCase() !== 'discontinued'; });
+  var live = ((typeof INV_FROM !== 'undefined' && INV_FROM && POOLCAT[INV_FROM]) || CAT).filter(function (p) { return String(p.status).toLowerCase() !== 'discontinued'; });
   var hit = live.filter(function (p) { return String(p.sku).toLowerCase() === text; })[0];
   if (!hit) {
     var some = live.filter(function (p) { return (p.name + ' ' + p.sku + ' ' + p.brand + ' ' + p.color).toLowerCase().indexOf(text) >= 0; });
@@ -13678,5 +13678,77 @@ function invFromSaved(res) {
 #view .card h2 { font-weight:600; }
 #view .kpi .lbl { font-weight:500; }
 </style>
+
+<!-- plan C3: New invoice - totals always in sight, quantity keys, fits a phone -->
+<style>
+.c3bar { position:sticky; bottom:0; z-index:40; display:flex; align-items:center; gap:16px; flex-wrap:wrap; margin-top:12px; padding:9px 14px;
+  background:var(--surface); border:1px solid var(--ring); border-radius:6px; box-shadow:0 -4px 16px rgba(0,0,0,.12); }
+.c3bar .c3n { color:var(--muted); font-size:13px; }
+.c3bar .c3t { font-size:18px; font-weight:700; font-variant-numeric:tabular-nums; }
+.c3bar .c3t small { font-size:12px; font-weight:600; color:var(--muted); margin-right:4px; }
+.c3bar .c3d { color:var(--critical); font-weight:600; font-size:13px; }
+.c3bar .c3p { color:var(--critical); font-size:12.5px; flex:1 1 160px; }
+.c3bar .btn { margin-left:auto; min-height:40px; padding:8px 18px; }
+.qst { display:inline-flex; align-items:center; gap:4px; }
+.qst button { width:30px; height:32px; border:1px solid var(--ring); background:var(--surface); color:var(--ink); border-radius:4px; font-size:17px; line-height:1; cursor:pointer; }
+.qst button:hover { background:var(--thead); }
+.qst input.i.qty { width:58px; text-align:center; }
+.inv2-l .fields { grid-template-columns:1fr 1fr; }
+.inv2 td .btn.c3x { min-width:30px; padding:4px 8px; }
+@media (max-width:640px) {
+  body.has-tabbar .c3bar { bottom:calc(64px + env(safe-area-inset-bottom)); }
+  .c3bar { gap:10px; padding:8px 10px; margin-left:-4px; margin-right:-4px; }
+  .c3bar .c3n { display:none; }
+  .c3bar .c3p { flex-basis:100%; order:5; }
+  .inv2 .card > .sub { display:none; }
+  .inv2 .fields { grid-template-columns:1fr 1fr; gap:10px; }
+  .inv2 section { margin-bottom:10px; }
+  .inv2 .card { padding:12px; }
+  .qst button { width:38px; height:38px; }
+}
+</style>
+<script>
+var viewInvoiceC3 = viewInvoice;
+viewInvoice = function () {
+  var h = viewInvoiceC3();
+  if (!CAT || !OPT || h.indexOf('class="inv2"') < 0) return h;
+  // quantity keys around every quantity box
+  h = h.replace(/<input class="i qty" type="number" min="1" step="1" data-qty="(\d+)" value="(\d+)">/g, function (m, i) {
+    return '<span class="qst"><button type="button" data-qstep="-1" data-qi="' + i + '" aria-label="One less">\u2212</button>' + m +
+           '<button type="button" data-qstep="1" data-qi="' + i + '" aria-label="One more">+</button></span>';
+  });
+  h = h.replace(/(<button class="btn small danger)(" type="button" data-del="\d+")>Remove<\/button>/g, '$1 c3x$2 title="Remove this line" aria-label="Remove this line">✕</button>');
+  var t = cartTotals(), probs = CART.length ? cartProblems() : [], units = 0;
+  CART.forEach(function (l) { units += Number(l.qty) || 0; });
+  var paid = FORM.payMode === 'full' ? t.grand : FORM.payMode === 'part' ? Math.min(num(FORM.paidNow), t.grand) : 0;
+  var due = Math.max(0, t.grand - paid);
+  var bar = '<div class="c3bar">' + (CART.length
+    ? '<span class="c3n">' + fmt(CART.length) + ' product' + (CART.length === 1 ? '' : 's') + ' \u00b7 ' + fmt(units) + ' unit' + (units === 1 ? '' : 's') + '</span>' +
+      '<span class="c3t"><small>' + esc(OPT.currency) + '</small>' + fmt(t.grand) + '</span>' +
+      (due > 0 ? '<span class="c3d">due ' + fmt(due) + '</span>' : '<span class="c3n" style="display:inline">paid in full</span>') +
+      (probs.length ? '<span class="c3p">' + esc(probs[0]) + (probs.length > 1 ? ' (+' + (probs.length - 1) + ' more)' : '') + '</span>' : '')
+    : '<span class="c3n" style="display:inline">Search a product and press Enter, or tap it, to start.</span>') +
+    '<button class="btn primary" type="button" id="c3save"' + (SAVING || !CART.length ? ' disabled' : '') + '>' + (SAVING ? 'Saving\u2026' : 'Save invoice') + '</button></div>';
+  return h + bar;
+};
+document.addEventListener('click', function (ev) {
+  var t = ev.target;
+  if (!t || VIEW !== 'invoice') return;
+  if (t.id === 'c3save') { saveInvoice(); return; }
+  if (t.getAttribute && t.getAttribute('data-qstep')) {
+    var l = CART[Number(t.getAttribute('data-qi'))];
+    if (!l) return;
+    l.qty = Math.max(1, (Number(l.qty) || 1) + Number(t.getAttribute('data-qstep')));
+    try { updateCounts(); } catch (e) {}
+    repaint();
+  }
+});
+// Ctrl+Enter (or Cmd+Enter) saves from anywhere on the invoice
+document.addEventListener('keydown', function (ev) {
+  if (VIEW !== 'invoice' || ev.key !== 'Enter' || !(ev.ctrlKey || ev.metaKey)) return;
+  if (!CART.length || SAVING) return;
+  ev.preventDefault(); saveInvoice();
+});
+</script>
 </body>
 </html>

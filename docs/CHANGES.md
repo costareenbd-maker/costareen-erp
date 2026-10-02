@@ -171,3 +171,11 @@
 2026-10-03 — Plan C2 (one table style everywhere)
 - Every table on the older screens (Stock, Expenses, Capital, Money, Suppliers, Product cost, Web orders, Quotations, Settings...) now has the look of the new lists: shaded header in normal case, same row height, row highlight, framed, group rows like the list's groups, sticky header in long tables. Style only (one CSS block "plan C2" at the end of app.html) - no screen logic changed. Phone card layout untouched.
 - Not done: the older screens do not get the new list's search box / filters / group-by / favourites; that needs a server list model per screen.
+
+2026-10-03 — Plan C3 (New invoice: faster, fits a phone)
+- A bar that stays at the bottom of the screen: products and units, grand total, what is due, the first thing still missing, and **Save invoice** - no scrolling to the end to see the total or to save. On a phone it sits just above the bottom menu.
+- Quantity keys (− / +) around every quantity box. Remove is a small ✕.
+- Customer takes two lines instead of five (phone + name, delivery + date, address). On a phone the help lines are hidden and fields sit two to a row.
+- Ctrl+Enter saves. Typing a code and pressing Enter (already there) now also works when selling from a joint pool.
+- Layout only: every field, rule and id is as before (one block "plan C3" at the end of app.html).
+- Not done: product photos in the search (products have no photos stored).
