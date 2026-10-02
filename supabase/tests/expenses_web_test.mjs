@@ -238,13 +238,13 @@ check('xlsx parts present, CRCs right', ['[Content_Types].xml', '_rels/.rels', '
   'xl/styles.xml', 'xl/worksheets/sheet1.xml', 'xl/worksheets/sheet2.xml'].every((n) => z[n] && z[n].crcOk), Object.keys(z));
 check('two sheets Summary, Entries', /<sheet name="Summary" sheetId="1"/.test(z['xl/workbook.xml'].text) && /<sheet name="Entries" sheetId="2"/.test(z['xl/workbook.xml'].text));
 const s1 = z['xl/worksheets/sheet1.xml'].text;
-check('Summary: title bold 14 at A1, label, NET PROFIT on row 13 bold, widths',
+check('Summary: title bold 14 at A1, label, NET PROFIT on row 16 bold, widths',
   /<c r="A1" s="2" t="inlineStr"><is><t xml:space="preserve">Costareen - expenses<\/t>/.test(s1) &&
   /<c r="A2" t="inlineStr"><is><t xml:space="preserve">March 2025</.test(s1) &&
-  /<c r="A13" s="1" t="inlineStr"><is><t xml:space="preserve">NET PROFIT<\/t><\/is><\/c><c r="B13" s="1"><v>-20580<\/v>/.test(s1) &&
+  /<c r="A16" s="1" t="inlineStr"><is><t xml:space="preserve">NET PROFIT<\/t><\/is><\/c><c r="B16" s="1"><v>-20580<\/v>/.test(s1) &&
   /<c r="A4" t="inlineStr"><is><t xml:space="preserve">Sold \(after discounts\)<\/t><\/is><\/c><c r="B4"><v>2200<\/v>/.test(s1) &&
-  /<col min="1" max="1" width="39.29" customWidth="1"\/>/.test(s1) && /<c r="A15" t="inlineStr"><is><t xml:space="preserve">By category/.test(s1) &&
-  /<c r="A16" t="inlineStr"><is><t xml:space="preserve">Rent<\/t><\/is><\/c><c r="B16"><v>15000<\/v>/.test(s1), s1.slice(0, 1500));
+  /<col min="1" max="1" width="39.29" customWidth="1"\/>/.test(s1) && /<c r="A18" t="inlineStr"><is><t xml:space="preserve">By category/.test(s1) &&
+  /<c r="A19" t="inlineStr"><is><t xml:space="preserve">Rent<\/t><\/is><\/c><c r="B19"><v>15000<\/v>/.test(s1), s1.slice(0, 1500));
 const s2 = z['xl/worksheets/sheet2.xml'].text;
 check('Entries: bold frozen header, oldest first, one-off, struck text, & escaped',
   /<pane ySplit="1" topLeftCell="A2" activePane="bottomLeft" state="frozen"\/>/.test(s2) &&

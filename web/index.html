@@ -1192,8 +1192,11 @@ function viewDash() {
     kpiT('Revenue', cur, fmt(k.revenueMTD), delta(k.revenueMTD, k.revenuePrev), 'accent') +
     (p ? kpiT('Gross profit', cur, fmt(p.monthGross), '<span class="delta">' + fmt(p.monthMargin) + '% margin · goods cost ' + fmt(p.monthCost) + '</span>', p.monthGross < 0 ? 'bad' : 'good') : '') +
     (p && p.monthExpenses !== null && p.monthExpenses !== undefined
-      ? kpiT('Net profit', cur, fmt(p.monthGross - p.monthExpenses), '<span class="delta">' + (p.monthGross - p.monthExpenses < 0 ? '<span class="down">a loss</span> · ' : '') +
-          'after ' + fmt(p.monthExpenses) + ' of expenses paid' + (p.monthUnpaid > 0 ? ' · ' + fmt(p.monthUnpaid) + ' still to pay' : '') + '</span>', p.monthGross - p.monthExpenses < 0 ? 'bad' : 'good') : '') +
+      ? (function () {
+          var net = (p.monthNet !== null && p.monthNet !== undefined) ? p.monthNet : p.monthGross - p.monthExpenses;
+          return kpiT('Net profit', cur, fmt(net), '<span class="delta">' + (net < 0 ? '<span class="down">a loss</span> · ' : '') +
+            'after ' + fmt(p.monthExpenses) + ' of expenses' + (p.monthOther ? ' and ' + fmt(Math.abs(p.monthOther)) + (p.monthOther < 0 ? ' courier cost' : ' delivery income') : '') +
+            (p.monthUnpaid > 0 ? ' · ' + fmt(p.monthUnpaid) + ' still to pay' : '') + '</span>', net < 0 ? 'bad' : 'good'); })() : '') +
     kpiT('Orders', '', fmt(k.ordersMTD), delta(k.ordersMTD, k.ordersPrev)) +
     kpiT('Average order', cur, fmt(k.aov), '<span class="delta">' + fmt(k.unitsMTD) + ' units sold</span>') +
     kpiT('Customers', '', fmt(k.customers), '<span class="delta">' + (k.newCustomers ? '<span class="up">+' + k.newCustomers + '</span> new this month' : 'no new customers yet') + '</span>') +
@@ -6604,7 +6607,7 @@ function viewExpenses() {
         '<span class="delta">1st to last day of ' + esc(e.label) + '</span>') +
     kpi('Net profit', cur, fmt(e.net),
         '<span class="delta">' + (e.net >= 0 ? '' : '<span class="down">a loss · </span>') +
-        'gross ' + fmt(e.gross) + ' less expenses paid' + (e.fixedUnpaid > 0 ? ' · ' + fmt(e.fixedUnpaid) + ' still to pay' : '') + '</span>') +
+        'gross ' + fmt(e.gross) + (e.other ? (e.other > 0 ? ' + ' : ' − ') + fmt(Math.abs(e.other)) + ' delivery and courier' : '') + ' less expenses paid' + (e.fixedUnpaid > 0 ? ' · ' + fmt(e.fixedUnpaid) + ' still to pay' : '') + '</span>') +
     '</div></section>';
 
   // ---- 1. fixed ----

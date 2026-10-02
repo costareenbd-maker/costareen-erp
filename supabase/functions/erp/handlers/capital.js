@@ -15,7 +15,7 @@
 import { formatDate, num, dhakaDayStart, monthStr } from '../lib/time.js';
 import { phone11 } from '../lib/phone.js';
 import { lock, who } from './money.js';
-import { monthGross, expenseTotal } from './dashboard.js';
+import { monthNet, pnlFor } from './dashboard.js';
 
 const ERP_CAP_TYPES = { invest: 'Money put in', withdraw: 'Capital taken back',
                         profit: 'Profit paid out', ret: 'Return paid' };
@@ -62,9 +62,9 @@ async function closedMonths(ctx) {
 /** Was this person part of the business in this month? */
 const isIn = (h, month) => (!h.since || month >= h.since) && (!h.ended || month <= h.ended);
 
-/** What a month really made: the figure the Expenses screen calls net profit. */
+/** What a month really made: the one net profit every screen shows (plan A2, dashboard.js pnlFor). */
 async function capNet(ctx, month) {
-  return (await monthGross(ctx, month)).gross - (await expenseTotal(ctx, month));
+  return (await monthNet(ctx, month)).net;
 }
 
 /** What an investor is due for one month, from their terms and the money they have in. */
@@ -88,14 +88,18 @@ export async function erpCapital(ctx) {
   const months = [];
   for (let g = 0, m = nowMonth; g < 24 && m >= first; g++, m = monthShift(m, -1)) months.unshift(m);
 
+  // the open months, worked out together in one pass over the books
+  const live = {};
+  let liveErr = '';
+  const open = months.filter((m) => !closed[m]);
+  if (open.length) {
+    try { (await ctx.tx.savepoint(() => pnlFor(ctx, open))).forEach((x) => { live[x.month] = x.net; }); }
+    catch (e) { liveErr = String((e && e.message) || e); }
+  }
   const monthRows = [];
   for (const mo of months) {
     const c = closed[mo];
-    let net = c ? c.net : 0, err = '';
-    if (!c) {
-      try { net = Math.round(await ctx.tx.savepoint(() => capNet(ctx, mo))); }
-      catch (e) { err = String((e && e.message) || e); }
-    }
+    const net = c ? c.net : Math.round(live[mo] || 0), err = c ? '' : liveErr;
     monthRows.push({ month: mo, net, closed: !!c, shares: c ? c.shares : null, current: mo === nowMonth, error: err });
   }
 

@@ -577,6 +577,9 @@ export async function erpDashboardData(ctx) {
     monthMargin: monthG.revenue > 0 ? Math.round((monthG.gross / monthG.revenue) * 1000) / 10 : 0,
     uncosted: Math.round(revenueUncosted),
     monthExpenses: await soft(ctx, () => expenseTotal(ctx, thisKey), null),
+    // plan A2: the month's net as the Profitability screen has it (courier and delivery included)
+    monthNet: await soft(ctx, async () => (await monthNet(ctx, thisKey)).net, null),
+    monthOther: await soft(ctx, async () => { const m = await monthNet(ctx, thisKey); return m.delivery + m.courierExtra - m.courierShort - m.courier; }, 0),
     monthUnpaid: await soft(ctx, () => expenseUnpaid(ctx, thisKey), 0),
   };
 
@@ -657,14 +660,19 @@ export async function erpDaySales(ctx, dateStr) {
 
 // ----------------------------------------------------------- profitability
 
-/** erpPnl (ERP.js:8306): calendar-month profit and loss. */
-export async function erpPnl(ctx, payload) {
-  const n = Math.min(12, Math.max(1, Math.round(num(payload && payload.months)) || 6));
+/**
+ * The profit and loss of some months - THE one place a month's profit is worked
+ * out (plan A2). The Profitability screen, the Expenses screen, the Dashboard
+ * and the Capital book all read this, so they can never disagree:
+ *
+ *   net = sales - returns - cost of the goods            (gross)
+ *         + delivery charged to customers
+ *         + courier collected more  - courier collected less (written off)
+ *         - what the courier kept (delivery + COD fee)
+ *         - expenses
+ */
+export async function pnlFor(ctx, months) {
   const now = monthKey(ctx.now);
-  // the window can end on an earlier month (redesign phase 4: the month picker)
-  const to = payload && /^\d{4}-(0[1-9]|1[0-2])$/.test(String(payload.to || '')) && payload.to < now ? payload.to : now;
-  const months = [];
-  for (let i = n - 1; i >= 0; i--) months.push(shiftMonth(to, -i));
   const want = {};
   for (const m of months) want[m] = { month: m, sales: 0, returns: 0, cost: 0, delivery: 0, uncosted: 0 };
 
@@ -752,6 +760,25 @@ export async function erpPnl(ctx, payload) {
                courierExtra: Math.round(cx.extra), courierShort: Math.round(cx.short),
                uncosted: Math.round(x.uncosted), current: m === now });
   }
+  return out;
+}
+
+/** One month of it (kept for the length of the call: several screens' parts ask for the same month). */
+export async function monthNet(ctx, month) {
+  const k = 'pnl:' + month;
+  if (!ctx.memo[k]) ctx.memo[k] = (await pnlFor(ctx, [month]))[0];
+  return ctx.memo[k];
+}
+
+/** erpPnl (ERP.js:8306): calendar-month profit and loss. */
+export async function erpPnl(ctx, payload) {
+  const n = Math.min(12, Math.max(1, Math.round(num(payload && payload.months)) || 6));
+  const now = monthKey(ctx.now);
+  // the window can end on an earlier month (redesign phase 4: the month picker)
+  const to = payload && /^\d{4}-(0[1-9]|1[0-2])$/.test(String(payload.to || '')) && payload.to < now ? payload.to : now;
+  const months = [];
+  for (let i = n - 1; i >= 0; i--) months.push(shiftMonth(to, -i));
+  const out = await pnlFor(ctx, months);
   const cats = {};
   for (const x of out) for (const c of Object.keys(x.byCat)) cats[c] = 1;
   return { months: out, categories: Object.keys(cats).sort(), to, thisMonth: now,

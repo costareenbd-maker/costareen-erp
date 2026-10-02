@@ -10,7 +10,7 @@ import { asDate, str } from '../lib/tabs.js';
 import { formatDate, num } from '../lib/time.js';
 import { getConfig, setConfig, saveFile, deleteFile, fileUrl } from '../lib/ext.js';
 import { who } from './money.js';
-import { monthGross } from './dashboard.js';
+import { monthGross, monthNet } from './dashboard.js';
 
 /** Each section offers only the categories that belong in it (ERP.js:6573). */
 export const ERP_EXP_CATS = {
@@ -175,7 +175,9 @@ export async function erpExpenses(ctx, payload) {
   const all = rows.slice().sort((a, b) => b.ts - a.ts);
   const oneoff = all.filter((x) => x.kind === 'oneoff');
 
-  const g = await monthGross(ctx, month);
+  // plan A2: what the month earned, exactly as the Profitability screen has it
+  const g = await monthNet(ctx, month);
+  const other = g.delivery + g.courierExtra - g.courierShort - g.courier;
   const total = Math.round(sums.fixed + sums.recurring + sums.oneoff);
   const p = month.split('-');
   return {
@@ -187,8 +189,10 @@ export async function erpExpenses(ctx, payload) {
     fixed: Math.round(sums.fixed), fixedPaid: Math.round(sums.fixed),
     fixedUnpaid: Math.round(fixedUnpaid), recurring: Math.round(sums.recurring),
     oneoffTotal: Math.round(sums.oneoff), total,
-    revenue: g.revenue, goodsCost: g.cost, gross: g.gross, net: g.gross - total,
-    netAfterUnpaid: g.gross - total - Math.round(fixedUnpaid),
+    revenue: g.netSales, goodsCost: g.cost, gross: g.gross,
+    delivery: g.delivery, courier: g.courier, courierExtra: g.courierExtra, courierShort: g.courierShort, other,
+    net: g.gross + other - total,
+    netAfterUnpaid: g.gross + other - total - Math.round(fixedUnpaid),
   };
 }
 
@@ -388,7 +392,10 @@ export async function erpExpenseExport(ctx, payload) {
     [biz + ' - expenses', ''], [e.label, ''], ['', ''],
     ['Sold (after discounts)', e.revenue],
     ['The goods cost', e.goodsCost],
-    ['Gross profit', e.gross], ['', ''],
+    ['Gross profit', e.gross],
+    ['Delivery charged to customers', e.delivery],
+    ['Courier: delivery + COD fee', -e.courier],
+    ['Courier collected more / less', e.courierExtra - e.courierShort], ['', ''],
     ['Fixed expenses', e.fixed],
     ['Recurring expenses', e.recurring],
     ['One-off expenses', e.oneoffTotal],
@@ -408,7 +415,7 @@ export async function erpExpenseExport(ctx, payload) {
 
   const bytes = buildXlsx([
     { name: 'Summary', rows: summary, widthsPx: [280, 130],
-      style: (r, c) => (r === 0 && c === 0 ? 'title' : r === 12 ? 'bold' : '') },
+      style: (r, c) => (r === 0 && c === 0 ? 'title' : (summary[r] && summary[r][0] === 'NET PROFIT') ? 'bold' : '') },
     { name: 'Entries', rows, frozenRows: 1, style: (r) => (r === 0 ? 'bold' : '') },
   ]);
 
