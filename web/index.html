@@ -8306,7 +8306,7 @@ function srv(name, args, ok, bad) {
 
 var SRV_ACTIVE = 0, SRV_WRITING = false;
 // the same list the server uses to know a call changes nothing (ERP_READS)
-var SRV_READS = /^(erpBundle|erpHello|erpMe|erpCatalog|erpSales|erpDues|erpCustomers|erpPnl|erpMoney|erpToday|erpDaySales|erpProduct|erpLookupCustomer|erpCustomerAccount|erpCustomerStatement|erpCustomerCredit|erpWebOrders|erpWebOrderInvoices|erpCampaignAudience|erpCampaignList|erpCampaignGet|erpEvoStatus|erpBrandLogo|erpQuoteBoot|erpQuoteList|erpQuoteGet|erpQuoteAsset|erpExpenses|erpCapital|erpBackupStatus|erpAiKeys|erpGetTheme|erpBusinesses|erpStockHistory|erpReorderPlan|erpPoList|erpSfPayoutLines|erpBookedParcels|erpParcelPreview|erpReturnPreview|erpSettingsFull|erpSettingsLists|erpFormOptions|erpAdmin|erpPeople|erpDevices|erpCourierKeyStatus|erpPayReasons|erpDiscontinued|erpAccessWarning|erpBusinessLinks|erpLookupUsage|erpRecentInvoices|erpCourier|erpDashboardData|erpInvoice|erpCustomerPage|erpSearch|erpProductPage|erpPnlMonth|erpExpenseReceiptUrl|erpPartnership|erpPartnerStock|erpSecurity|erpCustomerList|erpAlerts|erpAccessKeys|erpListView|erpCurrencies|erpSharedStock|erpPoolCatalog|erpCashBook|erpSuppliers|erpSupplierPage)$/;
+var SRV_READS = /^(erpBundle|erpHello|erpMe|erpCatalog|erpSales|erpDues|erpCustomers|erpPnl|erpMoney|erpToday|erpDaySales|erpProduct|erpLookupCustomer|erpCustomerAccount|erpCustomerStatement|erpCustomerCredit|erpWebOrders|erpWebOrderInvoices|erpCampaignAudience|erpCampaignList|erpCampaignGet|erpEvoStatus|erpBrandLogo|erpQuoteBoot|erpQuoteList|erpQuoteGet|erpQuoteAsset|erpExpenses|erpCapital|erpBackupStatus|erpAiKeys|erpGetTheme|erpBusinesses|erpStockHistory|erpReorderPlan|erpPoList|erpSfPayoutLines|erpBookedParcels|erpParcelPreview|erpReturnPreview|erpSettingsFull|erpSettingsLists|erpFormOptions|erpAdmin|erpPeople|erpDevices|erpCourierKeyStatus|erpPayReasons|erpDiscontinued|erpAccessWarning|erpBusinessLinks|erpLookupUsage|erpRecentInvoices|erpCourier|erpDashboardData|erpInvoice|erpCustomerPage|erpSearch|erpProductPage|erpPnlMonth|erpExpenseReceiptUrl|erpPartnership|erpPartnerStock|erpSecurity|erpCustomerList|erpAlerts|erpAccessKeys|erpListView|erpCurrencies|erpSharedStock|erpPoolCatalog|erpProductThumbs|erpProductPhotoUrl|erpCashBook|erpSuppliers|erpSupplierPage)$/;
 function srvPump() {
   if (!SRV_Q.length) return;
   var isRead = SRV_READS.test(SRV_Q[0].name);
@@ -13973,6 +13973,121 @@ document.addEventListener('click', function (ev) {
   if (t.id === 'qz_toinv' && QZ.quote) { quoteToInvoice(QZ.quote); return; }
   var id = t.getAttribute('data-qzinv');
   if (id) srv('erpQuoteGet', [{ id: id }], function (q) { quoteToInvoice(q); }, function (e) { toast(esc(e && e.message ? e.message : e), true); });
+});
+</script>
+
+<!-- plan D3: product photos - on the product page, in the product list, in the invoice search -->
+<style>
+.pth { width:34px; height:34px; border-radius:4px; object-fit:cover; vertical-align:middle; margin-right:9px; border:1px solid var(--ring); background:var(--thead); flex:none; }
+#iresults .r .pth { width:40px; height:40px; float:left; }
+table.o_list td .pth { float:left; }
+.d3photo { display:flex; gap:16px; align-items:center; flex-wrap:wrap; }
+.d3photo .big { width:120px; height:120px; border-radius:6px; object-fit:cover; border:1px solid var(--ring); background:var(--thead); cursor:pointer; }
+.d3photo .none { width:120px; height:120px; border-radius:6px; border:1px dashed var(--ring); display:flex; align-items:center; justify-content:center; color:var(--muted); font-size:12px; text-align:center; }
+</style>
+<script>
+var THUMBS = null, THUMBS_BUSY = false, D3_BUSY = false;
+function thumbsLoad(force) {
+  if (THUMBS_BUSY || (THUMBS && !force) || !ME) return;
+  THUMBS_BUSY = true;
+  srv('erpProductThumbs', [], function (r) { THUMBS_BUSY = false; THUMBS = r.thumbs || {}; d3Decorate(); },
+      function () { THUMBS_BUSY = false; THUMBS = {}; });
+}
+function thumbOf(sku) { return (THUMBS && THUMBS[String(sku || '').toLowerCase()]) || ''; }
+/** Put the small pictures beside product rows that are on screen. */
+function d3Decorate() {
+  if (!THUMBS) { thumbsLoad(); return; }
+  var any = false; for (var k in THUMBS) { any = true; break; }
+  if (!any) return;
+  function add(node, sku, where) {
+    if (!node || node.getAttribute('data-pth')) return;
+    node.setAttribute('data-pth', '1');
+    var src = thumbOf(sku); if (!src) return;
+    var img = document.createElement('img'); img.className = 'pth'; img.alt = ''; img.loading = 'lazy'; img.src = src;
+    where.insertBefore(img, where.firstChild);
+  }
+  var rows = document.querySelectorAll('#view .o_lv[data-lv="products"] tr[data-lv-open]:not([data-pth])');
+  for (var i = 0; i < rows.length; i++) { var td = rows[i].children[1]; if (td) add(rows[i], rows[i].getAttribute('data-lv-open'), td); }
+  var picks = document.querySelectorAll('#iresults .r[data-pick]:not([data-pth]), #rv_results .r[data-rvpick]:not([data-pth])');
+  for (var j = 0; j < picks.length; j++) add(picks[j], picks[j].getAttribute('data-pick') || picks[j].getAttribute('data-rvpick'), picks[j].firstElementChild || picks[j]);
+}
+(function () {
+  if (!window.MutationObserver) return;
+  var due = false;
+  new MutationObserver(function () {
+    if (due) return; due = true;
+    setTimeout(function () { due = false; try { d3Decorate(); } catch (e) {} }, 40);
+  }).observe(document.body, { childList: true, subtree: true });
+})();
+
+// ---- the product page: see it, add it, change it, remove it
+function d3Card() {
+  var p = PRODP.data, sku = PRODP.sku, src = thumbOf(sku), can = typeof pageIsManager === 'function' ? pageIsManager() : true;
+  if (!src && !can) return '';
+  return '<section><div class="card"><h2>Photo</h2><div class="d3photo">' +
+    (src ? '<img class="big" id="d3_open" src="' + esc(src) + '" alt="Photo of the product" title="Open the full picture">' : '<div class="none">No photo yet</div>') +
+    (can ? '<div><input type="file" id="d3_file" accept="image/jpeg,image/png,image/webp" hidden>' +
+      '<button class="btn primary" type="button" id="d3_pick"' + (D3_BUSY ? ' disabled' : '') + '>' + (D3_BUSY ? 'Saving\u2026' : src ? 'Change photo' : 'Add a photo') + '</button> ' +
+      (src ? '<button class="btn" type="button" id="d3_rm"' + (D3_BUSY ? ' disabled' : '') + '>Remove</button>' : '') +
+      '<div class="sub" style="margin-top:8px">Shown in the product list and when adding products to an invoice. Any phone photo will do \u2014 it is made smaller before it is sent.</div></div>' : '') +
+    '</div></div></section>';
+}
+var productPageHtmlD3 = productPageHtml;
+productPageHtml = function () {
+  var h = productPageHtmlD3();
+  if (!PRODP.data) return h;
+  thumbsLoad();
+  var at = h.indexOf('</section>');
+  return at < 0 ? h + d3Card() : h.slice(0, at + 10) + d3Card() + h.slice(at + 10);
+};
+/** A picture file -> { full: base64 JPEG up to 1200px, thumb: data URL 96px }. */
+function d3Shrink(file) {
+  return new Promise(function (ok, bad) {
+    var url = URL.createObjectURL(file), img = new Image();
+    img.onload = function () {
+      try {
+        function draw(max, q, square) {
+          var w = img.naturalWidth, h = img.naturalHeight, sx = 0, sy = 0, sw = w, sh = h;
+          if (square) { var m = Math.min(w, h); sx = (w - m) / 2; sy = (h - m) / 2; sw = sh = m; w = h = m; }
+          var k = Math.min(1, max / Math.max(w, h)), c = document.createElement('canvas');
+          c.width = Math.max(1, Math.round(w * k)); c.height = Math.max(1, Math.round(h * k));
+          var g = c.getContext('2d'); g.fillStyle = '#fff'; g.fillRect(0, 0, c.width, c.height);
+          g.drawImage(img, sx, sy, sw, sh, 0, 0, c.width, c.height);
+          return c.toDataURL('image/jpeg', q);
+        }
+        var full = draw(1200, 0.85, false), thumb = draw(96, 0.72, true);
+        URL.revokeObjectURL(url);
+        ok({ full: full.split(',')[1], thumb: thumb });
+      } catch (e) { bad(e); }
+    };
+    img.onerror = function () { URL.revokeObjectURL(url); bad(new Error('That file is not a picture this browser can read.')); };
+    img.src = url;
+  });
+}
+document.addEventListener('click', async function (ev) {
+  var t = ev.target; if (!t || !t.id) return;
+  if (t.id === 'd3_pick') { var f = el('d3_file'); if (f) f.click(); }
+  if (t.id === 'd3_open') {
+    srv('erpProductPhotoUrl', [{ sku: PRODP.sku }], function (r) { if (r.url) window.open(r.url, '_blank', 'noopener'); },
+        function (e) { toast(esc(e && e.message ? e.message : e), true); });
+  }
+  if (t.id === 'd3_rm') {
+    if (!(await uiConfirm('Remove this product\u2019s photo?'))) return;
+    D3_BUSY = true; repaint();
+    srv('erpProductPhoto', [{ sku: PRODP.sku, remove: true }], function (r) {
+      D3_BUSY = false; if (THUMBS) delete THUMBS[String(r.sku).toLowerCase()]; toast('Photo removed.'); repaint();
+    }, function (e) { D3_BUSY = false; toast(esc(e && e.message ? e.message : e), true, 10000); repaint(); });
+  }
+});
+document.addEventListener('change', function (ev) {
+  var t = ev.target; if (!t || t.id !== 'd3_file' || !t.files || !t.files[0]) return;
+  var sku = PRODP.sku;
+  D3_BUSY = true; repaint();
+  d3Shrink(t.files[0]).then(function (x) {
+    srv('erpProductPhoto', [{ sku: sku, file: { data: x.full, mime: 'image/jpeg' }, thumb: x.thumb }], function (r) {
+      D3_BUSY = false; THUMBS = THUMBS || {}; THUMBS[String(r.sku).toLowerCase()] = r.thumb; toast('Photo saved.'); repaint();
+    }, function (e) { D3_BUSY = false; toast(esc(e && e.message ? e.message : e), true, 12000); repaint(); });
+  }, function (e) { D3_BUSY = false; toast(esc(e && e.message ? e.message : e), true, 12000); repaint(); });
 });
 </script>
 </body>

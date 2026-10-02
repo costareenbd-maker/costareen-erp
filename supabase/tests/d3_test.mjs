@@ -1,0 +1,33 @@
+// Plan D3 (first half): product photos.
+import { sql, FIX, owner, mgr, sales, check, done, files } from './harness.mjs';
+const PLA = 'FIL-SUN-PLA-BLA-001';
+const png = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==';
+const thumb = 'data:image/jpeg;base64,' + png;
+
+let r = await sales('erpProductThumbs', []);
+check('no photos to begin with', r.ok && Object.keys(r.result.thumbs).length === 0, r);
+r = await sales('erpProductPhoto', [{ sku: PLA, file: { data: png, mime: 'image/png' }, thumb }]);
+check('sales staff cannot change a photo', !r.ok, r);
+r = await mgr('erpProductPhoto', [{ sku: 'NOPE', file: { data: png, mime: 'image/png' }, thumb }]);
+check('unknown product', !r.ok && /no longer on the list/.test(r.error), r);
+r = await mgr('erpProductPhoto', [{ sku: PLA, file: { data: png, mime: 'application/pdf' }, thumb }]);
+check('only pictures', !r.ok && /JPG, PNG or WebP/.test(r.error), r);
+r = await mgr('erpProductPhoto', [{ sku: PLA, file: { data: png, mime: 'image/png' }, thumb: 'javascript:alert(1)' }]);
+check('the small picture must be a plain image data URL', !r.ok && /small picture/.test(r.error), r);
+r = await mgr('erpProductPhoto', [{ sku: PLA, file: { data: png, mime: 'image/png' }, thumb: 'data:image/svg+xml;base64,' + png }]);
+check('...and never an SVG', !r.ok && /small picture/.test(r.error), r);
+r = await mgr('erpProductPhoto', [{ sku: PLA.toLowerCase(), file: { data: png, mime: 'image/png' }, thumb }]);
+check('photo kept', r.ok && r.result.photo === true && r.result.sku === PLA && files.list().some((k) => k.startsWith(FIX.B + '/products/FIL-SUN-PLA-BLA-001-')), files.list());
+r = await sales('erpProductThumbs', []);
+check('the small picture travels with the list, by product code', r.ok && r.result.thumbs[PLA.toLowerCase()] === thumb, r.result);
+r = await sales('erpProductPhotoUrl', [{ sku: PLA }]);
+check('a link to the full picture', r.ok && /^https:\/\/files\.test\/.+products/.test(r.result.url), r);
+r = await mgr('erpProductPhoto', [{ sku: PLA, file: { data: png, mime: 'image/jpeg' }, thumb }]);
+check('a new photo replaces the old one', r.ok && files.list().filter((k) => k.includes('/products/')).length === 1 && files.list().some((k) => /\.jpg$/.test(k)), files.list());
+r = await mgr('erpProductPhoto', [{ sku: PLA, remove: true }]);
+check('removed: file gone, list clean', r.ok && !files.list().some((k) => k.includes('/products/')) && Object.keys((await sales('erpProductThumbs', [])).result.thumbs).length === 0, files.list());
+r = await sales('erpProductPhotoUrl', [{ sku: PLA }]);
+check('no link when there is no photo', !r.ok && /No photo/.test(r.error), r);
+const other = await sql`select count(*)::int n from products where business_id = ${FIX.B2} and thumb is not null`;
+check('another business untouched', other[0].n === 0);
+await done();

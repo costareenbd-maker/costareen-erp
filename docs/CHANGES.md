@@ -193,3 +193,9 @@
 - **Invoice** button on every quotation in the list, and **Make invoice** on the open quotation. One click puts it on the New invoice screen: customer name, phone and address; each product at the quoted rate (as a discount per piece under the price list); the quotation's discount; its delivery charge. Then check and Save - the invoice notes which quotation it came from.
 - It says plainly what could not be carried: lines that are not products in the list (services, free-text items), lines quoted above the price list (the invoice uses the price list), and VAT (invoices here have no VAT line).
 - Page only (block "plan D4"); createInvoice already took a note.
+
+2026-10-03 — Plan D3, first half (product photos)
+- A **Photo** card on every product's page: add, change, remove (manager and up). The picture is made smaller in the browser before it is sent (full picture up to 1200 px kept in storage; a tiny square one kept with the product for lists).
+- The small picture shows in the Products list, in the product search on New invoice, and in Receive stock's search. Tapping the photo on the product page opens the full picture.
+- 036_product_photos.sql (products.photo, products.thumb), goods.js erpProductPhoto / erpProductPhotoUrl / erpProductThumbs, tests/d3_test.mjs (13).
+- Not done yet: photos in the price-list PDF; colour variants (second half of D3).

@@ -14,6 +14,7 @@ import { roleAtLeast } from '../allow.js';
 import { forget } from '../lib/tabs.js';
 import { erpCatalog } from './catalog.js';
 import { lock, who } from './money.js';
+import { saveFile, deleteFile, fileUrl } from '../lib/ext.js';
 
 const str = (v) => String(v == null ? '' : v).trim();
 const day = (d) => (d ? formatDate(d, 'd MMM yyyy') : '');
@@ -209,4 +210,64 @@ export async function erpFreezeSaleCosts(ctx) {
   return { ok: true, fixed: before - after, stillWithoutCost: after };
 }
 
-export const HANDLERS = { erpProductPage, erpStockCount, erpFreezeSaleCosts };
+// ------------------------------------------------------------------ photos (plan D3)
+const PHOTO_TYPES = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp' };
+const THUMB_OK = /^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/;
+
+async function productRow(ctx, sku) {
+  const k = str(sku);
+  if (!k) throw new Error('Which product?');
+  const p = (await ctx.tx`select id, sku, name, photo from products where business_id = ${ctx.biz} and lower(btrim(sku)) = ${k.toLowerCase()} limit 1`)[0];
+  if (!p) throw new Error('That product is no longer on the list.');
+  return p;
+}
+
+/**
+ * Keep (or remove) a product's photo.
+ *   { sku, file: { data (base64), mime }, thumb (data: URL, made by the browser) }   or   { sku, remove: true }
+ */
+export async function erpProductPhoto(ctx, payload) {
+  payload = payload || {};
+  const p = await productRow(ctx, payload.sku);
+  if (payload.remove) {
+    if (str(p.photo)) await deleteFile(ctx, 'products', str(p.photo));
+    await ctx.tx`update products set photo = null, thumb = null where id = ${p.id}`;
+    return { ok: true, sku: str(p.sku), thumb: '', photo: false };
+  }
+  const f = payload.file || {};
+  const ext = PHOTO_TYPES[str(f.mime)];
+  if (!ext) throw new Error('A product photo is a JPG, PNG or WebP picture.');
+  const thumb = str(payload.thumb);
+  if (!THUMB_OK.test(thumb) || thumb.length > 24000) throw new Error('The small picture for the lists could not be made. Try another photo.');
+  let bytes;
+  try {
+    const bin = atob(String(f.data || ''));
+    bytes = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+  } catch (_) { throw new Error('That picture could not be read. Try again.'); }
+  if (!bytes.length) throw new Error('That picture is empty.');
+  if (bytes.length > 2 * 1024 * 1024) throw new Error('That picture is over 2 MB. Use a smaller one.');
+  const name = str(p.sku).replace(/[^A-Za-z0-9_-]+/g, '_').slice(0, 60) + '-' + Date.now() + '.' + ext;
+  if (str(p.photo)) await deleteFile(ctx, 'products', str(p.photo));
+  await saveFile(ctx, 'products', name, bytes, str(f.mime));
+  await ctx.tx`update products set photo = ${name}, thumb = ${thumb} where id = ${p.id}`;
+  return { ok: true, sku: str(p.sku), thumb, photo: true };
+}
+
+/** A link to the full picture (links expire, so one is made each time). */
+export async function erpProductPhotoUrl(ctx, payload) {
+  const p = await productRow(ctx, payload && payload.sku);
+  if (!str(p.photo)) throw new Error('No photo is kept for that product.');
+  return { url: await fileUrl(ctx, 'products', str(p.photo)) };
+}
+
+/** Every product's small picture, by product code - fetched once and kept by the browser. */
+export async function erpProductThumbs(ctx) {
+  const out = {};
+  for (const r of await ctx.tx`select sku, thumb from products where business_id = ${ctx.biz} and thumb is not null`) {
+    out[str(r.sku).toLowerCase()] = str(r.thumb);
+  }
+  return { thumbs: out };
+}
+
+export const HANDLERS = { erpProductPage, erpStockCount, erpFreezeSaleCosts, erpProductPhoto, erpProductPhotoUrl, erpProductThumbs };
