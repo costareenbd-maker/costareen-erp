@@ -15,6 +15,7 @@ import { getConfig, setConfig } from '../lib/ext.js';
 import { roleAtLeast } from '../allow.js';
 import { lock, who } from './money.js';
 import { billForShipment } from './suppliers.js';
+import { ratesMap, landedCost, saveRate } from './currency.js';
 
 // CFG.SKU_PREFIX / CFG.BRAND_CODE (Code.js:40-56)
 export const SKU_PREFIX = {
@@ -77,17 +78,15 @@ function bookKeyOf(cat, brand, type) {
  */
 export async function bookCostMap(ctx) {
   if (ctx.memo.bookCost) return ctx.memo.bookCost;
-  const rate = num(await getConfig(ctx, 'cost_rate', '0'));
+  const rates = await ratesMap(ctx);
   const defH = num(await getConfig(ctx, 'cost_handling', '0'));
   const rows = await ctx.tx`
-    select category, brand, type, buy_rmb, buy_bdt, handling
+    select category, brand, type, buy_rmb, buy_bdt, buy_amount, buy_cur, handling
     from cost_book where business_id = ${ctx.biz}
     order by sort_order, id`;
   const map = {};
   for (const r of rows) {
-    const h = r.handling === null || r.handling === undefined ? defH : num(r.handling);
-    const rmb = num(r.buy_rmb), bdt = num(r.buy_bdt);
-    const landed = rmb > 0 ? round2(rmb * rate + h) : bdt > 0 ? round2(bdt + h) : 0;
+    const landed = landedCost(r, rates, defH) || 0;
     if (landed > 0) map[bookKeyOf(r.category, r.brand, r.type)] = landed;
   }
   ctx.memo.bookCost = map;
@@ -279,16 +278,34 @@ export async function receiveShipment(ctx, payload) {
                     'items together as one shipment.');
   }
 
-  const mode = String(payload.mode || 'none').toLowerCase();
-  const shipping = round2(num(payload.shippingBdt));
-  if (shipping < 0) throw new Error('Shipping cannot be negative.');
+  // plan A5: 'rmb' was the only foreign money; it is now any currency ('fx', with payload.currency)
+  let mode = String(payload.mode || 'none').toLowerCase();
+  const fxCur = (mode === 'rmb' ? 'RMB' : str(payload.currency).toUpperCase()) || 'RMB';
+  if (mode === 'fx') mode = 'rmb';
+  const freight = round2(num(payload.shippingBdt));
+  if (freight < 0) throw new Error('Shipping cannot be negative.');
+  // the other costs of bringing it in: duty, VAT at the port, the C&F agent...
+  const extras = [];
+  for (const c of Array.isArray(payload.costs) ? payload.costs : []) {
+    const amt = round2(num(c && c.amount));
+    if (!amt) continue;
+    if (amt < 0) throw new Error('A cost cannot be negative.');
+    if (!str(c.label)) throw new Error('Say what each extra cost was (duty, agent, ...).');
+    extras.push({ label: str(c.label).slice(0, 60), amount: amt, account: str(c.account) });
+  }
+  const shipping = round2(freight + extras.reduce((t, c) => t + c.amount, 0));
   const rate = num(payload.rate);
-  const totalRmb = num(payload.totalRmb);
+  const totalRmb = num(payload.totalFx !== undefined ? payload.totalFx : payload.totalRmb);
   let totalBdt = num(payload.totalBdt);
   if (mode === 'rmb') {
-    if (totalRmb <= 0) throw new Error('Enter the shipment total in RMB, or switch to local.');
-    if (rate <= 0) throw new Error('Enter the rate you paid for this shipment (TK per RMB).');
-    if (rate > 1000) throw new Error('That rate looks wrong (' + rate + ' TK per RMB).');
+    if (!/^[A-Z]{3,5}$/.test(fxCur) || fxCur === 'BDT') throw new Error('Choose the currency of the supplier invoice.');
+    if (totalRmb <= 0) throw new Error('Enter the shipment total in ' + fxCur + ', or switch to local.');
+    if (rate <= 0) throw new Error('Enter the rate you paid for this shipment (TK per ' + fxCur + ').');
+    // a slip of the finger: far from the rate on record for that currency (or, for RMB with none yet, over 1,000)
+    const usual = num((await ratesMap(ctx))[fxCur]);
+    if ((usual > 0 && (rate > usual * 5 || rate < usual / 5)) || (!(usual > 0) && fxCur === 'RMB' && rate > 1000) || rate > 100000) {
+      throw new Error('That rate looks wrong (' + rate + ' TK per ' + fxCur + (usual > 0 ? '; the usual rate is ' + usual : '') + ').');
+    }
     totalBdt = totalRmb * rate;
   } else if (mode === 'bdt') {
     if (totalBdt <= 0) throw new Error('Enter what this shipment cost in taka, or switch to imported.');
@@ -370,7 +387,8 @@ export async function receiveShipment(ctx, payload) {
 
   // ---- 3. the movements
   let stampNote = str(payload.notes);
-  if (mode === 'rmb') stampNote = (stampNote ? stampNote + ' | ' : '') + 'RMB ' + totalRmb + ' @ ' + rate + ' TK/RMB';
+  if (mode === 'rmb') stampNote = (stampNote ? stampNote + ' | ' : '') + fxCur + ' ' + totalRmb + ' @ ' + rate + ' TK/' + fxCur;
+  if (extras.length) stampNote = (stampNote ? stampNote + ' | ' : '') + extras.map((c) => c.label + ' TK ' + c.amount).join(', ');
   else if (mode === 'bdt') stampNote = (stampNote ? stampNote + ' | ' : '') + 'local, TK ' + totalBdt;
   if (shipping > 0) {
     stampNote = (stampNote ? stampNote + ' | ' : '') + 'shipping TK ' + shipping +
@@ -408,9 +426,20 @@ export async function receiveShipment(ctx, payload) {
   // ---- 5. the usual rate
   let rateSaved = false;
   if (mode === 'rmb' && rate > 0 && payload.saveRate) {
-    await setConfig(ctx, 'cost_rate', rate);
-    delete ctx.memo.bookCost;
+    await saveRate(ctx, fxCur, rate);
     rateSaved = true;
+  }
+
+  // plan A5: what was paid besides the goods, each line with the account that paid it
+  const accOk = {};
+  if ((freight > 0 && str(payload.shippingAccount)) || extras.some((c) => c.account) || str(payload.paidFrom)) {
+    try { (await ctx.tx.savepoint(() => ctx.tx`select id from money_accounts where business_id = ${ctx.biz} and not archived`)).forEach((a) => { accOk[a.id] = true; }); }
+    catch (_) { /* someone who cannot see the accounts cannot name one */ }
+  }
+  const costRows = (freight > 0 ? [{ label: 'Freight' + (payload.shipNote ? ' (' + String(payload.shipNote) + ')' : ''), amount: freight, account: str(payload.shippingAccount) }] : []).concat(extras);
+  for (const c of costRows) {
+    await ctx.tx`insert into shipment_costs (business_id, reference, at, label, amount, account_id, by)
+                 values (${ctx.biz}, ${reference}, ${now}, ${c.label}, ${c.amount}, ${accOk[c.account] ? c.account : null}, ${who(ctx)})`;
   }
 
   const poId = str(payload.poId);
@@ -424,12 +453,21 @@ export async function receiveShipment(ctx, payload) {
   const goods = totalBdt > 0 ? totalBdt : round2(lines.reduce((t, l) => t + num(l.unitBdt) * num(l.qty), 0));
   if (str(payload.supplier) && goods > 0) {
     billId = await billForShipment(ctx, { supplier: payload.supplier, reference, amount: goods,
-      fxAmount: mode === 'rmb' ? totalRmb : 0, fxCurrency: mode === 'rmb' ? 'RMB' : '', fxRate: mode === 'rmb' ? rate : 0,
+      fxAmount: mode === 'rmb' ? totalRmb : 0, fxCurrency: mode === 'rmb' ? fxCur : '', fxRate: mode === 'rmb' ? rate : 0,
       note: lines.length + ' product(s), ' + lines.reduce((n, l) => n + num(l.qty), 0) + ' unit(s)' });
   }
 
+  // paid there and then (a local purchase for cash): the bill is settled from the account named
+  let paidNow = 0;
+  if (billId && accOk[str(payload.paidFrom)]) {
+    await ctx.tx`insert into supplier_payments (business_id, supplier, at, amount, account_id, fx_amount, fx_currency, note, by)
+                 values (${ctx.biz}, ${str(payload.supplier)}, ${now}, ${round2(goods)}, ${str(payload.paidFrom)}, ${mode === 'rmb' ? totalRmb : null},
+                         ${mode === 'rmb' ? fxCur : null}, ${'paid on receiving ' + reference}, ${who(ctx)})`;
+    paidNow = round2(goods);
+  }
+
   return {
-    ok: true, reference, billed: !!billId, received: updated.length || lines.length,
+    ok: true, reference, billed: !!billId, paidNow, costs: costRows.length, currency: mode === 'rmb' ? fxCur : '', received: updated.length || lines.length,
     units: lines.reduce((n, l) => n + num(l.qty), 0),
     shipping, createdProducts: created, lines: updated, totalCost: round2(totalBdt),
     rate: mode === 'rmb' ? rate : 0, rateSaved,

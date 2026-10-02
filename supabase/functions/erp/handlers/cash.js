@@ -111,6 +111,12 @@ async function ledger(ctx, accs) {
     out.push({ at: new Date(sp.at), account: sp.account_id, amount: -num(sp.amount), src: 'supplier', id: sp.id, by: str(sp.by),
                what: 'Paid to supplier ' + str(sp.supplier), ref: str(sp.note) });
   }
+  for (const sc of await ctx.tx`select id, reference, at, label, amount, account_id, by, voided from shipment_costs
+                                where business_id = ${ctx.biz} and account_id is not null`) {
+    if (str(sc.voided)) continue;
+    out.push({ at: new Date(sc.at), account: sc.account_id, amount: -num(sc.amount), src: 'shipcost', id: sc.id, by: str(sc.by),
+               what: str(sc.label) + ' on a shipment', ref: str(sc.reference) });
+  }
   for (const m of await ctx.tx`select id, account_id, at, amount, kind, pair_id, note, by, voided from money_moves where business_id = ${ctx.biz}`) {
     if (str(m.voided)) continue;
     out.push({ at: new Date(m.at), account: m.account_id, amount: num(m.amount), src: 'move', id: m.id, by: str(m.by), pair: m.pair_id,
@@ -338,6 +344,7 @@ export async function erpCashReassign(ctx, payload) {
   else if (src === 'expense') n = await ctx.tx`update expenses set account_id = ${to.id} where id = ${id} and business_id = ${ctx.biz} returning id`;
   else if (src === 'capital') n = await ctx.tx`update capital_book set account_id = ${to.id} where id = ${id} and business_id = ${ctx.biz} returning id`;
   else if (src === 'payout') n = await ctx.tx`update courier_payouts set account_id = ${to.id} where id = ${id} and business_id = ${ctx.biz} returning id`;
+  else if (src === 'shipcost') n = await ctx.tx`update shipment_costs set account_id = ${to.id} where id = ${id} and business_id = ${ctx.biz} returning id`;
   else if (src === 'supplier') n = await ctx.tx`update supplier_payments set account_id = ${to.id} where id = ${id} and business_id = ${ctx.biz} returning id`;
   else throw new Error('That line cannot be moved.');
   if (!n.length) throw new Error('That line was not found.');

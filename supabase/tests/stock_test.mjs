@@ -105,7 +105,7 @@ check('rmb needs a total', !r.ok && r.error === 'Enter the shipment total in RMB
 r = await recv({ mode: 'rmb', totalRmb: 10, lines: [{ sku: PLA, qty: 1 }] });
 check('rmb needs a rate', !r.ok && r.error === 'Enter the rate you paid for this shipment (TK per RMB).', r);
 r = await recv({ mode: 'rmb', totalRmb: 10, rate: 1500, lines: [{ sku: PLA, qty: 1 }] });
-check('silly rate', !r.ok && r.error === 'That rate looks wrong (1500 TK per RMB).', r);
+check('silly rate', !r.ok && /^That rate looks wrong \(1500 TK per RMB/.test(r.error), r);
 r = await recv({ mode: 'bdt', lines: [{ sku: PLA, qty: 1 }] });
 check('bdt needs a total', !r.ok && r.error === 'Enter what this shipment cost in taka, or switch to imported.', r);
 r = await recv({ shippingBdt: -5, lines: [{ sku: PLA, qty: 1 }] });

@@ -135,3 +135,10 @@
 - A shipment received with the supplier named on it adds a bill for the goods (not the freight): from the shipment total, or line by line at the order's prices when a supplier order is ticked off. A bill can also be typed in. A payment comes out of a money account (required once accounts exist), may carry the amount in their currency and how it was sent; paying more than is owed is an advance. Struck out, never deleted - a struck-out payment gives the money back to its account.
 - A rename follows through products, stock movements, orders, bills, payments and the suppliers list.
 - 031_suppliers.sql (suppliers, supplier_bills, supplier_payments), handlers/suppliers.js, tests/a4_test.mjs (25). Money statements show "Paid to supplier …". Managers see suppliers; paying and bills are shareholder and up; striking out is the owner's.
+
+2026-10-03 — Plan A5 (currencies and landed cost)
+- **Currencies** card on Product cost: every currency the business buys in, its rate in taka, and each earlier rate by date. RMB and USD are offered from the start; any other is added there. The old single "TK per RMB" box is gone (RMB is one of the currencies; the old setting is kept in step).
+- Price book: each row has a price and the currency it was quoted in (TK, RMB, USD, ...). A new rate changes what the book lands at; stock already bought keeps its cost.
+- Receive stock: "Imported — foreign money" takes any currency with the rate of THAT shipment (a rate far from the usual one is refused). "Other costs of this shipment" (customs duty, C&F agent, local transport, ...) are each written down and spread into the unit cost with the freight. Goods, shipping and each other cost can name the money account that paid (shareholder and up); the account statement says what it paid for. The supplier is billed for the goods only, in the foreign amount and taka.
+- 032_currencies.sql (currencies, currency_rates, shipment_costs, cost_book.buy_amount/buy_cur), handlers/currency.js, tests/a5_test.mjs (27).
+- Not done yet: a separate buying price per product per supplier.

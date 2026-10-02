@@ -17,6 +17,7 @@ import { formatDate, num, round2, dhakaDayStart, DAY_MS, looseDate } from '../li
 import { getConfig, setConfig } from '../lib/ext.js';
 import { roleAtLeast } from '../allow.js';
 import { erpDues, creditMap, paidByOrder, discLeft, lock } from './money.js';
+import { ratesMap, landedCost, saveRate } from './currency.js';
 
 // ------------------------------------------------------------------ months
 
@@ -75,8 +76,10 @@ function costCell(v) {
 
 /** COST_PRICES O2:O4 */
 async function costConfig(ctx) {
+  const rates = await ratesMap(ctx);
   return {
-    rate: num(await getConfig(ctx, 'cost_rate', '')),
+    rates,
+    rate: num(rates.RMB) || num(await getConfig(ctx, 'cost_rate', '')),
     handling: num(await getConfig(ctx, 'cost_handling', '')),
     minMargin: num(await getConfig(ctx, 'cost_min_margin', '')),
   };
@@ -84,10 +87,7 @@ async function costConfig(ctx) {
 
 /** Column G: landed = rmb x rate + handling, else bdt + handling, else blank (null). */
 function landedOf(r, cfg) {
-  const h = r.handling === null || r.handling === undefined ? cfg.handling : num(r.handling);
-  if (num(r.buy_rmb) > 0) return round2(num(r.buy_rmb) * cfg.rate + h);
-  if (num(r.buy_bdt) > 0) return round2(num(r.buy_bdt) + h);
-  return null;
+  return landedCost(r, cfg.rates || { RMB: cfg.rate, BDT: 1 }, cfg.handling);        // plan A5: any currency
 }
 
 /** Column J: margin on the selling price, 1 dp, or blank (null). */
@@ -98,7 +98,7 @@ function marginOf(landed, sell) {
 
 async function bookRows(ctx) {
   return ctx.tx`
-    select id, sort_order, category, brand, type, buy_rmb, buy_bdt, handling,
+    select id, sort_order, category, brand, type, buy_rmb, buy_bdt, buy_amount, buy_cur, handling,
            products, typical_sell, updated_at, note
     from cost_book where business_id = ${ctx.biz}
     order by sort_order, id`;
@@ -1043,6 +1043,8 @@ export async function erpCostBook(ctx) {
       row: i + 2,
       category: str(r.category), brand: str(r.brand), type: str(r.type),
       rmb: costCell(r.buy_rmb), bdt: costCell(r.buy_bdt), handling: costCell(r.handling),
+      amount: num(r.buy_amount) > 0 ? num(r.buy_amount) : (num(r.buy_rmb) > 0 ? num(r.buy_rmb) : num(r.buy_bdt) > 0 ? num(r.buy_bdt) : null),
+      cur: str(r.buy_cur).toUpperCase() || (num(r.buy_rmb) > 0 ? 'RMB' : num(r.buy_bdt) > 0 ? 'BDT' : ''),
       landed: num(landed), products: num(r.products), sell,
       margin: marginOf(landed, sell),
       note: str(r.note),
@@ -1050,7 +1052,7 @@ export async function erpCostBook(ctx) {
   });
   let priced = 0;
   for (const r of rows) if (r.landed > 0) priced++;
-  return { ok: true, rows, rate: cfg.rate, handling: cfg.handling, minMargin: cfg.minMargin,
+  return { ok: true, rows, rate: cfg.rate, rates: cfg.rates, handling: cfg.handling, minMargin: cfg.minMargin,
            priced, missing: rows.length - priced, added: sync.added || 0 };
 }
 
@@ -1066,6 +1068,7 @@ export async function erpSaveCostSettings(ctx, payload) {
       throw new Error('That rate looks wrong (' + v + ' TK per RMB). Check it before saving.');
     }
     await setConfig(ctx, cfgKey, v);
+    if (key === 'rate' && v > 0) await saveRate(ctx, 'RMB', v);          // plan A5: the RMB rate lives with the currencies
   }
   delete ctx.memo.bookCost;
   delete ctx.memo.dashProducts;
@@ -1092,6 +1095,17 @@ export async function erpSaveCostRows(ctx, payload) {
     const id = whereIs[bookKey(...want)];
     if (!id) { notFound.push(want[1] + ' ' + want[2]); continue; }
     let touched = false;
+    // plan A5: a price in any currency - { amount, cur }. The old two columns are kept in step.
+    if (Object.prototype.hasOwnProperty.call(it, 'amount')) {
+      const amt = costCell(it.amount), cur = str(it.cur).toUpperCase() || 'BDT';
+      if (amt !== null && amt < 0) throw new Error('A price cannot be negative.');
+      if (amt !== null && cur !== 'BDT' && !(num((await ratesMap(ctx))[cur]) > 0)) {
+        throw new Error('There is no rate for ' + cur + ' yet. Set it under Currencies first.');
+      }
+      await ctx.tx`update cost_book set buy_amount = ${amt}, buy_cur = ${amt === null ? null : cur},
+                   buy_rmb = ${amt !== null && cur === 'RMB' ? amt : null}, buy_bdt = ${amt !== null && cur === 'BDT' ? amt : null} where id = ${id}`;
+      touched = true;
+    }
     for (const f of Object.keys(cols)) {
       if (!Object.prototype.hasOwnProperty.call(it, f)) continue;
       const val = costCell(it[f]);
@@ -1099,6 +1113,8 @@ export async function erpSaveCostRows(ctx, payload) {
         throw new Error(f === 'handling' ? 'Handling cannot be negative.' : 'A price cannot be negative.');
       }
       await ctx.tx`update cost_book set ${ctx.tx(cols[f])} = ${val} where id = ${id}`;
+      if (f === 'rmb' && !Object.prototype.hasOwnProperty.call(it, 'amount')) await ctx.tx`update cost_book set buy_amount = ${val}, buy_cur = ${val === null ? null : 'RMB'} where id = ${id} and (${val}::numeric is not null or buy_cur = 'RMB')`;
+      if (f === 'bdt' && !Object.prototype.hasOwnProperty.call(it, 'amount')) await ctx.tx`update cost_book set buy_amount = ${val}, buy_cur = ${val === null ? null : 'BDT'} where id = ${id} and (${val}::numeric is not null or buy_cur = 'BDT')`;
       touched = true;
     }
     if (!touched) continue;

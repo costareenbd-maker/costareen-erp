@@ -6105,15 +6105,7 @@ function wireStock() {
   if (sv) sv.addEventListener('click', function () {
     if (BUSY || !RECV.lines.length) return;
     BUSY = 'receive'; repaint();
-    srv('erpReceiveShipment', [{ supplier:RECV.supplier, reference:RECV.reference,
-                         notes:RECV.notes, mode:RECV.mode,
-                         totalRmb:num(RECV.totalRmb), rate:num(RECV.rate),
-                         totalBdt:num(RECV.totalBdt), saveRate:!!RECV.saveRate,
-                         shippingBdt:recvShipBdt(), shipNote:recvShipNote(), poId:RECV.poId||'',
-                         lines:RECV.lines.map(function (l) {
-                           return l.isNew ? { isNew:true, product:l.product, qty:l.qty }
-                                          : { sku:l.sku, qty:l.qty };
-                         })}],
+    srv('erpReceiveShipment', [recvPayload()],
         function (res) {
         BUSY = '';
         toast('Received '+fmt(res.units || 0)+' unit(s) across '+fmt(res.received)+' product(s)'+
@@ -8292,7 +8284,7 @@ function srv(name, args, ok, bad) {
 
 var SRV_ACTIVE = 0, SRV_WRITING = false;
 // the same list the server uses to know a call changes nothing (ERP_READS)
-var SRV_READS = /^(erpBundle|erpHello|erpMe|erpCatalog|erpSales|erpDues|erpCustomers|erpPnl|erpMoney|erpToday|erpDaySales|erpProduct|erpLookupCustomer|erpCustomerAccount|erpCustomerStatement|erpCustomerCredit|erpWebOrders|erpWebOrderInvoices|erpCampaignAudience|erpCampaignList|erpCampaignGet|erpEvoStatus|erpBrandLogo|erpQuoteBoot|erpQuoteList|erpQuoteGet|erpQuoteAsset|erpExpenses|erpCapital|erpBackupStatus|erpAiKeys|erpGetTheme|erpBusinesses|erpStockHistory|erpReorderPlan|erpPoList|erpSfPayoutLines|erpBookedParcels|erpParcelPreview|erpReturnPreview|erpSettingsFull|erpSettingsLists|erpFormOptions|erpAdmin|erpPeople|erpDevices|erpCourierKeyStatus|erpPayReasons|erpDiscontinued|erpAccessWarning|erpBusinessLinks|erpLookupUsage|erpRecentInvoices|erpCourier|erpDashboardData|erpInvoice|erpCustomerPage|erpSearch|erpProductPage|erpPnlMonth|erpExpenseReceiptUrl|erpPartnership|erpPartnerStock|erpSecurity|erpCustomerList|erpAlerts|erpAccessKeys|erpListView|erpCashBook|erpSuppliers|erpSupplierPage)$/;
+var SRV_READS = /^(erpBundle|erpHello|erpMe|erpCatalog|erpSales|erpDues|erpCustomers|erpPnl|erpMoney|erpToday|erpDaySales|erpProduct|erpLookupCustomer|erpCustomerAccount|erpCustomerStatement|erpCustomerCredit|erpWebOrders|erpWebOrderInvoices|erpCampaignAudience|erpCampaignList|erpCampaignGet|erpEvoStatus|erpBrandLogo|erpQuoteBoot|erpQuoteList|erpQuoteGet|erpQuoteAsset|erpExpenses|erpCapital|erpBackupStatus|erpAiKeys|erpGetTheme|erpBusinesses|erpStockHistory|erpReorderPlan|erpPoList|erpSfPayoutLines|erpBookedParcels|erpParcelPreview|erpReturnPreview|erpSettingsFull|erpSettingsLists|erpFormOptions|erpAdmin|erpPeople|erpDevices|erpCourierKeyStatus|erpPayReasons|erpDiscontinued|erpAccessWarning|erpBusinessLinks|erpLookupUsage|erpRecentInvoices|erpCourier|erpDashboardData|erpInvoice|erpCustomerPage|erpSearch|erpProductPage|erpPnlMonth|erpExpenseReceiptUrl|erpPartnership|erpPartnerStock|erpSecurity|erpCustomerList|erpAlerts|erpAccessKeys|erpListView|erpCurrencies|erpCashBook|erpSuppliers|erpSupplierPage)$/;
 function srvPump() {
   if (!SRV_Q.length) return;
   var isRead = SRV_READS.test(SRV_Q[0].name);
@@ -8471,8 +8463,7 @@ function viewCosts() {
 
   h += '<section><div class="card"><h2>Buying prices</h2>' +
     '<div class="sub">One row per brand and type \u2014 colours share a price, so they are ' +
-    'not listed separately. Type the RMB price; use the taka column only for anything not ' +
-    'bought in RMB. Leave handling blank to use the default above. Nothing is saved until ' +
+    'not listed separately. Type the price and pick the money it was quoted in. Leave handling blank to use the default above. Nothing is saved until ' +
     'you press Save changes.</div>';
 
   h += '<div style="margin-bottom:4px"><label class="f">Category</label><div class="chips">';
@@ -8512,7 +8503,7 @@ function viewCosts() {
 
   h += '<div class="scroll tall"><table><thead><tr>' +
     '<th>Brand</th><th>Type</th><th class="num">SKUs</th>' +
-    '<th class="num">Buy RMB</th><th class="num">or TK</th><th class="num">Handling</th>' +
+    '<th class="num">Buy price</th><th>In</th><th class="num">Handling</th>' +
     '<th class="num">Lands at</th><th class="num">Sells at</th><th class="num">Margin</th>' +
     '</tr></thead><tbody>';
 
@@ -8537,8 +8528,8 @@ function viewCosts() {
       '<td>' + esc(r.brand) + '</td>' +
       '<td class="nm">' + esc(r.type) + '</td>' +
       '<td class="num"><span class="sku">' + fmt(r.products) + '</span></td>' +
-      costInput(r, ed, 'rmb', '') +
-      costInput(r, ed, 'bdt', '') +
+      costInput(r, ed, 'amount', '') +
+      costCurCell(r, ed) +
       costHandling(r, ed, hnd) +
       '<td class="num">' + (r.landed > 0 ? fmt(r.landed) : '<span class="sku">\u2014</span>') + '</td>' +
       '<td class="num">' + (r.sell > 0 ? fmt(r.sell) : '<span class="sku">\u2014</span>') + '</td>' +
@@ -8620,7 +8611,7 @@ function wireCosts() {
 
   // Every keystroke is remembered, so a background refresh cannot throw away
   // half-typed work.
-  var ins = v.querySelectorAll('input[data-ck]');
+  var ins = v.querySelectorAll('[data-ck]');
   for (var i = 0; i < ins.length; i++) {
     ins[i].addEventListener('input', function () {
       var row = this.getAttribute('data-row');
@@ -8693,11 +8684,13 @@ function wireCosts() {
       // Send ONLY what was typed. A field left alone is not included at all,
       // so the server never rewrites it from a stale copy in this browser.
       var item = { row: r.row, category: r.category, brand: r.brand, type: r.type };
-      ['rmb', 'bdt', 'handling'].forEach(function (k) {
-        if (ed[k] !== undefined) item[k] = ed[k];
-      });
-      if (item.rmb === undefined && item.bdt === undefined &&
-          item.handling === undefined) return;
+      if (ed.handling !== undefined) item.handling = ed.handling;
+      // a price is an amount AND its currency, so the two always travel together
+      if (ed.amount !== undefined || ed.cur !== undefined) {
+        item.amount = ed.amount !== undefined ? ed.amount : (r.amount === null || r.amount === undefined ? '' : r.amount);
+        item.cur = ed.cur !== undefined ? ed.cur : (r.cur || 'RMB');
+      }
+      if (item.amount === undefined && item.handling === undefined) return;
       list.push(item);
     });
     if (!list.length) { toast('Nothing has been changed yet.'); return; }
@@ -13223,6 +13216,256 @@ function wireSuppliers() {
     supDo('erpSupplierVoid', [{ kind: kind, id: id, reason: why }], 'Struck out.');
   });
 }
+</script>
+
+<!-- plan A5: any currency, the other costs of a shipment -->
+<script>
+var FX = null, FX_BUSY = false, FX_NEW = false;
+function fxLoad(force) {
+  if (FX_BUSY || (FX && !force)) return;
+  FX_BUSY = true;
+  srv('erpCurrencies', [], function (res) { FX_BUSY = false; FX = res; repaint(); },
+      function () { FX_BUSY = false; FX = { currencies: [], canEdit: false, names: {} }; });
+}
+function fxList() {
+  return ((FX && FX.currencies) || []).filter(function (c) { return !c.archived; });
+}
+function fxRate(code) {
+  var r = 0;
+  fxList().forEach(function (c) { if (c.code === code) r = Number(c.rate) || 0; });
+  return r;
+}
+function fxAccOpts(sel, none) {
+  var h = '<option value="">' + esc(none) + '</option>';
+  ((FX && FX.accounts) || []).forEach(function (a) {
+    h += '<option value="' + esc(a.id) + '"' + (sel === a.id ? ' selected' : '') + '>' + esc(a.name) + '</option>';
+  });
+  return h;
+}
+
+// ---------------------------------------------------------------- receive
+recvCostHtml = function () {
+  fxLoad();
+  if (RECV.mode === 'rmb') { RECV.mode = 'fx'; RECV.currency = 'RMB'; }
+  var m = RECV.mode || 'none', cur = RECV.currency || 'RMB', usual = fxRate(cur);
+  var h = '<div style="margin-top:12px"><label class="f">What did this shipment cost?</label><div class="chips">' +
+    recvModeChip('none', 'Use the price book') + recvModeChip('fx', 'Imported \u2014 foreign money') +
+    recvModeChip('bdt', 'Local \u2014 taka') + '</div>';
+  if (m === 'fx') {
+    var opts = '';
+    fxList().forEach(function (c) {
+      opts += '<option value="' + esc(c.code) + '"' + (c.code === cur ? ' selected' : '') + '>' + esc(c.code + ' \u2014 ' + c.name) + '</option>';
+    });
+    if (!opts) opts = '<option value="RMB">RMB</option>';
+    h += '<div class="fields">' +
+      '<div><label class="f" for="rv_cur">Currency</label><select class="i" id="rv_cur">' + opts + '</select></div>' +
+      '<div><label class="f" for="rv_rmb">Total on the supplier invoice (' + esc(cur) + ')</label>' +
+      '<input class="i" id="rv_rmb" inputmode="decimal" value="' + esc(RECV.totalRmb) + '" placeholder="e.g. 4800"></div>' +
+      '<div><label class="f" for="rv_rate">Rate for THIS shipment (TK per ' + esc(cur) + ')</label>' +
+      '<input class="i" id="rv_rate" inputmode="decimal" value="' + esc(RECV.rate) + '" placeholder="' +
+      (usual > 0 ? esc(String(usual)) : 'rate') + '"></div>' +
+      '<div><label class="f">&nbsp;</label><label class="chk"><input type="checkbox" id="rv_saverate"' +
+      (RECV.saveRate ? ' checked' : '') + '> Make this my usual rate</label></div></div>' +
+      '<div class="sub">Another currency? Add it under Product cost \u2192 Currencies.</div>';
+  } else if (m === 'bdt') {
+    h += '<div class="fields"><div><label class="f" for="rv_bdt">Total paid for this shipment (TK)</label>' +
+      '<input class="i" id="rv_bdt" inputmode="decimal" value="' + esc(RECV.totalBdt) + '" placeholder="e.g. 62000"></div></div>';
+  }
+  if (m !== 'none' && FX && FX.accounts && FX.accounts.length) {
+    h += '<div class="fields"><div><label class="f" for="rv_paid">Goods paid from</label><select class="i" id="rv_paid">' +
+      fxAccOpts(RECV.paidFrom || '', 'Not paid yet \u2014 owed to the supplier') + '</select></div></div>';
+  }
+  return h + '</div>';
+};
+recvTotalBdt = function () {
+  if (RECV.mode === 'fx' || RECV.mode === 'rmb') {
+    var r = Number(RECV.rate) || 0, t = Number(RECV.totalRmb) || 0;
+    return (r > 0 && t > 0) ? r * t : 0;
+  }
+  if (RECV.mode === 'bdt') return Number(RECV.totalBdt) || 0;
+  return 0;
+};
+function recvExtraBdt() {
+  var t = 0;
+  (RECV.costs || []).forEach(function (c) { t += num(c.amount); });
+  return t;
+}
+recvCostSummary = function () {
+  var total = recvTotalBdt(), units = 0, extra = recvExtraBdt() + recvShipBdt();
+  for (var i = 0; i < RECV.lines.length; i++) units += Number(RECV.lines[i].qty) || 0;
+  if (!(total > 0) || !units) {
+    return '<div class="sub" style="text-align:right">' +
+      (RECV.mode === 'none' ? 'Each line will be costed from the price book.'
+        : 'Enter the shipment total and each line will be costed from it.') +
+      (extra > 0 ? ' Shipping and other costs (' + fmt(extra) + ' TK) are spread over the units.' : '') + '</div>';
+  }
+  var rate = Number(RECV.rate) || 0;
+  return '<div class="sub" style="text-align:right">Goods <strong>' + fmt(total) + ' TK</strong>' +
+    (RECV.mode === 'fx' && rate > 0 ? ' (at ' + rate + ' TK/' + esc(RECV.currency || 'RMB') + ')' : '') +
+    (extra > 0 ? ' + shipping and other costs <strong>' + fmt(extra) + ' TK</strong>' : '') +
+    ' across ' + fmt(units) + ' unit(s) \u2014 about <strong>' + fmt((total + extra) / units) +
+    ' TK</strong> each on average.<br>The handling default is not added on top of a shipment total.</div>';
+};
+var recvShipHtmlA5 = recvShipHtml;
+recvShipHtml = function () {
+  var h = recvShipHtmlA5(), acc = FX && FX.accounts && FX.accounts.length;
+  var s = RECV.ship || {};
+  if (acc && s.mode && s.mode !== 'none') {
+    h += '<div class="fields"><div><label class="f" for="rv_shipacc">Shipping paid from</label><select class="i" id="rv_shipacc">' +
+      fxAccOpts(RECV.shippingAccount || '', 'Not recorded') + '</select></div></div>';
+  }
+  var costs = RECV.costs || (RECV.costs = []);
+  h += '<div style="margin-top:12px"><label class="f">Other costs of this shipment (TK)</label>' +
+    '<div class="sub">Customs duty, C&amp;F agent, local truck \u2014 anything paid to get the goods here. Each is spread into the unit cost.</div>';
+  costs.forEach(function (c, i) {
+    h += '<div class="row" style="margin-top:6px;align-items:center">' +
+      '<input class="i" style="flex:2 1 160px" data-rvcl="' + i + '" list="l_rvcost" placeholder="What for" value="' + esc(c.label) + '">' +
+      '<input class="i" style="flex:1 1 100px" data-rvca="' + i + '" inputmode="decimal" placeholder="TK" value="' + esc(c.amount) + '">' +
+      (acc ? '<select class="i" style="flex:1 1 140px" data-rvcc="' + i + '">' + fxAccOpts(c.account || '', 'Paid from\u2026') + '</select>' : '') +
+      '<button class="btn small" type="button" data-rvcx="' + i + '">\u2715</button></div>';
+  });
+  h += '<datalist id="l_rvcost"><option value="Customs duty"><option value="C&amp;F agent"><option value="Local transport"><option value="Bank charge"><option value="Packaging"></datalist>' +
+    '<div style="margin-top:6px"><button class="btn small" type="button" id="rv_addcost">+ Add a cost</button></div></div>';
+  return h;
+};
+function recvPayload() {
+  var mode = RECV.mode === 'rmb' ? 'fx' : (RECV.mode || 'none');
+  return { supplier: RECV.supplier, reference: RECV.reference, notes: RECV.notes, mode: mode,
+    currency: RECV.currency || 'RMB', totalFx: num(RECV.totalRmb), rate: num(RECV.rate),
+    totalBdt: num(RECV.totalBdt), saveRate: !!RECV.saveRate,
+    paidFrom: mode === 'none' ? '' : (RECV.paidFrom || ''),
+    shippingBdt: recvShipBdt(), shipNote: recvShipNote(), shippingAccount: RECV.shippingAccount || '',
+    costs: (RECV.costs || []).filter(function (c) { return String(c.label || '').trim() || num(c.amount) > 0; })
+      .map(function (c) { return { label: String(c.label || '').trim(), amount: num(c.amount), account: c.account || '' }; }),
+    poId: RECV.poId || '',
+    lines: RECV.lines.map(function (l) {
+      return l.isNew ? { isNew: true, product: l.product, qty: l.qty } : { sku: l.sku, qty: l.qty };
+    }) };
+}
+var wireStockExtraA5 = wireStockExtra;
+wireStockExtra = function () {
+  wireStockExtraA5();
+  if (VIEW !== 'stock') return;
+  var v = el('view');
+  function sum() { var s = el('rv_costsum'); if (s) s.innerHTML = recvCostSummary(); }
+  var modes = v.querySelectorAll('button[data-rvmode]');
+  for (var i = 0; i < modes.length; i++) modes[i].addEventListener('click', function () {
+    if (this.getAttribute('data-rvmode') === 'fx') {
+      RECV.currency = RECV.currency || 'RMB';
+      if (!RECV.rate && fxRate(RECV.currency) > 0) RECV.rate = String(fxRate(RECV.currency));
+      if (RECV.saveRate === undefined) RECV.saveRate = true;
+      repaint();
+    }
+  });
+  var cur = el('rv_cur');
+  if (cur) cur.addEventListener('change', function () {
+    RECV.currency = cur.value; RECV.rate = fxRate(cur.value) > 0 ? String(fxRate(cur.value)) : ''; repaint();
+  });
+  var pf = el('rv_paid'); if (pf) pf.addEventListener('change', function () { RECV.paidFrom = pf.value; });
+  var sa = el('rv_shipacc'); if (sa) sa.addEventListener('change', function () { RECV.shippingAccount = sa.value; });
+  var add = el('rv_addcost');
+  if (add) add.addEventListener('click', function () { (RECV.costs = RECV.costs || []).push({ label: '', amount: '', account: '' }); repaint(); });
+  function each(attr, ev, fn) {
+    var ns = v.querySelectorAll('[' + attr + ']');
+    for (var k = 0; k < ns.length; k++) (function (n) {
+      n.addEventListener(ev, function () { fn(RECV.costs[Number(n.getAttribute(attr))], n, Number(n.getAttribute(attr))); });
+    })(ns[k]);
+  }
+  each('data-rvcl', 'input', function (c, n) { if (c) c.label = n.value; });
+  each('data-rvca', 'input', function (c, n) { if (c) { c.amount = n.value; sum(); } });
+  each('data-rvcc', 'change', function (c, n) { if (c) c.account = n.value; });
+  each('data-rvcx', 'click', function (c, n, i) { RECV.costs.splice(i, 1); repaint(); });
+  ['rv_kg', 'rv_krate', 'rv_shiptot'].forEach(function (id) { var n = el(id); if (n) n.addEventListener('input', sum); });
+};
+
+// ---------------------------------------------------------------- price book
+function costCurCell(r, ed) {
+  var cur = ed.cur !== undefined ? ed.cur : (r.cur || 'RMB');
+  var codes = ['BDT'];
+  fxList().forEach(function (c) { codes.push(c.code); });
+  if (codes.indexOf('RMB') < 0) codes.push('RMB');
+  if (codes.indexOf(cur) < 0) codes.push(cur);
+  var h = '<td><select class="i" style="min-width:74px;padding:6px" data-ck="cur" data-row="' + r.row + '">';
+  codes.forEach(function (c) {
+    h += '<option value="' + esc(c) + '"' + (c === cur ? ' selected' : '') + '>' + esc(c === 'BDT' ? 'TK' : c) + '</option>';
+  });
+  return h + '</select></td>';
+}
+function fxCardHtml() {
+  if (!FX) return '';
+  var can = !!FX.canEdit, list = FX.currencies || [];
+  var h = '<section><div class="card"><h2>Currencies</h2>' +
+    '<div class="sub">The money you buy in, and what one unit costs you in taka \u2014 your real rate, broker included. ' +
+    'A new rate changes what the price book lands at from now on; stock already bought keeps the cost it came in at. Every rate is kept by date.</div>' +
+    '<div class="scroll"><table><thead><tr><th>Currency</th><th class="num">TK for 1</th><th>Last set</th><th>Earlier rates</th>' + (can ? '<th></th>' : '') + '</tr></thead><tbody>';
+  list.forEach(function (c) {
+    var hist = (c.history || []).slice(1, 5).map(function (x) { return x.rate + ' (' + x.date + ')'; }).join(' \u00b7 ');
+    h += '<tr' + (c.archived ? ' style="opacity:.55"' : '') + '><td><strong>' + esc(c.code) + '</strong> <span class="sku">' + esc(c.name) + (c.archived ? ' \u00b7 not in use' : '') + '</span></td>' +
+      '<td class="num">' + (can ? '<input class="i qty" inputmode="decimal" data-fxrate="' + esc(c.code) + '" value="' + (c.rate > 0 ? esc(String(c.rate)) : '') + '" placeholder="rate">'
+                              : (c.rate > 0 ? esc(String(c.rate)) : '\u2014')) + '</td>' +
+      '<td><span class="sku">' + esc(c.updated || 'never') + '</span></td>' +
+      '<td><span class="sku">' + esc(hist || '\u2014') + '</span></td>' +
+      (can ? '<td class="num"><button class="btn small" type="button" data-fxsave="' + esc(c.code) + '">Save</button>' +
+        (c.saved && c.code !== 'RMB' ? ' <button class="btn small" type="button" data-fxarch="' + esc(c.code) + '">' + (c.archived ? 'Use again' : 'Stop using') + '</button>' : '') + '</td>' : '') +
+      '</tr>';
+  });
+  h += '</tbody></table></div>';
+  if (can) {
+    if (FX_NEW) {
+      var opts = '';
+      Object.keys(FX.names || {}).forEach(function (k) {
+        if (!list.some(function (c) { return c.code === k; })) opts += '<option value="' + esc(k) + '">' + esc(FX.names[k]) + '</option>';
+      });
+      h += '<div class="row" style="margin-top:10px;align-items:flex-end">' +
+        '<div style="flex:1 1 110px"><label class="f" for="fx_code">Code (3 letters)</label><input class="i" id="fx_code" list="l_fxcode" maxlength="5" placeholder="EUR" style="text-transform:uppercase"><datalist id="l_fxcode">' + opts + '</datalist></div>' +
+        '<div style="flex:2 1 160px"><label class="f" for="fx_name">Name</label><input class="i" id="fx_name" placeholder="optional"></div>' +
+        '<div style="flex:1 1 110px"><label class="f" for="fx_rate">TK for 1</label><input class="i" id="fx_rate" inputmode="decimal"></div>' +
+        '<div style="flex:0 0 auto"><button class="btn primary" type="button" id="fx_add">Add</button> <button class="btn" type="button" id="fx_cancel">Cancel</button></div></div>';
+    } else {
+      h += '<div style="margin-top:10px"><button class="btn small" type="button" id="fx_new">+ Add a currency</button></div>';
+    }
+  }
+  return h + '</div></section>';
+}
+var viewCostsA5 = viewCosts;
+viewCosts = function () {
+  var h = viewCostsA5();
+  if (!COSTS || COST_ERR || COSTS.missingTab) return h;
+  fxLoad();
+  // the single RMB box is now the Currencies card; handling and margin stay where they were
+  h = h.replace('<h2>Your buying rate</h2>', '<h2>Handling and margin</h2>')
+       .replace(/<div class="sub">Your real rate including[\s\S]*?<\/div>/, '<div class="sub">Handling is added to every unit priced from the book. Rows under the minimum margin are flagged below.</div>')
+       .replace(/<div style="flex:1 1 150px"><label class="f" for="ck_rate">[\s\S]*?<\/div>/, '<input type="hidden" id="ck_rate" value="">')
+       .replace('TK-per-RMB rate above is filled in.', 'RMB rate under Currencies is filled in.');
+  var at = h.indexOf('</section>');
+  return at < 0 ? h : h.slice(0, at + 10) + fxCardHtml() + h.slice(at + 10);
+};
+var wireCostsA5 = wireCosts;
+wireCosts = function () {
+  wireCostsA5();
+  var v = el('view');
+  function save(payload, msg) {
+    srv('erpCurrencySave', [payload], function (res) {
+      FX = res; FX_NEW = false; toast(msg); loadCosts();
+    }, function (e) { toast(esc(e && e.message ? e.message : e), true, 12000); });
+  }
+  function find(code) { var f = null; (FX.currencies || []).forEach(function (c) { if (c.code === code) f = c; }); return f; }
+  var sv = v.querySelectorAll('button[data-fxsave]');
+  for (var i = 0; i < sv.length; i++) sv[i].addEventListener('click', function () {
+    var code = this.getAttribute('data-fxsave'), box = v.querySelector('input[data-fxrate="' + code + '"]'), c = find(code) || {};
+    save({ code: code, rate: box ? box.value.trim() : '', archived: false }, code + ' rate saved.');
+  });
+  var ar = v.querySelectorAll('button[data-fxarch]');
+  for (var j = 0; j < ar.length; j++) ar[j].addEventListener('click', function () {
+    var c = find(this.getAttribute('data-fxarch')); if (!c) return;
+    save({ code: c.code, rate: c.rate, archived: !c.archived }, c.archived ? c.code + ' is in use again.' : c.code + ' is no longer offered.');
+  });
+  var nw = el('fx_new'); if (nw) nw.addEventListener('click', function () { FX_NEW = true; repaint(); });
+  var cn = el('fx_cancel'); if (cn) cn.addEventListener('click', function () { FX_NEW = false; repaint(); });
+  var ad = el('fx_add'); if (ad) ad.addEventListener('click', function () {
+    save({ code: el('fx_code').value.trim().toUpperCase(), name: el('fx_name').value.trim(), rate: el('fx_rate').value.trim() }, 'Currency added.');
+  });
+};
 </script>
 </body>
 </html>
