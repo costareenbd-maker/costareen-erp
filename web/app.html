@@ -2129,10 +2129,12 @@ async function saveInvoice() {
       advancePaid: num(FORM.advance),
       paymentMethod: FORM.method,
       paymentStatus: FORM.status,
-      date: FORM.date || ''
+      date: FORM.date || '',
+      from: (typeof INV_FROM !== 'undefined' && INV_FROM) || ''
     }],
       function (res) {
       SAVING = false;
+      if (typeof invFromSaved === 'function') invFromSaved(res);
       CART = [];
       // date goes back to blank, so a backdated invoice does not silently
       // set the date for every sale after it
@@ -8303,7 +8305,7 @@ function srv(name, args, ok, bad) {
 
 var SRV_ACTIVE = 0, SRV_WRITING = false;
 // the same list the server uses to know a call changes nothing (ERP_READS)
-var SRV_READS = /^(erpBundle|erpHello|erpMe|erpCatalog|erpSales|erpDues|erpCustomers|erpPnl|erpMoney|erpToday|erpDaySales|erpProduct|erpLookupCustomer|erpCustomerAccount|erpCustomerStatement|erpCustomerCredit|erpWebOrders|erpWebOrderInvoices|erpCampaignAudience|erpCampaignList|erpCampaignGet|erpEvoStatus|erpBrandLogo|erpQuoteBoot|erpQuoteList|erpQuoteGet|erpQuoteAsset|erpExpenses|erpCapital|erpBackupStatus|erpAiKeys|erpGetTheme|erpBusinesses|erpStockHistory|erpReorderPlan|erpPoList|erpSfPayoutLines|erpBookedParcels|erpParcelPreview|erpReturnPreview|erpSettingsFull|erpSettingsLists|erpFormOptions|erpAdmin|erpPeople|erpDevices|erpCourierKeyStatus|erpPayReasons|erpDiscontinued|erpAccessWarning|erpBusinessLinks|erpLookupUsage|erpRecentInvoices|erpCourier|erpDashboardData|erpInvoice|erpCustomerPage|erpSearch|erpProductPage|erpPnlMonth|erpExpenseReceiptUrl|erpPartnership|erpPartnerStock|erpSecurity|erpCustomerList|erpAlerts|erpAccessKeys|erpListView|erpCurrencies|erpSharedStock|erpCashBook|erpSuppliers|erpSupplierPage)$/;
+var SRV_READS = /^(erpBundle|erpHello|erpMe|erpCatalog|erpSales|erpDues|erpCustomers|erpPnl|erpMoney|erpToday|erpDaySales|erpProduct|erpLookupCustomer|erpCustomerAccount|erpCustomerStatement|erpCustomerCredit|erpWebOrders|erpWebOrderInvoices|erpCampaignAudience|erpCampaignList|erpCampaignGet|erpEvoStatus|erpBrandLogo|erpQuoteBoot|erpQuoteList|erpQuoteGet|erpQuoteAsset|erpExpenses|erpCapital|erpBackupStatus|erpAiKeys|erpGetTheme|erpBusinesses|erpStockHistory|erpReorderPlan|erpPoList|erpSfPayoutLines|erpBookedParcels|erpParcelPreview|erpReturnPreview|erpSettingsFull|erpSettingsLists|erpFormOptions|erpAdmin|erpPeople|erpDevices|erpCourierKeyStatus|erpPayReasons|erpDiscontinued|erpAccessWarning|erpBusinessLinks|erpLookupUsage|erpRecentInvoices|erpCourier|erpDashboardData|erpInvoice|erpCustomerPage|erpSearch|erpProductPage|erpPnlMonth|erpExpenseReceiptUrl|erpPartnership|erpPartnerStock|erpSecurity|erpCustomerList|erpAlerts|erpAccessKeys|erpListView|erpCurrencies|erpSharedStock|erpPoolCatalog|erpCashBook|erpSuppliers|erpSupplierPage)$/;
 function srvPump() {
   if (!SRV_Q.length) return;
   var isRead = SRV_READS.test(SRV_Q[0].name);
@@ -11100,6 +11102,8 @@ function partnerOwnHtml() {
         '<div style="flex:1 1 190px"><label class="f" for="pd_side">Who sold whose</label><select class="i" id="pd_side"><option value="theirs"' + (PART_DEAL.side === 'theirs' ? ' selected' : '') + '>I sold their stock — I owe them</option>' +
           '<option value="mine"' + (PART_DEAL.side === 'mine' ? ' selected' : '') + '>They sold my stock — they owe me</option></select></div>' +
         '<div style="flex:2 1 200px"><label class="f" for="pd_what">What</label><input class="i" id="pd_what" maxlength="200" placeholder="e.g. 2 rolls Sunlu PLA+ black" value="' + esc(PART_DEAL.description) + '"></div>' +
+        '<div style="flex:1 1 170px"><label class="f" for="pd_sku">Product code <span class="sku">(optional)</span></label><input class="i" id="pd_sku" list="l_pdsku" maxlength="60" placeholder="SKU \u2014 then the stock moves by itself" value="' + esc(PART_DEAL.sku || '') + '">' +
+          '<datalist id="l_pdsku">' + (CAT || []).slice(0, 1500).map(function (x) { return '<option value="' + esc(x.sku) + '">' + esc(x.name) + '</option>'; }).join('') + '</datalist></div>' +
         '<div style="flex:0 0 80px"><label class="f" for="pd_qty">Qty</label><input class="i" id="pd_qty" inputmode="decimal" value="' + esc(PART_DEAL.qty) + '"></div>' +
         '<div style="flex:1 1 120px"><label class="f" for="pd_amt">Agreed price, total</label><input class="i" id="pd_amt" inputmode="decimal" placeholder="0" value="' + esc(PART_DEAL.amount) + '"></div>' +
         '<div style="flex:1 1 140px"><label class="f" for="pd_date">Date <span class="sku">(empty = today)</span></label><input class="i" id="pd_date" type="date" max="' + esc(p.today) + '" value="' + esc(PART_DEAL.date) + '"></div>' +
@@ -11298,8 +11302,8 @@ function wirePhase4() {
   var ds = el('pd_side'); if (ds) ds.addEventListener('change', function () { PART_DEAL.side = ds.value; });
   var da = el('pd_add');
   if (da) da.addEventListener('click', function () {
-    partSave('erpPartnerDeal', [{ action: 'record', partner: PART_DEAL.partner, side: PART_DEAL.side, description: PART_DEAL.description, qty: PART_DEAL.qty, amount: PART_DEAL.amount, date: PART_DEAL.date }],
-      'Written down. The other side has to confirm it.', function () { PART_DEAL.description = ''; PART_DEAL.amount = ''; PART_DEAL.qty = '1'; PART_DEAL.date = ''; });
+    partSave('erpPartnerDeal', [{ action: 'record', partner: PART_DEAL.partner, side: PART_DEAL.side, sku: (el('pd_sku') ? el('pd_sku').value.trim() : ''), description: PART_DEAL.description, qty: PART_DEAL.qty, amount: PART_DEAL.amount, date: PART_DEAL.date }],
+      'Written down. The other side has to confirm it.', function () { PART_DEAL.description = ''; PART_DEAL.amount = ''; PART_DEAL.qty = '1'; PART_DEAL.date = ''; PART_DEAL.sku = ''; CAT = null; loadAll(); });
   });
   p4Each('button[data-pdeal]', async function () {
     var act = this.getAttribute('data-pdeal'), id = this.getAttribute('data-id');
@@ -13587,6 +13591,67 @@ wireProducts = function () {
   var o = el('sh_only'); if (o) o.addEventListener('change', function () { SHARED_ONLY = o.checked; repaint(); });
   var rl = el('sh_reload'); if (rl) rl.addEventListener('click', function () { SHARED = null; sharedLoad(true); toast('Reading the stock again\u2026'); });
 };
+</script>
+
+<!-- plan B3: sell from the joint pool without switching business -->
+<script>
+var INV_FROM = '', POOLCAT = {}, POOLCAT_BUSY = '';
+function invPools() {
+  return ((SHARED && SHARED.columns) || []).filter(function (c) { return c.kind === 'pool' && !c.note && c.key.indexOf('pool:') === 0; })
+    .map(function (c) { return { id: c.key.slice(5), name: c.name }; });
+}
+function invPoolName() { var n = ''; invPools().forEach(function (p) { if (p.id === INV_FROM) n = p.name; }); return n || 'the joint pool'; }
+function invPoolLoad(id, force) {
+  if (!id || POOLCAT_BUSY || (POOLCAT[id] && !force)) return;
+  POOLCAT_BUSY = id;
+  srv('erpPoolCatalog', [{ pool: id }], function (r) { POOLCAT_BUSY = ''; POOLCAT[id] = r.products || []; if (VIEW === 'invoice') repaint(); },
+      function (e) { POOLCAT_BUSY = ''; INV_FROM = ''; toast(esc(e && e.message ? e.message : e), true, 12000); if (VIEW === 'invoice') repaint(); });
+}
+/** Run one of the invoice screen's own functions against the pool's catalogue. */
+function invWithCat(fn, self, args) {
+  if (!INV_FROM || !POOLCAT[INV_FROM]) return fn.apply(self, args);
+  var keep = CAT; CAT = POOLCAT[INV_FROM];
+  try { return fn.apply(self, args); } finally { CAT = keep; }
+}
+['paintResults', 'addToCart', 'cartProblems', 'cartTotals', 'saveInvoice'].forEach(function (name) {
+  var orig = window[name];
+  if (typeof orig !== 'function') return;
+  window[name] = function () { return invWithCat(orig, this, arguments); };
+});
+try { paintResults = window.paintResults; addToCart = window.addToCart; cartProblems = window.cartProblems; cartTotals = window.cartTotals; saveInvoice = window.saveInvoice; } catch (e) {}
+var viewInvoiceB3 = viewInvoice;
+viewInvoice = function () {
+  if (typeof sharedLoad === 'function') sharedLoad();
+  var pools = invPools();
+  if (!pools.length) { INV_FROM = ''; return viewInvoiceB3(); }
+  if (INV_FROM && !POOLCAT[INV_FROM]) { invPoolLoad(INV_FROM); }
+  var bar = '<section><div class="card" style="padding:10px 14px"><div class="row" style="align-items:center;gap:10px;flex-wrap:wrap">' +
+    '<label class="f" for="inv_from" style="margin:0">Selling from</label>' +
+    '<select class="i" id="inv_from" style="flex:0 1 260px"><option value="">My stock' + (ME && ME.business ? ' \u2014 ' + esc(ME.business) : '') + '</option>' +
+    pools.map(function (p) { return '<option value="' + esc(p.id) + '"' + (INV_FROM === p.id ? ' selected' : '') + '>Joint pool \u2014 ' + esc(p.name) + '</option>'; }).join('') + '</select>' +
+    (INV_FROM ? '<span class="sub" style="margin:0">This sale is ' + esc(invPoolName()) + '\u2019s: its stock, its prices, its invoice number and its books. The money you take counts as held by you in the settlement.</span>' : '') +
+    '</div></div></section>';
+  if (INV_FROM && !POOLCAT[INV_FROM]) return bar + '<div class="loading">Reading the pool\u2019s products&hellip;</div>';
+  return bar + invWithCat(viewInvoiceB3, this, []);
+};
+document.addEventListener('change', async function (ev) {
+  var t = ev.target;
+  if (!t || t.id !== 'inv_from') return;
+  var want = t.value;
+  if (want === INV_FROM) return;
+  if (CART.length && !(await uiConfirm('Change where this sale comes from?\n\nThe products already added are taken off: one invoice comes from one stock.'))) { t.value = INV_FROM; return; }
+  CART = []; iSearch = ''; INV_FROM = want;
+  if (want) invPoolLoad(want, true);
+  try { updateCounts(); } catch (e) {}
+  repaint();
+});
+function invFromSaved(res) {
+  if (res && res.soldFrom) {
+    toast('Saved in ' + esc(res.soldFrom) + ' as ' + esc(res.invoiceNo) + '.', false, 9000);
+    if (res.soldFromId) { POOLCAT[res.soldFromId] = null; invPoolLoad(res.soldFromId, true); }
+    SHARED = null;
+  }
+}
 </script>
 </body>
 </html>

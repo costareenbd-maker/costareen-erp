@@ -189,12 +189,30 @@ check('...and takes no shareholders of its own', !r.ok && /joint pool/.test(r.er
 // back in their own businesses: stock counts and deals
 await owner('erpSetBusiness', [A]);
 await other('erpSetBusiness', [Bz]);
+// ---- plan B3: sell from the pool without switching business
+r = await other('erpPoolCatalog', [{ pool: POOL }]);
+check('the pool catalogue from my own business, at my tier', r.ok && r.result.name === 'ProtoReen JV' && r.result.products.find((p) => p.sku === SKU).sell === 150, r.result && r.result.name);
+r = await mgr('erpPoolCatalog', [{ pool: POOL }]);
+check('staff who are not in the pool cannot', !r.ok && /not one you are in/.test(r.error), r);
+r = await other('erpPoolCatalog', [{ pool: A }]);
+check('...and a normal business is not a pool to sell from', !r.ok && /not one you are in/.test(r.error), r);
+const poolBefore = (await sql`select count(*)::int n from invoices where business_id = ${POOL}`)[0].n;
+const ownBefore = (await sql`select count(*)::int n from invoices where business_id = ${Bz}`)[0].n;
+r = await other('erpCreateInvoice', [{ from: POOL, customer: { name: 'Walk In', phone: '01844444444' }, items: [{ sku: SKU, qty: 2 }], payMode: 'full' }]);
+check('a sale "from the pool" made inside my own business', r.ok && r.result.soldFrom === 'ProtoReen JV' && r.result.grandTotal === 300, r.result);
+const poolInv = await sql`select sold_by from invoices where business_id = ${POOL} and invoice_no = ${r.ok ? r.result.invoiceNo : ''}`;
+check('...is the pool\'s invoice, sold by me, and nothing lands in my own books', poolInv.length === 1 && poolInv[0].sold_by === Bz &&
+  (await sql`select count(*)::int n from invoices where business_id = ${POOL}`)[0].n === poolBefore + 1 &&
+  (await sql`select count(*)::int n from invoices where business_id = ${Bz}`)[0].n === ownBefore, poolInv);
+r = await mgr('erpCreateInvoice', [{ from: POOL, customer: { name: 'X', phone: '01855555555' }, items: [{ sku: SKU, qty: 1 }], payMode: 'full' }]);
+check('staff outside the pool cannot sell from it', !r.ok && /not one you are in/.test(r.error), r);
+
 // ---- plan B2: one inventory, side by side
 r = await other('erpSharedStock', []);
 const colOf = (res, kind) => res.columns.find((c) => c.kind === kind);
 check('one screen: mine, the pool, the partner', r.ok && r.result.shared && r.result.columns.length === 3 && colOf(r.result, 'mine') && colOf(r.result, 'pool').name === 'ProtoReen JV' && colOf(r.result, 'partner').name === 'Costareen', r.result && r.result.columns);
 const jv = r.result.rows.find((x) => x.sku === SKU), pla = r.result.rows.find((x) => x.sku === PLA);
-check('pool stock counted (1000 received, 210 sold)', jv && jv.qty[colOf(r.result, 'pool').key] === 790 && jv.qty.mine === undefined, jv);
+check('pool stock counted (1000 received, 212 sold)', jv && jv.qty[colOf(r.result, 'pool').key] === 788 && jv.qty.mine === undefined, jv);
 check('the partner\'s shelf beside it, counts only', pla && pla.qty[colOf(r.result, 'partner').key] === 5 && !/cost|price|sell/.test(JSON.stringify(r.result)), pla);
 r = await mgr('erpSharedStock', []);
 check('staff who are not in the pool see their own stock, and are told why the pool is empty', r.ok && r.result.rows.some((x) => x.sku === PLA && x.qty.mine === 5) &&
@@ -220,6 +238,31 @@ r = await owner('erpPartnerDeal', [{ action: 'confirm', id: D.id }]);
 check('confirmed', r.ok && r.result.deals[0].confirmed === true && r.result.deals[0].settled === false, r.result && r.result.deals);
 r = await owner('erpPartnerDeal', [{ action: 'paid', id: D.id }]);
 check('marked paid by the side that is owed', r.ok && r.result.deals[0].settled === true, r.result && r.result.deals);
+// ---- plan B3: a partner item with its product code moves the stock, through a real invoice
+const stockA = async () => Number((await sql`select ps.stock from products p join product_stock ps on ps.product_id = p.id where p.business_id = ${A} and p.sku = ${PLA}`)[0].stock);
+const s0 = await stockA();
+r = await other('erpPartnerDeal', [{ action: 'record', partner: A, side: 'theirs', sku: PLA, description: '2 rolls PLA black', amount: 2400, qty: 2 }]);
+const mineD = r.ok && r.result.deals.find((d) => d.sku === PLA);
+check('a request names the product; nothing moves yet', mineD && !mineD.stockMoved && mineD.invoiceNo === '' && (await stockA()) === s0, mineD);
+r = await owner('erpPartnerDeal', [{ action: 'confirm', id: mineD.id }]);
+const conf = r.ok && r.result.deals.find((d) => d.id === mineD.id);
+check('the stock owner confirms: an invoice to the partner at the agreed price, stock down', conf && conf.confirmed && /^INV-/.test(conf.invoiceNo) && (await stockA()) === s0 - 2, conf || r);
+const di = (await sql`select grand_total, due_amount, customer_name from invoices where business_id = ${A} and invoice_no = ${conf.invoiceNo}`)[0];
+check('...2400 owed by "Partner (partner)"', di && Number(di.grand_total) === 2400 && di.customer_name === 'Partner (partner)', di);
+r = await other('erpPartnership', [{}]);
+check('the other side sees that the stock moved, not the invoice number', r.result.deals.find((d) => d.id === mineD.id).stockMoved === true && r.result.deals.find((d) => d.id === mineD.id).invoiceNo === '', r.result.deals[0]);
+r = await owner('erpPartnerDeal', [{ action: 'paid', id: mineD.id, method: 'Cash' }]);
+const paidRow = await sql`select coalesce(sum(amount), 0)::float as s from payments where business_id = ${A} and invoice_no = ${conf.invoiceNo}`;
+check('"paid" receives the money on that invoice', r.ok && r.result.deals.find((d) => d.id === mineD.id).settled && paidRow[0].s === 2400, paidRow);
+r = await owner('erpPartnerDeal', [{ action: 'record', partner: Bz, side: 'mine', sku: 'NOPE-1', description: 'x', amount: 100 }]);
+check('my own stock: the code must exist', !r.ok && /no product with the code NOPE-1/.test(r.error), r);
+r = await owner('erpPartnerDeal', [{ action: 'record', partner: Bz, side: 'mine', sku: PLA, description: '1 roll PLA black', amount: 1000, qty: 1 }]);
+const own = r.ok && r.result.deals.find((d) => d.sku === PLA && !d.confirmed);
+check('recorded by the stock owner: the stock leaves at once', own && /^INV-/.test(own.invoiceNo) && (await stockA()) === s0 - 3, own || r);
+r = await owner('erpPartnerDeal', [{ action: 'cancel', id: own.id }]);
+check('...so it cannot simply be withdrawn', !r.ok && /already left on invoice INV-/.test(r.error), r);
+r = await owner('erpPartnerDeal', [{ action: 'record', partner: Bz, side: 'mine', sku: PLA, description: 'too many', amount: 100, qty: 999 }]);
+check('not enough stock: refused, and no deal is left behind', !r.ok && /Not enough stock/.test(r.error) && (await owner('erpPartnership', [{}])).result.deals.every((d) => d.what !== 'too many'), r);
 r = await sales('erpPartnership', [{}]);
 check('sales staff see none of it', !r.ok, r);
 

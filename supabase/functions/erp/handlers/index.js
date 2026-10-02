@@ -54,6 +54,7 @@ const core = {
   erpTakeAdvance: money.erpTakeAdvance,
 
   erpCreateInvoice: invoice.erpCreateInvoice,
+  erpPoolCatalog: invoice.erpPoolCatalog,
 };
 
 export const HANDLERS = {};

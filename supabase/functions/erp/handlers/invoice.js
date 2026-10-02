@@ -148,7 +148,8 @@ export async function createInvoice(ctx, payload, opts = {}) {
         '% of the goods. Your limit is ' + cap + '% - ask a manager or the owner to save this sale.');
     }
   }
-  const phoneIn = opts.webEntry ? formatBdPhone(String(payload.customer.phone || '').trim())
+  const phoneIn = opts.partnerDeal ? ''
+                : opts.webEntry ? formatBdPhone(String(payload.customer.phone || '').trim())
                                 : phone11(payload.customer.phone);
   const address = String(payload.customer.address || '').trim();
   const source = String(payload.customer.source || '').trim() || 'Walk-in';
@@ -160,7 +161,8 @@ export async function createInvoice(ctx, payload, opts = {}) {
     const pr = await ctx.tx`select id, name, sale_price_for(${ctx.biz}, id) as price
                             from products where business_id = ${ctx.biz}
                               and lower(btrim(sku)) = ${rec.sku.toLowerCase()} limit 1`;
-    const unit = num(pr[0].price) || num(rec.sell);
+    // a sale to a partner company goes at the price the two agreed (plan B3)
+    const unit = opts.partnerDeal && opts.unitPrice > 0 ? opts.unitPrice : (num(pr[0].price) || num(rec.sell));
     const qty = num(items[i].qty);
     const disc = DSC.line[i];
     lines.push({ productId: pr[0].id, sku: rec.sku, name: rec.name || pr[0].name, qty, unit,
@@ -274,7 +276,32 @@ export async function createInvoice(ctx, payload, opts = {}) {
 }
 
 export async function erpCreateInvoice(ctx, payload) {
-  const res = await createInvoice(ctx, payload);
+  // plan B3: "sell from" a joint pool without switching business. The sale is
+  // the pool's in every way - its stock, prices, invoice number and books -
+  // made by this person as the member of the pool they are.
+  const from = String((payload && payload.from) || '').trim();
+  let sctx = ctx, soldFrom = '';
+  if (from && from !== ctx.biz) {
+    const p = await poolCtx(ctx, from);
+    sctx = p.ctx; soldFrom = p.name;
+  }
+  const res = await createInvoice(sctx, payload);
   delete res.invoiceId;
+  if (soldFrom) { res.soldFrom = soldFrom; res.soldFromId = from; }
   return res;
+}
+
+/** This call, made inside a joint pool the person belongs to. Refused for anything else. */
+export async function poolCtx(ctx, poolId) {
+  const hit = (ctx.s.memberships || []).find((m) => m.business_id === String(poolId));
+  if (!hit || !hit.is_pool) throw new Error('That joint pool is not one you are in. Its own members sell from it.');
+  const role = String(hit.role || '').toLowerCase();
+  return { name: String(hit.name || 'Joint pool'),
+           ctx: { ...ctx, biz: hit.business_id, memo: {}, s: { ...ctx.s, role: ERP_DISCOUNT_CAP[role] !== undefined ? role : ctx.s.role } } };
+}
+
+/** The pool's products and prices, for the "sell from" switch on the invoice screen. */
+export async function erpPoolCatalog(ctx, payload) {
+  const p = await poolCtx(ctx, payload && payload.pool);
+  return { pool: p.ctx.biz, name: p.name, products: await erpCatalog(p.ctx) };
 }

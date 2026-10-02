@@ -17,6 +17,8 @@
 import { formatDate, num } from '../lib/time.js';
 import { setConfig } from '../lib/ext.js';
 import { SEED_LISTS } from './settings.js';
+import { createInvoice } from './invoice.js';
+import { erpRecordPayment } from './customers.js';
 
 const str = (v) => String(v == null ? '' : v).trim();
 const isMonth = (m) => /^\d{4}-(0[1-9]|1[0-2])$/.test(String(m || ''));
@@ -105,6 +107,7 @@ export async function erpPartnership(ctx, payload) {
     const owedToMe = d.from_business_id === ctx.biz;
     const other = owedToMe ? d.to_business_id : d.from_business_id;
     return { id: d.id, when: day(d.deal_date), what: str(d.description), qty: num(d.qty), amount: num(d.amount), note: str(d.note),
+             sku: str(d.sku), invoiceNo: owedToMe ? str(d.invoice_no) : '', stockMoved: !!str(d.invoice_no),
              owedToMe, other: names[other] || 'Partner', mineToConfirm: !d.confirmed_at && d.created_side !== ctx.biz,
              confirmed: !!d.confirmed_at, settled: !!d.settled_at, settledWhen: day(d.settled_at) };
   });
@@ -290,9 +293,26 @@ export async function erpPartnerStock(ctx, payload) {
 /**
  * A sale from the other partner's own stock - a debt between the two
  * companies at the price agreed for that deal.
- *   {action:'record', partner, side:'theirs'|'mine', description, amount, qty, date, note}
- *   {action:'confirm'|'paid'|'cancel', id}
+ *   {action:'record', partner, side:'theirs'|'mine', description, amount, qty, date, note, sku}
+ *   {action:'confirm'|'paid'|'cancel', id, method}
+ *
+ * Plan B3: with a product code (sku) the stock owner's books carry the deal as
+ * a real invoice to the partner at the agreed price - stock out, cost, revenue
+ * and a due. It is made the moment the stock owner acts: when they record the
+ * deal themselves, or when they confirm the other side's request. "Paid" then
+ * receives the money on that invoice.
  */
+async function dealInvoice(ctx, deal) {
+  const other = (await ctx.tx`select partner_name from my_partners() where my_business_id = ${ctx.biz} and partner_business_id = ${deal.to_business_id} limit 1`)[0];
+  const qty = num(deal.qty) > 0 ? num(deal.qty) : 1;
+  const res = await createInvoice(ctx, {
+    customer: { name: (other ? str(other.partner_name) : 'Partner') + ' (partner)', phone: '', source: 'Partner' },
+    items: [{ sku: str(deal.sku), qty }], payMode: 'none', paymentMethod: 'Cash',
+    note: 'Sold by partner: ' + str(deal.description),
+  }, { partnerDeal: true, unitPrice: Math.round(num(deal.amount) / qty * 100) / 100 });
+  await ctx.tx`select partner_deal_note(${deal.id}, ${null}, ${res.invoiceNo})`;
+  return res.invoiceNo;
+}
 export async function erpPartnerDeal(ctx, payload) {
   payload = payload || {};
   const action = str(payload.action);
@@ -307,14 +327,44 @@ export async function erpPartnerDeal(ctx, payload) {
     // "theirs": I sold their stock, I owe them. "mine": they sold mine, they owe me.
     const from = payload.side === 'mine' ? ctx.biz : partner;
     const to = payload.side === 'mine' ? partner : ctx.biz;
-    await ctx.tx`select record_partner_deal(${from}, ${to}, ${what}, ${amount}, ${qty},
-                 ${isDate(payload.date) ? payload.date : null}::date, ${str(payload.note).slice(0, 300) || null})`;
+    const sku = str(payload.sku);
+    if (sku && qty !== Math.round(qty)) throw new Error('With a product code the quantity is a whole number.');
+    if (sku && from === ctx.biz) {
+      const mine = await ctx.tx`select 1 from products where business_id = ${ctx.biz} and lower(btrim(sku)) = ${sku.toLowerCase()} limit 1`;
+      if (!mine.length) throw new Error('There is no product with the code ' + sku + ' in your stock.');
+    }
+    const deal = (await ctx.tx`select * from record_partner_deal(${from}, ${to}, ${what}, ${amount}, ${qty},
+                 ${isDate(payload.date) ? payload.date : null}::date, ${str(payload.note).slice(0, 300) || null})`)[0];
+    if (sku) {
+      await ctx.tx`select partner_deal_note(${deal.id}, ${sku}, ${null})`;
+      // my own stock went out: it leaves my books now
+      if (from === ctx.biz) await dealInvoice(ctx, { ...deal, sku });
+    }
   } else {
     const id = str(payload.id);
     if (!id) throw new Error('Which deal?');
-    if (action === 'confirm') await ctx.tx`select confirm_partner_deal(${id})`;
-    else if (action === 'paid') await ctx.tx`select settle_partner_deal(${id})`;
-    else if (action === 'cancel') await ctx.tx`select cancel_partner_deal(${id})`;
+    const deal = /^[0-9a-f-]{36}$/i.test(id) ? (await ctx.tx`select * from partner_deals where id = ${id}`)[0] : null;
+    if (!deal) throw new Error('That deal was not found.');
+    if (action === 'confirm') {
+      await ctx.tx`select confirm_partner_deal(${id})`;
+      // it was my stock they sold: confirming takes it off my shelf
+      if (str(deal.sku) && !str(deal.invoice_no) && deal.from_business_id === ctx.biz) await dealInvoice(ctx, deal);
+    } else if (action === 'paid') {
+      await ctx.tx`select settle_partner_deal(${id})`;
+      if (str(deal.invoice_no) && deal.from_business_id === ctx.biz) {
+        try {
+          await ctx.tx.savepoint(() => erpRecordPayment(ctx, { orderId: str(deal.invoice_no), amount: num(deal.amount), method: str(payload.method) || 'Cash' }));
+        } catch (e) {
+          if (!/already settled/.test(String(e && e.message))) throw e;      // paid on the invoice itself beforehand: fine
+        }
+      }
+    } else if (action === 'cancel') {
+      if (str(deal.invoice_no)) {
+        throw new Error('The stock has already left on invoice ' + (deal.from_business_id === ctx.biz ? str(deal.invoice_no) : 'of the other company') +
+                        '. Cancel that invoice first (the goods come back), then withdraw this.');
+      }
+      await ctx.tx`select cancel_partner_deal(${id})`;
+    }
     else throw new Error('Unknown action.');
   }
   return erpPartnership(ctx, {});

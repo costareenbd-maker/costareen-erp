@@ -161,3 +161,9 @@
 - **B1.** "A company for a partner" (Settings) now hands back the partner's own private access link, shown once. It opens THEIR login and company only - nothing of the creator's business. E-mail is optional (the sign-in screen is off). The partner makes further links for their own devices under Settings > Access links, and joins the pool with the invite code as before.
 - **B2.** Products has a switch **Mine · Joint pool · Partner's · All, side by side** (only when the business is in a pool). Counts only for what is not ours; a partner who stopped sharing, and staff who are not in the pool, are told why a column is empty. Handler erpSharedStock (manager and up).
 - Tests: phase5_test (37), phase4_test (80).
+
+2026-10-03 — Plan B3 (one invoice, any stock)
+- **Sell from the joint pool without switching business.** New invoice has "Selling from: My stock / Joint pool" (shown to pool members only). A pool sale is the pool's in every way - stock, tier price, invoice number, books - made by the person as the pool member they are; the money taken counts as held by them in the settlement. One invoice comes from one stock (no mixing on one paper). erpCreateInvoice `from`, erpPoolCatalog.
+- **A partner's item moves the stock.** A partner deal can name the product code. The stock owner's books then carry it as a real invoice to "<Partner> (partner)" at the agreed price: stock out, cost, revenue, a due. It is made when the stock owner acts (records it, or confirms the other side's request). "Paid" receives the money on that invoice. A deal whose stock has left cannot be withdrawn - cancel the invoice first.
+- 035_partner_deal_stock.sql (partner_deals.sku, invoice_no, partner_deal_note()). Fixed on the way: nothing. Tests: phase4_test (95).
+- Not done: the selling side has no automatic purchase/sale lines for the partner's item in its own books (it sells something it never stocked); it records its customer sale and the cost by hand.
