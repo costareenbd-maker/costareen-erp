@@ -179,3 +179,6 @@
 - Ctrl+Enter saves. Typing a code and pressing Enter (already there) now also works when selling from a joint pool.
 - Layout only: every field, rule and id is as before (one block "plan C3" at the end of app.html).
 - Not done: product photos in the search (products have no photos stored).
+
+2026-10-03 — Plan C4 (dashboard trimmed)
+- The dashboard keeps what needs doing, today and the month so far (with its two charts) in sight. Stock and cash, Top products / Stock health and Recent orders sit behind three tabs under them; the chosen tab is remembered on the device. Nothing was removed and no figure changed (block "plan C4" at the end of app.html).

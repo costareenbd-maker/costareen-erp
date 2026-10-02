@@ -13750,5 +13750,44 @@ document.addEventListener('keydown', function (ev) {
   ev.preventDefault(); saveInvoice();
 });
 </script>
+
+<!-- plan C4: dashboard trimmed - what needs doing, today, this month; the rest behind tabs -->
+<style>
+.dtabs { margin-top:6px; }
+.dtabp[hidden] { display:none !important; }
+</style>
+<script>
+var DASH_TAB = (function () { try { return localStorage.getItem('cz_dash_tab') || 'stock'; } catch (e) { return 'stock'; } })();
+var viewDashC4 = viewDash;
+viewDash = function () {
+  var h = viewDashC4();
+  var marks = [
+    ['stock', 'Stock and cash', '<section><div class="grid g-third">'],
+    ['top', 'Top products', '<section><div class="grid g-half"><div class="card"><h2>Top products'],
+    ['orders', 'Recent orders', '<section><div class="card"><div class="row" style="justify-content:space-between;align-items:center"><h2 style="margin:0">Recent orders']
+  ];
+  var found = [];
+  marks.forEach(function (m) { var at = h.indexOf(m[2]); if (at >= 0) found.push({ key: m[0], label: m[1], at: at }); });
+  if (found.length < 2) return h;
+  found.sort(function (a, b) { return a.at - b.at; });
+  if (!found.some(function (f) { return f.key === DASH_TAB; })) DASH_TAB = found[0].key;
+  var out = h.slice(0, found[0].at) + '<div class="tabs dtabs" role="tablist">' + found.map(function (f) {
+    return '<button type="button" role="tab" data-dtab="' + f.key + '" aria-selected="' + (f.key === DASH_TAB) + '">' + f.label + '</button>'; }).join('') + '</div>';
+  found.forEach(function (f, i) {
+    var end = i + 1 < found.length ? found[i + 1].at : h.length;
+    out += '<div class="dtabp" data-dtabp="' + f.key + '"' + (f.key === DASH_TAB ? '' : ' hidden') + '>' + h.slice(f.at, end) + '</div>';
+  });
+  return out;
+};
+document.addEventListener('click', function (ev) {
+  var t = ev.target && ev.target.closest ? ev.target.closest('button[data-dtab]') : null;
+  if (!t) return;
+  DASH_TAB = t.getAttribute('data-dtab');
+  try { localStorage.setItem('cz_dash_tab', DASH_TAB); } catch (e) {}
+  var tabs = document.querySelectorAll('button[data-dtab]'), panes = document.querySelectorAll('[data-dtabp]');
+  for (var i = 0; i < tabs.length; i++) tabs[i].setAttribute('aria-selected', String(tabs[i] === t));
+  for (var j = 0; j < panes.length; j++) panes[j].hidden = panes[j].getAttribute('data-dtabp') !== DASH_TAB;
+});
+</script>
 </body>
 </html>
