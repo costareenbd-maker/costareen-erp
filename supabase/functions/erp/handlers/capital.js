@@ -20,6 +20,7 @@ import { lock, who } from './money.js';
 import { monthNet, pnlFor } from './dashboard.js';
 import { expenseAccount, cashRules } from './cash.js';
 import { investorReturns } from './returns.js';
+import { isPool, notInPool } from '../lib/pool.js';
 import { assertOpen, monthLabel } from '../lib/period.js';
 
 const ERP_CAP_TYPES = { invest: 'Money put in', withdraw: 'Capital taken back',
@@ -164,13 +165,14 @@ export async function erpCapital(ctx) {
   let accs = [];
   try { accs = (await ctx.tx.savepoint(() => ctx.tx`select id, name from money_accounts where business_id = ${ctx.biz} and not archived and kind <> 'courier' order by sort_order, created_at`)).map((a) => ({ id: a.id, name: String(a.name) })); } catch (_) { accs = []; }
   const lockM = Object.keys(closed).sort().pop() || '';
-  return { lockedThrough: lockM, canEdit: owner, currency: 'BDT', holders: list, hidden, totals, entries, thisMonth: nowMonth, accounts: accs, accountDefault: (await cashRules(ctx)).expense || '',
+  return { isPool: await isPool(ctx), lockedThrough: lockM, canEdit: owner, currency: 'BDT', holders: list, hidden, totals, entries, thisMonth: nowMonth, accounts: accs, accountDefault: (await cashRules(ctx)).expense || '',
            months: monthRows.map((mr) => ({ month: mr.month, net: mr.net, closed: mr.closed, locked: !!lockM && mr.month <= lockM, canReopen: mr.month === lockM, current: mr.current, error: mr.error })).reverse() };
 }
 
 /** Add a person, or change what is written about one. All shares together may never pass 100%. */
 export async function erpCapitalHolderSave(ctx, payload) {
   if (ctx.s.role !== 'owner') throw new Error('Only the owner can change who holds what.');
+  await notInPool(ctx, 'who put in what is');
   payload = payload || {};
   const kind = String(payload.kind) === 'investor' ? 'investor' : 'shareholder';
   const name = String(payload.name || '').trim().slice(0, 80);
@@ -244,6 +246,7 @@ export async function erpCapitalHolderEnd(ctx, payload) {
 /** A line in the book: money put in, capital taken back, profit handed over, or an investor's return paid. */
 export async function erpCapitalEntryAdd(ctx, payload) {
   if (ctx.s.role !== 'owner') throw new Error('Only the owner can write in the capital book.');
+  await notInPool(ctx, 'capital is');
   payload = payload || {};
   const type = String(payload.type || '');
   if (!ERP_CAP_TYPES[type]) throw new Error('What kind of entry is it?');
@@ -303,6 +306,7 @@ export async function erpCapitalEntryVoid(ctx, payload) {
 /** Close a month that is over: its profit and the shares as they stand are kept as they are. */
 export async function erpCapitalClose(ctx, payload) {
   if (ctx.s.role !== 'owner') throw new Error('Only the owner can close a month.');
+  if (await isPool(ctx)) throw new Error('This is a joint pool: its months are closed under Partnership, where the settlement is.');
   const month = String((payload && payload.month) || '');
   if (!isMonth(month)) throw new Error('Which month?');
   if (month >= monthStr(ctx.now)) throw new Error('A month can be closed once it is over.');

@@ -149,3 +149,10 @@
 - **No profit without an owner.** The "stays with the business" wording is gone: shares under 100% show a warning, and a month cannot be closed until the shares make 100%.
 - **A closed month closes the whole books.** Nothing can be dated into a closed month or any month before it, nor struck out of it: sales, expenses, capital lines, supplier bills and payments, transfers. Voiding an invoice of a closed month is refused (cancel it instead - the goods come back today). The owner can reopen the latest closed month, with a reason.
 - 033_book_lock.sql (books_locked_through(), delete policy for reopening), lib/period.js, handlers/returns.js, erpCapitalReopen, tests/a6_test.mjs (28).
+
+2026-10-03 — Plan A7 (partnership corrections)
+- **Settlement on money received.** A partner "holds" the cash actually taken from customers, by whoever took it (payments.received_by, set inside a pool) - not the invoices raised. A sale on credit is profit, but nobody's cash: "Customers still owe" is shown and shared by the capital ratio, like the stock. Returned goods, adjustments and credit moved about are not money.
+- **One set of books for the pool's costs.** Inside a pool the normal Expenses screen takes no entries and points to the pool's book; the pool's Profitability, Dashboard and Expenses totals read their expenses from that book, so they agree with the settlement.
+- **Lines are struck out, never removed.** A reason is required; the line stays, crossed through, with who and why, for every partner.
+- **Capital inside a pool** shows only Partnership: no second shareholder/investor system there.
+- 034_partnership_fix.sql (pool_settlement rewritten, received_by trigger, pool_ledger.voided_*), lib/pool.js; phase4_test.mjs now 75.

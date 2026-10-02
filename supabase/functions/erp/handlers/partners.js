@@ -64,13 +64,14 @@ export async function erpPartnership(ctx, payload) {
     const lockRow = (await ctx.tx`select to_char(pool_locked_until(${ctx.biz}), 'YYYY-MM-DD') as d`)[0];
 
     const led = await ctx.tx`
-      select id, kind, partner_business_id, to_business_id, amount, entry_date, category, note
+      select id, kind, partner_business_id, to_business_id, amount, entry_date, category, note, voided_at, voided_by, void_reason
       from pool_ledger where pool_id = ${ctx.biz} order by entry_date desc, created_at desc limit 300`;
     const ledger = led.map((l) => {
       const d = formatDate(new Date(l.entry_date), 'yyyy-MM-dd');
       return { id: l.id, kind: str(l.kind).toLowerCase(), label: KIND_WORDS[str(l.kind)] || str(l.kind),
                who: names[l.partner_business_id] || '?', to: l.to_business_id ? (names[l.to_business_id] || '?') : '',
                amount: num(l.amount), when: day(l.entry_date), category: str(l.category), note: str(l.note),
+               voided: l.voided_at ? 'struck out ' + day(l.voided_at) + ' by ' + (str(l.voided_by) || '?') + ': ' + str(l.void_reason) : '',
                locked: !!(lockRow && lockRow.d && d < lockRow.d) };
     });
     const invites = owner ? (await ctx.tx`
@@ -180,12 +181,20 @@ export async function erpPoolEntryAdd(ctx, payload) {
   return erpPartnership(ctx, { month: payload.month });
 }
 
-/** Take a wrong line out of the book. A settled month stays as it is. */
+/**
+ * Strike a wrong line out of the book, saying why. The line stays, crossed
+ * through, for every partner to see (plan A7). A settled month stays as it is.
+ */
 export async function erpPoolEntryRemove(ctx, payload) {
   await needPool(ctx);
-  const id = str(payload && payload.id);
-  if (!id) throw new Error('Which entry?');
-  const gone = await ctx.tx`delete from pool_ledger where pool_id = ${ctx.biz} and id = ${id} returning id`;
+  const id = str(payload && payload.id), why = str(payload && payload.reason).slice(0, 300);
+  if (!/^[0-9a-f-]{36}$/i.test(id)) throw new Error('Which entry?');
+  if (!why) throw new Error('Say why the line is being struck out. Your partner will see it.');
+  const was = (await ctx.tx`select voided_at from pool_ledger where pool_id = ${ctx.biz} and id = ${id}`)[0];
+  if (!was) throw new Error('That entry was not found.');
+  if (was.voided_at) throw new Error('That line is already struck out.');
+  const gone = await ctx.tx`update pool_ledger set voided_at = now(), voided_by = ${(ctx.s && ctx.s.name) || 'owner'}, void_reason = ${why}
+                            where pool_id = ${ctx.biz} and id = ${id} returning id`;
   if (!gone.length) throw new Error('That entry was not found.');
   return erpPartnership(ctx, { month: payload.month });
 }

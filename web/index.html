@@ -6577,7 +6577,10 @@ function viewExpenses() {
   if (!EXP) return '<div class="loading">Reading the expenses&hellip;</div>';
   var e = EXP, cats = e.categories || {};
 
-  var h = '<section><div class="row" style="align-items:center;gap:8px;margin-bottom:12px">' +
+  var h = (e.poolBook ? '<section><div class="note"><div class="ico">i</div><div><strong>This is a joint pool.</strong> Its costs are written in one place: the pool\u2019s book, where each line says which partner paid. ' +
+      'This month the book holds ' + esc(cur) + ' ' + fmt(e.poolExpenses || 0) + ' of expenses \u2014 already inside the figures below. ' +
+      '<button class="btn small" type="button" id="ex_topool">Open the pool\u2019s book</button></div></div></section>' : '') +
+    '<section><div class="row" style="align-items:center;gap:8px;margin-bottom:12px">' +
     '<button class="btn small" type="button" id="ex_prev">&larr; Earlier</button>' +
     '<strong style="min-width:150px;text-align:center">' + esc(e.label) + '</strong>' +
     '<button class="btn small" type="button" id="ex_next"' + (e.isCurrent ? ' disabled' : '') +
@@ -6759,6 +6762,7 @@ function capTerms(h, cur) {
 }
 
 function viewCapital() {
+  if (capInPool() && CAP_TAB !== 'partner') { CAP_TAB = 'partner'; if (!PART) { PART_ERR = null; loadPartner(); } }
   if (CAP_TAB === 'partner') return capTabsHtml() + partnerHtml();
   if (CAP_ERR) return capTabsHtml() + '<section><div class="note err"><div class="ico">✕</div><div><strong>Could not read the capital book.</strong><br>' + esc(CAP_ERR) + '</div></div></section>';
   if (!CAPD) return capTabsHtml() + '<div class="loading">Reading the capital book&hellip;</div>';
@@ -11017,7 +11021,10 @@ var PART_EN = { kind: 'capital_in', partner: '', to: '', amount: '', date: '', c
 var PART_NEW = { name: '', displayName: '', tier: 'retail', code: '', joinName: '', joinTier: 'retail' };
 var PART_DEAL = { partner: '', side: 'theirs', description: '', qty: '1', amount: '', date: '', note: '' };
 var PART_STOCK = null;   // { partner, name, products } - the other side's shelf
+/** Inside a joint pool there is one capital system: the pool's book under Partnership. */
+function capInPool() { return !!((CAPD && CAPD.isPool) || (PART && PART.isPool)); }
 function capTabsHtml() {
+  if (capInPool()) return '';
   return '<div class="tabs" role="tablist"><button type="button" role="tab" data-captab="capital" aria-selected="' + (CAP_TAB === 'capital') + '">Capital</button>' +
     '<button type="button" role="tab" data-captab="partner" aria-selected="' + (CAP_TAB === 'partner') + '">Partnership</button></div>';
 }
@@ -11134,10 +11141,11 @@ function poolHtml() {
     kpiT('Profit this month', cur, fmt(tm.profit || 0), '<span class="delta">after ' + fmt(tm.expenses || 0) + ' of pool expenses</span>', (tm.profit || 0) < 0 ? 'bad' : 'good') +
     kpiT('Capital in the pool', cur, fmt(td.capital || 0), '<span class="delta">profit so far ' + fmt(td.profit || 0) + '</span>') +
     kpiT('Stock at cost', cur, fmt(td.stock_at_cost || 0), '<span class="delta">owned in the same shares</span>') +
+    (td.basis === 'cash' ? kpiT('Customers still owe', cur, fmt(td.receivables || 0), '<span class="delta">sold on credit, not paid yet \u2014 shared like the stock</span>', (td.receivables || 0) > 0.5 ? 'warn' : '') : '') +
     '</div></section>';
 
   h += '<section><div class="card"><h2>' + esc(p.name) + ' — the partners</h2><div class="sub">Profit is shared by capital as it stood when the month began; money added during a month counts from the next. ' +
-    '“Holds” is the pool’s cash in that partner’s hands; “should hold” is what is theirs. The difference is what they pay in or get back.</div>' +
+    '“Holds” is the pool’s cash in that partner’s hands \u2014 money actually received from customers, by whoever took it; a sale on credit is not counted until it is paid. “Should hold” is what is theirs. The difference is what they pay in or get back.</div>' +
     '<div class="scroll"><table><thead><tr><th>Partner</th><th class="num">Capital</th><th class="num">Share</th><th class="num">Sold this month</th><th class="num">Profit share</th>' +
     '<th class="num">Holds</th><th class="num">Should hold</th><th class="num">To settle</th></tr></thead><tbody>' +
     ps.map(function (x) {
@@ -11184,13 +11192,14 @@ function poolHtml() {
       '<div style="flex:2 1 200px"><label class="f" for="pe_note">Note <span class="sku">(optional)</span></label><input class="i" id="pe_note" maxlength="300" value="' + esc(e.note) + '"></div>' +
       '<button class="btn primary" type="button" id="pe_add"' + (PART_BUSY ? ' disabled' : '') + '>' + (PART_BUSY ? 'Saving…' : 'Write it down') + '</button></div></div></section>';
   }
-  h += '<section><div class="grid g-half"><div class="card"><h2>The pool’s book</h2><div class="sub">Newest first. A line in a closed month can no longer be changed.</div>';
+  h += '<section><div class="grid g-half"><div class="card"><h2>The pool’s book</h2><div class="sub">Newest first. Nothing is removed: a wrong line is struck out with a reason, and every partner sees it. A line in a closed month can no longer be changed.</div>';
   if (!p.ledger.length) h += '<div class="empty">Nothing written yet. Start with the capital each partner put in.</div>';
   else h += '<div class="scroll tall"><table><tbody>' + p.ledger.map(function (l) {
     var plus = l.kind === 'capital_in';
-    return '<tr><td style="white-space:nowrap">' + esc(l.when) + '</td><td class="nm">' + esc(l.who) + (l.to ? ' &rarr; ' + esc(l.to) : '') + '<br><span class="sku">' + esc(l.label) + (l.category ? ' · ' + esc(l.category) : '') + (l.note ? ' · ' + esc(l.note) : '') + '</span></td>' +
+    return '<tr' + (l.voided ? ' style="opacity:.6"' : '') + '><td style="white-space:nowrap">' + esc(l.when) + '</td><td class="nm"' + (l.voided ? ' style="text-decoration:line-through"' : '') + '>' + esc(l.who) + (l.to ? ' &rarr; ' + esc(l.to) : '') + '<br><span class="sku">' + esc(l.label) + (l.category ? ' · ' + esc(l.category) : '') + (l.note ? ' · ' + esc(l.note) : '') + '</span>' +
+      (l.voided ? '<br><span class="sku" style="text-decoration:none;display:inline-block">' + esc(l.voided) + '</span>' : '') + '</td>' +
       '<td class="num"><strong>' + (plus ? '+' : l.kind === 'transfer' ? '' : '−') + fmt(l.amount) + '</strong></td>' +
-      '<td class="num">' + (ed && !l.locked ? '<button class="btn small" type="button" data-pldel="' + esc(l.id) + '">Remove</button>' : '') + '</td></tr>'; }).join('') + '</tbody></table></div>';
+      '<td class="num">' + (ed && !l.locked && !l.voided ? '<button class="btn small" type="button" data-pldel="' + esc(l.id) + '">Strike out</button>' : '') + '</td></tr>'; }).join('') + '</tbody></table></div>';
   h += '</div><div class="card"><h2>Partners and invites</h2><div class="list">' + p.partners.map(function (x) {
     return '<div><span>' + esc(x.name) + '<span class="sku">sells at the ' + esc(x.tier) + ' price</span></span><b>' + (x.id === p.me ? 'you' : '') + '</b></div>'; }).join('') + '</div>';
   if (ed) {
@@ -11330,8 +11339,10 @@ function wirePhase4() {
   });
   p4Each('button[data-pldel]', async function () {
     var id = this.getAttribute('data-pldel');
-    if (!(await uiConfirm('Remove this line from the pool’s book?\n\nThe settlement is worked out again without it.'))) return;
-    partSave('erpPoolEntryRemove', [{ id: id, month: PART.month }], 'Line removed.');
+    var why = await uiPrompt('Why is this line being struck out? It stays in the book, crossed through, and your partner sees the reason.', '');
+    if (why === null) return;
+    if (!why.trim()) { toast('Say why.', true); return; }
+    partSave('erpPoolEntryRemove', [{ id: id, reason: why.trim(), month: PART.month }], 'Struck out.');
   });
 }
 </script>
@@ -13481,6 +13492,14 @@ wireCosts = function () {
     save({ code: el('fx_code').value.trim().toUpperCase(), name: el('fx_name').value.trim(), rate: el('fx_rate').value.trim() }, 'Currency added.');
   });
 };
+</script>
+
+<!-- plan A7: inside a pool the Expenses screen points to the pool's book -->
+<script>
+document.addEventListener('click', function (ev) {
+  var t = ev.target;
+  if (t && t.id === 'ex_topool') { CAP_TAB = 'partner'; PART = null; go('capital'); }
+});
 </script>
 </body>
 </html>

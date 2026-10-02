@@ -14,6 +14,7 @@ import { monthGross, monthNet } from './dashboard.js';
 import { expenseAccount, cashRules } from './cash.js';
 import { returnsFor, isReturnPaid } from './returns.js';
 import { assertOpen, lockedThrough } from '../lib/period.js';
+import { isPool, notInPool, poolExpenses } from '../lib/pool.js';
 
 /** Each section offers only the categories that belong in it (ERP.js:6573). */
 export const ERP_EXP_CATS = {
@@ -109,6 +110,7 @@ async function expRows(ctx, month) {
 /** erpExpWrite_: append one EXPENSES row. */
 async function expWrite(ctx, row) {
   const [id, at, month, kind, category, description, amount, itemId, by, voided, account] = row;
+  await notInPool(ctx, 'its expenses are');
   await assertOpen(ctx, month, 'an expense cannot be written into it');
   await ctx.tx`
     insert into expenses (business_id, expense_no, recorded_at, month, kind, category,
@@ -193,7 +195,10 @@ export async function erpExpenses(ctx, payload) {
   // plan A2: what the month earned, exactly as the Profitability screen has it
   const g = await monthNet(ctx, month);
   const other = g.delivery + g.courierExtra - g.courierShort - g.courier;
-  const total = Math.round(sums.fixed + sums.recurring + sums.oneoff + investorReturns);
+  const pool = await poolExpenses(ctx, month);
+  let poolTotal = 0;
+  for (const e of pool) { poolTotal += e.amount; const hit = cats.find((c) => c.name === e.category); if (hit) hit.amount += Math.round(e.amount); else cats.push({ name: e.category, amount: Math.round(e.amount) }); }
+  const total = Math.round(sums.fixed + sums.recurring + sums.oneoff + investorReturns + poolTotal);
   const p = month.split('-');
   return {
     month, label: MONTH_NAMES[Number(p[1]) - 1] + ' ' + p[0],
@@ -204,7 +209,7 @@ export async function erpExpenses(ctx, payload) {
     byCategory: cats,
     fixed: Math.round(sums.fixed), fixedPaid: Math.round(sums.fixed),
     fixedUnpaid: Math.round(fixedUnpaid), recurring: Math.round(sums.recurring),
-    oneoffTotal: Math.round(sums.oneoff), total, investorReturns, lockedThrough: await lockedThrough(ctx),
+    oneoffTotal: Math.round(sums.oneoff), total, investorReturns, poolBook: await isPool(ctx), poolExpenses: Math.round(poolTotal), lockedThrough: await lockedThrough(ctx),
     revenue: g.netSales, goodsCost: g.cost, gross: g.gross,
     delivery: g.delivery, courier: g.courier, courierExtra: g.courierExtra, courierShort: g.courierShort, other,
     net: g.gross + other - total,

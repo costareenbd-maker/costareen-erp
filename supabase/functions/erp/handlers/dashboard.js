@@ -19,6 +19,7 @@ import { roleAtLeast } from '../allow.js';
 import { erpDues, creditMap, paidByOrder, discLeft, lock } from './money.js';
 import { ratesMap, landedCost, saveRate } from './currency.js';
 import { returnsFor } from './returns.js';
+import { poolExpenses } from '../lib/pool.js';
 
 // ------------------------------------------------------------------ months
 
@@ -169,6 +170,7 @@ export async function expenseTotal(ctx, month) {
   let total = 0;
   for (const r of await expRows(ctx, month)) if (!r.voided) total += num(r.amount);
   total += await returnsFor(ctx, month);
+  for (const e of await poolExpenses(ctx, month)) total += e.amount;
   return Math.round(total);
 }
 
@@ -204,6 +206,7 @@ export async function expByCat(ctx, month) {
     by[r.category] = (by[r.category] || 0) + num(r.amount);
     total += num(r.amount);
   }
+  for (const e of await poolExpenses(ctx, month)) { by[e.category] = (by[e.category] || 0) + e.amount; total += e.amount; }
   const due = await returnsFor(ctx, month);
   if (due > 0) { by['Investor returns'] = (by['Investor returns'] || 0) + due; total += due; }
   for (const c of Object.keys(by)) by[c] = Math.round(by[c]);

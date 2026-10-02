@@ -137,7 +137,14 @@ r = await owner('erpPoolEntryAdd', [{ kind: 'transfer', partner: T.from, to: T.t
 check('after the transfer nobody owes', r.ok && r.result.report.transfers.length === 0 && r.result.report.partners.every((p) => Math.abs(p.balance) < 0.01), r.result && r.result.report.partners);
 const L = r.result.ledger.find((l) => l.kind === 'transfer');
 r = await owner('erpPoolEntryRemove', [{ id: L.id }]);
-check('a wrong line can be taken out', r.ok && r.result.ledger.length === 2 && r.result.report.transfers.length === 1, r.result && r.result.ledger);
+check('a line is not struck out without a reason', !r.ok && /Say why the line is being struck out/.test(r.error), r);
+r = await owner('erpPoolEntryRemove', [{ id: L.id, reason: 'not handed over yet' }]);
+check('a wrong line is struck out, not removed, and no longer counts', r.ok && r.result.ledger.length === 3 && r.result.report.transfers.length === 1 &&
+  /^struck out .* by .*: not handed over yet$/.test(r.result.ledger.find((l) => l.id === L.id).voided), r.result && r.result.ledger);
+r = await owner('erpPoolEntryRemove', [{ id: L.id, reason: 'again' }]);
+check('...once only', !r.ok && r.error === 'That line is already struck out.', r);
+r = await other('erpPartnership', [{}]);
+check('the other partner sees the struck-out line and the reason', r.ok && /not handed over yet/.test(r.result.ledger.find((l) => l.id === L.id).voided), r.result && r.result.ledger);
 r = await owner('erpPoolClose', [{ month }]);
 check('a month cannot be closed before it ends', !r.ok && /only be closed after it has ended/.test(r.error), r);
 r = await owner('erpPoolTier', [{ partner: A, tier: 'retail' }]);
@@ -145,11 +152,47 @@ check('tier can be changed', r.ok && r.result.partners.find((p) => p.id === A).t
 r = await owner('erpPoolInvite', []);
 check('a new invite code', r.ok && r.result.invites.length === 1 && /^[0-9A-F]{10}$/.test(r.result.invites[0].code), r.result && r.result.invites);
 
+// ---- plan A7: the settlement counts money received, not invoices raised
+const before7 = (await owner('erpPartnership', [{}])).result.report;
+r = await other('erpCreateInvoice', [{ customer: { name: 'Credit Buyer', phone: '01833333333' }, items: [{ sku: SKU, qty: 10 }], paymentMethod: 'Cash', paid: 0 }]);
+check('Partner sells 10 on credit', r.ok && r.result.grandTotal === 1500 && r.result.thisDue === 1500, r.result);
+const CR = r.result.invoiceNo;
+r = await owner('erpPartnership', [{}]);
+let rep7 = r.result.report;
+check('a credit sale is profit, but not cash in the seller\'s hands', rep7.to_date.basis === 'cash' && rep7.to_date.receivables === 1500 &&
+  P(rep7, 'Partner').collected === P(before7, 'Partner').collected && P(rep7, 'Partner').invoiced === P(before7, 'Partner').invoiced + 1500 &&
+  P(rep7, 'Partner').held === P(before7, 'Partner').held && rep7.this_month.revenue === before7.this_month.revenue + 1500, [rep7.to_date, P(rep7, 'Partner')]);
+check('what customers owe is shared like the stock: still balanced', rep7.balance_check === 0, rep7.balance_check);
+r = await other('erpRecordPayment', [{ orderId: CR, amount: 500, method: 'Cash' }]);
+check('Partner takes 500 of it', r.ok, r);
+rep7 = (await owner('erpPartnership', [{}])).result.report;
+check('...and now holds 500 more', P(rep7, 'Partner').collected === P(before7, 'Partner').collected + 500 && rep7.to_date.receivables === 1000 && rep7.balance_check === 0, [P(rep7, 'Partner'), rep7.to_date]);
+r = await owner('erpRecordPayment', [{ orderId: CR, amount: 1000, method: 'Cash' }]);
+rep7 = (await owner('erpPartnership', [{}])).result.report;
+check('the rest is paid to Costareen: whoever takes the money holds it', r.ok && P(rep7, 'Costareen').collected === P(before7, 'Costareen').collected + 1000 &&
+  P(rep7, 'Partner').collected === P(before7, 'Partner').collected + 500 && rep7.to_date.receivables === 0 && rep7.balance_check === 0, rep7.partners);
+
+// ---- plan A7: one set of books for the pool's costs
+r = await owner('erpExpenseAdd', [{ amount: 300, description: 'courier bags' }]);
+check('the normal Expenses screen is closed inside a pool', !r.ok && /joint pool: its expenses are written in the pool/.test(r.error), r);
+r = await owner('erpPoolEntryAdd', [{ kind: 'expense', partner: A, amount: 300, category: 'Packaging', note: 'courier bags' }]);
+check('the expense goes in the pool\'s book', r.ok && r.result.report.this_month.expenses === 300, r.result && r.result.report.this_month);
+r = await owner('erpPnl', [{ months: 1 }]);
+check('the pool\'s profit screen reads the same book', r.ok && r.result.months[0].byCat.Packaging === 300 && r.result.months[0].expenses === 300, r.result && r.result.months[0]);
+r = await owner('erpExpenses', [{}]);
+check('the Expenses screen says so, with the same total', r.ok && r.result.poolBook === true && r.result.poolExpenses === 300 && r.result.total === 300, r.result && [r.result.poolBook, r.result.total]);
+r = await owner('erpCapital', []);
+check('Capital inside a pool points to Partnership', r.ok && r.result.isPool === true, r.result && r.result.isPool);
+r = await owner('erpCapitalHolderSave', [{ kind: 'shareholder', name: 'Someone', pct: 50 }]);
+check('...and takes no shareholders of its own', !r.ok && /joint pool/.test(r.error), r);
+
 // back in their own businesses: stock counts and deals
 await owner('erpSetBusiness', [A]);
 await other('erpSetBusiness', [Bz]);
 r = await other('erpPartnerStock', [{ partner: A }]);
 check('partner sees stock counts, never cost or price', r.ok && r.result.products.some((p) => p.sku === PLA && p.stock === 5) && !/cost|price|sell/.test(JSON.stringify(r.result)), r.result);
+r = await owner('erpCapital', []);
+check('a normal business is not a pool', r.ok && r.result.isPool === false, r.result && r.result.isPool);
 r = await owner('erpPoolShare', [{ share: false }]);
 check('sharing switched off', r.ok && r.result.sharesStock === false, r.result);
 r = await other('erpPartnerStock', [{ partner: A }]);
