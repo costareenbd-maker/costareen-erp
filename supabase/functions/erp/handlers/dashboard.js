@@ -267,7 +267,11 @@ async function owedMap(ctx) {
 
 /** erpSfNeeds_ (ERP.js:11070): what about courier money needs a person. */
 async function sfNeeds(ctx) {
-  const out = { review: 0, pending: 0, error: '' };
+  const out = { review: 0, pending: 0, error: '', back: 0 };
+  try {
+    const dn = JSON.parse(String(await getConfig(ctx, 'sf_deliv', '')) || 'null');
+    if (dn) out.back = num(dn.back) + num(dn.part);
+  } catch (_) { /* as original */ }
   try {
     const recon = await ctx.tx`select consignment_id, action from courier_recon where business_id = ${ctx.biz}`;
     const done = {};

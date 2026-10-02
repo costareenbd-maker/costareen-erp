@@ -1145,6 +1145,8 @@ function viewDash() {
   var toSend = sendCount();
   if (toSend) acts.unshift({ cls: 'warning', ico: '▲', n: toSend, lbl: 'parcel(s) to send', hint: 'saved, not handed to the courier yet', go: 'sales', f: 'tosend' });
   var cz = a.courier || null;
+  if (cz && cz.back) acts.push({ cls: 'critical', ico: '!', n: cz.back, lbl: 'parcel(s) came back or were only part delivered',
+    hint: 'the customer still owes \u2014 see Sales, Check deliveries', go: 'sales' });
   if (cz && cz.review) acts.push({ cls: 'critical', ico: '!', n: cz.review, lbl: 'Steadfast parcel(s) collected much less than the invoice',
     hint: 'write off, or the customer still owes \u2014 your decision', go: 'sales', sfp: 1 });
   if (cz && cz.pending) acts.push({ cls: 'warning', ico: '\u25B2', n: cz.pending, lbl: 'Steadfast parcel(s) to match to an invoice',
@@ -1536,17 +1538,19 @@ function delZoneGuess(addr) {
   return delZoneFind(addr).zone;
 }
 
-function delCharge(spools, zone) {
+var DEL_EXPRESS_FIRST = 105;       // Steadfast Express, first kilo, Dhaka city to Dhaka city
+function delCharge(spools, zone, express) {
   var z = DEL_ZONES[zone];
   if (!z || !(spools > 0)) return null;
   var kg = Math.round(spools * DEL_SPOOL_KG * 100) / 100;
   var bill = Math.max(1, Math.ceil(kg));
-  return { amount: z.first + (bill - 1) * DEL_EXTRA_KG, kg: kg, bill: bill, zone: z.label };
+  return { amount: (express ? DEL_EXPRESS_FIRST : z.first) + (bill - 1) * DEL_EXTRA_KG, kg: kg, bill: bill, zone: z.label + (express ? ' \u00b7 Express, same day' : '') };
 }
 
 /** What to suggest for the order on screen, and why - or why not. */
 function delSuggest() {
-  if (!isCourier(FORM.source)) return { off: true };
+  var express = isExpress(FORM.source);
+  if (!isCourier(FORM.source) && !express) return { off: true };
   if (!CART.length) return { note: 'Add the products and the charge is worked out.' };
   var spools = 0, other = 0;
   CART.forEach(function (l) {
@@ -1559,7 +1563,11 @@ function delSuggest() {
   var found = delZoneFind(FORM.address);
   var zone = FORM.zone || found.zone;
   if (!zone) return { needZone: true, note: 'The address does not say where this is going. Choose it once and the charge is worked out.' };
-  var c = delCharge(spools, zone);
+  if (express && zone !== 'city') {
+    return { zoneKey: zone, zoneWord: FORM.zone ? '' : found.word,
+             note: 'Steadfast Express is same-day inside Dhaka city only, and this is going to ' + DEL_ZONES[zone].label + '. Use the regular Steadfast courier, or type the charge yourself.' };
+  }
+  var c = delCharge(spools, zone, express);
   c.zoneKey = zone;
   c.zoneWord = FORM.zone ? '' : found.word;       // the word in the address that decided it
   c.note = spools + (spools === 1 ? ' spool' : ' spools') + ' × ' + DEL_SPOOL_KG + ' kg = ' + c.kg +
@@ -2135,6 +2143,7 @@ async function saveInvoice() {
     }],
       function (res) {
       SAVING = false;
+      if (typeof s1AfterSave === 'function') s1AfterSave(res, FORM.source, FORM.cid);
       if (typeof invFromSaved === 'function') invFromSaved(res);
       CART = [];
       // date goes back to blank, so a backdated invoice does not silently
@@ -6387,7 +6396,9 @@ function addressWeak(addr) {
 
 /** Is this order going out with the courier this ERP posts to? */
 function isCourier(delivery) {
-  return /steadfast/i.test(String(delivery || ''));
+  // Steadfast Express is booked by hand in Steadfast's own panel, so here it is a rider, not a parcel
+  var d = String(delivery || '');
+  return /steadfast/i.test(d) && !/express/i.test(d);
 }
 
 /** How many orders are waiting to be sent - shown on the tab itself. */
@@ -14342,6 +14353,95 @@ document.addEventListener('click', async function (ev) {
     if (!why.trim()) { toast('Say why.', true); return; }
     srv('erpNoteVoid', [{ id: id, reason: why.trim() }], function (r) { st.data = r; repaint(); }, function (e) { toast(esc(e && e.message ? e.message : e), true, 10000); });
   }
+});
+</script>
+
+<!-- sheet build b261003-0358: Steadfast Express, consignment numbers on invoices, "Check deliveries now" -->
+<script>
+/** Steadfast Express: same day, booked by hand in Steadfast's panel, tied to the invoice by its consignment number. */
+function isExpress(delivery) {
+  var d = String(delivery || '');
+  return /steadfast/i.test(d) && /express/i.test(d);
+}
+/** Ask for the consignment number of a parcel booked in Steadfast's panel and tie it to its invoice. */
+async function expressLinkAsk(invoiceNo, express) {
+  var v = await uiPrompt('Steadfast consignment number for ' + invoiceNo + '?\n\nIt is the number Steadfast gave the parcel - on the label, or in the Steadfast panel.', '');
+  if (v === null) return;
+  v = String(v).replace(/\s+/g, '');
+  if (!v) return;
+  srv('erpExpressLink', [{ invoiceNo: invoiceNo, consignment: v, express: express !== false }], function (k) {
+    toast('Consignment ' + esc(k.consignment) + ' is on invoice ' + esc(k.invoiceNo) + '.' +
+      (k.found ? ' Steadfast says: ' + esc(k.statusLabel || k.status) + '.' : k.asked ? ' Steadfast has not answered for it yet \u2014 check the number.' : ''), !k.found && k.asked, 12000);
+    ORDERS = null; DUES = null; if (typeof parcelsChanged === 'function') parcelsChanged(); else repaint();
+    try { lvSt('invoices').stale = true; } catch (e) {}
+  }, function (e) { toast(esc(e && e.message ? e.message : e), true, 15000); });
+}
+function checkDeliveriesNow(btn) {
+  if (btn) { btn.disabled = true; btn.textContent = 'Asking the courier\u2026'; }
+  srv('erpCheckDeliveries', [], function (r) {
+    var bits = [];
+    if (r.collected.length) bits.push('<strong>' + fmt(r.collected.length) + ' delivered</strong> \u2014 due cleared: ' + r.collected.map(function (x) { return esc(x.invoice) + ' (' + fmt(x.amount) + ')'; }).join(', '));
+    if (r.raised.length) bits.push(fmt(r.raised.length) + ' website invoice(s) brought up to what the website charged');
+    if (r.back.length) bits.push('<strong>' + fmt(r.back.length) + ' came back or were cancelled</strong>: ' + r.back.map(function (x) { return esc(x.invoice); }).join(', '));
+    if (r.part.length) bits.push(fmt(r.part.length) + ' only part delivered \u2014 look at them: ' + r.part.map(function (x) { return esc(x.invoice); }).join(', '));
+    if (r.errors.length) bits.push(esc(r.errors.join(' ')));
+    if (!bits.length) bits.push(r.checked ? fmt(r.checked) + ' parcel(s) asked about \u2014 none delivered since the last check.' : 'No parcel is waiting on an unpaid invoice. A parcel typed into the Steadfast panel needs its consignment number added first.');
+    toast(bits.join('<br>'), !!(r.back.length || r.errors.length), 20000);
+    if (btn) { btn.disabled = false; btn.textContent = 'Check deliveries now'; }
+    DUES = null; D = null; ORDERS = null; try { lvSt('invoices').stale = true; } catch (e) {}
+    if (typeof parcelsChanged === 'function') parcelsChanged(); else repaint();
+  }, function (e) { if (btn) { btn.disabled = false; btn.textContent = 'Check deliveries now'; } toast(esc(e && e.message ? e.message : e), true, 15000); });
+}
+
+// New invoice: the consignment number, when the parcel is already booked in Steadfast's panel
+var viewInvoiceS1 = viewInvoice;
+viewInvoice = function () {
+  var h = viewInvoiceS1();
+  if (!CAT || !OPT || !(isExpress(FORM.source) || isCourier(FORM.source))) return h;
+  var ex = isExpress(FORM.source);
+  var box = '<div style="grid-column:1/-1"><label class="f" for="fcid">Steadfast consignment number <span class="sku">' +
+    (ex ? 'from the Express booking \u2014 on the label' : 'only if the parcel is already booked in the Steadfast panel') + '</span></label>' +
+    '<input class="i" id="fcid" inputmode="numeric" autocomplete="off" maxlength="24" style="max-width:260px" value="' + esc(FORM.cid || '') + '" placeholder="e.g. 123456789">' +
+    '<div class="sub" style="margin-top:4px">With it, the ERP follows the parcel and clears the due by itself the moment it is delivered. ' +
+    (ex ? 'Not at hand? Leave it empty and add it later from Sales.' : 'Not booked yet? Leave it empty and press Send parcel after saving.') + '</div></div>';
+  var mark = '<div style="grid-column:1/-1"><label class="f">How was this paid?</label>';
+  var at = h.indexOf(mark);
+  return at < 0 ? h : h.slice(0, at) + box + h.slice(at);
+};
+document.addEventListener('input', function (ev) { var t = ev.target; if (t && t.id === 'fcid') FORM.cid = t.value; });
+/** After an invoice is saved: tie the parcel booked beforehand to it. */
+function s1AfterSave(res, source, cid) {
+  cid = String(cid || '').replace(/\s+/g, '');
+  if (!cid || !res || !res.invoiceNo || res.soldFrom) return;
+  srv('erpExpressLink', [{ invoiceNo: res.invoiceNo, consignment: cid, express: isExpress(source) }], function (k) {
+    toast('Consignment ' + esc(k.consignment) + ' is on invoice ' + esc(k.invoiceNo) + '.' +
+      (k.found ? ' Steadfast says: ' + esc(k.statusLabel || k.status) + '.' : k.asked ? ' Steadfast has not answered for it yet \u2014 check the number on the label.' : ''), !k.found && k.asked, 12000);
+  }, function (e) {
+    toast('The invoice is saved, but the consignment number was not: ' + esc(e && e.message ? e.message : e) + ' Add it from Sales.', true, 20000);
+  });
+}
+
+// Sales: "Check deliveries now", and "Add number" on an invoice that has no parcel yet
+var viewSalesS1 = viewSales;
+viewSales = function () {
+  var h = viewSalesS1();
+  if (INVP.no) {
+    var d = INVP.data;
+    if (d && !d.cancelled && d.owed > 0 && !(d.parcel && d.parcel.consignment) && (isExpress(d.delivery) || isCourier(d.delivery))) {
+      var ex = isExpress(d.delivery);
+      h = '<section><div class="note"><div class="ico">i</div><div>' + (ex ? '<strong>Steadfast Express</strong> \u2014 no consignment number on this invoice yet.' : 'Already booked in the Steadfast panel?') +
+        ' With the number, the due clears by itself when the parcel is delivered. <button class="btn small primary" type="button" data-explink="' + esc(INVP.no) + '"' + (ex ? '' : ' data-reg="1"') + '>Add consignment number</button></div></div></section>' + h;
+    }
+    return h;
+  }
+  if (!ME || !{ manager: 1, shareholder: 1, owner: 1 }[ME.role]) return h;
+  return '<div class="row" style="justify-content:flex-end;margin-bottom:8px"><button class="btn" type="button" id="sl_checkdel" title="Ask the courier which parcels are delivered, and clear those dues">Check deliveries now</button></div>' + h;
+};
+document.addEventListener('click', function (ev) {
+  var t = ev.target; if (!t || !t.getAttribute) return;
+  if (t.id === 'sl_checkdel') { checkDeliveriesNow(t); return; }
+  var inv = t.getAttribute('data-explink');
+  if (inv) expressLinkAsk(inv, t.getAttribute('data-reg') !== '1');
 });
 </script>
 </body>

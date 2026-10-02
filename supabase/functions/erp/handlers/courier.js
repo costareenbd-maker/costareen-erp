@@ -832,6 +832,210 @@ export async function sfNeeds(ctx) {
   return out;
 }
 
+// ------------------------------------------------- delivered parcels (sheet build b261003-0358)
+//
+// The due of a parcel is cleared the moment the courier says "delivered",
+// not days later when the payout arrives. It can only be done for a parcel
+// this system can name: one booked from here, one whose consignment number
+// was typed onto its invoice, or a website order (the website knows its
+// parcels). A parcel that came back, or was only part delivered, is never
+// guessed at: it is listed for a person.
+
+/**
+ * erpWebAlignTotal_: an invoice typed by hand for a website order holds the
+ * goods alone; the website charged delivery and a cash-handling fee on top.
+ * The difference is written onto the invoice as its delivery charge. Only
+ * ever raises an invoice that has no delivery charge yet, and only by a
+ * believable amount.
+ */
+async function webAlignTotal(ctx, invoiceNo, orderTotal, orderNo) {
+  orderTotal = round2(num(orderTotal));
+  if (!(orderTotal > 0)) return 0;
+  const inv = (await ctx.tx`select id, grand_total, delivery_charge, advance_paid, cancelled_at from invoices
+                            where business_id = ${ctx.biz} and invoice_no = ${invoiceNo} limit 1`)[0];
+  if (!inv || inv.cancelled_at) return 0;
+  const grand = num(inv.grand_total), del = num(inv.delivery_charge), adv = num(inv.advance_paid);
+  const gap = round2(orderTotal - grand);
+  if (del > 0.5 || !(gap > 0.5) || gap > 600) return 0;
+  await ctx.tx`update invoices set delivery_charge = ${gap}, grand_total = ${orderTotal},
+                 due_amount = ${Math.max(0, round2(orderTotal - adv))} where id = ${inv.id}`;
+  await ctx.tx`insert into invoice_fixes (business_id, fixed_at, invoice_no, field, was, now, fixed_by)
+               values (${ctx.biz}, now(), ${invoiceNo}, 'delivery charge', '0',
+                       ${gap + ' - delivery and cash handling fee the website charged on order ' + (orderNo || '') +
+                         ' (invoice total ' + grand + ' -> ' + orderTotal + ')'}, 'Website order')`;
+  forget(ctx, 'SALES_LOG');
+  return gap;
+}
+
+/** erpDeliveredCollect_: every delivered parcel that can be named - record the customer's payment and clear the due. */
+export async function deliveredCollect(ctx) {
+  const out = { checked: 0, collected: [], back: [], part: [], raised: [], errors: [], seen: [] };
+  const parcels = {};
+
+  // 1. parcels this system booked, or whose number was typed onto the invoice
+  const booked = await sfBooked(ctx);
+  for (const inv of Object.keys(booked)) {
+    if (booked[inv].consignment) parcels[String(booked[inv].consignment)] = { inv, cod: booked[inv].cod, how: 'log', status: '' };
+  }
+  // 2. website orders: the website knows their parcels and what the courier says
+  const web = {};
+  for (const r of await salesLog(ctx)) {
+    const m = /WEB-(\S+)/.exec(String(r[SL.notes] || '')), id = str(r[SL.order_id]);
+    if (m && id && !/^RTN-/.test(id)) web[m[1]] = id;
+  }
+  if (Object.keys(web).length) {
+    try {
+      const site = await czFetch(ctx, '/cod?days=60&limit=200');
+      for (const o of (site && site.orders) || []) {
+        const wi = web[String(o.order_no || '')], cid = String(o.consignment || '');
+        if (!wi || !cid) continue;
+        parcels[cid] = { inv: wi, cod: num(o.cod_amount), how: 'web', status: String(o.courier || '').toLowerCase(),
+                         total: num(o.total), orderNo: String(o.order_no || ''), isCod: /cash on delivery|\bcod\b/i.test(String(o.method || '')) };
+      }
+    } catch (e) { out.errors.push('The website did not answer: ' + String((e && e.message) || e).slice(0, 120)); }
+  }
+
+  // parcels already counted - by an earlier delivery, or by a payout
+  const prior = {};
+  for (const r of await paymentsTab(ctx)) {
+    const pm = /\[sf:([^\]]+)\]/.exec(String(r[PAY.note] || ''));
+    if (pm) prior[pm[1]] = true;
+  }
+  let done = {};
+  try { done = await reconDone(ctx); } catch (_) { done = {}; }
+  let haveKeys = false;
+  try { const k = await sfKeys(ctx); haveKeys = !!(k.key && k.secret); } catch (_) { haveKeys = false; }
+  const names = {};
+  let owed = await owedMap(ctx, names);
+  const now = new Date(), st = stamp(now);
+  let k = 0;
+
+  for (const cid of Object.keys(parcels)) {
+    const p = parcels[cid];
+    if (prior[cid] || done[cid] || owed[p.inv] === undefined) continue;
+    // a website order's invoice typed by hand: bring it up to what the website charged, first
+    if (p.how === 'web' && p.isCod) {
+      try {
+        const up = await ctx.tx.savepoint(() => webAlignTotal(ctx, p.inv, p.total, p.orderNo));
+        if (up > 0) { owed[p.inv] = round2(owed[p.inv] + up); out.raised.push({ invoice: p.inv, by: up }); }
+      } catch (_) { /* as original */ }
+    }
+    if (!(owed[p.inv] > 0.5) || !(p.cod > 0.5)) continue;          // nothing owed, or nothing the rider was to collect
+    let status = p.status;
+    if (!status && haveKeys) {
+      try { status = String(((await sfCall(ctx, 'GET', '/status_by_cid/' + encodeURIComponent(cid), null)) || {}).delivery_status || '').toLowerCase(); }
+      catch (_) { status = ''; }
+    }
+    out.checked++;
+    if (out.seen.length < 60) out.seen.push(p.inv + ' ' + cid + ' ' + (status || 'no answer') + (p.how === 'web' ? ' (website)' : ''));
+    const who1 = { invoice: p.inv, consignment: cid, customer: names[p.inv] || '' };
+    if (status === 'delivered') {
+      const amount = round2(Math.min(owed[p.inv], p.cod));
+      await addPayment(ctx, { id: 'D' + st + '-' + (k++), order: p.inv, customer: names[p.inv] || '', at: now, amount,
+        method: 'COD (Steadfast)',
+        note: 'delivered - collected by the rider, with Steadfast until they pay out [payment] [sf:' + cid + ']', by: 'Courier' });
+      owed[p.inv] = Math.max(0, round2(owed[p.inv] - amount));
+      try { await ctx.tx.savepoint(() => syncInvoiceStatus(ctx, p.inv)); } catch (_) { /* as original */ }
+      who1.amount = amount; out.collected.push(who1);
+    } else if (status === 'cancelled' || status === 'returned') { who1.status = status; who1.owed = owed[p.inv]; out.back.push(who1); }
+    else if (status === 'partial_delivered') { who1.status = status; who1.owed = owed[p.inv]; out.part.push(who1); }
+  }
+  return out;
+}
+
+/** erpDeliveredNote_: every round is written down, and the last one kept for the dashboard. */
+async function deliveredNote(ctx, r) {
+  let amt = 0;
+  r.collected.forEach((x) => { amt += x.amount; });
+  try {
+    await ctx.tx.savepoint(() => ctx.tx`
+      insert into delivery_checks (business_id, by, asked, collected, amount, raised, came_back, part, problem, said)
+      values (${ctx.biz}, ${who(ctx) || 'Timer'}, ${r.checked}, ${r.collected.map((x) => x.invoice).join(', ')}, ${amt},
+              ${r.raised.map((x) => x.invoice + ' +' + x.by).join(', ')}, ${r.back.map((x) => x.invoice).join(', ')},
+              ${r.part.map((x) => x.invoice).join(', ')}, ${(r.errors || []).join(' ')}, ${(r.seen || []).join(' | ').slice(0, 3000)})`);
+    await ctx.tx.savepoint(() => ctx.tx`
+      delete from delivery_checks where business_id = ${ctx.biz} and id < (
+        select id from delivery_checks where business_id = ${ctx.biz} order by id desc offset 800 limit 1)`);
+  } catch (_) { /* the log is never the reason a check fails */ }
+  await setConfig(ctx, 'sf_deliv', JSON.stringify({ at: Date.now(), collected: r.collected.length, back: r.back.length,
+                                                    part: r.part.length, error: (r.errors || []).join(' ') }));
+}
+
+/** erpCheckDeliveries: ask now, from the Sales screen, instead of waiting for the hour. */
+export async function erpCheckDeliveries(ctx) {
+  if (!roleAtLeast(ctx.s.role, 'manager')) throw new Error('Your account cannot record payments.');
+  await lock(ctx, 'courier-delivered');
+  const r = await deliveredCollect(ctx);
+  await deliveredNote(ctx, r);
+  return r;
+}
+
+/** erpDeliveryTick: the hourly visit, for a business that uses the courier or the website. */
+export async function deliveryTick(ctx) {
+  await lock(ctx, 'courier-delivered');
+  const r = await deliveredCollect(ctx);
+  await deliveredNote(ctx, r);
+  return { checked: r.checked, collected: r.collected.length, back: r.back.length, part: r.part.length, error: (r.errors || []).join(' ') };
+}
+
+/** Parcels that came back or were only part delivered at the last check - for the dashboard. */
+export async function deliveryBack(ctx) {
+  try {
+    const dn = JSON.parse(String(await getConfig(ctx, 'sf_deliv', '')) || 'null');
+    return dn ? (num(dn.back) + num(dn.part)) : 0;
+  } catch (_) { return 0; }
+}
+
+/**
+ * erpExpressLink: a parcel booked in Steadfast's own panel - Express is,
+ * their API cannot make one - is tied to its invoice by the consignment
+ * number Steadfast gave it. From then on it is a parcel like any other here.
+ * Steadfast is asked whether it knows the number; a silence is not treated
+ * as a no.
+ */
+export async function erpExpressLink(ctx, payload) {
+  payload = payload || {};
+  const invoiceNo = str(payload.invoiceNo);
+  const cid = String(payload.consignment || '').replace(/\s+/g, '').trim();
+  if (!invoiceNo) throw new Error('Which invoice?');
+  if (!/^[A-Za-z0-9-]{4,24}$/.test(cid)) throw new Error('That does not look like a consignment number. It is the number Steadfast gives the parcel, usually 8 or 9 digits.');
+  const inv = await outstanding(ctx, invoiceNo);
+  if (!inv) throw new Error('No invoice called ' + invoiceNo + '.');
+
+  await lock(ctx, 'courier');
+  forgetCourier(ctx);
+  const booked = await sfBooked(ctx);
+  if (booked[invoiceNo] && booked[invoiceNo].consignment) {
+    throw new Error('Invoice ' + invoiceNo + ' already has a parcel: consignment ' + booked[invoiceNo].consignment + '.');
+  }
+  for (const other of Object.keys(booked)) {
+    if (String(booked[other].consignment) === cid) throw new Error('Consignment ' + cid + ' is already on invoice ' + other + '. One parcel, one invoice.');
+  }
+  // what Steadfast says about it, if it answers
+  let status = '', asked = false;
+  try {
+    const k = await sfKeys(ctx);
+    if (k.key && k.secret) {
+      asked = true;
+      const r = await sfCall(ctx, 'GET', '/status_by_cid/' + encodeURIComponent(cid), null);
+      status = String((r && r.delivery_status) || '');
+    }
+  } catch (_) { status = ''; }
+  if (booked[invoiceNo]) {                                           // was set aside by hand with no number: now it has one
+    await ctx.tx`update courier_log set consignment_id = ${cid}, cod_amount = ${inv.owed} where id = ${booked[invoiceNo].row} and business_id = ${ctx.biz}`;
+  } else {
+    await ctx.tx`
+      insert into courier_log (business_id, booked_at, invoice_no, consignment_id, customer, phone, address,
+                               cod_amount, invoice_total, booked_by, note)
+      values (${ctx.biz}, ${new Date()}, ${invoiceNo}, ${cid}, ${inv.customer}, ${inv.phone}, ${inv.address},
+              ${inv.owed}, ${inv.grand}, ${who(ctx)},
+              ${(payload.express === false ? '[panel]' : '[express]') + ' booked in the Steadfast panel'})`;
+  }
+  forgetCourier(ctx);
+  const known = Object.prototype.hasOwnProperty.call(ERP_COURIER_WORDS, status) ? ERP_COURIER_WORDS[status] : null;
+  return { ok: true, invoiceNo, consignment: cid, collect: inv.owed, asked, found: !!status, status, statusLabel: known ? known.label : status };
+}
+
 /** erpSfChargesByMonth_ (ERP:8894): delivery + COD fee per payout month - for the P&L. */
 export async function sfChargesByMonth(ctx) {
   const out = {};
@@ -860,4 +1064,5 @@ export const HANDLERS = {
   erpParcelPreview, erpBookParcel, erpParcelHandled, erpParcelPutBack, erpBookedParcels,
   erpSfPayouts, erpSfPayoutLines, erpSfConfirmMatches, erpSfReconDecide,
   erpCourierKeyStatus, erpCourierSetKeys, erpCourierTest,
+  erpExpressLink, erpCheckDeliveries,
 };

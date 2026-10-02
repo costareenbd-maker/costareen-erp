@@ -3,6 +3,7 @@
 //   nightly   (03:00 Dhaka)   Steadfast payout sync + backup, every business
 //   campaigns (every 10 min)  spread WhatsApp campaigns that have work waiting
 //   websync   (every 15 min)  pull website orders, push stock (czSyncCycle)
+//   deliveries (every hour)   delivered parcels: record the payment, clear the due (erpDeliveryTick)
 //
 // pg_cron calls the Edge Function with header x-erp-cron (deploy/cron.sql).
 // Each business runs in its own transaction, as that business's owner, so
@@ -85,6 +86,20 @@ export async function runJob(deps, job) {
         for (const row of await owners(sql, ids)) {
           if (out[row.name]) continue;               // one owner per business is enough
           out[row.name] = await asBusiness(deps, row, 'alerts:push', (ctx) => push(ctx));
+        }
+      }
+    }
+  } else if (job === 'deliveries') {
+    // erpDeliveryTick: delivered parcels have their due cleared, every hour
+    const tick = await maybe('./handlers/courier.js', 'deliveryTick');
+    if (tick) {
+      const keyed = (await sql`select distinct business_id from business_secrets where key in ('CZ_SYNC_KEY', 'ERP_SF_KEY')`).map((r) => r.business_id);
+      const withParcels = (await sql`select distinct business_id from courier_log where booked_at > now() - interval '60 days'`).map((r) => r.business_id);
+      const ids = Array.from(new Set(keyed.concat(withParcels)));
+      if (ids.length) {
+        for (const row of await owners(sql, ids)) {
+          if (out[row.name]) continue;
+          out[row.name] = await asBusiness(deps, row, 'deliveries:tick', (ctx) => tick(ctx));
         }
       }
     }

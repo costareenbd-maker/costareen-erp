@@ -134,7 +134,7 @@ def step_cron():
     q = open(os.path.join(ROOT, 'supabase', 'deploy', 'cron.sql'), encoding='utf-8').read()
     q = q.replace('__FN_URL__', 'https://%s.supabase.co/functions/v1/erp' % REF).replace('__CRON_KEY__', key)
     sql(q)
-    print('timers installed: erp-nightly 03:00 Dhaka, erp-campaigns and erp-alerts every 10 min, erp-websync every 15 min')
+    print('timers installed: erp-nightly 03:00 Dhaka, erp-campaigns and erp-alerts every 10 min, erp-websync every 15 min, erp-deliveries every hour')
 
 
 if __name__ == '__main__':

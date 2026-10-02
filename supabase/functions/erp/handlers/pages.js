@@ -9,6 +9,7 @@
 // (money.js: outstanding, erpDues, creditOf) so a page can never disagree
 // with the list it was opened from.
 
+import { isCourier } from './catalog.js';
 import { formatDate, num, round2 } from '../lib/time.js';
 import { custKey, formatBdPhone } from '../lib/phone.js';
 import { outstanding, erpDues, creditOf } from './money.js';
@@ -87,7 +88,7 @@ export async function erpInvoice(ctx, payload) {
     parcel: parcel ? { consignment: str(parcel.consignment_id), when: dayTime(parcel.booked_at),
                        cod: Math.round(num(parcel.cod_amount)), by: str(parcel.booked_by), byHand,
                        note: plainNote(parcel.note) } : null,
-    courier: /steadfast/i.test(str(inv.source)),
+    courier: isCourier(str(inv.source)),
     changes: fixes.map((f) => ({ when: dayTime(f.fixed_at), field: str(f.field), was: str(f.was), now: str(f.now), by: str(f.fixed_by) })),
   };
 }

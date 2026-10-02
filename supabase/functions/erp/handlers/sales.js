@@ -23,7 +23,7 @@ import { salesLog, returnsTab, courierLog, forget, asDate, str, SL } from '../li
 import { formatDate, num, round2, dhakaDayStart } from '../lib/time.js';
 import { phone11, custKey } from '../lib/phone.js';
 import { roleAtLeast } from '../allow.js';
-import { ERP_DELIVERY } from './catalog.js';
+import { ERP_DELIVERY, isCourier } from './catalog.js';
 import {
   paidByOrder, addPayment, syncInvoiceStatus, sameOrder, outstanding, discLeft, lock, who,
 } from './money.js';
@@ -193,7 +193,7 @@ export async function erpRecentInvoices(ctx, limit) {
   try { booked = await sfBooked(ctx); } catch (_) { /* as original */ }
   out = out.filter((x) => {
     if (isReturnId(x.id)) return false;
-    return /steadfast/i.test(x.source) || /^WEB-/.test(x.note) || !!booked[x.id];
+    return isCourier(x.source) || /^WEB-/.test(x.note) || !!booked[x.id];
   });
   out = out.slice(0, limit || 40);
 
@@ -206,7 +206,7 @@ export async function erpRecentInvoices(ctx, limit) {
     const src = o.source.toLowerCase();
     const fromSite = src === 'website' || src === 'website order' || /^WEB-/.test(o.note);
     const newEnough = o.ts >= ERP_PARCEL_FROM;
-    o.postable = newEnough && !b && !fromSite && /steadfast/.test(src);
+    o.postable = newEnough && !b && !fromSite && isCourier(src);
     o.canSend = newEnough && !b && !fromSite;
     o.fromSite = fromSite;
     delete o.ts;
@@ -279,7 +279,7 @@ export async function erpSales(ctx, payload) {
   for (const r of order) {
     const b = booked[r.id] || null;
     const fromSite = /^WEB-/.test(r.note);
-    const postable = !b && !fromSite && /steadfast/i.test(r.delivery) && r.ts >= ERP_PARCEL_FROM;
+    const postable = !b && !fromSite && isCourier(r.delivery) && r.ts >= ERP_PARCEL_FROM;
     const grand = r.grand || r.sum;
     const head = same[r.id] || r.id, grp = group[head];
     let got = 0;
@@ -312,7 +312,7 @@ export async function erpSales(ctx, payload) {
                 consignment: b ? b.consignment : '',
                 handled: !!b, byHand: !!(b && b.byHand),
                 canSend: postable,
-                courier: /steadfast/i.test(r.delivery),
+                courier: isCourier(r.delivery),
                 fromSite });
   }
 

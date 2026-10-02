@@ -4,7 +4,16 @@
 import { normalizePhone, formatBdPhone } from '../lib/phone.js';
 import { DAY_MS } from '../lib/time.js';
 
-export const ERP_DELIVERY = ['Customer pickup', 'Steadfast courier', 'Pathao Instant',
+/**
+ * erpIsCourier_: does this order go out as a Steadfast parcel that this system books?
+ * The regular courier does. Steadfast Express does not: it is same-day, booked by hand
+ * in Steadfast's own panel, and handled here like any rider.
+ */
+export function isCourier(delivery) {
+  const d = String(delivery || '');
+  return /steadfast/i.test(d) && !/express/i.test(d);
+}
+export const ERP_DELIVERY = ['Customer pickup', 'Steadfast courier', 'Steadfast Express', 'Pathao Instant',
   'Uber Instant', 'Costareen Delivery'];
 
 // SETTINGS columns A-G as lookup kinds.

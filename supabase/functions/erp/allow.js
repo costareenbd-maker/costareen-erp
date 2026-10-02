@@ -109,7 +109,7 @@ export const ERP_ALLOW = {
   erpPoolCreate: 'owner', erpPoolInvite: 'owner', erpPoolJoin: 'owner', erpPoolEntryAdd: 'owner',
   erpPoolEntryRemove: 'owner', erpPoolClose: 'owner', erpPoolTier: 'owner', erpPoolShare: 'owner',
   erpPartnerDeal: 'owner',
-  erpBookParcel: 'manager', erpParcelPreview: 'manager', erpBookedParcels: 'manager',
+  erpBookParcel: 'manager', erpParcelPreview: 'manager', erpBookedParcels: 'manager', erpExpressLink: 'sales', erpCheckDeliveries: 'manager',
   erpParcelHandled: 'manager', erpParcelPutBack: 'manager',
   erpCourierSetKeys: 'owner', erpCourierKeyStatus: 'manager', erpCourierTest: 'owner',
   erpBackupStatus: 'owner', erpBackupRun: 'owner', erpSfReconDecide: 'shareholder',
