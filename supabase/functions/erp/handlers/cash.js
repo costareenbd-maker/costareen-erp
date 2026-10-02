@@ -20,6 +20,7 @@
 import { formatDate, num, round2, dhakaDayStart, looseDate } from '../lib/time.js';
 import { getConfig, setConfig } from '../lib/ext.js';
 import { roleAtLeast } from '../allow.js';
+import { assertOpen } from '../lib/period.js';
 
 const str = (v) => String(v == null ? '' : v).trim();
 const KINDS = { cash: 'Cash', bank: 'Bank', wallet: 'Mobile wallet', courier: 'Courier (holds collected cash)' };
@@ -297,6 +298,7 @@ export async function erpCashTransfer(ctx, payload) {
   const amount = round2(num(payload.amount));
   if (!(amount > 0)) throw new Error('How much? Type an amount above 0.');
   const at = moveDate(ctx, payload.date), note = str(payload.note).slice(0, 200);
+  await assertOpen(ctx, at, 'a transfer cannot be dated there');
   const pair = (await ctx.tx`select gen_random_uuid() as id`)[0].id;
   await ctx.tx`insert into money_moves (business_id, account_id, at, amount, kind, pair_id, note, by) values
     (${ctx.biz}, ${from.id}, ${at}, ${-amount}, 'transfer', ${pair}, ${'to ' + to.name + (note ? ' · ' + note : '')}, ${whoIs(ctx)}),
@@ -325,8 +327,9 @@ export async function erpCashMoveVoid(ctx, payload) {
   needOwner(ctx);
   const id = str(payload && payload.id), why = str(payload && payload.reason);
   if (!why) throw new Error('Say why it is being struck out.');
-  const m = (await ctx.tx`select id, pair_id, account_id, voided from money_moves where id = ${isId(id) ? id : null} and business_id = ${ctx.biz}`)[0];
+  const m = (await ctx.tx`select id, pair_id, account_id, voided, at from money_moves where id = ${isId(id) ? id : null} and business_id = ${ctx.biz}`)[0];
   if (!m) throw new Error('That line was not found.');
+  await assertOpen(ctx, new Date(m.at), 'its lines cannot be struck out');
   if (str(m.voided)) throw new Error('That line is already struck out.');
   const mark = 'struck out ' + formatDate(new Date(), 'd MMM yy') + ' by ' + whoIs(ctx) + ': ' + why;
   if (m.pair_id) await ctx.tx`update money_moves set voided = ${mark} where business_id = ${ctx.biz} and pair_id = ${m.pair_id}`;

@@ -22,7 +22,7 @@ const WORDS = {
   erpAddPerson: 'Added a staff member', erpRevokePerson: 'Withdrew a person’s access', erpResetCode: 'Gave a new code',
   erpApproveDevice: 'Allowed a device', erpAllowDevice: 'Allowed a device', erpDenyDevice: 'Refused a device',
   erpRevokeDevice: 'Signed a device out', erpConfigSet: 'Changed a setting', erpSaveCourierKeys: 'Changed the courier keys',
-  erpCapitalEntryAdd: 'Wrote in the capital book', erpCapitalClose: 'Closed a month', erpPoolEntryAdd: 'Wrote in the pool’s book',
+  erpCapitalEntryAdd: 'Wrote in the capital book', erpCapitalClose: 'Closed a month', erpCapitalReopen: 'Reopened a closed month', erpPoolEntryAdd: 'Wrote in the pool’s book',
   erpPoolClose: 'Closed a pool month', erpPoolCreate: 'Started a joint pool', erpPoolJoin: 'Joined a joint pool',
   erpPartnerCompany: 'Created a partner company', erpAccessKeyNew: 'Made an access link', erpSupplierPay: 'Paid a supplier', erpSupplierBill: 'Wrote a supplier bill', erpCashTransfer: 'Moved money between accounts', erpCashAdjust: 'Corrected an account after counting', erpAccessKeyRevoke: 'Switched an access link off', erpCreateBusiness: 'Added a business', erpBackupRun: 'Made a backup',
   erpSaveCostRows: 'Changed product costs', erpAiKeyCreate: 'Made an AI access key',

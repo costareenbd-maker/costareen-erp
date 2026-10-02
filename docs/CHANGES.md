@@ -142,3 +142,10 @@
 - Receive stock: "Imported — foreign money" takes any currency with the rate of THAT shipment (a rate far from the usual one is refused). "Other costs of this shipment" (customs duty, C&F agent, local transport, ...) are each written down and spread into the unit cost with the freight. Goods, shipping and each other cost can name the money account that paid (shareholder and up); the account statement says what it paid for. The supplier is billed for the goods only, in the foreign amount and taka.
 - 032_currencies.sql (currencies, currency_rates, shipment_costs, cost_book.buy_amount/buy_cur), handlers/currency.js, tests/a5_test.mjs (27).
 - Not done yet: a separate buying price per product per supplier.
+
+2026-10-03 — Plan A6 (capital corrections)
+- **Investor return, month by month.** Each month's return is worked out on the money the investor had in during THAT month (a percentage day by day, so money added on the 16th earns from the 16th; a fixed monthly amount is the amount). Adding or taking back money no longer rewrites earlier months. It falls due when the month ends; the running month shows as "this month so far".
+- **A cost of the month it fell due in.** Profit and loss, Expenses, Dashboard and Capital all carry the return in the month it was earned ("Investor returns"). Paying it only settles what is owed - it is no longer a second expense on the day of payment (and still moves the money account).
+- **No profit without an owner.** The "stays with the business" wording is gone: shares under 100% show a warning, and a month cannot be closed until the shares make 100%.
+- **A closed month closes the whole books.** Nothing can be dated into a closed month or any month before it, nor struck out of it: sales, expenses, capital lines, supplier bills and payments, transfers. Voiding an invoice of a closed month is refused (cancel it instead - the goods come back today). The owner can reopen the latest closed month, with a reason.
+- 033_book_lock.sql (books_locked_through(), delete policy for reopening), lib/period.js, handlers/returns.js, erpCapitalReopen, tests/a6_test.mjs (28).

@@ -6770,7 +6770,7 @@ function viewCapital() {
     kpiT('From shareholders', cur, fmt(t.ownersCapital), '<span class="delta">the owners’ own capital</span>') +
     kpiT('From investors', cur, fmt(t.outsideCapital), '<span class="delta">outside money, to be returned</span>') +
     kpiT('Profit not yet paid out', cur, fmt(t.earned - t.profitPaid), '<span class="delta">earned ' + fmt(t.earned) + ' · paid ' + fmt(t.profitPaid) + '</span>', t.earned - t.profitPaid < 0 ? 'bad' : 'good') +
-    kpiT('Owed to investors', cur, fmt(Math.max(0, t.returnDue - t.returnPaid)), '<span class="delta">returns due ' + fmt(t.returnDue) + ' · paid ' + fmt(t.returnPaid) + '</span>', t.returnDue - t.returnPaid > 0 ? 'warn' : '') +
+    kpiT('Owed to investors', cur, fmt(Math.max(0, t.returnDue - t.returnPaid)), '<span class="delta">returns due ' + fmt(t.returnDue) + ' · paid ' + fmt(t.returnPaid) + (t.returnBuilding > 0 ? ' · this month so far ' + fmt(t.returnBuilding) : '') + '</span>', t.returnDue - t.returnPaid > 0 ? 'warn' : '') +
     '</div></section>';
   if (c.hidden) h += '<section><div class="note"><div class="ico">▲</div><div>' + fmt(c.hidden) + ' person(s) are not listed here — only the owner sees them. The totals above include them.</div></div></section>';
 
@@ -6779,7 +6779,11 @@ function viewCapital() {
     'Each month’s net profit belongs to them in that proportion, whether or not it has been handed over.</div>' +
     '<div class="sharebar">' + sh.filter(live).map(function (x, i) {
       return '<div style="width:' + x.pct + '%;background:var(--series-1);opacity:' + [1, .72, .5, .86, .6][i % 5] + '" title="' + esc(x.name + ' ' + x.pct + '%') + '"></div>'; }).join('') + '</div>' +
-    '<div class="sub" style="margin:6px 0 10px"><strong>' + fmt(t.pctGiven) + '%</strong> given out · <strong>' + fmt(t.pctFree) + '%</strong> not given to anyone — that part of the profit stays with the business.</div>';
+    (t.pctFree > 0.005
+      ? '<div class="note err" style="margin:6px 0 10px"><div class="ico">!</div><div><strong>' + fmt(t.pctFree) + '% of the business has no owner written down.</strong> ' +
+        'All of the profit belongs to the owners, kept in the business or paid out \u2014 so the shares must add up to 100%. ' +
+        'Give the remaining ' + fmt(t.pctFree) + '% to someone (the owner, usually). A month cannot be closed until they do.</div></div>'
+      : '<div class="sub" style="margin:6px 0 10px">The shares add up to <strong>100%</strong>. Profit not paid out stays in the business and still belongs to the shareholders, each by their share.</div>');
   if (!sh.length) h += '<div class="empty">No shareholder written down yet.</div>';
   else h += '<div class="scroll"><table><thead><tr><th>Shareholder</th><th class="num">Share</th><th class="num">Amount invested</th><th class="num">Profit earned</th><th class="num">Paid out</th><th class="num">Left in the business</th>' + (ed ? '<th></th>' : '') + '</tr></thead><tbody>' +
     sh.map(function (x) {
@@ -6804,13 +6808,14 @@ function viewCapital() {
 
   // ---- investors ----
   h += '<section><div class="card"><h2>Investors</h2><div class="sub">Money put in against a fixed return — so much a month. No share of the business. ' +
-    'What they are paid is written in the book as “Return paid”, and counts as an expense on the day it is paid.</div>';
+    'Each month\u2019s return is worked out on the money they had in during that month (day by day for a percentage), and is a cost of that month. ' +
+    'It falls due when the month ends; paying it is written in the book as “Return paid”.</div>';
   if (!inv.length) h += '<div class="empty">No investor written down yet.</div>';
   else h += '<div class="scroll"><table><thead><tr><th>Investor</th><th class="num">Amount invested</th><th>Gets</th><th class="num">Due so far</th><th class="num">Paid</th><th class="num">Still owed</th>' + (ed ? '<th></th>' : '') + '</tr></thead><tbody>' +
     inv.map(function (x) {
       return '<tr' + (live(x) ? '' : ' style="opacity:.55"') + '><td class="nm">' + esc(x.name) + (x.private ? ' <span class="pill">private</span>' : '') + (live(x) ? '' : ' <span class="pill">ended ' + esc(capMonth(x.ended)) + '</span>') +
         '<br><span class="sku">since ' + esc(capMonth(x.since)) + (x.phone ? ' · ' + esc(x.phone) : '') + '</span></td>' +
-        '<td class="num"><strong>' + fmt(x.capital) + '</strong></td><td>' + esc(capTerms(x, cur)) + '</td><td class="num">' + fmt(x.returnDue) + '</td><td class="num">' + fmt(x.returnPaid) + '</td>' +
+        '<td class="num"><strong>' + fmt(x.capital) + '</strong></td><td>' + esc(capTerms(x, cur)) + '</td><td class="num">' + fmt(x.returnDue) + (x.returnBuilding > 0 ? '<br><span class="sku">+ ' + fmt(x.returnBuilding) + ' this month so far</span>' : '') + '</td><td class="num">' + fmt(x.returnPaid) + '</td>' +
         '<td class="num"><strong' + (x.returnOwed > 0 ? ' style="color:var(--critical)"' : '') + '>' + fmt(x.returnOwed) + '</strong></td>' +
         (ed ? '<td class="num" style="white-space:nowrap"><button class="btn small" type="button" data-capedit="' + esc(x.id) + '">Change</button> ' +
           '<button class="btn small" type="button" data-capend="' + esc(x.id) + '" data-undo="' + (live(x) ? '' : '1') + '" data-n="' + esc(x.name) + '">' + (live(x) ? 'Ended' : 'Bring back') + '</button></td>' : '') + '</tr>';
@@ -6850,16 +6855,18 @@ function viewCapital() {
       '<div style="flex:3 1 220px"><label class="f" for="ce_note">Note <span class="sku">(optional)</span></label><input class="i" id="ce_note" maxlength="300" value="' + esc(CAP_EN.note) + '"></div>' +
       '<button class="btn primary" type="button" id="ce_add"' + (CAP_BUSY ? ' disabled' : '') + '>' + (CAP_BUSY ? 'Saving…' : 'Write it down') + '</button></div>' +
       (who && who.kind === 'shareholder' && CAP_EN.type === 'profit' ? '<div class="sub" style="margin-top:6px">' + esc(who.name) + ' has ' + esc(cur) + ' ' + fmt(who.profitLeft) + ' of profit left in the business.</div>' : '') +
-      (who && who.kind === 'investor' && CAP_EN.type === 'ret' ? '<div class="sub" style="margin-top:6px">' + esc(who.name) + ' is still owed ' + esc(cur) + ' ' + fmt(who.returnOwed) + '. This also goes into Expenses.</div>' : '') +
+      (who && who.kind === 'investor' && CAP_EN.type === 'ret' ? '<div class="sub" style="margin-top:6px">' + esc(who.name) + ' is ' + (who.returnOwed >= 0 ? 'still owed ' + esc(cur) + ' ' + fmt(who.returnOwed) : 'paid ' + esc(cur) + ' ' + fmt(-who.returnOwed) + ' ahead') + '. The cost is already counted in the month it fell due, so this is not a new expense.</div>' : '') +
       '</div></section>';
   }
 
   // ---- the months, and the book ----
-  h += '<section><div class="grid g-half"><div class="card"><h2>Profit, month by month</h2><div class="sub">Net profit as the Expenses screen shows it. Closing a month keeps its profit and the shares as they stand, so a later change does not rewrite it.</div>' +
+  h += '<section><div class="grid g-half"><div class="card"><h2>Profit, month by month</h2><div class="sub">Net profit as the Expenses screen shows it. Closing a month keeps its profit and the shares as they stand, and locks the books: no sale, expense, payment to a supplier, transfer or capital line can be dated into it or struck out of it, in that month or any before it.' +
+    (c.lockedThrough ? ' <strong>Books are closed up to ' + esc(capMonth(c.lockedThrough)) + '.</strong>' : '') + '</div>' +
     '<div class="list">' + c.months.map(function (m) {
-      return '<div><span>' + esc(capMonth(m.month)) + (m.current ? '<span class="sku">this month, so far</span>' : m.closed ? '<span class="sku">closed</span>' : '<span class="sku">open — still follows the books</span>') + '</span>' +
+      return '<div><span>' + esc(capMonth(m.month)) + (m.current ? '<span class="sku">this month, so far</span>' : m.closed ? '<span class="sku">closed</span>' : m.locked ? '<span class="sku">locked — a later month is closed</span>' : '<span class="sku">open — still follows the books</span>') + '</span>' +
         '<span class="row" style="gap:8px;flex-wrap:nowrap;align-items:center"><b' + (m.net < 0 ? ' style="color:var(--critical)"' : '') + '>' + fmt(m.net) + '</b>' +
-        (ed && !m.current && !m.closed ? '<button class="btn small" type="button" data-capclose="' + esc(m.month) + '">Close</button>' : '') + '</span></div>'; }).join('') + '</div></div>' +
+        (ed && !m.current && !m.closed ? '<button class="btn small" type="button" data-capclose="' + esc(m.month) + '">Close</button>' : '') +
+        (ed && m.closed && m.canReopen ? '<button class="btn small" type="button" data-capreopen="' + esc(m.month) + '">Reopen</button>' : '') + '</span></div>'; }).join('') + '</div></div>' +
     '<div class="card"><h2>The book</h2><div class="sub">Newest first. Nothing is deleted — a wrong line is struck out.</div>';
   if (!c.entries.length) h += '<div class="empty">Nothing written yet.</div>';
   else h += '<div class="scroll tall"><table><tbody>' + c.entries.map(function (e) {
@@ -6960,9 +6967,17 @@ function wireCapital() {
   });
   each('button[data-capclose]', async function () {
     var m = this.getAttribute('data-capclose');
-    if (!(await uiConfirm('Close ' + capMonth(m) + '?\n\nIts profit and the shares as they stand today are kept as they are. This cannot be undone here.'))) return;
+    if (!(await uiConfirm('Close ' + capMonth(m) + '?\n\nIts profit and the shares as they stand today are kept as they are, and nothing can be dated into it (or any month before it) afterwards. The owner can reopen the latest closed month.'))) return;
     CAP_BUSY = true;
-    srv('erpCapitalClose', [{ month: m }], done(capMonth(m) + ' closed.'), bad);
+    srv('erpCapitalClose', [{ month: m }], function (r) { EXP = null; done(capMonth(m) + ' closed.')(r); }, bad);
+  });
+  each('button[data-capreopen]', async function () {
+    var m = this.getAttribute('data-capreopen');
+    var why = (await uiPrompt('Why is ' + capMonth(m) + ' being reopened? Its profit follows the books again until it is closed anew.', ''));
+    if (why === null) return;
+    if (!why.trim()) { toast('Say why.', true); return; }
+    CAP_BUSY = true;
+    srv('erpCapitalReopen', [{ month: m, reason: why.trim() }], function (r) { EXP = null; D = null; done(capMonth(m) + ' is open again.')(r); }, bad);
   });
 }
 

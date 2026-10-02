@@ -18,6 +18,7 @@ import { getConfig, setConfig } from '../lib/ext.js';
 import { roleAtLeast } from '../allow.js';
 import { erpDues, creditMap, paidByOrder, discLeft, lock } from './money.js';
 import { ratesMap, landedCost, saveRate } from './currency.js';
+import { returnsFor } from './returns.js';
 
 // ------------------------------------------------------------------ months
 
@@ -158,13 +159,16 @@ async function expRows(ctx, month) {
   return ctx.tx`
     select expense_no, month, kind, coalesce(nullif(btrim(category), ''), 'Miscellaneous') as category,
            amount, coalesce(item_no, '') as item_no, coalesce(btrim(voided), '') as voided
-    from expenses where business_id = ${ctx.biz} and month = ${month}`;
+    from expenses where business_id = ${ctx.biz} and month = ${month}
+      -- plan A6: an investor's return is a cost of the month it fell due in, not of the day it was paid
+      and not (category = 'Investor returns' and description like 'Return paid to %')`;
 }
 
 /** erpExpenseTotal_: everything entered for the month and not struck out. */
 export async function expenseTotal(ctx, month) {
   let total = 0;
   for (const r of await expRows(ctx, month)) if (!r.voided) total += num(r.amount);
+  total += await returnsFor(ctx, month);
   return Math.round(total);
 }
 
@@ -200,6 +204,8 @@ export async function expByCat(ctx, month) {
     by[r.category] = (by[r.category] || 0) + num(r.amount);
     total += num(r.amount);
   }
+  const due = await returnsFor(ctx, month);
+  if (due > 0) { by['Investor returns'] = (by['Investor returns'] || 0) + due; total += due; }
   for (const c of Object.keys(by)) by[c] = Math.round(by[c]);
   return { total, byCat: by };
 }

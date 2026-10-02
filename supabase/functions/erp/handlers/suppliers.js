@@ -17,6 +17,7 @@
 
 import { formatDate, num, round2, dhakaDayStart } from '../lib/time.js';
 import { roleAtLeast } from '../allow.js';
+import { assertOpen } from '../lib/period.js';
 
 const str = (v) => String(v == null ? '' : v).trim();
 const key = (v) => str(v).toLowerCase();
@@ -173,6 +174,7 @@ export async function erpSupplierBill(ctx, payload) {
   if (!e) throw new Error('That supplier is not on the list.');
   const amount = round2(num(payload.amount));
   if (!(amount > 0)) throw new Error('How much is the bill? Type an amount above 0.');
+  await assertOpen(ctx, moneyDate(ctx, payload.date), 'a bill cannot be dated there');
   await ctx.tx`insert into supplier_bills (business_id, supplier, at, reference, amount, fx_amount, fx_currency, source, note, by)
                values (${ctx.biz}, ${e.name}, ${moneyDate(ctx, payload.date)}, ${str(payload.reference).slice(0, 80) || null}, ${amount},
                        ${num(payload.fxAmount) || null}, ${str(payload.fxCurrency).toUpperCase().slice(0, 6) || null}, 'manual',
@@ -187,6 +189,7 @@ export async function erpSupplierPay(ctx, payload) {
   if (!e) throw new Error('That supplier is not on the list.');
   const amount = round2(num(payload.amount));
   if (!(amount > 0)) throw new Error('How much was paid? Type an amount above 0.');
+  await assertOpen(ctx, moneyDate(ctx, payload.date), 'a payment cannot be dated there');
   let account = null;
   const have = await ctx.tx`select id, archived, kind from money_accounts where business_id = ${ctx.biz}`;
   if (have.length) {
@@ -207,6 +210,10 @@ export async function erpSupplierVoid(ctx, payload) {
   const why = str(payload.reason), id = isId(payload.id) ? payload.id : null;
   if (!why) throw new Error('Say why it is being struck out.');
   const mark = 'struck out ' + formatDate(new Date(), 'd MMM yy') + ' by ' + whoIs(ctx) + ': ' + why;
+  const was = payload.kind === 'payment'
+    ? await ctx.tx`select at from supplier_payments where id = ${id} and business_id = ${ctx.biz}`
+    : await ctx.tx`select at from supplier_bills where id = ${id} and business_id = ${ctx.biz}`;
+  if (was[0]) await assertOpen(ctx, new Date(was[0].at), 'its lines cannot be struck out');
   const r = payload.kind === 'payment'
     ? await ctx.tx`update supplier_payments set voided = ${mark} where id = ${id} and business_id = ${ctx.biz} and voided is null returning supplier`
     : await ctx.tx`update supplier_bills set voided = ${mark} where id = ${id} and business_id = ${ctx.biz} and voided is null returning supplier`;

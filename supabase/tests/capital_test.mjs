@@ -48,11 +48,11 @@ r = await owner('erpCapitalHolderSave', [{ kind: 'investor', name: 'Salma', retu
 check('percent above 100 refused', !r.ok && r.error === 'A monthly return above 100% cannot be right.', r);
 r = await owner('erpCapitalHolderSave', [{ kind: 'investor', name: 'Salma', returnKind: 'monthly', returnValue: 5000, since: prev, invested: 200000 }]);
 const SAL = r.ok && r.result.holders.find((h) => h.name === 'Salma');
-check('investor: 200000 in, 5000 a month, due for 2 months', SAL && SAL.capital === 200000 && SAL.returnDue === 10000 && SAL.returnOwed === 10000 && SAL.monthlyReturn === 5000, SAL);
+check('investor: 200000 in, 5000 a month, due for the month that is over; this month still building', SAL && SAL.capital === 200000 && SAL.returnDue === 5000 && SAL.returnOwed === 5000 && SAL.monthlyReturn === 5000 && SAL.returnBuilding > 0 && SAL.returnBuilding <= 5000, SAL);
 r = await owner('erpCapitalHolderSave', [{ kind: 'investor', name: 'Kamal', returnKind: 'percent', returnValue: 2, invested: 50000 }]);
 const KAM = r.result.holders.find((h) => h.name === 'Kamal');
-check('percent investor: 2% of 50000 = 1000 this month', KAM.monthlyReturn === 1000 && KAM.returnDue === 1000, KAM);
-check('totals: owners 100000, outside 250000, all 350000', r.result.totals.ownersCapital === 100000 && r.result.totals.outsideCapital === 250000 && r.result.totals.allCapital === 350000 && r.result.totals.returnDue === 11000, r.result.totals);
+check('percent investor: 2% of 50000 = 1000 a month, nothing due until the month is over', KAM.monthlyReturn === 1000 && KAM.returnDue === 0 && KAM.returnBuilding > 0 && KAM.returnBuilding < 100, KAM);
+check('totals: owners 100000, outside 250000, all 350000', r.result.totals.ownersCapital === 100000 && r.result.totals.outsideCapital === 250000 && r.result.totals.allCapital === 350000 && r.result.totals.returnDue === 5000, r.result.totals);
 
 // ---- the book ----
 r = await owner('erpCapitalEntryAdd', [{ holder: SAL.id, type: 'profit', amount: 100 }]);
@@ -66,17 +66,15 @@ check('future date refused', !r.ok && r.error === 'That date has not come yet.',
 r = await owner('erpCapitalEntryAdd', [{ holder: '', type: 'invest', amount: 5 }]);
 check('needs a person', !r.ok && r.error === 'Whose money is it? Choose the person.', r);
 r = await owner('erpCapitalEntryAdd', [{ holder: SAL.id, type: 'ret', amount: 5000, method: 'bKash', note: 'first month' }]);
-check('return paid: owed drops to 5000', r.ok && r.result.holders.find((h) => h.id === SAL.id).returnOwed === 5000 && r.result.totals.returnPaid === 5000, r.result && r.result.totals);
+check('return paid: owed drops to 0', r.ok && r.result.holders.find((h) => h.id === SAL.id).returnOwed === 0 && r.result.totals.returnPaid === 5000, r.result && r.result.totals);
 let ex = await sql`select * from expenses where business_id = ${B} and category = 'Investor returns'`;
-check('a paid return is an expense that day', ex.length === 1 && ex[0].amount === 5000 && ex[0].description === 'Return paid to Salma' && ex[0].kind === 'oneoff' && ex[0].month === thisMonth && !ex[0].voided, ex);
+check('paying a return is not a second expense (the month it fell due in carries it)', ex.length === 0, ex);
 const retEntry = r.result.entries.find((e) => e.type === 'ret');
 r = await owner('erpCapitalEntryVoid', [{ id: retEntry.id, reason: '' }]);
 check('strike out needs a reason', !r.ok && r.error === 'Say why it is being struck out, so the book can be read later.', r);
 r = await owner('erpCapitalEntryVoid', [{ id: retEntry.id, reason: 'typed twice' }]);
-check('struck out: owed back to 10000, line kept', r.ok && r.result.holders.find((h) => h.id === SAL.id).returnOwed === 10000 &&
+check('struck out: owed back to 5000, line kept', r.ok && r.result.holders.find((h) => h.id === SAL.id).returnOwed === 5000 &&
   /^struck out .* by .*: typed twice$/.test(r.result.entries.find((e) => e.id === retEntry.id).voided), r.result && r.result.entries[0]);
-ex = await sql`select voided from expenses where business_id = ${B} and category = 'Investor returns'`;
-check('its expense is struck out with it', /typed twice$/.test(ex[0].voided || ''), ex);
 r = await owner('erpCapitalEntryVoid', [{ id: retEntry.id, reason: 'again' }]);
 check('already struck out', !r.ok && r.error === 'That line is already struck out.', r);
 
@@ -92,15 +90,18 @@ check('this month cannot be closed', !r.ok && r.error === 'A month can be closed
 r = await owner('erpCapitalClose', [{ month: 'x' }]);
 check('which month?', !r.ok && r.error === 'Which month?', r);
 r = await owner('erpCapitalClose', [{ month: prev }]);
+check('a month cannot be closed while part of the profit has no owner', !r.ok && /add up to 95%, not 100%/.test(r.error), r);
+await owner('erpCapitalHolderSave', [{ id: RAH, kind: 'shareholder', name: 'Rahman', pct: 70 }]);
+r = await owner('erpCapitalClose', [{ month: prev }]);
 check('last month closed, same net kept', r.ok && r.result.months.find((m) => m.month === prev).closed && r.result.months.find((m) => m.month === prev).net === mPrev.net, r.result && r.result.months);
 r = await owner('erpCapitalClose', [{ month: prev }]);
 check('already closed', !r.ok && r.error === 'That month is already closed.', r);
 const cl = await sql`select shares from capital_closed where business_id = ${B} and month = ${prev}`;
-check('closed month keeps the shares as they stood', cl[0].shares[RAH] === 65 && cl[0].shares[PAR] === 30, cl);
+check('closed month keeps the shares as they stood', cl[0].shares[RAH] === 70 && cl[0].shares[PAR] === 30, cl);
 r = await owner('erpCapitalHolderSave', [{ id: RAH, kind: 'shareholder', name: 'Rahman', pct: 50 }]);
 const rah2 = r.result.holders.find((h) => h.id === RAH);
 check('a later share change does not rewrite the closed month',
-  rah2.earned === Math.round(mPrev.net * 0.65 + (mPrev2.net + mNow.net) * 0.50), { rah2, mPrev, mPrev2, mNow });
+  rah2.earned === Math.round(mPrev.net * 0.70 + (mPrev2.net + mNow.net) * 0.50), { rah2, mPrev, mPrev2, mNow });
 
 // ---- leaving and coming back ----
 r = await owner('erpCapitalHolderEnd', [{ id: PAR }]);

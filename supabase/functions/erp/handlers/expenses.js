@@ -12,6 +12,8 @@ import { getConfig, setConfig, saveFile, deleteFile, fileUrl } from '../lib/ext.
 import { who } from './money.js';
 import { monthGross, monthNet } from './dashboard.js';
 import { expenseAccount, cashRules } from './cash.js';
+import { returnsFor, isReturnPaid } from './returns.js';
+import { assertOpen, lockedThrough } from '../lib/period.js';
 
 /** Each section offers only the categories that belong in it (ERP.js:6573). */
 export const ERP_EXP_CATS = {
@@ -107,6 +109,7 @@ async function expRows(ctx, month) {
 /** erpExpWrite_: append one EXPENSES row. */
 async function expWrite(ctx, row) {
   const [id, at, month, kind, category, description, amount, itemId, by, voided, account] = row;
+  await assertOpen(ctx, month, 'an expense cannot be written into it');
   await ctx.tx`
     insert into expenses (business_id, expense_no, recorded_at, month, kind, category,
                           description, amount, item_no, recorded_by, voided, account_id)
@@ -141,7 +144,9 @@ export async function erpExpenses(ctx, payload) {
   const nowMonth = monthOf(ctx.now);
   const month = isMonth(payload.month) ? payload.month : nowMonth;
 
-  const rows = await expRows(ctx, month);
+  // plan A6: a return paid to an investor is not this month's cost; what fell due this month is
+  const rows = (await expRows(ctx, month)).filter((r) => !isReturnPaid(r.category, r.description));
+  const investorReturns = await returnsFor(ctx, month);
   const items = (await expItems(ctx)).filter((it) => itemActive(it, month));
 
   const entered = {};
@@ -178,6 +183,7 @@ export async function erpExpenses(ctx, payload) {
     if (!(r.category in byCat)) { byCat[r.category] = 0; catOrder.push(r.category); }
     byCat[r.category] += r.amount;
   }
+  if (investorReturns > 0) { if (!('Investor returns' in byCat)) { byCat['Investor returns'] = 0; catOrder.push('Investor returns'); } byCat['Investor returns'] += investorReturns; }
   const cats = catOrder.map((c) => ({ name: c, amount: Math.round(byCat[c]) }));
   cats.sort((a, b) => b.amount - a.amount);
 
@@ -187,7 +193,7 @@ export async function erpExpenses(ctx, payload) {
   // plan A2: what the month earned, exactly as the Profitability screen has it
   const g = await monthNet(ctx, month);
   const other = g.delivery + g.courierExtra - g.courierShort - g.courier;
-  const total = Math.round(sums.fixed + sums.recurring + sums.oneoff);
+  const total = Math.round(sums.fixed + sums.recurring + sums.oneoff + investorReturns);
   const p = month.split('-');
   return {
     month, label: MONTH_NAMES[Number(p[1]) - 1] + ' ' + p[0],
@@ -198,7 +204,7 @@ export async function erpExpenses(ctx, payload) {
     byCategory: cats,
     fixed: Math.round(sums.fixed), fixedPaid: Math.round(sums.fixed),
     fixedUnpaid: Math.round(fixedUnpaid), recurring: Math.round(sums.recurring),
-    oneoffTotal: Math.round(sums.oneoff), total,
+    oneoffTotal: Math.round(sums.oneoff), total, investorReturns, lockedThrough: await lockedThrough(ctx),
     revenue: g.netSales, goodsCost: g.cost, gross: g.gross,
     delivery: g.delivery, courier: g.courier, courierExtra: g.courierExtra, courierShort: g.courierShort, other,
     net: g.gross + other - total,
@@ -240,6 +246,7 @@ export async function erpExpenseRecurringSet(ctx, payload) {
   for (const x of await expItems(ctx)) if (x.id === id) it = x;
   if (!it || it.kind !== 'recurring') throw new Error('That recurring bill was not found.');
   if (!itemActive(it, month)) throw new Error(it.name + ' does not apply in that month.');
+  await assertOpen(ctx, month, 'its bills cannot be changed');
 
   for (const r of await expRows(ctx, month)) {
     if (r.itemId === id && !r.voided) {
@@ -259,6 +266,7 @@ export async function erpExpenseFixedPay(ctx, payload) {
   const nowMonth = monthOf(ctx.now);
   const month = isMonth(payload.month) ? payload.month : nowMonth;
   if (month > nowMonth) throw new Error('That month has not begun yet.');
+  await assertOpen(ctx, month, 'its fixed expenses cannot be changed');
   let it = null;
   for (const x of await expItems(ctx)) if (x.id === id) it = x;
   if (!it || it.kind !== 'fixed' || !itemActive(it, month)) {
@@ -293,6 +301,7 @@ export async function erpExpenseVoid(ctx, payload) {
   for (const r of v) {
     if (str(r.expense_no) !== id) continue;
     if (str(r.voided)) throw new Error('That entry is already struck out.');
+    await assertOpen(ctx, monthText(r.month), 'its expenses cannot be struck out');
     if (str(r.kind) === 'fixed') {
       throw new Error('A fixed expense is changed or stopped from its own line, not struck out.');
     }

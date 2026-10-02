@@ -76,7 +76,7 @@ export const ERP_ALLOW = {
   // product page and stock count (redesign phase 3)
   erpProductPage: 'sales', erpStockCount: 'manager',
   erpCapital: 'shareholder', erpCapitalHolderSave: 'owner', erpCapitalHolderEnd: 'owner',
-  erpCapitalEntryAdd: 'owner', erpCapitalEntryVoid: 'owner', erpCapitalClose: 'owner',
+  erpCapitalEntryAdd: 'owner', erpCapitalEntryVoid: 'owner', erpCapitalClose: 'owner', erpCapitalReopen: 'owner',
   erpExpenses: 'shareholder', erpExpenseAdd: 'shareholder', erpExpenseVoid: 'owner',
   erpExpenseItemSave: 'shareholder', erpExpenseItemEnd: 'shareholder',
   erpExpenseFixedPay: 'shareholder', erpExpenseRecurringSet: 'shareholder',

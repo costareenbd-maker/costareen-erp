@@ -4,8 +4,10 @@
 //   SHAREHOLDER  owns an agreed share (typed in, not worked out from money).
 //                All shares together never pass 100%. Each month's net profit
 //                is theirs in that proportion, paid out or not.
-//   INVESTOR     put money in against a fixed return. No ownership. What is
-//                paid to them is an expense on the day it is paid.
+//   INVESTOR     put money in against a fixed return. No ownership. Their
+//                return is a cost of the month it was earned in, worked out on
+//                the money they had in during that month (returns.js); paying
+//                it only settles what is owed (plan A6).
 //
 // Nothing is deleted: a wrong line is struck out. A closed month keeps its
 // profit and the shares as they stood. A person marked private is listed for
@@ -17,6 +19,8 @@ import { phone11 } from '../lib/phone.js';
 import { lock, who } from './money.js';
 import { monthNet, pnlFor } from './dashboard.js';
 import { expenseAccount, cashRules } from './cash.js';
+import { investorReturns } from './returns.js';
+import { assertOpen, monthLabel } from '../lib/period.js';
 
 const ERP_CAP_TYPES = { invest: 'Money put in', withdraw: 'Capital taken back',
                         profit: 'Profit paid out', ret: 'Return paid' };
@@ -104,6 +108,7 @@ export async function erpCapital(ctx) {
     monthRows.push({ month: mo, net, closed: !!c, shares: c ? c.shares : null, current: mo === nowMonth, error: err });
   }
 
+  const ret = await investorReturns(ctx);
   const sums = {};
   hs.forEach((h) => { sums[h.id] = { capital: 0, earned: 0, profitPaid: 0, returnPaid: 0, returnDue: 0 }; });
   bk.forEach((b) => {
@@ -122,32 +127,31 @@ export async function erpCapital(ctx) {
         s.earned += mr.net * pct / 100;
       }
     });
-    if (h.kind === 'investor' && h.since) {
-      // a return falls due for every month they have been in, this one included
-      const last = h.ended && h.ended < nowMonth ? h.ended : nowMonth;
-      for (let mo2 = h.since, guard = 0; mo2 <= last && guard++ < 240; mo2 = monthShift(mo2, 1)) {
-        s.returnDue += returnDue(h, s.capital);
-      }
+    if (h.kind === 'investor') {
+      // each month on that month's money; due once the month is over, the running month still building
+      const mine = ret.byHolder[h.id] || {};
+      for (const mo2 of Object.keys(mine)) { if (mo2 < nowMonth) s.returnDue += mine[mo2]; else s.building = (s.building || 0) + mine[mo2]; }
     }
   });
 
   let pctOut = 0;
   hs.filter((h) => !h.ended || h.ended >= nowMonth).forEach((h) => { if (h.kind === 'shareholder') pctOut += h.pct; });
   const totals = { allCapital: 0, ownersCapital: 0, outsideCapital: 0, earned: 0, profitPaid: 0, returnDue: 0,
-                   returnPaid: 0, pctGiven: r2(pctOut), pctFree: r2(100 - pctOut) };
+                   returnPaid: 0, returnBuilding: 0, pctGiven: r2(pctOut), pctFree: r2(100 - pctOut) };
   const list = [];
   let hidden = 0;
   hs.forEach((h) => {
     const s = sums[h.id];
     if (h.kind === 'shareholder') { totals.ownersCapital += s.capital; totals.earned += s.earned; totals.profitPaid += s.profitPaid; }
-    else { totals.outsideCapital += s.capital; totals.returnDue += s.returnDue; totals.returnPaid += s.returnPaid; }
+    else { totals.outsideCapital += s.capital; totals.returnDue += s.returnDue; totals.returnPaid += s.returnPaid; totals.returnBuilding += s.building || 0; }
     if (h.private && !owner) { hidden++; return; }                 // counted above, not listed
     list.push({ id: h.id, kind: h.kind, name: h.name, phone: h.phone, pct: h.pct, returnKind: h.returnKind,
                 returnValue: h.returnValue, since: h.since, ended: h.ended, private: h.private, note: h.note,
                 capital: Math.round(s.capital), earned: Math.round(s.earned), profitPaid: Math.round(s.profitPaid),
                 profitLeft: Math.round(s.earned - s.profitPaid), returnDue: Math.round(s.returnDue),
                 returnPaid: Math.round(s.returnPaid), returnOwed: Math.round(s.returnDue - s.returnPaid),
-                monthlyReturn: h.kind === 'investor' ? returnDue(h, s.capital) : 0 });
+                returnBuilding: Math.round(s.building || 0),
+                monthlyReturn: h.kind === 'investor' && (!h.ended || h.ended >= nowMonth) ? returnDue(h, Math.max(0, s.capital)) : 0 });
   });
   totals.allCapital = totals.ownersCapital + totals.outsideCapital;
   for (const k of Object.keys(totals)) if (k.indexOf('pct') !== 0) totals[k] = Math.round(totals[k]);
@@ -159,8 +163,9 @@ export async function erpCapital(ctx) {
   }));
   let accs = [];
   try { accs = (await ctx.tx.savepoint(() => ctx.tx`select id, name from money_accounts where business_id = ${ctx.biz} and not archived and kind <> 'courier' order by sort_order, created_at`)).map((a) => ({ id: a.id, name: String(a.name) })); } catch (_) { accs = []; }
-  return { canEdit: owner, currency: 'BDT', holders: list, hidden, totals, entries, thisMonth: nowMonth, accounts: accs, accountDefault: (await cashRules(ctx)).expense || '',
-           months: monthRows.map((mr) => ({ month: mr.month, net: mr.net, closed: mr.closed, current: mr.current, error: mr.error })).reverse() };
+  const lockM = Object.keys(closed).sort().pop() || '';
+  return { lockedThrough: lockM, canEdit: owner, currency: 'BDT', holders: list, hidden, totals, entries, thisMonth: nowMonth, accounts: accs, accountDefault: (await cashRules(ctx)).expense || '',
+           months: monthRows.map((mr) => ({ month: mr.month, net: mr.net, closed: mr.closed, locked: !!lockM && mr.month <= lockM, canReopen: mr.month === lockM, current: mr.current, error: mr.error })).reverse() };
 }
 
 /** Add a person, or change what is written about one. All shares together may never pass 100%. */
@@ -256,6 +261,7 @@ export async function erpCapitalEntryAdd(ctx, payload) {
     on = new Date(dhakaDayStart(typed).getTime() + 12 * 3600 * 1000);      // noon that day, in Dhaka
     if (on.getTime() > now.getTime() + 86400000) throw new Error('That date has not come yet.');
   }
+  await assertOpen(ctx, on, 'a capital line cannot be dated there');
   await lock(ctx, 'capital');
   if (type === 'withdraw') {
     let has = 0;
@@ -267,15 +273,8 @@ export async function erpCapitalEntryAdd(ctx, payload) {
   const month = monthStr(on);
   // plan A3: the account the money went into or came out of
   const account = await expenseAccount(ctx, payload.account);
-  let expenseId = '';
-  // what an investor is paid is a cost of the business, on the day it is paid
-  if (type === 'ret') {
-    expenseId = 'E' + formatDate(now, 'yyMMddHHmmss') + '-' + Math.floor(Math.random() * 900 + 100);
-    await ctx.tx`insert into expenses (business_id, expense_no, recorded_at, month, kind, category, description,
-                                       amount, item_no, recorded_by, voided, account_id)
-                 values (${ctx.biz}, ${expenseId}, ${now}, ${month}, 'oneoff', 'Investor returns',
-                         ${'Return paid to ' + h.name}, ${amount}, null, ${who(ctx)}, null, ${account})`;
-  }
+  // plan A6: a return paid is no longer an expense of the day - the month it fell due in already carries it
+  const expenseId = '';
   await ctx.tx`insert into capital_book (business_id, entry_no, recorded_at, on_date, holder_no, type, amount, method,
                                          note, by, voided, expense_no, month, account_id)
                values (${ctx.biz}, ${'C' + formatDate(now, 'yyMMddHHmmss') + '-' + Math.floor(Math.random() * 900 + 100)},
@@ -292,6 +291,7 @@ export async function erpCapitalEntryVoid(ctx, payload) {
   const hit = (await book(ctx)).find((b) => b.id === id);
   if (!hit) throw new Error('That line was not found.');
   if (hit.voided) throw new Error('That line is already struck out.');
+  if (hit.ts) await assertOpen(ctx, new Date(hit.ts), 'its capital lines cannot be struck out');
   const mark = 'struck out ' + formatDate(new Date(), 'd MMM yy') + ' by ' + who(ctx) + ': ' + why;
   await ctx.tx`update capital_book set voided = ${mark} where id = ${hit.row}`;
   if (hit.expenseId) {
@@ -309,12 +309,34 @@ export async function erpCapitalClose(ctx, payload) {
   await lock(ctx, 'capital');
   if ((await closedMonths(ctx))[month]) throw new Error('That month is already closed.');
   const shares = {};
-  for (const h of await holders(ctx)) if (h.kind === 'shareholder' && isIn(h, month)) shares[h.id] = h.pct;
+  let given = 0;
+  for (const h of await holders(ctx)) if (h.kind === 'shareholder' && isIn(h, month)) { shares[h.id] = h.pct; given += h.pct; }
+  // every taka of profit belongs to somebody: a month cannot be closed with part of it owned by no one
+  if (Math.abs(given - 100) > 0.01) {
+    throw new Error('The shares for ' + monthLabel(month) + ' add up to ' + r2(given) + '%, not 100%. ' +
+                    'All of the profit belongs to the owners: bring the shares to 100% first, then close.');
+  }
   await ctx.tx`insert into capital_closed (business_id, month, net_profit, shares, by)
                values (${ctx.biz}, ${month}, ${Math.round(await capNet(ctx, month))}, ${ctx.tx.json(shares)}, ${who(ctx)})`;
+  delete ctx.memo.lockedThrough;
+  return erpCapital(ctx);
+}
+
+/** Open the latest closed month again, saying why. Its profit follows the books again until it is closed anew. */
+export async function erpCapitalReopen(ctx, payload) {
+  if (ctx.s.role !== 'owner') throw new Error('Only the owner can reopen a month.');
+  const month = String((payload && payload.month) || ''), why = String((payload && payload.reason) || '').trim();
+  if (!isMonth(month)) throw new Error('Which month?');
+  if (!why) throw new Error('Say why the month is being reopened, so the books can be read later.');
+  await lock(ctx, 'capital');
+  const last = Object.keys(await closedMonths(ctx)).sort().pop() || '';
+  if (!last) throw new Error('No month is closed.');
+  if (month !== last) throw new Error('Only the latest closed month (' + monthLabel(last) + ') can be reopened. Reopen that one first.');
+  await ctx.tx`delete from capital_closed where business_id = ${ctx.biz} and month = ${month}`;
+  delete ctx.memo.lockedThrough;
   return erpCapital(ctx);
 }
 
 export const HANDLERS = {
-  erpCapital, erpCapitalHolderSave, erpCapitalHolderEnd, erpCapitalEntryAdd, erpCapitalEntryVoid, erpCapitalClose,
+  erpCapital, erpCapitalHolderSave, erpCapitalHolderEnd, erpCapitalEntryAdd, erpCapitalEntryVoid, erpCapitalClose, erpCapitalReopen,
 };

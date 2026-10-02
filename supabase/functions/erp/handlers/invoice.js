@@ -18,6 +18,7 @@ import {
   lock, stamp, who,
 } from './money.js';
 import { products } from './dashboard.js';
+import { assertOpen } from '../lib/period.js';
 
 /** erpSetInvoiceDate_ + invoiceTimestamp_: the moment the sale is logged at. */
 function saleTimestamp(wanted, now) {
@@ -121,6 +122,7 @@ export async function createInvoice(ctx, payload, opts = {}) {
   await lock(ctx, 'sale');
   const now = new Date();
   const ts = saleTimestamp(payload.date, now);
+  await assertOpen(ctx, ts instanceof Date ? ts : new Date(ts), 'a sale cannot be dated there');
 
   // live stock, before anything is written
   delete ctx.memo.catalog;

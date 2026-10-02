@@ -31,6 +31,7 @@ import {
   getSecret, getConfig, httpFetch, saveFile, findFiles, deleteFile, readFile, renderPdf,
 } from '../lib/ext.js';
 import { products } from './dashboard.js';
+import { assertOpen } from '../lib/period.js';
 
 const R2 = (v) => Math.round(v * 100) / 100;
 
@@ -731,6 +732,8 @@ export async function erpVoidInvoice(ctx, invoiceNo) {
     select l.qty, l.line_total from invoice_lines l join invoices i on i.id = l.invoice_id
     where i.business_id = ${ctx.biz} and i.invoice_no = ${no}`;
   const inv = await ctx.tx`select id from invoices where business_id = ${ctx.biz} and invoice_no = ${no}`;
+  const sold = (await salesLog(ctx)).find((r) => str(r[SL.order_id]) === no);
+  if (sold && asDate(sold[SL.timestamp])) await assertOpen(ctx, asDate(sold[SL.timestamp]), 'its sales cannot be removed. Cancel the invoice instead: that takes the goods back today');
   const txn = await ctx.tx`select id from stock_movements where business_id = ${ctx.biz}
                            and (btrim(reference) = ${'Invoice: ' + no} or btrim(reference) = ${no})`;
   if (!lines.length && !txn.length) throw new Error('Nothing found for invoice ' + no + '.');
