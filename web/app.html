@@ -543,7 +543,7 @@ svg { display:block; width:100%; overflow:visible; }
 // from the server and overrides it if the person picked light.
 (function () {
   var t = 'dark';
-  try { t = localStorage.getItem('cz_theme') || 'dark'; } catch (e) {}
+  try { t = localStorage.getItem('cz_look2') ? (localStorage.getItem('cz_theme') || 'light') : 'light'; } catch (e) {}
   document.documentElement.setAttribute('data-theme', t === 'light' ? 'light' : 'dark');
 })();
 </script>
@@ -611,7 +611,7 @@ var D = null;         // dashboard payload
 var CAT = null;       // product catalogue
 var OPT = null;       // form dropdown options
 var ORDERS = null;    // recent invoices
-var VIEW = 'dash';
+var VIEW = 'home';
 var CART = [];        // [{sku,name,price,qty,discount,stock}]
 // payMode: how this sale was paid - in full now, nothing yet, or part.
 // It replaces 'advance paid', which assumed money arrived before the sale.
@@ -8425,7 +8425,7 @@ function erpSetKey(k) {
   var m = /[#&]k=([A-Za-z0-9_-]{40,128})/.exec(location.hash || '');
   if (!m) return;
   erpSetKey(m[1]);
-  try { history.replaceState(null, '', location.pathname + '#/dash'); } catch (e) { location.hash = '#/dash'; }
+  try { history.replaceState(null, '', location.pathname + '#/home'); } catch (e) { location.hash = '#/home'; }
 })();
 
 /** What travels with every request so the server knows who is asking. */
@@ -9781,7 +9781,8 @@ function wireSettings() {
 // shell
 // =====================================================================
 function repaint() {
-  var h = VIEW === 'dash' ? viewDash()
+  var h = VIEW === 'home' ? homeHtml()
+        : VIEW === 'dash' ? viewDash()
         : VIEW === 'products' ? viewProducts()
         : VIEW === 'invoice' ? viewInvoice()
         : VIEW === 'stock' ? viewStock()
@@ -10381,7 +10382,7 @@ function applyRole() {
   var so = el('signoutBtn');
   if (so) so.style.display = ME ? '' : 'none';
   // send them somewhere they are allowed to be, not to a screen they cannot open
-  var home = rank >= 3 ? 'dash' : 'products';
+  var home = 'home';
   if (!ME || rank < (need[VIEW] || 0)) VIEW = home;
 }
 
@@ -12116,6 +12117,263 @@ function wireAccess() {
 if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {
   window.addEventListener('load', function () { navigator.serviceWorker.register('/sw.js').catch(function () {}); });
 }
+</script>
+<style>
+/* =====================================================================
+   look 2 - step 1: the shell. An app home screen, a top bar that carries
+   the open app's menus, a breadcrumb row. The side menu is gone.
+   Every screen underneath is the same code as before.
+   ===================================================================== */
+:root {
+  --plane:#f5f6f8; --surface:#ffffff; --ink:#1f2933; --ink-2:#3d4852;
+  --muted:#6b7682; --grid:#e9ecef; --baseline:#ced4da; --ring:#dee2e6; --field:#ffffff;
+  --series-1:#714B67; --series-1-soft:#f1e9ef; --accent-2:#017E84;
+  --nav:#714B67; --nav-ink:#ffffff; --thead:#f1f3f5;
+  --shadow:0 1px 2px rgba(31,41,51,.05); --shadow-lg:0 8px 28px rgba(31,41,51,.14);
+}
+:root[data-theme="dark"] {
+  --plane:#17171c; --surface:#212127; --ink:#eceef1; --ink-2:#c9ced6;
+  --muted:#8f97a3; --grid:#2c2c34; --baseline:#3b3b45; --ring:#30303a; --field:#1a1a20;
+  --series-1:#c597ba; --series-1-soft:#3a2a36; --accent-2:#3fb6bb;
+  --nav:#2b2130; --nav-ink:#f3eef2; --thead:#27272e;
+}
+a { color:var(--accent-2); }
+.linkbtn { color:var(--accent-2); }
+
+/* ---- no side menu, no bottom bar: the home screen is the menu */
+#side, .menuBtn, #navBackdrop, #tabbar { display:none !important; }
+body.has-tabbar #view { padding-bottom:56px; }
+body.has-tabbar #toast { bottom:22px; }
+.ptitle, .stamp { display:none; }
+#view { padding:16px 20px 56px; max-width:1560px; margin:0 auto; }
+
+/* ---- top bar */
+.topbar { background:var(--nav); color:var(--nav-ink); border-bottom:none; backdrop-filter:none; -webkit-backdrop-filter:none;
+  min-height:46px; padding:0 10px 0 4px; gap:4px; }
+.topbar button.act { background:transparent; border-color:transparent; color:var(--nav-ink); min-height:46px; border-radius:0; padding:0 12px; font-weight:500; }
+.topbar button.act:hover { background:rgba(255,255,255,.12); color:var(--nav-ink); border-color:transparent; }
+#o_home svg { width:18px; height:18px; fill:currentColor; }
+.o_app { font-size:16px; font-weight:600; padding:0 12px 0 6px; white-space:nowrap; cursor:pointer; }
+.o_menu { display:flex; align-items:stretch; overflow-x:auto; scrollbar-width:none; min-width:0; }
+.o_menu::-webkit-scrollbar { display:none; }
+.o_menu button { font:inherit; font-size:13.5px; color:var(--nav-ink); background:none; border:none; padding:0 12px; min-height:46px; cursor:pointer; white-space:nowrap; opacity:.88; }
+.o_menu button:hover { background:rgba(255,255,255,.12); opacity:1; }
+.o_menu button[aria-current="page"] { opacity:1; font-weight:600; box-shadow:inset 0 -3px 0 rgba(255,255,255,.75); }
+.o_menu .n { display:inline-block; min-width:17px; margin-left:6px; padding:0 5px; border-radius:9px; background:rgba(255,255,255,.22); font-size:11px; font-weight:700; line-height:17px; text-align:center; }
+.o_menu .n:empty { display:none; }
+.topbar .gsearch input { background:rgba(255,255,255,.14); border-color:transparent; color:var(--nav-ink); border-radius:4px; min-height:32px; }
+.topbar .gsearch input::placeholder { color:rgba(255,255,255,.7); }
+.topbar .gsearch input:focus { background:var(--surface); color:var(--ink); }
+.topbar .bizsel { background:rgba(255,255,255,.12); color:var(--nav-ink); border-color:transparent; border-radius:4px; min-height:32px; max-width:190px; }
+.topbar .bizsel option { color:#1f2933; background:#fff; }
+#o_user { width:32px; height:32px; min-height:32px !important; border-radius:6px !important; background:rgba(255,255,255,.2) !important; padding:0 !important; font-weight:700 !important; margin-left:4px; }
+#o_usermenu { position:fixed; top:50px; right:10px; z-index:90; min-width:220px; background:var(--surface); color:var(--ink); border:1px solid var(--ring);
+  border-radius:6px; box-shadow:var(--shadow-lg); padding:8px; display:none; }
+#o_usermenu.open { display:block; }
+#o_usermenu #whoami { display:block !important; padding:6px 8px 10px; font-weight:600; border-bottom:1px solid var(--ring); margin-bottom:6px; }
+#o_usermenu button { display:flex; width:100%; justify-content:flex-start; background:none; border:none; color:var(--ink); min-height:36px; border-radius:4px; padding:0 8px; font-weight:500; }
+#o_usermenu button:hover { background:var(--thead); color:var(--ink); }
+#alertPanel { top:50px; border-radius:6px; }
+#o_usermenu #themeBtn::before { content:"Switch to "; white-space:pre; }
+
+/* ---- breadcrumb row */
+#o_cp { display:flex; align-items:center; gap:10px; min-height:46px; padding:6px 20px; background:var(--surface); border-bottom:1px solid var(--ring); flex-wrap:wrap; }
+#o_cp .crumbs { display:flex; align-items:center; gap:8px; font-size:17px; min-width:0; flex-wrap:wrap; }
+#o_cp .crumbs button { font:inherit; background:none; border:none; padding:0; cursor:pointer; color:var(--accent-2); }
+#o_cp .crumbs button:hover { text-decoration:underline; }
+#o_cp .crumbs .sep { color:var(--muted); }
+#o_cp .crumbs .here { color:var(--ink); font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:60vw; }
+#o_cp .stampx { margin-left:auto; color:var(--muted); font-size:12px; white-space:nowrap; }
+.backlink { display:none !important; }
+
+/* ---- home screen */
+body.o-home { background:linear-gradient(135deg, #e9e3ee 0%, #dfe9f0 55%, #e6efe9 100%); }
+:root[data-theme="dark"] body.o-home { background:linear-gradient(135deg, #241c29 0%, #1b2229 60%, #1c2622 100%); }
+body.o-home #o_cp, body.o-home .o_menu, body.o-home .o_app, body.o-home .gsearch, body.o-home #gs_btn { display:none !important; }
+body.o-home .topbar { background:transparent; color:var(--ink); }
+body.o-home .topbar button.act, body.o-home .topbar .bizsel { color:var(--ink); }
+body.o-home .topbar .bizsel { background:rgba(127,127,127,.14); }
+body.o-home #o_user { background:var(--series-1) !important; color:#fff !important; }
+body.o-home #o_home { visibility:hidden; }
+.o_apps { display:grid; grid-template-columns:repeat(auto-fill, minmax(128px, 1fr)); gap:26px 12px; max-width:860px; margin:5vh auto 0; padding:0 8px; }
+.o_tile { display:flex; flex-direction:column; align-items:center; gap:10px; background:none; border:none; cursor:pointer; font:inherit; color:var(--ink); padding:8px 4px; border-radius:10px; position:relative; }
+.o_tile .ico { width:76px; height:76px; border-radius:16px; display:grid; place-items:center; box-shadow:0 2px 6px rgba(31,41,51,.18), inset 0 -3px 0 rgba(0,0,0,.12); transition:transform .12s, box-shadow .12s; }
+.o_tile:hover .ico { transform:translateY(-2px); box-shadow:0 8px 18px rgba(31,41,51,.22), inset 0 -3px 0 rgba(0,0,0,.12); }
+.o_tile .ico svg { width:40px; height:40px; fill:none; stroke:#fff; stroke-width:1.9; stroke-linecap:round; stroke-linejoin:round; }
+.o_tile .nm { font-size:13.5px; font-weight:600; text-align:center; }
+.o_tile .n { position:absolute; top:2px; left:calc(50% + 22px); min-width:22px; height:22px; padding:0 6px; border-radius:11px; background:#d9463e; color:#fff; font-size:12px; font-weight:700; line-height:22px; text-align:center; box-shadow:0 0 0 2px rgba(255,255,255,.7); }
+.o_tile .n:empty { display:none; }
+.o_hello { text-align:center; margin-top:4vh; color:var(--ink-2); }
+.o_hello h1 { font-size:22px; margin:0 0 4px; color:var(--ink); letter-spacing:-.01em; }
+
+/* ---- the plainer, flatter look of the screens themselves */
+.card { border-radius:6px; box-shadow:none; padding:16px 18px; }
+.card h2 { font-size:15px; }
+button.act, .btn { border-radius:4px; font-weight:500; min-height:34px; padding:6px 12px; }
+.btn.primary { background:var(--series-1); border-color:var(--series-1); box-shadow:none; }
+.btn:hover { border-color:var(--baseline); color:var(--ink); background:var(--thead); }
+.btn.primary:hover { color:#fff; background:var(--series-1); filter:brightness(1.12); }
+.btn.danger:hover { color:var(--critical); }
+input.i, select.i, textarea.i { border-radius:4px; }
+input.i:focus, select.i:focus, textarea.i:focus { border-color:var(--accent-2); box-shadow:0 0 0 2px color-mix(in srgb, var(--accent-2) 22%, transparent); outline:none; }
+.chip { border-radius:4px; }
+.chip.on { background:var(--series-1-soft); border-color:var(--series-1); color:var(--series-1); }
+.pill { border-radius:10px; }
+.tabs { border-radius:0; border:none; border-bottom:1px solid var(--ring); background:none; padding:0; gap:0; }
+.tabs button { flex:0 0 auto; border-radius:0; color:var(--ink-2); border-bottom:2px solid transparent; margin-bottom:-1px; padding:10px 16px; font-weight:500; }
+.tabs button[aria-selected="true"] { background:none; color:var(--series-1); border-bottom-color:var(--series-1); font-weight:600; }
+#view table thead th { background:var(--thead); color:var(--ink); font-size:13px; font-weight:600; letter-spacing:0; text-transform:none; padding-top:9px; padding-bottom:9px; border-bottom:1px solid var(--ring); }
+#view .tall thead th { background:var(--thead); }
+#view table tbody tr:hover > td { background:color-mix(in srgb, var(--series-1) 4%, transparent); }
+.kpi { border-radius:6px; box-shadow:none; }
+.alert { border-radius:6px; box-shadow:none; }
+.hero h1 { font-size:20px; }
+#toast { border-radius:6px; }
+.dlg .box, .dlgbox { border-radius:8px; }
+
+@media (max-width:760px) {
+  .topbar { flex-wrap:wrap; padding:0 6px 0 2px; }
+  .o_menu { order:9; flex:1 0 100%; border-top:1px solid rgba(255,255,255,.14); }
+  .o_menu button { min-height:40px; padding:0 11px; }
+  .topbar .bizsel { max-width:120px; }
+  #o_cp { padding:6px 12px; }
+  #o_cp .crumbs { font-size:15.5px; }
+  #o_cp .stampx { display:none; }
+  #view { padding:12px 12px 56px; }
+  .o_apps { grid-template-columns:repeat(3, 1fr); gap:20px 6px; margin-top:3vh; }
+  .o_tile .ico { width:66px; height:66px; border-radius:14px; }
+  .o_tile .ico svg { width:34px; height:34px; }
+  .tabs { overflow-x:auto; flex-wrap:nowrap; }
+  .tabs button { flex:0 0 auto !important; }
+}
+</style>
+<script>
+// =====================================================================
+// look 2 - step 1: the shell
+// =====================================================================
+var APPS = [
+  { id: 'dashboards', name: 'Dashboard', color: '#7c6bb1', views: ['dash'],
+    icon: '<path d="M4 20V10M10 20V4M16 20v-8M22 20H2"/>' },
+  { id: 'sales', name: 'Sales', color: '#e39a2d', views: ['invoice', 'sales', 'weborders', 'quotes'],
+    icon: '<path d="M3 17l5-5 4 4 8-9"/><path d="M15 7h5v5"/>' },
+  { id: 'contacts', name: 'Contacts', color: '#2a9d8f', views: ['customers', 'campaigns'],
+    icon: '<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-7 8-7s8 3 8 7"/>' },
+  { id: 'inventory', name: 'Inventory', color: '#c8553d', views: ['products', 'stock', 'costs'],
+    icon: '<path d="M3 8l9-5 9 5v8l-9 5-9-5z"/><path d="M3 8l9 5 9-5M12 13v8"/>' },
+  { id: 'accounting', name: 'Accounting', color: '#3a86c8', views: ['profit', 'expenses', 'capital'],
+    icon: '<circle cx="12" cy="12" r="9"/><path d="M15 9.2c-.6-.8-1.7-1.2-3-1.2-1.8 0-3 .8-3 2s1 1.800 3 2 3 .8 3 2-1.200 2-3 2c-1.300 0-2.400-.4-3-1.200M12 6v2M12 16v2"/>' },
+  { id: 'settings', name: 'Settings', color: '#5f6b7a', views: ['settings', 'tools'],
+    icon: '<circle cx="12" cy="12" r="3.2"/><path d="M12 2.500v3M12 18.500v3M2.500 12h3M18.500 12h3M5.300 5.300l2.100 2.100M16.600 16.600l2.100 2.100M5.300 18.700l2.100-2.100M16.600 7.400l2.100-2.100"/>' }
+];
+var VIEW_NAMES = { invoice: 'New invoice', sales: 'Invoices', weborders: 'Web orders', quotes: 'Quotations', customers: 'Customers', campaigns: 'Campaigns',
+                   products: 'Products', stock: 'Stock', costs: 'Product cost', profit: 'Profitability', expenses: 'Expenses', capital: 'Capital',
+                   settings: 'Settings', tools: 'Maintenance', dash: 'Dashboard', home: 'Home' };
+var VIEW_COUNT = { invoice: 'cCart', sales: 'cSend', weborders: 'cWeb', costs: 'cCosts' };
+function appOf(view) { for (var i = 0; i < APPS.length; i++) if (APPS[i].views.indexOf(view) >= 0) return APPS[i]; return null; }
+function appViews(app) { return app.views.filter(function (v) { return navOn(v); }); }
+function countOf(view) { var c = VIEW_COUNT[view] && el(VIEW_COUNT[view]); return c ? c.textContent : ''; }
+
+function homeHtml() {
+  var hr = new Date().getHours(), greet = hr < 12 ? 'Good morning' : hr < 17 ? 'Good afternoon' : 'Good evening';
+  var biz = el('bizName') ? el('bizName').textContent : '';
+  var h = '<div class="o_hello"><h1>' + esc(greet) + '</h1><div>' + esc(biz) + '</div></div><div class="o_apps">';
+  APPS.forEach(function (a) {
+    var vs = appViews(a); if (!vs.length) return;
+    var n = 0; vs.forEach(function (v) { if (v !== 'invoice' && v !== 'costs') n += Number(countOf(v)) || 0; });
+    h += '<button class="o_tile" type="button" data-app="' + a.id + '"><span class="ico" style="background:' + a.color + '"><svg viewBox="0 0 24 24">' + a.icon + '</svg></span>' +
+      '<span class="nm">' + esc(a.name) + '</span><span class="n">' + (n ? n : '') + '</span></button>';
+  });
+  return h + '</div>';
+}
+
+/** Where am I: Invoices / INV-1883. The first part goes back to the list. */
+function crumbs() {
+  var out = [{ t: VIEW_NAMES[VIEW] || VIEW, go: VIEW }], rec = '';
+  if (VIEW === 'sales' && INVP.no) rec = INVP.no;
+  if (VIEW === 'customers' && CUSP.key) rec = (CUSP.data && CUSP.data.name) || 'Customer';
+  if (VIEW === 'products' && PRODP.sku) rec = (PRODP.data && PRODP.data.name) || PRODP.sku;
+  if (VIEW === 'settings') { var st = SET_TABS.filter(function (t) { return t[0] === SET_TAB; })[0]; if (st) rec = st[1]; }
+  if (VIEW === 'capital' && CAP_TAB === 'partner') rec = 'Partnership';
+  if (rec) out.push({ t: rec });
+  return out;
+}
+function shellSync() {
+  var home = VIEW === 'home' || !ME;
+  document.body.classList.toggle('o-home', !!ME && VIEW === 'home');
+  var cp = el('o_cp'), menu = el('o_menu'), nm = el('o_appname');
+  if (!cp) return;
+  cp.style.display = (!ME || VIEW === 'home') ? 'none' : '';
+  if (home) return;
+  var app = appOf(VIEW);
+  nm.textContent = app ? app.name : '';
+  var vs = app ? appViews(app) : [];
+  menu.innerHTML = vs.length > 1 ? vs.map(function (v) {
+    return '<button type="button" data-oview="' + v + '"' + (v === VIEW ? ' aria-current="page"' : '') + '>' + esc(VIEW_NAMES[v] || v) + '<span class="n">' + esc(countOf(v)) + '</span></button>'; }).join('') : '';
+  var c = crumbs();
+  cp.querySelector('.crumbs').innerHTML = c.map(function (x, i) {
+    return (i ? '<span class="sep">/</span>' : '') + (i < c.length - 1 ? '<button type="button" data-ocrumb="' + esc(x.go) + '">' + esc(x.t) + '</button>' : '<span class="here">' + esc(x.t) + '</span>'); }).join('');
+  var s = el('stamp'); cp.querySelector('.stampx').textContent = (VIEW === 'dash' && s) ? s.textContent : '';
+}
+
+(function () {
+  // ---- build the new top bar out of the old one (the pieces keep their wiring)
+  var bar = document.querySelector('.topbar'), nav = document.getElementById('nav');
+  if (!bar || !nav) return;
+  var hb = document.createElement('button'); hb.type = 'button'; hb.setAttribute('data-view', 'home'); hb.textContent = 'Home'; hb.style.display = 'none';
+  nav.insertBefore(hb, nav.firstChild);
+  var home = document.createElement('button'); home.className = 'act'; home.id = 'o_home'; home.type = 'button'; home.title = 'All apps'; home.setAttribute('aria-label', 'All apps');
+  home.innerHTML = '<svg viewBox="0 0 24 24"><rect x="3" y="3" width="5" height="5" rx="1"/><rect x="9.500" y="3" width="5" height="5" rx="1"/><rect x="16" y="3" width="5" height="5" rx="1"/><rect x="3" y="9.500" width="5" height="5" rx="1"/><rect x="9.500" y="9.500" width="5" height="5" rx="1"/><rect x="16" y="9.500" width="5" height="5" rx="1"/><rect x="3" y="16" width="5" height="5" rx="1"/><rect x="9.500" y="16" width="5" height="5" rx="1"/><rect x="16" y="16" width="5" height="5" rx="1"/></svg>';
+  var name = document.createElement('div'); name.className = 'o_app'; name.id = 'o_appname';
+  var menu = document.createElement('div'); menu.className = 'o_menu'; menu.id = 'o_menu';
+  bar.insertBefore(menu, bar.firstChild); bar.insertBefore(name, menu); bar.insertBefore(home, name);
+  var user = document.createElement('button'); user.className = 'act'; user.id = 'o_user'; user.type = 'button'; user.setAttribute('aria-label', 'Account'); user.textContent = '•';
+  bar.appendChild(user);
+  var um = document.createElement('div'); um.id = 'o_usermenu';
+  var who = document.getElementById('whoami'), so = document.getElementById('signoutBtn'), th = document.getElementById('themeBtn');
+  if (who) um.appendChild(who);
+  if (th) { th.className = ''; um.appendChild(th); }
+  if (so) { so.className = ''; um.appendChild(so); }
+  document.body.appendChild(um);
+  var cp = document.createElement('div'); cp.id = 'o_cp'; cp.style.display = 'none'; cp.innerHTML = '<div class="crumbs"></div><div class="stampx"></div>';
+  bar.parentNode.insertBefore(cp, bar.nextSibling);
+
+  home.addEventListener('click', function () { go('home'); });
+  name.addEventListener('click', function () { var a = appOf(VIEW); if (a) { var v = appViews(a); if (v.length) go(v[0]); } });
+  menu.addEventListener('click', function (ev) { var b = ev.target.closest('button[data-oview]'); if (b) go(b.getAttribute('data-oview')); });
+  cp.addEventListener('click', function (ev) { var b = ev.target.closest('button[data-ocrumb]'); if (b) go(b.getAttribute('data-ocrumb')); });
+  user.addEventListener('click', function () { um.classList.toggle('open'); });
+  document.addEventListener('mousedown', function (ev) { if (!ev.target.closest('#o_usermenu') && !ev.target.closest('#o_user')) um.classList.remove('open'); });
+  um.addEventListener('click', function (ev) { if (ev.target.closest('button')) um.classList.remove('open'); });
+  document.addEventListener('click', function (ev) {
+    var t = ev.target.closest && ev.target.closest('[data-app]'); if (!t) return;
+    var a = APPS.filter(function (x) { return x.id === t.getAttribute('data-app'); })[0];
+    // Sales opens on the list of invoices, not on an empty new invoice
+    if (a) { var v = appViews(a), first = (a.id === 'sales' && v.indexOf('sales') >= 0) ? 'sales' : v[0]; if (first) go(first); }
+  });
+
+  // ---- every redraw keeps the top bar and the breadcrumb in step
+  var paint = repaint;
+  repaint = function () { paint(); try { shellSync(); } catch (e) {} };
+  var gate = paintGate;
+  paintGate = function () { gate(); document.body.classList.remove('o-home'); try { el('o_cp').style.display = 'none'; } catch (e) {} };
+  var start = startApp;
+  startApp = function () {
+    start();
+    var u = el('o_user'); if (u && ME && ME.name) u.textContent = String(ME.name).trim().charAt(0).toUpperCase();
+    // the new look starts in the light theme once; after that the person's own choice holds
+    try {
+      if (!localStorage.getItem('cz_look2')) { localStorage.setItem('cz_look2', '1'); LOOK_RESET = true; applyTheme('light'); srv('erpSetTheme', ['light'], function () { LOOK_RESET = false; }, function () { LOOK_RESET = false; }); }
+    } catch (e) {}
+  };
+  var biz = applyBusinesses;
+  applyBusinesses = function (b) { if (LOOK_RESET && b) b.theme = 'light'; biz(b); if (VIEW === 'home' && ME) el('view').innerHTML = homeHtml(); };
+  var counts = updateCounts;
+  updateCounts = function () {
+    counts.apply(this, arguments);
+    try { if (ME) { if (VIEW === 'home') el('view').innerHTML = homeHtml(); else shellSync(); } } catch (e) {}
+  };
+})();
+var LOOK_RESET = false;
 </script>
 </body>
 </html>
