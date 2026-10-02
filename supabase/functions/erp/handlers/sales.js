@@ -225,7 +225,8 @@ export async function erpSales(ctx, payload) {
   payload = payload || {};
   const q = String(payload.q || '').trim().toLowerCase();
   const filter = String(payload.filter || 'all');
-  const limit = Math.min(300, Math.max(20, Math.round(num(payload.limit)) || 100));
+  // all: every matching invoice, for the list view (redesign look 2), which pages itself
+  const limit = payload.all ? 1e9 : Math.min(300, Math.max(20, Math.round(num(payload.limit)) || 100));
   // paging (redesign phase 2): skip this many matching invoices first
   const offset = Math.max(0, Math.round(num(payload.offset)) || 0);
 
@@ -298,7 +299,7 @@ export async function erpSales(ctx, payload) {
     matched++;
     totals.sold += grand; totals.returned += retVal; totals.due += due;
     if (matched <= offset || rows.length >= limit) continue;
-    rows.push({ id: r.id, date: r.date, customer: r.customer, phone: r.phone,
+    rows.push({ id: r.id, ts: r.ts, date: r.date, customer: r.customer, phone: r.phone,
                 units: r.units, total: Math.round(grand),
                 returned: retVal, returnedQty: rb ? rb.qty : 0,
                 net: (rb && rb.cancelled) ? 0 : Math.round(grand - retVal),
@@ -313,7 +314,7 @@ export async function erpSales(ctx, payload) {
                 fromSite });
   }
 
-  try {
+  if (!payload.all) try {
     const need = rows.filter((x) => x.fromSite && !x.consignment);
     if (need.length) {
       const ids = await webParcelIds(ctx, need.map(() => ({ fromSite: true, consignment: '' })));
