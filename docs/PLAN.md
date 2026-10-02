@@ -67,3 +67,6 @@ Not planned (not needed now): payroll and attendance, CRM pipeline, subscription
 10. **Go-live** (`GOLIVE.md`)
 
 Needed from the owner along the way: the list of money accounts (A3); suppliers and currencies used (A4, A5); how duty is charged today (A5); partner's company name for his link (B1); answer on VAT (D8).
+
+
+Owner, 2026-10-03: the business also sells 3D printers and will sell more electronics - D1 (serials, warranty) and D2 (repairs) are wanted. Order from here: D1, D2, D6, per-person sign-in, go-live.
