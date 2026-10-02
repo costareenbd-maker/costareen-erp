@@ -611,7 +611,7 @@ var D = null;         // dashboard payload
 var CAT = null;       // product catalogue
 var OPT = null;       // form dropdown options
 var ORDERS = null;    // recent invoices
-var VIEW = 'home';
+var VIEW = 'dash';
 var CART = [];        // [{sku,name,price,qty,discount,stock}]
 // payMode: how this sale was paid - in full now, nothing yet, or part.
 // It replaces 'advance paid', which assumed money arrived before the sale.
@@ -8425,7 +8425,7 @@ function erpSetKey(k) {
   var m = /[#&]k=([A-Za-z0-9_-]{40,128})/.exec(location.hash || '');
   if (!m) return;
   erpSetKey(m[1]);
-  try { history.replaceState(null, '', location.pathname + '#/home'); } catch (e) { location.hash = '#/home'; }
+  try { history.replaceState(null, '', location.pathname + '#/dash'); } catch (e) { location.hash = '#/dash'; }
 })();
 
 /** What travels with every request so the server knows who is asking. */
@@ -10382,7 +10382,7 @@ function applyRole() {
   var so = el('signoutBtn');
   if (so) so.style.display = ME ? '' : 'none';
   // send them somewhere they are allowed to be, not to a screen they cannot open
-  var home = 'home';
+  var home = rank >= 3 ? 'dash' : 'products';
   if (!ME || rank < (need[VIEW] || 0)) VIEW = home;
 }
 
@@ -12337,7 +12337,7 @@ function shellSync() {
   var cp = document.createElement('div'); cp.id = 'o_cp'; cp.style.display = 'none'; cp.innerHTML = '<div class="crumbs"></div><div class="stampx"></div>';
   bar.parentNode.insertBefore(cp, bar.nextSibling);
 
-  home.addEventListener('click', function () { go('home'); });
+  home.addEventListener('click', function (ev) { ev.stopPropagation(); appsMenuToggle(); });
   name.addEventListener('click', function () { var a = appOf(VIEW); if (a) { var v = appViews(a); if (v.length) go(v[0]); } });
   menu.addEventListener('click', function (ev) { var b = ev.target.closest('button[data-oview]'); if (b) go(b.getAttribute('data-oview')); });
   cp.addEventListener('click', function (ev) { var b = ev.target.closest('button[data-ocrumb]'); if (b) go(b.getAttribute('data-ocrumb')); });
@@ -12374,6 +12374,53 @@ function shellSync() {
   };
 })();
 var LOOK_RESET = false;
+</script>
+<style>
+/* ---- look 2 - apps drop-down: the apps button no longer replaces the screen */
+#o_apps_dd { position:fixed; top:46px; left:6px; z-index:95; width:min(440px, calc(100vw - 12px)); max-height:calc(100vh - 60px); overflow:auto;
+  background:var(--surface); border:1px solid var(--ring); border-radius:8px; box-shadow:var(--shadow-lg); padding:14px 10px; display:none; }
+#o_apps_dd.open { display:block; }
+#o_apps_dd .o_apps { margin:0; max-width:none; gap:14px 6px; grid-template-columns:repeat(3, 1fr); padding:0; }
+#o_apps_dd .o_tile .ico { width:56px; height:56px; border-radius:12px; }
+#o_apps_dd .o_tile .ico svg { width:30px; height:30px; }
+#o_apps_dd .o_tile .nm { font-size:12.5px; }
+#o_apps_dd .o_tile .n { left:calc(50% + 14px); }
+#o_apps_dd .o_tile[aria-current="true"] { background:var(--series-1-soft); }
+#o_home[aria-expanded="true"] { background:rgba(255,255,255,.18); }
+body.o-home #o_home { visibility:visible; }
+</style>
+<script>
+// =====================================================================
+// look 2 - apps drop-down: the apps button opens the apps over whatever is
+// on screen; picking one moves there, clicking anywhere else closes it.
+// =====================================================================
+function appsMenuHtml() {
+  var cur = appOf(VIEW), h = '<div class="o_apps">';
+  APPS.forEach(function (a) {
+    var vs = appViews(a); if (!vs.length) return;
+    var n = 0; vs.forEach(function (v) { if (v !== 'invoice' && v !== 'costs') n += Number(countOf(v)) || 0; });
+    h += '<button class="o_tile" type="button" data-app="' + a.id + '"' + (cur && cur.id === a.id ? ' aria-current="true"' : '') + '><span class="ico" style="background:' + a.color + '"><svg viewBox="0 0 24 24">' + a.icon + '</svg></span>' +
+      '<span class="nm">' + esc(a.name) + '</span><span class="n">' + (n ? n : '') + '</span></button>';
+  });
+  return h + '</div>';
+}
+function appsMenuToggle(open) {
+  var dd = el('o_apps_dd');
+  if (!dd) { dd = document.createElement('div'); dd.id = 'o_apps_dd'; dd.setAttribute('role', 'menu'); document.body.appendChild(dd); }
+  var want = open === undefined ? !dd.classList.contains('open') : !!open;
+  if (want) dd.innerHTML = appsMenuHtml();
+  dd.classList.toggle('open', want);
+  var b = el('o_home'); if (b) b.setAttribute('aria-expanded', want ? 'true' : 'false');
+}
+document.addEventListener('mousedown', function (ev) {
+  var dd = el('o_apps_dd'); if (!dd || !dd.classList.contains('open')) return;
+  if (ev.target.closest('#o_apps_dd') || ev.target.closest('#o_home')) return;
+  appsMenuToggle(false);
+});
+document.addEventListener('keydown', function (ev) { if (ev.key === 'Escape') appsMenuToggle(false); });
+// picking an app closes the drop-down (the move itself is the existing [data-app] handler)
+document.addEventListener('click', function (ev) { if (ev.target.closest && ev.target.closest('#o_apps_dd [data-app]')) setTimeout(function () { appsMenuToggle(false); }, 0); });
+(function () { var b = el('o_home'); if (b) { b.title = 'Apps'; b.setAttribute('aria-haspopup', 'true'); b.setAttribute('aria-expanded', 'false'); } })();
 </script>
 </body>
 </html>
