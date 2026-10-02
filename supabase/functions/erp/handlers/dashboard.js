@@ -13,7 +13,7 @@
 //   - the price book is a table; landed and margin are computed, not stored
 
 import { salesLog, paymentsTab, asDate, str, SL, PAY } from '../lib/tabs.js';
-import { formatDate, num, round2, dhakaDayStart, DAY_MS } from '../lib/time.js';
+import { formatDate, num, round2, dhakaDayStart, DAY_MS, looseDate } from '../lib/time.js';
 import { getConfig, setConfig } from '../lib/ext.js';
 import { roleAtLeast } from '../allow.js';
 import { erpDues, creditMap, paidByOrder, discLeft, lock } from './money.js';
@@ -722,8 +722,9 @@ export async function pnlFor(ctx, months) {
     const rows = await ctx.tx`select created_src, paid_at, delivery_charges, cod_fee from courier_payouts
                               where business_id = ${ctx.biz}`;
     for (const r of rows) {
-      const m = String(r.paid_at || r.created_src || '').slice(0, 7);
-      if (!/^\d{4}-\d{2}$/.test(m)) continue;
+      const pd = looseDate(r.paid_at) || looseDate(r.created_src);
+      if (!pd) continue;
+      const m = monthKey(pd);
       c[m] = (c[m] || 0) + num(r.delivery_charges) + num(r.cod_fee);
     }
     return c;

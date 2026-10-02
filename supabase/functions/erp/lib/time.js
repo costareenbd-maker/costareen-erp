@@ -68,3 +68,20 @@ export function num(v) {
 }
 
 export function round2(n) { return Math.round((Number(n) || 0) * 100) / 100; }
+
+/**
+ * A date as it may have been kept in a text column: an ISO / "yyyy-MM-dd HH:mm"
+ * string, or a spreadsheet serial number ("46272.52" - days since 30 Dec 1899,
+ * Dhaka clock) left by the import. Returns a Date, or null.
+ */
+export function looseDate(v) {
+  const s = String(v == null ? '' : v).trim();
+  if (!s) return null;
+  if (/^\d{4,6}(\.\d+)?$/.test(s)) {
+    const d = new Date(Date.UTC(1899, 11, 30) + Number(s) * 86400e3 - OFFSET_MS);
+    return isNaN(d.getTime()) ? null : d;
+  }
+  const d = new Date(s);
+  return isNaN(d.getTime()) ? null : d;
+}
+

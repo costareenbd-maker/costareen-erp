@@ -12,6 +12,7 @@ import { custKey } from '../lib/phone.js';
 import { getSecret, setSecret, getConfig, setConfig, httpFetch } from '../lib/ext.js';
 import { roleAtLeast } from '../allow.js';
 import { paidByOrder, addPayment, syncInvoiceStatus, outstanding, lock, stamp, who } from './money.js';
+import { cashRules } from './cash.js';
 
 export const ERP_SF_BASE = 'https://portal.packzy.com/api/v1';
 export const ERP_SF_AUTO_WRITEOFF = 200;
@@ -521,10 +522,10 @@ async function payoutSync(ctx) {
     }
     await ctx.tx`
       insert into courier_payouts (business_id, payout_id, created_src, paid_at, cod_collected, delivery_charges,
-                                   cod_fee, paid_to_bank, parcels, synced_at, fields_seen)
+                                   cod_fee, paid_to_bank, parcels, synced_at, fields_seen, account_id)
       values (${ctx.biz}, ${String(pay.payment_id)}, ${String(pay.created_at || '')}, ${String(pay.paid_at || '')},
               ${num(pay.amount)}, ${num(pay.due_bills)}, ${num(pay.charges)}, ${num(pay.total)},
-              ${lines.length}, ${now}, ${seenF})`;
+              ${lines.length}, ${now}, ${seenF}, ${(await cashRules(ctx)).payout || null})`;
     added++;
   }
   return { added, list };

@@ -11,6 +11,7 @@ import { formatDate, num } from '../lib/time.js';
 import { getConfig, setConfig, saveFile, deleteFile, fileUrl } from '../lib/ext.js';
 import { who } from './money.js';
 import { monthGross, monthNet } from './dashboard.js';
+import { expenseAccount, cashRules } from './cash.js';
 
 /** Each section offers only the categories that belong in it (ERP.js:6573). */
 export const ERP_EXP_CATS = {
@@ -105,12 +106,12 @@ async function expRows(ctx, month) {
 
 /** erpExpWrite_: append one EXPENSES row. */
 async function expWrite(ctx, row) {
-  const [id, at, month, kind, category, description, amount, itemId, by, voided] = row;
+  const [id, at, month, kind, category, description, amount, itemId, by, voided, account] = row;
   await ctx.tx`
     insert into expenses (business_id, expense_no, recorded_at, month, kind, category,
-                          description, amount, item_no, recorded_by, voided)
+                          description, amount, item_no, recorded_by, voided, account_id)
     values (${ctx.biz}, ${id}, ${at}, ${month}, ${kind}, ${category}, ${description},
-            ${amount}, ${itemId || null}, ${by}, ${voided || null})`;
+            ${amount}, ${itemId || null}, ${by}, ${voided || null}, ${await expenseAccount(ctx, account)})`;
 }
 
 async function setVoided(ctx, seq, text) {
@@ -123,6 +124,14 @@ async function setVoided(ctx, seq, text) {
 // Dashboard, Profit and Expenses screens); re-exported here under the name
 // the porting brief asked for.
 export { monthGross };
+
+/** The accounts an expense can be paid from (plan A3); empty until the owner has set accounts up. */
+async function paidFrom(ctx) {
+  try {
+    return (await ctx.tx.savepoint(() => ctx.tx`select id, name from money_accounts where business_id = ${ctx.biz} and not archived and kind <> 'courier'
+                                               order by sort_order, created_at`)).map((a) => ({ id: a.id, name: str(a.name) }));
+  } catch (_) { return []; }
+}
 
 // ------------------------------------------------------------------ screen
 
@@ -185,6 +194,7 @@ export async function erpExpenses(ctx, payload) {
     isCurrent: month === nowMonth, isFuture: month > nowMonth,
     fixedItems, recurringItems, oneoff,
     all, missing, categories: await expCats(ctx),
+    accounts: await paidFrom(ctx), accountDefault: (await cashRules(ctx)).expense || '',
     byCategory: cats,
     fixed: Math.round(sums.fixed), fixedPaid: Math.round(sums.fixed),
     fixedUnpaid: Math.round(fixedUnpaid), recurring: Math.round(sums.recurring),
@@ -211,7 +221,7 @@ export async function erpExpenseAdd(ctx, payload) {
 
   await expWrite(ctx, [newId('E'), new Date(), month, 'oneoff',
     str(payload.category) || 'Miscellaneous', what,
-    Math.round(amount * 100) / 100, '', who(ctx), '']);
+    Math.round(amount * 100) / 100, '', who(ctx), '', payload.account]);
   return erpExpenses(ctx, { month });
 }
 
@@ -238,7 +248,7 @@ export async function erpExpenseRecurringSet(ctx, payload) {
     }
   }
   await expWrite(ctx, [newId('E'), new Date(), month, 'recurring', it.category, it.name,
-    Math.round(amount * 100) / 100, it.id, who(ctx), '']);
+    Math.round(amount * 100) / 100, it.id, who(ctx), '', payload && payload.account]);
   return erpExpenses(ctx, { month });
 }
 
@@ -266,7 +276,7 @@ export async function erpExpenseFixedPay(ctx, payload) {
   }
   if (paid) throw new Error(it.name + ' is already marked as paid for this month.');
   await expWrite(ctx, [newId('E'), new Date(), month, 'fixed', it.category, it.name, it.amount,
-    it.id, who(ctx), '']);
+    it.id, who(ctx), '', payload && payload.account]);
   return erpExpenses(ctx, { month });
 }
 

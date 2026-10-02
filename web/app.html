@@ -572,6 +572,7 @@ svg { display:block; width:100%; overflow:visible; }
       <div class="navgrp">Money</div>
       <button type="button" data-view="profit" aria-selected="false"><span class="ic"><svg viewBox="0 0 24 24"><path d="M3 17l6-6 4 4 8-8"/><path d="M14 7h7v7"/></svg></span>Profitability</button>
       <button type="button" data-view="expenses" aria-selected="false"><span class="ic"><svg viewBox="0 0 24 24"><path d="M20 7H5a2 2 0 0 1 0-4h13v4"/><path d="M4 7v12a2 2 0 0 0 2 2h14V7"/><circle cx="16" cy="14" r="1.5"/></svg></span>Expenses</button>
+      <button type="button" data-view="cash" aria-selected="false"><span class="ic"><svg viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="13" rx="2"/><path d="M3 10h18M7 15h4"/></svg></span>Money</button>
       <button type="button" data-view="capital" aria-selected="false"><span class="ic"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 3v9l7 5"/></svg></span>Capital</button>
       <div class="navgrp">System</div>
       <button type="button" data-view="settings" aria-selected="false"><span class="ic"><svg viewBox="0 0 24 24"><path d="M4 6h9M18 6h2M4 12h2M11 12h9M4 18h11M20 18h0"/><circle cx="15.5" cy="6" r="2"/><circle cx="8.5" cy="12" r="2"/><circle cx="17.5" cy="18" r="2"/></svg></span>Settings</button>
@@ -6696,6 +6697,8 @@ function viewExpenses() {
     '<select class="i" id="ex_cat">' + expCatOptions(cats.oneoff) + '</select></div>' +
     '<div style="flex:1 1 120px"><label class="f" for="ex_amt">Amount</label>' +
     '<input class="i" id="ex_amt" inputmode="decimal" placeholder="0"></div>' +
+    ((e.accounts || []).length ? '<div style="flex:1 1 150px"><label class="f" for="ex_acc">Paid from</label><select class="i" id="ex_acc">' + e.accounts.map(function (a) {
+      return '<option value="' + esc(a.id) + '"' + (a.id === e.accountDefault ? ' selected' : '') + '>' + esc(a.name) + '</option>'; }).join('') + '</select></div>' : '') +
     '<div style="flex:0 0 auto"><button class="btn primary" type="button" id="ex_add">Add</button></div>' +
     '</div>') + '</div></section>';
 
@@ -6846,8 +6849,11 @@ function viewCapital() {
         return '<option value="' + o[0] + '"' + (CAP_EN.type === o[0] ? ' selected' : '') + '>' + o[1] + '</option>'; }).join('') + '</select></div>' +
       '<div style="flex:1 1 120px"><label class="f" for="ce_amt">Amount</label><input class="i" id="ce_amt" inputmode="decimal" value="' + esc(CAP_EN.amount) + '" placeholder="0"></div>' +
       '<div style="flex:1 1 140px"><label class="f" for="ce_date">Date <span class="sku">(empty = today)</span></label><input class="i" id="ce_date" type="date" max="' + esc(todayISO()) + '" value="' + esc(CAP_EN.date) + '"></div>' +
-      '<div style="flex:1 1 120px"><label class="f" for="ce_meth">How</label><select class="i" id="ce_meth">' + ['Cash', 'Bank Transfer', 'bKash', 'Other'].map(function (o) {
-        return '<option' + (CAP_EN.method === o ? ' selected' : '') + '>' + o + '</option>'; }).join('') + '</select></div>' +
+      ((c.accounts || []).length
+        ? '<div style="flex:1 1 150px"><label class="f" for="ce_meth">Account</label><select class="i" id="ce_meth">' + c.accounts.map(function (a) {
+            return '<option value="' + esc(a.id) + '"' + ((CAP_EN.method || c.accountDefault) === a.id ? ' selected' : '') + '>' + esc(a.name) + '</option>'; }).join('') + '</select></div>'
+        : '<div style="flex:1 1 120px"><label class="f" for="ce_meth">How</label><select class="i" id="ce_meth">' + ['Cash', 'Bank Transfer', 'bKash', 'Other'].map(function (o) {
+            return '<option' + (CAP_EN.method === o ? ' selected' : '') + '>' + o + '</option>'; }).join('') + '</select></div>') +
       '<div style="flex:3 1 220px"><label class="f" for="ce_note">Note <span class="sku">(optional)</span></label><input class="i" id="ce_note" maxlength="300" value="' + esc(CAP_EN.note) + '"></div>' +
       '<button class="btn primary" type="button" id="ce_add"' + (CAP_BUSY ? ' disabled' : '') + '>' + (CAP_BUSY ? 'Saving…' : 'Write it down') + '</button></div>' +
       (who && who.kind === 'shareholder' && CAP_EN.type === 'profit' ? '<div class="sub" style="margin-top:6px">' + esc(who.name) + ' has ' + esc(cur) + ' ' + fmt(who.profitLeft) + ' of profit left in the business.</div>' : '') +
@@ -6947,7 +6953,7 @@ function wireCapital() {
     if (!(await uiConfirm((hh ? hh.name : '') + ' ' + label + ' ' + CAPD.currency + ' ' + fmt(amt) + (CAP_EN.date ? ' on ' + CAP_EN.date : ' today') + '?' +
         (CAP_EN.type === 'ret' ? '\n\nIt also goes into Expenses.' : '')))) return;
     CAP_BUSY = true; repaint();
-    srv('erpCapitalEntryAdd', [{ holder: CAP_EN.holder, type: CAP_EN.type, amount: amt, date: CAP_EN.date, method: CAP_EN.method, note: CAP_EN.note }], function (r) {
+    srv('erpCapitalEntryAdd', [{ holder: CAP_EN.holder, type: CAP_EN.type, amount: amt, date: CAP_EN.date, method: capMethodName(CAP_EN.method), account: /^[0-9a-f-]{36}$/.test(CAP_EN.method) ? CAP_EN.method : '', note: CAP_EN.note }], function (r) {
       CAP_EN.amount = ''; CAP_EN.note = ''; CAP_EN.date = ''; EXP = null; D = null; done('Written down.')(r);
     }, bad);
   });
@@ -7005,7 +7011,7 @@ function wireExpenses() {
     if (!(amt > 0)) { toast('Enter an amount.', true); return; }
     add.disabled = true; add.textContent = 'Saving…';
     srv('erpExpenseAdd', [{ month: EXP.month, category: el('ex_cat').value,
-                            description: what, amount: amt }], show('Recorded.'),
+                            description: what, amount: amt, account: el('ex_acc') ? el('ex_acc').value : '' }], show('Recorded.'),
         function (x) { add.disabled = false; add.textContent = 'Add'; bad(x); });
   });
 
@@ -8285,7 +8291,7 @@ function srv(name, args, ok, bad) {
 
 var SRV_ACTIVE = 0, SRV_WRITING = false;
 // the same list the server uses to know a call changes nothing (ERP_READS)
-var SRV_READS = /^(erpBundle|erpHello|erpMe|erpCatalog|erpSales|erpDues|erpCustomers|erpPnl|erpMoney|erpToday|erpDaySales|erpProduct|erpLookupCustomer|erpCustomerAccount|erpCustomerStatement|erpCustomerCredit|erpWebOrders|erpWebOrderInvoices|erpCampaignAudience|erpCampaignList|erpCampaignGet|erpEvoStatus|erpBrandLogo|erpQuoteBoot|erpQuoteList|erpQuoteGet|erpQuoteAsset|erpExpenses|erpCapital|erpBackupStatus|erpAiKeys|erpGetTheme|erpBusinesses|erpStockHistory|erpReorderPlan|erpPoList|erpSfPayoutLines|erpBookedParcels|erpParcelPreview|erpReturnPreview|erpSettingsFull|erpSettingsLists|erpFormOptions|erpAdmin|erpPeople|erpDevices|erpCourierKeyStatus|erpPayReasons|erpDiscontinued|erpAccessWarning|erpBusinessLinks|erpLookupUsage|erpRecentInvoices|erpCourier|erpDashboardData|erpInvoice|erpCustomerPage|erpSearch|erpProductPage|erpPnlMonth|erpExpenseReceiptUrl|erpPartnership|erpPartnerStock|erpSecurity|erpCustomerList|erpAlerts|erpAccessKeys|erpListView)$/;
+var SRV_READS = /^(erpBundle|erpHello|erpMe|erpCatalog|erpSales|erpDues|erpCustomers|erpPnl|erpMoney|erpToday|erpDaySales|erpProduct|erpLookupCustomer|erpCustomerAccount|erpCustomerStatement|erpCustomerCredit|erpWebOrders|erpWebOrderInvoices|erpCampaignAudience|erpCampaignList|erpCampaignGet|erpEvoStatus|erpBrandLogo|erpQuoteBoot|erpQuoteList|erpQuoteGet|erpQuoteAsset|erpExpenses|erpCapital|erpBackupStatus|erpAiKeys|erpGetTheme|erpBusinesses|erpStockHistory|erpReorderPlan|erpPoList|erpSfPayoutLines|erpBookedParcels|erpParcelPreview|erpReturnPreview|erpSettingsFull|erpSettingsLists|erpFormOptions|erpAdmin|erpPeople|erpDevices|erpCourierKeyStatus|erpPayReasons|erpDiscontinued|erpAccessWarning|erpBusinessLinks|erpLookupUsage|erpRecentInvoices|erpCourier|erpDashboardData|erpInvoice|erpCustomerPage|erpSearch|erpProductPage|erpPnlMonth|erpExpenseReceiptUrl|erpPartnership|erpPartnerStock|erpSecurity|erpCustomerList|erpAlerts|erpAccessKeys|erpListView|erpCashBook)$/;
 function srvPump() {
   if (!SRV_Q.length) return;
   var isRead = SRV_READS.test(SRV_Q[0].name);
@@ -9582,6 +9588,7 @@ function repaint() {
         : VIEW === 'profit' ? viewProfit()
         : VIEW === 'expenses' ? viewExpenses()
         : VIEW === 'capital' ? viewCapital()
+        : VIEW === 'cash' ? viewCash()
         : VIEW === 'sales' ? viewSales()
         : VIEW === 'quotes' ? viewQuotes()
         : VIEW === 'campaigns' ? viewCampaigns()
@@ -9615,6 +9622,7 @@ function repaint() {
     wirePhase5();
     wirePhase6();
     wireAccess();
+    wireCash();
     // the parcel confirmation floats above whatever screen is open
     var pb = document.getElementById('parcelbox');
     if (pb && pb.parentNode) pb.parentNode.removeChild(pb);
@@ -9733,6 +9741,7 @@ function go(view, param) {
   if (view === 'profit' && !MONEY) loadMoney();
   if (view === 'profit') { PNL = null; PNL_ERR = null; loadPnl(); }
   if (view === 'expenses' && !EXP && !EXP_ERR) loadExpenses();
+  if (view === 'cash') { CASH_ERR = null; loadCash(); }
   if (view === 'capital') { CAP_ERR = null; loadCapital(); if (CAP_TAB === 'partner') { PART_ERR = null; loadPartner(); } }
   if (view === 'settings' && SET_TAB === 'security' && !SEC) loadSecurity();
   if (view === 'sales' && INVP.no && !INVP.data) loadInvoicePage();
@@ -10147,7 +10156,7 @@ function applyRole() {
   // The dashboard is the shape of the business - the month's revenue, what
   // the stock is worth, the trend. That is not a manager's to see, so the
   // screen goes rather than being emptied out.
-  var need = { dash: 3, costs: 3, settings: 3, tools: 3, profit: 3, expenses: 3, capital: 3, campaigns: 2,
+  var need = { dash: 3, costs: 3, settings: 3, tools: 3, profit: 3, expenses: 3, capital: 3, cash: 3, campaigns: 2,
                weborders: 2, stock: 2 };
   var btns = document.querySelectorAll('#nav button[data-view]');
   for (var i = 0; i < btns.length; i++) {
@@ -10217,6 +10226,7 @@ function switchBusiness(id) {
     OPT = null; CART = []; RECV = { supplier:'', reference:'', notes:'', lines:[] };
     PRODUCT_FORM = null; CUST_FORM = null;
     CLIST = null; CUST_OFF = 0; ALERTS = null; loadAlerts(); LVS = {};
+    CASH = null; CASH_ACC = '';
     PART = null; PART_STOCK = null; PART_MONTH = ''; CAPD = null; EXP = null; PNL = null; MONEY = null; SALES = null; PLAN = null; PO = null;
     PNLM = { month: '', data: null, err: null }; INVP = { no: '', data: null, err: null }; CUSP = { key: '', data: null, err: null }; PRODP = { sku: '', data: null, err: null };
     if (VIEW === 'capital' || VIEW === 'expenses' || VIEW === 'profit' || VIEW === 'sales' || VIEW === 'stock') setTimeout(function () { go(VIEW); }, 0);
@@ -12049,13 +12059,13 @@ var APPS = [
     icon: '<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-7 8-7s8 3 8 7"/>' },
   { id: 'inventory', name: 'Inventory', color: '#c8553d', views: ['products', 'stock', 'costs'],
     icon: '<path d="M3 8l9-5 9 5v8l-9 5-9-5z"/><path d="M3 8l9 5 9-5M12 13v8"/>' },
-  { id: 'accounting', name: 'Accounting', color: '#3a86c8', views: ['profit', 'expenses', 'capital'],
+  { id: 'accounting', name: 'Accounting', color: '#3a86c8', views: ['profit', 'expenses', 'cash', 'capital'],
     icon: '<circle cx="12" cy="12" r="9"/><path d="M15 9.2c-.6-.8-1.7-1.2-3-1.2-1.8 0-3 .8-3 2s1 1.800 3 2 3 .8 3 2-1.200 2-3 2c-1.300 0-2.400-.4-3-1.200M12 6v2M12 16v2"/>' },
   { id: 'settings', name: 'Settings', color: '#5f6b7a', views: ['settings', 'tools'],
     icon: '<circle cx="12" cy="12" r="3.2"/><path d="M12 2.500v3M12 18.500v3M2.500 12h3M18.500 12h3M5.300 5.300l2.100 2.100M16.600 16.600l2.100 2.100M5.300 18.700l2.100-2.100M16.600 7.400l2.100-2.100"/>' }
 ];
 var VIEW_NAMES = { invoice: 'New invoice', sales: 'Invoices', weborders: 'Web orders', quotes: 'Quotations', customers: 'Customers', campaigns: 'Campaigns',
-                   products: 'Products', stock: 'Stock', costs: 'Product cost', profit: 'Profitability', expenses: 'Expenses', capital: 'Capital',
+                   products: 'Products', stock: 'Stock', costs: 'Product cost', profit: 'Profitability', expenses: 'Expenses', capital: 'Capital', cash: 'Money',
                    settings: 'Settings', tools: 'Maintenance', dash: 'Dashboard', home: 'Home' };
 var VIEW_COUNT = { invoice: 'cCart', sales: 'cSend', weborders: 'cWeb', costs: 'cCosts' };
 function appOf(view) { for (var i = 0; i < APPS.length; i++) if (APPS[i].views.indexOf(view) >= 0) return APPS[i]; return null; }
@@ -12659,7 +12669,7 @@ nav#nav button[data-view="dash"] { --app:#7c6bb1; }
 nav#nav button[data-view="invoice"], nav#nav button[data-view="sales"], nav#nav button[data-view="weborders"], nav#nav button[data-view="quotes"] { --app:#e39a2d; }
 nav#nav button[data-view="customers"], nav#nav button[data-view="campaigns"] { --app:#2a9d8f; }
 nav#nav button[data-view="products"], nav#nav button[data-view="stock"], nav#nav button[data-view="costs"] { --app:#c8553d; }
-nav#nav button[data-view="profit"], nav#nav button[data-view="expenses"], nav#nav button[data-view="capital"] { --app:#3a86c8; }
+nav#nav button[data-view="cash"], nav#nav button[data-view="profit"], nav#nav button[data-view="expenses"], nav#nav button[data-view="capital"] { --app:#3a86c8; }
 nav#nav button[data-view="settings"], nav#nav button[data-view="tools"] { --app:#5f6b7a; }
 nav#nav .count { background:#d9463e; }
 nav#nav button[data-view="home"] { display:none !important; }
@@ -12795,6 +12805,213 @@ document.addEventListener('keydown', function (ev) { if (ev.key === 'Escape') { 
   // the choice saved with the person wins over what this device remembered
   var biz = applyBusinesses;
   applyBusinesses = function (b) { biz(b); if (b && typeof b.look === 'string' && b.look !== LOOK) lookApply(b.look, false); };
+})();
+</script>
+<style>
+/* ---- plan A3: the Money screen */
+.cash_grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(190px, 1fr)); gap:12px; }
+.cash_card { text-align:left; font:inherit; color:var(--ink); background:var(--surface); border:1px solid var(--ring); border-radius:6px; padding:14px 16px; cursor:pointer; position:relative; }
+.cash_card:hover { border-color:var(--baseline); }
+.cash_card[aria-pressed="true"] { border-color:var(--series-1); box-shadow:inset 0 3px 0 var(--series-1); }
+.cash_card .k { font-size:11.5px; color:var(--muted); text-transform:uppercase; letter-spacing:.05em; font-weight:600; }
+.cash_card .n { font-weight:600; margin-top:2px; }
+.cash_card .b { font-size:22px; font-weight:700; margin-top:8px; font-variant-numeric:tabular-nums; letter-spacing:-.01em; }
+.cash_card .b.neg { color:var(--critical); }
+.cash_card.arch { opacity:.55; }
+.cash_tot { display:flex; gap:22px; flex-wrap:wrap; align-items:baseline; margin:0 0 12px; }
+.cash_tot b { font-size:22px; font-variant-numeric:tabular-nums; }
+.cash_form { border:1px solid var(--ring); border-radius:6px; padding:12px 14px; margin-top:12px; background:var(--thead); }
+</style>
+<script>
+// =====================================================================
+// plan A3: the Money screen - the accounts, what each holds, the statement
+// of one, moving money between them, and how they are set up.
+// =====================================================================
+var CASH = null, CASH_ERR = null, CASH_ACC = '', CASH_BUSY = false, CASH_FORM = '', CASH_EDIT = null;
+function capMethodName(v) {
+  var a = CAPD && (CAPD.accounts || []).filter(function (x) { return x.id === v; })[0];
+  return a ? a.name : (v || '');
+}
+function loadCash() {
+  srv('erpCashBook', [{ account: CASH_ACC }], function (r) { CASH = r; CASH_ERR = null; CASH_BUSY = false; if (VIEW === 'cash') repaint(); },
+      function (e) { CASH_ERR = (e && e.message) || String(e); CASH_BUSY = false; if (VIEW === 'cash') repaint(); });
+}
+function cashDo(fn, args, msg, after) {
+  if (CASH_BUSY) return;
+  CASH_BUSY = true; repaint();
+  srv(fn, args, function (r) {
+    CASH_BUSY = false; CASH = r; if (r.account) CASH_ACC = r.account;
+    if (msg) toast(msg, false, 8000);
+    if (after) after(r);
+    EXP = null; CAPD = null;
+    if (VIEW === 'cash') repaint();
+  }, function (e) { CASH_BUSY = false; toast(esc((e && e.message) || e), true, 14000); repaint(); });
+}
+function cashOpts(sel, skip, all) {
+  return (CASH.accounts || []).filter(function (a) { return (all || !a.archived) && a.id !== skip; }).map(function (a) {
+    return '<option value="' + esc(a.id) + '"' + (sel === a.id ? ' selected' : '') + '>' + esc(a.name) + '</option>'; }).join('');
+}
+function cashKindOpts(sel) {
+  return Object.keys(CASH.kinds).map(function (k) { return '<option value="' + k + '"' + (sel === k ? ' selected' : '') + '>' + esc(CASH.kinds[k]) + '</option>'; }).join('');
+}
+function viewCash() {
+  if (CASH_ERR) return '<section><div class="note err"><div class="ico">✕</div><div><strong>Could not read the money accounts.</strong><br>' + esc(CASH_ERR) + '</div></div></section>';
+  if (!CASH) return '<div class="loading">Reading the accounts&hellip;</div>';
+  var c = CASH, cur = c.currency, ed = c.canEdit, h = '';
+
+  if (c.setup) {
+    return '<section><div class="card"><h2>Money accounts</h2><div class="sub">Say where the business keeps its money: the cash drawer, each bank account, a mobile wallet, and the courier that holds what it has collected until it pays out. ' +
+      'After that every payment, expense and capital line says which account it touched, and each account shows what it should hold. You can add, rename and retire accounts at any time.</div>' +
+      (ed ? '<div class="cash_form"><strong>Start with these</strong> <span class="sku">— change the names, remove a line by emptying it, or add more later</span>' +
+        [['Cash', 'cash'], ['Islami Bank', 'bank'], ['BRAC Bank', 'bank'], ['bKash', 'wallet'], ['Steadfast', 'courier'], ['', 'bank']].map(function (a, i) {
+          return '<div class="row" style="gap:8px;margin-top:8px"><input class="i" style="flex:2 1 180px" data-csn="' + i + '" maxlength="60" placeholder="Account name" value="' + esc(a[0]) + '">' +
+            '<select class="i" style="flex:1 1 180px" data-csk="' + i + '">' + cashKindOpts(a[1]) + '</select></div>'; }).join('') +
+        '<button class="btn primary" type="button" id="cs_go" style="margin-top:12px"' + (CASH_BUSY ? ' disabled' : '') + '>Create the accounts</button></div>'
+      : '<div class="empty">The owner has not set the accounts up yet.</div>') + '</div></section>';
+  }
+
+  var live = c.accounts.filter(function (a) { return !a.archived; }), old = c.accounts.filter(function (a) { return a.archived; });
+  h += '<section><div class="cash_tot"><span>In hand and at the bank <b>' + esc(cur) + ' ' + fmt(c.inHand) + '</b></span>' +
+    (c.total !== c.inHand ? '<span class="sub" style="margin:0">with what the courier holds: ' + fmt(c.total) + '</span>' : '') +
+    '<span style="flex:1"></span><button class="btn" type="button" data-cform="transfer">Move money</button>' +
+    (ed ? '<button class="btn" type="button" data-cform="count">Count / correct</button><button class="btn" type="button" data-cform="setup">Set up</button>' : '') + '</div>' +
+    '<div class="cash_grid">' + live.concat(CASH_FORM === 'setup' ? old : []).map(function (a) {
+      return '<button type="button" class="cash_card' + (a.archived ? ' arch' : '') + '" data-cacc="' + esc(a.id) + '" aria-pressed="' + (CASH_ACC === a.id) + '"><div class="k">' + esc(a.kindLabel.replace(/ \(.*/, '')) + (a.archived ? ' · retired' : '') + '</div>' +
+        '<div class="n">' + esc(a.name) + '</div><div class="b' + (a.balance < 0 ? ' neg' : '') + '">' + fmt(a.balance) + '</div></button>'; }).join('') + '</div>';
+
+  if (CASH_FORM === 'transfer') {
+    h += '<div class="cash_form"><strong>Move money between accounts</strong> <span class="sku">— bank to drawer, drawer to bank, wallet to bank</span><div class="row" style="gap:8px;align-items:flex-end;flex-wrap:wrap;margin-top:8px">' +
+      '<div style="flex:1 1 160px"><label class="f" for="ct_from">From</label><select class="i" id="ct_from">' + cashOpts(CASH_ACC) + '</select></div>' +
+      '<div style="flex:1 1 160px"><label class="f" for="ct_to">To</label><select class="i" id="ct_to">' + cashOpts('') + '</select></div>' +
+      '<div style="flex:1 1 120px"><label class="f" for="ct_amt">Amount</label><input class="i" id="ct_amt" inputmode="decimal" placeholder="0"></div>' +
+      '<div style="flex:1 1 140px"><label class="f" for="ct_date">Date <span class="sku">(empty = today)</span></label><input class="i" id="ct_date" type="date" max="' + esc(c.today) + '"></div>' +
+      '<div style="flex:2 1 180px"><label class="f" for="ct_note">Note <span class="sku">(optional)</span></label><input class="i" id="ct_note" maxlength="200"></div>' +
+      '<button class="btn primary" type="button" id="ct_go"' + (CASH_BUSY ? ' disabled' : '') + '>Move it</button><button class="btn" type="button" data-cform="">Cancel</button></div></div>';
+  }
+  if (CASH_FORM === 'count' && ed) {
+    h += '<div class="cash_form"><strong>Count an account</strong> <span class="sku">— counted the drawer, or read the bank statement, and it holds something else than the book says</span><div class="row" style="gap:8px;align-items:flex-end;flex-wrap:wrap;margin-top:8px">' +
+      '<div style="flex:1 1 160px"><label class="f" for="cc_acc">Account</label><select class="i" id="cc_acc">' + cashOpts(CASH_ACC) + '</select></div>' +
+      '<div style="flex:1 1 140px"><label class="f" for="cc_amt">It really holds</label><input class="i" id="cc_amt" inputmode="decimal" placeholder="0"></div>' +
+      '<div style="flex:3 1 240px"><label class="f" for="cc_note">Why the book was wrong *</label><input class="i" id="cc_note" maxlength="200" placeholder="e.g. bank charge not entered, 50 short in the drawer"></div>' +
+      '<button class="btn primary" type="button" id="cc_go"' + (CASH_BUSY ? ' disabled' : '') + '>Correct the book</button><button class="btn" type="button" data-cform="">Cancel</button></div></div>';
+  }
+  h += '</section>';
+
+  // things waiting for an account
+  if ((c.unassigned || []).length || (c.loose || []).length) {
+    h += '<section><div class="card" style="border-color:var(--warning)"><h2>Waiting for an account</h2><div class="sub">This money is in no balance until someone says where it went.</div><div class="scroll"><table><thead><tr><th>When</th><th>What</th><th class="num">Amount</th><th>It went to</th></tr></thead><tbody>' +
+      (c.unassigned || []).map(function (p) {
+        return '<tr><td>' + esc(p.when) + '</td><td class="nm">Courier payout ' + esc(p.payout) + '</td><td class="num"><strong>' + fmt(p.amount) + '</strong></td>' +
+          '<td>' + (ed ? '<select class="i" data-cassign="payout" data-id="' + esc(p.id) + '"><option value="">Choose the bank…</option>' + cashOpts('') + '</select>' : 'the owner chooses') + '</td></tr>'; }).join('') +
+      (c.loose || []).map(function (p) {
+        return '<tr><td>' + esc(p.when) + '</td><td class="nm">' + esc(p.customer || 'Customer') + ' paid by ' + esc(p.method) + (p.invoice ? '<br><span class="sku">' + esc(p.invoice) + '</span>' : '') + '</td><td class="num"><strong>' + fmt(p.amount) + '</strong></td>' +
+          '<td>' + (ed ? '<select class="i" data-cassign="payment" data-id="' + esc(p.id) + '"><option value="">Choose the account…</option>' + cashOpts('') + '</select>' : 'the owner chooses') + '</td></tr>'; }).join('') +
+      '</tbody></table></div></div></section>';
+  }
+
+  // the statement of the chosen account
+  var acc = c.accounts.filter(function (a) { return a.id === CASH_ACC; })[0];
+  if (acc && CASH_FORM !== 'setup') {
+    h += '<section><div class="card"><h2>' + esc(acc.name) + '</h2><div class="sub">Everything that went in or out, newest first, with what the account held after each line.</div>';
+    if (c.account !== CASH_ACC) h += '<div class="loading">Reading the statement&hellip;</div>';
+    else if (!c.entries.length) h += '<div class="empty">Nothing has moved through this account yet.</div>';
+    else h += '<div class="scroll tall"><table><thead><tr><th>When</th><th>What</th><th class="num">In</th><th class="num">Out</th><th class="num">Balance</th><th></th></tr></thead><tbody>' + c.entries.map(function (e) {
+        var act = '';
+        if (ed && e.src === 'move') act = '<button class="btn small" type="button" data-cvoid="' + esc(e.id) + '">Strike out</button>';
+        else if (ed && (e.src === 'payment' || e.src === 'expense' || e.src === 'capital' || e.src === 'payout')) act = '<button class="btn small" type="button" data-cmove="' + esc(e.src) + '" data-id="' + esc(e.id) + '">Wrong account</button>';
+        return '<tr><td style="white-space:nowrap">' + esc(e.when) + '</td><td class="nm">' + esc(e.what) +
+          ((e.ref || e.by) ? '<br><span class="sku">' + (e.invoice ? '<button class="linkbtn" type="button" data-openinv="' + esc(e.invoice) + '">' + esc(e.invoice) + '</button>' : esc(e.ref)) + (e.method && e.invoice ? ' · ' + esc(e.method) : '') + (e.by ? ' · ' + esc(e.by) : '') + '</span>' : '') + '</td>' +
+          '<td class="num">' + (e.amount > 0 ? '<span style="color:var(--good)">' + fmt(e.amount) + '</span>' : '') + '</td><td class="num">' + (e.amount < 0 ? fmt(-e.amount) : '') + '</td>' +
+          '<td class="num"><strong>' + fmt(e.after) + '</strong></td><td class="num">' + act + '</td></tr>'; }).join('') + '</tbody></table></div>' +
+        (c.more ? '<div class="sub" style="margin-top:8px">' + fmt(c.more) + ' older line(s) not shown.</div>' : '');
+    h += '</div></section>';
+  } else if (CASH_FORM !== 'setup') {
+    h += '<section><div class="empty">Click an account to see its statement.</div></section>';
+  }
+
+  // set-up: accounts, and where each kind of money goes
+  if (CASH_FORM === 'setup' && ed) {
+    var E = CASH_EDIT || { id: '', name: '', kind: 'bank', opening: '', openingDate: '', archived: false };
+    h += '<section><div class="card"><div class="row" style="justify-content:space-between;align-items:center"><h2 style="margin:0">Set up</h2><button class="btn small" type="button" data-cform="">Done</button></div>' +
+      '<div class="sub">Click an account above to change or retire it, or add a new one here. A retired account keeps its history and takes no new money.</div>' +
+      '<div class="row" style="gap:8px;align-items:flex-end;flex-wrap:wrap">' +
+      '<div style="flex:2 1 180px"><label class="f" for="ca_name">' + (E.id ? 'Change account' : 'New account') + '</label><input class="i" id="ca_name" maxlength="60" placeholder="e.g. City Bank current a/c" value="' + esc(E.name) + '"></div>' +
+      '<div style="flex:1 1 180px"><label class="f" for="ca_kind">Kind</label><select class="i" id="ca_kind">' + cashKindOpts(E.kind) + '</select></div>' +
+      '<div style="flex:1 1 130px"><label class="f" for="ca_open">Opening balance</label><input class="i" id="ca_open" inputmode="decimal" placeholder="0" value="' + esc(E.opening || '') + '"></div>' +
+      '<div style="flex:1 1 140px"><label class="f" for="ca_date">On date</label><input class="i" id="ca_date" type="date" max="' + esc(c.today) + '" value="' + esc(E.openingDate || '') + '"></div>' +
+      (E.id ? '<label class="chk" style="padding-bottom:9px"><input type="checkbox" id="ca_arch"' + (E.archived ? ' checked' : '') + '> Retired</label>' : '') +
+      '<button class="btn primary" type="button" id="ca_save"' + (CASH_BUSY ? ' disabled' : '') + '>' + (E.id ? 'Save' : 'Add') + '</button>' + (E.id ? '<button class="btn" type="button" id="ca_new">New instead</button>' : '') + '</div>' +
+      '<h2 style="margin-top:18px">Where money goes by itself</h2><div class="sub">A customer payment lands in the account of its payment method. Changing this affects new entries only; one line that went elsewhere is moved with “Wrong account” on the statement.</div>' +
+      '<div class="fields">' + c.methods.map(function (m) {
+        return '<div><label class="f">' + esc(m) + ' lands in</label><select class="i" data-cmap="' + esc(m.toLowerCase()) + '"><option value="">— no account: ask each time —</option>' + cashOpts(c.rules.map[m.toLowerCase()] || '') + '</select></div>'; }).join('') +
+      '<div><label class="f">Expenses are paid from</label><select class="i" id="cm_exp"><option value="">— none —</option>' + cashOpts(c.rules.expense) + '</select></div>' +
+      '<div><label class="f">Courier payouts arrive in</label><select class="i" id="cm_pay"><option value="">— ask each time —</option>' + cashOpts(c.rules.payout) + '</select></div></div>' +
+      '<button class="btn primary" type="button" id="cm_save" style="margin-top:12px"' + (CASH_BUSY ? ' disabled' : '') + '>Save where money goes</button></div></section>';
+  }
+  return h;
+}
+
+function wireCash() {
+  if (VIEW !== 'cash' || !CASH) return;
+  var v = el('view');
+  function val(id) { var n = el(id); return n ? n.value : ''; }
+  var go5 = el('cs_go');
+  if (go5) go5.addEventListener('click', function () {
+    var list = [];
+    for (var i = 0; i < 6; i++) { var n = v.querySelector('[data-csn="' + i + '"]'), k = v.querySelector('[data-csk="' + i + '"]'); if (n && n.value.trim()) list.push({ name: n.value.trim(), kind: k.value }); }
+    if (!list.length) { toast('Name at least one account.', true); return; }
+    cashDo('erpCashSetup', [{ accounts: list }], 'Accounts created. Money already in the books was placed by the same rules.');
+  });
+  p4Each('[data-cacc]', function () {
+    var id = this.getAttribute('data-cacc');
+    if (CASH_FORM === 'setup') { var a = CASH.accounts.filter(function (x) { return x.id === id; })[0]; CASH_EDIT = { id: a.id, name: a.name, kind: a.kind, opening: a.opening || '', openingDate: a.openingDate, archived: a.archived }; repaint(); return; }
+    CASH_ACC = id; repaint(); loadCash();
+  });
+  p4Each('[data-cform]', function () { CASH_FORM = this.getAttribute('data-cform'); CASH_EDIT = null; repaint(); });
+  var tg = el('ct_go');
+  if (tg) tg.addEventListener('click', function () {
+    cashDo('erpCashTransfer', [{ from: val('ct_from'), to: val('ct_to'), amount: val('ct_amt'), date: val('ct_date'), note: val('ct_note'), show: CASH_ACC || val('ct_from') }], 'Moved.', function () { CASH_FORM = ''; });
+  });
+  var cg = el('cc_go');
+  if (cg) cg.addEventListener('click', function () {
+    cashDo('erpCashAdjust', [{ account: val('cc_acc'), counted: val('cc_amt'), note: val('cc_note') }], 'The book now matches what was counted.', function () { CASH_FORM = ''; });
+  });
+  p4Each('[data-cvoid]', async function () {
+    var id = this.getAttribute('data-cvoid'), why = await uiPrompt('Strike this line out?\n\nA transfer is struck out on both accounts. Say why:', '');
+    if (!why) return;
+    cashDo('erpCashMoveVoid', [{ id: id, reason: why }], 'Struck out.');
+  });
+  p4Each('[data-cmove]', async function () {
+    var src = this.getAttribute('data-cmove'), id = this.getAttribute('data-id');
+    var others = CASH.accounts.filter(function (a) { return !a.archived && a.id !== CASH_ACC; });
+    var pick = await uiPrompt('Which account did this really go through?\n\n' + others.map(function (a, i) { return (i + 1) + '. ' + a.name; }).join('\n') + '\n\nType the number:', '');
+    var a = others[Number(pick) - 1];
+    if (!a) return;
+    cashDo('erpCashReassign', [{ src: src, id: id, account: a.id, show: CASH_ACC }], 'Moved to ' + esc(a.name) + '.');
+  });
+  var as = v.querySelectorAll('select[data-cassign]');
+  for (var i = 0; i < as.length; i++) as[i].addEventListener('change', function () {
+    if (!this.value) return;
+    cashDo('erpCashReassign', [{ src: this.getAttribute('data-cassign'), id: this.getAttribute('data-id'), account: this.value, show: CASH_ACC }], 'Placed.');
+  });
+  var sv = el('ca_save');
+  if (sv) sv.addEventListener('click', function () {
+    var E = CASH_EDIT || {};
+    cashDo('erpCashAccountSave', [{ id: E.id || '', name: val('ca_name'), kind: val('ca_kind'), opening: val('ca_open'), openingDate: val('ca_date'), archived: el('ca_arch') ? el('ca_arch').checked : false }],
+      E.id ? 'Account saved.' : 'Account added.', function () { CASH_EDIT = null; });
+  });
+  var nw = el('ca_new'); if (nw) nw.addEventListener('click', function () { CASH_EDIT = null; repaint(); });
+  var ms = el('cm_save');
+  if (ms) ms.addEventListener('click', function () {
+    var map = {}, sels = v.querySelectorAll('select[data-cmap]');
+    for (var i = 0; i < sels.length; i++) if (sels[i].value) map[sels[i].getAttribute('data-cmap')] = sels[i].value;
+    cashDo('erpCashMapSave', [{ map: map, expense: val('cm_exp'), payout: val('cm_pay') }], 'Saved. New entries follow this.');
+  });
+}
+// after any save elsewhere the balances are stale
+(function () {
+  var after = pagesAfterWrite;
+  pagesAfterWrite = function () { after(); if (VIEW !== 'cash') CASH = null; };
 })();
 </script>
 </body>

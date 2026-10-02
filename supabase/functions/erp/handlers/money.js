@@ -6,6 +6,7 @@ import { salesLog, paymentsTab, forget, asDate, str, SL, PAY } from '../lib/tabs
 import { formatDate, num, round2 } from '../lib/time.js';
 import { roleAtLeast } from '../allow.js';
 import { custKey } from '../lib/phone.js';
+import { accountForMethod } from './cash.js';
 
 export const ERP_PAY_REASONS = {
   payment:  { label: 'Payment received', minRole: 'manager', money: true },
@@ -43,12 +44,21 @@ export async function paidByOrder(ctx) {
 
 /** Append one PAYMENTS row. */
 export async function addPayment(ctx, p) {
+  // plan A3: the account the money landed in (or left). Decided by the payment
+  // method; what is not money (Adjusted, Returned, Advance) touches no account.
+  // A payment taken back leaves the account the payment went into.
+  let account = p.account || await accountForMethod(ctx, p.method);
+  if (!account && String(p.method) === 'Undone' && p.order) {
+    const last = await ctx.tx`select account_id from payments where business_id = ${ctx.biz} and invoice_no = ${p.order}
+                              and account_id is not null and amount > 0 order by paid_at desc limit 1`;
+    account = last[0] ? last[0].account_id : null;
+  }
   await ctx.tx`
     insert into payments (business_id, payment_no, invoice_no, customer, customer_key,
-                          paid_at, amount, method, note, recorded_by)
+                          paid_at, amount, method, note, recorded_by, account_id)
     values (${ctx.biz}, ${p.id}, ${p.order || null}, ${p.customer || null}, ${p.key || null},
             ${p.at || new Date()}, ${round2(p.amount)}, ${p.method || null}, ${p.note || ''},
-            ${p.by || who(ctx)})`;
+            ${p.by || who(ctx)}, ${account || null})`;
   forget(ctx, 'PAYMENTS');
 }
 

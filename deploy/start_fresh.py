@@ -28,7 +28,7 @@ REF = 'oqzcuuytytqadqjlwdsh'
 ALWAYS_KEEP = {
     'businesses', 'memberships', 'business_config', 'business_secrets', 'lookups', 'quote_settings',
     'erp_people', 'erp_devices', 'erp_prefs', 'erp_backup_log', 'invoice_counters', 'ai_keys', 'erp_ai_keys',
-    'pool_partners', 'pool_invites',
+    'pool_partners', 'pool_invites', 'money_accounts', 'erp_access_keys',
 }
 LISTS = {'products', 'customers', 'cost_book', 'expense_items'}
 

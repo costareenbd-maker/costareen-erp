@@ -16,6 +16,7 @@ import { formatDate, num, dhakaDayStart, monthStr } from '../lib/time.js';
 import { phone11 } from '../lib/phone.js';
 import { lock, who } from './money.js';
 import { monthNet, pnlFor } from './dashboard.js';
+import { expenseAccount, cashRules } from './cash.js';
 
 const ERP_CAP_TYPES = { invest: 'Money put in', withdraw: 'Capital taken back',
                         profit: 'Profit paid out', ret: 'Return paid' };
@@ -156,7 +157,9 @@ export async function erpCapital(ctx) {
     id: b.id, when: b.when, holder: b.holder, name: names[b.holder] || '—', type: b.type,
     label: ERP_CAP_TYPES[b.type] || b.type, amount: b.amount, method: b.method, note: b.note, by: b.by, voided: b.voided,
   }));
-  return { canEdit: owner, currency: 'BDT', holders: list, hidden, totals, entries, thisMonth: nowMonth,
+  let accs = [];
+  try { accs = (await ctx.tx.savepoint(() => ctx.tx`select id, name from money_accounts where business_id = ${ctx.biz} and not archived and kind <> 'courier' order by sort_order, created_at`)).map((a) => ({ id: a.id, name: String(a.name) })); } catch (_) { accs = []; }
+  return { canEdit: owner, currency: 'BDT', holders: list, hidden, totals, entries, thisMonth: nowMonth, accounts: accs, accountDefault: (await cashRules(ctx)).expense || '',
            months: monthRows.map((mr) => ({ month: mr.month, net: mr.net, closed: mr.closed, current: mr.current, error: mr.error })).reverse() };
 }
 
@@ -262,20 +265,22 @@ export async function erpCapitalEntryAdd(ctx, payload) {
     if (amount > has + 0.5) throw new Error(h.name + ' has ' + Math.round(has) + ' in the business. More than that cannot be taken back.');
   }
   const month = monthStr(on);
+  // plan A3: the account the money went into or came out of
+  const account = await expenseAccount(ctx, payload.account);
   let expenseId = '';
   // what an investor is paid is a cost of the business, on the day it is paid
   if (type === 'ret') {
     expenseId = 'E' + formatDate(now, 'yyMMddHHmmss') + '-' + Math.floor(Math.random() * 900 + 100);
     await ctx.tx`insert into expenses (business_id, expense_no, recorded_at, month, kind, category, description,
-                                       amount, item_no, recorded_by, voided)
+                                       amount, item_no, recorded_by, voided, account_id)
                  values (${ctx.biz}, ${expenseId}, ${now}, ${month}, 'oneoff', 'Investor returns',
-                         ${'Return paid to ' + h.name}, ${amount}, null, ${who(ctx)}, null)`;
+                         ${'Return paid to ' + h.name}, ${amount}, null, ${who(ctx)}, null, ${account})`;
   }
   await ctx.tx`insert into capital_book (business_id, entry_no, recorded_at, on_date, holder_no, type, amount, method,
-                                         note, by, voided, expense_no, month)
+                                         note, by, voided, expense_no, month, account_id)
                values (${ctx.biz}, ${'C' + formatDate(now, 'yyMMddHHmmss') + '-' + Math.floor(Math.random() * 900 + 100)},
                        ${now}, ${on}, ${h.id}, ${type}, ${amount}, ${String(payload.method || '').trim().slice(0, 40)},
-                       ${String(payload.note || '').trim().slice(0, 300)}, ${who(ctx)}, null, ${expenseId || null}, ${month})`;
+                       ${String(payload.note || '').trim().slice(0, 300)}, ${who(ctx)}, null, ${expenseId || null}, ${month}, ${account})`;
   return erpCapital(ctx);
 }
 
