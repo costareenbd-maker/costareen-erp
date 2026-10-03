@@ -16,7 +16,11 @@ await sql`insert into business_secrets (business_id, key, value) values (${FIX.B
 web.on(/\/orders/, () => ({ body: { items: [] } }));
 web.on(/\/stock/, () => ({ body: { changed: [], changed_count: 0, unchanged: 2, missing_count: 0 } }));
 r = await runJob(deps, 'websync');
-check('websync: pulls and pushes for the keyed business only', r.Costareen && !r.Elsewhere && !r.Costareen.pull.error && !r.Costareen.push.error, r);
+check('websync: a key alone does not start the sync (the owner switches it on)', r && Object.keys(r).length === 0, r);
+await sql`insert into business_config (business_id, key, value) values (${FIX.B}, 'website_sync_on', '1')
+          on conflict (business_id, key) do update set value = '1'`;
+r = await runJob(deps, 'websync');
+check('websync: pulls and pushes for the keyed, switched-on business only', r.Costareen && !r.Elsewhere && !r.Costareen.pull.error && !r.Costareen.push.error, r);
 let bad = false;
 try { await runJob(deps, 'nope'); } catch (e) { bad = /Unknown job/.test(e.message); }
 check('unknown job refused', bad);

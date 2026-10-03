@@ -8321,7 +8321,7 @@ function srv(name, args, ok, bad) {
 
 var SRV_ACTIVE = 0, SRV_WRITING = false;
 // the same list the server uses to know a call changes nothing (ERP_READS)
-var SRV_READS = /^(erpBundle|erpHello|erpMe|erpCatalog|erpSales|erpDues|erpCustomers|erpPnl|erpMoney|erpToday|erpDaySales|erpProduct|erpLookupCustomer|erpCustomerAccount|erpCustomerStatement|erpCustomerCredit|erpWebOrders|erpWebOrderInvoices|erpCampaignAudience|erpCampaignList|erpCampaignGet|erpEvoStatus|erpBrandLogo|erpQuoteBoot|erpQuoteList|erpQuoteGet|erpQuoteAsset|erpExpenses|erpCapital|erpBackupStatus|erpAiKeys|erpGetTheme|erpBusinesses|erpStockHistory|erpReorderPlan|erpPoList|erpSfPayoutLines|erpBookedParcels|erpParcelPreview|erpReturnPreview|erpSettingsFull|erpSettingsLists|erpFormOptions|erpAdmin|erpPeople|erpDevices|erpCourierKeyStatus|erpPayReasons|erpDiscontinued|erpAccessWarning|erpBusinessLinks|erpLookupUsage|erpRecentInvoices|erpCourier|erpDashboardData|erpInvoice|erpCustomerPage|erpSearch|erpProductPage|erpPnlMonth|erpExpenseReceiptUrl|erpPartnership|erpPartnerStock|erpSecurity|erpCustomerList|erpAlerts|erpAccessKeys|erpListView|erpCurrencies|erpSharedStock|erpPoolCatalog|erpProductThumbs|erpProductPhotoUrl|erpFamilies|erpNotes|erpNoteFileUrl|erpSerialsFor|erpSerialLookup|erpJobs|erpJob|erpUsers|erpSessions|erpPlatform|erpPlatformErrors|erpRisks|erpAlertRules|erpCashBook|erpSuppliers|erpSupplierPage)$/;
+var SRV_READS = /^(erpBundle|erpHello|erpMe|erpCatalog|erpSales|erpDues|erpCustomers|erpPnl|erpMoney|erpToday|erpDaySales|erpProduct|erpLookupCustomer|erpCustomerAccount|erpCustomerStatement|erpCustomerCredit|erpWebOrders|erpWebOrderInvoices|erpCampaignAudience|erpCampaignList|erpCampaignGet|erpEvoStatus|erpBrandLogo|erpQuoteBoot|erpQuoteList|erpQuoteGet|erpQuoteAsset|erpExpenses|erpCapital|erpBackupStatus|erpAiKeys|erpGetTheme|erpBusinesses|erpStockHistory|erpReorderPlan|erpPoList|erpSfPayoutLines|erpBookedParcels|erpParcelPreview|erpReturnPreview|erpSettingsFull|erpSettingsLists|erpFormOptions|erpAdmin|erpPeople|erpDevices|erpCourierKeyStatus|erpPayReasons|erpDiscontinued|erpAccessWarning|erpBusinessLinks|erpLookupUsage|erpRecentInvoices|erpCourier|erpDashboardData|erpInvoice|erpCustomerPage|erpSearch|erpProductPage|erpPnlMonth|erpExpenseReceiptUrl|erpPartnership|erpPartnerStock|erpSecurity|erpCustomerList|erpAlerts|erpAccessKeys|erpListView|erpCurrencies|erpSharedStock|erpPoolCatalog|erpProductThumbs|erpProductPhotoUrl|erpFamilies|erpNotes|erpNoteFileUrl|erpSerialsFor|erpSerialLookup|erpJobs|erpJob|erpUsers|erpSessions|erpPlatform|erpPlatformErrors|erpRisks|erpAlertRules|erpConnections|erpWebsiteTest|erpCashBook|erpSuppliers|erpSupplierPage)$/;
 function srvPump() {
   if (!SRV_Q.length) return;
   var isRead = SRV_READS.test(SRV_Q[0].name);
@@ -15322,6 +15322,53 @@ document.addEventListener('click', function (ev) {
   ARULES_BUSY = true; repaint();
   srv('erpAlertRulesSave', [{ rules: rules }], function (r) { ARULES = r; ARULES_BUSY = false; toast('Alerts saved.'); ALERTS = null; loadAlerts(); repaint(); },
       function (e) { ARULES_BUSY = false; toast(esc(e && e.message ? e.message : e), true, 12000); repaint(); });
+});
+</script>
+
+<!-- Settings > Connections: every outside service at a glance, and the website -->
+<style>
+.conn { display:grid; gap:10px; grid-template-columns:repeat(auto-fit, minmax(min(240px,100%),1fr)); }
+.conn > div { border:1px solid var(--ring); border-radius:6px; padding:10px 12px; display:flex; gap:10px; align-items:flex-start; }
+.conn .d { width:10px; height:10px; border-radius:50%; margin-top:5px; flex:none; background:var(--muted); }
+.conn .on .d { background:var(--good); } .conn .warn .d, .conn .ready .d { background:var(--warning); }
+.conn b { display:block; } .conn span { font-size:12.5px; color:var(--muted); }
+</style>
+<script>
+var CONN = null, CONN_BUSY = false, CONN_TEST = null;
+function connLoad() { srv('erpConnections', [], function (r) { CONN = r; if (VIEW === 'settings') repaint(); }, function (e) { toast(esc(e && e.message ? e.message : e), true); }); }
+function connHtml() {
+  if (!ME || ME.role !== 'owner') return '';
+  if (!CONN) { connLoad(); return '<div class="loading">Reading the connections&hellip;</div>'; }
+  var c = CONN, items = [['website', 'Website'], ['courier', 'Courier (Steadfast)'], ['whatsapp', 'WhatsApp'], ['email', 'E-mail sending'], ['google', 'Google Drive'], ['ai', 'AI access']];
+  var h = '<section><div class="card"><h2>Connections</h2><div class="sub">Every outside service this business uses. Green works; amber needs a step; grey is not connected.</div><div class="conn">' +
+    items.map(function (x) { var v = c[x[0]]; return '<div class="' + esc(v.state) + '"><span class="d"></span><div><b>' + esc(x[1]) + '</b><span>' + esc(v.label) + '</span></div></div>'; }).join('') + '</div></div></section>';
+  var w = c.website;
+  h += '<section><div class="card"><h2>Website</h2><div class="sub">Website orders come in every 15 minutes (Web orders screen) and stock goes out to the shop, by product code (SKU). ' +
+    'It needs the sync plugin on the website and its key. <strong>The sync stays off until you switch it on</strong> \u2014 while the old sheet still sends stock to the shop, switching this on too would make the two overwrite each other.</div>' +
+    '<div class="fields" style="margin-top:8px"><div style="grid-column:1/-1"><label class="f" for="ws_url">Website sync address</label><input class="i" id="ws_url" value="' + esc(w.url) + '" placeholder="https://yourshop.com/wp-json/cz/v1"></div>' +
+    '<div style="grid-column:1/-1"><label class="f" for="ws_key">Sync key <span class="sku">' + (w.hasKey ? 'saved \u2014 type a new one only to change it' : 'from the website\u2019s sync plugin') + '</span></label><input class="i" id="ws_key" type="password" autocomplete="off" placeholder="' + (w.hasKey ? '\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022' : 'paste the key') + '"></div></div>' +
+    '<div class="row" style="margin-top:10px;gap:8px;flex-wrap:wrap;align-items:center"><button class="btn primary" type="button" id="ws_save"' + (CONN_BUSY ? ' disabled' : '') + '>Save</button>' +
+    (w.hasKey ? '<button class="btn" type="button" id="ws_test">Test connection</button><button class="btn" type="button" id="ws_clear">Remove the key</button>' : '') +
+    (CONN_TEST ? '<span class="pill ' + (CONN_TEST.ok ? 'ok' : 'out') + '">' + esc(CONN_TEST.ok ? 'Connected: ' + CONN_TEST.reply : CONN_TEST.error) + '</span>' : '') + '</div>' +
+    (w.hasKey ? '<div class="row" style="margin-top:12px;gap:10px;align-items:center;border-top:1px solid var(--ring);padding-top:12px"><div style="flex:1"><b>Live sync</b><div class="sub" style="margin:0">' + esc(w.label) + '</div></div>' +
+      '<button class="btn ' + (w.on ? 'danger' : 'primary') + '" type="button" id="ws_sync" data-to="' + (w.on ? '0' : '1') + '">' + (w.on ? 'Switch off' : 'Switch on') + '</button></div>' : '') +
+    '<div class="sub" style="margin-top:10px">A shop without this plugin (any WooCommerce or Shopify store) will connect with its own standard keys \u2014 that connection is planned, not built yet.</div></div></section>';
+  return h;
+}
+var settingsPickC1 = settingsPick;
+settingsPick = function (h) { return settingsPickC1(setMark('connections') + connHtml() + h); };
+document.addEventListener('click', async function (ev) {
+  var t = ev.target; if (!t || !t.id || !/^ws_/.test(t.id)) return;
+  function done(r, msg) { CONN = r; CONN_BUSY = false; if (msg) toast(msg); repaint(); }
+  function bad(e) { CONN_BUSY = false; toast(esc(e && e.message ? e.message : e), true, 12000); repaint(); }
+  if (t.id === 'ws_save') { var wsArgs = { url: el('ws_url').value.trim(), key: el('ws_key').value.trim() }; CONN_BUSY = true; CONN_TEST = null; repaint(); srv('erpWebsiteSet', [wsArgs], function (r) { done(r, 'Saved.'); }, bad); }
+  else if (t.id === 'ws_test') { CONN_TEST = { ok: false, error: 'Asking the website\u2026' }; repaint(); srv('erpWebsiteTest', [], function (r) { CONN_TEST = r; repaint(); }, bad); }
+  else if (t.id === 'ws_clear') { if (!(await uiConfirm('Remove the website key? The sync stops.'))) return; srv('erpWebsiteSet', [{ clearKey: true }], function (r) { CONN_TEST = null; done(r, 'Removed.'); }, bad); }
+  else if (t.id === 'ws_sync') {
+    var on = t.getAttribute('data-to') === '1';
+    if (on && !(await uiConfirm('Switch the website sync on?\n\nFrom now on this ERP takes website orders and sends stock to the shop every 15 minutes.\n\nFirst make sure the OLD sheet\u2019s website sync is switched off \u2014 two systems sending stock overwrite each other.'))) return;
+    CONN_BUSY = true; repaint(); srv('erpWebsiteSync', [{ on: on }], function (r) { done(r, on ? 'Website sync is on.' : 'Website sync is off.'); }, bad);
+  }
 });
 </script>
 </body>

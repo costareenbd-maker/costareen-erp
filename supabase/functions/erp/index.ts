@@ -18,7 +18,8 @@ const ANON = Deno.env.get('SUPABASE_ANON_KEY') ?? '';
 const SERVICE = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
 const RENDER_URL = (Deno.env.get('RENDER_URL') ?? '').replace(/\/+$/, '');
 const RENDER_KEY = Deno.env.get('RENDER_KEY') ?? '';
-const CRON_KEY = Deno.env.get('CRON_KEY') ?? '';   // pg_cron sends it as x-erp-cron
+const CRON_KEY = Deno.env.get('CRON_KEY') ?? '';
+const SMTP_NOTE = Deno.env.get('ERP_SMTP_NOTE') ?? '';   // set by deploy/set_smtp.py when a real mail service is in use   // pg_cron sends it as x-erp-cron
 const BUCKET = 'erp-files';
 const sql = connect(postgres, Deno.env.get('SUPABASE_DB_URL') ?? '');
 // a second, small pool for side-queries made from inside a transaction (see core.js)
@@ -194,7 +195,7 @@ async function sendReset(email: string) {
 }
 
 // sign-in by e-mail + password is on again (per-person users); access keys still work for machines and old links
-const deps = { linkOnly: false, sql, sqlAux, verifyUser, fetch: globalThis.fetch.bind(globalThis), storage, renderPdf, createAuthUser,
+const deps = { smtpNote: SMTP_NOTE, linkOnly: false, sql, sqlAux, verifyUser, fetch: globalThis.fetch.bind(globalThis), storage, renderPdf, createAuthUser,
                createOwner, removeUser, sendReset,
                hookBase: SUPABASE_URL + '/functions/v1/erp' };
 

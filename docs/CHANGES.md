@@ -278,3 +278,11 @@
 - **Settings → Alerts** (owner; shareholders read): each alert on/off, its threshold, who sees it (owner / shareholders / managers too), WhatsApp yes/no. WhatsApp alerts can go to up to three numbers (set in the bell). Things that happened are told once; things still open stay in the bell until fixed.
 - handlers/risk.js (erpRisks, erpAlertRules, erpAlertRulesSave, moneyAlerts), alerts.js (money alerts first, role-filtered; up to 3 numbers), tests/r1_test.mjs (33); phase6_test updated for the new rule (managers get money alerts, never system ones).
 - Not done yet: supplier bills falling due (bills have no due date), the 9 am WhatsApp summary, automatic reminders to customers (round 2).
+
+2026-10-03 — Settings → Connections: one place for every outside service
+- At the top of Connections: a status card for each service - Website, Courier (Steadfast), WhatsApp, E-mail sending, Google Drive, AI access - green works, amber needs a step, grey not connected.
+- New **Website** card: the sync address and key (the key is never shown back), **Test connection** (asks the website's /ping), **Remove the key**, and a **Live sync** switch. The website sync now stays **off** until switched on here, even with a key saved (the timer only syncs switched-on businesses), so it can be set up before go-live without the sheet and the ERP both pushing stock.
+- E-mail: `deploy/set_smtp.py` sends invitations and password resets through a real mail service (e.g. Gmail with an app password, ~500 a day) instead of Supabase's built-in mailer (a few an hour); the card then shows it.
+- handlers/connections.js (erpConnections, erpWebsiteSet, erpWebsiteTest, erpWebsiteSync), jobs.js websync gated by website_sync_on, tests/c1_test.mjs (14), jobs_test updated.
+- Fixed before shipping: Save read the typed key after the screen was redrawn, so the key was lost.
+- Not done: Google Drive (next step), a standard WooCommerce / Shopify connection for shops without the plugin.

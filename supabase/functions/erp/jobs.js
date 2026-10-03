@@ -107,7 +107,9 @@ export async function runJob(deps, job) {
     const pull = await maybe('./handlers/weborders.js', 'pullWebOrders');
     const push = await maybe('./handlers/weborders.js', 'pushStockToWebsite');
     // only businesses that have a website key
-    const keyed = (await sql`select business_id from business_secrets where key = 'CZ_SYNC_KEY'`).map((r) => r.business_id);
+    // only where the key is saved AND the owner switched the sync on (Settings > Connections)
+    const keyed = (await sql`select s.business_id from business_secrets s join business_config c on c.business_id = s.business_id
+                             where s.key = 'CZ_SYNC_KEY' and c.key = 'website_sync_on' and c.value = '1'`).map((r) => r.business_id);
     if (keyed.length) {
       for (const row of await owners(sql, keyed)) {
         out[row.name] = {
