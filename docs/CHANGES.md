@@ -458,3 +458,7 @@
 - Game over shows "Your print": the whole run as a colour bar. Colourful head (brass nozzle, red heater, filament in the current colour), amber bed sheet, faint plate grid.
 - A bar above the canvas with game tabs (only Print Run now; GAME_LIST takes more) and ✕. Wider gap under the invoice (36 px).
 - Checked with a scripted player: 40 s, every obstacle type cleared, colours changed 8 times, runout ends the game.
+
+## tidy-9 — Defaults in plain words; game setting moved (2026-10-04)
+- Settings → Business → Defaults: each known value has a plain name with its explanation behind "?" (Business name, Currency, Reorder level for new products, Supplier delivery days, Google Drive folder for invoice PDFs, Next invoice number, Website address for orders). Values the system keeps for itself (courier caches, delivery/money rules saved by their own screens, anything unknown) are folded under "Values the system keeps for itself — for support only", still editable there.
+- "Game under New invoice" moved from Settings → Business to the bottom of Maintenance.
