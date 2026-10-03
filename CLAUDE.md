@@ -179,7 +179,7 @@ Left, in order:
      owner's reset link; health (erp_errors, last activity, timers, storage). No
      "log in as" by default; if ever built, time-limited and written to that business's
      activity log. Platform admin has no role inside a customer's business.
-2. **Go-live** (`docs/GOLIVE.md`) - also: set the website sync key (CZ_SYNC_KEY) on the live web ERP, re-upload the quotation logo/signature if wanted, owner sets his password (costareen.bd@gmail.com) and invites staff under Settings > Users, retire the old 6-digit code logins: re-read the sheet, run `start_fresh.py` only on his
+2. **Go-live** - OWNER IS TESTING ON THE TRIAL DATA FIRST (3 Oct 2026): do not wipe, do not suggest wiping; wait for his "wipe now". (`docs/GOLIVE.md`) - also: set the website sync key (CZ_SYNC_KEY) on the live web ERP, re-upload the quotation logo/signature if wanted, owner sets his password (costareen.bd@gmail.com) and invites staff under Settings > Users, retire the old 6-digit code logins: re-read the sheet, run `start_fresh.py` only on his
    "wipe now", set the invoice counter to last sheet number + 1, opening balances for money
    accounts, stock count, the few supplier dues, confirm colour families and serial flags,
    hand staff their links, sheet becomes read-only backup.
