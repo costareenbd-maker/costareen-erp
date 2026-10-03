@@ -438,3 +438,4 @@
 - Key/password boxes inside the ERP get `autocomplete="new-password"`, other card text boxes `off` (sign-in screen untouched). WhatsApp instance/key boxes have their own names so Chrome stops putting the owner's e-mail and saved password there. Chrome may still offer a "suggested password" on key boxes; harmless.
 - WhatsApp QR: already built — after "Save and test" succeeds against a running Evolution server, "Link a WhatsApp number (QR code)" shows the QR (refreshes until scanned in WhatsApp → Linked devices).
 - Not done: nothing else on this list.
+- tidy-7b: every title-bar button/chip is one size (34px, 13px text, same corners). Web orders now follows the same rule: Check the website for new orders, Website products to match, Website chip sit in the title bar instead of inside the box.

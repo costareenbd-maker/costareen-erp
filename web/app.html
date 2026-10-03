@@ -16808,10 +16808,13 @@ var viewWebOrdersT6 = viewWebOrders;
 viewWebOrders = function () {
   var h = viewWebOrdersT6();
   // the toolbar of the Website orders box: check for orders, match products, and the website's state at the right
+  // tidy-7: like every page, its buttons go to the title bar (titleActions moves the leading row up)
   var at = h.indexOf('id="wo_pull"');
   if (at < 0) return h;
-  var end = h.indexOf('</button>', at) + 9;
-  return h.slice(0, end) + ' ' + wmToggleBtn() + '<span style="flex:1"></span>' + connChip('website') + h.slice(end);
+  var st = h.lastIndexOf('<div class="row"', at), end = h.indexOf('</button>', at) + 9;
+  var pull = h.slice(h.lastIndexOf('<button', at), end);
+  h = h.slice(0, st) + h.slice(end + 6);   // the row and its closing </div>
+  return '<div class="row">' + pull + wmToggleBtn() + connChip('website') + '</div>' + h;
 };
 var viewSalesT6 = viewSales;
 viewSales = function () {
@@ -16831,7 +16834,7 @@ cpTabsHtml = function () { return cpTabsHtmlT6().replace(/<span class="pill([^"]
 #o_cp { display:flex; align-items:center; gap:10px; }
 #o_cp .o_acts { margin-left:auto; display:flex; align-items:center; gap:8px; flex-wrap:wrap; justify-content:flex-end; }
 #o_cp .o_acts .row { display:contents; }
-#o_cp .o_acts .btn { padding-top:5px; padding-bottom:5px; }
+#o_cp .o_acts > .btn, #o_cp .o_acts > .cchip { height:34px !important; min-height:34px !important; max-height:34px; box-sizing:border-box; padding:0 12px; font-size:13px; line-height:1; border-radius:8px; display:inline-flex; align-items:center; gap:6px; white-space:nowrap; }
 @media (max-width:640px) { #o_cp { flex-wrap:wrap; } #o_cp .o_acts { width:100%; justify-content:flex-start; } }
 </style>
 <script>
