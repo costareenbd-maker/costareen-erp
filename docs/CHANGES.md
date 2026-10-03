@@ -428,3 +428,4 @@
 - Until the owner's own mail service is set up (deploy/set_smtp.py, which now also sets this e-mail's text), Supabase's free plan sends the link with its standard "sign-in link" wording; the link works the same and the ERP shows the full change.
 - Found on the way: company copies did not get their login e-mail address set (password e-mails would have pointed at Supabase's default); the installer now sets it (their own page, ?use=<id>, and their own address once ready), and the page understands ?use=<id>.
 - 053_owner_safety.sql, handlers/owners.js, users.js (owner changes), index.ts sendMagic; tests/o1_test.mjs (17), u1_test updated for the deliberate change.
+- The background photo has one place now: the Themes window (account menu → "Theme & background…"): add or change, remove, how strong (owner and manager), and "for me" show or hide (everyone). Removed from the account menu and from Settings → Business.
