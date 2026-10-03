@@ -16641,7 +16641,18 @@ function bgPaint() {
   var a = { subtle: 0.9, medium: 0.8, strong: 0.66 }[BG.strength || 'medium'] || 0.8;
   el('bgShade').style.background = dark ? 'rgba(18,20,26,' + a + ')' : 'rgba(244,246,249,' + a + ')';
 }
-function bgLoad() { srv('erpBg', [], function (r) { BG = r; bgPaint(); umPaint(); }, function () {}); }
+function bgKey() { return 'erp_bg_' + ((BIZ && BIZ.active) || ''); }
+function bgLoad() {
+  var kept = null;
+  try { kept = JSON.parse(localStorage.getItem(bgKey()) || 'null'); } catch (e) { kept = null; }
+  // shown at once from this device; the server only sends the photo when it has changed
+  if (kept && kept.photo) { BG = { photo: kept.photo, strength: kept.strength, off: kept.off, v: kept.v }; bgPaint(); }
+  srv('erpBg', [{ have: kept && kept.v || '' }], function (r) {
+    if (r.same && kept) r.photo = kept.photo;
+    BG = r; bgPaint(); umPaint();
+    try { if (r.photo && r.v) localStorage.setItem(bgKey(), JSON.stringify({ v: r.v, photo: r.photo, strength: r.strength, off: r.off })); else localStorage.removeItem(bgKey()); } catch (e) { /* a full device keeps working without the copy */ }
+  }, function () {});
+}
 function bgCardHtml() {
   if (!ME || ['manager', 'shareholder', 'owner'].indexOf(ME.role) < 0) return '';
   var b = BG || {};

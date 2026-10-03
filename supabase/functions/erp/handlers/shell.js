@@ -102,10 +102,14 @@ export async function erpProfileSave(ctx, payload) {
   return erpProfile(ctx);
 }
 /** The business's background photo: {photo, strength}, and whether I switched it off for myself. */
-export async function erpBg(ctx) {
+export async function erpBg(ctx, payload) {
   const { getConfig } = await import('../lib/ext.js');
   const pr = (await ctx.sql`select bg_off from erp_prefs where user_id = ${ctx.s.userId}`)[0] || {};
-  return { photo: String(await getConfig(ctx, 'bg_photo', '')) || '', strength: String(await getConfig(ctx, 'bg_strength', 'medium')) || 'medium', off: !!pr.bg_off };
+  const v = String(await getConfig(ctx, 'bg_v', '')) || '';
+  const out = { v, strength: String(await getConfig(ctx, 'bg_strength', 'medium')) || 'medium', off: !!pr.bg_off };
+  // the device already has this photo: no need to send it again
+  if (v && payload && payload.have === v) return { ...out, same: true };
+  return { ...out, photo: String(await getConfig(ctx, 'bg_photo', '')) || '' };
 }
 /** Owner or manager: {photo} ('' removes it) and/or {strength: subtle|medium|strong}. */
 export async function erpBgSave(ctx, payload) {
@@ -117,6 +121,7 @@ export async function erpBgSave(ctx, payload) {
     const ph = String(payload.photo || '');
     if (ph && (!IMG.test(ph) || ph.length > 700000)) throw new Error('That photo could not be used. Try another one.');
     await setConfig(ctx, 'bg_photo', ph);
+    await setConfig(ctx, 'bg_v', ph ? String(Date.now()) : '');
   }
   if (payload.strength !== undefined) {
     const st = String(payload.strength);
