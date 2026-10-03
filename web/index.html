@@ -8321,7 +8321,7 @@ function srv(name, args, ok, bad) {
 
 var SRV_ACTIVE = 0, SRV_WRITING = false;
 // the same list the server uses to know a call changes nothing (ERP_READS)
-var SRV_READS = /^(erpBundle|erpHello|erpMe|erpCatalog|erpSales|erpDues|erpCustomers|erpPnl|erpMoney|erpToday|erpDaySales|erpProduct|erpLookupCustomer|erpCustomerAccount|erpCustomerStatement|erpCustomerCredit|erpWebOrders|erpWebOrderInvoices|erpCampaignAudience|erpCampaignList|erpCampaignGet|erpEvoStatus|erpBrandLogo|erpQuoteBoot|erpQuoteList|erpQuoteGet|erpQuoteAsset|erpExpenses|erpCapital|erpBackupStatus|erpAiKeys|erpGetTheme|erpBusinesses|erpStockHistory|erpReorderPlan|erpPoList|erpSfPayoutLines|erpBookedParcels|erpParcelPreview|erpReturnPreview|erpSettingsFull|erpSettingsLists|erpFormOptions|erpAdmin|erpPeople|erpDevices|erpCourierKeyStatus|erpPayReasons|erpDiscontinued|erpAccessWarning|erpBusinessLinks|erpLookupUsage|erpRecentInvoices|erpCourier|erpDashboardData|erpInvoice|erpCustomerPage|erpSearch|erpProductPage|erpPnlMonth|erpExpenseReceiptUrl|erpPartnership|erpPartnerStock|erpSecurity|erpCustomerList|erpAlerts|erpAccessKeys|erpListView|erpCurrencies|erpSharedStock|erpPoolCatalog|erpProductThumbs|erpProductPhotoUrl|erpFamilies|erpNotes|erpNoteFileUrl|erpSerialsFor|erpSerialLookup|erpJobs|erpJob|erpUsers|erpSessions|erpPlatform|erpPlatformErrors|erpRisks|erpAlertRules|erpConnections|erpWebsiteTest|erpGoogle|erpCashBook|erpSuppliers|erpSupplierPage)$/;
+var SRV_READS = /^(erpBundle|erpHello|erpMe|erpCatalog|erpSales|erpDues|erpCustomers|erpPnl|erpMoney|erpToday|erpDaySales|erpProduct|erpLookupCustomer|erpCustomerAccount|erpCustomerStatement|erpCustomerCredit|erpWebOrders|erpWebOrderInvoices|erpCampaignAudience|erpCampaignList|erpCampaignGet|erpEvoStatus|erpBrandLogo|erpQuoteBoot|erpQuoteList|erpQuoteGet|erpQuoteAsset|erpExpenses|erpCapital|erpBackupStatus|erpAiKeys|erpGetTheme|erpBusinesses|erpStockHistory|erpReorderPlan|erpPoList|erpSfPayoutLines|erpBookedParcels|erpParcelPreview|erpReturnPreview|erpSettingsFull|erpSettingsLists|erpFormOptions|erpAdmin|erpPeople|erpDevices|erpCourierKeyStatus|erpPayReasons|erpDiscontinued|erpAccessWarning|erpBusinessLinks|erpLookupUsage|erpRecentInvoices|erpCourier|erpDashboardData|erpInvoice|erpCustomerPage|erpSearch|erpProductPage|erpPnlMonth|erpExpenseReceiptUrl|erpPartnership|erpPartnerStock|erpSecurity|erpCustomerList|erpAlerts|erpAccessKeys|erpListView|erpCurrencies|erpSharedStock|erpPoolCatalog|erpProductThumbs|erpProductPhotoUrl|erpFamilies|erpNotes|erpNoteFileUrl|erpSerialsFor|erpSerialLookup|erpJobs|erpJob|erpUsers|erpSessions|erpPlatform|erpPlatformErrors|erpRisks|erpAlertRules|erpConnections|erpWebsiteTest|erpGoogle|erpSheet|erpRestorePreview|erpCashBook|erpSuppliers|erpSupplierPage)$/;
 function srvPump() {
   if (!SRV_Q.length) return;
   var isRead = SRV_READS.test(SRV_Q[0].name);
@@ -9392,9 +9392,9 @@ function backupCardHtml() {
     }
     return '<section><div class="card"><h2>Backups</h2><div class="loading">Checking the backups&hellip;</div></div></section>';
   }
-  var b = BKUP, h = '<section><div class="card"><h2>Backups</h2><div class="sub">A full copy of the business sheet is saved every night at 3 AM into a ' +
-    'Drive folder called <strong>ERP_Backups</strong>. The newest ' + fmt(b.keep || 14) + ' are kept. Nothing is ever restored automatically: ' +
-    'to go back, open a copy and take what you need from it.</div>';
+  var b = BKUP, h = '<section><div class="card"><h2>Backups</h2><div class="sub">A full copy of the business is made every night at 3 AM (and whenever you press Back up now). ' +
+    'The newest ' + fmt(b.keep || 14) + ' are kept here, and — with Google Drive connected — every copy also goes to your Drive. ' +
+    '"Go back to this copy" puts the whole business back as it was in that copy; today is copied first, so that can be undone too. Users and sign-in are never changed by it.</div>';
   if (b.error) return h + '<div class="note err" style="margin-top:10px"><div class="ico">✕</div><div>' + esc(b.error) + '</div></div></div></section>';
   var stale = b.lastAgeHours === null || b.lastAgeHours > 36;
   h += '<div class="row" style="gap:8px;margin-top:12px;align-items:center;flex-wrap:wrap">' +
@@ -9417,7 +9417,8 @@ function backupCardHtml() {
   }
   if (b.files && b.files.length) {
     h += '<div class="list" style="margin-top:10px">' + b.files.map(function (f) {
-      return '<div><span>' + esc(f.name) + '<span class="sku">' + esc(f.when) + '</span></span><a href="' + esc(f.url) + '" target="_blank" rel="noopener">Open</a></div>';
+      return '<div><span>' + esc(f.name) + '<span class="sku">' + esc(f.when) + '</span></span><span style="white-space:nowrap"><a href="' + esc(f.url) + '" target="_blank" rel="noopener">Open</a> ' +
+        '<button class="btn small" type="button" data-bkback="' + esc(f.name) + '">Go back to this copy</button></span></div>';
     }).join('') + '</div>';
   }
   return h + '</div></section>';
@@ -15417,6 +15418,48 @@ function qzKeepPdf(q) {
     srv('erpQuotePdfSave', [{ id: q.id, html: html }], function () {}, function () {});
   } catch (e) {}
 }
+</script>
+
+<!-- live backup sheet, and going back to a backup -->
+<script>
+var GSHEET = null, GSHEET_BUSY = false;
+function gsheetHtml() {
+  if (!ME || ME.role !== 'owner') return '';
+  if (!GSHEET) { srv('erpSheet', [], function (r) { GSHEET = r; if (VIEW === 'settings') repaint(); }, function () { GSHEET = { google: false }; }); return ''; }
+  var g = GSHEET;
+  var h = '<section><div class="card"><h2>Live backup sheet</h2><div class="sub">A Google Sheet in your Drive with every list of the business \u2014 invoices, lines, payments, stock, customers, products, expenses, money, suppliers, capital, serials, repairs \u2014 one tab each. ' +
+    'A tab is written again within about 10 minutes of any change, so edits and cancellations show too. It is a copy to read and keep: changing the sheet changes nothing here. Who signs in, keys and passwords never go into it.</div>';
+  if (!g.google) return h + '<div class="note"><div class="ico">i</div><div>Connect Google Drive first (above).</div></div></div></section>';
+  if (!g.id) return h + '<div class="row" style="margin-top:10px"><button class="btn primary" type="button" id="gs_make"' + (GSHEET_BUSY ? ' disabled' : '') + '>' + (GSHEET_BUSY ? 'Making\u2026' : 'Make the backup sheet') + '</button></div></div></section>';
+  h += '<div class="row" style="margin-top:10px;gap:8px;flex-wrap:wrap;align-items:center"><a class="btn primary" href="' + esc(g.url) + '" target="_blank" rel="noopener">Open the sheet</a>' +
+    '<button class="btn" type="button" id="gs_now"' + (GSHEET_BUSY ? ' disabled' : '') + '>' + (GSHEET_BUSY ? 'Writing\u2026' : 'Write changes now') + '</button>' +
+    '<button class="btn danger" type="button" id="gs_stop">Stop updating it</button><span class="sku">' + (g.last ? 'last written ' + esc(g.last) : 'not written yet \u2014 within 10 minutes') + '</span></div>';
+  if (g.error) h += '<div class="note err" style="margin-top:8px"><div class="ico">!</div><div>' + esc(g.error) + '</div></div>';
+  if (g.tabs && g.tabs.length) h += '<div class="sub" style="margin-top:8px">' + g.tabs.map(function (t) { return esc(t.name) + ' ' + fmt(t.rows); }).join(' \u00b7 ') + '</div>';
+  return h + '</div></section>';
+}
+var settingsPickG4 = settingsPick;
+settingsPick = function (h) { return settingsPickG4(h + setMark('connections') + gsheetHtml()); };
+document.addEventListener('click', async function (ev) {
+  var t = ev.target; if (!t || !t.getAttribute) return;
+  function bad(e) { GSHEET_BUSY = false; toast(esc(e && e.message ? e.message : e), true, 12000); repaint(); }
+  if (t.id === 'gs_make') { GSHEET_BUSY = true; repaint(); srv('erpSheetCreate', [], function (r) { GSHEET = r; GSHEET_BUSY = false; toast('The sheet is made. Its tabs fill within 10 minutes.'); repaint(); }, bad); return; }
+  if (t.id === 'gs_now') { GSHEET_BUSY = true; repaint(); srv('erpSheetSyncNow', [], function (r) { GSHEET = r; GSHEET_BUSY = false; toast(r.error ? esc(r.error) : fmt(r.written) + ' tab(s) written' + (r.more ? ', more in the next minutes.' : '.'), !!r.error); repaint(); }, bad); return; }
+  if (t.id === 'gs_stop') { if (!(await uiConfirm('Stop updating the backup sheet?\n\nThe sheet stays in your Drive as it is now.'))) return; srv('erpSheetStop', [], function (r) { GSHEET = r; toast('Stopped.'); repaint(); }, bad); return; }
+  var f = t.getAttribute('data-bkback');
+  if (f) {
+    srv('erpRestorePreview', [{ file: f }], async function (p) {
+      var lines = p.lists.filter(function (x) { return x.now !== x.copy; }).slice(0, 14).map(function (x) { return '  ' + x.name + ': now ' + x.now + ' \u2192 ' + x.copy; }).join('\n');
+      var typed = await uiPrompt('Go back to the copy of ' + p.made + '?\n\nThe whole business is put back exactly as it was then. What changes:\n' + (lines || '  nothing differs') +
+        '\n\nToday is copied first, so this can be undone. Users and sign-in are not touched.\n\nType the business name (' + p.business + ') to go ahead:', '');
+      if (typed === null) return;
+      srv('erpRestore', [{ file: f, confirm: typed.trim() }], function (r) {
+        uiAlert('Done. The business is back as it was on ' + p.made + '.\n\nToday was kept as "' + r.before + '" \u2014 go back to it the same way if needed.');
+        BKUP = null; D = null; CAT = null; CUST = null; ORDERS = null; DUES = null; loadAll(); repaint();
+      }, function (e) { toast(esc(e && e.message ? e.message : e), true, 15000); });
+    }, function (e) { toast(esc(e && e.message ? e.message : e), true, 12000); });
+  }
+});
 </script>
 </body>
 </html>

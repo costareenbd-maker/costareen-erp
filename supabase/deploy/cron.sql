@@ -35,3 +35,8 @@ select cron.schedule('erp-drive', '*/10 * * * *', $$
   select net.http_post(url := '__FN_URL__',
     headers := '{"Content-Type":"application/json","x-erp-cron":"__CRON_KEY__"}'::jsonb,
     body := '{"job":"drive"}'::jsonb, timeout_milliseconds := 150000) $$);
+
+select cron.schedule('erp-sheet', '5-59/10 * * * *', $$
+  select net.http_post(url := '__FN_URL__',
+    headers := '{"Content-Type":"application/json","x-erp-cron":"__CRON_KEY__"}'::jsonb,
+    body := '{"job":"sheet"}'::jsonb, timeout_milliseconds := 150000) $$);

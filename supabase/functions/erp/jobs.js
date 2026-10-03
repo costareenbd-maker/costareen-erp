@@ -89,6 +89,17 @@ export async function runJob(deps, job) {
         }
       }
     }
+  } else if (job === 'sheet') {
+    // the live backup sheet: tabs whose rows changed are written again
+    const tick = await maybe('./handlers/sheet.js', 'sheetTick');
+    const ids = (await sql`select c.business_id from business_config c join business_secrets s on s.business_id = c.business_id and s.key = 'GOOGLE_REFRESH'
+                           where c.key = 'google_sheet_id' and coalesce(c.value, '') <> ''`).map((r) => r.business_id);
+    if (tick && ids.length) {
+      for (const row of await owners(sql, ids)) {
+        if (out[row.name]) continue;
+        out[row.name] = await asBusiness(deps, row, 'sheet:write', (ctx) => tick(ctx));
+      }
+    }
   } else if (job === 'drive') {
     // copies of new files into each connected owner's Google Drive
     const tick = await maybe('./handlers/google.js', 'driveTick');

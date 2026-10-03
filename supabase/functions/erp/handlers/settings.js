@@ -711,7 +711,13 @@ export async function backupNow(ctx, why) {
   if (!got[0].ok) return { ok: false, busy: true };
   const b = await ctx.tx`select name from businesses where id = ${ctx.biz}`;
   const bizName = (b[0] && b[0].name) || ctx.s.businessName || 'Business';
-  const fileName = bizName + BK_PART + formatDate(ctx.now, 'yyyy-MM-dd HHmm') + '.json';
+  // seconds too when made by hand, so a copy made in the same minute never overwrites another
+  let fileName = bizName + BK_PART + formatDate(ctx.now, why === 'night' ? 'yyyy-MM-dd HHmm' : 'yyyy-MM-dd HHmmss') + '.json';
+  if (why !== 'night') {
+    // never on top of another copy made in the same second (a restore copies today first)
+    const taken = new Set((await findFiles(ctx, 'backups', BK_PART)).map((f) => f.name));
+    for (let k = 1; taken.has(fileName) && k < 60; k++) fileName = bizName + BK_PART + formatDate(new Date(ctx.now.getTime() + k * 1000), 'yyyy-MM-dd HHmmss') + '.json';
+  }
   const made = [], failed = [];
   try {
     const doc = { business: { id: ctx.biz, name: bizName }, made_at: ctx.now.toISOString(),
@@ -735,12 +741,12 @@ export async function backupNow(ctx, why) {
   return { ok: made.length > 0, made, failed, binned };
 }
 
-const BK_RE = / - backup (\d{4}-\d{2}-\d{2}) (\d{2})(\d{2})\.json$/;
+const BK_RE = / - backup (\d{4}-\d{2}-\d{2}) (\d{2})(\d{2})(\d{2})?\.json$/;
 function isBackupName(n) { return BK_RE.test(String(n || '')); }
 function backupTime(n) {
   const m = BK_RE.exec(String(n || ''));
   if (!m) return null;
-  return dhakaDayStart(m[1]).getTime() + Number(m[2]) * 3600e3 + Number(m[3]) * 60e3;
+  return dhakaDayStart(m[1]).getTime() + Number(m[2]) * 3600e3 + Number(m[3]) * 60e3 + Number(m[4] || 0) * 1e3;
 }
 
 export async function erpBackupStatus(ctx) {

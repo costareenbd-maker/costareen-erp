@@ -236,7 +236,7 @@ for (let i = 1; i <= 15; i++) {
 await deps.storage.save(B, 'backups', 'someone else.json', new Uint8Array([1]), 'application/json');
 r = await owner('erpBackupRun', []);
 check('backup made, status returned', r.ok && r.result.count === 14 && r.result.lastAt !== '' && r.result.lastAgeHours === 0 &&
-  r.result.files.length === 6 && /^Costareen - backup \d{4}-\d{2}-\d{2} \d{4}\.json$/.test(r.result.files[0].name), r);
+  r.result.files.length === 6 && /^Costareen - backup \d{4}-\d{2}-\d{2} \d{4}(\d{2})?\.json$/.test(r.result.files[0].name), r);
 const names2 = files.list().filter((k) => k.startsWith(B + '/backups/'));
 check('newest 14 kept, oldest removed, other files untouched', names2.length === 15 &&
   !names2.some((k) => k.includes('2026-01-01 0300')) && !names2.some((k) => k.includes('2026-01-02 0300')) &&

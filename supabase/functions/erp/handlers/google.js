@@ -25,7 +25,7 @@ function cfg(deps) {
   return { id: str(g.clientId), secret: str(g.clientSecret), redirect: str(g.redirect), app: str(g.appUrl) || 'https://erp.costareen.com/' };
 }
 function needOwner(ctx) { if (ctx.s.role !== 'owner') throw new Error('Only the owner connects Google.'); }
-async function gfetch(deps, url, opts) {
+export async function gfetch(deps, url, opts) {
   const f = (deps && deps.fetch) || globalThis.fetch;
   const r = await f(url, opts);
   const text = await r.text();
@@ -124,7 +124,7 @@ export async function erpGoogleCopyAll(ctx) {
 }
 
 // ------------------------------------------------------------------ the timer
-async function accessToken(ctx) {
+export async function accessToken(ctx) {
   if (ctx.memo.gAccess) return ctx.memo.gAccess;
   const c = cfg(ctx.deps), rt = await getSecret(ctx, 'GOOGLE_REFRESH');
   const t = await gfetch(ctx.deps, 'https://oauth2.googleapis.com/token', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -136,7 +136,7 @@ async function accessToken(ctx) {
   ctx.memo.gAccess = t.json.access_token;
   return ctx.memo.gAccess;
 }
-async function folderId(ctx, path) {
+export async function folderId(ctx, path) {
   if (!ctx.memo.gFolders) { try { ctx.memo.gFolders = JSON.parse(str(await getConfig(ctx, 'google_folders', '')) || '{}'); } catch (_) { ctx.memo.gFolders = {}; } }
   const known = ctx.memo.gFolders;
   if (known[path]) return known[path];
