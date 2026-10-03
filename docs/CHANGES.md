@@ -462,3 +462,8 @@
 ## tidy-9 — Defaults in plain words; game setting moved (2026-10-04)
 - Settings → Business → Defaults: each known value has a plain name with its explanation behind "?" (Business name, Currency, Reorder level for new products, Supplier delivery days, Google Drive folder for invoice PDFs, Next invoice number, Website address for orders). Values the system keeps for itself (courier caches, delivery/money rules saved by their own screens, anything unknown) are folded under "Values the system keeps for itself — for support only", still editable there.
 - "Game under New invoice" moved from Settings → Business to the bottom of Maintenance.
+
+## tidy-10 — system values locked, undo on Defaults; no flame in the game (2026-10-04)
+- "Values the system keeps for itself": read-only. "Change…" warns (can break invoices, deliveries or money; only if support asks) before the box opens.
+- Every Defaults save (plain ones too) can be undone: an Undo button in the row and in the "Saved" toast puts back the value from before, while the page is open. "Nothing changed" when the value is the same.
+- Print Run: the thermal-runaway flame is removed (too hard to time). The drawing code stays unused.
