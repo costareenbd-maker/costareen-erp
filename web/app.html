@@ -16346,7 +16346,12 @@ var viewCampaignsT5 = viewCampaigns;
 viewCampaigns = function () { return viewCampaignsT5(); };
 // a website not connected: no red "could not read" - the button says it
 var courierPanelT5 = courierPanel;
-courierPanel = function () { if (CSTAT && !CSTAT.loading && CSTAT.website !== 'on') return ''; return courierPanelT5(); };
+// tidy-8: never drawn and then taken away - only once the website is known to be on, and only when there are parcels to show
+courierPanel = function () {
+  if (!CSTAT || CSTAT.loading || CSTAT.website !== 'on') return '';
+  if (!COURIER_ERR && (!COURIER || !COURIER.orders.length)) return '';
+  return courierPanelT5();
+};
 /** The set-up card from Settings, in a window over the page. */
 function cpopHtml(kind) {
   if (!ME || ME.role !== 'owner') return '<div class="sub" data-c5x="1" style="display:block">Only the owner connects ' + esc(CPOP_NAME[kind]) + '. Ask the owner (Settings \u2192 Connections).</div>';

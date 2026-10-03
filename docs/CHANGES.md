@@ -440,3 +440,6 @@
 - Not done: nothing else on this list.
 - tidy-7b: every title-bar button/chip is one size (34px, 13px text, same corners). Web orders now follows the same rule: Check the website for new orders, Website products to match, Website chip sit in the title bar instead of inside the box.
 - tidy-7c: Web orders: Check the website for new orders + Website products to match back inside the Website orders box, right side of its heading; only the Website chip stays in the title bar.
+
+## tidy-8 — no box that appears and vanishes on Web orders (2026-10-04)
+- The Courier box on Web orders was drawn before the connection status arrived, then removed when the website turned out not connected (a flash on every reload). It now waits for the status and shows only when the website is connected AND Steadfast reports parcels (or an error); an all-zero box is not drawn. Kept, not removed: once the website is live it is the only place showing each website parcel's courier state.
