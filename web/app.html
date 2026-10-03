@@ -4527,8 +4527,8 @@ function evoSettingsHtml() {
       : s.needsLink ? '<div class="note" style="margin-bottom:10px"><div class="ico">▲</div><div><strong>Server connected. One step left:</strong> press <strong>Link a WhatsApp number (QR code)</strong> below and scan it with the phone.</div></div>'
       : (s.error ? '<div class="note err" style="margin-bottom:10px"><div class="ico">✕</div><div>' + esc(s.error) + '</div></div>' : '')) +
     '<div class="fields"><div style="grid-column:1/-1"><label class="f" for="evo_url">Server address</label><input class="i" id="evo_url" autocomplete="off" value="' + esc(s.url || '') + '" placeholder="https://wa.yourdomain.com"></div>' +
-    '<div><label class="f" for="evo_inst">Instance name</label><input class="i" id="evo_inst" autocomplete="off" value="' + esc(s.instance || '') + '"></div>' +
-    '<div><label class="f" for="evo_key">API key</label><input class="i" id="evo_key" type="password" autocomplete="off" placeholder="' + (s.hasKey ? '•••••••• already set' : 'from your Evolution server') + '"></div></div>' +
+    '<div><label class="f" for="evo_inst">Instance name</label><input class="i" id="evo_inst" autocomplete="off" name="evo-instance-name" value="' + esc(s.instance || '') + '"></div>' +
+    '<div><label class="f" for="evo_key">API key</label><input class="i" id="evo_key" type="password" autocomplete="new-password" name="evo-api-key" placeholder="' + (s.hasKey ? '•••••••• already set' : 'from your Evolution server') + '"></div></div>' +
     '<div class="row" style="gap:8px;margin-top:10px;justify-content:flex-end;flex-wrap:wrap">' + (s.configured ? '<button class="btn" type="button" id="evo_clear">Disconnect</button>' : '') +
     (s.configured && !s.connected ? '<button class="btn" type="button" id="evo_qr">Link a WhatsApp number (QR code)</button>' : '') +
     (s.connected ? '<button class="btn" type="button" id="evo_logout">Log the number out</button>' : '') +
@@ -16824,6 +16824,46 @@ viewSales = function () {
 // Campaigns already shows its WhatsApp state: that pill opens the set-up
 var cpTabsHtmlT6 = cpTabsHtml;
 cpTabsHtml = function () { return cpTabsHtmlT6().replace(/<span class="pill([^"]*)">((?:\u2713 )?WhatsApp)/, '<span class="pill$1" data-cpop="whatsapp" style="cursor:pointer" title="Set up WhatsApp">$2'); };
+</script>
+
+<!-- tidy-7: a page's own buttons sit in its title bar (right); keys and passwords are never filled in by the browser -->
+<style>
+#o_cp { display:flex; align-items:center; gap:10px; }
+#o_cp .o_acts { margin-left:auto; display:flex; align-items:center; gap:8px; flex-wrap:wrap; justify-content:flex-end; }
+#o_cp .o_acts .row { display:contents; }
+#o_cp .o_acts .btn { padding-top:5px; padding-bottom:5px; }
+@media (max-width:640px) { #o_cp { flex-wrap:wrap; } #o_cp .o_acts { width:100%; justify-content:flex-start; } }
+</style>
+<script>
+function titleActions() {
+  var cp = el('o_cp'), v = el('view'); if (!cp || !v) return;
+  var acts = cp.querySelector('.o_acts');
+  if (!acts) { acts = document.createElement('div'); acts.className = 'o_acts'; cp.appendChild(acts); }
+  acts.innerHTML = '';
+  // the rows of buttons a page starts with (Excel, Print today's labels, Colour families...) move up into the title bar
+  var kid = v.firstElementChild, moved = 0;
+  while (kid && kid.classList && kid.classList.contains('row') && !kid.querySelector('input, select, textarea, table') && kid.querySelector('button, a.btn, .cchip')) {
+    var next = kid.nextElementSibling;
+    while (kid.firstChild) acts.appendChild(kid.firstChild);
+    kid.remove(); moved++;
+    kid = next;
+  }
+  acts.style.display = moved ? '' : 'none';
+}
+// keys, tokens and passwords inside the ERP: the browser must not fill in the owner's e-mail or saved password
+function noAutofill(root) {
+  if (!ME) return;   // the sign-in screen keeps the browser's help
+  [].forEach.call((root || document).querySelectorAll('input[type=password]'), function (i) { if (i.getAttribute('autocomplete') !== 'new-password') i.setAttribute('autocomplete', 'new-password'); });
+  [].forEach.call((root || document).querySelectorAll('.card input[type=text], .card input:not([type])'), function (i) {
+    if (!i.getAttribute('autocomplete') || i.getAttribute('autocomplete') === 'on') i.setAttribute('autocomplete', 'off');
+  });
+}
+var repaintT7 = repaint;
+repaint = function () {
+  repaintT7.apply(this, arguments);
+  try { titleActions(); } catch (e) {}
+  try { noAutofill(el('view')); var cp = el('cpop'); if (cp) noAutofill(cp); } catch (e) {}
+};
 </script>
 <!-- lang-2: the language of what customers receive -->
 <script>

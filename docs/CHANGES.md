@@ -432,3 +432,9 @@
 - The background photo is kept on the device and shown at once; the server sends it again only when it changed (a version per photo). The page shell was already cached by the app's service worker; business data always comes fresh.
 - Found: the site's security rules (web/_headers) allowed only the provider's own Supabase server, so a company copy's page could not have talked to its own server; now any *.supabase.co.
 - tidy-6: no rows of their own above pages: on Web orders the website state and "Website products to match" sit in the Website orders box next to "Check the website for new orders"; on Sales the courier state sits in the existing button row; Campaigns already had a WhatsApp state pill (the extra one is gone) and that pill now opens the set-up.
+
+## tidy-7 — page buttons in the title bar; no browser autofill in key boxes (2026-10-04)
+- The rows of buttons a page started with (Excel; Sales: courier chip, Print today's labels, Check deliveries now; Products: Colour families…) now sit at the right of the page's title bar (#o_cp) on every page, via one step after each repaint (`titleActions`). Moved as DOM nodes, so their click handlers keep working. Phone width: they wrap under the title.
+- Key/password boxes inside the ERP get `autocomplete="new-password"`, other card text boxes `off` (sign-in screen untouched). WhatsApp instance/key boxes have their own names so Chrome stops putting the owner's e-mail and saved password there. Chrome may still offer a "suggested password" on key boxes; harmless.
+- WhatsApp QR: already built — after "Save and test" succeeds against a running Evolution server, "Link a WhatsApp number (QR code)" shows the QR (refreshes until scanned in WhatsApp → Linked devices).
+- Not done: nothing else on this list.
