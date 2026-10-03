@@ -12,7 +12,7 @@ Status column: ✅ done · ⏳ owner to do · 🔧 done by the system on the day
 |---|------|-----|--------|
 | 1 | **Owner password + 2-step.** Open erp.costareen.com *without* a link → "Forgot the password?" → `costareen.bd@gmail.com` → choose a password (10+ characters) → sign in → Settings → Security → turn on 2-step sign-in. Protect that Gmail account too: whoever holds it holds the ERP. | owner | ⏳ |
 | 2 | **Invite every staff member**: Settings → Users → name, e-mail, role (Sales / Manager / Shareholder / Owner). Each gets an e-mail to choose a password. | owner | ⏳ none invited yet |
-| 3 | **Connections** (Settings → Connections): Steadfast keys ✅ already set; **website sync key** ⏳ not set (the courier screen and website orders need it); WhatsApp link if campaigns are used. | owner | partly |
+| 3 | **Connections** (Settings → Connections): Steadfast keys ✅ already set; WhatsApp link if campaigns are used. **Website sync key: NOT before the day** - the sheet still pushes stock to costareen.com every 15 min; two systems pushing would overwrite each other and put trial numbers on the live shop. | owner | partly |
 | 4 | **Business look** (Settings → Business): logo, signature, payment QR (the old ones pointed at Google Drive). Quotations → Settings: re-upload the logo/signature (live shows "That image could not be read"). | owner | ⏳ |
 | 5 | **Money accounts** (Money → + Add / change accounts): Cash, Islami Bank, BRAC Bank, bKash, Steadfast exist. On the day, type each one's real **opening balance**. | owner | ✅ set up · ⏳ balances |
 | 6 | **Products** worth checking: printers → product page → "Sold by serial number" + warranty months; Products → Colour families… → group the 16 suggestions. | owner | ⏳ |
@@ -31,12 +31,13 @@ Status column: ✅ done · ⏳ owner to do · 🔧 done by the system on the day
    ```
    Goes: invoices, payments, stock movements, courier bookings/payouts/checks, supplier bills/payments, money moves, capital book, expenses (entries), web orders, quotations, campaigns, serials, repair jobs, notes, logs.
    Stays: products (prices, costs, photos, families, serial flags), customers (totals cleared), suppliers, price book, expense set-up, shareholders list, money accounts, currencies and rates, WhatsApp opt-outs, lists, settings, users, keys. 🔧
-4. **Count the shelf**: Stock entry → Count & adjust → every product's real count → Save. First count = **Opening stock** at its cost. Number printers' serials on their product pages. owner + staff
-5. **Opening balances**: each money account's real balance (Money → Correct a balance). owner
-6. **Old dues** ("a few"): customer page → Receive / adjust due → **Increase the due** with a note "opening due from the sheet". Supplier dues: supplier page → bill with note "opening". owner
-7. **Costs**: any product without a cost → Product cost. No cost = no profit for it. owner
-8. **Retire the old 6-digit codes** (Settings → People): everyone now signs in with e-mail. 🔧
-9. **First sale**: one real invoice, open its PDF, check the dashboard. owner
+4. **Website hand-over**: switch the sheet's website sync off (its 15-minute trigger), then set the website sync key in the web ERP (Settings → Connections). From then on the web ERP pulls website orders and pushes stock. Never both at once. 🔧
+5. **Count the shelf**: Stock entry → Count & adjust → every product's real count → Save. First count = **Opening stock** at its cost. Number printers' serials on their product pages. owner + staff
+6. **Opening balances**: each money account's real balance (Money → Correct a balance). owner
+7. **Old dues** ("a few"): customer page → Receive / adjust due → **Increase the due** with a note "opening due from the sheet". Supplier dues: supplier page → bill with note "opening". owner
+8. **Costs**: any product without a cost → Product cost. No cost = no profit for it. owner
+9. **Retire the old 6-digit codes** (Settings → People): everyone now signs in with e-mail. 🔧
+10. **First sale**: one real invoice, open its PDF, check the dashboard. owner
 
 ## After
 
