@@ -19,6 +19,7 @@ import { roleAtLeast } from '../allow.js';
 import { erpDues, creditMap, paidByOrder, discLeft, lock } from './money.js';
 import { ratesMap, landedCost, saveRate } from './currency.js';
 import { returnsFor } from './returns.js';
+import { serviceFor } from './repairs.js';
 import { poolExpenses } from '../lib/pool.js';
 
 // ------------------------------------------------------------------ months
@@ -764,7 +765,8 @@ export async function pnlFor(ctx, months) {
     const exp = await soft(ctx, () => expByCat(ctx, m), { total: 0, byCat: {} });
     const cour = Math.round(courier[m] || 0);
     const cx = chkM[m] || { extra: 0, short: 0 };
-    const profit = gross + x.delivery + cx.extra - cx.short - cour - exp.total;
+    const svc = await serviceFor(ctx, m);                       // plan D2: repairs made, parts used
+    const profit = gross + x.delivery + cx.extra - cx.short - cour - exp.total + svc.income - svc.parts;
     out.push({ month: m, sales: Math.round(x.sales), returns: Math.round(x.returns), netSales: Math.round(net),
                cost: Math.round(x.cost), gross: Math.round(gross),
                grossMargin: net > 0 ? Math.round(gross / net * 1000) / 10 : 0,
@@ -772,7 +774,8 @@ export async function pnlFor(ctx, months) {
                net: Math.round(profit), netMargin: net > 0 ? Math.round(profit / net * 1000) / 10 : 0,
                delivery: Math.round(x.delivery), courier: cour,
                courierExtra: Math.round(cx.extra), courierShort: Math.round(cx.short),
-               uncosted: Math.round(x.uncosted), current: m === now });
+               uncosted: Math.round(x.uncosted), current: m === now,
+               serviceIncome: svc.income, serviceParts: svc.parts, serviceJobs: svc.jobs });
   }
   return out;
 }

@@ -563,6 +563,7 @@ svg { display:block; width:100%; overflow:visible; }
       <button type="button" data-view="sales" aria-selected="false"><span class="ic"><svg viewBox="0 0 24 24"><path d="M4 2v20l3-2 3 2 3-2 3 2 3-2 1 .7V2z"/><path d="M8 7h8M8 11h8M8 15h5"/></svg></span>Sales<span class="count" id="cSend"></span></button>
       <button type="button" data-view="weborders" aria-selected="false"><span class="ic"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15 15 0 0 1 0 20M12 2a15 15 0 0 0 0 20"/></svg></span>Web orders<span class="count" id="cWeb"></span></button>
       <button type="button" data-view="quotes" aria-selected="false"><span class="ic"><svg viewBox="0 0 24 24"><path d="M14 3v4a1 1 0 0 0 1 1h4"/><path d="M17 21H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2z"/><path d="M9 13h6M9 17h6"/></svg></span>Quotations</button>
+      <button type="button" data-view="repairs" aria-selected="false"><span class="ic"><svg viewBox="0 0 24 24"><path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 0 0 5.4-5.4l-2.7 2.7-2.1-2.1z"/></svg></span>Repairs</button>
       <button type="button" data-view="customers" aria-selected="false"><span class="ic"><svg viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.9M16 3.1a4 4 0 0 1 0 7.8"/></svg></span>Customers</button>
       <button type="button" data-view="campaigns" aria-selected="false"><span class="ic"><svg viewBox="0 0 24 24"><path d="M3 11v2a1 1 0 0 0 1 1h2l5 4V6L6 10H4a1 1 0 0 0-1 1z"/><path d="M15 9a3 3 0 0 1 0 6M18 6a7 7 0 0 1 0 12"/></svg></span>Campaigns</button>
       <div class="navgrp">Goods</div>
@@ -8318,7 +8319,7 @@ function srv(name, args, ok, bad) {
 
 var SRV_ACTIVE = 0, SRV_WRITING = false;
 // the same list the server uses to know a call changes nothing (ERP_READS)
-var SRV_READS = /^(erpBundle|erpHello|erpMe|erpCatalog|erpSales|erpDues|erpCustomers|erpPnl|erpMoney|erpToday|erpDaySales|erpProduct|erpLookupCustomer|erpCustomerAccount|erpCustomerStatement|erpCustomerCredit|erpWebOrders|erpWebOrderInvoices|erpCampaignAudience|erpCampaignList|erpCampaignGet|erpEvoStatus|erpBrandLogo|erpQuoteBoot|erpQuoteList|erpQuoteGet|erpQuoteAsset|erpExpenses|erpCapital|erpBackupStatus|erpAiKeys|erpGetTheme|erpBusinesses|erpStockHistory|erpReorderPlan|erpPoList|erpSfPayoutLines|erpBookedParcels|erpParcelPreview|erpReturnPreview|erpSettingsFull|erpSettingsLists|erpFormOptions|erpAdmin|erpPeople|erpDevices|erpCourierKeyStatus|erpPayReasons|erpDiscontinued|erpAccessWarning|erpBusinessLinks|erpLookupUsage|erpRecentInvoices|erpCourier|erpDashboardData|erpInvoice|erpCustomerPage|erpSearch|erpProductPage|erpPnlMonth|erpExpenseReceiptUrl|erpPartnership|erpPartnerStock|erpSecurity|erpCustomerList|erpAlerts|erpAccessKeys|erpListView|erpCurrencies|erpSharedStock|erpPoolCatalog|erpProductThumbs|erpProductPhotoUrl|erpFamilies|erpNotes|erpNoteFileUrl|erpSerialsFor|erpSerialLookup|erpCashBook|erpSuppliers|erpSupplierPage)$/;
+var SRV_READS = /^(erpBundle|erpHello|erpMe|erpCatalog|erpSales|erpDues|erpCustomers|erpPnl|erpMoney|erpToday|erpDaySales|erpProduct|erpLookupCustomer|erpCustomerAccount|erpCustomerStatement|erpCustomerCredit|erpWebOrders|erpWebOrderInvoices|erpCampaignAudience|erpCampaignList|erpCampaignGet|erpEvoStatus|erpBrandLogo|erpQuoteBoot|erpQuoteList|erpQuoteGet|erpQuoteAsset|erpExpenses|erpCapital|erpBackupStatus|erpAiKeys|erpGetTheme|erpBusinesses|erpStockHistory|erpReorderPlan|erpPoList|erpSfPayoutLines|erpBookedParcels|erpParcelPreview|erpReturnPreview|erpSettingsFull|erpSettingsLists|erpFormOptions|erpAdmin|erpPeople|erpDevices|erpCourierKeyStatus|erpPayReasons|erpDiscontinued|erpAccessWarning|erpBusinessLinks|erpLookupUsage|erpRecentInvoices|erpCourier|erpDashboardData|erpInvoice|erpCustomerPage|erpSearch|erpProductPage|erpPnlMonth|erpExpenseReceiptUrl|erpPartnership|erpPartnerStock|erpSecurity|erpCustomerList|erpAlerts|erpAccessKeys|erpListView|erpCurrencies|erpSharedStock|erpPoolCatalog|erpProductThumbs|erpProductPhotoUrl|erpFamilies|erpNotes|erpNoteFileUrl|erpSerialsFor|erpSerialLookup|erpJobs|erpJob|erpCashBook|erpSuppliers|erpSupplierPage)$/;
 function srvPump() {
   if (!SRV_Q.length) return;
   var isRead = SRV_READS.test(SRV_Q[0].name);
@@ -9618,6 +9619,7 @@ function repaint() {
         : VIEW === 'capital' ? viewCapital()
         : VIEW === 'cash' ? viewCash()
         : VIEW === 'suppliers' ? viewSuppliers()
+        : VIEW === 'repairs' ? viewRepairs()
         : VIEW === 'sales' ? viewSales()
         : VIEW === 'quotes' ? viewQuotes()
         : VIEW === 'campaigns' ? viewCampaigns()
@@ -9653,6 +9655,7 @@ function repaint() {
     wireAccess();
     wireCash();
     wireSuppliers();
+    if (VIEW === 'repairs') wireRepairs();
     // the parcel confirmation floats above whatever screen is open
     var pb = document.getElementById('parcelbox');
     if (pb && pb.parentNode) pb.parentNode.removeChild(pb);
@@ -9716,7 +9719,7 @@ function routeSet(view, param, replace) {
 window.addEventListener('popstate', function () {
   var v = routeView();
   var pm = routeParam();
-  var cur = VIEW === 'sales' ? INVP.no : VIEW === 'customers' ? CUSP.key : VIEW === 'products' ? PRODP.sku : VIEW === 'suppliers' ? SUPP.name : '';
+  var cur = VIEW === 'sales' ? INVP.no : VIEW === 'customers' ? CUSP.key : VIEW === 'products' ? PRODP.sku : VIEW === 'suppliers' ? SUPP.name : VIEW === 'repairs' ? JOBP.no : '';
   if (ME && v && (v !== VIEW || pm !== cur) && routeAllowed(v)) go(v, pm);
 });
 
@@ -9746,7 +9749,8 @@ function tabbarSync() {
 function go(view, param) {
   VIEW = view;
   // a record page inside a screen: one invoice, one customer
-  param = (view === 'sales' || view === 'customers' || view === 'products' || view === 'suppliers') ? String(param || '') : '';
+  param = (view === 'sales' || view === 'customers' || view === 'products' || view === 'suppliers' || view === 'repairs') ? String(param || '') : '';
+  if (view === 'repairs') { if (JOBP.no !== param) JOBP = { no: param, data: null, err: null }; }
   if (view === 'suppliers') { if (SUPP.name !== param) SUPP = { name: param, data: null, err: null }; }
   if (view === 'products') { if (PRODP.sku !== param) { PRODP = { sku: param, data: null, err: null }; PRODUCT_FORM = null; } }
   if (view === 'sales') { if (INVP.no !== param) { INVP = { no: param, data: null, err: null }; } }
@@ -9774,6 +9778,7 @@ function go(view, param) {
   if (view === 'expenses' && !EXP && !EXP_ERR) loadExpenses();
   if (view === 'cash') { CASH_ERR = null; loadCash(); }
   if (view === 'suppliers') { if (SUPP.name) loadSupplier(); else loadSuppliers(); }
+  if (view === 'repairs') { if (JOBP.no) loadJob(); else loadJobs(); }
   if (view === 'capital') { CAP_ERR = null; loadCapital(); if (CAP_TAB === 'partner') { PART_ERR = null; loadPartner(); } }
   if (view === 'settings' && SET_TAB === 'security' && !SEC) loadSecurity();
   if (view === 'sales' && INVP.no && !INVP.data) loadInvoicePage();
@@ -12100,7 +12105,7 @@ input.i:focus, select.i:focus, textarea.i:focus { border-color:var(--accent-2); 
 var APPS = [
   { id: 'dashboards', name: 'Dashboard', color: '#7c6bb1', views: ['dash'],
     icon: '<path d="M4 20V10M10 20V4M16 20v-8M22 20H2"/>' },
-  { id: 'sales', name: 'Sales', color: '#e39a2d', views: ['invoice', 'sales', 'weborders', 'quotes'],
+  { id: 'sales', name: 'Sales', color: '#e39a2d', views: ['invoice', 'sales', 'weborders', 'quotes', 'repairs'],
     icon: '<path d="M3 17l5-5 4 4 8-9"/><path d="M15 7h5v5"/>' },
   { id: 'contacts', name: 'Contacts', color: '#2a9d8f', views: ['customers', 'campaigns'],
     icon: '<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-7 8-7s8 3 8 7"/>' },
@@ -12111,7 +12116,7 @@ var APPS = [
   { id: 'settings', name: 'Settings', color: '#5f6b7a', views: ['settings', 'tools'],
     icon: '<circle cx="12" cy="12" r="3.2"/><path d="M12 2.500v3M12 18.500v3M2.500 12h3M18.500 12h3M5.300 5.300l2.100 2.100M16.600 16.600l2.100 2.100M5.300 18.700l2.100-2.100M16.600 7.400l2.100-2.100"/>' }
 ];
-var VIEW_NAMES = { invoice: 'New invoice', sales: 'Invoices', weborders: 'Web orders', quotes: 'Quotations', customers: 'Customers', campaigns: 'Campaigns',
+var VIEW_NAMES = { invoice: 'New invoice', sales: 'Invoices', weborders: 'Web orders', quotes: 'Quotations', repairs: 'Repairs', customers: 'Customers', campaigns: 'Campaigns',
                    products: 'Products', stock: 'Stock', costs: 'Product cost', profit: 'Profitability', expenses: 'Expenses', capital: 'Capital', cash: 'Money', suppliers: 'Suppliers',
                    settings: 'Settings', tools: 'Maintenance', dash: 'Dashboard', home: 'Home' };
 var VIEW_COUNT = { invoice: 'cCart', sales: 'cSend', weborders: 'cWeb', costs: 'cCosts' };
@@ -12139,6 +12144,7 @@ function crumbs() {
   if (VIEW === 'customers' && CUSP.key) rec = (CUSP.data && CUSP.data.name) || 'Customer';
   if (VIEW === 'products' && PRODP.sku) rec = (PRODP.data && PRODP.data.name) || PRODP.sku;
   if (VIEW === 'suppliers' && SUPP.name) rec = SUPP.name;
+  if (VIEW === 'repairs' && JOBP.no) rec = JOBP.no;
   if (VIEW === 'settings') { var st = SET_TABS.filter(function (t) { return t[0] === SET_TAB; })[0]; if (st) rec = st[1]; }
   if (VIEW === 'capital' && CAP_TAB === 'partner') rec = 'Partnership';
   if (rec) out.push({ t: rec });
@@ -12717,7 +12723,7 @@ nav#nav .ic { width:26px; height:26px; flex:0 0 26px; border-radius:7px; backgro
   display:grid; place-items:center; box-shadow:inset 0 -2px 0 rgba(0,0,0,.14); }
 nav#nav .ic svg { width:15px; height:15px; stroke:#fff; stroke-width:2; }
 nav#nav button[data-view="dash"] { --app:#7c6bb1; }
-nav#nav button[data-view="invoice"], nav#nav button[data-view="sales"], nav#nav button[data-view="weborders"], nav#nav button[data-view="quotes"] { --app:#e39a2d; }
+nav#nav button[data-view="invoice"], nav#nav button[data-view="sales"], nav#nav button[data-view="weborders"], nav#nav button[data-view="quotes"], nav#nav button[data-view="repairs"] { --app:#e39a2d; }
 nav#nav button[data-view="customers"], nav#nav button[data-view="campaigns"] { --app:#2a9d8f; }
 nav#nav button[data-view="suppliers"], nav#nav button[data-view="products"], nav#nav button[data-view="stock"], nav#nav button[data-view="costs"] { --app:#c8553d; }
 nav#nav button[data-view="cash"], nav#nav button[data-view="profit"], nav#nav button[data-view="expenses"], nav#nav button[data-view="capital"] { --app:#3a86c8; }
@@ -14656,6 +14662,174 @@ gsHtml = function () {
       (x.status === 'sold' ? esc(x.customer || 'sold') + (x.warrantyUntil ? ' \u00b7 warranty until ' + esc(x.warrantyUntil) : '') : x.status === 'damaged' ? 'damaged' : 'on the shelf') + '</small></button>'; }).join('');
   return /class="empty"/.test(h) && !/gs-h/.test(h) ? block : block + h;
 };
+</script>
+
+<!-- plan D2: repair / service jobs -->
+<style>
+.jobst { display:inline-flex; align-items:center; gap:6px; border-radius:10px; padding:2px 10px; font-size:12px; font-weight:600; }
+.jobst.received { background:var(--warning-soft); color:var(--warning); }
+.jobst.diagnosed, .jobst.waiting { background:var(--series-1-soft); color:var(--series-1); }
+.jobst.repaired { background:var(--good-soft); color:var(--good); }
+.jobst.returned { background:var(--thead); color:var(--muted); }
+.jobst.cancelled { background:var(--critical-soft); color:var(--critical); }
+</style>
+<script>
+var JOBS = null, JOBS_ERR = '', JOBS_TAB = 'open', JOBP = { no: '', data: null, err: null }, JOB_NEW = null, JOB_BUSY = false, JOB_PARTQ = '';
+function loadJobs() {
+  srv('erpJobs', [{}], function (r) { JOBS = r; JOBS_ERR = ''; if (VIEW === 'repairs' && !JOBP.no) repaint(); },
+      function (e) { JOBS_ERR = (e && e.message) || String(e); if (VIEW === 'repairs') repaint(); });
+}
+function loadJob() {
+  var n = JOBP.no;
+  srv('erpJob', [{ jobNo: n }], function (r) { if (JOBP.no !== n) return; JOBP.data = r; JOBP.err = null; if (VIEW === 'repairs') repaint(); },
+      function (e) { if (JOBP.no !== n) return; JOBP.err = (e && e.message) || String(e); if (VIEW === 'repairs') repaint(); });
+}
+function jobDo(name, args, msg, after) {
+  JOB_BUSY = true; repaint();
+  srv(name, args, function (r) {
+    JOB_BUSY = false;
+    if (r && r.job) { if (r.job.jobNo !== JOBP.no) { JOBP = { no: r.job.jobNo, data: r, err: null }; routeSet('repairs', r.job.jobNo, true); } else JOBP.data = r; }
+    JOBS = null; loadJobs(); CAT = null; loadAll(); D = null;
+    if (msg) toast(msg);
+    if (after) after(r);
+    repaint();
+  }, function (e) { JOB_BUSY = false; toast(esc(e && e.message ? e.message : e), true, 12000); repaint(); });
+}
+function jobStatus(j) { return '<span class="jobst ' + esc(j.status) + '">' + esc(j.statusLabel) + '</span>'; }
+function viewRepairs() {
+  if (JOBP.no) return jobPageHtml();
+  var h = '<section><div class="row" style="justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:8px">' +
+    '<div class="tabs" style="margin:0"><button type="button" role="tab" data-jtab="open" aria-selected="' + (JOBS_TAB === 'open') + '">Open' + (JOBS ? ' <span class="tb-c">' + fmt(JOBS.counts.open) + '</span>' : '') + '</button>' +
+    '<button type="button" role="tab" data-jtab="closed" aria-selected="' + (JOBS_TAB === 'closed') + '">Returned and cancelled</button></div>' +
+    '<button class="btn primary" type="button" id="job_new">+ New job</button></div></section>';
+  if (JOB_NEW) h += jobNewHtml();
+  if (JOBS_ERR) return h + '<section><div class="note err"><div class="ico">\u2715</div><div>' + esc(JOBS_ERR) + '</div></div></section>';
+  if (!JOBS) return h + '<div class="loading">Reading the jobs&hellip;</div>';
+  var list = JOBS.jobs.filter(function (j) { return JOBS_TAB === 'open' ? j.open : !j.open; });
+  h += '<section><div class="card"><h2>' + (JOBS_TAB === 'open' ? 'Machines in the shop' : 'Finished jobs') + (JOBS.counts.owed > 0 && JOBS_TAB === 'closed' ? ' <span class="sku">' + fmt(JOBS.counts.owed) + ' still owed</span>' : '') + '</h2>';
+  if (!list.length) h += '<div class="empty">' + (JOBS_TAB === 'open' ? 'Nothing in the shop. Press + New job when a machine comes in.' : 'Nothing finished yet.') + '</div>';
+  else h += '<div class="scroll"><table><thead><tr><th>Job</th><th>Machine</th><th>Customer</th><th>Problem</th><th>Status</th><th class="num">Charge</th><th class="num">Due</th><th class="num">Days</th></tr></thead><tbody>' +
+    list.map(function (j) {
+      return '<tr data-jobopen="' + esc(j.jobNo) + '" style="cursor:pointer"><td class="nm">' + esc(j.jobNo) + '<br><span class="sku">' + esc(j.received) + '</span></td>' +
+        '<td>' + esc(j.item) + (j.serial ? '<br><span class="sku">S/N ' + esc(j.serial) + (j.underWarranty ? ' \u00b7 in warranty' : '') + '</span>' : '') + '</td>' +
+        '<td>' + esc(j.customer) + (j.phone ? '<br><span class="sku">' + esc(j.phone) + '</span>' : '') + '</td><td>' + esc(j.problem.slice(0, 80)) + '</td><td>' + jobStatus(j) + '</td>' +
+        '<td class="num">' + fmt(j.charge) + '</td><td class="num">' + (j.due > 0 ? '<strong style="color:var(--critical)">' + fmt(j.due) + '</strong>' : '') + '</td><td class="num">' + fmt(j.days) + '</td></tr>'; }).join('') +
+    '</tbody></table></div>';
+  return h + '</div></section>';
+}
+function jobNewHtml() {
+  var n = JOB_NEW;
+  return '<section><div class="card"><h2>A machine comes in</h2><div class="sub">Type the serial number first if it has one: a machine sold here fills in the rest and says whether it is under warranty.</div>' +
+    '<div class="fields">' +
+    '<div><label class="f" for="jn_serial">Serial number</label><input class="i" id="jn_serial" value="' + esc(n.serial) + '" placeholder="optional"></div>' +
+    '<div><label class="f" for="jn_item">Machine / item *</label><input class="i" id="jn_item" value="' + esc(n.item) + '" placeholder="e.g. Bambu A1 Mini"></div>' +
+    '<div><label class="f" for="jn_name">Customer *</label><input class="i" id="jn_name" value="' + esc(n.name) + '"></div>' +
+    '<div><label class="f" for="jn_phone">Phone</label><input class="i" id="jn_phone" inputmode="numeric" value="' + esc(n.phone) + '" placeholder="01XXXXXXXXX"></div>' +
+    '<div style="grid-column:1/-1"><label class="f" for="jn_problem">What is wrong *</label><input class="i" id="jn_problem" value="' + esc(n.problem) + '" placeholder="as the customer describes it"></div>' +
+    '<div style="grid-column:1/-1"><label class="f" for="jn_acc">Came with <span class="sku">cable, spool, box\u2026</span></label><input class="i" id="jn_acc" value="' + esc(n.accessories) + '"></div></div>' +
+    '<div class="row" style="margin-top:12px;gap:8px"><button class="btn primary" type="button" id="jn_go"' + (JOB_BUSY ? ' disabled' : '') + '>' + (JOB_BUSY ? 'Opening\u2026' : 'Open the job') + '</button><button class="btn" type="button" id="jn_cancel">Cancel</button></div></div></section>';
+}
+function jobPageHtml() {
+  var back = '<div class="row" style="margin-bottom:10px"><button class="btn small" type="button" id="job_back">\u2190 All jobs</button></div>';
+  if (JOBP.err) return back + '<section><div class="note err"><div class="ico">\u2715</div><div>' + esc(JOBP.err) + '</div></div></section>';
+  if (!JOBP.data) return back + '<div class="loading">Opening the job&hellip;</div>';
+  var d = JOBP.data, j = d.job, cur = OPT ? OPT.currency : 'BDT', can = !!d.canMoney, closed = !j.open;
+  var h = back + '<section><div class="card"><div class="row" style="justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px">' +
+    '<div><h2 style="margin:0">' + esc(j.jobNo) + ' \u00b7 ' + esc(j.item) + '</h2><div class="sub">' + esc(j.customer) + (j.phone ? ' \u00b7 ' + esc(j.phone) : '') + ' \u00b7 came in ' + esc(j.received) + (j.returned ? ' \u00b7 returned ' + esc(j.returned) : ' \u00b7 ' + fmt(j.days) + ' day(s) in the shop') + '</div></div>' + jobStatus(j) + '</div>' +
+    (j.serial ? '<div style="margin-top:8px"><span class="pill' + (j.underWarranty ? ' ok' : '') + '">S/N ' + esc(j.serial) + (j.warrantyUntil ? (j.underWarranty ? ' \u00b7 under warranty until ' : ' \u00b7 warranty ended ') + esc(j.warrantyUntil) : ' \u00b7 no warranty on record') + '</span></div>' : '') +
+    '<div style="margin-top:10px"><label class="f">Problem</label><div>' + esc(j.problem) + '</div>' + (j.accessories ? '<div class="sku">Came with: ' + esc(j.accessories) + '</div>' : '') + '</div></div></section>';
+  // the work
+  h += '<section><div class="card"><h2>The work</h2>' +
+    '<div><label class="f" for="jb_diag">Diagnosis / what was done</label><textarea class="i" id="jb_diag" rows="3"' + (closed ? ' disabled' : '') + '>' + esc(j.diagnosis) + '</textarea></div>' +
+    '<h2 style="margin-top:14px">Parts used' + (j.underWarranty ? ' <span class="sku">under warranty \u2014 priced at 0 unless typed</span>' : '') + '</h2>';
+  if (!j.parts.length) h += '<div class="empty">No part yet.</div>';
+  else h += '<div class="scroll"><table><thead><tr><th>Part</th><th class="num">Qty</th><th class="num">Price each</th><th class="num">Total</th><th></th></tr></thead><tbody>' + j.parts.map(function (p, i) {
+    return '<tr><td class="nm">' + esc(p.name) + '<br><span class="sku">' + esc(p.sku) + '</span></td>' +
+      '<td class="num"><input class="i qty" type="number" min="1" step="1" data-jpq="' + i + '" value="' + esc(String(p.qty)) + '"' + (closed ? ' disabled' : '') + '></td>' +
+      '<td class="num"><input class="i qty" inputmode="decimal" data-jpp="' + i + '" value="' + esc(String(p.price)) + '"' + (closed ? ' disabled' : '') + '></td>' +
+      '<td class="num">' + fmt(p.qty * p.price) + '</td><td class="num">' + (closed ? '' : '<button class="btn small" type="button" data-jpx="' + i + '">\u2715</button>') + '</td></tr>'; }).join('') + '</tbody></table></div>';
+  if (!closed) h += '<div style="margin-top:8px"><input class="i" id="jb_partq" type="search" placeholder="Add a part: search by name or code" value="' + esc(JOB_PARTQ) + '"><div class="results" id="jb_partres"></div></div>';
+  h += '<div class="row" style="margin-top:12px;gap:12px;align-items:flex-end;flex-wrap:wrap">' +
+    '<div style="flex:0 1 160px"><label class="f" for="jb_labour">Labour (' + esc(cur) + ')</label><input class="i" id="jb_labour" inputmode="decimal" value="' + esc(String(j.labour)) + '"' + (closed ? ' disabled' : '') + '></div>' +
+    '<div style="flex:1 1 160px"><label class="f">Charge</label><div style="padding:9px 0"><strong>' + esc(cur) + ' ' + fmt(j.charge) + '</strong> <span class="sku">labour + parts</span></div></div>' +
+    (closed ? '' : '<button class="btn primary" type="button" id="jb_save"' + (JOB_BUSY ? ' disabled' : '') + '>Save</button>') + '</div>';
+  if (!closed) h += '<div class="row" style="margin-top:12px;gap:8px;flex-wrap:wrap">' + ['received', 'diagnosed', 'waiting', 'repaired'].map(function (st) {
+      return '<button class="chip' + (j.status === st ? ' on' : '') + '" type="button" data-jst="' + st + '">' + esc(d.statuses[st]) + '</button>'; }).join('') +
+    '<span style="flex:1"></span><button class="btn primary" type="button" data-jst="returned">Returned to customer</button>' + (can ? '<button class="btn danger" type="button" data-jst="cancelled">Cancel job</button>' : '') + '</div>';
+  else if (can && j.status === 'returned') h += '<div class="row" style="margin-top:12px"><button class="btn small" type="button" data-jst="repaired">Reopen</button></div>';
+  h += '</div></section>';
+  // money
+  h += '<section><div class="card"><h2>Money</h2><div class="list">' +
+    '<div><span>Charge</span><b>' + fmt(j.charge) + '</b></div><div><span>Paid</span><b>' + fmt(j.paid) + '</b></div><div class="lead"><span>Due</span><b' + (j.due > 0 ? ' style="color:var(--critical)"' : '') + '>' + fmt(j.due) + '</b></div></div>';
+  if (d.payments.length) h += '<div class="list" style="margin-top:8px">' + d.payments.map(function (p) { return '<div><span>' + esc(p.when) + ' \u00b7 ' + esc(p.method) + '<span class="sku">' + esc(p.by) + '</span></span><b>' + fmt(p.amount) + '</b></div>'; }).join('') + '</div>';
+  if (can && j.due > 0 && j.status !== 'cancelled') {
+    h += '<div class="row" style="margin-top:12px;gap:8px;align-items:flex-end;flex-wrap:wrap">' +
+      '<div style="flex:0 1 140px"><label class="f" for="jb_amt">Received</label><input class="i" id="jb_amt" inputmode="decimal" value="' + esc(String(j.due)) + '"></div>' +
+      '<div style="flex:0 1 160px"><label class="f" for="jb_method">By</label><select class="i" id="jb_method">' + ((OPT && OPT.paymentMethods) || ['Cash']).map(function (m) { return '<option>' + esc(m) + '</option>'; }).join('') + '</select></div>' +
+      '<button class="btn primary" type="button" id="jb_pay"' + (JOB_BUSY ? ' disabled' : '') + '>Receive payment</button></div>';
+  }
+  h += '</div></section>';
+  return h;
+}
+function jobParts() {
+  var j = JOBP.data.job, rows = document.querySelectorAll('input[data-jpq]'), out = [];
+  for (var i = 0; i < j.parts.length; i++) {
+    var q = document.querySelector('input[data-jpq="' + i + '"]'), pr = document.querySelector('input[data-jpp="' + i + '"]');
+    out.push({ sku: j.parts[i].sku, qty: q ? num(q.value) : j.parts[i].qty, price: pr ? pr.value.trim() : j.parts[i].price });
+  }
+  return out;
+}
+function jobSave(extra) {
+  var j = JOBP.data.job, body = { jobNo: j.jobNo, diagnosis: (el('jb_diag') || {}).value, labour: (el('jb_labour') || { value: j.labour }).value, parts: jobParts() };
+  for (var k in (extra || {})) body[k] = extra[k];
+  jobDo('erpJobSave', [body], 'Saved.');
+}
+function jobPaintParts() {
+  var box = el('jb_partres'); if (!box) return;
+  var q = JOB_PARTQ.trim().toLowerCase();
+  if (!q || !CAT) { box.innerHTML = ''; return; }
+  var rows = CAT.filter(function (p) { return String(p.status || '').toLowerCase() !== 'discontinued' && (p.name + ' ' + p.sku + ' ' + p.brand).toLowerCase().indexOf(q) >= 0; }).slice(0, 12);
+  box.innerHTML = rows.map(function (p) {
+    return '<div class="r' + (p.stock > 0 ? '' : ' dis') + '"' + (p.stock > 0 ? ' data-jpadd="' + esc(p.sku) + '"' : '') + '><div><div class="nm">' + esc(p.name) + '</div><div class="sku">' + esc(p.sku) + ' \u00b7 ' + fmt(p.stock) + ' in stock</div></div><div><strong>' + fmt(p.sell) + '</strong></div></div>'; }).join('') || '<div class="empty">Nothing matches.</div>';
+}
+function wireRepairs() {
+  var v = el('view');
+  function each(sel, ev, fn) { var ns = v.querySelectorAll(sel); for (var i = 0; i < ns.length; i++) ns[i].addEventListener(ev, fn); }
+  each('button[data-jtab]', 'click', function () { JOBS_TAB = this.getAttribute('data-jtab'); repaint(); });
+  each('tr[data-jobopen]', 'click', function () { go('repairs', this.getAttribute('data-jobopen')); });
+  var nb = el('job_new'); if (nb) nb.addEventListener('click', function () { JOB_NEW = JOB_NEW || { serial: '', item: '', name: '', phone: '', problem: '', accessories: '' }; repaint(); setTimeout(function () { var s = el('jn_serial'); if (s) s.focus(); }, 0); });
+  var nc = el('jn_cancel'); if (nc) nc.addEventListener('click', function () { JOB_NEW = null; repaint(); });
+  [['jn_serial', 'serial'], ['jn_item', 'item'], ['jn_name', 'name'], ['jn_phone', 'phone'], ['jn_problem', 'problem'], ['jn_acc', 'accessories']].forEach(function (x) {
+    var n = el(x[0]); if (n) n.addEventListener('input', function () { JOB_NEW[x[1]] = n.value; });
+  });
+  var ng = el('jn_go'); if (ng) ng.addEventListener('click', function () {
+    var n = JOB_NEW;
+    jobDo('erpJobOpen', [{ customer: { name: n.name, phone: n.phone }, item: n.item, serial: n.serial, problem: n.problem, accessories: n.accessories }], 'Job opened.', function () { JOB_NEW = null; });
+  });
+  var bk = el('job_back'); if (bk) bk.addEventListener('click', function () { go('repairs', ''); });
+  var sv = el('jb_save'); if (sv) sv.addEventListener('click', function () { jobSave({}); });
+  each('button[data-jst]', 'click', async function () {
+    var st = this.getAttribute('data-jst');
+    if (st === 'cancelled' && !(await uiConfirm('Cancel this job?\n\nEvery part on it goes back to the shelf and the charge becomes 0.'))) return;
+    if (st === 'returned' && JOBP.data.job.due > 0 && !(await uiConfirm('Hand the machine back with ' + fmt(JOBP.data.job.due) + ' still owed?\n\nThe due stays on the job until it is received.'))) return;
+    jobSave({ status: st });
+  });
+  each('button[data-jpx]', 'click', function () { JOBP.data.job.parts.splice(Number(this.getAttribute('data-jpx')), 1); jobSave({}); });
+  var pq = el('jb_partq');
+  if (pq) { pq.addEventListener('input', function () { JOB_PARTQ = pq.value; jobPaintParts(); }); jobPaintParts(); }
+  var pr = el('jb_partres');
+  if (pr) pr.addEventListener('click', function (ev) {
+    var r = ev.target.closest('[data-jpadd]'); if (!r) return;
+    var sku = r.getAttribute('data-jpadd'), parts = jobParts(), hit = null;
+    parts.forEach(function (p) { if (p.sku === sku) hit = p; });
+    if (hit) hit.qty = num(hit.qty) + 1; else parts.push({ sku: sku, qty: 1 });
+    JOB_PARTQ = '';
+    jobDo('erpJobSave', [{ jobNo: JOBP.data.job.jobNo, parts: parts, diagnosis: (el('jb_diag') || {}).value, labour: (el('jb_labour') || { value: JOBP.data.job.labour }).value }], 'Part added.');
+  });
+  var pay = el('jb_pay'); if (pay) pay.addEventListener('click', function () {
+    jobDo('erpJobPay', [{ jobNo: JOBP.data.job.jobNo, amount: el('jb_amt').value, method: el('jb_method').value }], 'Payment received.');
+  });
+}
 </script>
 </body>
 </html>

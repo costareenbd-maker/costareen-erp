@@ -194,7 +194,7 @@ export async function erpExpenses(ctx, payload) {
 
   // plan A2: what the month earned, exactly as the Profitability screen has it
   const g = await monthNet(ctx, month);
-  const other = g.delivery + g.courierExtra - g.courierShort - g.courier;
+  const other = g.delivery + g.courierExtra - g.courierShort - g.courier + (g.serviceIncome || 0) - (g.serviceParts || 0);
   const pool = await poolExpenses(ctx, month);
   let poolTotal = 0;
   for (const e of pool) { poolTotal += e.amount; const hit = cats.find((c) => c.name === e.category); if (hit) hit.amount += Math.round(e.amount); else cats.push({ name: e.category, amount: Math.round(e.amount) }); }

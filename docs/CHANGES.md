@@ -233,3 +233,10 @@
 - Look up any serial from the top search or the product page: who bought it, when, warranty left. A shareholder can change one sold unit's warranty with a reason.
 - 040_serials.sql (products.serialised, warranty_months; table serials), handlers/serials.js, hooks in invoice.js / sales.js / stock.js / pages.js; tests/d1_test.mjs (34).
 - Not done: a warranty "end date" typed directly at the sale (months only); serials on the quotation; the go-live wipe clears the serials table with the rest (products keep their flags).
+
+2026-10-03 — Plan D2 (repair / service jobs)
+- New screen **Repairs** (Sell): a machine comes in (serial number first - one sold here fills in the machine, the customer and whether it is under warranty), the problem, what it came with. Job numbers JOB-yymmdd-nn.
+- On the job: diagnosis, parts (searched from the product list; they leave the shelf when put on and come back when taken off; under warranty they are priced at 0 unless typed), labour, the charge = labour + parts. Status: received → diagnosed → waiting for parts → repaired → returned to customer; cancel (manager) puts every part back.
+- Money: receive payments on the job (manager and up; they land in the money account by payment method); the due stays on the job. Repair income and the parts used go into the profit and loss (and the Expenses screen's net) in the month the machine was returned.
+- 041_service_jobs.sql, handlers/repairs.js (erpJobs, erpJob, erpJobOpen, erpJobSave, erpJobPay, serviceFor), tests/d2_test.mjs (23).
+- Not done: a job slip / receipt to print for the customer; jobs on the customer's page; the P&L screen shows repair income inside the net only (no line of its own yet); the go-live wipe clears jobs.
