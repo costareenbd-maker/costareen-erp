@@ -406,3 +406,10 @@
 
 2026-10-04 — Dashboard: a past day shows its gross profit
 - Picking another day on the Dashboard now shows Revenue, Orders, Units sold and **Gross profit** with its margin (shareholder and owner, the same rule as today's card), worked out the same way as today's (each line's cost at the time of the sale). Others still see the average order. tests/d10_test.mjs.
+
+2026-10-04 — ui-6: account menu, a sidebar that folds to icons, the business's background photo
+- Backup of the design before this: git tag `design-before-ui6` (go back with `git checkout design-before-ui6 -- web/app.html`, build and deploy web).
+- **Account menu** (photo or initial, top right): your photo (tap to change; made small in the browser), name, e-mail, role and business; **Appearance** Light / Auto (follows the phone or computer) / Dark in one place; **Language** English / বাংলা (the quick button in the top bar stays); **Background photo** On / Off for yourself (when the business has one); Colour theme…; **My account** (name, photo, password change for e-mail sign-in, 2-step sign-in, sign out on every device); Help & shortcuts; **Sign out** (replaces "Forget device"). On a phone it opens as a sheet from the bottom.
+- **Sidebar folds to icons**: the « / » button at the top next to the business name; folded, each icon shows its name when pointed at and the counts (e.g. Web orders 14) stay on the icons; each device remembers its choice; phones keep their slide-in menu.
+- **Background photo** (Settings → Business, owner or manager): a photo for the business behind the screens. Cards, tables and forms stay solid so text is always readable; the photo shows around them under a soft layer in the page's own colour (Subtle / Medium / Strong), lightly blurred; titles over it get a shadow. Made small in the browser (≤ 1600 px). Each person can switch it off for themselves.
+- 052_look_photos.sql (profiles.avatar, erp_prefs.bg_off), shell.js erpProfile/erpProfileSave/erpBg/erpBgSave/erpBgOff, erpSetTheme takes "auto"; tests/u6_test.mjs.

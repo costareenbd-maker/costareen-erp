@@ -12,7 +12,8 @@ export async function erpGetTheme(ctx) {
 }
 
 export async function erpSetTheme(ctx, t) {
-  const v = String(t || '').toLowerCase() === 'light' ? 'light' : 'dark';
+  const w = String(t || '').toLowerCase();
+  const v = w === 'light' || w === 'auto' ? w : 'dark';   // auto = follow the phone or computer
   await ctx.tx`insert into erp_prefs (user_id, theme) values (${ctx.s.userId}, ${v})
                on conflict (user_id) do update set theme = excluded.theme`;
   return { ok: true, theme: v };
@@ -74,6 +75,61 @@ export async function erpDocLang(ctx, lang) {
   if (v !== 'en' && v !== 'bn') throw new Error('That language is not offered.');
   await setConfig(ctx, 'doc_lang', v);
   return { lang: v };
+}
+
+// ---- ui-6: my account (name, photo) and the business's background photo
+const IMG = /^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/=]+$/;
+/** Who I am, for the account menu. */
+export async function erpProfile(ctx) {
+  const p = (await ctx.sql`select email, full_name, avatar from profiles where id = ${ctx.s.userId}`)[0] || {};
+  const pr = (await ctx.sql`select bg_off from erp_prefs where user_id = ${ctx.s.userId}`)[0] || {};
+  return { name: String(p.full_name || ctx.s.name || '').trim(), email: String(p.email || '').trim(), avatar: p.avatar || '', role: ctx.s.role,
+           roleLabel: ctx.s.roleLabel || ctx.s.role, business: ctx.s.businessName || '', bgOff: !!pr.bg_off };
+}
+/** {name} and/or {avatar} ('' removes the photo). The photo is made small on the page first. */
+export async function erpProfileSave(ctx, payload) {
+  payload = payload || {};
+  if (payload.name !== undefined) {
+    const n = String(payload.name).trim().replace(/\s+/g, ' ');
+    if (!n || n.length > 80) throw new Error('Type your name (up to 80 letters).');
+    await ctx.sql`insert into profiles (id, full_name) values (${ctx.s.userId}, ${n}) on conflict (id) do update set full_name = excluded.full_name`;
+  }
+  if (payload.avatar !== undefined) {
+    const a = String(payload.avatar || '');
+    if (a && (!IMG.test(a) || a.length > 120000)) throw new Error('That photo could not be used. Try another one.');
+    await ctx.sql`insert into profiles (id, avatar) values (${ctx.s.userId}, ${a || null}) on conflict (id) do update set avatar = excluded.avatar`;
+  }
+  return erpProfile(ctx);
+}
+/** The business's background photo: {photo, strength}, and whether I switched it off for myself. */
+export async function erpBg(ctx) {
+  const { getConfig } = await import('../lib/ext.js');
+  const pr = (await ctx.sql`select bg_off from erp_prefs where user_id = ${ctx.s.userId}`)[0] || {};
+  return { photo: String(await getConfig(ctx, 'bg_photo', '')) || '', strength: String(await getConfig(ctx, 'bg_strength', 'medium')) || 'medium', off: !!pr.bg_off };
+}
+/** Owner or manager: {photo} ('' removes it) and/or {strength: subtle|medium|strong}. */
+export async function erpBgSave(ctx, payload) {
+  const { setConfig } = await import('../lib/ext.js');
+  const { roleAtLeast } = await import('../allow.js');
+  if (!roleAtLeast(ctx.s.role, 'manager')) throw new Error('Only a manager or the owner changes the background photo.');
+  payload = payload || {};
+  if (payload.photo !== undefined) {
+    const ph = String(payload.photo || '');
+    if (ph && (!IMG.test(ph) || ph.length > 700000)) throw new Error('That photo could not be used. Try another one.');
+    await setConfig(ctx, 'bg_photo', ph);
+  }
+  if (payload.strength !== undefined) {
+    const st = String(payload.strength);
+    if (!['subtle', 'medium', 'strong'].includes(st)) throw new Error('Subtle, medium or strong?');
+    await setConfig(ctx, 'bg_strength', st);
+  }
+  return erpBg(ctx);
+}
+/** Switch the background photo off (or on) for myself only. */
+export async function erpBgOff(ctx, payload) {
+  const off = !!(payload && payload.off);
+  await ctx.sql`insert into erp_prefs (user_id, bg_off) values (${ctx.s.userId}, ${off}) on conflict (user_id) do update set bg_off = excluded.bg_off`;
+  return erpBg(ctx);
 }
 
 /** This person's screen language: 'en' or 'bn'. */
