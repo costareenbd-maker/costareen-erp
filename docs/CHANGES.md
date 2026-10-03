@@ -487,3 +487,15 @@
 - Specials redrawn: whip with glow, spinning spool with trail, fire dash, resin blob + bubbling puddle, layer wall printed by a moving nozzle, support pillars printed layer by layer, laser with glow, slam shockwave, Print Blast as a scrolling stripe beam with a charging ball of filament.
 - The computer is gentler at level 1 (damage ×0.75) and rises 8% per level; combos, sweeps, jump-ins and jumping over sweeps at higher levels.
 - Checked with captured frames (kick, blast, combo, pillars) and a scripted lesson run.
+
+## game-5 — Brawl v3: smarter computer, rounds, supers, sound, endless (2026-10-04)
+- The computer reads your attacks (reaction time and accuracy rise with the level and the Easy/Normal/Hard choice): blocks, jumps over sweeps and spools, steps back from big moves, jabs through slow moves, punishes after a block, breaks combos with 25 power ("BREAK!"), escapes corners when low, keeps distance if it has a ranged special, sweeps when you block high, and remembers if you spam kicks.
+- Rounds: best of 3 per level, 60 s timer (time up: more health wins), round dots, "PERFECT!".
+- Each fighter has his own super (F at MAX) with a dark-screen banner: Whip Storm, Spool Storm, Inferno Rush, Resin Flood, Wall Crush, Mega Pillar, Laser Sweep, Earthquake, Speed Print 1000; the boss: Spaghetti Storm.
+- Brutal (cartoon, no blood): juggles in the air, wall splat off the floor edge, dizzy stars after 3 heavy hits, sweat drops, floor cracks, camera zoom on heavy hits, slow-motion "FINISH!", combo counter.
+- Better bodies: thick shaded limbs, broad-shouldered torso, fists, shoes, belt; outfits T-shirt, panjabi, vest, tracksuit, suit with tie.
+- Taunts before each fight (Banglish), shown on the select screen too.
+- Sound made in code (no files): hits, blocks, whooshes, jumps, super, K.O. bell, round jingle and a low beat while fighting; off by default, M or the speaker turns it on.
+- Endless mode (select screen: Story / Endless): one round each, health carries over (+35), the boss every 6th fight, damage keeps rising; best streak kept per device. Champion screen with confetti.
+- fight.js 87 KB (26 KB downloaded), still only when the Brawl tab opens.
+- Checked: all 9 supers deal damage (scripted), level-5 computer beat a button-mashing script, endless streak and health carry-over, sound on/off without errors, captured frames.
