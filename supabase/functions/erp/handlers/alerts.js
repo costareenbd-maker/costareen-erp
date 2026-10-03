@@ -13,6 +13,8 @@ import { formatDate } from '../lib/time.js';
 import { getConfig, setConfig } from '../lib/ext.js';
 import { erpDevices } from './settings.js';
 import { waNumber, evoCall, erpEvoStatus } from './campaigns.js';
+import { moneyAlerts } from './risk.js';
+import { roleAtLeast } from '../allow.js';
 
 const str = (v) => String(v == null ? '' : v).trim();
 const JOB_WORDS = { 'nightly:steadfast': 'The nightly Steadfast check', 'nightly:backup': 'The nightly backup',
@@ -22,6 +24,10 @@ const JOB_WORDS = { 'nightly:steadfast': 'The nightly Steadfast check', 'nightly
 export async function alertList(ctx) {
   const out = [];
   const part = async (fn) => { try { await ctx.tx.savepoint(fn); } catch (_) { /* one part failing must not hide the others */ } };
+  // money first (plan: no money lost), each rule decides who sees it
+  await part(async () => { for (const a of await moneyAlerts(ctx, ctx.s.role)) out.push(a); });
+  // the system's own health stays with shareholders and the owner
+  if (!roleAtLeast(ctx.s.role, 'shareholder')) return out;
 
   await part(async () => {
     const d = await erpDevices(ctx);
@@ -70,15 +76,17 @@ export async function alertList(ctx) {
 
 export async function erpAlerts(ctx) {
   const alerts = await alertList(ctx);
-  const out = { alerts, count: alerts.filter((a) => a.level !== 'info').length };
+  const out = { alerts, count: alerts.filter((a) => a.level !== 'info').length, canRules: ctx.s.role === 'owner' };
   if (ctx.s.role === 'owner') out.phone = str(await getConfig(ctx, 'alert_phone', ''));
   return out;
 }
 
-/** The number alerts are also sent to on WhatsApp. Empty switches that off. */
+/** The numbers alerts are also sent to on WhatsApp (up to three, separated by commas). Empty switches that off. */
 export async function erpAlertPhone(ctx, payload) {
-  const raw = str(payload && payload.phone);
-  if (raw && !waNumber(raw)) throw new Error('Type an 11-digit mobile number, or a number abroad with + and its country code.');
+  const list = str(payload && payload.phone).split(/[,;]+/).map(str).filter(Boolean);
+  if (list.length > 3) throw new Error('At most three numbers.');
+  for (const n of list) if (!waNumber(n)) throw new Error('"' + n + '" is not a mobile number. Type 11 digits, or + and the country code for a number abroad.');
+  const raw = list.join(', ');
   await setConfig(ctx, 'alert_phone', raw);
   let ready = false;
   if (raw) { try { ready = !!(await erpEvoStatus(ctx)).connected; } catch (_) { ready = false; } }
@@ -87,9 +95,10 @@ export async function erpAlertPhone(ctx, payload) {
 
 /** Timer: send what is new to the owner's WhatsApp, once each. */
 export async function alertsPush(ctx) {
-  const phone = waNumber(await getConfig(ctx, 'alert_phone', ''));
-  if (!phone) return { skipped: 'no number' };
-  const list = (await alertList(ctx)).filter((a) => a.level !== 'info');
+  const phones = str(await getConfig(ctx, 'alert_phone', '')).split(/[,;]+/).map((n) => waNumber(str(n))).filter(Boolean);
+  if (!phones.length) return { skipped: 'no number' };
+  // money alerts go to WhatsApp only where their rule says so
+  const list = (await alertList(ctx)).filter((a) => a.level !== 'info' && (a.kind ? a.wa : true));
   // what no longer applies may be said again if it comes back after a week
   await ctx.sql`delete from erp_alert_sent where business_id = ${ctx.biz} and sent_at < now() - interval '7 days'`;
   if (!list.length) return { sent: 0 };
@@ -98,9 +107,11 @@ export async function alertsPush(ctx) {
   const fresh = list.filter((a) => !had[a.key]);
   if (!fresh.length) return { sent: 0 };
   const text = str(ctx.s.businessName) + ' ERP — needs your attention:\n' +
-    fresh.slice(0, 8).map((a) => '• ' + a.title + (a.detail ? '\n  ' + a.detail : '')).join('\n') + '\n\nhttps://erp.costareen.com';
-  const r = await evoCall(ctx, 'POST', '/message/sendText', { number: phone, text });
-  if (r.code !== 200 && r.code !== 201) throw new Error('The alert did not go (' + r.code + ').');
+    fresh.slice(0, 12).map((a) => '• ' + a.title + (a.detail ? '\n  ' + a.detail : '')).join('\n') + '\n\nhttps://erp.costareen.com';
+  for (const phone of phones) {
+    const r = await evoCall(ctx, 'POST', '/message/sendText', { number: phone, text });
+    if (r.code !== 200 && r.code !== 201) throw new Error('The alert did not go (' + r.code + ').');
+  }
   for (const a of fresh) {
     await ctx.sql`insert into erp_alert_sent (business_id, key) values (${ctx.biz}, ${a.key}) on conflict do nothing`;
   }

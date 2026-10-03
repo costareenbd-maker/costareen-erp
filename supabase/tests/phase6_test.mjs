@@ -53,8 +53,10 @@ r = await sales('erpCustomerList', [{ orders: 'repeat' }]);
 check('repeat buyers', r.ok && r.result.rows.every((c) => c.orders >= 2), r.result);
 
 // ---------------------------------------------------------------- alerts
+r = await sales('erpAlerts', []);
+check('sales staff get no alerts', !r.ok, r);
 r = await mgr('erpAlerts', []);
-check('alerts are for shareholders and the owner', !r.ok, r);
+check('a manager gets only the money alerts meant for managers - never the system ones', r.ok && r.result.alerts.every((a) => !!a.kind) && r.result.canRules === false, r);
 r = await owner('erpAlerts', []);
 check('nothing to report', r.ok && r.result.count === 0 && r.result.phone === '', r.result);
 await erpCall(deps, { name: 'erpHello', args: [], token: { code: '222222', device: 'new-phone', label: 'Mozilla/5.0 (Linux; Android 14) Chrome/120' } });

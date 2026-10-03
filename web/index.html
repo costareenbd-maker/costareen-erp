@@ -8321,7 +8321,7 @@ function srv(name, args, ok, bad) {
 
 var SRV_ACTIVE = 0, SRV_WRITING = false;
 // the same list the server uses to know a call changes nothing (ERP_READS)
-var SRV_READS = /^(erpBundle|erpHello|erpMe|erpCatalog|erpSales|erpDues|erpCustomers|erpPnl|erpMoney|erpToday|erpDaySales|erpProduct|erpLookupCustomer|erpCustomerAccount|erpCustomerStatement|erpCustomerCredit|erpWebOrders|erpWebOrderInvoices|erpCampaignAudience|erpCampaignList|erpCampaignGet|erpEvoStatus|erpBrandLogo|erpQuoteBoot|erpQuoteList|erpQuoteGet|erpQuoteAsset|erpExpenses|erpCapital|erpBackupStatus|erpAiKeys|erpGetTheme|erpBusinesses|erpStockHistory|erpReorderPlan|erpPoList|erpSfPayoutLines|erpBookedParcels|erpParcelPreview|erpReturnPreview|erpSettingsFull|erpSettingsLists|erpFormOptions|erpAdmin|erpPeople|erpDevices|erpCourierKeyStatus|erpPayReasons|erpDiscontinued|erpAccessWarning|erpBusinessLinks|erpLookupUsage|erpRecentInvoices|erpCourier|erpDashboardData|erpInvoice|erpCustomerPage|erpSearch|erpProductPage|erpPnlMonth|erpExpenseReceiptUrl|erpPartnership|erpPartnerStock|erpSecurity|erpCustomerList|erpAlerts|erpAccessKeys|erpListView|erpCurrencies|erpSharedStock|erpPoolCatalog|erpProductThumbs|erpProductPhotoUrl|erpFamilies|erpNotes|erpNoteFileUrl|erpSerialsFor|erpSerialLookup|erpJobs|erpJob|erpUsers|erpSessions|erpPlatform|erpPlatformErrors|erpCashBook|erpSuppliers|erpSupplierPage)$/;
+var SRV_READS = /^(erpBundle|erpHello|erpMe|erpCatalog|erpSales|erpDues|erpCustomers|erpPnl|erpMoney|erpToday|erpDaySales|erpProduct|erpLookupCustomer|erpCustomerAccount|erpCustomerStatement|erpCustomerCredit|erpWebOrders|erpWebOrderInvoices|erpCampaignAudience|erpCampaignList|erpCampaignGet|erpEvoStatus|erpBrandLogo|erpQuoteBoot|erpQuoteList|erpQuoteGet|erpQuoteAsset|erpExpenses|erpCapital|erpBackupStatus|erpAiKeys|erpGetTheme|erpBusinesses|erpStockHistory|erpReorderPlan|erpPoList|erpSfPayoutLines|erpBookedParcels|erpParcelPreview|erpReturnPreview|erpSettingsFull|erpSettingsLists|erpFormOptions|erpAdmin|erpPeople|erpDevices|erpCourierKeyStatus|erpPayReasons|erpDiscontinued|erpAccessWarning|erpBusinessLinks|erpLookupUsage|erpRecentInvoices|erpCourier|erpDashboardData|erpInvoice|erpCustomerPage|erpSearch|erpProductPage|erpPnlMonth|erpExpenseReceiptUrl|erpPartnership|erpPartnerStock|erpSecurity|erpCustomerList|erpAlerts|erpAccessKeys|erpListView|erpCurrencies|erpSharedStock|erpPoolCatalog|erpProductThumbs|erpProductPhotoUrl|erpFamilies|erpNotes|erpNoteFileUrl|erpSerialsFor|erpSerialLookup|erpJobs|erpJob|erpUsers|erpSessions|erpPlatform|erpPlatformErrors|erpRisks|erpAlertRules|erpCashBook|erpSuppliers|erpSupplierPage)$/;
 function srvPump() {
   if (!SRV_Q.length) return;
   var isRead = SRV_READS.test(SRV_Q[0].name);
@@ -11387,11 +11387,11 @@ function wirePhase4() {
 // a company for a partner, the second step on the sign-in screen
 // =====================================================================
 var SET_TAB = 'business';
-var SET_TABS = [['business', 'Business'], ['lists', 'Lists'], ['users', 'Users'], ['connections', 'Connections'], ['security', 'Security']];
+var SET_TABS = [['business', 'Business'], ['lists', 'Lists'], ['users', 'Users'], ['alerts', 'Alerts'], ['connections', 'Connections'], ['security', 'Security']];
 function setMark(t) { return '<!--tab:' + t + '-->'; }
 function settingsTabsHtml() {
   var owner = ME && ME.role === 'owner';
-  return '<div class="tabs" role="tablist">' + SET_TABS.filter(function (t) { return owner || (t[0] !== 'security' && t[0] !== 'connections' && t[0] !== 'users'); }).map(function (t) {
+  return '<div class="tabs" role="tablist">' + SET_TABS.filter(function (t) { return owner || (t[0] !== 'security' && t[0] !== 'connections' && t[0] !== 'users' && (t[0] !== 'alerts' || (ME && ME.role === 'shareholder'))); }).map(function (t) {
     return '<button type="button" role="tab" data-settab="' + t[0] + '" aria-selected="' + (SET_TAB === t[0]) + '">' + t[1] + '</button>'; }).join('') + '</div>';
 }
 /** Everything Settings draws carries a mark saying which tab it belongs to; only the open tab is shown. */
@@ -11699,7 +11699,7 @@ function custPagerHtml() {
 
 // ------------------------------------------------------------ alerts
 var ALERTS = null, ALERT_OPEN = false;
-function canSeeAlerts() { return !!(ME && (ME.role === 'owner' || ME.role === 'shareholder')); }
+function canSeeAlerts() { return !!(ME && (ME.role === 'owner' || ME.role === 'shareholder' || ME.role === 'manager')); }
 function loadAlerts() {
   var b = el('alertBtn');
   if (!canSeeAlerts()) { if (b) b.style.display = 'none'; return; }
@@ -11717,9 +11717,10 @@ function alertPanelHtml() {
   else h += ALERTS.alerts.map(function (a, i) {
     return '<div class="al-item ' + esc(a.level) + '"><span class="dot"></span><div style="flex:1"><div class="t">' + esc(a.title) + '</div>' +
       (a.detail ? '<div class="d">' + esc(a.detail) + '</div>' : '') +
-      (a.go ? '<button class="linkbtn" type="button" data-algo="' + esc(a.go) + '" style="font-size:12.5px;margin-top:4px">' + (a.go === 'people' ? 'Open staff and devices' : 'Open backups') + '</button>' : '') + '</div></div>'; }).join('');
+      (a.go ? '<button class="linkbtn" type="button" data-algo="' + esc(a.go) + '" style="font-size:12.5px;margin-top:4px">' + alertGoWord(a.go) + '</button>' : '') + '</div></div>'; }).join('');
   if (ME && ME.role === 'owner') {
-    h += '<div style="border-top:1px solid var(--ring);margin-top:10px;padding-top:10px"><label class="f" for="al_phone">Also send these to WhatsApp</label>' +
+    h += '<div style="margin-top:10px"><button class="btn small" type="button" data-algo="alerts">Choose which alerts…</button></div>';
+    h += '<div style="border-top:1px solid var(--ring);margin-top:10px;padding-top:10px"><label class="f" for="al_phone">Also send these to WhatsApp <span class="sku">up to 3 numbers, commas between</span></label>' +
       '<div class="row" style="gap:6px"><input class="i" id="al_phone" inputmode="tel" placeholder="01XXXXXXXXX — empty = off" value="' + esc(ALERTS.phone || '') + '" style="flex:1 1 150px">' +
       '<button class="btn small" type="button" id="al_save">Save</button></div>' +
       '<div class="sub" style="margin-top:6px">Sent from this business’s own WhatsApp link (Settings → Connections), within ten minutes, once each.</div></div>';
@@ -11733,7 +11734,10 @@ function paintAlerts() {
   p.innerHTML = alertPanelHtml();
   var gos = p.querySelectorAll('button[data-algo]');
   for (var i = 0; i < gos.length; i++) gos[i].addEventListener('click', function () {
-    SET_TAB = this.getAttribute('data-algo'); ALERT_OPEN = false; paintAlerts();
+    var g = this.getAttribute('data-algo'); ALERT_OPEN = false; paintAlerts();
+    if (/^sales:/.test(g)) { openInvoicePage(g.slice(6)); return; }
+    if (/^(cash|stock|weborders|sales|customers)$/.test(g)) { go(g); return; }
+    SET_TAB = g;
     if (SET_TAB === 'security') { SEC = null; }
     go('settings');
   });
@@ -15204,6 +15208,121 @@ function wirePlatform() {
   });
   var ec = el('pl_errclose'); if (ec) ec.addEventListener('click', function () { PLAT_ERRS = null; repaint(); });
 }
+</script>
+
+<!-- no money lost: Sales "unpaid and at risk" box, money alerts, alert rules -->
+<style>
+.risk .rk { display:flex; gap:10px; flex-wrap:wrap; margin:8px 0 10px; }
+.risk .rk div { flex:1 1 130px; border:1px solid var(--ring); border-radius:6px; padding:8px 10px; }
+.risk .rk b { display:block; font-size:18px; font-variant-numeric:tabular-nums; }
+.risk .rk span { font-size:12px; color:var(--muted); }
+.risk .rk .bad b { color:var(--critical); }
+.risk .rk .warn b { color:var(--warning); }
+</style>
+<script>
+function alertGoWord(g) {
+  if (/^sales:/.test(g)) return 'Open ' + g.slice(6);
+  return { people: 'Open staff and devices', security: 'Open backups', cash: 'Open Money', stock: 'Open Stock', weborders: 'Open Web orders', alerts: 'Choose which alerts\u2026' }[g] || 'Open';
+}
+var RISK = null, RISK_TAB = 'overdue', RISK_OPEN = true;
+function loadRisks() {
+  if (!ME || !{ manager: 1, shareholder: 1, owner: 1 }[ME.role]) return;
+  srv('erpRisks', [], function (r) { RISK = r; if (VIEW === 'sales' && !INVP.no) repaint(); }, function () {});
+}
+function riskBoxHtml() {
+  var r = RISK, cur = OPT ? OPT.currency : 'BDT';
+  if (!r) { loadRisks(); return ''; }
+  var t = r.totals;
+  var calm = !t.over7 && !r.payoutLate.length && !r.returnWaiting.length && !r.webWaiting.length;
+  var tabs = [['overdue', 'Unpaid', r.overdueCount], ['payout', 'Courier not paid', r.payoutLate.length], ['back', 'Came back', r.returnWaiting.length], ['web', 'Website orders', r.webWaiting.length]];
+  var h = '<section><div class="card risk" style="border-color:var(' + (calm ? '--good' : '--critical') + ')"><div class="row" style="justify-content:space-between;align-items:center"><h2 style="margin:0">Unpaid and at risk' +
+    (calm ? ' <span class="pill ok">nothing at risk</span>' : '') + '</h2>' +
+    '<button class="btn small" type="button" id="rk_toggle">' + (RISK_OPEN ? 'Hide' : 'Show') + '</button></div>' +
+    '<div class="rk"><div><b>' + fmt(t.owed) + '</b><span>owed in all</span></div><div class="warn"><b>' + fmt(t.over30) + '</b><span>over 30 days</span></div>' +
+    '<div class="bad"><b>' + fmt(t.over60) + '</b><span>over 60 days</span></div><div class="warn"><b>' + fmt(t.payoutLate) + '</b><span>delivered, Steadfast has not paid (' + fmt(r.rules.payoutDays) + '+ days)</span></div>' +
+    (t.returnWaiting ? '<div class="bad"><b>' + fmt(t.returnWaiting) + '</b><span>came back, goods not taken back</span></div>' : '') + '</div>';
+  if (!RISK_OPEN) return h + '</div></section>';
+  h += '<div class="chips" style="margin:0 0 8px">' + tabs.map(function (x) { return '<button class="chip' + (RISK_TAB === x[0] ? ' on' : '') + '" type="button" data-rktab="' + x[0] + '">' + esc(x[1]) + ' <span class="sku">' + fmt(x[2]) + '</span></button>'; }).join('') + '</div>';
+  var rows = '', empty = '';
+  if (RISK_TAB === 'overdue') {
+    empty = 'Every invoice is paid.';
+    rows = r.overdue.map(function (i) {
+      var wa = (typeof waLink === 'function' && typeof dueMessage === 'function' && i.phone) ? waLink(i.phone, dueMessage({ name: i.customer, due: i.due, oldest: i.days, invoices: 1 }, cur)) : '';
+      return '<tr><td class="nm"><button class="linkbtn" type="button" data-openinv="' + esc(i.invoice) + '">' + esc(i.invoice) + '</button><br><span class="sku">' + esc(i.when) + '</span></td>' +
+        '<td>' + esc(i.customer) + (i.phone ? '<br><span class="sku">' + esc(i.phone) + '</span>' : '') + '</td><td class="num"><strong>' + fmt(i.due) + '</strong></td>' +
+        '<td class="num">' + (typeof dueAge === 'function' ? dueAge(i.days) : fmt(i.days) + 'd') + '</td><td class="num" style="white-space:nowrap">' +
+        (wa ? '<a class="btn small primary" href="' + esc(wa) + '" target="_blank" rel="noopener" data-rkwa="1" data-rphone="' + esc(i.phone) + '" data-rname="' + esc(i.customer) + '" data-rdue="' + esc(i.due) + '">WhatsApp</a> ' : '') +
+        '<button class="btn small" type="button" data-cdue="1" data-cphone="' + esc(i.phone) + '" data-cname="' + esc(i.customer) + '">Receive / adjust due</button></td></tr>'; }).join('');
+    if (r.overdueCount > r.overdue.length) rows += '<tr><td colspan="5" class="sku">' + fmt(r.overdueCount - r.overdue.length) + ' more \u2014 filter the list below by "With a due".</td></tr>';
+  } else if (RISK_TAB === 'payout') {
+    empty = 'Every delivered parcel has been paid out.';
+    rows = r.payoutLate.map(function (p) { return '<tr><td class="nm"><button class="linkbtn" type="button" data-openinv="' + esc(p.invoice) + '">' + esc(p.invoice) + '</button></td><td>' + esc(p.customer) + '<br><span class="sku">consignment ' + esc(p.consignment) + '</span></td>' +
+      '<td class="num"><strong>' + fmt(p.amount) + '</strong></td><td class="num">' + fmt(p.days) + 'd</td><td><span class="sku">delivered ' + esc(p.since) + ' \u2014 ask Steadfast</span></td></tr>'; }).join('');
+  } else if (RISK_TAB === 'back') {
+    empty = 'No parcel waiting to be taken back.';
+    rows = r.returnWaiting.map(function (p) { return '<tr><td class="nm"><button class="linkbtn" type="button" data-openinv="' + esc(p.invoice) + '">' + esc(p.invoice) + '</button></td><td>' + esc(p.customer) + '</td>' +
+      '<td class="num"><strong>' + fmt(p.amount) + '</strong></td><td class="num">' + fmt(p.days) + 'd</td><td><span class="sku">courier said it came back ' + esc(p.since) + ' \u2014 open the invoice and press Return when it is on the shelf</span></td></tr>'; }).join('');
+  } else {
+    empty = 'No website order waiting.';
+    rows = r.webWaiting.map(function (w) { return '<tr><td class="nm">' + esc(w.order) + '</td><td>' + esc(w.customer) + '</td><td class="num"><strong>' + fmt(w.amount) + '</strong></td><td class="num">' + fmt(w.hours) + 'h</td>' +
+      '<td><button class="btn small" type="button" data-rkgo="weborders">Open Web orders</button></td></tr>'; }).join('');
+  }
+  h += rows ? '<div class="scroll"><table><thead><tr><th>Invoice</th><th>Customer</th><th class="num">Amount</th><th class="num">Age</th><th></th></tr></thead><tbody>' + rows + '</tbody></table></div>' : '<div class="empty">' + esc(empty) + '</div>';
+  return h + '</div></section>';
+}
+var viewSalesR1 = viewSales;
+viewSales = function () {
+  var h = viewSalesR1();
+  if (INVP.no || !ME || !{ manager: 1, shareholder: 1, owner: 1 }[ME.role]) return h;
+  var box = riskBoxHtml();
+  // under the Excel button and the due box, above the list
+  var at = h.indexOf('<div class="o_lv"');
+  return at < 0 ? box + h : h.slice(0, at) + box + h.slice(at);
+};
+try { window.viewSales = viewSales; } catch (e) {}
+document.addEventListener('click', function (ev) {
+  var t = ev.target; if (!t || !t.getAttribute) return;
+  if (t.id === 'rk_toggle') { RISK_OPEN = !RISK_OPEN; repaint(); return; }
+  var k = t.getAttribute('data-rktab'); if (k) { RISK_TAB = k; repaint(); return; }
+  var g = t.getAttribute('data-rkgo'); if (g) { go(g); return; }
+  if (t.getAttribute('data-rkwa')) srv('erpDueReminded', [{ phone: t.getAttribute('data-rphone'), name: t.getAttribute('data-rname'), due: t.getAttribute('data-rdue') }], function () {}, function () {});
+});
+// money changed: read the box again
+var parcelsChangedR1 = typeof parcelsChanged === 'function' ? parcelsChanged : null;
+parcelsChanged = function () { RISK = null; if (parcelsChangedR1) parcelsChangedR1.apply(this, arguments); };
+
+// ---- Settings → Alerts
+var ARULES = null, ARULES_BUSY = false;
+function aRulesHtml() {
+  if (!ME || !(ME.role === 'owner' || ME.role === 'shareholder')) return '';
+  if (!ARULES) { srv('erpAlertRules', [], function (r) { ARULES = r; if (VIEW === 'settings') repaint(); }, function (e) { toast(esc(e && e.message ? e.message : e), true); }); return '<div class="loading">Reading the alerts&hellip;</div>'; }
+  var ed = ARULES.canEdit, dis = ed ? '' : ' disabled';
+  var whoOpts = function (sel) { return [['owner', 'Owner only'], ['shareholder', 'Shareholders + owner'], ['manager', 'Managers too']].map(function (o) { return '<option value="' + o[0] + '"' + (o[0] === sel ? ' selected' : '') + '>' + o[1] + '</option>'; }).join(''); };
+  var h = '<section><div class="card"><h2>Money alerts</h2><div class="sub">So no money is lost quietly. Each alert shows in the bell (\uD83D\uDD14) for the people chosen, and goes to WhatsApp if ticked ' +
+    '(numbers are set in the bell). Things that already happened are told once; things still open stay in the bell until they are fixed.</div>' +
+    '<div class="scroll"><table><thead><tr><th>On</th><th>Tell me when\u2026</th><th>Threshold</th><th>Who sees it</th><th>WhatsApp</th></tr></thead><tbody>' + ARULES.rules.map(function (x) {
+      return '<tr><td><input type="checkbox" data-arule="' + x.id + '" data-f="on"' + (x.on ? ' checked' : '') + dis + '></td><td>' + esc(x.label) + '</td>' +
+        '<td>' + (x.at === null ? '<span class="sku">\u2014</span>' : '<input class="i qty" inputmode="decimal" data-arule="' + x.id + '" data-f="at" value="' + esc(String(x.at)) + '"' + dis + '> <span class="sku">' + esc(x.unit) + '</span>') + '</td>' +
+        '<td><select class="i" data-arule="' + x.id + '" data-f="who" style="padding:5px"' + dis + '>' + whoOpts(x.who) + '</select></td>' +
+        '<td><input type="checkbox" data-arule="' + x.id + '" data-f="wa"' + (x.wa ? ' checked' : '') + dis + '></td></tr>'; }).join('') + '</tbody></table></div>' +
+    (ed ? '<div class="row" style="margin-top:12px;justify-content:flex-end"><button class="btn primary" type="button" id="ar_save"' + (ARULES_BUSY ? ' disabled' : '') + '>' + (ARULES_BUSY ? 'Saving\u2026' : 'Save') + '</button></div>' : '<div class="sub" style="margin-top:8px">Only the owner changes these.</div>') +
+    '<div class="sub" style="margin-top:10px">Not yet: supplier bills falling due (bills carry no due date yet), and a daily morning summary on WhatsApp.</div></div></section>';
+  return h;
+}
+var settingsPickR1 = settingsPick;
+settingsPick = function (h) { return settingsPickR1(h + setMark('alerts') + aRulesHtml()); };
+document.addEventListener('click', function (ev) {
+  var t = ev.target; if (!t || t.id !== 'ar_save') return;
+  var rules = {};
+  document.querySelectorAll('[data-arule]').forEach(function (n) {
+    var id = n.getAttribute('data-arule'), f = n.getAttribute('data-f');
+    rules[id] = rules[id] || {};
+    rules[id][f] = n.type === 'checkbox' ? n.checked : n.value;
+  });
+  ARULES_BUSY = true; repaint();
+  srv('erpAlertRulesSave', [{ rules: rules }], function (r) { ARULES = r; ARULES_BUSY = false; toast('Alerts saved.'); ALERTS = null; loadAlerts(); repaint(); },
+      function (e) { ARULES_BUSY = false; toast(esc(e && e.message ? e.message : e), true, 12000); repaint(); });
+});
 </script>
 </body>
 </html>

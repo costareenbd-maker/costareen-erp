@@ -271,3 +271,10 @@
 - docs/GOLIVE.md rewritten for the e-mail sign-in system, with a status column of what is done and what is the owner's.
 
 2026-10-03 — Customers: the red "Customers who owe" box now sits at the top of the screen, above the customer list (owner's request).
+
+2026-10-03 — No money lost: the Sales "Unpaid and at risk" box and money alerts
+- **Sales screen, top**: "Unpaid and at risk" - owed in all, over 30 days, over 60 days, delivered but Steadfast has not paid, came back but goods not taken back. Tabs: Unpaid (every unpaid invoice, age-coloured, WhatsApp reminder and Receive / adjust due on each), Courier not paid, Came back, Website orders. Green "nothing at risk" when that is so. Managers and up.
+- **Money alerts** in the bell (managers now see the bell too, but only the money alerts meant for them; system alerts stay with shareholders and the owner): a due turning 7/30/60 days old; a due reduced or increased by hand (who, how much, why); an invoice cancelled or deleted; a sale below cost; a big discount; a money account found short when counted; a parcel delivered but not paid out after N days; a parcel back but its goods not taken back after N days; stock written off over N taka; a website order not entered after N hours.
+- **Settings → Alerts** (owner; shareholders read): each alert on/off, its threshold, who sees it (owner / shareholders / managers too), WhatsApp yes/no. WhatsApp alerts can go to up to three numbers (set in the bell). Things that happened are told once; things still open stay in the bell until fixed.
+- handlers/risk.js (erpRisks, erpAlertRules, erpAlertRulesSave, moneyAlerts), alerts.js (money alerts first, role-filtered; up to 3 numbers), tests/r1_test.mjs (33); phase6_test updated for the new rule (managers get money alerts, never system ones).
+- Not done yet: supplier bills falling due (bills have no due date), the 9 am WhatsApp summary, automatic reminders to customers (round 2).
