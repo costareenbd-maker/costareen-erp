@@ -193,8 +193,8 @@ async function sendReset(email: string) {
   if (!r.ok) throw new Error('mail ' + r.status);
 }
 
-// the sign-in screen is switched off: only a device holding an access key gets in (027)
-const deps = { linkOnly: true, sql, sqlAux, verifyUser, fetch: globalThis.fetch.bind(globalThis), storage, renderPdf, createAuthUser,
+// sign-in by e-mail + password is on again (per-person users); access keys still work for machines and old links
+const deps = { linkOnly: false, sql, sqlAux, verifyUser, fetch: globalThis.fetch.bind(globalThis), storage, renderPdf, createAuthUser,
                createOwner, removeUser, sendReset,
                hookBase: SUPABASE_URL + '/functions/v1/erp' };
 

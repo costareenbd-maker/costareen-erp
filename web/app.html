@@ -647,8 +647,8 @@ var BIZ_READY = true;    // the sheet build is always bound to one business
 var ME = null;
 var ME_MSG = '';
 var GATE_BUSY = false;
-var GATE_TAB = 'staff', GATE_EMAIL = '', GATE_OK = false;   // sign-in screen: Staff (code) or Owner (email)
-try { if (localStorage.getItem('erp_gate_tab') === 'owner') GATE_TAB = 'owner'; } catch (e) {}
+var GATE_TAB = 'owner', GATE_EMAIL = '', GATE_OK = false;   // sign-in screen: Staff (code) or Owner (email)
+try { if (localStorage.getItem('erp_gate_tab') === 'staff') GATE_TAB = 'staff'; } catch (e) {}
 var BIZ = null;          // { businesses:[{id,name}], active, canAdd }
 var NEWBIZ = { name:'', bank:'', logo:null, qr:null };
 // a business run by a partner is a separate draft - it has their people on it
@@ -8319,7 +8319,7 @@ function srv(name, args, ok, bad) {
 
 var SRV_ACTIVE = 0, SRV_WRITING = false;
 // the same list the server uses to know a call changes nothing (ERP_READS)
-var SRV_READS = /^(erpBundle|erpHello|erpMe|erpCatalog|erpSales|erpDues|erpCustomers|erpPnl|erpMoney|erpToday|erpDaySales|erpProduct|erpLookupCustomer|erpCustomerAccount|erpCustomerStatement|erpCustomerCredit|erpWebOrders|erpWebOrderInvoices|erpCampaignAudience|erpCampaignList|erpCampaignGet|erpEvoStatus|erpBrandLogo|erpQuoteBoot|erpQuoteList|erpQuoteGet|erpQuoteAsset|erpExpenses|erpCapital|erpBackupStatus|erpAiKeys|erpGetTheme|erpBusinesses|erpStockHistory|erpReorderPlan|erpPoList|erpSfPayoutLines|erpBookedParcels|erpParcelPreview|erpReturnPreview|erpSettingsFull|erpSettingsLists|erpFormOptions|erpAdmin|erpPeople|erpDevices|erpCourierKeyStatus|erpPayReasons|erpDiscontinued|erpAccessWarning|erpBusinessLinks|erpLookupUsage|erpRecentInvoices|erpCourier|erpDashboardData|erpInvoice|erpCustomerPage|erpSearch|erpProductPage|erpPnlMonth|erpExpenseReceiptUrl|erpPartnership|erpPartnerStock|erpSecurity|erpCustomerList|erpAlerts|erpAccessKeys|erpListView|erpCurrencies|erpSharedStock|erpPoolCatalog|erpProductThumbs|erpProductPhotoUrl|erpFamilies|erpNotes|erpNoteFileUrl|erpSerialsFor|erpSerialLookup|erpJobs|erpJob|erpCashBook|erpSuppliers|erpSupplierPage)$/;
+var SRV_READS = /^(erpBundle|erpHello|erpMe|erpCatalog|erpSales|erpDues|erpCustomers|erpPnl|erpMoney|erpToday|erpDaySales|erpProduct|erpLookupCustomer|erpCustomerAccount|erpCustomerStatement|erpCustomerCredit|erpWebOrders|erpWebOrderInvoices|erpCampaignAudience|erpCampaignList|erpCampaignGet|erpEvoStatus|erpBrandLogo|erpQuoteBoot|erpQuoteList|erpQuoteGet|erpQuoteAsset|erpExpenses|erpCapital|erpBackupStatus|erpAiKeys|erpGetTheme|erpBusinesses|erpStockHistory|erpReorderPlan|erpPoList|erpSfPayoutLines|erpBookedParcels|erpParcelPreview|erpReturnPreview|erpSettingsFull|erpSettingsLists|erpFormOptions|erpAdmin|erpPeople|erpDevices|erpCourierKeyStatus|erpPayReasons|erpDiscontinued|erpAccessWarning|erpBusinessLinks|erpLookupUsage|erpRecentInvoices|erpCourier|erpDashboardData|erpInvoice|erpCustomerPage|erpSearch|erpProductPage|erpPnlMonth|erpExpenseReceiptUrl|erpPartnership|erpPartnerStock|erpSecurity|erpCustomerList|erpAlerts|erpAccessKeys|erpListView|erpCurrencies|erpSharedStock|erpPoolCatalog|erpProductThumbs|erpProductPhotoUrl|erpFamilies|erpNotes|erpNoteFileUrl|erpSerialsFor|erpSerialLookup|erpJobs|erpJob|erpUsers|erpSessions|erpCashBook|erpSuppliers|erpSupplierPage)$/;
 function srvPump() {
   if (!SRV_Q.length) return;
   var isRead = SRV_READS.test(SRV_Q[0].name);
@@ -11382,11 +11382,11 @@ function wirePhase4() {
 // a company for a partner, the second step on the sign-in screen
 // =====================================================================
 var SET_TAB = 'business';
-var SET_TABS = [['business', 'Business'], ['lists', 'Lists'], ['connections', 'Connections'], ['security', 'Security']];
+var SET_TABS = [['business', 'Business'], ['lists', 'Lists'], ['users', 'Users'], ['connections', 'Connections'], ['security', 'Security']];
 function setMark(t) { return '<!--tab:' + t + '-->'; }
 function settingsTabsHtml() {
   var owner = ME && ME.role === 'owner';
-  return '<div class="tabs" role="tablist">' + SET_TABS.filter(function (t) { return owner || (t[0] !== 'security' && t[0] !== 'connections'); }).map(function (t) {
+  return '<div class="tabs" role="tablist">' + SET_TABS.filter(function (t) { return owner || (t[0] !== 'security' && t[0] !== 'connections' && t[0] !== 'users'); }).map(function (t) {
     return '<button type="button" role="tab" data-settab="' + t[0] + '" aria-selected="' + (SET_TAB === t[0]) + '">' + t[1] + '</button>'; }).join('') + '</div>';
 }
 /** Everything Settings draws carries a mark saying which tab it belongs to; only the open tab is shown. */
@@ -11810,7 +11810,7 @@ function gateKeyFrom(text) {
   if (m) return m[1];
   return /^[A-Za-z0-9_-]{40,128}$/.test(t) ? t : '';
 }
-gateScreen = function () {
+var gateScreenLink = function () {
   var mark = String(gateName()).charAt(0).toUpperCase();
   var bad = ME_MSG && !/private system/i.test(ME_MSG);
   return '<div class="gate"><div class="gatecard">' +
@@ -11823,7 +11823,7 @@ gateScreen = function () {
     '<button class="btn primary gatego" type="button" id="gate_link_go"' + (GATE_BUSY ? ' disabled' : '') + '>' + (GATE_BUSY ? 'Checking…' : 'Open') + '</button>' +
     '</div></div>';
 };
-wireGate = function () {
+var wireGateLink = function () {
   var box = el('gate_link'), go = el('gate_link_go');
   function submit() {
     if (GATE_BUSY) return;
@@ -15009,6 +15009,106 @@ document.addEventListener('change', async function (ev) {
   try { XL.rows = await xlReadFile(XL.file); if (!XL.rows.length) XL.err = 'No rows under the heading line.'; }
   catch (e) { XL.err = (e && e.message) || String(e); XL.file = null; }
   repaint();
+});
+</script>
+
+<!-- per-person sign-in: e-mail + password for everyone (Odoo's way); users with roles; sessions -->
+<style>
+.gatetabs { display:none; }
+.gate .sub.gatefoot a { margin-right:14px; }
+.usr .sessions { margin-top:6px; }
+</style>
+<script>
+var GATE_MODE = 'email';
+var gateScreenEmail = gateScreen, wireGateEmail = wireGate;
+gateScreen = function () {
+  if (GATE_MODE === 'link') { var L = gateScreenLink(), at = L.lastIndexOf('</div></div>'); return L.slice(0, at) + '<div class="sub gatefoot" style="margin-top:10px"><a href="#" id="gate_to_email">Sign in with e-mail instead</a></div>' + L.slice(at); }
+  GATE_TAB = 'owner';
+  var h = gateScreenEmail();
+  h = h.replace('<div class="sub">Sign in to the ERP</div>', '<div class="sub">Sign in with your e-mail and password</div>');
+  h = h.replace('<a href="#" id="gate_forgot">Forgot the password?</a>', '<a href="#" id="gate_forgot">Forgot the password?</a><a href="#" id="gate_to_link">Have an access link?</a>');
+  return h;
+};
+wireGate = function () {
+  if (GATE_MODE === 'link') wireGateLink(); else wireGateEmail();
+  var a = el('gate_to_link'); if (a) a.addEventListener('click', function (ev) { ev.preventDefault(); GATE_MODE = 'link'; ME_MSG = ''; paintGate(); });
+  var b = el('gate_to_email'); if (b) b.addEventListener('click', function (ev) { ev.preventDefault(); GATE_MODE = 'email'; ME_MSG = ''; paintGate(); });
+};
+// the first page-load with a key in the address still opens by the key; with a session it opens by the session
+
+// ---- Settings → Users
+var USR = { data: null, err: '', busy: false, inv: { name: '', email: '', role: 'sales' }, open: '', sess: {} };
+function usrLoad() { srv('erpUsers', [], function (r) { USR.data = r; USR.err = ''; if (VIEW === 'settings') repaint(); }, function (e) { USR.err = (e && e.message) || String(e); if (VIEW === 'settings') repaint(); }); }
+function usrHtml() {
+  if (!ME || ME.role !== 'owner') return '';
+  var d = USR.data;
+  var h = '<section><div class="card usr"><h2>Users</h2><div class="sub">Everyone who signs in to ' + esc(gateName()) + ': their own e-mail and password, and a role that decides what they see and do. ' +
+    'Invite someone and they get an e-mail to choose their password. Switch a person off and nothing opens for them any more; their history keeps their name.</div>';
+  if (USR.err) h += '<div class="note err"><div class="ico">\u2715</div><div>' + esc(USR.err) + '</div></div>';
+  if (!d) { if (!USR.err) usrLoad(); return h + '<div class="loading">Reading the users&hellip;</div></div></section>'; }
+  var roleOpts = function (sel) { return d.roles.map(function (r) { return '<option value="' + esc(r.id) + '"' + (sel === r.id ? ' selected' : '') + '>' + esc(r.label) + '</option>'; }).join(''); };
+  h += '<div class="scroll"><table><thead><tr><th>Name</th><th>E-mail</th><th>Role</th><th>Last sign-in</th><th>Devices</th><th></th></tr></thead><tbody>' + d.users.map(function (u) {
+    return '<tr' + (u.active ? '' : ' style="opacity:.55"') + '><td class="nm">' + esc(u.name) + (u.me ? ' <span class="pill">you</span>' : '') + (u.mfa ? ' <span class="pill ok" title="2-step sign-in is on">2FA</span>' : '') + (u.active ? '' : ' <span class="pill out">switched off</span>') + '</td>' +
+      '<td>' + (u.email ? esc(u.email) : '<span class="sku">code login (old way)</span>') + '</td>' +
+      '<td>' + (u.me ? esc(u.roleLabel) : '<select class="i" data-usrrole="' + esc(u.id) + '" style="padding:5px">' + roleOpts(u.role) + '</select>') + '</td>' +
+      '<td><span class="sku">' + esc(u.lastSignIn || 'never') + '</span></td>' +
+      '<td>' + fmt(u.sessions) + ' <button class="btn small" type="button" data-usrsess="' + esc(u.id) + '">' + (USR.open === u.id ? 'Hide' : 'Show') + '</button></td>' +
+      '<td class="num" style="white-space:nowrap">' + (u.me ? '' : (u.email ? '<button class="btn small" type="button" data-usrmail="' + esc(u.id) + '" title="Send the choose-a-password e-mail again">Resend e-mail</button> ' : '') +
+        '<button class="btn small' + (u.active ? ' danger' : ' primary') + '" type="button" data-usractive="' + esc(u.id) + '" data-to="' + (u.active ? '0' : '1') + '">' + (u.active ? 'Switch off' : 'Switch on') + '</button>') + '</td></tr>' +
+      (USR.open === u.id ? '<tr><td colspan="6">' + usrSessHtml(u) + '</td></tr>' : ''); }).join('') + '</tbody></table></div>';
+  var i = USR.inv;
+  h += '<h2 style="margin-top:16px">Invite someone</h2><div class="row" style="gap:8px;align-items:flex-end;flex-wrap:wrap">' +
+    '<div style="flex:1 1 160px"><label class="f" for="ui_name">Name</label><input class="i" id="ui_name" maxlength="80" value="' + esc(i.name) + '"></div>' +
+    '<div style="flex:1 1 220px"><label class="f" for="ui_email">E-mail</label><input class="i" id="ui_email" type="email" inputmode="email" value="' + esc(i.email) + '"></div>' +
+    '<div style="flex:0 1 160px"><label class="f" for="ui_role">Role</label><select class="i" id="ui_role">' + roleOpts(i.role) + '</select></div>' +
+    '<button class="btn primary" type="button" id="ui_go"' + (USR.busy ? ' disabled' : '') + '>' + (USR.busy ? 'Sending\u2026' : 'Invite') + '</button></div>' +
+    '<div class="sub" style="margin-top:8px">Sales: sells, sees stock and customers, no money figures. Manager: also stock, suppliers, repairs, payments. Shareholder: also profit, costs, capital. Owner: everything, including users.</div>';
+  return h + '</div></section>';
+}
+function usrSessHtml(u) {
+  var ss = USR.sess[u.id];
+  if (!ss) { srv('erpSessions', [{ userId: u.id }], function (r) { USR.sess[u.id] = r.sessions; repaint(); }, function (e) { USR.sess[u.id] = []; toast(esc(e && e.message ? e.message : e), true); }); return '<span class="sku">Reading\u2026</span>'; }
+  if (!ss.length) return '<span class="sku">Not signed in anywhere.</span>';
+  return '<div class="list sessions">' + ss.map(function (x) { return '<div><span>' + esc(x.device) + '<span class="sku">since ' + esc(x.started) + ' \u00b7 last seen ' + esc(x.lastSeen) + (x.ip ? ' \u00b7 ' + esc(x.ip) : '') + '</span></span><button class="btn small" type="button" data-sessend="' + esc(x.id) + '" data-u="' + esc(u.id) + '">End</button></div>'; }).join('') +
+    '</div><div style="margin-top:6px"><button class="btn small danger" type="button" data-sessall="' + esc(u.id) + '">Sign out everywhere</button></div>';
+}
+var settingsPickU1 = settingsPick;
+settingsPick = function (h) { return settingsPickU1(h + setMark('users') + usrHtml()); };
+document.addEventListener('click', async function (ev) {
+  var t = ev.target; if (!t || !t.getAttribute) return;
+  function fresh(r) { USR.data = r; USR.busy = false; USR.sess = {}; repaint(); }
+  function bad(e) { USR.busy = false; toast(esc(e && e.message ? e.message : e), true, 12000); repaint(); }
+  if (t.id === 'ui_go') {
+    var inv = { name: el('ui_name').value.trim(), email: el('ui_email').value.trim(), role: el('ui_role').value };
+    if (!inv.name || !inv.email) { toast('Name and e-mail are needed.', true); return; }
+    USR.busy = true; USR.inv = inv; repaint();
+    srv('erpUserInvite', [inv], function (r) { USR.inv = { name: '', email: '', role: 'sales' }; fresh(r);
+      uiAlert(r.invited.mailed ? r.invited.name + ' is invited as ' + r.invited.role + '. An e-mail to choose a password is on its way to ' + r.invited.email + '. It is valid for a limited time; "Resend e-mail" sends a fresh one.'
+        : r.invited.name + ' was added, but the e-mail could not be sent now. Press "Resend e-mail" in a minute, or they can press "Forgot the password?" on the sign-in screen.'); }, bad);
+    return;
+  }
+  var id = t.getAttribute('data-usractive');
+  if (id) {
+    var on = t.getAttribute('data-to') === '1', u = USR.data.users.find(function (x) { return x.id === id; });
+    if (!on && !(await uiConfirm('Switch ' + u.name + ' off?\n\nThey are signed out on every device at once and nothing opens for them until switched on again. Their history keeps their name.'))) return;
+    USR.busy = true; repaint(); srv('erpUserSet', [{ userId: id, active: on }], function (r) { fresh(r); toast(on ? 'Switched on.' : 'Switched off.'); }, bad); return;
+  }
+  id = t.getAttribute('data-usrmail');
+  if (id) { srv('erpUserResend', [{ userId: id }], function (r) { toast('E-mail sent to ' + esc(r.email) + '.'); }, bad); return; }
+  id = t.getAttribute('data-usrsess');
+  if (id) { USR.open = USR.open === id ? '' : id; repaint(); return; }
+  id = t.getAttribute('data-sessend');
+  if (id) { srv('erpSessionEnd', [{ sessionId: id }], function (r) { USR.sess[r.userId] = r.sessions; usrLoad(); }, bad); return; }
+  id = t.getAttribute('data-sessall');
+  if (id) { if (!(await uiConfirm('Sign this person out on every device?'))) return; srv('erpSignOutAll', [{ userId: id }], function (r) { USR.sess[r.userId] = r.sessions; usrLoad(); toast('Signed out everywhere.'); }, bad); return; }
+});
+document.addEventListener('change', function (ev) {
+  var t = ev.target; if (!t || !t.getAttribute) return;
+  var id = t.getAttribute('data-usrrole');
+  if (!id) return;
+  USR.busy = true; repaint();
+  srv('erpUserSet', [{ userId: id, role: t.value }], function (r) { USR.data = r; USR.busy = false; USR.sess = {}; toast('Role changed.'); repaint(); },
+      function (e) { USR.busy = false; toast(esc(e && e.message ? e.message : e), true, 12000); usrLoad(); });
 });
 </script>
 </body>

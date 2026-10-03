@@ -246,3 +246,12 @@
 - Import reads the file in the browser (an .xlsx is unzipped and parsed there, no library), matches columns by their headings loosely ("Sell price", "Price", "sell_price"...), shows what would be added, changed, refused and skipped, and writes only after "Yes". Stock figures in a file are never applied (use Stock count). A manager's file cannot change cost (shareholder and up can). The same customer twice in a file: the later row wins.
 - handlers/excel.js (erpExport, erpImport), tests/d6_test.mjs (26). The xlsx writer is the one Expenses already had.
 - Not done: importing stock counts, invoices or payments from a file (on purpose - those are movements, not lists); Excel buttons on the older non-list screens (Stock, Money) - their data exports from the panel anyway.
+
+2026-10-03 — Per-person sign-in (Odoo's way)
+- Sign-in by **e-mail + password** is the door again for everyone (Supabase Auth; the screen existed and was switched off). "Forgot the password?" e-mails a link to choose a new one - the recovery root when a phone or PC is lost. "Have an access link?" keeps the old link way as a fallback; existing links still open.
+- Settings → **Users** (owner): everyone in the business with role, last sign-in, devices. **Invite** by name + e-mail + role: a login is made (or an existing one found) and an e-mail to choose a password is sent; "Resend e-mail". Change a role from the list. **Switch off** a user: signed out everywhere at once, nothing opens for them, history keeps the name; switch on again. Nobody can switch off or demote themselves; the last owner cannot be removed. Sessions per user with "End" and "Sign out everywhere".
+- Roles now mean what they say for every login: sales / manager / shareholder / owner, enforced by the server (allow.js) and by the database (RLS sees only active memberships).
+- 2-step sign-in (authenticator app) was already under Settings → Security; the Users list shows who has it on.
+- 042_users.sql (memberships.active, member_role/is_member on active only, erp_add_member for e-mail logins, erp_set_member), handlers/users.js, index.ts linkOnly=false, tests/u1_test.mjs (28).
+- Live: the only login is the owner (costareen.bd@gmail.com). Staff still have no logins - invite them under Users before go-live. Old 6-digit code logins (Settings → People) remain for the transition and are to be retired at go-live.
+- Not done: the platform admin panel (next); automatic e-mail when a role changes; a session's access token stays valid up to an hour after "End".

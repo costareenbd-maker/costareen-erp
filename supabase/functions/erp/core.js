@@ -152,7 +152,7 @@ async function activeBusiness(sql, userId) {
   const mem = await sql`
     select m.business_id, m.role, b.name, b.is_pool
     from memberships m join businesses b on b.id = m.business_id
-    where m.user_id = ${userId}
+    where m.user_id = ${userId} and coalesce(m.active, true)
     order by m.created_at`;
   if (!mem.length) throw new Refused('NO_ROLE');
   const pref = await sql`select active_business from erp_prefs where user_id = ${userId}`;
