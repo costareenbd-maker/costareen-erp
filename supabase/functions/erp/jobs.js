@@ -143,6 +143,10 @@ export async function runJob(deps, job) {
         };
       }
     }
+  } else if (job === 'heartbeat') {
+    // a company's copy reports to its provider (lib/control.js); nothing on the provider's own system
+    const { heartbeat } = await import('./lib/control.js');
+    out.heartbeat = await heartbeat(deps);
   } else {
     throw new Error('Unknown job: ' + job);
   }

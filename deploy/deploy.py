@@ -9,6 +9,7 @@
     python deploy.py web         # build web/index.html and publish to Cloudflare Pages
     python deploy.py domain      # attach erp.costareen.com to the Pages project
     python deploy.py cron        # nightly / 10-min campaigns / 15-min website sync timers
+    python deploy.py release     # keep this version for the installer (every company's copy is built from it)
 
 Each step prints what it did and stops at the first error.
 """
@@ -134,12 +135,34 @@ def step_cron():
     q = open(os.path.join(ROOT, 'supabase', 'deploy', 'cron.sql'), encoding='utf-8').read()
     q = q.replace('__FN_URL__', 'https://%s.supabase.co/functions/v1/erp' % REF).replace('__CRON_KEY__', key)
     sql(q)
-    print('timers installed: erp-nightly 03:00 Dhaka, erp-campaigns and erp-alerts every 10 min, erp-websync every 15 min, erp-deliveries every hour, erp-drive every 10 min, erp-sheet every 10 min')
+    print('timers installed: erp-nightly 03:00 Dhaka, erp-campaigns and erp-alerts every 10 min, erp-websync every 15 min, erp-deliveries every hour, erp-drive every 10 min, erp-sheet every 10 min, erp-heartbeat hourly (copies only)')
+
+
+def step_release():
+    """Keep a copy of this version's server and database steps on the provider's system: the installer builds every company's copy from it."""
+    files = {}
+    fdir = os.path.join(ROOT, 'supabase', 'functions', 'erp')
+    for base, _, names in os.walk(fdir):
+        for n in names:
+            if n.endswith(('.ts', '.js', '.json')):
+                full = os.path.join(base, n)
+                files['fn/' + os.path.relpath(full, fdir).replace(os.sep, '/')] = open(full, encoding='utf-8').read()
+    for f in sorted(glob.glob(os.path.join(ROOT, 'supabase', '[0-9][0-9][0-9]_*.sql'))):
+        files['sql/' + os.path.basename(f)] = open(f, encoding='utf-8').read()
+    for n in ['storage.sql', 'cron.sql']:
+        files['deploy/' + n] = open(os.path.join(ROOT, 'supabase', 'deploy', n), encoding='utf-8').read()
+    version = subprocess.check_output(['git', 'describe', '--tags', '--always'], cwd=ROOT).decode().strip()
+    body = json.dumps(files)
+    if '$rel$' in body:
+        sys.exit('the release text contains $rel$ - change the quoting')
+    sql("insert into public.erp_releases (version, files) values ('%s', $rel$%s$rel$::jsonb) "
+        "on conflict (version) do update set files = excluded.files, made_at = now()" % (version.replace("'", ""), body))
+    print('release', version, 'published:', len(files), 'files,', len(body) // 1024, 'KB')
 
 
 if __name__ == '__main__':
     if len(sys.argv) < 2:
         sys.exit(__doc__)
     s = sys.argv[1]
-    {'db': step_db, 'function': step_function, 'web': step_web, 'domain': step_domain, 'cron': step_cron}.get(
+    {'db': step_db, 'function': step_function, 'web': step_web, 'domain': step_domain, 'cron': step_cron, 'release': step_release}.get(
         s, lambda: step_secrets(sys.argv[2:]) if s == 'secrets' else sys.exit(__doc__))()

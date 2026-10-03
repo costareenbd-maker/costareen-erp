@@ -6,6 +6,7 @@
 // of the database relies on. Only sign-in, secrets and the error log use the
 // privileged connection, and never with data from another business.
 
+import { controlState } from './lib/control.js';
 import { ERP_ALLOW, ERP_READS, ERP_ROLES, ERP_DISCOUNT_CAP, normRole, roleAtLeast } from './allow.js';
 import { dashForget, dashKeep } from './handlers/bundle.js';
 import { scrub } from './scrub.js';
@@ -246,6 +247,11 @@ export async function erpCall(deps, { name, args, token, authHeader, ip }) {
   const sql = deps.sql;
   name = String(name || '');
 
+  // a company's copy that its provider switched off opens for nobody (lib/control.js)
+  if (deps.install && deps.install.id) {
+    const c = await controlState(sql);
+    if (c.status === 'suspended') return { ok: false, error: 'This ERP has been switched off by its provider' + (c.message ? ': ' + c.message : '.') };
+  }
   if (name === 'erpHello') return { ok: true, result: await hello(sql, deps, token, authHeader, ip) };
 
   const need = ERP_ALLOW[name];

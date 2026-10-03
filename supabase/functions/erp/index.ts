@@ -10,6 +10,8 @@
 
 import { googleCallback } from './handlers/google.js';
 import { shopDoor } from './handlers/shop.js';
+import { installRoute } from './handlers/installer.js';
+import { installFinish } from './lib/control.js';
 import postgres from 'npm:postgres@3.4.5';
 import { connect } from './db.js';
 import { erpCall } from './core.js';
@@ -199,7 +201,10 @@ async function sendReset(email: string) {
 }
 
 // sign-in by e-mail + password is on again (per-person users); access keys still work for machines and old links
-const deps = { google: GOOGLE, smtpNote: SMTP_NOTE, linkOnly: false, sql, sqlAux, verifyUser, fetch: globalThis.fetch.bind(globalThis), storage, renderPdf, createAuthUser,
+// a company's own copy knows who it is and where its provider is (set by the installer); the provider's system has none of these
+const INSTALL = { id: Deno.env.get('ERP_INSTALL_ID') ?? '', key: Deno.env.get('ERP_INSTALL_KEY') ?? '', controlUrl: Deno.env.get('ERP_CONTROL_URL') ?? '', version: Deno.env.get('ERP_RELEASE') ?? '' };
+const INSTALL_ENV = { controlUrl: SUPABASE_URL + '/functions/v1/erp', appUrl: Deno.env.get('ERP_APP_URL') ?? 'https://erp.costareen.com/', renderUrl: RENDER_URL, renderKey: RENDER_KEY };
+const deps = { install: INSTALL, installEnv: INSTALL_ENV, google: GOOGLE, smtpNote: SMTP_NOTE, linkOnly: false, sql, sqlAux, verifyUser, fetch: globalThis.fetch.bind(globalThis), storage, renderPdf, createAuthUser,
                createOwner, removeUser, sendReset,
                hookBase: SUPABASE_URL + '/functions/v1/erp' };
 
@@ -212,6 +217,19 @@ Deno.serve(async (req) => {
     let to = GOOGLE.appUrl + '#/settings?google=failed';
     try { to = await googleCallback(deps, q); } catch (_) { /* told as failed */ }
     return new Response(null, { status: 302, headers: { Location: to } });
+  }
+  // the installer (handlers/installer.js) and a copy's last install step (lib/control.js)
+  {
+    const q = new URL(req.url).searchParams;
+    if (q.get('install') === 'finish' && req.method === 'POST') {
+      let b: any = {}; try { b = await req.json(); } catch (_) { /* empty */ }
+      try { const r = await installFinish(deps, req.headers.get('x-install-key') ?? '', b); return new Response(JSON.stringify(r.body), { status: r.status, headers }); }
+      catch (e) { return new Response(JSON.stringify({ ok: false, error: String((e as Error).message || e) }), { status: 500, headers }); }
+    }
+    if (q.get('install') || q.get('control')) {
+      const r = await installRoute(deps, req);
+      return new Response(JSON.stringify(r.body), { status: r.status, headers });
+    }
   }
   // any website (handlers/shop.js): ?shop=ping|stock|order|products with the x-shop-key header
   if (new URL(req.url).searchParams.get('shop')) {

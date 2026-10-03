@@ -12,6 +12,7 @@ const { connect } = await import(pathToFileURL(path.join(fnDir, 'db.js')));
 const { erpCall } = await import(pathToFileURL(path.join(fnDir, 'core.js')));
 const { shopDoor } = await import(pathToFileURL(path.join(fnDir, 'handlers', 'shop.js')));
 const { asBusiness, owners } = await import(pathToFileURL(path.join(fnDir, 'jobs.js')));
+const { installRoute } = await import(pathToFileURL(path.join(fnDir, 'handlers', 'installer.js')));
 
 const sql = connect(postgres, process.env.DB_URL);
 // fake storage / PDF / outside world from the test harness (nothing leaves this computer)
@@ -41,6 +42,10 @@ http.createServer(async (req, res) => {
   let raw = '';
   for await (const c of req) raw += c;
   // the open door for any website (handlers/shop.js), as index.ts does
+  if (/[?&](install|control)=/.test(req.url)) {
+    const r = await installRoute(deps, new Request('http://localhost:' + PORT + req.url, { method: req.method, headers: req.headers, body: req.method === 'POST' ? raw : undefined }));
+    res.writeHead(r.status, h); return res.end(JSON.stringify(r.body));
+  }
   if (/[?&]shop=/.test(req.url)) {
     const r = await shopDoor(deps, asBusiness, owners, new Request('http://localhost:' + PORT + req.url, { method: req.method, headers: req.headers, body: req.method === 'POST' ? raw : undefined }));
     res.writeHead(r.status, h); return res.end(JSON.stringify(r.body));
