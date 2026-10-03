@@ -15836,9 +15836,10 @@ function t2Help(root) {
   for (var i = 0; i < subs.length; i++) {
     var n = subs[i];
     if (n.closest('details') || n.closest('.c3bar') || n.closest('.lb')) { n.setAttribute('data-t2', '-'); continue; }
-    if (!t2IsTalk(n, 60)) { n.setAttribute('data-t2', '-'); continue; }
-    // a figure inside (counts, money) stays readable on one line
-    var mode = /\d/.test(n.textContent) || n.querySelector('strong, b') ? 'line' : 'hide';
+    if (!t2IsTalk(n, 40)) { n.setAttribute('data-t2', '-'); continue; }
+    // how-to text hides whole behind "?"; only a short status line with figures ("3 of 14 not entered") stays, on one line
+    var txt = (n.textContent || '').replace(/\s+/g, ' ').trim();
+    var mode = /\d/.test(txt) && txt.length < 120 ? 'line' : 'hide';
     var field = n.closest('.fields > div');
     var card = n.closest('.card') || n.parentNode;
     var head = field ? field.querySelector('label.f') : null;
