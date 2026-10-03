@@ -3,7 +3,10 @@
     set SUPABASE_ACCESS_TOKEN=sbp_...
     python start_fresh.py <business id>                 # only counts what is there (changes nothing)
     python start_fresh.py <business id> --keep-lists    # the plan: what would go, what would stay
-    python start_fresh.py <business id> --keep-lists --yes-delete "<business name>"
+    python start_fresh.py <business id> --keep-lists --yes-delete "<business name>" --next-invoice <n>
+
+--next-invoice <n>: the number the first web invoice gets (last sheet invoice + 1), set in the
+    same transaction as the wipe.
 
 What goes (everything that was copied from the sheet for the trial):
     invoices and their lines, payments, returns, stock movements, supplier orders,
@@ -29,8 +32,10 @@ ALWAYS_KEEP = {
     'businesses', 'memberships', 'business_config', 'business_secrets', 'lookups', 'quote_settings',
     'erp_people', 'erp_devices', 'erp_prefs', 'erp_backup_log', 'invoice_counters', 'ai_keys', 'erp_ai_keys',
     'pool_partners', 'pool_invites', 'money_accounts', 'erp_access_keys',
+    # set-up, not history: currencies and their rates, who said STOP to WhatsApp (must survive)
+    'currencies', 'currency_rates', 'campaign_optouts',
 }
-LISTS = {'products', 'customers', 'cost_book', 'expense_items', 'suppliers'}
+LISTS = {'products', 'customers', 'cost_book', 'expense_items', 'suppliers', 'capital_holders', 'quote_items'}
 
 
 def q(sql):
@@ -53,6 +58,14 @@ def main():
         sys.exit(__doc__)
     biz = sys.argv[1]
     keep_lists = '--keep-lists' in sys.argv
+    nxt = None
+    if '--next-invoice' in sys.argv:
+        try:
+            nxt = int(sys.argv[sys.argv.index('--next-invoice') + 1])
+        except (IndexError, ValueError):
+            sys.exit('--next-invoice needs a number, e.g. --next-invoice 1951')
+        if nxt < 1:
+            sys.exit('--next-invoice must be above 0.')
     b = q("select name from businesses where id = '%s'" % biz)
     if not b:
         sys.exit('No such business.')
@@ -72,6 +85,9 @@ def main():
     print('\nSTAYS:')
     for t in stay:
         print('  %-28s %6d rows' % (t, counts[t]))
+    cur = q("select next_number from invoice_counters where business_id = '%s'" % biz)
+    print('\nINVOICE NUMBERS: web counter now %s%s' % (cur[0]['next_number'] if cur else '-',
+          ('; will be set to %d' % nxt) if nxt else ' (add --next-invoice <last sheet number + 1>)'))
     if '--yes-delete' not in sys.argv:
         print('\nNothing was changed. Add  --yes-delete "%s"  to do it.' % name)
         return
@@ -96,6 +112,8 @@ def main():
         stmts.append("delete from public.\"%s\" where business_id = '%s'" % (t, biz))
     if keep_lists:
         stmts.append("update public.customers set total_orders = 0, total_spent = 0, last_order_at = null, last_product = null where business_id = '%s'" % biz)
+    if nxt is not None:
+        stmts.append("update public.invoice_counters set next_number = %d where business_id = '%s'" % (nxt, biz))
     q('begin; ' + '; '.join(stmts) + '; commit;')
 
     after = {r['t']: r['n'] for r in q(' union all '.join(
@@ -104,6 +122,7 @@ def main():
     print('done. emptied %d tables.%s' % (len(go), (' STILL HOLD ROWS: ' + ', '.join(left)) if left else ''))
     stock = q("select count(*)::int n from product_stock ps join products p on p.id = ps.product_id where p.business_id = '%s' and ps.stock <> 0" % biz)
     print('products with stock other than 0:', stock[0]['n'])
+    print('next invoice number:', q("select next_number from invoice_counters where business_id = '%s'" % biz)[0]['next_number'])
 
 
 if __name__ == '__main__':

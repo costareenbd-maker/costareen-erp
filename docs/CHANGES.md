@@ -263,3 +263,9 @@
 - 043_platform.sql (platform_admins - server-only, seeded with costareen.bd@gmail.com; businesses.suspended_at/reason; platform_log()), handlers/platform.js, core.js (suspended businesses refused, erpHello says platform), tests/p1_test.mjs (25). Local trial server makes the local owner a platform admin.
 - Found on live while checking: 14 × "That image could not be read." on Quotations (a logo/signature the imported quotation settings point to is not in storage - re-upload under Quotations > Settings, or ignore), 9 × "Website sync key not set" (the web ERP has no website key yet - set it at go-live). The nightly timer shows "not run yet" only because the timers were re-installed today.
 - Not done: billing / plans (table-ready later), "log in as" (deliberately not built).
+
+2026-10-03 — Go-live preparation (nothing deleted)
+- Dry run of the wipe on live: 19 tables would empty (1,045 invoices, 2,041 stock movements, 481 payments...), products / customers / price book / money accounts / settings stay. Keep-list extended: currencies + rates and WhatsApp opt-outs always stay; shareholders list and saved quotation items stay with --keep-lists.
+- `start_fresh.py --next-invoice <n>` sets the invoice counter in the same transaction as the wipe. Today: sheet's latest invoice INV-20261002-1890, web counter 1884.
+- Sheet script re-read: still build b261003-0358 - nothing new to port.
+- docs/GOLIVE.md rewritten for the e-mail sign-in system, with a status column of what is done and what is the owner's.
