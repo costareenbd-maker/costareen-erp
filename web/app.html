@@ -16907,10 +16907,16 @@ repaint = function () {
 <style>
 #pgame { position:relative; border:1px solid var(--ring); border-radius:12px; background:var(--surface); overflow:hidden; }
 #pgame .pgbar { display:flex; align-items:center; gap:6px; height:34px; padding:0 6px 0 10px; border-bottom:1px solid var(--ring); }
-#pgame .pgtabs { display:flex; gap:4px; flex:1; }
+#pgame .pgtabs { display:flex; gap:4px; }
 #pgame .pgtab { border:0; background:transparent; color:var(--muted); font-size:12.5px; font-weight:600; padding:4px 10px; border-radius:999px; cursor:pointer; }
 #pgame .pgtab.on { background:color-mix(in srgb, var(--series-1) 18%, transparent); color:var(--ink); }
 #pgame canvas { display:block; width:100%; outline:none; cursor:pointer; touch-action:manipulation; }
+#pgame .pghb { margin-left:auto; border:1px solid var(--ring); }
+#pgame .pghelp { position:absolute; left:0; right:0; top:34px; bottom:0; overflow:auto; background:var(--surface); padding:12px 44px 14px 16px; font-size:13px; color:var(--ink-2); z-index:2; }
+#pgame .pghelp h3 { margin:0 0 6px; font-size:15px; color:var(--ink); } #pgame .pghelp h4 { margin:12px 0 4px; font-size:13px; color:var(--ink); }
+#pgame .pghelp p { margin:6px 0; max-width:900px; } #pgame .pghelp table { border-collapse:collapse; margin:4px 0; } #pgame .pghelp td { padding:3px 14px 3px 0; vertical-align:top; }
+#pgame .pghelp kbd { display:inline-block; min-width:18px; padding:1px 6px; border:1px solid var(--ring); border-bottom-width:2px; border-radius:5px; background:var(--grid); font:600 12px ui-monospace, Consolas, monospace; text-align:center; color:var(--ink); }
+#pgame .pghx { position:absolute; top:8px; right:10px; }
 #pgame .pgx { width:24px; height:24px; border-radius:6px; border:0; background:transparent; color:var(--muted); font-size:14px; line-height:24px; cursor:pointer; padding:0; }
 #pgame .pgx:hover { background:var(--grid); color:var(--ink); }
 #pgoff { position:fixed; left:50%; bottom:20px; transform:translateX(-50%); width:min(900px, calc(100vw - 32px)); z-index:9000; background:var(--surface); border:1px solid var(--ring); border-radius:12px; box-shadow:0 12px 40px rgba(0,0,0,.35); padding:12px 14px 14px; }
@@ -16945,7 +16951,7 @@ function makeFightLazy(cv) {
   }
   function fail(e) { note = 'Brawl could not load. Check the internet and open the tab again.'; paint(); }
   if (!FIGHT_JS) FIGHT_JS = new Promise(function (ok, bad) {
-    var sc = document.createElement('script'); sc.src = 'games/fight.js?v=1'; sc.onload = ok; sc.onerror = function () { FIGHT_JS = null; bad(); }; document.head.appendChild(sc);
+    var sc = document.createElement('script'); sc.src = 'games/fight.js?v=5'; sc.onload = ok; sc.onerror = function () { FIGHT_JS = null; bad(); }; document.head.appendChild(sc);
   });
   var roster = FIGHTERS ? Promise.resolve(FIGHTERS) : new Promise(function (ok) { srv('erpFighters', [], function (r) { FIGHTERS = r.fighters || []; ok(FIGHTERS); }, function () { ok([]); }); });
   Promise.all([FIGHT_JS, roster]).then(function (v) {
@@ -16969,9 +16975,25 @@ function makeGame() {
   var bar = document.createElement('div'); bar.className = 'pgbar';
   var tabs = document.createElement('span'); tabs.className = 'pgtabs';
   var x = document.createElement('button'); x.type = 'button'; x.className = 'pgx'; x.title = 'Hide the game on this device'; x.textContent = '✕';
-  bar.appendChild(tabs); bar.appendChild(x);
+  var hb = document.createElement('button'); hb.type = 'button'; hb.className = 'pgtab pghb'; hb.textContent = gw('How to play');
+  var help = document.createElement('div'); help.className = 'pghelp'; help.style.display = 'none';
+  bar.appendChild(tabs); bar.appendChild(hb); bar.appendChild(x);
   var cv = document.createElement('canvas'); cv.tabIndex = 0;
-  wrap.appendChild(bar); wrap.appendChild(cv);
+  wrap.appendChild(bar); wrap.appendChild(cv); wrap.appendChild(help);
+  function helpHtml() {
+    if (pick === 'fight') return window.ERP_FIGHT_HELP ? window.ERP_FIGHT_HELP(FIGHTERS, gw) : '<p>' + gw('Loading…') + '</p>';
+    return '<h3>' + gw('Print Run — how to play') + '</h3><p>' + gw('Click the game first. Your print head runs along the bed by itself.') + '</p><table><tbody>' +
+      '<tr><td><kbd>Space</kbd> <kbd>↑</kbd> ' + gw('or click') + '</td><td>' + gw('jump (hold it: a higher jump)') + '</td></tr>' +
+      '<tr><td><kbd>↓</kbd></td><td>' + gw('duck under stringing and gantry bars') + '</td></tr><tr><td><kbd>Esc</kbd></td><td>' + gw('pause') + '</td></tr></tbody></table>' +
+      '<p>' + gw('Grab the coloured spools: the filament changes colour and the filament bar fills up. Same colour in a row gives ×2, ×3. Silk gold +50, Rainbow doubles the layers for 5 seconds. If the filament runs out, the print stops.') + '</p>' +
+      '<p>' + gw('Jump over blobs, spaghetti, warped corners, loose screws and binder clips (hold the jump for those). The game pauses by itself when you type in the invoice.') + '</p>';
+  }
+  function helpShow(on) {
+    if (on) { strip.pause(); help.innerHTML = '<button type="button" class="pgx pghx" title="Close">✕</button>' + helpHtml(); help.style.display = ''; hb.classList.add('on'); }
+    else { help.style.display = 'none'; hb.classList.remove('on'); }
+  }
+  hb.addEventListener('click', function () { helpShow(help.style.display === 'none'); });
+  help.addEventListener('click', function (ev) { if (ev.target.closest('.pghx')) helpShow(false); });
   var pick = 'printrun'; try { pick = localStorage.getItem('erp_game_pick') || pick; } catch (e) {}
   if (!GAME_LIST.some(function (g) { return g.id === pick; })) pick = GAME_LIST[0].id;
   var strip = { el: wrap, game: null, W: 0, H: 0 };
@@ -16988,7 +17010,7 @@ function makeGame() {
     paintTabs();
     if (strip.W) strip.game.size(strip.W, strip.H - bar.offsetHeight);
   }
-  tabs.addEventListener('click', function (ev) { var b = ev.target.closest('[data-pgpick]'); if (b && b.getAttribute('data-pgpick') !== pick) use(b.getAttribute('data-pgpick')); });
+  tabs.addEventListener('click', function (ev) { var b = ev.target.closest('[data-pgpick]'); if (b && b.getAttribute('data-pgpick') !== pick) { use(b.getAttribute('data-pgpick')); if (help.style.display !== 'none') helpShow(true); } });
   x.addEventListener('click', function () { strip.pause(); try { localStorage.setItem('erp_game_hide', '1'); } catch (e) {} gamePlace(); toast('Game hidden on this device. Maintenance (at the bottom) brings it back.'); });
   strip.size = function (w, h) { strip.W = w; strip.H = h; if (strip.game) strip.game.size(w, Math.max(60, h - (bar.offsetHeight || 30))); };
   strip.pause = function () { if (strip.game) strip.game.pause(); };

@@ -478,3 +478,12 @@
 - Fixed on the way: the account menu read LANG before it existed at page load (ReferenceError on every load since ui-6), which skipped the photo/background reload after switching business and the saved "auto" theme.
 - Tests: g1 +6 checks (fighters read/save/refusals). Scripted play: lost → retry, two level wins, supers on both sides, every special lands.
 - Not done: "Add a fighter" upload in Maintenance (fighters are loaded by script for now); 2-player; sounds.
+
+## game-4 — Brawl v2: how to play, real moves, fight effects (2026-10-04)
+- "How to play" button in the game bar (both games): a window over the game with every key and each fighter's special move; it pauses the game.
+- First fight starts with a lesson (punch, 3-hit combo, kick, block, jump, special, power up, Print Blast) - steps in any order, Esc skips, remembered per device; nobody can be knocked out during it.
+- Bodies are now skeletons (torso, bending arms and legs, fists, boots) tweened between key poses: idle breathing, walk cycle, jab → cross → uppercut combo (presses are buffered, even during the hit freeze), kick, ↓+S sweep, flying kick, block, hit recoil, knockdown + get-up (short invulnerability), double-tap dash, win pose.
+- Effects: hit freeze, screen shake, impact ring + star + sparks, POW/BAM/THUD words, damage numbers, punch trails, dust on landing/dashes, afterimages on dashes and flurries, glowing power aura with rising sparks, slow-motion K.O. with flash, health bars with a draining "ghost", segmented power bar with MAX, face portraits, a workshop background (shelves, printers with moving nozzles and blinking lights, spools, wooden floor).
+- Specials redrawn: whip with glow, spinning spool with trail, fire dash, resin blob + bubbling puddle, layer wall printed by a moving nozzle, support pillars printed layer by layer, laser with glow, slam shockwave, Print Blast as a scrolling stripe beam with a charging ball of filament.
+- The computer is gentler at level 1 (damage ×0.75) and rises 8% per level; combos, sweeps, jump-ins and jumping over sweeps at higher levels.
+- Checked with captured frames (kick, blast, combo, pillars) and a scripted lesson run.
