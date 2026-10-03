@@ -16881,9 +16881,13 @@ repaint = function () {
 
 <!-- game: "Print Run" - a small print-head runner in the empty space under New invoice, and while the internet is down -->
 <style>
-#pgame { position:relative; margin-top:16px; border:1px solid var(--ring); border-radius:10px; background:var(--surface); overflow:hidden; }
+#pgame { position:relative; border:1px solid var(--ring); border-radius:12px; background:var(--surface); overflow:hidden; }
+#pgame .pgbar { display:flex; align-items:center; gap:6px; height:34px; padding:0 6px 0 10px; border-bottom:1px solid var(--ring); }
+#pgame .pgtabs { display:flex; gap:4px; flex:1; }
+#pgame .pgtab { border:0; background:transparent; color:var(--muted); font-size:12.5px; font-weight:600; padding:4px 10px; border-radius:999px; cursor:pointer; }
+#pgame .pgtab.on { background:color-mix(in srgb, var(--series-1) 18%, transparent); color:var(--ink); }
 #pgame canvas { display:block; width:100%; outline:none; cursor:pointer; touch-action:manipulation; }
-#pgame .pgx { position:absolute; top:6px; right:8px; width:24px; height:24px; border-radius:6px; border:0; background:transparent; color:var(--muted); font-size:14px; line-height:24px; cursor:pointer; padding:0; }
+#pgame .pgx { width:24px; height:24px; border-radius:6px; border:0; background:transparent; color:var(--muted); font-size:14px; line-height:24px; cursor:pointer; padding:0; }
 #pgame .pgx:hover { background:var(--grid); color:var(--ink); }
 #pgoff { position:fixed; left:50%; bottom:20px; transform:translateX(-50%); width:min(900px, calc(100vw - 32px)); z-index:9000; background:var(--surface); border:1px solid var(--ring); border-radius:12px; box-shadow:0 12px 40px rgba(0,0,0,.35); padding:12px 14px 14px; }
 #pgoff .pgt { font-size:13px; color:var(--ink-2); margin:0 28px 10px 2px; }
@@ -16892,22 +16896,64 @@ repaint = function () {
 <script>
 var GAMEP = null;            // {who, on} from the server
 var GAME_WORDS = { 'Click to start printing': 'প্রিন্ট শুরু করতে ক্লিক করুন', 'Space or tap: jump \u00b7 \u2193: duck': 'স্পেস বা ট্যাপ: লাফ \u00b7 \u2193: নিচু', 'Paused \u2014 click to carry on': 'থামানো \u2014 চালাতে ক্লিক করুন',
-  'Print failed at layer': 'প্রিন্ট ব্যর্থ, লেয়ার', 'Click or Space to reprint': 'আবার প্রিন্ট করতে ক্লিক বা স্পেস', 'Layer': 'লেয়ার', 'Best': 'সেরা', 'New best!': 'নতুন রেকর্ড!' };
+  'Print failed at layer': 'প্রিন্ট ব্যর্থ, লেয়ার', 'Click or Space to reprint': 'আবার প্রিন্ট করতে ক্লিক বা স্পেস', 'Layer': 'লেয়ার', 'Best': 'সেরা', 'New best!': 'নতুন রেকর্ড!',
+  'Filament': 'ফিলামেন্ট', 'Your print': 'আপনার প্রিন্ট', 'Filament ran out at layer': 'ফিলামেন্ট শেষ, লেয়ার', 'Thermal runaway at layer': 'থার্মাল রানঅ্যাওয়ে, লেয়ার',
+  'Red': 'লাল', 'Blue': 'নীল', 'Green': 'সবুজ', 'Yellow': 'হলুদ', 'Orange': 'কমলা', 'White': 'সাদা', 'Purple': 'বেগুনি', 'Natural': 'ন্যাচারাল', 'Silk gold': 'সিল্ক গোল্ড', 'Rainbow': 'রেইনবো',
+  'Space or tap: jump (hold: higher) · ↓: duck · grab spools before the filament runs out': 'স্পেস বা ট্যাপ: লাফ (চেপে রাখলে উঁচু) · ↓: নিচু · ফিলামেন্ট শেষের আগে স্পুল ধরুন' };
 function gw(t) { return typeof LANG !== 'undefined' && LANG === 'bn' && GAME_WORDS[t] ? GAME_WORDS[t] : t; }
 function gameHidden() { try { return localStorage.getItem('erp_game_hide') === '1'; } catch (e) { return false; } }
 function gameBest(v) { try { if (v !== undefined) localStorage.setItem('erp_game_best', String(v)); return Number(localStorage.getItem('erp_game_best')) || 0; } catch (e) { return 0; } }
 
-/** One game on a canvas. Keys only reach it while the canvas itself has focus, so the invoice never loses a key press. */
+/** The game strip: a bar to switch games (more come later) and the canvas. Keys only reach a game while its canvas has focus, so the invoice never loses a key press. */
+var GAME_LIST = [{ id: 'printrun', name: 'Print Run', make: makePrintRun }];
 function makeGame() {
   var wrap = document.createElement('div'); wrap.id = 'pgame';
-  var cv = document.createElement('canvas'); cv.tabIndex = 0; cv.setAttribute('aria-label', 'Print Run game');
-  var x = document.createElement('button'); x.type = 'button'; x.className = 'pgx'; x.title = 'Hide the game on this device'; x.textContent = '\u2715';
-  wrap.appendChild(cv); wrap.appendChild(x);
-  var g = { el: wrap, state: 'idle', W: 0, H: 0, k: 1, best: gameBest(), newBest: false };
-  var ctx = cv.getContext('2d'), raf = 0, last = 0, duckKey = false, duckTouch = false;
+  var bar = document.createElement('div'); bar.className = 'pgbar';
+  var tabs = document.createElement('span'); tabs.className = 'pgtabs';
+  var x = document.createElement('button'); x.type = 'button'; x.className = 'pgx'; x.title = 'Hide the game on this device'; x.textContent = '✕';
+  bar.appendChild(tabs); bar.appendChild(x);
+  var cv = document.createElement('canvas'); cv.tabIndex = 0;
+  wrap.appendChild(bar); wrap.appendChild(cv);
+  var pick = 'printrun'; try { pick = localStorage.getItem('erp_game_pick') || pick; } catch (e) {}
+  if (!GAME_LIST.some(function (g) { return g.id === pick; })) pick = GAME_LIST[0].id;
+  var strip = { el: wrap, game: null, W: 0, H: 0 };
+  function paintTabs() {
+    tabs.innerHTML = GAME_LIST.map(function (g) { return '<button type="button" class="pgtab' + (g.id === pick ? ' on' : '') + '" data-pgpick="' + g.id + '">' + esc(g.name) + '</button>'; }).join('');
+  }
+  function use(id) {
+    if (strip.game) strip.game.stop();
+    pick = id; try { localStorage.setItem('erp_game_pick', id); } catch (e) {}
+    var def = GAME_LIST.filter(function (g) { return g.id === id; })[0];
+    var fresh = cv.cloneNode(false); cv.parentNode.replaceChild(fresh, cv); cv = fresh;   // a clean canvas: no old listeners
+    cv.setAttribute('aria-label', def.name + ' game');
+    strip.game = def.make(cv);
+    paintTabs();
+    if (strip.W) strip.game.size(strip.W, strip.H - bar.offsetHeight);
+  }
+  tabs.addEventListener('click', function (ev) { var b = ev.target.closest('[data-pgpick]'); if (b && b.getAttribute('data-pgpick') !== pick) use(b.getAttribute('data-pgpick')); });
+  x.addEventListener('click', function () { strip.pause(); try { localStorage.setItem('erp_game_hide', '1'); } catch (e) {} gamePlace(); toast('Game hidden on this device. Settings → Business brings it back.'); });
+  strip.size = function (w, h) { strip.W = w; strip.H = h; if (strip.game) strip.game.size(w, Math.max(60, h - (bar.offsetHeight || 30))); };
+  strip.pause = function () { if (strip.game) strip.game.pause(); };
+  Object.defineProperty(strip, 'state', { get: function () { return strip.game ? strip.game.state() : 'idle'; } });
+  document.addEventListener('visibilitychange', function () { if (document.hidden) strip.pause(); });
+  use(pick);
+  return strip;
+}
+
+/** Print Run: a print head on the bed. Colour spools change the filament (and refill it), real print faults are in the way. */
+function makePrintRun(cv) {
+  var g = { state: 'idle', W: 0, H: 0, k: 1, best: gameBest() };
+  var ctx = cv.getContext('2d'), raf = 0, last = 0, duckKey = false, duckTouch = false, held = false, holdT = 0, dead = false;
+  var FIL = [{ n: 'Red', c: '#ef4444' }, { n: 'Blue', c: '#3b82f6' }, { n: 'Green', c: '#22c55e' }, { n: 'Yellow', c: '#eab308' }, { n: 'Orange', c: '#f97316' }, { n: 'White', c: '#f1f5f9', l: '#94a3b8' }, { n: 'Purple', c: '#a855f7' }];
+  var GOLD = { n: 'Silk gold', c: '#f5c542', gold: true }, RAINBOW = { n: 'Rainbow', rainbow: true };
+  var NATURAL = { n: 'Natural', c: '#e7dcc4', l: '#b8a77f' };
   function col(n, f) { var v = getComputedStyle(document.documentElement).getPropertyValue(n).trim(); return v || f; }
+  function light() { var s = col('--surface', '#222').replace('#', ''); if (s.length === 3) s = s.replace(/./g, '$&$&'); var n = parseInt(s, 16); return isNaN(n) ? false : ((n >> 16) * 0.3 + ((n >> 8) & 255) * 0.59 + (n & 255) * 0.11) > 150; }
+  function fc(f) { if (!f) return '#888'; if (f.rainbow) return 'hsl(' + Math.round((performance.now() / 6) % 360) + ',85%,58%)'; return light() && f.l ? f.l : f.c; }
   function reset() {
-    g.dist = 0; g.bonus = 0; g.y = 0; g.vy = 0; g.obs = []; g.next = 300 * g.k; g.pops = []; g.newBest = false;
+    g.dist = 0; g.bonus = 0; g.y = 0; g.vy = 0; g.obs = []; g.next = 320 * g.k; g.pops = [];
+    g.fil = 1; g.cur = NATURAL; g.segs = [{ at: 0, f: NATURAL }]; g.streak = { n: '', x: 0 }; g.rainbowT = 0; g.lastL = 0;
+    g.newBest = false; g.why = ''; g.shift = 0;
   }
   reset();
   g.size = function (w, h) {
@@ -16922,35 +16968,71 @@ function makeGame() {
   function speed() { return Math.min(950, 380 + layers() * 0.2) * g.k; }
   function ground() { return g.H - 26 * g.k; }
   function ducking() { return (duckKey || duckTouch) && g.y === 0; }
-  function box() {            // the print head: heater block with the nozzle under it
-    var k = g.k, h = ducking() ? 20 * k : 34 * k, w = 22 * k;
-    return { x: 70 * k, y: ground() - g.y - h, w: w, h: h };
-  }
+  var NX = 70;
+  function box() { var k = g.k, h = ducking() ? 20 * k : 34 * k; return { x: NX * k, y: ground() - g.y - h, w: 22 * k, h: h }; }
+  function pickFil() { var r = Math.random(); if (layers() > 80 && r < 0.05) return RAINBOW; if (layers() > 40 && r < 0.11) return GOLD; return FIL[Math.floor(Math.random() * FIL.length)]; }
   function spawn() {
-    var k = g.k, L = layers(), r = Math.random(), o;
-    if (L > 50 && r < 0.22) o = { t: 'gantry', w: 70 * k, h: 9 * k, y: ground() - 25 * k - 9 * k };          // duck under
-    else if (r < 0.34) o = { t: 'spool', w: 18 * k, h: 18 * k, y: ground() - 62 * k - Math.random() * 18 * k }; // jump to catch
-    else if (r < 0.62) o = { t: 'spag', w: (38 + Math.random() * 22) * k, h: 24 * k };                         // jump over
-    else o = { t: 'blob', w: (16 + Math.random() * 10) * k, h: (13 + Math.random() * 9) * k };                    // jump over
-    if (o.y === undefined) o.y = ground() - o.h;
+    var k = g.k, L = layers(), r = Math.random(), gy = ground(), o;
+    var spoolP = 0.2 + (1 - g.fil) * 0.3;                        // running low: more spools come
+    var pool = ['blob', 'spag'];
+    if (L >= 50) pool.push('string'); if (L >= 80) pool.push('gantry'); if (L >= 100) pool.push('warp');
+    if (L >= 150) pool.push('screw'); if (L >= 220) pool.push('clip'); if (L >= 300) pool.push('flame');
+    if (r < spoolP) {
+      var f = pickFil(), hi = Math.random() < 0.3;
+      o = { t: 'spool', f: f, w: 18 * k, h: 18 * k, y: gy - (hi ? 108 : 64) * k - Math.random() * 14 * k };
+    } else {
+      var t = pool[Math.floor(Math.random() * pool.length)];
+      if (t === 'blob') o = { t: t, w: (16 + Math.random() * 10) * k, h: (13 + Math.random() * 9) * k, hue: Math.floor(Math.random() * FIL.length) };
+      else if (t === 'spag') o = { t: t, w: (38 + Math.random() * 22) * k, h: 24 * k, cols: [0, 1, 2].map(function () { return FIL[Math.floor(Math.random() * FIL.length)]; }) };
+      else if (t === 'string') o = { t: t, w: 46 * k, h: gy - 25 * k, y: 0 };                         // hairs from above: duck
+      else if (t === 'gantry') o = { t: t, w: 70 * k, h: 9 * k, y: gy - 34 * k };                        // a bar: duck
+      else if (t === 'warp') o = { t: t, w: 34 * k, h: 44 * k, f: FIL[Math.floor(Math.random() * FIL.length)] };
+      else if (t === 'screw') o = { t: t, w: 14 * k, h: 14 * k, extra: 0.35 };                            // rolls at you
+      else if (t === 'clip') o = { t: t, w: 26 * k, h: 80 * k };                                          // tall: hold jump
+      else o = { t: 'flame', w: 20 * k, h: 140 * k, ph: Math.random() };                                  // on / off
+    }
+    if (o.y === undefined) o.y = gy - o.h;
     o.x = g.W + 10 * k;
     g.obs.push(o);
-    // always room to land before the next one: a jump covers about speed x 0.63 s
-    g.next = speed() * 0.75 + (40 + Math.random() * 320) * g.k + (o.t === 'gantry' ? 40 * g.k : 0);
+    g.next = speed() * 0.8 + (40 + Math.random() * 320) * k + (o.t === 'clip' || o.t === 'flame' ? 60 * k : 0);
   }
+  function flameOn(o) { return ((performance.now() / 1000 + o.ph) % 1.1) < 0.6; }
   function hit(a, b, m) { return a.x + m < b.x + b.w && a.x + a.w - m > b.x && a.y + m < b.y + b.h && a.y + a.h - m > b.y; }
+  function grab(o) {
+    var f = o.f, k = g.k, pts, label;
+    g.fil = Math.min(1, g.fil + (f.gold ? 0.7 : 0.45));
+    if (f.rainbow) { g.rainbowT = 5; pts = 15; label = 'Rainbow ×2 5s'; }
+    else if (f.gold) { pts = 50; label = '+50 Silk'; }
+    else {
+      g.streak = g.streak.n === f.n ? { n: f.n, x: Math.min(3, g.streak.x + 1) } : { n: f.n, x: 1 };
+      pts = 10 * g.streak.x; label = '+' + pts + (g.streak.x > 1 ? ' ×' + g.streak.x : '');
+    }
+    g.bonus += pts;
+    g.cur = f; g.segs.push({ at: g.dist, f: f });
+    g.pops.push({ x: o.x, y: o.y, t: 0.9, s: label, f: f });
+  }
   function step(dt) {
     var k = g.k, v = speed();
     g.dist += v * dt;
-    if (g.y > 0 || g.vy > 0) { g.vy -= 2600 * k * dt; g.y = Math.max(0, g.y + g.vy * dt); if (g.y === 0) g.vy = 0; }
+    // rainbow: the layers printed meanwhile count twice
+    var L = Math.floor(g.dist / (14 * k)); if (g.rainbowT > 0) { g.rainbowT -= dt; g.bonus += Math.max(0, L - g.lastL); if (g.rainbowT <= 0) { g.segs.push({ at: g.dist, f: g.cur.rainbow ? NATURAL : g.cur }); if (g.cur.rainbow) g.cur = NATURAL; } } g.lastL = L;
+    g.fil -= dt / 24;
+    if (g.fil <= 0) { g.fil = 0; g.why = 'runout'; over(); return; }
+    if (g.y > 0 || g.vy > 0) {
+      holdT += dt;
+      var grav = held && g.vy > 0 && holdT < 0.15 ? 1100 : 2600;      // hold the key: a higher jump
+      g.vy -= grav * k * dt; g.y = Math.max(0, g.y + g.vy * dt); if (g.y === 0) g.vy = 0;
+    }
     g.next -= v * dt; if (g.next <= 0) spawn();
     var me = box();
     for (var i = g.obs.length - 1; i >= 0; i--) {
-      var o = g.obs[i]; o.x -= v * dt;
-      if (o.x + o.w < -20) { g.obs.splice(i, 1); continue; }
-      if (!o.got && hit(me, o, 3 * k)) {
-        if (o.t === 'spool') { o.got = true; g.bonus += 20; g.pops.push({ x: o.x, y: o.y, t: 0.8 }); g.obs.splice(i, 1); }
-        else { g.lastHit = o.t; over(); return; }
+      var o = g.obs[i]; o.x -= v * dt * (1 + (o.extra || 0));
+      if (o.x + o.w < -30 * k) { g.obs.splice(i, 1); continue; }
+      if (o.t === 'flame' && !flameOn(o)) continue;
+      var hb = o.t === 'string' ? { x: o.x, y: 0, w: o.w, h: ground() - 25 * k } : o;
+      if (hit(me, hb, 3 * k)) {
+        if (o.t === 'spool') { grab(o); g.obs.splice(i, 1); }
+        else { g.why = o.t; over(); return; }
       }
     }
     g.pops.forEach(function (p) { p.t -= dt; p.y -= 30 * k * dt; }); g.pops = g.pops.filter(function (p) { return p.t > 0; });
@@ -16961,80 +17043,135 @@ function makeGame() {
     draw();
   }
   function tick(t) {
-    if (g.state !== 'run') return;
+    if (g.state !== 'run' || dead) return;
     var dt = Math.min(0.05, (t - last) / 1000 || 0); last = t;
     step(dt); if (g.state === 'run') { draw(); raf = requestAnimationFrame(tick); }
   }
   function run() { if (g.state === 'over' || g.state === 'idle') reset(); g.state = 'run'; last = performance.now(); cancelAnimationFrame(raf); raf = requestAnimationFrame(tick); }
-  g.pause = function () { if (g.state === 'run') { g.state = 'paused'; cancelAnimationFrame(raf); draw(); } };
-  function jump() { if (g.y === 0 && !ducking()) g.vy = 820 * g.k; }
+  function jump() { if (g.y === 0 && !ducking()) { g.vy = 650 * g.k; holdT = 0; held = true; } }
   function pad(n) { n = String(n); return n.length < 4 ? ('0000' + n).slice(-4) : n; }
+  var WHY = { runout: 'Filament ran out at layer', blob: 'Hit a blob at layer', spag: 'Spaghetti at layer', string: 'Caught in stringing at layer', gantry: 'Hit the gantry at layer',
+    warp: 'Hit a warped corner at layer', screw: 'A loose screw at layer', clip: 'Hit a binder clip at layer', flame: 'Thermal runaway at layer' };
   function draw() {
     var k = g.k, W = g.W, H = g.H, gy = ground(); if (!W || !H) return;
-    var ink = col('--ink', '#ddd'), mute = col('--muted', '#888'), ring = col('--ring', '#333'), acc = col('--series-1', ink);
+    var ink = col('--ink', '#ddd'), mute = col('--muted', '#888'), ring = col('--ring', '#333'), lt = light();
     ctx.clearRect(0, 0, W, H);
     ctx.lineCap = 'round'; ctx.lineJoin = 'round';
-    // the bed, with marks that slide by
-    ctx.strokeStyle = mute; ctx.lineWidth = Math.max(1, 1.2 * k);
+    // faint dots, like a build plate grid
+    ctx.fillStyle = ring; var dg = 28 * k, doff = g.dist % dg;
+    for (var dx = -doff; dx < W; dx += dg) for (var dy = 14 * k; dy < gy - 6 * k; dy += dg) ctx.fillRect(dx, dy, 1.4, 1.4);
+    // the bed: a textured sheet
+    ctx.fillStyle = lt ? 'rgba(180,120,40,.18)' : 'rgba(212,160,70,.16)'; ctx.fillRect(0, gy, W, 9 * k);
+    ctx.strokeStyle = lt ? '#b07a2a' : '#c9973f'; ctx.lineWidth = Math.max(1, 1.2 * k);
     ctx.beginPath(); ctx.moveTo(0, gy + 0.5); ctx.lineTo(W, gy + 0.5); ctx.stroke();
     ctx.strokeStyle = ring; var gap = 46 * k, off = g.dist % gap;
-    for (var mx = -off; mx < W; mx += gap) { ctx.beginPath(); ctx.moveTo(mx, gy + 7 * k); ctx.lineTo(mx + 10 * k, gy + 7 * k); ctx.stroke(); }
-    // the line of filament it has laid
-    var me = box();
-    ctx.strokeStyle = acc; ctx.lineWidth = 3 * k;
-    ctx.beginPath(); ctx.moveTo(0, gy - 1.5 * k); ctx.lineTo(me.x + me.w / 2, gy - 1.5 * k); ctx.stroke();
+    for (var mx = -off; mx < W; mx += gap) { ctx.beginPath(); ctx.moveTo(mx, gy + 13 * k); ctx.lineTo(mx + 10 * k, gy + 13 * k); ctx.stroke(); }
+    // the print so far: each colour from where it was picked up
+    var me = box(), nzx = me.x + me.w / 2;
+    ctx.lineWidth = 4 * k; ctx.lineCap = 'butt';
+    for (var i = g.segs.length - 1; i >= 0; i--) {
+      var a = nzx - (g.dist - g.segs[i].at), b = i === g.segs.length - 1 ? nzx : nzx - (g.dist - g.segs[i + 1].at);
+      if (b < 0) break;
+      ctx.strokeStyle = fc(g.segs[i].f);
+      ctx.beginPath(); ctx.moveTo(Math.max(0, a), gy - 2 * k); ctx.lineTo(b, gy - 2 * k); ctx.stroke();
+    }
+    ctx.lineCap = 'round';
     // things on the bed
     ctx.lineWidth = Math.max(1.2, 1.6 * k);
     g.obs.forEach(function (o) {
-      ctx.strokeStyle = ink;
       if (o.t === 'blob') {
-        ctx.beginPath(); ctx.ellipse(o.x + o.w / 2, gy, o.w / 2, o.h, 0, Math.PI, 0); ctx.stroke();
-      } else if (o.t === 'spag') {          // a tangle of failed print
-        ctx.beginPath(); ctx.moveTo(o.x, gy);
-        for (var i = 0; i <= 6; i++) { var cx = o.x + o.w * i / 6, cy = gy - o.h * (0.35 + 0.65 * ((i * 37) % 10) / 10); ctx.quadraticCurveTo(cx - 6 * k, cy - 8 * k, cx, cy); }
-        ctx.lineTo(o.x + o.w, gy); ctx.stroke();
-        ctx.beginPath(); ctx.arc(o.x + o.w * 0.35, gy - o.h * 0.45, 5 * k, 0, Math.PI * 2); ctx.stroke();
-        ctx.beginPath(); ctx.arc(o.x + o.w * 0.68, gy - o.h * 0.55, 4 * k, 0, Math.PI * 2); ctx.stroke();
-      } else if (o.t === 'gantry') {        // a bar hanging down: duck
+        ctx.fillStyle = fc(FIL[o.hue]); ctx.globalAlpha = 0.85;
+        ctx.beginPath(); ctx.ellipse(o.x + o.w / 2, gy, o.w / 2, o.h, 0, Math.PI, 0); ctx.fill(); ctx.globalAlpha = 1;
+      } else if (o.t === 'spag') {
+        o.cols.forEach(function (c, j) {
+          ctx.strokeStyle = fc(c); ctx.beginPath(); ctx.moveTo(o.x, gy);
+          for (var q = 0; q <= 6; q++) { var cx = o.x + o.w * q / 6, cy = gy - o.h * (0.3 + 0.7 * (((q + j * 3) * 37) % 10) / 10); ctx.quadraticCurveTo(cx - 6 * k, cy - 8 * k, cx, cy); }
+          ctx.lineTo(o.x + o.w, gy); ctx.stroke();
+        });
+      } else if (o.t === 'string') {
+        ctx.strokeStyle = lt ? '#64748b' : '#cbd5e1'; ctx.lineWidth = 1;
+        for (var s = 0; s < 7; s++) { var sx = o.x + s * o.w / 6; ctx.beginPath(); ctx.moveTo(sx, 0); ctx.quadraticCurveTo(sx + 5 * k * (s % 2 ? 1 : -1), (gy - 25 * k) / 2, sx + 2 * k, gy - 25 * k - (s % 3) * 4 * k); ctx.stroke(); }
+        ctx.lineWidth = Math.max(1.2, 1.6 * k);
+      } else if (o.t === 'gantry') {
+        ctx.strokeStyle = lt ? '#475569' : '#94a3b8';
         ctx.beginPath(); ctx.moveTo(o.x + 8 * k, 0); ctx.lineTo(o.x + 8 * k, o.y); ctx.moveTo(o.x + o.w - 8 * k, 0); ctx.lineTo(o.x + o.w - 8 * k, o.y); ctx.stroke();
-        ctx.strokeRect(o.x, o.y, o.w, o.h);
-      } else if (o.t === 'spool') {         // a filament spool: +20 layers
-        ctx.strokeStyle = acc;
-        ctx.beginPath(); ctx.arc(o.x + o.w / 2, o.y + o.h / 2, o.w / 2, 0, Math.PI * 2); ctx.stroke();
-        ctx.beginPath(); ctx.arc(o.x + o.w / 2, o.y + o.h / 2, o.w / 5, 0, Math.PI * 2); ctx.stroke();
+        ctx.fillStyle = lt ? '#94a3b8' : '#475569'; ctx.fillRect(o.x, o.y, o.w, o.h); ctx.strokeRect(o.x, o.y, o.w, o.h);
+      } else if (o.t === 'warp') {            // a print whose corner curled up
+        ctx.fillStyle = fc(o.f); ctx.globalAlpha = 0.8;
+        ctx.beginPath(); ctx.moveTo(o.x, gy); ctx.lineTo(o.x + o.w, gy); ctx.lineTo(o.x + o.w, gy - o.h * 0.35); ctx.quadraticCurveTo(o.x + o.w * 0.2, gy - o.h * 0.35, o.x + 2 * k, gy - o.h); ctx.closePath(); ctx.fill(); ctx.globalAlpha = 1;
+      } else if (o.t === 'screw') {
+        var rot = g.dist / (6 * k), cx2 = o.x + o.w / 2, cy2 = o.y + o.h / 2;
+        ctx.fillStyle = lt ? '#94a3b8' : '#cbd5e1'; ctx.beginPath(); ctx.arc(cx2, cy2, o.w / 2, 0, Math.PI * 2); ctx.fill();
+        ctx.strokeStyle = lt ? '#334155' : '#475569'; ctx.beginPath(); ctx.moveTo(cx2 - Math.cos(rot) * o.w / 3, cy2 - Math.sin(rot) * o.w / 3); ctx.lineTo(cx2 + Math.cos(rot) * o.w / 3, cy2 + Math.sin(rot) * o.w / 3); ctx.stroke();
+      } else if (o.t === 'clip') {          // a binder clip holding the glass bed
+        ctx.fillStyle = lt ? '#1f2937' : '#0b0f17'; ctx.strokeStyle = lt ? '#1f2937' : '#94a3b8';
+        ctx.beginPath(); ctx.moveTo(o.x, gy); ctx.lineTo(o.x + o.w / 2, gy - o.h * 0.45); ctx.lineTo(o.x + o.w, gy); ctx.closePath(); ctx.fill(); ctx.stroke();
+        ctx.strokeStyle = '#d4d4d8'; ctx.lineWidth = 2 * k;
+        ctx.beginPath(); ctx.moveTo(o.x + o.w * 0.35, gy - o.h * 0.4); ctx.lineTo(o.x + o.w * 0.2, o.y); ctx.lineTo(o.x + o.w * 0.8, o.y); ctx.lineTo(o.x + o.w * 0.65, gy - o.h * 0.4); ctx.stroke();
+        ctx.lineWidth = Math.max(1.2, 1.6 * k);
+      } else if (o.t === 'flame') {
+        var on = flameOn(o), t2 = performance.now() / 90;
+        ctx.fillStyle = lt ? '#64748b' : '#94a3b8'; ctx.fillRect(o.x, gy - 8 * k, o.w, 8 * k);             // the heater
+        if (on) {
+          [['#ef4444', 1], ['#f97316', 0.7], ['#facc15', 0.42]].forEach(function (f) {
+            var hh = o.h * f[1] * (0.9 + 0.1 * Math.sin(t2 + f[1] * 5));
+            ctx.fillStyle = f[0]; ctx.beginPath(); ctx.moveTo(o.x, gy - 8 * k); ctx.quadraticCurveTo(o.x + o.w * 0.1, gy - hh * 0.6, o.x + o.w / 2, gy - 8 * k - hh); ctx.quadraticCurveTo(o.x + o.w * 0.9, gy - hh * 0.6, o.x + o.w, gy - 8 * k); ctx.fill();
+          });
+        } else { ctx.strokeStyle = '#ef4444'; ctx.globalAlpha = 0.5; ctx.beginPath(); ctx.moveTo(o.x + o.w / 2, gy - 10 * k); ctx.lineTo(o.x + o.w / 2, gy - 18 * k); ctx.stroke(); ctx.globalAlpha = 1; }
+      } else if (o.t === 'spool') {
+        var c3 = fc(o.f), ox = o.x + o.w / 2, oy = o.y + o.h / 2;
+        ctx.fillStyle = c3; ctx.beginPath(); ctx.arc(ox, oy, o.w / 2, 0, Math.PI * 2); ctx.fill();
+        ctx.strokeStyle = lt ? '#334155' : '#e2e8f0'; ctx.beginPath(); ctx.arc(ox, oy, o.w / 2, 0, Math.PI * 2); ctx.stroke();
+        ctx.fillStyle = col('--surface', '#222'); ctx.beginPath(); ctx.arc(ox, oy, o.w / 5, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+        if (o.f.gold || o.f.rainbow) { ctx.strokeStyle = c3; ctx.globalAlpha = 0.5; ctx.beginPath(); ctx.arc(ox, oy, o.w / 2 + 4 * k, 0, Math.PI * 2); ctx.stroke(); ctx.globalAlpha = 1; }
       }
     });
-    // the print head
-    ctx.strokeStyle = ink; ctx.fillStyle = col('--surface', '#222');
-    var bh = me.h * 0.58;
+    // the print head: filament going in, heater block, brass nozzle
+    var bh = me.h * 0.58, fcur = fc(g.cur);
+    ctx.strokeStyle = fcur; ctx.lineWidth = 3 * k; ctx.beginPath(); ctx.moveTo(nzx, Math.max(0, me.y - 22 * k)); ctx.lineTo(nzx, me.y); ctx.stroke();
+    ctx.lineWidth = Math.max(1.2, 1.6 * k);
+    ctx.fillStyle = lt ? '#cbd5e1' : '#475569'; ctx.strokeStyle = ink;
     ctx.beginPath(); ctx.rect(me.x, me.y, me.w, bh); ctx.fill(); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(me.x + me.w * 0.22, me.y + bh); ctx.lineTo(me.x + me.w / 2, me.y + me.h); ctx.lineTo(me.x + me.w * 0.78, me.y + bh); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(me.x + me.w * 0.3, me.y + bh * 0.35); ctx.lineTo(me.x + me.w * 0.7, me.y + bh * 0.35); ctx.stroke();   // fins
-    ctx.beginPath(); ctx.moveTo(me.x + me.w * 0.3, me.y + bh * 0.68); ctx.lineTo(me.x + me.w * 0.7, me.y + bh * 0.68); ctx.stroke();
-    // +20
-    ctx.fillStyle = acc; ctx.font = '600 ' + Math.round(12 * k + 2) + 'px system-ui, sans-serif';
-    g.pops.forEach(function (p) { ctx.globalAlpha = Math.max(0, p.t / 0.8); ctx.fillText('+20', p.x, p.y); }); ctx.globalAlpha = 1;
-    // score
+    ctx.fillStyle = '#ef4444'; ctx.fillRect(me.x + me.w * 0.62, me.y + bh * 0.25, me.w * 0.22, bh * 0.5);   // heater cartridge
+    ctx.fillStyle = '#d4a017'; ctx.beginPath(); ctx.moveTo(me.x + me.w * 0.22, me.y + bh); ctx.lineTo(me.x + me.w / 2, me.y + me.h); ctx.lineTo(me.x + me.w * 0.78, me.y + bh); ctx.closePath(); ctx.fill();
+    // points that float up
+    ctx.font = '700 ' + Math.round(12 * k + 2) + 'px system-ui, sans-serif'; ctx.textAlign = 'left';
+    g.pops.forEach(function (p) { ctx.globalAlpha = Math.max(0, p.t / 0.9); ctx.fillStyle = fc(p.f); ctx.fillText(p.s, p.x, p.y); }); ctx.globalAlpha = 1;
+    // top: name and filament left; score at the right
     var fs = Math.round(Math.max(11, 12 * k));
-    ctx.font = '600 ' + fs + 'px ui-monospace, Consolas, monospace'; ctx.textAlign = 'right'; ctx.fillStyle = mute;
-    ctx.fillText(gw('Best') + ' ' + pad(g.best) + '   ' + gw('Layer') + ' ' + pad(layers()), W - 40, 22);
-    ctx.fillText(Math.round(50 + (speed() / k - 380) / 570 * 250) + ' mm/s', W - 40, 22 + fs + 4);
-    ctx.textAlign = 'left'; ctx.fillText('Print Run', 14, 22);
-    // what to do
+    ctx.font = '600 ' + fs + 'px ui-monospace, Consolas, monospace'; ctx.fillStyle = mute; ctx.textAlign = 'left';
+    ctx.fillText(gw('Filament'), 14, 20);
+    var bx = 14 + ctx.measureText(gw('Filament')).width + 8, bw = 90, low = g.fil < 0.25 && Math.floor(performance.now() / 250) % 2;
+    ctx.strokeStyle = ring; ctx.lineWidth = 1; ctx.strokeRect(bx, 11, bw, 10);
+    ctx.fillStyle = low ? '#ef4444' : fcur; ctx.fillRect(bx + 1, 12, (bw - 2) * g.fil, 8);
+    ctx.fillStyle = mute; ctx.fillText(gw(g.cur.n), bx + bw + 8, 20);
+    ctx.textAlign = 'right';
+    ctx.fillText(gw('Best') + ' ' + pad(g.best) + '   ' + gw('Layer') + ' ' + pad(layers()), W - 14, 20);
+    ctx.fillText(Math.round(50 + (speed() / k - 380) / 570 * 250) + ' mm/s' + (g.streak.x > 1 ? '   ' + g.streak.n + ' ×' + g.streak.x : ''), W - 14, 20 + fs + 4);
+    // messages
     var msg = '', sub = '';
-    if (g.state === 'idle') { msg = gw('Click to start printing'); sub = gw('Space or tap: jump \u00b7 \u2193: duck'); }
-    else if (g.state === 'paused') msg = gw('Paused \u2014 click to carry on');
-    else if (g.state === 'over') { msg = gw('Print failed at layer') + ' ' + layers() + (g.newBest ? '  \u00b7  ' + gw('New best!') : ''); sub = gw('Click or Space to reprint'); }
+    if (g.state === 'idle') { msg = gw('Click to start printing'); sub = gw('Space or tap: jump (hold: higher) · ↓: duck · grab spools before the filament runs out'); }
+    else if (g.state === 'paused') msg = gw('Paused — click to carry on');
+    else if (g.state === 'over') { msg = gw(WHY[g.why] || 'Print failed at layer') + ' ' + layers() + (g.newBest ? '  ·  ' + gw('New best!') : ''); sub = gw('Click or Space to reprint'); }
     if (msg) {
       ctx.textAlign = 'center'; ctx.fillStyle = ink; ctx.font = '600 ' + Math.round(Math.max(13, 15 * k)) + 'px system-ui, sans-serif';
-      ctx.fillText(msg, W / 2, H * 0.42);
-      if (sub) { ctx.fillStyle = mute; ctx.font = Math.round(Math.max(11, 12 * k)) + 'px system-ui, sans-serif'; ctx.fillText(sub, W / 2, H * 0.42 + 20 * k + 4); }
+      var my = H * (g.state === 'over' ? 0.3 : 0.42);
+      ctx.fillText(msg, W / 2, my);
+      if (sub) { ctx.fillStyle = mute; ctx.font = Math.round(Math.max(11, 12 * k)) + 'px system-ui, sans-serif'; ctx.fillText(sub, W / 2, my + 20 * k + 4); }
+      if (g.state === 'over' && g.dist > 0) {   // your print: every colour, in order
+        var pw = Math.min(W * 0.6, 520), px0 = (W - pw) / 2, py = my + 34 * k + 8;
+        ctx.font = '600 ' + Math.round(Math.max(11, 11 * k)) + 'px system-ui, sans-serif'; ctx.fillStyle = mute; ctx.fillText(gw('Your print'), W / 2, py - 6);
+        g.segs.forEach(function (sg, j) {
+          var end = j === g.segs.length - 1 ? g.dist : g.segs[j + 1].at;
+          ctx.fillStyle = sg.f.rainbow ? 'hsl(' + (j * 47 % 360) + ',85%,58%)' : fc(sg.f);
+          ctx.fillRect(px0 + pw * sg.at / g.dist, py, Math.max(1, pw * (end - sg.at) / g.dist), 12 * k);
+        });
+        ctx.strokeStyle = ring; ctx.strokeRect(px0, py, pw, 12 * k);
+      }
       ctx.textAlign = 'left';
     }
   }
-  g.draw = draw;
   function press(ev) {
-    if (ev.target === x) return;
     cv.focus({ preventScroll: true });
     if (g.state === 'run') {
       var r = cv.getBoundingClientRect(), y = (ev.touches ? ev.touches[0].clientY : ev.clientY) - r.top;
@@ -17042,20 +17179,23 @@ function makeGame() {
       jump();
     } else run();
   }
+  function release() { held = false; duckTouch = false; }
   cv.addEventListener('mousedown', function (ev) { ev.preventDefault(); press(ev); });
+  cv.addEventListener('mouseup', release);
   cv.addEventListener('touchstart', function (ev) { ev.preventDefault(); press(ev); }, { passive: false });
-  cv.addEventListener('touchend', function () { duckTouch = false; });
+  cv.addEventListener('touchend', release);
   cv.addEventListener('keydown', function (ev) {
     var c = ev.code || ev.key;
-    if (c === 'Space' || c === 'ArrowUp' || c === ' ' || c === 'KeyW') { ev.preventDefault(); if (g.state === 'run') jump(); else run(); }
+    if (c === 'Space' || c === 'ArrowUp' || c === ' ' || c === 'KeyW') { ev.preventDefault(); if (ev.repeat) return; if (g.state === 'run') jump(); else run(); }
     else if (c === 'ArrowDown' || c === 'KeyS') { ev.preventDefault(); duckKey = true; }
     else if (c === 'Escape') { g.pause(); cv.blur(); }
   });
-  cv.addEventListener('keyup', function (ev) { var c = ev.code || ev.key; if (c === 'ArrowDown' || c === 'KeyS') duckKey = false; });
-  cv.addEventListener('blur', function () { duckKey = false; g.pause(); });
-  document.addEventListener('visibilitychange', function () { if (document.hidden) g.pause(); });
-  x.addEventListener('click', function () { g.pause(); try { localStorage.setItem('erp_game_hide', '1'); } catch (e) {} gamePlace(); toast('Game hidden on this device. Settings \u2192 Business brings it back.'); });
-  return g;
+  cv.addEventListener('keyup', function (ev) { var c = ev.code || ev.key; if (c === 'ArrowDown' || c === 'KeyS') duckKey = false; if (c === 'Space' || c === 'ArrowUp' || c === ' ' || c === 'KeyW') held = false; });
+  cv.addEventListener('blur', function () { duckKey = false; held = false; g.pause(); });
+  g.pause = function () { if (g.state === 'run') { g.state = 'paused'; cancelAnimationFrame(raf); draw(); } };
+  g.stop = function () { g.pause(); dead = true; };
+  var api = { size: g.size, pause: g.pause, stop: g.stop, draw: draw, state: function () { return g.state; }, _g: g };
+  return api;
 }
 
 var GAME = null;
@@ -17077,11 +17217,11 @@ function gamePlace() {
   var inner = v.clientWidth - padL - padR;
   GAME.el.style.display = '';
   GAME.el.style.width = inner + 'px';
-  GAME.el.style.margin = (16 - padB) + 'px 0 24px ' + (v.getBoundingClientRect().left - v.parentNode.getBoundingClientRect().left + padL) + 'px';
+  GAME.el.style.margin = (36 - padB) + 'px 0 24px ' + (v.getBoundingClientRect().left - v.parentNode.getBoundingClientRect().left + padL) + 'px';
   var top = GAME.el.getBoundingClientRect().top + window.scrollY;
   var free = window.innerHeight - top - 24;
-  var h = Math.min(260, Math.floor(free / 2));
-  if (h < 110) { GAME.pause(); GAME.el.style.display = 'none'; return; }
+  var h = Math.min(300, Math.floor(free / 2));
+  if (h < 150) { GAME.pause(); GAME.el.style.display = 'none'; return; }
   GAME.size(inner, h);
 }
 var repaintPG = repaint;
@@ -17089,7 +17229,7 @@ repaint = function () {
   repaintPG.apply(this, arguments);
   try { gameLoad(); gamePlace(); setTimeout(gamePlace, 300); } catch (e) {}
 };
-window.addEventListener('resize', function () { try { gamePlace(); if (el('pgoff') && GAME) GAME.size(GAME.el.clientWidth, 180); } catch (e) {} });
+window.addEventListener('resize', function () { try { gamePlace(); if (el('pgoff') && GAME) GAME.size(GAME.el.clientWidth, 214); } catch (e) {} });
 // the invoice keeps every key: clicking or typing anywhere else pauses the game
 document.addEventListener('focusin', function (ev) { if (GAME && ev.target && !(GAME.el.contains(ev.target))) GAME.pause(); });
 ['keydown', 'mousedown', 'touchstart'].forEach(function (t) {
@@ -17105,7 +17245,7 @@ window.addEventListener('offline', function () {
   if (GAMEP && GAMEP.on) {
     if (!GAME) GAME = makeGame();
     GAME.pause(); w.appendChild(GAME.el); GAME.el.style.display = '';
-    GAME.size(GAME.el.clientWidth || 860, 180);
+    GAME.size(GAME.el.clientWidth || 860, 214);
   }
 });
 window.addEventListener('online', function () {

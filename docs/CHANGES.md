@@ -450,3 +450,11 @@
 - Owner decides who sees it: erpGame / erpGameSet (business_config game_who = owner | all | none, default owner). Test g1 (7 checks).
 - No internet (browser 'offline' event): a window at the bottom says nothing typed is lost and, if allowed, holds the game; 'online' removes it.
 - Not done: leaderboard across staff (deliberately); phone play (hidden there).
+
+## game-2 — Print Run in colour, filament runout, more print faults; a game switcher (2026-10-04)
+- Colour spools (red, blue, green, yellow, orange, white, purple; rare Silk gold +50, rare Rainbow = layers count double for 5 s). Grabbing one changes the filament: the line printed from there on is that colour, so the bed shows a striped multi-colour print. Same colour in a row: ×2, ×3 points.
+- Filament runout: a bar empties over ~24 s; every spool refills it; empty = "Filament ran out at layer N". Spools come more often when it runs low.
+- New faults unlock by layer: stringing (50, duck), gantry (80, duck), warped corner (100, jump), loose screw rolling at you (150), binder clip (220, hold jump for a higher one), thermal runaway flame that flickers on/off (300, pass while off).
+- Game over shows "Your print": the whole run as a colour bar. Colourful head (brass nozzle, red heater, filament in the current colour), amber bed sheet, faint plate grid.
+- A bar above the canvas with game tabs (only Print Run now; GAME_LIST takes more) and ✕. Wider gap under the invoice (36 px).
+- Checked with a scripted player: 40 s, every obstacle type cleared, colours changed 8 times, runout ends the game.
