@@ -32,6 +32,7 @@ import { HANDLERS as cash } from './cash.js';
 import { HANDLERS as suppliers } from './suppliers.js';
 import { HANDLERS as currency } from './currency.js';
 import { HANDLERS as notes } from './notes.js';
+import { HANDLERS as serials } from './serials.js';
 
 const core = {
   erpToday: shell.erpToday,
@@ -60,7 +61,7 @@ const core = {
 
 export const HANDLERS = {};
 for (const [group, table] of Object.entries({ core, sales, courier, customers, stock, dashboard,
-                                              expenses, weborders, quotes, settings, campaigns, capital, pages, goods, partners, security, alerts, access, listview, cash, suppliers, currency, notes })) {
+                                              expenses, weborders, quotes, settings, campaigns, capital, pages, goods, partners, security, alerts, access, listview, cash, suppliers, currency, notes, serials })) {
   for (const [name, fn] of Object.entries(table)) {
     if (HANDLERS[name]) throw new Error('Handler ' + name + ' is defined twice (' + group + ').');
     HANDLERS[name] = fn;

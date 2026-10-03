@@ -10,6 +10,7 @@
 // with the list it was opened from.
 
 import { isCourier } from './catalog.js';
+import { serialsOnInvoice } from './serials.js';
 import { formatDate, num, round2 } from '../lib/time.js';
 import { custKey, formatBdPhone } from '../lib/phone.js';
 import { outstanding, erpDues, creditOf } from './money.js';
@@ -59,11 +60,12 @@ export async function erpInvoice(ctx, payload) {
     if (/^Invoice cancelled/.test(str(r.reason))) cancelled = true;
   }
   let units = 0, gross = 0;
+  const sn = await serialsOnInvoice(ctx, no);
   const outLines = lines.map((l) => {
     units += num(l.qty); gross += num(l.qty) * num(l.unit_price);
     return { sku: str(l.sku), product: str(l.name), qty: num(l.qty), price: num(l.unit_price),
              discount: num(l.discount), total: num(l.line_total),
-             returned: backBySku[str(l.sku).toLowerCase()] || 0 };
+             returned: backBySku[str(l.sku).toLowerCase()] || 0, serials: sn[str(l.sku).toLowerCase()] || [] };
   });
   const owe = await outstanding(ctx, no);
   const grand = num(inv.grand_total) || outLines.reduce((a, l) => a + l.total, 0);
@@ -169,7 +171,7 @@ export async function erpCustomerPage(ctx, payload) {
 /** Find invoices, customers and products from a few letters or digits. */
 export async function erpSearch(ctx, payload) {
   const q = str(payload && payload.q).slice(0, 60);
-  if (q.length < 2) return { q, invoices: [], customers: [], products: [] };
+  if (q.length < 2) return { q, invoices: [], customers: [], products: [], serials: [] };
   const like = '%' + q.replace(/[\\%_]/g, (c) => '\\' + c) + '%';
   const digits = q.replace(/\D/g, '');
   const phoneLike = digits.length >= 3 ? '%' + digits.replace(/^0+/, '') + '%' : null;
@@ -193,8 +195,19 @@ export async function erpSearch(ctx, payload) {
       and (p.sku ilike ${like} or p.name ilike ${like} or p.brand ilike ${like} or p.color ilike ${like})
     order by (lower(p.sku) = lower(${q})) desc, p.name limit 8`;
 
+  // plan D1: a serial number, from a few characters
+  let serials = [];
+  if (q.replace(/\s+/g, '').length >= 3) {
+    try {
+      const sq = '%' + q.replace(/\s+/g, '').toUpperCase().replace(/[\\%_]/g, (c) => '\\' + c) + '%';
+      serials = (await ctx.tx.savepoint(() => ctx.tx`select s.serial, s.sku, s.status, s.invoice_no, s.customer, s.warranty_until, p.name
+        from serials s join products p on p.id = s.product_id where s.business_id = ${ctx.biz} and upper(s.serial) like ${sq}
+        order by s.sold_at desc nulls last limit 6`)).map((s) => ({ serial: str(s.serial), sku: str(s.sku), product: str(s.name), status: str(s.status),
+          invoice: str(s.invoice_no), customer: str(s.customer), warrantyUntil: s.warranty_until ? day(s.warranty_until) : '' }));
+    } catch (_) { serials = []; }
+  }
   return {
-    q,
+    q, serials,
     invoices: invoices.map((i) => ({ id: i.invoice_no, date: day(i.created_at), customer: str(i.customer_name),
                                      phone: str(i.customer_phone), total: Math.round(num(i.grand_total)) })),
     customers: customers.map((c) => ({ name: str(c.name), phone: formatBdPhone(str(c.phone)), address: str(c.address),

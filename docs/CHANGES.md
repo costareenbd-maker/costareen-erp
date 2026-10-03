@@ -224,3 +224,12 @@
 - **Consignment number on the invoice**: a box on New invoice (Express, or a courier parcel already booked in the panel), or "Add consignment number" on the invoice's page later. One parcel, one invoice. (erpExpressLink)
 - **Check deliveries now** on Sales (manager and up) and an **hourly** check: a parcel the courier says is delivered has its payment recorded ("COD (Steadfast)", still with Steadfast until the payout) and the due cleared. Parcels that came back or were part delivered are listed for a person and counted on the dashboard. Website orders are followed through the website; an invoice typed by hand for a website order is first brought up to what the website charged. Every round is written to delivery_checks. (erpCheckDeliveries, job "deliveries", 039_delivery_checks.sql)
 - tests/s1_test.mjs (22). Timer erp-deliveries installed on the live project.
+
+2026-10-03 — Plan D1 (serial numbers and warranty)
+- Product page → **Serial numbers and warranty**: "Sold by serial number" and the warranty in months. The warranty can be changed any time; it applies to sales from then on - units already sold keep what they were sold with.
+- Numbers come in with the shipment (Receive stock shows a box per serialised product) or are added on the product page, never more than the units on the shelf; duplicates are refused by name.
+- New invoice: a serialised product shows a serial picker per unit and the warranty for this sale (prefilled with the product's; a special deal can type another). The sale cannot save without naming the units (unless none is numbered yet). The invoice page and the PDF show S/N and "warranty until".
+- Returns name the unit coming back (or, when the whole line comes back, every unit); damaged ones are marked. Cancelling an invoice brings its units back.
+- Look up any serial from the top search or the product page: who bought it, when, warranty left. A shareholder can change one sold unit's warranty with a reason.
+- 040_serials.sql (products.serialised, warranty_months; table serials), handlers/serials.js, hooks in invoice.js / sales.js / stock.js / pages.js; tests/d1_test.mjs (34).
+- Not done: a warranty "end date" typed directly at the sale (months only); serials on the quotation; the go-live wipe clears the serials table with the rest (products keep their flags).

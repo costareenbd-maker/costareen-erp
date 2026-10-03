@@ -32,6 +32,7 @@ import {
 } from '../lib/ext.js';
 import { products } from './dashboard.js';
 import { assertOpen } from '../lib/period.js';
+import { returnSerials, serialsOnInvoice } from './serials.js';
 
 const R2 = (v) => Math.round(v * 100) / 100;
 
@@ -437,6 +438,9 @@ async function returnGoods(ctx, payload, opts = {}) {
   const moneyWord = excess > 0 ? (money === 'refund' ? 'refunded ' + excess : 'advance ' + excess)
                                : 'due reduced';
 
+  // plan D1: the numbered units come back to the shelf (or are marked damaged)
+  await returnSerials(ctx, invoiceNo, take, asked);
+
   // ---- 1. the record of the return itself (RETURNS)
   for (const t of take) {
     await ctx.tx`
@@ -799,13 +803,15 @@ async function invoiceDocData(ctx, invoiceNo) {
     let price = num(r[SL.unit_price]);
     if (!(price > 0) && qty > 0) price = total / qty;
     lines.push({ sku: str(r[SL.sku]), product: str(r[SL.product_name]), qty, price, total,
-                 gross: qty * price });
+                 gross: qty * price, serials: [] });
     disc = Math.max(disc, num(r[SL.discount]));
     delivery = Math.max(delivery, num(r[SL.delivery_charge]));
     grand = Math.max(grand, num(r[SL.grand_total]));
     if (!note) note = String(r[SL.notes] || '');
   }
   if (!head) return null;
+  const sn = await serialsOnInvoice(ctx, invoiceNo);
+  lines.forEach((l) => { l.serials = sn[l.sku.toLowerCase()] || []; });
   let gross = 0, sum = 0;
   lines.forEach((l) => { gross += l.gross; sum += l.total; });
   const inside = Math.max(0, gross - sum);
@@ -989,7 +995,9 @@ export function invoiceArtParts(d, p, s, opt, img, now = new Date()) {
       (d.perLine ? '<th class="r" style="width:24mm">Discount</th>' : '') + '<th class="r" style="width:28mm">Total</th></tr></thead><tbody>' +
     d.lines.map((l, li) => {
       const off = Math.max(0, l.gross - l.total);
-      return '<tr><td class="c">' + (li + 1) + '</td><td>' + h(l.product) + '</td><td class="c">' + n(l.qty) + '</td>' +
+      const sn = (l.serials || []).length ? '<div style="font-size:8.5pt;color:#555;margin-top:1mm">S/N ' + l.serials.map((x) => h(x.serial)).join(', ') +
+        (l.serials[0].warrantyUntil ? ' · warranty until ' + h(l.serials[0].warrantyUntil) : '') + '</div>' : '';
+      return '<tr><td class="c">' + (li + 1) + '</td><td>' + h(l.product) + sn + '</td><td class="c">' + n(l.qty) + '</td>' +
         '<td class="r">' + n(l.price) + '</td>' + (d.perLine ? '<td class="r">' + (off > 0.5 ? '−' + n(off) : '') + '</td>' : '') +
         '<td class="r">' + n(d.perLine ? l.total : l.gross) + '</td></tr>';
     }).join('') + '</tbody></table>' +

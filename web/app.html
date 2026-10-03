@@ -2128,7 +2128,7 @@ async function saveInvoice() {
       customer: { name:FORM.name.trim(), phone:FORM.phone.trim(),
                   address:FORM.address.trim(), source:FORM.source },
       items: CART.map(function (l) {
-        return { sku:l.sku, qty:l.qty, discEach:num(l.discEach) };
+        return { sku:l.sku, qty:l.qty, discEach:num(l.discEach), serials: l.serials || [], warrantyMonths: (l.warrantyMonths === undefined || l.warrantyMonths === '') ? undefined : l.warrantyMonths };
       }),
       invoiceDiscount: Math.max(0, Math.round(num(FORM.invDisc))),
       deliveryCharge: num(FORM.delivery),
@@ -5014,7 +5014,8 @@ function saveReturn() {
   }
   var lines = RET.data.lines.filter(function (L) { return num(RET.qty[L.sku]) > 0; })
     .map(function (L) { return { sku: L.sku, qty: Math.round(num(RET.qty[L.sku])),
-                                 condition: RET.cond[L.sku] === 'damaged' ? 'damaged' : 'good' }; });
+                                 condition: RET.cond[L.sku] === 'damaged' ? 'damaged' : 'good',
+                                 serials: (RET.sn && RET.sn[L.sku]) ? String(RET.sn[L.sku]).split(/[\s,;]+/).filter(Boolean) : [] }; });
   var mt = document.getElementById('rt_method');
   RET.busy = true; retRender();
   srv('erpReturnGoods', [{ invoiceNo: RET.invoiceNo, lines: lines,
@@ -8317,7 +8318,7 @@ function srv(name, args, ok, bad) {
 
 var SRV_ACTIVE = 0, SRV_WRITING = false;
 // the same list the server uses to know a call changes nothing (ERP_READS)
-var SRV_READS = /^(erpBundle|erpHello|erpMe|erpCatalog|erpSales|erpDues|erpCustomers|erpPnl|erpMoney|erpToday|erpDaySales|erpProduct|erpLookupCustomer|erpCustomerAccount|erpCustomerStatement|erpCustomerCredit|erpWebOrders|erpWebOrderInvoices|erpCampaignAudience|erpCampaignList|erpCampaignGet|erpEvoStatus|erpBrandLogo|erpQuoteBoot|erpQuoteList|erpQuoteGet|erpQuoteAsset|erpExpenses|erpCapital|erpBackupStatus|erpAiKeys|erpGetTheme|erpBusinesses|erpStockHistory|erpReorderPlan|erpPoList|erpSfPayoutLines|erpBookedParcels|erpParcelPreview|erpReturnPreview|erpSettingsFull|erpSettingsLists|erpFormOptions|erpAdmin|erpPeople|erpDevices|erpCourierKeyStatus|erpPayReasons|erpDiscontinued|erpAccessWarning|erpBusinessLinks|erpLookupUsage|erpRecentInvoices|erpCourier|erpDashboardData|erpInvoice|erpCustomerPage|erpSearch|erpProductPage|erpPnlMonth|erpExpenseReceiptUrl|erpPartnership|erpPartnerStock|erpSecurity|erpCustomerList|erpAlerts|erpAccessKeys|erpListView|erpCurrencies|erpSharedStock|erpPoolCatalog|erpProductThumbs|erpProductPhotoUrl|erpFamilies|erpNotes|erpNoteFileUrl|erpCashBook|erpSuppliers|erpSupplierPage)$/;
+var SRV_READS = /^(erpBundle|erpHello|erpMe|erpCatalog|erpSales|erpDues|erpCustomers|erpPnl|erpMoney|erpToday|erpDaySales|erpProduct|erpLookupCustomer|erpCustomerAccount|erpCustomerStatement|erpCustomerCredit|erpWebOrders|erpWebOrderInvoices|erpCampaignAudience|erpCampaignList|erpCampaignGet|erpEvoStatus|erpBrandLogo|erpQuoteBoot|erpQuoteList|erpQuoteGet|erpQuoteAsset|erpExpenses|erpCapital|erpBackupStatus|erpAiKeys|erpGetTheme|erpBusinesses|erpStockHistory|erpReorderPlan|erpPoList|erpSfPayoutLines|erpBookedParcels|erpParcelPreview|erpReturnPreview|erpSettingsFull|erpSettingsLists|erpFormOptions|erpAdmin|erpPeople|erpDevices|erpCourierKeyStatus|erpPayReasons|erpDiscontinued|erpAccessWarning|erpBusinessLinks|erpLookupUsage|erpRecentInvoices|erpCourier|erpDashboardData|erpInvoice|erpCustomerPage|erpSearch|erpProductPage|erpPnlMonth|erpExpenseReceiptUrl|erpPartnership|erpPartnerStock|erpSecurity|erpCustomerList|erpAlerts|erpAccessKeys|erpListView|erpCurrencies|erpSharedStock|erpPoolCatalog|erpProductThumbs|erpProductPhotoUrl|erpFamilies|erpNotes|erpNoteFileUrl|erpSerialsFor|erpSerialLookup|erpCashBook|erpSuppliers|erpSupplierPage)$/;
 function srvPump() {
   if (!SRV_Q.length) return;
   var isRead = SRV_READS.test(SRV_Q[0].name);
@@ -13387,7 +13388,7 @@ function recvPayload() {
       .map(function (c) { return { label: String(c.label || '').trim(), amount: num(c.amount), account: c.account || '' }; }),
     poId: RECV.poId || '',
     lines: RECV.lines.map(function (l) {
-      return l.isNew ? { isNew: true, product: l.product, qty: l.qty } : { sku: l.sku, qty: l.qty };
+      return l.isNew ? { isNew: true, product: l.product, qty: l.qty } : { sku: l.sku, qty: l.qty, serials: l.serials || [] };
     }) };
 }
 var wireStockExtraA5 = wireStockExtra;
@@ -14443,6 +14444,218 @@ document.addEventListener('click', function (ev) {
   var inv = t.getAttribute('data-explink');
   if (inv) expressLinkAsk(inv, t.getAttribute('data-reg') !== '1');
 });
+</script>
+
+<!-- plan D1: serial numbers and warranty -->
+<style>
+.snchips { display:flex; flex-wrap:wrap; gap:6px; margin-top:6px; }
+.snchips span { border:1px solid var(--ring); border-radius:4px; padding:3px 8px; font-size:12.5px; font-family:ui-monospace, Menlo, Consolas, monospace; }
+.snrow td { background:color-mix(in srgb, var(--series-1) 4%, transparent) !important; }
+.snpick { display:flex; flex-wrap:wrap; gap:8px; align-items:center; }
+.snpick select { min-width:150px; padding:6px; }
+.snpick input.i { width:70px; text-align:center; }
+.snpick .l { font-size:12px; color:var(--muted); }
+</style>
+<script>
+var SER = {}, SER_BUSY = {};
+function serCat(sku) { var cat = (typeof INV_FROM !== 'undefined' && INV_FROM && POOLCAT[INV_FROM]) || CAT || []; for (var i = 0; i < cat.length; i++) if (cat[i].sku === sku) return cat[i]; return null; }
+function serLoad(sku, force) {
+  if (!sku || SER_BUSY[sku] || (SER[sku] && !force)) return;
+  SER_BUSY[sku] = true;
+  srv('erpSerialsFor', [{ sku: sku }], function (r) { SER_BUSY[sku] = false; SER[sku] = r; repaint(); },
+      function (e) { SER_BUSY[sku] = false; SER[sku] = { inStock: [], sold: [], err: (e && e.message) || String(e) }; repaint(); });
+}
+function serForget(sku) { if (sku) delete SER[sku]; else SER = {}; }
+
+// ---- the product page: serials and warranty
+function serCardHtml() {
+  var sku = PRODP.sku, p = PRODP.data, d = SER[sku], mgr = typeof pageIsManager === 'function' ? pageIsManager() : false;
+  if (!d) { serLoad(sku); return '<section><div class="card"><h2>Serial numbers and warranty</h2><div class="loading">Reading&hellip;</div></div></section>'; }
+  var sh = ME && (ME.role === 'owner' || ME.role === 'shareholder');
+  var h = '<section><div class="card" data-sercard="' + esc(sku) + '"><h2>Serial numbers and warranty</h2>' +
+    '<div class="sub">For printers and other items where each unit has its own number. A sale then names the unit that went out, and the warranty it carries. ' +
+    'Changing the warranty here changes it for sales from now on \u2014 units already sold keep what they were sold with.</div>';
+  if (d.err) h += '<div class="note err"><div class="ico">\u2715</div><div>' + esc(d.err) + '</div></div>';
+  h += '<div class="row" style="gap:12px;align-items:flex-end;flex-wrap:wrap">' +
+    '<label class="chk" style="padding-bottom:9px"><input type="checkbox" id="ser_on"' + (d.serialised ? ' checked' : '') + (mgr ? '' : ' disabled') + '> Sold by serial number</label>' +
+    '<div style="flex:0 1 180px"><label class="f" for="ser_wm">Warranty (months)</label><input class="i" id="ser_wm" inputmode="numeric" placeholder="none" value="' + (d.warrantyMonths ? esc(String(d.warrantyMonths)) : '') + '"' + (mgr ? '' : ' disabled') + '></div>' +
+    (mgr ? '<button class="btn primary" type="button" id="ser_save">Save</button>' : '') + '</div>';
+  if (d.serialised || d.inStock.length || d.sold.length) {
+    h += '<h2 style="margin-top:16px">On the shelf <span class="sku">' + fmt(d.inStock.length) + ' numbered' + (d.unnumbered > 0 ? ' \u00b7 ' + fmt(d.unnumbered) + ' unit(s) without a number yet' : '') + '</span></h2>';
+    h += d.inStock.length ? '<div class="snchips">' + d.inStock.map(function (x) { return '<span title="received ' + esc(x.received) + (x.ref ? ' \u00b7 ' + esc(x.ref) : '') + '">' + esc(x.serial) + '</span>'; }).join('') + '</div>' : '<div class="empty">No numbered unit on the shelf.</div>';
+    if (mgr && d.unnumbered > 0) {
+      h += '<div style="margin-top:10px"><label class="f" for="ser_add">Add serial numbers <span class="sku">one per line \u2014 up to ' + fmt(d.unnumbered) + '</span></label>' +
+        '<textarea class="i" id="ser_add" rows="3" placeholder="SN123456&#10;SN123457"></textarea>' +
+        '<div class="row" style="margin-top:6px"><button class="btn" type="button" id="ser_addgo">Add numbers</button></div></div>';
+    }
+    h += '<h2 style="margin-top:16px">Sold <span class="sku">' + fmt(d.sold.length) + '</span></h2>';
+    if (!d.sold.length) h += '<div class="empty">None sold yet.</div>';
+    else h += '<div class="scroll"><table><thead><tr><th>Serial</th><th>Sold</th><th>Invoice</th><th>Customer</th><th>Warranty</th><th></th></tr></thead><tbody>' +
+      d.sold.map(function (x) {
+        var w = !x.warrantyUntil ? '<span class="sku">none</span>' : x.inWarranty ? 'until ' + esc(x.warrantyUntilText) + ' <span class="pill ok">' + fmt(x.daysLeft) + ' days left</span>' : 'ended ' + esc(x.warrantyUntilText);
+        return '<tr' + (x.status !== 'sold' ? ' style="opacity:.6"' : '') + '><td><code>' + esc(x.serial) + '</code>' + (x.status === 'damaged' ? ' <span class="pill out">damaged</span>' : '') + '</td><td>' + esc(x.sold) + '</td>' +
+          '<td>' + (x.invoiceNo ? '<button class="linkbtn" type="button" data-openinv="' + esc(x.invoiceNo) + '">' + esc(x.invoiceNo) + '</button>' : '') + '</td><td>' + esc(x.customer) + '</td><td>' + w + (x.note ? '<br><span class="sku">' + esc(x.note) + '</span>' : '') + '</td>' +
+          '<td class="num">' + (sh && x.status === 'sold' ? '<button class="btn small" type="button" data-serwar="' + esc(x.serial) + '">Change warranty</button>' : '') + '</td></tr>'; }).join('') + '</tbody></table></div>';
+  }
+  return h + '</div></section>';
+}
+var productPageHtmlD1 = productPageHtml;
+productPageHtml = function () {
+  var h = productPageHtmlD1();
+  if (!PRODP.data) return h;
+  var at = h.indexOf('</section>');
+  return at < 0 ? h + serCardHtml() : h.slice(0, at + 10) + serCardHtml() + h.slice(at + 10);
+};
+document.addEventListener('click', async function (ev) {
+  var t = ev.target; if (!t || !t.getAttribute) return;
+  var card = t.closest ? t.closest('[data-sercard]') : null;
+  if (!card) return;
+  var sku = card.getAttribute('data-sercard');
+  function done(r, msg) { SER[sku] = r; toast(msg); CAT = null; loadAll(); repaint(); }
+  function bad(e) { toast(esc(e && e.message ? e.message : e), true, 12000); }
+  if (t.id === 'ser_save') {
+    srv('erpSerialSetup', [{ sku: sku, serialised: el('ser_on').checked, warrantyMonths: el('ser_wm').value.trim() }], function (r) { done(r, 'Saved.'); }, bad);
+  } else if (t.id === 'ser_addgo') {
+    var list = el('ser_add').value.split(/[\n,;]+/).map(function (x) { return x.trim(); }).filter(Boolean);
+    if (!list.length) { toast('Type the serial numbers, one per line.', true); return; }
+    srv('erpSerialsAdd', [{ sku: sku, serials: list }], function (r) { done(r, fmt(r.added) + ' number(s) added.'); }, bad);
+  } else if (t.getAttribute('data-serwar')) {
+    var sn = t.getAttribute('data-serwar');
+    var m = await uiPrompt('New warranty for ' + sn + ', in months from the sale date (0 = none):', '');
+    if (m === null) return;
+    var why = await uiPrompt('Why is the warranty changed?', '');
+    if (why === null) return;
+    srv('erpSerialWarranty', [{ serial: sn, sku: sku, months: m.trim(), reason: why.trim() }], function (r) { done(r, 'Warranty changed.'); }, bad);
+  }
+});
+
+// ---- New invoice: pick the unit(s), and the warranty for this sale
+function serPickHtml(i, l, p) {
+  var d = SER[l.sku];
+  if (!d) { serLoad(l.sku); return '<tr class="snrow"><td colspan="6"><span class="sku">Reading the serial numbers\u2026</span></td></tr>'; }
+  var free = d.inStock || [], chosen = l.serials || [];
+  if (!free.length) return '<tr class="snrow"><td colspan="6"><span class="sku">Sold by serial number, but no unit is numbered yet \u2014 the sale goes through unnamed. Number the units on the product page.</span></td></tr>';
+  var sels = '';
+  for (var u = 0; u < l.qty; u++) {
+    sels += '<select class="i" data-snsel="' + i + '" data-snu="' + u + '"><option value="">Serial ' + (u + 1) + '\u2026</option>' + free.map(function (x) {
+      return '<option value="' + esc(x.serial) + '"' + (chosen[u] === x.serial ? ' selected' : '') + '>' + esc(x.serial) + '</option>'; }).join('') + '</select>';
+  }
+  var wm = l.warrantyMonths !== undefined && l.warrantyMonths !== '' ? l.warrantyMonths : (p.warrantyMonths || '');
+  return '<tr class="snrow"><td colspan="6"><div class="snpick"><span class="l">Serial</span>' + sels +
+    '<span class="l">Warranty (months)</span><input class="i" inputmode="numeric" data-snwm="' + i + '" value="' + esc(String(wm)) + '" placeholder="none">' +
+    (p.warrantyMonths ? '<span class="l">product\u2019s: ' + fmt(p.warrantyMonths) + '</span>' : '') + '</div></td></tr>';
+}
+var viewInvoiceD1 = viewInvoice;
+viewInvoice = function () {
+  var h = viewInvoiceD1();
+  if (!CAT || !OPT || !CART.length) return h;
+  return h.replace(/(<td class="num"><button class="btn small danger[^"]*" type="button" data-del="(\d+)"[^>]*>[^<]*<\/button><\/td><\/tr>)/g, function (m, row, idx) {
+    var i = Number(idx), l = CART[i], p = l && serCat(l.sku);
+    if (!p || !p.serialised) return m;
+    return row + serPickHtml(i, l, p);
+  });
+};
+document.addEventListener('change', function (ev) {
+  var t = ev.target; if (!t || !t.getAttribute) return;
+  var i = t.getAttribute('data-snsel');
+  if (i !== null && i !== undefined && i !== '') {
+    var l = CART[Number(i)]; if (!l) return;
+    l.serials = l.serials || [];
+    l.serials[Number(t.getAttribute('data-snu'))] = t.value;
+    var seen = {}, dup = false;
+    l.serials.forEach(function (x) { if (x) { if (seen[x]) dup = true; seen[x] = true; } });
+    if (dup) toast('The same serial is picked twice.', true);
+    try { updateCounts(); } catch (e) {}
+  }
+});
+document.addEventListener('input', function (ev) {
+  var t = ev.target; if (!t || !t.getAttribute) return;
+  var i = t.getAttribute('data-snwm');
+  if (i !== null && i !== undefined && i !== '') { var l = CART[Number(i)]; if (l) l.warrantyMonths = t.value.trim(); }
+});
+var cartProblemsD1 = window.cartProblems;
+window.cartProblems = function () {
+  var out = cartProblemsD1.apply(this, arguments) || [];
+  CART.forEach(function (l) {
+    var p = serCat(l.sku), d = SER[l.sku];
+    if (!p || !p.serialised || !d || !(d.inStock || []).length) return;
+    var got = (l.serials || []).filter(Boolean);
+    if (got.length !== l.qty) out.push(p.name + ': pick the serial number of ' + (l.qty === 1 ? 'the unit' : 'each of the ' + l.qty + ' units') + ' going out.');
+  });
+  return out;
+};
+try { cartProblems = window.cartProblems; } catch (e) {}
+// after a sale the shelf changed
+var invFromSavedD1 = typeof invFromSaved === 'function' ? invFromSaved : null;
+invFromSaved = function (res) { serForget(); if (invFromSavedD1) invFromSavedD1(res); };
+
+// ---- Receive stock: the numbers that came with the shipment
+var viewStockD1 = viewStock;
+viewStock = function () {
+  var h = viewStockD1();
+  if (STOCK_TAB !== 'receive' || !RECV.lines.length || !CAT) return h;
+  var rows = '';
+  RECV.lines.forEach(function (l, i) {
+    var p = l.isNew ? null : serCat(l.sku);
+    if (!p || !p.serialised) return;
+    rows += '<div style="margin-top:8px"><label class="f">' + esc(p.name) + ' <span class="sku">' + fmt(l.qty) + ' unit(s) \u2014 one number per line, or leave empty and add them on the product page</span></label>' +
+      '<textarea class="i" rows="2" data-rvsn="' + i + '" placeholder="SN123456">' + esc((l.serials || []).join('\n')) + '</textarea></div>';
+  });
+  if (!rows) return h;
+  var at = h.indexOf('id="rv_save"'); if (at < 0) return h;
+  var start = h.lastIndexOf('<div class="row"', at);
+  return h.slice(0, start) + '<div style="margin-top:12px"><label class="f">Serial numbers in this shipment</label>' + rows + '</div>' + h.slice(start);
+};
+document.addEventListener('input', function (ev) {
+  var t = ev.target; if (!t || !t.getAttribute) return;
+  var i = t.getAttribute('data-rvsn');
+  if (i !== null && i !== undefined && i !== '') { var l = RECV.lines[Number(i)]; if (l) l.serials = t.value.split(/[\n,;]+/).map(function (x) { return x.trim(); }).filter(Boolean); }
+});
+
+// ---- Return: which numbered unit came back
+var retRenderD1 = typeof retRender === 'function' ? retRender : null;
+if (retRenderD1) retRender = function () {
+  retRenderD1.apply(this, arguments);
+  if (!RET || !RET.data || !CAT) return;
+  var qs = document.querySelectorAll('input[data-rq]');
+  for (var i = 0; i < qs.length; i++) (function (n) {
+    var sku = n.getAttribute('data-rq'), p = serCat(sku);
+    if (!p || !p.serialised || n.parentNode.querySelector('[data-rsn]')) return;
+    var inp = document.createElement('input');
+    inp.className = 'i'; inp.setAttribute('data-rsn', sku); inp.placeholder = 'serial number(s) coming back'; inp.style.marginTop = '6px';
+    inp.value = (RET.sn && RET.sn[sku]) || '';
+    n.parentNode.appendChild(inp);
+  })(qs[i]);
+};
+document.addEventListener('input', function (ev) {
+  var t = ev.target; if (!t || !t.getAttribute) return;
+  var sku = t.getAttribute('data-rsn');
+  if (sku && RET) { RET.sn = RET.sn || {}; RET.sn[sku] = t.value; }
+});
+
+// ---- the invoice page: the units on it
+var invoicePageHtmlD1 = invoicePageHtml;
+invoicePageHtml = function () {
+  var h = invoicePageHtmlD1();
+  var d = INVP.data; if (!d || !d.lines) return h;
+  var any = d.lines.filter(function (l) { return (l.serials || []).length; });
+  if (!any.length) return h;
+  var card = '<section><div class="card"><h2>Serial numbers on this invoice</h2><div class="list">' + any.map(function (l) {
+    return l.serials.map(function (x) { return '<div><span>' + esc(l.product) + ' <code>' + esc(x.serial) + '</code>' + (x.back ? ' <span class="pill out">came back</span>' : '') + '</span><b>' + (x.warrantyUntil ? 'warranty until ' + esc(x.warrantyUntil) : '<span class="sku">no warranty</span>') + '</b></div>'; }).join(''); }).join('') + '</div></div></section>';
+  var at = h.indexOf('</section>');
+  return at < 0 ? h + card : h.slice(0, at + 10) + card + h.slice(at + 10);
+};
+
+// ---- the top search finds a serial
+var gsHtmlD1 = gsHtml;
+gsHtml = function () {
+  var h = gsHtmlD1(), r = GS.res;
+  if (!r || !(r.serials || []).length) return h;
+  var block = '<div class="gs-h">Serial numbers</div>' + r.serials.map(function (x) {
+    return '<button type="button" data-gs="' + (x.invoice ? 'inv' : 'prod') + '" data-v="' + esc(x.invoice || x.sku) + '"><span><strong>' + esc(x.serial) + '</strong> &nbsp;' + esc(x.product) + '</span><small>' +
+      (x.status === 'sold' ? esc(x.customer || 'sold') + (x.warrantyUntil ? ' \u00b7 warranty until ' + esc(x.warrantyUntil) : '') : x.status === 'damaged' ? 'damaged' : 'on the shelf') + '</small></button>'; }).join('');
+  return /class="empty"/.test(h) && !/gs-h/.test(h) ? block : block + h;
+};
 </script>
 </body>
 </html>

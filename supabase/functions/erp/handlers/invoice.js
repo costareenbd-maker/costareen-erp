@@ -19,6 +19,7 @@ import {
 } from './money.js';
 import { products } from './dashboard.js';
 import { assertOpen } from '../lib/period.js';
+import { sellSerials } from './serials.js';
 
 /** erpSetInvoiceDate_ + invoiceTimestamp_: the moment the sale is logged at. */
 function saleTimestamp(wanted, now) {
@@ -226,6 +227,9 @@ export async function createInvoice(ctx, payload, opts = {}) {
               ${who(ctx)}, ${l.name})`;
   }
 
+  // plan D1: which units went out, and the warranty each one carries from today
+  const soldSerials = await sellSerials(ctx, invoiceNo, name, key, ts instanceof Date ? ts : now, items, bySku, opts);
+
   const customerId = await upsertCustomer(ctx, name, phoneIn, address, grand,
     lines.map((l) => l.name).join(', '), source);
   if (customerId) await ctx.tx`update invoices set customer_id = ${customerId} where id = ${invoiceId}`;
@@ -265,8 +269,7 @@ export async function createInvoice(ctx, payload, opts = {}) {
     pdf = await ctx.tx.savepoint(() => makeInvoicePdf(ctx, invoiceNo, {}));
   } catch (_) { pdf = null; }
 
-  return {
-    ok: true, invoiceNo, invoiceId,
+  return { serials: soldSerials, ok: true, invoiceNo, invoiceId,
     pdfUrl: (pdf && pdf.url) || '',
     items: lines.length, grandTotal: grand, paidNow: took, creditUsed,
     pdfId: (pdf && pdf.id) || '', pdfName: (pdf && pdf.name) || 'Invoice_' + invoiceNo + '.pdf',

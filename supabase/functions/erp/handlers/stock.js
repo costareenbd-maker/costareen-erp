@@ -16,6 +16,7 @@ import { roleAtLeast } from '../allow.js';
 import { lock, who } from './money.js';
 import { billForShipment } from './suppliers.js';
 import { ratesMap, landedCost, saveRate } from './currency.js';
+import { registerSerials } from './serials.js';
 
 // CFG.SKU_PREFIX / CFG.BRAND_CODE (Code.js:40-56)
 export const SKU_PREFIX = {
@@ -406,6 +407,15 @@ export async function receiveShipment(ctx, payload) {
   }
   forget(ctx, 'TXN_LOG');
 
+  // plan D1: the serial numbers that came with the shipment
+  let numbered = 0;
+  for (const l of lines) {
+    const list = Array.isArray(l.serials) ? l.serials.filter((x) => str(x)) : [];
+    if (!list.length) continue;
+    if (list.length > num(l.qty)) throw new Error(str(l.sku) + ': ' + list.length + ' serial numbers for ' + num(l.qty) + ' unit(s).');
+    numbered += await registerSerials(ctx, l.sku, list, reference);
+  }
+
   // ---- 4. the weighted average
   const updated = [];
   for (let y = 0; y < lines.length; y++) {
@@ -467,7 +477,7 @@ export async function receiveShipment(ctx, payload) {
   }
 
   return {
-    ok: true, reference, billed: !!billId, paidNow, costs: costRows.length, currency: mode === 'rmb' ? fxCur : '', received: updated.length || lines.length,
+    ok: true, numbered, reference, billed: !!billId, paidNow, costs: costRows.length, currency: mode === 'rmb' ? fxCur : '', received: updated.length || lines.length,
     units: lines.reduce((n, l) => n + num(l.qty), 0),
     shipping, createdProducts: created, lines: updated, totalCost: round2(totalBdt),
     rate: mode === 'rmb' ? rate : 0, rateSaved,
