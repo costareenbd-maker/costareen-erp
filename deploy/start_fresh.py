@@ -34,6 +34,8 @@ ALWAYS_KEEP = {
     'pool_partners', 'pool_invites', 'money_accounts', 'erp_access_keys',
     # set-up, not history: currencies and their rates, who said STOP to WhatsApp (must survive)
     'currencies', 'currency_rates', 'campaign_optouts',
+    # website items matched to products (set up once, keep after go-live)
+    'web_product_links', 'web_catalog',
 }
 LISTS = {'products', 'customers', 'cost_book', 'expense_items', 'suppliers', 'capital_holders', 'quote_items'}
 
