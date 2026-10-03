@@ -413,3 +413,8 @@
 - **Sidebar folds to icons**: the « / » button at the top next to the business name; folded, each icon shows its name when pointed at and the counts (e.g. Web orders 14) stay on the icons; each device remembers its choice; phones keep their slide-in menu.
 - **Background photo** (Settings → Business, owner or manager): a photo for the business behind the screens. Cards, tables and forms stay solid so text is always readable; the photo shows around them under a soft layer in the page's own colour (Subtle / Medium / Strong), lightly blurred; titles over it get a shadow. Made small in the browser (≤ 1600 px). Each person can switch it off for themselves.
 - 052_look_photos.sql (profiles.avatar, erp_prefs.bg_off), shell.js erpProfile/erpProfileSave/erpBg/erpBgSave/erpBgOff, erpSetTheme takes "auto"; tests/u6_test.mjs.
+
+2026-10-04 — ui-6b: no flicker of explanations, language in one place, background photo from the account menu
+- Long explanations showed for a moment on loading or redrawing a screen, then hid behind "?" (the hiding ran on a 30 ms timer, after the screen was drawn). It now runs before the screen is drawn: they never show.
+- Language is only in the account menu now (the top-bar বাংলা button is gone).
+- The background photo can be added or changed from the account menu ("Add a background photo" / "Change background photo", owner and manager), as well as in Settings → Business.
