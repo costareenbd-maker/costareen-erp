@@ -439,3 +439,4 @@
 - WhatsApp QR: already built — after "Save and test" succeeds against a running Evolution server, "Link a WhatsApp number (QR code)" shows the QR (refreshes until scanned in WhatsApp → Linked devices).
 - Not done: nothing else on this list.
 - tidy-7b: every title-bar button/chip is one size (34px, 13px text, same corners). Web orders now follows the same rule: Check the website for new orders, Website products to match, Website chip sit in the title bar instead of inside the box.
+- tidy-7c: Web orders: Check the website for new orders + Website products to match back inside the Website orders box, right side of its heading; only the Website chip stays in the title bar.
