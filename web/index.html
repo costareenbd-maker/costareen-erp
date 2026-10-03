@@ -14831,5 +14831,185 @@ function wireRepairs() {
   });
 }
 </script>
+
+<!-- plan D6: Excel out, spreadsheet in -->
+<style>
+.xl .pick { display:flex; flex-wrap:wrap; gap:8px; }
+.xl .pick button { border:1px solid var(--ring); background:var(--surface); color:var(--ink); border-radius:4px; padding:8px 12px; font:inherit; font-size:13px; cursor:pointer; }
+.xl .pick button:hover { border-color:var(--series-1); background:var(--series-1-soft); }
+.xl .pick button[disabled] { opacity:.5; cursor:default; }
+.xl .rows { max-height:260px; overflow:auto; border:1px solid var(--ring); border-radius:4px; padding:6px 10px; font-size:12.5px; margin-top:8px; }
+.xl .rows div { padding:2px 0; border-bottom:1px solid var(--grid); }
+.xl .rows div:last-child { border-bottom:none; }
+.xl .rows .e { color:var(--critical); }
+.xl .rows .s { color:var(--muted); }
+</style>
+<script>
+var XL = { open: false, what: 'products', busy: '', file: null, rows: null, preview: null, err: '' };
+var XL_LISTS = [['products', 'Products'], ['customers', 'Customers'], ['invoices', 'Invoices'], ['suppliers', 'Suppliers'], ['serials', 'Serial numbers'], ['jobs', 'Repair jobs'], ['stock', 'Stock movements (90 days)'], ['costbook', 'Price book']];
+var XL_IMPORTS = [['products', 'Products'], ['customers', 'Customers'], ['suppliers', 'Suppliers']];
+
+// ---- reading a spreadsheet in the browser: .xlsx (a zip of XML) or .csv
+async function xlInflate(bytes, method) {
+  if (method === 0) return bytes;
+  if (method !== 8 || typeof DecompressionStream === 'undefined') throw new Error('This browser cannot open .xlsx files. Save the sheet as CSV and try again.');
+  var ds = new DecompressionStream('deflate-raw');
+  var w = ds.writable.getWriter(); w.write(bytes); w.close();
+  return new Uint8Array(await new Response(ds.readable).arrayBuffer());
+}
+async function xlUnzip(buf) {
+  var b = new Uint8Array(buf), dv = new DataView(buf), n = b.length, eocd = -1;
+  for (var i = n - 22; i >= Math.max(0, n - 65558); i--) if (dv.getUint32(i, true) === 0x06054b50) { eocd = i; break; }
+  if (eocd < 0) throw new Error('Not an .xlsx file.');
+  var count = dv.getUint16(eocd + 10, true), off = dv.getUint32(eocd + 16, true), out = {}, dec = new TextDecoder();
+  for (var k = 0; k < count; k++) {
+    if (dv.getUint32(off, true) !== 0x02014b50) break;
+    var method = dv.getUint16(off + 10, true), csize = dv.getUint32(off + 20, true), nlen = dv.getUint16(off + 28, true), elen = dv.getUint16(off + 30, true), clen = dv.getUint16(off + 32, true), lho = dv.getUint32(off + 42, true);
+    var name = dec.decode(b.subarray(off + 46, off + 46 + nlen));
+    out[name] = { method: method, csize: csize, lho: lho };
+    off += 46 + nlen + elen + clen;
+  }
+  return { get: async function (name) {
+    var e = out[name]; if (!e) return null;
+    var ln = dv.getUint16(e.lho + 26, true), le = dv.getUint16(e.lho + 28, true), start = e.lho + 30 + ln + le;
+    return dec.decode(await xlInflate(b.subarray(start, start + e.csize), e.method));
+  }, names: Object.keys(out) };
+}
+function xlCol(ref) { var m = /^([A-Z]+)/.exec(ref || ''); if (!m) return 0; var c = 0; for (var i = 0; i < m[1].length; i++) c = c * 26 + (m[1].charCodeAt(i) - 64); return c - 1; }
+async function xlReadXlsx(buf) {
+  var z = await xlUnzip(buf), par = new DOMParser();
+  var ssx = await z.get('xl/sharedStrings.xml'), shared = [];
+  if (ssx) { var sd = par.parseFromString(ssx, 'application/xml'); var sis = sd.getElementsByTagName('si'); for (var i = 0; i < sis.length; i++) { var ts = sis[i].getElementsByTagName('t'), t = ''; for (var j = 0; j < ts.length; j++) t += ts[j].textContent; shared.push(t); } }
+  var sheetName = z.names.filter(function (x) { return /^xl\/worksheets\/sheet\d+\.xml$/.test(x); }).sort()[0];
+  if (!sheetName) throw new Error('No sheet in the file.');
+  var xd = par.parseFromString(await z.get(sheetName), 'application/xml'), rows = xd.getElementsByTagName('row'), grid = [];
+  for (var r = 0; r < rows.length; r++) {
+    var cells = rows[r].getElementsByTagName('c'), line = [];
+    for (var c = 0; c < cells.length; c++) {
+      var cell = cells[c], col = xlCol(cell.getAttribute('r')), t = cell.getAttribute('t'), v = cell.getElementsByTagName('v')[0], val = '';
+      if (t === 's') val = shared[Number(v ? v.textContent : -1)] || '';
+      else if (t === 'inlineStr') { var isx = cell.getElementsByTagName('t')[0]; val = isx ? isx.textContent : ''; }
+      else if (t === 'b') val = v && v.textContent === '1' ? 'yes' : '';
+      else val = v ? v.textContent : '';
+      line[col] = val;
+    }
+    grid.push(line);
+  }
+  return grid;
+}
+function xlReadCsv(text) {
+  text = String(text || '').replace(/^\uFEFF/, '');
+  var rows = [], row = [], cell = '', q = false;
+  for (var i = 0; i < text.length; i++) {
+    var ch = text[i];
+    if (q) { if (ch === '"') { if (text[i + 1] === '"') { cell += '"'; i++; } else q = false; } else cell += ch; }
+    else if (ch === '"') q = true;
+    else if (ch === ',' || ch === ';' || ch === '\t') { row.push(cell); cell = ''; }
+    else if (ch === '\n' || ch === '\r') { if (ch === '\r' && text[i + 1] === '\n') i++; row.push(cell); rows.push(row); row = []; cell = ''; }
+    else cell += ch;
+  }
+  if (cell !== '' || row.length) { row.push(cell); rows.push(row); }
+  return rows;
+}
+function xlObjects(grid) {
+  var head = null, out = [];
+  for (var r = 0; r < grid.length; r++) {
+    var line = grid[r] || [];
+    if (!head) { if (line.some(function (x) { return String(x || '').trim(); })) head = line.map(function (x) { return String(x || '').trim(); }); continue; }
+    var o = {}, any = false;
+    for (var c = 0; c < head.length; c++) { if (!head[c]) continue; var v = line[c] == null ? '' : String(line[c]).trim(); o[head[c]] = v; if (v) any = true; }
+    if (any) out.push(o);
+  }
+  return out;
+}
+async function xlReadFile(file) {
+  if (/\.xlsx$/i.test(file.name)) return xlObjects(await xlReadXlsx(await file.arrayBuffer()));
+  if (/\.(csv|txt|tsv)$/i.test(file.name)) return xlObjects(xlReadCsv(await file.text()));
+  throw new Error('Choose an .xlsx or a .csv file. An old .xls must be saved as .xlsx first.');
+}
+
+// ---- the panel
+function xlPanelHtml() {
+  var x = XL, canImp = XL_IMPORTS.some(function (l) { return l[0] === x.what; });
+  var h = '<section><div class="card xl"><div class="row" style="justify-content:space-between;align-items:center"><h2 style="margin:0">Excel</h2><button class="btn small" type="button" id="xl_close">Close</button></div>' +
+    '<div class="sub">Every list goes out as an .xlsx. Products, customers and suppliers come in from an .xlsx or .csv: the columns are read by their headings (a file exported from here goes straight back in), you see what would change, then you say yes. Stock is never changed by a file.</div>' +
+    '<h2 style="margin-top:12px">Export</h2><div class="pick">' + XL_LISTS.map(function (l) {
+      return '<button type="button" data-xlexp="' + l[0] + '"' + (x.busy === 'exp:' + l[0] ? ' disabled' : '') + '>' + (x.busy === 'exp:' + l[0] ? 'Making\u2026' : '\u2B07 ' + l[1]) + '</button>'; }).join('') + '</div>';
+  h += '<h2 style="margin-top:16px">Import</h2><div class="row" style="gap:8px;align-items:flex-end;flex-wrap:wrap">' +
+    '<div><label class="f" for="xl_what">Into</label><select class="i" id="xl_what">' + XL_IMPORTS.map(function (l) { return '<option value="' + l[0] + '"' + (x.what === l[0] ? ' selected' : '') + '>' + l[1] + '</option>'; }).join('') + '</select></div>' +
+    '<div><label class="f">File</label><input type="file" id="xl_file" accept=".xlsx,.csv,.txt,.tsv" hidden><button class="btn" type="button" id="xl_pick">' + (x.file ? esc(x.file.name) + ' \u2715' : 'Choose a file\u2026') + '</button></div>' +
+    (x.rows ? '<span class="sku">' + fmt(x.rows.length) + ' row(s) read</span>' : '') +
+    (x.rows && !x.preview ? '<button class="btn primary" type="button" id="xl_preview"' + (x.busy ? ' disabled' : '') + '>' + (x.busy === 'prev' ? 'Checking\u2026' : 'Check the file') + '</button>' : '') + '</div>';
+  if (x.err) h += '<div class="note err" style="margin-top:10px"><div class="ico">\u2715</div><div>' + esc(x.err) + '</div></div>';
+  var pv = x.preview;
+  if (pv) {
+    var unknown = pv.columns.filter(function (c) { return !c.as; }).map(function (c) { return c.column; });
+    h += '<div style="margin-top:10px"><div class="sub">Columns read: ' + pv.columns.filter(function (c) { return c.as; }).map(function (c) { return '<strong>' + esc(c.column) + '</strong>'; }).join(', ') +
+      (unknown.length ? ' \u00b7 not understood (ignored): ' + unknown.map(esc).join(', ') : '') + '</div>' +
+      '<div class="grid g-kpi" style="margin-top:8px">' + kpi('To add', '', fmt(pv.add.length), '') + kpi('To change', '', fmt(pv.change.length), '') + kpi('Refused', '', fmt(pv.errors.length), '') + kpi('Skipped', '', fmt(pv.skip.length), '') + '</div>' +
+      '<div class="rows">' + pv.add.map(function (r) { return '<div>+ row ' + r.row + ': ' + esc(r.text) + '</div>'; }).join('') +
+      pv.change.map(function (r) { return '<div>\u270E row ' + r.row + ': ' + esc(r.text) + '</div>'; }).join('') +
+      pv.errors.map(function (r) { return '<div class="e">\u2715 row ' + r.row + ': ' + esc(r.text) + '</div>'; }).join('') +
+      pv.skip.map(function (r) { return '<div class="s">\u2013 row ' + r.row + ': ' + esc(r.text) + '</div>'; }).join('') + (!pv.add.length && !pv.change.length && !pv.errors.length && !pv.skip.length ? '<div class="s">Nothing in the file.</div>' : '') + '</div>';
+    if (pv.apply) h += '<div class="note" style="margin-top:10px"><div class="ico">\u2713</div><div><strong>Done.</strong> ' + fmt(pv.added) + ' added, ' + fmt(pv.changed) + ' changed' + (pv.errors.length ? ', ' + fmt(pv.errors.length) + ' refused (listed above)' : '') + '.</div></div>';
+    else if (pv.add.length || pv.change.length) h += '<div class="row" style="margin-top:10px;gap:8px"><button class="btn primary" type="button" id="xl_apply"' + (x.busy ? ' disabled' : '') + '>' + (x.busy === 'apply' ? 'Writing\u2026' : 'Yes, add ' + fmt(pv.add.length) + ' and change ' + fmt(pv.change.length)) + '</button><button class="btn" type="button" id="xl_reset">Start again</button></div>';
+    else h += '<div class="row" style="margin-top:10px"><button class="btn" type="button" id="xl_reset">Start again</button></div>';
+    h += '</div>';
+  }
+  return h + '</div></section>';
+}
+function xlOpen(what) { XL.open = true; if (what) XL.what = what; XL.preview = null; XL.err = ''; repaint(); }
+(function () {
+  // an Excel button on the lists, and the panel under it
+  var wraps = [['viewProducts', 'products', function () { return !(typeof PRODP !== 'undefined' && PRODP && PRODP.sku); }],
+               ['viewCustomers', 'customers', function () { return !(typeof CUSP !== 'undefined' && CUSP && CUSP.key); }],
+               ['viewSales', 'invoices', function () { return !(typeof INVP !== 'undefined' && INVP && INVP.no); }],
+               ['viewSuppliers', 'suppliers', function () { return !(typeof SUPP !== 'undefined' && SUPP && SUPP.name); }],
+               ['viewRepairs', 'jobs', function () { return !(typeof JOBP !== 'undefined' && JOBP && JOBP.no); }]];
+  wraps.forEach(function (w) {
+    var orig = window[w[0]]; if (typeof orig !== 'function') return;
+    window[w[0]] = function () {
+      var h = orig.apply(this, arguments);
+      if (!w[2]() || !ME || !{ manager: 1, shareholder: 1, owner: 1 }[ME.role]) return h;
+      if (XL.open && XL_LISTS.some(function (l) { return l[0] === XL.what; }) && XL.what === w[1] || (XL.open && XL.at === w[1])) return xlPanelHtml() + h;
+      return '<div class="row" style="justify-content:flex-end;margin-bottom:6px"><button class="btn small" type="button" data-xlopen="' + w[1] + '">Excel</button></div>' + h;
+    };
+  });
+  try { viewProducts = window.viewProducts; viewCustomers = window.viewCustomers; viewSales = window.viewSales; viewSuppliers = window.viewSuppliers; viewRepairs = window.viewRepairs; } catch (e) {}
+})();
+document.addEventListener('click', async function (ev) {
+  var t = ev.target; if (!t || !t.getAttribute) return;
+  var o = t.getAttribute('data-xlopen');
+  if (o) { XL.at = o; xlOpen(XL_IMPORTS.some(function (l) { return l[0] === o; }) ? o : XL.what); return; }
+  if (t.id === 'xl_close') { XL.open = false; XL.at = ''; repaint(); return; }
+  var e = t.getAttribute('data-xlexp');
+  if (e) {
+    XL.busy = 'exp:' + e; repaint();
+    srv('erpExport', [{ what: e }], function (r) { XL.busy = ''; repaint(); toast('Made: ' + esc(r.name) + ' (' + fmt(r.rows) + ' rows). Opening\u2026', false, 8000); window.open(r.url, '_blank', 'noopener'); },
+        function (x) { XL.busy = ''; repaint(); toast(esc(x && x.message ? x.message : x), true, 12000); });
+    return;
+  }
+  if (t.id === 'xl_pick') { if (XL.file) { XL.file = null; XL.rows = null; XL.preview = null; XL.err = ''; repaint(); return; } var f = el('xl_file'); if (f) f.click(); return; }
+  if (t.id === 'xl_reset') { XL.file = null; XL.rows = null; XL.preview = null; XL.err = ''; repaint(); return; }
+  if (t.id === 'xl_preview' || t.id === 'xl_apply') {
+    var apply = t.id === 'xl_apply';
+    if (apply && !(await uiConfirm('Write the file into ' + XL.what + '?\n\n' + fmt(XL.preview.add.length) + ' added, ' + fmt(XL.preview.change.length) + ' changed. Stock figures in the file are not applied.'))) return;
+    XL.busy = apply ? 'apply' : 'prev'; XL.err = ''; repaint();
+    srv('erpImport', [{ what: XL.what, rows: XL.rows, apply: apply }], function (r) {
+      XL.busy = ''; XL.preview = r; repaint();
+      if (apply) { toast(fmt(r.added) + ' added, ' + fmt(r.changed) + ' changed.'); CAT = null; CUST = null; LISTS = null; loadAll(); try { lvSt(XL.what === 'suppliers' ? 'products' : XL.what).stale = true; } catch (e2) {} if (XL.what === 'suppliers' && typeof loadSuppliers === 'function') loadSuppliers(); }
+    }, function (x) { XL.busy = ''; XL.err = (x && x.message) || String(x); repaint(); });
+  }
+});
+document.addEventListener('change', async function (ev) {
+  var t = ev.target; if (!t) return;
+  if (t.id === 'xl_what') { XL.what = t.value; XL.preview = null; repaint(); return; }
+  if (t.id !== 'xl_file' || !t.files || !t.files[0]) return;
+  XL.file = t.files[0]; XL.rows = null; XL.preview = null; XL.err = ''; repaint();
+  try { XL.rows = await xlReadFile(XL.file); if (!XL.rows.length) XL.err = 'No rows under the heading line.'; }
+  catch (e) { XL.err = (e && e.message) || String(e); XL.file = null; }
+  repaint();
+});
+</script>
 </body>
 </html>

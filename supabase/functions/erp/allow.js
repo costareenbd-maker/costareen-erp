@@ -78,6 +78,7 @@ export const ERP_ALLOW = {
   erpProductPhoto: 'manager', erpProductPhotoUrl: 'sales', erpProductThumbs: 'sales',
   erpFamilies: 'manager', erpFamilyApply: 'manager', erpFamilyClear: 'manager',
   erpNotes: 'sales', erpNoteAdd: 'sales', erpNoteVoid: 'manager', erpNoteFileUrl: 'sales',
+  erpExport: 'manager', erpImport: 'manager',
   erpJobs: 'sales', erpJob: 'sales', erpJobOpen: 'sales', erpJobSave: 'sales', erpJobPay: 'manager',
   erpSerialSetup: 'manager', erpSerialsAdd: 'manager', erpSerialsFor: 'sales', erpSerialLookup: 'sales', erpSerialWarranty: 'shareholder',
   erpCapital: 'shareholder', erpCapitalHolderSave: 'owner', erpCapitalHolderEnd: 'owner',

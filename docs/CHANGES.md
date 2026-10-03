@@ -240,3 +240,9 @@
 - Money: receive payments on the job (manager and up; they land in the money account by payment method); the due stays on the job. Repair income and the parts used go into the profit and loss (and the Expenses screen's net) in the month the machine was returned.
 - 041_service_jobs.sql, handlers/repairs.js (erpJobs, erpJob, erpJobOpen, erpJobSave, erpJobPay, serviceFor), tests/d2_test.mjs (23).
 - Not done: a job slip / receipt to print for the customer; jobs on the customer's page; the P&L screen shows repair income inside the net only (no line of its own yet); the go-live wipe clears jobs.
+
+2026-10-03 — Plan D6 (Excel out, spreadsheet in)
+- An **Excel** button on Products, Customers, Invoices, Suppliers and Repairs (manager and up) opens one panel: export any list as .xlsx (products, customers, invoices, suppliers, serial numbers, repair jobs, 90 days of stock movements, the price book for shareholders); import products, customers or suppliers from an .xlsx or .csv.
+- Import reads the file in the browser (an .xlsx is unzipped and parsed there, no library), matches columns by their headings loosely ("Sell price", "Price", "sell_price"...), shows what would be added, changed, refused and skipped, and writes only after "Yes". Stock figures in a file are never applied (use Stock count). A manager's file cannot change cost (shareholder and up can). The same customer twice in a file: the later row wins.
+- handlers/excel.js (erpExport, erpImport), tests/d6_test.mjs (26). The xlsx writer is the one Expenses already had.
+- Not done: importing stock counts, invoices or payments from a file (on purpose - those are movements, not lists); Excel buttons on the older non-list screens (Stock, Money) - their data exports from the panel anyway.
