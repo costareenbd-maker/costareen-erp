@@ -16264,8 +16264,7 @@ wmBoxHtml = function () {
   if (!wmCan()) return '';
   if (!WMATCH) { if (!WMATCH_BUSY) { WMATCH_BUSY = true; loadWMatch(); } return ''; }
   var w = WMATCH, n = w.unmatched.length;
-  var h = '<div class="row" style="justify-content:flex-end;margin-bottom:8px"><button class="btn' + (n ? ' primary' : '') + '" type="button" id="wm_toggle">' +
-    (WM_OPEN ? 'Hide website products' : 'Website products to match' + (n ? ' (' + fmt(n) + ')' : ' \u2713')) + '</button></div>';
+  var h = '';
   if (!WM_OPEN) return h;
   h += '<section><div class="card"><h2>Website products to match</h2><div class="sub">A website product that is not in the ERP: add it, or link it to a product you already have. Linked once, its orders and stock follow by themselves. Prices may differ - a website order keeps the website\u2019s price.</div>';
   if (!n) h += '<div class="empty">Every website product is matched.</div>';
@@ -16340,11 +16339,11 @@ function connChip(kind) {
 function chipRow(kinds) { var c = kinds.map(connChip).join(' '); return c ? '<div class="row" style="justify-content:flex-end;gap:6px;margin-bottom:8px">' + c + '</div>' : ''; }
 // the pages that use an outside service show its state
 var viewWebOrdersT5 = viewWebOrders;
-viewWebOrders = function () { return chipRow(['website']) + viewWebOrdersT5(); };
+viewWebOrders = function () { return viewWebOrdersT5(); };
 var viewSalesT5 = viewSales;
-viewSales = function () { return (INVP && INVP.no ? '' : chipRow(['courier'])) + viewSalesT5(); };
+viewSales = function () { return viewSalesT5(); };
 var viewCampaignsT5 = viewCampaigns;
-viewCampaigns = function () { return chipRow(['whatsapp']) + viewCampaignsT5(); };
+viewCampaigns = function () { return viewCampaignsT5(); };
 // a website not connected: no red "could not read" - the button says it
 var courierPanelT5 = courierPanel;
 courierPanel = function () { if (CSTAT && !CSTAT.loading && CSTAT.website !== 'on') return ''; return courierPanelT5(); };
@@ -16796,6 +16795,35 @@ themeBoxHtml = function () {
 // the window follows every change of the photo
 var bgPaintTH = bgPaint;
 bgPaint = function () { bgPaintTH(); if (el('th_back') && typeof themeBoxPaint === 'function') themeBoxPaint(); };
+</script>
+
+<!-- tidy-6: the service status and its buttons sit inside the boxes, not in rows of their own -->
+<script>
+function wmToggleBtn() {
+  if (!wmCan() || !WMATCH || WMATCH.loading) return '';
+  var n = (WMATCH.unmatched || []).length;
+  return '<button class="btn' + (n && !WM_OPEN ? ' primary' : '') + '" type="button" id="wm_toggle">' + (WM_OPEN ? 'Hide website products' : 'Website products to match' + (n ? ' (' + fmt(n) + ')' : ' \u2713')) + '</button>';
+}
+var viewWebOrdersT6 = viewWebOrders;
+viewWebOrders = function () {
+  var h = viewWebOrdersT6();
+  // the toolbar of the Website orders box: check for orders, match products, and the website's state at the right
+  var at = h.indexOf('id="wo_pull"');
+  if (at < 0) return h;
+  var end = h.indexOf('</button>', at) + 9;
+  return h.slice(0, end) + ' ' + wmToggleBtn() + '<span style="flex:1"></span>' + connChip('website') + h.slice(end);
+};
+var viewSalesT6 = viewSales;
+viewSales = function () {
+  var h = viewSalesT6();
+  if (INVP && INVP.no) return h;
+  var at = h.indexOf('<button class="btn" type="button" id="t1_labels"');
+  if (at < 0) at = h.indexOf('<button class="btn" type="button" id="sl_checkdel"');
+  return at < 0 ? h : h.slice(0, at) + connChip('courier') + ' ' + h.slice(at);
+};
+// Campaigns already shows its WhatsApp state: that pill opens the set-up
+var cpTabsHtmlT6 = cpTabsHtml;
+cpTabsHtml = function () { return cpTabsHtmlT6().replace(/<span class="pill([^"]*)">((?:\u2713 )?WhatsApp)/, '<span class="pill$1" data-cpop="whatsapp" style="cursor:pointer" title="Set up WhatsApp">$2'); };
 </script>
 <!-- lang-2: the language of what customers receive -->
 <script>
