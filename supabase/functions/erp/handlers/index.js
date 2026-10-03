@@ -55,7 +55,7 @@ const core = {
   erpBusinesses: shell.erpBusinesses,
   erpSetLook: shell.erpSetLook,
   erpSetLang: shell.erpSetLang,
-  erpProfile: shell.erpProfile, erpProfileSave: shell.erpProfileSave, erpBg: shell.erpBg, erpBgSave: shell.erpBgSave, erpBgOff: shell.erpBgOff, erpGame: shell.erpGame, erpGameSet: shell.erpGameSet,
+  erpProfile: shell.erpProfile, erpProfileSave: shell.erpProfileSave, erpBg: shell.erpBg, erpBgSave: shell.erpBgSave, erpBgOff: shell.erpBgOff, erpGame: shell.erpGame, erpGameSet: shell.erpGameSet, erpFighters: shell.erpFighters, erpFightersSet: shell.erpFightersSet,
   erpDocLang: shell.erpDocLang,
   erpBnWords: (ctx) => shell.erpBnWords(ctx, {}),
   erpBnWordsSet: (ctx, p) => shell.erpBnWords(ctx, { set: (p && p.set) || {} }),

@@ -156,6 +156,40 @@ export async function erpGameSet(ctx, payload) {
   return erpGame(ctx);
 }
 
+// ---- the fighting game's fighters: pixel heads made from photos of people who agreed. Kept per business, never in public files.
+const FIGHT_MOVES = ['whip', 'spool', 'dash', 'resin', 'wall', 'pillars', 'laser', 'slam', 'flurry'];
+/** {fighters: [{name, move, color, head: {w, h, pal: ['#rrggbb'], px}}]} */
+export async function erpFighters(ctx) {
+  const { getConfig } = await import('../lib/ext.js');
+  let list = [];
+  try { list = JSON.parse(String(await getConfig(ctx, 'fighters', '[]')) || '[]'); } catch (e) { list = []; }
+  return { fighters: Array.isArray(list) ? list : [] };
+}
+/** Owner: the whole list, checked piece by piece. */
+export async function erpFightersSet(ctx, payload) {
+  const { setConfig } = await import('../lib/ext.js');
+  if (ctx.s.role !== 'owner') throw new Error('Only the owner changes the fighters.');
+  const src = payload && payload.fighters;
+  if (!Array.isArray(src) || src.length > 24) throw new Error('Up to 24 fighters.');
+  const out = src.map((f, i) => {
+    const name = String(f && f.name || '').trim().replace(/\s+/g, ' ');
+    if (!name || name.length > 24) throw new Error('Fighter ' + (i + 1) + ': a name up to 24 letters.');
+    const move = String(f.move || '');
+    if (!FIGHT_MOVES.includes(move)) throw new Error(name + ': which special move?');
+    const color = String(f.color || '');
+    if (!/^#[0-9a-f]{6}$/i.test(color)) throw new Error(name + ': a colour like #3366cc.');
+    const h = f.head || {};
+    const w = Number(h.w), hh = Number(h.h), pal = Array.isArray(h.pal) ? h.pal.map(String) : [], px = String(h.px || '');
+    if (!(w >= 8 && w <= 40 && hh >= 8 && hh <= 48) || px.length !== w * hh) throw new Error(name + ': the face picture does not fit.');
+    if (!pal.length || pal.length > 16 || pal.some((c) => !/^#[0-9a-f]{6}$/i.test(c))) throw new Error(name + ': the face colours do not fit.');
+    const ok = new RegExp('^[.' + '0123456789abcdef'.slice(0, pal.length) + ']+$');
+    if (!ok.test(px)) throw new Error(name + ': the face picture does not fit.');
+    return { name, move, color: color.toLowerCase(), head: { w, h: hh, pal: pal.map((c) => c.toLowerCase()), px } };
+  });
+  await setConfig(ctx, 'fighters', JSON.stringify(out));
+  return { fighters: out };
+}
+
 /** This person's screen language: 'en' or 'bn'. */
 export async function erpSetLang(ctx, lang) {
   const v = String(lang || '').trim().toLowerCase();

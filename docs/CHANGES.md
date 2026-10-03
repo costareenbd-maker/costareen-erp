@@ -467,3 +467,14 @@
 - "Values the system keeps for itself": read-only. "Change…" warns (can break invoices, deliveries or money; only if support asks) before the box opens.
 - Every Defaults save (plain ones too) can be undone: an Undo button in the row and in the "Saved" toast puts back the value from before, while the page is open. "Nothing changed" when the value is the same.
 - Print Run: the thermal-runaway flame is removed (too hard to time). The drawing code stays unused.
+
+## game-3 — Costareen Brawl (fighting game, 2nd tab) (2026-10-04)
+- New tab "Brawl" in the game strip. One player against the computer: choose a fighter, beat the others one by one (each level the computer reacts faster, blocks more, hits harder), last level the Spaghetti Monster (160 HP). Best level kept per device.
+- Keys (only while the canvas has focus): ← → move, ↑ jump, ↓ block, A punch, S kick, D special, hold F to power up (aura), F when full = Print Blast (layered-filament beam, 30 damage).
+- Specials: Filament Whip, Spool Throw, Hot Nozzle Dash, Resin Splash (slowing puddle), Layer Wall (blocks shots), Support Pillars, Laser Engraver, Heated Bed Slam (shockwave), Speed Print 300 (flurry).
+- 9 fighters from photos of staff who agreed (owner confirmed): pixel heads 28×34, 9–13 colours, made with a script (grabCut background cut, outline). Names: Rafiq, Sabbir, Tanvir, Jubayer, Nayeem, Shakil, Arif, Rakib, Imran.
+- Privacy: the faces are NOT in any public file. They are in the business's own data (business_config 'fighters'), read with erpFighters (any member) and saved with erpFightersSet (owner, every field checked). Other businesses / the neutral copy get three plain faceless fighters.
+- The game code is web/games/fight.js (30 KB), fetched only when the Brawl tab first opens; deploy.py now publishes web/games; _headers no-cache for /games/*.
+- Fixed on the way: the account menu read LANG before it existed at page load (ReferenceError on every load since ui-6), which skipped the photo/background reload after switching business and the saved "auto" theme.
+- Tests: g1 +6 checks (fighters read/save/refusals). Scripted play: lost → retry, two level wins, supers on both sides, every special lands.
+- Not done: "Add a fighter" upload in Maintenance (fighters are loaded by script for now); 2-player; sounds.

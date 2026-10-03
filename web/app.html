@@ -16543,7 +16543,7 @@ function umPaint() {
       '<div class="u6n"><b>' + esc(p.name || '') + '</b><span>' + esc(p.email || '') + '</span><span>' + esc(p.roleLabel || p.role || '') + (p.business ? ' \u00b7 ' + esc(p.business) : '') + '</span></div></div>' +
     '<div class="u6s"><div class="u6row"><span>Appearance</span><span class="seg">' +
       [['light', '\u2600 Light'], ['auto', '\u25D0 Auto'], ['dark', '\u263E Dark']].map(function (x) { return '<button type="button" data-u6mode="' + x[0] + '" class="' + (m === x[0] ? 'on' : '') + '">' + x[1] + '</button>'; }).join('') + '</span></div>' +
-      '<div class="u6row"><span>Language</span><span class="seg" data-noi18n="1"><button type="button" data-u6lang="en" class="' + (LANG === 'en' ? 'on' : '') + '">English</button><button type="button" data-u6lang="bn" class="' + (LANG === 'bn' ? 'on' : '') + '">বাংলা</button></span></div>' +
+      '<div class="u6row"><span>Language</span><span class="seg" data-noi18n="1"><button type="button" data-u6lang="en" class="' + ((typeof LANG === 'undefined' ? 'en' : LANG) === 'en' ? 'on' : '') + '">English</button><button type="button" data-u6lang="bn" class="' + ((typeof LANG === 'undefined' ? 'en' : LANG) === 'bn' ? 'on' : '') + '">বাংলা</button></span></div>' +
 
     '</div>' +
     '<button type="button" class="u6a" id="u6themes">Theme & background\u2026</button>' +
@@ -16923,13 +16923,47 @@ var GAME_WORDS = { 'Click to start printing': 'প্রিন্ট শুর�
   'Print failed at layer': 'প্রিন্ট ব্যর্থ, লেয়ার', 'Click or Space to reprint': 'আবার প্রিন্ট করতে ক্লিক বা স্পেস', 'Layer': 'লেয়ার', 'Best': 'সেরা', 'New best!': 'নতুন রেকর্ড!',
   'Filament': 'ফিলামেন্ট', 'Your print': 'আপনার প্রিন্ট', 'Filament ran out at layer': 'ফিলামেন্ট শেষ, লেয়ার', 'Thermal runaway at layer': 'থার্মাল রানঅ্যাওয়ে, লেয়ার',
   'Red': 'লাল', 'Blue': 'নীল', 'Green': 'সবুজ', 'Yellow': 'হলুদ', 'Orange': 'কমলা', 'White': 'সাদা', 'Purple': 'বেগুনি', 'Natural': 'ন্যাচারাল', 'Silk gold': 'সিল্ক গোল্ড', 'Rainbow': 'রেইনবো',
+  'Level': 'লেভেল', 'Fight!': 'লড়াই!', 'wins.': 'জিতেছে।', 'You reached level': 'আপনি পৌঁছেছেন লেভেল', 'is the champion!': 'চ্যাম্পিয়ন!', 'Special': 'বিশেষ চাল', 'level': 'লেভেল',
+  'Power full: press F': 'পাওয়ার পূর্ণ: F চাপুন', 'Loading…': 'লোড হচ্ছে…', 'Costareen Brawl — choose your fighter': 'কস্টারিন ব্রল — আপনার ফাইটার বাছুন',
   'Space or tap: jump (hold: higher) · ↓: duck · grab spools before the filament runs out': 'স্পেস বা ট্যাপ: লাফ (চেপে রাখলে উঁচু) · ↓: নিচু · ফিলামেন্ট শেষের আগে স্পুল ধরুন' };
 function gw(t) { return typeof LANG !== 'undefined' && LANG === 'bn' && GAME_WORDS[t] ? GAME_WORDS[t] : t; }
 function gameHidden() { try { return localStorage.getItem('erp_game_hide') === '1'; } catch (e) { return false; } }
 function gameBest(v) { try { if (v !== undefined) localStorage.setItem('erp_game_best', String(v)); return Number(localStorage.getItem('erp_game_best')) || 0; } catch (e) { return 0; } }
 
 /** The game strip: a bar to switch games (more come later) and the canvas. Keys only reach a game while its canvas has focus, so the invoice never loses a key press. */
-var GAME_LIST = [{ id: 'printrun', name: 'Print Run', make: makePrintRun }];
+var GAME_LIST = [{ id: 'printrun', name: 'Print Run', make: makePrintRun }, { id: 'fight', name: 'Brawl', make: makeFightLazy }];
+/** Brawl lives in its own file (games/fight.js), fetched the first time its tab opens; the fighters come from the business's data. */
+var FIGHTERS = null, FIGHT_JS = null;
+function makeFightLazy(cv) {
+  var inner = null, W = 0, H = 0, dead = false, note = 'Loading…';
+  function paint() {
+    if (inner || !W) return;
+    var r = window.devicePixelRatio || 1, x = cv.getContext('2d');
+    cv.width = Math.round(W * r); cv.height = Math.round(H * r); cv.style.height = H + 'px'; x.setTransform(r, 0, 0, r, 0, 0);
+    x.clearRect(0, 0, W, H); x.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--muted') || '#888';
+    x.font = '600 13px system-ui, sans-serif'; x.textAlign = 'center'; x.fillText(gw(note), W / 2, H / 2);
+  }
+  function fail(e) { note = 'Brawl could not load. Check the internet and open the tab again.'; paint(); }
+  if (!FIGHT_JS) FIGHT_JS = new Promise(function (ok, bad) {
+    var sc = document.createElement('script'); sc.src = 'games/fight.js?v=1'; sc.onload = ok; sc.onerror = function () { FIGHT_JS = null; bad(); }; document.head.appendChild(sc);
+  });
+  var roster = FIGHTERS ? Promise.resolve(FIGHTERS) : new Promise(function (ok) { srv('erpFighters', [], function (r) { FIGHTERS = r.fighters || []; ok(FIGHTERS); }, function () { ok([]); }); });
+  Promise.all([FIGHT_JS, roster]).then(function (v) {
+    if (dead) return;
+    inner = window.ERP_FIGHT(cv, { roster: v[1], words: gw,
+      bestGet: function () { try { return Number(localStorage.getItem('erp_fight_best')) || 0; } catch (e) { return 0; } },
+      bestSet: function (n) { try { localStorage.setItem('erp_fight_best', String(n)); } catch (e) {} } });
+    if (W) inner.size(W, H);
+  }, fail);
+  return {
+    size: function (w, h) { W = w; H = h; if (inner) inner.size(w, h); else paint(); },
+    pause: function () { if (inner) inner.pause(); },
+    stop: function () { dead = true; if (inner) inner.stop(); },
+    draw: function () { if (inner) inner.draw(); else paint(); },
+    state: function () { return inner ? inner.state() : 'idle'; },
+    inner: function () { return inner; }
+  };
+}
 function makeGame() {
   var wrap = document.createElement('div'); wrap.id = 'pgame';
   var bar = document.createElement('div'); bar.className = 'pgbar';
@@ -17300,7 +17334,7 @@ document.addEventListener('click', function (ev) {
 });
 // a new business: ask again
 var switchBusinessPG = switchBusiness;
-switchBusiness = function (id) { GAMEP = null; switchBusinessPG(id); };
+switchBusiness = function (id) { GAMEP = null; FIGHTERS = null; switchBusinessPG(id); };
 </script>
 
 <!-- tidy-10: locked system values (warn before changing) and undo for every saved default -->

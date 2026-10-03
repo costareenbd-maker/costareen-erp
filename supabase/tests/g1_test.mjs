@@ -15,4 +15,18 @@ r = await owner('erpGame', []);
 check('nobody, not even the owner', r.ok && !r.result.on, r);
 r = await owner('erpGameSet', [{ who: 'boss' }]);
 check('nonsense refused', !r.ok, r);
+// fighters for the fighting game
+const head = { w: 8, h: 8, pal: ['#112233', '#ffeedd'], px: '.'.repeat(8) + '01'.repeat(28) };
+r = await owner('erpFighters', []);
+check('no fighters at first', r.ok && r.result.fighters.length === 0, r);
+r = await owner('erpFightersSet', [{ fighters: [{ name: 'Rafiq', move: 'whip', color: '#3366CC', head }] }]);
+check('owner saves a fighter', r.ok && r.result.fighters[0].color === '#3366cc', r);
+r = await sales('erpFighters', []);
+check('staff can read them (to play)', r.ok && r.result.fighters.length === 1 && r.result.fighters[0].head.px.length === 64, r);
+r = await mgr('erpFightersSet', [{ fighters: [] }]);
+check('only the owner changes them', !r.ok, r);
+r = await owner('erpFightersSet', [{ fighters: [{ name: 'X', move: 'fireball', color: '#000000', head }] }]);
+check('unknown move refused', !r.ok, r);
+r = await owner('erpFightersSet', [{ fighters: [{ name: 'X', move: 'whip', color: '#000000', head: { ...head, px: 'zz' + head.px.slice(2) } }] }]);
+check('bad picture refused', !r.ok, r);
 await done();

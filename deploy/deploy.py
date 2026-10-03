@@ -107,6 +107,7 @@ def step_web():
     for f in ['index.html', 'manifest.webmanifest', 'sw.js', '_headers']:
         shutil.copy(os.path.join(ROOT, 'web', f), out)
     shutil.copytree(os.path.join(ROOT, 'web', 'icons'), os.path.join(out, 'icons'))
+    shutil.copytree(os.path.join(ROOT, 'web', 'games'), os.path.join(out, 'games'))   # games load on demand (no photos in them)
     # never publish web/.env.local, web/src, web/original or the old app
     for proj in [PAGES_PROJECT, PUBLIC_PROJECT]:
         if proj == PUBLIC_PROJECT:
