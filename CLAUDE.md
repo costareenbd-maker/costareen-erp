@@ -159,12 +159,25 @@ D3 photos + colour families; D5 notes and files; D1 serial numbers + warranty; D
 jobs; D6 Excel out / in; sheet catch-up to b261003-0358.
 
 Left, in order:
-1. **Per-person sign-in** (the owner wanted security last). Today every access key maps to
-   the owner's auth user. Build: a key per person carrying a role (sales / manager /
-   shareholder / owner) and a name; device approval as `erp_devices` already does for codes;
-   revoke one person; the activity log shows the real name; the owner's Settings → Access
-   links screen lists people with roles. Keep `linkOnly`; keep `deploy/new_access_link.py`
-   working. Tests in `access_test.mjs` are the pattern.
+1. **Per-person sign-in, Odoo's way** (decided with the owner 2026-10-03; he rejected
+   links-only because a lost phone + PC would lock him out):
+   - Every user = email + password (Supabase Auth, already in the project; the sign-in
+     screen was switched off with `deps.linkOnly`, not removed). Staff too. No private links
+     for people any more; machine keys (AI/MCP) stay as per-user API keys.
+   - Settings → Users (owner): name, email, role (sales / manager / shareholder / owner);
+     the system e-mails an invitation to set a password (`deps.sendReset`); deactivate
+     (history keeps the name); sessions list per user with "end this session" and
+     "sign out everywhere"; optional 2-factor (authenticator app) built in, off by default.
+   - "Stay signed in" per device; forgot-password by e-mail is the recovery root.
+   - Role gates in `allow.js` and the scrub are already there - switch them on by giving
+     each user a real role instead of owner. Activity log shows the real name.
+   - Migrate the owner's current link to his e-mail account FIRST so he is never locked
+     out; partner companies use the same system (owner of their own company only).
+   - Then a **platform admin panel** (Odoo's database manager) for the owner as vendor:
+     businesses list / create (first owner invited by e-mail) / suspend; resend an
+     owner's reset link; health (erp_errors, last activity, timers, storage). No
+     "log in as" by default; if ever built, time-limited and written to that business's
+     activity log. Platform admin has no role inside a customer's business.
 2. **Go-live** (`docs/GOLIVE.md`): re-read the sheet, run `start_fresh.py` only on his
    "wipe now", set the invoice counter to last sheet number + 1, opening balances for money
    accounts, stock count, the few supplier dues, confirm colour families and serial flags,
