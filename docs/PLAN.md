@@ -80,3 +80,15 @@ Build "tidy-1" (all together, one command):
 4. Business switcher: "+ Add a business" only in the top dropdown -> clean New business page (name, currency, optional logo), same owner, opens at once. Removed from Settings, and "A company for a partner" removed from Settings. Joint-venture pool untouched.
 
 Then "installer-1..3": bring-your-own-Supabase installer. Link -> connect their Supabase (OAuth) -> ERP built in their project -> each copy checks in with the owner's Platform screen (list, version, errors, push updates, switch off). First user: a friendly company (not a partner, no shared pool). Their own domain possible via DNS + Cloudflare custom domain.
+
+### tidy-1 final scope (owner, 2026-10-03 late) - supersedes the list above where they differ
+1. Payment: Paid now / Cash on delivery / Part paid / Due; COD only for Courier or Own rider deliveries; advance with its own method; "Part paid" with 0 = Due; status from real payments; save bar shows the choice; old "Cash" with nothing paid shown as "-" (display only).
+2. Same rule on every invoice path: new invoice, quotation -> invoice, website orders (COD -> COD), repair jobs, joint-pool sales.
+3. Delivery options get a type in Settings: Pickup / Courier / Own rider (no more "Steadfast" name matching).
+4. "Delivered & collected" button for COD without Steadfast (Pathao, own rider).
+5. Alerts: COD money still with the courier is not "customer at risk".
+6. Courier field: Steadfast -> "Already booked in Steadfast?" No/Yes; Express -> box shown.
+7. Parcel label: Print label after booking; A4 sheet of 4-6 now, 100x75 mm thermal later; "print all booked today".
+8. Business switcher: add only from the top dropdown (New business page); remove add-business and "A company for a partner" from Settings; joint pools stay.
+No courier test mode (owner tests with a real order; books by hand if it fails).
+Then: tidy-2 long text behind "?" -> lang-1/2 Bangla -> installer (incl. own web address for a friendly company, per-owner business limit, Google app verification note).
