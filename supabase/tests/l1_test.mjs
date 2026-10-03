@@ -22,4 +22,14 @@ r = await owner('erpCreateInvoice', [{ customer: { name: 'Doc Buyer', phone: '01
 const html = pdfs.length > before ? String(pdfs[pdfs.length - 1].html || pdfs[pdfs.length - 1]) : '';
 check('the invoice PDF prints Bangla labels, the product name as typed', r.ok && html.includes('>ইনভয়েস<') && html.includes('সাবটোটাল') && html.includes('Sunlu'), html.slice(0, 200));
 await owner('erpDocLang', ['en']);
+
+// the business's own Bangla words
+r = await sales('erpBnWordsSet', [{ set: { Sales: 'X' } }]);
+check('sales staff cannot change the words', !r.ok, r);
+r = await mgr('erpBnWordsSet', [{ set: { Sales: 'বেচাকেনা', '{} days ago': '{1} দিন আগে' } }]);
+check('a manager sets own words', r.ok && r.result.words.Sales === 'বেচাকেনা', r);
+r = await sales('erpBnWords', []);
+check('everyone reads them', r.ok && r.result.words['{} days ago'] === '{1} দিন আগে', r);
+r = await mgr('erpBnWordsSet', [{ set: { Sales: '' } }]);
+check('empty = back to the built-in word', r.ok && !('Sales' in r.result.words), r);
 await done();

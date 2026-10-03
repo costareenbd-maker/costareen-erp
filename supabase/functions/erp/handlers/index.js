@@ -53,6 +53,8 @@ const core = {
   erpSetLook: shell.erpSetLook,
   erpSetLang: shell.erpSetLang,
   erpDocLang: shell.erpDocLang,
+  erpBnWords: (ctx) => shell.erpBnWords(ctx, {}),
+  erpBnWordsSet: (ctx, p) => shell.erpBnWords(ctx, { set: (p && p.set) || {} }),
   erpSetBusiness: shell.erpSetBusiness,
 
   erpCatalog: catalog.erpCatalog,

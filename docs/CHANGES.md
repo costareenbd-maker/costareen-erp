@@ -353,3 +353,8 @@
 - **Customer documents** (Settings → Business, owner): English or বাংলা for the invoice PDF the customer receives - labels only (ইনভয়েস, ক্রেতা, পণ্যের বিবরণ, সাবটোটাল, মোট বাকি, পেমেন্টের তথ্য, "আপনার অর্ডারের জন্য ধন্যবাদ।"); product names, customer data and figures stay as typed. The PDF server has Noto Sans Bengali. lib/doclang.js, erpDocLang.
 - tests: l1_test (8).
 - Not done: quotation PDFs, statements and the price-list PDF are still English (next if wanted); a few long explanations behind "?" that contain numbers are still English; a handful of messages assembled in unusual ways may still show English - send a screenshot and the line is added.
+
+2026-10-04 — lang-3: the business's own Bangla words
+- The Bangla was written by the AI (no ready-made ERP dictionary fits shop Bangla), so the business can correct it: Settings → Lists → **Bangla words** (manager or owner): every phrase with the built-in Bangla and a "Your word" box; search; "Download for review" (CSV for Excel, staff mark their words) and "Upload corrections". Own words win everywhere for everyone in the business at once ({1}, {2} stand for names and amounts). Kept in business_config bn_words (erpBnWords / erpBnWordsSet, logged as a change). Empty = back to the built-in word.
+- Fixed on the way: the screen translated before the business's words were loaded; it now waits for them.
+- tests l1 (12).

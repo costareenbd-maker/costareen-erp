@@ -42,6 +42,29 @@ export async function erpSetLook(ctx, look) {
   return { ok: true, look: v };
 }
 
+/**
+ * The business's own Bangla words: {english: bangla} laid over the built-in
+ * dictionary for everyone in the business. erpBnWords() reads; with
+ * {set: {english: bangla|''}} the owner or a manager changes them ('' = back to the built-in one).
+ */
+export async function erpBnWords(ctx, payload) {
+  const { getConfig, setConfig } = await import('../lib/ext.js');
+  const { roleAtLeast } = await import('../allow.js');
+  let words = {};
+  try { words = JSON.parse(await getConfig(ctx, 'bn_words', '') || '{}') || {}; } catch (_) { words = {}; }
+  if (payload && payload.set && typeof payload.set === 'object') {
+    if (!roleAtLeast(ctx.s.role, 'manager')) throw new Error('Only a manager or the owner can change the Bangla words.');
+    for (const [en, bn] of Object.entries(payload.set)) {
+      const k = String(en).replace(/\s+/g, ' ').trim(), v = String(bn == null ? '' : bn).trim();
+      if (!k || k.length > 400 || v.length > 600) throw new Error('That word or sentence is too long.');
+      if (v) words[k] = v; else delete words[k];
+    }
+    if (Object.keys(words).length > 3000) throw new Error('At most 3,000 own words.');
+    await setConfig(ctx, 'bn_words', JSON.stringify(words));
+  }
+  return { words };
+}
+
 /** What customers receive (invoice PDF) - English or Bangla, for the whole business (owner). */
 export async function erpDocLang(ctx, lang) {
   const { getConfig, setConfig } = await import('../lib/ext.js');
