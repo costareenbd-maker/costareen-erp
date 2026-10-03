@@ -88,6 +88,11 @@ export async function erpUserSet(ctx, payload) {
   const role = payload.role === undefined ? normRole(m.role) : normRole(payload.role);
   if (!ERP_ROLES[role]) throw new Error('Choose a role.');
   const active = payload.active === undefined ? !!m.active : !!payload.active;
+  // taking access from another owner: both owners must agree, each from their own e-mail (owners.js)
+  if (normRole(m.role) === 'owner' && m.active && m.user_id !== ctx.s.userId && (role !== 'owner' || !active)) {
+    const { ownerChangeStart } = await import('./owners.js');
+    return { ...(await erpUsers(ctx)), ownerChange: await ownerChangeStart(ctx, m, role, active) };
+  }
   await ctx.tx`select erp_set_member(${ctx.biz}, ${m.user_id}, ${role}::member_role, ${active})`;
   if (!active) await ctx.sql`delete from auth.sessions where user_id = ${m.user_id}`;      // switched off: out everywhere, now
   return erpUsers(ctx);

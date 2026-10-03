@@ -55,6 +55,11 @@ def main():
     print('mail settings', code, 'ok' if code < 300 else out[:400])
     if code >= 300:
         sys.exit(1)
+    # with its own mail service, Supabase lets the owner-approval e-mail say what it is
+    code2, out2 = call('https://api.supabase.com/v1/projects/%s/config/auth' % REF, 'PATCH', {
+        'mailer_subjects_magic_link': 'Confirm a change in your ERP',
+        'mailer_templates_magic_link_content': '<h2>Confirm a change in your ERP</h2><p>An owner wants to change who may use your ERP. Open this link to see the change and agree or refuse:</p><p><a href="{{ .ConfirmationURL }}">Review the change</a></p><p>If you did not expect this, do not agree - and tell the other owner.</p>'})
+    print('owner-approval e-mail text', code2, 'ok' if code2 < 300 else str(out2)[:200])
     code, out = call('https://api.supabase.com/v1/projects/%s/secrets' % REF, 'POST',
                      [{'name': 'ERP_SMTP_NOTE', 'value': '%s as %s' % (host, sender)}])
     print('told the ERP', code, 'ok' if code < 300 else out[:300])

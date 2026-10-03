@@ -53,7 +53,14 @@ check('...nor demote himself', !r.ok && /cannot switch yourself off or demote/.t
 r = await owner('erpUserInvite', [{ name: 'Second Owner', email: 'second@example.com', role: 'owner' }]);
 const SECOND = r.result.invited.id;
 r = await as(SECOND)('erpUserSet', [{ userId: FIX.U.owner, role: 'manager' }]);
-check('another owner can change the first one', r.ok && r.result.users.find((u) => u.id === FIX.U.owner).role === 'manager', r.result);
+check('another owner can change the first one - once both agree from their own e-mail', r.ok && r.result.ownerChange && r.result.ownerChange.pending, r.result);
+{
+  const ownerMail = (await sql`select email from auth.users where id = ${FIX.U.owner}`)[0].email;
+  const tok = (email) => new URL([...deps.magic].reverse().find((m) => m.email === email).to).searchParams.get('approve');
+  await as(SECOND)('erpOwnerChangeAnswer', [{ token: tok('second@example.com'), agree: true }]);
+  r = await owner('erpOwnerChangeAnswer', [{ token: tok(ownerMail), agree: true }]);
+  check('...both agreed: changed', r.ok && r.result.status === 'done' && (await sql`select role::text r from memberships where business_id = ${B} and user_id = ${FIX.U.owner}`)[0].r === 'manager', r);
+}
 r = await as(SECOND)('erpUserSet', [{ userId: SECOND, active: false }]);
 check('...but not switch off the last owner (himself)', !r.ok, r);
 r = await as(SECOND)('erpUserSet', [{ userId: FIX.U.owner, role: 'owner' }]);

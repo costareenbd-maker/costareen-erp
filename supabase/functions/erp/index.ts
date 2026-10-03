@@ -205,6 +205,14 @@ async function createOwner(email: string, name: string): Promise<string> {
 async function removeUser(id: string) {
   await fetch(SUPABASE_URL + '/auth/v1/admin/users/' + encodeURIComponent(id), { method: 'DELETE', headers: svc });
 }
+async function sendMagic(email: string, redirectTo: string) {
+  const r = await fetch(SUPABASE_URL + '/auth/v1/otp?redirect_to=' + encodeURIComponent(redirectTo), {
+    method: 'POST', headers: { apikey: ANON, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, create_user: false }),
+  });
+  if (!r.ok) throw new Error('The e-mail could not be sent (' + r.status + ').');
+}
+
 async function sendReset(email: string) {
   const r = await fetch(SUPABASE_URL + '/auth/v1/recover?redirect_to=' + encodeURIComponent('https://erp.costareen.com/'), {
     method: 'POST',
@@ -223,7 +231,7 @@ const INSTALL_ENV = { controlUrl: SUPABASE_URL + '/functions/v1/erp', appUrl: De
   oauth: { clientId: Deno.env.get('SUPABASE_OAUTH_CLIENT_ID') ?? '', clientSecret: Deno.env.get('SUPABASE_OAUTH_CLIENT_SECRET') ?? '', redirect: SUPABASE_URL + '/functions/v1/erp?install=oauth_back' },
   cloudflare: { token: Deno.env.get('ERP_CF_TOKEN') ?? '', account: Deno.env.get('ERP_CF_ACCOUNT') ?? '', project: Deno.env.get('ERP_PUBLIC_PROJECT') ?? '' } };
 const deps = { install: INSTALL, installEnv: INSTALL_ENV, google: GOOGLE, smtpNote: SMTP_NOTE, linkOnly: false, sql, sqlAux, verifyUser, fetch: globalThis.fetch.bind(globalThis), storage, renderPdf, createAuthUser,
-               createOwner, removeUser, sendReset,
+               createOwner, removeUser, sendReset, sendMagic,
                hookBase: SUPABASE_URL + '/functions/v1/erp' };
 
 Deno.serve(async (req) => {

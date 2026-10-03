@@ -72,6 +72,17 @@ async function tokenOf(deps, row) {
   return t.access;
 }
 // where a company's own address points: the neutral page's address (its pages.dev name can differ from the project name)
+/** The login system's settings for a copy: where its e-mails send people, and the owner-approval e-mail. */
+export function authConfig(site, allowBase) {
+  return { site_url: site, uri_allow_list: [site, String(allowBase).replace(/\/?$/, '/') + '**'].join(',') };
+}
+/** The approval e-mail's own words (Supabase allows this only with the company's own mail service; tried, never required). */
+export function authMailText() {
+  return {
+    mailer_subjects_magic_link: 'Confirm a change in your ERP',
+    mailer_templates_magic_link_content: '<h2>Confirm a change in your ERP</h2><p>An owner wants to change who may use your ERP. Open this link to see the change and agree or refuse:</p><p><a href="{{ .ConfirmationURL }}">Review the change</a></p><p>If you did not expect this, do not agree - and tell the other owner.</p>',
+  };
+}
 const pagesTarget = (deps) => {
   const e = deps.installEnv || {};
   const m = /^https?:\/\/([^/]+\.pages\.dev)/i.exec(str(e.publicUrl));
@@ -199,6 +210,9 @@ export async function installStep(deps, b) {
           ...(env.renderUrl ? [{ name: 'RENDER_URL', value: env.renderUrl }, { name: 'RENDER_KEY', value: str(env.renderKey) }] : []),
           ...(poolHost ? [{ name: 'ERP_POOL_HOST', value: poolHost }] : []),
         ]);
+        // their login e-mails (password, approvals) come back to their own page
+        try { await mgmt(deps, tok, 'PATCH', '/projects/' + row.ref + '/config/auth', authConfig(publicUrl(deps) + '?use=' + row.id, publicUrl(deps))); } catch (_) { /* set again when their address is ready */ }
+        try { await mgmt(deps, tok, 'PATCH', '/projects/' + row.ref + '/config/auth', authMailText()); } catch (_) { /* free plan with the built-in mailer: Supabase's own wording */ }
         // the cron key is needed once more (timers), the install key once more (finish): kept until then, then wiped
         return set({ step: 'function', key_hash: await sha256(key), install_key: key + '|' + cron, detail: '' });
       }
@@ -280,6 +294,7 @@ export async function domainCheck(deps, b) {
   if (ready && row.domain_state !== 'ready') {
     // the copy's own links (alerts, e-mails) now use its address
     try { await mgmt(deps, await tokenOf(deps, row), 'POST', '/projects/' + row.ref + '/secrets', [{ name: 'ERP_APP_URL', value: 'https://' + row.domain + '/' }]); } catch (_) { /* best effort */ }
+    try { await mgmt(deps, await tokenOf(deps, row), 'PATCH', '/projects/' + row.ref + '/config/auth', authConfig('https://' + row.domain + '/', 'https://' + row.domain + '/')); } catch (_) { /* best effort */ }
   }
   await sqlOf(deps)`update erp_installs set domain_state = ${state}, updated_at = now() where id = ${row.id}`;
   return { domain: row.domain, state, ready, auto: !!(deps.installEnv && deps.installEnv.cloudflare && deps.installEnv.cloudflare.token), url: 'https://' + row.domain + '/', free: publicUrl(deps) + '#/use/' + row.id };

@@ -86,6 +86,8 @@ export const deps = {
   },
   async removeUser(id) { await sql`delete from auth.users where id = ${id}`; },
   async sendReset(email) { deps.mails.push(email); },
+  magic: [],
+  async sendMagic(email, to) { deps.magic.push({ email, to }); },
   async createAuthUser(name) {
     const r = await sql`insert into auth.users (id, email, raw_user_meta_data)
                         values (gen_random_uuid(), null, ${sql.json({ full_name: name })}) returning id`;
