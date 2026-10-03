@@ -30,7 +30,7 @@ async function loadCopy(ctx, file) {
 }
 
 /** The tables that go back, parents before children (by their foreign keys). */
-async function plan(ctx, doc) {
+export async function plan(ctx, doc) {
   const here = (await ctx.sql`select c.table_name as t from information_schema.columns c
                               join information_schema.tables x on x.table_schema = c.table_schema and x.table_name = c.table_name
                               where c.table_schema = 'public' and c.column_name = 'business_id' and x.table_type = 'BASE TABLE'`).map((r) => r.t);
@@ -75,8 +75,16 @@ export async function erpRestore(ctx, payload) {
   const before = await backupNow(ctx, 'before restore');
   if (!before || !before.ok || !(before.made && before.made.length)) throw new Error('Today could not be copied first, so nothing was changed. Try again.');
   const p = await plan(ctx, doc);
+  let counts = {};
+  await ctx.sql.begin(async (tx) => { counts = await putBack(ctx, tx, p, doc); });
+  for (const k of Object.keys(ctx.memo)) delete ctx.memo[k];
+  return { ok: true, file: str(payload.file), before: before.made[0], lists: counts };
+}
+
+/** Clear the business's lists and put the copy's rows in, inside the caller's transaction (also used to bring back a deleted business). */
+export async function putBack(ctx, tx, p, doc) {
   const counts = {};
-  await ctx.sql.begin(async (tx) => {
+  {
     for (const t of [...p.order].reverse()) await tx`delete from ${tx(t)} where business_id = ${ctx.biz}`;
     for (const t of p.order) {
       if (!p.inCopy(t) || !doc.tables[t].length) { counts[t] = 0; continue; }
@@ -97,9 +105,8 @@ export async function erpRestore(ctx, payload) {
         await tx`select setval(${s.q}, greatest((select coalesce(max(${tx(s.c)}), 0) from ${tx(t)}), (select last_value from ${tx.unsafe(s.q)})))`;
       }
     }
-  });
-  for (const k of Object.keys(ctx.memo)) delete ctx.memo[k];
-  return { ok: true, file: str(payload.file), before: before.made[0], lists: counts };
+  }
+  return counts;
 }
 
 export const HANDLERS = { erpRestorePreview, erpRestore };

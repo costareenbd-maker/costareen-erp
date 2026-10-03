@@ -394,3 +394,12 @@
 
 2026-10-04 — db-pool-1: the database ran out of connection slots
 - Seen live: "remaining connection slots are reserved for roles with the SUPERUSER attribute". Every running copy of the server opened its own direct database connections (up to 5), and the timers start several copies at once; on the free plan the slots run out and calls fail. The server now goes through Supabase's connection pooler (transaction mode, port 6543; secret ERP_POOL_HOST) - same user and password, nothing else changes. Checked live: calls answer, and the server holds no direct connections any more. The installer sets the pooler host for every company copy too.
+
+2026-10-04 — tidy-5: messages, website products, service buttons, Connections tiles, greeting, delete a business
+- **Messages** now appear at the top centre; a problem stays until its ✕ is pressed, good news fades. The ✕ on a red note in a screen (e.g. "Customer name is required.") closes it.
+- **Greeting** follows Dhaka's clock (it said "Good morning" late at night on a device set to another time).
+- **Website products to match** is behind a button at the top of Web orders ("Website products to match (7)" / "Hide"). No more percentage guesses: each website product has **Add to ERP** (name and SKU from the website, you give category and prices; the same SKU then matches by itself) or **Link** to one of your SKUs (with search). Prices may differ: linking only ties stock; a website order keeps the website's price.
+- **Status buttons** on pages that need an outside service: Web orders (Website), Sales (Courier), Campaigns (WhatsApp) - green connected, grey not; pressing one opens the same set-up as Settings in a window over the page (owner; others are told to ask the owner). Web orders no longer shows the red "Could not read the courier" when the website is not connected.
+- **Connections tiles**: small and all the same size: dot, name, one word (Connected / Not connected / Needs a step); "?" shows the detail; pressing a tile goes to its card.
+- **Delete a business** (Settings → Business → Your businesses, owner, not the one you are working in, not your last): type its name; a full copy is made first (kept 90 days in the ERP, and copied to Google Drive when connected), then all its records are cleared. **Deleted businesses → Restore** brings it back with all its records (staff and connections are set up again). 051_deleted_businesses.sql, handlers/bizdelete.js (restore.js putBack shared), tests/d9_test.mjs (18).
+- erpConnStatus (states only, for everyone).

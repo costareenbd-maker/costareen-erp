@@ -36,6 +36,18 @@ const KEY_OK = (k) => k.length >= 12 && !/\s/.test(k);
 
 export async function erpConnections(ctx) {
   needOwner(ctx);
+  return connectionsOf(ctx);
+}
+
+/** Only whether each service is connected - for the small status buttons on the pages that need one (everyone). */
+export async function erpConnStatus(ctx) {
+  const c = await connectionsOf(ctx);
+  const out = {};
+  for (const k of Object.keys(c)) out[k] = c[k].state;
+  return out;
+}
+
+async function connectionsOf(ctx) {
   const soft = async (fn, d) => { try { return await ctx.tx.savepoint(fn); } catch (_) { return d; } };
   const w = await website(ctx);
   const sfKey = await getSecret(ctx, 'ERP_SF_KEY'), sfSecret = await getSecret(ctx, 'ERP_SF_SECRET');
@@ -144,4 +156,4 @@ export async function erpWebsiteSync(ctx, payload) {
   return erpConnections(ctx);
 }
 
-export const HANDLERS = { erpConnections, erpWebsiteSet, erpWebsiteTest, erpWebsiteSync };
+export const HANDLERS = { erpConnections, erpConnStatus, erpWebsiteSet, erpWebsiteTest, erpWebsiteSync };
