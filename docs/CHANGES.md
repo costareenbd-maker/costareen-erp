@@ -255,3 +255,11 @@
 - 042_users.sql (memberships.active, member_role/is_member on active only, erp_add_member for e-mail logins, erp_set_member), handlers/users.js, index.ts linkOnly=false, tests/u1_test.mjs (28).
 - Live: the only login is the owner (costareen.bd@gmail.com). Staff still have no logins - invite them under Users before go-live. Old 6-digit code logins (Settings → People) remain for the transition and are to be retired at go-live.
 - Not done: the platform admin panel (next); automatic e-mail when a role changes; a session's access token stays valid up to an hour after "End".
+
+2026-10-03 — Platform admin panel (Odoo's database manager)
+- New screen **Platform** (System, shown only to platform admins): every business on the system with its owner(s) and their last sign-in, active users, last activity, invoices in 30 days, errors in 7 days (click for the list), storage used; the timers with their last run.
+- **A new business** with its first owner (e-mailed a link to choose a password; an existing login is reused); its lists start with the usual values. **Suspend / Resume** a business with a reason: nobody in it can open anything ("This business has been suspended…"); the business you are working in cannot be suspended from inside it. **Send reset** e-mails an owner a password link - the admin never sees passwords.
+- A platform admin has no role inside a customer's business. Every platform action is written to that business's own activity log (who: "Platform admin: …"), in the same transaction (platform_log()).
+- 043_platform.sql (platform_admins - server-only, seeded with costareen.bd@gmail.com; businesses.suspended_at/reason; platform_log()), handlers/platform.js, core.js (suspended businesses refused, erpHello says platform), tests/p1_test.mjs (25). Local trial server makes the local owner a platform admin.
+- Found on live while checking: 14 × "That image could not be read." on Quotations (a logo/signature the imported quotation settings point to is not in storage - re-upload under Quotations > Settings, or ignore), 9 × "Website sync key not set" (the web ERP has no website key yet - set it at go-live). The nightly timer shows "not run yet" only because the timers were re-installed today.
+- Not done: billing / plans (table-ready later), "log in as" (deliberately not built).

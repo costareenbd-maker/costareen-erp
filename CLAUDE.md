@@ -173,12 +173,13 @@ Left, in order:
      each user a real role instead of owner. Activity log shows the real name.
    - Migrate the owner's current link to his e-mail account FIRST so he is never locked
      out; partner companies use the same system (owner of their own company only).
-   - Then a **platform admin panel** (Odoo's database manager) for the owner as vendor:
+   **DONE (tag users-1).**
+   - Then a **platform admin panel** (Odoo's database manager) for the owner as vendor - **DONE (tag platform-1)**:
      businesses list / create (first owner invited by e-mail) / suspend; resend an
      owner's reset link; health (erp_errors, last activity, timers, storage). No
      "log in as" by default; if ever built, time-limited and written to that business's
      activity log. Platform admin has no role inside a customer's business.
-2. **Go-live** (`docs/GOLIVE.md`): re-read the sheet, run `start_fresh.py` only on his
+2. **Go-live** (`docs/GOLIVE.md`) - also: set the website sync key (CZ_SYNC_KEY) on the live web ERP, re-upload the quotation logo/signature if wanted, owner sets his password (costareen.bd@gmail.com) and invites staff under Settings > Users, retire the old 6-digit code logins: re-read the sheet, run `start_fresh.py` only on his
    "wipe now", set the invoice counter to last sheet number + 1, opening balances for money
    accounts, stock count, the few supplier dues, confirm colour families and serial flags,
    hand staff their links, sheet becomes read-only backup.

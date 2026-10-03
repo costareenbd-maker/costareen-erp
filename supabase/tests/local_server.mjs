@@ -22,6 +22,8 @@ if (process.env.LINK_ONLY) {
   const key = newKey();
   await sql`insert into erp_access_keys (key_hash, user_id, label) values (${await keyHash(key)}, ${JSON.parse(process.env.FIX).U.owner}, 'Local trial')`;
   deps.linkOnly = true;
+  // locally the owner is also a platform admin, so the Platform screen can be tried
+  try { await sql`insert into platform_admins (user_id, note) values (${JSON.parse(process.env.FIX).U.owner}, 'local') on conflict do nothing`; } catch (_) { /* before 043 */ }
   console.log('LINK http://localhost:8793/index-local.html#k=' + key);
 }
 

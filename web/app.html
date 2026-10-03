@@ -579,6 +579,7 @@ svg { display:block; width:100%; overflow:visible; }
       <div class="navgrp">System</div>
       <button type="button" data-view="settings" aria-selected="false"><span class="ic"><svg viewBox="0 0 24 24"><path d="M4 6h9M18 6h2M4 12h2M11 12h9M4 18h11M20 18h0"/><circle cx="15.5" cy="6" r="2"/><circle cx="8.5" cy="12" r="2"/><circle cx="17.5" cy="18" r="2"/></svg></span>Settings</button>
       <button type="button" data-view="tools" aria-selected="false"><span class="ic"><svg viewBox="0 0 24 24"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.8-3.8a6 6 0 0 1-7.9 7.9l-7 7a2.1 2.1 0 0 1-3-3l7-7a6 6 0 0 1 7.9-7.9z"/></svg></span>Maintenance</button>
+      <button type="button" data-view="platform" aria-selected="false" style="display:none"><span class="ic"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="6" rx="1.5"/><rect x="3" y="14" width="18" height="6" rx="1.5"/><path d="M7 7h.01M7 17h.01"/></svg></span>Platform</button>
     </nav>
     <div class="sidefoot"><span id="whoami" title="Signed in as"></span><button class="btn small" id="signoutBtn" type="button" style="display:none">Sign out</button></div>
   </aside>
@@ -8319,7 +8320,7 @@ function srv(name, args, ok, bad) {
 
 var SRV_ACTIVE = 0, SRV_WRITING = false;
 // the same list the server uses to know a call changes nothing (ERP_READS)
-var SRV_READS = /^(erpBundle|erpHello|erpMe|erpCatalog|erpSales|erpDues|erpCustomers|erpPnl|erpMoney|erpToday|erpDaySales|erpProduct|erpLookupCustomer|erpCustomerAccount|erpCustomerStatement|erpCustomerCredit|erpWebOrders|erpWebOrderInvoices|erpCampaignAudience|erpCampaignList|erpCampaignGet|erpEvoStatus|erpBrandLogo|erpQuoteBoot|erpQuoteList|erpQuoteGet|erpQuoteAsset|erpExpenses|erpCapital|erpBackupStatus|erpAiKeys|erpGetTheme|erpBusinesses|erpStockHistory|erpReorderPlan|erpPoList|erpSfPayoutLines|erpBookedParcels|erpParcelPreview|erpReturnPreview|erpSettingsFull|erpSettingsLists|erpFormOptions|erpAdmin|erpPeople|erpDevices|erpCourierKeyStatus|erpPayReasons|erpDiscontinued|erpAccessWarning|erpBusinessLinks|erpLookupUsage|erpRecentInvoices|erpCourier|erpDashboardData|erpInvoice|erpCustomerPage|erpSearch|erpProductPage|erpPnlMonth|erpExpenseReceiptUrl|erpPartnership|erpPartnerStock|erpSecurity|erpCustomerList|erpAlerts|erpAccessKeys|erpListView|erpCurrencies|erpSharedStock|erpPoolCatalog|erpProductThumbs|erpProductPhotoUrl|erpFamilies|erpNotes|erpNoteFileUrl|erpSerialsFor|erpSerialLookup|erpJobs|erpJob|erpUsers|erpSessions|erpCashBook|erpSuppliers|erpSupplierPage)$/;
+var SRV_READS = /^(erpBundle|erpHello|erpMe|erpCatalog|erpSales|erpDues|erpCustomers|erpPnl|erpMoney|erpToday|erpDaySales|erpProduct|erpLookupCustomer|erpCustomerAccount|erpCustomerStatement|erpCustomerCredit|erpWebOrders|erpWebOrderInvoices|erpCampaignAudience|erpCampaignList|erpCampaignGet|erpEvoStatus|erpBrandLogo|erpQuoteBoot|erpQuoteList|erpQuoteGet|erpQuoteAsset|erpExpenses|erpCapital|erpBackupStatus|erpAiKeys|erpGetTheme|erpBusinesses|erpStockHistory|erpReorderPlan|erpPoList|erpSfPayoutLines|erpBookedParcels|erpParcelPreview|erpReturnPreview|erpSettingsFull|erpSettingsLists|erpFormOptions|erpAdmin|erpPeople|erpDevices|erpCourierKeyStatus|erpPayReasons|erpDiscontinued|erpAccessWarning|erpBusinessLinks|erpLookupUsage|erpRecentInvoices|erpCourier|erpDashboardData|erpInvoice|erpCustomerPage|erpSearch|erpProductPage|erpPnlMonth|erpExpenseReceiptUrl|erpPartnership|erpPartnerStock|erpSecurity|erpCustomerList|erpAlerts|erpAccessKeys|erpListView|erpCurrencies|erpSharedStock|erpPoolCatalog|erpProductThumbs|erpProductPhotoUrl|erpFamilies|erpNotes|erpNoteFileUrl|erpSerialsFor|erpSerialLookup|erpJobs|erpJob|erpUsers|erpSessions|erpPlatform|erpPlatformErrors|erpCashBook|erpSuppliers|erpSupplierPage)$/;
 function srvPump() {
   if (!SRV_Q.length) return;
   var isRead = SRV_READS.test(SRV_Q[0].name);
@@ -9620,6 +9621,7 @@ function repaint() {
         : VIEW === 'cash' ? viewCash()
         : VIEW === 'suppliers' ? viewSuppliers()
         : VIEW === 'repairs' ? viewRepairs()
+        : VIEW === 'platform' ? viewPlatform()
         : VIEW === 'sales' ? viewSales()
         : VIEW === 'quotes' ? viewQuotes()
         : VIEW === 'campaigns' ? viewCampaigns()
@@ -9656,6 +9658,7 @@ function repaint() {
     wireCash();
     wireSuppliers();
     if (VIEW === 'repairs') wireRepairs();
+    if (VIEW === 'platform') wirePlatform();
     // the parcel confirmation floats above whatever screen is open
     var pb = document.getElementById('parcelbox');
     if (pb && pb.parentNode) pb.parentNode.removeChild(pb);
@@ -9779,6 +9782,7 @@ function go(view, param) {
   if (view === 'cash') { CASH_ERR = null; loadCash(); }
   if (view === 'suppliers') { if (SUPP.name) loadSupplier(); else loadSuppliers(); }
   if (view === 'repairs') { if (JOBP.no) loadJob(); else loadJobs(); }
+  if (view === 'platform') loadPlatform();
   if (view === 'capital') { CAP_ERR = null; loadCapital(); if (CAP_TAB === 'partner') { PART_ERR = null; loadPartner(); } }
   if (view === 'settings' && SET_TAB === 'security' && !SEC) loadSecurity();
   if (view === 'sales' && INVP.no && !INVP.data) loadInvoicePage();
@@ -12113,12 +12117,12 @@ var APPS = [
     icon: '<path d="M3 8l9-5 9 5v8l-9 5-9-5z"/><path d="M3 8l9 5 9-5M12 13v8"/>' },
   { id: 'accounting', name: 'Accounting', color: '#3a86c8', views: ['profit', 'expenses', 'cash', 'capital'],
     icon: '<circle cx="12" cy="12" r="9"/><path d="M15 9.2c-.6-.8-1.7-1.2-3-1.2-1.8 0-3 .8-3 2s1 1.800 3 2 3 .8 3 2-1.200 2-3 2c-1.300 0-2.400-.4-3-1.200M12 6v2M12 16v2"/>' },
-  { id: 'settings', name: 'Settings', color: '#5f6b7a', views: ['settings', 'tools'],
+  { id: 'settings', name: 'Settings', color: '#5f6b7a', views: ['settings', 'tools', 'platform'],
     icon: '<circle cx="12" cy="12" r="3.2"/><path d="M12 2.500v3M12 18.500v3M2.500 12h3M18.500 12h3M5.300 5.300l2.100 2.100M16.600 16.600l2.100 2.100M5.300 18.700l2.100-2.100M16.600 7.400l2.100-2.100"/>' }
 ];
 var VIEW_NAMES = { invoice: 'New invoice', sales: 'Invoices', weborders: 'Web orders', quotes: 'Quotations', repairs: 'Repairs', customers: 'Customers', campaigns: 'Campaigns',
                    products: 'Products', stock: 'Stock', costs: 'Product cost', profit: 'Profitability', expenses: 'Expenses', capital: 'Capital', cash: 'Money', suppliers: 'Suppliers',
-                   settings: 'Settings', tools: 'Maintenance', dash: 'Dashboard', home: 'Home' };
+                   settings: 'Settings', tools: 'Maintenance', platform: 'Platform', dash: 'Dashboard', home: 'Home' };
 var VIEW_COUNT = { invoice: 'cCart', sales: 'cSend', weborders: 'cWeb', costs: 'cCosts' };
 function appOf(view) { for (var i = 0; i < APPS.length; i++) if (APPS[i].views.indexOf(view) >= 0) return APPS[i]; return null; }
 function appViews(app) { return app.views.filter(function (v) { return navOn(v); }); }
@@ -12727,7 +12731,7 @@ nav#nav button[data-view="invoice"], nav#nav button[data-view="sales"], nav#nav 
 nav#nav button[data-view="customers"], nav#nav button[data-view="campaigns"] { --app:#2a9d8f; }
 nav#nav button[data-view="suppliers"], nav#nav button[data-view="products"], nav#nav button[data-view="stock"], nav#nav button[data-view="costs"] { --app:#c8553d; }
 nav#nav button[data-view="cash"], nav#nav button[data-view="profit"], nav#nav button[data-view="expenses"], nav#nav button[data-view="capital"] { --app:#3a86c8; }
-nav#nav button[data-view="settings"], nav#nav button[data-view="tools"] { --app:#5f6b7a; }
+nav#nav button[data-view="settings"], nav#nav button[data-view="tools"], nav#nav button[data-view="platform"] { --app:#5f6b7a; }
 nav#nav .count { background:#d9463e; }
 nav#nav button[data-view="home"] { display:none !important; }
 .sidefoot { display:none; }
@@ -15110,6 +15114,95 @@ document.addEventListener('change', function (ev) {
   srv('erpUserSet', [{ userId: id, role: t.value }], function (r) { USR.data = r; USR.busy = false; USR.sess = {}; toast('Role changed.'); repaint(); },
       function (e) { USR.busy = false; toast(esc(e && e.message ? e.message : e), true, 12000); usrLoad(); });
 });
+</script>
+
+<!-- platform admin: every business on the system (Odoo's database manager) -->
+<script>
+var PLAT = null, PLAT_ERR = '', PLAT_BUSY = false, PLAT_NEW = { name: '', ownerName: '', ownerEmail: '' }, PLAT_ERRS = null;
+var applyRoleP1 = applyRole;
+applyRole = function () {
+  applyRoleP1.apply(this, arguments);
+  var b = document.querySelector('#nav button[data-view="platform"]');
+  if (b) b.style.display = ME && ME.platform ? '' : 'none';
+};
+function loadPlatform() {
+  if (!ME || !ME.platform) return;
+  srv('erpPlatform', [], function (r) { PLAT = r; PLAT_ERR = ''; if (VIEW === 'platform') repaint(); },
+      function (e) { PLAT_ERR = (e && e.message) || String(e); if (VIEW === 'platform') repaint(); });
+}
+function viewPlatform() {
+  if (!ME || !ME.platform) return '<section><div class="empty">Not for this account.</div></section>';
+  var h = '<section><div class="note"><div class="ico">i</div><div><strong>Platform admin.</strong> Every business on this system. You have no role inside a business unless its owner adds you; ' +
+    'whatever you do here is written to that business\u2019s own activity log, where its owner can read it.</div></div></section>';
+  if (PLAT_ERR) return h + '<section><div class="note err"><div class="ico">\u2715</div><div>' + esc(PLAT_ERR) + '</div></div></section>';
+  if (!PLAT) return h + '<div class="loading">Reading the businesses&hellip;</div>';
+  var bs = PLAT.businesses;
+  h += '<section><div class="grid g-kpi">' + kpi('Businesses', '', fmt(bs.length), '<span class="delta">' + fmt(bs.filter(function (b) { return b.suspended; }).length) + ' suspended</span>') +
+    kpi('Users', '', fmt(bs.reduce(function (a, b) { return a + b.users; }, 0)), '') +
+    kpi('Errors, 7 days', '', fmt(bs.reduce(function (a, b) { return a + b.errors7; }, 0)), '', bs.some(function (b) { return b.errors7 > 0; }) ? 'warn' : '') +
+    kpi('Storage', 'MB', fmt(Math.round(bs.reduce(function (a, b) { return a + b.storageMb; }, 0))), '') + '</div></section>';
+  h += '<section><div class="card"><h2>Businesses</h2><div class="scroll"><table><thead><tr><th>Business</th><th>Owner(s)</th><th class="num">Users</th><th>Last activity</th><th class="num">Invoices 30d</th><th class="num">Errors 7d</th><th class="num">Storage</th><th></th></tr></thead><tbody>' +
+    bs.map(function (b) {
+      return '<tr' + (b.suspended ? ' style="opacity:.6"' : '') + '><td class="nm">' + esc(b.name) + (b.current ? ' <span class="pill">you are here</span>' : '') + (b.pool ? ' <span class="pill">joint pool</span>' : '') +
+        (b.suspended ? '<br><span class="pill out">suspended ' + esc(b.suspendedWhen) + '</span> <span class="sku">' + esc(b.suspendedReason) + '</span>' : '') + '<br><span class="sku">since ' + esc(b.created) + '</span></td>' +
+        '<td>' + (b.owners.length ? b.owners.map(function (o) { return esc(o.name || o.email || 'no e-mail') + (o.email ? '<br><span class="sku">' + esc(o.email) + (o.lastSignIn ? ' \u00b7 ' + esc(o.lastSignIn) : ' \u00b7 never signed in') + '</span>' : '') +
+          (o.email ? ' <button class="btn small" type="button" data-plreset="' + esc(b.id) + '" data-u="' + esc(o.id) + '">Send reset</button>' : ''); }).join('<br>') : '<span class="sku">no owner</span>') + '</td>' +
+        '<td class="num">' + fmt(b.users) + '</td><td><span class="sku">' + esc(b.lastActivity || 'never') + '</span></td><td class="num">' + fmt(b.invoices30) + '</td>' +
+        '<td class="num">' + (b.errors7 ? '<button class="linkbtn" type="button" data-plerr="' + esc(b.id) + '" style="color:var(--critical)">' + fmt(b.errors7) + '</button>' : '0') + '</td>' +
+        '<td class="num">' + (b.storageMb ? fmt(b.storageMb) + ' MB' : '\u2014') + '</td>' +
+        '<td class="num">' + (b.current ? '' : '<button class="btn small' + (b.suspended ? ' primary' : ' danger') + '" type="button" data-plsus="' + esc(b.id) + '" data-to="' + (b.suspended ? '0' : '1') + '">' + (b.suspended ? 'Resume' : 'Suspend') + '</button>') + '</td></tr>'; }).join('') +
+    '</tbody></table></div></div></section>';
+  if (PLAT_ERRS) {
+    h += '<section><div class="card"><div class="row" style="justify-content:space-between;align-items:center"><h2 style="margin:0">Errors \u2014 ' + esc(PLAT_ERRS.name) + '</h2><button class="btn small" type="button" id="pl_errclose">Close</button></div>' +
+      (PLAT_ERRS.errors.length ? '<div class="scroll tall"><table><thead><tr><th>When</th><th>Who</th><th>Action</th><th>Message</th></tr></thead><tbody>' + PLAT_ERRS.errors.map(function (e) {
+        return '<tr><td style="white-space:nowrap">' + esc(e.when) + '</td><td>' + esc(e.who) + '<br><span class="sku">' + esc(e.role) + '</span></td><td><code>' + esc(e.action) + '</code></td><td>' + esc(e.message) + '</td></tr>'; }).join('') + '</tbody></table></div>' : '<div class="empty">No errors.</div>') + '</div></section>';
+  }
+  if (PLAT.timers.length) h += '<section><div class="card"><h2>Timers</h2><div class="list">' + PLAT.timers.map(function (t) {
+    return '<div><span><code>' + esc(t.name) + '</code><span class="sku">' + esc(t.schedule) + (t.message ? ' \u00b7 ' + esc(t.message) : '') + '</span></span><b' + (t.status === 'failed' ? ' style="color:var(--critical)"' : '') + '>' + esc(t.status) + (t.last ? ' \u00b7 ' + esc(t.last) : '') + '</b></div>'; }).join('') + '</div></div></section>';
+  var n = PLAT_NEW;
+  h += '<section><div class="card"><h2>A new business</h2><div class="sub">It is created with its first owner, who is e-mailed a link to choose a password. Its lists start with the usual values; nothing of any other business is shared.</div>' +
+    '<div class="fields"><div><label class="f" for="pn_name">Business name</label><input class="i" id="pn_name" maxlength="80" value="' + esc(n.name) + '"></div>' +
+    '<div><label class="f" for="pn_owner">Owner\u2019s name</label><input class="i" id="pn_owner" maxlength="80" value="' + esc(n.ownerName) + '"></div>' +
+    '<div><label class="f" for="pn_email">Owner\u2019s e-mail</label><input class="i" id="pn_email" type="email" inputmode="email" value="' + esc(n.ownerEmail) + '"></div></div>' +
+    '<div class="row" style="justify-content:flex-end;margin-top:12px"><button class="btn primary" type="button" id="pn_go"' + (PLAT_BUSY ? ' disabled' : '') + '>' + (PLAT_BUSY ? 'Creating\u2026' : 'Create the business') + '</button></div></div></section>';
+  return h;
+}
+function wirePlatform() {
+  var v = el('view');
+  function bad(e) { PLAT_BUSY = false; toast(esc(e && e.message ? e.message : e), true, 12000); repaint(); }
+  var go = el('pn_go');
+  if (go) go.addEventListener('click', async function () {
+    var n = { name: el('pn_name').value.trim(), ownerName: el('pn_owner').value.trim(), ownerEmail: el('pn_email').value.trim() };
+    PLAT_NEW = n;
+    if (!n.name || !n.ownerName || !n.ownerEmail) { toast('Name, owner and e-mail are needed.', true); return; }
+    if (!(await uiConfirm('Create \u201c' + n.name + '\u201d with ' + n.ownerName + ' (' + n.ownerEmail + ') as its owner?\n\nThey are e-mailed a link to choose a password.'))) return;
+    PLAT_BUSY = true; repaint();
+    srv('erpPlatformCreate', [n], function (r) {
+      PLAT_BUSY = false; PLAT_NEW = { name: '', ownerName: '', ownerEmail: '' }; loadPlatform();
+      uiAlert('\u201c' + r.created.name + '\u201d is ready. ' + (r.created.mailed ? 'An e-mail to choose a password is on its way to ' + r.created.email + '.' : 'The e-mail could not be sent now - use "Send reset" in the list.'));
+    }, bad);
+  });
+  var pe = v.querySelectorAll('button[data-plsus]');
+  for (var i = 0; i < pe.length; i++) pe[i].addEventListener('click', async function () {
+    var id = this.getAttribute('data-plsus'), on = this.getAttribute('data-to') === '1', b = PLAT.businesses.find(function (x) { return x.id === id; });
+    var why = '';
+    if (on) { why = await uiPrompt('Suspend \u201c' + b.name + '\u201d? Nobody in it can open anything until it is resumed.\n\nWhy? (its owner is told this reason)', ''); if (why === null) return; if (!why.trim()) { toast('Say why.', true); return; } }
+    else if (!(await uiConfirm('Resume \u201c' + b.name + '\u201d?'))) return;
+    PLAT_BUSY = true; repaint();
+    srv('erpPlatformSuspend', [{ businessId: id, suspend: on, reason: why.trim() }], function (r) { PLAT = r; PLAT_BUSY = false; toast(on ? 'Suspended.' : 'Resumed.'); repaint(); }, bad);
+  });
+  var rs = v.querySelectorAll('button[data-plreset]');
+  for (var j = 0; j < rs.length; j++) rs[j].addEventListener('click', async function () {
+    var bid = this.getAttribute('data-plreset'), uid = this.getAttribute('data-u');
+    if (!(await uiConfirm('E-mail this owner a link to choose a new password?\n\nYou never see the password. The owner sees in their activity log that you sent it.'))) return;
+    srv('erpPlatformOwnerReset', [{ businessId: bid, userId: uid }], function (r) { toast('Reset e-mail sent to ' + esc(r.email) + '.'); }, bad);
+  });
+  var er = v.querySelectorAll('button[data-plerr]');
+  for (var k = 0; k < er.length; k++) er[k].addEventListener('click', function () {
+    srv('erpPlatformErrors', [{ businessId: this.getAttribute('data-plerr') }], function (r) { PLAT_ERRS = r; repaint(); }, bad);
+  });
+  var ec = el('pl_errclose'); if (ec) ec.addEventListener('click', function () { PLAT_ERRS = null; repaint(); });
+}
 </script>
 </body>
 </html>

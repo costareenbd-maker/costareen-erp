@@ -31,6 +31,7 @@ const SAYS = {
   NO_KEY: 'This is a private system. Open it with your access link.',
   BAD_KEY: 'That access link does not work any more. Ask the owner for a new one.',
   IDLE: 'This device has not been used for 30 days, so it has to be allowed again. The owner has been asked.',
+  SUSPENDED: 'This business has been suspended. Its owner has been told why; contact the system provider.',
 };
 
 class Refused extends Error {}
@@ -150,11 +151,15 @@ async function authenticate(sql, deps, token, authHeader, ip) {
 /** The business this person is working in, and their role there. */
 async function activeBusiness(sql, userId) {
   const mem = await sql`
-    select m.business_id, m.role, b.name, b.is_pool
+    select m.business_id, m.role, b.name, b.is_pool, b.suspended_at
     from memberships m join businesses b on b.id = m.business_id
     where m.user_id = ${userId} and coalesce(m.active, true)
     order by m.created_at`;
   if (!mem.length) throw new Refused('NO_ROLE');
+  // a suspended business opens for nobody; the person's other businesses still do
+  const open = mem.filter((m) => !m.suspended_at);
+  if (!open.length) throw new Refused('SUSPENDED');
+  mem.splice(0, mem.length, ...open);
   const pref = await sql`select active_business from erp_prefs where user_id = ${userId}`;
   const want = pref[0] && pref[0].active_business;
   const hit = mem.find((m) => m.business_id === want) || mem[0];
@@ -177,8 +182,10 @@ async function hello(sql, deps, token, authHeader, ip) {
   try {
     const s = await session(sql, deps, token, authHeader, ip);
     await logActivity(sql, s, 'sign-in', null, token, ip);
+    let platform = false;
+    try { platform = (await sql`select 1 from platform_admins where user_id = ${s.userId}`).length > 0; } catch (_) { platform = false; }
     return { ok: true, role: s.role, roleLabel: s.roleLabel, name: s.name,
-             implicit: !!s.implicit, link: !!s.viaKey, discountCap: s.discountCap };
+             implicit: !!s.implicit, link: !!s.viaKey, discountCap: s.discountCap, platform };
   } catch (e) {
     if (!(e instanceof Refused)) throw e;
     return { ok: false, reason: e.message, message: SAYS[e.message] || 'Could not sign you in.' };
