@@ -16423,6 +16423,10 @@ switchBusiness = function (id) { BDEL = null; switchBusinessT5b(id); };
 <style>
 /* ---- account menu */
 #o_usermenu.u6 { width:300px; padding:0; overflow:hidden; }
+/* the old menu is never drawn, not even for a moment while the page loads */
+#o_usermenu:not(.u6) > * { display:none !important; }
+/* light / dark lives in the account menu (Appearance), not in the Themes window */
+#th_box .th_mode { display:none !important; }
 .u6 .u6h { display:flex; gap:12px; align-items:center; padding:14px; border-bottom:1px solid var(--ring); }
 .u6 .u6av { position:relative; width:52px; height:52px; flex:none; border-radius:50%; overflow:hidden; cursor:pointer; background:var(--series-1); color:#fff; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:20px; }
 .u6 .u6av img, #o_user img { width:100%; height:100%; object-fit:cover; display:block; }
@@ -16647,7 +16651,8 @@ document.addEventListener('click', function (ev) {
 });
 // on start and on every switch of business
 var startAppU6 = startApp;
-startApp = function () { startAppU6.apply(this, arguments); profLoad(); bgLoad(); sideFoldPaint(); };
+startApp = function () { startAppU6.apply(this, arguments); umPaint(); profLoad(); bgLoad(); sideFoldPaint(); };
+umPaint();
 var switchBusinessU6 = switchBusiness;
 switchBusiness = function (id) { switchBusinessU6(id); setTimeout(function () { profLoad(); bgLoad(); }, 1500); };
 // the theme saved with the person may be "auto"

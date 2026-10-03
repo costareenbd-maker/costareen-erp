@@ -418,3 +418,4 @@
 - Long explanations showed for a moment on loading or redrawing a screen, then hid behind "?" (the hiding ran on a 30 ms timer, after the screen was drawn). It now runs before the screen is drawn: they never show.
 - Language is only in the account menu now (the top-bar বাংলা button is gone).
 - The background photo can be added or changed from the account menu ("Add a background photo" / "Change background photo", owner and manager), as well as in Settings → Business.
+- ui-6c: the old account menu ("Themes… / Switch to Light / Forget device") showed for a moment after a reload until the new one was built; the new menu is now built as the page loads and the old one is never drawn. The Themes window no longer has its own light/dark switch (Appearance in the account menu is the one place).
