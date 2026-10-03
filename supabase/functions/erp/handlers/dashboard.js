@@ -638,8 +638,11 @@ export async function erpDashboardData(ctx) {
 export async function erpDaySales(ctx, dateStr) {
   const want = str(dateStr);
   if (!/^\d{4}-\d{2}-\d{2}$/.test(want)) throw new Error('Pick a date first.');
-  let units = 0, revenue = 0, lines = 0;
+  let units = 0, revenue = 0, lines = 0, cogs = 0;
   const orders = {}, byProduct = {}, byOrder = [], invoices = {}, byInv = [];
+  // profit only for those who may see it (as on the Dashboard)
+  const full = roleAtLeast(ctx.s && ctx.s.role, 'shareholder');
+  const prod = full ? (await products(ctx)).bySku : {};
   for (const row of await salesLog(ctx)) {
     const oid = str(row[SL.order_id]);
     if (!oid) continue;
@@ -648,6 +651,7 @@ export async function erpDaySales(ctx, dateStr) {
     const qty = num(row[SL.quantity]), total = num(row[SL.total]);
     units += qty; revenue += total; lines++;
     orders[oid] = 1;
+    if (full) { const pi = prod[str(row[SL.sku]).toLowerCase()]; const c = soldCost(row, pi && pi.cost); if (c > 0) cogs += c * qty; }
     const nm = str(row[SL.product_name]) || str(row[SL.sku]);
     if (!byProduct[nm]) { byProduct[nm] = { name: nm, units: 0, revenue: 0 }; byOrder.push(nm); }
     byProduct[nm].units += qty;
@@ -669,6 +673,7 @@ export async function erpDaySales(ctx, dateStr) {
     date: want, label: formatDate(dhakaDayStart(want), 'EEE d MMM yyyy'),
     units: Math.round(units), orders: Object.keys(orders).length, revenue: Math.round(revenue),
     lines, top: top.slice(0, 8), invoices: inv.slice(0, 25),
+    ...(full ? { gross: Math.round(revenue - cogs), margin: revenue > 0 ? Math.round(((revenue - cogs) / revenue) * 1000) / 10 : 0 } : {}),
   };
 }
 

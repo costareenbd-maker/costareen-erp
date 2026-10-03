@@ -1177,7 +1177,8 @@ function viewDash() {
     h += kpiT('Revenue', cur, fmt(dsel.revenue), '<span class="delta">on ' + esc(dsel.label) + '</span>', 'accent') +
       kpiT('Orders', '', fmt(dsel.orders), '<span class="delta">' + fmt(dsel.lines) + ' product line(s)</span>') +
       kpiT('Units sold', '', fmt(dsel.units), '') +
-      kpiT('Average order', cur, fmt(dsel.orders ? dsel.revenue / dsel.orders : 0), '') + '</div>';
+      (dsel.gross !== undefined ? kpiT('Gross profit', cur, fmt(dsel.gross), '<span class="delta">' + fmt(dsel.margin) + '% margin</span>', dsel.gross < 0 ? 'bad' : 'good')
+        : kpiT('Average order', cur, fmt(dsel.orders ? dsel.revenue / dsel.orders : 0), '')) + '</div>';
     if (dsel.top && dsel.top.length) {
       h += '<div class="card" style="margin-top:12px"><h2>Sold on ' + esc(dsel.label) + '</h2><div class="scroll"><table><thead><tr><th>Product</th><th class="num">Units</th><th class="num">Value</th></tr></thead><tbody>' +
         dsel.top.map(function (t) { return '<tr><td class="nm">' + esc(t.name) + '</td><td class="num">' + fmt(t.units) + '</td><td class="num">' + fmt(t.revenue) + '</td></tr>'; }).join('') +

@@ -403,3 +403,6 @@
 - **Connections tiles**: small and all the same size: dot, name, one word (Connected / Not connected / Needs a step); "?" shows the detail; pressing a tile goes to its card.
 - **Delete a business** (Settings → Business → Your businesses, owner, not the one you are working in, not your last): type its name; a full copy is made first (kept 90 days in the ERP, and copied to Google Drive when connected), then all its records are cleared. **Deleted businesses → Restore** brings it back with all its records (staff and connections are set up again). 051_deleted_businesses.sql, handlers/bizdelete.js (restore.js putBack shared), tests/d9_test.mjs (18).
 - erpConnStatus (states only, for everyone).
+
+2026-10-04 — Dashboard: a past day shows its gross profit
+- Picking another day on the Dashboard now shows Revenue, Orders, Units sold and **Gross profit** with its margin (shareholder and owner, the same rule as today's card), worked out the same way as today's (each line's cost at the time of the sale). Others still see the average order. tests/d10_test.mjs.
