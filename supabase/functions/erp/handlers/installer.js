@@ -193,7 +193,8 @@ export async function installStep(deps, b) {
 
 export async function installInfo(deps, id) {
   const r = (await sqlOf(deps)`select company, api_url, anon_key, ref, status from erp_installs where id = ${str(id)}::uuid`)[0];
-  if (!r || r.status !== 'active') throw new Error('That ERP is not ready, or not known.');
+  // a switched-off copy still opens its sign-in page, which then says why
+  if (!r || !['active', 'suspended'].includes(r.status)) throw new Error('That ERP is not ready, or not known.');
   return { name: r.company, api: r.api_url, url: 'https://' + r.ref + '.supabase.co', anon: r.anon_key };
 }
 
@@ -213,6 +214,13 @@ export async function installRoute(deps, req) {
     if (u.searchParams.get('control') === 'beat') return { status: 200, body: await controlBeat(deps, await req.json()) };
     const what = u.searchParams.get('install');
     if (what === 'info') return { status: 200, body: { ok: true, ...(await installInfo(deps, u.searchParams.get('id'))) } };
+    // a page opened on a company's own web address finds its copy
+    if (what === 'host') {
+      const h = str(u.searchParams.get('h')).toLowerCase();
+      const r = (await sqlOf(deps)`select id from erp_installs where lower(domain) = ${h} and status in ('active', 'suspended')`)[0];
+      if (!r) return { status: 200, body: { ok: false, error: 'No ERP at this address.' } };
+      return { status: 200, body: { ok: true, id: r.id, ...(await installInfo(deps, r.id)) } };
+    }
     if (req.method !== 'POST') return { status: 405, body: { ok: false } };
     const b = await req.json();
     if (what === 'start') return { status: 200, body: { ok: true, ...(await installStart(deps, b)) } };
@@ -230,7 +238,8 @@ async function needAdmin(ctx) {
 
 export async function erpInstalls(ctx) {
   await needAdmin(ctx);
-  const rows = await ctx.sql`select id, company, owner_name, owner_email, status, step, step_n, detail, error, ref, version, stats, last_seen, reason, made_at
+  const rows = await ctx.sql`select id, company, owner_name, owner_email, status, step, step_n, detail, error, ref, version, stats, last_seen, reason, made_at,
+                                    domain, upd_step, upd_error, updated_to_at
                              from erp_installs order by made_at desc`;
   const rel = (await ctx.sql`select version, made_at from erp_releases order by made_at desc limit 1`)[0];
   const invites = await ctx.sql`select note, made_at, expires_at, used_at from erp_install_invites order by made_at desc limit 20`;
@@ -264,4 +273,87 @@ export async function erpInstallRetry(ctx, payload) {
   return { ok: true };
 }
 
-export const HANDLERS = { erpInstalls, erpInstallInvite, erpInstallSet, erpInstallRetry };
+// ------------------------------------------------------------- updates (installer-2)
+
+/**
+ * erpInstallUpdate({id}) - one step of bringing a copy up to the newest release.
+ * The Platform page calls it until it says done: new database files first (only
+ * the ones the copy has not had), then the server, then the timers with a fresh key.
+ * Nothing is changed when the copy is already on the newest release.
+ */
+export async function erpInstallUpdate(ctx, payload) {
+  await needAdmin(ctx);
+  const sql = ctx.sql;
+  const row = (await sql`select * from erp_installs where id = ${str(payload && payload.id)}::uuid`)[0];
+  if (!row || !['active', 'suspended'].includes(row.status)) throw new Error('Only an installed copy can be updated.');
+  const rel = await latestRelease(sql);
+  const files = rel.files, tok = row.mgmt_token;
+  const save = async (f) => {
+    const r = { ...row, ...f };
+    await sql`update erp_installs set upd_to = ${r.upd_to || null}, upd_step = ${r.upd_step || null}, upd_n = ${r.upd_n || 0}, upd_error = ${r.upd_error || null},
+              version = ${r.version || null}, updated_to_at = ${r.updated_to_at || null}, updated_at = now() where id = ${row.id}`;
+    return { id: row.id, step: r.upd_step || 'done', n: r.upd_n || 0, version: r.version, to: r.upd_to || r.version, done: !r.upd_step, error: str(r.upd_error) };
+  };
+  if (!row.upd_step) {
+    if (row.version === rel.version) return { id: row.id, done: true, step: 'done', version: row.version, to: rel.version, already: true };
+    row.upd_step = 'db'; row.upd_n = 0; row.upd_to = rel.version; row.upd_error = null;
+  }
+  if (row.upd_to !== rel.version) { row.upd_step = 'db'; row.upd_n = 0; row.upd_to = rel.version; }   // a newer release came out meanwhile
+  const runSql = (q) => mgmt(ctx.deps, tok, 'POST', '/projects/' + row.ref + '/database/query', { query: q });
+  try {
+    if (row.upd_step === 'db') {
+      const have = new Set(((await runSql('select name from public._erp_migrations')) || []).map((r) => r.name));
+      const todo = Object.keys(files).filter((k) => /^sql\/\d{3}_.+\.sql$/.test(k)).sort().filter((k) => !have.has(k.slice(4)));
+      if (!todo.length) return save({ upd_step: 'function', upd_n: 0, upd_error: null });
+      const name = todo[0].slice(4);
+      await runSql(files[todo[0]]);
+      await runSql("insert into public._erp_migrations (name) values ('" + name.replace(/'/g, "''") + "') on conflict do nothing");
+      return save({ upd_n: (row.upd_n || 0) + 1, upd_error: null });
+    }
+    if (row.upd_step === 'function') {
+      const form = new FormData();
+      form.append('metadata', JSON.stringify({ entrypoint_path: 'index.ts', name: 'erp', verify_jwt: false }));
+      for (const k of Object.keys(files).filter((x) => x.startsWith('fn/'))) {
+        form.append('file', new Blob([files[k]], { type: k.endsWith('.ts') ? 'application/typescript' : 'application/javascript' }), k.slice(3));
+      }
+      await mgmt(ctx.deps, tok, 'POST', '/projects/' + row.ref + '/functions/deploy?slug=erp', form, true);
+      return save({ upd_step: 'cron', upd_error: null });
+    }
+    if (row.upd_step === 'cron') {
+      const cron = rand();
+      await mgmt(ctx.deps, tok, 'POST', '/projects/' + row.ref + '/secrets', [{ name: 'CRON_KEY', value: cron }, { name: 'ERP_RELEASE', value: rel.version }]);
+      const q = (files['deploy/cron.sql'] || '').split('__FN_URL__').join(row.api_url).split('__CRON_KEY__').join(cron);
+      if (q) await runSql(q);
+      return save({ upd_step: null, upd_n: 0, version: rel.version, updated_to_at: new Date(), upd_error: null });
+    }
+    return save({ upd_step: null });
+  } catch (e) {
+    return save({ upd_error: str((e && e.message) || e).slice(0, 400) });
+  }
+}
+
+/** The company sent a new Supabase access token (the old one was removed or expired). */
+export async function erpInstallToken(ctx, payload) {
+  await needAdmin(ctx);
+  const token = str(payload && payload.token);
+  if (!/^sbp_[A-Za-z0-9]{20,}$/.test(token)) throw new Error('That does not look like a Supabase access token (it starts with sbp_).');
+  const row = (await ctx.sql`select ref from erp_installs where id = ${str(payload.id)}::uuid`)[0];
+  if (!row || !row.ref) throw new Error('That copy has no project yet.');
+  await mgmt(ctx.deps, token, 'GET', '/projects/' + row.ref);   // the token must reach that very project
+  await ctx.sql`update erp_installs set mgmt_token = ${token}, upd_error = null, updated_at = now() where id = ${payload.id}::uuid`;
+  return { ok: true };
+}
+
+/** The company's own web address for its copy, e.g. erp.theirshop.com (they point it at the provider's page). */
+export async function erpInstallDomain(ctx, payload) {
+  await needAdmin(ctx);
+  const d = str(payload && payload.domain).toLowerCase().replace(/^https?:\/\//, '').replace(/\/.*$/, '');
+  if (d && !/^([a-z0-9-]+\.)+[a-z]{2,}$/.test(d)) throw new Error('A web address is like erp.theirshop.com');
+  if (d && /(^|\.)costareen\.com$/.test(d)) throw new Error('That is the provider\u2019s own address.');
+  if (d && (await ctx.sql`select 1 from erp_installs where lower(domain) = ${d} and id <> ${str(payload.id)}::uuid`).length) throw new Error('Another copy already uses ' + d + '.');
+  const r = await ctx.sql`update erp_installs set domain = ${d || null}, updated_at = now() where id = ${str(payload.id)}::uuid returning id`;
+  if (!r.length) throw new Error('That copy is not known.');
+  return { ok: true, domain: d, cname: 'costareen-erp.pages.dev' };
+}
+
+export const HANDLERS = { erpInstalls, erpInstallInvite, erpInstallSet, erpInstallRetry, erpInstallUpdate, erpInstallToken, erpInstallDomain };

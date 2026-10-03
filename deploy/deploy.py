@@ -10,6 +10,7 @@
     python deploy.py domain      # attach erp.costareen.com to the Pages project
     python deploy.py cron        # nightly / 10-min campaigns / 15-min website sync timers
     python deploy.py release     # keep this version for the installer (every company's copy is built from it)
+    python deploy.py domains     # add company copies' own web addresses to the Pages project
 
 Each step prints what it did and stops at the first error.
 """
@@ -138,6 +139,21 @@ def step_cron():
     print('timers installed: erp-nightly 03:00 Dhaka, erp-campaigns and erp-alerts every 10 min, erp-websync every 15 min, erp-deliveries every hour, erp-drive every 10 min, erp-sheet every 10 min, erp-heartbeat hourly (copies only)')
 
 
+def step_domains():
+    """Every company copy's own web address (Platform > Company copies) is added to the Pages project, so it opens the ERP page."""
+    tok = need('CLOUDFLARE_API_TOKEN'); acct = need('CLOUDFLARE_ACCOUNT_ID')
+    base = 'https://api.cloudflare.com/client/v4/accounts/%s/pages/projects/%s/domains' % (acct, PAGES_PROJECT)
+    code, have = api(base, token=tok)
+    known = {d['name'] for d in (have.get('result') or [])} if isinstance(have, dict) else set()
+    for r in sql("select company, domain from public.erp_installs where domain is not null") or []:
+        d = r['domain']
+        if d in known:
+            print('already on:', d, '(' + r['company'] + ')'); continue
+        code, out = api(base, 'POST', {'name': d}, tok)
+        print('added' if code < 300 else 'FAILED', d, '(' + r['company'] + ')', '' if code < 300 else out)
+    print('each company points its address with a CNAME record to %s.pages.dev' % PAGES_PROJECT)
+
+
 def step_release():
     """Keep a copy of this version's server and database steps on the provider's system: the installer builds every company's copy from it."""
     files = {}
@@ -164,5 +180,5 @@ if __name__ == '__main__':
     if len(sys.argv) < 2:
         sys.exit(__doc__)
     s = sys.argv[1]
-    {'db': step_db, 'function': step_function, 'web': step_web, 'domain': step_domain, 'cron': step_cron, 'release': step_release}.get(
+    {'db': step_db, 'function': step_function, 'web': step_web, 'domain': step_domain, 'cron': step_cron, 'release': step_release, 'domains': step_domains}.get(
         s, lambda: step_secrets(sys.argv[2:]) if s == 'secrets' else sys.exit(__doc__))()

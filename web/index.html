@@ -8253,6 +8253,21 @@ function erpToken() {
 var ERP_API = 'https://oqzcuuytytqadqjlwdsh.supabase.co/functions/v1/erp';
 var SB_URL = 'https://oqzcuuytytqadqjlwdsh.supabase.co';
 var SB_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9xemN1dXl0eXRxYWRxamx3ZHNoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODk4Nzk4MDEsImV4cCI6MjEwNTQ1NTgwMX0.fwdCTTde1fS2SPfT5ULNqLI4-YQLa__3pHjufarZG_0';
+var CONTROL_API = ERP_API;   // the provider's server: installs are always asked there
+var ERP_BACKEND = null;
+try { ERP_BACKEND = JSON.parse(localStorage.getItem('erp_backend') || 'null'); } catch (e) { ERP_BACKEND = null; }
+if (ERP_BACKEND && ERP_BACKEND.api && ERP_BACKEND.url && ERP_BACKEND.anon) { ERP_API = ERP_BACKEND.api; SB_URL = ERP_BACKEND.url; SB_ANON = ERP_BACKEND.anon; }
+// #/use/<install id> opens a company's own copy on this device; #/use/main goes back to the provider's
+(function () {
+  var m = /^#\/use\/([\w-]+)/.exec(location.hash || '');
+  if (!m) return;
+  if (m[1] === 'main') { try { localStorage.removeItem('erp_backend'); } catch (e) {} location.replace(location.pathname + '#/'); return; }
+  fetch(CONTROL_API + '?install=info&id=' + encodeURIComponent(m[1])).then(function (r) { return r.json(); }).then(function (j) {
+    if (!j.ok) { alert(j.error || 'That ERP is not ready.'); location.replace(location.pathname + '#/'); return; }
+    try { localStorage.setItem('erp_backend', JSON.stringify({ id: m[1], name: j.name, api: j.api, url: j.url, anon: j.anon })); } catch (e) {}
+    location.replace(location.pathname + '#/'); location.reload();
+  }, function () { alert('The ERP could not be reached.'); });
+})();
 var SB = null;
 try { SB = window.supabase.createClient(SB_URL, SB_ANON); } catch (e) { SB = null; }
 
@@ -15865,6 +15880,133 @@ c5Help = function () { try { t2Help(document.getElementById('view')); } catch (e
 </script>
 
 
+
+<!-- installer: build your own copy (#/install/<code>), and the provider's list of copies -->
+<style>
+.ins { max-width:640px; margin:24px auto; }
+.ins ol { padding-left:20px; margin:6px 0; } .ins li { margin:3px 0; }
+.ins .st { display:flex; gap:8px; align-items:center; padding:4px 0; font-size:14px; } .ins .st b { width:20px; text-align:center; }
+.ins .st.now { font-weight:600; } .ins .st.todo { color:var(--muted); }
+</style>
+<script>
+var INS = null;
+function insCode() { var m = /^#\/install\/([\w-]+)/.exec(location.hash || ''); return m ? m[1] : ''; }
+function insCall(what, body, ok, bad) {
+  fetch(CONTROL_API + '?install=' + what, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
+    .then(function (r) { return r.json(); }).then(function (j) { if (j.ok) ok(j); else bad(j.error || 'Something went wrong.'); }, function () { bad('The installer could not be reached. Check the internet and try again.'); });
+}
+var INS_STEPS = [['project', 'Make the project in your Supabase account'], ['wait', 'Supabase starts it (1-2 minutes)'], ['keys', 'Read its keys'], ['db', 'Build the database'],
+  ['storage', 'Make file storage'], ['secrets', 'Set its private settings'], ['function', 'Put the ERP server in place'], ['cron', 'Start its timers'], ['finish', 'Make your business and your owner login']];
+function insHtml() {
+  var i = INS || {};
+  var h = '<div class="ins"><section><div class="card"><h2>Your own ERP</h2>';
+  if (!i.job) {
+    h += '<div class="sub" data-c5x="1" style="display:block">The ERP is built in <b>your own</b> free Supabase account: your data is yours, and the costs (none on the free plan) are yours. Updates keep coming from the provider.</div>' +
+      '<ol class="sub" data-c5x="1" style="display:block"><li>Open <a href="https://supabase.com/dashboard/sign-up" target="_blank" rel="noopener">supabase.com</a> and sign up (free).</li>' +
+      '<li>Go to <a href="https://supabase.com/dashboard/account/tokens" target="_blank" rel="noopener">Account → Access Tokens</a>, press <b>Generate new token</b>, name it "ERP", copy it.</li><li>Fill this in and press Build.</li></ol>' +
+      '<div class="fields" style="margin-top:8px"><div style="grid-column:1/-1"><label class="f" for="ins_co">Company name</label><input class="i" id="ins_co" value="' + esc(i.company || '') + '"></div>' +
+      '<div><label class="f" for="ins_on">Owner’s name</label><input class="i" id="ins_on" value="' + esc(i.ownerName || '') + '"></div>' +
+      '<div><label class="f" for="ins_oe">Owner’s e-mail</label><input class="i" id="ins_oe" type="email" value="' + esc(i.ownerEmail || '') + '"></div>' +
+      '<div style="grid-column:1/-1"><label class="f" for="ins_tk">Supabase access token</label><input class="i" id="ins_tk" type="password" autocomplete="off" placeholder="sbp_…"></div>' +
+      (i.orgs ? '<div style="grid-column:1/-1"><label class="f" for="ins_org">Which organisation?</label><select class="i" id="ins_org">' + i.orgs.map(function (o) { return '<option value="' + esc(o.id) + '">' + esc(o.name) + '</option>'; }).join('') + '</select></div>' : '') +
+      '</div>' + (i.err ? '<div class="note err" style="margin-top:10px"><div class="ico">!</div><div>' + esc(i.err) + '</div></div>' : '') +
+      '<div class="row" style="justify-content:flex-end;margin-top:12px"><button class="btn primary" type="button" id="ins_go"' + (i.busy ? ' disabled' : '') + '>' + (i.busy ? 'Checking…' : 'Build my ERP') + '</button></div>';
+  } else {
+    var at = i.state ? INS_STEPS.map(function (x) { return x[0]; }).indexOf(i.state.step) : 0;
+    if (i.state && i.state.done) at = INS_STEPS.length;
+    h += '<div class="sub" data-c5x="1" style="display:block">Keep this page open. It takes about 3-5 minutes.</div>' + INS_STEPS.map(function (x, k) {
+      var cls = k < at ? '' : k === at ? 'now' : 'todo';
+      return '<div class="st ' + cls + '"><b>' + (k < at ? '\u2713' : k === at && !(i.state && i.state.status === 'failed') ? '\u23F3' : k === at ? '\u2715' : '\u00b7') + '</b><span>' + esc(x[1]) +
+        (k === at && i.state && i.state.detail ? ' <span class="sku">' + esc(i.state.detail) + '</span>' : '') + '</span></div>'; }).join('');
+    if (i.state && i.state.status === 'failed') h += '<div class="note err" style="margin-top:10px"><div class="ico">!</div><div>' + esc(i.state.error) + '</div></div>' +
+      '<div class="row" style="justify-content:flex-end;margin-top:10px"><button class="btn primary" type="button" id="ins_retry">Try again</button></div>';
+    if (i.state && i.state.done) h += '<div class="note ok" style="margin-top:10px"><div class="ico">\u2713</div><div><b>Your ERP is ready.</b> The owner has been e-mailed a link to choose a password (look in spam too). Then open it and sign in as Owner.</div></div>' +
+      '<div class="row" style="justify-content:flex-end;margin-top:10px"><a class="btn primary" href="#/use/' + esc(i.job.id) + '">Open my ERP</a></div>';
+  }
+  return h + '</div></section></div>';
+}
+function insPaint() {
+  var v = el('view'); if (!v) return;
+  v.innerHTML = insHtml();
+  try { el('nav').style.display = 'none'; el('side').style.display = 'none'; document.querySelector('.topbar').style.display = 'none'; } catch (e) {}
+}
+function insRun(retry) {
+  var j = INS.job;
+  insCall('step', { id: j.id, secret: j.secret, retry: !!retry }, function (st) {
+    INS.state = st; insPaint();
+    if (st.status === 'installing') setTimeout(function () { insRun(false); }, st.step === 'wait' || /waiting/.test(st.detail || '') ? 5000 : 300);
+    if (st.done) { try { localStorage.removeItem('erp_install_job'); } catch (e) {} }
+  }, function (err) { INS.state = { status: 'failed', error: err, step: INS.state ? INS.state.step : 'project' }; insPaint(); });
+}
+(function () {
+  if (!insCode()) return;
+  INS = {};
+  try { var saved = JSON.parse(localStorage.getItem('erp_install_job') || 'null'); if (saved && saved.code === insCode()) INS.job = saved; } catch (e) {}
+  // the sign-in screen must not cover the installer
+  paintGate = insPaint; startApp = insPaint;
+  insPaint();
+  if (INS.job) insRun(false);
+  document.addEventListener('click', function (ev) {
+    var t = ev.target; if (!t) return;
+    if (t.id === 'ins_retry') { INS.state.status = 'installing'; insPaint(); insRun(true); }
+    if (t.id !== 'ins_go') return;
+    INS.company = el('ins_co').value.trim(); INS.ownerName = el('ins_on').value.trim(); INS.ownerEmail = el('ins_oe').value.trim();
+    var body = { code: insCode(), company: INS.company, ownerName: INS.ownerName, ownerEmail: INS.ownerEmail, token: el('ins_tk').value.trim(), orgId: el('ins_org') ? el('ins_org').value : '' };
+    INS.busy = true; INS.err = ''; insPaint();
+    insCall('start', body, function (r) {
+      INS.busy = false;
+      if (r.needOrg) { INS.orgs = r.needOrg; insPaint(); el('ins_tk').value = body.token; return; }
+      INS.job = { id: r.id, secret: r.secret, code: insCode() };
+      try { localStorage.setItem('erp_install_job', JSON.stringify(INS.job)); } catch (e) {}
+      insPaint(); insRun(false);
+    }, function (err) { INS.busy = false; INS.err = err; insPaint(); el('ins_tk').value = body.token; });
+  });
+})();
+
+// ---- Platform: every company's copy
+var INSTALLS = null;
+function installsHtml() {
+  if (!INSTALLS) { INSTALLS = { loading: true }; srv('erpInstalls', [], function (r) { INSTALLS = r; if (VIEW === 'platform') repaint(); }, function (e) { INSTALLS = { err: e && e.message ? e.message : String(e) }; }); return ''; }
+  if (INSTALLS.loading) return '';
+  if (INSTALLS.err) return '';
+  var r = INSTALLS, ago = function (t) { if (!t) return 'never'; var m = Math.round((Date.now() - new Date(t).getTime()) / 60000); return m < 60 ? m + ' min ago' : m < 2880 ? Math.round(m / 60) + ' h ago' : Math.round(m / 1440) + ' days ago'; };
+  var h = '<section><div class="card"><div class="row" style="justify-content:space-between;align-items:center"><h2 style="margin:0">Company copies</h2>' +
+    '<button class="btn primary" type="button" id="ins_invite">+ Install link for a company</button></div>' +
+    '<div class="sub">Companies running the ERP in their own Supabase account. Each checks in every hour; switched off, it stops within the hour. Release kept for installs: ' + (r.release ? esc(r.release.version) : '<b>none yet</b> (deploy.py release)') + '.</div>';
+  if (!r.installs.length) h += '<div class="empty">No company copy yet.</div>';
+  else h += '<div class="scroll"><table><thead><tr><th>Company</th><th>State</th><th>Version</th><th>Last check-in</th><th class="num">Invoices 30d</th><th class="num">Users</th><th class="num">Errors 7d</th><th></th></tr></thead><tbody>' +
+    r.installs.map(function (x) {
+      var st = x.status === 'active' ? '<span class="pill ' + (x.late ? 'out' : 'ok') + '">' + (x.late ? 'not heard from' : 'running') + '</span>'
+        : x.status === 'suspended' ? '<span class="pill out">switched off</span><br><span class="sku">' + esc(x.reason || '') + '</span>'
+        : x.status === 'failed' ? '<span class="pill out">install failed</span><br><span class="sku">' + esc(x.say) + ': ' + esc(x.error || '') + '</span>'
+        : '<span class="pill">installing</span><br><span class="sku">' + esc(x.say) + ' ' + esc(x.detail || '') + '</span>';
+      var s = x.stats || {};
+      return '<tr><td class="nm">' + esc(x.company) + '<br><span class="sku">' + esc(x.owner_name) + ' \u00b7 ' + esc(x.owner_email) + (x.ref ? ' \u00b7 ' + esc(x.ref) : '') + '</span></td><td>' + st + '</td>' +
+        '<td>' + esc(x.version || '') + '</td><td>' + esc(ago(x.last_seen)) + '</td><td class="num">' + fmt(s.invoices30 || 0) + '</td><td class="num">' + fmt(s.users || 0) + '</td><td class="num">' + fmt(s.errors7 || 0) + '</td><td class="num" style="white-space:nowrap">' +
+        (x.status === 'active' ? '<button class="btn small danger" type="button" data-insoff="' + esc(x.id) + '">Switch off</button>' : '') +
+        (x.status === 'suspended' ? '<button class="btn small primary" type="button" data-inson="' + esc(x.id) + '">Switch on</button>' : '') +
+        (x.status === 'failed' ? '<button class="btn small" type="button" data-insretry="' + esc(x.id) + '">Let it carry on</button>' : '') + '</td></tr>'; }).join('') + '</tbody></table></div>';
+  return h + '</div></section>';
+}
+var viewPlatformI1 = viewPlatform;
+viewPlatform = function () { return viewPlatformI1() + installsHtml(); };
+document.addEventListener('click', async function (ev) {
+  var t = ev.target && ev.target.closest ? ev.target.closest('#ins_invite,[data-insoff],[data-inson],[data-insretry]') : null; if (!t) return;
+  var bad = function (e) { toast(esc(e && e.message ? e.message : e), true, 10000); };
+  var again = function () { INSTALLS = null; repaint(); };
+  if (t.id === 'ins_invite') {
+    var note = await uiPrompt('Install link for which company?\n\nThe link works once, for 14 days. They need a free Supabase account.', '');
+    if (note === null) return;
+    srv('erpInstallInvite', [{ note: note }], function (r) { uiAlert('Send this link to the company:\n\n' + r.link); again(); }, bad);
+  } else if (t.getAttribute('data-insoff')) {
+    var why = await uiPrompt('Switch this copy off?\n\nNobody in it can open anything until you switch it on. Their data stays theirs. The reason is shown to them:', '');
+    if (why === null) return;
+    srv('erpInstallSet', [{ id: t.getAttribute('data-insoff'), status: 'suspended', reason: why }], function () { toast('Switched off. It stops within the hour.'); again(); }, bad);
+  } else if (t.getAttribute('data-inson')) {
+    srv('erpInstallSet', [{ id: t.getAttribute('data-inson'), status: 'active' }], function () { toast('Switched on. It opens again within the hour.'); again(); }, bad);
+  } else srv('erpInstallRetry', [{ id: t.getAttribute('data-insretry') }], function () { toast('It carries on when the company opens its install page again.'); again(); }, bad);
+});
+</script>
 <!-- lang-2: the language of what customers receive -->
 <script>
 var DOCLANG = null;

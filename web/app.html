@@ -8257,6 +8257,17 @@ var CONTROL_API = ERP_API;   // the provider's server: installs are always asked
 var ERP_BACKEND = null;
 try { ERP_BACKEND = JSON.parse(localStorage.getItem('erp_backend') || 'null'); } catch (e) { ERP_BACKEND = null; }
 if (ERP_BACKEND && ERP_BACKEND.api && ERP_BACKEND.url && ERP_BACKEND.anon) { ERP_API = ERP_BACKEND.api; SB_URL = ERP_BACKEND.url; SB_ANON = ERP_BACKEND.anon; }
+// a page opened on a company's own web address (erp.theirshop.com) opens that company's copy
+(function () {
+  var h = String(location.hostname || '').toLowerCase();
+  if (ERP_BACKEND || !h || /(^|\.)costareen\.com$|^localhost$|^127\.|\.pages\.dev$/.test(h) || /^#\/(use|install)\//.test(location.hash || '')) return;
+  fetch(CONTROL_API + '?install=host&h=' + encodeURIComponent(h)).then(function (r) { return r.json(); }).then(function (j) {
+    if (!j.ok) return;
+    try { localStorage.setItem('erp_backend', JSON.stringify({ id: j.id, name: j.name, api: j.api, url: j.url, anon: j.anon })); } catch (e) {}
+    location.reload();
+  }, function () {});
+})();
+if (ERP_BACKEND && ERP_BACKEND.name) { try { document.title = ERP_BACKEND.name + ' ERP'; } catch (e) {} }
 // #/use/<install id> opens a company's own copy on this device; #/use/main goes back to the provider's
 (function () {
   var m = /^#\/use\/([\w-]+)/.exec(location.hash || '');
@@ -15985,7 +15996,12 @@ function installsHtml() {
         '<td>' + esc(x.version || '') + '</td><td>' + esc(ago(x.last_seen)) + '</td><td class="num">' + fmt(s.invoices30 || 0) + '</td><td class="num">' + fmt(s.users || 0) + '</td><td class="num">' + fmt(s.errors7 || 0) + '</td><td class="num" style="white-space:nowrap">' +
         (x.status === 'active' ? '<button class="btn small danger" type="button" data-insoff="' + esc(x.id) + '">Switch off</button>' : '') +
         (x.status === 'suspended' ? '<button class="btn small primary" type="button" data-inson="' + esc(x.id) + '">Switch on</button>' : '') +
-        (x.status === 'failed' ? '<button class="btn small" type="button" data-insretry="' + esc(x.id) + '">Let it carry on</button>' : '') + '</td></tr>'; }).join('') + '</tbody></table></div>';
+        (x.status === 'failed' ? '<button class="btn small" type="button" data-insretry="' + esc(x.id) + '">Let it carry on</button>' : '') +
+        (['active', 'suspended'].indexOf(x.status) >= 0 && r.release && x.version !== r.release.version ? ' <button class="btn small primary" type="button" data-insupd="' + esc(x.id) + '">Update to ' + esc(r.release.version) + '</button>' : '') +
+        (['active', 'suspended'].indexOf(x.status) >= 0 ? ' <button class="btn small" type="button" data-insdom="' + esc(x.id) + '" data-cur="' + esc(x.domain || '') + '">Web address</button>' : '') +
+        (x.upd_error ? '<br><span class="sku" style="color:var(--critical)">Update stopped: ' + esc(x.upd_error) + '</span> <button class="btn small" type="button" data-instok="' + esc(x.id) + '">New Supabase token</button>' : '') +
+        (x.domain ? '<br><span class="sku">' + esc(x.domain) + '</span>' : '') + '</td></tr>'; }).join('') + '</tbody></table></div>' +
+    (r.installs.some(function (x) { return ['active', 'suspended'].indexOf(x.status) >= 0 && r.release && x.version !== r.release.version; }) ? '<div class="row" style="justify-content:flex-end;margin-top:8px"><button class="btn" type="button" id="ins_updall">Update every copy to ' + esc(r.release.version) + '</button></div>' : '');
   return h + '</div></section>';
 }
 var viewPlatformI1 = viewPlatform;
@@ -16005,6 +16021,54 @@ document.addEventListener('click', async function (ev) {
   } else if (t.getAttribute('data-inson')) {
     srv('erpInstallSet', [{ id: t.getAttribute('data-inson'), status: 'active' }], function () { toast('Switched on. It opens again within the hour.'); again(); }, bad);
   } else srv('erpInstallRetry', [{ id: t.getAttribute('data-insretry') }], function () { toast('It carries on when the company opens its install page again.'); again(); }, bad);
+});
+</script>
+
+<!-- installer-2: updates, web addresses, a new token -->
+<script>
+var INS_UPD = false;
+/** Run one copy's update to the end: one step per call, as the server says. */
+function insUpdate(id, done) {
+  var steps = 0;
+  (function next() {
+    srv('erpInstallUpdate', [{ id: id }], function (st) {
+      steps++;
+      if (st.error) { toast('Update stopped: ' + esc(st.error), true, 15000); done(false); return; }
+      if (st.done) { toast(st.already ? 'Already on ' + esc(st.to) + '.' : 'Updated to ' + esc(st.version) + '.'); done(true); return; }
+      toast('Updating\u2026 ' + esc(st.step) + (st.step === 'db' ? ' ' + st.n : ''), false, 4000);
+      if (steps > 120) { done(false); return; }
+      next();
+    }, function (e) { toast(esc(e && e.message ? e.message : e), true, 12000); done(false); });
+  })();
+}
+document.addEventListener('click', async function (ev) {
+  var t = ev.target && ev.target.closest ? ev.target.closest('[data-insupd],#ins_updall,[data-insdom],[data-instok]') : null; if (!t) return;
+  var again = function () { INSTALLS = null; repaint(); };
+  var bad = function (e) { toast(esc(e && e.message ? e.message : e), true, 10000); };
+  if (t.getAttribute('data-insupd')) {
+    if (INS_UPD) return;
+    if (!(await uiConfirm('Update this copy now?\n\nIts new database steps run first, then its server is replaced. It takes a minute; people using it may need to reload. This release has already been running on your own ERP.'))) return;
+    INS_UPD = true; t.disabled = true;
+    insUpdate(t.getAttribute('data-insupd'), function () { INS_UPD = false; again(); });
+  } else if (t.id === 'ins_updall') {
+    if (INS_UPD) return;
+    var list = (INSTALLS.installs || []).filter(function (x) { return ['active', 'suspended'].indexOf(x.status) >= 0 && x.version !== INSTALLS.release.version; });
+    if (!(await uiConfirm('Update ' + list.length + ' copies, one after another?'))) return;
+    INS_UPD = true;
+    (function one(i) { if (i >= list.length) { INS_UPD = false; again(); return; } insUpdate(list[i].id, function () { one(i + 1); }); })(0);
+  } else if (t.getAttribute('data-insdom')) {
+    var d = await uiPrompt('Its own web address (e.g. erp.theirshop.com)\n\nThey add a CNAME record for it pointing to costareen-erp.pages.dev. Then you run "python deploy.py domains" once. Empty removes it.', t.getAttribute('data-cur') || '');
+    if (d === null) return;
+    srv('erpInstallDomain', [{ id: t.getAttribute('data-insdom'), domain: d }], function (r) {
+      if (r.domain) uiAlert('Saved: ' + r.domain + '\n\n1. The company adds a DNS record: CNAME  ' + r.domain + '  \u2192  ' + r.cname + '\n2. You run:  python deploy.py domains\n3. Opening https://' + r.domain + ' then opens their own ERP.');
+      else toast('Web address removed.');
+      again();
+    }, bad);
+  } else if (t.getAttribute('data-instok')) {
+    var tk = await uiPrompt('The company\u2019s new Supabase access token (sbp_\u2026)\n\nThey make it at supabase.com \u2192 Account \u2192 Access Tokens and send it to you.', '');
+    if (tk === null) return;
+    srv('erpInstallToken', [{ id: t.getAttribute('data-instok'), token: tk.trim() }], function () { toast('Token replaced. Press Update again.'); again(); }, bad);
+  }
 });
 </script>
 <!-- lang-2: the language of what customers receive -->
