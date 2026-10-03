@@ -391,3 +391,6 @@
 - "A new business" (business name + owner name + e-mail) is gone from Platform: a business of your own is added from the dropdown at the top (switchable, same login); another company gets its own ERP (Platform → Company copies → install link).
 - Maintenance: short descriptions in table cells stay as they are (the "?" broke the table).
 - Checked: a second business added from the dropdown has its own (empty) website connection and kind, courier keys, WhatsApp, Google Drive and backup sheet, website door key, customer documents language, delivery list, invoices, money and risk figures - it behaves as a separate business; only the login and the switch are shared.
+
+2026-10-04 — db-pool-1: the database ran out of connection slots
+- Seen live: "remaining connection slots are reserved for roles with the SUPERUSER attribute". Every running copy of the server opened its own direct database connections (up to 5), and the timers start several copies at once; on the free plan the slots run out and calls fail. The server now goes through Supabase's connection pooler (transaction mode, port 6543; secret ERP_POOL_HOST) - same user and password, nothing else changes. Checked live: calls answer, and the server holds no direct connections any more. The installer sets the pooler host for every company copy too.

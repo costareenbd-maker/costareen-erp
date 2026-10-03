@@ -27,9 +27,23 @@ const SMTP_NOTE = Deno.env.get('ERP_SMTP_NOTE') ?? '';
 const GOOGLE = { clientId: Deno.env.get('GOOGLE_CLIENT_ID') ?? '', clientSecret: Deno.env.get('GOOGLE_CLIENT_SECRET') ?? '',
                  redirect: SUPABASE_URL + '/functions/v1/erp?google=back', appUrl: Deno.env.get('ERP_APP_URL') ?? 'https://erp.costareen.com/' };   // set by deploy/set_smtp.py when a real mail service is in use   // pg_cron sends it as x-erp-cron
 const BUCKET = 'erp-files';
-const sql = connect(postgres, Deno.env.get('SUPABASE_DB_URL') ?? '');
+// Through Supabase's connection pooler (transaction mode) when its host is set: a direct
+// connection per running copy of this server ran the database out of connection slots
+// ("remaining connection slots are reserved..."). Same user and password, pooler host, port 6543.
+function poolUrl(direct: string): string {
+  const host = Deno.env.get('ERP_POOL_HOST') ?? '';
+  const ref = (/^https:\/\/([a-z0-9]+)\.supabase\.co/.exec(SUPABASE_URL) || [])[1] || '';
+  if (!host || !ref || !direct) return direct;
+  try {
+    const u = new URL(direct);
+    u.username = 'postgres.' + ref; u.hostname = host; u.port = '6543';
+    return u.toString();
+  } catch (_) { return direct; }
+}
+const DB_URL = poolUrl(Deno.env.get('SUPABASE_DB_URL') ?? '');
+const sql = connect(postgres, DB_URL);
 // a second, small pool for side-queries made from inside a transaction (see core.js)
-const sqlAux = connect(postgres, Deno.env.get('SUPABASE_DB_URL') ?? '', { max: 2 });
+const sqlAux = connect(postgres, DB_URL, { max: 2 });
 
 const ALLOWED_ORIGINS = [
   'https://erp.costareen.com',

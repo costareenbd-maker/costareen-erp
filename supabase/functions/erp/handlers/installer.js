@@ -191,10 +191,13 @@ export async function installStep(deps, b) {
       case 'secrets': {
         const env = deps.installEnv || {};
         const key = rand(), cron = rand();
+        let poolHost = '';
+        try { const pc = await mgmt(deps, tok, 'GET', '/projects/' + row.ref + '/config/database/pooler'); poolHost = str((Array.isArray(pc) ? (pc.find((x) => x.database_type === 'PRIMARY') || pc[0]) : pc || {}).db_host); } catch (_) { poolHost = ''; }
         await mgmt(deps, tok, 'POST', '/projects/' + row.ref + '/secrets', [
           { name: 'ERP_INSTALL_ID', value: row.id }, { name: 'ERP_INSTALL_KEY', value: key }, { name: 'ERP_CONTROL_URL', value: str(env.controlUrl) },
           { name: 'ERP_RELEASE', value: rel.version }, { name: 'CRON_KEY', value: cron }, { name: 'ERP_APP_URL', value: publicUrl(deps) + '#/use/' + row.id },
           ...(env.renderUrl ? [{ name: 'RENDER_URL', value: env.renderUrl }, { name: 'RENDER_KEY', value: str(env.renderKey) }] : []),
+          ...(poolHost ? [{ name: 'ERP_POOL_HOST', value: poolHost }] : []),
         ]);
         // the cron key is needed once more (timers), the install key once more (finish): kept until then, then wiped
         return set({ step: 'function', key_hash: await sha256(key), install_key: key + '|' + cron, detail: '' });
