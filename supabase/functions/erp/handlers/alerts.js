@@ -107,7 +107,7 @@ export async function alertsPush(ctx) {
   const fresh = list.filter((a) => !had[a.key]);
   if (!fresh.length) return { sent: 0 };
   const text = str(ctx.s.businessName) + ' ERP — needs your attention:\n' +
-    fresh.slice(0, 12).map((a) => '• ' + a.title + (a.detail ? '\n  ' + a.detail : '')).join('\n') + '\n\nhttps://erp.costareen.com';
+    fresh.slice(0, 12).map((a) => '• ' + a.title + (a.detail ? '\n  ' + a.detail : '')).join('\n') + '\n\n' + String((ctx.deps && ctx.deps.google && ctx.deps.google.appUrl) || '').replace(/#.*$/, '');
   for (const phone of phones) {
     const r = await evoCall(ctx, 'POST', '/message/sendText', { number: phone, text });
     if (r.code !== 200 && r.code !== 201) throw new Error('The alert did not go (' + r.code + ').');

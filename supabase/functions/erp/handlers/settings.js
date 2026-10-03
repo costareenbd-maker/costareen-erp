@@ -14,6 +14,8 @@ import { setConfig, getSecret, saveFile, findFiles, deleteFile } from '../lib/ex
 
 /** The one web address every business opens from (was: one Apps Script link per sheet). */
 export const APP_URL = 'https://erp.costareen.com';
+/** This system's own page address (a company's copy has its own). */
+const appUrlOf = (ctx) => String((ctx && ctx.deps && ctx.deps.google && ctx.deps.google.appUrl) || APP_URL).replace(/#.*$/, '').replace(/\/+$/, '');
 const NOT_YET = 'This part is not in the web app yet.';
 
 // ======================================================================
@@ -376,7 +378,7 @@ const ONE_LINK = 'Every business now opens from the same web address, ' + APP_UR
 
 export async function erpBusinessLinks(ctx) {
   const list = ctx.s.memberships.map((m) => ({
-    id: m.business_id, name: m.name, url: APP_URL, isHome: m.business_id === ctx.biz,
+    id: m.business_id, name: m.name, url: appUrlOf(ctx), isHome: m.business_id === ctx.biz,
   }));
   return { businesses: list, canAdd: roleAtLeast(ctx.s.role, 'owner') };
 }
@@ -532,7 +534,7 @@ export async function erpCreateBusiness(ctx, payload) {
   await ctx.tx`insert into erp_prefs (user_id, active_business) values (${ctx.s.userId}, ${id})
                on conflict (user_id) do update set active_business = excluded.active_business`;
 
-  return { ok: true, id, name, url: APP_URL, invited: [], couldNot: [], warning };
+  return { ok: true, id, name, url: appUrlOf(ctx), invited: [], couldNot: [], warning };
 }
 
 /** Sheet-only: every business shares one web address (see fixes). */
@@ -541,9 +543,9 @@ export async function erpDeployBusiness(ctx, id) {
   throw new Error(ONE_LINK);
 }
 
-export async function erpCheckBusinessSheet() {
+export async function erpCheckBusinessSheet(ctx) {
   return {
-    ok: true, name: '', url: APP_URL,
+    ok: true, name: '', url: appUrlOf(ctx),
     message: 'There are no business sheets any more. Each business keeps its own records, ' +
       'and nobody sees a business they were not added to - so there is nothing to check.',
   };

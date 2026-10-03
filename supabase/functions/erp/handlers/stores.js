@@ -38,7 +38,7 @@ async function conn(ctx) {
     if (!url || !t) throw new Error('Shopify is not set up: the shop address and the Admin API token are needed.');
     return { kind, url, api: url + '/admin/api/' + SHOPIFY_API + '/', headers: { 'X-Shopify-Access-Token': t, 'Content-Type': 'application/json' } };
   }
-  throw new Error('This business uses the Costareen website plugin, not a store connection.');
+  throw new Error('This business uses the WordPress sync plugin, not a store connection.');
 }
 
 async function call(ctx, c, method, path, body) {

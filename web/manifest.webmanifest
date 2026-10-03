@@ -1,6 +1,6 @@
 {
-  "name": "Costareen ERP",
-  "short_name": "Costareen",
+  "name": "ERP",
+  "short_name": "ERP",
   "description": "Inventory, invoicing, customers and partner pools.",
   "id": "/",
   "start_url": "/",

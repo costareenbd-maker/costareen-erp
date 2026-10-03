@@ -6,7 +6,7 @@ let r = await shareholder('erpConnections', []);
 check('connections are the owner\'s', !r.ok, r);
 r = await owner('erpConnections', []);
 check('every connection with its state', r.ok && ['website', 'courier', 'whatsapp', 'email', 'google', 'ai'].every((k) => r.result[k] && r.result[k].state) &&
-  r.result.website.state === 'off' && r.result.website.url === 'https://costareen.com/wp-json/cz/v1' && r.result.email.state === 'warn', r.result);
+  r.result.website.state === 'off' && r.result.website.url === '' && r.result.email.state === 'warn', r.result);
 
 r = await owner('erpWebsiteSync', [{ on: true }]);
 check('the sync cannot be switched on without a key', !r.ok && /keys first/.test(r.error), r);

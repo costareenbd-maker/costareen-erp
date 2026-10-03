@@ -203,7 +203,11 @@ async function sendReset(email: string) {
 // sign-in by e-mail + password is on again (per-person users); access keys still work for machines and old links
 // a company's own copy knows who it is and where its provider is (set by the installer); the provider's system has none of these
 const INSTALL = { id: Deno.env.get('ERP_INSTALL_ID') ?? '', key: Deno.env.get('ERP_INSTALL_KEY') ?? '', controlUrl: Deno.env.get('ERP_CONTROL_URL') ?? '', version: Deno.env.get('ERP_RELEASE') ?? '' };
-const INSTALL_ENV = { controlUrl: SUPABASE_URL + '/functions/v1/erp', appUrl: Deno.env.get('ERP_APP_URL') ?? 'https://erp.costareen.com/', renderUrl: RENDER_URL, renderKey: RENDER_KEY };
+const INSTALL_ENV = { controlUrl: SUPABASE_URL + '/functions/v1/erp', appUrl: Deno.env.get('ERP_APP_URL') ?? 'https://erp.costareen.com/', renderUrl: RENDER_URL, renderKey: RENDER_KEY,
+  // the neutral address customers see (install links, a copy without its own address), set by deploy/set_installer.py
+  publicUrl: Deno.env.get('ERP_PUBLIC_URL') ?? '',
+  oauth: { clientId: Deno.env.get('SUPABASE_OAUTH_CLIENT_ID') ?? '', clientSecret: Deno.env.get('SUPABASE_OAUTH_CLIENT_SECRET') ?? '', redirect: SUPABASE_URL + '/functions/v1/erp?install=oauth_back' },
+  cloudflare: { token: Deno.env.get('ERP_CF_TOKEN') ?? '', account: Deno.env.get('ERP_CF_ACCOUNT') ?? '', project: Deno.env.get('ERP_PUBLIC_PROJECT') ?? '' } };
 const deps = { install: INSTALL, installEnv: INSTALL_ENV, google: GOOGLE, smtpNote: SMTP_NOTE, linkOnly: false, sql, sqlAux, verifyUser, fetch: globalThis.fetch.bind(globalThis), storage, renderPdf, createAuthUser,
                createOwner, removeUser, sendReset,
                hookBase: SUPABASE_URL + '/functions/v1/erp' };
@@ -227,7 +231,8 @@ Deno.serve(async (req) => {
       catch (e) { return new Response(JSON.stringify({ ok: false, error: String((e as Error).message || e) }), { status: 500, headers }); }
     }
     if (q.get('install') || q.get('control')) {
-      const r = await installRoute(deps, req);
+      const r: any = await installRoute(deps, req);
+      if (r.location) return new Response(null, { status: 302, headers: { Location: r.location } });
       return new Response(JSON.stringify(r.body), { status: r.status, headers });
     }
   }

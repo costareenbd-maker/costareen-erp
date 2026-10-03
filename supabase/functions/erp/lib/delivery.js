@@ -9,7 +9,7 @@ import { getConfig } from './ext.js';
 
 const str = (v) => String(v == null ? '' : v).trim();
 export const DELIVERY_TYPES = { pickup: 'Pickup', courier: 'Courier', rider: 'Own rider' };
-export const DEFAULT_DELIVERY = ['Customer pickup', 'Steadfast courier', 'Steadfast Express', 'Pathao Instant', 'Uber Instant', 'Costareen Delivery'];
+export const DEFAULT_DELIVERY = ['Customer pickup', 'Steadfast courier', 'Steadfast Express', 'Pathao Instant', 'Uber Instant', 'Own delivery'];
 
 export function guessType(name) {
   const n = str(name).toLowerCase();

@@ -20,7 +20,7 @@ export const WEBSITE_DEFAULT = 'https://costareen.com/wp-json/cz/v1';
 
 function needOwner(ctx) { if (ctx.s.role !== 'owner') throw new Error('Only the owner manages connections.'); }
 
-const KINDS = { plugin: 'Costareen plugin (WordPress)', woo: 'WooCommerce', shopify: 'Shopify' };
+const KINDS = { plugin: 'WordPress sync plugin', woo: 'WooCommerce', shopify: 'Shopify' };
 
 async function website(ctx) {
   const kind = str(await getConfig(ctx, 'website_kind', '')) || 'plugin';
@@ -28,7 +28,7 @@ async function website(ctx) {
   let url, key;
   if (kind === 'woo') { url = str(await getConfig(ctx, 'store_url', '')); key = (await getSecret(ctx, 'WOO_KEY')) && (await getSecret(ctx, 'WOO_SECRET')); }
   else if (kind === 'shopify') { url = str(await getConfig(ctx, 'store_url', '')); key = await getSecret(ctx, 'SHOPIFY_TOKEN'); }
-  else { url = str(await getConfig(ctx, 'website_api', '')) || WEBSITE_DEFAULT; key = await getSecret(ctx, 'CZ_SYNC_KEY'); }
+  else { url = str(await getConfig(ctx, 'website_api', '')); key = await getSecret(ctx, 'CZ_SYNC_KEY'); }
   return { kind, kindLabel: KINDS[kind] || kind, url, hasKey: !!(key && url), on, state: !(key && url) ? 'off' : on ? 'on' : 'ready' };
 }
 

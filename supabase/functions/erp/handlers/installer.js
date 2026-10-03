@@ -50,6 +50,42 @@ async function mgmt(deps, token, method, path, body, raw) {
   return json;
 }
 
+const OAUTH = 'https://api.supabase.com/v1/oauth';
+const b64url = (bytes) => btoa(String.fromCharCode(...bytes)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+async function oauthToken(deps, form) {
+  const o = deps.installEnv && deps.installEnv.oauth || {};
+  const r = await (deps.fetch || fetch)(OAUTH + '/token', {
+    method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded', Authorization: 'Basic ' + btoa(o.clientId + ':' + o.clientSecret) },
+    body: new URLSearchParams(form).toString(),
+  });
+  const j = await r.json().catch(() => null);
+  if (!r.ok || !j || !j.access_token) throw new Error('Supabase did not give access (' + r.status + '): ' + str(j && (j.error_description || j.message || j.error)).slice(0, 160));
+  return { access: j.access_token, refresh: j.refresh_token, expires: new Date(Date.now() + (Number(j.expires_in) || 3600) * 1000) };
+}
+/** The token to reach the company's Supabase: the pasted one, or the connected one (renewed when it is about to run out). */
+async function tokenOf(deps, row) {
+  if (row.mgmt_kind !== 'oauth') return row.mgmt_token;
+  if (row.oauth_expires && new Date(row.oauth_expires).getTime() - Date.now() > 120000) return row.mgmt_token;
+  const t = await oauthToken(deps, { grant_type: 'refresh_token', refresh_token: row.oauth_refresh });
+  await sqlOf(deps)`update erp_installs set mgmt_token = ${t.access}, oauth_refresh = ${t.refresh || row.oauth_refresh}, oauth_expires = ${t.expires} where id = ${row.id}`;
+  row.mgmt_token = t.access; row.oauth_refresh = t.refresh || row.oauth_refresh; row.oauth_expires = t.expires;
+  return t.access;
+}
+// where a company's own address points: the neutral page's address (its pages.dev name can differ from the project name)
+const pagesTarget = (deps) => {
+  const e = deps.installEnv || {};
+  const m = /^https?:\/\/([^/]+\.pages\.dev)/i.exec(str(e.publicUrl));
+  return m ? m[1].toLowerCase() : ((e.cloudflare && e.cloudflare.project) || 'costareen-erp') + '.pages.dev';
+};
+const publicUrl = (deps) => str(deps.installEnv && (deps.installEnv.publicUrl || deps.installEnv.appUrl)) || 'https://erp.costareen.com/';
+async function cf(deps, method, path, body) {
+  const c = deps.installEnv && deps.installEnv.cloudflare;
+  if (!c || !c.token || !c.account || !c.project) return null;
+  const r = await (deps.fetch || fetch)('https://api.cloudflare.com/client/v4/accounts/' + c.account + '/pages/projects/' + c.project + path, {
+    method, headers: { Authorization: 'Bearer ' + c.token, 'Content-Type': 'application/json' }, body: body ? JSON.stringify(body) : undefined });
+  return { status: r.status, json: await r.json().catch(() => null) };
+}
+
 async function latestRelease(sql) {
   const r = (await sql`select version, files from erp_releases order by made_at desc limit 1`)[0];
   if (!r) throw new Error('No release has been published yet (deploy.py release).');
@@ -61,13 +97,20 @@ async function latestRelease(sql) {
 export async function installStart(deps, b) {
   const sql = sqlOf(deps);
   const code = str(b.code), company = str(b.company).slice(0, 80), ownerName = str(b.ownerName).slice(0, 80);
-  const ownerEmail = str(b.ownerEmail).toLowerCase(), token = str(b.token);
+  const ownerEmail = str(b.ownerEmail).toLowerCase();
+  const website = str(b.website).toLowerCase().replace(/^https?:\/\//, '').replace(/^www\./, '').replace(/\/.*$/, '').slice(0, 120);
+  let token = str(b.token), oauth = null;
+  if (b.oauthState) {
+    oauth = (await sql`select * from erp_install_oauth where state = ${str(b.oauthState)} and invite = ${code}`)[0];
+    if (!oauth || !oauth.access) throw new Error('Supabase was not connected. Press "Connect Supabase" again.');
+    token = oauth.access;
+  }
   const inv = (await sql`select * from erp_install_invites where code_hash = ${await sha256(code)}`)[0];
   if (!inv || inv.used_at || new Date(inv.expires_at) < new Date()) throw new Error('This install link is not valid any more. Ask for a new one.');
   if (!company) throw new Error('What is the company called?');
   if (!ownerName) throw new Error('Who is the owner? Type the name.');
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(ownerEmail)) throw new Error('Type the owner’s e-mail address - the login is made for it.');
-  if (!/^sbp_[A-Za-z0-9]{20,}$/.test(token)) throw new Error('That does not look like a Supabase access token (it starts with sbp_).');
+  if (!oauth && !/^sbp_[A-Za-z0-9]{20,}$/.test(token)) throw new Error('That does not look like a Supabase access token (it starts with sbp_).');
   const orgs = (await mgmt(deps, token, 'GET', '/organizations')) || [];
   if (!orgs.length) throw new Error('This Supabase account has no organisation yet. Open supabase.com, make one, and start again.');
   let orgId = str(b.orgId), ref = str(b.ref);
@@ -80,8 +123,10 @@ export async function installStart(deps, b) {
     if (!p || !p.id) throw new Error('That project was not found in this account.');
   }
   const secret = rand(), id = crypto.randomUUID();
-  await sql`insert into erp_installs (id, company, owner_name, owner_email, status, step, org_id, ref, mgmt_token, secret_hash)
-            values (${id}, ${company}, ${ownerName}, ${ownerEmail}, 'installing', ${ref ? 'wait' : 'project'}, ${orgId || null}, ${ref || null}, ${token}, ${await sha256(secret)})`;
+  await sql`insert into erp_installs (id, company, owner_name, owner_email, status, step, org_id, ref, mgmt_token, secret_hash, mgmt_kind, oauth_refresh, oauth_expires, website)
+            values (${id}, ${company}, ${ownerName}, ${ownerEmail}, 'installing', ${ref ? 'wait' : 'project'}, ${orgId || null}, ${ref || null}, ${token}, ${await sha256(secret)},
+                    ${oauth ? 'oauth' : 'pat'}, ${oauth ? oauth.refresh : null}, ${oauth ? oauth.expires_at : null}, ${website || null})`;
+  if (oauth) await sql`delete from erp_install_oauth where state = ${oauth.state}`;
   await sql`update erp_install_invites set used_at = now(), install_id = ${id} where code_hash = ${inv.code_hash}`;
   return { id, secret };
 }
@@ -104,8 +149,8 @@ export async function installStep(deps, b) {
               key_hash = ${r.key_hash || null}, install_key = ${r.install_key || null}, updated_at = now() where id = ${row.id}`;
     return view(r);
   };
-  const tok = row.mgmt_token;
   try {
+    const tok = await tokenOf(deps, row);
     const rel = await latestRelease(sql);
     const files = rel.files;
     const runSql = (q) => mgmt(deps, tok, 'POST', '/projects/' + row.ref + '/database/query', { query: q });
@@ -148,7 +193,7 @@ export async function installStep(deps, b) {
         const key = rand(), cron = rand();
         await mgmt(deps, tok, 'POST', '/projects/' + row.ref + '/secrets', [
           { name: 'ERP_INSTALL_ID', value: row.id }, { name: 'ERP_INSTALL_KEY', value: key }, { name: 'ERP_CONTROL_URL', value: str(env.controlUrl) },
-          { name: 'ERP_RELEASE', value: rel.version }, { name: 'CRON_KEY', value: cron }, { name: 'ERP_APP_URL', value: str(env.appUrl) || 'https://erp.costareen.com/' },
+          { name: 'ERP_RELEASE', value: rel.version }, { name: 'CRON_KEY', value: cron }, { name: 'ERP_APP_URL', value: publicUrl(deps) + '#/use/' + row.id },
           ...(env.renderUrl ? [{ name: 'RENDER_URL', value: env.renderUrl }, { name: 'RENDER_KEY', value: str(env.renderKey) }] : []),
         ]);
         // the cron key is needed once more (timers), the install key once more (finish): kept until then, then wiped
@@ -191,6 +236,80 @@ export async function installStep(deps, b) {
   }
 }
 
+/** The install page: the company's own web address for its ERP (e.g. erp.xyzenterprise.com). */
+async function rowFor(deps, b) {
+  const row = (await sqlOf(deps)`select * from erp_installs where id = ${str(b.id)}::uuid`)[0];
+  if (!row || row.secret_hash !== (await sha256(str(b.secret)))) throw new Error('Unknown install.');
+  return row;
+}
+export function cleanHost(v) {
+  const d = str(v).toLowerCase().replace(/^https?:\/\//, '').replace(/\/.*$/, '').replace(/\.$/, '');
+  if (!/^([a-z0-9]([a-z0-9-]*[a-z0-9])?\.)+[a-z]{2,}$/.test(d)) throw new Error('A web address is like erp.yourcompany.com');
+  if (/(^|\.)costareen\.com$|\.pages\.dev$|\.supabase\.co$/.test(d)) throw new Error('Use an address of your own company.');
+  return d;
+}
+export async function domainSet(deps, b) {
+  const row = await rowFor(deps, b);
+  const d = cleanHost(b.domain);
+  if ((await sqlOf(deps)`select 1 from erp_installs where lower(domain) = ${d} and id <> ${row.id}`).length) throw new Error(d + ' is already used by another ERP.');
+  await sqlOf(deps)`update erp_installs set domain = ${d}, domain_state = 'waiting', updated_at = now() where id = ${row.id}`;
+  const r = await cf(deps, 'POST', '/domains', { name: d });
+  const host = d.split('.')[0], parent = d.split('.').slice(1).join('.');
+  return { domain: d, record: { type: 'CNAME', name: host, full: d, value: pagesTarget(deps), parent }, auto: !!r };
+}
+/** Is the record there yet, and is the address ready (certificate made)? */
+export async function domainCheck(deps, b) {
+  const row = await rowFor(deps, b);
+  if (!row.domain) throw new Error('Set the address first.');
+  const target = pagesTarget(deps);
+  let seen = false;
+  try {
+    const r = await (deps.fetch || fetch)('https://cloudflare-dns.com/dns-query?name=' + encodeURIComponent(row.domain) + '&type=CNAME', { headers: { accept: 'application/dns-json' } });
+    const j = await r.json();
+    seen = ((j && j.Answer) || []).some((a) => str(a.data).replace(/\.$/, '').toLowerCase() === target);
+  } catch (_) { seen = false; }
+  let state = seen ? 'seen' : 'waiting', ready = false;
+  if (seen) {
+    const c = await cf(deps, 'GET', '/domains/' + encodeURIComponent(row.domain));
+    if (c && c.json && c.json.result && c.json.result.status === 'active') { state = 'ready'; ready = true; }
+    if (c && c.status === 404) await cf(deps, 'POST', '/domains', { name: row.domain });
+  }
+  if (ready && row.domain_state !== 'ready') {
+    // the copy's own links (alerts, e-mails) now use its address
+    try { await mgmt(deps, await tokenOf(deps, row), 'POST', '/projects/' + row.ref + '/secrets', [{ name: 'ERP_APP_URL', value: 'https://' + row.domain + '/' }]); } catch (_) { /* best effort */ }
+  }
+  await sqlOf(deps)`update erp_installs set domain_state = ${state}, updated_at = now() where id = ${row.id}`;
+  return { domain: row.domain, state, ready, auto: !!(deps.installEnv && deps.installEnv.cloudflare && deps.installEnv.cloudflare.token), url: 'https://' + row.domain + '/', free: publicUrl(deps) + '#/use/' + row.id };
+}
+
+/** "Connect Supabase": where to send the person, with a one-time state (PKCE). */
+export async function oauthStart(deps, b) {
+  const o = deps.installEnv && deps.installEnv.oauth || {};
+  if (!o.clientId) throw new Error('Connecting with one click is not set up yet - use the access token instead.');
+  const code = str(b.code);
+  const inv = (await sqlOf(deps)`select used_at, expires_at from erp_install_invites where code_hash = ${await sha256(code)}`)[0];
+  if (!inv || inv.used_at || new Date(inv.expires_at) < new Date()) throw new Error('This install link is not valid any more. Ask for a new one.');
+  const state = rand(24), verifier = rand(48);
+  const challenge = b64url(new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(verifier))));
+  await sqlOf(deps)`insert into erp_install_oauth (state, invite, verifier) values (${state}, ${code}, ${verifier})`;
+  await sqlOf(deps)`delete from erp_install_oauth where made_at < now() - interval '1 day'`;
+  const q = new URLSearchParams({ client_id: o.clientId, redirect_uri: o.redirect, response_type: 'code', state, code_challenge: challenge, code_challenge_method: 'S256' });
+  return { url: OAUTH + '/authorize?' + q.toString() };
+}
+/** Supabase sends the person back here; the token is kept for the install page, which carries on. */
+export async function oauthBack(deps, q) {
+  const o = deps.installEnv && deps.installEnv.oauth || {};
+  const row = (await sqlOf(deps)`select * from erp_install_oauth where state = ${str(q.state)}`)[0];
+  if (!row) return publicUrl(deps) + '#/install/expired';
+  const back = publicUrl(deps) + '#/install/' + row.invite;
+  if (q.error || !q.code) return back + '/cancelled';
+  try {
+    const t = await oauthToken(deps, { grant_type: 'authorization_code', code: str(q.code), redirect_uri: o.redirect, code_verifier: row.verifier });
+    await sqlOf(deps)`update erp_install_oauth set access = ${t.access}, refresh = ${t.refresh || null}, expires_at = ${t.expires} where state = ${row.state}`;
+    return back + '/' + row.state;
+  } catch (_) { return back + '/cancelled'; }
+}
+
 export async function installInfo(deps, id) {
   const r = (await sqlOf(deps)`select company, api_url, anon_key, ref, status from erp_installs where id = ${str(id)}::uuid`)[0];
   // a switched-off copy still opens its sign-in page, which then says why
@@ -214,6 +333,11 @@ export async function installRoute(deps, req) {
     if (u.searchParams.get('control') === 'beat') return { status: 200, body: await controlBeat(deps, await req.json()) };
     const what = u.searchParams.get('install');
     if (what === 'info') return { status: 200, body: { ok: true, ...(await installInfo(deps, u.searchParams.get('id'))) } };
+    if (what === 'caps') {
+      const e = deps.installEnv || {};
+      return { status: 200, body: { ok: true, oauth: !!(e.oauth && e.oauth.clientId), domains: !!(e.cloudflare && e.cloudflare.token), target: pagesTarget(deps) } };
+    }
+    if (what === 'oauth_back') return { status: 302, location: await oauthBack(deps, Object.fromEntries(u.searchParams.entries())), body: null };
     // a page opened on a company's own web address finds its copy
     if (what === 'host') {
       const h = str(u.searchParams.get('h')).toLowerCase();
@@ -225,6 +349,9 @@ export async function installRoute(deps, req) {
     const b = await req.json();
     if (what === 'start') return { status: 200, body: { ok: true, ...(await installStart(deps, b)) } };
     if (what === 'step') return { status: 200, body: { ok: true, ...(await installStep(deps, b)) } };
+    if (what === 'oauth') return { status: 200, body: { ok: true, ...(await oauthStart(deps, b)) } };
+    if (what === 'domain') return { status: 200, body: { ok: true, ...(await domainSet(deps, b)) } };
+    if (what === 'domaincheck') return { status: 200, body: { ok: true, ...(await domainCheck(deps, b)) } };
     return { status: 404, body: { ok: false, error: 'Unknown.' } };
   } catch (e) { return { status: 200, body: { ok: false, error: str((e && e.message) || e) } }; }
 }
@@ -239,7 +366,7 @@ async function needAdmin(ctx) {
 export async function erpInstalls(ctx) {
   await needAdmin(ctx);
   const rows = await ctx.sql`select id, company, owner_name, owner_email, status, step, step_n, detail, error, ref, version, stats, last_seen, reason, made_at,
-                                    domain, upd_step, upd_error, updated_to_at
+                                    domain, domain_state, website, mgmt_kind, upd_step, upd_error, updated_to_at
                              from erp_installs order by made_at desc`;
   const rel = (await ctx.sql`select version, made_at from erp_releases order by made_at desc limit 1`)[0];
   const invites = await ctx.sql`select note, made_at, expires_at, used_at from erp_install_invites order by made_at desc limit 20`;
@@ -251,7 +378,7 @@ export async function erpInstallInvite(ctx, payload) {
   await needAdmin(ctx);
   const code = rand(18);
   await ctx.sql`insert into erp_install_invites (code_hash, note, made_by, expires_at) values (${await sha256(code)}, ${str(payload && payload.note).slice(0, 120) || null}, ${ctx.s.userId}, now() + interval '14 days')`;
-  return { code, link: str(ctx.deps && ctx.deps.installEnv && ctx.deps.installEnv.appUrl || 'https://erp.costareen.com/') + '#/install/' + code };
+  return { code, link: publicUrl(ctx.deps) + '#/install/' + code };
 }
 
 export async function erpInstallSet(ctx, payload) {
@@ -287,7 +414,9 @@ export async function erpInstallUpdate(ctx, payload) {
   const row = (await sql`select * from erp_installs where id = ${str(payload && payload.id)}::uuid`)[0];
   if (!row || !['active', 'suspended'].includes(row.status)) throw new Error('Only an installed copy can be updated.');
   const rel = await latestRelease(sql);
-  const files = rel.files, tok = row.mgmt_token;
+  const files = rel.files;
+  let tok;
+  try { tok = await tokenOf(ctx.deps, row); } catch (e) { return { id: row.id, done: false, step: row.upd_step || 'db', error: str(e && e.message) }; }
   const save = async (f) => {
     const r = { ...row, ...f };
     await sql`update erp_installs set upd_to = ${r.upd_to || null}, upd_step = ${r.upd_step || null}, upd_n = ${r.upd_n || 0}, upd_error = ${r.upd_error || null},
@@ -351,9 +480,10 @@ export async function erpInstallDomain(ctx, payload) {
   if (d && !/^([a-z0-9-]+\.)+[a-z]{2,}$/.test(d)) throw new Error('A web address is like erp.theirshop.com');
   if (d && /(^|\.)costareen\.com$/.test(d)) throw new Error('That is the provider\u2019s own address.');
   if (d && (await ctx.sql`select 1 from erp_installs where lower(domain) = ${d} and id <> ${str(payload.id)}::uuid`).length) throw new Error('Another copy already uses ' + d + '.');
-  const r = await ctx.sql`update erp_installs set domain = ${d || null}, updated_at = now() where id = ${str(payload.id)}::uuid returning id`;
+  const r = await ctx.sql`update erp_installs set domain = ${d || null}, domain_state = ${d ? 'waiting' : null}, updated_at = now() where id = ${str(payload.id)}::uuid returning id`;
   if (!r.length) throw new Error('That copy is not known.');
-  return { ok: true, domain: d, cname: 'costareen-erp.pages.dev' };
+  const auto = d ? !!(await cf(ctx.deps, 'POST', '/domains', { name: d })) : false;
+  return { ok: true, domain: d, cname: pagesTarget(ctx.deps), auto };
 }
 
 export const HANDLERS = { erpInstalls, erpInstallInvite, erpInstallSet, erpInstallRetry, erpInstallUpdate, erpInstallToken, erpInstallDomain };

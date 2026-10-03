@@ -19,6 +19,8 @@ import glob, json, os, shutil, subprocess, sys, tempfile, urllib.request
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 REF = 'oqzcuuytytqadqjlwdsh'
 PAGES_PROJECT = 'costareen-erp'
+# the neutral address customers see (install links; a company copy without its own address): no company name in it
+PUBLIC_PROJECT = 'office-erp'
 DOMAIN = 'erp.costareen.com'
 ZONE = 'costareen.com'
 
@@ -106,10 +108,18 @@ def step_web():
         shutil.copy(os.path.join(ROOT, 'web', f), out)
     shutil.copytree(os.path.join(ROOT, 'web', 'icons'), os.path.join(out, 'icons'))
     # never publish web/.env.local, web/src, web/original or the old app
-    cmd = ['npx', '-y', 'wrangler@3', 'pages', 'deploy', out, '--project-name=' + PAGES_PROJECT,
-           '--branch=main', '--commit-dirty=true']
-    print(' '.join(cmd))
-    subprocess.check_call(cmd, shell=(os.name == 'nt'))
+    for proj in [PAGES_PROJECT, PUBLIC_PROJECT]:
+        if proj == PUBLIC_PROJECT:
+            # made once, on first use
+            base = 'https://api.cloudflare.com/client/v4/accounts/%s/pages/projects' % os.environ['CLOUDFLARE_ACCOUNT_ID']
+            code, _ = api(base + '/' + proj, token=os.environ['CLOUDFLARE_API_TOKEN'])
+            if code == 404:
+                code, out2 = api(base, 'POST', {'name': proj, 'production_branch': 'main'}, os.environ['CLOUDFLARE_API_TOKEN'])
+                print('made the neutral Pages project', proj, code, '' if code < 300 else out2)
+        cmd = ['npx', '-y', 'wrangler@3', 'pages', 'deploy', out, '--project-name=' + proj,
+               '--branch=main', '--commit-dirty=true']
+        print(' '.join(cmd))
+        subprocess.check_call(cmd, shell=(os.name == 'nt'))
 
 
 def step_domain():
@@ -142,7 +152,7 @@ def step_cron():
 def step_domains():
     """Every company copy's own web address (Platform > Company copies) is added to the Pages project, so it opens the ERP page."""
     tok = need('CLOUDFLARE_API_TOKEN'); acct = need('CLOUDFLARE_ACCOUNT_ID')
-    base = 'https://api.cloudflare.com/client/v4/accounts/%s/pages/projects/%s/domains' % (acct, PAGES_PROJECT)
+    base = 'https://api.cloudflare.com/client/v4/accounts/%s/pages/projects/%s/domains' % (acct, PUBLIC_PROJECT)
     code, have = api(base, token=tok)
     known = {d['name'] for d in (have.get('result') or [])} if isinstance(have, dict) else set()
     for r in sql("select company, domain from public.erp_installs where domain is not null") or []:
@@ -151,7 +161,7 @@ def step_domains():
             print('already on:', d, '(' + r['company'] + ')'); continue
         code, out = api(base, 'POST', {'name': d}, tok)
         print('added' if code < 300 else 'FAILED', d, '(' + r['company'] + ')', '' if code < 300 else out)
-    print('each company points its address with a CNAME record to %s.pages.dev' % PAGES_PROJECT)
+    print('each company points its address with a CNAME record to %s.pages.dev' % PUBLIC_PROJECT)
 
 
 def step_release():
