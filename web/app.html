@@ -15148,12 +15148,7 @@ function viewPlatform() {
   }
   if (PLAT.timers.length) h += '<section><div class="card"><h2>Timers</h2><div class="list">' + PLAT.timers.map(function (t) {
     return '<div><span><code>' + esc(t.name) + '</code><span class="sku">' + esc(t.schedule) + (t.message ? ' \u00b7 ' + esc(t.message) : '') + '</span></span><b' + (t.status === 'failed' ? ' style="color:var(--critical)"' : '') + '>' + esc(t.status) + (t.last ? ' \u00b7 ' + esc(t.last) : '') + '</b></div>'; }).join('') + '</div></div></section>';
-  var n = PLAT_NEW;
-  h += '<section><div class="card"><h2>A new business</h2><div class="sub">It is created with its first owner, who is e-mailed a link to choose a password. Its lists start with the usual values; nothing of any other business is shared.</div>' +
-    '<div class="fields"><div><label class="f" for="pn_name">Business name</label><input class="i" id="pn_name" maxlength="80" value="' + esc(n.name) + '"></div>' +
-    '<div><label class="f" for="pn_owner">Owner\u2019s name</label><input class="i" id="pn_owner" maxlength="80" value="' + esc(n.ownerName) + '"></div>' +
-    '<div><label class="f" for="pn_email">Owner\u2019s e-mail</label><input class="i" id="pn_email" type="email" inputmode="email" value="' + esc(n.ownerEmail) + '"></div></div>' +
-    '<div class="row" style="justify-content:flex-end;margin-top:12px"><button class="btn primary" type="button" id="pn_go"' + (PLAT_BUSY ? ' disabled' : '') + '>' + (PLAT_BUSY ? 'Creating\u2026' : 'Create the business') + '</button></div></div></section>';
+  // a new business of your own: the dropdown at the top; another company: Company copies (its own ERP)
   return h;
 }
 function wirePlatform() {
@@ -15835,7 +15830,7 @@ function t2Help(root) {
   var subs = root.querySelectorAll('.card .sub:not([data-t2]):not([data-c5x]), section > .sub:not([data-t2])');
   for (var i = 0; i < subs.length; i++) {
     var n = subs[i];
-    if (n.closest('details') || n.closest('.c3bar') || n.closest('.lb')) { n.setAttribute('data-t2', '-'); continue; }
+    if (n.closest('details') || n.closest('.c3bar') || n.closest('.lb') || n.closest('td, th')) { n.setAttribute('data-t2', '-'); continue; }
     if (!t2IsTalk(n, 40)) { n.setAttribute('data-t2', '-'); continue; }
     // how-to text hides whole behind "?"; only a short status line with figures ("3 of 14 not entered") stays, on one line
     var txt = (n.textContent || '').replace(/\s+/g, ' ').trim();
@@ -16183,6 +16178,22 @@ var applyBusinessesT3 = applyBusinesses;
 applyBusinesses = function (b) {
   applyBusinessesT3(b);
   try { var n = b && b.businesses && (b.businesses.find(function (x) { return x.id === b.active; }) || b.businesses[0]); if (n && n.name) document.title = n.name + ' ERP'; } catch (e) {}
+};
+</script>
+
+<!-- tidy-4: switching business leaves nothing of the previous one on screen -->
+<script>
+var switchBusinessT4 = switchBusiness;
+switchBusiness = function (id) {
+  ['COSTS', 'SETTINGS', 'EXP', 'PLAN', 'SALES', 'PARCEL', 'SFKEYS', 'BKUP', 'COURIER', 'COURIER_ERR', 'MONEY', 'DUEBOX', 'DUES', 'DEVS', 'STAFF', 'LINKS', 'PEOPLE',
+   'SFP', 'RET', 'PO', 'CAPD', 'PNL', 'AIK', 'PART', 'PART_STOCK', 'PCO_LINK', 'SEC', 'CLIST', 'AKEYS', 'CASH', 'SUPS', 'FX', 'SHARED', 'THUMBS', 'JOBS',
+   'RISK', 'ARULES', 'CONN', 'GDRV', 'GSHEET', 'WMATCH', 'WM_WEB', 'DOPTS', 'DOCLANG', 'SHOPKEY', 'USERS', 'SESS', 'NOTES', 'SERIALS', 'FAMS'].forEach(function (k) {
+    try { if (typeof window[k] !== 'undefined') window[k] = null; } catch (e) {}
+  });
+  try { WMATCH_BUSY = false; GSHEET_BUSY = false; SHOPKEY_NEW = ''; CONN_TEST = null; WS_KIND = ''; } catch (e) {}
+  switchBusinessT4(id);
+  // its own Bangla words
+  try { setTimeout(bnLoadOwn, 1500); } catch (e) {}
 };
 </script>
 <!-- lang-2: the language of what customers receive -->

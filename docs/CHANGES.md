@@ -385,3 +385,9 @@
 2026-10-04 — tidy-3: explanations hide fully
 - The "?" rule now hides every how-to text whole (from 40 characters), also those with bold words - before, text with bold words or numbers stayed on one line (e.g. "Invoice lines", "Receive stock"). Only a short status line with figures (under 120 characters, e.g. "3 of 14 not yet entered") stays, on one line. State notes ("Connect Google Drive first") and warnings stay visible.
 - Swept every screen (Dashboard, New invoice with lines, Sales and an invoice page, Stock with Receive / Count / Supplier orders / To order, Products, Customers and a customer page, Profit, Expenses, Capital, Money, Suppliers, Repairs, Quotations and the editor, Campaigns, Web orders, Product cost, Maintenance, Platform, every Settings tab): no how-to text left on screen.
+
+2026-10-04 — tidy-4: switching business, one way to add one, Maintenance table
+- Switching business left boxes of the previous one on screen (Unpaid and at risk, money alerts, connections, backup sheet, website matching, delivery list, documents language, and more): everything that belongs to a business is now cleared on the switch and read again for the new one; its own Bangla words too. (The server always sent the right business; the page kept old copies.)
+- "A new business" (business name + owner name + e-mail) is gone from Platform: a business of your own is added from the dropdown at the top (switchable, same login); another company gets its own ERP (Platform → Company copies → install link).
+- Maintenance: short descriptions in table cells stay as they are (the "?" broke the table).
+- Checked: a second business added from the dropdown has its own (empty) website connection and kind, courier keys, WhatsApp, Google Drive and backup sheet, website door key, customer documents language, delivery list, invoices, money and risk figures - it behaves as a separate business; only the login and the switch are shared.
