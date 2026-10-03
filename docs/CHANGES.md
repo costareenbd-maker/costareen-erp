@@ -338,3 +338,11 @@
 - Replaces plan C5's one-line "?" (same place, now hides fully).
 - Checked on Dashboard, New invoice, Sales, Web orders, Money, Products and every Settings tab: no long explanation left on screen.
 - Not done: the texts themselves were not rewritten shorter; that comes with the Bangla stage (each phrase is touched then anyway).
+
+2026-10-04 — lang-1: English / বাংলা per person
+- A **বাংলা / EN** button in the top bar (next to refresh). Each person's choice is kept with their login (046_lang.sql erp_prefs.lang, erpSetLang, returned by erpBusinesses), so it follows them to every device; the device remembers it too for a fast start.
+- In Bangla: the menu, screen titles, buttons, field names, table headings, choices (e.g. এখনই পরিশোধ / ক্যাশ অন ডেলিভারি / আংশিক পরিশোধ / বাকি), empty-list messages, the "?" explanations shown so far, placeholders and hover hints - about 610 phrases and 26 patterns with numbers ("3 days ago" -> "3 দিন আগে"). Font Hind Siliguri. Digits stay English (money is easier to check).
+- Not translated, on purpose: product, brand, colour, category, unit, payment-method and delivery names, customer data, month names - they are the business's own words. A drop-down option keeps its English value, so what is saved never changes with the language.
+- Done as a dictionary applied to whatever is drawn, so the existing screens did not have to be rewritten; new words are added to the dictionary.
+- Checked locally: menu, New invoice (saved a COD invoice in Bangla), Sales, Customers, Products, Web orders, Stock, Expenses, Money, Quotations, Repairs, Suppliers, Profit - no screen phrase left in English except data. tests/l1_test.mjs (5).
+- Not yet (lang-2): the confirm-box questions, toasts and the server's own messages (errors, "Saved ... "), Settings long texts, PDFs/invoices for customers (a business setting), and the owner's review of shop words.

@@ -25,8 +25,8 @@ export async function erpSetTheme(ctx, t) {
 export async function erpBusinesses(ctx) {
   const list = ctx.s.memberships.map((m) => ({ id: m.business_id, name: m.name, pool: !!m.is_pool }));
   const canAdd = roleAtLeast(ctx.s.role, 'owner');
-  const look = await ctx.tx`select look from erp_prefs where user_id = ${ctx.s.userId}`;
-  return { businesses: list, active: ctx.biz, canAdd, theme: await erpGetTheme(ctx), look: (look[0] && look[0].look) || '' };
+  const look = await ctx.tx`select look, lang from erp_prefs where user_id = ${ctx.s.userId}`;
+  return { businesses: list, active: ctx.biz, canAdd, theme: await erpGetTheme(ctx), look: (look[0] && look[0].look) || '', lang: (look[0] && look[0].lang) || '' };
 }
 
 /**
@@ -40,6 +40,15 @@ export async function erpSetLook(ctx, look) {
   await ctx.tx`insert into erp_prefs (user_id, look) values (${ctx.s.userId}, ${v || null})
                on conflict (user_id) do update set look = excluded.look`;
   return { ok: true, look: v };
+}
+
+/** This person's screen language: 'en' or 'bn'. */
+export async function erpSetLang(ctx, lang) {
+  const v = String(lang || '').trim().toLowerCase();
+  if (v !== 'en' && v !== 'bn') throw new Error('That language is not offered.');
+  await ctx.tx`insert into erp_prefs (user_id, lang) values (${ctx.s.userId}, ${v})
+               on conflict (user_id) do update set lang = excluded.lang`;
+  return { ok: true, lang: v };
 }
 
 export async function erpSetBusiness(ctx, id) {

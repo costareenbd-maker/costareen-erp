@@ -100,7 +100,7 @@ export const ERP_ALLOW = {
   erpAccessKeys: 'owner', erpAccessKeyNew: 'owner', erpAccessKeyRevoke: 'owner',
   // the list view (look 2); each list checks its own role as well
   erpListView: 'sales',
-  erpSetLook: 'sales',
+  erpSetLook: 'sales', erpSetLang: 'sales',
   erpFreezeSaleCosts: 'owner',
   // currencies (plan A5)
   erpCurrencies: 'manager', erpCurrencySave: 'shareholder',

@@ -51,6 +51,7 @@ const core = {
   erpSetTheme: shell.erpSetTheme,
   erpBusinesses: shell.erpBusinesses,
   erpSetLook: shell.erpSetLook,
+  erpSetLang: shell.erpSetLang,
   erpSetBusiness: shell.erpSetBusiness,
 
   erpCatalog: catalog.erpCatalog,
