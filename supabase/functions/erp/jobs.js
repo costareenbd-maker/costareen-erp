@@ -89,6 +89,17 @@ export async function runJob(deps, job) {
         }
       }
     }
+  } else if (job === 'drive') {
+    // copies of new files into each connected owner's Google Drive
+    const tick = await maybe('./handlers/google.js', 'driveTick');
+    const ids = (await sql`select distinct q.business_id from drive_queue q join business_secrets s on s.business_id = q.business_id and s.key = 'GOOGLE_REFRESH'
+                           where q.done_at is null and q.tries < 5`).map((r) => r.business_id);
+    if (tick && ids.length) {
+      for (const row of await owners(sql, ids)) {
+        if (out[row.name]) continue;
+        out[row.name] = await asBusiness(deps, row, 'drive:copy', (ctx) => tick(ctx));
+      }
+    }
   } else if (job === 'deliveries') {
     // erpDeliveryTick: delivered parcels have their due cleared, every hour
     const tick = await maybe('./handlers/courier.js', 'deliveryTick');

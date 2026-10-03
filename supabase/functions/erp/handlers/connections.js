@@ -41,7 +41,8 @@ export async function erpConnections(ctx) {
                 label: evo.connected ? 'Linked' : evo.configured ? (evo.error || 'Set up, not linked') : 'Not connected' },
     email: { state: smtp ? 'on' : 'warn', label: smtp ? 'Sending through ' + smtp
              : 'Built-in mailer - only a few e-mails an hour. A real mail service is set up by the system provider (deploy/set_smtp.py).' },
-    google: { state: 'off', label: 'Not built yet - next step (invoices, quotations and backups to your Google Drive)' },
+    google: await soft(async () => { const g = (await getSecret(ctx, 'GOOGLE_REFRESH')) ? [1] : []; const e = str(await getConfig(ctx, 'google_email', ''));
+      return g.length ? { state: 'on', label: 'Copies go to ' + (e || 'your Google Drive') } : { state: 'off', label: 'Not connected - invoices, quotations and backups can be copied to your Google Drive' }; }, { state: 'off', label: 'Not connected' }),
     ai: { state: ai ? 'on' : 'off', label: ai ? ai + ' AI access key(s) in use' : 'No AI access keys' },
   };
 }

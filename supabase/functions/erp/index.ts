@@ -8,6 +8,7 @@
 //   RENDER_KEY  - its key (header X-Render-Key)
 //   CRON_KEY    - shared with deploy/cron.sql; lets the scheduled jobs in
 
+import { googleCallback } from './handlers/google.js';
 import postgres from 'npm:postgres@3.4.5';
 import { connect } from './db.js';
 import { erpCall } from './core.js';
@@ -19,7 +20,9 @@ const SERVICE = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
 const RENDER_URL = (Deno.env.get('RENDER_URL') ?? '').replace(/\/+$/, '');
 const RENDER_KEY = Deno.env.get('RENDER_KEY') ?? '';
 const CRON_KEY = Deno.env.get('CRON_KEY') ?? '';
-const SMTP_NOTE = Deno.env.get('ERP_SMTP_NOTE') ?? '';   // set by deploy/set_smtp.py when a real mail service is in use   // pg_cron sends it as x-erp-cron
+const SMTP_NOTE = Deno.env.get('ERP_SMTP_NOTE') ?? '';
+const GOOGLE = { clientId: Deno.env.get('GOOGLE_CLIENT_ID') ?? '', clientSecret: Deno.env.get('GOOGLE_CLIENT_SECRET') ?? '',
+                 redirect: SUPABASE_URL + '/functions/v1/erp?google=back', appUrl: Deno.env.get('ERP_APP_URL') ?? 'https://erp.costareen.com/' };   // set by deploy/set_smtp.py when a real mail service is in use   // pg_cron sends it as x-erp-cron
 const BUCKET = 'erp-files';
 const sql = connect(postgres, Deno.env.get('SUPABASE_DB_URL') ?? '');
 // a second, small pool for side-queries made from inside a transaction (see core.js)
@@ -195,13 +198,20 @@ async function sendReset(email: string) {
 }
 
 // sign-in by e-mail + password is on again (per-person users); access keys still work for machines and old links
-const deps = { smtpNote: SMTP_NOTE, linkOnly: false, sql, sqlAux, verifyUser, fetch: globalThis.fetch.bind(globalThis), storage, renderPdf, createAuthUser,
+const deps = { google: GOOGLE, smtpNote: SMTP_NOTE, linkOnly: false, sql, sqlAux, verifyUser, fetch: globalThis.fetch.bind(globalThis), storage, renderPdf, createAuthUser,
                createOwner, removeUser, sendReset,
                hookBase: SUPABASE_URL + '/functions/v1/erp' };
 
 Deno.serve(async (req) => {
   const headers = { ...cors(req.headers.get('origin')), 'Content-Type': 'application/json' };
   if (req.method === 'OPTIONS') return new Response('ok', { headers });
+  // Google sends the owner back here after they allow Drive access (handlers/google.js)
+  if (req.method === 'GET' && new URL(req.url).searchParams.get('google') === 'back') {
+    const q = Object.fromEntries(new URL(req.url).searchParams.entries());
+    let to = GOOGLE.appUrl + '#/settings?google=failed';
+    try { to = await googleCallback(deps, q); } catch (_) { /* told as failed */ }
+    return new Response(null, { status: 302, headers: { Location: to } });
+  }
   if (req.method !== 'POST') return new Response('{"ok":false}', { status: 405, headers });
 
   let body: any = {};

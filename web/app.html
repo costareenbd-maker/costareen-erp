@@ -3212,7 +3212,7 @@ function wireQuotes() {
     each('button[data-qztheme]', 'click', function () { q.theme = this.getAttribute('data-qztheme'); qzEdited(true); });
     ['qz_save', 'qz_save2'].forEach(function (id) { var b = el(id); if (b) b.addEventListener('click', function () { qzSave('Draft'); }); });
     var rd = el('qz_ready');
-    if (rd) rd.addEventListener('click', function () { qzSave('Ready', function (saved) { qzPrint(saved); }); });
+    if (rd) rd.addEventListener('click', function () { qzSave('Ready', function (saved) { qzPrint(saved); setTimeout(function () { qzKeepPdf(saved); }, 400); }); });
   }
 
   // ---- conditions ----
@@ -8321,7 +8321,7 @@ function srv(name, args, ok, bad) {
 
 var SRV_ACTIVE = 0, SRV_WRITING = false;
 // the same list the server uses to know a call changes nothing (ERP_READS)
-var SRV_READS = /^(erpBundle|erpHello|erpMe|erpCatalog|erpSales|erpDues|erpCustomers|erpPnl|erpMoney|erpToday|erpDaySales|erpProduct|erpLookupCustomer|erpCustomerAccount|erpCustomerStatement|erpCustomerCredit|erpWebOrders|erpWebOrderInvoices|erpCampaignAudience|erpCampaignList|erpCampaignGet|erpEvoStatus|erpBrandLogo|erpQuoteBoot|erpQuoteList|erpQuoteGet|erpQuoteAsset|erpExpenses|erpCapital|erpBackupStatus|erpAiKeys|erpGetTheme|erpBusinesses|erpStockHistory|erpReorderPlan|erpPoList|erpSfPayoutLines|erpBookedParcels|erpParcelPreview|erpReturnPreview|erpSettingsFull|erpSettingsLists|erpFormOptions|erpAdmin|erpPeople|erpDevices|erpCourierKeyStatus|erpPayReasons|erpDiscontinued|erpAccessWarning|erpBusinessLinks|erpLookupUsage|erpRecentInvoices|erpCourier|erpDashboardData|erpInvoice|erpCustomerPage|erpSearch|erpProductPage|erpPnlMonth|erpExpenseReceiptUrl|erpPartnership|erpPartnerStock|erpSecurity|erpCustomerList|erpAlerts|erpAccessKeys|erpListView|erpCurrencies|erpSharedStock|erpPoolCatalog|erpProductThumbs|erpProductPhotoUrl|erpFamilies|erpNotes|erpNoteFileUrl|erpSerialsFor|erpSerialLookup|erpJobs|erpJob|erpUsers|erpSessions|erpPlatform|erpPlatformErrors|erpRisks|erpAlertRules|erpConnections|erpWebsiteTest|erpCashBook|erpSuppliers|erpSupplierPage)$/;
+var SRV_READS = /^(erpBundle|erpHello|erpMe|erpCatalog|erpSales|erpDues|erpCustomers|erpPnl|erpMoney|erpToday|erpDaySales|erpProduct|erpLookupCustomer|erpCustomerAccount|erpCustomerStatement|erpCustomerCredit|erpWebOrders|erpWebOrderInvoices|erpCampaignAudience|erpCampaignList|erpCampaignGet|erpEvoStatus|erpBrandLogo|erpQuoteBoot|erpQuoteList|erpQuoteGet|erpQuoteAsset|erpExpenses|erpCapital|erpBackupStatus|erpAiKeys|erpGetTheme|erpBusinesses|erpStockHistory|erpReorderPlan|erpPoList|erpSfPayoutLines|erpBookedParcels|erpParcelPreview|erpReturnPreview|erpSettingsFull|erpSettingsLists|erpFormOptions|erpAdmin|erpPeople|erpDevices|erpCourierKeyStatus|erpPayReasons|erpDiscontinued|erpAccessWarning|erpBusinessLinks|erpLookupUsage|erpRecentInvoices|erpCourier|erpDashboardData|erpInvoice|erpCustomerPage|erpSearch|erpProductPage|erpPnlMonth|erpExpenseReceiptUrl|erpPartnership|erpPartnerStock|erpSecurity|erpCustomerList|erpAlerts|erpAccessKeys|erpListView|erpCurrencies|erpSharedStock|erpPoolCatalog|erpProductThumbs|erpProductPhotoUrl|erpFamilies|erpNotes|erpNoteFileUrl|erpSerialsFor|erpSerialLookup|erpJobs|erpJob|erpUsers|erpSessions|erpPlatform|erpPlatformErrors|erpRisks|erpAlertRules|erpConnections|erpWebsiteTest|erpGoogle|erpCashBook|erpSuppliers|erpSupplierPage)$/;
 function srvPump() {
   if (!SRV_Q.length) return;
   var isRead = SRV_READS.test(SRV_Q[0].name);
@@ -15370,6 +15370,53 @@ document.addEventListener('click', async function (ev) {
     CONN_BUSY = true; repaint(); srv('erpWebsiteSync', [{ on: on }], function (r) { done(r, on ? 'Website sync is on.' : 'Website sync is off.'); }, bad);
   }
 });
+</script>
+
+<!-- Google Drive: copies of invoices, quotations, receipts, exports and backups in the owner's Drive -->
+<script>
+var GDRV = null;
+function gdrvLoad() { srv('erpGoogle', [], function (r) { GDRV = r; if (VIEW === 'settings') repaint(); }, function () { GDRV = { configured: false }; }); }
+function gdrvHtml() {
+  if (!ME || ME.role !== 'owner') return '';
+  if (!GDRV) { gdrvLoad(); return ''; }
+  var g = GDRV;
+  var h = '<section><div class="card"><h2>Google Drive</h2><div class="sub">Every invoice, return, quotation PDF, expense receipt, Excel export and the nightly backup is also copied into your own Google Drive, ' +
+    'in a folder "ERP - ' + esc(gateName()) + '" sorted by month. The ERP can only see the files it makes there \u2014 nothing else in your Drive. Copies go every 10 minutes, so a slow Google never slows a sale.</div>';
+  if (!g.configured) return h + '<div class="note"><div class="ico">i</div><div>Google is not set up on this system yet. It is a one-time step by the system provider (deploy/set_google.py); then the Connect button appears here.</div></div></div></section>';
+  if (!g.connected) return h + '<div class="row" style="margin-top:10px"><button class="btn primary" type="button" id="gd_connect">Connect Google Drive</button></div></div></section>';
+  h += '<div class="list" style="margin-top:8px"><div><span>Connected as</span><b>' + esc(g.email || 'your Google account') + (g.since ? ' <span class="sku">since ' + esc(g.since) + '</span>' : '') + '</b></div>' +
+    '<div><span>Copied</span><b>' + fmt(g.copied) + (g.last ? ' <span class="sku">last ' + esc(g.last) + '</span>' : '') + '</b></div>' +
+    '<div><span>Waiting</span><b>' + fmt(g.waiting) + '</b></div>' + (g.failed ? '<div><span>Could not be copied</span><b style="color:var(--critical)">' + fmt(g.failed) + '</b></div>' : '') + '</div>' +
+    (g.lastError ? '<div class="note err" style="margin-top:8px"><div class="ico">!</div><div>' + esc(g.lastError) + '</div></div>' : '') +
+    '<div class="row" style="margin-top:10px;gap:8px;flex-wrap:wrap">' + (g.folderUrl ? '<a class="btn primary" href="' + esc(g.folderUrl) + '" target="_blank" rel="noopener">Open the Drive folder</a>' : '') +
+    '<button class="btn" type="button" id="gd_all">Copy older files too</button><button class="btn danger" type="button" id="gd_off">Disconnect</button></div>';
+  return h + '</div></section>';
+}
+var settingsPickG2 = settingsPick;
+settingsPick = function (h) { return settingsPickG2(h + setMark('connections') + gdrvHtml()); };
+document.addEventListener('click', async function (ev) {
+  var t = ev.target; if (!t || !t.id || !/^gd_/.test(t.id)) return;
+  function bad(e) { toast(esc(e && e.message ? e.message : e), true, 12000); }
+  if (t.id === 'gd_connect') srv('erpGoogleStart', [], function (r) { location.href = r.url; }, bad);
+  else if (t.id === 'gd_all') srv('erpGoogleCopyAll', [], function (r) { GDRV = r; toast(fmt(r.queued) + ' older file(s) will be copied in the next minutes.'); repaint(); }, bad);
+  else if (t.id === 'gd_off') { if (!(await uiConfirm('Disconnect Google Drive?\n\nNothing more is copied. The files already in your Drive stay there.'))) return; srv('erpGoogleDisconnect', [], function (r) { GDRV = r; CONN = null; toast('Disconnected.'); repaint(); }, bad); }
+});
+// back from Google
+(function () {
+  var m = /[?&]google=([a-z-]+)/.exec(location.hash || '');
+  if (!m) return;
+  var said = { ok: 'Google Drive is connected. New files are copied every 10 minutes.', refused: 'Google access was not given.', expired: 'That took too long or was opened twice. Press Connect again.', failed: 'Google did not finish connecting. Press Connect again.' }[m[1]] || 'Google: ' + m[1];
+  setTimeout(function () { try { SET_TAB = 'connections'; GDRV = null; CONN = null; toast(said, m[1] !== 'ok', 12000); history.replaceState(null, '', '#/settings'); if (ME) go('settings'); } catch (e) {} }, 1500);
+})();
+/** A quotation made ready is kept as a PDF too (and so copied to Drive). */
+function qzKeepPdf(q) {
+  try {
+    var box = el('qz_print'); if (!box || !q || !q.id) return;
+    var css = Array.prototype.map.call(document.querySelectorAll('style'), function (s) { return s.textContent; }).join('\n');
+    var html = '<!doctype html><html><head><meta charset="utf-8"><style>' + css + '\nbody{margin:0;background:#fff}#qz_print{display:block!important;position:static}</style></head><body><div id="qz_print">' + box.innerHTML + '</div></body></html>';
+    srv('erpQuotePdfSave', [{ id: q.id, html: html }], function () {}, function () {});
+  } catch (e) {}
+}
 </script>
 </body>
 </html>

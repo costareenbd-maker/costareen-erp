@@ -65,7 +65,10 @@ export async function httpFetch(ctx, url, opts = {}) {
  */
 export async function saveFile(ctx, folder, name, bytes, mime) {
   if (!ctx.deps || !ctx.deps.storage) throw new Error('File storage is not available.');
-  return ctx.deps.storage.save(ctx.biz, folder, name, bytes, mime);
+  const out = await ctx.deps.storage.save(ctx.biz, folder, name, bytes, mime);
+  // a copy for the owner's Google Drive, when it is connected (handlers/google.js); never the reason a save fails
+  try { const g = await import('../handlers/google.js'); await g.driveEnqueue(ctx, folder, name, mime); } catch (_) { /* no Drive copy this time */ }
+  return out;
 }
 
 /** Find this business's files whose name contains `part` (newest first). */

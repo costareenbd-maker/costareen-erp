@@ -13,7 +13,7 @@
 
 import { roleAtLeast } from '../allow.js';
 import { lock, who } from './money.js';
-import { getConfig, saveFile, readFile } from '../lib/ext.js';
+import { getConfig, saveFile, readFile, renderPdf } from '../lib/ext.js';
 import { todayStr, num } from '../lib/time.js';
 
 // ------------------------------------------------------------------ helpers
@@ -586,7 +586,24 @@ async function erpBrandLogoClear(ctx) {
   return { ok: true, profile: p };
 }
 
+/**
+ * The quotation as a PDF, kept with the business's files (and so copied to Google
+ * Drive when it is connected). The page sends the pages exactly as they print.
+ */
+async function erpQuotePdfSave(ctx, payload) {
+  payload = payload || {};
+  const row = await quoteRow(ctx, String(payload.id || ''));
+  if (!row) throw new Error('That quotation was not found. Save it first.');
+  const html = String(payload.html || '');
+  if (!html || html.length > 6e6) throw new Error('The quotation could not be turned into a PDF.');
+  const bytes = await renderPdf(ctx, html, {});
+  const name = 'Quotation_' + String(row.reference || row.id).replace(/[^A-Za-z0-9_-]+/g, '_').slice(0, 60) + '.pdf';
+  const f = await saveFile(ctx, 'quotes', name, bytes, 'application/pdf');
+  return { ok: true, name, url: f.url };
+}
+
 export const HANDLERS = {
+  erpQuotePdfSave,
   erpQuoteBoot, erpQuoteList, erpQuoteGet, erpQuoteSave, erpQuoteDuplicate,
   erpQuoteAsset, erpQuoteAssetUpload, erpQuoteProfileSave, erpQuoteSettingsSave,
   erpLetterheadSave, erpQuoteSnippetsSave, erpQuoteItemsImport, erpBrandLogo, erpBrandLogoClear,

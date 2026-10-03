@@ -286,3 +286,10 @@
 - handlers/connections.js (erpConnections, erpWebsiteSet, erpWebsiteTest, erpWebsiteSync), jobs.js websync gated by website_sync_on, tests/c1_test.mjs (14), jobs_test updated.
 - Fixed before shipping: Save read the typed key after the screen was redrawn, so the key was lost.
 - Not done: Google Drive (next step), a standard WooCommerce / Shopify connection for shops without the plugin.
+
+2026-10-03 — Google Drive copies
+- Settings → Connections → **Google Drive**: "Connect Google Drive" sends the owner to Google to allow access (permission drive.file: the ERP sees only the files and folders it makes, nothing else in the Drive). Then every invoice, return, statement, quotation PDF, expense receipt, Excel export, note file and the nightly backup is also copied into the owner's Drive: "ERP - <business> / Invoices / 2026-10", Returns, Quotations, Expense receipts, Excel exports, Notes and files, Backups. The card shows the account, copied / waiting / failed, the last problem, "Open the Drive folder", "Copy older files too" and "Disconnect" (which also tells Google to forget the permission).
+- Copies go through a queue and a 10-minute timer (job "drive"), so a slow or broken Google never slows or fails a sale; a file that cannot go is retried and the reason shown. If the permission is withdrawn in Google, the card says so.
+- A quotation made Ready is now also kept as a PDF on the server (erpQuotePdfSave), so it can be copied too.
+- 044_drive.sql (drive_queue), handlers/google.js, saveFile queues the file, index.ts answers Google's redirect (GET ?google=back), tests/g2_test.mjs (27).
+- To switch on (once per system): create a Google OAuth app and run `deploy/set_google.py` (steps inside), then each owner presses Connect. Not done until then: nothing is copied on live yet.
