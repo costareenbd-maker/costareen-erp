@@ -443,3 +443,10 @@
 
 ## tidy-8 — no box that appears and vanishes on Web orders (2026-10-04)
 - The Courier box on Web orders was drawn before the connection status arrived, then removed when the website turned out not connected (a flash on every reload). It now waits for the status and shows only when the website is connected AND Steadfast reports parcels (or an error); an all-zero box is not drawn. Kept, not removed: once the website is live it is the only place showing each website parcel's courier state.
+
+## game-1 — "Print Run" under New invoice (2026-10-04)
+- A small symbolic runner in the empty space under New invoice: a print head on the bed lays a filament line; jump blobs and spaghetti, duck gantry bars (after layer 50), catch spools (+20 layers). Score in layers, speed shown as 50→300 mm/s, best kept per device (localStorage). Canvas, thin lines in the theme's colours, no assets.
+- Never in the way: sits after #view (repaints don't touch it), takes half of the free height (max 260 px), hides itself under 110 px or below 760 px wide. Keys reach it only while the canvas has focus; any key, click or tap outside pauses it; tab hidden pauses it. ✕ hides it on that device; Settings → Business brings it back.
+- Owner decides who sees it: erpGame / erpGameSet (business_config game_who = owner | all | none, default owner). Test g1 (7 checks).
+- No internet (browser 'offline' event): a window at the bottom says nothing typed is lost and, if allowed, holds the game; 'online' removes it.
+- Not done: leaderboard across staff (deliberately); phone play (hidden there).

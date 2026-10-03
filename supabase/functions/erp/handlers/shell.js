@@ -137,6 +137,25 @@ export async function erpBgOff(ctx, payload) {
   return erpBg(ctx);
 }
 
+// ---- game: a small print-head runner under New invoice. The owner decides who sees it.
+const GAME_WHO = ['owner', 'all', 'none'];
+/** {who: owner|all|none, on: whether I may see it}. Default: only the owner. */
+export async function erpGame(ctx) {
+  const { getConfig } = await import('../lib/ext.js');
+  let who = String(await getConfig(ctx, 'game_who', 'owner')) || 'owner';
+  if (!GAME_WHO.includes(who)) who = 'owner';
+  return { who, on: who === 'all' || (who === 'owner' && ctx.s.role === 'owner') };
+}
+/** Owner: {who: owner|all|none}. */
+export async function erpGameSet(ctx, payload) {
+  const { setConfig } = await import('../lib/ext.js');
+  if (ctx.s.role !== 'owner') throw new Error('Only the owner decides who sees the game.');
+  const who = String(payload && payload.who || '');
+  if (!GAME_WHO.includes(who)) throw new Error('Everyone, only the owner, or nobody?');
+  await setConfig(ctx, 'game_who', who);
+  return erpGame(ctx);
+}
+
 /** This person's screen language: 'en' or 'bn'. */
 export async function erpSetLang(ctx, lang) {
   const v = String(lang || '').trim().toLowerCase();
