@@ -331,3 +331,10 @@
 - Fixed on the way: the invoice form's currency was hard-wired to BDT; it is the business's own now.
 - lib/delivery.js, handlers/cod.js (erpCodCollected), catalog.js (erpDeliveryOptions/Save, currency), courier.js erpParcelLabels, invoice.js payment rule, risk.js (isCodDue, cod_waiting), tabs.js display, weborders/partners, settings.js currency; tests t1_test.mjs (25); sales_test and r1_test updated for the deliberate changes.
 - Not done: the barcode is checked for structure, not yet with a real scanner; Pathao/RedX booking from the ERP (only "Delivered & collected" by hand).
+
+2026-10-04 — tidy-2: explanations behind "?"
+- One rule for every screen (and windows opened over it): a long explanation under a card title or a field is hidden; a small "?" next to the title or field name shows it (tap again to hide; it stays open while you move around until the page is reloaded). Text that carries figures (counts, money) stays as one line, the rest behind the same "?". Long hints inside field names ("saved - type a new one only to change it") move behind the field's "?". Long plain information notes shrink to one line.
+- Never hidden: amber and red notes (warnings, errors), anything with a button, link or field inside, empty-list messages, tables, toasts, and the questions in confirm boxes.
+- Replaces plan C5's one-line "?" (same place, now hides fully).
+- Checked on Dashboard, New invoice, Sales, Web orders, Money, Products and every Settings tab: no long explanation left on screen.
+- Not done: the texts themselves were not rewritten shorter; that comes with the Bangla stage (each phrase is touched then anyway).

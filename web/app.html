@@ -15766,5 +15766,102 @@ function openNewBusiness() {
   });
 }
 </script>
+
+<!-- tidy-2: explanations behind "?" - one rule for every screen; warnings always stay visible -->
+<style>
+.t2q { display:inline-flex; align-items:center; justify-content:center; width:18px; height:18px; margin:0 0 0 6px; border-radius:50%; vertical-align:middle;
+  border:1px solid var(--ring); background:var(--surface); color:var(--muted); font:inherit; font-size:11px; font-weight:700; line-height:1; cursor:pointer; padding:0; flex:none; }
+.t2q:hover, .t2q.on { color:var(--series-1); border-color:var(--series-1); }
+.t2hide { display:none !important; }
+.t2open { display:block !important; background:var(--field); border:1px solid var(--ring); border-left:3px solid var(--series-1); border-radius:6px;
+  padding:7px 10px; margin:6px 0 8px; font-size:13px; color:var(--muted); }
+.sub.t2line { display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:1; overflow:hidden; }
+</style>
+<script>
+var T2_OPEN = {}, T2_N = 0;
+/** Is this text an explanation (words only) rather than a figure or a state? */
+function t2IsTalk(n, min) {
+  var t = (n.textContent || '').replace(/\s+/g, ' ').trim();
+  if (t.length < min) return false;
+  if (n.querySelector('button, input, select, textarea, a.btn, .pill')) return false;
+  return true;
+}
+function t2Key(n) { return (n.textContent || '').replace(/\s+/g, ' ').trim().slice(0, 50); }
+/** Put a "?" at `host` that shows / hides `n`. mode 'hide' hides it whole; 'line' keeps one line (it carries figures). */
+function t2Wire(n, host, mode) {
+  var id = 't2_' + (++T2_N), key = t2Key(n), open = !!T2_OPEN[key];
+  n.setAttribute('data-t2', id);
+  var q = document.createElement('button');
+  q.type = 'button'; q.className = 't2q' + (open ? ' on' : ''); q.textContent = '?';
+  q.title = 'Explain'; q.setAttribute('aria-label', 'Explain'); q.setAttribute('data-t2for', id); q.setAttribute('data-t2mode', mode); q.setAttribute('data-t2k', key);
+  if (host) host.appendChild(q); else n.parentNode.insertBefore(q, n);
+  if (!open) n.classList.add(mode === 'line' ? 't2line' : 't2hide');
+  else if (mode !== 'line') n.classList.add('t2open');
+}
+function t2Help(root) {
+  root = root || document;
+  // anything the old one-line help already touched
+  var olds = root.querySelectorAll('.c5q'); for (var o = 0; o < olds.length; o++) olds[o].parentNode.removeChild(olds[o]);
+  var clips = root.querySelectorAll('.c5clip'); for (var c = 0; c < clips.length; c++) { clips[c].classList.remove('c5clip'); clips[c].removeAttribute('data-c5'); }
+  // 1. a card's explanation under its title
+  var subs = root.querySelectorAll('.card .sub:not([data-t2]):not([data-c5x]), section > .sub:not([data-t2])');
+  for (var i = 0; i < subs.length; i++) {
+    var n = subs[i];
+    if (n.closest('details') || n.closest('.c3bar') || n.closest('.lb')) { n.setAttribute('data-t2', '-'); continue; }
+    if (!t2IsTalk(n, 60)) { n.setAttribute('data-t2', '-'); continue; }
+    // a figure inside (counts, money) stays readable on one line
+    var mode = /\d/.test(n.textContent) || n.querySelector('strong, b') ? 'line' : 'hide';
+    var field = n.closest('.fields > div');
+    var card = n.closest('.card') || n.parentNode;
+    var head = field ? field.querySelector('label.f') : null;
+    if (!head) {
+      // the nearest title above it in the same card
+      var hs = card.querySelectorAll('h2, h3');
+      for (var k = hs.length - 1; k >= 0; k--) if (hs[k].compareDocumentPosition(n) & Node.DOCUMENT_POSITION_FOLLOWING) { head = hs[k]; break; }
+    }
+    if (head && head.querySelector('.t2q') && mode === 'line') head = null;   // one "?" per title; a second sits by its text
+    t2Wire(n, head && !head.querySelector('.t2q') ? head : null, mode);
+  }
+  // 2. long hints inside field names ("Sync key  saved - type a new one only to change it")
+  var hints = root.querySelectorAll('label.f .sku:not([data-t2])');
+  for (var j = 0; j < hints.length; j++) {
+    var h = hints[j];
+    if ((h.textContent || '').trim().length < 28) { h.setAttribute('data-t2', '-'); continue; }
+    var lab = h.closest('label.f');
+    var box = document.createElement('div'); box.className = 'sub'; box.textContent = h.textContent.trim().replace(/^[\u2014-]\s*/, '');
+    h.setAttribute('data-t2', '-'); h.style.display = 'none';
+    lab.insertAdjacentElement('afterend', box);
+    t2Wire(box, lab, 'hide');
+  }
+  // 3. long information notes (never the amber or red ones: those are warnings)
+  var notes = root.querySelectorAll('.note:not(.warn):not(.err):not(.bad):not([data-t2])');
+  for (var m = 0; m < notes.length; m++) {
+    var nt = notes[m], body = nt.children[1];
+    nt.setAttribute('data-t2', '-');
+    if (!body || !t2IsTalk(body, 160) || /\d{3,}/.test(body.textContent)) continue;
+    t2Wire(body, null, 'line');
+  }
+}
+document.addEventListener('click', function (ev) {
+  var q = ev.target && ev.target.closest ? ev.target.closest('.t2q') : null; if (!q) return;
+  ev.preventDefault(); ev.stopPropagation();
+  var n = document.querySelector('[data-t2="' + q.getAttribute('data-t2for') + '"]'); if (!n) return;
+  var line = q.getAttribute('data-t2mode') === 'line', closed = n.classList.contains(line ? 't2line' : 't2hide');
+  n.classList.toggle(line ? 't2line' : 't2hide', !closed);
+  if (!line) n.classList.toggle('t2open', closed);
+  q.classList.toggle('on', closed);
+  var k = q.getAttribute('data-t2k'); if (closed) T2_OPEN[k] = true; else delete T2_OPEN[k];
+}, true);
+// the old one-line "?" (plan C5) is replaced by this one
+c5Help = function () { try { t2Help(document.getElementById('view')); } catch (e) {} };
+(function () {
+  // windows opened over the page (invoice done, parcel booked, new business...) get the same rule
+  if (!window.MutationObserver) return;
+  new MutationObserver(function (list) {
+    list.forEach(function (r) { for (var i = 0; i < r.addedNodes.length; i++) { var x = r.addedNodes[i]; if (x.nodeType === 1 && x.id !== 'view') try { t2Help(x); } catch (e) {} } });
+  }).observe(document.body, { childList: true });
+  try { t2Help(document.getElementById('view')); } catch (e) {}
+})();
+</script>
 </body>
 </html>
