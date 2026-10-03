@@ -4,3 +4,4 @@ desktop/dist/
 web/index-local.html
 deploy/before-start-fresh-*.json
 __pycache__/
+deploy/secrets.env
