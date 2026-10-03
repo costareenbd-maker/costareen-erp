@@ -425,7 +425,7 @@ r = await mgr('erpCourier', [{ days: 7 }]);
 check('website base from config website_api', r.ok && r.result.count === 0 && r.result.days === 7, r);
 await sql`delete from business_secrets where business_id = ${B} and key = 'CZ_SYNC_KEY'`;
 r = await mgr('erpCourier', [{}]);
-check('no key', !r.ok && r.error === 'Could not reach the website: Website sync key not set. Run "Setup Website Sync" from the menu first.', r);
+check('no key: not connected, no error', r.ok && r.result.notConnected && r.result.orders.length === 0, r);
 r = await sales('erpCourier', [{}]);
 check('sales refused courier', !r.ok && r.error === 'Your account does not have access to that.', r);
 

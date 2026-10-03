@@ -517,6 +517,10 @@ export async function erpCourier(ctx, payload) {
   payload = payload || {};
   const days = num(payload.days) > 0 ? Math.round(num(payload.days)) : 30;
 
+  // no website connected: nothing to ask, nothing wrong
+  if (!(await getSecret(ctx, 'CZ_SYNC_KEY'))) {
+    return { days, count: 0, orders: [], collected: 0, waiting: 0, lost: 0, notConnected: true, generatedAt: formatDate(new Date(), 'd MMM yy, h:mm a') };
+  }
   let res;
   try {
     res = await czFetch(ctx, 'GET', '/cod?days=' + days + '&limit=200', null);

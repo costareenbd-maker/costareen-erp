@@ -482,7 +482,8 @@ async function erpQuoteAsset(ctx, payload) {
   const known = (await qsRead(ctx)).assets || [];
   if (known.indexOf(id) < 0) throw new Error('That image does not belong to this business.');
   const data = await readAsset(ctx, id);
-  if (!data) throw new Error('That image could not be read.');
+  // a picture that was never uploaded (or was removed) is simply not shown - not an error
+  if (!data) return { data: '', missing: true };
   return { data };
 }
 
