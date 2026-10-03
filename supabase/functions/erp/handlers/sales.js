@@ -24,6 +24,7 @@ import { formatDate, num, round2, dhakaDayStart } from '../lib/time.js';
 import { phone11, custKey } from '../lib/phone.js';
 import { roleAtLeast } from '../allow.js';
 import { ERP_DELIVERY, isCourier } from './catalog.js';
+import { deliveryOptions } from '../lib/delivery.js';
 import {
   paidByOrder, addPayment, syncInvoiceStatus, sameOrder, outstanding, discLeft, lock, who,
 } from './money.js';
@@ -681,7 +682,7 @@ export async function erpFixInvoice(ctx, payload) {
     if (now === was) continue;
     if (f === 'phone') now = phone11(now);
     if (f === 'name' && !now) throw new Error('A sale needs a customer name.');
-    if (f === 'delivery' && ERP_DELIVERY.indexOf(now) < 0) {
+    if (f === 'delivery' && !(await deliveryOptions(ctx)).some((o) => o.name === now)) {
       throw new Error('"' + now + '" is not one of the delivery methods.');
     }
     changes.push({ label: fields[f][1], col: fields[f][2], was, now, key: f });

@@ -89,7 +89,7 @@ check('...and an alert for the manager', find(r, 'web_waiting', /W-900 not enter
 r = await mgr('erpAlertRules', []);
 check('the rules are not a manager\'s', !r.ok, r);
 r = await shareholder('erpAlertRules', []);
-check('a shareholder reads them', r.ok && r.result.rules.length === 10 && r.result.canEdit === false, r.result);
+check('a shareholder reads them', r.ok && r.result.rules.length === 11 && r.result.canEdit === false, r.result);
 r = await shareholder('erpAlertRulesSave', [{ rules: { cancel: { on: false } } }]);
 check('...but only the owner changes them', !r.ok, r);
 r = await owner('erpAlertRulesSave', [{ rules: { cancel: { on: false }, return_waiting: { who: 'owner' }, discount: { at: -5 } } }]);

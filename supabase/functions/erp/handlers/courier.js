@@ -384,6 +384,32 @@ export async function erpBookedParcels(ctx) {
   return { parcels: out, warnings: warn, hasKeys: haveKeys };
 }
 
+/**
+ * erpParcelLabels({invoices:[...]} | {day:'yyyy-MM-dd'}): what goes on the
+ * parcel sticker - shop, customer, address, cash to collect, consignment.
+ * Read from the booking log only (no courier calls), so printing is instant.
+ */
+export async function erpParcelLabels(ctx, payload) {
+  payload = payload || {};
+  const want = Array.isArray(payload.invoices) ? payload.invoices.map(str).filter(Boolean) : null;
+  const day = str(payload.day) || formatDate(new Date(), 'yyyy-MM-dd');
+  const prof = (await ctx.tx`select value from quote_settings where business_id = ${ctx.biz} and key = 'profile'`)[0];
+  const pv = (prof && prof.value) || {};
+  const shop = { name: str(pv.name) || str((await ctx.tx`select name from businesses where id = ${ctx.biz}`)[0].name), phone: str(pv.phone), address: str(pv.address) };
+  const items = {};
+  for (const r of await ctx.tx`select i.invoice_no, sum(l.qty)::numeric q from invoices i join invoice_lines l on l.invoice_id = i.id
+                               where i.business_id = ${ctx.biz} and i.created_at > now() - interval '60 days' group by 1`) items[r.invoice_no] = num(r.q);
+  const out = [];
+  for (const r of await courierRows(ctx)) {
+    const inv = str(r[1]), when = asDate(r[0]);
+    if (!inv || !str(r[2])) continue;
+    if (want ? want.indexOf(inv) < 0 : !(when && formatDate(when, 'yyyy-MM-dd') === day)) continue;
+    out.push({ invoiceNo: inv, consignment: str(r[2]), customer: str(r[3]), phone: str(r[4]), address: str(r[5]),
+               collect: Math.round(num(r[6])), total: Math.round(num(r[7])), items: items[inv] || 0, when: when ? formatDate(when, 'd MMM yyyy') : '' });
+  }
+  return { shop, labels: out, day };
+}
+
 /** erpParcelHandled (ERP:6482): off the to-send list without booking anything. */
 export async function erpParcelHandled(ctx, payload) {
   payload = payload || {};
@@ -1060,7 +1086,7 @@ export async function sfReconByMonth(ctx) {
   return out;
 }
 
-export const HANDLERS = {
+export const HANDLERS = { erpParcelLabels,
   erpParcelPreview, erpBookParcel, erpParcelHandled, erpParcelPutBack, erpBookedParcels,
   erpSfPayouts, erpSfPayoutLines, erpSfConfirmMatches, erpSfReconDecide,
   erpCourierKeyStatus, erpCourierSetKeys, erpCourierTest,

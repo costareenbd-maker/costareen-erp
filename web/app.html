@@ -1808,25 +1808,10 @@ function viewInvoice() {
        '<div><label class="f" for="finvdisc">Invoice discount <span class="sku">off the whole invoice</span></label><input class="i" id="finvdisc" type="number" min="0" step="1" value="'+num(FORM.invDisc)+'"></div>'+
        '<div><label class="f" for="fdel">Delivery charge</label><input class="i" id="fdel" type="number" min="0" step="1" value="'+num(FORM.delivery)+'"></div>'+
        delHintHtml(delS)+
-       '<div style="grid-column:1/-1"><label class="f">How was this paid?</label>'+
-         '<div class="chips" style="margin:4px 0 0">'+
-         payChip('full', 'Paid in full now')+
-         payChip('none', 'Due')+
-         payChip('part', 'Part paid')+
-         '</div></div>'+
-       (FORM.payMode === 'part'
-         ? '<div><label class="f" for="fpaid">Received now</label>'+
-           '<input class="i" id="fpaid" type="number" min="0" step="1" value="'+
-           num(FORM.paidNow)+'"></div>'
-         : '')+
-       '<div><label class="f" for="fmethod">Payment method</label><select class="i" id="fmethod">'+
-         OPT.paymentMethods.map(function (m) {
-           return '<option value="'+esc(m)+'"'+(FORM.method===m?' selected':'')+'>'+esc(m)+'</option>';
-         }).join('')+'</select></div>'+
+       payBlockHtml()+
 
        '</div></div>';
-  var paidNow = FORM.payMode === 'full' ? t.grand
-              : FORM.payMode === 'part' ? Math.min(num(FORM.paidNow), t.grand) : 0;
+  var paidNow = payNow(t.grand);
   var thisDue = Math.max(0, t.grand - paidNow);
   var prior = (ACCT && ACCT.balance) || 0;
 
@@ -1933,7 +1918,7 @@ function wireInvoice() {
   for (var pm = 0; pm < modes.length; pm++) {
     modes[pm].addEventListener('click', function () {
       FORM.payMode = this.getAttribute('data-paymode');
-      if (FORM.payMode !== 'part') FORM.paidNow = 0;
+      if (FORM.payMode !== 'part' && FORM.payMode !== 'cod') FORM.paidNow = 0;
       repaint();
     });
   }
@@ -2118,9 +2103,10 @@ async function saveInvoice() {
             'Grand total: ' + OPT.currency + ' ' + fmt(t.grand) +
             (function () {
               // what is taken now follows the "How was this paid?" choice
-              var now = FORM.payMode === 'full' ? t.grand : FORM.payMode === 'part' ? Math.min(num(FORM.paidNow), t.grand) : 0;
+              var now = payNow(t.grand);
               var due = Math.max(0, t.grand - now);
-              return '\nPaid now: ' + OPT.currency + ' ' + fmt(now) + (due > 0 ? '\nDue: ' + OPT.currency + ' ' + fmt(due) : '');
+              if (FORM.payMode === 'cod') return (now > 0 ? '\nAdvance now: ' + OPT.currency + ' ' + fmt(now) + ' (' + FORM.advMethod + ')' : '') + '\nCash on delivery: the ' + (t1Type(FORM.source) === 'rider' ? 'rider' : 'courier') + ' collects ' + OPT.currency + ' ' + fmt(due);
+              return '\nPaid now: ' + OPT.currency + ' ' + fmt(now) + (now > 0 ? ' (' + FORM.method + ')' : '') + (due > 0 ? '\nDue: ' + OPT.currency + ' ' + fmt(due) : '');
             })() +
             '\n\nStock will be deducted and the invoice PDF made.';
   if (!(await uiConfirm(msg))) return;
@@ -2137,8 +2123,8 @@ async function saveInvoice() {
       payMode: FORM.payMode || 'full',
       paidNow: num(FORM.paidNow),
       advancePaid: num(FORM.advance),
-      paymentMethod: FORM.method,
-      paymentStatus: FORM.status,
+      paymentMethod: FORM.payMode === 'none' || FORM.payMode === 'cod' ? '' : FORM.method,
+      advanceMethod: FORM.payMode === 'cod' && num(FORM.paidNow) > 0 ? FORM.advMethod : '',
       date: FORM.date || '',
       from: (typeof INV_FROM !== 'undefined' && INV_FROM) || '',
       note: FORM.quoteRef ? 'From quotation ' + FORM.quoteRef : ''
@@ -8321,7 +8307,7 @@ function srv(name, args, ok, bad) {
 
 var SRV_ACTIVE = 0, SRV_WRITING = false;
 // the same list the server uses to know a call changes nothing (ERP_READS)
-var SRV_READS = /^(erpBundle|erpHello|erpMe|erpCatalog|erpSales|erpDues|erpCustomers|erpPnl|erpMoney|erpToday|erpDaySales|erpProduct|erpLookupCustomer|erpCustomerAccount|erpCustomerStatement|erpCustomerCredit|erpWebOrders|erpWebOrderInvoices|erpCampaignAudience|erpCampaignList|erpCampaignGet|erpEvoStatus|erpBrandLogo|erpQuoteBoot|erpQuoteList|erpQuoteGet|erpQuoteAsset|erpExpenses|erpCapital|erpBackupStatus|erpAiKeys|erpGetTheme|erpBusinesses|erpStockHistory|erpReorderPlan|erpPoList|erpSfPayoutLines|erpBookedParcels|erpParcelPreview|erpReturnPreview|erpSettingsFull|erpSettingsLists|erpFormOptions|erpAdmin|erpPeople|erpDevices|erpCourierKeyStatus|erpPayReasons|erpDiscontinued|erpAccessWarning|erpBusinessLinks|erpLookupUsage|erpRecentInvoices|erpCourier|erpDashboardData|erpInvoice|erpCustomerPage|erpSearch|erpProductPage|erpPnlMonth|erpExpenseReceiptUrl|erpPartnership|erpPartnerStock|erpSecurity|erpCustomerList|erpAlerts|erpAccessKeys|erpListView|erpCurrencies|erpSharedStock|erpPoolCatalog|erpProductThumbs|erpProductPhotoUrl|erpFamilies|erpNotes|erpNoteFileUrl|erpSerialsFor|erpSerialLookup|erpJobs|erpJob|erpUsers|erpSessions|erpPlatform|erpPlatformErrors|erpRisks|erpAlertRules|erpConnections|erpWebsiteTest|erpGoogle|erpSheet|erpRestorePreview|erpWebMatches|erpCashBook|erpSuppliers|erpSupplierPage)$/;
+var SRV_READS = /^(erpBundle|erpHello|erpMe|erpCatalog|erpSales|erpDues|erpCustomers|erpPnl|erpMoney|erpToday|erpDaySales|erpProduct|erpLookupCustomer|erpCustomerAccount|erpCustomerStatement|erpCustomerCredit|erpWebOrders|erpWebOrderInvoices|erpCampaignAudience|erpCampaignList|erpCampaignGet|erpEvoStatus|erpBrandLogo|erpQuoteBoot|erpQuoteList|erpQuoteGet|erpQuoteAsset|erpExpenses|erpCapital|erpBackupStatus|erpAiKeys|erpGetTheme|erpBusinesses|erpStockHistory|erpReorderPlan|erpPoList|erpSfPayoutLines|erpBookedParcels|erpParcelPreview|erpReturnPreview|erpSettingsFull|erpSettingsLists|erpFormOptions|erpAdmin|erpPeople|erpDevices|erpCourierKeyStatus|erpPayReasons|erpDiscontinued|erpAccessWarning|erpBusinessLinks|erpLookupUsage|erpRecentInvoices|erpCourier|erpDashboardData|erpInvoice|erpCustomerPage|erpSearch|erpProductPage|erpPnlMonth|erpExpenseReceiptUrl|erpPartnership|erpPartnerStock|erpSecurity|erpCustomerList|erpAlerts|erpAccessKeys|erpListView|erpCurrencies|erpSharedStock|erpPoolCatalog|erpProductThumbs|erpProductPhotoUrl|erpFamilies|erpNotes|erpNoteFileUrl|erpSerialsFor|erpSerialLookup|erpJobs|erpJob|erpUsers|erpSessions|erpPlatform|erpPlatformErrors|erpRisks|erpAlertRules|erpConnections|erpWebsiteTest|erpGoogle|erpSheet|erpRestorePreview|erpWebMatches|erpDeliveryOptions|erpParcelLabels|erpCashBook|erpSuppliers|erpSupplierPage)$/;
 function srvPump() {
   if (!SRV_Q.length) return;
   var isRead = SRV_READS.test(SRV_Q[0].name);
@@ -9203,38 +9189,7 @@ function viewSettings() {
   h += viewStaff();
   h += viewLinks();
 
-  // ---- add a business to this ERP ---------------------------------------
-  h += setMark('business');
-  if (!BIZ || BIZ.canAdd) {
-    h += '<section><div class="card">'+
-      '<h2>Add a business of your own</h2>'+
-      '<div class="sub">Another business of <strong>yours</strong>. Same link and same '+
-      'staff \u2014 it just appears in the dropdown at the top. Nobody outside your team '+
-      'is given access.</div>'+
-      '<div class="fields">'+
-        '<div><label class="f" for="nb2_name">Business name *</label>'+
-          '<input class="i" id="nb2_name" value="'+esc(NEWBIZ.name)+'" placeholder="e.g. ProtoReen"></div>'+
-        '<div><label class="f" for="nb2_logo">Logo</label>'+
-          '<div class="filebox">'+(NEWBIZ.logo?'<img src="data:'+esc(NEWBIZ.logo.mime)+';base64,'+NEWBIZ.logo.data+'">':'')+
-          '<input type="file" id="nb2_logo" accept="image/*"></div></div>'+
-        '<div><label class="f" for="nb2_qr">Payment QR (bKash / bank)</label>'+
-          '<div class="filebox">'+(NEWBIZ.qr?'<img src="data:'+esc(NEWBIZ.qr.mime)+';base64,'+NEWBIZ.qr.data+'">':'')+
-          '<input type="file" id="nb2_qr" accept="image/*"></div></div>'+
-        '<div style="grid-column:1/-1"><label class="f" for="nb2_bank">Bank / payment details</label>'+
-          '<textarea class="i" id="nb2_bank" rows="4" placeholder="Bank name, account name, account number, branch">'+esc(NEWBIZ.bank)+'</textarea></div>'+
-      '</div>'+
-      '<div class="note" style="margin-top:12px"><div class="ico">\u25B2</div><div>'+
-      'The new business starts completely empty \u2014 its own products, stock, customers and '+
-      'invoice numbering. Its invoices carry <strong>its own</strong> logo, bank details and QR, '+
-      'never this one\u2019s. Switch to it and add its staff under People; anyone not added will not even '+
-      'see it in the menu.</div></div>'+
-      '<div class="row" style="justify-content:flex-end;margin-top:14px">'+
-      '<button class="btn primary" type="button" id="nb2_go"'+(BUSY==='addbiz'?' disabled':'')+'>'+
-      (BUSY==='addbiz'?'Creating\u2026':'Create business')+'</button></div>'+
-      '<div id="nb2_out" style="margin-top:12px"></div></div></section>';
-
-    h += partnerCompanyHtml();
-  }
+  // a new business is added from the dropdown at the top (openNewBusiness), nowhere else
 
   // ---- start another business -------------------------------------------
 
@@ -9918,9 +9873,8 @@ function srvOpt() {
   sel.addEventListener('change', function () {
     var v = sel.value;
     if (v === '__new') {
-      SET_TAB = 'business';
-      loadBusinesses(function () { go('settings'); window.scrollTo(0, 0); });
-      toast('Add the new business under Settings \u2192 Business.');
+      sel.value = (BIZ && BIZ.active) || (sel.options[0] && sel.options[0].value) || '';
+      openNewBusiness();
       return;
     }
     switchBusiness(v);
@@ -13749,12 +13703,12 @@ viewInvoice = function () {
   h = h.replace(/(<button class="btn small danger)(" type="button" data-del="\d+")>Remove<\/button>/g, '$1 c3x$2 title="Remove this line" aria-label="Remove this line">✕</button>');
   var t = cartTotals(), probs = CART.length ? cartProblems() : [], units = 0;
   CART.forEach(function (l) { units += Number(l.qty) || 0; });
-  var paid = FORM.payMode === 'full' ? t.grand : FORM.payMode === 'part' ? Math.min(num(FORM.paidNow), t.grand) : 0;
+  var paid = payNow(t.grand);
   var due = Math.max(0, t.grand - paid);
   var bar = '<div class="c3bar">' + (CART.length
     ? '<span class="c3n">' + fmt(CART.length) + ' product' + (CART.length === 1 ? '' : 's') + ' \u00b7 ' + fmt(units) + ' unit' + (units === 1 ? '' : 's') + '</span>' +
       '<span class="c3t"><small>' + esc(OPT.currency) + '</small>' + fmt(t.grand) + '</span>' +
-      (due > 0 ? '<span class="c3d">due ' + fmt(due) + '</span>' : '<span class="c3n" style="display:inline">paid in full</span>') +
+      (due > 0 ? '<span class="c3d">' + (FORM.payMode === 'cod' ? 'cash on delivery ' : 'due ') + fmt(due) + '</span>' : '<span class="c3n" style="display:inline">paid in full</span>') +
       (probs.length ? '<span class="c3p">' + esc(probs[0]) + (probs.length > 1 ? ' (+' + (probs.length - 1) + ' more)' : '') + '</span>' : '')
     : '<span class="c3n" style="display:inline">Search a product and press Enter, or tap it, to start.</span>') +
     '<button class="btn primary" type="button" id="c3save"' + (SAVING || !CART.length ? ' disabled' : '') + '>' + (SAVING ? 'Saving\u2026' : 'Save invoice') + '</button></div>';
@@ -14416,11 +14370,12 @@ viewInvoice = function () {
   var h = viewInvoiceS1();
   if (!CAT || !OPT || !(isExpress(FORM.source) || isCourier(FORM.source))) return h;
   var ex = isExpress(FORM.source);
-  var box = '<div style="grid-column:1/-1"><label class="f" for="fcid">Steadfast consignment number <span class="sku">' +
-    (ex ? 'from the Express booking \u2014 on the label' : 'only if the parcel is already booked in the Steadfast panel') + '</span></label>' +
-    '<input class="i" id="fcid" inputmode="numeric" autocomplete="off" maxlength="24" style="max-width:260px" value="' + esc(FORM.cid || '') + '" placeholder="e.g. 123456789">' +
-    '<div class="sub" style="margin-top:4px">With it, the ERP follows the parcel and clears the due by itself the moment it is delivered. ' +
-    (ex ? 'Not at hand? Leave it empty and add it later from Sales.' : 'Not booked yet? Leave it empty and press Send parcel after saving.') + '</div></div>';
+  var input = '<input class="i" id="fcid" inputmode="numeric" autocomplete="off" maxlength="24" style="max-width:260px;margin-top:6px" value="' + esc(FORM.cid || '') + '" placeholder="Consignment number">';
+  var box = ex
+    ? '<div style="grid-column:1/-1"><label class="f" for="fcid">Express consignment number <span class="sku">optional</span></label>' + input + '</div>'
+    : '<div style="grid-column:1/-1"><label class="f">Already booked in Steadfast?</label><div class="chips" style="margin:4px 0 0">' +
+      '<button type="button" class="chip ckcat' + (FORM.booked ? '' : ' on') + '" data-t1booked="0">No</button><button type="button" class="chip ckcat' + (FORM.booked ? ' on' : '') + '" data-t1booked="1">Yes</button></div>' +
+      (FORM.booked ? input : '') + '</div>';
   var mark = '<div style="grid-column:1/-1"><label class="f">How was this paid?</label>';
   var at = h.indexOf(mark);
   return at < 0 ? h : h.slice(0, at) + box + h.slice(at);
@@ -15578,6 +15533,238 @@ document.addEventListener('click', async function (ev) {
     srv('erpShopKey', [{ remove: true }], function (r) { SHOPKEY_NEW = ''; SHOPKEY = r; toast('Removed. The door is shut.'); repaint(); }, bad); return; }
   if (t.id === 'door_copy') { try { await navigator.clipboard.writeText(SHOPKEY_NEW); toast('Copied.'); } catch (_) { toast('Select the key and copy it by hand.', true); } }
 });
+</script>
+
+<!-- tidy-1: how it is paid, delivery types, COD collected, parcel labels, new business -->
+<style>
+.t1lab{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.t1do td{padding:4px 6px}
+.nbz{position:fixed;inset:0;z-index:9000;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.55)}
+.nbz .card{max-width:440px;width:92%}
+</style>
+<script>
+/** pickup | courier | rider for a delivery name (the business's own list; guessed for an unknown one). */
+function t1Type(src) {
+  var m = (OPT && OPT.deliveryTypes) || {};
+  if (m[src]) return m[src];
+  var n = String(src || '').toLowerCase();
+  if (/pick ?up|walk|counter|store|shop/.test(n)) return 'pickup';
+  if (/steadfast|pathao|redx|paperfly|sundarban|courier|parcel/.test(n)) return 'courier';
+  return 'rider';
+}
+function t1Methods() { return ((OPT && OPT.paymentMethods) || ['Cash']).filter(function (m) { return !/^cod\b|cash on delivery/i.test(m); }); }
+/** What is taken now under the chosen answer. */
+function payNow(grand) {
+  var m = FORM.payMode || 'full';
+  return m === 'full' ? grand : (m === 'part' || m === 'cod') ? Math.min(Math.max(0, num(FORM.paidNow)), grand) : 0;
+}
+function payBlockHtml() {
+  var codOk = t1Type(FORM.source) !== 'pickup';
+  if (FORM.payMode === 'cod' && !codOk) FORM.payMode = 'full';
+  var ms = t1Methods();
+  if (!FORM.method || ms.indexOf(FORM.method) < 0) FORM.method = ms[0] || 'Cash';
+  if (!FORM.advMethod || ms.indexOf(FORM.advMethod) < 0) FORM.advMethod = ms.indexOf('bKash') >= 0 ? 'bKash' : ms[0];
+  function sel(id, val) { return '<select class="i" id="' + id + '">' + ms.map(function (x) { return '<option value="' + esc(x) + '"' + (x === val ? ' selected' : '') + '>' + esc(x) + '</option>'; }).join('') + '</select>'; }
+  var paid = '<input class="i" id="fpaid" type="number" min="0" step="1" value="' + num(FORM.paidNow) + '">';
+  var m = FORM.payMode || 'full';
+  var h = '<div style="grid-column:1/-1"><label class="f">How was this paid?</label><div class="chips" style="margin:4px 0 0">' +
+    payChip('full', 'Paid now') + (codOk ? payChip('cod', 'Cash on delivery') : '') + payChip('part', 'Part paid') + payChip('none', 'Due') + '</div></div>';
+  if (m === 'full') h += '<div><label class="f" for="fmethod">Paid by</label>' + sel('fmethod', FORM.method) + '</div>';
+  else if (m === 'part') h += '<div><label class="f" for="fpaid">Received now</label>' + paid + '</div><div><label class="f" for="fmethod">Paid by</label>' + sel('fmethod', FORM.method) + '</div>';
+  else if (m === 'cod') h += '<div><label class="f" for="fpaid">Advance now <span class="sku">optional</span></label>' + paid + '</div>' +
+    (num(FORM.paidNow) > 0 ? '<div><label class="f" for="fadvm">Advance paid by</label>' + sel('fadvm', FORM.advMethod) + '</div>' : '');
+  return h;
+}
+document.addEventListener('change', function (ev) {
+  var t = ev.target; if (!t) return;
+  if (t.id === 'fadvm') FORM.advMethod = t.value;
+  if (t.id === 'fpaid' && FORM.payMode === 'cod') { FORM.paidNow = num(t.value); repaint(); }
+});
+
+// ---- the courier switch
+document.addEventListener('click', function (ev) {
+  var b = ev.target && ev.target.closest ? ev.target.closest('[data-t1booked]') : null;
+  if (!b) return;
+  FORM.booked = b.getAttribute('data-t1booked') === '1';
+  if (!FORM.booked) FORM.cid = '';
+  repaint();
+});
+
+// ---- delivery options with their type (Settings > Lists)
+var DOPTS = null;
+function doptsHtml() {
+  if (!ME || ['manager', 'shareholder', 'owner'].indexOf(ME.role) < 0) return '';
+  if (!DOPTS) { DOPTS = { loading: true }; srv('erpDeliveryOptions', [], function (r) { DOPTS = { list: r.options.slice(), types: r.types }; if (VIEW === 'settings') repaint(); }, function () { DOPTS = null; }); return ''; }
+  if (DOPTS.loading) return '';
+  var types = DOPTS.types;
+  function tsel(i, v) { return '<select class="i" data-dotype="' + i + '">' + Object.keys(types).map(function (k) { return '<option value="' + k + '"' + (k === v ? ' selected' : '') + '>' + esc(types[k]) + '</option>'; }).join('') + '</select>'; }
+  return '<section><div class="card"><h2>Delivery options</h2><div class="sub">What the invoice offers under delivery. Cash on delivery is offered only for Courier and Own rider.</div>' +
+    '<div class="scroll"><table class="t1do"><tbody>' + DOPTS.list.map(function (o, i) {
+      return '<tr><td><input class="i" data-doname="' + i + '" value="' + esc(o.name) + '"></td><td>' + tsel(i, o.type) + '</td><td><button class="btn small" type="button" data-dodel="' + i + '" title="Remove">\u2715</button></td></tr>'; }).join('') +
+    '</tbody></table></div><div class="row" style="margin-top:8px;gap:8px"><button class="btn" type="button" id="do_add">+ Add</button><button class="btn primary" type="button" id="do_save">Save</button></div></div></section>';
+}
+var settingsPickT1 = settingsPick;
+settingsPick = function (h) { return settingsPickT1(h + setMark('lists') + doptsHtml()); };
+document.addEventListener('input', function (ev) { var t = ev.target; if (t && t.getAttribute && t.getAttribute('data-doname') !== null && DOPTS && DOPTS.list) DOPTS.list[+t.getAttribute('data-doname')].name = t.value; });
+document.addEventListener('change', function (ev) { var t = ev.target; if (t && t.getAttribute && t.getAttribute('data-dotype') !== null && DOPTS && DOPTS.list) DOPTS.list[+t.getAttribute('data-dotype')].type = t.value; });
+document.addEventListener('click', function (ev) {
+  var t = ev.target; if (!t || !t.getAttribute || !DOPTS || !DOPTS.list) return;
+  if (t.getAttribute('data-dodel') !== null) { DOPTS.list.splice(+t.getAttribute('data-dodel'), 1); repaint(); return; }
+  if (t.id === 'do_add') { DOPTS.list.push({ name: '', type: 'courier' }); repaint(); return; }
+  if (t.id === 'do_save') {
+    t.disabled = true;
+    srv('erpDeliveryOptionsSave', [{ options: DOPTS.list }], function (r) {
+      DOPTS = { list: r.options.slice(), types: r.types }; OPT = null; srvOpt(); toast('Delivery options saved.'); repaint();
+    }, function (e) { t.disabled = false; toast(esc(e && e.message ? e.message : e), true, 10000); });
+  }
+});
+
+// ---- cash on delivery: delivered & collected (invoice page, and the "with the courier" list)
+function codCollect(no, by, after) {
+  srv('erpCodCollected', [{ invoiceNo: no, by: by }], function (r) {
+    toast(esc(no) + ': ' + fmt(r.amount) + ' received (' + esc(r.method) + ').');
+    RISK = null; DUES = null; D = null; ORDERS = null; try { lvSt('invoices').stale = true; } catch (e) {}
+    if (after) after();
+    if (INVP && INVP.no === no) { INVP = { no: '', data: null, err: null }; go('sales', no); } else repaint();
+  }, function (e) { toast(esc(e && e.message ? e.message : e), true, 10000); });
+}
+function codButtons(no) {
+  return '<button class="btn small primary" type="button" data-codc="' + esc(no) + '" data-codby="shop" title="The rider brought the cash to the shop">Delivered \u2014 cash came</button> ' +
+         '<button class="btn small" type="button" data-codc="' + esc(no) + '" data-codby="courier" title="The courier holds the cash until its payout">Delivered \u2014 courier holds it</button>';
+}
+document.addEventListener('click', async function (ev) {
+  var t = ev.target && ev.target.closest ? ev.target.closest('[data-codc]') : null; if (!t) return;
+  var no = t.getAttribute('data-codc'), by = t.getAttribute('data-codby');
+  if (!(await uiConfirm(no + ': delivered and the cash collected?\n\n' + (by === 'shop' ? 'The rider brought the cash to the shop (Cash).' : 'The courier holds the cash until it pays out.')))) return;
+  t.disabled = true; codCollect(no, by);
+});
+var viewSalesT1 = viewSales;
+viewSales = function () {
+  var h = viewSalesT1();
+  if (INVP.no && INVP.data) {
+    var d = INVP.data, top = '';
+    var steadfastFollows = isCourier(d.delivery) && d.parcel && d.parcel.consignment;
+    if (!d.cancelled && d.owed > 0 && /^(cod|cash on delivery)/i.test(String(d.method || '')) && !steadfastFollows)
+      top += '<section><div class="note"><div class="ico">\u21B3</div><div><strong>Cash on delivery \u2014 ' + fmt(d.owed) + ' to collect.</strong> ' + codButtons(INVP.no) + '</div></div></section>';
+    if (d.parcel && d.parcel.consignment) top += '<div class="row" style="justify-content:flex-end;margin-bottom:6px"><button class="btn small" type="button" data-label="' + esc(INVP.no) + '">Print parcel label</button></div>';
+    return top + h;
+  }
+  if (!INVP.no) h = h.replace('<button class="btn" type="button" id="sl_checkdel"', '<button class="btn" type="button" id="t1_labels" title="Every parcel booked today, ready to stick">Print today\u2019s labels</button> <button class="btn" type="button" id="sl_checkdel"');
+  return h;
+};
+
+// the "with the courier" tab in Unpaid and at risk
+var riskBoxHtmlT1 = riskBoxHtml;
+riskBoxHtml = function () {
+  var h = riskBoxHtmlT1();
+  var r = RISK; if (!r || !r.withCourier) return h;
+  var late = r.withCourier.filter(function (x) { return x.late; }).length;
+  h = h.replace('<span>owed in all</span></div>', '<span>owed in all</span></div><div' + (late ? ' class="warn"' : '') + '><b>' + fmt(r.totals.withCourier) + '</b><span>cash on delivery, not collected yet' + (late ? ' (' + late + ' late)' : '') + '</span></div>');
+  if (!RISK_OPEN) return h;
+  h = h.replace('data-rktab="web">', 'data-rktab="web">').replace(/(<button class="chip[^"]*" type="button" data-rktab="web">)/, '<button class="chip' + (RISK_TAB === 'cod' ? ' on' : '') + '" type="button" data-rktab="cod">With the courier <span class="sku">' + fmt(r.withCourier.length) + '</span></button>$1');
+  if (RISK_TAB === 'cod') {
+    var rows = r.withCourier.map(function (i) {
+      return '<tr><td class="nm"><button class="linkbtn" type="button" data-openinv="' + esc(i.invoice) + '">' + esc(i.invoice) + '</button><br><span class="sku">' + esc(i.when) + '</span></td><td>' + esc(i.customer) + (i.phone ? '<br><span class="sku">' + esc(i.phone) + '</span>' : '') + '</td>' +
+        '<td class="num"><strong>' + fmt(i.due) + '</strong></td><td class="num"' + (i.late ? ' style="color:var(--critical)"' : '') + '>' + fmt(i.days) + 'd</td><td class="num" style="white-space:nowrap">' + codButtons(i.invoice) + '</td></tr>'; }).join('');
+    var tbl = rows ? '<div class="scroll"><table><thead><tr><th>Invoice</th><th>Customer</th><th class="num">To collect</th><th class="num">Age</th><th></th></tr></thead><tbody>' + rows + '</tbody></table></div>' : '<div class="empty">No cash on delivery waiting.</div>';
+    var a = h.lastIndexOf('<div class="scroll"><table>'), b2 = h.lastIndexOf('<div class="empty">');
+    var at = Math.max(a, b2);
+    if (at > 0) h = h.slice(0, at) + tbl + '</div></section>';
+  }
+  return h;
+};
+
+// ---- parcel labels (A4 sheet of six now; a 100 x 75 mm sticker for a label printer later)
+var C128 = ['212222','222122','222221','121223','121322','131222','122213','122312','132212','221213','221312','231212','112232','122132','122231','113222','123122','123221','223211','221132','221231','213212','223112','312131','311222','321122','321221','312212','322112','322211','212123','212321','232121','111323','131123','131321','112313','132113','132311','211313','231113','231311','112133','112331','132131','113123','113321','133121','313121','211331','231131','213113','213311','213131','311123','311321','331121','312113','312311','332111','314111','221411','431111','111224','111422','121124','121421','141122','141221','112214','112412','122114','122411','142112','142211','241211','221114','413111','241112','134111','111242','121142','121241','114212','124112','124211','411212','421112','421211','212141','214121','412121','111143','111341','131141','114113','114311','411113','411311','113141','114131','311141','411131','211412','211214','211232','2331112'];
+/** Code 128 (set B) as an SVG - the rider's scanner reads the consignment number. */
+function code128Svg(text, h) {
+  text = String(text || '').replace(/[^\x20-\x7e]/g, '');
+  var codes = [104], sum = 104;
+  for (var i = 0; i < text.length; i++) { var c = text.charCodeAt(i) - 32; codes.push(c); sum += c * (i + 1); }
+  codes.push(sum % 103); codes.push(106);
+  var x = 10, bars = '';
+  codes.forEach(function (c) { var p = C128[c]; for (var k = 0; k < p.length; k++) { var w = +p[k]; if (k % 2 === 0) bars += '<rect x="' + x + '" y="0" width="' + w + '" height="' + h + '"/>'; x += w; } });
+  return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' + (x + 10) + ' ' + h + '" preserveAspectRatio="none" style="width:100%;height:' + h + 'px">' + bars + '</svg>';
+}
+function printLabels(payload) {
+  var w = window.open('', '_blank');
+  if (!w) { toast('Allow pop-ups for this site to print labels.', true); return; }
+  w.document.write('<p style="font:14px system-ui;padding:20px">Making the labels\u2026</p>');
+  srv('erpParcelLabels', [payload], function (r) {
+    if (!r.labels.length) { w.document.body.innerHTML = '<p style="font:14px system-ui;padding:20px">No booked parcel ' + (payload.invoices ? 'for this invoice' : 'today') + '. A parcel needs its consignment number first.</p>'; return; }
+    var cur = OPT ? OPT.currency : 'BDT', shop = r.shop;
+    var one = function (l) {
+      return '<div class="lb"><div class="top"><b>' + esc(shop.name) + '</b>' + (shop.phone ? '<span>' + esc(shop.phone) + '</span>' : '') + '</div>' +
+        '<div class="to"><div class="k">To</div><div class="nm">' + esc(l.customer) + '</div><div class="ph">' + esc(l.phone) + '</div><div class="ad">' + esc(l.address) + '</div></div>' +
+        '<div class="mid"><div class="cod">' + (l.collect > 0 ? 'COLLECT ' + esc(cur) + ' ' + fmt(l.collect) : 'PAID') + '</div><div class="inv">Invoice ' + esc(l.invoiceNo) + (l.items ? ' \u00b7 ' + fmt(l.items) + ' item' + (l.items === 1 ? '' : 's') : '') + '</div></div>' +
+        '<div class="bc">' + code128Svg(l.consignment, 46) + '<div class="cid">' + esc(l.consignment) + '</div></div></div>';
+    };
+    var css = '*{box-sizing:border-box}body{margin:0;font-family:system-ui,Segoe UI,Arial,sans-serif;color:#000}' +
+      '.bar{padding:10px;display:flex;gap:8px;align-items:center;background:#f3f4f6;border-bottom:1px solid #ddd}.bar button{font:inherit;padding:6px 12px;cursor:pointer}' +
+      '.lb{border:1.5px solid #000;padding:3mm;display:flex;flex-direction:column;gap:2mm;overflow:hidden;break-inside:avoid}' +
+      '.top{display:flex;justify-content:space-between;font-size:11pt;border-bottom:1px solid #000;padding-bottom:1mm}.k{font-size:8pt;text-transform:uppercase}' +
+      '.nm{font-size:13pt;font-weight:700}.ph{font-size:12pt;font-weight:700}.ad{font-size:10pt;line-height:1.25;max-height:3.8em;overflow:hidden}' +
+      '.mid{display:flex;justify-content:space-between;align-items:center;border-top:1px solid #000;padding-top:1mm}.cod{font-size:14pt;font-weight:800}.inv{font-size:9pt}' +
+      '.bc{margin-top:auto;text-align:center}.cid{font-size:12pt;font-weight:700;letter-spacing:1px}' +
+      'body.a4 .sheet{display:grid;grid-template-columns:1fr 1fr;grid-auto-rows:92mm;gap:4mm;padding:8mm;width:210mm}' +
+      'body.th .sheet{display:block}body.th .lb{width:100mm;height:75mm;margin:0 auto 4mm;page-break-after:always}' +
+      '@media print{.bar{display:none}body.a4 .sheet{padding:6mm}@page{margin:0}body.th .lb{margin:0;border:none}body.th @page{size:100mm 75mm}}';
+    var size = 'a4';
+    try { size = localStorage.getItem('erp_label_size') || 'a4'; } catch (e) {}
+    w.document.open();
+    w.document.write('<!doctype html><html><head><meta charset="utf-8"><title>Parcel labels</title><style>' + css + (size === 'th' ? '@page{size:100mm 75mm;margin:0}' : '@page{size:A4;margin:0}') + '</style></head><body class="' + size + '">' +
+      '<div class="bar"><b>' + r.labels.length + ' label(s)</b><button onclick="document.body.className=\'a4\';try{localStorage.setItem(\'erp_label_size\',\'a4\')}catch(e){}">A4 \u2014 6 per page</button>' +
+      '<button onclick="document.body.className=\'th\';try{localStorage.setItem(\'erp_label_size\',\'th\')}catch(e){}">Sticker 100\u00d775 mm</button><button onclick="window.print()"><b>Print</b></button></div>' +
+      '<div class="sheet">' + r.labels.map(one).join('') + '</div></body></html>');
+    w.document.close();
+  }, function (e) { w.document.body.innerHTML = '<p style="font:14px system-ui;padding:20px;color:#b91c1c">' + esc(e && e.message ? e.message : e) + '</p>'; });
+}
+document.addEventListener('click', function (ev) {
+  var t = ev.target && ev.target.closest ? ev.target.closest('[data-label],#t1_labels,#pclabel') : null; if (!t) return;
+  if (t.id === 't1_labels') printLabels({});
+  else printLabels({ invoices: [t.getAttribute('data-label')] });
+});
+// right after booking: print its label
+var parcelDoneT1 = parcelDone;
+parcelDone = function (res) {
+  parcelDoneT1(res);
+  var c = el('pccopy');
+  if (c) c.insertAdjacentHTML('afterend', ' <button class="btn" type="button" data-label="' + esc(res.invoiceNo) + '">Print label</button>');
+};
+
+// ---- a new business, from the dropdown at the top
+function openNewBusiness() {
+  var old = el('nbz'); if (old) old.parentNode.removeChild(old);
+  var curs = ['BDT', 'USD', 'EUR', 'GBP', 'INR', 'CNY', 'AED', 'SAR', 'MYR'];
+  var wrap = document.createElement('div');
+  wrap.className = 'nbz'; wrap.id = 'nbz';
+  wrap.innerHTML = '<div class="card"><h2>New business</h2><div class="sub">Yours, under the same login. It starts empty and appears in the dropdown at the top.</div>' +
+    '<div class="fields" style="margin-top:8px"><div style="grid-column:1/-1"><label class="f" for="nbz_name">Business name</label><input class="i" id="nbz_name" autocomplete="off"></div>' +
+    '<div><label class="f" for="nbz_cur">Currency</label><select class="i" id="nbz_cur">' + curs.map(function (c) { return '<option>' + c + '</option>'; }).join('') + '</select></div>' +
+    '<div><label class="f" for="nbz_logo">Logo <span class="sku">optional</span></label><input type="file" id="nbz_logo" accept="image/*"></div></div>' +
+    '<div class="row" style="justify-content:flex-end;gap:8px;margin-top:12px"><button class="btn" type="button" id="nbz_x">Cancel</button><button class="btn primary" type="button" id="nbz_go">Create</button></div></div>';
+  document.body.appendChild(wrap);
+  var logo = null;
+  el('nbz_name').focus();
+  el('nbz_logo').addEventListener('change', function () {
+    var f = this.files && this.files[0]; if (!f) { logo = null; return; }
+    var rd = new FileReader();
+    rd.onload = function () { var u = String(rd.result), k = u.indexOf(','); logo = { mime: f.type || 'image/png', data: u.slice(k + 1), name: f.name }; };
+    rd.readAsDataURL(f);
+  });
+  el('nbz_x').addEventListener('click', function () { wrap.parentNode.removeChild(wrap); });
+  el('nbz_go').addEventListener('click', function () {
+    var name = el('nbz_name').value.trim();
+    if (!name) { toast('Type the business name.', true); return; }
+    var b = this; b.disabled = true; b.textContent = 'Creating\u2026';
+    srv('erpCreateBusiness', [{ name: name, currency: el('nbz_cur').value, logo: logo }], function (res) {
+      if (wrap.parentNode) wrap.parentNode.removeChild(wrap);
+      toast('<strong>' + esc(res.name) + '</strong> created. Switching to it\u2026', false, 9000);
+      D = CAT = CUST = ORDERS = LISTS = HIST = WEB = SETTINGS = null; OPT = null; CART = [];
+      loadBusinesses(loadAll);
+    }, function (e) { b.disabled = false; b.textContent = 'Create'; toast(esc(e && e.message ? e.message : e), true, 12000); });
+  });
+}
 </script>
 </body>
 </html>

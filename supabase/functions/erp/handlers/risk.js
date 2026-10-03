@@ -20,6 +20,9 @@ const str = (v) => String(v == null ? '' : v).trim();
 const day = (d) => (d ? formatDate(new Date(d), 'd MMM') : '');
 const tk = (n) => '৳' + Math.round(num(n)).toLocaleString('en-US');
 
+/** A due on a cash-on-delivery sale: the courier or rider collects it. */
+export const isCodDue = (i) => /^(cod|cash on delivery)/i.test(String((i && i.method) || ''));
+
 export const RULES = {
   due_age:        { label: 'A due turns 7, 30 or 60 days old',                              who: 'shareholder', wa: true,  at: null, unit: '' },
   due_change:     { label: 'A due reduced or increased by hand',                            who: 'owner',       wa: true,  at: null, unit: '' },
@@ -31,6 +34,7 @@ export const RULES = {
   return_waiting: { label: 'A parcel came back but its goods are not back on the shelf',    who: 'manager',     wa: true,  at: 3,    unit: 'days' },
   write_off:      { label: 'Stock written off (damage, loss, a count that came out short)', who: 'shareholder', wa: true,  at: 1000, unit: 'taka or more' },
   web_waiting:    { label: 'A website order not entered as an invoice',                     who: 'manager',     wa: false, at: 6,    unit: 'hours' },
+  cod_waiting:    { label: 'A cash-on-delivery sale still not collected',                   who: 'shareholder', wa: true,  at: 14,   unit: 'days after the sale' },
 };
 
 export async function rulesOf(ctx) {
@@ -114,17 +118,19 @@ async function webWaiting(ctx, hours) {
 export async function erpRisks(ctx) {
   const rules = await rulesOf(ctx);
   const d = await erpDues(ctx);
-  const all = d.invoices, inv = all.filter((i) => i.days >= 7);
+  // cash on delivery is owed by the courier until it is collected, not by the customer
+  const cod = d.invoices.filter((i) => isCodDue(i)), all = d.invoices.filter((i) => !isCodDue(i)), inv = all.filter((i) => i.days >= 7);
   const late = await payoutLate(ctx, rules.payout_late.at);
   const ret = await returnWaiting(ctx, rules.return_waiting.at);
   const web = await webWaiting(ctx, rules.web_waiting.at);
   const sum = (l) => round2(l.reduce((a, x) => a + num(x.due !== undefined ? x.due : x.amount), 0));
   return {
     totals: { owed: Math.round(d.total), over7: sum(inv), over30: sum(inv.filter((i) => i.days >= 30)), over60: sum(inv.filter((i) => i.days >= 60)),
-              payoutLate: sum(late), returnWaiting: sum(ret), webWaiting: sum(web) },
+              payoutLate: sum(late), returnWaiting: sum(ret), webWaiting: sum(web), withCourier: sum(cod), codLate: sum(cod.filter((i) => i.days >= rules.cod_waiting.at)) },
+    withCourier: cod.slice(0, 80).map((i) => ({ invoice: i.id, customer: i.customer, phone: i.phone, due: Math.round(i.due), days: i.days, when: i.when, late: i.days >= rules.cod_waiting.at })),
     overdue: all.slice(0, 80).map((i) => ({ invoice: i.id, customer: i.customer, phone: i.phone, due: Math.round(i.due), days: i.days, when: i.when })),
     overdueCount: all.length, over7Count: inv.length, payoutLate: late, returnWaiting: ret, webWaiting: web,
-    rules: { payoutDays: rules.payout_late.at, returnDays: rules.return_waiting.at, webHours: rules.web_waiting.at },
+    rules: { payoutDays: rules.payout_late.at, returnDays: rules.return_waiting.at, webHours: rules.web_waiting.at, codDays: rules.cod_waiting.at },
   };
 }
 
@@ -138,9 +144,16 @@ export async function moneyAlerts(ctx, role) {
   if (may('due_age')) {
     const d = await soft(ctx, () => erpDues(ctx), { invoices: [] });
     for (const b of [60, 30, 7]) {
-      const hit = d.invoices.filter((i) => i.days >= b && i.days < b + 3);
+      const hit = d.invoices.filter((i) => !isCodDue(i) && i.days >= b && i.days < b + 3);
       for (const i of hit) add('due_age', { key: 'due' + b + ':' + i.id, level: b >= 30 ? 'bad' : 'warn', title: i.customer + ' owes ' + tk(i.due) + ' for ' + b + ' days',
         detail: i.id + (i.phone ? ' · ' + i.phone : ''), go: 'sales:' + i.id });
+    }
+  }
+  if (may('cod_waiting')) {
+    const d = await soft(ctx, () => erpDues(ctx), { invoices: [] });
+    for (const i of d.invoices.filter((x) => isCodDue(x) && x.days >= rules.cod_waiting.at)) {
+      add('cod_waiting', { key: 'cod:' + i.id, title: 'Cash on delivery ' + tk(i.due) + ' not collected after ' + i.days + ' days — ' + i.customer,
+        detail: i.id + (i.phone ? ' · ' + i.phone : '') + ' · ask the courier or rider', go: 'sales:' + i.id });
     }
   }
   if (may('due_change')) {

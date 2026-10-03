@@ -489,7 +489,8 @@ export async function erpCreateBusiness(ctx, payload) {
     await ctx.tx`insert into lookups ${ctx.tx(rows, 'business_id', 'kind', 'value', 'sort_order')}`;
   }
   // erpSetIdentity_: its own name; nothing of this business's carried over
-  for (const [k, v] of [['business_name', name], ['currency', 'BDT'], ['default_reorder', '5'],
+  const cur = /^[A-Za-z]{3}$/.test(String(payload.currency || '').trim()) ? String(payload.currency).trim().toUpperCase() : 'BDT';
+  for (const [k, v] of [['business_name', name], ['currency', cur], ['default_reorder', '5'],
     ['default_lead_time', '7'], ['payment_qr_file_id', '']]) {
     await setConfig(nctx, k, v);
   }

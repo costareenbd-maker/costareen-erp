@@ -1,6 +1,9 @@
 // Catalogue, lists, form options, one product, customer lookup
 // (ERP.js:649-835, 1169-1222).
 
+import { deliveryOptions, guessType, DELIVERY_TYPES, DEFAULT_DELIVERY } from '../lib/delivery.js';
+import { setConfig, getConfig } from '../lib/ext.js';
+import { roleAtLeast as roleAtLeastC } from '../allow.js';
 import { normalizePhone, formatBdPhone } from '../lib/phone.js';
 import { DAY_MS } from '../lib/time.js';
 
@@ -13,8 +16,7 @@ export function isCourier(delivery) {
   const d = String(delivery || '');
   return /steadfast/i.test(d) && !/express/i.test(d);
 }
-export const ERP_DELIVERY = ['Customer pickup', 'Steadfast courier', 'Steadfast Express', 'Pathao Instant',
-  'Uber Instant', 'Costareen Delivery'];
+export const ERP_DELIVERY = DEFAULT_DELIVERY;
 
 // SETTINGS columns A-G as lookup kinds.
 export const LIST_KINDS = ['categories', 'brands', 'types', 'suppliers', 'units', 'colors'];
@@ -149,9 +151,36 @@ export async function erpFormOptions(ctx) {
   return {
     paymentMethods: pay.length ? pay : ['Cash', 'bKash', 'Bangla QR', 'Bank Transfer'],
     paymentStatuses: ['Pending', 'Paid', 'Partial'],
-    sources: ERP_DELIVERY.slice(),
-    currency: 'BDT',
+    sources: (await deliveryOptions(ctx)).map((o) => o.name),
+    deliveryTypes: Object.fromEntries((await deliveryOptions(ctx)).map((o) => [o.name, o.type])),
+    currency: String((await getConfig(ctx, 'currency', 'BDT')) || 'BDT').trim().toUpperCase() || 'BDT',
   };
+}
+
+/**
+ * The delivery list with its types (Settings > Lists).
+ * erpDeliveryOptionsSave({options:[{name, type}]}) - manager or owner.
+ */
+export async function erpDeliveryOptions(ctx) {
+  return { options: await deliveryOptions(ctx), types: DELIVERY_TYPES };
+}
+export async function erpDeliveryOptionsSave(ctx, payload) {
+  if (!roleAtLeastC(ctx.s.role, 'manager')) throw new Error('Only a manager or the owner changes the delivery list.');
+  const list = Array.isArray(payload && payload.options) ? payload.options : [];
+  const seen = {}, out = [];
+  for (const o of list) {
+    const name = String((o && o.name) || '').trim().replace(/\s+/g, ' ');
+    if (!name) continue;
+    if (name.length > 40) throw new Error('"' + name.slice(0, 40) + '\u2026" is too long for a delivery name (40 letters).');
+    if (seen[name.toLowerCase()]) continue;
+    seen[name.toLowerCase()] = 1;
+    out.push({ name, type: DELIVERY_TYPES[o.type] ? o.type : guessType(name) });
+  }
+  if (!out.length) throw new Error('Keep at least one delivery option.');
+  if (out.length > 30) throw new Error('At most 30 delivery options.');
+  await setConfig(ctx, 'delivery_options', JSON.stringify(out));
+  delete ctx.memo.delivery;
+  return erpDeliveryOptions(ctx);
 }
 
 /** One product's full editable record, or null. */

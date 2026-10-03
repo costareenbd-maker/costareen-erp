@@ -315,9 +315,9 @@ export async function erpEnterWebOrder(ctx, orderNo) {
     items,
     // delivery, and the cash handling fee on a COD order
     deliveryCharge: Math.max(0, Math.round((num(order.orderTotal) - itemsTotal) * 100) / 100),
-    advancePaid: 0,
-    paymentMethod: pay.method,
-    paymentStatus: pay.status,
+    // COD -> cash on delivery; paid online -> paid now; anything else is still owed
+    payMode: /^cod$/i.test(pay.method) ? 'cod' : pay.status === 'Paid' ? 'full' : 'none',
+    paymentMethod: /^cod$/i.test(pay.method) ? '' : pay.method,
     note: 'WEB-' + no,
   }, { webEntry: true, webOrderNo: no });
 

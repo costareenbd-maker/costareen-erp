@@ -43,6 +43,7 @@ import { HANDLERS as google } from './google.js';
 import { HANDLERS as sheet } from './sheet.js';
 import { HANDLERS as restore } from './restore.js';
 import { HANDLERS as shop } from './shop.js';
+import { HANDLERS as cod } from './cod.js';
 
 const core = {
   erpToday: shell.erpToday,
@@ -55,6 +56,8 @@ const core = {
   erpCatalog: catalog.erpCatalog,
   erpSettingsLists: catalog.erpSettingsLists,
   erpFormOptions: catalog.erpFormOptions,
+  erpDeliveryOptions: catalog.erpDeliveryOptions,
+  erpDeliveryOptionsSave: catalog.erpDeliveryOptionsSave,
   erpProduct: catalog.erpProduct,
   erpLookupCustomer: catalog.erpLookupCustomer,
 
@@ -71,7 +74,7 @@ const core = {
 
 export const HANDLERS = {};
 for (const [group, table] of Object.entries({ core, sales, courier, customers, stock, dashboard,
-                                              expenses, weborders, quotes, settings, campaigns, capital, pages, goods, partners, security, alerts, access, listview, cash, suppliers, currency, notes, serials, repairs, excel, users, platform, risk, connections, google, sheet, restore, shop })) {
+                                              expenses, weborders, quotes, settings, campaigns, capital, pages, goods, partners, security, alerts, access, listview, cash, suppliers, currency, notes, serials, repairs, excel, users, platform, risk, connections, google, sheet, restore, shop, cod })) {
   for (const [name, fn] of Object.entries(table)) {
     if (HANDLERS[name]) throw new Error('Handler ' + name + ' is defined twice (' + group + ').');
     HANDLERS[name] = fn;

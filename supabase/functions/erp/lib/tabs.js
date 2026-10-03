@@ -59,7 +59,9 @@ export function salesLog(ctx) {
     if (hit && hit.mark === mark) { hit.at = Date.now(); return hit.rows; }
     const rows = await ctx.tx`
       select i.invoice_no, i.created_at, i.customer_name, i.customer_phone, i.customer_address,
-             l.sku, l.name, l.qty, l.unit_price, l.line_total, i.payment_method, i.payment_status,
+             l.sku, l.name, l.qty, l.unit_price, l.line_total,
+             case when coalesce(i.advance_paid, 0) = 0 and coalesce(i.payment_method, '') !~* '^(cod|cash on delivery)' then '' else i.payment_method end,
+             i.payment_status,
              i.delivery_status, i.note, i.discount, i.delivery_charge, i.grand_total,
              i.advance_paid, i.due_amount, i.source, i.id, l.id, coalesce(l.unit_cost, 0)
       from invoice_lines l join invoices i on i.id = l.invoice_id

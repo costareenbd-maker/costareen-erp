@@ -211,8 +211,8 @@ row = await inv(C);
 check('C stays Paid', row.payment_status === 'Paid' && row.due_amount === 0, row);
 
 // E: Steadfast parcel already booked
-r = await mgr('erpCreateInvoice', [{ customer: { name: 'Nasir', phone: '01633333333', address: 'Uttara' }, items: [{ sku: PLA, qty: 1 }],
-  payMode: 'none', paymentMethod: 'COD' }]);
+r = await mgr('erpCreateInvoice', [{ customer: { name: 'Nasir', phone: '01633333333', address: 'Uttara', source: 'Steadfast courier' }, items: [{ sku: PLA, qty: 1 }],
+  payMode: 'cod' }]);
 const E = r.result.invoiceNo;
 await sql`update invoices set source = 'Steadfast courier' where invoice_no = ${E}`;
 await sql`insert into courier_log (business_id, invoice_no, consignment_id, customer, cod_amount, booked_by)

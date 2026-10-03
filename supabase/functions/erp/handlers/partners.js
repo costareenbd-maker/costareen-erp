@@ -307,7 +307,7 @@ async function dealInvoice(ctx, deal) {
   const qty = num(deal.qty) > 0 ? num(deal.qty) : 1;
   const res = await createInvoice(ctx, {
     customer: { name: (other ? str(other.partner_name) : 'Partner') + ' (partner)', phone: '', source: 'Partner' },
-    items: [{ sku: str(deal.sku), qty }], payMode: 'none', paymentMethod: 'Cash',
+    items: [{ sku: str(deal.sku), qty }], payMode: 'none',
     note: 'Sold by partner: ' + str(deal.description),
   }, { partnerDeal: true, unitPrice: Math.round(num(deal.amount) / qty * 100) / 100 });
   await ctx.tx`select partner_deal_note(${deal.id}, ${null}, ${res.invoiceNo})`;

@@ -8,6 +8,7 @@
 //   grand      = subtotal - discount + delivery
 //   advance    = what was taken now          due = grand - advance
 
+import { codAllowed } from '../lib/delivery.js';
 import { erpCatalog } from './catalog.js';
 import { forget } from '../lib/tabs.js';
 import { formatDate, num, round2, dhakaDayStart, todayStr, DAY_MS } from '../lib/time.js';
@@ -174,12 +175,31 @@ export async function createInvoice(ctx, payload, opts = {}) {
   const delivery = num(payload.deliveryCharge);
   const grand = round2(sub - discount + delivery);
 
-  const mode = String(payload.payMode || '').toLowerCase();
-  const advance = mode === 'full' ? grand : mode === 'part' ? num(payload.paidNow)
-                : mode === 'none' ? 0 : num(payload.advancePaid);
-  const status = mode === 'full' ? 'Paid' : mode === 'part' ? 'Partial' : mode === 'none' ? 'Pending'
-               : String(payload.paymentStatus || 'Pending');
-  const method = String(payload.paymentMethod || 'Cash');
+  // How it is paid (owner's rule, tidy-1): paid now / cash on delivery / part paid / due.
+  // What was paid decides the status - never the button.
+  let mode = String(payload.payMode || '').toLowerCase();
+  if (!mode) mode = /^paid$/i.test(String(payload.paymentStatus || '')) ? 'full' : num(payload.advancePaid) > 0 ? 'part' : 'none';
+  if (['full', 'cod', 'part', 'none'].indexOf(mode) < 0) throw new Error('How was it paid?');
+  const isCod = (m) => /^cod\b|cash on delivery/i.test(String(m || '').trim());
+  let method = String(payload.paymentMethod || '').trim();
+  let took = mode === 'full' ? grand : mode === 'none' ? 0 : Math.max(0, Math.min(num(payload.paidNow !== undefined && payload.paidNow !== '' ? payload.paidNow : payload.advancePaid), grand));
+  if (mode === 'part' && took <= 0) mode = 'none';
+  if (mode === 'part' && took >= grand) mode = 'full';
+  let payMethod = method;
+  if (mode === 'cod') {
+    if (!opts.webEntry && !(await codAllowed(ctx, source))) throw new Error('Cash on delivery needs a courier or a rider - "' + (source || 'this delivery') + '" is a pickup. Choose Paid now, Part paid or Due.');
+    payMethod = String(payload.advanceMethod || '').trim();
+    if (took > 0 && (!payMethod || isCod(payMethod))) throw new Error('How was the advance paid? (bKash, Cash, Bank...)');
+    method = 'COD';
+  } else if (mode === 'full' || mode === 'part') {
+    if (!method) method = 'Cash';
+    if (isCod(method)) throw new Error('Cash on delivery is its own choice: choose "Cash on delivery", not COD as the method.');
+    payMethod = method;
+  } else {
+    method = '';   // nothing paid: no method
+  }
+  const advance = took;
+  const status = took >= grand - 0.5 ? 'Paid' : took > 0 ? 'Partial' : 'Pending';
 
   // what they owed before this sale, read before it exists
   let priorBalance = 0;
@@ -238,15 +258,9 @@ export async function createInvoice(ctx, payload, opts = {}) {
   forget(ctx, 'SALES_LOG', 'CUSTOMERS', 'TXN_LOG');
 
   // money taken at the counter is money received
-  let took = 0;
-  if (mode === 'full') took = grand;
-  else if (mode === 'part') took = num(payload.paidNow);
-  else if (mode === 'none') took = 0;
-  else if (/^paid$/i.test(String(payload.paymentStatus || ''))) took = grand;
-  else took = num(payload.advancePaid);
   if (took > 0) {
     await addPayment(ctx, { id: 'P' + stamp(), order: invoiceNo, customer: name,
-      amount: Math.min(took, grand), method,
+      amount: Math.min(took, grand), method: payMethod,
       note: took >= grand ? 'paid in full at the till' : 'advance' });
     await syncInvoiceStatus(ctx, invoiceNo);
   }
