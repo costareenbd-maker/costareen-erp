@@ -9,10 +9,11 @@
 //   CRON_KEY    - shared with deploy/cron.sql; lets the scheduled jobs in
 
 import { googleCallback } from './handlers/google.js';
+import { shopDoor } from './handlers/shop.js';
 import postgres from 'npm:postgres@3.4.5';
 import { connect } from './db.js';
 import { erpCall } from './core.js';
-import { runJob, runHook } from './jobs.js';
+import { runJob, runHook, asBusiness, owners } from './jobs.js';
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL') ?? '';
 const ANON = Deno.env.get('SUPABASE_ANON_KEY') ?? '';
@@ -211,6 +212,15 @@ Deno.serve(async (req) => {
     let to = GOOGLE.appUrl + '#/settings?google=failed';
     try { to = await googleCallback(deps, q); } catch (_) { /* told as failed */ }
     return new Response(null, { status: 302, headers: { Location: to } });
+  }
+  // any website (handlers/shop.js): ?shop=ping|stock|order|products with the x-shop-key header
+  if (new URL(req.url).searchParams.get('shop')) {
+    try {
+      const r = await shopDoor(deps, asBusiness, owners, req);
+      return new Response(JSON.stringify(r.body), { status: r.status, headers });
+    } catch (e) {
+      return new Response(JSON.stringify({ ok: false, error: String((e as Error).message || e) }), { status: 500, headers });
+    }
   }
   if (req.method !== 'POST') return new Response('{"ok":false}', { status: 405, headers });
 

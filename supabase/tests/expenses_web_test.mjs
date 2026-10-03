@@ -332,7 +332,7 @@ check('unknown order', !r.ok && r.error === 'Order 9999 not found.', r);
 r = await mgr('erpEnterWebOrder', ['']);
 check('no order', !r.ok && r.error === 'Which order?', r);
 r = await mgr('erpEnterWebOrder', ['1002']);
-check('unknown SKU refused, nothing written', !r.ok && r.error === 'These SKUs are not in PRODUCT_MASTER: (no sku). Add them first, then enter the order.' &&
+check('unknown SKU refused, nothing written', !r.ok && /^Not matched to a product yet: Gift card. Match them under Web orders/.test(r.error) &&
   (await stockOf(PLA)) === 5, r);
 r = await mgr('erpEnterWebOrder', ['1003']);
 row = r.ok && (await sql`select * from invoices where invoice_no = ${r.result.invoiceNo}`)[0];

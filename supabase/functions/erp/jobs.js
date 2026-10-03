@@ -13,7 +13,7 @@
 import { ERP_ROLES, ERP_DISCOUNT_CAP } from './allow.js';
 
 /** Owner of each business (or just the ones asked for). */
-async function owners(sql, ids) {
+export async function owners(sql, ids) {
   return ids && ids.length
     ? sql`select m.business_id, m.user_id, b.name from memberships m join businesses b on b.id = m.business_id
           where m.role = 'owner' and m.business_id = any(${ids}) order by m.created_at`
@@ -22,10 +22,10 @@ async function owners(sql, ids) {
 }
 
 /** Run fn(ctx) for one business, inside one transaction, as its owner. */
-async function asBusiness(deps, row, label, fn) {
+export async function asBusiness(deps, row, label, fn) {
   const sql = deps.sql;
   const s = {
-    userId: row.user_id, name: 'Timer', role: 'owner', roleLabel: ERP_ROLES.owner.label,
+    userId: row.user_id, name: row.who || 'Timer', role: 'owner', roleLabel: ERP_ROLES.owner.label,
     discountCap: ERP_DISCOUNT_CAP.owner, businessId: row.business_id, businessName: row.name,
     memberships: [{ business_id: row.business_id, role: 'owner', name: row.name }], implicit: true,
   };
@@ -42,7 +42,7 @@ async function asBusiness(deps, row, label, fn) {
   } catch (e) {
     try {
       await sql`insert into erp_errors (business_id, who, role, action, message, build)
-                values (${row.business_id}, 'Timer', 'owner', ${label},
+                values (${row.business_id}, ${row.who || 'Timer'}, 'owner', ${label},
                         ${String((e && e.message) || e).slice(0, 500)}, 'jobs')`;
     } catch (_) { /* never the reason a job stops */ }
     return { error: String((e && e.message) || e) };

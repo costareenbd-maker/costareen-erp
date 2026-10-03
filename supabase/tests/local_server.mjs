@@ -10,12 +10,15 @@ const postgres = require('postgres');
 const fnDir = path.join(path.dirname(new URL(import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, '$1')), '..', 'functions', 'erp');
 const { connect } = await import(pathToFileURL(path.join(fnDir, 'db.js')));
 const { erpCall } = await import(pathToFileURL(path.join(fnDir, 'core.js')));
+const { shopDoor } = await import(pathToFileURL(path.join(fnDir, 'handlers', 'shop.js')));
+const { asBusiness, owners } = await import(pathToFileURL(path.join(fnDir, 'jobs.js')));
 
 const sql = connect(postgres, process.env.DB_URL);
 // fake storage / PDF / outside world from the test harness (nothing leaves this computer)
 const H = await import('./harness.mjs');
 const deps = { ...H.deps, sql, sqlAux: connect(postgres, process.env.DB_URL, { max: 2 }), verifyUser: async () => null };   // owner email sign-in is not simulated
 const PORT = Number(process.env.PORT || 8794);
+deps.hookBase = 'http://localhost:' + PORT + '/';
 if (process.env.LINK_ONLY) {
   // as deployed: no sign-in, a private link. One is made for the fixture owner and printed.
   const { keyHash, newKey } = await import(pathToFileURL(path.join(fnDir, 'handlers', 'access.js')));
@@ -37,6 +40,11 @@ http.createServer(async (req, res) => {
   if (req.method === 'OPTIONS') { res.writeHead(200, h); return res.end('ok'); }
   let raw = '';
   for await (const c of req) raw += c;
+  // the open door for any website (handlers/shop.js), as index.ts does
+  if (/[?&]shop=/.test(req.url)) {
+    const r = await shopDoor(deps, asBusiness, owners, new Request('http://localhost:' + PORT + req.url, { method: req.method, headers: req.headers, body: req.method === 'POST' ? raw : undefined }));
+    res.writeHead(r.status, h); return res.end(JSON.stringify(r.body));
+  }
   let body = {};
   try { body = JSON.parse(raw || '{}'); } catch (_) { /* empty */ }
   // local trial only: let every waiting device in

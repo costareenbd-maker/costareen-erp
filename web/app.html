@@ -8321,7 +8321,7 @@ function srv(name, args, ok, bad) {
 
 var SRV_ACTIVE = 0, SRV_WRITING = false;
 // the same list the server uses to know a call changes nothing (ERP_READS)
-var SRV_READS = /^(erpBundle|erpHello|erpMe|erpCatalog|erpSales|erpDues|erpCustomers|erpPnl|erpMoney|erpToday|erpDaySales|erpProduct|erpLookupCustomer|erpCustomerAccount|erpCustomerStatement|erpCustomerCredit|erpWebOrders|erpWebOrderInvoices|erpCampaignAudience|erpCampaignList|erpCampaignGet|erpEvoStatus|erpBrandLogo|erpQuoteBoot|erpQuoteList|erpQuoteGet|erpQuoteAsset|erpExpenses|erpCapital|erpBackupStatus|erpAiKeys|erpGetTheme|erpBusinesses|erpStockHistory|erpReorderPlan|erpPoList|erpSfPayoutLines|erpBookedParcels|erpParcelPreview|erpReturnPreview|erpSettingsFull|erpSettingsLists|erpFormOptions|erpAdmin|erpPeople|erpDevices|erpCourierKeyStatus|erpPayReasons|erpDiscontinued|erpAccessWarning|erpBusinessLinks|erpLookupUsage|erpRecentInvoices|erpCourier|erpDashboardData|erpInvoice|erpCustomerPage|erpSearch|erpProductPage|erpPnlMonth|erpExpenseReceiptUrl|erpPartnership|erpPartnerStock|erpSecurity|erpCustomerList|erpAlerts|erpAccessKeys|erpListView|erpCurrencies|erpSharedStock|erpPoolCatalog|erpProductThumbs|erpProductPhotoUrl|erpFamilies|erpNotes|erpNoteFileUrl|erpSerialsFor|erpSerialLookup|erpJobs|erpJob|erpUsers|erpSessions|erpPlatform|erpPlatformErrors|erpRisks|erpAlertRules|erpConnections|erpWebsiteTest|erpGoogle|erpSheet|erpRestorePreview|erpCashBook|erpSuppliers|erpSupplierPage)$/;
+var SRV_READS = /^(erpBundle|erpHello|erpMe|erpCatalog|erpSales|erpDues|erpCustomers|erpPnl|erpMoney|erpToday|erpDaySales|erpProduct|erpLookupCustomer|erpCustomerAccount|erpCustomerStatement|erpCustomerCredit|erpWebOrders|erpWebOrderInvoices|erpCampaignAudience|erpCampaignList|erpCampaignGet|erpEvoStatus|erpBrandLogo|erpQuoteBoot|erpQuoteList|erpQuoteGet|erpQuoteAsset|erpExpenses|erpCapital|erpBackupStatus|erpAiKeys|erpGetTheme|erpBusinesses|erpStockHistory|erpReorderPlan|erpPoList|erpSfPayoutLines|erpBookedParcels|erpParcelPreview|erpReturnPreview|erpSettingsFull|erpSettingsLists|erpFormOptions|erpAdmin|erpPeople|erpDevices|erpCourierKeyStatus|erpPayReasons|erpDiscontinued|erpAccessWarning|erpBusinessLinks|erpLookupUsage|erpRecentInvoices|erpCourier|erpDashboardData|erpInvoice|erpCustomerPage|erpSearch|erpProductPage|erpPnlMonth|erpExpenseReceiptUrl|erpPartnership|erpPartnerStock|erpSecurity|erpCustomerList|erpAlerts|erpAccessKeys|erpListView|erpCurrencies|erpSharedStock|erpPoolCatalog|erpProductThumbs|erpProductPhotoUrl|erpFamilies|erpNotes|erpNoteFileUrl|erpSerialsFor|erpSerialLookup|erpJobs|erpJob|erpUsers|erpSessions|erpPlatform|erpPlatformErrors|erpRisks|erpAlertRules|erpConnections|erpWebsiteTest|erpGoogle|erpSheet|erpRestorePreview|erpWebMatches|erpCashBook|erpSuppliers|erpSupplierPage)$/;
 function srvPump() {
   if (!SRV_Q.length) return;
   var isRead = SRV_READS.test(SRV_Q[0].name);
@@ -15459,6 +15459,99 @@ document.addEventListener('click', async function (ev) {
       }, function (e) { toast(esc(e && e.message ? e.message : e), true, 15000); });
     }, function (e) { toast(esc(e && e.message ? e.message : e), true, 12000); });
   }
+});
+</script>
+
+<!-- any website: match website products, and the open door -->
+<style>
+.wm_row{display:grid;grid-template-columns:minmax(180px,1.2fr) 2fr;gap:10px;padding:10px 0;border-top:1px solid var(--line,#e5e7eb);align-items:start}
+.wm_row:first-of-type{border-top:0}
+.wm_sug{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.wm_sug input{min-width:180px;flex:1}
+.door_code{font-family:ui-monospace,Consolas,monospace;font-size:12px;white-space:pre;overflow:auto;background:var(--soft,#f6f7f9);padding:10px;border-radius:8px;max-height:340px}
+@media (max-width:700px){.wm_row{grid-template-columns:1fr}}
+</style>
+<script>
+var WMATCH = null, WMATCH_BUSY = false, SHOPKEY = null, SHOPKEY_NEW = '';
+function wmCan() { return ME && ['manager', 'shareholder', 'owner'].indexOf(ME.role) >= 0; }
+function loadWMatch() { if (!wmCan()) return; srv('erpWebMatches', [], function (r) { WMATCH = r; if (VIEW === 'weborders') repaint(); }, function () { WMATCH = { unmatched: [], links: [], products: [], matched: 0 }; }); }
+function wmBoxHtml() {
+  if (!wmCan()) return '';
+  if (!WMATCH) { if (!WMATCH_BUSY) { WMATCH_BUSY = true; loadWMatch(); } return ''; }
+  var w = WMATCH, n = w.unmatched.length;
+  var h = '<section><div class="card"' + (n ? ' style="border-left:4px solid var(--warn,#d97706)"' : '') + '><h2>Match website products' + (n ? ' (' + fmt(n) + ' waiting)' : '') + '</h2>' +
+    '<div class="sub">When the website calls a product by another SKU or name, link it here once. It is remembered: its orders enter as that product, and its stock goes back to the website under the website\u2019s own SKU. ' +
+    'Same SKU (capitals ignored) and same barcode match by themselves. Close names are only suggested \u2014 nothing is guessed.</div>';
+  if (!n) h += '<div class="note ok" style="margin-top:8px"><div class="ico">\u2713</div><div>Every website item is matched' + (w.matched ? ' (' + fmt(w.matched) + ')' : '') + '.</div></div>';
+  else {
+    h += '<datalist id="wm_products">' + w.products.map(function (p) { return '<option value="' + esc(p.sku) + '">' + esc(p.name) + '</option>'; }).join('') + '</datalist><div style="margin-top:6px">';
+    w.unmatched.slice(0, 40).forEach(function (x, i) {
+      h += '<div class="wm_row"><div><strong>' + esc(x.name || x.sku) + '</strong><br><span class="sku">' + (x.sku ? 'website SKU ' + esc(x.sku) : 'no SKU on the website') +
+        (x.orders ? ' \u00b7 <span style="color:var(--bad,#b91c1c)">' + fmt(x.orders) + ' order line(s) waiting</span>' : x.onSite ? ' \u00b7 on the website' : '') + '</span></div><div class="wm_sug">' +
+        x.suggest.map(function (s) { return '<button class="btn small" type="button" data-wmlink="' + i + '" data-wmsku="' + esc(s.sku) + '" title="' + esc(s.sku) + '">= ' + esc(s.name) + ' <span class="sku">' + Math.round(s.score * 100) + '%</span></button>'; }).join('') +
+        '<input type="text" list="wm_products" placeholder="or type our SKU\u2026" id="wm_in_' + i + '"><button class="btn small primary" type="button" data-wmlink="' + i + '">Link</button></div></div>';
+    });
+    if (n > 40) h += '<div class="sub">\u2026and ' + fmt(n - 40) + ' more after these.</div>';
+    h += '</div>';
+  }
+  if (w.links.length) h += '<details style="margin-top:10px"><summary>' + fmt(w.links.length) + ' link(s) made</summary><div class="scroll"><table><thead><tr><th>On the website</th><th>Is our product</th><th>By</th><th></th></tr></thead><tbody>' +
+    w.links.map(function (l) { return '<tr><td>' + esc(l.extName || l.extSku || l.key) + '<br><span class="sku">' + esc(l.extSku || 'by name') + '</span></td><td>' + esc(l.name) + '<br><span class="sku">' + esc(l.sku) + '</span></td><td>' + esc(l.by) + '</td>' +
+      '<td><button class="btn small" type="button" data-wmclear="' + esc(l.key) + '">Unlink</button></td></tr>'; }).join('') + '</tbody></table></div></details>';
+  return h + '</div></section>';
+}
+var viewWebOrdersW1 = viewWebOrders;
+var WM_WEB = null;
+viewWebOrders = function () {
+  // new or entered orders: read the matches again
+  if (WEB !== WM_WEB) { WM_WEB = WEB; WMATCH = null; WMATCH_BUSY = false; }
+  var h = viewWebOrdersW1(); return WEB ? wmBoxHtml() + h : h;
+};
+
+function doorHtml() {
+  if (!ME || ME.role !== 'owner') return '';
+  if (!SHOPKEY) { SHOPKEY = { loading: true }; srv('erpShopKey', [{}], function (r) { SHOPKEY = r; if (VIEW === 'settings') repaint(); }, function () { SHOPKEY = { hasKey: false, door: '' }; }); return ''; }
+  if (SHOPKEY.loading) return '';
+  var k = SHOPKEY, door = k.door || '';
+  var h = '<section><div class="card"><h2>Any website \u2014 open door</h2><div class="sub">For a website that is not WordPress with the Costareen plugin: PHP, Laravel, a Shopify or Wix app, anything that can send a web request. ' +
+    'The website sends each order here and asks for stock; orders appear under Web orders and are entered as usual. Products with other SKUs are matched once under Web orders \u2192 Match website products.</div>';
+  if (SHOPKEY_NEW) h += '<div class="note warn" style="margin-top:8px"><div class="ico">!</div><div><strong>The key \u2014 copy it now, it is not shown again:</strong><br><code style="word-break:break-all">' + esc(SHOPKEY_NEW) + '</code> <button class="btn small" type="button" id="door_copy">Copy</button></div></div>';
+  h += '<div class="row" style="margin-top:10px;gap:8px;flex-wrap:wrap;align-items:center">' +
+    (k.hasKey ? '<button class="btn" type="button" id="door_make">Make a new key (the old one stops)</button><button class="btn danger" type="button" id="door_off">Remove the key</button>'
+              : '<button class="btn primary" type="button" id="door_make">Make the website key</button>') +
+    '<span class="sku">' + (k.hasKey ? (k.last ? 'last call from the website ' + esc(new Date(k.last).toLocaleString()) : 'the website has not called yet') : 'no key: the door is shut') + '</span></div>';
+  var php = "<?php\n// 1) a new order (send it again with status 'cancelled' to cancel)\n$order = [\n  'number' => '1001', 'created' => date('c'), 'status' => 'processing',\n  'customer' => 'Name', 'phone' => '01711000000', 'address' => 'Address',\n  'payment' => 'Cash on delivery', 'total' => 1430,\n  'items' => [ ['sku' => 'ABC-1', 'name' => 'Product name', 'qty' => 1, 'line_total' => 1350] ],\n];\n$ch = curl_init('" + door + "order');\ncurl_setopt_array($ch, [CURLOPT_POST => true, CURLOPT_RETURNTRANSFER => true,\n  CURLOPT_HTTPHEADER => ['Content-Type: application/json', 'x-shop-key: ' . getenv('ERP_SHOP_KEY')],\n  CURLOPT_POSTFIELDS => json_encode($order)]);\n$reply = json_decode(curl_exec($ch), true);   // ['ok' => true, 'unmatched' => [...]]\n\n// 2) stock, e.g. every 15 minutes from cron\n$ch = curl_init('" + door + "stock');\ncurl_setopt_array($ch, [CURLOPT_RETURNTRANSFER => true, CURLOPT_HTTPHEADER => ['x-shop-key: ' . getenv('ERP_SHOP_KEY')]]);\nforeach (json_decode(curl_exec($ch), true)['items'] as $it) {\n  // set_stock($it['sku'], $it['qty']);   // your shop's own function\n}\n";
+  h += '<details style="margin-top:10px"><summary>For the website\u2019s programmer</summary><div class="sub" style="margin-top:6px">Every call carries the header <code>x-shop-key</code>. Answers are JSON with <code>ok</code>; a refusal says why in <code>error</code>.</div>' +
+    '<div class="door_code">GET  ' + esc(door) + 'ping       who am I talking to\nGET  ' + esc(door) + 'stock      [{sku, name, qty, price}]\nPOST ' + esc(door) + 'order      one order (below); sent twice = kept once\nPOST ' + esc(door) + 'products   {items:[{sku, name, price, barcode}]} to match before orders</div>' +
+    '<div class="door_code" style="margin-top:8px">' + esc(php) + '</div></details>';
+  return h + '</div></section>';
+}
+var settingsPickW1 = settingsPick;
+settingsPick = function (h) { return settingsPickW1(h + setMark('connections') + doorHtml()); };
+
+document.addEventListener('click', async function (ev) {
+  var t = ev.target && ev.target.closest ? ev.target.closest('button') : null; if (!t) return;
+  function bad(e) { toast(esc(e && e.message ? e.message : e), true, 12000); }
+  var i = t.getAttribute('data-wmlink');
+  if (i !== null) {
+    var x = WMATCH && WMATCH.unmatched[+i]; if (!x) return;
+    var inp = el('wm_in_' + i), sku = t.getAttribute('data-wmsku') || (inp ? inp.value.trim() : '');
+    if (!sku) { toast('Type or pick our SKU first.', true); return; }
+    t.disabled = true;
+    srv('erpWebMatchSet', [{ key: x.key, sku: sku, name: x.name, extSku: x.sku }], function (r) {
+      toast(esc(x.name || x.sku) + ' \u2192 ' + esc(r.name)); WMATCH = null; WMATCH_BUSY = false; repaint();
+    }, function (e) { t.disabled = false; bad(e); });
+    return;
+  }
+  var c = t.getAttribute('data-wmclear');
+  if (c) { if (!(await uiConfirm('Unlink this website item?\n\nIts next orders will wait to be matched again.'))) return;
+    srv('erpWebMatchClear', [{ key: c }], function () { toast('Unlinked.'); WMATCH = null; WMATCH_BUSY = false; repaint(); }, bad); return; }
+  if (t.id === 'door_make') {
+    if (SHOPKEY && SHOPKEY.hasKey && !(await uiConfirm('Make a new key?\n\nThe website stops working with the old key until the new one is put in it.'))) return;
+    srv('erpShopKey', [{ make: true }], function (r) { SHOPKEY_NEW = r.key; SHOPKEY = r; repaint(); }, bad); return;
+  }
+  if (t.id === 'door_off') { if (!(await uiConfirm('Remove the website key?\n\nThe website can no longer send orders or read stock.'))) return;
+    srv('erpShopKey', [{ remove: true }], function (r) { SHOPKEY_NEW = ''; SHOPKEY = r; toast('Removed. The door is shut.'); repaint(); }, bad); return; }
+  if (t.id === 'door_copy') { try { await navigator.clipboard.writeText(SHOPKEY_NEW); toast('Copied.'); } catch (_) { toast('Select the key and copy it by hand.', true); } }
 });
 </script>
 </body>

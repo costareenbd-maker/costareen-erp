@@ -13,6 +13,7 @@ import { getSecret, getConfig, httpFetch } from '../lib/ext.js';
 import { erpCatalog } from './catalog.js';
 import { createInvoice } from './invoice.js';
 import { lock, who } from './money.js';
+import { matcher } from '../lib/match.js';
 
 export const WEBSITE_API = 'https://costareen.com/wp-json/cz/v1';
 const LOOKBACK_DAYS = 7;
@@ -79,13 +80,23 @@ export async function pullWebOrders(ctx) {
   const since = new Date(Date.now() - LOOKBACK_DAYS * DAY_MS);
   const iso = since.toISOString().slice(0, 19);
   const res = await czFetch(ctx, 'GET', '/orders?limit=100&since=' + encodeURIComponent(iso));
+  const items = (res && res.items) || [];
+  const added = await addWebLines(ctx, items);
+  return { ok: true, fetched: items.length, added };
+}
 
+/**
+ * Website order lines into web_orders / web_order_lines, one row per
+ * order|sku, never twice. Each item: {number, created, status, customer,
+ * phone, address, payment, total, sku, product, qty, line_total}.
+ * A known order whose status changed (e.g. cancelled) gets the new status.
+ */
+export async function addWebLines(ctx, items) {
   const seen = {};
   for (const r of await webOrdersTab(ctx)) {
     seen[str(r[WO.order_no]) + '|' + str(r[WO.sku])] = true;
   }
 
-  const items = (res && res.items) || [];
   let added = 0;
   const orderIds = {};
   for (const it of items) {
@@ -94,7 +105,16 @@ export async function pullWebOrders(ctx) {
     const sku = str(it.sku) || '(no sku)';
     const no = str(it.number);
     const key = no + '|' + sku;
-    if (seen[key]) continue;
+    if (seen[key]) {
+      if (str(it.status)) {
+        await ctx.tx`update web_orders set status = ${str(it.status)}
+                     where business_id = ${ctx.biz} and order_no = ${no} and coalesce(status, '') <> ${str(it.status)}`;
+        await ctx.tx`update web_order_lines l set status = ${str(it.status)} from web_orders o
+                     where o.id = l.web_order_id and o.business_id = ${ctx.biz} and o.order_no = ${no} and coalesce(l.status, '') <> ${str(it.status)}`;
+        forget(ctx, 'WEB_ORDERS');
+      }
+      continue;
+    }
     seen[key] = true;
 
     let oid = orderIds[no];
@@ -122,33 +142,36 @@ export async function pullWebOrders(ctx) {
     added++;
   }
   forget(ctx, 'WEB_ORDERS');
-  return { ok: true, fetched: items.length, added };
+  return added;
 }
 
 /** czPendingWebQty_ (Code.js:3950): web-order quantities not yet entered, per SKU. */
 async function pendingWebQty(ctx) {
   const pending = {};
+  const m = await matcher(ctx);
   for (const r of await webOrdersTab(ctx)) {
-    const sku = str(r[WO.sku]).toLowerCase();
     const qty = Number(r[WO.qty]) || 0;
     const entered = str(r[WO.entered_in_sheet]).toLowerCase();
-    if (!sku || sku === '(no sku)' || entered === 'yes') continue;
+    if (entered === 'yes' || /cancel|refund|fail|trash/i.test(str(r[WO.status]))) continue;
+    const hit = m.find(r[WO.sku], r[WO.product]);
+    if (!hit) continue;
+    const sku = str(hit.product.sku).toLowerCase();
     pending[sku] = (pending[sku] || 0) + qty;
   }
   return pending;
 }
 
 /**
- * pushStockToWebsite (Code.js:3985): every product's stock to the website.
- * qty = max(0, round(stock - web orders not yet entered)) - otherwise this
- * push would undo the deduction WooCommerce already made.
- * mode 'apply' changes the website; anything else is a dry run.
+ * What the website may sell: every product's stock less the website orders
+ * not yet entered, under our SKU and under every website SKU linked to it.
  */
-export async function pushStockToWebsite(ctx, mode) {
-  await lock(ctx, 'website');
+export async function stockItems(ctx) {
   const pending = await pendingWebQty(ctx);
+  const m = await matcher(ctx);
+  const alias = {};
+  for (const l of m.links) if (str(l.ext_sku)) (alias[l.product_id] = alias[l.product_id] || []).push(str(l.ext_sku));
   const rows = await ctx.tx`
-    select p.sku, coalesce(ps.stock, 0) as stock
+    select p.id, p.sku, p.name, p.sell_price, p.status, coalesce(ps.stock, 0) as stock
     from products p left join product_stock ps on ps.product_id = p.id
     where p.business_id = ${ctx.biz}
     order by p.date_added, p.created_at, p.sku`;
@@ -159,8 +182,22 @@ export async function pushStockToWebsite(ctx, mode) {
     let avail = Number(r.stock);
     if (isNaN(avail)) avail = 0;
     const held = pending[sku.toLowerCase()] || 0;
-    items.push({ sku, qty: Math.max(0, Math.round(avail - held)) });
+    const qty = Math.max(0, Math.round(avail - held));
+    items.push({ sku, qty, name: str(r.name), price: num(r.sell_price), active: str(r.status).toLowerCase() !== 'discontinued' });
+    for (const a of alias[r.id] || []) if (a.toLowerCase() !== sku.toLowerCase()) items.push({ sku: a, qty, name: str(r.name), price: num(r.sell_price), active: str(r.status).toLowerCase() !== 'discontinued', ours: sku });
   }
+  return items;
+}
+
+/**
+ * pushStockToWebsite (Code.js:3985): every product's stock to the website.
+ * qty = max(0, round(stock - web orders not yet entered)) - otherwise this
+ * push would undo the deduction WooCommerce already made.
+ * mode 'apply' changes the website; anything else is a dry run.
+ */
+export async function pushStockToWebsite(ctx, mode) {
+  await lock(ctx, 'website');
+  const items = (await stockItems(ctx)).map((x) => ({ sku: x.sku, qty: x.qty }));
   const res = await czFetch(ctx, 'POST', '/stock', {
     mode: mode === 'apply' ? 'apply' : 'dry',
     zero_policy: 'outofstock',
@@ -248,17 +285,19 @@ export async function erpEnterWebOrder(ctx, orderNo) {
   // the website's own line totals decide the discount
   const by = {};
   for (const p of await erpCatalog(ctx)) by[p.sku.toLowerCase()] = p;
+  const m = await matcher(ctx);
   const items = [], unknown = [];
   for (const ln of order.lines) {
-    const rec = by[ln.sku.toLowerCase()];
-    if (!rec) { unknown.push(ln.sku); continue; }
+    const hit = m.find(ln.sku, ln.product);
+    const rec = hit ? by[str(hit.product.sku).toLowerCase()] : null;
+    if (!rec) { unknown.push(ln.sku && ln.sku !== '(no sku)' ? ln.sku + ' (' + ln.product + ')' : ln.product); continue; }
     const listTotal = rec.sell * ln.qty;
     const disc = Math.max(0, Math.round(listTotal - ln.lineTotal));
     items.push({ sku: rec.sku, qty: ln.qty, discount: disc });
   }
   if (unknown.length) {
-    throw new Error('These SKUs are not in PRODUCT_MASTER: ' + unknown.join(', ') +
-      '. Add them first, then enter the order.');
+    throw new Error('Not matched to a product yet: ' + unknown.join(', ') +
+      '. Match them under Web orders \u2192 Match website products (or add the product), then enter the order.');
   }
   if (!items.length) throw new Error('Order ' + no + ' has no usable lines.');
 
