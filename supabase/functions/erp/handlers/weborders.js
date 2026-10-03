@@ -77,6 +77,9 @@ async function czFetch(ctx, method, path, payload) {
  */
 export async function pullWebOrders(ctx) {
   await lock(ctx, 'website');
+  // a WooCommerce or Shopify shop without the plugin (handlers/stores.js)
+  const kind = str(await getConfig(ctx, 'website_kind', '')) || 'plugin';
+  if (kind !== 'plugin') return (await import('./stores.js')).storePull(ctx);
   const since = new Date(Date.now() - LOOKBACK_DAYS * DAY_MS);
   const iso = since.toISOString().slice(0, 19);
   const res = await czFetch(ctx, 'GET', '/orders?limit=100&since=' + encodeURIComponent(iso));
@@ -197,6 +200,8 @@ export async function stockItems(ctx) {
  */
 export async function pushStockToWebsite(ctx, mode) {
   await lock(ctx, 'website');
+  const kind = str(await getConfig(ctx, 'website_kind', '')) || 'plugin';
+  if (kind !== 'plugin') return (await import('./stores.js')).storePush(ctx, mode);
   const items = (await stockItems(ctx)).map((x) => ({ sku: x.sku, qty: x.qty }));
   const res = await czFetch(ctx, 'POST', '/stock', {
     mode: mode === 'apply' ? 'apply' : 'dry',

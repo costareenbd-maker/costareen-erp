@@ -15335,7 +15335,7 @@ document.addEventListener('click', function (ev) {
 .conn b { display:block; } .conn span { font-size:12.5px; color:var(--muted); }
 </style>
 <script>
-var CONN = null, CONN_BUSY = false, CONN_TEST = null;
+var CONN = null, CONN_BUSY = false, CONN_TEST = null, WS_KIND = '';
 function connLoad() { srv('erpConnections', [], function (r) { CONN = r; if (VIEW === 'settings') repaint(); }, function (e) { toast(esc(e && e.message ? e.message : e), true); }); }
 function connHtml() {
   if (!ME || ME.role !== 'owner') return '';
@@ -15343,28 +15343,53 @@ function connHtml() {
   var c = CONN, items = [['website', 'Website'], ['courier', 'Courier (Steadfast)'], ['whatsapp', 'WhatsApp'], ['email', 'E-mail sending'], ['google', 'Google Drive'], ['ai', 'AI access']];
   var h = '<section><div class="card"><h2>Connections</h2><div class="sub">Every outside service this business uses. Green works; amber needs a step; grey is not connected.</div><div class="conn">' +
     items.map(function (x) { var v = c[x[0]]; return '<div class="' + esc(v.state) + '"><span class="d"></span><div><b>' + esc(x[1]) + '</b><span>' + esc(v.label) + '</span></div></div>'; }).join('') + '</div></div></section>';
-  var w = c.website;
-  h += '<section><div class="card"><h2>Website</h2><div class="sub">Website orders come in every 15 minutes (Web orders screen) and stock goes out to the shop, by product code (SKU). ' +
-    'It needs the sync plugin on the website and its key. <strong>The sync stays off until you switch it on</strong> \u2014 while the old sheet still sends stock to the shop, switching this on too would make the two overwrite each other.</div>' +
-    '<div class="fields" style="margin-top:8px"><div style="grid-column:1/-1"><label class="f" for="ws_url">Website sync address</label><input class="i" id="ws_url" value="' + esc(w.url) + '" placeholder="https://yourshop.com/wp-json/cz/v1"></div>' +
-    '<div style="grid-column:1/-1"><label class="f" for="ws_key">Sync key <span class="sku">' + (w.hasKey ? 'saved \u2014 type a new one only to change it' : 'from the website\u2019s sync plugin') + '</span></label><input class="i" id="ws_key" type="password" autocomplete="off" placeholder="' + (w.hasKey ? '\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022' : 'paste the key') + '"></div></div>' +
-    '<div class="row" style="margin-top:10px;gap:8px;flex-wrap:wrap;align-items:center"><button class="btn primary" type="button" id="ws_save"' + (CONN_BUSY ? ' disabled' : '') + '>Save</button>' +
-    (w.hasKey ? '<button class="btn" type="button" id="ws_test">Test connection</button><button class="btn" type="button" id="ws_clear">Remove the key</button>' : '') +
+  var w = c.website, kind = WS_KIND || w.kind || 'plugin';
+  var kinds = [['plugin', 'Costareen plugin', 'WordPress with the Costareen sync plugin'], ['woo', 'WooCommerce', 'any WooCommerce shop, no plugin needed'], ['shopify', 'Shopify', 'any Shopify shop']];
+  h += '<section><div class="card"><h2>Website</h2><div class="sub">Website orders come in every 15 minutes (Web orders screen) and stock goes out to the shop. Products with other SKUs are matched once under Web orders \u2192 Match website products. ' +
+    '<strong>The sync stays off until you switch it on</strong> \u2014 while the old sheet still sends stock to the shop, switching this on too would make the two overwrite each other. Any other website: the open door further down.</div>' +
+    '<div class="row" style="margin-top:10px;gap:8px;flex-wrap:wrap">' + kinds.map(function (k) {
+      return '<button type="button" class="btn' + (k[0] === kind ? ' primary' : '') + '" data-wskind="' + k[0] + '" title="' + esc(k[2]) + '">' + esc(k[1]) + '</button>'; }).join('') + '</div>';
+  var same = kind === w.kind, saved = same && w.hasKey;
+  var keyNote = saved ? 'saved \u2014 type a new one only to change it' : '';
+  if (kind === 'plugin') {
+    h += '<div class="fields" style="margin-top:8px"><div style="grid-column:1/-1"><label class="f" for="ws_url">Website sync address</label><input class="i" id="ws_url" value="' + esc(same ? w.url : '') + '" placeholder="https://yourshop.com/wp-json/cz/v1"></div>' +
+      '<div style="grid-column:1/-1"><label class="f" for="ws_key">Sync key <span class="sku">' + (keyNote || 'from the website\u2019s sync plugin') + '</span></label><input class="i" id="ws_key" type="password" autocomplete="off" placeholder="' + (saved ? '\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022' : 'paste the key') + '"></div></div>';
+  } else if (kind === 'woo') {
+    h += '<details style="margin-top:8px"' + (saved ? '' : ' open') + '><summary>Where the keys are</summary><div class="sub" style="margin-top:4px">In WordPress: <b>WooCommerce \u2192 Settings \u2192 Advanced \u2192 REST API \u2192 Add key</b>. Description "ERP", user an administrator, permissions <b>Read/Write</b>, Generate. Copy the consumer key (ck_\u2026) and secret (cs_\u2026) \u2014 WooCommerce shows the secret only once. The shop must use https.</div></details>' +
+      '<div class="fields" style="margin-top:8px"><div style="grid-column:1/-1"><label class="f" for="ws_url">Shop address</label><input class="i" id="ws_url" value="' + esc(same ? w.url : '') + '" placeholder="https://yourshop.com"></div>' +
+      '<div><label class="f" for="ws_key">Consumer key <span class="sku">' + (keyNote || 'ck_\u2026') + '</span></label><input class="i" id="ws_key" type="password" autocomplete="off" placeholder="' + (saved ? '\u2022\u2022\u2022\u2022\u2022\u2022' : 'ck_\u2026') + '"></div>' +
+      '<div><label class="f" for="ws_secret">Consumer secret</label><input class="i" id="ws_secret" type="password" autocomplete="off" placeholder="' + (saved ? '\u2022\u2022\u2022\u2022\u2022\u2022' : 'cs_\u2026') + '"></div></div>';
+  } else {
+    h += '<details style="margin-top:8px"' + (saved ? '' : ' open') + '><summary>Where the token is</summary><div class="sub" style="margin-top:4px">In Shopify admin: <b>Settings \u2192 Apps and sales channels \u2192 Develop apps \u2192 Create an app</b> ("ERP"). Configure Admin API scopes: <b>read_orders, read_products, write_inventory, read_locations</b>. Install the app, then reveal the <b>Admin API access token</b> (shpat_\u2026) \u2014 Shopify shows it only once. Stock is set at the shop\u2019s first location; only products with "Track quantity" on are changed.</div></details>' +
+      '<div class="fields" style="margin-top:8px"><div style="grid-column:1/-1"><label class="f" for="ws_url">Shop address</label><input class="i" id="ws_url" value="' + esc(same ? w.url : '') + '" placeholder="yourshop.myshopify.com"></div>' +
+      '<div style="grid-column:1/-1"><label class="f" for="ws_key">Admin API access token <span class="sku">' + (keyNote || 'shpat_\u2026') + '</span></label><input class="i" id="ws_key" type="password" autocomplete="off" placeholder="' + (saved ? '\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022' : 'shpat_\u2026') + '"></div></div>';
+  }
+  h += '<div class="row" style="margin-top:10px;gap:8px;flex-wrap:wrap;align-items:center"><button class="btn primary" type="button" id="ws_save"' + (CONN_BUSY ? ' disabled' : '') + '>Save</button>' +
+    (saved ? '<button class="btn" type="button" id="ws_test">Test connection</button><button class="btn" type="button" id="ws_pull">Check for orders now</button><button class="btn" type="button" id="ws_preview">Preview stock changes</button><button class="btn" type="button" id="ws_clear">Remove the key' + (kind === 'woo' ? 's' : '') + '</button>' : '') +
     (CONN_TEST ? '<span class="pill ' + (CONN_TEST.ok ? 'ok' : 'out') + '">' + esc(CONN_TEST.ok ? 'Connected: ' + CONN_TEST.reply : CONN_TEST.error) + '</span>' : '') + '</div>' +
-    (w.hasKey ? '<div class="row" style="margin-top:12px;gap:10px;align-items:center;border-top:1px solid var(--ring);padding-top:12px"><div style="flex:1"><b>Live sync</b><div class="sub" style="margin:0">' + esc(w.label) + '</div></div>' +
+    (!same ? '<div class="sub" style="margin-top:8px">Saving switches this business to ' + esc(kinds.filter(function (k) { return k[0] === kind; })[0][1]) + ' and turns the live sync off until you switch it on again.</div>' : '') +
+    (saved ? '<div class="row" style="margin-top:12px;gap:10px;align-items:center;border-top:1px solid var(--ring);padding-top:12px"><div style="flex:1"><b>Live sync</b><div class="sub" style="margin:0">' + esc(w.label) + '</div></div>' +
       '<button class="btn ' + (w.on ? 'danger' : 'primary') + '" type="button" id="ws_sync" data-to="' + (w.on ? '0' : '1') + '">' + (w.on ? 'Switch off' : 'Switch on') + '</button></div>' : '') +
-    '<div class="sub" style="margin-top:10px">A shop without this plugin (any WooCommerce or Shopify store) will connect with its own standard keys \u2014 that connection is planned, not built yet.</div></div></section>';
+    '</div></section>';
   return h;
 }
 var settingsPickC1 = settingsPick;
 settingsPick = function (h) { return settingsPickC1(setMark('connections') + connHtml() + h); };
 document.addEventListener('click', async function (ev) {
-  var t = ev.target; if (!t || !t.id || !/^ws_/.test(t.id)) return;
+  var t = ev.target;
+  if (t && t.getAttribute && t.getAttribute('data-wskind')) { WS_KIND = t.getAttribute('data-wskind'); CONN_TEST = null; repaint(); return; }
+  if (!t || !t.id || !/^ws_/.test(t.id)) return;
+  if (t.id === 'ws_pull' || t.id === 'ws_preview') {
+    t.disabled = true; CONN_TEST = { ok: false, error: t.id === 'ws_pull' ? 'Reading the shop\u2019s orders\u2026' : 'Reading the shop\u2019s products\u2026' }; repaint();
+    srv('erpTool', [t.id === 'ws_pull' ? 'pullOrders' : 'previewPush'], function (msg) { CONN_TEST = null; repaint(); uiAlert(msg); if (t.id === 'ws_pull') WEB = null; WMATCH = null; },
+        function (e) { CONN_TEST = { ok: false, error: e && e.message ? e.message : String(e) }; repaint(); });
+    return;
+  }
   function done(r, msg) { CONN = r; CONN_BUSY = false; if (msg) toast(msg); repaint(); }
   function bad(e) { CONN_BUSY = false; toast(esc(e && e.message ? e.message : e), true, 12000); repaint(); }
-  if (t.id === 'ws_save') { var wsArgs = { url: el('ws_url').value.trim(), key: el('ws_key').value.trim() }; CONN_BUSY = true; CONN_TEST = null; repaint(); srv('erpWebsiteSet', [wsArgs], function (r) { done(r, 'Saved.'); }, bad); }
+  if (t.id === 'ws_save') { var wsArgs = { kind: WS_KIND || (CONN && CONN.website.kind) || 'plugin', url: el('ws_url').value.trim(), key: el('ws_key').value.trim(), secret: el('ws_secret') ? el('ws_secret').value.trim() : '' }; WS_KIND = ''; CONN_BUSY = true; CONN_TEST = null; repaint(); srv('erpWebsiteSet', [wsArgs], function (r) { done(r, 'Saved.'); }, bad); }
   else if (t.id === 'ws_test') { CONN_TEST = { ok: false, error: 'Asking the website\u2026' }; repaint(); srv('erpWebsiteTest', [], function (r) { CONN_TEST = r; repaint(); }, bad); }
-  else if (t.id === 'ws_clear') { if (!(await uiConfirm('Remove the website key? The sync stops.'))) return; srv('erpWebsiteSet', [{ clearKey: true }], function (r) { CONN_TEST = null; done(r, 'Removed.'); }, bad); }
+  else if (t.id === 'ws_clear') { if (!(await uiConfirm('Remove the website key(s)? The sync stops.'))) return; srv('erpWebsiteSet', [{ clearKey: true }], function (r) { CONN_TEST = null; done(r, 'Removed.'); }, bad); }
   else if (t.id === 'ws_sync') {
     var on = t.getAttribute('data-to') === '1';
     if (on && !(await uiConfirm('Switch the website sync on?\n\nFrom now on this ERP takes website orders and sends stock to the shop every 15 minutes.\n\nFirst make sure the OLD sheet\u2019s website sync is switched off \u2014 two systems sending stock overwrite each other.'))) return;
@@ -15429,7 +15454,7 @@ function gsheetHtml() {
   var g = GSHEET;
   var h = '<section><div class="card"><h2>Live backup sheet</h2><div class="sub">A Google Sheet in your Drive with every list of the business \u2014 invoices, lines, payments, stock, customers, products, expenses, money, suppliers, capital, serials, repairs \u2014 one tab each. ' +
     'A tab is written again within about 10 minutes of any change, so edits and cancellations show too. It is a copy to read and keep: changing the sheet changes nothing here. Who signs in, keys and passwords never go into it.</div>';
-  if (!g.google) return h + '<div class="note"><div class="ico">i</div><div>Connect Google Drive first (above).</div></div></div></section>';
+  if (!g.google) return h + '<div class="note"><div class="ico">i</div><div>Connect Google Drive first (its card is on this page).</div></div></div></section>';
   if (!g.id) return h + '<div class="row" style="margin-top:10px"><button class="btn primary" type="button" id="gs_make"' + (GSHEET_BUSY ? ' disabled' : '') + '>' + (GSHEET_BUSY ? 'Making\u2026' : 'Make the backup sheet') + '</button></div></div></section>';
   h += '<div class="row" style="margin-top:10px;gap:8px;flex-wrap:wrap;align-items:center"><a class="btn primary" href="' + esc(g.url) + '" target="_blank" rel="noopener">Open the sheet</a>' +
     '<button class="btn" type="button" id="gs_now"' + (GSHEET_BUSY ? ' disabled' : '') + '>' + (GSHEET_BUSY ? 'Writing\u2026' : 'Write changes now') + '</button>' +

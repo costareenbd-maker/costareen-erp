@@ -13,18 +13,26 @@
 import { getSecret, setSecret, getConfig, setConfig, httpFetch } from '../lib/ext.js';
 import { erpCourierTest } from './courier.js';
 import { erpEvoStatus } from './campaigns.js';
+import { storeTest } from './stores.js';
 
 const str = (v) => String(v == null ? '' : v).trim();
 export const WEBSITE_DEFAULT = 'https://costareen.com/wp-json/cz/v1';
 
 function needOwner(ctx) { if (ctx.s.role !== 'owner') throw new Error('Only the owner manages connections.'); }
 
+const KINDS = { plugin: 'Costareen plugin (WordPress)', woo: 'WooCommerce', shopify: 'Shopify' };
+
 async function website(ctx) {
-  const key = await getSecret(ctx, 'CZ_SYNC_KEY');
-  const url = str(await getConfig(ctx, 'website_api', '')) || WEBSITE_DEFAULT;
+  const kind = str(await getConfig(ctx, 'website_kind', '')) || 'plugin';
   const on = str(await getConfig(ctx, 'website_sync_on', '')) === '1';
-  return { url, hasKey: !!key, on, state: !key ? 'off' : on ? 'on' : 'ready' };
+  let url, key;
+  if (kind === 'woo') { url = str(await getConfig(ctx, 'store_url', '')); key = (await getSecret(ctx, 'WOO_KEY')) && (await getSecret(ctx, 'WOO_SECRET')); }
+  else if (kind === 'shopify') { url = str(await getConfig(ctx, 'store_url', '')); key = await getSecret(ctx, 'SHOPIFY_TOKEN'); }
+  else { url = str(await getConfig(ctx, 'website_api', '')) || WEBSITE_DEFAULT; key = await getSecret(ctx, 'CZ_SYNC_KEY'); }
+  return { kind, kindLabel: KINDS[kind] || kind, url, hasKey: !!(key && url), on, state: !(key && url) ? 'off' : on ? 'on' : 'ready' };
 }
+
+const KEY_OK = (k) => k.length >= 12 && !/\s/.test(k);
 
 export async function erpConnections(ctx) {
   needOwner(ctx);
@@ -35,7 +43,7 @@ export async function erpConnections(ctx) {
   const ai = await soft(async () => (await ctx.tx`select count(*)::int n from erp_ai_keys where business_id = ${ctx.biz} and enabled`)[0].n, 0);
   const smtp = str(ctx.deps && ctx.deps.smtpNote);
   return {
-    website: { ...w, label: w.state === 'on' ? 'Live: orders in, stock out' : w.state === 'ready' ? 'Key saved, sync switched off' : 'Not connected' },
+    website: { ...w, label: (w.kind === 'plugin' ? '' : w.kindLabel + ': ') + (w.state === 'on' ? 'Live: orders in, stock out' : w.state === 'ready' ? 'Keys saved, sync switched off' : 'Not connected') },
     courier: { state: sfKey && sfSecret ? 'on' : 'off', label: sfKey && sfSecret ? 'Steadfast keys saved' : 'Not connected' },
     whatsapp: { state: evo.connected ? 'on' : evo.configured ? 'warn' : 'off',
                 label: evo.connected ? 'Linked' : evo.configured ? (evo.error || 'Set up, not linked') : 'Not connected' },
@@ -50,6 +58,15 @@ export async function erpConnections(ctx) {
 export async function erpWebsiteSet(ctx, payload) {
   needOwner(ctx);
   payload = payload || {};
+  const was = str(await getConfig(ctx, 'website_kind', '')) || 'plugin';
+  const kind = payload.kind === undefined ? was : str(payload.kind);
+  if (!KINDS[kind]) throw new Error('Which kind of website?');
+  if (kind !== was) {
+    // another shop: nothing runs until it is tested and switched on again
+    await setConfig(ctx, 'website_kind', kind === 'plugin' ? '' : kind);
+    await setConfig(ctx, 'website_sync_on', '');
+  }
+  if (kind !== 'plugin') return storeSet(ctx, kind, payload);
   if (payload.url !== undefined) {
     const url = str(payload.url).replace(/\/+$/, '');
     if (url && !/^https:\/\/[^\s/]+\.[^\s/]+\/\S*$/.test(url + '/')) throw new Error('The website address starts with https:// - e.g. https://costareen.com/wp-json/cz/v1');
@@ -66,9 +83,47 @@ export async function erpWebsiteSet(ctx, payload) {
   return erpConnections(ctx);
 }
 
+async function storeSet(ctx, kind, payload) {
+  if (payload.url !== undefined && str(payload.url)) {
+    let url = str(payload.url).replace(/\/+$/, '');
+    if (kind === 'shopify') {
+      // the admin address people copy from the browser: admin.shopify.com/store/<name>
+      const a = /admin\.shopify\.com\/store\/([a-z0-9][a-z0-9-]*)/i.exec(url);
+      if (a) url = a[1];
+      const m = /^(?:https?:\/\/)?([a-z0-9][a-z0-9-]*)(?:\.myshopify\.com)?(?:\/.*)?$/i.exec(url);
+      if (!m) throw new Error('The Shopify address is like yourshop.myshopify.com (the .myshopify.com name, not your own domain).');
+      url = 'https://' + m[1].toLowerCase() + '.myshopify.com';
+    } else {
+      if (!/^https:\/\//i.test(url)) url = 'https://' + url.replace(/^http:\/\//i, '');
+      const m = /^(https:\/\/[^\s/]+\.[^\s/]+)(\/.*)?$/i.exec(url);
+      if (!m) throw new Error('The shop address is like https://yourshop.com');
+      url = m[1].toLowerCase() + (m[2] && !/^\/wp-(json|admin)/i.test(m[2]) ? m[2].replace(/\/+$/, '') : '');
+    }
+    await setConfig(ctx, 'store_url', url);
+  }
+  if (payload.clearKey) {
+    for (const k of ['WOO_KEY', 'WOO_SECRET', 'SHOPIFY_TOKEN']) await setSecret(ctx, k, '');
+    await setConfig(ctx, 'website_sync_on', '');
+    return erpConnections(ctx);
+  }
+  if (kind === 'woo') {
+    const k = str(payload.key), s = str(payload.secret);
+    if (k || s) {
+      if (!KEY_OK(k) || !KEY_OK(s)) throw new Error('Paste both WooCommerce keys: the consumer key (ck_...) and the consumer secret (cs_...).');
+      if (/^cs_/.test(k) && /^ck_/.test(s)) throw new Error('The two keys are swapped: the consumer key starts with ck_, the secret with cs_.');
+      await setSecret(ctx, 'WOO_KEY', k); await setSecret(ctx, 'WOO_SECRET', s);
+    }
+  } else if (str(payload.key)) {
+    if (!KEY_OK(str(payload.key))) throw new Error('That does not look like a Shopify Admin API token (it starts with shpat_).');
+    await setSecret(ctx, 'SHOPIFY_TOKEN', str(payload.key));
+  }
+  return erpConnections(ctx);
+}
+
 export async function erpWebsiteTest(ctx) {
   needOwner(ctx);
   const w = await website(ctx);
+  if (w.kind !== 'plugin') return w.hasKey ? storeTest(ctx) : { ok: false, error: 'Save the shop address and keys first.' };
   const key = await getSecret(ctx, 'CZ_SYNC_KEY');
   if (!key) return { ok: false, error: 'No sync key saved yet.' };
   const r = await httpFetch(ctx, w.url.replace(/\/+$/, '') + '/ping', { method: 'GET', headers: { 'x-cz-key': key } });
@@ -84,7 +139,7 @@ export async function erpWebsiteTest(ctx) {
 export async function erpWebsiteSync(ctx, payload) {
   needOwner(ctx);
   const on = !!(payload && payload.on);
-  if (on && !(await getSecret(ctx, 'CZ_SYNC_KEY'))) throw new Error('Save the website sync key first.');
+  if (on && !(await website(ctx)).hasKey) throw new Error('Save the website address and keys first.');
   await setConfig(ctx, 'website_sync_on', on ? '1' : '');
   return erpConnections(ctx);
 }

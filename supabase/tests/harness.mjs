@@ -41,7 +41,7 @@ async function fakeFetch(url, opts = {}) {
   if (!hit) return new Response('no route for ' + url, { status: 404 });
   const out = await hit.fn(url, opts);
   const body = typeof out.body === 'string' ? out.body : JSON.stringify(out.body ?? {});
-  return new Response(body, { status: out.status ?? 200 });
+  return new Response(body, { status: out.status ?? 200, headers: out.headers || {} });
 }
 
 const store = new Map();   // `${biz}/${folder}/${name}` -> {bytes, mime, at}

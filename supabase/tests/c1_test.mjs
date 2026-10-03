@@ -9,7 +9,7 @@ check('every connection with its state', r.ok && ['website', 'courier', 'whatsap
   r.result.website.state === 'off' && r.result.website.url === 'https://costareen.com/wp-json/cz/v1' && r.result.email.state === 'warn', r.result);
 
 r = await owner('erpWebsiteSync', [{ on: true }]);
-check('the sync cannot be switched on without a key', !r.ok && /key first/.test(r.error), r);
+check('the sync cannot be switched on without a key', !r.ok && /keys first/.test(r.error), r);
 r = await owner('erpWebsiteSet', [{ url: 'http://insecure.example/x', key: 'abc' }]);
 check('the address must be https', !r.ok && /https:\/\//.test(r.error), r);
 r = await owner('erpWebsiteSet', [{ url: 'https://shop.example.com/wp-json/cz/v1', key: 'short' }]);

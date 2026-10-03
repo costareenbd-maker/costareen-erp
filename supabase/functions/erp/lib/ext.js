@@ -51,7 +51,7 @@ export async function httpFetch(ctx, url, opts = {}) {
     const text = await res.text();
     let json = null;
     try { json = JSON.parse(text); } catch (_) { /* not json */ }
-    return { code: res.status, text, json };
+    return { code: res.status, text, json, link: (res.headers && res.headers.get && res.headers.get('link')) || '' };
   } catch (e) {
     return { code: 0, text: String((e && e.message) || e), json: null };
   }
