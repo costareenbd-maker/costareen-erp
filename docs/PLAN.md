@@ -70,3 +70,13 @@ Needed from the owner along the way: the list of money accounts (A3); suppliers 
 
 
 Owner, 2026-10-03: the business also sells 3D printers and will sell more electronics - D1 (serials, warranty) and D2 (repairs) are wanted. Order from here: D1, D2, D6, per-person sign-in, go-live.
+
+## Agreed with the owner 2026-10-03 (evening) - one build, then the installer
+
+Build "tidy-1" (all together, one command):
+1. Courier field on the invoice: Steadfast courier -> no consignment box by default; switch "Already booked in Steadfast?" No/Yes, Yes shows the box. No -> Send parcel after saving returns the number. Steadfast Express -> the box shows at once (may stay empty, added later).
+2. Less text: long grey explanations (card subtitles, field hints) move behind a "?" icon (tap to open/close), one rule for every screen. Warnings/errors (red/amber notes) always stay visible. Labels short.
+3. Payment logic: one question - Paid now (method; COD not offered) / Cash on delivery (courier or rider only; optional advance with its own method; rest "COD - with the courier", cleared on delivery) / Part paid (amount + method, rest due) / Due (credit; no method). Status always from real payments; "Part paid" with 0 = Due. Old invoices unchanged; "Cash" shown as "-" where nothing was paid (display only; 465 such in the trial data).
+4. Business switcher: "+ Add a business" only in the top dropdown -> clean New business page (name, currency, optional logo), same owner, opens at once. Removed from Settings, and "A company for a partner" removed from Settings. Joint-venture pool untouched.
+
+Then "installer-1..3": bring-your-own-Supabase installer. Link -> connect their Supabase (OAuth) -> ERP built in their project -> each copy checks in with the owner's Platform screen (list, version, errors, push updates, switch off). First user: a friendly company (not a partner, no shared pool). Their own domain possible via DNS + Cloudflare custom domain.
