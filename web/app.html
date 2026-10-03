@@ -7325,7 +7325,8 @@ function loadMoney() {
 
 function viewCustomers() {
   if (CUSP.key) return dueBoxHtml() + customerPageHtml();
-  return dueBoxHtml() + customerFormHtml() + lvHtml('customers') + custMoneyBoxes();
+  // who owes comes first: it is what gets chased today (owner, 3 Oct 2026)
+  return dueBoxHtml() + custMoneyBoxes() + customerFormHtml() + lvHtml('customers');
 }
 
 /**

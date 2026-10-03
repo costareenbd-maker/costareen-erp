@@ -269,3 +269,5 @@
 - `start_fresh.py --next-invoice <n>` sets the invoice counter in the same transaction as the wipe. Today: sheet's latest invoice INV-20261002-1890, web counter 1884.
 - Sheet script re-read: still build b261003-0358 - nothing new to port.
 - docs/GOLIVE.md rewritten for the e-mail sign-in system, with a status column of what is done and what is the owner's.
+
+2026-10-03 — Customers: the red "Customers who owe" box now sits at the top of the screen, above the customer list (owner's request).
