@@ -346,3 +346,10 @@
 - Done as a dictionary applied to whatever is drawn, so the existing screens did not have to be rewritten; new words are added to the dictionary.
 - Checked locally: menu, New invoice (saved a COD invoice in Bangla), Sales, Customers, Products, Web orders, Stock, Expenses, Money, Quotations, Repairs, Suppliers, Profit - no screen phrase left in English except data. tests/l1_test.mjs (5).
 - Not yet (lang-2): the confirm-box questions, toasts and the server's own messages (errors, "Saved ... "), Settings long texts, PDFs/invoices for customers (a business setting), and the owner's review of shop words.
+
+2026-10-04 — lang-2: Bangla for messages, confirm boxes and customer invoices
+- Every message the page or the server can show was pulled out of the code (887 lines: 577 fixed, 297 with moving parts such as names and amounts) and given Bangla. Confirm boxes are translated line by line; a message inside a message is translated too ("সেভ হয়নি: Sunlu PLA Black-এর যথেষ্ট স্টক নেই: স্টকে 0, চাওয়া হয়েছে 1।"). Names, products and amounts inside stay as written.
+- কাস্টমার -> গ্রাহক everywhere (owner's word).
+- **Customer documents** (Settings → Business, owner): English or বাংলা for the invoice PDF the customer receives - labels only (ইনভয়েস, ক্রেতা, পণ্যের বিবরণ, সাবটোটাল, মোট বাকি, পেমেন্টের তথ্য, "আপনার অর্ডারের জন্য ধন্যবাদ।"); product names, customer data and figures stay as typed. The PDF server has Noto Sans Bengali. lib/doclang.js, erpDocLang.
+- tests: l1_test (8).
+- Not done: quotation PDFs, statements and the price-list PDF are still English (next if wanted); a few long explanations behind "?" that contain numbers are still English; a handful of messages assembled in unusual ways may still show English - send a screenshot and the line is added.

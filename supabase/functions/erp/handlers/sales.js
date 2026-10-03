@@ -19,6 +19,7 @@
 // Function instance lives for minutes, so the cache is at most as good as
 // the original's and never shared between businesses.
 
+import { docLang, docBangla } from '../lib/doclang.js';
 import { salesLog, returnsTab, courierLog, forget, asDate, str, SL } from '../lib/tabs.js';
 import { formatDate, num, round2, dhakaDayStart } from '../lib/time.js';
 import { phone11, custKey } from '../lib/phone.js';
@@ -1062,6 +1063,8 @@ export async function makeInvoicePdf(ctx, invoiceNo, opts = {}) {
   const img = { logo: (await docImg(ctx, p.logoTrimId)) || (await docImg(ctx, p.logoId)),
                 qr: await docImg(ctx, p.qrId) };
   const parts = invoiceArtParts(d, p, s, opts, img, now);
+  // the customer's language for what they receive (Settings > Business)
+  if ((await docLang(ctx)) === 'bn') { parts.html = docBangla(parts.html); parts.footer = docBangla(parts.footer); }
   const bytes = await renderPdf(ctx, parts.html, { footer: parts.footer });
   const f = await saveFile(ctx, 'invoices', name, bytes, 'application/pdf');
   await quietly(ctx, () => ctx.tx`update invoices set pdf_path = ${f.id || name}, pdf_url = ${f.url},

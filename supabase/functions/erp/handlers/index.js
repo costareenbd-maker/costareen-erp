@@ -52,6 +52,7 @@ const core = {
   erpBusinesses: shell.erpBusinesses,
   erpSetLook: shell.erpSetLook,
   erpSetLang: shell.erpSetLang,
+  erpDocLang: shell.erpDocLang,
   erpSetBusiness: shell.erpSetBusiness,
 
   erpCatalog: catalog.erpCatalog,

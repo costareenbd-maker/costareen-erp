@@ -42,6 +42,17 @@ export async function erpSetLook(ctx, look) {
   return { ok: true, look: v };
 }
 
+/** What customers receive (invoice PDF) - English or Bangla, for the whole business (owner). */
+export async function erpDocLang(ctx, lang) {
+  const { getConfig, setConfig } = await import('../lib/ext.js');
+  if (lang === undefined || lang === null || lang === '') return { lang: (String(await getConfig(ctx, 'doc_lang', 'en')) || 'en') === 'bn' ? 'bn' : 'en' };
+  if (ctx.s.role !== 'owner') throw new Error('Only the owner can do that.');
+  const v = String(lang).trim().toLowerCase();
+  if (v !== 'en' && v !== 'bn') throw new Error('That language is not offered.');
+  await setConfig(ctx, 'doc_lang', v);
+  return { lang: v };
+}
+
 /** This person's screen language: 'en' or 'bn'. */
 export async function erpSetLang(ctx, lang) {
   const v = String(lang || '').trim().toLowerCase();
