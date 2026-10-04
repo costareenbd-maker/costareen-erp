@@ -22,9 +22,10 @@ REF = 'oqzcuuytytqadqjlwdsh'
 
 
 def main():
-    if '--client-id' not in sys.argv or sys.argv.index('--client-id') + 1 >= len(sys.argv):
-        sys.exit(__doc__)
-    cid = sys.argv[sys.argv.index('--client-id') + 1].strip()
+    if '--client-id' in sys.argv and sys.argv.index('--client-id') + 1 < len(sys.argv):
+        cid = sys.argv[sys.argv.index('--client-id') + 1].strip()
+    else:
+        cid = input('Client ID (ends with .apps.googleusercontent.com): ').strip()
     sec = getpass.getpass('Client secret: ').strip()
     if not cid.endswith('.apps.googleusercontent.com') or not sec:
         sys.exit('That does not look like a Google OAuth client ID / secret.')
@@ -39,7 +40,20 @@ def main():
             print('saved', r.status)
     except urllib.error.HTTPError as e:
         sys.exit('Supabase said: ' + e.read().decode()[:400])
-    print('Now: python deploy.py function   (and python deploy.py cron once, for the copy timer)')
+    if '--deploy' in sys.argv:
+        import subprocess
+        here = os.path.dirname(os.path.abspath(__file__))
+        print('Switching it on (deploying the server, about a minute)...')
+        r1 = subprocess.run([sys.executable, os.path.join(here, 'deploy.py'), 'function'], cwd=here)
+        r2 = subprocess.run([sys.executable, os.path.join(here, 'deploy.py'), 'cron'], cwd=here)
+        if r1.returncode == 0 and r2.returncode == 0:
+            print()
+            print('Done. Open the ERP: Settings > Connections > Google Drive > Connect.')
+        else:
+            print()
+            print('The keys are saved, but switching on failed. Run it again, or ask Claude.')
+    else:
+        print('Now: python deploy.py function   (and python deploy.py cron once, for the copy timer)')
 
 
 if __name__ == '__main__':
