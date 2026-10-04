@@ -516,3 +516,12 @@
 - Grabs and throws: the thrower lifts and hurls the other one; a flung body spins and bounces off the sides and undersides of buttons and boxes (with a dent burst and damage) and off the tops when falling fast, then lands and gets up. Knock-outs become ragdolls that bounce the same way.
 - Long ninja leaps (flips and afterimages on long ones); the ninja sometimes hides crouched at the end of a ledge and ambushes with a flying kick, and after a good exchange often leaps far away so the fight moves across the whole page. Fixed: a fighter landing on the very tip of a button kept falling off and "landing" again.
 - Checked on a test page: in 40 s both visited 12-13 areas of the screen, 2 knock-outs, all moves including throws and hides seen, the ninja never lost health.
+
+## stick-3 — calmer, muted colours, no getting stuck (2026-10-04)
+- 30% slower overall; muted colours: the ninja mustard yellow (#c9a43a, darker in the light theme) with a dark-red headband, the enemies deep navy.
+- The next enemy comes from a random side (left / right / dropping in from the top), not always opposite the ninja.
+- Table rows are floors too (lists are mostly rows), so they no longer keep falling off the narrow Paid/Due pills.
+- A planned jump lands on the ledge it aimed for instead of the first one it passes (stacked rows used to stop every jump one row down).
+- Anyone at the bottom of the screen leaps back up after 0.7 s; anyone who cannot get closer for 3.5 s vanishes in smoke and reappears near the other (ninja style).
+- Blood cut to about a third, smaller splats that fade in 5 s; a little light-blue sweat flies off on some hits.
+- Checked on a Sales-like test page (18 rows, pills, Pay buttons): together on the same ledge ~75% of the time, 19 areas visited in 40 s, enemies entered from the top and the right.

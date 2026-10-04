@@ -9,8 +9,8 @@
 (function () {
   'use strict';
   var G = 1900, ZONE = 95, REACH_X = 640, REACH_UP = 300;
-  var SEL = '#view .card, #view .btn, #view button, #view .c3bar, #view .o_lv, #view .pill, #view .cchip, #o_cp .btn, #o_cp .cchip, #pgame';
-  var HERO_D = '#fde047', HERO_L = '#ca8a04', FOE = '#3b82f6';
+  var SEL = '#view .card, #view tbody tr, #view .btn, #view button, #view .c3bar, #view .o_lv, #view .pill, #view .cchip, #o_cp .btn, #o_cp .cchip, #pgame';
+  var HERO_D = '#c9a43a', HERO_L = '#9a7b1c', FOE = '#24346b', FOE_D = '#2c4387';
 
   var P = {
     idle: { L: 14, hy: 20, sF: 50, eF: 100, sB: 30, eB: 110, hF: 30, kF: -45, hB: -22, kB: -30 },
@@ -74,6 +74,7 @@
       }
       np.push({ el: null, x0: 0, x1: W, y: H - 2, ground: 1 });
       [hero, foe].forEach(function (m) {
+        if (m && m.aim) { m.aim = m.aim.el ? np.filter(function (p) { return p.el === m.aim.el; })[0] || null : null; }
         if (!m || !m.on) return;
         var q = m.on.el ? np.filter(function (p) { return p.el === m.on.el; })[0] : np[np.length - 1];
         if (q) { m.x = q.x0 + (m.x - m.on.x0); m.y = q.y; m.on = q; if (m.x < q.x0 - 2 || m.x > q.x1 + 2) m.on = null; } else m.on = null;
@@ -113,9 +114,12 @@
     function spark(x, y, n, c) { for (var i = 0; i < n; i++) fx.push({ k: 'spark', x: x, y: y, vx: (Math.random() - 0.5) * 380, vy: (Math.random() - 0.8) * 320, t: 0.3, T: 0.3, c: c || '#fff' }); }
     function dust(x, y, n) { for (var i = 0; i < n; i++) fx.push({ k: 'dust', x: x + (Math.random() - 0.5) * 10, y: y - 1, vx: (Math.random() - 0.5) * 80, vy: -Math.random() * 30, t: 0.45, T: 0.45, r: 2 + Math.random() * 2.5 }); }
     function bleed(x, y, dir, n) {
+      if (Math.random() < 0.5) sweat(x, y, dir, 1 + Math.floor(Math.random() * 2));
       if (!blood) { spark(x, y, n, '#fde68a'); return; }
+      n = Math.max(1, Math.round(n / 3));
       for (var i = 0; i < n; i++) fx.push({ k: 'blood', x: x, y: y, vx: dir * (60 + Math.random() * 280) + (Math.random() - 0.5) * 90, vy: -80 - Math.random() * 280, t: 1.4, T: 1.4, r: 1 + Math.random() * 1.9 });
     }
+    function sweat(x, y, dir, n) { for (var i = 0; i < n; i++) fx.push({ k: 'sweat', x: x + (Math.random() - 0.5) * 6, y: y - 6, vx: dir * (30 + Math.random() * 90), vy: -60 - Math.random() * 120, t: 0.7, T: 0.7, r: 0.9 }); }
     function begin(m, st, atk) { m.st = st; m.t = 0; m.done = 0; m.atk = atk || null; m.queue = null; }
     function enemyOf(m) { return m === hero ? foe : hero; }
     function hurt(a, b, A) {
@@ -138,7 +142,7 @@
       else { b.vx = dir * A.kb; begin(b, 'hit'); }
     }
     // a body sent flying: it spins, bounces off the sides and bottoms of buttons and boxes, and lands on a top
-    function fling(m, vx, vy) { m.on = null; m.vx = vx; m.vy = vy; begin(m, 'flung'); m.spin = 0; }
+    function fling(m, vx, vy) { m.aim = null; m.on = null; m.vx = vx; m.vy = vy; begin(m, 'flung'); m.spin = 0; }
     function bounce(m, ox, oy) {
       for (var i = 0; i < boxes.length; i++) {
         var b = boxes[i];
@@ -175,7 +179,7 @@
         if (p.x < 0) { p.x = 0; p.px = vx * 0.5; } if (p.x > W) { p.x = W; p.px = W + vx * 0.5; } if (p.y > H - 2) { p.y = H - 2; p.py = p.y + vy * 0.3; }
       }
       for (var it = 0; it < 3; it++) r.sticks.forEach(function (s) { var a = r.pts[s[0]], b = r.pts[s[1]], dx = b.x - a.x, dy = b.y - a.y, d = Math.hypot(dx, dy) || 0.01, df = (d - s[2]) / d * 0.5; a.x += dx * df; a.y += dy * df; b.x -= dx * df; b.y -= dy * df; });
-      if (blood && r.t < 1.2) { r.bleedT -= dt; if (r.bleedT <= 0) { r.bleedT = 0.07; var n = r.pts.neck; fx.push({ k: 'blood', x: n.x, y: n.y, vx: (Math.random() - 0.5) * 70, vy: -50, t: 1.2, T: 1.2, r: 1.3 }); } }
+      if (blood && r.t < 0.6) { r.bleedT -= dt; if (r.bleedT <= 0) { r.bleedT = 0.18; var n = r.pts.neck; fx.push({ k: 'blood', x: n.x, y: n.y, vx: (Math.random() - 0.5) * 70, vy: -50, t: 1.2, T: 1.2, r: 1.3 }); } }
     }
 
     // ---- moving
@@ -256,8 +260,36 @@
       m.st = 'run'; m.vx = m.dir * 250;
       if (m.x <= m.on.x0 + 2 || m.x >= m.on.x1 - 2) { m.on = null; begin(m, 'air'); m.vx = m.dir * 160; }
     }
+    function poof(m, near) {
+      var c = plats.filter(function (p) { return !p.ground && p.x1 - p.x0 > 30 && !nearBlock((p.x0 + p.x1) / 2, p.y) && (!near || Math.hypot((p.x0 + p.x1) / 2 - near.x, p.y - near.y) < 260) && (!near || p !== near.on || Math.abs(near.x - p.x0) > 60 || Math.abs(near.x - p.x1) > 60); });
+      if (!c.length) c = plats.filter(function (p) { return !p.ground && p.x1 - p.x0 > 30; });
+      if (!c.length) return;
+      var p = c[Math.floor(Math.random() * c.length)];
+      smoke(m.x, m.y - 20, m === hero ? '#c9a43a' : '#2c4387');
+      m.x = near && p === near.on ? (near.x - p.x0 > p.x1 - near.x ? p.x0 + 10 : p.x1 - 10) : p.x0 + Math.random() * (p.x1 - p.x0);
+      m.y = p.y; m.on = p; m.vx = m.vy = 0; m.flip = 0; m.spin = 0; begin(m, 'land');
+      smoke(m.x, m.y - 20, m === hero ? '#c9a43a' : '#2c4387');
+      m.stuckT = 0; m.groundT = 0;
+    }
+    function free2(m) { return m.st === 'idle' || m.st === 'run' || m.st === 'taunt' || m.st === 'land'; }
+    function watchStuck(m, dt) {
+      var tg = enemyOf(m);
+      if (m.on && m.on.ground && (!tg || !tg.on || !tg.on.ground)) {
+        m.groundT = (m.groundT || 0) + dt;
+        if (m.groundT > 0.7 && free2(m)) {   // down at the bottom of the screen: one big leap back up, or vanish and reappear
+          m.groundT = 0;
+          var up = plats.filter(function (p) { return !p.ground && p.x1 - p.x0 > 60 && m.y - p.y < 520 && Math.abs((p.x0 + p.x1) / 2 - m.x) < 500 && !nearBlock((p.x0 + p.x1) / 2, p.y); });
+          if (up.length) { var p = up[Math.floor(Math.random() * up.length)]; jumpTo(m, p.x0 + Math.random() * (p.x1 - p.x0), p.y, true, p); } else poof(m, tg);
+        }
+      } else m.groundT = 0;
+      if (!tg || !tg.on || !m.on || tg.on === m.on || m.st === 'hide' || m.goHide) { m.stuckT = 0; m.bestD = 1e9; return; }
+      var d = Math.hypot(tg.x - m.x, tg.y - m.y);
+      if (d < (m.bestD || 1e9) - 25) { m.bestD = d; m.stuckT = 0; } else m.stuckT = (m.stuckT || 0) + dt;
+      if (m.stuckT > 3.5) { m.bestD = 1e9; poof(m, tg); }
+    }
     function step(m, dt) {
       if (!m) return;
+      watchStuck(m, dt);
       m.t += dt; m.flash = Math.max(0, m.flash - dt); m.ph += dt * (m.st === 'run' ? 15 : 3);
       think(m, dt);
       var tg = enemyOf(m);
@@ -304,9 +336,10 @@
         if (m.st === 'flung') bounce(m, ox, oy);
         if (m.vy >= 0) for (var i = 0; i < plats.length; i++) {
           var p = plats[i];
+          if (m.aim && m.st !== 'flung' && p !== m.aim && !p.ground) continue;   // a planned jump lands where it was aimed
           if (m.x >= p.x0 - 3 && m.x <= p.x1 + 3 && oy <= p.y + 0.5 && m.y >= p.y) {
             if (m.st === 'flung' && m.vy > 500 && !p.ground) { m.y = p.y; m.vy = -m.vy * 0.32; m.vx *= 0.7; dust(m.x, p.y, 6); spark(m.x, p.y - 4, 4); if (m !== hero) m.hp -= 4; break; }   // bounces on the top
-            m.y = p.y; m.on = p; m.x = Math.max(p.x0, Math.min(p.x1, m.x)); m.vy = 0; m.vx *= 0.2; m.flip = 0; m.spin = 0; m.lastLand = now; dust(m.x, p.y, 6);
+            m.aim = null; m.y = p.y; m.on = p; m.x = Math.max(p.x0, Math.min(p.x1, m.x)); m.vy = 0; m.vx *= 0.2; m.flip = 0; m.spin = 0; m.lastLand = now; dust(m.x, p.y, 6);
             if (m.st === 'flung') { m.down = 1; begin(m, 'land'); } else begin(m, 'land');
             break;
           }
@@ -344,7 +377,7 @@
       var kF = pt(hip, p.hF, 10), fF = pt(kF, p.hF + p.kF, 10), kB = pt(hip, p.hB, 10), fB = pt(kB, p.hB + p.kB, 10);
       return { hip: hip, neck: neck, head: head, eF: eF, hF: hF, eB: eB, hB: hB, kF: kF, fF: fF, kB: kB, fB: fB };
     }
-    function colorOf(team) { return team === 'hero' ? (dark() ? HERO_D : HERO_L) : FOE; }
+    function colorOf(team) { return team === 'hero' ? (dark() ? HERO_D : HERO_L) : (dark() ? FOE_D : FOE); }
     function drawMan(J, team, flash, c, ang, alpha) {
       ctx.save(); if (alpha !== undefined) ctx.globalAlpha = alpha;
       if (ang) { ctx.translate(c.x, c.y); ctx.rotate(ang); ctx.translate(-c.x, -c.y); }
@@ -365,7 +398,7 @@
       drawMan(J, m.team, m.flash > 0, c, ang, alpha);
       if (m.team === 'hero') {
         ctx.save(); ctx.globalAlpha = alpha; if (ang) { ctx.translate(c.x, c.y); ctx.rotate(ang); ctx.translate(-c.x, -c.y); }
-        var hx = J.head.x - m.dir * 5, hy = J.head.y - 1, wv = Math.sin(now * 18 + m.x * 0.05), band = '#b91c1c';
+        var hx = J.head.x - m.dir * 5, hy = J.head.y - 1, wv = Math.sin(now * 18 + m.x * 0.05), band = '#8f2a2a';
         ctx.strokeStyle = band; ctx.lineWidth = 2.4; ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(J.head.x - 5.8, J.head.y - 1.5); ctx.lineTo(J.head.x + 5.8, J.head.y - 1.5); ctx.stroke();
         ctx.lineWidth = 1.8; ctx.beginPath(); ctx.moveTo(hx, hy); ctx.quadraticCurveTo(hx - m.dir * 9, hy + wv * 3, hx - m.dir * 18, hy + 2 + wv * 5); ctx.stroke();
         ctx.beginPath(); ctx.moveTo(hx, hy); ctx.quadraticCurveTo(hx - m.dir * 8, hy + 4 + wv * 2, hx - m.dir * 14, hy + 7 + wv * 4); ctx.stroke();
@@ -380,7 +413,8 @@
       if (foe) drawFighter(foe); if (hero) drawFighter(hero);
       fx.forEach(function (p) {
         var a = p.t / p.T; ctx.globalAlpha = Math.max(0, Math.min(1, a));
-        if (p.k === 'blood') { ctx.fillStyle = '#dc2626'; ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, 7); ctx.fill(); }
+        if (p.k === 'blood') { ctx.fillStyle = '#b91c1c'; ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, 7); ctx.fill(); }
+        else if (p.k === 'sweat') { ctx.fillStyle = '#bfdbfe'; ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, 7); ctx.fill(); }
         else if (p.k === 'spark') { ctx.fillStyle = p.c; ctx.fillRect(p.x - 1, p.y - 1, 2.2, 2.2); }
         else if (p.k === 'smoke' || p.k === 'dust') { ctx.fillStyle = p.k === 'smoke' ? p.c : 'rgba(160,150,140,.7)'; ctx.globalAlpha *= 0.6; ctx.beginPath(); ctx.arc(p.x, p.y, p.r * (1.6 - a), 0, 7); ctx.fill(); }
         else if (p.k === 'ring') { ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(p.x, p.y, 4 + (1 - a) * 15, 0, 7); ctx.stroke(); }
@@ -391,10 +425,10 @@
     }
     function bringFoe() {
       // the next one leaps in from the far side of the screen
-      var fromLeft = hero ? hero.x > W / 2 : Math.random() < 0.5;
-      var m = make('foe', fromLeft ? -30 : W + 30, 80 + Math.random() * Math.max(40, H * 0.45), null);
+      var r = Math.random(), fromLeft = r < 0.4, fromTop = r >= 0.8;
+      var m = make('foe', fromTop ? W * (0.15 + Math.random() * 0.7) : fromLeft ? -30 : W + 30, fromTop ? -40 : 80 + Math.random() * Math.max(40, H * 0.45), null);
       m.dir = fromLeft ? 1 : -1;
-      var land = plats.filter(function (p) { return !p.ground && (fromLeft ? p.x0 < W * 0.35 : p.x1 > W * 0.65) && !nearBlock((p.x0 + p.x1) / 2, p.y); });
+      var land = plats.filter(function (p) { return !p.ground && (fromTop ? Math.abs((p.x0 + p.x1) / 2 - m.x) < 300 : fromLeft ? p.x0 < W * 0.35 : p.x1 > W * 0.65) && !nearBlock((p.x0 + p.x1) / 2, p.y); });
       var p = land.length ? land[Math.floor(Math.random() * land.length)] : plats[plats.length - 1];
       jumpTo(m, spot(null, p, fromLeft ? p.x0 + 30 : p.x1 - 30), p.y, true, p);
       foe = m;
@@ -404,7 +438,7 @@
       raf = requestAnimationFrame(tick);
       var dt = Math.min(0.05, (t - last) / 1000 || 0); last = t; acc += dt;
       if (acc < 1 / 45) return;
-      dt = Math.min(0.05, acc); acc = 0; now += dt;
+      dt = Math.min(0.05, acc) * 0.7; acc = 0; now += dt;
       scanT -= dt; if (scanT <= 0) { scanT = 0.5; scan(); }
       if (!hero) { var ok = plats.filter(function (p) { return !p.ground && p.x1 - p.x0 > 40 && !nearBlock((p.x0 + p.x1) / 2, p.y); }); var p = ok.length ? ok[Math.floor(Math.random() * ok.length)] : plats[plats.length - 1]; hero = make('hero', (p.x0 + p.x1) / 2, p.y, p); smoke(hero.x, hero.y - 20, '#fde047'); }
       if (!foe) { nextFoeT -= dt; if (nextFoeT <= 0) bringFoe(); }
@@ -412,8 +446,8 @@
       rags.forEach(function (r) { stepRag(r, dt); }); rags = rags.filter(function (r) { return r.t < 4; });
       fx.forEach(function (p) {
         p.t -= dt; p.x += p.vx * dt || 0; p.y += p.vy * dt || 0;
-        if (p.k === 'blood') { p.vy += G * 0.6 * dt; for (var i = 0; i < plats.length; i++) { var q = plats[i]; if (p.x >= q.x0 && p.x <= q.x1 && p.y >= q.y && p.y - p.vy * dt <= q.y + 1 && p.vy > 0) { p.t = 0; decals.push({ x: p.x, y: q.y, on: q, r: p.r * 1.4, t: 9 }); break; } } }
-        if (p.k === 'spark') p.vy += 900 * dt;
+        if (p.k === 'blood') { p.vy += G * 0.6 * dt; for (var i = 0; i < plats.length; i++) { var q = plats[i]; if (p.x >= q.x0 && p.x <= q.x1 && p.y >= q.y && p.y - p.vy * dt <= q.y + 1 && p.vy > 0) { p.t = 0; decals.push({ x: p.x, y: q.y, on: q, r: p.r * 1.1, t: 5 }); break; } } }
+        if (p.k === 'spark' || p.k === 'sweat') p.vy += 900 * dt;
       });
       fx = fx.filter(function (p) { return p.t > 0; });
       decals.forEach(function (d) { d.t -= dt; }); decals = decals.filter(function (d) { return d.t > 0; }); if (decals.length > 160) decals.splice(0, decals.length - 160);
