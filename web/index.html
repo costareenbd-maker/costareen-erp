@@ -18523,5 +18523,42 @@ document.addEventListener('change', function (ev) {
   usrPowSave(id, o, (a ? a.label : p) + (t.checked ? ' switched on.' : ' switched off.') + ' They see it after a refresh.');
 });
 </script>
+
+<!-- hover on everything you can press (2026-10-05): one layer over the old styles, mouse only; keyboard gets a ring -->
+<style>
+@media (hover:hover) and (pointer:fine) {
+  .btn, button.act, button.chip, .cchip, .tabs button, button[role="tab"], #tabbar button, .navgrp, select, summary,
+  .alert[data-go], [data-lv-pg], .o_tile, a[href] {
+    transition:background-color .14s, border-color .14s, color .14s, box-shadow .14s, transform .14s, filter .14s;
+  }
+  /* buttons: a small lift and a shadow, pressed sinks back */
+  .btn:not(:disabled):hover, button.act:not(:disabled):hover { transform:translateY(-1px); box-shadow:var(--shadow-lg); }
+  .btn:not(:disabled):active, button.act:not(:disabled):active { transform:translateY(0) scale(.98); box-shadow:none; }
+  /* tabs and switches */
+  .tabs button:not([aria-selected="true"]):not(:disabled):hover,
+  button[role="tab"]:not([aria-selected="true"]):not(:disabled):hover { background:var(--series-1-soft); color:var(--series-1); }
+  #tabbar button:hover { color:var(--series-1); background:var(--series-1-soft); }
+  /* chips: the off ones light up, the on one brightens */
+  button.chip:not(.on):not(:disabled):hover, .cchip:not(:disabled):hover { border-color:var(--series-1); color:var(--series-1); background:var(--series-1-soft); }
+  button.chip.on:not(:disabled):hover { filter:brightness(1.1); }
+  button.chip:not(:disabled):active, .cchip:not(:disabled):active { transform:scale(.97); }
+  /* drop-downs */
+  select:not(:disabled):hover { border-color:var(--series-1); }
+  /* side-menu group headers that fold */
+  .navgrp:hover { color:var(--ink); background:color-mix(in srgb, var(--series-1) 8%, transparent); border-radius:8px; }
+  /* dashboard alerts that open a list */
+  .alert[data-go]:hover { transform:translateY(-1px); box-shadow:var(--shadow-lg); }
+  summary:hover { color:var(--series-1); }
+  [data-lv-pg]:not(:disabled):hover { color:var(--series-1); border-color:var(--series-1); }
+  .o_tile:hover { transform:translateY(-2px); }
+  a[href]:not(.btn):hover { text-decoration:underline; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .btn:hover, button.act:hover, .alert[data-go]:hover, .o_tile:hover { transform:none !important; }
+}
+button:focus-visible, a:focus-visible, select:focus-visible, summary:focus-visible, [role="tab"]:focus-visible, .navgrp:focus-visible {
+  outline:2px solid var(--series-1); outline-offset:2px;
+}
+</style>
 </body>
 </html>

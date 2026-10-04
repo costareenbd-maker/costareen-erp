@@ -701,3 +701,6 @@ Not done: per-person ability switches in Settings > Users. Tests: mgr_access 11;
 - Change of default: a manager now sees buying prices everywhere (product page, Excel, catalog), because "Product cost" is a manager ability. Switch it off per person if not wanted.
 - Not switchable (stay with shareholder/owner): money accounts, capital, users, connections, security. Dropped a "void invoices" switch: there is no Void button on the page.
 Tests: powers 33; d6/erp_server/goods/stock switch the manager's Product cost off where they test the hidden-cost view; all suites green.
+
+## Hover on everything you can press (2026-10-05)
+One CSS layer (mouse only): buttons lift with a shadow and sink when pressed; tabs, chips, phone tab bar, drop-downs, side-menu group headers, dashboard alert cards, list pager, home tiles and links light up. Keyboard focus gets a blue ring. Audit over every screen: no clickable element left without a hover (except the tab already open). Respects reduced motion.
