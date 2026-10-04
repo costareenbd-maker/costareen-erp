@@ -17017,7 +17017,7 @@ function makeGame() {
     if (strip.W) strip.game.size(strip.W, strip.H - bar.offsetHeight);
   }
   tabs.addEventListener('click', function (ev) { var b = ev.target.closest('[data-pgpick]'); if (b && b.getAttribute('data-pgpick') !== pick) { use(b.getAttribute('data-pgpick')); if (help.style.display !== 'none') helpShow(true); } });
-  x.addEventListener('click', function () { strip.pause(); try { localStorage.setItem('erp_game_hide', '1'); } catch (e) {} gamePlace(); toast('Game hidden on this device. Maintenance (at the bottom) brings it back.'); });
+  x.addEventListener('click', function () { strip.pause(); try { localStorage.setItem('erp_game_hide', '1'); } catch (e) {} gamePlace(); toast('Game hidden on this device. "Show the game" under the invoice brings it back.'); });
   strip.size = function (w, h) { strip.W = w; strip.H = h; if (strip.game) strip.game.size(w, Math.max(60, h - (bar.offsetHeight || 30))); };
   strip.pause = function () { if (strip.game) strip.game.pause(); };
   Object.defineProperty(strip, 'state', { get: function () { return strip.game ? strip.game.state() : 'idle'; } });
@@ -17295,6 +17295,10 @@ function gamePlace() {
   var v = el('view');
   if (el('pgoff')) return;                     // the offline window holds it
   var want = v && VIEW === 'invoice' && GAMEP && GAMEP.on && !gameHidden() && window.innerWidth >= 760 && !(INVP && INVP.no);
+  // hidden on this device: a small way back right here (Maintenance is not every role's screen)
+  var back = el('pgshow'), wantBack = v && VIEW === 'invoice' && GAMEP && GAMEP.on && gameHidden() && window.innerWidth >= 760 && !(INVP && INVP.no);
+  if (wantBack && !back) { back = document.createElement('div'); back.id = 'pgshow'; back.style.cssText = 'margin:14px 0 20px;text-align:center'; back.innerHTML = '<button class="btn small" type="button" id="game_show">Show the game</button>'; v.parentNode.insertBefore(back, v.nextSibling); }
+  else if (!wantBack && back) back.parentNode.removeChild(back);
   if (!want) { if (GAME && GAME.el.parentNode) { GAME.pause(); GAME.el.parentNode.removeChild(GAME.el); } return; }
   if (!GAME) GAME = makeGame();
   // a sibling right after the page, so a repaint of the invoice never touches it (or the game in play)
@@ -17306,8 +17310,7 @@ function gamePlace() {
   GAME.el.style.margin = (36 - padB) + 'px 0 24px ' + (v.getBoundingClientRect().left - v.parentNode.getBoundingClientRect().left + padL) + 'px';
   var top = GAME.el.getBoundingClientRect().top + window.scrollY;
   var free = window.innerHeight - top - 24;
-  var h = Math.min(300, Math.floor(free / 2));
-  if (h < 150) { GAME.pause(); GAME.el.style.display = 'none'; return; }
+  var h = Math.max(190, Math.min(300, Math.floor(free / 2)));
   GAME.size(inner, h);
 }
 var repaintPG = repaint;
