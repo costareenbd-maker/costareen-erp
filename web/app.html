@@ -16287,8 +16287,10 @@ document.addEventListener('click', function (ev) {
   var tile = t.closest('[data-conntile]');
   if (tile) {
     var want = { website: 'Website', courier: 'courier', whatsapp: 'WhatsApp', email: 'mail', google: 'Google Drive', ai: 'AI' }[tile.getAttribute('data-conntile')] || '';
-    var h2 = [].slice.call(document.querySelectorAll('#view h2')).filter(function (h) { return h !== tile && h.closest('.card') && !h.closest('.conn') && h.textContent.toLowerCase().indexOf(want.toLowerCase()) >= 0; })[1] ||
-             [].slice.call(document.querySelectorAll('#view h2')).filter(function (h) { return h.textContent.toLowerCase().indexOf(want.toLowerCase()) >= 0 && h.textContent.indexOf('Connections') < 0; })[0];
+    // the card whose title starts with the tile's name (not "Any website - open door"), else one that mentions it
+    var w0 = want.toLowerCase(), hs = [].slice.call(document.querySelectorAll('#view h2')).filter(function (h) { return h.closest('.card') && h.textContent.indexOf('Connections') < 0; });
+    var h2 = hs.filter(function (h) { return h.textContent.replace(/[?\s]+$/, '').trim().toLowerCase().indexOf(w0) === 0; })[0] ||
+             hs.filter(function (h) { return h.textContent.toLowerCase().indexOf(w0) >= 0; })[0];
     if (h2) { h2.scrollIntoView({ behavior: 'smooth', block: 'start' }); var c = h2.closest('.card'); if (c) { c.style.outline = '2px solid var(--series-1)'; setTimeout(function () { c.style.outline = ''; }, 1600); } }
   }
 });
