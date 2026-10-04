@@ -20,6 +20,8 @@
  * v11: the ninja always senses where they are: with no way to climb there he fires the rope within about two seconds,
  * to their floor or to the object that leads on to it (the rope reaches almost the whole screen), then free-runs on.
  * The blue men only sense him when he is near (about 380) or after he hits them; until then they patrol.
+ * v11.1: the ninja's sense works everywhere: far from the enemy he looks about for 2-5 s, then "!" and he goes by
+ * free-running, rope up or rope down - he never waits for an enemy who has not noticed him.
  */
 (function () {
   'use strict';
@@ -503,8 +505,7 @@
     }
     function goToward(m, tg) {   // chase him by the quickest chain of moves; no way at all: get as close as I can
       if (!m.on || !tg.on) return false;
-      var canCome = function () { var Pt = paths(tg.on, tg.x); return Pt && Pt.dist[idx(m.on)] < 1e9; };
-      if (tg.on.ground && !m.on.ground && (m !== hero || canCome())) { var up0 = upFrom(m, tg); if (up0 === m.on) return false; if (up0) return moveTo(m, up0); }   // he is at the bottom: wait for him up here (the ninja goes down if they cannot come up)
+      if (tg.on.ground && !m.on.ground && m !== hero) { var up0 = upFrom(m, tg); if (up0 === m.on) return false; if (up0) return moveTo(m, up0); }   // he is at the bottom: wait for him up here (the ninja goes down if they cannot come up)
       var P2 = paths(m.on, m.x), e = firstMove(P2, tg.on), ti = idx(tg.on);
       if (m === hero) {
         if (!e || isBad(m, e) || (P2 && P2.dist[ti] > 5)) {   // no way up (or a long one): the rope - to him, or after a moment to whatever leads on
@@ -630,6 +631,22 @@
       }
       if (tg.cho && m !== hero && Math.abs(tg.x - m.x) < 80) { m.dir = tg.x >= m.x ? 1 : -1; m.vx = 0; if (m.st !== 'guard' && m.st !== 'taunt') begin(m, Math.random() < 0.3 ? 'taunt' : 'guard'); return; }   // someone else's fight: wait his turn
       var dx = tg.x - m.x, ad = Math.abs(dx), same = tg.on && m.on && (tg.on === m.on || (Math.abs(tg.y - m.y) < 14 && ad < 90)), sc = scene.name;   // next-door tiles at the same height are one fighting ground
+      if (m === hero && !(sc === 'retreat') && !(sc === 'pursuit' && scene.runner === hero)) {
+        // the ninja's sense, wherever the enemy is: far away he looks about for a few seconds, then he knows and goes
+        var dd = Math.hypot(dx, tg.y - m.y);
+        if (same || dd < 300) { m.huntSince = 0; m.locked = 0; }
+        else if (tg.on) {
+          if (!m.huntSince) { m.huntSince = now; m.senseIn = 2 + Math.random() * 3; }
+          if (!m.locked && now - m.huntSince > m.senseIn) { m.locked = 1; m.lockAt = now; m.dir = dx >= 0 ? 1 : -1; begin(m, 'guard'); m.vx = 0; return; }
+          if (!m.locked) { if (m.st !== 'look' && Math.random() < 0.35) { begin(m, 'look'); m.vx = 0; } else if (m.st !== 'look' && m.st !== 'walk') { m.st = 'walk'; m.vx = (Math.random() < 0.5 ? 1 : -1) * 60; } return; }
+          if (now - m.lockAt < 0.5) return;                          // the "!" moment
+          if (m.st === 'hide') begin(m, 'guard');
+          if (goToward(m, tg)) return;
+          if (tg.y - m.y > 60 && rappel(m, tg)) return;
+          if (m.y - tg.y > 60 && hookPlan(m, tg)) return;
+          lost(m); return;
+        }
+      }
       m.dir = dx >= 0 ? 1 : -1;
       var flee = (sc === 'chase' && m === foe) || (sc === 'retreat' && m === hero) || (sc === 'pursuit' && m === scene.runner);
       if (flee) {
@@ -684,7 +701,7 @@
       }
       if (!tg.on) { if (m.st === 'run' || m.st === 'walk') { m.st = 'guard'; m.vx = 0; } return; }   // he is in the air: wait for him to land
       if (same) m.waitT = 0;
-      if (!same && m === hero && Math.hypot(dx, tg.y - m.y) < 260 && (sc === 'duel' || sc === 'standoff') && (m.waitT = (m.waitT || 0) + 0.25) < 1.6) { if (m.st !== 'guard') { begin(m, 'guard'); m.vx = 0; } return; }   // he lets the other come to him
+      if (!same && m === hero && tg.aware && now - tg.aware < 6 && Math.hypot(dx, tg.y - m.y) < 260 && (sc === 'duel' || sc === 'standoff') && (m.waitT = (m.waitT || 0) + 0.25) < 1.6) { if (m.st !== 'guard') { begin(m, 'guard'); m.vx = 0; } return; }   // he lets the other come to him
       if (!same) { if (!goToward(m, tg)) lost(m); return; }
       // same ledge (or the tile next door: hop over the gap)
       if (tg.on !== m.on && (ad > 34 || Math.abs(tg.y - m.y) > 2)) { if (moveTo(m, tg.on)) return; }
@@ -937,6 +954,7 @@
         }
       }
       drawMan(J, m.team, m.flash > 0, c, ang, alpha);
+      if (m.team === 'hero' && m.lockAt && now - m.lockAt < 0.8 && m.st !== 'seq') { ctx.font = '800 14px system-ui, sans-serif'; ctx.textAlign = 'center'; ctx.fillStyle = dark() ? '#fde68a' : '#d97706'; ctx.fillText('!', J.head.x, J.head.y - 11); }
       if (m.st === 'seq' && m.seq && m.seq[m.seqI] && m.seq[m.seqI].p === 'hookaim') { ctx.font = '800 13px system-ui, sans-serif'; ctx.textAlign = 'center'; ctx.fillStyle = dark() ? '#fde68a' : '#d97706'; ctx.fillText('!', J.head.x, J.head.y - 11); }
       // looking for him: "?" over the head
       if (m.st === 'look') { ctx.font = '700 12px system-ui, sans-serif'; ctx.textAlign = 'center'; ctx.fillStyle = 'rgba(203,213,225,.9)'; ctx.fillText('?', J.head.x + m.dir * 6, J.head.y - 10); }
