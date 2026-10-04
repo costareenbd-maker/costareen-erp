@@ -577,3 +577,14 @@
 - The computer: long flipping leaps that end in a dive kick, dropkicks at mid range, backfists, backflip dodges against big attacks, wall jumps when cornered, super-jump air combos after its uppercut, elbow drops on a downed player.
 - fight.js 109 KB (32 KB downloaded). Checked on a standalone page: backfist, dropkick, pixel look and muscles in captured frames, a 40 s fight with no errors where the computer used air punch, backfist, dropkick and the player became a ragdoll 8 times and got up.
 - The neutral office-erp copy did not get this upload (the PC ran out of memory twice); erp.costareen.com has it.
+
+## game-8 — Brawl: Mortal-Kombat-style finishers and look (our own "PRINT-ALITY") (2026-10-04)
+- FINISH HIM!: when a knock-out decides the match (and half the time in Endless), the loser stands dazed, the screen darkens, "FINISH HIM!" in red metal letters with a 3-key combo shown as boxes (turn green as typed) and a 3.6 s timer bar. Typed in time → a finisher; missed → normal K.O. The computer, when it wins, finishes the player about 2 in 3 times.
+- Six printing finishers, chosen by the winner's special, ending in "PRINT-ALITY!": Spool Storm (spools rain and pile up over him), Resin Tomb (frozen in a green resin block that cracks and shatters), Print Over (a giant print head prints layers over him into a block), Spaghetti Wrap (filament wraps him, he is dragged away), Laser Engrave ("LOSER" engraved into the floor with a glowing laser), Pillar Launch (a mega pillar fires him into the sky; he crashes down as a ragdoll). The boss uses Spaghetti Wrap. No gore on the real faces (owner agreed).
+- CRUSHER (↓+F with a full power bar): slow motion, three blows with a bone-crack sound, white flash, freeze and close zoom, "CRACK!", then a launch; the computer uses it too.
+- BRUTAL!: the next heavy hit after a 5-hit combo = slow motion, big launch, sound.
+- Look: night arena (dark red sky, red moon, floor fog), red pulsing screen edges when the player is low, Impact-style metal lettering for FIGHT!, K.O., NAME WINS, FINISH HIM!, PRINT-ALITY!.
+- Cartoon blood (small red squares on hits), B switches it, remembered.
+- Sounds: bone crack, the deep finish drone, brutal hit.
+- Never stuck in slow motion (a guard returns to normal speed). fight.js 125 KB (36 KB downloaded).
+- Checked on a standalone page: FINISH HIM → typed combo → Spool Storm / Spaghetti Wrap / Laser Engrave → next level or champion; a 38 s fight with no errors; captured FINISH HIM and PRINT-ALITY frames. Both web copies (erp.costareen.com and office-erp) updated.
