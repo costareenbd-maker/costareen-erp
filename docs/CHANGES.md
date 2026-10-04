@@ -618,3 +618,6 @@ Clicking any table cell in phone/card view opened a "Parcel labels" tab ("No boo
 
 ## Every home owner is a platform admin (2026-10-04)
 054_home_owners_platform.sql: trigger on memberships - an owner of the home business (one whose owners include a founding platform admin) is added to platform_admins (note "home owner (054)") and removed when no longer owner. Nazir added. Founding admin rows never touched.
+
+## Stick fight v7: written fights, a third man, natural run (2026-10-04)
+When the ninja and an enemy meet on one ledge a scripted fight plays (7 two-man and 3 three-man scripts): every move lands at its set moment and the answer (block, parry, duck, lean away, take it, gut, go down, slam over the head, fly) is timed to it; new moves hook, knee, elbow, headbutt, stomp, axe kick, spinning kick, backflip, slam. Slow motion on the last blow, hit-stop, shake, whoosh on a dodge, ground hits on a downed man. Only the last blow of a script can kill. A bigger purple third man drops in (6 rounds in 10, 4-10 s in) for two-on-one; he waits his turn while others fight; when the blue one dies the purple one takes his place. Run: leaning in, bent arms pumping, trailing knee folds, stride speed follows running speed. Checked: contact sheets of a two-man and a three-man fight, 80 s of play with no error and no stuck fight. app.html loads stickfight.js?v=7.

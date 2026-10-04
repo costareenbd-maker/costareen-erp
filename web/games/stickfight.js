@@ -5,12 +5,15 @@
  * send a body flying and bouncing off the sides of buttons and boxes. The top line of every box and button is a
  * floor; they never fly, only jump (long ninja leaps) from ledge to ledge. They keep clear of the mouse and of
  * the field being typed in. One see-through canvas over the page that never takes a click.
+ * v7: when they meet on one ledge a written fight plays (film-style: every move has its moment and the other side's
+ * answer lands on it), a bigger purple third man can drop in for two-on-one fights, slow motion on the big blows,
+ * and a more natural run.
  */
 (function () {
   'use strict';
   var G = 1900, ZONE = 95, REACH_X = 640, REACH_UP = 340, M = 96;   // M: about an inch kept clear at the left, right and bottom
   var SEL = '#nav button, header.topbar input, header.topbar button, header.topbar select, #view .tabs button, #view .seg button, #view input, #view select, #view .card, #view .kpi, #view .hero, #view .qa, #view .note, #view .grid > *, #view .chips > *, #view h2, #view canvas, #view tbody tr, #view .btn, #view button, #view .c3bar, #view .o_lv, #view .pill, #view .cchip, #o_cp .btn, #o_cp .cchip, #pgame';
-  var HERO_D = '#c9a43a', HERO_L = '#f59e0b', FOE = '#2563eb', FOE_D = '#2c4387';
+  var HERO_D = '#c9a43a', HERO_L = '#f59e0b', FOE = '#2563eb', FOE_D = '#2c4387', THIRD = '#7c3aed', THIRD_D = '#6d4aa8';
 
   var P = {
     idle: { L: 14, hy: 20, sF: 50, eF: 100, sB: 30, eB: 110, hF: 30, kF: -45, hB: -22, kB: -30 },
@@ -40,6 +43,50 @@
   function mix(a, b, t) { var o = {}; for (var k in a) o[k] = a[k] + (b[k] - a[k]) * t; return o; }
   function ease(t) { return t < 0 ? 0 : t > 1 ? 1 : t * t * (3 - 2 * t); }
   function rad(a) { return a * Math.PI / 180; }
+  P.hook = { L: 18, hy: 19, sF: 95, eF: 75, sB: 30, eB: 110, hF: 30, kF: -40, hB: -30, kB: -20 };
+  P.knee = { L: 12, hy: 22, sF: 75, eF: 55, sB: 75, eB: 55, hF: 115, kF: -140, hB: -5, kB: -5 };
+  P.elbow = { L: 26, hy: 19, sF: 100, eF: 150, sB: 20, eB: 110, hF: 35, kF: -40, hB: -30, kB: -20 };
+  P.headbutt = { L: 42, hy: 19, sF: 65, eF: 60, sB: 65, eB: 60, hF: 25, kF: -30, hB: -25, kB: -20 };
+  P.stomp = { L: -6, hy: 23, sF: 60, eF: 60, sB: -25, eB: 60, hF: 45, kF: -8, hB: -5, kB: -5 };
+  P.axe = { L: -16, hy: 21, sF: 125, eF: 30, sB: -60, eB: 40, hF: 170, kF: 0, hB: -10, kB: -10 };
+  P.duck = { L: 38, hy: 9, sF: 60, eF: 120, sB: 40, eB: 130, hF: 90, kF: -150, hB: -10, kB: -140 };
+  P.gut = { L: 58, hy: 17, sF: 20, eF: 90, sB: 10, eB: 100, hF: 20, kF: -30, hB: -20, kB: -20 };
+  P.hurt = { L: -36, hy: 20, sF: -40, eF: 20, sB: -60, eB: 20, hF: 15, kF: -15, hB: -25, kB: -15 };
+  P.lean = { L: -26, hy: 19, sF: 40, eF: 120, sB: 20, eB: 130, hF: 35, kF: -60, hB: -30, kB: -30 };
+  P.parry = { L: 5, hy: 19, sF: 125, eF: 60, sB: 50, eB: 140, hF: 32, kF: -48, hB: -26, kB: -34 };
+  P.lie = { L: 0, hy: 21, sF: 165, eF: 15, sB: 150, eB: 25, hF: 8, kF: -6, hB: -8, kB: -14 };
+  // moves in a written fight: pose, length, the moment it lands, the distance it lands from
+  var MV = {
+    jab: { p: 'jab', d: 0.24, hit: 0.08, r: 28 }, cross: { p: 'cross', d: 0.28, hit: 0.1, r: 28 }, hook: { p: 'hook', d: 0.32, hit: 0.13, r: 24 },
+    upper: { p: 'upper', d: 0.38, hit: 0.13, r: 20 }, knee: { p: 'knee', d: 0.34, hit: 0.13, r: 18 }, elbow: { p: 'elbow', d: 0.3, hit: 0.11, r: 18 },
+    headbutt: { p: 'headbutt', d: 0.32, hit: 0.13, r: 16 }, kick: { p: 'kick', d: 0.36, hit: 0.13, r: 32 }, spin: { p: 'kick', d: 0.48, hit: 0.24, r: 32, spin: 1 },
+    round: { p: 'kick', d: 0.44, hit: 0.2, r: 33, spin: 0.6 }, sweep: { p: 'sweep', d: 0.42, hit: 0.15, r: 30 }, stomp: { p: 'stomp', d: 0.36, hit: 0.18, r: 12 },
+    axe: { p: 'axe', d: 0.6, hit: 0.38, r: 22, hop: 34 }, flykick: { p: 'flykick', d: 0.55, hit: 0.3, r: 28, hop: 30 }, slam: { p: 'grab', d: 0.75, hit: 0.12, r: 18 },
+    backflip: { p: 'air', d: 0.5, back: 52 }, taunt: { p: 'taunt', d: 0.7 }, step: { p: 'walk', d: 0.32 }
+  };
+  // the answer on the other side (early: it starts as the blow is seen coming)
+  var REACT = {
+    hit: { p: 'hurt', d: 0.32, kb: 14, dmg: 8, blood: 7 }, head: { p: 'hurt', d: 0.45, kb: 24, dmg: 13, blood: 13, heavy: 1 },
+    gut: { p: 'gut', d: 0.45, kb: 8, dmg: 10, blood: 4 }, block: { p: 'block', d: 0.26, kb: 6 }, parry: { p: 'parry', d: 0.24, kb: 3 },
+    duck: { p: 'duck', d: 0.42, early: 1 }, lean: { p: 'lean', d: 0.38, kb: 18, early: 1 },
+    down: { p: 'lie', d: 1.25, kb: 22, dmg: 12, blood: 10, heavy: 1 }, onground: { p: 'hurt', d: 0.3, dmg: 8, blood: 10 },
+    slam: { d: 0.55, dmg: 16 }, fling: { kb: 560, up: 380, dmg: 24, blood: 16, heavy: 1 }
+  };
+  // the written fights: [who, move, at whom, answer, {gap, with, off, pass, slow}]  a = the ninja, b = his man, c = the third
+  var SC2 = [
+    [['b', 'jab', 'a', 'parry'], ['b', 'cross', 'a', 'duck'], ['a', 'upper', 'b', 'head'], ['b', 'kick', 'a', 'block'], ['a', 'knee', 'b', 'gut'], ['a', 'elbow', 'b', 'hit'], ['a', 'spin', 'b', 'fling', { slow: 0.7 }]],
+    [['b', 'hook', 'a', 'hit'], ['b', 'kick', 'a', 'lean'], ['a', 'taunt'], ['b', 'cross', 'a', 'parry'], ['a', 'sweep', 'b', 'down'], ['a', 'stomp', 'b', 'onground', { gap: 0.05 }], ['a', 'step', null, null, { gap: 0.6 }], ['a', 'headbutt', 'b', 'head'], ['a', 'round', 'b', 'fling', { slow: 0.6 }]],
+    [['a', 'jab', 'b', 'block'], ['a', 'cross', 'b', 'block'], ['a', 'hook', 'b', 'hit'], ['a', 'knee', 'b', 'gut'], ['a', 'elbow', 'b', 'head'], ['a', 'upper', 'b', 'fling', { slow: 0.6 }]],
+    [['b', 'flykick', 'a', 'duck', { pass: 1 }], ['a', 'spin', 'b', 'block', { gap: 0.1 }], ['b', 'hook', 'a', 'parry'], ['a', 'headbutt', 'b', 'head'], ['a', 'slam', 'b', 'slam', { slow: 0.45 }], ['a', 'stomp', 'b', 'onground', { gap: 0.1 }], ['a', 'step', null, null, { gap: 0.7 }], ['a', 'kick', 'b', 'fling']],
+    [['a', 'jab', 'b', 'hit'], ['b', 'cross', 'a', 'hit'], ['a', 'jab', 'b', 'block'], ['b', 'jab', 'a', 'block'], ['a', 'backflip'], ['b', 'step'], ['a', 'flykick', 'b', 'head'], ['a', 'axe', 'b', 'down', { slow: 0.6 }], ['a', 'taunt', null, null, { gap: 0.5 }]],
+    [['b', 'kick', 'a', 'block'], ['b', 'round', 'a', 'duck'], ['a', 'upper', 'b', 'head'], ['a', 'knee', 'b', 'gut'], ['a', 'knee', 'b', 'gut'], ['a', 'elbow', 'b', 'down', { slow: 0.5 }], ['a', 'stomp', 'b', 'onground', { gap: 0.15 }], ['a', 'taunt', null, null, { gap: 0.4 }]],
+    [['b', 'jab', 'a', 'hit'], ['b', 'cross', 'a', 'hit'], ['b', 'knee', 'a', 'gut'], ['b', 'upper', 'a', 'lean'], ['a', 'sweep', 'b', 'down'], ['a', 'backflip'], ['a', 'step', null, null, { gap: 0.6 }], ['a', 'flykick', 'b', 'fling', { slow: 0.6 }]]
+  ];
+  var SC3 = [
+    [['a', 'taunt'], ['b', 'kick', 'a', 'block'], ['c', 'hook', 'a', 'duck'], ['b', 'cross', 'c', 'head', { with: 1, off: 0.08 }], ['a', 'sweep', 'b', 'down'], ['c', 'kick', 'a', 'parry'], ['a', 'knee', 'c', 'gut'], ['a', 'elbow', 'c', 'head'], ['a', 'spin', 'c', 'fling', { slow: 0.6 }], ['a', 'stomp', 'b', 'onground'], ['a', 'step', null, null, { gap: 0.4 }], ['a', 'upper', 'b', 'fling']],
+    [['c', 'hook', 'a', 'hit'], ['b', 'kick', 'a', 'gut'], ['c', 'knee', 'a', 'gut'], ['a', 'backflip'], ['b', 'step'], ['a', 'flykick', 'c', 'down'], ['b', 'cross', 'a', 'parry'], ['a', 'headbutt', 'b', 'head'], ['a', 'slam', 'b', 'slam', { slow: 0.45 }], ['a', 'round', 'c', 'fling', { gap: 0.2, slow: 0.6 }]],
+    [['b', 'jab', 'a', 'block'], ['c', 'jab', 'a', 'block', { with: 1, off: 0.05 }], ['b', 'kick', 'a', 'duck'], ['c', 'kick', 'b', 'hit', { with: 1, off: 0.04 }], ['a', 'upper', 'c', 'head'], ['a', 'spin', 'b', 'fling', { slow: 0.5 }], ['c', 'hook', 'a', 'parry'], ['a', 'knee', 'c', 'gut'], ['a', 'axe', 'c', 'down', { slow: 0.5 }], ['a', 'stomp', 'c', 'onground']]
+  ];
   var ATK = {
     jab: { hit: 0.06, act: 0.08, end: 0.2, reach: 20, dmg: 9, kb: 170, up: 0, next: 'cross' },
     cross: { hit: 0.07, act: 0.08, end: 0.22, reach: 22, dmg: 10, kb: 200, up: 0, next: 'upper' },
@@ -58,8 +105,9 @@
     document.body.appendChild(cv);
     var ctx = cv.getContext('2d'), W = 0, H = 0, dpr = 1;
     var mode = o.mode || 'on', blood = o.blood !== false, on = false, raf = 0, last = 0, acc = 0;
-    var plats = [], boxes = [], links = [], hero = null, foe = null, fx = [], decals = [], rags = [];
+    var plats = [], boxes = [], links = [], hero = null, foe = null, third = null, fx = [], decals = [], rags = [];
     var mx = -999, my = -999, mouseT = -99, scanT = 0, now = 0, nextFoeT = 1, kills = 0;
+    var cho = null, choCd = 3, slowT = 0, thirdT = -1, lastCho = '';
 
     function size() { dpr = window.devicePixelRatio || 1; W = window.innerWidth; H = window.innerHeight; cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr); ctx.setTransform(dpr, 0, 0, dpr, 0, 0); }
     function dark() {
@@ -80,7 +128,7 @@
         if (r.height < 60 && r.width < 500 && e.matches('button, .btn, .pill, .cchip, input, select')) nb.push({ el: e, x0: r.left, x1: r.right, y0: r.top, y1: r.bottom });
       }
       np.push({ el: null, x0: M, x1: W - M, y: H - M, ground: 1 });   // a last-resort floor an inch above the bottom
-      [hero, foe].forEach(function (m) {
+      [hero, foe, third].forEach(function (m) {
         if (m && m.aim) { m.aim = m.aim.el ? np.filter(function (p) { return p.el === m.aim.el; })[0] || null : null; }
         if (!m || !m.on) return;
         var q = m.on.el ? np.filter(function (p) { return p.el === m.on.el; })[0] : np[np.length - 1];
@@ -128,9 +176,14 @@
     }
     function sweat(x, y, dir, n) { for (var i = 0; i < n; i++) fx.push({ k: 'sweat', x: x + (Math.random() - 0.5) * 6, y: y - 6, vx: dir * (30 + Math.random() * 90), vy: -60 - Math.random() * 120, t: 0.7, T: 0.7, r: 0.9 }); }
     function begin(m, st, atk) { m.st = st; m.t = 0; m.done = 0; m.atk = atk || null; m.queue = null; }
-    function enemyOf(m) { return m === hero ? foe : hero; }
+    function enemyOf(m) {
+      if (m !== hero) return hero;
+      var a = foe && !foe.dying ? foe : null, b = third && !third.dying ? third : null;
+      if (!a || !b) return a || b;
+      return Math.hypot(a.x - hero.x, a.y - hero.y) <= Math.hypot(b.x - hero.x, b.y - hero.y) ? a : b;
+    }
     function hurt(a, b, A) {
-      if (!b || b.st === 'dead' || b.st === 'flung' || b.st === 'held') return;
+      if (!b || b.cho || b.st === 'dead' || b.st === 'flung' || b.st === 'held') return;
       var dir = b.x >= a.x ? 1 : -1;
       // the ninja reads almost everything: he blocks or slips away and hits back
       if (b === hero && Math.random() < 0.55) {
@@ -181,7 +234,7 @@
       var sticks = [['head', 'neck'], ['neck', 'hip'], ['neck', 'eF'], ['eF', 'hF'], ['neck', 'eB'], ['eB', 'hB'], ['hip', 'kF'], ['kF', 'fF'], ['hip', 'kB'], ['kB', 'fB'], ['head', 'hip']];
       sticks = sticks.map(function (s) { var a = pts[s[0]], b = pts[s[1]]; return [s[0], s[1], Math.hypot(a.x - b.x, a.y - b.y)]; });
       rags.push({ team: m.team, pts: pts, sticks: sticks, t: 0, bleedT: 0 });
-      if (m === foe) { foe = null; kills++; nextFoeT = 1.6 + Math.random(); }
+      gone(m);
       if (hero) { hero.plan = null; hero.roamT = 0.8; }
     }
     function stepRag(r, dt) {
@@ -306,7 +359,7 @@
     function think(m, dt) {
       m.think -= dt; m.cd = Math.max(0, m.cd - dt);
       if (m === hero) m.sta = Math.min(100, m.sta + (m.st === 'pant' ? 22 : 3) * dt);
-      if (!m.on || ['atk', 'hit', 'land', 'flung', 'held', 'dead', 'rise', 'roll', 'aim'].indexOf(m.st) >= 0) return;
+      if (!m.on || ['atk', 'hit', 'land', 'flung', 'held', 'dead', 'rise', 'roll', 'aim', 'cho'].indexOf(m.st) >= 0) return;
       if (m.dropTo) { if (m.st !== 'run') m.dropTo = null; else return; }   // (a planned drop runs on past the edge)
       if (nearBlock(m.x, m.y)) { escape(m); return; }
       var tg = enemyOf(m);
@@ -317,6 +370,7 @@
       m.think = 0.1 + Math.random() * 0.15 * (mode === 'calm' ? 3 : 1);
       // no one to fight: wander about the whole page
       if (!tg || tg.st === 'dead' || tg.dying) { m.roamT -= 0.25; if (m.roamT <= 0) { m.roamT = 1.5 + Math.random() * 2.5; roam(m); } else if (Math.random() < 0.08) begin(m, Math.random() < 0.5 ? 'taunt' : 'look'); return; }
+      if (tg.cho && m !== hero && Math.abs(tg.x - m.x) < 80) { m.dir = tg.x >= m.x ? 1 : -1; m.vx = 0; if (m.st !== 'guard' && m.st !== 'taunt') begin(m, Math.random() < 0.3 ? 'taunt' : 'guard'); return; }   // someone else's fight: wait his turn
       var dx = tg.x - m.x, ad = Math.abs(dx), same = tg.on && m.on && (tg.on === m.on || (Math.abs(tg.y - m.y) < 14 && ad < 90)), sc = scene.name;   // next-door tiles at the same height are one fighting ground
       m.dir = dx >= 0 ? 1 : -1;
       var flee = (sc === 'chase' && m === foe) || (sc === 'retreat' && m === hero);
@@ -420,6 +474,7 @@
     }
     function free2(m) { return ['idle', 'run', 'taunt', 'land', 'guard', 'walk', 'pant', 'look'].indexOf(m.st) >= 0; }
     function watchStuck(m, dt) {
+      if (m.st === 'cho') return;
       var tg = enemyOf(m);
       if (m.on && m.on.ground && tg && tg.on && !tg.on.ground) {
         m.groundT = (m.groundT || 0) + dt;
@@ -437,8 +492,9 @@
     }
     function step(m, dt) {
       if (!m) return;
+      if (m.st === 'cho') { m.t += dt; m.flash = Math.max(0, m.flash - dt); stepCho(m, dt); return; }
       watchStuck(m, dt);
-      m.t += dt; m.flash = Math.max(0, m.flash - dt); m.ph += dt * (m.st === 'run' ? 15 : 3);
+      m.t += dt; m.flash = Math.max(0, m.flash - dt); m.ph += dt * (m.st === 'run' ? Math.max(9, Math.abs(m.vx) / 16) : m.st === 'walk' ? Math.max(4, Math.abs(m.vx) / 9) : 3);
       think(m, dt);
       var tg = enemyOf(m);
       if (m.st === 'atk' && m.atk === 'toss') {
@@ -456,7 +512,7 @@
       } else if (m.st === 'atk') {
         var A = ATK[m.atk];
         if (!A.air) m.vx = A.spin ? m.dir * 40 : 0;
-        if (!m.done && m.t >= A.hit && m.t <= A.hit + A.act && tg && tg.st !== 'dead') {
+        if (!m.done && m.t >= A.hit && m.t <= A.hit + A.act && tg && tg.st !== 'dead' && !tg.cho) {
           var f = (tg.x - m.x) * m.dir;
           if (f > -6 && f < A.reach + 8 && Math.abs(tg.y - m.y) < (A.low ? 12 : 36)) {
             m.done = 1;
@@ -489,7 +545,7 @@
         var hp2 = r.pts.hip, sp2 = Math.hypot(hp2.x - hp2.px, hp2.y - hp2.py) / Math.max(dt, 0.001);
         m.x = hp2.x; m.y = Math.max(r.pts.fF.y, r.pts.fB.y, hp2.y + 4); m.vx = (hp2.x - hp2.px) / Math.max(dt, 0.001); m.vy = (hp2.y - hp2.py) / Math.max(dt, 0.001);
         if (r.impact) { r.impact = 0; }
-        if (m.dying) { m.dying = 0; rags.push(r); r.live = 0; m.rag = null; if (m === foe) { foe = null; kills++; nextFoeT = 1.6 + Math.random(); } if (hero) { hero.plan = null; hero.roamT = 0.8; } return; }
+        if (m.dying) { m.dying = 0; rags.push(r); r.live = 0; m.rag = null; gone(m); if (hero) { hero.plan = null; hero.roamT = 0.8; } return; }
         if (r.t > 0.7 && sp2 < 60) {
           var under = null; for (var u = 0; u < plats.length; u++) { var q2 = plats[u]; if (hp2.x >= q2.x0 && hp2.x <= q2.x1 && q2.y >= hp2.y - 6 && q2.y - hp2.y < 30) { under = q2; break; } }
           if (under) { m.rag = null; m.x = hp2.x; m.y = under.y; m.on = under; m.vx = m.vy = 0; m.down = 1; begin(m, 'land'); dust(m.x, m.y, 5); }
@@ -509,6 +565,7 @@
             if (m.st === 'flung' && m.vy > 500 && !p.ground) { m.y = p.y; m.vy = -m.vy * 0.32; m.vx *= 0.7; dust(m.x, p.y, 6); spark(m.x, p.y - 4, 4); if (m !== hero) m.hp -= 4; break; }   // bounces on the top
             var fast = m.vy > 820;
             m.aim = null; m.vault = 0; m.y = p.y; m.on = p; m.x = Math.max(p.x0, Math.min(p.x1, m.x)); m.vy = 0; m.vx *= 0.08; m.flip = 0; m.spin = 0; m.lastLand = now; dust(m.x, p.y, 6);
+            if (m.big) { m.big = 0; shake(6); dust(m.x, p.y, 16); fx.push({ k: 'shock', x: m.x, y: p.y - 4, t: 0.3, T: 0.3 }); }
             if (m.st === 'flung') { m.down = 1; begin(m, 'land'); } else if (fast && p.x1 - p.x0 > 60) begin(m, 'roll'); else begin(m, 'land');
             break;
           }
@@ -528,7 +585,8 @@
 
     // ---- drawing (no outline: the ninja yellow, the others blue)
     function pose(m) {
-      if (m.st === 'run') { var s = Math.sin(m.ph); return { L: 28, hy: 20 + Math.abs(s) * 1.5, sF: 40 - s * 50, eF: 90, sB: 40 + s * 50, eB: 90, hF: 20 + 45 * s, kF: -30 - 50 * Math.max(0, -s), hB: 20 - 45 * s, kB: -30 - 50 * Math.max(0, s) }; }
+      if (m.st === 'cho') return choPose(m);
+      if (m.st === 'run') { var s = Math.sin(m.ph), cc = Math.abs(Math.cos(m.ph)); return { L: 22 + cc * 4, hy: 19 + cc * 2, sF: 28 - s * 62, eF: 95 + s * 15, sB: 28 + s * 62, eB: 95 - s * 15, hF: 14 + 52 * s, kF: -22 - 85 * Math.max(0, -s), hB: 14 - 52 * s, kB: -22 - 85 * Math.max(0, s) }; }   // leaning in, bent arms pumping against the legs, the trailing knee folding high
       if (m.st === 'atk') {
         if (m.atk === 'toss') return m.t < 0.3 ? mix(P.grab, P.toss, ease(m.t / 0.3) * 0.8) : m.t < 0.45 ? P.toss : mix(P.toss, P.jab, ease((m.t - 0.45) / 0.12));
         var A = ATK[m.atk], tp = P[A.pose || m.atk], k = m.t < A.hit ? ease(m.t / A.hit) * 0.6 : m.t < A.hit + A.act ? 1 : 1 - ease((m.t - A.hit - A.act) / (A.end - A.hit - A.act));
@@ -546,24 +604,24 @@
       return P[m.st] || P.idle;
     }
     function joints(m, p) {
-      var d = m.dir, hip = { x: m.x, y: m.y - p.hy }, L = rad(p.L);
-      function pt(o, a, l) { return { x: o.x + Math.sin(rad(a)) * l * d, y: o.y + Math.cos(rad(a)) * l }; }
-      var neck = { x: hip.x + Math.sin(L) * 15 * d, y: hip.y - Math.cos(L) * 15 };
-      var head = { x: neck.x + Math.sin(L) * 6 * d, y: neck.y - Math.cos(L) * 6 };
-      var sh = { x: hip.x + Math.sin(L) * 13 * d, y: hip.y - Math.cos(L) * 13 };
+      var d = m.dir, z = m.sz || 1, hip = { x: m.x, y: m.y - p.hy * z + (m.yo || 0) }, L = rad(p.L);
+      function pt(o, a, l) { return { x: o.x + Math.sin(rad(a)) * l * z * d, y: o.y + Math.cos(rad(a)) * l * z }; }
+      var neck = { x: hip.x + Math.sin(L) * 15 * z * d, y: hip.y - Math.cos(L) * 15 * z };
+      var head = { x: neck.x + Math.sin(L) * 6 * z * d, y: neck.y - Math.cos(L) * 6 * z };
+      var sh = { x: hip.x + Math.sin(L) * 13 * z * d, y: hip.y - Math.cos(L) * 13 * z };
       var eF = pt(sh, p.sF, 8), hF = pt(eF, p.sF + p.eF, 8), eB = pt(sh, p.sB, 8), hB = pt(eB, p.sB + p.eB, 8);
       var kF = pt(hip, p.hF, 10), fF = pt(kF, p.hF + p.kF, 10), kB = pt(hip, p.hB, 10), fB = pt(kB, p.hB + p.kB, 10);
-      return { hip: hip, neck: neck, head: head, eF: eF, hF: hF, eB: eB, hB: hB, kF: kF, fF: fF, kB: kB, fB: fB };
+      return { hip: hip, neck: neck, head: head, eF: eF, hF: hF, eB: eB, hB: hB, kF: kF, fF: fF, kB: kB, fB: fB, z: z };
     }
-    function colorOf(team) { return team === 'hero' ? (dark() ? HERO_D : HERO_L) : (dark() ? FOE_D : FOE); }
+    function colorOf(team) { return team === 'hero' ? (dark() ? HERO_D : HERO_L) : team === 'red' ? (dark() ? THIRD_D : THIRD) : (dark() ? FOE_D : FOE); }
     function drawMan(J, team, flash, c, ang, alpha) {
       ctx.save(); if (alpha !== undefined) ctx.globalAlpha = alpha;
       if (ang) { ctx.translate(c.x, c.y); ctx.rotate(ang); ctx.translate(-c.x, -c.y); }
       ctx.lineCap = 'round'; ctx.lineJoin = 'round';
       var col = flash ? '#ffffff' : colorOf(team);
-      ctx.strokeStyle = col; ctx.lineWidth = 3.4;
+      ctx.strokeStyle = col; ctx.lineWidth = 3.4 * (J.z || 1);
       [['neck', 'hip'], ['neck', 'eB'], ['eB', 'hB'], ['hip', 'kB'], ['kB', 'fB'], ['hip', 'kF'], ['kF', 'fF'], ['neck', 'eF'], ['eF', 'hF']].forEach(function (l) { ctx.beginPath(); ctx.moveTo(J[l[0]].x, J[l[0]].y); ctx.lineTo(J[l[1]].x, J[l[1]].y); ctx.stroke(); });
-      ctx.fillStyle = col; ctx.beginPath(); ctx.arc(J.head.x, J.head.y, 5.8, 0, 7); ctx.fill();
+      ctx.fillStyle = col; ctx.beginPath(); ctx.arc(J.head.x, J.head.y, 5.8 * (J.z || 1), 0, 7); ctx.fill();
       ctx.restore();
     }
     function drawFighter(m) {
@@ -571,11 +629,13 @@
       var p = pose(m), J = joints(m, p), ang = (m.flip || m.st === 'flung') ? -m.spin * m.dir : 0;
       if (m.st === 'roll') { ang = -(m.t / 0.35) * Math.PI * 2 * m.dir; J = joints(m, P.land); }
       if (m.st === 'atk' && ATK[m.atk] && ATK[m.atk].spin) ang = (m.t / ATK[m.atk].end) * Math.PI * 2 * m.dir * 0.25;
-      var c = { x: m.x, y: m.y - 22 }, alpha = m.st === 'hide' ? 0.45 : 1;
+      var c = { x: m.x, y: m.y - 22 + (m.yo || 0) }, alpha = m.st === 'hide' ? 0.45 : 1;
+      if (m.st === 'cho') { var CA = choAng(m); ang = CA.a; if (CA.c) c = CA.c; }
       if (m.st === 'run' && Math.abs(m.vx) > 220) { ctx.strokeStyle = 'rgba(148,163,184,.5)'; ctx.lineWidth = 1; for (var q = 0; q < 3; q++) { var ly = m.y - 10 - q * 12; ctx.beginPath(); ctx.moveTo(m.x - m.dir * 14, ly); ctx.lineTo(m.x - m.dir * (32 + q * 6), ly); ctx.stroke(); } }
       // afterimages on long leaps and when thrown
-      if ((m.flip && Math.abs(m.vx) > 400) || m.st === 'flung') [0.035, 0.07].forEach(function (k, i) { drawMan(joints({ x: m.x - m.vx * k, y: m.y - m.vy * k, dir: m.dir }, p), m.team, false, { x: c.x - m.vx * k, y: c.y - m.vy * k }, ang + (i + 1) * 0.5 * m.dir, 0.22 - i * 0.08); });
-      if (m.st === 'atk' && (m.atk === 'kick' || m.atk === 'round' || m.atk === 'flykick') && m.t > 0.04 && m.t < 0.3) {
+      if ((m.flip && Math.abs(m.vx) > 400) || m.st === 'flung' || (m.st === 'cho' && Math.abs(m.vx) > 260)) [0.035, 0.07].forEach(function (k, i) { drawMan(joints({ x: m.x - m.vx * k, y: m.y - m.vy * k, dir: m.dir }, p), m.team, false, { x: c.x - m.vx * k, y: c.y - m.vy * k }, ang + (i + 1) * 0.5 * m.dir, 0.22 - i * 0.08); });
+      if ((m.st === 'atk' && (m.atk === 'kick' || m.atk === 'round' || m.atk === 'flykick') && m.t > 0.04 && m.t < 0.3) ||
+          (m.st === 'cho' && m.mv && /kick|spin|round|axe|sweep/.test(m.mv.mv) && m.mv.t > 0.04 && m.mv.t < MV[m.mv.mv].d * 0.75)) {
         m.ktrail = (m.ktrail || []).concat([{ x: J.fF.x, y: J.fF.y }]).slice(-6);
         ctx.strokeStyle = 'rgba(255,255,255,.55)'; ctx.lineWidth = 2.2; ctx.beginPath(); m.ktrail.forEach(function (q, i) { if (i) ctx.lineTo(q.x, q.y); else ctx.moveTo(q.x, q.y); }); ctx.stroke();
       } else m.ktrail = null;
@@ -605,7 +665,7 @@
       if (shk > 0) ctx.translate((Math.random() - 0.5) * shk * 2, (Math.random() - 0.5) * shk * 2);
       decals.forEach(function (d) { ctx.globalAlpha = Math.min(1, d.t / 3) * 0.85; ctx.fillStyle = '#991b1b'; ctx.beginPath(); ctx.ellipse(d.x, d.y - 0.5, d.r * 1.8, d.r * 0.55, 0, 0, 7); ctx.fill(); }); ctx.globalAlpha = 1;
       rags.forEach(drawRag);
-      if (foe) drawFighter(foe); if (hero) drawFighter(hero);
+      if (third) drawFighter(third); if (foe) drawFighter(foe); if (hero) drawFighter(hero);
       arrows.forEach(function (a) {
         var ang2 = Math.atan2(a.vy, a.vx), len = 14; ctx.globalAlpha = a.stuck ? Math.min(1, a.stuck) : 1;
         ctx.strokeStyle = '#d6d3d1'; ctx.lineWidth = 1.3; ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(a.x - Math.cos(ang2) * len, a.y - Math.sin(ang2) * len); ctx.stroke();
@@ -622,9 +682,213 @@
         else if (p.k === 'shock') { ctx.strokeStyle = 'rgba(255,255,255,.75)'; ctx.lineWidth = 1.4; for (var sI = 0; sI < 10; sI++) { var aS = sI * 0.628 + p.x; ctx.beginPath(); ctx.moveTo(p.x + Math.cos(aS) * (8 + (1 - a) * 10), p.y + Math.sin(aS) * (8 + (1 - a) * 10)); ctx.lineTo(p.x + Math.cos(aS) * (16 + (1 - a) * 22), p.y + Math.sin(aS) * (16 + (1 - a) * 22)); ctx.stroke(); } }
         else if (p.k === 'ring') { ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(p.x, p.y, 4 + (1 - a) * 15, 0, 7); ctx.stroke(); }
         else if (p.k === 'dent') { ctx.strokeStyle = 'rgba(255,255,255,.6)'; ctx.lineWidth = 1; for (var i = 0; i < 6; i++) { var an = i * 1.05 + 0.3; ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(p.x + Math.cos(an) * (6 + (1 - a) * 8), p.y + Math.sin(an) * (6 + (1 - a) * 8)); ctx.stroke(); } }
+        else if (p.k === 'whoosh') { ctx.strokeStyle = 'rgba(226,232,240,.7)'; ctx.lineWidth = 1.2; for (var wI = 0; wI < 3; wI++) { ctx.beginPath(); ctx.arc(p.x, p.y + wI * 6, 10 + wI * 3 + (1 - a) * 6, p.dir > 0 ? -0.9 : Math.PI - 0.9, p.dir > 0 ? 0.9 : Math.PI + 0.9); ctx.stroke(); } }
         else if (p.k === 'star') { ctx.strokeStyle = '#fde047'; ctx.lineWidth = 2; for (var j = 0; j < 8; j++) { var an2 = j * Math.PI / 4; ctx.beginPath(); ctx.moveTo(p.x + Math.cos(an2) * 3, p.y + Math.sin(an2) * 3); ctx.lineTo(p.x + Math.cos(an2) * (j % 2 ? 9 : 14), p.y + Math.sin(an2) * (j % 2 ? 9 : 14)); ctx.stroke(); } }
       });
       ctx.globalAlpha = 1;
+    }
+    // ---- v7: written fights. Two (or three) on one ledge: the fight plays from a script. Every blow lands at its
+    //   moment and the other side's answer (block, parry, duck, take it, go down, fly) is timed to it, like a film.
+    function gone(m) {
+      if (m === foe) { foe = third; third = null; kills++; if (!foe) nextFoeT = 1.6 + Math.random(); }
+      else if (m === third) { third = null; kills++; }
+      m.cho = 0;
+    }
+    function free3(m) { return m && !m.dying && m.hp > 0 && m.on && !m.cho && ['idle', 'run', 'walk', 'guard', 'taunt', 'land', 'look', 'block', 'hit'].indexOf(m.st) >= 0; }
+    function tryCho() {
+      if (cho || choCd > 0 || !free3(hero) || ['chase', 'ambush', 'breather', 'retreat'].indexOf(scene.name) >= 0) return;
+      var pl = hero.on, w = pl.x1 - pl.x0; if (w < 90 || nearBlock(hero.x, hero.y)) return;
+      var near = function (m, d) { return free3(m) && m.on === pl && Math.abs(m.x - hero.x) < d; };
+      var b = near(foe, 110) ? foe : near(third, 110) ? third : null; if (!b) return;
+      startCho(b, b === foe && w >= 150 && near(third, 220) ? third : null);
+    }
+    function startCho(b, c) {
+      var pl = hero.on, list = c ? SC3 : SC2, n, key;
+      do { n = Math.floor(Math.random() * list.length); key = (c ? 'c' : 'b') + n; } while (list.length > 1 && key === lastCho);
+      lastCho = key;
+      var side = b.x >= hero.x ? 1 : -1, ax, bx, cx = 0;
+      if (c) { ax = Math.max(pl.x0 + 44, Math.min(pl.x1 - 44, hero.x)); bx = ax + side * 38; cx = ax - side * 38; }
+      else {
+        var mid = (hero.x + b.x) / 2; ax = mid - side * 19; bx = mid + side * 19;
+        var sh = Math.max(0, pl.x0 + 8 - Math.min(ax, bx)) - Math.max(0, Math.max(ax, bx) - (pl.x1 - 8)); ax += sh; bx += sh;
+      }
+      cho = { a: hero, b: b, c: c, pl: pl, beats: list[n], t: 0, setup: 0.9, i: 0, tempo: mode === 'calm' ? 1.35 : 1 };
+      [[hero, ax], [b, bx], [c, cx]].forEach(function (q) { var m = q[0]; if (!m) return; m.cho = 1; begin(m, 'cho'); m.mv = null; m.re = null; m.yo = 0; m.vx = 0; m.vy = 0; m.cgo = q[1]; m.flip = 0; m.spin = 0; });
+      schedule();
+    }
+    function schedule() {
+      var T = 0.35 + (Math.random() < 0.35 ? 0.4 : 0), prev = null;   // a moment of staring each other down first
+      cho.q = [];
+      cho.beats.forEach(function (bt) {
+        var o = bt[4] || {}, M = MV[bt[1]], R = REACT[bt[3]] || {};
+        var st = o.with && prev ? prev.st + (o.off || 0) * cho.tempo : T + (o.gap || 0) * cho.tempo;
+        var q = { st: st, by: bt[0], mv: bt[1], to: bt[2], re: bt[3], o: o }; cho.q.push(q);
+        var end = st + M.d * 0.8 * cho.tempo;
+        if (bt[2] && M.hit) end = Math.max(end, st + (M.hit + (R.d || 0.25) * 0.6) * cho.tempo);
+        if (bt[3] === 'slam') end = st + (M.hit + 0.85) * cho.tempo;
+        if (bt[3] === 'down') end = st + (M.hit + 0.5) * cho.tempo;
+        T = Math.max(T, end); prev = q;
+      });
+      cho.end = T + 0.5;
+    }
+    function inCho() { return cho ? [cho.a, cho.b, cho.c].filter(function (m) { return m && m.cho; }) : []; }
+    function nearestIn(m) {
+      var best = null, bd = 1e9;
+      inCho().forEach(function (o) { if (o === m || (m !== hero && o !== hero)) return; var d = Math.abs(o.x - m.x); if (d < bd) { bd = d; best = o; } });
+      return best;
+    }
+    function endCho() {
+      if (!cho) return;
+      inCho().forEach(function (m) {
+        m.cho = 0; m.mv = null; m.yo = 0; m.walking = 0; m.vx = 0;
+        if (m.re && m.re.name === 'down') { m.down = 1; begin(m, 'land'); } else begin(m, 'guard');
+        m.re = null; m.think = 0.3;
+      });
+      cho = null; choCd = 2.5 + Math.random() * 3;
+    }
+    function tickCho(dt) {
+      if (!cho) return;
+      var ms = inCho();
+      if (ms.length < 2 && !ms.some(function (m) { return m.mv || (m.re && m.re.name !== 'down'); })) { endCho(); return; }
+      if (ms.some(function (m) { return nearBlock(m.x, m.y); })) { endCho(); return; }
+      if (cho.setup > 0) {   // walk into place
+        cho.setup -= dt; var all = true;
+        ms.forEach(function (m) { var d = m.cgo - m.x; if (Math.abs(d) > 2) { all = false; m.x += (d > 0 ? 1 : -1) * Math.min(Math.abs(d), 240 * dt); m.walking = 1; } else m.walking = 0; });
+        if (!all && cho.setup > 0) return;
+        ms.forEach(function (m) { m.walking = 0; }); cho.setup = 0;
+      }
+      cho.t += dt;
+      while (cho.i < cho.q.length && cho.q[cho.i].st <= cho.t) fire(cho.q[cho.i++]);
+      if (cho.i >= cho.q.length && cho.t > cho.end && !ms.some(function (m) { return m.mv || (m.re && m.re.name !== 'down'); })) endCho();
+    }
+    function fire(q) {
+      var m = cho[q.by], tg = q.to ? cho[q.to] : null, M = MV[q.mv];
+      if (!m || !m.cho || (q.to && (!tg || !tg.cho))) return;
+      if (m.re && m.re.name === 'down') return;              // still on the floor: his line is skipped
+      m.re = null;
+      var side = m.dir || 1, lunge = 0;
+      if (tg) {
+        side = tg.x >= m.x ? 1 : -1; var dist = Math.abs(tg.x - m.x);
+        lunge = side * (q.o.pass ? dist + 26 : dist - (M.r || 20));
+        if (tg.re && tg.re.name === 'down') lunge = side * (dist - 10);
+      } else if (M.back) lunge = -side * M.back;
+      else { var o2 = nearestIn(m); if (o2) { side = o2.x >= m.x ? 1 : -1; if (q.mv === 'step') lunge = side * Math.max(0, Math.abs(o2.x - m.x) - 36); } }
+      m.dir = side;
+      m.mv = { mv: q.mv, t: 0, x0: m.x, lunge: lunge, to: tg, re: q.re, o: q.o, dir: side, done: 0, early: 0 };
+    }
+    function hpLoss(m, d) { if (m === hero) m.sta = Math.max(0, m.sta - d * 1.2); else m.hp = Math.max(1, m.hp - d); }   // only the last blow of a fight can kill
+    function whoosh(m) { fx.push({ k: 'whoosh', x: m.x + m.dir * 16, y: m.y - 32 + (m.yo || 0), dir: m.dir, t: 0.18, T: 0.18 }); }
+    function react(m, tg, re, o) {
+      var R = REACT[re] || REACT.hit, side = tg.x >= m.x ? 1 : -1; o = o || {};
+      if (!tg.cho) return;
+      if (tg.re && tg.re.name === 'down' && re !== 'fling' && re !== 'slam') {   // hit while down: he stays down a little longer
+        tg.re.t = Math.max(0, tg.re.t - 0.35); hpLoss(tg, 8); bleed(tg.x - tg.dir * 14, tg.y - 5, side, 10); dust(tg.x, tg.y, 6); freeze(0.06); shake(3);
+        fx.push({ k: 'ring', x: tg.x - tg.dir * 10, y: tg.y - 5, t: 0.2, T: 0.2 }); if (o.slow) slowT = o.slow; return;
+      }
+      if (o.slow) slowT = o.slow;
+      var hx = tg.x - side * 5, hy = tg.y - (re === 'gut' ? 22 : re === 'down' ? 26 : 38);
+      if (re === 'fling') {
+        tg.cho = 0; tg.mv = null; tg.re = null; tg.yo = 0;
+        if (tg !== hero) tg.hp -= o.dmg || R.dmg; else tg.sta -= R.dmg;
+        bleed(hx, hy, side, R.blood); spark(hx, hy, 12);
+        fx.push({ k: 'star', x: hx, y: hy, t: 0.16, T: 0.16 }); fx.push({ k: 'shock', x: hx, y: hy, t: 0.3, T: 0.3 }); fx.push({ k: 'ring', x: hx, y: hy, t: 0.25, T: 0.25 });
+        freeze(0.12); shake(6);
+        fling(tg, side * (R.kb + Math.random() * 220), -(R.up + Math.random() * 160));
+        if (tg !== hero && tg.hp <= 0) setTimeout(function () { tg.dying = 1; }, 60);
+        return;
+      }
+      if (re === 'slam') { tg.mv = null; tg.re = { name: 'slam', t: 0, d: R.d, by: m, side: side, o: o }; spark(hx, hy, 4); return; }
+      tg.mv = null; tg.yo = 0;
+      tg.re = { name: re, t: 0, d: R.d, kbv: side * (R.kb || 0) / 0.15, from: m };
+      if (re === 'down') { tg.dir = -side; dust(tg.x, tg.y, 10); shake(4); }
+      if (R.dmg) {
+        hpLoss(tg, o.dmg || R.dmg); tg.flash = 0.08;
+        bleed(hx, hy, side, R.blood || 6); spark(hx, hy, R.heavy ? 10 : 6); fx.push({ k: 'ring', x: hx, y: hy, t: 0.2, T: 0.2 });
+        if (R.heavy) { fx.push({ k: 'star', x: hx, y: hy, t: 0.14, T: 0.14 }); fx.push({ k: 'shock', x: hx, y: hy, t: 0.25, T: 0.25 }); freeze(0.08); shake(4); } else freeze(0.04);
+      } else if (re === 'block' || re === 'parry') {
+        spark(tg.x - side * 8, tg.y - 32, re === 'parry' ? 12 : 7, re === 'parry' ? '#fde68a' : '#fff'); freeze(re === 'parry' ? 0.05 : 0.025);
+        if (re === 'parry') fx.push({ k: 'ring', x: tg.x - side * 8, y: tg.y - 32, t: 0.18, T: 0.18 });
+      }
+    }
+    function slamDown(m, r) {
+      m.re = { name: 'down', t: 0, d: REACT.down.d, kbv: 0, from: r.by }; m.dir = r.by.x >= m.x ? 1 : -1;
+      hpLoss(m, REACT.slam.dmg); shake(7); freeze(0.1); dust(m.x, m.y, 16);
+      fx.push({ k: 'ring', x: m.x, y: m.y - 4, t: 0.3, T: 0.3 }); fx.push({ k: 'shock', x: m.x, y: m.y - 6, t: 0.3, T: 0.3 });
+      bleed(m.x - m.dir * 20, m.y - 6, -m.dir, 14);
+      if (r.o && r.o.slow) slowT = r.o.slow;
+    }
+    function stepCho(m, dt) {
+      if (!cho) { m.cho = 0; begin(m, 'guard'); return; }
+      var ox = m.x, pl = cho.pl;
+      if (m.walking) m.ph += dt * 9;
+      if (m.mv) {
+        var mv = m.mv, M = MV[mv.mv], R = REACT[mv.re] || {};
+        mv.t += dt; m.dir = mv.dir;
+        m.x = mv.x0 + mv.lunge * ease(Math.min(1, mv.t / (M.hit || M.d)));
+        var arc = M.hop || (M.back ? 30 : 0); m.yo = arc ? -Math.sin(Math.PI * Math.min(1, mv.t / M.d)) * arc : 0;
+        if (mv.to && R.early && !mv.early && mv.t >= (M.hit || 0) * 0.3) { mv.early = 1; react(m, mv.to, mv.re, mv.o); }
+        if (mv.to && M.hit && !mv.done && mv.t >= M.hit) { mv.done = 1; if (!R.early) react(m, mv.to, mv.re, mv.o); else whoosh(m); }
+        if (mv.t >= M.d) { m.mv = null; m.yo = 0; }
+      }
+      if (m.re) {
+        var r = m.re; r.t += dt;
+        if (r.name === 'slam') {   // lifted over his head and smashed down on the other side
+          var k = Math.min(1, r.t / r.d);
+          m.x = r.by.x + r.side * Math.cos(Math.PI * k) * 22; m.yo = -Math.sin(Math.PI * k) * 44;
+          if (r.t >= r.d) { m.x = r.by.x - r.side * 24; m.yo = 0; slamDown(m, r); }
+        } else {
+          if (r.t < 0.15 && r.kbv) m.x += r.kbv * dt;
+          if (r.from && r.name !== 'down') m.dir = r.from.x >= m.x ? 1 : -1;
+          if (r.t >= r.d) m.re = null;
+        }
+      }
+      m.x = Math.max(pl.x0 + 3, Math.min(pl.x1 - 3, m.x));
+      if (!m.mv && !m.re && !m.walking) { var o = nearestIn(m); if (o) m.dir = o.x >= m.x ? 1 : -1; }
+      if (m.walking && m.cgo !== undefined) m.dir = m.cgo >= m.x ? 1 : -1;
+      m.vx = (m.x - ox) / Math.max(dt, 0.001); m.vy = 0;
+    }
+    function walkPose(w) { return { L: 12, hy: 19, sF: 55 - w * 15, eF: 110, sB: 40 + w * 15, eB: 120, hF: 18 + 28 * w, kF: -25 - 25 * Math.max(0, -w), hB: 12 - 28 * w, kB: -25 - 25 * Math.max(0, w) }; }
+    function choPose(m) {
+      var r = m.re;
+      if (r) {
+        if (r.name === 'slam') return P.fall;
+        if (r.name === 'down') { var left = r.d - r.t; return left < 0.4 ? mix(P.land, P.lie, ease(left / 0.4)) : P.lie; }
+        var R = REACT[r.name], tp = P[R.p] || P.hurt, k = r.t < 0.06 ? r.t / 0.06 : r.t > r.d * 0.6 ? 1 - ease((r.t - r.d * 0.6) / (r.d * 0.4)) : 1;
+        return mix(P.guard, tp, k);
+      }
+      if (m.mv) {
+        var mv = m.mv, M = MV[mv.mv], t = mv.t;
+        if (mv.mv === 'step') return walkPose(Math.sin(t * 22));
+        if (M.back) return t < 0.1 ? mix(P.guard, P.land, t / 0.1) : t < M.d - 0.1 ? P.air : mix(P.air, P.land, Math.min(1, (t - M.d + 0.1) / 0.1));
+        if (mv.mv === 'slam') return t < M.hit ? mix(P.guard, P.grab, ease(t / M.hit)) : t < 0.5 ? mix(P.grab, P.toss, ease((t - M.hit) / 0.3)) : mix(P.toss, P.guard, ease((t - 0.5) / 0.25));
+        if (mv.mv === 'axe') return t < M.hit ? mix(P.guard, P.axe, ease(t / M.hit)) : mix(P.stomp, P.guard, ease((t - M.hit) / (M.d - M.hit)));
+        var k2 = !M.hit ? Math.sin(Math.PI * Math.min(1, t / M.d)) : t < M.hit ? ease(t / M.hit) * 0.6 : t < M.hit + 0.08 ? 1 : 1 - ease((t - M.hit - 0.08) / Math.max(0.05, M.d - M.hit - 0.08));
+        return mix(P.guard, P[M.p], k2);
+      }
+      if (m.walking) return walkPose(Math.sin(m.ph));
+      var b = Math.sin(now * 6 + m.x) * 1.2; return { L: 8, hy: 19 + b, sF: 58, eF: 118, sB: 42, eB: 126, hF: 32, kF: -48 - b * 3, hB: -26, kB: -34 - b * 3 };
+    }
+    function choAng(m) {
+      var r = m.re;
+      if (r && r.name === 'down') { var left = r.d - r.t; return { a: -Math.PI / 2 * m.dir * (left < 0.4 ? ease(left / 0.4) : 1), c: { x: m.x, y: m.y - 3 } }; }
+      if (r && r.name === 'slam') return { a: -r.side * Math.PI * Math.min(1, r.t / r.d), c: null };
+      if (m.mv) {
+        var M = MV[m.mv.mv], k = Math.min(1, m.mv.t / M.d);
+        if (M.back) return { a: -m.dir * Math.PI * 2 * ease(k), c: null };
+        if (M.spin) return { a: m.dir * Math.PI * 0.5 * M.spin * Math.sin(Math.PI * k), c: null };
+      }
+      return { a: 0, c: null };
+    }
+    // the third man: bigger, purple, drops in from the top near the ninja
+    function bringThird() {
+      if (!hero || !hero.on) return;
+      var x = Math.max(M, Math.min(W - M, hero.x + (Math.random() < 0.5 ? -1 : 1) * (120 + Math.random() * 120)));
+      var m = make('red', x, -50, null); m.sz = 1.12; m.hp = 85; m.big = 1;
+      var cand = plats.filter(function (p) { return !p.ground && p.x1 - p.x0 > 60 && Math.abs(p.y - hero.y) < 160 && !nearBlock((p.x0 + p.x1) / 2, p.y); });
+      cand.sort(function (a, b) { return Math.abs((a.x0 + a.x1) / 2 - hero.x) - Math.abs((b.x0 + b.x1) / 2 - hero.x); });
+      var p = cand[0] || hero.on;
+      jumpTo(m, spot(null, p, hero.x + (x > hero.x ? 50 : -50)), p.y, false, p, 0.75);
+      third = m;
     }
     function bringFoe() {
       // the next one leaps in from the far side of the screen
@@ -634,7 +898,7 @@
       var land = plats.filter(function (p) { return !p.ground && (fromTop ? Math.abs((p.x0 + p.x1) / 2 - m.x) < 300 : fromLeft ? p.x0 < W * 0.35 : p.x1 > W * 0.65) && !nearBlock((p.x0 + p.x1) / 2, p.y); });
       var p = land.length ? land[Math.floor(Math.random() * land.length)] : plats[plats.length - 1];
       jumpTo(m, spot(null, p, fromLeft ? p.x0 + 30 : p.x1 - 30), p.y, true, p);
-      foe = m; setScene(Math.random() < 0.6 ? 'standoff' : 'duel', 3 + Math.random() * 2);
+      foe = m; thirdT = Math.random() < 0.6 ? 4 + Math.random() * 6 : -1; setScene(Math.random() < 0.6 ? 'standoff' : 'duel', 3 + Math.random() * 2);
     }
     function tick(t) {
       if (!on) return;
@@ -642,13 +906,15 @@
       var dt = Math.min(0.05, (t - last) / 1000 || 0); last = t; acc += dt;
       if (acc < 1 / 45) return;
       dt = Math.min(0.05, acc) * 0.7; acc = 0; now += dt;
+      if (slowT > 0) { slowT -= dt; dt *= 0.3; }   // slow motion on the big blows
       scanT -= dt; if (scanT <= 0) { scanT = 0.5; scan(); }
       if (!hero) { var ok = plats.filter(function (p) { return !p.ground && p.x1 - p.x0 > 40 && !nearBlock((p.x0 + p.x1) / 2, p.y); }); var p = ok.length ? ok[Math.floor(Math.random() * ok.length)] : plats[plats.length - 1]; hero = make('hero', (p.x0 + p.x1) / 2, p.y, p); smoke(hero.x, hero.y - 20, '#fde047'); }
       if (!foe) { nextFoeT -= dt; if (nextFoeT <= 0) bringFoe(); }
+      if (foe && !third && thirdT > 0) { thirdT -= dt; if (thirdT <= 0) bringThird(); }
       shk = Math.max(0, shk - dt * 20);
       if (frozen > 0) { frozen -= dt; draw(); return; }      // the hit-stop: a heartbeat of stillness on a hard hit
-      direct(dt);
-      step(hero, dt); step(foe, dt); stepArrows(dt);
+      direct(dt); choCd -= dt; tryCho(); tickCho(dt);
+      step(hero, dt); step(foe, dt); step(third, dt); stepArrows(dt);
       rags.forEach(function (r) { stepRag(r, dt); }); rags = rags.filter(function (r) { return r.t < 4; });
       fx.forEach(function (p) {
         p.t -= dt; p.x += p.vx * dt || 0; p.y += p.vy * dt || 0;
@@ -665,11 +931,11 @@
     function onResize() { size(); if (on) scan(); }
     var api = {
       start: function () { if (on) return; on = true; cv.style.display = ''; size(); scan(); last = performance.now(); raf = requestAnimationFrame(tick); },
-      stop: function () { arrows = []; on = false; cancelAnimationFrame(raf); ctx.clearRect(0, 0, W, H); cv.style.display = 'none'; hero = null; foe = null; rags = []; fx = []; decals = []; nextFoeT = 1; },
+      stop: function () { arrows = []; on = false; cancelAnimationFrame(raf); ctx.clearRect(0, 0, W, H); cv.style.display = 'none'; hero = null; foe = null; third = null; cho = null; slowT = 0; rags = []; fx = []; decals = []; nextFoeT = 1; },
       mode: function (m) { mode = m; },
       blood: function (b) { blood = !!b; if (!blood) decals = []; },
       running: function () { return on; },
-      _s: function () { return { scene: scene, arrows: arrows, hero: hero, foe: foe, plats: plats, rags: rags, decals: decals, kills: kills, links: links }; }
+      _s: function () { return { scene: scene, cho: cho, third: third, arrows: arrows, hero: hero, foe: foe, plats: plats, rags: rags, decals: decals, kills: kills, links: links }; }
     };
     document.addEventListener('mousemove', onMove, { passive: true });
     document.addEventListener('mouseleave', onLeave);
