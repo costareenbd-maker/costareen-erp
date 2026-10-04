@@ -16035,7 +16035,9 @@ function insCode() { var m = /^#\/install\/([\w-]+)/.exec(location.hash || ''); 
 function insBack() { var m = /^#\/install\/[\w-]+\/([\w-]+)/.exec(location.hash || ''); return m ? m[1] : ''; }
 function insCall(what, body, ok, bad) {
   fetch(CONTROL_API + '?install=' + what, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
-    .then(function (r) { return r.json(); }).then(function (j) { if (j.ok) ok(j); else bad(j.error || 'Something went wrong.'); }, function () { bad('The installer could not be reached. Check the internet and try again.'); });
+    .then(function (r) { return r.text().then(function (t) { try { return JSON.parse(t); } catch (e) { return { ok: false, error: 'The installer answered with an error (' + r.status + '). Wait a minute and press the button again.' }; } }); })
+    .then(function (j) { if (j.ok) ok(j); else bad(j.error || 'Something went wrong.'); },
+          function () { bad(navigator.onLine === false ? 'This computer is offline. Connect to the internet and try again.' : 'The installer did not answer. Wait a minute and press the button again; if it keeps happening, send a screenshot of this page to the provider.'); });
 }
 function insSave() { try { var c = {}; for (var k in INS) if (k !== 'token' && k !== 'busy' && k !== 'err') c[k] = INS[k]; localStorage.setItem('erp_install_wiz', JSON.stringify(c)); } catch (e) {} }
 var INS_STEPS = [['project', 'Make the project in your Supabase account'], ['wait', 'Supabase starts it (1-2 minutes)'], ['keys', 'Read its keys'], ['db', 'Build the database'],
@@ -16111,10 +16113,32 @@ function insHtml() {
   return h + '</div></section></div>';
 }
 function insTokenHtml() {
-  return '<ol class="sub" data-c5x="1" style="display:block;margin-top:8px"><li><a class="btn small" href="https://supabase.com/dashboard/sign-up" target="_blank" rel="noopener">Open Supabase</a> and make a free account (or sign in).</li>' +
-    '<li><a class="btn small" href="https://supabase.com/dashboard/account/tokens" target="_blank" rel="noopener">Open Access Tokens</a> \u2192 press <b>Generate new token</b> \u2192 name it ERP \u2192 copy it.</li>' +
-    '<li>Paste it here:</li></ol><input class="i" id="ins_tk" type="password" autocomplete="off" placeholder="sbp_\u2026" value="' + esc(INS.token || '') + '">';
+  var L = function (href, t) { return '<a class="btn small" href="' + href + '" target="_blank" rel="noopener">' + t + '</a>'; };
+  return '<div class="sub" data-c5x="1" style="display:block;margin-top:8px">Takes about 3 minutes. Keep this page open; the Supabase pages open in a new tab.</div>' +
+    '<ol class="sub" data-c5x="1" style="display:block;margin-top:8px">' +
+    '<li><b>Make a Supabase account.</b> ' + L('https://supabase.com/dashboard/sign-up', 'Open Supabase sign-up') + '<br>Press <b>Continue with GitHub</b>, or type your e-mail and a password and press <b>Sign up</b>. ' +
+      'With e-mail: open the message Supabase sends you (look in spam too) and press <b>Confirm your mail</b>. Already have an account? ' + L('https://supabase.com/dashboard/sign-in', 'Sign in') + '</li>' +
+    '<li><b>Make an organisation</b> (only if Supabase asks for one). Name: your company. Type: <b>Company</b> (or Personal). Plan: <b>Free - $0/month</b>. Press <b>Create organization</b>.<br>' +
+      '<b>Do not make a project yourself</b> - this installer makes it for you.</li>' +
+    '<li><b>Open the Access Tokens page.</b> ' + L('https://supabase.com/dashboard/account/tokens', 'Open Access Tokens') + '<br>(Or: your picture at the bottom-left of Supabase \u2192 <b>Account preferences</b> \u2192 <b>Access Tokens</b>.)</li>' +
+    '<li><b>Make the token.</b> Press <b>Generate new token</b>. Name: <b>ERP</b>. If it asks when it should expire, choose <b>Never</b> (or the longest) - your ERP uses it later to update itself. Press <b>Generate token</b>.</li>' +
+    '<li><b>Copy it.</b> A long code starting with <b>sbp_</b> appears <b>only once</b>. Press the copy button next to it. (Closed it by mistake? Make a new one the same way.)</li>' +
+    '<li><b>Paste it here</b> and press <b>Build my ERP</b>:</li></ol>' +
+    '<input class="i" id="ins_tk" type="password" autocomplete="off" placeholder="sbp_\u2026" value="' + esc(INS.token || '') + '">' +
+    '<div class="sub" id="ins_tkhint" data-c5x="1" style="display:block;margin-top:6px"></div>' +
+    '<details style="margin-top:10px"><summary class="sku" style="cursor:pointer">Something not working?</summary><ul class="sub" data-c5x="1" style="display:block">' +
+    '<li>"Does not look like a token": it must start with <b>sbp_</b>. A key from a project\u2019s settings (it starts with <b>eyJ</b>) is the wrong one.</li>' +
+    '<li>"No organisation yet": do step 2, then press Build again.</li>' +
+    '<li>"Limit of free projects": a free Supabase account can run 2 projects. Pause or delete one you do not use (Supabase \u2192 the project \u2192 Settings \u2192 General), then try again.</li>' +
+    '<li>The token is safe with us: it is used only to build and later update <b>your</b> ERP in <b>your</b> account. You can delete it on the Access Tokens page at any time (updates then stop until you add a new one).</li></ul></details>';
 }
+document.addEventListener('input', function (ev) {
+  var t = ev.target; if (!t || t.id !== 'ins_tk') return;
+  var v = t.value.trim(), h = el('ins_tkhint'); if (!h) return;
+  h.innerHTML = !v ? '' : /^sbp_[A-Za-z0-9]{20,}$/.test(v) ? '<span style="color:var(--good)">\u2713 That looks like a Supabase access token.</span>'
+    : /^eyJ/.test(v) ? '<span style="color:var(--critical)">This is a project key, not an access token. Use step 3 (Access Tokens).</span>'
+    : '<span style="color:var(--critical)">A token starts with sbp_ - copy it again from step 5.</span>';
+});
 function insPaint() {
   var v = el('view'); if (!v) return;
   v.innerHTML = insHtml();

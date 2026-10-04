@@ -54,12 +54,18 @@ const ALLOWED_ORIGINS = [
   'http://127.0.0.1:8793',
 ];
 
-function cors(origin: string | null) {
-  const ok = origin && (ALLOWED_ORIGINS.includes(origin) || /^https:\/\/([a-z0-9]+\.)?costareen-erp\.pages\.dev$/.test(origin));
+// the page's own address (a company copy's ERP_APP_URL, the provider's public copy ERP_PUBLIC_URL) is always allowed
+const OWN_ORIGINS = [Deno.env.get('ERP_APP_URL'), Deno.env.get('ERP_PUBLIC_URL')]
+  .map((u) => { try { return u ? new URL(u).origin : ''; } catch (_) { return ''; } }).filter(Boolean);
+
+// open: the public installer routes (no sign-in, nothing private) answer any page, wherever the install link was opened
+function cors(origin: string | null, open = false) {
+  const ok = origin && (open || ALLOWED_ORIGINS.includes(origin) || OWN_ORIGINS.includes(origin) ||
+    /^https:\/\/([a-z0-9-]+\.)?(costareen-erp|office-erp)\.pages\.dev$/.test(origin));
   return {
     'Access-Control-Allow-Origin': ok ? origin! : ALLOWED_ORIGINS[0],
     'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-erp-session, x-region',
-    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
     'Vary': 'Origin',
   };
 }
@@ -238,7 +244,8 @@ const deps = { install: INSTALL, installEnv: INSTALL_ENV, google: GOOGLE, smtpNo
                hookBase: SUPABASE_URL + '/functions/v1/erp' };
 
 Deno.serve(async (req) => {
-  const headers = { ...cors(req.headers.get('origin')), 'Content-Type': 'application/json' };
+  const q0 = new URL(req.url).searchParams;
+  const headers = { ...cors(req.headers.get('origin'), !!(q0.get('install') || q0.get('control'))), 'Content-Type': 'application/json' };
   if (req.method === 'OPTIONS') return new Response('ok', { headers });
   // Google sends the owner back here after they allow Drive access (handlers/google.js)
   if (req.method === 'GET' && new URL(req.url).searchParams.get('google') === 'back') {
