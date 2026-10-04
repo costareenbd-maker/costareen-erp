@@ -595,3 +595,14 @@
 - The computer: flying knee against a jumping player, charge/slide/dropkick at mid range, headbutts and knee bashes up close, tornado kicks at the end of its flipping leaps.
 - Fixed: a slide pressed right after ↓ turned into a block-then-sweep; running is remembered for 0.3 s.
 - fight.js 136 KB (39 KB downloaded). Checked on a standalone page: all 12 finishers run through FINISH HIM with no errors (frames captured for 9 of them), headbutt→dizzy, slide, knee bash, charge and tornado trigger. Both web copies updated.
+
+## Connection limit fix (2026-10-04)
+Owner saw "(EMAXCONN) max client connections reached, limit: 200" - the Supabase pooler refuses
+clients past 200 when many copies of the Edge Function run at once. Fix: each copy holds at most
+2 + 1 connections (was 3 + 2) and drops idle ones after 5 s (was 20 s); the server retries a
+call refused this way up to 3 times (400 ms / 1 s / 2 s + jitter; it is refused while connecting,
+before any work, so a retry cannot do work twice) and then says "The database is busy for a
+moment"; the page waits 2.5 s and tries once more before showing anything. Timers spread so no
+two start in the same minute (alerts :x2, drive :x4, sheet :x6, websync :08/:23/:38/:53,
+heartbeat :29). Checked live: 60 calls at once, all answered. Not done: a bigger pooler limit
+needs a paid compute size - not needed unless it comes back.

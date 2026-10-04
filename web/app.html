@@ -8303,7 +8303,7 @@ function erpSession() {
   }, function () { return ''; });
 }
 
-function erpPost(name, args) {
+function erpPost(name, args, again) {
   return erpSession().then(function (tok) {
     return fetch(ERP_API, {
       method: 'POST',
@@ -8314,7 +8314,13 @@ function erpPost(name, args) {
                  'x-erp-session': tok ? 'Bearer ' + tok : '' },
       body: JSON.stringify({ name: name, args: args || [], token: erpToken() })
     });
-  }).then(function (r) { return r.json(); });
+  }).then(function (r) { return r.json(); }).then(function (j) {
+    // the server already retried; one more quiet try after a pause before telling anyone
+    if (j && j.ok === false && !again && /busy for a moment|EMAXCONN|max client connections/i.test(String(j.error || ''))) {
+      return new Promise(function (ok) { setTimeout(ok, 2500); }).then(function () { return erpPost(name, args, true); });
+    }
+    return j;
+  });
 }
 
 // Owner password reset: the emailed link opens the app signed in; ask for the

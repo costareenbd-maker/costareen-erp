@@ -43,7 +43,9 @@ function poolUrl(direct: string): string {
 const DB_URL = poolUrl(Deno.env.get('SUPABASE_DB_URL') ?? '');
 const sql = connect(postgres, DB_URL);
 // a second, small pool for side-queries made from inside a transaction (see core.js)
-const sqlAux = connect(postgres, DB_URL, { max: 2 });
+const sqlAux = connect(postgres, DB_URL, { max: 1 });
+
+const BUSY_DB = /EMAXCONN|max client connections|too many clients|remaining connection slots/i;
 
 const ALLOWED_ORIGINS = [
   'https://erp.costareen.com',
@@ -290,13 +292,22 @@ Deno.serve(async (req) => {
     }
   }
 
-  const out = await erpCall(deps, {
+  const call = {
     name: body.name,
     args: body.args,
     token: body.token,
     authHeader: req.headers.get('x-erp-session') || '',
     // the caller's internet address, for limiting wrong-code guessing
     ip: (req.headers.get('cf-connecting-ip') || (req.headers.get('x-forwarded-for') || '').split(',')[0] || '').trim(),
-  });
+  };
+  let out = await erpCall(deps, call);
+  // "Database full for a moment" is refused while connecting, before anything ran, so trying
+  // again cannot do the work twice. Wait a little and try again instead of showing it.
+  for (const wait of [400, 1000, 2000]) {
+    if (out.ok || !BUSY_DB.test(String(out.error || ''))) break;
+    await new Promise((r) => setTimeout(r, wait + Math.random() * 300));
+    out = await erpCall(deps, call);
+  }
+  if (!out.ok && BUSY_DB.test(String(out.error || ''))) out = { ok: false, error: 'The database is busy for a moment. Try again in a few seconds.' };
   return new Response(JSON.stringify(out), { headers });
 });
