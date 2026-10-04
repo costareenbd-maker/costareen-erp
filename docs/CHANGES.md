@@ -508,3 +508,11 @@
 - Keeps clear of the mouse (a ~190 px circle: they flip or run to a ledge outside it) and of the field being typed in.
 - Never on New invoice or Quotations (button hidden there too), never while a dialog/popup/print preview is open, when the tab is hidden, or below 900 px. Esc twice hides it at once; the ⚔ button (bottom right) brings it back and offers On / Calm / Off and Blood on/off, remembered per person. The owner's Maintenance switch (who sees the games) covers it too.
 - Checked on a test page and in the ERP (Sales, Customers, Products): fights, deaths/ragdolls, blood decals, off on New invoice, cursor circle empty after 1 s, Esc-twice hide, button restore. Not checked: real mouse use and how distracting it is over a full day.
+
+## stick-2 — one ninja against one at a time, throws, long leaps (2026-10-04)
+- Owner's changes: no white outline; the hero is light yellow (darker yellow in the light theme) with a red headband, the enemies blue; no sword, no shuriken, no health bar.
+- One against one: the yellow ninja can never be beaten (no damage; he blocks or slips away from ~90% of attacks and counters, escapes ~95% of grabs). Only one blue fighter at a time; when he is knocked out the next leaps in from the far side of the screen across the buttons.
+- The blue ones find him anywhere: a route of long jumps between ledges (breadth-first over which ledge can reach which, up to 640 px across and 300 px up) is worked out on every look. They use the same moves: jab-cross-uppercut chains, kicks, roundhouse, sweep, flying kick, block, grab.
+- Grabs and throws: the thrower lifts and hurls the other one; a flung body spins and bounces off the sides and undersides of buttons and boxes (with a dent burst and damage) and off the tops when falling fast, then lands and gets up. Knock-outs become ragdolls that bounce the same way.
+- Long ninja leaps (flips and afterimages on long ones); the ninja sometimes hides crouched at the end of a ledge and ambushes with a flying kick, and after a good exchange often leaps far away so the fight moves across the whole page. Fixed: a fighter landing on the very tip of a button kept falling off and "landing" again.
+- Checked on a test page: in 40 s both visited 12-13 areas of the screen, 2 knock-outs, all moves including throws and hides seen, the ninja never lost health.
