@@ -8,9 +8,9 @@
  */
 (function () {
   'use strict';
-  var G = 1900, ZONE = 95, REACH_X = 640, REACH_UP = 300;
-  var SEL = '#view .card, #view tbody tr, #view .btn, #view button, #view .c3bar, #view .o_lv, #view .pill, #view .cchip, #o_cp .btn, #o_cp .cchip, #pgame';
-  var HERO_D = '#c9a43a', HERO_L = '#9a7b1c', FOE = '#24346b', FOE_D = '#2c4387';
+  var G = 1900, ZONE = 95, REACH_X = 640, REACH_UP = 340, M = 96;   // M: about an inch kept clear at the left, right and bottom
+  var SEL = '#nav button, header.topbar input, header.topbar button, header.topbar select, #view .tabs button, #view .seg button, #view input, #view select, #view .card, #view tbody tr, #view .btn, #view button, #view .c3bar, #view .o_lv, #view .pill, #view .cchip, #o_cp .btn, #o_cp .cchip, #pgame';
+  var HERO_D = '#c9a43a', HERO_L = '#f59e0b', FOE = '#2563eb', FOE_D = '#2c4387';
 
   var P = {
     idle: { L: 14, hy: 20, sF: 50, eF: 100, sB: 30, eB: 110, hF: 30, kF: -45, hB: -22, kB: -30 },
@@ -74,11 +74,12 @@
       for (var i = 0; i < els.length; i++) {
         var e = els[i]; if (!e.offsetParent && e.id !== 'pgame') continue;
         var r = e.getBoundingClientRect();
-        if (r.width < 26 || r.height < 14 || r.bottom < 0 || r.top > H || r.top < 4) continue;
-        np.push({ el: e, x0: r.left + 2, x1: r.right - 2, y: r.top });
-        nb.push({ x0: r.left, x1: r.right, y0: r.top, y1: r.bottom });
+        if (r.width < 26 || r.height < 14 || r.bottom < 0 || r.top > H - M || r.top < 4) continue;
+        var x0 = Math.max(M, r.left + 2), x1 = Math.min(W - M, r.right - 2);
+        if (x1 - x0 >= 24) np.push({ el: e, x0: x0, x1: x1, y: r.top });
+        if (r.height < 60 && r.width < 500 && e.matches('button, .btn, .pill, .cchip, input, select')) nb.push({ el: e, x0: r.left, x1: r.right, y0: r.top, y1: r.bottom });
       }
-      np.push({ el: null, x0: 0, x1: W, y: H - 2, ground: 1 });
+      np.push({ el: null, x0: M, x1: W - M, y: H - M, ground: 1 });   // a last-resort floor an inch above the bottom
       [hero, foe].forEach(function (m) {
         if (m && m.aim) { m.aim = m.aim.el ? np.filter(function (p) { return p.el === m.aim.el; })[0] || null : null; }
         if (!m || !m.on) return;
@@ -182,15 +183,35 @@
         p.px = p.x; p.py = p.y; p.x += vx; p.y += vy + G * dt * dt;
         for (var i = 0; i < plats.length; i++) { var q = plats[i]; if (p.x >= q.x0 && p.x <= q.x1 && oy <= q.y + 0.5 && p.y > q.y) { p.y = q.y; p.py = p.y + (p.y - oy) * 0.3; p.px = p.x - vx * 0.6; break; } }
         for (var j = 0; j < boxes.length; j++) { var b = boxes[j]; if (p.x > b.x0 && p.x < b.x1 && p.y > b.y0 && p.y < b.y1 && !(ox > b.x0 && ox < b.x1 && oy > b.y0 && oy < b.y1) && oy > b.y0) { if (ox <= b.x0) { p.x = b.x0; p.px = p.x + vx * 0.5; } else if (ox >= b.x1) { p.x = b.x1; p.px = p.x + vx * 0.5; } else { p.y = b.y1; p.py = p.y + vy * 0.4; } } }
-        if (p.x < 0) { p.x = 0; p.px = vx * 0.5; } if (p.x > W) { p.x = W; p.px = W + vx * 0.5; } if (p.y > H - 2) { p.y = H - 2; p.py = p.y + vy * 0.3; }
+        if (p.x < M) { p.x = M; p.px = M + vx * 0.5; } if (p.x > W - M) { p.x = W - M; p.px = W - M + vx * 0.5; } if (p.y > H - M) { p.y = H - M; p.py = p.y + vy * 0.3; }
       }
       for (var it = 0; it < 3; it++) r.sticks.forEach(function (s) { var a = r.pts[s[0]], b = r.pts[s[1]], dx = b.x - a.x, dy = b.y - a.y, d = Math.hypot(dx, dy) || 0.01, df = (d - s[2]) / d * 0.5; a.x += dx * df; a.y += dy * df; b.x -= dx * df; b.y -= dy * df; });
       if (blood && r.t < 0.6) { r.bleedT -= dt; if (r.bleedT <= 0) { r.bleedT = 0.18; var n = r.pts.neck; fx.push({ k: 'blood', x: n.x, y: n.y, vx: (Math.random() - 0.5) * 70, vy: -50, t: 1.2, T: 1.2, r: 1.3 }); } }
     }
 
     // ---- moving
-    function jumpTo(m, x, y, flip, plat) {
-      var dx = x - m.x, rise = m.y - y, T = Math.max(0.38, Math.min(1.15, 0.32 + Math.abs(dx) / 820 + Math.max(0, rise) / 900));
+    function clearArc(m, x, y, T, plat) {
+      var vx = (x - m.x) / T, vy = -((m.y - y) + 0.5 * G * T * T) / T;
+      for (var k = 1; k < 12; k++) {
+        var t = T * k / 12, px = m.x + vx * t, py = m.y + vy * t + 0.5 * G * t * t;
+        if (py < 0) continue;
+        for (var i = 0; i < boxes.length; i++) {
+          var b = boxes[i];
+          if (m.on && b.el === m.on.el) continue;
+          if (plat && b.el === plat.el && k > 8) continue;
+          if (px + 5 > b.x0 && px - 5 < b.x1 && py > b.y0 + 2 && py - 40 < b.y1) return false;
+        }
+      }
+      return true;
+    }
+    function planT(m, x, y, plat) {   // a flight time whose arc is clear, or 0
+      var dx = x - m.x, rise = m.y - y, T = Math.max(0.36, Math.min(0.95, 0.3 + Math.abs(dx) / 900 + Math.max(0, rise) / 1000));
+      var tries = [T, Math.min(1.05, T * 1.2), Math.min(1.1, T * 1.4), T * 0.8];
+      for (var i = 0; i < tries.length; i++) if (clearArc(m, x, y, tries[i], plat)) return tries[i];
+      return 0;
+    }
+    function jumpTo(m, x, y, flip, plat, T0) {
+      var dx = x - m.x, rise = m.y - y, T = T0 || Math.max(0.38, Math.min(1.15, 0.32 + Math.abs(dx) / 820 + Math.max(0, rise) / 900));
       m.vx = dx / T; m.vy = -(rise + 0.5 * G * T * T) / T; m.on = null; m.dir = dx >= 0 ? 1 : -1;
       begin(m, 'air'); m.flip = flip || Math.abs(dx) > 260 ? 1 : 0; m.spin = 0; m.aim = plat || null; dust(m.x, m.y, 4);
     }
@@ -200,7 +221,7 @@
       plats.forEach(function (p) {
         if (p === m.on || !m.on || !canJump(m.on, p)) return;
         var tx = spot(m.on, p, m.x + away * 220); if (nearBlock(tx, p.y)) return;
-        var sc = (tx - m.x) * away - Math.abs(m.y - p.y) * 0.3;
+        var tg2 = enemyOf(m), sc = (tx - m.x) * away - Math.abs(m.y - p.y) * 0.3 - (tg2 ? Math.hypot(tx - tg2.x, p.y - tg2.y) * 0.3 : 0);
         if (sc > bs) { bs = sc; best = p; }
       });
       if (best) leapToward(m, best, m.x + away * 220); else { m.st = 'run'; m.vx = away * 340; m.dir = away; }
@@ -230,7 +251,7 @@
       if (!hero || !foe || foe.dying) return;
       scene.t -= dt;
       if (foe.hp < 24 && !foe.fled && foe.on && scene.name !== 'chase') { foe.fled = 1; setScene('chase', 9); scene.bow = Math.random() < 1 / 3; scene.arrows = 0; return; }
-      if (hero.sta < 35 && scene.name !== 'retreat' && scene.name !== 'chase') { setScene('retreat', 6); return; }
+
       if (scene.name === 'retreat' && hero.sta > 88 && hero.st !== 'pant') { setScene('duel', 7); return; }
       if (scene.t <= 0) { if (scene.name === 'chase') setScene('duel', 8); else if (scene.name !== 'retreat') pickScene(); }
     }
@@ -241,24 +262,33 @@
     }
     // parkour: walk off an edge to drop down, a quick vault to a ledge just above, a flip only over a long gap
     function moveTo(m, p, tx) {
-      if (!m.on || p === m.on) return;
+      if (!m.on || p === m.on) return false;
       var x = spot(m.on, p, tx), dx = x - m.x, rise = m.y - p.y, overlap = p.x1 > m.on.x0 - 20 && p.x0 < m.on.x1 + 20;
       if (rise < -8 && overlap && !p.ground) {               // below: run off the edge on his side and drop
         var edge = x < m.x ? m.on.x0 - 4 : m.on.x1 + 4;
         if (x > m.on.x0 && x < m.on.x1) edge = Math.abs(x - m.on.x0) < Math.abs(x - m.on.x1) ? m.on.x0 - 4 : m.on.x1 + 4;
-        m.dropTo = p; m.st = 'run'; m.dir = edge > m.x ? 1 : -1; m.vx = m.dir * 190; return;
+        m.dropTo = p; m.st = 'run'; m.dir = edge > m.x ? 1 : -1; m.vx = m.dir * 190; return true;
       }
-      if (rise > 0 && rise < 90 && Math.abs(dx) < 160) { jumpTo(m, x, p.y, false, p); m.vault = 1; return; }
-      jumpTo(m, x, p.y, Math.abs(dx) > 230 && Math.random() < 0.7, p);
+      var xs = [x, (p.x0 + p.x1) / 2, p.x0 + 10, p.x1 - 10], T = 0;
+      for (var i = 0; i < xs.length && !T; i++) { T = planT(m, xs[i], p.y, p); if (T) x = xs[i]; }
+      if (!T) return false;
+      if (rise > 0 && rise < 90 && Math.abs(dx) < 160) { jumpTo(m, x, p.y, false, p, T); m.vault = 1; return true; }
+      jumpTo(m, x, p.y, Math.abs(dx) > 230 && Math.random() < 0.7, p, T);
+      return true;
     }
     function farFrom(m, from) {   // a ledge far from "from" that m can reach
       var best = null, bs = -1;
       (links[idx(m.on)] || []).forEach(function (j) { var p = plats[j]; if (p.ground || nearBlock((p.x0 + p.x1) / 2, p.y)) return; var d = Math.hypot((p.x0 + p.x1) / 2 - from.x, p.y - from.y) + Math.random() * 120; if (d > bs) { bs = d; best = p; } });
       return best;
     }
-    function goToward(m, tg) {   // the next ledge on the way to him
+    function goToward(m, tg) {   // the next ledge on the way to him: the shortest chain first, else any ledge that brings him closer
       var nxt = route(m.on, tg.on);
-      if (nxt && nxt !== m.on && !nearBlock(spot(m.on, nxt, tg.x), nxt.y)) { moveTo(m, nxt, nxt === tg.on ? tg.x - (tg.x > m.x ? 30 : -30) : tg.x); return true; }
+      if (nxt && nxt !== m.on && !nearBlock(spot(m.on, nxt, tg.x), nxt.y) && moveTo(m, nxt, nxt === tg.on ? tg.x - (tg.x > m.x ? 30 : -30) : tg.x)) return true;
+      var here = Math.hypot(tg.x - m.x, tg.y - m.y);
+      var cand = (links[idx(m.on)] || []).map(function (j) { return plats[j]; }).filter(function (p) { return !p.ground; })
+        .map(function (p) { var x = spot(m.on, p, tg.x); return { p: p, x: x, d: Math.hypot(tg.x - x, tg.y - p.y) }; })
+        .filter(function (c) { return c.d < here - 20 && !nearBlock(c.x, c.p.y); }).sort(function (a, b) { return a.d - b.d; });
+      for (var i = 0; i < Math.min(5, cand.length); i++) if (moveTo(m, cand[i].p, cand[i].x)) return true;
       return false;
     }
     function think(m, dt) {
@@ -307,8 +337,6 @@
             return;
           }
           if (!m.goHide) {
-            var spotP = same || ad < 200 ? farFrom(m, tg) : null;
-            if (spotP) { moveTo(m, spotP, dx > 0 ? spotP.x1 : spotP.x0); return; }
             var edgeX = dx > 0 ? m.on.x1 - 6 : m.on.x0 + 6;
             m.st = 'run'; m.dir = edgeX > m.x ? 1 : -1; m.vx = m.dir * 160; m.hideAt = edgeX; m.goHide = 1; return;
           }
@@ -380,16 +408,17 @@
       var tg = enemyOf(m);
       if (m.on && m.on.ground && (!tg || !tg.on || !tg.on.ground)) {
         m.groundT = (m.groundT || 0) + dt;
-        if (m.groundT > 0.7 && free2(m)) {   // down at the bottom of the screen: one big leap back up, or vanish and reappear
+        if (m.groundT > 0.35 && free2(m)) {   // down at the bottom of the screen: one big leap back up, or vanish and reappear
           m.groundT = 0;
-          var up = plats.filter(function (p) { return !p.ground && p.x1 - p.x0 > 60 && m.y - p.y < 520 && Math.abs((p.x0 + p.x1) / 2 - m.x) < 500 && !nearBlock((p.x0 + p.x1) / 2, p.y); });
-          if (up.length) { var p = up[Math.floor(Math.random() * up.length)]; jumpTo(m, p.x0 + Math.random() * (p.x1 - p.x0), p.y, true, p); } else poof(m, tg);
+          var up = plats.filter(function (p) { return !p.ground && p.x1 - p.x0 > 30 && m.y - p.y < 620 && Math.abs((p.x0 + p.x1) / 2 - m.x) < 500 && !nearBlock((p.x0 + p.x1) / 2, p.y); });
+          up.sort(function (a, b) { return (tg ? Math.hypot((a.x0 + a.x1) / 2 - tg.x, a.y - tg.y) - Math.hypot((b.x0 + b.x1) / 2 - tg.x, b.y - tg.y) : 0); });
+          for (var u = 0; u < Math.min(6, up.length); u++) { var p = up[u], ux = Math.max(p.x0 + 8, Math.min(p.x1 - 8, tg ? tg.x : m.x)), T = planT(m, ux, p.y, p); if (T) { jumpTo(m, ux, p.y, true, p, T); break; } }
         }
       } else m.groundT = 0;
       if (!tg || !tg.on || !m.on || tg.on === m.on || m.st === 'hide' || m.goHide) { m.stuckT = 0; m.bestD = 1e9; return; }
       var d = Math.hypot(tg.x - m.x, tg.y - m.y);
       if (d < (m.bestD || 1e9) - 25) { m.bestD = d; m.stuckT = 0; } else m.stuckT = (m.stuckT || 0) + dt;
-      if (m.stuckT > 3.5) { m.bestD = 1e9; poof(m, tg); }
+      if (m.stuckT > 3.5) { m.bestD = 1e9; m.stuckT = 0; if (m.on && !goToward(m, tg)) { begin(m, 'look'); m.vx = 0; } }
     }
     function step(m, dt) {
       if (!m) return;
@@ -430,7 +459,7 @@
         m.vx = 0; if (tg) m.dir = tg.x >= m.x ? 1 : -1;
         if (m.t > 0.55 && !m.done && tg) { m.done = 1; shoot(m, tg); scene.arrows++; }
         if (m.t > 0.85) begin(m, 'guard');
-      } else if (m.st === 'roll') { m.vx = m.dir * 130; if (m.t > 0.35) begin(m, 'guard'); }
+      } else if (m.st === 'roll') { if (tg) m.dir = tg.x >= m.x ? 1 : -1; m.vx = m.dir * 60; if (m.t > 0.3) begin(m, 'guard'); }
       else if (m.st === 'look') { m.vx = 0; if (m.t > 0.5 && !m.done) { m.done = 1; m.dir = -m.dir; } if (m.t > 1.1) begin(m, 'guard'); }
       else if (m.st === 'wipe' && m.t > 0.7) begin(m, 'pant');
       else if (m.st === 'hit' && m.t > 0.22) begin(m, 'guard');
@@ -451,13 +480,13 @@
           if (m.x >= p.x0 - 3 && m.x <= p.x1 + 3 && oy <= p.y + 0.5 && m.y >= p.y) {
             if (m.st === 'flung' && m.vy > 500 && !p.ground) { m.y = p.y; m.vy = -m.vy * 0.32; m.vx *= 0.7; dust(m.x, p.y, 6); spark(m.x, p.y - 4, 4); if (m !== hero) m.hp -= 4; break; }   // bounces on the top
             var fast = m.vy > 820;
-            m.aim = null; m.vault = 0; m.y = p.y; m.on = p; m.x = Math.max(p.x0, Math.min(p.x1, m.x)); m.vy = 0; m.vx *= 0.2; m.flip = 0; m.spin = 0; m.lastLand = now; dust(m.x, p.y, 6);
+            m.aim = null; m.vault = 0; m.y = p.y; m.on = p; m.x = Math.max(p.x0, Math.min(p.x1, m.x)); m.vy = 0; m.vx *= 0.08; m.flip = 0; m.spin = 0; m.lastLand = now; dust(m.x, p.y, 6);
             if (m.st === 'flung') { m.down = 1; begin(m, 'land'); } else if (fast && p.x1 - p.x0 > 60) begin(m, 'roll'); else begin(m, 'land');
             break;
           }
         }
-        if (m.x < 4 || m.x > W - 4) { m.vx = -m.vx * 0.5; m.x = Math.max(4, Math.min(W - 4, m.x)); }
-        if (m.y > H + 60) { m.y = H - 2; m.on = plats[plats.length - 1]; m.vy = 0; begin(m, 'land'); }
+        if (m.x < M || m.x > W - M) { m.vx = -m.vx * 0.5; m.x = Math.max(M, Math.min(W - M, m.x)); }
+        if (m.y > H - M + 4) { m.y = H - M; m.on = plats[plats.length - 1]; m.vy = 0; begin(m, 'land'); }
       } else {
         m.x += m.vx * dt;
         if (m.x < m.on.x0 - 2 || m.x > m.on.x1 + 2) {
@@ -530,7 +559,7 @@
       }
       if (m.team === 'hero') {
         ctx.save(); ctx.globalAlpha = alpha; if (ang) { ctx.translate(c.x, c.y); ctx.rotate(ang); ctx.translate(-c.x, -c.y); }
-        var hx = J.head.x - m.dir * 5, hy = J.head.y - 1, wv = Math.sin(now * 18 + m.x * 0.05), band = '#8f2a2a';
+        var hx = J.head.x - m.dir * 5, hy = J.head.y - 1, wv = Math.sin(now * 18 + m.x * 0.05), band = dark() ? '#8f2a2a' : '#dc2626';
         ctx.strokeStyle = band; ctx.lineWidth = 2.4; ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(J.head.x - 5.8, J.head.y - 1.5); ctx.lineTo(J.head.x + 5.8, J.head.y - 1.5); ctx.stroke();
         ctx.lineWidth = 1.8; ctx.beginPath(); ctx.moveTo(hx, hy); ctx.quadraticCurveTo(hx - m.dir * 9, hy + wv * 3, hx - m.dir * 18, hy + 2 + wv * 5); ctx.stroke();
         ctx.beginPath(); ctx.moveTo(hx, hy); ctx.quadraticCurveTo(hx - m.dir * 8, hy + 4 + wv * 2, hx - m.dir * 14, hy + 7 + wv * 4); ctx.stroke();
@@ -565,7 +594,7 @@
     function bringFoe() {
       // the next one leaps in from the far side of the screen
       var r = Math.random(), fromLeft = r < 0.4, fromTop = r >= 0.8;
-      var m = make('foe', fromTop ? W * (0.15 + Math.random() * 0.7) : fromLeft ? -30 : W + 30, fromTop ? -40 : 80 + Math.random() * Math.max(40, H * 0.45), null);
+      var m = make('foe', fromTop ? M + (W - 2 * M) * Math.random() : fromLeft ? -30 : W + 30, fromTop ? -40 : 80 + Math.random() * Math.max(40, H * 0.45), null);
       m.dir = fromLeft ? 1 : -1;
       var land = plats.filter(function (p) { return !p.ground && (fromTop ? Math.abs((p.x0 + p.x1) / 2 - m.x) < 300 : fromLeft ? p.x0 < W * 0.35 : p.x1 > W * 0.65) && !nearBlock((p.x0 + p.x1) / 2, p.y); });
       var p = land.length ? land[Math.floor(Math.random() * land.length)] : plats[plats.length - 1];

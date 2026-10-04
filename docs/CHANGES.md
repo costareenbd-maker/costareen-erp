@@ -534,3 +534,13 @@
 - Throws are slower and clear: lift over the head, a beat, then the hurl (grab reach 30, more grabs).
 - Kept from the last round as the owner decided: less blood + sweat, the smoke vanish when stuck.
 - Checked on a Sales-like test page: all scenes appear, a full sequence seen (enemy leaps in, grab and throw, breather, chase along the bottom, the enemy turns and fights back), forced bow shot and searching pose captured, no errors.
+
+## stick-5 — the whole page, edge margins, looking before leaping, no vanish (2026-10-04)
+- Floors everywhere: the side menu buttons, the top bar (search, business picker, buttons), tabs, segment buttons and fields join the boxes, rows and buttons.
+- About an inch (96 px) kept clear at the left, right and bottom: floors are cut to it, fighters and ragdolls bounce off it, a last-resort floor sits an inch above the bottom and anyone landing there leaps back up within ~0.3 s towards the enemy. No limit at the top.
+- Solid things are only buttons, chips, pills and fields (not the big boxes or rows they stand inside). Every jump checks its arc first; if a solid thing is in the way it tries a higher (capped) arc, a lower one, or another landing spot on the ledge; if none is clear it picks another ledge. Thrown bodies, ragdolls and arrows only hit solid things.
+- Pursuit: the shortest chain of jumps first; if that is blocked, any reachable ledge that brings him closer with a clear arc (both fighters).
+- Always towards the enemy: the ninja's retreat removed; hiding only at the end of his own ledge facing the enemy; shorter landing slides and rolls (and rolls face the enemy); the mouse-escape prefers ledges towards the enemy.
+- The smoke vanish is off (owner's request); a stuck fighter takes another route or looks around.
+- Light theme uses lively colours (amber-yellow ninja, bright blue enemy, red headband); the dark theme keeps the muted ones.
+- Checked on a test page with side menu + top bar + rows (light theme): 0 margin violations in 40 s, a quarter of the time spent on the side menu/top bar, almost no passes through buttons.
