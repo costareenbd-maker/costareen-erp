@@ -16951,7 +16951,7 @@ function makeFightLazy(cv) {
   }
   function fail(e) { note = 'Brawl could not load. Check the internet and open the tab again.'; paint(); }
   if (!FIGHT_JS) FIGHT_JS = new Promise(function (ok, bad) {
-    var sc = document.createElement('script'); sc.src = 'games/fight.js?v=9'; sc.onload = ok; sc.onerror = function () { FIGHT_JS = null; bad(); }; document.head.appendChild(sc);
+    var sc = document.createElement('script'); sc.src = 'games/fight.js?v=10'; sc.onload = ok; sc.onerror = function () { FIGHT_JS = null; bad(); }; document.head.appendChild(sc);
   });
   var roster = FIGHTERS ? Promise.resolve(FIGHTERS) : new Promise(function (ok) { srv('erpFighters', [], function (r) { FIGHTERS = r.fighters || []; ok(FIGHTERS); }, function () { ok([]); }); });
   Promise.all([FIGHT_JS, roster]).then(function (v) {

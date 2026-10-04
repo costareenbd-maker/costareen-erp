@@ -568,3 +568,12 @@
 - Smear frames: two ghost copies of the body on the active frames of heavy moves.
 - Knock-outs are real ragdolls (12 points + sticks, fixed 1/60 s steps so slow motion stays right), with the pixel head on the neck; they tumble across the floor.
 - fight.js 97 KB (29 KB downloaded). Checked on a standalone page: throw (12 damage), parry, cancel jab→special, camera zoom, ragdoll K.O. arc and landing.
+
+## game-7 — Brawl: pixel-art muscular fighters, stickman-style moves, more physics, throw/parry sounds (2026-10-04)
+- Sounds: a grab-and-heave for throws (+ whoosh and a body slam on release), a bright metallic ping for parries, a heavy slam for elbow drops and wall splats.
+- Pixel art: the fighters are drawn into a canvas 2–3× smaller and scaled up with hard pixels, so the bodies match the pixel faces. Muscular bodies: deltoids, biceps, forearms, thighs and calves, broader shoulders, chest and abs lines under T-shirt/vest/tracksuit.
+- New moves: ←A spinning backfist, →S running dropkick (while walking/dashing), ↓A elbow drop on a downed fighter (hits on the ground), ←↑ backflip (short invulnerability), ↑ at the floor's edge in the air = wall jump, air punch (A) → air kick (S), ↓S dive kick from the air, ↑ after an uppercut = super-jump chase for an air combo. Flips turn the body around the hips.
+- Physics: every knockdown (not only K.O.) is a ragdoll that tumbles and gets up when it comes to rest; flying ragdolls can be juggled (hits re-throw them, up to 4); ragdolls slamming into the edge of the floor = WALL SPLAT.
+- The computer: long flipping leaps that end in a dive kick, dropkicks at mid range, backfists, backflip dodges against big attacks, wall jumps when cornered, super-jump air combos after its uppercut, elbow drops on a downed player.
+- fight.js 109 KB (32 KB downloaded). Checked on a standalone page: backfist, dropkick, pixel look and muscles in captured frames, a 40 s fight with no errors where the computer used air punch, backfist, dropkick and the player became a ragdoll 8 times and got up.
+- The neutral office-erp copy did not get this upload (the PC ran out of memory twice); erp.costareen.com has it.
