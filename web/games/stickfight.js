@@ -14,6 +14,9 @@
  * a jump to the edge of a higher box then hang and pull up, a run up the side of a box, lowering from an edge and
  * dropping, a roll after a hard landing and a slide after a fast one. A route finder picks the quickest chain of
  * moves, so a chase goes button to button across the page; a "pursuit" scene has one run and the other follow.
+ * v10: the ninja's grappling hook. When there is no way to climb to the enemy (or only a very long one) he spots him,
+ * fires a rope to the edge of that floor, climbs it, pulls over and attacks. The blue men have no hook: when they
+ * cannot reach him they wait as close as they can, point at him and taunt. Two blue men never stand in one spot.
  */
 (function () {
   'use strict';
@@ -64,6 +67,8 @@
   P.lie = { L: 0, hy: 21, sF: 165, eF: 15, sB: 150, eB: 25, hF: 8, kF: -6, hB: -8, kB: -14 };
   P.hang = { L: -4, hy: 21, sF: 172, eF: 6, sB: 166, eB: 12, hF: 12, kF: -14, hB: -4, kB: -24 };       // hands 50 above the feet, on an edge
   P.slide = { L: -28, hy: 13, sF: -35, eF: 40, sB: -55, eB: 30, hF: 78, kF: -6, hB: 25, kB: -70 };
+  P.point = { L: 2, hy: 21, sF: 118, eF: 4, sB: 18, eB: 40, hF: 14, kF: -16, hB: -14, kB: -20 };       // "there he is"
+  P.hookaim = { L: -10, hy: 20, sF: 150, eF: 8, sB: 120, eB: 30, hF: 22, kF: -30, hB: -20, kB: -24 };   // looking up, the hook gun raised
   // moves in a written fight: pose, length, the moment it lands, the distance it lands from
   var MV = {
     jab: { p: 'jab', d: 0.24, hit: 0.08, r: 28 }, cross: { p: 'cross', d: 0.28, hit: 0.1, r: 28 }, hook: { p: 'hook', d: 0.32, hit: 0.13, r: 24 },
@@ -256,7 +261,7 @@
       for (var i = 0; i < n; i++) fx.push({ k: 'blood', x: x, y: y, vx: dir * (60 + Math.random() * 280) + (Math.random() - 0.5) * 90, vy: -80 - Math.random() * 280, t: 1.4, T: 1.4, r: 1 + Math.random() * 1.9 });
     }
     function sweat(x, y, dir, n) { for (var i = 0; i < n; i++) fx.push({ k: 'sweat', x: x + (Math.random() - 0.5) * 6, y: y - 6, vx: dir * (30 + Math.random() * 90), vy: -60 - Math.random() * 120, t: 0.7, T: 0.7, r: 0.9 }); }
-    function begin(m, st, atk) { m.st = st; m.t = 0; m.done = 0; m.atk = atk || null; m.queue = null; m.act = null; if (st !== 'seq') m.seq = null; }
+    function begin(m, st, atk) { m.st = st; m.t = 0; m.done = 0; m.atk = atk || null; m.queue = null; m.act = null; if (st !== 'seq') { m.seq = null; m.rope = null; } }
     function enemyOf(m) {
       if (m !== hero) return hero;
       var a = foe && !foe.dying ? foe : null, b = third && !third.dying ? third : null;
@@ -417,6 +422,7 @@
     }
     function endSeq(m) {
       var e = m.seqEnd || {}; m.seq = null; m.seqEnd = null;
+      if (m.rope) { m.rope = null; m.hookHit = now; }
       if (e.land && idx(e.land) >= 0) { m.on = e.land; m.y = e.land.y; m.x = cl(m.x, e.land.x0, e.land.x1); m.vx = m.vy = 0; begin(m, 'land'); m.lastLand = now; dust(m.x, m.y, 4); return; }
       m.on = null; begin(m, 'air'); m.vx = e.fall ? e.fall.vx : 0; m.vy = 0; m.aim = e.fall && e.fall.aim && idx(e.fall.aim) >= 0 ? e.fall.aim : null;
       if (e.fall) m.dir = e.fall.vx >= 0 ? 1 : -1;
@@ -487,17 +493,61 @@
     function goToward(m, tg) {   // chase him by the quickest chain of moves; no way at all: get as close as I can
       if (!m.on || !tg.on) return false;
       if (tg.on.ground && !m.on.ground) { var up0 = upFrom(m, tg); if (up0 === m.on) return false; if (up0) return moveTo(m, up0); }   // he is at the bottom: wait for him up here, near him
-      var P2 = paths(m.on, m.x), e = firstMove(P2, tg.on);
+      var P2 = paths(m.on, m.x), e = firstMove(P2, tg.on), ti = idx(tg.on);
+      if (m === hero && (!e || isBad(m, e) || (P2 && P2.dist[ti] > 5)) && hookTo(m, tg.on, tg)) return true;   // no way up (or a long one): the rope
       if (e && !isBad(m, e) && !nearBlock(landX(e), plats[e.to].y)) return doMove(m, e);
       var b = nearestReach(P2, tg.x, tg.y);
       if (b && b !== m.on) { e = firstMove(P2, b); if (e && !isBad(m, e)) return doMove(m, e); }
       return false;
     }
-    function lost(m) { if (Math.random() < 0.5) { begin(m, 'look'); m.vx = 0; } else { m.st = 'walk'; m.vx = m.dir * 70; } }
+    function lost(m) {
+      var tg = enemyOf(m);
+      if (m !== hero && tg) {   // can't get to him: point at him now and then, otherwise look about or taunt
+        m.dir = tg.x >= m.x ? 1 : -1; m.vx = 0;
+        if (now - (m.pointAt || -9) > 4.5) { m.pointAt = now; begin(m, 'point'); }
+        else if (Math.random() < 0.25) begin(m, 'taunt');
+        else if (Math.random() < 0.5) { begin(m, 'look'); }
+        else { m.st = 'walk'; m.vx = (Math.random() < 0.5 ? 1 : -1) * 50; }
+        return;
+      }
+      if (Math.random() < 0.5) { begin(m, 'look'); m.vx = 0; } else { m.st = 'walk'; m.vx = m.dir * 70; }
+    }
+    // ---- the ninja's grappling hook: a rope to the edge of the enemy's floor when he cannot climb there
+    function ropeClear(x0, y0, x1, y1, b, from) {
+      for (var k = 1; k < 14; k++) {
+        var t = k / 14, px = x0 + (x1 - x0) * t, py = y0 + (y1 - y0) * t;
+        for (var i = 0; i < boxes.length; i++) { var q = boxes[i]; if ((b && q.el === b.el) || (from && q.el === from.el)) continue; if (px > q.x0 && px < q.x1 && py > q.y0 && py < q.y1) return false; }
+      }
+      return true;
+    }
+    function hookTo(m, b, tg) {
+      if (m !== hero || !m.on || !b || b.ground || (m.hookCd || 0) > now || nearBlock(m.x, m.y)) return false;
+      var rise = m.y - b.y; if (rise < 60 || rise > Math.min(460, H * 0.6)) return false;
+      var xs = m.x >= b.x0 + 8 && m.x <= b.x1 - 8 ? [m.x] : [];        // straight above me, else the nearer edge of his floor
+      xs.push(b.x0 + 4, b.x1 - 4);
+      xs.sort(function (a, c) { return Math.abs(a - m.x) - Math.abs(c - m.x); });
+      for (var i = 0; i < xs.length; i++) {
+        var ax = cl(xs[i], M + 4, W - M - 4), lean = Math.abs(ax - m.x);
+        if (lean > rise * 0.9 + 60 || nearBlock(ax, b.y) || !ropeClear(m.x, m.y - 34, ax, b.y, b, m.on)) continue;
+        var side = ax <= b.x0 + 6 ? 1 : ax >= b.x1 - 6 ? -1 : (tg && tg.x < ax ? -1 : 1);
+        var hy = b.y + HANG, len = Math.hypot(ax - m.x, hy - m.y), face = ax >= m.x ? 1 : -1;
+        m.dir = face; m.hookCd = now + 8;
+        runSeq(m, [
+          { p: 'hookaim', d: 0.45, x0: m.x, y0: m.y, x1: m.x, y1: m.y, face: face },
+          { p: 'hookfire', d: 0.16 + rise / 1600, x0: m.x, y0: m.y, x1: m.x, y1: m.y, face: face },
+          { p: 'rope', d: Math.max(0.35, len / (len > 260 ? 480 : 260)), x0: m.x, y0: m.y, x1: ax, y1: hy, face: face },
+          { p: 'hang', d: 0.08, x0: ax, y0: hy, x1: ax, y1: hy },
+          { p: 'pull', d: 0.36, x0: ax, y0: hy, x1: cl(ax + side * 12, b.x0 + 4, b.x1 - 4), y1: b.y, face: side }
+        ], { land: b });
+        m.rope = { ax: ax, ay: b.y };
+        return true;
+      }
+      return false;
+    }
     function think(m, dt) {
       m.think -= dt; m.cd = Math.max(0, m.cd - dt);
       if (m === hero) m.sta = Math.min(100, m.sta + (m.st === 'pant' ? 22 : 3) * dt);
-      if (!m.on || ['atk', 'hit', 'land', 'flung', 'held', 'dead', 'rise', 'roll', 'aim', 'cho', 'seq', 'slide'].indexOf(m.st) >= 0) return;
+      if (!m.on || ['atk', 'hit', 'land', 'flung', 'held', 'dead', 'rise', 'roll', 'aim', 'cho', 'seq', 'slide', 'point'].indexOf(m.st) >= 0) return;
       if (m.dropTo) { if (m.st !== 'run') m.dropTo = null; else return; }   // (a planned drop runs on past the edge)
       if (nearBlock(m.x, m.y)) { escape(m); return; }
       var tg = enemyOf(m);
@@ -506,6 +556,14 @@
       if ((m.st === 'run' || m.st === 'walk') && ((m.x <= m.on.x0 + 3 && m.vx < 0) || (m.x >= m.on.x1 - 3 && m.vx > 0))) { m.vx = 0; m.st = 'guard'; }   // never walk off an edge by accident
       if (m.think > 0) return;
       m.think = 0.1 + Math.random() * 0.15 * (mode === 'calm' ? 3 : 1);
+      if (m !== hero && !m.cho) {   // the two blue men never stand in one spot
+        var mate = m === foe ? third : foe;
+        if (mate && !mate.dying && !mate.cho && mate.on === m.on && Math.abs(mate.x - m.x) < 24 && (m === third || Math.abs(mate.x - m.x) < 4)) {
+          var aw = m.x > mate.x ? 1 : m.x < mate.x ? -1 : (Math.random() < 0.5 ? 1 : -1);
+          if (m.x + aw * 30 < m.on.x0 + 4 || m.x + aw * 30 > m.on.x1 - 4) aw = -aw;
+          m.st = 'walk'; m.dir = aw; m.vx = aw * 90; return;
+        }
+      }
       if (m.on.ground && !m.cho) {   // nobody stays at the bottom of the screen: climb back up the boxes
         if (!m.upTo || now - (m.upAt || 0) > 1.5 || idx(m.upTo) < 0) { m.upTo = upFrom(m, tg && !tg.dying ? tg : null); m.upAt = now; }
         if (m.upTo && moveTo(m, m.upTo)) return;
@@ -590,6 +648,7 @@
         if (m === foe && Math.random() < 0.07) { begin(m, 'block'); m.vx = 0; return; }
         begin(m, 'atk', attackChoice(m)); m.vx = 0; m.guardT = 0.08 + Math.random() * 0.25; return;
       }
+      if (m.hookHit && now - m.hookHit < 1.6 && ad > 40 && ad < 170 && !nearBlock(tg.x, tg.y)) { m.hookHit = 0; var Ah = planArc(m, tg.x - m.dir * 14, tg.y, tg.on, 26); if (Ah) { jumpTo(m, tg.x - m.dir * 14, tg.y, true, tg.on, Ah); m.flykick = 1; return; } }   // straight off the rope into a flying kick
       if (ad > 90 && ad < 150 && Math.random() < 0.06 && !nearBlock(tg.x, tg.y)) { var A1 = planArc(m, tg.x - m.dir * 14, tg.y, tg.on, 22); if (A1) { jumpTo(m, tg.x - m.dir * 14, tg.y, false, tg.on, A1); m.flykick = 1; return; } }
       m.st = ad < 60 ? 'walk' : 'run'; m.vx = m.dir * (ad < 60 ? 150 : 210) * (mode === 'calm' ? 0.6 : 1);
     }
@@ -682,6 +741,7 @@
         if (m.t > 0.85) begin(m, 'guard');
       } else if (m.st === 'roll') { m.vx = m.dir * 70; if (m.t > 0.35) begin(m, 'guard'); }
       else if (m.st === 'slide') { if (m.t > 0.3) begin(m, 'guard'); }
+      else if (m.st === 'point') { m.vx = 0; if (tg) m.dir = tg.x >= m.x ? 1 : -1; if (m.t > 0.9) begin(m, Math.random() < 0.4 ? 'taunt' : 'guard'); }
       else if (m.st === 'look') { m.vx = 0; if (m.t > 0.5 && !m.done) { m.done = 1; m.dir = -m.dir; } if (m.t > 1.1) begin(m, 'guard'); }
       else if (m.st === 'wipe' && m.t > 0.7) begin(m, 'pant');
       else if (m.st === 'hit' && m.t > 0.22) begin(m, 'guard');
@@ -748,10 +808,13 @@
         if (sq.p === 'hang') { var hq = {}; for (var kk in P.hang) hq[kk] = P.hang[kk]; hq.hF += sw; hq.hB += sw; return hq; }
         if (sq.p === 'pull') return kq < 0.5 ? mix(P.hang, P.vault, ease(kq / 0.5)) : mix(P.vault, P.land, ease((kq - 0.5) / 0.5));
         if (sq.p === 'lower') return mix(P.land, P.hang, ease(kq));
+        if (sq.p === 'hookaim' || sq.p === 'hookfire') return sq.p === 'hookaim' ? mix(P.guard, P.hookaim, ease(Math.min(1, kq * 2))) : P.hookaim;
+        if (sq.p === 'rope') { var ra = Math.sin(m.seqT * 14); return { L: -2, hy: 20, sF: 168 + ra * 12, eF: 8, sB: 168 - ra * 12, eB: 8, hF: 45 + ra * 10, kF: -70, hB: 25 - ra * 10, kB: -80 }; }   // hand over hand, legs round the rope
         if (sq.p === 'wall') { var sr = Math.sin(m.ph); return { L: 18, hy: 18, sF: 120 - sr * 50, eF: 40, sB: 120 + sr * 50, eB: 40, hF: 40 + 45 * sr, kF: -60 - 40 * Math.max(0, -sr), hB: 40 - 45 * sr, kB: -60 - 40 * Math.max(0, sr) }; }
         return kq < 0.6 ? mix(P.air, P.hang, ease(kq / 0.6)) : P.hang;   // the jump up to the edge, arms reaching
       }
       if (m.st === 'slide') return P.slide;
+      if (m.st === 'point') return mix(P.guard, P.point, ease(Math.min(1, m.t / 0.2)));
       if (m.st === 'run') { var s = Math.sin(m.ph), cc = Math.abs(Math.cos(m.ph)); return { L: 22 + cc * 4, hy: 19 + cc * 2, sF: 28 - s * 62, eF: 95 + s * 15, sB: 28 + s * 62, eB: 95 - s * 15, hF: 14 + 52 * s, kF: -22 - 85 * Math.max(0, -s), hB: 14 - 52 * s, kB: -22 - 85 * Math.max(0, s) }; }   // leaning in, bent arms pumping against the legs, the trailing knee folding high
       if (m.st === 'atk') {
         if (m.atk === 'toss') return m.t < 0.3 ? mix(P.grab, P.toss, ease(m.t / 0.3) * 0.8) : m.t < 0.45 ? P.toss : mix(P.toss, P.jab, ease((m.t - 0.45) / 0.12));
@@ -806,7 +869,20 @@
         m.ktrail = (m.ktrail || []).concat([{ x: J.fF.x, y: J.fF.y }]).slice(-6);
         ctx.strokeStyle = 'rgba(255,255,255,.55)'; ctx.lineWidth = 2.2; ctx.beginPath(); m.ktrail.forEach(function (q, i) { if (i) ctx.lineTo(q.x, q.y); else ctx.moveTo(q.x, q.y); }); ctx.stroke();
       } else m.ktrail = null;
+      if (m.rope && m.st === 'seq' && m.seq && m.seq[m.seqI]) {
+        var rq = m.seq[m.seqI], hand = J.hF, tipx = m.rope.ax, tipy = m.rope.ay;
+        if (rq.p === 'hookaim') tipx = null;
+        else if (rq.p === 'hookfire') { var kf = Math.min(1, m.seqT / rq.d); tipx = hand.x + (m.rope.ax - hand.x) * kf; tipy = hand.y + (m.rope.ay - hand.y) * kf; }
+        if (tipx !== null && !(rq.p === 'pull' && m.seqT > rq.d * 0.6)) {
+          ctx.save(); ctx.strokeStyle = dark() ? '#c4b59a' : '#8b6a3e'; ctx.lineWidth = 1.4; ctx.beginPath(); ctx.moveTo(hand.x, hand.y); ctx.lineTo(tipx, tipy); ctx.stroke();
+          ctx.strokeStyle = dark() ? '#e5e7eb' : '#475569'; ctx.lineWidth = 1.6;          // the hook: three claws over the edge
+          [-0.9, 0, 0.9].forEach(function (a2) { ctx.beginPath(); ctx.moveTo(tipx, tipy); ctx.lineTo(tipx + Math.sin(a2) * 5, tipy - 3 + Math.cos(a2) * 2); ctx.stroke(); });
+          ctx.restore();
+          if (rq.p === 'hookfire' && m.seqT + 0.03 >= rq.d && !m.rope.clank) { m.rope.clank = 1; spark(m.rope.ax, m.rope.ay, 5, '#fde68a'); }
+        }
+      }
       drawMan(J, m.team, m.flash > 0, c, ang, alpha);
+      if (m.st === 'seq' && m.seq && m.seq[m.seqI] && m.seq[m.seqI].p === 'hookaim') { ctx.font = '800 13px system-ui, sans-serif'; ctx.textAlign = 'center'; ctx.fillStyle = dark() ? '#fde68a' : '#d97706'; ctx.fillText('!', J.head.x, J.head.y - 11); }
       // looking for him: "?" over the head
       if (m.st === 'look') { ctx.font = '700 12px system-ui, sans-serif'; ctx.textAlign = 'center'; ctx.fillStyle = 'rgba(203,213,225,.9)'; ctx.fillText('?', J.head.x + m.dir * 6, J.head.y - 10); }
       // the bow
