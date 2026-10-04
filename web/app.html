@@ -1974,10 +1974,10 @@ function wireInvoice() {
         function (c) {
       if (!c) {
         if (hint) hint.innerHTML = '<div class="sub" style="margin:10px 0 0">New customer — they will be created on save.</div>';
-        ACCT = null;
+        ACCT = null; FORM.lockedPhone = ''; var nmx = el('cname'); if (nmx) { nmx.readOnly = false; nmx.classList.remove('locked'); }
         return;
       }
-      FORM.name = c.name; FORM.address = c.address;
+      FORM.name = c.name; FORM.address = c.address; FORM.lockedPhone = String(c.phone || v);
       // how THIS order goes out is decided now, not inherited from last time
       if (c.phone) FORM.phone = c.phone;
       repaint();
@@ -1985,7 +1985,7 @@ function wireInvoice() {
       var h2 = el('custHint');
       if (h2) h2.innerHTML = '<div class="note ok" style="margin-top:12px"><div class="ico">✓</div><div>'+
         'Existing customer — <strong>'+esc(c.name)+'</strong>, '+fmt(c.orders)+
-        ' previous order(s), '+fmt(c.spent)+' spent.</div></div>';
+        ' previous order(s), '+fmt(c.spent)+' spent.<br><span class="sub">This phone number is saved under this name. To change the name, open the customer on the <b>Customers</b> page.</span></div></div>';
     },
         function (e) {
       if (hint) hint.innerHTML = '<div class="note err" style="margin-top:12px"><div class="ico">✕</div><div>'+
@@ -7349,7 +7349,7 @@ function dueBoxHtml() {
       '<th class="num">Total</th><th class="num">Owed</th><th class="num">Age</th>' +
       '</tr></thead><tbody>';
     a.invoices.forEach(function (i) {
-      h += '<tr><td class="nm">' + esc(i.id) + '</td><td>' + esc(i.when) + '</td>' +
+      h += '<tr><td class="nm"><button type="button" class="linkbtn invpdf" data-invpdf="' + esc(i.id) + '" title="Open the PDF">' + esc(i.id) + '</button></td><td>' + esc(i.when) + '</td>' +
         '<td class="num">' + fmt(i.grand) + '</td>' +
         '<td class="num"><strong>' + fmt(i.due) + '</strong></td>' +
         '<td class="num">' + dueAge(i.days) + '</td></tr>';
@@ -12548,7 +12548,8 @@ function lvCell(c, r) {
       var cls = { Paid: 'ok', Due: 'out', Returned: 'low', Cancelled: '' }[v];
       out = v ? '<span class="pill' + (cls ? ' ' + cls : '') + '">' + esc(v) + '</span>' : '';
     }
-  } else out = esc(v == null ? '' : v);
+  } else if (c.key === 'id' && c.main && /^(INV|ORD|RTN|WEB|QT)/i.test(String(v || ''))) out = '<button type="button" class="linkbtn invpdf" data-invpdf="' + esc(v) + '" title="Open the PDF">' + esc(v) + '</button>';
+  else out = esc(v == null ? '' : v);
   if (c.sub && r[c.sub]) out += '<span class="s">' + esc(r[c.sub]) + '</span>';
   return out;
 }
@@ -13132,7 +13133,7 @@ table.o_list tr.r:hover td.o_acts .btn, table.o_list tr.r td.o_acts .btn.primary
 function lvRowActs(m, r) {
   var TIP = { pay: 'Receive a payment', 'return': 'Goods coming back', pdf: 'Open the invoice PDF', add: 'Add to the invoice being written', edit: 'Change the details', invoice: 'New invoice for this customer', statement: 'Statement of account' };
   var a = r.act || {}, mgr = pageIsManager(), b = function (act, label, cls) { return '<button class="btn small' + (cls ? ' ' + cls : '') + '" type="button" data-lva="' + act + '" title="' + TIP[act] + '">' + label + '</button>'; };
-  if (m === 'invoices') return (mgr && a.due > 0.5 ? b('pay', 'Pay', 'primary') : '') + (mgr && a.canReturn ? b('return', 'Return') : '') + b('pdf', 'PDF');
+  if (m === 'invoices') return (mgr && a.due > 0.5 ? b('pay', 'Pay', 'primary') : '') + (mgr && a.canReturn ? b('return', 'Return') : '');   // the PDF: press the invoice number
   if (m === 'products') return (a.canAdd ? b('add', 'Add') : '') + (mgr ? b('edit', 'Edit') : '');
   if (m === 'customers') return b('invoice', 'Invoice') + (mgr && a.owes > 0.5 ? b('pay', 'Pay', 'primary') : '') + b('statement', 'Statement') + b('edit', 'Edit');
   return '';
@@ -18240,6 +18241,40 @@ var WS_OTHER = false;
     setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 500);
     toast(SHOPKEY_NEW ? 'Downloaded with the key inside. Send it to the website\u2019s programmer.' : 'Downloaded. The key is shown only once: make a new key first, or let the programmer paste it in.', !SHOPKEY_NEW, 10000);
   });
+})();
+</script>
+<!-- one phone = one customer on New invoice; the invoice number opens its PDF (2026-10-05) -->
+<style>
+#cname.locked { background:var(--thead, #f3f4f6); color:var(--ink-2); cursor:not-allowed; }
+.linkbtn.invpdf { font-weight:600; }
+</style>
+<script>
+(function () {
+  // the name box stays locked while the phone is a saved customer's
+  function lockName() {
+    var nm = el('cname'), ph = el('cphone'); if (!nm || typeof FORM === 'undefined' || !FORM) return;
+    var digits = function (x) { return String(x || '').replace(/\D/g, '').slice(-10); };
+    var on = !!(FORM.lockedPhone && digits(ph ? ph.value : FORM.phone) === digits(FORM.lockedPhone));
+    nm.readOnly = on; nm.classList.toggle('locked', on);
+    nm.title = on ? 'Saved customer: change the name on the Customers page' : '';
+  }
+  var repaintNL = repaint;
+  repaint = function () { var r = repaintNL.apply(this, arguments); try { lockName(); } catch (e) {} return r; };
+  document.addEventListener('input', function (ev) { if (ev.target && ev.target.id === 'cphone') { try { lockName(); } catch (e) {} } });
+
+  // press an invoice number: its PDF opens in a new tab
+  document.addEventListener('click', function (ev) {
+    var t = ev.target && ev.target.closest && ev.target.closest('[data-invpdf]'); if (!t) return;
+    ev.preventDefault(); ev.stopPropagation();
+    var id = t.getAttribute('data-invpdf'), w = window.open('', '_blank');
+    if (w) { try { w.document.write('<p style="font:14px system-ui;padding:20px">Opening ' + id.replace(/[<>&]/g, '') + '\u2026</p>'); } catch (e) {} }
+    srv('erpInvoicePdf', [{ invoiceNo: id }], function (x) {
+      if (x.found && x.url) { if (w) w.location = x.url; else window.open(x.url, '_blank', 'noopener'); return; }
+      if (w) w.close();
+      var links = (x.notes || []).map(function (n) { return '<a href="' + esc(n.url) + '" target="_blank" rel="noopener">' + esc(n.name) + '</a>'; });
+      toast(links.length ? links.join(' \u00b7 ') : esc(x.why || 'No PDF was saved for this invoice.'), !links.length, 12000);
+    }, function (e) { if (w) w.close(); toast(esc((e && e.message) || e), true, 12000); });
+  }, true);
 })();
 </script>
 </body>

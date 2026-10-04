@@ -99,7 +99,7 @@ async function upsertCustomer(ctx, name, contact, address, amount, productSummar
   const orders = (Number(hit.total_orders) || 0) + 1;
   const spent = (Number(hit.total_spent) || 0) + spend;
   await ctx.tx`
-    update customers set name = ${cleanName}, phone = ${cleanContact},
+    update customers set name = coalesce(nullif(name, ''), ${cleanName}), phone = ${cleanContact},   -- an invoice never renames a customer
       -- a sale with no address (a pickup) must not wipe the address on file
       address = coalesce(nullif(${cleanAddress}, ''), address),
       total_orders = ${orders}, total_spent = ${spent}, last_order_at = now(),
@@ -116,7 +116,7 @@ async function upsertCustomer(ctx, name, contact, address, amount, productSummar
  */
 export async function createInvoice(ctx, payload, opts = {}) {
   if (!payload || !payload.customer) throw new Error('Nothing to save.');
-  const name = String(payload.customer.name || '').trim();
+  let name = String(payload.customer.name || '').trim();
   if (!name) throw new Error('Customer name is required.');
   const items = (payload.items || []).filter((it) => it && String(it.sku || '').trim() && num(it.qty) > 0);
   if (!items.length) throw new Error('Add at least one product.');
@@ -155,6 +155,14 @@ export async function createInvoice(ctx, payload, opts = {}) {
                                 : phone11(payload.customer.phone);
   const address = String(payload.customer.address || '').trim();
   const source = String(payload.customer.source || '').trim() || 'Walk-in';
+  // one phone = one customer: a phone already on the list keeps its saved name, whatever was typed
+  // (the name is changed on the customer's own page, and then on every invoice of theirs)
+  if (phoneIn) {
+    const want = normalizePhone(phoneIn);
+    const known = want ? (await ctx.tx`select name, phone from customers where business_id = ${ctx.biz} and coalesce(phone, '') <> '' order by seq`)
+      .find((r) => normalizePhone(String(r.phone || '')) === want) : null;
+    if (known && String(known.name || '').trim()) name = String(known.name).trim();
+  }
 
   // the lines, priced as the invoice sheet's VLOOKUP priced them
   const lines = [];

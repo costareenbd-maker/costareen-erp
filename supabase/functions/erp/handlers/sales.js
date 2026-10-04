@@ -22,7 +22,7 @@
 import { docLang, docBangla } from '../lib/doclang.js';
 import { salesLog, returnsTab, courierLog, forget, asDate, str, SL } from '../lib/tabs.js';
 import { formatDate, num, round2, dhakaDayStart } from '../lib/time.js';
-import { phone11, custKey } from '../lib/phone.js';
+import { phone11, custKey, normalizePhone } from '../lib/phone.js';
 import { roleAtLeast } from '../allow.js';
 import { ERP_DELIVERY, isCourier } from './catalog.js';
 import { deliveryOptions } from '../lib/delivery.js';
@@ -687,6 +687,18 @@ export async function erpFixInvoice(ctx, payload) {
       throw new Error('"' + now + '" is not one of the delivery methods.');
     }
     changes.push({ label: fields[f][1], col: fields[f][2], was, now, key: f });
+  }
+  // one phone = one customer: the name follows the phone's saved customer; it is changed on the customer's page
+  {
+    const ph = changes.find((c) => c.key === 'phone'), nm = changes.find((c) => c.key === 'name');
+    const phoneNow = ph ? ph.now : str(first[SL.customer_contact]);
+    const want = normalizePhone(phoneNow);
+    const known = want ? (await ctx.tx`select name, phone from customers where business_id = ${ctx.biz} and coalesce(phone, '') <> ''`)
+      .find((c) => normalizePhone(String(c.phone || '')) === want) : null;
+    if (known && nm && str(nm.now).toLowerCase() !== str(known.name).toLowerCase())
+      throw new Error('This phone number belongs to ' + known.name + '. To change the name, change it on the customer\u2019s page (Customers) - every invoice of theirs follows.');
+    if (known && ph && !nm && str(first[SL.customer_name]).toLowerCase() !== str(known.name).toLowerCase())
+      changes.push({ label: 'customer', col: 'customer_name', was: str(first[SL.customer_name]), now: str(known.name), key: 'name' });
   }
   if (!changes.length) return { ok: true, invoiceNo, changed: 0 };
 

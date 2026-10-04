@@ -135,12 +135,31 @@ export async function erpSaveCustomer(ctx, data) {
     const hit = await ctx.tx`select id from customers
                              where business_id = ${ctx.biz} and seq = ${isFinite(r) ? r : -1}`;
     if (!hit.length) throw new Error('That customer is no longer on the list. Reload and try again.');
+    // the phone may not be another customer's: one phone = one customer
+    const want = normalizePhone(phone);
+    if (want) {
+      const other = (await ctx.tx`select id, name, phone from customers where business_id = ${ctx.biz} and id <> ${hit[0].id} and coalesce(phone, '') <> ''`)
+        .find((c) => normalizePhone(String(c.phone || '')) === want);
+      if (other) throw new Error('That phone number already belongs to ' + other.name + '. One phone number is one customer.');
+    }
+    const before = (await ctx.tx`select name, phone from customers where id = ${hit[0].id}`)[0];
     await ctx.tx`
       update customers set name = ${name}, phone = ${phone}, email = ${String(data.email || '')},
         address = ${String(data.address || '')}, type = ${String(data.type || 'Retail')},
         source = ${String(data.source || 'Walk-in')}, status = ${String(data.status || '')},
         customer_key = ${custKey(phone, name)}, updated_at = now()
       where id = ${hit[0].id}`;
+    // the new name goes onto every invoice and payment of this customer (theirs by id, or by their phone)
+    if (before && str(before.name) !== name) {
+      const oldKey = normalizePhone(before.phone || '');
+      const invs = (await ctx.tx`select id, invoice_no, customer_id, customer_phone from invoices where business_id = ${ctx.biz}`)
+        .filter((i) => i.customer_id === hit[0].id || (oldKey && normalizePhone(String(i.customer_phone || '')) === oldKey));
+      if (invs.length) {
+        await ctx.tx`update invoices set customer_name = ${name}, customer_id = ${hit[0].id} where id = any(${invs.map((i) => i.id)}::uuid[])`;
+        await ctx.tx`update payments set customer = ${name} where business_id = ${ctx.biz} and invoice_no = any(${invs.map((i) => i.invoice_no)}::text[])`;
+      }
+      forget(ctx, 'SALES_LOG', 'PAYMENTS');
+    }
     forget(ctx, 'CUSTOMERS');
     return { ok: true, updated: true, name };
   }
