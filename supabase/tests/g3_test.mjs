@@ -61,7 +61,7 @@ check('nothing changed: nothing written', r.Costareen.written === 0 && writes ==
 
 // a sale: the lists it touched are rewritten, the rest left alone
 const invBefore = tabs.get('invoices').length;
-await owner('erpCreateInvoice', [{ customer: { name: 'Sheet Buyer', phone: '01712345678' }, items: [{ sku: PLA, qty: 1 }], payMode: 'full' }]);
+await owner('erpCreateInvoice', [{ customer: { name: 'Sheet Buyer', phone: '01799100002' }, items: [{ sku: PLA, qty: 1 }], payMode: 'full' }]);
 r = await runJob(deps, 'sheet');
 check('a sale rewrites invoices, lines, payments, stock and the customer - not the rest', r.Costareen.written >= 4 && r.Costareen.written <= 8 &&
   tabs.get('invoices').length === invBefore + 1, [r, tabs.get('invoices').length, invBefore]);

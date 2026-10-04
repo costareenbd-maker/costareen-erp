@@ -4,7 +4,7 @@ const B = FIX.B;
 const PLA = 'FIL-SUN-PLA-BLA-001';
 const count = async (t) => (await sql`select count(*)::int n from ${sql(t)} where business_id = ${B}`)[0].n;
 
-let r = await owner('erpCreateInvoice', [{ customer: { name: 'Before Copy', phone: '01712345678' }, items: [{ sku: PLA, qty: 1 }], payMode: 'full' }]);
+let r = await owner('erpCreateInvoice', [{ customer: { name: 'Before Copy', phone: '01799100003' }, items: [{ sku: PLA, qty: 1 }], payMode: 'full' }]);
 check('a sale before the copy', r.ok, r);
 r = await owner('erpBackupRun', []);
 check('a copy is made', r.ok, r);

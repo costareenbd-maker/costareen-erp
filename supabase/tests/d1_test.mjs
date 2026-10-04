@@ -36,13 +36,13 @@ r = await mgr('erpSerialsAdd', [{ sku: PR, serials: ' SN-C ' }]);
 check('the third unit numbered from the product page', r.ok && r.result.added === 1 && r.result.inStock.length === 3 && r.result.unnumbered === 0, r.result);
 
 // the sale names the unit
-r = await sales('erpCreateInvoice', [{ customer: { name: 'Printer Buyer', phone: '01712345678' }, items: [{ sku: PR, qty: 1 }], payMode: 'full' }]);
+r = await sales('erpCreateInvoice', [{ customer: { name: 'Printer Buyer', phone: '01799100004' }, items: [{ sku: PR, qty: 1 }], payMode: 'full' }]);
 check('a serialised product cannot be sold without naming the unit', !r.ok && /pick which unit goes out \(3 on the shelf\)/.test(r.error), r);
-r = await sales('erpCreateInvoice', [{ customer: { name: 'Printer Buyer', phone: '01712345678' }, items: [{ sku: PR, qty: 2, serials: ['SN-A'] }], payMode: 'full' }]);
+r = await sales('erpCreateInvoice', [{ customer: { name: 'Printer Buyer', phone: '01799100004' }, items: [{ sku: PR, qty: 2, serials: ['SN-A'] }], payMode: 'full' }]);
 check('as many numbers as units', !r.ok && /2 sold but 1 serial/.test(r.error), r);
-r = await sales('erpCreateInvoice', [{ customer: { name: 'Printer Buyer', phone: '01712345678' }, items: [{ sku: PR, qty: 1, serials: ['SN-Z'] }], payMode: 'full' }]);
+r = await sales('erpCreateInvoice', [{ customer: { name: 'Printer Buyer', phone: '01799100004' }, items: [{ sku: PR, qty: 1, serials: ['SN-Z'] }], payMode: 'full' }]);
 check('a number not on the shelf', !r.ok && /Not on the shelf.*SN-Z/.test(r.error), r);
-r = await sales('erpCreateInvoice', [{ customer: { name: 'Printer Buyer', phone: '01712345678' }, items: [{ sku: PR, qty: 1, serials: ['sn-a'] }], payMode: 'full' }]);
+r = await sales('erpCreateInvoice', [{ customer: { name: 'Printer Buyer', phone: '01799100004' }, items: [{ sku: PR, qty: 1, serials: ['sn-a'] }], payMode: 'full' }]);
 check('sold: the unit, with 24 months of warranty from today', r.ok && r.result.serials.length === 1 && r.result.serials[0].serial === 'SN-A' && r.result.serials[0].warrantyUntil === ymd(addMonths(todayDhaka, 24)), r.result && r.result.serials);
 const INV1 = r.result.invoiceNo;
 // the warranty changes from now on: the unit already sold keeps its 24

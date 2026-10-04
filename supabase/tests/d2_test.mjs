@@ -9,7 +9,7 @@ let r = await owner('erpSaveProduct', [{ isNew: true, product_name: 'Bambu A1 Mi
 const PR = r.result.sku;
 await mgr('erpSerialSetup', [{ sku: PR, serialised: true, warrantyMonths: 12 }]);
 await mgr('erpReceiveShipment', [{ reference: 'PRN-1', mode: 'bdt', totalBdt: 40000, lines: [{ sku: PR, qty: 2, serials: ['SN-A', 'SN-B'] }] }]);
-await sales('erpCreateInvoice', [{ customer: { name: 'Printer Buyer', phone: '01712345678' }, items: [{ sku: PR, qty: 1, serials: ['SN-A'] }], payMode: 'full' }]);
+await sales('erpCreateInvoice', [{ customer: { name: 'Printer Buyer', phone: '01799100004' }, items: [{ sku: PR, qty: 1, serials: ['SN-A'] }], payMode: 'full' }]);
 
 // ---------------------------------------------------------------- opening a job
 r = await sales('erpJobs', [{}]);
