@@ -17,6 +17,9 @@
  * v10: the ninja's grappling hook. When there is no way to climb to the enemy (or only a very long one) he spots him,
  * fires a rope to the edge of that floor, climbs it, pulls over and attacks. The blue men have no hook: when they
  * cannot reach him they wait as close as they can, point at him and taunt. Two blue men never stand in one spot.
+ * v11: the ninja always senses where they are: with no way to climb there he fires the rope within about two seconds,
+ * to their floor or to the object that leads on to it (the rope reaches almost the whole screen), then free-runs on.
+ * The blue men only sense him when he is near (about 380) or after he hits them; until then they patrol.
  */
 (function () {
   'use strict';
@@ -402,6 +405,13 @@
         return true;
       }
       m.dir = e.side;
+      if (e.k === 'rappel') {   // hook the edge, lower down and slide down the rope
+        var rx = e.e + e.side * 3, top = m.y;
+        runSeq(m, [{ p: 'lower', d: 0.28, x0: m.x, y0: m.y, x1: rx, y1: top + HANG, face: -e.side },
+                   { p: 'rope', d: Math.max(0.4, (b.y - top - HANG) / 420), x0: rx, y0: top + HANG, x1: rx, y1: b.y, face: -e.side }], { land: b });
+        m.rope = { ax: e.e, ay: top };
+        return true;
+      }
       if (e.k === 'off') { m.on = null; begin(m, 'air'); m.x = e.e + e.side * 2; m.vx = e.vx; m.vy = 0; m.aim = b; return true; }
       // drop: turn to face the ledge, lower down, hang, let go
       var ex = e.e + e.side * 3;
@@ -456,6 +466,7 @@
     function pickScene() {
       var opts = ['duel', 'duel', 'duel', 'pursuit', 'pursuit', 'standoff', 'ambush'].filter(function (n) { return n !== scene.name; });
       var n = opts[Math.floor(Math.random() * opts.length)];
+      if (hero && hero.noWaySince) n = 'duel';                  // he is on his way up to them: no hiding or running scenes now
       setScene(n, n === 'duel' ? 6 + Math.random() * 5 : n === 'pursuit' ? 7 + Math.random() * 4 : n === 'standoff' ? 1.8 + Math.random() * 1.2 : n === 'ambush' ? 7 : 2 + Math.random());
       if (n === 'pursuit') { scene.runner = Math.random() < 0.5 ? hero : foe; if (scene.runner) { scene.runner.fleeTo = null; } }
     }
@@ -492,9 +503,16 @@
     }
     function goToward(m, tg) {   // chase him by the quickest chain of moves; no way at all: get as close as I can
       if (!m.on || !tg.on) return false;
-      if (tg.on.ground && !m.on.ground) { var up0 = upFrom(m, tg); if (up0 === m.on) return false; if (up0) return moveTo(m, up0); }   // he is at the bottom: wait for him up here, near him
+      var canCome = function () { var Pt = paths(tg.on, tg.x); return Pt && Pt.dist[idx(m.on)] < 1e9; };
+      if (tg.on.ground && !m.on.ground && (m !== hero || canCome())) { var up0 = upFrom(m, tg); if (up0 === m.on) return false; if (up0) return moveTo(m, up0); }   // he is at the bottom: wait for him up here (the ninja goes down if they cannot come up)
       var P2 = paths(m.on, m.x), e = firstMove(P2, tg.on), ti = idx(tg.on);
-      if (m === hero && (!e || isBad(m, e) || (P2 && P2.dist[ti] > 5)) && hookTo(m, tg.on, tg)) return true;   // no way up (or a long one): the rope
+      if (m === hero) {
+        if (!e || isBad(m, e) || (P2 && P2.dist[ti] > 5)) {   // no way up (or a long one): the rope - to him, or after a moment to whatever leads on
+          if (!m.noWaySince) m.noWaySince = now;
+          if (hookTo(m, tg.on, tg) || (now - m.noWaySince > 1.5 && hookPlan(m, tg))) { m.noWaySince = 0; return true; }
+          if (tg.y - m.y > 60 && !e && rappel(m, tg)) { m.noWaySince = 0; return true; }      // he is far below: down the rope
+        } else m.noWaySince = 0;
+      }
       if (e && !isBad(m, e) && !nearBlock(landX(e), plats[e.to].y)) return doMove(m, e);
       var b = nearestReach(P2, tg.x, tg.y);
       if (b && b !== m.on) { e = firstMove(P2, b); if (e && !isBad(m, e)) return doMove(m, e); }
@@ -520,28 +538,53 @@
       }
       return true;
     }
+    function ropeMax() { return Math.max(200, H - 2 * M); }
     function hookTo(m, b, tg) {
       if (m !== hero || !m.on || !b || b.ground || (m.hookCd || 0) > now || nearBlock(m.x, m.y)) return false;
-      var rise = m.y - b.y; if (rise < 60 || rise > Math.min(460, H * 0.6)) return false;
+      var rise = m.y - b.y; if (rise < 60 || rise > ropeMax()) return false;
       var xs = m.x >= b.x0 + 8 && m.x <= b.x1 - 8 ? [m.x] : [];        // straight above me, else the nearer edge of his floor
       xs.push(b.x0 + 4, b.x1 - 4);
       xs.sort(function (a, c) { return Math.abs(a - m.x) - Math.abs(c - m.x); });
       for (var i = 0; i < xs.length; i++) {
         var ax = cl(xs[i], M + 4, W - M - 4), lean = Math.abs(ax - m.x);
-        if (lean > rise * 0.9 + 60 || nearBlock(ax, b.y) || !ropeClear(m.x, m.y - 34, ax, b.y, b, m.on)) continue;
+        if (lean > rise * 1.1 + 80 || nearBlock(ax, b.y) || !ropeClear(m.x, m.y - 34, ax, b.y, b, m.on)) continue;
         var side = ax <= b.x0 + 6 ? 1 : ax >= b.x1 - 6 ? -1 : (tg && tg.x < ax ? -1 : 1);
         var hy = b.y + HANG, len = Math.hypot(ax - m.x, hy - m.y), face = ax >= m.x ? 1 : -1;
         m.dir = face; m.hookCd = now + 8;
         runSeq(m, [
           { p: 'hookaim', d: 0.45, x0: m.x, y0: m.y, x1: m.x, y1: m.y, face: face },
           { p: 'hookfire', d: 0.16 + rise / 1600, x0: m.x, y0: m.y, x1: m.x, y1: m.y, face: face },
-          { p: 'rope', d: Math.max(0.35, len / (len > 260 ? 480 : 260)), x0: m.x, y0: m.y, x1: ax, y1: hy, face: face },
+          { p: 'rope', d: Math.max(0.35, len / (len > 260 ? 520 : 260)), x0: m.x, y0: m.y, x1: ax, y1: hy, face: face },
           { p: 'hang', d: 0.08, x0: ax, y0: hy, x1: ax, y1: hy },
           { p: 'pull', d: 0.36, x0: ax, y0: hy, x1: cl(ax + side * 12, b.x0 + 4, b.x1 - 4), y1: b.y, face: side }
         ], { land: b });
         m.rope = { ax: ax, ay: b.y };
         return true;
       }
+      return false;
+    }
+    function rappel(m, tg) {
+      if (m !== hero || !m.on || m.on.ground) return false;
+      var b = tg.on, G2 = plats[plats.length - 1];
+      var edgesX = [m.on.x0, m.on.x1].sort(function (a, c) { return Math.abs(a - tg.x) - Math.abs(c - tg.x); });
+      for (var i = 0; i < 2; i++) {
+        var ex = edgesX[i], side = ex === m.on.x0 ? -1 : 1, under = b && ex + side * 3 >= b.x0 && ex + side * 3 <= b.x1 && b.y > m.y + 60 ? b : G2;
+        if (!under || under.y - m.y < 60 || nearBlock(ex, m.y) || !ropeClear(ex + side * 3, m.y + 10, ex + side * 3, under.y - 10, under, m.on)) continue;
+        return doMove(m, { k: 'rappel', s: ex - side * 4, e: ex, side: side, to: idx(under), lx: ex + side * 3 });
+      }
+      return false;
+    }
+    // no way to climb to him: the best object above to fire the rope at - his floor, or one that leads on to it
+    function hookPlan(m, tg) {
+      if (m !== hero || !m.on || !tg || !tg.on || (m.hookCd || 0) > now) return false;
+      var ti = idx(tg.on), max = ropeMax();
+      var c = plats.filter(function (p) { var r = m.y - p.y; return !p.ground && p !== m.on && r >= 60 && r <= max; });
+      c = c.map(function (p) {
+        var cx = cl(m.x, p.x0 + 8, p.x1 - 8), len = Math.hypot(cx - m.x, p.y - m.y), on;
+        if (p === tg.on) on = 0; else { var P3 = paths(p, (p.x0 + p.x1) / 2); on = P3 && P3.dist[ti] < 1e9 ? P3.dist[ti] : 50 + Math.hypot((p.x0 + p.x1) / 2 - tg.x, p.y - tg.y) / 60; }
+        return { p: p, sc: on + len / 300 };
+      }).sort(function (a, b) { return a.sc - b.sc; });
+      for (var i = 0; i < Math.min(8, c.length); i++) if (hookTo(m, c[i].p, tg)) return true;
       return false;
     }
     function think(m, dt) {
@@ -572,6 +615,18 @@
       if (!tg || tg.st === 'dead' || tg.dying) {
         if (m.trip && m.trip !== m.on && moveTo(m, m.trip)) return;
         m.trip = null; m.roamT -= 0.25; if (m.roamT <= 0) { m.roamT = 1.5 + Math.random() * 2.5; roam(m); } else if (Math.random() < 0.08) begin(m, Math.random() < 0.5 ? 'taunt' : 'look'); return;
+      }
+      if (m !== hero && tg === hero && !m.cho) {
+        if (Math.hypot(tg.x - m.x, tg.y - m.y) < 380 || (m.hp < (m.hp0 || 70))) m.aware = now;
+        m.hp0 = m.hp;
+        if (!m.aware || now - m.aware > 6) {   // he has not sensed the ninja: patrol about, look around
+          if (m.trip && m.trip !== m.on && moveTo(m, m.trip)) return;
+          m.trip = null; m.roamT = (m.roamT || 0) - 0.2;
+          if (m.roamT <= 0) { m.roamT = 2 + Math.random() * 3; roam(m); }
+          else if (Math.random() < 0.06) { begin(m, 'look'); m.vx = 0; }
+          else if (m.st !== 'walk' && m.st !== 'look' && Math.random() < 0.3) { m.st = 'walk'; m.vx = (Math.random() < 0.5 ? 1 : -1) * 55; m.dir = m.vx > 0 ? 1 : -1; }
+          return;
+        }
       }
       if (tg.cho && m !== hero && Math.abs(tg.x - m.x) < 80) { m.dir = tg.x >= m.x ? 1 : -1; m.vx = 0; if (m.st !== 'guard' && m.st !== 'taunt') begin(m, Math.random() < 0.3 ? 'taunt' : 'guard'); return; }   // someone else's fight: wait his turn
       var dx = tg.x - m.x, ad = Math.abs(dx), same = tg.on && m.on && (tg.on === m.on || (Math.abs(tg.y - m.y) < 14 && ad < 90)), sc = scene.name;   // next-door tiles at the same height are one fighting ground
