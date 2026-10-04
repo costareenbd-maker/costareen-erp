@@ -26,9 +26,30 @@ def main():
         cid = sys.argv[sys.argv.index('--client-id') + 1].strip()
     else:
         cid = input('Client ID (ends with .apps.googleusercontent.com): ').strip()
-    sec = getpass.getpass('Client secret: ').strip()
-    if not cid.endswith('.apps.googleusercontent.com') or not sec:
-        sys.exit('That does not look like a Google OAuth client ID / secret.')
+    cid = ''.join(ch for ch in cid if ch.isprintable()).strip()
+    print('Client secret: paste it with a RIGHT-CLICK in this window (Ctrl+V does not paste here), then press Enter.')
+    sec = getpass.getpass('Client secret (hidden): ')
+    sec = ''.join(ch for ch in sec if ch.isprintable() and not ch.isspace())   # Ctrl+V types an invisible character here
+    if not cid.endswith('.apps.googleusercontent.com'):
+        sys.exit('The Client ID should end with .apps.googleusercontent.com - nothing changed.')
+    if not sec.startswith('GOCSPX-') or len(sec) < 30:
+        sys.exit('That is not a Google client secret (it starts with GOCSPX- and is about 35 characters; got %d). '
+                 'Paste it with a right-click. Nothing changed.' % len(sec))
+    # ask Google whether this ID and secret belong together, before saving anything
+    import urllib.parse
+    probe = urllib.request.Request('https://oauth2.googleapis.com/token', method='POST',
+                                   data=urllib.parse.urlencode({'code': 'check', 'client_id': cid, 'client_secret': sec, 'grant_type': 'authorization_code',
+                                                                'redirect_uri': 'https://%s.supabase.co/functions/v1/erp?google=back' % REF}).encode(),
+                                   headers={'Content-Type': 'application/x-www-form-urlencoded', 'User-Agent': 'costareen-deploy'})
+    try:
+        urllib.request.urlopen(probe, timeout=30)
+    except urllib.error.HTTPError as e:
+        said = e.read().decode('utf-8', 'replace')
+        if 'invalid_client' in said:
+            sys.exit('Google says this ID and secret do not belong together (invalid_client). Copy them again from Google > Credentials. Nothing changed.')
+        print('Google accepted the ID and secret.')   # a fake code is refused with invalid_grant: that means the secret is right
+    except Exception as e:
+        print('Could not ask Google first (%s) - saving anyway.' % e)
     tok = os.environ.get('SUPABASE_ACCESS_TOKEN', '').strip()
     if not tok:
         sys.exit('Set SUPABASE_ACCESS_TOKEN first (source secrets.env).')
