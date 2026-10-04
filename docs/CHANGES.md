@@ -615,3 +615,6 @@ was refusing the saved password (recover -> 500 "Error sending recovery email").
 
 ## Stray label tabs fixed (2026-10-04)
 Clicking any table cell in phone/card view opened a "Parcel labels" tab ("No booked parcel for this invoice..."): the card view puts data-label (column heading) on every cell, and the Print label button used the same attribute. The button now uses data-plabel.
+
+## Every home owner is a platform admin (2026-10-04)
+054_home_owners_platform.sql: trigger on memberships - an owner of the home business (one whose owners include a founding platform admin) is added to platform_admins (note "home owner (054)") and removed when no longer owner. Nazir added. Founding admin rows never touched.
