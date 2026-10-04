@@ -273,11 +273,11 @@ export async function receiveShipment(ctx, payload) {
   const lines = (payload.lines || []).filter((l) => l && num(l.qty) > 0 && (str(l.sku) || l.isNew));
   if (!lines.length) throw new Error('Add at least one product with a quantity.');
 
-  const reference = str(payload.reference);
-  if (!reference) {
-    throw new Error('Enter the shipment or invoice number. It is what ties these ' +
-                    'items together as one shipment.');
-  }
+  // a reference is only needed for a shipment; a local buy or a campaign exchange gets one made for it
+  const FROM = { shipment: 'Shipment', local: 'Bought locally', campaign: 'Campaign exchange', other: 'Received' };
+  const from = FROM[str(payload.from)] ? str(payload.from) : 'shipment';
+  let reference = str(payload.reference);
+  if (!reference) reference = FROM[from === 'shipment' ? 'other' : from] + ' ' + formatDate(new Date(), 'yyyy-MM-dd HH:mm');
 
   // plan A5: 'rmb' was the only foreign money; it is now any currency ('fx', with payload.currency)
   let mode = String(payload.mode || 'none').toLowerCase();

@@ -98,8 +98,6 @@ const recv = (pl) => mgr('erpReceiveShipment', [{ supplier: 'Sunlu Direct', refe
   totalRmb: 0, rate: 0, totalBdt: 0, saveRate: true, shippingBdt: 0, shipNote: '', poId: '', ...pl }]);
 r = await recv({ lines: [] });
 check('no lines', !r.ok && r.error === 'Add at least one product with a quantity.', r);
-r = await recv({ reference: ' ', lines: [{ sku: PLA, qty: 1 }] });
-check('reference required', !r.ok && r.error === 'Enter the shipment or invoice number. It is what ties these items together as one shipment.', r);
 r = await recv({ mode: 'rmb', lines: [{ sku: PLA, qty: 1 }] });
 check('rmb needs a total', !r.ok && r.error === 'Enter the shipment total in RMB, or switch to local.', r);
 r = await recv({ mode: 'rmb', totalRmb: 10, lines: [{ sku: PLA, qty: 1 }] });
@@ -385,4 +383,6 @@ check('apply writes the suggested level', r.ok && r.result.applied === true && (
 r = await shareholder('erpApplyReorderLevels', [false]);
 check('after apply nothing to change', r.ok && r.result.changed === 0, r);
 
+r = await recv({ reference: ' ', from: 'local', lines: [{ sku: PLA, qty: 1 }] });
+check('a local buy needs no reference: one is made for it', r.ok && /^Bought locally \d{4}-\d{2}-\d{2} \d{2}:\d{2}$/.test(r.result.reference), r);
 await done();

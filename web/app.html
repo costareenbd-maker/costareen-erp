@@ -543,8 +543,13 @@ svg { display:block; width:100%; overflow:visible; }
 // flash, and before any data loads. The saved choice arrives a moment later
 // from the server and overrides it if the person picked light.
 (function () {
-  var t = 'dark';
-  try { t = localStorage.getItem('cz_look2') ? (localStorage.getItem('cz_theme') || 'light') : 'light'; } catch (e) {}
+  // the person's own choice on this device first: dark, light, or "auto" (follows the computer)
+  var t = 'light';
+  try {
+    var m = localStorage.getItem('erp_mode'), c = localStorage.getItem('cz_theme');
+    if (m === 'auto') t = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    else if (c === 'dark' || c === 'light') t = c;
+  } catch (e) {}
   document.documentElement.setAttribute('data-theme', t === 'light' ? 'light' : 'dark');
 })();
 </script>
@@ -5484,7 +5489,8 @@ function viewStock() {
        '<div><label class="f" for="rv_sup">Supplier</label>'+
          '<input class="i" id="rv_sup" list="l_sup" value="'+esc(RECV.supplier)+'" placeholder="Supplier name">'+
          '<datalist id="l_sup">'+(L.suppliers||[]).map(function(v){return '<option value="'+esc(v)+'">';}).join('')+'</datalist></div>'+
-       '<div><label class="f" for="rv_ref">Shipment reference</label><input class="i" id="rv_ref" type="text" value="'+esc(RECV.reference)+'" placeholder="Invoice or shipment no."></div>'+
+       '<div><label class="f" for="rv_from">Where from</label><select class="i" id="rv_from">'+[['shipment','Shipment / import'],['local','Bought locally'],['campaign','Campaign exchange'],['other','Other']].map(function(o){return '<option value="'+o[0]+'"'+((RECV.from||'shipment')===o[0]?' selected':'')+'>'+o[1]+'</option>';}).join('')+'</select></div>'+
+       '<div><label class="f" for="rv_ref">Reference <span class="sku">optional</span></label><input class="i" id="rv_ref" type="text" value="'+esc(RECV.reference)+'" placeholder="Invoice or shipment no. — leave empty for a local buy"></div>'+
        '<div><label class="f" for="rv_notes">Notes</label><input class="i" id="rv_notes" type="text" value="'+esc(RECV.notes)+'"></div>'+
        '</div>';
   h += recvPoBanner() + recvCostHtml() + recvShipHtml();
@@ -5497,13 +5503,14 @@ function viewStock() {
        '<div class="results" id="rv_results"></div></div>'+quickCardHtml('receive');
   if (RECV.lines.length) {
     h += '<div class="scroll" style="margin-top:12px"><table><thead><tr><th>Product</th>'+
-         '<th class="num">In stock now</th><th class="num">Receiving</th><th></th></tr></thead><tbody>';
+         '<th class="num">In stock now</th><th class="num">Receiving</th><th class="num">New stock</th><th></th></tr></thead><tbody>';
     RECV.lines.forEach(function (l, i) {
       h += '<tr'+(l.isNew?' class="grp-new"':'')+'><td class="nm">'+esc(l.name)+
            (l.isNew ? '<br><span class="pill low">new product \u2014 not saved yet</span>'
                     : '<br><span class="sku">'+esc(l.sku)+'</span>')+'</td>'+
            '<td class="num">'+(l.isNew?'<span class="sku">\u2014</span>':fmt(l.stock))+'</td>'+
            '<td class="num"><input class="i qty" type="number" min="1" step="1" data-rvqty="'+i+'" value="'+l.qty+'"></td>'+
+           '<td class="num"><strong data-rvnew="'+i+'">'+fmt((l.isNew?0:num(l.stock))+num(l.qty))+'</strong></td>'+
            '<td class="num"><button class="btn small danger" type="button" data-rvdel="'+i+'">Remove</button></td></tr>';
     });
     h += '</tbody></table></div>';
@@ -10298,7 +10305,8 @@ function applyBusinesses(b) {
     var nm = el('bizName');
     if (nm && cur) nm.textContent = cur.name;
     if (cur) { brandLetter(cur.name); brandLoad(cur.id); }
-    if (b.theme) applyTheme(b.theme);
+    // this device's own choice wins here; the saved choice is for a device that has none yet
+    if (b.theme) { var mine2 = null; try { mine2 = localStorage.getItem('cz_theme'); } catch (e) {} if (!mine2 || typeof LOOK_RESET !== 'undefined' && LOOK_RESET) applyTheme(b.theme); }
 }
 
 function switchBusiness(id) {
@@ -12265,7 +12273,7 @@ function shellSync() {
     var u = el('o_user'); if (u && ME && ME.name) u.textContent = String(ME.name).trim().charAt(0).toUpperCase();
     // the new look starts in the light theme once; after that the person's own choice holds
     try {
-      if (!localStorage.getItem('cz_look2')) { localStorage.setItem('cz_look2', '1'); LOOK_RESET = true; applyTheme('light'); srv('erpSetTheme', ['light'], function () { LOOK_RESET = false; }, function () { LOOK_RESET = false; }); }
+      if (!localStorage.getItem('cz_look2')) { localStorage.setItem('cz_look2', '1'); }   // the first visit of the new look no longer resets the person's saved light/dark choice
     } catch (e) {}
   };
   var biz = applyBusinesses;
@@ -13453,7 +13461,7 @@ recvShipHtml = function () {
 };
 function recvPayload() {
   var mode = RECV.mode === 'rmb' ? 'fx' : (RECV.mode || 'none');
-  return { supplier: RECV.supplier, reference: RECV.reference, notes: RECV.notes, mode: mode,
+  return { supplier: RECV.supplier, reference: RECV.reference, from: RECV.from || 'shipment', notes: RECV.notes, mode: mode,
     currency: RECV.currency || 'RMB', totalFx: num(RECV.totalRmb), rate: num(RECV.rate),
     totalBdt: num(RECV.totalBdt), saveRate: !!RECV.saveRate,
     paidFrom: mode === 'none' ? '' : (RECV.paidFrom || ''),
@@ -16774,7 +16782,10 @@ var switchBusinessU6 = switchBusiness;
 switchBusiness = function (id) { switchBusinessU6(id); setTimeout(function () { profLoad(); bgLoad(); }, 1500); };
 // the theme saved with the person may be "auto"
 var applyBusinessesU6 = applyBusinesses;
-applyBusinesses = function (b) { applyBusinessesU6(b); if (b && b.theme === 'auto' && MODE !== 'auto') { MODE = 'auto'; try { localStorage.setItem('erp_mode', 'auto'); } catch (e) {} applyTheme('auto'); } };
+applyBusinesses = function (b) { applyBusinessesU6(b);
+  if (b && b.theme === 'auto' && MODE !== 'auto') { MODE = 'auto'; try { localStorage.setItem('erp_mode', 'auto'); } catch (e) {} applyTheme('auto'); }
+  else if (b && (b.theme === 'dark' || b.theme === 'light')) { var mine = null; try { mine = localStorage.getItem('cz_theme'); } catch (e) {} if (!mine) applyTheme(b.theme); }   // a new device takes the saved choice
+};
 </script>
 
 <!-- the automatic jobs in plain words (Platform) -->
@@ -18329,6 +18340,84 @@ var WS_OTHER = false;
     try { if (typeof JOB_NEW !== 'undefined' && JOB_NEW && (JOB_NEW.problem || JOB_NEW.item)) open.push('repair job'); } catch (e) {}
     if (open.length) { ev.preventDefault(); ev.returnValue = 'Not saved yet: ' + open.join(', '); return ev.returnValue; }
   });
+})();
+</script>
+<!-- Receive: where from + optional reference; New stock updates as the quantity is typed (2026-10-05) -->
+<script>
+(function () {
+  document.addEventListener('input', function (ev) {
+    var t = ev.target; if (!t || !t.matches) return;
+    if (t.matches('[data-rvqty]')) {   // in stock now + receiving = new stock, as it is typed
+      var i = +t.getAttribute('data-rvqty'), l = RECV && RECV.lines[i]; if (!l) return;
+      var q = Math.max(0, Math.round(num(t.value))); if (q > 0) l.qty = q;
+      var cell = document.querySelector('[data-rvnew="' + i + '"]'); if (cell) cell.textContent = fmt((l.isNew ? 0 : num(l.stock)) + q);
+    }
+  });
+  document.addEventListener('change', function (ev) { var t = ev.target; if (t && t.id === 'rv_from' && typeof RECV === 'object') RECV.from = t.value; });
+})();
+</script>
+<!-- work in progress survives a refresh; other browser tabs see new products and stock at once (2026-10-05) -->
+<script>
+(function () {
+  var DK = 'erp_drafts_v1', restored = false, TAB = 't' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7), alive = {};
+  function has(o) { return o && Object.keys(o).length; }
+  function snapshot() {
+    var d = {};
+    try { if (CART && CART.length) { d.cart = CART; d.form = FORM; } } catch (e) {}
+    try { if (RECV && RECV.lines && RECV.lines.length) d.recv = RECV; } catch (e) {}
+    try { if (typeof PONEW !== 'undefined' && PONEW && PONEW.lines && PONEW.lines.length) d.ponew = PONEW; } catch (e) {}
+    try { if (typeof JOB_NEW !== 'undefined' && JOB_NEW && (JOB_NEW.problem || JOB_NEW.item || JOB_NEW.name)) d.job = JOB_NEW; } catch (e) {}
+    try { if (PRODUCT_FORM && String(PRODUCT_FORM.product_name || '').trim()) d.prod = PRODUCT_FORM; } catch (e) {}
+    try { if (CUST_FORM && (CUST_FORM.name || CUST_FORM.phone)) d.cust = CUST_FORM; } catch (e) {}
+    return d;
+  }
+  // kept every moment it changes; removed once nothing is open
+  setInterval(function () {
+    if (!restored) return;
+    // each tab keeps only its own unsaved work; an empty tab never removes another open tab's
+    try {
+      var d = snapshot(), cur = JSON.parse(localStorage.getItem(DK) || 'null');
+      if (has(d)) { d.at = Date.now(); d.owner = TAB; localStorage.setItem(DK, JSON.stringify(d)); }
+      else if (cur && cur.owner === TAB) localStorage.removeItem(DK);
+    } catch (e) {}
+  }, 1500);
+  // brought back once, after signing in and the product list is loaded (only into empty places)
+  var iv = setInterval(function () {
+    if (typeof ME === 'undefined' || !ME || typeof CAT === 'undefined' || !CAT) return;
+    clearInterval(iv);
+    var d = null; try { d = JSON.parse(localStorage.getItem(DK) || 'null'); } catch (e) {}
+    var back = [];
+    // the work belongs to a tab that is still open: that tab keeps it, this one starts clean
+    if (d && d.owner && alive[d.owner] && Date.now() - alive[d.owner] < 5000) d = null;
+    if (d && Date.now() - (d.at || 0) < 7 * 86400e3) {
+      if (d.cart && !CART.length) { CART = d.cart; if (d.form) for (var k in d.form) FORM[k] = d.form[k]; back.push('the invoice you were writing'); }
+      if (d.recv && !(RECV.lines && RECV.lines.length)) { RECV = d.recv; back.push('the shipment'); }
+      if (d.ponew && !PONEW) { PONEW = d.ponew; back.push('the supplier order'); }
+      if (d.job && !JOB_NEW) { JOB_NEW = d.job; back.push('the repair job'); }
+      if (d.prod && !PRODUCT_FORM) { PRODUCT_FORM = d.prod; back.push('the product form'); }
+      if (d.cust && !CUST_FORM) { CUST_FORM = d.cust; back.push('the customer form'); }
+    }
+    restored = true;
+    if (back.length) { try { updateCounts(); } catch (e) {} repaint(); toast('Brought back what was not saved yet: ' + back.join(', ') + '.', false, 9000); }
+  }, 400);
+
+  // another browser tab changed products or stock: this tab reloads its product list (work in progress stays)
+  var bc = null; try { bc = new BroadcastChannel('erp-catalog'); } catch (e) {}
+  var CHANGES = /^erp(SaveProduct|SetProductStatus|ProductPhoto|ReceiveShipment|ReceiveStock|AdjustStock|StockCount|CreateInvoice|EnterWebOrder|ReturnGoods|CancelInvoice|VoidInvoice|PoArrive|JobSave|JobPay|Import|FamilyApply|FamilyClear|SerialsAdd|SerialSetup)$/;
+  var srvBC = srv;
+  srv = function (name, args, ok, bad) {
+    return srvBC(name, args, function () {
+      if (bc && CHANGES.test(name)) { try { bc.postMessage({ t: 'catalog', at: Date.now() }); } catch (e) {} }
+      if (ok) return ok.apply(this, arguments);
+    }, bad);
+  };
+  // open tabs tell each other they are alive, so a new tab does not take over another's unsaved work
+  if (bc) { try { bc.postMessage({ t: 'hello', id: TAB }); } catch (e) {} setInterval(function () { try { bc.postMessage({ t: 'alive', id: TAB }); } catch (e) {} }, 2000); }
+  if (bc) bc.onmessage = function (ev) {
+    if (ev.data && (ev.data.t === 'alive' || ev.data.t === 'hello')) { alive[ev.data.id] = Date.now(); if (ev.data.t === 'hello') { try { bc.postMessage({ t: 'alive', id: TAB }); } catch (e) {} } return; }
+    if (!ev.data || ev.data.t !== 'catalog' || typeof ME === 'undefined' || !ME) return;
+    srvBC('erpBundle', [['catalog']], function (b) { applyBundle(b); D = null; if (typeof quietRepaint === 'function') quietRepaint(); else repaint(); }, function () {});
+  };
 })();
 </script>
 </body>
