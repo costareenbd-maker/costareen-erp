@@ -15463,7 +15463,8 @@ document.addEventListener('click', async function (ev) {
   var m = /[?&]google=([a-z-]+)/.exec(location.hash || '');
   if (!m) return;
   var said = { ok: 'Google Drive is connected. New files are copied every 10 minutes.', refused: 'Google access was not given.', expired: 'That took too long or was opened twice. Press Connect again.', failed: 'Google did not finish connecting. Press Connect again.' }[m[1]] || 'Google: ' + m[1];
-  setTimeout(function () { try { SET_TAB = 'connections'; GDRV = null; CONN = null; toast(said, m[1] !== 'ok', 12000); history.replaceState(null, '', '#/settings'); if (ME) go('settings'); } catch (e) {} }, 1500);
+  var wy = /[?&]why=([^&]*)/.exec(location.hash || ''); if (wy) { try { said += ' (' + decodeURIComponent(wy[1]) + ')'; } catch (e) {} }
+  setTimeout(function () { try { SET_TAB = 'connections'; GDRV = null; CONN = null; toast(esc(said), m[1] !== 'ok', 20000); history.replaceState(null, '', '#/settings'); if (ME) go('settings'); } catch (e) {} }, 1500);
 })();
 /** A quotation made ready is kept as a PDF too (and so copied to Drive). */
 function qzKeepPdf(q) {

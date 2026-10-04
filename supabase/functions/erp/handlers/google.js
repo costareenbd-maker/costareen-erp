@@ -78,7 +78,13 @@ export async function googleCallback(deps, query) {
   if (query.error) return back('refused');
   const t = await gfetch(deps, 'https://oauth2.googleapis.com/token', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     body: form({ code: str(query.code), client_id: c.id, client_secret: c.secret, redirect_uri: c.redirect, grant_type: 'authorization_code' }) });
-  if (t.code !== 200 || !t.json || !t.json.refresh_token) return back('failed');
+  const why = (txt) => sql`insert into business_config (business_id, key, value) values (${biz}, 'google_error', ${txt.slice(0, 300)}) on conflict (business_id, key) do update set value = excluded.value, updated_at = now()`;
+  if (t.code !== 200 || !t.json || !t.json.refresh_token) {
+    // keep Google's own words: a wrong secret, a redirect address that does not match, an app not yet allowed...
+    const j = t.json || {}, txt = t.code !== 200 ? 'Google said ' + t.code + ': ' + str(j.error) + (j.error_description ? ' - ' + str(j.error_description) : '') : 'Google gave no lasting key (refresh token).';
+    await why(txt);
+    return back('failed') + '&why=' + encodeURIComponent(txt.slice(0, 140));
+  }
   let email = '';
   try { email = str(JSON.parse(atob(String(t.json.id_token || '').split('.')[1].replace(/-/g, '+').replace(/_/g, '/'))).email); } catch (_) { email = ''; }
   const put = (k, v) => sql`insert into business_config (business_id, key, value) values (${biz}, ${k}, ${v}) on conflict (business_id, key) do update set value = excluded.value, updated_at = now()`;

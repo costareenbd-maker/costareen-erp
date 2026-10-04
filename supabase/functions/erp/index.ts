@@ -243,7 +243,7 @@ Deno.serve(async (req) => {
   if (req.method === 'GET' && new URL(req.url).searchParams.get('google') === 'back') {
     const q = Object.fromEntries(new URL(req.url).searchParams.entries());
     let to = GOOGLE.appUrl + '#/settings?google=failed';
-    try { to = await googleCallback(deps, q); } catch (_) { /* told as failed */ }
+    try { to = await googleCallback(deps, q); } catch (e) { console.error('google callback', e); to += '&why=' + encodeURIComponent(String((e && (e as Error).message) || e).slice(0, 140)); }
     return new Response(null, { status: 302, headers: { Location: to } });
   }
   // the installer (handlers/installer.js) and a copy's last install step (lib/control.js)
