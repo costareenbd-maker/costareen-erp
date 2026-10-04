@@ -613,7 +613,8 @@ export async function erpTool(ctx, action) {
     if (!p || p.ok === false) throw new Error('Preview failed: ' + ((p && p.error) || 'unknown'));
     return 'Preview only, nothing changed. Sent ' + p.sent + ' products · would change ' +
       p.changed_count + ' · already correct ' + p.unchanged +
-      ' · not found on the website ' + p.missing_count + '.';
+      ' · not found on the website ' + p.missing_count + '.' +
+      (p.changes && p.changes.length ? '\n' + p.changes.map((x) => (x.name || x.sku) + ': ' + (x.from == null ? 'not tracked' : x.from) + ' → ' + x.to).join('\n') : '');
   }
   if (a === 'pushStock') {
     const push = await other('./weborders.js', 'pushStockToWebsite');

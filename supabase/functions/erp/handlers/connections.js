@@ -29,7 +29,8 @@ async function website(ctx) {
   if (kind === 'woo') { url = str(await getConfig(ctx, 'store_url', '')); key = (await getSecret(ctx, 'WOO_KEY')) && (await getSecret(ctx, 'WOO_SECRET')); }
   else if (kind === 'shopify') { url = str(await getConfig(ctx, 'store_url', '')); key = await getSecret(ctx, 'SHOPIFY_TOKEN'); }
   else { url = str(await getConfig(ctx, 'website_api', '')); key = await getSecret(ctx, 'CZ_SYNC_KEY'); }
-  return { kind, kindLabel: KINDS[kind] || kind, url, hasKey: !!(key && url), on, state: !(key && url) ? 'off' : on ? 'on' : 'ready' };
+  const pluginKey = kind === 'plugin' ? !!key : !!(await getSecret(ctx, 'CZ_SYNC_KEY'));
+  return { kind, kindLabel: KINDS[kind] || kind, url, hasKey: !!(key && url), on, state: !(key && url) ? 'off' : on ? 'on' : 'ready', pluginKey };
 }
 
 const KEY_OK = (k) => k.length >= 12 && !/\s/.test(k);
@@ -71,6 +72,15 @@ export async function erpWebsiteSet(ctx, payload) {
   needOwner(ctx);
   payload = payload || {};
   const was = str(await getConfig(ctx, 'website_kind', '')) || 'plugin';
+  // the WordPress sync plugin's key on its own (next to WooCommerce): the parcel numbers of website orders come from it
+  if (payload.pluginKey !== undefined) {
+    const k = str(payload.pluginKey);
+    if (!k) { await setSecret(ctx, 'CZ_SYNC_KEY', ''); return erpConnections(ctx); }
+    if (k.length < 12 || /\s/.test(k)) throw new Error('That does not look like the sync plugin key (12 or more letters and digits, no spaces).');
+    await setSecret(ctx, 'CZ_SYNC_KEY', k);
+    if (!str(await getConfig(ctx, 'website_api', ''))) await setConfig(ctx, 'website_api', WEBSITE_DEFAULT);
+    return erpConnections(ctx);
+  }
   const kind = payload.kind === undefined ? was : str(payload.kind);
   if (!KINDS[kind]) throw new Error('Which kind of website?');
   if (kind !== was) {

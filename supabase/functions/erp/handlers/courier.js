@@ -909,7 +909,9 @@ export async function deliveredCollect(ctx) {
     const m = /WEB-(\S+)/.exec(String(r[SL.notes] || '')), id = str(r[SL.order_id]);
     if (m && id && !/^RTN-/.test(id)) web[m[1]] = id;
   }
-  if (Object.keys(web).length) {
+  const { getSecret: gs } = await import('../lib/ext.js');
+  if (Object.keys(web).length && !(await gs(ctx, 'CZ_SYNC_KEY'))) out.errors.push("Website orders’ parcel numbers: paste the WordPress sync plugin key in Settings > Connections > Website.");
+  else if (Object.keys(web).length) {
     try {
       const site = await czFetch(ctx, '/cod?days=60&limit=200');
       for (const o of (site && site.orders) || []) {
