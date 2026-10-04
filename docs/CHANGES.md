@@ -556,3 +556,15 @@
 ## stick-7 — on every page; switches in Maintenance (2026-10-04)
 - The stick fight now also runs on New invoice and Quotations (owner's choice; Esc twice still hides it at once, the ⚔ button stays).
 - Maintenance → "Games and stick fight" now has per-device switches: Stick fight On / Calm / Off and Blood On / Off (same as the ⚔ menu), shown to everyone who may see the games; the owner's "Who sees it" stays above.
+
+## game-6 — Brawl: fighting-game systems from the genre (2026-10-04)
+- Studied open GitHub fighters (alfredang/street-fighter-game, StreetPhyter, shadow-fight) and fighting-game design notes (input buffering, hitstun/blockstun, cancels, juggles); took the ideas, wrote our own code (their code/sprites are licensed or copyrighted).
+- Input buffer: a key pressed up to 0.15 s before a move ends is kept and used once.
+- Cancels: a hit that lands can go straight into the special (D, "CANCEL!") or the super (F).
+- Throw (W): grab, lift over the head, hurl; can't be blocked; hold ← or → to throw that way; W at the right moment breaks a throw ("BREAK!"); the computer breaks some (more at higher levels) and throws players who keep blocking.
+- Parry: ↓ pressed just before a hit (0.16 s) = no damage, the attacker staggers, +15 power, "PARRY!" with a flash and a freeze; the computer parries sometimes at higher skill.
+- The computer punishes missed moves (jab/uppercut into the gap).
+- Camera: follows the middle of the two fighters and zooms in up to 14% when they are close (smoothed; clamped to the arena).
+- Smear frames: two ghost copies of the body on the active frames of heavy moves.
+- Knock-outs are real ragdolls (12 points + sticks, fixed 1/60 s steps so slow motion stays right), with the pixel head on the neck; they tumble across the floor.
+- fight.js 97 KB (29 KB downloaded). Checked on a standalone page: throw (12 damage), parry, cancel jab→special, camera zoom, ragdoll K.O. arc and landing.
