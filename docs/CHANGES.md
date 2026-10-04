@@ -552,3 +552,7 @@
 - Dashboards: KPI tiles, the banner, the quick-action row, notes, grid cells, section titles and charts are floors too; next-door tiles at the same height count as one fighting ground, and they hop the gap between tiles instead of walking into it (the old ping-pong to the bottom floor). Nobody walks off an edge by accident any more.
 - The ninja goes after a far enemy (he waits on guard only when the enemy is within ~260 px).
 - Checked on a dashboard-like test page: throws, held lifts, ragdoll tumbles and get-ups, fights on tiles; no errors.
+
+## stick-7 — on every page; switches in Maintenance (2026-10-04)
+- The stick fight now also runs on New invoice and Quotations (owner's choice; Esc twice still hides it at once, the ⚔ button stays).
+- Maintenance → "Games and stick fight" now has per-device switches: Stick fight On / Calm / Off and Blood On / Off (same as the ⚔ menu), shown to everyone who may see the games; the owner's "Who sees it" stays above.
