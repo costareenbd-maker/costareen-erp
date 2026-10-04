@@ -15714,7 +15714,7 @@ viewSales = function () {
     var steadfastFollows = isCourier(d.delivery) && d.parcel && d.parcel.consignment;
     if (!d.cancelled && d.owed > 0 && /^(cod|cash on delivery)/i.test(String(d.method || '')) && !steadfastFollows)
       top += '<section><div class="note"><div class="ico">\u21B3</div><div><strong>Cash on delivery \u2014 ' + fmt(d.owed) + ' to collect.</strong> ' + codButtons(INVP.no) + '</div></div></section>';
-    if (d.parcel && d.parcel.consignment) top += '<div class="row" style="justify-content:flex-end;margin-bottom:6px"><button class="btn small" type="button" data-label="' + esc(INVP.no) + '">Print parcel label</button></div>';
+    if (d.parcel && d.parcel.consignment) top += '<div class="row" style="justify-content:flex-end;margin-bottom:6px"><button class="btn small" type="button" data-plabel="' + esc(INVP.no) + '">Print parcel label</button></div>';
     return top + h;
   }
   if (!INVP.no) h = h.replace('<button class="btn" type="button" id="sl_checkdel"', '<button class="btn" type="button" id="t1_labels" title="Every parcel booked today, ready to stick">Print today\u2019s labels</button> <button class="btn" type="button" id="sl_checkdel"');
@@ -15788,16 +15788,16 @@ function printLabels(payload) {
   }, function (e) { w.document.body.innerHTML = '<p style="font:14px system-ui;padding:20px;color:#b91c1c">' + esc(e && e.message ? e.message : e) + '</p>'; });
 }
 document.addEventListener('click', function (ev) {
-  var t = ev.target && ev.target.closest ? ev.target.closest('[data-label],#t1_labels,#pclabel') : null; if (!t) return;
+  var t = ev.target && ev.target.closest ? ev.target.closest('[data-plabel],#t1_labels,#pclabel') : null; if (!t) return;
   if (t.id === 't1_labels') printLabels({});
-  else printLabels({ invoices: [t.getAttribute('data-label')] });
+  else printLabels({ invoices: [t.getAttribute('data-plabel')] });
 });
 // right after booking: print its label
 var parcelDoneT1 = parcelDone;
 parcelDone = function (res) {
   parcelDoneT1(res);
   var c = el('pccopy');
-  if (c) c.insertAdjacentHTML('afterend', ' <button class="btn" type="button" data-label="' + esc(res.invoiceNo) + '">Print label</button>');
+  if (c) c.insertAdjacentHTML('afterend', ' <button class="btn" type="button" data-plabel="' + esc(res.invoiceNo) + '">Print label</button>');
 };
 
 // ---- a new business, from the dropdown at the top

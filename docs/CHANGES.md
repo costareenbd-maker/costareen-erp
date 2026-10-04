@@ -612,3 +612,6 @@ Messages (toasts) moved back to the bottom centre (close button kept). set_smtp.
 mail server before saving: a wrong Gmail password (normal password instead of an app password) is
 refused on the spot with how to make an app password; spaces in the app password are removed. Gmail
 was refusing the saved password (recover -> 500 "Error sending recovery email").
+
+## Stray label tabs fixed (2026-10-04)
+Clicking any table cell in phone/card view opened a "Parcel labels" tab ("No booked parcel for this invoice..."): the card view puts data-label (column heading) on every cell, and the Print label button used the same attribute. The button now uses data-plabel.
