@@ -525,3 +525,12 @@
 - Anyone at the bottom of the screen leaps back up after 0.7 s; anyone who cannot get closer for 3.5 s vanishes in smoke and reappears near the other (ninja style).
 - Blood cut to about a third, smaller splats that fade in 5 s; a little light-blue sweat flies off on some hits.
 - Checked on a Sales-like test page (18 rows, pills, Pay buttons): together on the same ledge ~75% of the time, 19 areas visited in 40 s, enemies entered from the top and the right.
+
+## stick-4 — a fight with a story: scenes, hidden health, chase, bow, parkour, searching (2026-10-04)
+- A "director" picks the scene, never the same twice in a row: duel (guard stance, step in, an exchange, sometimes a step back), stand-off (circling at arm's length, taunts), ambush (the ninja hides at a ledge end; the enemy searches: slow steps, turns, hand over the eyes, a "?"), breather (both pant, wipe sweat), chase, retreat.
+- Hidden health: the enemy, when beaten down (<24 of 70), runs away across the ledges once per life and the ninja chases; cornered he may turn and fight back. The ninja has hidden stamina (he can now be hit about 1 in 4 but never hurt for real); worn out he runs off, pants until recovered, the enemy hunts him, then he comes back.
+- Bow: in 1 chase in 3, when the runner is 180-620 px away, the ninja draws a bow and shoots up to 3 arrows in real arcs (aimed with a little lead and spread); a hit knocks the enemy down, misses stick in ledges and box sides for 3 s.
+- Parkour instead of constant jumping: walk off an edge to drop to a ledge below, a quick vault (no flip) to a ledge just above, flips only over long gaps, a roll after a hard landing; the ninja waits on guard for the enemy to come in duels; very few random flying kicks.
+- Throws are slower and clear: lift over the head, a beat, then the hurl (grab reach 30, more grabs).
+- Kept from the last round as the owner decided: less blood + sweat, the smoke vanish when stuck.
+- Checked on a Sales-like test page: all scenes appear, a full sequence seen (enemy leaps in, grab and throw, breather, chase along the bottom, the enemy turns and fights back), forced bow shot and searching pose captured, no errors.
