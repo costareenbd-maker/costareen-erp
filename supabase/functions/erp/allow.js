@@ -9,7 +9,7 @@ export const ERP_ROLES = {
   sales:       { label: 'Sales',       rank: 1 },
 };
 
-export const ERP_DISCOUNT_CAP = { owner: 100, shareholder: 100, manager: 100, sales: 5 };
+export const ERP_DISCOUNT_CAP = { owner: 100, shareholder: 100, manager: 100, sales: 20 };
 
 // 001 called the lowest role `staff`; it is the sheet's `sales`.
 export function normRole(r) {
@@ -38,10 +38,10 @@ export const ERP_ALLOW = {
   erpMarkWebOrderEntered: 'manager', erpWebOrderInvoices: 'manager', erpSettingsLists: 'manager',
 
   // the money
-  erpCostBook: 'shareholder', erpSaveCostRows: 'shareholder',
-  erpSaveCostSettings: 'shareholder', erpVoidInvoice: 'owner',
-  erpSettingsFull: 'shareholder', erpLookupAdd: 'shareholder',
-  erpLookupRemove: 'shareholder', erpConfigSet: 'shareholder',
+  erpCostBook: 'manager', erpSaveCostRows: 'manager',
+  erpSaveCostSettings: 'manager', erpVoidInvoice: 'owner',
+  erpSettingsFull: 'manager', erpLookupAdd: 'manager',
+  erpLookupRemove: 'manager', erpConfigSet: 'shareholder',
   erpApplyReorderLevels: 'shareholder', erpTool: 'shareholder',
   erpMergeCustomers: 'shareholder', erpSelfTest: 'shareholder',
   erpBusinesses: 'sales', erpSetBusiness: 'manager',
@@ -103,7 +103,7 @@ export const ERP_ALLOW = {
   erpSetLook: 'sales', erpSetLang: 'sales', erpProfile: 'sales', erpProfileSave: 'sales', erpBg: 'sales', erpBgSave: 'manager', erpBgOff: 'sales', erpGame: 'sales', erpGameSet: 'owner', erpArena: 'sales', erpArenaResult: 'sales', erpArenaWorldSet: 'owner', erpWooConnectStart: 'owner', erpFighters: 'sales', erpFightersSet: 'owner', erpDocLang: 'sales', erpBnWords: 'sales', erpBnWordsSet: 'manager',
   erpFreezeSaleCosts: 'owner',
   // currencies (plan A5)
-  erpCurrencies: 'manager', erpCurrencySave: 'shareholder',
+  erpCurrencies: 'manager', erpCurrencySave: 'manager',
   // suppliers and what is owed to them (plan A4)
   erpSuppliers: 'manager', erpSupplierPage: 'manager', erpSupplierSave: 'manager', erpSupplierBill: 'shareholder',
   erpSupplierPay: 'shareholder', erpSupplierVoid: 'owner',

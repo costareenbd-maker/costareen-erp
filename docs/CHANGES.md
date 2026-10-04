@@ -688,3 +688,9 @@ Not done: drafts live in this browser only (not across devices). Tests: stock 11
 
 ## Manager: no discount limit (2026-10-05)
 Manager discount cap raised from 10% to 100% (same as owner). Sales stays at 5%. Not done: per-person / per-role limits set by the owner in Settings.
+
+## Discount limits and manager access (2026-10-05)
+- Discount: sales up to 20%; manager, shareholder, owner no limit.
+- Manager: Settings opens with the Lists tab only (no Business, Users, Alerts, Connections, Security; business values not sent); Product cost page opens to them (cost book, rates, handling/margin). Dashboard stays hidden.
+- Fixed: erpBundle settings/costs parts are now held to their own call's role (sales could read them through the bundle before).
+Not done: per-person ability switches in Settings > Users. Tests: mgr_access 11; settings, dashboard, a5, erp_server updated; all suites green.

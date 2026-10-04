@@ -95,6 +95,8 @@ async function lookupWrite(ctx, kind, values) {
 export async function erpSettingsFull(ctx) {
   const lists = {};
   for (const k of LOOKUP_KINDS) lists[k] = await lookupRead(ctx, k);
+  // a manager gets the drop-down lists only; the business's own values stay with the owner and shareholders
+  if (!roleAtLeast(ctx.s.role, 'shareholder')) return { lists, config: [] };
   const config = (await configRows(ctx)).map((c, i) => {
     const secret = !!ERP_SECRET_CONFIG[c.key];
     return { key: c.key, value: secret ? '' : c.value, secret, row: i + 2 };

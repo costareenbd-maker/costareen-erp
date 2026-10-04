@@ -120,8 +120,8 @@ check('existing customer updated: orders 4, spent +2700, Returning', c.total_ord
 const mv = await sql`select * from stock_movements where reference = ${'Invoice: ' + inv1}`;
 check('stock movement SALE OUT with txn no and operator', mv.length === 1 && mv[0].kind === 'SALE' && /^TXN-\d{8}-\d{4}$/.test(mv[0].txn_no) && mv[0].operator === 'Rina', mv);
 
-r = await sales('erpCreateInvoice', [{ customer: { name: 'Karim', phone: '01712345678' }, items: [{ sku: PLA, qty: 2 }], invoiceDiscount: 200, payMode: 'full' }]);
-check('sales capped at 5%', !r.ok && r.error === 'This discount is 7.4% of the goods. Your limit is 5% - ask a manager or the owner to save this sale.', r);
+r = await sales('erpCreateInvoice', [{ customer: { name: 'Karim', phone: '01712345678' }, items: [{ sku: PLA, qty: 2 }], invoiceDiscount: 600, payMode: 'full' }]);
+check('sales capped at 20%', !r.ok && r.error === 'This discount is 22.2% of the goods. Your limit is 20% - ask a manager or the owner to save this sale.', r);
 
 r = await mgr('erpCreateInvoice', [{ customer: { name: 'Rahim', phone: '1811111111', address: 'Mirpur', source: 'Steadfast courier' },
   items: [{ sku: PLA, qty: 1, discEach: 40 }], invoiceDiscount: 90, deliveryCharge: 60, payMode: 'part', paidNow: 500, paymentMethod: 'Cash' }]);

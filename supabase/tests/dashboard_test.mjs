@@ -175,7 +175,7 @@ check('...without profit, cover or cash', SD && !('profit' in SD) && !('cover' i
 check('...stock by category without cost', SD && SD.stockByCat.every((c) => !('cost' in c) && !('uncosted' in c)), SD && SD.stockByCat);
 check('...no cost-gap count, sales figures still there', SD && SD.quality.costMissing === 0 && SD.kpi.todayRevenue === 3350 && SD.kpi.stockValue === 171450, SD && SD.kpi);
 r = await mgr('erpBundle', [['dash', 'costs']]);
-check('manager: same, and the price book never leaves', r.ok && !('profit' in r.result.dash) && !('cash' in r.result.dash) && !r.result.costs, r.result && Object.keys(r.result));
+check('manager: same, and the cost book opens to them', r.ok && !('profit' in r.result.dash) && !('cash' in r.result.dash) && !!r.result.costs, r.result && Object.keys(r.result));
 await makeShareholder();
 r = await shareholder('erpBundle', [['dash', 'costs']]);
 check('shareholder sees everything through the bundle', r.ok && r.result.dash.profit.monthGross === 1225 && r.result.dash.cash &&

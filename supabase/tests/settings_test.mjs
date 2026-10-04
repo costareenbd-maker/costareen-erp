@@ -14,7 +14,7 @@ let r;
 
 // ---------------------------------------------------------------- lists
 r = await mgr('erpSettingsFull', []);
-check('manager refused Settings', !r.ok && r.error === 'Your account does not have access to that.', r);
+check('manager: Settings gives the lists only', r.ok && r.result.lists && r.result.config.length === 0, r);
 r = await shareholder('erpSettingsFull', []);
 check('settings full: lists de-duplicated, all 7 kinds', r.ok && JSON.stringify(r.result.lists.brands) === '["Bambulab","Sunlu"]' &&
   r.result.lists.payment_methods.length === 3 && Array.isArray(r.result.lists.colors), r);
@@ -80,7 +80,7 @@ check('staff lists this business’s people', names.includes('Mehedi') && names.
 const meh = r.result.staff.people.find((p) => p.name === 'Mehedi');
 check('person row shape', meh.role === 'manager' && meh.roleLabel === 'Manager' && meh.code === '111111' &&
   meh.status === 'approved' && meh.devices[0].id === 'dev-mgr' && meh.devices[0].status === 'approved', meh);
-check('roles with caps, iAm', r.result.staff.roles.length === 4 && r.result.staff.roles.find((x) => x.id === 'sales').cap === 5 &&
+check('roles with caps, iAm', r.result.staff.roles.length === 4 && r.result.staff.roles.find((x) => x.id === 'sales').cap === 20 &&
   r.result.staff.iAm === 'owner', r.result.staff);
 check('links: every business on the one address', r.result.links.businesses[0].isHome === true &&
   r.result.links.businesses[0].url === 'https://erp.costareen.com' && r.result.links.canAdd === true, r.result.links);

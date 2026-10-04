@@ -48,7 +48,7 @@ export function scrub(name, out, role) {
       (d.stockByCat || []).forEach((c) => { delete c.cost; delete c.uncosted; });
       d.hideProfit = true;
     }
-    if (out.costs) delete out.costs;
+    if (out.costs && !roleAtLeast(role, 'manager')) delete out.costs;   // the cost book opens to a manager
     return out;
   }
   if (name === 'erpDashboardData' && hideMoney) {

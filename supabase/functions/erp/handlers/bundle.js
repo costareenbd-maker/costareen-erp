@@ -3,7 +3,7 @@
 // in Postgres one failed statement would otherwise abort the whole call.
 
 import { todayStr } from '../lib/time.js';
-import { roleAtLeast } from '../allow.js';
+import { roleAtLeast, ERP_ALLOW } from '../allow.js';
 
 let ERP_BUILD_REF = 'b261002-1321';
 export function setBuild(b) { ERP_BUILD_REF = b; }
@@ -81,6 +81,8 @@ export function makeBundle(handlers) {
       const t0 = Date.now();
       try {
         if (!fn) throw new Error('Not built yet: ' + fnName);
+        // the settings and the cost book are held to their own call's role
+        if ((name === 'settings' || name === 'costs') && ERP_ALLOW[fnName] && !roleAtLeast(ctx.s.role, ERP_ALLOW[fnName])) throw new Error('Not open to your role.');
         out[name] = await ctx.tx.savepoint(() => (name === 'dash'
           ? dashReady(ctx, handlers, !!(opt && opt.fresh))
           : fn(ctx, ...args)));

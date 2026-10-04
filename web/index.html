@@ -9852,7 +9852,7 @@ function go(view, param) {
   if (view === 'weborders' && !COURIER && !COURIER_ERR) loadCourier();
   if (view === 'stock' && !HIST) loadHistory();
   if (view === 'settings' && !SETTINGS) loadSettings();
-  if (view === 'settings') loadAdmin(false);
+  if (view === 'settings' && ME && ME.role !== 'manager') loadAdmin(false);
   if (view === 'costs' && !COSTS) loadCosts();
   if ((view === 'products' || view === 'stock') && !LISTS) loadLists();
 }
@@ -10246,7 +10246,7 @@ function applyRole() {
   // The dashboard is the shape of the business - the month's revenue, what
   // the stock is worth, the trend. That is not a manager's to see, so the
   // screen goes rather than being emptied out.
-  var need = { dash: 3, costs: 3, settings: 3, tools: 3, profit: 3, expenses: 3, capital: 3, cash: 3, suppliers: 2, campaigns: 2,
+  var need = { dash: 3, costs: 2, settings: 2, tools: 3, profit: 3, expenses: 3, capital: 3, cash: 3, suppliers: 2, campaigns: 2,
                weborders: 2, stock: 2 };
   var btns = document.querySelectorAll('#nav button[data-view]');
   for (var i = 0; i < btns.length; i++) {
@@ -11438,16 +11438,23 @@ function wirePhase4() {
 var SET_TAB = 'business';
 var SET_TABS = [['business', 'Business'], ['lists', 'Lists'], ['users', 'Users'], ['alerts', 'Alerts'], ['connections', 'Connections'], ['security', 'Security']];
 function setMark(t) { return '<!--tab:' + t + '-->'; }
+function setTabsMine() {
+  var owner = ME && ME.role === 'owner', mgr = ME && ME.role === 'manager';
+  // a manager keeps the drop-down lists only; the business itself stays with the owner and shareholders
+  return SET_TABS.filter(function (t) { return owner || (mgr ? t[0] === 'lists' : (t[0] !== 'security' && t[0] !== 'connections' && t[0] !== 'users' && (t[0] !== 'alerts' || (ME && ME.role === 'shareholder')))); });
+}
 function settingsTabsHtml() {
-  var owner = ME && ME.role === 'owner';
-  return '<div class="tabs" role="tablist">' + SET_TABS.filter(function (t) { return owner || (t[0] !== 'security' && t[0] !== 'connections' && t[0] !== 'users' && (t[0] !== 'alerts' || (ME && ME.role === 'shareholder'))); }).map(function (t) {
+  var mine = setTabsMine();
+  if (mine.length && !mine.some(function (t) { return t[0] === SET_TAB; })) SET_TAB = mine[0][0];
+  return '<div class="tabs" role="tablist">' + mine.map(function (t) {
     return '<button type="button" role="tab" data-settab="' + t[0] + '" aria-selected="' + (SET_TAB === t[0]) + '">' + t[1] + '</button>'; }).join('') + '</div>';
 }
 /** Everything Settings draws carries a mark saying which tab it belongs to; only the open tab is shown. */
 function settingsPick(h) {
   var parts = h.split(/<!--tab:(\w+)-->/), out = '';
+  var tabs = settingsTabsHtml();
   for (var i = 1; i < parts.length; i += 2) if (parts[i] === SET_TAB) out += parts[i + 1];
-  return settingsTabsHtml() + (out || '<div class="empty">Nothing here for your account.</div>');
+  return tabs + (out || '<div class="empty">Nothing here for your account.</div>');
 }
 
 // ------------------------------------------------------------ a company for a partner
