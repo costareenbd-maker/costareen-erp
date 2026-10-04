@@ -282,17 +282,20 @@
     // a blue man smashing the page: the crack sits on the element he kicks (drawn here only - the page itself is untouched)
     function crack(m, A) {
       var el = m.on && m.on.el; if (!el) return;
+      if (Math.random() < 0.5) { dust(m.x + m.dir * 14, m.y, 2); return; }   // not every blow leaves a mark
       var r = el.getBoundingClientRect(); if (!r.width) return;
       var px = m.x + m.dir * (A && A.low ? 12 : 18), py = r.top + 2 + Math.random() * Math.max(1, Math.min(10, r.height - 4));
       var rx = cl(px - r.left, 3, r.width - 3), ry = cl(py - r.top, 2, Math.max(3, r.height - 3)), segs = [];
-      for (var i = 0, n = 3 + Math.floor(Math.random() * 3); i < n; i++) {
-        var a = Math.random() * Math.PI * 2, len = 5 + Math.random() * 10, x = 0, y = 0, pts = [];
+      for (var i = 0, n = 2 + Math.floor(Math.random() * 2); i < n; i++) {
+        var a = Math.random() * Math.PI * 2, len = 4 + Math.random() * 4, x = 0, y = 0, pts = [];
         for (var k = 0; k < 3; k++) { a += (Math.random() - 0.5) * 0.9; x += Math.cos(a) * len / 3; y += Math.sin(a) * len / 3; pts.push([x, y]); }
         segs.push(pts);
       }
-      cracks.push({ el: el, rx: rx, ry: ry, segs: segs, t: 0, by: m, mend: 0 }); if (cracks.length > 70) cracks.shift();
+      var onEl = cracks.filter(function (c) { return c.el === el && !c.mend; });
+      if (onEl.length >= 2) onEl[0].mend = 0.001;                 // at most two marks on one thing; the oldest fades
+      cracks.push({ el: el, rx: rx, ry: ry, segs: segs, t: 0, by: m, mend: 0 }); if (cracks.length > 12) cracks.shift();
       var gx = r.left + rx, gy = r.top + ry;
-      for (var b = 0; b < 6; b++) fx.push({ k: 'bit', x: gx, y: gy, vx: (Math.random() - 0.5) * 160, vy: -60 - Math.random() * 160, t: 0.6, T: 0.6 });
+      for (var b = 0; b < 3; b++) fx.push({ k: 'bit', x: gx, y: gy, vx: (Math.random() - 0.5) * 160, vy: -60 - Math.random() * 160, t: 0.6, T: 0.6 });
       dust(gx, gy, 3); shake(1.2);
     }
     function mendBy(m) {   // he is beaten: what he broke mends, with a sparkle
@@ -1091,7 +1094,7 @@
         if (!c.el.isConnected) { c.dead = 1; return; }
         var r = rc.get(c.el); if (!r) { r = c.el.getBoundingClientRect(); rc.set(c.el, r); }
         if (!r.width || r.bottom < 0 || r.top > H) return;
-        ctx.globalAlpha = (c.mend ? Math.max(0, 1 - c.mend / 1.2) : Math.min(1, c.t * 4)) * 0.85;
+        ctx.globalAlpha = (c.mend ? Math.max(0, 1 - c.mend / 1.2) : Math.min(1, c.t * 4)) * 0.6;
         ctx.strokeStyle = dk ? 'rgba(226,232,240,.9)' : 'rgba(30,41,59,.85)'; ctx.lineWidth = 1;
         var ox = r.left + c.rx, oy = r.top + c.ry;
         c.segs.forEach(function (sg) { ctx.beginPath(); ctx.moveTo(ox, oy); sg.forEach(function (p2) { ctx.lineTo(ox + p2[0], oy + p2[1]); }); ctx.stroke(); });
@@ -1367,7 +1370,7 @@
         if (p.k === 'spark' || p.k === 'sweat' || p.k === 'bit' || p.k === 'butt') p.vy += 900 * dt;
       });
       fx = fx.filter(function (p) { return p.t > 0; });
-      cracks.forEach(function (c) { c.t += dt; if (c.mend) c.mend += dt; }); cracks = cracks.filter(function (c) { return !c.dead && !(c.mend > 1.2); });
+      cracks.forEach(function (c) { c.t += dt; if (c.mend) c.mend += dt; else if (c.t > 3.5) c.mend = 0.001; });   // a mark fades by itself after a few seconds cracks = cracks.filter(function (c) { return !c.dead && !(c.mend > 1.2); });
       decals.forEach(function (d) { d.t -= dt; }); decals = decals.filter(function (d) { return d.t > 0; }); if (decals.length > 160) decals.splice(0, decals.length - 160);
       draw();
     }
