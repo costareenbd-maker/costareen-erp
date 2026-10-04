@@ -16244,9 +16244,8 @@ switchBusiness = function (id) {
 
 <!-- tidy-5: messages at the top with a working close, the red note's ✕ closes it, tiles -->
 <style>
-#toast { top:14px !important; bottom:auto !important; transform:translateX(-50%) translateY(-12px); max-width:min(620px, calc(100vw - 24px)); padding-right:38px; }
-#toast.show { transform:translateX(-50%) translateY(0); }
-@media (max-width:640px) { #toast { left:12px; right:12px; transform:translateY(-12px); } #toast.show { transform:translateY(0); } }
+#toast { max-width:min(620px, calc(100vw - 24px)); padding-right:38px; }
+@media (max-width:640px) { #toast { max-width:none; } }
 #toast .tclose { position:absolute; right:8px; top:8px; width:24px; height:24px; border:0; border-radius:50%; background:transparent; color:inherit; cursor:pointer; font-size:14px; opacity:.7; }
 #toast .tclose:hover { opacity:1; background:rgba(127,127,127,.18); }
 .note.err .ico, .note.ok .ico { cursor:pointer; } .note.err .ico:hover { opacity:.7; }

@@ -606,3 +606,9 @@ moment"; the page waits 2.5 s and tries once more before showing anything. Timer
 two start in the same minute (alerts :x2, drive :x4, sheet :x6, websync :08/:23/:38/:53,
 heartbeat :29). Checked live: 60 calls at once, all answered. Not done: a bigger pooler limit
 needs a paid compute size - not needed unless it comes back.
+
+## Toast back at the bottom; e-mail setup checks the login (2026-10-04)
+Messages (toasts) moved back to the bottom centre (close button kept). set_smtp.py now logs in to the
+mail server before saving: a wrong Gmail password (normal password instead of an app password) is
+refused on the spot with how to make an app password; spaces in the app password are removed. Gmail
+was refusing the saved password (recover -> 500 "Error sending recovery email").

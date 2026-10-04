@@ -49,6 +49,26 @@ def main():
     pw = getpass.getpass('SMTP password (app password for Gmail): ')
     if not pw:
         sys.exit('No password - nothing changed.')
+    pw = pw.replace(' ', '') if 'gmail' in host else pw   # Google shows app passwords as 4 groups of 4
+    # try the login here first: a wrong password saved silently makes every e-mail fail later
+    import smtplib, ssl
+    try:
+        with smtplib.SMTP(host, int(port), timeout=20) as m:
+            m.starttls(context=ssl.create_default_context()); m.login(user, pw)
+        print('login to %s: OK' % host)
+    except smtplib.SMTPAuthenticationError:
+        sys.exit('
+%s REFUSED that password - nothing changed.
+'
+                 'For Gmail it must be an APP PASSWORD (16 letters), not the normal password:
+'
+                 '  1. Sign in to %s, open https://myaccount.google.com/apppasswords
+'
+                 '     (2-Step Verification must be on first).
+'
+                 '  2. Make one named "Costareen ERP", copy the 16 letters, run this again and paste them.' % (host, user))
+    except Exception as e:
+        sys.exit('Could not reach %s:%s (%s) - nothing changed.' % (host, port, e))
     code, out = call('https://api.supabase.com/v1/projects/%s/config/auth' % REF, 'PATCH', {
         'smtp_host': host, 'smtp_port': str(port), 'smtp_user': user, 'smtp_pass': pw,
         'smtp_admin_email': sender, 'smtp_sender_name': name, 'rate_limit_email_sent': 200})
