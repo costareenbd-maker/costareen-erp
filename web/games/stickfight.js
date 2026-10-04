@@ -9,7 +9,7 @@
 (function () {
   'use strict';
   var G = 1900, ZONE = 95, REACH_X = 640, REACH_UP = 340, M = 96;   // M: about an inch kept clear at the left, right and bottom
-  var SEL = '#nav button, header.topbar input, header.topbar button, header.topbar select, #view .tabs button, #view .seg button, #view input, #view select, #view .card, #view tbody tr, #view .btn, #view button, #view .c3bar, #view .o_lv, #view .pill, #view .cchip, #o_cp .btn, #o_cp .cchip, #pgame';
+  var SEL = '#nav button, header.topbar input, header.topbar button, header.topbar select, #view .tabs button, #view .seg button, #view input, #view select, #view .card, #view .kpi, #view .hero, #view .qa, #view .note, #view .grid > *, #view .chips > *, #view h2, #view canvas, #view tbody tr, #view .btn, #view button, #view .c3bar, #view .o_lv, #view .pill, #view .cchip, #o_cp .btn, #o_cp .cchip, #pgame';
   var HERO_D = '#c9a43a', HERO_L = '#f59e0b', FOE = '#2563eb', FOE_D = '#2c4387';
 
   var P = {
@@ -43,9 +43,9 @@
   var ATK = {
     jab: { hit: 0.06, act: 0.08, end: 0.2, reach: 20, dmg: 9, kb: 170, up: 0, next: 'cross' },
     cross: { hit: 0.07, act: 0.08, end: 0.22, reach: 22, dmg: 10, kb: 200, up: 0, next: 'upper' },
-    upper: { hit: 0.08, act: 0.1, end: 0.34, reach: 18, dmg: 16, kb: 160, up: 640, heavy: 1 },
-    kick: { hit: 0.09, act: 0.09, end: 0.3, reach: 26, dmg: 14, kb: 520, up: 260, heavy: 1 },
-    round: { pose: 'kick', hit: 0.14, act: 0.12, end: 0.42, reach: 28, dmg: 18, kb: 720, up: 340, heavy: 1, spin: 1 },
+    upper: { hit: 0.08, act: 0.1, end: 0.34, reach: 18, dmg: 16, kb: 200, up: 720, heavy: 1 },
+    kick: { hit: 0.09, act: 0.09, end: 0.3, reach: 26, dmg: 14, kb: 640, up: 300, heavy: 1 },
+    round: { pose: 'kick', hit: 0.14, act: 0.12, end: 0.42, reach: 28, dmg: 18, kb: 860, up: 380, heavy: 1, spin: 1 },
     sweep: { hit: 0.1, act: 0.12, end: 0.38, reach: 28, dmg: 10, kb: 120, up: 380, low: 1 },
     flykick: { hit: 0.02, act: 0.45, end: 0.5, reach: 22, dmg: 18, kb: 680, up: 300, air: 1, heavy: 1 },
     grab: { hit: 0.08, act: 0.12, end: 0.45, reach: 30, dmg: 0, grab: 1 }
@@ -133,7 +133,7 @@
       if (!b || b.st === 'dead' || b.st === 'flung' || b.st === 'held') return;
       var dir = b.x >= a.x ? 1 : -1;
       // the ninja reads almost everything: he blocks or slips away and hits back
-      if (b === hero && Math.random() < 0.72) {
+      if (b === hero && Math.random() < 0.55) {
         if (Math.random() < 0.5 && hero.on) { spark(b.x - dir * 6, b.y - 28, 6); begin(hero, 'block'); hero.counter = 1; }
         else { jumpTo(hero, a.x - dir * 40, a.on ? a.on.y : hero.y, true, a.on); hero.ambush = 1; }
         return;
@@ -143,13 +143,21 @@
       b.flash = 0.1;
       bleed(b.x, b.y - 30, dir, A.heavy ? 14 : 7); spark(b.x - dir * 4, b.y - 30, 8);
       fx.push({ k: 'ring', x: b.x - dir * 4, y: b.y - 30, t: 0.2, T: 0.2 });
-      if (A.heavy) fx.push({ k: 'star', x: b.x - dir * 4, y: b.y - 30, t: 0.12, T: 0.12 });
-      if (b.hp <= 0) { fling(b, dir * (A.kb + 200), -(A.up + 300)); b.dying = 1; return; }
+      if (A.heavy) { fx.push({ k: 'star', x: b.x - dir * 4, y: b.y - 30, t: 0.14, T: 0.14 }); fx.push({ k: 'shock', x: b.x - dir * 4, y: b.y - 30, t: 0.25, T: 0.25 }); freeze(0.07); shake(3); }
+      else freeze(0.03);
+      if (b.hp <= 0) { freeze(0.12); shake(5); fling(b, dir * (A.kb + 250), -(A.up + 340)); setTimeout(function () { b.dying = 1; }, 60); return; }
       if (A.up >= 250) fling(b, dir * A.kb, -A.up);
       else { b.vx = dir * A.kb; begin(b, 'hit'); }
     }
     // a body sent flying: it spins, bounces off the sides and bottoms of buttons and boxes, and lands on a top
-    function fling(m, vx, vy) { m.aim = null; m.on = null; m.vx = vx; m.vy = vy; begin(m, 'flung'); m.spin = 0; }
+    function fling(m, vx, vy) { m.aim = null; m.on = null; m.vx = vx; m.vy = vy; begin(m, 'flung'); m.spin = 0; m.rag = makeRag(m, vx, vy, m.team); }
+    function makeRag(m, vx, vy, team, owner) {
+      var J = joints(m, pose(m)), pts = {};
+      ['head', 'neck', 'hip', 'eF', 'hF', 'eB', 'hB', 'kF', 'fF', 'kB', 'fB'].forEach(function (k) { var p = J[k], sp = k === 'head' || k === 'neck' ? 1.15 : k === 'fF' || k === 'fB' ? 0.85 : 1; pts[k] = { x: p.x, y: p.y, px: p.x - vx * sp / 50 + (Math.random() - 0.5) * 3, py: p.y - vy * sp / 50 + (Math.random() - 0.5) * 3 }; });
+      var sticks = [['head', 'neck'], ['neck', 'hip'], ['neck', 'eF'], ['eF', 'hF'], ['neck', 'eB'], ['eB', 'hB'], ['hip', 'kF'], ['kF', 'fF'], ['hip', 'kB'], ['kB', 'fB'], ['head', 'hip'], ['eF', 'eB']];
+      sticks = sticks.map(function (s2) { var a = pts[s2[0]], b = pts[s2[1]]; return [s2[0], s2[1], Math.hypot(a.x - b.x, a.y - b.y)]; });
+      return { team: team, pts: pts, sticks: sticks, t: 0, bleedT: 0, live: 1, owner: m };
+    }
     function bounce(m, ox, oy) {
       for (var i = 0; i < boxes.length; i++) {
         var b = boxes[i];
@@ -181,8 +189,12 @@
       for (var k in r.pts) {
         var p = r.pts[k], vx = (p.x - p.px) * 0.99, vy = (p.y - p.py) * 0.99, ox = p.x, oy = p.y;
         p.px = p.x; p.py = p.y; p.x += vx; p.y += vy + G * dt * dt;
-        for (var i = 0; i < plats.length; i++) { var q = plats[i]; if (p.x >= q.x0 && p.x <= q.x1 && oy <= q.y + 0.5 && p.y > q.y) { p.y = q.y; p.py = p.y + (p.y - oy) * 0.3; p.px = p.x - vx * 0.6; break; } }
-        for (var j = 0; j < boxes.length; j++) { var b = boxes[j]; if (p.x > b.x0 && p.x < b.x1 && p.y > b.y0 && p.y < b.y1 && !(ox > b.x0 && ox < b.x1 && oy > b.y0 && oy < b.y1) && oy > b.y0) { if (ox <= b.x0) { p.x = b.x0; p.px = p.x + vx * 0.5; } else if (ox >= b.x1) { p.x = b.x1; p.px = p.x + vx * 0.5; } else { p.y = b.y1; p.py = p.y + vy * 0.4; } } }
+        for (var i = 0; i < plats.length; i++) { var q = plats[i]; if (p.x >= q.x0 && p.x <= q.x1 && oy <= q.y + 0.5 && p.y > q.y) { if (k === 'hip' && vy > 8 && r.t - (r.lastDust || -9) > 0.2) { r.lastDust = r.t; dust(p.x, q.y, 6); } p.y = q.y; p.py = p.y + (p.y - oy) * 0.3; p.px = p.x - vx * 0.6; break; } }
+        for (var j = 0; j < boxes.length; j++) { var b = boxes[j]; if (p.x > b.x0 && p.x < b.x1 && p.y > b.y0 && p.y < b.y1 && !(ox > b.x0 && ox < b.x1 && oy > b.y0 && oy < b.y1) && oy > b.y0) {
+          var hard = Math.hypot(vx, vy) > 9;
+          if (ox <= b.x0) { p.x = b.x0; p.px = p.x + vx * 0.5; } else if (ox >= b.x1) { p.x = b.x1; p.px = p.x + vx * 0.5; } else { p.y = b.y1; p.py = p.y + vy * 0.4; }
+          if (hard && (k === 'head' || k === 'hip') && r.t - (r.lastBump || -9) > 0.15) { r.lastBump = r.t; spark(p.x, p.y, 8); fx.push({ k: 'ring', x: p.x, y: p.y, t: 0.2, T: 0.2 }); fx.push({ k: 'dent', x: p.x, y: p.y, t: 0.5, T: 0.5 }); shake(2); if (r.owner && r.owner !== hero && r.owner.hp > 0) { r.owner.hp -= 5; if (r.owner.hp <= 0) r.owner.dying = 1; } }
+        } }
         if (p.x < M) { p.x = M; p.px = M + vx * 0.5; } if (p.x > W - M) { p.x = W - M; p.px = W - M + vx * 0.5; } if (p.y > H - M) { p.y = H - M; p.py = p.y + vy * 0.3; }
       }
       for (var it = 0; it < 3; it++) r.sticks.forEach(function (s) { var a = r.pts[s[0]], b = r.pts[s[1]], dx = b.x - a.x, dy = b.y - a.y, d = Math.hypot(dx, dy) || 0.01, df = (d - s[2]) / d * 0.5; a.x += dx * df; a.y += dy * df; b.x -= dx * df; b.y -= dy * df; });
@@ -243,7 +255,7 @@
     var scene = { name: 'standoff', t: 3, last: '', n: 0, bow: false, arrows: 0 };
     function setScene(name, t) { scene.last = scene.name; scene.name = name; scene.t = t; scene.n++; if (hero) { hero.guardT = 0; hero.goHide = 0; if (hero.st === 'hide' && name !== 'ambush') hero.st = 'guard'; } if (foe) foe.guardT = 0; }
     function pickScene() {
-      var opts = ['duel', 'duel', 'duel', 'duel', 'standoff', 'ambush', 'breather'].filter(function (n) { return n !== scene.name; });
+      var opts = ['duel', 'duel', 'duel', 'duel', 'duel', 'standoff', 'ambush'].filter(function (n) { return n !== scene.name; });
       var n = opts[Math.floor(Math.random() * opts.length)];
       setScene(n, n === 'duel' ? 6 + Math.random() * 5 : n === 'standoff' ? 1.8 + Math.random() * 1.2 : n === 'ambush' ? 7 : 2 + Math.random());
     }
@@ -295,17 +307,17 @@
       m.think -= dt; m.cd = Math.max(0, m.cd - dt);
       if (m === hero) m.sta = Math.min(100, m.sta + (m.st === 'pant' ? 22 : 3) * dt);
       if (!m.on || ['atk', 'hit', 'land', 'flung', 'held', 'dead', 'rise', 'roll', 'aim'].indexOf(m.st) >= 0) return;
-      if (m.dropTo) { if (m.st !== 'run') m.dropTo = null; else return; }
+      if (m.dropTo) { if (m.st !== 'run') m.dropTo = null; else return; }   // (a planned drop runs on past the edge)
       if (nearBlock(m.x, m.y)) { escape(m); return; }
       var tg = enemyOf(m);
       if (m.st === 'block' && m.t < 0.25) return;
       if (m.st === 'block') { begin(m, 'guard'); if (m.counter && tg && Math.abs(tg.x - m.x) < 40) { m.counter = 0; begin(m, 'atk', 'upper'); return; } }
-      if (m.st === 'run' && (m.x <= m.on.x0 + 3 || m.x >= m.on.x1 - 3)) { m.vx = 0; m.st = 'idle'; }
+      if ((m.st === 'run' || m.st === 'walk') && ((m.x <= m.on.x0 + 3 && m.vx < 0) || (m.x >= m.on.x1 - 3 && m.vx > 0))) { m.vx = 0; m.st = 'guard'; }   // never walk off an edge by accident
       if (m.think > 0) return;
-      m.think = 0.16 + Math.random() * 0.22 * (mode === 'calm' ? 3 : 1);
+      m.think = 0.1 + Math.random() * 0.15 * (mode === 'calm' ? 3 : 1);
       // no one to fight: wander about the whole page
       if (!tg || tg.st === 'dead' || tg.dying) { m.roamT -= 0.25; if (m.roamT <= 0) { m.roamT = 1.5 + Math.random() * 2.5; roam(m); } else if (Math.random() < 0.08) begin(m, Math.random() < 0.5 ? 'taunt' : 'look'); return; }
-      var dx = tg.x - m.x, ad = Math.abs(dx), same = tg.on && tg.on === m.on && Math.abs(tg.y - m.y) < 6, sc = scene.name;
+      var dx = tg.x - m.x, ad = Math.abs(dx), same = tg.on && m.on && (tg.on === m.on || (Math.abs(tg.y - m.y) < 14 && ad < 90)), sc = scene.name;   // next-door tiles at the same height are one fighting ground
       m.dir = dx >= 0 ? 1 : -1;
       var flee = (sc === 'chase' && m === foe) || (sc === 'retreat' && m === hero);
       if (flee) {
@@ -354,9 +366,10 @@
       }
       if (!tg.on) { if (m.st === 'run' || m.st === 'walk') { m.st = 'guard'; m.vx = 0; } return; }   // he is in the air: wait for him to land
       if (same) m.waitT = 0;
-      if (!same && m === hero && (sc === 'duel' || sc === 'standoff') && (m.waitT = (m.waitT || 0) + 0.25) < 2.6) { if (m.st !== 'guard') { begin(m, 'guard'); m.vx = 0; } return; }   // he lets the other come to him
+      if (!same && m === hero && Math.hypot(dx, tg.y - m.y) < 260 && (sc === 'duel' || sc === 'standoff') && (m.waitT = (m.waitT || 0) + 0.25) < 1.6) { if (m.st !== 'guard') { begin(m, 'guard'); m.vx = 0; } return; }   // he lets the other come to him
       if (!same) { if (!goToward(m, tg)) { m.st = 'run'; m.vx = m.dir * 200; if (m.x <= m.on.x0 + 2 || m.x >= m.on.x1 - 2) { m.on = null; begin(m, 'air'); m.vx = m.dir * 140; } } return; }
-      // same ledge
+      // same ledge (or the tile next door: hop over the gap)
+      if (tg.on !== m.on && (ad > 34 || Math.abs(tg.y - m.y) > 2)) { if (moveTo(m, tg.on, tg.x - m.dir * 26)) return; }
       if (sc === 'standoff') {
         // circle: keep 70-110 apart, step in and out slowly, taunt
         var want = 90;
@@ -364,18 +377,20 @@
         m.st = 'walk'; m.vx = (ad > want + 20 ? m.dir : ad < want - 20 ? -m.dir : (Math.random() < 0.5 ? 1 : -1)) * 55; return;
       }
       // the duel: guard at arm's length, then an exchange, then a step back
-      if (ad < 30) {
+      if (ad < 34) {
         if (nearBlock(tg.x, tg.y)) { m.vx = 0; m.st = 'guard'; return; }
-        if (m.st !== 'guard') { begin(m, 'guard'); m.vx = 0; m.guardT = 0.12 + Math.random() * 0.35; return; }
+        if (m.st !== 'guard') { begin(m, 'guard'); m.vx = 0; m.guardT = 0.05 + Math.random() * 0.2; return; }
         m.guardT = (m.guardT || 0) - 0.2;
         if (m.guardT > 0) { m.vx = (Math.random() - 0.5) * 30; return; }
-        if (m === foe && Math.random() < 0.18) { begin(m, 'block'); m.vx = 0; return; }
-        begin(m, 'atk', attackChoice(m)); m.vx = 0; m.guardT = 0.15 + Math.random() * 0.4; return;
+        if (m === foe && Math.random() < 0.07) { begin(m, 'block'); m.vx = 0; return; }
+        begin(m, 'atk', attackChoice(m)); m.vx = 0; m.guardT = 0.08 + Math.random() * 0.25; return;
       }
       if (ad > 90 && ad < 150 && Math.random() < 0.06 && !nearBlock(tg.x, tg.y)) { jumpTo(m, tg.x - m.dir * 14, tg.y, false, tg.on); m.flykick = 1; return; }
-      m.st = ad < 60 ? 'walk' : 'run'; m.vx = m.dir * (ad < 60 ? 110 : 200) * (mode === 'calm' ? 0.6 : 1);
+      m.st = ad < 60 ? 'walk' : 'run'; m.vx = m.dir * (ad < 60 ? 150 : 210) * (mode === 'calm' ? 0.6 : 1);
     }
-    var arrows = [];
+    var arrows = [], frozen = 0, shk = 0;
+    function freeze(t) { frozen = Math.max(frozen, t); }
+    function shake(a) { shk = Math.max(shk, a); }
     function shoot(m, tg) {
       var sx0 = m.x + m.dir * 14, sy0 = m.y - 34, ty = tg.y - 26 + (Math.random() - 0.5) * 14, tx = tg.x + (tg.vx || 0) * 0.25 + (Math.random() - 0.5) * 18;
       var T = Math.max(0.35, Math.min(0.95, Math.abs(tx - sx0) / 650)), ga = 900;
@@ -406,7 +421,7 @@
     function free2(m) { return ['idle', 'run', 'taunt', 'land', 'guard', 'walk', 'pant', 'look'].indexOf(m.st) >= 0; }
     function watchStuck(m, dt) {
       var tg = enemyOf(m);
-      if (m.on && m.on.ground && (!tg || !tg.on || !tg.on.ground)) {
+      if (m.on && m.on.ground && tg && tg.on && !tg.on.ground) {
         m.groundT = (m.groundT || 0) + dt;
         if (m.groundT > 0.35 && free2(m)) {   // down at the bottom of the screen: one big leap back up, or vanish and reappear
           m.groundT = 0;
@@ -452,7 +467,7 @@
           }
         }
         if (m.t > A.end && !A.air) {
-          if (m.done && A.next && Math.random() < (m === hero ? 0.85 : 0.6)) begin(m, 'atk', A.next);
+          if (m.done && A.next && Math.random() < (m === hero ? 0.95 : 0.75)) begin(m, 'atk', A.next);
           else { begin(m, 'guard'); if (m.on && Math.random() < 0.35) { m.vx = -m.dir * 90; } }
         }
       } else if (m.st === 'aim') {
@@ -469,11 +484,24 @@
       if (m.st === 'air' && m.flykick && m.vy > -160) { m.flykick = 0; begin(m, 'atk', 'flykick'); }
       if (m.st === 'air' && m.ambush && m.vy > -160 && tg && Math.abs(tg.x - m.x) < 60) { m.ambush = 0; begin(m, 'atk', 'flykick'); }
       if (m.st === 'held') { if (!m.heldBy || m.heldBy.holding !== m || m.heldBy.st !== 'atk') { m.heldBy = null; fling(m, 0, -120); } else return; }
+      if (m.st === 'flung' && m.rag) {
+        var r = m.rag; stepRag(r, dt);
+        var hp2 = r.pts.hip, sp2 = Math.hypot(hp2.x - hp2.px, hp2.y - hp2.py) / Math.max(dt, 0.001);
+        m.x = hp2.x; m.y = Math.max(r.pts.fF.y, r.pts.fB.y, hp2.y + 4); m.vx = (hp2.x - hp2.px) / Math.max(dt, 0.001); m.vy = (hp2.y - hp2.py) / Math.max(dt, 0.001);
+        if (r.impact) { r.impact = 0; }
+        if (m.dying) { m.dying = 0; rags.push(r); r.live = 0; m.rag = null; if (m === foe) { foe = null; kills++; nextFoeT = 1.6 + Math.random(); } if (hero) { hero.plan = null; hero.roamT = 0.8; } return; }
+        if (r.t > 0.7 && sp2 < 60) {
+          var under = null; for (var u = 0; u < plats.length; u++) { var q2 = plats[u]; if (hp2.x >= q2.x0 && hp2.x <= q2.x1 && q2.y >= hp2.y - 6 && q2.y - hp2.y < 30) { under = q2; break; } }
+          if (under) { m.rag = null; m.x = hp2.x; m.y = under.y; m.on = under; m.vx = m.vy = 0; m.down = 1; begin(m, 'land'); dust(m.x, m.y, 5); }
+          else if (r.t > 2.5) { m.rag = null; m.on = null; begin(m, 'air'); }
+        }
+        return;
+      }
       var ox = m.x, oy = m.y;
       if (!m.on) {
         m.vy += G * dt; m.x += m.vx * dt; m.y += m.vy * dt;
         if (m.flip || m.st === 'flung') m.spin += dt * (m.st === 'flung' ? 16 : 13);
-        if (m.st === 'flung') bounce(m, ox, oy);
+        if (m.st === 'flung' && !m.rag) bounce(m, ox, oy);
         if (m.vy >= 0) for (var i = 0; i < plats.length; i++) {
           var p = plats[i];
           if (m.aim && m.st !== 'flung' && p !== m.aim && !p.ground) continue;   // a planned jump lands where it was aimed
@@ -539,6 +567,7 @@
       ctx.restore();
     }
     function drawFighter(m) {
+      if (m.st === 'flung' && m.rag) { var JR = {}; for (var kk in m.rag.pts) JR[kk] = m.rag.pts[kk]; drawMan(JR, m.team, m.flash > 0, null, 0); return; }
       var p = pose(m), J = joints(m, p), ang = (m.flip || m.st === 'flung') ? -m.spin * m.dir : 0;
       if (m.st === 'roll') { ang = -(m.t / 0.35) * Math.PI * 2 * m.dir; J = joints(m, P.land); }
       if (m.st === 'atk' && ATK[m.atk] && ATK[m.atk].spin) ang = (m.t / ATK[m.atk].end) * Math.PI * 2 * m.dir * 0.25;
@@ -546,6 +575,10 @@
       if (m.st === 'run' && Math.abs(m.vx) > 220) { ctx.strokeStyle = 'rgba(148,163,184,.5)'; ctx.lineWidth = 1; for (var q = 0; q < 3; q++) { var ly = m.y - 10 - q * 12; ctx.beginPath(); ctx.moveTo(m.x - m.dir * 14, ly); ctx.lineTo(m.x - m.dir * (32 + q * 6), ly); ctx.stroke(); } }
       // afterimages on long leaps and when thrown
       if ((m.flip && Math.abs(m.vx) > 400) || m.st === 'flung') [0.035, 0.07].forEach(function (k, i) { drawMan(joints({ x: m.x - m.vx * k, y: m.y - m.vy * k, dir: m.dir }, p), m.team, false, { x: c.x - m.vx * k, y: c.y - m.vy * k }, ang + (i + 1) * 0.5 * m.dir, 0.22 - i * 0.08); });
+      if (m.st === 'atk' && (m.atk === 'kick' || m.atk === 'round' || m.atk === 'flykick') && m.t > 0.04 && m.t < 0.3) {
+        m.ktrail = (m.ktrail || []).concat([{ x: J.fF.x, y: J.fF.y }]).slice(-6);
+        ctx.strokeStyle = 'rgba(255,255,255,.55)'; ctx.lineWidth = 2.2; ctx.beginPath(); m.ktrail.forEach(function (q, i) { if (i) ctx.lineTo(q.x, q.y); else ctx.moveTo(q.x, q.y); }); ctx.stroke();
+      } else m.ktrail = null;
       drawMan(J, m.team, m.flash > 0, c, ang, alpha);
       // looking for him: "?" over the head
       if (m.st === 'look') { ctx.font = '700 12px system-ui, sans-serif'; ctx.textAlign = 'center'; ctx.fillStyle = 'rgba(203,213,225,.9)'; ctx.fillText('?', J.head.x + m.dir * 6, J.head.y - 10); }
@@ -568,7 +601,8 @@
     }
     function drawRag(r) { var a = r.t > 3 ? Math.max(0, 1 - (r.t - 3)) : 1, J = {}; for (var k in r.pts) J[k] = r.pts[k]; drawMan(J, r.team, false, null, 0, a); }
     function draw() {
-      ctx.clearRect(0, 0, W, H);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, W, H);
+      if (shk > 0) ctx.translate((Math.random() - 0.5) * shk * 2, (Math.random() - 0.5) * shk * 2);
       decals.forEach(function (d) { ctx.globalAlpha = Math.min(1, d.t / 3) * 0.85; ctx.fillStyle = '#991b1b'; ctx.beginPath(); ctx.ellipse(d.x, d.y - 0.5, d.r * 1.8, d.r * 0.55, 0, 0, 7); ctx.fill(); }); ctx.globalAlpha = 1;
       rags.forEach(drawRag);
       if (foe) drawFighter(foe); if (hero) drawFighter(hero);
@@ -585,6 +619,7 @@
         else if (p.k === 'sweat') { ctx.fillStyle = '#bfdbfe'; ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, 7); ctx.fill(); }
         else if (p.k === 'spark') { ctx.fillStyle = p.c; ctx.fillRect(p.x - 1, p.y - 1, 2.2, 2.2); }
         else if (p.k === 'smoke' || p.k === 'dust') { ctx.fillStyle = p.k === 'smoke' ? p.c : 'rgba(160,150,140,.7)'; ctx.globalAlpha *= 0.6; ctx.beginPath(); ctx.arc(p.x, p.y, p.r * (1.6 - a), 0, 7); ctx.fill(); }
+        else if (p.k === 'shock') { ctx.strokeStyle = 'rgba(255,255,255,.75)'; ctx.lineWidth = 1.4; for (var sI = 0; sI < 10; sI++) { var aS = sI * 0.628 + p.x; ctx.beginPath(); ctx.moveTo(p.x + Math.cos(aS) * (8 + (1 - a) * 10), p.y + Math.sin(aS) * (8 + (1 - a) * 10)); ctx.lineTo(p.x + Math.cos(aS) * (16 + (1 - a) * 22), p.y + Math.sin(aS) * (16 + (1 - a) * 22)); ctx.stroke(); } }
         else if (p.k === 'ring') { ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(p.x, p.y, 4 + (1 - a) * 15, 0, 7); ctx.stroke(); }
         else if (p.k === 'dent') { ctx.strokeStyle = 'rgba(255,255,255,.6)'; ctx.lineWidth = 1; for (var i = 0; i < 6; i++) { var an = i * 1.05 + 0.3; ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(p.x + Math.cos(an) * (6 + (1 - a) * 8), p.y + Math.sin(an) * (6 + (1 - a) * 8)); ctx.stroke(); } }
         else if (p.k === 'star') { ctx.strokeStyle = '#fde047'; ctx.lineWidth = 2; for (var j = 0; j < 8; j++) { var an2 = j * Math.PI / 4; ctx.beginPath(); ctx.moveTo(p.x + Math.cos(an2) * 3, p.y + Math.sin(an2) * 3); ctx.lineTo(p.x + Math.cos(an2) * (j % 2 ? 9 : 14), p.y + Math.sin(an2) * (j % 2 ? 9 : 14)); ctx.stroke(); } }
@@ -610,6 +645,8 @@
       scanT -= dt; if (scanT <= 0) { scanT = 0.5; scan(); }
       if (!hero) { var ok = plats.filter(function (p) { return !p.ground && p.x1 - p.x0 > 40 && !nearBlock((p.x0 + p.x1) / 2, p.y); }); var p = ok.length ? ok[Math.floor(Math.random() * ok.length)] : plats[plats.length - 1]; hero = make('hero', (p.x0 + p.x1) / 2, p.y, p); smoke(hero.x, hero.y - 20, '#fde047'); }
       if (!foe) { nextFoeT -= dt; if (nextFoeT <= 0) bringFoe(); }
+      shk = Math.max(0, shk - dt * 20);
+      if (frozen > 0) { frozen -= dt; draw(); return; }      // the hit-stop: a heartbeat of stillness on a hard hit
       direct(dt);
       step(hero, dt); step(foe, dt); stepArrows(dt);
       rags.forEach(function (r) { stepRag(r, dt); }); rags = rags.filter(function (r) { return r.t < 4; });

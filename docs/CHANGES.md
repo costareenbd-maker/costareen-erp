@@ -544,3 +544,11 @@
 - The smoke vanish is off (owner's request); a stuck fighter takes another route or looks around.
 - Light theme uses lively colours (amber-yellow ninja, bright blue enemy, red headband); the dark theme keeps the muted ones.
 - Checked on a test page with side menu + top bar + rows (light theme): 0 margin violations in 40 s, a quarter of the time spent on the side menu/top bar, almost no passes through buttons.
+
+## stick-6 — more action and real body physics; dashboards understood (2026-10-04)
+- More action: the ninja dodges/blocks ~45% (was 72%; still never hurt), the enemy blocks 7% (was 18%), shorter guard pauses, faster decisions, longer combos, harder kicks/roundhouse/uppercut, stand-off and ambush rarer than duels.
+- Real physics: a heavy hit, a throw, an arrow or a knock-out turns the body into a ragdoll (11 points joined by sticks) that tumbles, bounces off ledges and solid things (buttons, chips, fields) with sparks, a dent burst, a little shake and damage on hard bumps; when it settles on a floor he gets up from where he lies. Knock-outs stay ragdolls and fade.
+- Impact: a short hit-stop (0.03–0.12 s), a slight shake of the drawing on heavy hits, star + shock lines, white kick trails.
+- Dashboards: KPI tiles, the banner, the quick-action row, notes, grid cells, section titles and charts are floors too; next-door tiles at the same height count as one fighting ground, and they hop the gap between tiles instead of walking into it (the old ping-pong to the bottom floor). Nobody walks off an edge by accident any more.
+- The ninja goes after a far enemy (he waits on guard only when the enemy is within ~260 px).
+- Checked on a dashboard-like test page: throws, held lifts, ragdoll tumbles and get-ups, fights on tiles; no errors.
