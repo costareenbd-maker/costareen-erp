@@ -15391,10 +15391,11 @@ function connHtml() {
         '<button type="button" class="t2q" data-conntip="' + esc(v.label) + '" aria-label="Details">?</button></div>'; }).join('') + '</div></div></section>';
   var w = c.website, kind = WS_KIND || w.kind || 'plugin';
   var kinds = [['plugin', 'WordPress plugin', 'WordPress with the ERP sync plugin'], ['woo', 'WooCommerce', 'any WooCommerce shop, no plugin needed'], ['shopify', 'Shopify', 'any Shopify shop']];
+  var otherBtn = '<button type="button" class="btn" data-wsother="1" title="PHP, Laravel, Wix, a custom site - anything that can send a web request">Any other website</button>';
   h += '<section><div class="card"><h2>Website</h2><div class="sub">Website orders come in every 15 minutes (Web orders screen) and stock goes out to the shop. Products with other SKUs are matched once under Web orders \u2192 Match website products. ' +
     '<strong>The sync stays off until you switch it on</strong> \u2014 while the old sheet still sends stock to the shop, switching this on too would make the two overwrite each other. Any other website: the open door further down.</div>' +
     '<div class="row" style="margin-top:10px;gap:8px;flex-wrap:wrap">' + kinds.map(function (k) {
-      return '<button type="button" class="btn' + (k[0] === kind ? ' primary' : '') + '" data-wskind="' + k[0] + '" title="' + esc(k[2]) + '">' + esc(k[1]) + '</button>'; }).join('') + '</div>';
+      return '<button type="button" class="btn' + (k[0] === kind ? ' primary' : '') + '" data-wskind="' + k[0] + '" title="' + esc(k[2]) + '">' + esc(k[1]) + '</button>'; }).join('') + otherBtn + '</div>';
   var same = kind === w.kind, saved = same && w.hasKey;
   var keyNote = saved ? 'saved \u2014 type a new one only to change it' : '';
   if (kind === 'plugin') {
@@ -15407,7 +15408,7 @@ function connHtml() {
       '<div><label class="f" for="ws_key">Consumer key <span class="sku">' + (keyNote || 'ck_\u2026') + '</span></label><input class="i" id="ws_key" type="password" autocomplete="off" placeholder="' + (saved ? '\u2022\u2022\u2022\u2022\u2022\u2022' : 'ck_\u2026') + '"></div>' +
       '<div><label class="f" for="ws_secret">Consumer secret</label><input class="i" id="ws_secret" type="password" autocomplete="off" placeholder="' + (saved ? '\u2022\u2022\u2022\u2022\u2022\u2022' : 'cs_\u2026') + '"></div></div>';
     h += '<div class="note" style="margin-top:10px"><div class="ico">+</div><div style="flex:1"><strong>Website orders’ parcel numbers</strong> ' + (w.pluginKey ? '<span class="pill ok">key saved</span>' : '<span class="pill out">not set</span>') +
-      '<div class="sub" style="margin:4px 0 6px">The website books Steadfast parcels for its own orders. To see those parcel numbers (and clear the due when they are delivered), paste the key of the WordPress <b>sync plugin</b> once — WordPress admin → the Costareen sync plugin’s page. WooCommerce stays as it is.</div>' +
+      '<div class="sub" style="margin:4px 0 6px">The website books Steadfast parcels for its own orders. To see those parcel numbers (and clear the due when they are delivered), paste the key once: in WordPress admin open <b>Settings → Costareen ERP</b> and press <b>Copy</b>. WooCommerce stays as it is.</div>' +
       '<div class="row" style="gap:8px"><input class="i" id="ws_pkey" type="password" autocomplete="off" placeholder="' + (w.pluginKey ? '•••••••• saved' : 'sync plugin key') + '" style="flex:1 1 240px"><button class="btn" type="button" id="ws_psave">Save the key</button></div></div></div>';
   } else {
     h += '<details style="margin-top:8px"' + (saved ? '' : ' open') + '><summary>Where the token is</summary><div class="sub" style="margin-top:4px">In Shopify admin: <b>Settings \u2192 Apps and sales channels \u2192 Develop apps \u2192 Create an app</b> ("ERP"). Configure Admin API scopes: <b>read_orders, read_products, write_inventory, read_locations</b>. Install the app, then reveal the <b>Admin API access token</b> (shpat_\u2026) \u2014 Shopify shows it only once. Stock is set at the shop\u2019s first location; only products with "Track quantity" on are changed.</div></details>' +
@@ -15589,7 +15590,7 @@ function doorHtml() {
   if (!SHOPKEY) { SHOPKEY = { loading: true }; srv('erpShopKey', [{}], function (r) { SHOPKEY = r; if (VIEW === 'settings') repaint(); }, function () { SHOPKEY = { hasKey: false, door: '' }; }); return ''; }
   if (SHOPKEY.loading) return '';
   var k = SHOPKEY, door = k.door || '';
-  var h = '<section><div class="card"><h2>Any website \u2014 open door</h2><div class="sub">For a website that is not WordPress with the sync plugin: PHP, Laravel, a Shopify or Wix app, anything that can send a web request. ' +
+  var h = '<section><div class="card"><h2>Any other website (PHP, Laravel, Wix \u2026)</h2><div class="sub">For a website that is not WordPress with the sync plugin: PHP, Laravel, a Shopify or Wix app, anything that can send a web request. ' +
     'The website sends each order here and asks for stock; orders appear under Web orders and are entered as usual. Products with other SKUs are matched once under Web orders \u2192 Match website products.</div>';
   if (SHOPKEY_NEW) h += '<div class="note warn" style="margin-top:8px"><div class="ico">!</div><div><strong>The key \u2014 copy it now, it is not shown again:</strong><br><code style="word-break:break-all">' + esc(SHOPKEY_NEW) + '</code> <button class="btn small" type="button" id="door_copy">Copy</button></div></div>';
   h += '<div class="row" style="margin-top:10px;gap:8px;flex-wrap:wrap;align-items:center">' +
@@ -18148,6 +18149,14 @@ document.addEventListener('click', function (ev) {
   t.disabled = true;
   srv('erpWebsiteSet', [{ pluginKey: k }], function (r) { CONN = r; t.disabled = false; toast('Saved. Website orders’ parcel numbers will now be read from the website.'); repaint(); },
     function (e) { t.disabled = false; toast(esc(e && e.message ? e.message : e), true, 12000); });
+});
+</script>
+<!-- Website: "Any other website" opens the open-door card (2026-10-05) -->
+<script>
+document.addEventListener('click', function (ev) {
+  var t = ev.target && ev.target.closest && ev.target.closest('[data-wsother]'); if (!t) return;
+  var h = [].slice.call(document.querySelectorAll('#view h2')).filter(function (x) { return /Any other website|open door/i.test(x.textContent); })[0];
+  if (h) { h.scrollIntoView({ behavior: 'smooth', block: 'start' }); var c = h.closest('.card'); if (c) { c.style.outline = '2px solid var(--series-1)'; setTimeout(function () { c.style.outline = ''; }, 1800); } }
 });
 </script>
 </body>
