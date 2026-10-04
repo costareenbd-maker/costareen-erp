@@ -9,6 +9,7 @@
 //   CRON_KEY    - shared with deploy/cron.sql; lets the scheduled jobs in
 
 import { googleCallback } from './handlers/google.js';
+import { wooKeysCallback } from './handlers/wooauth.js';
 import { shopDoor } from './handlers/shop.js';
 import { installRoute } from './handlers/installer.js';
 import { installFinish } from './lib/control.js';
@@ -245,6 +246,12 @@ Deno.serve(async (req) => {
     let to = GOOGLE.appUrl + '#/settings?google=failed';
     try { to = await googleCallback(deps, q); } catch (e) { console.error('google callback', e); to += '&why=' + encodeURIComponent(String((e && (e as Error).message) || e).slice(0, 140)); }
     return new Response(null, { status: 302, headers: { Location: to } });
+  }
+  // WooCommerce sends the shop's keys here after the owner presses Approve on their own site (handlers/wooauth.js)
+  if (req.method === 'POST' && new URL(req.url).searchParams.get('woo') === 'keys') {
+    let b: any = {}; try { b = await req.json(); } catch (_) { try { b = Object.fromEntries(new URLSearchParams(await req.text())); } catch (_) { b = {}; } }
+    try { const r = await wooKeysCallback(deps, b); return new Response(JSON.stringify(r.body), { status: r.status, headers }); }
+    catch (e) { console.error('woo keys', e); return new Response('{"ok":false}', { status: 500, headers }); }
   }
   // the installer (handlers/installer.js) and a copy's last install step (lib/control.js)
   {

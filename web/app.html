@@ -9194,6 +9194,8 @@ function viewSettings() {
     h += setMark('connections') + aiCardHtml();
     h += evoSettingsHtml();
     h += '<section><div class="card"><h2>Courier (Steadfast)</h2>' +
+      '<div class="note" style="margin:8px 0 10px"><div class="ico">1</div><div><a href="https://steadfast.com.bd/login" target="_blank" rel="noopener"><b>Open Steadfast</b></a> and sign in. ' +
+      '2. In the menu open <b>API</b>. 3. Copy the <b>API key</b> and the <b>Secret key</b> into the two boxes below and press <b>Save</b> — the ERP checks them with Steadfast by itself.</div></div>' +
       '<div class="sub">These keys belong to <strong>' + esc(ks.business || 'this business') +
       '</strong> alone. Another business gets its own; nothing is shared, and a copy of ' +
       'this system starts with none.</div>' +
@@ -9296,8 +9298,9 @@ function wireCourierKeys() {
     srv('erpCourierSetKeys', [{ apiKey: k, apiSecret: s }], function () {
       save.disabled = false; save.textContent = 'Save';
       el('sf_key').value = ''; el('sf_sec').value = '';
-      SFKEYS = null; loadKeyStatus();
-      toast('Courier keys saved for this business.');
+      SFKEYS = null; loadKeyStatus(); CONN = null;
+      toast('Courier keys saved. Checking them with Steadfast…');
+      setTimeout(function () { var tb = el('sf_test'); if (tb) tb.click(); }, 400);   // the check, without a second press
     }, function (e) {
       save.disabled = false; save.textContent = 'Save';
       toast(esc(e && e.message ? e.message : e), true, 12000);
@@ -15365,13 +15368,25 @@ document.addEventListener('click', function (ev) {
 </style>
 <script>
 var CONN = null, CONN_BUSY = false, CONN_TEST = null, WS_KIND = '';
+/** What a tile says: done, or the one next step, in plain words. */
+function connNext(k, st) {
+  var W = {
+    website: { on: 'Live', ready: 'Next: switch on live sync', off: 'Next: press Connect' },
+    courier: { on: 'Connected', off: 'Next: paste 2 keys' },
+    whatsapp: { on: 'Connected', warn: 'Next: scan the QR', off: 'Not set up yet' },
+    email: { on: 'Connected', warn: 'Set up by the provider', off: 'Set up by the provider' },
+    google: { on: 'Connected', off: 'Next: press Connect' },
+    ai: { on: 'Connected', off: 'Optional' }
+  }[k] || {};
+  return W[st] || (st === 'on' ? 'Connected' : st === 'off' ? 'Not connected' : 'Needs a step');
+}
 function connLoad() { srv('erpConnections', [], function (r) { CONN = r; if (VIEW === 'settings') repaint(); }, function (e) { toast(esc(e && e.message ? e.message : e), true); }); }
 function connHtml() {
   if (!ME || ME.role !== 'owner') return '';
   if (!CONN) { connLoad(); return '<div class="loading">Reading the connections&hellip;</div>'; }
   var c = CONN, items = [['website', 'Website'], ['courier', 'Courier (Steadfast)'], ['whatsapp', 'WhatsApp'], ['email', 'E-mail sending'], ['google', 'Google Drive'], ['ai', 'AI access']];
   var h = '<section><div class="card"><h2>Connections</h2><div class="sub">Every outside service this business uses. Green works; amber needs a step; grey is not connected.</div><div class="conn">' +
-    items.map(function (x) { var v = c[x[0]], word = v.state === 'on' ? 'Connected' : v.state === 'off' ? 'Not connected' : 'Needs a step';
+    items.map(function (x) { var v = c[x[0]], word = connNext(x[0], v.state);
       return '<div class="' + esc(v.state) + '" data-conntile="' + esc(x[0]) + '" title="' + esc(v.label) + '"><span class="d"></span><div style="min-width:0;flex:1"><b>' + esc(x[1]) + '</b><span>' + esc(word) + '</span></div>' +
         '<button type="button" class="t2q" data-conntip="' + esc(v.label) + '" aria-label="Details">?</button></div>'; }).join('') + '</div></div></section>';
   var w = c.website, kind = WS_KIND || w.kind || 'plugin';
@@ -15386,7 +15401,8 @@ function connHtml() {
     h += '<div class="fields" style="margin-top:8px"><div style="grid-column:1/-1"><label class="f" for="ws_url">Website sync address</label><input class="i" id="ws_url" value="' + esc(same ? w.url : '') + '" placeholder="https://yourshop.com/wp-json/cz/v1"></div>' +
       '<div style="grid-column:1/-1"><label class="f" for="ws_key">Sync key <span class="sku">' + (keyNote || 'from the website\u2019s sync plugin') + '</span></label><input class="i" id="ws_key" type="password" autocomplete="off" placeholder="' + (saved ? '\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022' : 'paste the key') + '"></div></div>';
   } else if (kind === 'woo') {
-    h += '<details style="margin-top:8px"' + (saved ? '' : ' open') + '><summary>Where the keys are</summary><div class="sub" style="margin-top:4px">In WordPress: <b>WooCommerce \u2192 Settings \u2192 Advanced \u2192 REST API \u2192 Add key</b>. Description "ERP", user an administrator, permissions <b>Read/Write</b>, Generate. Copy the consumer key (ck_\u2026) and secret (cs_\u2026) \u2014 WooCommerce shows the secret only once. The shop must use https.</div></details>' +
+    h += '<div class="note" style="margin-top:10px"><div class="ico">1</div><div><strong>Easiest:</strong> type your shop address below and press <b>Connect with one click</b>. Your own shop opens and asks you to <b>Approve</b> — press it and you come straight back. Nothing to copy.</div></div>' +
+      '<details style="margin-top:8px"><summary>Prefer to paste the keys by hand? Where they are</summary><div class="sub" style="margin-top:4px">In WordPress: <b>WooCommerce \u2192 Settings \u2192 Advanced \u2192 REST API \u2192 Add key</b>. Description "ERP", user an administrator, permissions <b>Read/Write</b>, Generate. Copy the consumer key (ck_\u2026) and secret (cs_\u2026) \u2014 WooCommerce shows the secret only once. The shop must use https.</div></details>' +
       '<div class="fields" style="margin-top:8px"><div style="grid-column:1/-1"><label class="f" for="ws_url">Shop address</label><input class="i" id="ws_url" value="' + esc(same ? w.url : '') + '" placeholder="https://yourshop.com"></div>' +
       '<div><label class="f" for="ws_key">Consumer key <span class="sku">' + (keyNote || 'ck_\u2026') + '</span></label><input class="i" id="ws_key" type="password" autocomplete="off" placeholder="' + (saved ? '\u2022\u2022\u2022\u2022\u2022\u2022' : 'ck_\u2026') + '"></div>' +
       '<div><label class="f" for="ws_secret">Consumer secret</label><input class="i" id="ws_secret" type="password" autocomplete="off" placeholder="' + (saved ? '\u2022\u2022\u2022\u2022\u2022\u2022' : 'cs_\u2026') + '"></div></div>';
@@ -15395,7 +15411,8 @@ function connHtml() {
       '<div class="fields" style="margin-top:8px"><div style="grid-column:1/-1"><label class="f" for="ws_url">Shop address</label><input class="i" id="ws_url" value="' + esc(same ? w.url : '') + '" placeholder="yourshop.myshopify.com"></div>' +
       '<div style="grid-column:1/-1"><label class="f" for="ws_key">Admin API access token <span class="sku">' + (keyNote || 'shpat_\u2026') + '</span></label><input class="i" id="ws_key" type="password" autocomplete="off" placeholder="' + (saved ? '\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022' : 'shpat_\u2026') + '"></div></div>';
   }
-  h += '<div class="row" style="margin-top:10px;gap:8px;flex-wrap:wrap;align-items:center"><button class="btn primary" type="button" id="ws_save"' + (CONN_BUSY ? ' disabled' : '') + '>Save</button>' +
+  h += '<div class="row" style="margin-top:10px;gap:8px;flex-wrap:wrap;align-items:center">' + (kind === 'woo' ? '<button class="btn primary" type="button" id="woo_go"' + (CONN_BUSY ? ' disabled' : '') + '>Connect with one click</button>' : '') +
+    '<button class="btn' + (kind === 'woo' ? '' : ' primary') + '" type="button" id="ws_save"' + (CONN_BUSY ? ' disabled' : '') + '>' + (kind === 'woo' ? 'Save keys' : 'Save') + '</button>' +
     (saved ? '<button class="btn" type="button" id="ws_test">Test connection</button><button class="btn" type="button" id="ws_pull">Check for orders now</button><button class="btn" type="button" id="ws_preview">Preview stock changes</button><button class="btn" type="button" id="ws_clear">Remove the key' + (kind === 'woo' ? 's' : '') + '</button>' : '') +
     (CONN_TEST ? '<span class="pill ' + (CONN_TEST.ok ? 'ok' : 'out') + '">' + esc(CONN_TEST.ok ? 'Connected: ' + CONN_TEST.reply : CONN_TEST.error) + '</span>' : '') + '</div>' +
     (!same ? '<div class="sub" style="margin-top:8px">Saving switches this business to ' + esc(kinds.filter(function (k) { return k[0] === kind; })[0][1]) + ' and turns the live sync off until you switch it on again.</div>' : '') +
@@ -18088,6 +18105,36 @@ table.o_list th[data-lv-sort]:hover::after { opacity:.7; }
   var repaintTS = repaint;
   repaint = function () { var r = repaintTS.apply(this, arguments); try { init(); setTimeout(init, 400); } catch (e) {} return r; };
   setInterval(function () { try { init(); } catch (e) {} }, 1500);   // tables that arrive after a repaint (loaded later)
+})();
+</script>
+<!-- easy-1: WooCommerce in one click (2026-10-04) -->
+<script>
+(function () {
+  document.addEventListener('click', function (ev) {
+    var t = ev.target; if (!t || t.id !== 'woo_go') return;
+    var url = ((el('ws_url') || {}).value || '').trim();
+    if (!url) { toast('Type your shop address first, e.g. https://yourshop.com', true); return; }
+    t.disabled = true; t.textContent = 'Opening your shop\u2026';
+    srv('erpWooConnectStart', [{ url: url }], function (r) { location.href = r.url; },
+      function (e) { t.disabled = false; t.textContent = 'Connect with one click'; toast(esc(e && e.message ? e.message : e), true, 12000); });
+  });
+  // back from the shop: say how it went
+  if (!/[?&]woo=back/.test(location.hash || '')) return;
+  var denied = /[?&]success=0/.test(location.search || '');
+  try { history.replaceState(null, '', location.pathname + '#/settings'); } catch (e) {}
+  var n = 0, iv = setInterval(function () {
+    if (++n > 40) { clearInterval(iv); return; }
+    if (typeof ME === 'undefined' || !ME) return;
+    clearInterval(iv);
+    if (denied) { toast('The shop was not connected: Approve was not pressed. Press Connect with one click again when ready.', true, 15000); }
+    srv('erpConnections', [], function (r) {
+      CONN = r; SET_TAB = 'connections'; if (VIEW !== 'settings') go('settings'); else repaint();
+      if (denied) return;
+      var w = r.website || {};
+      if (w.kind === 'woo' && w.hasKey) toast('Your shop is connected. Live sync stays off until you switch it on (Website card).', false, 15000);
+      else toast('The shop did not finish connecting. Press Connect with one click again.', true, 15000);
+    }, function () {});
+  }, 300);
 })();
 </script>
 </body>

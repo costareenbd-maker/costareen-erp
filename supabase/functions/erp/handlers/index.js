@@ -48,6 +48,7 @@ import { HANDLERS as installer } from './installer.js';
 import { HANDLERS as bizdelete } from './bizdelete.js';
 import { HANDLERS as owners } from './owners.js';
 import { HANDLERS as arena } from './arena.js';
+import { HANDLERS as wooauth } from './wooauth.js';
 
 const core = {
   erpToday: shell.erpToday,
@@ -83,7 +84,7 @@ const core = {
 
 export const HANDLERS = {};
 for (const [group, table] of Object.entries({ core, sales, courier, customers, stock, dashboard,
-                                              expenses, weborders, quotes, settings, campaigns, capital, pages, goods, partners, security, alerts, access, listview, cash, suppliers, currency, notes, serials, repairs, excel, users, platform, risk, connections, google, sheet, restore, shop, cod, installer, bizdelete, owners, arena })) {
+                                              expenses, weborders, quotes, settings, campaigns, capital, pages, goods, partners, security, alerts, access, listview, cash, suppliers, currency, notes, serials, repairs, excel, users, platform, risk, connections, google, sheet, restore, shop, cod, installer, bizdelete, owners, arena, wooauth })) {
   for (const [name, fn] of Object.entries(table)) {
     if (HANDLERS[name]) throw new Error('Handler ' + name + ' is defined twice (' + group + ').');
     HANDLERS[name] = fn;
