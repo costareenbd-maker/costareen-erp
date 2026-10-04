@@ -8352,7 +8352,7 @@ function srv(name, args, ok, bad) {
 
 var SRV_ACTIVE = 0, SRV_WRITING = false;
 // the same list the server uses to know a call changes nothing (ERP_READS)
-var SRV_READS = /^(erpBundle|erpHello|erpMe|erpCatalog|erpSales|erpDues|erpCustomers|erpPnl|erpMoney|erpToday|erpDaySales|erpProduct|erpLookupCustomer|erpCustomerAccount|erpCustomerStatement|erpCustomerCredit|erpWebOrders|erpWebOrderInvoices|erpCampaignAudience|erpCampaignList|erpCampaignGet|erpEvoStatus|erpBrandLogo|erpQuoteBoot|erpQuoteList|erpQuoteGet|erpQuoteAsset|erpExpenses|erpCapital|erpBackupStatus|erpAiKeys|erpGetTheme|erpBusinesses|erpStockHistory|erpReorderPlan|erpPoList|erpSfPayoutLines|erpBookedParcels|erpParcelPreview|erpReturnPreview|erpSettingsFull|erpSettingsLists|erpFormOptions|erpAdmin|erpPeople|erpDevices|erpCourierKeyStatus|erpPayReasons|erpDiscontinued|erpAccessWarning|erpBusinessLinks|erpLookupUsage|erpRecentInvoices|erpCourier|erpDashboardData|erpInvoice|erpCustomerPage|erpSearch|erpProductPage|erpPnlMonth|erpExpenseReceiptUrl|erpPartnership|erpPartnerStock|erpSecurity|erpCustomerList|erpAlerts|erpAccessKeys|erpListView|erpCurrencies|erpSharedStock|erpPoolCatalog|erpProductThumbs|erpProductPhotoUrl|erpFamilies|erpNotes|erpNoteFileUrl|erpSerialsFor|erpSerialLookup|erpJobs|erpJob|erpUsers|erpSessions|erpPlatform|erpPlatformErrors|erpRisks|erpAlertRules|erpConnections|erpWebsiteTest|erpGoogle|erpSheet|erpRestorePreview|erpWebMatches|erpDeliveryOptions|erpParcelLabels|erpConnStatus|erpRecovery|erpOwnerChange|erpOwnerChanges|erpBusinessesDeleted|erpCashBook|erpSuppliers|erpSupplierPage|erpGame)$/;
+var SRV_READS = /^(erpBundle|erpHello|erpMe|erpCatalog|erpSales|erpDues|erpCustomers|erpPnl|erpMoney|erpToday|erpDaySales|erpProduct|erpLookupCustomer|erpCustomerAccount|erpCustomerStatement|erpCustomerCredit|erpWebOrders|erpWebOrderInvoices|erpCampaignAudience|erpCampaignList|erpCampaignGet|erpEvoStatus|erpBrandLogo|erpQuoteBoot|erpQuoteList|erpQuoteGet|erpQuoteAsset|erpExpenses|erpCapital|erpBackupStatus|erpAiKeys|erpGetTheme|erpBusinesses|erpStockHistory|erpReorderPlan|erpPoList|erpSfPayoutLines|erpBookedParcels|erpParcelPreview|erpReturnPreview|erpSettingsFull|erpSettingsLists|erpFormOptions|erpAdmin|erpPeople|erpDevices|erpCourierKeyStatus|erpPayReasons|erpDiscontinued|erpAccessWarning|erpBusinessLinks|erpLookupUsage|erpRecentInvoices|erpCourier|erpDashboardData|erpInvoice|erpCustomerPage|erpSearch|erpProductPage|erpPnlMonth|erpExpenseReceiptUrl|erpPartnership|erpPartnerStock|erpSecurity|erpCustomerList|erpAlerts|erpAccessKeys|erpListView|erpCurrencies|erpSharedStock|erpPoolCatalog|erpProductThumbs|erpProductPhotoUrl|erpFamilies|erpNotes|erpNoteFileUrl|erpSerialsFor|erpSerialLookup|erpJobs|erpJob|erpUsers|erpSessions|erpPlatform|erpPlatformErrors|erpRisks|erpAlertRules|erpConnections|erpWebsiteTest|erpGoogle|erpSheet|erpRestorePreview|erpWebMatches|erpDeliveryOptions|erpParcelLabels|erpConnStatus|erpRecovery|erpOwnerChange|erpOwnerChanges|erpBusinessesDeleted|erpCashBook|erpSuppliers|erpSupplierPage|erpGame|erpArena)$/;
 function srvPump() {
   if (!SRV_Q.length) return;
   var isRead = SRV_READS.test(SRV_Q[0].name);
@@ -16957,7 +16957,7 @@ function makeFightLazy(cv) {
   }
   function fail(e) { note = 'Brawl could not load. Check the internet and open the tab again.'; paint(); }
   if (!FIGHT_JS) FIGHT_JS = new Promise(function (ok, bad) {
-    var sc = document.createElement('script'); sc.src = 'games/fight.js?v=13'; sc.onload = ok; sc.onerror = function () { FIGHT_JS = null; bad(); }; document.head.appendChild(sc);
+    var sc = document.createElement('script'); sc.src = 'games/fight.js?v=14'; sc.onload = ok; sc.onerror = function () { FIGHT_JS = null; bad(); }; document.head.appendChild(sc);
   });
   var roster = FIGHTERS ? Promise.resolve(FIGHTERS) : new Promise(function (ok) { srv('erpFighters', [], function (r) { FIGHTERS = r.fighters || []; ok(FIGHTERS); }, function () { ok([]); }); });
   Promise.all([FIGHT_JS, roster]).then(function (v) {
@@ -17721,6 +17721,233 @@ document.addEventListener('change', function (ev) {
     ME_MSG = why + ' Type your e-mail below and press "Forgot the password?" - a new link comes by e-mail. Open the newest e-mail only: each new link cancels the older ones.';
     paintGate();
   }, 250);
+})();
+</script>
+<!-- multi-1: online Brawl - who is online, challenge, accept, pick fighters, fight (2026-10-04) -->
+<style>
+#pgame .pgtab.arbtn { font-weight:700; }
+#pgame .pgtab.arbtn .ardot { display:inline-block; width:7px; height:7px; border-radius:50%; background:#22c55e; margin-right:5px; vertical-align:1px; }
+#arpanel { position:absolute; right:8px; top:38px; width:300px; max-height:calc(100% - 46px); overflow:auto; z-index:6; background:var(--surface); border:1px solid var(--ring); border-radius:10px; box-shadow:0 10px 30px rgba(0,0,0,.25); padding:10px 12px; font-size:13px; }
+#arpanel h4 { margin:2px 0 8px; font-size:13px; }
+#arpanel .arrow { display:flex; align-items:center; gap:8px; padding:5px 0; border-bottom:1px solid var(--ring); }
+#arpanel .arrow:last-child { border-bottom:0; }
+#arpanel .arrow .nm { flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+#arpanel .sub { color:var(--muted); font-size:12px; }
+#arinv { position:fixed; right:18px; bottom:18px; z-index:9998; width:320px; background:var(--surface); border:2px solid #f59e0b; border-radius:12px; box-shadow:0 12px 34px rgba(0,0,0,.3); padding:14px; font-size:14px; }
+#arinv .row { display:flex; gap:8px; justify-content:flex-end; margin-top:10px; }
+#armatch { position:fixed; inset:0; z-index:9990; background:rgba(8,10,16,.78); display:flex; align-items:center; justify-content:center; padding:16px; }
+#armatch .arbox { width:min(1000px, 100%); background:var(--surface); border-radius:14px; padding:14px 16px; box-shadow:0 20px 60px rgba(0,0,0,.4); }
+#armatch .arhead { display:flex; align-items:center; gap:10px; margin-bottom:10px; }
+#armatch .arhead b { font-size:15px; flex:1; }
+#armatch .arpick { display:grid; grid-template-columns:repeat(auto-fill, minmax(130px, 1fr)); gap:8px; margin:10px 0; }
+#armatch .arpick button { display:flex; align-items:center; gap:8px; padding:9px 10px; border:2px solid var(--ring); border-radius:10px; background:var(--plane, transparent); color:inherit; cursor:pointer; font:inherit; text-align:left; }
+#armatch .arpick button.on { border-color:#f59e0b; box-shadow:0 0 0 2px rgba(245,158,11,.25); }
+#armatch .arpick .sw { width:14px; height:14px; border-radius:4px; flex:none; }
+#armatch .arstat { display:flex; gap:16px; flex-wrap:wrap; align-items:center; margin:6px 0 2px; font-size:13px; }
+#armatch canvas { display:block; width:100%; border-radius:10px; outline:none; background:#111; }
+#armatch .arfoot { display:flex; gap:8px; align-items:center; justify-content:space-between; margin-top:10px; font-size:12px; color:var(--muted); flex-wrap:wrap; }
+</style>
+<script>
+(function () {
+  var AR = { room: null, me: null, ch: null, online: {}, board: [], recent: [], out: null, inv: null, mt: null, open: false, loading: false };
+  function say(t) { return typeof gw === 'function' ? gw(t) : t; }
+  function send(m) { if (AR.ch) AR.ch.send({ type: 'broadcast', event: 'm', payload: m }); }
+  function rid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 10); }
+
+  // ---- join this business's room while signed in (and allowed to play)
+  function arStart() {
+    if (AR.room || AR.loading || typeof ME === 'undefined' || !ME || typeof SB === 'undefined' || !SB || typeof GAMEP === 'undefined' || !GAMEP || !GAMEP.on) return;
+    AR.loading = true;
+    srv('erpArena', [], function (r) {
+      AR.loading = false; AR.room = r.room; AR.me = r.me; AR.board = r.board || []; AR.recent = r.recent || [];
+      AR.ch = SB.channel(r.room, { config: { presence: { key: r.me.id }, broadcast: { self: false } } });
+      AR.ch.on('presence', { event: 'sync' }, function () { AR.online = AR.ch.presenceState(); arPaint(); })
+        .on('broadcast', { event: 'm' }, function (p) { arMsg(p.payload || {}); })
+        .subscribe(function (st) { if (st === 'SUBSCRIBED') track(); });
+    }, function () { AR.loading = false; });
+  }
+  function track() { if (AR.ch && AR.me) AR.ch.track({ id: AR.me.id, name: AR.me.name, busy: !!AR.mt }); }
+  setInterval(function () { try { arStart(); arButton(); } catch (e) {} }, 2500);
+
+  function people() {
+    var out = [];
+    for (var k in AR.online) { if (!AR.me || k === AR.me.id) continue; var m = AR.online[k][0] || {}; out.push({ id: k, name: m.name || 'Player', busy: AR.online[k].some(function (x) { return x.busy; }) }); }
+    return out.sort(function (a, b) { return a.name.localeCompare(b.name); });
+  }
+
+  // ---- the "Online" button on the game bar, and its panel
+  function arButton() {
+    var bar = document.querySelector('#pgame .pgbar'); if (!bar || !AR.room) return;
+    var b = document.getElementById('arbtn');
+    if (!b) {
+      b = document.createElement('button'); b.type = 'button'; b.id = 'arbtn'; b.className = 'pgtab arbtn';
+      var hb = bar.querySelector('.pghb'); bar.insertBefore(b, hb || null);
+      b.addEventListener('click', function () { AR.open = !AR.open; if (AR.open) srv('erpArena', [], function (r) { AR.board = r.board || []; AR.recent = r.recent || []; arPaint(); }, function () {}); arPaint(); });
+    }
+    var n = people().length;
+    b.innerHTML = '<span class="ardot"' + (n ? '' : ' style="background:#9ca3af"') + '></span>' + esc(say('Online')) + ' ' + n;
+    b.classList.toggle('on', AR.open);
+  }
+  function arPaint() {
+    arButton();
+    var host = document.getElementById('pgame'); if (!host) return;
+    var p = document.getElementById('arpanel');
+    if (!AR.open) { if (p) p.remove(); return; }
+    if (!p) { p = document.createElement('div'); p.id = 'arpanel'; host.appendChild(p); }
+    var ps = people();
+    var h = '<h4>' + esc(say('Challenge someone to a Brawl')) + '</h4>';
+    h += ps.length ? ps.map(function (x) {
+      var waiting = AR.out && AR.out.to === x.id;
+      return '<div class="arrow"><span class="nm">' + esc(x.name) + (x.busy ? ' <span class="sub">· ' + esc(say('in a fight')) + '</span>' : '') + '</span>' +
+        '<button class="btn small" type="button" data-archal="' + esc(x.id) + '"' + (x.busy || AR.out || AR.mt ? ' disabled' : '') + '>' + esc(waiting ? say('Waiting…') : say('Challenge')) + '</button></div>';
+    }).join('') : '<div class="sub">' + esc(say('Nobody else from your team has the ERP open right now.')) + '</div>';
+    if (AR.board.length) {
+      h += '<h4 style="margin-top:12px">' + esc(say('Leaderboard')) + '</h4>' + AR.board.slice(0, 6).map(function (b, i) {
+        return '<div class="arrow"><span class="nm">' + (i + 1) + '. ' + esc(b.name) + '</span><span class="sub">' + b.wins + ' ' + esc(say('won')) + ' · ' + b.losses + ' ' + esc(say('lost')) + '</span></div>';
+      }).join('');
+    }
+    if (AR.recent.length) h += '<div class="sub" style="margin-top:8px">' + esc(say('Last')) + ': ' + AR.recent.slice(0, 3).map(function (r) { return esc(r.winner) + ' ' + esc(say('beat')) + ' ' + esc(r.loser) + ' ' + esc(r.score); }).join(' · ') + '</div>';
+    p.innerHTML = h;
+  }
+  document.addEventListener('click', function (ev) {
+    var t = ev.target; if (!t || !t.closest) return;
+    var c = t.closest('[data-archal]');
+    if (c) { challenge(c.getAttribute('data-archal')); return; }
+    if (AR.open && !t.closest('#arpanel') && !t.closest('#arbtn')) { AR.open = false; arPaint(); }
+  });
+
+  // ---- challenges
+  function challenge(id) {
+    var who = people().filter(function (x) { return x.id === id; })[0]; if (!who || AR.out || AR.mt) return;
+    AR.out = { mid: rid(), to: id, name: who.name };
+    send({ t: 'inv', to: id, from: AR.me.id, fromName: AR.me.name, mid: AR.out.mid });
+    toast(esc(say('Challenge sent to')) + ' ' + esc(who.name) + '…', false, 4000);
+    var mid = AR.out.mid;
+    setTimeout(function () { if (AR.out && AR.out.mid === mid) { toast(esc(who.name) + ' ' + esc(say('did not answer.')), true, 5000); AR.out = null; arPaint(); } }, 30000);
+    arPaint();
+  }
+  function arMsg(m) {
+    if (!AR.me || m.to !== AR.me.id) return;
+    if (m.t === 'inv') {
+      if (AR.mt || AR.inv) { send({ t: 'busy', to: m.from, mid: m.mid }); return; }
+      AR.inv = m; invCard(); return;
+    }
+    if (m.t === 'cancel' && AR.inv && AR.inv.mid === m.mid) { AR.inv = null; invCard(); return; }
+    if (!AR.out || m.mid !== AR.out.mid) return;
+    var o = AR.out;
+    if (m.t === 'acc') { AR.out = null; openMatch('host', o.mid, { id: o.to, name: o.name }); }
+    else if (m.t === 'dec') { AR.out = null; toast(esc(o.name) + ' ' + esc(say('said no this time.')), false, 5000); }
+    else if (m.t === 'busy') { AR.out = null; toast(esc(o.name) + ' ' + esc(say('is busy right now.')), false, 5000); }
+    arPaint();
+  }
+  function invCard() {
+    var c = document.getElementById('arinv');
+    if (!AR.inv) { if (c) c.remove(); return; }
+    if (!c) { c = document.createElement('div'); c.id = 'arinv'; document.body.appendChild(c); }
+    c.innerHTML = '<div style="font-size:22px;line-height:1">⚔</div><div style="margin-top:6px"><b>' + esc(AR.inv.fromName) + '</b> ' + esc(say('challenges you to a Brawl!')) + '</div>' +
+      '<div class="row"><button class="btn" type="button" id="arno">' + esc(say('Decline')) + '</button><button class="btn primary" type="button" id="aryes">' + esc(say('Accept')) + '</button></div>';
+    var mid = AR.inv.mid;
+    setTimeout(function () { if (AR.inv && AR.inv.mid === mid) { AR.inv = null; invCard(); } }, 30000);
+  }
+  document.addEventListener('click', function (ev) {
+    var t = ev.target; if (!t || !AR.inv) return;
+    if (t.id === 'aryes') { var m = AR.inv; AR.inv = null; invCard(); send({ t: 'acc', to: m.from, mid: m.mid }); openMatch('guest', m.mid, { id: m.from, name: m.fromName }); }
+    else if (t.id === 'arno') { var m2 = AR.inv; AR.inv = null; invCard(); send({ t: 'dec', to: m2.from, mid: m2.mid }); }
+  });
+
+  // ---- the match window: both pick a fighter, press Ready, fight
+  function loadFight() {
+    if (!FIGHT_JS) FIGHT_JS = new Promise(function (ok, bad) { var sc = document.createElement('script'); sc.src = 'games/fight.js?v=14'; sc.onload = ok; sc.onerror = function () { FIGHT_JS = null; bad(); }; document.head.appendChild(sc); });
+    var roster = FIGHTERS ? Promise.resolve(FIGHTERS) : new Promise(function (ok) { srv('erpFighters', [], function (r) { FIGHTERS = r.fighters || []; ok(FIGHTERS); }, function () { ok([]); }); });
+    return Promise.all([FIGHT_JS, roster]);
+  }
+  function openMatch(role, mid, opp) {
+    if (GAME && GAME.pause) GAME.pause();
+    var mt = AR.mt = { role: role, mid: mid, opp: opp, my: null, their: null, myReady: false, theirReady: false, last: Date.now(), game: null, over: false, list: [] };
+    track();
+    mt.ch = SB.channel(AR.room + '-' + mid, { config: { broadcast: { self: false } } });
+    mt.ch.on('broadcast', { event: 'g' }, function (p) { matchMsg(p.payload || {}); }).subscribe();
+    mt.hb = setInterval(function () {
+      msend({ t: 'hb' });
+      if (!mt.over && Date.now() - mt.last > 9000) endMatch(say('The connection to') + ' ' + opp.name + ' ' + say('was lost. No contest.'));
+    }, 2000);
+    var box = document.createElement('div'); box.id = 'armatch';
+    box.innerHTML = '<div class="arbox"><div class="arhead"><b>⚔ ' + esc(AR.me.name) + '  vs  ' + esc(opp.name) + '</b><button class="btn small" type="button" id="arleave">' + esc(say('Leave')) + '</button></div><div id="arbody">' + esc(say('Loading…')) + '</div></div>';
+    document.body.appendChild(box);
+    loadFight().then(function (v) { if (AR.mt !== mt) return; mt.list = window.ERP_FIGHT_ROSTER(v[1]); paintPick(); }, function () { endMatch(say('Brawl could not load. Check the internet.')); });
+  }
+  function msend(m) { if (AR.mt && AR.mt.ch) AR.mt.ch.send({ type: 'broadcast', event: 'g', payload: m }); }
+  function paintPick() {
+    var mt = AR.mt, b = document.getElementById('arbody'); if (!mt || !b || mt.game) return;
+    var their = mt.their === null ? say('picking…') : (mt.list[mt.their] || {}).name + (mt.theirReady ? ' ✓ ' + say('ready') : '');
+    b.innerHTML = '<div class="sub">' + esc(say('Choose your fighter')) + '</div><div class="arpick">' + mt.list.map(function (d, i) {
+      return '<button type="button" data-arpick="' + i + '" class="' + (mt.my === i ? 'on' : '') + '"' + (mt.myReady ? ' disabled' : '') + '><span class="sw" style="background:' + esc(d.color || '#888') + '"></span>' + esc(d.name) + '</button>';
+    }).join('') + '</div><div class="arstat"><span>' + esc(say('You')) + ': <b>' + esc(mt.my === null ? '—' : mt.list[mt.my].name) + '</b></span><span>' + esc(mt.opp.name) + ': <b>' + esc(their) + '</b></span>' +
+      '<span style="flex:1"></span><button class="btn primary" type="button" id="arready"' + (mt.my === null || mt.myReady ? ' disabled' : '') + '>' + esc(mt.myReady ? say('Waiting for') + ' ' + mt.opp.name + '…' : say('Ready')) + '</button></div>';
+  }
+  document.addEventListener('click', function (ev) {
+    var t = ev.target; if (!t || !t.closest || !AR.mt) return;
+    var mt = AR.mt, pk = t.closest('[data-arpick]');
+    if (pk && !mt.myReady) { mt.my = +pk.getAttribute('data-arpick'); msend({ t: 'pick', i: mt.my }); paintPick(); return; }
+    if (t.id === 'arready' && mt.my !== null) { mt.myReady = true; msend({ t: 'ready', i: mt.my }); paintPick(); maybeGo(); return; }
+    if (t.id === 'arleave') { leave(); return; }
+    if (t.id === 'arrematch') { var o = mt.opp; leave(true); setTimeout(function () { challenge(o.id); }, 300); return; }
+  });
+  function maybeGo() {
+    var mt = AR.mt; if (!mt || mt.role !== 'host' || mt.game || !mt.myReady || !mt.theirReady) return;
+    msend({ t: 'go', p: mt.my, c: mt.their }); startFight(mt.my, mt.their);
+  }
+  function matchMsg(m) {
+    var mt = AR.mt; if (!mt) return;
+    mt.last = Date.now();
+    if (m.t === 'n') { if (mt.game) mt.game.netRecv(m.d); return; }
+    if (m.t === 'pick') { mt.their = m.i; paintPick(); return; }
+    if (m.t === 'ready') { mt.their = m.i; mt.theirReady = true; paintPick(); maybeGo(); return; }
+    if (m.t === 'go' && mt.role === 'guest' && !mt.game) { startFight(m.p, m.c); return; }
+    if (m.t === 'bye') { if (!mt.over) endMatch(mt.opp.name + ' ' + say('left the match.') + (mt.game ? ' ' + say('No contest.') : '')); return; }
+  }
+  function startFight(pickP, pickC) {
+    var mt = AR.mt, b = document.getElementById('arbody'); if (!mt || !b) return;
+    var hostName = mt.role === 'host' ? AR.me.name : mt.opp.name, guestName = mt.role === 'host' ? mt.opp.name : AR.me.name;
+    b.innerHTML = '<canvas id="arcv" tabindex="0"></canvas><div class="arfoot"><span>' + esc(say('Click the fight, then use your keys (A S D F W, arrows). Keep this window in front.')) + '</span><span id="arres"></span></div>';
+    var cv = document.getElementById('arcv'), w = cv.parentNode.clientWidth, h = Math.max(260, Math.min(380, Math.round(w * 0.36)));
+    mt.game = window.ERP_FIGHT(cv, { roster: FIGHTERS || [], words: gw, net: {
+      role: mt.role, pickP: pickP, pickC: pickC, names: { p: hostName, c: guestName },
+      send: function (d) { msend({ t: 'n', d: d }); },
+      onEnd: function (r) { fightOver(r); } } });
+    mt.game.size(w, h); mt.game.netStart();
+    setTimeout(function () { try { cv.focus({ preventScroll: true }); } catch (e) {} }, 50);
+  }
+  function fightOver(r) {
+    var mt = AR.mt; if (!mt || mt.over) return; mt.over = true;
+    var iAmP = mt.role === 'host', iWon = (r.winner === 'p') === iAmP, score = iAmP ? r.pW + '-' + r.cW : r.cW + '-' + r.pW;
+    var res = document.getElementById('arres');
+    if (res) res.innerHTML = '<b style="color:var(--ink)">' + esc(iWon ? say('You won') : say('You lost')) + ' ' + esc(score) + '</b> <button class="btn small" type="button" id="arrematch">' + esc(say('Rematch')) + '</button> <button class="btn small" type="button" id="arleave2">' + esc(say('Close')) + '</button>';
+    if (mt.role === 'host') {
+      var hostWon = r.winner === 'p';
+      srv('erpArenaResult', [{ mid: mt.mid, winner: hostWon ? AR.me.id : mt.opp.id, loser: hostWon ? mt.opp.id : AR.me.id,
+        winnerName: hostWon ? AR.me.name : mt.opp.name, loserName: hostWon ? mt.opp.name : AR.me.name, score: Math.max(r.pW, r.cW) + '-' + Math.min(r.pW, r.cW) }],
+        function (b) { AR.board = b.board || AR.board; AR.recent = b.recent || AR.recent; }, function () {});
+    }
+  }
+  document.addEventListener('click', function (ev) { if (ev.target && ev.target.id === 'arleave2') leave(); });
+  function endMatch(why) {
+    var mt = AR.mt; if (!mt) return; mt.over = true;
+    if (mt.game) try { mt.game.stop(); } catch (e) {}
+    var b = document.getElementById('arbody');
+    if (b) b.innerHTML = '<p style="margin:18px 0">' + esc(why) + '</p><button class="btn" type="button" id="arleave2">' + esc(say('Close')) + '</button>';
+  }
+  async function leave(quiet) {
+    var mt = AR.mt; if (!mt) return;
+    if (!quiet && mt.game && !mt.over && !(await uiConfirm(say('Leave the fight? It ends as no contest.')))) return;
+    msend({ t: 'bye' });
+    clearInterval(mt.hb); if (mt.game) try { mt.game.stop(); } catch (e) {}
+    setTimeout(function () { try { SB.removeChannel(mt.ch); } catch (e) {} }, 400);
+    AR.mt = null; var box = document.getElementById('armatch'); if (box) box.remove();
+    track(); arPaint();
+  }
+  window.addEventListener('beforeunload', function () { if (AR.mt) msend({ t: 'bye' }); });
+  window.ERP_ARENA = AR;   // for checks
 })();
 </script>
 </body>

@@ -188,6 +188,8 @@
   window.ERP_FIGHT = function (cv, opts) {
     opts = opts || {};
     var gw = opts.words || function (t) { return t; };
+    // online fight: the challenger (host) runs the fight; the other side (guest) sends keys and draws what it is told
+    var NET = opts.net || null, rHeld = {}, rHit = {}, rHitT = {}, netAcc = 0, lastTickAt = 0;
     var roster = (opts.roster && opts.roster.length >= 2 ? opts.roster : PLAIN).map(function (d, i) {
       var h = 0; for (var q = 0; q < d.name.length; q++) h = (h * 31 + d.name.charCodeAt(q)) >>> 0;
       return { name: d.name, move: d.move, color: d.color, head: d.head, img: headCanvas(d.head),
@@ -249,6 +251,7 @@
     }
     function special(f) {
       if (f.cd > 0) return false;
+      netEv('sp', f);
       f.cd = 2.4;
       var k = f.def.move;
       if (k === 'whip' || k === 'flurry' || k === 'dash') { attack(f, k); return true; }
@@ -257,6 +260,7 @@
       return true;
     }
     function superMove(f) {
+      netEv('su', f);
       f.pw = 0; begin(f, 'super'); snd('super');
       g.banner = { f: f, t: 1.1, name: f.def.boss ? 'SPAGHETTI STORM' : MOVES[f.def.move][2] };
       g.dim = 0.7; g.zoom = 1.1; g.zx = f.x; g.zy = 50;
@@ -546,10 +550,12 @@
     function wallJump(f) { var away = f.x < AW() / 2 ? 1 : -1; f.dir = away; f.vy = 480; f.vx = away * 320; f.flip = 1; f.flipDir = 1; begin(f, 'air'); snd('jump'); burst(f.x - away * 6, f.y + 30, '#fff', 0.8, true); pops.push({ x: f.x, y: f.y + 70, t: 0.6, s: gw('WALL JUMP'), c: '#e5e7eb', size: 8, word: 1 }); }
     function superJump(f, o) { var dx = o.x - f.x; f.dir = dx >= 0 ? 1 : -1; f.vy = 560; f.vx = Math.max(-420, Math.min(420, dx * 2.2)); f.flip = 0; begin(f, 'air'); snd('jump'); dust(f.x, 8); f.airChase = 1; }
     function crusher(f) {
+      netEv('cr', f);
       f.pw = 0; attack(f, 'crusher'); g.dim = 0.6; g.slow = 0.55; g.slowAt = now; snd('finish');
       g.banner = { f: f, t: 1.0, name: gw('CRUSHER') };
     }
     function use(k) { if (!hit[k]) return false; delete hit[k]; return true; }
+    function playerWith(f, H, T) { var h0 = held, t0 = hit; held = H; hit = T; try { player(f); } finally { held = h0; hit = t0; } }
     function player(f) {
       if (f.st === 'charge' && !held.KeyF) begin(f, 'idle');
       if (f.st === 'block' && !held.ArrowDown) begin(f, 'idle');
@@ -716,8 +722,9 @@
       return g.level % 6 === 0 ? BOSS : pool[Math.floor(Math.random() * pool.length)];
     }
     function intro(newLevel) {
+      if (NET) { g.pick = NET.pickP; g.them = roster[NET.pickC]; newLevel = newLevel && !g.netGo; g.netGo = 1; }
       var me = roster[g.pick], L = g.level;
-      if (newLevel) { g.round = 1; g.pW = 0; g.cW = 0; g.them = opponent(); }
+      if (newLevel) { g.round = 1; g.pW = 0; g.cW = 0; if (!NET) g.them = opponent(); }
       var keepPw = g.p ? g.p.pw : 0;
       g.p = make(me, AW() * 0.3, 1); g.c = make(g.them, AW() * 0.7, -1, L);
       if (g.endless && g.carry !== null && g.carry !== undefined) g.p.hp = g.p.ghost = Math.min(g.p.max, g.carry + 35);
@@ -725,7 +732,8 @@
       g.c.mul = (0.75 + 0.08 * (Math.min(L, 14) - 1) + (g.them.boss ? 0.25 : 0)) * (0.8 + 0.2 * DIFF[g.diff]);
       if (g.endless && L > 14) g.c.mul += (L - 14) * 0.05;
       shots = []; walls = []; puddles = []; pend = []; beams = []; waves = []; fx = []; pops = []; g.cracks = [];
-      g.tut = !tutDone && L === 1 && !g.endless ? 0 : -1; g.tutDone = {};
+      g.tut = !NET && !tutDone && L === 1 && !g.endless ? 0 : -1; g.tutDone = {};
+      if (NET) { g.c.mul = 1; g.timer = 60; if (NET.role === 'host') NET.send({ e: 'round', round: g.round, pW: g.pW, cW: g.cW }); }
       g.mode = 'intro'; g.t = 0; g.slow = 1; g.timer = 60; g.banner = null; g.dim = 0; g.zoom = 1; g.koChecked = 0; g.fin = null;
       snd('round'); run();
     }
@@ -861,6 +869,10 @@
     function levels() { return g.endless ? 0 : g.opps.length; }
     function roundOver(pWon) {
       if (pWon) g.pW++; else g.cW++;
+      if (NET) {
+        if (g.pW >= 2 || g.cW >= 2) { netOver(g.pW >= 2 ? 'p' : 'c'); NET.send({ e: 'end', w: g.pW >= 2 ? 'p' : 'c', pW: g.pW, cW: g.cW }); return; }
+        g.round++; intro(false); return;
+      }
       var need = g.endless ? 1 : 2;
       if (g.pW >= need) {
         if (g.endless) { g.streak++; g.carry = g.p.hp; if (g.streak > bestEndless) { bestEndless = g.streak; try { localStorage.setItem('erp_fight_endless', String(bestEndless)); } catch (e) {} } g.level++; intro(true); return; }
@@ -886,20 +898,22 @@
         if (g.mode === 'fight') {
           // the build-up of a super stops the other fighter for a moment
           var sup = g.p.st === 'super' && g.p.t < 0.55 ? g.p : g.c.st === 'super' && g.c.t < 0.55 ? g.c : null;
-          if (!sup || sup === g.c) player(g.p);
-          if (!sup || sup === g.p ? !sup : true) computer(g.c, dt);
+          var GU = NET && NET.role === 'guest';
+          if (!GU && (!sup || sup === g.c)) player(g.p);
+          if (!GU && (!sup || sup === g.p ? !sup : true)) { if (NET) playerWith(g.c, rHeld, rHit); else computer(g.c, dt); }
           if (g.tut >= 0) g.tutT += dt;
-          if (g.tut < 0) { g.timer -= dt; if (g.timer <= 0) { g.timer = 0; var pr = g.p.hp / g.p.max, cr = g.c.hp / g.c.max; g.mode = 'ko'; g.t = 0; g.timeUp = true; var loser = pr >= cr ? g.c : g.p; loser.hp = Math.min(loser.hp, 0.0001); knock(loser, opp(loser), 200, true); snd('ko'); musicOn(false); } }
+          if (g.tut < 0 && !GU) { g.timer -= dt; if (g.timer <= 0) { g.timer = 0; var pr = g.p.hp / g.p.max, cr = g.c.hp / g.c.max; g.mode = 'ko'; g.t = 0; g.timeUp = true; var loser = pr >= cr ? g.c : g.p; loser.hp = Math.min(loser.hp, 0.0001); knock(loser, opp(loser), 200, true); snd('ko'); musicOn(false); } }
           if (sup && sup !== g.p) { g.p.vx = 0; }
           stepFighter(g.p, sup && sup !== g.p ? dt * 0.15 : dt); stepFighter(g.c, sup && sup !== g.c ? dt * 0.15 : dt);
         } else { stepFighter(g.p, dt); stepFighter(g.c, dt); }
         stepThings(dt);
-        if (g.mode === 'ko' && !g.koChecked && !g.timeUp && g.tut < 0) {
+        if (NET && NET.role === 'guest') { /* the host decides rounds */ }
+        else if (g.mode === 'ko' && !g.koChecked && !g.timeUp && g.tut < 0) {
           g.koChecked = 1;
           var vicK = g.c.hp <= 0.001 ? g.c : g.p, winK = opp(vicK), needK = g.endless ? 1 : 2, winsK = (winK === g.p ? g.pW : g.cW) + 1;
-          if (winsK >= needK && (!g.endless || Math.random() < 0.5)) { startFinishHim(winK, vicK); return; }
+          if (!NET && winsK >= needK && (!g.endless || Math.random() < 0.5)) { startFinishHim(winK, vicK); return; }
         }
-        if (g.mode === 'ko') {
+        if (g.mode === 'ko' && !(NET && NET.role === 'guest')) {
           if (g.t > 0.6) g.slow = 1;
           var w = g.c.hp <= 0.001 ? g.p : g.c;
           if (g.t > 1.3 && w.st !== 'win' && free(w)) { begin(w, 'win'); if (w === g.p) snd('win'); }
@@ -909,6 +923,7 @@
       fx.forEach(function (p) { p.t -= dt; if (p.vx !== undefined) { p.x += p.vx * dt; p.y += p.vy * dt; if (p.kind === 'dot' || p.kind === 'drop' || p.kind === 'conf' || p.kind === 'blood') p.vy -= (p.kind === 'conf' ? 120 : 700) * dt; } }); fx = fx.filter(function (p) { return p.t > 0; });
       pops.forEach(function (p) { p.t -= dt; p.y += 22 * dt; }); pops = pops.filter(function (p) { return p.t > 0; });
       for (var hk in hit) if (now - (hitT[hk] || 0) > 0.15) delete hit[hk];   // the input buffer
+      for (var rk in rHit) if (now - (rHitT[rk] || 0) > 0.25) delete rHit[rk];
     }
     function stepThings(dt) {
       shots = shots.filter(function (s) {
@@ -961,7 +976,8 @@
     function tick(t) {
       if (dead || g.paused || !loopOn()) return;
       var dt = Math.min(0.05, (t - last) / 1000 || 0); last = t;
-      step(dt); draw();
+      step(dt); draw(); lastTickAt = performance.now();
+      if (NET && NET.role === 'host') { netAcc += dt; if (netAcc >= 1 / 15) { netAcc = 0; NET.send(netSnap()); } }
       if (loopOn() && !g.paused) raf = requestAnimationFrame(tick);
     }
     function run() { g.paused = false; last = performance.now(); cancelAnimationFrame(raf); raf = requestAnimationFrame(tick); if (g.mode === 'fight') musicOn(true); }
@@ -1382,7 +1398,7 @@
       // round dots, timer, level
       if (!g.endless) [[g.pW, lx + bw - 30, 1], [g.cW, rx + 30, -1]].forEach(function (o) { for (var q = 0; q < 2; q++) { ctx.fillStyle = q < o[0] ? '#facc15' : 'rgba(0,0,0,.4)'; ctx.beginPath(); ctx.arc(o[1] + o[2] * q * 10, py + 12, 3.5, 0, 7); ctx.fill(); ctx.strokeStyle = OUT; ctx.stroke(); } });
       text(String(Math.ceil(g.timer)), W / 2, 9 + fs * 1.8, fs * 1.8, g.timer < 10 ? '#ef4444' : '#fff', 'center', true, true);
-      text(g.endless ? gw('Endless') + ' · ' + gw('wins') + ' ' + g.streak + (bestEndless ? ' · ' + gw('best') + ' ' + bestEndless : '') : gw('Level') + ' ' + g.level + '/' + levels() + ' · ' + gw('Round') + ' ' + g.round, W / 2, 9 + fs * 2.9, fs * 0.8, '#e5e7eb', 'center', true, true);
+      text(NET ? gw('Online') + ' · ' + gw('Round') + ' ' + g.round : g.endless ? gw('Endless') + ' · ' + gw('wins') + ' ' + g.streak + (bestEndless ? ' · ' + gw('best') + ' ' + bestEndless : '') : gw('Level') + ' ' + g.level + '/' + levels() + ' · ' + gw('Round') + ' ' + g.round, W / 2, 9 + fs * 2.9, fs * 0.8, '#e5e7eb', 'center', true, true);
       if (g.c.def.boss) text(gw('BOSS'), W / 2, 9 + fs * 3.9, fs * 0.8, '#ef4444', 'center', true, true);
       // sound switch
       var sbx = W - 30, sby = H - 24;
@@ -1425,6 +1441,13 @@
       if (g.mode === 'finisher' && g.fin) {
         if (g.t < 1.2) metal(gw(FIN_NAME[g.fin.kind] || ''), W / 2, H * 0.3, Math.max(16, 10 * s), 'red');
         if (g.t > 3.0) { var zz = 1 + Math.max(0, 3.4 - g.t) * 2; metal(gw('PRINT-ALITY!'), W / 2, H * 0.42, Math.max(26, 18 * s * zz), 'red'); }
+      }
+      if (NET && NET.names) { text(NET.names.p, lx, py + 30, Math.max(10, 5 * s), '#fde047', 'left', true, true); text(NET.names.c, rx + bw, py + 30, Math.max(10, 5 * s), '#fde047', 'right', true, true); }
+      if (g.mode === 'netover') {
+        ctx.fillStyle = 'rgba(0,0,0,.45)'; ctx.fillRect(0, 0, W, H);
+        var wn = NET && NET.names ? NET.names[g.netWin] : (g.netWin === 'p' ? g.p : g.c).def.name;
+        metal(String(wn).toUpperCase() + ' ' + gw('WINS'), W / 2, H * 0.42, Math.max(20, 13 * s), 'red');
+        text(g.pW + ' - ' + g.cW, W / 2, H * 0.42 + 14 * s, Math.max(14, 8 * s), '#fff', 'center', true, true);
       }
       if (g.paused) text(gw('Paused — click to carry on'), W / 2, H * 0.48, Math.max(13, 8 * s), '#fff', 'center', true, true);
       if (g.mode === 'lost') {
@@ -1489,17 +1512,19 @@
       if (g.mode === 'champion') { if (c === 'Enter' || c === 'Space') { g.mode = 'select'; draw(); } return; }
       if (g.mode === 'finishhim') { finishKey(c); return; }
       if (g.mode === 'finisher') return;
-      if (c === 'Escape') { if (g.tut >= 0) { endTut(); return; } api.pause(); cv.blur(); return; }
+      if (c === 'Escape') { if (NET) return; if (g.tut >= 0) { endTut(); return; } api.pause(); cv.blur(); return; }
+      if (NET && NET.role === 'guest') { if (!ev.repeat) NET.send({ k: 1, c: c }); return; }
       if (!ev.repeat) { hit[c] = true; hitT[c] = now; }
       held[c] = true;
     });
-    cv.addEventListener('keyup', function (ev) { held[ev.code] = false; });
-    cv.addEventListener('blur', function () { held = {}; api.pause(); });
+    cv.addEventListener('keyup', function (ev) { if (NET && NET.role === 'guest') { NET.send({ k: 0, c: ev.code }); return; } held[ev.code] = false; });
+    cv.addEventListener('blur', function () { held = {}; if (NET) { if (NET.role === 'guest') NET.send({ k: 2 }); return; } api.pause(); });
     function inBox(b, x, y) { return b && x >= b[0] && x <= b[0] + b[2] && y >= b[1] && y <= b[1] + b[3]; }
     cv.addEventListener('mousedown', function (ev) {
       ev.preventDefault(); cv.focus({ preventScroll: true });
       var r = cv.getBoundingClientRect(), x = ev.clientX - r.left, y = ev.clientY - r.top;
       if (g.mode !== 'select' && inBox(soundBtn, x, y)) { toggleSound(); return; }
+      if (NET) return;
       if (g.paused) { g.paused = false; run(); return; }
       if (g.mode === 'select') {
         for (var m = 0; m < modeBtns.length; m++) if (inBox(modeBtns[m], x, y)) {
@@ -1514,11 +1539,44 @@
       if (g.mode === 'lost') { if (g.endless) startRun(); else intro(true); return; }
       if (g.mode === 'champion') { g.mode = 'select'; draw(); }
     });
+    // ---- online helpers
+    function netEv(k, f) { if (NET && NET.role === 'host' && g.mode === 'fight') NET.send({ e: k, w: f === g.p ? 'p' : 'c' }); }
+    function fsnap(f) { var o = {}; for (var k in f) { var v = f[k], t = typeof v; if (v === null || t === 'string' || t === 'boolean') o[k] = v; else if (t === 'number') o[k] = Math.round(v * 1000) / 1000; } return o; }
+    function netSnap() { return { s: 1, m: g.mode, t: Math.round(g.t * 1000) / 1000, tm: Math.round(g.timer * 10) / 10, r: g.round, pW: g.pW, cW: g.cW, p: fsnap(g.p), c: fsnap(g.c) }; }
+    function netOver(w) {
+      g.mode = 'netover'; g.netWin = w; musicOn(false); stopLoop(); snd('win');
+      var f = w === 'p' ? g.p : g.c; if (f && free(f)) begin(f, 'win');
+      draw(); if (NET.onEnd) NET.onEnd({ winner: w, pW: g.pW, cW: g.cW });
+    }
+    function netRecv(m) {
+      if (!NET || !m) return;
+      if (NET.role === 'host') {
+        if (m.k === 1) { if (!rHeld[m.c]) { rHit[m.c] = true; rHitT[m.c] = now; } rHeld[m.c] = true; }
+        else if (m.k === 0) rHeld[m.c] = false;
+        else if (m.k === 2) rHeld = {};
+        return;
+      }
+      if (m.e === 'round') { g.pW = m.pW; g.cW = m.cW; g.round = m.round; intro(false); return; }
+      if (m.e === 'end') { g.pW = m.pW; g.cW = m.cW; netOver(m.w); return; }
+      if (m.e === 'sp' || m.e === 'su' || m.e === 'cr') {
+        var f = m.w === 'p' ? g.p : g.c; if (!f) return;
+        if (m.e === 'sp') { f.cd = 0; special(f); } else if (m.e === 'su') { f.pw = 100; superMove(f); } else { f.pw = 100; crusher(f); }
+        return;
+      }
+      if (m.s && g.p && g.c && g.mode !== 'netover') {
+        [['p', g.p], ['c', g.c]].forEach(function (q) { var o = m[q[0]], f = q[1]; if (!o) return; if (o.st !== f.st && o.st !== 'down') f.rag = null; for (var k in o) f[k] = o[k]; });
+        g.timer = m.tm; g.pW = m.pW; g.cW = m.cW; g.round = m.r;
+        if (m.m !== g.mode && m.m !== 'netover') { g.mode = m.m; g.t = m.t; if (m.m === 'fight') musicOn(true); }
+        if (loopOn() && performance.now() - lastTickAt > 250) run();
+      }
+    }
+    function netStart() { g.netGo = 0; g.level = 1; g.endless = false; intro(true); try { cv.focus({ preventScroll: true }); } catch (e) {} }
     var idleT = setInterval(function () { if (dead) { clearInterval(idleT); return; } if (g.mode === 'select' && document.body.contains(cv)) { now += 0.1; draw(); } }, 100);
 
     var api = {
       size: g.size,
-      pause: function () { if (loopOn() && !g.paused) { g.paused = true; stopLoop(); held = {}; musicOn(false); draw(); } },
+      netRecv: netRecv, netStart: netStart,
+      pause: function () { if (NET) return; if (loopOn() && !g.paused) { g.paused = true; stopLoop(); held = {}; musicOn(false); draw(); } },
       stop: function () { dead = true; stopLoop(); clearInterval(idleT); musicOn(false); },
       draw: draw,
       state: function () { return loopOn() ? (g.paused ? 'paused' : 'run') : 'idle'; },
@@ -1526,6 +1584,8 @@
     };
     return api;
   };
+  // the fighters an online match can pick from (the same list ERP_FIGHT uses)
+  window.ERP_FIGHT_ROSTER = function (r) { return (r && r.length >= 2 ? r : PLAIN).map(function (d) { return { name: d.name, color: d.color }; }); };
   // what the "How to play" window says
   window.ERP_FIGHT_HELP = function (roster, gw) {
     gw = gw || function (t) { return t; };
