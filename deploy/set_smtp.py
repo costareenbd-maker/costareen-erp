@@ -53,19 +53,20 @@ def main():
     # try the login here first: a wrong password saved silently makes every e-mail fail later
     import smtplib, ssl
     try:
-        with smtplib.SMTP(host, int(port), timeout=20) as m:
-            m.starttls(context=ssl.create_default_context()); m.login(user, pw)
+        m = smtplib.SMTP(host, int(port), timeout=20)
+        m.starttls(context=ssl.create_default_context())
+    except Exception as e:
+        sys.exit('Could not reach %s:%s (%s) - nothing changed.' % (host, port, e))
+    try:
+        m.login(user, pw)   # Gmail sometimes just hangs up on a wrong password instead of saying so
+        try: m.quit()
+        except Exception: pass
         print('login to %s: OK' % host)
-    except smtplib.SMTPAuthenticationError:
-        sys.exit('
-%s REFUSED that password - nothing changed.
-'
-                 'For Gmail it must be an APP PASSWORD (16 letters), not the normal password:
-'
-                 '  1. Sign in to %s, open https://myaccount.google.com/apppasswords
-'
-                 '     (2-Step Verification must be on first).
-'
+    except (smtplib.SMTPAuthenticationError, smtplib.SMTPServerDisconnected):
+        sys.exit('\n%s REFUSED that password - nothing changed.\n'
+                 'For Gmail it must be an APP PASSWORD (16 letters), not the normal password:\n'
+                 '  1. Sign in to %s, open https://myaccount.google.com/apppasswords\n'
+                 '     (2-Step Verification must be on first).\n'
                  '  2. Make one named "Costareen ERP", copy the 16 letters, run this again and paste them.' % (host, user))
     except Exception as e:
         sys.exit('Could not reach %s:%s (%s) - nothing changed.' % (host, port, e))
