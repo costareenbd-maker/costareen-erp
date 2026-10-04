@@ -1317,6 +1317,47 @@
       }
       hud();
     }
+    // ---- combo hints: only the keys, over the player's head, only when that move is the right answer now
+    var hint = { k: '', t: 0, until: 0, last: {}, gap: 0 };
+    function hintFor() {
+      var p = g.p, o = g.c; if (!p || !o) return '';
+      var d = Math.abs(o.x - p.x), fw = o.x >= p.x ? '\u2192' : '\u2190';
+      if (o.st === 'down' && !o.ko && o.y < 6 && d < 60) return '\u2193 + A';
+      if (o.st === 'down' && !o.ko && o.y > 24 && d < 140) return '\u2191';
+      if ((o.st === 'dizzy' || o.st === 'dazed') && d < 50) return 'W';
+      if (p.pw >= 100) return d < 40 ? '\u2193 + F' : 'F';
+      if (o.st === 'atk' && d < 70) return '\u2193';
+      if (o.st === 'block' && d < 50) return '\u2193 + S';
+      if (d < 40 && (o.x < 50 || o.x > AW() - 50)) return 'W';
+      if (o.y > 40 && d < 70) return '\u2191 + S';
+      if (d > 55 && d < 120) return fw + ' + S';
+      if (d >= 150 && p.cd <= 0) return 'D';
+      if (d < 36 && p.st === 'idle') return 'A A A';
+      return '';
+    }
+    function drawHint(hx, hy) {
+      if (g.mode !== 'fight' || g.tut >= 0 || !g.p) { hint.k = ''; return; }
+      hint.t = Math.max(0, hint.until - now);
+      if (hint.t <= 0) hint.k = '';
+      var want = hintFor();
+      if (want && want !== hint.k && now >= hint.gap && now - (hint.last[want] || -99) > 5) { hint.k = want; hint.until = now + 1.8; hint.t = 1.8; hint.gap = now + 1.4; hint.last[want] = now; }
+      if (!hint.k) return;
+      var parts = hint.k.split(' '), kh = Math.max(14, 7 * g.s), fz = Math.max(10, 5 * g.s), gapX = 4, w = 0;
+      ctx.font = '700 ' + fz + 'px system-ui, sans-serif';
+      var ws = parts.map(function (t) { var tw = t === '+' ? ctx.measureText('+').width : Math.max(kh, ctx.measureText(t).width + 8); w += tw + gapX; return tw; }); w -= gapX;
+      var cy = hy, x = hx, a = Math.min(1, hint.t * 3, (1.8 - hint.t) * 6 + 0.2);
+      ctx.save(); ctx.globalAlpha = Math.max(0, Math.min(1, a));
+      parts.forEach(function (t, i) {
+        if (t === '+') { text('+', x + ws[i] / 2, cy + kh * 0.72, fz, '#fff', 'center', true, true); }
+        else {
+          ctx.fillStyle = 'rgba(0,0,0,.6)'; ctx.fillRect(x, cy, ws[i], kh);
+          ctx.strokeStyle = '#fde047'; ctx.lineWidth = 1.2; ctx.strokeRect(x + 0.5, cy + 0.5, ws[i] - 1, kh - 1);
+          text(t, x + ws[i] / 2, cy + kh * 0.72, fz, '#fff', 'center', true);
+        }
+        x += ws[i] + gapX;
+      });
+      ctx.restore();
+    }
     function hud() {
       var W = g.W, H = g.H, s = g.s, bw = Math.min(300, W * 0.32), fs = Math.max(11, 6.5 * s), ph = Math.max(22, 13 * s), pw2 = ph * 28 / 34;
       [[g.p, 10, 1], [g.c, W - 10 - pw2, -1]].forEach(function (o) {
@@ -1344,11 +1385,11 @@
       text(g.endless ? gw('Endless') + ' · ' + gw('wins') + ' ' + g.streak + (bestEndless ? ' · ' + gw('best') + ' ' + bestEndless : '') : gw('Level') + ' ' + g.level + '/' + levels() + ' · ' + gw('Round') + ' ' + g.round, W / 2, 9 + fs * 2.9, fs * 0.8, '#e5e7eb', 'center', true, true);
       if (g.c.def.boss) text(gw('BOSS'), W / 2, 9 + fs * 3.9, fs * 0.8, '#ef4444', 'center', true, true);
       // sound switch
-      var sbx = W / 2 + Math.max(30, fs * 2.4), sby = 4;
+      var sbx = W - 30, sby = H - 24;
       soundBtn = [sbx, sby, 22, 18];
       ctx.fillStyle = 'rgba(0,0,0,.35)'; ctx.fillRect(sbx, sby, 22, 18);
       text(soundOn ? '🔊' : '🔇', sbx + 11, sby + 14, 12, '#fff', 'center');
-      text(gw('A punch ×3 · ←A backfist · S kick · →S dropkick · ↓S sweep · ↓A elbow drop · W throw (↓W knee bash) · →A headbutt · dash+A charge · run ↓S slide · D special · F super · ↓F crusher · ↓ block/PARRY · ↑ jump (←↑ backflip, air: A/knee S ↑S tornado ↓S dive, wall ↑) · B blood · M sound'), W / 2, H - 6, Math.max(10, 4.6 * s), 'rgba(255,255,255,.8)', 'center', true, true);
+      drawHint(lx, py + (g.endless ? 12 : 22));
       if (g.tut >= 0 && g.mode === 'fight' && TUT[g.tut]) {
         var msg = gw(TUT[g.tut][1]) + (TUT[g.tut][0] === 'special' ? ' (' + gw(MOVES[g.p.def.move][0]) + ')' : TUT[g.tut][0] === 'super' ? ' (' + MOVES[g.p.def.move][2] + ')' : '');
         var bw2 = Math.min(W - 40, msg.length * fs * 0.62 + 60), by = H * 0.3;

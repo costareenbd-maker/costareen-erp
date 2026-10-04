@@ -8,6 +8,8 @@
  * v7: when they meet on one ledge a written fight plays (film-style: every move has its moment and the other side's
  * answer lands on it), a bigger purple third man can drop in for two-on-one fights, slow motion on the big blows,
  * and a more natural run.
+ * v8: always two blue men (one team) against the ninja; three-man written fights first, where each side reads the
+ * other's next move (parry, slip, a blow behind without looking, a split kick into both); nobody runs backwards.
  */
 (function () {
   'use strict';
@@ -54,6 +56,7 @@
   P.hurt = { L: -36, hy: 20, sF: -40, eF: 20, sB: -60, eB: 20, hF: 15, kF: -15, hB: -25, kB: -15 };
   P.lean = { L: -26, hy: 19, sF: 40, eF: 120, sB: 20, eB: 130, hF: 35, kF: -60, hB: -30, kB: -30 };
   P.parry = { L: 5, hy: 19, sF: 125, eF: 60, sB: 50, eB: 140, hF: 32, kF: -48, hB: -26, kB: -34 };
+  P.split = { L: 0, hy: 15, sF: 95, eF: 0, sB: 95, eB: 0, hF: 95, kF: 0, hB: -95, kB: 0 };
   P.lie = { L: 0, hy: 21, sF: 165, eF: 15, sB: 150, eB: 25, hF: 8, kF: -6, hB: -8, kB: -14 };
   // moves in a written fight: pose, length, the moment it lands, the distance it lands from
   var MV = {
@@ -62,7 +65,7 @@
     headbutt: { p: 'headbutt', d: 0.32, hit: 0.13, r: 16 }, kick: { p: 'kick', d: 0.36, hit: 0.13, r: 32 }, spin: { p: 'kick', d: 0.48, hit: 0.24, r: 32, spin: 1 },
     round: { p: 'kick', d: 0.44, hit: 0.2, r: 33, spin: 0.6 }, sweep: { p: 'sweep', d: 0.42, hit: 0.15, r: 30 }, stomp: { p: 'stomp', d: 0.36, hit: 0.18, r: 12 },
     axe: { p: 'axe', d: 0.6, hit: 0.38, r: 22, hop: 34 }, flykick: { p: 'flykick', d: 0.55, hit: 0.3, r: 28, hop: 30 }, slam: { p: 'grab', d: 0.75, hit: 0.12, r: 18 },
-    backflip: { p: 'air', d: 0.5, back: 52 }, taunt: { p: 'taunt', d: 0.7 }, step: { p: 'walk', d: 0.32 }
+    backflip: { p: 'air', d: 0.5, back: 52 }, split: { p: 'split', d: 0.55, hit: 0.24, r: 30, hop: 26 }, taunt: { p: 'taunt', d: 0.7 }, step: { p: 'walk', d: 0.32 }
   };
   // the answer on the other side (early: it starts as the blow is seen coming)
   var REACT = {
@@ -83,6 +86,10 @@
     [['b', 'jab', 'a', 'hit'], ['b', 'cross', 'a', 'hit'], ['b', 'knee', 'a', 'gut'], ['b', 'upper', 'a', 'lean'], ['a', 'sweep', 'b', 'down'], ['a', 'backflip'], ['a', 'step', null, null, { gap: 0.6 }], ['a', 'flykick', 'b', 'fling', { slow: 0.6 }]]
   ];
   var SC3 = [
+    [['b', 'jab', 'a', 'parry'], ['a', 'cross', 'b', 'parry'], ['b', 'hook', 'a', 'duck'], ['a', 'elbow', 'c', 'gut', { with: 1, off: 0.12 }], ['a', 'upper', 'b', 'head'], ['c', 'kick', 'a', 'block'], ['b', 'kick', 'a', 'block', { with: 1, off: 0.06 }], ['a', 'split', 'b', 'head', { also: 'c', slow: 0.5 }], ['b', 'cross', 'a', 'parry'], ['a', 'knee', 'b', 'gut'], ['a', 'spin', 'b', 'fling', { slow: 0.6 }], ['c', 'hook', 'a', 'duck'], ['a', 'sweep', 'c', 'down'], ['a', 'stomp', 'c', 'onground']],
+    [['b', 'jab', 'a', 'block'], ['c', 'jab', 'a', 'block', { with: 1 }], ['b', 'cross', 'a', 'parry'], ['c', 'cross', 'a', 'parry', { with: 1 }], ['b', 'kick', 'a', 'duck'], ['c', 'kick', 'b', 'gut', { with: 1, off: 0.02 }], ['a', 'sweep', 'c', 'down'], ['a', 'headbutt', 'b', 'head'], ['b', 'hook', 'a', 'parry'], ['a', 'slam', 'b', 'slam', { slow: 0.45 }], ['a', 'stomp', 'b', 'onground', { gap: 0.1 }], ['a', 'taunt', null, null, { gap: 0.3 }]],
+    [['c', 'hook', 'a', 'hit'], ['b', 'knee', 'a', 'gut'], ['c', 'cross', 'a', 'hit'], ['b', 'kick', 'a', 'lean'], ['a', 'taunt'], ['b', 'jab', 'a', 'parry'], ['c', 'jab', 'a', 'parry', { with: 1, off: 0.08 }], ['a', 'split', 'b', 'head', { also: 'c', slow: 0.6 }], ['a', 'flykick', 'b', 'down'], ['c', 'hook', 'a', 'duck'], ['a', 'upper', 'c', 'head'], ['a', 'round', 'c', 'fling', { slow: 0.6 }]],
+    [['a', 'jab', 'b', 'block'], ['b', 'cross', 'a', 'parry'], ['c', 'kick', 'a', 'duck', { with: 1, off: 0.1 }], ['a', 'sweep', 'c', 'block'], ['c', 'hook', 'a', 'parry'], ['b', 'kick', 'a', 'block', { with: 1, off: 0.1 }], ['a', 'backflip'], ['b', 'step'], ['c', 'step', null, null, { with: 1 }], ['a', 'split', 'b', 'gut', { also: 'c' }], ['a', 'elbow', 'b', 'head'], ['a', 'knee', 'c', 'gut'], ['a', 'axe', 'b', 'down', { slow: 0.55 }], ['c', 'cross', 'a', 'parry'], ['a', 'spin', 'c', 'fling', { slow: 0.6 }]],
     [['a', 'taunt'], ['b', 'kick', 'a', 'block'], ['c', 'hook', 'a', 'duck'], ['b', 'cross', 'c', 'head', { with: 1, off: 0.08 }], ['a', 'sweep', 'b', 'down'], ['c', 'kick', 'a', 'parry'], ['a', 'knee', 'c', 'gut'], ['a', 'elbow', 'c', 'head'], ['a', 'spin', 'c', 'fling', { slow: 0.6 }], ['a', 'stomp', 'b', 'onground'], ['a', 'step', null, null, { gap: 0.4 }], ['a', 'upper', 'b', 'fling']],
     [['c', 'hook', 'a', 'hit'], ['b', 'kick', 'a', 'gut'], ['c', 'knee', 'a', 'gut'], ['a', 'backflip'], ['b', 'step'], ['a', 'flykick', 'c', 'down'], ['b', 'cross', 'a', 'parry'], ['a', 'headbutt', 'b', 'head'], ['a', 'slam', 'b', 'slam', { slow: 0.45 }], ['a', 'round', 'c', 'fling', { gap: 0.2, slow: 0.6 }]],
     [['b', 'jab', 'a', 'block'], ['c', 'jab', 'a', 'block', { with: 1, off: 0.05 }], ['b', 'kick', 'a', 'duck'], ['c', 'kick', 'b', 'hit', { with: 1, off: 0.04 }], ['a', 'upper', 'c', 'head'], ['a', 'spin', 'b', 'fling', { slow: 0.5 }], ['c', 'hook', 'a', 'parry'], ['a', 'knee', 'c', 'gut'], ['a', 'axe', 'c', 'down', { slow: 0.5 }], ['a', 'stomp', 'c', 'onground']]
@@ -496,6 +503,7 @@
       watchStuck(m, dt);
       m.t += dt; m.flash = Math.max(0, m.flash - dt); m.ph += dt * (m.st === 'run' ? Math.max(9, Math.abs(m.vx) / 16) : m.st === 'walk' ? Math.max(4, Math.abs(m.vx) / 9) : 3);
       think(m, dt);
+      if (m.st === 'run' && Math.abs(m.vx) > 30) m.dir = m.vx > 0 ? 1 : -1;
       var tg = enemyOf(m);
       if (m.st === 'atk' && m.atk === 'toss') {
         m.vx = 0;
@@ -618,7 +626,7 @@
       ctx.save(); if (alpha !== undefined) ctx.globalAlpha = alpha;
       if (ang) { ctx.translate(c.x, c.y); ctx.rotate(ang); ctx.translate(-c.x, -c.y); }
       ctx.lineCap = 'round'; ctx.lineJoin = 'round';
-      var col = flash ? '#ffffff' : colorOf(team);
+      var col = flash ? (dark() ? '#ffffff' : '#f87171') : colorOf(team);   // a hit flashes: white on dark pages, red on light ones (white would vanish)
       ctx.strokeStyle = col; ctx.lineWidth = 3.4 * (J.z || 1);
       [['neck', 'hip'], ['neck', 'eB'], ['eB', 'hB'], ['hip', 'kB'], ['kB', 'fB'], ['hip', 'kF'], ['kF', 'fF'], ['neck', 'eF'], ['eF', 'hF']].forEach(function (l) { ctx.beginPath(); ctx.moveTo(J[l[0]].x, J[l[0]].y); ctx.lineTo(J[l[1]].x, J[l[1]].y); ctx.stroke(); });
       ctx.fillStyle = col; ctx.beginPath(); ctx.arc(J.head.x, J.head.y, 5.8 * (J.z || 1), 0, 7); ctx.fill();
@@ -690,8 +698,8 @@
     // ---- v7: written fights. Two (or three) on one ledge: the fight plays from a script. Every blow lands at its
     //   moment and the other side's answer (block, parry, duck, take it, go down, fly) is timed to it, like a film.
     function gone(m) {
-      if (m === foe) { foe = third; third = null; kills++; if (!foe) nextFoeT = 1.6 + Math.random(); }
-      else if (m === third) { third = null; kills++; }
+      if (m === foe) { foe = third; third = null; kills++; if (!foe) nextFoeT = 1.6 + Math.random(); else thirdT = 2 + Math.random() * 1.5; }
+      else if (m === third) { third = null; kills++; thirdT = 2 + Math.random() * 1.5; }
       m.cho = 0;
     }
     function free3(m) { return m && !m.dying && m.hp > 0 && m.on && !m.cho && ['idle', 'run', 'walk', 'guard', 'taunt', 'land', 'look', 'block', 'hit'].indexOf(m.st) >= 0; }
@@ -700,7 +708,11 @@
       var pl = hero.on, w = pl.x1 - pl.x0; if (w < 90 || nearBlock(hero.x, hero.y)) return;
       var near = function (m, d) { return free3(m) && m.on === pl && Math.abs(m.x - hero.x) < d; };
       var b = near(foe, 110) ? foe : near(third, 110) ? third : null; if (!b) return;
-      startCho(b, b === foe && w >= 150 && near(third, 220) ? third : null);
+      var c = b === foe ? third : foe;
+      if (w >= 120 && near(c, 320)) { startCho(b, c); return; }
+      if (c && !c.dying && (c.waitedT = (c.waitedT || 0) + 1) < 90) return;   // give the other man about a second and a half to come
+      if (c) c.waitedT = 0;
+      startCho(b, null);
     }
     function startCho(b, c) {
       var pl = hero.on, list = c ? SC3 : SC2, n, key;
@@ -827,7 +839,7 @@
         m.x = mv.x0 + mv.lunge * ease(Math.min(1, mv.t / (M.hit || M.d)));
         var arc = M.hop || (M.back ? 30 : 0); m.yo = arc ? -Math.sin(Math.PI * Math.min(1, mv.t / M.d)) * arc : 0;
         if (mv.to && R.early && !mv.early && mv.t >= (M.hit || 0) * 0.3) { mv.early = 1; react(m, mv.to, mv.re, mv.o); }
-        if (mv.to && M.hit && !mv.done && mv.t >= M.hit) { mv.done = 1; if (!R.early) react(m, mv.to, mv.re, mv.o); else whoosh(m); }
+        if (mv.to && M.hit && !mv.done && mv.t >= M.hit) { mv.done = 1; if (!R.early) react(m, mv.to, mv.re, mv.o); else whoosh(m); var al = mv.o && mv.o.also && cho[mv.o.also]; if (al && al.cho) react(m, al, mv.o.alsoRe || mv.re, {}); }
         if (mv.t >= M.d) { m.mv = null; m.yo = 0; }
       }
       if (m.re) {
@@ -881,9 +893,9 @@
     }
     // the third man: bigger, purple, drops in from the top near the ninja
     function bringThird() {
-      if (!hero || !hero.on) return;
+      if (!hero || !hero.on) { thirdT = 0.5; return; }
       var x = Math.max(M, Math.min(W - M, hero.x + (Math.random() < 0.5 ? -1 : 1) * (120 + Math.random() * 120)));
-      var m = make('red', x, -50, null); m.sz = 1.12; m.hp = 85; m.big = 1;
+      var m = make('foe', x, -50, null); m.big = 1;
       var cand = plats.filter(function (p) { return !p.ground && p.x1 - p.x0 > 60 && Math.abs(p.y - hero.y) < 160 && !nearBlock((p.x0 + p.x1) / 2, p.y); });
       cand.sort(function (a, b) { return Math.abs((a.x0 + a.x1) / 2 - hero.x) - Math.abs((b.x0 + b.x1) / 2 - hero.x); });
       var p = cand[0] || hero.on;
@@ -898,7 +910,7 @@
       var land = plats.filter(function (p) { return !p.ground && (fromTop ? Math.abs((p.x0 + p.x1) / 2 - m.x) < 300 : fromLeft ? p.x0 < W * 0.35 : p.x1 > W * 0.65) && !nearBlock((p.x0 + p.x1) / 2, p.y); });
       var p = land.length ? land[Math.floor(Math.random() * land.length)] : plats[plats.length - 1];
       jumpTo(m, spot(null, p, fromLeft ? p.x0 + 30 : p.x1 - 30), p.y, true, p);
-      foe = m; thirdT = Math.random() < 0.6 ? 4 + Math.random() * 6 : -1; setScene(Math.random() < 0.6 ? 'standoff' : 'duel', 3 + Math.random() * 2);
+      foe = m; thirdT = 0.7 + Math.random() * 0.6; setScene(Math.random() < 0.6 ? 'standoff' : 'duel', 3 + Math.random() * 2);
     }
     function tick(t) {
       if (!on) return;

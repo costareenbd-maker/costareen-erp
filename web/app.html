@@ -16957,7 +16957,7 @@ function makeFightLazy(cv) {
   }
   function fail(e) { note = 'Brawl could not load. Check the internet and open the tab again.'; paint(); }
   if (!FIGHT_JS) FIGHT_JS = new Promise(function (ok, bad) {
-    var sc = document.createElement('script'); sc.src = 'games/fight.js?v=12'; sc.onload = ok; sc.onerror = function () { FIGHT_JS = null; bad(); }; document.head.appendChild(sc);
+    var sc = document.createElement('script'); sc.src = 'games/fight.js?v=13'; sc.onload = ok; sc.onerror = function () { FIGHT_JS = null; bad(); }; document.head.appendChild(sc);
   });
   var roster = FIGHTERS ? Promise.resolve(FIGHTERS) : new Promise(function (ok) { srv('erpFighters', [], function (r) { FIGHTERS = r.fighters || []; ok(FIGHTERS); }, function () { ok([]); }); });
   Promise.all([FIGHT_JS, roster]).then(function (v) {
@@ -17425,7 +17425,7 @@ function skTick() {
   skButton();
   var want = skShould();
   if (want && !SK) {
-    if (!SK_JS) SK_JS = new Promise(function (ok, bad) { var sc = document.createElement('script'); sc.src = 'games/stickfight.js?v=7'; sc.onload = ok; sc.onerror = function () { SK_JS = null; bad(); }; document.head.appendChild(sc); });
+    if (!SK_JS) SK_JS = new Promise(function (ok, bad) { var sc = document.createElement('script'); sc.src = 'games/stickfight.js?v=8'; sc.onload = ok; sc.onerror = function () { SK_JS = null; bad(); }; document.head.appendChild(sc); });
     SK_JS.then(function () { if (!SK && window.ERP_STICK) { SK = window.ERP_STICK({ mode: skMode() === 'calm' ? 'calm' : 'on', blood: skPref('blood') !== '0' }); if (skShould()) SK.start(); } }, function () {});
     return;
   }
