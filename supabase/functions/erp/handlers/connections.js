@@ -78,7 +78,7 @@ export async function erpWebsiteSet(ctx, payload) {
     if (!k) { await setSecret(ctx, 'CZ_SYNC_KEY', ''); return erpConnections(ctx); }
     if (k.length < 12 || /\s/.test(k)) throw new Error('That does not look like the sync plugin key (12 or more letters and digits, no spaces).');
     await setSecret(ctx, 'CZ_SYNC_KEY', k);
-    if (!str(await getConfig(ctx, 'website_api', ''))) await setConfig(ctx, 'website_api', WEBSITE_DEFAULT);
+    if (!str(await getConfig(ctx, 'website_api', '')) && !(ctx.deps && ctx.deps.install && ctx.deps.install.id)) await setConfig(ctx, 'website_api', WEBSITE_DEFAULT);
     return erpConnections(ctx);
   }
   const kind = payload.kind === undefined ? was : str(payload.kind);

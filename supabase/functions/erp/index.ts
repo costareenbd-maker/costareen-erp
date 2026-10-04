@@ -12,6 +12,7 @@ import { googleCallback } from './handlers/google.js';
 import { wooKeysCallback } from './handlers/wooauth.js';
 import { shopDoor } from './handlers/shop.js';
 import { installRoute } from './handlers/installer.js';
+import { signinRoute } from './handlers/signin.js';
 import { installFinish } from './lib/control.js';
 import postgres from 'npm:postgres@3.4.5';
 import { connect } from './db.js';
@@ -222,8 +223,14 @@ async function sendMagic(email: string, redirectTo: string) {
   if (!r.ok) throw new Error('The e-mail could not be sent (' + r.status + ').');
 }
 
+// where e-mailed links bring a person back: this ERP's own address (a copy: its domain, or the shared page with ?use=<id>)
+function appBack(): string {
+  const u = Deno.env.get('ERP_APP_URL') ?? 'https://erp.costareen.com/';
+  const m = /^(.*?)#\/use\/([\w-]+)/.exec(u);
+  return m ? m[1].replace(/\/?$/, '/') + '?use=' + m[2] : u.replace(/#.*$/, '');
+}
 async function sendReset(email: string) {
-  const r = await fetch(SUPABASE_URL + '/auth/v1/recover?redirect_to=' + encodeURIComponent('https://erp.costareen.com/'), {
+  const r = await fetch(SUPABASE_URL + '/auth/v1/recover?redirect_to=' + encodeURIComponent(appBack()), {
     method: 'POST',
     headers: { apikey: ANON, 'Content-Type': 'application/json' },
     body: JSON.stringify({ email }),
@@ -245,7 +252,8 @@ const deps = { install: INSTALL, installEnv: INSTALL_ENV, google: GOOGLE, smtpNo
 
 Deno.serve(async (req) => {
   const q0 = new URL(req.url).searchParams;
-  const headers = { ...cors(req.headers.get('origin'), !!(q0.get('install') || q0.get('control'))), 'Content-Type': 'application/json' };
+  // public routes, and every company copy (its calls carry their own sign-in, never a cookie), answer any page
+  const headers = { ...cors(req.headers.get('origin'), !!(q0.get('install') || q0.get('control') || q0.get('signin') || (INSTALL && INSTALL.id))), 'Content-Type': 'application/json' };
   if (req.method === 'OPTIONS') return new Response('ok', { headers });
   // Google sends the owner back here after they allow Drive access (handlers/google.js)
   if (req.method === 'GET' && new URL(req.url).searchParams.get('google') === 'back') {
@@ -259,6 +267,11 @@ Deno.serve(async (req) => {
     let b: any = {}; try { b = await req.json(); } catch (_) { try { b = Object.fromEntries(new URLSearchParams(await req.text())); } catch (_) { b = {}; } }
     try { const r = await wooKeysCallback(deps, b); return new Response(JSON.stringify(r.body), { status: r.status, headers }); }
     catch (e) { console.error('woo keys', e); return new Response('{"ok":false}', { status: 500, headers }); }
+  }
+  // the sign-in screen, step 1: what this e-mail needs - a password, a first password (the link is e-mailed now), or nothing here
+  if (req.method === 'POST' && (q0.get('signin') === 'check' || q0.get('signin') === 'forgot')) {
+    let b: any = {}; try { b = await req.json(); } catch (_) { b = {}; }
+    return new Response(JSON.stringify(await signinRoute(deps, q0.get('signin'), b)), { status: 200, headers });
   }
   // the installer (handlers/installer.js) and a copy's last install step (lib/control.js)
   {

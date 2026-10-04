@@ -1,5 +1,5 @@
 /*
- * Costareen Brawl v3 - a small fighting game for the strip under New invoice.
+ * Brawl v3 - a small fighting game for the strip under New invoice.
  * Story: beat everyone (best of 3 rounds each), the last one is the Spaghetti Monster. Endless: waves that never stop.
  * Loaded only when its tab is opened. The fighters' faces are not in this file: they come from the
  * business's own data (erpFighters), so nobody's photo sits in a public file.
@@ -1467,7 +1467,7 @@
     function drawSelect() {
       var W = g.W, H = g.H, n = roster.length, cw = Math.min(96, (W - 40) / n), hh = Math.min(H * 0.38, cw * 1.2), x0 = (W - cw * n) / 2, y0 = H * 0.22;
       ctx.fillStyle = 'rgba(0,0,0,.4)'; ctx.fillRect(0, 0, W, H);
-      text(gw('Costareen Brawl — choose your fighter'), W / 2, Math.max(16, H * 0.1), Math.max(14, H * 0.065), '#fff', 'center', true, true);
+      text(gw('Brawl — choose your fighter'), W / 2, Math.max(16, H * 0.1), Math.max(14, H * 0.065), '#fff', 'center', true, true);
       // mode and difficulty buttons
       modeBtns = [];
       var opt = [['story', gw('Story')], ['endless', gw('Endless')], ['|', ''], ['easy', gw('Easy')], ['normal', gw('Normal')], ['hard', gw('Hard')]], bx = W / 2 - 3 * 64, btnY = Math.max(22, H * 0.13);
@@ -1592,7 +1592,7 @@
     var list = (roster && roster.length >= 2 ? roster : PLAIN);
     var k = function (t) { return '<kbd>' + t + '</kbd>'; };
     var esc = function (t) { return String(t).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); };
-    return '<h3>' + gw('Costareen Brawl — how to play') + '</h3>' +
+    return '<h3>' + gw('Brawl — how to play') + '</h3>' +
       '<p>' + gw('Click the game first. Choose Story or Endless and Easy, Normal or Hard at the top, then a fighter with ← → and Enter. Story: beat everyone, best of 3 rounds each; the last one is the Spaghetti Monster. Endless: one fight after another, your health carries on, how many can you win? The first fight starts with a short lesson.') + '</p>' +
       '<table><tbody>' +
       '<tr><td>' + k('←') + ' ' + k('→') + '</td><td>' + gw('move (tap twice fast: a quick dash)') + '</td></tr>' +

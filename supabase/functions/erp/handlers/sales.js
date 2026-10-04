@@ -139,8 +139,10 @@ export function forgetWebParcelIds() { WEB_CIDS.clear(); }
 async function czFetch(ctx, method, path) {
   const key = await getSecret(ctx, 'CZ_SYNC_KEY');
   if (!key) throw new Error('No website sync key is set.');
-  const base = await getConfig(ctx, 'website_api', 'https://costareen.com/wp-json/cz/v1');
-  const r = await httpFetch(ctx, String(base || 'https://costareen.com/wp-json/cz/v1').replace(/\/+$/, '') + path,
+  const dflt = ctx.deps && ctx.deps.install && ctx.deps.install.id ? '' : 'https://costareen.com/wp-json/cz/v1';   // a copy: no default website
+  const base = await getConfig(ctx, 'website_api', dflt);
+  if (!String(base || dflt)) throw new Error('No website is connected yet (Settings \u2192 Connections \u2192 Website).');
+  const r = await httpFetch(ctx, String(base || dflt).replace(/\/+$/, '') + path,
     { method, headers: { 'x-cz-key': key } });
   if (r.code !== 200) throw new Error('Website returned HTTP ' + r.code + ': ' + String(r.text || '').substring(0, 300));
   if (r.json === null) throw new Error('The website did not answer with JSON.');

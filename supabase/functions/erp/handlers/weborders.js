@@ -61,7 +61,9 @@ async function markEntered(ctx, lineIds, invoiceId) {
 async function czFetch(ctx, method, path, payload) {
   const key = await getSecret(ctx, 'CZ_SYNC_KEY');
   if (!key) throw new Error('Website sync key not set. Run "Setup Website Sync" from the menu first.');
-  const base = String((await getConfig(ctx, 'website_api', WEBSITE_API)) || WEBSITE_API).trim().replace(/\/+$/, '');
+  const dflt = ctx.deps && ctx.deps.install && ctx.deps.install.id ? '' : WEBSITE_API;   // a company copy has no default website
+  const base = String((await getConfig(ctx, 'website_api', dflt)) || dflt).trim().replace(/\/+$/, '');
+  if (!base) throw new Error('No website is connected yet (Settings \u2192 Connections \u2192 Website).');
   const headers = { 'x-cz-key': key };
   if (payload) headers['Content-Type'] = 'application/json';
   const r = await httpFetch(ctx, base + path, { method, headers, body: payload ? JSON.stringify(payload) : undefined });

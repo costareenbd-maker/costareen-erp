@@ -27,7 +27,7 @@ export async function erpWooConnectStart(ctx, payload) {
   const nonce = crypto.randomUUID().replace(/-/g, '');
   await setConfig(ctx, 'woo_auth', nonce + '|' + (Date.now() + 20 * 60e3));
   const q = new URLSearchParams({
-    app_name: 'Costareen ERP',
+    app_name: (str(ctx.s && ctx.s.businessName) || 'ERP').slice(0, 60),
     scope: 'read_write',
     user_id: ctx.biz + '.' + nonce,
     return_url: b.app + '#/settings?woo=back',

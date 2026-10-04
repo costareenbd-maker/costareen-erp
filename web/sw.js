@@ -1,4 +1,4 @@
-// Costareen ERP service worker.
+// ERP service worker.
 //
 // The app is online-only by design (no offline sales), so this worker only
 // makes it installable and keeps the app shell loading fast. Business data

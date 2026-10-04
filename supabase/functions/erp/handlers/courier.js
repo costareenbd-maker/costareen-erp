@@ -79,7 +79,9 @@ export async function sfCall(ctx, method, path, body) {
 async function czFetch(ctx, path) {
   const key = await getSecret(ctx, 'CZ_SYNC_KEY');
   if (!key) throw new Error('Website sync key not set. Run "Setup Website Sync" from the menu first.');
-  const base = String(await getConfig(ctx, 'website_api', WEBSITE_API)).trim() || WEBSITE_API;
+  const dflt = ctx.deps && ctx.deps.install && ctx.deps.install.id ? '' : WEBSITE_API;   // a company copy has no default website
+  const base = String(await getConfig(ctx, 'website_api', dflt)).trim() || dflt;
+  if (!base) throw new Error('No website is connected yet (Settings \u2192 Connections \u2192 Website).');
   const res = await httpFetch(ctx, base + path, { method: 'GET', headers: { 'x-cz-key': key } });
   if (res.code !== 200) throw new Error('Website returned HTTP ' + res.code + ': ' + String(res.text).substring(0, 300));
   return JSON.parse(res.text);
