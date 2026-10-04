@@ -26,6 +26,10 @@
  * touched) while the ninja leans on a button smoking; he flicks the cigarette away and walks in. A blue man who is hit
  * shouts and his mate joins. When one dies the cracks he made mend with a sparkle. The rope is shot with the bow.
  * Moves are earned: he starts with the basics and learns more with every enemy beaten (kept on this computer).
+ * v13 (weapons): he picks by distance and rage. Close: fists, and the katana once he is angry. Medium: the bow, or two
+ * pistols. Long, same level: a rifle burst. Far or high above: the sniper - he finds a clear line, kneels, a red line
+ * settles on the head, one sure shot (Blood on: the head comes off with a short fountain; Blood off: the hat flies and he
+ * drops). Rage rises with smashing near him, hits he takes and long fights, and cools between waves. Calm: no guns.
  */
 (function () {
   'use strict';
@@ -78,6 +82,12 @@
   P.slide = { L: -28, hy: 13, sF: -35, eF: 40, sB: -55, eB: 30, hF: 78, kF: -6, hB: 25, kB: -70 };
   P.smoke = { L: 2, hy: 21, sF: 30, eF: 140, sB: -35, eB: 110, hF: 12, kF: -14, hB: -12, kB: -16 };   // hand at the mouth, the other on the hip
   P.bowup = { L: -8, hy: 20, sF: 140, eF: 0, sB: 128, eB: 62, hF: 30, kF: -30, hB: -22, kB: -18 };     // the bow raised, string drawn
+  P.slash = { L: 22, hy: 19, sF: 40, eF: 8, sB: 20, eB: 110, hF: 42, kF: -42, hB: -30, kB: -20 };      // the katana swung down
+  P.slash2 = { L: -6, hy: 20, sF: 155, eF: 0, sB: 30, eB: 100, hF: 30, kF: -36, hB: -26, kB: -22 };    // and back up
+  P.slash3 = { L: 28, hy: 16, sF: 80, eF: 0, sB: -40, eB: 60, hF: 70, kF: -70, hB: -40, kB: -40 };     // the lunging thrust
+  P.pistols = { L: 4, hy: 20, sF: 90, eF: 0, sB: 86, eB: 4, hF: 26, kF: -36, hB: -22, kB: -26 };
+  P.rifle = { L: 6, hy: 20, sF: 86, eF: 14, sB: 100, eB: 64, hF: 28, kF: -38, hB: -24, kB: -26 };
+  P.kneel = { L: 6, hy: 12, sF: 86, eF: 14, sB: 100, eB: 64, hF: 88, kF: -96, hB: -40, kB: -112 };
   P.point = { L: 2, hy: 21, sF: 118, eF: 4, sB: 18, eB: 40, hF: 14, kF: -16, hB: -14, kB: -20 };       // "there he is"
   P.hookaim = { L: -10, hy: 20, sF: 150, eF: 8, sB: 120, eB: 30, hF: 22, kF: -30, hB: -20, kB: -24 };   // looking up, the hook gun raised
   // moves in a written fight: pose, length, the moment it lands, the distance it lands from
@@ -124,7 +134,10 @@
     round: { pose: 'kick', hit: 0.14, act: 0.12, end: 0.42, reach: 28, dmg: 18, kb: 860, up: 380, heavy: 1, spin: 1 },
     sweep: { hit: 0.1, act: 0.12, end: 0.38, reach: 28, dmg: 10, kb: 120, up: 380, low: 1 },
     flykick: { hit: 0.02, act: 0.45, end: 0.5, reach: 22, dmg: 18, kb: 680, up: 300, air: 1, heavy: 1 },
-    grab: { hit: 0.08, act: 0.12, end: 0.45, reach: 30, dmg: 0, grab: 1 }
+    grab: { hit: 0.08, act: 0.12, end: 0.45, reach: 30, dmg: 0, grab: 1 },
+    slash: { hit: 0.07, act: 0.09, end: 0.24, reach: 34, dmg: 14, kb: 220, up: 0, blade: 1, next: 'slash2' },
+    slash2: { hit: 0.07, act: 0.09, end: 0.26, reach: 34, dmg: 14, kb: 240, up: 0, blade: 1, next: 'slash3' },
+    slash3: { hit: 0.1, act: 0.1, end: 0.36, reach: 40, dmg: 22, kb: 620, up: 300, heavy: 1, blade: 1 }
   };
 
   window.ERP_STICK = function (o) {
@@ -138,7 +151,7 @@
     var mx = -999, my = -999, mouseT = -99, scanT = 0, now = 0, nextFoeT = 1, kills = 0;
     var cho = null, choCd = 3, slowT = 0, thirdT = -1, lastCho = '';
     // moves he learns: the basics from the start, the rest one by one as enemies are beaten (kept on this computer)
-    var UNLOCK = { round: 3, backflip: 5, slide: 7, flykick: 9, counter: 12, spin: 14, slam: 17, axe: 20, ropepull: 24, split: 28 };
+    var UNLOCK = { round: 3, katana: 4, backflip: 5, slide: 7, flykick: 9, pistols: 10, counter: 12, spin: 14, slam: 17, rifle: 18, axe: 20, sniper: 22, ropepull: 24, split: 28 };
     var XP = (function () { try { return Number(localStorage.getItem('erp_stick_kills')) || 0; } catch (e) { return 0; } })();
     function can(mv) { return (UNLOCK[mv] || 0) <= XP; }
     function learnt() { XP++; try { localStorage.setItem('erp_stick_kills', String(XP)); } catch (e) {} }
@@ -297,6 +310,7 @@
       var gx = r.left + rx, gy = r.top + ry;
       for (var b = 0; b < 3; b++) fx.push({ k: 'bit', x: gx, y: gy, vx: (Math.random() - 0.5) * 160, vy: -60 - Math.random() * 160, t: 0.6, T: 0.6 });
       dust(gx, gy, 3); shake(1.2);
+      if (hero && Math.hypot(gx - hero.x, gy - hero.y) < 420) hero.rage = Math.min(100, (hero.rage || 0) + 3);   // smashing in front of him makes him angry
     }
     function mendBy(m) {   // he is beaten: what he broke mends, with a sparkle
       cracks.forEach(function (c) {
@@ -336,7 +350,7 @@
         return;
       }
       if (b.st === 'block' && b.dir === -dir) { spark(b.x - dir * 6, b.y - 28, 6); b.vx = dir * A.kb * 0.3; return; }
-      if (b !== hero) b.hp -= A.dmg; else b.sta -= A.dmg * 1.4;
+      if (b !== hero) b.hp -= A.dmg; else { b.sta -= A.dmg * 1.4; b.rage = Math.min(100, (b.rage || 0) + 10); }
       b.flash = 0.1;
       bleed(b.x, b.y - 30, dir, A.heavy ? 14 : 7); spark(b.x - dir * 4, b.y - 30, 8);
       fx.push({ k: 'ring', x: b.x - dir * 4, y: b.y - 30, t: 0.2, T: 0.2 });
@@ -395,6 +409,7 @@
         if (p.x < M) { p.x = M; p.px = M + vx * 0.5; } if (p.x > W - M) { p.x = W - M; p.px = W - M + vx * 0.5; } if (p.y > H - M) { p.y = H - M; p.py = p.y + vy * 0.3; }
       }
       for (var it = 0; it < 3; it++) r.sticks.forEach(function (s) { var a = r.pts[s[0]], b = r.pts[s[1]], dx = b.x - a.x, dy = b.y - a.y, d = Math.hypot(dx, dy) || 0.01, df = (d - s[2]) / d * 0.5; a.x += dx * df; a.y += dy * df; b.x -= dx * df; b.y -= dy * df; });
+      if (r.fountain > 0 && blood) { r.fountain -= dt; r.fT = (r.fT || 0) - dt; if (r.fT <= 0) { r.fT = 0.03; var nk = r.pts.neck; fx.push({ k: 'blood', x: nk.x, y: nk.y, vx: (Math.random() - 0.5) * 70, vy: -170 - Math.random() * 150, t: 1.2, T: 1.2, r: 1.2 }); } }
       if (blood && r.t < 0.6) { r.bleedT -= dt; if (r.bleedT <= 0) { r.bleedT = 0.18; var n = r.pts.neck; fx.push({ k: 'blood', x: n.x, y: n.y, vx: (Math.random() - 0.5) * 70, vy: -50, t: 1.2, T: 1.2, r: 1.3 }); } }
     }
 
@@ -541,6 +556,7 @@
     }
     function attackChoice(m) {
       var r = Math.random();
+      if (m === hero && brutal(m) && can('katana') && r < 0.75) return 'slash';
       if (m === hero) { var a2 = r < 0.3 ? 'grab' : r < 0.48 ? 'jab' : r < 0.62 ? 'round' : r < 0.78 ? 'kick' : r < 0.9 ? 'upper' : 'sweep'; return a2 === 'round' && !can('round') ? 'kick' : a2; }
       return r < 0.15 ? 'grab' : r < 0.47 ? 'jab' : r < 0.67 ? 'kick' : r < 0.78 ? 'round' : r < 0.9 ? 'sweep' : 'upper';
     }
@@ -633,6 +649,55 @@
       }
       return false;
     }
+    // ---- weapons (v13)
+    function guns() { return mode !== 'calm'; }
+    function brutal(m) { return (m.rage || 0) >= 50; }
+    function losTo(m, tg) { return ropeClear(m.x, m.y - 34, tg.x, tg.y - 30, tg.on, m.on); }
+    function fireAt(m, tg, hand, p, A) {   // one bullet: a tracer to him (or past him when it misses)
+      var J = joints(m, pose(m)), h = J[hand] || J.hF, tx = tg.x, ty = tg.y - 30, ang = Math.atan2(ty - h.y, tx - h.x);
+      var mx0 = h.x + Math.cos(ang) * 8, my0 = h.y + Math.sin(ang) * 8;
+      fx.push({ k: 'flash', x: mx0, y: my0, t: 0.06, T: 0.06 });
+      if (Math.random() < p && !tg.dying && tg.st !== 'flung' && !tg.cho) { fx.push({ k: 'tracer', x: mx0, y: my0, x2: tx, y2: ty, t: 0.08, T: 0.08 }); hurt(m, tg, A); }
+      else { var ex = tx + (Math.random() - 0.5) * 50, ey = ty + (Math.random() - 0.5) * 40; fx.push({ k: 'tracer', x: mx0, y: my0, x2: ex, y2: ey, t: 0.08, T: 0.08 }); spark(ex, ey, 3, '#fde68a'); }
+    }
+    function snipeSpot(m, tg) {   // a place on my ledge with a clear line to his head
+      if (!m.on) return null;
+      var best = null, bd = 1e9;
+      for (var x = m.on.x0 + 8; x <= m.on.x1 - 8; x += 18) {
+        if (!ropeClear(x, m.y - 30, tg.x, tg.y - 44, tg.on, m.on) || nearBlock(x, m.y)) continue;
+        var d = Math.abs(x - m.x); if (d < bd) { bd = d; best = x; }
+      }
+      return best;
+    }
+    function startSnipe(m, tg) { m.dir = tg.x >= m.x ? 1 : -1; m.vx = 0; begin(m, 'snipe'); m.gunAt = tg; m.lastSnipeK = kills; m.rangedCd = now + 4; }
+    function ranged(m, tg) {   // the weapon for the distance (and his mood); true when he started something
+      if (m !== hero || !m.on || !tg || !tg.on || tg.dying || tg.cho || m.cho || (m.rangedCd || 0) > now || nearBlock(m.x, m.y)) return false;
+      var d = Math.hypot(tg.x - m.x, tg.y - m.y), dy = m.y - tg.y, rag = brutal(m);
+      // the sniper: far away or high above, at most one kill in five
+      if (guns() && can('sniper') && (d > 450 || dy > 150) && kills - (m.lastSnipeK === undefined ? -99 : m.lastSnipeK) >= 4) {
+        if (ropeClear(m.x, m.y - 30, tg.x, tg.y - 44, tg.on, m.on)) { startSnipe(m, tg); return true; }
+        var sx = snipeSpot(m, tg);
+        if (sx !== null) { m.snipeAt = sx; m.snipeFor = tg; m.st = 'run'; m.dir = sx > m.x ? 1 : -1; m.vx = m.dir * RUN; return true; }
+      }
+      var los = losTo(m, tg);
+      if (!los) return false;
+      if (guns() && can('rifle') && rag && d > 380 && Math.abs(dy) < 90 && Math.random() < 0.6) { m.dir = tg.x >= m.x ? 1 : -1; m.vx = 0; begin(m, 'rifle'); m.gunAt = tg; m.shots = 3; m.nextShot = 0; m.rangedCd = now + 3.5; return true; }
+      if (guns() && can('pistols') && d > 140 && d < 420 && (rag || Math.random() < 0.3)) { m.dir = tg.x >= m.x ? 1 : -1; m.vx = 0; begin(m, 'shoot'); m.gunAt = tg; m.shots = 4 + Math.floor(Math.random() * 3); m.nextShot = 0; m.rangedCd = now + 3; return true; }
+      if (d > 150 && d < 460 && Math.random() < 0.35) { m.dir = tg.x >= m.x ? 1 : -1; m.vx = 0; begin(m, 'aim'); m.cd = 1.1; m.rangedCd = now + 3; return true; }   // the bow
+      m.rangedCd = now + 1.2;
+      return false;
+    }
+    function headshot(m, tg) {   // the sniper's one sure shot
+      var dir = tg.x >= m.x ? 1 : -1, hx = tg.x, hy = tg.y - 44;
+      if (blood) {
+        fx.push({ k: 'head', x: hx, y: hy, vx: dir * (120 + Math.random() * 90), vy: -260 - Math.random() * 80, t: 2.6, T: 2.6, team: tg.team, z: tg.sz || 1 });
+        bleed(hx, hy, dir, 18);
+      } else { fx.push({ k: 'hat', x: hx, y: hy - 4, vx: dir * 160, vy: -240, t: 1.4, T: 1.4 }); spark(hx, hy, 10, '#fde68a'); }
+      freeze(0.1); slowT = Math.max(slowT, 0.5); shake(4);
+      tg.hp = 0; tg.cho = 0; fling(tg, dir * 160, -120);
+      if (blood && tg.rag) { tg.rag.headless = 1; tg.rag.fountain = 0.9; }
+      setTimeout(function () { tg.dying = 1; }, 60);
+    }
     function ropePull(m, tg) {   // a rope arrow into him, then a pull - he comes flying to the ninja's fist
       m.hookCd = now + 6; m.dir = tg.x >= m.x ? 1 : -1;
       runSeq(m, [{ p: 'hookaim', d: 0.35, x0: m.x, y0: m.y, x1: m.x, y1: m.y, face: m.dir },
@@ -655,7 +720,13 @@
     function think(m, dt) {
       m.think -= dt; m.cd = Math.max(0, m.cd - dt);
       if (m === hero) m.sta = Math.min(100, m.sta + (m.st === 'pant' ? 22 : 3) * dt);
-      if (!m.on || ['atk', 'hit', 'land', 'flung', 'held', 'dead', 'rise', 'roll', 'aim', 'cho', 'seq', 'slide', 'point', 'smoke', 'yank'].indexOf(m.st) >= 0) return;
+      if (!m.on || ['atk', 'hit', 'land', 'flung', 'held', 'dead', 'rise', 'roll', 'aim', 'cho', 'seq', 'slide', 'point', 'smoke', 'yank', 'shoot', 'rifle', 'snipe'].indexOf(m.st) >= 0) return;
+      if (m.snipeAt !== undefined && m.snipeAt !== null) {   // on his way to a spot with a clear line
+        var sf = m.snipeFor;
+        if (!sf || sf.dying || !sf.on || m.st !== 'run') { m.snipeAt = null; }
+        else if (Math.abs(m.x - m.snipeAt) < 9) { m.snipeAt = null; startSnipe(m, sf); return; }
+        else return;
+      }
       if (m.dropTo) { if (m.st !== 'run') m.dropTo = null; else return; }   // (a planned drop runs on past the edge)
       if (nearBlock(m.x, m.y)) { escape(m); return; }
       var tg = enemyOf(m);
@@ -705,6 +776,7 @@
           if (!m.locked) { if (m.st !== 'look' && Math.random() < 0.35) { begin(m, 'look'); m.vx = 0; } else if (m.st !== 'look' && m.st !== 'walk') { m.st = 'walk'; m.vx = (Math.random() < 0.5 ? 1 : -1) * 60; } return; }
           if (now - m.lockAt < 0.5) return;                          // the "!" moment
           if (m.st === 'hide') begin(m, 'guard');
+          if (Math.random() < 0.45 && ranged(m, tg)) return;      // far: shoot from here instead of travelling (the sniper when it fits)
           if (goToward(m, tg)) return;
           if (tg.y - m.y > 60 && rappel(m, tg)) return;
           if (m.y - tg.y > 60 && hookPlan(m, tg)) return;
@@ -785,6 +857,7 @@
         begin(m, 'atk', attackChoice(m)); m.vx = 0; m.guardT = 0.08 + Math.random() * 0.25; return;
       }
       if (m.hookHit && now - m.hookHit < 1.6 && ad > 40 && ad < 170 && can('flykick') && !nearBlock(tg.x, tg.y)) { m.hookHit = 0; var Ah = planArc(m, tg.x - m.dir * 14, tg.y, tg.on, 26); if (Ah) { jumpTo(m, tg.x - m.dir * 14, tg.y, true, tg.on, Ah); m.flykick = 1; return; } }   // straight off the rope into a flying kick
+      if (m === hero && ad > 140 && Math.random() < 0.25 && ranged(m, tg)) return;
       if (m === hero && can('slide') && tg.on === m.on && ad > 60 && ad < 130 && Math.random() < 0.08 && !nearBlock(tg.x, tg.y)) { begin(m, 'slide'); m.vx = m.dir * 340; m.tackle = 1; return; }   // slide tackle
       if (m === hero && can('ropepull') && tg.on === m.on && ad > 140 && ad < 420 && (m.hookCd || 0) < now && Math.random() < 0.2 && ropeClear(m.x, m.y - 30, tg.x, tg.y - 28, null, m.on)) { ropePull(m, tg); return; }
       if (ad > 90 && ad < 150 && Math.random() < 0.06 && (m !== hero || can('flykick')) && !nearBlock(tg.x, tg.y)) { var A1 = planArc(m, tg.x - m.dir * 14, tg.y, tg.on, 22); if (A1) { jumpTo(m, tg.x - m.dir * 14, tg.y, false, tg.on, A1); m.flykick = 1; return; } }
@@ -884,6 +957,33 @@
         if (m.t > 0.55 && !m.done && tg) { m.done = 1; shoot(m, tg); scene.arrows++; }
         if (m.t > 0.85) begin(m, 'guard');
       } else if (m.st === 'roll') { m.vx = m.dir * 70; if (m.t > 0.35) begin(m, 'guard'); }
+      else if (m.st === 'shoot' || m.st === 'rifle') {   // two pistols (alternate hands), or a rifle burst after a short aim
+        m.vx = 0; var gt = m.gunAt;
+        if (!gt || gt.dying || gt.st === 'flung') { if (m.t > 0.3) begin(m, 'guard'); }
+        else {
+          m.dir = gt.x >= m.x ? 1 : -1; m.nextShot -= dt;
+          var rifle = m.st === 'rifle';
+          if (m.t > (rifle ? 0.45 : 0.22) && m.shots > 0 && m.nextShot <= 0) {
+            m.nextShot = rifle ? 0.09 : 0.13; m.shots--;
+            fireAt(m, gt, rifle ? 'hF' : (m.shots % 2 ? 'hB' : 'hF'), rifle ? 0.8 : 0.7, rifle ? { dmg: 10, kb: 200, up: 0 } : { dmg: 7, kb: 110, up: 0 });
+          }
+          if (m.shots <= 0 && m.nextShot <= 0 && m.t > 0.5) begin(m, 'guard');
+        }
+      }
+      else if (m.st === 'snipe') {   // kneel, the red line settles on his head, one shot
+        m.vx = 0; var sg = m.gunAt;
+        if (!sg || sg.dying) { if (m.t > 0.3) begin(m, 'guard'); }
+        else {
+          m.dir = sg.x >= m.x ? 1 : -1;
+          if (m.t >= 1.3 && !m.done) {
+            m.done = 1;
+            var Js = joints(m, P.kneel), sa = Math.atan2(sg.y - 44 - Js.hF.y, sg.x - Js.hF.x), smx = Js.hF.x + Math.cos(sa) * 30, smy = Js.hF.y + Math.sin(sa) * 30;
+            fx.push({ k: 'flash', x: smx, y: smy, t: 0.08, T: 0.08 }); fx.push({ k: 'tracer', x: smx, y: smy, x2: sg.x, y2: sg.y - 44, t: 0.12, T: 0.12 });
+            headshot(m, sg);
+          }
+          if (m.t > 1.8) begin(m, 'guard');
+        }
+      }
       else if (m.st === 'slide') {
         if (m.tackle && tg && tg.on === m.on && Math.abs(tg.x - m.x) < 18 && !tg.cho && tg.st !== 'flung') { m.tackle = 0; hurt(m, tg, { dmg: 10, kb: 160, up: 360 }); }
         if (m.t > (m.tackle ? 0.5 : 0.3)) { m.tackle = 0; begin(m, 'guard'); }
@@ -973,6 +1073,9 @@
       if (m.st === 'point') return mix(P.guard, P.point, ease(Math.min(1, m.t / 0.2)));
       if (m.st === 'smoke') { var sm = {}; for (var ks in P.smoke) sm[ks] = P.smoke[ks]; var drag = Math.sin(now * 1.3) > 0.7 ? 1 : 0; sm.eF += drag * 8; return sm; }
       if (m.st === 'yank') return P.hurt;
+      if (m.st === 'shoot') return mix(P.guard, P.pistols, ease(Math.min(1, m.t / 0.18)));
+      if (m.st === 'rifle') return mix(P.guard, P.rifle, ease(Math.min(1, m.t / 0.25)));
+      if (m.st === 'snipe') return mix(P.guard, P.kneel, ease(Math.min(1, m.t / 0.3)));
       if (m.st === 'run') { var s = Math.sin(m.ph), cc = Math.abs(Math.cos(m.ph)); return { L: 22 + cc * 4, hy: 19 + cc * 2, sF: 28 - s * 62, eF: 95 + s * 15, sB: 28 + s * 62, eB: 95 - s * 15, hF: 14 + 52 * s, kF: -22 - 85 * Math.max(0, -s), hB: 14 - 52 * s, kB: -22 - 85 * Math.max(0, s) }; }   // leaning in, bent arms pumping against the legs, the trailing knee folding high
       if (m.st === 'atk') {
         if (m.atk === 'toss') return m.t < 0.3 ? mix(P.grab, P.toss, ease(m.t / 0.3) * 0.8) : m.t < 0.45 ? P.toss : mix(P.toss, P.jab, ease((m.t - 0.45) / 0.12));
@@ -1008,11 +1111,11 @@
       var col = flash ? (dark() ? '#ffffff' : '#f87171') : colorOf(team);   // a hit flashes: white on dark pages, red on light ones (white would vanish)
       ctx.strokeStyle = col; ctx.lineWidth = 3.4 * (J.z || 1);
       [['neck', 'hip'], ['neck', 'eB'], ['eB', 'hB'], ['hip', 'kB'], ['kB', 'fB'], ['hip', 'kF'], ['kF', 'fF'], ['neck', 'eF'], ['eF', 'hF']].forEach(function (l) { ctx.beginPath(); ctx.moveTo(J[l[0]].x, J[l[0]].y); ctx.lineTo(J[l[1]].x, J[l[1]].y); ctx.stroke(); });
-      ctx.fillStyle = col; ctx.beginPath(); ctx.arc(J.head.x, J.head.y, 5.8 * (J.z || 1), 0, 7); ctx.fill();
+      if (!J.noHead) { ctx.fillStyle = col; ctx.beginPath(); ctx.arc(J.head.x, J.head.y, 5.8 * (J.z || 1), 0, 7); ctx.fill(); }
       ctx.restore();
     }
     function drawFighter(m) {
-      if (m.st === 'flung' && m.rag) { var JR = {}; for (var kk in m.rag.pts) JR[kk] = m.rag.pts[kk]; drawMan(JR, m.team, m.flash > 0, null, 0); return; }
+      if (m.st === 'flung' && m.rag) { var JR = {}; for (var kk in m.rag.pts) JR[kk] = m.rag.pts[kk]; JR.noHead = m.rag.headless; drawMan(JR, m.team, m.flash > 0, null, 0); return; }
       var p = pose(m), J = joints(m, p), ang = (m.flip || m.st === 'flung') ? -m.spin * m.dir : 0;
       if (m.st === 'roll') { ang = (m.t / 0.35) * Math.PI * 2 * m.dir; J = joints(m, P.land); }
       if (m.st === 'seq' && m.seq && m.seq[m.seqI] && m.seq[m.seqI].p === 'wall') ang = -m.dir * 0.5;   // feet on the wall, leaning back
@@ -1058,6 +1161,7 @@
         var pt2 = m.pulling; ctx.save(); ctx.strokeStyle = dark() ? '#c4b59a' : '#8b6a3e'; ctx.lineWidth = 1.4; ctx.beginPath(); ctx.moveTo(J.hF.x, J.hF.y); ctx.lineTo(pt2.x, pt2.y - 28); ctx.stroke(); ctx.restore();
       } else if (m.pulling) m.pulling = null;
       drawMan(J, m.team, m.flash > 0, c, ang, alpha);
+      drawWeapon(m, J);
       if (m.st === 'smoke') {   // the cigarette and its ember
         var ch = J.hF, ce = Math.sin(now * 1.3) > 0.7 ? '#fb923c' : '#ea580c';
         ctx.save(); ctx.strokeStyle = '#f8fafc'; ctx.lineWidth = 1.6; ctx.beginPath(); ctx.moveTo(ch.x, ch.y); ctx.lineTo(ch.x + m.dir * 5, ch.y - 1); ctx.stroke();
@@ -1085,7 +1189,39 @@
         ctx.restore();
       }
     }
-    function drawRag(r) { var a = r.t > 3 ? Math.max(0, 1 - (r.t - 3)) : 1, J = {}; for (var k in r.pts) J[k] = r.pts[k]; drawMan(J, r.team, false, null, 0, a); }
+    function drawRag(r) { var a = r.t > 3 ? Math.max(0, 1 - (r.t - 3)) : 1, J = {}; for (var k in r.pts) J[k] = r.pts[k]; J.noHead = r.headless; drawMan(J, r.team, false, null, 0, a); }
+    function drawWeapon(m, J) {
+      var steel = dark() ? '#e5e7eb' : '#475569', gun = dark() ? '#cbd5e1' : '#1f2937', tg = m.gunAt;
+      ctx.save(); ctx.lineCap = 'round';
+      // the katana: in his hand while he is angry (and has learnt it)
+      if (m === hero && brutal(m) && can('katana') && ['guard', 'atk', 'run', 'walk', 'idle', 'land', 'hit', 'block'].indexOf(m.st) >= 0) {
+        var vx = J.hF.x - J.eF.x, vy = J.hF.y - J.eF.y, L2 = Math.hypot(vx, vy) || 1; vx /= L2; vy /= L2;
+        var bx = J.hF.x + vx * 22, by = J.hF.y + vy * 22;
+        ctx.strokeStyle = '#7c2d12'; ctx.lineWidth = 2.2; ctx.beginPath(); ctx.moveTo(J.hF.x - vx * 3, J.hF.y - vy * 3); ctx.lineTo(J.hF.x + vx * 3, J.hF.y + vy * 3); ctx.stroke();
+        ctx.strokeStyle = steel; ctx.lineWidth = 1.6; ctx.beginPath(); ctx.moveTo(J.hF.x + vx * 3, J.hF.y + vy * 3); ctx.lineTo(bx, by); ctx.stroke();
+        if (m.st === 'atk' && ATK[m.atk] && ATK[m.atk].blade && m.t < ATK[m.atk].hit + ATK[m.atk].act + 0.05) {   // the bright arc of the swing
+          m.btrail = (m.btrail || []).concat([{ x: bx, y: by }]).slice(-7);
+          ctx.strokeStyle = 'rgba(255,255,255,.65)'; ctx.lineWidth = 2.4; ctx.beginPath(); m.btrail.forEach(function (q, i) { if (i) ctx.lineTo(q.x, q.y); else ctx.moveTo(q.x, q.y); }); ctx.stroke();
+        } else m.btrail = null;
+      }
+      if (m.st === 'shoot') {   // two pistols
+        ctx.strokeStyle = gun; ctx.lineWidth = 2.6;
+        [J.hF, J.hB].forEach(function (h) { ctx.beginPath(); ctx.moveTo(h.x, h.y); ctx.lineTo(h.x + m.dir * 6, h.y - 0.5); ctx.stroke(); ctx.beginPath(); ctx.moveTo(h.x, h.y); ctx.lineTo(h.x - m.dir * 0.5, h.y + 3); ctx.stroke(); });
+      }
+      if ((m.st === 'rifle' || m.st === 'snipe') && tg) {   // the rifle (the sniper's is longer, with a scope), pointed at him
+        var sn = m.st === 'snipe', ty = tg.y - (sn ? 44 : 30), a = Math.atan2(ty - J.hF.y, tg.x - J.hF.x), len = sn ? 30 : 24, cs = Math.cos(a), sn2 = Math.sin(a);
+        ctx.strokeStyle = gun; ctx.lineWidth = sn ? 2 : 2.6; ctx.beginPath(); ctx.moveTo(J.hF.x - cs * 10, J.hF.y - sn2 * 10); ctx.lineTo(J.hF.x + cs * len, J.hF.y + sn2 * len); ctx.stroke();
+        if (sn) {
+          ctx.lineWidth = 2.6; ctx.beginPath(); ctx.moveTo(J.hF.x + cs * 2 - sn2 * 3, J.hF.y + sn2 * 2 + cs * -3); ctx.lineTo(J.hF.x + cs * 10 - sn2 * 3, J.hF.y + sn2 * 10 + cs * -3); ctx.stroke();
+          if (m.t > 0.3 && m.t < 1.3) {   // the red line settling on his head
+            var k = Math.min(1, (m.t - 0.3) / 0.8), err = (1 - k) * 0.22 * Math.sin(m.t * 9), la = a + err, far = Math.hypot(tg.x - J.hF.x, ty - J.hF.y);
+            ctx.strokeStyle = 'rgba(239,68,68,.65)'; ctx.lineWidth = 0.8; ctx.beginPath(); ctx.moveTo(J.hF.x + cs * len, J.hF.y + sn2 * len); ctx.lineTo(J.hF.x + Math.cos(la) * far, J.hF.y + Math.sin(la) * far); ctx.stroke();
+            ctx.fillStyle = '#ef4444'; ctx.beginPath(); ctx.arc(J.hF.x + Math.cos(la) * far, J.hF.y + Math.sin(la) * far, 1.6, 0, 7); ctx.fill();
+          }
+        }
+      }
+      ctx.restore();
+    }
     function draw() {
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, W, H);
       if (shk > 0) ctx.translate((Math.random() - 0.5) * shk * 2, (Math.random() - 0.5) * shk * 2);
@@ -1114,6 +1250,10 @@
         var a = p.t / p.T; ctx.globalAlpha = Math.max(0, Math.min(1, a));
         if (p.k === 'blood') { ctx.fillStyle = '#b91c1c'; ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, 7); ctx.fill(); }
         else if (p.k === 'sweat') { ctx.fillStyle = '#bfdbfe'; ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, 7); ctx.fill(); }
+        else if (p.k === 'tracer') { ctx.strokeStyle = 'rgba(253,224,71,.9)'; ctx.lineWidth = 1.1; ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(p.x2, p.y2); ctx.stroke(); }
+        else if (p.k === 'flash') { ctx.fillStyle = '#fde047'; ctx.beginPath(); ctx.arc(p.x, p.y, 3.2, 0, 7); ctx.fill(); }
+        else if (p.k === 'head') { ctx.globalAlpha = Math.min(1, p.t * 2); ctx.fillStyle = colorOf(p.team); ctx.beginPath(); ctx.arc(p.x, p.y, 5.8 * (p.z || 1), 0, 7); ctx.fill(); }
+        else if (p.k === 'hat') { ctx.fillStyle = dk ? '#94a3b8' : '#334155'; ctx.beginPath(); ctx.moveTo(p.x - 5, p.y + 2); ctx.lineTo(p.x + 5, p.y + 2); ctx.lineTo(p.x, p.y - 4); ctx.fill(); }
         else if (p.k === 'bit') { ctx.fillStyle = dk ? '#94a3b8' : '#475569'; ctx.fillRect(p.x - 1, p.y - 1, 2.2, 2.2); }
         else if (p.k === 'butt') { ctx.fillStyle = '#f8fafc'; ctx.fillRect(p.x - 1.5, p.y - 0.6, 3, 1.2); ctx.fillStyle = '#fb923c'; ctx.fillRect(p.x + 1.2, p.y - 0.6, 1, 1.2); }
         else if (p.k === 'spark') { ctx.fillStyle = p.c; ctx.fillRect(p.x - 1, p.y - 1, 2.2, 2.2); }
@@ -1129,7 +1269,7 @@
     // ---- v7: written fights. Two (or three) on one ledge: the fight plays from a script. Every blow lands at its
     //   moment and the other side's answer (block, parry, duck, take it, go down, fly) is timed to it, like a film.
     function gone(m) {
-      if (m === foe || m === third) { learnt(); mendBy(m); }
+      if (m === foe || m === third) { learnt(); mendBy(m); if (hero) hero.rage = Math.max(0, (hero.rage || 0) - 15); }   // a man down lets some anger out
       if (m === foe) { foe = third; third = null; kills++; if (!foe) nextFoeT = 1.6 + Math.random(); else thirdT = 2 + Math.random() * 1.5; }
       else if (m === third) { third = null; kills++; thirdT = 2 + Math.random() * 1.5; }
       m.cho = 0;
@@ -1367,10 +1507,21 @@
       fx.forEach(function (p) {
         p.t -= dt; p.x += p.vx * dt || 0; p.y += p.vy * dt || 0;
         if (p.k === 'blood') { p.vy += G * 0.6 * dt; for (var i = 0; i < plats.length; i++) { var q = plats[i]; if (p.x >= q.x0 && p.x <= q.x1 && p.y >= q.y && p.y - p.vy * dt <= q.y + 1 && p.vy > 0) { p.t = 0; decals.push({ x: p.x, y: q.y, on: q, r: p.r * 1.1, t: 5 }); break; } } }
-        if (p.k === 'spark' || p.k === 'sweat' || p.k === 'bit' || p.k === 'butt') p.vy += 900 * dt;
+        if (p.k === 'spark' || p.k === 'sweat' || p.k === 'bit' || p.k === 'butt' || p.k === 'hat') p.vy += 900 * dt;
+        if (p.k === 'head') {   // it bounces on the tops and rolls to a stop
+          p.vy += G * dt;
+          for (var hi = 0; hi < plats.length; hi++) { var hq = plats[hi]; if (p.vy > 0 && p.x >= hq.x0 && p.x <= hq.x1 && p.y + 5 >= hq.y && p.y + 5 - p.vy * dt <= hq.y + 1) { p.y = hq.y - 5; p.vy = -p.vy * 0.35; p.vx *= 0.6; if (Math.abs(p.vy) < 40) p.vy = 0; break; } }
+          if (p.x < M) { p.x = M; p.vx = Math.abs(p.vx) * 0.5; } if (p.x > W - M) { p.x = W - M; p.vx = -Math.abs(p.vx) * 0.5; } if (p.y > H - M - 5) { p.y = H - M - 5; p.vy = 0; p.vx *= 0.9; }
+        }
       });
       fx = fx.filter(function (p) { return p.t > 0; });
-      cracks.forEach(function (c) { c.t += dt; if (c.mend) c.mend += dt; else if (c.t > 3.5) c.mend = 0.001; });   // a mark fades by itself after a few seconds cracks = cracks.filter(function (c) { return !c.dead && !(c.mend > 1.2); });
+      cracks.forEach(function (c) { c.t += dt; if (c.mend) c.mend += dt; else if (c.t > 3.5) c.mend = 0.001; });
+      if (hero) {   // rage: up while fighting close, down when nobody is about; a wave over leaves little of it
+        var es2 = [foe, third].filter(function (e) { return e && !e.dying; }), dmin = es2.length ? Math.min.apply(null, es2.map(function (e) { return Math.hypot(e.x - hero.x, e.y - hero.y); })) : 1e9;
+        if (dmin < 140) hero.rage = Math.min(100, (hero.rage || 0) + 3 * dt); else if (dmin > 300) hero.rage = Math.max(0, (hero.rage || 0) - 2.5 * dt);
+        if (!es2.length && hero.rage > 15) hero.rage *= Math.pow(0.5, dt);
+        if (hero.rage >= 50) { hero.bt = (hero.bt || 0) + dt; if (hero.bt > 15) { hero.rage = 30; hero.bt = 0; } } else hero.bt = 0;   // an angry spell lasts a while, then he cools
+      }   // a mark fades by itself after a few seconds cracks = cracks.filter(function (c) { return !c.dead && !(c.mend > 1.2); });
       decals.forEach(function (d) { d.t -= dt; }); decals = decals.filter(function (d) { return d.t > 0; }); if (decals.length > 160) decals.splice(0, decals.length - 160);
       draw();
     }

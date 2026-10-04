@@ -730,3 +730,6 @@ Opening: the ninja leans on a button smoking (ember, smoke puffs) while two blue
 
 ## Stick fight: fewer, fainter cracks (2026-10-05)
 Half the smash blows leave no mark; a mark has 2-3 short lines (was 3-5 long), fainter, at most two per element and 12 on the page; each fades by itself after ~3.5 s (still mends at once when its maker dies). Fewer flying bits.
+
+## Stick fight v13: weapons and the sniper (2026-10-05)
+Rage (hidden) rises with smashing near him (+3), hits he takes (+10), close fighting (+3/s); falls when nobody is near, by 15 per kill, and an angry spell ends after ~15 s. Angry + learnt: katana combo (down, up, lunge; blade arc). Medium range with a clear line: bow, or two pistols (alternating hands, tracers, 70% hits). Long range same level when angry: rifle burst (80%). Far or high above: sniper - walks to a spot with a clear line if needed, kneels, red line settles on the head, one sure shot; Blood on: head flies off and bounces, short neck fountain; Blood off: hat flies, he drops. Sniper at most one kill in five. Earned: katana 4, pistols 10, rifle 18, sniper 22 (menu total now 20). Calm mode: no guns. Simulated on 4 screens with all weapons learnt: every weapon used, headshot works, no guns in Calm, no errors.
