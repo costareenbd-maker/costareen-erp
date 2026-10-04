@@ -499,3 +499,12 @@
 - Endless mode (select screen: Story / Endless): one round each, health carries over (+35), the boss every 6th fight, damage keeps rising; best streak kept per device. Champion screen with confetti.
 - fight.js 87 KB (26 KB downloaded), still only when the Brawl tab opens.
 - Checked: all 9 supers deal damage (scripted), level-5 computer beat a button-mashing script, endless streak and health carry-over, sound on/off without errors, captured frames.
+
+## stick-1 — stick fight across the ERP pages (2026-10-04)
+- A red ninja (headband, sword, shuriken) fights black stickmen all day on the outlines of the page, in the style of the Terkoiz "Shock" videos the owner showed. Own code (ideas from GitHub stickman projects: bone skeleton, verlet ragdolls, enemy waves), web/games/stickfight.js, 30 KB, loaded only when it is on.
+- Floors = top lines of cards, buttons, the save bar, list views, chips, the game strip, the title-bar buttons; walls = sides of tall boxes (not the narrow gap between two boxes). They never fly: jumps are real arcs to ledges they can reach, wall cling + wall jump, drop off edges, ride along on scroll; floors re-read on scroll, resize and every 0.5 s.
+- Moves: punch, kick, uppercut, roundhouse, sword slash (crescent), flying kick, shuriken, block, taunt; knockback off ledges, tumbles; knocked-out fighters become ragdolls that tumble down the boxes and fade; new enemies appear in smoke.
+- Blood (cartoon): red drops that land on the ledges as splats and fade after ~9 s; switchable. Stickmen are faceless.
+- Keeps clear of the mouse (a ~190 px circle: they flip or run to a ledge outside it) and of the field being typed in.
+- Never on New invoice or Quotations (button hidden there too), never while a dialog/popup/print preview is open, when the tab is hidden, or below 900 px. Esc twice hides it at once; the ⚔ button (bottom right) brings it back and offers On / Calm / Off and Blood on/off, remembered per person. The owner's Maintenance switch (who sees the games) covers it too.
+- Checked on a test page and in the ERP (Sales, Customers, Products): fights, deaths/ragdolls, blood decals, off on New invoice, cursor circle empty after 1 s, Esc-twice hide, button restore. Not checked: real mouse use and how distracting it is over a full day.
