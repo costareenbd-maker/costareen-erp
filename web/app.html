@@ -13,6 +13,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="ERP">
 <link rel="preconnect" href="https://oqzcuuytytqadqjlwdsh.supabase.co" crossorigin>
+<script>window.ERP_HASH0 = location.hash || "";</script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -8329,15 +8330,15 @@ try {
   if (SB) SB.auth.onAuthStateChange(function (event) {
     if (event !== 'PASSWORD_RECOVERY') return;
     setTimeout(async function () {
-      var p1 = (await uiPrompt('Choose a new password for the owner account (at least 10 characters):', ''));
-      if (!p1) return;
-      if (p1.length < 10) { (await uiAlert('That is shorter than 10 characters. Open the link from the email again.')); return; }
+      var p1 = (await uiPrompt('Welcome! Choose your password for the ERP (at least 10 characters):', ''));
+      if (!p1) { (await uiAlert('No password was saved. Open the link from the e-mail again when you are ready, or press "Forgot the password?" on the sign-in screen for a new one.')); return; }
+      if (p1.length < 10) { (await uiAlert('That is shorter than 10 characters. Open the link from the e-mail again (it works until you save a password), or press "Forgot the password?" for a new one.')); return; }
       var p2 = (await uiPrompt('Type the same password again:', ''));
       if (p1 !== p2) { (await uiAlert('The two did not match. Open the link from the email again.')); return; }
       SB.auth.updateUser({ password: p1 }).then(async function (r) {
         if (r.error) { (await uiAlert('Could not change it: ' + r.error.message)); return; }
         try { history.replaceState(null, '', location.pathname); } catch (e) {}
-        (await uiAlert('Password changed. Use it with "Owner? Sign in with email" from now on.'));
+        (await uiAlert('Password saved. From now on sign in with your e-mail and this password.'));
         signIn();
       });
     }, 300);
@@ -10150,7 +10151,7 @@ function wireGate() {
       if (r.error) throw r.error;
       gateNeedsCode(function () { gateHello(fail); });
     }).catch(function (e) {
-      fail(/invalid/i.test(String(e && e.message)) ? 'That email and password do not match.' : ((e && e.message) || String(e)));
+      fail(/invalid/i.test(String(e && e.message)) ? 'That e-mail and password do not match. New here? You choose your password from the link in the e-mail you were sent - or press "Forgot the password?" below for a new link.' : ((e && e.message) || String(e)));
     });
   }
   if (og) og.addEventListener('click', ownerIn);
@@ -17699,6 +17700,25 @@ document.addEventListener('change', function (ev) {
   rd.readAsText(t.files[0], 'utf-8');
   t.value = '';
 });
+</script>
+<!-- set-password links: an expired or used link says so (2026-10-04) -->
+<script>
+(function () {
+  var h = window.ERP_HASH0 || '';
+  if (!/error_code=|error=access_denied/.test(h)) return;
+  var why = /otp_expired|expired/i.test(h) ? 'This link has expired or was already used.' : 'This link did not work.';
+  try { history.replaceState(null, '', location.pathname); } catch (e) {}
+  var n = 0, t = setInterval(function () {
+    if (++n > 60) { clearInterval(t); return; }
+    if (typeof ME !== 'undefined' && ME) { clearInterval(t); return; }
+    if (!document.getElementById('gate_email') && !document.querySelector('.gate')) return;
+    clearInterval(t);
+    try { if (typeof GATE_TAB !== 'undefined') GATE_TAB = 'owner'; } catch (e) {}
+    GATE_OK = false;
+    ME_MSG = why + ' Type your e-mail below and press "Forgot the password?" - a new link comes by e-mail. Open the newest e-mail only: each new link cancels the older ones.';
+    paintGate();
+  }, 250);
+})();
 </script>
 </body>
 </html>
