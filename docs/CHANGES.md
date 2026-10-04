@@ -704,3 +704,6 @@ Tests: powers 33; d6/erp_server/goods/stock switch the manager's Product cost of
 
 ## Hover on everything you can press (2026-10-05)
 One CSS layer (mouse only): buttons lift with a shadow and sink when pressed; tabs, chips, phone tab bar, drop-downs, side-menu group headers, dashboard alert cards, list pager, home tiles and links light up. Keyboard focus gets a blue ring. Audit over every screen: no clickable element left without a hover (except the tab already open). Respects reduced motion.
+
+## Stick fight v9: parkour (2026-10-05)
+No more giant leaps. Moves a person can do: running hop (max 150 across, 50 up), jump to a higher edge then hang and pull up (105 up), run up a box side then hang and pull up (170 up), climb over a box edge from inside (table rows, cards), step off or lower-hang-drop (380 down). Roll after a hard landing, slide after a fast one. Route finder (quickest chain of moves) for chases; new "pursuit" scene (one runs, the other follows). New fighters drop in from the top. Nobody stays on the bottom line: they climb back up; written fights never start there. Checked by simulation on 15 screens: highest hop 52px, longest 122px, no stuck spells, no errors, about 0.3 ms a frame. Not watched live in a real browser window (the preview pane was hidden).

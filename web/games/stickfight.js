@@ -10,10 +10,14 @@
  * and a more natural run.
  * v8: always two blue men (one team) against the ninja; three-man written fights first, where each side reads the
  * other's next move (parry, slip, a blow behind without looking, a split kick into both); nobody runs backwards.
+ * v9 (parkour): no more giant leaps. They get about by free-running: short running hops (150 across, 50 up at most),
+ * a jump to the edge of a higher box then hang and pull up, a run up the side of a box, lowering from an edge and
+ * dropping, a roll after a hard landing and a slide after a fast one. A route finder picks the quickest chain of
+ * moves, so a chase goes button to button across the page; a "pursuit" scene has one run and the other follow.
  */
 (function () {
   'use strict';
-  var G = 1900, ZONE = 95, REACH_X = 640, REACH_UP = 340, M = 96;   // M: about an inch kept clear at the left, right and bottom
+  var G = 1900, ZONE = 95, M = 96;   // M: about an inch kept clear at the left, right and bottom
   var SEL = '#nav button, header.topbar input, header.topbar button, header.topbar select, #view .tabs button, #view .seg button, #view input, #view select, #view .card, #view .kpi, #view .hero, #view .qa, #view .note, #view .grid > *, #view .chips > *, #view h2, #view canvas, #view tbody tr, #view .btn, #view button, #view .c3bar, #view .o_lv, #view .pill, #view .cchip, #o_cp .btn, #o_cp .cchip, #pgame';
   var HERO_D = '#c9a43a', HERO_L = '#f59e0b', FOE = '#2563eb', FOE_D = '#2c4387', THIRD = '#7c3aed', THIRD_D = '#6d4aa8';
 
@@ -58,6 +62,8 @@
   P.parry = { L: 5, hy: 19, sF: 125, eF: 60, sB: 50, eB: 140, hF: 32, kF: -48, hB: -26, kB: -34 };
   P.split = { L: 0, hy: 15, sF: 95, eF: 0, sB: 95, eB: 0, hF: 95, kF: 0, hB: -95, kB: 0 };
   P.lie = { L: 0, hy: 21, sF: 165, eF: 15, sB: 150, eB: 25, hF: 8, kF: -6, hB: -8, kB: -14 };
+  P.hang = { L: -4, hy: 21, sF: 172, eF: 6, sB: 166, eB: 12, hF: 12, kF: -14, hB: -4, kB: -24 };       // hands 50 above the feet, on an edge
+  P.slide = { L: -28, hy: 13, sF: -35, eF: 40, sB: -55, eB: 30, hF: 78, kF: -6, hB: 25, kB: -70 };
   // moves in a written fight: pose, length, the moment it lands, the distance it lands from
   var MV = {
     jab: { p: 'jab', d: 0.24, hit: 0.08, r: 28 }, cross: { p: 'cross', d: 0.28, hit: 0.1, r: 28 }, hook: { p: 'hook', d: 0.32, hit: 0.13, r: 24 },
@@ -112,7 +118,7 @@
     document.body.appendChild(cv);
     var ctx = cv.getContext('2d'), W = 0, H = 0, dpr = 1;
     var mode = o.mode || 'on', blood = o.blood !== false, on = false, raf = 0, last = 0, acc = 0;
-    var plats = [], boxes = [], links = [], hero = null, foe = null, third = null, fx = [], decals = [], rags = [];
+    var plats = [], boxes = [], hero = null, foe = null, third = null, fx = [], decals = [], rags = [];
     var mx = -999, my = -999, mouseT = -99, scanT = 0, now = 0, nextFoeT = 1, kills = 0;
     var cho = null, choCd = 3, slowT = 0, thirdT = -1, lastCho = '';
 
@@ -131,10 +137,17 @@
         var r = e.getBoundingClientRect();
         if (r.width < 26 || r.height < 14 || r.bottom < 0 || r.top > H - M || r.top < 4) continue;
         var x0 = Math.max(M, r.left + 2), x1 = Math.min(W - M, r.right - 2);
-        if (x1 - x0 >= 24) np.push({ el: e, x0: x0, x1: x1, y: r.top });
+        if (x1 - x0 >= 24) np.push({ el: e, x0: x0, x1: x1, y: r.top, yb: r.bottom });
         if (r.height < 60 && r.width < 500 && e.matches('button, .btn, .pill, .cchip, input, select')) nb.push({ el: e, x0: r.left, x1: r.right, y0: r.top, y1: r.bottom });
       }
       np.push({ el: null, x0: M, x1: W - M, y: H - M, ground: 1 });   // a last-resort floor an inch above the bottom
+      var same = function (q) { return !q ? null : q.ground ? np[np.length - 1] : (q.el ? np.filter(function (p) { return p.el === q.el; })[0] || null : null); };
+      [hero, foe, third].forEach(function (m) {
+        if (!m) return;
+        ['trip', 'fleeTo', 'actP', 'upTo'].forEach(function (k) { if (m[k]) m[k] = same(m[k]); });
+        if (m.act && !m.actP) m.act = null;
+        if (m.seqEnd) { if (m.seqEnd.land) { var L2 = same(m.seqEnd.land); if (L2) m.seqEnd.land = L2; else m.seqEnd = { fall: { vx: 0, aim: null } }; } if (m.seqEnd.fall && m.seqEnd.fall.aim) m.seqEnd.fall.aim = same(m.seqEnd.fall.aim); }
+      });
       [hero, foe, third].forEach(function (m) {
         if (m && m.aim) { m.aim = m.aim.el ? np.filter(function (p) { return p.el === m.aim.el; })[0] || null : null; }
         if (!m || !m.on) return;
@@ -142,24 +155,85 @@
         if (q) { m.x = q.x0 + (m.x - m.on.x0); m.y = q.y; m.on = q; if (m.x < q.x0 - 2 || m.x > q.x1 + 2) m.on = null; } else m.on = null;
       });
       decals.forEach(function (d) { if (!d.on) return; var q = d.on.el ? np.filter(function (p) { return p.el === d.on.el; })[0] : np[np.length - 1]; if (q) { d.x = q.x0 + (d.x - d.on.x0); d.y = q.y; d.on = q; } else d.t = 0; });
-      plats = np; boxes = nb;
-      // which ledge can be reached from which (one long jump)
-      links = plats.map(function (a) { return plats.map(function (b, j) { return b !== a && canJump(a, b) ? j : -1; }).filter(function (j) { return j >= 0; }); });
+      plats = np; boxes = nb; pcache = {};
+      buildEdges();
     }
     function spot(a, b, fromX) { return Math.max(b.x0 + 8, Math.min(b.x1 - 8, fromX)); }
-    function canJump(a, b) {
-      var gap = b.x0 > a.x1 ? b.x0 - a.x1 : a.x0 > b.x1 ? a.x0 - b.x1 : 0, rise = a.y - b.y;
-      return gap < REACH_X && rise < REACH_UP && b.x1 - b.x0 > 20;
-    }
     function idx(p) { return plats.indexOf(p); }
-    function route(from, to) {   // the next ledge on the shortest chain of jumps
-      var a = idx(from), b = idx(to); if (a < 0 || b < 0) return null; if (a === b) return to;
-      var prev = {}, q = [a]; prev[a] = -1;
-      while (q.length) { var c = q.shift(); if (c === b) break; (links[c] || []).forEach(function (n) { if (prev[n] === undefined) { prev[n] = c; q.push(n); } }); }
-      if (prev[b] === undefined) return null;
-      var n = b; while (prev[n] !== a && prev[n] !== -1) n = prev[n];
-      return plats[n];
+    function cl(v, a, b) { return Math.max(a, Math.min(b, v)); }
+    // ---- parkour: what a person can really do. A running hop (150 across, 50 up), a jump to the edge of a higher
+    //   box then hang and pull up (105 up), a run up the side of a box then hang and pull up (170 up), stepping off
+    //   an edge, or lowering from it, hanging and letting go (down to 380). Nothing bigger.
+    var edges = [], pcache = {}, HOP_X = 150, HOP_UP = 50, CLIMB_UP = 105, WALL_UP = 170, DROP_MAX = 380, HANG = 50, RUN = 220;
+    function moveOf(a, b) {
+      if (a === b || b.x1 - b.x0 < 20) return null;
+      var rise = a.y - b.y, gap = b.x0 > a.x1 ? b.x0 - a.x1 : a.x0 > b.x1 ? a.x0 - b.x1 : 0, best = null;
+      if (gap > 300 || rise > WALL_UP || -rise > DROP_MAX) return null;
+      function keep(mv) { if (mv && (!best || mv.cost < best.cost)) best = mv; }
+      if (rise <= 8) {                                            // level, or down
+        var d = -rise;
+        if (gap > 0 && gap <= HOP_X + (d > 20 ? 40 : 0)) {
+          var right = b.x0 > a.x1;
+          keep({ k: 'hop', s: right ? a.x1 - 4 : a.x0 + 4, lx: right ? Math.min(b.x1 - 8, b.x0 + 14) : Math.max(b.x0 + 8, b.x1 - 14), side: right ? 1 : -1, cost: 0.3 + gap / 400 + d / 900 });
+        }
+        if (d > 12) [a.x0, a.x1].forEach(function (e, i) {      // off one of my edges and down onto b
+          var side = i ? 1 : -1, sy = d > 70 ? a.y + HANG : a.y, t = Math.sqrt(2 * Math.max(4, b.y - sy) / G);
+          var lx = cl(e + side * 6, b.x0 + 8, b.x1 - 8);
+          if (Math.abs(lx - e) / t > 260) return;
+          keep({ k: d > 70 ? 'drop' : 'off', s: e - side * 4, e: e, lx: lx, side: side, vx: (lx - e) / t, cost: 0.3 + t + (d > 70 ? 0.45 : 0) });
+        });
+        return best;
+      }
+      [b.x0, b.x1].forEach(function (E, i) {
+        var side = i ? -1 : 1, s0 = cl(E - side * 10, a.x0 + 4, a.x1 - 4), reach = (E - s0) * side, wall = b.yb !== undefined && a.y - b.yb <= 40;
+        // up from outside, beside one of b's edges: hop, jump to the edge and pull up, or run up its side
+        if (reach >= 2) {
+          if (rise <= HOP_UP && reach <= 120) keep({ k: 'hop', s: s0, lx: E + side * 12, side: side, cost: 0.35 + reach / 400 });
+          else if (rise <= CLIMB_UP && reach <= 60) keep({ k: 'climb', s: s0, hx: E - side * 3, fx: E + side * 10, face: side, cost: 1.0 + reach / 400 });
+          else if (reach <= 26 && wall) keep({ k: 'wall', s: s0, hx: E - side * 3, fx: E + side * 10, face: side, cost: 1.3 });
+        }
+        // up from inside b (a row in a table, a button in a card): to its edge, hang there and climb over the top
+        var si = E + side * 12;
+        if (si > a.x0 + 3 && si < a.x1 - 3 && E > a.x0 - 40 && E < a.x1 + 40) {
+          if (rise <= CLIMB_UP) keep({ k: 'climb', s: si, hx: E + side * 3, fx: E + side * 14, face: -side, cost: 1.1 });
+          else if (wall) keep({ k: 'wall', s: si, hx: E + side * 3, fx: E + side * 14, face: -side, cost: 1.4 });
+        }
+      });
+      return best;
     }
+    function buildEdges() {
+      // the bottom of the screen is a last resort: routes keep off it unless the other man is down there
+      edges = plats.map(function (a) { var out = []; plats.forEach(function (b, j) { var mv = moveOf(a, b); if (mv) { mv.to = j; if (b.ground) mv.cost += 3; out.push(mv); } }); return out; });
+    }
+    function landX(e) { return e.lx !== undefined ? e.lx : e.fx; }
+    // the quickest chain of moves from here to every ledge (running time on each ledge plus each move)
+    function paths(from, fromX) {
+      var a = idx(from); if (a < 0) return null;
+      var key = a + ':' + Math.round(fromX / 40), hit = pcache[key]; if (hit && now - hit.t < 0.4) return hit.P;
+      var n = plats.length, dist = [], prev = [], pe = [], xs = [], done = [];
+      for (var i = 0; i < n; i++) dist[i] = 1e9;
+      dist[a] = 0; xs[a] = fromX;
+      for (;;) {
+        var u = -1, bd = 1e9; for (var k = 0; k < n; k++) if (!done[k] && dist[k] < bd) { bd = dist[k]; u = k; }
+        if (u < 0) break; done[u] = 1;
+        var es = edges[u] || [];
+        for (var q = 0; q < es.length; q++) { var e = es[q], c = dist[u] + Math.abs(e.s - xs[u]) / RUN + e.cost; if (c < dist[e.to]) { dist[e.to] = c; prev[e.to] = u; pe[e.to] = e; xs[e.to] = landX(e); } }
+      }
+      var P2 = { dist: dist, prev: prev, pe: pe, from: a }; pcache[key] = { t: now, P: P2 }; return P2;
+    }
+    function firstMove(P2, to) {
+      var b = idx(to); if (!P2 || b < 0 || b === P2.from || !(P2.dist[b] < 1e9)) return null;
+      var n = b; while (P2.prev[n] !== P2.from) n = P2.prev[n];
+      return P2.pe[n];
+    }
+    function nearestReach(P2, x, y) {   // no way to him: the ledge I can reach that is closest to him
+      var best = null, bd = 1e9; if (!P2) return null;
+      plats.forEach(function (p, i) { if (!(P2.dist[i] < 1e9)) return; var d = Math.hypot(cl(x, p.x0, p.x1) - x, p.y - y) + P2.dist[i] * 15; if (d < bd) { bd = d; best = p; } });
+      return best;
+    }
+    function badKey(e) { var b = plats[e.to]; return e.k + Math.round(e.s) + ':' + (b ? Math.round(b.y) : 0); }
+    function isBad(m, e) { return m.bad && m.bad[badKey(e)] > now; }
+    function badMove(m, e) { m.bad = m.bad || {}; m.bad[badKey(e)] = now + 3; }
     function nearBlock(x, y) {
       if (now - mouseT < 6 && Math.hypot(x - mx, y - 22 - my) < ZONE + 16) return true;
       var a = document.activeElement;
@@ -182,7 +256,7 @@
       for (var i = 0; i < n; i++) fx.push({ k: 'blood', x: x, y: y, vx: dir * (60 + Math.random() * 280) + (Math.random() - 0.5) * 90, vy: -80 - Math.random() * 280, t: 1.4, T: 1.4, r: 1 + Math.random() * 1.9 });
     }
     function sweat(x, y, dir, n) { for (var i = 0; i < n; i++) fx.push({ k: 'sweat', x: x + (Math.random() - 0.5) * 6, y: y - 6, vx: dir * (30 + Math.random() * 90), vy: -60 - Math.random() * 120, t: 0.7, T: 0.7, r: 0.9 }); }
-    function begin(m, st, atk) { m.st = st; m.t = 0; m.done = 0; m.atk = atk || null; m.queue = null; }
+    function begin(m, st, atk) { m.st = st; m.t = 0; m.done = 0; m.atk = atk || null; m.queue = null; m.act = null; if (st !== 'seq') m.seq = null; }
     function enemyOf(m) {
       if (m !== hero) return hero;
       var a = foe && !foe.dying ? foe : null, b = third && !third.dying ? third : null;
@@ -190,12 +264,12 @@
       return Math.hypot(a.x - hero.x, a.y - hero.y) <= Math.hypot(b.x - hero.x, b.y - hero.y) ? a : b;
     }
     function hurt(a, b, A) {
-      if (!b || b.cho || b.st === 'dead' || b.st === 'flung' || b.st === 'held') return;
+      if (!b || b.cho || b.st === 'dead' || b.st === 'flung' || b.st === 'held' || b.st === 'seq') return;
       var dir = b.x >= a.x ? 1 : -1;
       // the ninja reads almost everything: he blocks or slips away and hits back
       if (b === hero && Math.random() < 0.55) {
         if (Math.random() < 0.5 && hero.on) { spark(b.x - dir * 6, b.y - 28, 6); begin(hero, 'block'); hero.counter = 1; }
-        else { jumpTo(hero, a.x - dir * 40, a.on ? a.on.y : hero.y, true, a.on); hero.ambush = 1; }
+        else { var Av = a.on ? planArc(hero, cl(a.x - dir * 40, a.on.x0 + 4, a.on.x1 - 4), a.on.y, a.on, 55) : null; if (Av) { jumpTo(hero, cl(a.x - dir * 40, a.on.x0 + 4, a.on.x1 - 4), a.on.y, true, a.on, Av); hero.ambush = 1; } else { begin(hero, 'block'); hero.counter = 1; } }
         return;
       }
       if (b.st === 'block' && b.dir === -dir) { spark(b.x - dir * 6, b.y - 28, 6); b.vx = dir * A.kb * 0.3; return; }
@@ -262,62 +336,122 @@
     }
 
     // ---- moving
-    function clearArc(m, x, y, T, plat) {
-      var vx = (x - m.x) / T, vy = -((m.y - y) + 0.5 * G * T * T) / T;
+    // a jump that rises only a little above the higher of the two floors (no more flying over the page)
+    function arcFor(m, x, y, extra) {
+      var dx = x - m.x, rise = m.y - y, h = Math.max(0, rise) + extra, vy = -Math.sqrt(2 * G * h), tu = -vy / G, td = Math.sqrt(2 * Math.max(1, h - rise) / G), T = tu + td;
+      return { vx: dx / T, vy: vy, T: T };
+    }
+    function clearArc(m, A, plat) {
+      var vx = A.vx, vy = A.vy, T = A.T;
       for (var k = 1; k < 12; k++) {
         var t = T * k / 12, px = m.x + vx * t, py = m.y + vy * t + 0.5 * G * t * t;
         if (py < 0) continue;
         for (var i = 0; i < boxes.length; i++) {
           var b = boxes[i];
           if (m.on && b.el === m.on.el) continue;
-          if (plat && b.el === plat.el && k > 8) continue;
+          if (plat && b.el === plat.el) continue;                // the box he lands on: he goes up beside it and onto it
           if (px + 5 > b.x0 && px - 5 < b.x1 && py > b.y0 + 2 && py - 40 < b.y1) return false;
         }
       }
       return true;
     }
-    function planT(m, x, y, plat) {   // a flight time whose arc is clear, or 0
-      var dx = x - m.x, rise = m.y - y, T = Math.max(0.36, Math.min(0.95, 0.3 + Math.abs(dx) / 900 + Math.max(0, rise) / 1000));
-      var tries = [T, Math.min(1.05, T * 1.2), Math.min(1.1, T * 1.4), T * 0.8];
-      for (var i = 0; i < tries.length; i++) if (clearArc(m, x, y, tries[i], plat)) return tries[i];
-      return 0;
+    function planArc(m, x, y, plat, extra0) {   // the lowest of three arcs that clears the boxes on the way, or null
+      var base = extra0 !== undefined ? extra0 : 16 + Math.min(26, Math.abs(x - m.x) * 0.12), tries = [base, base + 14, base + 30];
+      for (var i = 0; i < tries.length; i++) { var A = arcFor(m, x, y, tries[i]); if (clearArc(m, A, plat)) return A; }
+      return null;
     }
-    function jumpTo(m, x, y, flip, plat, T0) {
-      var dx = x - m.x, rise = m.y - y, T = T0 || Math.max(0.38, Math.min(1.15, 0.32 + Math.abs(dx) / 820 + Math.max(0, rise) / 900));
-      m.vx = dx / T; m.vy = -(rise + 0.5 * G * T * T) / T; m.on = null; m.dir = dx >= 0 ? 1 : -1;
-      begin(m, 'air'); m.flip = flip || Math.abs(dx) > 260 ? 1 : 0; m.spin = 0; m.aim = plat || null; dust(m.x, m.y, 4);
+    function jumpTo(m, x, y, flip, plat, A) {
+      A = A || arcFor(m, x, y, 16 + Math.min(26, Math.abs(x - m.x) * 0.12));
+      m.vx = A.vx; m.vy = A.vy; m.on = null; if (Math.abs(A.vx) > 5) m.dir = A.vx > 0 ? 1 : -1;
+      begin(m, 'air'); m.flip = flip ? 1 : 0; m.spin = 0; m.aim = plat || null; m.vault = 0; dust(m.x, m.y, 4);
     }
-    function leapToward(m, p, tx) { jumpTo(m, spot(m.on, p, tx), p.y, Math.random() < 0.5, p); }
-    function escape(m) {
+    // carry out one move: run to the take-off point, then do it
+    function doMove(m, e) {
+      if (!m.on || !e) return false;
+      var b = plats[e.to]; if (!b) return false;
+      if (Math.abs(m.x - e.s) > 6) { m.act = e; m.actP = b; m.st = 'run'; m.dir = e.s > m.x ? 1 : -1; m.vx = m.dir * RUN * (mode === 'calm' ? 0.7 : 1); return true; }
+      return execMove(m, e, b);
+    }
+    function execMove(m, e, b) {
+      m.act = null; m.actP = null;
+      if (e.k === 'hop') {
+        var A = planArc(m, e.lx, b.y, b);
+        if (!A && m.y - b.y > 10) {   // no clean hop up: climb it instead (jump to the edge, hang, pull up)
+          var E2 = e.lx - e.side * 12;
+          return execMove(m, { k: 'climb', s: e.s, hx: E2 - e.side * 3, fx: E2 + e.side * 10, face: e.side }, b);
+        }
+        if (!A) { badMove(m, e); begin(m, 'guard'); m.vx = 0; return false; }
+        var gap = Math.abs(e.lx - m.x);
+        jumpTo(m, e.lx, b.y, gap > 120 && Math.random() < 0.5, b, A);   // a flip only over a long gap
+        if (m.y - b.y > 15) m.vault = 1;
+        return true;
+      }
+      if (e.k === 'climb' || e.k === 'wall') {
+        var hx = e.hx, hy = b.y + HANG, seq = [];
+        m.dir = e.face;
+        if (e.k === 'climb') seq.push({ p: 'air', d: Math.max(0.22, Math.sqrt(2 * (Math.max(10, m.y - hy) + 10) / G)), x0: m.x, y0: m.y, x1: hx, y1: hy, arc: 10 });
+        else seq.push({ p: 'wall', d: Math.max(0.25, (m.y - hy) / 330), x0: m.x, y0: m.y, x1: hx, y1: hy });
+        seq.push({ p: 'hang', d: 0.1 + Math.random() * 0.15, x0: hx, y0: hy, x1: hx, y1: hy, face: e.face });
+        seq.push({ p: 'pull', d: 0.4, x0: hx, y0: hy, x1: e.fx, y1: b.y, face: e.fx >= hx ? 1 : -1 });
+        dust(m.x, m.y, 3); runSeq(m, seq, { land: b });
+        return true;
+      }
+      m.dir = e.side;
+      if (e.k === 'off') { m.on = null; begin(m, 'air'); m.x = e.e + e.side * 2; m.vx = e.vx; m.vy = 0; m.aim = b; return true; }
+      // drop: turn to face the ledge, lower down, hang, let go
+      var ex = e.e + e.side * 3;
+      runSeq(m, [{ p: 'lower', d: 0.28, x0: m.x, y0: m.y, x1: ex, y1: m.y + HANG, face: -e.side }, { p: 'hang', d: 0.12 + Math.random() * 0.12, x0: ex, y0: m.y + HANG, x1: ex, y1: m.y + HANG, face: -e.side }],
+        { fall: { vx: e.vx, aim: b } });
+      return true;
+    }
+    function runSeq(m, seq, end) { begin(m, 'seq'); m.seq = seq; m.seqI = 0; m.seqT = 0; m.seqEnd = end; m.on = null; m.vx = m.vy = 0; m.flip = 0; m.spin = 0; m.aim = null; }
+    function stepSeq(m, dt) {
+      var q = m.seq && m.seq[m.seqI]; if (!q) { endSeq(m); return; }
+      m.seqT += dt; var k = Math.min(1, m.seqT / q.d), ke = q.p === 'wall' ? k : ease(k), ox = m.x, oy = m.y;
+      if (q.face) m.dir = q.face;
+      m.x = q.x0 + (q.x1 - q.x0) * ke; m.y = q.y0 + (q.y1 - q.y0) * ke - (q.arc ? Math.sin(Math.PI * k) * q.arc : 0);
+      m.x = cl(m.x, M, W - M); m.y = Math.min(m.y, H - M);       // an inch clear of the sides and the bottom
+      if (q.p === 'wall') m.ph += dt * 18;
+      m.vx = (m.x - ox) / Math.max(dt, 0.001); m.vy = (m.y - oy) / Math.max(dt, 0.001);
+      if (k >= 1) { m.seqI++; m.seqT = 0; if (m.seqI >= m.seq.length) endSeq(m); }
+    }
+    function endSeq(m) {
+      var e = m.seqEnd || {}; m.seq = null; m.seqEnd = null;
+      if (e.land && idx(e.land) >= 0) { m.on = e.land; m.y = e.land.y; m.x = cl(m.x, e.land.x0, e.land.x1); m.vx = m.vy = 0; begin(m, 'land'); m.lastLand = now; dust(m.x, m.y, 4); return; }
+      m.on = null; begin(m, 'air'); m.vx = e.fall ? e.fall.vx : 0; m.vy = 0; m.aim = e.fall && e.fall.aim && idx(e.fall.aim) >= 0 ? e.fall.aim : null;
+      if (e.fall) m.dir = e.fall.vx >= 0 ? 1 : -1;
+    }
+    function escape(m) {   // the mouse came close: the move that takes me away from it
       var away = m.x >= mx ? 1 : -1, best = null, bs = -1e9;
-      plats.forEach(function (p) {
-        if (p === m.on || !m.on || !canJump(m.on, p)) return;
-        var tx = spot(m.on, p, m.x + away * 220); if (nearBlock(tx, p.y)) return;
-        var tg2 = enemyOf(m), sc = (tx - m.x) * away - Math.abs(m.y - p.y) * 0.3 - (tg2 ? Math.hypot(tx - tg2.x, p.y - tg2.y) * 0.3 : 0);
-        if (sc > bs) { bs = sc; best = p; }
+      (edges[idx(m.on)] || []).forEach(function (e) {
+        var p = plats[e.to], tx = landX(e); if (nearBlock(tx, p.y) || isBad(m, e)) return;
+        var sc = (tx - m.x) * away - Math.abs(e.s - m.x) * 0.5 - Math.abs(m.y - p.y) * 0.2;
+        if (sc > bs) { bs = sc; best = e; }
       });
-      if (best) leapToward(m, best, m.x + away * 220); else { m.st = 'run'; m.vx = away * 340; m.dir = away; }
+      if (best) doMove(m, best); else { m.st = 'run'; m.vx = away * 300; m.dir = away; }
     }
-    function roam(m) {   // go somewhere else on the screen, often far
+    function roam(m) {   // somewhere else on the screen, often far, by a chain of moves
       if (!m.on) return;
-      var cand = (links[idx(m.on)] || []).map(function (j) { return plats[j]; }).filter(function (p) { return !p.ground || Math.random() < 0.15; });
-      if (!cand.length) return;
-      cand.sort(function (a, b) { return Math.abs((b.x0 + b.x1) / 2 - m.x) - Math.abs((a.x0 + a.x1) / 2 - m.x); });
-      var p = cand[Math.floor(Math.random() * Math.min(5, cand.length))];
-      if (nearBlock((p.x0 + p.x1) / 2, p.y)) return;
-      leapToward(m, p, p.x0 + Math.random() * (p.x1 - p.x0));
+      var P2 = paths(m.on, m.x), c = [];
+      plats.forEach(function (p, i) { if (p !== m.on && !p.ground && P2 && P2.dist[i] < 8 && !nearBlock((p.x0 + p.x1) / 2, p.y)) c.push(p); });
+      if (!c.length) return;
+      var far = function (p) { return Math.abs((p.x0 + p.x1) / 2 - m.x) + Math.abs(p.y - m.y); };
+      c.sort(function (a, b) { return far(b) - far(a); });
+      m.trip = c[Math.floor(Math.random() * Math.min(6, c.length))];
+      moveTo(m, m.trip);
     }
 
     // ---- minds: a "director" picks the scene so the fight is never the same loop
     //   duel (guard, step in, exchange, step back), stand-off (circle and taunt), ambush (the ninja hides, the other searches),
     //   breather (both pant), chase (a beaten enemy runs, the ninja follows; 1 in 3 chases he takes out the bow),
     //   retreat (the ninja is worn out - hidden stamina - runs off and catches his breath, the enemy hunts him)
-    var scene = { name: 'standoff', t: 3, last: '', n: 0, bow: false, arrows: 0 };
+    var scene = { name: 'standoff', t: 3, last: '', n: 0, bow: false, arrows: 0, runner: null };
     function setScene(name, t) { scene.last = scene.name; scene.name = name; scene.t = t; scene.n++; if (hero) { hero.guardT = 0; hero.goHide = 0; if (hero.st === 'hide' && name !== 'ambush') hero.st = 'guard'; } if (foe) foe.guardT = 0; }
     function pickScene() {
-      var opts = ['duel', 'duel', 'duel', 'duel', 'duel', 'standoff', 'ambush'].filter(function (n) { return n !== scene.name; });
+      var opts = ['duel', 'duel', 'duel', 'pursuit', 'pursuit', 'standoff', 'ambush'].filter(function (n) { return n !== scene.name; });
       var n = opts[Math.floor(Math.random() * opts.length)];
-      setScene(n, n === 'duel' ? 6 + Math.random() * 5 : n === 'standoff' ? 1.8 + Math.random() * 1.2 : n === 'ambush' ? 7 : 2 + Math.random());
+      setScene(n, n === 'duel' ? 6 + Math.random() * 5 : n === 'pursuit' ? 7 + Math.random() * 4 : n === 'standoff' ? 1.8 + Math.random() * 1.2 : n === 'ambush' ? 7 : 2 + Math.random());
+      if (n === 'pursuit') { scene.runner = Math.random() < 0.5 ? hero : foe; if (scene.runner) { scene.runner.fleeTo = null; } }
     }
     function direct(dt) {
       if (!hero || !foe || foe.dying) return;
@@ -325,6 +459,7 @@
       if (foe.hp < 24 && !foe.fled && foe.on && scene.name !== 'chase') { foe.fled = 1; setScene('chase', 9); scene.bow = Math.random() < 1 / 3; scene.arrows = 0; return; }
 
       if (scene.name === 'retreat' && hero.sta > 88 && hero.st !== 'pant') { setScene('duel', 7); return; }
+      if (scene.name === 'pursuit' && (!scene.runner || scene.runner.dying || (scene.runner !== hero && scene.runner !== foe))) { setScene('duel', 6); return; }
       if (scene.t <= 0) { if (scene.name === 'chase') setScene('duel', 8); else if (scene.name !== 'retreat') pickScene(); }
     }
     function attackChoice(m) {
@@ -332,41 +467,37 @@
       if (m === hero) return r < 0.3 ? 'grab' : r < 0.48 ? 'jab' : r < 0.62 ? 'round' : r < 0.78 ? 'kick' : r < 0.9 ? 'upper' : 'sweep';
       return r < 0.15 ? 'grab' : r < 0.47 ? 'jab' : r < 0.67 ? 'kick' : r < 0.78 ? 'round' : r < 0.9 ? 'sweep' : 'upper';
     }
-    // parkour: walk off an edge to drop down, a quick vault to a ledge just above, a flip only over a long gap
-    function moveTo(m, p, tx) {
-      if (!m.on || p === m.on) return false;
-      var x = spot(m.on, p, tx), dx = x - m.x, rise = m.y - p.y, overlap = p.x1 > m.on.x0 - 20 && p.x0 < m.on.x1 + 20;
-      if (rise < -8 && overlap && !p.ground) {               // below: run off the edge on his side and drop
-        var edge = x < m.x ? m.on.x0 - 4 : m.on.x1 + 4;
-        if (x > m.on.x0 && x < m.on.x1) edge = Math.abs(x - m.on.x0) < Math.abs(x - m.on.x1) ? m.on.x0 - 4 : m.on.x1 + 4;
-        m.dropTo = p; m.st = 'run'; m.dir = edge > m.x ? 1 : -1; m.vx = m.dir * 190; return true;
-      }
-      var xs = [x, (p.x0 + p.x1) / 2, p.x0 + 10, p.x1 - 10], T = 0;
-      for (var i = 0; i < xs.length && !T; i++) { T = planT(m, xs[i], p.y, p); if (T) x = xs[i]; }
-      if (!T) return false;
-      if (rise > 0 && rise < 90 && Math.abs(dx) < 160) { jumpTo(m, x, p.y, false, p, T); m.vault = 1; return true; }
-      jumpTo(m, x, p.y, Math.abs(dx) > 230 && Math.random() < 0.7, p, T);
-      return true;
+    // getting about: the first move of the quickest chain to a ledge
+    function moveTo(m, p) {
+      if (!m.on || !p || p === m.on) return false;
+      var e = firstMove(paths(m.on, m.x), p);
+      return e && !isBad(m, e) && !nearBlock(landX(e), plats[e.to].y) ? doMove(m, e) : false;
     }
-    function farFrom(m, from) {   // a ledge far from "from" that m can reach
-      var best = null, bs = -1;
-      (links[idx(m.on)] || []).forEach(function (j) { var p = plats[j]; if (p.ground || nearBlock((p.x0 + p.x1) / 2, p.y)) return; var d = Math.hypot((p.x0 + p.x1) / 2 - from.x, p.y - from.y) + Math.random() * 120; if (d > bs) { bs = d; best = p; } });
+    function farFrom(m, from) {   // a ledge a few moves away, as far from "from" as it gets
+      var P2 = paths(m.on, m.x), best = null, bs = -1e9;
+      if (!P2) return null;
+      plats.forEach(function (p, i) { if (p === m.on || p.ground || !(P2.dist[i] < 4) || nearBlock((p.x0 + p.x1) / 2, p.y)) return; var d = Math.hypot((p.x0 + p.x1) / 2 - from.x, p.y - from.y) - P2.dist[i] * 40 + Math.random() * 60; if (d > bs) { bs = d; best = p; } });
       return best;
     }
-    function goToward(m, tg) {   // the next ledge on the way to him: the shortest chain first, else any ledge that brings him closer
-      var nxt = route(m.on, tg.on);
-      if (nxt && nxt !== m.on && !nearBlock(spot(m.on, nxt, tg.x), nxt.y) && moveTo(m, nxt, nxt === tg.on ? tg.x - (tg.x > m.x ? 30 : -30) : tg.x)) return true;
-      var here = Math.hypot(tg.x - m.x, tg.y - m.y);
-      var cand = (links[idx(m.on)] || []).map(function (j) { return plats[j]; }).filter(function (p) { return !p.ground; })
-        .map(function (p) { var x = spot(m.on, p, tg.x); return { p: p, x: x, d: Math.hypot(tg.x - x, tg.y - p.y) }; })
-        .filter(function (c) { return c.d < here - 20 && !nearBlock(c.x, c.p.y); }).sort(function (a, b) { return a.d - b.d; });
-      for (var i = 0; i < Math.min(5, cand.length); i++) if (moveTo(m, cand[i].p, cand[i].x)) return true;
+    function upFrom(m, near) {   // off the bottom of the screen: the quickest ledge back up (near "near" if given)
+      var P2 = paths(m.on, m.x), best = null, bs = 1e9; if (!P2) return null;
+      plats.forEach(function (p, i) { if (p.ground || !(P2.dist[i] < 1e9) || nearBlock((p.x0 + p.x1) / 2, p.y)) return; var sc = P2.dist[i] + (near ? Math.hypot(cl(near.x, p.x0, p.x1) - near.x, p.y - near.y) / 150 : 0); if (sc < bs) { bs = sc; best = p; } });
+      return best;
+    }
+    function goToward(m, tg) {   // chase him by the quickest chain of moves; no way at all: get as close as I can
+      if (!m.on || !tg.on) return false;
+      if (tg.on.ground && !m.on.ground) { var up0 = upFrom(m, tg); if (up0 === m.on) return false; if (up0) return moveTo(m, up0); }   // he is at the bottom: wait for him up here, near him
+      var P2 = paths(m.on, m.x), e = firstMove(P2, tg.on);
+      if (e && !isBad(m, e) && !nearBlock(landX(e), plats[e.to].y)) return doMove(m, e);
+      var b = nearestReach(P2, tg.x, tg.y);
+      if (b && b !== m.on) { e = firstMove(P2, b); if (e && !isBad(m, e)) return doMove(m, e); }
       return false;
     }
+    function lost(m) { if (Math.random() < 0.5) { begin(m, 'look'); m.vx = 0; } else { m.st = 'walk'; m.vx = m.dir * 70; } }
     function think(m, dt) {
       m.think -= dt; m.cd = Math.max(0, m.cd - dt);
       if (m === hero) m.sta = Math.min(100, m.sta + (m.st === 'pant' ? 22 : 3) * dt);
-      if (!m.on || ['atk', 'hit', 'land', 'flung', 'held', 'dead', 'rise', 'roll', 'aim', 'cho'].indexOf(m.st) >= 0) return;
+      if (!m.on || ['atk', 'hit', 'land', 'flung', 'held', 'dead', 'rise', 'roll', 'aim', 'cho', 'seq', 'slide'].indexOf(m.st) >= 0) return;
       if (m.dropTo) { if (m.st !== 'run') m.dropTo = null; else return; }   // (a planned drop runs on past the edge)
       if (nearBlock(m.x, m.y)) { escape(m); return; }
       var tg = enemyOf(m);
@@ -375,25 +506,34 @@
       if ((m.st === 'run' || m.st === 'walk') && ((m.x <= m.on.x0 + 3 && m.vx < 0) || (m.x >= m.on.x1 - 3 && m.vx > 0))) { m.vx = 0; m.st = 'guard'; }   // never walk off an edge by accident
       if (m.think > 0) return;
       m.think = 0.1 + Math.random() * 0.15 * (mode === 'calm' ? 3 : 1);
+      if (m.on.ground && !m.cho) {   // nobody stays at the bottom of the screen: climb back up the boxes
+        if (!m.upTo || now - (m.upAt || 0) > 1.5 || idx(m.upTo) < 0) { m.upTo = upFrom(m, tg && !tg.dying ? tg : null); m.upAt = now; }
+        if (m.upTo && moveTo(m, m.upTo)) return;
+      }
       // no one to fight: wander about the whole page
-      if (!tg || tg.st === 'dead' || tg.dying) { m.roamT -= 0.25; if (m.roamT <= 0) { m.roamT = 1.5 + Math.random() * 2.5; roam(m); } else if (Math.random() < 0.08) begin(m, Math.random() < 0.5 ? 'taunt' : 'look'); return; }
+      if (!tg || tg.st === 'dead' || tg.dying) {
+        if (m.trip && m.trip !== m.on && moveTo(m, m.trip)) return;
+        m.trip = null; m.roamT -= 0.25; if (m.roamT <= 0) { m.roamT = 1.5 + Math.random() * 2.5; roam(m); } else if (Math.random() < 0.08) begin(m, Math.random() < 0.5 ? 'taunt' : 'look'); return;
+      }
       if (tg.cho && m !== hero && Math.abs(tg.x - m.x) < 80) { m.dir = tg.x >= m.x ? 1 : -1; m.vx = 0; if (m.st !== 'guard' && m.st !== 'taunt') begin(m, Math.random() < 0.3 ? 'taunt' : 'guard'); return; }   // someone else's fight: wait his turn
       var dx = tg.x - m.x, ad = Math.abs(dx), same = tg.on && m.on && (tg.on === m.on || (Math.abs(tg.y - m.y) < 14 && ad < 90)), sc = scene.name;   // next-door tiles at the same height are one fighting ground
       m.dir = dx >= 0 ? 1 : -1;
-      var flee = (sc === 'chase' && m === foe) || (sc === 'retreat' && m === hero);
+      var flee = (sc === 'chase' && m === foe) || (sc === 'retreat' && m === hero) || (sc === 'pursuit' && m === scene.runner);
       if (flee) {
         if (m === hero && m.st === 'pant') { if (m.sta > 88) begin(m, 'guard'); return; }
-        if (ad > 330 || (m === hero && ad > 220 && Math.random() < 0.4)) { begin(m, 'pant'); m.vx = 0; return; }        // far enough: catch his breath
+        if (sc === 'pursuit') { if (ad < 45 && Math.abs(tg.y - m.y) < 20) { setScene('duel', 6); begin(m, 'guard'); m.vx = 0; return; } }   // caught: they fight here
+        else if (ad > 330 || (m === hero && ad > 220 && Math.random() < 0.4)) { begin(m, 'pant'); m.vx = 0; return; }        // far enough: catch his breath
         if (m === foe && ad < 50 && Math.random() < 0.25) { setScene('duel', 6); begin(m, 'atk', 'jab'); m.vx = 0; return; } // cornered: turns and fights back
-        var away = farFrom(m, tg); if (away) { moveTo(m, away, (away.x0 + away.x1) / 2); return; }
-        m.st = 'run'; m.dir = -m.dir; m.vx = m.dir * 220; return;
+        if (!m.fleeTo || m.fleeTo === m.on || now - (m.fleeAt || 0) > 1.6) { m.fleeTo = farFrom(m, tg); m.fleeAt = now; }
+        if (m.fleeTo && moveTo(m, m.fleeTo)) return;
+        m.fleeTo = null; m.st = 'run'; m.dir = -m.dir; m.vx = m.dir * 220; return;
       }
-      if (sc === 'chase' && m === hero) {
+      if ((sc === 'chase' && m === hero) || (sc === 'pursuit' && m !== scene.runner)) {
         // the bow: 1 chase in 3, when he is far away
-        if (scene.bow && scene.arrows < 3 && ad > 180 && ad < 620 && Math.abs(tg.y - m.y) < 220 && m.cd <= 0 && tg.st !== 'flung') { begin(m, 'aim'); m.vx = 0; m.cd = 1.1; return; }
+        if (sc === 'chase' && scene.bow && scene.arrows < 3 && ad > 180 && ad < 620 && Math.abs(tg.y - m.y) < 220 && m.cd <= 0 && tg.st !== 'flung') { begin(m, 'aim'); m.vx = 0; m.cd = 1.1; return; }
         if (same) { if (ad < 30) { begin(m, 'atk', attackChoice(m)); m.vx = 0; return; } m.st = 'run'; m.vx = m.dir * 230; return; }
         if (!tg.on) { m.st = 'idle'; m.vx = 0; return; }
-        if (!goToward(m, tg)) { m.st = 'run'; m.vx = m.dir * 200; }
+        if (!goToward(m, tg)) lost(m);
         return;
       }
       if (sc === 'retreat' && m === foe) {
@@ -406,7 +546,11 @@
       if (sc === 'ambush') {
         if (m === hero) {
           if (m.st === 'hide') {
-            if ((ad < 150 && tg.on) || scene.t < 0.6) { if (tg.on && !nearBlock(tg.x, tg.y)) { jumpTo(m, tg.x - m.dir * 16, tg.on.y, true, tg.on); m.ambush = 1; } else begin(m, 'guard'); setScene('duel', 7); }
+            if ((ad < 150 && tg.on) || scene.t < 0.6) {
+              var A0 = tg.on && ad < 150 && Math.abs(tg.y - m.y) < 50 && !nearBlock(tg.x, tg.y) ? planArc(m, cl(tg.x - m.dir * 16, tg.on.x0, tg.on.x1), tg.on.y, tg.on) : null;
+              if (A0) { jumpTo(m, tg.x - m.dir * 16, tg.on.y, true, tg.on, A0); m.ambush = 1; } else begin(m, 'guard');
+              setScene('duel', 7);
+            }
             return;
           }
           if (!m.goHide) {
@@ -421,16 +565,16 @@
           var r = Math.random();
           if (r < 0.35) { begin(m, 'look'); m.vx = 0; return; }
           if (r < 0.5) { m.dir = -m.dir; m.st = 'walk'; m.vx = m.dir * 60; return; }
-          if (r < 0.62 && ad > 200) { goToward(m, hero); return; }
+          if (r < 0.62 && ad > 200 && goToward(m, hero)) return;
           m.st = 'walk'; m.vx = m.dir * 60; return;
         }
       }
       if (!tg.on) { if (m.st === 'run' || m.st === 'walk') { m.st = 'guard'; m.vx = 0; } return; }   // he is in the air: wait for him to land
       if (same) m.waitT = 0;
       if (!same && m === hero && Math.hypot(dx, tg.y - m.y) < 260 && (sc === 'duel' || sc === 'standoff') && (m.waitT = (m.waitT || 0) + 0.25) < 1.6) { if (m.st !== 'guard') { begin(m, 'guard'); m.vx = 0; } return; }   // he lets the other come to him
-      if (!same) { if (!goToward(m, tg)) { m.st = 'run'; m.vx = m.dir * 200; if (m.x <= m.on.x0 + 2 || m.x >= m.on.x1 - 2) { m.on = null; begin(m, 'air'); m.vx = m.dir * 140; } } return; }
+      if (!same) { if (!goToward(m, tg)) lost(m); return; }
       // same ledge (or the tile next door: hop over the gap)
-      if (tg.on !== m.on && (ad > 34 || Math.abs(tg.y - m.y) > 2)) { if (moveTo(m, tg.on, tg.x - m.dir * 26)) return; }
+      if (tg.on !== m.on && (ad > 34 || Math.abs(tg.y - m.y) > 2)) { if (moveTo(m, tg.on)) return; }
       if (sc === 'standoff') {
         // circle: keep 70-110 apart, step in and out slowly, taunt
         var want = 90;
@@ -446,7 +590,7 @@
         if (m === foe && Math.random() < 0.07) { begin(m, 'block'); m.vx = 0; return; }
         begin(m, 'atk', attackChoice(m)); m.vx = 0; m.guardT = 0.08 + Math.random() * 0.25; return;
       }
-      if (ad > 90 && ad < 150 && Math.random() < 0.06 && !nearBlock(tg.x, tg.y)) { jumpTo(m, tg.x - m.dir * 14, tg.y, false, tg.on); m.flykick = 1; return; }
+      if (ad > 90 && ad < 150 && Math.random() < 0.06 && !nearBlock(tg.x, tg.y)) { var A1 = planArc(m, tg.x - m.dir * 14, tg.y, tg.on, 22); if (A1) { jumpTo(m, tg.x - m.dir * 14, tg.y, false, tg.on, A1); m.flykick = 1; return; } }
       m.st = ad < 60 ? 'walk' : 'run'; m.vx = m.dir * (ad < 60 ? 150 : 210) * (mode === 'calm' ? 0.6 : 1);
     }
     var arrows = [], frozen = 0, shk = 0;
@@ -485,12 +629,7 @@
       var tg = enemyOf(m);
       if (m.on && m.on.ground && tg && tg.on && !tg.on.ground) {
         m.groundT = (m.groundT || 0) + dt;
-        if (m.groundT > 0.35 && free2(m)) {   // down at the bottom of the screen: one big leap back up, or vanish and reappear
-          m.groundT = 0;
-          var up = plats.filter(function (p) { return !p.ground && p.x1 - p.x0 > 30 && m.y - p.y < 620 && Math.abs((p.x0 + p.x1) / 2 - m.x) < 500 && !nearBlock((p.x0 + p.x1) / 2, p.y); });
-          up.sort(function (a, b) { return (tg ? Math.hypot((a.x0 + a.x1) / 2 - tg.x, a.y - tg.y) - Math.hypot((b.x0 + b.x1) / 2 - tg.x, b.y - tg.y) : 0); });
-          for (var u = 0; u < Math.min(6, up.length); u++) { var p = up[u], ux = Math.max(p.x0 + 8, Math.min(p.x1 - 8, tg ? tg.x : m.x)), T = planT(m, ux, p.y, p); if (T) { jumpTo(m, ux, p.y, true, p, T); break; } }
-        }
+        if (m.groundT > 0.35 && free2(m)) { m.groundT = 0; if (!goToward(m, tg)) lost(m); }   // at the bottom: climb back up the boxes
       } else m.groundT = 0;
       if (!tg || !tg.on || !m.on || tg.on === m.on || m.st === 'hide' || m.goHide) { m.stuckT = 0; m.bestD = 1e9; return; }
       var d = Math.hypot(tg.x - m.x, tg.y - m.y);
@@ -500,9 +639,11 @@
     function step(m, dt) {
       if (!m) return;
       if (m.st === 'cho') { m.t += dt; m.flash = Math.max(0, m.flash - dt); stepCho(m, dt); return; }
+      if (m.st === 'seq') { m.t += dt; m.flash = Math.max(0, m.flash - dt); stepSeq(m, dt); return; }
       watchStuck(m, dt);
       m.t += dt; m.flash = Math.max(0, m.flash - dt); m.ph += dt * (m.st === 'run' ? Math.max(9, Math.abs(m.vx) / 16) : m.st === 'walk' ? Math.max(4, Math.abs(m.vx) / 9) : 3);
       think(m, dt);
+      if (m.st === 'seq') return;                                  // a climb or drop just started: it moves itself
       if (m.st === 'run' && Math.abs(m.vx) > 30) m.dir = m.vx > 0 ? 1 : -1;
       var tg = enemyOf(m);
       if (m.st === 'atk' && m.atk === 'toss') {
@@ -525,7 +666,8 @@
           if (f > -6 && f < A.reach + 8 && Math.abs(tg.y - m.y) < (A.low ? 12 : 36)) {
             m.done = 1;
             if (A.grab) {
-              if (tg === hero && Math.random() < 0.95) { jumpTo(hero, m.x - hero.dir * 50, m.on ? m.on.y : hero.y, true, m.on); hero.ambush = 1; }
+              var Ag = tg === hero && m.on ? planArc(hero, cl(m.x - hero.dir * 50, m.on.x0 + 4, m.on.x1 - 4), m.on.y, m.on, 55) : null;
+              if (tg === hero && Math.random() < 0.95 && Ag) { jumpTo(hero, cl(m.x - hero.dir * 50, m.on.x0 + 4, m.on.x1 - 4), m.on.y, true, m.on, Ag); hero.ambush = 1; }
               else { begin(m, 'atk', 'toss'); begin(tg, 'held'); m.holding = tg; tg.heldBy = m; tg.on = null; }
             } else hurt(m, tg, A);
           }
@@ -538,7 +680,8 @@
         m.vx = 0; if (tg) m.dir = tg.x >= m.x ? 1 : -1;
         if (m.t > 0.55 && !m.done && tg) { m.done = 1; shoot(m, tg); scene.arrows++; }
         if (m.t > 0.85) begin(m, 'guard');
-      } else if (m.st === 'roll') { if (tg) m.dir = tg.x >= m.x ? 1 : -1; m.vx = m.dir * 60; if (m.t > 0.3) begin(m, 'guard'); }
+      } else if (m.st === 'roll') { m.vx = m.dir * 70; if (m.t > 0.35) begin(m, 'guard'); }
+      else if (m.st === 'slide') { if (m.t > 0.3) begin(m, 'guard'); }
       else if (m.st === 'look') { m.vx = 0; if (m.t > 0.5 && !m.done) { m.done = 1; m.dir = -m.dir; } if (m.t > 1.1) begin(m, 'guard'); }
       else if (m.st === 'wipe' && m.t > 0.7) begin(m, 'pant');
       else if (m.st === 'hit' && m.t > 0.22) begin(m, 'guard');
@@ -571,10 +714,10 @@
           if (m.aim && m.st !== 'flung' && p !== m.aim && !p.ground) continue;   // a planned jump lands where it was aimed
           if (m.x >= p.x0 - 3 && m.x <= p.x1 + 3 && oy <= p.y + 0.5 && m.y >= p.y) {
             if (m.st === 'flung' && m.vy > 500 && !p.ground) { m.y = p.y; m.vy = -m.vy * 0.32; m.vx *= 0.7; dust(m.x, p.y, 6); spark(m.x, p.y - 4, 4); if (m !== hero) m.hp -= 4; break; }   // bounces on the top
-            var fast = m.vy > 820;
-            m.aim = null; m.vault = 0; m.y = p.y; m.on = p; m.x = Math.max(p.x0, Math.min(p.x1, m.x)); m.vy = 0; m.vx *= 0.08; m.flip = 0; m.spin = 0; m.lastLand = now; dust(m.x, p.y, 6);
+            var fast = m.vy > 640, skid = !fast && m.st === 'air' && Math.abs(m.vx) > 250 && p.x1 - p.x0 > 50;
+            m.aim = null; m.vault = 0; m.y = p.y; m.on = p; m.x = Math.max(p.x0, Math.min(p.x1, m.x)); m.vy = 0; m.vx *= skid ? 0.7 : 0.08; m.flip = 0; m.spin = 0; m.lastLand = now; dust(m.x, p.y, skid ? 9 : 6);
             if (m.big) { m.big = 0; shake(6); dust(m.x, p.y, 16); fx.push({ k: 'shock', x: m.x, y: p.y - 4, t: 0.3, T: 0.3 }); }
-            if (m.st === 'flung') { m.down = 1; begin(m, 'land'); } else if (fast && p.x1 - p.x0 > 60) begin(m, 'roll'); else begin(m, 'land');
+            if (m.st === 'flung') { m.down = 1; begin(m, 'land'); } else if (fast && p.x1 - p.x0 > 60) { if (Math.abs(m.vx) > 5) m.dir = m.vx > 0 ? 1 : -1; begin(m, 'roll'); } else if (skid) begin(m, 'slide'); else begin(m, 'land');
             break;
           }
         }
@@ -582,11 +725,16 @@
         if (m.y > H - M + 4) { m.y = H - M; m.on = plats[plats.length - 1]; m.vy = 0; begin(m, 'land'); }
       } else {
         m.x += m.vx * dt;
+        if (m.act && m.st === 'run' && Math.abs(m.x - m.act.s) < 12 && (m.act.s - m.x) * m.dir <= 4) {   // at the take-off point
+          var ea = m.act, pb = m.actP; m.x = cl(ea.s, m.on.x0, m.on.x1);
+          if (pb && idx(pb) >= 0) { execMove(m, ea, pb); return; } m.act = null;
+        }
         if (m.x < m.on.x0 - 2 || m.x > m.on.x1 + 2) {
-          m.on = null; if (['run', 'idle', 'hit', 'walk', 'guard', 'roll'].indexOf(m.st) >= 0) begin(m, 'air');
+          m.on = null; if (['run', 'idle', 'hit', 'walk', 'guard', 'roll', 'slide'].indexOf(m.st) >= 0) begin(m, 'air');
           if (m.dropTo) { m.aim = m.dropTo; m.dropTo = null; m.vx = m.dir * 110; }
         }
-        if (m.st !== 'run' && m.st !== 'atk' && m.st !== 'walk' && m.st !== 'roll') m.vx *= Math.pow(0.002, dt);
+        if (m.st === 'slide') m.vx *= Math.pow(0.04, dt);
+        else if (m.st !== 'run' && m.st !== 'atk' && m.st !== 'walk' && m.st !== 'roll') m.vx *= Math.pow(0.002, dt);
       }
       if (m.dying && m.st !== 'held') { m.dying = 0; die(m); }
     }
@@ -594,6 +742,16 @@
     // ---- drawing (no outline: the ninja yellow, the others blue)
     function pose(m) {
       if (m.st === 'cho') return choPose(m);
+      if (m.st === 'seq') {
+        var sq = m.seq && m.seq[m.seqI], kq = sq ? Math.min(1, m.seqT / sq.d) : 1, sw = Math.sin(now * 7) * 4;
+        if (!sq) return P.land;
+        if (sq.p === 'hang') { var hq = {}; for (var kk in P.hang) hq[kk] = P.hang[kk]; hq.hF += sw; hq.hB += sw; return hq; }
+        if (sq.p === 'pull') return kq < 0.5 ? mix(P.hang, P.vault, ease(kq / 0.5)) : mix(P.vault, P.land, ease((kq - 0.5) / 0.5));
+        if (sq.p === 'lower') return mix(P.land, P.hang, ease(kq));
+        if (sq.p === 'wall') { var sr = Math.sin(m.ph); return { L: 18, hy: 18, sF: 120 - sr * 50, eF: 40, sB: 120 + sr * 50, eB: 40, hF: 40 + 45 * sr, kF: -60 - 40 * Math.max(0, -sr), hB: 40 - 45 * sr, kB: -60 - 40 * Math.max(0, sr) }; }
+        return kq < 0.6 ? mix(P.air, P.hang, ease(kq / 0.6)) : P.hang;   // the jump up to the edge, arms reaching
+      }
+      if (m.st === 'slide') return P.slide;
       if (m.st === 'run') { var s = Math.sin(m.ph), cc = Math.abs(Math.cos(m.ph)); return { L: 22 + cc * 4, hy: 19 + cc * 2, sF: 28 - s * 62, eF: 95 + s * 15, sB: 28 + s * 62, eB: 95 - s * 15, hF: 14 + 52 * s, kF: -22 - 85 * Math.max(0, -s), hB: 14 - 52 * s, kB: -22 - 85 * Math.max(0, s) }; }   // leaning in, bent arms pumping against the legs, the trailing knee folding high
       if (m.st === 'atk') {
         if (m.atk === 'toss') return m.t < 0.3 ? mix(P.grab, P.toss, ease(m.t / 0.3) * 0.8) : m.t < 0.45 ? P.toss : mix(P.toss, P.jab, ease((m.t - 0.45) / 0.12));
@@ -635,7 +793,8 @@
     function drawFighter(m) {
       if (m.st === 'flung' && m.rag) { var JR = {}; for (var kk in m.rag.pts) JR[kk] = m.rag.pts[kk]; drawMan(JR, m.team, m.flash > 0, null, 0); return; }
       var p = pose(m), J = joints(m, p), ang = (m.flip || m.st === 'flung') ? -m.spin * m.dir : 0;
-      if (m.st === 'roll') { ang = -(m.t / 0.35) * Math.PI * 2 * m.dir; J = joints(m, P.land); }
+      if (m.st === 'roll') { ang = (m.t / 0.35) * Math.PI * 2 * m.dir; J = joints(m, P.land); }
+      if (m.st === 'seq' && m.seq && m.seq[m.seqI] && m.seq[m.seqI].p === 'wall') ang = -m.dir * 0.5;   // feet on the wall, leaning back
       if (m.st === 'atk' && ATK[m.atk] && ATK[m.atk].spin) ang = (m.t / ATK[m.atk].end) * Math.PI * 2 * m.dir * 0.25;
       var c = { x: m.x, y: m.y - 22 + (m.yo || 0) }, alpha = m.st === 'hide' ? 0.45 : 1;
       if (m.st === 'cho') { var CA = choAng(m); ang = CA.a; if (CA.c) c = CA.c; }
@@ -704,8 +863,8 @@
     }
     function free3(m) { return m && !m.dying && m.hp > 0 && m.on && !m.cho && ['idle', 'run', 'walk', 'guard', 'taunt', 'land', 'look', 'block', 'hit'].indexOf(m.st) >= 0; }
     function tryCho() {
-      if (cho || choCd > 0 || !free3(hero) || ['chase', 'ambush', 'breather', 'retreat'].indexOf(scene.name) >= 0) return;
-      var pl = hero.on, w = pl.x1 - pl.x0; if (w < 90 || nearBlock(hero.x, hero.y)) return;
+      if (cho || choCd > 0 || !free3(hero) || ['chase', 'ambush', 'breather', 'retreat', 'pursuit'].indexOf(scene.name) >= 0) return;
+      var pl = hero.on, w = pl.x1 - pl.x0; if (w < 90 || pl.ground || nearBlock(hero.x, hero.y)) return;
       var near = function (m, d) { return free3(m) && m.on === pl && Math.abs(m.x - hero.x) < d; };
       var b = near(foe, 110) ? foe : near(third, 110) ? third : null; if (!b) return;
       var c = b === foe ? third : foe;
@@ -895,21 +1054,20 @@
     function bringThird() {
       if (!hero || !hero.on) { thirdT = 0.5; return; }
       var x = Math.max(M, Math.min(W - M, hero.x + (Math.random() < 0.5 ? -1 : 1) * (120 + Math.random() * 120)));
-      var m = make('foe', x, -50, null); m.big = 1;
       var cand = plats.filter(function (p) { return !p.ground && p.x1 - p.x0 > 60 && Math.abs(p.y - hero.y) < 160 && !nearBlock((p.x0 + p.x1) / 2, p.y); });
       cand.sort(function (a, b) { return Math.abs((a.x0 + a.x1) / 2 - hero.x) - Math.abs((b.x0 + b.x1) / 2 - hero.x); });
       var p = cand[0] || hero.on;
-      jumpTo(m, spot(null, p, hero.x + (x > hero.x ? 50 : -50)), p.y, false, p, 0.75);
+      var m = make('foe', spot(null, p, hero.x + (x > hero.x ? 50 : -50)), -50, null); m.big = 1;   // drops in from the top
+      begin(m, 'air'); m.vx = 0; m.vy = 80; m.aim = p; m.dir = hero.x >= m.x ? 1 : -1;
       third = m;
     }
     function bringFoe() {
       // the next one leaps in from the far side of the screen
-      var r = Math.random(), fromLeft = r < 0.4, fromTop = r >= 0.8;
-      var m = make('foe', fromTop ? M + (W - 2 * M) * Math.random() : fromLeft ? -30 : W + 30, fromTop ? -40 : 80 + Math.random() * Math.max(40, H * 0.45), null);
-      m.dir = fromLeft ? 1 : -1;
-      var land = plats.filter(function (p) { return !p.ground && (fromTop ? Math.abs((p.x0 + p.x1) / 2 - m.x) < 300 : fromLeft ? p.x0 < W * 0.35 : p.x1 > W * 0.65) && !nearBlock((p.x0 + p.x1) / 2, p.y); });
+      // the next one drops in from the top of the screen, away from the ninja, and has to free-run to him
+      var land = plats.filter(function (p) { return !p.ground && p.x1 - p.x0 > 40 && (!hero || Math.abs((p.x0 + p.x1) / 2 - hero.x) > 250) && !nearBlock((p.x0 + p.x1) / 2, p.y); });
       var p = land.length ? land[Math.floor(Math.random() * land.length)] : plats[plats.length - 1];
-      jumpTo(m, spot(null, p, fromLeft ? p.x0 + 30 : p.x1 - 30), p.y, true, p);
+      var m = make('foe', p.x0 + 10 + Math.random() * Math.max(1, p.x1 - p.x0 - 20), -40, null);
+      begin(m, 'air'); m.vx = 0; m.vy = 60; m.aim = p; m.dir = hero && hero.x < m.x ? -1 : 1;
       foe = m; thirdT = 0.7 + Math.random() * 0.6; setScene(Math.random() < 0.6 ? 'standoff' : 'duel', 3 + Math.random() * 2);
     }
     function tick(t) {
@@ -947,7 +1105,7 @@
       mode: function (m) { mode = m; },
       blood: function (b) { blood = !!b; if (!blood) decals = []; },
       running: function () { return on; },
-      _s: function () { return { scene: scene, cho: cho, third: third, arrows: arrows, hero: hero, foe: foe, plats: plats, rags: rags, decals: decals, kills: kills, links: links }; }
+      _s: function () { return { scene: scene, cho: cho, third: third, arrows: arrows, hero: hero, foe: foe, plats: plats, rags: rags, decals: decals, kills: kills, edges: edges }; }
     };
     document.addEventListener('mousemove', onMove, { passive: true });
     document.addEventListener('mouseleave', onLeave);
