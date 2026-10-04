@@ -12501,6 +12501,13 @@ function lvInner(m) {
       '<input class="i" id="lvfav_' + m + '" maxlength="40" placeholder="Name this search…"><button class="btn small" type="button" data-lv-favsave="1" style="margin-top:6px">Save current search</button></div></div>';
   }
   h += '</div>';
+  if (sp) {
+    var so = st.order || sp.order || {}, seen = {};
+    h += '<div class="o_sort"><label for="lvsort_' + m + '">Sort by</label><select id="lvsort_' + m + '" data-lv-sortsel="1">' +
+      sp.columns.filter(function (c) { if (!c.sort || seen[c.sort]) return false; seen[c.sort] = 1; return true; }).map(function (c) {
+        return '<option value="' + esc(c.sort) + '"' + (so.field === c.sort ? ' selected' : '') + '>' + esc(c.label) + '</option>'; }).join('') +
+      '</select><button type="button" class="o_sdir" data-lv-sortdir="1" title="Reverse the order">' + (so.dir === 'asc' ? '↑' : '↓') + '</button></div>';
+  }
   // pager
   if (d && !st.groupBy && d.total > d.limit) {
     var from = d.offset + 1, to = Math.min(d.total, d.offset + d.rows.length);
@@ -17989,6 +17996,95 @@ document.addEventListener('change', function (ev) {
   }
   window.addEventListener('beforeunload', function () { if (AR.mt) msend({ t: 'bye' }); });
   window.ERP_ARENA = AR;   // for checks
+})();
+</script>
+<!-- sorting everywhere (2026-10-04): a visible Sort by in the big lists; click a heading of any other table -->
+<style>
+.o_sort { display:flex; align-items:center; gap:6px; font-size:13px; color:var(--ink-2); }
+.o_sort select { height:34px; border:1px solid var(--ring); border-radius:4px; background:var(--field); color:var(--ink); font:inherit; font-size:13px; padding:0 6px; }
+.o_sort .o_sdir { height:34px; width:34px; border:1px solid var(--ring); border-radius:4px; background:var(--surface); color:var(--ink); cursor:pointer; font-size:15px; }
+.o_sort .o_sdir:hover { border-color:var(--accent-2); }
+table.o_list th[data-lv-sort]:not(:has(.ar))::after { content:'⇅'; margin-left:4px; opacity:.28; font-size:11px; }
+table.o_list th[data-lv-sort]:hover::after { opacity:.7; }
+#view table.ts thead th.tsh { cursor:pointer; user-select:none; white-space:nowrap; }
+#view table.ts thead th.tsh:hover { background:color-mix(in srgb, var(--thead, transparent) 70%, var(--ring)); }
+#view table.ts thead th.tsh::after { content:'⇅'; margin-left:4px; opacity:.25; font-size:11px; }
+#view table.ts thead th.tsh.tsa::after { content:'▲'; opacity:.8; }
+#view table.ts thead th.tsh.tsd::after { content:'▼'; opacity:.8; }
+</style>
+<script>
+(function () {
+  // ---- the big lists: the Sort by menu and its direction button
+  document.addEventListener('change', function (ev) {
+    var t = ev.target; if (!t || !t.matches || !t.matches('[data-lv-sortsel]')) return;
+    var w = t.closest('.o_lv[data-lv]'); if (!w) return;
+    var m = w.getAttribute('data-lv'), st = lvSt(m), col = (st.spec.columns || []).filter(function (c) { return c.sort === t.value; })[0];
+    st.order = { field: t.value, dir: col && (col.type === 'money' || col.type === 'num') ? 'desc' : 'asc' };
+    lvRefresh(m);
+  });
+  document.addEventListener('click', function (ev) {
+    var t = ev.target && ev.target.closest && ev.target.closest('[data-lv-sortdir]'); if (!t) return;
+    var w = t.closest('.o_lv[data-lv]'); if (!w) return;
+    var m = w.getAttribute('data-lv'), st = lvSt(m), cur = st.order || st.spec.order || { field: '', dir: 'asc' };
+    st.order = { field: cur.field, dir: cur.dir === 'asc' ? 'desc' : 'asc' };
+    lvRefresh(m);
+  });
+
+  // ---- every other table: click a heading to sort (kept per screen and table while the page is open, and on this device)
+  var TS = {}; try { TS = JSON.parse(localStorage.getItem('erp_tsort') || '{}') || {}; } catch (e) { TS = {}; }
+  function save() { try { localStorage.setItem('erp_tsort', JSON.stringify(TS)); } catch (e) {} }
+  function heads(tbl) { return [].map.call(tbl.tHead.rows[0].cells, function (c) { return c.textContent.replace(/[⇅▲▼]/g, '').trim(); }); }
+  function keyOf(tbl) { return (typeof VIEW !== 'undefined' ? VIEW : '') + '::' + heads(tbl).join('|'); }
+  function sortable(tbl) {
+    if (!tbl.tHead || tbl.tHead.rows.length !== 1 || !tbl.tBodies[0] || tbl.tBodies.length !== 1) return false;
+    if (tbl.closest('.o_lv, #pgame, #armatch, .dlg-back, .pghelp') || tbl.querySelector('thead th[data-lv-sort]')) return false;   // the big lists sort on the server
+    if (typeof VIEW !== 'undefined' && VIEW === 'profit') return false;   // statements keep their order (sales, costs, profit)
+    var b = tbl.tBodies[0];
+    if (b.rows.length < 2 || b.querySelector('input, select, textarea, td[colspan], th[colspan]')) return false;
+    var n = tbl.tHead.rows[0].cells.length;
+    for (var i = 0; i < b.rows.length; i++) if (b.rows[i].cells.length !== n) return false;
+    return true;
+  }
+  function val(td) {
+    var t = (td.getAttribute('data-sort') || td.textContent || '').trim();
+    var c = t.replace(/[,\s]/g, '').replace(/^(BDT|৳|Tk\.?)/i, ''), neg = /^\((.+)\)$/.exec(c);
+    if (neg) c = '-' + neg[1];   // (1,250) is minus 1,250
+    var mm = /^([-+]?\d+(?:\.\d+)?)(%|[a-z]{0,5})$/i.exec(c);
+    if (mm) return { n: parseFloat(mm[1]) };
+    if (/\d{4}/.test(t) || /^\d{1,2} [A-Za-z]{3}/.test(t)) { var d = Date.parse(t); if (!isNaN(d)) return { n: d }; }
+    return { s: t.toLowerCase() };
+  }
+  function cmp(a, b) {
+    if (a.n !== undefined && b.n !== undefined) return a.n - b.n;
+    if (a.n !== undefined) return -1; if (b.n !== undefined) return 1;
+    return a.s < b.s ? -1 : a.s > b.s ? 1 : 0;
+  }
+  function apply(tbl, col, dir) {
+    var b = tbl.tBodies[0], rows = [].slice.call(b.rows), k = dir === 'asc' ? 1 : -1;
+    rows.map(function (r, i) { return { r: r, i: i, v: val(r.cells[col]) }; })
+      .sort(function (x, y) { return k * cmp(x.v, y.v) || x.i - y.i; })
+      .forEach(function (o) { b.appendChild(o.r); });
+    [].forEach.call(tbl.tHead.rows[0].cells, function (c, i) { c.classList.toggle('tsa', i === col && dir === 'asc'); c.classList.toggle('tsd', i === col && dir === 'desc'); });
+  }
+  function init() {
+    var v = document.getElementById('view'); if (!v) return;
+    [].forEach.call(v.querySelectorAll('table'), function (tbl) {
+      if (tbl.__ts || !sortable(tbl)) return;
+      tbl.__ts = 1; tbl.classList.add('ts');
+      [].forEach.call(tbl.tHead.rows[0].cells, function (c) { if (c.textContent.trim()) c.classList.add('tsh'); });
+      var s = TS[keyOf(tbl)]; if (s && s.col < tbl.tHead.rows[0].cells.length) apply(tbl, s.col, s.dir);
+    });
+  }
+  document.addEventListener('click', function (ev) {
+    var th = ev.target && ev.target.closest && ev.target.closest('#view table.ts thead th.tsh'); if (!th) return;
+    var tbl = th.closest('table'), col = th.cellIndex, key = keyOf(tbl), cur = TS[key];
+    var firstNum = val(tbl.tBodies[0].rows[0].cells[col]).n !== undefined;
+    var dir = cur && cur.col === col ? (cur.dir === 'asc' ? 'desc' : 'asc') : (firstNum ? 'desc' : 'asc');
+    TS[key] = { col: col, dir: dir }; save(); apply(tbl, col, dir);
+  });
+  var repaintTS = repaint;
+  repaint = function () { var r = repaintTS.apply(this, arguments); try { init(); setTimeout(init, 400); } catch (e) {} return r; };
+  setInterval(function () { try { init(); } catch (e) {} }, 1500);   // tables that arrive after a repaint (loaded later)
 })();
 </script>
 </body>
