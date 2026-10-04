@@ -1,5 +1,6 @@
 // Online Brawl (multi-1): a private room per business, results written by a player only, once per match.
-import { owner, mgr, sales, check, done } from './harness.mjs';
+import { owner, mgr, sales, call, FIX, check, done } from './harness.mjs';
+const other = (name, args) => call(name, args, { authHeader: 'Bearer owner:' + FIX.U.other });   // owner of another business (B2)
 
 let a = await owner('erpArena', []);
 check('the owner gets a room and his own id', a.ok && /^arena-[0-9a-f-]{36}$/.test(a.result.room) && a.result.me.id, a);
@@ -20,4 +21,28 @@ r = await owner('erpArenaResult', [{ mid: 'm3', winner: me, loser: me }]);
 check('a match against oneself is refused', !r.ok, r);
 a = await sales('erpArena', []);
 check('the board shows wins and losses to everyone', a.ok && a.result.recent.length === 1 && a.result.recent[0].score === '2-1' && salesId, a);
+
+// ---- multi-3: owners of other companies
+a = await owner('erpArena', []);
+check('the world arena is off until an owner switches it on', a.ok && a.result.world === null && a.result.worldOn === false && a.result.canWorld === true, a);
+r = await mgr('erpArenaWorldSet', [{ on: true }]);
+check('a manager cannot switch it', !r.ok, r);
+r = await owner('erpArenaWorldSet', [{ on: true }]);
+check('the owner switches it on and gets the world room', r.ok && /^arena-world-/.test(r.result.world.room) && r.result.world.company, r);
+const world = r.ok ? r.result.world.room : '';
+b = await mgr('erpArena', []);
+check('staff never get the world room', b.ok && b.result.world === null && b.result.canWorld === false, b);
+let o = await other('erpArena', []);
+check('another company stays out until its own owner switches it on', o.ok && o.result.world === null && o.result.room !== room, o);
+o = await other('erpArenaWorldSet', [{ on: true }]);
+check('its owner switches it on: the same world room, its own company room', o.ok && o.result.world.room === world && o.result.room !== room, o);
+const otherId = FIX.U.other;
+r = await owner('erpArenaResult', [{ mid: 'w1', world: true, winner: me, loser: otherId, winnerName: 'Owner', loserName: 'Other', loserCo: 'Elsewhere', score: '2-1' }]);
+check('a world result is kept with both companies', r.ok && r.result.board[0].id === me && r.result.recent[0].loserCo === 'Elsewhere' && r.result.recent[0].winnerCo, r);
+a = await owner('erpArena', []);
+check('a world match does not touch the company leaderboard', a.ok && a.result.recent.length === 1 && a.result.world.recent.length === 1, a);
+r = await mgr('erpArenaResult', [{ mid: 'w2', world: true, winner: mgrId, loser: otherId }]);
+check('staff cannot write world results', !r.ok, r);
+r = await owner('erpArenaWorldSet', [{ on: false }]);
+check('switched off again: no world room', r.ok && r.result.world === null, r);
 await done();

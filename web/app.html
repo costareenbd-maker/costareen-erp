@@ -17294,9 +17294,10 @@ function gameLoad() {
 function gamePlace() {
   var v = el('view');
   if (el('pgoff')) return;                     // the offline window holds it
-  var want = v && VIEW === 'invoice' && GAMEP && GAMEP.on && !gameHidden() && window.innerWidth >= 760 && !(INVP && INVP.no);
+  var desk = window.erpDesk ? window.erpDesk() : window.innerWidth >= 760;
+  var want = v && desk && VIEW === 'invoice' && GAMEP && GAMEP.on && !gameHidden() && window.innerWidth >= 760 && !(INVP && INVP.no);
   // hidden on this device: a small way back right here (Maintenance is not every role's screen)
-  var back = el('pgshow'), wantBack = v && VIEW === 'invoice' && GAMEP && GAMEP.on && gameHidden() && window.innerWidth >= 760 && !(INVP && INVP.no);
+  var back = el('pgshow'), wantBack = v && desk && VIEW === 'invoice' && GAMEP && GAMEP.on && gameHidden() && window.innerWidth >= 760 && !(INVP && INVP.no);
   if (wantBack && !back) { back = document.createElement('div'); back.id = 'pgshow'; back.style.cssText = 'margin:14px 0 20px;text-align:center'; back.innerHTML = '<button class="btn small" type="button" id="game_show">Show the game</button>'; v.parentNode.insertBefore(back, v.nextSibling); }
   else if (!wantBack && back) back.parentNode.removeChild(back);
   if (!want) { if (GAME && GAME.el.parentNode) { GAME.pause(); GAME.el.parentNode.removeChild(GAME.el); } return; }
@@ -17414,12 +17415,13 @@ function skPref(k, v) { try { if (v !== undefined) localStorage.setItem('erp_sti
 function skMode() { return skPref('mode') || 'on'; }
 function skAllowed() { return !!(ME && GAMEP && GAMEP.on && window.innerWidth >= 900); }
 function skShould() {
+  if (window.erpDesk && !window.erpDesk()) return false;   // phones: the plain ERP
   if (!skAllowed() || skMode() === 'off' || SK_HIDE || SK_PRINT || document.hidden) return false;
   if (document.querySelector('.dlg-back, #cpop, #pgoff, #th_back')) return false;
   return true;
 }
 function skButton() {
-  var b = el('skBtn'), show = skAllowed() && !SK_PRINT;
+  var b = el('skBtn'), show = skAllowed() && !SK_PRINT && !(window.erpDesk && !window.erpDesk());
   if (!show) { if (b) b.style.display = 'none'; var mm = el('skMenu'); if (mm) mm.remove(); return; }
   if (!b) { b = document.createElement('button'); b.id = 'skBtn'; b.type = 'button'; b.title = 'Stick fight'; b.textContent = '\u2694'; document.body.appendChild(b); }
   b.style.display = '';
@@ -17749,14 +17751,17 @@ document.addEventListener('change', function (ev) {
 </style>
 <script>
 (function () {
-  var AR = { room: null, me: null, ch: null, online: {}, board: [], recent: [], out: null, inv: null, mt: null, open: false, loading: false };
+  var AR = { room: null, me: null, ch: null, online: {}, board: [], recent: [], out: null, inv: null, mt: null, open: false, loading: false,
+             world: null, wch: null, wonline: {}, canWorld: false, worldOn: false };
+  // laptops and desktops only: a phone (or tablet) shows the plain ERP
+  window.erpDesk = function () { try { return window.innerWidth >= 760 && window.matchMedia('(hover: hover) and (pointer: fine)').matches; } catch (e) { return window.innerWidth >= 760; } };
   function say(t) { return typeof gw === 'function' ? gw(t) : t; }
-  function send(m) { if (AR.ch) AR.ch.send({ type: 'broadcast', event: 'm', payload: m }); }
+  function send(m, world) { var c = world ? AR.wch : AR.ch; if (c) c.send({ type: 'broadcast', event: 'm', payload: m }); }
   function rid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 10); }
 
   // ---- join this business's room while signed in (and allowed to play)
   function arStart() {
-    if (AR.room || AR.loading || typeof ME === 'undefined' || !ME || typeof SB === 'undefined' || !SB || typeof GAMEP === 'undefined' || !GAMEP || !GAMEP.on) return;
+    if (AR.room || AR.loading || !window.erpDesk() || typeof ME === 'undefined' || !ME || typeof SB === 'undefined' || !SB || typeof GAMEP === 'undefined' || !GAMEP || !GAMEP.on) return;
     AR.loading = true;
     srv('erpArena', [], function (r) {
       AR.loading = false; AR.room = r.room; AR.me = r.me; AR.board = r.board || []; AR.recent = r.recent || [];
@@ -17764,14 +17769,37 @@ document.addEventListener('change', function (ev) {
       AR.ch.on('presence', { event: 'sync' }, function () { AR.online = AR.ch.presenceState(); arPaint(); })
         .on('broadcast', { event: 'm' }, function (p) { arMsg(p.payload || {}); })
         .subscribe(function (st) { if (st === 'SUBSCRIBED') track(); });
+      worldSet(r);
     }, function () { AR.loading = false; });
   }
-  function track() { if (AR.ch && AR.me) AR.ch.track({ id: AR.me.id, name: AR.me.name, busy: !!AR.mt }); }
+  // the world room: owners of companies that switched it on
+  function worldSet(r) {
+    AR.canWorld = !!r.canWorld; AR.worldOn = !!r.worldOn;
+    var want = r.world && r.world.room;
+    if (AR.wch && (!want || AR.world.room !== want)) { try { SB.removeChannel(AR.wch); } catch (e) {} AR.wch = null; AR.wonline = {}; }
+    AR.world = r.world || null;
+    if (want && !AR.wch) {
+      AR.wch = SB.channel(want, { config: { presence: { key: AR.me.id }, broadcast: { self: false } } });
+      AR.wch.on('presence', { event: 'sync' }, function () { AR.wonline = AR.wch.presenceState(); arPaint(); })
+        .on('broadcast', { event: 'm' }, function (p) { arMsg(p.payload || {}, true); })
+        .subscribe(function (st) { if (st === 'SUBSCRIBED') track(); });
+    }
+    arPaint();
+  }
+  function track() {
+    if (AR.ch && AR.me) AR.ch.track({ id: AR.me.id, name: AR.me.name, busy: !!AR.mt });
+    if (AR.wch && AR.me && AR.world) AR.wch.track({ id: AR.me.id, name: AR.me.name, company: AR.world.company, busy: !!AR.mt });
+  }
   setInterval(function () { try { arStart(); arButton(); } catch (e) {} }, 2500);
 
-  function people() {
-    var out = [];
-    for (var k in AR.online) { if (!AR.me || k === AR.me.id) continue; var m = AR.online[k][0] || {}; out.push({ id: k, name: m.name || 'Player', busy: AR.online[k].some(function (x) { return x.busy; }) }); }
+  function people(world) {
+    var out = [], src = world ? AR.wonline : AR.online;
+    for (var k in src) {
+      if (!AR.me || k === AR.me.id) continue;
+      if (world && AR.online[k]) continue;               // my own team is in the first list
+      var m = src[k][0] || {};
+      out.push({ id: k, name: m.name || 'Player', company: m.company || '', world: !!world, busy: src[k].some(function (x) { return x.busy; }) });
+    }
     return out.sort(function (a, b) { return a.name.localeCompare(b.name); });
   }
 
@@ -17782,9 +17810,9 @@ document.addEventListener('change', function (ev) {
     if (!b) {
       b = document.createElement('button'); b.type = 'button'; b.id = 'arbtn'; b.className = 'pgtab arbtn';
       var hb = bar.querySelector('.pghb'); bar.insertBefore(b, hb || null);
-      b.addEventListener('click', function () { AR.open = !AR.open; if (AR.open) srv('erpArena', [], function (r) { AR.board = r.board || []; AR.recent = r.recent || []; arPaint(); }, function () {}); arPaint(); });
+      b.addEventListener('click', function () { AR.open = !AR.open; if (AR.open) srv('erpArena', [], function (r) { AR.board = r.board || []; AR.recent = r.recent || []; worldSet(r); }, function () {}); arPaint(); });
     }
-    var n = people().length;
+    var n = people().length + people(true).length;
     b.innerHTML = '<span class="ardot"' + (n ? '' : ' style="background:#9ca3af"') + '></span>' + esc(say('Online')) + ' ' + n;
     b.classList.toggle('on', AR.open);
   }
@@ -17795,12 +17823,22 @@ document.addEventListener('change', function (ev) {
     if (!AR.open) { if (p) p.remove(); return; }
     if (!p) { p = document.createElement('div'); p.id = 'arpanel'; host.appendChild(p); }
     var ps = people();
-    var h = '<h4>' + esc(say('Challenge someone to a Brawl')) + '</h4>';
-    h += ps.length ? ps.map(function (x) {
+    function rowOf(x) {
       var waiting = AR.out && AR.out.to === x.id;
-      return '<div class="arrow"><span class="nm">' + esc(x.name) + (x.busy ? ' <span class="sub">· ' + esc(say('in a fight')) + '</span>' : '') + '</span>' +
-        '<button class="btn small" type="button" data-archal="' + esc(x.id) + '"' + (x.busy || AR.out || AR.mt ? ' disabled' : '') + '>' + esc(waiting ? say('Waiting…') : say('Challenge')) + '</button></div>';
-    }).join('') : '<div class="sub">' + esc(say('Nobody else from your team has the ERP open right now.')) + '</div>';
+      return '<div class="arrow"><span class="nm">' + esc(x.name) + (x.company ? ' <span class="sub">· ' + esc(x.company) + '</span>' : '') + (x.busy ? ' <span class="sub">· ' + esc(say('in a fight')) + '</span>' : '') + '</span>' +
+        '<button class="btn small" type="button" data-archal="' + esc(x.id) + '" data-arw="' + (x.world ? 1 : 0) + '"' + (x.busy || AR.out || AR.mt ? ' disabled' : '') + '>' + esc(waiting ? say('Waiting…') : say('Challenge')) + '</button></div>';
+    }
+    var h = '<h4>' + esc(say('Your team')) + '</h4>';
+    h += ps.length ? ps.map(rowOf).join('') : '<div class="sub">' + esc(say('Nobody else from your team has the ERP open right now.')) + '</div>';
+    if (AR.canWorld) {
+      h += '<h4 style="margin-top:12px">' + esc(say('Other companies')) + '</h4>' +
+        '<label class="sub" style="display:flex;gap:6px;align-items:center;margin-bottom:6px;cursor:pointer"><input type="checkbox" id="arworld"' + (AR.worldOn ? ' checked' : '') + '> ' + esc(say('Owners of other companies can challenge our owners')) + '</label>';
+      if (AR.world) {
+        var wp = people(true);
+        h += wp.length ? wp.map(rowOf).join('') : '<div class="sub">' + esc(say('No owner of another company is online right now.')) + '</div>';
+        if (AR.world.board && AR.world.board.length) h += '<div class="sub" style="margin-top:6px">' + esc(say('World')) + ': ' + AR.world.board.slice(0, 5).map(function (b, i) { return (i + 1) + '. ' + esc(b.name) + (b.company ? ' (' + esc(b.company) + ')' : '') + ' ' + b.wins + '-' + b.losses; }).join(' · ') + '</div>';
+      }
+    }
     if (AR.board.length) {
       h += '<h4 style="margin-top:12px">' + esc(say('Leaderboard')) + '</h4>' + AR.board.slice(0, 6).map(function (b, i) {
         return '<div class="arrow"><span class="nm">' + (i + 1) + '. ' + esc(b.name) + '</span><span class="sub">' + b.wins + ' ' + esc(say('won')) + ' · ' + b.losses + ' ' + esc(say('lost')) + '</span></div>';
@@ -17812,30 +17850,32 @@ document.addEventListener('change', function (ev) {
   document.addEventListener('click', function (ev) {
     var t = ev.target; if (!t || !t.closest) return;
     var c = t.closest('[data-archal]');
-    if (c) { challenge(c.getAttribute('data-archal')); return; }
+    if (c) { challenge(c.getAttribute('data-archal'), c.getAttribute('data-arw') === '1'); return; }
+    if (t.id === 'arworld') { srv('erpArenaWorldSet', [{ on: t.checked }], function (r) { worldSet(r); toast(esc(r.worldOn ? say('Owners of other companies can now challenge you.') : say('Only your own team can challenge you now.')), false, 5000); }, function (e) { toast(esc(e && e.message ? e.message : e), true); arPaint(); }); return; }
     if (AR.open && !t.closest('#arpanel') && !t.closest('#arbtn')) { AR.open = false; arPaint(); }
   });
 
   // ---- challenges
-  function challenge(id) {
-    var who = people().filter(function (x) { return x.id === id; })[0]; if (!who || AR.out || AR.mt) return;
-    AR.out = { mid: rid(), to: id, name: who.name };
-    send({ t: 'inv', to: id, from: AR.me.id, fromName: AR.me.name, mid: AR.out.mid });
+  function challenge(id, world) {
+    var who = people(!!world).filter(function (x) { return x.id === id; })[0]; if (!who || AR.out || AR.mt) return;
+    AR.out = { mid: rid(), to: id, name: who.name, world: !!world, company: who.company || '' };
+    send({ t: 'inv', to: id, from: AR.me.id, fromName: AR.me.name, fromCo: world && AR.world ? AR.world.company : '', mid: AR.out.mid, w: world ? 1 : 0 }, world);
     toast(esc(say('Challenge sent to')) + ' ' + esc(who.name) + '…', false, 4000);
     var mid = AR.out.mid;
     setTimeout(function () { if (AR.out && AR.out.mid === mid) { toast(esc(who.name) + ' ' + esc(say('did not answer.')), true, 5000); AR.out = null; arPaint(); } }, 30000);
     arPaint();
   }
-  function arMsg(m) {
+  function arMsg(m, world) {
     if (!AR.me || m.to !== AR.me.id) return;
     if (m.t === 'inv') {
-      if (AR.mt || AR.inv) { send({ t: 'busy', to: m.from, mid: m.mid }); return; }
+      m.w = world ? 1 : 0;
+      if (AR.mt || AR.inv) { send({ t: 'busy', to: m.from, mid: m.mid }, world); return; }
       AR.inv = m; invCard(); return;
     }
     if (m.t === 'cancel' && AR.inv && AR.inv.mid === m.mid) { AR.inv = null; invCard(); return; }
     if (!AR.out || m.mid !== AR.out.mid) return;
     var o = AR.out;
-    if (m.t === 'acc') { AR.out = null; openMatch('host', o.mid, { id: o.to, name: o.name }); }
+    if (m.t === 'acc') { AR.out = null; openMatch('host', o.mid, { id: o.to, name: o.name, company: o.company }, o.world); }
     else if (m.t === 'dec') { AR.out = null; toast(esc(o.name) + ' ' + esc(say('said no this time.')), false, 5000); }
     else if (m.t === 'busy') { AR.out = null; toast(esc(o.name) + ' ' + esc(say('is busy right now.')), false, 5000); }
     arPaint();
@@ -17844,15 +17884,15 @@ document.addEventListener('change', function (ev) {
     var c = document.getElementById('arinv');
     if (!AR.inv) { if (c) c.remove(); return; }
     if (!c) { c = document.createElement('div'); c.id = 'arinv'; document.body.appendChild(c); }
-    c.innerHTML = '<div style="font-size:22px;line-height:1">⚔</div><div style="margin-top:6px"><b>' + esc(AR.inv.fromName) + '</b> ' + esc(say('challenges you to a Brawl!')) + '</div>' +
+    c.innerHTML = '<div style="font-size:22px;line-height:1">⚔</div><div style="margin-top:6px"><b>' + esc(AR.inv.fromName) + '</b>' + (AR.inv.fromCo ? ' (' + esc(AR.inv.fromCo) + ')' : '') + ' ' + esc(say('challenges you to a Brawl!')) + '</div>' +
       '<div class="row"><button class="btn" type="button" id="arno">' + esc(say('Decline')) + '</button><button class="btn primary" type="button" id="aryes">' + esc(say('Accept')) + '</button></div>';
     var mid = AR.inv.mid;
     setTimeout(function () { if (AR.inv && AR.inv.mid === mid) { AR.inv = null; invCard(); } }, 30000);
   }
   document.addEventListener('click', function (ev) {
     var t = ev.target; if (!t || !AR.inv) return;
-    if (t.id === 'aryes') { var m = AR.inv; AR.inv = null; invCard(); send({ t: 'acc', to: m.from, mid: m.mid }); openMatch('guest', m.mid, { id: m.from, name: m.fromName }); }
-    else if (t.id === 'arno') { var m2 = AR.inv; AR.inv = null; invCard(); send({ t: 'dec', to: m2.from, mid: m2.mid }); }
+    if (t.id === 'aryes') { var m = AR.inv; AR.inv = null; invCard(); send({ t: 'acc', to: m.from, mid: m.mid }, !!m.w); openMatch('guest', m.mid, { id: m.from, name: m.fromName, company: m.fromCo || '' }, !!m.w); }
+    else if (t.id === 'arno') { var m2 = AR.inv; AR.inv = null; invCard(); send({ t: 'dec', to: m2.from, mid: m2.mid }, !!m2.w); }
   });
 
   // ---- the match window: both pick a fighter, press Ready, fight
@@ -17861,18 +17901,18 @@ document.addEventListener('change', function (ev) {
     var roster = FIGHTERS ? Promise.resolve(FIGHTERS) : new Promise(function (ok) { srv('erpFighters', [], function (r) { FIGHTERS = r.fighters || []; ok(FIGHTERS); }, function () { ok([]); }); });
     return Promise.all([FIGHT_JS, roster]);
   }
-  function openMatch(role, mid, opp) {
+  function openMatch(role, mid, opp, world) {
     if (GAME && GAME.pause) GAME.pause();
-    var mt = AR.mt = { role: role, mid: mid, opp: opp, my: null, their: null, myReady: false, theirReady: false, last: Date.now(), game: null, over: false, list: [] };
+    var mt = AR.mt = { role: role, mid: mid, opp: opp, world: !!world, my: null, their: null, myReady: false, theirReady: false, last: Date.now(), game: null, over: false, list: [] };
     track();
-    mt.ch = SB.channel(AR.room + '-' + mid, { config: { broadcast: { self: false } } });
+    mt.ch = SB.channel((world && AR.world ? AR.world.room : AR.room) + '-' + mid, { config: { broadcast: { self: false } } });
     mt.ch.on('broadcast', { event: 'g' }, function (p) { matchMsg(p.payload || {}); }).subscribe();
     mt.hb = setInterval(function () {
       msend({ t: 'hb' });
       if (!mt.over && Date.now() - mt.last > 9000) endMatch(say('The connection to') + ' ' + opp.name + ' ' + say('was lost. No contest.'));
     }, 2000);
     var box = document.createElement('div'); box.id = 'armatch';
-    box.innerHTML = '<div class="arbox"><div class="arhead"><b>⚔ ' + esc(AR.me.name) + '  vs  ' + esc(opp.name) + '</b><button class="btn small" type="button" id="arleave">' + esc(say('Leave')) + '</button></div><div id="arbody">' + esc(say('Loading…')) + '</div></div>';
+    box.innerHTML = '<div class="arbox"><div class="arhead"><b>⚔ ' + esc(AR.me.name) + '  vs  ' + esc(opp.name) + (opp.company ? ' (' + esc(opp.company) + ')' : '') + '</b><button class="btn small" type="button" id="arleave">' + esc(say('Leave')) + '</button></div><div id="arbody">' + esc(say('Loading…')) + '</div></div>';
     document.body.appendChild(box);
     loadFight().then(function (v) { if (AR.mt !== mt) return; mt.list = window.ERP_FIGHT_ROSTER(v[1]); paintPick(); }, function () { endMatch(say('Brawl could not load. Check the internet.')); });
   }
@@ -17891,7 +17931,7 @@ document.addEventListener('change', function (ev) {
     if (pk && !mt.myReady) { mt.my = +pk.getAttribute('data-arpick'); msend({ t: 'pick', i: mt.my }); paintPick(); return; }
     if (t.id === 'arready' && mt.my !== null) { mt.myReady = true; msend({ t: 'ready', i: mt.my }); paintPick(); maybeGo(); return; }
     if (t.id === 'arleave') { leave(); return; }
-    if (t.id === 'arrematch') { var o = mt.opp; leave(true); setTimeout(function () { challenge(o.id); }, 300); return; }
+    if (t.id === 'arrematch') { var o = mt.opp, wv = mt.world; leave(true); setTimeout(function () { challenge(o.id, wv); }, 300); return; }
   });
   function maybeGo() {
     var mt = AR.mt; if (!mt || mt.role !== 'host' || mt.game || !mt.myReady || !mt.theirReady) return;
@@ -17926,8 +17966,9 @@ document.addEventListener('change', function (ev) {
     if (mt.role === 'host') {
       var hostWon = r.winner === 'p';
       srv('erpArenaResult', [{ mid: mt.mid, winner: hostWon ? AR.me.id : mt.opp.id, loser: hostWon ? mt.opp.id : AR.me.id,
-        winnerName: hostWon ? AR.me.name : mt.opp.name, loserName: hostWon ? mt.opp.name : AR.me.name, score: Math.max(r.pW, r.cW) + '-' + Math.min(r.pW, r.cW) }],
-        function (b) { AR.board = b.board || AR.board; AR.recent = b.recent || AR.recent; }, function () {});
+        winnerName: hostWon ? AR.me.name : mt.opp.name, loserName: hostWon ? mt.opp.name : AR.me.name, score: Math.max(r.pW, r.cW) + '-' + Math.min(r.pW, r.cW),
+        world: mt.world, winnerCo: hostWon ? '' : mt.opp.company, loserCo: hostWon ? mt.opp.company : '' }],
+        function (b) { if (mt.world) { if (AR.world) { AR.world.board = b.board; AR.world.recent = b.recent; } } else { AR.board = b.board || AR.board; AR.recent = b.recent || AR.recent; } }, function () {});
     }
   }
   document.addEventListener('click', function (ev) { if (ev.target && ev.target.id === 'arleave2') leave(); });
