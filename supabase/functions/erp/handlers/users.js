@@ -5,6 +5,7 @@
 //                                           sent to choose a password; the person joins with that role
 //   erpUserSet({userId, role, active})      change the role, switch off / on
 //   erpUserResend({userId})                 send the choose-a-password e-mail again
+//   erpUserPowers({userId, powers})         switch single abilities on / off, own discount limit (058)
 //   erpSessions({userId})                   the devices signed in as that person
 //   erpSessionEnd({sessionId})              end one; erpSignOutAll({userId}) ends them all
 //
@@ -14,7 +15,7 @@
 // limited to members of this business.
 
 import { formatDate } from '../lib/time.js';
-import { ERP_ROLES, normRole, roleAtLeast } from '../allow.js';
+import { ERP_ROLES, ERP_POWERS, ERP_DISCOUNT_CAP, normRole, roleAtLeast, powerOn, discountCapOf } from '../allow.js';
 
 const str = (v) => String(v == null ? '' : v).trim();
 const when = (d) => (d ? formatDate(new Date(d), 'd MMM yyyy, h:mm a') : '');
@@ -32,7 +33,7 @@ async function member(ctx, userId) {
 
 export async function erpUsers(ctx) {
   needOwner(ctx);
-  const rows = await ctx.tx`select m.user_id, m.role, m.active, m.added_at, p.full_name, p.email
+  const rows = await ctx.tx`select m.user_id, m.role, m.active, m.added_at, m.powers, p.full_name, p.email
                             from memberships m left join profiles p on p.id = m.user_id
                             where m.business_id = ${ctx.biz} order by m.active desc, m.role, p.full_name`;
   const ids = rows.map((r) => r.user_id);
@@ -50,10 +51,51 @@ export async function erpUsers(ctx) {
       return { id: r.user_id, name: str(r.full_name) || (code ? str(code.name) : '') || email.split('@')[0], email: /@(people|link)\.erp\.invalid$/.test(email) ? '' : email,
                role: normRole(r.role), roleLabel: (ERP_ROLES[normRole(r.role)] || {}).label || r.role, active: !!r.active, me: r.user_id === ctx.s.userId,
                lastSignIn: when(a.last_sign_in_at), sessions: sess[r.user_id] || 0, mfa: (mfa[r.user_id] || 0) > 0, added: when(r.added_at),
-               codeLogin: !!code && !/@(people|link)\.erp\.invalid$/.test(email) === false && !!code };
+               codeLogin: !!code && !/@(people|link)\.erp\.invalid$/.test(email) === false && !!code,
+               powers: abilitiesOf(r) };
     }),
     roles: Object.keys(ERP_ROLES).map((k) => ({ id: k, label: ERP_ROLES[k].label })),
+    abilities: ERP_POWERS.map((p) => ({ id: p.id, label: p.label, help: p.help, min: p.min })),
+    discountCaps: ERP_DISCOUNT_CAP,
   };
+}
+
+/** One person's abilities: each on/off, whether the owner set it or the role gives it, and the discount limit. */
+function abilitiesOf(r) {
+  const role = normRole(r.role), set = (r.powers && typeof r.powers === 'object') ? r.powers : {};
+  const s = { role, powers: set };
+  const out = { list: {}, discount: discountCapOf(role, set), discountSet: set.discount !== undefined && set.discount !== null };
+  ERP_POWERS.forEach((p) => {
+    out.list[p.id] = { on: powerOn(s, p.id), byRole: roleAtLeast(role, p.min), set: set[p.id] === true || set[p.id] === false };
+  });
+  return out;
+}
+
+export async function erpUserPowers(ctx, payload) {
+  needOwner(ctx);
+  payload = payload || {};
+  const m = await member(ctx, payload.userId);
+  if (normRole(m.role) === 'owner') throw new Error('An owner always has every ability.');
+  const want = (payload.powers && typeof payload.powers === 'object') ? payload.powers : {};
+  const cur = (await ctx.tx`select powers from memberships where business_id = ${ctx.biz} and user_id = ${m.user_id}`)[0];
+  const next = { ...((cur && cur.powers) || {}) };
+  for (const [k, v] of Object.entries(want)) {
+    if (k === 'discount') {
+      if (v === null || v === '') { delete next.discount; continue; }
+      const d = Number(v);
+      if (!isFinite(d) || d < 0 || d > 100) throw new Error('A discount limit is a number from 0 to 100.');
+      next.discount = Math.round(d * 10) / 10;
+      continue;
+    }
+    if (!ERP_POWERS.some((p) => p.id === k)) throw new Error('Unknown ability: ' + k);
+    // the same as the role gives = no switch at all, so a later role change carries the right default
+    const byRole = roleAtLeast(m.role, ERP_POWERS.find((p) => p.id === k).min);
+    if (v === null || v === byRole) delete next[k];
+    else if (v === true || v === false) next[k] = v;
+    else throw new Error('Switch ' + k + ' on or off.');
+  }
+  await ctx.tx`update memberships set powers = ${ctx.tx.json(next)} where business_id = ${ctx.biz} and user_id = ${m.user_id}`;
+  return erpUsers(ctx);
 }
 
 export async function erpUserInvite(ctx, payload) {
@@ -141,4 +183,4 @@ export async function erpSignOutAll(ctx, payload) {
   return erpSessions(ctx, { userId });
 }
 
-export const HANDLERS = { erpUsers, erpUserInvite, erpUserSet, erpUserResend, erpSessions, erpSessionEnd, erpSignOutAll };
+export const HANDLERS = { erpUsers, erpUserInvite, erpUserSet, erpUserPowers, erpUserResend, erpSessions, erpSessionEnd, erpSignOutAll };

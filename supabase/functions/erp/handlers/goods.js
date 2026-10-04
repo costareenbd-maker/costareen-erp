@@ -10,7 +10,7 @@
 // are left out here rather than scrubbed afterwards.
 
 import { formatDate, num, round2 } from '../lib/time.js';
-import { roleAtLeast } from '../allow.js';
+import { roleAtLeast, powerOn, callAllowed } from '../allow.js';
 import { forget } from '../lib/tabs.js';
 import { erpCatalog } from './catalog.js';
 import { lock, who } from './money.js';
@@ -30,8 +30,8 @@ export async function erpProductPage(ctx, payload) {
   const p = (await ctx.tx`select * from products where business_id = ${ctx.biz}
                           and lower(btrim(sku)) = ${sku.toLowerCase()} limit 1`)[0];
   if (!p) throw new Error('That product is no longer on the list.');
-  const money = roleAtLeast(ctx.s.role, 'shareholder');
-  const showSupplier = roleAtLeast(ctx.s.role, 'manager');
+  const money = powerOn(ctx.s, 'costs');
+  const showSupplier = (roleAtLeast(ctx.s.role, 'manager') || powerOn(ctx.s, 'suppliers'));
   const cat = (await erpCatalog(ctx)).find((c) => c.sku.toLowerCase() === str(p.sku).toLowerCase()) || {};
 
   // the ledger, oldest first to carry a running balance, shown newest first

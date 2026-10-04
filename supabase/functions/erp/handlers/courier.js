@@ -10,7 +10,7 @@ import { salesLog, paymentsTab, forget, asDate, str, SL, PAY } from '../lib/tabs
 import { formatDate, num, round2 } from '../lib/time.js';
 import { custKey } from '../lib/phone.js';
 import { getSecret, setSecret, getConfig, setConfig, httpFetch } from '../lib/ext.js';
-import { roleAtLeast } from '../allow.js';
+import { roleAtLeast, powerOn, callAllowed } from '../allow.js';
 import { paidByOrder, addPayment, syncInvoiceStatus, outstanding, lock, stamp, who } from './money.js';
 import { cashRules } from './cash.js';
 
@@ -751,7 +751,7 @@ async function payoutsCore(ctx) {
 
 /** erpSfPayouts (ERP:8695) */
 export async function erpSfPayouts(ctx) {
-  if (!roleAtLeast(ctx.s.role, 'manager')) throw new Error('Your account cannot see courier money.');
+  if (!callAllowed(ctx.s, 'erpSfPayouts')) throw new Error('Your account cannot see courier money.');
   return payoutsCore(ctx);
 }
 
@@ -774,7 +774,7 @@ export async function erpSfPayoutLines(ctx, payload) {
 
 /** erpSfConfirmMatches (ERP:8875): a person confirms phone matches. */
 export async function erpSfConfirmMatches(ctx, payload) {
-  if (!roleAtLeast(ctx.s.role, 'manager')) throw new Error('Your account cannot record payments.');
+  if (!callAllowed(ctx.s, 'erpSfConfirmMatches')) throw new Error('Your account cannot record payments.');
   const want = {};
   ((payload && payload.consignments) || []).forEach((c) => { want[String(c)] = true; });
   const items = (await lineRows(ctx)).filter((l) => want[String(l[1])] && String(l[9]) === 'phone')
@@ -991,7 +991,7 @@ async function deliveredNote(ctx, r) {
 
 /** erpCheckDeliveries: ask now, from the Sales screen, instead of waiting for the hour. */
 export async function erpCheckDeliveries(ctx) {
-  if (!roleAtLeast(ctx.s.role, 'manager')) throw new Error('Your account cannot record payments.');
+  if (!callAllowed(ctx.s, 'erpCheckDeliveries')) throw new Error('Your account cannot record payments.');
   await lock(ctx, 'courier-delivered');
   const r = await deliveredCollect(ctx);
   await deliveredNote(ctx, r);

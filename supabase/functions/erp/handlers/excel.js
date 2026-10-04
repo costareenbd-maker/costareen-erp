@@ -14,7 +14,7 @@ import { formatDate, num, round2 } from '../lib/time.js';
 import { phone11, formatBdPhone, normalizePhone, custKey } from '../lib/phone.js';
 import { saveFile, deleteFile } from '../lib/ext.js';
 import { forget } from '../lib/tabs.js';
-import { roleAtLeast } from '../allow.js';
+import { roleAtLeast, powerOn, callAllowed } from '../allow.js';
 import { buildXlsx } from './expenses.js';
 import { erpListView } from './listview.js';
 import { erpSuppliers, erpSupplierSave } from './suppliers.js';
@@ -50,7 +50,7 @@ export async function erpExport(ctx, payload) {
   const biz = str(ctx.s && ctx.s.businessName) || 'ERP';
   const stamp = formatDate(ctx.now, 'yyyy-MM-dd');
   if (what === 'products') {
-    const money = roleAtLeast(ctx.s.role, 'shareholder');
+    const money = powerOn(ctx.s, 'costs');
     const rows = await ctx.tx`select p.*, coalesce(ps.stock, 0) as stock from products p left join product_stock ps on ps.product_id = p.id
                               where p.business_id = ${ctx.biz} order by p.category, p.brand, p.name`;
     const costed = money ? (await costedProducts(ctx)).bySku : {};
@@ -92,14 +92,14 @@ export async function erpExport(ctx, payload) {
     const rows = await ctx.tx`select m.created_at, m.kind, m.direction, m.qty, m.unit_price, m.total, m.reference, m.supplier, m.note, m.operator, p.sku, p.name
                               from stock_movements m join products p on p.id = m.product_id
                               where m.business_id = ${ctx.biz} and m.created_at > now() - interval '90 days' order by m.created_at desc limit 20000`;
-    const money = roleAtLeast(ctx.s.role, 'shareholder');
+    const money = powerOn(ctx.s, 'costs');
     const out = [['When', 'SKU', 'Product', 'Kind', 'In / out', 'Qty'].concat(money ? ['Unit price', 'Total'] : []).concat(['Reference', 'Supplier', 'Note', 'By'])];
     for (const m of rows) out.push([formatDate(new Date(m.created_at), 'yyyy-MM-dd HH:mm'), str(m.sku), str(m.name), str(m.kind), str(m.direction), num(m.qty)]
       .concat(money ? [num(m.unit_price), num(m.total)] : []).concat([str(m.reference), str(m.supplier), str(m.note), str(m.operator)]));
     return fileOut(ctx, biz + ' stock movements ' + stamp + '.xlsx', [{ name: 'Stock', rows: out, frozenRows: 1, style: bold }]);
   }
   if (what === 'costbook') {
-    if (!roleAtLeast(ctx.s.role, 'shareholder')) throw new Error('Your account does not have access to that.');
+    if (!powerOn(ctx.s, 'costs')) throw new Error('Your account does not have access to that.');
     const book = await erpCostBook(ctx);
     const out = [['Category', 'Brand', 'Type', 'Buy price', 'Currency', 'Handling', 'Landed cost', 'Products', 'Typical sell', 'Margin %', 'Note']];
     for (const r of book.rows) out.push([r.category, r.brand, r.type, r.amount == null ? '' : num(r.amount), r.cur, r.handling === '' || r.handling == null ? '' : num(r.handling),
@@ -145,7 +145,7 @@ export async function erpImport(ctx, payload) {
   const kind = str(payload.what), apply = !!payload.apply;
   const rows = Array.isArray(payload.rows) ? payload.rows : [];
   if (!['products', 'customers', 'suppliers'].includes(kind)) throw new Error('Products, customers or suppliers can be imported.');
-  if (!roleAtLeast(ctx.s.role, 'manager')) throw new Error('Importing is a manager matter.');
+  if (!callAllowed(ctx.s, 'erpImport')) throw new Error('Importing is a manager matter.');
   if (!rows.length) throw new Error('The file has no rows under its heading line.');
   if (rows.length > 5000) throw new Error('At most 5,000 rows at a time.');
   const headers = Object.keys(rows[0] || {});
@@ -157,7 +157,7 @@ export async function erpImport(ctx, payload) {
     const cat = await erpCatalog(ctx);
     const bySku = {}, byName = {};
     cat.forEach((p) => { bySku[p.sku.toLowerCase()] = p; byName[p.name.toLowerCase()] = p; });
-    const money = roleAtLeast(ctx.s.role, 'shareholder');
+    const money = powerOn(ctx.s, 'costs');
     const ownCost = {}, costed2 = money ? (await costedProducts(ctx)).bySku : {};
     if (money) for (const r of await ctx.tx`select sku, cost_price from products where business_id = ${ctx.biz}`) ownCost[String(r.sku).toLowerCase()] = r.cost_price;
     const plan = [];

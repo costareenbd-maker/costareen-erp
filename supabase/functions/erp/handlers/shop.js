@@ -21,12 +21,12 @@
 import { getConfig, setConfig, setSecret, getSecret } from '../lib/ext.js';
 import { matcher, extKey, forgetMatcher } from '../lib/match.js';
 import { addWebLines, stockItems, webOrdersTab, WO } from './weborders.js';
-import { roleAtLeast } from '../allow.js';
+import { roleAtLeast, powerOn, callAllowed } from '../allow.js';
 
 const str = (v) => String(v == null ? '' : v).trim();
 const num = (v) => { const n = Number(v); return isFinite(n) ? n : 0; };
 
-function needManager(ctx) { if (!roleAtLeast(ctx.s.role, 'manager')) throw new Error('Only a manager or the owner can match website products.'); }
+function needManager(ctx) { if (!powerOn(ctx.s, 'weborders')) throw new Error('Only a manager or the owner can match website products.'); }
 
 // ------------------------------------------------------------- matching
 

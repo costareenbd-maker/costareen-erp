@@ -3,7 +3,7 @@
 // in Postgres one failed statement would otherwise abort the whole call.
 
 import { todayStr } from '../lib/time.js';
-import { roleAtLeast, ERP_ALLOW } from '../allow.js';
+import { callAllowed, powerOn } from '../allow.js';
 
 let ERP_BUILD_REF = 'b261002-1321';
 export function setBuild(b) { ERP_BUILD_REF = b; }
@@ -32,7 +32,7 @@ const ORDER = ['biz', 'dash', 'catalog', 'lists', 'options', 'customers', 'invoi
 // it. Anything that changes the books throws the kept copy away (core.js),
 // and so does a new day or six hours.
 const DASH_TTL_MS = 21600 * 1000;
-const dashTier = (ctx) => (roleAtLeast(ctx.s.role, 'shareholder') ? 'full' : 'staff');
+const dashTier = (ctx) => (powerOn(ctx.s, 'dash') ? 'full' : 'staff');
 
 export async function dashForget(sql, biz) {
   try { await sql`delete from erp_dash_cache where business_id = ${biz}`; } catch (_) { /* never fatal */ }
@@ -82,7 +82,7 @@ export function makeBundle(handlers) {
       try {
         if (!fn) throw new Error('Not built yet: ' + fnName);
         // the settings and the cost book are held to their own call's role
-        if ((name === 'settings' || name === 'costs') && ERP_ALLOW[fnName] && !roleAtLeast(ctx.s.role, ERP_ALLOW[fnName])) throw new Error('Not open to your role.');
+        if ((name === 'settings' || name === 'costs') && !callAllowed(ctx.s, fnName)) throw new Error('Not open to your role.');
         out[name] = await ctx.tx.savepoint(() => (name === 'dash'
           ? dashReady(ctx, handlers, !!(opt && opt.fresh))
           : fn(ctx, ...args)));

@@ -145,7 +145,7 @@ export async function createInvoice(ctx, payload, opts = {}) {
   // discounts: so much off each piece, and so much off the whole
   const DSC = invoiceDiscounts(items, bySku, num(payload.invoiceDiscount));
   if (!opts.webEntry) {
-    const cap = ERP_DISCOUNT_CAP[ctx.s.role] ?? 0;
+    const cap = ctx.s.discountCap ?? ERP_DISCOUNT_CAP[ctx.s.role] ?? 0;
     if (cap < 100 && DSC.itemDisc + DSC.invDisc > DSC.sub * cap / 100 + 0.5) {
       throw new Error('This discount is ' + (Math.round((DSC.itemDisc + DSC.invDisc) / DSC.sub * 1000) / 10) +
         '% of the goods. Your limit is ' + cap + '% - ask a manager or the owner to save this sale.');

@@ -12,7 +12,7 @@ import { erpCatalog, erpProduct } from './catalog.js';
 import { forget, str } from '../lib/tabs.js';
 import { formatDate, num, round2, DAY_MS } from '../lib/time.js';
 import { getConfig, setConfig } from '../lib/ext.js';
-import { roleAtLeast } from '../allow.js';
+import { roleAtLeast, powerOn, callAllowed } from '../allow.js';
 import { lock, who } from './money.js';
 import { billForShipment } from './suppliers.js';
 import { ratesMap, landedCost, saveRate } from './currency.js';
@@ -226,7 +226,7 @@ export async function erpSaveProduct(ctx, data) {
   // Fix (spec 02 §4.3): below shareholder the cost is scrubbed from the form,
   // so a missing / 0 cost from such an editor means "not shown", not "zero".
   let cost = num(data.cost_price);
-  if (!roleAtLeast(ctx.s.role, 'shareholder') && !(cost > 0)) cost = cur.cost_price;
+  if (!powerOn(ctx.s, 'costs') && !(cost > 0)) cost = cur.cost_price;
 
   await ctx.tx`
     update products set
@@ -813,7 +813,7 @@ async function insertDiff(ctx, d) {
 /** erpPoCreate (ERP:7930) */
 export async function erpPoCreate(ctx, payload) {
   payload = payload || {};
-  if (!roleAtLeast(ctx.s.role, 'manager')) throw new Error('Your account cannot place orders.');
+  if (!powerOn(ctx.s, 'suppliers')) throw new Error('Your account cannot place orders.');
   const shipBy = String(payload.shipBy || 'Sea');
   if (shipBy !== 'Sea' && shipBy !== 'Air') throw new Error('By sea or by air?');
   const rate = num(payload.rate);
@@ -882,7 +882,7 @@ export async function erpPoCreate(ctx, payload) {
 /** erpPoArrive (ERP:8010) */
 export async function erpPoArrive(ctx, payload) {
   payload = payload || {};
-  if (!roleAtLeast(ctx.s.role, 'manager')) throw new Error('Your account cannot receive orders.');
+  if (!powerOn(ctx.s, 'suppliers')) throw new Error('Your account cannot receive orders.');
   const id = str(payload.poId);
   const order = (await poOpen(ctx)).orders.find((o) => o.id === id);
   if (!order) throw new Error('No open order called ' + id + '.');
@@ -976,7 +976,7 @@ export async function erpPoArrive(ctx, payload) {
 
 /** erpPoLineClose (ERP:8103) */
 export async function erpPoLineClose(ctx, payload) {
-  if (!roleAtLeast(ctx.s.role, 'manager')) throw new Error('Your account cannot close orders.');
+  if (!powerOn(ctx.s, 'suppliers')) throw new Error('Your account cannot close orders.');
   const id = str(payload && payload.poId), sku = str(payload && payload.sku).toLowerCase();
   const why = str(payload && payload.reason) || 'supplier did not send it';
   await lock(ctx, 'stock');
@@ -1000,7 +1000,7 @@ function shortDiff(dno, id, supplier, line, why, now, by) {
 
 /** erpPoClose (ERP:8230): the rest of an order is not coming. */
 export async function erpPoClose(ctx, payload) {
-  if (!roleAtLeast(ctx.s.role, 'manager')) throw new Error('Your account cannot close orders.');
+  if (!powerOn(ctx.s, 'suppliers')) throw new Error('Your account cannot close orders.');
   const id = str(payload && payload.poId);
   const why = str(payload && payload.reason);
   if (!why) throw new Error('Say why the rest is not coming.');
@@ -1028,7 +1028,7 @@ export async function erpPoClose(ctx, payload) {
 
 /** erpPoDiffDecide (ERP:8130): pay / free bonus / hand back. */
 export async function erpPoDiffDecide(ctx, payload) {
-  if (!roleAtLeast(ctx.s.role, 'manager')) throw new Error('Your account cannot decide this.');
+  if (!powerOn(ctx.s, 'suppliers')) throw new Error('Your account cannot decide this.');
   const did = String((payload && payload.diffId) || ''), what = String((payload && payload.decision) || '');
   if (what !== 'pay' && what !== 'free' && what !== 'return') throw new Error('Pay for it, keep it free, or hand it back?');
   await lock(ctx, 'stock');

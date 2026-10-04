@@ -58,6 +58,7 @@ check('next SKU in the series: -002, no opening -> no movement', r.ok && r.resul
 r = await mgr('erpSaveProduct', [{ isNew: true, sku: 'fil-sun-pla-bla-001', product_name: 'Dup' }]);
 check('duplicate SKU (case-insensitive)', !r.ok && r.error === 'SKU already exists: fil-sun-pla-bla-001', r);
 
+await sql`update memberships set powers = '{"costs": false}'::jsonb where business_id = ${FIX.B} and user_id = ${FIX.U.mgr}`;   // since 058 a manager has Product cost unless switched off
 // manager edit: the cost is scrubbed from what the form loads, so it must survive the save
 r = await mgr('erpProduct', [PLA]);
 const form = { ...r.result, isNew: false, sell_price: 1400 };
@@ -67,6 +68,7 @@ p = await prod(PLA);
 check('manager edit keeps the cost it cannot see (fix)', r.ok && r.result.created === false && p.cost_price === 900 && p.sell_price === 1400, [r, p]);
 r = await mgr('erpSaveProduct', [{ ...form, cost_price: 0 }]);
 check('manager sending cost 0 does not wipe it either', r.ok && (await prod(PLA)).cost_price === 900);
+await sql`update memberships set powers = '{}'::jsonb where business_id = ${FIX.B} and user_id = ${FIX.U.mgr}`;
 r = await owner('erpSaveProduct', [{ ...(await owner('erpProduct', [PLA])).result, isNew: false, cost_price: 1000 }]);
 check('owner can change the cost', r.ok && (await prod(PLA)).cost_price === 1000, r);
 await owner('erpSaveProduct', [{ ...(await owner('erpProduct', [PLA])).result, isNew: false, cost_price: 900, sell_price: 1350 }]);

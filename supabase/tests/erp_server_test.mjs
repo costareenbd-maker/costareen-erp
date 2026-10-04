@@ -74,8 +74,10 @@ r = await mgr('erpCatalog', []);
 check('manager keeps supplier', r.result.find((p) => p.sku === 'FIL-SUN-PLA-BLA-001').supplier === 'Sunlu Direct');
 check('sorted by name', cat[0].name === 'Bambu A1');
 
+await sql`update memberships set powers = '{"costs": false}'::jsonb where business_id = ${FIX.B} and user_id = ${FIX.U.mgr}`;   // since 058 a manager has Product cost unless switched off
 r = await mgr('erpProduct', ['fil-sun-pla-bla-001']);
 check('manager: product found case-insensitive, cost scrubbed', r.ok && r.result.product_name === 'Sunlu PLA Black' && !('cost_price' in r.result), r);
+await sql`update memberships set powers = '{}'::jsonb where business_id = ${FIX.B} and user_id = ${FIX.U.mgr}`;
 r = await owner('erpProduct', ['FIL-SUN-PLA-BLA-001']);
 check('owner sees cost', r.result.cost_price === 900, r);
 r = await owner('erpProduct', ['X-OTHER']);

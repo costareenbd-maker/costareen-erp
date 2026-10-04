@@ -7,7 +7,7 @@
 // privileged connection, and never with data from another business.
 
 import { controlState } from './lib/control.js';
-import { ERP_ALLOW, ERP_READS, ERP_ROLES, ERP_DISCOUNT_CAP, normRole, roleAtLeast } from './allow.js';
+import { ERP_ALLOW, ERP_READS, ERP_ROLES, ERP_DISCOUNT_CAP, normRole, roleAtLeast, callAllowed, powersMap, discountCapOf } from './allow.js';
 import { dashForget, dashKeep } from './handlers/bundle.js';
 import { scrub } from './scrub.js';
 import { HANDLERS } from './handlers/index.js';
@@ -152,7 +152,7 @@ async function authenticate(sql, deps, token, authHeader, ip) {
 /** The business this person is working in, and their role there. */
 async function activeBusiness(sql, userId) {
   const mem = await sql`
-    select m.business_id, m.role, b.name, b.is_pool, b.suspended_at
+    select m.business_id, m.role, m.powers, b.name, b.is_pool, b.suspended_at
     from memberships m join businesses b on b.id = m.business_id
     where m.user_id = ${userId} and coalesce(m.active, true)
     order by m.created_at`;
@@ -166,14 +166,15 @@ async function activeBusiness(sql, userId) {
   const hit = mem.find((m) => m.business_id === want) || mem[0];
   const role = normRole(hit.role);
   if (!ERP_ROLES[role]) throw new Refused('NO_ROLE');
-  return { businessId: hit.business_id, businessName: hit.name, role, memberships: mem };
+  const powers = (hit.powers && typeof hit.powers === 'object') ? hit.powers : {};
+  return { businessId: hit.business_id, businessName: hit.name, role, powers, memberships: mem };
 }
 
 async function session(sql, deps, token, authHeader, ip) {
   const who = await authenticate(sql, deps, token, authHeader, ip);
   const biz = await activeBusiness(sql, who.userId);
   return { ...who, ...biz, roleLabel: ERP_ROLES[biz.role].label,
-           discountCap: ERP_DISCOUNT_CAP[biz.role] };
+           discountCap: discountCapOf(biz.role, biz.powers) };
 }
 
 /** erpMe / erpHello: what the browser is told about the person using it. */
@@ -186,7 +187,7 @@ async function hello(sql, deps, token, authHeader, ip) {
     let platform = false;
     try { platform = (await sql`select 1 from platform_admins where user_id = ${s.userId}`).length > 0; } catch (_) { platform = false; }
     return { ok: true, role: s.role, roleLabel: s.roleLabel, name: s.name,
-             implicit: !!s.implicit, link: !!s.viaKey, discountCap: s.discountCap, platform };
+             implicit: !!s.implicit, link: !!s.viaKey, discountCap: s.discountCap, powers: powersMap(s), platform };
   } catch (e) {
     if (!(e instanceof Refused)) throw e;
     return { ok: false, reason: e.message, message: SAYS[e.message] || 'Could not sign you in.' };
@@ -272,7 +273,7 @@ export async function erpCall(deps, { name, args, token, authHeader, ip }) {
       if (e instanceof Refused) throw new Error(SAYS[e.message] || 'Sign in to the ERP first.');
       throw e;
     }
-    if (!roleAtLeast(s.role, need)) throw new Error('Your account does not have access to that.');
+    if (!callAllowed(s, name)) throw new Error('Your account does not have access to that.');
 
     const claims = JSON.stringify({ sub: s.userId, role: 'authenticated' });
     const result = await sql.begin(async (tx) => {
@@ -301,11 +302,11 @@ export async function erpCall(deps, { name, args, token, authHeader, ip }) {
       if (opKey) await tx`update erp_op_keys set result = ${tx.json(out === undefined ? null : out)} where business_id = ${s.businessId} and op_key = ${opKey}`;
       return out;
     });
-    if (result && result.__replay === true) return { ok: true, result: scrub(name, result.value, s.role), replayed: true };
+    if (result && result.__replay === true) return { ok: true, result: scrub(name, result.value, s), replayed: true };
     // the books may have changed: the kept dashboard is no longer to be trusted
     if (!ERP_READS.test(name)) { await dashForget(sql, s.businessId); await logActivity(sql, s, name, args, token, ip, result); }
     else if (name === 'erpDashboardData') await dashKeep({ sql, biz: s.businessId, s, now: new Date() }, result);
-    return { ok: true, result: scrub(name, result, s.role) };
+    return { ok: true, result: scrub(name, result, s) };
   } catch (err) {
     await logError(sql, s, name, err);
     return { ok: false, error: String((err && err.message) || err) };

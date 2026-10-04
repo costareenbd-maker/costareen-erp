@@ -28,9 +28,11 @@ const fields = P.changes.map((c) => c.field);
 const sp = P.changes.find((c) => c.field === 'Selling price') || {};
 check('product page: price and cost changes recorded with who', fields.includes('Selling price') && fields.includes('Cost') &&
   sp.was === '1350' && sp.now === '1400' && sp.by === 'Mehedi', P.changes);
+await sql`update memberships set powers = '{"costs": false}'::jsonb where business_id = ${FIX.B} and user_id = ${FIX.U.mgr}`;   // since 058 a manager has Product cost unless switched off
 r = await mgr('erpProductPage', [{ sku: PLA }]);
 check('manager: no cost, margin, stock value at cost, receipt cost or cost changes', r.ok && !r.result.canSeeMoney && !('cost' in r.result) && !('margin' in r.result) &&
   !('stockValueCost' in r.result) && r.result.ledger[0].price === null && !r.result.changes.some((c) => c.field === 'Cost') && 'supplier' in r.result, r.result);
+await sql`update memberships set powers = '{}'::jsonb where business_id = ${FIX.B} and user_id = ${FIX.U.mgr}`;
 r = await sales('erpProductPage', [{ sku: PLA }]);
 check('sales: no supplier either, sale prices still shown', r.ok && !('supplier' in r.result) && r.result.ledger[0].supplier === '' && r.result.ledger[1].price === 1350 &&
   !JSON.stringify(r.result).match(/"cost"|margin|stockValueCost/), Object.keys(r.result || {}));

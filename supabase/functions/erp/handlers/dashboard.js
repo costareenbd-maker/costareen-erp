@@ -15,7 +15,7 @@
 import { salesLog, paymentsTab, asDate, str, SL, PAY } from '../lib/tabs.js';
 import { formatDate, num, round2, dhakaDayStart, DAY_MS, looseDate } from '../lib/time.js';
 import { getConfig, setConfig } from '../lib/ext.js';
-import { roleAtLeast } from '../allow.js';
+import { roleAtLeast, powerOn } from '../allow.js';
 import { erpDues, creditMap, paidByOrder, discLeft, lock } from './money.js';
 import { ratesMap, landedCost, saveRate } from './currency.js';
 import { returnsFor } from './returns.js';
@@ -320,7 +320,7 @@ async function courierBalance(ctx) {
 
 /** erpDashboardData (ERP.js:187-627). */
 export async function erpDashboardData(ctx) {
-  const full = roleAtLeast(ctx.s && ctx.s.role, 'shareholder');
+  const full = powerOn(ctx.s, 'dash');
   const now = ctx.now, nowMs = now.getTime();
   const thisKey = monthKey(now);
   const todayKey = formatDate(now, 'yyyy-MM-dd');
@@ -641,7 +641,7 @@ export async function erpDaySales(ctx, dateStr) {
   let units = 0, revenue = 0, lines = 0, cogs = 0;
   const orders = {}, byProduct = {}, byOrder = [], invoices = {}, byInv = [];
   // profit only for those who may see it (as on the Dashboard)
-  const full = roleAtLeast(ctx.s && ctx.s.role, 'shareholder');
+  const full = powerOn(ctx.s, 'dash');
   const prod = full ? (await products(ctx)).bySku : {};
   for (const row of await salesLog(ctx)) {
     const oid = str(row[SL.order_id]);

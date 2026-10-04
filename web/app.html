@@ -1081,6 +1081,15 @@ function wireDash() {
 
 
 /** Is this screen open to the person signed in? (the nav already knows) */
+// Abilities per person (058): the server sends ME.powers; an older server does not, then the role decides.
+var POWER_MIN = { dash: 3, costs: 2, lists: 2, profit: 3, expenses: 3, stock: 2, suppliers: 2, weborders: 2, campaigns: 2, products: 2, returns: 2, dues: 2 };
+function pageCan(id) {
+  if (!ME) return false;
+  if (ME.role === 'owner') return true;
+  if (ME.powers && id in ME.powers) return !!ME.powers[id];
+  var rank = { sales: 1, manager: 2, shareholder: 3, owner: 4 }[ME.role] || 0;
+  return rank >= (POWER_MIN[id] || 4);
+}
 function navOn(v) {
   var b = document.querySelector('#nav button[data-view="' + v + '"]');
   return !!(b && b.style.display !== 'none');
@@ -2182,7 +2191,7 @@ async function saveInvoice() {
 var SFP = null, SFP_ERR = null, SFP_OPEN = false, SFP_LINES = {};
 
 function courierMoneyHtml() {
-  if (!ME || !(ME.role === 'manager' || ME.role === 'shareholder' || ME.role === 'owner')) return '';
+  if (!pageCan('weborders')) return '';
   var cur = OPT ? OPT.currency : 'BDT';
   var h = '<section><div class="card"><div class="row" style="align-items:center;gap:8px">' +
     '<h2 style="margin:0;flex:1">Steadfast money</h2>' +
@@ -5423,7 +5432,7 @@ function reorderPlanHtml() {
       'sells has enough on the shelf.</div></div></section>';
   }
 
-  var mgrPo = ME && (ME.role === 'manager' || ME.role === 'shareholder' || ME.role === 'owner');
+  var mgrPo = pageCan('suppliers');
   h += '<div class="scroll tall"><table><thead><tr>' + (mgrPo ? '<th></th>' : '') + '<th>Product</th><th>Brand</th>' +
     '<th class="num">On hand</th><th class="num">On the way</th><th class="num">Sells / month</th>' +
     '<th class="num">Days left</th><th class="num">Order</th>' +
@@ -5527,7 +5536,7 @@ function viewStock() {
 
   // ---- count and adjust -----------------------------------------------
   if (STOCK_TAB === 'count') {
-  if (pageIsManager()) h += stockCountHtml();
+  if (pageCan('stock')) h += stockCountHtml();
   var sel = null;
   for (var i = 0; i < CAT.length; i++) if (CAT[i].sku === ADJ.sku) { sel = CAT[i]; break; }
   h += '<section><div class="card"><h2>Stock adjustment</h2>'+
@@ -5584,7 +5593,7 @@ var PO_BUSY = '';
 function loadPo() {
   srv('erpPoList', [], function (r) { PO = r; if (VIEW === 'stock') repaint(); }, function () { PO = { orders: [] }; });
 }
-function poCanOrder() { return !!(ME && (ME.role === 'manager' || ME.role === 'shareholder' || ME.role === 'owner')); }
+function poCanOrder() { return pageCan('suppliers'); }
 function poBlank() { return { lines: [], rate: '', ship: POSHIP, note: '', supplier: '' }; }
 function poNewTotals() {
   var rmb = 0, units = 0;
@@ -10252,7 +10261,9 @@ function applyRole() {
   for (var i = 0; i < btns.length; i++) {
     var v = btns[i].getAttribute('data-view');
     var min = need[v] || 0;
-    btns[i].style.display = (rank >= min) ? '' : 'none';
+    var VP = { dash: 'dash', costs: 'costs', profit: 'profit', expenses: 'expenses', stock: 'stock', suppliers: 'suppliers', weborders: 'weborders', campaigns: 'campaigns' };
+    var ok = VP[v] ? pageCan(VP[v]) : v === 'settings' ? (rank >= 3 || pageCan('lists')) : rank >= min;
+    btns[i].style.display = ok ? '' : 'none';
   }
   var grps = document.querySelectorAll('#nav .navgrp');
   for (var g = 0; g < grps.length; g++) {
@@ -10490,7 +10501,7 @@ function invoicePageHtml() {
   var back = '<button class="backlink" type="button" data-back="sales">&larr; All sales</button>';
   if (INVP.err) return '<section>' + back + '<div class="note err"><div class="ico">✕</div><div><strong>Could not open ' + esc(INVP.no) + '.</strong><br>' + esc(INVP.err) + '</div></div></section>';
   if (!INVP.data) return '<section>' + back + '<div class="loading">Opening ' + esc(INVP.no) + '&hellip;</div></section>';
-  var d = INVP.data, cur = OPT ? OPT.currency : 'BDT', mgr = pageIsManager();
+  var d = INVP.data, cur = OPT ? OPT.currency : 'BDT', mgr = pageCan('returns') || pageCan('dues');
   var state = d.cancelled ? '<span class="pill out">Cancelled</span>'
     : (d.owed > 0 ? '<span class="pill out">' + esc(cur) + ' ' + fmt(d.owed) + ' due</span>' : '<span class="pill ok">✓ Paid</span>') +
       (d.allBack ? ' <span class="pill low">all returned</span>' : d.returnedQty ? ' <span class="pill low">' + fmt(d.returnedQty) + ' returned</span>' : '');
@@ -10568,7 +10579,7 @@ function customerPageHtml() {
   var back = '<button class="backlink" type="button" data-back="customers">&larr; All customers</button>';
   if (CUSP.err) return '<section>' + back + '<div class="note err"><div class="ico">✕</div><div><strong>Could not open that customer.</strong><br>' + esc(CUSP.err) + '</div></div></section>';
   if (!CUSP.data) return '<section>' + back + '<div class="loading">Opening the customer&hellip;</div></section>';
-  var c = CUSP.data, cur = OPT ? OPT.currency : 'BDT', mgr = pageIsManager();
+  var c = CUSP.data, cur = OPT ? OPT.currency : 'BDT', mgr = pageCan('dues');
   var wa = (typeof waLink === 'function' && c.phone) ? waLink(c.phone, '') : '';
   var acts = '<button class="btn primary" type="button" id="cp_inv">New invoice</button>' +
     '<button class="btn" type="button" data-stmt="1" data-sphone="' + esc(c.phone) + '" data-sname="' + esc(c.name) + '">Statement</button>' +
@@ -10754,7 +10765,7 @@ function productPageHtml() {
   var back = '<button class="backlink" type="button" data-back="products">&larr; All products</button>';
   if (PRODP.err) return '<section>' + back + '<div class="note err"><div class="ico">✕</div><div><strong>Could not open that product.</strong><br>' + esc(PRODP.err) + '</div></div></section>';
   if (!PRODP.data) return '<section>' + back + '<div class="loading">Opening the product&hellip;</div></section>';
-  var p = PRODP.data, cur = OPT ? OPT.currency : 'BDT', mgr = pageIsManager();
+  var p = PRODP.data, cur = OPT ? OPT.currency : 'BDT', mgr = pageCan('products') || pageCan('stock');
   var gone = String(p.status).toLowerCase() === 'discontinued';
   var acts = '';
   if (p.stock > 0 && p.sell > 0 && !gone) acts += '<button class="btn primary" type="button" data-add="' + esc(p.sku) + '">Add to invoice</button>';
@@ -11441,7 +11452,7 @@ function setMark(t) { return '<!--tab:' + t + '-->'; }
 function setTabsMine() {
   var owner = ME && ME.role === 'owner', mgr = ME && ME.role === 'manager';
   // a manager keeps the drop-down lists only; the business itself stays with the owner and shareholders
-  return SET_TABS.filter(function (t) { return owner || (mgr ? t[0] === 'lists' : (t[0] !== 'security' && t[0] !== 'connections' && t[0] !== 'users' && (t[0] !== 'alerts' || (ME && ME.role === 'shareholder')))); });
+  return SET_TABS.filter(function (t) { return owner || (mgr || (ME && ME.role === 'sales') ? (t[0] === 'lists' && pageCan('lists')) : (t[0] !== 'security' && t[0] !== 'connections' && t[0] !== 'users' && (t[0] !== 'alerts' || (ME && ME.role === 'shareholder')))); });
 }
 function settingsTabsHtml() {
   var mine = setTabsMine();
@@ -14123,7 +14134,7 @@ function d3Decorate() {
 
 // ---- the product page: see it, add it, change it, remove it
 function d3Card() {
-  var p = PRODP.data, sku = PRODP.sku, src = thumbOf(sku), can = typeof pageIsManager === 'function' ? pageIsManager() : true;
+  var p = PRODP.data, sku = PRODP.sku, src = thumbOf(sku), can = pageCan('products');
   if (!src && !can) return '';
   return '<section><div class="card"><h2>Photo</h2><div class="d3photo">' +
     (src ? '<img class="big" id="d3_open" src="' + esc(src) + '" alt="Photo of the product" title="Open the full picture">' : '<div class="none">No photo yet</div>') +
@@ -14559,7 +14570,7 @@ function serForget(sku) { if (sku) delete SER[sku]; else SER = {}; }
 
 // ---- the product page: serials and warranty
 function serCardHtml() {
-  var sku = PRODP.sku, p = PRODP.data, d = SER[sku], mgr = typeof pageIsManager === 'function' ? pageIsManager() : false;
+  var sku = PRODP.sku, p = PRODP.data, d = SER[sku], mgr = pageCan('stock');
   if (!d) { serLoad(sku); return '<section><div class="card"><h2>Serial numbers and warranty</h2><div class="loading">Reading&hellip;</div></div></section>'; }
   var sh = ME && (ME.role === 'owner' || ME.role === 'shareholder');
   var h = '<section><div class="card" data-sercard="' + esc(sku) + '"><h2>Serial numbers and warranty</h2>' +
@@ -18426,6 +18437,91 @@ var WS_OTHER = false;
     srvBC('erpBundle', [['catalog']], function (b) { applyBundle(b); D = null; if (typeof quietRepaint === 'function') quietRepaint(); else repaint(); }, function () {});
   };
 })();
+</script>
+
+<!-- abilities per person (058): Settings > Users > Abilities -->
+<style>
+.pow { display:grid; grid-template-columns:repeat(auto-fill, minmax(260px, 1fr)); gap:8px; margin:8px 0; }
+.pow label { display:flex; gap:10px; align-items:flex-start; padding:9px 10px; border:1px solid var(--line, #ddd); border-radius:8px; cursor:pointer; }
+.pow label:hover { border-color:var(--accent, #3a86c8); }
+.pow input { margin-top:3px; width:18px; height:18px; flex:0 0 auto; }
+.pow .t { font-weight:600; }
+.pow .h { font-size:12px; opacity:.75; }
+.pow .tag { font-size:11px; padding:1px 6px; border-radius:9px; margin-left:6px; background:rgba(127,127,127,.15); font-weight:400; }
+.pow .tag.set { background:rgba(58,134,200,.18); }
+.powbox { padding:10px 12px; border-radius:10px; background:rgba(127,127,127,.06); }
+</style>
+<script>
+var USR_POW = '';
+function usrPowHtml(u) {
+  var d = USR.data, pw = u.powers || { list: {}, discount: 0 };
+  var h = '<div class="powbox"><h3 style="margin:0 0 4px">What ' + esc(u.name) + ' can do</h3>' +
+    '<div class="sub">Their role (' + esc(u.roleLabel) + ') gives the ticks marked <b>role</b>. Tick or untick to change one for this person only; <b>set by you</b> shows it. Saved at once.</div><div class="pow">';
+  (d.abilities || []).forEach(function (a) {
+    var x = pw.list[a.id] || { on: false, byRole: false, set: false };
+    h += '<label><input type="checkbox" data-powuser="' + esc(u.id) + '" data-pow="' + esc(a.id) + '"' + (x.on ? ' checked' : '') + (USR.busy ? ' disabled' : '') + '>' +
+      '<span><span class="t">' + esc(a.label) + '</span><span class="tag' + (x.set ? ' set' : '') + '">' + (x.set ? 'set by you' : 'role') + '</span><br><span class="h">' + esc(a.help) + '</span></span></label>';
+  });
+  h += '</div><div class="row" style="gap:8px;align-items:flex-end;flex-wrap:wrap">' +
+    '<div style="flex:0 1 200px"><label class="f" for="pow_disc_' + esc(u.id) + '">Discount limit, %</label><input class="i" id="pow_disc_' + esc(u.id) + '" type="number" min="0" max="100" step="0.5" inputmode="decimal" value="' + esc(pw.discount) + '"></div>' +
+    '<button class="btn primary" type="button" data-powdisc="' + esc(u.id) + '">Save limit</button>' +
+    '<span class="sku">' + (pw.discountSet ? 'set by you' : 'from the role (' + esc((d.discountCaps || {})[u.role]) + '%)') + '</span>' +
+    '<span style="flex:1"></span><button class="btn" type="button" data-powreset="' + esc(u.id) + '">Back to the role\u2019s abilities</button></div>' +
+    '<div class="sub" style="margin-top:8px">Money accounts, capital, users, connections and security stay with shareholders and the owner.</div></div>';
+  return h;
+}
+var usrHtmlP1 = usrHtml;
+usrHtml = function () {
+  var h = usrHtmlP1();
+  var d = USR.data;
+  if (!h || !d || !d.users) return h;
+  d.users.forEach(function (u) {
+    if (u.me || u.role === 'owner' || !u.powers) return;
+    var key = 'data-usrrole="' + esc(u.id) + '"', at = h.indexOf(key);
+    if (at < 0) return;
+    var sel = h.indexOf('</select>', at);
+    if (sel < 0) return;
+    sel += '</select>'.length;
+    var btn = ' <button class="btn small' + (USR_POW === u.id ? ' primary' : '') + '" type="button" data-usrpow="' + esc(u.id) + '">Abilities</button>';
+    h = h.slice(0, sel) + btn + h.slice(sel);
+    if (USR_POW === u.id) {
+      var end = h.indexOf('</tr>', sel);
+      if (end >= 0) { end += 5; h = h.slice(0, end) + '<tr><td colspan="6">' + usrPowHtml(u) + '</td></tr>' + h.slice(end); }
+    }
+  });
+  return h;
+};
+function usrPowSave(userId, powers, msg) {
+  USR.busy = true; repaint();
+  srv('erpUserPowers', [{ userId: userId, powers: powers }], function (r) { USR.data = r; USR.busy = false; toast(msg); repaint(); },
+      function (e) { USR.busy = false; toast(esc(e && e.message ? e.message : e), true, 12000); repaint(); });
+}
+document.addEventListener('click', function (ev) {
+  var t = ev.target; if (!t || !t.getAttribute) return;
+  var id = t.getAttribute('data-usrpow');
+  if (id) { USR_POW = USR_POW === id ? '' : id; repaint(); return; }
+  id = t.getAttribute('data-powdisc');
+  if (id) {
+    var v = (el('pow_disc_' + id) || {}).value;
+    if (v === '' || isNaN(Number(v)) || Number(v) < 0 || Number(v) > 100) { toast('Type a number from 0 to 100.', true); return; }
+    usrPowSave(id, { discount: Number(v) }, 'Discount limit saved: ' + Number(v) + '%.');
+    return;
+  }
+  id = t.getAttribute('data-powreset');
+  if (id) {
+    var all = { discount: null };
+    ((USR.data && USR.data.abilities) || []).forEach(function (a) { all[a.id] = null; });
+    usrPowSave(id, all, 'Back to the role\u2019s abilities.');
+  }
+});
+document.addEventListener('change', function (ev) {
+  var t = ev.target; if (!t || !t.getAttribute) return;
+  var id = t.getAttribute('data-powuser'), p = t.getAttribute('data-pow');
+  if (!id || !p) return;
+  var o = {}; o[p] = !!t.checked;
+  var a = ((USR.data && USR.data.abilities) || []).find(function (x) { return x.id === p; });
+  usrPowSave(id, o, (a ? a.label : p) + (t.checked ? ' switched on.' : ' switched off.') + ' They see it after a refresh.');
+});
 </script>
 </body>
 </html>

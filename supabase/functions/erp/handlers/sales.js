@@ -23,7 +23,7 @@ import { docLang, docBangla } from '../lib/doclang.js';
 import { salesLog, returnsTab, courierLog, forget, asDate, str, SL } from '../lib/tabs.js';
 import { formatDate, num, round2, dhakaDayStart } from '../lib/time.js';
 import { phone11, custKey, normalizePhone } from '../lib/phone.js';
-import { roleAtLeast } from '../allow.js';
+import { roleAtLeast, powerOn, callAllowed } from '../allow.js';
 import { ERP_DELIVERY, isCourier } from './catalog.js';
 import { deliveryOptions } from '../lib/delivery.js';
 import {
@@ -661,7 +661,7 @@ export async function erpCancelInvoice(ctx, payload) {
 /** erpFixInvoice (ERP:7627): who it is for, where it goes, how. Never money or stock. */
 export async function erpFixInvoice(ctx, payload) {
   payload = payload || {};
-  if (!roleAtLeast(ctx.s.role, 'manager')) throw new Error('Your account cannot change a saved sale.');
+  if (!callAllowed(ctx.s, 'erpFixInvoice')) throw new Error('Your account cannot change a saved sale.');
   const invoiceNo = String(payload.invoiceNo || '').trim();
   if (!invoiceNo) throw new Error('Which invoice?');
 

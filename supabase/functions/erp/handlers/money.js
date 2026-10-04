@@ -4,7 +4,7 @@
 
 import { salesLog, paymentsTab, forget, asDate, str, SL, PAY } from '../lib/tabs.js';
 import { formatDate, num, round2 } from '../lib/time.js';
-import { roleAtLeast } from '../allow.js';
+import { roleAtLeast, powerOn, callAllowed } from '../allow.js';
 import { custKey } from '../lib/phone.js';
 import { accountForMethod } from './cash.js';
 
@@ -395,7 +395,7 @@ async function undoPayment(ctx, payload, amount, note) {
 /** erpTakeAdvance (ERP:5342): money for goods that do not exist yet. */
 export async function erpTakeAdvance(ctx, payload) {
   payload = payload || {};
-  if (!roleAtLeast(ctx.s.role, 'manager')) throw new Error('Your account cannot take payments.');
+  if (!callAllowed(ctx.s, 'erpTakeAdvance')) throw new Error('Your account cannot take payments.');
   const amount = num(payload.amount);
   if (!(amount > 0)) throw new Error('How much was received?');
   const phone = str(payload.phone), name = str(payload.name);

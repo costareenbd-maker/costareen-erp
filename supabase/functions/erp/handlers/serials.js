@@ -11,7 +11,7 @@
 // or what was typed for that line. A return brings the unit back (returnSerials).
 
 import { formatDate, num, dhakaDayStart } from '../lib/time.js';
-import { roleAtLeast } from '../allow.js';
+import { roleAtLeast, powerOn, callAllowed } from '../allow.js';
 import { who } from './money.js';
 
 const str = (v) => String(v == null ? '' : v).trim();
@@ -102,7 +102,7 @@ export async function erpSerialsFor(ctx, payload) {
   const inStock = all.filter((r) => r.status === 'in_stock');
   return { sku: str(p.sku), name: str(p.name), serialised: !!p.serialised, warrantyMonths: p.warranty_months == null ? null : num(p.warranty_months),
            stock: num(p.stock), inStock, sold: all.filter((r) => r.status !== 'in_stock').slice(0, 200),
-           unnumbered: Math.max(0, num(p.stock) - inStock.length), canEdit: roleAtLeast(ctx.s.role, 'manager') };
+           unnumbered: Math.max(0, num(p.stock) - inStock.length), canEdit: powerOn(ctx.s, 'stock') };
 }
 
 /** Any serial, from a few characters: whose it is, when it was sold, warranty left. */

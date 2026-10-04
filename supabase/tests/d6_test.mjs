@@ -10,8 +10,10 @@ for (const what of ['products', 'customers', 'invoices', 'suppliers', 'serials',
   r = await mgr('erpExport', [{ what }]);
   check('export ' + what + ': an .xlsx file with a link', r.ok && /\.xlsx$/.test(r.result.name) && /^https:\/\/files\.test\//.test(r.result.url) && r.result.rows >= 0, r);
 }
+await sql`update memberships set powers = '{"costs": false}'::jsonb where business_id = ${FIX.B} and user_id = ${FIX.U.mgr}`;   // since 058 a manager has Product cost unless switched off
 r = await mgr('erpExport', [{ what: 'costbook' }]);
 check('the price book is for shareholders and up', !r.ok, r);
+await sql`update memberships set powers = '{}'::jsonb where business_id = ${FIX.B} and user_id = ${FIX.U.mgr}`;
 r = await owner('erpExport', [{ what: 'costbook' }]);
 check('...and exports for them', r.ok && r.result.rows >= 0, r);
 r = await mgr('erpExport', [{ what: 'moon' }]);
@@ -46,8 +48,10 @@ check('the changed product sells at 1234 now, type and others untouched', Number
   (await sql`select type from products where business_id = ${B} and sku = ${PLA}`)[0].type === typeBefore, 0);
 r = await owner('erpImport', [{ what: 'products', rows: [{ 'SKU': PLA, 'Name': 'Sunlu PLA Black', 'Cost': 777 }], apply: true }]);
 check('a shareholder\'s file changes the cost', r.ok && r.result.changed === 1 && Number((await sql`select cost_price from products where business_id = ${B} and sku = ${PLA}`)[0].cost_price) === 777, r.result);
+await sql`update memberships set powers = '{"costs": false}'::jsonb where business_id = ${FIX.B} and user_id = ${FIX.U.mgr}`;   // since 058 a manager has Product cost unless switched off
 r = await mgr('erpImport', [{ what: 'products', rows: [{ 'SKU': PLA, 'Name': 'Sunlu PLA Black', 'Cost': 1 }], apply: true }]);
 check('a manager\'s file cannot', r.ok && r.result.skip.length === 1 && Number((await sql`select cost_price from products where business_id = ${B} and sku = ${PLA}`)[0].cost_price) === 777, r.result);
+await sql`update memberships set powers = '{}'::jsonb where business_id = ${FIX.B} and user_id = ${FIX.U.mgr}`;
 
 // ---------------------------------------------------------------- import: customers
 const crows = [

@@ -694,3 +694,10 @@ Manager discount cap raised from 10% to 100% (same as owner). Sales stays at 5%.
 - Manager: Settings opens with the Lists tab only (no Business, Users, Alerts, Connections, Security; business values not sent); Product cost page opens to them (cost book, rates, handling/margin). Dashboard stays hidden.
 - Fixed: erpBundle settings/costs parts are now held to their own call's role (sales could read them through the bundle before).
 Not done: per-person ability switches in Settings > Users. Tests: mgr_access 11; settings, dashboard, a5, erp_server updated; all suites green.
+
+## Abilities per person (2026-10-05)
+- Settings > Users > "Abilities" (next to each non-owner's role): 12 switches on top of the role - Dashboard, Product cost, Settings lists, Profitability, Expenses, Stock and receiving, Suppliers and purchase orders, Web orders and parcels, Campaigns, Add and edit products, Returns and invoice fixes, Dues and payments - plus an own discount limit. Ticks marked "role" come from the role; "set by you" are the owner's. "Back to the role's abilities" clears them. Owners always have all.
+- Server: memberships.powers (058); allow.js ERP_POWERS groups calls by ability; core gate, bundle parts, scrub, dashboard tier and the handlers' own checks follow the abilities. erpUserPowers (owner). Page: menu, Settings tabs and buttons follow ME.powers.
+- Change of default: a manager now sees buying prices everywhere (product page, Excel, catalog), because "Product cost" is a manager ability. Switch it off per person if not wanted.
+- Not switchable (stay with shareholder/owner): money accounts, capital, users, connections, security. Dropped a "void invoices" switch: there is no Void button on the page.
+Tests: powers 33; d6/erp_server/goods/stock switch the manager's Product cost off where they test the hidden-cost view; all suites green.
