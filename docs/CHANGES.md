@@ -653,3 +653,6 @@ Website orders' parcel numbers: the sync plugin key is the wp_option cz_sync_sha
 
 ## WordPress key page + any other website (2026-10-05)
 New mu-plugin wp-content/mu-plugins/cz-erp-key.php on costareen.com (separate file, nothing else changed): WordPress admin > Settings > Costareen ERP shows the cz_sync_shared_secret key (Show / Copy) and "Make a new key" (nonce, confirm). The ERP's parcel-key field now says exactly that. Website card: a 4th button "Any other website" opens the open-door card, renamed "Any other website (PHP, Laravel, Wix ...)". Source of the mu-plugin kept in the scratchpad copy only (website files are not in this repo).
+
+## Any other website: inside the Website box + a ready PHP file (2026-10-05)
+The open-door card no longer sits at the bottom of Connections: it opens inside the Website box only when "Any other website" is pressed (pressed again: closed; the button shows it is open). New "Download the PHP file": costareen-erp.php with the door address and - right after "Make a new key" - the key inside; functions erp_ping, erp_send_order, erp_stock, erp_send_products (curl, PHP 7.4+). Checked: php -l clean on the website host, erp_ping reaches the door (refuses the placeholder key as it should); live: hidden by default, opens inside the Website box, closes again.

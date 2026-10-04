@@ -15391,11 +15391,11 @@ function connHtml() {
         '<button type="button" class="t2q" data-conntip="' + esc(v.label) + '" aria-label="Details">?</button></div>'; }).join('') + '</div></div></section>';
   var w = c.website, kind = WS_KIND || w.kind || 'plugin';
   var kinds = [['plugin', 'WordPress plugin', 'WordPress with the ERP sync plugin'], ['woo', 'WooCommerce', 'any WooCommerce shop, no plugin needed'], ['shopify', 'Shopify', 'any Shopify shop']];
-  var otherBtn = '<button type="button" class="btn" data-wsother="1" title="PHP, Laravel, Wix, a custom site - anything that can send a web request">Any other website</button>';
+  var otherBtn = '<button type="button" class="btn' + (WS_OTHER ? ' primary' : '') + '" data-wsother="1" aria-expanded="' + !!WS_OTHER + '" title="PHP, Laravel, Wix, a custom site - anything that can send a web request">Any other website</button>';
   h += '<section><div class="card"><h2>Website</h2><div class="sub">Website orders come in every 15 minutes (Web orders screen) and stock goes out to the shop. Products with other SKUs are matched once under Web orders \u2192 Match website products. ' +
     '<strong>The sync stays off until you switch it on</strong> \u2014 while the old sheet still sends stock to the shop, switching this on too would make the two overwrite each other. Any other website: the open door further down.</div>' +
     '<div class="row" style="margin-top:10px;gap:8px;flex-wrap:wrap">' + kinds.map(function (k) {
-      return '<button type="button" class="btn' + (k[0] === kind ? ' primary' : '') + '" data-wskind="' + k[0] + '" title="' + esc(k[2]) + '">' + esc(k[1]) + '</button>'; }).join('') + otherBtn + '</div>';
+      return '<button type="button" class="btn' + (k[0] === kind ? ' primary' : '') + '" data-wskind="' + k[0] + '" title="' + esc(k[2]) + '">' + esc(k[1]) + '</button>'; }).join('') + otherBtn + '</div><!--WSDOOR-->';
   var same = kind === w.kind, saved = same && w.hasKey;
   var keyNote = saved ? 'saved \u2014 type a new one only to change it' : '';
   if (kind === 'plugin') {
@@ -15596,6 +15596,7 @@ function doorHtml() {
   h += '<div class="row" style="margin-top:10px;gap:8px;flex-wrap:wrap;align-items:center">' +
     (k.hasKey ? '<button class="btn" type="button" id="door_make">Make a new key (the old one stops)</button><button class="btn danger" type="button" id="door_off">Remove the key</button>'
               : '<button class="btn primary" type="button" id="door_make">Make the website key</button>') +
+    '<button class="btn" type="button" id="door_kit" title="A ready PHP file for the website\u2019s programmer: 2 lines in the checkout">Download the PHP file</button>' +
     '<span class="sku">' + (k.hasKey ? (k.last ? 'last call from the website ' + esc(new Date(k.last).toLocaleString()) : 'the website has not called yet') : 'no key: the door is shut') + '</span></div>';
   var php = "<?php\n// 1) a new order (send it again with status 'cancelled' to cancel)\n$order = [\n  'number' => '1001', 'created' => date('c'), 'status' => 'processing',\n  'customer' => 'Name', 'phone' => '01711000000', 'address' => 'Address',\n  'payment' => 'Cash on delivery', 'total' => 1430,\n  'items' => [ ['sku' => 'ABC-1', 'name' => 'Product name', 'qty' => 1, 'line_total' => 1350] ],\n];\n$ch = curl_init('" + door + "order');\ncurl_setopt_array($ch, [CURLOPT_POST => true, CURLOPT_RETURNTRANSFER => true,\n  CURLOPT_HTTPHEADER => ['Content-Type: application/json', 'x-shop-key: ' . getenv('ERP_SHOP_KEY')],\n  CURLOPT_POSTFIELDS => json_encode($order)]);\n$reply = json_decode(curl_exec($ch), true);   // ['ok' => true, 'unmatched' => [...]]\n\n// 2) stock, e.g. every 15 minutes from cron\n$ch = curl_init('" + door + "stock');\ncurl_setopt_array($ch, [CURLOPT_RETURNTRANSFER => true, CURLOPT_HTTPHEADER => ['x-shop-key: ' . getenv('ERP_SHOP_KEY')]]);\nforeach (json_decode(curl_exec($ch), true)['items'] as $it) {\n  // set_stock($it['sku'], $it['qty']);   // your shop's own function\n}\n";
   h += '<details style="margin-top:10px"><summary>For the website\u2019s programmer</summary><div class="sub" style="margin-top:6px">Every call carries the header <code>x-shop-key</code>. Answers are JSON with <code>ok</code>; a refusal says why in <code>error</code>.</div>' +
@@ -15604,7 +15605,7 @@ function doorHtml() {
   return h + '</div></section>';
 }
 var settingsPickW1 = settingsPick;
-settingsPick = function (h) { return settingsPickW1(h + setMark('connections') + doorHtml()); };
+settingsPick = function (h) { return settingsPickW1(h); };   // the open door now opens inside the Website box (see "the open door inside the Website box")
 
 document.addEventListener('click', async function (ev) {
   var t = ev.target && ev.target.closest ? ev.target.closest('button') : null; if (!t) return;
@@ -18151,13 +18152,95 @@ document.addEventListener('click', function (ev) {
     function (e) { t.disabled = false; toast(esc(e && e.message ? e.message : e), true, 12000); });
 });
 </script>
-<!-- Website: "Any other website" opens the open-door card (2026-10-05) -->
+<!-- the open door inside the Website box, and a ready PHP file for the programmer (2026-10-05) -->
+<style>
+.wsdoor { margin-top:10px; padding:12px 14px; border:1px solid var(--ring); border-radius:10px; background:color-mix(in srgb, var(--thead, transparent) 55%, transparent); }
+.wsdoor h2 { font-size:15px; margin:0 0 4px; }
+</style>
 <script>
-document.addEventListener('click', function (ev) {
-  var t = ev.target && ev.target.closest && ev.target.closest('[data-wsother]'); if (!t) return;
-  var h = [].slice.call(document.querySelectorAll('#view h2')).filter(function (x) { return /Any other website|open door/i.test(x.textContent); })[0];
-  if (h) { h.scrollIntoView({ behavior: 'smooth', block: 'start' }); var c = h.closest('.card'); if (c) { c.style.outline = '2px solid var(--series-1)'; setTimeout(function () { c.style.outline = ''; }, 1800); } }
-});
+var WS_OTHER = false;
+(function () {
+  // after each drawing: put the open door where the Website box left its place for it
+  function placeDoor() {
+    var v = document.getElementById('view'); if (!v) return;
+    var w = document.createTreeWalker(v, NodeFilter.SHOW_COMMENT), n, spot = null;
+    while ((n = w.nextNode())) if (n.nodeValue === 'WSDOOR') { spot = n; break; }
+    var old = v.querySelector('.wsdoor'); if (old) old.remove();
+    if (!spot || !WS_OTHER) return;
+    var d = doorHtml(); if (!d) return;                     // (it asks the server first time, then repaints)
+    var box = document.createElement('div'); box.className = 'wsdoor';
+    box.innerHTML = d.replace(/^<section><div class="card">/, '').replace(/<\/div><\/section>$/, '');
+    spot.parentNode.insertBefore(box, spot.nextSibling);
+  }
+  var repaintWD = repaint;
+  repaint = function () { var r = repaintWD.apply(this, arguments); try { placeDoor(); } catch (e) {} return r; };
+  // "Any other website" opens or closes the open door inside the same box
+  document.addEventListener('click', function (ev) {
+    var t = ev.target && ev.target.closest && ev.target.closest('[data-wsother]'); if (!t) return;
+    ev.stopImmediatePropagation();
+    WS_OTHER = !WS_OTHER; repaint();
+  }, true);
+  // the ready-made PHP file: the door's address and, right after it is made, the key already inside
+  function kit() {
+    var door = (SHOPKEY && SHOPKEY.door) || '', key = SHOPKEY_NEW || 'PASTE-THE-KEY-FROM-THE-ERP';
+    var L = [
+      '<?php',
+      '/**',
+      ' * Costareen ERP - connect this website. One file, no library needed (PHP 7.4+ with curl).',
+      ' *',
+      ' *   require_once __DIR__ . "/costareen-erp.php";',
+      ' *   erp_send_order($order);      // right after an order is saved (again with status cancelled to cancel it)',
+      ' *   $stock = erp_stock();        // [sku => qty] - what the website may sell',
+      ' *   erp_ping();                  // test: ["ok" => true, "business" => "..."]',
+      ' */',
+      "const ERP_DOOR = '" + door.replace(/'/g, '') + "';",
+      "const ERP_KEY  = '" + String(key).replace(/'/g, '') + "';   // ERP > Settings > Connections > Website > Any other website",
+      '',
+      'function erp_call(string $what, ?array $body = null): array {',
+      '  $ch = curl_init(ERP_DOOR . $what);',
+      "  $head = ['x-shop-key: ' . ERP_KEY];",
+      '  if ($body !== null) {',
+      "    $head[] = 'Content-Type: application/json';",
+      '    curl_setopt($ch, CURLOPT_POST, true);',
+      '    curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($body));',
+      '  }',
+      '  curl_setopt_array($ch, [CURLOPT_HTTPHEADER => $head, CURLOPT_RETURNTRANSFER => true, CURLOPT_TIMEOUT => 20]);',
+      '  $out = curl_exec($ch); $err = curl_error($ch); curl_close($ch);',
+      "  if ($out === false) return ['ok' => false, 'error' => $err];",
+      '  $j = json_decode($out, true);',
+      "  return is_array($j) ? $j : ['ok' => false, 'error' => 'The ERP did not answer with JSON'];",
+      '}',
+      '',
+      '/** Is the ERP reachable with this key? */',
+      "function erp_ping(): array { return erp_call('ping'); }",
+      '',
+      '/**',
+      ' * One order. Fields: number, created (date), status, customer, phone, address, payment, total,',
+      ' * items => [[sku, name, qty, line_total]]. Sending the same order twice keeps it once.',
+      ' */',
+      "function erp_send_order(array $order): array { return erp_call('order', $order); }",
+      '',
+      '/** What the website may sell, as [sku => qty]. */',
+      'function erp_stock(): array {',
+      "  $r = erp_call('stock'); $out = [];",
+      "  foreach (($r['items'] ?? []) as $x) $out[$x['sku']] = $x['qty'];",
+      '  return $out;',
+      '}',
+      '',
+      '/** Optional, once: the website\'s product list [[sku, name, price, barcode]], so the ERP can match them before the first order. */',
+      "function erp_send_products(array $items): array { return erp_call('products', ['items' => $items]); }",
+      ''
+    ];
+    return L.join(String.fromCharCode(10));
+  }
+  document.addEventListener('click', function (ev) {
+    var t = ev.target; if (!t || t.id !== 'door_kit') return;
+    var b = new Blob([kit()], { type: 'text/plain' }), a = document.createElement('a');
+    a.href = URL.createObjectURL(b); a.download = 'costareen-erp.php'; document.body.appendChild(a); a.click();
+    setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 500);
+    toast(SHOPKEY_NEW ? 'Downloaded with the key inside. Send it to the website\u2019s programmer.' : 'Downloaded. The key is shown only once: make a new key first, or let the programmer paste it in.', !SHOPKEY_NEW, 10000);
+  });
+})();
 </script>
 </body>
 </html>
