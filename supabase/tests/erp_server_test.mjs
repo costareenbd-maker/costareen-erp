@@ -30,7 +30,7 @@ check('no code, no session -> NO_CODE', r.ok && r.result.ok === false && r.resul
 r = await erpCall(deps, { name: 'erpHello', authHeader: 'Bearer owner:' + FIX.U.owner });
 check('owner session -> owner, implicit', r.result.ok && r.result.role === 'owner' && r.result.implicit && r.result.discountCap === 100, r);
 r = await erpCall(deps, { name: 'erpHello', token: { code: '111111', device: 'dev-mgr' } });
-check('manager code -> manager, cap 10', r.result.ok && r.result.role === 'manager' && r.result.discountCap === 10 && r.result.name === 'Mehedi', r);
+check('manager code -> manager, no discount cap', r.result.ok && r.result.role === 'manager' && r.result.discountCap === 100 && r.result.name === 'Mehedi', r);
 r = await erpCall(deps, { name: 'erpHello', token: { code: '222222', device: 'new-phone', label: 'Mozilla/5.0 (Linux; Android 14) Chrome/120' } });
 check('new device -> PENDING', r.result.reason === 'PENDING', r);
 const dev = await sql`select label, status from erp_devices where device_id = 'new-phone'`;

@@ -685,3 +685,6 @@ Not changed (low): webAlignTotal does not reset a Paid status; quiet syncInvoice
 - Unsaved work (invoice cart + customer, receive, new purchase order, new job, product and customer forms) is kept per tab and brought back after a refresh / hard refresh with a toast; a second tab starts clean. Products/stock changed in one tab refresh the other open tabs within seconds without losing their cart.
 - Dark mode: the device choice wins; the first-visit "look 2" code no longer forces light (it had reset the owner's saved theme whenever a fresh browser opened the ERP). Owner's saved theme set back to dark.
 Not done: drafts live in this browser only (not across devices). Tests: stock 119.
+
+## Manager: no discount limit (2026-10-05)
+Manager discount cap raised from 10% to 100% (same as owner). Sales stays at 5%. Not done: per-person / per-role limits set by the owner in Settings.

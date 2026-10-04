@@ -9,7 +9,7 @@ export const ERP_ROLES = {
   sales:       { label: 'Sales',       rank: 1 },
 };
 
-export const ERP_DISCOUNT_CAP = { owner: 100, shareholder: 100, manager: 10, sales: 5 };
+export const ERP_DISCOUNT_CAP = { owner: 100, shareholder: 100, manager: 100, sales: 5 };
 
 // 001 called the lowest role `staff`; it is the sheet's `sales`.
 export function normRole(r) {
