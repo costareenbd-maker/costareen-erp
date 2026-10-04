@@ -8,7 +8,7 @@ import { salesLog, paymentsTab, forget, asDate, str, SL, PAY } from '../lib/tabs
 import { formatDate, num, round2, DAY_MS } from '../lib/time.js';
 import { normalizePhone, formatBdPhone, phone11, custKey } from '../lib/phone.js';
 import { saveFile, deleteFile, renderPdf } from '../lib/ext.js';
-import { sameOrder, paidByOrder, addPayment, syncInvoiceStatus, erpDues, lock, stamp, who } from './money.js';
+import { sameOrder, paidByOrder, addPayment, syncInvoiceStatus, erpDues, lock, stamp, who, outstanding } from './money.js';
 
 /** CUSTOMERS rows with their write-order number (the sheet row the page edits by). */
 async function customerRows(ctx) {
@@ -149,14 +149,24 @@ export async function erpSaveCustomer(ctx, data) {
         source = ${String(data.source || 'Walk-in')}, status = ${String(data.status || '')},
         customer_key = ${custKey(phone, name)}, updated_at = now()
       where id = ${hit[0].id}`;
-    // the new name goes onto every invoice and payment of this customer (theirs by id, or by their phone)
-    if (before && str(before.name) !== name) {
-      const oldKey = normalizePhone(before.phone || '');
-      const invs = (await ctx.tx`select id, invoice_no, customer_id, customer_phone from invoices where business_id = ${ctx.biz}`)
-        .filter((i) => i.customer_id === hit[0].id || (oldKey && normalizePhone(String(i.customer_phone || '')) === oldKey));
+    // a new name or phone goes onto everything of this customer: their invoices (by id, or by the old phone), their
+    // payments, and their advance - an advance is found by its [acct:<key>] tag, so the tag moves with the key
+    const oldKey = custKey(before ? before.phone : '', before ? before.name : ''), newKey = custKey(phone, name);
+    if (before && (str(before.name) !== name || normalizePhone(before.phone || '') !== normalizePhone(phone))) {
+      const oldPh = normalizePhone(before.phone || '');
+      const invs = (await ctx.tx`select id, invoice_no, customer_id, customer_phone, customer_key from invoices where business_id = ${ctx.biz}`)
+        .filter((i) => i.customer_id === hit[0].id || (oldPh && normalizePhone(String(i.customer_phone || '')) === oldPh) || (!oldPh && i.customer_key && i.customer_key === oldKey));
       if (invs.length) {
-        await ctx.tx`update invoices set customer_name = ${name}, customer_id = ${hit[0].id} where id = any(${invs.map((i) => i.id)}::uuid[])`;
-        await ctx.tx`update payments set customer = ${name} where business_id = ${ctx.biz} and invoice_no = any(${invs.map((i) => i.invoice_no)}::text[])`;
+        await ctx.tx`update invoices set customer_name = ${name}, customer_id = ${hit[0].id}, customer_key = ${newKey},
+                       customer_phone = case when ${phone} <> '' then ${phone} else customer_phone end
+                     where id = any(${invs.map((i) => i.id)}::uuid[])`;
+        await ctx.tx`update payments set customer = ${name}, customer_key = ${newKey}
+                     where business_id = ${ctx.biz} and invoice_no = any(${invs.map((i) => i.invoice_no)}::text[])`;
+      }
+      if (oldKey && oldKey !== newKey) {
+        await ctx.tx`update payments set customer = ${name}, customer_key = ${newKey},
+                       note = replace(coalesce(note, ''), ${'[acct:' + oldKey + ']'}, ${'[acct:' + newKey + ']'})
+                     where business_id = ${ctx.biz} and (customer_key = ${oldKey} or note like ${'%[acct:' + oldKey + ']%'})`;
       }
       forget(ctx, 'SALES_LOG', 'PAYMENTS');
     }
@@ -359,8 +369,9 @@ export async function erpRecordPayment(ctx, payload) {
   }
   if (!found) throw new Error('No invoice called ' + oid + '.');
 
-  const already = (await paidByOrder(ctx))[oid] || 0;
-  const owed = round2(grand - already);
+  // what is owed is worked out the one way the Dues screen does (an advance on the invoice counts, "Paid" is settled)
+  const o = await outstanding(ctx, oid);
+  const owed = o ? o.owed : round2(grand - ((await paidByOrder(ctx))[oid] || 0));
   if (owed <= 0) throw new Error('That invoice is already settled.');
   if (amount > owed + 0.5) {
     throw new Error('That is more than is owed. ' + oid + ' has ' + owed.toFixed(0) + ' outstanding.');

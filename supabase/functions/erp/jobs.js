@@ -14,11 +14,15 @@ import { ERP_ROLES, ERP_DISCOUNT_CAP } from './allow.js';
 
 /** Owner of each business (or just the ones asked for). */
 export async function owners(sql, ids) {
+  // one ACTIVE owner per business (the earliest), and no suspended business: a switched-off owner sees
+  // nothing through row security, so a job run as them silently does nothing (or backs up empty tables)
   return ids && ids.length
-    ? sql`select m.business_id, m.user_id, b.name from memberships m join businesses b on b.id = m.business_id
-          where m.role = 'owner' and m.business_id = any(${ids}) order by m.created_at`
-    : sql`select m.business_id, m.user_id, b.name from memberships m join businesses b on b.id = m.business_id
-          where m.role = 'owner' order by m.created_at`;
+    ? sql`select distinct on (m.business_id) m.business_id, m.user_id, b.name from memberships m join businesses b on b.id = m.business_id
+          where m.role = 'owner' and coalesce(m.active, true) and b.suspended_at is null and m.business_id = any(${ids})
+          order by m.business_id, m.created_at`
+    : sql`select distinct on (m.business_id) m.business_id, m.user_id, b.name from memberships m join businesses b on b.id = m.business_id
+          where m.role = 'owner' and coalesce(m.active, true) and b.suspended_at is null
+          order by m.business_id, m.created_at`;
 }
 
 /** Run fn(ctx) for one business, inside one transaction, as its owner. */
@@ -58,6 +62,7 @@ export async function runJob(deps, job) {
   const sql = deps.sql;
   const out = {};
   if (job === 'nightly') {
+    try { await sql`delete from erp_op_keys where at < now() - interval '3 days'`; } catch (_) { /* the table may not exist yet */ }
     const sfNightly = await maybe('./handlers/courier.js', 'sfNightly');
     const backupNow = await maybe('./handlers/settings.js', 'backupNow');
     for (const row of await owners(sql)) {

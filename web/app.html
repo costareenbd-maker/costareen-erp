@@ -2027,7 +2027,8 @@ function wireInvoice() {
   })(del[d]);
 
   var c = el('clearInv');
-  if (c) c.addEventListener('click', function () {
+  if (c) c.addEventListener('click', async function () {
+    if (CART.length && !(await uiConfirm('Clear this invoice? Every product line on it is removed.'))) return;
     CART = [];
     FORM.delivery = 0; FORM.advance = 0; FORM.invDisc = 0; FORM.delTouched = false; FORM.delAuto = false; FORM.zone = ''; FORM.zoneEdit = false;
     updateCounts(); repaint();
@@ -3072,7 +3073,7 @@ function qzSave(status, then) {
       if (then) then(saved);
     }, function (e) {
       var m = String(e && e.message ? e.message : e);
-      if (n < 2 && /timed out|network|unavailable|busy/i.test(m)) { attempt(n + 1); return; }   // same key: cannot save twice
+      if (n < 2 && /timed out|network|unavailable|busy|did not answer|could not reach/i.test(m)) { attempt(n + 1); return; }   // same key: cannot save twice
       QZ.saving = false; qzKeep();
       var s2 = el('qz_state'); if (s2) s2.textContent = qzStateText();
       toast(esc(m.replace(/^CONFLICT:\s*/, '')) + '<br>Your changes are still here and kept in this browser.', true, 20000);
@@ -5197,7 +5198,7 @@ function wireProductForm() {
 }
 
 function saveProduct() {
-  if (BUSY) return;
+  if (BUSY) { toast('Wait \u2014 the last save is still running.', true); return; }
   if (!String(PRODUCT_FORM.product_name || '').trim()) {
     toast('Product name is required.', true); return;
   }
@@ -5210,7 +5211,11 @@ function saveProduct() {
     PRODUCT_FORM.opening_stock = 0;
   }
 
-  if (returnTo === 'pox') {
+  if (returnTo === 'pox' || returnTo === 'po') {   // created at once (no stock): it is on the product list even if the order is never saved
+    PO_NEWQTY = Math.max(1, num(PRODUCT_FORM.opening_stock) || 1);
+    PRODUCT_FORM.opening_stock = 0;
+  }
+  if (false) {
     var d3 = {};
     Object.keys(PRODUCT_FORM).forEach(function (k) { d3[k] = PRODUCT_FORM[k]; });
     delete d3.returnTo;
@@ -5224,7 +5229,7 @@ function saveProduct() {
     return;
   }
 
-  if (returnTo === 'po') {
+  if (false) {
     var d2 = {};
     Object.keys(PRODUCT_FORM).forEach(function (k) { d2[k] = PRODUCT_FORM[k]; });
     delete d2.returnTo;
@@ -5257,7 +5262,7 @@ function saveProduct() {
 }
 
 /** Re-pull the catalogue, then put the new product where it was asked for. */
-var RECV_NEWQTY = 0;
+var RECV_NEWQTY = 0, PO_NEWQTY = 0;
 function attachNewProduct(target, sku) {
   srv('erpCatalog', [],
       function (cat) {
@@ -5267,6 +5272,13 @@ function attachNewProduct(target, sku) {
     } else {
       var p = null;
       for (var i = 0; i < CAT.length; i++) if (CAT[i].sku === sku) { p = CAT[i]; break; }
+      if (target === 'po' || target === 'pox') {
+        var q = PO_NEWQTY || 1; PO_NEWQTY = 0;
+        if (target === 'po') { if (!PONEW) PONEW = poBlank(); PONEW.lines.push({ sku: sku, name: p ? p.name : sku, qty: q, rmb: '' }); }
+        else { var oY = null; ((PO && PO.orders) || []).forEach(function (x) { if (x.id === POX_FOR) oY = x; }); if (oY) poArr(oY).extras.push({ sku: sku, name: p ? p.name : sku, qty: q, rmb: '' }); }
+        toast('Product created and put on the ' + (target === 'po' ? 'order' : 'box') + ' (' + q + ').', false, 8000);
+        D = null; loadDashboardOnly(); updateCounts(); repaint(); return;
+      }
       RECV.lines.push({ sku: sku, name: p ? p.name : sku, qty: RECV_NEWQTY || 1, stock: p ? p.stock : 0 });
       if (RECV_NEWQTY) toast('Product created and added to this shipment (' + RECV_NEWQTY + '). Press <strong>Receive</strong> to put them in stock.', false, 9000);
       RECV_NEWQTY = 0;
@@ -5952,12 +5964,13 @@ function wirePo() {
     if (why === null) return;
     srv('erpPoLineClose', [{ poId: k[0], sku: k[1], reason: why }], function (r) {
       toast(esc(l.product) + ': closed' + (r.owed ? ' · supplier owes RMB ' + fmt(r.owed) : '') + '.', false, 9000);
-      delete POARR[k[0]]; PO = null; PLAN = null; PLAN_ERR = null; loadPo(); loadPlan();
+      if (POARR[k[0]] && POARR[k[0]].got) delete POARR[k[0]].got[k[1]]; PO = null; PLAN = null; PLAN_ERR = null; loadPo(); loadPlan();
     }, function (e) { toast(esc(e && e.message ? e.message : e), true, 12000); });
   });
   each2('button[data-pago]', 'click', async function () {
     var id = this.getAttribute('data-pago'), o = orderOf(id);
-    if (!o || PO_BUSY) return;
+    if (!o) return;
+    if (PO_BUSY) { toast('Wait \u2014 another box is still being added to stock.', true); return; }
     var a = poArr(o), lines = [], shorts = [], overs = [];
     o.lines.forEach(function (l) {
       if (!(l.left > 0)) return;
@@ -6094,11 +6107,12 @@ function wireStock() {
   })(d[j]);
 
   var c = el('rv_clear');
-  if (c) c.addEventListener('click', function () { RECV.lines = []; repaint(); });
+  if (c) c.addEventListener('click', async function () { if (RECV.lines.length && !(await uiConfirm('Clear this shipment? Every line on it is removed (products already created stay on the list).'))) return; RECV.lines = []; repaint(); });
 
   var sv = el('rv_save');
   if (sv) sv.addEventListener('click', function () {
-    if (BUSY || !RECV.lines.length) return;
+    if (BUSY) { toast('Wait \u2014 the last save is still running.', true); return; }
+    if (!RECV.lines.length) { toast('Add the products that came in first.', true); return; }
     BUSY = 'receive'; repaint();
     srv('erpReceiveShipment', [recvPayload()],
         function (res) {
@@ -8342,9 +8356,9 @@ function srv(name, args, ok, bad) {
   srvPump();
 }
 
-var SRV_ACTIVE = 0, SRV_WRITING = false;
+var SRV_ACTIVE = 0, SRV_WRITING = false, SRV_TIMED = {};
 // the same list the server uses to know a call changes nothing (ERP_READS)
-var SRV_READS = /^(erpBundle|erpHello|erpMe|erpCatalog|erpSales|erpDues|erpCustomers|erpPnl|erpMoney|erpToday|erpDaySales|erpProduct|erpLookupCustomer|erpCustomerAccount|erpCustomerStatement|erpCustomerCredit|erpWebOrders|erpWebOrderInvoices|erpCampaignAudience|erpCampaignList|erpCampaignGet|erpEvoStatus|erpBrandLogo|erpQuoteBoot|erpQuoteList|erpQuoteGet|erpQuoteAsset|erpExpenses|erpCapital|erpBackupStatus|erpAiKeys|erpGetTheme|erpBusinesses|erpStockHistory|erpReorderPlan|erpPoList|erpSfPayoutLines|erpBookedParcels|erpParcelPreview|erpReturnPreview|erpSettingsFull|erpSettingsLists|erpFormOptions|erpAdmin|erpPeople|erpDevices|erpCourierKeyStatus|erpPayReasons|erpDiscontinued|erpAccessWarning|erpBusinessLinks|erpLookupUsage|erpRecentInvoices|erpCourier|erpDashboardData|erpInvoice|erpCustomerPage|erpSearch|erpProductPage|erpPnlMonth|erpExpenseReceiptUrl|erpPartnership|erpPartnerStock|erpSecurity|erpCustomerList|erpAlerts|erpAccessKeys|erpListView|erpCurrencies|erpSharedStock|erpPoolCatalog|erpProductThumbs|erpProductPhotoUrl|erpFamilies|erpNotes|erpNoteFileUrl|erpSerialsFor|erpSerialLookup|erpJobs|erpJob|erpUsers|erpSessions|erpPlatform|erpPlatformErrors|erpRisks|erpAlertRules|erpConnections|erpWebsiteTest|erpGoogle|erpSheet|erpRestorePreview|erpWebMatches|erpDeliveryOptions|erpParcelLabels|erpConnStatus|erpRecovery|erpOwnerChange|erpOwnerChanges|erpBusinessesDeleted|erpCashBook|erpSuppliers|erpSupplierPage|erpGame|erpArena)$/;
+var SRV_READS = /^(erpAccessKeys|erpAccessWarning|erpAdmin|erpAiKeys|erpAlertRules|erpAlerts|erpArena|erpBackupStatus|erpBg|erpBnWords|erpBookedParcels|erpBrandLogo|erpBundle|erpBusinessLinks|erpBusinesses|erpBusinessesDeleted|erpCampaignAudience|erpCampaignGet|erpCampaignList|erpCapital|erpCashBook|erpCatalog|erpConnStatus|erpConnections|erpCostBook|erpCourier|erpCourierKeyStatus|erpCurrencies|erpCustomerAccount|erpCustomerCredit|erpCustomerList|erpCustomerPage|erpCustomerStatement|erpCustomers|erpDashboardData|erpDaySales|erpDeliveryOptions|erpDevices|erpDiscontinued|erpDues|erpEvoQr|erpEvoStatus|erpExpenseExport|erpExpenseReceiptUrl|erpExpenses|erpFamilies|erpFighters|erpFormOptions|erpGame|erpGetTheme|erpGoogle|erpHello|erpInstalls|erpInvoice|erpInvoicePdf|erpJob|erpJobs|erpListView|erpLookupCustomer|erpLookupUsage|erpMe|erpMoney|erpNoteFileUrl|erpNotes|erpOwnerChange|erpOwnerChanges|erpParcelLabels|erpParcelPreview|erpPartnerStock|erpPartnership|erpPayReasons|erpPeople|erpPlatform|erpPlatformErrors|erpPnl|erpPnlMonth|erpPoList|erpPoolCatalog|erpProduct|erpProductListShare|erpProductPage|erpProductPhotoUrl|erpProductThumbs|erpProfile|erpQuoteAsset|erpQuoteBoot|erpQuoteGet|erpQuoteList|erpRecentInvoices|erpRecovery|erpReorderPlan|erpRestorePreview|erpReturnPreview|erpRisks|erpSales|erpSearch|erpSecurity|erpSelfTest|erpSerialLookup|erpSerialsFor|erpSessions|erpSetTheme|erpSettingsFull|erpSettingsLists|erpSfPayoutLines|erpSfPayouts|erpShareFile|erpSharedStock|erpSheet|erpStatementPdf|erpStockHistory|erpSupplierPage|erpSuppliers|erpToday|erpUsers|erpWaProductPdf|erpWebMatches|erpWebOrderInvoices|erpWebOrders|erpWebsiteTest)$/;
 function srvPump() {
   if (!SRV_Q.length) return;
   var isRead = SRV_READS.test(SRV_Q[0].name);
@@ -8378,8 +8392,16 @@ function srvPump() {
     srvPump();
   }
 
+  // a write carries a one-time key; when the page gave up waiting and the same thing is sent again,
+  // the same key goes with it and the server answers with the first result instead of saving twice
+  if (!isRead && job.args && job.args[0] && typeof job.args[0] === 'object' && !Array.isArray(job.args[0]) && !job.args[0].opKey) {
+    var base = job.name + ':' + JSON.stringify(job.args), was = SRV_TIMED[base];
+    job.opBase = base; job.opKey = was && was.until > Date.now() ? was.key : ('k' + Date.now().toString(36) + Math.random().toString(36).slice(2, 12));
+    job.args = [Object.assign({}, job.args[0], { opKey: job.opKey })].concat(job.args.slice(1));
+  }
   var patience = srvPatience(job.name);
   var timer = setTimeout(function () {
+    if (job.opBase) SRV_TIMED[job.opBase] = { key: job.opKey, until: Date.now() + 15 * 60e3 };
     finish(job.bad, new Error('The server did not answer within ' +
       Math.round(patience / 1000) + ' seconds. Check the connection and try again.'));
   }, patience);
@@ -12929,16 +12951,25 @@ function loadCash() {
   srv('erpCashBook', [{ account: CASH_ACC }], function (r) { CASH = r; CASH_ERR = null; CASH_BUSY = false; if (VIEW === 'cash') repaint(); },
       function (e) { CASH_ERR = (e && e.message) || String(e); CASH_BUSY = false; if (VIEW === 'cash') repaint(); });
 }
+function formSnap() {
+  var v = document.getElementById('view'), out = {}; if (!v) return out;
+  [].forEach.call(v.querySelectorAll('input[id], select[id], textarea[id]'), function (e) { if (e.type !== 'file' && e.type !== 'password') out[e.id] = e.type === 'checkbox' ? e.checked : e.value; });
+  return out;
+}
+function formPut(snap) {
+  for (var id in snap) { var e = document.getElementById(id); if (!e) continue; if (e.type === 'checkbox') e.checked = snap[id]; else if (e.value !== snap[id]) e.value = snap[id]; }
+}
 function cashDo(fn, args, msg, after) {
-  if (CASH_BUSY) return;
-  CASH_BUSY = true; repaint();
+  if (CASH_BUSY) { toast('Wait \u2014 the last change is still being saved.', true); return; }
+  var snap = formSnap();
+  CASH_BUSY = true; repaint(); formPut(snap);
   srv(fn, args, function (r) {
     CASH_BUSY = false; CASH = r; if (r.account) CASH_ACC = r.account;
     if (msg) toast(msg, false, 8000);
     if (after) after(r);
     EXP = null; CAPD = null;
     if (VIEW === 'cash') repaint();
-  }, function (e) { CASH_BUSY = false; toast(esc((e && e.message) || e), true, 14000); repaint(); });
+  }, function (e) { CASH_BUSY = false; toast(esc((e && e.message) || e), true, 14000); repaint(); formPut(snap); });
 }
 function cashOpts(sel, skip, all) {
   return (CASH.accounts || []).filter(function (a) { return (all || !a.archived) && a.id !== skip; }).map(function (a) {
@@ -13184,15 +13215,16 @@ function loadSupplier() {
       function (e) { if (SUPP.name !== n) return; SUPP.err = (e && e.message) || String(e); if (VIEW === 'suppliers') repaint(); });
 }
 function supDo(fn, args, msg, after) {
-  if (SUP_BUSY) return;
-  SUP_BUSY = true; repaint();
+  if (SUP_BUSY) { toast('Wait \u2014 the last change is still being saved.', true); return; }
+  var snap = formSnap();
+  SUP_BUSY = true; repaint(); formPut(snap);
   srv(fn, args, function (r) {
     SUP_BUSY = false; SUPS = null; CASH = null;
     if (r && r.name) { if (r.name !== SUPP.name) { SUPP = { name: r.name, data: r, err: null }; routeSet('suppliers', r.name, true); } else SUPP.data = r; }
     if (msg) toast(msg, false, 8000);
     if (after) after(r);
     if (VIEW === 'suppliers') repaint();
-  }, function (e) { SUP_BUSY = false; toast(esc((e && e.message) || e), true, 14000); repaint(); });
+  }, function (e) { SUP_BUSY = false; toast(esc((e && e.message) || e), true, 14000); repaint(); formPut(snap); });
 }
 function owedCell(n) {
   return n > 0 ? '<strong style="color:var(--critical)">' + fmt(n) + '</strong>' : n < 0 ? '<span style="color:var(--good)">' + fmt(-n) + ' paid ahead</span>' : '<span style="color:var(--muted)">0</span>';
@@ -14383,7 +14415,7 @@ document.addEventListener('click', async function (ev) {
         else send.file = { data: await d5Read(st.file), mime: st.file.type, name: st.file.name };
       }
     } catch (e) { st.busy = false; st.err = (e && e.message) || String(e); repaint(); return; }
-    srv('erpNoteAdd', [send], function (r) { st.busy = false; st.data = r; st.text = ''; st.file = null; repaint(); },
+    srv('erpNoteAdd', [send], function (r) { st.busy = false; st.data = r; if (st.text === send.body) st.text = ''; st.file = null; repaint(); },
         function (e) { st.busy = false; st.err = (e && e.message) || String(e); repaint(); });
     return;
   }
@@ -14722,7 +14754,8 @@ function loadJob() {
       function (e) { if (JOBP.no !== n) return; JOBP.err = (e && e.message) || String(e); if (VIEW === 'repairs') repaint(); });
 }
 function jobDo(name, args, msg, after) {
-  JOB_BUSY = true; repaint();
+  var snap = formSnap();
+  JOB_BUSY = true; repaint(); formPut(snap);
   srv(name, args, function (r) {
     JOB_BUSY = false;
     if (r && r.job) { if (r.job.jobNo !== JOBP.no) { JOBP = { no: r.job.jobNo, data: r, err: null }; routeSet('repairs', r.job.jobNo, true); } else JOBP.data = r; }
@@ -14730,7 +14763,7 @@ function jobDo(name, args, msg, after) {
     if (msg) toast(msg);
     if (after) after(r);
     repaint();
-  }, function (e) { JOB_BUSY = false; toast(esc(e && e.message ? e.message : e), true, 12000); repaint(); });
+  }, function (e) { JOB_BUSY = false; toast(esc(e && e.message ? e.message : e), true, 12000); repaint(); formPut(snap); });
 }
 function jobStatus(j) { return '<span class="jobst ' + esc(j.status) + '">' + esc(j.statusLabel) + '</span>'; }
 function viewRepairs() {
@@ -14851,7 +14884,7 @@ function wireRepairs() {
     if (st === 'returned' && JOBP.data.job.due > 0 && !(await uiConfirm('Hand the machine back with ' + fmt(JOBP.data.job.due) + ' still owed?\n\nThe due stays on the job until it is received.'))) return;
     jobSave({ status: st });
   });
-  each('button[data-jpx]', 'click', function () { JOBP.data.job.parts.splice(Number(this.getAttribute('data-jpx')), 1); jobSave({}); });
+  each('button[data-jpx]', 'click', function () { var parts = jobParts(); parts.splice(Number(this.getAttribute('data-jpx')), 1); jobSave({ parts: parts }); });   // read the boxes first, then drop that one
   var pq = el('jb_partq');
   if (pq) { pq.addEventListener('input', function () { JOB_PARTQ = pq.value; jobPaintParts(); }); jobPaintParts(); }
   var pr = el('jb_partres');
@@ -14864,7 +14897,11 @@ function wireRepairs() {
     jobDo('erpJobSave', [{ jobNo: JOBP.data.job.jobNo, parts: parts, diagnosis: (el('jb_diag') || {}).value, labour: (el('jb_labour') || { value: JOBP.data.job.labour }).value }], 'Part added.');
   });
   var pay = el('jb_pay'); if (pay) pay.addEventListener('click', function () {
-    jobDo('erpJobPay', [{ jobNo: JOBP.data.job.jobNo, amount: el('jb_amt').value, method: el('jb_method').value }], 'Payment received.');
+    var j = JOBP.data.job, amt = el('jb_amt').value, method = el('jb_method').value;
+    var body = { jobNo: j.jobNo, diagnosis: (el('jb_diag') || {}).value, labour: (el('jb_labour') || { value: j.labour }).value, parts: jobParts() };
+    // what was typed on the job is saved first, so the payment's redraw cannot wipe it
+    srv('erpJobSave', [body], function () { jobDo('erpJobPay', [{ jobNo: j.jobNo, amount: amt, method: method }], 'Payment received.'); },
+      function (e) { toast(esc(e && e.message ? e.message : e), true, 12000); });
   });
 }
 </script>
@@ -15311,7 +15348,7 @@ document.addEventListener('click', function (ev) {
   if (t.id === 'rk_toggle') { RISK_OPEN = !RISK_OPEN; repaint(); return; }
   var k = t.getAttribute('data-rktab'); if (k) { RISK_TAB = k; repaint(); return; }
   var g = t.getAttribute('data-rkgo'); if (g) { go(g); return; }
-  if (t.getAttribute('data-rkwa')) srv('erpDueReminded', [{ phone: t.getAttribute('data-rphone'), name: t.getAttribute('data-rname'), due: t.getAttribute('data-rdue') }], function () {}, function () {});
+  if (t.getAttribute('data-rkwa')) srv('erpDueReminded', [{ phone: t.getAttribute('data-rphone'), name: t.getAttribute('data-rname'), due: t.getAttribute('data-rdue') }], function () {}, function () { toast('The reminder went out, but it was not marked as sent.', true, 8000);});
 });
 // money changed: read the box again
 var parcelsChangedR1 = typeof parcelsChanged === 'function' ? parcelsChanged : null;
@@ -15486,7 +15523,7 @@ function qzKeepPdf(q) {
     var box = el('qz_print'); if (!box || !q || !q.id) return;
     var css = Array.prototype.map.call(document.querySelectorAll('style'), function (s) { return s.textContent; }).join('\n');
     var html = '<!doctype html><html><head><meta charset="utf-8"><style>' + css + '\nbody{margin:0;background:#fff}#qz_print{display:block!important;position:static}</style></head><body><div id="qz_print">' + box.innerHTML + '</div></body></html>';
-    srv('erpQuotePdfSave', [{ id: q.id, html: html }], function () {}, function () {});
+    srv('erpQuotePdfSave', [{ id: q.id, html: html }], function () {}, function (e) { toast('The quotation is saved, but its PDF copy was not: ' + esc((e && e.message) || e), true, 10000); });
   } catch (e) {}
 }
 </script>
@@ -18267,6 +18304,31 @@ var WS_OTHER = false;
       toast(links.length ? links.join(' \u00b7 ') : esc(x.why || 'No PDF was saved for this invoice.'), !links.length, 12000);
     }, function (e) { if (w) w.close(); toast(esc((e && e.message) || e), true, 12000); });
   }, true);
+})();
+</script>
+<!-- audit (2026-10-05): unsaved drafts are kept or warned about -->
+<script>
+(function () {
+  // the stock count is kept on this device as it is typed, and comes back after a reload
+  var K = 'erp_count_draft';
+  try { var d = JSON.parse(localStorage.getItem(K) || 'null'); if (d && d.vals && typeof COUNT === 'object' && COUNT && !Object.keys(COUNT.vals || {}).length) { COUNT.vals = d.vals; COUNT.note = d.note || ''; } } catch (e) {}
+  setInterval(function () {
+    try {
+      if (typeof COUNT !== 'object' || !COUNT) return;
+      var n = Object.keys(COUNT.vals || {}).length;
+      if (n) localStorage.setItem(K, JSON.stringify({ vals: COUNT.vals, note: COUNT.note || '', at: Date.now() })); else localStorage.removeItem(K);
+    } catch (e) {}
+  }, 1500);
+  // leaving or reloading with work not yet saved asks first
+  window.addEventListener('beforeunload', function (ev) {
+    var open = [];
+    try { if (typeof CART !== 'undefined' && CART && CART.length) open.push('invoice'); } catch (e) {}
+    try { if (typeof RECV !== 'undefined' && RECV && RECV.lines && RECV.lines.length) open.push('shipment'); } catch (e) {}
+    try { if (typeof PONEW !== 'undefined' && PONEW && PONEW.lines && PONEW.lines.length) open.push('supplier order'); } catch (e) {}
+    try { if (typeof PRODUCT_FORM !== 'undefined' && PRODUCT_FORM && String(PRODUCT_FORM.product_name || '').trim()) open.push('product'); } catch (e) {}
+    try { if (typeof JOB_NEW !== 'undefined' && JOB_NEW && (JOB_NEW.problem || JOB_NEW.item)) open.push('repair job'); } catch (e) {}
+    if (open.length) { ev.preventDefault(); ev.returnValue = 'Not saved yet: ' + open.join(', '); return ev.returnValue; }
+  });
 })();
 </script>
 </body>

@@ -689,12 +689,14 @@ export async function erpFixInvoice(ctx, payload) {
     changes.push({ label: fields[f][1], col: fields[f][2], was, now, key: f });
   }
   // one phone = one customer: the name follows the phone's saved customer; it is changed on the customer's page
+  let fixTo = null;
   {
     const ph = changes.find((c) => c.key === 'phone'), nm = changes.find((c) => c.key === 'name');
     const phoneNow = ph ? ph.now : str(first[SL.customer_contact]);
     const want = normalizePhone(phoneNow);
-    const known = want ? (await ctx.tx`select name, phone from customers where business_id = ${ctx.biz} and coalesce(phone, '') <> ''`)
+    const known = want ? (await ctx.tx`select id, name, phone from customers where business_id = ${ctx.biz} and coalesce(phone, '') <> ''`)
       .find((c) => normalizePhone(String(c.phone || '')) === want) : null;
+    if (known && ph) fixTo = known;
     if (known && nm && str(nm.now).toLowerCase() !== str(known.name).toLowerCase())
       throw new Error('This phone number belongs to ' + known.name + '. To change the name, change it on the customer\u2019s page (Customers) - every invoice of theirs follows.');
     if (known && ph && !nm && str(first[SL.customer_name]).toLowerCase() !== str(known.name).toLowerCase())
@@ -720,6 +722,11 @@ export async function erpFixInvoice(ctx, payload) {
   const set = {};
   for (const c of changes) set[c.col] = c.now;
   await ctx.tx`update invoices set ${ctx.tx(set)} where business_id = ${ctx.biz} and invoice_no = ${invoiceNo}`;
+  // moved to another saved customer's phone: the invoice (and its payments) now belong to that customer
+  if (fixTo) {
+    await ctx.tx`update invoices set customer_id = ${fixTo.id} where business_id = ${ctx.biz} and invoice_no = ${invoiceNo}`;
+    await ctx.tx`update payments set customer = ${fixTo.name} where business_id = ${ctx.biz} and invoice_no = ${invoiceNo}`;
+  }
   // the invoice's customer key follows its name and phone
   await ctx.tx`update invoices set customer_key = case
                  when length(regexp_replace(coalesce(customer_phone, ''), '[^0-9]', '', 'g')) >= 10
@@ -755,8 +762,21 @@ export async function erpVoidInvoice(ctx, invoiceNo) {
   const txn = await ctx.tx`select id from stock_movements where business_id = ${ctx.biz}
                            and (btrim(reference) = ${'Invoice: ' + no} or btrim(reference) = ${no})`;
   if (!lines.length && !txn.length) throw new Error('Nothing found for invoice ' + no + '.');
+  // removing an invoice that money, a return, numbered units or a parcel hang on would leave them pointing at
+  // nothing (the cash book would still count the money): such an invoice is cancelled, not removed
+  const ties = [];
+  if ((await ctx.tx`select 1 from payments where business_id = ${ctx.biz} and invoice_no = ${no} limit 1`).length) ties.push('payments');
+  if ((await ctx.tx`select 1 from returns where business_id = ${ctx.biz} and invoice_no = ${no} limit 1`).length) ties.push('a return');
+  if ((await ctx.tx`select 1 from serials where business_id = ${ctx.biz} and invoice_no = ${no} limit 1`).length) ties.push('numbered units');
+  if ((await ctx.tx`select 1 from courier_log where business_id = ${ctx.biz} and invoice_no = ${no} limit 1`).length) ties.push('a booked parcel');
+  if (ties.length) throw new Error('Invoice ' + no + ' has ' + ties.join(', ') + ', so it cannot be removed. Cancel it instead: that takes the goods back and keeps the money record straight.');
   let units = 0, value = 0;
   for (const l of lines) { units += num(l.qty); value += num(l.line_total); }
+  // the customer's totals no longer count it
+  const head = (await ctx.tx`select customer_id, grand_total from invoices where business_id = ${ctx.biz} and invoice_no = ${no}`)[0];
+  if (head && head.customer_id) await ctx.tx`update customers set total_orders = greatest(0, coalesce(total_orders, 0) - 1),
+                                              total_spent = greatest(0, coalesce(total_spent, 0) - ${num(head.grand_total)}), updated_at = now()
+                                            where id = ${head.customer_id}`;
   if (inv.length) await ctx.tx`delete from invoices where id = any(${inv.map((r) => r.id)})`;
   if (txn.length) await ctx.tx`delete from stock_movements where id = any(${txn.map((r) => r.id)})`;
   forget(ctx, 'SALES_LOG', 'TXN_LOG');

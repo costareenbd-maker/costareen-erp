@@ -281,6 +281,8 @@ export function webPayment(raw) {
 export async function erpEnterWebOrder(ctx, orderNo) {
   const no = str(orderNo);
   if (!no) throw new Error('Which order?');
+  // the sale lock first, then read: two presses (or the timer and a person) at once cannot both enter it
+  await lock(ctx, 'sale');
 
   let order = null;
   for (const o of await webOrders(ctx)) if (o.no === no) { order = o; break; }

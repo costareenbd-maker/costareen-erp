@@ -99,13 +99,14 @@ async function upsertCustomer(ctx, name, contact, address, amount, productSummar
   const orders = (Number(hit.total_orders) || 0) + 1;
   const spent = (Number(hit.total_spent) || 0) + spend;
   await ctx.tx`
-    update customers set name = coalesce(nullif(name, ''), ${cleanName}), phone = ${cleanContact},   -- an invoice never renames a customer
+    -- an invoice never renames a customer, and a sale with no phone never wipes the phone on file
+    update customers set name = coalesce(nullif(name, ''), ${cleanName}), phone = coalesce(nullif(${cleanContact}, ''), phone),
       -- a sale with no address (a pickup) must not wipe the address on file
       address = coalesce(nullif(${cleanAddress}, ''), address),
       total_orders = ${orders}, total_spent = ${spent}, last_order_at = now(),
       last_product = ${lastProduct}, source = ${src},
       status = ${spent >= 50000 || orders >= 5 ? 'VIP' : 'Returning'},
-      customer_key = ${key}, updated_at = now()
+      customer_key = case when ${cleanContact} <> '' then ${key} else customer_key end, updated_at = now()
     where id = ${hit.id}`;
   return hit.id;
 }

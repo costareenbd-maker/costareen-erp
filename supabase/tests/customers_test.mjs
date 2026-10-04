@@ -186,7 +186,7 @@ check('unknown invoice', !r.ok && r.error === 'No invoice called INV-NOPE.', r);
 r = await mgr('erpRecordPayment', [{ orderId: invK, amount: 5000 }]);
 check('more than owed (ledger 1130 of 2700)', !r.ok && r.error === 'That is more than is owed. ' + invK + ' has 1570 outstanding.', r);
 r = await mgr('erpRecordPayment', [{ orderId: 'ORD-' + t0, amount: 5 }]);
-check('legacy rule kept: ledger-only, so a Paid-on-sheet ORD- still takes money', r.ok, r);
+check('owed the one way Dues works it out: an invoice marked Paid takes no more money (no overpayment)', !r.ok && r.error === 'That invoice is already settled.', r);
 r = await mgr('erpRecordPayment', [{ orderId: invK, amount: 70, method: 'bKash', note: 'counter' }]);
 check('payment recorded: still owed 1500, dues returned', r.ok && r.result.ok && r.result.orderId === invK && r.result.received === 70 &&
   r.result.stillOwed === 1500 && r.result.dues && typeof r.result.dues.total === 'number', r);

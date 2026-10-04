@@ -95,7 +95,10 @@ export async function erpProductPage(ctx, payload) {
     was: c.field === 'status' ? str(c.was) : String(Math.round(num(c.was) * 100) / 100),
     now: c.field === 'status' ? str(c.now) : String(Math.round(num(c.now) * 100) / 100), by: str(c.by) }));
 
-  const stock = num(cat.stock), sell = num(p.sell_price), cost = num(p.cost_price);
+  // the cost the rest of the ERP uses: the product's own, else the price book's landed cost
+  const { products: costedProducts } = await import('./dashboard.js');
+  const cRow = (await costedProducts(ctx)).bySku[str(p.sku).toLowerCase()];
+  const stock = num(cat.stock), sell = num(p.sell_price), cost = cRow ? num(cRow.cost) : num(p.cost_price);
   const out = {
     sku: str(p.sku), name: str(p.name), category: str(p.category), brand: str(p.brand), type: str(p.type),
     color: str(p.color), unit: str(p.unit) || 'Piece', bin: str(p.location_bin),
@@ -162,7 +165,10 @@ export async function erpStockCount(ctx, payload) {
     if (diff === 0) { same++; continue; }
     const no = 'TXN-' + formatDate(now, 'yyyyMMdd') + '-' + (Math.floor(Math.random() * 9000) + 1000);
     if (p.fresh && diff > 0) {
-      const cost = num(p.cost_price);
+      // opening stock at the cost the rest of the ERP uses (own cost, else the price book's landed cost)
+      if (!ctx.memo.costedForCount) { const { products: cp } = await import('./dashboard.js'); ctx.memo.costedForCount = (await cp(ctx)).bySku; }
+      const cc = ctx.memo.costedForCount[str(l.sku).toLowerCase()];
+      const cost = cc ? num(cc.cost) : num(p.cost_price);
       await ctx.tx`
         insert into stock_movements (business_id, product_id, kind, direction, qty, unit_price, total, reference,
                                      supplier, note, created_by, created_at, txn_no, operator, product_name)

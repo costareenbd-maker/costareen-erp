@@ -282,8 +282,26 @@ export async function erpCall(deps, { name, args, token, authHeader, ip }) {
       // transaction is open. It must NOT be the pool the transaction came from: with
       // every connection held by a transaction waiting for one more, nothing moves.
       const ctx = { tx, sql: deps.sqlAux || sql, s, biz: s.businessId, now: new Date(), memo: {}, deps };
-      return fn(ctx, ...(Array.isArray(args) ? args : []));
+      // a save sent twice is saved once: the page's one-time key (opKey) is claimed in this same transaction
+      let list = Array.isArray(args) ? args.slice() : [], opKey = null;
+      if (list[0] && typeof list[0] === 'object' && !Array.isArray(list[0]) && 'opKey' in list[0]) {
+        const { opKey: k, ...rest } = list[0]; list[0] = rest;
+        if (!ERP_READS.test(name) && typeof k === 'string' && /^[A-Za-z0-9_-]{8,80}$/.test(k)) opKey = k;
+      }
+      if (opKey) {
+        const got = await tx`insert into erp_op_keys (business_id, op_key, name) values (${s.businessId}, ${opKey}, ${name})
+                             on conflict do nothing returning op_key`;
+        if (!got.length) {
+          const prev = await tx`select result from erp_op_keys where business_id = ${s.businessId} and op_key = ${opKey}`;
+          if (prev[0] && prev[0].result !== null) return { __replay: true, value: prev[0].result };
+          throw new Error('This was already sent and is still being saved. Wait a moment and reload before trying again.');
+        }
+      }
+      const out = await fn(ctx, ...list);
+      if (opKey) await tx`update erp_op_keys set result = ${tx.json(out === undefined ? null : out)} where business_id = ${s.businessId} and op_key = ${opKey}`;
+      return out;
     });
+    if (result && result.__replay === true) return { ok: true, result: scrub(name, result.value, s.role), replayed: true };
     // the books may have changed: the kept dashboard is no longer to be trusted
     if (!ERP_READS.test(name)) { await dashForget(sql, s.businessId); await logActivity(sql, s, name, args, token, ip, result); }
     else if (name === 'erpDashboardData') await dashKeep({ sql, biz: s.businessId, s, now: new Date() }, result);

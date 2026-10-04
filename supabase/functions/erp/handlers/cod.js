@@ -7,7 +7,7 @@
 //     courier the courier holds it until its payout   -> a payment "COD (<delivery>)"
 //   The whole remaining due is received; part deliveries go through Receive / adjust due.
 
-import { paidByOrder, addPayment, syncInvoiceStatus, lock, stamp } from './money.js';
+import { paidByOrder, addPayment, syncInvoiceStatus, lock, stamp, outstanding } from './money.js';
 import { assertOpen } from '../lib/period.js';
 import { roleAtLeast } from '../allow.js';
 import { forget } from '../lib/tabs.js';
@@ -27,8 +27,9 @@ export async function erpCodCollected(ctx, payload) {
   if (inv.cancelled_at) throw new Error(no + ' is cancelled.');
   if (!/^(cod|cash on delivery)/i.test(str(inv.payment_method))) throw new Error(no + ' is not a cash-on-delivery sale. Use Receive / adjust due.');
   forget(ctx, 'PAYMENTS');
-  const got = (await paidByOrder(ctx))[no] || 0;
-  const due = Math.round((num(inv.grand_total) - got) * 100) / 100;
+  // owed the one way the Dues screen works it out (an advance kept on the invoice counts too)
+  const o = await outstanding(ctx, no);
+  const due = o ? Math.round(o.owed * 100) / 100 : Math.round((num(inv.grand_total) - ((await paidByOrder(ctx))[no] || 0)) * 100) / 100;
   if (due <= 0.5) throw new Error(no + ' is already paid.');
   await assertOpen(ctx, new Date(), 'money cannot be received there');
   const by = str(payload.by) === 'courier' ? 'courier' : 'shop';
