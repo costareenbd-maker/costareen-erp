@@ -588,3 +588,10 @@
 - Sounds: bone crack, the deep finish drone, brutal hit.
 - Never stuck in slow motion (a guard returns to normal speed). fight.js 125 KB (36 KB downloaded).
 - Checked on a standalone page: FINISH HIM → typed combo → Spool Storm / Spaghetti Wrap / Laser Engrave → next level or champion; a 38 s fight with no errors; captured FINISH HIM and PRINT-ALITY frames. Both web copies (erp.costareen.com and office-erp) updated.
+
+## game-9 — Brawl: 12 finishers, six more moves (2026-10-04)
+- Six more PRINT-ALITY finishers: Bed Flip (a giant print bed slides under him and flips him into the sky), Filament Lasso (whirled round on a filament line, hurled away, a twinkle in the sky), Scale 10% (shrunk to a tenth and kicked away), Calibration Cube (printed into an XYZ cube, then kicked rolling off), Support Cage (support pillars grow round him, a roof prints, the cage is lifted away), Thermal Runaway (orange glow and flames, he comes out sooty-black and falls over). Each finish picks his own special's finisher about half the time, otherwise one of the six new ones.
+- New moves: → A headbutt (up close; leaves him dizzy), A during a dash = shoulder charge, ↓ S while running at him = slide tackle (low), jump close + A = flying knee (anti-air launcher), ↑ S in the air = tornado kick (four spinning hits), ↓ W = knee bash grab (three knees, then a shove).
+- The computer: flying knee against a jumping player, charge/slide/dropkick at mid range, headbutts and knee bashes up close, tornado kicks at the end of its flipping leaps.
+- Fixed: a slide pressed right after ↓ turned into a block-then-sweep; running is remembered for 0.3 s.
+- fight.js 136 KB (39 KB downloaded). Checked on a standalone page: all 12 finishers run through FINISH HIM with no errors (frames captured for 9 of them), headbutt→dizzy, slide, knee bash, charge and tornado trigger. Both web copies updated.

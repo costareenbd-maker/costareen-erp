@@ -160,6 +160,16 @@
       fr: [[0, P.air], [0.08, { L: 62, hy: 18, sF: 150, eF: 150, sB: 30, eB: 60, hF: 70, kF: -120, hB: -20, kB: -60 }], [0.45, { L: 62, hy: 18, sF: 150, eF: 150, sB: 30, eB: 60, hF: 70, kF: -120, hB: -20, kB: -60 }]] },
     crusher: { start: 0.25, act: 0.9, end: 1.3, reach: 34, dmg: 10, kb: 30, hy: 50, multi: 3, heavy: 1, crush: 1, last: { knock: 1, kb: 320, lift: 320 },
       fr: [[0, over(I, { L: -10, sF: -40, eF: 120, sB: -30, eB: 120 })], [0.25, over(I, { L: 22, sF: 95, eF: 0, sB: 20, eB: 120, hF: 40, hB: -30 })], [0.55, over(I, { L: 26, sB: 95, eB: 0, sF: 20, eF: 120, hF: 40, hB: -30 })], [0.85, over(I, { L: -8, sF: 170, eF: 15, hy: 32 })], [1.3, I]] },
+    risingknee: { start: 0.04, act: 0.2, end: 0.42, reach: 26, dmg: 10, kb: 120, hy: 52, lift: 440, heavy: 1, knock: 1, air: 1,
+      fr: [[0, P.air], [0.05, { L: -12, hy: 30, sF: 150, eF: 30, sB: -40, eB: 60, hF: 112, kF: -150, hB: -20, kB: -40 }], [0.42, { L: -12, hy: 30, sF: 150, eF: 30, sB: -40, eB: 60, hF: 112, kF: -150, hB: -20, kB: -40 }]] },
+    headbutt: { start: 0.11, act: 0.08, end: 0.34, reach: 20, dmg: 7, kb: 70, hy: 72, daze: 1,
+      fr: [[0, over(I, { L: -14 })], [0.11, over(I, { L: 42, sF: 20, eF: 120, sB: 10, eB: 120 })], [0.2, over(I, { L: 42, sF: 20, eF: 120, sB: 10, eB: 120 })], [0.34, I]] },
+    charge: { start: 0.03, act: 0.3, end: 0.46, reach: 26, dmg: 11, kb: 400, hy: 46, heavy: 1, knock: 1, dashv: 470,
+      fr: [[0, I], [0.04, over(I, { L: 36, sF: 20, eF: 90, sB: 10, eB: 120, hF: 52, kF: -52, hB: -42, kB: -20 })], [0.46, over(I, { L: 36, sF: 20, eF: 90, sB: 10, eB: 120, hF: 52, kF: -52, hB: -42, kB: -20 })]] },
+    slide: { start: 0.05, act: 0.3, end: 0.5, reach: 30, dmg: 8, kb: 80, hy: 4, low: 1, knock: 1, lift: 300, dashv: 390,
+      fr: [[0, I], [0.05, { L: -62, hy: 10, sF: -90, eF: 30, sB: -100, eB: 30, hF: 86, kF: 0, hB: 70, kB: 30 }], [0.5, { L: -62, hy: 10, sF: -90, eF: 30, sB: -100, eB: 30, hF: 86, kF: 0, hB: 70, kB: 30 }]] },
+    tornado: { start: 0.04, act: 0.5, end: 0.6, reach: 30, dmg: 4, kb: 50, hy: 30, air: 1, multi: 4, last: { knock: 1, kb: 300, lift: 260 },
+      fr: [[0, P.air], [0.05, { L: -10, hy: 30, sF: 90, eF: 20, sB: -90, eB: 20, hF: 92, kF: 0, hB: -30, kB: -60 }], [0.6, { L: -10, hy: 30, sF: 90, eF: 20, sB: -90, eB: 20, hF: 92, kF: 0, hB: -30, kB: -60 }]] },
     grab: { start: 0.07, act: 0.07, end: 0.45, reach: 26, dmg: 0, kb: 0, hy: 50, grab: 1,
       fr: [[0, I], [0.07, over(I, { sF: 80, eF: 20, sB: 70, eB: 30, L: 20 })], [0.45, I]] },
     dash: { start: 0.06, act: 0.3, end: 0.5, reach: 26, dmg: 12, kb: 200, hy: 48, heavy: 1, knock: 1,
@@ -230,6 +240,8 @@
       if (name === 'dropkick') { f.vy = 300; f.vx = f.dir * 330; snd('whoosh'); }
       if (name === 'divekick') { f.vy = -560; f.vx = f.dir * 380; f.flip = 0; snd('whoosh'); }
       if (name === 'elbowdrop') { f.vy = 230; f.vx = f.dir * 120; }
+      if (name === 'risingknee') { f.vy = Math.max(f.vy, 430); f.vx = f.dir * 80; snd('whoosh'); }
+      if (name === 'charge' || name === 'slide' || name === 'headbutt') snd('whoosh');
       if (name === 'airpunch' && f.vy < 120) f.vy = Math.max(f.vy, 120);   // a little hang in the air for juggles
       if (name === 'dash' || name === 'inferno') dust(f.x, 6);
       if (ATK[name].snd === 'whoosh' || name === 'kick' || name === 'sweep') snd('whoosh');
@@ -396,6 +408,12 @@
           f.victim = null;
         }
         if (f.t > 0.62) begin(f, 'idle');
+      } else if (f.st === 'kneeing') {
+        var vk = f.victim; f.vx = 0;
+        if (vk && vk.st === 'thrown') { vk.x = f.x + f.dir * 20; vk.y = 0; vk.dir = -f.dir; }
+        [0.15, 0.3, 0.45].forEach(function (tt, i) { if (f.t >= tt && (f.knees || 0) <= i && vk) { f.knees = i + 1; var dk = 4 * f.mul; vk.hp = Math.max(g.tut >= 0 && vk === g.c ? 25 : 0, vk.hp - dk); burst(vk.x, 40, f.def.color, 1.1); snd('hit'); g.freeze = 0.06; g.shake = Math.max(g.shake, 3); bleed(vk.x, 40, f.dir, 2); pops.push({ x: vk.x, y: 70, t: 0.6, s: '-' + Math.round(dk), c: '#fde047', size: 7 }); } });
+        if (f.t > 0.6 && vk && vk.st === 'thrown') { f.victim = null; f.knees = 0; if (vk.hp <= 0) { knock(vk, f, 300, true); g.mode = 'ko'; g.t = 0; g.slow = 0.45; snd('ko'); musicOn(false); } else { knock(vk, f, 200); vk.kx = f.dir * 300; } }
+        if (f.t > 0.75) { f.kneeGrab = 0; begin(f, 'idle'); }
       } else if (f.st === 'thrown') {
         if (!opp(f).victim) { begin(f, 'down'); f.vy = 100; f.downT = 0; }
         f.x = Math.max(14, Math.min(AW() - 14, f.x)); return;
@@ -406,12 +424,15 @@
             f.done = 1;
             var breakIt = o === g.c ? Math.random() < Math.min(0.35, 0.05 + 0.04 * o.L) * DIFF[g.diff] : hit.KeyW;
             if (breakIt) { delete hit.KeyW; burst((f.x + o.x) / 2, o.y + 50, '#fff', 1); pops.push({ x: o.x, y: o.y + 95, t: 0.8, s: gw('BREAK!'), c: '#fff', size: 10, word: 1 }); begin(f, 'hit'); f.kx = -f.dir * 160; o.kx = f.dir * 160; begin(o, 'hit'); }
+            else if (f.kneeGrab) { begin(f, 'kneeing'); f.victim = o; begin(o, 'thrown'); o.vx = 0; o.vy = 0; snd('throw'); }
             else { begin(f, 'throwing'); f.victim = o; begin(o, 'thrown'); o.vx = 0; o.vy = 0; snd('throw'); }
             return;
           }
           if (f.t > a.end) begin(f, 'idle');
           f.vx = 0;
         } else {
+        if (f.atk === 'tornado') { f.flip = 1; f.flipDir = 1; }
+        if ((f.atk === 'charge' || f.atk === 'slide') && f.t > a.start && f.t < a.start + a.act) { f.vx = f.dir * a.dashv * (1 - (f.t - a.start) / a.act * 0.5); if (f.atk === 'slide' && Math.random() < 0.6) dust(f.x, 2); }
         if ((f.atk === 'dash' || f.atk === 'inferno') && f.t > a.start && f.t < a.start + a.act) {
           f.vx = f.dir * (a.dashv || 470);
           if (Math.random() < 0.7) fx.push({ kind: 'fire', x: f.x - f.dir * 10, y: 20 + Math.random() * 40, vx: -f.dir * 60, vy: 40, t: 0.35, T: 0.35 });
@@ -428,7 +449,7 @@
             if (inReach(f, a)) hurt(f, o, a.dmg * (lastHit ? 2 : 1), lastHit ? a.last.kb : a.kb, lastHit ? { heavy: 1, knock: a.last.knock, lift: a.last.lift, at: tip(f) } : { at: tip(f) });
           }
         } else if (on && !f.done && inReach(f, a)) {
-          f.done = 1; hurt(f, o, a.dmg, a.kb, { heavy: a.heavy, knock: a.knock, lift: a.lift, low: a.low, otg: a.otg, at: tip(f) });
+          f.done = 1; if (hurt(f, o, a.dmg, a.kb, { heavy: a.heavy, knock: a.knock, lift: a.lift, low: a.low, otg: a.otg, at: tip(f) }) && a.daze && o.st === 'hit') { begin(o, 'dizzy'); o.t = 0.5; pops.push({ x: o.x, y: o.y + 98, t: 0.9, s: gw('DIZZY!'), c: '#facc15', size: 10, word: 1 }); snd('crack'); }
         }
         if (f.atk === 'jab' || f.atk === 'cross' || f.atk === 'upper' || f.atk === 'kick') { if (f.t > a.start - 0.03 && f.t < a.start + a.act) f.trail.push(tip(f)); if (f.trail.length > 6) f.trail.shift(); }
         if (a.air) { if (f.y === 0 && f.t > 0.05) { var heavyLand = f.atk === 'divekick' || f.atk === 'elbowdrop' || f.atk === 'dropkick'; begin(f, 'idle'); dust(f.x, heavyLand ? 10 : 4); if (heavyLand) { g.shake = Math.max(g.shake, 3); snd('hit'); } } }
@@ -478,7 +499,7 @@
       } else if (f.st === 'walk') {
         f.walkPh += dt * 9 * slow;
       }
-      if (f.st !== 'walk' && f.st !== 'hit' && f.st !== 'down' && !(f.st === 'atk' && (f.atk === 'dash' || f.atk === 'inferno' || ATK[f.atk].multi)) && f.st !== 'dashstep' && f.y === 0 && f.punish <= 0) f.vx = 0;
+      if (f.st !== 'walk' && f.st !== 'hit' && f.st !== 'down' && !(f.st === 'atk' && (f.atk === 'dash' || f.atk === 'inferno' || f.atk === 'charge' || f.atk === 'slide' || ATK[f.atk].multi)) && f.st !== 'dashstep' && f.y === 0 && f.punish <= 0) f.vx = 0;
       if (f.st === 'dashstep') { if (f.t > 0.18) begin(f, 'idle'); }
       if (f.st === 'block' && f.y === 0) { f.vx *= 0.8; }
       var nx = f.x + f.vx * dt * (f.st === 'walk' ? slow : 1);
@@ -541,19 +562,21 @@
       var awayKey = f.dir > 0 ? 'ArrowLeft' : 'ArrowRight', towardKey = f.dir > 0 ? 'ArrowRight' : 'ArrowLeft';
       if (f.st === 'air' || (f.st === 'atk' && ATK[f.atk].air && f.done && f.y > 0)) {
         if ((f.x < 22 || f.x > AW() - 22) && use('ArrowUp')) { wallJump(f); return; }   // kick off the edge
-        if (use('KeyA')) { attack(f, 'airpunch'); tutMark('kick'); return; }
-        if (hit.KeyS) { use('KeyS'); attack(f, held.ArrowDown ? 'divekick' : 'airkick'); tutMark('kick'); return; }
+        if (use('KeyA')) { var oz = opp(f); attack(f, f.vy > 0 && Math.abs(oz.x - f.x) < 44 && Math.abs(oz.y - f.y) < 50 ? 'risingknee' : 'airpunch'); tutMark('kick'); return; }
+        if (hit.KeyS) { use('KeyS'); attack(f, held.ArrowDown ? 'divekick' : held.ArrowUp ? 'tornado' : 'airkick'); tutMark('kick'); return; }
       }
       // after a launch: jump after him for an air combo
       if (free(f) && f.y === 0 && hit.ArrowUp && opp(f).st === 'down' && opp(f).y > 20 && !opp(f).ko) { use('ArrowUp'); superJump(f, opp(f)); return; }
+      if (f.st === 'dashstep' && hit.KeyA) { use('KeyA'); attack(f, 'charge'); return; }
       if (!free(f)) return;
-      if (use('KeyW')) { attack(f, 'grab'); return; }
+      if (use('KeyW')) { f.kneeGrab = held.ArrowDown ? 1 : 0; attack(f, 'grab'); return; }
+      if (f.st === 'dashstep' && use('KeyA')) { attack(f, 'charge'); return; }
       if (use('KeyA')) {
         var oq = opp(f);
         if (held.ArrowDown && oq.st === 'down' && !oq.ko && Math.abs(oq.x - f.x) < 60) { attack(f, 'elbowdrop'); return; }
-        attack(f, held[awayKey] ? 'backfist' : 'jab'); tutMark('punch'); return;
+        attack(f, held[awayKey] ? 'backfist' : (held[towardKey] && Math.abs(oq.x - f.x) < 34) ? 'headbutt' : 'jab'); tutMark('punch'); return;
       }
-      if (use('KeyS')) { attack(f, held.ArrowDown ? 'sweep' : (held[towardKey] && (f.st === 'walk' || f.st === 'dashstep')) ? 'dropkick' : 'kick'); tutMark('kick'); return; }
+      if (use('KeyS')) { var moving = held[towardKey] && (f.st === 'walk' || f.st === 'dashstep' || now - (f.walkAt || -9) < 0.3); attack(f, held.ArrowDown ? (moving ? 'slide' : 'sweep') : moving ? 'dropkick' : 'kick'); tutMark('kick'); return; }
       if (hit.KeyD && f.cd <= 0) { use('KeyD'); special(f); tutMark('special'); return; }
       if (hit.KeyF && f.pw >= 100 && held.ArrowDown) { use('KeyF'); crusher(f); return; }
       if (hit.KeyF && f.pw >= 100) { use('KeyF'); superMove(f); tutMark('super'); return; }
@@ -567,7 +590,7 @@
         if (use(k)) { if (now - (lastTap[k] || 0) < 0.25) { begin(f, 'dashstep'); f.vx = (k === 'ArrowLeft' ? -1 : 1) * 400; dust(f.x, 5); snd('whoosh'); } lastTap[k] = now; }
       });
       if (f.st === 'dashstep') return;
-      if (held.ArrowLeft || held.ArrowRight) { f.st = 'walk'; f.vx = held.ArrowLeft ? -150 : 150; }
+      if (held.ArrowLeft || held.ArrowRight) { f.st = 'walk'; f.vx = held.ArrowLeft ? -150 : 150; f.walkAt = now; }
       else if (f.st === 'walk') begin(f, 'idle');
     }
 
@@ -598,12 +621,14 @@
       if (f.st === 'air') {
         var ddx = o.x - f.x;
         if (f.airChase && Math.abs(ddx) < 34 && Math.abs(o.y - f.y) < 40) { f.airChase = 0; attack(f, 'airpunch'); return; }
-        if (f.divePlan && f.vy < 0 && Math.abs(ddx) < 120 && ddx * f.dir > 0 && o.y < 10) { f.divePlan = 0; attack(f, 'divekick'); return; }
+        if (f.divePlan && f.vy < 0 && Math.abs(ddx) < 120 && ddx * f.dir > 0 && o.y < 10) { f.divePlan = 0; attack(f, Math.random() < 0.3 ? 'tornado' : 'divekick'); return; }
         if ((f.x < 22 || f.x > AW() - 22) && f.vy < 100 && Math.random() < skill * 0.6) { wallJump(f); return; }
         return;
       }
       if (f.st === 'atk' && f.atk === 'airpunch' && f.done && f.t > 0.2 && Math.random() < skill) { attack(f, 'airkick'); return; }
       if (!free(f)) return;
+      // he jumps at it: a flying knee to meet him
+      if (o.st === 'air' && o.y > 10 && dist < 60 && f.y === 0 && Math.random() < skill * 0.5) { f.vy = 430; begin(f, 'air'); attack(f, 'risingknee'); return; }
       // someone on the floor: drop an elbow on him
       if (o.st === 'down' && !o.ko && o.y < 6 && dist < 46 && Math.random() < skill * 0.7) { attack(f, 'elbowdrop'); return; }
       // just launched him: jump after him
@@ -646,7 +671,7 @@
       if (dist > 190 && Math.random() < 0.18 + 0.3 * skill && !ranged) {   // a long flipping leap in, ready to dive
         f.vy = 470; f.vx = f.dir * Math.min(390, dist * 1.3); f.flip = 1; f.flipDir = 1; f.divePlan = 1; begin(f, 'air'); snd('jump'); dust(f.x, 6); return;
       }
-      if (dist > 55 && dist < 120 && Math.random() < 0.12 + 0.12 * skill) { attack(f, 'dropkick'); return; }
+      if (dist > 55 && dist < 120 && Math.random() < 0.12 + 0.12 * skill) { var rr = Math.random(); attack(f, rr < 0.4 ? 'dropkick' : rr < 0.7 ? 'charge' : 'slide'); return; }
       if (dist > want + 6) {
         if (Math.random() < aggr) { f.st = 'walk'; f.ai.dir = o.x > f.x ? 1 : -1; f.vx = f.ai.dir * 150; }
         else if (f.pw < 100 && dist > 170 && Math.random() < 0.5) { begin(f, 'charge'); f.chargeT = 0.8; }
@@ -656,7 +681,8 @@
         var r2 = Math.random();
         if (r2 < 0.08 + 0.1 * skill) { f.vy = 440; f.vx = f.dir * 120; begin(f, 'air'); return; }
         if (o.st === 'block' && Math.random() < skill) { attack(f, 'sweep'); return; }   // you block high: it goes low
-        attack(f, r2 < 0.08 ? 'grab' : r2 < 0.18 ? 'backfist' : r2 < 0.55 ? 'jab' : r2 < 0.82 ? 'kick' : 'sweep');
+        if (r2 < 0.05) f.kneeGrab = 1;
+        attack(f, r2 < 0.1 ? 'grab' : r2 < 0.18 ? 'backfist' : r2 < 0.25 ? 'headbutt' : r2 < 0.58 ? 'jab' : r2 < 0.84 ? 'kick' : 'sweep');
       }
     }
 
@@ -705,13 +731,16 @@
     }
     var FIN = { whip: 'wrap', spool: 'spools', dash: 'launch', resin: 'tomb', wall: 'printover', pillars: 'launch', laser: 'engrave', slam: 'printover', flurry: 'wrap' };
     var FIN_SEQ = [['D', 'F', 'A'], ['B', 'F', 'S'], ['D', 'D', 'A'], ['F', 'D', 'S'], ['B', 'D', 'A'], ['F', 'F', 'W']];
-    var FIN_NAME = { wrap: 'SPAGHETTI WRAP', spools: 'SPOOL STORM', launch: 'PILLAR LAUNCH', tomb: 'RESIN TOMB', printover: 'PRINT OVER', engrave: 'LASER ENGRAVE' };
+    var FIN_EXTRA = ['bedflip', 'lasso', 'shrink', 'cube', 'cage', 'meltdown'];
+    var FIN_NAME = { bedflip: 'BED FLIP', lasso: 'FILAMENT LASSO', shrink: 'SCALE 10%', cube: 'CALIBRATION CUBE', cage: 'SUPPORT CAGE', meltdown: 'THERMAL RUNAWAY', wrap: 'SPAGHETTI WRAP', spools: 'SPOOL STORM', launch: 'PILLAR LAUNCH', tomb: 'RESIN TOMB', printover: 'PRINT OVER', engrave: 'LASER ENGRAVE' };
     function startFinishHim(win, vic) {
       vic.rag = null; vic.ko = false; vic.y = 0; vic.vy = 0; vic.vx = 0; vic.kx = 0; begin(vic, 'dazed'); vic.hp = 0.0005;
       vic.x = Math.max(30, Math.min(AW() - 30, win.x + (vic.x >= win.x ? 1 : -1) * 46));
       win.y = 0; win.vy = 0; win.vx = 0; begin(win, 'idle'); win.dir = vic.x >= win.x ? 1 : -1; vic.dir = -win.dir;
       var seq = FIN_SEQ[Math.floor(Math.random() * FIN_SEQ.length)];
-      g.fin = { win: win, vic: vic, seq: seq, i: 0, kind: win.def.boss ? 'wrap' : (FIN[win.def.move] || 'printover'), items: [] };
+      var own = win.def.boss ? 'wrap' : (FIN[win.def.move] || 'printover');
+      g.fin = { win: win, vic: vic, seq: seq, i: 0, kind: Math.random() < 0.45 ? own : FIN_EXTRA[Math.floor(Math.random() * FIN_EXTRA.length)], items: [] };
+      vic.sc = 1; vic.hide = 0; vic.soot = 0;
       g.mode = 'finishhim'; g.t = 0; g.slow = 1; g.dim = 0.45; shots = []; beams = []; waves = []; pend = []; pops = [];
       snd('finish'); musicOn(false);
     }
@@ -729,7 +758,7 @@
       if (F.kind === 'engrave') { begin(F.vic, 'down'); F.vic.vy = 120; F.vic.kx = F.win.dir * 60; F.vic.downT = 0; F.vic.ko = true; }
     }
     function missFinish() {
-      var F = g.fin; g.mode = 'ko'; g.t = 1.0; g.koChecked = 1; F.vic.hp = 0; knock(F.vic, F.win, 260, true); snd('ko');
+      var F = g.fin; F.vic.sc = 1; F.vic.hide = 0; F.vic.soot = 0; g.mode = 'ko'; g.t = 1.0; g.koChecked = 1; F.vic.hp = 0; knock(F.vic, F.win, 260, true); snd('ko');
     }
     function stepFinish(dt) {
       var F = g.fin; if (!F) return;
@@ -753,8 +782,30 @@
       } else if (F.kind === 'engrave') {
         if (Math.random() < 0.6 && t < 2.2) fx.push({ kind: 'dot', x: v.x - 40 + Math.min(1, t / 2) * 80, y: 1, vx: (Math.random() - 0.5) * 60, vy: 80, t: 0.3, T: 0.3, c: '#67e8f9' });
       }
+      else if (F.kind === 'bedflip') {
+        if (t > 0.9 && !F.flipped) { F.flipped = 1; v.vy = 1000; v.vx = w.dir * 260; v.flip = 1; v.flipDir = 1; begin(v, 'air'); g.shake = 10; snd('slam'); dust(v.x, 12); }
+      } else if (F.kind === 'lasso') {
+        if (t > 0.4 && t < 2.2) { var an = (t - 0.4) * 7, rad2 = 52; v.x = w.x + Math.cos(an) * rad2; v.y = 46 + Math.sin(an) * 34; v.vy = 0; v.vx = 0; v.flip = 1; if (v.st !== 'air') begin(v, 'air'); if (Math.random() < 0.3) snd('whoosh'); }
+        if (t > 2.2 && !F.hurled) { F.hurled = 1; v.vy = 1100; v.vx = w.dir * 520; snd('whoosh'); }
+        if (t > 3.0 && !F.twinkle) { F.twinkle = 1; snd('pick'); }
+      } else if (F.kind === 'shrink') {
+        v.sc = Math.max(0.22, 1 - Math.min(1, t / 1.2) * 0.78);
+        if (t > 1.5 && !F.flicked) { F.flicked = 1; attack(w, 'kick'); }
+        if (t > 1.62 && !F.flown) { F.flown = 1; v.vy = 800; v.vx = w.dir * 640; v.flip = 1; begin(v, 'air'); snd('hit'); }
+      } else if (F.kind === 'cube') {
+        if (t > 1.3) v.hide = 1;
+        if (t > 2.0 && !F.kicked) { F.kicked = 1; attack(w, 'kick'); F.cubeVx = w.dir * 420; snd('slam'); }
+        if (F.kicked) { F.cubeX = (F.cubeX === undefined ? v.x : F.cubeX) + F.cubeVx * dt; F.cubeVx *= 0.985; F.cubeRot = (F.cubeRot || 0) + F.cubeVx * dt * 0.05; }
+      } else if (F.kind === 'cage') {
+        if (t > 1.6) { var lift2 = (t - 1.6) * 90; v.y = lift2; v.vy = 0; F.cageY = lift2; }
+      } else if (F.kind === 'meltdown') {
+        if (t < 2.2 && Math.random() < 0.8) fx.push({ kind: 'fire', x: v.x + (Math.random() - 0.5) * 30, y: Math.random() * 50, vx: (Math.random() - 0.5) * 40, vy: 80 + Math.random() * 80, t: 0.5, T: 0.5 });
+        if (t > 1.0) v.soot = 1;
+        if (t > 2.3 && !F.fell) { F.fell = 1; begin(v, 'down'); v.vy = 60; v.kx = 0; v.downT = 0; v.ko = true; }
+        if (t > 2.3 && Math.random() < 0.15) dust(v.x, 2);
+      }
       if (t > 3.3 && w.st !== 'win') begin(w, 'win');
-      if (t > 4.6) { v.hp = 0; g.fin = null; roundOver(v === g.c); }
+      if (t > 4.6) { v.hp = 0; v.sc = 1; v.hide = 0; v.soot = 0; g.fin = null; roundOver(v === g.c); }
     }
     function drawFinish() {
       var F = g.fin; if (!F || g.mode !== 'finisher') return;
@@ -783,6 +834,28 @@
         ctx.shadowColor = '#22d3ee'; ctx.shadowBlur = 12; ctx.fillStyle = '#a5f3fc'; ctx.fillText(word, sx(v.x), sy(3)); ctx.restore();
         if (t < 2.3) { var lx = x0 + full * k, J = joints(poseOf(w)); ctx.strokeStyle = '#06b6d4'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(sx(w.x + w.dir * (J.aF[2].x + 4)), sy(w.y + J.aF[2].y)); ctx.lineTo(lx, sy(6)); ctx.stroke(); ctx.strokeStyle = '#fff'; ctx.lineWidth = 0.8; ctx.stroke(); }
       }
+      if (F.kind === 'bedflip') {   // a giant print bed slides in under him and flips like a pancake turner
+        var bx0 = v.x - 40, inX = Math.min(1, t / 0.6), ang3 = t > 0.8 ? -Math.min(1, (t - 0.8) * 5) * 1.1 * w.dir : 0;
+        ctx.save(); ctx.translate(sx(v.x - w.dir * 40 + (1 - inX) * -w.dir * 200), sy(0)); ctx.rotate(ang3);
+        ctx.fillStyle = '#b45309'; ctx.fillRect(0, -6 * s, w.dir * 80 * s, 6 * s); ctx.fillStyle = '#facc15'; ctx.globalAlpha = 0.6; ctx.fillRect(0, -7 * s, w.dir * 80 * s, 1.5 * s); ctx.globalAlpha = 1; ctx.restore();
+      }
+      if (F.kind === 'lasso' && t > 0.3 && t < 2.25) { ctx.strokeStyle = w.def.color; ctx.lineWidth = 2.2; ctx.beginPath(); ctx.moveTo(sx(w.x), sy(w.y + 60)); ctx.lineTo(sx(v.x), sy(v.y + 50)); ctx.stroke(); }
+      if (F.kind === 'lasso' && t > 3.0 && t < 3.6) { var tw = Math.sin((t - 3) * 20); ctx.fillStyle = '#fff'; ctx.save(); ctx.translate(g.W * 0.75, 18 * s); ctx.rotate(t * 4); ctx.fillRect(-1.5, -8 * Math.abs(tw) - 2, 3, 16 * Math.abs(tw) + 4); ctx.fillRect(-8 * Math.abs(tw) - 2, -1.5, 16 * Math.abs(tw) + 4, 3); ctx.restore(); }
+      if (F.kind === 'cube') {   // printed into a 20 mm calibration cube
+        var ch = Math.min(1, t / 1.3) * 46, cx3 = F.cubeX === undefined ? v.x : F.cubeX;
+        ctx.save(); ctx.translate(sx(cx3), sy(ch / 2)); ctx.rotate(F.cubeRot || 0);
+        ctx.fillStyle = '#9ca3af'; ctx.fillRect(-23 * s, -ch / 2 * s, 46 * s, ch * s); ctx.strokeStyle = '#4b5563'; ctx.lineWidth = 2; ctx.strokeRect(-23 * s, -ch / 2 * s, 46 * s, ch * s);
+        for (var l3 = 0; l3 < ch; l3 += 3) { ctx.fillStyle = 'rgba(0,0,0,.08)'; ctx.fillRect(-23 * s, (ch / 2 - l3) * s, 46 * s, 1); }
+        if (ch >= 46) { ctx.font = '900 ' + Math.round(16 * s) + 'px system-ui, sans-serif'; ctx.textAlign = 'center'; ctx.fillStyle = '#374151'; ctx.fillText('X', -9 * s, 2 * s); ctx.fillText('Y', 9 * s, 2 * s); ctx.font = '900 ' + Math.round(9 * s) + 'px system-ui'; ctx.fillText('Z', 0, -12 * s); }
+        ctx.restore();
+      }
+      if (F.kind === 'cage') {   // support pillars grow round him, a roof prints on, then the whole cage is lifted away
+        var bars = Math.min(1, t / 1.2) * 96, cy0 = F.cageY || 0;
+        [-24, -14, -4, 6, 16, 26].forEach(function (o3) { for (var l4 = 0; l4 < bars; l4 += 3) { ctx.fillStyle = l4 % 6 ? '#a855f7' : '#c084fc'; ctx.fillRect(sx(v.x + o3) - 1.6 * s, sy(cy0 + l4 + 3), 3.2 * s, 3 * s - 1); } });
+        if (t > 1.2) { ctx.fillStyle = '#7e22ce'; ctx.fillRect(sx(v.x - 28), sy(cy0 + 100), 56 * s, 4 * s); }
+        if (t > 1.6) { ctx.strokeStyle = '#6b7280'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(sx(v.x), sy(cy0 + 104)); ctx.lineTo(sx(v.x), 0); ctx.stroke(); }
+      }
+      if (F.kind === 'meltdown' && t < 2.4) { ctx.fillStyle = 'rgba(249,115,22,' + (0.18 * Math.min(1, t * 2)) + ')'; ctx.fillRect(0, 0, g.W, g.H); }
       if (F.kind === 'launch' && t > 0.3 && t < 1.2) { var hp2 = Math.min(1, (t - 0.3) * 6) * 120; for (var l2 = 0; l2 < hp2; l2 += 3) { ctx.fillStyle = l2 % 6 ? '#a855f7' : '#c084fc'; ctx.fillRect(sx(v.x - 12), sy(l2 + 3), 24 * s, 3 * s - 1); } }
     }
     function levels() { return g.endless ? 0 : g.opps.length; }
@@ -906,6 +979,7 @@
         case 'dazed': return over(P.dizzy, { L: -10 + Math.sin(now * 3) * 12, hy: 26 + Math.sin(now * 6) });
         case 'throwing': return f.t < 0.3 ? mix(over(I, { sF: 80, eF: 20, sB: 70, eB: 30, L: 20 }), { L: -14, hy: 30, sF: 170, eF: 10, sB: 165, eB: 10, hF: 22, kF: -18, hB: -20, kB: -10 }, ease(f.t / 0.3)) : f.t < 0.42 ? { L: -14, hy: 30, sF: 170, eF: 10, sB: 165, eB: 10, hF: 22, kF: -18, hB: -20, kB: -10 } : mix({ L: -14, hy: 30, sF: 170, eF: 10, sB: 165, eB: 10, hF: 22, kF: -18, hB: -20, kB: -10 }, over(I, { sF: 120, eF: 10, sB: 110, eB: 10, L: 30 }), ease((f.t - 0.42) / 0.1));
         case 'thrown': return P.hit;
+        case 'kneeing': var kn = (f.t * 6.6) % 1 < 0.5; return over(I, kn ? { hF: 100, kF: -150, L: -6, sF: 80, eF: 40, sB: 70, eB: 50 } : { sF: 80, eF: 40, sB: 70, eB: 50, L: 10 });
         case 'dizzy': return over(P.dizzy, { L: -8 + Math.sin(now * 5) * 8 });
         case 'charge': return over(P.charge, { sF: 28 + Math.sin(b * 3) * 4, sB: 30 - Math.sin(b * 3) * 4 });
         case 'win': return over(P.win, { hy: 30 + Math.abs(Math.sin(b)) * 2 });
@@ -945,14 +1019,16 @@
       if (f.y > 0 && f.flip && (f.st === 'air' || f.st === 'atk')) { rot = (f.spin || 0); piv = 30; }
       var cr = Math.cos(rad(rot)), sr = Math.sin(rad(rot));
       var shk = f.flash > 0 ? (Math.random() - 0.5) * 2 : 0;
-      function X(pt) { var x = pt.x * cr - (pt.y - piv) * sr; return sx(f.x + f.dir * x + shk); }
-      function Y(pt) { var y = pt.x * sr + (pt.y - piv) * cr + piv; return sy(f.y + Math.max(lying ? 3 : -99, y)); }
+      var scl = f.sc || 1;
+      function X(pt) { var x = (pt.x * cr - (pt.y - piv) * sr) * scl; return sx(f.x + f.dir * x + shk); }
+      function Y(pt) { var y = (pt.x * sr + (pt.y - piv) * cr + piv) * scl; return sy(f.y + Math.max(lying ? 3 : -99, y)); }
       function seg(a, b, w, c) { ctx.strokeStyle = c; ctx.lineWidth = w * s; ctx.beginPath(); ctx.moveTo(X(a), Y(a)); ctx.lineTo(X(b), Y(b)); ctx.stroke(); }
       function off(a, k) { return { x: a.x + k, y: a.y + k * 0.4 }; }
       var fl = f.flash > 0, o = d.outfit;
       var sh = fl ? '#ffffff' : d.color, shD = fl ? '#e5e7eb' : shade(d.color, -0.35), shL = fl ? '#fff' : shade(d.color, 0.35);
       var sk = fl ? '#ffffff' : d.skin, skD = fl ? '#e5e7eb' : shade(d.skin.charAt(0) === '#' ? d.skin : '#b07a5a', -0.25);
-      var pants = o === 'tracksuit' ? shD : o === 'suit' ? '#1f2433' : o === 'panjabi' ? '#e7e2d6' : PANTS;
+      if (f.soot) { sh = shD = shL = '#2a2a2a'; sk = skD = '#333'; }
+      var pants = f.soot ? '#1f1f1f' : o === 'tracksuit' ? shD : o === 'suit' ? '#1f2433' : o === 'panjabi' ? '#e7e2d6' : PANTS;
       var sleeve = o === 'suit' ? '#1f2433' : o === 'vest' ? shL : sh, sleeveD = o === 'suit' ? '#11141d' : o === 'vest' ? shade(d.color, 0.1) : shD;
       // limbs: outline, colour, a highlight; muscle on the upper arm; real fists and shoes
       function mid(a, b, t) { return { x: a.x + (b.x - a.x) * t, y: a.y + (b.y - a.y) * t }; }
@@ -1016,7 +1092,9 @@
       ctx.translate(X({ x: J.neck.x, y: J.neck.y + 14 }), Y({ x: J.neck.x, y: J.neck.y + 14 }));
       ctx.rotate(rad(-(rot + J.L * 0.4) * f.dir) + (f.st === 'dizzy' ? Math.sin(now * 5) * 0.15 : 0));
       ctx.scale(f.dir, 1);
-      ctx.drawImage(d.img, -13 * s, -17.5 * s, 26 * s, 32 * s);
+      if (f.soot) ctx.filter = 'brightness(0.25)';
+      ctx.drawImage(d.img, -13 * s * scl, -17.5 * s * scl, 26 * s * scl, 32 * s * scl);
+      ctx.filter = 'none';
       if (fl) { ctx.globalAlpha = 0.6 * (ghost || 1); ctx.drawImage(d.white, -13 * s, -17.5 * s, 26 * s, 32 * s); }
       ctx.restore();
       if (ghost) ctx.globalAlpha = ghost;
@@ -1148,6 +1226,7 @@
       pctx.setTransform(m0.a / dv, m0.b / dv, m0.c / dv, m0.d / dv, m0.e / dv, m0.f / dv);
       ctx = pctx;
       [g.c, g.p].forEach(function (f) {
+        if (f.hide) return;
         if (f.def.boss) { drawBoss(f); return; }
         if (f.rag && f.st === 'down') { drawRag(f); return; }
         // a smear of the body on the active frames of heavy moves
@@ -1269,7 +1348,7 @@
       soundBtn = [sbx, sby, 22, 18];
       ctx.fillStyle = 'rgba(0,0,0,.35)'; ctx.fillRect(sbx, sby, 22, 18);
       text(soundOn ? '🔊' : '🔇', sbx + 11, sby + 14, 12, '#fff', 'center');
-      text(gw('A punch ×3 · ←A backfist · S kick · →S dropkick · ↓S sweep · ↓A elbow drop · W throw · D special · F super · ↓F crusher · ↓ block/PARRY · ↑ jump (←↑ backflip, air: A S ↓S, wall ↑) · B blood · M sound'), W / 2, H - 6, Math.max(10, 4.6 * s), 'rgba(255,255,255,.8)', 'center', true, true);
+      text(gw('A punch ×3 · ←A backfist · S kick · →S dropkick · ↓S sweep · ↓A elbow drop · W throw (↓W knee bash) · →A headbutt · dash+A charge · run ↓S slide · D special · F super · ↓F crusher · ↓ block/PARRY · ↑ jump (←↑ backflip, air: A/knee S ↑S tornado ↓S dive, wall ↑) · B blood · M sound'), W / 2, H - 6, Math.max(10, 4.6 * s), 'rgba(255,255,255,.8)', 'center', true, true);
       if (g.tut >= 0 && g.mode === 'fight' && TUT[g.tut]) {
         var msg = gw(TUT[g.tut][1]) + (TUT[g.tut][0] === 'special' ? ' (' + gw(MOVES[g.p.def.move][0]) + ')' : TUT[g.tut][0] === 'super' ? ' (' + MOVES[g.p.def.move][2] + ')' : '');
         var bw2 = Math.min(W - 40, msg.length * fs * 0.62 + 60), by = H * 0.3;
@@ -1428,8 +1507,14 @@
       '<tr><td>' + k('\u2190') + ' ' + k('\u2191') + '</td><td>' + gw('backflip: jump away, can\u2019t be hit for a moment') + '</td></tr>' +
       '<tr><td>' + gw('in the air') + '</td><td>' + gw('A air punch (then S air kick), \u2193+S dive kick, \u2191 at the edge of the floor: wall jump') + '</td></tr>' +
       '<tr><td>' + gw('after an uppercut') + '</td><td>' + gw('\u2191 jumps after him for an air combo; he can be hit again while flying') + '</td></tr>' +
+      '<tr><td>' + k('\u2192') + ' ' + k('A') + ' ' + gw('up close') + '</td><td>' + gw('headbutt: he is left dizzy') + '</td></tr>' +
+      '<tr><td>' + gw('dash') + ' + ' + k('A') + '</td><td>' + gw('shoulder charge') + '</td></tr>' +
+      '<tr><td>' + gw('running at him') + ' ' + k('\u2193') + ' ' + k('S') + '</td><td>' + gw('slide tackle (low: knocks him off his feet)') + '</td></tr>' +
+      '<tr><td>' + gw('jump close +') + ' ' + k('A') + '</td><td>' + gw('flying knee') + '</td></tr>' +
+      '<tr><td>' + gw('in the air') + ' ' + k('\u2191') + ' ' + k('S') + '</td><td>' + gw('tornado kick (four spinning hits)') + '</td></tr>' +
+      '<tr><td>' + k('\u2193') + ' ' + k('W') + '</td><td>' + gw('knee bash grab: three knees, then a shove') + '</td></tr>' +
       '<tr><td>' + k('\u2193') + ' ' + k('F') + '</td><td>' + gw('CRUSHER (full power bar): three bone-cracking blows in slow motion') + '</td></tr>' +
-      '<tr><td>' + gw('FINISH HIM!') + '</td><td>' + gw('when the winning round ends, type the keys shown on screen within 3 seconds: your PRINT-ALITY finisher (spool storm, resin tomb, print over, spaghetti wrap, laser engrave or pillar launch)') + '</td></tr>' +
+      '<tr><td>' + gw('FINISH HIM!') + '</td><td>' + gw('when the winning round ends, type the keys shown on screen within 3 seconds: your PRINT-ALITY finisher (12 of them: spool storm, resin tomb, print over, spaghetti wrap, laser engrave, pillar launch, bed flip, filament lasso, scale 10%, calibration cube, support cage, thermal runaway)') + '</td></tr>' +
       '<tr><td>' + gw('5-hit combo') + '</td><td>' + gw('the next heavy hit is BRUTAL!: slow motion and a big launch') + '</td></tr>' +
       '<tr><td>' + k('B') + '</td><td>' + gw('cartoon blood on / off') + '</td></tr>' +
       '<tr><td>' + k('W') + '</td><td>' + gw('throw: grab and hurl him (can\u2019t be blocked; press W when he grabs you to break free; hold \u2190 or \u2192 to throw that way)') + '</td></tr>' +
