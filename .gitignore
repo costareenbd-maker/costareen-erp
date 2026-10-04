@@ -5,3 +5,5 @@ web/index-local.html
 deploy/before-start-fresh-*.json
 __pycache__/
 deploy/secrets.env
+deploy/* - backup *.json
+deploy/sheet_stock.json
