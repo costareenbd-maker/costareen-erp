@@ -21,6 +21,7 @@ import { erpSuppliers, erpSupplierSave } from './suppliers.js';
 import { erpSaveProduct } from './stock.js';
 import { erpCatalog } from './catalog.js';
 import { lock, who } from './money.js';
+import { products as costedProducts, erpCostBook } from './dashboard.js';
 
 const str = (v) => String(v == null ? '' : v).trim();
 const day = (d) => (d ? formatDate(new Date(d), 'yyyy-MM-dd') : '');
@@ -52,17 +53,19 @@ export async function erpExport(ctx, payload) {
     const money = roleAtLeast(ctx.s.role, 'shareholder');
     const rows = await ctx.tx`select p.*, coalesce(ps.stock, 0) as stock from products p left join product_stock ps on ps.product_id = p.id
                               where p.business_id = ${ctx.biz} order by p.category, p.brand, p.name`;
-    const head = ['SKU', 'Name', 'Category', 'Brand', 'Type', 'Colour', 'Unit', 'Supplier', 'Family', 'Serialised', 'Warranty months'].concat(money ? ['Cost'] : [])
+    const costed = money ? (await costedProducts(ctx)).bySku : {};
+    const head = ['SKU', 'Name', 'Category', 'Brand', 'Type', 'Colour', 'Unit', 'Supplier', 'Family', 'Serialised', 'Warranty months'].concat(money ? ['Cost', 'Cost from'] : [])
       .concat(['Sell price', 'Wholesale price', 'Reorder level', 'Lead days', 'Stock', 'Status', 'Barcode', 'Notes']);
     const out = [head];
     for (const p of rows) out.push([str(p.sku), str(p.name), str(p.category), str(p.brand), str(p.type), str(p.color), str(p.unit), str(p.supplier), str(p.family), p.serialised ? 'yes' : '', p.warranty_months == null ? '' : num(p.warranty_months)]
-      .concat(money ? [num(p.cost_price)] : []).concat([num(p.sell_price), num(p.wholesale_price), num(p.reorder_level), num(p.lead_time_days), num(p.stock), str(p.status), str(p.barcode), str(p.notes)]));
+      .concat(money ? (function () { const c = costed[str(p.sku).toLowerCase()], v = c ? num(c.cost) : num(p.cost_price);
+        return [v, num(p.cost_price) > 0 ? 'product' : v > 0 ? 'price book (landed)' : 'no cost yet']; })() : []).concat([num(p.sell_price), num(p.wholesale_price), num(p.reorder_level), num(p.lead_time_days), num(p.stock), str(p.status), str(p.barcode), str(p.notes)]));
     return fileOut(ctx, biz + ' products ' + stamp + '.xlsx', [{ name: 'Products', rows: out, frozenRows: 1, style: bold }]);
   }
   if (what === 'customers') {
     const rows = await ctx.tx`select * from customers where business_id = ${ctx.biz} order by name`;
     const out = [['Name', 'Phone', 'Email', 'Address', 'Type', 'Source', 'Status', 'Orders', 'Spent', 'Last order', 'Added', 'Notes']];
-    for (const c of rows) out.push([str(c.name), str(c.phone), str(c.email), str(c.address), str(c.type), str(c.source), str(c.status), num(c.total_orders), num(c.total_spent), day(c.last_order_at), day(c.date_added || c.created_at), str(c.notes)]);
+    for (const c of rows) out.push([str(c.name), str(c.phone), str(c.email), str(c.address), str(c.type), str(c.source), str(c.status), num(c.total_orders), num(c.total_spent), day(c.last_order_at), day(c.created_at), str(c.note)]);
     return fileOut(ctx, biz + ' customers ' + stamp + '.xlsx', [{ name: 'Customers', rows: out, frozenRows: 1, style: bold }]);
   }
   if (what === 'invoices') return fileOut(ctx, biz + ' invoices ' + stamp + '.xlsx', [await listSheet(ctx, 'invoices', 'Invoices')]);
@@ -90,16 +93,17 @@ export async function erpExport(ctx, payload) {
                               from stock_movements m join products p on p.id = m.product_id
                               where m.business_id = ${ctx.biz} and m.created_at > now() - interval '90 days' order by m.created_at desc limit 20000`;
     const money = roleAtLeast(ctx.s.role, 'shareholder');
-    const out = [['When', 'SKU', 'Product', 'Kind', 'In / out', 'Qty'].concat(money ? ['Unit cost', 'Total'] : []).concat(['Reference', 'Supplier', 'Note', 'By'])];
+    const out = [['When', 'SKU', 'Product', 'Kind', 'In / out', 'Qty'].concat(money ? ['Unit price', 'Total'] : []).concat(['Reference', 'Supplier', 'Note', 'By'])];
     for (const m of rows) out.push([formatDate(new Date(m.created_at), 'yyyy-MM-dd HH:mm'), str(m.sku), str(m.name), str(m.kind), str(m.direction), num(m.qty)]
       .concat(money ? [num(m.unit_price), num(m.total)] : []).concat([str(m.reference), str(m.supplier), str(m.note), str(m.operator)]));
     return fileOut(ctx, biz + ' stock movements ' + stamp + '.xlsx', [{ name: 'Stock', rows: out, frozenRows: 1, style: bold }]);
   }
   if (what === 'costbook') {
     if (!roleAtLeast(ctx.s.role, 'shareholder')) throw new Error('Your account does not have access to that.');
-    const rows = await ctx.tx`select * from cost_book where business_id = ${ctx.biz} order by category, brand, type`;
-    const out = [['Category', 'Brand', 'Type', 'Buy price', 'Currency', 'Handling', 'Note']];
-    for (const r of rows) out.push([str(r.category), str(r.brand), str(r.type), r.buy_amount == null ? (num(r.buy_rmb) || num(r.buy_bdt)) : num(r.buy_amount), str(r.buy_cur) || (num(r.buy_rmb) ? 'RMB' : num(r.buy_bdt) ? 'BDT' : ''), r.handling == null ? '' : num(r.handling), str(r.note)]);
+    const book = await erpCostBook(ctx);
+    const out = [['Category', 'Brand', 'Type', 'Buy price', 'Currency', 'Handling', 'Landed cost', 'Products', 'Typical sell', 'Margin %', 'Note']];
+    for (const r of book.rows) out.push([r.category, r.brand, r.type, r.amount == null ? '' : num(r.amount), r.cur, r.handling === '' || r.handling == null ? '' : num(r.handling),
+      r.landed > 0 ? r.landed : '', num(r.products), r.sell > 0 ? r.sell : '', r.margin == null ? '' : r.margin, r.note]);
     return fileOut(ctx, biz + ' price book ' + stamp + '.xlsx', [{ name: 'Price book', rows: out, frozenRows: 1, style: bold }]);
   }
   throw new Error('Nothing called "' + what + '" can be exported.');
@@ -154,6 +158,8 @@ export async function erpImport(ctx, payload) {
     const bySku = {}, byName = {};
     cat.forEach((p) => { bySku[p.sku.toLowerCase()] = p; byName[p.name.toLowerCase()] = p; });
     const money = roleAtLeast(ctx.s.role, 'shareholder');
+    const ownCost = {}, costed2 = money ? (await costedProducts(ctx)).bySku : {};
+    if (money) for (const r of await ctx.tx`select sku, cost_price from products where business_id = ${ctx.biz}`) ownCost[String(r.sku).toLowerCase()] = r.cost_price;
     const plan = [];
     rows.forEach((raw, i) => {
       const r = mapRow(raw, kind), name = str(r.name), sku = str(r.sku);
@@ -168,7 +174,13 @@ export async function erpImport(ctx, payload) {
       take('category', 'category'); take('brand', 'brand'); take('type', 'type'); take('color', 'color'); take('unit', 'unit'); take('supplier', 'supplier');
       take('sell', 'sell_price', num); take('wholesale', 'wholesale_price', num); take('reorder', 'reorder_level', num); take('lead', 'lead_time_days', num);
       take('status', 'status'); take('barcode', 'barcode'); take('notes', 'notes'); take('family', 'family');
-      if (money) take('cost', 'cost_price', num);
+      if (money) {
+        take('cost', 'cost_price', num);
+        // the export shows the price book's landed cost where a product has none of its own: reading it back changes nothing
+        const own = cur ? num(ownCost[cur.sku.toLowerCase()]) : 0, eff = cur && costed2[cur.sku.toLowerCase()] ? num(costed2[cur.sku.toLowerCase()].cost) : 0;
+        if (cur && d.cost_price !== undefined && !(own > 0) && Math.abs(d.cost_price - eff) < 0.01) delete d.cost_price;
+        if (cur && d.cost_price !== undefined && own > 0 && Math.abs(d.cost_price - own) < 0.01) delete d.cost_price;
+      }
       if (r.warranty !== undefined && str(r.warranty) !== '') d.warranty_months = Math.round(num(r.warranty));
       if (r.serialised !== undefined && str(r.serialised) !== '') d.serialised = yes(r.serialised);
       if (!cur && r.stock !== undefined) d.opening_stock = num(r.stock);

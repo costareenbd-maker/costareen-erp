@@ -109,12 +109,22 @@ export async function sheetTick(ctx) {
     for (const t of await tables(ctx)) {
       const fp = (await ctx.sql`select md5(coalesce(string_agg(md5(x::text), '' order by md5(x::text)), '')) as fp, count(*)::int as n
                                 from ${ctx.sql(t)} x where business_id = ${ctx.biz}`)[0];
+      if (t === 'products') {   // the products tab also carries the cost the ERP uses and the stock: it changes with the price book and every movement
+        const more2 = (await ctx.sql`select md5(coalesce((select string_agg(md5(b::text), '' order by md5(b::text)) from cost_book b where b.business_id = ${ctx.biz}), '') ||
+                                              coalesce((select string_agg(ps.product_id::text || ':' || ps.stock::text, ',' order by ps.product_id) from product_stock ps join products q on q.id = ps.product_id where q.business_id = ${ctx.biz}), '')) as m`)[0];
+        fp.fp = fp.fp + ':' + more2.m;
+      }
       if (st[t] && st[t].fp === fp.fp) continue;
       if (!st[t] && fp.n === 0) continue;                                     // an empty list gets no tab until it has rows
       if (written >= MAX_TABS_PER_RUN) { more = true; break; }
       const cols = await ctx.sql`select column_name as c, data_type as d from information_schema.columns where table_schema = 'public' and table_name = ${t} order by ordinal_position`;
       const rows = await ctx.sql`select * from ${ctx.sql(t)} where business_id = ${ctx.biz}`;
-      const values = [cols.map((c) => c.c)].concat(rows.map((r) => cols.map((c) => cell(r[c.c], c.d))));
+      let values = [cols.map((c) => c.c)].concat(rows.map((r) => cols.map((c) => cell(r[c.c], c.d))));
+      if (t === 'products') {
+        const { products: costed } = await import('./dashboard.js');
+        const by = (await costed(ctx)).bySku;
+        values = [values[0].concat(['cost_used', 'stock'])].concat(rows.map((r, i) => { const c = by[String(r.sku || '').toLowerCase()]; return values[i + 1].concat([c ? num(c.cost) : num(r.cost_price), c ? num(c.stock) : 0]); }));
+      }
       if (!titles.has(t)) {
         const a = await gfetch(ctx.deps, SHEETS + id + ':batchUpdate', { method: 'POST', headers: auth,
           body: JSON.stringify({ requests: [{ addSheet: { properties: { title: t, gridProperties: { frozenRowCount: 1 } } } }] }) });
