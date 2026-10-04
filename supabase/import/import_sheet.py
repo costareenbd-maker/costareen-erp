@@ -351,8 +351,8 @@ def main():
     wids = ins('web_orders', ['business_id', 'order_no', 'order_date', 'status', 'customer_name', 'customer_phone',
                               'customer_address', 'payment', 'order_total', 'pulled_at', 'entered', 'manager_note'], wrows)
     wid = dict(zip(worder, wids))
-    ins('web_order_lines', ['business_id', 'web_order_id', 'sku', 'product_name', 'qty', 'line_total', 'status'],
-        [(biz, wid[no], s(r[4]), s(r[5]), n(r[6]), n(r[7]), s(r[3])) for no in worder for r in wo[no]])
+    ins('web_order_lines', ['business_id', 'web_order_id', 'sku', 'product_name', 'qty', 'line_total', 'status', 'entered'],
+        [(biz, wid[no], s(r[4]), s(r[5]), n(r[6]), n(r[7]), s(r[3]), s(r[13]).lower() == 'yes') for no in worder for r in wo[no]])   # each line's own "entered
 
     # ---- CAPITAL (build b261002-1321; the tabs exist only once the screen was used) ----
     h, rows = load(src, 'CAPITAL_HOLDERS')
