@@ -5203,22 +5203,11 @@ function saveProduct() {
   }
   var returnTo = PRODUCT_FORM.returnTo;
 
-  // In a shipment the product is only a draft: it joins the list at the bottom
-  // and is created for real when the shipment is received, so abandoning the
-  // form cannot leave a half-entered product behind in the sheet.
+  // From Receive the product is created at once (with no stock), so it is on the product list even if the
+  // shipment is never received; the quantity typed here goes onto the shipment line, and Receive adds it to stock.
   if (returnTo === 'receive') {
-    var draft = {};
-    Object.keys(PRODUCT_FORM).forEach(function (k) { draft[k] = PRODUCT_FORM[k]; });
-    delete draft.returnTo;
-    RECV.lines.push({
-      sku: '', isNew: true, product: draft,
-      name: String(PRODUCT_FORM.product_name || '').trim(),
-      qty: Math.max(1, num(PRODUCT_FORM.opening_stock) || 1), stock: 0
-    });
-    PRODUCT_FORM = null;
-    toast('Added to this shipment. It is created when you press Receive.');
-    repaint();
-    return;
+    RECV_NEWQTY = Math.max(1, num(PRODUCT_FORM.opening_stock) || 1);
+    PRODUCT_FORM.opening_stock = 0;
   }
 
   if (returnTo === 'pox') {
@@ -5268,6 +5257,7 @@ function saveProduct() {
 }
 
 /** Re-pull the catalogue, then put the new product where it was asked for. */
+var RECV_NEWQTY = 0;
 function attachNewProduct(target, sku) {
   srv('erpCatalog', [],
       function (cat) {
@@ -5277,7 +5267,9 @@ function attachNewProduct(target, sku) {
     } else {
       var p = null;
       for (var i = 0; i < CAT.length; i++) if (CAT[i].sku === sku) { p = CAT[i]; break; }
-      RECV.lines.push({ sku: sku, name: p ? p.name : sku, qty: 1, stock: p ? p.stock : 0 });
+      RECV.lines.push({ sku: sku, name: p ? p.name : sku, qty: RECV_NEWQTY || 1, stock: p ? p.stock : 0 });
+      if (RECV_NEWQTY) toast('Product created and added to this shipment (' + RECV_NEWQTY + '). Press <strong>Receive</strong> to put them in stock.', false, 9000);
+      RECV_NEWQTY = 0;
     }
     D = null; loadDashboardOnly();
     updateCounts();
