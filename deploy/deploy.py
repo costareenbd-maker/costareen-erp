@@ -108,6 +108,9 @@ def step_web():
         shutil.copy(os.path.join(ROOT, 'web', f), out)
     shutil.copytree(os.path.join(ROOT, 'web', 'icons'), os.path.join(out, 'icons'))
     shutil.copytree(os.path.join(ROOT, 'web', 'games'), os.path.join(out, 'games'))   # games load on demand (no photos in them)
+    # Stage 1e: only the published copy is minified (the source stays readable); a failed minify stops the deploy
+    games = [os.path.join(out, 'games', f) for f in os.listdir(os.path.join(out, 'games')) if f.endswith('.js')]
+    subprocess.check_call(['node', os.path.join(ROOT, 'deploy', 'minify.mjs'), os.path.join(out, 'index.html')] + games)
     # never publish web/.env.local, web/src, web/original or the old app
     for proj in [PAGES_PROJECT, PUBLIC_PROJECT]:
         if proj == PUBLIC_PROJECT:

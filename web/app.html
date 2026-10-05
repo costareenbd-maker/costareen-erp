@@ -18856,11 +18856,11 @@ document.addEventListener('click', function (ev) {
 })();
 // ---- the lock screen: the provider switched the company off, or its connection was removed
 var ERP_LOCKED = false;
-function erpShowLock(msg) {
+function erpShowLock(msg, title) {
   if (ERP_LOCKED) return; ERP_LOCKED = true;
   var B = window.ERP_BRAND || {}, d = document.createElement('div');
   d.className = 'erplock';
-  d.innerHTML = '<div class="box"><div class="ic">\uD83D\uDD12</div><h2 style="margin:0">' + esc((ERP_BACKEND && ERP_BACKEND.name) || 'This ERP') + ' is locked</h2>' +
+  d.innerHTML = '<div class="box"><div class="ic">\uD83D\uDD12</div><h2 style="margin:0">' + esc((ERP_BACKEND && ERP_BACKEND.name) || 'This ERP') + (title || ' is locked') + '</h2>' +
     '<div class="sub" data-c5x="1" style="display:block">' + esc(msg || 'This ERP cannot be used right now.') + '</div>' +
     '<div class="sub" data-c5x="1" style="display:block">Your data is safe in your own account. Nothing was deleted.</div>' +
     '<div class="row" style="justify-content:center;gap:8px"><button class="btn primary" type="button" onclick="location.reload()">Try again</button></div>' +
@@ -18869,7 +18869,12 @@ function erpShowLock(msg) {
 }
 var erpPostL1 = erpPost;
 erpPost = function (name, args, again) {
-  return erpPostL1(name, args, again).then(function (j) { if (j && j.locked) erpShowLock(j.error); return j; });
+  return erpPostL1(name, args, again).then(function (j) {
+    if (j && j.locked) erpShowLock(j.error);
+    // Stage 1e: the server answers a company's ERP only on the provider's addresses
+    else if (j && j.unlicensed) erpShowLock(j.error, ' is not licensed here');
+    return j;
+  });
 };
 </script>
 

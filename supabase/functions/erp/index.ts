@@ -75,6 +75,22 @@ function cors(origin: string | null, open = false) {
   };
 }
 
+// Stage 1e: a company's ERP answers only pages served from the provider's addresses (or the company's own domain).
+// A browser always sends Origin and a page cannot change it, so a copy of the page put up elsewhere stops working.
+// No Origin (server-to-server, the timers) is let through: those calls still need a valid sign-in or key.
+const FREE_ZONE = (Deno.env.get('ERP_FREE_ZONE') ?? '').toLowerCase();
+function pageAllowed(origin: string | null, domain: string): boolean {
+  if (!origin) return true;
+  // https only: a copy run on someone's own computer (localhost) is refused too
+  if ((ALLOWED_ORIGINS.includes(origin) || OWN_ORIGINS.includes(origin)) && origin.startsWith('https://')) return true;
+  if (/^https:\/\/([a-z0-9-]+\.)?(costareen-erp|office-erp)\.pages\.dev$/.test(origin)) return true;
+  let host = '';
+  try { const u = new URL(origin); if (u.protocol !== 'https:') return false; host = u.hostname.toLowerCase(); } catch (_) { return false; }
+  if (FREE_ZONE && (host === FREE_ZONE || host.endsWith('.' + FREE_ZONE))) return true;
+  return !!domain && host === domain.toLowerCase();
+}
+const NOT_LICENSED = 'This ERP page is not licensed at this address. Open your ERP from its own link.';
+
 /** One claim of a token Supabase Auth has just accepted (so it is not verified again here). */
 function jwtClaim(token: string, key: string): string {
   try {
@@ -276,7 +292,7 @@ async function buildTenant(t: any) {
   const fpHex = [...new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(t.service + '|' + t.dbUrl)))].map((b) => b.toString(16).padStart(2, '0')).join('');
   return {
     providerFingerprint: fpHex.slice(0, 16).toUpperCase().match(/.{4}/g)!.join('-'),
-    install: { id: t.id, key: '', controlUrl: '', version: Deno.env.get('ERP_RELEASE') ?? '', bridged: true },
+    install: { id: t.id, key: '', controlUrl: '', version: Deno.env.get('ERP_RELEASE') ?? '', bridged: true, domain: String(t.domain || '') },
     installEnv: INSTALL_ENV,
     google: { ...GOOGLE, redirect: FN_URL + '?google=back&t=' + t.id, appUrl },
     smtpNote: '', linkOnly: false, sql: tsql, sqlAux: tAux, fetch: globalThis.fetch.bind(globalThis), renderPdf,
@@ -318,7 +334,13 @@ Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers });
   if (tid && !(q0.get('install') || q0.get('control'))) {
     if (!tenantDeps) return new Response(JSON.stringify({ ok: false, error: 'This server does not run company ERPs.' }), { status: 200, headers });
-    try { return await serveWith(await tenantDeps(tid), req, q0, headers); }
+    try {
+      const td = await tenantDeps(tid);
+      if (!pageAllowed(req.headers.get('origin'), td.install && td.install.domain || '')) {
+        return new Response(JSON.stringify({ ok: false, unlicensed: true, error: NOT_LICENSED }), { status: 403, headers });
+      }
+      return await serveWith(td, req, q0, headers);
+    }
     catch (e) {
       if (e instanceof Locked) return new Response(JSON.stringify({ ok: false, locked: true, error: (e as Error).message }), { status: 200, headers });
       return new Response(JSON.stringify({ ok: false, error: 'The ERP server could not reach this company\u2019s database. Try again in a minute.' }), { status: 200, headers });

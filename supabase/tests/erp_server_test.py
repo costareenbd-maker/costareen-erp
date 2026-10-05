@@ -2,7 +2,7 @@
 
 Builds the schema (001-007) with Supabase auth stubbed, seeds a small
 business, then runs erp_server_test.mjs in Node with the connection string.
-Touches nothing live. Same setup as test_partnership.py (pgserver + tzdata).
+Touches nothing live. Same setup as legacy/test_partnership.py (pgserver + tzdata).
 Usage: python erp_server_test.py
   env ERP_NODE_CWD = a folder whose node_modules has postgres@3.4.5
   env TEST_SCRIPT  = which .mjs in this folder to run (default erp_server_test.mjs)

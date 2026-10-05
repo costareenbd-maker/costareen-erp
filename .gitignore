@@ -7,3 +7,5 @@ __pycache__/
 deploy/secrets.env
 deploy/* - backup *.json
 deploy/sheet_stock.json
+
+deploy/.tools/
