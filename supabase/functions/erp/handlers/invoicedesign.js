@@ -162,7 +162,7 @@ function sealSvg(paid) {
   const col = paid ? '#1f8a4c' : '#c0262d', id = paid ? 'sp' : 'sd';
   const rim = []; for (let i = 0; i < 72; i++) { const r = i % 2 ? 94 : 100, a = i * Math.PI / 36; rim.push((100 + r * Math.cos(a)).toFixed(1) + ',' + (100 + r * Math.sin(a)).toFixed(1)); }
   const star = (cx, cy, r) => { const p = []; for (let i = 0; i < 10; i++) { const rr = i % 2 ? r * 0.42 : r, a = -Math.PI / 2 + i * Math.PI / 5; p.push((cx + rr * Math.cos(a)).toFixed(1) + ',' + (cy + rr * Math.sin(a)).toFixed(1)); } return '<polygon points="' + p.join(' ') + '" fill="' + col + '"/>'; };
-  const worn = '<filter id="' + id + 'w"><feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" seed="' + (paid ? 7 : 3) + '"/><feColorMatrix values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 -1.1 1.3"/><feComposite in="SourceGraphic" operator="in"/></filter>';
+  const worn = '<filter id="' + id + 'w"><feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" seed="' + (paid ? 7 : 3) + '"/><feColorMatrix values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 -0.9 1.35"/><feComposite in="SourceGraphic" operator="in"/></filter>';
   let inner;
   if (paid) {
     inner = '<path id="' + id + 't" d="M 38 100 A 62 62 0 0 1 162 100" fill="none"/><path id="' + id + 'b" d="M 40 108 A 60 60 0 0 0 160 108" fill="none"/>' +
@@ -205,7 +205,7 @@ function finish(id, out, P, d, D) {
   let css = '.pstamp{display:inline-block;white-space:nowrap;border:0.7mm solid;border-radius:1.5mm;padding:1.2mm 3.5mm;font-weight:800;font-size:12pt;letter-spacing:1pt;transform:rotate(-6deg);margin-top:3mm;background:rgba(255,255,255,.85)}' +
     '.bigb{position:relative;display:flex;justify-content:space-between;align-items:center;border-radius:2mm;padding:3.5mm 6mm;margin-top:9mm;margin-bottom:6mm;break-inside:avoid;color:#1f2430}.bigb span{font-size:10pt;font-weight:700;text-transform:uppercase;letter-spacing:1.5pt}.bigb b{font-size:20pt;font-weight:800;position:relative;z-index:1}' +
     // a real stamp: tilted, a little see-through and printed over (multiply), so every figure under it still reads
-    '.sealat{position:absolute;right:14mm;top:50%;width:37mm;height:37mm;margin:-18.5mm 0 0 0;transform:rotate(-14deg);opacity:.62;mix-blend-mode:multiply;pointer-events:none;z-index:2}.sealat svg{width:100%;height:100%;display:block}' +
+    '.sealat{position:absolute;right:14mm;top:50%;width:37mm;height:37mm;margin:-18.5mm 0 0 0;transform:rotate(-14deg);opacity:.8;mix-blend-mode:multiply;pointer-events:none;z-index:2}.sealat svg{width:100%;height:100%;display:block}' +
     '.sumwrap{position:relative;flex:0 0 auto;align-self:flex-start}.sumwrap .sealat.sealsum{right:6mm;top:62%}' +
     'tr.blank td{height:6.5mm;padding-top:0 !important;padding-bottom:0 !important}' +
     // the page is A4 even with one item: the money part sits at its foot
