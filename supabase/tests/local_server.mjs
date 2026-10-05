@@ -18,7 +18,7 @@ const { signinRoute } = await import(pathToFileURL(path.join(fnDir, 'handlers', 
 const sql = connect(postgres, process.env.DB_URL);
 // fake storage / PDF / outside world from the test harness (nothing leaves this computer)
 const H = await import('./harness.mjs');
-const deps = { ...H.deps, sql, control: sql, sqlAux: connect(postgres, process.env.DB_URL, { max: 2 }), verifyUser: async () => null };   // owner email sign-in is not simulated
+const deps = { ...H.deps, sql, control: connect(postgres, process.env.DB_URL, { max: 2 }), sqlAux: connect(postgres, process.env.DB_URL, { max: 2 }), verifyUser: async () => null };   // owner email sign-in is not simulated
 const PORT = Number(process.env.PORT || 8794);
 deps.hookBase = 'http://localhost:' + PORT + '/';
 if (process.env.LINK_ONLY) {

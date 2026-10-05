@@ -577,7 +577,7 @@ svg { display:block; width:100%; overflow:visible; }
       <button type="button" data-view="stock" aria-selected="false"><span class="ic"><svg viewBox="0 0 24 24"><path d="M3 21V9l9-6 9 6v12"/><path d="M9 21v-6h6v6"/><path d="M3 21h18"/></svg></span>Stock entry</button>
       <button type="button" data-view="suppliers" aria-selected="false"><span class="ic"><svg viewBox="0 0 24 24"><path d="M3 7h11v9H3zM14 10h4l3 3v3h-7z"/><circle cx="7" cy="18" r="1.800"/><circle cx="17.500" cy="18" r="1.800"/></svg></span>Suppliers<span class="count" id="cOwed"></span></button>
       <button type="button" data-view="costs" aria-selected="false"><span class="ic"><svg viewBox="0 0 24 24"><path d="M20 12l-8 8-9-9V3h8z"/><circle cx="7.5" cy="7.5" r="1.5"/></svg></span>Product cost<span class="count" id="cCosts"></span></button>
-      <button type="button" data-view="market" aria-selected="false"><span class="ic"><svg viewBox="0 0 24 24"><path d="M3 9l1.5-5h15L21 9"/><path d="M3 9h18v2a3 3 0 0 1-6 0 3 3 0 0 1-6 0 3 3 0 0 1-6 0z"/><path d="M5 13v8h14v-8"/><path d="M10 21v-5h4v5"/></svg></span>Market</button>
+      <button type="button" data-view="market" aria-selected="false"><span class="ic"><svg viewBox="0 0 24 24"><path d="M3 9l1.5-5h15L21 9"/><path d="M3 9h18v2a3 3 0 0 1-6 0 3 3 0 0 1-6 0 3 3 0 0 1-6 0z"/><path d="M5 13v8h14v-8"/><path d="M10 21v-5h4v5"/></svg></span>Market<span class="count" id="cMarket"></span></button>
       <div class="navgrp">Money</div>
       <button type="button" data-view="profit" aria-selected="false"><span class="ic"><svg viewBox="0 0 24 24"><path d="M3 17l6-6 4 4 8-8"/><path d="M14 7h7v7"/></svg></span>Profitability</button>
       <button type="button" data-view="expenses" aria-selected="false"><span class="ic"><svg viewBox="0 0 24 24"><path d="M20 7H5a2 2 0 0 1 0-4h13v4"/><path d="M4 7v12a2 2 0 0 0 2 2h14V7"/><circle cx="16" cy="14" r="1.5"/></svg></span>Expenses</button>
@@ -8394,7 +8394,7 @@ function srv(name, args, ok, bad) {
 
 var SRV_ACTIVE = 0, SRV_WRITING = false, SRV_TIMED = {};
 // the same list the server uses to know a call changes nothing (ERP_READS)
-var SRV_READS = /^(erpMarket|erpMarketMine|erpBrand|erpComplianceLog|erpProviderKey|erpNews|erpAccessKeys|erpAccessWarning|erpAdmin|erpAiKeys|erpAlertRules|erpAlerts|erpArena|erpBackupStatus|erpBg|erpBnWords|erpBookedParcels|erpBrandLogo|erpBundle|erpBusinessLinks|erpBusinesses|erpBusinessesDeleted|erpCampaignAudience|erpCampaignGet|erpCampaignList|erpCapital|erpCashBook|erpCatalog|erpConnStatus|erpConnections|erpCostBook|erpCourier|erpCourierKeyStatus|erpCurrencies|erpCustomerAccount|erpCustomerCredit|erpCustomerList|erpCustomerPage|erpCustomerStatement|erpCustomers|erpDashboardData|erpDaySales|erpDeliveryOptions|erpDevices|erpDiscontinued|erpDues|erpEvoQr|erpEvoStatus|erpExpenseExport|erpExpenseReceiptUrl|erpExpenses|erpFamilies|erpFighters|erpFormOptions|erpGame|erpGetTheme|erpGoogle|erpHello|erpInstalls|erpInvoice|erpInvoicePdf|erpJob|erpJobs|erpListView|erpLookupCustomer|erpLookupUsage|erpMe|erpMoney|erpNoteFileUrl|erpNotes|erpOwnerChange|erpOwnerChanges|erpParcelLabels|erpParcelPreview|erpPartnerStock|erpPartnership|erpPayReasons|erpPeople|erpPlatform|erpPlatformErrors|erpPnl|erpPnlMonth|erpPoList|erpPoolCatalog|erpProduct|erpProductListShare|erpProductPage|erpProductPhotoUrl|erpProductThumbs|erpProfile|erpQuoteAsset|erpQuoteBoot|erpQuoteGet|erpQuoteList|erpRecentInvoices|erpRecovery|erpReorderPlan|erpRestorePreview|erpReturnPreview|erpRisks|erpSales|erpSearch|erpSecurity|erpSelfTest|erpSerialLookup|erpSerialsFor|erpSessions|erpSetTheme|erpSettingsFull|erpSettingsLists|erpSfPayoutLines|erpSfPayouts|erpShareFile|erpSharedStock|erpSheet|erpStatementPdf|erpStockHistory|erpSupplierPage|erpSuppliers|erpToday|erpUsers|erpWaProductPdf|erpWebMatches|erpWebOrderInvoices|erpWebOrders|erpWebsiteTest)$/;
+var SRV_READS = /^(erpMarket|erpMarketMine|erpMarketRequests|erpBrand|erpComplianceLog|erpProviderKey|erpNews|erpAccessKeys|erpAccessWarning|erpAdmin|erpAiKeys|erpAlertRules|erpAlerts|erpArena|erpBackupStatus|erpBg|erpBnWords|erpBookedParcels|erpBrandLogo|erpBundle|erpBusinessLinks|erpBusinesses|erpBusinessesDeleted|erpCampaignAudience|erpCampaignGet|erpCampaignList|erpCapital|erpCashBook|erpCatalog|erpConnStatus|erpConnections|erpCostBook|erpCourier|erpCourierKeyStatus|erpCurrencies|erpCustomerAccount|erpCustomerCredit|erpCustomerList|erpCustomerPage|erpCustomerStatement|erpCustomers|erpDashboardData|erpDaySales|erpDeliveryOptions|erpDevices|erpDiscontinued|erpDues|erpEvoQr|erpEvoStatus|erpExpenseExport|erpExpenseReceiptUrl|erpExpenses|erpFamilies|erpFighters|erpFormOptions|erpGame|erpGetTheme|erpGoogle|erpHello|erpInstalls|erpInvoice|erpInvoicePdf|erpJob|erpJobs|erpListView|erpLookupCustomer|erpLookupUsage|erpMe|erpMoney|erpNoteFileUrl|erpNotes|erpOwnerChange|erpOwnerChanges|erpParcelLabels|erpParcelPreview|erpPartnerStock|erpPartnership|erpPayReasons|erpPeople|erpPlatform|erpPlatformErrors|erpPnl|erpPnlMonth|erpPoList|erpPoolCatalog|erpProduct|erpProductListShare|erpProductPage|erpProductPhotoUrl|erpProductThumbs|erpProfile|erpQuoteAsset|erpQuoteBoot|erpQuoteGet|erpQuoteList|erpRecentInvoices|erpRecovery|erpReorderPlan|erpRestorePreview|erpReturnPreview|erpRisks|erpSales|erpSearch|erpSecurity|erpSelfTest|erpSerialLookup|erpSerialsFor|erpSessions|erpSetTheme|erpSettingsFull|erpSettingsLists|erpSfPayoutLines|erpSfPayouts|erpShareFile|erpSharedStock|erpSheet|erpStatementPdf|erpStockHistory|erpSupplierPage|erpSuppliers|erpToday|erpUsers|erpWaProductPdf|erpWebMatches|erpWebOrderInvoices|erpWebOrders|erpWebsiteTest)$/;
 function srvPump() {
   if (!SRV_Q.length) return;
   var isRead = SRV_READS.test(SRV_Q[0].name);
@@ -12256,7 +12256,7 @@ var APPS = [
 var VIEW_NAMES = { invoice: 'New invoice', sales: 'Invoices', weborders: 'Web orders', quotes: 'Quotations', repairs: 'Repairs', customers: 'Customers', campaigns: 'Campaigns',
                    products: 'Products', stock: 'Stock', costs: 'Product cost', market: 'Market', profit: 'Profitability', expenses: 'Expenses', capital: 'Capital', cash: 'Money', suppliers: 'Suppliers',
                    settings: 'Settings', tools: 'Maintenance', platform: 'Platform', dash: 'Dashboard', home: 'Home' };
-var VIEW_COUNT = { invoice: 'cCart', sales: 'cSend', weborders: 'cWeb', costs: 'cCosts' };
+var VIEW_COUNT = { invoice: 'cCart', sales: 'cSend', weborders: 'cWeb', costs: 'cCosts', market: 'cMarket' };
 function appOf(view) { for (var i = 0; i < APPS.length; i++) if (APPS[i].views.indexOf(view) >= 0) return APPS[i]; return null; }
 function appViews(app) { return app.views.filter(function (v) { return navOn(v); }); }
 function countOf(view) { var c = VIEW_COUNT[view] && el(VIEW_COUNT[view]); return c ? c.textContent : ''; }
@@ -18978,10 +18978,11 @@ function viewMarket() {
     '<div class="sub" data-c5x="1" style="display:block">' + (r && r.sharing
       ? 'You see every supplier that shares stock' + (r.city ? '. Yours is shared from <b>' + esc(r.city) + '</b>' : '') + '.'
       : 'You see the platform\u2019s own stock. <b>Share your stock</b> to see every supplier\u2019s too.') +
-    ' Suppliers are shown by city only. Ordering through the market comes in the next update.</div>' +
+    ' Suppliers are shown by city only until they give you a price.</div>' +
     '<div class="mk-tabs"><button class="btn' + (MK.tab === 'find' ? ' primary' : '') + '" type="button" data-mktab="find">Find stock</button>' +
+    '<button class="btn' + (MK.tab === 'req' ? ' primary' : '') + '" type="button" data-mktab="req">Requests' + (MKR.data && MKR.data.waiting ? ' <span class="mk-n">' + MKR.data.waiting + '</span>' : '') + '</button>' +
     (owner ? '<button class="btn' + (MK.tab === 'mine' ? ' primary' : '') + '" type="button" data-mktab="mine">What I share' + (r && r.sharing ? ' \u2713' : '') + '</button>' : '') + '</div>';
-  h += MK.tab === 'mine' ? mkMineHtml() : mkFindHtml();
+  h += MK.tab === 'mine' ? mkMineHtml() : MK.tab === 'req' ? mkReqHtml() : mkFindHtml();
   return h + '</div></section>';
 }
 function mkFindHtml() {
@@ -18993,13 +18994,15 @@ function mkFindHtml() {
   if (MK.err) return h + '<div class="note err" style="margin-top:10px"><div class="ico">!</div><div>' + esc(MK.err) + '</div></div>';
   if (!r) return h + '<div class="empty">Loading\u2026</div>';
   if (!r.items.length) return h + '<div class="empty">' + (MK.q || MK.cat ? 'Nothing matches.' : 'Nothing on the market yet.') + '</div>';
-  return h + '<div class="scroll" style="margin-top:10px"><table><thead><tr><th>Product</th><th>Category</th><th>Stock</th><th class="num">Price</th><th>Supplier</th><th>Updated</th></tr></thead><tbody>' +
+  return h + '<div class="scroll" style="margin-top:10px"><table><thead><tr><th>Product</th><th>Category</th><th>Stock</th><th class="num">Price</th><th>Supplier</th><th>Updated</th><th></th></tr></thead><tbody>' +
     r.items.map(function (x) {
       var sub = [x.brand, x.color, x.unit].filter(Boolean).join(' \u00b7 ');
       return '<tr><td><b>' + esc(x.name) + '</b>' + (sub ? '<div class="sku">' + esc(sub) + '</div>' : '') + '</td><td>' + esc(x.category || '') + '</td>' +
         '<td><span class="mk-band ' + (x.band === 'low' ? 'low">Low' : 'in">In stock') + '</span></td>' +
         '<td class="num">' + (x.price == null ? '<span class="sku">Ask</span>' : '\u09f3' + fmt(x.price)) + '</td>' +
-        '<td>' + esc(x.seller) + '</td><td class="sku">' + esc(mkAgo(x.minutes)) + '</td></tr>';
+        '<td>' + esc(x.seller) + (x.stars ? ' <span class="mk-star">\u2605' + x.stars + ' (' + x.ratings + ')</span>' : '') + '</td><td class="sku">' + esc(mkAgo(x.minutes)) + '</td>' +
+        '<td><button class="btn small" type="button" data-mkask="' + esc(x.ref) + '">Request</button></td></tr>' +
+        (MKR.ask && MKR.ask.ref === x.ref ? '<tr><td colspan="7">' + mkAskHtml(x) + '</td></tr>' : '');
     }).join('') + '</tbody></table></div>' + (r.truncated ? '<div class="sub" data-c5x="1" style="display:block">First 300 shown - search to narrow down.</div>' : '');
 }
 function mkMineHtml() {
@@ -19025,7 +19028,7 @@ function mkMineHtml() {
 var goMk1 = go;
 go = function (view, param) {
   var r = goMk1.apply(this, arguments);
-  if (view === 'market') { if (MK.tab === 'mine') loadMarketMine(); loadMarket(); }
+  if (view === 'market') { if (MK.tab === 'mine') loadMarketMine(); loadMarket(); loadMarketReq(); }
   return r;
 };
 document.addEventListener('click', function (ev) {
@@ -19054,6 +19057,143 @@ document.addEventListener('change', function (ev) {
 });
 document.addEventListener('keydown', function (ev) {
   if (VIEW === 'market' && ev.key === 'Enter' && ev.target && ev.target.id === 'mk_q') { ev.preventDefault(); el('mk_go').click(); }
+});
+</script>
+
+<!-- Stage 3: deals between ERPs on the market - request, price, accept, invoice, receive, rate -->
+<style>
+.mk-n{display:inline-block;min-width:18px;padding:0 5px;border-radius:999px;background:#d1495b;color:#fff;font-size:11px;line-height:18px;text-align:center;margin-left:4px}
+.mk-star{color:#b7791f;font-size:12px;font-weight:600;white-space:nowrap}
+.mk-form{display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;padding:10px;border:1px solid var(--line,#ddd);border-radius:10px;margin:6px 0}
+.mk-form > div{flex:1 1 130px;min-width:0}
+.mk-st{display:inline-block;padding:2px 8px;border-radius:999px;font-size:12px;font-weight:600;background:color-mix(in srgb,#5f6b7a 16%,transparent);white-space:nowrap}
+.mk-st.go{background:color-mix(in srgb,#d1495b 18%,transparent);color:#a3283a}
+.mk-st.ok{background:color-mix(in srgb,#2a9d8f 18%,transparent);color:#1f7a6f}
+.mk-acts{display:flex;gap:6px;flex-wrap:wrap}
+</style>
+<script>
+var MKR = { data: null, err: '', ask: null, form: null, busy: false };
+function loadMarketReq(quiet) {
+  srv('erpMarketRequests', [], function (r) {
+    MKR.data = r; MKR.err = '';
+    var c = el('cMarket'); if (c) c.textContent = r.waiting ? String(r.waiting) : '';
+    if (VIEW === 'market' && !quiet) repaint();
+  }, function (e) { MKR.err = (e && e.message) || String(e); if (VIEW === 'market' && !quiet) repaint(); });
+}
+// new requests and prices show on the Market button without opening it (every 10 minutes while the ERP is open)
+setInterval(function () { if (ME && !document.hidden && VIEW !== 'market') loadMarketReq(true); }, 600000);
+setTimeout(function () { if (ME) loadMarketReq(true); }, 8000);
+
+function mkAskHtml(x) {
+  var a = MKR.ask;
+  return '<div class="mk-form"><div style="flex:2 1 220px"><b>Request: ' + esc(x.name) + '</b><div class="sku">Your business name and this phone go to the supplier.</div></div>' +
+    '<div><label class="f" for="mk_aq">How many</label><input class="i" id="mk_aq" type="number" min="1" value="' + esc(a.qty || 1) + '"></div>' +
+    '<div><label class="f" for="mk_ap">Your phone</label><input class="i" id="mk_ap" value="' + esc(a.phone || (MKR.data && MKR.data.phone) || '') + '"></div>' +
+    '<div style="flex:2 1 200px"><label class="f" for="mk_an">Note (optional)</label><input class="i" id="mk_an" maxlength="500" value="' + esc(a.note || '') + '"></div>' +
+    '<div class="mk-acts" style="flex:0 0 auto"><button class="btn primary" type="button" id="mk_asend"' + (MKR.busy ? ' disabled' : '') + '>Send request</button><button class="btn" type="button" id="mk_aoff">Cancel</button></div></div>';
+}
+function mkMoney(v) { return v == null ? '' : '\u09f3' + fmt(v); }
+function mkStatus(x) {
+  var cls = x.mine ? ' go' : (x.status === 'received' || x.status === 'invoiced') ? ' ok' : '';
+  return '<span class="mk-st' + cls + '">' + esc(x.say) + '</span>';
+}
+function mkFormHtml(x) {
+  var f = MKR.form; if (!f || f.id !== x.id) return '';
+  if (f.kind === 'quote') return '<div class="mk-form"><div><label class="f" for="mk_qp">Price for one</label><input class="i" id="mk_qp" type="number" min="0" value="' + esc(f.price || '') + '"></div>' +
+    '<div><label class="f" for="mk_qd">Delivery (total)</label><input class="i" id="mk_qd" type="number" min="0" value="' + esc(f.delivery || 0) + '"></div>' +
+    '<div><label class="f" for="mk_qv">Valid for (days)</label><input class="i" id="mk_qv" type="number" min="1" max="60" value="' + esc(f.days || 7) + '"></div>' +
+    '<div><label class="f" for="mk_qph">Your phone</label><input class="i" id="mk_qph" value="' + esc(f.phone || (MKR.data && MKR.data.phone) || '') + '"></div>' +
+    '<div style="flex:2 1 200px"><label class="f" for="mk_qn">Note to the buyer</label><input class="i" id="mk_qn" maxlength="1000" value="' + esc(f.note || '') + '"></div>' +
+    '<div class="mk-acts" style="flex:0 0 auto"><button class="btn primary" type="button" data-mkdo="quote-send" data-id="' + esc(x.id) + '"' + (MKR.busy ? ' disabled' : '') + '>Send price</button><button class="btn" type="button" data-mkdo="off">Cancel</button></div>' +
+    '<div class="sku" style="flex-basis:100%">Your business name and phone go to the buyer with the price. A quotation is also made in Quotations.</div></div>';
+  if (f.kind === 'close') return '<div class="mk-form"><div style="flex:3 1 240px"><label class="f" for="mk_cr">Reason (the other side sees it)</label><input class="i" id="mk_cr" maxlength="300"></div>' +
+    '<div class="mk-acts" style="flex:0 0 auto"><button class="btn danger" type="button" data-mkdo="close-send" data-id="' + esc(x.id) + '" data-side="' + f.side + '">' + (f.side === 'seller' ? 'Decline' : 'Cancel request') + '</button><button class="btn" type="button" data-mkdo="off">Back</button></div></div>';
+  if (f.kind === 'receive') {
+    var opts = (CAT || []).map(function (p) { return '<option value="' + esc(p.sku) + '">' + esc(p.name) + ' (' + esc(p.sku) + ')</option>'; }).join('');
+    return '<div class="mk-form"><div style="flex:3 1 260px"><label class="f" for="mk_rs">Which of your products is it?</label><select class="i" id="mk_rs"><option value="__new">New product: ' + esc(x.product) + '</option>' + opts + '</select></div>' +
+      '<div class="mk-acts" style="flex:0 0 auto"><button class="btn primary" type="button" data-mkdo="receive-send" data-id="' + esc(x.id) + '"' + (MKR.busy ? ' disabled' : '') + '>Put ' + fmt(x.qty) + ' in stock</button><button class="btn" type="button" data-mkdo="off">Cancel</button></div>' +
+      '<div class="sku" style="flex-basis:100%">Booked as a local purchase at ' + mkMoney(x.total) + ' (delivery included), owed to ' + esc(x.who) + ' under Suppliers until you pay.</div></div>';
+  }
+  if (f.kind === 'rate') return '<div class="mk-form"><div><label class="f" for="mk_rt">Stars</label><select class="i" id="mk_rt">' + [5, 4, 3, 2, 1].map(function (n) { return '<option value="' + n + '">' + Array(n + 1).join('\u2605') + '</option>'; }).join('') + '</select></div>' +
+    '<div style="flex:3 1 220px"><label class="f" for="mk_rn">Comment (optional)</label><input class="i" id="mk_rn" maxlength="300"></div>' +
+    '<div class="mk-acts" style="flex:0 0 auto"><button class="btn primary" type="button" data-mkdo="rate-send" data-id="' + esc(x.id) + '">Rate</button><button class="btn" type="button" data-mkdo="off">Cancel</button></div></div>';
+  return '';
+}
+function mkActs(x) {
+  var mgr = ME && /^(manager|shareholder|owner)$/.test(ME.role), b = function (k, label, cls) { return '<button class="btn small' + (cls ? ' ' + cls : '') + '" type="button" data-mkdo="' + k + '" data-id="' + esc(x.id) + '">' + label + '</button>'; };
+  var a = [];
+  if (x.side === 'seller') {
+    if (mgr && x.status === 'asked') a.push(b('quote', 'Give price', 'primary'));
+    if (mgr && x.status === 'quoted') a.push(b('quote', 'Change price'));
+    if (mgr && x.status === 'accepted') a.push(b('invoice', 'Make invoice', 'primary'));
+    if (mgr && ['asked', 'quoted', 'accepted'].indexOf(x.status) >= 0) a.push(b('close-seller', 'Decline'));
+    if (x.invoiceNo) a.push('<button class="btn small" type="button" data-mkinv="' + esc(x.invoiceNo) + '">Invoice ' + esc(x.invoiceNo) + '</button>');
+  } else {
+    if (mgr && x.status === 'quoted') a.push(b('accept', 'Accept price', 'primary'));
+    if (mgr && x.status === 'invoiced') a.push(b('receive', 'Receive into stock', 'primary'));
+    if (mgr && (x.status === 'invoiced' || x.status === 'received') && x.rating == null) a.push(b('rate', 'Rate supplier'));
+    if (['asked', 'quoted', 'accepted'].indexOf(x.status) >= 0) a.push(b('close-buyer', 'Cancel'));
+  }
+  if (!mgr && x.mine && x.status !== 'asked') a.push('<span class="sku">a manager or the owner answers this</span>');
+  return '<div class="mk-acts">' + a.join('') + '</div>';
+}
+function mkRowHtml(x) {
+  var price = x.price == null ? '' : mkMoney(x.price) + ' \u00d7 ' + fmt(x.qty) + (x.delivery ? ' + ' + mkMoney(x.delivery) + ' delivery' : '') + ' = <b>' + mkMoney(x.total) + '</b>' + (x.validUntil && x.status === 'quoted' ? '<div class="sku">valid until ' + esc(x.validUntil) + '</div>' : '');
+  var notes = [x.note ? 'Note: ' + x.note : '', x.quoteNote ? 'Seller: ' + x.quoteNote : '', x.reason ? 'Reason: ' + x.reason : '', x.quoteRef ? 'Quotation ' + x.quoteRef : '',
+               x.stockRef ? 'Stock entry: ' + x.stockRef : '', x.rating ? 'Rated ' + Array(x.rating + 1).join('\u2605') + (x.ratingNote ? ' - ' + x.ratingNote : '') : ''].filter(Boolean);
+  return '<tr><td><b>' + esc(x.product) + '</b><div class="sku">' + fmt(x.qty) + (x.unit ? ' ' + esc(x.unit) : '') + ' \u00b7 ' + esc(String(x.at).slice(0, 10)) + '</div>' + (notes.length ? '<div class="sku">' + esc(notes.join(' \u00b7 ')) + '</div>' : '') + '</td>' +
+    '<td>' + esc(x.who) + (x.city ? ' \u00b7 ' + esc(x.city) : '') + (x.phone ? '<div class="sku">' + esc(x.phone) + '</div>' : '') + '</td>' +
+    '<td>' + mkStatus(x) + '</td><td class="num">' + price + '</td><td>' + mkActs(x) + '</td></tr>' +
+    (MKR.form && MKR.form.id === x.id ? '<tr><td colspan="5">' + mkFormHtml(x) + '</td></tr>' : '');
+}
+function mkReqHtml() {
+  if (MKR.err) return '<div class="note err"><div class="ico">!</div><div>' + esc(MKR.err) + '</div></div>';
+  var d = MKR.data; if (!d) return '<div class="empty">Loading\u2026</div>';
+  var tbl = function (rows, empty, who) {
+    if (!rows.length) return '<div class="empty">' + empty + '</div>';
+    return '<div class="scroll"><table><thead><tr><th>Product</th><th>' + who + '</th><th>Status</th><th class="num">Price</th><th></th></tr></thead><tbody>' + rows.map(mkRowHtml).join('') + '</tbody></table></div>';
+  };
+  return '<h3 style="margin:4px 0 6px">Asked of me <span class="sku">I sell</span></h3>' + tbl(d.toMe, 'No requests for your stock yet.' + (MK.res && !MK.res.sharing ? ' Share your stock to get some.' : ''), 'Buyer') +
+    '<h3 style="margin:16px 0 6px">I asked <span class="sku">I buy</span></h3>' + tbl(d.mine, 'You have not asked anyone yet. Use Request on Find stock.', 'Supplier') +
+    '<div class="sub" data-c5x="1" style="display:block;margin-top:10px">How a deal goes: request \u2192 the supplier gives a price (also a quotation in their ERP) \u2192 you accept \u2192 they make the invoice (a normal sale, unpaid) \u2192 you put it in stock (owed to them under Suppliers) \u2192 you rate them. Payment is between you two, as with any supplier.</div>';
+}
+function mkDone(r, msg) { MKR.busy = false; MKR.form = null; MKR.ask = null; if (msg) toast(msg); loadMarketReq(); }
+function mkFail(e) { MKR.busy = false; toast(esc((e && e.message) || e), true, 9000); repaint(); }
+document.addEventListener('click', function (ev) {
+  if (VIEW !== 'market' || !ev.target.closest) return;
+  var t = ev.target.closest('[data-mkask],#mk_asend,#mk_aoff,[data-mkdo],[data-mkinv]'); if (!t) return;
+  if (t.hasAttribute('data-mkinv')) { go('sales', t.getAttribute('data-mkinv')); return; }
+  if (t.hasAttribute('data-mkask')) { MKR.ask = { ref: t.getAttribute('data-mkask'), qty: 1 }; if (!MKR.data) loadMarketReq(true); repaint(); return; }
+  if (t.id === 'mk_aoff') { MKR.ask = null; repaint(); return; }
+  if (t.id === 'mk_asend') {
+    var a = { ref: MKR.ask.ref, qty: Number(el('mk_aq').value), phone: el('mk_ap').value.trim(), note: el('mk_an').value.trim() };
+    MKR.ask.qty = a.qty; MKR.ask.phone = a.phone; MKR.ask.note = a.note; MKR.busy = true; repaint();
+    srv('erpMarketAsk', [a], function () { mkDone(null, 'Request sent. You will see the price under Requests.'); }, mkFail);
+    return;
+  }
+  var k = t.getAttribute('data-mkdo'), id = t.getAttribute('data-id');
+  if (k === 'off') { MKR.form = null; repaint(); return; }
+  if (k === 'quote' || k === 'receive' || k === 'rate') { MKR.form = { id: id, kind: k }; repaint(); return; }
+  if (k === 'close-seller' || k === 'close-buyer') { MKR.form = { id: id, kind: 'close', side: k === 'close-seller' ? 'seller' : 'buyer' }; repaint(); return; }
+  if (k === 'quote-send') {
+    var f = MKR.form; f.price = el('mk_qp').value; f.delivery = el('mk_qd').value; f.days = el('mk_qv').value; f.phone = el('mk_qph').value.trim(); f.note = el('mk_qn').value.trim();
+    MKR.busy = true; repaint();
+    srv('erpMarketQuote', [{ id: id, price: Number(f.price), delivery: Number(f.delivery) || 0, days: Number(f.days) || 7, phone: f.phone, note: f.note }], function () { mkDone(null, 'Price sent.'); }, mkFail);
+  } else if (k === 'close-send') {
+    MKR.busy = true;
+    srv('erpMarketClose', [{ id: id, side: t.getAttribute('data-side'), reason: el('mk_cr').value.trim() }], function () { mkDone(null, 'Closed.'); }, mkFail);
+  } else if (k === 'accept') {
+    MKR.busy = true; repaint();
+    srv('erpMarketAccept', [{ id: id }], function () { mkDone(null, 'Accepted. The supplier makes the invoice next.'); }, mkFail);
+  } else if (k === 'invoice') {
+    MKR.busy = true; repaint();
+    srv('erpMarketInvoice', [{ id: id }], function (r) { mkDone(null, 'Invoice ' + r.invoiceNo + ' made (unpaid). Record the payment in Sales when it comes.'); }, mkFail);
+  } else if (k === 'receive-send') {
+    var sku = el('mk_rs').value; MKR.busy = true; repaint();
+    srv('erpMarketReceive', [sku === '__new' ? { id: id, newProduct: true } : { id: id, sku: sku }], function () { mkDone(null, 'In stock now. The amount is owed to the supplier under Suppliers.'); }, mkFail);
+  } else if (k === 'rate-send') {
+    srv('erpMarketRate', [{ id: id, stars: Number(el('mk_rt').value), note: el('mk_rn').value.trim() }], function () { mkDone(null, 'Thank you - rated.'); }, mkFail);
+  }
 });
 </script>
 </body>

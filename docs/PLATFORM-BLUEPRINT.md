@@ -145,7 +145,7 @@ the market network and copyright law protect against that.
 | 1d | Compliance view with reasons + logs in both places; Security page provider key verified | logged view visible in the company's ERP |
 | 1e | DONE 2026-10-05: 11 dead DB functions dropped (063); page minified; address lock (403 elsewhere). Remaining 45 helper/RLS functions stay - separate refactor | a company's database shows plain tables only |
 | 2 | DONE 2026-10-05: Open market: share switch (business + per product), listings timer, Market tab | provider stock visible to all, shared stock to sharers |
-| 3 | Request → quotation → invoice between ERPs, ratings | a deal between two test companies |
+| 3 | DONE 2026-10-05: Request → quotation → invoice between ERPs, ratings | a deal between two test companies |
 | 4 | Shared product catalogue, low-stock market hints, price guide, wanted board | - |
 | 5 | Hosted Quick-start plan (no Supabase step) | - |
 
