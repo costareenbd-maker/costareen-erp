@@ -36,6 +36,7 @@ import { HANDLERS as serials } from './serials.js';
 import { HANDLERS as repairs } from './repairs.js';
 import { HANDLERS as excel } from './excel.js';
 import { HANDLERS as users } from './users.js';
+import { HANDLERS as compliance } from './compliance.js';
 import { HANDLERS as platform } from './platform.js';
 import { HANDLERS as risk } from './risk.js';
 import { HANDLERS as connections } from './connections.js';
@@ -84,7 +85,7 @@ const core = {
 
 export const HANDLERS = {};
 for (const [group, table] of Object.entries({ core, sales, courier, customers, stock, dashboard,
-                                              expenses, weborders, quotes, settings, campaigns, capital, pages, goods, partners, security, alerts, access, listview, cash, suppliers, currency, notes, serials, repairs, excel, users, platform, risk, connections, google, sheet, restore, shop, cod, installer, bizdelete, owners, arena, wooauth })) {
+                                              expenses, weborders, quotes, settings, campaigns, capital, pages, goods, partners, security, alerts, access, listview, cash, suppliers, currency, notes, serials, repairs, excel, users, compliance, platform, risk, connections, google, sheet, restore, shop, cod, installer, bizdelete, owners, arena, wooauth })) {
   for (const [name, fn] of Object.entries(table)) {
     if (HANDLERS[name]) throw new Error('Handler ' + name + ' is defined twice (' + group + ').');
     HANDLERS[name] = fn;

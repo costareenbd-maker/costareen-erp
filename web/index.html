@@ -8393,7 +8393,7 @@ function srv(name, args, ok, bad) {
 
 var SRV_ACTIVE = 0, SRV_WRITING = false, SRV_TIMED = {};
 // the same list the server uses to know a call changes nothing (ERP_READS)
-var SRV_READS = /^(erpBrand|erpAccessKeys|erpAccessWarning|erpAdmin|erpAiKeys|erpAlertRules|erpAlerts|erpArena|erpBackupStatus|erpBg|erpBnWords|erpBookedParcels|erpBrandLogo|erpBundle|erpBusinessLinks|erpBusinesses|erpBusinessesDeleted|erpCampaignAudience|erpCampaignGet|erpCampaignList|erpCapital|erpCashBook|erpCatalog|erpConnStatus|erpConnections|erpCostBook|erpCourier|erpCourierKeyStatus|erpCurrencies|erpCustomerAccount|erpCustomerCredit|erpCustomerList|erpCustomerPage|erpCustomerStatement|erpCustomers|erpDashboardData|erpDaySales|erpDeliveryOptions|erpDevices|erpDiscontinued|erpDues|erpEvoQr|erpEvoStatus|erpExpenseExport|erpExpenseReceiptUrl|erpExpenses|erpFamilies|erpFighters|erpFormOptions|erpGame|erpGetTheme|erpGoogle|erpHello|erpInstalls|erpInvoice|erpInvoicePdf|erpJob|erpJobs|erpListView|erpLookupCustomer|erpLookupUsage|erpMe|erpMoney|erpNoteFileUrl|erpNotes|erpOwnerChange|erpOwnerChanges|erpParcelLabels|erpParcelPreview|erpPartnerStock|erpPartnership|erpPayReasons|erpPeople|erpPlatform|erpPlatformErrors|erpPnl|erpPnlMonth|erpPoList|erpPoolCatalog|erpProduct|erpProductListShare|erpProductPage|erpProductPhotoUrl|erpProductThumbs|erpProfile|erpQuoteAsset|erpQuoteBoot|erpQuoteGet|erpQuoteList|erpRecentInvoices|erpRecovery|erpReorderPlan|erpRestorePreview|erpReturnPreview|erpRisks|erpSales|erpSearch|erpSecurity|erpSelfTest|erpSerialLookup|erpSerialsFor|erpSessions|erpSetTheme|erpSettingsFull|erpSettingsLists|erpSfPayoutLines|erpSfPayouts|erpShareFile|erpSharedStock|erpSheet|erpStatementPdf|erpStockHistory|erpSupplierPage|erpSuppliers|erpToday|erpUsers|erpWaProductPdf|erpWebMatches|erpWebOrderInvoices|erpWebOrders|erpWebsiteTest)$/;
+var SRV_READS = /^(erpBrand|erpComplianceLog|erpProviderKey|erpNews|erpAccessKeys|erpAccessWarning|erpAdmin|erpAiKeys|erpAlertRules|erpAlerts|erpArena|erpBackupStatus|erpBg|erpBnWords|erpBookedParcels|erpBrandLogo|erpBundle|erpBusinessLinks|erpBusinesses|erpBusinessesDeleted|erpCampaignAudience|erpCampaignGet|erpCampaignList|erpCapital|erpCashBook|erpCatalog|erpConnStatus|erpConnections|erpCostBook|erpCourier|erpCourierKeyStatus|erpCurrencies|erpCustomerAccount|erpCustomerCredit|erpCustomerList|erpCustomerPage|erpCustomerStatement|erpCustomers|erpDashboardData|erpDaySales|erpDeliveryOptions|erpDevices|erpDiscontinued|erpDues|erpEvoQr|erpEvoStatus|erpExpenseExport|erpExpenseReceiptUrl|erpExpenses|erpFamilies|erpFighters|erpFormOptions|erpGame|erpGetTheme|erpGoogle|erpHello|erpInstalls|erpInvoice|erpInvoicePdf|erpJob|erpJobs|erpListView|erpLookupCustomer|erpLookupUsage|erpMe|erpMoney|erpNoteFileUrl|erpNotes|erpOwnerChange|erpOwnerChanges|erpParcelLabels|erpParcelPreview|erpPartnerStock|erpPartnership|erpPayReasons|erpPeople|erpPlatform|erpPlatformErrors|erpPnl|erpPnlMonth|erpPoList|erpPoolCatalog|erpProduct|erpProductListShare|erpProductPage|erpProductPhotoUrl|erpProductThumbs|erpProfile|erpQuoteAsset|erpQuoteBoot|erpQuoteGet|erpQuoteList|erpRecentInvoices|erpRecovery|erpReorderPlan|erpRestorePreview|erpReturnPreview|erpRisks|erpSales|erpSearch|erpSecurity|erpSelfTest|erpSerialLookup|erpSerialsFor|erpSessions|erpSetTheme|erpSettingsFull|erpSettingsLists|erpSfPayoutLines|erpSfPayouts|erpShareFile|erpSharedStock|erpSheet|erpStatementPdf|erpStockHistory|erpSupplierPage|erpSuppliers|erpToday|erpUsers|erpWaProductPdf|erpWebMatches|erpWebOrderInvoices|erpWebOrders|erpWebsiteTest)$/;
 function srvPump() {
   if (!SRV_Q.length) return;
   var isRead = SRV_READS.test(SRV_Q[0].name);
@@ -18871,6 +18871,71 @@ var erpPostL1 = erpPost;
 erpPost = function (name, args, again) {
   return erpPostL1(name, args, again).then(function (j) { if (j && j.locked) erpShowLock(j.error); return j; });
 };
+</script>
+
+<!-- Stage 1d: the provider's compliance view (Platform) and the company's view of the provider's connection (Security) -->
+<script>
+var COMP = { busy: false, res: null, log: null, id: '', what: 'stock' };
+function compCardHtml() {
+  if (!ME || !ME.platform) return '';
+  var list = (INSTALLS && INSTALLS.installs || []).filter(function (x) { return x.bridge; });
+  if (!COMP.log) { COMP.log = { loading: true }; srv('erpComplianceLog', [], function (r) { COMP.log = r; if (VIEW === 'platform') repaint(); }, function (e) { COMP.log = { items: [], error: (e && e.message) || String(e) }; }); }
+  var today = new Date().toISOString().slice(0, 10), past = new Date(Date.now() - 90 * 86400e3).toISOString().slice(0, 10);
+  var h = '<section><div class="card"><h2>Compliance check</h2><div class="sub" data-c5x="1" style="display:block">Read-only view of a company\u2019s stock, invoices, payments or money movements, for checks against illegal use. ' +
+    '<b>Every view is written into that company\u2019s own activity log with your reason</b>, as their terms say. Nothing can be changed from here.</div>';
+  if (!list.length) return h + '<div class="empty">No company on your server yet.</div></div></section>';
+  h += '<div class="fields" style="margin-top:8px"><div><label class="f" for="cp_id">Company</label><select class="i" id="cp_id">' + list.map(function (x) { return '<option value="' + esc(x.id) + '"' + (COMP.id === x.id ? ' selected' : '') + '>' + esc(x.company) + '</option>'; }).join('') + '</select></div>' +
+    '<div><label class="f" for="cp_what">What</label><select class="i" id="cp_what">' + [['stock', 'Stock'], ['invoices', 'Invoices'], ['payments', 'Payments'], ['money', 'Money movements']].map(function (o) { return '<option value="' + o[0] + '"' + (COMP.what === o[0] ? ' selected' : '') + '>' + o[1] + '</option>'; }).join('') + '</select></div>' +
+    '<div><label class="f" for="cp_from">From</label><input class="i" id="cp_from" type="date" value="' + past + '"></div><div><label class="f" for="cp_to">To</label><input class="i" id="cp_to" type="date" value="' + today + '"></div>' +
+    '<div style="grid-column:1/-1"><label class="f" for="cp_reason">Reason (the company sees it)</label><input class="i" id="cp_reason" maxlength="300" placeholder="e.g. Police request no. 123 about stolen printers"></div></div>' +
+    '<div class="row" style="justify-content:flex-end;margin-top:8px"><button class="btn primary" type="button" id="cp_go"' + (COMP.busy ? ' disabled' : '') + '>' + (COMP.busy ? 'Reading\u2026' : 'View (read only)') + '</button></div>';
+  var r = COMP.res;
+  if (r) {
+    h += '<h3 style="margin:14px 0 6px">' + esc(r.company) + ' \u2014 ' + esc(r.label) + ' <span class="sku">' + fmt(r.rows.length) + ' rows' + (r.truncated ? ' (first 1,000)' : '') + ' \u00b7 logged in their activity log</span></h3>' +
+      '<div class="scroll tall"><table><thead><tr>' + r.columns.map(function (c) { return '<th>' + esc(c) + '</th>'; }).join('') + '</tr></thead><tbody>' +
+      r.rows.map(function (row) { return '<tr>' + row.map(function (v) { return '<td' + (typeof v === 'number' ? ' class="num"' : '') + '>' + (typeof v === 'number' ? fmt(v) : esc(/^\d{4}-\d{2}-\d{2}T/.test(String(v || '')) ? String(v).slice(0, 16).replace('T', ' ') : String(v == null ? '' : v))) + '</td>'; }).join('') + '</tr>'; }).join('') +
+      '</tbody></table></div>';
+  }
+  var items = (COMP.log && COMP.log.items) || [];
+  if (items.length) h += '<details style="margin-top:12px"><summary class="sku" style="cursor:pointer">Your recent checks (' + items.length + ')</summary><div class="scroll"><table><thead><tr><th>When</th><th>Company</th><th>What</th><th>Reason</th><th class="num">Rows</th></tr></thead><tbody>' +
+    items.map(function (x) { return '<tr><td class="sku">' + esc(String(x.at).slice(0, 16).replace('T', ' ')) + '</td><td>' + esc(x.company || '') + '</td><td>' + esc(x.what) + '</td><td>' + esc(x.reason) + '</td><td class="num">' + fmt(x.rows || 0) + '</td></tr>'; }).join('') + '</tbody></table></div></details>';
+  return h + '</div></section>';
+}
+var viewPlatformC1 = viewPlatform;
+viewPlatform = function () { return viewPlatformC1() + compCardHtml(); };
+document.addEventListener('click', function (ev) {
+  var t = ev.target && ev.target.closest ? ev.target.closest('#cp_go') : null; if (!t || VIEW !== 'platform') return;
+  var reason = el('cp_reason').value.trim();
+  if (reason.length < 10) { toast('Write the reason (at least 10 characters). The company sees it.', true); return; }
+  COMP.id = el('cp_id').value; COMP.what = el('cp_what').value; COMP.busy = true; repaint();
+  srv('erpComplianceView', [{ id: COMP.id, what: COMP.what, reason: reason, from: el('cp_from') && el('cp_from').value, to: el('cp_to') && el('cp_to').value }], function (r) {
+    COMP.busy = false; COMP.res = r; COMP.log = null; repaint();
+  }, function (e) { COMP.busy = false; toast(esc((e && e.message) || e), true, 9000); repaint(); });
+});
+
+// ---- inside a company's ERP: Settings > Security shows the provider's connection, the database logins, and every provider check
+var PKEY = null;
+function providerKeyHtml() {
+  if (!ERP_BACKEND || !ME || ME.role !== 'owner') return '';
+  if (!PKEY) { PKEY = { loading: true }; srv('erpProviderKey', [], function (r) { PKEY = r; if (VIEW === 'settings') repaint(); }, function (e) { PKEY = { error: (e && e.message) || String(e) }; if (VIEW === 'settings') repaint(); }); return ''; }
+  if (PKEY.loading || !PKEY.bridged) return '';
+  var B = window.ERP_BRAND || {};
+  var h = '<section><div class="card"><h2>Provider connection</h2>' +
+    '<div class="note ok"><div class="ico">\u2713</div><div><b>Provider key \u2014 verified</b>' + (PKEY.fingerprint ? ' <span class="sku">fingerprint ' + esc(PKEY.fingerprint) + '</span>' : '') +
+    '<br>This answer comes from ' + esc(B.name || 'the provider') + '\u2019s server through its own secure connection to your database.</div></div>' +
+    '<div class="sub" data-c5x="1" style="display:block;margin-top:8px">What the connection is for:</div><ul class="sub" data-c5x="1" style="display:block;margin:4px 0 0 18px">' +
+    PKEY.uses.map(function (u) { return '<li>' + esc(u) + '</li>'; }).join('') + '</ul>';
+  h += '<h3 style="margin:14px 0 6px">Database logins</h3>' + (PKEY.unknown
+    ? '<div class="note err"><div class="ico">!</div><div><b>' + PKEY.unknown + ' unknown login' + (PKEY.unknown > 1 ? 's' : '') + '.</b> If you did not add ' + (PKEY.unknown > 1 ? 'them' : 'it') + ', remove ' + (PKEY.unknown > 1 ? 'them' : 'it') + ' in your Supabase account (Database \u2192 Roles).</div></div>'
+    : '<div class="sub" data-c5x="1" style="display:block">Only the logins Supabase itself makes. Nothing unknown.</div>') +
+    '<div class="chips" style="margin-top:6px">' + PKEY.logins.map(function (l) { return '<span class="pill' + (l.known ? '' : ' out') + '">' + esc(l.name) + (l.known ? '' : ' \u2014 unknown') + '</span>'; }).join(' ') + '</div>';
+  h += '<h3 style="margin:14px 0 6px">Provider checks</h3>' + (PKEY.checks.length
+    ? '<div class="scroll"><table><thead><tr><th>When</th><th>What and why</th></tr></thead><tbody>' + PKEY.checks.map(function (c) { return '<tr><td class="sku">' + esc(String(c.at).slice(0, 16).replace('T', ' ')) + '</td><td>' + esc(c.detail) + '</td></tr>'; }).join('') + '</tbody></table></div>'
+    : '<div class="sub" data-c5x="1" style="display:block">None. Every check the provider makes would be listed here with its reason.</div>');
+  return h + '</div></section>';
+}
+var securityHtmlK1 = securityHtml;
+securityHtml = function () { return providerKeyHtml() + securityHtmlK1.apply(this, arguments); };
 </script>
 </body>
 </html>

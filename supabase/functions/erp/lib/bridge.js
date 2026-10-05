@@ -81,14 +81,15 @@ export async function saveTenant(sql, key, id, conn) {
 /** The company's working parts, built once (connections are expensive) and kept for ttlMs. */
 export function tenantSource(sql, key, build, ttlMs = 5 * 60e3) {
   const cache = new Map();
-  async function get(id) {
+  async function get(id, opts) {
     id = str(id);
+    const any = !!(opts && opts.any);                       // the compliance view: a switched-off company too
     const hit = cache.get(id);
-    if (hit && Date.now() - hit.at < ttlMs) { if (hit.locked) throw new Locked(hit.locked); return hit.deps; }
+    if (hit && Date.now() - hit.at < ttlMs && (!hit.locked || !any)) { if (hit.locked) throw new Locked(hit.locked); return hit.deps; }
     const row = (await sql`select t.id, t.status, t.url, t.anon_key, t.secret_enc, t.reason, i.domain, i.company
                            from erp_tenants t left join erp_installs i on i.id = t.id where t.id::text = ${id}`)[0];
     if (!row) throw new Locked(LOCK_SAY.unknown);
-    if (row.status !== 'active') {
+    if (row.status !== 'active' && !(any && row.status === 'locked')) {
       const say = row.status === 'locked' ? LOCK_SAY.locked + (row.reason ? ' ' + row.reason : '') : LOCK_SAY.disconnected;
       cache.set(id, { at: Date.now(), locked: say });
       throw new Locked(say);
@@ -97,7 +98,7 @@ export function tenantSource(sql, key, build, ttlMs = 5 * 60e3) {
     if (hit && hit.deps && hit.deps.close) { try { hit.deps.close(); } catch (_) { /* old pool */ } }
     const deps = await build({ id: row.id, url: row.url, anon: row.anon_key, service: secret.service, dbUrl: secret.dbUrl,
                                domain: str(row.domain), company: str(row.company) });
-    cache.set(id, { at: Date.now(), deps });
+    if (row.status === 'active') cache.set(id, { at: Date.now(), deps });   // a locked company's parts are not kept
     return deps;
   }
   get.forget = (id) => { const h = cache.get(str(id)); if (h && h.deps && h.deps.close) { try { h.deps.close(); } catch (_) { /* gone */ } } cache.delete(str(id)); };

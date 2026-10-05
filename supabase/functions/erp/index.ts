@@ -273,7 +273,9 @@ async function buildTenant(t: any) {
   const tAux = connect(postgres, t.dbUrl, { max: 1 });
   const appUrl = t.domain ? 'https://' + t.domain + '/' : (PUBLIC_URL || 'https://erp.costareen.com/') + '#/use/' + t.id;
   const parts = projectParts({ url: t.url, anon: t.anon, service: t.service, appUrl });
+  const fpHex = [...new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(t.service + '|' + t.dbUrl)))].map((b) => b.toString(16).padStart(2, '0')).join('');
   return {
+    providerFingerprint: fpHex.slice(0, 16).toUpperCase().match(/.{4}/g)!.join('-'),
     install: { id: t.id, key: '', controlUrl: '', version: Deno.env.get('ERP_RELEASE') ?? '', bridged: true },
     installEnv: INSTALL_ENV,
     google: { ...GOOGLE, redirect: FN_URL + '?google=back&t=' + t.id, appUrl },
