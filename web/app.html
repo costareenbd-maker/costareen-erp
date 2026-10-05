@@ -20647,12 +20647,18 @@ document.addEventListener('click', function (ev) {
 document.addEventListener('change', function (ev) { if (ev.target && ev.target.id === 'wr_show') srv('erpPassportShowSeller', [{ on: ev.target.checked }], function () { toast(ev.target.checked ? 'Your shop\u2019s name shows on the register.' : 'The register shows only \u201cSupplier \u00b7 city\u201d for you.'); }, function (e) { toast(esc((e && e.message) || e), true); }); });
 
 // ---- the warranty card (printable) and the customer's page link
+function printHtml(html) {
+  var w = null; try { w = window.open('', '_blank'); } catch (e) { w = null; }
+  if (w) { w.document.write(html); w.document.close(); return; }
+  var f = document.createElement('iframe'); f.setAttribute('aria-hidden', 'true'); f.style.cssText = 'position:fixed;right:0;bottom:0;width:0;height:0;border:0;opacity:0';
+  document.body.appendChild(f); f.contentDocument.open(); f.contentDocument.write(html); f.contentDocument.close();
+  setTimeout(function () { try { f.contentWindow.focus(); f.contentWindow.print(); } catch (e) { toast('Printing is blocked here. Open the ERP in Chrome or Safari to print.', true, 8000); } setTimeout(function () { f.remove(); }, 90000); }, 400);
+}
 function wcardOpen(serial, sku) {
   toast('Preparing the card\u2026', false, 6000);
   srv('erpWarrantyCard', [{ serial: serial, sku: sku || '' }], function (c) {
-    var w = window.open('', '_blank'); if (!w) { toast('Allow pop-ups to print the card.', true); return; }
     var brand = c.brandName ? ' \u00b7 ' + esc(c.brandName) : '';
-    w.document.write('<!doctype html><html><head><meta charset="utf-8"><title>Warranty card ' + esc(c.serial) + '</title><style>@page{size:A6 landscape;margin:8mm}body{font-family:Inter,system-ui,sans-serif;color:#111;margin:0;padding:10mm}' +
+    printHtml('<!doctype html><html><head><meta charset="utf-8"><title>Warranty card ' + esc(c.serial) + '</title><style>@page{size:A6 landscape;margin:8mm}body{font-family:Inter,system-ui,sans-serif;color:#111;margin:0;padding:10mm}' +
       '.card{display:flex;gap:8mm;align-items:flex-start;border:1px solid #bbb;border-radius:4mm;padding:7mm}.card h1{font-size:15pt;margin:0 0 2mm}.card .k{font-size:8.5pt;color:#666;margin-top:2mm}.card .v{font-size:11.5pt;font-weight:600}' +
       '.big{font-size:13pt;color:#166534;font-weight:800}.qr{text-align:center;font-size:8pt;color:#444;flex:0 0 38mm}.qr img{width:36mm;height:36mm;display:block;margin:0 auto 1mm}.foot{font-size:8pt;color:#666;margin-top:4mm}@media print{.np{display:none}}</style></head><body>' +
       '<div class="card"><div style="flex:1"><h1>' + esc(c.seller.name) + '</h1><div class="k">Product</div><div class="v">' + esc(c.product) + '</div><div class="k">Serial number</div><div class="v">' + esc(c.serial) + '</div>' +
@@ -20660,7 +20666,6 @@ function wcardOpen(serial, sku) {
       '<div class="foot">' + esc([c.seller.phone, c.seller.address].filter(Boolean).join(' \u00b7 ')) + '</div></div>' +
       '<div class="qr"><img src="' + c.qr + '">Scan to check this warranty<br>' + esc(c.checkUrl.replace(/^https?:\/\//, '')) + brand + '</div></div>' +
       '<p class="np" style="margin-top:8mm"><button onclick="window.print()">Print</button></p></body></html>');
-    w.document.close();
   }, function (e) { toast(esc((e && e.message) || e), true, 8000); });
 }
 function myLinkBox(phone, name, target) {
