@@ -1799,7 +1799,7 @@ function viewInvoice() {
   // ---- lines -----------------------------------------------------------
   h += '</div><div class="inv2-r">';
   h += '<section><div class="card"><h2>Invoice lines</h2>'+
-       '<div class="sub">Unit price comes from the product list. <strong>Disc. per pc</strong> is taken off every piece of that line; a discount on the whole invoice goes in the box below.</div>';
+       '<div class="sub">Unit price comes from the product list. Type the price you are selling at in the <strong>Price</strong> box and the <strong>Disc. per pc</strong> is worked out for you (the price goes back to normal). A discount on the whole invoice goes in the box below.</div>';
   if (!CART.length) {
     h += '<div class="empty">No products yet. Add one above, or from the Products screen.</div>';
   } else {
@@ -1810,7 +1810,7 @@ function viewInvoice() {
       h += '<tr><td class="nm">'+esc(l.name)+'<br><span class="sku">'+esc(l.sku)+
            ' · '+fmt(l.stock)+' in stock</span>'+
            (over ? '<br><span class="pill out">✕ Over stock</span>' : '')+'</td>'+
-           '<td class="num">'+fmt(l.price)+'</td>'+
+           '<td class="num"><input class="i qty" type="number" min="0" step="1" data-sellat="'+i+'" value="'+l.price+'" title="Type the price you are selling at - the discount per piece is worked out for you"></td>'+
            '<td class="num"><input class="i qty" type="number" min="1" step="1" data-qty="'+i+'" value="'+l.qty+'"></td>'+
            '<td class="num"><input class="i qty" type="number" min="0" step="1" data-disc="'+i+'" value="'+num(l.discEach)+'">'+
              (num(l.discEach) > 0 ? '<br><span class="sku">'+fmt(l.price - num(l.discEach))+' each \u00b7 \u2212'+fmt(l.qty*num(l.discEach))+'</span>' : '')+'</td>'+
@@ -2025,6 +2025,19 @@ function wireInvoice() {
       repaint();
     });
   })(q[i]);
+
+  // the price box: type the price you sell at; on leaving the box the discount per piece is filled in and the price goes back
+  var sp = el('view').querySelectorAll('[data-sellat]');
+  for (var k = 0; k < sp.length; k++) (function (n) {
+    n.addEventListener('focus', function () { try { n.select(); } catch (e) {} });
+    n.addEventListener('change', function () {
+      var l = CART[Number(n.getAttribute('data-sellat'))]; if (!l) return;
+      var v = String(n.value).trim() === '' ? l.price : num(n.value);
+      if (v > l.price) toast('The price cannot go above ' + fmt(l.price) + ' here. To sell higher, change the product’s price.', true);
+      else if (v < l.price) l.discEach = Math.round((l.price - Math.max(0, v)) * 100) / 100;
+      repaint();
+    });
+  })(sp[k]);
 
   var dd = el('view').querySelectorAll('[data-disc]');
   for (var j = 0; j < dd.length; j++) (function (n) {
