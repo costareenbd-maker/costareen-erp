@@ -1813,7 +1813,7 @@ function viewInvoice() {
            '<td class="num"><input class="i qty" type="number" min="0" step="1" data-sellat="'+i+'" value="'+l.price+'" title="Type the price you are selling at - the discount per piece is worked out for you"></td>'+
            '<td class="num"><input class="i qty" type="number" min="1" step="1" data-qty="'+i+'" value="'+l.qty+'"></td>'+
            '<td class="num"><input class="i qty" type="number" min="0" step="1" data-disc="'+i+'" value="'+num(l.discEach)+'">'+
-             (num(l.discEach) > 0 ? '<br><span class="sku">'+fmt(l.price - num(l.discEach))+' each \u00b7 \u2212'+fmt(l.qty*num(l.discEach))+'</span>' : '')+'</td>'+
+             '</td>'+
            '<td class="num">'+fmt(Math.max(0, l.qty*(l.price - num(l.discEach))))+'</td>'+
            '<td class="num"><button class="btn small danger" type="button" data-del="'+i+'">Remove</button></td></tr>';
     });
