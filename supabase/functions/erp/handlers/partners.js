@@ -86,7 +86,8 @@ export async function erpPartnership(ctx, payload) {
       select code, expires_at from pool_invites
       where pool_id = ${ctx.biz} and used_at is null and expires_at > now() order by expires_at desc`)
       .map((i) => ({ code: i.code, until: day(i.expires_at) })) : [];
-    const me = (await ctx.tx`select my_partner_in(${ctx.biz}) as p`)[0].p;
+    // joint stock gives the partner (a company on its own database has no login here to look it up by)
+    const me = ctx.jointMe || (await ctx.tx`select my_partner_in(${ctx.biz}) as p`)[0].p;
 
     return { isPool: true, name: str(b.name), month, label: monthLabel(month), isCurrent: month === nowMonth,
              canEdit: owner, me: me || '', partners, report, ledger, closedMonths: closed, invites,
@@ -218,7 +219,7 @@ export async function erpPoolClose(ctx, payload) {
   if (month >= formatDate(ctx.now, 'yyyy-MM')) throw new Error('A month can only be closed after it has ended.');
   const first = month + '-01';
   if ((await ctx.tx`select 1 from pool_settlements where pool_id = ${ctx.biz} and month = ${first}::date`).length) throw new Error('That month is already closed.');
-  const me = (await ctx.tx`select my_partner_in(${ctx.biz}) as p`)[0].p;
+  const me = ctx.jointMe || (await ctx.tx`select my_partner_in(${ctx.biz}) as p`)[0].p;
   if (payload && payload.withdraw) {
     await ctx.tx`delete from pool_month_agreed where pool_id = ${ctx.biz} and month = ${first}::date and partner_business_id = ${me}`;
     return erpPartnership(ctx, { month });

@@ -80,7 +80,7 @@ export const ERP_ALLOW = {
   erpNotes: 'sales', erpNoteAdd: 'sales', erpNoteVoid: 'manager', erpNoteFileUrl: 'sales',
   erpExport: 'manager', erpImport: 'manager',
   erpPlatform: 'sales', erpPlatformCreate: 'sales', erpPlatformSuspend: 'sales', erpPlatformOwnerReset: 'sales', erpPlatformErrors: 'sales', erpPlatformJoint: 'sales',
-  erpJoint: 'manager', erpJointCatalog: 'sales', erpJointStart: 'owner', erpJointProduct: 'owner', erpJointReceive: 'owner', erpJointAdjust: 'owner', erpJointBook: 'owner', erpJointSettings: 'owner', erpJointAgree: 'owner', erpJointCard: 'owner', erpJointStatementPdf: 'owner',
+  erpJoint: 'manager', erpJointCatalog: 'sales', erpJointStart: 'owner', erpJointProduct: 'owner', erpJointReceive: 'owner', erpJointAdjust: 'owner', erpJointBook: 'owner', erpJointSettings: 'owner', erpJointAgree: 'owner', erpJointCard: 'owner', erpJointStatementPdf: 'owner', erpPlatformJointCopy: 'sales',
   erpUsers: 'owner', erpUserInvite: 'owner', erpUserSet: 'owner', erpUserPowers: 'owner', erpUserResend: 'owner', erpSessions: 'sales', erpSessionEnd: 'sales', erpSignOutAll: 'sales',
   erpJobs: 'sales', erpJob: 'sales', erpJobOpen: 'sales', erpJobSave: 'sales', erpJobPay: 'manager',
   erpSerialSetup: 'manager', erpSerialsAdd: 'manager', erpSerialsFor: 'sales', erpSerialLookup: 'sales', erpSerialWarranty: 'shareholder',

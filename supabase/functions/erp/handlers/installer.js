@@ -472,7 +472,7 @@ export async function erpInstalls(ctx) {
   await needAdmin(ctx);
   const rows = await ctx.sql`select i.id, i.company, i.owner_name, i.owner_email, i.status, i.step, i.step_n, i.detail, i.error, i.ref, i.version, i.stats, i.last_seen, i.reason, i.made_at,
                                     i.domain, i.domain_state, i.website, i.mgmt_kind, i.upd_step, i.upd_error, i.updated_to_at, i.terms_version,
-                                    t.status as bridge, t.checked_at, t.check_error
+                                    t.status as bridge, t.checked_at, t.check_error, coalesce(t.joint, false) as joint
                              from erp_installs i left join erp_tenants t on t.id = i.id order by i.made_at desc`;
   const rel = (await ctx.sql`select version, made_at from erp_releases order by made_at desc limit 1`)[0];
   const invites = await ctx.sql`select note, made_at, expires_at, used_at from erp_install_invites order by made_at desc limit 20`;
