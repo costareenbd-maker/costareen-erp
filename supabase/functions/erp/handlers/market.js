@@ -36,7 +36,7 @@ const STALE_DAYS = 3;          // a seller not refreshed for this long drops out
 const LIMIT = 300;
 
 /** Who is listing: the provider's own businesses are 'self', a company on the bridge its install id. */
-function sourceOf(deps) {
+export function sourceOf(deps) {
   if (!deps || !deps.control) return null;
   const ins = deps.install || {};
   if (ins.bridged) return str(ins.id);
@@ -144,7 +144,11 @@ export async function erpMarketSave(ctx, payload) {
   const put = (k, v) => ctx.tx`insert into business_config (business_id, key, value) values (${ctx.biz}, ${k}, ${v})
                                on conflict (business_id, key) do update set value = excluded.value, updated_at = now()`;
   if (p.on !== undefined) await put('market_share_on', p.on ? '1' : '0');
-  if (p.city !== undefined) await put('market_city', str(p.city).slice(0, 40));
+  if (p.city !== undefined) {
+    await put('market_city', str(p.city).slice(0, 40));
+    // the Printer Passport register shows "Supplier · <city>" for a seller who hides the name
+    try { await (await import('./passport.js')).refreshSeller(ctx); } catch (e) { console.error('passport seller', e); }
+  }
   let changed = 0;
   for (const x of Array.isArray(p.products) ? p.products.slice(0, 5000) : []) {
     const id = str(x && x.id);

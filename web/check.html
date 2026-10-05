@@ -1,0 +1,193 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Check a 3D printer's serial number: who sold it, when, and how much warranty is left. A public register filled by sellers at the time of sale.">
+<title>Printer Passport</title>
+<link rel="icon" href="icons/favicon-32.png">
+<style>
+/* Stage N1 (docs/NETWORK-BLUEPRINT.md section 5): the public check page of the Printer Passport register.
+   Self-contained; talks to the ERP server's public route ?pub=check&s=... ; no sign-in; never shows the buyer. */
+:root{--bg:#f6f7f4;--card:#fff;--ink:#14201c;--mute:#5d6b66;--line:#dfe5e1;--ok:#0f766e;--okbg:#e6f4f1;--warn:#9a5b00;--warnbg:#fff4df;--bad:#b42318;--badbg:#fdecea;--acc:#0f766e}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans","Noto Sans Bengali","Hind Siliguri",sans-serif}
+body{padding:calc(16px + env(safe-area-inset-top,0px)) 16px calc(28px + env(safe-area-inset-bottom,0px))}
+main{max-width:560px;margin:0 auto}
+header{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:18px}
+header h1{font-size:20px;margin:0;letter-spacing:.2px}
+header h1 small{display:block;font-size:13px;color:var(--mute);font-weight:500}
+.lang{border:1px solid var(--line);background:var(--card);border-radius:999px;padding:6px 12px;font:inherit;font-size:14px;cursor:pointer}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:14px}
+label{display:block;font-size:14px;color:var(--mute);margin-bottom:6px}
+.row{display:flex;gap:8px;flex-wrap:wrap}
+input{flex:1 1 180px;min-width:0;font:inherit;font-size:18px;letter-spacing:1px;text-transform:uppercase;padding:12px 14px;border:1px solid var(--line);border-radius:10px;background:#fff;color:var(--ink)}
+input:focus{outline:2px solid var(--acc);outline-offset:1px;border-color:var(--acc)}
+button{font:inherit;font-size:16px;padding:12px 16px;border-radius:10px;border:1px solid var(--line);background:#fff;color:var(--ink);cursor:pointer}
+button.pri{background:var(--acc);border-color:var(--acc);color:#fff;font-weight:600}
+button:disabled{opacity:.6;cursor:default}
+.hint{font-size:13px;color:var(--mute);margin:10px 0 0}
+.state{font-size:15px;color:var(--mute);margin:0}
+.badge{display:inline-block;font-size:13px;font-weight:600;padding:3px 10px;border-radius:999px;border:1px solid transparent}
+.b-ok{background:var(--okbg);color:var(--ok)}.b-warn{background:var(--warnbg);color:var(--warn)}.b-bad{background:var(--badbg);color:var(--bad)}.b-mute{background:#eef1ee;color:var(--mute)}
+.rec h2{font-size:19px;margin:0 0 2px}
+.rec .sub{color:var(--mute);font-size:14px;margin:0 0 12px}
+dl{display:grid;grid-template-columns:minmax(90px,38%) 1fr;gap:8px 12px;margin:0;font-size:15px}
+dt{color:var(--mute)}dd{margin:0;font-weight:600;min-width:0;overflow-wrap:anywhere}
+.big{font-size:18px}
+.alert{border-radius:10px;padding:10px 12px;font-size:14px;margin:12px 0 0;display:flex;gap:8px;align-items:flex-start}
+.alert.bad{background:var(--badbg);color:var(--bad)}.alert.warn{background:var(--warnbg);color:var(--warn)}.alert.ok{background:var(--okbg);color:var(--ok)}
+.tl{list-style:none;margin:12px 0 0;padding:0;border-top:1px solid var(--line)}
+.tl li{display:flex;justify-content:space-between;gap:12px;padding:8px 0;border-bottom:1px solid var(--line);font-size:14px}
+.tl li span:last-child{color:var(--mute);white-space:nowrap}
+footer{font-size:13px;color:var(--mute);text-align:center;margin-top:22px}
+footer a{color:var(--mute)}
+/* the camera */
+.scan{position:fixed;inset:0;background:#000;z-index:50;display:flex;flex-direction:column}
+.scan video{flex:1;width:100%;object-fit:cover;background:#000}
+.scan .aim{position:absolute;left:50%;top:45%;width:min(80vw,420px);height:140px;transform:translate(-50%,-50%);border:3px solid rgba(255,255,255,.85);border-radius:14px;box-shadow:0 0 0 100vmax rgba(0,0,0,.35);pointer-events:none}
+.scan .aim i{position:absolute;left:8px;right:8px;top:50%;height:2px;background:rgba(255,80,80,.9);animation:ln 1.4s ease-in-out infinite alternate}
+@keyframes ln{from{transform:translateY(-55px)}to{transform:translateY(55px)}}
+.scan .txt{position:absolute;left:0;right:0;top:calc(12px + env(safe-area-inset-top,0px));text-align:center;color:#fff;font-weight:600;text-shadow:0 1px 3px #000;padding:0 16px}
+.scan .bar{display:flex;gap:8px;justify-content:center;padding:14px 14px calc(14px + env(safe-area-inset-bottom,0px));background:#111}
+.scan .bar button{background:#222;color:#fff;border-color:#444}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1><span data-t="title">Printer Passport</span><small data-t="sub">Check a serial number</small></h1>
+    <button class="lang" id="lang" type="button" aria-label="Language">বাংলা</button>
+  </header>
+
+  <form class="card" id="f">
+    <label for="s" data-t="label">Type or scan the serial number on the machine or its box</label>
+    <div class="row">
+      <input id="s" name="s" autocomplete="off" autocapitalize="characters" spellcheck="false" inputmode="text" placeholder="01P00A000000000" maxlength="60">
+      <button type="button" id="scan" hidden>📷 <span data-t="scan">Scan</span></button>
+      <button type="submit" class="pri" id="go"><span data-t="check">Check</span></button>
+    </div>
+    <p class="hint" data-t="hint">Spaces and dashes do not matter. The sticker is usually on the back or under the machine, and on the box.</p>
+  </form>
+
+  <div id="out"></div>
+
+  <footer><span data-t="foot">A public register, filled by sellers at the time of sale. Buyer details are never shown.</span></footer>
+</main>
+
+<script>
+// where the register is (the ERP server's public route). ?api= overrides it for a local check.
+var API = (new URLSearchParams(location.search).get('api') || 'https://oqzcuuytytqadqjlwdsh.supabase.co/functions/v1/erp').replace(/\/+$/, '');
+var T = {
+  en: { title: 'Printer Passport', sub: 'Check a serial number', label: 'Type or scan the serial number on the machine or its box', scan: 'Scan', check: 'Check',
+    hint: 'Spaces and dashes do not matter. The sticker is usually on the back or under the machine, and on the box.', foot: 'A public register, filled by sellers at the time of sale. Buyer details are never shown.',
+    checking: 'Checking…', short: 'Type at least 3 letters or digits.', net: 'The register could not be reached. Check your connection and try again.',
+    nf: 'Not registered yet', nfBody: 'This serial is not in the register. Sellers’ systems write to it at the time of sale. Ask the shop that sold the machine to register it. Registering it yourself is coming soon.',
+    found1: 'Registered', found2: 'Registered — more than one record', seller: 'Seller', sold: 'Sold', warranty: 'Warranty', until: 'until', days: 'days left', ended: 'Warranty ended', ended2: 'ended', none: 'No warranty recorded',
+    verified: 'Verified: written by the seller’s system at the sale', confirmed: 'Confirmed by the seller', declared: 'Declared by the owner, not confirmed by a seller',
+    disputed: 'Two sellers claim this serial. Ask the seller before you pay.', returned: 'This unit was returned to the seller.', repairs: 'Repairs', last: 'last', zero: 'none',
+    history: 'History', evSold: 'Sold', evIn: 'Came in for repair', evOut: 'Repaired and returned to customer', evWarr: 'Warranty changed', evRet: 'Returned to the seller',
+    moves: 'The warranty moves with the machine when it is resold.', stays: 'The warranty is for the first buyer only.', unnamed: 'The seller chose not to show its name.',
+    camHint: 'Point the camera at the barcode', camErr: 'The camera could not be opened. Type the number instead.', noCam: 'This browser has no camera access. Type the number instead.', cancel: 'Cancel' },
+  bn: { title: 'প্রিন্টার পাসপোর্ট', sub: 'সিরিয়াল নম্বর যাচাই', label: 'মেশিন বা বাক্সের গায়ের সিরিয়াল নম্বরটি লিখুন বা স্ক্যান করুন', scan: 'স্ক্যান', check: 'যাচাই',
+    hint: 'স্পেস বা ড্যাশ থাকলেও সমস্যা নেই। স্টিকারটি সাধারণত মেশিনের পেছনে বা নিচে, এবং বাক্সের গায়ে থাকে।', foot: 'বিক্রির সময় বিক্রেতারা এই রেজিস্টার পূরণ করেন। ক্রেতার কোনো তথ্য দেখানো হয় না।',
+    checking: 'দেখা হচ্ছে…', short: 'কমপক্ষে ৩টি অক্ষর বা সংখ্যা লিখুন।', net: 'রেজিস্টারে পৌঁছানো যায়নি। ইন্টারনেট দেখে আবার চেষ্টা করুন।',
+    nf: 'এখনো নিবন্ধিত নয়', nfBody: 'এই সিরিয়ালটি রেজিস্টারে নেই। বিক্রির সময় বিক্রেতার সিস্টেম থেকে এখানে লেখা হয়। যে দোকান থেকে কিনেছেন, তাদের নিবন্ধন করতে বলুন। নিজে নিবন্ধনের সুবিধা শিগগিরই আসছে।',
+    found1: 'নিবন্ধিত', found2: 'নিবন্ধিত — একাধিক রেকর্ড', seller: 'বিক্রেতা', sold: 'বিক্রি', warranty: 'ওয়ারেন্টি', until: 'পর্যন্ত', days: 'দিন বাকি', ended: 'ওয়ারেন্টি শেষ', ended2: 'শেষ', none: 'ওয়ারেন্টির তথ্য নেই',
+    verified: 'যাচাইকৃত: বিক্রির সময় বিক্রেতার সিস্টেম থেকে লেখা', confirmed: 'বিক্রেতা নিশ্চিত করেছেন', declared: 'মালিকের ঘোষণা, কোনো বিক্রেতা নিশ্চিত করেননি',
+    disputed: 'দুই বিক্রেতা এই সিরিয়ালটি দাবি করছে। টাকা দেওয়ার আগে বিক্রেতাকে জিজ্ঞেস করুন।', returned: 'এই মেশিনটি বিক্রেতার কাছে ফেরত গেছে।', repairs: 'মেরামত', last: 'শেষ', zero: 'নেই',
+    history: 'ইতিহাস', evSold: 'বিক্রি', evIn: 'মেরামতে এসেছে', evOut: 'মেরামত শেষে ফেরত', evWarr: 'ওয়ারেন্টি বদল', evRet: 'বিক্রেতার কাছে ফেরত',
+    moves: 'পুনরায় বিক্রি হলে ওয়ারেন্টি মেশিনের সাথে যায়।', stays: 'ওয়ারেন্টি শুধু প্রথম ক্রেতার জন্য।', unnamed: 'বিক্রেতা নাম দেখাতে চাননি।',
+    camHint: 'বারকোডের দিকে ক্যামেরা ধরুন', camErr: 'ক্যামেরা খোলা যায়নি। নম্বরটি লিখুন।', noCam: 'এই ব্রাউজারে ক্যামেরা চলে না। নম্বরটি লিখুন।', cancel: 'বাতিল' }
+};
+var LANG = 'en';
+try { LANG = localStorage.getItem('pp_lang') || ((navigator.language || '').indexOf('bn') === 0 ? 'bn' : 'en'); } catch (e) {}
+function t(k) { return (T[LANG] || T.en)[k] || T.en[k] || k; }
+function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+function paintLang() {
+  document.documentElement.lang = LANG;
+  document.querySelectorAll('[data-t]').forEach(function (n) { n.textContent = t(n.getAttribute('data-t')); });
+  document.getElementById('lang').textContent = LANG === 'bn' ? 'English' : 'বাংলা';
+  if (LAST) show(LAST);
+}
+document.getElementById('lang').onclick = function () { LANG = LANG === 'bn' ? 'en' : 'bn'; try { localStorage.setItem('pp_lang', LANG); } catch (e) {} paintLang(); };
+
+var out = document.getElementById('out'), LAST = null;
+function monthWords(m) { return m || ''; }
+function show(r) {
+  LAST = r;
+  if (!r.ok) { out.innerHTML = '<div class="card"><p class="state">' + esc(r.error || t('net')) + '</p></div>'; return; }
+  if (!r.found) { out.innerHTML = '<div class="card rec"><span class="badge b-warn">' + t('nf') + '</span><h2 style="margin-top:10px">' + esc(r.serial) + '</h2><p class="state">' + t('nfBody') + '</p></div>'; return; }
+  var h = '';
+  r.records.forEach(function (c, i) {
+    var w = c.warrantyState === 'active' ? '<span class="big">' + t('until') + ' ' + esc(c.warrantyUntil) + '</span> <span class="badge b-ok">' + c.daysLeft + ' ' + t('days') + '</span>'
+      : c.warrantyState === 'ended' ? '<span class="badge b-mute">' + t('ended') + ' ' + esc(c.warrantyUntil) + '</span>' : '<span class="badge b-mute">' + t('none') + '</span>';
+    var lvl = c.level === 'verified' ? '<span class="badge b-ok">✓ ' + t('verified') + '</span>' : c.level === 'confirmed' ? '<span class="badge b-ok">' + t('confirmed') + '</span>' : '<span class="badge b-warn">' + t('declared') + '</span>';
+    h += '<div class="card rec">' + (i === 0 ? '<span class="badge ' + (r.records.length > 1 ? 'b-warn' : 'b-ok') + '">' + (r.records.length > 1 ? t('found2') : t('found1')) + '</span>' : '') +
+      '<h2 style="margin-top:10px">' + esc(c.product || '—') + '</h2><p class="sub">' + esc([c.brand, c.category, c.version ? c.version.toUpperCase() + ' version' : ''].filter(Boolean).join(' · ')) + (c.brand || c.category ? ' · ' : '') + '<b>' + esc(r.serial) + '</b></p>' +
+      '<dl><dt>' + t('seller') + '</dt><dd>' + esc(c.seller) + (c.named ? '' : '<div style="font-weight:400;color:var(--mute);font-size:13px">' + t('unnamed') + '</div>') + '</dd>' +
+      '<dt>' + t('sold') + '</dt><dd>' + esc(monthWords(c.soldMonth) || '—') + '</dd>' +
+      '<dt>' + t('warranty') + '</dt><dd>' + w + (c.warrantyMonths ? '<div style="font-weight:400;color:var(--mute);font-size:13px">' + c.warrantyMonths + ' ' + (LANG === 'bn' ? 'মাস' : 'months') + ' · ' + (c.transferable ? t('moves') : t('stays')) + '</div>' : '') + '</dd>' +
+      '<dt>' + t('repairs') + '</dt><dd>' + (c.repairs ? c.repairs + (c.lastRepair ? ' <span style="font-weight:400;color:var(--mute)">(' + t('last') + ' ' + esc(c.lastRepair) + ')</span>' : '') : t('zero')) + '</dd></dl>' +
+      '<div style="margin-top:12px">' + lvl + '</div>' +
+      (c.disputed ? '<div class="alert bad">⚠ ' + t('disputed') + '</div>' : '') + (c.status === 'returned' ? '<div class="alert warn">↩ ' + t('returned') + '</div>' : '') +
+      (c.events && c.events.length ? '<h3 style="font-size:14px;color:var(--mute);margin:14px 0 0">' + t('history') + '</h3><ul class="tl">' + c.events.map(function (e) {
+        var k = e.kind === 'sold' ? t('evSold') : e.kind === 'repair' ? (e.status === 'returned' ? t('evOut') : t('evIn')) : e.kind === 'warranty' ? t('evWarr') : e.kind === 'returned' ? t('evRet') : esc(e.kind);
+        return '<li><span>' + k + '</span><span>' + esc(e.month) + '</span></li>'; }).join('') + '</ul>' : '') + '</div>';
+  });
+  out.innerHTML = h;
+}
+function check(s) {
+  s = String(s || '').replace(/\s+/g, '').toUpperCase();
+  if (s.replace(/[^A-Z0-9]/g, '').length < 3) { out.innerHTML = '<div class="card"><p class="state">' + t('short') + '</p></div>'; return; }
+  var go = document.getElementById('go'); go.disabled = true;
+  out.innerHTML = '<div class="card"><p class="state">' + t('checking') + '</p></div>';
+  try { history.replaceState(null, '', location.pathname + '?s=' + encodeURIComponent(s) + (new URLSearchParams(location.search).get('api') ? '&api=' + encodeURIComponent(new URLSearchParams(location.search).get('api')) : '')); } catch (e) {}
+  fetch(API + '?pub=check&s=' + encodeURIComponent(s), { method: 'GET' }).then(function (r) { return r.json(); }).then(show, function () { show({ ok: false, error: t('net') }); }).then(function () { go.disabled = false; });
+}
+document.getElementById('f').addEventListener('submit', function (ev) { ev.preventDefault(); check(document.getElementById('s').value); });
+
+// ---- the camera (the browser's own reader where it has one; the bundled ZXing library elsewhere, loaded only when needed)
+var scanBtn = document.getElementById('scan');
+if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) scanBtn.hidden = false;
+function lib() { return window.ZXing ? Promise.resolve() : new Promise(function (ok, bad) { var sc = document.createElement('script'); sc.src = 'vendor/zxing.min.js'; sc.onload = ok; sc.onerror = bad; document.head.appendChild(sc); }); }
+scanBtn.onclick = function () {
+  var w = document.createElement('div'); w.className = 'scan';
+  w.innerHTML = '<video autoplay playsinline muted></video><div class="aim"><i></i></div><div class="txt">' + t('camHint') + '</div><div class="bar"><button type="button" id="sc_x">' + t('cancel') + '</button></div>';
+  document.body.appendChild(w);
+  var video = w.querySelector('video'), stream = null, timer = 0, stopped = false;
+  function stop(code) {
+    if (stopped) return; stopped = true; clearInterval(timer);
+    try { stream && stream.getTracks().forEach(function (tr) { tr.stop(); }); } catch (e) {}
+    w.remove();
+    if (code) { document.getElementById('s').value = code; try { navigator.vibrate && navigator.vibrate(40); } catch (e) {} check(code); }
+  }
+  w.querySelector('#sc_x').onclick = function () { stop(null); };
+  navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } }, audio: false }).then(function (st) {
+    stream = st; video.srcObject = st;
+    if ('BarcodeDetector' in window) {
+      var det; try { det = new window.BarcodeDetector({ formats: ['code_128', 'code_39', 'code_93', 'ean_13', 'ean_8', 'upc_a', 'itf', 'qr_code', 'data_matrix'] }); } catch (e) { det = new window.BarcodeDetector(); }
+      timer = setInterval(function () { if (stopped || video.readyState < 2) return; det.detect(video).then(function (rs) { if (rs && rs.length && rs[0].rawValue) stop(rs[0].rawValue); }).catch(function () {}); }, 180);
+    } else {
+      lib().then(function () {
+        var Z = window.ZXing, reader = new Z.MultiFormatReader(), hints = new Map();
+        try { hints.set(Z.DecodeHintType.TRY_HARDER, true); reader.setHints(hints); } catch (e) {}
+        var cv = document.createElement('canvas'), g = cv.getContext('2d', { willReadFrequently: true });
+        timer = setInterval(function () {
+          if (stopped || video.readyState < 2 || !video.videoWidth) return;
+          var W = Math.min(960, video.videoWidth), H = Math.round(video.videoHeight * W / video.videoWidth); cv.width = W; cv.height = H; g.drawImage(video, 0, 0, W, H);
+          try { var res = reader.decode(new Z.BinaryBitmap(new Z.HybridBinarizer(new Z.HTMLCanvasElementLuminanceSource(cv)))); if (res && res.getText()) stop(res.getText()); } catch (e) { /* nothing in this frame */ }
+          try { reader.reset(); } catch (e) {}
+        }, 220);
+      }, function () { alert(t('camErr')); stop(null); });
+    }
+  }, function () { alert(t('camErr')); stop(null); });
+};
+
+paintLang();
+var q = new URLSearchParams(location.search).get('s');
+if (q) { document.getElementById('s').value = q; check(q); }
+</script>
+</body>
+</html>

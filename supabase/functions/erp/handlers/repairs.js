@@ -107,6 +107,8 @@ export async function erpJobOpen(ctx, payload) {
   await ctx.tx`insert into service_jobs (business_id, job_no, customer, phone, customer_key, item, sku, serial, under_warranty, warranty_until, problem, accessories, opened_by)
                values (${ctx.biz}, ${jobNo}, ${name}, ${phone}, ${custKey(phone, name) || null}, ${item}, ${sku || null}, ${serial || null}, ${underWarranty}, ${warrantyUntil},
                        ${problem}, ${str(payload.accessories).slice(0, 300) || null}, ${who(ctx)})`;
+  // the Printer Passport register: "a repair came in" (the job number stays private)
+  if (serial) { try { const P = await import('./passport.js'); await P.passportRepair(ctx, serial, jobNo, 'received'); } catch (e) { console.error('passport repair', e); } }
   return erpJob(ctx, { jobNo });
 }
 
@@ -168,6 +170,7 @@ export async function erpJobSave(ctx, payload) {
   const note = payload.note === undefined ? r.note : str(payload.note).slice(0, 1000);
   await ctx.tx`update service_jobs set status = ${status}, diagnosis = ${diagnosis}, parts = ${ctx.tx.json(parts)}, labour = ${labour}, charge = ${charge}, note = ${note},
                  returned_at = ${status === 'returned' ? (r.returned_at || new Date()) : null}, updated_at = now() where id = ${r.id}`;
+  if (status === 'returned' && str(r.status) !== 'returned' && str(r.serial)) { try { const P = await import('./passport.js'); await P.passportRepair(ctx, r.serial, r.job_no, 'returned'); } catch (e) { console.error('passport repair', e); } }
   return erpJob(ctx, { jobNo: r.job_no });
 }
 

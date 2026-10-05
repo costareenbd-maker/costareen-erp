@@ -8420,7 +8420,7 @@ function srv(name, args, ok, bad) {
 
 var SRV_ACTIVE = 0, SRV_WRITING = false, SRV_TIMED = {};
 // the same list the server uses to know a call changes nothing (ERP_READS)
-var SRV_READS = /^(erpJoint|erpJointCatalog|erpJointCard|erpInvoiceDesign|erpInvoicePreview|erpMarket|erpMarketMine|erpMarketRequests|erpMarketHints|erpMarketNames|erpWanted|erpBrand|erpComplianceLog|erpProviderKey|erpNews|erpAccessKeys|erpAccessWarning|erpAdmin|erpAiKeys|erpAlertRules|erpAlerts|erpArena|erpBackupStatus|erpBg|erpBnWords|erpBookedParcels|erpBrandLogo|erpBundle|erpBusinessLinks|erpBusinesses|erpBusinessesDeleted|erpCampaignAudience|erpCampaignGet|erpCampaignList|erpCapital|erpCashBook|erpCatalog|erpConnStatus|erpConnections|erpCostBook|erpCourier|erpCourierKeyStatus|erpCurrencies|erpCustomerAccount|erpCustomerCredit|erpCustomerList|erpCustomerPage|erpCustomerStatement|erpCustomers|erpDashboardData|erpDaySales|erpDeliveryOptions|erpDevices|erpDiscontinued|erpDues|erpEvoQr|erpEvoStatus|erpExpenseExport|erpExpenseReceiptUrl|erpExpenses|erpFamilies|erpFighters|erpFormOptions|erpGame|erpGetTheme|erpGoogle|erpHello|erpInstalls|erpInvoice|erpInvoicePdf|erpJob|erpJobs|erpListView|erpLookupCustomer|erpLookupUsage|erpMe|erpMoney|erpNoteFileUrl|erpNotes|erpOwnerChange|erpOwnerChanges|erpParcelLabels|erpParcelPreview|erpPartnerStock|erpPartnership|erpPayReasons|erpPeople|erpPlatform|erpPlatformErrors|erpPnl|erpPnlMonth|erpPoList|erpPoolCatalog|erpProduct|erpProductListShare|erpProductPage|erpProductPhotoUrl|erpProductThumbs|erpProfile|erpQuoteAsset|erpQuoteBoot|erpQuoteGet|erpQuoteList|erpRecentInvoices|erpRecovery|erpReorderPlan|erpRestorePreview|erpReturnPreview|erpRisks|erpSales|erpSearch|erpSecurity|erpSelfTest|erpSerialLookup|erpSerialsFor|erpSessions|erpSetTheme|erpSettingsFull|erpSettingsLists|erpSfPayoutLines|erpSfPayouts|erpShareFile|erpSharedStock|erpSheet|erpStatementPdf|erpStockHistory|erpSupplierPage|erpSuppliers|erpToday|erpUsers|erpWaProductPdf|erpWebMatches|erpWebOrderInvoices|erpWebOrders|erpWebsiteTest)$/;
+var SRV_READS = /^(erpWarrantyRules|erpWarrantyCard|erpMyLink|erpJoint|erpJointCatalog|erpJointCard|erpInvoiceDesign|erpInvoicePreview|erpMarket|erpMarketMine|erpMarketRequests|erpMarketHints|erpMarketNames|erpWanted|erpBrand|erpComplianceLog|erpProviderKey|erpNews|erpAccessKeys|erpAccessWarning|erpAdmin|erpAiKeys|erpAlertRules|erpAlerts|erpArena|erpBackupStatus|erpBg|erpBnWords|erpBookedParcels|erpBrandLogo|erpBundle|erpBusinessLinks|erpBusinesses|erpBusinessesDeleted|erpCampaignAudience|erpCampaignGet|erpCampaignList|erpCapital|erpCashBook|erpCatalog|erpConnStatus|erpConnections|erpCostBook|erpCourier|erpCourierKeyStatus|erpCurrencies|erpCustomerAccount|erpCustomerCredit|erpCustomerList|erpCustomerPage|erpCustomerStatement|erpCustomers|erpDashboardData|erpDaySales|erpDeliveryOptions|erpDevices|erpDiscontinued|erpDues|erpEvoQr|erpEvoStatus|erpExpenseExport|erpExpenseReceiptUrl|erpExpenses|erpFamilies|erpFighters|erpFormOptions|erpGame|erpGetTheme|erpGoogle|erpHello|erpInstalls|erpInvoice|erpInvoicePdf|erpJob|erpJobs|erpListView|erpLookupCustomer|erpLookupUsage|erpMe|erpMoney|erpNoteFileUrl|erpNotes|erpOwnerChange|erpOwnerChanges|erpParcelLabels|erpParcelPreview|erpPartnerStock|erpPartnership|erpPayReasons|erpPeople|erpPlatform|erpPlatformErrors|erpPnl|erpPnlMonth|erpPoList|erpPoolCatalog|erpProduct|erpProductListShare|erpProductPage|erpProductPhotoUrl|erpProductThumbs|erpProfile|erpQuoteAsset|erpQuoteBoot|erpQuoteGet|erpQuoteList|erpRecentInvoices|erpRecovery|erpReorderPlan|erpRestorePreview|erpReturnPreview|erpRisks|erpSales|erpSearch|erpSecurity|erpSelfTest|erpSerialLookup|erpSerialsFor|erpSessions|erpSetTheme|erpSettingsFull|erpSettingsLists|erpSfPayoutLines|erpSfPayouts|erpShareFile|erpSharedStock|erpSheet|erpStatementPdf|erpStockHistory|erpSupplierPage|erpSuppliers|erpToday|erpUsers|erpWaProductPdf|erpWebMatches|erpWebOrderInvoices|erpWebOrders|erpWebsiteTest)$/;
 function srvPump() {
   if (!SRV_Q.length) return;
   var isRead = SRV_READS.test(SRV_Q[0].name);
@@ -19394,7 +19394,7 @@ function ivdHtml() {
       '<div><label class="f" for="ivd_lsz">Logo size</label><select class="i" id="ivd_lsz"' + dis + '>' + [['s', 'Small'], ['m', 'Medium'], ['l', 'Large']].map(function (o) { return '<option value="' + o[0] + '"' + (d.logoSize === o[0] ? ' selected' : '') + '>' + o[1] + '</option>'; }).join('') + '</select></div>' +
       '<div><label class="f" for="ivd_lside">Logo side</label><select class="i" id="ivd_lside"' + dis + '><option value="left"' + (d.logoSide !== 'right' ? ' selected' : '') + '>Left</option><option value="right"' + (d.logoSide === 'right' ? ' selected' : '') + '>Right' + (d.template === 'classic' ? ' (Classic is always centred)' : '') + '</option></select></div></div>' +
       '<div class="sku" style="margin-top:4px">Every A4 design fills the page and shows at least 5 item rows; the money part sits at the foot of the page.</div>' +
-    '<h3 style="margin:16px 0 6px">3. What it shows</h3><div class="ivd-checks">' + [['banks', 'Bank accounts'], ['qr', 'Payment QR'], ['signature', 'Signature'], ['phone', 'Phone number'], ['delivery', 'Delivery charge line']].map(function (o) {
+    '<h3 style="margin:16px 0 6px">3. What it shows</h3><div class="ivd-checks">' + [['banks', 'Bank accounts'], ['qr', 'Payment QR'], ['myqr', 'Customer QR (orders & warranty)'], ['signature', 'Signature'], ['phone', 'Phone number'], ['delivery', 'Delivery charge line']].map(function (o) {
       return '<label><input type="checkbox" data-ivdshow="' + o[0] + '"' + (d.show[o[0]] ? ' checked' : '') + dis + ' style="width:18px;height:18px">' + o[1] + '</label>'; }).join('') + '</div>' +
     '<div class="ivd-row"><div style="flex-basis:100%"><label class="f" for="ivd_thanks">Thank-you line</label><input class="i" id="ivd_thanks" maxlength="300" value="' + esc(d.thanks) + '" placeholder="' + esc(r.profile.footer || 'Thank you for your order.') + '"' + dis + '></div>' +
       '<div style="flex-basis:100%"><label class="f" for="ivd_terms">Terms (warranty, returns\u2026)</label><textarea class="i" id="ivd_terms" rows="3" maxlength="2000" placeholder="e.g. Goods sold are not returnable after 7 days. Warranty as per the maker."' + dis + '>' + esc(d.terms) + '</textarea></div></div>' +
@@ -20429,6 +20429,257 @@ partnerOwnHtml = function () {
     'This screen is only for the rare sale from the other company’s <strong>own</strong> shelf.</div></div></section>';
   return note + (cut >= 0 ? h.slice(cut + '</section>'.length) : h);
 };
+</script>
+
+<!-- Stage N0 + N1 (docs/NETWORK-BLUEPRINT.md): scan with the phone camera, warranty rules, the warranty card,
+     the customer's page link. The Printer Passport register is written by the server at every sale. -->
+<style>
+.scanbtn{margin-left:6px;white-space:nowrap}
+.scanwrap{position:fixed;inset:0;background:#000;z-index:120;display:flex;flex-direction:column}
+.scanwrap video{flex:1;width:100%;object-fit:cover;background:#000}
+.scanwrap .aim{position:absolute;left:50%;top:45%;width:min(80vw,420px);height:140px;transform:translate(-50%,-50%);border:3px solid rgba(255,255,255,.85);border-radius:14px;box-shadow:0 0 0 100vmax rgba(0,0,0,.35);pointer-events:none}
+.scanwrap .aim i{position:absolute;left:8px;right:8px;top:50%;height:2px;background:rgba(255,80,80,.9);animation:scanline 1.4s ease-in-out infinite alternate}
+@keyframes scanline{from{transform:translateY(-55px)}to{transform:translateY(55px)}}
+.scanwrap .hint{position:absolute;left:0;right:0;top:12px;text-align:center;color:#fff;font-weight:600;text-shadow:0 1px 3px #000;padding:0 16px}
+.scanwrap .got{position:absolute;left:0;right:0;top:calc(45% + 90px);text-align:center;color:#4ade80;font-weight:700;font-size:15px;text-shadow:0 1px 3px #000}
+.scanwrap .bar{display:flex;gap:8px;justify-content:center;padding:14px;background:#111}
+.scanwrap .bar .btn{background:#222;color:#fff;border-color:#444}
+.wrcard table td,.wrcard table th{white-space:nowrap}
+.wrform{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-top:8px}.wrform>div{flex:1 1 140px;min-width:0}
+.mylink{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:8px}.mylink code{font-size:12px;word-break:break-all}
+</style>
+<script>
+// ---- the phone camera as a barcode scanner (the browser's own reader on Android; the ZXing library elsewhere)
+var SCAN = { lib: null, open: false };
+function scanSupported() { return !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia); }
+function scanLib() {
+  if (window.ZXing) return Promise.resolve();
+  if (!SCAN.lib) SCAN.lib = new Promise(function (ok, bad) { var sc = document.createElement('script'); sc.src = 'vendor/zxing.min.js'; sc.onload = ok; sc.onerror = function () { SCAN.lib = null; bad(new Error('The scanner could not load. Type the number instead.')); }; document.head.appendChild(sc); });
+  return SCAN.lib;
+}
+function scanBeep() { try { var ac = new (window.AudioContext || window.webkitAudioContext)(), o = ac.createOscillator(), g = ac.createGain(); o.frequency.value = 1320; g.gain.value = 0.08; o.connect(g); g.connect(ac.destination); o.start(); setTimeout(function () { o.stop(); ac.close(); }, 90); } catch (e) {} try { navigator.vibrate && navigator.vibrate(40); } catch (e) {} }
+// opts: { hint, multi: function(code) -> keep going } ; resolves with the code (single) or null when closed
+function scanOpen(opts) {
+  opts = opts || {};
+  if (SCAN.open) return Promise.resolve(null);
+  if (!scanSupported()) { toast('This browser has no camera access. Type the number instead.', true); return Promise.resolve(null); }
+  SCAN.open = true;
+  return new Promise(function (resolve) {
+    var w = document.createElement('div'); w.className = 'scanwrap';
+    w.innerHTML = '<video autoplay playsinline muted></video><div class="aim"><i></i></div><div class="hint">' + esc(opts.hint || 'Point the camera at the barcode or QR') + '</div><div class="got" id="scan_got"></div>' +
+      '<div class="bar"><button class="btn" type="button" id="scan_torch" hidden>Light</button>' + (opts.multi ? '<button class="btn primary" type="button" id="scan_done">Done</button>' : '') + '<button class="btn" type="button" id="scan_close">' + (opts.multi ? 'Cancel' : 'Cancel') + '</button></div>';
+    document.body.appendChild(w);
+    var video = w.querySelector('video'), stream = null, timer = 0, stopped = false, last = '', lastAt = 0, track = null;
+    function stop(code) {
+      if (stopped) return; stopped = true; clearInterval(timer);
+      try { stream && stream.getTracks().forEach(function (t) { t.stop(); }); } catch (e) {}
+      w.remove(); SCAN.open = false; resolve(code === undefined ? null : code);
+    }
+    w.querySelector('#scan_close').onclick = function () { stop(null); };
+    var done = w.querySelector('#scan_done'); if (done) done.onclick = function () { stop(null); };
+    function found(text) {
+      text = String(text || '').trim(); if (!text) return;
+      var now = Date.now(); if (text === last && now - lastAt < 2000) return; last = text; lastAt = now;
+      scanBeep();
+      if (opts.multi) { var g = w.querySelector('#scan_got'); g.textContent = '\u2713 ' + text; var keep = opts.multi(text); if (keep === false) stop(null); }
+      else stop(text);
+    }
+    navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } }, audio: false }).then(function (st) {
+      stream = st; video.srcObject = st; track = st.getVideoTracks()[0];
+      try { var caps = track.getCapabilities ? track.getCapabilities() : {}; if (caps.torch) { var tb = w.querySelector('#scan_torch'); tb.hidden = false; var on = false; tb.onclick = function () { on = !on; track.applyConstraints({ advanced: [{ torch: on }] }).catch(function () {}); }; } } catch (e) {}
+      var FORMATS = ['code_128', 'code_39', 'code_93', 'ean_13', 'ean_8', 'upc_a', 'upc_e', 'itf', 'codabar', 'qr_code', 'data_matrix', 'pdf417'];
+      if ('BarcodeDetector' in window) {
+        var det; try { det = new window.BarcodeDetector({ formats: FORMATS }); } catch (e) { det = new window.BarcodeDetector(); }
+        timer = setInterval(function () { if (stopped || video.readyState < 2) return; det.detect(video).then(function (rs) { if (rs && rs.length) found(rs[0].rawValue); }).catch(function () {}); }, 180);
+      } else {
+        scanLib().then(function () {
+          var Z = window.ZXing, hints = new Map();
+          try { hints.set(Z.DecodeHintType.TRY_HARDER, true); hints.set(Z.DecodeHintType.POSSIBLE_FORMATS, [Z.BarcodeFormat.CODE_128, Z.BarcodeFormat.CODE_39, Z.BarcodeFormat.CODE_93, Z.BarcodeFormat.EAN_13, Z.BarcodeFormat.EAN_8, Z.BarcodeFormat.UPC_A, Z.BarcodeFormat.ITF, Z.BarcodeFormat.QR_CODE, Z.BarcodeFormat.DATA_MATRIX]); } catch (e) {}
+          var reader = new Z.MultiFormatReader(); try { reader.setHints(hints); } catch (e) {}
+          var cv = document.createElement('canvas'), g = cv.getContext('2d', { willReadFrequently: true });
+          timer = setInterval(function () {
+            if (stopped || video.readyState < 2 || !video.videoWidth) return;
+            var W = Math.min(960, video.videoWidth), H = Math.round(video.videoHeight * W / video.videoWidth); cv.width = W; cv.height = H; g.drawImage(video, 0, 0, W, H);
+            try { var res = reader.decode(new Z.BinaryBitmap(new Z.HybridBinarizer(new Z.HTMLCanvasElementLuminanceSource(cv)))); if (res && res.getText) found(res.getText()); }
+            catch (e) { /* nothing in this frame */ }
+            try { reader.reset(); } catch (e) {}
+          }, 220);
+        }, function (e) { toast(esc(e.message), true, 8000); stop(null); });
+      }
+    }, function (e) { toast('The camera could not be opened (' + esc(e && e.name) + '). Allow the camera for this site, or type the number.', true, 9000); stop(null); });
+  });
+}
+// a scan button beside every place a serial number is typed; appended lines for the multi-line boxes
+function scanBtn(id, label) { return '<button class="btn small scanbtn" type="button" data-scan="' + id + '">\uD83D\uDCF7 ' + (label || 'Scan') + '</button>'; }
+function scanWire() {
+  if (!scanSupported()) return;
+  function after(node, html) { if (!node || node.nextElementSibling && node.nextElementSibling.hasAttribute && node.nextElementSibling.hasAttribute('data-scan')) return; node.insertAdjacentHTML('afterend', html); }
+  var a = el('ser_add'); if (a) after(a, scanBtn('ser_add', 'Scan serials, one after another'));
+  document.querySelectorAll('textarea[data-rvsn]').forEach(function (t) { after(t, scanBtn('rvsn:' + t.getAttribute('data-rvsn'), 'Scan the boxes')); });
+  document.querySelectorAll('.snpick').forEach(function (row) { if (row.querySelector('[data-scan]')) return; var sel = row.querySelector('select[data-snsel]'); if (sel) row.insertAdjacentHTML('beforeend', scanBtn('snpick:' + sel.getAttribute('data-snsel'), 'Scan')); });
+  document.querySelectorAll('input[data-rsn]').forEach(function (i) { after(i, scanBtn('rsn:' + i.getAttribute('data-rsn'))); });
+  var j = el('jn_serial'); if (j) after(j, scanBtn('jn_serial'));
+  var q = el('gs_q'); if (q && !q.parentNode.querySelector('[data-scan]')) q.insertAdjacentHTML('afterend', '<button class="btn small scanbtn" type="button" data-scan="gs_q" title="Scan a serial number" style="margin-left:4px">\uD83D\uDCF7</button>');
+}
+document.addEventListener('click', function (ev) {
+  var b = ev.target && ev.target.closest ? ev.target.closest('[data-scan]') : null; if (!b) return;
+  var id = b.getAttribute('data-scan'), add = function (ta, code) { ta.value = (ta.value.trim() ? ta.value.replace(/\s+$/, '') + '\n' : '') + code; ta.dispatchEvent(new Event('input', { bubbles: true })); };
+  if (id === 'ser_add') { scanOpen({ hint: 'Scan each printer\u2019s serial sticker. Press Done when finished.', multi: function (c) { var ta = el('ser_add'); if (ta) add(ta, c); return true; } }); return; }
+  if (id.indexOf('rvsn:') === 0) { var k = id.slice(5); scanOpen({ hint: 'Scan the serial sticker on each box. Press Done when finished.', multi: function (c) { var ta = document.querySelector('textarea[data-rvsn="' + k + '"]'); if (ta) add(ta, c); return true; } }); return; }
+  if (id.indexOf('snpick:') === 0) {
+    var li = id.slice(7);
+    scanOpen({ hint: 'Scan the serial of the unit going out' }).then(function (c) {
+      if (!c) return; var want = String(c).replace(/\s+/g, '').toUpperCase(), sels = document.querySelectorAll('select[data-snsel="' + li + '"]'), hit = null;
+      sels.forEach(function (sl) { if (hit) return; for (var i = 0; i < sl.options.length; i++) if (sl.options[i].value.replace(/\s+/g, '').toUpperCase() === want) { hit = sl; break; } });
+      if (!hit) { toast('Serial ' + esc(want) + ' is not on the shelf for this product.', true, 7000); return; }
+      var free = null; sels.forEach(function (sl) { if (!free && !sl.value) free = sl; }); (free || hit).value = want === (free || hit).value ? want : [].slice.call((free || hit).options).filter(function (o) { return o.value.replace(/\s+/g, '').toUpperCase() === want; })[0].value;
+      (free || hit).dispatchEvent(new Event('change', { bubbles: true })); toast('Serial ' + esc(want) + ' picked.');
+    });
+    return;
+  }
+  if (id.indexOf('rsn:') === 0) { var rk = id.slice(4); scanOpen({ hint: 'Scan the serial of the unit coming back' }).then(function (c) { if (!c) return; var i = document.querySelector('input[data-rsn="' + rk + '"]'); if (i) { i.value = (i.value.trim() ? i.value.trim() + ', ' : '') + c; i.dispatchEvent(new Event('input', { bubbles: true })); } }); return; }
+  if (id === 'jn_serial') { scanOpen({ hint: 'Scan the machine\u2019s serial sticker' }).then(function (c) { if (!c) return; var i = el('jn_serial'); if (i) { i.value = c; i.dispatchEvent(new Event('input', { bubbles: true })); i.dispatchEvent(new Event('change', { bubbles: true })); } }); return; }
+  if (id === 'gs_q') { scanOpen({ hint: 'Scan a serial number to look it up' }).then(function (c) { if (!c) return; var i = el('gs_q'); if (i) { i.value = c; i.focus(); i.dispatchEvent(new Event('input', { bubbles: true })); } }); return; }
+});
+
+// ---- warranty rules (Products screen) and the bulk "Set serial & warranty"
+var WR = { open: false, data: null, err: '', busy: false, bulk: null, sync: null };
+function wrLoad() { srv('erpWarrantyRules', [], function (r) { WR.data = r; WR.err = ''; wrPaint(); }, function (e) { WR.err = (e && e.message) || String(e); wrPaint(); }); }
+function wrHtml() {
+  var d = WR.data;
+  var h = '<section class="wrcard"><div class="card"><div class="row" style="justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap"><h2 style="margin:0">Serial numbers &amp; warranty rules</h2><button class="btn small" type="button" data-wr="close">Close</button></div>';
+  if (WR.err) return h + '<div class="note err"><div class="ico">!</div><div>' + esc(WR.err) + '</div></div></div></section>';
+  if (!d) return h + '<div class="empty">Loading\u2026</div></div></section>';
+  var ed = d.canEdit, dis = ed ? '' : ' disabled';
+  h += '<div class="sub" data-c5x="1" style="display:block">A rule says, for one category (and brand, or any brand): sold by serial number or not, and how many months of warranty. Every new product of that kind takes it by itself. ' +
+    '<b>Apply</b> puts it on the products you already have. ' + fmt(d.serialised) + ' of ' + fmt(d.products) + ' products are sold by serial number. ' +
+    'Public register for your customers: <a href="' + esc(d.checkUrl) + '" target="_blank" rel="noopener">' + esc(d.checkUrl.replace(/^https?:\/\//, '')) + '</a></div>';
+  h += d.rules.length ? '<div class="scroll" style="margin-top:8px"><table><thead><tr><th>Category</th><th>Brand</th><th>Sold by serial</th><th>Warranty</th><th>Moves with the machine</th><th></th></tr></thead><tbody>' +
+    d.rules.map(function (r) { return '<tr><td>' + esc(r.category || 'Any') + '</td><td>' + esc(r.brand || 'Any') + '</td><td>' + (r.serialised ? 'Yes' : 'No') + '</td><td>' + (r.warrantyMonths ? r.warrantyMonths + ' months' : 'None') + '</td><td>' + (r.transferable ? 'Yes' : 'No') + '</td>' +
+      '<td>' + (ed ? '<button class="btn small" type="button" data-wr="apply" data-id="' + esc(r.id) + '">Apply to existing</button> <button class="btn small" type="button" data-wr="remove" data-id="' + esc(r.id) + '">Remove</button>' : '') + '</td></tr>'; }).join('') + '</tbody></table></div>'
+    : '<div class="empty">No rules yet.</div>';
+  if (ed) {
+    h += '<h3 style="margin:14px 0 4px">Add or change a rule</h3><div class="wrform">' +
+      '<div><label class="f" for="wr_cat">Category</label><select class="i" id="wr_cat"><option value="">Any category</option>' + d.categories.map(function (c) { return '<option>' + esc(c) + '</option>'; }).join('') + '</select></div>' +
+      '<div><label class="f" for="wr_brand">Brand</label><select class="i" id="wr_brand"><option value="">Any brand</option>' + d.brands.map(function (c) { return '<option>' + esc(c) + '</option>'; }).join('') + '</select></div>' +
+      '<div style="flex:0 0 auto"><label class="chk" style="padding-bottom:9px"><input type="checkbox" id="wr_ser" checked> Sold by serial number</label></div>' +
+      '<div style="flex:0 1 150px"><label class="f" for="wr_months">Warranty (months)</label><input class="i" id="wr_months" inputmode="numeric" placeholder="none" value="12"></div>' +
+      '<div style="flex:0 0 auto"><label class="chk" style="padding-bottom:9px"><input type="checkbox" id="wr_tr" checked> Warranty moves with the machine when resold</label></div>' +
+      '<div style="flex:0 0 auto" class="row"><button class="btn primary" type="button" data-wr="save"' + (WR.busy ? ' disabled' : '') + '>Save rule</button> <button class="btn" type="button" data-wr="saveapply"' + (WR.busy ? ' disabled' : '') + '>Save &amp; apply to existing</button></div></div>';
+    h += '<h3 style="margin:14px 0 4px">The public register</h3><div class="row" style="gap:10px;flex-wrap:wrap;align-items:center">' +
+      '<button class="btn" type="button" data-wr="sync"' + (WR.busy ? ' disabled' : '') + '>Publish every sold serial to the register</button>' + (WR.sync !== null ? '<span class="sku">' + fmt(WR.sync) + ' published</span>' : '') +
+      (d.isOwner ? '<label class="chk"><input type="checkbox" id="wr_show"' + (d.showSeller ? ' checked' : '') + '> Show my shop\u2019s name on the register (off = \u201cSupplier \u00b7 city\u201d)</label>' : '') + '</div>' +
+      '<div class="sku" style="margin-top:4px">Every sale with a serial number is published by itself. This button is for sales made before today.</div>';
+  }
+  if (WR.bulk) {
+    h += '<h3 style="margin:14px 0 4px">Set serial &amp; warranty on ' + fmt(WR.bulk.n) + ' ticked product' + (WR.bulk.n === 1 ? '' : 's') + '</h3><div class="wrform">' +
+      '<div style="flex:0 0 auto"><label class="chk" style="padding-bottom:9px"><input type="checkbox" id="wb_ser" checked> Sold by serial number</label></div>' +
+      '<div style="flex:0 1 150px"><label class="f" for="wb_months">Warranty (months)</label><input class="i" id="wb_months" inputmode="numeric" placeholder="none" value="12"></div>' +
+      '<div style="flex:0 0 auto"><label class="chk" style="padding-bottom:9px"><input type="checkbox" id="wb_tr" checked> Moves with the machine</label></div>' +
+      '<div style="flex:0 0 auto" class="row"><button class="btn primary" type="button" data-wr="bulkgo"' + (WR.busy ? ' disabled' : '') + '>Set on ' + fmt(WR.bulk.n) + '</button> <button class="btn" type="button" data-wr="bulkoff">Cancel</button></div></div>';
+  }
+  return h + '</div></section>';
+}
+function wrPaint() {
+  var old = document.getElementById('wr_card'); if (old) old.remove();
+  if (!WR.open || VIEW !== 'products') return;
+  var lv = document.querySelector('#view .o_lv[data-lv="products"]'); if (!lv) return;
+  var box = document.createElement('div'); box.id = 'wr_card'; box.innerHTML = wrHtml(); lv.parentNode.insertBefore(box, lv);
+}
+function wrButtons() {
+  if (VIEW !== 'products' || !ME || !/^(manager|shareholder|owner)$/.test(ME.role)) return;
+  var nb = document.querySelector('#view .o_lv[data-lv="products"] [data-lv-new]');
+  if (nb && !nb.parentNode.querySelector('[data-wr="open"]')) nb.insertAdjacentHTML('afterend', ' <button class="btn" type="button" data-wr="open">Warranty rules</button>');
+  var db = document.querySelector('#view .o_lv[data-lv="products"] [data-lv-act="discontinue"]');
+  if (db && !db.parentNode.querySelector('[data-wr="bulk"]')) db.insertAdjacentHTML('beforebegin', '<button class="btn small" type="button" data-wr="bulk">Set serial &amp; warranty</button>');
+  if (WR.open && !document.getElementById('wr_card')) wrPaint();
+}
+document.addEventListener('click', function (ev) {
+  var b = ev.target && ev.target.closest ? ev.target.closest('[data-wr]') : null; if (!b) return;
+  var k = b.getAttribute('data-wr'), fail = function (e) { WR.busy = false; toast(esc((e && e.message) || e), true, 9000); wrPaint(); };
+  if (k === 'open') { WR.open = true; WR.bulk = null; wrPaint(); if (!WR.data) wrLoad(); window.scrollTo(0, 0); return; }
+  if (k === 'close') { WR.open = false; WR.bulk = null; wrPaint(); return; }
+  if (k === 'save' || k === 'saveapply') {
+    var p = { category: el('wr_cat').value, brand: el('wr_brand').value, serialised: el('wr_ser').checked, warrantyMonths: el('wr_months').value.trim(), transferable: el('wr_tr').checked, apply: k === 'saveapply' };
+    WR.busy = true; wrPaint();
+    srv('erpWarrantyRuleSave', [p], function (r) { WR.busy = false; WR.data = r; toast(k === 'saveapply' ? 'Saved and applied to ' + fmt(r.applied) + ' product(s).' : 'Rule saved. New products of this kind take it by themselves.'); wrPaint(); if (r.applied) { CAT = null; loadAll(); lvLoad('products'); } }, fail);
+    return;
+  }
+  if (k === 'apply') { WR.busy = true; wrPaint(); srv('erpWarrantyRuleApply', [{ id: b.getAttribute('data-id') }], function (r) { WR.busy = false; toast('Applied to ' + fmt(r.applied) + ' product(s).'); wrPaint(); CAT = null; loadAll(); lvLoad('products'); wrLoad(); }, fail); return; }
+  if (k === 'remove') { srv('erpWarrantyRuleRemove', [{ id: b.getAttribute('data-id') }], function (r) { WR.data = r; toast('Rule removed.'); wrPaint(); }, fail); return; }
+  if (k === 'sync') { WR.busy = true; wrPaint(); srv('erpPassportSync', [], function (r) { WR.busy = false; WR.sync = r.published; toast(fmt(r.published) + ' sold serial(s) published to the register.'); wrPaint(); }, fail); return; }
+  if (k === 'bulk') {
+    var st = lvSt('products'), keys = Object.keys(st.sel || {});
+    if (st.all) { toast('Reading every ticked row\u2026'); srv('erpListView', [lvArgs(st, 'products', { exportAll: true })], function (r) { WR.bulk = { keys: r.rows.map(function (x) { return x.key; }), n: r.rows.length }; WR.open = true; wrPaint(); if (!WR.data) wrLoad(); window.scrollTo(0, 0); }, fail); return; }
+    if (!keys.length) { toast('Tick the products first.', true); return; }
+    WR.bulk = { keys: keys, n: keys.length }; WR.open = true; wrPaint(); if (!WR.data) wrLoad(); window.scrollTo(0, 0); return;
+  }
+  if (k === 'bulkoff') { WR.bulk = null; wrPaint(); return; }
+  if (k === 'bulkgo') {
+    WR.busy = true; wrPaint();
+    srv('erpSerialBulkSet', [{ skus: WR.bulk.keys, serialised: el('wb_ser').checked, warrantyMonths: el('wb_months').value.trim(), transferable: el('wb_tr').checked }], function (r) { WR.busy = false; WR.bulk = null; toast(fmt(r.changed) + ' product(s) set.'); CAT = null; loadAll(); lvLoad('products'); wrLoad(); }, fail);
+  }
+});
+document.addEventListener('change', function (ev) { if (ev.target && ev.target.id === 'wr_show') srv('erpPassportShowSeller', [{ on: ev.target.checked }], function () { toast(ev.target.checked ? 'Your shop\u2019s name shows on the register.' : 'The register shows only \u201cSupplier \u00b7 city\u201d for you.'); }, function (e) { toast(esc((e && e.message) || e), true); }); });
+
+// ---- the warranty card (printable) and the customer's page link
+function wcardOpen(serial, sku) {
+  toast('Preparing the card\u2026', false, 6000);
+  srv('erpWarrantyCard', [{ serial: serial, sku: sku || '' }], function (c) {
+    var w = window.open('', '_blank'); if (!w) { toast('Allow pop-ups to print the card.', true); return; }
+    var brand = c.brandName ? ' \u00b7 ' + esc(c.brandName) : '';
+    w.document.write('<!doctype html><html><head><meta charset="utf-8"><title>Warranty card ' + esc(c.serial) + '</title><style>@page{size:A6 landscape;margin:8mm}body{font-family:Inter,system-ui,sans-serif;color:#111;margin:0;padding:10mm}' +
+      '.card{display:flex;gap:8mm;align-items:flex-start;border:1px solid #bbb;border-radius:4mm;padding:7mm}.card h1{font-size:15pt;margin:0 0 2mm}.card .k{font-size:8.5pt;color:#666;margin-top:2mm}.card .v{font-size:11.5pt;font-weight:600}' +
+      '.big{font-size:13pt;color:#166534;font-weight:800}.qr{text-align:center;font-size:8pt;color:#444;flex:0 0 38mm}.qr img{width:36mm;height:36mm;display:block;margin:0 auto 1mm}.foot{font-size:8pt;color:#666;margin-top:4mm}@media print{.np{display:none}}</style></head><body>' +
+      '<div class="card"><div style="flex:1"><h1>' + esc(c.seller.name) + '</h1><div class="k">Product</div><div class="v">' + esc(c.product) + '</div><div class="k">Serial number</div><div class="v">' + esc(c.serial) + '</div>' +
+      '<div class="k">Sold</div><div class="v">' + esc(c.sold || '\u2014') + (c.invoiceNo ? ' \u00b7 ' + esc(c.invoiceNo) : '') + '</div><div class="k">Warranty</div><div class="big">' + (c.warrantyUntil ? 'until ' + esc(c.warrantyUntil) + (c.warrantyMonths ? ' (' + c.warrantyMonths + ' months)' : '') : 'none recorded') + '</div>' +
+      '<div class="foot">' + esc([c.seller.phone, c.seller.address].filter(Boolean).join(' \u00b7 ')) + '</div></div>' +
+      '<div class="qr"><img src="' + c.qr + '">Scan to check this warranty<br>' + esc(c.checkUrl.replace(/^https?:\/\//, '')) + brand + '</div></div>' +
+      '<p class="np" style="margin-top:8mm"><button onclick="window.print()">Print</button></p></body></html>');
+    w.document.close();
+  }, function (e) { toast(esc((e && e.message) || e), true, 8000); });
+}
+function myLinkBox(phone, name, target) {
+  srv('erpMyLink', [{ phone: phone, name: name }], function (r) {
+    var box = document.getElementById('mylink_box'); if (box) box.remove();
+    box = document.createElement('div'); box.id = 'mylink_box'; box.className = 'mylink';
+    box.innerHTML = '<code>' + esc(r.url) + '</code><button class="btn small" type="button" data-copy="' + esc(r.url) + '">Copy</button>' + (r.whatsapp ? '<a class="btn small primary" href="' + esc(r.whatsapp) + '" target="_blank" rel="noopener">Send on WhatsApp</a>' : '') + '<span class="sku">The customer\u2019s own page: parcel, dues, warranty, reorder. The same link is the QR on every invoice.</span>';
+    target.insertAdjacentElement('afterend', box);
+  }, function (e) { toast(esc((e && e.message) || e), true, 8000); });
+}
+document.addEventListener('click', function (ev) {
+  var t = ev.target && ev.target.closest ? ev.target.closest('[data-wcard],[data-mylink],[data-copy]') : null; if (!t) return;
+  if (t.hasAttribute('data-copy')) { try { navigator.clipboard.writeText(t.getAttribute('data-copy')).then(function () { toast('Copied.'); }, function () { toast('Could not copy - select the link and copy it.', true); }); } catch (e) { toast('Could not copy - select the link and copy it.', true); } return; }
+  if (t.hasAttribute('data-wcard')) { wcardOpen(t.getAttribute('data-wcard'), t.getAttribute('data-wsku')); return; }
+  if (t.hasAttribute('data-mylink')) { myLinkBox(t.getAttribute('data-mylink'), t.getAttribute('data-myname'), t.parentNode); }
+});
+// where the buttons go: the invoice page, the customer page, the product page's sold list
+function n1Buttons() {
+  if (VIEW === 'sales' && INVP && INVP.data) {
+    var pdf = document.querySelector('#view [data-spdf]'), d = INVP.data;
+    if (pdf && !pdf.parentNode.querySelector('[data-mylink]') && (d.phone || d.customer)) {
+      var sn = []; (d.lines || []).forEach(function (l) { (l.serials || []).forEach(function (x) { if (!x.back) sn.push({ serial: x.serial, sku: l.sku }); }); });
+      pdf.insertAdjacentHTML('afterend', sn.map(function (x) { return '<button class="btn" type="button" data-wcard="' + esc(x.serial) + '" data-wsku="' + esc(x.sku) + '">Warranty card ' + esc(x.serial) + '</button>'; }).join('') +
+        '<button class="btn" type="button" data-mylink="' + esc(d.phone) + '" data-myname="' + esc(d.customer) + '">Customer\u2019s page link</button>');
+    }
+  }
+  if (VIEW === 'customers' && CUSP && CUSP.data) {
+    var cd = document.querySelector('#view [data-cdue="1"]');
+    if (cd && !cd.parentNode.querySelector('[data-mylink]')) cd.insertAdjacentHTML('afterend', '<button class="btn" type="button" data-mylink="' + esc(cd.getAttribute('data-cphone')) + '" data-myname="' + esc(cd.getAttribute('data-cname')) + '">Customer\u2019s page link</button>');
+  }
+  document.querySelectorAll('#view [data-sercard] table tbody tr').forEach(function (tr) {
+    if (tr.querySelector('[data-wcard]') || tr.cells.length < 5) return;
+    var serial = (tr.cells[0].textContent || '').trim(); if (!serial) return;
+    tr.cells[tr.cells.length - 1].insertAdjacentHTML('beforeend', ' <button class="btn small" type="button" data-wcard="' + esc(serial) + '" data-wsku="' + esc(document.querySelector('#view [data-sercard]').getAttribute('data-sercard')) + '">Card</button>');
+  });
+}
+// after every redraw
+(function () {
+  var t = 0;
+  var mo = new MutationObserver(function () { clearTimeout(t); t = setTimeout(function () { try { scanWire(); wrButtons(); n1Buttons(); } catch (e) {} }, 80); });
+  mo.observe(document.body, { childList: true, subtree: true });
+  setTimeout(function () { try { scanWire(); wrButtons(); n1Buttons(); } catch (e) {} }, 1500);
+})();
 </script>
 </body>
 </html>

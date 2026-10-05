@@ -35,7 +35,7 @@ const FONTS = {
 };
 const DEFAULTS = { template: 'wave', accent: '', dark: '', font: 'sans', title: 'INVOICE', thanks: '', terms: '', qrId: '', qrLabel: 'Bangla QR',
   bigTop: false, logoSize: 'm', logoSide: 'left',
-  show: { banks: true, qr: true, signature: false, phone: true, delivery: true } };
+  show: { banks: true, qr: true, signature: false, phone: true, delivery: true, myqr: true } };
 
 function merge(saved) {
   const s = saved && typeof saved === 'object' ? saved : {};
@@ -64,7 +64,7 @@ function clean(x) {
     title: t(x.title, 40).trim() || 'INVOICE', thanks: t(x.thanks, 300), terms: t(x.terms, 2000),
     qrId: t(x.qrId, 200), qrLabel: (t(x.qrLabel, 60).trim() === 'Scan to pay' ? '' : t(x.qrLabel, 60)) || 'Bangla QR',
     bigTop: x.bigTop === true, logoSize: ['s', 'm', 'l'].includes(x.logoSize) ? x.logoSize : 'm', logoSide: x.logoSide === 'right' ? 'right' : 'left',
-    show: { banks: sh.banks !== false, qr: sh.qr !== false, signature: !!sh.signature, phone: sh.phone !== false, delivery: sh.delivery !== false },
+    show: { banks: sh.banks !== false, qr: sh.qr !== false, signature: !!sh.signature, phone: sh.phone !== false, delivery: sh.delivery !== false, myqr: sh.myqr !== false },
   };
   return d;
 }
@@ -103,7 +103,7 @@ function parts(d, p, s, opt, img, now, D) {
   if (d.invDisc > 0.5) { if (d.itemDisc > 0.5) sums.push(['Item discounts', '− ' + n(d.itemDisc)]); sums.push(['Invoice discount', '− ' + n(d.invDisc)]); }
   else if (d.totalDisc > 0.5) sums.push(['Discount', '− ' + n(d.totalDisc)]);
   if (D.show.delivery && d.delivery > 0.5) sums.push(['Delivery', n(d.delivery)]);
-  return { accent, dark, cur, n, paidUp, banks, qr, when, biz, addrLines, contact, rows, sums,
+  return { accent, dark, cur, n, paidUp, banks, qr, my: D.show.myqr === false ? '' : str(img.my), when, biz, addrLines, contact, rows, sums,
     a2: tint(accent, 0.35), a4: tint(accent, 0.84), a5: tint(accent, 0.93), d5: tint(dark, 0.93),
     onAccent: isDark(accent) ? '#ffffff' : dark, onDark: '#ffffff', font: FONTS[D.font] || FONTS.sans,
     title: esc(D.title || 'INVOICE'), thanks: esc(D.thanks || p.footer || 'Thank you for your order.'), terms: esc(D.terms).replace(/\n/g, '<br>'),
@@ -133,11 +133,12 @@ function qrWords(D, small) {
   return l === 'Bangla QR' ? '<b>Bangla QR</b><br><span style="font-size:' + (small || '7.5pt') + ';color:#6b7280">Scan with any bank app, bKash, Nagad or Rocket</span>' : esc(l);
 }
 function payBlock(P, D) {
-  if (!P.banks.length && !P.qr) return '';
+  if (!P.banks.length && !P.qr && !P.my) return '';
   return '<div class="pay">' + (P.banks.length ? '<div><div class="h">Payment details</div>' + P.banks.map((b) =>
       '<div class="bank"><b>' + esc(b.bank || 'Bank') + '</b><br>' + (b.name ? esc(b.name) + '<br>' : '') + 'A/C <b>' + esc(b.number || '—') + '</b>' +
       (b.branch ? '<br><span class="muted">' + esc(b.branch) + '</span>' : '') + (b.extra ? '<br><span class="muted">' + esc(b.extra) + '</span>' : '') + '</div>').join('') + '</div>' : '') +
-    (P.qr ? '<div class="qr"><img src="' + P.qr + '"><div style="max-width:34mm;margin:0 auto">' + qrWords(D) + '</div></div>' : '') + '</div>';
+    (P.qr ? '<div class="qr"><img src="' + P.qr + '"><div style="max-width:34mm;margin:0 auto">' + qrWords(D) + '</div></div>' : '') +
+    (P.my ? '<div class="qr"><img src="' + P.my + '"><div style="max-width:34mm;margin:0 auto"><b>My orders &amp; warranty</b><br><span style="font-size:7.5pt;color:#6b7280">Scan: parcel, dues, warranty, reorder</span></div></div>' : '') + '</div>';
 }
 function billTo(d) {
   return '<div class="h">Bill to</div><div class="cust">' + esc(d.head.customer || 'Walk-in customer') + '</div>' + (d.head.phone ? '<div>' + esc(d.head.phone) + '</div>' : '') +
@@ -317,7 +318,7 @@ function bold(d, p, s, opt, img, now, D) {
 function receipt(d, p, s, opt, img, now, D) {
   const P = parts(d, p, s, opt, img, now, D);
   // the page is as long as the receipt (a thermal roll is cut where it ends)
-  const h = Math.round(118 + d.lines.length * 9 + P.sums.length * 5 + (P.qr ? 42 : 0) + (P.terms ? 14 : 0) + (img.logo ? 16 : 0));
+  const h = Math.round(118 + d.lines.length * 9 + P.sums.length * 5 + (P.qr ? 42 : 0) + (P.my ? 40 : 0) + (P.terms ? 14 : 0) + (img.logo ? 16 : 0));
   const font = D.font === 'sans' ? FONTS.mono : P.font;
   const css = '@page{size:80mm ' + h + 'mm;margin:4mm 4mm}body{font-family:' + font + ';font-size:8.6pt;color:#000;line-height:1.35}' +
     '.c{text-align:center}.hr{border-top:0.3mm dashed #000;margin:2mm 0}.nm{font-size:11pt;font-weight:700}img.lg{height:12mm;display:block;margin:0 auto 1mm;filter:grayscale(1)}' +
@@ -329,6 +330,7 @@ function receipt(d, p, s, opt, img, now, D) {
     '<table>' + P.rows.map((r) => '<tr><td colspan="2">' + r.product + r.sn + '</td></tr><tr><td>&nbsp;&nbsp;' + r.qty + ' x ' + r.price + (r.off ? ' (' + r.off + ')' : '') + '</td><td class="r">' + r.total + '</td></tr>').join('') + '</table>' +
     '<div class="hr"></div><table>' + sumRows(P, d) + '</table><div class="hr"></div>' +
     (P.qr ? '<div class="qr c"><img src="' + P.qr + '">' + qrWords(D, '7pt') + '</div><div class="hr"></div>' : '') +
+    (P.my ? '<div class="qr c"><img src="' + P.my + '"><b>My orders &amp; warranty</b></div><div class="hr"></div>' : '') +
     '<div class="c">' + P.thanks + '</div>' + (P.terms ? '<div style="margin-top:1.5mm;font-size:7.5pt">' + P.terms + '</div>' : '');
   return { html: doc(css, body), footer: '' };
 }
@@ -341,7 +343,7 @@ export async function invoiceDoc(d, p, s, opt, img, now, D, waveArt) {
   if (DRAW[D.template]) return finish(D.template, DRAW[D.template](d, p, s, opt || {}, img || {}, now || new Date(), D), parts(d, p, s, opt || {}, img || {}, now || new Date(), D), d, D);
   const p2 = { ...p, banks: D.show.banks ? p.banks : [], footer: D.thanks || p.footer, phone: D.show.phone ? p.phone : '' };
   const s2 = { ...s, accent: HEX.test(String(D.accent)) ? D.accent : s.accent, dark: HEX.test(String(D.dark)) ? D.dark : s.dark };
-  const img2 = { ...img, qr: D.show.qr ? img.qr : '' };
+  const img2 = { ...img, qr: D.show.qr ? img.qr : '', my: D.show.myqr === false ? '' : img.my };
   const out = waveArt(d, p2, s2, opt || {}, img2, now || new Date());
   let html = out.html.replace('>INVOICE</div>', '>' + esc(D.title || 'INVOICE') + '</div>');
   if (str(D.qrLabel) && str(D.qrLabel) !== 'Bangla QR') html = html.replace('<b>Bangla QR</b><br><span class="muted">any bank app, bKash,<br>Nagad or Rocket</span>', '<b>' + esc(D.qrLabel) + '</b>');
@@ -370,7 +372,12 @@ async function pageFor(ctx, D, invoiceNo) {
   const d = (no && await S.invoiceDocData(ctx, no)) || SAMPLE();
   const p = await S.qProfile(ctx), s = await S.qSettings(ctx);
   if (!str(p.name)) p.name = (ctx.s && ctx.s.businessName) || '';
-  const parts2 = await invoiceDoc(d, p, s, {}, await imagesFor(ctx, p, D), new Date(), D, S.invoiceArtParts);
+  const img = await imagesFor(ctx, p, D);
+  if (D.show.myqr !== false) {   // the customer-page QR (a sample link on the sample invoice)
+    const P = await import('./passport.js');
+    img.my = d.invoiceNo === 'INV-SAMPLE-001' ? (await import('../lib/qr.js')).qrDataUrl(P.pubBase(ctx.deps).my + '?t=sample') : await P.myQrFor(ctx, d.head.phone, d.head.customer);
+  }
+  const parts2 = await invoiceDoc(d, p, s, {}, img, new Date(), D, S.invoiceArtParts);
   if ((await docLang(ctx)) === 'bn') { parts2.html = docBangla(parts2.html); parts2.footer = docBangla(parts2.footer); }
   return { ...parts2, invoiceNo: d.invoiceNo, sample: d.invoiceNo === 'INV-SAMPLE-001' };
 }

@@ -13,6 +13,7 @@
 import { formatDate, num, dhakaDayStart } from '../lib/time.js';
 import { roleAtLeast, powerOn, callAllowed } from '../allow.js';
 import { who } from './money.js';
+import { passportSold, passportReturned, passportWarranty } from './passport.js';
 
 const str = (v) => String(v == null ? '' : v).trim();
 const clean = (v) => str(v).replace(/\s+/g, '').toUpperCase();
@@ -139,7 +140,92 @@ export async function erpSerialWarranty(ctx, payload) {
   await ctx.tx`update serials set warranty_until = ${until}, warranty_months = ${months},
                  note = ${(str(r.note) ? str(r.note) + ' | ' : '') + 'warranty changed ' + formatDate(ctx.now, 'd MMM yy') + ' by ' + who(ctx) + ': ' + why}
                where id = ${r.id}`;
+  try { await passportWarranty(ctx, serial, until, months); } catch (e) { console.error('passport warranty', e); }
   return erpSerialsFor(ctx, { sku: r.sku });
+}
+
+// ---------------------------------------------------------------- Stage N0: warranty rules
+// One rule per category (and brand, or any brand): sold by serial number or not, and the warranty in months.
+// A new product takes the rule of its kind by itself (addProduct); "Apply" puts it on every product of that kind now.
+const ruleRow = (r) => ({ id: r.id, category: str(r.category), brand: str(r.brand), serialised: !!r.serialised,
+  warrantyMonths: r.warranty_months == null ? null : num(r.warranty_months), transferable: r.transferable !== false });
+export async function ruleFor(ctx, category, brand) {
+  const c = str(category).toLowerCase(), b = str(brand).toLowerCase();
+  const rows = await ctx.tx`select * from warranty_rules where business_id = ${ctx.biz}
+                            and (category = '' or lower(category) = ${c}) and (brand = '' or lower(brand) = ${b})
+                            order by (category <> '')::int + (brand <> '')::int desc, (category <> '')::int desc limit 1`;
+  return rows[0] || null;
+}
+/** A new product takes the rule of its kind - only the fields the caller did not set itself. */
+export async function applyRuleToProduct(ctx, productId, category, brand, given) {
+  const r = await ruleFor(ctx, category, brand); if (!r) return null;
+  const g = given || {};
+  const ser = g.serialised === undefined ? !!r.serialised : !!g.serialised;
+  const months = g.warranty_months === undefined ? (r.warranty_months == null ? null : num(r.warranty_months)) : (num(g.warranty_months) > 0 ? Math.round(num(g.warranty_months)) : null);
+  await ctx.tx`update products set serialised = ${ser}, warranty_months = ${months}, warranty_transferable = ${r.transferable !== false}, updated_at = now()
+               where id = ${productId} and business_id = ${ctx.biz}`;
+  delete ctx.memo.catalog;
+  return ruleRow(r);
+}
+async function applyRule(ctx, r) {
+  const c = str(r.category).toLowerCase(), b = str(r.brand).toLowerCase();
+  const months = r.warranty_months == null ? null : num(r.warranty_months);
+  const got = await ctx.tx`update products set serialised = ${!!r.serialised}, warranty_months = ${months}, warranty_transferable = ${r.transferable !== false}, updated_at = now()
+                           where business_id = ${ctx.biz} and (${c} = '' or lower(coalesce(category, '')) = ${c}) and (${b} = '' or lower(coalesce(brand, '')) = ${b}) returning id`;
+  delete ctx.memo.catalog;
+  return got.length;
+}
+function needManager(ctx, what) { if (!roleAtLeast(ctx.s.role, 'manager')) throw new Error('Only a manager or the owner can ' + what + '.'); }
+export async function erpWarrantyRules(ctx) {
+  const rows = await ctx.tx`select * from warranty_rules where business_id = ${ctx.biz} order by category, brand`;
+  const lk = await ctx.tx`select kind, value from lookups where business_id = ${ctx.biz} and kind in ('categories', 'brands') order by value`;
+  const cfg = await ctx.tx`select value from business_config where business_id = ${ctx.biz} and key = 'passport_show_seller'`;
+  const c = (await ctx.tx`select count(*)::int as n, count(*) filter (where serialised)::int as s from products where business_id = ${ctx.biz} and coalesce(status, 'Active') <> 'Discontinued'`)[0];
+  const { pubBase } = await import('./passport.js');
+  return { rules: rows.map(ruleRow), categories: lk.filter((x) => x.kind === 'categories').map((x) => str(x.value)), brands: lk.filter((x) => x.kind === 'brands').map((x) => str(x.value)),
+           products: c.n, serialised: c.s, showSeller: !(cfg[0] && str(cfg[0].value) === '0'), checkUrl: pubBase(ctx.deps).check,
+           canEdit: roleAtLeast(ctx.s.role, 'manager'), isOwner: ctx.s.role === 'owner' };
+}
+export async function erpWarrantyRuleSave(ctx, payload) {
+  needManager(ctx, 'set warranty rules');
+  const p = payload || {};
+  const category = str(p.category).slice(0, 80), brand = str(p.brand).slice(0, 80);
+  if (!category && !brand) throw new Error('A rule needs a category, a brand, or both.');
+  let months = p.warrantyMonths === '' || p.warrantyMonths === null || p.warrantyMonths === undefined ? null : Math.round(num(p.warrantyMonths));
+  if (months !== null && (months < 0 || months > 120)) throw new Error('Warranty is a number of months, 0 to 120. Empty means no warranty.');
+  if (months === 0) months = null;
+  const row = { business_id: ctx.biz, category, brand, serialised: p.serialised !== false, warranty_months: months, transferable: p.transferable !== false, created_by: who(ctx) };
+  const got = await ctx.tx`insert into warranty_rules ${ctx.tx(row, 'business_id', 'category', 'brand', 'serialised', 'warranty_months', 'transferable', 'created_by')}
+                           on conflict (business_id, lower(category), lower(brand)) do update set serialised = excluded.serialised, warranty_months = excluded.warranty_months,
+                             transferable = excluded.transferable, updated_at = now() returning *`;
+  const applied = p.apply ? await applyRule(ctx, got[0]) : 0;
+  return { ...(await erpWarrantyRules(ctx)), applied, saved: ruleRow(got[0]) };
+}
+export async function erpWarrantyRuleApply(ctx, payload) {
+  needManager(ctx, 'apply a warranty rule');
+  const r = (await ctx.tx`select * from warranty_rules where business_id = ${ctx.biz} and id = ${str(payload && payload.id)}::uuid`)[0];
+  if (!r) throw new Error('That rule was not found.');
+  return { applied: await applyRule(ctx, r) };
+}
+export async function erpWarrantyRuleRemove(ctx, payload) {
+  needManager(ctx, 'remove a warranty rule');
+  const got = await ctx.tx`delete from warranty_rules where business_id = ${ctx.biz} and id = ${str(payload && payload.id)}::uuid returning id`;
+  if (!got.length) throw new Error('That rule was not found.');
+  return erpWarrantyRules(ctx);
+}
+/** Many products at once (ticked in the list): sold by serial number or not, and the warranty. */
+export async function erpSerialBulkSet(ctx, payload) {
+  needManager(ctx, 'set serial numbers and warranty');
+  const p = payload || {};
+  const skus = (Array.isArray(p.skus) ? p.skus : []).map((s) => str(s).toLowerCase()).filter(Boolean).slice(0, 2000);
+  if (!skus.length) throw new Error('Tick at least one product.');
+  let months = p.warrantyMonths === '' || p.warrantyMonths === null || p.warrantyMonths === undefined ? null : Math.round(num(p.warrantyMonths));
+  if (months !== null && (months < 0 || months > 120)) throw new Error('Warranty is a number of months, 0 to 120. Empty means no warranty.');
+  if (months === 0) months = null;
+  const got = await ctx.tx`update products set serialised = ${p.serialised !== false}, warranty_months = ${months}, warranty_transferable = ${p.transferable !== false}, updated_at = now()
+                           where business_id = ${ctx.biz} and lower(btrim(sku)) = any(${skus}) returning id`;
+  delete ctx.memo.catalog;
+  return { changed: got.length };
 }
 
 /**
@@ -148,7 +234,7 @@ export async function erpSerialWarranty(ctx, payload) {
  * Lenient only when the product has no numbered unit at all (numbers never typed): then the sale goes through unnamed.
  */
 export async function sellSerials(ctx, invoiceNo, customer, key, at, items, recs, opts = {}) {
-  const out = [];
+  const out = [], units = [];
   for (const it of items) {
     const rec = recs[str(it.sku).toLowerCase()];
     if (!rec || !rec.serialised) continue;
@@ -171,8 +257,11 @@ export async function sellSerials(ctx, invoiceNo, customer, key, at, items, recs
       await ctx.tx`update serials set status = 'sold', sold_at = ${at}, invoice_no = ${invoiceNo}, customer = ${customer}, customer_key = ${key || null},
                      warranty_months = ${months > 0 ? months : null}, warranty_until = ${until}, returned_at = null where id = ${bySerial[w].id}`;
       out.push({ sku: str(it.sku), serial: w, warrantyUntil: until });
+      units.push({ serial: w, sku: str(it.sku), name: rec.name, brand: rec.brand, category: rec.cat, warrantyMonths: months, warrantyUntil: until });
     }
   }
+  // the Printer Passport register (provider side): never the reason a sale fails
+  if (units.length) { try { await passportSold(ctx, { invoiceNo, customerKey: key, at, units }); } catch (e) { console.error('passport sold', e); } }
   return out;
 }
 
@@ -195,6 +284,7 @@ export async function returnSerials(ctx, invoiceNo, take, asked) {
     if (ids.length !== num(t.qty)) throw new Error(t.product + ': ' + num(t.qty) + ' back but ' + ids.length + ' serial number(s) named.');
     await ctx.tx`update serials set status = ${t.good ? 'in_stock' : 'damaged'}, returned_at = ${new Date()},
                    note = ${'back from ' + invoiceNo} where id = any(${ids})`;
+    try { await passportReturned(ctx, sold.filter((s) => ids.includes(s.id)).map((s) => s.serial), invoiceNo); } catch (e) { console.error('passport returned', e); }
   }
 }
 
@@ -208,4 +298,5 @@ export async function serialsOnInvoice(ctx, invoiceNo) {
   return out;
 }
 
-export const HANDLERS = { erpSerialSetup, erpSerialsAdd, erpSerialsFor, erpSerialLookup, erpSerialWarranty };
+export const HANDLERS = { erpSerialSetup, erpSerialsAdd, erpSerialsFor, erpSerialLookup, erpSerialWarranty,
+  erpWarrantyRules, erpWarrantyRuleSave, erpWarrantyRuleApply, erpWarrantyRuleRemove, erpSerialBulkSet };

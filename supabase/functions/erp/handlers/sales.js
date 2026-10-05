@@ -1051,14 +1051,15 @@ export function invoiceArtParts(d, p, s, opt, img, now = new Date()) {
     }).join('') + '</tbody></table>' +
 
     '<div class="tail"><div class="end"><div class="pay">';
-  if (banks.length || img.qr) {
+  if (banks.length || img.qr || img.my) {
     body += '<div><div class="h">Payment Details</div>' + banks.map((b) =>
       '<div class="bank"><span class="bn">' + h(b.bank || 'Bank') + '</span>' +
         '<span class="muted">A/C name</span><span>' + (h(b.name) || '—') + '</span>' +
         '<span class="muted">A/C number</span><span><b>' + (h(b.number) || '—') + '</b></span>' +
         (b.branch ? '<span class="muted">Branch</span><span>' + h(b.branch) + '</span>' : '') +
         (b.extra ? '<span class="muted">Note</span><span>' + h(b.extra) + '</span>' : '') + '</div>').join('') + '</div>' +
-    (img.qr ? '<div class="qr"><img src="' + img.qr + '"><b>Bangla QR</b><br><span class="muted">any bank app, bKash,<br>Nagad or Rocket</span></div>' : '');
+    (img.qr ? '<div class="qr"><img src="' + img.qr + '"><b>Bangla QR</b><br><span class="muted">any bank app, bKash,<br>Nagad or Rocket</span></div>' : '') +
+    (img.my ? '<div class="qr"><img src="' + img.my + '"><b>My orders &amp; warranty</b><br><span class="muted">scan: parcel, dues,<br>warranty, reorder</span></div>' : '');
   }
   body += '</div><table class="sum">' +
     '<tr><td>Subtotal</td><td>' + n(d.gross) + '</td></tr>' +
@@ -1111,6 +1112,8 @@ export async function makeInvoicePdf(ctx, invoiceNo, opts = {}) {
   const D = await invoiceDesign(ctx);
   const img = { logo: (await docImg(ctx, p.logoTrimId)) || (await docImg(ctx, p.logoId)),
                 qr: await docImg(ctx, D.qrId || p.qrId), sig: D.show.signature ? await docImg(ctx, p.signatureId) : '' };
+  // the customer's own page (parcel, dues, warranty, reorder) as a QR - Stage N1
+  img.my = D.show.myqr === false ? '' : await (await import('./passport.js')).myQrFor(ctx, d.head.phone, d.head.customer);
   const parts = await invoiceDoc(d, p, s, opts, img, now, D, invoiceArtParts);
   // the customer's language for what they receive (Settings > Business)
   if ((await docLang(ctx)) === 'bn') { parts.html = docBangla(parts.html); parts.footer = docBangla(parts.footer); }

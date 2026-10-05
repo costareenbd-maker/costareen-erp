@@ -12,6 +12,7 @@ import { googleCallback } from './handlers/google.js';
 import { wooKeysCallback } from './handlers/wooauth.js';
 import { shopDoor } from './handlers/shop.js';
 import { installRoute } from './handlers/installer.js';
+import { pubRoute } from './handlers/passport.js';
 import { signinRoute } from './handlers/signin.js';
 import { installFinish, copyStats } from './lib/control.js';
 import postgres from 'npm:postgres@3.4.5';
@@ -333,7 +334,7 @@ Deno.serve(async (req) => {
   const q0 = new URL(req.url).searchParams;
   const tid = tenantOf(req, q0);
   // public routes, a company on the bridge, and every company copy (calls carry their own sign-in, never a cookie) answer any page
-  const headers = { ...cors(req.headers.get('origin'), !!(tid || q0.get('install') || q0.get('control') || q0.get('signin') || (INSTALL && INSTALL.id))), 'Content-Type': 'application/json' };
+  const headers = { ...cors(req.headers.get('origin'), !!(tid || q0.get('install') || q0.get('control') || q0.get('signin') || q0.get('pub') || (INSTALL && INSTALL.id))), 'Content-Type': 'application/json' };
   if (req.method === 'OPTIONS') return new Response('ok', { headers });
   if (tid && !(q0.get('install') || q0.get('control'))) {
     if (!tenantDeps) return new Response(JSON.stringify({ ok: false, error: 'This server does not run company ERPs.' }), { status: 200, headers });
@@ -384,6 +385,11 @@ async function serveWith(deps: any, req: Request, q0: URLSearchParams, headers: 
       if (r.location) return new Response(null, { status: 302, headers: { Location: r.location } });
       return new Response(JSON.stringify(r.body), { status: r.status, headers });
     }
+  }
+  // the public pages (handlers/passport.js): ?pub=check&s=<serial> (the register), ?pub=my&t=<token> (a customer's page)
+  if (q0.get('pub')) {
+    const r: any = await pubRoute(deps, req, { asBusiness, owners, tenantDeps });
+    return new Response(JSON.stringify(r.body), { status: r.status, headers });
   }
   // any website (handlers/shop.js): ?shop=ping|stock|order|products with the x-shop-key header
   if (new URL(req.url).searchParams.get('shop')) {

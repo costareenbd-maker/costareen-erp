@@ -5,7 +5,7 @@
 // always comes live from Supabase and is never cached here.
 //
 // Bump VERSION when the shell files change, so phones drop the old copy.
-var VERSION = 'cz-shell-v2';
+var VERSION = 'cz-shell-v3';
 var SHELL = [
   '/',
   '/manifest.webmanifest',
@@ -36,11 +36,12 @@ self.addEventListener('fetch', function (e) {
   // Pages: network first so an update shows up immediately; cached copy only
   // when the phone is offline, so the app at least opens and says so.
   if (req.mode === 'navigate') {
+    // only the app itself is kept: the public pages (/check, /my) are never the offline copy of the app
+    var isApp = url.pathname === '/' || url.pathname === '/index.html';
     e.respondWith(fetch(req).then(function (res) {
-      var copy = res.clone();
-      caches.open(VERSION).then(function (c) { c.put('/', copy); });
+      if (isApp) { var copy = res.clone(); caches.open(VERSION).then(function (c) { c.put('/', copy); }); }
       return res;
-    }).catch(function () { return caches.match('/'); }));
+    }).catch(function () { return isApp ? caches.match('/') : Response.error(); }));
     return;
   }
 

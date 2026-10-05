@@ -16,7 +16,7 @@ import { roleAtLeast, powerOn, callAllowed } from '../allow.js';
 import { lock, who } from './money.js';
 import { billForShipment } from './suppliers.js';
 import { ratesMap, landedCost, saveRate } from './currency.js';
-import { registerSerials } from './serials.js';
+import { registerSerials, applyRuleToProduct } from './serials.js';
 
 // CFG.SKU_PREFIX / CFG.BRAND_CODE (Code.js:40-56)
 export const SKU_PREFIX = {
@@ -168,6 +168,8 @@ export async function addProduct(ctx, data) {
             ${String(data.status || 'Active')}, ${now}, ${String(data.notes || '')})
     returning id`;
   const id = r[0].id;
+  // Stage N0: a new product takes the warranty rule of its category and brand (the caller's own values win)
+  try { await applyRuleToProduct(ctx, id, data.category, data.brand, { serialised: data.serialised, warranty_months: data.warranty_months }); } catch (e) { console.error('warranty rule', e); }
   const opening = num(data.opening_stock);
   if (opening > 0) {
     await addMovement(ctx, { productId: id, kind: 'OPENING', direction: 'IN', qty: opening, unit: cost,
