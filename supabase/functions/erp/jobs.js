@@ -148,6 +148,16 @@ export async function runJob(deps, job) {
         };
       }
     }
+    // the open market: every business that shares its stock lists it again (stock bands, prices, new products)
+    if (deps.control) {
+      const { marketRefresh } = await import('./handlers/market.js');
+      const sharing = (await sql`select business_id from business_config where key = 'market_share_on' and value = '1'`).map((r) => r.business_id);
+      if (sharing.length) {
+        for (const row of await owners(sql, sharing)) {
+          out['market:' + row.name] = await asBusiness(deps, row, 'websync:market', (ctx) => marketRefresh(ctx));
+        }
+      }
+    }
   } else if (job === 'heartbeat') {
     // a company's copy reports to its provider (lib/control.js); nothing on the provider's own system
     const { heartbeat } = await import('./lib/control.js');

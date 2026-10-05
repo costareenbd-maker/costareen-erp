@@ -36,7 +36,7 @@ check('said no at Supabase: back with "cancelled"', r.location.endsWith('/cancel
 
 let seenAuth = '';
 web.on(/api\.supabase\.com\/v1\/organizations$/, (u, o) => { seenAuth = o.headers.Authorization; return { status: 200, body: [{ id: 'org1', name: 'XYZ' }] }; });
-r = (await route('install=start', { code, company: 'XYZ Enterprise', ownerName: 'X', ownerEmail: 'x@xyz.test', website: 'https://www.XYZenterprise.test/about', oauthState: state, agree: true, terms: '2026-10' })).body;
+r = (await route('install=start', { code, company: 'XYZ Enterprise', ownerName: 'X', ownerEmail: 'x@xyz.test', website: 'https://www.XYZenterprise.test/about', oauthState: state, agree: true, terms: '2026-10.2' })).body;
 check('started with the connected account, no token pasted', r.ok && r.id && seenAuth === 'Bearer ACC1', [r, seenAuth]);
 const { id, secret } = r;
 const row = (await sql`select mgmt_kind, oauth_refresh, website from erp_installs where id = ${id}`)[0];

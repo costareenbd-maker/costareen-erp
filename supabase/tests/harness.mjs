@@ -72,6 +72,7 @@ async function renderPdf(html, opts) {
 export const deps = {
   sql,
   sqlAux,
+  control: sql,   // the provider's own tables (market list): the same test database
   verifyUser: async (h) => (/^Bearer owner:(.+)$/.exec(h) || [])[1] || null,
   fetch: fakeFetch,
   storage,

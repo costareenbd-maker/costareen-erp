@@ -47,20 +47,20 @@ web.on(/newref\.supabase\.co\/functions\/v1\/erp\?install=finish$/, async (u, o)
 });
 
 // an invite is needed
-let r = await route('install=start', { code: 'nope', company: 'Friend Co', ownerName: 'Ali', ownerEmail: 'ali@friend.test', token: 'sbp_' + 'a'.repeat(40), agree: true, terms: '2026-10' });
+let r = await route('install=start', { code: 'nope', company: 'Friend Co', ownerName: 'Ali', ownerEmail: 'ali@friend.test', token: 'sbp_' + 'a'.repeat(40), agree: true, terms: '2026-10.2' });
 check('no install without a valid invite', !r.ok && /not valid/.test(r.error), r);
 r = await mgr('erpInstallInvite', [{ note: 'x' }]);
 check('only the platform admin makes install links', !r.ok, r);
 r = await owner('erpInstallInvite', [{ note: 'Friend Co' }]);
 const code = r.ok && r.result.code;
 check('an install link', r.ok && r.result.link === 'https://app.test/#/install/' + code, r);
-r = await route('install=start', { code, company: 'Friend Co', ownerName: 'Ali', ownerEmail: 'ali@friend.test', token: 'not-a-token', agree: true, terms: '2026-10' });
+r = await route('install=start', { code, company: 'Friend Co', ownerName: 'Ali', ownerEmail: 'ali@friend.test', token: 'not-a-token', agree: true, terms: '2026-10.2' });
 check('a wrong token is refused before anything', !r.ok && /sbp_/.test(r.error), r);
 const TOKEN = 'sbp_' + 'b'.repeat(40);
-r = await route('install=start', { code, company: 'Friend Co', ownerName: 'Ali', ownerEmail: 'ali@friend.test', token: TOKEN, agree: true, terms: '2026-10' });
+r = await route('install=start', { code, company: 'Friend Co', ownerName: 'Ali', ownerEmail: 'ali@friend.test', token: TOKEN, agree: true, terms: '2026-10.2' });
 check('started with the company\'s own token', r.ok && r.id && r.secret && tokenSeen === 'Bearer ' + TOKEN, r);
 const { id, secret } = r;
-r = await route('install=start', { code, company: 'Again', ownerName: 'Ali', ownerEmail: 'ali@friend.test', token: TOKEN, agree: true, terms: '2026-10' });
+r = await route('install=start', { code, company: 'Again', ownerName: 'Ali', ownerEmail: 'ali@friend.test', token: TOKEN, agree: true, terms: '2026-10.2' });
 check('the link works once', !r.ok, r);
 r = await route('install=step', { id, secret: 'wrong' });
 check('the steps need the install\'s own secret', !r.ok, r);
@@ -138,7 +138,7 @@ check('the provider\'s own system is not affected', r.ok);
 r = await owner('erpInstallInvite', [{}]);
 const code2 = r.result.code;
 web.on(/api\.supabase\.com\/v1\/projects$/, () => ({ status: 402, body: { message: 'The following organization members have reached their maximum limits for the number of active free projects' } }));
-r = await route('install=start', { code: code2, company: 'Second Co', ownerName: 'B', ownerEmail: 'b@x.test', token: TOKEN, agree: true, terms: '2026-10' });
+r = await route('install=start', { code: code2, company: 'Second Co', ownerName: 'B', ownerEmail: 'b@x.test', token: TOKEN, agree: true, terms: '2026-10.2' });
 r = await route('install=step', { id: r.id, secret: r.secret });
 check('a failed step is said plainly (e.g. the free plan\'s 2 projects)', r.ok && r.status === 'failed' && /maximum limits/.test(r.error), r);
 await done();

@@ -30,7 +30,7 @@ const MGMT = 'https://api.supabase.com/v1';
 // the provider's own server, which runs every bridged company's ERP
 const controlApi = (deps) => str(deps.installEnv && deps.installEnv.controlUrl);
 // Stage 1b: the permanent link (/start = invite code 'open'), the terms every new owner agrees to, the sign-up limits
-export const TERMS_VERSION = '2026-10';
+export const TERMS_VERSION = '2026-10.2';   // .2: section 9, the market
 const OPEN = 'open', PER_IP_HOUR = 3, PER_DAY = 30;
 // the provider's zone where each company gets <name>.<zone> by itself (e.g. acme.3dowala.com)
 const freeZone = (deps) => str(deps.installEnv && deps.installEnv.freeZone).toLowerCase();

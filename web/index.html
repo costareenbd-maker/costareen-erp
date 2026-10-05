@@ -577,6 +577,7 @@ svg { display:block; width:100%; overflow:visible; }
       <button type="button" data-view="stock" aria-selected="false"><span class="ic"><svg viewBox="0 0 24 24"><path d="M3 21V9l9-6 9 6v12"/><path d="M9 21v-6h6v6"/><path d="M3 21h18"/></svg></span>Stock entry</button>
       <button type="button" data-view="suppliers" aria-selected="false"><span class="ic"><svg viewBox="0 0 24 24"><path d="M3 7h11v9H3zM14 10h4l3 3v3h-7z"/><circle cx="7" cy="18" r="1.800"/><circle cx="17.500" cy="18" r="1.800"/></svg></span>Suppliers<span class="count" id="cOwed"></span></button>
       <button type="button" data-view="costs" aria-selected="false"><span class="ic"><svg viewBox="0 0 24 24"><path d="M20 12l-8 8-9-9V3h8z"/><circle cx="7.5" cy="7.5" r="1.5"/></svg></span>Product cost<span class="count" id="cCosts"></span></button>
+      <button type="button" data-view="market" aria-selected="false"><span class="ic"><svg viewBox="0 0 24 24"><path d="M3 9l1.5-5h15L21 9"/><path d="M3 9h18v2a3 3 0 0 1-6 0 3 3 0 0 1-6 0 3 3 0 0 1-6 0z"/><path d="M5 13v8h14v-8"/><path d="M10 21v-5h4v5"/></svg></span>Market</button>
       <div class="navgrp">Money</div>
       <button type="button" data-view="profit" aria-selected="false"><span class="ic"><svg viewBox="0 0 24 24"><path d="M3 17l6-6 4 4 8-8"/><path d="M14 7h7v7"/></svg></span>Profitability</button>
       <button type="button" data-view="expenses" aria-selected="false"><span class="ic"><svg viewBox="0 0 24 24"><path d="M20 7H5a2 2 0 0 1 0-4h13v4"/><path d="M4 7v12a2 2 0 0 0 2 2h14V7"/><circle cx="16" cy="14" r="1.5"/></svg></span>Expenses</button>
@@ -8393,7 +8394,7 @@ function srv(name, args, ok, bad) {
 
 var SRV_ACTIVE = 0, SRV_WRITING = false, SRV_TIMED = {};
 // the same list the server uses to know a call changes nothing (ERP_READS)
-var SRV_READS = /^(erpBrand|erpComplianceLog|erpProviderKey|erpNews|erpAccessKeys|erpAccessWarning|erpAdmin|erpAiKeys|erpAlertRules|erpAlerts|erpArena|erpBackupStatus|erpBg|erpBnWords|erpBookedParcels|erpBrandLogo|erpBundle|erpBusinessLinks|erpBusinesses|erpBusinessesDeleted|erpCampaignAudience|erpCampaignGet|erpCampaignList|erpCapital|erpCashBook|erpCatalog|erpConnStatus|erpConnections|erpCostBook|erpCourier|erpCourierKeyStatus|erpCurrencies|erpCustomerAccount|erpCustomerCredit|erpCustomerList|erpCustomerPage|erpCustomerStatement|erpCustomers|erpDashboardData|erpDaySales|erpDeliveryOptions|erpDevices|erpDiscontinued|erpDues|erpEvoQr|erpEvoStatus|erpExpenseExport|erpExpenseReceiptUrl|erpExpenses|erpFamilies|erpFighters|erpFormOptions|erpGame|erpGetTheme|erpGoogle|erpHello|erpInstalls|erpInvoice|erpInvoicePdf|erpJob|erpJobs|erpListView|erpLookupCustomer|erpLookupUsage|erpMe|erpMoney|erpNoteFileUrl|erpNotes|erpOwnerChange|erpOwnerChanges|erpParcelLabels|erpParcelPreview|erpPartnerStock|erpPartnership|erpPayReasons|erpPeople|erpPlatform|erpPlatformErrors|erpPnl|erpPnlMonth|erpPoList|erpPoolCatalog|erpProduct|erpProductListShare|erpProductPage|erpProductPhotoUrl|erpProductThumbs|erpProfile|erpQuoteAsset|erpQuoteBoot|erpQuoteGet|erpQuoteList|erpRecentInvoices|erpRecovery|erpReorderPlan|erpRestorePreview|erpReturnPreview|erpRisks|erpSales|erpSearch|erpSecurity|erpSelfTest|erpSerialLookup|erpSerialsFor|erpSessions|erpSetTheme|erpSettingsFull|erpSettingsLists|erpSfPayoutLines|erpSfPayouts|erpShareFile|erpSharedStock|erpSheet|erpStatementPdf|erpStockHistory|erpSupplierPage|erpSuppliers|erpToday|erpUsers|erpWaProductPdf|erpWebMatches|erpWebOrderInvoices|erpWebOrders|erpWebsiteTest)$/;
+var SRV_READS = /^(erpMarket|erpMarketMine|erpBrand|erpComplianceLog|erpProviderKey|erpNews|erpAccessKeys|erpAccessWarning|erpAdmin|erpAiKeys|erpAlertRules|erpAlerts|erpArena|erpBackupStatus|erpBg|erpBnWords|erpBookedParcels|erpBrandLogo|erpBundle|erpBusinessLinks|erpBusinesses|erpBusinessesDeleted|erpCampaignAudience|erpCampaignGet|erpCampaignList|erpCapital|erpCashBook|erpCatalog|erpConnStatus|erpConnections|erpCostBook|erpCourier|erpCourierKeyStatus|erpCurrencies|erpCustomerAccount|erpCustomerCredit|erpCustomerList|erpCustomerPage|erpCustomerStatement|erpCustomers|erpDashboardData|erpDaySales|erpDeliveryOptions|erpDevices|erpDiscontinued|erpDues|erpEvoQr|erpEvoStatus|erpExpenseExport|erpExpenseReceiptUrl|erpExpenses|erpFamilies|erpFighters|erpFormOptions|erpGame|erpGetTheme|erpGoogle|erpHello|erpInstalls|erpInvoice|erpInvoicePdf|erpJob|erpJobs|erpListView|erpLookupCustomer|erpLookupUsage|erpMe|erpMoney|erpNoteFileUrl|erpNotes|erpOwnerChange|erpOwnerChanges|erpParcelLabels|erpParcelPreview|erpPartnerStock|erpPartnership|erpPayReasons|erpPeople|erpPlatform|erpPlatformErrors|erpPnl|erpPnlMonth|erpPoList|erpPoolCatalog|erpProduct|erpProductListShare|erpProductPage|erpProductPhotoUrl|erpProductThumbs|erpProfile|erpQuoteAsset|erpQuoteBoot|erpQuoteGet|erpQuoteList|erpRecentInvoices|erpRecovery|erpReorderPlan|erpRestorePreview|erpReturnPreview|erpRisks|erpSales|erpSearch|erpSecurity|erpSelfTest|erpSerialLookup|erpSerialsFor|erpSessions|erpSetTheme|erpSettingsFull|erpSettingsLists|erpSfPayoutLines|erpSfPayouts|erpShareFile|erpSharedStock|erpSheet|erpStatementPdf|erpStockHistory|erpSupplierPage|erpSuppliers|erpToday|erpUsers|erpWaProductPdf|erpWebMatches|erpWebOrderInvoices|erpWebOrders|erpWebsiteTest)$/;
 function srvPump() {
   if (!SRV_Q.length) return;
   var isRead = SRV_READS.test(SRV_Q[0].name);
@@ -9705,6 +9706,7 @@ function repaint() {
         : VIEW === 'campaigns' ? viewCampaigns()
         : VIEW === 'weborders' ? viewWebOrders()
         : VIEW === 'costs' ? viewCosts()
+        : VIEW === 'market' ? viewMarket()
         : VIEW === 'settings' ? viewSettings()
         : VIEW === 'tools' ? viewTools()
         : viewOrders();
@@ -12244,7 +12246,7 @@ var APPS = [
     icon: '<path d="M3 17l5-5 4 4 8-9"/><path d="M15 7h5v5"/>' },
   { id: 'contacts', name: 'Contacts', color: '#2a9d8f', views: ['customers', 'campaigns'],
     icon: '<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-7 8-7s8 3 8 7"/>' },
-  { id: 'inventory', name: 'Inventory', color: '#c8553d', views: ['products', 'stock', 'suppliers', 'costs'],
+  { id: 'inventory', name: 'Inventory', color: '#c8553d', views: ['products', 'stock', 'suppliers', 'costs', 'market'],
     icon: '<path d="M3 8l9-5 9 5v8l-9 5-9-5z"/><path d="M3 8l9 5 9-5M12 13v8"/>' },
   { id: 'accounting', name: 'Accounting', color: '#3a86c8', views: ['profit', 'expenses', 'cash', 'capital'],
     icon: '<circle cx="12" cy="12" r="9"/><path d="M15 9.2c-.6-.8-1.7-1.2-3-1.2-1.8 0-3 .8-3 2s1 1.800 3 2 3 .8 3 2-1.200 2-3 2c-1.300 0-2.400-.4-3-1.200M12 6v2M12 16v2"/>' },
@@ -12252,7 +12254,7 @@ var APPS = [
     icon: '<circle cx="12" cy="12" r="3.2"/><path d="M12 2.500v3M12 18.500v3M2.500 12h3M18.500 12h3M5.300 5.300l2.100 2.100M16.600 16.600l2.100 2.100M5.300 18.700l2.100-2.100M16.600 7.400l2.100-2.100"/>' }
 ];
 var VIEW_NAMES = { invoice: 'New invoice', sales: 'Invoices', weborders: 'Web orders', quotes: 'Quotations', repairs: 'Repairs', customers: 'Customers', campaigns: 'Campaigns',
-                   products: 'Products', stock: 'Stock', costs: 'Product cost', profit: 'Profitability', expenses: 'Expenses', capital: 'Capital', cash: 'Money', suppliers: 'Suppliers',
+                   products: 'Products', stock: 'Stock', costs: 'Product cost', market: 'Market', profit: 'Profitability', expenses: 'Expenses', capital: 'Capital', cash: 'Money', suppliers: 'Suppliers',
                    settings: 'Settings', tools: 'Maintenance', platform: 'Platform', dash: 'Dashboard', home: 'Home' };
 var VIEW_COUNT = { invoice: 'cCart', sales: 'cSend', weborders: 'cWeb', costs: 'cCosts' };
 function appOf(view) { for (var i = 0; i < APPS.length; i++) if (APPS[i].views.indexOf(view) >= 0) return APPS[i]; return null; }
@@ -18671,7 +18673,7 @@ button:focus-visible, a:focus-visible, select:focus-visible, summary:focus-visib
 
 <!-- Stage 1b: the terms on the sign-up, the brand (name, sponsor, colour, logo) on install pages and company ERPs -->
 <script>
-var INS_TERMS = '2026-10';
+var INS_TERMS = '2026-10.2';
 function insTermsHtml(i) {
   var B = window.ERP_BRAND || {}, N = esc(B.name || 'the ERP');
   return '<details style="margin-top:12px"><summary style="cursor:pointer;font-weight:600">Read the terms (version ' + INS_TERMS + ')</summary><div class="sub" data-c5x="1" style="display:block;max-height:280px;overflow:auto;margin-top:6px;line-height:1.55">' +
@@ -18683,7 +18685,8 @@ function insTermsHtml(i) {
     '<p><b>6. What the provider keeps about you.</b> Your company name, the owner\u2019s name and e-mail, your web address, and simple usage counts (for example how many invoices a month), to run and improve the service. These are not sold.</p>' +
     '<p><b>7. Changes and ending.</b> The software and these terms may change; you will be told inside the software. Either side may end the service. The provider may switch a business off for illegal use or a breach of these terms, and tells the business why.</p>' +
     '<p><b>8. No guarantee.</b> The software is provided as it is. Keep your own backups (Settings has a backup). The provider is not responsible for losses from using it, as far as the law allows.</p>' +
-    '</div></details>' +
+        '<p><b>9. The market.</b> Every business can see stock offered on the market. Only if you switch on “Share my stock” are the products you choose shown to other businesses: name, category, brand, “in stock” or “low”, and your price or “ask”, as “Supplier · your city”. Never your costs, customers or sales. Switching off removes them at once. The platform operator may also list stock there.</p>' +
+'</div></details>' +
     '<label class="row" style="gap:8px;align-items:flex-start;margin-top:10px;cursor:pointer"><input type="checkbox" id="ins_agree"' + (i.agree ? ' checked' : '') + ' style="width:18px;height:18px;margin-top:2px">' +
     '<span>I have read and agree to the terms.</span></label>';
 }
@@ -18941,6 +18944,117 @@ function providerKeyHtml() {
 }
 var securityHtmlK1 = securityHtml;
 securityHtml = function () { return providerKeyHtml() + securityHtmlK1.apply(this, arguments); };
+</script>
+
+<!-- Stage 2: the open market - find stock from other suppliers; the owner chooses what to share -->
+<style>
+.mk-band{display:inline-block;padding:2px 8px;border-radius:999px;font-size:12px;font-weight:600;white-space:nowrap}
+.mk-band.in{background:color-mix(in srgb,#2a9d8f 18%,transparent);color:#1f7a6f}
+.mk-band.low{background:color-mix(in srgb,#e09f3e 22%,transparent);color:#9a6412}
+.mk-tabs{display:flex;gap:8px;flex-wrap:wrap;margin:4px 0 12px}
+.mk-find{display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end}
+.mk-find .i{min-width:0}
+.mk-sw{display:flex;gap:10px;align-items:center;font-weight:600;cursor:pointer}
+.mk-sw input{width:20px;height:20px}
+</style>
+<script>
+var MK = { tab: 'find', q: '', cat: '', res: null, err: '', busy: false, mine: null, mineErr: '', saving: false };
+function loadMarket() {
+  MK.busy = true; MK.err = '';
+  srv('erpMarket', [{ q: MK.q, category: MK.cat }], function (r) { MK.res = r; MK.busy = false; if (VIEW === 'market') repaint(); },
+    function (e) { MK.err = (e && e.message) || String(e); MK.busy = false; if (VIEW === 'market') repaint(); });
+}
+function loadMarketMine() {
+  MK.mine = { loading: true }; MK.mineErr = '';
+  srv('erpMarketMine', [], function (r) { MK.mine = r; if (VIEW === 'market') repaint(); },
+    function (e) { MK.mine = null; MK.mineErr = (e && e.message) || String(e); if (VIEW === 'market') repaint(); });
+}
+function mkAgo(m) { return m < 1 ? 'just now' : m < 60 ? m + ' min ago' : m < 1440 ? Math.round(m / 60) + ' h ago' : Math.round(m / 1440) + ' d ago'; }
+function viewMarket() {
+  var owner = ME && ME.role === 'owner';
+  if (!owner && MK.tab === 'mine') MK.tab = 'find';
+  var r = MK.res;
+  var h = '<section><div class="card"><h2>Market</h2>' +
+    '<div class="sub" data-c5x="1" style="display:block">' + (r && r.sharing
+      ? 'You see every supplier that shares stock' + (r.city ? '. Yours is shared from <b>' + esc(r.city) + '</b>' : '') + '.'
+      : 'You see the platform\u2019s own stock. <b>Share your stock</b> to see every supplier\u2019s too.') +
+    ' Suppliers are shown by city only. Ordering through the market comes in the next update.</div>' +
+    '<div class="mk-tabs"><button class="btn' + (MK.tab === 'find' ? ' primary' : '') + '" type="button" data-mktab="find">Find stock</button>' +
+    (owner ? '<button class="btn' + (MK.tab === 'mine' ? ' primary' : '') + '" type="button" data-mktab="mine">What I share' + (r && r.sharing ? ' \u2713' : '') + '</button>' : '') + '</div>';
+  h += MK.tab === 'mine' ? mkMineHtml() : mkFindHtml();
+  return h + '</div></section>';
+}
+function mkFindHtml() {
+  var r = MK.res;
+  var h = '<div class="mk-find"><div style="flex:1 1 220px"><label class="f" for="mk_q">Search</label><input class="i" id="mk_q" value="' + esc(MK.q) + '" placeholder="Product, brand or category"></div>' +
+    '<div style="flex:0 1 200px"><label class="f" for="mk_cat">Category</label><select class="i" id="mk_cat"><option value="">All</option>' +
+    ((r && r.categories) || []).map(function (c) { return '<option' + (c === MK.cat ? ' selected' : '') + '>' + esc(c) + '</option>'; }).join('') + '</select></div>' +
+    '<button class="btn primary" type="button" id="mk_go">' + (MK.busy ? 'Searching\u2026' : 'Search') + '</button></div>';
+  if (MK.err) return h + '<div class="note err" style="margin-top:10px"><div class="ico">!</div><div>' + esc(MK.err) + '</div></div>';
+  if (!r) return h + '<div class="empty">Loading\u2026</div>';
+  if (!r.items.length) return h + '<div class="empty">' + (MK.q || MK.cat ? 'Nothing matches.' : 'Nothing on the market yet.') + '</div>';
+  return h + '<div class="scroll" style="margin-top:10px"><table><thead><tr><th>Product</th><th>Category</th><th>Stock</th><th class="num">Price</th><th>Supplier</th><th>Updated</th></tr></thead><tbody>' +
+    r.items.map(function (x) {
+      var sub = [x.brand, x.color, x.unit].filter(Boolean).join(' \u00b7 ');
+      return '<tr><td><b>' + esc(x.name) + '</b>' + (sub ? '<div class="sku">' + esc(sub) + '</div>' : '') + '</td><td>' + esc(x.category || '') + '</td>' +
+        '<td><span class="mk-band ' + (x.band === 'low' ? 'low">Low' : 'in">In stock') + '</span></td>' +
+        '<td class="num">' + (x.price == null ? '<span class="sku">Ask</span>' : '\u09f3' + fmt(x.price)) + '</td>' +
+        '<td>' + esc(x.seller) + '</td><td class="sku">' + esc(mkAgo(x.minutes)) + '</td></tr>';
+    }).join('') + '</tbody></table></div>' + (r.truncated ? '<div class="sub" data-c5x="1" style="display:block">First 300 shown - search to narrow down.</div>' : '');
+}
+function mkMineHtml() {
+  if (MK.mineErr) return '<div class="note err"><div class="ico">!</div><div>' + esc(MK.mineErr) + '</div></div>';
+  var m = MK.mine;
+  if (!m || m.loading) { if (!m) loadMarketMine(); return '<div class="empty">Loading\u2026</div>'; }
+  var shared = m.products.filter(function (p) { return p.shared; }).length;
+  var h = '<label class="mk-sw"><input type="checkbox" id="mk_on"' + (m.on ? ' checked' : '') + '> Share my stock on the market</label>' +
+    '<div class="sub" data-c5x="1" style="display:block;margin:6px 0 10px">Other businesses see only the products ticked below: name, category, brand, \u201cIn stock\u201d or \u201cLow\u201d (never the number), and your sell price or \u201cAsk\u201d. Never your costs, customers or sales. Sold-out products drop off by themselves; the list refreshes every 15 minutes. Switching off removes everything at once.</div>' +
+    '<div class="mk-find"><div style="flex:0 1 240px"><label class="f" for="mk_city">Your city (buyers see \u201cSupplier \u00b7 city\u201d)</label><input class="i" id="mk_city" maxlength="40" value="' + esc(m.city) + '" placeholder="e.g. Dhaka"></div>' +
+    '<button class="btn" type="button" id="mk_all">Tick all in stock</button><button class="btn" type="button" id="mk_none">Untick all</button>' +
+    '<button class="btn primary" type="button" id="mk_save"' + (MK.saving ? ' disabled' : '') + '>' + (MK.saving ? 'Saving\u2026' : 'Save') + '</button></div>' +
+    '<div class="sku" style="margin-top:8px">' + shared + ' of ' + m.products.length + ' products ticked</div>';
+  if (!m.products.length) return h + '<div class="empty">No products yet.</div>';
+  return h + '<div class="scroll tall" style="margin-top:6px"><table><thead><tr><th style="width:36px">Share</th><th>Product</th><th class="num">In stock</th><th class="num">Sell price</th><th>Buyers see</th></tr></thead><tbody>' +
+    m.products.map(function (p, i) {
+      return '<tr><td><input type="checkbox" data-mkp="' + i + '"' + (p.shared ? ' checked' : '') + ' style="width:18px;height:18px" aria-label="Share ' + esc(p.name) + '"></td>' +
+        '<td><b>' + esc(p.name) + '</b><div class="sku">' + esc([p.sku, p.brand, p.category].filter(Boolean).join(' \u00b7 ')) + '</div></td>' +
+        '<td class="num">' + fmt(p.stock) + (p.stock <= 0 ? ' <span class="sku">(not listed)</span>' : '') + '</td><td class="num">' + fmt(p.price) + '</td>' +
+        '<td><select class="i" data-mkm="' + i + '" style="min-width:110px"><option value="price"' + (p.mode !== 'ask' ? ' selected' : '') + '>My price</option><option value="ask"' + (p.mode === 'ask' ? ' selected' : '') + '>Ask</option></select></td></tr>';
+    }).join('') + '</tbody></table></div>';
+}
+var goMk1 = go;
+go = function (view, param) {
+  var r = goMk1.apply(this, arguments);
+  if (view === 'market') { if (MK.tab === 'mine') loadMarketMine(); loadMarket(); }
+  return r;
+};
+document.addEventListener('click', function (ev) {
+  if (VIEW !== 'market' || !ev.target.closest) return;
+  var t = ev.target.closest('[data-mktab],#mk_go,#mk_all,#mk_none,#mk_save'); if (!t) return;
+  var m = MK.mine;
+  if (t.hasAttribute('data-mktab')) { MK.tab = t.getAttribute('data-mktab'); if (MK.tab === 'mine') loadMarketMine(); repaint(); return; }
+  if (t.id === 'mk_go') { MK.q = el('mk_q').value.trim(); MK.cat = el('mk_cat').value; loadMarket(); repaint(); return; }
+  if (!m || !m.products) return;
+  if (t.id === 'mk_all' || t.id === 'mk_none') { m.products.forEach(function (p) { p.shared = t.id === 'mk_all' ? p.stock > 0 : false; }); repaint(); return; }
+  if (t.id === 'mk_save') {
+    m.on = el('mk_on').checked; m.city = el('mk_city').value.trim();
+    MK.saving = true; repaint();
+    srv('erpMarketSave', [{ on: m.on, city: m.city, products: m.products.map(function (p) { return { id: p.id, shared: p.shared, mode: p.mode }; }) }], function (r) {
+      MK.saving = false; MK.mine = null; loadMarketMine(); loadMarket();
+      toast(r.on ? 'Saved. ' + r.listed + ' product' + (r.listed === 1 ? '' : 's') + ' on the market now.' : 'Saved. Nothing of yours is on the market.');
+    }, function (e) { MK.saving = false; toast(esc((e && e.message) || e), true, 9000); repaint(); });
+  }
+});
+document.addEventListener('change', function (ev) {
+  if (VIEW !== 'market' || !MK.mine || !MK.mine.products) return;
+  var t = ev.target, p;
+  if (t.hasAttribute && t.hasAttribute('data-mkp')) { p = MK.mine.products[+t.getAttribute('data-mkp')]; if (p) p.shared = t.checked; }
+  if (t.hasAttribute && t.hasAttribute('data-mkm')) { p = MK.mine.products[+t.getAttribute('data-mkm')]; if (p) { p.mode = t.value; if (!p.shared) { p.shared = true; repaint(); } } }
+  if (t.id === 'mk_on' || t.id === 'mk_city') { MK.mine.on = el('mk_on').checked; MK.mine.city = el('mk_city').value; }
+});
+document.addEventListener('keydown', function (ev) {
+  if (VIEW === 'market' && ev.key === 'Enter' && ev.target && ev.target.id === 'mk_q') { ev.preventDefault(); el('mk_go').click(); }
+});
 </script>
 </body>
 </html>

@@ -278,7 +278,7 @@ const INSTALL_ENV = { controlUrl: SUPABASE_URL + '/functions/v1/erp', appUrl: De
   // the provider's own domain where each company gets <name>.<zone> by itself (Stage 1b)
   freeZone: Deno.env.get('ERP_FREE_ZONE') ?? '', freeZoneId: Deno.env.get('ERP_FREE_ZONE_ID') ?? '' };
 const own = projectParts({ url: SUPABASE_URL, anon: ANON, service: SERVICE, appUrl: Deno.env.get('ERP_APP_URL') ?? 'https://erp.costareen.com/' });
-const deps: any = { install: INSTALL, installEnv: INSTALL_ENV, google: GOOGLE, smtpNote: SMTP_NOTE, linkOnly: false, sql, sqlAux, fetch: globalThis.fetch.bind(globalThis), renderPdf,
+const deps: any = { install: INSTALL, installEnv: INSTALL_ENV, google: GOOGLE, smtpNote: SMTP_NOTE, linkOnly: false, sql, sqlAux, control: sql, fetch: globalThis.fetch.bind(globalThis), renderPdf,
                ...own, hookBase: FN_URL };
 
 // A company on the bridge: its own database, sign-in, files and e-mails; the provider's logic and PDF service.
@@ -295,7 +295,7 @@ async function buildTenant(t: any) {
     install: { id: t.id, key: '', controlUrl: '', version: Deno.env.get('ERP_RELEASE') ?? '', bridged: true, domain: String(t.domain || '') },
     installEnv: INSTALL_ENV,
     google: { ...GOOGLE, redirect: FN_URL + '?google=back&t=' + t.id, appUrl },
-    smtpNote: '', linkOnly: false, sql: tsql, sqlAux: tAux, fetch: globalThis.fetch.bind(globalThis), renderPdf,
+    smtpNote: '', linkOnly: false, sql: tsql, sqlAux: tAux, control: sql,   // control: the provider's own tables (the market list) fetch: globalThis.fetch.bind(globalThis), renderPdf,
     ...parts, hookBase: FN_URL + '?t=' + t.id,
     close() { try { tsql.end({ timeout: 2 }); tAux.end({ timeout: 2 }); } catch (_) { /* gone */ } },
   };
