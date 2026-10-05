@@ -34,6 +34,7 @@ const FONTS = {
   mono: '"Courier New","Noto Sans Bengali",monospace',
 };
 const DEFAULTS = { template: 'wave', accent: '', dark: '', font: 'sans', title: 'INVOICE', thanks: '', terms: '', qrId: '', qrLabel: 'Scan to pay',
+  bigTop: false, logoSize: 'm', logoSide: 'left',
   show: { banks: true, qr: true, signature: false, phone: true, delivery: true } };
 
 function merge(saved) {
@@ -61,6 +62,7 @@ function clean(x) {
     font: FONTS[x.font] ? x.font : 'sans',
     title: t(x.title, 40).trim() || 'INVOICE', thanks: t(x.thanks, 300), terms: t(x.terms, 2000),
     qrId: t(x.qrId, 200), qrLabel: t(x.qrLabel, 60) || 'Scan to pay',
+    bigTop: x.bigTop === true, logoSize: ['s', 'm', 'l'].includes(x.logoSize) ? x.logoSize : 'm', logoSide: x.logoSide === 'right' ? 'right' : 'left',
     show: { banks: sh.banks !== false, qr: sh.qr !== false, signature: !!sh.signature, phone: sh.phone !== false, delivery: sh.delivery !== false },
   };
   return d;
@@ -144,6 +146,55 @@ const simpleFooter = (P, bg, fg) => '<div style="-webkit-print-color-adjust:exac
   ';background:' + bg + ';padding:3mm 14mm;display:flex;justify-content:space-between;gap:6mm;margin:0">' +
   '<span>' + esc(P.biz) + '</span><span>' + esc(P.contact.join('  ·  ')) + '</span><span>' + esc(P.addrLines.join(', ')) + '</span></div>';
 
+// ---------------------------------------------------------------- the finish every A4 design goes through
+//   at least 5 item rows (empty ones under the sold ones), the page filled to A4 with the money part at its foot,
+//   a PAID / DUE stamp in the top corner, the big amount at the bottom (unless the owner wants it on top), logo size and side.
+const PAGE_H = { wave: 266, modern: 281, minimal: 265, classic: 267, bold: 281 };   // the first page's room between its margins (mm)
+const LOGO_H = { wave: 27, modern: 18, minimal: 14, classic: 18, bold: 16 };
+const LOGO_K = { s: 0.7, m: 1, l: 1.35 };
+function stampHtml(P, d) {
+  const due = num(d.due), paid = num(d.paid);
+  const [txt, col] = !(due > 0.5) ? ['PAID', '#15803d'] : paid > 0.5 ? ['PARTLY PAID', '#b45309'] : ['DUE', '#b91c1c'];   // the amount owed is in the big bar at the bottom
+  return '<div class="pstamp" style="color:' + col + ';border-color:' + col + '">' + txt + '</div>';
+}
+function bigBottom(P, d) {
+  const owed = num(d.due) > 0.5;
+  return '<div class="bigb" style="background:' + (owed ? '#b91c1c' : P.accent) + ';color:' + (owed ? '#ffffff' : P.onAccent) + '"><span>' + (owed ? 'Amount due' : 'Total') + '</span><b>' + esc(P.cur) + ' ' + P.n(owed ? d.due : d.grand) + '</b></div>';
+}
+function finish(id, out, P, d, D) {
+  let html = out.html;
+  // at least five rows
+  const cols = d.perLine ? 6 : 5, blanks = Math.max(0, 5 - d.lines.length);
+  if (blanks) html = html.replace('</tbody></table>', Array(blanks + 1).join('<tr class="blank">' + Array(cols + 1).join('<td>&nbsp;</td>') + '</tr>') + '</tbody></table>');
+  // the stamp in the top corner, the big amount at the bottom (or the old big amount on top)
+  if (!D.bigTop) {
+    if (id === 'wave') html = html.replace(/<div class="owed">[\s\S]*?<\/span><\/div>/, '<div class="owed">' + stampHtml(P, d) + '</div>');
+    else if (id === 'bold') html = html.replace(/<div class="big">[\s\S]*?<\/span><\/div><\/div>/, '<div class="bigs">' + stampHtml(P, d) + '</div></div>');
+    else html = html.replace(/(<div class="tt">[\s\S]*?<\/div>)/, '$1' + stampHtml(P, d));
+    html = html.replace('<div class="note">', bigBottom(P, d) + '<div class="note">');
+  }
+  const lh = Math.round(LOGO_H[id] * (id === 'classic' && D.logoSize === 'l' ? 1.12 : LOGO_K[D.logoSize]) * 10) / 10;   // Classic is tall already: its large logo stays a little smaller
+  let css = '.pstamp{display:inline-block;white-space:nowrap;border:0.7mm solid;border-radius:1.5mm;padding:1.2mm 3.5mm;font-weight:800;font-size:12pt;letter-spacing:1pt;transform:rotate(-6deg);margin-top:3mm;background:rgba(255,255,255,.85)}' +
+    '.bigb{display:flex;justify-content:space-between;align-items:center;border-radius:2mm;padding:3.5mm 6mm;margin-top:5mm;break-inside:avoid}.bigb span{font-size:10pt;font-weight:700;text-transform:uppercase;letter-spacing:1.5pt}.bigb b{font-size:20pt;font-weight:800}' +
+    'tr.blank td{height:6.5mm;padding-top:0 !important;padding-bottom:0 !important}' +
+    // the page is A4 even with one item: the money part sits at its foot
+    'body{min-height:' + (PAGE_H[id] - 4) + 'mm;display:flex;flex-direction:column}.wrap{flex:1 0 auto;display:flex;flex-direction:column}.tail{margin-top:auto;padding-top:4mm}' +
+    '.lgo{height:' + lh + 'mm !important}';
+  if (id === 'wave') css += '.owed{top:9mm}.owed .pstamp{margin-top:0}';
+  if (id === 'modern') css += '.band>div:last-child{text-align:right}';
+  if (id === 'minimal') css += '.top>div:last-child{text-align:right}';
+  if (id === 'classic') css += '.wrap>.pstamp{display:table;margin:0 auto 3mm}.sig{margin-top:4mm !important}.note{margin-top:3mm}table.items th,table.items td{padding:1.4mm 2.5mm}.sum td{padding:1mm 2.5mm}.tt{margin:3mm 0 2mm}.lh{padding-bottom:2mm}.bigb{margin-top:3mm;padding:2.5mm 6mm}';
+  if (id === 'bold') css += '.bigs{display:flex;align-items:center}';
+  if (D.logoSide === 'right') {
+    if (id === 'wave') { css += '.logo{left:auto !important;right:16mm}.owed{right:auto;left:95mm;top:14mm}'; html = html.replace(/left:50\.?5?mm/g, 'left:16mm'); }
+    if (id === 'modern') css += '.band{flex-direction:row-reverse}.band .lg{flex-direction:row-reverse;text-align:right}.band .tt{text-align:left}';
+    if (id === 'minimal') css += '.top{flex-direction:row-reverse}.top>div:first-child{text-align:right}.tt{text-align:left}';
+    if (id === 'bold') css += '.hd{flex-direction:row-reverse}.hd>div:first-child{text-align:right}';
+  }
+  html = html.replace('</style>', css + '</style>');
+  return { html, footer: out.footer };
+}
+
 // ---------------------------------------------------------------- the designs
 function modern(d, p, s, opt, img, now, D) {
   const P = parts(d, p, s, opt, img, now, D);
@@ -160,7 +211,7 @@ function modern(d, p, s, opt, img, now, D) {
     '.sum tr.tot td{background:' + P.accent + ';color:' + P.onAccent + ';font-weight:800;font-size:11pt;border-radius:0}.sum tr.due td{color:#b3261e;font-weight:800}.sum tr.ok td{color:#1e7d46;font-weight:700}' +
     '.pay{display:flex;gap:6mm;font-size:9pt}.bank{margin-bottom:2mm}.qr{text-align:center;font-size:8pt}.qr img{width:26mm;height:26mm;border:0.3mm solid #e5e7eb;padding:1mm}' +
     '.note{margin-top:6mm;padding-top:3mm;border-top:0.3mm solid #e5e7eb;font-size:9.5pt}.terms{margin-top:2mm;font-size:8.5pt;color:#6b7280}.sig{width:60mm;margin:8mm 0 0 auto;text-align:right}';
-  const body = '<div class="band"><div class="lg">' + (img.logo ? '<img src="' + img.logo + '">' : '') + '<div><div class="nm">' + esc(P.biz) + '</div><div class="ad">' + esc(P.addrLines.join(', ')) + '</div><div class="ad">' + esc(P.contact.join(' · ')) + '</div></div></div>' +
+  const body = '<div class="band"><div class="lg">' + (img.logo ? '<img class="lgo" src="' + img.logo + '">' : '') + '<div><div class="nm">' + esc(P.biz) + '</div><div class="ad">' + esc(P.addrLines.join(', ')) + '</div><div class="ad">' + esc(P.contact.join(' · ')) + '</div></div></div>' +
     '<div><div class="tt">' + P.title + '</div>' + P.stamp + '</div></div>' +
     '<div class="wrap"><div class="cards"><div class="card">' + billTo(d) + '</div><div class="card">' + meta(P, d) + '</div></div>' + itemsTable(P, d) +
     '<div class="tail"><div class="end">' + payBlock(P, D) + '<table class="sum">' + sumRows(P, d) + '</table></div>' +
@@ -180,7 +231,7 @@ function minimal(d, p, s, opt, img, now, D) {
     '.sum tr.tot td{border-top:0.4mm solid ' + P.accent + ';border-bottom:0.4mm solid ' + P.accent + ';font-weight:700;font-size:11.5pt;padding:2mm 0}.sum tr.due td{font-weight:700}.sum tr.ok td{color:#6b7280}' +
     '.pay{display:flex;gap:6mm;font-size:9pt}.bank{margin-bottom:2mm}.qr{text-align:center;font-size:8pt}.qr img{width:24mm;height:24mm}' +
     '.note{margin-top:10mm;font-size:9.5pt}.terms{margin-top:2mm;font-size:8.5pt;color:#6b7280}.sig{width:58mm;margin:10mm 0 0 auto;text-align:right}';
-  const body = '<div class="wrap"><div class="top"><div>' + (img.logo ? '<img src="' + img.logo + '"><br>' : '') + '<span class="nm">' + esc(P.biz) + '</span><div class="muted">' +
+  const body = '<div class="wrap"><div class="top"><div>' + (img.logo ? '<img class="lgo" src="' + img.logo + '"><br>' : '') + '<span class="nm">' + esc(P.biz) + '</span><div class="muted">' +
     P.addrLines.map(esc).join('<br>') + '</div><div class="muted">' + esc(P.contact.join(' · ')) + '</div></div><div><div class="tt">' + P.title + '</div>' + P.stamp + '</div></div>' +
     '<div class="two"><div>' + billTo(d) + '</div><div>' + meta(P, d) + '</div></div>' + itemsTable(P, d) +
     '<div class="tail"><div class="end">' + payBlock(P, D) + '<table class="sum">' + sumRows(P, d) + '</table></div>' +
@@ -200,7 +251,7 @@ function classic(d, p, s, opt, img, now, D) {
     '.sum tr.tot td{font-weight:700;background:' + P.d5 + '}.sum tr.due td{font-weight:700;color:#8b1a1a}' +
     '.pay{display:flex;gap:6mm;font-size:9.5pt}.bank{margin-bottom:2mm}.qr{text-align:center;font-size:8pt}.qr img{width:25mm;height:25mm;border:0.3mm solid #444;padding:1mm}' +
     '.note{margin-top:6mm;text-align:center;font-style:italic}.terms{margin-top:2mm;font-size:8.5pt;color:#555;text-align:left;font-style:normal}.sig{width:60mm;margin:12mm 0 0 auto;text-align:center}';
-  const body = '<div class="wrap"><div class="lh">' + (img.logo ? '<img src="' + img.logo + '"><br>' : '') + '<div class="nm">' + esc(P.biz) + '</div><div class="muted">' +
+  const body = '<div class="wrap"><div class="lh">' + (img.logo ? '<img class="lgo" src="' + img.logo + '"><br>' : '') + '<div class="nm">' + esc(P.biz) + '</div><div class="muted">' +
     esc(P.addrLines.join(', ')) + '</div><div class="muted">' + esc(P.contact.join('  ·  ')) + '</div></div>' +
     '<div class="tt">' + P.title + '</div><div style="text-align:center">' + P.stamp + '</div>' +
     '<div class="two"><div>' + billTo(d) + '</div><div>' + meta(P, d) + '</div></div>' + itemsTable(P, d) +
@@ -224,7 +275,7 @@ function bold(d, p, s, opt, img, now, D) {
     '.sum tr.tot td{background:#15171c;color:#fff;font-weight:900;font-size:11pt}.sum tr.due td{background:' + P.accent + ';color:' + P.onAccent + ';font-weight:900}.sum tr.ok td{color:#1e7d46;font-weight:700}' +
     '.pay{display:flex;gap:6mm;font-size:9pt}.bank{margin-bottom:2mm}.qr{text-align:center;font-size:8pt}.qr img{width:26mm;height:26mm;border:0.6mm solid ' + P.accent + ';padding:1mm}' +
     '.note{margin-top:6mm;font-size:10pt;font-weight:700}.terms{margin-top:2mm;font-size:8.5pt;color:#6b7280;font-weight:400}.sig{width:60mm;margin:8mm 0 0 auto;text-align:right}';
-  const body = '<div class="hd"><div>' + (img.logo ? '<img src="' + img.logo + '"><br>' : '') + '<div class="nm">' + esc(P.biz) + '</div><div class="muted">' + esc(P.addrLines.join(', ')) +
+  const body = '<div class="hd"><div>' + (img.logo ? '<img class="lgo" src="' + img.logo + '"><br>' : '') + '<div class="nm">' + esc(P.biz) + '</div><div class="muted">' + esc(P.addrLines.join(', ')) +
     '</div><div class="muted">' + esc(P.contact.join(' · ')) + '</div><div class="tt">' + P.title + '</div>' + P.stamp + '</div>' +
     '<div class="big"><span>' + (P.paidUp ? 'Paid in full' : 'Amount due') + '</span><b>' + esc(P.cur) + ' ' + P.n(P.paidUp ? d.grand : d.due) + '</b><span style="font-weight:400;letter-spacing:0;text-transform:none">' + esc(d.invoiceNo) + ' · ' + esc(P.when) + '</span></div></div>' +
     '<div class="wrap"><div class="two"><div>' + billTo(d) + '</div><div>' + meta(P, d) + '</div></div>' + itemsTable(P, d) +
@@ -255,7 +306,8 @@ const DRAW = { modern, minimal, classic, bold, receipt };
 /** The invoice page in the chosen design. 'wave' is the original drawing (sales.js invoiceArtParts), with the options applied. */
 export async function invoiceDoc(d, p, s, opt, img, now, D, waveArt) {
   D = D || merge(null);
-  if (DRAW[D.template]) return DRAW[D.template](d, p, s, opt || {}, img || {}, now || new Date(), D);
+  if (D.template === 'receipt') return receipt(d, p, s, opt || {}, img || {}, now || new Date(), D);
+  if (DRAW[D.template]) return finish(D.template, DRAW[D.template](d, p, s, opt || {}, img || {}, now || new Date(), D), parts(d, p, s, opt || {}, img || {}, now || new Date(), D), d, D);
   const p2 = { ...p, banks: D.show.banks ? p.banks : [], footer: D.thanks || p.footer, phone: D.show.phone ? p.phone : '' };
   const s2 = { ...s, accent: HEX.test(String(D.accent)) ? D.accent : s.accent, dark: HEX.test(String(D.dark)) ? D.dark : s.dark };
   const img2 = { ...img, qr: D.show.qr ? img.qr : '' };
@@ -266,8 +318,9 @@ export async function invoiceDoc(d, p, s, opt, img, now, D, waveArt) {
   const extra = (D.terms ? '<div style="margin-top:1.5mm;font-size:9pt;color:#5d6672">' + esc(D.terms).replace(/\n/g, '<br>') + '</div>' : '') +
     (D.show.signature ? '<div style="width:60mm;margin:8mm 0 0 auto;text-align:right">' + (img.sig ? '<img src="' + img.sig + '" style="height:14mm;display:block;margin:0 0 1mm auto">' : '<div style="height:12mm"></div>') +
       '<div style="border-top:0.3mm solid #8a8f98;padding-top:1mm;font-size:9pt">' + esc(p.signer || 'Authorised signature') + '</div></div>' : '');
-  if (extra) html = html.replace('</body>', '<div style="padding:0 16mm">' + extra + '</div></body>');
-  return { html, footer: out.footer };
+  if (extra) html = html.replace(/(<div class="note">[\s\S]*?<\/div>)/, '$1' + extra);   // terms and signature under the thank-you line
+  html = html.replace('<img class="logo"', '<img class="logo lgo"');
+  return finish('wave', { html, footer: out.footer }, parts(d, p, s, opt || {}, img || {}, now || new Date(), D), d, D);
 }
 
 // ---------------------------------------------------------------- handlers

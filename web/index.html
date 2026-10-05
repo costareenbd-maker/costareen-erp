@@ -19355,10 +19355,12 @@ input.ivd-col{width:44px;height:34px;padding:0;border:1px solid var(--line,#ccc)
 </style>
 <script>
 var IVD = { data: null, err: '', d: null, busy: false, prevT: 0, prevKey: '' };
+var SALES_TAB = 'list';
+function ivdOn() { return VIEW === 'sales' && SALES_TAB === 'design' && !(typeof INVP !== 'undefined' && INVP.no); }
 function ivdLoad() {
   IVD.data = { loading: true };
-  srv('erpInvoiceDesign', [], function (r) { IVD.data = r; IVD.d = JSON.parse(JSON.stringify(r.design)); if (VIEW === 'settings') repaint(); },
-    function (e) { IVD.data = null; IVD.err = (e && e.message) || String(e); if (VIEW === 'settings') repaint(); });
+  srv('erpInvoiceDesign', [], function (r) { IVD.data = r; IVD.d = JSON.parse(JSON.stringify(r.design)); if (ivdOn()) repaint(); },
+    function (e) { IVD.data = null; IVD.err = (e && e.message) || String(e); if (ivdOn()) repaint(); });
 }
 var IVD_SW = { wave: ['a', 'l'], modern: ['a', 'd'], minimal: ['k', 'a'], classic: ['d', 'k'], bold: ['d', 'a'], receipt: ['k', 'k'] };
 function ivdHtml() {
@@ -19381,6 +19383,11 @@ function ivdHtml() {
       '<div><label class="f" for="ivd_font">Letters</label><select class="i" id="ivd_font"' + dis + '>' + [['sans', 'Clean (sans)'], ['serif', 'Traditional (serif)'], ['rounded', 'Friendly (rounded)'], ['mono', 'Typewriter']].map(function (o) { return '<option value="' + o[0] + '"' + (d.font === o[0] ? ' selected' : '') + '>' + o[1] + '</option>'; }).join('') + '</select></div>' +
       '<div><label class="f" for="ivd_title">Title on the page</label><input class="i" id="ivd_title" maxlength="40" value="' + esc(d.title) + '" placeholder="INVOICE, CASH MEMO, BILL\u2026"' + dis + '></div></div>' +
       (ed ? '<div class="row" style="margin-top:6px"><button class="btn small" type="button" data-ivd="cols">Use the quotation colours</button></div>' : '') +
+    '<h3 style="margin:16px 0 6px">Layout</h3><div class="ivd-row">' +
+      '<div><label class="f" for="ivd_big">The big amount</label><select class="i" id="ivd_big"' + dis + '><option value="bottom"' + (d.bigTop ? '' : ' selected') + '>At the bottom (stamp on top)</option><option value="top"' + (d.bigTop ? ' selected' : '') + '>At the top</option></select></div>' +
+      '<div><label class="f" for="ivd_lsz">Logo size</label><select class="i" id="ivd_lsz"' + dis + '>' + [['s', 'Small'], ['m', 'Medium'], ['l', 'Large']].map(function (o) { return '<option value="' + o[0] + '"' + (d.logoSize === o[0] ? ' selected' : '') + '>' + o[1] + '</option>'; }).join('') + '</select></div>' +
+      '<div><label class="f" for="ivd_lside">Logo side</label><select class="i" id="ivd_lside"' + dis + '><option value="left"' + (d.logoSide !== 'right' ? ' selected' : '') + '>Left</option><option value="right"' + (d.logoSide === 'right' ? ' selected' : '') + '>Right' + (d.template === 'classic' ? ' (Classic is always centred)' : '') + '</option></select></div></div>' +
+      '<div class="sku" style="margin-top:4px">Every A4 design fills the page and shows at least 5 item rows; the money part sits at the foot of the page.</div>' +
     '<h3 style="margin:16px 0 6px">3. What it shows</h3><div class="ivd-checks">' + [['banks', 'Bank accounts'], ['qr', 'Payment QR'], ['signature', 'Signature'], ['phone', 'Phone number'], ['delivery', 'Delivery charge line']].map(function (o) {
       return '<label><input type="checkbox" data-ivdshow="' + o[0] + '"' + (d.show[o[0]] ? ' checked' : '') + dis + ' style="width:18px;height:18px">' + o[1] + '</label>'; }).join('') + '</div>' +
     '<div class="ivd-row"><div style="flex-basis:100%"><label class="f" for="ivd_thanks">Thank-you line</label><input class="i" id="ivd_thanks" maxlength="300" value="' + esc(d.thanks) + '" placeholder="' + esc(r.profile.footer || 'Thank you for your order.') + '"' + dis + '></div>' +
@@ -19436,6 +19443,7 @@ function ivdRead() {   // the fields into the design (no repaint: the preview fo
   var v = function (id) { var n = el(id); return n ? n.value : undefined; };
   if (el('ivd_acc')) d.accent = v('ivd_acc'); if (el('ivd_drk')) d.dark = v('ivd_drk');
   if (el('ivd_font')) d.font = v('ivd_font'); if (el('ivd_title')) d.title = v('ivd_title');
+  if (el('ivd_big')) d.bigTop = v('ivd_big') === 'top'; if (el('ivd_lsz')) d.logoSize = v('ivd_lsz'); if (el('ivd_lside')) d.logoSide = v('ivd_lside');
   if (el('ivd_thanks')) d.thanks = v('ivd_thanks'); if (el('ivd_terms')) d.terms = v('ivd_terms'); if (el('ivd_qrl')) d.qrLabel = v('ivd_qrl');
   document.querySelectorAll('[data-ivdshow]').forEach(function (c) { d.show[c.getAttribute('data-ivdshow')] = c.checked; });
 }
@@ -19444,26 +19452,34 @@ function ivdFile(input, then) {
   if (f.size > 1024 * 1024) { toast('The image is over 1 MB. Use a smaller one.', true); return; }
   var rd = new FileReader(); rd.onload = function () { then(f.type, String(rd.result).replace(/^data:[^,]*,/, '')); }; rd.readAsDataURL(f);
 }
-var settingsPickIVD = settingsPick;
-settingsPick = function (h) { return settingsPickIVD(h + setMark('invoice') + (SET_TAB === 'invoice' ? ivdHtml() : '')); };
-var setTabsMineIVD = setTabsMine;
-setTabsMine = function () {
-  var t = setTabsMineIVD();
-  if (ME && /^(manager|shareholder|owner)$/.test(ME.role) && !t.some(function (x) { return x[0] === 'invoice'; })) t = t.concat([['invoice', 'Invoice design']]);
-  return t;
+// Invoices gets two tabs: the list, and the design (managers and up)
+function salesTabsHtml() {
+  if (!ME || !/^(manager|shareholder|owner)$/.test(ME.role)) return '';
+  return '<div class="tabs" role="tablist" style="margin-bottom:10px">' + [['list', 'Invoices'], ['design', 'Invoice design']].map(function (t) {
+    return '<button type="button" role="tab" data-salestab="' + t[0] + '" aria-selected="' + (SALES_TAB === t[0]) + '">' + t[1] + '</button>'; }).join('') + '</div>';
+}
+var viewSalesIVD = viewSales;
+viewSales = function () {
+  if (typeof INVP !== 'undefined' && INVP.no) return viewSalesIVD();     // an open invoice: as it was
+  if (SALES_TAB === 'design' && ME && /^(manager|shareholder|owner)$/.test(ME.role)) return salesTabsHtml() + ivdHtml();
+  return salesTabsHtml() + viewSalesIVD();
 };
-document.addEventListener('input', function (ev) { if (VIEW === 'settings' && SET_TAB === 'invoice' && ev.target && /^ivd_/.test(ev.target.id || '')) { ivdRead(); ivdPreview(); } });
+document.addEventListener('click', function (ev) {
+  var b = ev.target && ev.target.closest ? ev.target.closest('[data-salestab]') : null; if (!b) return;
+  SALES_TAB = b.getAttribute('data-salestab'); repaint(); window.scrollTo(0, 0);
+});
+document.addEventListener('input', function (ev) { if (ivdOn() && ev.target && /^ivd_/.test(ev.target.id || '')) { ivdRead(); ivdPreview(); } });
 document.addEventListener('change', function (ev) {
-  if (VIEW !== 'settings' || SET_TAB !== 'invoice' || !ev.target) return;
+  if (!ivdOn() || !ev.target) return;
   var t = ev.target;
-  if (t.hasAttribute && t.hasAttribute('data-ivdshow') || /^ivd_(font|acc|drk)$/.test(t.id || '')) { ivdRead(); ivdPreview(); }
+  if (t.hasAttribute && t.hasAttribute('data-ivdshow') || /^ivd_(font|acc|drk|big|lsz|lside)$/.test(t.id || '')) { ivdRead(); ivdPreview(); }
   if (t.id === 'ivd_qrf') ivdFile(t, function (mime, data) { srv('erpInvoiceQrUpload', [{ mime: mime, data: data }], function (r) { IVD.d.qrId = r.design.qrId; IVD.data.design = r.design; toast('QR saved.'); repaint(); }, function (e) { toast(esc((e && e.message) || e), true); }); });
   if (t.id === 'ivd_logof' || t.id === 'ivd_sigf') ivdFile(t, function (mime, data) {
     srv('erpQuoteAssetUpload', [{ kind: t.id === 'ivd_logof' ? 'logo' : 'signature', mime: mime, data: data }], function () { toast('Saved.'); IVD.prevKey = ''; ivdLoad(); }, function (e) { toast(esc((e && e.message) || e), true); });
   });
 });
 document.addEventListener('click', function (ev) {
-  if (VIEW !== 'settings' || SET_TAB !== 'invoice' || !ev.target.closest) return;
+  if (!ivdOn() || !ev.target.closest) return;
   var tp = ev.target.closest('[data-ivdtpl]');
   if (tp) { ivdRead(); IVD.d.template = tp.getAttribute('data-ivdtpl'); document.querySelectorAll('[data-ivdtpl]').forEach(function (b) { b.classList.toggle('on', b === tp); }); ivdPreview(); return; }
   var b = ev.target.closest('[data-ivd]'); if (!b) return;
@@ -19491,7 +19507,7 @@ document.addEventListener('click', function (ev) {
     srv('erpQuoteProfileSave', [{ profile: prof }], function () { toast('Company details saved.'); IVD.prevKey = ''; ivdLoad(); }, function (e) { toast(esc((e && e.message) || e), true); });
   }
 });
-window.addEventListener('resize', function () { if (VIEW === 'settings' && SET_TAB === 'invoice') ivdShow(); });
+window.addEventListener('resize', function () { if (ivdOn()) ivdShow(); });
 </script>
 </body>
 </html>
