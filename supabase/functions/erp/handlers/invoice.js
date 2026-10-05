@@ -131,6 +131,12 @@ export async function createInvoice(ctx, payload, opts = {}) {
   delete ctx.memo.catalog;
   const bySku = {};
   for (const p of await erpCatalog(ctx)) bySku[p.sku.toLowerCase()] = p;
+  // joint stock: lines that come from a pool this company co-owns (their code carries the pool).
+  // The pools are locked and their shelves read here; the pool's own copy of the sale is made below.
+  const J = await import('./joint.js');
+  const jointItems = opts.mirror ? [] : items.filter((it) => J.JOINT_MARK.test(String(it.sku).trim()));
+  const joint = jointItems.length ? await J.prepareJointSale(ctx, jointItems) : null;
+  if (joint) Object.assign(bySku, joint.recs);
   const seen = {};
   for (const it of items) {
     const sk = String(it.sku).trim(), rec = bySku[sk.toLowerCase()];
@@ -143,15 +149,18 @@ export async function createInvoice(ctx, payload, opts = {}) {
   }
 
   // discounts: so much off each piece, and so much off the whole
-  const DSC = invoiceDiscounts(items, bySku, num(payload.invoiceDiscount));
-  if (!opts.webEntry) {
+  // the pool's copy of a partner company's sale takes its prices and discounts as they were given to the customer
+  const DSC = opts.mirror
+    ? { line: opts.mirror.lines.map((l) => round2(num(l.disc))), itemDisc: opts.mirror.lines.reduce((a, l) => a + num(l.disc), 0), invDisc: 0, sub: 0 }
+    : invoiceDiscounts(items, bySku, num(payload.invoiceDiscount));
+  if (!opts.webEntry && !opts.mirror) {
     const cap = ctx.s.discountCap ?? ERP_DISCOUNT_CAP[ctx.s.role] ?? 0;
     if (cap < 100 && DSC.itemDisc + DSC.invDisc > DSC.sub * cap / 100 + 0.5) {
       throw new Error('This discount is ' + (Math.round((DSC.itemDisc + DSC.invDisc) / DSC.sub * 1000) / 10) +
         '% of the goods. Your limit is ' + cap + '% - ask a manager or the owner to save this sale.');
     }
   }
-  const phoneIn = opts.partnerDeal ? ''
+  const phoneIn = opts.partnerDeal || opts.mirror ? ''
                 : opts.webEntry ? formatBdPhone(String(payload.customer.phone || '').trim())
                                 : phone11(payload.customer.phone);
   const address = String(payload.customer.address || '').trim();
@@ -169,16 +178,26 @@ export async function createInvoice(ctx, payload, opts = {}) {
   const lines = [];
   for (let i = 0; i < items.length; i++) {
     const rec = bySku[String(items[i].sku).trim().toLowerCase()];
+    if (rec.joint) {   // a joint line: priced for this company by the pool, no product of its own here
+      const jq = num(items[i].qty), jd = DSC.line[i];
+      lines.push({ productId: null, sku: rec.sku, name: rec.name, qty: jq, unit: num(rec.sell), disc: jd, total: Math.max(0, jq * num(rec.sell) - jd),
+                   poolId: rec.poolId, code: rec.code, floor: num(rec.floor) });
+      continue;
+    }
     const pr = await ctx.tx`select id, name, sale_price_for(${ctx.biz}, id) as price
                             from products where business_id = ${ctx.biz}
                               and lower(btrim(sku)) = ${rec.sku.toLowerCase()} limit 1`;
     // a sale to a partner company goes at the price the two agreed (plan B3)
-    const unit = opts.partnerDeal && opts.unitPrice > 0 ? opts.unitPrice : (num(pr[0].price) || num(rec.sell));
+    const unit = opts.mirror ? num(opts.mirror.lines[i].unit)
+               : opts.partnerDeal && opts.unitPrice > 0 ? opts.unitPrice : (num(pr[0].price) || num(rec.sell));
     const qty = num(items[i].qty);
     const disc = DSC.line[i];
     lines.push({ productId: pr[0].id, sku: rec.sku, name: rec.name || pr[0].name, qty, unit,
                  disc, total: Math.max(0, qty * unit - disc) });
   }
+  // nobody sells joint stock under its floor price (the owner may: it is flagged for the partner)
+  const shortfall = {};
+  if (joint) for (const pool of joint.pools) shortfall[pool.id] = J.floorCheck(ctx, lines.filter((l) => l.poolId === pool.id));
   const sub = lines.reduce((a, l) => a + l.qty * l.unit, 0);
   const discount = lines.reduce((a, l) => a + l.disc, 0);
   const delivery = num(payload.deliveryCharge);
@@ -212,7 +231,7 @@ export async function createInvoice(ctx, payload, opts = {}) {
 
   // what they owed before this sale, read before it exists
   let priorBalance = 0;
-  try {
+  if (!opts.mirror) try {
     priorBalance = (await erpCustomerAccount(ctx, { phone: String(payload.customer.phone || ''), name })).balance;
   } catch (_) { /* as original */ }
 
@@ -229,11 +248,11 @@ export async function createInvoice(ctx, payload, opts = {}) {
     insert into invoices (business_id, invoice_no, customer_name, customer_phone, customer_address,
       source, subtotal, discount, delivery_charge, grand_total, advance_paid, due_amount,
       payment_method, payment_status, delivery_status, note, created_by, created_at,
-      item_discount, invoice_discount, customer_key, web_order_no)
+      item_discount, invoice_discount, customer_key, web_order_no, sold_by)
     values (${ctx.biz}, ${invoiceNo}, ${name}, ${phoneIn}, ${address}, ${source}, ${round2(sub)},
       ${round2(discount)}, ${delivery}, ${grand}, ${round2(advance)}, ${round2(grand - advance)},
       ${method}, ${status}, 'Processing', ${noteText || 'Invoice submission'}, ${ctx.s.userId}, ${ts},
-      ${round2(DSC.itemDisc)}, ${DSC.invDisc}, ${key}, ${opts.webOrderNo || null})
+      ${round2(DSC.itemDisc)}, ${DSC.invDisc}, ${key}, ${opts.webOrderNo || null}, ${opts.mirror ? opts.mirror.seller : null})
     returning id`;
   const invoiceId = inv[0].id;
 
@@ -243,6 +262,16 @@ export async function createInvoice(ctx, payload, opts = {}) {
   const costNow = (sku) => { const p = costs[String(sku).trim().toLowerCase()]; return p && p.cost > 0 ? p.cost : 0; };
   for (let i = 0; i < lines.length; i++) {
     const l = lines[i];
+    if (l.poolId) {
+      // a joint line: the goods are the pool's, so the stock moves there. Here its cost is what it
+      // was sold for - the money is held for the pool, and this company's own profit is not touched.
+      await ctx.tx`
+        insert into invoice_lines (business_id, invoice_id, product_id, sku, name, qty, unit_price,
+                                   discount, line_total, line_no, unit_cost, pool_id)
+        values (${ctx.biz}, ${invoiceId}, ${null}, ${l.sku}, ${l.name}, ${l.qty}, ${l.unit},
+                ${l.disc}, ${l.total}, ${i + 1}, ${l.qty > 0 ? round2(l.total / l.qty) : 0}, ${l.poolId})`;
+      continue;
+    }
     await ctx.tx`
       insert into invoice_lines (business_id, invoice_id, product_id, sku, name, qty, unit_price,
                                  discount, line_total, line_no, unit_cost)
@@ -257,14 +286,19 @@ export async function createInvoice(ctx, payload, opts = {}) {
   }
 
   // plan D1: which units went out, and the warranty each one carries from today
-  const soldSerials = await sellSerials(ctx, invoiceNo, name, key, ts instanceof Date ? ts : now, items, bySku, opts);
+  const soldSerials = opts.mirror ? [] : await sellSerials(ctx, invoiceNo, name, key, ts instanceof Date ? ts : now, items.filter((it) => !J.JOINT_MARK.test(String(it.sku).trim())), bySku, opts);
 
-  const customerId = await upsertCustomer(ctx, name, phoneIn, address, grand,
+  const customerId = opts.mirror ? null : await upsertCustomer(ctx, name, phoneIn, address, grand,
     lines.map((l) => l.name).join(', '), source);
   if (customerId) await ctx.tx`update invoices set customer_id = ${customerId} where id = ${invoiceId}`;
 
   await ctx.tx`update invoice_counters set next_number = ${n + 1} where business_id = ${ctx.biz}`;
   forget(ctx, 'SALES_LOG', 'CUSTOMERS', 'TXN_LOG');
+
+  // the pool's side of the joint lines - before any money is written, so the money finds it
+  const jointMade = joint ? await J.mirrorJointSale(ctx, joint, { invoiceNo, date: payload.date, at: ts instanceof Date ? ts : now,
+                                                                 lines: lines.filter((l) => l.poolId), shortfall }, createInvoice) : [];
+  if (opts.mirror) return { ok: true, invoiceNo, invoiceId, grandTotal: grand };
 
   // money taken at the counter is money received
   if (took > 0) {
@@ -298,6 +332,7 @@ export async function createInvoice(ctx, payload, opts = {}) {
     pdfId: (pdf && pdf.id) || '', pdfName: (pdf && pdf.name) || 'Invoice_' + invoiceNo + '.pdf',
     source: String((payload.customer && payload.customer.source) || ''),
     thisDue, priorBalance, totalOwed: round2(priorBalance + thisDue),
+    joint: jointMade.map((j) => ({ pool: j.pool, name: j.name, total: j.total })),
   };
 }
 

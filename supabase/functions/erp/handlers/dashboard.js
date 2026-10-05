@@ -762,6 +762,17 @@ export async function pnlFor(ctx, months) {
     return c;
   }, {});
 
+  // joint stock sold on this company's own invoices: it is in the sales above at a cost equal to its
+  // price - the money is held for the joint book, where its profit is counted
+  const jointM = await soft(ctx, async () => {
+    const c = {};
+    const rows = await ctx.tx`select to_char(public.dhaka_date(i.created_at), 'YYYY-MM') as m, sum(l.line_total) as v
+                              from invoice_lines l join invoices i on i.id = l.invoice_id
+                              where l.business_id = ${ctx.biz} and i.voided_at is null and l.sku ~* '~J[0-9a-f]{4}$' group by 1`;
+    for (const r of rows) c[String(r.m)] = num(r.v);
+    return c;
+  }, {});
+
   const out = [];
   for (const m of months) {
     const x = want[m];
@@ -780,7 +791,7 @@ export async function pnlFor(ctx, months) {
                delivery: Math.round(x.delivery), courier: cour,
                courierExtra: Math.round(cx.extra), courierShort: Math.round(cx.short),
                uncosted: Math.round(x.uncosted), current: m === now,
-               serviceIncome: svc.income, serviceParts: svc.parts, serviceJobs: svc.jobs });
+               serviceIncome: svc.income, serviceParts: svc.parts, serviceJobs: svc.jobs, joint: Math.round(jointM[m] || 0) });
   }
   return out;
 }

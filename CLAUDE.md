@@ -187,6 +187,10 @@ Left, in order:
    the latest CHANGES.md entries (service line on invoices, job slip, photos in the price
    list PDF, "invoiced" mark on quotations, Excel on Stock/Money, P&L line for repairs).
 
+Joint stock with a partner company (2026-10-06, tags joint-1..4): built and live, switched on for Costareen only.
+Read `docs/JOINT-POOL-BLUEPRINT.md` (owner's words) and `docs/JOINT-BUILD-NOTES.md` (how it is built) before touching
+invoices, payments, returns or the pool settlement - a joint line on an invoice has a copy inside the pool.
+
 Things live but waiting for his hand: colour families (16 suggested, not grouped), printers
 not yet marked serialised, "Check deliveries now" not yet pressed against real Steadfast.
 

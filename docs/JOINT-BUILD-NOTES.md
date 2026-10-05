@@ -37,3 +37,7 @@ split pro rata.
 4. Floor price enforcement, 45-day rule, both-owner Agree, statement PDF, dashboard card, tabs finished.
 
 Progress is logged in docs/CHANGES.md under "joint-N".
+
+## Built (2026-10-06): steps 1-4 done, tags joint-1 .. joint-4
+Files: 068/069/070 sql; lib/system.js; handlers/joint.js (page, set-up, products, receive, adjust, catalog, prepareJointSale, floorCheck, mirrorJointSale, syncJoint, mirrorJointReturn, sales list, agree, card, statement PDF); invoice.js (joint lines + opts.mirror); money.js (syncJoint hook); sales.js (return hook, void refusal, clean codes); partners.js (erpPoolClose = agree); dashboard.js (pnl `joint`); page blocks joint-1, joint-2, joint-3/4 at the end of app.html.
+Local trial: set the provider flag with erpPlatformJoint, make the partner's company (erpJointStart company), create the pool, join with the partner's link.

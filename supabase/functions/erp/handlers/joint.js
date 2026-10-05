@@ -19,12 +19,12 @@
 // on for that company (joint_flags, Platform screen). Off = none of this answers.
 
 import { formatDate, num, round2 } from '../lib/time.js';
-import { getConfig, setConfig } from '../lib/ext.js';
+import { getConfig, setConfig, saveFile, deleteFile, renderPdf } from '../lib/ext.js';
 import { asSystem } from '../lib/system.js';
 import { lock, who } from './money.js';
 import { forget } from '../lib/tabs.js';
 import { erpSaveProduct } from './stock.js';
-import { erpPartnership, erpPoolCreate, erpPoolJoin, erpPoolEntryAdd, erpPoolEntryRemove, erpPoolTier, erpPoolInvite } from './partners.js';
+import { erpPartnership, erpPoolCreate, erpPoolJoin, erpPoolEntryAdd, erpPoolEntryRemove, erpPoolTier, erpPoolInvite, erpPoolClose } from './partners.js';
 import { erpPartnerCompany } from './security.js';
 import { isPlatformAdmin } from './platform.js';
 
@@ -133,7 +133,116 @@ export async function erpJoint(ctx, payload) {
   out.stock = await shelf(ctx, pool, money);
   out.slowDays = Math.round(num(await asSystem(ctx, () => getConfig(inPool(ctx, pool), 'joint_slow_days', String(SLOW_DAYS))))) || SLOW_DAYS;
   if (money) out.book = await erpPartnership(inPool(ctx, pool), { month: payload.month });
+  out.sales = await jointSales(ctx, pool, out.slowDays);
   return out;
+}
+
+/** Every joint sale of a pool, newest first: who sold what, what has been paid, what is late. Never cost. */
+async function jointSales(ctx, pool, slowDays) {
+  const rows = await asSystem(ctx, () => ctx.tx`
+    select j.seller_business_id as seller, j.seller_invoice_no, j.pool_invoice_no, j.joint_total, j.below_floor, i.created_at,
+           (select string_agg(l.name || ' x ' || (l.qty::numeric)::float8::text, ', ' order by l.line_no) from invoice_lines l where l.invoice_id = i.id) as items,
+           coalesce((select sum(p.amount) from payments p where p.business_id = j.pool_id and p.invoice_no = j.pool_invoice_no and lower(coalesce(p.method, '')) <> 'returned'), 0) as money,
+           coalesce((select sum(p.amount) from payments p where p.business_id = j.pool_id and p.invoice_no = j.pool_invoice_no and lower(coalesce(p.method, '')) = 'returned'), 0) as returned
+    from joint_sales j join invoices i on i.business_id = j.pool_id and i.invoice_no = j.pool_invoice_no
+    where j.pool_id = ${pool.id}
+    order by i.created_at desc limit 300`);
+  const names = {}; pool.partners.forEach((p) => { names[p.id] = p.name; });
+  const today = ctx.now.getTime();
+  return rows.map((r) => {
+    const total = num(r.joint_total), returned = num(r.returned), paid = num(r.money);
+    const due = Math.max(0, round2(total - returned - paid));
+    const days = Math.max(0, Math.floor((today - new Date(r.created_at).getTime()) / 86400000));
+    return { when: formatDate(new Date(r.created_at), 'd MMM yyyy'), seller: names[r.seller] || 'Partner', mine: r.seller === ctx.biz,
+             invoiceNo: r.seller === ctx.biz ? str(r.seller_invoice_no) : '', ref: str(r.pool_invoice_no), items: str(r.items),
+             total, returned, paid, due, days, late: due > 0.5 && days >= slowDays, belowFloor: num(r.below_floor) };
+  });
+}
+
+/** Say yes to a finished month's sums (or take the yes back before the other has agreed). The last yes closes it. */
+export async function erpJointAgree(ctx, payload) {
+  payload = payload || {};
+  await needOn(ctx);
+  const pool = await poolOf(ctx, payload.pool);
+  needOwner(ctx, pool);
+  await erpPoolClose(inPool(ctx, pool), { month: payload.month, withdraw: !!payload.withdraw });
+  return erpJoint(ctx, { pool: pool.id, month: payload.month });
+}
+
+/** For the dashboard card: each pool in one line (member owners only). */
+export async function erpJointCard(ctx) {
+  if (ctx.s.role !== 'owner' || !(await jointOn(ctx))) return { on: false, pools: [] };
+  const out = [];
+  for (const pool of await myPools(ctx)) {
+    if (!pool.member) continue;
+    const b = await erpPartnership(inPool(ctx, pool), {});
+    const r = b.report || {}, me = (r.partners || []).find((x) => x.business_id === b.me) || {};
+    const names = {}; (b.partners || []).forEach((x) => { names[x.id] = x.name; });
+    out.push({ id: pool.id, name: pool.name, profit: num((r.this_month || {}).profit), share: num(me.ratio), myProfit: round2(num((r.this_month || {}).profit) * num(me.ratio)),
+               stock: num((r.to_date || {}).stock_at_cost), balance: num(me.balance),
+               transfers: (r.transfers || []).map((t) => ({ from: names[t.from] || '?', to: names[t.to] || '?', amount: num(t.amount), mine: t.from === b.me ? 'pay' : t.to === b.me ? 'get' : '' })) });
+  }
+  return { on: true, pools: out, currency: 'BDT' };
+}
+
+const esc = (v) => String(v == null ? '' : v).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+const money0 = (n) => Math.round(num(n)).toLocaleString('en-US');
+
+/** The month's statement as a paper both owners can keep. */
+export async function erpJointStatementPdf(ctx, payload) {
+  payload = payload || {};
+  await needOn(ctx);
+  const pool = await poolOf(ctx, payload.pool);
+  needOwner(ctx, pool);
+  const pctx = inPool(ctx, pool);
+  const b = await erpPartnership(pctx, { month: payload.month });
+  const r = b.report || {}, tm = r.this_month || {}, td = r.to_date || {}, ps = r.partners || [];
+  const names = {}; (b.partners || []).forEach((x) => { names[x.id] = x.name; });
+  const slow = Math.round(num(td.slow_days)) || SLOW_DAYS;
+  const sales = (await jointSales(ctx, pool, slow)).filter((s) => s.when.slice(-8) === formatDate(new Date(b.month + '-15T00:00:00Z'), 'MMM yyyy'));
+  const bySeller = {};
+  for (const s of sales) { const o = bySeller[s.seller] || (bySeller[s.seller] = { n: 0, total: 0, returned: 0, paid: 0, due: 0 }); o.n++; o.total += s.total; o.returned += s.returned; o.paid += s.paid; o.due += s.due; }
+  const agreed = (r.agreed || []).map((id) => names[id] || '?');
+  const th = 'style="text-align:left;padding:6px 8px;border-bottom:2px solid #222;font-size:11px"', thn = th.replace('left', 'right');
+  const td1 = 'style="padding:6px 8px;border-bottom:1px solid #ddd"', tdn = 'style="padding:6px 8px;border-bottom:1px solid #ddd;text-align:right"';
+  const html = '<html><body style="font-family:Arial,Helvetica,sans-serif;font-size:12px;color:#111;margin:0">' +
+    '<h1 style="font-size:20px;margin:0 0 2px">' + esc(pool.name) + '</h1>' +
+    '<div style="font-size:14px;margin-bottom:2px">Joint stock statement — ' + esc(b.label) + '</div>' +
+    '<div style="color:#555;margin-bottom:14px">' + (r.closed ? 'Closed: agreed by ' + esc(agreed.join(' and ')) : 'Not closed yet' + (agreed.length ? ' — agreed so far by ' + esc(agreed.join(', ')) : '')) +
+      ' · made ' + esc(formatDate(ctx.now, 'd MMM yyyy, h:mm a')) + '</div>' +
+    '<table width="100%" cellspacing="0" style="border-collapse:collapse;margin-bottom:14px"><tr>' +
+      [['Sold', tm.revenue], ['Cost of goods', tm.cogs], ['Shared expenses', tm.expenses], ['Stock corrections', tm.stock_gain], ['Profit of the month', tm.profit]].map((x) =>
+        '<td style="border:1px solid #ccc;padding:8px 10px"><div style="font-size:10px;color:#555;text-transform:uppercase">' + x[0] + '</div><div style="font-size:16px;font-weight:700">BDT ' + money0(x[1]) + '</div></td>').join('') + '</tr></table>' +
+    '<h2 style="font-size:13px;margin:0 0 4px">The partners</h2>' +
+    '<table width="100%" cellspacing="0" style="border-collapse:collapse;margin-bottom:6px"><tr><th ' + th + '>Partner</th><th ' + thn + '>Capital</th><th ' + thn + '>Share</th><th ' + thn + '>Sold this month</th><th ' + thn +
+      '>Profit share</th><th ' + thn + '>Holds</th><th ' + thn + '>Should hold</th><th ' + thn + '>To settle</th></tr>' +
+      ps.map((x) => { const bal = num(x.balance); return '<tr><td ' + td1 + '>' + esc(x.name) + '</td><td ' + tdn + '>' + money0(x.capital) + '</td><td ' + tdn + '>' + (Math.round(num(x.ratio) * 1000) / 10) + '%</td><td ' + tdn + '>' + money0(x.month_sales) +
+        '</td><td ' + tdn + '>' + money0(x.profit_share) + '</td><td ' + tdn + '>' + money0(x.held) + '</td><td ' + tdn + '>' + money0(x.due) + '</td><td ' + tdn + '><b>' +
+        (bal > 0.5 ? 'pays ' + money0(bal) : bal < -0.5 ? 'receives ' + money0(-bal) : 'even') + '</b></td></tr>'; }).join('') + '</table>' +
+    '<div style="margin:8px 0 14px;padding:10px 12px;border:2px solid #111;font-size:14px">' +
+      ((r.transfers || []).length ? (r.transfers || []).map((t) => '<b>' + esc(names[t.from] || '?') + '</b> pays <b>BDT ' + money0(t.amount) + '</b> to <b>' + esc(names[t.to] || '?') + '</b>').join('<br>')
+                                  : 'Nobody owes anything — the cash is where it should be.') + '</div>' +
+    '<div style="color:#444;margin-bottom:14px">Stock at cost BDT ' + money0(td.stock_at_cost) + ' · customers still owe BDT ' + money0(td.receivables) +
+      (num(td.overdue) > 0.5 ? ' · unpaid for more than ' + slow + ' days, counted as held by the seller: BDT ' + money0(td.overdue) : '') +
+      '. Profit is shared by capital as it stood when the month began. “Holds” = joint money received from customers, less what that partner paid for stock and expenses.</div>' +
+    '<h2 style="font-size:13px;margin:0 0 4px">Sales of the month, by company</h2>' +
+    (Object.keys(bySeller).length ? '<table width="100%" cellspacing="0" style="border-collapse:collapse;margin-bottom:14px"><tr><th ' + th + '>Company</th><th ' + thn + '>Sales</th><th ' + thn + '>Value</th><th ' + thn + '>Returned</th><th ' + thn + '>Paid</th><th ' + thn + '>Not paid yet</th></tr>' +
+      Object.keys(bySeller).sort().map((k) => { const o = bySeller[k]; return '<tr><td ' + td1 + '>' + esc(k) + '</td><td ' + tdn + '>' + o.n + '</td><td ' + tdn + '>' + money0(o.total) + '</td><td ' + tdn + '>' + money0(o.returned) + '</td><td ' + tdn + '>' + money0(o.paid) + '</td><td ' + tdn + '>' + money0(o.due) + '</td></tr>'; }).join('') + '</table>'
+      : '<div style="color:#555;margin-bottom:14px">No joint sale this month.</div>') +
+    ((r.below_floor || []).length ? '<h2 style="font-size:13px;margin:0 0 4px">Sold under the floor price (by an owner)</h2><div style="margin-bottom:14px">' +
+      (r.below_floor || []).map((f) => esc(names[f.seller] || '?') + ', invoice ' + esc(f.invoice) + ': BDT ' + money0(f.amount) + ' under the floor').join('<br>') + '</div>' : '') +
+    '<h2 style="font-size:13px;margin:0 0 4px">The joint book this month</h2>' +
+    (() => { const led = (b.ledger || []).filter((l) => !l.voided && formatDate(new Date(b.month + '-15T00:00:00Z'), 'MMM yyyy') === l.when.slice(-8));
+      return led.length ? '<table width="100%" cellspacing="0" style="border-collapse:collapse"><tr><th ' + th + '>Date</th><th ' + th + '>Who</th><th ' + th + '>What</th><th ' + thn + '>Amount</th></tr>' +
+        led.map((l) => '<tr><td ' + td1 + '>' + esc(l.when) + '</td><td ' + td1 + '>' + esc(l.who) + (l.to ? ' → ' + esc(l.to) : '') + '</td><td ' + td1 + '>' + esc(l.label) + (l.category ? ' · ' + esc(l.category) : '') + (l.note ? ' · ' + esc(l.note) : '') +
+          '</td><td ' + tdn + '>' + money0(l.amount) + '</td></tr>').join('') + '</table>' : '<div style="color:#555">Nothing written this month.</div>'; })() +
+    '<table width="100%" style="margin-top:44px"><tr>' + ps.map((x) => '<td style="padding:0 20px"><div style="border-top:1px solid #111;padding-top:4px;text-align:center">' + esc(x.name) + '</div></td>').join('') + '</tr></table>' +
+    '</body></html>';
+  const name = 'Joint_' + String(pool.name).replace(/[^\w\-]+/g, '_') + '_' + b.month + '.pdf';
+  const bytes = await renderPdf(ctx, html, {});
+  await deleteFile(ctx, 'invoices', name);
+  const f = await saveFile(ctx, 'invoices', name, bytes, 'application/pdf');
+  return { url: f.url, id: f.id, name };
 }
 
 /** Create a pool, join one, or make the partner's own company. */
@@ -297,4 +406,208 @@ export async function erpJointSettings(ctx, payload) {
   return erpJoint(ctx, { pool: pool.id, month: payload.month });
 }
 
-export const HANDLERS = { erpJoint, erpJointCatalog, erpJointStart, erpJointProduct, erpJointReceive, erpJointAdjust, erpJointBook, erpJointSettings };
+// =====================================================================================
+// Selling. The customer's invoice is the seller's own; these make the pool's side of it.
+// =====================================================================================
+
+/**
+ * Before a sale with joint lines is written: which pool each line comes from,
+ * the pools locked (so two companies cannot sell the last piece at once), and
+ * what is on their shelves priced for this company.
+ *   -> { pools: [pool], recs: { markedSkuLower: { sku, code, name, sell, stock, floor, poolId, joint } } }
+ */
+export async function prepareJointSale(ctx, items) {
+  await needOn(ctx);
+  const pools = await myPools(ctx);
+  const used = new Map();
+  for (const it of items) {
+    const sku = str(it.sku), mark = sku.slice(-4).toLowerCase();
+    const hit = pools.filter((p) => p.id.replace(/-/g, '').slice(0, 4).toLowerCase() === mark);
+    if (hit.length !== 1) throw new Error('Unknown product: ' + cleanSku(sku) + ' (joint stock). Reload the page and add it again.');
+    used.set(hit[0].id, hit[0]);
+  }
+  const list = [...used.values()].sort((a, b) => (a.id < b.id ? -1 : 1));
+  const recs = {};
+  for (const pool of list) {
+    await lock(inPool(ctx, pool), 'sale');
+    for (const p of await shelf(ctx, pool, false)) {
+      if (p.status === 'Discontinued') continue;
+      const marked = jointSku(p.sku, pool.id);
+      recs[marked.toLowerCase()] = { sku: marked, code: p.sku, name: p.name, sell: p.price, stock: p.stock, floor: p.floor, poolId: pool.id, joint: true };
+    }
+  }
+  return { pools: list, recs };
+}
+
+/**
+ * Nobody sells joint stock below its floor price; the owner may, and it is flagged.
+ * `lines` = [{ name, qty, unit, disc, floor }] -> the shortfall in money (0 when none).
+ */
+export function floorCheck(ctx, lines) {
+  let short = 0;
+  for (const l of lines) {
+    if (!(l.floor > 0) || !(l.qty > 0)) continue;
+    const net = (l.qty * l.unit - l.disc) / l.qty;
+    if (net >= l.floor - 0.005) continue;
+    if (ctx.s.role !== 'owner') {
+      throw new Error(l.name + ': ' + (Math.round(net * 100) / 100) + ' each is below the floor price of ' + l.floor +
+        ' agreed for joint stock. Only the owner can go below it.');
+    }
+    short += (l.floor - net) * l.qty;
+  }
+  return round2(short);
+}
+
+/**
+ * The pool's own copy of the joint lines of a seller's invoice: pool stock out,
+ * pool cost, the pool's invoice number, sold by this company. The customer is
+ * not named there - the partner never sees the other's customers.
+ *   sale = { invoiceNo, date, lines: [{ poolId, code, qty, unit, disc, total }], shortfall: { poolId: n } }
+ */
+export async function mirrorJointSale(ctx, joint, sale, createInvoice) {
+  const out = [], seller = str(ctx.s.businessName) || 'Partner';
+  const day = formatDate(sale.at, 'yyyy-MM-dd');
+  for (const pool of joint.pools) {
+    const ls = sale.lines.filter((l) => l.poolId === pool.id);
+    if (!ls.length) continue;
+    await poolOpenOn(ctx, pool, day, 'a joint sale cannot be dated there');
+    const pctx = inPool(ctx, pool);
+    const total = round2(ls.reduce((a, l) => a + l.total, 0));
+    const res = await asSystem(ctx, () => createInvoice(pctx, {
+      customer: { name: seller + ' · ' + sale.invoiceNo, source: 'Joint' },
+      items: ls.map((l) => ({ sku: l.code, qty: l.qty })), payMode: 'none', date: sale.date || '',
+      note: 'Joint stock sold by ' + seller + ' on their invoice ' + sale.invoiceNo,
+    }, { mirror: { seller: ctx.biz, lines: ls.map((l) => ({ unit: l.unit, disc: l.disc })) } }));
+    await asSystem(ctx, () => ctx.tx`
+      insert into joint_sales (pool_id, seller_business_id, seller_invoice_no, pool_invoice_no, joint_total, below_floor)
+      values (${pool.id}, ${ctx.biz}, ${sale.invoiceNo}, ${res.invoiceNo}, ${total}, ${num((sale.shortfall || {})[pool.id])})`);
+    out.push({ pool: pool.id, name: pool.name, invoiceNo: res.invoiceNo, total });
+  }
+  return out;
+}
+
+/** The joint sales behind one of this company's invoices. */
+async function jointOf(ctx, invoiceNo) {
+  return asSystem(ctx, () => ctx.tx`
+    select j.pool_id, j.pool_invoice_no, j.joint_total, b.name
+    from joint_sales j join businesses b on b.id = j.pool_id
+    where j.seller_business_id = ${ctx.biz} and j.seller_invoice_no = ${str(invoiceNo)}`);
+}
+export async function hasJoint(ctx, invoiceNo) { return (await jointOf(ctx, invoiceNo)).length > 0; }
+
+/**
+ * Money. Whatever real money has come in on the seller's invoice belongs to
+ * the pool in the share the joint goods are of the invoice (what is still
+ * billed: returns taken off). Adjustments and returns are not money. The
+ * difference from what the pool already has is written in the pool as one
+ * payment line (method "Joint"), received by this company.
+ */
+export async function syncJoint(ctx, invoiceNo) {
+  const links = await jointOf(ctx, invoiceNo);
+  if (!links.length) return;
+  const inv = (await ctx.tx`select grand_total from invoices where business_id = ${ctx.biz} and invoice_no = ${str(invoiceNo)}`)[0];
+  if (!inv) return;
+  const pays = await ctx.tx`select amount, method from payments where business_id = ${ctx.biz} and invoice_no = ${str(invoiceNo)}`;
+  let money = 0, returned = 0;
+  for (const p of pays) {
+    const m = str(p.method).toLowerCase();
+    if (m === 'returned') returned += num(p.amount);
+    else if (m !== 'adjusted') money += num(p.amount);
+  }
+  const billed = round2(num(inv.grand_total) - returned);
+  for (const link of links) {
+    const pctx = inPool(ctx, { id: link.pool_id, name: str(link.name) });
+    await asSystem(ctx, async () => {
+      const mp = await ctx.tx`select amount, method from payments where business_id = ${link.pool_id} and invoice_no = ${link.pool_invoice_no}`;
+      let had = 0, back = 0;
+      for (const p of mp) { if (str(p.method).toLowerCase() === 'returned') back += num(p.amount); else had += num(p.amount); }
+      const joint = Math.max(0, round2(num(link.joint_total) - back));
+      let want = billed > 0 && joint > 0 ? round2(Math.max(0, money) * joint / billed) : 0;
+      if (money >= billed - 0.5) want = joint;
+      want = Math.max(0, Math.min(joint, want));
+      const delta = round2(want - had);
+      if (Math.abs(delta) >= 0.01) {
+        const at = new Date();
+        await ctx.tx`
+          insert into payments (business_id, payment_no, invoice_no, customer, paid_at, amount, method, note, recorded_by, received_by)
+          values (${link.pool_id}, ${'J' + formatDate(at, 'yyMMddHHmmss') + '-' + Math.floor(Math.random() * 9000 + 1000)}, ${link.pool_invoice_no},
+                  ${str(ctx.s.businessName) + ' · ' + str(invoiceNo)}, ${at}, ${delta}, 'Joint',
+                  ${(delta > 0 ? 'share of money received on ' : 'share of money given back on ') + str(invoiceNo)}, ${who(ctx)}, ${ctx.biz})`;
+        forget(pctx, 'PAYMENTS');
+      }
+      const got = round2(had + delta + back), due = Math.max(0, round2(num(link.joint_total) - got));
+      await ctx.tx`update invoices set advance_paid = ${got}, due_amount = ${due},
+                     payment_status = ${due <= 0.5 ? 'Paid' : got > 0 ? 'Partial' : 'Pending'}
+                   where business_id = ${link.pool_id} and invoice_no = ${link.pool_invoice_no}`;
+      forget(pctx, 'SALES_LOG');
+    });
+  }
+}
+
+/**
+ * Goods of a joint line came back to the seller: they go back on the pool's
+ * shelf (when good), the pool's sale is reduced by a return note of its own,
+ * dated today. `take` = the seller's return lines [{ sku (marked), product, qty, worth, unit, good }].
+ */
+export async function mirrorJointReturn(ctx, invoiceNo, take, rid, reason, at) {
+  const mine = take.filter((t) => JOINT_MARK.test(str(t.sku)));
+  if (!mine.length) return;
+  const links = await jointOf(ctx, invoiceNo);
+  const day = formatDate(at, 'yyyy-MM-dd');
+  for (const link of links) {
+    const mark = '~j' + String(link.pool_id).replace(/-/g, '').slice(0, 4).toLowerCase();
+    const ls = mine.filter((t) => str(t.sku).toLowerCase().endsWith(mark));
+    if (!ls.length) continue;
+    const pool = { id: link.pool_id, name: str(link.name) }, pctx = inPool(ctx, pool);
+    await poolOpenOn(ctx, pool, day, 'a return cannot be written there');
+    await asSystem(ctx, async () => {
+      await lock(pctx, 'sale');
+      const head = (await ctx.tx`select customer_name, sold_by from invoices where business_id = ${pool.id} and invoice_no = ${link.pool_invoice_no}`)[0];
+      if (!head) return;
+      let prid = rid + '-J';
+      for (let k = 2; (await ctx.tx`select 1 from invoices where business_id = ${pool.id} and invoice_no = ${prid} limit 1`).length; k++) prid = rid + '-J' + k;
+      const rtn = (await ctx.tx`
+        insert into invoices (business_id, invoice_no, customer_name, customer_phone, customer_address, source, subtotal, discount, delivery_charge,
+                              grand_total, advance_paid, due_amount, payment_method, payment_status, delivery_status, note, created_by, created_at, customer_key, sold_by)
+        values (${pool.id}, ${prid}, ${str(head.customer_name)}, '', '', 'Joint', 0, 0, 0, 0, 0, 0, '', 'Paid', '',
+                ${'return of ' + link.pool_invoice_no + ' - ' + reason}, ${ctx.s.userId}, ${at}, ${'n:' + str(head.customer_name).toLowerCase()}, ${head.sold_by})
+        returning id`)[0].id;
+      let value = 0;
+      for (let i = 0; i < ls.length; i++) {
+        const t = ls[i], code = cleanSku(t.sku);
+        const sold = (await ctx.tx`
+          select l.product_id, l.unit_cost, l.name from invoice_lines l join invoices i on i.id = l.invoice_id
+          where i.business_id = ${pool.id} and i.invoice_no = ${link.pool_invoice_no} and lower(btrim(l.sku)) = ${code.toLowerCase()} and l.qty > 0
+          order by l.line_no limit 1`)[0];
+        if (!sold) continue;
+        value += t.worth;
+        await ctx.tx`
+          insert into invoice_lines (business_id, invoice_id, product_id, sku, name, qty, unit_price, discount, line_total, line_no, unit_cost)
+          values (${pool.id}, ${rtn}, ${sold.product_id}, ${code}, ${str(sold.name) + (t.good ? ' (returned)' : ' (returned damaged)')},
+                  ${t.good ? -t.qty : 0}, ${round2(t.unit)}, 0, ${-t.worth}, ${i + 1}, ${num(sold.unit_cost)})`;
+        await ctx.tx`
+          insert into returns (business_id, return_no, returned_at, invoice_no, sku, product, qty, condition, value, money, customer, reason, recorded_by)
+          values (${pool.id}, ${prid}, ${at}, ${link.pool_invoice_no}, ${code}, ${str(sold.name)}, ${t.qty}, ${t.good ? 'good' : 'damaged'}, ${t.worth},
+                  'joint sale reduced', ${str(head.customer_name)}, ${reason}, ${who(ctx)})`;
+        if (t.good && sold.product_id) {
+          await ctx.tx`
+            insert into stock_movements (business_id, product_id, kind, direction, qty, unit_price, total, reference, supplier, note, invoice_id,
+                                         created_by, created_at, txn_no, operator, product_name)
+            values (${pool.id}, ${sold.product_id}, 'RETURN', 'IN', ${t.qty}, 0, 0, ${'Return: ' + link.pool_invoice_no}, ${str(head.customer_name)},
+                    ${prid + ' - ' + reason}, ${rtn}, ${ctx.s.userId}, ${at}, ${txnNo(at)}, ${who(ctx)}, ${str(sold.name)})`;
+        }
+      }
+      value = round2(value);
+      if (value > 0) {
+        await ctx.tx`
+          insert into payments (business_id, payment_no, invoice_no, customer, paid_at, amount, method, note, recorded_by, received_by)
+          values (${pool.id}, ${'R' + formatDate(at, 'yyMMddHHmmss') + '-J' + Math.floor(Math.random() * 900 + 100)}, ${link.pool_invoice_no}, ${str(head.customer_name)},
+                  ${at}, ${value}, 'Returned', ${'goods returned [return:' + prid + ']'}, ${who(ctx)}, ${ctx.biz})`;
+      }
+      forget(pctx, 'SALES_LOG', 'RETURNS', 'TXN_LOG', 'PAYMENTS');
+    });
+  }
+}
+
+export const HANDLERS = { erpJoint, erpJointCatalog, erpJointStart, erpJointProduct, erpJointReceive, erpJointAdjust, erpJointBook, erpJointSettings,
+                          erpJointAgree, erpJointCard, erpJointStatementPdf };

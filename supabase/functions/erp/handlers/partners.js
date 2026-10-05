@@ -215,7 +215,22 @@ export async function erpPoolClose(ctx, payload) {
   await needPool(ctx);
   const month = str(payload && payload.month);
   if (!isMonth(month)) throw new Error('Which month?');
-  await ctx.tx`select close_pool_month(${ctx.biz}, ${month + '-01'}::date)`;
+  if (month >= formatDate(ctx.now, 'yyyy-MM')) throw new Error('A month can only be closed after it has ended.');
+  const first = month + '-01';
+  if ((await ctx.tx`select 1 from pool_settlements where pool_id = ${ctx.biz} and month = ${first}::date`).length) throw new Error('That month is already closed.');
+  const me = (await ctx.tx`select my_partner_in(${ctx.biz}) as p`)[0].p;
+  if (payload && payload.withdraw) {
+    await ctx.tx`delete from pool_month_agreed where pool_id = ${ctx.biz} and month = ${first}::date and partner_business_id = ${me}`;
+    return erpPartnership(ctx, { month });
+  }
+  // every partner says yes to the same sums; the last yes closes the month
+  await ctx.tx`insert into pool_month_agreed (pool_id, month, partner_business_id, agreed_by, agreed_name)
+               values (${ctx.biz}, ${first}::date, ${me}, ${ctx.s.userId}, ${(ctx.s && ctx.s.name) || 'owner'})
+               on conflict (pool_id, month, partner_business_id) do nothing`;
+  const left = await ctx.tx`select 1 from pool_partners pp where pp.pool_id = ${ctx.biz}
+                             and not exists (select 1 from pool_month_agreed a where a.pool_id = pp.pool_id and a.month = ${first}::date
+                                             and a.partner_business_id = pp.partner_business_id)`;
+  if (!left.length) await ctx.tx`select close_pool_month(${ctx.biz}, ${first}::date)`;
   return erpPartnership(ctx, { month });
 }
 

@@ -514,6 +514,14 @@ async function returnGoods(ctx, payload, opts = {}) {
                             key: ckey, at: now, amount: excess, method: 'Advance',
                             note: 'from return of ' + invoiceNo + ' [advance] [acct:' + ckey + ']', by });
   }
+  // joint stock: what came back goes back on the pool's shelf, and the pool's sale and money follow
+  {
+    const J = await import('./joint.js');
+    if (take.some((t) => J.JOINT_MARK.test(String(t.sku))) && await J.jointOn(ctx)) {
+      await J.mirrorJointReturn(ctx, invoiceNo, take, rid, reason, now);
+      await J.syncJoint(ctx, invoiceNo);
+    }
+  }
   await quietly(ctx, () => syncInvoiceStatus(ctx, invoiceNo));
 
   // ---- 5. a paper for the customer
@@ -538,7 +546,7 @@ export async function erpReturnGoods(ctx, payload) {
 async function returnNotePdf(ctx, rid, invoiceNo, head, take, value, offDue, excess, money, reason, now) {
   const biz = (ctx.s && ctx.s.businessName) || '';
   const rows = take.map((t) =>
-    '<tr><td>' + esc(t.product) + '<br><small>' + esc(t.sku) + '</small></td>' +
+    '<tr><td>' + esc(t.product) + '<br><small>' + esc(String(t.sku).replace(/~J[0-9a-f]{4}$/i, '')) + '</small></td>' +
     '<td align="right">' + t.qty + '</td><td>' + (t.good ? 'good' : 'damaged') + '</td>' +
     '<td align="right">' + Math.round(t.worth) + '</td></tr>').join('');
   const html = '<html><body style="font-family:Arial,sans-serif;font-size:12px;color:#111">' +
@@ -771,6 +779,7 @@ export async function erpVoidInvoice(ctx, invoiceNo) {
   if ((await ctx.tx`select 1 from returns where business_id = ${ctx.biz} and invoice_no = ${no} limit 1`).length) ties.push('a return');
   if ((await ctx.tx`select 1 from serials where business_id = ${ctx.biz} and invoice_no = ${no} limit 1`).length) ties.push('numbered units');
   if ((await ctx.tx`select 1 from courier_log where business_id = ${ctx.biz} and invoice_no = ${no} limit 1`).length) ties.push('a booked parcel');
+  if ((await ctx.tx`select 1 from invoice_lines l join invoices i on i.id = l.invoice_id where i.business_id = ${ctx.biz} and i.invoice_no = ${no} and l.pool_id is not null limit 1`).length) ties.push('joint stock on it (the partner\u2019s book has its copy)');
   if (ties.length) throw new Error('Invoice ' + no + ' has ' + ties.join(', ') + ', so it cannot be removed. Cancel it instead: that takes the goods back and keeps the money record straight.');
   let units = 0, value = 0;
   for (const l of lines) { units += num(l.qty); value += num(l.line_total); }
@@ -848,6 +857,7 @@ export async function invoiceDocData(ctx, invoiceNo) {
   if (!head) return null;
   const sn = await serialsOnInvoice(ctx, invoiceNo);
   lines.forEach((l) => { l.serials = sn[l.sku.toLowerCase()] || []; });
+  lines.forEach((l) => { l.sku = l.sku.replace(/~J[0-9a-f]{4}$/i, ''); });   // a joint line: the customer's paper shows the plain code
   let gross = 0, sum = 0;
   lines.forEach((l) => { gross += l.gross; sum += l.total; });
   const inside = Math.max(0, gross - sum);

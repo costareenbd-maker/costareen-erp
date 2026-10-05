@@ -79,6 +79,10 @@ export async function syncInvoiceStatus(ctx, orderId) {
                  payment_status = ${status} where id = ${r.id}`;
   }
   forget(ctx, 'SALES_LOG');
+  if (orderId) {
+    const J = await import('./joint.js');
+    if (await J.jointOn(ctx)) await J.syncJoint(ctx, String(orderId));
+  }
 }
 
 // ------------------------------------------------------- legacy split orders

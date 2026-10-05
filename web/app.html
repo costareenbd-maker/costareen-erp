@@ -8420,7 +8420,7 @@ function srv(name, args, ok, bad) {
 
 var SRV_ACTIVE = 0, SRV_WRITING = false, SRV_TIMED = {};
 // the same list the server uses to know a call changes nothing (ERP_READS)
-var SRV_READS = /^(erpJoint|erpJointCatalog|erpInvoiceDesign|erpInvoicePreview|erpMarket|erpMarketMine|erpMarketRequests|erpMarketHints|erpMarketNames|erpWanted|erpBrand|erpComplianceLog|erpProviderKey|erpNews|erpAccessKeys|erpAccessWarning|erpAdmin|erpAiKeys|erpAlertRules|erpAlerts|erpArena|erpBackupStatus|erpBg|erpBnWords|erpBookedParcels|erpBrandLogo|erpBundle|erpBusinessLinks|erpBusinesses|erpBusinessesDeleted|erpCampaignAudience|erpCampaignGet|erpCampaignList|erpCapital|erpCashBook|erpCatalog|erpConnStatus|erpConnections|erpCostBook|erpCourier|erpCourierKeyStatus|erpCurrencies|erpCustomerAccount|erpCustomerCredit|erpCustomerList|erpCustomerPage|erpCustomerStatement|erpCustomers|erpDashboardData|erpDaySales|erpDeliveryOptions|erpDevices|erpDiscontinued|erpDues|erpEvoQr|erpEvoStatus|erpExpenseExport|erpExpenseReceiptUrl|erpExpenses|erpFamilies|erpFighters|erpFormOptions|erpGame|erpGetTheme|erpGoogle|erpHello|erpInstalls|erpInvoice|erpInvoicePdf|erpJob|erpJobs|erpListView|erpLookupCustomer|erpLookupUsage|erpMe|erpMoney|erpNoteFileUrl|erpNotes|erpOwnerChange|erpOwnerChanges|erpParcelLabels|erpParcelPreview|erpPartnerStock|erpPartnership|erpPayReasons|erpPeople|erpPlatform|erpPlatformErrors|erpPnl|erpPnlMonth|erpPoList|erpPoolCatalog|erpProduct|erpProductListShare|erpProductPage|erpProductPhotoUrl|erpProductThumbs|erpProfile|erpQuoteAsset|erpQuoteBoot|erpQuoteGet|erpQuoteList|erpRecentInvoices|erpRecovery|erpReorderPlan|erpRestorePreview|erpReturnPreview|erpRisks|erpSales|erpSearch|erpSecurity|erpSelfTest|erpSerialLookup|erpSerialsFor|erpSessions|erpSetTheme|erpSettingsFull|erpSettingsLists|erpSfPayoutLines|erpSfPayouts|erpShareFile|erpSharedStock|erpSheet|erpStatementPdf|erpStockHistory|erpSupplierPage|erpSuppliers|erpToday|erpUsers|erpWaProductPdf|erpWebMatches|erpWebOrderInvoices|erpWebOrders|erpWebsiteTest)$/;
+var SRV_READS = /^(erpJoint|erpJointCatalog|erpJointCard|erpInvoiceDesign|erpInvoicePreview|erpMarket|erpMarketMine|erpMarketRequests|erpMarketHints|erpMarketNames|erpWanted|erpBrand|erpComplianceLog|erpProviderKey|erpNews|erpAccessKeys|erpAccessWarning|erpAdmin|erpAiKeys|erpAlertRules|erpAlerts|erpArena|erpBackupStatus|erpBg|erpBnWords|erpBookedParcels|erpBrandLogo|erpBundle|erpBusinessLinks|erpBusinesses|erpBusinessesDeleted|erpCampaignAudience|erpCampaignGet|erpCampaignList|erpCapital|erpCashBook|erpCatalog|erpConnStatus|erpConnections|erpCostBook|erpCourier|erpCourierKeyStatus|erpCurrencies|erpCustomerAccount|erpCustomerCredit|erpCustomerList|erpCustomerPage|erpCustomerStatement|erpCustomers|erpDashboardData|erpDaySales|erpDeliveryOptions|erpDevices|erpDiscontinued|erpDues|erpEvoQr|erpEvoStatus|erpExpenseExport|erpExpenseReceiptUrl|erpExpenses|erpFamilies|erpFighters|erpFormOptions|erpGame|erpGetTheme|erpGoogle|erpHello|erpInstalls|erpInvoice|erpInvoicePdf|erpJob|erpJobs|erpListView|erpLookupCustomer|erpLookupUsage|erpMe|erpMoney|erpNoteFileUrl|erpNotes|erpOwnerChange|erpOwnerChanges|erpParcelLabels|erpParcelPreview|erpPartnerStock|erpPartnership|erpPayReasons|erpPeople|erpPlatform|erpPlatformErrors|erpPnl|erpPnlMonth|erpPoList|erpPoolCatalog|erpProduct|erpProductListShare|erpProductPage|erpProductPhotoUrl|erpProductThumbs|erpProfile|erpQuoteAsset|erpQuoteBoot|erpQuoteGet|erpQuoteList|erpRecentInvoices|erpRecovery|erpReorderPlan|erpRestorePreview|erpReturnPreview|erpRisks|erpSales|erpSearch|erpSecurity|erpSelfTest|erpSerialLookup|erpSerialsFor|erpSessions|erpSetTheme|erpSettingsFull|erpSettingsLists|erpSfPayoutLines|erpSfPayouts|erpShareFile|erpSharedStock|erpSheet|erpStatementPdf|erpStockHistory|erpSupplierPage|erpSuppliers|erpToday|erpUsers|erpWaProductPdf|erpWebMatches|erpWebOrderInvoices|erpWebOrders|erpWebsiteTest)$/;
 function srvPump() {
   if (!SRV_Q.length) return;
   var isRead = SRV_READS.test(SRV_Q[0].name);
@@ -20221,6 +20221,218 @@ document.addEventListener('click', async function (ev) {
     repaint();
   }, function (e) { toast(p4Err(e), true, 12000); });
 });
+</script>
+
+<!-- joint-2 (2026-10-06): joint products on New invoice. They sit in the same search as the company's own products,
+     with a "Joint" tag; one invoice can mix own and joint lines. Their code carries the pool (X~Jabcd) - never shown. -->
+<script>
+function jcatLoad(force) {
+  if (!jtOn() || (JCAT && !force) || jcatLoad.busy) return;
+  jcatLoad.busy = true;
+  srv('erpJointCatalog', [], function (r) { jcatLoad.busy = false; JCAT = (r && r.products) || []; if (VIEW === 'invoice') repaint(); },
+      function () { jcatLoad.busy = false; JCAT = []; });
+}
+function jcatIs(sku) { return /~J[0-9a-f]{4}$/i.test(String(sku || '')); }
+function jcatOf(sku) { var a = JCAT || []; for (var i = 0; i < a.length; i++) if (a[i].sku === sku) return a[i]; return null; }
+/** Run one of the invoice screen's own functions with the joint products added to the catalogue. */
+function jcatWith(fn, self, args) {
+  if (!jtOn() || !JCAT || !JCAT.length || !Array.isArray(CAT)) return fn.apply(self, args);
+  var keep = CAT; CAT = keep.concat(JCAT);
+  try { return fn.apply(self, args); } finally { CAT = keep; }
+}
+['paintResults', 'cartTotals', 'saveInvoice'].forEach(function (name) {
+  var orig = window[name];
+  if (typeof orig !== 'function') return;
+  window[name] = function () { return jcatWith(orig, this, arguments); };
+});
+(function () {
+  var add = window.addToCart;
+  window.addToCart = function (sku) {
+    var r = jcatWith(add, this, arguments);
+    if (jcatIs(sku)) { var p = jcatOf(sku); CART.forEach(function (l) { if (l.sku === sku && p) { l.joint = true; l.floor = p.floor; l.pool = p.poolName; l.stock = p.stock; } }); }
+    return r;
+  };
+  var probs = window.cartProblems;
+  window.cartProblems = function () {
+    var p = jcatWith(probs, this, arguments);
+    if (!ME || ME.role === 'owner') return p;
+    CART.forEach(function (l) {
+      if (!l.joint || !(l.floor > 0)) return;
+      var net = l.price - num(l.discEach);
+      if (net < l.floor - 0.005) p.push(l.name + ': ' + fmt(net) + ' each is below the floor price of ' + fmt(l.floor) + ' agreed for joint stock. Only the owner can go below it.');
+    });
+    return p;
+  };
+})();
+try { paintResults = window.paintResults; addToCart = window.addToCart; cartProblems = window.cartProblems; cartTotals = window.cartTotals; saveInvoice = window.saveInvoice; } catch (e) {}
+// the old "Selling from: Joint pool" switch (one invoice from one stock) is replaced by the tag
+invPools = function () { return []; };
+var goJT2 = go;
+go = function (view) {
+  var r = goJT2.apply(this, arguments);
+  if (view === 'invoice') jcatLoad();
+  return r;
+};
+var viewInvoiceJT = viewInvoice;
+viewInvoice = function () {
+  jcatLoad();
+  var h = jcatWith(viewInvoiceJT, this, arguments);
+  var n = CART.filter(function (l) { return l.joint; }).length;
+  if (n) h += '<div class="sub" style="margin-top:8px"><span class="jt-tag">Joint</span> ' + fmt(n) + ' line(s) come from joint stock. The customer’s invoice does not show it; the money for them is held for the joint book.</div>';
+  return h;
+};
+/** Wherever a joint code shows on the invoice screen, show the plain code and a tag instead. */
+function jcatDress(root) {
+  if (!root || !jtOn()) return;
+  var w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, null), hit = [], nd;
+  while ((nd = w.nextNode())) if (nd.nodeValue.indexOf('~J') >= 0 && /~J[0-9a-f]{4}/i.test(nd.nodeValue)) hit.push(nd);
+  hit.forEach(function (t) {
+    var parts = t.nodeValue.split(/~J[0-9a-f]{4}/i), f = document.createDocumentFragment();
+    parts.forEach(function (s, i) {
+      f.appendChild(document.createTextNode(s));
+      if (i < parts.length - 1) { var tag = document.createElement('span'); tag.className = 'jt-tag'; tag.textContent = 'Joint'; tag.style.marginLeft = '5px'; f.appendChild(tag); }
+    });
+    t.parentNode.replaceChild(f, t);
+  });
+}
+(function () {
+  var busy = false;
+  function run() { if (busy) return; busy = true; try { jcatDress(el('view')); } finally { busy = false; } }
+  var v = document.getElementById('view');
+  if (v && window.MutationObserver) new MutationObserver(function () { if (VIEW === 'invoice' || VIEW === 'sales' || VIEW === 'customers') run(); }).observe(v, { childList: true, subtree: true });
+})();
+// after a sale the joint shelf is read again; the "saved" window says what part was joint
+var invoiceDoneJT = invoiceDone;
+invoiceDone = function (res) {
+  var r = invoiceDoneJT.apply(this, arguments);
+  if (res && res.joint && res.joint.length) {
+    JCAT = null; jcatLoad(true); JT.data = null;
+    var box = document.querySelector('#invdone .card .sub');
+    if (box) { var d = document.createElement('div'); d.className = 'sub'; d.style.marginBottom = '6px';
+      d.innerHTML = '<span class="jt-tag">Joint</span> ' + res.joint.map(function (j) { return esc(OPT ? OPT.currency : 'BDT') + ' ' + fmt(j.total) + ' of it is ' + esc(j.name); }).join(' · ');
+      box.parentNode.insertBefore(d, box.nextSibling); }
+  }
+  return r;
+};
+</script>
+
+<!-- joint-3/4 (2026-10-06): Joint stock - the Sales tab, late payers, flags, both owners agree, the statement paper,
+     the dashboard card, the note under Profitability; the old Capital > Partnership tab only where joint stock is on. -->
+<script>
+jtTabs = function () {
+  var d = JT.data; if (!d || !d.pool) return [];
+  return d.money ? [['overview', 'Overview'], ['stock', 'Stock'], ['sales', 'Sales'], ['money', 'Money'], ['month', 'Month end'], ['settings', 'Settings']] : [['stock', 'Stock'], ['sales', 'Sales']];
+};
+function jtSalesHtml(d, pool) {
+  var cur = d.currency, s = d.sales || [], late = s.filter(function (x) { return x.late; });
+  var h = '';
+  if (late.length) h += '<section><div class="note"><div class="ico">!</div><div><strong>' + fmt(late.length) + ' joint sale(s) are unpaid for more than ' + fmt(d.slowDays) + ' days</strong> — ' + esc(cur) + ' ' +
+    fmt(late.reduce(function (a, x) { return a + x.due; }, 0)) + '. That part now counts as owed by the company that made the sale.</div></div></section>';
+  h += '<section><div class="card"><h2>' + esc(pool.name) + ' — every joint sale</h2><div class="sub">Each line is the joint part of one invoice, made by either company under its own name. The other side sees what was sold and for how much — never the customer.</div>';
+  if (!s.length) return h + '<div class="empty">Nothing sold from the joint stock yet. Joint products are on New invoice, with a <span class="jt-tag">Joint</span> tag.</div></div></section>';
+  h += '<div class="scroll tall"><table><thead><tr><th>Date</th><th>Sold by</th><th>What</th><th class="num">Value</th><th class="num">Paid</th><th class="num">Not paid</th><th></th></tr></thead><tbody>' +
+    s.map(function (x) {
+      var st = x.late ? '<span class="pill out">late, ' + fmt(x.days) + ' days</span>' : x.due > 0.5 ? '<span class="pill low">on credit, ' + fmt(x.days) + ' d</span>' : '<span class="pill ok">paid</span>';
+      return '<tr><td style="white-space:nowrap">' + esc(x.when) + '</td><td class="nm">' + esc(x.seller) + (x.mine && x.invoiceNo ? '<br><button class="linkbtn sku" type="button" data-jtinv="' + esc(x.invoiceNo) + '">' + esc(x.invoiceNo) + '</button>' : '<br><span class="sku">' + esc(x.ref) + '</span>') + '</td>' +
+        '<td>' + esc(x.items) + (x.returned > 0.5 ? '<br><span class="sku">' + fmt(x.returned) + ' came back</span>' : '') + (x.belowFloor > 0.5 ? '<br><span class="sku" style="color:var(--critical)">' + fmt(x.belowFloor) + ' under the floor price (owner)</span>' : '') + '</td>' +
+        '<td class="num">' + fmt(x.total - x.returned) + '</td><td class="num">' + fmt(x.paid) + '</td><td class="num">' + (x.due > 0.5 ? '<strong>' + fmt(x.due) + '</strong>' : '—') + '</td><td>' + st + '</td></tr>'; }).join('') + '</tbody></table></div>';
+  return h + '</div></section>';
+}
+var viewJointJT3 = viewJoint;
+viewJoint = function () {
+  var h = viewJointJT3.apply(this, arguments), d = JT.data;
+  if (JT.tab === 'sales' && d && d.on && d.pool) { var pool = d.pools.filter(function (p) { return p.id === d.pool; })[0] || d.pools[0]; h += jtSalesHtml(d, pool); }
+  return h;
+};
+// Month end: late money, flags, the two yeses, the paper
+var jtMonthHtmlJT3 = jtMonthHtml;
+jtMonthHtml = function (d, pool) {
+  var h = jtMonthHtmlJT3.apply(this, arguments), p = d.book, r = p.report || {}, td = r.to_date || {}, cur = d.currency, closed = !!r.closed;
+  var nameOf = {}; p.partners.forEach(function (x) { nameOf[x.id] = x.name; });
+  var x = '<section><div class="card"><h2>Agree and close ' + esc(p.label) + '</h2>';
+  if ((td.overdue || 0) > 0.5) x += '<div class="sub">Unpaid for more than ' + fmt(td.slow_days || d.slowDays) + ' days: ' + esc(cur) + ' ' + fmt(td.overdue) + ' — counted above as held by the company that sold it (' +
+    (r.partners || []).filter(function (q) { return q.overdue > 0.5; }).map(function (q) { return esc(q.name) + ' ' + fmt(q.overdue); }).join(', ') + ').</div>';
+  if ((r.below_floor || []).length) x += '<div class="sub" style="color:var(--critical)">Sold under the floor price by an owner this month: ' + r.below_floor.map(function (f) { return esc(nameOf[f.seller] || '?') + ' — ' + fmt(f.amount) + ' under, invoice ' + esc(f.invoice); }).join(' · ') + '</div>';
+  var agreed = r.agreed || [], mine = agreed.indexOf(p.me) >= 0, who = agreed.map(function (id) { return nameOf[id] || '?'; });
+  if (closed) x += '<div class="paybox"><span class="pill ok">✓ closed</span> Both sides agreed these sums' + (who.length ? ' (' + esc(who.join(' and ')) + ')' : '') + '. They can no longer change.</div>';
+  else if (p.isCurrent) x += '<div class="sub">This month is still running. When it has ended, each owner presses “I agree” here; the second yes closes the month and fixes its sums.</div>';
+  else x += '<div class="paybox"><span>' + (who.length ? 'Agreed so far: <strong>' + esc(who.join(', ')) + '</strong>. ' : 'Nobody has agreed yet. ') + (mine ? 'Waiting for your partner.' : 'Check the sums above, then say yes.') + '</span>' +
+    (mine ? '<button class="btn small" type="button" data-jt="unagree"' + (JT.busy ? ' disabled' : '') + '>Take my yes back</button>'
+          : '<button class="btn small primary" type="button" data-jt="agree"' + (JT.busy ? ' disabled' : '') + '>I agree with these sums</button>') + '</div>';
+  x += '<div class="row" style="margin-top:12px;gap:8px"><button class="btn" type="button" data-jt="pdf">Statement as a PDF</button></div></div></section>';
+  return h + x;
+};
+document.addEventListener('click', async function (ev) {
+  if (VIEW !== 'joint' || !ev.target || !ev.target.closest) return;
+  var iv = ev.target.closest('[data-jtinv]');
+  if (iv) { var no = iv.getAttribute('data-jtinv'); go('sales', no); return; }
+  var b = ev.target.closest('[data-jt]'); if (!b || !JT.data) return;
+  var a = b.getAttribute('data-jt'), d = JT.data;
+  if (a === 'agree') {
+    if (!(await uiConfirm('Agree with the sums of ' + d.book.label + '?\n\nWhen your partner has agreed too, the month is closed: its sales, stock entries and book lines can no longer be changed. This cannot be undone.'))) return;
+    jtSave('erpJointAgree', { pool: JT.pool, month: JT.month }, '', function (r) { toast(r.book && r.book.report && r.book.report.closed ? esc(r.book.label) + ' is closed.' : 'Your yes is written down. Waiting for your partner.', false, 8000); });
+  } else if (a === 'unagree') {
+    jtSave('erpJointAgree', { pool: JT.pool, month: JT.month, withdraw: true }, 'Taken back.');
+  } else if (a === 'pdf') {
+    var w = window.open('', '_blank');
+    srv('erpJointStatementPdf', [{ pool: JT.pool, month: JT.month }], function (r) { if (w) w.location = r.url; else location.href = r.url; },
+        function (e) { if (w) w.close(); toast(p4Err(e), true, 12000); });
+  }
+});
+
+// ---- the dashboard card (owners): one line per joint stock
+var JCARD = null;
+function jcardLoad() { if (!jtOn() || !ME || ME.role !== 'owner') return; srv('erpJointCard', [], function (r) { JCARD = r; if (VIEW === 'dash') repaint(); }, function () { JCARD = { on: false, pools: [] }; }); }
+var viewDashJT = viewDash;
+viewDash = function () {
+  var h = viewDashJT.apply(this, arguments);
+  if (!jtOn() || !ME || ME.role !== 'owner') return h;
+  if (!JCARD) { jcardLoad(); return h; }
+  if (!JCARD.pools || !JCARD.pools.length) return h;
+  var cur = JCARD.currency || 'BDT';
+  var card = '<section><div class="card"><div class="row" style="justify-content:space-between;align-items:center"><h2 style="margin:0">Joint stock</h2><button class="btn small" type="button" data-jtopen="1">Open</button></div>' +
+    '<div class="sub">Not part of the figures above — goods owned together with a partner company, in their own book.</div><div class="list">' +
+    JCARD.pools.map(function (p) {
+      var t = (p.transfers || []).filter(function (x) { return x.mine; })[0];
+      return '<div><span><button class="linkbtn" type="button" data-jtopen="' + esc(p.id) + '" style="font-weight:600">' + esc(p.name) + '</button><span class="sku">profit this month ' + esc(cur) + ' ' + fmt(p.profit) +
+        ' · your share ' + (Math.round(p.share * 1000) / 10) + '% = ' + fmt(p.myProfit) + ' · stock at cost ' + fmt(p.stock) + '</span></span>' +
+        '<b style="color:var(' + (t ? (t.mine === 'pay' ? '--critical' : '--good') : '--muted') + ')">' + (t ? (t.mine === 'pay' ? 'you pay ' + fmt(t.amount) : 'you get ' + fmt(t.amount)) : 'even') + '</b></div>'; }).join('') + '</div></div></section>';
+  return h + card;
+};
+document.addEventListener('click', function (ev) {
+  var b = ev.target && ev.target.closest ? ev.target.closest('[data-jtopen]') : null; if (!b) return;
+  var id = b.getAttribute('data-jtopen'); if (id && id !== '1') { JT.pool = id; JT.month = ''; }
+  JT.tab = 'overview'; go('joint');
+});
+var goJT3 = go;
+go = function (view) { var r = goJT3.apply(this, arguments); if (view === 'dash') { JCARD = null; } return r; };
+
+// ---- Profitability: what part of the sales was joint stock
+var viewProfitJT = viewProfit;
+viewProfit = function () {
+  var h = viewProfitJT.apply(this, arguments);
+  if (!jtOn() || typeof PNL === 'undefined' || !PNL || !PNL.months || !PNL.months.some(function (m) { return m.joint; })) return h;
+  var N = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  return h + '<section><div class="note"><div class="ico">i</div><div><strong>Joint stock in these sales:</strong> ' + PNL.months.filter(function (m) { return m.joint; }).map(function (m) {
+    return N[Number(m.month.slice(5, 7)) - 1] + ' ' + fmt(m.joint); }).join(' · ') +
+    '.<br>It is counted in Sales and, for the same amount, in Cost of goods sold: you hold that money for the joint book, so it adds no profit here. Its profit is under Joint stock.</div></div></section>';
+};
+
+// ---- the old Capital > Partnership tab: only where joint stock is on, and only for what is not on the Joint stock page
+capTabsHtml = function () {
+  if (capInPool()) return '';
+  if (!jtOn()) { if (CAP_TAB === 'partner') CAP_TAB = 'capital'; return ''; }
+  return '<div class="tabs" role="tablist"><button type="button" role="tab" data-captab="capital" aria-selected="' + (CAP_TAB === 'capital') + '">Capital</button>' +
+    '<button type="button" role="tab" data-captab="partner" aria-selected="' + (CAP_TAB === 'partner') + '">Partner’s own stock</button></div>';
+};
+var partnerOwnHtmlJT = partnerOwnHtml;
+partnerOwnHtml = function () {
+  var h = partnerOwnHtmlJT.apply(this, arguments), cut = h.indexOf('</section>');
+  // the pools themselves (start, join, open) live on the Joint stock page now
+  var note = '<section><div class="note"><div class="ico">i</div><div>The joint stock itself — its products, sales, money and month end — is under <button class="linkbtn" type="button" data-jtopen="1">Goods → Joint stock</button>. ' +
+    'This screen is only for the rare sale from the other company’s <strong>own</strong> shelf.</div></div></section>';
+  return note + (cut >= 0 ? h.slice(cut + '</section>'.length) : h);
+};
 </script>
 </body>
 </html>
