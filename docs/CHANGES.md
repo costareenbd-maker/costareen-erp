@@ -781,3 +781,6 @@ Invoices: the top corner is clean again (no stamp, no amount); a round rubber-st
 
 ## Brand logo up to 250 KB (2026-10-06)
 Platform > Brand logo limit raised from 150 KB to 250 KB (page check and server check).
+
+## Seal over the amount; QR says Bangla QR (2026-10-06)
+The PAID / PAYMENT DUE seal now sits over the big amount itself (right side of the bar), see-through (opacity .62, multiply) so the figure reads under it. The words under the payment QR default to "Bangla QR" with "Scan with any bank app, bKash, Nagad or Rocket" (an old saved "Scan to pay" counts as the default); own words still possible in Invoice design.

@@ -33,7 +33,7 @@ const FONTS = {
   rounded: '"Nunito","Segoe UI","Noto Sans Bengali",Arial,sans-serif',
   mono: '"Courier New","Noto Sans Bengali",monospace',
 };
-const DEFAULTS = { template: 'wave', accent: '', dark: '', font: 'sans', title: 'INVOICE', thanks: '', terms: '', qrId: '', qrLabel: 'Scan to pay',
+const DEFAULTS = { template: 'wave', accent: '', dark: '', font: 'sans', title: 'INVOICE', thanks: '', terms: '', qrId: '', qrLabel: 'Bangla QR',
   bigTop: false, logoSize: 'm', logoSide: 'left',
   show: { banks: true, qr: true, signature: false, phone: true, delivery: true } };
 
@@ -42,6 +42,7 @@ function merge(saved) {
   const out = { ...DEFAULTS, ...s, show: { ...DEFAULTS.show, ...(s.show && typeof s.show === 'object' ? s.show : {}) } };
   if (!TEMPLATES.some((t) => t.id === out.template)) out.template = 'wave';
   if (!FONTS[out.font]) out.font = 'sans';
+  if (!str(out.qrLabel) || str(out.qrLabel) === 'Scan to pay') out.qrLabel = 'Bangla QR';
   return out;
 }
 async function readSaved(ctx) {
@@ -61,7 +62,7 @@ function clean(x) {
     accent: HEX.test(String(x.accent)) ? x.accent : '', dark: HEX.test(String(x.dark)) ? x.dark : '',
     font: FONTS[x.font] ? x.font : 'sans',
     title: t(x.title, 40).trim() || 'INVOICE', thanks: t(x.thanks, 300), terms: t(x.terms, 2000),
-    qrId: t(x.qrId, 200), qrLabel: t(x.qrLabel, 60) || 'Scan to pay',
+    qrId: t(x.qrId, 200), qrLabel: (t(x.qrLabel, 60).trim() === 'Scan to pay' ? '' : t(x.qrLabel, 60)) || 'Bangla QR',
     bigTop: x.bigTop === true, logoSize: ['s', 'm', 'l'].includes(x.logoSize) ? x.logoSize : 'm', logoSide: x.logoSide === 'right' ? 'right' : 'left',
     show: { banks: sh.banks !== false, qr: sh.qr !== false, signature: !!sh.signature, phone: sh.phone !== false, delivery: sh.delivery !== false },
   };
@@ -126,12 +127,17 @@ function sumRows(P, d) {
     '<tr><td>Paid</td><td class="r">' + P.n(d.paid) + '</td></tr>' +
     (P.paidUp ? '<tr class="ok"><td>Due</td><td class="r">Nothing due</td></tr>' : '<tr class="due"><td>Due</td><td class="r">' + esc(P.cur) + ' ' + P.n(d.due) + '</td></tr>');
 }
+// the words under the payment QR: "Bangla QR" gets its usual explanation under it
+function qrWords(D, small) {
+  const l = (str(D.qrLabel) === 'Scan to pay' ? '' : str(D.qrLabel)) || 'Bangla QR';
+  return l === 'Bangla QR' ? '<b>Bangla QR</b><br><span style="font-size:' + (small || '7.5pt') + ';color:#6b7280">Scan with any bank app, bKash, Nagad or Rocket</span>' : esc(l);
+}
 function payBlock(P, D) {
   if (!P.banks.length && !P.qr) return '';
   return '<div class="pay">' + (P.banks.length ? '<div><div class="h">Payment details</div>' + P.banks.map((b) =>
       '<div class="bank"><b>' + esc(b.bank || 'Bank') + '</b><br>' + (b.name ? esc(b.name) + '<br>' : '') + 'A/C <b>' + esc(b.number || '—') + '</b>' +
       (b.branch ? '<br><span class="muted">' + esc(b.branch) + '</span>' : '') + (b.extra ? '<br><span class="muted">' + esc(b.extra) + '</span>' : '') + '</div>').join('') + '</div>' : '') +
-    (P.qr ? '<div class="qr"><img src="' + P.qr + '"><div>' + esc(D.qrLabel || 'Scan to pay') + '</div></div>' : '') + '</div>';
+    (P.qr ? '<div class="qr"><img src="' + P.qr + '"><div style="max-width:34mm;margin:0 auto">' + qrWords(D) + '</div></div>' : '') + '</div>';
 }
 function billTo(d) {
   return '<div class="h">Bill to</div><div class="cust">' + esc(d.head.customer || 'Walk-in customer') + '</div>' + (d.head.phone ? '<div>' + esc(d.head.phone) + '</div>' : '') +
@@ -199,8 +205,8 @@ function finish(id, out, P, d, D) {
   let css = '.pstamp{display:inline-block;white-space:nowrap;border:0.7mm solid;border-radius:1.5mm;padding:1.2mm 3.5mm;font-weight:800;font-size:12pt;letter-spacing:1pt;transform:rotate(-6deg);margin-top:3mm;background:rgba(255,255,255,.85)}' +
     '.bigb{position:relative;display:flex;justify-content:space-between;align-items:center;border-radius:2mm;padding:3.5mm 6mm;margin-top:9mm;margin-bottom:6mm;break-inside:avoid;color:#1f2430}.bigb span{font-size:10pt;font-weight:700;text-transform:uppercase;letter-spacing:1.5pt}.bigb b{font-size:20pt;font-weight:800;position:relative;z-index:1}' +
     // a real stamp: tilted, a little see-through and printed over (multiply), so every figure under it still reads
-    '.sealat{position:absolute;left:46%;top:50%;width:37mm;height:37mm;margin:-18.5mm 0 0 -18.5mm;transform:rotate(-14deg);opacity:.92;mix-blend-mode:multiply;pointer-events:none;z-index:2}.sealat svg{width:100%;height:100%;display:block}' +
-    '.sumwrap{position:relative;flex:0 0 auto;align-self:flex-start}.sumwrap .sealat.sealsum{left:30%;top:62%}' +
+    '.sealat{position:absolute;right:14mm;top:50%;width:37mm;height:37mm;margin:-18.5mm 0 0 0;transform:rotate(-14deg);opacity:.62;mix-blend-mode:multiply;pointer-events:none;z-index:2}.sealat svg{width:100%;height:100%;display:block}' +
+    '.sumwrap{position:relative;flex:0 0 auto;align-self:flex-start}.sumwrap .sealat.sealsum{right:6mm;top:62%}' +
     'tr.blank td{height:6.5mm;padding-top:0 !important;padding-bottom:0 !important}' +
     // the page is A4 even with one item: the money part sits at its foot
     'body{min-height:' + (PAGE_H[id] - 4) + 'mm;display:flex;flex-direction:column}.wrap{flex:1 0 auto;display:flex;flex-direction:column}.tail{margin-top:auto;padding-top:4mm}' +
@@ -322,7 +328,7 @@ function receipt(d, p, s, opt, img, now, D) {
     '<div>No: ' + esc(d.invoiceNo) + '<br>Date: ' + esc(P.when) + '<br>Customer: ' + esc(d.head.customer || 'Walk-in') + (d.head.phone ? ' (' + esc(d.head.phone) + ')' : '') + '</div><div class="hr"></div>' +
     '<table>' + P.rows.map((r) => '<tr><td colspan="2">' + r.product + r.sn + '</td></tr><tr><td>&nbsp;&nbsp;' + r.qty + ' x ' + r.price + (r.off ? ' (' + r.off + ')' : '') + '</td><td class="r">' + r.total + '</td></tr>').join('') + '</table>' +
     '<div class="hr"></div><table>' + sumRows(P, d) + '</table><div class="hr"></div>' +
-    (P.qr ? '<div class="qr c"><img src="' + P.qr + '">' + esc(D.qrLabel || 'Scan to pay') + '</div><div class="hr"></div>' : '') +
+    (P.qr ? '<div class="qr c"><img src="' + P.qr + '">' + qrWords(D, '7pt') + '</div><div class="hr"></div>' : '') +
     '<div class="c">' + P.thanks + '</div>' + (P.terms ? '<div style="margin-top:1.5mm;font-size:7.5pt">' + P.terms + '</div>' : '');
   return { html: doc(css, body), footer: '' };
 }
@@ -337,7 +343,8 @@ export async function invoiceDoc(d, p, s, opt, img, now, D, waveArt) {
   const s2 = { ...s, accent: HEX.test(String(D.accent)) ? D.accent : s.accent, dark: HEX.test(String(D.dark)) ? D.dark : s.dark };
   const img2 = { ...img, qr: D.show.qr ? img.qr : '' };
   const out = waveArt(d, p2, s2, opt || {}, img2, now || new Date());
-  let html = out.html.replace('>INVOICE</div>', '>' + esc(D.title || 'INVOICE') + '</div>').replace('<b>Bangla QR</b><br><span class="muted">any bank app, bKash,<br>Nagad or Rocket</span>', '<b>' + esc(D.qrLabel || 'Scan to pay') + '</b>');
+  let html = out.html.replace('>INVOICE</div>', '>' + esc(D.title || 'INVOICE') + '</div>');
+  if (str(D.qrLabel) && str(D.qrLabel) !== 'Bangla QR') html = html.replace('<b>Bangla QR</b><br><span class="muted">any bank app, bKash,<br>Nagad or Rocket</span>', '<b>' + esc(D.qrLabel) + '</b>');
   if (D.font !== 'sans') html = html.replace('body{font-family:Inter,"Noto Sans Bengali","Noto Sans",Arial,sans-serif;', 'body{font-family:' + FONTS[D.font] + ';');
   if (D.show.delivery === false) html = html.replace(/<tr><td>Delivery<\/td><td>[^<]*<\/td><\/tr>/, '');
   const extra = (D.terms ? '<div style="margin-top:1.5mm;font-size:9pt;color:#5d6672">' + esc(D.terms).replace(/\n/g, '<br>') + '</div>' : '') +

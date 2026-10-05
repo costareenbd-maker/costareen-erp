@@ -46,7 +46,7 @@ check('sales staff cannot upload the QR', !r.ok, r);
 r = await mgr('erpInvoiceQrUpload', [{ mime: 'image/png', data: png }]);
 check('manager uploads a payment QR', r.ok && r.result.design.qrId, r);
 r = await sales('erpInvoicePreview', [{ invoiceNo: inv1 }]);
-check('the saved design (with the QR) is what the preview shows', r.ok && /data:image\/png;base64/.test(r.result.html) && /Scan to pay/.test(r.result.html) && /CASH MEMO/.test(r.result.html), r.ok ? r.result.html.length : r);
+check('the saved design (with the QR) is what the preview shows', r.ok && /data:image\/png;base64/.test(r.result.html) && /Bangla QR/.test(r.result.html) && /bKash, Nagad or Rocket/.test(r.result.html) && /CASH MEMO/.test(r.result.html), r.ok ? r.result.html.length : r);
 
 // 6. wave with options: the title, terms and the QR caption change, the look stays
 r = await mgr('erpInvoiceDesignSave', [{ design: { template: 'wave', title: 'BILL', terms: 'Warranty as per maker.', qrLabel: 'bKash QR', show: { delivery: false } } }]);
