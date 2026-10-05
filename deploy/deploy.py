@@ -11,6 +11,7 @@
     python deploy.py cron        # nightly / 10-min campaigns / 15-min website sync timers
     python deploy.py release     # keep this version for the installer (every company's copy is built from it)
     python deploy.py domains     # add company copies' own web addresses to the Pages project
+    python deploy.py all         # db + function + web + release in one go: everything live, every company copy follows within the hour
 
 Each step prints what it did and stops at the first error.
 """
@@ -195,5 +196,6 @@ if __name__ == '__main__':
     if len(sys.argv) < 2:
         sys.exit(__doc__)
     s = sys.argv[1]
-    {'db': step_db, 'function': step_function, 'web': step_web, 'domain': step_domain, 'cron': step_cron, 'release': step_release, 'domains': step_domains}.get(
+    {'db': step_db, 'function': step_function, 'web': step_web, 'domain': step_domain, 'cron': step_cron, 'release': step_release, 'domains': step_domains,
+     'all': lambda: [step_db(), step_function(), step_web(), step_release()]}.get(
         s, lambda: step_secrets(sys.argv[2:]) if s == 'secrets' else sys.exit(__doc__))()

@@ -127,6 +127,11 @@ export async function runJob(deps, job) {
     }
   } else if (job === 'deliveries') {
     out.joint = await jointCheck(deps);       // joint sales across databases: confirm or take out what was left pending
+    // every company copy follows the newest release by itself (only the provider's own server does this)
+    if (!(deps.install && deps.install.bridged) && !(deps.install && deps.install.id)) {
+      const upd = await maybe('./handlers/installer.js', 'updateAll');
+      if (upd) { try { out.updates = await upd(deps); } catch (e) { out.updates = { error: String((e && e.message) || e) }; } }
+    }
     // erpDeliveryTick: delivered parcels have their due cleared, every hour
     const tick = await maybe('./handlers/courier.js', 'deliveryTick');
     if (tick) {

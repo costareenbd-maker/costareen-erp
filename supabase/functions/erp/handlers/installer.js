@@ -520,8 +520,12 @@ export async function erpInstallRetry(ctx, payload) {
  */
 export async function erpInstallUpdate(ctx, payload) {
   await needAdmin(ctx);
+  return updateStep(ctx, str(payload && payload.id));
+}
+/** One step of the update, for the Platform button and for the timer (updateAll). */
+async function updateStep(ctx, idText) {
   const sql = ctx.sql;
-  const row = (await sql`select * from erp_installs where id = ${str(payload && payload.id)}::uuid`)[0];
+  const row = (await sql`select * from erp_installs where id = ${idText}::uuid`)[0];
   if (!row || !['active', 'suspended'].includes(row.status)) throw new Error('Only an installed copy can be updated.');
   const rel = await latestRelease(sql);
   const files = rel.files;
@@ -631,6 +635,31 @@ export async function erpInstallDomain(ctx, payload) {
   if (!r.length) throw new Error('That copy is not known.');
   const auto = d ? !!(await cf(ctx.deps, 'POST', '/domains', { name: d })) : false;
   return { ok: true, domain: d, cname: pagesTarget(ctx.deps), auto };
+}
+
+/**
+ * Every company copy is brought to the newest release by itself (the hourly timer): the provider deploys once and
+ * nothing is pressed. A copy whose update stopped with an error (a refused token) is left for the Platform screen.
+ */
+export async function updateAll(deps) {
+  const sql = deps.sqlAux || deps.sql, out = { done: [], busy: [], errors: [] };
+  const rel = (await sql`select version from erp_releases order by made_at desc limit 1`)[0];
+  if (!rel) return out;
+  const rows = await sql`select id, company, version, upd_error from erp_installs where status in ('active', 'suspended') and ref is not null
+                         and coalesce(version, '') <> ${rel.version} order by made_at`;
+  const ctx = { sql, deps, s: { userId: null, name: 'Timer' }, biz: null, now: new Date(), memo: {} };
+  for (const r of rows) {
+    if (r.upd_error) { out.errors.push(str(r.company) + ': ' + str(r.upd_error).slice(0, 120)); continue; }   // a person has to look (Platform)
+    let last = null;
+    for (let i = 0; i < 40; i++) {                                 // enough steps for every database file of one release
+      last = await updateStep(ctx, r.id);
+      if (last.done || last.error) break;
+    }
+    if (last && last.done) out.done.push(str(r.company) + ' -> ' + last.version);
+    else if (last && last.error) out.errors.push(str(r.company) + ': ' + last.error.slice(0, 120));
+    else out.busy.push(str(r.company));
+  }
+  return out;
 }
 
 export const HANDLERS = { erpInstalls, erpInstallInvite, erpInstallSet, erpInstallRetry, erpInstallUpdate, erpInstallToken, erpInstallDomain, erpInstallBridge, erpBrand, erpBrandSet, erpInstallHealth, erpNews, erpNewsAdd, erpNewsEnd };

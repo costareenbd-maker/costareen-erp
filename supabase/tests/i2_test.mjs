@@ -57,6 +57,19 @@ check('a new token that reaches the project is kept', r.ok, r);
 for (let i = 0; i < 10; i++) { r = await owner('erpInstallUpdate', [{ id }]); if (!r.ok || r.result.done || r.result.error) break; }
 check('...and the update carries on to v3', r.ok && r.result.done && r.result.version === 'v3' && q.includes('D'), r.result);
 
+// the timer: every copy follows the newest release by itself, no button
+const { updateAll } = await import(pathToFileURL(path.join(fnDir, 'handlers', 'installer.js')));
+await sql`insert into erp_releases (version, files, made_at) values ('v4', ${JSON.stringify({ 'fn/index.ts': 'v4', 'sql/005_e.sql': 'E', 'deploy/cron.sql': '' })}::jsonb, now() + interval '2 seconds')`;
+let up = await updateAll(deps);
+check('the hourly timer brings the copy to v4 by itself', up.done.length === 1 && /Friend Co -> v4/.test(up.done[0]) && q.includes('E') &&
+  (await sql`select version from erp_installs where id = ${id}`)[0].version === 'v4', up);
+up = await updateAll(deps);
+check('nothing to do when every copy is on the newest', up.done.length === 0 && up.busy.length === 0 && up.errors.length === 0, up);
+await sql`update erp_installs set upd_error = 'Supabase refused the access token', version = 'v1' where id = ${id}`;
+up = await updateAll(deps);
+check('a copy stopped by an error is left for a person (Platform), not retried blindly', up.done.length === 0 && up.errors.length === 1 && /refused/.test(up.errors[0]), up);
+await sql`update erp_installs set upd_error = null, version = 'v4' where id = ${id}`;
+
 // its own web address
 r = await owner('erpInstallDomain', [{ id, domain: 'https://ERP.Friend.test/' }]);
 check('a web address is saved cleaned, with the CNAME to point it at', r.ok && r.result.domain === 'erp.friend.test' && r.result.cname === 'costareen-erp.pages.dev', r);
