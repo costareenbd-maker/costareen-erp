@@ -128,7 +128,7 @@ r = await mgr('erpBookParcel', [{ invoiceNo: 'INV-A', expect: 1500 }]);
 check('book: 200 without consignment', !r.ok && r.error === 'Steadfast would not take it. {"status":200,"message":"queued"}', r);
 createMode = 'junk';
 r = await mgr('erpBookParcel', [{ invoiceNo: 'INV-A', expect: 1500 }]);
-check('book: unreadable reply', !r.ok && r.error === 'Steadfast replied with something unreadable (HTTP 502).', r);
+check('book: their server down - said plainly, nothing booked, not retried', !r.ok && /server was down \(HTTP 502\).*Nothing was booked/.test(r.error), r);
 check('failed bookings logged nothing', (await logCount()) === 0);
 createMode = 'ok';
 
@@ -352,20 +352,24 @@ check('nightly: ran, nothing new', x && x.added === 0 && x.recorded === 0 && !x.
 let night = (await sql`select value from business_config where business_id = ${B} and key = 'sf_night'`)[0];
 check('nightly note stored in sf_night', night && JSON.parse(night.value).at > 0, night);
 payoutsBroken = true;
+web.calls.length = 0;
 x = await asOwner(async (ctx) => {
   const n = await courier.sfNightly(ctx);
   // the call carries on after the failure
   const c = await ctx.tx`select count(*)::int as n from courier_recon where business_id = ${ctx.biz}`;
   return { n, recon: c[0].n };
 });
-check('nightly failure: error noted, the transaction survives', x.n.error === 'Steadfast replied with something unreadable (HTTP 500).' && x.recon === 8, x);
+check('nightly failure: error noted, the transaction survives', /server was down \(HTTP 500\)/.test(x.n.error) && x.recon === 8, x);
+check('a reading call is tried three times before it counts as failed', web.calls.filter((c) => /payments/.test(c.url)).length === 3, web.calls.map((c) => c.url));
 r = await mgr('erpSfPayouts', [{}]);
-check('a broken Steadfast fails the screen with the reason', !r.ok && r.error === 'Steadfast replied with something unreadable (HTTP 500).', r);
+check('a broken Steadfast fails the screen with the reason', !r.ok && /server was down \(HTTP 500\)/.test(r.error), r);
 x = await asOwner((ctx) => courier.sfNeeds(ctx));
-check('sfNeeds shows the night error', x.error === 'Steadfast replied with something unreadable (HTTP 500).', x);
+check('sfNeeds shows the night error', /server was down/.test(x.error), x);
 payoutsBroken = false;
 r = await mgr('erpSfPayouts', [{}]);
-check('night info on the screen', r.ok && r.result.night && /^\d+ \w{3}, \d+:\d{2} (AM|PM)$/.test(r.result.night.when) && r.result.night.error === 'Steadfast replied with something unreadable (HTTP 500).', r.result && r.result.night);
+check('night info on the screen', r.ok && r.result.night && /^\d+ \w{3}, \d+:\d{2} (AM|PM)$/.test(r.result.night.when) && /server was down/.test(r.result.night.error), r.result && r.result.night);
+x = await asOwner((ctx) => courier.sfNeeds(ctx));
+check('once read by hand without trouble, last night\'s failure leaves the dashboard', x.error === '', x);
 
 // balance: cache expiry, then the website fallback without keys
 await sql`update business_config set value = ${JSON.stringify({ at: Date.now() - 31 * 60e3, v: 1 })} where business_id = ${B} and key = 'sf_balance_cache'`;

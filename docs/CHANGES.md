@@ -821,3 +821,6 @@ Blueprint: docs/JOINT-POOL-BLUEPRINT.md; build notes: docs/JOINT-BUILD-NOTES.md.
 
 ## joint-5 — simpler words (2026-10-06)
 Card 1 now says it IS the partner's ERP (made here because a joint stock needs both companies on the same server). Price tiers (retail / wholesale) are gone from the joint screens: one selling price and a floor price per product; any lower price is typed on the invoice, never below the floor. The tier setting still exists underneath (erpPoolTier), unused.
+
+## sf-retry — Steadfast night check: their server hiccups (2026-10-06)
+The dashboard said "last night's Steadfast check failed - HTTP 502". 502 = Steadfast's own gateway was down for a moment at 3:00 AM; keys and connection were fine (the connection test passes). The note stayed until the next night. Now: reading calls to Steadfast are tried 3 times (2.5 s, 5 s) on 5xx / no answer; a booking is never repeated (could book twice); a 5xx says plainly "Steadfast's server was down ... their side, not your settings"; opening Courier money and reading it without trouble clears last night's warning (and the kept dashboard). Ran the missed check live: nothing new from Steadfast, warning gone. courier_test 118.

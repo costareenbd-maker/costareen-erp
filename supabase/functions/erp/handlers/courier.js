@@ -52,13 +52,26 @@ export async function sfCall(ctx, method, path, body) {
     throw new Error('This business has no courier keys yet. Settings → Courier, ' +
                     'and paste the API key and secret from your Steadfast account.');
   }
-  const res = await httpFetch(ctx, ERP_SF_BASE + path, {
-    method,
-    headers: { 'api-key': k.key, 'secret-key': k.secret, 'Content-Type': 'application/json' },
-    body: body ? JSON.stringify(body) : undefined,
-  });
+  // Steadfast's own server sometimes answers 502/503/504 for a moment (their gateway, not your keys):
+  // a reading call is tried again a few seconds later before it counts as failed. A booking (POST) is
+  // never repeated by itself - it could book the parcel twice.
+  const tries = method === 'GET' ? 3 : 1;
+  let res = null;
+  for (let t = 0; t < tries; t++) {
+    if (t) await new Promise((ok) => setTimeout(ok, (ctx.deps && ctx.deps.sfRetryMs !== undefined) ? ctx.deps.sfRetryMs : 2500 * t));
+    res = await httpFetch(ctx, ERP_SF_BASE + path, {
+      method,
+      headers: { 'api-key': k.key, 'secret-key': k.secret, 'Content-Type': 'application/json' },
+      body: body ? JSON.stringify(body) : undefined,
+    });
+    if (!(res.code === 0 || res.code >= 500)) break;
+  }
   const code = res.code, text = res.text, json = res.json;
   if (code === 0) throw new Error('Could not reach Steadfast: ' + String(text).slice(0, 200));
+  if (code >= 500) {
+    throw new Error('Steadfast’s server was down (HTTP ' + code + ') — a problem on their side, not your settings. ' +
+      (method === 'GET' ? 'It is tried again tonight, or open Courier money to try now.' : 'Nothing was booked. Try again in a minute.'));
+  }
 
   // Steadfast also answers 401 when asked about a parcel that is not
   // yours, so a 401 on a status lookup does not mean the keys are wrong.
@@ -754,7 +767,17 @@ async function payoutsCore(ctx) {
 /** erpSfPayouts (ERP:8695) */
 export async function erpSfPayouts(ctx) {
   if (!callAllowed(ctx.s, 'erpSfPayouts')) throw new Error('Your account cannot see courier money.');
-  return payoutsCore(ctx);
+  const r = await payoutsCore(ctx);
+  // read by hand and it worked: a failure from last night's check no longer stands on the dashboard
+  try {
+    const n = JSON.parse((await getConfig(ctx, 'sf_night', '')) || 'null');
+    if (n && n.error && !r.noKeys) {
+      await setConfig(ctx, 'sf_night', JSON.stringify({ at: Date.now(), added: r.added || 0, recorded: r.autoRecorded || 0, by: 'hand' }));
+      const { dashForget } = await import('./bundle.js');
+      await dashForget(ctx.sql, ctx.biz);           // the kept dashboard still carries the warning
+    }
+  } catch (_) { /* the note is only for the dashboard */ }
+  return r;
 }
 
 /** erpSfPayoutLines (ERP:8857): the parcels inside one payout. */
