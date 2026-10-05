@@ -66,7 +66,7 @@ r = await owner('erpWanted', []);
 check('a closed post leaves the board', !r.result.others.some((x) => x.id === wid));
 r = await mgr('erpWantedOffer', [{ id: wid, sku: 'PRT-BAM-A1-001', price: 1, phone: '01999999999' }]);
 check('no offers on a closed post', !r.ok && /no longer open/.test(r.error), r);
-await sql`update erp_market_wanted set status = 'open', until = current_date - 1 where id = ${wid}`;
+await sql`update erp_market_wanted set status = 'open', until = current_date - 2 where id = ${wid}`;
 r = await owner('erpWanted', []);
 check('an expired post leaves the board', !r.result.others.some((x) => x.id === wid));
 await done();

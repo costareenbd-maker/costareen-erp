@@ -8394,7 +8394,7 @@ function srv(name, args, ok, bad) {
 
 var SRV_ACTIVE = 0, SRV_WRITING = false, SRV_TIMED = {};
 // the same list the server uses to know a call changes nothing (ERP_READS)
-var SRV_READS = /^(erpMarket|erpMarketMine|erpMarketRequests|erpMarketHints|erpMarketNames|erpWanted|erpBrand|erpComplianceLog|erpProviderKey|erpNews|erpAccessKeys|erpAccessWarning|erpAdmin|erpAiKeys|erpAlertRules|erpAlerts|erpArena|erpBackupStatus|erpBg|erpBnWords|erpBookedParcels|erpBrandLogo|erpBundle|erpBusinessLinks|erpBusinesses|erpBusinessesDeleted|erpCampaignAudience|erpCampaignGet|erpCampaignList|erpCapital|erpCashBook|erpCatalog|erpConnStatus|erpConnections|erpCostBook|erpCourier|erpCourierKeyStatus|erpCurrencies|erpCustomerAccount|erpCustomerCredit|erpCustomerList|erpCustomerPage|erpCustomerStatement|erpCustomers|erpDashboardData|erpDaySales|erpDeliveryOptions|erpDevices|erpDiscontinued|erpDues|erpEvoQr|erpEvoStatus|erpExpenseExport|erpExpenseReceiptUrl|erpExpenses|erpFamilies|erpFighters|erpFormOptions|erpGame|erpGetTheme|erpGoogle|erpHello|erpInstalls|erpInvoice|erpInvoicePdf|erpJob|erpJobs|erpListView|erpLookupCustomer|erpLookupUsage|erpMe|erpMoney|erpNoteFileUrl|erpNotes|erpOwnerChange|erpOwnerChanges|erpParcelLabels|erpParcelPreview|erpPartnerStock|erpPartnership|erpPayReasons|erpPeople|erpPlatform|erpPlatformErrors|erpPnl|erpPnlMonth|erpPoList|erpPoolCatalog|erpProduct|erpProductListShare|erpProductPage|erpProductPhotoUrl|erpProductThumbs|erpProfile|erpQuoteAsset|erpQuoteBoot|erpQuoteGet|erpQuoteList|erpRecentInvoices|erpRecovery|erpReorderPlan|erpRestorePreview|erpReturnPreview|erpRisks|erpSales|erpSearch|erpSecurity|erpSelfTest|erpSerialLookup|erpSerialsFor|erpSessions|erpSetTheme|erpSettingsFull|erpSettingsLists|erpSfPayoutLines|erpSfPayouts|erpShareFile|erpSharedStock|erpSheet|erpStatementPdf|erpStockHistory|erpSupplierPage|erpSuppliers|erpToday|erpUsers|erpWaProductPdf|erpWebMatches|erpWebOrderInvoices|erpWebOrders|erpWebsiteTest)$/;
+var SRV_READS = /^(erpInvoiceDesign|erpInvoicePreview|erpMarket|erpMarketMine|erpMarketRequests|erpMarketHints|erpMarketNames|erpWanted|erpBrand|erpComplianceLog|erpProviderKey|erpNews|erpAccessKeys|erpAccessWarning|erpAdmin|erpAiKeys|erpAlertRules|erpAlerts|erpArena|erpBackupStatus|erpBg|erpBnWords|erpBookedParcels|erpBrandLogo|erpBundle|erpBusinessLinks|erpBusinesses|erpBusinessesDeleted|erpCampaignAudience|erpCampaignGet|erpCampaignList|erpCapital|erpCashBook|erpCatalog|erpConnStatus|erpConnections|erpCostBook|erpCourier|erpCourierKeyStatus|erpCurrencies|erpCustomerAccount|erpCustomerCredit|erpCustomerList|erpCustomerPage|erpCustomerStatement|erpCustomers|erpDashboardData|erpDaySales|erpDeliveryOptions|erpDevices|erpDiscontinued|erpDues|erpEvoQr|erpEvoStatus|erpExpenseExport|erpExpenseReceiptUrl|erpExpenses|erpFamilies|erpFighters|erpFormOptions|erpGame|erpGetTheme|erpGoogle|erpHello|erpInstalls|erpInvoice|erpInvoicePdf|erpJob|erpJobs|erpListView|erpLookupCustomer|erpLookupUsage|erpMe|erpMoney|erpNoteFileUrl|erpNotes|erpOwnerChange|erpOwnerChanges|erpParcelLabels|erpParcelPreview|erpPartnerStock|erpPartnership|erpPayReasons|erpPeople|erpPlatform|erpPlatformErrors|erpPnl|erpPnlMonth|erpPoList|erpPoolCatalog|erpProduct|erpProductListShare|erpProductPage|erpProductPhotoUrl|erpProductThumbs|erpProfile|erpQuoteAsset|erpQuoteBoot|erpQuoteGet|erpQuoteList|erpRecentInvoices|erpRecovery|erpReorderPlan|erpRestorePreview|erpReturnPreview|erpRisks|erpSales|erpSearch|erpSecurity|erpSelfTest|erpSerialLookup|erpSerialsFor|erpSessions|erpSetTheme|erpSettingsFull|erpSettingsLists|erpSfPayoutLines|erpSfPayouts|erpShareFile|erpSharedStock|erpSheet|erpStatementPdf|erpStockHistory|erpSupplierPage|erpSuppliers|erpToday|erpUsers|erpWaProductPdf|erpWebMatches|erpWebOrderInvoices|erpWebOrders|erpWebsiteTest)$/;
 function srvPump() {
   if (!SRV_Q.length) return;
   var isRead = SRV_READS.test(SRV_Q[0].name);
@@ -19312,6 +19312,163 @@ document.addEventListener('change', function (ev) {
     for (var i = 0; i < s.options.length; i++) if (s.options[i].value.toLowerCase() === String(f[1]).toLowerCase()) { s.value = s.options[i].value; break; }
   });
 });
+</script>
+
+<!-- Invoice designs: Settings > Invoice design - several looks, colours, font, what is shown, a payment QR, company details, live preview -->
+<style>
+.ivd{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.15fr);gap:16px;align-items:start}
+@media (max-width:1100px){.ivd{grid-template-columns:1fr}}
+.ivd-tpls{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+.ivd-tpl{text-align:left;border:2px solid var(--line,#ddd);border-radius:10px;padding:8px 10px;background:transparent;color:inherit;cursor:pointer;font:inherit}
+.ivd-tpl b{display:block;font-size:14px}.ivd-tpl span{font-size:11.5px;opacity:.75;line-height:1.3;display:block;margin-top:2px}
+.ivd-tpl.on{border-color:var(--accent,#6d28d9);box-shadow:0 0 0 2px color-mix(in srgb,var(--accent,#6d28d9) 25%,transparent)}
+.ivd-tpl .sw{display:flex;gap:3px;margin-bottom:6px}.ivd-tpl .sw i{display:block;height:6px;border-radius:3px}
+.ivd-row{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-top:10px}.ivd-row>div{flex:1 1 150px;min-width:0}
+.ivd-checks{display:flex;gap:14px;flex-wrap:wrap;margin-top:8px}.ivd-checks label{display:flex;gap:6px;align-items:center;cursor:pointer}
+.ivd-prev{position:sticky;top:70px;background:#e5e7eb;border-radius:10px;padding:10px;overflow:hidden}
+.ivd-prev .pg{background:#fff;box-shadow:0 2px 10px rgba(0,0,0,.25);transform-origin:top left;overflow:hidden}
+.ivd-prev iframe{border:0;display:block;background:#fff}
+input.ivd-col{width:44px;height:34px;padding:0;border:1px solid var(--line,#ccc);border-radius:6px;background:none;cursor:pointer}
+</style>
+<script>
+var IVD = { data: null, err: '', d: null, busy: false, prevT: 0, prevKey: '' };
+function ivdLoad() {
+  IVD.data = { loading: true };
+  srv('erpInvoiceDesign', [], function (r) { IVD.data = r; IVD.d = JSON.parse(JSON.stringify(r.design)); if (VIEW === 'settings') repaint(); },
+    function (e) { IVD.data = null; IVD.err = (e && e.message) || String(e); if (VIEW === 'settings') repaint(); });
+}
+var IVD_SW = { wave: ['a', 'l'], modern: ['a', 'd'], minimal: ['k', 'a'], classic: ['d', 'k'], bold: ['d', 'a'], receipt: ['k', 'k'] };
+function ivdHtml() {
+  if (IVD.err) return '<section><div class="card"><div class="note err"><div class="ico">!</div><div>' + esc(IVD.err) + '</div></div></div></section>';
+  if (!IVD.data) { ivdLoad(); return '<section><div class="card"><div class="empty">Loading\u2026</div></div></section>'; }
+  if (IVD.data.loading) return '<section><div class="card"><div class="empty">Loading\u2026</div></div></section>';
+  var r = IVD.data, d = IVD.d, ed = r.canEdit, dis = ed ? '' : ' disabled';
+  var acc = d.accent || r.quoteColours.accent || '#dda51c', drk = d.dark || r.quoteColours.dark || '#303030';
+  var colOf = function (c) { return c === 'a' ? acc : c === 'd' ? drk : c === 'l' ? '#e5e7eb' : '#111827'; };
+  var h = '<section><div class="card"><h2>Invoice design</h2><div class="sub" data-c5x="1" style="display:block">The look of the invoice PDF your customers receive. Pick a design, your colours and what it shows \u2014 the preview on the right is your latest invoice. ' +
+    (ed ? 'Save, and every new invoice uses it (old PDFs stay as they were; \u201cRedo PDF\u201d on an invoice draws it again).' : '<b>Only a manager or the owner can change it.</b>') + '</div>' +
+    '<div class="ivd"><div>' +
+    '<h3 style="margin:12px 0 6px">1. Design</h3><div class="ivd-tpls">' + r.templates.map(function (t) {
+      var sw = IVD_SW[t.id] || ['a', 'd'];
+      return '<button type="button" class="ivd-tpl' + (d.template === t.id ? ' on' : '') + '" data-ivdtpl="' + t.id + '"' + dis + '><div class="sw"><i style="width:60%;background:' + colOf(sw[0]) + '"></i><i style="width:30%;background:' + colOf(sw[1]) + '"></i></div><b>' + esc(t.name) + '</b><span>' + esc(t.about) + '</span></button>';
+    }).join('') + '</div>' +
+    '<h3 style="margin:16px 0 6px">2. Colours, letters, title</h3><div class="ivd-row">' +
+      '<div style="flex:0 0 auto"><label class="f" for="ivd_acc">Main colour</label><input type="color" class="ivd-col" id="ivd_acc" value="' + esc(acc) + '"' + dis + '></div>' +
+      '<div style="flex:0 0 auto"><label class="f" for="ivd_drk">Dark colour</label><input type="color" class="ivd-col" id="ivd_drk" value="' + esc(drk) + '"' + dis + '></div>' +
+      '<div><label class="f" for="ivd_font">Letters</label><select class="i" id="ivd_font"' + dis + '>' + [['sans', 'Clean (sans)'], ['serif', 'Traditional (serif)'], ['rounded', 'Friendly (rounded)'], ['mono', 'Typewriter']].map(function (o) { return '<option value="' + o[0] + '"' + (d.font === o[0] ? ' selected' : '') + '>' + o[1] + '</option>'; }).join('') + '</select></div>' +
+      '<div><label class="f" for="ivd_title">Title on the page</label><input class="i" id="ivd_title" maxlength="40" value="' + esc(d.title) + '" placeholder="INVOICE, CASH MEMO, BILL\u2026"' + dis + '></div></div>' +
+      (ed ? '<div class="row" style="margin-top:6px"><button class="btn small" type="button" data-ivd="cols">Use the quotation colours</button></div>' : '') +
+    '<h3 style="margin:16px 0 6px">3. What it shows</h3><div class="ivd-checks">' + [['banks', 'Bank accounts'], ['qr', 'Payment QR'], ['signature', 'Signature'], ['phone', 'Phone number'], ['delivery', 'Delivery charge line']].map(function (o) {
+      return '<label><input type="checkbox" data-ivdshow="' + o[0] + '"' + (d.show[o[0]] ? ' checked' : '') + dis + ' style="width:18px;height:18px">' + o[1] + '</label>'; }).join('') + '</div>' +
+    '<div class="ivd-row"><div style="flex-basis:100%"><label class="f" for="ivd_thanks">Thank-you line</label><input class="i" id="ivd_thanks" maxlength="300" value="' + esc(d.thanks) + '" placeholder="' + esc(r.profile.footer || 'Thank you for your order.') + '"' + dis + '></div>' +
+      '<div style="flex-basis:100%"><label class="f" for="ivd_terms">Terms (warranty, returns\u2026)</label><textarea class="i" id="ivd_terms" rows="3" maxlength="2000" placeholder="e.g. Goods sold are not returnable after 7 days. Warranty as per the maker."' + dis + '>' + esc(d.terms) + '</textarea></div></div>' +
+    '<h3 style="margin:16px 0 6px">4. Payment QR</h3><div class="sub" data-c5x="1" style="display:block">' + (d.qrId ? 'This invoice QR is used (not the quotation\u2019s).' : r.profile.hasQr ? 'The quotation\u2019s QR is used. Upload one to use a different QR on invoices (e.g. your bKash merchant QR).' : 'No QR yet. Upload your bKash / Nagad / Bangla QR.') + '</div>' +
+    '<div class="ivd-row"><div><label class="f" for="ivd_qrl">Words under the QR</label><input class="i" id="ivd_qrl" maxlength="60" value="' + esc(d.qrLabel) + '"' + dis + '></div>' +
+      (ed ? '<div style="flex:0 0 auto"><button class="btn" type="button" data-ivd="qr">Upload QR image</button>' + (d.qrId ? ' <button class="btn" type="button" data-ivd="qrclear">Use the quotation QR</button>' : '') + '<input type="file" id="ivd_qrf" accept="image/png,image/jpeg,image/webp" hidden></div>' : '') + '</div>' +
+    (ed ? '<div class="row" style="gap:8px;margin-top:18px;flex-wrap:wrap"><button class="btn primary" type="button" data-ivd="save"' + (IVD.busy ? ' disabled' : '') + '>' + (IVD.busy ? 'Saving\u2026' : 'Save design') + '</button>' +
+      '<button class="btn" type="button" data-ivd="pdf">Download a sample PDF</button><button class="btn" type="button" data-ivd="reset">Undo changes</button></div>' : '') +
+    ivdCompanyHtml(r) +
+    '</div><div><div class="ivd-prev"><div class="sku" style="margin-bottom:6px;color:#374151">Preview \u2014 <span id="ivd_pno">' + esc(IVD.prevNo || '') + '</span></div><div class="pg" id="ivd_pg"><iframe id="ivd_frame" title="Invoice preview" scrolling="no"></iframe></div></div></div></div>' +
+    '</div></section>';
+  setTimeout(ivdPreview, 0);
+  return h;
+}
+function ivdCompanyHtml(r) {
+  var p = r.profile, can = r.canCompany, dis = can ? '' : ' disabled';
+  var f = function (id, label, v, ph) { return '<div><label class="f" for="' + id + '">' + label + '</label><input class="i" id="' + id + '" value="' + esc(v || '') + '"' + (ph ? ' placeholder="' + esc(ph) + '"' : '') + dis + '></div>'; };
+  return '<h3 style="margin:22px 0 6px">Company details</h3><div class="sub" data-c5x="1" style="display:block">Shown on invoices and quotations. ' + (can ? '' : '<b>Only a shareholder or the owner can change them.</b>') + '</div>' +
+    '<div class="ivd-row">' + f('ivc_name', 'Company name', p.name) + f('ivc_phone', 'Phone', p.phone, '01XXXXXXXXX, 01XXXXXXXXX') + '</div>' +
+    '<div class="ivd-row">' + f('ivc_email', 'E-mail', p.email) + f('ivc_web', 'Website', p.website) + '</div>' +
+    '<div class="ivd-row"><div style="flex-basis:100%"><label class="f" for="ivc_addr">Address</label><textarea class="i" id="ivc_addr" rows="2"' + dis + '>' + esc(p.address || '') + '</textarea></div></div>' +
+    '<div class="ivd-row">' + f('ivc_signer', 'Signed by', p.signer) + f('ivc_desig', 'Their title', p.designation) + '</div>' +
+    (can ? '<div class="row" style="gap:8px;margin-top:10px;flex-wrap:wrap"><button class="btn primary" type="button" data-ivd="company">Save company details</button>' +
+      '<button class="btn" type="button" data-ivd="logo">' + (p.hasLogo ? 'Change logo' : 'Upload logo') + '</button><button class="btn" type="button" data-ivd="sig">' + (p.hasSignature ? 'Change signature' : 'Upload signature') + '</button>' +
+      '<input type="file" id="ivd_logof" accept="image/png,image/jpeg,image/webp" hidden><input type="file" id="ivd_sigf" accept="image/png,image/jpeg,image/webp" hidden></div>' +
+      '<div class="sku" style="margin-top:6px">Bank accounts: Quotations \u2192 Settings (' + (p.banks || []).length + ' saved).</div>' : '');
+}
+// the live preview: drawn by the server from the design on screen, scaled to the column
+function ivdPreview() {
+  var fr = el('ivd_frame'), pg = el('ivd_pg'); if (!fr || !IVD.d) return;
+  var key = JSON.stringify(IVD.d);
+  if (IVD.prevKey === key && IVD.prevHtml) { ivdShow(); return; }
+  clearTimeout(IVD.prevT);
+  IVD.prevT = setTimeout(function () {
+    IVD.prevKey = key;
+    srv('erpInvoicePreview', [{ design: IVD.d }], function (r) {
+      IVD.prevHtml = r.html.replace('</body>', '<div style="margin-top:8mm">' + (r.footer || '') + '</div></body>'); IVD.prevNo = r.sample ? 'a sample invoice' : r.invoiceNo; ivdShow();
+    }, function (e) { toast(esc((e && e.message) || e), true); });
+  }, 350);
+}
+function ivdShow() {
+  var fr = el('ivd_frame'), pg = el('ivd_pg'), no = el('ivd_pno'); if (!fr || !pg) return;
+  var rec = IVD.d.template === 'receipt', w = rec ? 302 : 794, box = pg.parentNode.clientWidth - 20, k = Math.min(1, box / w);
+  fr.style.width = w + 'px'; fr.style.height = '1123px'; pg.style.width = w + 'px'; pg.style.transform = 'scale(' + k + ')';
+  pg.parentNode.style.height = Math.round(Math.min(1123, 1123) * k + 40) + 'px';
+  if (fr.getAttribute('data-k') !== IVD.prevKey) { fr.setAttribute('data-k', IVD.prevKey); fr.srcdoc = IVD.prevHtml; }
+  fr.onload = function () { try { var hh = fr.contentDocument.body.scrollHeight + 30; fr.style.height = hh + 'px'; pg.parentNode.style.height = Math.round(hh * k + 40) + 'px'; } catch (e) {} };
+  if (no) no.textContent = IVD.prevNo || '';
+}
+function ivdRead() {   // the fields into the design (no repaint: the preview follows)
+  var d = IVD.d; if (!d) return;
+  var v = function (id) { var n = el(id); return n ? n.value : undefined; };
+  if (el('ivd_acc')) d.accent = v('ivd_acc'); if (el('ivd_drk')) d.dark = v('ivd_drk');
+  if (el('ivd_font')) d.font = v('ivd_font'); if (el('ivd_title')) d.title = v('ivd_title');
+  if (el('ivd_thanks')) d.thanks = v('ivd_thanks'); if (el('ivd_terms')) d.terms = v('ivd_terms'); if (el('ivd_qrl')) d.qrLabel = v('ivd_qrl');
+  document.querySelectorAll('[data-ivdshow]').forEach(function (c) { d.show[c.getAttribute('data-ivdshow')] = c.checked; });
+}
+function ivdFile(input, then) {
+  var f = input.files && input.files[0]; if (!f) return;
+  if (f.size > 1024 * 1024) { toast('The image is over 1 MB. Use a smaller one.', true); return; }
+  var rd = new FileReader(); rd.onload = function () { then(f.type, String(rd.result).replace(/^data:[^,]*,/, '')); }; rd.readAsDataURL(f);
+}
+var settingsPickIVD = settingsPick;
+settingsPick = function (h) { return settingsPickIVD(h + setMark('invoice') + (SET_TAB === 'invoice' ? ivdHtml() : '')); };
+var setTabsMineIVD = setTabsMine;
+setTabsMine = function () {
+  var t = setTabsMineIVD();
+  if (ME && /^(manager|shareholder|owner)$/.test(ME.role) && !t.some(function (x) { return x[0] === 'invoice'; })) t = t.concat([['invoice', 'Invoice design']]);
+  return t;
+};
+document.addEventListener('input', function (ev) { if (VIEW === 'settings' && SET_TAB === 'invoice' && ev.target && /^ivd_/.test(ev.target.id || '')) { ivdRead(); ivdPreview(); } });
+document.addEventListener('change', function (ev) {
+  if (VIEW !== 'settings' || SET_TAB !== 'invoice' || !ev.target) return;
+  var t = ev.target;
+  if (t.hasAttribute && t.hasAttribute('data-ivdshow') || /^ivd_(font|acc|drk)$/.test(t.id || '')) { ivdRead(); ivdPreview(); }
+  if (t.id === 'ivd_qrf') ivdFile(t, function (mime, data) { srv('erpInvoiceQrUpload', [{ mime: mime, data: data }], function (r) { IVD.d.qrId = r.design.qrId; IVD.data.design = r.design; toast('QR saved.'); repaint(); }, function (e) { toast(esc((e && e.message) || e), true); }); });
+  if (t.id === 'ivd_logof' || t.id === 'ivd_sigf') ivdFile(t, function (mime, data) {
+    srv('erpQuoteAssetUpload', [{ kind: t.id === 'ivd_logof' ? 'logo' : 'signature', mime: mime, data: data }], function () { toast('Saved.'); IVD.prevKey = ''; ivdLoad(); }, function (e) { toast(esc((e && e.message) || e), true); });
+  });
+});
+document.addEventListener('click', function (ev) {
+  if (VIEW !== 'settings' || SET_TAB !== 'invoice' || !ev.target.closest) return;
+  var tp = ev.target.closest('[data-ivdtpl]');
+  if (tp) { ivdRead(); IVD.d.template = tp.getAttribute('data-ivdtpl'); document.querySelectorAll('[data-ivdtpl]').forEach(function (b) { b.classList.toggle('on', b === tp); }); ivdPreview(); return; }
+  var b = ev.target.closest('[data-ivd]'); if (!b) return;
+  var k = b.getAttribute('data-ivd'); ivdRead();
+  if (k === 'cols') { IVD.d.accent = ''; IVD.d.dark = ''; repaint(); }
+  else if (k === 'reset') { IVD.d = JSON.parse(JSON.stringify(IVD.data.design)); repaint(); }
+  else if (k === 'qr') { el('ivd_qrf').click(); }
+  else if (k === 'logo') { el('ivd_logof').click(); }
+  else if (k === 'sig') { el('ivd_sigf').click(); }
+  else if (k === 'qrclear') { IVD.d.qrId = ''; repaint(); }
+  else if (k === 'save') {
+    IVD.busy = true; repaint();
+    srv('erpInvoiceDesignSave', [{ design: IVD.d }], function (r) { IVD.busy = false; IVD.data.design = r.design; IVD.d = JSON.parse(JSON.stringify(r.design)); toast('Saved. New invoices use this design.'); repaint(); },
+      function (e) { IVD.busy = false; toast(esc((e && e.message) || e), true); repaint(); });
+  } else if (k === 'pdf') {
+    toast('Drawing the PDF\u2026', false, 15000);
+    srv('erpInvoiceSamplePdf', [{ design: IVD.d }], function (r) {
+      try { var bin = atob(r.base64), u8 = new Uint8Array(bin.length); for (var i = 0; i < bin.length; i++) u8[i] = bin.charCodeAt(i);
+        var url = URL.createObjectURL(new Blob([u8], { type: 'application/pdf' })), a = document.createElement('a'); a.href = url; a.download = r.name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(function () { URL.revokeObjectURL(url); }, 60000); toast('Downloaded.'); }
+      catch (e2) { toast('Could not open the PDF.', true); }
+    }, function (e) { toast(esc((e && e.message) || e), true, 9000); });
+  } else if (k === 'company') {
+    var p = IVD.data.profile, v = function (id) { return el(id) ? el(id).value : ''; };
+    var prof = { name: v('ivc_name'), phone: v('ivc_phone'), email: v('ivc_email'), website: v('ivc_web'), address: v('ivc_addr'), signer: v('ivc_signer'), designation: v('ivc_desig'), footer: p.footer, banks: p.banks };
+    srv('erpQuoteProfileSave', [{ profile: prof }], function () { toast('Company details saved.'); IVD.prevKey = ''; ivdLoad(); }, function (e) { toast(esc((e && e.message) || e), true); });
+  }
+});
+window.addEventListener('resize', function () { if (VIEW === 'settings' && SET_TAB === 'invoice') ivdShow(); });
 </script>
 </body>
 </html>

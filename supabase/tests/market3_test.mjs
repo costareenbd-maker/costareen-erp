@@ -48,7 +48,7 @@ check('a new price updates the same quotation', r.ok && qt[0].n === 1 && Number(
 r = await other('erpMarketRequests', []);
 q = r.result.mine.find((x) => x.id === id);
 check('buyer sees the price and now the seller\'s name and phone', q.status === 'quoted' && q.who === 'Costareen' && q.phone === '01999999999' && q.total === 2400 && q.mine, q);
-await sql`update erp_market_requests set valid_until = current_date - 1 where id = ${id}`;
+await sql`update erp_market_requests set valid_until = current_date - 2 where id = ${id}`;
 r = await other('erpMarketAccept', [{ id }]);
 check('an expired price cannot be accepted', !r.ok && /expired/.test(r.error), r);
 await sql`update erp_market_requests set valid_until = current_date + 3 where id = ${id}`;

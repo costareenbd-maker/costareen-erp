@@ -824,7 +824,7 @@ export async function erpInvoicePdf(ctx, payload) {
 }
 
 /** erpInvoiceDocData_ (ERP:11119): everything the page says, from the sales log. */
-async function invoiceDocData(ctx, invoiceNo) {
+export async function invoiceDocData(ctx, invoiceNo) {
   const sl = await salesLog(ctx);
   const lines = [];
   let head = null, disc = 0, delivery = 0, grand = 0, note = '';
@@ -873,7 +873,7 @@ async function quoteSetting(ctx, key) {
 }
 
 /** erpQProfile_ (ERP:9211) */
-async function qProfile(ctx) {
+export async function qProfile(ctx) {
   const p = { ...(await quoteSetting(ctx, 'profile')) };
   if (!p.name) {
     try { p.name = str(await getConfig(ctx, 'business_name', '')); } catch (_) { /* as original */ }
@@ -889,7 +889,7 @@ const ERP_Q_DEFAULTS = { version: 0, prefix: 'QUO', currency: 'BDT', validDays: 
   productTerms: '', serviceTerms: '', mixedTerms: '' };
 
 /** erpQSettings_ (ERP:9231) */
-async function qSettings(ctx) {
+export async function qSettings(ctx) {
   const s = await quoteSetting(ctx, 'settings'), out = {};
   for (const k of Object.keys(ERP_Q_DEFAULTS)) {
     out[k] = Object.prototype.hasOwnProperty.call(s, k) ? s[k] : ERP_Q_DEFAULTS[k];
@@ -914,11 +914,13 @@ function sniff(b) {
 }
 
 /** erpDocImg_ (ERP:11103, asItIs): one of this business's own images as a data: address, or ''. */
-async function docImg(ctx, id) {
+export async function docImg(ctx, id) {
   id = String(id || '');
   if (!id) return '';
   try {
-    const raw = await readFile(ctx, 'assets', id);
+    // an id is "folder/name" (what saveFile returns); reading it as a name inside 'assets' looked in assets/assets/...
+    const m = /^([^/]+)\/(.+)$/.exec(id);
+    const raw = m ? await readFile(ctx, m[1], m[2]) : await readFile(ctx, 'assets', id);
     if (!raw) return '';
     const bytes = raw instanceof Uint8Array ? raw : new Uint8Array(raw);
     const type = sniff(bytes);
@@ -1094,9 +1096,12 @@ export async function makeInvoicePdf(ctx, invoiceNo, opts = {}) {
   if (!d) return null;
   const p = await qProfile(ctx), s = await qSettings(ctx);
   if (!String(p.name || '').trim()) p.name = (ctx.s && ctx.s.businessName) || '';
+  // the chosen invoice design (Settings > Invoice design); its own payment QR when it has one
+  const { invoiceDesign, invoiceDoc } = await import('./invoicedesign.js');
+  const D = await invoiceDesign(ctx);
   const img = { logo: (await docImg(ctx, p.logoTrimId)) || (await docImg(ctx, p.logoId)),
-                qr: await docImg(ctx, p.qrId) };
-  const parts = invoiceArtParts(d, p, s, opts, img, now);
+                qr: await docImg(ctx, D.qrId || p.qrId), sig: D.show.signature ? await docImg(ctx, p.signatureId) : '' };
+  const parts = await invoiceDoc(d, p, s, opts, img, now, D, invoiceArtParts);
   // the customer's language for what they receive (Settings > Business)
   if ((await docLang(ctx)) === 'bn') { parts.html = docBangla(parts.html); parts.footer = docBangla(parts.footer); }
   const bytes = await renderPdf(ctx, parts.html, { footer: parts.footer });
