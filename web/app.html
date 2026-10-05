@@ -2408,7 +2408,7 @@ var QZ_IMPORT = [
 function qzRound(v) { return Math.round((v + Number.EPSILON) * 100) / 100; }
 function qzTotals(q) {
   var items = q.items || [];
-  var subtotal = qzRound(items.reduce(function (s, i) { return s + qzRound(Number(i.qty) * Number(i.rate)); }, 0));
+  var subtotal = qzRound(items.reduce(function (s, i) { return s + qzRound(Number(i.qty) * (Number(i.rate) - (Number(i.off) || 0))); }, 0));
   var discount = qzRound(Math.min(subtotal, q.discountType === 'Percent' ? subtotal * Number(q.discount) / 100 : Number(q.discount)));
   var tax = qzRound((subtotal - discount) * Number(q.vat) / 100);
   var total = qzRound(subtotal - discount + tax + Number(q.shipping));
@@ -2675,8 +2675,8 @@ function qzBlocksHtml(q) {
     q.items.forEach(function (it, i) {
       h += '<div class="doc-row"><div><b>' + String(i + 1).padStart(2, '0') + '. ' + esc(it.name || 'Untitled item') + '</b>' +
         (it.description ? '<p>' + esc(it.description) + '</p>' : '') + '<small>' + esc(it.kind) + '</small></div>' +
-        '<div>' + esc(String(it.qty)) + '<p>' + esc(it.unit || '') + '</p></div><div>' + qzMoney(it.rate, cur) + '</div>' +
-        '<div><b>' + qzMoney(qzRound(Number(it.qty) * Number(it.rate)), cur) + '</b></div></div>';
+        '<div>' + esc(String(it.qty)) + '<p>' + esc(it.unit || '') + '</p></div><div>' + qzMoney(it.rate, cur) + (Number(it.off) > 0 ? '<p>− ' + qzMoney(it.off, cur) + ' each</p>' : '') + '</div>' +
+        '<div><b>' + qzMoney(qzRound(Number(it.qty) * (Number(it.rate) - (Number(it.off) || 0))), cur) + '</b></div></div>';
     });
   } else h += '<div class="doc-empty">Your products and services will appear here.</div>';
   h += '<div class="doc-totals"><div><span>Subtotal</span><span>' + qzMoney(t.subtotal, cur) + '</span></div>' +
@@ -2892,8 +2892,9 @@ function qzEditorHtml() {
           '>Product</option><option' + (it.kind === 'Service' ? ' selected' : '') + '>Service</option></select>' : '') +
         '<input class="i" aria-label="Quantity" inputmode="decimal" data-qi="' + i + '" data-qk="qty" value="' + esc(it.qty) + '">' +
         '<input class="i" aria-label="Unit" data-qi="' + i + '" data-qk="unit" value="' + esc(it.unit) + '">' +
-        '<input class="i" aria-label="Rate" inputmode="decimal" data-qi="' + i + '" data-qk="rate" value="' + esc(it.rate) + '">' +
-        '<div class="amt" id="qz_amt_' + i + '"><strong>' + qzMoney(qzRound(Number(it.qty) * Number(it.rate)), q.currency) + '</strong></div>' +
+        '<div><input class="i" aria-label="Rate" inputmode="decimal" data-qi="' + i + '" data-qk="rate" value="' + esc(it.rate) + '" title="Type the price you are giving - a lower price becomes a discount per piece">' +
+          (Number(it.off) > 0 ? '<div class="sku" style="margin-top:2px;white-space:nowrap">−' + fmt(it.off) + ' each <a href="#" data-qzoff="' + i + '" title="Remove the discount">✕</a></div>' : '') + '</div>' +
+        '<div class="amt" id="qz_amt_' + i + '"><strong>' + qzMoney(qzRound(Number(it.qty) * (Number(it.rate) - (Number(it.off) || 0))), q.currency) + '</strong></div>' +
         '<span class="acts"><button class="btn small" type="button" title="Move up" data-qzup="' + i + '"' + (i ? '' : ' disabled') + '>↑</button>' +
         '<button class="btn small" type="button" title="Remove" aria-label="Remove" data-qzdel="' + i + '">✕</button></span></div>';
     });
@@ -3187,8 +3188,16 @@ function wireQuotes() {
     each('[data-qi]', 'input', function () {
       var i = Number(this.getAttribute('data-qi')), k = this.getAttribute('data-qk');
       q.items[i][k] = (k === 'qty' || k === 'rate') ? qzNum(this.value) : this.value;
-      var a = el('qz_amt_' + i); if (a) a.innerHTML = '<strong>' + qzMoney(qzRound(q.items[i].qty * q.items[i].rate), q.currency) + '</strong>';
+      var a = el('qz_amt_' + i); if (a) a.innerHTML = '<strong>' + qzMoney(qzRound(q.items[i].qty * (q.items[i].rate - (Number(q.items[i].off) || 0))), q.currency) + '</strong>';
       qzEdited(false);
+    });
+    // the rate box: the price shown before typing is kept; a lower price typed becomes a discount per piece when leaving the box
+    each('input[data-qk="rate"]', 'focus', function () { this.__base = q.items[Number(this.getAttribute('data-qi'))].rate; try { this.select(); } catch (e) {} });
+    each('input[data-qk="rate"]', 'change', function () {
+      var it = q.items[Number(this.getAttribute('data-qi'))], base = Number(this.__base) || 0, v = String(this.value).trim() === '' ? base : qzNum(this.value);
+      if (base > 0 && v < base) { it.rate = base; it.off = qzRound(base - Math.max(0, v)); }
+      else { it.rate = v; if (Number(it.off) > it.rate) it.off = 0; }
+      qzEdited(false); repaint();
     });
     each('details[data-qzdesc]', 'toggle', function () {
       if (!QZ.descOpen) QZ.descOpen = {};
@@ -3212,6 +3221,7 @@ function wireQuotes() {
       if (s2) blank({ name: s2.name, description: s2.description, kind: s2.kind, unit: s2.unit, rate: 0,
                       hint: s2.historicalRate ? 'last quoted ' + fmt(s2.historicalRate) + ' — type today\'s rate' : '' });
     });
+    each('a[data-qzoff]', 'click', function (ev) { ev.preventDefault(); q.items[Number(this.getAttribute('data-qzoff'))].off = 0; qzEdited(true); });
     each('button[data-qzdel]', 'click', function () { q.items.splice(Number(this.getAttribute('data-qzdel')), 1); QZ.descOpen = {}; qzEdited(true); });
     each('button[data-qzup]', 'click', function () {
       var i = Number(this.getAttribute('data-qzup')); var x = q.items[i]; q.items[i] = q.items[i - 1]; q.items[i - 1] = x; QZ.descOpen = {}; qzEdited(true);
@@ -14108,7 +14118,7 @@ async function quoteToInvoice(q) {
   var cart = [], left = [], higher = [], sub = 0;
   q.items.forEach(function (it) {
     var p = (it.sku && bySku[String(it.sku).trim().toLowerCase()]) || byName[String(it.name || '').trim().toLowerCase()];
-    var qty = Math.max(1, Math.round(Number(it.qty) || 1)), rate = Number(it.rate) || 0;
+    var qty = Math.max(1, Math.round(Number(it.qty) || 1)), rate = (Number(it.rate) || 0) - (Number(it.off) || 0);   // the quoted price after its discount
     if (!p) { left.push((it.name || 'Item') + ' \u00d7 ' + (Number(it.qty) || 1) + ' @ ' + fmt(rate) + (it.kind === 'Service' ? ' (service)' : '')); return; }
     if (!(p.sell > 0)) { left.push(p.name + ' (no selling price set)'); return; }
     var disc = rate > 0 && rate < p.sell ? Math.round((p.sell - rate) * 100) / 100 : 0;

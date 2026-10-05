@@ -24,7 +24,8 @@ function qRound(v) { return Math.round((v + Number.EPSILON) * 100) / 100; }
 /** erpQuoteTotals_ (ERP:9138): lines, subtotal, discount, VAT, shipping, advance. */
 export function quoteTotals(q) {
   const items = q.items || [];
-  const subtotal = qRound(items.reduce((s, i) => s + qRound(Number(i.qty) * Number(i.rate)), 0));
+  // a line's amount is its quantity at the rate less its discount per piece (off)
+  const subtotal = qRound(items.reduce((s, i) => s + qRound(Number(i.qty) * (Number(i.rate) - (Number(i.off) || 0))), 0));
   const discount = qRound(Math.min(subtotal, q.discountType === 'Percent'
     ? subtotal * Number(q.discount) / 100 : Number(q.discount)));
   const tax = qRound((subtotal - discount) * Number(q.vat) / 100);
@@ -275,7 +276,8 @@ export function normaliseQuote(q) {
       qty: qNum(i.qty, 0, 1e9, 'Quantity'), unit: qStr(i.unit || '', 300, 'Unit'),
       rate: qNum(i.rate, 0, 1e9, 'Rate'),
     };
-    it.amount = qRound(it.qty * it.rate);
+    it.off = Math.min(it.rate, qNum(i.off || 0, 0, 1e9, 'Discount'));   // discount per piece
+    it.amount = qRound(it.qty * (it.rate - it.off));
     return it;
   });
   return out;

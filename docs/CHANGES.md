@@ -766,3 +766,6 @@ Settings > Invoice design (manager+): 6 designs - Wave (original), Modern, Minim
 
 ## Invoice: type the selling price, the discount fills in (2026-10-06)
 The Price on each invoice line is now a box: type the price you are selling at (e.g. 1,600 for a 1,700 item); on leaving the box Disc. per pc becomes 100 and the price goes back to 1,700. Page only - the invoice is saved and printed as before (price 1,700, discount 100). Above the normal price is refused with a message. Discount limits per person still apply on saving.
+
+## Quotations: type the price, the discount per piece fills in (2026-10-06)
+Quotation lines now have a discount per piece (item.off; amount = qty x (rate - off); totals on server and page count it; a whole-quotation discount comes after). In the Rate box type the price you are giving: on leaving the box a lower price becomes "-100 each" under the box and the rate goes back; a higher price simply changes the rate (quotes have free prices). The x removes the discount. The customer's quotation shows the rate, "- 100 each" and the amount. Quotation -> invoice uses the price after the discount. Tests: quoteoff 3, quotes 79.
