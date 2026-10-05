@@ -23,9 +23,14 @@ Bangladesh - and built so it can later serve any small seller of things with a s
 
 1. Neutral name. The builder's name never appears. Brand names of others (e.g. Polymaker) only
    with their written permission, and then labelled as sponsor.
-2. "Open" means **open to join, open rules, an open registry anyone can check**. The code stays
-   closed and on the provider's side, as decided ("nobody can copy the system").
-   (If the owner meant publishing the code: that undoes the copy protection. To be confirmed.)
+2. "Open" as the owner means it (confirmed 2026-10-06): **made with its community, updated all
+   the time, open to everyone.** The code stays closed and on the provider's side ("nobody can
+   copy the system").
+   - We do **not** use the words "open source". In this hobby they mean published code under an
+     open licence; a closed product that uses them gets called out in public (see the Bambu Lab
+     firmware quarrel of 2025). We say "open community platform", and we make it true
+     (section 4.5).
+   - We never say that no company is behind it, or that it is non-profit.
 3. Logic on the provider's side; a company keeps only its data; the ERP stops if the provider's
    key is removed; compliance views are disclosed and logged (exists).
 4. The operator's own stock is always visible on the trade market, unlabelled; the terms say the
@@ -63,7 +68,7 @@ any product with a serial number and any small online seller.
 | **Printer Passport** | Type or scan a serial: model, version (global / China), who sold it, warranty until when, repairs on record, reported stolen or not. Register a printer yourself. See section 5. | new |
 | **Print Doctor** | Pictures of failed prints; tap the one that looks like yours; cause and fix in Bangla and English; the product that solves it. Monsoon guide; "which UPS for my printer". | new |
 | **Find stock** | Search a product, colour or brand: which shops have it now, price or "ask", city. Each shop has its own page. Order goes straight into that shop's system. | new (the trade market between companies exists) |
-| **Get it printed** | Upload a file, get an estimate at once (worked out in the browser), farms take the job or offer a price. No file: send a sketch or photo to the design desk. | new (wanted board and deals exist) |
+| **Get it printed** | Upload a file, get an estimate at once (worked out in the browser), farms take the job or offer a price. No file: send a sketch or photo to the design desk. The platform is only the board between the buyer and the farm: the owner's own business does not print and does not pass jobs (confirmed 2026-10-06). | new (wanted board and deals exist) |
 | **Help me choose** | Filament and printer picker with live stock, measured colours, "closest colour in stock". | new |
 | **Makers directory** | Verified sellers, farms, repair shops, designers, with ratings. | new (ratings exist) |
 | **Print of the week, monthly contest** | A file, its settings and the filament for it every Friday; a contest judged on merit; prizes from sponsors, labelled. | new |
@@ -96,7 +101,7 @@ New for the full ERP:
 | Points and levels, referral; refill and back-in-stock reminders | all sellers | M + S |
 | Delivery-history check before a cash-on-delivery parcel; WhatsApp "confirm your delivery" | all sellers | S |
 | Public sharing switch per product (private / trade / public) | all sellers | S |
-| Farm kit: true-cost calculator, job board, grams per job, own quote link | print farms | S + M + M |
+| Print-business kit: print jobs (which printer, which stage, for which order), true-cost calculator, grams taken from stock per job, own quote link. A core part: the owner expects users who run a printing business in the system (confirmed 2026-10-06). | print farms and print shops | S + M + M |
 | Sell without stock: reseller orders shipped under the reseller's name, settled monthly | resellers | L |
 | Service records onto a passport | repair shops | S |
 | Profile, paid design jobs; later the licensed catalogue with a royalty per print | designers | M, later L |
@@ -108,6 +113,25 @@ New for the full ERP:
 - Sponsor programme: a brand pays for prizes or a featured page, always labelled.
 - Conduct rule: the operator never uses a company's private data to trade against it. One
   discovered breach would end the network.
+
+### 4.5 Community - what makes "made with its community" true
+
+The owner wants the platform known as something a community makes and keeps improving, open to
+everyone. That is only safe to say if it is real. These parts make it real:
+
+| Part | What it does | Size |
+|---|---|---|
+| **Updates page** | A public list of what changed, newest first (the announcements that exist, made public). Shows the place is alive. | S |
+| **Ideas board** | Anyone proposes; members vote; each idea shows "planned / being built / done". What gets built follows it, and says so. | S-M |
+| **Shared knowledge** | Members send a failed print with its fix (for the Print Doctor), tested settings for a filament on a printer ("confirmed by 12 makers"), product names (exists), Bangla wording. | with N3 |
+| **Guides** | Trusted volunteers who check what members send before it is shown. A badge, and their name on what they checked. | S |
+| **Credits** | A page naming who contributed what; points for contributions. | S |
+| **Open register** | Anyone, any website, may check a serial through a public address (as Bike Index does). | with N1 |
+| **Open content (owner's choice)** | The guides and the settings library may be reused by anyone with credit. The code and the business data stay closed. | a decision, no build |
+
+Who runs it, said honestly: "the 3D Owala team, with its community". The builder's own company
+name stays out. A real legal name must still stand behind the terms and the data-protection
+notice (the lawyer's task).
 
 ## 5. Printer Passport - and the buyer whose seller is not in the system
 
@@ -214,24 +238,32 @@ Each line is one stage: built, tested, deployed, checked, recorded.
 | # | Stage | Size | Done when |
 |---|---|---|---|
 | N0 | Warranty automation + phone camera scan (agreed) | M | Every printer model has a rule; a box is scanned in with a phone. |
-| N1 | Printer Passport: public check page, QR and card, customer page on every invoice | M | A customer scans an invoice and sees parcel, warranty and reorder; a stranger checks a serial. |
+| N1 | Printer Passport: public check page (open to any website), QR and card, customer page on every invoice | M | A customer scans an invoice and sees parcel, warranty and reorder; a stranger checks a serial. |
+| N1b | Community base: updates page, ideas board with votes, credits | S-M | A member's idea is voted up and shown as "being built". |
 | N2 | Self-registration, the confirm link, Lite accounts | M-L | An outside buyer registers, his seller confirms from a phone in two minutes. |
-| N3 | Print Doctor, tested settings, monsoon and UPS helpers | M (mostly writing and pictures) | 20 problems with pictures, in two languages. |
-| N4 | Find stock: sharing switch, shop pages, search, back-in-stock alert | M | A stranger finds which shop has a colour and orders it. |
-| N5 | Keep-customers kit: points and levels, refill reminders, delivery-history check | M + S + S | A repeat customer reorders from a reminder; a risky parcel is flagged before it ships. |
-| N6 | Get it printed: estimate, jobs to farms, farm kit | L | A file from a stranger becomes a paid, rated job at a farm. |
-| N7 | Design desk, repair-part requests | M | A sketch becomes a file, then a print. |
-| N8 | Sell without stock for resellers | L | A reseller's order ships under his name and settles at month end. |
-| N9 | Licensed catalogue with royalty; sponsor programme; full hosted ERP | L | Owner's call, after real use. |
+| N3 | Print Doctor, tested settings, monsoon and UPS helpers; members send cases and settings, guides check them | M (mostly writing and pictures) | 20 problems with pictures, in two languages; the first case sent by a member is live with his name. |
+| N4 | Print-business kit in the ERP: print jobs, true-cost calculator, grams per job, own quote link | M-L | A print shop runs a week of jobs in it, with the right cost on each. |
+| N5 | Find stock: sharing switch, shop pages, search, back-in-stock alert | M | A stranger finds which shop has a colour and orders it. |
+| N6 | Keep-customers kit: points and levels, refill reminders, delivery-history check | M + S + S | A repeat customer reorders from a reminder; a risky parcel is flagged before it ships. |
+| N7 | Get it printed: estimate in the browser, a public board whose jobs go to the print businesses | M | A file from a stranger becomes a paid, rated job at a farm. |
+| N8 | Design desk, repair-part requests | M | A sketch becomes a file, then a print. |
+| N9 | Sell without stock for resellers | L | A reseller's order ships under his name and settles at month end. |
+| N10 | Licensed catalogue with royalty; sponsor programme; full hosted ERP | L | Owner's call, after real use. |
 
-Recommended start: N0 and N1 together, then N3 beside N2 (N3 is mostly content).
+Recommended start: N0 and N1 together, then N1b, then N3 beside N2 (N3 is mostly content).
 
 ## 11. Decisions for the owner
 
-1. "Open" = open to join and an open register, code stays closed. Right?
-2. One name for everything public (3D Owala), or another name for the public side?
-3. Does the owner's own business print for customers, or only pass print jobs to farms?
-4. Start with N0 + N1?
+Answered 2026-10-06:
+- "Open" = made with its community, updated all the time, open to everyone. Code closed; the
+  words "open source" are not used (rule 2, section 4.5).
+- The owner's own business does not print and does not pass print jobs. Users who run a
+  printing business do their jobs in the system.
+
+Still open:
+1. One name for everything public (3D Owala), or another name for the public side?
+2. May the guides and the settings library be reused by anyone with credit (open content)?
+3. Start with N0 + N1?
 
 ## 12. Sources added for this blueprint
 
@@ -252,3 +284,6 @@ Recommended start: N0 and N1 together, then N3 beside N2 (N3 is mostly content).
 - https://www.thedailystar.net/tech-startup/news/bangladeshs-personal-data-protection-ordinance-2025-key-takeaways-4015401
 - https://mahbub-law.com/key-highlights-of-the-personal-data-protection-ordinance-2025-for-businesses/
 - https://acviss.com/glossary/digital-warranty-registration/
+- https://en.wikipedia.org/wiki/The_Open_Source_Definition (what "open source" means)
+- https://dirkriehle.com/2024/12/07/what-is-open-washing/ (calling a closed thing open)
+- https://3dprintingindustry.com/news/bambu-lab-controversy-deepens-firmware-update-sparks-backlash-240588/ (how this hobby reacts)
