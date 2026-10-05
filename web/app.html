@@ -11325,7 +11325,7 @@ function poolHtml() {
     '<th class="num">Holds</th><th class="num">Should hold</th><th class="num">To settle</th></tr></thead><tbody>' +
     ps.map(function (x) {
       var b = Number(x.balance) || 0;
-      return '<tr><td class="nm">' + esc(x.name) + (x.business_id === p.me ? ' <span class="pill">you</span>' : '') + '<br><span class="sku">sells at the ' + esc(x.tier) + ' price</span></td>' +
+      return '<tr><td class="nm">' + esc(x.name) + (x.business_id === p.me ? ' <span class="pill">you</span>' : '') + (x.overdue > 0.5 ? '<br><span class="sku">incl. late money ' + fmt(x.overdue) + '</span>' : '') + '</td>' +
         '<td class="num">' + fmt(x.capital) + '</td><td class="num"><strong>' + (Math.round(x.ratio * 1000) / 10) + '%</strong></td><td class="num">' + fmt(x.month_sales) + '</td>' +
         '<td class="num">' + fmt(x.profit_share) + '</td><td class="num">' + fmt(x.held) + '</td><td class="num">' + fmt(x.due) + '</td>' +
         '<td class="num"><strong style="color:var(' + (b > 0.5 ? '--critical' : b < -0.5 ? '--good' : '--muted') + ')">' + (b > 0.5 ? 'pays ' + fmt(b) : b < -0.5 ? 'receives ' + fmt(-b) : 'even') + '</strong></td></tr>';
@@ -19887,7 +19887,7 @@ function viewJoint() {
       ? '<label class="f" for="jt_pool" style="margin:0">Joint stock with</label><select class="i" id="jt_pool" style="width:auto;min-width:200px">' + d.pools.map(function (p) {
           return '<option value="' + esc(p.id) + '"' + (p.id === d.pool ? ' selected' : '') + '>' + esc(p.name) + ' — ' + esc(jtOthers(p, d)) + '</option>'; }).join('') + '</select>'
       : '<span class="jt-pool">' + esc(pool.name) + '</span><span class="sku">with ' + esc(jtOthers(pool, d)) + '</span>') +
-    '<span class="pill">you sell at the ' + esc(pool.tier) + ' price</span></div>';
+    '</div>';
   var tabs = jtTabs();
   if (tabs.length > 1) h += '<div class="tabs" role="tablist" style="margin-bottom:12px">' + tabs.map(function (t) {
     return '<button type="button" role="tab" data-jttab="' + t[0] + '" aria-selected="' + (JT.tab === t[0]) + '">' + t[1] + '</button>'; }).join('') + '</div>';
@@ -19921,20 +19921,18 @@ function jtSetupHtml(first) {
   return '<section>' + (first ? '<div class="note" style="margin-bottom:14px"><div class="ico">i</div><div><strong>Joint stock</strong> is goods you and a partner company own together. Each of you sells it under your own name, from your own New invoice. ' +
       'The stock, its cost and its profit are kept in a separate book both owners see; the profit is shared by how much each put in.</div></div>' : '') +
     '<div class="jt-steps">' +
-    '<div class="card"><h2><span class="n">1</span>Is your partner on this ERP?</h2><div class="sub">If not, make their company here. They get their own private link and their own separate books — you cannot see inside, they cannot see inside yours.</div>' +
+    '<div class="card"><h2><span class="n">1</span>Set up your partner’s ERP</h2><div class="sub">A joint stock only works between companies on this same server, so your partner’s ERP is made here, not installed separately. It is a complete ERP of their own, with their own private link and their own books — you cannot see inside, they cannot see inside yours. Skip this if their company already exists here.</div>' +
       '<div class="jt-form"><div class="wide"><label class="f" for="jn_biz">Their company’s name</label><input class="i" id="jn_biz" maxlength="80" value="' + esc(n.business) + '"></div>' +
       '<div><label class="f" for="jn_owner">Owner’s name</label><input class="i" id="jn_owner" maxlength="60" value="' + esc(n.ownerName) + '"></div>' +
       '<div><label class="f" for="jn_email">E-mail <span class="sku">(optional)</span></label><input class="i" id="jn_email" type="email" maxlength="120" value="' + esc(n.email) + '"></div></div>' +
       '<button class="btn" type="button" data-jt="company" style="margin-top:10px"' + dis + '>Make their company</button></div>' +
     '<div class="card"><h2><span class="n">2</span>Start a joint stock</h2><div class="sub">You get a code to send to your partner.</div>' +
       '<div class="jt-form"><div class="wide"><label class="f" for="jn_name">Name</label><input class="i" id="jn_name" maxlength="80" placeholder="e.g. Polymaker joint stock" value="' + esc(n.name) + '"></div>' +
-      '<div><label class="f" for="jn_disp">Your name in it</label><input class="i" id="jn_disp" maxlength="60" placeholder="' + esc(d.company) + '" value="' + esc(n.displayName) + '"></div>' +
-      '<div><label class="f" for="jn_tier">You sell from it at</label>' + jtTierSel('jn_tier', n.tier) + '</div></div>' +
+      '<div><label class="f" for="jn_disp">Your name in it</label><input class="i" id="jn_disp" maxlength="60" placeholder="' + esc(d.company) + '" value="' + esc(n.displayName) + '"></div></div>' +
       '<button class="btn primary" type="button" data-jt="create" style="margin-top:10px"' + dis + '>Start it</button></div>' +
     '<div class="card"><h2><span class="n">3</span>Or join your partner’s</h2><div class="sub">With the code they sent you.</div>' +
       '<div class="jt-form"><div class="wide"><label class="f" for="jn_code">Invite code</label><input class="i" id="jn_code" maxlength="12" autocapitalize="characters" placeholder="10 letters and digits" value="' + esc(n.code) + '"></div>' +
-      '<div><label class="f" for="jn_jdisp">Your name in it</label><input class="i" id="jn_jdisp" maxlength="60" placeholder="' + esc(d.company) + '" value="' + esc(n.joinName) + '"></div>' +
-      '<div><label class="f" for="jn_jtier">You sell from it at</label>' + jtTierSel('jn_jtier', n.joinTier) + '</div></div>' +
+      '<div><label class="f" for="jn_jdisp">Your name in it</label><input class="i" id="jn_jdisp" maxlength="60" placeholder="' + esc(d.company) + '" value="' + esc(n.joinName) + '"></div></div>' +
       '<button class="btn" type="button" data-jt="join" style="margin-top:10px"' + dis + '>Join</button></div>' +
     '</div></section>';
 }
@@ -19976,18 +19974,18 @@ function jtStockHtml(d, pool) {
   }
   var st = d.stock || [];
   h += '<section><div class="card"><h2>' + esc(pool.name) + ' — what is on the shelf</h2><div class="sub">' +
-    (ed ? 'Both owners see this list, with cost. Staff see the name, their selling price, the floor price and the count — never the cost.' : 'Sell these from New invoice like any product: they carry a <span class="jt-tag">Joint</span> tag there. Nobody sells below the floor price.') + '</div>';
+    (ed ? 'Both owners see this list, with cost. Staff see the name, the price, the floor price and the count — never the cost. Any price can be typed on the invoice, down to the floor.' : 'Sell these from New invoice like any product: they carry a <span class="jt-tag">Joint</span> tag there. Type a lower price on the invoice if the deal needs it, never below the floor.') + '</div>';
   if (!st.length) h += '<div class="empty">No joint product yet.</div>';
   else h += '<div class="scroll"><table><thead><tr><th>Product</th><th class="num">In stock</th>' + (ed ? '<th class="num">Cost</th>' : '') +
-    '<th class="num">Retail</th><th class="num">Wholesale</th><th class="num">Floor</th>' + (ed ? '<th></th>' : '<th class="num">You sell at</th>') + '</tr></thead><tbody>' +
+    '<th class="num">Price</th><th class="num">Floor</th>' + (ed ? '<th></th>' : '') + '</tr></thead><tbody>' +
     st.map(function (s) {
       return '<tr' + (s.status === 'Discontinued' ? ' style="opacity:.55"' : '') + '><td class="nm">' + esc(s.name) + (s.status === 'Discontinued' ? ' <span class="pill">not sold any more</span>' : '') +
         '<br><span class="sku">' + esc([s.sku, s.brand, s.category, s.color].filter(Boolean).join(' · ')) + '</span></td>' +
         '<td class="num"><strong' + (s.stock <= 0 ? ' class="jt-low"' : '') + '>' + fmt(s.stock) + '</strong> <span class="sku">' + esc(s.unit || '') + '</span></td>' +
-        (ed ? '<td class="num">' + fmt(s.cost) + '</td>' : '') + '<td class="num">' + fmt(s.retail) + '</td><td class="num">' + (s.wholesale > 0 ? fmt(s.wholesale) : '—') + '</td>' +
+        (ed ? '<td class="num">' + fmt(s.cost) + '</td>' : '') + '<td class="num">' + fmt(s.price) + '</td>' +
         '<td class="num">' + (s.floor > 0 ? fmt(s.floor) : '<span class="sku">none</span>') + '</td>' +
         (ed ? '<td class="num" style="white-space:nowrap"><button class="btn small" type="button" data-jt="f-edit" data-sku="' + esc(s.sku) + '">Change</button> <button class="btn small" type="button" data-jt="f-receive" data-sku="' + esc(s.sku) + '">Receive</button></td>'
-            : '<td class="num"><strong>' + fmt(s.price) + '</strong></td>') + '</tr>'; }).join('') + '</tbody></table></div>';
+            : '') + '</tr>'; }).join('') + '</tbody></table></div>';
   return h + '</div></section>';
 }
 function jtSkuSel(d, id, val) {
@@ -20003,8 +20001,7 @@ function jtProductForm(d, pool, f) {
     '<div><label class="f" for="jf_brand">Brand</label><input class="i" id="jf_brand" maxlength="60" list="l_jfbr" value="' + esc(f.brand) + '"><datalist id="l_jfbr">' + jtUniq(d, 'brand') + '</datalist></div>' +
     '<div><label class="f" for="jf_color">Colour</label><input class="i" id="jf_color" maxlength="40" value="' + esc(f.color) + '"></div>' +
     '<div><label class="f" for="jf_unit">Unit</label><input class="i" id="jf_unit" maxlength="20" placeholder="Piece" value="' + esc(f.unit) + '"></div>' +
-    '<div><label class="f" for="jf_retail">Retail price</label><input class="i" id="jf_retail" inputmode="decimal" value="' + esc(f.retail) + '"></div>' +
-    '<div><label class="f" for="jf_whole">Wholesale price <span class="sku">(0 = same)</span></label><input class="i" id="jf_whole" inputmode="decimal" value="' + esc(f.wholesale) + '"></div>' +
+    '<div><label class="f" for="jf_retail">Selling price <span class="sku">(the list price; a lower price is typed on the invoice)</span></label><input class="i" id="jf_retail" inputmode="decimal" value="' + esc(f.retail) + '"></div>' +
     '<div><label class="f" for="jf_floor">Floor price <span class="sku">(nobody sells below)</span></label><input class="i" id="jf_floor" inputmode="decimal" value="' + esc(f.floor) + '"></div>' +
     (f.isNew ? '<div><label class="f" for="jf_cost">Cost of one <span class="sku">(set again by each receipt)</span></label><input class="i" id="jf_cost" inputmode="decimal" value="' + esc(f.cost) + '"></div>'
              : '<div><label class="f" for="jf_status">Still sold?</label><select class="i" id="jf_status"><option value="Active"' + (f.status !== 'Discontinued' ? ' selected' : '') + '>Yes</option><option value="Discontinued"' + (f.status === 'Discontinued' ? ' selected' : '') + '>No, not any more</option></select></div>') +
@@ -20076,7 +20073,7 @@ function jtMonthHtml(d, pool) {
     '<div class="scroll"><table><thead><tr><th>Partner</th><th class="num">Capital</th><th class="num">Share</th><th class="num">Sold this month</th><th class="num">Profit share</th><th class="num">Holds</th><th class="num">Should hold</th><th class="num">To settle</th></tr></thead><tbody>' +
     ps.map(function (x) {
       var b = Number(x.balance) || 0;
-      return '<tr><td class="nm">' + esc(x.name) + (x.business_id === p.me ? ' <span class="pill">you</span>' : '') + '<br><span class="sku">sells at the ' + esc(x.tier) + ' price</span></td>' +
+      return '<tr><td class="nm">' + esc(x.name) + (x.business_id === p.me ? ' <span class="pill">you</span>' : '') + (x.overdue > 0.5 ? '<br><span class="sku">incl. late money ' + fmt(x.overdue) + '</span>' : '') + '</td>' +
         '<td class="num">' + fmt(x.capital) + '</td><td class="num"><strong>' + (Math.round(x.ratio * 1000) / 10) + '%</strong></td><td class="num">' + fmt(x.month_sales) + '</td>' +
         '<td class="num">' + fmt(x.profit_share) + '</td><td class="num">' + fmt(x.held) + '</td><td class="num">' + fmt(x.due) + '</td>' +
         '<td class="num"><strong style="color:var(' + (b > 0.5 ? '--critical' : b < -0.5 ? '--good' : '--muted') + ')">' + (b > 0.5 ? 'pays ' + fmt(b) : b < -0.5 ? 'receives ' + fmt(-b) : 'even') + '</strong></td></tr>'; }).join('') + '</tbody></table></div>';
@@ -20093,8 +20090,7 @@ function jtMonthHtml(d, pool) {
 
 function jtSettingsHtml(d, pool) {
   var p = d.book, h = '<section><div class="grid g-half"><div class="card"><h2>Partners</h2><div class="list">' + p.partners.map(function (x) {
-    return '<div><span>' + esc(x.name) + (x.id === p.me ? ' <span class="pill">you</span>' : '') + '</span><select class="i" data-jttier="' + esc(x.id) + '" style="width:auto"><option value="retail"' + (x.tier === 'retail' ? ' selected' : '') + '>sells at the retail price</option>' +
-      '<option value="wholesale"' + (x.tier === 'wholesale' ? ' selected' : '') + '>sells at the wholesale price</option></select></div>'; }).join('') + '</div>' +
+    return '<div><span>' + esc(x.name) + (x.id === p.me ? ' <span class="pill">you</span>' : '') + '</span><b></b></div>'; }).join('') + '</div>' +
     (p.invites.length ? '<div class="sub" style="margin-top:12px">An invite code is open. Send it to your partner; in their own company they open Joint stock and join with it. Good until ' + esc(p.invites[0].until) + ', works once.</div>' +
         p.invites.map(function (i) { return '<div style="margin-top:6px"><span class="codebox">' + esc(i.code) + '</span></div>'; }).join('') : '') +
     '<button class="btn small" type="button" data-jt="invite" style="margin-top:10px"' + (JT.busy ? ' disabled' : '') + '>New invite code</button></div>' +
@@ -20110,7 +20106,7 @@ function jtSettingsHtml(d, pool) {
 function jtVal(id) { var n = el(id); return n ? n.value : ''; }
 function jtKeepForm() {
   var f = JT.form; if (!f) return;
-  if (f.kind === 'product') { ['name', 'sku', 'category:cat', 'brand', 'color', 'unit', 'retail', 'wholesale:whole', 'floor', 'cost', 'status'].forEach(function (k) { var a = k.split(':'), n = el('jf_' + (a[1] || a[0])); if (n) f[a[0]] = n.value; }); }
+  if (f.kind === 'product') { ['name', 'sku', 'category:cat', 'brand', 'color', 'unit', 'retail', 'floor', 'cost', 'status'].forEach(function (k) { var a = k.split(':'), n = el('jf_' + (a[1] || a[0])); if (n) f[a[0]] = n.value; }); }
   if (f.kind === 'receive') { f.sku = jtVal('jr_sku') || f.sku; f.qty = jtVal('jr_qty'); f.unitCost = jtVal('jr_cost'); f.paidBy = jtVal('jr_by'); f.date = jtVal('jr_date'); f.supplier = jtVal('jr_sup'); f.note = jtVal('jr_note'); }
   if (f.kind === 'adjust') { f.sku = jtVal('ja_sku') || f.sku; f.direction = jtVal('ja_dir'); f.qty = jtVal('ja_qty'); f.reason = jtVal('ja_why'); }
 }
@@ -20170,7 +20166,7 @@ document.addEventListener('click', async function (ev) {
   var f = JT.form;
   if (a === 'save-product' && f) {
     jtKeepForm();
-    jtSave('erpJointProduct', { pool: JT.pool, isNew: f.isNew, sku: f.sku, name: f.name, category: f.category, brand: f.brand, color: f.color, unit: f.unit, retail: f.retail, wholesale: f.wholesale, floor: f.floor, cost: f.cost, status: f.status },
+    jtSave('erpJointProduct', { pool: JT.pool, isNew: f.isNew, sku: f.sku, name: f.name, category: f.category, brand: f.brand, color: f.color, unit: f.unit, retail: f.retail, wholesale: f.wholesale || 0, floor: f.floor, cost: f.cost, status: f.status },
       f.isNew ? 'Joint product added.' : 'Saved.', function () { JT.form = null; JCAT = null; });
     return;
   }
