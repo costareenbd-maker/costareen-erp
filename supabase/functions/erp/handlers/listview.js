@@ -206,7 +206,8 @@ const allowed = (ctx, x) => !x.need || roleAtLeast(ctx.s.role, x.need);
 
 function specOf(ctx, m) {
   return {
-    search: m.search.map((s) => ({ field: s.field, label: s.label })),
+    // "Anything" first: Enter on the search box looks in every field (name, phone, number, product...)
+    search: [{ field: 'any', label: 'Anything' }].concat(m.search.map((s) => ({ field: s.field, label: s.label }))),
     filters: m.filters.filter((f) => allowed(ctx, f)).map((f) => ({ name: f.name, label: f.label, set: f.set })),
     groups: m.groups.filter((g) => allowed(ctx, g)).map((g) => ({ field: g.field, label: g.label })),
     columns: m.columns.filter((c) => allowed(ctx, c)).map((c) => ({ key: c.key, label: c.label, type: c.type || 'text', sub: c.sub || '',
@@ -240,7 +241,8 @@ export async function erpListView(ctx, payload) {
 
   // search facets
   for (const f of Array.isArray(payload.search) ? payload.search : []) {
-    const s = m.search.find((x) => x.field === str(f && f.field));
+    const field = str(f && f.field);
+    const s = field === 'any' ? { of: (r) => m.search.map((x) => str(x.of(r))).join(' ') } : m.search.find((x) => x.field === field);
     const vals = ((f && f.values) || []).map((v) => lower(v).trim()).filter(Boolean);
     if (!s || !vals.length) continue;
     rows = rows.filter((r) => { const hay = lower(s.of(r)); return vals.some((v) => hay.indexOf(v) >= 0); });

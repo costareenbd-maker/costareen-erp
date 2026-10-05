@@ -21,6 +21,13 @@ check('invoices: totals over everything matched', all.sums.total === all.rows.re
 check('a row carries only what the columns need', !('goods' in all.rows[0]) && all.rows[0].open.invoice === made[2], all.rows[0]);
 r = await lv(sales, { model: 'invoices', search: [{ field: 'customer', values: ['karim'] }] });
 check('search a customer', r.ok && r.result.total === r.result.rows.filter((x) => /Karim/.test(x.customer)).length && r.result.rows.every((x) => /Karim/.test(x.customer)) && r.result.total >= 2, r.result.rows.map((x) => x.customer));
+check('"Anything" is the first search choice (Enter uses it)', all.spec.search[0].field === 'any', all.spec.search);
+r = await lv(sales, { model: 'invoices', search: [{ field: 'any', values: ['karim'] }] });
+check('Anything: a customer name finds their invoices', r.ok && r.result.total >= 2 && r.result.rows.every((x) => /Karim/.test(x.customer)), r.result.rows.map((x) => x.customer));
+r = await lv(sales, { model: 'invoices', search: [{ field: 'any', values: [made[1].toLowerCase()] }] });
+check('Anything: an invoice number', r.ok && r.result.total === 1 && r.result.rows[0].id === made[1], r.result.rows.map((x) => x.id));
+r = await lv(sales, { model: 'invoices', search: [{ field: 'any', values: ['01811111111'] }] });
+check('Anything: a phone number', r.ok && r.result.rows.length && r.result.rows.every((x) => x.customer === 'Rahim'), r.result.rows.map((x) => x.customer));
 r = await lv(sales, { model: 'invoices', search: [{ field: 'customer', values: ['karim', 'rahim'] }] });
 check('two values for one field: either', r.ok && r.result.rows.some((x) => x.customer === 'Rahim') && r.result.rows.some((x) => x.customer === 'Karim'), r.result.total);
 r = await lv(sales, { model: 'invoices', search: [{ field: 'customer', values: ['karim'] }, { field: 'product', values: ['PRT-BAM'] }] });
