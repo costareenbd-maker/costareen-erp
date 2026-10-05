@@ -70,6 +70,7 @@ any product with a serial number and any small online seller.
 | **Find stock** | Search a product, colour or brand: which shops have it now, price or "ask", city. Each shop has its own page. Order goes straight into that shop's system. | new (the trade market between companies exists) |
 | **Get it printed** | Upload a file, get an estimate at once (worked out in the browser), farms take the job or offer a price. No file: send a sketch or photo to the design desk. The platform is only the board between the buyer and the farm: the owner's own business does not print and does not pass jobs (confirmed 2026-10-06). | new (wanted board and deals exist) |
 | **Help me choose** | Filament and printer picker with live stock, measured colours, "closest colour in stock". | new |
+| **Colour Finder** (the owner wants this kept, 2026-10-06) | Open the camera, hold a white paper or the small match card beside the thing, tap: the three closest filament colours, each marked "very close / close / roughly", in stock or not, and which shops have it. Out of stock: the next closest that is in stock, and "tell me when it is back". Always says "closest", never "exact". | new |
 | **Makers directory** | Verified sellers, farms, repair shops, designers, with ratings. | new (ratings exist) |
 | **Print of the week, monthly contest** | A file, its settings and the filament for it every Friday; a contest judged on merit; prizes from sponsors, labelled. | new |
 
@@ -244,6 +245,7 @@ Each line is one stage: built, tested, deployed, checked, recorded.
 | N3 | Print Doctor, tested settings, monsoon and UPS helpers; members send cases and settings, guides check them | M (mostly writing and pictures) | 20 problems with pictures, in two languages; the first case sent by a member is live with his name. |
 | N4 | Print-business kit in the ERP: print jobs, true-cost calculator, grams per job, own quote link | M-L | A print shop runs a week of jobs in it, with the right cost on each. |
 | N5 | Find stock: sharing switch, shop pages, search, back-in-stock alert | M | A stranger finds which shop has a colour and orders it. |
+| N5b | Colour Finder: camera with a white reference (paper or a match card in every parcel), closest colours with availability. Colour values: the open library of about 3,000 measured filament colours; a shop measures its other samples once with the same tool. Weak on silk, clear and glitter filaments, and says so. | M | A stranger points the phone at a coloured object and is shown three filaments, one in stock at a named shop. |
 | N6 | Keep-customers kit: points and levels, refill reminders, delivery-history check | M + S + S | A repeat customer reorders from a reminder; a risky parcel is flagged before it ships. |
 | N7 | Get it printed: estimate in the browser, a public board whose jobs go to the print businesses | M | A file from a stranger becomes a paid, rated job at a farm. |
 | N8 | Design desk, repair-part requests | M | A sketch becomes a file, then a print. |
@@ -284,6 +286,8 @@ Still open:
 - https://www.thedailystar.net/tech-startup/news/bangladeshs-personal-data-protection-ordinance-2025-key-takeaways-4015401
 - https://mahbub-law.com/key-highlights-of-the-personal-data-protection-ordinance-2025-for-businesses/
 - https://acviss.com/glossary/digital-warranty-registration/
+- https://www.yankodesign.com/2020/07/01/pantones-15-rainbow-card-turns-your-smartphone-camera-into-a-highly-accurate-color-picker/ (a reference card makes a phone camera read colours)
+- https://filamentcolors.xyz/ (open library of measured filament colours)
 - https://en.wikipedia.org/wiki/The_Open_Source_Definition (what "open source" means)
 - https://dirkriehle.com/2024/12/07/what-is-open-washing/ (calling a closed thing open)
 - https://3dprintingindustry.com/news/bambu-lab-controversy-deepens-firmware-update-sparks-backlash-240588/ (how this hobby reacts)
