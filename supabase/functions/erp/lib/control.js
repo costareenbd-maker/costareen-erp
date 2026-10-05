@@ -27,18 +27,23 @@ export async function controlState(sql) {
 }
 export function forgetControl() { kept.at = 0; }
 
-export async function heartbeat(deps) {
-  const ins = deps.install || {};
-  if (!ins.id || !ins.key || !ins.controlUrl) return 'not a company copy';
-  const sql = deps.sql;
+/** A company's usage figures (for the provider's list): businesses, users, invoices in 30 days, errors in 7, last activity. */
+export async function copyStats(sql) {
   const one = async (q, d) => { try { return (await q)[0]; } catch (_) { return d; } };
-  const stats = {
+  return {
     businesses: (await one(sql`select count(*)::int n from businesses where not coalesce(is_pool, false)`, { n: 0 })).n,
     users: (await one(sql`select count(distinct user_id)::int n from memberships`, { n: 0 })).n,
     invoices30: (await one(sql`select count(*)::int n from invoices where created_at > now() - interval '30 days'`, { n: 0 })).n,
     errors7: (await one(sql`select count(*)::int n from erp_errors where at > now() - interval '7 days'`, { n: 0 })).n,
     lastActivity: ((await one(sql`select max(at) as t from erp_activity`, { t: null })).t || null),
   };
+}
+
+export async function heartbeat(deps) {
+  const ins = deps.install || {};
+  if (!ins.id || !ins.key || !ins.controlUrl) return 'not a company copy';
+  const sql = deps.sql;
+  const stats = await copyStats(sql);
   let reply = null;
   try {
     const r = await (deps.fetch || fetch)(ins.controlUrl + '?control=beat', {

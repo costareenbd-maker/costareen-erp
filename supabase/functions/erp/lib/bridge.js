@@ -108,9 +108,11 @@ export function tenantSource(sql, key, build, ttlMs = 5 * 60e3) {
 export async function checkTenant(sql, key, id, tryQuery) {
   const row = (await sql`select id, status, secret_enc from erp_tenants where id = ${id}`)[0];
   if (!row || row.status === 'locked') return row ? row.status : 'unknown';
-  let err = '';
-  try { const s = await openJSON(key, row.secret_enc); await tryQuery(s.dbUrl); } catch (e) { err = str((e && e.message) || e).slice(0, 300); }
+  let err = '', got = null;
+  try { const s = await openJSON(key, row.secret_enc); got = await tryQuery(s.dbUrl); } catch (e) { err = str((e && e.message) || e).slice(0, 300); }
   const status = err ? 'disconnected' : 'active';
   await sql`update erp_tenants set status = ${status}, checked_at = now(), check_error = ${err || null} where id = ${id}`;
+  // what the check read over the bridge (usage figures) is what the provider's list shows
+  if (!err && got && typeof got === 'object') await sql`update erp_installs set stats = ${sql.json(got)}, last_seen = now() where id = ${id}`;
   return status;
 }

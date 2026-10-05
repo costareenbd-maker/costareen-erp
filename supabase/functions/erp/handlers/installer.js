@@ -362,6 +362,39 @@ export async function brandOf(sql) {
   const r = (await sql`select name, sponsor, accent, logo from erp_brand where id = 1`)[0] || {};
   return { name: str(r.name) || 'ERP', sponsor: str(r.sponsor), accent: str(r.accent), logo: str(r.logo) };
 }
+/** "Check now": can the provider reach the company, and its latest figures. */
+export async function erpInstallHealth(ctx, payload) {
+  await needAdmin(ctx);
+  const id = str(payload && payload.id);
+  if (!ctx.deps.checkTenantNow) throw new Error('This server does not run company ERPs.');
+  if (!(await ctx.sql`select 1 from erp_tenants where id::text = ${id}`).length) throw new Error('That company is not on the provider\u2019s server yet.');
+  return { id, status: await ctx.deps.checkTenantNow(id) };
+}
+
+// ---- announcements: a message the provider writes, shown inside every company's ERP until it ends
+export async function newsActive(sql) {
+  return (await sql`select id, text, level from erp_news where ended_at is null and (until is null or until > now()) order by made_at desc limit 5`)
+    .map((r) => ({ id: r.id, text: str(r.text), level: str(r.level) }));
+}
+export async function erpNews(ctx) {
+  await needAdmin(ctx);
+  return { items: (await ctx.sql`select id, text, level, until, made_at, ended_at from erp_news order by made_at desc limit 30`)
+    .map((r) => ({ ...r, live: !r.ended_at && (!r.until || new Date(r.until) > new Date()) })) };
+}
+export async function erpNewsAdd(ctx, payload) {
+  await needAdmin(ctx);
+  const p = payload || {};
+  const text = str(p.text).slice(0, 400), level = p.level === 'warn' ? 'warn' : 'info', days = Math.max(0, Math.min(90, Number(p.days) || 0));
+  if (!text) throw new Error('Write the message first.');
+  await ctx.sql`insert into erp_news (text, level, until) values (${text}, ${level}, ${days ? new Date(Date.now() + days * 86400e3) : null})`;
+  return erpNews(ctx);
+}
+export async function erpNewsEnd(ctx, payload) {
+  await needAdmin(ctx);
+  await ctx.sql`update erp_news set ended_at = now() where id = ${Number(payload && payload.id) || 0} and ended_at is null`;
+  return erpNews(ctx);
+}
+
 export async function erpBrand(ctx) { await needAdmin(ctx); return { ...(await brandOf(ctx.sql)), terms: TERMS_VERSION }; }
 export async function erpBrandSet(ctx, payload) {
   await needAdmin(ctx);
@@ -400,6 +433,7 @@ export async function installRoute(deps, req) {
     const what = u.searchParams.get('install');
     if (what === 'info') return { status: 200, body: { ok: true, ...(await installInfo(deps, u.searchParams.get('id'))) } };
     if (what === 'brand') return { status: 200, body: { ok: true, ...(await brandOf(sqlOf(deps))), terms: TERMS_VERSION } };
+    if (what === 'news') return { status: 200, body: { ok: true, items: await newsActive(sqlOf(deps)) } };
     if (what === 'caps') {
       const e = deps.installEnv || {};
       return { status: 200, body: { ok: true, oauth: !!(e.oauth && e.oauth.clientId), domains: !!(e.cloudflare && e.cloudflare.token), target: pagesTarget(deps), free: !!(freeZone(deps) && e.freeZoneId && e.cloudflare && e.cloudflare.token) } };
@@ -436,9 +470,10 @@ async function needAdmin(ctx) {
 
 export async function erpInstalls(ctx) {
   await needAdmin(ctx);
-  const rows = await ctx.sql`select id, company, owner_name, owner_email, status, step, step_n, detail, error, ref, version, stats, last_seen, reason, made_at,
-                                    domain, domain_state, website, mgmt_kind, upd_step, upd_error, updated_to_at
-                             from erp_installs order by made_at desc`;
+  const rows = await ctx.sql`select i.id, i.company, i.owner_name, i.owner_email, i.status, i.step, i.step_n, i.detail, i.error, i.ref, i.version, i.stats, i.last_seen, i.reason, i.made_at,
+                                    i.domain, i.domain_state, i.website, i.mgmt_kind, i.upd_step, i.upd_error, i.updated_to_at, i.terms_version,
+                                    t.status as bridge, t.checked_at, t.check_error
+                             from erp_installs i left join erp_tenants t on t.id = i.id order by i.made_at desc`;
   const rel = (await ctx.sql`select version, made_at from erp_releases order by made_at desc limit 1`)[0];
   const invites = await ctx.sql`select note, made_at, expires_at, used_at from erp_install_invites order by made_at desc limit 20`;
   return { release: rel ? { version: rel.version, at: rel.made_at } : null, installs: rows.map((r) => ({ ...r, say: SAY[r.step] || r.step,
@@ -598,4 +633,4 @@ export async function erpInstallDomain(ctx, payload) {
   return { ok: true, domain: d, cname: pagesTarget(ctx.deps), auto };
 }
 
-export const HANDLERS = { erpInstalls, erpInstallInvite, erpInstallSet, erpInstallRetry, erpInstallUpdate, erpInstallToken, erpInstallDomain, erpInstallBridge, erpBrand, erpBrandSet };
+export const HANDLERS = { erpInstalls, erpInstallInvite, erpInstallSet, erpInstallRetry, erpInstallUpdate, erpInstallToken, erpInstallDomain, erpInstallBridge, erpBrand, erpBrandSet, erpInstallHealth, erpNews, erpNewsAdd, erpNewsEnd };

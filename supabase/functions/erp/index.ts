@@ -13,7 +13,7 @@ import { wooKeysCallback } from './handlers/wooauth.js';
 import { shopDoor } from './handlers/shop.js';
 import { installRoute } from './handlers/installer.js';
 import { signinRoute } from './handlers/signin.js';
-import { installFinish } from './lib/control.js';
+import { installFinish, copyStats } from './lib/control.js';
 import postgres from 'npm:postgres@3.4.5';
 import { connect } from './db.js';
 import { erpCall } from './core.js';
@@ -292,18 +292,21 @@ function tenantOf(req: Request, q: URLSearchParams): string {
 }
 
 /** The hourly health check: can the provider still reach each company? (A removed key locks its ERP.) */
+async function checkOne(id: string) {
+  const st = await checkTenant(sql, BRIDGE_KEY, id, async (url: string) => {
+    const c = connect(postgres, url, { max: 1 });
+    try { await c`select 1`; return await copyStats(c); } finally { await c.end({ timeout: 2 }); }
+  });
+  if (st !== 'active') tenantDeps.forget(id);
+  return st;
+}
 async function checkAll() {
   const ids = (await sql`select id from erp_tenants where status <> 'locked'`).map((r: any) => r.id);
   const out: any = {};
-  for (const id of ids) {
-    out[id] = await checkTenant(sql, BRIDGE_KEY, id, async (url: string) => {
-      const c = connect(postgres, url, { max: 1 });
-      try { await c`select 1`; } finally { await c.end({ timeout: 2 }); }
-    });
-    if (out[id] !== 'active') tenantDeps.forget(id);
-  }
+  for (const id of ids) out[id] = await checkOne(id);
   return out;
 }
+if (tenantDeps) deps.checkTenantNow = checkOne;
 
 Deno.serve(async (req) => {
   const q0 = new URL(req.url).searchParams;
@@ -384,7 +387,7 @@ async function serveWith(deps: any, req: Request, q0: URLSearchParams, headers: 
     const result: any = {};
     try { result.own = await runJob(deps, job); } catch (e) { result.own = { error: String((e as Error).message || e) }; }
     if (deps === (globalThis as any).__ownDeps && tenantDeps) {
-      if (job === 'nightly') { try { result.health = await checkAll(); } catch (e) { result.health = { error: String((e as Error).message || e) }; } }
+      if (job === 'nightly' || job === 'deliveries') { try { result.health = await checkAll(); } catch (e) { result.health = { error: String((e as Error).message || e) }; } }   // every hour
       for (const r of await sql`select id from erp_tenants where status = 'active'`) {
         try { result[r.id] = await runJob(await tenantDeps(r.id), job); } catch (e) { result[r.id] = { error: String((e as Error).message || e) }; }
       }

@@ -16306,7 +16306,7 @@ function installsHtml() {
   var r = INSTALLS, ago = function (t) { if (!t) return 'never'; var m = Math.round((Date.now() - new Date(t).getTime()) / 60000); return m < 60 ? m + ' min ago' : m < 2880 ? Math.round(m / 60) + ' h ago' : Math.round(m / 1440) + ' days ago'; };
   var h = '<section><div class="card"><div class="row" style="justify-content:space-between;align-items:center"><h2 style="margin:0">Company copies</h2>' +
     '<button class="btn primary" type="button" id="ins_invite">+ Install link for a company</button></div>' +
-    '<div class="sub">Companies running the ERP in their own Supabase account. Each checks in every hour; switched off, it stops within the hour. Release kept for installs: ' + (r.release ? esc(r.release.version) : '<b>none yet</b> (deploy.py release)') + '.</div>';
+    '<div class="sub">Companies using the ERP. Their data is in their own Supabase account; their ERP runs on your server, which checks each connection every hour. Switched off, a company is locked at once. Release kept for installs: ' + (r.release ? esc(r.release.version) : '<b>none yet</b> (deploy.py release)') + '.</div>';
   if (!r.installs.length) h += '<div class="empty">No company copy yet.</div>';
   else h += '<div class="scroll"><table><thead><tr><th>Company</th><th>State</th><th>Version</th><th>Last check-in</th><th class="num">Invoices 30d</th><th class="num">Users</th><th class="num">Errors 7d</th><th></th></tr></thead><tbody>' +
     r.installs.map(function (x) {
@@ -16315,7 +16315,14 @@ function installsHtml() {
         : x.status === 'failed' ? '<span class="pill out">install failed</span><br><span class="sku">' + esc(x.say) + ': ' + esc(x.error || '') + '</span>'
         : '<span class="pill">installing</span><br><span class="sku">' + esc(x.say) + ' ' + esc(x.detail || '') + '</span>';
       var s = x.stats || {};
-      return '<tr><td class="nm">' + esc(x.company) + '<br><span class="sku">' + esc(x.owner_name) + ' \u00b7 ' + esc(x.owner_email) + (x.ref ? ' \u00b7 ' + esc(x.ref) : '') + '</span></td><td>' + st + '</td>' +
+      if (x.bridge) {   // on the provider's server: the connection is what counts (checked every hour)
+        st = x.status === 'suspended' ? st
+          : x.bridge === 'active' ? '<span class="pill ok">connected</span><br><span class="sku">checked ' + esc(ago(x.checked_at)) + '</span>'
+          : x.bridge === 'disconnected' ? '<span class="pill out">connection lost</span><br><span class="sku">its ERP is locked' + (x.check_error ? ': ' + esc(String(x.check_error).slice(0, 80)) : '') + '</span>'
+          : '<span class="pill out">' + esc(x.bridge) + '</span>';
+        st += ' <button class="btn small" type="button" data-inshealth="' + esc(x.id) + '">Check now</button>';
+      }
+      return '<tr><td class="nm">' + esc(x.company) + '<br><span class="sku">' + esc(x.owner_name) + ' \u00b7 ' + esc(x.owner_email) + (x.ref ? ' \u00b7 ' + esc(x.ref) : '') + (x.terms_version ? ' \u00b7 terms ' + esc(x.terms_version) : '') + '</span></td><td>' + st + '</td>' +
         '<td>' + esc(x.version || '') + '</td><td>' + esc(ago(x.last_seen)) + '</td><td class="num">' + fmt(s.invoices30 || 0) + '</td><td class="num">' + fmt(s.users || 0) + '</td><td class="num">' + fmt(s.errors7 || 0) + '</td><td class="num" style="white-space:nowrap">' +
         (x.status === 'active' ? '<button class="btn small danger" type="button" data-insoff="' + esc(x.id) + '">Switch off</button>' : '') +
         (x.status === 'suspended' ? '<button class="btn small primary" type="button" data-inson="' + esc(x.id) + '">Switch on</button>' : '') +
@@ -18776,6 +18783,94 @@ document.addEventListener('click', function (ev) {
     var fr = new FileReader(); fr.onload = function () { b.logo = String(fr.result); go(); }; fr.readAsDataURL(f);
   }
 });
+</script>
+
+<!-- Stage 1c: Platform health + announcements; inside a company's ERP: the announcement banner and the lock screen -->
+<style>
+#newsbar { position:sticky; top:env(safe-area-inset-top, 0px); z-index:60; display:flex; flex-direction:column; gap:1px; }
+#newsbar .nb { display:flex; gap:10px; align-items:flex-start; padding:9px 14px; font-size:14px; background:var(--series-1-soft); color:var(--ink); border-bottom:1px solid var(--ring); }
+#newsbar .nb.warn { background:var(--warning-soft); }
+#newsbar .nb span { flex:1; min-width:0; }
+#newsbar .nb button { border:0; background:transparent; color:inherit; cursor:pointer; font-size:16px; line-height:1; padding:2px 4px; }
+.erplock { position:fixed; inset:0; z-index:9999; display:flex; align-items:center; justify-content:center; padding:24px 16px; background:var(--plane); }
+.erplock .box { max-width:460px; width:100%; background:var(--surface); border:1px solid var(--ring); border-radius:14px; padding:26px 24px; display:grid; gap:12px; text-align:center; box-shadow:var(--shadow-lg); }
+.erplock .ic { font-size:34px; }
+</style>
+<script>
+// ---- Platform: "Check now"
+document.addEventListener('click', function (ev) {
+  var t = ev.target && ev.target.closest ? ev.target.closest('[data-inshealth]') : null; if (!t) return;
+  t.disabled = true; t.textContent = 'Checking\u2026';
+  srv('erpInstallHealth', [{ id: t.getAttribute('data-inshealth') }], function (r) {
+    toast(r.status === 'active' ? 'Connected. Figures updated.' : 'Not connected: its ERP stays locked until it is reconnected.', r.status !== 'active');
+    INSTALLS = null; repaint();
+  }, function (e) { toast(esc((e && e.message) || e), true, 9000); INSTALLS = null; repaint(); });
+});
+// ---- Platform: announcements
+var NEWS_ED = null;
+function newsCardHtml() {
+  if (!ME || !ME.platform) return '';
+  if (!NEWS_ED) { NEWS_ED = { loading: true }; srv('erpNews', [], function (r) { NEWS_ED = r; if (VIEW === 'platform') repaint(); }, function (e) { NEWS_ED = { error: (e && e.message) || String(e), items: [] }; if (VIEW === 'platform') repaint(); }); }
+  var items = NEWS_ED.items || [];
+  return '<section><div class="card"><h2>Announcements</h2><div class="sub" data-c5x="1" style="display:block">A message every company sees at the top of its ERP until it ends (they can close it on their screen).</div>' +
+    (NEWS_ED.error ? '<div class="note err"><div class="ico">!</div><div>' + esc(NEWS_ED.error) + '</div></div>' : '') +
+    '<div class="fields" style="margin-top:8px"><div style="grid-column:1/-1"><label class="f" for="nw_text">Message</label><textarea class="i" id="nw_text" rows="2" maxlength="400" placeholder="e.g. New: the open market is here. Open Market in the menu."></textarea></div>' +
+    '<div><label class="f" for="nw_level">Kind</label><select class="i" id="nw_level"><option value="info">News</option><option value="warn">Important</option></select></div>' +
+    '<div><label class="f" for="nw_days">Shown for</label><select class="i" id="nw_days"><option value="3">3 days</option><option value="7" selected>7 days</option><option value="30">30 days</option><option value="0">until I end it</option></select></div></div>' +
+    '<div class="row" style="justify-content:flex-end;margin-top:8px"><button class="btn primary" type="button" id="nw_add">Post to every company</button></div>' +
+    (items.length ? '<div class="scroll" style="margin-top:10px"><table><thead><tr><th>Message</th><th>Posted</th><th>State</th><th></th></tr></thead><tbody>' + items.map(function (n) {
+      return '<tr><td>' + (n.level === 'warn' ? '<span class="pill out">important</span> ' : '') + esc(n.text) + '</td><td class="sku">' + esc(String(n.made_at).slice(0, 10)) + '</td>' +
+        '<td>' + (n.live ? '<span class="pill ok">showing</span>' + (n.until ? '<br><span class="sku">until ' + esc(String(n.until).slice(0, 10)) + '</span>' : '') : '<span class="sku">ended</span>') + '</td>' +
+        '<td class="num">' + (n.live ? '<button class="btn small" type="button" data-nwend="' + esc(n.id) + '">End</button>' : '') + '</td></tr>'; }).join('') + '</tbody></table></div>' : '') +
+    '</div></section>';
+}
+var viewPlatformN1 = viewPlatform;
+viewPlatform = function () { return viewPlatformN1() + newsCardHtml(); };
+document.addEventListener('click', function (ev) {
+  var t = ev.target && ev.target.closest ? ev.target.closest('#nw_add,[data-nwend]') : null; if (!t || VIEW !== 'platform') return;
+  var done2 = function (r) { NEWS_ED = r; repaint(); }, bad = function (e) { toast(esc((e && e.message) || e), true, 9000); };
+  if (t.id === 'nw_add') {
+    var text = el('nw_text').value.trim(); if (!text) { toast('Write the message first.', true); return; }
+    srv('erpNewsAdd', [{ text: text, level: el('nw_level').value, days: Number(el('nw_days').value) }], function (r) { toast('Posted. Every company sees it at the top of its ERP.'); done2(r); }, bad);
+  } else srv('erpNewsEnd', [{ id: t.getAttribute('data-nwend') }], function (r) { toast('Ended.'); done2(r); }, bad);
+});
+// ---- inside a company's ERP: the announcements (closed ones stay closed on this device)
+(function () {
+  if (!ERP_BACKEND) return;
+  var closed = {}; try { closed = JSON.parse(localStorage.getItem('erp_news_closed') || '{}'); } catch (e) { closed = {}; }
+  function show(items) {
+    var bar = document.getElementById('newsbar');
+    var live = (items || []).filter(function (n) { return !closed[n.id]; });
+    if (!live.length) { if (bar) bar.remove(); return; }
+    if (!bar) { bar = document.createElement('div'); bar.id = 'newsbar'; document.body.insertBefore(bar, document.body.firstChild); }
+    bar.innerHTML = live.map(function (n) { return '<div class="nb' + (n.level === 'warn' ? ' warn' : '') + '"><span>' + esc(n.text) + '</span><button type="button" data-nbclose="' + esc(n.id) + '" aria-label="Close">\u00d7</button></div>'; }).join('');
+  }
+  var last = [];
+  function load() { fetch(CONTROL_API + '?install=news').then(function (r) { return r.json(); }).then(function (j) { if (j && j.ok) { last = j.items; show(last); } }, function () {}); }
+  document.addEventListener('click', function (ev) {
+    var b = ev.target && ev.target.closest ? ev.target.closest('[data-nbclose]') : null; if (!b) return;
+    closed[b.getAttribute('data-nbclose')] = 1; try { localStorage.setItem('erp_news_closed', JSON.stringify(closed)); } catch (e) {}
+    show(last);
+  });
+  load(); setInterval(load, 30 * 60e3);
+})();
+// ---- the lock screen: the provider switched the company off, or its connection was removed
+var ERP_LOCKED = false;
+function erpShowLock(msg) {
+  if (ERP_LOCKED) return; ERP_LOCKED = true;
+  var B = window.ERP_BRAND || {}, d = document.createElement('div');
+  d.className = 'erplock';
+  d.innerHTML = '<div class="box"><div class="ic">\uD83D\uDD12</div><h2 style="margin:0">' + esc((ERP_BACKEND && ERP_BACKEND.name) || 'This ERP') + ' is locked</h2>' +
+    '<div class="sub" data-c5x="1" style="display:block">' + esc(msg || 'This ERP cannot be used right now.') + '</div>' +
+    '<div class="sub" data-c5x="1" style="display:block">Your data is safe in your own account. Nothing was deleted.</div>' +
+    '<div class="row" style="justify-content:center;gap:8px"><button class="btn primary" type="button" onclick="location.reload()">Try again</button></div>' +
+    (B.name ? '<div class="sku">' + esc(B.name) + '</div>' : '') + '</div>';
+  document.body.appendChild(d);
+}
+var erpPostL1 = erpPost;
+erpPost = function (name, args, again) {
+  return erpPostL1(name, args, again).then(function (j) { if (j && j.locked) erpShowLock(j.error); return j; });
+};
 </script>
 </body>
 </html>
