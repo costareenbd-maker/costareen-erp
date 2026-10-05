@@ -2734,6 +2734,7 @@ function qzPaginate(q, target) {
     page.style.setProperty('--quote-accent', q.accent || '#dda51c');
     page.style.setProperty('--quote-dark', q.dark || '#303030');
     page.style.setProperty('--quote-font', q.font || 'Arial');
+    page.style.setProperty('--quote-on', qzOnColour(q.accent || '#dda51c', q.dark || '#303030'));
     page.style.fontSize = q.fontSize === 'Compact' ? '13px' : '14px';
     page.appendChild(src.querySelector('.doc-header').cloneNode(true));
     body = document.createElement('div'); body.className = 'doc-body'; page.appendChild(body);
@@ -2918,8 +2919,9 @@ function qzEditorHtml() {
       '<h3 style="margin-top:16px">Signatory &amp; look</h3>' +
       '<label class="chk"><input type="checkbox" data-qb="showSignature"' + (q.showSignature ? ' checked' : '') + '> Show the signatory block</label><br>' +
       '<label class="chk"><input type="checkbox" data-qb="useSignature"' + (q.useSignature ? ' checked' : '') + '> Include the signature image</label>' +
-      '<div class="row" style="gap:6px;margin-top:10px;flex-wrap:wrap">' + ['Signature', 'Executive', 'Minimal'].map(function (t) {
-        return '<button class="chip' + (q.theme === t ? ' on' : '') + '" type="button" data-qztheme="' + t + '">' + t + '</button>'; }).join('') +
+      '<div class="qzd-looks">' + QZ_LOOKS.map(function (t) {
+        return '<button class="qzd-look' + (q.theme === t[0] ? ' on' : '') + '" type="button" data-qztheme="' + t[0] + '">' + qzLookSwatch(t[0], q.accent, q.dark) + '<b>' + t[1] + '</b><span>' + t[2] + '</span></button>'; }).join('') + '</div>' +
+      '<div class="row" style="gap:6px;margin-top:10px;flex-wrap:wrap">' +
       '<input type="color" data-qf="accent" value="' + esc(q.accent) + '" title="Accent colour" style="width:48px;height:34px;padding:2px"> ' +
       '<input type="color" data-qf="dark" value="' + esc(q.dark || '#303030') + '" title="Second colour" style="width:48px;height:34px;padding:2px"> ' +
       '<select class="i" data-qf="font" style="width:170px">' + LZ_FONTS.map(function (f) {
@@ -3021,8 +3023,8 @@ function qzSettingsHtml() {
     '<div><label class="f" for="qs_cur">Currency</label><select class="i" id="qs_cur" data-qs="currency">' + ['BDT', 'USD', 'EUR', 'GBP', 'INR'].map(function (c) {
       return '<option' + (s.currency === c ? ' selected' : '') + '>' + c + '</option>'; }).join('') + '</select></div>' +
     '<div><label class="f">Numbering</label><label class="chk"><input type="checkbox" data-qsb="autoNumber"' + (s.autoNumber ? ' checked' : '') + '> Number automatically (' + esc(s.prefix) + '-YEAR-00001)</label></div>' +
-    '<div><label class="f" for="qs_theme">Look</label><select class="i" id="qs_theme" data-qs="theme">' + ['Signature', 'Executive', 'Minimal'].map(function (t) {
-      return '<option' + (s.theme === t ? ' selected' : '') + '>' + t + '</option>'; }).join('') + '</select></div>' +
+    '<div><label class="f" for="qs_theme">Look for new quotations</label><select class="i" id="qs_theme" data-qs="theme">' + QZ_LOOKS.map(function (t) {
+      return '<option value="' + t[0] + '"' + (s.theme === t[0] ? ' selected' : '') + '>' + t[1] + '</option>'; }).join('') + '</select></div>' +
     '<div><label class="f">Colours</label><input type="color" data-qs="accent" value="' + esc(s.accent) + '" title="Accent" style="width:60px;height:38px;padding:2px"> ' +
       '<input type="color" data-qs="dark" value="' + esc(s.dark || '#303030') + '" title="Second colour" style="width:60px;height:38px;padding:2px"></div>' +
     '<div><label class="f" for="qs_fontf">Font</label><select class="i" id="qs_fontf" data-qs="font">' + LZ_FONTS.map(function (f) {
@@ -19508,6 +19510,83 @@ document.addEventListener('click', function (ev) {
   }
 });
 window.addEventListener('resize', function () { if (ivdOn()) ivdShow(); });
+</script>
+
+<!-- quotation looks (2026-10-06): Signature (the original), Modern band, Minimal, Classic, Bold - the same family as the invoice designs -->
+<style>
+.qzd-looks{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;margin-top:10px}
+@media(max-width:900px){.qzd-looks{grid-template-columns:repeat(3,minmax(0,1fr))}}
+.qzd-look{text-align:left;border:1px solid var(--ring);border-radius:10px;padding:8px;background:var(--surface);color:var(--ink);cursor:pointer;font:inherit}
+.qzd-look.on{outline:2px solid var(--series-1);border-color:var(--series-1)}
+.qzd-look b{display:block;font-size:12.5px;margin-top:6px}.qzd-look span{display:block;font-size:11px;color:var(--muted);line-height:1.3}
+.qzd-sw{height:46px;border-radius:6px;background:#fff;border:1px solid #e5e7eb;position:relative;overflow:hidden}
+.qzd-sw i{position:absolute;display:block}
+/* Modern band (stored as Executive): the header on a solid band of the main colour */
+.quote-page.executive{border-top:0}
+.quote-page.executive .doc-header{margin:-46px -48px 0;padding:30px 48px 22px;height:198px;background:var(--quote-accent);border-bottom:0;color:var(--quote-on)}
+.quote-page.executive .doc-brand,.quote-page.executive .doc-reference>b{color:var(--quote-on)}
+.quote-page.executive .doc-header p,.quote-page.executive .doc-reference>span{color:var(--quote-on);opacity:.85}
+.quote-page.executive .doc-logo{background:#fff;border-radius:8px;padding:6px;height:92px}
+.quote-page.executive .doc-table-head{background:var(--quote-dark);color:#fff}
+.quote-page.executive .doc-totals .doc-grand{background:var(--quote-accent);color:var(--quote-on);border-left:0;border-radius:6px}
+.quote-page.executive .bank-card{border-color:var(--quote-accent)}.quote-page.executive .bank-card-header{border-color:var(--quote-accent)}
+.quote-page.executive .doc-footer{border-top:2px solid var(--quote-dark)}
+/* Minimal: black and white, thin lines, colour only on the total */
+.quote-page.minimal{border-top:0}
+.quote-page.minimal .doc-header{border-bottom:1px solid #111}
+.quote-page.minimal .doc-brand{font-weight:600;font-size:22px;letter-spacing:0}
+.quote-page.minimal .doc-reference>b{letter-spacing:6px;font-weight:600}
+.quote-page.minimal .doc-reference>span{color:#6b7280}
+.quote-page.minimal .doc-table-head{background:transparent;border-bottom:1px solid #111;color:#6b7280;letter-spacing:1.5px}
+.quote-page.minimal .doc-tag{color:#6b7280}
+.quote-page.minimal .doc-totals .doc-grand{background:transparent;border-left:0;border-top:2px solid var(--quote-accent);border-bottom:2px solid var(--quote-accent)}
+.quote-page.minimal .bank-card{border-color:#d1d5db;border-radius:4px}.quote-page.minimal .bank-card-header{border-color:#e5e7eb}
+/* Classic: a traditional letterhead - centred name, serif letters, boxed table */
+.quote-page.classic{border-top:0;font-family:Georgia,"Times New Roman",serif}
+.quote-page.classic .doc-header{justify-content:center;border-bottom:3px double var(--quote-dark)}
+.quote-page.classic .doc-business{flex-direction:column;align-items:center;text-align:center;gap:6px}
+.quote-page.classic .doc-logo{height:62px;margin:0}
+.quote-page.classic .doc-brand{font-size:24px;color:var(--quote-dark);letter-spacing:.3px;margin-bottom:2px}
+.quote-page.classic .doc-reference{position:absolute;right:0;top:0;font-size:10px}
+.quote-page.classic .doc-reference>b{color:var(--quote-accent);letter-spacing:4px;font-size:14px;margin-top:0}
+.quote-page.classic .doc-table-head{background:#f1f1f1;border:1px solid #444}
+.quote-page.classic .doc-row{border:1px solid #444;border-top:0}
+.quote-page.classic .doc-totals{border:1px solid #444}.quote-page.classic .doc-totals>div{border-bottom:1px solid #ddd}
+.quote-page.classic .doc-totals .doc-grand{background:#f1f1f1;border-left:0;margin:0}
+.quote-page.classic .doc-section-label{font-style:italic;letter-spacing:.5px}
+.quote-page.classic .bank-card{border-color:#444;border-radius:0}.quote-page.classic .bank-card-header{border-color:#444}
+/* Bold: a dark header with the reference in a box of the main colour */
+.quote-page.bold{border-top:0}
+.quote-page.bold .doc-header{margin:-46px -48px 0;padding:30px 48px 22px;height:198px;background:var(--quote-dark);border-bottom:0;color:#fff}
+.quote-page.bold .doc-brand{color:#fff}.quote-page.bold .doc-header p{color:#cbd5e1}
+.quote-page.bold .doc-logo{background:#fff;border-radius:6px;padding:5px;height:88px}
+.quote-page.bold .doc-reference{background:var(--quote-accent);color:var(--quote-on);border-radius:10px;padding:12px 16px;align-self:flex-start}
+.quote-page.bold .doc-reference>b{font-size:20px;letter-spacing:2px;margin:0 0 6px}.quote-page.bold .doc-reference>span{color:var(--quote-on);opacity:.85}
+.quote-page.bold .doc-table-head{background:#15171c;color:#fff}
+.quote-page.bold .doc-row{border-bottom:2px solid color-mix(in srgb,var(--quote-accent) 25%,#fff)}
+.quote-page.bold .doc-totals .doc-grand{background:var(--quote-dark);color:#fff;border-left:0;border-radius:6px}
+.quote-page.bold .doc-customer small,.quote-page.bold .doc-section-label{color:var(--quote-accent)}
+.quote-page.bold .bank-card{border:2px solid var(--quote-accent)}.quote-page.bold .bank-card-header{border-color:var(--quote-accent)}
+</style>
+<script>
+var QZ_LOOKS = [['Signature', 'Signature', 'Dark corner, colour wedge (the original)'], ['Executive', 'Modern band', 'Header on a band of your colour'],
+  ['Minimal', 'Minimal', 'Black and white, thin lines'], ['Classic', 'Classic', 'Centred letterhead, serif, boxed table'], ['Bold', 'Bold', 'Dark header, reference in a colour box']];
+function qzOnColour(acc, dark) {
+  var m = /^#?([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(String(acc || ''));
+  if (!m) return '#ffffff';
+  return (parseInt(m[1], 16) * 299 + parseInt(m[2], 16) * 587 + parseInt(m[3], 16) * 114) / 1000 < 165 ? '#ffffff' : (dark || '#303030');
+}
+function qzLookSwatch(t, acc, dark) {   // a tiny picture of each look
+  acc = acc || '#dda51c'; dark = dark || '#303030';
+  var b = function (css) { return '<i style="' + css + '"></i>'; };
+  var body = b('left:10%;right:10%;top:62%;height:3px;background:#e5e7eb') + b('left:10%;right:10%;top:76%;height:3px;background:#e5e7eb');
+  var top = t === 'Signature' ? b('left:0;top:0;width:45%;height:30%;background:' + dark + ';clip-path:polygon(0 0,100% 0,0 100%)') + b('left:0;right:0;top:0;height:3px;background:' + acc)
+    : t === 'Executive' ? b('left:0;right:0;top:0;height:38%;background:' + acc)
+    : t === 'Minimal' ? b('left:10%;right:10%;top:34%;height:1px;background:#111') + b('left:10%;width:30%;top:16%;height:4px;background:#111')
+    : t === 'Classic' ? b('left:35%;width:30%;top:12%;height:5px;background:' + dark) + b('left:10%;right:10%;top:34%;height:3px;border-top:1px solid ' + dark + ';border-bottom:1px solid ' + dark)
+    : b('left:0;right:0;top:0;height:40%;background:' + dark) + b('right:8%;width:28%;top:8%;height:24%;background:' + acc + ';border-radius:2px');
+  return '<div class="qzd-sw">' + top + body + '</div>';
+}
 </script>
 </body>
 </html>
