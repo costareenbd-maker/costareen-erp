@@ -57,6 +57,8 @@ export async function erpPlatform(ctx) {
     for (const s of await ctx.sql`select split_part(name, '/', 1) as biz, sum(coalesce((metadata->>'size')::bigint, 0))::bigint as bytes, count(*)::int as files
                                    from storage.objects group by 1`) storage[s.biz] = { bytes: Number(s.bytes) || 0, files: s.files };
   } catch (_) { storage = {}; }
+  let joint = {};
+  try { for (const j of await ctx.sql`select business_id from joint_flags where enabled`) joint[j.business_id] = true; } catch (_) { joint = {}; }
   let timers = [];
   try {
     timers = (await ctx.sql`select j.jobname, j.schedule, d.status, d.start_time, d.return_message
@@ -68,7 +70,7 @@ export async function erpPlatform(ctx) {
   return {
     me: ctx.biz,
     businesses: biz.map((b) => ({
-      id: b.id, name: str(b.name), pool: !!b.is_pool, created: when(b.created_at), current: b.id === ctx.biz,
+      id: b.id, name: str(b.name), pool: !!b.is_pool, joint: !!joint[b.id], created: when(b.created_at), current: b.id === ctx.biz,
       suspended: !!b.suspended_at, suspendedWhen: when(b.suspended_at), suspendedReason: str(b.suspended_reason),
       owners: owners[b.id] || [], users: members[b.id] ? members[b.id].active : 0, usersAll: members[b.id] ? members[b.id].all : 0,
       lastActivity: act[b.id] ? when(act[b.id].last) : '', errors7: errs[b.id] ? errs[b.id].n : 0, lastError: errs[b.id] ? when(errs[b.id].last) : '',
@@ -130,6 +132,22 @@ export async function erpPlatformSuspend(ctx, payload) {
   return erpPlatform(ctx);
 }
 
+/** Joint stock (a co-owned pool with a partner company) is off everywhere until switched on here, company by company. */
+export async function erpPlatformJoint(ctx, payload) {
+  await need(ctx);
+  payload = payload || {};
+  const b = await business(ctx, payload.businessId);
+  const on = !!payload.on;
+  if ((await ctx.sql`select is_pool from businesses where id = ${b.id}`)[0].is_pool) throw new Error('That is a joint pool itself. Switch it on for the companies that own it.');
+  if (!on && (await ctx.sql`select 1 from pool_partners where partner_business_id = ${b.id} limit 1`).length) {
+    throw new Error(str(b.name) + ' is a partner in a joint pool. Switching it off would hide stock and money that two companies own - it stays on while the pool exists.');
+  }
+  await ctx.sql`insert into joint_flags (business_id, enabled, set_by) values (${b.id}, ${on}, ${ctx.s.userId})
+                on conflict (business_id) do update set enabled = excluded.enabled, set_by = excluded.set_by, set_at = now()`;
+  await note(ctx, b.id, 'erpPlatformJoint', on ? 'joint stock switched on' : 'joint stock switched off');
+  return erpPlatform(ctx);
+}
+
 export async function erpPlatformOwnerReset(ctx, payload) {
   await need(ctx);
   payload = payload || {};
@@ -151,4 +169,4 @@ export async function erpPlatformErrors(ctx, payload) {
   return { businessId: b.id, name: str(b.name), errors: rows.map((r) => ({ when: when(r.at), who: str(r.who), role: str(r.role), action: str(r.action), message: str(r.message), build: str(r.build) })) };
 }
 
-export const HANDLERS = { erpPlatform, erpPlatformCreate, erpPlatformSuspend, erpPlatformOwnerReset, erpPlatformErrors };
+export const HANDLERS = { erpPlatform, erpPlatformCreate, erpPlatformSuspend, erpPlatformJoint, erpPlatformOwnerReset, erpPlatformErrors };

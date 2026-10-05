@@ -578,6 +578,7 @@ svg { display:block; width:100%; overflow:visible; }
       <button type="button" data-view="suppliers" aria-selected="false"><span class="ic"><svg viewBox="0 0 24 24"><path d="M3 7h11v9H3zM14 10h4l3 3v3h-7z"/><circle cx="7" cy="18" r="1.800"/><circle cx="17.500" cy="18" r="1.800"/></svg></span>Suppliers<span class="count" id="cOwed"></span></button>
       <button type="button" data-view="costs" aria-selected="false"><span class="ic"><svg viewBox="0 0 24 24"><path d="M20 12l-8 8-9-9V3h8z"/><circle cx="7.5" cy="7.5" r="1.5"/></svg></span>Product cost<span class="count" id="cCosts"></span></button>
       <button type="button" data-view="market" aria-selected="false"><span class="ic"><svg viewBox="0 0 24 24"><path d="M3 9l1.5-5h15L21 9"/><path d="M3 9h18v2a3 3 0 0 1-6 0 3 3 0 0 1-6 0 3 3 0 0 1-6 0z"/><path d="M5 13v8h14v-8"/><path d="M10 21v-5h4v5"/></svg></span>Market<span class="count" id="cMarket"></span></button>
+      <button type="button" data-view="joint" aria-selected="false" style="display:none"><span class="ic"><svg viewBox="0 0 24 24"><circle cx="9" cy="12" r="6"/><circle cx="15" cy="12" r="6"/></svg></span>Joint stock</button>
       <div class="navgrp">Money</div>
       <button type="button" data-view="profit" aria-selected="false"><span class="ic"><svg viewBox="0 0 24 24"><path d="M3 17l6-6 4 4 8-8"/><path d="M14 7h7v7"/></svg></span>Profitability</button>
       <button type="button" data-view="expenses" aria-selected="false"><span class="ic"><svg viewBox="0 0 24 24"><path d="M20 7H5a2 2 0 0 1 0-4h13v4"/><path d="M4 7v12a2 2 0 0 0 2 2h14V7"/><circle cx="16" cy="14" r="1.5"/></svg></span>Expenses</button>
@@ -8419,7 +8420,7 @@ function srv(name, args, ok, bad) {
 
 var SRV_ACTIVE = 0, SRV_WRITING = false, SRV_TIMED = {};
 // the same list the server uses to know a call changes nothing (ERP_READS)
-var SRV_READS = /^(erpInvoiceDesign|erpInvoicePreview|erpMarket|erpMarketMine|erpMarketRequests|erpMarketHints|erpMarketNames|erpWanted|erpBrand|erpComplianceLog|erpProviderKey|erpNews|erpAccessKeys|erpAccessWarning|erpAdmin|erpAiKeys|erpAlertRules|erpAlerts|erpArena|erpBackupStatus|erpBg|erpBnWords|erpBookedParcels|erpBrandLogo|erpBundle|erpBusinessLinks|erpBusinesses|erpBusinessesDeleted|erpCampaignAudience|erpCampaignGet|erpCampaignList|erpCapital|erpCashBook|erpCatalog|erpConnStatus|erpConnections|erpCostBook|erpCourier|erpCourierKeyStatus|erpCurrencies|erpCustomerAccount|erpCustomerCredit|erpCustomerList|erpCustomerPage|erpCustomerStatement|erpCustomers|erpDashboardData|erpDaySales|erpDeliveryOptions|erpDevices|erpDiscontinued|erpDues|erpEvoQr|erpEvoStatus|erpExpenseExport|erpExpenseReceiptUrl|erpExpenses|erpFamilies|erpFighters|erpFormOptions|erpGame|erpGetTheme|erpGoogle|erpHello|erpInstalls|erpInvoice|erpInvoicePdf|erpJob|erpJobs|erpListView|erpLookupCustomer|erpLookupUsage|erpMe|erpMoney|erpNoteFileUrl|erpNotes|erpOwnerChange|erpOwnerChanges|erpParcelLabels|erpParcelPreview|erpPartnerStock|erpPartnership|erpPayReasons|erpPeople|erpPlatform|erpPlatformErrors|erpPnl|erpPnlMonth|erpPoList|erpPoolCatalog|erpProduct|erpProductListShare|erpProductPage|erpProductPhotoUrl|erpProductThumbs|erpProfile|erpQuoteAsset|erpQuoteBoot|erpQuoteGet|erpQuoteList|erpRecentInvoices|erpRecovery|erpReorderPlan|erpRestorePreview|erpReturnPreview|erpRisks|erpSales|erpSearch|erpSecurity|erpSelfTest|erpSerialLookup|erpSerialsFor|erpSessions|erpSetTheme|erpSettingsFull|erpSettingsLists|erpSfPayoutLines|erpSfPayouts|erpShareFile|erpSharedStock|erpSheet|erpStatementPdf|erpStockHistory|erpSupplierPage|erpSuppliers|erpToday|erpUsers|erpWaProductPdf|erpWebMatches|erpWebOrderInvoices|erpWebOrders|erpWebsiteTest)$/;
+var SRV_READS = /^(erpJoint|erpJointCatalog|erpInvoiceDesign|erpInvoicePreview|erpMarket|erpMarketMine|erpMarketRequests|erpMarketHints|erpMarketNames|erpWanted|erpBrand|erpComplianceLog|erpProviderKey|erpNews|erpAccessKeys|erpAccessWarning|erpAdmin|erpAiKeys|erpAlertRules|erpAlerts|erpArena|erpBackupStatus|erpBg|erpBnWords|erpBookedParcels|erpBrandLogo|erpBundle|erpBusinessLinks|erpBusinesses|erpBusinessesDeleted|erpCampaignAudience|erpCampaignGet|erpCampaignList|erpCapital|erpCashBook|erpCatalog|erpConnStatus|erpConnections|erpCostBook|erpCourier|erpCourierKeyStatus|erpCurrencies|erpCustomerAccount|erpCustomerCredit|erpCustomerList|erpCustomerPage|erpCustomerStatement|erpCustomers|erpDashboardData|erpDaySales|erpDeliveryOptions|erpDevices|erpDiscontinued|erpDues|erpEvoQr|erpEvoStatus|erpExpenseExport|erpExpenseReceiptUrl|erpExpenses|erpFamilies|erpFighters|erpFormOptions|erpGame|erpGetTheme|erpGoogle|erpHello|erpInstalls|erpInvoice|erpInvoicePdf|erpJob|erpJobs|erpListView|erpLookupCustomer|erpLookupUsage|erpMe|erpMoney|erpNoteFileUrl|erpNotes|erpOwnerChange|erpOwnerChanges|erpParcelLabels|erpParcelPreview|erpPartnerStock|erpPartnership|erpPayReasons|erpPeople|erpPlatform|erpPlatformErrors|erpPnl|erpPnlMonth|erpPoList|erpPoolCatalog|erpProduct|erpProductListShare|erpProductPage|erpProductPhotoUrl|erpProductThumbs|erpProfile|erpQuoteAsset|erpQuoteBoot|erpQuoteGet|erpQuoteList|erpRecentInvoices|erpRecovery|erpReorderPlan|erpRestorePreview|erpReturnPreview|erpRisks|erpSales|erpSearch|erpSecurity|erpSelfTest|erpSerialLookup|erpSerialsFor|erpSessions|erpSetTheme|erpSettingsFull|erpSettingsLists|erpSfPayoutLines|erpSfPayouts|erpShareFile|erpSharedStock|erpSheet|erpStatementPdf|erpStockHistory|erpSupplierPage|erpSuppliers|erpToday|erpUsers|erpWaProductPdf|erpWebMatches|erpWebOrderInvoices|erpWebOrders|erpWebsiteTest)$/;
 function srvPump() {
   if (!SRV_Q.length) return;
   var isRead = SRV_READS.test(SRV_Q[0].name);
@@ -9732,6 +9733,7 @@ function repaint() {
         : VIEW === 'weborders' ? viewWebOrders()
         : VIEW === 'costs' ? viewCosts()
         : VIEW === 'market' ? viewMarket()
+        : VIEW === 'joint' ? viewJoint()
         : VIEW === 'settings' ? viewSettings()
         : VIEW === 'tools' ? viewTools()
         : viewOrders();
@@ -12271,7 +12273,7 @@ var APPS = [
     icon: '<path d="M3 17l5-5 4 4 8-9"/><path d="M15 7h5v5"/>' },
   { id: 'contacts', name: 'Contacts', color: '#2a9d8f', views: ['customers', 'campaigns'],
     icon: '<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-7 8-7s8 3 8 7"/>' },
-  { id: 'inventory', name: 'Inventory', color: '#c8553d', views: ['products', 'stock', 'suppliers', 'costs', 'market'],
+  { id: 'inventory', name: 'Inventory', color: '#c8553d', views: ['products', 'stock', 'suppliers', 'costs', 'market', 'joint'],
     icon: '<path d="M3 8l9-5 9 5v8l-9 5-9-5z"/><path d="M3 8l9 5 9-5M12 13v8"/>' },
   { id: 'accounting', name: 'Accounting', color: '#3a86c8', views: ['profit', 'expenses', 'cash', 'capital'],
     icon: '<circle cx="12" cy="12" r="9"/><path d="M15 9.2c-.6-.8-1.7-1.2-3-1.2-1.8 0-3 .8-3 2s1 1.800 3 2 3 .8 3 2-1.200 2-3 2c-1.300 0-2.400-.4-3-1.200M12 6v2M12 16v2"/>' },
@@ -12279,7 +12281,7 @@ var APPS = [
     icon: '<circle cx="12" cy="12" r="3.2"/><path d="M12 2.500v3M12 18.500v3M2.500 12h3M18.500 12h3M5.300 5.300l2.100 2.100M16.600 16.600l2.100 2.100M5.300 18.700l2.100-2.100M16.600 7.400l2.100-2.100"/>' }
 ];
 var VIEW_NAMES = { invoice: 'New invoice', sales: 'Invoices', weborders: 'Web orders', quotes: 'Quotations', repairs: 'Repairs', customers: 'Customers', campaigns: 'Campaigns',
-                   products: 'Products', stock: 'Stock', costs: 'Product cost', market: 'Market', profit: 'Profitability', expenses: 'Expenses', capital: 'Capital', cash: 'Money', suppliers: 'Suppliers',
+                   products: 'Products', stock: 'Stock', costs: 'Product cost', market: 'Market', joint: 'Joint stock', profit: 'Profitability', expenses: 'Expenses', capital: 'Capital', cash: 'Money', suppliers: 'Suppliers',
                    settings: 'Settings', tools: 'Maintenance', platform: 'Platform', dash: 'Dashboard', home: 'Home' };
 var VIEW_COUNT = { invoice: 'cCart', sales: 'cSend', weborders: 'cWeb', costs: 'cCosts', market: 'cMarket' };
 function appOf(view) { for (var i = 0; i < APPS.length; i++) if (APPS[i].views.indexOf(view) >= 0) return APPS[i]; return null; }
@@ -15332,7 +15334,8 @@ function viewPlatform() {
         '<td class="num">' + fmt(b.users) + '</td><td><span class="sku">' + esc(b.lastActivity || 'never') + '</span></td><td class="num">' + fmt(b.invoices30) + '</td>' +
         '<td class="num">' + (b.errors7 ? '<button class="linkbtn" type="button" data-plerr="' + esc(b.id) + '" style="color:var(--critical)">' + fmt(b.errors7) + '</button>' : '0') + '</td>' +
         '<td class="num">' + (b.storageMb ? fmt(b.storageMb) + ' MB' : '\u2014') + '</td>' +
-        '<td class="num">' + (b.current ? '' : '<button class="btn small' + (b.suspended ? ' primary' : ' danger') + '" type="button" data-plsus="' + esc(b.id) + '" data-to="' + (b.suspended ? '0' : '1') + '">' + (b.suspended ? 'Resume' : 'Suspend') + '</button>') + '</td></tr>'; }).join('') +
+        '<td class="num" style="white-space:nowrap">' + (b.pool ? '' : '<button class="btn small' + (b.joint ? ' primary' : '') + '" type="button" data-pljoint="' + esc(b.id) + '" data-to="' + (b.joint ? '0' : '1') + '" title="Joint stock with a partner company: off for everyone until switched on here">Joint stock: ' + (b.joint ? 'on' : 'off') + '</button> ') +
+        (b.current ? '' : '<button class="btn small' + (b.suspended ? ' primary' : ' danger') + '" type="button" data-plsus="' + esc(b.id) + '" data-to="' + (b.suspended ? '0' : '1') + '">' + (b.suspended ? 'Resume' : 'Suspend') + '</button>') + '</td></tr>'; }).join('') +
     '</tbody></table></div></div></section>';
   if (PLAT_ERRS) {
     h += '<section><div class="card"><div class="row" style="justify-content:space-between;align-items:center"><h2 style="margin:0">Errors \u2014 ' + esc(PLAT_ERRS.name) + '</h2><button class="btn small" type="button" id="pl_errclose">Close</button></div>' +
@@ -19807,6 +19810,417 @@ function fmClick(ev) {
 }
 document.addEventListener('keydown', function (ev) { if (ev.key === 'Escape' && document.getElementById('fmk')) fmClose(); });
 window.addEventListener('resize', function () { if (FM && FM.img) fmDrawPic(); });
+</script>
+
+<!-- joint-1 (2026-10-06): Joint stock - goods owned together with a partner company (docs/JOINT-POOL-BLUEPRINT.md).
+     One page inside the company, a pool selector at the top, tabs. Shown only where the provider switched it on (ME.joint). -->
+<style>
+nav#nav button[data-view="joint"] { --app:#c8553d; }
+.jt-top { display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-bottom:12px; }
+.jt-top .jt-pool { font-weight:700; font-size:15px; }
+.jt-tag { display:inline-block; font-size:10.5px; font-weight:700; letter-spacing:.03em; padding:1px 6px; border-radius:99px; background:color-mix(in srgb, #c8553d 16%, transparent); color:#c8553d; vertical-align:1px; }
+.jt-form { display:grid; grid-template-columns:repeat(auto-fit, minmax(150px, 1fr)); gap:8px 10px; align-items:end; margin-top:10px; }
+.jt-form .wide { grid-column:span 2; } @media (max-width:520px) { .jt-form .wide { grid-column:auto; } }
+.jt-steps { display:grid; grid-template-columns:repeat(auto-fit, minmax(260px, 1fr)); gap:14px; }
+.jt-steps .card h2 { display:flex; gap:8px; align-items:center; } .jt-steps .n { width:24px; height:24px; border-radius:50%; background:var(--series-1); color:#fff; font-size:13px; display:inline-flex; align-items:center; justify-content:center; flex:0 0 auto; }
+.jt-low { color:var(--critical); font-weight:700; }
+</style>
+<script>
+var JT = { data: null, err: '', busy: false, pool: '', tab: '', month: '', form: null, link: null, code: null,
+           newp: { name: '', displayName: '', tier: 'retail', code: '', joinName: '', joinTier: 'retail', business: '', ownerName: '', email: '' },
+           entry: { kind: 'capital_in', partner: '', to: '', amount: '', date: '', category: '', note: '' } };
+function jtOn() { return !!(ME && ME.joint); }
+function jtRank() { return { sales: 1, manager: 2, shareholder: 3, owner: 4 }[(ME && ME.role) || ''] || 0; }
+var applyRoleJT = applyRole;
+applyRole = function () {
+  applyRoleJT.apply(this, arguments);
+  var b = document.querySelector('#nav button[data-view="joint"]');
+  if (b) b.style.display = jtOn() && jtRank() >= 2 ? '' : 'none';
+};
+function jtLoad(keep) {
+  if (!jtOn()) return;
+  if (!keep) { JT.err = ''; }
+  srv('erpJoint', [{ pool: JT.pool, month: JT.month }], function (r) { jtTake(r); if (VIEW === 'joint') repaint(); },
+      function (e) { JT.err = (e && e.message) || String(e); JT.busy = false; if (VIEW === 'joint') repaint(); });
+}
+function jtTake(r) {
+  JT.data = r; JT.err = ''; JT.busy = false;
+  if (r && r.pool) JT.pool = r.pool;
+  if (r && r.book && r.book.month) JT.month = r.book.month;
+  var tabs = jtTabs(); if (!tabs.some(function (t) { return t[0] === JT.tab; })) JT.tab = tabs.length ? tabs[0][0] : '';
+}
+function jtTabs() {
+  var d = JT.data; if (!d || !d.pool) return [];
+  return d.money ? [['overview', 'Overview'], ['stock', 'Stock'], ['money', 'Money'], ['month', 'Month end'], ['settings', 'Settings']] : [['stock', 'Stock']];
+}
+function jtSave(fn, payload, msg, after) {
+  if (JT.busy) return;
+  JT.busy = true; repaint();
+  srv(fn, [payload], function (r) {
+    JT.busy = false;
+    if (r && r.on !== undefined) jtTake(r);
+    if (msg) toast(msg, false, 7000);
+    if (after) after(r);
+    if (VIEW === 'joint') repaint();
+  }, function (e) { JT.busy = false; toast(p4Err(e), true, 14000); if (VIEW === 'joint') repaint(); });
+}
+var goJT = go;
+go = function (view) {
+  var r = goJT.apply(this, arguments);
+  if (view === 'joint') { JT.form = null; jtLoad(); }
+  return r;
+};
+function jtTierSel(id, val) {
+  return '<select class="i" id="' + id + '"><option value="retail"' + (val !== 'wholesale' ? ' selected' : '') + '>Retail price</option><option value="wholesale"' + (val === 'wholesale' ? ' selected' : '') + '>Wholesale price</option></select>';
+}
+
+function viewJoint() {
+  if (!jtOn()) return '<section><div class="empty">Joint stock is not switched on for this company.</div></section>';
+  if (JT.err) return '<section><div class="note err"><div class="ico">✕</div><div><strong>Could not read the joint stock.</strong><br>' + esc(JT.err) + '</div></div></section>';
+  var d = JT.data;
+  if (!d) return '<div class="loading">Reading the joint stock&hellip;</div>';
+  if (!d.on) return '<section><div class="empty">Joint stock is not switched on for this company.</div></section>';
+  var h = jtLinkHtml();
+  if (!d.pools.length) return h + jtSetupHtml(true);
+  var pool = d.pools.filter(function (p) { return p.id === d.pool; })[0] || d.pools[0];
+  h += '<div class="jt-top">' + (d.pools.length > 1
+      ? '<label class="f" for="jt_pool" style="margin:0">Joint stock with</label><select class="i" id="jt_pool" style="width:auto;min-width:200px">' + d.pools.map(function (p) {
+          return '<option value="' + esc(p.id) + '"' + (p.id === d.pool ? ' selected' : '') + '>' + esc(p.name) + ' — ' + esc(jtOthers(p, d)) + '</option>'; }).join('') + '</select>'
+      : '<span class="jt-pool">' + esc(pool.name) + '</span><span class="sku">with ' + esc(jtOthers(pool, d)) + '</span>') +
+    '<span class="pill">you sell at the ' + esc(pool.tier) + ' price</span></div>';
+  var tabs = jtTabs();
+  if (tabs.length > 1) h += '<div class="tabs" role="tablist" style="margin-bottom:12px">' + tabs.map(function (t) {
+    return '<button type="button" role="tab" data-jttab="' + t[0] + '" aria-selected="' + (JT.tab === t[0]) + '">' + t[1] + '</button>'; }).join('') + '</div>';
+  if (JT.tab === 'overview') h += jtOverviewHtml(d, pool);
+  else if (JT.tab === 'stock') h += jtStockHtml(d, pool);
+  else if (JT.tab === 'money') h += jtMoneyHtml(d, pool);
+  else if (JT.tab === 'month') h += jtMonthHtml(d, pool);
+  else if (JT.tab === 'settings') h += jtSettingsHtml(d, pool);
+  return h;
+}
+function jtOthers(p, d) {
+  var o = (p.partners || []).map(function (x) { return x.name; }).filter(function (n) { return n !== d.company; });
+  return o.length ? o.join(' + ') : 'nobody yet — send the invite code';
+}
+/** the partner's private link / a new pool's invite code: shown once, on top */
+function jtLinkHtml() {
+  var h = '';
+  if (JT.link) h += '<section><div class="note"><div class="ico">✓</div><div><strong>“' + esc(JT.link.business) + '” is ready.</strong> This is ' + esc(JT.link.ownerName) +
+    '’s private link. Send it to them and to nobody else — whoever opens it is the owner of their company. <strong>It is shown only now.</strong>' +
+    '<div class="row" style="margin-top:8px;gap:8px"><input class="i" id="jt_link" readonly style="flex:1 1 260px" value="' + esc(JT.link.url) + '">' +
+    '<button class="btn small primary" type="button" data-jt="copylink">Copy</button><button class="btn small" type="button" data-jt="donelink">I have sent it</button></div>' +
+    (JT.link.switched ? '' : '<div class="sub" style="margin-top:6px">Joint stock still has to be switched on for their company (Platform).</div>') + '</div></div></section>';
+  if (JT.code) h += '<section><div class="note"><div class="ico">✓</div><div><strong>“' + esc(JT.code.name) + '” is ready.</strong> Send this code to your partner. In their own company they open <b>Joint stock</b> and join with it. It works once and is good for 7 days.' +
+    '<div style="margin-top:8px"><span class="codebox">' + esc(JT.code.code) + '</span> <button class="btn small" type="button" data-jt="donecode">Done</button></div></div></div></section>';
+  return h;
+}
+function jtSetupHtml(first) {
+  var d = JT.data, n = JT.newp;
+  if (!d.owner) return '<section><div class="empty">' + (first ? 'This company is not in a joint stock yet. The owner sets it up.' : '') + '</div></section>';
+  var dis = JT.busy ? ' disabled' : '';
+  return '<section>' + (first ? '<div class="note" style="margin-bottom:14px"><div class="ico">i</div><div><strong>Joint stock</strong> is goods you and a partner company own together. Each of you sells it under your own name, from your own New invoice. ' +
+      'The stock, its cost and its profit are kept in a separate book both owners see; the profit is shared by how much each put in.</div></div>' : '') +
+    '<div class="jt-steps">' +
+    '<div class="card"><h2><span class="n">1</span>Is your partner on this ERP?</h2><div class="sub">If not, make their company here. They get their own private link and their own separate books — you cannot see inside, they cannot see inside yours.</div>' +
+      '<div class="jt-form"><div class="wide"><label class="f" for="jn_biz">Their company’s name</label><input class="i" id="jn_biz" maxlength="80" value="' + esc(n.business) + '"></div>' +
+      '<div><label class="f" for="jn_owner">Owner’s name</label><input class="i" id="jn_owner" maxlength="60" value="' + esc(n.ownerName) + '"></div>' +
+      '<div><label class="f" for="jn_email">E-mail <span class="sku">(optional)</span></label><input class="i" id="jn_email" type="email" maxlength="120" value="' + esc(n.email) + '"></div></div>' +
+      '<button class="btn" type="button" data-jt="company" style="margin-top:10px"' + dis + '>Make their company</button></div>' +
+    '<div class="card"><h2><span class="n">2</span>Start a joint stock</h2><div class="sub">You get a code to send to your partner.</div>' +
+      '<div class="jt-form"><div class="wide"><label class="f" for="jn_name">Name</label><input class="i" id="jn_name" maxlength="80" placeholder="e.g. Polymaker joint stock" value="' + esc(n.name) + '"></div>' +
+      '<div><label class="f" for="jn_disp">Your name in it</label><input class="i" id="jn_disp" maxlength="60" placeholder="' + esc(d.company) + '" value="' + esc(n.displayName) + '"></div>' +
+      '<div><label class="f" for="jn_tier">You sell from it at</label>' + jtTierSel('jn_tier', n.tier) + '</div></div>' +
+      '<button class="btn primary" type="button" data-jt="create" style="margin-top:10px"' + dis + '>Start it</button></div>' +
+    '<div class="card"><h2><span class="n">3</span>Or join your partner’s</h2><div class="sub">With the code they sent you.</div>' +
+      '<div class="jt-form"><div class="wide"><label class="f" for="jn_code">Invite code</label><input class="i" id="jn_code" maxlength="12" autocapitalize="characters" placeholder="10 letters and digits" value="' + esc(n.code) + '"></div>' +
+      '<div><label class="f" for="jn_jdisp">Your name in it</label><input class="i" id="jn_jdisp" maxlength="60" placeholder="' + esc(d.company) + '" value="' + esc(n.joinName) + '"></div>' +
+      '<div><label class="f" for="jn_jtier">You sell from it at</label>' + jtTierSel('jn_jtier', n.joinTier) + '</div></div>' +
+      '<button class="btn" type="button" data-jt="join" style="margin-top:10px"' + dis + '>Join</button></div>' +
+    '</div></section>';
+}
+function jtMe(d, pool) { var m = (pool.partners || []).filter(function (x) { return x.name === d.company; })[0]; return (d.book && d.book.me) || (m && m.id) || ''; }
+
+function jtOverviewHtml(d, pool) {
+  var b = d.book, r = (b && b.report) || {}, tm = r.this_month || {}, td = r.to_date || {}, cur = d.currency, ps = r.partners || [], me = jtMe(d, pool);
+  var mine = ps.filter(function (x) { return x.business_id === me; })[0] || {};
+  var names = {}; (b.partners || []).forEach(function (x) { names[x.id] = x.name; });
+  var h = '<section><div class="grid g-kpi">' +
+    kpiT('Stock at cost', cur, fmt(td.stock_at_cost || 0), '<span class="delta">' + fmt((d.stock || []).reduce(function (a, s) { return a + s.stock; }, 0)) + ' pieces on the shelf</span>') +
+    kpiT('Sold this month', cur, fmt(tm.revenue || 0), '<span class="delta">goods cost ' + fmt(tm.cogs || 0) + '</span>', 'accent') +
+    kpiT('Profit this month', cur, fmt(tm.profit || 0), '<span class="delta">your share ' + (mine.ratio !== undefined ? (Math.round(mine.ratio * 1000) / 10) + '%' : '—') + '</span>', (tm.profit || 0) < 0 ? 'bad' : 'good') +
+    kpiT('Capital put in', cur, fmt(td.capital || 0), '<span class="delta">yours ' + fmt(mine.capital || 0) + '</span>') +
+    kpiT('Customers still owe', cur, fmt(td.receivables || 0), '<span class="delta">sold on credit, not paid yet</span>', (td.receivables || 0) > 0.5 ? 'warn' : '') +
+    '</div></section>';
+  h += '<section><div class="card"><h2>Who owes whom, as of now</h2>';
+  var tr = r.transfers || [];
+  if (!tr.length) h += '<div class="paybox"><span class="pill ok">✓</span> Nobody owes anything — the cash is where it should be.</div>';
+  else tr.forEach(function (t) { h += '<div class="paybox"><span><strong>' + esc(names[t.from] || '?') + '</strong> pays <b>' + esc(cur) + ' ' + fmt(t.amount) + '</b> to <strong>' + esc(names[t.to] || '?') + '</strong></span></div>'; });
+  h += '<div class="sub" style="margin-top:8px">The full sums are under <button class="linkbtn" type="button" data-jttab="month">Month end</button>.</div></div></section>';
+  var low = (d.stock || []).filter(function (s) { return s.status !== 'Discontinued' && s.stock <= 0; });
+  if (!(d.stock || []).length) h += '<section><div class="note"><div class="ico">i</div><div><strong>Nothing in the joint stock yet.</strong> Open <button class="linkbtn" type="button" data-jttab="stock">Stock</button>, add the products you own together and receive what you bought. Then write what each of you put in under <button class="linkbtn" type="button" data-jttab="money">Money</button>.</div></div></section>';
+  else if (low.length) h += '<section><div class="note"><div class="ico">!</div><div><strong>' + fmt(low.length) + ' joint product(s) are out of stock:</strong> ' + low.slice(0, 8).map(function (s) { return esc(s.name); }).join(', ') + (low.length > 8 ? '…' : '') + '</div></div></section>';
+  return h;
+}
+
+function jtStockHtml(d, pool) {
+  var ed = d.money, cur = d.currency, f = JT.form, h = '';
+  if (ed) {
+    h += '<section><div class="row" style="gap:8px;flex-wrap:wrap">' +
+      '<button class="btn primary" type="button" data-jt="f-receive">+ Receive stock</button>' +
+      '<button class="btn" type="button" data-jt="f-new">+ New joint product</button>' +
+      '<button class="btn" type="button" data-jt="f-adjust">Correct a count</button></div>';
+    if (f && f.kind === 'product') h += jtProductForm(d, pool, f);
+    if (f && f.kind === 'receive') h += jtReceiveForm(d, pool, f);
+    if (f && f.kind === 'adjust') h += jtAdjustForm(d, pool, f);
+    h += '</section>';
+  }
+  var st = d.stock || [];
+  h += '<section><div class="card"><h2>' + esc(pool.name) + ' — what is on the shelf</h2><div class="sub">' +
+    (ed ? 'Both owners see this list, with cost. Staff see the name, their selling price, the floor price and the count — never the cost.' : 'Sell these from New invoice like any product: they carry a <span class="jt-tag">Joint</span> tag there. Nobody sells below the floor price.') + '</div>';
+  if (!st.length) h += '<div class="empty">No joint product yet.</div>';
+  else h += '<div class="scroll"><table><thead><tr><th>Product</th><th class="num">In stock</th>' + (ed ? '<th class="num">Cost</th>' : '') +
+    '<th class="num">Retail</th><th class="num">Wholesale</th><th class="num">Floor</th>' + (ed ? '<th></th>' : '<th class="num">You sell at</th>') + '</tr></thead><tbody>' +
+    st.map(function (s) {
+      return '<tr' + (s.status === 'Discontinued' ? ' style="opacity:.55"' : '') + '><td class="nm">' + esc(s.name) + (s.status === 'Discontinued' ? ' <span class="pill">not sold any more</span>' : '') +
+        '<br><span class="sku">' + esc([s.sku, s.brand, s.category, s.color].filter(Boolean).join(' · ')) + '</span></td>' +
+        '<td class="num"><strong' + (s.stock <= 0 ? ' class="jt-low"' : '') + '>' + fmt(s.stock) + '</strong> <span class="sku">' + esc(s.unit || '') + '</span></td>' +
+        (ed ? '<td class="num">' + fmt(s.cost) + '</td>' : '') + '<td class="num">' + fmt(s.retail) + '</td><td class="num">' + (s.wholesale > 0 ? fmt(s.wholesale) : '—') + '</td>' +
+        '<td class="num">' + (s.floor > 0 ? fmt(s.floor) : '<span class="sku">none</span>') + '</td>' +
+        (ed ? '<td class="num" style="white-space:nowrap"><button class="btn small" type="button" data-jt="f-edit" data-sku="' + esc(s.sku) + '">Change</button> <button class="btn small" type="button" data-jt="f-receive" data-sku="' + esc(s.sku) + '">Receive</button></td>'
+            : '<td class="num"><strong>' + fmt(s.price) + '</strong></td>') + '</tr>'; }).join('') + '</tbody></table></div>';
+  return h + '</div></section>';
+}
+function jtSkuSel(d, id, val) {
+  return '<select class="i" id="' + id + '">' + (d.stock || []).filter(function (s) { return s.status !== 'Discontinued' || s.sku === val; }).map(function (s) {
+    return '<option value="' + esc(s.sku) + '"' + (s.sku === val ? ' selected' : '') + '>' + esc(s.name) + ' (' + fmt(s.stock) + ' in stock)</option>'; }).join('') + '</select>';
+}
+function jtProductForm(d, pool, f) {
+  var dis = JT.busy ? ' disabled' : '';
+  return '<div class="card" style="margin-top:12px"><h2>' + (f.isNew ? 'New joint product' : 'Change ' + esc(f.name)) + '</h2>' +
+    '<div class="jt-form"><div class="wide"><label class="f" for="jf_name">Name</label><input class="i" id="jf_name" maxlength="120" value="' + esc(f.name) + '"></div>' +
+    (f.isNew ? '<div><label class="f" for="jf_sku">Product code <span class="sku">(empty = made for you)</span></label><input class="i" id="jf_sku" maxlength="60" value="' + esc(f.sku) + '"></div>' : '') +
+    '<div><label class="f" for="jf_cat">Category</label><input class="i" id="jf_cat" maxlength="60" list="l_jfcat" value="' + esc(f.category) + '"><datalist id="l_jfcat">' + jtUniq(d, 'category') + '</datalist></div>' +
+    '<div><label class="f" for="jf_brand">Brand</label><input class="i" id="jf_brand" maxlength="60" list="l_jfbr" value="' + esc(f.brand) + '"><datalist id="l_jfbr">' + jtUniq(d, 'brand') + '</datalist></div>' +
+    '<div><label class="f" for="jf_color">Colour</label><input class="i" id="jf_color" maxlength="40" value="' + esc(f.color) + '"></div>' +
+    '<div><label class="f" for="jf_unit">Unit</label><input class="i" id="jf_unit" maxlength="20" placeholder="Piece" value="' + esc(f.unit) + '"></div>' +
+    '<div><label class="f" for="jf_retail">Retail price</label><input class="i" id="jf_retail" inputmode="decimal" value="' + esc(f.retail) + '"></div>' +
+    '<div><label class="f" for="jf_whole">Wholesale price <span class="sku">(0 = same)</span></label><input class="i" id="jf_whole" inputmode="decimal" value="' + esc(f.wholesale) + '"></div>' +
+    '<div><label class="f" for="jf_floor">Floor price <span class="sku">(nobody sells below)</span></label><input class="i" id="jf_floor" inputmode="decimal" value="' + esc(f.floor) + '"></div>' +
+    (f.isNew ? '<div><label class="f" for="jf_cost">Cost of one <span class="sku">(set again by each receipt)</span></label><input class="i" id="jf_cost" inputmode="decimal" value="' + esc(f.cost) + '"></div>'
+             : '<div><label class="f" for="jf_status">Still sold?</label><select class="i" id="jf_status"><option value="Active"' + (f.status !== 'Discontinued' ? ' selected' : '') + '>Yes</option><option value="Discontinued"' + (f.status === 'Discontinued' ? ' selected' : '') + '>No, not any more</option></select></div>') +
+    '</div><div class="row" style="margin-top:12px;gap:8px"><button class="btn primary" type="button" data-jt="save-product"' + dis + '>' + (JT.busy ? 'Saving…' : 'Save') + '</button><button class="btn" type="button" data-jt="f-close">Cancel</button></div></div>';
+}
+function jtUniq(d, k) { var seen = {}; return (d.stock || []).map(function (s) { return s[k]; }).filter(function (v) { if (!v || seen[v]) return false; seen[v] = 1; return true; }).map(function (v) { return '<option value="' + esc(v) + '">'; }).join(''); }
+function jtReceiveForm(d, pool, f) {
+  var dis = JT.busy ? ' disabled' : '';
+  if (!(d.stock || []).length) return '<div class="card" style="margin-top:12px"><div class="empty">Add a joint product first.</div></div>';
+  return '<div class="card" style="margin-top:12px"><h2>Receive stock into ' + esc(pool.name) + '</h2><div class="sub">What was bought for the joint stock. Who paid is what the month-end sum credits them with.</div>' +
+    '<div class="jt-form"><div class="wide"><label class="f" for="jr_sku">Product</label>' + jtSkuSel(d, 'jr_sku', f.sku) + '</div>' +
+    '<div><label class="f" for="jr_qty">How many</label><input class="i" id="jr_qty" inputmode="numeric" value="' + esc(f.qty) + '"></div>' +
+    '<div><label class="f" for="jr_cost">Cost of one</label><input class="i" id="jr_cost" inputmode="decimal" value="' + esc(f.unitCost) + '"></div>' +
+    '<div><label class="f" for="jr_by">Who paid</label><select class="i" id="jr_by">' + pool.partners.map(function (p) { return '<option value="' + esc(p.id) + '"' + (p.id === (f.paidBy || jtMe(d, pool)) ? ' selected' : '') + '>' + esc(p.name) + '</option>'; }).join('') + '</select></div>' +
+    '<div><label class="f" for="jr_date">Date <span class="sku">(empty = today)</span></label><input class="i" id="jr_date" type="date" max="' + esc(d.today) + '" value="' + esc(f.date) + '"></div>' +
+    '<div><label class="f" for="jr_sup">Bought from <span class="sku">(optional)</span></label><input class="i" id="jr_sup" maxlength="80" value="' + esc(f.supplier) + '"></div>' +
+    '<div class="wide"><label class="f" for="jr_note">Note <span class="sku">(optional)</span></label><input class="i" id="jr_note" maxlength="300" value="' + esc(f.note) + '"></div>' +
+    '</div><div class="row" style="margin-top:12px;gap:8px"><button class="btn primary" type="button" data-jt="save-receive"' + dis + '>' + (JT.busy ? 'Saving…' : 'Receive') + '</button><button class="btn" type="button" data-jt="f-close">Cancel</button></div></div>';
+}
+function jtAdjustForm(d, pool, f) {
+  var dis = JT.busy ? ' disabled' : '';
+  if (!(d.stock || []).length) return '<div class="card" style="margin-top:12px"><div class="empty">Add a joint product first.</div></div>';
+  return '<div class="card" style="margin-top:12px"><h2>Correct a count</h2><div class="sub">Counted and found different: damaged, lost, or found. The difference is valued at cost and is the joint stock’s loss or gain — shared by both. Your partner sees who did it and why.</div>' +
+    '<div class="jt-form"><div class="wide"><label class="f" for="ja_sku">Product</label>' + jtSkuSel(d, 'ja_sku', f.sku) + '</div>' +
+    '<div><label class="f" for="ja_dir">What</label><select class="i" id="ja_dir"><option value="out"' + (f.direction !== 'in' ? ' selected' : '') + '>Fewer than the list says</option><option value="in"' + (f.direction === 'in' ? ' selected' : '') + '>More than the list says</option></select></div>' +
+    '<div><label class="f" for="ja_qty">By how many</label><input class="i" id="ja_qty" inputmode="numeric" value="' + esc(f.qty) + '"></div>' +
+    '<div class="wide"><label class="f" for="ja_why">Why</label><input class="i" id="ja_why" maxlength="200" placeholder="e.g. 2 rolls water damaged" value="' + esc(f.reason) + '"></div>' +
+    '</div><div class="row" style="margin-top:12px;gap:8px"><button class="btn primary" type="button" data-jt="save-adjust"' + dis + '>' + (JT.busy ? 'Saving…' : 'Correct it') + '</button><button class="btn" type="button" data-jt="f-close">Cancel</button></div></div>';
+}
+
+function jtMoneyHtml(d, pool) {
+  var p = d.book, cur = d.currency, r = p.report || {}, closed = !!r.closed, e = JT.entry, who = e.partner || jtMe(d, pool), h = '';
+  var opts = function (sel, skip) { return p.partners.filter(function (x) { return x.id !== skip; }).map(function (x) { return '<option value="' + esc(x.id) + '"' + (sel === x.id ? ' selected' : '') + '>' + esc(x.name) + '</option>'; }).join(''); };
+  h += '<section><div class="card"><h2>Write in the joint book</h2><div class="sub">Money that is not a sale or a stock purchase: what each of you put in or took back, a cost one of you paid for the joint stock, cash handed from one to the other. Sales and stock bought are counted by themselves.</div>' +
+    '<div class="jt-form">' +
+    '<div><label class="f" for="je_kind">What</label><select class="i" id="je_kind">' + [['capital_in', 'Money put in'], ['capital_out', 'Capital taken back'], ['expense', 'Expense paid for the joint stock'], ['transfer', 'Cash handed to the other']].map(function (o) {
+      return '<option value="' + o[0] + '"' + (e.kind === o[0] ? ' selected' : '') + '>' + o[1] + '</option>'; }).join('') + '</select></div>' +
+    '<div><label class="f" for="je_who">' + (e.kind === 'transfer' ? 'From' : 'Who') + '</label><select class="i" id="je_who">' + opts(who) + '</select></div>' +
+    (e.kind === 'transfer' ? '<div><label class="f" for="je_to">To</label><select class="i" id="je_to">' + opts(e.to, who) + '</select></div>' : '') +
+    '<div><label class="f" for="je_amt">Amount</label><input class="i" id="je_amt" inputmode="decimal" placeholder="0" value="' + esc(e.amount) + '"></div>' +
+    '<div><label class="f" for="je_date">Date <span class="sku">(empty = today)</span></label><input class="i" id="je_date" type="date" max="' + esc(d.today) + '" value="' + esc(e.date) + '"></div>' +
+    (e.kind === 'expense' ? '<div><label class="f" for="je_cat">Category</label><input class="i" id="je_cat" maxlength="40" placeholder="Transport, packaging…" value="' + esc(e.category) + '"></div>' : '') +
+    '<div class="wide"><label class="f" for="je_note">Note <span class="sku">(optional)</span></label><input class="i" id="je_note" maxlength="300" value="' + esc(e.note) + '"></div></div>' +
+    '<button class="btn primary" type="button" data-jt="save-entry" style="margin-top:12px"' + (JT.busy ? ' disabled' : '') + '>' + (JT.busy ? 'Saving…' : 'Write it down') + '</button></div></section>';
+  h += '<section><div class="card"><h2>The joint book</h2><div class="sub">Newest first. Nothing is removed: a wrong line is struck out with a reason, and both owners see it. A line in a closed month can no longer be changed.</div>';
+  if (!p.ledger.length) h += '<div class="empty">Nothing written yet. Start with the money each of you put in.</div>';
+  else h += '<div class="scroll tall"><table><tbody>' + p.ledger.map(function (l) {
+    var plus = l.kind === 'capital_in';
+    return '<tr' + (l.voided ? ' style="opacity:.6"' : '') + '><td style="white-space:nowrap">' + esc(l.when) + '</td><td class="nm"' + (l.voided ? ' style="text-decoration:line-through"' : '') + '>' + esc(l.who) + (l.to ? ' &rarr; ' + esc(l.to) : '') +
+      '<br><span class="sku">' + esc(l.label) + (l.category ? ' · ' + esc(l.category) : '') + (l.note ? ' · ' + esc(l.note) : '') + '</span>' +
+      (l.voided ? '<br><span class="sku" style="text-decoration:none;display:inline-block">' + esc(l.voided) + '</span>' : '') + '</td>' +
+      '<td class="num"><strong>' + (plus ? '+' : l.kind === 'transfer' ? '' : '−') + fmt(l.amount) + '</strong></td>' +
+      '<td class="num">' + (!l.locked && !l.voided ? '<button class="btn small" type="button" data-jt="strike" data-id="' + esc(l.id) + '">Strike out</button>' : '') + '</td></tr>'; }).join('') + '</tbody></table></div>';
+  return h + '</div></section>';
+}
+
+function jtMonthHtml(d, pool) {
+  var p = d.book, cur = d.currency, r = p.report || {}, tm = r.this_month || {}, td = r.to_date || {}, ps = r.partners || [], closed = !!r.closed;
+  var nameOf = {}; p.partners.forEach(function (x) { nameOf[x.id] = x.name; });
+  var h = '<section><div class="row" style="align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap">' +
+    '<button class="btn small" type="button" data-jt="m-prev">&larr; Earlier</button><strong style="min-width:140px;text-align:center">' + esc(p.label) + '</strong>' +
+    '<button class="btn small" type="button" data-jt="m-next"' + (p.isCurrent ? ' disabled' : '') + '>Later &rarr;</button>' +
+    (closed ? '<span class="pill ok">closed — fixed as agreed</span>' : p.isCurrent ? '<span class="pill">this month, so far</span>' : '<span class="pill low">open</span>') + '</div>' +
+    '<div class="grid g-kpi">' + kpiT('Sold', cur, fmt(tm.revenue || 0), '<span class="delta">goods cost ' + fmt(tm.cogs || 0) + '</span>', 'accent') +
+    kpiT('Shared expenses', cur, fmt(tm.expenses || 0), (tm.stock_gain ? '<span class="delta">stock corrections ' + fmt(tm.stock_gain) + '</span>' : '')) +
+    kpiT('Profit of the month', cur, fmt(tm.profit || 0), '', (tm.profit || 0) < 0 ? 'bad' : 'good') + '</div></section>';
+  h += '<section><div class="card"><h2>The partners</h2><div class="sub">Profit is shared by capital as it stood when the month began; money added during a month counts from the next. ' +
+    '“Holds” is joint money in that partner’s hands — received from customers, less what they paid for stock and expenses. “Should hold” is what is theirs. The difference is what they pay or get.</div>' +
+    '<div class="scroll"><table><thead><tr><th>Partner</th><th class="num">Capital</th><th class="num">Share</th><th class="num">Sold this month</th><th class="num">Profit share</th><th class="num">Holds</th><th class="num">Should hold</th><th class="num">To settle</th></tr></thead><tbody>' +
+    ps.map(function (x) {
+      var b = Number(x.balance) || 0;
+      return '<tr><td class="nm">' + esc(x.name) + (x.business_id === p.me ? ' <span class="pill">you</span>' : '') + '<br><span class="sku">sells at the ' + esc(x.tier) + ' price</span></td>' +
+        '<td class="num">' + fmt(x.capital) + '</td><td class="num"><strong>' + (Math.round(x.ratio * 1000) / 10) + '%</strong></td><td class="num">' + fmt(x.month_sales) + '</td>' +
+        '<td class="num">' + fmt(x.profit_share) + '</td><td class="num">' + fmt(x.held) + '</td><td class="num">' + fmt(x.due) + '</td>' +
+        '<td class="num"><strong style="color:var(' + (b > 0.5 ? '--critical' : b < -0.5 ? '--good' : '--muted') + ')">' + (b > 0.5 ? 'pays ' + fmt(b) : b < -0.5 ? 'receives ' + fmt(-b) : 'even') + '</strong></td></tr>'; }).join('') + '</tbody></table></div>';
+  var tr = r.transfers || [];
+  if (!tr.length) h += '<div class="paybox"><span class="pill ok">✓</span> Nobody owes anything — the cash is where it should be.</div>';
+  else tr.forEach(function (t) {
+    h += '<div class="paybox"><span><strong>' + esc(nameOf[t.from] || '?') + '</strong> hands <b>' + esc(cur) + ' ' + fmt(t.amount) + '</b> to <strong>' + esc(nameOf[t.to] || '?') + '</strong> and everyone is even.</span>' +
+      (!closed ? '<button class="btn small primary" type="button" data-jt="handed" data-from="' + esc(t.from) + '" data-to="' + esc(t.to) + '" data-amt="' + esc(t.amount) + '">It has been handed over</button>' : '') + '</div>'; });
+  if (ps.length > 1 && ps.some(function (x) { return x.top_up_to_equal > 0.5; })) h += '<div class="sub" style="margin-top:8px">To bring the shares level: ' + ps.filter(function (x) { return x.top_up_to_equal > 0.5; }).map(function (x) { return esc(x.name) + ' puts in ' + fmt(x.top_up_to_equal) + ' more'; }).join(' · ') + '.</div>';
+  h += '<div class="sub" style="margin-top:10px">Stock at cost ' + fmt(td.stock_at_cost || 0) + ' · customers still owe ' + fmt(td.receivables || 0) + ' · both belong to the partners in their shares.</div>';
+  if (p.closedMonths && p.closedMonths.length) h += '<div class="sub" style="margin-top:6px">Closed months: ' + p.closedMonths.map(function (m) { return esc(capMonth(m)); }).join(' · ') + '</div>';
+  return h + '</div></section>';
+}
+
+function jtSettingsHtml(d, pool) {
+  var p = d.book, h = '<section><div class="grid g-half"><div class="card"><h2>Partners</h2><div class="list">' + p.partners.map(function (x) {
+    return '<div><span>' + esc(x.name) + (x.id === p.me ? ' <span class="pill">you</span>' : '') + '</span><select class="i" data-jttier="' + esc(x.id) + '" style="width:auto"><option value="retail"' + (x.tier === 'retail' ? ' selected' : '') + '>sells at the retail price</option>' +
+      '<option value="wholesale"' + (x.tier === 'wholesale' ? ' selected' : '') + '>sells at the wholesale price</option></select></div>'; }).join('') + '</div>' +
+    (p.invites.length ? '<div class="sub" style="margin-top:12px">An invite code is open. Send it to your partner; in their own company they open Joint stock and join with it. Good until ' + esc(p.invites[0].until) + ', works once.</div>' +
+        p.invites.map(function (i) { return '<div style="margin-top:6px"><span class="codebox">' + esc(i.code) + '</span></div>'; }).join('') : '') +
+    '<button class="btn small" type="button" data-jt="invite" style="margin-top:10px"' + (JT.busy ? ' disabled' : '') + '>New invite code</button></div>' +
+    '<div class="card"><h2>Slow payers</h2><div class="sub">A joint sale on credit is shared risk at first. After this many days, the part still unpaid counts as owed by the company that sold it — it chose the customer.</div>' +
+    '<div class="row" style="gap:8px;align-items:flex-end;margin-top:8px"><div style="flex:0 0 120px"><label class="f" for="js_days">Days</label><input class="i" id="js_days" inputmode="numeric" value="' + esc(d.slowDays) + '"></div>' +
+    '<button class="btn small primary" type="button" data-jt="save-days"' + (JT.busy ? ' disabled' : '') + '>Save</button></div>' +
+    '<div class="sub" style="margin-top:14px">Floor prices are set per product, under Stock → Change.</div></div></div></section>';
+  h += '<section><div class="card"><h2>Another joint stock</h2><div class="sub">With a different partner company. Each one has its own stock, money and month-end sum; the partners of one never see the other.</div></div></section>' + jtSetupHtml(false);
+  return h;
+}
+
+// ---- wiring (delegated)
+function jtVal(id) { var n = el(id); return n ? n.value : ''; }
+function jtKeepForm() {
+  var f = JT.form; if (!f) return;
+  if (f.kind === 'product') { ['name', 'sku', 'category:cat', 'brand', 'color', 'unit', 'retail', 'wholesale:whole', 'floor', 'cost', 'status'].forEach(function (k) { var a = k.split(':'), n = el('jf_' + (a[1] || a[0])); if (n) f[a[0]] = n.value; }); }
+  if (f.kind === 'receive') { f.sku = jtVal('jr_sku') || f.sku; f.qty = jtVal('jr_qty'); f.unitCost = jtVal('jr_cost'); f.paidBy = jtVal('jr_by'); f.date = jtVal('jr_date'); f.supplier = jtVal('jr_sup'); f.note = jtVal('jr_note'); }
+  if (f.kind === 'adjust') { f.sku = jtVal('ja_sku') || f.sku; f.direction = jtVal('ja_dir'); f.qty = jtVal('ja_qty'); f.reason = jtVal('ja_why'); }
+}
+function jtKeepNew() { var n = JT.newp, m = { jn_biz: 'business', jn_owner: 'ownerName', jn_email: 'email', jn_name: 'name', jn_disp: 'displayName', jn_tier: 'tier', jn_code: 'code', jn_jdisp: 'joinName', jn_jtier: 'joinTier' }; for (var k in m) { var x = el(k); if (x) n[m[k]] = x.value; } }
+function jtKeepEntry() { var e = JT.entry; if (!el('je_kind')) return; e.kind = jtVal('je_kind'); e.partner = jtVal('je_who'); e.to = jtVal('je_to'); e.amount = jtVal('je_amt'); e.date = jtVal('je_date'); e.category = jtVal('je_cat'); e.note = jtVal('je_note'); }
+document.addEventListener('input', function (ev) { if (VIEW !== 'joint' || !ev.target || !ev.target.id) return; if (/^jf_|^jr_|^ja_/.test(ev.target.id)) jtKeepForm(); else if (/^jn_/.test(ev.target.id)) jtKeepNew(); else if (/^je_/.test(ev.target.id)) jtKeepEntry(); });
+document.addEventListener('change', function (ev) {
+  if (VIEW !== 'joint' || !ev.target) return;
+  var t = ev.target;
+  if (t.id === 'jt_pool') { JT.pool = t.value; JT.month = ''; JT.form = null; JT.data = null; repaint(); jtLoad(); return; }
+  if (t.id === 'je_kind' || t.id === 'je_who') { jtKeepEntry(); repaint(); return; }
+  if (/^jn_/.test(t.id || '')) jtKeepNew();
+  if (/^jf_|^jr_|^ja_/.test(t.id || '')) jtKeepForm();
+  if (t.hasAttribute && t.hasAttribute('data-jttier')) jtSave('erpJointSettings', { pool: JT.pool, month: JT.month, tier: { partner: t.getAttribute('data-jttier'), tier: t.value } }, 'Price changed.', function () { if (typeof CAT !== 'undefined') JCAT = null; });
+});
+document.addEventListener('click', async function (ev) {
+  if (VIEW !== 'joint' || !ev.target || !ev.target.closest) return;
+  var tb = ev.target.closest('[data-jttab]');
+  if (tb) { JT.tab = tb.getAttribute('data-jttab'); JT.form = null; repaint(); window.scrollTo(0, 0); return; }
+  var b = ev.target.closest('[data-jt]'); if (!b) return;
+  var a = b.getAttribute('data-jt'), d = JT.data, pool = d && d.pools ? (d.pools.filter(function (p) { return p.id === d.pool; })[0] || d.pools[0]) : null, n = JT.newp;
+  if (a === 'copylink') { var ln = el('jt_link'); try { navigator.clipboard.writeText(JT.link.url).then(function () { toast('Link copied.'); }, function () { if (ln) ln.select(); toast('Select the link and copy it.', true); }); } catch (e) { if (ln) ln.select(); } return; }
+  if (a === 'donelink') { JT.link = null; repaint(); return; }
+  if (a === 'donecode') { JT.code = null; repaint(); return; }
+  if (a === 'company') {
+    jtKeepNew();
+    if (!n.business.trim() || !n.ownerName.trim()) { toast('Their company’s name and the owner’s name are needed.', true); return; }
+    if (!(await uiConfirm('Make the company “' + n.business.trim() + '” for ' + n.ownerName.trim() + '?\n\nIt is their own company with their own books. You get a private link to send them.'))) return;
+    jtSave('erpJointStart', { action: 'company', business: n.business, ownerName: n.ownerName, email: n.email }, '', function (r) {
+      var c = r.company; JT.link = c.link && c.link.key ? { business: c.name, ownerName: c.ownerName || 'the partner', url: location.origin + location.pathname + '#k=' + c.link.key, switched: c.switched } : null;
+      n.business = ''; n.ownerName = ''; n.email = ''; if (!JT.link) uiAlert('“' + c.name + '” is ready.'); window.scrollTo(0, 0);
+    });
+    return;
+  }
+  if (a === 'create') {
+    jtKeepNew();
+    if (!n.name.trim()) { toast('Give the joint stock a name.', true); return; }
+    if (!(await uiConfirm('Start the joint stock “' + n.name.trim() + '”?\n\nIt is owned together with the partner who joins it with your code.'))) return;
+    jtSave('erpJointStart', { action: 'create', name: n.name, displayName: n.displayName, tier: n.tier }, '', function (r) {
+      JT.code = { name: r.created.name, code: r.created.code }; JT.pool = r.created.id; n.name = ''; n.displayName = ''; JT.tab = 'overview'; loadBusinesses(); jtLoad(); window.scrollTo(0, 0); });
+    return;
+  }
+  if (a === 'join') {
+    jtKeepNew();
+    if (!n.code.trim()) { toast('Type the invite code your partner sent.', true); return; }
+    jtSave('erpJointStart', { action: 'join', code: n.code, displayName: n.joinName, tier: n.joinTier }, '', function (r) {
+      toast('Joined <strong>' + esc(r.joined.name) + '</strong>.', false, 9000); JT.pool = r.joined.id; n.code = ''; n.joinName = ''; JT.tab = 'overview'; loadBusinesses(); jtLoad(); });
+    return;
+  }
+  if (!pool) return;
+  if (a === 'f-close') { JT.form = null; repaint(); return; }
+  if (a === 'f-new') { JT.form = { kind: 'product', isNew: true, name: '', sku: '', category: '', brand: '', color: '', unit: '', retail: '', wholesale: '', floor: '', cost: '' }; repaint(); return; }
+  if (a === 'f-edit') { var s = (d.stock || []).filter(function (x) { return x.sku === b.getAttribute('data-sku'); })[0]; if (!s) return;
+    JT.form = { kind: 'product', isNew: false, name: s.name, sku: s.sku, category: s.category, brand: s.brand, color: s.color, unit: s.unit, retail: s.retail, wholesale: s.wholesale || '', floor: s.floor || '', cost: '', status: s.status }; repaint(); window.scrollTo(0, 0); return; }
+  if (a === 'f-receive') { JT.form = { kind: 'receive', sku: b.getAttribute('data-sku') || '', qty: '', unitCost: '', paidBy: '', date: '', supplier: '', note: '' }; repaint(); window.scrollTo(0, 0); return; }
+  if (a === 'f-adjust') { JT.form = { kind: 'adjust', sku: '', direction: 'out', qty: '', reason: '' }; repaint(); return; }
+  var f = JT.form;
+  if (a === 'save-product' && f) {
+    jtKeepForm();
+    jtSave('erpJointProduct', { pool: JT.pool, isNew: f.isNew, sku: f.sku, name: f.name, category: f.category, brand: f.brand, color: f.color, unit: f.unit, retail: f.retail, wholesale: f.wholesale, floor: f.floor, cost: f.cost, status: f.status },
+      f.isNew ? 'Joint product added.' : 'Saved.', function () { JT.form = null; JCAT = null; });
+    return;
+  }
+  if (a === 'save-receive' && f) {
+    jtKeepForm();
+    jtSave('erpJointReceive', { pool: JT.pool, sku: f.sku, qty: f.qty, unitCost: f.unitCost, paidBy: f.paidBy, date: f.date, supplier: f.supplier, note: f.note }, 'Received into the joint stock.', function () { JT.form = null; JCAT = null; });
+    return;
+  }
+  if (a === 'save-adjust' && f) {
+    jtKeepForm();
+    if (!(await uiConfirm('Correct the count of this product by ' + (f.direction === 'in' ? '+' : '−') + (f.qty || '?') + '?\n\nThe difference, at cost, is shared by both partners. It cannot be removed afterwards, only corrected back.'))) return;
+    jtSave('erpJointAdjust', { pool: JT.pool, sku: f.sku, qty: f.qty, direction: f.direction, reason: f.reason }, 'Count corrected.', function () { JT.form = null; JCAT = null; });
+    return;
+  }
+  if (a === 'save-entry') {
+    jtKeepEntry(); var e = JT.entry;
+    jtSave('erpJointBook', { pool: JT.pool, month: JT.month, kind: e.kind, partner: e.partner || jtMe(d, pool), to: e.to || jtVal('je_to'), amount: e.amount, date: e.date, category: e.category, note: e.note }, 'Written in the joint book.',
+      function () { e.amount = ''; e.note = ''; e.category = ''; e.date = ''; });
+    return;
+  }
+  if (a === 'strike') {
+    var why = await uiPrompt('Why is this line being struck out? It stays in the book, crossed through, and your partner sees the reason.', '');
+    if (why === null) return; if (!why.trim()) { toast('Say why.', true); return; }
+    jtSave('erpJointBook', { pool: JT.pool, month: JT.month, strike: b.getAttribute('data-id'), reason: why.trim() }, 'Struck out.');
+    return;
+  }
+  if (a === 'handed') {
+    if (!(await uiConfirm('Write down that this cash has been handed over?\n\n' + fmt(Number(b.getAttribute('data-amt'))) + ' — only do this once it has really changed hands.'))) return;
+    jtSave('erpJointBook', { pool: JT.pool, month: JT.month, kind: 'transfer', partner: b.getAttribute('data-from'), to: b.getAttribute('data-to'), amount: b.getAttribute('data-amt'), note: 'Settlement' }, 'Written in the book.');
+    return;
+  }
+  if (a === 'm-prev' || a === 'm-next') { JT.month = shiftMonth(d.book.month, a === 'm-prev' ? -1 : 1); jtLoad(true); return; }
+  if (a === 'invite') { jtSave('erpJointSettings', { pool: JT.pool, month: JT.month, invite: true }, 'New invite code made.'); return; }
+  if (a === 'save-days') { jtSave('erpJointSettings', { pool: JT.pool, month: JT.month, slowDays: jtVal('js_days') }, 'Saved.'); return; }
+});
+var JCAT = null;   // joint products for New invoice (step 2 fills and uses it)
+
+// ---- Platform: the switch, per company
+document.addEventListener('click', async function (ev) {
+  if (VIEW !== 'platform' || !ev.target || !ev.target.closest) return;
+  var b = ev.target.closest('[data-pljoint]'); if (!b || !PLAT) return;
+  var id = b.getAttribute('data-pljoint'), on = b.getAttribute('data-to') === '1', biz = PLAT.businesses.filter(function (x) { return x.id === id; })[0];
+  if (!(await uiConfirm(on ? 'Switch joint stock ON for “' + biz.name + '”?\n\nIts owner will see a new menu item, Joint stock, and can start or join a co-owned stock with another company that also has it on.'
+                           : 'Switch joint stock OFF for “' + biz.name + '”?'))) return;
+  srv('erpPlatformJoint', [{ businessId: id, on: on }], function (r) {
+    PLAT = r; toast('Joint stock ' + (on ? 'on' : 'off') + ' for ' + esc(biz.name) + '.');
+    if (biz.current) { ME.joint = on; applyRole(); }
+    repaint();
+  }, function (e) { toast(p4Err(e), true, 12000); });
+});
 </script>
 </body>
 </html>

@@ -186,8 +186,10 @@ async function hello(sql, deps, token, authHeader, ip) {
     await logActivity(sql, s, 'sign-in', null, token, ip);
     let platform = false;
     try { platform = (await sql`select 1 from platform_admins where user_id = ${s.userId}`).length > 0; } catch (_) { platform = false; }
+    let joint = false;   // joint stock with a partner company: only where the provider switched it on
+    try { joint = (await sql`select 1 from joint_flags where business_id = ${s.businessId} and enabled`).length > 0; } catch (_) { joint = false; }
     return { ok: true, role: s.role, roleLabel: s.roleLabel, name: s.name,
-             implicit: !!s.implicit, link: !!s.viaKey, discountCap: s.discountCap, powers: powersMap(s), platform };
+             implicit: !!s.implicit, link: !!s.viaKey, discountCap: s.discountCap, powers: powersMap(s), platform, joint };
   } catch (e) {
     if (!(e instanceof Refused)) throw e;
     return { ok: false, reason: e.message, message: SAYS[e.message] || 'Could not sign you in.' };

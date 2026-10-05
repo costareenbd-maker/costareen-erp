@@ -796,3 +796,14 @@ PAID / PAYMENT DUE seal: opacity .62 -> .8, fewer worn holes. Amount still reads
 - One own fighter now plays with the plain ones (before, fewer than 2 meant only the faceless three).
 - Stick fight v19: nobody is flung in or dropped from the sky. The next man sprints in along the floor from off the screen (now and then a front flip, double flip, aerial or dive roll on the way in), or runs in at the height of a top near the edge and dives onto it (a tuck flip half the time), or slides down a rope from the top onto a top; then free-runs up to the ninja. Simulated 10 minutes: 24 entries of 8 kinds, none left off screen, no big upward leap, no errors.
 - Weak spot (said to the owner): the in-browser cut-out is rough on busy backgrounds (trees, rooms); a plain wall or sky works best. Bangla words for the new window not added yet.
+
+## joint-1 — Joint stock, step 1: the switch and the page (2026-10-06)
+Blueprint: docs/JOINT-POOL-BLUEPRINT.md; build notes: docs/JOINT-BUILD-NOTES.md.
+- Off for every company. Platform > Businesses has a "Joint stock: on/off" button per company (erpPlatformJoint; server-only table joint_flags, joint_enabled()). Switched ON for Costareen live. A company in a pool cannot be switched off. erpPoolCreate / erpPoolJoin refuse while off.
+- New menu item Goods > Joint stock (owners all tabs, managers Stock only, sales staff none), opened from inside the company - nobody switches business. Selector at the top when there is more than one pool. Tabs: Overview, Stock, Money, Month end, Settings.
+- Set-up on the page: make the partner's company (own link, own books; the provider's switch is turned on for it in the same step), start a joint stock (invite code), or join with a code.
+- Stock tab: add / change a joint product (retail, wholesale, floor price, cost), receive stock (who paid; cost becomes the average), correct a count (valued at cost = the pool's loss or gain; reason required).
+- Money tab = the pool's book (capital, expenses, cash handed over, strike out with a reason). Month end = partners table and who pays whom. Settings = price tiers, invite code, slow-payer days (45 by default, 7-180).
+- Server: handlers/joint.js, lib/system.js (asSystem: a window with row-level security off inside the same transaction, used after the handler's own checks - staff are not members of the pool). 068_joint.sql also adds products.floor_price, invoice_lines.pool_id, joint_sales for the next steps.
+- Tests: joint1_test (41). All suites green. Checked on screen as both companies (set-up, product, receive, capital, all tabs).
+- Not done yet: selling (step 2), money split / returns (step 3), floor enforcement, 45-day rule, both-owner Agree, statement PDF, dashboard card (step 4). The old Capital > Partnership tab is still there until step 4.

@@ -12,6 +12,8 @@ const B3 = (await sql.begin(async (t) => {
   return t`select create_business('Partner Shop') as id`;
 }))[0].id;
 const other = (name, args) => erpCall(deps, { name, args, authHeader: 'Bearer owner:' + PU });
+// joint stock is switched on per company by the provider (068)
+await sql`insert into joint_flags (business_id) values (${FIX.B}), (${B3}) on conflict do nothing`;
 
 await makeShareholder();
 const PLA = 'FIL-SUN-PLA-BLA-001';

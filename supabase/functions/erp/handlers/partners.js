@@ -35,6 +35,12 @@ async function thisBusiness(ctx) {
   if (!b) throw new Error('That business was not found.');
   return b;
 }
+/** Joint stock is switched on per company by the provider (068_joint.sql). */
+async function needJoint(ctx) {
+  let ok = false;
+  try { ok = !!(await ctx.tx.savepoint(() => ctx.tx`select public.joint_enabled(${ctx.biz}) as ok`))[0].ok; } catch (_) { ok = false; }
+  if (!ok) throw new Error('Joint stock is not switched on for this company.');
+}
 async function needPool(ctx) {
   const b = await thisBusiness(ctx);
   if (!b.is_pool) throw new Error('Switch to the joint pool first - this is done inside the pool.');
@@ -120,6 +126,7 @@ export async function erpPartnership(ctx, payload) {
 /** Start a joint pool with this business as its first partner. */
 export async function erpPoolCreate(ctx, payload) {
   payload = payload || {};
+  await needJoint(ctx);
   const name = str(payload.name);
   if (!name) throw new Error('Give the joint pool a name.');
   if (name.length > 80) throw new Error('That name is too long.');
@@ -152,6 +159,7 @@ export async function erpPoolInvite(ctx) {
 /** Join somebody's pool with the code they sent. */
 export async function erpPoolJoin(ctx, payload) {
   payload = payload || {};
+  await needJoint(ctx);
   const code = str(payload.code).toUpperCase();
   if (!code) throw new Error('Type the invite code your partner sent.');
   const b = await thisBusiness(ctx);
