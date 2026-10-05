@@ -258,7 +258,9 @@ const INSTALL_ENV = { controlUrl: SUPABASE_URL + '/functions/v1/erp', appUrl: De
   // the neutral address customers see (install links, a copy without its own address), set by deploy/set_installer.py
   publicUrl: Deno.env.get('ERP_PUBLIC_URL') ?? '',
   oauth: { clientId: Deno.env.get('SUPABASE_OAUTH_CLIENT_ID') ?? '', clientSecret: Deno.env.get('SUPABASE_OAUTH_CLIENT_SECRET') ?? '', redirect: SUPABASE_URL + '/functions/v1/erp?install=oauth_back' },
-  cloudflare: { token: Deno.env.get('ERP_CF_TOKEN') ?? '', account: Deno.env.get('ERP_CF_ACCOUNT') ?? '', project: Deno.env.get('ERP_PUBLIC_PROJECT') ?? '' } };
+  cloudflare: { token: Deno.env.get('ERP_CF_TOKEN') ?? '', account: Deno.env.get('ERP_CF_ACCOUNT') ?? '', project: Deno.env.get('ERP_PUBLIC_PROJECT') ?? '' },
+  // the provider's own domain where each company gets <name>.<zone> by itself (Stage 1b)
+  freeZone: Deno.env.get('ERP_FREE_ZONE') ?? '', freeZoneId: Deno.env.get('ERP_FREE_ZONE_ID') ?? '' };
 const own = projectParts({ url: SUPABASE_URL, anon: ANON, service: SERVICE, appUrl: Deno.env.get('ERP_APP_URL') ?? 'https://erp.costareen.com/' });
 const deps: any = { install: INSTALL, installEnv: INSTALL_ENV, google: GOOGLE, smtpNote: SMTP_NOTE, linkOnly: false, sql, sqlAux, fetch: globalThis.fetch.bind(globalThis), renderPdf,
                ...own, hookBase: FN_URL };

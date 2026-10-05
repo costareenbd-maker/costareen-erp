@@ -29,6 +29,12 @@ const str = (v) => String(v == null ? '' : v).trim();
 const MGMT = 'https://api.supabase.com/v1';
 // the provider's own server, which runs every bridged company's ERP
 const controlApi = (deps) => str(deps.installEnv && deps.installEnv.controlUrl);
+// Stage 1b: the permanent link (/start = invite code 'open'), the terms every new owner agrees to, the sign-up limits
+export const TERMS_VERSION = '2026-10';
+const OPEN = 'open', PER_IP_HOUR = 3, PER_DAY = 30;
+// the provider's zone where each company gets <name>.<zone> by itself (e.g. acme.3dowala.com)
+const freeZone = (deps) => str(deps.installEnv && deps.installEnv.freeZone).toLowerCase();
+const RESERVED = new Set(['erp', 'www', 'mail', 'app', 'api', 'admin', 'start', 'shop', 'store', 'blog', 'help', 'support', 'status', 'mx', 'ns1', 'ns2', 'smtp', 'ftp']);
 // the database files a company gets: all of them except the provider's own control tables
 function companySql(files) {
   return Object.keys(files).filter((k) => /^sql\/\d{3}_.+\.sql$/.test(k) && !/^\s*--\s*control-only/.test(String(files[k]))).sort();
@@ -131,8 +137,18 @@ export async function installStart(deps, b) {
     if (!oauth || !oauth.access) throw new Error('Supabase was not connected. Press "Connect Supabase" again.');
     token = oauth.access;
   }
-  const inv = (await sql`select * from erp_install_invites where code_hash = ${await sha256(code)}`)[0];
-  if (!inv || inv.used_at || new Date(inv.expires_at) < new Date()) throw new Error('This install link is not valid any more. Ask for a new one.');
+  const open = code === OPEN;
+  const inv = open ? null : (await sql`select * from erp_install_invites where code_hash = ${await sha256(code)}`)[0];
+  if (!open && (!inv || inv.used_at || new Date(inv.expires_at) < new Date())) throw new Error('This install link is not valid any more. Ask for a new one.');
+  if (b.agree !== true || str(b.terms) !== TERMS_VERSION) throw new Error('Read and agree to the terms first (the tick box).');
+  const ip = str(b.__ip).slice(0, 64);
+  if (open) {   // the public link: a few sign-ups per address, and a daily ceiling that protects the free plan
+    const n = (await sql`select count(*) filter (where signup_ip = ${ip} and made_at > now() - interval '1 hour')::int ip1,
+                                count(*) filter (where made_at > now() - interval '1 day' and signup_ip is not null)::int day_n
+                         from erp_installs`)[0];
+    if (ip && n.ip1 >= PER_IP_HOUR) throw new Error('Too many sign-ups from this connection. Try again in an hour.');
+    if (n.day_n >= PER_DAY) throw new Error('Too many new ERPs today. Try again tomorrow.');
+  }
   if (!company) throw new Error('What is the company called?');
   if (!ownerName) throw new Error('Who is the owner? Type the name.');
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(ownerEmail)) throw new Error('Type the owner’s e-mail address - the login is made for it.');
@@ -149,11 +165,13 @@ export async function installStart(deps, b) {
     if (!p || !p.id) throw new Error('That project was not found in this account.');
   }
   const secret = rand(), id = crypto.randomUUID();
-  await sql`insert into erp_installs (id, company, owner_name, owner_email, status, step, org_id, ref, mgmt_token, secret_hash, mgmt_kind, oauth_refresh, oauth_expires, website)
+  await sql`insert into erp_installs (id, company, owner_name, owner_email, status, step, org_id, ref, mgmt_token, secret_hash, mgmt_kind, oauth_refresh, oauth_expires, website,
+                                      terms_version, terms_at, signup_ip)
             values (${id}, ${company}, ${ownerName}, ${ownerEmail}, 'installing', ${ref ? 'wait' : 'project'}, ${orgId || null}, ${ref || null}, ${token}, ${await sha256(secret)},
-                    ${oauth ? 'oauth' : 'pat'}, ${oauth ? oauth.refresh : null}, ${oauth ? oauth.expires_at : null}, ${website || null})`;
+                    ${oauth ? 'oauth' : 'pat'}, ${oauth ? oauth.refresh : null}, ${oauth ? oauth.expires_at : null}, ${website || null},
+                    ${TERMS_VERSION}, now(), ${open ? (ip || 'unknown') : null})`;
   if (oauth) await sql`delete from erp_install_oauth where state = ${oauth.state}`;
-  await sql`update erp_install_invites set used_at = now(), install_id = ${id} where code_hash = ${inv.code_hash}`;
+  if (inv) await sql`update erp_install_invites set used_at = now(), install_id = ${id} where code_hash = ${inv.code_hash}`;
   return { id, secret };
 }
 
@@ -263,13 +281,36 @@ export async function domainSet(deps, b) {
   const host = d.split('.')[0], parent = d.split('.').slice(1).join('.');
   return { domain: d, record: { type: 'CNAME', name: host, full: d, value: pagesTarget(deps), parent }, auto: !!r };
 }
+/** The free address: <company>.<zone> on the provider's own domain - the DNS record and the page address are made here. */
+export async function freeDomain(deps, b) {
+  const row = await rowFor(deps, b);
+  const zone = freeZone(deps), zid = str(deps.installEnv && deps.installEnv.freeZoneId), c = deps.installEnv && deps.installEnv.cloudflare;
+  if (!zone || !zid || !c || !c.token) throw new Error('Free addresses are not set up on this server.');
+  if (row.domain && row.domain.endsWith('.' + zone)) return { domain: row.domain, auto: true };
+  let base = str(row.company).toLowerCase().normalize('NFKD').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 30) || 'erp';
+  if (RESERVED.has(base)) base = base + '-erp';
+  let d = '', n = 1;
+  for (; n < 50; n++) {
+    d = (n === 1 ? base : base + '-' + n) + '.' + zone;
+    if (!(await sqlOf(deps)`select 1 from erp_installs where lower(domain) = ${d}`).length) break;
+  }
+  const r = await (deps.fetch || fetch)('https://api.cloudflare.com/client/v4/zones/' + zid + '/dns_records', {
+    method: 'POST', headers: { Authorization: 'Bearer ' + c.token, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ type: 'CNAME', name: d, content: pagesTarget(deps), proxied: true, comment: 'ERP of ' + str(row.company).slice(0, 60) }) });
+  const j = await r.json().catch(() => null);
+  if (!r.ok && !(j && (j.errors || []).some((e) => /already exists/i.test(str(e.message))))) throw new Error('The address could not be made (' + r.status + ').');
+  await cf(deps, 'POST', '/domains', { name: d });
+  await sqlOf(deps)`update erp_installs set domain = ${d}, domain_state = 'seen', updated_at = now() where id = ${row.id}`;
+  return { domain: d, auto: true };
+}
+
 /** Is the record there yet, and is the address ready (certificate made)? */
 export async function domainCheck(deps, b) {
   const row = await rowFor(deps, b);
   if (!row.domain) throw new Error('Set the address first.');
   const target = pagesTarget(deps);
-  let seen = false;
-  try {
+  let seen = !!freeZone(deps) && row.domain.endsWith('.' + freeZone(deps));   // on the provider's own zone the record was made here
+  if (!seen) try {
     const r = await (deps.fetch || fetch)('https://cloudflare-dns.com/dns-query?name=' + encodeURIComponent(row.domain) + '&type=CNAME', { headers: { accept: 'application/dns-json' } });
     const j = await r.json();
     seen = ((j && j.Answer) || []).some((a) => str(a.data).replace(/\.$/, '').toLowerCase() === target);
@@ -294,7 +335,7 @@ export async function oauthStart(deps, b) {
   const o = deps.installEnv && deps.installEnv.oauth || {};
   if (!o.clientId) throw new Error('Connecting with one click is not set up yet - use the access token instead.');
   const code = str(b.code);
-  const inv = (await sqlOf(deps)`select used_at, expires_at from erp_install_invites where code_hash = ${await sha256(code)}`)[0];
+  const inv = code === OPEN ? { expires_at: new Date(Date.now() + 86400e3) } : (await sqlOf(deps)`select used_at, expires_at from erp_install_invites where code_hash = ${await sha256(code)}`)[0];
   if (!inv || inv.used_at || new Date(inv.expires_at) < new Date()) throw new Error('This install link is not valid any more. Ask for a new one.');
   const state = rand(24), verifier = rand(48);
   const challenge = b64url(new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(verifier))));
@@ -315,6 +356,22 @@ export async function oauthBack(deps, q) {
     await sqlOf(deps)`update erp_install_oauth set access = ${t.access}, refresh = ${t.refresh || null}, expires_at = ${t.expires} where state = ${row.state}`;
     return back + '/' + row.state;
   } catch (_) { return back + '/cancelled'; }
+}
+
+export async function brandOf(sql) {
+  const r = (await sql`select name, sponsor, accent, logo from erp_brand where id = 1`)[0] || {};
+  return { name: str(r.name) || 'ERP', sponsor: str(r.sponsor), accent: str(r.accent), logo: str(r.logo) };
+}
+export async function erpBrand(ctx) { await needAdmin(ctx); return { ...(await brandOf(ctx.sql)), terms: TERMS_VERSION }; }
+export async function erpBrandSet(ctx, payload) {
+  await needAdmin(ctx);
+  const p = payload || {};
+  const name = str(p.name).slice(0, 40), sponsor = str(p.sponsor).slice(0, 80), accent = str(p.accent), logo = str(p.logo);
+  if (!name) throw new Error('Give the ERP a name.');
+  if (accent && !/^#[0-9a-f]{6}$/i.test(accent)) throw new Error('A colour is like #2756c9.');
+  if (logo && (!/^data:image\/(png|jpeg|webp|svg\+xml);base64,/.test(logo) || logo.length > 200000)) throw new Error('The logo must be a PNG, JPG, WebP or SVG under 150 KB.');
+  await ctx.sql`update erp_brand set name = ${name}, sponsor = ${sponsor || null}, accent = ${accent || null}, logo = ${logo || null}, updated_at = now() where id = 1`;
+  return erpBrand(ctx);
 }
 
 export async function installInfo(deps, id) {
@@ -342,9 +399,10 @@ export async function installRoute(deps, req) {
     if (u.searchParams.get('control') === 'beat') return { status: 200, body: await controlBeat(deps, await req.json()) };
     const what = u.searchParams.get('install');
     if (what === 'info') return { status: 200, body: { ok: true, ...(await installInfo(deps, u.searchParams.get('id'))) } };
+    if (what === 'brand') return { status: 200, body: { ok: true, ...(await brandOf(sqlOf(deps))), terms: TERMS_VERSION } };
     if (what === 'caps') {
       const e = deps.installEnv || {};
-      return { status: 200, body: { ok: true, oauth: !!(e.oauth && e.oauth.clientId), domains: !!(e.cloudflare && e.cloudflare.token), target: pagesTarget(deps) } };
+      return { status: 200, body: { ok: true, oauth: !!(e.oauth && e.oauth.clientId), domains: !!(e.cloudflare && e.cloudflare.token), target: pagesTarget(deps), free: !!(freeZone(deps) && e.freeZoneId && e.cloudflare && e.cloudflare.token) } };
     }
     if (what === 'oauth_back') return { status: 302, location: await oauthBack(deps, Object.fromEntries(u.searchParams.entries())), body: null };
     // a page opened on a company's own web address finds its copy
@@ -356,7 +414,11 @@ export async function installRoute(deps, req) {
     }
     if (req.method !== 'POST') return { status: 405, body: { ok: false } };
     const b = await req.json();
-    if (what === 'start') return { status: 200, body: { ok: true, ...(await installStart(deps, b)) } };
+    if (what === 'start') {
+      const ip = str(req.headers.get('cf-connecting-ip') || str(req.headers.get('x-forwarded-for')).split(',')[0]);
+      return { status: 200, body: { ok: true, ...(await installStart(deps, { ...b, __ip: ip })) } };
+    }
+    if (what === 'freedomain') return { status: 200, body: { ok: true, ...(await freeDomain(deps, b)) } };
     if (what === 'step') return { status: 200, body: { ok: true, ...(await installStep(deps, b)) } };
     if (what === 'oauth') return { status: 200, body: { ok: true, ...(await oauthStart(deps, b)) } };
     if (what === 'domain') return { status: 200, body: { ok: true, ...(await domainSet(deps, b)) } };
@@ -536,4 +598,4 @@ export async function erpInstallDomain(ctx, payload) {
   return { ok: true, domain: d, cname: pagesTarget(ctx.deps), auto };
 }
 
-export const HANDLERS = { erpInstalls, erpInstallInvite, erpInstallSet, erpInstallRetry, erpInstallUpdate, erpInstallToken, erpInstallDomain, erpInstallBridge };
+export const HANDLERS = { erpInstalls, erpInstallInvite, erpInstallSet, erpInstallRetry, erpInstallUpdate, erpInstallToken, erpInstallDomain, erpInstallBridge, erpBrand, erpBrandSet };
