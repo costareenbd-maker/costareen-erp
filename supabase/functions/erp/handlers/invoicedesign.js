@@ -152,6 +152,26 @@ const simpleFooter = (P, bg, fg) => '<div style="-webkit-print-color-adjust:exac
 const PAGE_H = { wave: 266, modern: 281, minimal: 265, classic: 267, bold: 281 };   // the first page's room between its margins (mm)
 const LOGO_H = { wave: 27, modern: 18, minimal: 14, classic: 18, bold: 16 };
 const LOGO_K = { s: 0.7, m: 1, l: 1.35 };
+function sealSvg(paid) {
+  const col = paid ? '#1f8a4c' : '#c0262d', id = paid ? 'sp' : 'sd';
+  const rim = []; for (let i = 0; i < 72; i++) { const r = i % 2 ? 94 : 100, a = i * Math.PI / 36; rim.push((100 + r * Math.cos(a)).toFixed(1) + ',' + (100 + r * Math.sin(a)).toFixed(1)); }
+  const star = (cx, cy, r) => { const p = []; for (let i = 0; i < 10; i++) { const rr = i % 2 ? r * 0.42 : r, a = -Math.PI / 2 + i * Math.PI / 5; p.push((cx + rr * Math.cos(a)).toFixed(1) + ',' + (cy + rr * Math.sin(a)).toFixed(1)); } return '<polygon points="' + p.join(' ') + '" fill="' + col + '"/>'; };
+  const worn = '<filter id="' + id + 'w"><feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" seed="' + (paid ? 7 : 3) + '"/><feColorMatrix values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 -1.1 1.3"/><feComposite in="SourceGraphic" operator="in"/></filter>';
+  let inner;
+  if (paid) {
+    inner = '<path id="' + id + 't" d="M 38 100 A 62 62 0 0 1 162 100" fill="none"/><path id="' + id + 'b" d="M 40 108 A 60 60 0 0 0 160 108" fill="none"/>' +
+      '<text font-family="Arial Black,Arial,sans-serif" font-weight="900" font-size="17" letter-spacing="3" fill="' + col + '"><textPath href="#' + id + 't" startOffset="50%" text-anchor="middle">THANK YOU</textPath></text>' +
+      '<text font-family="Arial Black,Arial,sans-serif" font-weight="900" font-size="17" letter-spacing="3" fill="' + col + '"><textPath href="#' + id + 'b" startOffset="50%" text-anchor="middle" dominant-baseline="hanging">THANK YOU</textPath></text>' +
+      '<g transform="rotate(-24 100 100)"><rect x="6" y="78" width="188" height="44" rx="5" fill="' + col + '"/><text x="100" y="113" text-anchor="middle" font-family="Arial Black,Arial,sans-serif" font-weight="900" font-size="38" letter-spacing="4" fill="#fff">PAID</text></g>';
+  } else {
+    inner = star(72, 58, 9) + star(100, 48, 11) + star(128, 58, 9) + star(72, 142, 9) + star(100, 152, 11) + star(128, 142, 9) +
+      '<g transform="rotate(-12 100 100)"><rect x="4" y="80" width="192" height="40" rx="4" fill="#fff" stroke="' + col + '" stroke-width="5"/>' +
+      '<text x="100" y="110" text-anchor="middle" font-family="Arial Black,Arial,sans-serif" font-weight="900" font-size="21" letter-spacing="0.5" fill="' + col + '">PAYMENT DUE</text></g>';
+  }
+  return '<svg class="seal" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg"><defs>' + worn + '</defs><g filter="url(#' + id + 'w)">' +
+    '<polygon points="' + rim.join(' ') + '" fill="' + col + '"/><circle cx="100" cy="100" r="88" fill="#fff"/>' +
+    '<circle cx="100" cy="100" r="84" fill="none" stroke="' + col + '" stroke-width="4"/><circle cx="100" cy="100" r="70" fill="none" stroke="' + col + '" stroke-width="2"/>' + inner + '</g></svg>';
+}
 function stampHtml(P, d) {
   const due = num(d.due), paid = num(d.paid);
   const [txt, col] = !(due > 0.5) ? ['PAID', '#15803d'] : paid > 0.5 ? ['PARTLY PAID', '#b45309'] : ['DUE', '#b91c1c'];   // the amount owed is in the big bar at the bottom
@@ -159,7 +179,8 @@ function stampHtml(P, d) {
 }
 function bigBottom(P, d) {
   const owed = num(d.due) > 0.5;
-  return '<div class="bigb" style="background:' + (owed ? '#b91c1c' : P.accent) + ';color:' + (owed ? '#ffffff' : P.onAccent) + '"><span>' + (owed ? 'Amount due' : 'Total') + '</span><b>' + esc(P.cur) + ' ' + P.n(owed ? d.due : d.grand) + '</b></div>';
+  return '<div class="bigb" style="background:' + (owed ? '#fdf2f2' : P.a5) + ';border-left:2.2mm solid ' + (owed ? '#c0262d' : P.accent) + '"><span>' + (owed ? 'Amount due' : 'Total') + '</span>' +
+    '<i class="sealat">' + sealSvg(!owed) + '</i><b style="color:' + (owed ? '#b91c1c' : P.dark) + '">' + esc(P.cur) + ' ' + P.n(owed ? d.due : d.grand) + '</b></div>';
 }
 function finish(id, out, P, d, D) {
   let html = out.html;
@@ -167,15 +188,19 @@ function finish(id, out, P, d, D) {
   const cols = d.perLine ? 6 : 5, blanks = Math.max(0, 5 - d.lines.length);
   if (blanks) html = html.replace('</tbody></table>', Array(blanks + 1).join('<tr class="blank">' + Array(cols + 1).join('<td>&nbsp;</td>') + '</tr>') + '</tbody></table>');
   // the stamp in the top corner, the big amount at the bottom (or the old big amount on top)
-  if (!D.bigTop) {
-    if (id === 'wave') html = html.replace(/<div class="owed">[\s\S]*?<\/span><\/div>/, '<div class="owed">' + stampHtml(P, d) + '</div>');
-    else if (id === 'bold') html = html.replace(/<div class="big">[\s\S]*?<\/span><\/div><\/div>/, '<div class="bigs">' + stampHtml(P, d) + '</div></div>');
-    else html = html.replace(/(<div class="tt">[\s\S]*?<\/div>)/, '$1' + stampHtml(P, d));
+  if (!D.bigTop) {   // the top stays clean; the big amount and its seal sit at the bottom
+    if (id === 'wave') html = html.replace(/<div class="owed">[\s\S]*?<\/span><\/div>/, '');
+    else if (id === 'bold') html = html.replace(/<div class="big">[\s\S]*?<\/span><\/div><\/div>/, '</div>');
     html = html.replace('<div class="note">', bigBottom(P, d) + '<div class="note">');
+  } else {           // the big amount on top: the seal goes on the totals
+    html = html.replace(/(<table class="sum">[\s\S]*?<\/table>)/, '<div class="sumwrap">$1<i class="sealat sealsum">' + sealSvg(!(num(d.due) > 0.5)) + '</i></div>');
   }
   const lh = Math.round(LOGO_H[id] * (id === 'classic' && D.logoSize === 'l' ? 1.12 : LOGO_K[D.logoSize]) * 10) / 10;   // Classic is tall already: its large logo stays a little smaller
   let css = '.pstamp{display:inline-block;white-space:nowrap;border:0.7mm solid;border-radius:1.5mm;padding:1.2mm 3.5mm;font-weight:800;font-size:12pt;letter-spacing:1pt;transform:rotate(-6deg);margin-top:3mm;background:rgba(255,255,255,.85)}' +
-    '.bigb{display:flex;justify-content:space-between;align-items:center;border-radius:2mm;padding:3.5mm 6mm;margin-top:5mm;break-inside:avoid}.bigb span{font-size:10pt;font-weight:700;text-transform:uppercase;letter-spacing:1.5pt}.bigb b{font-size:20pt;font-weight:800}' +
+    '.bigb{position:relative;display:flex;justify-content:space-between;align-items:center;border-radius:2mm;padding:3.5mm 6mm;margin-top:9mm;margin-bottom:6mm;break-inside:avoid;color:#1f2430}.bigb span{font-size:10pt;font-weight:700;text-transform:uppercase;letter-spacing:1.5pt}.bigb b{font-size:20pt;font-weight:800;position:relative;z-index:1}' +
+    // a real stamp: tilted, a little see-through and printed over (multiply), so every figure under it still reads
+    '.sealat{position:absolute;left:46%;top:50%;width:37mm;height:37mm;margin:-18.5mm 0 0 -18.5mm;transform:rotate(-14deg);opacity:.92;mix-blend-mode:multiply;pointer-events:none;z-index:2}.sealat svg{width:100%;height:100%;display:block}' +
+    '.sumwrap{position:relative;flex:0 0 auto;align-self:flex-start}.sumwrap .sealat.sealsum{left:30%;top:62%}' +
     'tr.blank td{height:6.5mm;padding-top:0 !important;padding-bottom:0 !important}' +
     // the page is A4 even with one item: the money part sits at its foot
     'body{min-height:' + (PAGE_H[id] - 4) + 'mm;display:flex;flex-direction:column}.wrap{flex:1 0 auto;display:flex;flex-direction:column}.tail{margin-top:auto;padding-top:4mm}' +
@@ -387,3 +412,28 @@ export async function erpInvoiceQrUpload(ctx, payload) {
 }
 
 export const HANDLERS = { erpInvoiceDesign, erpInvoiceDesignSave, erpInvoicePreview, erpInvoiceSamplePdf, erpInvoiceQrUpload };
+
+// ---------------------------------------------------------------- the customer statement, on the invoice design
+// The chosen invoice design draws a page for the customer, then its item table becomes the statement's lines
+// (date, details, charged, paid, balance) and its totals show brought forward / charged / paid / balance, with the seal.
+export async function statementDoc(st, p, s, img, now, D, waveArt) {
+  D = { ...merge(D), title: 'STATEMENT', terms: '', thanks: D && D.thanks ? D.thanks : 'Thank you for your business.' };
+  if (D.template === 'receipt') D.template = 'modern';
+  const charged = st.totalDebit, paid = st.totalCredit, owed = Math.max(0, st.closing);
+  const d = { invoiceNo: st.from + ' \u2013 ' + st.to, head: { customer: st.customer, phone: st.phone, when: now, method: '', source: '' },
+    lines: [], gross: st.opening + charged, itemDisc: 0, invDisc: 0, totalDisc: 0, delivery: 0, grand: st.opening + charged, paid, due: owed, perLine: false };
+  const out = await invoiceDoc(d, p, s, {}, img, now, D, waveArt);
+  const n = (v) => String(Math.round(num(v))).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  const rows = [['', 'Balance brought forward', '', '', n(st.opening)]].concat(st.rows.map((r) => [r.date, r.text + (r.ref && r.text.indexOf(r.ref) < 0 ? ' \u00b7 ' + r.ref : ''), r.debit ? n(r.debit) : '', r.credit ? n(r.credit) : '', n(r.balance)]));
+  while (rows.length < 5) rows.push(['', '', '', '', '']);
+  const table = '<table class="items"><thead><tr><th style="width:30mm;white-space:nowrap">Date</th><th>Details</th><th class="r" style="width:26mm">Charged</th><th class="r" style="width:26mm">Paid</th><th class="r" style="width:28mm">Balance</th></tr></thead><tbody>' +
+    rows.map((r) => '<tr' + (r[1] ? '' : ' class="blank"') + '><td style="white-space:nowrap">' + esc(r[0]) + '</td><td>' + esc(r[1]) + '</td><td class="r">' + r[2] + '</td><td class="r">' + r[3] + '</td><td class="r">' + r[4] + '</td></tr>').join('') + '</tbody></table>';
+  let html = out.html.replace(/<table class="items[\s\S]*?<\/table>/, table)
+    .replace(/Invoice no\./g, 'Period').replace(/<tr[^>]*><td>Subtotal<\/td><td[^>]*>[^<]*<\/td><\/tr>/, '<tr><td>Brought forward</td><td class="r">' + n(st.opening) + '</td></tr><tr><td>Charged</td><td class="r">' + n(charged) + '</td></tr>')
+    .replace(/>Paid<\/td>/, '>Paid in this period</td>').replace(/>Due<\/td>/, '>Balance</td>');
+  html = html.replace(/(<div class="bigb"[^>]*><span>)(?:Amount due|Total)(<\/span>[\s\S]*?<b[^>]*>)[^<]*(<\/b>)/, (m, a1, a2, a3) => a1 + (owed > 0.5 ? 'Balance due' : 'Balance') + a2 + (owed > 0.5 ? esc(String(s.currency || 'BDT')) + ' ' + n(owed) : 'Nothing due') + a3);
+  if (st.advance > 0) html = html.replace('<div class="note">', '<div class="note"><b>Advance held for you: ' + esc(String(s.currency || 'BDT')) + ' ' + n(st.advance) + '</b><br>');
+  if (st.open && st.open.length) html = html.replace('<div class="note">', '<div class="note">Unpaid invoices: ' + st.open.map((o) => esc(o.id) + ' (' + n(o.owed) + ')').join(', ') + '<br>');
+  return { html, footer: out.footer };
+}
+export { imagesFor };

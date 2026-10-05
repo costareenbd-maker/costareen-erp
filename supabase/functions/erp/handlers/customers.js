@@ -315,22 +315,14 @@ function h(s) {
 /** erpStatementPdf (ERP:9013): the statement as a PDF, saved beside the invoices. */
 export async function erpStatementPdf(ctx, payload) {
   const s = await erpCustomerStatement(ctx, payload);
-  const html = '<html><body style="font-family:Arial,sans-serif;font-size:11px;color:#111">' +
-    '<h2 style="margin:0">' + h(s.business) + '</h2><h3 style="margin:4px 0 10px">Statement of account</h3>' +
-    '<p><b>' + h(s.customer) + '</b>' + (s.phone ? ' &middot; ' + h(s.phone) : '') + '<br>' + h(s.from) + ' to ' + h(s.to) + '</p>' +
-    '<table width="100%" cellpadding="5" cellspacing="0" border="1" style="border-collapse:collapse">' +
-    '<tr style="background:#eee"><th align="left">Date</th><th align="left">Details</th><th align="right">Charged</th>' +
-    '<th align="right">Paid</th><th align="right">Balance</th></tr>' +
-    '<tr><td></td><td>Balance brought forward</td><td></td><td></td><td align="right">' + s.opening + '</td></tr>' +
-    s.rows.map((r) => '<tr><td>' + h(r.date) + '</td><td>' + h(r.text) + (r.ref && r.text.indexOf(r.ref) < 0 ? ' &middot; ' + h(r.ref) : '') +
-        '</td><td align="right">' + (r.debit || '') + '</td><td align="right">' + (r.credit || '') + '</td><td align="right">' + r.balance + '</td></tr>').join('') +
-    '<tr><td colspan="4" align="right"><b>Balance due</b></td><td align="right"><b>' + s.closing + '</b></td></tr></table>' +
-    (s.advance > 0 ? '<p>Advance held for you: <b>' + s.advance + '</b></p>' : '') +
-    (s.open.length ? '<p>Unpaid invoices: ' + s.open.map((o) => h(o.id) + ' (' + o.owed + ')').join(', ') + '</p>' : '') +
-    '</body></html>';
+  // drawn on the business's invoice design: the same header, colours and footer, and the PAID / PAYMENT DUE seal
+  const S = await import('./sales.js'), V = await import('./invoicedesign.js');
+  const p = await S.qProfile(ctx), qs = await S.qSettings(ctx), D = await V.invoiceDesign(ctx);
+  if (!String(p.name || '').trim()) p.name = s.business || (ctx.s && ctx.s.businessName) || '';
+  const page = await V.statementDoc(s, p, qs, await V.imagesFor(ctx, p, D), ctx.now, D, S.invoiceArtParts);
   const name = 'Statement_' + String(s.customer || s.phone).replace(/[^\w\-]+/g, '_') + '_' +
                formatDate(ctx.now, 'yyyy-MM-dd') + '.pdf';
-  const bytes = await renderPdf(ctx, html);
+  const bytes = await renderPdf(ctx, page.html, { footer: page.footer });
   await deleteFile(ctx, 'invoices', name);          // same-day statement is replaced
   const f = await saveFile(ctx, 'invoices', name, bytes, 'application/pdf');
   return { url: f.url, id: f.id, name };

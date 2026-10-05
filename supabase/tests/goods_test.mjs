@@ -22,7 +22,7 @@ check('product page: stock = ledger (7 - 2 + 10 = 15), totals in/out', P.stock =
 check('product page: ledger newest first with running balance', P.ledger[0].what === 'Received' && P.ledger[0].after === 15 && P.ledger[0].qty === 10 &&
   P.ledger[1].what === 'Sold' && P.ledger[1].invoice === INV && P.ledger[1].after === 5, P.ledger.slice(0, 3));
 check('product page: owner sees cost, margin, stock at cost, receipt cost', P.canSeeMoney && P.cost > 0 && P.margin !== undefined && P.stockValueCost > 0 && P.ledger[0].price === 1000, [P.cost, P.margin, P.ledger[0]]);
-check('product page: 12 months, this month has the sale', P.months.length === 12 && P.months[11].units >= 2, P.months.slice(-2));
+check('product page: 12 months, this month has the sale', P.months.length === 12 && P.months[11].value >= 2700, P.months.slice(-2));
 check('product page: recent sales link to invoices', P.sales[0].invoice === INV && P.sales[0].qty === 2 && P.sales[0].price === 1350, P.sales[0]);
 const fields = P.changes.map((c) => c.field);
 const sp = P.changes.find((c) => c.field === 'Selling price') || {};

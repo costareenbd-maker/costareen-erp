@@ -15,17 +15,26 @@ const count = (h, re) => (h.match(re) || []).length;
 for (const t of ['wave', 'modern', 'minimal', 'classic', 'bold']) {
   let h = await page(t, inv(1, 100, 0));
   check(t + ': 1 item gives 5 rows (4 empty)', count(h, /<tr class="blank">/g) === 4, count(h, /<tr class="blank">/g));
-  check(t + ': paid -> PAID stamp, Total bar at the bottom', /class="pstamp"[^>]*>PAID</.test(h) && /class="bigb"[\s\S]*?Total<\/span><b>BDT 100</.test(h), t);
+  check(t + ': paid -> PAID seal on the Total bar at the bottom, nothing on top', /class="bigb"[\s\S]*?Total<\/span><i class="sealat"><svg class="seal"[\s\S]*?>PAID<[\s\S]*?BDT 100</.test(h) && !/class="pstamp"/.test(h), t);
   check(t + ': the page is filled to A4', /body\{min-height:\d+mm;display:flex/.test(h), t);
   h = await page(t, inv(7, 0, 700));
-  check(t + ': 7 items, no empty rows; DUE stamp; Amount due bar', count(h, /<tr class="blank">/g) === 0 && />DUE</.test(h) && /Amount due<\/span><b>BDT 700</.test(h), t);
+  check(t + ': 7 items, no empty rows; PAYMENT DUE seal on the Amount due bar', count(h, /<tr class="blank">/g) === 0 && />PAYMENT DUE</.test(h) && /Amount due<\/span><i class="sealat">[\s\S]*?BDT 700</.test(h), t);
   h = await page(t, inv(2, 50, 150));
-  check(t + ': part paid -> PARTLY PAID', />PARTLY PAID</.test(h), t);
+  check(t + ': part paid -> PAYMENT DUE seal', />PAYMENT DUE</.test(h) && !/>PAID</.test(h), t);
 }
 let h = await page('bold', inv(1, 0, 100), { bigTop: true });
-check('big amount on top when chosen: no stamp, no bottom bar', !/class="pstamp"/.test(h) && !/class="bigb"/.test(h) && /class="big"/.test(h));
+check('big amount on top when chosen: no bottom bar, the seal sits on the totals', !/class="bigb"/.test(h) && /class="big"/.test(h) && /class="sumwrap"[\s\S]*?class="sealat sealsum"/.test(h));
 h = await page('modern', inv(1, 0, 100), { logoSize: 'l', logoSide: 'right' });
 check('logo large and on the right', /\.lgo\{height:24\.3mm/.test(h) && /\.band\{flex-direction:row-reverse\}/.test(h));
 h = (await D1.invoiceDoc(inv(1, 100, 0), p, s, {}, {}, new Date(), des('receipt'), S.invoiceArtParts)).html;
 check('the receipt stays short (no A4 fill, no empty rows)', !/min-height/.test(h) && !/class="blank"/.test(h));
+// the customer statement on the invoice design
+const st = { business: 'Shop', customer: 'K', phone: '017', from: '1 Jul 2026', to: '6 Oct 2026', opening: 100, rows: [{ date: '2 Jul 2026', text: 'Invoice INV-9 (1 item)', ref: 'INV-9', debit: 500, credit: 0, balance: 600 }, { date: '3 Jul 2026', text: 'Payment - Cash', ref: 'INV-9', debit: 0, credit: 200, balance: 400 }], closing: 400, totalDebit: 500, totalCredit: 200, advance: 0, open: [{ id: 'INV-9', owed: 400 }] };
+for (const t of ['wave', 'modern', 'classic', 'bold', 'receipt']) {
+  const sh = (await D1.statementDoc(st, p, s, {}, new Date(), des(t), S.invoiceArtParts)).html;
+  check(t + ': statement on the design: title, lines, balance due bar, PAYMENT DUE seal', /STATEMENT/.test(sh) && /Balance brought forward/.test(sh) && /Invoice INV-9/.test(sh) && /Balance due<\/span>[\s\S]*?BDT 400/.test(sh) && />PAYMENT DUE</.test(sh) && /Period/.test(sh), t);
+}
+const paidSt = { ...st, closing: 0, totalCredit: 600, open: [] };
+const ph = (await D1.statementDoc(paidSt, p, s, {}, new Date(), des('modern'), S.invoiceArtParts)).html;
+check('settled statement: Balance, Nothing due, PAID seal', /Balance<\/span>[\s\S]*?Nothing due/.test(ph) && />PAID</.test(ph));
 await done();

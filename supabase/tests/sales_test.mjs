@@ -55,8 +55,8 @@ let h = lastPdf().html;
 check('designed page: business, invoice no, Bill To, Deliver To, method, delivery',
   h.includes('Costareen Ltd') && h.includes(A) && h.includes('Rahim') && h.includes('Mirpur') &&
   h.includes('<b>Payment</b><span>Cash</span>') && h.includes('Steadfast courier'), h.slice(0, 200));
-check('designed page: owed band "BDT 1,660 Total due", due row red',
-  h.includes('<b>BDT 1,660</b><span>Total due</span>') && h.includes('<tr class="due"><td>Due</td><td>BDT 1,660</td></tr>'));
+check('designed page: "Amount due BDT 1,660" bar at the bottom with the PAYMENT DUE seal, due row red',
+  /Amount due<\/span><i class="sealat">[\s\S]*?>PAYMENT DUE<[\s\S]*?BDT 1,660<\/b>/.test(h) && h.includes('<tr class="due"><td>Due</td><td>BDT 1,660</td></tr>'));
 check('designed page: discount split from the note tag (invoice discount only)',
   h.includes('<tr><td>Invoice discount</td><td>− 100</td></tr>') && !h.includes('Item discounts') &&
   h.includes('<tr><td>Subtotal</td><td>2,700</td></tr>') && h.includes('<tr><td>Delivery</td><td>60</td></tr>') &&
@@ -64,7 +64,7 @@ check('designed page: discount split from the note tag (invoice discount only)',
 check('designed page: line shows gross (no per-line column when an invoice discount exists)',
   !h.includes('>Discount</th>') && h.includes('<td class="r">1,350</td><td class="r">2,700</td>'));
 check('designed page: logo + QR embedded as data URLs, bank card, footer text, accent tints',
-  h.includes('<img class="logo" src="data:image/png;base64,') && h.includes('<div class="qr"><img src="data:image/png;base64,') &&
+  h.includes('<img class="logo lgo" src="data:image/png;base64,') && h.includes('<div class="qr"><img src="data:image/png;base64,') &&
   h.includes('BRAC Bank') && h.includes('2080773020001') && h.includes('Thanks!') && h.includes('fill="#1a3c8f"'));
 check('designed page: dark accent -> white text on it', h.includes('.owed{position:absolute;right:16mm;top:12mm;text-align:right;color:#ffffff}'));
 const foot = lastPdf().opts.footer || '';
@@ -343,7 +343,7 @@ const made = await sql.begin(async (tx) => {
 });
 h = lastPdf().html;
 check('makeInvoicePdf returns {id,url,name}', made && made.name === 'Invoice_' + P + '.pdf' && made.id && /^https:/.test(made.url), made);
-check('paid in full band, per-line discount column, Nothing due', h.includes('<span>Paid in full</span>') && h.includes('>Discount</th>') &&
+check('paid in full: Total bar with the PAID seal, per-line discount column, Nothing due', /Total<\/span><i class="sealat">[\s\S]*?>PAID</.test(h) && h.includes('>Discount</th>') &&
   h.includes('<td class="r">−100</td><td class="r">2,600</td>') && h.includes('<tr class="ok"><td>Due</td><td>Nothing due</td></tr>') &&
   h.includes('<tr><td>Discount</td><td>− 100</td></tr>') && !h.includes('Deliver To'), h.slice(h.indexOf('<table class="items"'), h.indexOf('<table class="items"') + 600));
 

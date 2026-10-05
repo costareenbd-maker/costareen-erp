@@ -163,10 +163,10 @@ const ymd = new Date(Date.now() + 6 * 3600e3).toISOString().slice(0, 10);
 check('PDF saved as Statement_Karim_<today>.pdf in invoices', r.ok && r.result.name === 'Statement_Karim_' + ymd + '.pdf' &&
   /^https:\/\/files\.test\//.test(r.result.url) && files.list().includes(B + '/invoices/Statement_Karim_' + ymd + '.pdf'), r);
 const html = pdfs.length ? pdfs[pdfs.length - 1].html : '';
-check('PDF html: heading, opening, rows, closing, advance, unpaid', html.includes('<h2 style="margin:0">Costareen</h2>') &&
-  html.includes('Statement of account') && html.includes('Balance brought forward</td><td></td><td></td><td align="right">300') &&
-  html.includes('<b>1870</b>') && html.includes('Advance held for you: <b>300</b>') && html.includes('INV-OLD (300)') &&
-  html.includes('Goods returned &middot; ' + invK), html.slice(0, 400));
+check('PDF html (on the invoice design): title, opening, rows, closing, advance, unpaid, seal', html.includes('STATEMENT') && html.includes('Costareen') &&
+  /Balance brought forward<\/td><td class="r"><\/td><td class="r"><\/td><td class="r">300</.test(html) &&
+  /Balance due<\/span>[\s\S]*?BDT 1,870/.test(html) && html.includes('Advance held for you: BDT 300') && html.includes('INV-OLD (300)') &&
+  html.includes('Goods returned · ' + invK) && html.includes('>PAYMENT DUE<'), html.slice(0, 400));
 r = await sales('erpStatementPdf', [{ phone: '01712345678', name: 'Karim', days: 365 }]);
 check('same-day statement replaced, not doubled', r.ok && files.list().filter((k) => k.includes('Statement_Karim_')).length === 1, files.list());
 r = await sales('erpStatementPdf', [{ phone: '01666666666', name: 'Lina O\'Neil' }]);
