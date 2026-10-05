@@ -537,20 +537,24 @@
     function runSeq(m, seq, end) { begin(m, 'seq'); m.seq = seq; m.seqI = 0; m.seqT = 0; m.seqEnd = end; m.on = null; m.vx = m.vy = 0; m.flip = 0; m.spin = 0; m.aim = null; }
     function stepSeq(m, dt) {
       var q = m.seq && m.seq[m.seqI]; if (!q) { endSeq(m); return; }
-      m.seqT += dt; var k = Math.min(1, m.seqT / q.d), ke = q.p === 'wall' ? k : ease(k), ox = m.x, oy = m.y;
+      m.seqT += dt; var k = Math.min(1, m.seqT / q.d), ke = q.p === 'wall' || q.lin ? k : ease(k), ox = m.x, oy = m.y;
+      if (q.p === 'runin') m.ph += dt * 15;
+      if (q.p === 'dive') { m.flip = q.flip ? 1 : 0; m.spin = q.flip ? q.flip * Math.PI * 2 * ease(k) : 0; }
       if (q.face) m.dir = q.face;
       m.x = q.x0 + (q.x1 - q.x0) * ke; m.y = q.y0 + (q.y1 - q.y0) * ke - (q.arc ? Math.sin(Math.PI * k) * q.arc : 0);
-      m.x = cl(m.x, M, W - M); m.y = Math.min(m.y, H - M);       // an inch clear of the sides and the bottom
+      if (!m.entering) m.x = cl(m.x, M, W - M); m.y = Math.min(m.y, H - M);       // an inch clear of the sides and the bottom (not while coming in)
       if (q.p === 'wall') m.ph += dt * 18;
       m.vx = (m.x - ox) / Math.max(dt, 0.001); m.vy = (m.y - oy) / Math.max(dt, 0.001);
       if (k >= 1) { m.seqI++; m.seqT = 0; if (m.seqI >= m.seq.length) endSeq(m); }
     }
     function endSeq(m) {
-      var e = m.seqEnd || {}; m.seq = null; m.seqEnd = null;
+      var e = m.seqEnd || {}; m.seq = null; m.seqEnd = null; m.flip = 0; m.spin = 0;
+      if (m.entering) { m.entering = 0; m.x = cl(m.x, M, W - M); }
       var yt = e.yank;
       if (m.rope) { if (!yt) m.hookHit = now; m.rope = null; }
       if (e.land && idx(e.land) >= 0) {
         m.on = e.land; m.y = e.land.y; m.x = cl(m.x, e.land.x0, e.land.x1); m.vx = m.vy = 0; begin(m, 'land'); m.lastLand = now; dust(m.x, m.y, 4);
+        if (m.big) { m.big = 0; shake(5); dust(m.x, m.y, 12); }
         if (yt && yt.on === m.on && !yt.dying && !yt.cho && yt.st !== 'flung' && yt.st !== 'held') { yt.yank = { x0: yt.x, x1: m.x + m.dir * 24 }; begin(yt, 'yank'); m.pulling = yt; begin(m, 'guard'); }
         return;
       }
@@ -1211,6 +1215,8 @@
         if (sq.p === 'pull1') return kq < 0.5 ? mix(P.hang1, P.vault, ease(kq / 0.5)) : mix(P.vault, P.land, ease((kq - 0.5) / 0.5));
         if (sq.p === 'pull') return kq < 0.5 ? mix(P.hang, P.vault, ease(kq / 0.5)) : mix(P.vault, P.land, ease((kq - 0.5) / 0.5));
         if (sq.p === 'lower') return mix(P.land, P.hang, ease(kq));
+        if (sq.p === 'runin') { var rs = Math.sin(m.ph), rc = Math.abs(Math.cos(m.ph)); return { L: 22 + rc * 4, hy: 19 + rc * 2, sF: 28 - rs * 62, eF: 95 + rs * 15, sB: 28 + rs * 62, eB: 95 - rs * 15, hF: 14 + 52 * rs, kF: -22 - 85 * Math.max(0, -rs), hB: 14 - 52 * rs, kB: -22 - 85 * Math.max(0, rs) }; }
+        if (sq.p === 'dive') return sq.tuck && kq > 0.15 && kq < 0.85 ? P.land : kq > 0.85 ? mix(P.air, P.land, (kq - 0.85) / 0.15) : P.air;
         if (sq.p === 'hookaim' || sq.p === 'hookfire') return sq.p === 'hookaim' ? mix(P.guard, P.bowup, ease(Math.min(1, kq * 2))) : P.bowup;
         if (sq.p === 'rope') { var ra = Math.sin(m.seqT * 14); return { L: -2, hy: 20, sF: 168 + ra * 12, eF: 8, sB: 168 - ra * 12, eB: 8, hF: 45 + ra * 10, kF: -70, hB: 25 - ra * 10, kB: -80 }; }   // hand over hand, legs round the rope
         if (sq.p === 'wall') { var sr = Math.sin(m.ph); return { L: 18, hy: 18, sF: 120 - sr * 50, eF: 40, sB: 120 + sr * 50, eB: 40, hF: 40 + 45 * sr, kF: -60 - 40 * Math.max(0, -sr), hB: 40 - 45 * sr, kB: -60 - 40 * Math.max(0, sr) }; }
@@ -1769,7 +1775,7 @@
       }
       return { a: 0, c: null };
     }
-    // the third man: bigger, purple, drops in from the top near the ninja
+    // the third man: bigger, purple, comes in from the edge near the ninja
     function bringThird() {
       if (!hero || !hero.on) { thirdT = 0.5; return; }
       var x = Math.max(M, Math.min(W - M, hero.x + (Math.random() < 0.5 ? -1 : 1) * (120 + Math.random() * 120)));
@@ -1780,16 +1786,41 @@
       leapIn(m, p, foe && foe.x > W / 2 ? -1 : 1);
       third = m;
     }
-    // v16: from just off the edge of the screen, a running leap with a somersault onto a top near that edge
+    // v19: they come in by themselves from off the screen - sprinting along the floor (now and then a flip, a double flip,
+    // an aerial or a dive roll on the way in), a running dive in at the height of a top near the edge, or sliding down a
+    // rope from the top. Then they free-run up to the ninja on their own. Nobody is flung in or falls from the sky.
     function leapIn(m, p, side) {
-      var x0 = side > 0 ? W + 24 : -24, tx = side > 0 ? Math.max(p.x0 + 8, p.x1 - 16) : Math.min(p.x1 - 8, p.x0 + 16);
-      var y0 = Math.max(30, p.y - 50), vy0 = -560, dy = y0 - p.y, t = (-vy0 + Math.sqrt(vy0 * vy0 - 2 * G * dy)) / G;
-      m.x = x0; m.y = y0; begin(m, 'air'); m.vx = (tx - x0) / t; m.vy = vy0; m.aim = p; m.flip = 1; m.entering = 1; m.dir = m.vx >= 0 ? 1 : -1;
+      var gr = plats[plats.length - 1], face = -side, edgeX = side > 0 ? W - M : M, out = side > 0 ? W + 30 : -30, seq = [];
+      var nearEdge = side > 0 ? W - M - p.x1 : p.x0 - M, r = Math.random();
+      m.entering = 1; m.dir = face;
+      if (nearEdge < 260 && p.y > 60 && r < 0.4) {   // a running dive in at the height of the top
+        var tx = side > 0 ? Math.max(p.x0 + 8, p.x1 - 18) : Math.min(p.x1 - 8, p.x0 + 18), sx = side > 0 ? W + 8 : -8, dist = Math.abs(tx - sx), fl = Math.random() < 0.55;
+        m.x = out; m.y = p.y;
+        seq.push({ p: 'runin', d: 0.16, x0: out, y0: p.y, x1: sx, y1: p.y, face: face, lin: 1 });
+        seq.push({ p: 'dive', d: Math.max(0.34, dist / 430), x0: sx, y0: p.y, x1: tx, y1: p.y, arc: 30 + Math.min(36, dist * 0.1), face: face, flip: fl ? 1 : 0, tuck: fl, lin: 1 });
+        runSeq(m, seq, { land: p }); m.entering = 1; return;
+      }
+      if (r > 0.82 && p.y > 80) {   // down a rope from the top of the screen
+        var rx = cl(side > 0 ? p.x1 - 20 - Math.random() * 30 : p.x0 + 20 + Math.random() * 30, p.x0 + 6, p.x1 - 6);
+        m.x = rx; m.y = -40;
+        seq.push({ p: 'rope', d: Math.max(0.6, (p.y + 40) / 380), x0: rx, y0: -40, x1: rx, y1: p.y - 10, face: face, lin: 1 });
+        seq.push({ p: 'dive', d: 0.18, x0: rx, y0: p.y - 10, x1: rx + face * 8, y1: p.y, arc: 6, face: face });
+        runSeq(m, seq, { land: p }); m.rope = { ax: rx, ay: -60 }; m.entering = 1; return;
+      }
+      // sprinting in along the floor
+      var stop = edgeX - side * (70 + Math.random() * 140), trick = Math.random();
+      m.x = out; m.y = gr.y;
+      if (trick < 0.62) {
+        var mid = edgeX - side * 10;
+        var kind = trick < 0.2 ? { flip: 1, tuck: 1, arc: 46, d: 0.46 } : trick < 0.32 ? { flip: 2, tuck: 1, arc: 74, d: 0.66 } : trick < 0.47 ? { flip: 1, tuck: 0, arc: 40, d: 0.5 } : { flip: 0, tuck: 1, arc: 26, d: 0.4 };
+        seq.push({ p: 'runin', d: Math.abs(mid - out) / 330, x0: out, y0: gr.y, x1: mid, y1: gr.y, face: face, lin: 1 });
+        seq.push({ p: 'dive', d: kind.d, x0: mid, y0: gr.y, x1: stop, y1: gr.y, arc: kind.arc, face: face, flip: kind.flip, tuck: kind.tuck, lin: 1 });
+      } else seq.push({ p: 'runin', d: Math.abs(stop - out) / 300, x0: out, y0: gr.y, x1: stop, y1: gr.y, face: face, lin: 1 });
+      runSeq(m, seq, { land: gr }); m.entering = 1;
     }
     function makeBoss(m) { m.boss = 1; m.team = 'red'; m.sz = 1.35; m.hp = 160; m.hp0 = 160; m.shield = 3; m.big = 1; }
     function bringFoe() {
-      // the next one leaps in from the far side of the screen
-      // the next one drops in from the top of the screen, away from the ninja, and has to free-run to him
+      // the next one comes in by himself from the side of the screen away from the ninja, and free-runs to him
       var land = plats.filter(function (p) { return !p.ground && p.x1 - p.x0 > 40 && (!hero || Math.abs((p.x0 + p.x1) / 2 - hero.x) > 250) && !nearBlock((p.x0 + p.x1) / 2, p.y); });
       var p = land.length ? land[Math.floor(Math.random() * land.length)] : plats[plats.length - 1];
       var side = hero && hero.x < W / 2 ? 1 : -1;               // the side of the screen away from the ninja

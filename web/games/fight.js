@@ -184,17 +184,20 @@
   var SLAM = [[0, over(P.air, { sF: 172, eF: 0, sB: 166, eB: 0 })], [0.6, over(P.air, { sF: 172, eF: 0, sB: 166, eB: 0 })]];
   var LAND = { L: 34, hy: 18, sF: 120, eF: 0, sB: 110, eB: 0, hF: 50, kF: -80, hB: -40, kB: -60 };
   var DIFF = { easy: 0.65, normal: 1, hard: 1.4 };
+  function rosterOf(r) { r = Array.isArray(r) ? r : []; return r.length >= 2 ? r : r.concat(PLAIN.filter(function (p) { return !r.some(function (q) { return q.name === p.name; }); })); }   // one own fighter plays with the plain ones
+  function statsOf(x) { x = x || {}; var o = {}; ['spd', 'pow', 'hp', 'def'].forEach(function (k) { var v = Math.round(Number(x[k])); o[k] = v >= 1 && v <= 9 ? v : 5; }); return o; }
+  function statK(v) { return 1 + (v - 5) * 0.04; }   // 1 point = 4 %
 
   window.ERP_FIGHT = function (cv, opts) {
     opts = opts || {};
     var gw = opts.words || function (t) { return t; };
     // online fight: the challenger (host) runs the fight; the other side (guest) sends keys and draws what it is told
     var NET = opts.net || null, rHeld = {}, rHit = {}, rHitT = {}, netAcc = 0, lastTickAt = 0;
-    var roster = (opts.roster && opts.roster.length >= 2 ? opts.roster : PLAIN).map(function (d, i) {
+    var roster = rosterOf(opts.roster).map(function (d, i) {
       var h = 0; for (var q = 0; q < d.name.length; q++) h = (h * 31 + d.name.charCodeAt(q)) >>> 0;
       return { name: d.name, move: d.move, color: d.color, head: d.head, img: headCanvas(d.head),
         white: headCanvas({ w: d.head.w, h: d.head.h, pal: ['#ffffff'], px: d.head.px.replace(/[^.]/g, '0') }),
-        skin: skinOf(d.head), outfit: d.outfit || OUTFITS[i % OUTFITS.length], taunt: d.taunt || TAUNTS[h % TAUNTS.length] };
+        skin: skinOf(d.head), outfit: d.outfit || OUTFITS[i % OUTFITS.length], taunt: d.taunt || TAUNTS[h % TAUNTS.length], st: statsOf(d.stats) };
     });
     var ctx = cv.getContext('2d');
     var g = { mode: 'select', W: 0, H: 0, s: 1, pick: 0, level: 1, opps: [], p: null, c: null, t: 0, paused: false,
@@ -226,9 +229,9 @@
 
     // ---- fighters
     function make(def, x, dir, L) {
-      var boss = !!def.boss;
-      return { def: def, x: x, y: 0, vx: 0, vy: 0, dir: dir, hp: boss ? 180 : 100, max: boss ? 180 : 100, ghost: boss ? 180 : 100, pw: 0,
-        st: 'idle', t: 0, atk: null, cd: 0, done: 0, kx: 0, flash: 0, ai: null, mul: 1, L: L || 0, blockT: 0, chargeT: 0,
+      var boss = !!def.boss, sv = statsOf(def.st), life = boss ? 180 : Math.round(100 * statK(sv.hp));
+      return { def: def, x: x, y: 0, vx: 0, vy: 0, dir: dir, hp: life, max: life, ghost: life, pw: 0, powK: statK(sv.pow), spm: statK(sv.spd), dfm: 2 - statK(sv.def),
+        st: 'idle', t: 0, atk: null, cd: 0, done: 0, kx: 0, flash: 0, ai: null, mul: statK(sv.pow), L: L || 0, blockT: 0, chargeT: 0,
         queue: null, queue2: null, walkPh: 0, inv: 0, trail: [], downT: 0, ko: false, heavies: [], juggles: 0, bounced: false,
         combo: 0, comboT: 0, seen: {}, punish: 0, react: null };
     }
@@ -275,7 +278,7 @@
       if (g.mode !== 'fight' || tgt.inv > 0 || tgt.st === 'rise') return false;
       if (tgt.st === 'down' && o.otg) {
         if (tgt.ko) return false;
-        var dd = Math.round(dmg * att.mul * 10) / 10; tgt.hp = Math.max(g.tut >= 0 && tgt === g.c ? 25 : 0, tgt.hp - dd);
+        var dd = Math.round(dmg * att.mul * (tgt.dfm || 1) * 10) / 10; tgt.hp = Math.max(g.tut >= 0 && tgt === g.c ? 25 : 0, tgt.hp - dd);
         burst(tgt.x, tgt.y + 10, att.def.color, 1.4); g.freeze = 0.1; g.shake = Math.max(g.shake, 6); snd('slam'); sweat(tgt, 6);
         pops.push({ x: tgt.x, y: tgt.y + 40, t: 0.8, s: '-' + Math.round(dd), c: '#fde047', size: 7 }); pops.push({ x: tgt.x, y: tgt.y + 60, t: 0.8, s: gw('ELBOW DROP!'), c: att.def.color, size: 11, word: 1 });
         if (tgt.rag) { tgt.rag.t = 0; for (var kq in tgt.rag.pts) { var pq = tgt.rag.pts[kq]; pq.py = pq.y + 1.5; } }
@@ -286,7 +289,7 @@
         if (tgt.ko || tgt.y < 8 || tgt.juggles >= 4) return false;
         tgt.juggles++;
         if (tgt.rag) {   // a juggle: the hit throws the flying ragdoll again
-          var jd = Math.round(dmg * att.mul * 10) / 10, jdir = att.x < tgt.x ? 1 : -1; tgt.hp = Math.max(g.tut >= 0 && tgt === g.c ? 25 : 0, tgt.hp - jd);
+          var jd = Math.round(dmg * att.mul * (tgt.dfm || 1) * 10) / 10, jdir = att.x < tgt.x ? 1 : -1; tgt.hp = Math.max(g.tut >= 0 && tgt === g.c ? 25 : 0, tgt.hp - jd);
           for (var kj in tgt.rag.pts) { var pj = tgt.rag.pts[kj]; pj.px = pj.x - jdir * (kb + 60) / 60 * 0.6; pj.py = pj.y - (o.lift || 260) / 60 * 0.8; }
           burst((att.x + tgt.x) / 2, tgt.y + 30, att.def.color, 1.3); g.freeze = 0.07; snd('hit'); att.combo = (att.comboT > 0 ? att.combo : 0) + 1; att.comboT = 0.9;
           pops.push({ x: tgt.x, y: tgt.y + 40, t: 0.7, s: '-' + Math.round(jd), c: '#fde047', size: 7 });
@@ -304,7 +307,7 @@
         tgt.pw = Math.min(100, tgt.pw + 15); begin(att, 'hit'); att.kx = (att.x < tgt.x ? -1 : 1) * 160; att.flash = 0.15;
         return true;
       }
-      var d = Math.round(dmg * att.mul * (blocked ? 0.15 : 1) * 10) / 10;
+      var d = Math.round(dmg * att.mul * (tgt.dfm || 1) * (blocked ? 0.15 : 1) * 10) / 10;
       if (tgt.st === 'dizzy') d *= 1.3;
       tgt.hp = Math.max(g.tut >= 0 && tgt === g.c ? 25 : 0, tgt.hp - d);
       att.pw = Math.min(100, att.pw + (blocked ? 3 : 6 + dmg * 0.5)); tgt.pw = Math.min(100, tgt.pw + 4);
@@ -506,7 +509,7 @@
       if (f.st !== 'walk' && f.st !== 'hit' && f.st !== 'down' && !(f.st === 'atk' && (f.atk === 'dash' || f.atk === 'inferno' || f.atk === 'charge' || f.atk === 'slide' || ATK[f.atk].multi)) && f.st !== 'dashstep' && f.y === 0 && f.punish <= 0) f.vx = 0;
       if (f.st === 'dashstep') { if (f.t > 0.18) begin(f, 'idle'); }
       if (f.st === 'block' && f.y === 0) { f.vx *= 0.8; }
-      var nx = f.x + f.vx * dt * (f.st === 'walk' ? slow : 1);
+      var nx = f.x + f.vx * dt * (f.st === 'walk' ? slow * (f.spm || 1) : f.st === 'dashstep' ? (f.spm || 1) : 1);
       walls.forEach(function (w) { if (w.owner !== f && w.h > 30 && ((f.x < w.x && nx > w.x - 14) || (f.x > w.x && nx < w.x + 14))) nx = f.x < w.x ? w.x - 14 : w.x + 14; });
       f.x = Math.max(14, Math.min(AW() - 14, nx));
       if (f.flip && f.y > 0) f.spin = (f.spin || 0) - dt * 760 * (f.flipDir || 1);
@@ -731,9 +734,10 @@
       if (!newLevel) g.p.pw = keepPw;
       g.c.mul = (0.75 + 0.08 * (Math.min(L, 14) - 1) + (g.them.boss ? 0.25 : 0)) * (0.8 + 0.2 * DIFF[g.diff]);
       if (g.endless && L > 14) g.c.mul += (L - 14) * 0.05;
+      g.c.mul *= g.c.powK || 1;
       shots = []; walls = []; puddles = []; pend = []; beams = []; waves = []; fx = []; pops = []; g.cracks = [];
       g.tut = !NET && !tutDone && L === 1 && !g.endless ? 0 : -1; g.tutDone = {};
-      if (NET) { g.c.mul = 1; g.timer = 60; if (NET.role === 'host') NET.send({ e: 'round', round: g.round, pW: g.pW, cW: g.cW }); }
+      if (NET) { g.c.mul = g.c.powK || 1; g.timer = 60; if (NET.role === 'host') NET.send({ e: 'round', round: g.round, pW: g.pW, cW: g.cW }); }
       g.mode = 'intro'; g.t = 0; g.slow = 1; g.timer = 60; g.banner = null; g.dim = 0; g.zoom = 1; g.koChecked = 0; g.fin = null;
       snd('round'); run();
     }
@@ -1489,7 +1493,7 @@
       });
       var d = roster[g.pick], m = MOVES[d.move];
       text(gw('Special') + ': ' + gw(m[0]) + '  ·  ' + gw('Super') + ': ' + m[2] + '  ·  ' + d.outfit + (best ? '  ·  ' + gw('Best') + ': ' + gw('level') + ' ' + best : '') + (bestEndless ? '  ·  ' + gw('Endless best') + ' ' + bestEndless : ''), W / 2, y0 + hh + 36, Math.max(11, H * 0.048), '#fde047', 'center', true, true);
-      text('“' + d.taunt + '”', W / 2, y0 + hh + 52, Math.max(10, H * 0.042), '#e5e7eb', 'center', true);
+      text('“' + d.taunt + '”   ' + gw('Speed') + ' ' + d.st.spd + ' · ' + gw('Power') + ' ' + d.st.pow + ' · ' + gw('Health') + ' ' + d.st.hp + ' · ' + gw('Defence') + ' ' + d.st.def, W / 2, y0 + hh + 52, Math.max(10, H * 0.042), '#e5e7eb', 'center', true);
       text(gw('← → choose · Enter or click again: fight · M: sound ') + (soundOn ? gw('on') : gw('off')), W / 2, Math.min(H - 6, y0 + hh + 68), Math.max(10, H * 0.04), '#cbd5e1', 'center');
     }
 
@@ -1585,11 +1589,11 @@
     return api;
   };
   // the fighters an online match can pick from (the same list ERP_FIGHT uses)
-  window.ERP_FIGHT_ROSTER = function (r) { return (r && r.length >= 2 ? r : PLAIN).map(function (d) { return { name: d.name, color: d.color }; }); };
+  window.ERP_FIGHT_ROSTER = function (r) { return rosterOf(r).map(function (d) { return { name: d.name, color: d.color }; }); };
   // what the "How to play" window says
   window.ERP_FIGHT_HELP = function (roster, gw) {
     gw = gw || function (t) { return t; };
-    var list = (roster && roster.length >= 2 ? roster : PLAIN);
+    var list = rosterOf(roster);
     var k = function (t) { return '<kbd>' + t + '</kbd>'; };
     var esc = function (t) { return String(t).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); };
     return '<h3>' + gw('Brawl — how to play') + '</h3>' +
@@ -1625,7 +1629,7 @@
       '<tr><td>' + k('Esc') + '</td><td>' + gw('pause / skip the lesson') + '</td></tr>' +
       '</tbody></table>' +
       '<h4>' + gw('Fighters') + '</h4><table><tbody>' +
-      list.map(function (d) { var m = MOVES[d.move] || ['', '', '', '']; return '<tr><td><b>' + esc(d.name) + '</b></td><td>' + gw(m[0]) + ' — ' + gw(m[1]) + '<br><span style="opacity:.8">' + gw('Super') + ': ' + m[2] + ' — ' + gw(m[3]) + '</span></td></tr>'; }).join('') +
+      list.map(function (d) { var m = MOVES[d.move] || ['', '', '', '']; return '<tr><td><b>' + esc(d.name) + '</b></td><td>' + gw(m[0]) + ' — ' + gw(m[1]) + '<br><span style="opacity:.8">' + gw('Super') + ': ' + m[2] + ' — ' + gw(m[3]) + '</span>' + (d.stats ? '<br><span style="opacity:.8">' + gw('Speed') + ' ' + statsOf(d.stats).spd + ' · ' + gw('Power') + ' ' + statsOf(d.stats).pow + ' · ' + gw('Health') + ' ' + statsOf(d.stats).hp + ' · ' + gw('Defence') + ' ' + statsOf(d.stats).def + '</span>' : '') + '</td></tr>'; }).join('') +
       '</tbody></table>' +
       '<p>' + gw('Tips: the computer blocks and hits back now - block, then punish. Mix high and low: it blocks punches, so sweep. Three heavy hits make him dizzy. Knock him into the edge for a wall splat, hit him again in the air. With power to spare he can break your combo.') + '</p>';
   };

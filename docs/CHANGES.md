@@ -787,3 +787,12 @@ The PAID / PAYMENT DUE seal now sits over the big amount itself (right side of t
 
 ## Seal a bit darker (2026-10-06)
 PAID / PAYMENT DUE seal: opacity .62 -> .8, fewer worn holes. Amount still reads under it.
+
+## game-10 — Brawl: make your own fighter from a photo; stick fight: men come in by themselves (2026-10-06)
+- New fighter "Bajpakhi Bablu" (owner's photo, made with the grabCut script like the first nine; Hot Nozzle Dash).
+- "+ My fighter" on the Brawl bar (any user who sees the game). Choose a photo -> the browser finds the head (the person against the background: top of the hair, widest row above the neck; skin colour as backup on busy backgrounds), cuts the background (flood from the edges, Lab colours, edges stop it, the middle of the face is never cut), 28x34 pixels, 12 colours, dark outline - web/games/facepix.js, loaded only when the window opens. No AI; the photo never leaves the device, only the pixel head is saved. The user can drag / resize the box (wheel or corner) and slide "Background cut" (less keeps a white cap or light hair).
+- Random tough-guy name (dice for another, or type one), random special (+ its super), colour and abilities: speed, power, health, defence, 1-9 each, always 20 in all (4 % per point: walk speed, damage dealt, life, damage taken). Shown on the choose screen and in How to play. Old fighters count as 5/5/5/5.
+- Server: erpFighterMine (one per person, a new photo replaces it; owner can tick "someone else" to add others without limit), erpFighterRemove (own, or any for the owner); fighters now carry an id and the maker (never sent to the page, only "mine"); limit 24 -> 60; abilities checked (1-9, sum 20). erpFightersSet keeps makers by id. fighter2_test (19).
+- One own fighter now plays with the plain ones (before, fewer than 2 meant only the faceless three).
+- Stick fight v19: nobody is flung in or dropped from the sky. The next man sprints in along the floor from off the screen (now and then a front flip, double flip, aerial or dive roll on the way in), or runs in at the height of a top near the edge and dives onto it (a tuck flip half the time), or slides down a rope from the top onto a top; then free-runs up to the ninja. Simulated 10 minutes: 24 entries of 8 kinds, none left off screen, no big upward leap, no errors.
+- Weak spot (said to the owner): the in-browser cut-out is rough on busy backgrounds (trees, rooms); a plain wall or sky works best. Bangla words for the new window not added yet.

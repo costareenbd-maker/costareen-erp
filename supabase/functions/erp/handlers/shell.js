@@ -157,37 +157,88 @@ export async function erpGameSet(ctx, payload) {
 }
 
 // ---- the fighting game's fighters: pixel heads made from photos of people who agreed. Kept per business, never in public files.
+// Anyone can make (or remake) their own fighter from a photo; only the owner adds someone else or removes anyone's.
 const FIGHT_MOVES = ['whip', 'spool', 'dash', 'resin', 'wall', 'pillars', 'laser', 'slam', 'flurry'];
-/** {fighters: [{name, move, color, head: {w, h, pal: ['#rrggbb'], px}}]} */
-export async function erpFighters(ctx) {
+const FIGHT_MAX = 60, STAT_KEYS = ['spd', 'pow', 'hp', 'def'], STAT_SUM = 20;
+async function fightersRaw(ctx) {
   const { getConfig } = await import('../lib/ext.js');
   let list = [];
   try { list = JSON.parse(String(await getConfig(ctx, 'fighters', '[]')) || '[]'); } catch (e) { list = []; }
-  return { fighters: Array.isArray(list) ? list : [] };
+  return (Array.isArray(list) ? list : []).map((f, i) => ({ ...f, id: f.id || ('n' + i + ':' + f.name) }));
 }
-/** Owner: the whole list, checked piece by piece. */
+function fightersOut(ctx, list) {
+  return { fighters: list.map((f) => { const o = { ...f, mine: !!f.by && f.by === ctx.s.userId }; delete o.by; return o; }), max: FIGHT_MAX };
+}
+/** One fighter, checked piece by piece (stats optional: 1-9 each, 20 in all, so nobody is stronger overall). */
+function cleanFighter(f, i) {
+  const name = String(f && f.name || '').trim().replace(/\s+/g, ' ');
+  if (!name || name.length > 24) throw new Error('Fighter ' + (i + 1) + ': a name up to 24 letters.');
+  const move = String(f.move || '');
+  if (!FIGHT_MOVES.includes(move)) throw new Error(name + ': which special move?');
+  const color = String(f.color || '');
+  if (!/^#[0-9a-f]{6}$/i.test(color)) throw new Error(name + ': a colour like #3366cc.');
+  const h = f.head || {};
+  const w = Number(h.w), hh = Number(h.h), pal = Array.isArray(h.pal) ? h.pal.map(String) : [], px = String(h.px || '');
+  if (!(w >= 8 && w <= 40 && hh >= 8 && hh <= 48) || px.length !== w * hh) throw new Error(name + ': the face picture does not fit.');
+  if (!pal.length || pal.length > 16 || pal.some((c) => !/^#[0-9a-f]{6}$/i.test(c))) throw new Error(name + ': the face colours do not fit.');
+  const ok = new RegExp('^[.' + '0123456789abcdef'.slice(0, pal.length) + ']+$');
+  if (!ok.test(px)) throw new Error(name + ': the face picture does not fit.');
+  const out = { name, move, color: color.toLowerCase(), head: { w, h: hh, pal: pal.map((c) => c.toLowerCase()), px } };
+  if (f.stats) {
+    const st = {};
+    for (const k of STAT_KEYS) { const v = Number(f.stats[k]); if (!Number.isInteger(v) || v < 1 || v > 9) throw new Error(name + ': each ability from 1 to 9.'); st[k] = v; }
+    if (STAT_KEYS.reduce((a, k) => a + st[k], 0) !== STAT_SUM) throw new Error(name + ': the abilities must add up to ' + STAT_SUM + '.');
+    out.stats = st;
+  }
+  return out;
+}
+function newFighterId() { return 'f' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
+/** {fighters: [{id, name, move, color, stats?, mine, head: {w, h, pal: ['#rrggbb'], px}}], max} */
+export async function erpFighters(ctx) {
+  return fightersOut(ctx, await fightersRaw(ctx));
+}
+/** Owner: the whole list, checked piece by piece (who made each one is kept by id). */
 export async function erpFightersSet(ctx, payload) {
   const { setConfig } = await import('../lib/ext.js');
   if (ctx.s.role !== 'owner') throw new Error('Only the owner changes the fighters.');
   const src = payload && payload.fighters;
-  if (!Array.isArray(src) || src.length > 24) throw new Error('Up to 24 fighters.');
+  if (!Array.isArray(src) || src.length > FIGHT_MAX) throw new Error('Up to ' + FIGHT_MAX + ' fighters.');
+  const old = await fightersRaw(ctx), byId = new Map(old.map((f) => [f.id, f]));
   const out = src.map((f, i) => {
-    const name = String(f && f.name || '').trim().replace(/\s+/g, ' ');
-    if (!name || name.length > 24) throw new Error('Fighter ' + (i + 1) + ': a name up to 24 letters.');
-    const move = String(f.move || '');
-    if (!FIGHT_MOVES.includes(move)) throw new Error(name + ': which special move?');
-    const color = String(f.color || '');
-    if (!/^#[0-9a-f]{6}$/i.test(color)) throw new Error(name + ': a colour like #3366cc.');
-    const h = f.head || {};
-    const w = Number(h.w), hh = Number(h.h), pal = Array.isArray(h.pal) ? h.pal.map(String) : [], px = String(h.px || '');
-    if (!(w >= 8 && w <= 40 && hh >= 8 && hh <= 48) || px.length !== w * hh) throw new Error(name + ': the face picture does not fit.');
-    if (!pal.length || pal.length > 16 || pal.some((c) => !/^#[0-9a-f]{6}$/i.test(c))) throw new Error(name + ': the face colours do not fit.');
-    const ok = new RegExp('^[.' + '0123456789abcdef'.slice(0, pal.length) + ']+$');
-    if (!ok.test(px)) throw new Error(name + ': the face picture does not fit.');
-    return { name, move, color: color.toLowerCase(), head: { w, h: hh, pal: pal.map((c) => c.toLowerCase()), px } };
+    const c = cleanFighter(f, i), was = f && byId.get(String(f.id || ''));
+    c.id = was ? was.id : newFighterId();
+    if (was && was.by) c.by = was.by;
+    return c;
   });
   await setConfig(ctx, 'fighters', JSON.stringify(out));
-  return { fighters: out };
+  return fightersOut(ctx, out);
+}
+/** Make my own fighter from my photo (a new photo replaces my old one). The owner may also add one for someone else (other: true). */
+export async function erpFighterMine(ctx, payload) {
+  const { setConfig } = await import('../lib/ext.js');
+  const p = payload || {}, other = !!p.other;
+  if (other && ctx.s.role !== 'owner') throw new Error('Only the owner adds a fighter for someone else. Make your own with your own photo.');
+  if (!p.stats) throw new Error('The fighter needs abilities.');
+  const c = cleanFighter(p, 0);
+  const list = await fightersRaw(ctx);
+  const at = other ? -1 : list.findIndex((f) => f.by === ctx.s.userId);
+  if (list.some((f, i) => i !== at && f.name.toLowerCase() === c.name.toLowerCase())) throw new Error('There is already a fighter called ' + c.name + '. Pick another name.');
+  if (at < 0 && list.length >= FIGHT_MAX) throw new Error('The game is full (' + FIGHT_MAX + ' fighters). The owner can remove one.');
+  if (at >= 0) { c.id = list[at].id; c.by = ctx.s.userId; list[at] = c; }
+  else { c.id = newFighterId(); if (!other) c.by = ctx.s.userId; list.push(c); }
+  await setConfig(ctx, 'fighters', JSON.stringify(list));
+  return { ...fightersOut(ctx, list), id: c.id };
+}
+/** Remove a fighter: my own, or any (owner). */
+export async function erpFighterRemove(ctx, payload) {
+  const { setConfig } = await import('../lib/ext.js');
+  const id = String(payload && payload.id || '');
+  const list = await fightersRaw(ctx), f = list.find((x) => x.id === id);
+  if (!f) throw new Error('That fighter is not in the game any more.');
+  if (ctx.s.role !== 'owner' && f.by !== ctx.s.userId) throw new Error('Only the owner removes someone else\u2019s fighter.');
+  const out = list.filter((x) => x.id !== id);
+  await setConfig(ctx, 'fighters', JSON.stringify(out));
+  return fightersOut(ctx, out);
 }
 
 /** This person's screen language: 'en' or 'bn'. */

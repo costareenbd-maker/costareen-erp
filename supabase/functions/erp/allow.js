@@ -100,7 +100,7 @@ export const ERP_ALLOW = {
   erpAccessKeys: 'owner', erpAccessKeyNew: 'owner', erpAccessKeyRevoke: 'owner',
   // the list view (look 2); each list checks its own role as well
   erpListView: 'sales',
-  erpSetLook: 'sales', erpSetLang: 'sales', erpProfile: 'sales', erpProfileSave: 'sales', erpBg: 'sales', erpBgSave: 'manager', erpBgOff: 'sales', erpGame: 'sales', erpGameSet: 'owner', erpArena: 'sales', erpArenaResult: 'sales', erpArenaWorldSet: 'owner', erpWooConnectStart: 'owner', erpFighters: 'sales', erpFightersSet: 'owner', erpDocLang: 'sales', erpBnWords: 'sales', erpBnWordsSet: 'manager',
+  erpSetLook: 'sales', erpSetLang: 'sales', erpProfile: 'sales', erpProfileSave: 'sales', erpBg: 'sales', erpBgSave: 'manager', erpBgOff: 'sales', erpGame: 'sales', erpGameSet: 'owner', erpArena: 'sales', erpArenaResult: 'sales', erpArenaWorldSet: 'owner', erpWooConnectStart: 'owner', erpFighters: 'sales', erpFightersSet: 'owner', erpFighterMine: 'sales', erpFighterRemove: 'sales', erpDocLang: 'sales', erpBnWords: 'sales', erpBnWordsSet: 'manager',
   erpFreezeSaleCosts: 'owner',
   // currencies (plan A5)
   erpCurrencies: 'manager', erpCurrencySave: 'manager',

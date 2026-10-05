@@ -17182,7 +17182,7 @@ function makeFightLazy(cv) {
   }
   function fail(e) { note = 'Brawl could not load. Check the internet and open the tab again.'; paint(); }
   if (!FIGHT_JS) FIGHT_JS = new Promise(function (ok, bad) {
-    var sc = document.createElement('script'); sc.src = 'games/fight.js?v=15'; sc.onload = ok; sc.onerror = function () { FIGHT_JS = null; bad(); }; document.head.appendChild(sc);
+    var sc = document.createElement('script'); sc.src = 'games/fight.js?v=16'; sc.onload = ok; sc.onerror = function () { FIGHT_JS = null; bad(); }; document.head.appendChild(sc);
   });
   var roster = FIGHTERS ? Promise.resolve(FIGHTERS) : new Promise(function (ok) { srv('erpFighters', [], function (r) { FIGHTERS = r.fighters || []; ok(FIGHTERS); }, function () { ok([]); }); });
   Promise.all([FIGHT_JS, roster]).then(function (v) {
@@ -17238,7 +17238,7 @@ function makeGame() {
     var fresh = cv.cloneNode(false); cv.parentNode.replaceChild(fresh, cv); cv = fresh;   // a clean canvas: no old listeners
     cv.setAttribute('aria-label', def.name + ' game');
     strip.game = def.make(cv);
-    paintTabs();
+    paintTabs(); if (window.fmBar) fmBar(bar, id);
     if (strip.W) strip.game.size(strip.W, strip.H - bar.offsetHeight);
   }
   tabs.addEventListener('click', function (ev) { var b = ev.target.closest('[data-pgpick]'); if (b && b.getAttribute('data-pgpick') !== pick) { use(b.getAttribute('data-pgpick')); if (help.style.display !== 'none') helpShow(true); } });
@@ -17247,6 +17247,7 @@ function makeGame() {
   strip.pause = function () { if (strip.game) strip.game.pause(); };
   Object.defineProperty(strip, 'state', { get: function () { return strip.game ? strip.game.state() : 'idle'; } });
   document.addEventListener('visibilitychange', function () { if (document.hidden) strip.pause(); });
+  strip.use = use; strip.pickId = function () { return pick; };
   use(pick);
   return strip;
 }
@@ -17655,7 +17656,7 @@ function skTick() {
   skButton();
   var want = skShould();
   if (want && !SK) {
-    if (!SK_JS) SK_JS = new Promise(function (ok, bad) { var sc = document.createElement('script'); sc.src = 'games/stickfight.js?v=18'; sc.onload = ok; sc.onerror = function () { SK_JS = null; bad(); }; document.head.appendChild(sc); });
+    if (!SK_JS) SK_JS = new Promise(function (ok, bad) { var sc = document.createElement('script'); sc.src = 'games/stickfight.js?v=19'; sc.onload = ok; sc.onerror = function () { SK_JS = null; bad(); }; document.head.appendChild(sc); });
     SK_JS.then(function () { if (!SK && window.ERP_STICK) { SK = window.ERP_STICK({ mode: skMode() === 'calm' ? 'calm' : 'on', blood: skPref('blood') !== '0' }); if (skShould()) SK.start(); } }, function () {});
     return;
   }
@@ -18123,7 +18124,7 @@ document.addEventListener('change', function (ev) {
 
   // ---- the match window: both pick a fighter, press Ready, fight
   function loadFight() {
-    if (!FIGHT_JS) FIGHT_JS = new Promise(function (ok, bad) { var sc = document.createElement('script'); sc.src = 'games/fight.js?v=15'; sc.onload = ok; sc.onerror = function () { FIGHT_JS = null; bad(); }; document.head.appendChild(sc); });
+    if (!FIGHT_JS) FIGHT_JS = new Promise(function (ok, bad) { var sc = document.createElement('script'); sc.src = 'games/fight.js?v=16'; sc.onload = ok; sc.onerror = function () { FIGHT_JS = null; bad(); }; document.head.appendChild(sc); });
     var roster = FIGHTERS ? Promise.resolve(FIGHTERS) : new Promise(function (ok) { srv('erpFighters', [], function (r) { FIGHTERS = r.fighters || []; ok(FIGHTERS); }, function () { ok([]); }); });
     return Promise.all([FIGHT_JS, roster]);
   }
@@ -19587,6 +19588,225 @@ function qzLookSwatch(t, acc, dark) {   // a tiny picture of each look
     : b('left:0;right:0;top:0;height:40%;background:' + dark) + b('right:8%;width:28%;top:8%;height:24%;background:' + acc + ';border-radius:2px');
   return '<div class="qzd-sw">' + top + body + '</div>';
 }
+</script>
+
+<!-- game-10 (2026-10-06): "+ My fighter" - anyone makes a Brawl fighter from a photo, in the browser (games/facepix.js, no AI):
+     the photo stays on the device, only the 28x34 pixel head is saved; random tough-guy name, random special and abilities (20 points). -->
+<style>
+#pgame .pgmf { border:1px solid var(--ring); }
+#fmk { position:fixed; inset:0; z-index:9000; background:rgba(0,0,0,.55); display:flex; align-items:flex-start; justify-content:center; overflow:auto; padding:24px 12px; }
+#fmk .fmbox { background:var(--surface); color:var(--ink); border-radius:14px; border:1px solid var(--ring); width:min(860px, 100%); padding:16px 18px 18px; box-shadow:0 20px 50px rgba(0,0,0,.35); }
+#fmk h3 { margin:0 0 4px; font-size:17px; } #fmk .fmsub { color:var(--muted); font-size:12.5px; margin-bottom:12px; }
+#fmk .fmgrid { display:grid; grid-template-columns:minmax(0,1.2fr) minmax(0,1fr); gap:16px; }
+@media (max-width:720px) { #fmk .fmgrid { grid-template-columns:1fr; } }
+#fmk .fmpic { position:relative; background:var(--grid); border-radius:10px; overflow:hidden; touch-action:none; user-select:none; min-height:160px; display:flex; align-items:center; justify-content:center; }
+#fmk .fmpic canvas { display:block; max-width:100%; }
+#fmk .fmprev { display:flex; gap:14px; align-items:flex-start; }
+#fmk .fmprev canvas { background:#23232b; border-radius:10px; image-rendering:pixelated; flex:0 0 auto; }
+#fmk .fmst { display:grid; grid-template-columns:70px 1fr 18px; gap:4px 8px; align-items:center; font-size:12.5px; margin-top:6px; }
+#fmk .fmbar { height:8px; border-radius:99px; background:var(--grid); overflow:hidden; } #fmk .fmbar i { display:block; height:100%; background:var(--series-1); }
+#fmk .fmrow { display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-top:8px; }
+#fmk .fmlist { margin-top:14px; border-top:1px solid var(--ring); padding-top:10px; display:flex; flex-wrap:wrap; gap:6px; }
+#fmk .fmchip { display:inline-flex; align-items:center; gap:6px; border:1px solid var(--ring); border-radius:999px; padding:3px 6px 3px 10px; font-size:12.5px; }
+#fmk .fmchip button { border:0; background:transparent; color:var(--muted); cursor:pointer; font-size:13px; padding:0 4px; border-radius:99px; }
+#fmk .fmchip button:hover { color:#b91c1c; background:var(--grid); }
+#fmk .fmhint { font-size:12px; color:var(--muted); margin-top:6px; }
+#fmk input[type=range] { width:180px; }
+</style>
+<script>
+var FM = null, FACEPIX_JS = null;
+var FM_A = ['Toofan', 'Bagha', 'Shamsher', 'Danob', 'Rangbaaz', 'Pahlowan', 'Chand', 'Kalu', 'Don', 'Bajpakhi', 'Agun', 'Bijli', 'Jhor', 'Lathial', 'Dhakait', 'Mastan',
+  'Cheetah', 'Hurricane', 'Bulldozer', 'Tiger', 'Rocket', 'Cyclone', 'Toofani', 'Lohar', 'Kamaan', 'Haturi', 'Guli', 'Bomb'];
+var FM_B = ['Mia', 'Sultan', 'Khan', 'Raju', 'Kader', 'Bahadur', 'Dulal', 'Shahjahan', 'Bablu', 'Babu', 'Kashem', 'Jamal', 'Kamal', 'Mokbul', 'Badsha', 'Shikder',
+  'Talukder', 'Majnu', 'Dablu', 'Jabbar', 'Rustom', 'Golam', 'Sardar', 'Mollah', 'Bepari', 'Haider'];
+var FM_MOVES = [['whip', 'Filament Whip'], ['spool', 'Spool Throw'], ['dash', 'Hot Nozzle Dash'], ['resin', 'Resin Splash'], ['wall', 'Layer Wall'],
+  ['pillars', 'Support Pillars'], ['laser', 'Laser Engraver'], ['slam', 'Heated Bed Slam'], ['flurry', 'Speed Print 300']];
+var FM_COLS = ['#f43f5e', '#3b82f6', '#f97316', '#22c55e', '#eab308', '#a855f7', '#06b6d4', '#ec4899', '#14b8a6', '#8b5cf6', '#84cc16', '#0ea5e9', '#ef4444', '#d946ef'];
+function fmPick(a) { return a[Math.floor(Math.random() * a.length)]; }
+function fmName() {
+  var used = {}; (FIGHTERS || []).forEach(function (f) { used[String(f.name).toLowerCase()] = 1; });
+  for (var i = 0; i < 50; i++) { var n = fmPick(FM_A) + ' ' + fmPick(FM_B); if (!used[n.toLowerCase()]) return n; }
+  return fmPick(FM_A) + ' ' + fmPick(FM_B) + ' ' + (2 + Math.floor(Math.random() * 8));
+}
+/** 20 points over speed, power, health, defence (2-8 each): nobody is stronger overall, just different. */
+function fmStats() {
+  var k = ['spd', 'pow', 'hp', 'def'], s = { spd: 5, pow: 5, hp: 5, def: 5 };
+  for (var i = 0; i < 9; i++) { var a = fmPick(k), b = fmPick(k); if (a !== b && s[a] < 8 && s[b] > 2) { s[a]++; s[b]--; } }
+  return s;
+}
+function fmRoll() { FM.move = fmPick(FM_MOVES)[0]; FM.color = fmPick(FM_COLS); FM.stats = fmStats(); }
+
+/** the "+ My fighter" button: only on the Brawl tab */
+function fmBar(bar, id) {
+  var b = bar.querySelector('.pgmf');
+  if (!b) {
+    b = document.createElement('button'); b.type = 'button'; b.className = 'pgtab pgmf'; b.title = gw('Make a fighter from a photo');
+    var hb = bar.querySelector('.pghb'); bar.insertBefore(b, hb || null);
+    b.addEventListener('click', function () { if (GAME) GAME.pause(); fmOpen(); });
+  }
+  b.textContent = gw('+ My fighter');
+  b.style.display = id === 'fight' ? '' : 'none';
+}
+
+function fmOpen() {
+  FM = { img: null, cv: null, scale: 1, box: null, cut: 0.4, head: null, name: fmName(), other: false, busy: false, drag: null };
+  fmRoll();
+  if (!FACEPIX_JS) FACEPIX_JS = new Promise(function (ok, bad) { var sc = document.createElement('script'); sc.src = 'games/facepix.js?v=1'; sc.onload = ok; sc.onerror = function () { FACEPIX_JS = null; bad(); }; document.head.appendChild(sc); });
+  var el = document.getElementById('fmk'); if (el) el.remove();
+  el = document.createElement('div'); el.id = 'fmk'; document.body.appendChild(el);
+  el.addEventListener('click', fmClick); el.addEventListener('input', fmInput); el.addEventListener('change', fmInput);
+  if (!FIGHTERS) srv('erpFighters', [], function (r) { FIGHTERS = r.fighters || []; fmPaint(); }, function () {});
+  fmPaint();
+}
+function fmClose() { var el = document.getElementById('fmk'); if (el) el.remove(); FM = null; }
+function fmMine() { return (FIGHTERS || []).filter(function (f) { return f.mine; })[0] || null; }
+
+function fmPaint() {
+  var el = document.getElementById('fmk'); if (!el || !FM) return;
+  var owner = ME && ME.role === 'owner', mine = fmMine(), mv = FM_MOVES.filter(function (m) { return m[0] === FM.move; })[0];
+  var stat = function (k, t) { return '<span>' + gw(t) + '</span><span class="fmbar"><i style="width:' + (FM.stats[k] * 11.1) + '%"></i></span><b>' + FM.stats[k] + '</b>'; };
+  var list = (FIGHTERS || []).map(function (f) {
+    var can = owner || f.mine;
+    return '<span class="fmchip"><i style="width:9px;height:9px;border-radius:50%;background:' + esc(f.color) + ';display:inline-block"></i>' + esc(f.name) + (f.mine ? ' <small style="color:var(--muted)">(' + gw('you') + ')</small>' : '') +
+      (can ? '<button type="button" data-fmdel="' + esc(f.id) + '" title="' + gw('Remove from the game') + '">✕</button>' : '') + '</span>';
+  }).join('');
+  el.innerHTML = '<div class="fmbox" role="dialog" aria-label="' + gw('Make a fighter from a photo') + '">' +
+    '<div style="display:flex;justify-content:space-between;gap:10px"><div><h3>' + gw('Make a fighter from a photo') + '</h3>' +
+    '<div class="fmsub">' + gw('A clear face photo works best (a plain wall or sky behind). The photo stays on this device - only the small pixel head is saved.') +
+    (mine && !FM.other ? ' <b>' + gw('You already have a fighter') + ' (' + esc(mine.name) + '): ' + gw('saving replaces it.') + '</b>' : '') + '</div></div>' +
+    '<button type="button" class="btn small" data-fm="close" title="' + gw('Close') + '">✕</button></div>' +
+    '<div class="fmgrid"><div>' +
+      '<div class="fmrow" style="margin-top:0"><label class="btn' + (FM.img ? '' : ' primary') + '" style="cursor:pointer">' + (FM.img ? gw('Choose another photo') : gw('Choose a photo')) +
+        '<input type="file" accept="image/*" id="fm_file" style="display:none"></label>' +
+        (FM.img ? '<button type="button" class="btn small" data-fm="auto">' + gw('Find the face again') + '</button>' : '') + '</div>' +
+      '<div class="fmpic" id="fm_pic" style="margin-top:8px">' + (FM.img ? '' : '<span style="color:var(--muted);font-size:13px;padding:30px">' + gw('No photo yet') + '</span>') + '</div>' +
+      (FM.img ? '<div class="fmhint">' + gw('Drag the box onto the head (hair and chin inside). Drag its corner, or use the mouse wheel, to make it bigger or smaller.') + '</div>' : '') +
+    '</div><div>' +
+      '<div class="fmprev"><canvas id="fm_head" width="168" height="204" style="width:168px;height:204px"></canvas><div style="min-width:0;flex:1">' +
+        '<label class="f" for="fm_name">' + gw('Fighter name') + '</label><div class="fmrow" style="margin-top:2px"><input class="i" id="fm_name" maxlength="24" value="' + esc(FM.name) + '" style="flex:1;min-width:120px">' +
+        '<button type="button" class="btn small" data-fm="name" title="' + gw('Another random name') + '">🎲</button></div>' +
+        '<div style="margin-top:10px;font-size:12.5px"><span style="display:inline-block;width:11px;height:11px;border-radius:50%;background:' + FM.color + ';vertical-align:-1px"></span> <b>' + gw(mv ? mv[1] : '') + '</b> <span style="color:var(--muted)">' + gw('special move + its super') + '</span></div>' +
+        '<div class="fmst">' + stat('spd', 'Speed') + stat('pow', 'Power') + stat('hp', 'Health') + stat('def', 'Defence') + '</div>' +
+        '<div class="fmrow"><button type="button" class="btn small" data-fm="roll">' + gw('Roll abilities again') + '</button></div>' +
+      '</div></div>' +
+      (FM.img ? '<div style="margin-top:12px"><label class="f" for="fm_cut">' + gw('Background cut') + '</label><div class="fmrow" style="margin-top:2px"><small>' + gw('less') + '</small><input type="range" id="fm_cut" min="0" max="1" step="0.05" value="' + FM.cut + '"><small>' + gw('more') + '</small></div>' +
+        '<div class="fmhint">' + gw('Part of the hair or cap missing? Slide to less. Background left round the head? Slide to more.') + '</div></div>' : '') +
+      (owner ? '<label style="display:flex;gap:6px;align-items:center;margin-top:12px;font-size:13px"><input type="checkbox" id="fm_other"' + (FM.other ? ' checked' : '') + '> ' + gw('This is someone else, not me (owner only)') + '</label>' : '') +
+      '<div class="fmrow" style="margin-top:14px"><button type="button" class="btn primary" data-fm="save"' + (FM.head && !FM.busy ? '' : ' disabled') + '>' + (FM.busy ? gw('Saving…') : gw('Save the fighter')) + '</button>' +
+      '<button type="button" class="btn" data-fm="close">' + gw('Cancel') + '</button></div>' +
+    '</div></div>' +
+    '<div class="fmlist"><b style="font-size:12.5px;width:100%">' + gw('Fighters in the game') + ' (' + (FIGHTERS || []).length + ')</b>' + (list || '<span style="color:var(--muted);font-size:12.5px">' + gw('None yet') + '</span>') + '</div>' +
+  '</div>';
+  if (FM.img) { document.getElementById('fm_pic').appendChild(FM.cv); fmDrawPic(); }
+  fmDrawHead();
+}
+
+function fmLoad(file) {
+  if (!file || !/^image\//.test(file.type || '')) { toast(gw('That is not a photo.'), true); return; }
+  var url = URL.createObjectURL(file), im = new Image();
+  im.onload = function () {
+    URL.revokeObjectURL(url);
+    var k = Math.min(1, 900 / Math.max(im.naturalWidth, im.naturalHeight)), w = Math.max(1, Math.round(im.naturalWidth * k)), h = Math.max(1, Math.round(im.naturalHeight * k));
+    var c = document.createElement('canvas'); c.width = w; c.height = h; var x = c.getContext('2d'); x.drawImage(im, 0, 0, w, h);
+    FM.img = { c: c, w: w, h: h, d: x.getImageData(0, 0, w, h).data };
+    FM.cv = document.createElement('canvas'); fmPointer(FM.cv);
+    FACEPIX_JS.then(function () { FM.box = window.ERP_FACE_FIND(FM.img.d, w, h); fmMake(); fmPaint(); }, function () { toast(gw('The face maker could not load. Check the internet.'), true); });
+  };
+  im.onerror = function () { URL.revokeObjectURL(url); toast(gw('That photo could not be read. Try a JPG or PNG.'), true); };
+  im.src = url;
+}
+function fmMake() { if (!FM || !FM.img || !FM.box || !window.ERP_FACE_PIX) return; FM.head = window.ERP_FACE_PIX(FM.img.d, FM.img.w, FM.img.h, FM.box, FM.cut); }
+function fmDrawPic() {
+  var c = FM.cv, I = FM.img, pic = document.getElementById('fm_pic'); if (!c || !I || !pic) return;
+  var maxW = Math.max(200, pic.clientWidth || 440), k = Math.min(maxW / I.w, 420 / I.h), r = window.devicePixelRatio || 1;
+  FM.scale = k; c.style.width = Math.round(I.w * k) + 'px'; c.style.height = Math.round(I.h * k) + 'px'; c.width = Math.round(I.w * k * r); c.height = Math.round(I.h * k * r);
+  var x = c.getContext('2d'); x.setTransform(r * k, 0, 0, r * k, 0, 0); x.drawImage(I.c, 0, 0);
+  var b = FM.box; if (!b) return;
+  x.fillStyle = 'rgba(0,0,0,.45)'; x.beginPath(); x.rect(0, 0, I.w, I.h); x.rect(b.x + b.w, b.y, -b.w, b.h); x.fill('evenodd');
+  x.lineWidth = 2 / k; x.strokeStyle = '#facc15'; x.strokeRect(b.x, b.y, b.w, b.h);
+  var hs = 12 / k; x.fillStyle = '#facc15'; x.fillRect(b.x + b.w - hs, b.y + b.h - hs, hs, hs);
+}
+function fmDrawHead() {
+  var c = document.getElementById('fm_head'); if (!c) return;
+  var x = c.getContext('2d'); x.clearRect(0, 0, c.width, c.height);
+  var h = FM.head;
+  if (!h) { x.fillStyle = '#9ca3af'; x.font = '600 12px system-ui, sans-serif'; x.textAlign = 'center'; x.fillText(gw('pixel head'), c.width / 2, c.height / 2); return; }
+  var s = Math.floor(Math.min(c.width / h.w, c.height / h.h)), ox = (c.width - h.w * s) / 2, oy = (c.height - h.h * s) / 2;
+  for (var i = 0; i < h.px.length; i++) { var ch = h.px[i]; if (ch === '.') continue; x.fillStyle = h.pal[parseInt(ch, 16)]; x.fillRect(ox + (i % h.w) * s, oy + Math.floor(i / h.w) * s, s, s); }
+}
+/** drag the box, drag its corner, wheel to zoom; keeps 28:34 and stays inside the photo */
+function fmPointer(c) {
+  function pt(ev) { var r = c.getBoundingClientRect(); return { x: (ev.clientX - r.left) / FM.scale, y: (ev.clientY - r.top) / FM.scale }; }
+  function fit(b) {
+    var I = FM.img, minW = Math.min(I.w, I.h) * 0.12;
+    b.w = Math.max(minW, Math.min(b.w, I.w, I.h * 28 / 34)); b.h = b.w * 34 / 28;
+    b.x = Math.max(0, Math.min(I.w - b.w, b.x)); b.y = Math.max(0, Math.min(I.h - b.h, b.y)); return b;
+  }
+  var t = 0;
+  function redo() { fmDrawPic(); clearTimeout(t); t = setTimeout(function () { fmMake(); fmDrawHead(); }, 60); }
+  c.addEventListener('pointerdown', function (ev) {
+    if (!FM || !FM.box) return; var p = pt(ev), b = FM.box, hs = 18 / FM.scale;
+    var corner = p.x > b.x + b.w - hs && p.x < b.x + b.w + hs && p.y > b.y + b.h - hs && p.y < b.y + b.h + hs;
+    var inside = p.x >= b.x && p.x <= b.x + b.w && p.y >= b.y && p.y <= b.y + b.h;
+    FM.drag = { mode: corner ? 'size' : inside ? 'move' : 'jump', p: p, b: { x: b.x, y: b.y, w: b.w, h: b.h } };
+    if (FM.drag.mode === 'jump') { FM.box = fit({ x: p.x - b.w / 2, y: p.y - b.h / 2, w: b.w, h: b.h }); FM.drag = { mode: 'move', p: p, b: { x: FM.box.x, y: FM.box.y, w: b.w, h: b.h } }; redo(); }
+    try { c.setPointerCapture(ev.pointerId); } catch (e) {}
+    ev.preventDefault();
+  });
+  c.addEventListener('pointermove', function (ev) {
+    if (!FM || !FM.drag) { if (FM && FM.box) { var q = pt(ev), bb = FM.box, hs2 = 18 / FM.scale; c.style.cursor = q.x > bb.x + bb.w - hs2 && q.x < bb.x + bb.w + hs2 && q.y > bb.y + bb.h - hs2 && q.y < bb.y + bb.h + hs2 ? 'nwse-resize' : 'move'; } return; }
+    var p = pt(ev), d = FM.drag, b0 = d.b;
+    if (d.mode === 'move') FM.box = fit({ x: b0.x + p.x - d.p.x, y: b0.y + p.y - d.p.y, w: b0.w, h: b0.h });
+    else FM.box = fit({ x: b0.x, y: b0.y, w: b0.w + Math.max(p.x - d.p.x, (p.y - d.p.y) * 28 / 34), h: 0 });
+    redo();
+  });
+  function up() { if (FM) FM.drag = null; }
+  c.addEventListener('pointerup', up); c.addEventListener('pointercancel', up);
+  c.addEventListener('wheel', function (ev) {
+    if (!FM || !FM.box) return; ev.preventDefault();
+    var b = FM.box, f = ev.deltaY > 0 ? 1.06 : 1 / 1.06, cx = b.x + b.w / 2, cy = b.y + b.h / 2, w = b.w * f;
+    FM.box = fit({ x: cx - w / 2, y: cy - w * 34 / 28 / 2, w: w, h: 0 }); redo();
+  }, { passive: false });
+}
+
+function fmInput(ev) {
+  var t = ev.target; if (!FM || !t) return;
+  if (t.id === 'fm_file' && ev.type === 'change') { fmLoad(t.files && t.files[0]); return; }
+  if (t.id === 'fm_name') { FM.name = t.value; return; }
+  if (t.id === 'fm_cut') { FM.cut = Number(t.value); fmMake(); fmDrawHead(); return; }
+  if (t.id === 'fm_other' && ev.type === 'change') { FM.other = t.checked; fmPaint(); }
+}
+function fmAfter(r) {
+  FIGHTERS = r.fighters || [];
+  if (GAME && GAME.use && GAME.pickId && GAME.pickId() === 'fight') GAME.use('fight');   // Brawl starts again with the new list
+}
+function fmClick(ev) {
+  var el = document.getElementById('fmk');
+  if (ev.target === el) { fmClose(); return; }
+  var del = ev.target.closest('[data-fmdel]');
+  if (del) {
+    var id = del.getAttribute('data-fmdel'), f = (FIGHTERS || []).filter(function (x) { return x.id === id; })[0];
+    if (!f || !confirm(gw('Remove') + ' ' + f.name + ' ' + gw('from the game?'))) return;
+    srv('erpFighterRemove', [{ id: id }], function (r) { fmAfter(r); toast(esc(f.name) + ' ' + gw('removed.')); fmPaint(); }, function (e) { toast(esc((e && e.message) || String(e)), true); });
+    return;
+  }
+  var b = ev.target.closest('[data-fm]'); if (!b || !FM) return;
+  var a = b.getAttribute('data-fm');
+  if (a === 'close') fmClose();
+  else if (a === 'name') { FM.name = fmName(); fmPaint(); }
+  else if (a === 'roll') { fmRoll(); fmPaint(); }
+  else if (a === 'auto' && FM.img && window.ERP_FACE_FIND) { FM.box = window.ERP_FACE_FIND(FM.img.d, FM.img.w, FM.img.h); fmMake(); fmDrawPic(); fmDrawHead(); }
+  else if (a === 'save' && FM.head && !FM.busy) {
+    var name = String(FM.name || '').trim().replace(/\s+/g, ' ');
+    if (!name) { toast(gw('Give the fighter a name.'), true); return; }
+    FM.busy = true; fmPaint();
+    srv('erpFighterMine', [{ name: name, move: FM.move, color: FM.color, stats: FM.stats, head: FM.head, other: !!FM.other }], function (r) {
+      fmAfter(r); fmClose(); toast(esc(name) + ' ' + gw('is in Brawl now. Pick him on the choose screen.'));
+    }, function (e) { if (FM) { FM.busy = false; fmPaint(); } toast(esc((e && e.message) || String(e)), true); });
+  }
+}
+document.addEventListener('keydown', function (ev) { if (ev.key === 'Escape' && document.getElementById('fmk')) fmClose(); });
+window.addEventListener('resize', function () { if (FM && FM.img) fmDrawPic(); });
 </script>
 </body>
 </html>
