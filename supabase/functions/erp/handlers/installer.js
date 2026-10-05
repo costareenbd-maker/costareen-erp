@@ -402,7 +402,7 @@ export async function erpBrandSet(ctx, payload) {
   const name = str(p.name).slice(0, 40), sponsor = str(p.sponsor).slice(0, 80), accent = str(p.accent), logo = str(p.logo);
   if (!name) throw new Error('Give the ERP a name.');
   if (accent && !/^#[0-9a-f]{6}$/i.test(accent)) throw new Error('A colour is like #2756c9.');
-  if (logo && (!/^data:image\/(png|jpeg|webp|svg\+xml);base64,/.test(logo) || logo.length > 200000)) throw new Error('The logo must be a PNG, JPG, WebP or SVG under 150 KB.');
+  if (logo && (!/^data:image\/(png|jpeg|webp|svg\+xml);base64,/.test(logo) || logo.length > 345000)) throw new Error('The logo must be a PNG, JPG, WebP or SVG under 250 KB.');
   await ctx.sql`update erp_brand set name = ${name}, sponsor = ${sponsor || null}, accent = ${accent || null}, logo = ${logo || null}, updated_at = now() where id = 1`;
   return erpBrand(ctx);
 }

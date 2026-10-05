@@ -778,3 +778,6 @@ Quotations had three look names but only Signature had its own styling. Now five
 
 ## Round seals on invoices; customer statement on the invoice design (2026-10-06)
 Invoices: the top corner is clean again (no stamp, no amount); a round rubber-stamp seal drawn in SVG - green PAID with THANK YOU around it, red PAYMENT DUE with stars (also for part paid) - sits tilted, a little see-through (multiply) half over the big amount bar near the bottom, which is now paper-coloured with a coloured edge so the seal shows; every figure stays readable. With "big amount at the top" the seal sits on the totals. Customer statement PDF (Customers > statement) now uses the business's invoice design: same header, colours, footer and seal (PAID when the balance is nil, PAYMENT DUE otherwise); lines Date / Details / Charged / Paid / Balance (at least 5 rows), totals Brought forward / Charged / Total / Paid in this period / Balance, a "Balance due" (or "Balance: Nothing due") bar, advance and unpaid invoices noted. Receipt design falls back to Modern for statements. Tests: ivdlayout 34, customers 60, sales 109 (old top-band checks moved to the bottom bar); goods_test made independent of the time of day.
+
+## Brand logo up to 250 KB (2026-10-06)
+Platform > Brand logo limit raised from 150 KB to 250 KB (page check and server check).

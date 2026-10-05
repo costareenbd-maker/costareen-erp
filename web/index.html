@@ -18787,7 +18787,7 @@ function startCardHtml() {
     '<div class="fields" style="margin-top:8px"><div><label class="f" for="br_name">Name</label><input class="i" id="br_name" maxlength="40" value="' + esc(B.name || '') + '"></div>' +
     '<div><label class="f" for="br_sp">Sponsor line (optional)</label><input class="i" id="br_sp" maxlength="80" value="' + esc(B.sponsor || '') + '" placeholder="e.g. Sponsored by ..."></div>' +
     '<div><label class="f" for="br_acc">Colour</label><input class="i" id="br_acc" type="color" value="' + esc(B.accent || '#2756c9') + '" style="height:40px;padding:2px"></div>' +
-    '<div><label class="f" for="br_logo">Logo (PNG, JPG, WebP or SVG, under 150 KB)</label><input class="i" id="br_logo" type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml">' +
+    '<div><label class="f" for="br_logo">Logo (PNG, JPG, WebP or SVG, under 250 KB)</label><input class="i" id="br_logo" type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml">' +
       (B.logo ? '<div class="row" style="gap:8px;align-items:center;margin-top:6px"><img src="' + esc(B.logo) + '" alt="" style="height:36px;border-radius:6px"><button class="btn small" type="button" id="br_nologo">Remove logo</button></div>' : '') + '</div></div>' +
     '<div class="row" style="justify-content:flex-end;margin-top:10px"><button class="btn primary" type="button" id="br_save">Save brand</button></div></div></section>';
 }
@@ -18807,7 +18807,7 @@ document.addEventListener('click', function (ev) {
     var f = el('br_logo') && el('br_logo').files && el('br_logo').files[0];
     var go = function () { srv('erpBrandSet', [b], function (r) { BRAND_ED = r; window.ERP_BRAND = Object.assign({}, window.ERP_BRAND || {}, r); toast('Brand saved. Install pages and company ERPs show it now.'); repaint(); }, function (e) { toast(esc((e && e.message) || e), true, 9000); }); };
     if (!f) { go(); return; }
-    if (f.size > 150000) { toast('That logo is over 150 KB. Use a smaller image.', true); return; }
+    if (f.size > 250000) { toast('That logo is over 250 KB. Use a smaller image.', true); return; }
     var fr = new FileReader(); fr.onload = function () { b.logo = String(fr.result); go(); }; fr.readAsDataURL(f);
   }
 });

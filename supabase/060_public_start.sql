@@ -8,7 +8,7 @@ create table if not exists public.erp_brand (
   name        text not null default '3D Owala ERP',
   sponsor     text,                      -- e.g. "Sponsored by ..." (only with the sponsor's written permission)
   accent      text,                      -- a colour like #2756c9; empty = the page's own
-  logo        text,                      -- a small image as a data: URL (at most ~150 KB)
+  logo        text,                      -- a small image as a data: URL (at most ~250 KB)
   updated_at  timestamptz not null default now()
 );
 insert into public.erp_brand (id) values (1) on conflict do nothing;
