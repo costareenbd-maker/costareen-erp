@@ -1320,7 +1320,7 @@
       pops.forEach(function (p) { var a = Math.min(1, p.t * 3); ctx.globalAlpha = a; var sc = p.word ? 1 + Math.max(0, p.t - 0.5) * 0.8 : 1; text(p.s, sx(p.x), sy(p.y), p.size * s * 0.7 * sc, p.c, 'center', true, true); });
       ctx.globalAlpha = 1;
       ctx.restore();
-      if (g.dim > 0) { ctx.globalAlpha = g.dim * 0.6; ctx.fillStyle = '#000'; ctx.fillRect(0, 0, W, H); ctx.globalAlpha = 1; if (g.banner) { var bf = g.banner.f; drawFighter(bf); } }
+      if (g.banner) { var bf = g.banner.f; drawFighter(bf); }   // (no darkened screen on the big moves: it disturbed people at work)
       if (g.flash > 0) { ctx.globalAlpha = Math.min(0.6, g.flash * 3); ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, W, H); ctx.globalAlpha = 1; }
       if (g.p && g.mode === 'fight' && g.p.hp < g.p.max * 0.3) {   // low health: the screen edges glow red
         var vg = ctx.createRadialGradient(W / 2, H / 2, Math.min(W, H) * 0.35, W / 2, H / 2, Math.max(W, H) * 0.65), pa = 0.22 + 0.12 * Math.sin(now * 6);
