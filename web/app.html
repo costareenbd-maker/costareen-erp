@@ -13243,9 +13243,9 @@ table.o_list tr.r:hover td.o_acts .btn, table.o_list tr.r td.o_acts .btn.primary
 function lvRowActs(m, r) {
   var TIP = { pay: 'Receive a payment', 'return': 'Goods coming back', pdf: 'Open the invoice PDF', add: 'Add to the invoice being written', edit: 'Change the details', invoice: 'New invoice for this customer', statement: 'Statement of account' };
   var a = r.act || {}, mgr = pageIsManager(), b = function (act, label, cls) { return '<button class="btn small' + (cls ? ' ' + cls : '') + '" type="button" data-lva="' + act + '" title="' + TIP[act] + '">' + label + '</button>'; };
-  if (m === 'invoices') return (mgr && a.due > 0.5 ? b('pay', 'Pay', 'primary') : '') + (mgr && a.canReturn ? b('return', 'Return') : '');   // the PDF: press the invoice number
+  if (m === 'invoices') return (mgr && a.due > 0.5 ? b('pay', 'Receive due', 'primary') : '') + (mgr && a.canReturn ? b('return', 'Return') : '');   // the PDF: press the invoice number
   if (m === 'products') return (a.canAdd ? b('add', 'Add') : '') + (mgr ? b('edit', 'Edit') : '');
-  if (m === 'customers') return b('invoice', 'Invoice') + (mgr && a.owes > 0.5 ? b('pay', 'Pay', 'primary') : '') + b('statement', 'Statement') + b('edit', 'Edit');
+  if (m === 'customers') return b('invoice', 'Invoice') + (mgr && a.owes > 0.5 ? b('pay', 'Receive due', 'primary') : '') + b('statement', 'Statement') + b('edit', 'Edit');
   return '';
 }
 function lvRowAct(m, act, key) {
