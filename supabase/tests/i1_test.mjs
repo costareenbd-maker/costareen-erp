@@ -1,11 +1,18 @@
-// The installer: a company builds its own copy in its own Supabase account; the provider keeps control.
-// The company's Supabase (Management API) and its new server are faked; both sides run against this database.
+// The installer: a company's ERP in its own Supabase account; the provider keeps control.
+// Since the bridge (2026-10-05): the company's project gets tables, storage and sign-in only - no server code;
+// the provider's server runs its ERP over an encrypted database connection. The company's Supabase
+// (Management API) is faked; the company's database is this same test database.
 import { pathToFileURL } from 'node:url';
 import path from 'node:path';
 import { sql, FIX, owner, mgr, check, done, web, deps, fnDir } from './harness.mjs';
 const { installRoute } = await import(pathToFileURL(path.join(fnDir, 'handlers', 'installer.js')));
 const { installFinish, heartbeat, forgetControl } = await import(pathToFileURL(path.join(fnDir, 'lib', 'control.js')));
 const { erpCall } = await import(pathToFileURL(path.join(fnDir, 'core.js')));
+const { tenantSource, openJSON, Locked } = await import(pathToFileURL(path.join(fnDir, 'lib', 'bridge.js')));
+const { createHash, randomBytes } = await import('node:crypto');
+const KEY = randomBytes(32).toString('base64');
+deps.bridgeKey = KEY;
+deps.tenantDeps = tenantSource(sql, KEY, async (t) => ({ ...deps, install: { id: t.id, bridged: true }, built: t }));
 
 deps.install = {};
 deps.installEnv = { controlUrl: 'https://ctl.test/erp', appUrl: 'https://app.test/', renderUrl: 'https://render.test', renderKey: 'RK' };
@@ -15,7 +22,7 @@ const route = async (q, body, method = 'POST') => (await installRoute(deps, new 
 // a release to build from
 await sql`insert into erp_releases (version, files) values ('v-test', ${JSON.stringify({
   'fn/index.ts': 'console.log(1)', 'fn/handlers/a.js': 'export const x = 1;',
-  'sql/001_first.sql': 'create table t1 (x int);', 'sql/002_second.sql': 'create table t2 (x int);',
+  'sql/001_first.sql': 'create table t1 (x int);', 'sql/002_second.sql': 'create table t2 (x int);', 'sql/003_ctl.sql': '-- control-only\ncreate table ctl_secret (x int);',
   'deploy/storage.sql': '-- storage', 'deploy/cron.sql': "select '__FN_URL__', '__CRON_KEY__';" })}::jsonb)`;
 
 // the company's Supabase account
@@ -28,6 +35,10 @@ web.on(/api\.supabase\.com\/v1\/projects\/newref\/api-keys/, () => ({ status: 20
 web.on(/api\.supabase\.com\/v1\/projects\/newref\/database\/query$/, (u, o) => { const s = JSON.parse(o.body).query; q.push(s); return { status: 201, body: /select 1 from public._erp_migrations/.test(s) ? [] : [] }; });
 web.on(/api\.supabase\.com\/v1\/projects\/newref\/secrets$/, (u, o) => { secrets.push(...JSON.parse(o.body)); return { status: 201, body: {} }; });
 web.on(/api\.supabase\.com\/v1\/projects\/newref\/functions\/deploy\?slug=erp$/, (u, o) => { deployed = o.body; return { status: 201, body: { id: 'f1' } }; });
+let newPw = '';
+web.on(/api\.supabase\.com\/v1\/projects\/newref\/config\/database\/pooler$/, () => ({ status: 200, body: [{ database_type: 'PRIMARY', db_host: 'pool.test', db_port: 6543 }] }));
+web.on(/api\.supabase\.com\/v1\/projects\/newref\/database\/password$/, (u, o) => { newPw = JSON.parse(o.body).password; return { status: 200, body: {} }; });
+web.on(/api\.supabase\.com\/v1\/projects\/newref\/config\/auth$/, () => ({ status: 200, body: {} }));
 // the new server's last install step runs the copy's own code (here: against this same database)
 web.on(/newref\.supabase\.co\/functions\/v1\/erp\?install=finish$/, async (u, o) => {
   const key = secrets.find((s) => s.name === 'ERP_INSTALL_KEY').value;
@@ -64,21 +75,34 @@ for (let i = 0; i < 30; i++) {
 }
 check('every step ran and it is ready', r.ok && r.done && r.status === 'active', [r, seen]);
 check('...in Singapore, the project waited for, two database files in order then storage', q.some((s) => /create table t1/.test(s)) && q.findIndex((s) => /t1/.test(s)) < q.findIndex((s) => /t2/.test(s)) && q.some((s) => s === '-- storage') && seen.includes('wait'), seen);
-check('timers point at the new server with its own key', q.some((s) => s.includes('https://newref.supabase.co/functions/v1/erp') && s.includes(secrets.find((x) => x.name === 'CRON_KEY').value)));
-check('its secrets: who it is, where its provider is, the PDF service', ['ERP_INSTALL_ID', 'ERP_INSTALL_KEY', 'ERP_CONTROL_URL', 'RENDER_URL', 'CRON_KEY', 'ERP_RELEASE'].every((n) => secrets.some((s) => s.name === n)) &&
-  secrets.find((s) => s.name === 'ERP_CONTROL_URL').value === 'https://ctl.test/erp', secrets.map((s) => s.name));
-check('the server files went up with their paths', deployed && deployed.getAll('file').map((f) => f.name).sort().join() === 'handlers/a.js,index.ts' && JSON.parse(deployed.get('metadata')).verify_jwt === false);
+check('no server code and no timers or settings were put into the company\'s project', deployed === null && secrets.length === 0 && !q.some((x) => /__FN_URL__|cron\.schedule/.test(x)), [deployed, secrets]);
+check('the provider\'s own control tables stay out of the company\'s database', !q.some((x) => /ctl_secret/.test(x)));
+const ten = (await sql`select status, url, anon_key, secret_enc from erp_tenants where id = ${id}`)[0];
+const opened = ten && await openJSON(KEY, ten.secret_enc);
+check('the bridge: a fresh database password set through Supabase, kept only sealed', ten && ten.status === 'active' && ten.url === 'https://newref.supabase.co' && newPw.length > 20 &&
+  !ten.secret_enc.includes(newPw) && opened.dbUrl === 'postgresql://postgres.newref:' + encodeURIComponent(newPw) + '@pool.test:6543/postgres' && opened.service === 'SR', ten);
 const biz = (await sql`select b.id from businesses b join memberships m on m.business_id = b.id join auth.users u on u.id = m.user_id where b.name = 'Friend Co' and u.email = 'ali@friend.test' and m.role = 'owner'`)[0];
 check('the company\'s business with its owner, who is e-mailed to choose a password', !!biz && deps.mails.includes('ali@friend.test'));
 const row = (await sql`select install_key, mgmt_token, key_hash from erp_installs where id = ${id}`)[0];
-check('the one-time keys are wiped after use; only the check-in key\'s hash is kept', !row.install_key && !!row.key_hash);
+check('the one-time keys are wiped after use', !row.install_key);
 await sql`insert into platform_admins (user_id, note) values (${FIX.U.owner}, 'test') on conflict do nothing`;   // the finish step made Ali the only admin here
 
 r = await route('install=info&id=' + id, null, 'GET');
-check('the page can open it: its own server and public key', r.ok && r.api === 'https://newref.supabase.co/functions/v1/erp' && r.anon === 'ANONKEY' && r.name === 'Friend Co', r);
+check('the page can open it: the provider\'s server for this company, its own sign-in and public key', r.ok && r.api === 'https://ctl.test/erp' && r.tenant === id && r.url === 'https://newref.supabase.co' && r.anon === 'ANONKEY' && r.name === 'Friend Co', r);
+r = await owner('erpInstallSet', [{ id, status: 'suspended', reason: 'Unpaid' }]);
+let lockSay = ''; try { await deps.tenantDeps(id); } catch (e) { lockSay = e instanceof Locked ? e.message : 'other: ' + e.message; }
+check('switched off: the bridged ERP is locked at once, with the reason', /switched off by its provider\. Unpaid/.test(lockSay), lockSay);
+await owner('erpInstallSet', [{ id, status: 'active' }]);
+let back = null; try { back = await deps.tenantDeps(id); } catch (e) { back = e.message; }
+check('...and opens again', back && back.install && back.install.id === id, back);
+await sql`update erp_tenants set status = 'disconnected' where id = ${id}`; deps.tenantDeps.forget(id);
+lockSay = ''; try { await deps.tenantDeps(id); } catch (e) { lockSay = e.message; }
+check('the provider\'s connection removed: the ERP says so and does not open', /lost its connection to the provider/.test(lockSay), lockSay);
+await sql`update erp_tenants set status = 'active' where id = ${id}`; deps.tenantDeps.forget(id);
 
 // the copy checks in; the provider switches it off and on
-const key = secrets.find((s) => s.name === 'ERP_INSTALL_KEY').value;
+const key = randomBytes(16).toString('hex');   // a copy made before the bridge had its own check-in key
+await sql`update erp_installs set key_hash = ${createHash('sha256').update(key).digest('hex')} where id = ${id}`;
 const copy = { ...deps, install: { id, key, controlUrl: 'https://ctl.test/erp', version: 'v-test' } };
 web.on(/ctl\.test\/erp\?control=beat$/, async (u, o) => ({ status: 200, body: await route('control=beat', JSON.parse(o.body)) }));
 r = await heartbeat({ ...copy, install: { ...copy.install, key: 'wrong' } });

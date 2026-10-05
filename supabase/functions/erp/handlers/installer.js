@@ -16,15 +16,30 @@
 //
 // Each step is short (one Management API call or one database file), so the
 // install page simply calls ?install=step until it is done - no long request.
+//
+// The bridge (2026-10-05, docs/PLATFORM-BLUEPRINT.md): a company's project gets tables, storage and sign-in
+// only. No server code is copied there any more: the provider's server runs the company's ERP over an
+// encrypted database connection (lib/bridge.js, erp_tenants). Copies made before keep working until
+// erpInstallBridge moves them (it also removes the server code and timers from their project).
+
+import { connectProject, saveTenant } from '../lib/bridge.js';
+import { makeCompany } from '../lib/control.js';
 
 const str = (v) => String(v == null ? '' : v).trim();
 const MGMT = 'https://api.supabase.com/v1';
+// the provider's own server, which runs every bridged company's ERP
+const controlApi = (deps) => str(deps.installEnv && deps.installEnv.controlUrl);
+// the database files a company gets: all of them except the provider's own control tables
+function companySql(files) {
+  return Object.keys(files).filter((k) => /^sql\/\d{3}_.+\.sql$/.test(k) && !/^\s*--\s*control-only/.test(String(files[k]))).sort();
+}
 const REGION = 'ap-southeast-1';
-const STEPS = ['project', 'wait', 'keys', 'db', 'storage', 'secrets', 'function', 'cron', 'finish'];
+const STEPS = ['project', 'wait', 'keys', 'db', 'storage', 'bridge', 'finish'];
 const SAY = {
   project: 'Making the project in your Supabase account', wait: 'Waiting for Supabase to start it (1-2 minutes)', keys: 'Reading its keys',
-  db: 'Building the database', storage: 'Making file storage', secrets: 'Setting its private settings', function: 'Putting the ERP server in place',
-  cron: 'Starting its timers', finish: 'Making your business and your owner login', done: 'Ready',
+  db: 'Building the database', storage: 'Making file storage', bridge: 'Connecting it to the ERP server',
+  secrets: 'Connecting it to the ERP server', function: 'Connecting it to the ERP server', cron: 'Connecting it to the ERP server',
+  finish: 'Making your business and your owner login', done: 'Ready',
 };
 
 async function sha256(t) {
@@ -182,10 +197,10 @@ export async function installStep(deps, b) {
         const anon = (keys.find((k) => k.name === 'anon') || {}).api_key;
         if (!anon) throw new Error('Supabase did not give the project’s public key.');
         await runSql('create table if not exists public._erp_migrations (name text primary key, at timestamptz default now()); alter table public._erp_migrations enable row level security;');
-        return set({ step: 'db', step_n: 0, anon_key: anon, api_url: 'https://' + row.ref + '.supabase.co/functions/v1/erp' });
+        return set({ step: 'db', step_n: 0, anon_key: anon, api_url: controlApi(deps) });
       }
       case 'db': {
-        const list = Object.keys(files).filter((k) => /^sql\/\d{3}_.+\.sql$/.test(k)).sort();
+        const list = companySql(files);
         if (row.step_n >= list.length) return set({ step: 'storage', step_n: 0, detail: '' });
         const name = list[row.step_n].slice(4);
         const done = (await runSql("select 1 from public._erp_migrations where name = '" + name.replace(/'/g, "''") + "'")) || [];
@@ -199,52 +214,26 @@ export async function installStep(deps, b) {
         if (files['deploy/storage.sql']) await runSql(files['deploy/storage.sql']);
         return set({ step: 'secrets', detail: '' });
       }
-      case 'secrets': {
-        const env = deps.installEnv || {};
-        const key = rand(), cron = rand();
-        let poolHost = '';
-        try { const pc = await mgmt(deps, tok, 'GET', '/projects/' + row.ref + '/config/database/pooler'); poolHost = str((Array.isArray(pc) ? (pc.find((x) => x.database_type === 'PRIMARY') || pc[0]) : pc || {}).db_host); } catch (_) { poolHost = ''; }
-        await mgmt(deps, tok, 'POST', '/projects/' + row.ref + '/secrets', [
-          { name: 'ERP_INSTALL_ID', value: row.id }, { name: 'ERP_INSTALL_KEY', value: key }, { name: 'ERP_CONTROL_URL', value: str(env.controlUrl) },
-          { name: 'ERP_RELEASE', value: rel.version }, { name: 'CRON_KEY', value: cron }, { name: 'ERP_APP_URL', value: publicUrl(deps) + '#/use/' + row.id },
-          ...(env.renderUrl ? [{ name: 'RENDER_URL', value: env.renderUrl }, { name: 'RENDER_KEY', value: str(env.renderKey) }] : []),
-          ...(poolHost ? [{ name: 'ERP_POOL_HOST', value: poolHost }] : []),
-        ]);
+      case 'secrets': case 'function': case 'cron':   // an install started before the bridge: carry on with it
+      case 'bridge': {
+        if (!deps.bridgeKey || !deps.tenantDeps) throw new Error('The ERP server is not set up for new companies yet (bridge key missing).');
+        const conn = await connectProject(deps, tok, row.ref);
+        await saveTenant(sqlOf(deps), deps.bridgeKey, row.id, conn);
+        deps.tenantDeps.forget(row.id);
         // their login e-mails (password, approvals) come back to their own page
         try { await mgmt(deps, tok, 'PATCH', '/projects/' + row.ref + '/config/auth', authConfig(publicUrl(deps) + '?use=' + row.id, publicUrl(deps))); } catch (_) { /* set again when their address is ready */ }
         try { await mgmt(deps, tok, 'PATCH', '/projects/' + row.ref + '/config/auth', authMailText()); } catch (_) { /* free plan with the built-in mailer: Supabase's own wording */ }
-        // the cron key is needed once more (timers), the install key once more (finish): kept until then, then wiped
-        return set({ step: 'function', key_hash: await sha256(key), install_key: key + '|' + cron, detail: '' });
-      }
-      case 'function': {
-        const form = new FormData();
-        form.append('metadata', JSON.stringify({ entrypoint_path: 'index.ts', name: 'erp', verify_jwt: false }));
-        for (const k of Object.keys(files).filter((x) => x.startsWith('fn/'))) {
-          form.append('file', new Blob([files[k]], { type: k.endsWith('.ts') ? 'application/typescript' : 'application/javascript' }), k.slice(3));
-        }
-        await mgmt(deps, tok, 'POST', '/projects/' + row.ref + '/functions/deploy?slug=erp', form, true);
-        return set({ step: 'cron', version: rel.version, detail: '' });
-      }
-      case 'cron': {
-        const cron = str(row.install_key).split('|')[1];
-        let q = files['deploy/cron.sql'] || '';
-        q = q.split('__FN_URL__').join(row.api_url).split('__CRON_KEY__').join(cron);
-        if (q) await runSql(q);
-        return set({ step: 'finish', detail: '' });
+        return set({ step: 'finish', api_url: controlApi(deps), version: rel.version, detail: '' });
       }
       case 'finish': {
-        const key = str(row.install_key).split('|')[0];
-        const r = await (deps.fetch || fetch)(row.api_url + '?install=finish', {
-          method: 'POST', headers: { 'Content-Type': 'application/json', 'x-install-key': key },
-          body: JSON.stringify({ company: row.company, ownerName: row.owner_name, ownerEmail: row.owner_email }),
-        });
-        let j = null; try { j = await r.json(); } catch (_) { j = null; }
-        if (!j || !j.ok) {
-          // a function just deployed can take a few seconds to answer
-          if (r.status >= 500 || r.status === 404) return set({ detail: 'waiting for the new server to answer' });
-          throw new Error('The new ERP did not finish: ' + str(j && j.error).slice(0, 200));
+        let r;
+        try { r = await makeCompany(await deps.tenantDeps(row.id), { company: row.company, ownerName: row.owner_name, ownerEmail: row.owner_email }); }
+        catch (e) {   // the new database password is still on its way to the pooler: the page simply asks again
+          if (/password authentication|ECONNREFUSED|timeout/i.test(str(e && e.message))) { deps.tenantDeps.forget(row.id); return set({ detail: 'waiting for the database to accept the new connection' }); }
+          throw e;
         }
-        return set({ step: 'done', status: 'active', install_key: '', detail: j.mailed ? 'owner e-mailed' : 'owner made - e-mail not sent', error: '' });
+        if (!r.body || !r.body.ok) throw new Error('The new ERP did not finish: ' + str(r.body && r.body.error).slice(0, 200));
+        return set({ step: 'done', status: 'active', install_key: '', detail: r.body.mailed ? 'owner e-mailed' : 'owner made - e-mail not sent', error: '' });
       }
       default: return view(row);
     }
@@ -329,9 +318,11 @@ export async function oauthBack(deps, q) {
 }
 
 export async function installInfo(deps, id) {
-  const r = (await sqlOf(deps)`select company, api_url, anon_key, ref, status from erp_installs where id = ${str(id)}::uuid`)[0];
+  const r = (await sqlOf(deps)`select i.company, i.api_url, i.anon_key, i.ref, i.status, t.id as tenant
+                                 from erp_installs i left join erp_tenants t on t.id = i.id where i.id = ${str(id)}::uuid`)[0];
   // a switched-off copy still opens its sign-in page, which then says why
   if (!r || !['active', 'suspended'].includes(r.status)) throw new Error('That ERP is not ready, or not known.');
+  if (r.tenant) return { name: r.company, api: controlApi(deps), url: 'https://' + r.ref + '.supabase.co', anon: r.anon_key, tenant: str(id) };
   return { name: r.company, api: r.api_url, url: 'https://' + r.ref + '.supabase.co', anon: r.anon_key };
 }
 
@@ -408,6 +399,10 @@ export async function erpInstallSet(ctx, payload) {
   const r = await ctx.sql`update erp_installs set status = ${status}, reason = ${status === 'suspended' ? reason : null}, updated_at = now()
                           where id = ${str(payload.id)}::uuid and status in ('active', 'suspended') returning id`;
   if (!r.length) throw new Error('That copy is not installed yet.');
+  // a bridged company: its ERP on the provider's server locks (or opens) at once
+  await ctx.sql`update erp_tenants set status = ${status === 'suspended' ? 'locked' : 'active'}, reason = ${status === 'suspended' ? reason : null}
+                where id = ${str(payload.id)}::uuid and (status <> 'disconnected' or ${status} = 'suspended')`;
+  if (ctx.deps && ctx.deps.tenantDeps) ctx.deps.tenantDeps.forget(str(payload.id));
   return { ok: true, status };
 }
 
@@ -450,8 +445,12 @@ export async function erpInstallUpdate(ctx, payload) {
   try {
     if (row.upd_step === 'db') {
       const have = new Set(((await runSql('select name from public._erp_migrations')) || []).map((r) => r.name));
-      const todo = Object.keys(files).filter((k) => /^sql\/\d{3}_.+\.sql$/.test(k)).sort().filter((k) => !have.has(k.slice(4)));
-      if (!todo.length) return save({ upd_step: 'function', upd_n: 0, upd_error: null });
+      const todo = companySql(files).filter((k) => !have.has(k.slice(4)));
+      if (!todo.length) {
+        const bridged = (await ctx.sql`select 1 from erp_tenants where id = ${row.id}`).length > 0;
+        if (bridged) return save({ upd_step: null, upd_n: 0, version: rel.version, updated_to_at: new Date(), upd_error: null });   // its server is the provider's: already new
+        return save({ upd_step: 'function', upd_n: 0, upd_error: null });
+      }
       const name = todo[0].slice(4);
       await runSql(files[todo[0]]);
       await runSql("insert into public._erp_migrations (name) values ('" + name.replace(/'/g, "''") + "') on conflict do nothing");
@@ -479,6 +478,39 @@ export async function erpInstallUpdate(ctx, payload) {
   }
 }
 
+/** Run fn over the bridge, waiting (up to ~40 s) for a freshly set database password to be accepted. */
+async function reachable(deps, id, fn) {
+  let last = null;
+  for (let i = 0; i < 9; i++) {
+    try { return await fn(await deps.tenantDeps(id)); }
+    catch (e) { last = e; if (!/password authentication|ECONNREFUSED|timeout|terminated/i.test(str(e && e.message))) throw e; deps.tenantDeps.forget(id); await new Promise((ok) => setTimeout(ok, 4500)); }
+  }
+  throw last;
+}
+
+/** Move a copy made before the bridge onto it: its ERP then runs on the provider's server, and the server code
+ *  and timers are taken out of the company's project (nothing of the logic stays there). */
+export async function erpInstallBridge(ctx, payload) {
+  await needAdmin(ctx);
+  const deps = ctx.deps;
+  if (!deps.bridgeKey || !deps.tenantDeps) throw new Error('The bridge key is not set on this server.');
+  const row = (await ctx.sql`select * from erp_installs where id = ${str(payload && payload.id)}::uuid`)[0];
+  if (!row || !row.ref || !['active', 'suspended'].includes(row.status)) throw new Error('Only an installed copy can be moved.');
+  const tok = await tokenOf(deps, row);
+  const conn = await connectProject(deps, tok, row.ref);
+  await saveTenant(ctx.sql, deps.bridgeKey, row.id, conn);
+  deps.tenantDeps.forget(row.id);
+  // it must answer over the bridge before anything is taken away (a new password takes a few seconds to reach the pooler)
+  const biz = await reachable(deps, row.id, (td) => td.sql`select count(*)::int n from businesses`.then((r) => r[0].n));
+  const runSql = (q) => mgmt(deps, tok, 'POST', '/projects/' + row.ref + '/database/query', { query: q });
+  let removed = [];
+  try { await runSql("select cron.unschedule(jobid) from cron.job where command like '%functions/v1/erp%'"); removed.push('timers'); } catch (_) { /* no timers */ }
+  try { await mgmt(deps, tok, 'DELETE', '/projects/' + row.ref + '/functions/erp'); removed.push('server code'); } catch (_) { /* already gone */ }
+  if (row.status === 'suspended') await ctx.sql`update erp_tenants set status = 'locked', reason = ${row.reason || null} where id = ${row.id}`;
+  await ctx.sql`update erp_installs set api_url = ${controlApi(deps)}, key_hash = null, updated_at = now() where id = ${row.id}`;
+  return { ok: true, id: row.id, businesses: biz, removed };
+}
+
 /** The company sent a new Supabase access token (the old one was removed or expired). */
 export async function erpInstallToken(ctx, payload) {
   await needAdmin(ctx);
@@ -504,4 +536,4 @@ export async function erpInstallDomain(ctx, payload) {
   return { ok: true, domain: d, cname: pagesTarget(ctx.deps), auto };
 }
 
-export const HANDLERS = { erpInstalls, erpInstallInvite, erpInstallSet, erpInstallRetry, erpInstallUpdate, erpInstallToken, erpInstallDomain };
+export const HANDLERS = { erpInstalls, erpInstallInvite, erpInstallSet, erpInstallRetry, erpInstallUpdate, erpInstallToken, erpInstallDomain, erpInstallBridge };

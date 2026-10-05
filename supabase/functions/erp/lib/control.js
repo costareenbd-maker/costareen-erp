@@ -59,6 +59,12 @@ export async function heartbeat(deps) {
 export async function installFinish(deps, key, body) {
   const ins = deps.install || {};
   if (!ins.key || key !== ins.key) return { status: 403, body: { ok: false, error: 'Not the installer.' } };
+  return makeCompany(deps, body);
+}
+
+/** The company's business, its first lists and its owner login, in the company's own database (deps = that company's).
+ *  The provider's installer calls it over the bridge; a copy with its own server called it through installFinish. */
+export async function makeCompany(deps, body) {
   const sql = deps.sql;
   const company = str(body.company).slice(0, 80), name = str(body.ownerName).slice(0, 80), email = str(body.ownerEmail).toLowerCase();
   if (!company || !name || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return { status: 400, body: { ok: false, error: 'Company, owner name and e-mail are needed.' } };

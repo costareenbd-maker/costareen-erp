@@ -8282,11 +8282,22 @@ var CONTROL_API = ERP_API;   // the provider's server: installs are always asked
 var ERP_BACKEND = null;
 try { ERP_BACKEND = JSON.parse(localStorage.getItem('erp_backend') || 'null'); } catch (e) { ERP_BACKEND = null; }
 if (ERP_BACKEND && ERP_BACKEND.api && ERP_BACKEND.url && ERP_BACKEND.anon) { ERP_API = ERP_BACKEND.api; SB_URL = ERP_BACKEND.url; SB_ANON = ERP_BACKEND.anon; }
+// a company on the bridge: the provider's server runs its ERP; every call says which company it is
+var ERP_TENANT = ERP_BACKEND && ERP_BACKEND.tenant ? String(ERP_BACKEND.tenant) : '';
+function erpSaveBackend(id, j) { try { localStorage.setItem('erp_backend', JSON.stringify({ id: id, name: j.name, api: j.api, url: j.url, anon: j.anon, tenant: j.tenant || '' })); } catch (e) {} }
+// the company was moved (e.g. onto the bridge): pick up its new server address and open again
+(function () {
+  if (!ERP_BACKEND || !ERP_BACKEND.id || /[?&]use=/.test(location.search)) return;
+  fetch(CONTROL_API + '?install=info&id=' + encodeURIComponent(ERP_BACKEND.id)).then(function (r) { return r.json(); }).then(function (j) {
+    if (!j || !j.ok) return;
+    if (j.api !== ERP_BACKEND.api || String(j.tenant || '') !== ERP_TENANT || j.url !== ERP_BACKEND.url) { erpSaveBackend(ERP_BACKEND.id, j); location.reload(); }
+  }, function () {});
+})();
 (function () {
   var q = new URLSearchParams(location.search), id = q.get('use');
   if (!id) return;
   fetch(CONTROL_API + '?install=info&id=' + encodeURIComponent(id)).then(function (r) { return r.json(); }).then(function (j) {
-    if (j.ok) { try { localStorage.setItem('erp_backend', JSON.stringify({ id: id, name: j.name, api: j.api, url: j.url, anon: j.anon })); } catch (e) {} }
+    if (j.ok) erpSaveBackend(id, j);
     q.delete('use'); var rest = q.toString();
     location.replace(location.pathname + (rest ? '?' + rest : '') + location.hash);
   }, function () {});
@@ -8297,7 +8308,7 @@ if (ERP_BACKEND && ERP_BACKEND.api && ERP_BACKEND.url && ERP_BACKEND.anon) { ERP
   if (ERP_BACKEND || !h || /(^|\.)costareen\.com$|^localhost$|^127\.|\.pages\.dev$/.test(h) || /^#\/(use|install)\//.test(location.hash || '')) return;
   fetch(CONTROL_API + '?install=host&h=' + encodeURIComponent(h)).then(function (r) { return r.json(); }).then(function (j) {
     if (!j.ok) return;
-    try { localStorage.setItem('erp_backend', JSON.stringify({ id: j.id, name: j.name, api: j.api, url: j.url, anon: j.anon })); } catch (e) {}
+    erpSaveBackend(j.id, j);
     location.reload();
   }, function () {});
 })();
@@ -8311,7 +8322,7 @@ var ERP_PUBLIC_MODE = !/(^|\.)costareen\.com$|^costareen-erp\.pages\.dev$|^local
   if (m[1] === 'main') { try { localStorage.removeItem('erp_backend'); } catch (e) {} location.replace(location.pathname + '#/'); return; }
   fetch(CONTROL_API + '?install=info&id=' + encodeURIComponent(m[1])).then(function (r) { return r.json(); }).then(function (j) {
     if (!j.ok) { alert(j.error || 'That ERP is not ready.'); location.replace(location.pathname + '#/'); return; }
-    try { localStorage.setItem('erp_backend', JSON.stringify({ id: m[1], name: j.name, api: j.api, url: j.url, anon: j.anon })); } catch (e) {}
+    erpSaveBackend(m[1], j);
     location.replace(location.pathname + '#/'); location.reload();
   }, function () { alert('The ERP could not be reached.'); });
 })();
@@ -8333,9 +8344,9 @@ function erpPost(name, args, again) {
       method: 'POST',
       // run the server next to the database (Singapore); without this it runs
       // wherever the visitor is nearest, and every query crosses the distance
-      headers: { 'Content-Type': 'application/json', 'apikey': SB_ANON, 'x-region': 'ap-southeast-1',
+      headers: Object.assign({ 'Content-Type': 'application/json', 'apikey': SB_ANON, 'x-region': 'ap-southeast-1',
                  'Authorization': 'Bearer ' + SB_ANON,
-                 'x-erp-session': tok ? 'Bearer ' + tok : '' },
+                 'x-erp-session': tok ? 'Bearer ' + tok : '' }, ERP_TENANT ? { 'x-erp-tenant': ERP_TENANT } : {}),
       body: JSON.stringify({ name: name, args: args || [], token: erpToken() })
     });
   }).then(function (r) { return r.json(); }).then(function (j) {
@@ -10186,7 +10197,7 @@ function wireGate() {
   if (em) { try { (pw || em).focus(); } catch (e) {} em.addEventListener('input', function () { GATE_EMAIL = em.value.trim(); }); }
   // step 1: the e-mail alone - the server says what it needs next
   function signinCall(what, mail, ok) {
-    fetch(ERP_API + '?signin=' + what, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: mail }) })
+    fetch(ERP_API + '?signin=' + what, { method: 'POST', headers: Object.assign({ 'Content-Type': 'application/json' }, ERP_TENANT ? { 'x-erp-tenant': ERP_TENANT } : {}), body: JSON.stringify({ email: mail }) })
       .then(function (r) { return r.json(); })
       .then(function (j) { GATE_BUSY = false; if (!j || !j.ok) { fail((j && j.error) || 'Something went wrong. Try again.'); return; } ok(j); },
             function () { fail(navigator.onLine === false ? 'This computer is offline. Connect to the internet and try again.' : 'The ERP server did not answer. Wait a moment and try again.'); });

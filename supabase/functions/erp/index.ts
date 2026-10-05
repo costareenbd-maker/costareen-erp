@@ -18,6 +18,7 @@ import postgres from 'npm:postgres@3.4.5';
 import { connect } from './db.js';
 import { erpCall } from './core.js';
 import { runJob, runHook, asBusiness, owners } from './jobs.js';
+import { tenantSource, Locked, checkTenant } from './lib/bridge.js';
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL') ?? '';
 const ANON = Deno.env.get('SUPABASE_ANON_KEY') ?? '';
@@ -25,6 +26,9 @@ const SERVICE = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
 const RENDER_URL = (Deno.env.get('RENDER_URL') ?? '').replace(/\/+$/, '');
 const RENDER_KEY = Deno.env.get('RENDER_KEY') ?? '';
 const CRON_KEY = Deno.env.get('CRON_KEY') ?? '';
+// the bridge (lib/bridge.js): seals each company's database URL and service key in erp_tenants
+const BRIDGE_KEY = Deno.env.get('ERP_BRIDGE_KEY') ?? '';
+const FN_URL = SUPABASE_URL + '/functions/v1/erp';
 const SMTP_NOTE = Deno.env.get('ERP_SMTP_NOTE') ?? '';
 const GOOGLE = { clientId: Deno.env.get('GOOGLE_CLIENT_ID') ?? '', clientSecret: Deno.env.get('GOOGLE_CLIENT_SECRET') ?? '',
                  redirect: SUPABASE_URL + '/functions/v1/erp?google=back', appUrl: Deno.env.get('ERP_APP_URL') ?? 'https://erp.costareen.com/' };   // set by deploy/set_smtp.py when a real mail service is in use   // pg_cron sends it as x-erp-cron
@@ -65,7 +69,7 @@ function cors(origin: string | null, open = false) {
     /^https:\/\/([a-z0-9-]+\.)?(costareen-erp|office-erp)\.pages\.dev$/.test(origin));
   return {
     'Access-Control-Allow-Origin': ok ? origin! : ALLOWED_ORIGINS[0],
-    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-erp-session, x-region',
+    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-erp-session, x-region, x-erp-tenant',
     'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
     'Vary': 'Origin',
   };
@@ -80,85 +84,155 @@ function jwtClaim(token: string, key: string): string {
   } catch (_) { return ''; }
 }
 
+// ------------------------------------------------------------- one project's parts
+// The provider's own project, or a company's (the bridge): sign-in, files, logins and e-mailed links
+// all talk to that project. The same ERP code then runs against whichever company is calling.
+type Project = { url: string; anon: string; service: string; appUrl: string };
+
+function projectParts(p: Project) {
+  const SUPABASE_URL = p.url, ANON = p.anon, SERVICE = p.service;
 /** A Supabase session -> its user id, or null. Asked of Supabase Auth itself. */
-async function verifyUser(authHeader: string): Promise<string | null> {
-  const m = /^Bearer\s+(.+)$/i.exec(authHeader || '');
-  if (!m || m[1] === ANON) return null;
-  try {
-    const r = await fetch(SUPABASE_URL + '/auth/v1/user', {
-      headers: { Authorization: 'Bearer ' + m[1], apikey: ANON },
-    });
-    if (!r.ok) return null;
-    const u = await r.json();
-    if (!u || !u.id) return null;
-    // An owner who has switched on the second step is only let in by a session
-    // that has passed it (aal2). The password alone is not enough.
-    const twoStep = Array.isArray(u.factors) && u.factors.some((f: any) => f && f.status === 'verified');
-    if (twoStep && jwtClaim(m[1], 'aal') !== 'aal2') return null;
-    return String(u.id);
-  } catch (_) {
-    return null;
-  }
-}
-
-// ------------------------------------------------------------ file storage
-// One private bucket; every file lives under <business id>/<folder>/<name>,
-// so one business can never be handed another's file. Links are signed
-// and expire after a week (the page asks again when it needs one).
-
-const svc = { Authorization: 'Bearer ' + SERVICE, apikey: SERVICE };
-const enc = (p: string) => p.split('/').map(encodeURIComponent).join('/');
-
-const storage = {
-  async save(biz: string, folder: string, name: string, bytes: Uint8Array, mime: string) {
-    const path = `${biz}/${folder}/${name}`;
-    const r = await fetch(`${SUPABASE_URL}/storage/v1/object/${BUCKET}/${enc(path)}`, {
-      method: 'POST',
-      headers: { ...svc, 'Content-Type': mime || 'application/octet-stream', 'x-upsert': 'true' },
-      body: bytes,
-    });
-    if (!r.ok) throw new Error('The file could not be saved (' + r.status + ').');
-    return { id: `${folder}/${name}`, name, url: await storage.url(biz, folder, name) };
-  },
-  async url(biz: string, folder: string, name: string) {
-    const r = await fetch(`${SUPABASE_URL}/storage/v1/object/sign/${BUCKET}/${enc(`${biz}/${folder}/${name}`)}`, {
-      method: 'POST',
-      headers: { ...svc, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ expiresIn: 7 * 24 * 3600 }),
-    });
-    if (!r.ok) return '';
-    const j = await r.json();
-    return j.signedURL ? SUPABASE_URL + '/storage/v1' + j.signedURL : '';
-  },
-  async find(biz: string, folder: string, part: string) {
-    const r = await fetch(`${SUPABASE_URL}/storage/v1/object/list/${BUCKET}`, {
-      method: 'POST',
-      headers: { ...svc, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ prefix: `${biz}/${folder}/`, search: part, limit: 100,
-                             sortBy: { column: 'created_at', order: 'desc' } }),
-    });
-    if (!r.ok) return [];
-    const list = await r.json();
-    const out = [];
-    for (const f of list || []) {
-      if (!f || !f.name || !String(f.name).includes(part)) continue;
-      out.push({ id: `${folder}/${f.name}`, name: f.name, url: await storage.url(biz, folder, f.name) });
+  async function verifyUser(authHeader: string): Promise<string | null> {
+    const m = /^Bearer\s+(.+)$/i.exec(authHeader || '');
+    if (!m || m[1] === ANON) return null;
+    try {
+      const r = await fetch(SUPABASE_URL + '/auth/v1/user', {
+        headers: { Authorization: 'Bearer ' + m[1], apikey: ANON },
+      });
+      if (!r.ok) return null;
+      const u = await r.json();
+      if (!u || !u.id) return null;
+      // An owner who has switched on the second step is only let in by a session
+      // that has passed it (aal2). The password alone is not enough.
+      const twoStep = Array.isArray(u.factors) && u.factors.some((f: any) => f && f.status === 'verified');
+      if (twoStep && jwtClaim(m[1], 'aal') !== 'aal2') return null;
+      return String(u.id);
+    } catch (_) {
+      return null;
     }
-    return out;
-  },
-  async remove(biz: string, folder: string, name: string) {
-    await fetch(`${SUPABASE_URL}/storage/v1/object/${BUCKET}`, {
-      method: 'DELETE',
+  }
+  
+  // ------------------------------------------------------------ file storage
+  // One private bucket; every file lives under <business id>/<folder>/<name>,
+  // so one business can never be handed another's file. Links are signed
+  // and expire after a week (the page asks again when it needs one).
+  
+  const svc = { Authorization: 'Bearer ' + SERVICE, apikey: SERVICE };
+  const enc = (p: string) => p.split('/').map(encodeURIComponent).join('/');
+  
+  const storage = {
+    async save(biz: string, folder: string, name: string, bytes: Uint8Array, mime: string) {
+      const path = `${biz}/${folder}/${name}`;
+      const r = await fetch(`${SUPABASE_URL}/storage/v1/object/${BUCKET}/${enc(path)}`, {
+        method: 'POST',
+        headers: { ...svc, 'Content-Type': mime || 'application/octet-stream', 'x-upsert': 'true' },
+        body: bytes,
+      });
+      if (!r.ok) throw new Error('The file could not be saved (' + r.status + ').');
+      return { id: `${folder}/${name}`, name, url: await storage.url(biz, folder, name) };
+    },
+    async url(biz: string, folder: string, name: string) {
+      const r = await fetch(`${SUPABASE_URL}/storage/v1/object/sign/${BUCKET}/${enc(`${biz}/${folder}/${name}`)}`, {
+        method: 'POST',
+        headers: { ...svc, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ expiresIn: 7 * 24 * 3600 }),
+      });
+      if (!r.ok) return '';
+      const j = await r.json();
+      return j.signedURL ? SUPABASE_URL + '/storage/v1' + j.signedURL : '';
+    },
+    async find(biz: string, folder: string, part: string) {
+      const r = await fetch(`${SUPABASE_URL}/storage/v1/object/list/${BUCKET}`, {
+        method: 'POST',
+        headers: { ...svc, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prefix: `${biz}/${folder}/`, search: part, limit: 100,
+                               sortBy: { column: 'created_at', order: 'desc' } }),
+      });
+      if (!r.ok) return [];
+      const list = await r.json();
+      const out = [];
+      for (const f of list || []) {
+        if (!f || !f.name || !String(f.name).includes(part)) continue;
+        out.push({ id: `${folder}/${f.name}`, name: f.name, url: await storage.url(biz, folder, f.name) });
+      }
+      return out;
+    },
+    async remove(biz: string, folder: string, name: string) {
+      await fetch(`${SUPABASE_URL}/storage/v1/object/${BUCKET}`, {
+        method: 'DELETE',
+        headers: { ...svc, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prefixes: [`${biz}/${folder}/${name}`] }),
+      });
+    },
+    async read(biz: string, folder: string, name: string) {
+      const r = await fetch(`${SUPABASE_URL}/storage/v1/object/${BUCKET}/${enc(`${biz}/${folder}/${name}`)}`, { headers: svc });
+      if (!r.ok) return null;
+      return new Uint8Array(await r.arrayBuffer());
+    },
+  };
+
+  // ----------------------------------------------------- staff sign-in people
+  // A staff member signs in with a code, never a password, but RLS needs them
+  // to be a real user. They get an auth user with an address nobody can use.
+  
+  async function createAuthUser(name: string): Promise<string> {
+    const r = await fetch(SUPABASE_URL + '/auth/v1/admin/users', {
+      method: 'POST',
       headers: { ...svc, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ prefixes: [`${biz}/${folder}/${name}`] }),
+      body: JSON.stringify({
+        email: 'p' + crypto.randomUUID().replace(/-/g, '') + '@people.erp.invalid',
+        email_confirm: true,
+        user_metadata: { full_name: name },
+      }),
     });
-  },
-  async read(biz: string, folder: string, name: string) {
-    const r = await fetch(`${SUPABASE_URL}/storage/v1/object/${BUCKET}/${enc(`${biz}/${folder}/${name}`)}`, { headers: svc });
-    if (!r.ok) return null;
-    return new Uint8Array(await r.arrayBuffer());
-  },
-};
+    const j = await r.json();
+    if (!r.ok || !j.id) throw new Error('Could not add the person (' + r.status + ').');
+    return String(j.id);
+  }
+  
+  // ------------------------------------------------- a partner company's owner
+  // A real login with an e-mail address. No password is set here: the person
+  // chooses one from the link they are sent.
+  async function createOwner(email: string, name: string): Promise<string> {
+    const r = await fetch(SUPABASE_URL + '/auth/v1/admin/users', {
+      method: 'POST',
+      headers: { ...svc, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, email_confirm: true, user_metadata: { full_name: name } }),
+    });
+    const j = await r.json().catch(() => ({}));
+    if (r.status === 422 || /already/i.test(String(j.msg || j.message || j.error_code || ''))) {
+      throw new Error('That e-mail already has a login here. They can sign in as Owner and join your pool with the invite code.');
+    }
+    if (!r.ok || !j.id) throw new Error('Could not create the login (' + r.status + ').');
+    return String(j.id);
+  }
+  async function removeUser(id: string) {
+    await fetch(SUPABASE_URL + '/auth/v1/admin/users/' + encodeURIComponent(id), { method: 'DELETE', headers: svc });
+  }
+  async function sendMagic(email: string, redirectTo: string) {
+    const r = await fetch(SUPABASE_URL + '/auth/v1/otp?redirect_to=' + encodeURIComponent(redirectTo), {
+      method: 'POST', headers: { apikey: ANON, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, create_user: false }),
+    });
+    if (!r.ok) throw new Error('The e-mail could not be sent (' + r.status + ').');
+  }
+
+  // where e-mailed links bring a person back: this ERP's own address (a company: its domain, or the shared page with ?use=<id>)
+  function appBack(): string {
+    const u = p.appUrl || 'https://erp.costareen.com/';
+    const m = /^(.*?)#\/use\/([\w-]+)/.exec(u);
+    return m ? m[1].replace(/\/?$/, '/') + '?use=' + m[2] : u.replace(/#.*$/, '');
+  }
+  async function sendReset(email: string) {
+    const r = await fetch(SUPABASE_URL + '/auth/v1/recover?redirect_to=' + encodeURIComponent(appBack()), {
+      method: 'POST',
+      headers: { apikey: ANON, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email }),
+    });
+    if (!r.ok) throw new Error('mail ' + r.status);
+  }
+  return { verifyUser, storage, createAuthUser, createOwner, removeUser, sendMagic, sendReset };
+}
 
 // --------------------------------------------------------------- PDF render
 
@@ -177,67 +251,6 @@ async function renderPdf(html: string, opts: { footer?: string } = {}) {
   return bytes;
 }
 
-// ----------------------------------------------------- staff sign-in people
-// A staff member signs in with a code, never a password, but RLS needs them
-// to be a real user. They get an auth user with an address nobody can use.
-
-async function createAuthUser(name: string): Promise<string> {
-  const r = await fetch(SUPABASE_URL + '/auth/v1/admin/users', {
-    method: 'POST',
-    headers: { ...svc, 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      email: 'p' + crypto.randomUUID().replace(/-/g, '') + '@people.erp.invalid',
-      email_confirm: true,
-      user_metadata: { full_name: name },
-    }),
-  });
-  const j = await r.json();
-  if (!r.ok || !j.id) throw new Error('Could not add the person (' + r.status + ').');
-  return String(j.id);
-}
-
-// ------------------------------------------------- a partner company's owner
-// A real login with an e-mail address. No password is set here: the person
-// chooses one from the link they are sent.
-async function createOwner(email: string, name: string): Promise<string> {
-  const r = await fetch(SUPABASE_URL + '/auth/v1/admin/users', {
-    method: 'POST',
-    headers: { ...svc, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email, email_confirm: true, user_metadata: { full_name: name } }),
-  });
-  const j = await r.json().catch(() => ({}));
-  if (r.status === 422 || /already/i.test(String(j.msg || j.message || j.error_code || ''))) {
-    throw new Error('That e-mail already has a login here. They can sign in as Owner and join your pool with the invite code.');
-  }
-  if (!r.ok || !j.id) throw new Error('Could not create the login (' + r.status + ').');
-  return String(j.id);
-}
-async function removeUser(id: string) {
-  await fetch(SUPABASE_URL + '/auth/v1/admin/users/' + encodeURIComponent(id), { method: 'DELETE', headers: svc });
-}
-async function sendMagic(email: string, redirectTo: string) {
-  const r = await fetch(SUPABASE_URL + '/auth/v1/otp?redirect_to=' + encodeURIComponent(redirectTo), {
-    method: 'POST', headers: { apikey: ANON, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email, create_user: false }),
-  });
-  if (!r.ok) throw new Error('The e-mail could not be sent (' + r.status + ').');
-}
-
-// where e-mailed links bring a person back: this ERP's own address (a copy: its domain, or the shared page with ?use=<id>)
-function appBack(): string {
-  const u = Deno.env.get('ERP_APP_URL') ?? 'https://erp.costareen.com/';
-  const m = /^(.*?)#\/use\/([\w-]+)/.exec(u);
-  return m ? m[1].replace(/\/?$/, '/') + '?use=' + m[2] : u.replace(/#.*$/, '');
-}
-async function sendReset(email: string) {
-  const r = await fetch(SUPABASE_URL + '/auth/v1/recover?redirect_to=' + encodeURIComponent(appBack()), {
-    method: 'POST',
-    headers: { apikey: ANON, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email }),
-  });
-  if (!r.ok) throw new Error('mail ' + r.status);
-}
-
 // sign-in by e-mail + password is on again (per-person users); access keys still work for machines and old links
 // a company's own copy knows who it is and where its provider is (set by the installer); the provider's system has none of these
 const INSTALL = { id: Deno.env.get('ERP_INSTALL_ID') ?? '', key: Deno.env.get('ERP_INSTALL_KEY') ?? '', controlUrl: Deno.env.get('ERP_CONTROL_URL') ?? '', version: Deno.env.get('ERP_RELEASE') ?? '' };
@@ -246,19 +259,72 @@ const INSTALL_ENV = { controlUrl: SUPABASE_URL + '/functions/v1/erp', appUrl: De
   publicUrl: Deno.env.get('ERP_PUBLIC_URL') ?? '',
   oauth: { clientId: Deno.env.get('SUPABASE_OAUTH_CLIENT_ID') ?? '', clientSecret: Deno.env.get('SUPABASE_OAUTH_CLIENT_SECRET') ?? '', redirect: SUPABASE_URL + '/functions/v1/erp?install=oauth_back' },
   cloudflare: { token: Deno.env.get('ERP_CF_TOKEN') ?? '', account: Deno.env.get('ERP_CF_ACCOUNT') ?? '', project: Deno.env.get('ERP_PUBLIC_PROJECT') ?? '' } };
-const deps = { install: INSTALL, installEnv: INSTALL_ENV, google: GOOGLE, smtpNote: SMTP_NOTE, linkOnly: false, sql, sqlAux, verifyUser, fetch: globalThis.fetch.bind(globalThis), storage, renderPdf, createAuthUser,
-               createOwner, removeUser, sendReset, sendMagic,
-               hookBase: SUPABASE_URL + '/functions/v1/erp' };
+const own = projectParts({ url: SUPABASE_URL, anon: ANON, service: SERVICE, appUrl: Deno.env.get('ERP_APP_URL') ?? 'https://erp.costareen.com/' });
+const deps: any = { install: INSTALL, installEnv: INSTALL_ENV, google: GOOGLE, smtpNote: SMTP_NOTE, linkOnly: false, sql, sqlAux, fetch: globalThis.fetch.bind(globalThis), renderPdf,
+               ...own, hookBase: FN_URL };
+
+// A company on the bridge: its own database, sign-in, files and e-mails; the provider's logic and PDF service.
+// Callbacks (Google, WooCommerce, website door, WhatsApp) carry ?t=<company> so they come back to it.
+const PUBLIC_URL = (Deno.env.get('ERP_PUBLIC_URL') ?? '').replace(/\/?$/, '/');
+async function buildTenant(t: any) {
+  const tsql = connect(postgres, t.dbUrl, { max: 2 });
+  const tAux = connect(postgres, t.dbUrl, { max: 1 });
+  const appUrl = t.domain ? 'https://' + t.domain + '/' : (PUBLIC_URL || 'https://erp.costareen.com/') + '#/use/' + t.id;
+  const parts = projectParts({ url: t.url, anon: t.anon, service: t.service, appUrl });
+  return {
+    install: { id: t.id, key: '', controlUrl: '', version: Deno.env.get('ERP_RELEASE') ?? '', bridged: true },
+    installEnv: INSTALL_ENV,
+    google: { ...GOOGLE, redirect: FN_URL + '?google=back&t=' + t.id, appUrl },
+    smtpNote: '', linkOnly: false, sql: tsql, sqlAux: tAux, fetch: globalThis.fetch.bind(globalThis), renderPdf,
+    ...parts, hookBase: FN_URL + '?t=' + t.id,
+    close() { try { tsql.end({ timeout: 2 }); tAux.end({ timeout: 2 }); } catch (_) { /* gone */ } },
+  };
+}
+const tenantDeps: any = BRIDGE_KEY ? tenantSource(sql, BRIDGE_KEY, buildTenant) : null;
+if (tenantDeps) { deps.bridgeKey = BRIDGE_KEY; deps.tenantDeps = tenantDeps; }
+
+/** Which company is calling: the page's x-erp-tenant header, or ?t= on a callback. Empty = the provider's own. */
+function tenantOf(req: Request, q: URLSearchParams): string {
+  const t = (req.headers.get('x-erp-tenant') || q.get('t') || '').trim();
+  return /^[0-9a-f-]{36}$/i.test(t) ? t : '';
+}
+
+/** The hourly health check: can the provider still reach each company? (A removed key locks its ERP.) */
+async function checkAll() {
+  const ids = (await sql`select id from erp_tenants where status <> 'locked'`).map((r: any) => r.id);
+  const out: any = {};
+  for (const id of ids) {
+    out[id] = await checkTenant(sql, BRIDGE_KEY, id, async (url: string) => {
+      const c = connect(postgres, url, { max: 1 });
+      try { await c`select 1`; } finally { await c.end({ timeout: 2 }); }
+    });
+    if (out[id] !== 'active') tenantDeps.forget(id);
+  }
+  return out;
+}
 
 Deno.serve(async (req) => {
   const q0 = new URL(req.url).searchParams;
-  // public routes, and every company copy (its calls carry their own sign-in, never a cookie), answer any page
-  const headers = { ...cors(req.headers.get('origin'), !!(q0.get('install') || q0.get('control') || q0.get('signin') || (INSTALL && INSTALL.id))), 'Content-Type': 'application/json' };
+  const tid = tenantOf(req, q0);
+  // public routes, a company on the bridge, and every company copy (calls carry their own sign-in, never a cookie) answer any page
+  const headers = { ...cors(req.headers.get('origin'), !!(tid || q0.get('install') || q0.get('control') || q0.get('signin') || (INSTALL && INSTALL.id))), 'Content-Type': 'application/json' };
   if (req.method === 'OPTIONS') return new Response('ok', { headers });
+  if (tid && !(q0.get('install') || q0.get('control'))) {
+    if (!tenantDeps) return new Response(JSON.stringify({ ok: false, error: 'This server does not run company ERPs.' }), { status: 200, headers });
+    try { return await serveWith(await tenantDeps(tid), req, q0, headers); }
+    catch (e) {
+      if (e instanceof Locked) return new Response(JSON.stringify({ ok: false, locked: true, error: (e as Error).message }), { status: 200, headers });
+      return new Response(JSON.stringify({ ok: false, error: 'The ERP server could not reach this company\u2019s database. Try again in a minute.' }), { status: 200, headers });
+    }
+  }
+  return serveWith(deps, req, q0, headers);
+});
+
+async function serveWith(deps: any, req: Request, q0: URLSearchParams, headers: any): Promise<Response> {
   // Google sends the owner back here after they allow Drive access (handlers/google.js)
   if (req.method === 'GET' && new URL(req.url).searchParams.get('google') === 'back') {
     const q = Object.fromEntries(new URL(req.url).searchParams.entries());
-    let to = GOOGLE.appUrl + '#/settings?google=failed';
+    let to = deps.google.appUrl + '#/settings?google=failed';
     try { to = await googleCallback(deps, q); } catch (e) { console.error('google callback', e); to += '&why=' + encodeURIComponent(String((e && (e as Error).message) || e).slice(0, 140)); }
     return new Response(null, { status: 302, headers: { Location: to } });
   }
@@ -282,7 +348,7 @@ Deno.serve(async (req) => {
       catch (e) { return new Response(JSON.stringify({ ok: false, error: String((e as Error).message || e) }), { status: 500, headers }); }
     }
     if (q.get('install') || q.get('control')) {
-      const r: any = await installRoute(deps, req);
+      const r: any = await installRoute(deps, req);   // (a company call never gets here: the router keeps these on the provider's own deps)
       if (r.location) return new Response(null, { status: 302, headers: { Location: r.location } });
       return new Response(JSON.stringify(r.body), { status: r.status, headers });
     }
@@ -312,11 +378,16 @@ Deno.serve(async (req) => {
     if (!CRON_KEY || req.headers.get('x-erp-cron') !== CRON_KEY) {
       return new Response('{"ok":false}', { status: 403, headers });
     }
-    try {
-      return new Response(JSON.stringify({ ok: true, result: await runJob(deps, String(body.job)) }), { headers });
-    } catch (e) {
-      return new Response(JSON.stringify({ ok: false, error: String((e as Error).message || e) }), { headers });
+    const job = String(body.job);
+    const result: any = {};
+    try { result.own = await runJob(deps, job); } catch (e) { result.own = { error: String((e as Error).message || e) }; }
+    if (deps === (globalThis as any).__ownDeps && tenantDeps) {
+      if (job === 'nightly') { try { result.health = await checkAll(); } catch (e) { result.health = { error: String((e as Error).message || e) }; } }
+      for (const r of await sql`select id from erp_tenants where status = 'active'`) {
+        try { result[r.id] = await runJob(await tenantDeps(r.id), job); } catch (e) { result[r.id] = { error: String((e as Error).message || e) }; }
+      }
     }
+    return new Response(JSON.stringify({ ok: true, result }), { headers });
   }
 
   const call = {
@@ -337,4 +408,5 @@ Deno.serve(async (req) => {
   }
   if (!out.ok && BUSY_DB.test(String(out.error || ''))) out = { ok: false, error: 'The database is busy for a moment. Try again in a few seconds.' };
   return new Response(JSON.stringify(out), { headers });
-});
+}
+(globalThis as any).__ownDeps = deps;
