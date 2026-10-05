@@ -8394,7 +8394,7 @@ function srv(name, args, ok, bad) {
 
 var SRV_ACTIVE = 0, SRV_WRITING = false, SRV_TIMED = {};
 // the same list the server uses to know a call changes nothing (ERP_READS)
-var SRV_READS = /^(erpMarket|erpMarketMine|erpMarketRequests|erpBrand|erpComplianceLog|erpProviderKey|erpNews|erpAccessKeys|erpAccessWarning|erpAdmin|erpAiKeys|erpAlertRules|erpAlerts|erpArena|erpBackupStatus|erpBg|erpBnWords|erpBookedParcels|erpBrandLogo|erpBundle|erpBusinessLinks|erpBusinesses|erpBusinessesDeleted|erpCampaignAudience|erpCampaignGet|erpCampaignList|erpCapital|erpCashBook|erpCatalog|erpConnStatus|erpConnections|erpCostBook|erpCourier|erpCourierKeyStatus|erpCurrencies|erpCustomerAccount|erpCustomerCredit|erpCustomerList|erpCustomerPage|erpCustomerStatement|erpCustomers|erpDashboardData|erpDaySales|erpDeliveryOptions|erpDevices|erpDiscontinued|erpDues|erpEvoQr|erpEvoStatus|erpExpenseExport|erpExpenseReceiptUrl|erpExpenses|erpFamilies|erpFighters|erpFormOptions|erpGame|erpGetTheme|erpGoogle|erpHello|erpInstalls|erpInvoice|erpInvoicePdf|erpJob|erpJobs|erpListView|erpLookupCustomer|erpLookupUsage|erpMe|erpMoney|erpNoteFileUrl|erpNotes|erpOwnerChange|erpOwnerChanges|erpParcelLabels|erpParcelPreview|erpPartnerStock|erpPartnership|erpPayReasons|erpPeople|erpPlatform|erpPlatformErrors|erpPnl|erpPnlMonth|erpPoList|erpPoolCatalog|erpProduct|erpProductListShare|erpProductPage|erpProductPhotoUrl|erpProductThumbs|erpProfile|erpQuoteAsset|erpQuoteBoot|erpQuoteGet|erpQuoteList|erpRecentInvoices|erpRecovery|erpReorderPlan|erpRestorePreview|erpReturnPreview|erpRisks|erpSales|erpSearch|erpSecurity|erpSelfTest|erpSerialLookup|erpSerialsFor|erpSessions|erpSetTheme|erpSettingsFull|erpSettingsLists|erpSfPayoutLines|erpSfPayouts|erpShareFile|erpSharedStock|erpSheet|erpStatementPdf|erpStockHistory|erpSupplierPage|erpSuppliers|erpToday|erpUsers|erpWaProductPdf|erpWebMatches|erpWebOrderInvoices|erpWebOrders|erpWebsiteTest)$/;
+var SRV_READS = /^(erpMarket|erpMarketMine|erpMarketRequests|erpMarketHints|erpMarketNames|erpWanted|erpBrand|erpComplianceLog|erpProviderKey|erpNews|erpAccessKeys|erpAccessWarning|erpAdmin|erpAiKeys|erpAlertRules|erpAlerts|erpArena|erpBackupStatus|erpBg|erpBnWords|erpBookedParcels|erpBrandLogo|erpBundle|erpBusinessLinks|erpBusinesses|erpBusinessesDeleted|erpCampaignAudience|erpCampaignGet|erpCampaignList|erpCapital|erpCashBook|erpCatalog|erpConnStatus|erpConnections|erpCostBook|erpCourier|erpCourierKeyStatus|erpCurrencies|erpCustomerAccount|erpCustomerCredit|erpCustomerList|erpCustomerPage|erpCustomerStatement|erpCustomers|erpDashboardData|erpDaySales|erpDeliveryOptions|erpDevices|erpDiscontinued|erpDues|erpEvoQr|erpEvoStatus|erpExpenseExport|erpExpenseReceiptUrl|erpExpenses|erpFamilies|erpFighters|erpFormOptions|erpGame|erpGetTheme|erpGoogle|erpHello|erpInstalls|erpInvoice|erpInvoicePdf|erpJob|erpJobs|erpListView|erpLookupCustomer|erpLookupUsage|erpMe|erpMoney|erpNoteFileUrl|erpNotes|erpOwnerChange|erpOwnerChanges|erpParcelLabels|erpParcelPreview|erpPartnerStock|erpPartnership|erpPayReasons|erpPeople|erpPlatform|erpPlatformErrors|erpPnl|erpPnlMonth|erpPoList|erpPoolCatalog|erpProduct|erpProductListShare|erpProductPage|erpProductPhotoUrl|erpProductThumbs|erpProfile|erpQuoteAsset|erpQuoteBoot|erpQuoteGet|erpQuoteList|erpRecentInvoices|erpRecovery|erpReorderPlan|erpRestorePreview|erpReturnPreview|erpRisks|erpSales|erpSearch|erpSecurity|erpSelfTest|erpSerialLookup|erpSerialsFor|erpSessions|erpSetTheme|erpSettingsFull|erpSettingsLists|erpSfPayoutLines|erpSfPayouts|erpShareFile|erpSharedStock|erpSheet|erpStatementPdf|erpStockHistory|erpSupplierPage|erpSuppliers|erpToday|erpUsers|erpWaProductPdf|erpWebMatches|erpWebOrderInvoices|erpWebOrders|erpWebsiteTest)$/;
 function srvPump() {
   if (!SRV_Q.length) return;
   var isRead = SRV_READS.test(SRV_Q[0].name);
@@ -18980,9 +18980,10 @@ function viewMarket() {
       : 'You see the platform\u2019s own stock. <b>Share your stock</b> to see every supplier\u2019s too.') +
     ' Suppliers are shown by city only until they give you a price.</div>' +
     '<div class="mk-tabs"><button class="btn' + (MK.tab === 'find' ? ' primary' : '') + '" type="button" data-mktab="find">Find stock</button>' +
+    '<button class="btn' + (MK.tab === 'wanted' ? ' primary' : '') + '" type="button" data-mktab="wanted">Wanted board</button>' +
     '<button class="btn' + (MK.tab === 'req' ? ' primary' : '') + '" type="button" data-mktab="req">Requests' + (MKR.data && MKR.data.waiting ? ' <span class="mk-n">' + MKR.data.waiting + '</span>' : '') + '</button>' +
     (owner ? '<button class="btn' + (MK.tab === 'mine' ? ' primary' : '') + '" type="button" data-mktab="mine">What I share' + (r && r.sharing ? ' \u2713' : '') + '</button>' : '') + '</div>';
-  h += MK.tab === 'mine' ? mkMineHtml() : MK.tab === 'req' ? mkReqHtml() : mkFindHtml();
+  h += MK.tab === 'mine' ? mkMineHtml() : MK.tab === 'req' ? mkReqHtml() : MK.tab === 'wanted' ? mkWantedHtml() : mkHintsHtml() + mkFindHtml();
   return h + '</div></section>';
 }
 function mkFindHtml() {
@@ -19017,18 +19018,18 @@ function mkMineHtml() {
     '<button class="btn primary" type="button" id="mk_save"' + (MK.saving ? ' disabled' : '') + '>' + (MK.saving ? 'Saving\u2026' : 'Save') + '</button></div>' +
     '<div class="sku" style="margin-top:8px">' + shared + ' of ' + m.products.length + ' products ticked</div>';
   if (!m.products.length) return h + '<div class="empty">No products yet.</div>';
-  return h + '<div class="scroll tall" style="margin-top:6px"><table><thead><tr><th style="width:36px">Share</th><th>Product</th><th class="num">In stock</th><th class="num">Sell price</th><th>Buyers see</th></tr></thead><tbody>' +
+  return h + '<div class="scroll tall" style="margin-top:6px"><table><thead><tr><th style="width:36px">Share</th><th>Product</th><th class="num">In stock</th><th class="num">Sell price</th><th class="num">Market price</th><th>Buyers see</th></tr></thead><tbody>' +
     m.products.map(function (p, i) {
       return '<tr><td><input type="checkbox" data-mkp="' + i + '"' + (p.shared ? ' checked' : '') + ' style="width:18px;height:18px" aria-label="Share ' + esc(p.name) + '"></td>' +
         '<td><b>' + esc(p.name) + '</b><div class="sku">' + esc([p.sku, p.brand, p.category].filter(Boolean).join(' \u00b7 ')) + '</div></td>' +
-        '<td class="num">' + fmt(p.stock) + (p.stock <= 0 ? ' <span class="sku">(not listed)</span>' : '') + '</td><td class="num">' + fmt(p.price) + '</td>' +
+        '<td class="num">' + fmt(p.stock) + (p.stock <= 0 ? ' <span class="sku">(not listed)</span>' : '') + '</td><td class="num">' + fmt(p.price) + '</td><td class="num">' + mkGuide(p.guide) + '</td>' +
         '<td><select class="i" data-mkm="' + i + '" style="min-width:110px"><option value="price"' + (p.mode !== 'ask' ? ' selected' : '') + '>My price</option><option value="ask"' + (p.mode === 'ask' ? ' selected' : '') + '>Ask</option></select></td></tr>';
     }).join('') + '</tbody></table></div>';
 }
 var goMk1 = go;
 go = function (view, param) {
   var r = goMk1.apply(this, arguments);
-  if (view === 'market') { if (MK.tab === 'mine') loadMarketMine(); loadMarket(); loadMarketReq(); }
+  if (view === 'market') { if (MK.tab === 'mine') loadMarketMine(); loadMarket(); loadMarketReq(); loadMarketHints(); if (MK.tab === 'wanted') loadWanted(); }
   return r;
 };
 document.addEventListener('click', function (ev) {
@@ -19194,6 +19195,122 @@ document.addEventListener('click', function (ev) {
   } else if (k === 'rate-send') {
     srv('erpMarketRate', [{ id: id, stars: Number(el('mk_rt').value), note: el('mk_rn').value.trim() }], function () { mkDone(null, 'Thank you - rated.'); }, mkFail);
   }
+});
+</script>
+
+<!-- Stage 4: low-stock hints, price guide, shared product names, wanted board -->
+<script>
+var MKW = { data: null, err: '', post: null, offer: null, busy: false }, MKH = null, MKNAMES = null;
+function loadMarketHints() { srv('erpMarketHints', [], function (r) { MKH = r; if (VIEW === 'market' && MK.tab === 'find') repaint(); }, function () { MKH = { items: [] }; }); }
+function loadWanted() {
+  MKW.loading = true;
+  srv('erpWanted', [], function (r) { MKW.loading = false; MKW.data = r; MKW.err = ''; if (VIEW === 'market') repaint(); },
+    function (e) { MKW.loading = false; MKW.err = (e && e.message) || String(e); if (VIEW === 'market') repaint(); });
+}
+function mkGuide(g) {
+  if (!g) return '<span class="sku">\u2014</span>';
+  var range = g.low == null ? 'ask' : g.low === g.high ? mkMoney(g.low) : mkMoney(g.low) + '\u2013' + fmt(g.high);
+  return range + ' <span class="sku">(' + g.sellers + ' seller' + (g.sellers === 1 ? '' : 's') + ')</span>';
+}
+function mkHintsHtml() {
+  if (!MKH || !MKH.items || !MKH.items.length) return '';
+  return '<div class="note" style="margin-bottom:10px"><div class="ico">\u2193</div><div><b>Running low on your shelf \u2014 on the market now</b><div class="mk-acts" style="margin-top:6px">' +
+    MKH.items.map(function (x) {
+      return '<button class="btn small" type="button" data-mkhint="' + esc(x.name) + '">' + esc(x.name) + ' <span class="sku">(' + fmt(x.stock) + ' left \u00b7 ' + x.sellers + ' seller' + (x.sellers === 1 ? '' : 's') + (x.from != null ? ' \u00b7 from ' + mkMoney(x.from) : '') + ')</span></button>';
+    }).join('') + '</div></div></div>';
+}
+function mkWantedHtml() {
+  if (MKW.err) return '<div class="note err"><div class="ico">!</div><div>' + esc(MKW.err) + '</div></div>';
+  var d = MKW.data; if (!d) { if (!MKW.loading) loadWanted(); return '<div class="empty">Loading\u2026</div>'; }
+  var mgr = ME && /^(manager|shareholder|owner)$/.test(ME.role);
+  var h = '<div class="sub" data-c5x="1" style="display:block;margin-bottom:8px">Can\u2019t find it? Post what you need. Suppliers see \u201cBuyer \u00b7 your city\u201d and answer with a price; each answer arrives under Requests, and the deal goes on from there.</div>';
+  if (mgr) {
+    var p = MKW.post || {};
+    h += MKW.post ? '<div class="mk-form"><div style="flex:3 1 220px"><label class="f" for="mw_item">What you need</label><input class="i" id="mw_item" maxlength="200" value="' + esc(p.item || '') + '" placeholder="e.g. Bambu Lab P1S printer"></div>' +
+      '<div><label class="f" for="mw_qty">How many</label><input class="i" id="mw_qty" type="number" min="1" value="' + esc(p.qty || 1) + '"></div>' +
+      '<div><label class="f" for="mw_days">Open for (days)</label><input class="i" id="mw_days" type="number" min="1" max="60" value="' + esc(p.days || 14) + '"></div>' +
+      '<div><label class="f" for="mw_phone">Your phone</label><input class="i" id="mw_phone" value="' + esc(p.phone || d.phone || '') + '"></div>' +
+      '<div style="flex:3 1 220px"><label class="f" for="mw_note">Note (optional)</label><input class="i" id="mw_note" maxlength="500" value="' + esc(p.note || '') + '"></div>' +
+      '<div class="mk-acts" style="flex:0 0 auto"><button class="btn primary" type="button" data-mw="post-send"' + (MKW.busy ? ' disabled' : '') + '>Post</button><button class="btn" type="button" data-mw="off">Cancel</button></div>' +
+      '<div class="sku" style="flex-basis:100%">Your business name and phone go only to suppliers who answer with a price.</div></div>'
+      : '<div class="row" style="margin-bottom:8px"><button class="btn primary" type="button" data-mw="post">+ Post what I need</button></div>';
+  }
+  h += '<h3 style="margin:10px 0 6px">Wanted by others</h3>';
+  h += !d.others.length ? '<div class="empty">Nobody is looking for anything right now.</div>' :
+    '<div class="scroll"><table><thead><tr><th>Wanted</th><th class="num">How many</th><th>Buyer</th><th>Open until</th><th></th></tr></thead><tbody>' +
+    d.others.map(function (w) {
+      return '<tr><td><b>' + esc(w.item) + '</b>' + (w.note ? '<div class="sku">' + esc(w.note) + '</div>' : '') + '</td><td class="num">' + fmt(w.qty) + '</td>' +
+        '<td>Buyer' + (w.city ? ' \u00b7 ' + esc(w.city) : '') + '</td><td class="sku">' + esc(w.until) + '</td>' +
+        '<td>' + (w.offered ? '<span class="mk-st ok">You offered</span>' : mgr ? '<button class="btn small primary" type="button" data-mw="offer" data-id="' + esc(w.id) + '">I have it</button>' : '') + '</td></tr>' +
+        (MKW.offer && MKW.offer.id === w.id ? '<tr><td colspan="5">' + mkOfferHtml(w) + '</td></tr>' : '');
+    }).join('') + '</tbody></table></div>';
+  h += '<h3 style="margin:16px 0 6px">My posts</h3>';
+  h += !d.mine.length ? '<div class="empty">You have not posted anything.</div>' :
+    '<div class="scroll"><table><thead><tr><th>Wanted</th><th class="num">How many</th><th>Open until</th><th class="num">Offers</th><th></th></tr></thead><tbody>' +
+    d.mine.map(function (w) {
+      var st = w.status === 'closed' ? '<span class="mk-st">Closed</span>' : w.expired ? '<span class="mk-st">Expired</span>' : mgr ? '<button class="btn small" type="button" data-mw="close" data-id="' + esc(w.id) + '">Close</button>' : '';
+      return '<tr><td><b>' + esc(w.item) + '</b>' + (w.note ? '<div class="sku">' + esc(w.note) + '</div>' : '') + '</td><td class="num">' + fmt(w.qty) + '</td><td class="sku">' + esc(w.until) + '</td>' +
+        '<td class="num">' + (w.offers ? '<button class="btn small" type="button" data-mktab="req">' + w.offers + ' \u2192 Requests</button>' : '0') + '</td><td>' + st + '</td></tr>';
+    }).join('') + '</tbody></table></div>';
+  return h;
+}
+function mkOfferHtml(w) {
+  var o = MKW.offer;
+  var opts = (CAT || []).filter(function (p) { return Number(p.stock) > 0; }).map(function (p) { return '<option value="' + esc(p.sku) + '"' + (o.sku === p.sku ? ' selected' : '') + '>' + esc(p.name) + ' (' + fmt(p.stock) + ' in stock)</option>'; }).join('');
+  return '<div class="mk-form"><div style="flex:3 1 240px"><label class="f" for="mo_sku">Your product</label><select class="i" id="mo_sku">' + opts + '</select></div>' +
+    '<div><label class="f" for="mo_price">Price for one</label><input class="i" id="mo_price" type="number" min="0" value="' + esc(o.price || '') + '"></div>' +
+    '<div><label class="f" for="mo_del">Delivery (total)</label><input class="i" id="mo_del" type="number" min="0" value="' + esc(o.delivery || 0) + '"></div>' +
+    '<div><label class="f" for="mo_days">Valid for (days)</label><input class="i" id="mo_days" type="number" min="1" max="60" value="' + esc(o.days || 7) + '"></div>' +
+    '<div><label class="f" for="mo_phone">Your phone</label><input class="i" id="mo_phone" value="' + esc(o.phone || (MKW.data && MKW.data.phone) || '') + '"></div>' +
+    '<div style="flex:2 1 200px"><label class="f" for="mo_note">Note</label><input class="i" id="mo_note" maxlength="1000" value="' + esc(o.note || '') + '"></div>' +
+    '<div class="mk-acts" style="flex:0 0 auto"><button class="btn primary" type="button" data-mw="offer-send" data-id="' + esc(w.id) + '"' + (MKW.busy ? ' disabled' : '') + '>Send price</button><button class="btn" type="button" data-mw="off">Cancel</button></div>' +
+    '<div class="sku" style="flex-basis:100%">For ' + fmt(w.qty) + '. Your business name and phone go to the buyer with the price; a quotation is also made in Quotations.</div></div>';
+}
+document.addEventListener('click', function (ev) {
+  if (VIEW !== 'market' || !ev.target.closest) return;
+  var t = ev.target.closest('[data-mw],[data-mkhint]'); if (!t) return;
+  if (t.hasAttribute('data-mkhint')) { MK.q = t.getAttribute('data-mkhint'); MK.cat = ''; loadMarket(); repaint(); return; }
+  var k = t.getAttribute('data-mw'), id = t.getAttribute('data-id');
+  if (k === 'off') { MKW.post = null; MKW.offer = null; repaint(); return; }
+  if (k === 'post') { MKW.post = {}; repaint(); return; }
+  if (k === 'offer') { MKW.offer = { id: id }; repaint(); return; }
+  if (k === 'post-send') {
+    var p = MKW.post = { item: el('mw_item').value.trim(), qty: Number(el('mw_qty').value), days: Number(el('mw_days').value), phone: el('mw_phone').value.trim(), note: el('mw_note').value.trim() };
+    MKW.busy = true; repaint();
+    srv('erpWantedPost', [p], function () { MKW.busy = false; MKW.post = null; toast('Posted. Answers arrive under Requests.'); loadWanted(); }, function (e) { MKW.busy = false; toast(esc((e && e.message) || e), true, 9000); repaint(); });
+  } else if (k === 'close') {
+    srv('erpWantedClose', [{ id: id }], function () { toast('Closed.'); loadWanted(); }, function (e) { toast(esc((e && e.message) || e), true, 9000); });
+  } else if (k === 'offer-send') {
+    var o = MKW.offer = { id: id, sku: el('mo_sku').value, price: Number(el('mo_price').value), delivery: Number(el('mo_del').value) || 0, days: Number(el('mo_days').value) || 7, phone: el('mo_phone').value.trim(), note: el('mo_note').value.trim() };
+    MKW.busy = true; repaint();
+    srv('erpWantedOffer', [o], function () { MKW.busy = false; MKW.offer = null; toast('Price sent. Follow it under Requests.'); loadWanted(); loadMarketReq(true); }, function (e) { MKW.busy = false; toast(esc((e && e.message) || e), true, 9000); repaint(); });
+  }
+});
+// the wanted board opens fresh each time
+document.addEventListener('click', function (ev) { var t = ev.target.closest && ev.target.closest('[data-mktab="wanted"]'); if (t) loadWanted(); }, true);
+
+// ---- one way of naming things: product names already on the market, suggested when a product is added or renamed
+document.addEventListener('focusin', function (ev) {
+  var t = ev.target; if (!t || t.id !== 'pf_name') return;
+  if (!el('mk_names')) { var dl = document.createElement('datalist'); dl.id = 'mk_names'; document.body.appendChild(dl); }
+  t.setAttribute('list', 'mk_names'); t.setAttribute('autocomplete', 'off');
+  if (MKNAMES) return;
+  MKNAMES = [];
+  srv('erpMarketNames', [{}], function (r) {
+    MKNAMES = r.names || [];
+    el('mk_names').innerHTML = MKNAMES.map(function (n) { return '<option value="' + esc(n.name) + '">' + esc([n.brand, n.category].filter(Boolean).join(' \u00b7 ')) + '</option>'; }).join('');
+    var f = el('pf_name'); if (f) f.setAttribute('list', 'mk_names');   // the form may have been drawn again meanwhile
+  }, function () { MKNAMES = null; });
+});
+document.addEventListener('input', function (ev) { var t = ev.target; if (t && t.id === 'pf_name' && el('mk_names') && !t.getAttribute('list')) t.setAttribute('list', 'mk_names'); });
+document.addEventListener('change', function (ev) {
+  var t = ev.target; if (!t || t.id !== 'pf_name' || !MKNAMES) return;
+  var hit = MKNAMES.filter(function (n) { return n.name === t.value; })[0]; if (!hit) return;
+  // fill brand and category only when still empty and the business already has that choice
+  [['pf_brand', hit.brand], ['pf_cat', hit.category]].forEach(function (f) {
+    var s = el(f[0]); if (!s || !f[1] || s.value) return;
+    for (var i = 0; i < s.options.length; i++) if (s.options[i].value.toLowerCase() === String(f[1]).toLowerCase()) { s.value = s.options[i].value; break; }
+  });
 });
 </script>
 </body>

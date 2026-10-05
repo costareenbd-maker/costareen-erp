@@ -19,6 +19,14 @@
 //   erpMarketReceive({id, sku | newProduct})              buyer: the stock entry + the bill owed to the seller
 //   erpMarketClose({id, reason})                          seller declines / buyer cancels, before the invoice
 //   erpMarketRate({id, stars, note})                      buyer rates the seller after the invoice
+//
+// Stage 4 - helpers around the market:
+//   erpMarketHints()            products running low on this business's shelf that are on the market (and from what price)
+//   erpMarketMine() .guide      the market's price range for each of this business's products (price guide)
+//   erpMarketNames({q})         product names used on the market (suggestions when adding a product: one shared naming)
+//   erpWanted()                 the wanted board: open posts of others + this business's own posts
+//   erpWantedPost({item, qty, note, days, phone})   erpWantedClose({id})
+//   erpWantedOffer({id, sku, price, delivery, days, phone, note})   a supplier answers: a request, already priced
 
 import { roleAtLeast } from '../allow.js';
 import { todayStr, round2 } from '../lib/time.js';
@@ -121,10 +129,12 @@ export async function erpMarketMine(ctx) {
       left join market_shares m on m.product_id = p.id and m.business_id = p.business_id
      where p.business_id = ${ctx.biz} and coalesce(p.status, 'Active') = 'Active'
      order by (m.product_id is null), p.name`;
+  const seen = await visibleListings(ctx);
   return {
     on: c.on, city: c.city,
     products: rows.map((r) => ({ id: r.id, sku: r.sku, name: r.name, category: r.category, brand: r.brand,
-      price: Number(r.sell_price) || 0, stock: Number(r.stock), shared: !!r.price_mode, mode: r.price_mode || 'price' })),
+      price: Number(r.sell_price) || 0, stock: Number(r.stock), shared: !!r.price_mode, mode: r.price_mode || 'price',
+      guide: guideFor(seen, r.name) })),
   };
 }
 
@@ -332,5 +342,155 @@ export async function erpMarketRate(ctx, payload) {
   return { request: view(await step(ctx, r, ['invoiced', 'received'], { rating: stars, rating_note: str(p.note).slice(0, 300) || null, rated_at: new Date() }), 'buyer') };
 }
 
+// ---------------------------------------------------------------- Stage 4: hints, price guide, names, wanted board
+/** Every listing this business may see (the Market list's own rule), for matching by name. */
+async function visibleListings(ctx) {
+  const src = sourceOf(ctx.deps);
+  if (!src) return [];
+  const c = await conf(ctx.tx, ctx.biz);
+  return ctx.deps.control`
+    select l.name, l.brand, l.category, l.band, l.price, l.city from erp_market_listings l
+      left join erp_tenants t on l.source <> 'self' and t.id::text = l.source
+     where not (l.source = ${src} and l.business_id = ${ctx.biz})
+       and l.updated_at > now() - make_interval(days => ${STALE_DAYS})
+       and (l.source = 'self' or (${c.on} and t.status = 'active'))
+     limit 5000`;
+}
+/** The words that name a product, without sizes ("Sunlu PLA+ Black 1kg" -> black, pla, sunlu). */
+function words(name) {
+  return [...new Set(str(name).toLowerCase().split(/[^a-z0-9+ঀ-৿]+/)
+    .filter((w) => w.length >= 2 && !/^\d+(\.\d+)?(kg|g|gm|mm|cm|m|ml|l|pcs|pc)?$/.test(w)))].sort();
+}
+// a match: the same words, in any order, sizes ignored ("Sunlu PLA Black" ~ "Black Sunlu PLA 1kg";
+// not "Sunlu PLA Twinkling Black", not "Sunlu PLA White")
+function matching(list, name) {
+  const key = words(name).join(' ');
+  if (!key) return [];
+  return list.filter((l) => words(l.name).join(' ') === key);
+}
+function guideFor(list, name) {
+  const m = matching(list, name);
+  const prices = m.map((l) => Number(l.price)).filter((x) => x > 0).sort((a, b) => a - b);
+  if (!m.length) return null;
+  return { sellers: m.length, priced: prices.length, low: prices[0] ?? null, high: prices[prices.length - 1] ?? null,
+    mid: prices.length ? prices[Math.floor((prices.length - 1) / 2)] : null };
+}
+
+export async function erpMarketHints(ctx) {
+  needMarket(ctx);
+  const low = await ctx.tx`
+    select p.name, p.unit, coalesce(ps.stock, 0) as stock, p.reorder_level from products p left join product_stock ps on ps.product_id = p.id
+     where p.business_id = ${ctx.biz} and coalesce(p.status, 'Active') = 'Active' and coalesce(ps.stock, 0) <= greatest(p.reorder_level, 2)
+     order by coalesce(ps.stock, 0), p.name limit 200`;
+  if (!low.length) return { items: [] };
+  const seen = await visibleListings(ctx);
+  const items = [];
+  for (const p of low) {
+    const g = guideFor(seen, p.name);
+    if (g) items.push({ name: p.name, unit: p.unit, stock: Number(p.stock), sellers: g.sellers, from: g.low });
+    if (items.length >= 12) break;
+  }
+  return { items };
+}
+
+export async function erpMarketNames(ctx, payload) {
+  const src = sourceOf(ctx.deps);
+  if (!src) return { names: [] };
+  const q = str(payload && payload.q).slice(0, 60);
+  const like = '%' + q.replace(/[\\%_]/g, (m) => '\\' + m) + '%';
+  // names only (no price, no seller), from every active listing: the point is one way of naming things
+  const rows = await ctx.deps.control`
+    select l.name, max(l.brand) as brand, max(l.category) as category, count(*)::int as n from erp_market_listings l
+      left join erp_tenants t on l.source <> 'self' and t.id::text = l.source
+     where l.updated_at > now() - make_interval(days => ${STALE_DAYS}) and (l.source = 'self' or t.status = 'active')
+       and (${q} = '' or l.name ilike ${like})
+     group by l.name order by count(*) desc, l.name limit 300`;
+  return { names: rows.map((r) => ({ name: r.name, brand: r.brand, category: r.category, n: r.n })) };
+}
+
+function wantedView(w, mine, offers) {
+  return { id: w.id, item: w.item, qty: Number(w.qty), note: str(w.note), until: new Date(w.until).toISOString().slice(0, 10),
+    status: w.status, at: w.created_at, mine, who: mine ? 'You' : 'Buyer', city: str(w.city), offers: offers || 0 };
+}
+
+export async function erpWanted(ctx) {
+  const src = needMarket(ctx);
+  const ctl = ctx.deps.control;
+  const today = todayStr(ctx.now);
+  const others = await ctl`
+    select w.*, (select count(*)::int from erp_market_requests r where r.wanted_id = w.id and r.seller_source = ${src} and r.seller_business = ${ctx.biz}) as by_me
+      from erp_market_wanted w left join erp_tenants t on w.source <> 'self' and t.id::text = w.source
+     where w.status = 'open' and w.until >= ${today}::date and not (w.source = ${src} and w.business_id = ${ctx.biz})
+       and (w.source = 'self' or t.status = 'active')
+     order by w.created_at desc limit 200`;
+  const mine = await ctl`
+    select w.*, (select count(*)::int from erp_market_requests r where r.wanted_id = w.id) as n
+      from erp_market_wanted w where w.source = ${src} and w.business_id = ${ctx.biz} order by w.created_at desc limit 100`;
+  const ph = (await ctx.tx`select value from business_config where business_id = ${ctx.biz} and key = 'market_phone'`)[0];
+  return { others: others.map((w) => ({ ...wantedView(w, false), offered: w.by_me > 0 })),
+    mine: mine.map((w) => ({ ...wantedView(w, true, w.n), expired: new Date(w.until).toISOString().slice(0, 10) < today })),
+    phone: ph ? str(ph.value) : '' };
+}
+
+export async function erpWantedPost(ctx, payload) {
+  need(ctx, 'manager', 'post on the wanted board');
+  const src = needMarket(ctx);
+  const p = payload || {};
+  const item = str(p.item).slice(0, 200), qty = Number(p.qty), phone = str(p.phone).slice(0, 30);
+  const days = Math.min(60, Math.max(1, Math.round(Number(p.days) || 14)));
+  if (item.length < 3) throw new Error('Write what you need.');
+  if (!(qty > 0) || qty > 1e6) throw new Error('How many do you need?');
+  if (!phoneOk(phone)) throw new Error('Write a phone number suppliers can call.');
+  const ctl = ctx.deps.control;
+  const n = (await ctl`select count(*)::int as n from erp_market_wanted where source = ${src} and business_id = ${ctx.biz} and status = 'open'`)[0].n;
+  if (n >= 30) throw new Error('You have 30 open posts - close some first.');
+  const c = await conf(ctx.tx, ctx.biz);
+  await phoneSave(ctx, phone);
+  const w = (await ctl`insert into erp_market_wanted (source, business_id, buyer_name, city, phone, item, qty, note, until, posted_by)
+                       values (${src}, ${ctx.biz}, ${str(ctx.s.businessName) || 'A business'}, ${c.city || null}, ${phone}, ${item}, ${qty},
+                               ${str(p.note).slice(0, 500) || null}, ${todayStr(new Date(ctx.now.getTime() + days * 86400e3))}::date, ${str(ctx.s.name)}) returning *`)[0];
+  return { wanted: wantedView(w, true, 0) };
+}
+
+export async function erpWantedClose(ctx, payload) {
+  need(ctx, 'manager', 'close a wanted post');
+  const src = needMarket(ctx);
+  const got = await ctx.deps.control`update erp_market_wanted set status = 'closed', closed_at = now()
+                                      where id = ${str(payload && payload.id)}::uuid and source = ${src} and business_id = ${ctx.biz} and status = 'open' returning *`;
+  if (!got.length) throw new Error('That post was not found (or is already closed).');
+  return { wanted: wantedView(got[0], true) };
+}
+
+export async function erpWantedOffer(ctx, payload) {
+  need(ctx, 'manager', 'offer a price');
+  const src = needMarket(ctx);
+  const p = payload || {};
+  const ctl = ctx.deps.control;
+  if (!/^[0-9a-f-]{36}$/i.test(str(p.id))) throw new Error('That post was not found.');
+  const w = (await ctl`select w.* from erp_market_wanted w left join erp_tenants t on w.source <> 'self' and t.id::text = w.source
+                       where w.id = ${str(p.id)} and w.status = 'open' and w.until >= ${todayStr(ctx.now)}::date
+                         and (w.source = 'self' or t.status = 'active')`)[0];
+  if (!w || (w.source === src && w.business_id === ctx.biz)) throw new Error('That post is no longer open.');
+  const prod = (await ctx.tx`select id, name, unit from products where business_id = ${ctx.biz} and lower(btrim(sku)) = ${str(p.sku).toLowerCase()} limit 1`)[0];
+  if (!prod) throw new Error('Choose which of your products you offer.');
+  if (!(Number(p.price) > 0)) throw new Error('Write the price for one piece.');
+  if (!phoneOk(p.phone)) throw new Error('Write a phone number the buyer can call.');
+  const dup = await ctl`select 1 from erp_market_requests where wanted_id = ${w.id} and seller_source = ${src} and seller_business = ${ctx.biz} and status in ('asked', 'quoted', 'accepted')`;
+  if (dup.length) throw new Error('You already offered on this post - see Requests.');
+  const c = await conf(ctx.tx, ctx.biz);
+  const r = (await ctl`insert into erp_market_requests (buyer_source, buyer_business, buyer_name, buyer_city, buyer_phone, buyer_by,
+                         seller_source, seller_business, seller_city, product_id, product_name, unit, qty, note, wanted_id)
+                       values (${w.source}, ${w.business_id}, ${w.buyer_name}, ${w.city}, ${w.phone}, ${w.posted_by},
+                         ${src}, ${ctx.biz}, ${c.city || null}, ${prod.id}, ${prod.name}, ${prod.unit}, ${Number(w.qty)},
+                         ${'Wanted: ' + w.item + (w.note ? ' - ' + w.note : '')}, ${w.id}) returning id`)[0];
+  try {
+    return await erpMarketQuote(ctx, { id: r.id, price: p.price, delivery: p.delivery, days: p.days, phone: p.phone, note: p.note });
+  } catch (e) {
+    await ctl`delete from erp_market_requests where id = ${r.id} and status = 'asked'`;   // no half offer left behind
+    throw e;
+  }
+}
+
 export const HANDLERS = { erpMarket, erpMarketMine, erpMarketSave, erpMarketAsk, erpMarketRequests, erpMarketQuote, erpMarketAccept,
-  erpMarketInvoice, erpMarketReceive, erpMarketClose, erpMarketRate };
+  erpMarketInvoice, erpMarketReceive, erpMarketClose, erpMarketRate, erpMarketHints, erpMarketNames, erpWanted, erpWantedPost,
+  erpWantedClose, erpWantedOffer };
