@@ -17630,7 +17630,7 @@ function skTick() {
   skButton();
   var want = skShould();
   if (want && !SK) {
-    if (!SK_JS) SK_JS = new Promise(function (ok, bad) { var sc = document.createElement('script'); sc.src = 'games/stickfight.js?v=17'; sc.onload = ok; sc.onerror = function () { SK_JS = null; bad(); }; document.head.appendChild(sc); });
+    if (!SK_JS) SK_JS = new Promise(function (ok, bad) { var sc = document.createElement('script'); sc.src = 'games/stickfight.js?v=18'; sc.onload = ok; sc.onerror = function () { SK_JS = null; bad(); }; document.head.appendChild(sc); });
     SK_JS.then(function () { if (!SK && window.ERP_STICK) { SK = window.ERP_STICK({ mode: skMode() === 'calm' ? 'calm' : 'on', blood: skPref('blood') !== '0' }); if (skShould()) SK.start(); } }, function () {});
     return;
   }
