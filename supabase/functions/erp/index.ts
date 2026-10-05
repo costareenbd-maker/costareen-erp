@@ -298,7 +298,8 @@ async function buildTenant(t: any) {
     install: { id: t.id, key: '', controlUrl: '', version: Deno.env.get('ERP_RELEASE') ?? '', bridged: true, domain: String(t.domain || '') },
     installEnv: INSTALL_ENV,
     google: { ...GOOGLE, redirect: FN_URL + '?google=back&t=' + t.id, appUrl },
-    smtpNote: '', linkOnly: false, sql: tsql, sqlAux: tAux, control: ctlSql,   // control: the provider's own tables (the market list) fetch: globalThis.fetch.bind(globalThis), renderPdf,
+    // control: the provider's own tables (the market list, joint pools)
+    smtpNote: '', linkOnly: false, sql: tsql, sqlAux: tAux, control: ctlSql, fetch: globalThis.fetch.bind(globalThis), renderPdf,
     ...parts, hookBase: FN_URL + '?t=' + t.id,
     close() { try { tsql.end({ timeout: 2 }); tAux.end({ timeout: 2 }); } catch (_) { /* gone */ } },
   };

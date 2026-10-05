@@ -41,3 +41,29 @@ Progress is logged in docs/CHANGES.md under "joint-N".
 ## Built (2026-10-06): steps 1-4 done, tags joint-1 .. joint-4
 Files: 068/069/070 sql; lib/system.js; handlers/joint.js (page, set-up, products, receive, adjust, catalog, prepareJointSale, floorCheck, mirrorJointSale, syncJoint, mirrorJointReturn, sales list, agree, card, statement PDF); invoice.js (joint lines + opts.mirror); money.js (syncJoint hook); sales.js (return hook, void refusal, clean codes); partners.js (erpPoolClose = agree); dashboard.js (pnl `joint`); page blocks joint-1, joint-2, joint-3/4 at the end of app.html.
 Local trial: set the provider flag with erpPlatformJoint, make the partner's company (erpJointStart company), create the pool, join with the partner's link.
+
+## Cross-database (2026-10-06, tag joint-x): a partner on its own Supabase
+Owner's decision: partners keep their own Supabase (company copy on the bridge); the pools stay in the provider's
+database (the shared space, like the market). Costareen (provider DB) keeps the one-transaction path.
+- `isRemote(ctx)` = bridged company. Pool work goes through `withPool / poolRead / controlTx` (joint.js "where the pool lives"):
+  same DB -> asSystem in the call's transaction; remote -> `ctx.deps.control.begin` with `erp.system = on`
+  (075: `erp_system()` lets the server write pool rows for a partner that has no login here: create_pool_invite,
+  close_pool_month, pool_settlement). `asSystem` is a no-op on such a control transaction (`t.__ctl`).
+- A remote partner is a stand-in row in the provider's `businesses` (`remote_tenant`, `remote_business`), made on join
+  (`remoteJoin`, invite code). It has no members; its owner counts as pool owner (`member: true` for remote).
+  Remote companies only JOIN; pools are started by a provider-side company.
+- Sale from a remote seller: `mirrorJointSale` writes the pool copy in its own control transaction, `joint_sales.status
+  = 'pending'`; core.js hooks (075/core: `ctx.onRollback` -> `dropMirror`, `ctx.afterCommit` -> status 'ok').
+  Money (`syncJoint`) and returns (`mirrorJointReturn`, idempotent `<rid>-J`) for remote run after the seller's
+  commit (`later`). Pending sales are left out of the settlement.
+- Safety net `jointReconcile(deps)` (jobs.js nightly + hourly 'deliveries'): pending > 3 min -> keep if the seller's
+  invoice exists, else drop; re-sync money of remote joint sales of 90 days; write returns the pool missed.
+- Switch for copies: `erp_tenants.joint` (076, control-only), Platform > Company copies button (`erpPlatformJointCopy`);
+  `erpHello.joint` and `jointOn` read it for bridged companies.
+- `invoice_lines.pool_id` FK dropped (075): in a partner's DB the pool is elsewhere.
+- Mirror invoice (`createInvoice opts.mirror`) no longer calls `erpCatalog`/`sale_price_for` (they need a login in the pool).
+- Also fixed: bridged company deps had lost `fetch` and `renderPdf` (a comment swallowed them in index.ts since Stage 2):
+  company copies could not make PDFs.
+- Card 1 on the Joint stock page = "make an install link" (erpInstallInvite, platform admin). The old "make their company
+  here" server action stays but has no button.
+- Test: joint4_test (45) runs a second database in the same test server as the partner's.

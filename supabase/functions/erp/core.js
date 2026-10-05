@@ -187,7 +187,10 @@ async function hello(sql, deps, token, authHeader, ip) {
     let platform = false;
     try { platform = (await sql`select 1 from platform_admins where user_id = ${s.userId}`).length > 0; } catch (_) { platform = false; }
     let joint = false;   // joint stock with a partner company: only where the provider switched it on
-    try { joint = (await sql`select 1 from joint_flags where business_id = ${s.businessId} and enabled`).length > 0; } catch (_) { joint = false; }
+    try {
+      if (deps.install && deps.install.bridged && deps.control) joint = !!((await deps.control`select joint from erp_tenants where id = ${deps.install.id}`)[0] || {}).joint;
+      else joint = (await sql`select 1 from joint_flags where business_id = ${s.businessId} and enabled`).length > 0;
+    } catch (_) { joint = false; }
     return { ok: true, role: s.role, roleLabel: s.roleLabel, name: s.name,
              implicit: !!s.implicit, link: !!s.viaKey, discountCap: s.discountCap, powers: powersMap(s), platform, joint };
   } catch (e) {
@@ -278,13 +281,18 @@ export async function erpCall(deps, { name, args, token, authHeader, ip }) {
     if (!callAllowed(s, name)) throw new Error('Your account does not have access to that.');
 
     const claims = JSON.stringify({ sub: s.userId, role: 'authenticated' });
-    const result = await sql.begin(async (tx) => {
+    // work that must happen only once this call's own transaction is saved (afterCommit), or undone
+    // elsewhere if it is not (onRollback) - e.g. a joint sale's copy in another database (handlers/joint.js)
+    const hooks = { after: [], undo: [] };
+    let result;
+    try { result = await sql.begin(async (tx) => {
       await tx`select set_config('role', 'authenticated', true),
                       set_config('request.jwt.claims', ${claims}, true)`;
       // ctx.sql is for the few privileged side-queries a handler makes while its own
       // transaction is open. It must NOT be the pool the transaction came from: with
       // every connection held by a transaction waiting for one more, nothing moves.
-      const ctx = { tx, sql: deps.sqlAux || sql, s, biz: s.businessId, now: new Date(), memo: {}, deps };
+      const ctx = { tx, sql: deps.sqlAux || sql, s, biz: s.businessId, now: new Date(), memo: {}, deps,
+                    afterCommit: (f) => hooks.after.push(f), onRollback: (f) => hooks.undo.push(f) };
       // a save sent twice is saved once: the page's one-time key (opKey) is claimed in this same transaction
       let list = Array.isArray(args) ? args.slice() : [], opKey = null;
       if (list[0] && typeof list[0] === 'object' && !Array.isArray(list[0]) && 'opKey' in list[0]) {
@@ -303,7 +311,11 @@ export async function erpCall(deps, { name, args, token, authHeader, ip }) {
       const out = await fn(ctx, ...list);
       if (opKey) await tx`update erp_op_keys set result = ${tx.json(out === undefined ? null : out)} where business_id = ${s.businessId} and op_key = ${opKey}`;
       return out;
-    });
+    }); } catch (e) {
+      for (const f of hooks.undo) { try { await f(); } catch (u) { console.error('undo after a failed call', name, u); } }
+      throw e;
+    }
+    for (const f of hooks.after) { try { await f(); } catch (a) { console.error('after-save step', name, a); await logError(sql, s, name + ' (after save)', a); } }
     if (result && result.__replay === true) return { ok: true, result: scrub(name, result.value, s), replayed: true };
     // the books may have changed: the kept dashboard is no longer to be trusted
     if (!ERP_READS.test(name)) { await dashForget(sql, s.businessId); await logActivity(sql, s, name, args, token, ip, result); }

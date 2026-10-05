@@ -16355,6 +16355,7 @@ function installsHtml() {
       return '<tr><td class="nm">' + esc(x.company) + '<br><span class="sku">' + esc(x.owner_name) + ' \u00b7 ' + esc(x.owner_email) + (x.ref ? ' \u00b7 ' + esc(x.ref) : '') + (x.terms_version ? ' \u00b7 terms ' + esc(x.terms_version) : '') + '</span></td><td>' + st + '</td>' +
         '<td>' + esc(x.version || '') + '</td><td>' + esc(ago(x.last_seen)) + '</td><td class="num">' + fmt(s.invoices30 || 0) + '</td><td class="num">' + fmt(s.users || 0) + '</td><td class="num">' + fmt(s.errors7 || 0) + '</td><td class="num" style="white-space:nowrap">' +
         (x.status === 'active' ? '<button class="btn small danger" type="button" data-insoff="' + esc(x.id) + '">Switch off</button>' : '') +
+        (x.bridge ? ' <button class="btn small' + (x.joint ? ' primary' : '') + '" type="button" data-insjoint="' + esc(x.id) + '" data-to="' + (x.joint ? '0' : '1') + '" title="Joint stock with a partner company: off until switched on here">Joint stock: ' + (x.joint ? 'on' : 'off') + '</button>' : '') +
         (x.status === 'suspended' ? '<button class="btn small primary" type="button" data-inson="' + esc(x.id) + '">Switch on</button>' : '') +
         (x.status === 'failed' ? '<button class="btn small" type="button" data-insretry="' + esc(x.id) + '">Let it carry on</button>' : '') +
         (['active', 'suspended'].indexOf(x.status) >= 0 && r.release && x.version !== r.release.version ? ' <button class="btn small primary" type="button" data-insupd="' + esc(x.id) + '">Update to ' + esc(r.release.version) + '</button>' : '') +
@@ -16364,6 +16365,12 @@ function installsHtml() {
     (r.installs.some(function (x) { return ['active', 'suspended'].indexOf(x.status) >= 0 && r.release && x.version !== r.release.version; }) ? '<div class="row" style="justify-content:flex-end;margin-top:8px"><button class="btn" type="button" id="ins_updall">Update every copy to ' + esc(r.release.version) + '</button></div>' : '');
   return h + '</div></section>';
 }
+document.addEventListener('click', async function (ev) {
+  var t = ev.target && ev.target.closest ? ev.target.closest('[data-insjoint]') : null; if (!t) return;
+  var id = t.getAttribute('data-insjoint'), on = t.getAttribute('data-to') === '1';
+  if (!(await uiConfirm(on ? 'Switch joint stock ON for this company copy?\n\nIts owner sees Joint stock and can join a joint stock with a code from a partner.' : 'Switch joint stock OFF for this company copy?'))) return;
+  srv('erpPlatformJointCopy', [{ id: id, on: on }], function () { toast('Joint stock ' + (on ? 'on.' : 'off.')); INSTALLS = null; repaint(); }, function (e) { toast(p4Err(e), true, 12000); });
+});
 var viewPlatformI1 = viewPlatform;
 viewPlatform = function () { return viewPlatformI1() + installsHtml(); };
 document.addEventListener('click', async function (ev) {
@@ -19905,8 +19912,12 @@ function jtOthers(p, d) {
 /** the partner's private link / a new pool's invite code: shown once, on top */
 function jtLinkHtml() {
   var h = '';
-  if (JT.link) h += '<section><div class="note"><div class="ico">✓</div><div><strong>“' + esc(JT.link.business) + '” is ready.</strong> This is ' + esc(JT.link.ownerName) +
-    '’s private link. Send it to them and to nobody else — whoever opens it is the owner of their company. <strong>It is shown only now.</strong>' +
+  if (JT.link && JT.link.install) h += '<section><div class="note"><div class="ico">\u2713</div><div><strong>Install link for your partner.</strong> They open it and make their own ERP on their own Supabase (about 10 minutes). It is good for 14 days. ' +
+    'When it is done, switch <b>Joint stock</b> on for their copy under Platform \u2192 Company copies, and send them the invite code of your joint stock.' +
+    '<div class="row" style="margin-top:8px;gap:8px"><input class="i" id="jt_link" readonly style="flex:1 1 260px" value="' + esc(JT.link.url) + '">' +
+    '<button class="btn small primary" type="button" data-jt="copylink">Copy</button><button class="btn small" type="button" data-jt="donelink">Done</button></div></div></div></section>';
+  else if (JT.link) h += '<section><div class="note"><div class="ico">\u2713</div><div><strong>\u201c' + esc(JT.link.business) + '\u201d is ready.</strong> This is ' + esc(JT.link.ownerName) +
+    '\u2019s private link. Send it to them and to nobody else \u2014 whoever opens it is the owner of their company. <strong>It is shown only now.</strong>' +
     '<div class="row" style="margin-top:8px;gap:8px"><input class="i" id="jt_link" readonly style="flex:1 1 260px" value="' + esc(JT.link.url) + '">' +
     '<button class="btn small primary" type="button" data-jt="copylink">Copy</button><button class="btn small" type="button" data-jt="donelink">I have sent it</button></div>' +
     (JT.link.switched ? '' : '<div class="sub" style="margin-top:6px">Joint stock still has to be switched on for their company (Platform).</div>') + '</div></div></section>';
@@ -19918,14 +19929,20 @@ function jtSetupHtml(first) {
   var d = JT.data, n = JT.newp;
   if (!d.owner) return '<section><div class="empty">' + (first ? 'This company is not in a joint stock yet. The owner sets it up.' : '') + '</div></section>';
   var dis = JT.busy ? ' disabled' : '';
+  if (d.remote) {   // a company on its own database: it joins the pool its partner started
+    return '<section>' + (first ? '<div class="note" style="margin-bottom:14px"><div class="ico">i</div><div><strong>Joint stock</strong> is goods you and a partner company own together. Each of you sells it under your own name, from your own New invoice. ' +
+        'Your own books stay in your own database; only the joint stock\u2019s book is shared. Your partner starts it and sends you a code.</div></div>' : '') +
+      '<div class="jt-steps"><div class="card"><h2><span class="n">1</span>Join your partner\u2019s joint stock</h2><div class="sub">With the code they sent you.</div>' +
+      '<div class="jt-form"><div class="wide"><label class="f" for="jn_code">Invite code</label><input class="i" id="jn_code" maxlength="12" autocapitalize="characters" placeholder="10 letters and digits" value="' + esc(n.code) + '"></div>' +
+      '<div><label class="f" for="jn_jdisp">Your name in it</label><input class="i" id="jn_jdisp" maxlength="60" placeholder="' + esc(d.company) + '" value="' + esc(n.joinName) + '"></div></div>' +
+      '<button class="btn primary" type="button" data-jt="join" style="margin-top:10px"' + dis + '>Join</button></div></div></section>';
+  }
   return '<section>' + (first ? '<div class="note" style="margin-bottom:14px"><div class="ico">i</div><div><strong>Joint stock</strong> is goods you and a partner company own together. Each of you sells it under your own name, from your own New invoice. ' +
       'The stock, its cost and its profit are kept in a separate book both owners see; the profit is shared by how much each put in.</div></div>' : '') +
     '<div class="jt-steps">' +
-    '<div class="card"><h2><span class="n">1</span>Set up your partner’s ERP</h2><div class="sub">A joint stock only works between companies on this same server, so your partner’s ERP is made here, not installed separately. It is a complete ERP of their own, with their own private link and their own books — you cannot see inside, they cannot see inside yours. Skip this if their company already exists here.</div>' +
-      '<div class="jt-form"><div class="wide"><label class="f" for="jn_biz">Their company’s name</label><input class="i" id="jn_biz" maxlength="80" value="' + esc(n.business) + '"></div>' +
-      '<div><label class="f" for="jn_owner">Owner’s name</label><input class="i" id="jn_owner" maxlength="60" value="' + esc(n.ownerName) + '"></div>' +
-      '<div><label class="f" for="jn_email">E-mail <span class="sku">(optional)</span></label><input class="i" id="jn_email" type="email" maxlength="120" value="' + esc(n.email) + '"></div></div>' +
-      '<button class="btn" type="button" data-jt="company" style="margin-top:10px"' + dis + '>Make their company</button></div>' +
+    '<div class="card"><h2><span class="n">1</span>Your partner\u2019s own ERP</h2><div class="sub">Your partner keeps their own ERP on their own Supabase \u2014 their books stay theirs, you never see inside. ' +
+      'If they do not have one yet, make them an install link; they open it and set it up themselves. Then switch <b>Joint stock</b> on for their copy under Platform \u2192 Company copies.</div>' +
+      (ME && ME.platform ? '<button class="btn" type="button" data-jt="installlink" style="margin-top:10px"' + dis + '>Make an install link for them</button>' : '<div class="sub" style="margin-top:8px">The install link comes from the provider of this ERP.</div>') + '</div>' +
     '<div class="card"><h2><span class="n">2</span>Start a joint stock</h2><div class="sub">You get a code to send to your partner.</div>' +
       '<div class="jt-form"><div class="wide"><label class="f" for="jn_name">Name</label><input class="i" id="jn_name" maxlength="80" placeholder="e.g. Polymaker joint stock" value="' + esc(n.name) + '"></div>' +
       '<div><label class="f" for="jn_disp">Your name in it</label><input class="i" id="jn_disp" maxlength="60" placeholder="' + esc(d.company) + '" value="' + esc(n.displayName) + '"></div></div>' +
@@ -20131,6 +20148,12 @@ document.addEventListener('click', async function (ev) {
   if (a === 'copylink') { var ln = el('jt_link'); try { navigator.clipboard.writeText(JT.link.url).then(function () { toast('Link copied.'); }, function () { if (ln) ln.select(); toast('Select the link and copy it.', true); }); } catch (e) { if (ln) ln.select(); } return; }
   if (a === 'donelink') { JT.link = null; repaint(); return; }
   if (a === 'donecode') { JT.code = null; repaint(); return; }
+  if (a === 'installlink') {
+    srv('erpInstallInvite', [{ note: 'joint stock partner' }], function (r) {
+      JT.link = { business: 'Your partner\u2019s ERP', ownerName: 'your partner', url: r.link, install: true, switched: true }; repaint(); window.scrollTo(0, 0);
+    }, function (e) { toast(p4Err(e), true, 12000); });
+    return;
+  }
   if (a === 'company') {
     jtKeepNew();
     if (!n.business.trim() || !n.ownerName.trim()) { toast('Their company’s name and the owner’s name are needed.', true); return; }
@@ -20345,7 +20368,8 @@ var jtMonthHtmlJT3 = jtMonthHtml;
 jtMonthHtml = function (d, pool) {
   var h = jtMonthHtmlJT3.apply(this, arguments), p = d.book, r = p.report || {}, td = r.to_date || {}, cur = d.currency, closed = !!r.closed;
   var nameOf = {}; p.partners.forEach(function (x) { nameOf[x.id] = x.name; });
-  var x = '<section><div class="card"><h2>Agree and close ' + esc(p.label) + '</h2>';
+  var x = '<section><div class="card"><h2>Agree and close ' + esc(p.label) + '</h2>' +
+    (d.pending ? '<div class="sub" style="color:var(--warning)">' + fmt(d.pending) + ' joint sale(s) from a partner\u2019s own ERP are still being confirmed \u2014 they are left out of the sums until then (checked every hour).</div>' : '');
   if ((td.overdue || 0) > 0.5) x += '<div class="sub">Unpaid for more than ' + fmt(td.slow_days || d.slowDays) + ' days: ' + esc(cur) + ' ' + fmt(td.overdue) + ' — counted above as held by the company that sold it (' +
     (r.partners || []).filter(function (q) { return q.overdue > 0.5; }).map(function (q) { return esc(q.name) + ' ' + fmt(q.overdue); }).join(', ') + ').</div>';
   if ((r.below_floor || []).length) x += '<div class="sub" style="color:var(--critical)">Sold under the floor price by an owner this month: ' + r.below_floor.map(function (f) { return esc(nameOf[f.seller] || '?') + ' — ' + fmt(f.amount) + ' under, invoice ' + esc(f.invoice); }).join(' · ') + '</div>';

@@ -10,15 +10,16 @@
 
 export async function asSystem(ctx, fn) {
   const t = ctx.tx;
+  if (t.__ctl) return fn();          // already the server's own transaction in the provider's database (handlers/joint.js)
   t.__sys = (t.__sys || 0) + 1;
-  if (t.__sys === 1) await t`select set_config('role', 'none', true)`;
+  if (t.__sys === 1) await t`select set_config('role', 'none', true), set_config('erp.system', 'on', true)`;
   try {
     return await fn();
   } finally {
     t.__sys--;
     if (t.__sys === 0) {
       // after a failed statement this cannot run; the rollback puts the role back by itself
-      try { await t`select set_config('role', 'authenticated', true)`; } catch (_) { /* rolled back */ }
+      try { await t`select set_config('role', 'authenticated', true), set_config('erp.system', '', true)`; } catch (_) { /* rolled back */ }
     }
   }
 }

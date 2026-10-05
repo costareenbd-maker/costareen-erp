@@ -58,6 +58,14 @@ async function maybe(mod, name) {
   try { const m = await import(mod); return typeof m[name] === 'function' ? m[name] : null; } catch (_) { return null; }
 }
 
+/** Joint stock across databases (handlers/joint.js): only on the provider's own server, which reaches every company. */
+async function jointCheck(deps) {
+  if (!deps.tenantDeps || (deps.install && deps.install.bridged)) return 'skipped';
+  const rec = await maybe('./handlers/joint.js', 'jointReconcile');
+  if (!rec) return 'skipped';
+  try { return await rec(deps); } catch (e) { return { error: String((e && e.message) || e) }; }
+}
+
 export async function runJob(deps, job) {
   const sql = deps.sql;
   const out = {};
@@ -71,6 +79,7 @@ export async function runJob(deps, job) {
         backup: backupNow ? await asBusiness(deps, row, 'nightly:backup', (ctx) => backupNow(ctx, 'night')) : 'skipped',
       };
     }
+    out.joint = await jointCheck(deps);
   } else if (job === 'campaigns') {
     const tick = await maybe('./handlers/campaigns.js', 'campaignTick');
     const which = await maybe('./handlers/campaigns.js', 'spreadBusinesses');
@@ -117,6 +126,7 @@ export async function runJob(deps, job) {
       }
     }
   } else if (job === 'deliveries') {
+    out.joint = await jointCheck(deps);       // joint sales across databases: confirm or take out what was left pending
     // erpDeliveryTick: delivered parcels have their due cleared, every hour
     const tick = await maybe('./handlers/courier.js', 'deliveryTick');
     if (tick) {

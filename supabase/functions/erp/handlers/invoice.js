@@ -130,7 +130,12 @@ export async function createInvoice(ctx, payload, opts = {}) {
   // live stock, before anything is written
   delete ctx.memo.catalog;
   const bySku = {};
-  for (const p of await erpCatalog(ctx)) bySku[p.sku.toLowerCase()] = p;
+  // the pool's copy of a partner's sale reads its shelf as it is (no price list of a person: there may be no login here)
+  const shelfNow = opts.mirror
+    ? (await ctx.tx`select p.sku, p.name, coalesce(ps.stock, 0) as stock, p.sell_price from products p left join product_stock ps on ps.product_id = p.id
+                    where p.business_id = ${ctx.biz}`).map((r) => ({ sku: String(r.sku || '').trim(), name: String(r.name || ''), stock: num(r.stock), sell: num(r.sell_price) }))
+    : await erpCatalog(ctx);
+  for (const p of shelfNow) bySku[p.sku.toLowerCase()] = p;
   // joint stock: lines that come from a pool this company co-owns (their code carries the pool).
   // The pools are locked and their shelves read here; the pool's own copy of the sale is made below.
   const J = await import('./joint.js');
@@ -184,9 +189,11 @@ export async function createInvoice(ctx, payload, opts = {}) {
                    poolId: rec.poolId, code: rec.code, floor: num(rec.floor) });
       continue;
     }
-    const pr = await ctx.tx`select id, name, sale_price_for(${ctx.biz}, id) as price
-                            from products where business_id = ${ctx.biz}
-                              and lower(btrim(sku)) = ${rec.sku.toLowerCase()} limit 1`;
+    const pr = opts.mirror
+      ? await ctx.tx`select id, name, sell_price as price from products where business_id = ${ctx.biz} and lower(btrim(sku)) = ${rec.sku.toLowerCase()} limit 1`
+      : await ctx.tx`select id, name, sale_price_for(${ctx.biz}, id) as price
+                     from products where business_id = ${ctx.biz}
+                       and lower(btrim(sku)) = ${rec.sku.toLowerCase()} limit 1`;
     // a sale to a partner company goes at the price the two agreed (plan B3)
     const unit = opts.mirror ? num(opts.mirror.lines[i].unit)
                : opts.partnerDeal && opts.unitPrice > 0 ? opts.unitPrice : (num(pr[0].price) || num(rec.sell));
