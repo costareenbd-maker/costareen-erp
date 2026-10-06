@@ -8422,7 +8422,7 @@ function srv(name, args, ok, bad) {
 
 var SRV_ACTIVE = 0, SRV_WRITING = false, SRV_TIMED = {};
 // the same list the server uses to know a call changes nothing (ERP_READS)
-var SRV_READS = /^(erpRestockOffers|erpRestockList|erpWarrantyRules|erpWarrantyCard|erpMyLink|erpPlatformRegister|erpPlatformDoctor|erpPlatformCommunity|erpMarketWaiting|erpBoard|erpLoyalty|erpCustomerPoints|erpRefillDue|erpDeliveryHistory|erpDeliveryHistoryMany|erpPrintKit|erpPrintJobs|erpPrintJob|erpPrintCost|erpSpools|erpPrintRequests|erpJoint|erpJointCatalog|erpJointCard|erpInvoiceDesign|erpInvoicePreview|erpMarket|erpMarketMine|erpMarketRequests|erpMarketHints|erpMarketNames|erpWanted|erpBrand|erpComplianceLog|erpProviderKey|erpNews|erpAccessKeys|erpAccessWarning|erpAdmin|erpAiKeys|erpAlertRules|erpAlerts|erpArena|erpBackupStatus|erpBg|erpBnWords|erpBookedParcels|erpBrandLogo|erpBundle|erpBusinessLinks|erpBusinesses|erpBusinessesDeleted|erpCampaignAudience|erpCampaignGet|erpCampaignList|erpCapital|erpCashBook|erpCatalog|erpConnStatus|erpConnections|erpCostBook|erpCourier|erpCourierKeyStatus|erpCurrencies|erpCustomerAccount|erpCustomerCredit|erpCustomerList|erpCustomerPage|erpCustomerStatement|erpCustomers|erpDashboardData|erpDaySales|erpDeliveryOptions|erpDevices|erpDiscontinued|erpDues|erpEvoQr|erpEvoStatus|erpExpenseExport|erpExpenseReceiptUrl|erpExpenses|erpFamilies|erpFighters|erpFormOptions|erpGame|erpGetTheme|erpGoogle|erpHello|erpInstalls|erpInvoice|erpInvoicePdf|erpJob|erpJobs|erpListView|erpLookupCustomer|erpLookupUsage|erpMe|erpMoney|erpNoteFileUrl|erpNotes|erpOwnerChange|erpOwnerChanges|erpParcelLabels|erpParcelPreview|erpPartnerStock|erpPartnership|erpPayReasons|erpPeople|erpPlatform|erpPlatformErrors|erpPnl|erpPnlMonth|erpPoList|erpPoolCatalog|erpProduct|erpProductListShare|erpProductPage|erpProductPhotoUrl|erpProductThumbs|erpProfile|erpQuoteAsset|erpQuoteBoot|erpQuoteGet|erpQuoteList|erpRecentInvoices|erpRecovery|erpReorderPlan|erpRestorePreview|erpReturnPreview|erpRisks|erpSales|erpSearch|erpSecurity|erpSelfTest|erpSerialLookup|erpSerialsFor|erpSessions|erpSetTheme|erpSettingsFull|erpSettingsLists|erpSfPayoutLines|erpSfPayouts|erpShareFile|erpSharedStock|erpSheet|erpStatementPdf|erpStockHistory|erpSupplierPage|erpSuppliers|erpToday|erpUsers|erpWaProductPdf|erpWebMatches|erpWebOrderInvoices|erpWebOrders|erpWebsiteTest)$/;
+var SRV_READS = /^(erpRestockOffers|erpRestockList|erpWarrantyRules|erpWarrantyCard|erpMyLink|erpPlatformRegister|erpPlatformDoctor|erpPlatformCommunity|erpMarketWaiting|erpBoard|erpPlatformDesign|erpLoyalty|erpCustomerPoints|erpRefillDue|erpDeliveryHistory|erpDeliveryHistoryMany|erpPrintKit|erpPrintJobs|erpPrintJob|erpPrintCost|erpSpools|erpPrintRequests|erpJoint|erpJointCatalog|erpJointCard|erpInvoiceDesign|erpInvoicePreview|erpMarket|erpMarketMine|erpMarketRequests|erpMarketHints|erpMarketNames|erpWanted|erpBrand|erpComplianceLog|erpProviderKey|erpNews|erpAccessKeys|erpAccessWarning|erpAdmin|erpAiKeys|erpAlertRules|erpAlerts|erpArena|erpBackupStatus|erpBg|erpBnWords|erpBookedParcels|erpBrandLogo|erpBundle|erpBusinessLinks|erpBusinesses|erpBusinessesDeleted|erpCampaignAudience|erpCampaignGet|erpCampaignList|erpCapital|erpCashBook|erpCatalog|erpConnStatus|erpConnections|erpCostBook|erpCourier|erpCourierKeyStatus|erpCurrencies|erpCustomerAccount|erpCustomerCredit|erpCustomerList|erpCustomerPage|erpCustomerStatement|erpCustomers|erpDashboardData|erpDaySales|erpDeliveryOptions|erpDevices|erpDiscontinued|erpDues|erpEvoQr|erpEvoStatus|erpExpenseExport|erpExpenseReceiptUrl|erpExpenses|erpFamilies|erpFighters|erpFormOptions|erpGame|erpGetTheme|erpGoogle|erpHello|erpInstalls|erpInvoice|erpInvoicePdf|erpJob|erpJobs|erpListView|erpLookupCustomer|erpLookupUsage|erpMe|erpMoney|erpNoteFileUrl|erpNotes|erpOwnerChange|erpOwnerChanges|erpParcelLabels|erpParcelPreview|erpPartnerStock|erpPartnership|erpPayReasons|erpPeople|erpPlatform|erpPlatformErrors|erpPnl|erpPnlMonth|erpPoList|erpPoolCatalog|erpProduct|erpProductListShare|erpProductPage|erpProductPhotoUrl|erpProductThumbs|erpProfile|erpQuoteAsset|erpQuoteBoot|erpQuoteGet|erpQuoteList|erpRecentInvoices|erpRecovery|erpReorderPlan|erpRestorePreview|erpReturnPreview|erpRisks|erpSales|erpSearch|erpSecurity|erpSelfTest|erpSerialLookup|erpSerialsFor|erpSessions|erpSetTheme|erpSettingsFull|erpSettingsLists|erpSfPayoutLines|erpSfPayouts|erpShareFile|erpSharedStock|erpSheet|erpStatementPdf|erpStockHistory|erpSupplierPage|erpSuppliers|erpToday|erpUsers|erpWaProductPdf|erpWebMatches|erpWebOrderInvoices|erpWebOrders|erpWebsiteTest)$/;
 function srvPump() {
   if (!SRV_Q.length) return;
   var isRead = SRV_READS.test(SRV_Q[0].name);
@@ -21340,6 +21340,58 @@ document.addEventListener('click', function (ev) {
   if (k === 'offer') { srv('erpBoardOffer', [{ id: id, price: el('pkb_p_' + id).value, days: el('pkb_d_' + id).value, note: el('pkb_n_' + id).value }], function () { delete PKB_OPEN[id]; toast('Offer sent - the buyer sees it on his link.'); pkBoardLoad(); }, fail); return; }
   if (k === 'withdraw') { srv('erpBoardWithdraw', [{ id: id }], function () { toast('Offer withdrawn.'); pkBoardLoad(); }, fail); return; }
   if (k === 'take') { srv('erpBoardTake', [{ id: id, printerId: (el('pkb_prn_' + id) || {}).value || '' }], function (r) { toast('Print job ' + r.job.jobNo + ' is on the board.'); pkBoardLoad(); pkLoad(); }, fail); }
+});
+</script>
+
+<!-- Stage N8 (docs/NETWORK-BLUEPRINT.md section 4.1): the design desk - a button on the Repairs screen (a part to be
+     modelled from a photo), and the admin's card on the Platform screen (designers, requests). -->
+<script>
+var DESIGN_URL = 'https://erp.3dowala.com/design';
+// Repairs: "Need a printed part?" beside the Print Doctor button
+(function () {
+  var t = 0;
+  var mo = new MutationObserver(function () { clearTimeout(t); t = setTimeout(function () {
+    if (VIEW !== 'repairs') return;
+    var p = document.querySelector('[data-doctor]'); if (!p || p.parentNode.querySelector('[data-desk]')) return;
+    p.insertAdjacentHTML('afterend', ' <button class="btn small" type="button" data-desk="1" style="margin-top:6px">\uD83D\uDCD0 Need a printed part? Ask the design desk</button>');
+  }, 90); });
+  mo.observe(document.body, { childList: true, subtree: true });
+})();
+document.addEventListener('click', function (ev) {
+  var b = ev.target && ev.target.closest ? ev.target.closest('[data-desk]') : null; if (!b) return;
+  var q = (document.getElementById('jn_problem') || {}).value || '';
+  window.open(DESIGN_URL + '?kind=repair' + (q ? '&what=' + encodeURIComponent(q.slice(0, 400)) : ''), '_blank', 'noopener');
+});
+// Platform: the design desk card
+var PDES = null, PDES_ERR = '';
+function pdesLoad() { srv('erpPlatformDesign', [], function (r) { PDES = r; PDES_ERR = ''; DESIGN_URL = r.deskUrl || DESIGN_URL; if (VIEW === 'platform') repaint(); }, function (e) { PDES_ERR = (e && e.message) || String(e); if (VIEW === 'platform') repaint(); }); }
+function pdesCard() {
+  var h = '<section><div class="card"><div class="row" style="justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap"><h2 style="margin:0">Design desk \u2014 designers and requests</h2>' + (PDES ? '<a class="btn small" href="' + esc(PDES.deskUrl) + '" target="_blank" rel="noopener">Open the public desk</a>' : '') + '</div>' +
+    '<div class="sub" data-c5x="1" style="display:block">Anyone posts a sketch, a broken part or a personalised thing; designers who joined the desk offer a price; the buyer chooses, the designer delivers the file on the request, the buyer accepts and rates. The platform holds no money. Here: block a designer who misbehaves, give a designer a new link when his is lost, take an abusive request down.</div>';
+  if (PDES_ERR) return h + '<div class="note err"><div class="ico">!</div><div>' + esc(PDES_ERR) + '</div></div></div></section>';
+  if (!PDES) { pdesLoad(); return h + '<div class="loading">Reading the desk\u2026</div></div></section>'; }
+  var c = PDES.counts;
+  h += '<div class="row" style="gap:14px;flex-wrap:wrap;margin:8px 0"><span><b>' + fmt(c.designers) + '</b> designers</span><span><b>' + fmt(c.open) + '</b> open</span><span><b>' + fmt(c.busy) + '</b> in work</span><span><b>' + fmt(c.done) + '</b> done</span></div>';
+  h += '<h3 style="margin:10px 0 4px">Designers</h3>' + (PDES.designers.length ? '<div class="scroll"><table><thead><tr><th>Designer</th><th>City</th><th>Skills</th><th>Rating</th><th>State</th><th></th></tr></thead><tbody>' + PDES.designers.map(function (d) {
+    return '<tr><td class="nm">' + esc(d.name) + '<br><span class="sku">' + esc(d.phone) + (d.link ? ' \u00b7 <a href="' + esc(d.link) + '" target="_blank" rel="noopener">portfolio</a>' : '') + '</span></td><td>' + esc(d.city) + '</td><td>' + esc(d.skills) + '</td><td>' + (d.rating.count ? '\u2605 ' + d.rating.stars + ' (' + fmt(d.rating.count) + ') \u00b7 ' + fmt(d.rating.done) + ' done' : fmt(d.rating.done) + ' done') + '</td><td>' + (d.status === 'blocked' ? '<span class="pill bad">blocked</span>' : '<span class="pill ok">active</span>' + (d.public ? '' : ' <span class="sku">not listed</span>')) + '</td>' +
+      '<td style="white-space:nowrap"><button class="btn small" type="button" data-pdes="' + (d.status === 'blocked' ? 'unblock' : 'block') + '" data-id="' + esc(d.id) + '">' + (d.status === 'blocked' ? 'Unblock' : 'Block') + '</button> <button class="btn small" type="button" data-pdes="link" data-id="' + esc(d.id) + '">New link</button></td></tr>'; }).join('') + '</tbody></table></div>' : '<div class="empty">Nobody has joined the desk yet.</div>');
+  h += '<h3 style="margin:14px 0 4px">Requests</h3>' + (PDES.requests.length ? '<div class="scroll"><table><thead><tr><th>Request</th><th>Buyer</th><th>What</th><th>Designer</th><th>State</th><th></th></tr></thead><tbody>' + PDES.requests.slice(0, 60).map(function (r) {
+    return '<tr><td class="nm">' + esc(r.reqNo) + '<br><span class="sku">' + esc(r.posted) + ' \u00b7 ' + esc(r.kind) + '</span></td><td>' + esc(r.name) + '<br><span class="sku">' + esc(r.phone) + ' \u00b7 ' + esc(r.city) + '</span></td><td>' + esc(r.title) + (r.what ? '<br><span class="sku">' + esc(r.what.slice(0, 120)) + '</span>' : '') + '</td><td>' + esc(r.designer) + '</td><td><span class="pill' + (r.status === 'done' ? ' ok' : '') + '">' + esc(r.status) + '</span></td>' +
+      '<td style="white-space:nowrap">' + (r.status === 'removed' ? '' : '<button class="btn small" type="button" data-pdes="remove" data-id="' + esc(r.id) + '">Remove</button>') + '</td></tr>'; }).join('') + '</tbody></table></div>' : '<div class="empty">No requests yet.</div>');
+  return h + '</div></section>';
+}
+var viewPlatformK8 = viewPlatform;
+viewPlatform = function () {
+  var h = viewPlatformK8();
+  if (!ME || !ME.platform || PLAT_ERR || !PLAT) return h;
+  return h + pdesCard();
+};
+document.addEventListener('click', function (ev) {
+  var b = ev.target && ev.target.closest ? ev.target.closest('[data-pdes]') : null; if (!b) return;
+  var k = b.getAttribute('data-pdes'), id = b.getAttribute('data-id'), fail = function (e) { toast(esc((e && e.message) || e), true, 8000); }, reload = function (msg) { return function () { toast(msg); PDES = null; repaint(); }; };
+  if (k === 'block' || k === 'unblock') { srv('erpPlatformDesignAct', [{ designerId: id, block: k === 'block' }], reload(k === 'block' ? 'Designer blocked - his link no longer opens.' : 'Designer unblocked.'), fail); return; }
+  if (k === 'link') { srv('erpPlatformDesignAct', [{ designerId: id, newLink: true }], function (r) { PDES = null; repaint(); prompt('The designer\u2019s new link (the old one is dead). Send it to him:', r.deskUrl); }, fail); return; }
+  if (k === 'remove') { if (b.getAttribute('data-sure') !== '1') { b.setAttribute('data-sure', '1'); b.textContent = 'Remove? Press again'; return; } srv('erpPlatformDesignAct', [{ requestId: id }], reload('Request removed.'), fail); }
 });
 </script>
 </body>

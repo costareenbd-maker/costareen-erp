@@ -59,6 +59,9 @@ export async function start(deps, body, ip) {
   await limit(deps, ip, 'board_start', 10);
   const b = body || {};
   let fileName = str(b.fileName).replace(/[^A-Za-z0-9._ -]+/g, '_').slice(0, 80), fileSize = Math.round(num(b.fileSize));
+  // Stage N8: "Get it printed" from the design desk - the delivered file is copied here by the server
+  let from = null;
+  if (str(b.from)) { from = await (await import('./designdesk.js')).fromDesign(deps, str(b.from)); fileName = from.name; fileSize = from.bytes.length; }
   if (fileName && !FILE_RE.test(fileName)) throw new Error('Send an STL, 3MF, OBJ, STEP, a ZIP of them, or a photo or PDF of a sketch.');
   if (fileName && (fileSize <= 0 || fileSize > MAX_FILE)) throw new Error('The file should be between 1 byte and 40 MB.');
   const id = (await ctl`insert into erp_print_board (job_no, status, file_name, file_size) values (${'GP-' + formatDate(new Date(), 'yyMMdd') + '-' + Math.random().toString(36).slice(2, 6).toUpperCase()}, 'uploading', ${fileName || null}, ${fileName ? fileSize : null}) returning id`)[0].id;
@@ -68,10 +71,11 @@ export async function start(deps, body, ip) {
   if (fileName) {
     if (!deps.storage || !deps.storage.signUpload) throw new Error('File uploads are not available on this server - give a link instead.');
     const stored = 'file' + fileName.slice(fileName.lastIndexOf('.')).toLowerCase();
-    upload = await deps.storage.signUpload('public', 'printjobs/' + id, stored);
+    if (from) await deps.storage.save('public', 'printjobs/' + id, stored, from.bytes, 'application/octet-stream');
+    else upload = await deps.storage.signUpload('public', 'printjobs/' + id, stored);
     await ctl`update erp_print_board set file_name = ${stored}, file_path = ${'public/printjobs/' + id + '/' + stored} where id = ${id}`;
   }
-  return { t: token, jobUrl: base(deps) + 'print?t=' + token, upload };
+  return { t: token, jobUrl: base(deps) + 'print?t=' + token, upload, from: from ? { reqNo: from.reqNo, title: from.title } : null };
 }
 async function byToken(deps, token) {
   const t = str(token);
