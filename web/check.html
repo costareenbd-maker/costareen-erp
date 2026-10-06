@@ -84,7 +84,7 @@ footer{font-size:13px;color:var(--mute);text-align:center;margin-top:22px}
 
   <div id="out"></div>
 
-  <footer><span data-t="foot">A public register, filled by sellers at the time of sale or by owners with proof. Buyer details are never shown.</span></footer>
+  <footer><span data-t="foot">A public register, filled by sellers at the time of sale or by owners with proof. Buyer details are never shown.</span> <a href="doctor" data-t="doctor">Print Doctor</a></footer>
 </main>
 
 <script>
@@ -107,7 +107,7 @@ var T = {
     submit: 'Register', sending: 'Sending…', shrinking: 'Preparing the photos…',
     okH: 'Registered - grey until your seller confirms', ownerLink: 'Your owner link (save it: it is the only way to see, resend or remove your registration)', copy: 'Copy', copied: 'Copied', sendWa: 'Send the confirm link to your seller on WhatsApp', copyMsg: 'Copy the message for your seller', openCheck: 'Open the public check',
     ownH: 'Your registration', status: 'Status', sellerNamed: 'Seller you named', confirmedBy: 'Confirmed by', stDecl: 'waiting for the seller', stConf: 'confirmed by the seller', stRej: 'the seller says: not theirs', yourPhotos: 'Your photos',
-    withdraw: 'Remove my registration', sure: 'Remove it? Everything is deleted, including the photos. Press again to confirm.', removed: 'Your registration and photos have been removed.' },
+    doctor: 'Failed print? Print Doctor', withdraw: 'Remove my registration', sure: 'Remove it? Everything is deleted, including the photos. Press again to confirm.', removed: 'Your registration and photos have been removed.' },
   bn: { title: 'প্রিন্টার পাসপোর্ট', sub: 'সিরিয়াল নম্বর যাচাই', label: 'মেশিন বা বাক্সের গায়ের সিরিয়াল নম্বরটি লিখুন বা স্ক্যান করুন', scan: 'স্ক্যান', check: 'যাচাই',
     hint: 'স্পেস বা ড্যাশ থাকলেও সমস্যা নেই। স্টিকারটি সাধারণত মেশিনের পেছনে বা নিচে, এবং বাক্সের গায়ে থাকে।', foot: 'বিক্রির সময় বিক্রেতারা, বা প্রমাণসহ মালিকেরা এই রেজিস্টার পূরণ করেন। ক্রেতার কোনো তথ্য দেখানো হয় না।',
     checking: 'দেখা হচ্ছে…', short: 'কমপক্ষে ৩টি অক্ষর বা সংখ্যা লিখুন।', net: 'রেজিস্টারে পৌঁছানো যায়নি। ইন্টারনেট দেখে আবার চেষ্টা করুন।',
@@ -124,7 +124,7 @@ var T = {
     submit: 'নিবন্ধন করুন', sending: 'পাঠানো হচ্ছে…', shrinking: 'ছবি প্রস্তুত হচ্ছে…',
     okH: 'নিবন্ধিত - বিক্রেতা নিশ্চিত না করা পর্যন্ত ধূসর', ownerLink: 'আপনার মালিক-লিংক (সংরক্ষণ করুন: নিবন্ধন দেখা, আবার পাঠানো বা মুছে ফেলার একমাত্র পথ)', copy: 'কপি', copied: 'কপি হয়েছে', sendWa: 'WhatsApp-এ বিক্রেতাকে নিশ্চিতকরণ লিংক পাঠান', copyMsg: 'বিক্রেতার জন্য বার্তাটি কপি করুন', openCheck: 'পাবলিক চেক খুলুন',
     ownH: 'আপনার নিবন্ধন', status: 'অবস্থা', sellerNamed: 'আপনার উল্লেখ করা বিক্রেতা', confirmedBy: 'নিশ্চিত করেছেন', stDecl: 'বিক্রেতার অপেক্ষায়', stConf: 'বিক্রেতা নিশ্চিত করেছেন', stRej: 'বিক্রেতা বলছেন: তাদের নয়', yourPhotos: 'আপনার ছবি',
-    withdraw: 'আমার নিবন্ধন মুছুন', sure: 'মুছে ফেলবেন? ছবিসহ সব মুছে যাবে। নিশ্চিত করতে আবার চাপুন।', removed: 'আপনার নিবন্ধন ও ছবি মুছে ফেলা হয়েছে।' }
+    doctor: 'প্রিন্ট নষ্ট? প্রিন্ট ডাক্তার', withdraw: 'আমার নিবন্ধন মুছুন', sure: 'মুছে ফেলবেন? ছবিসহ সব মুছে যাবে। নিশ্চিত করতে আবার চাপুন।', removed: 'আপনার নিবন্ধন ও ছবি মুছে ফেলা হয়েছে।' }
 };
 var LANG = 'en';
 try { LANG = localStorage.getItem('pp_lang') || ((navigator.language || '').indexOf('bn') === 0 ? 'bn' : 'en'); } catch (e) {}

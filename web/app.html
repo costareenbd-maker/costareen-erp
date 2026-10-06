@@ -8420,7 +8420,7 @@ function srv(name, args, ok, bad) {
 
 var SRV_ACTIVE = 0, SRV_WRITING = false, SRV_TIMED = {};
 // the same list the server uses to know a call changes nothing (ERP_READS)
-var SRV_READS = /^(erpWarrantyRules|erpWarrantyCard|erpMyLink|erpPlatformRegister|erpJoint|erpJointCatalog|erpJointCard|erpInvoiceDesign|erpInvoicePreview|erpMarket|erpMarketMine|erpMarketRequests|erpMarketHints|erpMarketNames|erpWanted|erpBrand|erpComplianceLog|erpProviderKey|erpNews|erpAccessKeys|erpAccessWarning|erpAdmin|erpAiKeys|erpAlertRules|erpAlerts|erpArena|erpBackupStatus|erpBg|erpBnWords|erpBookedParcels|erpBrandLogo|erpBundle|erpBusinessLinks|erpBusinesses|erpBusinessesDeleted|erpCampaignAudience|erpCampaignGet|erpCampaignList|erpCapital|erpCashBook|erpCatalog|erpConnStatus|erpConnections|erpCostBook|erpCourier|erpCourierKeyStatus|erpCurrencies|erpCustomerAccount|erpCustomerCredit|erpCustomerList|erpCustomerPage|erpCustomerStatement|erpCustomers|erpDashboardData|erpDaySales|erpDeliveryOptions|erpDevices|erpDiscontinued|erpDues|erpEvoQr|erpEvoStatus|erpExpenseExport|erpExpenseReceiptUrl|erpExpenses|erpFamilies|erpFighters|erpFormOptions|erpGame|erpGetTheme|erpGoogle|erpHello|erpInstalls|erpInvoice|erpInvoicePdf|erpJob|erpJobs|erpListView|erpLookupCustomer|erpLookupUsage|erpMe|erpMoney|erpNoteFileUrl|erpNotes|erpOwnerChange|erpOwnerChanges|erpParcelLabels|erpParcelPreview|erpPartnerStock|erpPartnership|erpPayReasons|erpPeople|erpPlatform|erpPlatformErrors|erpPnl|erpPnlMonth|erpPoList|erpPoolCatalog|erpProduct|erpProductListShare|erpProductPage|erpProductPhotoUrl|erpProductThumbs|erpProfile|erpQuoteAsset|erpQuoteBoot|erpQuoteGet|erpQuoteList|erpRecentInvoices|erpRecovery|erpReorderPlan|erpRestorePreview|erpReturnPreview|erpRisks|erpSales|erpSearch|erpSecurity|erpSelfTest|erpSerialLookup|erpSerialsFor|erpSessions|erpSetTheme|erpSettingsFull|erpSettingsLists|erpSfPayoutLines|erpSfPayouts|erpShareFile|erpSharedStock|erpSheet|erpStatementPdf|erpStockHistory|erpSupplierPage|erpSuppliers|erpToday|erpUsers|erpWaProductPdf|erpWebMatches|erpWebOrderInvoices|erpWebOrders|erpWebsiteTest)$/;
+var SRV_READS = /^(erpWarrantyRules|erpWarrantyCard|erpMyLink|erpPlatformRegister|erpPlatformDoctor|erpJoint|erpJointCatalog|erpJointCard|erpInvoiceDesign|erpInvoicePreview|erpMarket|erpMarketMine|erpMarketRequests|erpMarketHints|erpMarketNames|erpWanted|erpBrand|erpComplianceLog|erpProviderKey|erpNews|erpAccessKeys|erpAccessWarning|erpAdmin|erpAiKeys|erpAlertRules|erpAlerts|erpArena|erpBackupStatus|erpBg|erpBnWords|erpBookedParcels|erpBrandLogo|erpBundle|erpBusinessLinks|erpBusinesses|erpBusinessesDeleted|erpCampaignAudience|erpCampaignGet|erpCampaignList|erpCapital|erpCashBook|erpCatalog|erpConnStatus|erpConnections|erpCostBook|erpCourier|erpCourierKeyStatus|erpCurrencies|erpCustomerAccount|erpCustomerCredit|erpCustomerList|erpCustomerPage|erpCustomerStatement|erpCustomers|erpDashboardData|erpDaySales|erpDeliveryOptions|erpDevices|erpDiscontinued|erpDues|erpEvoQr|erpEvoStatus|erpExpenseExport|erpExpenseReceiptUrl|erpExpenses|erpFamilies|erpFighters|erpFormOptions|erpGame|erpGetTheme|erpGoogle|erpHello|erpInstalls|erpInvoice|erpInvoicePdf|erpJob|erpJobs|erpListView|erpLookupCustomer|erpLookupUsage|erpMe|erpMoney|erpNoteFileUrl|erpNotes|erpOwnerChange|erpOwnerChanges|erpParcelLabels|erpParcelPreview|erpPartnerStock|erpPartnership|erpPayReasons|erpPeople|erpPlatform|erpPlatformErrors|erpPnl|erpPnlMonth|erpPoList|erpPoolCatalog|erpProduct|erpProductListShare|erpProductPage|erpProductPhotoUrl|erpProductThumbs|erpProfile|erpQuoteAsset|erpQuoteBoot|erpQuoteGet|erpQuoteList|erpRecentInvoices|erpRecovery|erpReorderPlan|erpRestorePreview|erpReturnPreview|erpRisks|erpSales|erpSearch|erpSecurity|erpSelfTest|erpSerialLookup|erpSerialsFor|erpSessions|erpSetTheme|erpSettingsFull|erpSettingsLists|erpSfPayoutLines|erpSfPayouts|erpShareFile|erpSharedStock|erpSheet|erpStatementPdf|erpStockHistory|erpSupplierPage|erpSuppliers|erpToday|erpUsers|erpWaProductPdf|erpWebMatches|erpWebOrderInvoices|erpWebOrders|erpWebsiteTest)$/;
 function srvPump() {
   if (!SRV_Q.length) return;
   var isRead = SRV_READS.test(SRV_Q[0].name);
@@ -20754,6 +20754,67 @@ document.addEventListener('click', function (ev) {
     srv('erpPlatformRegisterRemove', [{ id: id }], function () { toast('Registration removed.'); PREG = null; repaint(); }, fail); return;
   }
   if (k === 'block') srv('erpPlatformLiteBlock', [{ id: id, on: b.getAttribute('data-to') === '1' }], function (r) { toast(r.blocked ? 'Seller blocked.' : 'Seller unblocked.'); PREG = null; repaint(); }, fail);
+});
+</script>
+
+<!-- Stage N3 (docs/NETWORK-BLUEPRINT.md): the Print Doctor - a button on the Repairs screen (opens the public page
+     with the job's problem as the search), and the guide's card on the Platform screen (cases, shared settings, tips). -->
+<script>
+var DOCTOR_URL = 'https://erp.3dowala.com/doctor';
+// Repairs: a "Print Doctor" button beside the New job form's problem box
+(function () {
+  var t = 0;
+  var mo = new MutationObserver(function () { clearTimeout(t); t = setTimeout(function () {
+    if (VIEW !== 'repairs') return;
+    var p = document.getElementById('jn_problem'); if (!p || p.parentNode.querySelector('[data-doctor]')) return;
+    p.insertAdjacentHTML('afterend', '<button class="btn small" type="button" data-doctor="1" style="margin-top:6px">\uD83E\uDE7A Print Doctor: causes and fixes for this problem</button>');
+  }, 80); });
+  mo.observe(document.body, { childList: true, subtree: true });
+})();
+document.addEventListener('click', function (ev) {
+  var b = ev.target && ev.target.closest ? ev.target.closest('[data-doctor]') : null; if (!b) return;
+  var q = (document.getElementById('jn_problem') || {}).value || '';
+  window.open(DOCTOR_URL + (q ? '?q=' + encodeURIComponent(q.slice(0, 60)) : ''), '_blank', 'noopener');
+});
+// Platform: the guide's card
+var PDOC = null, PDOC_ERR = '', PDOC_OPEN = {};
+function pdocLoad() { srv('erpPlatformDoctor', [], function (r) { PDOC = r; PDOC_ERR = ''; DOCTOR_URL = r.doctorUrl || DOCTOR_URL; if (VIEW === 'platform') repaint(); }, function (e) { PDOC_ERR = (e && e.message) || String(e); if (VIEW === 'platform') repaint(); }); }
+function pdocCard() {
+  var h = '<section><div class="card"><div class="row" style="justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap"><h2 style="margin:0">Print Doctor \u2014 cases, settings, tips</h2>' + (PDOC ? '<a class="btn small" href="' + esc(PDOC.doctorUrl) + '" target="_blank" rel="noopener">Open the Print Doctor</a>' : '') + '</div>' +
+    '<div class="sub" data-c5x="1" style="display:block">Members send a failed print with its story; you answer on their case link. Tick "publish" to show the answer under the problem with the member\u2019s first name. Settings members share are shown only after you approve them.</div>';
+  if (PDOC_ERR) return h + '<div class="note err"><div class="ico">!</div><div>' + esc(PDOC_ERR) + '</div></div></div></section>';
+  if (!PDOC) { pdocLoad(); return h + '<div class="loading">Reading the Print Doctor\u2026</div></div></section>'; }
+  h += '<div class="sku" style="margin:8px 0">' + fmt(PDOC.newCases) + ' case(s) waiting \u00b7 ' + fmt(PDOC.pendingSettings) + ' settings to approve \u00b7 ' + fmt(PDOC.tips.length) + ' tips published</div>';
+  h += '<h3 style="margin:10px 0 4px">Cases</h3>' + (PDOC.cases.length ? PDOC.cases.map(function (c) {
+    var open = !!PDOC_OPEN[c.id];
+    return '<div class="card" style="margin:6px 0;padding:10px 12px"><div class="row" style="justify-content:space-between;gap:8px;flex-wrap:wrap"><div><b>' + esc(c.name) + '</b> <span class="sku">' + esc([c.problem, c.printer, c.material, c.sent].filter(Boolean).join(' \u00b7 ')) + '</span> ' +
+      (c.status === 'new' ? '<span class="pill">waiting</span>' : c.status === 'published' ? '<span class="pill" style="background:#e6f4f1;color:#0f766e">published</span>' : '<span class="pill">answered</span>') + '</div><button class="btn small" type="button" data-pdoc="toggle" data-id="' + esc(c.id) + '">' + (open ? 'Close' : (c.status === 'new' ? 'Answer' : 'Open')) + '</button></div>' +
+      (open ? '<p style="margin:8px 0 4px;white-space:pre-wrap">' + esc(c.story) + '</p>' + (c.tried ? '<p class="sku" style="margin:0 0 6px">Tried: ' + esc(c.tried) + '</p>' : '') + (c.contact ? '<p class="sku" style="margin:0 0 6px">Contact: ' + esc(c.contact) + '</p>' : '') + (c.photo ? '<a href="' + esc(c.photo) + '" target="_blank" rel="noopener"><img src="' + esc(c.photo) + '" alt="" style="max-width:160px;border-radius:8px;border:1px solid var(--line)"></a>' : '') +
+        '<label class="f" for="pd_r_' + esc(c.id) + '" style="margin-top:8px">Your answer</label><textarea class="i" id="pd_r_' + esc(c.id) + '" rows="4">' + esc(c.reply) + '</textarea>' +
+        '<div class="row" style="gap:10px;flex-wrap:wrap;align-items:center;margin-top:6px"><label class="chk"><input type="checkbox" id="pd_p_' + esc(c.id) + '"' + (c.status === 'published' ? ' checked' : '') + '> Publish under the problem</label><input class="i" id="pd_c_' + esc(c.id) + '" placeholder="Credit (first name, area)" value="' + esc(c.name) + '" style="max-width:220px"><input class="i" id="pd_pr_' + esc(c.id) + '" placeholder="Problem id (e.g. stringing)" value="' + esc(c.problem) + '" style="max-width:200px"></div>' +
+        '<div class="row" style="margin-top:8px"><button class="btn primary small" type="button" data-pdoc="answer" data-id="' + esc(c.id) + '">Save answer</button><button class="btn small danger" type="button" data-pdoc="remove" data-id="' + esc(c.id) + '">Remove case</button></div>' : '') + '</div>'; }).join('') : '<div class="empty">No cases yet.</div>');
+  h += '<h3 style="margin:14px 0 4px">Shared settings</h3>' + (PDOC.settings.length ? '<div class="scroll"><table><thead><tr><th>Printer</th><th>Material</th><th>Nozzle</th><th>Bed</th><th>Speed</th><th>Cooling</th><th>Retraction</th><th>Notes</th><th>By</th><th></th></tr></thead><tbody>' + PDOC.settings.map(function (s) {
+    return '<tr' + (s.status === 'pending' ? ' style="background:var(--warn-bg,#fff4df)"' : '') + '><td>' + esc(s.printer) + '</td><td>' + esc(s.material) + (s.brand ? '<br><span class="sku">' + esc(s.brand) + '</span>' : '') + '</td><td>' + (s.nozzle == null ? '' : s.nozzle) + '</td><td>' + (s.bed == null ? '' : s.bed) + '</td><td>' + esc(s.speed) + '</td><td>' + esc(s.cooling) + '</td><td>' + esc(s.retraction) + '</td><td>' + esc(s.notes) + '</td><td>' + esc(s.name) + '<br><span class="sku">' + esc(s.month) + (s.confirms ? ' \u00b7 ' + fmt(s.confirms) + ' confirm' : '') + '</span></td>' +
+      '<td class="num" style="white-space:nowrap">' + (s.status === 'pending' ? '<button class="btn small primary" type="button" data-pdoc="approve" data-id="' + esc(s.id) + '">Approve</button> ' : '') + '<button class="btn small danger" type="button" data-pdoc="sremove" data-id="' + esc(s.id) + '">Remove</button></td></tr>'; }).join('') + '</tbody></table></div>' : '<div class="empty">Nothing shared yet.</div>');
+  h += '<h3 style="margin:14px 0 4px">Published tips</h3>' + (PDOC.tips.length ? PDOC.tips.map(function (x) { return '<div class="row" style="justify-content:space-between;gap:8px;margin:4px 0"><div><span class="sku">' + esc(x.problem) + '</span> ' + esc(x.text) + ' <span class="sku">\u2014 ' + esc(x.credit) + '</span></div><button class="btn small" type="button" data-pdoc="tremove" data-id="' + esc(x.id) + '">Remove</button></div>'; }).join('') : '<div class="empty">No tips yet.</div>');
+  if (PDOC.votes.length) h += '<h3 style="margin:14px 0 4px">"Did this help?"</h3><div class="sku">' + PDOC.votes.map(function (v) { return esc(v.problem) + ': ' + fmt(v.yes) + ' yes / ' + fmt(v.no) + ' no'; }).join(' \u00b7 ') + '</div>';
+  return h + '</div></section>';
+}
+var viewPlatformD3 = viewPlatform;
+viewPlatform = function () {
+  var h = viewPlatformD3();
+  if (!ME || !ME.platform || PLAT_ERR || !PLAT) return h;
+  return h + pdocCard();
+};
+document.addEventListener('click', function (ev) {
+  var b = ev.target && ev.target.closest ? ev.target.closest('[data-pdoc]') : null; if (!b) return;
+  var k = b.getAttribute('data-pdoc'), id = b.getAttribute('data-id'), fail = function (e) { toast(esc((e && e.message) || e), true, 8000); }, reload = function (msg) { return function () { toast(msg); PDOC = null; repaint(); }; };
+  if (k === 'toggle') { PDOC_OPEN[id] = !PDOC_OPEN[id]; repaint(); return; }
+  if (k === 'answer') { srv('erpPlatformDoctorCase', [{ id: id, reply: (document.getElementById('pd_r_' + id) || {}).value || '', publish: !!(document.getElementById('pd_p_' + id) || {}).checked, credit: (document.getElementById('pd_c_' + id) || {}).value || '', problem: (document.getElementById('pd_pr_' + id) || {}).value || '' }], reload('Answer saved.'), fail); return; }
+  if (k === 'remove') { if (b.getAttribute('data-sure') !== '1') { b.setAttribute('data-sure', '1'); b.textContent = 'Remove? Press again'; return; } srv('erpPlatformDoctorCase', [{ id: id, remove: true }], reload('Case removed.'), fail); return; }
+  if (k === 'approve') { srv('erpPlatformDoctorSettings', [{ id: id, action: 'approve' }], reload('Approved - now on the page.'), fail); return; }
+  if (k === 'sremove') { srv('erpPlatformDoctorSettings', [{ id: id, action: 'remove' }], reload('Removed.'), fail); return; }
+  if (k === 'tremove') srv('erpPlatformDoctorTipRemove', [{ id: id }], reload('Tip removed.'), fail);
 });
 </script>
 </body>
