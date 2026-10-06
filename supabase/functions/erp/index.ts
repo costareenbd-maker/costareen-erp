@@ -263,7 +263,18 @@ function projectParts(p: Project) {
     });
     if (!r.ok) throw new Error('mail ' + r.status);
   }
-  return { verifyUser, storage, createAuthUser, createOwner, removeUser, sendMagic, sendReset };
+  // the same "choose your password" link, made without an e-mail (the platform admin hands it over, e.g. on WhatsApp)
+  async function recoveryLink(email: string) {
+    const r = await fetch(SUPABASE_URL + '/auth/v1/admin/generate_link', {
+      method: 'POST', headers: { ...svc, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type: 'recovery', email, redirect_to: appBack() }),
+    });
+    const j: any = await r.json().catch(() => null);
+    const link = j && (j.action_link || (j.properties && j.properties.action_link));
+    if (!r.ok || !link) throw new Error('The link could not be made (' + r.status + (j && (j.msg || j.message) ? ': ' + String(j.msg || j.message).slice(0, 120) : '') + ').');
+    return String(link);
+  }
+  return { verifyUser, storage, createAuthUser, createOwner, removeUser, sendMagic, sendReset, recoveryLink };
 }
 
 // --------------------------------------------------------------- PDF render

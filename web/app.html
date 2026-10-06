@@ -10253,7 +10253,7 @@ function wireGate() {
     signinCall('check', mail, function (j) {
       GATE_OK = false; ME_MSG = '';
       if (j.state === 'password') { GATE_STEP = 'pw'; try { localStorage.setItem('erp_gate_email', mail); } catch (e) {} }
-      else if (j.state === 'set') { GATE_STEP = 'sent'; if (j.sent === false) ME_MSG = 'The e-mail could not be sent just now. Wait a minute and press "Send the e-mail again".'; }
+      else if (j.state === 'set') { GATE_STEP = 'sent'; if (j.sent === false) ME_MSG = 'The e-mail could not be sent just now (the free mail service sends only a few an hour). Try again in 15 minutes, or ask your ERP provider for a password link on WhatsApp.'; }
       else { ME_MSG = 'No account here uses ' + mail + '. Check the spelling, or ask the owner to add you (Settings \u2192 Users).'; }
       paintGate();
     });
@@ -16335,6 +16335,7 @@ function installsHtml() {
         (x.status === 'failed' ? '<button class="btn small" type="button" data-insretry="' + esc(x.id) + '">Let it carry on</button>' : '') +
         (['active', 'suspended'].indexOf(x.status) >= 0 && r.release && x.version !== r.release.version ? ' <button class="btn small primary" type="button" data-insupd="' + esc(x.id) + '">Update to ' + esc(r.release.version) + '</button>' : '') +
         (['active', 'suspended'].indexOf(x.status) >= 0 ? ' <button class="btn small" type="button" data-insdom="' + esc(x.id) + '" data-cur="' + esc(x.domain || '') + '">Web address</button>' : '') +
+        (x.status === 'active' ? ' <button class="btn small" type="button" data-inspw="' + esc(x.id) + '">Password link</button>' : '') +
         (x.upd_error ? '<br><span class="sku" style="color:var(--critical)">Update stopped: ' + esc(x.upd_error) + '</span> <button class="btn small" type="button" data-instok="' + esc(x.id) + '">New Supabase token</button>' : '') +
         (x.domain ? '<br><span class="sku">' + esc(x.domain) + '</span>' : '') + '</td></tr>'; }).join('') + '</tbody></table></div>' +
     (r.installs.some(function (x) { return ['active', 'suspended'].indexOf(x.status) >= 0 && r.release && x.version !== r.release.version; }) ? '<div class="row" style="justify-content:flex-end;margin-top:8px"><button class="btn" type="button" id="ins_updall">Update every copy to ' + esc(r.release.version) + '</button></div>' : '');
@@ -16384,7 +16385,7 @@ function insUpdate(id, done) {
   })();
 }
 document.addEventListener('click', async function (ev) {
-  var t = ev.target && ev.target.closest ? ev.target.closest('[data-insupd],#ins_updall,[data-insdom],[data-instok]') : null; if (!t) return;
+  var t = ev.target && ev.target.closest ? ev.target.closest('[data-insupd],#ins_updall,[data-insdom],[data-instok],[data-inspw]') : null; if (!t) return;
   var again = function () { INSTALLS = null; repaint(); };
   var bad = function (e) { toast(esc(e && e.message ? e.message : e), true, 10000); };
   if (t.getAttribute('data-insupd')) {
@@ -16406,6 +16407,11 @@ document.addEventListener('click', async function (ev) {
       else if (r.domain) uiAlert('Saved: ' + r.domain + '\n\n1. The company adds a DNS record: CNAME  ' + r.domain + '  \u2192  ' + r.cname + '\n2. You run:  python deploy.py domains\n3. Opening https://' + r.domain + ' then opens their own ERP.');
       else toast('Web address removed.');
       again();
+    }, bad);
+  } else if (t.getAttribute('data-inspw')) {
+    srv('erpInstallPwLink', [{ id: t.getAttribute('data-inspw') }], function (r) {
+      try { navigator.clipboard.writeText(r.link); } catch (e) {}
+      uiAlert('Password link for ' + r.email + ' (copied):\n\n' + r.link + '\n\nSend it to the owner on WhatsApp. It works once, for about an hour; it opens their ERP to choose a password. No e-mail needed.');
     }, bad);
   } else if (t.getAttribute('data-instok')) {
     var tk = await uiPrompt('The company\u2019s new Supabase access token (sbp_\u2026)\n\nThey make it at supabase.com \u2192 Account \u2192 Access Tokens and send it to you.', '');

@@ -22,6 +22,10 @@ export async function signinRoute(deps, what, body) {
   }
   if (!u) return { ok: true, state: 'none' };
   if (u.last_sign_in_at) return { ok: true, state: 'password' };
+  // the free Supabase mailer sends only a few e-mails an hour: a link sent in the last 15 minutes is not sent again
+  let recent = false;
+  try { recent = !!(await sql`select 1 from auth.users where id = ${u.id} and recovery_sent_at > now() - interval '15 minutes'`).length; } catch (_) { recent = false; }
+  if (recent) return { ok: true, state: 'set', sent: true, earlier: true };
   let sent = true;
   try { await deps.sendReset(email); } catch (_) { sent = false; }
   return { ok: true, state: 'set', sent };

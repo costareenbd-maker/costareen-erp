@@ -154,4 +154,10 @@ web.on(/api\.supabase\.com\/v1\/projects$/, () => ({ status: 402, body: { messag
 r = await route('install=start', { code: code2, company: 'Second Co', ownerName: 'B', ownerEmail: 'b@x.test', token: TOKEN, agree: true, terms: '2026-10.2' });
 r = await route('install=step', { id: r.id, secret: r.secret });
 check('a failed step is said plainly (e.g. the free plan\'s 2 projects)', r.ok && r.status === 'failed' && /maximum limits/.test(r.error), r);
+// the platform admin hands the owner a password link (no e-mail - the free mailer sends only a few an hour)
+deps.recoveryLink = async (e) => 'https://newref.supabase.co/auth/v1/verify?type=recovery&for=' + e;
+r = await owner('erpInstallPwLink', [{ id }]);
+check('a password link for the copy owner, made without an e-mail', r.ok && r.result.email === 'ali@friend.test' && /type=recovery&for=ali@friend.test/.test(r.result.link), r);
+r = await mgr('erpInstallPwLink', [{ id }]);
+check('...only for the platform admin', !r.ok, r);
 await done();

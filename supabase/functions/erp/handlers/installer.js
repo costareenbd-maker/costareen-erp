@@ -691,4 +691,16 @@ export async function updateAll(deps) {
   return out;
 }
 
-export const HANDLERS = { erpInstalls, erpInstallInvite, erpInstallSet, erpInstallRetry, erpInstallUpdate, erpInstallToken, erpInstallDomain, erpInstallBridge, erpBrand, erpBrandSet, erpInstallHealth, erpNews, erpNewsAdd, erpNewsEnd };
+/** "Password link": the copy's owner gets the choose-your-password link from the platform admin (WhatsApp) - no e-mail needed. */
+export async function erpInstallPwLink(ctx, payload) {
+  await needAdmin(ctx);
+  const row = (await ctx.sql`select id, owner_email, status from erp_installs where id = ${str(payload && payload.id)}::uuid`)[0];
+  if (!row || row.status !== 'active') throw new Error('That copy is not running.');
+  if (!ctx.deps.tenantDeps) throw new Error('This server does not run company ERPs.');
+  const email = str((payload && payload.email) || row.owner_email).toLowerCase();
+  const td = await ctx.deps.tenantDeps(row.id);
+  if (!td.recoveryLink) throw new Error('This server cannot make the link.');
+  return { ok: true, email, link: await td.recoveryLink(email) };
+}
+
+export const HANDLERS = { erpInstallPwLink, erpInstalls, erpInstallInvite, erpInstallSet, erpInstallRetry, erpInstallUpdate, erpInstallToken, erpInstallDomain, erpInstallBridge, erpBrand, erpBrandSet, erpInstallHealth, erpNews, erpNewsAdd, erpNewsEnd };
