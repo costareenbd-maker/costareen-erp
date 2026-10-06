@@ -306,6 +306,8 @@ export async function createInvoice(ctx, payload, opts = {}) {
   const jointMade = joint ? await J.mirrorJointSale(ctx, joint, { invoiceNo, date: payload.date, at: ts instanceof Date ? ts : now,
                                                                  lines: lines.filter((l) => l.poolId), shortfall }, createInvoice) : [];
   if (opts.mirror) return { ok: true, invoiceNo, invoiceId, grandTotal: grand };
+  // made from a waiting order (restock from the market): that order is done
+  if (payload.restockId) { const { restockInvoiced } = await import('./restock.js'); await restockInvoiced(ctx, String(payload.restockId), invoiceNo); }
 
   // money taken at the counter is money received
   if (took > 0) {

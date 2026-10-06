@@ -2161,6 +2161,7 @@ async function saveInvoice() {
       advanceMethod: FORM.payMode === 'cod' && num(FORM.paidNow) > 0 ? FORM.advMethod : '',
       date: FORM.date || '',
       from: (typeof INV_FROM !== 'undefined' && INV_FROM) || '',
+      restockId: FORM.restockId || '',
       note: FORM.quoteRef ? 'From quotation ' + FORM.quoteRef : ''
     }],
       function (res) {
@@ -8421,7 +8422,7 @@ function srv(name, args, ok, bad) {
 
 var SRV_ACTIVE = 0, SRV_WRITING = false, SRV_TIMED = {};
 // the same list the server uses to know a call changes nothing (ERP_READS)
-var SRV_READS = /^(erpWarrantyRules|erpWarrantyCard|erpMyLink|erpPlatformRegister|erpPlatformDoctor|erpPlatformCommunity|erpMarketWaiting|erpBoard|erpLoyalty|erpCustomerPoints|erpRefillDue|erpDeliveryHistory|erpDeliveryHistoryMany|erpPrintKit|erpPrintJobs|erpPrintJob|erpPrintCost|erpSpools|erpPrintRequests|erpJoint|erpJointCatalog|erpJointCard|erpInvoiceDesign|erpInvoicePreview|erpMarket|erpMarketMine|erpMarketRequests|erpMarketHints|erpMarketNames|erpWanted|erpBrand|erpComplianceLog|erpProviderKey|erpNews|erpAccessKeys|erpAccessWarning|erpAdmin|erpAiKeys|erpAlertRules|erpAlerts|erpArena|erpBackupStatus|erpBg|erpBnWords|erpBookedParcels|erpBrandLogo|erpBundle|erpBusinessLinks|erpBusinesses|erpBusinessesDeleted|erpCampaignAudience|erpCampaignGet|erpCampaignList|erpCapital|erpCashBook|erpCatalog|erpConnStatus|erpConnections|erpCostBook|erpCourier|erpCourierKeyStatus|erpCurrencies|erpCustomerAccount|erpCustomerCredit|erpCustomerList|erpCustomerPage|erpCustomerStatement|erpCustomers|erpDashboardData|erpDaySales|erpDeliveryOptions|erpDevices|erpDiscontinued|erpDues|erpEvoQr|erpEvoStatus|erpExpenseExport|erpExpenseReceiptUrl|erpExpenses|erpFamilies|erpFighters|erpFormOptions|erpGame|erpGetTheme|erpGoogle|erpHello|erpInstalls|erpInvoice|erpInvoicePdf|erpJob|erpJobs|erpListView|erpLookupCustomer|erpLookupUsage|erpMe|erpMoney|erpNoteFileUrl|erpNotes|erpOwnerChange|erpOwnerChanges|erpParcelLabels|erpParcelPreview|erpPartnerStock|erpPartnership|erpPayReasons|erpPeople|erpPlatform|erpPlatformErrors|erpPnl|erpPnlMonth|erpPoList|erpPoolCatalog|erpProduct|erpProductListShare|erpProductPage|erpProductPhotoUrl|erpProductThumbs|erpProfile|erpQuoteAsset|erpQuoteBoot|erpQuoteGet|erpQuoteList|erpRecentInvoices|erpRecovery|erpReorderPlan|erpRestorePreview|erpReturnPreview|erpRisks|erpSales|erpSearch|erpSecurity|erpSelfTest|erpSerialLookup|erpSerialsFor|erpSessions|erpSetTheme|erpSettingsFull|erpSettingsLists|erpSfPayoutLines|erpSfPayouts|erpShareFile|erpSharedStock|erpSheet|erpStatementPdf|erpStockHistory|erpSupplierPage|erpSuppliers|erpToday|erpUsers|erpWaProductPdf|erpWebMatches|erpWebOrderInvoices|erpWebOrders|erpWebsiteTest)$/;
+var SRV_READS = /^(erpRestockOffers|erpRestockList|erpWarrantyRules|erpWarrantyCard|erpMyLink|erpPlatformRegister|erpPlatformDoctor|erpPlatformCommunity|erpMarketWaiting|erpBoard|erpLoyalty|erpCustomerPoints|erpRefillDue|erpDeliveryHistory|erpDeliveryHistoryMany|erpPrintKit|erpPrintJobs|erpPrintJob|erpPrintCost|erpSpools|erpPrintRequests|erpJoint|erpJointCatalog|erpJointCard|erpInvoiceDesign|erpInvoicePreview|erpMarket|erpMarketMine|erpMarketRequests|erpMarketHints|erpMarketNames|erpWanted|erpBrand|erpComplianceLog|erpProviderKey|erpNews|erpAccessKeys|erpAccessWarning|erpAdmin|erpAiKeys|erpAlertRules|erpAlerts|erpArena|erpBackupStatus|erpBg|erpBnWords|erpBookedParcels|erpBrandLogo|erpBundle|erpBusinessLinks|erpBusinesses|erpBusinessesDeleted|erpCampaignAudience|erpCampaignGet|erpCampaignList|erpCapital|erpCashBook|erpCatalog|erpConnStatus|erpConnections|erpCostBook|erpCourier|erpCourierKeyStatus|erpCurrencies|erpCustomerAccount|erpCustomerCredit|erpCustomerList|erpCustomerPage|erpCustomerStatement|erpCustomers|erpDashboardData|erpDaySales|erpDeliveryOptions|erpDevices|erpDiscontinued|erpDues|erpEvoQr|erpEvoStatus|erpExpenseExport|erpExpenseReceiptUrl|erpExpenses|erpFamilies|erpFighters|erpFormOptions|erpGame|erpGetTheme|erpGoogle|erpHello|erpInstalls|erpInvoice|erpInvoicePdf|erpJob|erpJobs|erpListView|erpLookupCustomer|erpLookupUsage|erpMe|erpMoney|erpNoteFileUrl|erpNotes|erpOwnerChange|erpOwnerChanges|erpParcelLabels|erpParcelPreview|erpPartnerStock|erpPartnership|erpPayReasons|erpPeople|erpPlatform|erpPlatformErrors|erpPnl|erpPnlMonth|erpPoList|erpPoolCatalog|erpProduct|erpProductListShare|erpProductPage|erpProductPhotoUrl|erpProductThumbs|erpProfile|erpQuoteAsset|erpQuoteBoot|erpQuoteGet|erpQuoteList|erpRecentInvoices|erpRecovery|erpReorderPlan|erpRestorePreview|erpReturnPreview|erpRisks|erpSales|erpSearch|erpSecurity|erpSelfTest|erpSerialLookup|erpSerialsFor|erpSessions|erpSetTheme|erpSettingsFull|erpSettingsLists|erpSfPayoutLines|erpSfPayouts|erpShareFile|erpSharedStock|erpSheet|erpStatementPdf|erpStockHistory|erpSupplierPage|erpSuppliers|erpToday|erpUsers|erpWaProductPdf|erpWebMatches|erpWebOrderInvoices|erpWebOrders|erpWebsiteTest)$/;
 function srvPump() {
   if (!SRV_Q.length) return;
   var isRead = SRV_READS.test(SRV_Q[0].name);
@@ -21100,6 +21101,132 @@ document.addEventListener('click', function (ev) {
 });
 </script>
 
+<!-- restock (2026-10-06): waiting orders - a customer order short of stock asks the market for the rest, waits,
+     and becomes one normal invoice when the goods are on the shelf (handlers/restock.js). -->
+<style>
+#rsk { position:fixed; inset:0; z-index:9000; background:rgba(0,0,0,.55); display:flex; align-items:flex-start; justify-content:center; overflow:auto; padding:24px 12px; }
+#rsk .rsbox { background:var(--surface); color:var(--ink); border:1px solid var(--ring); border-radius:14px; width:min(720px, 100%); padding:16px 18px; }
+.rs-line { border:1px solid var(--ring); border-radius:10px; padding:10px 12px; margin-top:10px; }
+.rs-off { display:flex; gap:8px; align-items:center; padding:6px 0; border-top:1px dashed var(--ring); font-size:13px; }
+.rs-off:first-of-type { border-top:0; }
+.rs-ord { border:1px solid var(--ring); border-radius:10px; padding:10px 12px; margin-top:10px; }
+.rs-ord.ready { border-color:var(--good); }
+.rs-req { display:flex; gap:8px; align-items:center; flex-wrap:wrap; font-size:13px; margin-top:6px; }
+</style>
+<script>
+var RS = { list: null, offers: null, busy: false };
+function rsLoad() {
+  srv('erpRestockList', [], function (r) { RS.list = r; if (VIEW === 'invoice' || VIEW === 'dash') repaint(); }, function () { RS.list = { orders: [], ready: 0 }; });
+}
+/** own lines that ask for more than the shelf has (joint lines belong to a pool: not restocked) */
+function rsShort() { return CART.filter(function (l) { return !l.joint && l.qty > l.stock; }); }
+var viewInvoiceRS1 = viewInvoice;
+viewInvoice = function () {
+  if (!RS.list && ME) rsLoad();
+  var h = viewInvoiceRS1.apply(this, arguments), top = '';
+  var orders = (RS.list && RS.list.orders) || [];
+  if (orders.length) {
+    top = '<section><div class="card"><h2>Waiting orders' + (RS.list.ready ? ' <span class="pill ok">' + fmt(RS.list.ready) + ' ready to send</span>' : '') + '</h2>' +
+      '<div class="sub">Customer orders waiting for goods asked from the market. When everything is on your shelf, make the invoice: one parcel to the customer.</div>' +
+      orders.map(function (o) {
+        return '<div class="rs-ord' + (o.status === 'ready' ? ' ready' : '') + '"><div class="row" style="justify-content:space-between;gap:8px;flex-wrap:wrap"><strong>' + esc(o.customer) +
+          (o.phone ? ' <span class="sku">' + esc(o.phone) + '</span>' : '') + '</strong>' +
+          (o.status === 'ready' ? '<span class="pill ok">all on the shelf</span>' : '<span class="pill low">waiting</span>') + '</div>' +
+          '<div class="sku" style="margin-top:2px">' + o.items.map(function (i) { return esc(i.name) + ' × ' + fmt(i.qty); }).join(' · ') + '</div>' +
+          o.requests.map(function (q) {
+            var acts = '';
+            if (q.state === 'quoted') acts = '<button class="btn small primary" type="button" data-rsacc="' + esc(q.request) + '">Accept ' + fmt(q.price) + ' each' + (q.delivery ? ' + ' + fmt(q.delivery) + ' delivery' : '') + '</button>';
+            if (q.state === 'invoiced') acts = '<button class="btn small primary" type="button" data-rsrcv="' + esc(q.request) + '" data-sku="' + esc(q.sku) + '">It arrived — put on shelf</button>';
+            return '<div class="rs-req"><span>' + esc(q.name) + ' × ' + fmt(q.qty) + ' from <b>' + esc(q.shop) + '</b>' + (q.phone ? ' <span class="sku">' + esc(q.phone) + '</span>' : '') + ':</span>' +
+              '<span class="sku">' + esc(q.say) + '</span>' + acts + '</div>';
+          }).join('') +
+          '<div class="row" style="gap:8px;margin-top:8px">' + (o.status === 'ready' ? '<button class="btn small primary" type="button" data-rsinv="' + esc(o.id) + '">Make the invoice</button>' : '') +
+          '<button class="btn small" type="button" data-rscan="' + esc(o.id) + '">Cancel this order</button></div></div>';
+      }).join('') + '</div></section>';
+  }
+  var short = rsShort(), bottom = '';
+  if (short.length) bottom = '<section><div class="note"><div class="ico">!</div><div><strong>Not enough on your shelf:</strong> ' +
+    short.map(function (l) { return esc(l.name) + ' (' + fmt(l.stock) + ' of ' + fmt(l.qty) + ')'; }).join(', ') +
+    '. <button class="btn small primary" type="button" id="rs_find">Find the rest on the market</button> — the order waits, the missing goods are asked for, and you make the invoice when they arrive.</div></div></section>';
+  return top + h + bottom;
+};
+function rsModal() {
+  var el = document.getElementById('rsk'); if (el) el.remove();
+  if (!RS.offers) return;
+  el = document.createElement('div'); el.id = 'rsk'; document.body.appendChild(el);
+  var L = RS.offers.lines;
+  el.innerHTML = '<div class="rsbox"><div class="row" style="justify-content:space-between"><h3 style="margin:0">Find the rest on the market</h3><button class="btn small" type="button" data-rsx="1">✕</button></div>' +
+    '<div class="sub" style="margin-top:4px">For ' + esc(FORM.name || 'this customer') + '. Choose a shop for each missing product; they get a normal market request and answer with a price.</div>' +
+    L.map(function (l, i) {
+      return '<div class="rs-line"><strong>' + esc(l.name) + '</strong> — ' + fmt(l.need) + ' missing <span class="sku">(you have ' + fmt(l.have) + ')</span>' +
+        (l.offers.length ? l.offers.map(function (o, j) {
+          return '<label class="rs-off"><input type="radio" name="rs_' + i + '" value="' + esc(o.ref) + '"' + (j === 0 ? ' checked' : '') + '><span style="flex:1">' + esc(o.name) +
+            '<br><span class="sku">' + (o.band === 'in' ? 'in stock' : 'low') + (o.city ? ' · ' + esc(o.city) : '') + '</span></span><b>' + (o.price ? fmt(o.price) : 'ask') + '</b></label>'; }).join('')
+          : '<div class="sub" style="margin-top:6px;color:var(--critical)">Nobody on the market lists it right now.</div>') + '</div>';
+    }).join('') +
+    '<div class="row" style="gap:8px;margin-top:12px;align-items:flex-end;flex-wrap:wrap"><div style="flex:0 1 220px"><label class="f" for="rs_phone">Your phone for the shop</label><input class="i" id="rs_phone" value="' + esc(RS.offers.phone || '') + '"></div>' +
+    '<button class="btn primary" type="button" data-rsgo="1"' + (L.some(function (l) { return !l.offers.length; }) || RS.busy ? ' disabled' : '') + '>' + (RS.busy ? 'Sending…' : 'Ask and keep the order waiting') + '</button>' +
+    '<button class="btn" type="button" data-rsx="1">Cancel</button></div></div>';
+}
+document.addEventListener('click', async function (ev) {
+  var t = ev.target; if (!t || !t.closest) return;
+  if (t.id === 'rs_find') {
+    srv('erpRestockOffers', [{ items: CART.filter(function (l) { return !l.joint; }).map(function (l) { return { sku: l.sku, qty: l.qty }; }) }], function (r) {
+      if (!r.lines.length) { toast('Everything is on the shelf now.'); return; }
+      RS.offers = r; rsModal();
+    }, function (e) { toast(p4Err(e), true, 10000); });
+    return;
+  }
+  if (t.closest('[data-rsx]')) { RS.offers = null; rsModal(); return; }
+  if (t.closest('[data-rsgo]') && RS.offers && !RS.busy) {
+    if (!FORM.name.trim()) { toast('Write the customer’s name first.', true); return; }
+    var picks = RS.offers.lines.map(function (l, i) { var c = document.querySelector('#rsk input[name="rs_' + i + '"]:checked'); return { sku: l.sku, ref: c ? c.value : '' }; });
+    var phoneNow = ((el('rs_phone') || {}).value || '').trim(); RS.offers.phone = phoneNow;   // read before the window is drawn again
+    RS.busy = true; rsModal();
+    srv('erpRestockStart', [{ customer: { name: FORM.name.trim(), phone: FORM.phone.trim(), address: FORM.address.trim(), source: FORM.source },
+      items: CART.map(function (l) { return { sku: l.sku, qty: l.qty, discEach: num(l.discEach) }; }), picks: picks, phone: phoneNow }], function (r) {
+      RS.busy = false; RS.offers = null; rsModal(); RS.list = r;
+      CART = []; FORM.name = ''; FORM.phone = ''; FORM.address = ''; updateCounts(); repaint(); window.scrollTo(0, 0);
+      toast('The order is waiting. ' + fmt(r.asked) + ' request(s) sent to the market.', false, 9000);
+    }, function (e) { RS.busy = false; rsModal(); toast(p4Err(e), true, 12000); });
+    return;
+  }
+  var b = t.closest('[data-rsacc],[data-rsrcv],[data-rscan],[data-rsinv]'); if (!b) return;
+  var bad = function (e) { toast(p4Err(e), true, 12000); };
+  if (b.getAttribute('data-rsacc')) { srv('erpMarketAccept', [{ id: b.getAttribute('data-rsacc') }], function () { toast('Price accepted. The shop sends its invoice next.'); rsLoad(); }, bad); return; }
+  if (b.getAttribute('data-rsrcv')) {
+    if (!(await uiConfirm('Put these goods on your shelf now?\n\nOnly when the parcel is really here. Its cost and what you owe the shop are written down.'))) return;
+    srv('erpMarketReceive', [{ id: b.getAttribute('data-rsrcv'), sku: b.getAttribute('data-sku') }], function () { toast('On the shelf.'); CAT = null; srv('erpBundle', [['catalog']], applyBundle, function () {}); rsLoad(); }, bad); return;
+  }
+  if (b.getAttribute('data-rscan')) {
+    var why = await uiPrompt('Cancel this waiting order? Requests the shops have not invoiced yet are cancelled too.\n\nWhy? (optional)', ''); if (why === null) return;
+    srv('erpRestockCancel', [{ id: b.getAttribute('data-rscan'), reason: why }], function (r) { RS.list = r; repaint(); toast('Cancelled.'); }, bad); return;
+  }
+  if (b.getAttribute('data-rsinv')) {
+    var o = ((RS.list && RS.list.orders) || []).filter(function (x) { return x.id === b.getAttribute('data-rsinv'); })[0]; if (!o) return;
+    var miss = [];
+    CART = [];
+    o.items.forEach(function (i) {
+      var p = (CAT || []).filter(function (x) { return x.sku === i.sku; })[0];
+      if (!p) { miss.push(i.name); return; }
+      CART.push({ sku: p.sku, name: p.name, price: p.sell, qty: i.qty, discEach: num(i.discEach), stock: p.stock, cat: p.cat });
+    });
+    FORM.name = o.customer; FORM.phone = o.phone; FORM.address = o.address; if (o.source) FORM.source = o.source; FORM.restockId = o.id;
+    updateCounts(); repaint(); window.scrollTo(0, document.body.scrollHeight);
+    toast(miss.length ? 'Not found in your products: ' + esc(miss.join(', ')) : 'The order is in the invoice. Check it and save.', !!miss.length, 9000);
+  }
+});
+var goRS1 = go;
+go = function (view) { var r = goRS1.apply(this, arguments); if (view === 'invoice' || view === 'dash') rsLoad(); return r; };
+// the dashboard says when a waiting order can be sent
+var viewDashRS1 = viewDash;
+viewDash = function () {
+  var h = viewDashRS1.apply(this, arguments);
+  if (RS.list && RS.list.ready) h = '<section><div class="note" style="border-color:var(--good)"><div class="ico">✓</div><div><strong>' + fmt(RS.list.ready) +
+    ' waiting order(s) are ready to send</strong> — the goods from the market are on your shelf. <button class="btn small primary" type="button" data-go="invoice">Open New invoice</button></div></div></section>' + h;
+  return h;
+};
+</script>
 <!-- Stage N6 (docs/NETWORK-BLUEPRINT.md section 4): the keep-customers kit - points and level on the customer page,
      the delivery-history check on invoices and web orders, refill reminders and the points rules on Customers. -->
 <style>
