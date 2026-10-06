@@ -1040,3 +1040,20 @@ holds the 9 public features: Find stock, Colour finder, Printer Passport, Custom
 Print quote, Design desk, Ideas) and are managed only in Settings → Business → Edit menu bar. On his word, live:
 Customer page, Get it printed, Print quote, Design desk, Ideas switched off for everyone ("not open for customers yet");
 Print jobs Off in Costareen's menu bar. apps_test (28).
+
+## Apps as app icons, one screen per app, Feedback (tag apps-7, 7 Oct 2026)
+
+Owner: design first, app icons like a phone's home screen, in the ERP's own look. The Apps screen is now a grid of
+icons (`.ap-home`, 62 px rounded squares in the menu's --app colours, name under; a red dot = off for everyone).
+Tapping one opens **the app's own screen** (`#/app/<key>`, view 'app'): icon, name, what it does, the company's
+settings link, **Open the page ↗**, and for the provider the switch On for everyone / Off; a **Share** card with the
+public address, its QR (`erpAppQr`, SVG, download + copy); and - provider only - the management panel **moved here from
+Platform**: Passport register (`pregCard`), Print Doctor cases (`pdocCard`), Ideas (`pcomCard`), Design desk
+(`pdesCard`). Platform shows a one-line "Moved to Apps" card instead. The four loaders repaint on the app screen too.
+**Feedback** (new app, `092_feedback.sql` control-only `erp_feedback`): anyone signed in to any ERP sends a problem /
+complaint / idea / praise with an optional contact (`erpFeedbackSend`), sees what their business sent and the
+provider's answer (`erpFeedback`); the provider's inbox with counts, a status (new / looking / fixed / not planned) and
+a reply per report (`erpFeedbackSet`); a **Report a problem** button in the side menu's foot opens it from any screen.
+Companies never see each other's reports. `apps_test.mjs` (38).
+- Not done: a public "report a problem" form on the customer pages (not open to customers yet); Bangla on the app
+  screens; e-mail/WhatsApp notice to the provider when feedback arrives.

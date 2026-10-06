@@ -592,7 +592,7 @@ svg { display:block; width:100%; overflow:visible; }
       <button type="button" data-view="tools" aria-selected="false"><span class="ic"><svg viewBox="0 0 24 24"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.8-3.8a6 6 0 0 1-7.9 7.9l-7 7a2.1 2.1 0 0 1-3-3l7-7a6 6 0 0 1 7.9-7.9z"/></svg></span>Maintenance</button>
       <button type="button" data-view="platform" aria-selected="false" style="display:none"><span class="ic"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="6" rx="1.5"/><rect x="3" y="14" width="18" height="6" rx="1.5"/><path d="M7 7h.01M7 17h.01"/></svg></span>Platform</button>
     </nav>
-    <div class="sidefoot"><span id="whoami" title="Signed in as"></span><button class="btn small" id="signoutBtn" type="button" style="display:none">Sign out</button></div>
+    <div class="sidefoot"><span id="whoami" title="Signed in as"></span><button class="btn small" id="fbBtn" type="button" title="Tell the provider about a problem">Report a problem</button><button class="btn small" id="signoutBtn" type="button" style="display:none">Sign out</button></div>
   </aside>
   <div class="main">
     <header class="topbar">
@@ -8424,7 +8424,7 @@ function srv(name, args, ok, bad) {
 
 var SRV_ACTIVE = 0, SRV_WRITING = false, SRV_TIMED = {};
 // the same list the server uses to know a call changes nothing (ERP_READS)
-var SRV_READS = /^(erpApps|erpRestockOffers|erpRestockList|erpWarrantyRules|erpWarrantyCard|erpMyLink|erpPlatformRegister|erpPlatformDoctor|erpPlatformCommunity|erpMarketWaiting|erpBoard|erpPlatformDesign|erpResell|erpResellerProgramme|erpLoyalty|erpCustomerPoints|erpRefillDue|erpDeliveryHistory|erpDeliveryHistoryMany|erpPrintKit|erpPrintJobs|erpPrintJob|erpPrintCost|erpSpools|erpPrintRequests|erpJoint|erpJointCatalog|erpJointCard|erpInvoiceDesign|erpInvoicePreview|erpMarket|erpMarketMine|erpMarketRequests|erpMarketHints|erpMarketNames|erpWanted|erpBrand|erpComplianceLog|erpProviderKey|erpNews|erpAccessKeys|erpAccessWarning|erpAdmin|erpAiKeys|erpAlertRules|erpAlerts|erpArena|erpBackupStatus|erpBg|erpBnWords|erpBookedParcels|erpBrandLogo|erpBundle|erpBusinessLinks|erpBusinesses|erpBusinessesDeleted|erpCampaignAudience|erpCampaignGet|erpCampaignList|erpCapital|erpCashBook|erpCatalog|erpConnStatus|erpConnections|erpCostBook|erpCourier|erpCourierKeyStatus|erpCurrencies|erpCustomerAccount|erpCustomerCredit|erpCustomerList|erpCustomerPage|erpCustomerStatement|erpCustomers|erpDashboardData|erpDaySales|erpDeliveryOptions|erpDevices|erpDiscontinued|erpDues|erpEvoQr|erpEvoStatus|erpExpenseExport|erpExpenseReceiptUrl|erpExpenses|erpFamilies|erpFighters|erpFormOptions|erpGame|erpGetTheme|erpGoogle|erpHello|erpInstalls|erpInvoice|erpInvoicePdf|erpJob|erpJobs|erpListView|erpLookupCustomer|erpLookupUsage|erpMe|erpMoney|erpNoteFileUrl|erpNotes|erpOwnerChange|erpOwnerChanges|erpParcelLabels|erpParcelPreview|erpPartnerStock|erpPartnership|erpPayReasons|erpPeople|erpPlatform|erpPlatformErrors|erpPnl|erpPnlMonth|erpPoList|erpPoolCatalog|erpProduct|erpProductListShare|erpProductPage|erpProductPhotoUrl|erpProductThumbs|erpProfile|erpQuoteAsset|erpQuoteBoot|erpQuoteGet|erpQuoteList|erpRecentInvoices|erpRecovery|erpReorderPlan|erpRestorePreview|erpReturnPreview|erpRisks|erpSales|erpSearch|erpSecurity|erpSelfTest|erpSerialLookup|erpSerialsFor|erpSessions|erpSetTheme|erpSettingsFull|erpSettingsLists|erpSfPayoutLines|erpSfPayouts|erpShareFile|erpSharedStock|erpSheet|erpStatementPdf|erpStockHistory|erpSupplierPage|erpSuppliers|erpToday|erpUsers|erpWaProductPdf|erpWebMatches|erpWebOrderInvoices|erpWebOrders|erpWebsiteTest)$/;
+var SRV_READS = /^(erpApps|erpAppQr|erpFeedback|erpRestockOffers|erpRestockList|erpWarrantyRules|erpWarrantyCard|erpMyLink|erpPlatformRegister|erpPlatformDoctor|erpPlatformCommunity|erpMarketWaiting|erpBoard|erpPlatformDesign|erpResell|erpResellerProgramme|erpLoyalty|erpCustomerPoints|erpRefillDue|erpDeliveryHistory|erpDeliveryHistoryMany|erpPrintKit|erpPrintJobs|erpPrintJob|erpPrintCost|erpSpools|erpPrintRequests|erpJoint|erpJointCatalog|erpJointCard|erpInvoiceDesign|erpInvoicePreview|erpMarket|erpMarketMine|erpMarketRequests|erpMarketHints|erpMarketNames|erpWanted|erpBrand|erpComplianceLog|erpProviderKey|erpNews|erpAccessKeys|erpAccessWarning|erpAdmin|erpAiKeys|erpAlertRules|erpAlerts|erpArena|erpBackupStatus|erpBg|erpBnWords|erpBookedParcels|erpBrandLogo|erpBundle|erpBusinessLinks|erpBusinesses|erpBusinessesDeleted|erpCampaignAudience|erpCampaignGet|erpCampaignList|erpCapital|erpCashBook|erpCatalog|erpConnStatus|erpConnections|erpCostBook|erpCourier|erpCourierKeyStatus|erpCurrencies|erpCustomerAccount|erpCustomerCredit|erpCustomerList|erpCustomerPage|erpCustomerStatement|erpCustomers|erpDashboardData|erpDaySales|erpDeliveryOptions|erpDevices|erpDiscontinued|erpDues|erpEvoQr|erpEvoStatus|erpExpenseExport|erpExpenseReceiptUrl|erpExpenses|erpFamilies|erpFighters|erpFormOptions|erpGame|erpGetTheme|erpGoogle|erpHello|erpInstalls|erpInvoice|erpInvoicePdf|erpJob|erpJobs|erpListView|erpLookupCustomer|erpLookupUsage|erpMe|erpMoney|erpNoteFileUrl|erpNotes|erpOwnerChange|erpOwnerChanges|erpParcelLabels|erpParcelPreview|erpPartnerStock|erpPartnership|erpPayReasons|erpPeople|erpPlatform|erpPlatformErrors|erpPnl|erpPnlMonth|erpPoList|erpPoolCatalog|erpProduct|erpProductListShare|erpProductPage|erpProductPhotoUrl|erpProductThumbs|erpProfile|erpQuoteAsset|erpQuoteBoot|erpQuoteGet|erpQuoteList|erpRecentInvoices|erpRecovery|erpReorderPlan|erpRestorePreview|erpReturnPreview|erpRisks|erpSales|erpSearch|erpSecurity|erpSelfTest|erpSerialLookup|erpSerialsFor|erpSessions|erpSetTheme|erpSettingsFull|erpSettingsLists|erpSfPayoutLines|erpSfPayouts|erpShareFile|erpSharedStock|erpSheet|erpStatementPdf|erpStockHistory|erpSupplierPage|erpSuppliers|erpToday|erpUsers|erpWaProductPdf|erpWebMatches|erpWebOrderInvoices|erpWebOrders|erpWebsiteTest)$/;
 function srvPump() {
   if (!SRV_Q.length) return;
   var isRead = SRV_READS.test(SRV_Q[0].name);
@@ -9865,7 +9865,7 @@ function tabbarSync() {
 function go(view, param) {
   VIEW = view;
   // a record page inside a screen: one invoice, one customer
-  param = (view === 'sales' || view === 'customers' || view === 'products' || view === 'suppliers' || view === 'repairs') ? String(param || '') : '';
+  param = (view === 'sales' || view === 'customers' || view === 'products' || view === 'suppliers' || view === 'repairs' || view === 'app') ? String(param || '') : '';
   if (view === 'repairs') { if (JOBP.no !== param) JOBP = { no: param, data: null, err: null }; }
   if (view === 'suppliers') { if (SUPP.name !== param) SUPP = { name: param, data: null, err: null }; }
   if (view === 'products') { if (PRODP.sku !== param) { PRODP = { sku: param, data: null, err: null }; PRODUCT_FORM = null; } }
@@ -20700,7 +20700,7 @@ function n1Buttons() {
      registrations made by owners themselves (declared / confirmed by a Lite seller) and the Lite sellers. -->
 <script>
 var PREG = null, PREG_ERR = '';
-function pregLoad() { srv('erpPlatformRegister', [], function (r) { PREG = r; PREG_ERR = ''; if (VIEW === 'platform') repaint(); }, function (e) { PREG_ERR = (e && e.message) || String(e); if (VIEW === 'platform') repaint(); }); }
+function pregLoad() { srv('erpPlatformRegister', [], function (r) { PREG = r; PREG_ERR = ''; if (VIEW === 'platform' || VIEW === 'app') repaint(); }, function (e) { PREG_ERR = (e && e.message) || String(e); if (VIEW === 'platform' || VIEW === 'app') repaint(); }); }
 function pregCard() {
   var h = '<section><div class="card"><div class="row" style="justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap"><h2 style="margin:0">Public register (Printer Passport)</h2>' +
     (PREG ? '<a class="btn small" href="' + esc(PREG.checkUrl) + '" target="_blank" rel="noopener">Open the check page</a>' : '') + '</div>' +
@@ -20763,7 +20763,7 @@ document.addEventListener('click', function (ev) {
 });
 // Platform: the guide's card
 var PDOC = null, PDOC_ERR = '', PDOC_OPEN = {};
-function pdocLoad() { srv('erpPlatformDoctor', [], function (r) { PDOC = r; PDOC_ERR = ''; DOCTOR_URL = r.doctorUrl || DOCTOR_URL; if (VIEW === 'platform') repaint(); }, function (e) { PDOC_ERR = (e && e.message) || String(e); if (VIEW === 'platform') repaint(); }); }
+function pdocLoad() { srv('erpPlatformDoctor', [], function (r) { PDOC = r; PDOC_ERR = ''; DOCTOR_URL = r.doctorUrl || DOCTOR_URL; if (VIEW === 'platform' || VIEW === 'app') repaint(); }, function (e) { PDOC_ERR = (e && e.message) || String(e); if (VIEW === 'platform' || VIEW === 'app') repaint(); }); }
 function pdocCard() {
   var h = '<section><div class="card"><div class="row" style="justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap"><h2 style="margin:0">Print Doctor \u2014 cases, settings, tips</h2>' + (PDOC ? '<a class="btn small" href="' + esc(PDOC.doctorUrl) + '" target="_blank" rel="noopener">Open the Print Doctor</a>' : '') + '</div>' +
     '<div class="sub" data-c5x="1" style="display:block">Members send a failed print with its story; you answer on their case link. Tick "publish" to show the answer under the problem with the member\u2019s first name. Settings members share are shown only after you approve them.</div>';
@@ -21015,7 +21015,7 @@ document.addEventListener('click', function (ev) {
      public updates to write (optionally announced inside every ERP), the guides. -->
 <script>
 var PCOM = null, PCOM_ERR = '';
-function pcomLoad() { srv('erpPlatformCommunity', [], function (r) { PCOM = r; PCOM_ERR = ''; if (VIEW === 'platform') repaint(); }, function (e) { PCOM_ERR = (e && e.message) || String(e); if (VIEW === 'platform') repaint(); }); }
+function pcomLoad() { srv('erpPlatformCommunity', [], function (r) { PCOM = r; PCOM_ERR = ''; if (VIEW === 'platform' || VIEW === 'app') repaint(); }, function (e) { PCOM_ERR = (e && e.message) || String(e); if (VIEW === 'platform' || VIEW === 'app') repaint(); }); }
 function pcomCard() {
   var h = '<section><div class="card"><div class="row" style="justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap"><h2 style="margin:0">Community \u2014 ideas, updates, guides</h2>' + (PCOM ? '<a class="btn small" href="' + esc(PCOM.boardUrl) + '" target="_blank" rel="noopener">Open the public board</a>' : '') + '</div>' +
     '<div class="sub" data-c5x="1" style="display:block">Anyone proposes an idea and votes; you answer each one and set where it stands (planned, being built, done, not for now). Updates are the public "what changed" page; tick "announce" to also show one inside every ERP. Guides are the volunteers named on the credits page.</div>';
@@ -21379,7 +21379,7 @@ document.addEventListener('click', function (ev) {
 });
 // Platform: the design desk card
 var PDES = null, PDES_ERR = '';
-function pdesLoad() { srv('erpPlatformDesign', [], function (r) { PDES = r; PDES_ERR = ''; DESIGN_URL = r.deskUrl || DESIGN_URL; if (VIEW === 'platform') repaint(); }, function (e) { PDES_ERR = (e && e.message) || String(e); if (VIEW === 'platform') repaint(); }); }
+function pdesLoad() { srv('erpPlatformDesign', [], function (r) { PDES = r; PDES_ERR = ''; DESIGN_URL = r.deskUrl || DESIGN_URL; if (VIEW === 'platform' || VIEW === 'app') repaint(); }, function (e) { PDES_ERR = (e && e.message) || String(e); if (VIEW === 'platform' || VIEW === 'app') repaint(); }); }
 function pdesCard() {
   var h = '<section><div class="card"><div class="row" style="justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap"><h2 style="margin:0">Design desk \u2014 designers and requests</h2>' + (PDES ? '<a class="btn small" href="' + esc(PDES.deskUrl) + '" target="_blank" rel="noopener">Open the public desk</a>' : '') + '</div>' +
     '<div class="sub" data-c5x="1" style="display:block">Anyone posts a sketch, a broken part or a personalised thing; designers who joined the desk offer a price; the buyer chooses, the designer delivers the file on the request, the buyer accepts and rates. The platform holds no money. Here: block a designer who misbehaves, give a designer a new link when his is lost, take an abusive request down.</div>';
@@ -21529,35 +21529,65 @@ document.addEventListener('click', function (ev) {
   if (k === 'pay') { if (t.getAttribute('data-sure') !== '1') { t.setAttribute('data-sure', '1'); t.textContent = 'Paid \u09f3' + fmt(Number(t.getAttribute('data-amt'))) + '? Press again'; return; } srv('erpResellerPay', [{ linkId: id, month: t.getAttribute('data-month') }], function (r) { toast('\u09f3' + fmt(r.paid) + ' to ' + r.reseller + ' booked as an expense (Reseller commission).'); RZS.data = null; repaint(); }, fail); }
 });
 </script>
-<!-- Apps page: every ability beyond the core menu, one switch each. The provider's switch is for every company
-     (off = invisible everywhere, the public page answers "not open yet"); an owner's switch hides an app from his own
-     menu. The core menu (Dashboard, Apps, New invoice, Sales, Customers, Products, Stock entry, Money, Settings) cannot
-     be switched off. handlers/apps.js; erpHello carries ME.apps = {off, hidden} so the menu is right on first paint. -->
+<!-- Apps page: the special features customers reach from outside, as app icons (a phone's home screen). One icon
+     opens the app's own screen: what it is, the public page and its QR, the company's settings for it, and - for the
+     provider only - the management panel (moved here from Platform). The provider's switch "On for everyone" lives
+     on that screen. Edit menu bar (Settings > Business) decides who in a company sees the ordinary menu screens.
+     handlers/apps.js; erpHello carries ME.apps = {off, hidden, gone} so the menu is right on first paint. -->
 <style>
-.ap-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:10px;margin-top:8px}
-.ap-tile{border:1px solid var(--ring);border-radius:12px;padding:12px 14px;background:var(--surface);display:flex;flex-direction:column;gap:6px;min-width:0}
-.ap-tile.off .ap-ic{background:var(--grid);color:var(--muted)}
-.ap-head{flex-wrap:wrap}
-.ap-head{display:flex;align-items:center;gap:10px}
-.ap-ic{width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;background:var(--series-1-soft);color:var(--series-1);flex:0 0 auto}
-.ap-ic svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
-.ap-name{font-weight:700;font-size:14px}
-.ap-what{font-size:12.5px;color:var(--ink-2);line-height:1.4}
-.ap-where{font-size:11.5px;color:var(--muted)}
-.ap-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:auto;padding-top:4px}
-.ap-row .mk-sw{font-size:12.5px;font-weight:600}
-.ap-row .mk-sw input{width:18px;height:18px}
-.ap-h3{margin:16px 0 2px;font-size:13px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+.ap-home{display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:18px 6px;margin:14px 0 6px}
+.ap-app{display:flex;flex-direction:column;align-items:center;gap:8px;background:none;border:0;padding:6px 2px;cursor:pointer;color:var(--ink);font:inherit;border-radius:12px;min-width:0}
+.ap-app:hover .ap-ico{transform:translateY(-2px);box-shadow:var(--shadow-lg)}
+.ap-ico{position:relative;width:62px;height:62px;border-radius:18px;display:flex;align-items:center;justify-content:center;background:var(--c-soft);color:var(--c);box-shadow:var(--shadow);transition:transform .12s,box-shadow .12s}
+.ap-ico svg{width:30px;height:30px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.ap-app.off .ap-ico{background:var(--grid);color:var(--muted)}
+.ap-dot{position:absolute;top:-3px;right:-3px;width:12px;height:12px;border-radius:50%;background:var(--critical);border:2px solid var(--surface)}
+.ap-lbl{font-size:12px;font-weight:600;line-height:1.25;text-align:center;max-width:96px}
+.ap-app.off .ap-lbl{color:var(--muted)}
+.ap-h3{margin:16px 0 2px;font-size:11px;text-transform:uppercase;letter-spacing:.09em;color:var(--muted);font-weight:700}
+.ap-head{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.ap-head .ap-ico{width:56px;height:56px;border-radius:16px;box-shadow:none}
+.ap-head h2{margin:0}
+.ap-what{font-size:13px;color:var(--ink-2);line-height:1.45;margin-top:6px}
+.ap-where{font-size:12px;color:var(--muted)}
+.ap-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:12px}
 .ap-pill{font-size:11px;padding:2px 8px;border-radius:999px;background:var(--critical-soft);color:var(--critical);font-weight:700}
+.ap-share{display:flex;gap:16px;align-items:center;flex-wrap:wrap}
+.ap-share img{width:148px;height:148px;border-radius:10px;background:#fff;padding:6px;border:1px solid var(--ring)}
+.ap-url{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12.5px;word-break:break-all}
 .seg[data-apseg] .btn{padding:3px 10px}
 .ap-mrows{display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:0 28px;margin-top:8px}
 .ap-mrow{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:6px 0;border-bottom:1px solid var(--ring);min-width:0}
 .ap-mrow .nm{font-weight:600}
+.fb-kind .btn{padding:4px 12px}
+.fb-item{border-top:1px solid var(--ring);padding:10px 0}
+.fb-item:first-child{border-top:0}
+.fb-meta{font-size:12px;color:var(--muted);display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.fb-txt{margin:4px 0;white-space:pre-wrap}
+.fb-reply{margin-top:6px;padding:8px 10px;border-left:3px solid var(--series-1);background:var(--series-1-soft);border-radius:0 8px 8px 0;font-size:13px;white-space:pre-wrap}
+.fb-k{font-size:11px;padding:1px 7px;border-radius:999px;background:var(--grid);font-weight:700}
+.fb-k.complaint{background:var(--critical-soft);color:var(--critical)} .fb-k.problem{background:var(--warning-soft);color:var(--warning)} .fb-k.praise{background:var(--good-soft);color:var(--good)}
+.fb-s{font-size:11px;padding:1px 7px;border-radius:999px;background:var(--grid);font-weight:700}
+.fb-s.new{background:var(--series-1-soft);color:var(--series-1)} .fb-s.fixed{background:var(--good-soft);color:var(--good)}
+#fbBtn{margin-left:auto}
 </style>
 <script>
-var APPS = null, APPS_ERR = '';
-var APPS_CORE = { dash: 1, apps: 1, invoice: 1, sales: 1, customers: 1, products: 1, stock: 1, cash: 1, settings: 1, platform: 1, orders: 1, home: 1 };
-var APPS_GROUPS = ['For customers'];
+var APPS = null, APPS_ERR = '', APP_KEY = '', AP_QR = {}, FB = null, FB_ERR = '', FB_FORM = { kind: 'problem', text: '', contact: '' };
+var APPS_CORE = { dash: 1, apps: 1, app: 1, invoice: 1, sales: 1, customers: 1, products: 1, stock: 1, cash: 1, settings: 1, platform: 1, orders: 1, home: 1 };
+// icon and colour per app, in the ERP's own palette (the menu's --app colours)
+var AP_LOOK = {
+  find:     { c: '#2a9d8f', i: '<circle cx="11" cy="11" r="6.5"/><path d="M16 16l5 5"/>' },
+  choose:   { c: '#e39a2d', i: '<path d="M12 3C7 3 3 7 3 11.5 3 15 5.5 17 8 17h1.5a1.5 1.5 0 0 1 1 2.6c-.4.5 0 1.4.7 1.4H12c5 0 9-3.6 9-8.5S17 3 12 3z"/><circle cx="8" cy="10" r="1.2"/><circle cx="12" cy="7.5" r="1.2"/><circle cx="16" cy="10" r="1.2"/>' },
+  check:    { c: '#3a86c8', i: '<path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/><path d="M8.5 12l2.5 2.5 4.5-5"/>' },
+  my:       { c: '#7c6bb1', i: '<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-7 8-7s8 3 8 7"/>' },
+  doctor:   { c: '#c8553d', i: '<path d="M6 3v6a6 6 0 0 0 12 0V3"/><path d="M12 15v2a4 4 0 0 0 8 0v-1"/><circle cx="20" cy="13" r="2"/>' },
+  print:    { c: '#2f6fed', i: '<path d="M6 9V3h12v6"/><rect x="3" y="9" width="18" height="8" rx="2"/><path d="M6 14h12v7H6z"/>' },
+  quote:    { c: '#e39a2d', i: '<path d="M3 12l9-9 9 9-9 9z"/><path d="M12 8v8M8.5 12h7"/>' },
+  design:   { c: '#7c6bb1', i: '<path d="M4 20l4-1 11-11-3-3L5 16z"/><path d="M14 7l3 3"/>' },
+  ideas:    { c: '#2a9d8f', i: '<path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0 0 12 3z"/>' },
+  feedback: { c: '#c8553d', i: '<path d="M4 5h16v11H9l-5 4z"/><path d="M8 9h8M8 12h5"/>' }
+};
+var AP_PANEL = { check: 'preg', doctor: 'pdoc', ideas: 'pcom', design: 'pdes' };   // the provider's panels, moved here from Platform
 function apState() { var a = (ME && ME.apps) || {}; return { off: a.off || [], hidden: a.hidden || [], gone: a.gone || [] }; }
 function apSyncMe(r) {
   if (!ME) return;
@@ -21565,7 +21595,10 @@ function apSyncMe(r) {
   (r.menu || []).forEach(function (m) { if (m.mode === 'owner') hid[m.key] = 1; if (m.mode === 'off') gone[m.key] = 1; });
   ME.apps = { off: r.apps.filter(function (a) { return !a.on; }).map(function (a) { return a.key; }), hidden: Object.keys(hid), gone: Object.keys(gone) };
 }
-// the menu: an app the provider switched off, or one the owner set to Off, is gone for everyone here; one set to
+function apOf(key) { return APPS ? APPS.apps.filter(function (a) { return a.key === key; })[0] : null; }
+function apIcon(key) { var l = AP_LOOK[key] || { c: '#5f6b7a', i: '<circle cx="12" cy="12" r="9"/>' }; return '<svg viewBox="0 0 24 24">' + l.i + '</svg>'; }
+function apStyle(key) { var c = (AP_LOOK[key] || { c: '#5f6b7a' }).c; return 'style="--c:' + c + ';--c-soft:' + c + '1f"'; }
+// the menu: an app the provider switched off, or a screen the owner set to Off, is gone for everyone here; one set to
 // Only owners is out of the STAFF's menu
 var applyRoleApps = applyRole;
 applyRole = function () {
@@ -21585,126 +21618,211 @@ applyRole = function () {
     while (n && !n.classList.contains('navgrp')) { if (n.style.display !== 'none') any = true; n = n.nextElementSibling; }
     grps[g].style.display = any ? '' : 'none';
   }
+  var fb = el('fbBtn'); if (fb) fb.style.display = ME ? '' : 'none';
 };
 var routeAllowedApps = routeAllowed;
 routeAllowed = function (view) {
-  if (view === 'apps') return !!ME;
+  if (view === 'apps' || view === 'app') return !!ME;
   var b = el('nav').querySelector('button[data-view="' + view + '"]');
   if (b && b.getAttribute('data-apphidden') === '1') return true;
   return routeAllowedApps.apply(this, arguments);
 };
 var repaintApps = repaint;
 repaint = function () {
-  if (VIEW !== 'apps') return repaintApps.apply(this, arguments);
-  el('view').innerHTML = viewApps();
+  if (VIEW !== 'apps' && VIEW !== 'app') return repaintApps.apply(this, arguments);
+  el('view').innerHTML = VIEW === 'apps' ? viewApps() : viewApp();
   try { bindTips(el('view')); } catch (e) {}
 };
 var goApps = go;
-go = function (view) {
+go = function (view, param) {
+  if (view === 'app') APP_KEY = String(param || APP_KEY || '');
   goApps.apply(this, arguments);
-  if ((view === 'apps' || view === 'settings') && !APPS) apLoad();
+  if ((view === 'apps' || view === 'app' || view === 'settings') && !APPS) apLoad();
+  if (view === 'app') {
+    var a = apOf(APP_KEY), pt = el('pageTitle'); if (pt) pt.textContent = a ? a.name : 'Apps';
+    var tb = el('tabbar'); if (tb) { var t = tb.querySelector('button[data-tab="apps"]'); if (t) t.setAttribute('aria-current', 'page'); }
+    apScreenLoad();
+  }
 };
 function apLoad() {
-  srv('erpApps', [], function (r) { APPS = r; APPS_ERR = ''; apSyncMe(r); applyRole(); tabbarSync(); if (VIEW === 'apps' || VIEW === 'settings') repaint(); },
-      function (e) { APPS_ERR = (e && e.message) || String(e); if (VIEW === 'apps') repaint(); });
+  srv('erpApps', [], function (r) { APPS = r; APPS_ERR = ''; apSyncMe(r); applyRole(); tabbarSync(); if (VIEW === 'apps' || VIEW === 'app' || VIEW === 'settings') repaint(); if (VIEW === 'app') apScreenLoad(); },
+      function (e) { APPS_ERR = (e && e.message) || String(e); if (VIEW === 'apps' || VIEW === 'app') repaint(); });
 }
-function apIcon(a) {
-  if (a.view) { var b = document.querySelector('#nav button[data-view="' + a.view + '"] .ic'); if (b) return b.innerHTML; }
-  return '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg>';
+function apScreenLoad() {
+  var a = apOf(APP_KEY); if (!a) return;
+  if (a.url && !AP_QR[a.key]) srv('erpAppQr', [{ key: a.key }], function (r) { AP_QR[a.key] = r; if (VIEW === 'app') repaint(); }, function () {});
+  if (a.key === 'feedback' && !FB) fbLoad();
+  if (APPS.admin && AP_PANEL[a.key]) {
+    var p = AP_PANEL[a.key];
+    if (p === 'preg' && !PREG && !PREG_ERR) pregLoad();
+    if (p === 'pdoc' && !PDOC && !PDOC_ERR) pdocLoad();
+    if (p === 'pcom' && !PCOM && !PCOM_ERR) pcomLoad();
+    if (p === 'pdes' && !PDES && !PDES_ERR) pdesLoad();
+  }
 }
+// ---- the home screen: icons
+function viewApps() {
+  var h = '<section><div class="card"><h2 style="margin:0 0 2px">Apps</h2><div class="sub" data-c5x="1" style="display:block">The special features customers reach from outside. Tap one to see what it does, share its page, and set it up.</div>';
+  if (APPS_ERR) return h + '<div class="note err"><div class="ico">!</div><div>' + esc(APPS_ERR) + '</div></div></div></section>';
+  if (!APPS) return h + '<div class="loading">Loading\u2026</div></div></section>';
+  var list = APPS.apps.filter(function (a) { return a.on || APPS.admin; });
+  h += '<div class="ap-home">' + list.map(function (a) {
+    return '<button type="button" class="ap-app' + (a.on ? '' : ' off') + '" data-apopen="' + esc(a.key) + '" ' + apStyle(a.key) + '>' +
+           '<span class="ap-ico">' + apIcon(a.key) + (a.on ? '' : '<span class="ap-dot" title="Off for everyone"></span>') + '</span>' +
+           '<span class="ap-lbl">' + esc(a.name) + '</span></button>';
+  }).join('') + '</div>';
+  return h + '</div></section>';
+}
+// ---- one app's screen
+function viewApp() {
+  if (APPS_ERR) return '<section><div class="note err"><div class="ico">!</div><div>' + esc(APPS_ERR) + '</div></div></section>';
+  if (!APPS) return '<div class="loading">Loading\u2026</div>';
+  var a = apOf(APP_KEY);
+  if (!a) return '<section><div class="empty">No such app. <a href="#" data-apback="1">Back to Apps</a></div></section>';
+  var admin = APPS.admin;
+  var h = '<section><div class="card"><div class="ap-head" ' + apStyle(a.key) + '><span class="ap-ico">' + apIcon(a.key) + '</span><div><h2>' + esc(a.name) + '</h2>' +
+          (a.on ? '' : '<span class="ap-pill">Off for everyone</span>') + '</div></div>' +
+          '<div class="ap-what">' + esc(a.what) + '</div>' + (a.where && a.key !== 'feedback' ? '<div class="ap-where">Settings: ' + esc(a.where) + '</div>' : '') +
+          '<div class="ap-row">' +
+          (a.url && a.on ? '<a class="btn small primary" href="' + esc(a.url) + '" target="_blank" rel="noopener">Open the page \u2197</a>' : '') +
+          (a.view && a.view !== 'app' && a.view !== 'platform' ? '<button class="btn small" type="button" data-apgo="' + esc(a.view) + '" data-aptab="' + esc(a.tab || '') + '">Settings</button>' : '') +
+          '<button class="btn small" type="button" data-apback="1">All apps</button>' +
+          (admin && !a.sameAs ? '<span class="seg" style="margin-left:auto"><button class="btn small' + (a.on ? ' on' : '') + '" type="button" data-apall="' + esc(a.key) + '" data-on="1">On for everyone</button><button class="btn small' + (a.on ? '' : ' on') + '" type="button" data-apall="' + esc(a.key) + '" data-on="0">Off</button></span>' : '') +
+          (admin && a.sameAs ? '<span class="sku" style="margin-left:auto">Follows Find stock.</span>' : '') +
+          '</div></div>';
+  if (a.url && a.on) {
+    var q = AP_QR[a.key];
+    h += '<div class="card"><h2>Share</h2><div class="sub" data-c5x="1" style="display:block">Print the code for the counter, or send the link. It opens on any phone, no sign-in.</div>' +
+         '<div class="ap-share">' + (q ? '<img src="' + esc(q.qr) + '" alt="QR">' : '<div class="loading" style="width:148px">Loading\u2026</div>') +
+         '<div><div class="ap-url">' + esc(a.url) + '</div><div class="ap-row" style="margin-top:8px"><button class="btn small" type="button" data-apcopy="' + esc(a.url) + '">Copy the link</button>' +
+         (q ? '<a class="btn small" href="' + esc(q.qr) + '" download="' + esc(a.key) + '-qr.svg">Download the code</a>' : '') + '</div></div></div></div>';
+  }
+  if (a.key === 'feedback') h += fbMineHtml();
+  if (admin) {
+    if (a.key === 'feedback') h += fbInboxHtml();
+    else if (AP_PANEL[a.key]) {
+      var p = AP_PANEL[a.key];
+      h += '<h3 class="ap-h3">Provider</h3>' + (p === 'preg' ? pregCard() : p === 'pdoc' ? pdocCard() : p === 'pcom' ? pcomCard() : pdesCard());
+    }
+  }
+  return h + '</section>';
+}
+// the provider's panels left Platform for the app screens; Platform says where they went
+var pregCardA = pregCard, pdocCardA = pdocCard, pcomCardA = pcomCard, pdesCardA = pdesCard;
+pregCard = function () { return VIEW === 'platform' ? '' : pregCardA.apply(this, arguments); };
+pdocCard = function () { return VIEW === 'platform' ? '' : pdocCardA.apply(this, arguments); };
+pcomCard = function () { return VIEW === 'platform' ? '' : pcomCardA.apply(this, arguments); };
+pdesCard = function () { return VIEW === 'platform' ? '' : pdesCardA.apply(this, arguments); };
+var viewPlatformApps = viewPlatform;
+viewPlatform = function () {
+  var h = viewPlatformApps.apply(this, arguments);
+  if (!ME || !ME.platform) return h;
+  return h + '<section><div class="card"><h2>Moved to Apps</h2><div class="sub" data-c5x="1" style="display:block">Ideas and updates, the Print Doctor, the Design desk, the Passport register and Feedback are now each on their own screen under <b>Apps</b>, with their public page, share code and switch.</div></div></section>';
+};
+// ---- Feedback: what this company sent, and the provider's inbox
+function fbLoad() { srv('erpFeedback', [], function (r) { FB = r; FB_ERR = ''; if (VIEW === 'app') repaint(); }, function (e) { FB_ERR = (e && e.message) || String(e); if (VIEW === 'app') repaint(); }); }
+var FB_KINDS = [['problem', 'Something is wrong'], ['complaint', 'A complaint'], ['idea', 'An idea'], ['praise', 'It works well']];
+var FB_STATUS = { new: 'New', looking: 'Looking at it', fixed: 'Fixed', wont: 'Not planned' };
+function fbItem(r, admin) {
+  return '<div class="fb-item"><div class="fb-meta"><span class="fb-k ' + esc(r.kind) + '">' + esc((FB_KINDS.filter(function (k) { return k[0] === r.kind; })[0] || [0, r.kind])[1]) + '</span>' +
+         '<span class="fb-s ' + esc(r.status) + '">' + esc(FB_STATUS[r.status] || r.status) + '</span>' +
+         (admin ? '<b>' + esc(r.company || '?') + '</b> \u00b7 ' + esc(r.who) + (r.role ? ' (' + esc(r.role) + ')' : '') : '') +
+         (r.screen ? ' \u00b7 ' + esc(r.screen) : '') + ' \u00b7 ' + esc(fmtWhen(r.at)) + (admin && r.contact ? ' \u00b7 ' + esc(r.contact) : '') + '</div>' +
+         '<div class="fb-txt">' + esc(r.text) + '</div>' +
+         (r.reply ? '<div class="fb-reply"><b>Answer:</b> ' + esc(r.reply) + '</div>' : '') +
+         (admin ? '<div class="ap-row" style="margin-top:6px"><select class="i" style="width:auto" id="fb_s_' + r.id + '">' + Object.keys(FB_STATUS).map(function (k) { return '<option value="' + k + '"' + (k === r.status ? ' selected' : '') + '>' + FB_STATUS[k] + '</option>'; }).join('') + '</select>' +
+          '<input class="i" style="flex:1;min-width:180px" id="fb_r_' + r.id + '" placeholder="Your answer (they see it on their Feedback screen)" value="' + esc(r.reply || '') + '">' +
+          '<button class="btn small primary" type="button" data-fbset="' + r.id + '">Save</button></div>' : '') + '</div>';
+}
+function fmtWhen(v) { try { return new Date(v).toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' }); } catch (e) { return String(v).slice(0, 16); } }
+function fbMineHtml() {
+  var h = '<div class="card"><h2>Tell the provider</h2><div class="sub" data-c5x="1" style="display:block">A problem, a complaint, an idea or praise. It goes to the people who run this ERP, not to anyone else. You see the answer here.</div>' +
+          '<div class="seg fb-kind" style="margin:8px 0">' + FB_KINDS.map(function (k) { return '<button class="btn small' + (FB_FORM.kind === k[0] ? ' on' : '') + '" type="button" data-fbkind="' + k[0] + '">' + k[1] + '</button>'; }).join('') + '</div>' +
+          '<textarea class="i" id="fb_text" rows="4" placeholder="What happened, where, and what you expected" style="width:100%">' + esc(FB_FORM.text) + '</textarea>' +
+          '<div class="ap-row"><input class="i" id="fb_contact" style="flex:1;min-width:200px" placeholder="Phone or e-mail if you want an answer back (optional)" value="' + esc(FB_FORM.contact) + '">' +
+          '<button class="btn primary" type="button" id="fb_send">Send</button></div></div>';
+  if (FB_ERR) return h + '<div class="note err"><div class="ico">!</div><div>' + esc(FB_ERR) + '</div></div>';
+  if (!FB) return h + '<div class="loading">Loading\u2026</div>';
+  if (FB.mine.length) h += '<div class="card"><h2>Sent from this business</h2>' + FB.mine.map(function (r) { return fbItem(r, false); }).join('') + '</div>';
+  return h;
+}
+function fbInboxHtml() {
+  if (!FB) return '<h3 class="ap-h3">Provider</h3><div class="loading">Loading\u2026</div>';
+  var c = FB.counts || {};
+  var h = '<h3 class="ap-h3">Provider</h3><div class="card"><h2>Inbox</h2><div class="sub" data-c5x="1" style="display:block">' +
+          (c.new ? '<b>' + fmt(c.new) + ' new</b>' : 'Nothing new') + ' \u00b7 ' + fmt(c.looking || 0) + ' looking at \u00b7 ' + fmt(c.fixed || 0) + ' fixed \u00b7 ' + fmt(c.wont || 0) + ' not planned. Every company sees only its own reports and your answers.</div>';
+  if (!FB.inbox.length) return h + '<div class="empty">No feedback yet.</div></div>';
+  return h + FB.inbox.map(function (r) { return fbItem(r, true); }).join('') + '</div>';
+}
+// ---- Edit menu bar (Settings > Business): who in this company sees each ordinary screen
 function apModeSeg(key, mode) {
   return '<span class="seg" data-apseg="' + esc(key) + '">' + [['all', 'Everyone'], ['owner', 'Only owners'], ['off', 'Off']].map(function (x) {
     return '<button class="btn small' + (x[0] === mode ? ' on' : '') + '" type="button" data-apmode="' + esc(key) + '" data-mode="' + x[0] + '">' + x[1] + '</button>';
   }).join('') + '</span>';
 }
-function apTile(a) {
-  var admin = APPS.admin, owner = APPS.owner, inMenu = APPS.menu.some(function (m) { return m.key === a.key; });
-  var h = '<div class="ap-tile' + (a.on ? '' : ' off') + '"><div class="ap-head"><span class="ap-ic">' + apIcon(a) + '</span><span class="ap-name">' + esc(a.name) + '</span>' +
-          (a.on ? '' : '<span class="ap-pill" style="margin-left:auto">Off</span>') + '</div>' +
-          '<div class="ap-what">' + esc(a.what) + '</div>' +
-          (a.where ? '<div class="ap-where">Settings: ' + esc(a.where) + '</div>' : '') +
-          '<div class="ap-row">';
-  if (a.on) {
-    if (a.view) h += '<button class="btn small primary" type="button" data-apgo="' + esc(a.view) + '" data-aptab="' + esc(a.tab) + '">Open</button>';
-    if (a.url) h += '<a class="btn small' + (a.view ? '' : ' primary') + '" href="' + esc(a.url) + '" target="_blank" rel="noopener">Public page \u2197</a>';
-    if (owner && inMenu) h += apModeSeg(a.key, a.mode || 'all');
-    if (admin && !a.sameAs) h += '<label class="mk-sw"><input type="checkbox" data-apall="' + esc(a.key) + '"' + (a.on ? ' checked' : '') + '> On for everyone</label>';
-  } else if (admin && !a.sameAs) h += '<button class="btn small primary" type="button" data-apon="' + esc(a.key) + '">Switch on for everyone</button>';
-  else if (!admin) h += '<span class="sku">Switched off by the provider.</span>';
-  if (admin && a.sameAs) h += '<span class="sku">Follows ' + esc(a.sameAs === 'find' ? 'Find stock' : a.sameAs) + '.</span>';
-  return h + '</div></div>';
-}
-function viewApps() {
-  var h = '<section><div class="card"><h2 style="margin:0 0 4px">Apps</h2><div class="sub" data-c5x="1" style="display:block">The special features customers reach from outside. <b>Open</b>: the screen where it is run and set up. <b>Public page</b>: what a customer sees.' +
-          (APPS && APPS.admin ? ' <b>On for everyone</b>: off hides it from every company and its page answers “not open yet”.' : '') + '</div>';
-  if (APPS_ERR) return h + '<div class="note err"><div class="ico">!</div><div>' + esc(APPS_ERR) + '</div></div></div></section>';
-  if (!APPS) return h + '<div class="loading">Loading\u2026</div></div></section>';
-  APPS_GROUPS.forEach(function (g) {
-    var list = APPS.apps.filter(function (a) { return a.group === g && !(a.key === 'joint' && !(ME && ME.joint) && !APPS.admin); });
-    if (!list.length) return;
-    h += '<h3 class="ap-h3">' + esc(g) + '</h3><div class="ap-grid">' + list.map(apTile).join('') + '</div>';
-  });
-  return h + '</div></section>';
-}
-document.addEventListener('click', function (ev) {
-  if (VIEW !== 'apps') return;
-  var t = ev.target && ev.target.closest ? ev.target.closest('[data-apgo]') : null; if (!t) return;
-  var v = t.getAttribute('data-apgo'), tab = t.getAttribute('data-aptab');
-  if (v === 'market' && tab) MK.tab = tab;
-  if (v === 'printjobs' && tab) PK_TAB = tab;
-  go(v);
-});
-document.addEventListener('click', function (ev) {
-  if (VIEW !== 'apps' && VIEW !== 'settings') return;
-  var m = ev.target && ev.target.closest ? ev.target.closest('[data-apmode]') : null; if (!m) return;
-  if (m.classList.contains('on')) return;
-  var seg = m.parentNode; [].forEach.call(seg.querySelectorAll('button'), function (b) { b.disabled = true; });
-  srv('erpAppSet', [{ key: m.getAttribute('data-apmode'), mode: m.getAttribute('data-mode'), scope: 'mine' }], function (r) {
-    APPS = r; apSyncMe(r); applyRole(); tabbarSync(); repaint();
-    toast({ all: 'Everyone here sees it.', owner: 'Only owners see it now.', off: 'Off for this business. Switch it back here any time.' }[m.getAttribute('data-mode')]);
-  }, function (e) { [].forEach.call(seg.querySelectorAll('button'), function (b) { b.disabled = false; }); toast(esc((e && e.message) || e), true, 9000); });
-});
-document.addEventListener('click', function (ev) {
-  if (VIEW !== 'apps' && VIEW !== 'settings') return;
-  var t = ev.target && ev.target.closest ? ev.target.closest('[data-apon]') : null; if (!t) return;
-  ev.preventDefault(); t.disabled = true;
-  srv('erpAppSet', [{ key: t.getAttribute('data-apon'), on: true, scope: 'all' }], function (r) { APPS = r; apSyncMe(r); applyRole(); tabbarSync(); repaint(); toast('On for every company.'); },
-      function (e) { t.disabled = false; toast(esc((e && e.message) || e), true, 9000); });
-});
-// Settings > Business > Menu: the screens this company shows in its menu (owner). Same list the Apps page uses.
 function menuCardHtml() {
   if (!ME || ME.role !== 'owner') return '';
   if (!APPS) { apLoad(); return '<section><div class="card"><h2>Edit menu bar</h2><div class="loading">Loading\u2026</div></div></section>'; }
   var h = '<section><div class="card"><h2>Edit menu bar</h2><div class="sub" data-c5x="1" style="display:block">Who sees each screen in this business. <b>Everyone</b>: you and your staff. <b>Only owners</b>: you use it, staff do not see it. <b>Off</b>: nobody here, until you switch it back. Only an owner changes this; nothing is deleted. The main screens are not listed - they always stay. (What a person may DO on a screen is set under Users.)</div>' +
           '<div class="ap-mrows">';
   APPS.menu.forEach(function (m) {
-    h += '<div class="ap-mrow"' + (m.off ? ' style="opacity:.55"' : '') + '><span class="nm">' + esc(m.name) + '</span>' +
-         (m.off ? (APPS.admin ? '<span><span class="sku">Off for every company</span> <button class="btn small" type="button" data-apon="' + esc(m.key) + '">Switch on for everyone</button></span>' : '<span class="sku">Off for every company (the provider)</span>')
-                : apModeSeg(m.key, m.mode)) + '</div>';
+    h += '<div class="ap-mrow"><span class="nm">' + esc(m.name) + '</span>' + apModeSeg(m.key, m.mode) + '</div>';
   });
   return h + '</div></div></section>';
 }
 var brandCardHtmlMenu = brandCardHtml;
 brandCardHtml = function () { return brandCardHtmlMenu.apply(this, arguments) + menuCardHtml(); };
-document.addEventListener('change', function (ev) {
-  if (VIEW !== 'settings') return;
-  var t = ev.target; if (!t || !t.getAttribute || !t.getAttribute('data-apmine')) return;
-  var key = t.getAttribute('data-apmine'), on = !!t.checked;
-  t.disabled = true;
-  srv('erpAppSet', [{ key: key, on: on, scope: 'mine' }], function (r) { APPS = r; apSyncMe(r); applyRole(); tabbarSync(); repaint(); toast(on ? 'Staff see it again.' : 'Hidden from staff. Owners still see it.'); },
-      function (e) { t.checked = !on; t.disabled = false; toast(esc((e && e.message) || e), true, 9000); });
-});
-document.addEventListener('change', function (ev) {
-  if (VIEW !== 'apps') return;
-  var t = ev.target; if (!t || !t.getAttribute) return;
-  var mine = t.getAttribute('data-apmine'), all = t.getAttribute('data-apall');
-  if (!mine && !all) return;
-  var key = mine || all, on = !!t.checked;
-  t.disabled = true;
-  srv('erpAppSet', [{ key: key, on: on, scope: all ? 'all' : 'mine' }], function (r) {
-    APPS = r; apSyncMe(r); applyRole(); tabbarSync(); repaint();
-    toast(all ? (on ? 'On for every company.' : 'Off for every company.') : (on ? 'Staff see it again.' : 'Hidden from staff. Owners still see it.'));
-  }, function (e) { t.checked = !on; t.disabled = false; toast(esc((e && e.message) || e), true, 9000); });
+// ---- wiring
+function apAfterSet(r, msg) { APPS = r; apSyncMe(r); applyRole(); tabbarSync(); repaint(); if (msg) toast(msg); }
+document.addEventListener('click', function (ev) {
+  var fb = ev.target && ev.target.closest ? ev.target.closest('#fbBtn') : null;
+  if (fb) { go('app', 'feedback'); return; }
+  if (VIEW !== 'apps' && VIEW !== 'app' && VIEW !== 'settings') return;
+  var t = ev.target && ev.target.closest ? ev.target.closest('[data-apopen],[data-apback],[data-apgo],[data-apall],[data-apmode],[data-apcopy],[data-fbkind],#fb_send,[data-fbset]') : null;
+  if (!t) return;
+  var fail = function (e) { toast(esc((e && e.message) || e), true, 9000); };
+  if (t.hasAttribute('data-apopen')) { go('app', t.getAttribute('data-apopen')); return; }
+  if (t.hasAttribute('data-apback')) { ev.preventDefault(); go('apps'); return; }
+  if (t.hasAttribute('data-apgo')) {
+    var v = t.getAttribute('data-apgo'), tab = t.getAttribute('data-aptab');
+    if (v === 'market' && tab) MK.tab = tab;
+    if (v === 'printjobs' && tab) PK_TAB = tab;
+    go(v); return;
+  }
+  if (t.hasAttribute('data-apall')) {
+    if (t.classList.contains('on')) return;
+    var on = t.getAttribute('data-on') === '1';
+    srv('erpAppSet', [{ key: t.getAttribute('data-apall'), on: on, scope: 'all' }], function (r) { apAfterSet(r, on ? 'On for every company.' : 'Off for every company. Its page answers \u201cnot open yet\u201d.'); }, fail);
+    return;
+  }
+  if (t.hasAttribute('data-apmode')) {
+    if (t.classList.contains('on')) return;
+    var seg = t.parentNode; [].forEach.call(seg.querySelectorAll('button'), function (b) { b.disabled = true; });
+    srv('erpAppSet', [{ key: t.getAttribute('data-apmode'), mode: t.getAttribute('data-mode'), scope: 'mine' }], function (r) {
+      apAfterSet(r, { all: 'Everyone here sees it.', owner: 'Only owners see it now.', off: 'Off for this business. Switch it back here any time.' }[t.getAttribute('data-mode')]);
+    }, function (e) { [].forEach.call(seg.querySelectorAll('button'), function (b) { b.disabled = false; }); fail(e); });
+    return;
+  }
+  if (t.hasAttribute('data-apcopy')) {
+    var u = t.getAttribute('data-apcopy');
+    try { navigator.clipboard.writeText(u).then(function () { toast('Copied.'); }, function () { prompt('Copy the link', u); }); } catch (e) { prompt('Copy the link', u); }
+    return;
+  }
+  if (t.hasAttribute('data-fbkind')) { FB_FORM.kind = t.getAttribute('data-fbkind'); FB_FORM.text = (el('fb_text') || {}).value || ''; FB_FORM.contact = (el('fb_contact') || {}).value || ''; repaint(); return; }
+  if (t.id === 'fb_send') {
+    FB_FORM.text = el('fb_text').value; FB_FORM.contact = el('fb_contact').value;
+    t.disabled = true;
+    srv('erpFeedbackSend', [{ kind: FB_FORM.kind, text: FB_FORM.text, contact: FB_FORM.contact, screen: 'Apps' }], function (r) {
+      FB_FORM = { kind: 'problem', text: '', contact: '' }; FB = null; fbLoad(); toast('Sent. Thank you - the answer shows here when there is one.');
+    }, function (e) { t.disabled = false; fail(e); });
+    return;
+  }
+  if (t.hasAttribute('data-fbset')) {
+    var id = t.getAttribute('data-fbset');
+    t.disabled = true;
+    srv('erpFeedbackSet', [{ id: Number(id), status: el('fb_s_' + id).value, reply: el('fb_r_' + id).value }], function (r) { FB = r; repaint(); toast('Saved - they see it on their Feedback screen.'); }, function (e) { t.disabled = false; fail(e); });
+    return;
+  }
 });
 </script>
 </body>

@@ -13,6 +13,7 @@
 
 import { getConfig, setConfig } from '../lib/ext.js';
 import { platformAdmin } from './platform.js';
+import { qrDataUrl } from '../lib/qr.js';
 
 const str = (v) => String(v == null ? '' : v).trim();
 
@@ -30,6 +31,7 @@ export const APPS = [
   { key: 'print', group: 'For customers', name: 'Get it printed', view: 'printjobs', tab: 'board', path: 'print', what: 'Anyone posts a file; print farms offer a price; the chosen farm prints and delivers.', where: 'Print jobs \u2192 Jobs board' },
   { key: 'quote', group: 'For customers', name: 'Print quote', view: 'printjobs', tab: 'requests', path: 'quote', what: 'A customer asks THIS shop for a print price.', where: 'Print jobs \u2192 Requests \u2192 Taking requests' },
   { key: 'design', group: 'For customers', name: 'Design desk', view: 'platform', path: 'design', what: 'Designers take sketches and repair-part requests; the part goes to a print farm.', where: 'Platform \u2192 Design desk' },
+  { key: 'feedback', group: 'For customers', name: 'Feedback', view: 'app', what: 'Problems, complaints, ideas and praise from anyone who uses an ERP on this platform; the provider answers in one inbox.', where: 'Apps \u2192 Feedback' },
   { key: 'ideas', group: 'For customers', name: 'Ideas and updates', view: 'platform', path: 'ideas', what: 'Visitors post and vote on ideas for the ERP; you answer in public.', where: 'Platform \u2192 Ideas' },
 ];
 // Menu screens an owner may take out of his own menu (Settings > Business > Menu). Core screens are not here.
@@ -136,4 +138,56 @@ export async function erpAppSet(ctx, payload) {
   return erpApps(ctx);
 }
 
-export const HANDLERS = { erpApps, erpAppSet };
+
+/** The share card on an app's screen: the public address and its QR. */
+export async function erpAppQr(ctx, payload) {
+  const a = BY_KEY[str(payload && payload.key)];
+  if (!a || !a.path) throw new Error('No public page for that.');
+  const url = pageUrl(ctx.deps, a.path);
+  return { key: a.key, url, qr: qrDataUrl(url) };
+}
+
+// ---------------------------------------------------------------- Feedback and complaints
+const KINDS = ['complaint', 'problem', 'idea', 'praise'], STATUSES = ['new', 'looking', 'fixed', 'wont'];
+const fbRow = (r) => ({ id: Number(r.id), company: str(r.company), who: str(r.who), role: str(r.role), kind: str(r.kind), text: str(r.text), screen: str(r.screen),
+                        contact: str(r.contact), status: str(r.status), reply: str(r.reply), at: r.created_at, updated: r.updated_at });
+
+/** Anyone signed in to any company's ERP: send a report. Lands in the provider's inbox. */
+export async function erpFeedbackSend(ctx, payload) {
+  const p = payload || {};
+  const kind = KINDS.includes(p.kind) ? p.kind : 'problem';
+  const text = str(p.text).slice(0, 2000); if (text.length < 5) throw new Error('Write what happened, in a sentence or two.');
+  const screen = str(p.screen).slice(0, 60), contact = str(p.contact).slice(0, 120);
+  const c = ctl(ctx.deps, ctx.sql);
+  const r = (await c`insert into erp_feedback (business_id, company, who, role, kind, text, screen, contact)
+                     values (${ctx.biz}, ${str(ctx.s.businessName).slice(0, 120)}, ${str(ctx.s.name).slice(0, 80)}, ${str(ctx.s.role)}, ${kind}, ${text}, ${screen || null}, ${contact || null}) returning id`)[0];
+  return { ok: true, id: Number(r.id), mine: await myFeedback(ctx) };
+}
+/** What this person sent before, with the provider's answers (so a company sees only its own). */
+async function myFeedback(ctx) {
+  const rows = await ctl(ctx.deps, ctx.sql)`select * from erp_feedback where business_id = ${ctx.biz} order by created_at desc limit 50`;
+  return rows.map(fbRow);
+}
+export async function erpFeedback(ctx) {
+  const admin = await platformAdmin(ctx);
+  const out = { admin, mine: await myFeedback(ctx), inbox: [], counts: {} };
+  if (admin) {
+    const c = ctl(ctx.deps, ctx.sql);
+    out.inbox = (await c`select * from erp_feedback order by (status = 'new') desc, created_at desc limit 300`).map(fbRow);
+    for (const r of await c`select status, count(*)::int n from erp_feedback group by status`) out.counts[str(r.status)] = Number(r.n);
+  }
+  return out;
+}
+/** The provider: a status and a reply (the company that sent it sees the reply on its Feedback screen). */
+export async function erpFeedbackSet(ctx, payload) {
+  if (!(await platformAdmin(ctx))) throw new Error('Only the provider answers feedback.');
+  const p = payload || {}, id = Math.round(Number(p.id) || 0);
+  if (!id) throw new Error('Which report?');
+  const status = STATUSES.includes(p.status) ? p.status : null, reply = p.reply === undefined ? null : str(p.reply).slice(0, 2000);
+  const c = ctl(ctx.deps, ctx.sql);
+  const r = (await c`update erp_feedback set status = coalesce(${status}, status), reply = coalesce(${reply}, reply), updated_at = now() where id = ${id} returning id`)[0];
+  if (!r) throw new Error('That report is not here any more.');
+  return erpFeedback(ctx);
+}
+
+export const HANDLERS = { erpApps, erpAppSet, erpAppQr, erpFeedback, erpFeedbackSend, erpFeedbackSet };

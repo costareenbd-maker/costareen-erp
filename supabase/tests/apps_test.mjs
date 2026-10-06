@@ -13,8 +13,8 @@ const menu = (r, k) => r.result.menu.find((m) => m.key === k);
 
 // 1. the catalogue, as anyone
 let r = await sales('erpApps', []);
-check('sales staff read the catalogue: 9 features, every one on, no switches for them', r.ok && r.result.apps.length === 9 && r.result.apps.every((a) => a.on && !a.hidden) && !r.result.owner && !r.result.admin, r);
-check('the public ones carry a link; every tile names its screen (Platform ones only for the admin)', r.ok && r.result.apps.filter((a) => a.url).length === 9 && r.result.apps.filter((a) => a.view).length === 7 && r.result.apps.every((a) => typeof a.where === 'string'), r.result.apps.map((a) => a.key + ':' + a.view + ':' + a.url));
+check('sales staff read the catalogue: 10 features, every one on, no switches for them', r.ok && r.result.apps.length === 10 && r.result.apps.every((a) => a.on && !a.hidden) && !r.result.owner && !r.result.admin, r);
+check('the public ones carry a link; every tile names its screen (Platform ones only for the admin)', r.ok && r.result.apps.filter((a) => a.url).length === 9 && r.result.apps.filter((a) => a.view).length === 8 && r.result.apps.every((a) => typeof a.where === 'string'), r.result.apps.map((a) => a.key + ':' + a.view + ':' + a.url));
 check('the menu list: 14 screens, all for everyone', r.ok && r.result.menu.length === 14 && r.result.menu.every((m) => m.mode === 'all' && !m.off), r.result.menu);
 
 // 2. the owner sets who sees a screen; staff cannot; the other business is untouched
@@ -79,4 +79,27 @@ r = await owner('erpAppSet', [{ key: 'nothing', on: true, scope: 'all' }]);
 check('an unknown app is refused', !r.ok, r);
 const log = await sql`select action from erp_activity where business_id = ${FIX.B} and action = 'erpAppSet'`;
 check('the switch is in the activity log', log.length >= 3, log.length);
+
+// 4. the share card and Feedback
+r = await sales('erpAppQr', [{ key: 'find' }]);
+check('the QR of a public page', r.ok && /\/find$/.test(r.result.url) && /^data:image\/svg\+xml;base64,/.test(r.result.qr), r);
+r = await sales('erpAppQr', [{ key: 'feedback' }]);
+check('no QR for an app without a public page', !r.ok, r);
+r = await sales('erpFeedbackSend', [{ kind: 'complaint', text: 'The invoice PDF opens blank on my phone.', screen: 'Sales', contact: '01712345678' }]);
+check('sales staff send a complaint', r.ok && r.result.id > 0 && r.result.mine.length === 1 && r.result.mine[0].kind === 'complaint' && r.result.mine[0].status === 'new', r);
+r = await sales('erpFeedbackSend', [{ kind: 'praise', text: 'Hi' }]);
+check('too short: refused', !r.ok, r);
+r = await mgr('erpFeedback', []);
+check('the company sees its own reports, no inbox', r.ok && !r.result.admin && r.result.mine.length === 1 && r.result.inbox.length === 0, r);
+const fid = (await mgr('erpFeedback', [])).result.mine[0].id;
+r = await mgr('erpFeedbackSet', [{ id: fid, status: 'fixed' }]);
+check('a manager cannot answer feedback', !r.ok, r);
+r = await owner('erpFeedback', []);
+check('the provider: the inbox with company, who and contact', r.ok && r.result.admin && r.result.inbox.length === 1 && r.result.inbox[0].company && r.result.inbox[0].contact === '01712345678' && r.result.counts.new === 1, r);
+r = await owner('erpFeedbackSet', [{ id: fid, status: 'fixed', reply: 'Fixed in the next build - thank you.' }]);
+check('the provider answers', r.ok && r.result.inbox[0].status === 'fixed' && /thank you/.test(r.result.inbox[0].reply) && r.result.counts.fixed === 1, r);
+r = await sales('erpFeedback', []);
+check('the sender sees the answer', r.ok && r.result.mine[0].status === 'fixed' && /thank you/.test(r.result.mine[0].reply), r);
+r = await owner('erpFeedbackSet', [{ id: 999999, status: 'fixed' }]);
+check('an unknown report is refused', !r.ok, r);
 await done();
