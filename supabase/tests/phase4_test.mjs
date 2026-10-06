@@ -210,6 +210,7 @@ r = await mgr('erpCreateInvoice', [{ from: POOL, customer: { name: 'X', phone: '
 check('staff outside the pool cannot sell from it', !r.ok && /not one you are in/.test(r.error), r);
 
 // ---- plan B2: one inventory, side by side
+await owner('erpPoolShare', [{ share: true }]);   // off by default since 082: the owner chooses to show counts
 r = await other('erpSharedStock', []);
 const colOf = (res, kind) => res.columns.find((c) => c.kind === kind);
 check('one screen: mine, the pool, the partner', r.ok && r.result.shared && r.result.columns.length === 3 && colOf(r.result, 'mine') && colOf(r.result, 'pool').name === 'ProtoReen JV' && colOf(r.result, 'partner').name === 'Costareen', r.result && r.result.columns);
