@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Ideas, updates and credits: propose what the platform should do next, vote, see what is being built and who made it happen.">
+<title>Ideas and updates</title>
+<link rel="icon" href="icons/favicon-32.png">
+<style>
+/* Stage N1b (docs/NETWORK-BLUEPRINT.md section 4.5): the ideas board, the updates page, the credits.
+   Talks to the server's ?pub=ideas / idea / ideavote routes; no sign-in. */
+:root{--bg:#f6f7f4;--card:#fff;--ink:#14201c;--mute:#5d6b66;--line:#dfe5e1;--ok:#0f766e;--okbg:#e6f4f1;--warn:#9a5b00;--warnbg:#fff4df;--bad:#b42318;--badbg:#fdecea;--acc:#0f766e;--blue:#1d4ed8;--bluebg:#e8eefc}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans","Noto Sans Bengali","Hind Siliguri",sans-serif}
+body{padding:calc(16px + env(safe-area-inset-top,0px)) 16px calc(28px + env(safe-area-inset-bottom,0px))}
+main{max-width:680px;margin:0 auto}
+header{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:14px}
+header h1{font-size:22px;margin:0}header h1 small{display:block;font-size:13px;color:var(--mute);font-weight:500}
+.lang{border:1px solid var(--line);background:var(--card);border-radius:999px;padding:6px 12px;font:inherit;font-size:14px;cursor:pointer}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 12px}.tabs button{font-size:14px;padding:7px 12px;border-radius:999px}.tabs button.on{background:var(--acc);color:#fff;border-color:var(--acc)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 16px;margin-bottom:12px}
+button{font:inherit;font-size:15px;padding:10px 14px;border-radius:10px;border:1px solid var(--line);background:#fff;color:var(--ink);cursor:pointer}
+button.pri{background:var(--acc);border-color:var(--acc);color:#fff;font-weight:600}button:disabled{opacity:.6;cursor:default}
+input,textarea{width:100%;font:inherit;font-size:16px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:#fff;color:var(--ink)}textarea{min-height:90px}
+input:focus,textarea:focus{outline:2px solid var(--acc);outline-offset:1px;border-color:var(--acc)}
+label.f{display:block;font-size:14px;color:var(--mute);margin:10px 0 4px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:8px}@media (max-width:460px){.two{grid-template-columns:1fr}}
+.chk{display:flex;gap:8px;align-items:flex-start;font-size:14px;margin:12px 0 0}.chk input{width:auto;margin-top:3px}
+.idea{display:flex;gap:12px;align-items:flex-start}
+.vote{flex:0 0 auto;display:flex;flex-direction:column;align-items:center;gap:2px}.vote button{padding:6px 12px;font-size:16px;line-height:1}.vote b{font-variant-numeric:tabular-nums}
+.idea h2{font-size:17px;margin:0 0 2px}.idea p{margin:0;font-size:15px}.idea .m{font-size:13px;color:var(--mute);margin-top:4px}
+.reply{border-left:3px solid var(--acc);padding:6px 10px;margin-top:8px;font-size:14px;background:#fbfcfb}
+.badge{display:inline-block;font-size:12px;font-weight:600;padding:2px 9px;border-radius:999px}.s-new{background:#eef1ee;color:var(--mute)}.s-planned{background:var(--bluebg);color:var(--blue)}.s-building{background:var(--warnbg);color:var(--warn)}.s-done{background:var(--okbg);color:var(--ok)}.s-declined{background:var(--badbg);color:var(--bad)}.s-guide{background:var(--bluebg);color:var(--blue)}
+.upd h2{font-size:17px;margin:0 0 2px}.upd .m{font-size:13px;color:var(--mute)}.upd p{margin:6px 0 0;white-space:pre-wrap}
+.hint{font-size:13px;color:var(--mute)}.err{color:var(--bad);font-size:14px;margin-top:8px}
+table{border-collapse:collapse;width:100%;font-size:14px}th,td{text-align:left;padding:7px 8px;border-bottom:1px solid var(--line)}th{color:var(--mute);font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:.4px}td.n{text-align:right;font-variant-numeric:tabular-nums}
+footer{font-size:13px;color:var(--mute);text-align:center;margin-top:22px}footer a{color:var(--mute)}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
+<main>
+  <header><h1><span data-t="title">Ideas and updates</span><small data-t="sub">Made with its community: propose, vote, see what is built</small></h1><button class="lang" id="lang" type="button">বাংলা</button></header>
+  <div class="tabs" id="tabs"><button type="button" data-tab="ideas" class="on" data-t="tIdeas">Ideas</button><button type="button" data-tab="updates" data-t="tUpdates">Updates</button><button type="button" data-tab="credits" data-t="tCredits">Credits</button></div>
+  <div id="out"><div class="card hint" data-t="loading">Loading…</div></div>
+  <footer><a href="find" data-t="find">Find stock</a> · <a href="doctor" data-t="doc">Print Doctor</a> · <a href="check" data-t="pp">Printer Passport</a></footer>
+</main>
+<script>
+var API = (new URLSearchParams(location.search).get('api') || 'https://oqzcuuytytqadqjlwdsh.supabase.co/functions/v1/erp').replace(/\/+$/, '');
+var Q = new URLSearchParams(location.search);
+var T = {
+  en: { title: 'Ideas and updates', sub: 'Made with its community: propose, vote, see what is built', tIdeas: 'Ideas', tUpdates: 'Updates', tCredits: 'Credits', loading: 'Loading…', net: 'Could not reach the server. Check your connection and try again.', find: 'Find stock', doc: 'Print Doctor', pp: 'Printer Passport',
+    propose: 'Propose an idea', pTitle: 'In a few words', pText: 'What should it do, and why? Who would use it?', pName: 'Your first name', pContact: 'Phone or e-mail, only if we may ask you about it (optional)', consent: 'My idea and my first name may be shown on the ideas board. My phone or e-mail is used only to ask me about the idea and is never shown.',
+    send: 'Send', sending: 'Sending…', sent: 'Thank you - your idea is on the board. Others can vote for it now.', cancel: 'Cancel', none: 'No ideas yet. Be the first.', vote: 'Vote', voted: 'You voted', by: 'by', reply: 'From the team',
+    st: { new: 'new', planned: 'planned', building: 'being built', done: 'done', declined: 'not for now' }, counts: 'being built · planned · done',
+    noUpd: 'Nothing posted yet.', credit: 'Credit', guides: 'Guides', guidesBody: 'Trusted volunteers who check what members send before it is shown.', noGuides: 'No guides yet - the platform checks everything for now.', contributors: 'Contributors', cIdeas: 'ideas taken up', cCases: 'Print Doctor cases', cSettings: 'settings approved', noContrib: 'Nobody yet - propose an idea, send a case to the Print Doctor, share settings.', since: 'since' },
+  bn: { title: 'আইডিয়া ও আপডেট', sub: 'কমিউনিটির সাথে তৈরি: প্রস্তাব দিন, ভোট দিন, কী তৈরি হচ্ছে দেখুন', tIdeas: 'আইডিয়া', tUpdates: 'আপডেট', tCredits: 'কৃতিত্ব', loading: 'লোড হচ্ছে…', net: 'সার্ভারে পৌঁছানো যায়নি। ইন্টারনেট দেখে আবার চেষ্টা করুন।', find: 'স্টক খুঁজুন', doc: 'প্রিন্ট ডাক্তার', pp: 'প্রিন্টার পাসপোর্ট',
+    propose: 'আইডিয়া দিন', pTitle: 'কয়েক শব্দে', pText: 'এটা কী করবে, কেন? কারা ব্যবহার করবে?', pName: 'আপনার নাম (প্রথম অংশ)', pContact: 'ফোন বা ই-মেইল, শুধু যদি আমরা জিজ্ঞেস করতে পারি (ঐচ্ছিক)', consent: 'আমার আইডিয়া ও নাম আইডিয়া বোর্ডে দেখানো যাবে। ফোন বা ই-মেইল শুধু আইডিয়া নিয়ে জিজ্ঞেস করতে ব্যবহার হবে, কখনো দেখানো হবে না।',
+    send: 'পাঠান', sending: 'পাঠানো হচ্ছে…', sent: 'ধন্যবাদ - আপনার আইডিয়া বোর্ডে আছে। এখন অন্যরা ভোট দিতে পারবে।', cancel: 'বাতিল', none: 'এখনো কোনো আইডিয়া নেই। আপনিই প্রথম হোন।', vote: 'ভোট', voted: 'ভোট দিয়েছেন', by: 'দিয়েছেন', reply: 'টিমের কথা',
+    st: { new: 'নতুন', planned: 'পরিকল্পনায়', building: 'তৈরি হচ্ছে', done: 'হয়ে গেছে', declined: 'এখন নয়' }, counts: 'তৈরি হচ্ছে · পরিকল্পনায় · হয়ে গেছে',
+    noUpd: 'এখনো কিছু পোস্ট হয়নি।', credit: 'কৃতিত্ব', guides: 'গাইড', guidesBody: 'বিশ্বস্ত স্বেচ্ছাসেবী, যারা সদস্যদের পাঠানো জিনিস দেখানোর আগে যাচাই করেন।', noGuides: 'এখনো গাইড নেই - আপাতত প্ল্যাটফর্ম সব যাচাই করে।', contributors: 'অবদানকারী', cIdeas: 'আইডিয়া গৃহীত', cCases: 'প্রিন্ট ডাক্তার কেস', cSettings: 'সেটিং অনুমোদিত', noContrib: 'এখনো কেউ নেই - আইডিয়া দিন, প্রিন্ট ডাক্তারে কেস পাঠান, সেটিং শেয়ার করুন।', since: 'থেকে' }
+};
+var LANG = 'en'; try { LANG = localStorage.getItem('pp_lang') || ((navigator.language || '').indexOf('bn') === 0 ? 'bn' : 'en'); } catch (e) {}
+function t(k) { return (T[LANG] || T.en)[k] || T.en[k] || k; }
+function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+var $ = function (id) { return document.getElementById(id); };
+var DATA = null, TAB = Q.get('tab') || 'ideas', FORM = false, VOTED = {}; try { VOTED = JSON.parse(localStorage.getItem('pp_voted') || '{}'); } catch (e) {}
+function paintLang() { document.documentElement.lang = LANG; document.querySelectorAll('[data-t]').forEach(function (n) { n.textContent = t(n.getAttribute('data-t')); }); $('lang').textContent = LANG === 'bn' ? 'English' : 'বাংলা'; if (DATA) paint(); }
+$('lang').onclick = function () { LANG = LANG === 'bn' ? 'en' : 'bn'; try { localStorage.setItem('pp_lang', LANG); } catch (e) {} paintLang(); };
+$('tabs').addEventListener('click', function (ev) { var b = ev.target.closest('[data-tab]'); if (!b) return; TAB = b.getAttribute('data-tab'); document.querySelectorAll('#tabs button').forEach(function (x) { x.classList.toggle('on', x === b); }); paint(); });
+function load() { fetch(API + '?pub=ideas').then(function (r) { return r.json(); }).then(function (r) { DATA = r; paint(); }, function () { DATA = { ok: false, error: t('net') }; paint(); }); }
+function paint() {
+  var r = DATA, out = $('out');
+  if (!r.ok) { out.innerHTML = '<div class="card"><p class="err" style="margin:0">' + esc(r.error || t('net')) + '</p></div>'; return; }
+  if (TAB === 'updates') { out.innerHTML = r.updates.length ? r.updates.map(function (u) { return '<div class="card upd"><h2>' + esc(u.title) + '</h2><div class="m">' + esc(u.when) + (u.credit ? ' · ' + esc(u.credit) : '') + '</div><p>' + esc(u.text) + '</p></div>'; }).join('') : '<div class="card hint">' + t('noUpd') + '</div>'; return; }
+  if (TAB === 'credits') {
+    var c = r.credits;
+    out.innerHTML = '<div class="card"><h2 style="font-size:17px;margin:0 0 4px">' + t('guides') + '</h2><p class="hint" style="margin:0 0 8px">' + t('guidesBody') + '</p>' + (c.guides.length ? c.guides.map(function (g) { return '<div style="padding:6px 0;border-top:1px solid var(--line)"><span class="badge s-guide">' + t('guides').replace(/s$/, '') + '</span> <b>' + esc(g.name) + '</b> <span class="hint">' + esc(g.area) + (g.since ? ' · ' + t('since') + ' ' + esc(g.since) : '') + '</span></div>'; }).join('') : '<p class="hint" style="margin:0">' + t('noGuides') + '</p>') + '</div>' +
+      '<div class="card"><h2 style="font-size:17px;margin:0 0 8px">' + t('contributors') + '</h2>' + (c.contributors.length ? '<table><thead><tr><th></th><th class="n">' + t('cIdeas') + '</th><th class="n">' + t('cCases') + '</th><th class="n">' + t('cSettings') + '</th></tr></thead><tbody>' + c.contributors.map(function (x) { return '<tr><td><b>' + esc(x.name) + '</b></td><td class="n">' + (x.ideas || '') + '</td><td class="n">' + (x.cases || '') + '</td><td class="n">' + (x.settings || '') + '</td></tr>'; }).join('') + '</tbody></table>' : '<p class="hint" style="margin:0">' + t('noContrib') + '</p>') + '</div>';
+    return;
+  }
+  var h = '';
+  if (FORM) h += '<form class="card" id="pf"><h2 style="font-size:17px;margin:0">' + t('propose') + '</h2><label class="f" for="p_title">' + t('pTitle') + '</label><input id="p_title" maxlength="120" required><label class="f" for="p_text">' + t('pText') + '</label><textarea id="p_text" maxlength="1500" required></textarea><div class="two"><div><label class="f" for="p_name">' + t('pName') + '</label><input id="p_name" maxlength="40" required></div><div><label class="f" for="p_contact">' + t('pContact') + '</label><input id="p_contact" maxlength="80"></div></div><label class="chk"><input type="checkbox" id="p_consent"> <span>' + t('consent') + '</span></label><div style="display:flex;gap:8px;margin-top:10px"><button type="submit" class="pri" id="p_go">' + t('send') + '</button><button type="button" data-act="cancel">' + t('cancel') + '</button></div><div class="err" id="p_err"></div></form>';
+  else h += '<div class="card" style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap"><span class="hint">' + (r.counts.building || 0) + ' ' + t('st').building + ' · ' + (r.counts.planned || 0) + ' ' + t('st').planned + ' · ' + (r.counts.done || 0) + ' ' + t('st').done + '</span><button type="button" class="pri" data-act="propose">' + t('propose') + '</button></div>';
+  h += r.ideas.length ? r.ideas.map(function (i) { var v = VOTED[i.id]; return '<div class="card idea"><div class="vote"><button type="button" data-vote="' + esc(i.id) + '"' + (v ? ' disabled' : '') + ' title="' + t('vote') + '">▲</button><b>' + i.votes + '</b></div><div style="min-width:0;flex:1"><h2>' + esc(i.title) + '</h2><span class="badge s-' + esc(i.status) + '">' + (t('st')[i.status] || i.status) + '</span><p style="margin-top:6px">' + esc(i.text) + '</p><div class="m">' + t('by') + ' ' + esc(i.name) + ' · ' + esc(i.when) + (v ? ' · ' + t('voted') : '') + '</div>' + (i.reply ? '<div class="reply"><b>' + t('reply') + ':</b> ' + esc(i.reply) + '</div>' : '') + '</div></div>'; }).join('') : '<div class="card hint">' + t('none') + '</div>';
+  out.innerHTML = h;
+  var f = $('pf'); if (f) f.addEventListener('submit', send);
+}
+function send(ev) {
+  ev.preventDefault(); var go = $('p_go'); go.disabled = true; go.textContent = t('sending'); $('p_err').textContent = '';
+  fetch(API + '?pub=idea', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ title: $('p_title').value, text: $('p_text').value, name: $('p_name').value, contact: $('p_contact').value, consent: $('p_consent').checked }) }).then(function (r) { return r.json(); }).then(function (r) {
+    if (!r.ok) { go.disabled = false; go.textContent = t('send'); $('p_err').textContent = r.error || t('net'); return; }
+    FORM = false; $('out').innerHTML = '<div class="card"><b>' + t('sent') + '</b></div>'; load();
+  }, function () { go.disabled = false; go.textContent = t('send'); $('p_err').textContent = t('net'); });
+}
+$('out').addEventListener('click', function (ev) {
+  var b = ev.target.closest('[data-act],[data-vote]'); if (!b) return;
+  if (b.getAttribute('data-act') === 'propose') { FORM = true; paint(); window.scrollTo(0, 0); return; }
+  if (b.getAttribute('data-act') === 'cancel') { FORM = false; paint(); return; }
+  if (b.hasAttribute('data-vote')) {
+    var id = b.getAttribute('data-vote'); b.disabled = true;
+    fetch(API + '?pub=ideavote', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ id: id }) }).then(function (r) { return r.json(); }).then(function (r) {
+      if (!r.ok) { b.disabled = false; return; }
+      VOTED[id] = true; try { localStorage.setItem('pp_voted', JSON.stringify(VOTED)); } catch (e) {}
+      var i = DATA.ideas.filter(function (x) { return x.id === id; })[0]; if (i) i.votes = r.votes; paint();
+    }, function () { b.disabled = false; });
+  }
+});
+paintLang(); document.querySelectorAll('#tabs button').forEach(function (x) { x.classList.toggle('on', x.getAttribute('data-tab') === TAB); }); load();
+</script>
+</body>
+</html>
