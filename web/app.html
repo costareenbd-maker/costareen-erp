@@ -10519,7 +10519,9 @@ function runSelfTest() {
 
 /* search in the top bar */
 .gsearch { position:relative; flex:1 1 260px; max-width:440px; margin:0 12px; }
-.gsearch input { width:100%; min-height:38px; }
+.gsearch input { width:100%; min-height:38px; padding-right:38px; }
+.gsearch .scanbtn { position:absolute; right:4px; top:50%; transform:translateY(-50%); margin:0 !important; min-height:0; padding:3px 7px; border:0; background:transparent; box-shadow:none; font-size:15px; line-height:1; opacity:.75; }
+.gsearch .scanbtn:hover { opacity:1; background:rgba(127,127,127,.15); }
 #gs_out { position:absolute; left:0; right:0; top:calc(100% + 6px); z-index:90; background:var(--surface); border:1px solid var(--ring);
   border-radius:12px; box-shadow:var(--shadow-lg, 0 18px 50px rgba(0,0,0,.35)); max-height:70vh; overflow:auto; padding:6px; }
 #gs_out .gs-h { font-size:11px; font-weight:700; letter-spacing:.05em; text-transform:uppercase; color:var(--muted); padding:8px 10px 4px; }
@@ -12312,6 +12314,7 @@ function homeHtml() {
 /** Where am I: Invoices / INV-1883. The first part goes back to the list. */
 function crumbs() {
   var out = [{ t: VIEW_NAMES[VIEW] || VIEW, go: VIEW }], rec = '';
+  if (VIEW === 'app') { var apN = (typeof apOf === 'function' && apOf(APP_KEY)) || null; out = [{ t: 'Apps', go: 'apps' }]; if (apN) rec = apN.name; }
   if (VIEW === 'sales' && INVP.no) rec = INVP.no;
   if (VIEW === 'customers' && CUSP.key) rec = (CUSP.data && CUSP.data.name) || 'Customer';
   if (VIEW === 'products' && PRODP.sku) rec = (PRODP.data && PRODP.data.name) || PRODP.sku;
