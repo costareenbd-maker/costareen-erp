@@ -1012,3 +1012,12 @@ Maintenance) are back in the menu as before. Which menu screens a company shows 
 Business** (owner; tick/untick; the main screens are not listed). Same `apps_hidden` list, same `erpAppSet` scope
 'mine'; `erpApps` also returns `menu`. The provider's switch stays on the Apps tiles only. **Resell switched off for
 everyone** on the owner's word (he switches it on from Apps when he needs it). `apps_test.mjs` (24).
+
+## Apps page: owners see everything, staff menu, "Switch on for everyone" (tag apps-3, 7 Oct 2026)
+
+Owner's two corrections. (1) The hidden list is for **staff only**: an owner always sees every screen (page: the
+`applyRole` wrapper skips the hidden list for role owner). The tick is now "Staff see it", on the tiles and in the
+Settings → Business → Menu card; its text says what a person may DO is set under Users (the hidden list is a menu
+matter, not a server refusal - the role gates are). (2) An app the provider switched off shows the provider a
+**"Switch on for everyone"** button, on its tile and in the Menu card row (`data-apon`), instead of a locked box.
+Page only; no server change.

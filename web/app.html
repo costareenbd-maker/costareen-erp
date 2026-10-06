@@ -21562,7 +21562,7 @@ function apSyncMe(r) {
   r.apps.concat(r.menu || []).forEach(function (a) { if (a.hidden) hid[a.key] = 1; });
   ME.apps = { off: r.apps.filter(function (a) { return !a.on; }).map(function (a) { return a.key; }), hidden: Object.keys(hid) };
 }
-// the menu: an app the provider switched off is gone; one the owner hid is out of the menu but still opens from the Apps page
+// the menu: an app the provider switched off is gone for everyone; one the owner hid is out of the STAFF's menu (owners see every screen)
 var applyRoleApps = applyRole;
 applyRole = function () {
   applyRoleApps.apply(this, arguments);
@@ -21571,7 +21571,7 @@ applyRole = function () {
     var v = btns[i].getAttribute('data-view');
     btns[i].removeAttribute('data-apphidden');
     if (APPS_CORE[v] || btns[i].style.display === 'none') continue;   // core, or the role / the joint flag already hid it
-    var off = st.off.indexOf(v) >= 0, hid = st.hidden.indexOf(v) >= 0;
+    var off = st.off.indexOf(v) >= 0, hid = !!(ME && ME.role !== 'owner') && st.hidden.indexOf(v) >= 0;
     if (off || hid) btns[i].style.display = 'none';
     if (!off && hid) btns[i].setAttribute('data-apphidden', '1');
   }
@@ -21618,16 +21618,17 @@ function apTile(a) {
   if (a.on) {
     if (a.view) h += '<button class="btn small primary" type="button" data-apgo="' + esc(a.view) + '" data-aptab="' + esc(a.tab) + '">Open</button>';
     if (a.url) h += '<a class="btn small' + (a.view ? '' : ' primary') + '" href="' + esc(a.url) + '" target="_blank" rel="noopener">Public page \u2197</a>';
-    if (owner && inMenu) h += '<label class="mk-sw"><input type="checkbox" data-apmine="' + esc(a.key) + '"' + (a.hidden ? '' : ' checked') + '> In my menu</label>';
-  } else if (!admin) h += '<span class="sku">Switched off by the provider.</span>';
-  if (admin && !a.sameAs) h += '<label class="mk-sw"><input type="checkbox" data-apall="' + esc(a.key) + '"' + (a.on ? ' checked' : '') + '> On for everyone</label>';
+    if (owner && inMenu) h += '<label class="mk-sw"><input type="checkbox" data-apmine="' + esc(a.key) + '"' + (a.hidden ? '' : ' checked') + '> Staff see it</label>';
+    if (admin && !a.sameAs) h += '<label class="mk-sw"><input type="checkbox" data-apall="' + esc(a.key) + '"' + (a.on ? ' checked' : '') + '> On for everyone</label>';
+  } else if (admin && !a.sameAs) h += '<button class="btn small primary" type="button" data-apon="' + esc(a.key) + '">Switch on for everyone</button>';
+  else if (!admin) h += '<span class="sku">Switched off by the provider.</span>';
   if (admin && a.sameAs) h += '<span class="sku">Follows ' + esc(a.sameAs === 'find' ? 'Find stock' : a.sameAs) + '.</span>';
   return h + '</div></div>';
 }
 function viewApps() {
   var h = '<section><div class="card"><h2 style="margin:0 0 4px">Apps</h2><div class="sub" data-c5x="1" style="display:block">The network features: what customers and other shops reach from outside. ' +
           '<b>Open</b> goes to the screen where it is run and set up; <b>Public page</b> is what a customer sees.' +
-          (APPS && APPS.owner ? ' <b>In my menu</b> off takes it out of the menu for this business; nothing is deleted, and it still opens from here.' : '') +
+          (APPS && APPS.owner ? ' <b>Staff see it</b> off takes it out of your staff\u2019s menu; owners always see every screen, nothing is deleted.' : '') +
           (APPS && APPS.admin ? ' <b>On for everyone</b> is the provider\u2019s switch: off hides the app from every company and a public page answers \u201cnot open yet\u201d.' : '') + '</div>';
   if (APPS_ERR) return h + '<div class="note err"><div class="ico">!</div><div>' + esc(APPS_ERR) + '</div></div></div></section>';
   if (!APPS) return h + '<div class="loading">Loading\u2026</div></div></section>';
@@ -21646,14 +21647,22 @@ document.addEventListener('click', function (ev) {
   if (v === 'printjobs' && tab) PK_TAB = tab;
   go(v);
 });
+document.addEventListener('click', function (ev) {
+  if (VIEW !== 'apps' && VIEW !== 'settings') return;
+  var t = ev.target && ev.target.closest ? ev.target.closest('[data-apon]') : null; if (!t) return;
+  ev.preventDefault(); t.disabled = true;
+  srv('erpAppSet', [{ key: t.getAttribute('data-apon'), on: true, scope: 'all' }], function (r) { APPS = r; apSyncMe(r); applyRole(); tabbarSync(); repaint(); toast('On for every company.'); },
+      function (e) { t.disabled = false; toast(esc((e && e.message) || e), true, 9000); });
+});
 // Settings > Business > Menu: the screens this company shows in its menu (owner). Same list the Apps page uses.
 function menuCardHtml() {
   if (!ME || ME.role !== 'owner') return '';
   if (!APPS) { apLoad(); return '<section><div class="card"><h2>Menu</h2><div class="loading">Loading\u2026</div></div></section>'; }
-  var h = '<section><div class="card"><h2>Menu</h2><div class="sub" data-c5x="1" style="display:block">Untick a screen this business does not use and it leaves the menu for everyone here. Nothing is deleted; tick it again any time. The main screens always stay.</div>' +
+  var h = '<section><div class="card"><h2>Menu</h2><div class="sub" data-c5x="1" style="display:block">Which screens your staff see. Untick one and it leaves their menu; owners always see every screen. Nothing is deleted; tick it again any time. The main screens are not listed - they always stay. (What a person may DO on a screen is set under Users.)</div>' +
           '<div class="ap-menu">';
   APPS.menu.forEach(function (m) {
-    h += '<label class="mk-sw' + (m.off ? ' is-off' : '') + '"><input type="checkbox" data-apmine="' + esc(m.key) + '"' + (m.hidden ? '' : ' checked') + (m.off ? ' disabled' : '') + '> ' + esc(m.name) + (m.off ? ' <span class="sku">(off for everyone)</span>' : '') + '</label>';
+    h += '<label class="mk-sw' + (m.off ? ' is-off' : '') + '"><input type="checkbox" data-apmine="' + esc(m.key) + '"' + (m.hidden ? '' : ' checked') + (m.off ? ' disabled' : '') + '> ' + esc(m.name) +
+         (m.off ? (APPS.admin ? ' <button class="btn small" type="button" data-apon="' + esc(m.key) + '">Switch on for everyone</button>' : ' <span class="sku">(off for everyone)</span>') : '') + '</label>';
   });
   return h + '</div></div></section>';
 }
@@ -21664,7 +21673,7 @@ document.addEventListener('change', function (ev) {
   var t = ev.target; if (!t || !t.getAttribute || !t.getAttribute('data-apmine')) return;
   var key = t.getAttribute('data-apmine'), on = !!t.checked;
   t.disabled = true;
-  srv('erpAppSet', [{ key: key, on: on, scope: 'mine' }], function (r) { APPS = r; apSyncMe(r); applyRole(); tabbarSync(); repaint(); toast(on ? 'Back in the menu.' : 'Out of the menu.'); },
+  srv('erpAppSet', [{ key: key, on: on, scope: 'mine' }], function (r) { APPS = r; apSyncMe(r); applyRole(); tabbarSync(); repaint(); toast(on ? 'Staff see it again.' : 'Hidden from staff. Owners still see it.'); },
       function (e) { t.checked = !on; t.disabled = false; toast(esc((e && e.message) || e), true, 9000); });
 });
 document.addEventListener('change', function (ev) {
@@ -21676,7 +21685,7 @@ document.addEventListener('change', function (ev) {
   t.disabled = true;
   srv('erpAppSet', [{ key: key, on: on, scope: all ? 'all' : 'mine' }], function (r) {
     APPS = r; apSyncMe(r); applyRole(); tabbarSync(); repaint();
-    toast(all ? (on ? 'On for every company.' : 'Off for every company.') : (on ? 'Back in the menu.' : 'Out of the menu. It still opens from Apps.'));
+    toast(all ? (on ? 'On for every company.' : 'Off for every company.') : (on ? 'Staff see it again.' : 'Hidden from staff. Owners still see it.'));
   }, function (e) { t.checked = !on; t.disabled = false; toast(esc((e && e.message) || e), true, 9000); });
 });
 </script>
