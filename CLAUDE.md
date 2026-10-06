@@ -202,3 +202,8 @@ Every stage ships with tests (the suites are green at the last tag — keep them
 checked on screen (desktop and phone width), is deployed, and is written down. If something
 cannot be finished properly, ship the honest smaller piece and say exactly what is missing —
 never a half-feature that looks done.
+
+- **Product cost lives in `cost_book`** (Product cost screen, rows by category/brand/type; `erpCostBook`,
+  `bookKey`, `landedOf` in handlers/dashboard.js). `products.cost_price` is an unused import leftover (0 on
+  nearly every product). Never report "products have no cost" from that column - the owner has been told this
+  wrongly twice.
