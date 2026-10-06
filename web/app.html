@@ -10521,9 +10521,10 @@ function runSelfTest() {
 .gsearch { position:relative; flex:1 1 260px; max-width:440px; margin:0 12px; }
 .gsearch input { width:100%; min-height:38px; padding-right:40px; }
 .scanbtn svg { width:16px; height:16px; stroke:currentColor; fill:none; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; vertical-align:-3px; }
-.gsearch .scanbtn { position:absolute; right:3px; top:50%; transform:translateY(-50%); margin:0 !important; min-height:0; width:30px; height:30px; padding:0; border:0; border-radius:6px; background:transparent; box-shadow:none; line-height:0; display:grid; place-items:center; color:inherit; opacity:1; filter:none; transition:none; }
-.gsearch .scanbtn svg { width:22px; height:22px; stroke-width:2; }
-.gsearch .scanbtn:hover, .gsearch .scanbtn:focus { background:rgba(127,127,127,.18); color:inherit; filter:none; transform:translateY(-50%); }
+.gsearch .scanbtn { position:absolute; right:3px; top:calc(50% - 15px); transform:none; margin:0 !important; min-height:0; width:30px; height:30px; padding:0; border:0; border-radius:6px; background:transparent; box-shadow:none; line-height:0; display:grid; place-items:center; color:inherit; opacity:1; filter:none; transition:none; }
+.gsearch .scanbtn svg { width:22px; height:22px; stroke-width:2; transition:transform .12s; }
+.gsearch .scanbtn:hover, .gsearch .scanbtn:focus { background:rgba(127,127,127,.18); color:inherit; filter:none; }
+.gsearch .scanbtn:hover svg { transform:scale(1.15); }
 .topbar .gsearch .scanbtn, .topbar .gsearch .scanbtn:hover { color:#fff; }
 .topbar .gsearch input:focus ~ .scanbtn { color:var(--ink); }
 #gs_out { position:absolute; left:0; right:0; top:calc(100% + 6px); z-index:90; background:var(--surface); border:1px solid var(--ring);
