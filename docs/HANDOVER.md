@@ -72,3 +72,27 @@ paragraph per stage. Public pages on erp.3dowala.com all answer: /check /my /doc
 - `deploy.py release` names the release by `git describe` → tag before `release`; then update the example
   copy (`erpInstallUpdate {"id":"f7dc979f-1561-415e-bfc8-ad2d554a688f"}` until `"done":true`).
 - Tests: 87 suites, all green at 53f6e05 (`supabase/tests/*_test.mjs`; loop command in CLAUDE.md §5).
+
+## 5. Installer / bridge / joint / restock - state and open items (from the joint-x session)
+
+**Installer (handlers/installer.js, page block "installer-2" in app.html).**
+- Flow: about (company, owner, e-mail, terms) -> connect Supabase (access token `sbp_`; OAuth only if `installEnv.oauth` set - it is NOT set live, `caps.oauth=false`) -> build steps `project/wait/keys/db/storage/bridge/finish` polled by the page -> address -> done.
+- Since 2026-10-06 (tags install-free-1/2) there is **no own-domain choice**: `finish` calls `freeDomainFor` -> `<company-slug>.3dowala.com` (Cloudflare DNS CNAME to office-erp.pages.dev, proxied, + Pages custom domain). `?install=domain` route removed. Own domains only via Platform > "Web address" (owner). Empty there = free address.
+- Hourly `deliveries` job runs `domainsAll` (addresses not 'ready': check cert, then set the copy's ERP_APP_URL + auth site URL). The page no longer has to stay open.
+- Supabase Management API: 429/502/503/504 retried 3x with backoff in `mgmt()` (installer + lib/bridge.js); still busy -> step stays `installing` with "slow down" detail, page waits 20 s. Page paces steps 1.5 s. A partner hit 429 at db file 39/65 before this.
+- Gotcha learned: a python heredoc turned `\b` into a backspace char in a regex and `'\n'` into real newlines in JS strings - `node --check` did not catch it; use the Edit tool for escapes and grep for `\x08`.
+- Limits: sub-name taken from company name (`-2` if used), no picker; installs started on the old page may show the old address screen (harmless).
+
+**CORS / free zone (index.ts, tag cors-zone-1).** `cors()` now allows `https://*.${ERP_FREE_ZONE}` (`inFreeZone`). Before, every 3dowala copy got "Could not reach the server (Failed to fetch)". `pageAllowed` already allowed the zone. A copy on its **own** domain (erp.theirshop.com) still fails CORS unless its origin is in OWN_ORIGINS - not fixed (no such copy is live).
+
+**E-mail for copies - the real risk.** A copy's sign-in mails go through ITS Supabase project's built-in mailer (~2 mails/hour). signin.js `check` no longer re-sends within 15 min (`recovery_sent_at`); message tells the person to ask for a link. Platform > company row > **"Password link"** (`erpInstallPwLink`, admin `generate_link` type recovery via the copy's service key, redirect to its address) gives the owner the set-password link to send by WhatsApp. Proper fix = custom SMTP for copies (e.g. Brevo free, 300/day) - **owner has not decided**; recommend before onboarding more companies.
+
+**Live copies (erp_installs on the provider DB).**
+- PrototypeBD `762c178e-e939-4211-9253-de6e4295ab53`, owner prototypebd2020@gmail.com, own Supabase ref `suefxuoklwxuwkitxzdy`, bridged, status active, address **prototypebd.3dowala.com** (ready). It was first set to erp.prototypebd.com (never pointed); moved to free on 6 Oct. On 7 Oct he could not sign in (CORS + mail limit); a password link was made and given to the owner to forward. **Not confirmed that he has signed in.** Leftover harmless: Pages custom domain `erp.prototypebd.com` pending on office-erp.
+- example `f7dc979f-1561-415e-bfc8-ad2d554a688f` - still on `erp.rmabidur.com`, domain_state waiting (never pointed). Offered to move it to the free address (Platform > Web address, empty) - owner not answered.
+
+**Joint stock (docs/JOINT-POOL-BLUEPRINT.md, JOINT-BUILD-NOTES.md; tags joint-1..5, joint-x, joint-privacy).** Built and live, switched on for Costareen only. Cross-database pools (partner on his own Supabase, `jointCheck` hourly) work in tests but **no real pool exists yet** - PrototypeBD is the intended first partner once he signs in (owner presses "Join your partners", partner accepts with the code). Known gaps: serial-numbered joint products, joint line on a quotation / web order, two partners that are both copies cannot start a pool, Bangla words for the joint screens.
+
+**Restock / waiting orders (handlers/restock.js, 088_restock.sql, tag restock).** Live. Short invoice -> "Find the rest on the market" -> market requests to chosen shops -> received -> "Make the invoice" (payload.restockId closes it). Nothing reserved while waiting. Not done: dropship from the other shop; the "it arrived" step is a button.
+
+**Other things from this session, live:** auto-update of all copies (hourly `updateAll`, tag auto-update; release = `git describe`), Steadfast 5xx retry (sf-retry), seal/brawl/stick-fight game tweaks.
