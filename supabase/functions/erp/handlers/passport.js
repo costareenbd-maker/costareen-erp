@@ -275,6 +275,12 @@ export async function pubRoute(deps, req, R) {
     if (req.method !== 'GET' && req.method !== 'POST') return { status: 405, body: { ok: false } };
     let body = {};
     if (req.method === 'POST') { try { body = await req.json(); } catch (_) { body = {}; } }
+    // Stage N4 (handlers/printkit.js): a print shop's own quote link
+    if (what === 'printquote' || what === 'printreq') {
+      const r = await (await import('./printkit.js')).route(deps, R || {}, what, req.method, u.searchParams, body, ip);
+      if (!r) return { status: 405, body: { ok: false } };
+      return { status: 200, body: { ok: true, ...r } };
+    }
     // Stage N3 (handlers/doctor.js): the Print Doctor's community parts
     if (what && what.indexOf('doctor') === 0) {
       const r = await (await import('./doctor.js')).route(deps, what, req.method, u.searchParams, body, ip);
