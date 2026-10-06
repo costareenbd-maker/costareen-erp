@@ -3,7 +3,8 @@
 //   erpApps()                     the catalogue with its state for this person: provider on/off, hidden in this
 //                                 company's menu, may this person open it (role), where its settings live
 //   erpAppSet({key, on, scope})   scope 'all'  - the provider (platform admin): an app on or off for EVERY company
-//                                 scope 'mine' - this company's owner: a menu screen (MENU) shown or hidden in this company's menu
+//                                 scope 'mine' - this company's owner: a menu screen (MENU) for everyone here ('all'),
+//                                 only owners ('owner') or nobody here ('off') - payload.mode; staff cannot change it
 //   appsState(deps, sql, biz)     what erpHello sends so the page builds its menu on first paint
 //   appOff(deps, pubWhat)         the public router: is the page behind ?pub=<what> switched off by the provider?
 //
@@ -61,16 +62,24 @@ async function offMap(deps, sql) {
     return off;
   } catch (_) { return {}; }   // the table is not there yet: everything on
 }
-async function hiddenList(ctx) {
-  try { const v = JSON.parse(str(await getConfig(ctx, 'apps_hidden', '')) || '[]'); return Array.isArray(v) ? v.filter((k) => HIDEABLE(k)).map(String) : []; } catch (_) { return []; }
+const MODES = ['all', 'owner', 'off'];
+/** This company's menu: {key: 'all' | 'owner' | 'off'} for the screens in MENU (missing = 'all'). */
+function parseModes(raw, legacyHidden) {
+  const out = {};
+  try { const v = JSON.parse(str(raw) || '{}'); if (v && typeof v === 'object' && !Array.isArray(v)) for (const k of Object.keys(v)) if (HIDEABLE(k) && MODES.includes(v[k]) && v[k] !== 'all') out[k] = v[k]; } catch (_) { /* fresh */ }
+  if (!Object.keys(out).length) {
+    try { const v = JSON.parse(str(legacyHidden) || '[]'); if (Array.isArray(v)) for (const k of v) if (HIDEABLE(k)) out[k] = 'owner'; } catch (_) { /* none */ }
+  }
+  return out;
 }
+async function menuModes(ctx) { return parseModes(await getConfig(ctx, 'apps_menu', ''), await getConfig(ctx, 'apps_hidden', '')); }
 
-/** What erpHello sends: the apps the provider switched off, and the ones this company hides. */
+/** What erpHello sends: the apps the provider switched off; this company's screens only owners see; the ones nobody here sees. */
 export async function appsState(deps, sql, biz, getCfg) {
   const off = Object.keys(await offMap(deps, sql));
-  let hidden = [];
-  try { const v = JSON.parse(str(await getCfg('apps_hidden')) || '[]'); hidden = Array.isArray(v) ? v.filter((k) => HIDEABLE(k)).map(String) : []; } catch (_) { hidden = []; }
-  return { off, hidden };
+  let modes = {};
+  try { modes = parseModes(await getCfg('apps_menu'), await getCfg('apps_hidden')); } catch (_) { modes = {}; }
+  return { off, hidden: Object.keys(modes).filter((k) => modes[k] === 'owner'), gone: Object.keys(modes).filter((k) => modes[k] === 'off') };
 }
 
 /** The public router asks before serving: is this page switched off by the provider? */
@@ -90,7 +99,7 @@ function pageUrl(deps, path) {
 
 export async function erpApps(ctx) {
   const off = await offMap(ctx.deps, ctx.sql);
-  const hidden = await hiddenList(ctx);
+  const modes = await menuModes(ctx);
   const admin = await platformAdmin(ctx);
   const owner = ctx.s.role === 'owner';
   return {
@@ -100,17 +109,19 @@ export async function erpApps(ctx) {
       view: (a.view === 'platform' && !admin) ? '' : a.view, tab: a.tab || '',
       url: a.path ? pageUrl(ctx.deps, a.path) : '',
       on: !(off[a.key] || (a.sameAs && off[a.sameAs])),
-      hidden: hidden.includes(a.key),
+      mode: HIDEABLE(a.key) ? (modes[a.key] || 'all') : '',
+      hidden: modes[a.key] === 'owner',
       sameAs: a.sameAs || '',
     })),
     // Settings > Business > Menu: which menu screens this company shows
-    menu: MENU.map((m) => ({ key: m.key, name: m.name, hidden: hidden.includes(m.key), off: !!off[m.key] })),
+    menu: MENU.map((m) => ({ key: m.key, name: m.name, mode: modes[m.key] || 'all', hidden: modes[m.key] === 'owner', off: !!off[m.key] })),
   };
 }
 
 export async function erpAppSet(ctx, payload) {
   const p = payload || {};
   const key = str(p.key), on = !!p.on, scope = p.scope === 'all' ? 'all' : 'mine';
+  const mode = MODES.includes(p.mode) ? p.mode : (p.on === undefined ? 'all' : (on ? 'all' : 'owner'));   // the old on/off still means everyone / only owners
   const a = BY_KEY[key];
   if (scope === 'all' && !a) throw new Error('No such app.');
   if (scope === 'mine' && !HIDEABLE(key)) throw new Error(a ? 'A public page is not in the menu; the provider switches it on or off.' : 'That screen stays in the menu.');
@@ -120,9 +131,10 @@ export async function erpAppSet(ctx, payload) {
                                   on conflict (key) do update set enabled = excluded.enabled, updated_at = now(), updated_by = excluded.updated_by`;
   } else {
     if (!ctx.s.role || ctx.s.role !== 'owner') throw new Error('Only an owner changes this company’s menu.');
-    const hidden = (await hiddenList(ctx)).filter((k) => k !== key);
-    if (!on) hidden.push(key);
-    await setConfig(ctx, 'apps_hidden', JSON.stringify(hidden));
+    const modes = await menuModes(ctx);
+    if (mode === 'all') delete modes[key]; else modes[key] = mode;
+    await setConfig(ctx, 'apps_menu', JSON.stringify(modes));
+    await setConfig(ctx, 'apps_hidden', '[]');   // the old list is retired once a mode is set
   }
   return erpApps(ctx);
 }

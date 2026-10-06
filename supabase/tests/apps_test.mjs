@@ -1,6 +1,6 @@
 // The Apps page (handlers/apps.js): the network features as tiles, the provider's switch for every company, an
-// owner's menu list (Settings > Business > Menu), the public router refusing a page that is switched off, and the
-// state erpHello carries.
+// owner's menu modes (Settings > Business > Menu: everyone / only owners / off), the public router refusing a page
+// that is switched off, and the state erpHello carries.
 import { pathToFileURL } from 'node:url';
 import path from 'node:path';
 import { sql, FIX, owner, mgr, sales, check, done, deps, fnDir, call } from './harness.mjs';
@@ -9,31 +9,44 @@ const { asBusiness, owners } = await import(pathToFileURL(path.join(fnDir, 'jobs
 const R = { asBusiness, owners, tenantDeps: null };
 let N = 0;
 const get = async (q) => (await pubRoute(deps, new Request('https://ctl.test/erp?' + q, { method: 'GET', headers: { 'x-forwarded-for': '198.51.100.' + (++N % 250) } }), R)).body;
+const menu = (r, k) => r.result.menu.find((m) => m.key === k);
 
 // 1. the catalogue, as anyone
 let r = await sales('erpApps', []);
 check('sales staff read the catalogue: 13 network features, every one on, no switches for them', r.ok && r.result.apps.length === 13 && r.result.apps.every((a) => a.on && !a.hidden) && !r.result.owner && !r.result.admin, r);
 check('the public ones carry a link; every tile names its screen (Platform ones only for the admin)', r.ok && r.result.apps.filter((a) => a.url).length === 9 && r.result.apps.filter((a) => a.view).length === 11 && r.result.apps.every((a) => typeof a.where === 'string'), r.result.apps.map((a) => a.key + ':' + a.view + ':' + a.url));
-check('the menu list: 14 screens, none hidden', r.ok && r.result.menu.length === 14 && r.result.menu.every((m) => !m.hidden && !m.off), r.result.menu);
+check('the menu list: 14 screens, all for everyone', r.ok && r.result.menu.length === 14 && r.result.menu.every((m) => m.mode === 'all' && !m.off), r.result.menu);
 
-// 2. an owner takes a screen out of his own menu - the other business does not see that
-r = await mgr('erpAppSet', [{ key: 'repairs', on: false, scope: 'mine' }]);
+// 2. the owner sets who sees a screen; staff cannot; the other business is untouched
+r = await mgr('erpAppSet', [{ key: 'repairs', mode: 'owner', scope: 'mine' }]);
 check('a manager cannot change the menu', !r.ok, r);
-r = await owner('erpAppSet', [{ key: 'repairs', on: false, scope: 'mine' }]);
-check('the owner hides Repairs', r.ok && r.result.menu.find((m) => m.key === 'repairs').hidden === true, r);
+r = await owner('erpAppSet', [{ key: 'repairs', mode: 'owner', scope: 'mine' }]);
+check('the owner keeps Repairs for owners only', r.ok && menu(r, 'repairs').mode === 'owner' && menu(r, 'repairs').hidden === true, r);
+r = await owner('erpAppSet', [{ key: 'campaigns', mode: 'off', scope: 'mine' }]);
+check('...and switches Campaigns off for this business', r.ok && menu(r, 'campaigns').mode === 'off', r);
 r = await owner('erpAppSet', [{ key: 'resell', on: false, scope: 'mine' }]);
-check('a network feature that is also a menu screen can be hidden too', r.ok && r.result.apps.find((a) => a.key === 'resell').hidden === true, r);
-r = await owner('erpAppSet', [{ key: 'find', on: false, scope: 'mine' }]);
-check('a public page cannot be hidden from a menu (it is not in one)', !r.ok, r);
-r = await owner('erpAppSet', [{ key: 'dash', on: false, scope: 'mine' }]);
+check('the old on/off still works: off = only owners; a network feature that is a menu screen carries its mode on the tile', r.ok && menu(r, 'resell').mode === 'owner' && r.result.apps.find((a) => a.key === 'resell').mode === 'owner', r);
+r = await owner('erpAppSet', [{ key: 'find', mode: 'off', scope: 'mine' }]);
+check('a public page is not in the menu', !r.ok, r);
+r = await owner('erpAppSet', [{ key: 'dash', mode: 'off', scope: 'mine' }]);
 check('a core screen stays in the menu', !r.ok, r);
+r = await owner('erpAppSet', [{ key: 'repairs', mode: 'maybe', scope: 'mine' }]);
+check('an unknown mode falls back to everyone', r.ok && menu(r, 'repairs').mode === 'all', r);
+r = await owner('erpAppSet', [{ key: 'repairs', mode: 'owner', scope: 'mine' }]);
 r = await call('erpHello', [], { authHeader: 'Bearer owner:' + FIX.U.owner });
-check('hello carries the hidden list', r.ok && r.result.apps && r.result.apps.hidden.includes('repairs') && r.result.apps.hidden.includes('resell') && r.result.apps.off.length === 0, r.result.apps);
-const other = (await sql`select value from business_config where business_id = ${FIX.B2} and key = 'apps_hidden'`)[0];
-check('the other business is untouched', !other, other);
-r = await owner('erpAppSet', [{ key: 'repairs', on: true, scope: 'mine' }]);
-r = await owner('erpAppSet', [{ key: 'resell', on: true, scope: 'mine' }]);
-check('...and shows them again', r.ok && r.result.menu.every((m) => !m.hidden), r);
+check('hello carries both lists: only-owners and off', r.ok && r.result.apps && r.result.apps.hidden.includes('repairs') && r.result.apps.hidden.includes('resell') && r.result.apps.gone.includes('campaigns') && r.result.apps.off.length === 0, r.result.apps);
+const other = (await sql`select value from business_config where business_id = ${FIX.B2} and key in ('apps_menu', 'apps_hidden')`);
+check('the other business is untouched', other.length === 0, other);
+for (const k of ['repairs', 'campaigns', 'resell']) r = await owner('erpAppSet', [{ key: k, mode: 'all', scope: 'mine' }]);
+check('...and everything back for everyone', r.ok && r.result.menu.every((m) => m.mode === 'all'), r);
+
+// 2b. an old 'apps_hidden' list (before the modes) still reads as only-owners
+await sql`update business_config set value = '["tools"]' where business_id = ${FIX.B} and key = 'apps_hidden'`;
+await sql`delete from business_config where business_id = ${FIX.B} and key = 'apps_menu'`;
+r = await owner('erpApps', []);
+check('the old hidden list reads as only owners', r.ok && menu(r, 'tools').mode === 'owner', menu(r, 'tools'));
+r = await owner('erpAppSet', [{ key: 'tools', mode: 'all', scope: 'mine' }]);
+check('...and is retired once a mode is set', r.ok && menu(r, 'tools').mode === 'all' && (await sql`select value from business_config where business_id = ${FIX.B} and key = 'apps_hidden'`)[0].value === '[]', r.result.menu);
 
 // 3. the provider switches an app off for everyone
 r = await owner('erpAppSet', [{ key: 'ideas', on: false, scope: 'all' }]);
@@ -50,7 +63,7 @@ check('every company sees it off', r.ok && r.result.apps.find((a) => a.key === '
 r = await call('erpHello', [], { token: { code: '222222', device: 'dev-sales' } });
 check('hello carries the off list', r.ok && r.result.apps.off.includes('ideas'), r.result.apps);
 r = await owner('erpAppSet', [{ key: 'resell', on: false, scope: 'all' }]);
-check('Resell off for everyone: the menu list says so', r.ok && r.result.menu.find((m) => m.key === 'resell').off === true, r);
+check('Resell off for everyone: the menu list says so', r.ok && menu(r, 'resell').off === true, r);
 r = await owner('erpAppSet', [{ key: 'find', on: false, scope: 'all' }]);
 r = await get('pub=find&q=pla');
 check('Find stock off: its search is refused', !r.ok && r.off === true, r);

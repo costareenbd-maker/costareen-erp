@@ -21548,21 +21548,21 @@ document.addEventListener('click', function (ev) {
 .ap-row .mk-sw input{width:18px;height:18px}
 .ap-h3{margin:16px 0 2px;font-size:13px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
 .ap-pill{font-size:11px;padding:2px 8px;border-radius:999px;background:var(--critical-soft);color:var(--critical);font-weight:700}
-.ap-menu{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px 16px;margin-top:10px}
-.ap-menu .mk-sw.is-off{opacity:.5}
+.seg[data-apseg] .btn{padding:3px 10px}
 </style>
 <script>
 var APPS = null, APPS_ERR = '';
 var APPS_CORE = { dash: 1, apps: 1, invoice: 1, sales: 1, customers: 1, products: 1, stock: 1, cash: 1, settings: 1, platform: 1, orders: 1, home: 1 };
 var APPS_GROUPS = ['For customers', 'Between shops'];
-function apState() { return (ME && ME.apps) || { off: [], hidden: [] }; }
+function apState() { var a = (ME && ME.apps) || {}; return { off: a.off || [], hidden: a.hidden || [], gone: a.gone || [] }; }
 function apSyncMe(r) {
   if (!ME) return;
-  var hid = {};
-  r.apps.concat(r.menu || []).forEach(function (a) { if (a.hidden) hid[a.key] = 1; });
-  ME.apps = { off: r.apps.filter(function (a) { return !a.on; }).map(function (a) { return a.key; }), hidden: Object.keys(hid) };
+  var hid = {}, gone = {};
+  (r.menu || []).forEach(function (m) { if (m.mode === 'owner') hid[m.key] = 1; if (m.mode === 'off') gone[m.key] = 1; });
+  ME.apps = { off: r.apps.filter(function (a) { return !a.on; }).map(function (a) { return a.key; }), hidden: Object.keys(hid), gone: Object.keys(gone) };
 }
-// the menu: an app the provider switched off is gone for everyone; one the owner hid is out of the STAFF's menu (owners see every screen)
+// the menu: an app the provider switched off, or one the owner set to Off, is gone for everyone here; one set to
+// Only owners is out of the STAFF's menu
 var applyRoleApps = applyRole;
 applyRole = function () {
   applyRoleApps.apply(this, arguments);
@@ -21571,7 +21571,7 @@ applyRole = function () {
     var v = btns[i].getAttribute('data-view');
     btns[i].removeAttribute('data-apphidden');
     if (APPS_CORE[v] || btns[i].style.display === 'none') continue;   // core, or the role / the joint flag already hid it
-    var off = st.off.indexOf(v) >= 0, hid = !!(ME && ME.role !== 'owner') && st.hidden.indexOf(v) >= 0;
+    var off = st.off.indexOf(v) >= 0 || st.gone.indexOf(v) >= 0, hid = !!(ME && ME.role !== 'owner') && st.hidden.indexOf(v) >= 0;
     if (off || hid) btns[i].style.display = 'none';
     if (!off && hid) btns[i].setAttribute('data-apphidden', '1');
   }
@@ -21608,6 +21608,11 @@ function apIcon(a) {
   if (a.view) { var b = document.querySelector('#nav button[data-view="' + a.view + '"] .ic'); if (b) return b.innerHTML; }
   return '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg>';
 }
+function apModeSeg(key, mode) {
+  return '<span class="seg" data-apseg="' + esc(key) + '">' + [['all', 'Everyone'], ['owner', 'Only owners'], ['off', 'Off']].map(function (x) {
+    return '<button class="btn small' + (x[0] === mode ? ' on' : '') + '" type="button" data-apmode="' + esc(key) + '" data-mode="' + x[0] + '">' + x[1] + '</button>';
+  }).join('') + '</span>';
+}
 function apTile(a) {
   var admin = APPS.admin, owner = APPS.owner, inMenu = APPS.menu.some(function (m) { return m.key === a.key; });
   var h = '<div class="ap-tile' + (a.on ? '' : ' off') + '"><div class="ap-head"><span class="ap-ic">' + apIcon(a) + '</span><span class="ap-name">' + esc(a.name) + '</span>' +
@@ -21618,7 +21623,7 @@ function apTile(a) {
   if (a.on) {
     if (a.view) h += '<button class="btn small primary" type="button" data-apgo="' + esc(a.view) + '" data-aptab="' + esc(a.tab) + '">Open</button>';
     if (a.url) h += '<a class="btn small' + (a.view ? '' : ' primary') + '" href="' + esc(a.url) + '" target="_blank" rel="noopener">Public page \u2197</a>';
-    if (owner && inMenu) h += '<label class="mk-sw"><input type="checkbox" data-apmine="' + esc(a.key) + '"' + (a.hidden ? '' : ' checked') + '> Staff see it</label>';
+    if (owner && inMenu) h += apModeSeg(a.key, a.mode || 'all');
     if (admin && !a.sameAs) h += '<label class="mk-sw"><input type="checkbox" data-apall="' + esc(a.key) + '"' + (a.on ? ' checked' : '') + '> On for everyone</label>';
   } else if (admin && !a.sameAs) h += '<button class="btn small primary" type="button" data-apon="' + esc(a.key) + '">Switch on for everyone</button>';
   else if (!admin) h += '<span class="sku">Switched off by the provider.</span>';
@@ -21628,7 +21633,7 @@ function apTile(a) {
 function viewApps() {
   var h = '<section><div class="card"><h2 style="margin:0 0 4px">Apps</h2><div class="sub" data-c5x="1" style="display:block">The network features: what customers and other shops reach from outside. ' +
           '<b>Open</b> goes to the screen where it is run and set up; <b>Public page</b> is what a customer sees.' +
-          (APPS && APPS.owner ? ' <b>Staff see it</b> off takes it out of your staff\u2019s menu; owners always see every screen, nothing is deleted.' : '') +
+          (APPS && APPS.owner ? ' For a screen in the menu: <b>Everyone</b> (you and your staff), <b>Only owners</b> (you use it, staff do not see it), <b>Off</b> (nobody here; switch it back any time). Nothing is deleted.' : '') +
           (APPS && APPS.admin ? ' <b>On for everyone</b> is the provider\u2019s switch: off hides the app from every company and a public page answers \u201cnot open yet\u201d.' : '') + '</div>';
   if (APPS_ERR) return h + '<div class="note err"><div class="ico">!</div><div>' + esc(APPS_ERR) + '</div></div></div></section>';
   if (!APPS) return h + '<div class="loading">Loading\u2026</div></div></section>';
@@ -21649,6 +21654,16 @@ document.addEventListener('click', function (ev) {
 });
 document.addEventListener('click', function (ev) {
   if (VIEW !== 'apps' && VIEW !== 'settings') return;
+  var m = ev.target && ev.target.closest ? ev.target.closest('[data-apmode]') : null; if (!m) return;
+  if (m.classList.contains('on')) return;
+  var seg = m.parentNode; [].forEach.call(seg.querySelectorAll('button'), function (b) { b.disabled = true; });
+  srv('erpAppSet', [{ key: m.getAttribute('data-apmode'), mode: m.getAttribute('data-mode'), scope: 'mine' }], function (r) {
+    APPS = r; apSyncMe(r); applyRole(); tabbarSync(); repaint();
+    toast({ all: 'Everyone here sees it.', owner: 'Only owners see it now.', off: 'Off for this business. Switch it back here any time.' }[m.getAttribute('data-mode')]);
+  }, function (e) { [].forEach.call(seg.querySelectorAll('button'), function (b) { b.disabled = false; }); toast(esc((e && e.message) || e), true, 9000); });
+});
+document.addEventListener('click', function (ev) {
+  if (VIEW !== 'apps' && VIEW !== 'settings') return;
   var t = ev.target && ev.target.closest ? ev.target.closest('[data-apon]') : null; if (!t) return;
   ev.preventDefault(); t.disabled = true;
   srv('erpAppSet', [{ key: t.getAttribute('data-apon'), on: true, scope: 'all' }], function (r) { APPS = r; apSyncMe(r); applyRole(); tabbarSync(); repaint(); toast('On for every company.'); },
@@ -21657,14 +21672,15 @@ document.addEventListener('click', function (ev) {
 // Settings > Business > Menu: the screens this company shows in its menu (owner). Same list the Apps page uses.
 function menuCardHtml() {
   if (!ME || ME.role !== 'owner') return '';
-  if (!APPS) { apLoad(); return '<section><div class="card"><h2>Menu</h2><div class="loading">Loading\u2026</div></div></section>'; }
-  var h = '<section><div class="card"><h2>Menu</h2><div class="sub" data-c5x="1" style="display:block">Which screens your staff see. Untick one and it leaves their menu; owners always see every screen. Nothing is deleted; tick it again any time. The main screens are not listed - they always stay. (What a person may DO on a screen is set under Users.)</div>' +
-          '<div class="ap-menu">';
+  if (!APPS) { apLoad(); return '<section><div class="card"><h2>Edit menu bar</h2><div class="loading">Loading\u2026</div></div></section>'; }
+  var h = '<section><div class="card"><h2>Edit menu bar</h2><div class="sub" data-c5x="1" style="display:block">Who sees each screen in this business. <b>Everyone</b>: you and your staff. <b>Only owners</b>: you use it, staff do not see it. <b>Off</b>: nobody here, until you switch it back. Only an owner changes this; nothing is deleted. The main screens are not listed - they always stay. (What a person may DO on a screen is set under Users.)</div>' +
+          '<div class="scroll"><table><thead><tr><th>Screen</th><th>Who sees it</th></tr></thead><tbody>';
   APPS.menu.forEach(function (m) {
-    h += '<label class="mk-sw' + (m.off ? ' is-off' : '') + '"><input type="checkbox" data-apmine="' + esc(m.key) + '"' + (m.hidden ? '' : ' checked') + (m.off ? ' disabled' : '') + '> ' + esc(m.name) +
-         (m.off ? (APPS.admin ? ' <button class="btn small" type="button" data-apon="' + esc(m.key) + '">Switch on for everyone</button>' : ' <span class="sku">(off for everyone)</span>') : '') + '</label>';
+    h += '<tr' + (m.off ? ' style="opacity:.55"' : '') + '><td class="nm">' + esc(m.name) + '</td><td>' +
+         (m.off ? (APPS.admin ? '<span class="sku">Off for every company</span> <button class="btn small" type="button" data-apon="' + esc(m.key) + '">Switch on for everyone</button>' : '<span class="sku">Off for every company (the provider)</span>')
+                : apModeSeg(m.key, m.mode)) + '</td></tr>';
   });
-  return h + '</div></div></section>';
+  return h + '</tbody></table></div></div></section>';
 }
 var brandCardHtmlMenu = brandCardHtml;
 brandCardHtml = function () { return brandCardHtmlMenu.apply(this, arguments) + menuCardHtml(); };

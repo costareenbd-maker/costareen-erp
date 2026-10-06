@@ -1021,3 +1021,14 @@ Settings → Business → Menu card; its text says what a person may DO is set u
 matter, not a server refusal - the role gates are). (2) An app the provider switched off shows the provider a
 **"Switch on for everyone"** button, on its tile and in the Menu card row (`data-apon`), instead of a locked box.
 Page only; no server change.
+
+## Edit menu bar: everyone / only owners / off, per screen (tag apps-4, 7 Oct 2026)
+
+The owner's rule: for every screen he decides three ways - **Everyone** (him and his staff), **Only owners** (he uses
+it, staff do not see it), **Off** (nobody in his business, until he switches it back) - and only an owner may change
+it. Settings → Business → **Edit menu bar**: a table, one row per screen, a three-button choice (`apModeSeg`,
+`.seg`). The same choice sits on the Apps tiles of Market, Resell, Print jobs and Joint stock. An app the provider
+switched off shows the provider a "Switch on for everyone" button in that row. Stored as `business_config`
+'apps_menu' = {key: mode}; the old 'apps_hidden' list reads as 'owner' and is retired on the first save.
+`erpAppSet {key, mode, scope:'mine'}` (the old `on` still means everyone / only owners); erpHello carries
+`apps: {off, hidden, gone}`. `apps_test.mjs` (28). Staff cannot change it (server: owner only).
