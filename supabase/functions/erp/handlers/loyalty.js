@@ -239,4 +239,15 @@ export async function erpDeliveryHistoryMany(ctx, payload) {
   for (const ph of phones) { const key = custKey(ph, ''); if (key && key !== 'n:' && !out[ph]) out[ph] = await deliveryFor(ctx, key); }
   return { history: out };
 }
-export const HANDLERS = { erpLoyalty, erpLoyaltySave, erpCustomerPoints, erpPointsAdjust, erpConsentSet, erpRefillDue, erpReminderSent, erpDeliveryHistory, erpDeliveryHistoryMany };
+/** Once, when points are switched on: every past invoice gets the points it would have earned (idempotent). */
+export async function erpLoyaltyBackfill(ctx) {
+  if (!roleAtLeast(ctx.s.role, 'manager')) throw new Error('Only a manager or the owner counts past invoices.');
+  const S = await settings(ctx);
+  if (!S.on) throw new Error('Switch points on first.');
+  const rows = await ctx.tx`select invoice_no from invoices where business_id = ${ctx.biz} and voided_at is null and invoice_no not like 'RTN-%' order by created_at desc limit 20000`;
+  let n = 0;
+  for (const r of rows) { await pointsSync(ctx, r.invoice_no); n++; }
+  const t = (await ctx.tx`select count(distinct customer_key)::int as members, coalesce(sum(points), 0)::int as points from customer_points where business_id = ${ctx.biz}`)[0];
+  return { invoices: n, members: num(t.members), pointsOut: num(t.points) };
+}
+export const HANDLERS = { erpLoyalty, erpLoyaltySave, erpCustomerPoints, erpPointsAdjust, erpConsentSet, erpRefillDue, erpReminderSent, erpDeliveryHistory, erpDeliveryHistoryMany, erpLoyaltyBackfill };

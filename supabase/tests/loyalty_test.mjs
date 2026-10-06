@@ -87,6 +87,12 @@ check('many at once: Karim risky, Rahim new', r.ok && r.result.history[K.phone].
 r = await sales('erpDeliveryHistory', [{ phone: '', name: '' }]);
 check('no number: nothing to check', r.ok && r.result.risk === 'none', r);
 
+// 5b. counting past invoices (idempotent: nothing doubles)
+r = await sales('erpLoyaltyBackfill', []);
+check('only a manager counts past invoices', !r.ok, r);
+r = await mgr('erpLoyaltyBackfill', []);
+check('past invoices counted; the points already there do not double', r.ok && r.result.invoices >= 5 && (await pts(K)).total === 43, r);
+
 // 6. the customer’s own page
 r = await sales('erpMyLink', [K]);
 const T = r.result.url.split('t=')[1];

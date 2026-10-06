@@ -21156,6 +21156,7 @@ document.addEventListener('click', function (ev) {
   if (k === 'refill') { LP_OPEN = ''; LPR = LPR && LPR.open ? null : { open: true, data: null }; if (LPR) srv('erpRefillDue', [], function (r) { LPR.data = r; lpPanels(); }, fail); lpPanels(); return; }
   if (k === 'rules') { LPS = LPS && LPS.open ? null : { open: true, data: null }; if (LPS) srv('erpLoyalty', [], function (r) { LPS.data = r; lpPanels(); }, fail); lpPanels(); return; }
   if (k === 'sent') { srv('erpReminderSent', [{ phone: b.getAttribute('data-phone'), name: b.getAttribute('data-name'), note: 'WhatsApp' }], function () { toast('Marked as sent.'); srv('erpRefillDue', [], function (r) { LPR.data = r; lpPanels(); }, fail); }, fail); return; }
+  if (k === 'backfill') { b.disabled = true; srv('erpLoyaltyBackfill', [], function (r) { toast(fmt(r.invoices) + ' invoices counted: ' + fmt(r.members) + ' customers hold ' + fmt(r.pointsOut) + ' points.'); srv('erpLoyalty', [], function (x) { LPS.data = x; lpPanels(); }, fail); }, function (e) { b.disabled = false; fail(e); }); return; }
   if (k === 'rulesave') { srv('erpLoyaltySave', [{ on: el('lr_on').checked, refillOn: el('lr_refill').checked, rate: el('lr_rate').value, silver: el('lr_silver').value, gold: el('lr_gold').value, taka: el('lr_taka').value, silverPerk: el('lr_sperk').value, goldPerk: el('lr_gperk').value }], function (r) { LPS.data = r; toast('Points rules saved.'); lpPanels(); }, fail); }
 });
 // ---- the Customers list: two buttons and their panels
@@ -21183,7 +21184,8 @@ function lpPanels() {
         '<div><label class="f" for="lr_rate">Points per 100 taka paid</label><input class="i" id="lr_rate" inputmode="decimal" value="' + S.rate + '"></div><div><label class="f" for="lr_taka">Taka per point when redeemed</label><input class="i" id="lr_taka" inputmode="decimal" value="' + S.taka + '"></div>' +
         '<div><label class="f" for="lr_silver">Silver from (points)</label><input class="i" id="lr_silver" inputmode="numeric" value="' + S.silver + '"></div><div><label class="f" for="lr_gold">Gold from (points)</label><input class="i" id="lr_gold" inputmode="numeric" value="' + S.gold + '"></div>' +
         '<div><label class="f" for="lr_sperk">Silver perk (shown to the customer)</label><input class="i" id="lr_sperk" value="' + esc(S.silverPerk) + '"></div><div><label class="f" for="lr_gperk">Gold perk</label><input class="i" id="lr_gperk" value="' + esc(S.goldPerk) + '"></div>' +
-        '<div style="flex:0 0 auto"><button class="btn primary" type="button" data-lp="rulesave">Save rules</button></div></div>') + '</div></section>';
+        '<div style="flex:0 0 auto"><button class="btn primary" type="button" data-lp="rulesave">Save rules</button></div></div>' +
+        '<div class="row" style="margin-top:10px;gap:8px;align-items:center;flex-wrap:wrap"><button class="btn" type="button" data-lp="backfill">Count past invoices</button><span class="sku">Once, when you start: every past paid invoice gets the points it would have earned. Safe to press again - nothing doubles.</span></div>') + '</div></section>';
   }
   if (!h) return;
   var box = document.createElement('div'); box.id = 'lp_panels'; box.innerHTML = h; lv.parentNode.insertBefore(box, lv);
