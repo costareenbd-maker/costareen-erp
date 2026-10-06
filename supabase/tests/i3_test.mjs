@@ -2,7 +2,7 @@
 import { pathToFileURL } from 'node:url';
 import path from 'node:path';
 import { sql, FIX, owner, check, done, web, deps, fnDir } from './harness.mjs';
-const { installRoute, cleanHost } = await import(pathToFileURL(path.join(fnDir, 'handlers', 'installer.js')));
+const { installRoute, cleanHost, domainSet } = await import(pathToFileURL(path.join(fnDir, 'handlers', 'installer.js')));
 deps.install = {};
 deps.installEnv = { controlUrl: 'https://ctl.test/erp', appUrl: 'https://app.test/', publicUrl: 'https://office-erp.pages.dev/',
   oauth: { clientId: 'CID', clientSecret: 'CSEC', redirect: 'https://ctl.test/erp?install=oauth_back' },
@@ -52,9 +52,9 @@ check('an expiring connection is renewed before use', r.ok && seenAuth === 'Bear
 check('addresses are checked', cleanHost('erp.xyzenterprise.test') === 'erp.xyzenterprise.test' && (() => { try { cleanHost('erp.costareen.com'); return false; } catch (_) { return true; } })());
 const cfCalls = [];
 web.on(/api\.cloudflare\.com\/client\/v4\/accounts\/ACC\/pages\/projects\/office-erp\/domains$/, (u, o) => { cfCalls.push(JSON.parse(o.body)); return { status: 200, body: { success: true } }; });
-r = (await route('install=domain', { id, secret: 'wrong', domain: 'erp.xyzenterprise.test' })).body;
-check('only the install page itself sets the address', !r.ok, r);
 r = (await route('install=domain', { id, secret, domain: 'erp.xyzenterprise.test' })).body;
+check('the install page no longer sets an own address (the free one is made by itself)', !r.ok, r);
+r = { ok: true, ...(await domainSet(deps, { id, secret, domain: 'erp.xyzenterprise.test' })) };   // still used by the platform's own address tools
 check('the exact record to add: CNAME erp -> the neutral page; added to Pages by itself', r.ok && r.record.type === 'CNAME' && r.record.name === 'erp' && r.record.value === 'office-erp.pages.dev' &&
   r.record.parent === 'xyzenterprise.test' && r.auto && cfCalls.some((c) => c.name === 'erp.xyzenterprise.test'), r);
 let dns = [];

@@ -60,10 +60,20 @@ const sqlOf = (deps) => deps.sqlAux || deps.sql;
 
 /** One Management API call with the company's own token. */
 async function mgmt(deps, token, method, path, body, raw) {
-  const r = await (deps.fetch || fetch)(MGMT + path, {
+  const OPTS = {
     method, headers: raw ? { Authorization: 'Bearer ' + token } : { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' },
     body: raw ? body : body === undefined ? undefined : JSON.stringify(body),
-  });
+  };
+  // Supabase limits how fast one account may call it (429) and its gateway sometimes stumbles (502-504):
+  // wait and try again a few times before it counts as a failure
+  let r;
+  for (let t = 0; ; t++) {
+    r = await (deps.fetch || fetch)(MGMT + path, OPTS);
+    if (!(r.status === 429 || r.status === 502 || r.status === 503 || r.status === 504) || t >= 3) break;
+    const after = Number(r.headers && r.headers.get && r.headers.get('retry-after')) || 0;
+    const ms = deps.mgmtRetryMs !== undefined ? deps.mgmtRetryMs : Math.min(20000, after > 0 ? after * 1000 : [3000, 7000, 12000][t]);
+    await new Promise((ok) => setTimeout(ok, ms));
+  }
   const text = await r.text();
   let json = null; try { json = JSON.parse(text); } catch (_) { json = null; }
   if (r.status === 401 || r.status === 403) throw new Error('Supabase refused the access token (' + r.status + '). Make a new token and start again.');
@@ -223,8 +233,7 @@ export async function installStep(deps, b) {
         const name = list[row.step_n].slice(4);
         const done = (await runSql("select 1 from public._erp_migrations where name = '" + name.replace(/'/g, "''") + "'")) || [];
         if (!done.length) {
-          await runSql(files[list[row.step_n]]);
-          await runSql("insert into public._erp_migrations (name) values ('" + name.replace(/'/g, "''") + "') on conflict do nothing");
+          await runSql(files[list[row.step_n]] + '\n;\ninsert into public._erp_migrations (name) values (\'' + name.replace(/'/g, "''") + '\') on conflict do nothing;');
         }
         return set({ step_n: row.step_n + 1, detail: (row.step_n + 1) + ' of ' + list.length });
       }
@@ -251,12 +260,16 @@ export async function installStep(deps, b) {
           throw e;
         }
         if (!r.body || !r.body.ok) throw new Error('The new ERP did not finish: ' + str(r.body && r.body.error).slice(0, 200));
+        // every copy opens on <company>.<provider zone> - made here, nothing for the company to choose or add
+        if (freeZone(deps)) try { await freeDomainFor(deps, row); } catch (_) { /* the page still opens on the provider's own link; the address can be made later */ }
         return set({ step: 'done', status: 'active', install_key: '', detail: r.body.mailed ? 'owner e-mailed' : 'owner made - e-mail not sent', error: '' });
       }
       default: return view(row);
     }
   } catch (e) {
-    return set({ status: 'failed', error: str((e && e.message) || e).slice(0, 400) });
+    const msg = str((e && e.message) || e);
+    if (/answered (429|502|503|504)\b/.test(msg)) return set({ detail: 'Supabase asked us to slow down - carrying on by itself in a moment', error: '' });
+    return set({ status: 'failed', error: msg.slice(0, 400) });
   }
 }
 
@@ -282,8 +295,8 @@ export async function domainSet(deps, b) {
   return { domain: d, record: { type: 'CNAME', name: host, full: d, value: pagesTarget(deps), parent }, auto: !!r };
 }
 /** The free address: <company>.<zone> on the provider's own domain - the DNS record and the page address are made here. */
-export async function freeDomain(deps, b) {
-  const row = await rowFor(deps, b);
+export async function freeDomain(deps, b) { return freeDomainFor(deps, await rowFor(deps, b)); }
+async function freeDomainFor(deps, row) {
   const zone = freeZone(deps), zid = str(deps.installEnv && deps.installEnv.freeZoneId), c = deps.installEnv && deps.installEnv.cloudflare;
   if (!zone || !zid || !c || !c.token) throw new Error('Free addresses are not set up on this server.');
   if (row.domain && row.domain.endsWith('.' + zone)) return { domain: row.domain, auto: true };
@@ -436,7 +449,7 @@ export async function installRoute(deps, req) {
     if (what === 'news') return { status: 200, body: { ok: true, items: await newsActive(sqlOf(deps)) } };
     if (what === 'caps') {
       const e = deps.installEnv || {};
-      return { status: 200, body: { ok: true, oauth: !!(e.oauth && e.oauth.clientId), domains: !!(e.cloudflare && e.cloudflare.token), target: pagesTarget(deps), free: !!(freeZone(deps) && e.freeZoneId && e.cloudflare && e.cloudflare.token) } };
+      return { status: 200, body: { ok: true, oauth: !!(e.oauth && e.oauth.clientId), domains: !!(e.cloudflare && e.cloudflare.token), target: pagesTarget(deps), zone: freeZone(deps), free: !!(freeZone(deps) && e.freeZoneId && e.cloudflare && e.cloudflare.token) } };
     }
     if (what === 'oauth_back') return { status: 302, location: await oauthBack(deps, Object.fromEntries(u.searchParams.entries())), body: null };
     // a page opened on a company's own web address finds its copy
@@ -455,7 +468,7 @@ export async function installRoute(deps, req) {
     if (what === 'freedomain') return { status: 200, body: { ok: true, ...(await freeDomain(deps, b)) } };
     if (what === 'step') return { status: 200, body: { ok: true, ...(await installStep(deps, b)) } };
     if (what === 'oauth') return { status: 200, body: { ok: true, ...(await oauthStart(deps, b)) } };
-    if (what === 'domain') return { status: 200, body: { ok: true, ...(await domainSet(deps, b)) } };
+    // (2026-10-06) no own-domain choice at install any more: every copy gets <company>.<provider zone> by itself
     if (what === 'domaincheck') return { status: 200, body: { ok: true, ...(await domainCheck(deps, b)) } };
     return { status: 404, body: { ok: false, error: 'Unknown.' } };
   } catch (e) { return { status: 200, body: { ok: false, error: str((e && e.message) || e) } }; }

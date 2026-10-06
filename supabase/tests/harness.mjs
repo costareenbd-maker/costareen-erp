@@ -71,6 +71,7 @@ async function renderPdf(html, opts) {
 }
 
 export const deps = {
+  mgmtRetryMs: 0,        // Supabase management API retries: no waiting in tests
   sfRetryMs: 0,          // Steadfast retries: no waiting in tests
   sql,
   sqlAux,

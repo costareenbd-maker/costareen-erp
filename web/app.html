@@ -16148,11 +16148,11 @@ function insHtml() {
     '<div><h2 style="margin:0">Set up your own ' + esc(B.name || 'ERP') + '</h2>' + (B.sponsor ? '<div class="sku">' + esc(B.sponsor) + '</div>' : '') + '</div></div>' + insTrack();
   var err = i.err ? '<div class="note err" style="margin-top:10px"><div class="ico">!</div><div>' + esc(i.err) + '</div></div>' : '';
   if (i.screen === 'about') {
-    h += '<div class="sub" data-c5x="1" style="display:block">Your ERP is built for you in a few minutes, in your own name: your data is kept in your own free Supabase account, and it opens on your own website address.</div>' +
+    h += '<div class="sub" data-c5x="1" style="display:block">Your ERP is built for you in a few minutes, in your own name: your data is kept in your own free Supabase account, and it opens on its own address' + (i.caps && i.caps.zone ? ' (<b>yourcompany.' + esc(i.caps.zone) + '</b>)' : '') + '.</div>' +
       '<div class="fields" style="margin-top:8px"><div style="grid-column:1/-1"><label class="f" for="ins_co">Company name</label><input class="i" id="ins_co" value="' + esc(i.company || '') + '" placeholder="e.g. XYZ Enterprise"></div>' +
       '<div><label class="f" for="ins_on">Owner’s name</label><input class="i" id="ins_on" value="' + esc(i.ownerName || '') + '"></div>' +
       '<div><label class="f" for="ins_oe">Owner’s e-mail</label><input class="i" id="ins_oe" type="email" value="' + esc(i.ownerEmail || '') + '" placeholder="the login is made for it"></div>' +
-      '<div style="grid-column:1/-1"><label class="f" for="ins_web">Your website, if you have one</label><input class="i" id="ins_web" value="' + esc(i.website || '') + '" placeholder="e.g. xyzenterprise.com (leave empty if none)"></div></div>' +
+      '</div>' +
       (typeof insTermsHtml === 'function' ? insTermsHtml(i) : '') + err +
       '<div class="row" style="justify-content:flex-end;margin-top:12px"><button class="btn primary" type="button" id="ins_next1">Next \u2192</button></div>';
   } else if (i.screen === 'connect') {
@@ -16173,38 +16173,13 @@ function insHtml() {
         (k === at && i.state && i.state.detail ? ' <span class="sku">' + esc(i.state.detail) + '</span>' : '') + '</span></div>'; }).join('');
     if (i.state && i.state.status === 'failed') h += '<div class="note err" style="margin-top:10px"><div class="ico">!</div><div>' + esc(i.state.error) + '</div></div>' +
       '<div class="row" style="justify-content:flex-end;margin-top:10px"><button class="btn primary" type="button" id="ins_retry">Try again</button></div>';
-  } else if (i.screen === 'address') {
-    var d = i.dom || {};
-    if (d.auto && d.domain) {   // <company>.<provider domain>, made by the installer itself
-      var rd = d.state === 'ready';
-      h += '<div class="sub" data-c5x="1" style="display:block">Your ERP\u2019s own address:</div><div style="font-size:1.25rem;font-weight:700;margin:6px 0">' + esc(d.domain) + ' ' + insCopyBtn('https://' + d.domain + '/') + '</div>' +
-        (rd ? '<div class="note ok"><div class="ico">\u2713</div><div>The address is ready.</div></div>'
-            : '<div class="note"><div class="ico">\u23F3</div><div>Making the address and its security certificate. This takes 1\u201310 minutes; this page checks by itself.</div></div>') + err +
-        '<div class="row" style="justify-content:flex-end;margin-top:12px">' + (rd ? '<button class="btn primary" type="button" id="ins_todone">Next \u2192</button>' : '<button class="btn" type="button" id="ins_domcheck">Check now</button>') + '</div>';
-    } else if (!i.website && !d.domain) {
-      h += '<div class="sub" data-c5x="1" style="display:block">You have no website address, so your ERP opens on a free address. You can add your own later.</div>' +
-        '<div class="row" style="justify-content:flex-end;margin-top:12px"><button class="btn" type="button" id="ins_addweb">I do have a website</button><button class="btn primary" type="button" id="ins_free">Next \u2192</button></div>';
-    } else if (!d.record) {
-      var base = (i.website || '').replace(/^www\./, '');
-      h += '<div class="sub" data-c5x="1" style="display:block">Your ERP will open on your own website’s address. Your website itself is not touched.</div>' +
-        '<label class="f" style="margin-top:10px">Your ERP’s address</label><div class="row" style="gap:4px;align-items:center;flex-wrap:nowrap"><input class="i" id="ins_sub" value="' + esc(i.sub || 'erp') + '" style="max-width:130px">' +
-        '<span style="font-weight:600">.' + esc(base) + '</span></div><div class="sku" style="margin-top:4px">e.g. erp, office, manage</div>' + err +
-        '<div class="row" style="justify-content:space-between;margin-top:12px"><button class="btn" type="button" id="ins_free">Use a free address instead</button><button class="btn primary" type="button" id="ins_domset"' + (i.busy ? ' disabled' : '') + '>Use this address</button></div>';
-    } else {
-      var r = d.record, ready = d.state === 'ready', seen = d.state === 'seen';
-      h += '<div class="sub" data-c5x="1" style="display:block">Add this one record where <b>' + esc(r.parent) + '</b> is managed (where you bought the domain, or your hosting). It does not change your website or e-mail.</div>' +
-        '<div class="scroll" style="margin-top:8px"><table><thead><tr><th>Type</th><th>Name / Host</th><th>Value / Points to</th></tr></thead><tbody><tr>' +
-        '<td><b>CNAME</b></td><td><b>' + esc(r.name) + '</b> ' + insCopyBtn(r.name) + '</td><td><b>' + esc(r.value) + '</b> ' + insCopyBtn(r.value) + '</td></tr></tbody></table></div>' +
-        '<details style="margin-top:8px"><summary>Where do I add it?</summary><div class="sub" data-c5x="1" style="display:block">' +
-        '<b>cPanel</b>: Domains \u2192 Zone Editor \u2192 Manage \u2192 + Add Record \u2192 CNAME.<br><b>Namecheap</b>: Domain List \u2192 Manage \u2192 Advanced DNS \u2192 Add new record \u2192 CNAME.<br>' +
-        '<b>GoDaddy</b>: My Products \u2192 DNS \u2192 Add New Record \u2192 CNAME.<br><b>Cloudflare</b>: DNS \u2192 Add record \u2192 CNAME, and switch the orange cloud <b>off</b> (DNS only).<br>' +
-        'A Bangladeshi provider (e.g. Exonhost, Dhakacom): their client area \u2192 DNS / Zone \u2192 add a CNAME record. Or send them this page.</div></details>' +
-        '<div class="note ' + (ready ? 'ok' : seen ? '' : '') + '" style="margin-top:10px"><div class="ico">' + (ready ? '\u2713' : '\u23F3') + '</div><div>' +
-        (ready ? '<b>' + esc(r.full) + ' is ready.</b>' : seen ? (d.auto ? 'Record found. Securing the address - a few minutes.' : 'Record found. Your provider switches the address on within a day; until then use the free address.')
-          : 'Waiting for the record. It can take from a few minutes to a few hours after you add it. This page checks by itself.') + '</div></div>' +
-        '<div class="row" style="justify-content:space-between;margin-top:12px"><button class="btn" type="button" id="ins_free">Use the free address for now</button>' +
-        (ready ? '<button class="btn primary" type="button" id="ins_todone">Next \u2192</button>' : '<button class="btn" type="button" id="ins_domcheck">Check now</button>') + '</div>';
-    }
+  } else if (i.screen === 'address') {   // (2026-10-06) one address for everyone: <company>.<provider zone>, made by the installer itself
+    var d = i.dom || {}, rd = d.state === 'ready';
+    h += '<div class="sub" data-c5x="1" style="display:block">Your ERP’s own address:</div><div style="font-size:1.25rem;font-weight:700;margin:6px 0">' + esc(d.domain || '') + ' ' + insCopyBtn('https://' + d.domain + '/') + '</div>' +
+      (rd ? '<div class="note ok"><div class="ico">✓</div><div>The address is ready.</div></div>'
+          : '<div class="note"><div class="ico">⏳</div><div>Making the address and its security certificate. This takes 1–10 minutes; this page checks by itself.</div></div>') + err +
+      '<div class="row" style="justify-content:flex-end;gap:8px;margin-top:12px">' + (rd ? '<button class="btn primary" type="button" id="ins_todone">Next →</button>'
+        : '<button class="btn" type="button" id="ins_todone">Skip - open it on the temporary link</button><button class="btn" type="button" id="ins_domcheck">Check now</button>') + '</div>';
   } else if (i.screen === 'done') {
     var url = i.dom && i.dom.state === 'ready' ? 'https://' + i.dom.domain + '/' : (i.free || '');
     h += '<div class="note ok"><div class="ico">\u2713</div><div><b>Your ERP is ready.</b></div></div>' +
@@ -16251,12 +16226,19 @@ function insRun(retry) {
   var j = INS.job;
   insCall('step', { id: j.id, secret: j.secret, retry: !!retry }, function (st) {
     INS.state = st; insSave();
-    if (st.done) { insGo('address'); return; }
+    if (st.done) { insAfterBuild(); return; }
     insPaint();
     if (st.status === 'installing') setTimeout(function () { insRun(false); }, st.step === 'wait' || /waiting/.test(st.detail || '') ? 5000 : 300);
   }, function (err) { INS.state = { status: 'failed', error: err, step: INS.state ? INS.state.step : 'project' }; insPaint(); });
 }
 var INS_POLL = null;
+/** the build made the address by itself: show it while its certificate is made (no address = the provider's own link) */
+function insAfterBuild() {
+  insCall('domaincheck', { id: INS.job.id, secret: INS.job.secret }, function (r) {
+    INS.dom = { domain: r.domain, state: r.state, auto: true }; INS.free = r.free; insGo(r.state === 'ready' ? 'done' : 'address');
+    if (r.state !== 'ready') INS_POLL = setTimeout(function () { insDomCheck(true); }, 10000);
+  }, function () { insGo('done'); });
+}
 function insDomCheck(quiet) {
   clearTimeout(INS_POLL);
   insCall('domaincheck', { id: INS.job.id, secret: INS.job.secret }, function (r) {
@@ -16288,18 +16270,16 @@ var CONTROL_PUBLIC = location.origin + location.pathname;
   history.replaceState(null, '', location.pathname + location.search + '#/install/' + insCode());
   paintGate = insPaint; startApp = insPaint;
   insPaint();
-  fetch(CONTROL_API + '?install=caps').then(function (r) { return r.json(); }).then(function (c) { INS.caps = c; if (INS.screen === 'connect' || INS.screen === 'address') insPaint(); }, function () {});
+  fetch(CONTROL_API + '?install=caps').then(function (r) { return r.json(); }).then(function (c) { INS.caps = c; if (['about', 'connect', 'address'].indexOf(INS.screen) >= 0) insPaint(); }, function () {});
   if (INS.job && INS.screen === 'build' && !(INS.state && INS.state.done)) insRun(false);
-  if (INS.screen === 'address' && INS.dom && (INS.dom.record || INS.dom.auto)) insDomCheck(true);
+  if (INS.screen === 'address' && INS.dom && INS.dom.domain) insDomCheck(true);
   document.addEventListener('click', function (ev) {
     var t = ev.target && ev.target.closest ? ev.target.closest('button,a') : null; if (!t) return;
     var c = t.getAttribute('data-inscopy');
     if (c !== null) { try { navigator.clipboard.writeText(c); t.textContent = 'Copied'; } catch (e) {} return; }
     if (t.id === 'ins_next1') {
       INS.company = el('ins_co').value.trim(); INS.ownerName = el('ins_on').value.trim(); INS.ownerEmail = el('ins_oe').value.trim();
-      INS.website = el('ins_web').value.trim().toLowerCase().replace(/^https?:\/\//, '').replace(/^www\./, '').replace(/\/.*$/, '');
       if (!INS.company || !INS.ownerName || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(INS.ownerEmail)) { INS.err = 'Fill in the company name, the owner’s name and a real e-mail.'; insPaint(); return; }
-      if (INS.website && !/^([a-z0-9-]+\.)+[a-z]{2,}$/.test(INS.website)) { INS.err = 'A website address is like xyzenterprise.com (or leave it empty).'; insPaint(); return; }
       INS.agree = !!(el('ins_agree') && el('ins_agree').checked);
       if (!INS.agree) { INS.err = 'Read the terms and tick the box to agree.'; insPaint(); return; }
       insGo('connect');
@@ -16308,26 +16288,13 @@ var CONTROL_PUBLIC = location.origin + location.pathname;
       INS.busy = true; insSave(); insPaint();
       insCall('oauth', { code: insCode() }, function (r) { location.href = r.url; }, function (err) { INS.busy = false; INS.err = err; INS.showToken = true; insPaint(); });
     } else if (t.id === 'ins_build') {
-      var body = { code: insCode(), company: INS.company, ownerName: INS.ownerName, ownerEmail: INS.ownerEmail, website: INS.website, orgId: el('ins_org') ? el('ins_org').value : '', agree: !!INS.agree, terms: INS_TERMS };
+      var body = { code: insCode(), company: INS.company, ownerName: INS.ownerName, ownerEmail: INS.ownerEmail, orgId: el('ins_org') ? el('ins_org').value : '', agree: !!INS.agree, terms: INS_TERMS };
       if (INS.connected && INS.oauthState) body.oauthState = INS.oauthState;
       else { INS.token = el('ins_tk') ? el('ins_tk').value.trim() : ''; body.token = INS.token; if (!/^sbp_/.test(body.token)) { INS.err = 'Paste the access token (it starts with sbp_).'; insPaint(); return; } }
       insStartBuild(body);
     } else if (t.id === 'ins_retry') { INS.state.status = 'installing'; insPaint(); insRun(true); }
-    else if (t.id === 'ins_addweb') { var w = prompt('Your website address (e.g. xyzenterprise.com)'); if (w) { INS.website = w.trim().toLowerCase().replace(/^https?:\/\//, '').replace(/^www\./, '').replace(/\/.*$/, ''); insGo('address'); } }
-    else if (t.id === 'ins_domset') {
-      INS.sub = (el('ins_sub').value.trim().toLowerCase() || 'erp').replace(/[^a-z0-9-]/g, '');
-      INS.busy = true; INS.err = ''; insPaint();
-      insCall('domain', { id: INS.job.id, secret: INS.job.secret, domain: INS.sub + '.' + INS.website.replace(/^www\./, '') }, function (r) {
-        INS.busy = false; INS.dom = { domain: r.domain, record: r.record, state: 'waiting', auto: r.auto }; insSave(); insPaint(); insDomCheck(true);
-      }, function (err) { INS.busy = false; INS.err = err; insPaint(); });
-    } else if (t.id === 'ins_domcheck') insDomCheck(false);
-    else if (t.id === 'ins_free' && INS.caps && INS.caps.free) {   // the provider's domain: the address is made here, no record for the company to add
-      INS.busy = true; INS.err = ''; insPaint();
-      insCall('freedomain', { id: INS.job.id, secret: INS.job.secret }, function (r) {
-        INS.busy = false; INS.dom = { domain: r.domain, state: 'seen', auto: true }; insSave(); insPaint(); insDomCheck(true);
-      }, function (err) { INS.busy = false; INS.err = err; insPaint(); });
-    }
-    else if (t.id === 'ins_free' || t.id === 'ins_todone') { clearTimeout(INS_POLL); try { localStorage.removeItem('erp_install_job'); } catch (e) {} insGo('done'); }
+    else if (t.id === 'ins_domcheck') insDomCheck(false);
+    else if (t.id === 'ins_todone') { clearTimeout(INS_POLL); try { localStorage.removeItem('erp_install_job'); } catch (e) {} insGo('done'); }
   });
 })();
 

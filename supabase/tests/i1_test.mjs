@@ -15,7 +15,11 @@ deps.bridgeKey = KEY;
 deps.tenantDeps = tenantSource(sql, KEY, async (t) => ({ ...deps, install: { id: t.id, bridged: true }, built: t }));
 
 deps.install = {};
-deps.installEnv = { controlUrl: 'https://ctl.test/erp', appUrl: 'https://app.test/', renderUrl: 'https://render.test', renderKey: 'RK' };
+deps.installEnv = { controlUrl: 'https://ctl.test/erp', appUrl: 'https://app.test/', renderUrl: 'https://render.test', renderKey: 'RK',
+  freeZone: 'zone.test', freeZoneId: 'Z1', cloudflare: { token: 'CF', account: 'A', project: 'office-erp' } };
+const dnsMade = [];
+web.on(/api\.cloudflare\.com\/client\/v4\/zones\/Z1\/dns_records$/, (u, o) => { dnsMade.push(JSON.parse(o.body)); return { status: 200, body: { success: true } }; });
+web.on(/pages\/projects\/office-erp\/domains$/, () => ({ status: 200, body: { success: true } }));
 await sql`insert into platform_admins (user_id, note) values (${FIX.U.owner}, 'test') on conflict do nothing`;
 const route = async (q, body, method = 'POST') => (await installRoute(deps, new Request('https://ctl.test/erp?' + q, { method, headers: { 'content-type': 'application/json' }, body: method === 'POST' ? JSON.stringify(body) : undefined }))).body;
 
@@ -32,7 +36,10 @@ web.on(/api\.supabase\.com\/v1\/organizations$/, (u, o) => { tokenSeen = o.heade
 web.on(/api\.supabase\.com\/v1\/projects$/, (u, o) => { const b = JSON.parse(o.body); return { status: 201, body: { id: 'newref', name: b.name, region: b.region } }; });
 web.on(/api\.supabase\.com\/v1\/projects\/newref$/, () => ({ status: 200, body: { id: 'newref', status: ++health < 2 ? 'COMING_UP' : 'ACTIVE_HEALTHY' } }));
 web.on(/api\.supabase\.com\/v1\/projects\/newref\/api-keys/, () => ({ status: 200, body: [{ name: 'anon', api_key: 'ANONKEY' }, { name: 'service_role', api_key: 'SR' }] }));
-web.on(/api\.supabase\.com\/v1\/projects\/newref\/database\/query$/, (u, o) => { const s = JSON.parse(o.body).query; q.push(s); return { status: 201, body: /select 1 from public._erp_migrations/.test(s) ? [] : [] }; });
+let busy = 0, busyMax = 0;     // Supabase says "too many requests" now and then (429) - the installer waits and carries on
+web.on(/api\.supabase\.com\/v1\/projects\/newref\/database\/query$/, (u, o) => { const s = JSON.parse(o.body).query;
+  if (busy < busyMax && !/select 1 from public._erp_migrations/.test(s)) { busy++; return { status: 429, body: { message: 'ThrottlerException: Too Many Requests' } }; }
+  q.push(s); return { status: 201, body: [] }; });
 web.on(/api\.supabase\.com\/v1\/projects\/newref\/secrets$/, (u, o) => { secrets.push(...JSON.parse(o.body)); return { status: 201, body: {} }; });
 web.on(/api\.supabase\.com\/v1\/projects\/newref\/functions\/deploy\?slug=erp$/, (u, o) => { deployed = o.body; return { status: 201, body: { id: 'f1' } }; });
 let newPw = '';
@@ -65,7 +72,8 @@ check('the link works once', !r.ok, r);
 r = await route('install=step', { id, secret: 'wrong' });
 check('the steps need the install\'s own secret', !r.ok, r);
 
-// step by step until done
+// step by step until done - with Supabase refusing with 429 a few times on the way (never a failure)
+busyMax = 6;
 const seen = [];
 for (let i = 0; i < 30; i++) {
   r = await route('install=step', { id, secret });
@@ -74,6 +82,11 @@ for (let i = 0; i < 30; i++) {
   if (r.done || r.status === 'failed') break;
 }
 check('every step ran and it is ready', r.ok && r.done && r.status === 'active', [r, seen]);
+const dom = (await sql`select domain, domain_state from erp_installs where id = ${id}`)[0];
+check('the address <company>.<provider zone> is made by itself at the end - nothing to choose', dom.domain === 'friend-co.zone.test' && dom.domain_state === 'seen' && dnsMade.length === 1, [dom, dnsMade]);
+r = await route('install=domain', { id, secret, domain: 'erp.friend.test' });
+check('an own domain cannot be chosen at install any more', !r.ok, r);
+check('a too-many-requests answer from Supabase was waited out, not a failure', busy === 6, busy);
 check('...in Singapore, the project waited for, two database files in order then storage', q.some((s) => /create table t1/.test(s)) && q.findIndex((s) => /t1/.test(s)) < q.findIndex((s) => /t2/.test(s)) && q.some((s) => s === '-- storage') && seen.includes('wait'), seen);
 check('no server code and no timers or settings were put into the company\'s project', deployed === null && secrets.length === 0 && !q.some((x) => /__FN_URL__|cron\.schedule/.test(x)), [deployed, secrets]);
 check('the provider\'s own control tables stay out of the company\'s database', !q.some((x) => /ctl_secret/.test(x)));

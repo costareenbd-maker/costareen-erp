@@ -43,10 +43,20 @@ function randPw(n = 30) {
   return b64(a).replace(/\+/g, 'A').replace(/\//g, 'B').replace(/=+$/, '');
 }
 async function mgmt(deps, token, method, path, body) {
-  const r = await (deps.fetch || fetch)(MGMT + path, {
+  const OPTS = {
     method, headers: { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' },
     body: body === undefined ? undefined : JSON.stringify(body),
-  });
+  };
+  // Supabase limits how fast one account may call it (429) and its gateway sometimes stumbles (502-504):
+  // wait and try again a few times before it counts as a failure
+  let r;
+  for (let t = 0; ; t++) {
+    r = await (deps.fetch || fetch)(MGMT + path, OPTS);
+    if (!(r.status === 429 || r.status === 502 || r.status === 503 || r.status === 504) || t >= 3) break;
+    const after = Number(r.headers && r.headers.get && r.headers.get('retry-after')) || 0;
+    const ms = deps.mgmtRetryMs !== undefined ? deps.mgmtRetryMs : Math.min(20000, after > 0 ? after * 1000 : [3000, 7000, 12000][t]);
+    await new Promise((ok) => setTimeout(ok, ms));
+  }
   const text = await r.text();
   let json = null; try { json = JSON.parse(text); } catch (_) { json = null; }
   if (r.status === 401 || r.status === 403) throw new Error('Supabase refused the access token (' + r.status + ').');
