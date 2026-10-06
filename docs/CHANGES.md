@@ -962,3 +962,11 @@ in erpHello (core.js) use it. Test `padmin_test.mjs` (18). Also checked: Prototy
 product, customer or invoice (nothing saved, nothing deleted) - the "data that disappeared" was not in his books.
 - Not done: no check whether he actually opened those screens (reads are not logged); a copy on its OWN server still
   makes its owner admin of that copy (intended).
+
+## Fix: file lists from Storage (backup screen showed 0 files) - tag storage-list-fix, 7 Oct 2026
+
+Backups ran every night (3.9 MB JSON in `erp-files/<biz>/backups/`), but Settings showed "0 files" and the keep-14
+pruning never removed anything: `storage.find` in index.ts passed `search: ' - backup '` and Supabase Storage now
+matches `search` against the START of the name. Removed `search`; the code already filters by `includes(part)`.
+Same path served invoice PDF and quotation-asset lookups by part of the name. Live: 7 files listed with links.
+Not done: no test (storage is a live HTTP service, not in the harness).
