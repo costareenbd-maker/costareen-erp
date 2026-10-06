@@ -20,6 +20,7 @@ const str = (v) => String(v == null ? '' : v).trim();
 // where: in which screen the app's own settings and switches sit (the owner kept asking where they were).
 // view: the screen inside the ERP where the feature is run and set up (a tile opens it); path: its public page.
 // Design desk and Ideas are run from Platform (provider only): a company's tile opens the public page.
+// Market, Resell, Print jobs, Joint stock are ordinary menu screens (MENU below), not apps.
 export const APPS = [
   { key: 'find', group: 'For customers', name: 'Find stock', view: 'market', tab: 'mine', path: 'find', what: 'Anyone searches a product or colour and sees which shops have it. Orders land under Web orders.', where: 'Market \u2192 What I share \u2192 Find stock public' },
   { key: 'choose', group: 'For customers', name: 'Colour finder', view: 'market', tab: 'mine', path: 'choose', what: 'Point the phone camera at a thing; the closest filament colours in stock are shown. Uses Find stock\u2019s data (one switch for both).', where: 'Market \u2192 What I share \u2192 Colour swatches', sameAs: 'find' },
@@ -30,10 +31,6 @@ export const APPS = [
   { key: 'quote', group: 'For customers', name: 'Print quote', view: 'printjobs', tab: 'requests', path: 'quote', what: 'A customer asks THIS shop for a print price.', where: 'Print jobs \u2192 Requests \u2192 Taking requests' },
   { key: 'design', group: 'For customers', name: 'Design desk', view: 'platform', path: 'design', what: 'Designers take sketches and repair-part requests; the part goes to a print farm.', where: 'Platform \u2192 Design desk' },
   { key: 'ideas', group: 'For customers', name: 'Ideas and updates', view: 'platform', path: 'ideas', what: 'Visitors post and vote on ideas for the ERP; you answer in public.', where: 'Platform \u2192 Ideas' },
-  { key: 'market', group: 'Between shops', name: 'Market', view: 'market', what: 'Other shops\u2019 stock: ask for prices, buy, post what you are looking for. A buying shop is a customer with source \u201cMarket\u201d.', where: 'Market \u2192 What I share' },
-  { key: 'resell', group: 'Between shops', name: 'Resell', view: 'resell', what: 'Sell a supplier\u2019s stock to your own customers at your own price; the supplier packs and ships, you earn a commission.', where: 'Market \u2192 What I share \u2192 Resellers' },
-  { key: 'printjobs', group: 'Between shops', name: 'Print jobs', view: 'printjobs', what: 'For a shop that prints for customers: every job, its true cost, the printers and spools.', where: 'Print jobs \u2192 Rates, Requests' },
-  { key: 'joint', group: 'Between shops', name: 'Joint stock', view: 'joint', what: 'Goods you and a partner company own together, sold by both, settled at month end.', where: 'Platform \u2192 Company copies (the provider switches it on per company)' },
 ];
 // Menu screens an owner may take out of his own menu (Settings > Business > Menu). Core screens are not here.
 export const MENU = [

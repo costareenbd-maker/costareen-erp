@@ -13,8 +13,8 @@ const menu = (r, k) => r.result.menu.find((m) => m.key === k);
 
 // 1. the catalogue, as anyone
 let r = await sales('erpApps', []);
-check('sales staff read the catalogue: 13 network features, every one on, no switches for them', r.ok && r.result.apps.length === 13 && r.result.apps.every((a) => a.on && !a.hidden) && !r.result.owner && !r.result.admin, r);
-check('the public ones carry a link; every tile names its screen (Platform ones only for the admin)', r.ok && r.result.apps.filter((a) => a.url).length === 9 && r.result.apps.filter((a) => a.view).length === 11 && r.result.apps.every((a) => typeof a.where === 'string'), r.result.apps.map((a) => a.key + ':' + a.view + ':' + a.url));
+check('sales staff read the catalogue: 9 features, every one on, no switches for them', r.ok && r.result.apps.length === 9 && r.result.apps.every((a) => a.on && !a.hidden) && !r.result.owner && !r.result.admin, r);
+check('the public ones carry a link; every tile names its screen (Platform ones only for the admin)', r.ok && r.result.apps.filter((a) => a.url).length === 9 && r.result.apps.filter((a) => a.view).length === 7 && r.result.apps.every((a) => typeof a.where === 'string'), r.result.apps.map((a) => a.key + ':' + a.view + ':' + a.url));
 check('the menu list: 14 screens, all for everyone', r.ok && r.result.menu.length === 14 && r.result.menu.every((m) => m.mode === 'all' && !m.off), r.result.menu);
 
 // 2. the owner sets who sees a screen; staff cannot; the other business is untouched
@@ -25,7 +25,7 @@ check('the owner keeps Repairs for owners only', r.ok && menu(r, 'repairs').mode
 r = await owner('erpAppSet', [{ key: 'campaigns', mode: 'off', scope: 'mine' }]);
 check('...and switches Campaigns off for this business', r.ok && menu(r, 'campaigns').mode === 'off', r);
 r = await owner('erpAppSet', [{ key: 'resell', on: false, scope: 'mine' }]);
-check('the old on/off still works: off = only owners; a network feature that is a menu screen carries its mode on the tile', r.ok && menu(r, 'resell').mode === 'owner' && r.result.apps.find((a) => a.key === 'resell').mode === 'owner', r);
+check('the old on/off still works: off = only owners', r.ok && menu(r, 'resell').mode === 'owner', r);
 r = await owner('erpAppSet', [{ key: 'find', mode: 'off', scope: 'mine' }]);
 check('a public page is not in the menu', !r.ok, r);
 r = await owner('erpAppSet', [{ key: 'dash', mode: 'off', scope: 'mine' }]);
@@ -63,7 +63,7 @@ check('every company sees it off', r.ok && r.result.apps.find((a) => a.key === '
 r = await call('erpHello', [], { token: { code: '222222', device: 'dev-sales' } });
 check('hello carries the off list', r.ok && r.result.apps.off.includes('ideas'), r.result.apps);
 r = await owner('erpAppSet', [{ key: 'resell', on: false, scope: 'all' }]);
-check('Resell off for everyone: the menu list says so', r.ok && menu(r, 'resell').off === true, r);
+check('Resell is a menu screen, not an app the provider switches', !r.ok, r);
 r = await owner('erpAppSet', [{ key: 'find', on: false, scope: 'all' }]);
 r = await get('pub=find&q=pla');
 check('Find stock off: its search is refused', !r.ok && r.off === true, r);
@@ -73,7 +73,6 @@ r = await owner('erpAppSet', [{ key: 'weborders', on: false, scope: 'all' }]);
 check('a plain menu screen is not an app the provider switches', !r.ok, r);
 r = await owner('erpAppSet', [{ key: 'find', on: true, scope: 'all' }]);
 r = await owner('erpAppSet', [{ key: 'ideas', on: true, scope: 'all' }]);
-r = await owner('erpAppSet', [{ key: 'resell', on: true, scope: 'all' }]);
 r = await get('pub=ideas');
 check('switched back on: the page answers again', r.ok, r);
 r = await owner('erpAppSet', [{ key: 'nothing', on: true, scope: 'all' }]);

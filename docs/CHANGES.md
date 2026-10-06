@@ -1032,3 +1032,11 @@ switched off shows the provider a "Switch on for everyone" button in that row. S
 'apps_menu' = {key: mode}; the old 'apps_hidden' list reads as 'owner' and is retired on the first save.
 `erpAppSet {key, mode, scope:'mine'}` (the old `on` still means everyone / only owners); erpHello carries
 `apps: {off, hidden, gone}`. `apps_test.mjs` (28). Staff cannot change it (server: owner only).
+
+## Apps = the special features only (tag apps-6, 7 Oct 2026)
+
+Owner: Market, Resell, Print jobs and Joint stock are menu screens, not apps. They leave the Apps page (which now
+holds the 9 public features: Find stock, Colour finder, Printer Passport, Customer page, Print Doctor, Get it printed,
+Print quote, Design desk, Ideas) and are managed only in Settings → Business → Edit menu bar. On his word, live:
+Customer page, Get it printed, Print quote, Design desk, Ideas switched off for everyone ("not open for customers yet");
+Print jobs Off in Costareen's menu bar. apps_test (28).

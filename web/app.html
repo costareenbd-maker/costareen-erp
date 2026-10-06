@@ -21556,7 +21556,7 @@ document.addEventListener('click', function (ev) {
 <script>
 var APPS = null, APPS_ERR = '';
 var APPS_CORE = { dash: 1, apps: 1, invoice: 1, sales: 1, customers: 1, products: 1, stock: 1, cash: 1, settings: 1, platform: 1, orders: 1, home: 1 };
-var APPS_GROUPS = ['For customers', 'Between shops'];
+var APPS_GROUPS = ['For customers'];
 function apState() { var a = (ME && ME.apps) || {}; return { off: a.off || [], hidden: a.hidden || [], gone: a.gone || [] }; }
 function apSyncMe(r) {
   if (!ME) return;
