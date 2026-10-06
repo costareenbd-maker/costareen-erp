@@ -970,3 +970,12 @@ pruning never removed anything: `storage.find` in index.ts passed `search: ' - b
 matches `search` against the START of the name. Removed `search`; the code already filters by `includes(part)`.
 Same path served invoice PDF and quotation-asset lookups by part of the name. Live: 7 files listed with links.
 Not done: no test (storage is a live HTTP service, not in the harness).
+
+## Fix: public-page refusals no longer show as failed timers (tag alerts-pub-fix, 7 Oct 2026)
+
+`/quote` refusing a visitor while "Taking requests" is off runs as the owner (`pub:quote`), so its error landed in
+erp_errors as who='Timer' and the Alerts bell showed a daily red "pub:quote failed". `erpAlerts` now skips `pub:*`
+actions. Test in phase6_test. Also checked and NOT changed: cost at sale is already frozen from the price book for
+every line since 5 Oct (0 zero-cost lines on 5-6 Oct); earlier zeros are history and the reports fall back to today's
+book cost for them. Live payments do flip invoice status (INV-1911 Partial); the 453 "Pending though paid" are all
+imported rows - the owner's data, left alone.

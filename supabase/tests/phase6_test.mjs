@@ -62,10 +62,13 @@ check('nothing to report', r.ok && r.result.count === 0 && r.result.phone === ''
 await erpCall(deps, { name: 'erpHello', args: [], token: { code: '222222', device: 'new-phone', label: 'Mozilla/5.0 (Linux; Android 14) Chrome/120' } });
 await sql`insert into erp_errors (business_id, who, role, action, message, build) values (${FIX.B}, 'Timer', 'owner', 'nightly:steadfast', 'Steadfast said no', 'jobs')`;
 await sql`insert into erp_errors (business_id, who, role, action, message, build) values (${FIX.B2}, 'Timer', 'owner', 'nightly:backup', 'not ours', 'jobs')`;
+// a public page refusing a visitor runs as the owner too - it is not a failed timer
+await sql`insert into erp_errors (business_id, who, role, action, message, build) values (${FIX.B}, 'Timer', 'owner', 'pub:quote', 'This shop is not taking print requests right now.', 'jobs')`;
 r = await owner('erpAlerts', []);
 const titles = r.result.alerts.map((a) => a.title);
 check('a device waiting and a failed night job', r.ok && r.result.count === 2 && titles.includes('Rina is waiting to be let in') &&
   titles.includes('The nightly Steadfast check failed') && !JSON.stringify(r.result).includes('not ours'), r.result);
+check('a public page refusal is not an alert', !titles.some((t) => /pub:quote/.test(t)), titles);
 r = await owner('erpAlertPhone', [{ phone: '123' }]);
 check('alert number must be a real mobile', !r.ok, r);
 r = await owner('erpAlertPhone', [{ phone: '01799999999' }]);

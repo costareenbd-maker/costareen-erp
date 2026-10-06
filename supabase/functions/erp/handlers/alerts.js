@@ -43,6 +43,8 @@ export async function alertList(ctx) {
       where business_id = ${ctx.biz} and who = 'Timer' and at > now() - interval '48 hours' order by at desc limit 40`;
     const seen = {};
     for (const r of rows) {
+      // a public page refusing a visitor ("not taking print requests") runs as the owner too, but it is not a timer failing
+      if (/^pub:/.test(str(r.action))) continue;
       const day = formatDate(new Date(r.at), 'yyyy-MM-dd'), k = 'timer:' + r.action + ':' + day;
       if (seen[k]) continue;
       seen[k] = true;
