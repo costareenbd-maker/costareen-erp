@@ -21,6 +21,11 @@ const H = await import('./harness.mjs');
 const deps = { ...H.deps, sql, control: connect(postgres, process.env.DB_URL, { max: 2 }), sqlAux: connect(postgres, process.env.DB_URL, { max: 2 }), verifyUser: async () => null };   // owner email sign-in is not simulated
 const PORT = Number(process.env.PORT || 8794);
 deps.hookBase = 'http://localhost:' + PORT + '/';
+// Stage N7: the Get-it-printed page PUTs the file straight to storage with a signed address; locally the fake storage
+// lives in this process, so the signed address and the file links point back here (PUT /upload/..., GET /file/...)
+deps.storage = { ...H.deps.storage,
+  async signUpload(biz, folder, name) { return { url: deps.hookBase + 'upload/' + [biz, folder, name].join('/'), token: 'local', path: folder + '/' + name }; },
+  async url(biz, folder, name) { return deps.hookBase + 'file/' + [biz, folder, name].join('/'); } };
 if (process.env.LINK_ONLY) {
   // as deployed: no sign-in, a private link. One is made for the fixture owner and printed.
   const { keyHash, newKey } = await import(pathToFileURL(path.join(fnDir, 'handlers', 'access.js')));
@@ -36,10 +41,13 @@ http.createServer(async (req, res) => {
   const h = {
     'Access-Control-Allow-Origin': req.headers.origin || '*',
     'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-erp-session, x-region',
-    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    'Access-Control-Allow-Methods': 'POST, PUT, GET, OPTIONS',
     'Content-Type': 'application/json',
   };
-  if (req.method === 'OPTIONS') { res.writeHead(200, h); return res.end('ok'); }
+  if (req.method === 'OPTIONS') { res.writeHead(200, { ...h, 'Access-Control-Allow-Headers': h['Access-Control-Allow-Headers'] + ', x-upsert' }); return res.end('ok'); }
+  { const up = /^\/(upload|file)\/([^/?]+)\/(.+?)\/([^/?]+)(\?.*)?$/.exec(req.url);   // Stage N7: the local stand-in for the storage bucket
+    if (up && req.method === 'PUT') { const parts = []; for await (const c of req) parts.push(c); await H.deps.storage.save(up[2], decodeURIComponent(up[3]), decodeURIComponent(up[4]), Buffer.concat(parts), req.headers['content-type'] || ''); res.writeHead(200, h); return res.end('{"Key":"ok"}'); }
+    if (up && req.method === 'GET') { const bytes = await H.deps.storage.read(up[2], decodeURIComponent(up[3]), decodeURIComponent(up[4])); if (!bytes) { res.writeHead(404, h); return res.end('{}'); } res.writeHead(200, { 'Access-Control-Allow-Origin': '*', 'Content-Type': 'application/octet-stream', 'Content-Disposition': 'attachment; filename="' + up[4] + '"' }); return res.end(Buffer.from(bytes)); } }
   let raw = '';
   for await (const c of req) raw += c;
   // the open door for any website (handlers/shop.js), as index.ts does

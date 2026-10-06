@@ -60,6 +60,7 @@ const storage = {
       .map(([k]) => { const name = k.split('/').slice(2).join('/'); return { id: `${folder}/${name}`, name, url: `https://files.test/${biz}/${folder}/${encodeURIComponent(name)}` }; });
   },
   async remove(biz, folder, name) { store.delete(`${biz}/${folder}/${name}`); },
+  async signUpload(biz, folder, name) { store.set(`${biz}/${folder}/${name}`, { bytes: new Uint8Array(0), mime: 'application/octet-stream', at: Date.now() }); return { url: `https://files.test/upload/${biz}/${folder}/${name}`, token: 'signed', path: `${folder}/${name}` }; },
   async url(biz, folder, name) { return `https://files.test/${biz}/${folder}/${encodeURIComponent(name)}`; },
   async read(biz, folder, name) { const f = store.get(`${biz}/${folder}/${name}`); return f ? f.bytes : null; },
 };

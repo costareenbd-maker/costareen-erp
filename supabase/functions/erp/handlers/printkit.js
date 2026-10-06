@@ -238,6 +238,8 @@ export async function erpPrintJobSave(ctx, payload) {
   if (merged.spool_id && drawNow !== drawnBefore) await drawGrams(ctx, merged.spool_id, drawNow - drawnBefore, merged.job_no || 'new job');
   if (r) {
     await ctx.tx`update print_jobs set ${ctx.tx(f)} where id = ${r.id}`;
+    // Stage N7: a job that came from the public board is done when it is delivered
+    if (status === 'delivered' && was !== 'delivered' && r.request_id) { try { await (await import('./printboard.js')).boardDone(ctx, r.request_id, r.job_no); } catch (e) { console.error('board done', e); } }
     return erpPrintJob(ctx, { jobNo: r.job_no });
   }
   const today = formatDate(ctx.now, 'yyMMdd');

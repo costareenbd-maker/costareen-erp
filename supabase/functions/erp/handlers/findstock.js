@@ -71,7 +71,8 @@ export async function shopPage(deps, params, ip) {
   const rows = await publicListings(deps, deps.control`and l.source = ${s.source} and l.business_id = ${s.business_id}`);
   const items = rows.map((l) => ({ productId: l.product_id, name: str(l.name), brand: str(l.brand), category: str(l.category), colour: str(l.color), hex: str(l.color_hex), unit: str(l.unit), band: str(l.band), price: l.price == null ? null : num(l.price), updated: ago(l.updated_at) }))
     .sort((a, b) => (a.band === 'in' ? 0 : 1) - (b.band === 'in' ? 0 : 1) || a.name.localeCompare(b.name));
-  return { shop: shopRow(s), items, consent: CONSENT_ORDER };
+  let rating = null; try { rating = await (await import('./printboard.js')).farmRating(deps.control, s.source, s.business_id); } catch (_) { rating = null; }
+  return { shop: { ...shopRow(s), rating }, items, consent: CONSENT_ORDER };
 }
 async function shopOf(deps, R, slug) {
   const s = (await deps.control`select * from erp_market_shops where slug = ${str(slug).toLowerCase()} and public`)[0];

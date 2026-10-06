@@ -45,6 +45,7 @@ import { HANDLERS as doctor } from './doctor.js';
 import { HANDLERS as printkit } from './printkit.js';
 import { HANDLERS as community } from './community.js';
 import { HANDLERS as loyalty } from './loyalty.js';
+import { HANDLERS as printboard } from './printboard.js';
 import { HANDLERS as platform } from './platform.js';
 import { HANDLERS as risk } from './risk.js';
 import { HANDLERS as connections } from './connections.js';
@@ -94,7 +95,7 @@ const core = {
 
 export const HANDLERS = {};
 for (const [group, table] of Object.entries({ core, sales, courier, customers, stock, dashboard,
-                                              expenses, weborders, quotes, settings, campaigns, capital, pages, goods, partners, security, alerts, access, listview, cash, suppliers, currency, notes, serials, repairs, excel, users, compliance, market, invoicedesign, passport, publicreg, doctor, printkit, community, loyalty, platform, risk, connections, google, sheet, restore, shop, cod, installer, bizdelete, owners, arena, wooauth, joint })) {
+                                              expenses, weborders, quotes, settings, campaigns, capital, pages, goods, partners, security, alerts, access, listview, cash, suppliers, currency, notes, serials, repairs, excel, users, compliance, market, invoicedesign, passport, publicreg, doctor, printkit, community, loyalty, printboard, platform, risk, connections, google, sheet, restore, shop, cod, installer, bizdelete, owners, arena, wooauth, joint })) {
   for (const [name, fn] of Object.entries(table)) {
     if (HANDLERS[name]) throw new Error('Handler ' + name + ' is defined twice (' + group + ').');
     HANDLERS[name] = fn;

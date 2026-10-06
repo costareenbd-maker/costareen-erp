@@ -1,0 +1,284 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Get it printed</title>
+<meta name="description" content="Post a 3D print job: your browser estimates grams, hours and a fair price range; print farms offer, you choose, you pay the farm.">
+<link rel="icon" href="icons/favicon-32.png">
+<style>
+/* Stage N7 (docs/NETWORK-BLUEPRINT.md 4.1): the public "Get it printed" page. Without ?t= it is the posting page: the
+   file is read HERE in the browser (STL/OBJ: volume by signed tetrahedra, surface, box -> grams, hours, price range),
+   then uploaded straight into storage with a signed address and posted to the board. With ?t=<token> it is the buyer's
+   own job: the farms' offers with their ratings, Choose, the chosen farm's contact, Close, and the rating after delivery.
+   Talks to the server's ?pub=printjob route. The page knows no farm and holds no money. */
+:root{--bg:#f6f7f4;--card:#fff;--ink:#14201c;--mute:#5d6b66;--line:#dfe5e1;--ok:#0f766e;--okbg:#e6f4f1;--warn:#9a5b00;--warnbg:#fff4df;--bad:#b42318;--badbg:#fdecea;--acc:#0f766e;--star:#d98a00}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans","Noto Sans Bengali","Hind Siliguri",sans-serif}
+body{padding:calc(16px + env(safe-area-inset-top,0px)) 16px calc(28px + env(safe-area-inset-bottom,0px))}
+main{max-width:600px;margin:0 auto}
+header{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:16px}
+header h1{font-size:21px;margin:0}header h1 small{display:block;font-size:13px;color:var(--mute);font-weight:500}
+.lang{border:1px solid var(--line);background:var(--card);border-radius:999px;padding:6px 12px;font:inherit;font-size:14px;cursor:pointer}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:14px}
+.card h2{font-size:17px;margin:0 0 6px}
+.state{color:var(--mute);margin:0}
+label{display:block;font-size:14px;color:var(--mute);margin:10px 0 4px}
+input,select,textarea{width:100%;font:inherit;font-size:16px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:#fff;color:var(--ink)}
+textarea{min-height:90px}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--acc);outline-offset:1px;border-color:var(--acc)}
+input[type=range]{padding:0;border:0;accent-color:var(--acc)}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:8px}@media (max-width:440px){.two{grid-template-columns:1fr}}
+.chk{display:flex;gap:8px;align-items:flex-start;font-size:14px;margin:12px 0 0}.chk input{width:auto;margin-top:3px}
+.row{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px;align-items:center}
+button{font:inherit;font-size:15px;padding:11px 16px;border-radius:10px;border:1px solid var(--line);background:#fff;color:var(--ink);cursor:pointer}
+button.pri{background:var(--acc);border-color:var(--acc);color:#fff;font-weight:600}button.bad{color:var(--bad)}button:disabled{opacity:.6;cursor:default}
+a.wa{display:inline-block;font-size:15px;padding:11px 16px;border-radius:10px;background:#1f9d55;color:#fff;font-weight:600;text-decoration:none}
+a.tel{display:inline-block;font-size:15px;padding:11px 16px;border-radius:10px;border:1px solid var(--line);color:var(--ink);text-decoration:none;font-weight:600}
+.badge{display:inline-block;font-size:13px;font-weight:600;padding:3px 10px;border-radius:999px}.b-ok{background:var(--okbg);color:var(--ok)}.b-warn{background:var(--warnbg);color:var(--warn)}.b-bad{background:var(--badbg);color:var(--bad)}.b-mute{background:#eef1ee;color:var(--mute)}
+.big{font-size:26px;font-weight:700;font-variant-numeric:tabular-nums}
+dl{display:grid;grid-template-columns:minmax(90px,36%) 1fr;gap:6px 12px;margin:10px 0 0;font-size:15px}dt{color:var(--mute)}dd{margin:0;font-weight:600;overflow-wrap:anywhere}
+.err{color:var(--bad);font-size:14px;margin-top:8px}.hint{font-size:13px;color:var(--mute)}
+code{font-size:13px;word-break:break-all}
+.drop{border:2px dashed var(--line);border-radius:14px;padding:18px;text-align:center;background:#fafbf9;cursor:pointer}.drop.on{border-color:var(--acc);background:var(--okbg)}.drop input{display:none}.drop b{display:block;font-size:16px}.drop span{font-size:13px;color:var(--mute)}
+.est{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}@media (max-width:440px){.est{grid-template-columns:1fr 1fr}}
+.est div{background:#fafbf9;border:1px solid var(--line);border-radius:10px;padding:8px 10px}.est b{display:block;font-size:19px;font-variant-numeric:tabular-nums}.est span{font-size:12px;color:var(--mute)}
+.bar{height:8px;background:#eef1ee;border-radius:999px;overflow:hidden;margin-top:10px}.bar i{display:block;height:100%;background:var(--acc);width:0;transition:width .2s}
+.offer{border:1px solid var(--line);border-radius:12px;padding:12px;margin-top:10px;display:grid;grid-template-columns:1fr auto;gap:6px 12px;align-items:start}.offer.ch{border-color:var(--ok);background:var(--okbg)}.offer.pa{opacity:.6}
+.offer .nm{font-weight:600}.offer .pr{font-size:22px;font-weight:700;font-variant-numeric:tabular-nums;text-align:right;white-space:nowrap}.offer .ft{grid-column:1/-1}
+.star{color:var(--star);font-weight:600}
+.stars button{font-size:26px;padding:4px 8px;border:0;background:none;color:#c9d1cc;cursor:pointer;line-height:1}.stars button.on{color:var(--star)}
+footer{font-size:13px;color:var(--mute);text-align:center;margin-top:22px}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
+<main>
+  <header><h1 id="h1"><span data-t="title">Get it printed</span><small data-t="sub">Post the file, see a fair estimate, let print farms offer</small></h1><button class="lang" id="lang" type="button">বাংলা</button></header>
+  <div id="out"><div class="card"><p class="state" data-t="loading">Loading…</p></div></div>
+  <footer><span data-t="foot">An open community platform. The farm you choose prints, invoices and delivers; you pay the farm. The board holds no money and gives your name and number to nobody else.</span><br><a href="find" data-t="find">Find stock</a> · <a href="doctor" data-t="doctor">Print Doctor</a> · <a href="check" data-t="check">Printer Passport</a> · <a href="choose" data-t="choose">Help me choose</a> · <a href="ideas" data-t="ideas">Ideas</a></footer>
+</main>
+<script>
+var API = (new URLSearchParams(location.search).get('api') || 'https://oqzcuuytytqadqjlwdsh.supabase.co/functions/v1/erp').replace(/\/+$/, '');
+var Q = new URLSearchParams(location.search), TOKEN = Q.get('t') || '';
+var T = {
+  en: { title: 'Get it printed', sub: 'Post the file, see a fair estimate, let print farms offer', loading: 'Loading…', foot: 'An open community platform. The farm you choose prints, invoices and delivers; you pay the farm. The board holds no money and gives your name and number to nobody else.', find: 'Find stock', doctor: 'Print Doctor', check: 'Printer Passport', choose: 'Help me choose', ideas: 'Ideas', net: 'Could not reach the server. Check your connection and try again.',
+    how: 'How it works', how1: '1. Drop your file. Your browser works out grams, hours and a fair price range - nothing is uploaded yet.', how2: '2. Post the job. Farms on the platform see the city, the file and your words - not your name or number.', how3: '3. Farms offer a price and days; you choose one on your job link. That farm gets your contact, prints, invoices and delivers. You pay the farm. After delivery you rate it.',
+    drop: 'Drop the file here or tap to pick', dropTypes: 'STL or OBJ for an estimate · 3MF, STEP, ZIP, a photo or PDF of a sketch also fine · up to 40 MB', reading: 'Reading the file…', noVol: 'The file has no closed volume (a flat or broken mesh) - farms will quote by eye.', notModel: 'Not a model file: no estimate, but the farm can look at it.', tiny: 'Very small - was it saved in inches? Check the size with the farm.', huge: 'Bigger than most printers (250 mm) - the farm may split it.',
+    est: 'Estimate per piece', grams: 'grams', hours: 'hours', price: 'fair price', box: 'size (mm)', tri: 'triangles', estNote: 'A browser estimate for PLA-class material at 0.2 mm layers; farms set the real price in their offers.', infill: 'Infill', material: 'Material', any: 'Let the farm choose', colour: 'Colour', anyColour: 'any', qty: 'How many', notes: 'What is it for, deadline, finish, anything the farm should know', link: 'Link to the file instead (Drive, Printables, Thingiverse)', total: 'for all pieces',
+    you: 'You', city: 'Your city or area', name: 'Your name', phone: 'Your mobile number', consent: 'The farm I choose gets my name, number and file to print and deliver this job; until then farms see only the city, the file and what I wrote. Offers show the farm, its city and its rating. The platform holds no money: I pay the farm directly.',
+    post: 'Post the job', posting: 'Posting…', uploading: 'Uploading the file…', needFile: 'Add a file, a link to it, or describe what you want.',
+    keep: 'Keep this link - it is the only way back to your job. Offers appear here.', copy: 'Copy the link', copied: 'Copied',
+    job: 'Your job', status: { uploading: 'Not posted yet', open: 'Waiting for offers', taken: 'Given to a farm', done: 'Delivered', closed: 'Closed' }, notPosted: 'This job was never posted. Start again.', again: 'Post a job',
+    offers: 'Offers', noOffers: 'No offers yet. Farms look at the board during the day; come back to this link.', newFarm: 'new farm, no rating yet', jobs: 'jobs', days: 'days', chooseBtn: 'Choose this farm', chosen: 'Chosen', passed: 'Not chosen', choosing: 'Choosing…',
+    farm: 'Your farm', farmNote: 'Agree the details and the delivery with the farm and pay the farm directly. The board holds no money.', call: 'Call', wa: 'WhatsApp', posted: 'posted', file: 'Your file', close: 'Close this job', closeSure: 'Sure? Close it', closed: 'Closed. Thank you.',
+    rate: 'How was the farm?', rateNote: 'Your stars are shown on the farm’s future offers.', rateText: 'A few words (optional)', rateSend: 'Send the rating', rated: 'You rated', thanks: 'Thank you - recorded.' },
+  bn: { title: 'প্রিন্ট করিয়ে নিন', sub: 'ফাইল দিন, ন্যায্য দামের আন্দাজ দেখুন, প্রিন্ট ফার্মগুলো দাম দিক', loading: 'লোড হচ্ছে…', foot: 'একটি উন্মুক্ত কমিউনিটি প্ল্যাটফর্ম। আপনি যে ফার্ম বেছে নেন সে-ই প্রিন্ট করে, বিল দেয়, পৌঁছে দেয়; টাকা আপনি ফার্মকে দেন। বোর্ড কোনো টাকা রাখে না, আপনার নাম-নম্বর অন্য কাউকে দেয় না।', find: 'স্টক খুঁজুন', doctor: 'প্রিন্ট ডাক্তার', check: 'প্রিন্টার পাসপোর্ট', choose: 'বেছে নিতে সাহায্য', ideas: 'আইডিয়া', net: 'সার্ভারে পৌঁছানো যায়নি। ইন্টারনেট দেখে আবার চেষ্টা করুন।',
+    how: 'কীভাবে কাজ করে', how1: '১. ফাইলটি দিন। আপনার ব্রাউজারই গ্রাম, ঘণ্টা ও ন্যায্য দামের সীমা হিসাব করে - এখনো কিছু আপলোড হয় না।', how2: '২. কাজটি পোস্ট করুন। প্ল্যাটফর্মের ফার্মগুলো শহর, ফাইল ও আপনার কথা দেখে - আপনার নাম বা নম্বর নয়।', how3: '৩. ফার্মগুলো দাম ও দিন জানায়; আপনি আপনার লিংকে একটি বেছে নেন। সেই ফার্ম আপনার যোগাযোগ পায়, প্রিন্ট করে, বিল দেয়, পৌঁছে দেয়। টাকা আপনি ফার্মকে দেন। ডেলিভারির পর রেটিং দেন।',
+    drop: 'ফাইলটি এখানে ফেলুন বা ট্যাপ করে বেছে নিন', dropTypes: 'আন্দাজের জন্য STL বা OBJ · 3MF, STEP, ZIP, স্কেচের ছবি বা PDF-ও চলবে · সর্বোচ্চ ৪০ MB', reading: 'ফাইল পড়া হচ্ছে…', noVol: 'ফাইলে বন্ধ আয়তন নেই (চ্যাপ্টা বা ভাঙা মেশ) - ফার্ম দেখে দাম বলবে।', notModel: 'এটি মডেল ফাইল নয়: আন্দাজ নেই, তবে ফার্ম দেখতে পারবে।', tiny: 'খুব ছোট - ইঞ্চিতে সেভ করা? মাপটা ফার্মের সাথে মিলিয়ে নিন।', huge: 'বেশিরভাগ প্রিন্টারের (২৫০ মিমি) চেয়ে বড় - ফার্ম ভাগ করে প্রিন্ট করতে পারে।',
+    est: 'প্রতি পিসের আন্দাজ', grams: 'গ্রাম', hours: 'ঘণ্টা', price: 'ন্যায্য দাম', box: 'মাপ (মিমি)', tri: 'ত্রিভুজ', estNote: 'PLA-ধরনের ম্যাটেরিয়াল, ০.২ মিমি লেয়ারে ব্রাউজারের আন্দাজ; আসল দাম ফার্মগুলো তাদের অফারে দেয়।', infill: 'ইনফিল', material: 'ম্যাটেরিয়াল', any: 'ফার্ম বেছে নিক', colour: 'রং', anyColour: 'যেকোনো', qty: 'কয়টা', notes: 'কী কাজে লাগবে, কবে লাগবে, ফিনিশ, ফার্মের জানা দরকার এমন কিছু', link: 'ফাইলের লিংক দিন (Drive, Printables, Thingiverse)', total: 'সব পিস মিলে',
+    you: 'আপনি', city: 'আপনার শহর বা এলাকা', name: 'আপনার নাম', phone: 'আপনার মোবাইল নম্বর', consent: 'আমি যে ফার্ম বেছে নেব সে এই কাজ প্রিন্ট ও পৌঁছে দিতে আমার নাম, নম্বর ও ফাইল পাবে; তার আগে ফার্মগুলো শুধু শহর, ফাইল ও আমার লেখা দেখে। অফারে ফার্মের নাম, শহর ও রেটিং দেখা যায়। প্ল্যাটফর্ম টাকা রাখে না: আমি ফার্মকে সরাসরি দেব।',
+    post: 'কাজটি পোস্ট করুন', posting: 'পোস্ট হচ্ছে…', uploading: 'ফাইল আপলোড হচ্ছে…', needFile: 'একটি ফাইল, তার লিংক, বা কী চান তা লিখুন।',
+    keep: 'এই লিংকটি রাখুন - আপনার কাজে ফেরার একমাত্র পথ। অফার এখানেই আসবে।', copy: 'লিংক কপি', copied: 'কপি হয়েছে',
+    job: 'আপনার কাজ', status: { uploading: 'এখনো পোস্ট হয়নি', open: 'অফারের অপেক্ষায়', taken: 'একটি ফার্মকে দেওয়া', done: 'পৌঁছে দেওয়া হয়েছে', closed: 'বন্ধ' }, notPosted: 'এই কাজটি পোস্ট হয়নি। আবার শুরু করুন।', again: 'কাজ পোস্ট করুন',
+    offers: 'অফার', noOffers: 'এখনো অফার নেই। ফার্মগুলো দিনের বেলায় বোর্ড দেখে; এই লিংকে আবার আসুন।', newFarm: 'নতুন ফার্ম, রেটিং নেই', jobs: 'কাজ', days: 'দিন', chooseBtn: 'এই ফার্মকে বেছে নিন', chosen: 'বেছে নেওয়া', passed: 'বাছাই হয়নি', choosing: 'বাছাই হচ্ছে…',
+    farm: 'আপনার ফার্ম', farmNote: 'বিস্তারিত ও ডেলিভারি ফার্মের সাথে ঠিক করুন, টাকা ফার্মকে সরাসরি দিন। বোর্ড টাকা রাখে না।', call: 'কল', wa: 'WhatsApp', posted: 'পোস্ট', file: 'আপনার ফাইল', close: 'কাজটি বন্ধ করুন', closeSure: 'নিশ্চিত? বন্ধ করুন', closed: 'বন্ধ হয়েছে। ধন্যবাদ।',
+    rate: 'ফার্মটি কেমন ছিল?', rateNote: 'আপনার তারা ফার্মের পরের অফারগুলোতে দেখা যাবে।', rateText: 'কয়েকটি কথা (ঐচ্ছিক)', rateSend: 'রেটিং পাঠান', rated: 'আপনি দিয়েছেন', thanks: 'ধন্যবাদ - লেখা হলো।' }
+};
+var LANG = 'en'; try { LANG = localStorage.getItem('pp_lang') || ((navigator.language || '').indexOf('bn') === 0 ? 'bn' : 'en'); } catch (e) {}
+function t(k) { return (T[LANG] || T.en)[k] || T.en[k] || k; }
+function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+function tk(n) { return '৳' + Number(n || 0).toLocaleString('en-IN'); }
+function val(id) { var n = document.getElementById(id); return n ? n.value : ''; }
+var out = document.getElementById('out'), DATA = null, MODE = '';
+function paintLang() { document.documentElement.lang = LANG; document.querySelectorAll('[data-t]').forEach(function (n) { n.textContent = t(n.getAttribute('data-t')); }); document.getElementById('lang').textContent = LANG === 'bn' ? 'English' : 'বাংলা'; if (MODE === 'form') showForm(); else if (DATA) showJob(DATA); }
+document.getElementById('lang').onclick = function () { LANG = LANG === 'bn' ? 'en' : 'bn'; try { localStorage.setItem('pp_lang', LANG); } catch (e) {} paintLang(); };
+
+/* ---------- reading the model in the browser.
+   Volume = sum over triangles of a·(b×c)/6 (signed tetrahedra against the origin; Zhang & Chen 2001 - the same formula
+   numpy-stl and admesh use), surface = sum of |(b-a)×(c-a)|/2, box = min/max. STL binary: 80-byte header, uint32 count,
+   50 bytes per triangle; STL ASCII: "vertex x y z" lines; OBJ: v/f lines, polygons fanned. Units are taken as mm. */
+function accum() {
+  var vol = 0, area = 0, mn = [Infinity, Infinity, Infinity], mx = [-Infinity, -Infinity, -Infinity];
+  function bb(p) { for (var k = 0; k < 3; k++) { if (p[k] < mn[k]) mn[k] = p[k]; if (p[k] > mx[k]) mx[k] = p[k]; } }
+  return {
+    add: function (a, b, c) {
+      vol += (a[0] * (b[1] * c[2] - b[2] * c[1]) + a[1] * (b[2] * c[0] - b[0] * c[2]) + a[2] * (b[0] * c[1] - b[1] * c[0])) / 6;
+      var ux = b[0] - a[0], uy = b[1] - a[1], uz = b[2] - a[2], vx = c[0] - a[0], vy = c[1] - a[1], vz = c[2] - a[2];
+      var cx = uy * vz - uz * vy, cy = uz * vx - ux * vz, cz = ux * vy - uy * vx;
+      area += Math.sqrt(cx * cx + cy * cy + cz * cz) / 2; bb(a); bb(b); bb(c);
+    },
+    done: function (n) { return n ? { triangles: n, volume: Math.abs(vol), area: area, box: [mx[0] - mn[0], mx[1] - mn[1], mx[2] - mn[2]] } : null; }
+  };
+}
+function parseStl(buf) {
+  var dv = new DataView(buf), n = buf.byteLength, A = accum();
+  if (n >= 84 && 84 + 50 * dv.getUint32(80, true) === n) {
+    var cnt = dv.getUint32(80, true), o = 84, f = function (p) { return [dv.getFloat32(p, true), dv.getFloat32(p + 4, true), dv.getFloat32(p + 8, true)]; };
+    for (var i = 0; i < cnt; i++) { A.add(f(o + 12), f(o + 24), f(o + 36)); o += 50; }
+    return A.done(cnt);
+  }
+  var txt = new TextDecoder().decode(buf); if (!/^\s*solid/i.test(txt)) return null;
+  var re = /vertex\s+([-+0-9.eE]+)\s+([-+0-9.eE]+)\s+([-+0-9.eE]+)/g, m, vs = [], k = 0;
+  while ((m = re.exec(txt))) { vs.push([+m[1], +m[2], +m[3]]); if (vs.length === 3) { A.add(vs[0], vs[1], vs[2]); vs = []; k++; } }
+  return A.done(k);
+}
+function parseObj(txt) {
+  var V = [], A = accum(), k = 0, lines = txt.split(/\r?\n/);
+  for (var i = 0; i < lines.length; i++) {
+    var L = lines[i];
+    if (L.charCodeAt(0) === 118 && L.charCodeAt(1) === 32) { var p = L.trim().split(/\s+/); V.push([+p[1], +p[2], +p[3]]); }
+    else if (L.charCodeAt(0) === 102 && L.charCodeAt(1) === 32) {
+      var idx = L.trim().split(/\s+/).slice(1).map(function (s) { var j = parseInt(s.split('/')[0], 10); return j < 0 ? V.length + j : j - 1; });
+      for (var q = 1; q + 1 < idx.length; q++) { if (V[idx[0]] && V[idx[q]] && V[idx[q + 1]]) { A.add(V[idx[0]], V[idx[q]], V[idx[q + 1]]); k++; } }
+    }
+  }
+  return A.done(k);
+}
+var DENS = { PLA: 1.24, PETG: 1.27, ABS: 1.04, ASA: 1.07, TPU: 1.21, Nylon: 1.14 };
+function r1(n) { return Math.round(n * 10) / 10; }
+function r10(n) { return Math.max(10, Math.round(n / 10) * 10); }
+/* grams: the walls and skins are solid (about 1.2 mm of shell on the whole surface, capped at the volume), the inside is
+   filled to the infill percentage, plus 8% for brim and purge; hours at about 18 g per hour (a middle-of-the-road printer
+   at 0.2 mm); cost = grams x 1.2 Tk + hours x 8 Tk + 50 Tk setup; a fair range is 1.3x to 2.2x of that. An estimate. */
+function estimate(m, material, infillPct) {
+  if (!m || !(m.volume > 0)) return null;
+  var dens = DENS[material] || 1.24, infill = Math.max(0, Math.min(100, infillPct || 15)) / 100;
+  var shell = Math.min(m.volume, m.area * 1.2), matVol = shell + Math.max(0, m.volume - shell) * infill;
+  var grams = matVol / 1000 * dens * 1.08, hours = Math.max(0.2, grams / 18 + 0.1), cost = grams * 1.2 + hours * 8 + 50;
+  return { grams: r1(grams), hours: r1(hours), low: r10(cost * 1.3), high: r10(cost * 2.2), infill: Math.round(infill * 100), triangles: m.triangles, box: m.box.map(function (x) { return Math.round(x); }).join(' × ') + ' mm', material: material || 'PLA' };
+}
+
+/* ---------- the posting page */
+var FILE = null, MODEL = null, MODEL_STATE = '', KEEP = { material: '', colour: '', qty: '1', notes: '', link: '', city: '', name: '', phone: '', infill: '15' };
+function remember() { ['material', 'colour', 'qty', 'notes', 'link', 'city', 'name', 'phone', 'infill'].forEach(function (k) { var n = document.getElementById('p_' + k); if (n) KEEP[k] = n.value; }); }
+function estHtml() {
+  var e = estimate(MODEL, KEEP.material, +KEEP.infill), q = Math.max(1, parseInt(KEEP.qty, 10) || 1);
+  if (!FILE) return '';
+  var h = '<div class="card" id="estcard"><h2>' + t('est') + '</h2>';
+  if (MODEL_STATE === 'reading') return h + '<p class="state">' + t('reading') + '</p></div>';
+  if (MODEL_STATE === 'notmodel') return h + '<p class="state">' + esc(FILE.name) + ' · ' + Math.round(FILE.size / 1024) + ' KB<br>' + t('notModel') + '</p></div>';
+  if (!e) return h + '<p class="state">' + esc(FILE.name) + '<br>' + t('noVol') + '</p></div>';
+  var big = Math.max.apply(null, MODEL.box), warn = big < 5 ? t('tiny') : big > 250 ? t('huge') : '';
+  h += '<div class="est"><div><b>' + e.grams + '</b><span>' + t('grams') + '</span></div><div><b>' + e.hours + '</b><span>' + t('hours') + '</span></div><div><b>' + tk(e.low) + '–' + tk(e.high) + '</b><span>' + t('price') + '</span></div><div><b style="font-size:15px">' + esc(e.box) + '</b><span>' + t('box') + '</span></div><div><b style="font-size:15px">' + e.triangles.toLocaleString('en-IN') + '</b><span>' + t('tri') + '</span></div>' + (q > 1 ? '<div><b>' + tk(e.low * q) + '–' + tk(e.high * q) + '</b><span>' + t('total') + ' (' + q + ')</span></div>' : '') + '</div>' +
+    '<label for="p_infill">' + t('infill') + ' <b id="infv">' + KEEP.infill + '%</b></label><input type="range" id="p_infill" min="5" max="100" step="5" value="' + esc(KEEP.infill) + '">' +
+    (warn ? '<p class="err">' + warn + '</p>' : '') + '<p class="hint" style="margin:8px 0 0">' + t('estNote') + '</p></div>';
+  return h;
+}
+function showForm() {
+  MODE = 'form'; remember();
+  var cities = ['Dhaka', 'Chattogram', 'Sylhet', 'Khulna', 'Rajshahi', 'Barishal', 'Rangpur', 'Mymensingh', 'Cumilla', 'Gazipur', 'Narayanganj', 'Bogura', "Cox's Bazar", 'Jashore'];
+  out.innerHTML = '<div class="card"><h2>' + t('how') + '</h2><p class="hint" style="margin:0 0 4px">' + t('how1') + '</p><p class="hint" style="margin:0 0 4px">' + t('how2') + '</p><p class="hint" style="margin:0">' + t('how3') + '</p></div>' +
+    '<form id="f"><div class="card"><label class="drop' + (FILE ? ' on' : '') + '" id="drop"><input type="file" id="p_file" accept=".stl,.obj,.3mf,.step,.stp,.zip,.jpg,.jpeg,.png,.pdf"><b>' + (FILE ? esc(FILE.name) + ' · ' + Math.round(FILE.size / 1024) + ' KB' : t('drop')) + '</b><span>' + t('dropTypes') + '</span></label>' +
+    '<label for="p_link">' + t('link') + '</label><input id="p_link" maxlength="400" value="' + esc(KEEP.link) + '"></div>' +
+    '<div id="estwrap">' + estHtml() + '</div>' +
+    '<div class="card"><div class="two"><div><label for="p_material">' + t('material') + '</label><select id="p_material"><option value="">' + t('any') + '</option>' + Object.keys(DENS).map(function (m) { return '<option' + (KEEP.material === m ? ' selected' : '') + '>' + m + '</option>'; }).join('') + '</select></div><div><label for="p_colour">' + t('colour') + '</label><input id="p_colour" maxlength="40" placeholder="' + t('anyColour') + '" value="' + esc(KEEP.colour) + '"></div></div>' +
+    '<label for="p_qty">' + t('qty') + '</label><input id="p_qty" inputmode="numeric" value="' + esc(KEEP.qty) + '"><label for="p_notes">' + t('notes') + '</label><textarea id="p_notes" maxlength="1500">' + esc(KEEP.notes) + '</textarea></div>' +
+    '<div class="card"><h2>' + t('you') + '</h2><label for="p_city">' + t('city') + '</label><input id="p_city" list="cities" maxlength="40" value="' + esc(KEEP.city) + '" required><datalist id="cities">' + cities.map(function (c) { return '<option value="' + esc(c) + '">'; }).join('') + '</datalist>' +
+    '<div class="two"><div><label for="p_name">' + t('name') + '</label><input id="p_name" maxlength="60" value="' + esc(KEEP.name) + '" required></div><div><label for="p_phone">' + t('phone') + '</label><input id="p_phone" inputmode="tel" placeholder="01XXXXXXXXX" value="' + esc(KEEP.phone) + '" required></div></div>' +
+    '<label class="chk"><input type="checkbox" id="p_consent"> <span>' + t('consent') + '</span></label>' +
+    '<div class="row"><button type="submit" class="pri" id="p_go">' + t('post') + '</button></div><div class="bar" id="bar" hidden><i id="bari"></i></div><div class="err" id="p_err"></div></div></form>';
+  var drop = document.getElementById('drop');
+  document.getElementById('p_file').addEventListener('change', function () { if (this.files && this.files[0]) takeFile(this.files[0]); });
+  drop.addEventListener('dragover', function (ev) { ev.preventDefault(); drop.classList.add('on'); });
+  drop.addEventListener('dragleave', function () { if (!FILE) drop.classList.remove('on'); });
+  drop.addEventListener('drop', function (ev) { ev.preventDefault(); if (ev.dataTransfer.files && ev.dataTransfer.files[0]) takeFile(ev.dataTransfer.files[0]); });
+  out.addEventListener('input', function (ev) {
+    if (ev.target.id === 'p_infill') { KEEP.infill = ev.target.value; document.getElementById('infv').textContent = KEEP.infill + '%'; var e = estimate(MODEL, KEEP.material, +KEEP.infill); if (e) { var cells = document.querySelectorAll('#estcard .est b'); cells[0].textContent = e.grams; cells[1].textContent = e.hours; cells[2].textContent = tk(e.low) + '–' + tk(e.high); var q = Math.max(1, parseInt(val('p_qty'), 10) || 1); if (cells[5]) cells[5].textContent = tk(e.low * q) + '–' + tk(e.high * q); } }
+    if (ev.target.id === 'p_material' || ev.target.id === 'p_qty') { remember(); document.getElementById('estwrap').innerHTML = estHtml(); }
+  });
+  document.getElementById('f').addEventListener('submit', postJob);
+}
+function takeFile(f) {
+  FILE = f; MODEL = null; MODEL_STATE = 'reading'; remember(); showForm();
+  var ext = (f.name.split('.').pop() || '').toLowerCase();
+  if (ext !== 'stl' && ext !== 'obj') { MODEL_STATE = 'notmodel'; document.getElementById('estwrap').innerHTML = estHtml(); return; }
+  var rd = new FileReader();
+  rd.onload = function () { try { MODEL = ext === 'stl' ? parseStl(rd.result) : parseObj(new TextDecoder().decode(rd.result)); } catch (e) { MODEL = null; } MODEL_STATE = MODEL ? 'ok' : 'novol'; document.getElementById('estwrap').innerHTML = estHtml(); };
+  rd.onerror = function () { MODEL_STATE = 'novol'; document.getElementById('estwrap').innerHTML = estHtml(); };
+  rd.readAsArrayBuffer(f);
+}
+function api(q, body) { return fetch(API + '?pub=' + q, body ? { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) } : undefined).then(function (x) { return x.json(); }); }
+function putFile(up, file, onProgress) {
+  return new Promise(function (ok, no) {
+    var x = new XMLHttpRequest(); x.open('PUT', up.url, true); x.setRequestHeader('content-type', file.type || 'application/octet-stream'); x.setRequestHeader('x-upsert', 'true');
+    x.upload.onprogress = function (ev) { if (ev.lengthComputable) onProgress(ev.loaded / ev.total); };
+    x.onload = function () { x.status >= 200 && x.status < 300 ? ok() : no(new Error('Upload failed (' + x.status + ').')); }; x.onerror = function () { no(new Error(t('net'))); };
+    x.send(file);
+  });
+}
+function postJob(ev) {
+  ev.preventDefault(); remember();
+  var go = document.getElementById('p_go'), err = document.getElementById('p_err'), bar = document.getElementById('bar'), bari = document.getElementById('bari');
+  err.textContent = '';
+  if (!FILE && !KEEP.link.trim() && KEEP.notes.trim().length < 10) { err.textContent = t('needFile'); return; }
+  go.disabled = true; go.textContent = t('posting');
+  var fail = function (e) { go.disabled = false; go.textContent = t('post'); bar.hidden = true; err.textContent = (e && e.message) || e || t('net'); };
+  api('printjob', { want: 'start', fileName: FILE ? FILE.name : '', fileSize: FILE ? FILE.size : 0 }).then(function (s) {
+    if (!s.ok) throw new Error(s.error || t('net'));
+    var up = FILE && s.upload ? (bar.hidden = false, go.textContent = t('uploading'), putFile(s.upload, FILE, function (p) { bari.style.width = Math.round(p * 100) + '%'; })) : Promise.resolve();
+    return up.then(function () {
+      go.textContent = t('posting');
+      return api('printjob', { t: s.t, action: 'post', name: KEEP.name, phone: KEEP.phone, city: KEEP.city, material: KEEP.material, colour: KEEP.colour, qty: KEEP.qty, notes: KEEP.notes, link: KEEP.link, est: estimate(MODEL, KEEP.material, +KEEP.infill), consent: document.getElementById('p_consent').checked });
+    }).then(function (p) {
+      if (!p.ok) throw new Error(p.error || t('net'));
+      TOKEN = s.t; MODE = ''; FILE = null; MODEL = null;
+      try { history.replaceState(null, '', location.pathname + '?t=' + encodeURIComponent(TOKEN) + (Q.get('api') ? '&api=' + encodeURIComponent(Q.get('api')) : '')); } catch (e) {}
+      JUST_POSTED = p.jobUrl; load();
+    });
+  }).catch(fail);
+}
+
+/* ---------- the buyer's own job */
+var JUST_POSTED = '', CLOSE_ARMED = false, STARS = 0;
+function starsHtml(r) { return r && r.count ? '<span class="star">★ ' + r.stars + '</span> <span class="hint">(' + r.count + ' ' + t('jobs') + ')</span>' : '<span class="hint">' + t('newFarm') + '</span>'; }
+function showJob(r) {
+  DATA = r; MODE = 'job';
+  if (!r.ok) { out.innerHTML = '<div class="card"><p class="state">' + esc(r.error || t('net')) + '</p><div class="row"><a class="tel" href="print">' + t('again') + '</a></div></div>'; return; }
+  if (r.status === 'uploading') { out.innerHTML = '<div class="card"><p class="state">' + t('notPosted') + '</p><div class="row"><a class="tel" href="print">' + t('again') + '</a></div></div>'; return; }
+  var st = t('status')[r.status] || r.status, cls = r.status === 'open' ? 'b-warn' : r.status === 'closed' ? 'b-mute' : 'b-ok', e = r.est, h = '';
+  if (JUST_POSTED) h += '<div class="card" style="border-color:var(--ok)"><p class="hint" style="margin:0 0 6px;color:var(--ink)">' + t('keep') + '</p><code>' + esc(JUST_POSTED) + '</code><div class="row"><button type="button" id="cp">' + t('copy') + '</button></div></div>';
+  h += '<div class="card"><h2>' + t('job') + ' ' + esc(r.jobNo) + '</h2><span class="badge ' + cls + '">' + st + '</span>' +
+    '<dl><dt>' + t('material') + '</dt><dd>' + esc([r.material, r.colour].filter(Boolean).join(' · ') || t('any')) + '</dd><dt>' + t('qty') + '</dt><dd>' + r.qty + '</dd>' + (r.notes ? '<dt>' + t('notes').split(',')[0] + '</dt><dd style="font-weight:400">' + esc(r.notes) + '</dd>' : '') +
+    (r.fileUrl ? '<dt>' + t('file') + '</dt><dd><a href="' + esc(r.fileUrl) + '" target="_blank" rel="noopener">' + esc(r.fileName) + '</a></dd>' : '') + (r.link ? '<dt>' + t('link').split(' (')[0] + '</dt><dd><a href="' + esc(r.link) + '" target="_blank" rel="noopener">' + esc(r.link) + '</a></dd>' : '') + '<dt>' + t('posted') + '</dt><dd>' + esc(r.posted) + '</dd>' +
+    (e && e.grams ? '<dt>' + t('est') + '</dt><dd>' + e.grams + ' g · ' + e.hours + ' h · ' + tk(e.low) + '–' + tk(e.high) + (e.box ? '<br><span class="hint">' + esc(e.box) + '</span>' : '') + '</dd>' : '') + '</dl>' +
+    (r.status === 'open' ? '<div class="row"><button type="button" class="bad" data-a="close">' + (CLOSE_ARMED ? t('closeSure') : t('close')) + '</button></div><div class="err" id="j_err"></div>' : '') + '</div>';
+  if (r.farm && (r.status === 'taken' || r.status === 'done')) {
+    var ph = String(r.farm.phone || '').replace(/[^0-9]/g, ''), wa = ph ? 'https://wa.me/' + (ph.length === 11 && ph.charAt(0) === '0' ? '88' + ph : ph) : '';
+    h += '<div class="card"><h2>' + t('farm') + '</h2><div class="big" style="font-size:20px">' + esc(r.farm.name) + '</div>' + (r.farm.address ? '<div class="hint">' + esc(r.farm.address) + '</div>' : r.farm.city ? '<div class="hint">' + esc(r.farm.city) + '</div>' : '') +
+      (ph ? '<div class="row"><a class="tel" href="tel:' + esc(ph) + '">' + t('call') + ' ' + esc(r.farm.phone) + '</a><a class="wa" href="' + esc(wa) + '" target="_blank" rel="noopener">' + t('wa') + '</a></div>' : '') + '<p class="hint" style="margin:10px 0 0">' + t('farmNote') + '</p></div>';
+  }
+  if (r.status === 'done') {
+    h += '<div class="card"><h2>' + t('rate') + '</h2>' + (r.rating ? '<p class="state">' + t('rated') + ' <span class="star">' + '★'.repeat(r.rating.stars) + '</span>' + (r.rating.text ? ' · ' + esc(r.rating.text) : '') + '</p>' :
+      '<div class="stars" id="stars">' + [1, 2, 3, 4, 5].map(function (i) { return '<button type="button" data-s="' + i + '"' + (i <= STARS ? ' class="on"' : '') + '>★</button>'; }).join('') + '</div><label for="r_text">' + t('rateText') + '</label><input id="r_text" maxlength="500"><p class="hint">' + t('rateNote') + '</p><div class="row"><button type="button" class="pri" data-a="rate"' + (STARS ? '' : ' disabled') + '>' + t('rateSend') + '</button></div><div class="err" id="j_err"></div>') + '</div>';
+  }
+  if (r.status === 'open' || r.status === 'taken' || r.status === 'done') {
+    h += '<div class="card"><h2>' + t('offers') + (r.offers.length ? ' (' + r.offers.length + ')' : '') + '</h2>' + (r.offers.length ? r.offers.map(function (o) {
+      var mine = o.id === r.chosen;
+      return '<div class="offer' + (mine ? ' ch' : o.status === 'passed' ? ' pa' : '') + '"><div><div class="nm">' + esc(o.farm) + (o.city && !new RegExp(esc(o.city)).test(o.farm) ? ' <span class="hint">· ' + esc(o.city) + '</span>' : '') + '</div>' + starsHtml(o.rating) + '</div><div class="pr">' + tk(o.price) + (o.days != null ? '<div class="hint" style="font-weight:400">' + o.days + ' ' + t('days') + '</div>' : '') + '</div>' +
+        (o.note ? '<div class="ft hint">' + esc(o.note) + '</div>' : '') + (r.status === 'open' ? '<div class="ft row" style="margin-top:4px"><button type="button" class="pri" data-a="choose" data-id="' + esc(o.id) + '">' + t('chooseBtn') + '</button></div>' : mine ? '<div class="ft"><span class="badge b-ok">' + t('chosen') + '</span></div>' : '<div class="ft"><span class="badge b-mute">' + t('passed') + '</span></div>') + '</div>'; }).join('') : '<p class="state">' + (r.status === 'open' ? t('noOffers') : '') + '</p>') + (r.status === 'open' ? '<div class="err" id="o_err"></div>' : '') + '</div>';
+  }
+  out.innerHTML = h;
+  var cp = document.getElementById('cp'); if (cp) cp.onclick = function () { var b = this; try { navigator.clipboard.writeText(JUST_POSTED).then(function () { b.textContent = t('copied'); }); } catch (e) { prompt('', JUST_POSTED); } };
+}
+out.addEventListener('click', function (ev) {
+  var s = ev.target.closest('[data-s]'); if (s) { STARS = +s.getAttribute('data-s'); showJob(DATA); return; }
+  var b = ev.target.closest('[data-a]'); if (!b || MODE !== 'job') return;
+  var a = b.getAttribute('data-a');
+  if (a === 'close' && !CLOSE_ARMED) { CLOSE_ARMED = true; showJob(DATA); return; }
+  out.querySelectorAll('[data-a]').forEach(function (x) { x.disabled = true; });
+  if (a === 'choose') b.textContent = t('choosing');
+  var body = { t: TOKEN, action: a }; if (a === 'choose') body.offerId = b.getAttribute('data-id'); if (a === 'rate') { body.stars = STARS; body.text = val('r_text'); }
+  api('printjob', body).then(function (x) {
+    if (!x.ok) { out.querySelectorAll('[data-a]').forEach(function (y) { y.disabled = false; }); var e = document.getElementById(a === 'choose' ? 'o_err' : 'j_err'); if (e) e.textContent = x.error || t('net'); return; }
+    CLOSE_ARMED = false; JUST_POSTED = ''; load();
+  }, function () { out.querySelectorAll('[data-a]').forEach(function (y) { y.disabled = false; }); var e = document.getElementById(a === 'choose' ? 'o_err' : 'j_err'); if (e) e.textContent = t('net'); });
+});
+function load() {
+  if (!TOKEN) { showForm(); return; }
+  api('printjob&t=' + encodeURIComponent(TOKEN)).then(showJob, function () { showJob({ ok: false, error: t('net') }); });
+}
+paintLang(); load();
+</script>
+</body>
+</html>

@@ -177,6 +177,14 @@ function projectParts(p: Project) {
       }
       return out;
     },
+    // Stage N7: the browser uploads a file straight into the bucket with a one-time signed address
+    async signUpload(biz: string, folder: string, name: string) {
+      const path = `${biz}/${folder}/${name}`;
+      const r = await fetch(`${SUPABASE_URL}/storage/v1/object/upload/sign/${BUCKET}/${enc(path)}`, { method: 'POST', headers: { ...svc, 'Content-Type': 'application/json' }, body: '{}' });
+      if (!r.ok) throw new Error('The upload could not be prepared (' + r.status + ').');
+      const j = await r.json();
+      return { url: SUPABASE_URL + '/storage/v1' + j.url, token: j.token, path: `${folder}/${name}` };
+    },
     async remove(biz: string, folder: string, name: string) {
       await fetch(`${SUPABASE_URL}/storage/v1/object/${BUCKET}`, {
         method: 'DELETE',
