@@ -571,6 +571,7 @@ svg { display:block; width:100%; overflow:visible; }
       <button type="button" data-view="quotes" aria-selected="false"><span class="ic"><svg viewBox="0 0 24 24"><path d="M14 3v4a1 1 0 0 0 1 1h4"/><path d="M17 21H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2z"/><path d="M9 13h6M9 17h6"/></svg></span>Quotations</button>
       <button type="button" data-view="repairs" aria-selected="false"><span class="ic"><svg viewBox="0 0 24 24"><path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 0 0 5.4-5.4l-2.7 2.7-2.1-2.1z"/></svg></span>Repairs</button>
       <button type="button" data-view="printjobs" aria-selected="false"><span class="ic"><svg viewBox="0 0 24 24"><path d="M6 9V3h12v6"/><rect x="3" y="9" width="18" height="8" rx="2"/><path d="M7 17v4h10v-4"/></svg></span>Print jobs</button>
+      <button type="button" data-view="resell" aria-selected="false"><span class="ic"><svg viewBox="0 0 24 24"><path d="M3 7h13l4 4v6H3z"/><circle cx="7" cy="18" r="2"/><circle cx="16" cy="18" r="2"/><path d="M8 11h4"/></svg></span>Resell</button>
       <button type="button" data-view="customers" aria-selected="false"><span class="ic"><svg viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.9M16 3.1a4 4 0 0 1 0 7.8"/></svg></span>Customers</button>
       <button type="button" data-view="campaigns" aria-selected="false"><span class="ic"><svg viewBox="0 0 24 24"><path d="M3 11v2a1 1 0 0 0 1 1h2l5 4V6L6 10H4a1 1 0 0 0-1 1z"/><path d="M15 9a3 3 0 0 1 0 6M18 6a7 7 0 0 1 0 12"/></svg></span>Campaigns</button>
       <div class="navgrp">Goods</div>
@@ -8422,7 +8423,7 @@ function srv(name, args, ok, bad) {
 
 var SRV_ACTIVE = 0, SRV_WRITING = false, SRV_TIMED = {};
 // the same list the server uses to know a call changes nothing (ERP_READS)
-var SRV_READS = /^(erpRestockOffers|erpRestockList|erpWarrantyRules|erpWarrantyCard|erpMyLink|erpPlatformRegister|erpPlatformDoctor|erpPlatformCommunity|erpMarketWaiting|erpBoard|erpPlatformDesign|erpLoyalty|erpCustomerPoints|erpRefillDue|erpDeliveryHistory|erpDeliveryHistoryMany|erpPrintKit|erpPrintJobs|erpPrintJob|erpPrintCost|erpSpools|erpPrintRequests|erpJoint|erpJointCatalog|erpJointCard|erpInvoiceDesign|erpInvoicePreview|erpMarket|erpMarketMine|erpMarketRequests|erpMarketHints|erpMarketNames|erpWanted|erpBrand|erpComplianceLog|erpProviderKey|erpNews|erpAccessKeys|erpAccessWarning|erpAdmin|erpAiKeys|erpAlertRules|erpAlerts|erpArena|erpBackupStatus|erpBg|erpBnWords|erpBookedParcels|erpBrandLogo|erpBundle|erpBusinessLinks|erpBusinesses|erpBusinessesDeleted|erpCampaignAudience|erpCampaignGet|erpCampaignList|erpCapital|erpCashBook|erpCatalog|erpConnStatus|erpConnections|erpCostBook|erpCourier|erpCourierKeyStatus|erpCurrencies|erpCustomerAccount|erpCustomerCredit|erpCustomerList|erpCustomerPage|erpCustomerStatement|erpCustomers|erpDashboardData|erpDaySales|erpDeliveryOptions|erpDevices|erpDiscontinued|erpDues|erpEvoQr|erpEvoStatus|erpExpenseExport|erpExpenseReceiptUrl|erpExpenses|erpFamilies|erpFighters|erpFormOptions|erpGame|erpGetTheme|erpGoogle|erpHello|erpInstalls|erpInvoice|erpInvoicePdf|erpJob|erpJobs|erpListView|erpLookupCustomer|erpLookupUsage|erpMe|erpMoney|erpNoteFileUrl|erpNotes|erpOwnerChange|erpOwnerChanges|erpParcelLabels|erpParcelPreview|erpPartnerStock|erpPartnership|erpPayReasons|erpPeople|erpPlatform|erpPlatformErrors|erpPnl|erpPnlMonth|erpPoList|erpPoolCatalog|erpProduct|erpProductListShare|erpProductPage|erpProductPhotoUrl|erpProductThumbs|erpProfile|erpQuoteAsset|erpQuoteBoot|erpQuoteGet|erpQuoteList|erpRecentInvoices|erpRecovery|erpReorderPlan|erpRestorePreview|erpReturnPreview|erpRisks|erpSales|erpSearch|erpSecurity|erpSelfTest|erpSerialLookup|erpSerialsFor|erpSessions|erpSetTheme|erpSettingsFull|erpSettingsLists|erpSfPayoutLines|erpSfPayouts|erpShareFile|erpSharedStock|erpSheet|erpStatementPdf|erpStockHistory|erpSupplierPage|erpSuppliers|erpToday|erpUsers|erpWaProductPdf|erpWebMatches|erpWebOrderInvoices|erpWebOrders|erpWebsiteTest)$/;
+var SRV_READS = /^(erpRestockOffers|erpRestockList|erpWarrantyRules|erpWarrantyCard|erpMyLink|erpPlatformRegister|erpPlatformDoctor|erpPlatformCommunity|erpMarketWaiting|erpBoard|erpPlatformDesign|erpResell|erpResellerProgramme|erpLoyalty|erpCustomerPoints|erpRefillDue|erpDeliveryHistory|erpDeliveryHistoryMany|erpPrintKit|erpPrintJobs|erpPrintJob|erpPrintCost|erpSpools|erpPrintRequests|erpJoint|erpJointCatalog|erpJointCard|erpInvoiceDesign|erpInvoicePreview|erpMarket|erpMarketMine|erpMarketRequests|erpMarketHints|erpMarketNames|erpWanted|erpBrand|erpComplianceLog|erpProviderKey|erpNews|erpAccessKeys|erpAccessWarning|erpAdmin|erpAiKeys|erpAlertRules|erpAlerts|erpArena|erpBackupStatus|erpBg|erpBnWords|erpBookedParcels|erpBrandLogo|erpBundle|erpBusinessLinks|erpBusinesses|erpBusinessesDeleted|erpCampaignAudience|erpCampaignGet|erpCampaignList|erpCapital|erpCashBook|erpCatalog|erpConnStatus|erpConnections|erpCostBook|erpCourier|erpCourierKeyStatus|erpCurrencies|erpCustomerAccount|erpCustomerCredit|erpCustomerList|erpCustomerPage|erpCustomerStatement|erpCustomers|erpDashboardData|erpDaySales|erpDeliveryOptions|erpDevices|erpDiscontinued|erpDues|erpEvoQr|erpEvoStatus|erpExpenseExport|erpExpenseReceiptUrl|erpExpenses|erpFamilies|erpFighters|erpFormOptions|erpGame|erpGetTheme|erpGoogle|erpHello|erpInstalls|erpInvoice|erpInvoicePdf|erpJob|erpJobs|erpListView|erpLookupCustomer|erpLookupUsage|erpMe|erpMoney|erpNoteFileUrl|erpNotes|erpOwnerChange|erpOwnerChanges|erpParcelLabels|erpParcelPreview|erpPartnerStock|erpPartnership|erpPayReasons|erpPeople|erpPlatform|erpPlatformErrors|erpPnl|erpPnlMonth|erpPoList|erpPoolCatalog|erpProduct|erpProductListShare|erpProductPage|erpProductPhotoUrl|erpProductThumbs|erpProfile|erpQuoteAsset|erpQuoteBoot|erpQuoteGet|erpQuoteList|erpRecentInvoices|erpRecovery|erpReorderPlan|erpRestorePreview|erpReturnPreview|erpRisks|erpSales|erpSearch|erpSecurity|erpSelfTest|erpSerialLookup|erpSerialsFor|erpSessions|erpSetTheme|erpSettingsFull|erpSettingsLists|erpSfPayoutLines|erpSfPayouts|erpShareFile|erpSharedStock|erpSheet|erpStatementPdf|erpStockHistory|erpSupplierPage|erpSuppliers|erpToday|erpUsers|erpWaProductPdf|erpWebMatches|erpWebOrderInvoices|erpWebOrders|erpWebsiteTest)$/;
 function srvPump() {
   if (!SRV_Q.length) return;
   var isRead = SRV_READS.test(SRV_Q[0].name);
@@ -9729,6 +9730,7 @@ function repaint() {
         : VIEW === 'suppliers' ? viewSuppliers()
         : VIEW === 'repairs' ? viewRepairs()
         : VIEW === 'printjobs' ? viewPrintJobs()
+        : VIEW === 'resell' ? viewResell()
         : VIEW === 'platform' ? viewPlatform()
         : VIEW === 'sales' ? viewSales()
         : VIEW === 'quotes' ? viewQuotes()
@@ -9894,6 +9896,7 @@ function go(view, param) {
   if (view === 'repairs') { if (JOBP.no) loadJob(); else loadJobs(); }
   if (view === 'platform') loadPlatform();
   if (view === 'printjobs') pkLoad();
+  if (view === 'resell') rzLoad();
   if (view === 'capital') { CAP_ERR = null; loadCapital(); if (CAP_TAB === 'partner') { PART_ERR = null; loadPartner(); } }
   if (view === 'settings' && SET_TAB === 'security' && !SEC) loadSecurity();
   if (view === 'sales' && INVP.no && !INVP.data) loadInvoicePage();
@@ -12273,7 +12276,7 @@ input.i:focus, select.i:focus, textarea.i:focus { border-color:var(--accent-2); 
 var APPS = [
   { id: 'dashboards', name: 'Dashboard', color: '#7c6bb1', views: ['dash'],
     icon: '<path d="M4 20V10M10 20V4M16 20v-8M22 20H2"/>' },
-  { id: 'sales', name: 'Sales', color: '#e39a2d', views: ['invoice', 'sales', 'weborders', 'quotes', 'repairs', 'printjobs'],
+  { id: 'sales', name: 'Sales', color: '#e39a2d', views: ['invoice', 'sales', 'weborders', 'quotes', 'repairs', 'printjobs', 'resell'],
     icon: '<path d="M3 17l5-5 4 4 8-9"/><path d="M15 7h5v5"/>' },
   { id: 'contacts', name: 'Contacts', color: '#2a9d8f', views: ['customers', 'campaigns'],
     icon: '<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-7 8-7s8 3 8 7"/>' },
@@ -12284,7 +12287,7 @@ var APPS = [
   { id: 'settings', name: 'Settings', color: '#5f6b7a', views: ['settings', 'tools', 'platform'],
     icon: '<circle cx="12" cy="12" r="3.2"/><path d="M12 2.500v3M12 18.500v3M2.500 12h3M18.500 12h3M5.300 5.300l2.100 2.100M16.600 16.600l2.100 2.100M5.300 18.700l2.100-2.100M16.600 7.400l2.100-2.100"/>' }
 ];
-var VIEW_NAMES = { invoice: 'New invoice', sales: 'Invoices', weborders: 'Web orders', quotes: 'Quotations', repairs: 'Repairs', printjobs: 'Print jobs', customers: 'Customers', campaigns: 'Campaigns',
+var VIEW_NAMES = { invoice: 'New invoice', sales: 'Invoices', weborders: 'Web orders', quotes: 'Quotations', repairs: 'Repairs', printjobs: 'Print jobs', resell: 'Resell', customers: 'Customers', campaigns: 'Campaigns',
                    products: 'Products', stock: 'Stock', costs: 'Product cost', market: 'Market', joint: 'Joint stock', profit: 'Profitability', expenses: 'Expenses', capital: 'Capital', cash: 'Money', suppliers: 'Suppliers',
                    settings: 'Settings', tools: 'Maintenance', platform: 'Platform', dash: 'Dashboard', home: 'Home' };
 var VIEW_COUNT = { invoice: 'cCart', sales: 'cSend', weborders: 'cWeb', costs: 'cCosts', market: 'cMarket' };
@@ -21394,6 +21397,126 @@ document.addEventListener('click', function (ev) {
   if (k === 'block' || k === 'unblock') { srv('erpPlatformDesignAct', [{ designerId: id, block: k === 'block' }], reload(k === 'block' ? 'Designer blocked - his link no longer opens.' : 'Designer unblocked.'), fail); return; }
   if (k === 'link') { srv('erpPlatformDesignAct', [{ designerId: id, newLink: true }], function (r) { PDES = null; repaint(); prompt('The designer\u2019s new link (the old one is dead). Send it to him:', r.deskUrl); }, fail); return; }
   if (k === 'remove') { if (b.getAttribute('data-sure') !== '1') { b.setAttribute('data-sure', '1'); b.textContent = 'Remove? Press again'; return; } srv('erpPlatformDesignAct', [{ requestId: id }], reload('Request removed.'), fail); }
+});
+</script>
+
+<!-- Stage N9 (docs/NETWORK-BLUEPRINT.md section 4.3): sell without stock. The Resell screen for a reseller (suppliers,
+     catalogue and order, orders, statements) and the supplier's Resellers card under Market > What I share. -->
+<style>
+.rz-tabs{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0 12px}.rz-sum{display:flex;gap:16px;flex-wrap:wrap;margin:8px 0;font-size:14px}.rz-sum b{font-size:16px}
+.rz-band{display:inline-block;font-size:12px;padding:2px 8px;border-radius:999px;background:#eef1ee}.rz-band.in{background:#e6f4f1;color:#0f766e}.rz-band.low{background:#fff4df;color:#9a5b00}.rz-band.out{background:#fdecea;color:#b42318}
+</style>
+<script>
+var RZ = { data: null, err: '', tab: 'suppliers', link: '', qty: {}, price: {}, cust: { name: '', phone: '', address: '' }, delivery: '', note: '', ask: {}, busy: false };
+function rzLoad() { srv('erpResell', [], function (r) { RZ.data = r; RZ.err = ''; if (!RZ.link && r.catalogues.length) RZ.link = r.catalogues[0].linkId; if (VIEW === 'resell') repaint(); }, function (e) { RZ.err = (e && e.message) || String(e); if (VIEW === 'resell') repaint(); }); }
+function rzPill(st) { var c = st === 'delivered' ? ' ok' : st === 'returned' || st === 'declined' || st === 'cancelled' ? ' bad' : ''; return '<span class="pill' + c + '">' + esc((RZ.data && RZ.data.says[st]) || st) + '</span>'; }
+function rzRemember() { ['name', 'phone', 'address'].forEach(function (k) { var n = el('rz_c_' + k); if (n) RZ.cust[k] = n.value; }); var d = el('rz_delivery'); if (d) RZ.delivery = d.value; var nn = el('rz_note'); if (nn) RZ.note = nn.value; document.querySelectorAll('[data-rzq]').forEach(function (i) { RZ.qty[i.getAttribute('data-rzq')] = i.value; }); document.querySelectorAll('[data-rzp]').forEach(function (i) { RZ.price[i.getAttribute('data-rzp')] = i.value; }); }
+function rzSummary() {
+  var cat = (RZ.data.catalogues || []).find(function (c) { return c.linkId === RZ.link; }); if (!cat) return '';
+  var goods = 0, cost = 0, n = 0;
+  cat.items.forEach(function (it) { var q = Math.round(Number(RZ.qty[it.productId]) || 0); if (q > 0) { var p = Number(RZ.price[it.productId] !== undefined && RZ.price[it.productId] !== '' ? RZ.price[it.productId] : it.retail) || 0; goods += p * q; cost += it.price * q; n += q; } });
+  return '<div class="rz-sum"><span>' + n + ' pieces</span><span>Customer pays <b>\u09f3' + fmt(goods) + '</b>' + (Number(RZ.delivery) > 0 ? ' + \u09f3' + fmt(Number(RZ.delivery)) + ' delivery' : '') + '</span><span>You pay the supplier <b>\u09f3' + fmt(cost) + '</b></span><span>Your margin <b style="color:#0f766e">\u09f3' + fmt(goods - cost) + '</b></span></div>';
+}
+function viewResell() {
+  var h = '<section><div class="card"><h2>Resell \u2014 sell without stock</h2><div class="sub" data-c5x="1" style="display:block">Sell a supplier\u2019s products to your own customers at your own price. The supplier packs with a slip in your name and sends the parcel; its courier collects cash on delivery. Your margin is paid to you by the supplier at month end. The platform holds no money.</div>';
+  if (RZ.err) return h + '<div class="note err"><div class="ico">!</div><div>' + esc(RZ.err) + '</div></div></div></section>';
+  var d = RZ.data; if (!d) { rzLoad(); return h + '<div class="loading">Loading\u2026</div></div></section>'; }
+  var tabs = [['suppliers', 'Suppliers'], ['sell', 'Sell'], ['orders', 'Orders' + (d.orders.length ? ' (' + d.orders.length + ')' : '')], ['statements', 'My commission']];
+  h += '<div class="rz-tabs">' + tabs.map(function (t) { return '<button class="btn' + (RZ.tab === t[0] ? ' primary' : '') + '" type="button" data-rztab="' + t[0] + '">' + t[1] + '</button>'; }).join('') + '</div>';
+  if (RZ.tab === 'suppliers') {
+    h += d.suppliers.length ? '<div class="scroll"><table><thead><tr><th>Supplier</th><th>Your price</th><th>Products</th><th>Terms</th><th>State</th><th></th></tr></thead><tbody>' + d.suppliers.map(function (sp) {
+      var key = sp.source + ':' + sp.business, st = sp.link ? sp.link.status : '';
+      return '<tr><td class="nm">' + esc(sp.name) + (sp.city ? '<br><span class="sku">' + esc(sp.city) + '</span>' : '') + '</td><td>' + (sp.link && sp.link.status === 'active' ? sp.link.pct : sp.pct) + '% off the shelf price</td><td>' + fmt(sp.products) + '</td><td class="sku">' + esc(sp.terms) + '</td>' +
+        '<td>' + (st === 'active' ? '<span class="pill ok">approved</span>' : st === 'asked' ? '<span class="pill">asked - waiting</span>' : st === 'paused' ? '<span class="pill">paused</span>' : st === 'declined' ? '<span class="pill bad">declined</span>' : '') + '</td>' +
+        '<td style="white-space:nowrap">' + (st === 'active' ? '<button class="btn small primary" type="button" data-rzsell="' + esc(sp.link.id) + '">Sell their products</button>' : st === 'asked' ? '' : RZ.ask[key] ? '<div class="pkmini"><input class="i" id="rz_ask_' + esc(key) + '" placeholder="a line about your shop (optional)" style="max-width:260px"><button class="btn small primary" type="button" data-rzjoin="' + esc(key) + '">Send</button></div>' : '<button class="btn small" type="button" data-rzask="' + esc(key) + '">Ask to join</button>') + '</td></tr>'; }).join('') + '</tbody></table></div>'
+      : '<div class="empty">No supplier sells through resellers yet. Suppliers switch it on under Market > What I share.</div>';
+  } else if (RZ.tab === 'sell') {
+    var cat = d.catalogues.find(function (c) { return c.linkId === RZ.link; });
+    if (!d.catalogues.length) h += '<div class="empty">No approved supplier yet - ask one under Suppliers.</div>';
+    else {
+      h += '<div class="row" style="gap:8px;align-items:end;flex-wrap:wrap"><div><label class="f" for="rz_link">Supplier</label><select class="i" id="rz_link">' + d.catalogues.map(function (c) { return '<option value="' + esc(c.linkId) + '"' + (c.linkId === RZ.link ? ' selected' : '') + '>' + esc(c.supplier) + ' (' + c.pct + '% off)</option>'; }).join('') + '</select></div></div>';
+      if (cat) {
+        h += (cat.items.length ? '<div class="scroll" style="margin-top:8px"><table><thead><tr><th>Product</th><th>Stock</th><th class="num">You pay</th><th class="num">Suggested</th><th class="num" style="width:80px">Qty</th><th class="num" style="width:110px">Your price</th></tr></thead><tbody>' + cat.items.map(function (it) {
+          return '<tr><td class="nm">' + esc(it.name) + (it.unit ? ' <span class="sku">' + esc(it.unit) + '</span>' : '') + '</td><td><span class="rz-band ' + esc(it.band) + '">' + (it.band === 'in' ? 'In stock' : it.band === 'low' ? 'Low' : 'Out') + '</span></td><td class="num">' + fmt(it.price) + '</td><td class="num">' + fmt(it.retail) + '</td>' +
+            '<td class="num"><input class="i" inputmode="numeric" data-rzq="' + esc(it.productId) + '" value="' + esc(RZ.qty[it.productId] || '') + '"' + (it.band === 'out' ? ' disabled' : '') + '></td><td class="num"><input class="i" inputmode="decimal" data-rzp="' + esc(it.productId) + '" value="' + esc(RZ.price[it.productId] !== undefined ? RZ.price[it.productId] : it.retail) + '"></td></tr>'; }).join('') + '</tbody></table></div>' : '<div class="empty">The supplier has nothing shared right now.</div>') +
+          '<div id="rz_sum">' + rzSummary() + '</div>' +
+          '<div class="grid g-3" style="gap:8px"><div><label class="f" for="rz_c_name">Customer\u2019s name</label><input class="i" id="rz_c_name" value="' + esc(RZ.cust.name) + '"></div><div><label class="f" for="rz_c_phone">Mobile</label><input class="i" id="rz_c_phone" inputmode="tel" value="' + esc(RZ.cust.phone) + '"></div><div><label class="f" for="rz_delivery">Delivery charge (customer pays)</label><input class="i" id="rz_delivery" inputmode="decimal" value="' + esc(RZ.delivery) + '"></div></div>' +
+          '<label class="f" for="rz_c_address">Delivery address</label><input class="i" id="rz_c_address" value="' + esc(RZ.cust.address) + '"><label class="f" for="rz_note">Note to the supplier (optional)</label><input class="i" id="rz_note" value="' + esc(RZ.note) + '">' +
+          '<div class="row" style="margin-top:10px"><button class="btn primary" type="button" id="rz_place"' + (RZ.busy ? ' disabled' : '') + '>' + (RZ.busy ? 'Placing\u2026' : 'Place the order') + '</button><span class="sku">The supplier invoices your customer at your prices and ships. Cash on delivery goes to the supplier; your margin is settled at month end.</span></div>';
+      }
+    }
+  } else if (RZ.tab === 'orders') {
+    h += d.orders.length ? '<div class="scroll"><table><thead><tr><th>Order</th><th>Supplier</th><th>Customer</th><th>What</th><th class="num">Customer pays</th><th class="num">You pay</th><th class="num">Margin</th><th>State</th><th></th></tr></thead><tbody>' + d.orders.map(function (o) {
+      return '<tr><td class="nm">' + esc(o.orderNo) + '<br><span class="sku">' + esc(o.placed) + '</span></td><td>' + esc(o.supplier) + '</td><td>' + esc(o.customer) + '<br><span class="sku">' + esc(o.phone) + '</span></td><td class="sku">' + o.lines.map(function (l) { return l.qty + ' \u00d7 ' + esc(l.name); }).join(', ') + '</td><td class="num">' + fmt(o.goods + o.delivery) + '</td><td class="num">' + fmt(o.cost) + '</td><td class="num">' + fmt(o.margin) + '</td>' +
+        '<td>' + rzPill(o.status) + (o.consignment ? '<br><span class="sku">parcel ' + esc(o.consignment) + '</span>' : '') + (o.reason ? '<br><span class="sku">' + esc(o.reason) + '</span>' : '') + '</td><td>' + (o.status === 'placed' ? '<button class="btn small" type="button" data-rzcancel="' + esc(o.id) + '">Cancel</button>' : '') + '</td></tr>'; }).join('') + '</tbody></table></div>' : '<div class="empty">No orders yet.</div>';
+  } else {
+    h += '<div class="sub" data-c5x="1" style="display:block">Each delivered and paid order earns its margin. The supplier pays the month\u2019s total; press Received when the money is in your hands. Your commission is not yet a line in your profit report - note it there by hand.</div>' +
+      (d.statements.length ? '<div class="scroll"><table><thead><tr><th>Month</th><th>Supplier</th><th class="num">Orders</th><th class="num">Commission</th><th class="num">Paid</th><th>State</th><th></th></tr></thead><tbody>' + d.statements.map(function (st) {
+        return '<tr><td class="nm">' + esc(st.month) + '</td><td>' + esc(st.supplier) + '</td><td class="num">' + fmt(st.orders) + '</td><td class="num">' + fmt(st.margin) + '</td><td class="num">' + fmt(st.paid) + (st.paidAt ? '<br><span class="sku">' + esc(st.paidAt) + (st.paidNote ? ' \u00b7 ' + esc(st.paidNote) : '') + '</span>' : '') + '</td><td>' + (st.status === 'received' ? '<span class="pill ok">received</span>' : st.status === 'paid' ? '<span class="pill">paid - confirm</span>' : '<span class="pill">open</span>') + '</td>' +
+          '<td>' + (st.status === 'paid' && ME && ME.role === 'owner' ? '<button class="btn small primary" type="button" data-rzrecv="' + esc(st.id) + '">Received</button>' : '') + '</td></tr>'; }).join('') + '</tbody></table></div>' : '<div class="empty">Nothing earned yet.</div>');
+  }
+  return h + '</div></section>';
+}
+document.addEventListener('input', function (ev) { if (VIEW !== 'resell') return; var t = ev.target; if (t && (t.hasAttribute('data-rzq') || t.hasAttribute('data-rzp') || t.id === 'rz_delivery')) { rzRemember(); var s = el('rz_sum'); if (s) s.innerHTML = rzSummary(); } });
+document.addEventListener('change', function (ev) { if (VIEW === 'resell' && ev.target && ev.target.id === 'rz_link') { rzRemember(); RZ.link = ev.target.value; RZ.qty = {}; RZ.price = {}; repaint(); } });
+document.addEventListener('click', function (ev) {
+  if (VIEW !== 'resell') return;
+  var t = ev.target && ev.target.closest ? ev.target.closest('[data-rztab],[data-rzsell],[data-rzask],[data-rzjoin],[data-rzcancel],[data-rzrecv],#rz_place') : null; if (!t) return;
+  var fail = function (e) { RZ.busy = false; toast(esc((e && e.message) || e), true, 9000); repaint(); };
+  if (t.hasAttribute('data-rztab')) { rzRemember(); RZ.tab = t.getAttribute('data-rztab'); repaint(); return; }
+  if (t.hasAttribute('data-rzsell')) { RZ.link = t.getAttribute('data-rzsell'); RZ.tab = 'sell'; repaint(); return; }
+  if (t.hasAttribute('data-rzask')) { RZ.ask[t.getAttribute('data-rzask')] = true; repaint(); return; }
+  if (t.hasAttribute('data-rzjoin')) { var key = t.getAttribute('data-rzjoin'), i = key.indexOf(':'); srv('erpResellJoin', [{ source: key.slice(0, i), business: key.slice(i + 1), note: (el('rz_ask_' + key) || {}).value || '' }], function (r) { toast('Asked ' + r.supplier + ' - you will see "approved" here.'); RZ.ask = {}; rzLoad(); }, fail); return; }
+  if (t.hasAttribute('data-rzcancel')) { srv('erpResellCancel', [{ id: t.getAttribute('data-rzcancel') }], function () { toast('Order cancelled.'); rzLoad(); }, fail); return; }
+  if (t.hasAttribute('data-rzrecv')) { srv('erpResellReceived', [{ statementId: t.getAttribute('data-rzrecv') }], function (r) { toast('\u09f3' + fmt(r.received) + ' marked received.'); rzLoad(); }, fail); return; }
+  if (t.id === 'rz_place') {
+    rzRemember(); var cat = RZ.data.catalogues.find(function (c) { return c.linkId === RZ.link; }); if (!cat) return;
+    var items = cat.items.filter(function (it) { return Math.round(Number(RZ.qty[it.productId]) || 0) > 0; }).map(function (it) { return { productId: it.productId, qty: RZ.qty[it.productId], price: RZ.price[it.productId] !== undefined && RZ.price[it.productId] !== '' ? RZ.price[it.productId] : it.retail }; });
+    RZ.busy = true; repaint();
+    srv('erpResellOrder', [{ linkId: RZ.link, customer: RZ.cust, items: items, delivery: RZ.delivery, note: RZ.note }], function (r) { RZ.busy = false; toast('Order ' + r.order.orderNo + ' sent to ' + r.order.supplier + ' - margin \u09f3' + fmt(r.order.margin) + ' when delivered.'); RZ.qty = {}; RZ.price = {}; RZ.cust = { name: '', phone: '', address: '' }; RZ.delivery = ''; RZ.note = ''; RZ.tab = 'orders'; rzLoad(); }, fail);
+  }
+});
+
+// ---- the supplier's side: Market > What I share > Resellers
+var RZS = { data: null, err: '', open: {} };
+function rzsLoad() { srv('erpResellerProgramme', [], function (r) { RZS.data = r; RZS.err = ''; if (VIEW === 'market') repaint(); }, function (e) { RZS.err = (e && e.message) || String(e); if (VIEW === 'market') repaint(); }); }
+function rzsCard() {
+  var h = '<div class="card" style="margin-top:14px"><h2 style="margin:0 0 4px">Resellers \u2014 let others sell your stock</h2><div class="sub" data-c5x="1" style="display:block">A reseller with no stock sells your ticked products at his own price to his own customer. You invoice that customer at the reseller\u2019s prices (a normal sale: stock out, cost fixed, cash on delivery to your courier), pack with a slip in the reseller\u2019s name, book the parcel as usual. When it is delivered and paid, his margin is his commission - you pay it at month end and it is booked as an expense. The platform holds no money.</div>';
+  if (RZS.err) return h + '<div class="note err"><div class="ico">!</div><div>' + esc(RZS.err) + '</div></div></div>';
+  var d = RZS.data; if (!d) { rzsLoad(); return h + '<div class="loading">Loading\u2026</div></div>'; }
+  var p = d.programme;
+  h += '<label class="mk-sw"><input type="checkbox" id="rzs_on"' + (p.enabled ? ' checked' : '') + '> Sell through resellers</label>' +
+    '<div class="mk-find" style="margin-top:6px"><div style="flex:0 1 160px"><label class="f" for="rzs_pct">Reseller discount %</label><input class="i" id="rzs_pct" inputmode="decimal" value="' + esc(p.pct) + '"></div><div style="flex:0 1 200px"><label class="f" for="rzs_phone">Phone for resellers</label><input class="i" id="rzs_phone" value="' + esc(p.phone) + '"></div><div style="flex:1 1 240px"><label class="f" for="rzs_terms">Terms (a line resellers see)</label><input class="i" id="rzs_terms" maxlength="600" value="' + esc(p.terms) + '" placeholder="e.g. Dhaka only, parcels go out next day, commission paid by bKash on the 5th"></div><button class="btn primary" type="button" id="rzs_save">Save</button></div>' +
+    '<div class="sku" style="margin-top:6px">' + (p.enabled ? fmt(p.listed) + ' ticked products are open to resellers at ' + p.pct + '% off the shelf price.' : 'Off. Switch on and save: resellers then see the ticked products.') + '</div>';
+  var asked = d.links.filter(function (l) { return l.status === 'asked'; }), rest = d.links.filter(function (l) { return l.status !== 'asked'; });
+  h += '<h3 style="margin:12px 0 4px">Resellers' + (asked.length ? ' \u2014 ' + asked.length + ' asking' : '') + '</h3>' + (d.links.length ? '<div class="scroll"><table><thead><tr><th>Reseller</th><th>Says</th><th class="num">Discount %</th><th>State</th><th></th></tr></thead><tbody>' + asked.concat(rest).map(function (l) {
+    return '<tr><td class="nm">' + esc(l.name) + '<br><span class="sku">' + esc([l.city, l.phone].filter(Boolean).join(' \u00b7 ')) + ' \u00b7 ' + esc(l.since) + '</span></td><td class="sku">' + esc(l.note) + '</td><td class="num"><input class="i" style="width:70px" inputmode="decimal" id="rzs_pct_' + esc(l.id) + '" value="' + (l.pct == null ? '' : l.pct) + '" placeholder="' + esc(p.pct) + '"></td><td>' + (l.status === 'active' ? '<span class="pill ok">approved</span>' : l.status === 'asked' ? '<span class="pill">asking</span>' : '<span class="pill">' + esc(l.status) + '</span>') + '</td>' +
+      '<td style="white-space:nowrap">' + (l.status === 'active' ? '<button class="btn small" type="button" data-rzs="link" data-to="paused" data-id="' + esc(l.id) + '">Pause</button> <button class="btn small" type="button" data-rzs="link" data-to="active" data-id="' + esc(l.id) + '">Save %</button>' : '<button class="btn small primary" type="button" data-rzs="link" data-to="active" data-id="' + esc(l.id) + '">' + (l.status === 'asked' ? 'Approve' : 'Resume') + '</button>' + (l.status === 'asked' ? ' <button class="btn small" type="button" data-rzs="link" data-to="declined" data-id="' + esc(l.id) + '">Decline</button>' : '')) + '</td></tr>'; }).join('') + '</tbody></table></div>' : '<div class="empty">No reseller has asked yet. They find you under Resell > Suppliers once the switch is on.</div>');
+  var waiting = d.orders.filter(function (o) { return o.status === 'placed'; }).length;
+  h += '<h3 style="margin:12px 0 4px">Reseller orders' + (waiting ? ' \u2014 ' + waiting + ' waiting' : '') + '</h3>' + (d.orders.length ? '<div class="scroll"><table><thead><tr><th>Order</th><th>Reseller</th><th>Deliver to</th><th>What</th><th class="num">Collect</th><th class="num">Commission</th><th>State</th><th></th></tr></thead><tbody>' + d.orders.map(function (o) {
+    return '<tr><td class="nm">' + esc(o.orderNo) + '<br><span class="sku">' + esc(o.placed) + '</span></td><td>' + esc(o.reseller) + '</td><td>' + esc(o.customer) + '<br><span class="sku">' + esc(o.phone) + ' \u00b7 ' + esc(o.address) + '</span></td><td class="sku">' + o.lines.map(function (l) { return l.qty + ' \u00d7 ' + esc(l.name) + ' @ ' + fmt(l.retail); }).join('<br>') + (o.note ? '<br><i>' + esc(o.note) + '</i>' : '') + '</td><td class="num">' + fmt(o.goods + o.delivery) + '</td><td class="num">' + fmt(o.margin) + '</td>' +
+      '<td>' + rzPill(o.status) + (o.invoiceNo ? '<br><a href="#" data-rzinv="' + esc(o.invoiceNo) + '">' + esc(o.invoiceNo) + '</a>' : '') + (o.consignment ? '<br><span class="sku">parcel ' + esc(o.consignment) + '</span>' : '') + '</td>' +
+      '<td style="white-space:nowrap">' + (o.status === 'placed' ? '<button class="btn small primary" type="button" data-rzs="accept" data-id="' + esc(o.id) + '">Accept &amp; invoice</button> <button class="btn small" type="button" data-rzs="decline" data-id="' + esc(o.id) + '">Decline</button>' : o.status === 'accepted' ? '<button class="btn small" type="button" data-rzs="slip" data-id="' + esc(o.id) + '">Packing slip</button> <button class="btn small primary" type="button" data-rzs="book" data-id="' + esc(o.id) + '">Book parcel</button>' : o.status === 'booked' || o.status === 'delivered' ? '<button class="btn small" type="button" data-rzs="slip" data-id="' + esc(o.id) + '">Packing slip</button>' : '') + '</td></tr>'; }).join('') + '</tbody></table></div>' : '<div class="empty">No reseller orders yet.</div>');
+  h += '<h3 style="margin:12px 0 4px">Commission statements</h3>' + (d.statements.length ? '<div class="scroll"><table><thead><tr><th>Month</th><th>Reseller</th><th class="num">Orders</th><th class="num">Commission</th><th class="num">Paid</th><th class="num">Due</th><th></th></tr></thead><tbody>' + d.statements.map(function (st) {
+    return '<tr><td class="nm">' + esc(st.month) + '</td><td>' + esc(st.reseller) + '</td><td class="num">' + fmt(st.orders) + '</td><td class="num">' + fmt(st.margin) + '</td><td class="num">' + fmt(st.paid) + (st.paidAt ? '<br><span class="sku">' + esc(st.paidAt) + '</span>' : '') + '</td><td class="num">' + fmt(st.due) + '</td><td>' + (st.due > 0 && ME && ME.role === 'owner' ? '<button class="btn small primary" type="button" data-rzs="pay" data-id="' + esc(st.linkId) + '" data-month="' + esc(st.month) + '" data-amt="' + st.due + '">Pay \u09f3' + fmt(st.due) + '</button>' : st.status === 'received' ? '<span class="pill ok">received</span>' : st.status === 'paid' ? '<span class="pill">paid</span>' : '') + '</td></tr>'; }).join('') + '</tbody></table></div>' : '<div class="empty">Nothing to settle yet - delivered and paid orders appear here by month.</div>');
+  return h + '</div>';
+}
+var mkMineHtmlR9 = mkMineHtml;
+mkMineHtml = function () { var h = mkMineHtmlR9(); if (!MK.mine || MK.mine.loading || MK.mineErr) return h; return h + rzsCard(); };
+document.addEventListener('click', function (ev) {
+  if (VIEW !== 'market') return;
+  var inv = ev.target && ev.target.closest ? ev.target.closest('[data-rzinv]') : null;
+  if (inv) { ev.preventDefault(); INVP.no = inv.getAttribute('data-rzinv'); INVP.data = null; go('sales'); return; }
+  var t = ev.target && ev.target.closest ? ev.target.closest('[data-rzs],#rzs_save') : null; if (!t) return;
+  var fail = function (e) { toast(esc((e && e.message) || e), true, 9000); }, reload = function (msg) { return function () { if (msg) toast(msg); RZS.data = null; repaint(); }; };
+  if (t.id === 'rzs_save') { srv('erpResellerProgrammeSave', [{ enabled: el('rzs_on').checked, pct: el('rzs_pct').value, phone: el('rzs_phone').value, terms: el('rzs_terms').value }], function (r) { toast(r.hint || (r.listed + ' products open to resellers.')); RZS.data = null; repaint(); }, fail); return; }
+  var k = t.getAttribute('data-rzs'), id = t.getAttribute('data-id');
+  if (k === 'link') { srv('erpResellerLinkSet', [{ id: id, status: t.getAttribute('data-to'), pct: (el('rzs_pct_' + id) || {}).value || '' }], reload('Saved.'), fail); return; }
+  if (k === 'accept') { t.disabled = true; srv('erpResellerAccept', [{ id: id }], function (r) { toast('Invoice ' + r.invoiceNo + ' made - print the packing slip, pack, book the parcel.'); RZS.data = null; repaint(); }, function (e) { t.disabled = false; fail(e); }); return; }
+  if (k === 'decline') { var why = prompt('Why? (the reseller sees it)', ''); if (why === null) return; srv('erpResellerDecline', [{ id: id, reason: why }], reload('Declined.'), fail); return; }
+  if (k === 'slip') { srv('erpResellerSlip', [{ id: id }], function (r) { window.open(r.url, '_blank', 'noopener'); }, fail); return; }
+  if (k === 'book') { t.disabled = true; srv('erpResellerBook', [{ id: id }], function (r) { toast('Parcel booked: ' + r.consignment + ' - collects \u09f3' + fmt(r.collect) + '.'); RZS.data = null; repaint(); }, function (e) { t.disabled = false; fail(e); }); return; }
+  if (k === 'pay') { if (t.getAttribute('data-sure') !== '1') { t.setAttribute('data-sure', '1'); t.textContent = 'Paid \u09f3' + fmt(Number(t.getAttribute('data-amt'))) + '? Press again'; return; } srv('erpResellerPay', [{ linkId: id, month: t.getAttribute('data-month') }], function (r) { toast('\u09f3' + fmt(r.paid) + ' to ' + r.reseller + ' booked as an expense (Reseller commission).'); RZS.data = null; repaint(); }, fail); }
 });
 </script>
 </body>

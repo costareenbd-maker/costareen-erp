@@ -174,6 +174,14 @@ export async function runJob(deps, job) {
           out['market:' + row.name] = await asBusiness(deps, row, 'websync:market', (ctx) => marketRefresh(ctx));
         }
       }
+      // Stage N9: suppliers that sell through resellers - the reseller catalogue and the order states
+      const { resellerRefresh } = await import('./handlers/resellers.js');
+      const resellers = (await sql`select business_id from business_config where key = 'reseller_on' and value = '1'`).map((r) => r.business_id);
+      if (resellers.length) {
+        for (const row of await owners(sql, resellers)) {
+          out['resellers:' + row.name] = await asBusiness(deps, row, 'websync:resellers', (ctx) => resellerRefresh(ctx));
+        }
+      }
     }
   } else if (job === 'heartbeat') {
     // a company's copy reports to its provider (lib/control.js); nothing on the provider's own system

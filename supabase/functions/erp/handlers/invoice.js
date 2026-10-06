@@ -195,7 +195,9 @@ export async function createInvoice(ctx, payload, opts = {}) {
                      from products where business_id = ${ctx.biz}
                        and lower(btrim(sku)) = ${rec.sku.toLowerCase()} limit 1`;
     // a sale to a partner company goes at the price the two agreed (plan B3)
+    // Stage N9: a reseller's order is sold at the reseller's own prices, line by line
     const unit = opts.mirror ? num(opts.mirror.lines[i].unit)
+               : opts.resale && num(opts.resale.unitPrices && opts.resale.unitPrices[i]) > 0 ? num(opts.resale.unitPrices[i])
                : opts.partnerDeal && opts.unitPrice > 0 ? opts.unitPrice : (num(pr[0].price) || num(rec.sell));
     const qty = num(items[i].qty);
     const disc = DSC.line[i];
@@ -222,7 +224,7 @@ export async function createInvoice(ctx, payload, opts = {}) {
   if (mode === 'part' && took >= grand) mode = 'full';
   let payMethod = method;
   if (mode === 'cod') {
-    if (!opts.webEntry && !(await codAllowed(ctx, source))) throw new Error('Cash on delivery needs a courier or a rider - "' + (source || 'this delivery') + '" is a pickup. Choose Paid now, Part paid or Due.');
+    if (!opts.webEntry && !opts.resale && !(await codAllowed(ctx, source))) throw new Error('Cash on delivery needs a courier or a rider - "' + (source || 'this delivery') + '" is a pickup. Choose Paid now, Part paid or Due.');
     payMethod = String(payload.advanceMethod || '').trim();
     if (took > 0 && (!payMethod || isCod(payMethod))) throw new Error('How was the advance paid? (bKash, Cash, Bank...)');
     method = 'COD';
