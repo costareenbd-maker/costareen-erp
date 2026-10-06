@@ -16228,7 +16228,8 @@ function insRun(retry) {
     INS.state = st; insSave();
     if (st.done) { insAfterBuild(); return; }
     insPaint();
-    if (st.status === 'installing') setTimeout(function () { insRun(false); }, st.step === 'wait' || /waiting/.test(st.detail || '') ? 5000 : 300);
+    // a calm pace: Supabase refuses bursts (429) - a slightly slower build is better than an error
+    if (st.status === 'installing') setTimeout(function () { insRun(false); }, /slow down/.test(st.detail || '') ? 20000 : st.step === 'wait' || /waiting/.test(st.detail || '') ? 5000 : 1500);
   }, function (err) { INS.state = { status: 'failed', error: err, step: INS.state ? INS.state.step : 'project' }; insPaint(); });
 }
 var INS_POLL = null;
@@ -16395,10 +16396,11 @@ document.addEventListener('click', async function (ev) {
     INS_UPD = true;
     (function one(i) { if (i >= list.length) { INS_UPD = false; again(); return; } insUpdate(list[i].id, function () { one(i + 1); }); })(0);
   } else if (t.getAttribute('data-insdom')) {
-    var d = await uiPrompt('Its own web address (e.g. erp.theirshop.com)\n\nThey add a CNAME record for it pointing to costareen-erp.pages.dev. Then you run "python deploy.py domains" once. Empty removes it.', t.getAttribute('data-cur') || '');
+    var d = await uiPrompt('Its web address.\n\nLeave it EMPTY for the free address (<company>.3dowala.com) - made by itself, nothing for them to do.\n\nOr type their own (e.g. erp.theirshop.com): they add a CNAME record pointing to office-erp.pages.dev.', t.getAttribute('data-cur') || '');
     if (d === null) return;
     srv('erpInstallDomain', [{ id: t.getAttribute('data-insdom'), domain: d }], function (r) {
-      if (r.domain) uiAlert('Saved: ' + r.domain + '\n\n1. The company adds a DNS record: CNAME  ' + r.domain + '  \u2192  ' + r.cname + '\n2. You run:  python deploy.py domains\n3. Opening https://' + r.domain + ' then opens their own ERP.');
+      if (r.free) uiAlert('Free address: ' + r.domain + '\n\nIt opens in 1-10 minutes (certificate). Their sign-in links switch over by themselves within the hour.');
+      else if (r.domain) uiAlert('Saved: ' + r.domain + '\n\n1. The company adds a DNS record: CNAME  ' + r.domain + '  \u2192  ' + r.cname + '\n2. You run:  python deploy.py domains\n3. Opening https://' + r.domain + ' then opens their own ERP.');
       else toast('Web address removed.');
       again();
     }, bad);

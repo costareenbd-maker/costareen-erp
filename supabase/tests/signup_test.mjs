@@ -3,7 +3,7 @@
 import { pathToFileURL } from 'node:url';
 import path from 'node:path';
 import { sql, FIX, owner, mgr, check, done, web, deps, fnDir } from './harness.mjs';
-const { installRoute, TERMS_VERSION } = await import(pathToFileURL(path.join(fnDir, 'handlers', 'installer.js')));
+const { installRoute, TERMS_VERSION, domainsAll } = await import(pathToFileURL(path.join(fnDir, 'handlers', 'installer.js')));
 
 deps.install = {};
 deps.installEnv = { controlUrl: 'https://ctl.test/erp', appUrl: 'https://app.test/', publicUrl: 'https://erp.zone.test/', freeZone: 'zone.test', freeZoneId: 'Z1',
@@ -63,4 +63,12 @@ r = await route('install=freedomain', { id: second.id, secret: sec2 });
 check('a second company with the same name gets -2', r.ok && r.domain === 'acme-prints-1-2.zone.test', r);
 r = await route('install=freedomain', { id: first.id, secret: 'wrong' });
 check('only the install itself asks', !r.ok, r);
+// 5. the platform moves a copy from its own (never finished) address to the free one; the hourly timer finishes it
+await sql`update erp_installs set domain = 'erp.acme.test', domain_state = 'waiting', status = 'active' where id = ${first.id}`;
+r = await owner('erpInstallDomain', [{ id: first.id, domain: '' }]);
+check('empty = the free address, made here', r.ok && r.result.free && r.result.domain === 'acme-prints-1.zone.test', r);
+web.on(/pages\/projects\/office-erp\/domains\/acme-prints-1\.zone\.test$/, () => ({ status: 200, body: { result: { status: 'active' } } }));
+const hourly = await domainsAll(deps);
+check('the hourly timer marks it ready without the install page open', hourly['acme-prints-1.zone.test'] === 'ready' &&
+  (await sql`select domain_state from erp_installs where id = ${first.id}`)[0].domain_state === 'ready', hourly);
 await done();

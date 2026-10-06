@@ -318,8 +318,8 @@ async function freeDomainFor(deps, row) {
 }
 
 /** Is the record there yet, and is the address ready (certificate made)? */
-export async function domainCheck(deps, b) {
-  const row = await rowFor(deps, b);
+export async function domainCheck(deps, b) { return domainCheckFor(deps, await rowFor(deps, b)); }
+async function domainCheckFor(deps, row) {
   if (!row.domain) throw new Error('Set the address first.');
   const target = pagesTarget(deps);
   let seen = !!freeZone(deps) && row.domain.endsWith('.' + freeZone(deps));   // on the provider's own zone the record was made here
@@ -341,6 +341,15 @@ export async function domainCheck(deps, b) {
   }
   await sqlOf(deps)`update erp_installs set domain_state = ${state}, updated_at = now() where id = ${row.id}`;
   return { domain: row.domain, state, ready, auto: !!(deps.installEnv && deps.installEnv.cloudflare && deps.installEnv.cloudflare.token), url: 'https://' + row.domain + '/', free: publicUrl(deps) + '#/use/' + row.id };
+}
+
+/** The hourly timer: addresses still being made are checked here too, so the copy's links switch over even when nobody keeps the install page open. */
+export async function domainsAll(deps) {
+  const out = {};
+  for (const row of await sqlOf(deps)`select * from erp_installs where status = 'active' and domain is not null and coalesce(domain_state, 'waiting') <> 'ready' limit 50`) {
+    try { out[row.domain] = (await domainCheckFor(deps, row)).state; } catch (e) { out[row.domain] = 'error: ' + str((e && e.message) || e).slice(0, 120); }
+  }
+  return out;
 }
 
 /** "Connect Supabase": where to send the person, with a one-time state (PKCE). */
@@ -641,6 +650,13 @@ export async function erpInstallToken(ctx, payload) {
 export async function erpInstallDomain(ctx, payload) {
   await needAdmin(ctx);
   const d = str(payload && payload.domain).toLowerCase().replace(/^https?:\/\//, '').replace(/\/.*$/, '');
+  if (!d && freeZone(ctx.deps)) {   // empty = the free address <company>.<provider zone>, made here (DNS + page address)
+    const row = (await ctx.sql`select * from erp_installs where id = ${str(payload && payload.id)}::uuid`)[0];
+    if (!row) throw new Error('That copy is not known.');
+    if (row.domain && !row.domain.endsWith('.' + freeZone(ctx.deps))) { await ctx.sql`update erp_installs set domain = null, domain_state = null, updated_at = now() where id = ${row.id}`; row.domain = null; }
+    const f = await freeDomainFor(ctx.deps, row);
+    return { ok: true, domain: f.domain, free: true, cname: pagesTarget(ctx.deps), auto: true };
+  }
   if (d && !/^([a-z0-9-]+\.)+[a-z]{2,}$/.test(d)) throw new Error('A web address is like erp.theirshop.com');
   if (d && /(^|\.)costareen\.com$/.test(d)) throw new Error('That is the provider\u2019s own address.');
   if (d && (await ctx.sql`select 1 from erp_installs where lower(domain) = ${d} and id <> ${str(payload.id)}::uuid`).length) throw new Error('Another copy already uses ' + d + '.');

@@ -131,6 +131,8 @@ export async function runJob(deps, job) {
     if (!(deps.install && deps.install.bridged) && !(deps.install && deps.install.id)) {
       const upd = await maybe('./handlers/installer.js', 'updateAll');
       if (upd) { try { out.updates = await upd(deps); } catch (e) { out.updates = { error: String((e && e.message) || e) }; } }
+      const doms = await maybe('./handlers/installer.js', 'domainsAll');
+      if (doms) { try { out.domains = await doms(deps); } catch (e) { out.domains = { error: String((e && e.message) || e) }; } }
     }
     // erpDeliveryTick: delivered parcels have their due cleared, every hour
     const tick = await maybe('./handlers/courier.js', 'deliveryTick');
