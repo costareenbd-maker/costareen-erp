@@ -21548,16 +21548,19 @@ document.addEventListener('click', function (ev) {
 .ap-row .mk-sw input{width:18px;height:18px}
 .ap-h3{margin:16px 0 2px;font-size:13px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
 .ap-pill{font-size:11px;padding:2px 8px;border-radius:999px;background:var(--critical-soft);color:var(--critical);font-weight:700}
+.ap-menu{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px 16px;margin-top:10px}
+.ap-menu .mk-sw.is-off{opacity:.5}
 </style>
 <script>
 var APPS = null, APPS_ERR = '';
 var APPS_CORE = { dash: 1, apps: 1, invoice: 1, sales: 1, customers: 1, products: 1, stock: 1, cash: 1, settings: 1, platform: 1, orders: 1, home: 1 };
-var APPS_GROUPS = ['Sell', 'Goods', 'Money', 'System', 'For customers'];
+var APPS_GROUPS = ['For customers', 'Between shops'];
 function apState() { return (ME && ME.apps) || { off: [], hidden: [] }; }
 function apSyncMe(r) {
   if (!ME) return;
-  ME.apps = { off: r.apps.filter(function (a) { return !a.on; }).map(function (a) { return a.key; }),
-              hidden: r.apps.filter(function (a) { return a.hidden; }).map(function (a) { return a.key; }) };
+  var hid = {};
+  r.apps.concat(r.menu || []).forEach(function (a) { if (a.hidden) hid[a.key] = 1; });
+  ME.apps = { off: r.apps.filter(function (a) { return !a.on; }).map(function (a) { return a.key; }), hidden: Object.keys(hid) };
 }
 // the menu: an app the provider switched off is gone; one the owner hid is out of the menu but still opens from the Apps page
 var applyRoleApps = applyRole;
@@ -21595,35 +21598,35 @@ repaint = function () {
 var goApps = go;
 go = function (view) {
   goApps.apply(this, arguments);
-  if (view === 'apps' && !APPS) apLoad();
+  if ((view === 'apps' || view === 'settings') && !APPS) apLoad();
 };
 function apLoad() {
-  srv('erpApps', [], function (r) { APPS = r; APPS_ERR = ''; apSyncMe(r); applyRole(); tabbarSync(); if (VIEW === 'apps') repaint(); },
+  srv('erpApps', [], function (r) { APPS = r; APPS_ERR = ''; apSyncMe(r); applyRole(); tabbarSync(); if (VIEW === 'apps' || VIEW === 'settings') repaint(); },
       function (e) { APPS_ERR = (e && e.message) || String(e); if (VIEW === 'apps') repaint(); });
 }
 function apIcon(a) {
-  if (a.kind === 'screen') { var b = document.querySelector('#nav button[data-view="' + a.key + '"] .ic'); if (b) return b.innerHTML; }
+  if (a.view) { var b = document.querySelector('#nav button[data-view="' + a.view + '"] .ic'); if (b) return b.innerHTML; }
   return '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg>';
 }
 function apTile(a) {
-  var admin = APPS.admin, owner = APPS.owner, screen = a.kind === 'screen';
+  var admin = APPS.admin, owner = APPS.owner, inMenu = APPS.menu.some(function (m) { return m.key === a.key; });
   var h = '<div class="ap-tile' + (a.on ? '' : ' off') + '"><div class="ap-head"><span class="ap-ic">' + apIcon(a) + '</span><span class="ap-name">' + esc(a.name) + '</span>' +
           (a.on ? '' : '<span class="ap-pill">off for everyone</span>') + '</div>' +
           '<div class="ap-what">' + esc(a.what) + '</div>' +
           (a.where ? '<div class="ap-where">Settings: ' + esc(a.where) + '</div>' : '') +
           '<div class="ap-row">';
   if (a.on) {
-    if (screen) h += '<button class="btn small primary" type="button" data-apgo="' + esc(a.key) + '">Open</button>';
-    else h += '<a class="btn small primary" href="' + esc(a.url) + '" target="_blank" rel="noopener">Open the page</a>';
-    if (owner && screen) h += '<label class="mk-sw"><input type="checkbox" data-apmine="' + esc(a.key) + '"' + (a.hidden ? '' : ' checked') + '> In my menu</label>';
+    if (a.view) h += '<button class="btn small primary" type="button" data-apgo="' + esc(a.view) + '" data-aptab="' + esc(a.tab) + '">Open</button>';
+    if (a.url) h += '<a class="btn small' + (a.view ? '' : ' primary') + '" href="' + esc(a.url) + '" target="_blank" rel="noopener">Public page \u2197</a>';
+    if (owner && inMenu) h += '<label class="mk-sw"><input type="checkbox" data-apmine="' + esc(a.key) + '"' + (a.hidden ? '' : ' checked') + '> In my menu</label>';
   } else if (!admin) h += '<span class="sku">Switched off by the provider.</span>';
   if (admin && !a.sameAs) h += '<label class="mk-sw"><input type="checkbox" data-apall="' + esc(a.key) + '"' + (a.on ? ' checked' : '') + '> On for everyone</label>';
   if (admin && a.sameAs) h += '<span class="sku">Follows ' + esc(a.sameAs === 'find' ? 'Find stock' : a.sameAs) + '.</span>';
   return h + '</div></div>';
 }
 function viewApps() {
-  var h = '<section><div class="card"><h2 style="margin:0 0 4px">Apps</h2><div class="sub" data-c5x="1" style="display:block">Everything the ERP does beyond the main menu. ' +
-          'A tile opens the screen or the public page.' +
+  var h = '<section><div class="card"><h2 style="margin:0 0 4px">Apps</h2><div class="sub" data-c5x="1" style="display:block">The network features: what customers and other shops reach from outside. ' +
+          '<b>Open</b> goes to the screen where it is run and set up; <b>Public page</b> is what a customer sees.' +
           (APPS && APPS.owner ? ' <b>In my menu</b> off takes it out of the menu for this business; nothing is deleted, and it still opens from here.' : '') +
           (APPS && APPS.admin ? ' <b>On for everyone</b> is the provider\u2019s switch: off hides the app from every company and a public page answers \u201cnot open yet\u201d.' : '') + '</div>';
   if (APPS_ERR) return h + '<div class="note err"><div class="ico">!</div><div>' + esc(APPS_ERR) + '</div></div></div></section>';
@@ -21638,7 +21641,31 @@ function viewApps() {
 document.addEventListener('click', function (ev) {
   if (VIEW !== 'apps') return;
   var t = ev.target && ev.target.closest ? ev.target.closest('[data-apgo]') : null; if (!t) return;
-  go(t.getAttribute('data-apgo'));
+  var v = t.getAttribute('data-apgo'), tab = t.getAttribute('data-aptab');
+  if (v === 'market' && tab) MK.tab = tab;
+  if (v === 'printjobs' && tab) PK_TAB = tab;
+  go(v);
+});
+// Settings > Business > Menu: the screens this company shows in its menu (owner). Same list the Apps page uses.
+function menuCardHtml() {
+  if (!ME || ME.role !== 'owner') return '';
+  if (!APPS) { apLoad(); return '<section><div class="card"><h2>Menu</h2><div class="loading">Loading\u2026</div></div></section>'; }
+  var h = '<section><div class="card"><h2>Menu</h2><div class="sub" data-c5x="1" style="display:block">Untick a screen this business does not use and it leaves the menu for everyone here. Nothing is deleted; tick it again any time. The main screens always stay.</div>' +
+          '<div class="ap-menu">';
+  APPS.menu.forEach(function (m) {
+    h += '<label class="mk-sw' + (m.off ? ' is-off' : '') + '"><input type="checkbox" data-apmine="' + esc(m.key) + '"' + (m.hidden ? '' : ' checked') + (m.off ? ' disabled' : '') + '> ' + esc(m.name) + (m.off ? ' <span class="sku">(off for everyone)</span>' : '') + '</label>';
+  });
+  return h + '</div></div></section>';
+}
+var brandCardHtmlMenu = brandCardHtml;
+brandCardHtml = function () { return brandCardHtmlMenu.apply(this, arguments) + menuCardHtml(); };
+document.addEventListener('change', function (ev) {
+  if (VIEW !== 'settings') return;
+  var t = ev.target; if (!t || !t.getAttribute || !t.getAttribute('data-apmine')) return;
+  var key = t.getAttribute('data-apmine'), on = !!t.checked;
+  t.disabled = true;
+  srv('erpAppSet', [{ key: key, on: on, scope: 'mine' }], function (r) { APPS = r; apSyncMe(r); applyRole(); tabbarSync(); repaint(); toast(on ? 'Back in the menu.' : 'Out of the menu.'); },
+      function (e) { t.checked = !on; t.disabled = false; toast(esc((e && e.message) || e), true, 9000); });
 });
 document.addEventListener('change', function (ev) {
   if (VIEW !== 'apps') return;

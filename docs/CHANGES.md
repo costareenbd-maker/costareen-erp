@@ -999,3 +999,16 @@ route stays open). `apps_test.mjs` (21).
 - Not done: the company-type question at setup (defaults per type), the public front page and the share card, the
   plain-word renames, Bangla on the tiles. Old routes all still work. Provider flags live on the provider's database
   only; a copy on its own server has no provider switch (everything on).
+
+## Apps page, corrected (tag apps-2, 7 Oct 2026)
+
+The owner's correction: the Apps page is for the **network features** only, not every ERP screen. Tiles now: For
+customers (Find stock, Colour finder, Printer Passport, Customer page, Print Doctor, Get it printed, Print quote, Design
+desk, Ideas) and Between shops (Market, Resell, Print jobs, Joint stock). **Open** goes to the screen inside the ERP
+where the feature is run and set up (Market → What I share, Print jobs → Requests, ...); **Public page ↗** opens what a
+customer sees. Design desk and Ideas are run from Platform: a company's tile has only the public page. The ordinary
+screens (Web orders, Quotations, Repairs, Campaigns, Suppliers, Product cost, Profitability, Expenses, Capital,
+Maintenance) are back in the menu as before. Which menu screens a company shows is now a **Menu card under Settings →
+Business** (owner; tick/untick; the main screens are not listed). Same `apps_hidden` list, same `erpAppSet` scope
+'mine'; `erpApps` also returns `menu`. The provider's switch stays on the Apps tiles only. **Resell switched off for
+everyone** on the owner's word (he switches it on from Apps when he needs it). `apps_test.mjs` (24).
