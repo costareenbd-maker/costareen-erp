@@ -21536,7 +21536,8 @@ document.addEventListener('click', function (ev) {
 <style>
 .ap-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:10px;margin-top:8px}
 .ap-tile{border:1px solid var(--ring);border-radius:12px;padding:12px 14px;background:var(--surface);display:flex;flex-direction:column;gap:6px;min-width:0}
-.ap-tile.off{opacity:.55}
+.ap-tile.off .ap-ic{background:var(--grid);color:var(--muted)}
+.ap-head{flex-wrap:wrap}
 .ap-head{display:flex;align-items:center;gap:10px}
 .ap-ic{width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;background:var(--series-1-soft);color:var(--series-1);flex:0 0 auto}
 .ap-ic svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
@@ -21619,7 +21620,7 @@ function apModeSeg(key, mode) {
 function apTile(a) {
   var admin = APPS.admin, owner = APPS.owner, inMenu = APPS.menu.some(function (m) { return m.key === a.key; });
   var h = '<div class="ap-tile' + (a.on ? '' : ' off') + '"><div class="ap-head"><span class="ap-ic">' + apIcon(a) + '</span><span class="ap-name">' + esc(a.name) + '</span>' +
-          (a.on ? '' : '<span class="ap-pill">off for everyone</span>') + '</div>' +
+          (a.on ? '' : '<span class="ap-pill" style="margin-left:auto">Off</span>') + '</div>' +
           '<div class="ap-what">' + esc(a.what) + '</div>' +
           (a.where ? '<div class="ap-where">Settings: ' + esc(a.where) + '</div>' : '') +
           '<div class="ap-row">';
@@ -21634,10 +21635,8 @@ function apTile(a) {
   return h + '</div></div>';
 }
 function viewApps() {
-  var h = '<section><div class="card"><h2 style="margin:0 0 4px">Apps</h2><div class="sub" data-c5x="1" style="display:block">The network features: what customers and other shops reach from outside. ' +
-          '<b>Open</b> goes to the screen where it is run and set up; <b>Public page</b> is what a customer sees.' +
-          (APPS && APPS.owner ? ' For a screen in the menu: <b>Everyone</b> (you and your staff), <b>Only owners</b> (you use it, staff do not see it), <b>Off</b> (nobody here; switch it back any time). Nothing is deleted.' : '') +
-          (APPS && APPS.admin ? ' <b>On for everyone</b> is the provider\u2019s switch: off hides the app from every company and a public page answers \u201cnot open yet\u201d.' : '') + '</div>';
+  var h = '<section><div class="card"><h2 style="margin:0 0 4px">Apps</h2><div class="sub" data-c5x="1" style="display:block">The special features customers reach from outside. <b>Open</b>: the screen where it is run and set up. <b>Public page</b>: what a customer sees.' +
+          (APPS && APPS.admin ? ' <b>On for everyone</b>: off hides it from every company and its page answers “not open yet”.' : '') + '</div>';
   if (APPS_ERR) return h + '<div class="note err"><div class="ico">!</div><div>' + esc(APPS_ERR) + '</div></div></div></section>';
   if (!APPS) return h + '<div class="loading">Loading\u2026</div></div></section>';
   APPS_GROUPS.forEach(function (g) {
