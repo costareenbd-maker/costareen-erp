@@ -49,10 +49,13 @@ function needMarket(ctx) {
   return src;
 }
 async function conf(tx, biz) {
-  const rows = await tx`select key, value from business_config where business_id = ${biz} and key in ('market_share_on', 'market_city', 'market_public_on', 'market_public_orders', 'market_public_note')`;
+  const rows = await tx`select key, value from business_config where business_id = ${biz} and key in ('market_share_on', 'market_city', 'market_public_on', 'market_public_orders', 'market_public_note', 'market_colours')`;
   const m = Object.fromEntries(rows.map((r) => [r.key, r.value]));
-  return { on: m.market_share_on === '1', city: str(m.market_city), publicOn: m.market_public_on === '1', orders: m.market_public_orders === '1', note: str(m.market_public_note) };
+  let colours = {}; try { colours = JSON.parse(m.market_colours || '{}') || {}; } catch (_) { colours = {}; }
+  return { on: m.market_share_on === '1', city: str(m.market_city), publicOn: m.market_public_on === '1', orders: m.market_public_orders === '1', note: str(m.market_public_note), colours };
 }
+const HEX = /^#[0-9a-f]{6}$/i;
+const hexOf = (colours, name) => { const h = str(colours[str(name).toLowerCase()]); return HEX.test(h) ? h.toLowerCase() : null; };
 // Stage N5: the shop's public address on Find stock - "<name>-<4 letters>", kept once made
 async function slugFor(ctl, src, biz, name) {
   const had = (await ctl`select slug from erp_market_shops where source = ${src} and business_id = ${biz}`)[0];
@@ -91,13 +94,13 @@ export async function marketRefresh(ctx) {
        where m.business_id = ${ctx.biz} and coalesce(p.status, 'Active') = 'Active'` : [];
   const list = rows.filter((r) => Number(r.stock) > 0).map((r) => ({
     source: src, business_id: ctx.biz, product_id: r.id, name: str(r.name), category: str(r.category) || null, brand: str(r.brand) || null,
-    color: str(r.color) || null, unit: str(r.unit) || null, band: band(Number(r.stock), r.reorder_level),
+    color: str(r.color) || null, color_hex: hexOf(c.colours, r.color), unit: str(r.unit) || null, band: band(Number(r.stock), r.reorder_level),
     price: r.price_mode === 'ask' || !(Number(r.sell_price) > 0) ? null : Number(r.sell_price), city: c.city || null,
   }));
   const ctl = ctx.deps.control;
   await ctl.begin(async (t) => {
     await t`delete from erp_market_listings where source = ${src} and business_id = ${ctx.biz}`;
-    if (list.length) await t`insert into erp_market_listings ${t(list, 'source', 'business_id', 'product_id', 'name', 'category', 'brand', 'color', 'unit', 'band', 'price', 'city')}`;
+    if (list.length) await t`insert into erp_market_listings ${t(list, 'source', 'business_id', 'product_id', 'name', 'category', 'brand', 'color', 'color_hex', 'unit', 'band', 'price', 'city')}`;
   });
   try { await shopUpsert(ctx, src, c); } catch (e) { console.error('market shop row', e); }
   return { listed: list.length, on: c.on };
@@ -149,7 +152,7 @@ export async function erpMarketMine(ctx) {
   needMarket(ctx);
   const c = await conf(ctx.tx, ctx.biz);
   const rows = await ctx.tx`
-    select p.id, p.sku, p.name, p.category, p.brand, p.sell_price, coalesce(ps.stock, 0) as stock, m.price_mode
+    select p.id, p.sku, p.name, p.category, p.brand, p.color, p.sell_price, coalesce(ps.stock, 0) as stock, m.price_mode
       from products p left join product_stock ps on ps.product_id = p.id
       left join market_shares m on m.product_id = p.id and m.business_id = p.business_id
      where p.business_id = ${ctx.biz} and coalesce(p.status, 'Active') = 'Active'
@@ -160,6 +163,8 @@ export async function erpMarketMine(ctx) {
   const base = (await import('./passport.js')).pubBase(ctx.deps).check.replace(/check$/, '');
   return {
     on: c.on, city: c.city, publicOn: c.publicOn, orders: c.orders, note: c.note, shopUrl: base + 'find?s=' + slug, waiting: (await waitingFor(ctx, src)).length,
+    // the colour names on the shared products, with the swatch the shop set (Stage N5b)
+    colours: [...new Set(rows.filter((r) => r.price_mode && str(r.color)).map((r) => str(r.color)))].sort().map((name) => ({ name, hex: hexOf(c.colours, name) || '' })),
     products: rows.map((r) => ({ id: r.id, sku: r.sku, name: r.name, category: r.category, brand: r.brand,
       price: Number(r.sell_price) || 0, stock: Number(r.stock), shared: !!r.price_mode, mode: r.price_mode || 'price',
       guide: guideFor(seen, r.name) })),
@@ -175,6 +180,16 @@ export async function erpMarketSave(ctx, payload) {
   if (p.publicOn !== undefined) await put('market_public_on', p.publicOn ? '1' : '0');
   if (p.orders !== undefined) await put('market_public_orders', p.orders ? '1' : '0');
   if (p.note !== undefined) await put('market_public_note', str(p.note).slice(0, 300));
+  if (p.colours !== undefined) {
+    const had = (await conf(ctx.tx, ctx.biz)).colours, next = { ...had };
+    for (const [k, v] of Object.entries(p.colours && typeof p.colours === 'object' ? p.colours : {})) {
+      const name = str(k).toLowerCase().slice(0, 60); if (!name) continue;
+      if (!str(v)) { delete next[name]; continue; }
+      if (!HEX.test(str(v))) throw new Error('A colour value looks like #1a2b3c (' + str(k) + ').');
+      next[name] = str(v).toLowerCase();
+    }
+    await put('market_colours', JSON.stringify(Object.fromEntries(Object.entries(next).slice(0, 300))));
+  }
   if (p.city !== undefined) {
     await put('market_city', str(p.city).slice(0, 40));
     // the Printer Passport register shows "Supplier · <city>" for a seller who hides the name

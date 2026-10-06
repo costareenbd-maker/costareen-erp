@@ -46,7 +46,8 @@ export async function find(deps, params, ip) {
   for (const l of rows) {
     const key = words(l.name).join(' ');
     const g = groups[key] || (groups[key] = { key, name: str(l.name), brand: str(l.brand), category: str(l.category), colour: str(l.color), unit: str(l.unit), shops: [] });
-    g.shops.push({ slug: str(l.slug), shop: str(l.shop_name), city: str(l.shop_city), band: str(l.band), price: l.price == null ? null : num(l.price), orders: !!l.shop_orders, productId: l.product_id, updated: ago(l.updated_at) });
+    g.shops.push({ slug: str(l.slug), shop: str(l.shop_name), city: str(l.shop_city), band: str(l.band), price: l.price == null ? null : num(l.price), orders: !!l.shop_orders, productId: l.product_id, updated: ago(l.updated_at), hex: str(l.color_hex) });
+    if (!g.hex && str(l.color_hex)) g.hex = str(l.color_hex);
     if (l.brand) facets.brands[str(l.brand)] = (facets.brands[str(l.brand)] || 0) + 1;
     if (l.color) facets.colours[str(l.color)] = (facets.colours[str(l.color)] || 0) + 1;
     if (l.category) facets.categories[str(l.category)] = (facets.categories[str(l.category)] || 0) + 1;
@@ -68,7 +69,7 @@ export async function shopPage(deps, params, ip) {
   const s = (await deps.control`select * from erp_market_shops where slug = ${slug} and public`)[0];
   if (!s) throw new Error('This shop is not on Find stock (any more).');
   const rows = await publicListings(deps, deps.control`and l.source = ${s.source} and l.business_id = ${s.business_id}`);
-  const items = rows.map((l) => ({ productId: l.product_id, name: str(l.name), brand: str(l.brand), category: str(l.category), colour: str(l.color), unit: str(l.unit), band: str(l.band), price: l.price == null ? null : num(l.price), updated: ago(l.updated_at) }))
+  const items = rows.map((l) => ({ productId: l.product_id, name: str(l.name), brand: str(l.brand), category: str(l.category), colour: str(l.color), hex: str(l.color_hex), unit: str(l.unit), band: str(l.band), price: l.price == null ? null : num(l.price), updated: ago(l.updated_at) }))
     .sort((a, b) => (a.band === 'in' ? 0 : 1) - (b.band === 'in' ? 0 : 1) || a.name.localeCompare(b.name));
   return { shop: shopRow(s), items, consent: CONSENT_ORDER };
 }
