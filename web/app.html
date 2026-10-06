@@ -21085,13 +21085,16 @@ mkMineHtml = function () {
   if (!m || m.loading || MK.mineErr || !m.colours) return h;
   h += '<div style="margin-top:16px;border-top:1px solid var(--line);padding-top:12px"><h3 style="margin:0 0 4px">Colour swatches (Colour Finder)</h3>' +
     '<div class="sub" data-c5x="1" style="display:block">On the public page <b>erp.3dowala.com/choose</b> a buyer points the phone camera at a thing and gets the closest filament colours in stock. Set the true colour of each of your colour names here (tap the square, pick from a photo of the spool if you can); without it a general value for the name is used, marked "roughly".</div>' +
-    (m.colours.length ? '<div class="row" style="gap:10px;flex-wrap:wrap;margin-top:6px">' + m.colours.map(function (c) { return '<label class="chk" style="margin:0;gap:6px;align-items:center"><input type="color" data-mkcol="' + esc(c.name) + '" value="' + esc(c.hex || '#888888') + '" style="width:36px;height:30px;padding:0;border:1px solid var(--line);border-radius:6px;background:none"> <span>' + esc(c.name) + (c.hex ? '' : ' <span class="sku">(not set)</span>') + '</span></label>'; }).join('') + '</div>' +
+    (m.colours.length ? '<div class="row" style="gap:10px;flex-wrap:wrap;margin-top:6px">' + m.colours.map(function (c) { return '<label class="chk" style="margin:0;gap:6px;align-items:center"><input type="color" data-mkcol="' + esc(c.name) + '" data-had="' + (c.hex ? '1' : '0') + '" value="' + esc(c.hex || '#888888') + '" style="width:36px;height:30px;padding:0;border:1px solid var(--line);border-radius:6px;background:none"> <span>' + esc(c.name) + (c.hex ? '' : ' <span class="sku">(not set)</span>') + '</span></label>'; }).join('') + '</div>' +
       '<div class="row" style="margin-top:8px"><button class="btn primary small" type="button" data-mkpub="colours">Save swatches</button></div>' : '<div class="empty">Tick products with a colour first.</div>') + '</div>';
   return h;
 };
+document.addEventListener('input', function (ev) { if (ev.target && ev.target.hasAttribute && ev.target.hasAttribute('data-mkcol')) ev.target.setAttribute('data-touched', '1'); });
 document.addEventListener('click', function (ev) {
   var b = ev.target && ev.target.closest ? ev.target.closest('[data-mkpub="colours"]') : null; if (!b || VIEW !== 'market') return;
-  var map = {}; document.querySelectorAll('[data-mkcol]').forEach(function (i) { map[i.getAttribute('data-mkcol')] = i.value; });
+  // only swatches the owner set now or before: an untouched picker still shows its default grey and must not be saved
+  var map = {}; document.querySelectorAll('[data-mkcol]').forEach(function (i) { if (i.getAttribute('data-had') === '1' || i.getAttribute('data-touched') === '1') map[i.getAttribute('data-mkcol')] = i.value; });
+  if (!Object.keys(map).length) { toast('Pick a colour first - tap a square.', true); return; }
   b.disabled = true;
   srv('erpMarketSave', [{ colours: map }], function () { toast('Swatches saved - the Colour Finder uses them now.'); MK.mine = null; loadMarketMine(); }, function (e) { b.disabled = false; toast(esc((e && e.message) || e), true, 9000); });
 });
