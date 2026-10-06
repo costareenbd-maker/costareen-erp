@@ -979,3 +979,23 @@ actions. Test in phase6_test. Also checked and NOT changed: cost at sale is alre
 every line since 5 Oct (0 zero-cost lines on 5-6 Oct); earlier zeros are history and the reports fall back to today's
 book cost for them. Live payments do flip invoice status (INV-1911 Partial); the 453 "Pending though paid" are all
 imported rows - the owner's data, left alone.
+
+## Apps page (tag apps-1, 7 Oct 2026)
+
+Decided with the owner 7 Oct: the menu was 24 items and nobody could find the switches. Now a **core menu** (Dashboard,
+Apps, New invoice, Sales, Customers, Products, Stock entry, Money, Settings) and an **Apps** screen (second item, and on
+the phone bar in place of Products) listing every other ability as a tile: name, one line, where its settings live,
+Open. Two switches on a tile: **On for everyone** (platform admin only; off = the app leaves every company's menu and
+its public page answers "This page is not open yet.") and **In my menu** (a company's owner; off = out of this
+company's menu, still opens from Apps, nothing deleted). Public pages (Find stock, Colour finder, Printer Passport,
+Customer page, Print Doctor, Get it printed, Print quote, Design desk, Ideas) are tiles that open in a new tab and have
+only the provider's switch; Colour finder follows Find stock (same data). Joint stock keeps its per-company provider
+flag; Platform is not an app.
+`091_apps.sql` (control-only `erp_app_flags`), `handlers/apps.js` (`erpApps`, `erpAppSet`, `appsState` for erpHello,
+`appOff` for the public router), `core.js` (erpHello carries `apps: {off, hidden}` so the menu is right on first
+paint), `passport.js` (gate at the top of `pubRoute`), `web/app.html` (nav button, tab bar, block "Apps page":
+wrappers on `applyRole`, `routeAllowed`, `repaint`, `go`; a hidden app's nav button carries `data-apphidden` so its
+route stays open). `apps_test.mjs` (21).
+- Not done: the company-type question at setup (defaults per type), the public front page and the share card, the
+  plain-word renames, Bangla on the tiles. Old routes all still work. Provider flags live on the provider's database
+  only; a copy on its own server has no provider switch (everything on).

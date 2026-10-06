@@ -12,6 +12,7 @@ import { dashForget, dashKeep } from './handlers/bundle.js';
 import { scrub } from './scrub.js';
 import { HANDLERS } from './handlers/index.js';
 import { keyHash } from './handlers/access.js';
+import { appsState } from './handlers/apps.js';
 
 export const ERP_BUILD = 'b261002-1321';      // must equal ERP_BUILD in the page
 
@@ -193,8 +194,12 @@ async function hello(sql, deps, token, authHeader, ip) {
       if (deps.install && deps.install.bridged && deps.control) joint = !!((await deps.control`select joint from erp_tenants where id = ${deps.install.id}`)[0] || {}).joint;
       else joint = (await sql`select 1 from joint_flags where business_id = ${s.businessId} and enabled`).length > 0;
     } catch (_) { joint = false; }
+    let apps = { off: [], hidden: [] };   // the Apps page: what the provider switched off, what this company hides
+    try {
+      apps = await appsState(deps, sql, s.businessId, async (k) => { const r = await sql`select value from business_config where business_id = ${s.businessId} and key = ${k}`; return r[0] ? r[0].value : ''; });
+    } catch (_) { apps = { off: [], hidden: [] }; }
     return { ok: true, role: s.role, roleLabel: s.roleLabel, name: s.name,
-             implicit: !!s.implicit, link: !!s.viaKey, discountCap: s.discountCap, powers: powersMap(s), platform, joint };
+             implicit: !!s.implicit, link: !!s.viaKey, discountCap: s.discountCap, powers: powersMap(s), platform, joint, apps };
   } catch (e) {
     if (!(e instanceof Refused)) throw e;
     return { ok: false, reason: e.message, message: SAYS[e.message] || 'Could not sign you in.' };

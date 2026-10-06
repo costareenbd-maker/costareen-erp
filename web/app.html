@@ -564,6 +564,7 @@ svg { display:block; width:100%; overflow:visible; }
     <nav id="nav">
       <div class="navgrp">Overview</div>
       <button type="button" data-view="dash" aria-selected="true"><span class="ic"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg></span>Dashboard</button>
+      <button type="button" data-view="apps" aria-selected="false"><span class="ic"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg></span>Apps</button>
       <div class="navgrp">Sell</div>
       <button type="button" data-view="invoice" aria-selected="false"><span class="ic"><svg viewBox="0 0 24 24"><path d="M14 3v4a1 1 0 0 0 1 1h4"/><path d="M17 21H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2z"/><path d="M12 11v6M9 14h6"/></svg></span>New invoice<span class="count" id="cCart"></span></button>
       <button type="button" data-view="sales" aria-selected="false"><span class="ic"><svg viewBox="0 0 24 24"><path d="M4 2v20l3-2 3 2 3-2 3 2 3-2 1 .7V2z"/><path d="M8 7h8M8 11h8M8 15h5"/></svg></span>Sales<span class="count" id="cSend"></span></button>
@@ -613,7 +614,7 @@ svg { display:block; width:100%; overflow:visible; }
   <button type="button" data-tab="invoice"><svg viewBox="0 0 24 24"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M12 11v6M9 14h6"/></svg><span>Invoice</span><i class="tb-n" id="tbCart"></i></button>
   <button type="button" data-tab="sales"><svg viewBox="0 0 24 24"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6"/></svg><span>Sales</span><i class="tb-n" id="tbSend"></i></button>
   <button type="button" data-tab="customers"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.700 6 6M16 5.2a3 3 0 0 1 0 5.600M17.500 14.500c2.100.800 3.500 2.900 3.500 5.500"/></svg><span>Customers</span></button>
-  <button type="button" data-tab="products"><svg viewBox="0 0 24 24"><path d="M21 8l-9-5-9 5v8l9 5 9-5z"/><path d="M3 8l9 5 9-5M12 13v8"/></svg><span>Products</span></button>
+  <button type="button" data-tab="apps"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg><span>Apps</span></button>
   <button type="button" data-tab="__menu"><svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></svg><span>More</span></button>
 </nav>
 
@@ -8423,7 +8424,7 @@ function srv(name, args, ok, bad) {
 
 var SRV_ACTIVE = 0, SRV_WRITING = false, SRV_TIMED = {};
 // the same list the server uses to know a call changes nothing (ERP_READS)
-var SRV_READS = /^(erpRestockOffers|erpRestockList|erpWarrantyRules|erpWarrantyCard|erpMyLink|erpPlatformRegister|erpPlatformDoctor|erpPlatformCommunity|erpMarketWaiting|erpBoard|erpPlatformDesign|erpResell|erpResellerProgramme|erpLoyalty|erpCustomerPoints|erpRefillDue|erpDeliveryHistory|erpDeliveryHistoryMany|erpPrintKit|erpPrintJobs|erpPrintJob|erpPrintCost|erpSpools|erpPrintRequests|erpJoint|erpJointCatalog|erpJointCard|erpInvoiceDesign|erpInvoicePreview|erpMarket|erpMarketMine|erpMarketRequests|erpMarketHints|erpMarketNames|erpWanted|erpBrand|erpComplianceLog|erpProviderKey|erpNews|erpAccessKeys|erpAccessWarning|erpAdmin|erpAiKeys|erpAlertRules|erpAlerts|erpArena|erpBackupStatus|erpBg|erpBnWords|erpBookedParcels|erpBrandLogo|erpBundle|erpBusinessLinks|erpBusinesses|erpBusinessesDeleted|erpCampaignAudience|erpCampaignGet|erpCampaignList|erpCapital|erpCashBook|erpCatalog|erpConnStatus|erpConnections|erpCostBook|erpCourier|erpCourierKeyStatus|erpCurrencies|erpCustomerAccount|erpCustomerCredit|erpCustomerList|erpCustomerPage|erpCustomerStatement|erpCustomers|erpDashboardData|erpDaySales|erpDeliveryOptions|erpDevices|erpDiscontinued|erpDues|erpEvoQr|erpEvoStatus|erpExpenseExport|erpExpenseReceiptUrl|erpExpenses|erpFamilies|erpFighters|erpFormOptions|erpGame|erpGetTheme|erpGoogle|erpHello|erpInstalls|erpInvoice|erpInvoicePdf|erpJob|erpJobs|erpListView|erpLookupCustomer|erpLookupUsage|erpMe|erpMoney|erpNoteFileUrl|erpNotes|erpOwnerChange|erpOwnerChanges|erpParcelLabels|erpParcelPreview|erpPartnerStock|erpPartnership|erpPayReasons|erpPeople|erpPlatform|erpPlatformErrors|erpPnl|erpPnlMonth|erpPoList|erpPoolCatalog|erpProduct|erpProductListShare|erpProductPage|erpProductPhotoUrl|erpProductThumbs|erpProfile|erpQuoteAsset|erpQuoteBoot|erpQuoteGet|erpQuoteList|erpRecentInvoices|erpRecovery|erpReorderPlan|erpRestorePreview|erpReturnPreview|erpRisks|erpSales|erpSearch|erpSecurity|erpSelfTest|erpSerialLookup|erpSerialsFor|erpSessions|erpSetTheme|erpSettingsFull|erpSettingsLists|erpSfPayoutLines|erpSfPayouts|erpShareFile|erpSharedStock|erpSheet|erpStatementPdf|erpStockHistory|erpSupplierPage|erpSuppliers|erpToday|erpUsers|erpWaProductPdf|erpWebMatches|erpWebOrderInvoices|erpWebOrders|erpWebsiteTest)$/;
+var SRV_READS = /^(erpApps|erpRestockOffers|erpRestockList|erpWarrantyRules|erpWarrantyCard|erpMyLink|erpPlatformRegister|erpPlatformDoctor|erpPlatformCommunity|erpMarketWaiting|erpBoard|erpPlatformDesign|erpResell|erpResellerProgramme|erpLoyalty|erpCustomerPoints|erpRefillDue|erpDeliveryHistory|erpDeliveryHistoryMany|erpPrintKit|erpPrintJobs|erpPrintJob|erpPrintCost|erpSpools|erpPrintRequests|erpJoint|erpJointCatalog|erpJointCard|erpInvoiceDesign|erpInvoicePreview|erpMarket|erpMarketMine|erpMarketRequests|erpMarketHints|erpMarketNames|erpWanted|erpBrand|erpComplianceLog|erpProviderKey|erpNews|erpAccessKeys|erpAccessWarning|erpAdmin|erpAiKeys|erpAlertRules|erpAlerts|erpArena|erpBackupStatus|erpBg|erpBnWords|erpBookedParcels|erpBrandLogo|erpBundle|erpBusinessLinks|erpBusinesses|erpBusinessesDeleted|erpCampaignAudience|erpCampaignGet|erpCampaignList|erpCapital|erpCashBook|erpCatalog|erpConnStatus|erpConnections|erpCostBook|erpCourier|erpCourierKeyStatus|erpCurrencies|erpCustomerAccount|erpCustomerCredit|erpCustomerList|erpCustomerPage|erpCustomerStatement|erpCustomers|erpDashboardData|erpDaySales|erpDeliveryOptions|erpDevices|erpDiscontinued|erpDues|erpEvoQr|erpEvoStatus|erpExpenseExport|erpExpenseReceiptUrl|erpExpenses|erpFamilies|erpFighters|erpFormOptions|erpGame|erpGetTheme|erpGoogle|erpHello|erpInstalls|erpInvoice|erpInvoicePdf|erpJob|erpJobs|erpListView|erpLookupCustomer|erpLookupUsage|erpMe|erpMoney|erpNoteFileUrl|erpNotes|erpOwnerChange|erpOwnerChanges|erpParcelLabels|erpParcelPreview|erpPartnerStock|erpPartnership|erpPayReasons|erpPeople|erpPlatform|erpPlatformErrors|erpPnl|erpPnlMonth|erpPoList|erpPoolCatalog|erpProduct|erpProductListShare|erpProductPage|erpProductPhotoUrl|erpProductThumbs|erpProfile|erpQuoteAsset|erpQuoteBoot|erpQuoteGet|erpQuoteList|erpRecentInvoices|erpRecovery|erpReorderPlan|erpRestorePreview|erpReturnPreview|erpRisks|erpSales|erpSearch|erpSecurity|erpSelfTest|erpSerialLookup|erpSerialsFor|erpSessions|erpSetTheme|erpSettingsFull|erpSettingsLists|erpSfPayoutLines|erpSfPayouts|erpShareFile|erpSharedStock|erpSheet|erpStatementPdf|erpStockHistory|erpSupplierPage|erpSuppliers|erpToday|erpUsers|erpWaProductPdf|erpWebMatches|erpWebOrderInvoices|erpWebOrders|erpWebsiteTest)$/;
 function srvPump() {
   if (!SRV_Q.length) return;
   var isRead = SRV_READS.test(SRV_Q[0].name);
@@ -12287,7 +12288,7 @@ var APPS = [
   { id: 'settings', name: 'Settings', color: '#5f6b7a', views: ['settings', 'tools', 'platform'],
     icon: '<circle cx="12" cy="12" r="3.2"/><path d="M12 2.500v3M12 18.500v3M2.500 12h3M18.500 12h3M5.300 5.300l2.100 2.100M16.600 16.600l2.100 2.100M5.300 18.700l2.100-2.100M16.600 7.400l2.100-2.100"/>' }
 ];
-var VIEW_NAMES = { invoice: 'New invoice', sales: 'Invoices', weborders: 'Web orders', quotes: 'Quotations', repairs: 'Repairs', printjobs: 'Print jobs', resell: 'Resell', customers: 'Customers', campaigns: 'Campaigns',
+var VIEW_NAMES = { apps: 'Apps', invoice: 'New invoice', sales: 'Invoices', weborders: 'Web orders', quotes: 'Quotations', repairs: 'Repairs', printjobs: 'Print jobs', resell: 'Resell', customers: 'Customers', campaigns: 'Campaigns',
                    products: 'Products', stock: 'Stock', costs: 'Product cost', market: 'Market', joint: 'Joint stock', profit: 'Profitability', expenses: 'Expenses', capital: 'Capital', cash: 'Money', suppliers: 'Suppliers',
                    settings: 'Settings', tools: 'Maintenance', platform: 'Platform', dash: 'Dashboard', home: 'Home' };
 var VIEW_COUNT = { invoice: 'cCart', sales: 'cSend', weborders: 'cWeb', costs: 'cCosts', market: 'cMarket' };
@@ -12902,6 +12903,7 @@ nav#nav .ic { width:26px; height:26px; flex:0 0 26px; border-radius:7px; backgro
   display:grid; place-items:center; box-shadow:inset 0 -2px 0 rgba(0,0,0,.14); }
 nav#nav .ic svg { width:15px; height:15px; stroke:#fff; stroke-width:2; }
 nav#nav button[data-view="dash"] { --app:#7c6bb1; }
+nav#nav button[data-view="apps"] { --app:#2f6fed; }
 nav#nav button[data-view="invoice"], nav#nav button[data-view="sales"], nav#nav button[data-view="weborders"], nav#nav button[data-view="quotes"], nav#nav button[data-view="repairs"] { --app:#e39a2d; }
 nav#nav button[data-view="customers"], nav#nav button[data-view="campaigns"] { --app:#2a9d8f; }
 nav#nav button[data-view="suppliers"], nav#nav button[data-view="products"], nav#nav button[data-view="stock"], nav#nav button[data-view="costs"] { --app:#c8553d; }
@@ -21525,6 +21527,130 @@ document.addEventListener('click', function (ev) {
   if (k === 'slip') { srv('erpResellerSlip', [{ id: id }], function (r) { window.open(r.url, '_blank', 'noopener'); }, fail); return; }
   if (k === 'book') { t.disabled = true; srv('erpResellerBook', [{ id: id }], function (r) { toast('Parcel booked: ' + r.consignment + ' - collects \u09f3' + fmt(r.collect) + '.'); RZS.data = null; repaint(); }, function (e) { t.disabled = false; fail(e); }); return; }
   if (k === 'pay') { if (t.getAttribute('data-sure') !== '1') { t.setAttribute('data-sure', '1'); t.textContent = 'Paid \u09f3' + fmt(Number(t.getAttribute('data-amt'))) + '? Press again'; return; } srv('erpResellerPay', [{ linkId: id, month: t.getAttribute('data-month') }], function (r) { toast('\u09f3' + fmt(r.paid) + ' to ' + r.reseller + ' booked as an expense (Reseller commission).'); RZS.data = null; repaint(); }, fail); }
+});
+</script>
+<!-- Apps page: every ability beyond the core menu, one switch each. The provider's switch is for every company
+     (off = invisible everywhere, the public page answers "not open yet"); an owner's switch hides an app from his own
+     menu. The core menu (Dashboard, Apps, New invoice, Sales, Customers, Products, Stock entry, Money, Settings) cannot
+     be switched off. handlers/apps.js; erpHello carries ME.apps = {off, hidden} so the menu is right on first paint. -->
+<style>
+.ap-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:10px;margin-top:8px}
+.ap-tile{border:1px solid var(--ring);border-radius:12px;padding:12px 14px;background:var(--surface);display:flex;flex-direction:column;gap:6px;min-width:0}
+.ap-tile.off{opacity:.55}
+.ap-head{display:flex;align-items:center;gap:10px}
+.ap-ic{width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;background:var(--series-1-soft);color:var(--series-1);flex:0 0 auto}
+.ap-ic svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.ap-name{font-weight:700;font-size:14px}
+.ap-what{font-size:12.5px;color:var(--ink-2);line-height:1.4}
+.ap-where{font-size:11.5px;color:var(--muted)}
+.ap-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:auto;padding-top:4px}
+.ap-row .mk-sw{font-size:12.5px;font-weight:600}
+.ap-row .mk-sw input{width:18px;height:18px}
+.ap-h3{margin:16px 0 2px;font-size:13px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+.ap-pill{font-size:11px;padding:2px 8px;border-radius:999px;background:var(--critical-soft);color:var(--critical);font-weight:700}
+</style>
+<script>
+var APPS = null, APPS_ERR = '';
+var APPS_CORE = { dash: 1, apps: 1, invoice: 1, sales: 1, customers: 1, products: 1, stock: 1, cash: 1, settings: 1, platform: 1, orders: 1, home: 1 };
+var APPS_GROUPS = ['Sell', 'Goods', 'Money', 'System', 'For customers'];
+function apState() { return (ME && ME.apps) || { off: [], hidden: [] }; }
+function apSyncMe(r) {
+  if (!ME) return;
+  ME.apps = { off: r.apps.filter(function (a) { return !a.on; }).map(function (a) { return a.key; }),
+              hidden: r.apps.filter(function (a) { return a.hidden; }).map(function (a) { return a.key; }) };
+}
+// the menu: an app the provider switched off is gone; one the owner hid is out of the menu but still opens from the Apps page
+var applyRoleApps = applyRole;
+applyRole = function () {
+  applyRoleApps.apply(this, arguments);
+  var st = apState(), btns = document.querySelectorAll('#nav button[data-view]');
+  for (var i = 0; i < btns.length; i++) {
+    var v = btns[i].getAttribute('data-view');
+    btns[i].removeAttribute('data-apphidden');
+    if (APPS_CORE[v] || btns[i].style.display === 'none') continue;   // core, or the role / the joint flag already hid it
+    var off = st.off.indexOf(v) >= 0, hid = st.hidden.indexOf(v) >= 0;
+    if (off || hid) btns[i].style.display = 'none';
+    if (!off && hid) btns[i].setAttribute('data-apphidden', '1');
+  }
+  var grps = document.querySelectorAll('#nav .navgrp');
+  for (var g = 0; g < grps.length; g++) {
+    var any = false, n = grps[g].nextElementSibling;
+    while (n && !n.classList.contains('navgrp')) { if (n.style.display !== 'none') any = true; n = n.nextElementSibling; }
+    grps[g].style.display = any ? '' : 'none';
+  }
+};
+var routeAllowedApps = routeAllowed;
+routeAllowed = function (view) {
+  if (view === 'apps') return !!ME;
+  var b = el('nav').querySelector('button[data-view="' + view + '"]');
+  if (b && b.getAttribute('data-apphidden') === '1') return true;
+  return routeAllowedApps.apply(this, arguments);
+};
+var repaintApps = repaint;
+repaint = function () {
+  if (VIEW !== 'apps') return repaintApps.apply(this, arguments);
+  el('view').innerHTML = viewApps();
+  try { bindTips(el('view')); } catch (e) {}
+};
+var goApps = go;
+go = function (view) {
+  goApps.apply(this, arguments);
+  if (view === 'apps' && !APPS) apLoad();
+};
+function apLoad() {
+  srv('erpApps', [], function (r) { APPS = r; APPS_ERR = ''; apSyncMe(r); applyRole(); tabbarSync(); if (VIEW === 'apps') repaint(); },
+      function (e) { APPS_ERR = (e && e.message) || String(e); if (VIEW === 'apps') repaint(); });
+}
+function apIcon(a) {
+  if (a.kind === 'screen') { var b = document.querySelector('#nav button[data-view="' + a.key + '"] .ic'); if (b) return b.innerHTML; }
+  return '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg>';
+}
+function apTile(a) {
+  var admin = APPS.admin, owner = APPS.owner, screen = a.kind === 'screen';
+  var h = '<div class="ap-tile' + (a.on ? '' : ' off') + '"><div class="ap-head"><span class="ap-ic">' + apIcon(a) + '</span><span class="ap-name">' + esc(a.name) + '</span>' +
+          (a.on ? '' : '<span class="ap-pill">off for everyone</span>') + '</div>' +
+          '<div class="ap-what">' + esc(a.what) + '</div>' +
+          (a.where ? '<div class="ap-where">Settings: ' + esc(a.where) + '</div>' : '') +
+          '<div class="ap-row">';
+  if (a.on) {
+    if (screen) h += '<button class="btn small primary" type="button" data-apgo="' + esc(a.key) + '">Open</button>';
+    else h += '<a class="btn small primary" href="' + esc(a.url) + '" target="_blank" rel="noopener">Open the page</a>';
+    if (owner && screen) h += '<label class="mk-sw"><input type="checkbox" data-apmine="' + esc(a.key) + '"' + (a.hidden ? '' : ' checked') + '> In my menu</label>';
+  } else if (!admin) h += '<span class="sku">Switched off by the provider.</span>';
+  if (admin && !a.sameAs) h += '<label class="mk-sw"><input type="checkbox" data-apall="' + esc(a.key) + '"' + (a.on ? ' checked' : '') + '> On for everyone</label>';
+  if (admin && a.sameAs) h += '<span class="sku">Follows ' + esc(a.sameAs === 'find' ? 'Find stock' : a.sameAs) + '.</span>';
+  return h + '</div></div>';
+}
+function viewApps() {
+  var h = '<section><div class="card"><h2 style="margin:0 0 4px">Apps</h2><div class="sub" data-c5x="1" style="display:block">Everything the ERP does beyond the main menu. ' +
+          'A tile opens the screen or the public page.' +
+          (APPS && APPS.owner ? ' <b>In my menu</b> off takes it out of the menu for this business; nothing is deleted, and it still opens from here.' : '') +
+          (APPS && APPS.admin ? ' <b>On for everyone</b> is the provider\u2019s switch: off hides the app from every company and a public page answers \u201cnot open yet\u201d.' : '') + '</div>';
+  if (APPS_ERR) return h + '<div class="note err"><div class="ico">!</div><div>' + esc(APPS_ERR) + '</div></div></div></section>';
+  if (!APPS) return h + '<div class="loading">Loading\u2026</div></div></section>';
+  APPS_GROUPS.forEach(function (g) {
+    var list = APPS.apps.filter(function (a) { return a.group === g && !(a.key === 'joint' && !(ME && ME.joint) && !APPS.admin); });
+    if (!list.length) return;
+    h += '<h3 class="ap-h3">' + esc(g) + '</h3><div class="ap-grid">' + list.map(apTile).join('') + '</div>';
+  });
+  return h + '</div></section>';
+}
+document.addEventListener('click', function (ev) {
+  if (VIEW !== 'apps') return;
+  var t = ev.target && ev.target.closest ? ev.target.closest('[data-apgo]') : null; if (!t) return;
+  go(t.getAttribute('data-apgo'));
+});
+document.addEventListener('change', function (ev) {
+  if (VIEW !== 'apps') return;
+  var t = ev.target; if (!t || !t.getAttribute) return;
+  var mine = t.getAttribute('data-apmine'), all = t.getAttribute('data-apall');
+  if (!mine && !all) return;
+  var key = mine || all, on = !!t.checked;
+  t.disabled = true;
+  srv('erpAppSet', [{ key: key, on: on, scope: all ? 'all' : 'mine' }], function (r) {
+    APPS = r; apSyncMe(r); applyRole(); tabbarSync(); repaint();
+    toast(all ? (on ? 'On for every company.' : 'Off for every company.') : (on ? 'Back in the menu.' : 'Out of the menu. It still opens from Apps.'));
+  }, function (e) { t.checked = !on; t.disabled = false; toast(esc((e && e.message) || e), true, 9000); });
 });
 </script>
 </body>
