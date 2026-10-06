@@ -32,7 +32,7 @@ import { roleAtLeast } from '../allow.js';
 import { todayStr, round2 } from '../lib/time.js';
 
 const str = (v) => String(v == null ? '' : v).trim();
-const STALE_DAYS = 3;          // a seller not refreshed for this long drops out of the market
+export const STALE_DAYS = 3;          // a seller not refreshed for this long drops out of the market
 const LIMIT = 300;
 
 /** Who is listing: the provider's own businesses are 'self', a company on the bridge its install id. */
@@ -49,9 +49,33 @@ function needMarket(ctx) {
   return src;
 }
 async function conf(tx, biz) {
-  const rows = await tx`select key, value from business_config where business_id = ${biz} and key in ('market_share_on', 'market_city')`;
+  const rows = await tx`select key, value from business_config where business_id = ${biz} and key in ('market_share_on', 'market_city', 'market_public_on', 'market_public_orders', 'market_public_note')`;
   const m = Object.fromEntries(rows.map((r) => [r.key, r.value]));
-  return { on: m.market_share_on === '1', city: str(m.market_city) };
+  return { on: m.market_share_on === '1', city: str(m.market_city), publicOn: m.market_public_on === '1', orders: m.market_public_orders === '1', note: str(m.market_public_note) };
+}
+// Stage N5: the shop's public address on Find stock - "<name>-<4 letters>", kept once made
+async function slugFor(ctl, src, biz, name) {
+  const had = (await ctl`select slug from erp_market_shops where source = ${src} and business_id = ${biz}`)[0];
+  if (had) return str(had.slug);
+  const base = str(name).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 40) || 'shop';
+  const b = await crypto.subtle.digest('SHA-256', new TextEncoder().encode('shop|' + src + '|' + biz));
+  const hex = [...new Uint8Array(b)].map((x) => x.toString(16).padStart(2, '0')).join('');
+  for (let n = 4; n <= 12; n += 2) {
+    const slug = base + '-' + hex.slice(0, n);
+    if (!(await ctl`select 1 from erp_market_shops where slug = ${slug}`).length) return slug;
+  }
+  return base + '-' + hex.slice(0, 16);
+}
+async function shopUpsert(ctx, src, c) {
+  const ctl = ctx.deps.control;
+  let prof = {}; try { prof = await (await import('./sales.js')).qProfile(ctx); } catch (_) { prof = {}; }
+  const name = str(prof.name) || str(ctx.s.businessName) || 'Shop';
+  const slug = await slugFor(ctl, src, ctx.biz, name);
+  await ctl`insert into erp_market_shops (source, business_id, slug, name, phone, address, city, note, public, orders, updated_at)
+            values (${src}, ${ctx.biz}, ${slug}, ${name}, ${str(prof.phone) || null}, ${str(prof.address) || null}, ${c.city || null}, ${c.note || null}, ${!!(c.on && c.publicOn)}, ${!!c.orders}, now())
+            on conflict (source, business_id) do update set name = excluded.name, phone = excluded.phone, address = excluded.address, city = excluded.city, note = excluded.note,
+              public = excluded.public, orders = excluded.orders, updated_at = now()`;
+  return slug;
 }
 const band = (stock, reorder) => (stock <= Math.max(Number(reorder) || 0, 2) ? 'low' : 'in');
 
@@ -75,6 +99,7 @@ export async function marketRefresh(ctx) {
     await t`delete from erp_market_listings where source = ${src} and business_id = ${ctx.biz}`;
     if (list.length) await t`insert into erp_market_listings ${t(list, 'source', 'business_id', 'product_id', 'name', 'category', 'brand', 'color', 'unit', 'band', 'price', 'city')}`;
   });
+  try { await shopUpsert(ctx, src, c); } catch (e) { console.error('market shop row', e); }
   return { listed: list.length, on: c.on };
 }
 
@@ -130,8 +155,11 @@ export async function erpMarketMine(ctx) {
      where p.business_id = ${ctx.biz} and coalesce(p.status, 'Active') = 'Active'
      order by (m.product_id is null), p.name`;
   const seen = await visibleListings(ctx);
+  const src = sourceOf(ctx.deps);
+  const slug = await slugFor(ctx.deps.control, src, ctx.biz, str((await (await import('./sales.js')).qProfile(ctx)).name) || str(ctx.s.businessName));
+  const base = (await import('./passport.js')).pubBase(ctx.deps).check.replace(/check$/, '');
   return {
-    on: c.on, city: c.city,
+    on: c.on, city: c.city, publicOn: c.publicOn, orders: c.orders, note: c.note, shopUrl: base + 'find?s=' + slug, waiting: (await waitingFor(ctx, src)).length,
     products: rows.map((r) => ({ id: r.id, sku: r.sku, name: r.name, category: r.category, brand: r.brand,
       price: Number(r.sell_price) || 0, stock: Number(r.stock), shared: !!r.price_mode, mode: r.price_mode || 'price',
       guide: guideFor(seen, r.name) })),
@@ -144,6 +172,9 @@ export async function erpMarketSave(ctx, payload) {
   const put = (k, v) => ctx.tx`insert into business_config (business_id, key, value) values (${ctx.biz}, ${k}, ${v})
                                on conflict (business_id, key) do update set value = excluded.value, updated_at = now()`;
   if (p.on !== undefined) await put('market_share_on', p.on ? '1' : '0');
+  if (p.publicOn !== undefined) await put('market_public_on', p.publicOn ? '1' : '0');
+  if (p.orders !== undefined) await put('market_public_orders', p.orders ? '1' : '0');
+  if (p.note !== undefined) await put('market_public_note', str(p.note).slice(0, 300));
   if (p.city !== undefined) {
     await put('market_city', str(p.city).slice(0, 40));
     // the Printer Passport register shows "Supplier · <city>" for a seller who hides the name
@@ -165,8 +196,33 @@ export async function erpMarketSave(ctx, payload) {
   }
   const c = await conf(ctx.tx, ctx.biz);
   if (c.on && !c.city) throw new Error('Write your city: buyers see "Supplier · <city>".');
+  if (c.publicOn && !c.on) throw new Error('Switch on "Share my stock on the market" first - Find stock shows the same products.');
   const r = await marketRefresh(ctx);
-  return { on: c.on, city: c.city, changed, listed: r.listed || 0 };
+  return { on: c.on, city: c.city, publicOn: c.publicOn, orders: c.orders, note: c.note, changed, listed: r.listed || 0 };
+}
+// ---------------------------------------------------------------- Stage N5: buyers waiting for a product I list
+async function waitingFor(ctx, src) {
+  if (!src) return [];
+  const keys = [...new Set((await ctx.deps.control`select name from erp_market_listings where source = ${src} and business_id = ${ctx.biz}`).map((l) => words(l.name).join(' ')).filter(Boolean))];
+  if (!keys.length) return [];
+  return ctx.deps.control`select * from erp_stock_alerts where told_at is null and name_key = any(${keys}) and created_at > now() - interval '60 days' order by created_at desc limit 200`;
+}
+export async function erpMarketWaiting(ctx) {
+  const src = needMarket(ctx);
+  const c = await conf(ctx.tx, ctx.biz);
+  let shop = str(ctx.s.businessName); try { shop = str((await (await import('./sales.js')).qProfile(ctx)).name) || shop; } catch (_) { /* the business name */ }
+  const rows = await waitingFor(ctx, src);
+  return { waiting: rows.map((a) => { const d = str(a.phone).replace(/[^0-9]/g, ''); return { id: a.id, name: str(a.name), phone: str(a.phone), since: a.created_at ? formatDateDay(a.created_at) : '',
+    whatsapp: d ? 'https://wa.me/' + (d.startsWith('0') ? '88' + d : d) + '?text=' + encodeURIComponent('Hello, ' + str(a.name) + ' is back in stock at ' + shop + '.') : '' }; }), publicOn: c.publicOn };
+}
+function formatDateDay(d) { const x = new Date(d); return x.getDate() + ' ' + ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][x.getMonth()]; }
+export async function erpMarketTold(ctx, payload) {
+  const src = needMarket(ctx);
+  const mine = (await waitingFor(ctx, src)).map((a) => String(a.id));
+  const id = str(payload && payload.id);
+  if (!mine.includes(id)) throw new Error('That buyer is not waiting for a product you list.');
+  await ctx.deps.control`update erp_stock_alerts set told_at = now(), told_by = ${src + ':' + ctx.biz} where id = ${id}::uuid`;
+  return { told: true };
 }
 
 // ---------------------------------------------------------------- Stage 3: deals
@@ -361,7 +417,7 @@ async function visibleListings(ctx) {
      limit 5000`;
 }
 /** The words that name a product, without sizes ("Sunlu PLA+ Black 1kg" -> black, pla, sunlu). */
-function words(name) {
+export function words(name) {
   return [...new Set(str(name).toLowerCase().split(/[^a-z0-9+ঀ-৿]+/)
     .filter((w) => w.length >= 2 && !/^\d+(\.\d+)?(kg|g|gm|mm|cm|m|ml|l|pcs|pc)?$/.test(w)))].sort();
 }
@@ -497,4 +553,4 @@ export async function erpWantedOffer(ctx, payload) {
 
 export const HANDLERS = { erpMarket, erpMarketMine, erpMarketSave, erpMarketAsk, erpMarketRequests, erpMarketQuote, erpMarketAccept,
   erpMarketInvoice, erpMarketReceive, erpMarketClose, erpMarketRate, erpMarketHints, erpMarketNames, erpWanted, erpWantedPost,
-  erpWantedClose, erpWantedOffer };
+  erpWantedClose, erpWantedOffer, erpMarketWaiting, erpMarketTold };
