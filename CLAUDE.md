@@ -3,7 +3,9 @@
 This file is for whichever model continues the work (it was written by Claude Fable 5.1 on
 2026-10-03 for Claude Opus 5.5). It says what the system is, how the owner wants to be worked
 with, how every change is made, and what is left. Read it fully before touching anything.
-Then read `docs/CHANGES.md` (the log of every phase, newest at the bottom) and `docs/PLAN.md`.
+Then read `docs/HANDOVER.md` (7 Oct 2026: the live state, what is wrong in the books, open work, branch
+state - the business is LIVE on this ERP, never wipe), then `docs/CHANGES.md` (the log of every phase,
+newest at the bottom) and `docs/PLAN.md`.
 The auto-memory file `~/.claude/projects/G--/memory/erp-redesign.md` holds the same history
 in note form plus gotchas; keep appending to it after every stage.
 
