@@ -56,13 +56,13 @@ footer{font-size:13px;color:var(--mute);text-align:center;margin-top:22px}
 <main>
   <header><h1 id="h1"><span data-t="title">Get it printed</span><small data-t="sub">Post the file, see a fair estimate, let print farms offer</small></h1><button class="lang" id="lang" type="button">বাংলা</button></header>
   <div id="out"><div class="card"><p class="state" data-t="loading">Loading…</p></div></div>
-  <footer><span data-t="foot">An open community platform. The farm you choose prints, invoices and delivers; you pay the farm. The board holds no money and gives your name and number to nobody else.</span><br><a href="find" data-t="find">Find stock</a> · <a href="doctor" data-t="doctor">Print Doctor</a> · <a href="check" data-t="check">Printer Passport</a> · <a href="choose" data-t="choose">Help me choose</a> · <a href="ideas" data-t="ideas">Ideas</a></footer>
+  <footer><span data-t="foot">An open community platform. The farm you choose prints, invoices and delivers; you pay the farm. The board holds no money and gives your name and number to nobody else.</span><br><a href="find" data-t="find">Find stock</a> · <a href="doctor" data-t="doctor">Print Doctor</a> · <a href="check" data-t="check">Printer Passport</a> · <a href="choose" data-t="choose">Help me choose</a> · <a href="ideas" data-t="ideas">Ideas</a> · <a href="design" data-t="design">Design desk</a></footer>
 </main>
 <script>
 var API = (new URLSearchParams(location.search).get('api') || 'https://oqzcuuytytqadqjlwdsh.supabase.co/functions/v1/erp').replace(/\/+$/, '');
 var Q = new URLSearchParams(location.search), TOKEN = Q.get('t') || '';
 var T = {
-  en: { title: 'Get it printed', sub: 'Post the file, see a fair estimate, let print farms offer', loading: 'Loading…', foot: 'An open community platform. The farm you choose prints, invoices and delivers; you pay the farm. The board holds no money and gives your name and number to nobody else.', find: 'Find stock', doctor: 'Print Doctor', check: 'Printer Passport', choose: 'Help me choose', ideas: 'Ideas', net: 'Could not reach the server. Check your connection and try again.',
+  en: { title: 'Get it printed', sub: 'Post the file, see a fair estimate, let print farms offer', loading: 'Loading…', foot: 'An open community platform. The farm you choose prints, invoices and delivers; you pay the farm. The board holds no money and gives your name and number to nobody else.', find: 'Find stock', doctor: 'Print Doctor', check: 'Printer Passport', choose: 'Help me choose', ideas: 'Ideas', design: 'Design desk', fromDesk: 'From the design desk', noFile: 'No file yet? The design desk makes one from a sketch or a broken part.', askDesk: 'Ask the design desk', net: 'Could not reach the server. Check your connection and try again.',
     how: 'How it works', how1: '1. Drop your file. Your browser works out grams, hours and a fair price range - nothing is uploaded yet.', how2: '2. Post the job. Farms on the platform see the city, the file and your words - not your name or number.', how3: '3. Farms offer a price and days; you choose one on your job link. That farm gets your contact, prints, invoices and delivers. You pay the farm. After delivery you rate it.',
     drop: 'Drop the file here or tap to pick', dropTypes: 'STL or OBJ for an estimate · 3MF, STEP, ZIP, a photo or PDF of a sketch also fine · up to 40 MB', reading: 'Reading the file…', noVol: 'The file has no closed volume (a flat or broken mesh) - farms will quote by eye.', notModel: 'Not a model file: no estimate, but the farm can look at it.', tiny: 'Very small - was it saved in inches? Check the size with the farm.', huge: 'Bigger than most printers (250 mm) - the farm may split it.',
     est: 'Estimate per piece', grams: 'grams', hours: 'hours', price: 'fair price', box: 'size (mm)', tri: 'triangles', estNote: 'A browser estimate for PLA-class material at 0.2 mm layers; farms set the real price in their offers.', infill: 'Infill', material: 'Material', any: 'Let the farm choose', colour: 'Colour', anyColour: 'any', qty: 'How many', notes: 'What is it for, deadline, finish, anything the farm should know', link: 'Link to the file instead (Drive, Printables, Thingiverse)', total: 'for all pieces',
@@ -73,7 +73,7 @@ var T = {
     offers: 'Offers', noOffers: 'No offers yet. Farms look at the board during the day; come back to this link.', newFarm: 'new farm, no rating yet', jobs: 'jobs', days: 'days', chooseBtn: 'Choose this farm', chosen: 'Chosen', passed: 'Not chosen', choosing: 'Choosing…',
     farm: 'Your farm', farmNote: 'Agree the details and the delivery with the farm and pay the farm directly. The board holds no money.', call: 'Call', wa: 'WhatsApp', posted: 'posted', file: 'Your file', close: 'Close this job', closeSure: 'Sure? Close it', closed: 'Closed. Thank you.',
     rate: 'How was the farm?', rateNote: 'Your stars are shown on the farm’s future offers.', rateText: 'A few words (optional)', rateSend: 'Send the rating', rated: 'You rated', thanks: 'Thank you - recorded.' },
-  bn: { title: 'প্রিন্ট করিয়ে নিন', sub: 'ফাইল দিন, ন্যায্য দামের আন্দাজ দেখুন, প্রিন্ট ফার্মগুলো দাম দিক', loading: 'লোড হচ্ছে…', foot: 'একটি উন্মুক্ত কমিউনিটি প্ল্যাটফর্ম। আপনি যে ফার্ম বেছে নেন সে-ই প্রিন্ট করে, বিল দেয়, পৌঁছে দেয়; টাকা আপনি ফার্মকে দেন। বোর্ড কোনো টাকা রাখে না, আপনার নাম-নম্বর অন্য কাউকে দেয় না।', find: 'স্টক খুঁজুন', doctor: 'প্রিন্ট ডাক্তার', check: 'প্রিন্টার পাসপোর্ট', choose: 'বেছে নিতে সাহায্য', ideas: 'আইডিয়া', net: 'সার্ভারে পৌঁছানো যায়নি। ইন্টারনেট দেখে আবার চেষ্টা করুন।',
+  bn: { title: 'প্রিন্ট করিয়ে নিন', sub: 'ফাইল দিন, ন্যায্য দামের আন্দাজ দেখুন, প্রিন্ট ফার্মগুলো দাম দিক', loading: 'লোড হচ্ছে…', foot: 'একটি উন্মুক্ত কমিউনিটি প্ল্যাটফর্ম। আপনি যে ফার্ম বেছে নেন সে-ই প্রিন্ট করে, বিল দেয়, পৌঁছে দেয়; টাকা আপনি ফার্মকে দেন। বোর্ড কোনো টাকা রাখে না, আপনার নাম-নম্বর অন্য কাউকে দেয় না।', find: 'স্টক খুঁজুন', doctor: 'প্রিন্ট ডাক্তার', check: 'প্রিন্টার পাসপোর্ট', choose: 'বেছে নিতে সাহায্য', ideas: 'আইডিয়া', design: 'ডিজাইন ডেস্ক', fromDesk: 'ডিজাইন ডেস্ক থেকে', noFile: 'ফাইল নেই? ডিজাইন ডেস্ক স্কেচ বা ভাঙা যন্ত্রাংশ থেকে ফাইল বানিয়ে দেয়।', askDesk: 'ডিজাইন ডেস্কে বলুন', net: 'সার্ভারে পৌঁছানো যায়নি। ইন্টারনেট দেখে আবার চেষ্টা করুন।',
     how: 'কীভাবে কাজ করে', how1: '১. ফাইলটি দিন। আপনার ব্রাউজারই গ্রাম, ঘণ্টা ও ন্যায্য দামের সীমা হিসাব করে - এখনো কিছু আপলোড হয় না।', how2: '২. কাজটি পোস্ট করুন। প্ল্যাটফর্মের ফার্মগুলো শহর, ফাইল ও আপনার কথা দেখে - আপনার নাম বা নম্বর নয়।', how3: '৩. ফার্মগুলো দাম ও দিন জানায়; আপনি আপনার লিংকে একটি বেছে নেন। সেই ফার্ম আপনার যোগাযোগ পায়, প্রিন্ট করে, বিল দেয়, পৌঁছে দেয়। টাকা আপনি ফার্মকে দেন। ডেলিভারির পর রেটিং দেন।',
     drop: 'ফাইলটি এখানে ফেলুন বা ট্যাপ করে বেছে নিন', dropTypes: 'আন্দাজের জন্য STL বা OBJ · 3MF, STEP, ZIP, স্কেচের ছবি বা PDF-ও চলবে · সর্বোচ্চ ৪০ MB', reading: 'ফাইল পড়া হচ্ছে…', noVol: 'ফাইলে বন্ধ আয়তন নেই (চ্যাপ্টা বা ভাঙা মেশ) - ফার্ম দেখে দাম বলবে।', notModel: 'এটি মডেল ফাইল নয়: আন্দাজ নেই, তবে ফার্ম দেখতে পারবে।', tiny: 'খুব ছোট - ইঞ্চিতে সেভ করা? মাপটা ফার্মের সাথে মিলিয়ে নিন।', huge: 'বেশিরভাগ প্রিন্টারের (২৫০ মিমি) চেয়ে বড় - ফার্ম ভাগ করে প্রিন্ট করতে পারে।',
     est: 'প্রতি পিসের আন্দাজ', grams: 'গ্রাম', hours: 'ঘণ্টা', price: 'ন্যায্য দাম', box: 'মাপ (মিমি)', tri: 'ত্রিভুজ', estNote: 'PLA-ধরনের ম্যাটেরিয়াল, ০.২ মিমি লেয়ারে ব্রাউজারের আন্দাজ; আসল দাম ফার্মগুলো তাদের অফারে দেয়।', infill: 'ইনফিল', material: 'ম্যাটেরিয়াল', any: 'ফার্ম বেছে নিক', colour: 'রং', anyColour: 'যেকোনো', qty: 'কয়টা', notes: 'কী কাজে লাগবে, কবে লাগবে, ফিনিশ, ফার্মের জানা দরকার এমন কিছু', link: 'ফাইলের লিংক দিন (Drive, Printables, Thingiverse)', total: 'সব পিস মিলে',
@@ -150,7 +150,7 @@ function estimate(m, material, infillPct) {
 }
 
 /* ---------- the posting page */
-var FILE = null, MODEL = null, MODEL_STATE = '', KEEP = { material: '', colour: '', qty: '1', notes: '', link: '', city: '', name: '', phone: '', infill: '15' };
+var FILE = null, FROM = null, MODEL = null, MODEL_STATE = '', KEEP = { material: '', colour: '', qty: '1', notes: '', link: '', city: '', name: '', phone: '', infill: '15' };
 function remember() { ['material', 'colour', 'qty', 'notes', 'link', 'city', 'name', 'phone', 'infill'].forEach(function (k) { var n = document.getElementById('p_' + k); if (n) KEEP[k] = n.value; }); }
 function estHtml() {
   var e = estimate(MODEL, KEEP.material, +KEEP.infill), q = Math.max(1, parseInt(KEEP.qty, 10) || 1);
@@ -169,7 +169,7 @@ function showForm() {
   MODE = 'form'; remember();
   var cities = ['Dhaka', 'Chattogram', 'Sylhet', 'Khulna', 'Rajshahi', 'Barishal', 'Rangpur', 'Mymensingh', 'Cumilla', 'Gazipur', 'Narayanganj', 'Bogura', "Cox's Bazar", 'Jashore'];
   out.innerHTML = '<div class="card"><h2>' + t('how') + '</h2><p class="hint" style="margin:0 0 4px">' + t('how1') + '</p><p class="hint" style="margin:0 0 4px">' + t('how2') + '</p><p class="hint" style="margin:0">' + t('how3') + '</p></div>' +
-    '<form id="f"><div class="card"><label class="drop' + (FILE ? ' on' : '') + '" id="drop"><input type="file" id="p_file" accept=".stl,.obj,.3mf,.step,.stp,.zip,.jpg,.jpeg,.png,.pdf"><b>' + (FILE ? esc(FILE.name) + ' · ' + Math.round(FILE.size / 1024) + ' KB' : t('drop')) + '</b><span>' + t('dropTypes') + '</span></label>' +
+    '<form id="f"><div class="card">' + (FROM ? '<div class="drop on"><b>' + esc(FROM.name) + '</b><span>' + t('fromDesk') + ': ' + esc(FROM.title) + ' (' + esc(FROM.reqNo) + ')</span></div>' : '<label class="drop' + (FILE ? ' on' : '') + '" id="drop"><input type="file" id="p_file" accept=".stl,.obj,.3mf,.step,.stp,.zip,.jpg,.jpeg,.png,.pdf"><b>' + (FILE ? esc(FILE.name) + ' · ' + Math.round(FILE.size / 1024) + ' KB' : t('drop')) + '</b><span>' + t('dropTypes') + '</span></label><p class="hint" style="margin:8px 0 0">' + t('noFile') + ' <a href="design">' + t('askDesk') + '</a></p>') +
     '<label for="p_link">' + t('link') + '</label><input id="p_link" maxlength="400" value="' + esc(KEEP.link) + '"></div>' +
     '<div id="estwrap">' + estHtml() + '</div>' +
     '<div class="card"><div class="two"><div><label for="p_material">' + t('material') + '</label><select id="p_material"><option value="">' + t('any') + '</option>' + Object.keys(DENS).map(function (m) { return '<option' + (KEEP.material === m ? ' selected' : '') + '>' + m + '</option>'; }).join('') + '</select></div><div><label for="p_colour">' + t('colour') + '</label><input id="p_colour" maxlength="40" placeholder="' + t('anyColour') + '" value="' + esc(KEEP.colour) + '"></div></div>' +
@@ -179,10 +179,12 @@ function showForm() {
     '<label class="chk"><input type="checkbox" id="p_consent"> <span>' + t('consent') + '</span></label>' +
     '<div class="row"><button type="submit" class="pri" id="p_go">' + t('post') + '</button></div><div class="bar" id="bar" hidden><i id="bari"></i></div><div class="err" id="p_err"></div></div></form>';
   var drop = document.getElementById('drop');
-  document.getElementById('p_file').addEventListener('change', function () { if (this.files && this.files[0]) takeFile(this.files[0]); });
-  drop.addEventListener('dragover', function (ev) { ev.preventDefault(); drop.classList.add('on'); });
-  drop.addEventListener('dragleave', function () { if (!FILE) drop.classList.remove('on'); });
-  drop.addEventListener('drop', function (ev) { ev.preventDefault(); if (ev.dataTransfer.files && ev.dataTransfer.files[0]) takeFile(ev.dataTransfer.files[0]); });
+  if (drop) {
+    document.getElementById('p_file').addEventListener('change', function () { if (this.files && this.files[0]) takeFile(this.files[0]); });
+    drop.addEventListener('dragover', function (ev) { ev.preventDefault(); drop.classList.add('on'); });
+    drop.addEventListener('dragleave', function () { if (!FILE) drop.classList.remove('on'); });
+    drop.addEventListener('drop', function (ev) { ev.preventDefault(); if (ev.dataTransfer.files && ev.dataTransfer.files[0]) takeFile(ev.dataTransfer.files[0]); });
+  }
   out.addEventListener('input', function (ev) {
     if (ev.target.id === 'p_infill') { KEEP.infill = ev.target.value; document.getElementById('infv').textContent = KEEP.infill + '%'; var e = estimate(MODEL, KEEP.material, +KEEP.infill); if (e) { var cells = document.querySelectorAll('#estcard .est b'); cells[0].textContent = e.grams; cells[1].textContent = e.hours; cells[2].textContent = tk(e.low) + '–' + tk(e.high); var q = Math.max(1, parseInt(val('p_qty'), 10) || 1); if (cells[5]) cells[5].textContent = tk(e.low * q) + '–' + tk(e.high * q); } }
     if (ev.target.id === 'p_material' || ev.target.id === 'p_qty') { remember(); document.getElementById('estwrap').innerHTML = estHtml(); }
@@ -190,7 +192,7 @@ function showForm() {
   document.getElementById('f').addEventListener('submit', postJob);
 }
 function takeFile(f) {
-  FILE = f; MODEL = null; MODEL_STATE = 'reading'; remember(); showForm();
+  FILE = f; FROM = null; MODEL = null; MODEL_STATE = 'reading'; remember(); showForm();
   var ext = (f.name.split('.').pop() || '').toLowerCase();
   if (ext !== 'stl' && ext !== 'obj') { MODEL_STATE = 'notmodel'; document.getElementById('estwrap').innerHTML = estHtml(); return; }
   var rd = new FileReader();
@@ -214,7 +216,7 @@ function postJob(ev) {
   if (!FILE && !KEEP.link.trim() && KEEP.notes.trim().length < 10) { err.textContent = t('needFile'); return; }
   go.disabled = true; go.textContent = t('posting');
   var fail = function (e) { go.disabled = false; go.textContent = t('post'); bar.hidden = true; err.textContent = (e && e.message) || e || t('net'); };
-  api('printjob', { want: 'start', fileName: FILE ? FILE.name : '', fileSize: FILE ? FILE.size : 0 }).then(function (s) {
+  api('printjob', FROM ? { want: 'start', from: FROM.t } : { want: 'start', fileName: FILE ? FILE.name : '', fileSize: FILE ? FILE.size : 0 }).then(function (s) {
     if (!s.ok) throw new Error(s.error || t('net'));
     var up = FILE && s.upload ? (bar.hidden = false, go.textContent = t('uploading'), putFile(s.upload, FILE, function (p) { bari.style.width = Math.round(p * 100) + '%'; })) : Promise.resolve();
     return up.then(function () {
@@ -274,7 +276,20 @@ out.addEventListener('click', function (ev) {
     CLOSE_ARMED = false; JUST_POSTED = ''; load();
   }, function () { out.querySelectorAll('[data-a]').forEach(function (y) { y.disabled = false; }); var e = document.getElementById(a === 'choose' ? 'o_err' : 'j_err'); if (e) e.textContent = t('net'); });
 });
+/* a file delivered on the design desk (?from=<design token>): the server copies it into the job; the browser only reads it for the estimate */
+function fromDesk(tok) {
+  api('design&t=' + encodeURIComponent(tok)).then(function (d) {
+    if (!d.ok || !d.out) { showForm(); return; }
+    FROM = { t: tok, name: d.out.name, url: d.out.url, title: d.title, reqNo: d.reqNo }; FILE = { name: d.out.name, size: 0 }; MODEL = null; MODEL_STATE = 'reading';
+    if (!KEEP.notes) KEEP.notes = d.title + ' (' + d.reqNo + ')'; if (!KEEP.city && d.city) KEEP.city = d.city; if (!KEEP.name && d.name) KEEP.name = d.name;
+    showForm();
+    var ext = (d.out.name.split('.').pop() || '').toLowerCase(), paint = function () { var w = document.getElementById('estwrap'); if (w) w.innerHTML = estHtml(); };
+    if (ext !== 'stl' && ext !== 'obj') { MODEL_STATE = 'notmodel'; paint(); return; }
+    fetch(d.out.url).then(function (x) { return x.arrayBuffer(); }).then(function (buf) { FILE.size = buf.byteLength; try { MODEL = ext === 'stl' ? parseStl(buf) : parseObj(new TextDecoder().decode(buf)); } catch (e) { MODEL = null; } MODEL_STATE = MODEL ? 'ok' : 'novol'; paint(); }, function () { MODEL_STATE = 'novol'; paint(); });
+  }, function () { showForm(); });
+}
 function load() {
+  if (!TOKEN && Q.get('from') && !FROM) { fromDesk(Q.get('from')); return; }
   if (!TOKEN) { showForm(); return; }
   api('printjob&t=' + encodeURIComponent(TOKEN)).then(showJob, function () { showJob({ ok: false, error: t('net') }); });
 }

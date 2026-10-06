@@ -290,6 +290,12 @@ export async function pubRoute(deps, req, R) {
     if (req.method !== 'GET' && req.method !== 'POST') return { status: 405, body: { ok: false } };
     let body = {};
     if (req.method === 'POST') { try { body = await req.json(); } catch (_) { body = {}; } }
+    // Stage N8 (handlers/designdesk.js): the design desk and repair-part requests
+    if (what === 'design') {
+      const r = await (await import('./designdesk.js')).route(deps, what, req.method, u.searchParams, body, ip);
+      if (!r) return { status: 405, body: { ok: false } };
+      return { status: 200, body: { ok: true, ...r } };
+    }
     // Stage N7 (handlers/printboard.js): Get it printed - the public board of print jobs
     if (what === 'printjob') {
       const r = await (await import('./printboard.js')).route(deps, R || {}, what, req.method, u.searchParams, body, ip);
