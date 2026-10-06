@@ -47,7 +47,7 @@ async function sha256hex(s) {
   return [...new Uint8Array(b)].map((x) => x.toString(16).padStart(2, '0')).join('');
 }
 /** A customer's token: derived from the provider's secret, so every invoice gets the same link without storing a secret. */
-async function tokenFor(deps, source, biz, key) {
+export async function tokenFor(deps, source, biz, key) {
   const secret = str(deps && (deps.bridgeKey || deps.pubSecret)) || 'local-test-secret';
   const k = await crypto.subtle.importKey('raw', enc.encode(secret), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
   const sig = new Uint8Array(await crypto.subtle.sign('HMAC', k, enc.encode('my|' + source + '|' + biz + '|' + key)));
@@ -62,7 +62,7 @@ async function sellerInfo(ctx) {
   const m = Object.fromEntries(rows.map((r) => [r.key, str(r.value)]));
   return { name, city: m.market_city || '', show: m.passport_show_seller !== '0' };
 }
-const versionOf = (name) => (/\b(chin(a|ese)|cn)\b/i.test(name) ? 'china' : /\b(global|gl)\b/i.test(name) ? 'global' : '');
+export const versionOf = (name) => (/\b(chin(a|ese)|cn)\b/i.test(name) ? 'china' : /\b(global|gl)\b/i.test(name) ? 'global' : '');
 
 // ---------------------------------------------------------------- writes from the seller's ERP
 /** units: [{serial, sku, name, brand, category, warrantyMonths, warrantyUntil}] sold on one invoice. */
@@ -114,14 +114,14 @@ export async function passportRepair(ctx, serial, jobNo, status) {
 }
 
 // ---------------------------------------------------------------- public: the check
-async function limit(deps, ip, kind, max) {
+export async function limit(deps, ip, kind, max) {
   const ctl = deps.control; if (!ctl || !ip) return;
   await ctl`delete from erp_pub_hits where at < now() - interval '2 hours'`;
   const n = (await ctl`select count(*)::int as n from erp_pub_hits where ip = ${ip} and kind = ${kind} and at > now() - interval '1 hour'`)[0].n;
   if (n >= max) throw new Error('Too many requests from this connection. Try again in an hour.');
   await ctl`insert into erp_pub_hits (ip, kind) values (${ip}, ${kind})`;
 }
-function warrantyWords(until, now) {
+export function warrantyWords(until, now) {
   if (!until) return { state: 'none', days: null };
   const end = dhakaDayStart(day(until)).getTime() + DAY - 1;
   const left = Math.ceil((end - now.getTime()) / DAY);
@@ -137,8 +137,10 @@ export async function checkSerial(deps, serial, ip) {
                            from erp_passports p where p.serial_norm = ${sn} order by p.sold_at desc nulls last limit 5`;
   if (!rows.length) return { serial: sn, found: false, records: [] };
   const now = new Date();
-  const sellers = new Set(rows.filter((r) => r.status === 'sold').map((r) => r.source + '/' + r.business_id));
+  const sellers = new Set(rows.filter((r) => r.status === 'sold' && r.level !== 'declared').map((r) => r.source + '/' + r.business_id));
   const disputed = sellers.size > 1;
+  const rank = { verified: 0, confirmed: 1, declared: 2 };
+  rows.sort((a, b) => (rank[a.level] || 0) - (rank[b.level] || 0));
   const records = [];
   for (const r of rows) {
     const w = warrantyWords(r.warranty_until, now);
@@ -151,6 +153,7 @@ export async function checkSerial(deps, serial, ip) {
       warrantyState: w.state, daysLeft: w.days, transferable: r.transferable !== false,
       status: str(r.status), level: str(r.level), disputed,
       repairs: num(r.repairs), lastRepair: month(r.last_repair),
+      answer: str(r.answer), proofs: Array.isArray(r.proof) ? r.proof.length : 0,
       events: ev.map((e) => ({ kind: e.kind, month: month(e.at), status: e.detail && e.detail.status ? str(e.detail.status) : '' })),
     });
   }
@@ -269,6 +272,15 @@ export async function pubRoute(deps, req, R) {
   const u = new URL(req.url), what = u.searchParams.get('pub');
   const ip = str(req.headers.get('cf-connecting-ip') || str(req.headers.get('x-forwarded-for')).split(',')[0]) || 'local';
   try {
+    if (req.method !== 'GET' && req.method !== 'POST') return { status: 405, body: { ok: false } };
+    let body = {};
+    if (req.method === 'POST') { try { body = await req.json(); } catch (_) { body = {}; } }
+    // Stage N2 (handlers/publicreg.js): register, owner, confirm, lite
+    if (['register', 'owner', 'confirm', 'lite'].includes(what)) {
+      const r = await (await import('./publicreg.js')).route(deps, what, req.method, u.searchParams, body, ip);
+      if (!r) return { status: 405, body: { ok: false } };
+      return { status: 200, body: { ok: true, ...r } };
+    }
     if (req.method !== 'GET') return { status: 405, body: { ok: false } };
     if (what === 'check') return { status: 200, body: { ok: true, ...(await checkSerial(deps, u.searchParams.get('s'), ip)) } };
     if (what === 'my') { const r = await myPage(deps, R || {}, u.searchParams.get('t'), u.searchParams.get('pdf'), ip); delete r.deps0; return { status: 200, body: { ok: true, ...r } }; }

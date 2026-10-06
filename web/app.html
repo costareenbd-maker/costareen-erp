@@ -8420,7 +8420,7 @@ function srv(name, args, ok, bad) {
 
 var SRV_ACTIVE = 0, SRV_WRITING = false, SRV_TIMED = {};
 // the same list the server uses to know a call changes nothing (ERP_READS)
-var SRV_READS = /^(erpWarrantyRules|erpWarrantyCard|erpMyLink|erpJoint|erpJointCatalog|erpJointCard|erpInvoiceDesign|erpInvoicePreview|erpMarket|erpMarketMine|erpMarketRequests|erpMarketHints|erpMarketNames|erpWanted|erpBrand|erpComplianceLog|erpProviderKey|erpNews|erpAccessKeys|erpAccessWarning|erpAdmin|erpAiKeys|erpAlertRules|erpAlerts|erpArena|erpBackupStatus|erpBg|erpBnWords|erpBookedParcels|erpBrandLogo|erpBundle|erpBusinessLinks|erpBusinesses|erpBusinessesDeleted|erpCampaignAudience|erpCampaignGet|erpCampaignList|erpCapital|erpCashBook|erpCatalog|erpConnStatus|erpConnections|erpCostBook|erpCourier|erpCourierKeyStatus|erpCurrencies|erpCustomerAccount|erpCustomerCredit|erpCustomerList|erpCustomerPage|erpCustomerStatement|erpCustomers|erpDashboardData|erpDaySales|erpDeliveryOptions|erpDevices|erpDiscontinued|erpDues|erpEvoQr|erpEvoStatus|erpExpenseExport|erpExpenseReceiptUrl|erpExpenses|erpFamilies|erpFighters|erpFormOptions|erpGame|erpGetTheme|erpGoogle|erpHello|erpInstalls|erpInvoice|erpInvoicePdf|erpJob|erpJobs|erpListView|erpLookupCustomer|erpLookupUsage|erpMe|erpMoney|erpNoteFileUrl|erpNotes|erpOwnerChange|erpOwnerChanges|erpParcelLabels|erpParcelPreview|erpPartnerStock|erpPartnership|erpPayReasons|erpPeople|erpPlatform|erpPlatformErrors|erpPnl|erpPnlMonth|erpPoList|erpPoolCatalog|erpProduct|erpProductListShare|erpProductPage|erpProductPhotoUrl|erpProductThumbs|erpProfile|erpQuoteAsset|erpQuoteBoot|erpQuoteGet|erpQuoteList|erpRecentInvoices|erpRecovery|erpReorderPlan|erpRestorePreview|erpReturnPreview|erpRisks|erpSales|erpSearch|erpSecurity|erpSelfTest|erpSerialLookup|erpSerialsFor|erpSessions|erpSetTheme|erpSettingsFull|erpSettingsLists|erpSfPayoutLines|erpSfPayouts|erpShareFile|erpSharedStock|erpSheet|erpStatementPdf|erpStockHistory|erpSupplierPage|erpSuppliers|erpToday|erpUsers|erpWaProductPdf|erpWebMatches|erpWebOrderInvoices|erpWebOrders|erpWebsiteTest)$/;
+var SRV_READS = /^(erpWarrantyRules|erpWarrantyCard|erpMyLink|erpPlatformRegister|erpJoint|erpJointCatalog|erpJointCard|erpInvoiceDesign|erpInvoicePreview|erpMarket|erpMarketMine|erpMarketRequests|erpMarketHints|erpMarketNames|erpWanted|erpBrand|erpComplianceLog|erpProviderKey|erpNews|erpAccessKeys|erpAccessWarning|erpAdmin|erpAiKeys|erpAlertRules|erpAlerts|erpArena|erpBackupStatus|erpBg|erpBnWords|erpBookedParcels|erpBrandLogo|erpBundle|erpBusinessLinks|erpBusinesses|erpBusinessesDeleted|erpCampaignAudience|erpCampaignGet|erpCampaignList|erpCapital|erpCashBook|erpCatalog|erpConnStatus|erpConnections|erpCostBook|erpCourier|erpCourierKeyStatus|erpCurrencies|erpCustomerAccount|erpCustomerCredit|erpCustomerList|erpCustomerPage|erpCustomerStatement|erpCustomers|erpDashboardData|erpDaySales|erpDeliveryOptions|erpDevices|erpDiscontinued|erpDues|erpEvoQr|erpEvoStatus|erpExpenseExport|erpExpenseReceiptUrl|erpExpenses|erpFamilies|erpFighters|erpFormOptions|erpGame|erpGetTheme|erpGoogle|erpHello|erpInstalls|erpInvoice|erpInvoicePdf|erpJob|erpJobs|erpListView|erpLookupCustomer|erpLookupUsage|erpMe|erpMoney|erpNoteFileUrl|erpNotes|erpOwnerChange|erpOwnerChanges|erpParcelLabels|erpParcelPreview|erpPartnerStock|erpPartnership|erpPayReasons|erpPeople|erpPlatform|erpPlatformErrors|erpPnl|erpPnlMonth|erpPoList|erpPoolCatalog|erpProduct|erpProductListShare|erpProductPage|erpProductPhotoUrl|erpProductThumbs|erpProfile|erpQuoteAsset|erpQuoteBoot|erpQuoteGet|erpQuoteList|erpRecentInvoices|erpRecovery|erpReorderPlan|erpRestorePreview|erpReturnPreview|erpRisks|erpSales|erpSearch|erpSecurity|erpSelfTest|erpSerialLookup|erpSerialsFor|erpSessions|erpSetTheme|erpSettingsFull|erpSettingsLists|erpSfPayoutLines|erpSfPayouts|erpShareFile|erpSharedStock|erpSheet|erpStatementPdf|erpStockHistory|erpSupplierPage|erpSuppliers|erpToday|erpUsers|erpWaProductPdf|erpWebMatches|erpWebOrderInvoices|erpWebOrders|erpWebsiteTest)$/;
 function srvPump() {
   if (!SRV_Q.length) return;
   var isRead = SRV_READS.test(SRV_Q[0].name);
@@ -20709,6 +20709,52 @@ function n1Buttons() {
   mo.observe(document.body, { childList: true, subtree: true });
   setTimeout(function () { try { scanWire(); wrButtons(); n1Buttons(); } catch (e) {} }, 1500);
 })();
+</script>
+
+<!-- Stage N2 (docs/NETWORK-BLUEPRINT.md section 5): the public register's moderation card on the Platform screen -
+     registrations made by owners themselves (declared / confirmed by a Lite seller) and the Lite sellers. -->
+<script>
+var PREG = null, PREG_ERR = '';
+function pregLoad() { srv('erpPlatformRegister', [], function (r) { PREG = r; PREG_ERR = ''; if (VIEW === 'platform') repaint(); }, function (e) { PREG_ERR = (e && e.message) || String(e); if (VIEW === 'platform') repaint(); }); }
+function pregCard() {
+  var h = '<section><div class="card"><div class="row" style="justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap"><h2 style="margin:0">Public register (Printer Passport)</h2>' +
+    (PREG ? '<a class="btn small" href="' + esc(PREG.checkUrl) + '" target="_blank" rel="noopener">Open the check page</a>' : '') + '</div>' +
+    '<div class="sub" data-c5x="1" style="display:block">Printers registered by their owners on the public check page: grey until the seller they named confirms through a Lite record (two minutes, from a phone). ' +
+    'Remove a registration only for abuse (fake photos, a stranger\u2019s serial); the owner can always remove his own. Blocking a Lite seller closes his page and stops further confirmations.</div>';
+  if (PREG_ERR) return h + '<div class="note err"><div class="ico">!</div><div>' + esc(PREG_ERR) + '</div></div></div></section>';
+  if (!PREG) { pregLoad(); return h + '<div class="loading">Reading the register\u2026</div></div></section>'; }
+  var c = PREG.counts;
+  h += '<div class="sku" style="margin:8px 0">' + fmt(c.all) + ' registered by owners \u00b7 ' + fmt(c.declared) + ' waiting for the seller \u00b7 ' + fmt(c.confirmed) + ' confirmed</div>';
+  h += PREG.registrations.length ? '<div class="scroll"><table><thead><tr><th>Serial</th><th>Printer</th><th>State</th><th>Owner</th><th>Seller named</th><th>Confirmed by</th><th>Proof</th><th></th></tr></thead><tbody>' +
+    PREG.registrations.map(function (r) {
+      var st = r.level === 'confirmed' ? '<span class="pill" style="background:var(--good-bg,#e6f4f1);color:var(--good,#0f766e)">confirmed' + (r.answer === 'corrected' ? ' (corrected)' : '') + '</span>' : r.answer === 'rejected' ? '<span class="pill out">seller says: not ours</span>' : '<span class="pill">declared \u00b7 waiting</span>';
+      return '<tr><td class="nm">' + esc(r.serial) + '<br><span class="sku">' + esc(r.declared) + (r.answered ? ' \u2192 ' + esc(r.answered) : '') + '</span></td><td>' + esc(r.product) + '</td><td>' + st + '</td>' +
+        '<td>' + esc(r.buyer) + '<br><span class="sku">' + esc(r.buyerPhone) + '</span></td><td>' + esc(r.sellerClaim) + '</td><td>' + esc(r.lite || '\u2014') + '</td>' +
+        '<td>' + (r.proofs.length ? r.proofs.map(function (p, i) { return p.url ? '<a href="' + esc(p.url) + '" target="_blank" rel="noopener">' + esc(p.kind) + '</a>' : esc(p.kind); }).join(', ') : '\u2014') + '</td>' +
+        '<td class="num" style="white-space:nowrap"><button class="btn small danger" type="button" data-preg="remove" data-id="' + esc(r.id) + '" data-sn="' + esc(r.serial) + '">Remove</button></td></tr>';
+    }).join('') + '</tbody></table></div>' : '<div class="empty">No registrations by owners yet.</div>';
+  h += '<h3 style="margin:14px 0 4px">Lite sellers</h3>' + (PREG.sellers.length ? '<div class="scroll"><table><thead><tr><th>Shop</th><th>Mobile</th><th>City</th><th class="num">Confirmed</th><th>Since</th><th></th></tr></thead><tbody>' +
+    PREG.sellers.map(function (s) {
+      return '<tr' + (s.status === 'blocked' ? ' style="opacity:.6"' : '') + '><td class="nm">' + esc(s.name) + (s.status === 'blocked' ? ' <span class="pill out">blocked</span>' : '') + (s.email ? '<br><span class="sku">' + esc(s.email) + '</span>' : '') + '</td><td>' + esc(s.phone) + '</td><td>' + esc(s.city || '\u2014') + '</td>' +
+        '<td class="num">' + fmt(s.confirms) + '</td><td><span class="sku">' + esc(s.since) + '</span></td><td class="num"><button class="btn small' + (s.status === 'blocked' ? ' primary' : ' danger') + '" type="button" data-preg="block" data-id="' + esc(s.id) + '" data-to="' + (s.status === 'blocked' ? '0' : '1') + '">' + (s.status === 'blocked' ? 'Unblock' : 'Block') + '</button></td></tr>';
+    }).join('') + '</tbody></table></div>' : '<div class="empty">No Lite sellers yet.</div>');
+  return h + '</div></section>';
+}
+var viewPlatformR2 = viewPlatform;
+viewPlatform = function () {
+  var h = viewPlatformR2();
+  if (!ME || !ME.platform || PLAT_ERR || !PLAT) return h;
+  return h + pregCard();
+};
+document.addEventListener('click', function (ev) {
+  var b = ev.target && ev.target.closest ? ev.target.closest('[data-preg]') : null; if (!b) return;
+  var k = b.getAttribute('data-preg'), id = b.getAttribute('data-id'), fail = function (e) { toast(esc((e && e.message) || e), true, 8000); };
+  if (k === 'remove') {
+    if (b.getAttribute('data-sure') !== '1') { b.setAttribute('data-sure', '1'); b.textContent = 'Remove ' + b.getAttribute('data-sn') + '? Press again'; return; }
+    srv('erpPlatformRegisterRemove', [{ id: id }], function () { toast('Registration removed.'); PREG = null; repaint(); }, fail); return;
+  }
+  if (k === 'block') srv('erpPlatformLiteBlock', [{ id: id, on: b.getAttribute('data-to') === '1' }], function (r) { toast(r.blocked ? 'Seller blocked.' : 'Seller unblocked.'); PREG = null; repaint(); }, fail);
+});
 </script>
 </body>
 </html>

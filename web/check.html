@@ -3,12 +3,13 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="description" content="Check a 3D printer's serial number: who sold it, when, and how much warranty is left. A public register filled by sellers at the time of sale.">
+<meta name="description" content="Check a 3D printer's serial number: who sold it, when, and how much warranty is left. A public register filled by sellers at the time of sale, or by the owner with proof.">
 <title>Printer Passport</title>
 <link rel="icon" href="icons/favicon-32.png">
 <style>
-/* Stage N1 (docs/NETWORK-BLUEPRINT.md section 5): the public check page of the Printer Passport register.
-   Self-contained; talks to the ERP server's public route ?pub=check&s=... ; no sign-in; never shows the buyer. */
+/* Stage N1 + N2 (docs/NETWORK-BLUEPRINT.md section 5): the public check page of the Printer Passport register, and the
+   owner's own registration (declared, grey) when his seller is outside the system. Self-contained; talks to the ERP
+   server's public routes ?pub=check / register / owner; no sign-in; never shows a buyer. */
 :root{--bg:#f6f7f4;--card:#fff;--ink:#14201c;--mute:#5d6b66;--line:#dfe5e1;--ok:#0f766e;--okbg:#e6f4f1;--warn:#9a5b00;--warnbg:#fff4df;--bad:#b42318;--badbg:#fdecea;--acc:#0f766e}
 *{box-sizing:border-box}
 html,body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans","Noto Sans Bengali","Hind Siliguri",sans-serif}
@@ -21,11 +22,14 @@ header h1 small{display:block;font-size:13px;color:var(--mute);font-weight:500}
 .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:14px}
 label{display:block;font-size:14px;color:var(--mute);margin-bottom:6px}
 .row{display:flex;gap:8px;flex-wrap:wrap}
-input{flex:1 1 180px;min-width:0;font:inherit;font-size:18px;letter-spacing:1px;text-transform:uppercase;padding:12px 14px;border:1px solid var(--line);border-radius:10px;background:#fff;color:var(--ink)}
-input:focus{outline:2px solid var(--acc);outline-offset:1px;border-color:var(--acc)}
+input,select{font:inherit;font-size:16px;padding:11px 12px;border:1px solid var(--line);border-radius:10px;background:#fff;color:var(--ink);width:100%}
+input#s{flex:1 1 180px;min-width:0;font-size:18px;letter-spacing:1px;text-transform:uppercase;padding:12px 14px;width:auto}
+input:focus,select:focus{outline:2px solid var(--acc);outline-offset:1px;border-color:var(--acc)}
 button{font:inherit;font-size:16px;padding:12px 16px;border-radius:10px;border:1px solid var(--line);background:#fff;color:var(--ink);cursor:pointer}
 button.pri{background:var(--acc);border-color:var(--acc);color:#fff;font-weight:600}
+button.bad{color:var(--bad)}
 button:disabled{opacity:.6;cursor:default}
+a.wa{display:inline-block;font-size:16px;padding:12px 16px;border-radius:10px;background:#1f9d55;color:#fff;font-weight:600;text-decoration:none}
 .hint{font-size:13px;color:var(--mute);margin:10px 0 0}
 .state{font-size:15px;color:var(--mute);margin:0}
 .badge{display:inline-block;font-size:13px;font-weight:600;padding:3px 10px;border-radius:999px;border:1px solid transparent}
@@ -40,8 +44,15 @@ dt{color:var(--mute)}dd{margin:0;font-weight:600;min-width:0;overflow-wrap:anywh
 .tl{list-style:none;margin:12px 0 0;padding:0;border-top:1px solid var(--line)}
 .tl li{display:flex;justify-content:space-between;gap:12px;padding:8px 0;border-bottom:1px solid var(--line);font-size:14px}
 .tl li span:last-child{color:var(--mute);white-space:nowrap}
+.f label{margin:12px 0 4px}.f .two{display:grid;grid-template-columns:1fr 1fr;gap:8px}@media (max-width:420px){.f .two{grid-template-columns:1fr}}
+.f h3{font-size:14px;color:var(--mute);margin:16px 0 0;text-transform:uppercase;letter-spacing:.5px}
+.chk{display:flex;gap:8px;align-items:flex-start;font-size:14px;margin:14px 0 0}.chk input{width:auto;margin-top:3px}
+.photo{display:flex;gap:10px;align-items:center;margin-top:6px}.photo img{width:64px;height:64px;object-fit:cover;border-radius:8px;border:1px solid var(--line);background:#eee}
+.photo input{width:auto;flex:1;padding:8px;font-size:14px}
+.photos{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.photos a{display:block;width:96px;height:96px;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:#eee}.photos img{width:100%;height:100%;object-fit:cover}
+.err{color:var(--bad);font-size:14px;margin-top:10px}
+code{font-size:13px;word-break:break-all}
 footer{font-size:13px;color:var(--mute);text-align:center;margin-top:22px}
-footer a{color:var(--mute)}
 /* the camera */
 .scan{position:fixed;inset:0;background:#000;z-index:50;display:flex;flex-direction:column}
 .scan video{flex:1;width:100%;object-fit:cover;background:#000}
@@ -73,67 +84,83 @@ footer a{color:var(--mute)}
 
   <div id="out"></div>
 
-  <footer><span data-t="foot">A public register, filled by sellers at the time of sale. Buyer details are never shown.</span></footer>
+  <footer><span data-t="foot">A public register, filled by sellers at the time of sale or by owners with proof. Buyer details are never shown.</span></footer>
 </main>
 
 <script>
-// where the register is (the ERP server's public route). ?api= overrides it for a local check.
+// where the register is (the ERP server's public routes). ?api= overrides it for a local check.
 var API = (new URLSearchParams(location.search).get('api') || 'https://oqzcuuytytqadqjlwdsh.supabase.co/functions/v1/erp').replace(/\/+$/, '');
 var T = {
   en: { title: 'Printer Passport', sub: 'Check a serial number', label: 'Type or scan the serial number on the machine or its box', scan: 'Scan', check: 'Check',
-    hint: 'Spaces and dashes do not matter. The sticker is usually on the back or under the machine, and on the box.', foot: 'A public register, filled by sellers at the time of sale. Buyer details are never shown.',
+    hint: 'Spaces and dashes do not matter. The sticker is usually on the back or under the machine, and on the box.', foot: 'A public register, filled by sellers at the time of sale or by owners with proof. Buyer details are never shown.',
     checking: 'Checking…', short: 'Type at least 3 letters or digits.', net: 'The register could not be reached. Check your connection and try again.',
-    nf: 'Not registered yet', nfBody: 'This serial is not in the register. Sellers’ systems write to it at the time of sale. Ask the shop that sold the machine to register it. Registering it yourself is coming soon.',
-    found1: 'Registered', found2: 'Registered — more than one record', seller: 'Seller', sold: 'Sold', warranty: 'Warranty', until: 'until', days: 'days left', ended: 'Warranty ended', ended2: 'ended', none: 'No warranty recorded',
-    verified: 'Verified: written by the seller’s system at the sale', confirmed: 'Confirmed by the seller', declared: 'Declared by the owner, not confirmed by a seller',
-    disputed: 'Two sellers claim this serial. Ask the seller before you pay.', returned: 'This unit was returned to the seller.', repairs: 'Repairs', last: 'last', zero: 'none',
-    history: 'History', evSold: 'Sold', evIn: 'Came in for repair', evOut: 'Repaired and returned to customer', evWarr: 'Warranty changed', evRet: 'Returned to the seller',
-    moves: 'The warranty moves with the machine when it is resold.', stays: 'The warranty is for the first buyer only.', unnamed: 'The seller chose not to show its name.',
-    camHint: 'Point the camera at the barcode', camErr: 'The camera could not be opened. Type the number instead.', noCam: 'This browser has no camera access. Type the number instead.', cancel: 'Cancel' },
+    nf: 'Not registered yet', nfBody: 'This serial is not in the register. Sellers’ systems write to it at the time of sale. If your seller is not in the system yet, register it yourself with a photo of the invoice and of the sticker - then send your seller a link to confirm.',
+    found1: 'Registered', found2: 'Registered — more than one record', seller: 'Seller', sold: 'Sold', warranty: 'Warranty', until: 'until', days: 'days left', ended: 'Warranty ended', none: 'No warranty recorded',
+    verified: 'Verified: written by the seller’s system at the sale', confirmed: 'Confirmed by the seller', declared: 'Declared by the owner with proof - the seller has not confirmed yet',
+    disputed: 'Two sellers claim this serial. Ask the seller before you pay.', returned: 'This unit was returned to the seller.', rejected: 'The seller named by the owner says this sale is not theirs.', repairs: 'Repairs', last: 'last', zero: 'none',
+    history: 'History', evSold: 'Sold', evIn: 'Came in for repair', evOut: 'Repaired and returned to customer', evWarr: 'Warranty changed', evRet: 'Returned to the seller', evDecl: 'Registered by the owner', evConf: 'Confirmed by the seller', evRej: 'Seller: not ours',
+    moves: 'The warranty moves with the machine when it is resold.', stays: 'The warranty is for the first buyer only.', unnamed: 'The seller chose not to show its name.', proofs: 'photos of proof on file',
+    camHint: 'Point the camera at the barcode', camErr: 'The camera could not be opened. Type the number instead.', cancel: 'Cancel',
+    regBtn: 'Register it yourself', regH: 'Register this printer', regWhy: 'Your passport exists at once (grey). Then you send your seller a link; when the seller confirms, it turns green. It cannot force anyone to honour a promise - it keeps the promise and the proof in one place.',
+    product: 'Printer model', brand: 'Brand', month: 'Month of purchase', months: 'Warranty promised (months)', sellerH: 'Who sold it', sellerName: 'Shop or seller name', sellerPhone: 'Seller’s mobile (for the confirm link)', city: 'City or area',
+    youH: 'You', yourName: 'Your name', yourPhone: 'Your mobile number', proofH: 'Proof', pInvoice: 'Photo of the invoice or receipt', pSticker: 'Photo of the serial sticker', pTake: 'Take a photo', consent: 'I agree that my name and mobile number are kept with this registration so the seller can recognise my purchase and so I can be reached about this printer’s warranty. Nothing else is done with them. I can remove the registration with my owner link at any time.',
+    submit: 'Register', sending: 'Sending…', shrinking: 'Preparing the photos…',
+    okH: 'Registered - grey until your seller confirms', ownerLink: 'Your owner link (save it: it is the only way to see, resend or remove your registration)', copy: 'Copy', copied: 'Copied', sendWa: 'Send the confirm link to your seller on WhatsApp', copyMsg: 'Copy the message for your seller', openCheck: 'Open the public check',
+    ownH: 'Your registration', status: 'Status', sellerNamed: 'Seller you named', confirmedBy: 'Confirmed by', stDecl: 'waiting for the seller', stConf: 'confirmed by the seller', stRej: 'the seller says: not theirs', yourPhotos: 'Your photos',
+    withdraw: 'Remove my registration', sure: 'Remove it? Everything is deleted, including the photos. Press again to confirm.', removed: 'Your registration and photos have been removed.' },
   bn: { title: 'প্রিন্টার পাসপোর্ট', sub: 'সিরিয়াল নম্বর যাচাই', label: 'মেশিন বা বাক্সের গায়ের সিরিয়াল নম্বরটি লিখুন বা স্ক্যান করুন', scan: 'স্ক্যান', check: 'যাচাই',
-    hint: 'স্পেস বা ড্যাশ থাকলেও সমস্যা নেই। স্টিকারটি সাধারণত মেশিনের পেছনে বা নিচে, এবং বাক্সের গায়ে থাকে।', foot: 'বিক্রির সময় বিক্রেতারা এই রেজিস্টার পূরণ করেন। ক্রেতার কোনো তথ্য দেখানো হয় না।',
+    hint: 'স্পেস বা ড্যাশ থাকলেও সমস্যা নেই। স্টিকারটি সাধারণত মেশিনের পেছনে বা নিচে, এবং বাক্সের গায়ে থাকে।', foot: 'বিক্রির সময় বিক্রেতারা, বা প্রমাণসহ মালিকেরা এই রেজিস্টার পূরণ করেন। ক্রেতার কোনো তথ্য দেখানো হয় না।',
     checking: 'দেখা হচ্ছে…', short: 'কমপক্ষে ৩টি অক্ষর বা সংখ্যা লিখুন।', net: 'রেজিস্টারে পৌঁছানো যায়নি। ইন্টারনেট দেখে আবার চেষ্টা করুন।',
-    nf: 'এখনো নিবন্ধিত নয়', nfBody: 'এই সিরিয়ালটি রেজিস্টারে নেই। বিক্রির সময় বিক্রেতার সিস্টেম থেকে এখানে লেখা হয়। যে দোকান থেকে কিনেছেন, তাদের নিবন্ধন করতে বলুন। নিজে নিবন্ধনের সুবিধা শিগগিরই আসছে।',
-    found1: 'নিবন্ধিত', found2: 'নিবন্ধিত — একাধিক রেকর্ড', seller: 'বিক্রেতা', sold: 'বিক্রি', warranty: 'ওয়ারেন্টি', until: 'পর্যন্ত', days: 'দিন বাকি', ended: 'ওয়ারেন্টি শেষ', ended2: 'শেষ', none: 'ওয়ারেন্টির তথ্য নেই',
-    verified: 'যাচাইকৃত: বিক্রির সময় বিক্রেতার সিস্টেম থেকে লেখা', confirmed: 'বিক্রেতা নিশ্চিত করেছেন', declared: 'মালিকের ঘোষণা, কোনো বিক্রেতা নিশ্চিত করেননি',
-    disputed: 'দুই বিক্রেতা এই সিরিয়ালটি দাবি করছে। টাকা দেওয়ার আগে বিক্রেতাকে জিজ্ঞেস করুন।', returned: 'এই মেশিনটি বিক্রেতার কাছে ফেরত গেছে।', repairs: 'মেরামত', last: 'শেষ', zero: 'নেই',
-    history: 'ইতিহাস', evSold: 'বিক্রি', evIn: 'মেরামতে এসেছে', evOut: 'মেরামত শেষে ফেরত', evWarr: 'ওয়ারেন্টি বদল', evRet: 'বিক্রেতার কাছে ফেরত',
-    moves: 'পুনরায় বিক্রি হলে ওয়ারেন্টি মেশিনের সাথে যায়।', stays: 'ওয়ারেন্টি শুধু প্রথম ক্রেতার জন্য।', unnamed: 'বিক্রেতা নাম দেখাতে চাননি।',
-    camHint: 'বারকোডের দিকে ক্যামেরা ধরুন', camErr: 'ক্যামেরা খোলা যায়নি। নম্বরটি লিখুন।', noCam: 'এই ব্রাউজারে ক্যামেরা চলে না। নম্বরটি লিখুন।', cancel: 'বাতিল' }
+    nf: 'এখনো নিবন্ধিত নয়', nfBody: 'এই সিরিয়ালটি রেজিস্টারে নেই। বিক্রির সময় বিক্রেতার সিস্টেম থেকে এখানে লেখা হয়। আপনার বিক্রেতা এখনো সিস্টেমে না থাকলে, ইনভয়েস ও স্টিকারের ছবি দিয়ে নিজেই নিবন্ধন করুন - তারপর বিক্রেতাকে নিশ্চিত করার লিংক পাঠান।',
+    found1: 'নিবন্ধিত', found2: 'নিবন্ধিত — একাধিক রেকর্ড', seller: 'বিক্রেতা', sold: 'বিক্রি', warranty: 'ওয়ারেন্টি', until: 'পর্যন্ত', days: 'দিন বাকি', ended: 'ওয়ারেন্টি শেষ', none: 'ওয়ারেন্টির তথ্য নেই',
+    verified: 'যাচাইকৃত: বিক্রির সময় বিক্রেতার সিস্টেম থেকে লেখা', confirmed: 'বিক্রেতা নিশ্চিত করেছেন', declared: 'মালিক প্রমাণসহ ঘোষণা করেছেন - বিক্রেতা এখনো নিশ্চিত করেননি',
+    disputed: 'দুই বিক্রেতা এই সিরিয়ালটি দাবি করছে। টাকা দেওয়ার আগে বিক্রেতাকে জিজ্ঞেস করুন।', returned: 'এই মেশিনটি বিক্রেতার কাছে ফেরত গেছে।', rejected: 'মালিকের উল্লেখ করা বিক্রেতা বলছেন এই বিক্রি তাদের নয়।', repairs: 'মেরামত', last: 'শেষ', zero: 'নেই',
+    history: 'ইতিহাস', evSold: 'বিক্রি', evIn: 'মেরামতে এসেছে', evOut: 'মেরামত শেষে ফেরত', evWarr: 'ওয়ারেন্টি বদল', evRet: 'বিক্রেতার কাছে ফেরত', evDecl: 'মালিক নিবন্ধন করেছেন', evConf: 'বিক্রেতা নিশ্চিত করেছেন', evRej: 'বিক্রেতা: আমাদের নয়',
+    moves: 'পুনরায় বিক্রি হলে ওয়ারেন্টি মেশিনের সাথে যায়।', stays: 'ওয়ারেন্টি শুধু প্রথম ক্রেতার জন্য।', unnamed: 'বিক্রেতা নাম দেখাতে চাননি।', proofs: 'টি প্রমাণের ছবি জমা আছে',
+    camHint: 'বারকোডের দিকে ক্যামেরা ধরুন', camErr: 'ক্যামেরা খোলা যায়নি। নম্বরটি লিখুন।', cancel: 'বাতিল',
+    regBtn: 'নিজেই নিবন্ধন করুন', regH: 'এই প্রিন্টারটি নিবন্ধন করুন', regWhy: 'আপনার পাসপোর্ট সাথে সাথে তৈরি হবে (ধূসর)। তারপর বিক্রেতাকে একটি লিংক পাঠাবেন; বিক্রেতা নিশ্চিত করলে এটি সবুজ হবে। এটি কাউকে প্রতিশ্রুতি মানতে বাধ্য করতে পারে না - প্রতিশ্রুতি ও প্রমাণ এক জায়গায় রাখে।',
+    product: 'প্রিন্টারের মডেল', brand: 'ব্র্যান্ড', month: 'কেনার মাস', months: 'প্রতিশ্রুত ওয়ারেন্টি (মাস)', sellerH: 'কার কাছ থেকে কিনেছেন', sellerName: 'দোকান বা বিক্রেতার নাম', sellerPhone: 'বিক্রেতার মোবাইল (লিংক পাঠানোর জন্য)', city: 'শহর বা এলাকা',
+    youH: 'আপনি', yourName: 'আপনার নাম', yourPhone: 'আপনার মোবাইল নম্বর', proofH: 'প্রমাণ', pInvoice: 'ইনভয়েস বা রসিদের ছবি', pSticker: 'সিরিয়াল স্টিকারের ছবি', pTake: 'ছবি তুলুন', consent: 'আমি সম্মত যে আমার নাম ও মোবাইল নম্বর এই নিবন্ধনের সাথে রাখা হবে, যাতে বিক্রেতা আমার কেনাকাটা চিনতে পারেন এবং এই প্রিন্টারের ওয়ারেন্টি নিয়ে আমার সাথে যোগাযোগ করা যায়। এর বাইরে কিছু করা হবে না। আমার মালিক-লিংক দিয়ে যেকোনো সময় নিবন্ধন মুছে ফেলতে পারব।',
+    submit: 'নিবন্ধন করুন', sending: 'পাঠানো হচ্ছে…', shrinking: 'ছবি প্রস্তুত হচ্ছে…',
+    okH: 'নিবন্ধিত - বিক্রেতা নিশ্চিত না করা পর্যন্ত ধূসর', ownerLink: 'আপনার মালিক-লিংক (সংরক্ষণ করুন: নিবন্ধন দেখা, আবার পাঠানো বা মুছে ফেলার একমাত্র পথ)', copy: 'কপি', copied: 'কপি হয়েছে', sendWa: 'WhatsApp-এ বিক্রেতাকে নিশ্চিতকরণ লিংক পাঠান', copyMsg: 'বিক্রেতার জন্য বার্তাটি কপি করুন', openCheck: 'পাবলিক চেক খুলুন',
+    ownH: 'আপনার নিবন্ধন', status: 'অবস্থা', sellerNamed: 'আপনার উল্লেখ করা বিক্রেতা', confirmedBy: 'নিশ্চিত করেছেন', stDecl: 'বিক্রেতার অপেক্ষায়', stConf: 'বিক্রেতা নিশ্চিত করেছেন', stRej: 'বিক্রেতা বলছেন: তাদের নয়', yourPhotos: 'আপনার ছবি',
+    withdraw: 'আমার নিবন্ধন মুছুন', sure: 'মুছে ফেলবেন? ছবিসহ সব মুছে যাবে। নিশ্চিত করতে আবার চাপুন।', removed: 'আপনার নিবন্ধন ও ছবি মুছে ফেলা হয়েছে।' }
 };
 var LANG = 'en';
 try { LANG = localStorage.getItem('pp_lang') || ((navigator.language || '').indexOf('bn') === 0 ? 'bn' : 'en'); } catch (e) {}
 function t(k) { return (T[LANG] || T.en)[k] || T.en[k] || k; }
 function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+var Q = new URLSearchParams(location.search), out = document.getElementById('out'), LAST = null, MODE = '', OWN = null, REG = null, FORM = null;
+function apiQ() { return Q.get('api') ? '&api=' + encodeURIComponent(Q.get('api')) : ''; }
 function paintLang() {
   document.documentElement.lang = LANG;
   document.querySelectorAll('[data-t]').forEach(function (n) { n.textContent = t(n.getAttribute('data-t')); });
   document.getElementById('lang').textContent = LANG === 'bn' ? 'English' : 'বাংলা';
-  if (LAST) show(LAST);
+  if (MODE === 'owner' && OWN) showOwner(OWN); else if (MODE === 'done' && REG) showDone(REG); else if (MODE === 'form') showForm(); else if (LAST) show(LAST);
 }
 document.getElementById('lang').onclick = function () { LANG = LANG === 'bn' ? 'en' : 'bn'; try { localStorage.setItem('pp_lang', LANG); } catch (e) {} paintLang(); };
+function copyBtn(text, id) { return '<button type="button" data-copy="' + esc(text) + '"' + (id ? ' id="' + id + '"' : '') + '>' + t('copy') + '</button>'; }
 
-var out = document.getElementById('out'), LAST = null;
-function monthWords(m) { return m || ''; }
+// ---- the check
 function show(r) {
-  LAST = r;
+  LAST = r; MODE = 'check';
   if (!r.ok) { out.innerHTML = '<div class="card"><p class="state">' + esc(r.error || t('net')) + '</p></div>'; return; }
-  if (!r.found) { out.innerHTML = '<div class="card rec"><span class="badge b-warn">' + t('nf') + '</span><h2 style="margin-top:10px">' + esc(r.serial) + '</h2><p class="state">' + t('nfBody') + '</p></div>'; return; }
+  if (!r.found) { out.innerHTML = '<div class="card rec"><span class="badge b-warn">' + t('nf') + '</span><h2 style="margin-top:10px">' + esc(r.serial) + '</h2><p class="state">' + t('nfBody') + '</p><div class="row" style="margin-top:12px"><button type="button" class="pri" data-act="reg">' + t('regBtn') + '</button></div></div>'; return; }
   var h = '';
   r.records.forEach(function (c, i) {
     var w = c.warrantyState === 'active' ? '<span class="big">' + t('until') + ' ' + esc(c.warrantyUntil) + '</span> <span class="badge b-ok">' + c.daysLeft + ' ' + t('days') + '</span>'
       : c.warrantyState === 'ended' ? '<span class="badge b-mute">' + t('ended') + ' ' + esc(c.warrantyUntil) + '</span>' : '<span class="badge b-mute">' + t('none') + '</span>';
-    var lvl = c.level === 'verified' ? '<span class="badge b-ok">✓ ' + t('verified') + '</span>' : c.level === 'confirmed' ? '<span class="badge b-ok">' + t('confirmed') + '</span>' : '<span class="badge b-warn">' + t('declared') + '</span>';
+    var lvl = c.level === 'verified' ? '<span class="badge b-ok">✓ ' + t('verified') + '</span>' : c.level === 'confirmed' ? '<span class="badge b-ok">✓ ' + t('confirmed') + '</span>' : '<span class="badge b-mute">' + t('declared') + (c.proofs ? ' · ' + c.proofs + ' ' + t('proofs') : '') + '</span>';
     h += '<div class="card rec">' + (i === 0 ? '<span class="badge ' + (r.records.length > 1 ? 'b-warn' : 'b-ok') + '">' + (r.records.length > 1 ? t('found2') : t('found1')) + '</span>' : '') +
       '<h2 style="margin-top:10px">' + esc(c.product || '—') + '</h2><p class="sub">' + esc([c.brand, c.category, c.version ? c.version.toUpperCase() + ' version' : ''].filter(Boolean).join(' · ')) + (c.brand || c.category ? ' · ' : '') + '<b>' + esc(r.serial) + '</b></p>' +
-      '<dl><dt>' + t('seller') + '</dt><dd>' + esc(c.seller) + (c.named ? '' : '<div style="font-weight:400;color:var(--mute);font-size:13px">' + t('unnamed') + '</div>') + '</dd>' +
-      '<dt>' + t('sold') + '</dt><dd>' + esc(monthWords(c.soldMonth) || '—') + '</dd>' +
+      '<dl><dt>' + t('seller') + '</dt><dd>' + esc(c.seller) + (c.named ? '' : '<div style="font-weight:400;color:var(--mute);font-size:13px">' + (c.level === 'declared' ? '' : t('unnamed')) + '</div>') + '</dd>' +
+      '<dt>' + t('sold') + '</dt><dd>' + esc(c.soldMonth || '—') + '</dd>' +
       '<dt>' + t('warranty') + '</dt><dd>' + w + (c.warrantyMonths ? '<div style="font-weight:400;color:var(--mute);font-size:13px">' + c.warrantyMonths + ' ' + (LANG === 'bn' ? 'মাস' : 'months') + ' · ' + (c.transferable ? t('moves') : t('stays')) + '</div>' : '') + '</dd>' +
       '<dt>' + t('repairs') + '</dt><dd>' + (c.repairs ? c.repairs + (c.lastRepair ? ' <span style="font-weight:400;color:var(--mute)">(' + t('last') + ' ' + esc(c.lastRepair) + ')</span>' : '') : t('zero')) + '</dd></dl>' +
       '<div style="margin-top:12px">' + lvl + '</div>' +
-      (c.disputed ? '<div class="alert bad">⚠ ' + t('disputed') + '</div>' : '') + (c.status === 'returned' ? '<div class="alert warn">↩ ' + t('returned') + '</div>' : '') +
+      (c.disputed ? '<div class="alert bad">⚠ ' + t('disputed') + '</div>' : '') + (c.status === 'returned' ? '<div class="alert warn">↩ ' + t('returned') + '</div>' : '') + (c.answer === 'rejected' ? '<div class="alert bad">✕ ' + t('rejected') + '</div>' : '') +
       (c.events && c.events.length ? '<h3 style="font-size:14px;color:var(--mute);margin:14px 0 0">' + t('history') + '</h3><ul class="tl">' + c.events.map(function (e) {
-        var k = e.kind === 'sold' ? t('evSold') : e.kind === 'repair' ? (e.status === 'returned' ? t('evOut') : t('evIn')) : e.kind === 'warranty' ? t('evWarr') : e.kind === 'returned' ? t('evRet') : esc(e.kind);
+        var k = e.kind === 'sold' ? t('evSold') : e.kind === 'repair' ? (e.status === 'returned' ? t('evOut') : t('evIn')) : e.kind === 'warranty' ? t('evWarr') : e.kind === 'returned' ? t('evRet') : e.kind === 'declared' ? t('evDecl') : e.kind === 'confirmed' ? t('evConf') : e.kind === 'rejected' ? t('evRej') : esc(e.kind);
         return '<li><span>' + k + '</span><span>' + esc(e.month) + '</span></li>'; }).join('') + '</ul>' : '') + '</div>';
   });
   out.innerHTML = h;
@@ -143,10 +170,96 @@ function check(s) {
   if (s.replace(/[^A-Z0-9]/g, '').length < 3) { out.innerHTML = '<div class="card"><p class="state">' + t('short') + '</p></div>'; return; }
   var go = document.getElementById('go'); go.disabled = true;
   out.innerHTML = '<div class="card"><p class="state">' + t('checking') + '</p></div>';
-  try { history.replaceState(null, '', location.pathname + '?s=' + encodeURIComponent(s) + (new URLSearchParams(location.search).get('api') ? '&api=' + encodeURIComponent(new URLSearchParams(location.search).get('api')) : '')); } catch (e) {}
+  try { history.replaceState(null, '', location.pathname + '?s=' + encodeURIComponent(s) + apiQ()); } catch (e) {}
   fetch(API + '?pub=check&s=' + encodeURIComponent(s), { method: 'GET' }).then(function (r) { return r.json(); }).then(show, function () { show({ ok: false, error: t('net') }); }).then(function () { go.disabled = false; });
 }
 document.getElementById('f').addEventListener('submit', function (ev) { ev.preventDefault(); check(document.getElementById('s').value); });
+
+// ---- the owner registers (Stage N2)
+var BRANDS = ['Bambu Lab', 'Creality', 'Anycubic', 'Elegoo', 'Prusa', 'Flashforge', 'Sovol', 'QIDI', 'Kingroon', 'Artillery', 'Voron', 'Other'];
+function showForm() {
+  MODE = 'form';
+  var sn = (LAST && LAST.serial) || document.getElementById('s').value, v = FORM || {};
+  var h = '<form class="card f" id="reg"><h2 style="font-size:19px;margin:0 0 4px">' + t('regH') + '</h2><p class="hint" style="margin:0">' + t('regWhy') + '</p>' +
+    '<label for="r_brand">' + t('brand') + '</label><select id="r_brand">' + BRANDS.map(function (b) { return '<option' + (v.brand === b ? ' selected' : '') + '>' + b + '</option>'; }).join('') + '</select>' +
+    '<label for="r_product">' + t('product') + '</label><input id="r_product" maxlength="80" placeholder="A1 Mini, Ender-3 V3 SE …" value="' + esc(v.product || '') + '" required>' +
+    '<div class="two"><div><label for="r_month">' + t('month') + '</label><input id="r_month" type="month" value="' + esc(v.month || '') + '" required></div><div><label for="r_months">' + t('months') + '</label><input id="r_months" inputmode="numeric" value="' + esc(v.months == null ? '12' : v.months) + '"></div></div>' +
+    '<h3>' + t('sellerH') + '</h3><label for="r_sname">' + t('sellerName') + '</label><input id="r_sname" maxlength="80" value="' + esc(v.sname || '') + '" required>' +
+    '<div class="two"><div><label for="r_sphone">' + t('sellerPhone') + '</label><input id="r_sphone" inputmode="tel" placeholder="01XXXXXXXXX" value="' + esc(v.sphone || '') + '"></div><div><label for="r_scity">' + t('city') + '</label><input id="r_scity" maxlength="40" value="' + esc(v.scity || '') + '"></div></div>' +
+    '<h3>' + t('youH') + '</h3><div class="two"><div><label for="r_name">' + t('yourName') + '</label><input id="r_name" maxlength="60" value="' + esc(v.name || '') + '" required></div><div><label for="r_phone">' + t('yourPhone') + '</label><input id="r_phone" inputmode="tel" placeholder="01XXXXXXXXX" value="' + esc(v.phone || '') + '" required></div></div>' +
+    '<h3>' + t('proofH') + '</h3><label>' + t('pInvoice') + '</label><div class="photo"><img id="p_invoice_img" alt=""><input type="file" id="p_invoice" accept="image/*" capture="environment"></div>' +
+    '<label style="margin-top:10px">' + t('pSticker') + '</label><div class="photo"><img id="p_sticker_img" alt=""><input type="file" id="p_sticker" accept="image/*" capture="environment"></div>' +
+    '<label class="chk"><input type="checkbox" id="r_consent"' + (v.consent ? ' checked' : '') + '> <span>' + t('consent') + '</span></label>' +
+    '<div class="row" style="margin-top:14px"><button type="submit" class="pri" id="r_go">' + t('submit') + '</button><button type="button" data-act="back">' + t('cancel') + '</button></div><div class="err" id="r_err"></div></form>';
+  out.innerHTML = h;
+  document.getElementById('reg').addEventListener('submit', submitReg);
+  ['invoice', 'sticker'].forEach(function (k) { var i = document.getElementById('p_' + k); i.onchange = function () { var f = i.files && i.files[0]; if (!f) return; shrink(f).then(function (d) { PH[k] = d; document.getElementById('p_' + k + '_img').src = d; }, function () { PH[k] = null; }); }; if (PH[k]) document.getElementById('p_' + k + '_img').src = PH[k]; });
+  window.scrollTo(0, 0);
+}
+var PH = { invoice: null, sticker: null };
+// the phone's photo is shrunk here (longest side 1600 px, JPEG) so the upload is small and quick
+function shrink(file) {
+  return new Promise(function (ok, bad) {
+    var url = URL.createObjectURL(file), img = new Image();
+    img.onload = function () {
+      var W = img.naturalWidth, H = img.naturalHeight, k = Math.min(1, 1600 / Math.max(W, H)), cv = document.createElement('canvas');
+      cv.width = Math.round(W * k); cv.height = Math.round(H * k);
+      cv.getContext('2d').drawImage(img, 0, 0, cv.width, cv.height); URL.revokeObjectURL(url);
+      var d = cv.toDataURL('image/jpeg', 0.82); if (d.length < 100) return bad(new Error('empty')); ok(d);
+    };
+    img.onerror = function () { URL.revokeObjectURL(url); bad(new Error('not an image')); };
+    img.src = url;
+  });
+}
+function val(id) { var n = document.getElementById(id); return n ? n.value : ''; }
+function submitReg(ev) {
+  ev.preventDefault();
+  FORM = { brand: val('r_brand'), product: val('r_product'), month: val('r_month'), months: val('r_months'), sname: val('r_sname'), sphone: val('r_sphone'), scity: val('r_scity'), name: val('r_name'), phone: val('r_phone'), consent: document.getElementById('r_consent').checked };
+  var proofs = []; if (PH.invoice) proofs.push({ kind: 'invoice', data: PH.invoice }); if (PH.sticker) proofs.push({ kind: 'sticker', data: PH.sticker });
+  var body = { serial: val('s') || (LAST && LAST.serial), brand: FORM.brand === 'Other' ? '' : FORM.brand, product: FORM.product, boughtMonth: FORM.month, warrantyMonths: FORM.months, sellerName: FORM.sname, sellerPhone: FORM.sphone, sellerCity: FORM.scity, buyerName: FORM.name, buyerPhone: FORM.phone, consent: FORM.consent, proofs: proofs };
+  var go = document.getElementById('r_go'); go.disabled = true; go.textContent = t('sending'); document.getElementById('r_err').textContent = '';
+  fetch(API + '?pub=register', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) }).then(function (r) { return r.json(); }).then(function (r) {
+    if (!r.ok) { go.disabled = false; go.textContent = t('submit'); document.getElementById('r_err').textContent = r.error || t('net'); return; }
+    PH = { invoice: null, sticker: null }; FORM = null; showDone(r);
+  }, function () { go.disabled = false; go.textContent = t('submit'); document.getElementById('r_err').textContent = t('net'); });
+}
+function showDone(r) {
+  REG = r; MODE = 'done';
+  try { history.replaceState(null, '', location.pathname + '?o=' + encodeURIComponent(r.ownerUrl.split('o=')[1]) + apiQ()); } catch (e) {}
+  out.innerHTML = '<div class="card"><span class="badge b-ok">' + t('okH') + '</span><h2 style="font-size:19px;margin:10px 0 2px">' + esc(r.product) + '</h2><p class="hint" style="margin:0">' + esc(r.serial) + '</p>' +
+    '<p style="margin:14px 0 6px;font-size:14px;color:var(--mute)">' + t('ownerLink') + '</p><code>' + esc(r.ownerUrl) + '</code><div class="row" style="margin-top:8px">' + copyBtn(r.ownerUrl) + '</div></div>' +
+    '<div class="card"><div class="row">' + (r.whatsapp ? '<a class="wa" href="' + esc(r.whatsapp) + '" target="_blank" rel="noopener">' + t('sendWa') + '</a>' : '') + '<button type="button" data-copy="' + esc(r.message) + '">' + t('copyMsg') + '</button></div>' +
+    '<p class="hint">' + esc(r.message) + '</p><div class="row" style="margin-top:8px"><a href="' + esc(r.checkUrl) + '"><button type="button">' + t('openCheck') + '</button></a></div></div>';
+  window.scrollTo(0, 0);
+}
+// ---- the owner's view (?o=)
+function showOwner(r) {
+  OWN = r; MODE = 'owner';
+  if (!r.ok) { out.innerHTML = '<div class="card"><p class="state">' + esc(r.error || t('net')) + '</p></div>'; return; }
+  var st = r.level === 'confirmed' ? '<span class="badge b-ok">' + t('stConf') + '</span>' : r.answer === 'rejected' ? '<span class="badge b-bad">' + t('stRej') + '</span>' : '<span class="badge b-mute">' + t('stDecl') + '</span>';
+  var w = r.warrantyState === 'active' ? t('until') + ' ' + esc(r.warrantyUntil) + ' · ' + r.daysLeft + ' ' + t('days') : r.warrantyState === 'ended' ? t('ended') + ' ' + esc(r.warrantyUntil) : t('none');
+  out.innerHTML = '<div class="card rec"><span class="badge b-ok">' + t('ownH') + '</span><h2 style="margin-top:10px">' + esc(r.product) + '</h2><p class="sub">' + esc(r.brand ? r.brand + ' · ' : '') + '<b>' + esc(r.serial) + '</b></p>' +
+    '<dl><dt>' + t('status') + '</dt><dd>' + st + '</dd><dt>' + t('sold') + '</dt><dd>' + esc(r.boughtMonth) + '</dd><dt>' + t('warranty') + '</dt><dd>' + w + '</dd><dt>' + t('sellerNamed') + '</dt><dd>' + esc(r.seller.name) + (r.seller.city ? ' · ' + esc(r.seller.city) : '') + '</dd>' +
+    (r.confirmedBy ? '<dt>' + t('confirmedBy') + '</dt><dd>' + esc(r.confirmedBy.name) + (r.confirmedBy.city ? ' · ' + esc(r.confirmedBy.city) : '') + '</dd>' : '') + '</dl>' +
+    (r.proofs.length ? '<div style="font-size:14px;color:var(--mute);margin-top:12px">' + t('yourPhotos') + '</div><div class="photos">' + r.proofs.map(function (p) { return p.url ? '<a href="' + esc(p.url) + '" target="_blank" rel="noopener"><img src="' + esc(p.url) + '" alt="' + esc(p.kind) + '"></a>' : ''; }).join('') + '</div>' : '') + '</div>' +
+    (r.level !== 'confirmed' ? '<div class="card"><div class="row">' + (r.whatsapp ? '<a class="wa" href="' + esc(r.whatsapp) + '" target="_blank" rel="noopener">' + t('sendWa') + '</a>' : '') + '<button type="button" data-copy="' + esc(r.message) + '">' + t('copyMsg') + '</button></div><p class="hint">' + esc(r.message) + '</p></div>' : '') +
+    '<div class="card"><div class="row"><a href="' + esc(r.checkUrl) + '"><button type="button">' + t('openCheck') + '</button></a><button type="button" class="bad" data-act="withdraw">' + t('withdraw') + '</button></div><div class="err" id="o_err"></div></div>';
+}
+out.addEventListener('click', function (ev) {
+  var b = ev.target.closest('[data-copy],[data-act]'); if (!b) return;
+  if (b.hasAttribute('data-copy')) { var txt = b.getAttribute('data-copy'), old = b.textContent; try { navigator.clipboard.writeText(txt).then(function () { b.textContent = t('copied'); setTimeout(function () { b.textContent = old; }, 1500); }, function () { prompt('', txt); }); } catch (e) { prompt('', txt); } return; }
+  var a = b.getAttribute('data-act');
+  if (a === 'reg') showForm();
+  else if (a === 'back') show(LAST);
+  else if (a === 'withdraw') {
+    if (b.getAttribute('data-sure') !== '1') { b.setAttribute('data-sure', '1'); b.textContent = t('sure'); return; }
+    b.disabled = true;
+    fetch(API + '?pub=owner', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ t: Q.get('o'), action: 'withdraw' }) }).then(function (r) { return r.json(); }).then(function (r) {
+      if (!r.ok) { b.disabled = false; document.getElementById('o_err').textContent = r.error || t('net'); return; }
+      MODE = ''; OWN = null; out.innerHTML = '<div class="card"><p class="state">' + t('removed') + '</p></div>'; try { history.replaceState(null, '', location.pathname + apiQ().replace(/^&/, '?')); } catch (e) {}
+    }, function () { b.disabled = false; document.getElementById('o_err').textContent = t('net'); });
+  }
+});
 
 // ---- the camera (the browser's own reader where it has one; the bundled ZXing library elsewhere, loaded only when needed)
 var scanBtn = document.getElementById('scan');
@@ -186,8 +299,8 @@ scanBtn.onclick = function () {
 };
 
 paintLang();
-var q = new URLSearchParams(location.search).get('s');
-if (q) { document.getElementById('s').value = q; check(q); }
+if (Q.get('o')) { out.innerHTML = '<div class="card"><p class="state">' + t('checking') + '</p></div>'; fetch(API + '?pub=owner&t=' + encodeURIComponent(Q.get('o'))).then(function (r) { return r.json(); }).then(showOwner, function () { showOwner({ ok: false, error: t('net') }); }); }
+else if (Q.get('s')) { document.getElementById('s').value = Q.get('s'); check(Q.get('s')); }
 </script>
 </body>
 </html>

@@ -51,7 +51,7 @@ http.createServer(async (req, res) => {
   }
   if (/[?&]pub=/.test(req.url)) {   // the public pages (handlers/passport.js), as index.ts does
     const { pubRoute } = await import(pathToFileURL(path.join(fnDir, 'handlers', 'passport.js')));
-    const r = await pubRoute(deps, new Request('http://localhost:' + PORT + req.url, { method: req.method, headers: req.headers }), { asBusiness, owners, tenantDeps: null });
+    const r = await pubRoute(deps, new Request('http://localhost:' + PORT + req.url, { method: req.method, headers: req.headers, body: req.method === 'POST' ? raw : undefined }), { asBusiness, owners, tenantDeps: null });
     res.writeHead(r.status, h); return res.end(JSON.stringify(r.body));
   }
   if (/[?&]shop=/.test(req.url)) {
