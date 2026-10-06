@@ -949,3 +949,16 @@ Stage N9 of `docs/NETWORK-BLUEPRINT.md` (section 4.3). Between two businesses on
 - **The reseller** (new **Resell** screen, Sales group): Suppliers (who sells through resellers, %, terms, products; Ask to join with a line about the shop; state), Sell (choose the supplier; products with stock band, "you pay", suggested price; quantity and **your own price**; customer name, mobile, address; delivery charge the customer pays; live summary: customer pays / you pay the supplier / your margin; Place the order), Orders (state, consignment, cancel while waiting), My commission (month, supplier, orders, commission, paid, **Received**).
 - Rules: a price below the reseller price is refused; an out-of-stock product cannot be ordered; only an approved (not paused) reseller orders; the supplier's invoice carries the reseller's prices line by line (`createInvoice` option `resale.unitPrices`, cash on delivery allowed without a courier source name). `090_resellers.sql` (control-only: `erp_reseller_programmes`, `erp_reseller_links`, `erp_reseller_catalog`, `erp_reseller_orders`, `erp_reseller_settlements`), `handlers/resellers.js`, `jobs.js` (websync → `resellerRefresh`), `invoice.js`, `allow.js`/`security.js`, `web/app.html` (view `resell`, wrapper `mkMineHtmlR9`). `resellers_test.mjs` (47: programme, join, catalogue, order rules, the invoice and its cost, slip, parcel, delivered → statement, returned, pay → expense, received, timer refresh, pause, own %, off).
 - Not done: the reseller's commission is not yet a line in his own profit report (the ERP has no "other income" entry; he sees it on the Resell screen and notes it by hand); the courier label still shows the supplier's merchant name (Steadfast does not take a sender name per parcel - the slip inside and the courier note carry the reseller's name); prepaid orders (customer pays the reseller first) are not supported - cash on delivery to the supplier only; no partial returns on a reseller order (a returned parcel earns nothing); no automatic reminders when a month's commission is due.
+
+## Fix: a company on the provider's server is never platform admin (tag padmin-fix, 7 Oct 2026)
+
+Found while checking PrototypeBD's copy: its owner saw the **Platform** screen. The installer puts a copy's owner
+into that copy's own `platform_admins` (right for a copy on its own server), but on the bridge every admin check read
+the company's database while several provider screens read the provider's control tables - so a bridged company's owner
+could see and moderate the ideas board, design desk (designers' contacts), Print Doctor cases, the public register and
+Lite sellers. Now one rule, `platformAdmin(ctx)` in `handlers/platform.js`: false when `deps.install.bridged`; every
+admin check (community, compliance, designdesk, doctor, installer, publicreg, joint, platform) and the `platform` flag
+in erpHello (core.js) use it. Test `padmin_test.mjs` (18). Also checked: PrototypeBD's database never held any
+product, customer or invoice (nothing saved, nothing deleted) - the "data that disappeared" was not in his books.
+- Not done: no check whether he actually opened those screens (reads are not logged); a copy on its OWN server still
+  makes its owner admin of that copy (intended).

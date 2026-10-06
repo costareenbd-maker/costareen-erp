@@ -24,6 +24,7 @@
 
 import { connectProject, saveTenant } from '../lib/bridge.js';
 import { makeCompany } from '../lib/control.js';
+import { platformAdmin } from './platform.js';
 
 const str = (v) => String(v == null ? '' : v).trim();
 const MGMT = 'https://api.supabase.com/v1';
@@ -486,8 +487,7 @@ export async function installRoute(deps, req) {
 // ------------------------------------------------------------- the provider's screen
 
 async function needAdmin(ctx) {
-  const r = await ctx.sql`select 1 from platform_admins where user_id = ${ctx.s.userId}`;
-  if (!r.length) throw new Error('Only the platform admin manages installs.');
+  if (!(await platformAdmin(ctx))) throw new Error('Only the platform admin manages installs.');
 }
 
 export async function erpInstalls(ctx) {

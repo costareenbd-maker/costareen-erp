@@ -185,7 +185,9 @@ async function hello(sql, deps, token, authHeader, ip) {
     const s = await session(sql, deps, token, authHeader, ip);
     await logActivity(sql, s, 'sign-in', null, token, ip);
     let platform = false;
-    try { platform = (await sql`select 1 from platform_admins where user_id = ${s.userId}`).length > 0; } catch (_) { platform = false; }
+    if (!(deps.install && deps.install.bridged)) {
+      try { platform = (await sql`select 1 from platform_admins where user_id = ${s.userId}`).length > 0; } catch (_) { platform = false; }
+    }
     let joint = false;   // joint stock with a partner company: only where the provider switched it on
     try {
       if (deps.install && deps.install.bridged && deps.control) joint = !!((await deps.control`select joint from erp_tenants where id = ${deps.install.id}`)[0] || {}).joint;

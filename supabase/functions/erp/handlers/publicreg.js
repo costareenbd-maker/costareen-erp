@@ -23,6 +23,7 @@ import { formatDate, num } from '../lib/time.js';
 import { phone11 } from '../lib/phone.js';
 import { qrDataUrl } from '../lib/qr.js';
 import { pubBase, checkUrl, limit, tokenFor, versionOf, warrantyWords } from './passport.js';
+import { platformAdmin } from './platform.js';
 
 const str = (v) => String(v == null ? '' : v).trim();
 const clean = (v) => str(v).replace(/\s+/g, '').toUpperCase();
@@ -281,8 +282,7 @@ export async function route(deps, what, method, params, body, ip) {
 
 // ---------------------------------------------------------------- platform admin: moderation
 async function needAdmin(ctx) {
-  const r = await ctx.sql`select 1 from platform_admins where user_id = ${ctx.s.userId}`;
-  if (!r.length) throw new Error('Only the platform admin sees the public register.');
+  if (!(await platformAdmin(ctx))) throw new Error('Only the platform admin sees the public register.');
 }
 export async function erpPlatformRegister(ctx) {
   await needAdmin(ctx);

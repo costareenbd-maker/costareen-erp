@@ -20,6 +20,7 @@
 
 import { formatDate, num } from '../lib/time.js';
 import { pubBase, limit, tokenFor } from './passport.js';
+import { platformAdmin } from './platform.js';
 
 const str = (v) => String(v == null ? '' : v).trim();
 const month = (d) => (d ? formatDate(new Date(d), 'MMM yyyy') : '');
@@ -163,8 +164,7 @@ export async function route(deps, what, method, params, body, ip) {
 
 // ---------------------------------------------------------------- platform admin: the first guide
 async function needAdmin(ctx) {
-  const r = await ctx.sql`select 1 from platform_admins where user_id = ${ctx.s.userId}`;
-  if (!r.length) throw new Error('Only the platform admin answers Print Doctor cases.');
+  if (!(await platformAdmin(ctx))) throw new Error('Only the platform admin answers Print Doctor cases.');
 }
 export async function erpPlatformDoctor(ctx) {
   await needAdmin(ctx);

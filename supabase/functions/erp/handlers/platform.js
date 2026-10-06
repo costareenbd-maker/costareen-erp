@@ -24,8 +24,14 @@ export async function isPlatformAdmin(sql, userId) {
   if (!isId(userId)) return false;
   try { return (await sql`select 1 from platform_admins where user_id = ${userId}`).length > 0; } catch (_) { return false; }
 }
+/** The platform admin of THIS server. A company running on the provider's server (bridged) never is:
+ *  its own platform_admins row (made by the installer) only counts on a copy that runs its own server. */
+export async function platformAdmin(ctx) {
+  if (ctx.deps && ctx.deps.install && ctx.deps.install.bridged) return false;
+  return isPlatformAdmin(ctx.sql, ctx.s.userId);
+}
 async function need(ctx) {
-  if (!(await isPlatformAdmin(ctx.sql, ctx.s.userId))) throw new Error('Your account does not have access to that.');
+  if (!(await platformAdmin(ctx))) throw new Error('Your account does not have access to that.');
 }
 async function business(ctx, id) {
   if (!isId(id)) throw new Error('Which business?');

@@ -29,7 +29,7 @@ import { forget } from '../lib/tabs.js';
 import { erpSaveProduct } from './stock.js';
 import { erpPartnership, erpPoolCreate, erpPoolJoin, erpPoolEntryAdd, erpPoolEntryRemove, erpPoolTier, erpPoolInvite, erpPoolClose } from './partners.js';
 import { erpPartnerCompany } from './security.js';
-import { isPlatformAdmin } from './platform.js';
+import { platformAdmin } from './platform.js';
 
 const str = (v) => String(v == null ? '' : v).trim();
 const isId = (v) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(String(v || ''));
@@ -324,13 +324,13 @@ export async function erpJointStart(ctx, payload) {
   }
   if (action === 'company') {
     // making a company on the provider's server is the provider's job (Platform), never a partner's
-    if (isRemote(ctx) || !(await isPlatformAdmin(ctx.sql, ctx.s.userId))) throw new Error('Only the provider of this ERP makes new companies.');
+    if (isRemote(ctx) || !(await platformAdmin(ctx))) throw new Error('Only the provider of this ERP makes new companies.');
     const names = new Set((await ctx.sql`select lower(name) as n from businesses`).map((r) => r.n));
     if (names.has(str(payload.business).toLowerCase())) throw new Error('A company called "' + str(payload.business) + '" already exists.');
     const r = await erpPartnerCompany(ctx, { business: payload.business, ownerName: payload.ownerName, email: payload.email });
     // the provider making a partner's company switches joint stock on for it in the same step
     let switched = false;
-    if (await isPlatformAdmin(ctx.sql, ctx.s.userId)) {
+    if (await platformAdmin(ctx)) {
       await asSystem(ctx, () => ctx.tx`
         insert into joint_flags (business_id, enabled, set_by)
         select id, true, ${ctx.s.userId} from businesses where lower(name) = ${str(payload.business).toLowerCase()} and not is_pool
@@ -815,7 +815,7 @@ export async function jointReconcile(deps) {
 
 /** Platform > Company copies: joint stock on or off for a company running on its own database. */
 export async function erpPlatformJointCopy(ctx, payload) {
-  if (!(await isPlatformAdmin(ctx.sql, ctx.s.userId))) throw new Error('Your account does not have access to that.');
+  if (!(await platformAdmin(ctx))) throw new Error('Your account does not have access to that.');
   const id = str(payload && payload.id), on = !!(payload && payload.on);
   if (!isId(id)) throw new Error('Which company copy?');
   if (!(await ctx.sql`select 1 from erp_tenants where id = ${id}`).length) throw new Error('That company is not on the provider’s server yet.');

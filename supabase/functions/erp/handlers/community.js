@@ -16,6 +16,7 @@
 
 import { formatDate, num } from '../lib/time.js';
 import { pubBase, limit } from './passport.js';
+import { platformAdmin } from './platform.js';
 
 const str = (v) => String(v == null ? '' : v).trim();
 const when = (d) => (d ? formatDate(new Date(d), 'd MMM yyyy') : '');
@@ -92,8 +93,7 @@ export async function route(deps, what, method, params, body, ip) {
 
 // ---------------------------------------------------------------- platform admin
 async function needAdmin(ctx) {
-  const r = await ctx.sql`select 1 from platform_admins where user_id = ${ctx.s.userId}`;
-  if (!r.length) throw new Error('Only the platform admin keeps the ideas board.');
+  if (!(await platformAdmin(ctx))) throw new Error('Only the platform admin keeps the ideas board.');
 }
 export async function erpPlatformCommunity(ctx) {
   await needAdmin(ctx);

@@ -9,6 +9,7 @@
 // Company (owner, inside its ERP):
 //   erpProviderKey()   the provider's connection - verified, what it is for, when last checked - the database
 //                      logins (unknown ones flagged) and every compliance check made on this company
+import { platformAdmin } from './platform.js';
 
 const str = (v) => String(v == null ? '' : v).trim();
 const WHAT = { stock: 'Stock', invoices: 'Invoices', payments: 'Payments', money: 'Money movements' };
@@ -19,8 +20,7 @@ const KNOWN_LOGINS = new Set(['postgres', 'authenticator', 'pgbouncer', 'supabas
   'dashboard_user', 'pgsodium_keyholder', 'pgsodium_keyiduser', 'pgsodium_keymaker', 'supabase_privileged_role', 'cli_login_postgres']);
 
 async function needAdmin(ctx) {
-  const r = await ctx.sql`select 1 from platform_admins where user_id = ${ctx.s.userId}`;
-  if (!r.length) throw new Error('Only the platform admin makes compliance checks.');
+  if (!(await platformAdmin(ctx))) throw new Error('Only the platform admin makes compliance checks.');
 }
 const day = (v, end) => {
   const s = str(v);
