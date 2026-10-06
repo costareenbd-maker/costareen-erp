@@ -169,7 +169,9 @@ function projectParts(p: Project) {
       const r = await fetch(`${SUPABASE_URL}/storage/v1/object/list/${BUCKET}`, {
         method: 'POST',
         headers: { ...svc, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prefix: `${biz}/${folder}/`, search: part, limit: 100,
+        // no `search`: Storage now matches it against the START of the name only, and our names
+        // ("Costareen - backup 2026-10-06 0300.json") carry the part in the middle - filtered below instead
+        body: JSON.stringify({ prefix: `${biz}/${folder}/`, limit: 100,
                                sortBy: { column: 'created_at', order: 'desc' } }),
       });
       if (!r.ok) return [];
