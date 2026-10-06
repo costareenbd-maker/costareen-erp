@@ -8421,7 +8421,7 @@ function srv(name, args, ok, bad) {
 
 var SRV_ACTIVE = 0, SRV_WRITING = false, SRV_TIMED = {};
 // the same list the server uses to know a call changes nothing (ERP_READS)
-var SRV_READS = /^(erpWarrantyRules|erpWarrantyCard|erpMyLink|erpPlatformRegister|erpPlatformDoctor|erpPlatformCommunity|erpMarketWaiting|erpPrintKit|erpPrintJobs|erpPrintJob|erpPrintCost|erpSpools|erpPrintRequests|erpJoint|erpJointCatalog|erpJointCard|erpInvoiceDesign|erpInvoicePreview|erpMarket|erpMarketMine|erpMarketRequests|erpMarketHints|erpMarketNames|erpWanted|erpBrand|erpComplianceLog|erpProviderKey|erpNews|erpAccessKeys|erpAccessWarning|erpAdmin|erpAiKeys|erpAlertRules|erpAlerts|erpArena|erpBackupStatus|erpBg|erpBnWords|erpBookedParcels|erpBrandLogo|erpBundle|erpBusinessLinks|erpBusinesses|erpBusinessesDeleted|erpCampaignAudience|erpCampaignGet|erpCampaignList|erpCapital|erpCashBook|erpCatalog|erpConnStatus|erpConnections|erpCostBook|erpCourier|erpCourierKeyStatus|erpCurrencies|erpCustomerAccount|erpCustomerCredit|erpCustomerList|erpCustomerPage|erpCustomerStatement|erpCustomers|erpDashboardData|erpDaySales|erpDeliveryOptions|erpDevices|erpDiscontinued|erpDues|erpEvoQr|erpEvoStatus|erpExpenseExport|erpExpenseReceiptUrl|erpExpenses|erpFamilies|erpFighters|erpFormOptions|erpGame|erpGetTheme|erpGoogle|erpHello|erpInstalls|erpInvoice|erpInvoicePdf|erpJob|erpJobs|erpListView|erpLookupCustomer|erpLookupUsage|erpMe|erpMoney|erpNoteFileUrl|erpNotes|erpOwnerChange|erpOwnerChanges|erpParcelLabels|erpParcelPreview|erpPartnerStock|erpPartnership|erpPayReasons|erpPeople|erpPlatform|erpPlatformErrors|erpPnl|erpPnlMonth|erpPoList|erpPoolCatalog|erpProduct|erpProductListShare|erpProductPage|erpProductPhotoUrl|erpProductThumbs|erpProfile|erpQuoteAsset|erpQuoteBoot|erpQuoteGet|erpQuoteList|erpRecentInvoices|erpRecovery|erpReorderPlan|erpRestorePreview|erpReturnPreview|erpRisks|erpSales|erpSearch|erpSecurity|erpSelfTest|erpSerialLookup|erpSerialsFor|erpSessions|erpSetTheme|erpSettingsFull|erpSettingsLists|erpSfPayoutLines|erpSfPayouts|erpShareFile|erpSharedStock|erpSheet|erpStatementPdf|erpStockHistory|erpSupplierPage|erpSuppliers|erpToday|erpUsers|erpWaProductPdf|erpWebMatches|erpWebOrderInvoices|erpWebOrders|erpWebsiteTest)$/;
+var SRV_READS = /^(erpWarrantyRules|erpWarrantyCard|erpMyLink|erpPlatformRegister|erpPlatformDoctor|erpPlatformCommunity|erpMarketWaiting|erpLoyalty|erpCustomerPoints|erpRefillDue|erpDeliveryHistory|erpDeliveryHistoryMany|erpPrintKit|erpPrintJobs|erpPrintJob|erpPrintCost|erpSpools|erpPrintRequests|erpJoint|erpJointCatalog|erpJointCard|erpInvoiceDesign|erpInvoicePreview|erpMarket|erpMarketMine|erpMarketRequests|erpMarketHints|erpMarketNames|erpWanted|erpBrand|erpComplianceLog|erpProviderKey|erpNews|erpAccessKeys|erpAccessWarning|erpAdmin|erpAiKeys|erpAlertRules|erpAlerts|erpArena|erpBackupStatus|erpBg|erpBnWords|erpBookedParcels|erpBrandLogo|erpBundle|erpBusinessLinks|erpBusinesses|erpBusinessesDeleted|erpCampaignAudience|erpCampaignGet|erpCampaignList|erpCapital|erpCashBook|erpCatalog|erpConnStatus|erpConnections|erpCostBook|erpCourier|erpCourierKeyStatus|erpCurrencies|erpCustomerAccount|erpCustomerCredit|erpCustomerList|erpCustomerPage|erpCustomerStatement|erpCustomers|erpDashboardData|erpDaySales|erpDeliveryOptions|erpDevices|erpDiscontinued|erpDues|erpEvoQr|erpEvoStatus|erpExpenseExport|erpExpenseReceiptUrl|erpExpenses|erpFamilies|erpFighters|erpFormOptions|erpGame|erpGetTheme|erpGoogle|erpHello|erpInstalls|erpInvoice|erpInvoicePdf|erpJob|erpJobs|erpListView|erpLookupCustomer|erpLookupUsage|erpMe|erpMoney|erpNoteFileUrl|erpNotes|erpOwnerChange|erpOwnerChanges|erpParcelLabels|erpParcelPreview|erpPartnerStock|erpPartnership|erpPayReasons|erpPeople|erpPlatform|erpPlatformErrors|erpPnl|erpPnlMonth|erpPoList|erpPoolCatalog|erpProduct|erpProductListShare|erpProductPage|erpProductPhotoUrl|erpProductThumbs|erpProfile|erpQuoteAsset|erpQuoteBoot|erpQuoteGet|erpQuoteList|erpRecentInvoices|erpRecovery|erpReorderPlan|erpRestorePreview|erpReturnPreview|erpRisks|erpSales|erpSearch|erpSecurity|erpSelfTest|erpSerialLookup|erpSerialsFor|erpSessions|erpSetTheme|erpSettingsFull|erpSettingsLists|erpSfPayoutLines|erpSfPayouts|erpShareFile|erpSharedStock|erpSheet|erpStatementPdf|erpStockHistory|erpSupplierPage|erpSuppliers|erpToday|erpUsers|erpWaProductPdf|erpWebMatches|erpWebOrderInvoices|erpWebOrders|erpWebsiteTest)$/;
 function srvPump() {
   if (!SRV_Q.length) return;
   var isRead = SRV_READS.test(SRV_Q[0].name);
@@ -21098,6 +21098,122 @@ document.addEventListener('click', function (ev) {
   b.disabled = true;
   srv('erpMarketSave', [{ colours: map }], function () { toast('Swatches saved - the Colour Finder uses them now.'); MK.mine = null; loadMarketMine(); }, function (e) { b.disabled = false; toast(esc((e && e.message) || e), true, 9000); });
 });
+</script>
+
+<!-- Stage N6 (docs/NETWORK-BLUEPRINT.md section 4): the keep-customers kit - points and level on the customer page,
+     the delivery-history check on invoices and web orders, refill reminders and the points rules on Customers. -->
+<style>
+.lpbar{height:8px;background:#eef1ee;border-radius:4px;overflow:hidden;margin-top:6px}.lpbar i{display:block;height:100%;background:var(--good,#0f766e)}
+.lpform{display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;margin-top:8px}.lpform>div{flex:1 1 140px}
+.risk-new{background:#eef1ee;color:#5d6b66}.risk-good{background:#e6f4f1;color:#0f766e}.risk-watch{background:#fff4df;color:#9a5b00}.risk-risky{background:#fdecea;color:#b42318}
+</style>
+<script>
+var LP = { key: '', data: null, err: '' }, LPR = null, LPS = null, LP_OPEN = '', WOH = {}, INVH = {};
+function riskPill(d) { if (!d) return ''; var w = d.risk === 'risky' ? 'Risky: ' + d.returned + ' returned' : d.risk === 'watch' ? d.returned + ' return \u00b7 ' + d.delivered + ' delivered' : d.risk === 'good' ? d.delivered + ' delivered, no returns' : d.risk === 'new' ? 'New customer: no parcels yet' : ''; return w ? '<span class="pill risk-' + esc(d.risk) + '" title="' + esc(d.advice) + '">' + esc(w) + '</span>' : ''; }
+// ---- the customer page: points, level, consent, delivery history
+function lpCard() {
+  var d = LP.data, c = CUSP.data;
+  if (LP.err) return '<section><div class="card"><div class="note err"><div class="ico">!</div><div>' + esc(LP.err) + '</div></div></div></section>';
+  if (!d) return '<section><div class="card"><div class="loading">Reading points\u2026</div></div></section>';
+  var h = '<section><div class="card"><div class="row" style="justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap"><h2 style="margin:0">Points &amp; reminders</h2>' + riskPill(d.delivery) + '</div>';
+  if (!d.on) h += '<div class="sub" data-c5x="1" style="display:block">Points are switched off (Customers &gt; Points rules).</div>';
+  else h += '<div class="row" style="gap:16px;flex-wrap:wrap;align-items:center;margin-top:6px"><div><div class="sku">Points</div><b style="font-size:22px">' + fmt(d.total) + '</b></div><div><div class="sku">Level</div><b style="font-size:18px">' + esc(d.level) + '</b>' + (d.perk ? '<div class="sku">' + esc(d.perk) + '</div>' : '') + '</div><div style="flex:1 1 180px">' + (d.next ? '<div class="sku">' + fmt(d.toNext) + ' more to ' + esc(d.next) + '</div><div class="lpbar"><i style="width:' + Math.max(2, Math.min(100, d.pct)) + '%"></i></div>' : '<div class="sku">Top level</div>') + '</div></div>';
+  h += '<div class="sku" style="margin-top:8px">' + esc(d.delivery.advice) + '</div>';
+  if (d.refill) h += '<div class="sku" style="margin-top:4px">Buys consumables about every ' + fmt(d.refill.avgDays) + ' days (' + fmt(d.refill.buys) + ' times) \u00b7 last ' + esc(d.refill.lastAt) + ' \u00b7 likely to need more around <b>' + esc(d.refill.nextAt) + '</b>' + (d.refill.due ? ' <span class="pill">due now</span>' : '') + '</div>';
+  h += '<label class="chk" style="margin-top:10px"><input type="checkbox" id="lp_consent"' + (d.consent.reminders ? ' checked' : '') + '> Agreed to refill reminders on WhatsApp' + (d.consent.at ? ' <span class="sku">(' + esc(d.consent.by) + ', ' + esc(d.consent.how) + ', ' + esc(d.consent.at) + ')</span>' : ' <span class="sku">(ask first, then tick)</span>') + '</label>';
+  if (d.canManage && d.on) {
+    h += '<div class="row" style="margin-top:10px"><button class="btn small" type="button" data-lp="bonus">+ Bonus points</button><button class="btn small" type="button" data-lp="redeem">Redeem points</button></div>';
+    if (LP_OPEN) h += '<div class="lpform"><div style="flex:0 1 120px"><label class="f" for="lp_pts">' + (LP_OPEN === 'redeem' ? 'Points to redeem' : 'Bonus points') + '</label><input class="i" id="lp_pts" inputmode="numeric" value="' + (LP_OPEN === 'redeem' ? Math.min(d.total, 100) : 50) + '"></div><div><label class="f" for="lp_note">Why</label><input class="i" id="lp_note" placeholder="' + (LP_OPEN === 'redeem' ? 'e.g. 100 taka off INV-\u2026' : 'e.g. photo review, brought a friend') + '"></div><div style="flex:0 0 auto"><button class="btn primary small" type="button" data-lp="go">' + (LP_OPEN === 'redeem' ? 'Redeem (' + d.taka + ' taka a point)' : 'Give') + '</button> <button class="btn small" type="button" data-lp="cancel">Cancel</button></div></div>';
+  }
+  if (d.ledger.length) h += '<div class="scroll" style="margin-top:10px"><table><thead><tr><th>When</th><th>What</th><th>By</th><th class="num">Points</th></tr></thead><tbody>' + d.ledger.slice(0, 8).map(function (l) { return '<tr><td style="white-space:nowrap">' + esc(l.when) + '</td><td>' + esc(l.note) + ' <span class="sku">' + esc(l.kind) + '</span></td><td>' + esc(l.by) + '</td><td class="num"' + (l.points < 0 ? ' style="color:var(--critical)"' : '') + '>' + (l.points > 0 ? '+' : '') + fmt(l.points) + '</td></tr>'; }).join('') + '</tbody></table></div>';
+  return h + '</div></section>';
+}
+function lpLoad() { var c = CUSP.data; if (!c) return; LP = { key: CUSP.key, data: null, err: '' }; srv('erpCustomerPoints', [{ phone: c.phone, name: c.name }], function (r) { if (LP.key !== CUSP.key) return; LP.data = r; lpPaint(); }, function (e) { LP.err = (e && e.message) || String(e); lpPaint(); }); }
+function lpPaint() {
+  var old = document.getElementById('lp_card'); if (old) old.remove();
+  if (VIEW !== 'customers' || !CUSP.key || !CUSP.data) return;
+  var grid = document.querySelector('#view .grid.g-kpi'); if (!grid) return;
+  var box = document.createElement('div'); box.id = 'lp_card'; box.innerHTML = lpCard();
+  grid.parentNode.insertBefore(box, grid.nextSibling);
+}
+(function () {
+  var t = 0;
+  var mo = new MutationObserver(function () { clearTimeout(t); t = setTimeout(function () {
+    if (VIEW === 'customers' && CUSP.key && CUSP.data) { if (LP.key !== CUSP.key) lpLoad(); else if (!document.getElementById('lp_card')) lpPaint(); }
+    if (VIEW === 'customers' && !CUSP.key) lpButtons();
+    if (VIEW === 'sales' && INVP && INVP.data) invRisk();
+    if (VIEW === 'weborders') woRisk();
+  }, 90); });
+  mo.observe(document.body, { childList: true, subtree: true });
+})();
+document.addEventListener('change', function (ev) { if (ev.target && ev.target.id === 'lp_consent' && CUSP.data) srv('erpConsentSet', [{ phone: CUSP.data.phone, name: CUSP.data.name, reminders: ev.target.checked, how: 'asked by staff' }], function () { toast(ev.target.checked ? 'Recorded: agreed to reminders.' : 'Recorded: no reminders.'); lpLoad(); }, function (e) { toast(esc((e && e.message) || e), true); }); });
+document.addEventListener('click', function (ev) {
+  var b = ev.target && ev.target.closest ? ev.target.closest('[data-lp]') : null; if (!b) return;
+  var k = b.getAttribute('data-lp'), fail = function (e) { toast(esc((e && e.message) || e), true, 9000); };
+  if (k === 'bonus' || k === 'redeem') { LP_OPEN = k; lpPaint(); return; }
+  if (k === 'cancel') { LP_OPEN = ''; lpPaint(); return; }
+  if (k === 'go') { srv('erpPointsAdjust', [{ phone: CUSP.data.phone, name: CUSP.data.name, kind: LP_OPEN, points: el('lp_pts').value, note: el('lp_note').value }], function (r) { LP.data = r; LP_OPEN = ''; toast('Points saved.'); lpPaint(); }, fail); return; }
+  if (k === 'refill') { LP_OPEN = ''; LPR = LPR && LPR.open ? null : { open: true, data: null }; if (LPR) srv('erpRefillDue', [], function (r) { LPR.data = r; lpPanels(); }, fail); lpPanels(); return; }
+  if (k === 'rules') { LPS = LPS && LPS.open ? null : { open: true, data: null }; if (LPS) srv('erpLoyalty', [], function (r) { LPS.data = r; lpPanels(); }, fail); lpPanels(); return; }
+  if (k === 'sent') { srv('erpReminderSent', [{ phone: b.getAttribute('data-phone'), name: b.getAttribute('data-name'), note: 'WhatsApp' }], function () { toast('Marked as sent.'); srv('erpRefillDue', [], function (r) { LPR.data = r; lpPanels(); }, fail); }, fail); return; }
+  if (k === 'backfill') { b.disabled = true; srv('erpLoyaltyBackfill', [], function (r) { toast(fmt(r.invoices) + ' invoices counted: ' + fmt(r.members) + ' customers hold ' + fmt(r.pointsOut) + ' points.'); srv('erpLoyalty', [], function (x) { LPS.data = x; lpPanels(); }, fail); }, function (e) { b.disabled = false; fail(e); }); return; }
+  if (k === 'rulesave') { srv('erpLoyaltySave', [{ on: el('lr_on').checked, refillOn: el('lr_refill').checked, rate: el('lr_rate').value, silver: el('lr_silver').value, gold: el('lr_gold').value, taka: el('lr_taka').value, silverPerk: el('lr_sperk').value, goldPerk: el('lr_gperk').value }], function (r) { LPS.data = r; toast('Points rules saved.'); lpPanels(); }, fail); }
+});
+// ---- the Customers list: two buttons and their panels
+function lpButtons() {
+  var nb = document.querySelector('#view .o_lv[data-lv="customers"] [data-lv-new]');
+  if (nb && !nb.parentNode.querySelector('[data-lp="refill"]')) nb.insertAdjacentHTML('afterend', ' <button class="btn" type="button" data-lp="refill">Refill reminders</button>' + (ME && /^(manager|shareholder|owner)$/.test(ME.role) ? ' <button class="btn" type="button" data-lp="rules">Points rules</button>' : ''));
+  if (((LPR && LPR.open) || (LPS && LPS.open)) && !document.getElementById('lp_panels')) lpPanels();
+}
+function lpPanels() {
+  var old = document.getElementById('lp_panels'); if (old) old.remove();
+  if (VIEW !== 'customers' || CUSP.key) return;
+  var lv = document.querySelector('#view .o_lv[data-lv="customers"]'); if (!lv) return;
+  var h = '';
+  if (LPR && LPR.open) {
+    var r = LPR.data;
+    h += '<section><div class="card"><div class="row" style="justify-content:space-between;align-items:center"><h2 style="margin:0">Refill reminders</h2><button class="btn small" type="button" data-lp="refill">Close</button></div><div class="sub" data-c5x="1" style="display:block">From each customer\u2019s own rhythm on filament: who is likely to be running out now. One tap opens WhatsApp with the message; press Sent so they are not listed again for two weeks. Only customers who agreed are under "Ready"; ask the others first (the message asks).</div>' +
+      (!r ? '<div class="loading">Reading\u2026</div>' : '<div class="sku" style="margin:6px 0">' + fmt(r.tracked) + ' customers with a rhythm' + (r.on ? '' : ' \u00b7 reminders switched off in Points rules') + '</div>' +
+        '<h3 style="margin:10px 0 4px">Ready to remind (' + r.ready.length + ')</h3>' + lpRefillTable(r.ready, true) + '<h3 style="margin:14px 0 4px">Ask first (' + r.askFirst.length + ')</h3>' + lpRefillTable(r.askFirst, false)) + '</div></section>';
+  }
+  if (LPS && LPS.open) {
+    var d = LPS.data, S = d && d.settings;
+    h += '<section><div class="card"><div class="row" style="justify-content:space-between;align-items:center"><h2 style="margin:0">Points rules</h2><button class="btn small" type="button" data-lp="rules">Close</button></div>' +
+      (!d ? '<div class="loading">Reading\u2026</div>' : '<div class="sub" data-c5x="1" style="display:block">Every paid invoice earns points; levels come from lifetime points. Points never move money by themselves: staff redeem them by giving a discount on the invoice and taking the points here. ' + fmt(d.members) + ' customers hold ' + fmt(d.pointsOut) + ' points; ' + fmt(d.consented) + ' agreed to reminders.</div>' +
+        '<div class="lpform"><div style="flex:0 0 auto"><label class="chk" style="padding-bottom:9px"><input type="checkbox" id="lr_on"' + (S.on ? ' checked' : '') + '> Points on</label></div><div style="flex:0 0 auto"><label class="chk" style="padding-bottom:9px"><input type="checkbox" id="lr_refill"' + (S.refillOn ? ' checked' : '') + '> Refill reminders on</label></div>' +
+        '<div><label class="f" for="lr_rate">Points per 100 taka paid</label><input class="i" id="lr_rate" inputmode="decimal" value="' + S.rate + '"></div><div><label class="f" for="lr_taka">Taka per point when redeemed</label><input class="i" id="lr_taka" inputmode="decimal" value="' + S.taka + '"></div>' +
+        '<div><label class="f" for="lr_silver">Silver from (points)</label><input class="i" id="lr_silver" inputmode="numeric" value="' + S.silver + '"></div><div><label class="f" for="lr_gold">Gold from (points)</label><input class="i" id="lr_gold" inputmode="numeric" value="' + S.gold + '"></div>' +
+        '<div><label class="f" for="lr_sperk">Silver perk (shown to the customer)</label><input class="i" id="lr_sperk" value="' + esc(S.silverPerk) + '"></div><div><label class="f" for="lr_gperk">Gold perk</label><input class="i" id="lr_gperk" value="' + esc(S.goldPerk) + '"></div>' +
+        '<div style="flex:0 0 auto"><button class="btn primary" type="button" data-lp="rulesave">Save rules</button></div></div>' +
+        '<div class="row" style="margin-top:10px;gap:8px;align-items:center;flex-wrap:wrap"><button class="btn" type="button" data-lp="backfill">Count past invoices</button><span class="sku">Once, when you start: every past paid invoice gets the points it would have earned. Safe to press again - nothing doubles.</span></div>') + '</div></section>';
+  }
+  if (!h) return;
+  var box = document.createElement('div'); box.id = 'lp_panels'; box.innerHTML = h; lv.parentNode.insertBefore(box, lv);
+}
+function lpRefillTable(list, ready) {
+  if (!list.length) return '<div class="empty">Nobody right now.</div>';
+  return '<div class="scroll"><table><thead><tr><th>Customer</th><th>Buys</th><th>Rhythm</th><th>Due</th><th></th></tr></thead><tbody>' + list.map(function (c) {
+    return '<tr><td class="nm">' + esc(c.name || c.phone) + '<br><span class="sku">' + esc(c.phone) + '</span></td><td>' + esc(c.items.map(function (i) { return i.name; }).join(', ')) + '</td><td class="sku">every ~' + fmt(c.avgDays) + ' days \u00b7 ' + fmt(c.buys) + ' times \u00b7 last ' + esc(c.lastAt) + '</td><td>' + (c.overdueDays ? '<span class="pill out">' + fmt(c.overdueDays) + ' days over</span>' : '<span class="pill">about now</span>') + '</td>' +
+      '<td style="white-space:nowrap">' + (c.whatsapp ? '<a class="btn small' + (ready ? ' primary' : '') + '" href="' + esc(c.whatsapp) + '" target="_blank" rel="noopener">' + (ready ? 'WhatsApp' : 'Ask on WhatsApp') + '</a> ' : '') + (ready ? '<button class="btn small" type="button" data-lp="sent" data-phone="' + esc(c.phone) + '" data-name="' + esc(c.name) + '">Sent</button>' : '') + '</td></tr>'; }).join('') + '</tbody></table></div>';
+}
+// ---- the invoice page and the web orders: the delivery-history word
+function invRisk() {
+  var d = INVP.data, host = document.querySelector('#view [data-mylink]'); if (!d || !host || !d.phone) return;
+  if (host.parentNode.querySelector('[data-invrisk]')) return;
+  var no = INVP.no;
+  if (INVH[no]) { host.insertAdjacentHTML('afterend', '<span data-invrisk="1" style="margin-left:6px">' + riskPill(INVH[no]) + '</span>'); return; }
+  INVH[no] = { risk: 'none' };
+  srv('erpDeliveryHistory', [{ phone: d.phone, name: d.customer }], function (r) { INVH[no] = r; var h2 = document.querySelector('#view [data-mylink]'); if (h2 && !h2.parentNode.querySelector('[data-invrisk]')) h2.insertAdjacentHTML('afterend', '<span data-invrisk="1" style="margin-left:6px">' + riskPill(r) + '</span>'); }, function () { delete INVH[no]; });
+}
+function woRisk() {
+  var cells = [].slice.call(document.querySelectorAll('#view table tbody tr td.nm .sku')).filter(function (s) { return /^0?1\d{9}$|^\+?8801\d{8}$/.test((s.textContent || '').replace(/[^0-9+]/g, '')) && !s.parentNode.querySelector('[data-worisk]'); });
+  if (!cells.length) return;
+  var want = [];
+  cells.forEach(function (s) { var ph = s.textContent.trim(); if (WOH[ph]) s.insertAdjacentHTML('afterend', '<span data-worisk="1"> ' + riskPill(WOH[ph]) + '</span>'); else if (want.indexOf(ph) < 0) want.push(ph); });
+  if (!want.length) return;
+  want.forEach(function (ph) { WOH[ph] = { risk: 'none' }; });
+  srv('erpDeliveryHistoryMany', [{ phones: want }], function (r) { Object.keys(r.history).forEach(function (ph) { WOH[ph] = r.history[ph]; }); cells.forEach(function (s) { var ph = s.textContent.trim(); if (r.history[ph] && !s.parentNode.querySelector('[data-worisk]')) s.insertAdjacentHTML('afterend', '<span data-worisk="1"> ' + riskPill(r.history[ph]) + '</span>'); }); }, function () { want.forEach(function (ph) { delete WOH[ph]; }); });
+}
 </script>
 </body>
 </html>

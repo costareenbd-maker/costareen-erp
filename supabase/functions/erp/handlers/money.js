@@ -82,6 +82,8 @@ export async function syncInvoiceStatus(ctx, orderId) {
   if (orderId) {
     const J = await import('./joint.js');
     if (await J.jointOn(ctx)) await J.syncJoint(ctx, String(orderId));
+    // Stage N6: the invoice's points follow what was paid (never stops a payment)
+    try { await (await import('./loyalty.js')).pointsSync(ctx, String(orderId)); } catch (e) { console.error('points', e); }
   }
 }
 

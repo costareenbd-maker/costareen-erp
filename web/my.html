@@ -61,12 +61,12 @@ var T = {
   en: { title: 'My orders & warranty', loading: 'Loading your page…', foot: 'This page opens only with your link. Keep the link to yourself.', hello: 'Hello', nolink: 'This link is not complete. Scan the QR on your invoice again.',
     net: 'The page could not be loaded. Check your connection and try again.', due: 'Total due', allpaid: 'All paid', orders: 'Orders', none: 'No orders yet.', total: 'Total', paid: 'Paid', dueW: 'Due',
     pdf: 'Invoice PDF', pdfWait: 'Preparing…', pdfErr: 'The PDF could not be opened right now.', parcel: 'Parcel', warr: 'Warranties', wUntil: 'until', wDays: 'days left', wEnded: 'ended', wNone: 'no warranty recorded', checkIt: 'Check in the register',
-    doctor: 'Failed print? Print Doctor', reorder: 'Order again', lastOrder: 'Your last order:', wa: 'Order on WhatsApp', call: 'Call', waText: 'Hello, I want to order again: ', contact: 'Contact the shop',
+    doctor: 'Failed print? Print Doctor', pts: 'Your points', level: 'Level', toNext: '{n} more points to {lvl}', top: 'Top level', perk: 'Your perk', remind: 'Message me on WhatsApp when I am likely to run out (switch off any time)', nextRefill: 'You usually buy again around', saved: 'Saved', reorder: 'Order again', lastOrder: 'Your last order:', wa: 'Order on WhatsApp', call: 'Call', waText: 'Hello, I want to order again: ', contact: 'Contact the shop',
     pw: { 'Delivered': 'Delivered', 'With the courier': 'With the courier', 'Booked with the courier': 'Booked with the courier', 'Cancelled': 'Cancelled', 'On hold': 'On hold', 'Partly delivered': 'Partly delivered', 'Being checked': 'Being checked', 'In review': 'In review' } },
   bn: { title: 'আমার অর্ডার ও ওয়ারেন্টি', loading: 'আপনার পেজ লোড হচ্ছে…', foot: 'এই পেজ শুধু আপনার লিংকে খোলে। লিংকটি অন্যকে দেবেন না।', hello: 'স্বাগতম', nolink: 'লিংকটি সম্পূর্ণ নয়। ইনভয়েসের QR আবার স্ক্যান করুন।',
     net: 'পেজ লোড করা যায়নি। ইন্টারনেট দেখে আবার চেষ্টা করুন।', due: 'মোট বাকি', allpaid: 'সব পরিশোধিত', orders: 'অর্ডার', none: 'এখনো কোনো অর্ডার নেই।', total: 'মোট', paid: 'পরিশোধিত', dueW: 'বাকি',
     pdf: 'ইনভয়েস PDF', pdfWait: 'তৈরি হচ্ছে…', pdfErr: 'PDF এখন খোলা যাচ্ছে না।', parcel: 'পার্সেল', warr: 'ওয়ারেন্টি', wUntil: 'পর্যন্ত', wDays: 'দিন বাকি', wEnded: 'শেষ', wNone: 'ওয়ারেন্টির তথ্য নেই', checkIt: 'রেজিস্টারে যাচাই',
-    doctor: 'প্রিন্ট নষ্ট? প্রিন্ট ডাক্তার', reorder: 'আবার অর্ডার', lastOrder: 'আপনার শেষ অর্ডার:', wa: 'WhatsApp-এ অর্ডার করুন', call: 'কল', waText: 'আসসালামু আলাইকুম, আমি আবার অর্ডার করতে চাই: ', contact: 'দোকানে যোগাযোগ',
+    doctor: 'প্রিন্ট নষ্ট? প্রিন্ট ডাক্তার', pts: 'আপনার পয়েন্ট', level: 'লেভেল', toNext: '{lvl}-এ যেতে আর {n} পয়েন্ট', top: 'সর্বোচ্চ লেভেল', perk: 'আপনার সুবিধা', remind: 'ফুরিয়ে আসার সময় হলে WhatsApp-এ জানান (যেকোনো সময় বন্ধ করা যায়)', nextRefill: 'আপনি সাধারণত আবার কেনেন', saved: 'সংরক্ষিত', reorder: 'আবার অর্ডার', lastOrder: 'আপনার শেষ অর্ডার:', wa: 'WhatsApp-এ অর্ডার করুন', call: 'কল', waText: 'আসসালামু আলাইকুম, আমি আবার অর্ডার করতে চাই: ', contact: 'দোকানে যোগাযোগ',
     pw: { 'Delivered': 'ডেলিভারি হয়েছে', 'With the courier': 'কুরিয়ারে', 'Booked with the courier': 'কুরিয়ারে বুক হয়েছে', 'Cancelled': 'বাতিল', 'On hold': 'আটকে আছে', 'Partly delivered': 'আংশিক ডেলিভারি', 'Being checked': 'যাচাই চলছে', 'In review': 'যাচাই চলছে' } }
 };
 var LANG = 'en';
@@ -91,6 +91,9 @@ function show(r) {
   document.getElementById('shop').innerHTML = (s.logo ? '<img src="' + esc(s.logo) + '" alt="">' : '') + '<div><h1>' + esc(s.name || t('title')) + '</h1><div class="c">' + esc([s.phone, s.address].filter(Boolean).join(' · ')) + '</div></div>';
   var h = '<div class="card due"><div><div style="color:var(--mute);font-size:14px">' + t('hello') + (c.name ? ', <b>' + esc(c.name) + '</b>' : '') + '</div><div style="font-size:13px;color:var(--mute)">' + t('due') + '</div></div>' +
     (r.totalDue > 0 ? '<b style="color:var(--bad)">' + tk(r.totalDue) + '</b>' : '<span class="badge b-ok">' + t('allpaid') + '</span>') + '</div>';
+  if (r.points) h += '<div class="card"><div class="due"><div><div style="font-size:13px;color:var(--mute)">' + t('pts') + '</div><b>' + Number(r.points.total).toLocaleString('en-IN') + '</b></div><div style="text-align:right"><span class="badge b-ok">' + t('level') + ': ' + esc(r.points.level) + '</span>' + (r.points.perk ? '<div style="font-size:13px;color:var(--mute);margin-top:4px">' + t('perk') + ': ' + esc(r.points.perk) + '</div>' : '') + '</div></div>' +
+    (r.points.next ? '<div style="margin-top:8px;height:8px;background:#eef1ee;border-radius:4px;overflow:hidden"><i style="display:block;height:100%;width:' + Math.max(2, Math.min(100, r.points.pct)) + '%;background:var(--ok)"></i></div><div style="font-size:13px;color:var(--mute);margin-top:4px">' + t('toNext').replace('{n}', r.points.toNext).replace('{lvl}', r.points.next) + '</div>' : '<div style="font-size:13px;color:var(--mute);margin-top:4px">' + t('top') + '</div>') + '</div>';
+  h += '<div class="card"><label style="display:flex;gap:8px;align-items:flex-start;font-size:14px;cursor:pointer"><input type="checkbox" id="rem"' + (r.reminders ? ' checked' : '') + ' style="margin-top:3px"> <span>' + t('remind') + '</span></label>' + (r.refill && r.refill.nextAt ? '<div style="font-size:13px;color:var(--mute);margin-top:6px">' + t('nextRefill') + ' <b>' + esc(r.refill.nextAt) + '</b></div>' : '') + '<div class="hint" id="remmsg" style="margin-top:4px"></div></div>';
   h += '<h2>' + t('orders') + '</h2>';
   if (!r.invoices || !r.invoices.length) h += '<div class="card"><p class="state">' + t('none') + '</p></div>';
   (r.invoices || []).forEach(function (i) {
@@ -113,6 +116,11 @@ function show(r) {
   }
   out.innerHTML = h;
 }
+out.addEventListener('change', function (ev) {
+  if (!ev.target || ev.target.id !== 'rem') return;
+  var on = ev.target.checked;
+  fetch(API + '?pub=my', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ t: TOKEN, action: 'reminders', on: on }) }).then(function (r) { return r.json(); }).then(function (r) { document.getElementById('remmsg').textContent = r.ok ? t('saved') : (r.error || t('net')); if (r.ok) DATA.reminders = on; }, function () { document.getElementById('remmsg').textContent = t('net'); });
+});
 out.addEventListener('click', function (ev) {
   var b = ev.target.closest('[data-pdf]'); if (!b) return;
   var no = b.getAttribute('data-pdf'), w = window.open('', '_blank'); b.disabled = true; b.textContent = t('pdfWait');
