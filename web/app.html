@@ -21181,9 +21181,10 @@ document.addEventListener('click', async function (ev) {
   if (t.closest('[data-rsgo]') && RS.offers && !RS.busy) {
     if (!FORM.name.trim()) { toast('Write the customer’s name first.', true); return; }
     var picks = RS.offers.lines.map(function (l, i) { var c = document.querySelector('#rsk input[name="rs_' + i + '"]:checked'); return { sku: l.sku, ref: c ? c.value : '' }; });
+    var phoneNow = ((el('rs_phone') || {}).value || '').trim(); RS.offers.phone = phoneNow;   // read before the window is drawn again
     RS.busy = true; rsModal();
     srv('erpRestockStart', [{ customer: { name: FORM.name.trim(), phone: FORM.phone.trim(), address: FORM.address.trim(), source: FORM.source },
-      items: CART.map(function (l) { return { sku: l.sku, qty: l.qty, discEach: num(l.discEach) }; }), picks: picks, phone: (el('rs_phone') || {}).value || '' }], function (r) {
+      items: CART.map(function (l) { return { sku: l.sku, qty: l.qty, discEach: num(l.discEach) }; }), picks: picks, phone: phoneNow }], function (r) {
       RS.busy = false; RS.offers = null; rsModal(); RS.list = r;
       CART = []; FORM.name = ''; FORM.phone = ''; FORM.address = ''; updateCounts(); repaint(); window.scrollTo(0, 0);
       toast('The order is waiting. ' + fmt(r.asked) + ' request(s) sent to the market.', false, 9000);
