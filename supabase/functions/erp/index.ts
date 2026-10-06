@@ -70,7 +70,7 @@ const OWN_ORIGINS = [Deno.env.get('ERP_APP_URL'), Deno.env.get('ERP_PUBLIC_URL')
 // open: the public installer routes (no sign-in, nothing private) answer any page, wherever the install link was opened
 function cors(origin: string | null, open = false) {
   const ok = origin && (open || ALLOWED_ORIGINS.includes(origin) || OWN_ORIGINS.includes(origin) ||
-    /^https:\/\/([a-z0-9-]+\.)?(costareen-erp|office-erp)\.pages\.dev$/.test(origin));
+    /^https:\/\/([a-z0-9-]+\.)?(costareen-erp|office-erp)\.pages\.dev$/.test(origin) || inFreeZone(origin));
   return {
     'Access-Control-Allow-Origin': ok ? origin! : ALLOWED_ORIGINS[0],
     'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-erp-session, x-region, x-erp-tenant',
@@ -83,6 +83,10 @@ function cors(origin: string | null, open = false) {
 // A browser always sends Origin and a page cannot change it, so a copy of the page put up elsewhere stops working.
 // No Origin (server-to-server, the timers) is let through: those calls still need a valid sign-in or key.
 const FREE_ZONE = (Deno.env.get('ERP_FREE_ZONE') ?? '').toLowerCase();
+// a copy on the free address <company>.<zone> (https only); its page must be answered by the browser too (CORS)
+function inFreeZone(origin: string): boolean {
+  try { const u = new URL(origin); const h = u.hostname.toLowerCase(); return !!FREE_ZONE && u.protocol === 'https:' && (h === FREE_ZONE || h.endsWith('.' + FREE_ZONE)); } catch (_) { return false; }
+}
 function pageAllowed(origin: string | null, domain: string): boolean {
   if (!origin) return true;
   // https only: a copy run on someone's own computer (localhost) is refused too
