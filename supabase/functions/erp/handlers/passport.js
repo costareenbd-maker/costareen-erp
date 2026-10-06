@@ -229,7 +229,10 @@ async function pageData(ctx, key, deps0) {
   const last = list[0];
   const reorder = last ? last.items.map((i) => i.qty + ' x ' + i.name).join(', ') : '';
   const wa = seller.phone.replace(/[^0-9]/g, '');
-  return { seller, customer: { name, phone }, invoices, totalDue: Math.round(totalDue), warranties,
+  // Stage N6: points, level, the reminder switch, when more is likely needed
+  let points = null, reminders = false, refill = null;
+  try { const L = await import('./loyalty.js'); const pts = await L.pointsFor(ctx, key); if (pts.on) points = pts; reminders = (await L.consentOf(ctx, key)).reminders; refill = await L.refillFor(ctx, key); } catch (e) { console.error('points on my page', e); }
+  return { seller, customer: { name, phone }, invoices, totalDue: Math.round(totalDue), warranties, points, reminders, refill,
     reorder: { text: reorder, whatsapp: wa ? 'https://wa.me/' + (wa.startsWith('0') ? '88' + wa : wa) : '' }, deps0 };
 }
 async function runAs(deps, R, biz, label, fn) {
@@ -267,6 +270,18 @@ export async function myPage(deps, R, token, pdfNo, ip) {
   return runAs(d, R, link.business_id, 'pub:my', (ctx) => pageData(ctx, link.customer_key));
 }
 
+/** The customer switches his refill reminders on or off from his own page (Stage N6). */
+export async function myAction(deps, R, body, ip) {
+  const b = body || {}, t = str(b.t);
+  if (!/^[A-Za-z0-9_-]{16,32}$/.test(t)) throw new Error('This link is not complete.');
+  await limit(deps, ip, 'my', 40);
+  const link = (await deps.control`select source, business_id, customer_key from erp_customer_links where token_hash = ${await sha256hex(t)}`)[0];
+  if (!link) throw new Error('This link is not known. Ask the shop for a new one.');
+  if (b.action !== 'reminders') throw new Error('Unknown action.');
+  let d = deps;
+  if (link.source !== 'self') { if (!R.tenantDeps) throw new Error('This page is not available right now.'); d = await R.tenantDeps(link.source); }
+  return runAs(d, R, link.business_id, 'pub:my', async (ctx) => { const L = await import('./loyalty.js'); await L.consentSet(ctx, link.customer_key, b.on === true, 'the customer', 'on the customer page'); return { reminders: b.on === true }; });
+}
 /** index.ts: the public routes. Returns {status, body}. */
 export async function pubRoute(deps, req, R) {
   const u = new URL(req.url), what = u.searchParams.get('pub');
@@ -305,6 +320,7 @@ export async function pubRoute(deps, req, R) {
       if (!r) return { status: 405, body: { ok: false } };
       return { status: 200, body: { ok: true, ...r } };
     }
+    if (what === 'my' && req.method === 'POST') return { status: 200, body: { ok: true, ...(await myAction(deps, R || {}, body, ip)) } };
     if (req.method !== 'GET') return { status: 405, body: { ok: false } };
     if (what === 'check') return { status: 200, body: { ok: true, ...(await checkSerial(deps, u.searchParams.get('s'), ip)) } };
     if (what === 'my') { const r = await myPage(deps, R || {}, u.searchParams.get('t'), u.searchParams.get('pdf'), ip); delete r.deps0; return { status: 200, body: { ok: true, ...r } }; }
