@@ -21266,8 +21266,10 @@ document.addEventListener('click', function (ev) {
 });
 // ---- the Customers list: two buttons and their panels
 function lpButtons() {
-  var nb = document.querySelector('#view .o_lv[data-lv="customers"] [data-lv-new]');
-  if (nb && !nb.parentNode.querySelector('[data-lp="refill"]')) nb.insertAdjacentHTML('afterend', ' <button class="btn" type="button" data-lp="refill">Refill reminders</button>' + (ME && /^(manager|shareholder|owner)$/.test(ME.role) ? ' <button class="btn" type="button" data-lp="rules">Points rules</button>' : ''));
+  // the two buttons sit in the top bar (beside Excel) so they are seen without scrolling past the dues; the list bar is the fallback
+  var top = document.querySelector('#view [data-xlopen="customers"]');
+  var nb = top || document.querySelector('#view .o_lv[data-lv="customers"] [data-lv-new]');
+  if (nb && !nb.parentNode.querySelector('[data-lp="refill"]')) nb.insertAdjacentHTML(top ? 'beforebegin' : 'afterend', ' <button class="btn" type="button" data-lp="refill">Refill reminders</button>' + (ME && /^(manager|shareholder|owner)$/.test(ME.role) ? ' <button class="btn" type="button" data-lp="rules">Points rules</button>' : ''));
   if (((LPR && LPR.open) || (LPS && LPS.open)) && !document.getElementById('lp_panels')) lpPanels();
 }
 function lpPanels() {
@@ -21293,7 +21295,7 @@ function lpPanels() {
         '<div class="row" style="margin-top:10px;gap:8px;align-items:center;flex-wrap:wrap"><button class="btn" type="button" data-lp="backfill">Count past invoices</button><span class="sku">Once, when you start: every past paid invoice gets the points it would have earned. Safe to press again - nothing doubles.</span></div>') + '</div></section>';
   }
   if (!h) return;
-  var box = document.createElement('div'); box.id = 'lp_panels'; box.innerHTML = h; lv.parentNode.insertBefore(box, lv);
+  var box = document.createElement('div'); box.id = 'lp_panels'; box.innerHTML = h; var topRow = document.querySelector('#view [data-xlopen="customers"]'); var anchor = topRow ? topRow.parentNode : lv; anchor.parentNode.insertBefore(box, anchor);
 }
 function lpRefillTable(list, ready) {
   if (!list.length) return '<div class="empty">Nobody right now.</div>';
