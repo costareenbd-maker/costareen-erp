@@ -570,6 +570,7 @@ svg { display:block; width:100%; overflow:visible; }
       <button type="button" data-view="weborders" aria-selected="false"><span class="ic"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15 15 0 0 1 0 20M12 2a15 15 0 0 0 0 20"/></svg></span>Web orders<span class="count" id="cWeb"></span></button>
       <button type="button" data-view="quotes" aria-selected="false"><span class="ic"><svg viewBox="0 0 24 24"><path d="M14 3v4a1 1 0 0 0 1 1h4"/><path d="M17 21H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2z"/><path d="M9 13h6M9 17h6"/></svg></span>Quotations</button>
       <button type="button" data-view="repairs" aria-selected="false"><span class="ic"><svg viewBox="0 0 24 24"><path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 0 0 5.4-5.4l-2.7 2.7-2.1-2.1z"/></svg></span>Repairs</button>
+      <button type="button" data-view="printjobs" aria-selected="false"><span class="ic"><svg viewBox="0 0 24 24"><path d="M6 9V3h12v6"/><rect x="3" y="9" width="18" height="8" rx="2"/><path d="M7 17v4h10v-4"/></svg></span>Print jobs</button>
       <button type="button" data-view="customers" aria-selected="false"><span class="ic"><svg viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.9M16 3.1a4 4 0 0 1 0 7.8"/></svg></span>Customers</button>
       <button type="button" data-view="campaigns" aria-selected="false"><span class="ic"><svg viewBox="0 0 24 24"><path d="M3 11v2a1 1 0 0 0 1 1h2l5 4V6L6 10H4a1 1 0 0 0-1 1z"/><path d="M15 9a3 3 0 0 1 0 6M18 6a7 7 0 0 1 0 12"/></svg></span>Campaigns</button>
       <div class="navgrp">Goods</div>
@@ -8420,7 +8421,7 @@ function srv(name, args, ok, bad) {
 
 var SRV_ACTIVE = 0, SRV_WRITING = false, SRV_TIMED = {};
 // the same list the server uses to know a call changes nothing (ERP_READS)
-var SRV_READS = /^(erpWarrantyRules|erpWarrantyCard|erpMyLink|erpPlatformRegister|erpPlatformDoctor|erpJoint|erpJointCatalog|erpJointCard|erpInvoiceDesign|erpInvoicePreview|erpMarket|erpMarketMine|erpMarketRequests|erpMarketHints|erpMarketNames|erpWanted|erpBrand|erpComplianceLog|erpProviderKey|erpNews|erpAccessKeys|erpAccessWarning|erpAdmin|erpAiKeys|erpAlertRules|erpAlerts|erpArena|erpBackupStatus|erpBg|erpBnWords|erpBookedParcels|erpBrandLogo|erpBundle|erpBusinessLinks|erpBusinesses|erpBusinessesDeleted|erpCampaignAudience|erpCampaignGet|erpCampaignList|erpCapital|erpCashBook|erpCatalog|erpConnStatus|erpConnections|erpCostBook|erpCourier|erpCourierKeyStatus|erpCurrencies|erpCustomerAccount|erpCustomerCredit|erpCustomerList|erpCustomerPage|erpCustomerStatement|erpCustomers|erpDashboardData|erpDaySales|erpDeliveryOptions|erpDevices|erpDiscontinued|erpDues|erpEvoQr|erpEvoStatus|erpExpenseExport|erpExpenseReceiptUrl|erpExpenses|erpFamilies|erpFighters|erpFormOptions|erpGame|erpGetTheme|erpGoogle|erpHello|erpInstalls|erpInvoice|erpInvoicePdf|erpJob|erpJobs|erpListView|erpLookupCustomer|erpLookupUsage|erpMe|erpMoney|erpNoteFileUrl|erpNotes|erpOwnerChange|erpOwnerChanges|erpParcelLabels|erpParcelPreview|erpPartnerStock|erpPartnership|erpPayReasons|erpPeople|erpPlatform|erpPlatformErrors|erpPnl|erpPnlMonth|erpPoList|erpPoolCatalog|erpProduct|erpProductListShare|erpProductPage|erpProductPhotoUrl|erpProductThumbs|erpProfile|erpQuoteAsset|erpQuoteBoot|erpQuoteGet|erpQuoteList|erpRecentInvoices|erpRecovery|erpReorderPlan|erpRestorePreview|erpReturnPreview|erpRisks|erpSales|erpSearch|erpSecurity|erpSelfTest|erpSerialLookup|erpSerialsFor|erpSessions|erpSetTheme|erpSettingsFull|erpSettingsLists|erpSfPayoutLines|erpSfPayouts|erpShareFile|erpSharedStock|erpSheet|erpStatementPdf|erpStockHistory|erpSupplierPage|erpSuppliers|erpToday|erpUsers|erpWaProductPdf|erpWebMatches|erpWebOrderInvoices|erpWebOrders|erpWebsiteTest)$/;
+var SRV_READS = /^(erpWarrantyRules|erpWarrantyCard|erpMyLink|erpPlatformRegister|erpPlatformDoctor|erpPrintKit|erpPrintJobs|erpPrintJob|erpPrintCost|erpSpools|erpPrintRequests|erpJoint|erpJointCatalog|erpJointCard|erpInvoiceDesign|erpInvoicePreview|erpMarket|erpMarketMine|erpMarketRequests|erpMarketHints|erpMarketNames|erpWanted|erpBrand|erpComplianceLog|erpProviderKey|erpNews|erpAccessKeys|erpAccessWarning|erpAdmin|erpAiKeys|erpAlertRules|erpAlerts|erpArena|erpBackupStatus|erpBg|erpBnWords|erpBookedParcels|erpBrandLogo|erpBundle|erpBusinessLinks|erpBusinesses|erpBusinessesDeleted|erpCampaignAudience|erpCampaignGet|erpCampaignList|erpCapital|erpCashBook|erpCatalog|erpConnStatus|erpConnections|erpCostBook|erpCourier|erpCourierKeyStatus|erpCurrencies|erpCustomerAccount|erpCustomerCredit|erpCustomerList|erpCustomerPage|erpCustomerStatement|erpCustomers|erpDashboardData|erpDaySales|erpDeliveryOptions|erpDevices|erpDiscontinued|erpDues|erpEvoQr|erpEvoStatus|erpExpenseExport|erpExpenseReceiptUrl|erpExpenses|erpFamilies|erpFighters|erpFormOptions|erpGame|erpGetTheme|erpGoogle|erpHello|erpInstalls|erpInvoice|erpInvoicePdf|erpJob|erpJobs|erpListView|erpLookupCustomer|erpLookupUsage|erpMe|erpMoney|erpNoteFileUrl|erpNotes|erpOwnerChange|erpOwnerChanges|erpParcelLabels|erpParcelPreview|erpPartnerStock|erpPartnership|erpPayReasons|erpPeople|erpPlatform|erpPlatformErrors|erpPnl|erpPnlMonth|erpPoList|erpPoolCatalog|erpProduct|erpProductListShare|erpProductPage|erpProductPhotoUrl|erpProductThumbs|erpProfile|erpQuoteAsset|erpQuoteBoot|erpQuoteGet|erpQuoteList|erpRecentInvoices|erpRecovery|erpReorderPlan|erpRestorePreview|erpReturnPreview|erpRisks|erpSales|erpSearch|erpSecurity|erpSelfTest|erpSerialLookup|erpSerialsFor|erpSessions|erpSetTheme|erpSettingsFull|erpSettingsLists|erpSfPayoutLines|erpSfPayouts|erpShareFile|erpSharedStock|erpSheet|erpStatementPdf|erpStockHistory|erpSupplierPage|erpSuppliers|erpToday|erpUsers|erpWaProductPdf|erpWebMatches|erpWebOrderInvoices|erpWebOrders|erpWebsiteTest)$/;
 function srvPump() {
   if (!SRV_Q.length) return;
   var isRead = SRV_READS.test(SRV_Q[0].name);
@@ -9726,6 +9727,7 @@ function repaint() {
         : VIEW === 'cash' ? viewCash()
         : VIEW === 'suppliers' ? viewSuppliers()
         : VIEW === 'repairs' ? viewRepairs()
+        : VIEW === 'printjobs' ? viewPrintJobs()
         : VIEW === 'platform' ? viewPlatform()
         : VIEW === 'sales' ? viewSales()
         : VIEW === 'quotes' ? viewQuotes()
@@ -9890,6 +9892,7 @@ function go(view, param) {
   if (view === 'suppliers') { if (SUPP.name) loadSupplier(); else loadSuppliers(); }
   if (view === 'repairs') { if (JOBP.no) loadJob(); else loadJobs(); }
   if (view === 'platform') loadPlatform();
+  if (view === 'printjobs') pkLoad();
   if (view === 'capital') { CAP_ERR = null; loadCapital(); if (CAP_TAB === 'partner') { PART_ERR = null; loadPartner(); } }
   if (view === 'settings' && SET_TAB === 'security' && !SEC) loadSecurity();
   if (view === 'sales' && INVP.no && !INVP.data) loadInvoicePage();
@@ -12269,7 +12272,7 @@ input.i:focus, select.i:focus, textarea.i:focus { border-color:var(--accent-2); 
 var APPS = [
   { id: 'dashboards', name: 'Dashboard', color: '#7c6bb1', views: ['dash'],
     icon: '<path d="M4 20V10M10 20V4M16 20v-8M22 20H2"/>' },
-  { id: 'sales', name: 'Sales', color: '#e39a2d', views: ['invoice', 'sales', 'weborders', 'quotes', 'repairs'],
+  { id: 'sales', name: 'Sales', color: '#e39a2d', views: ['invoice', 'sales', 'weborders', 'quotes', 'repairs', 'printjobs'],
     icon: '<path d="M3 17l5-5 4 4 8-9"/><path d="M15 7h5v5"/>' },
   { id: 'contacts', name: 'Contacts', color: '#2a9d8f', views: ['customers', 'campaigns'],
     icon: '<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-7 8-7s8 3 8 7"/>' },
@@ -12280,7 +12283,7 @@ var APPS = [
   { id: 'settings', name: 'Settings', color: '#5f6b7a', views: ['settings', 'tools', 'platform'],
     icon: '<circle cx="12" cy="12" r="3.2"/><path d="M12 2.500v3M12 18.500v3M2.500 12h3M18.500 12h3M5.300 5.300l2.100 2.100M16.600 16.600l2.100 2.100M5.300 18.700l2.100-2.100M16.600 7.400l2.100-2.100"/>' }
 ];
-var VIEW_NAMES = { invoice: 'New invoice', sales: 'Invoices', weborders: 'Web orders', quotes: 'Quotations', repairs: 'Repairs', customers: 'Customers', campaigns: 'Campaigns',
+var VIEW_NAMES = { invoice: 'New invoice', sales: 'Invoices', weborders: 'Web orders', quotes: 'Quotations', repairs: 'Repairs', printjobs: 'Print jobs', customers: 'Customers', campaigns: 'Campaigns',
                    products: 'Products', stock: 'Stock', costs: 'Product cost', market: 'Market', joint: 'Joint stock', profit: 'Profitability', expenses: 'Expenses', capital: 'Capital', cash: 'Money', suppliers: 'Suppliers',
                    settings: 'Settings', tools: 'Maintenance', platform: 'Platform', dash: 'Dashboard', home: 'Home' };
 var VIEW_COUNT = { invoice: 'cCart', sales: 'cSend', weborders: 'cWeb', costs: 'cCosts', market: 'cMarket' };
@@ -20816,6 +20819,183 @@ document.addEventListener('click', function (ev) {
   if (k === 'approve') { srv('erpPlatformDoctorSettings', [{ id: id, action: 'approve' }], reload('Approved - now on the page.'), fail); return; }
   if (k === 'sremove') { srv('erpPlatformDoctorSettings', [{ id: id, action: 'remove' }], reload('Removed.'), fail); return; }
   if (k === 'tremove') srv('erpPlatformDoctorTipRemove', [{ id: id }], reload('Tip removed.'), fail);
+});
+</script>
+
+<!-- Stage N4 (docs/NETWORK-BLUEPRINT.md section 4): the print-business kit - jobs on a board with their true cost,
+     printers, opened spools (grams per job), the quote calculator, the shop's own quote link and its inbox. -->
+<style>
+.pkboard{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:10px;margin-top:10px}
+.pkcol h3{font-size:13px;color:var(--ink-3,#5d6b66);text-transform:uppercase;letter-spacing:.5px;margin:0 0 6px}
+.pkjob{border:1px solid var(--line);border-radius:10px;padding:10px;margin-bottom:8px;background:var(--plane,#fff)}
+.pkjob b{display:block}.pkjob .sku{display:block}
+.pkjob .acts{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.pkcost{display:grid;grid-template-columns:1fr auto;gap:2px 12px;font-size:13px;margin-top:6px}.pkcost b{font-variant-numeric:tabular-nums;text-align:right}
+.pkbar{height:8px;background:#eef1ee;border-radius:4px;overflow:hidden}.pkbar i{display:block;height:100%;background:var(--good,#0f766e)}
+.pkform{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;margin-top:8px}
+.pkform .w2{grid-column:span 2}
+.pkmini{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-top:6px}.pkmini input{max-width:90px}
+</style>
+<script>
+var PK = null, PK_ERR = '', PK_TAB = 'jobs', PK_FORM = null, PK_COST = null, PK_REQ = null, PK_PRN = null, PK_OPEN = {};
+var PK_T = 0;
+function pkLoad() { srv('erpPrintKit', [], function (r) { PK = r; PK_ERR = ''; if (VIEW === 'printjobs') repaint(); }, function (e) { PK_ERR = (e && e.message) || String(e); if (VIEW === 'printjobs') repaint(); }); }
+function pkMoney(n) { return fmt(Math.round(n)); }
+function viewPrintJobs() {
+  var h = '<section><div class="card"><div class="row" style="justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap"><h2 style="margin:0">Print jobs</h2>' +
+    '<div class="tabs" role="tablist">' + [['jobs', 'Jobs'], ['printers', 'Printers'], ['spools', 'Spools'], ['requests', 'Requests' + (PK && PK.newRequests ? ' (' + fmt(PK.newRequests) + ')' : '')], ['settings', 'Rates']].map(function (t) {
+      return '<button type="button" role="tab" class="tab' + (PK_TAB === t[0] ? ' on' : '') + '" aria-selected="' + (PK_TAB === t[0]) + '" data-pktab="' + t[0] + '">' + t[1] + '</button>'; }).join('') + '</div></div>' +
+    '<div class="sub" data-c5x="1" style="display:block">For a business that prints for customers: every job on a board, the true cost of each (filament by the gram from the opened spool, machine hours, labour, packaging), a calculator for the price, and your own quote link for customers.</div></div></section>';
+  if (PK_ERR) return h + '<section><div class="note err"><div class="ico">\u2715</div><div>' + esc(PK_ERR) + '</div></div></section>';
+  if (!PK) return h + '<div class="loading">Reading the print kit\u2026</div>';
+  return h + (PK_TAB === 'jobs' ? pkJobsHtml() : PK_TAB === 'printers' ? pkPrintersHtml() : PK_TAB === 'spools' ? pkSpoolsHtml() : PK_TAB === 'requests' ? pkRequestsHtml() : pkSettingsHtml());
+}
+function pkSel(id, opts, cur, blank) { return '<select class="i" id="' + id + '">' + (blank ? '<option value="">' + esc(blank) + '</option>' : '') + opts.map(function (o) { return '<option value="' + esc(o[0]) + '"' + (String(o[0]) === String(cur || '') ? ' selected' : '') + '>' + esc(o[1]) + '</option>'; }).join('') + '</select>'; }
+function pkF(id, label, value, attrs) { return '<div><label class="f" for="' + id + '">' + label + '</label><input class="i" id="' + id + '" value="' + esc(value == null ? '' : value) + '"' + (attrs || '') + '></div>'; }
+// ---- Jobs
+function pkJobsHtml() {
+  var f = PK_FORM, h = '<section><div class="card">';
+  if (!f) h += '<div class="row"><button class="btn primary" type="button" data-pk="new">+ New job</button><span class="sku">Open: ' + fmt((PK.counts.queued || 0) + (PK.counts.printing || 0) + (PK.counts.finishing || 0) + (PK.counts.ready || 0)) + ' \u00b7 delivered ' + fmt(PK.counts.delivered || 0) + ' \u00b7 failed ' + fmt(PK.counts.failed || 0) + '</span></div>';
+  else {
+    var printers = PK.printers.filter(function (p) { return p.status === 'active'; }).map(function (p) { return [p.id, p.name + (p.model ? ' \u00b7 ' + p.model : '')]; });
+    var spools = PK.open.map(function (s) { return [s.id, s.name + ' \u00b7 ' + fmt(s.remainingG) + ' g left']; });
+    var fils = PK.filaments.map(function (x) { return [x.sku, x.name + ' (stock ' + fmt(x.stock) + ')']; });
+    h += '<h3 style="margin:0 0 4px">' + (f.jobNo ? 'Job ' + esc(f.jobNo) : 'New job') + '</h3><div class="pkform">' +
+      pkF('pk_title', 'What is printed *', f.title) + pkF('pk_customer', 'Customer', f.customer) + pkF('pk_phone', 'Phone', f.phone, ' inputmode="tel"') +
+      '<div><label class="f" for="pk_printer">Printer</label>' + pkSel('pk_printer', printers, f.printerId, 'any printer') + '</div>' +
+      '<div><label class="f" for="pk_spool">Spool (open)</label>' + pkSel('pk_spool', spools, f.spoolId, 'none - pick a filament') + '</div>' +
+      '<div><label class="f" for="pk_sku">Filament (no spool yet)</label>' + pkSel('pk_sku', fils, f.sku, '\u2014') + '</div>' +
+      pkF('pk_g', 'Planned grams', f.plannedG, ' inputmode="decimal"') + pkF('pk_h', 'Planned hours', f.plannedH, ' inputmode="decimal"') + pkF('pk_lab', 'Labour minutes', f.labourMin, ' inputmode="numeric"') +
+      pkF('pk_extra', 'Extras (inserts, paint, courier)', f.extraCost, ' inputmode="decimal"') + pkF('pk_price', 'Price to the customer', f.price, ' inputmode="decimal"') + pkF('pk_file', 'File name', f.fileName) +
+      '<div class="w2"><label class="f" for="pk_notes">Notes</label><textarea class="i" id="pk_notes" rows="2">' + esc(f.notes || '') + '</textarea></div></div>' +
+      '<div class="pkcost" id="pk_costbox">' + pkCostHtml(PK_COST) + '</div>' +
+      '<div class="row" style="margin-top:10px"><button class="btn primary" type="button" data-pk="save">' + (f.jobNo ? 'Save changes' : 'Add to the board') + '</button><button class="btn" type="button" data-pk="usesuggest">Use the suggested price</button><button class="btn" type="button" data-pk="cancel">Cancel</button></div>';
+  }
+  h += '</div></section>';
+  var cols = [['queued', 'Queued'], ['printing', 'Printing'], ['finishing', 'Finishing'], ['ready', 'Ready']];
+  h += '<section><div class="pkboard">' + cols.map(function (c) {
+    var list = PK.jobs.filter(function (j) { return j.status === c[0]; });
+    return '<div class="pkcol"><h3>' + c[1] + ' (' + list.length + ')</h3>' + (list.length ? list.map(pkJobCard).join('') : '<div class="empty" style="padding:10px">\u2014</div>') + '</div>'; }).join('') + '</div></section>';
+  var past = PK.jobs.filter(function (j) { return !j.open; });
+  if (past.length) {
+    var rev = 0, cost = 0; past.forEach(function (j) { if (j.status === 'delivered') { rev += j.price; cost += j.cost.total; } else if (j.status === 'failed') cost += j.cost.total; });
+    h += '<section><div class="card"><h2>Finished (last 30 days)</h2><div class="sku" style="margin-bottom:6px">Delivered: ' + pkMoney(rev) + ' taken, ' + pkMoney(cost) + ' true cost \u00b7 profit ' + pkMoney(rev - cost) + ' (failed jobs counted in the cost)</div><div class="scroll"><table><thead><tr><th>Job</th><th>What</th><th>Customer</th><th>Printer</th><th class="num">Grams</th><th class="num">Hours</th><th class="num">Cost</th><th class="num">Price</th><th class="num">Profit</th><th>State</th><th></th></tr></thead><tbody>' +
+      past.map(function (j) { return '<tr><td class="nm">' + esc(j.jobNo) + '<br><span class="sku">' + esc(j.delivered || j.done) + '</span></td><td>' + esc(j.title) + '</td><td>' + esc(j.customer) + '</td><td>' + esc(j.printer) + '</td><td class="num">' + fmt(j.actualG + j.failedG) + (j.failedG ? '<br><span class="sku">' + fmt(j.failedG) + ' wasted</span>' : '') + '</td><td class="num">' + j.actualH + '</td><td class="num">' + pkMoney(j.cost.total) + '</td><td class="num">' + pkMoney(j.price) + '</td><td class="num"' + (j.profit < 0 ? ' style="color:var(--critical)"' : '') + '>' + pkMoney(j.profit) + '</td><td>' + esc(j.statusLabel) + '</td><td><button class="btn small" type="button" data-pk="edit" data-job="' + esc(j.jobNo) + '">Edit</button></td></tr>'; }).join('') + '</tbody></table></div></div></section>';
+  }
+  return h;
+}
+function pkCostHtml(c) {
+  if (!c) return '<span class="sku" style="grid-column:1/-1">The cost shows here as you type (filament by the gram, machine time, labour, packaging).</span>';
+  return '<span>Filament ' + (c.materialName ? '(' + esc(c.materialName) + ', ' + c.perG + '/g)' : '') + '</span><b>' + pkMoney(c.material) + '</b><span>Machine time ' + (c.printerName ? '(' + esc(c.printerName) + ', ' + c.hourly + '/h)' : '(no printer picked)') + '</span><b>' + pkMoney(c.machine) + '</b><span>Labour</span><b>' + pkMoney(c.labour) + '</b><span>Packaging</span><b>' + pkMoney(c.pack) + '</b>' + (c.extra ? '<span>Extras</span><b>' + pkMoney(c.extra) + '</b>' : '') +
+    '<span><b>True cost</b></span><b>' + pkMoney(c.total) + '</b><span class="sku">+ failure allowance ' + pkMoney(c.failAllowance) + ', + margin \u2192 <b>suggested price ' + pkMoney(c.suggested) + '</b></span><b></b>';
+}
+function pkJobCard(j) {
+  var acts = '';
+  if (j.status === 'queued') acts = '<button class="btn small primary" type="button" data-pk="st" data-job="' + esc(j.jobNo) + '" data-to="printing">Start</button>';
+  if (j.status === 'printing') acts = '<button class="btn small primary" type="button" data-pk="done" data-job="' + esc(j.jobNo) + '">Print done</button>';
+  if (j.status === 'finishing') acts = '<button class="btn small primary" type="button" data-pk="st" data-job="' + esc(j.jobNo) + '" data-to="ready">Ready</button>';
+  if (j.status === 'ready') acts = '<button class="btn small primary" type="button" data-pk="st" data-job="' + esc(j.jobNo) + '" data-to="delivered">Delivered</button>';
+  acts += '<button class="btn small" type="button" data-pk="edit" data-job="' + esc(j.jobNo) + '">Edit</button>' + (j.status !== 'queued' ? '' : '<button class="btn small" type="button" data-pk="st" data-job="' + esc(j.jobNo) + '" data-to="cancelled">Cancel</button>') +
+    (j.status === 'printing' || j.status === 'finishing' ? '<button class="btn small danger" type="button" data-pk="fail" data-job="' + esc(j.jobNo) + '">Failed</button>' : '');
+  var mini = '';
+  if (PK_OPEN[j.jobNo] === 'done') mini = '<div class="pkmini"><input class="i" id="pkd_g_' + esc(j.jobNo) + '" placeholder="grams" inputmode="decimal" value="' + (j.actualG || j.plannedG) + '"><input class="i" id="pkd_h_' + esc(j.jobNo) + '" placeholder="hours" inputmode="decimal" value="' + (j.actualH || j.plannedH) + '"><input class="i" id="pkd_f_' + esc(j.jobNo) + '" placeholder="wasted g" inputmode="decimal" value="' + (j.failedG || 0) + '"><button class="btn small primary" type="button" data-pk="donego" data-job="' + esc(j.jobNo) + '" data-to="ready">Ready</button><button class="btn small" type="button" data-pk="donego" data-job="' + esc(j.jobNo) + '" data-to="finishing">Needs finishing</button></div><span class="sku">Actual grams and hours; wasted grams of any failed tries. They leave the spool now.</span>';
+  if (PK_OPEN[j.jobNo] === 'fail') mini = '<div class="pkmini"><input class="i" id="pkd_f_' + esc(j.jobNo) + '" placeholder="wasted g" inputmode="decimal" value="' + (j.plannedG || 0) + '"><button class="btn small danger" type="button" data-pk="failgo" data-job="' + esc(j.jobNo) + '">Mark failed</button></div><span class="sku">The wasted grams leave the spool and stay in the true cost.</span>';
+  return '<div class="pkjob"><b>' + esc(j.title) + '</b><span class="sku">' + esc(j.jobNo) + (j.customer ? ' \u00b7 ' + esc(j.customer) : '') + '</span><span class="sku">' + esc([j.printer, j.spool || j.material].filter(Boolean).join(' \u00b7 ')) + '</span>' +
+    '<span class="sku">' + fmt(j.plannedG) + ' g \u00b7 ' + j.plannedH + ' h' + (j.actualG ? ' \u2192 ' + fmt(j.actualG) + ' g \u00b7 ' + j.actualH + ' h' : '') + '</span>' +
+    '<div class="pkcost"><span>Cost</span><b>' + pkMoney(j.cost.total) + '</b><span>Price</span><b>' + pkMoney(j.price) + '</b><span>Profit</span><b' + (j.profit < 0 ? ' style="color:var(--critical)"' : '') + '>' + pkMoney(j.profit) + '</b></div>' + mini + '<div class="acts">' + acts + '</div></div>';
+}
+function pkFormRead() {
+  return { title: el('pk_title').value, customer: el('pk_customer').value, phone: el('pk_phone').value, printerId: el('pk_printer').value, spoolId: el('pk_spool').value, sku: el('pk_sku').value, plannedG: el('pk_g').value, plannedH: el('pk_h').value, labourMin: el('pk_lab').value, extraCost: el('pk_extra').value, price: el('pk_price').value, fileName: el('pk_file').value, notes: el('pk_notes').value };
+}
+function pkCostPreview() {
+  if (!PK_FORM || !el('pk_title')) return;
+  var f = pkFormRead(); PK_FORM = Object.assign(PK_FORM, f);
+  clearTimeout(PK_T);
+  PK_T = setTimeout(function () { srv('erpPrintCost', [{ printerId: f.printerId, spoolId: f.spoolId, sku: f.sku, grams: f.plannedG, hours: f.plannedH, labourMin: f.labourMin, extraCost: f.extraCost }], function (c) { PK_COST = c; var b = el('pk_costbox'); if (b) b.innerHTML = pkCostHtml(c); }, function () {}); }, 350);
+}
+document.addEventListener('input', function (ev) { if (ev.target && /^pk_/.test(ev.target.id || '')) pkCostPreview(); });
+document.addEventListener('change', function (ev) { if (ev.target && /^pk_/.test(ev.target.id || '')) pkCostPreview(); });
+// ---- Printers
+function pkPrintersHtml() {
+  var S = PK.settings, p = PK_PRN;
+  var h = '<section><div class="card"><h2>Printers</h2><div class="sub" data-c5x="1" style="display:block">Each printer\u2019s hour costs its wear (price \u00f7 life hours) + electricity (watts \u00d7 ' + S.kwh + ' taka per kWh) + maintenance. That hour rate goes into every job\u2019s cost.</div>' +
+    (PK.printers.length ? '<div class="scroll"><table><thead><tr><th>Printer</th><th>Model \u00b7 serial</th><th class="num">Cost</th><th class="num">Life h</th><th class="num">Watts</th><th class="num">Maint./h</th><th class="num">Per hour</th><th>State</th><th></th></tr></thead><tbody>' +
+      PK.printers.map(function (x) { var hr = x.wearHr + x.powerW / 1000 * S.kwh + x.maintenanceHr; return '<tr' + (x.status !== 'active' ? ' style="opacity:.6"' : '') + '><td class="nm">' + esc(x.name) + '</td><td>' + esc([x.model, x.serial].filter(Boolean).join(' \u00b7 ')) + '</td><td class="num">' + pkMoney(x.cost) + '</td><td class="num">' + fmt(x.lifeHours) + '</td><td class="num">' + fmt(x.powerW) + '</td><td class="num">' + x.maintenanceHr + '</td><td class="num"><b>' + (Math.round(hr * 100) / 100) + '</b></td><td>' + esc(x.status) + '</td><td>' + (PK.canManage ? '<button class="btn small" type="button" data-pk="prn" data-id="' + esc(x.id) + '">Edit</button>' : '') + '</td></tr>'; }).join('') + '</tbody></table></div>' : '<div class="empty">No printers yet. Add the ones you print with.</div>');
+  if (PK.canManage) {
+    if (!p) h += '<div class="row" style="margin-top:10px"><button class="btn primary" type="button" data-pk="prnnew">+ Add a printer</button></div>';
+    else h += '<h3 style="margin:14px 0 4px">' + (p.id ? 'Change ' + esc(p.name) : 'New printer') + '</h3><div class="pkform">' + pkF('pkp_name', 'Name *', p.name) + pkF('pkp_model', 'Model', p.model) + pkF('pkp_serial', 'Serial', p.serial) + pkF('pkp_bought', 'Bought (yyyy-mm-dd)', p.boughtAt) + pkF('pkp_cost', 'What it cost', p.cost, ' inputmode="decimal"') + pkF('pkp_life', 'Life in printing hours', p.lifeHours || 5000, ' inputmode="numeric"') + pkF('pkp_w', 'Average watts', p.powerW || 150, ' inputmode="numeric"') + pkF('pkp_maint', 'Maintenance per hour', p.maintenanceHr || 0, ' inputmode="decimal"') +
+      '<div><label class="f" for="pkp_status">State</label>' + pkSel('pkp_status', [['active', 'Active'], ['down', 'Down for repair'], ['sold', 'Sold / gone']], p.status || 'active') + '</div><div class="w2"><label class="f" for="pkp_notes">Notes</label><input class="i" id="pkp_notes" value="' + esc(p.notes || '') + '"></div></div>' +
+      '<div class="row" style="margin-top:10px"><button class="btn primary" type="button" data-pk="prnsave">Save printer</button><button class="btn" type="button" data-pk="prncancel">Cancel</button></div>';
+  }
+  return h + '</div></section>';
+}
+// ---- Spools
+function pkSpoolsHtml() {
+  var h = '<section><div class="card"><h2>Opened spools</h2><div class="sub" data-c5x="1" style="display:block">Opening a spool takes one unit off the shelf (a stock movement "Opened for printing"). Jobs draw their grams from it when the print is over; what is left shows here. Correct it when you weigh the spool.</div>' +
+    (PK.open.length ? '<div class="scroll"><table><thead><tr><th>Spool</th><th>Opened</th><th class="num">Left</th><th style="min-width:120px"></th><th class="num">Cost/g</th><th></th></tr></thead><tbody>' + PK.open.map(function (s) {
+      var pct = s.netG ? Math.max(0, Math.min(100, Math.round(s.remainingG / s.netG * 100))) : 0;
+      return '<tr><td class="nm">' + esc(s.name) + '<br><span class="sku">' + esc(s.sku) + (s.note ? ' \u00b7 ' + esc(s.note) : '') + '</span></td><td><span class="sku">' + esc(s.opened) + '</span></td><td class="num">' + fmt(s.remainingG) + ' / ' + fmt(s.netG) + ' g</td><td><div class="pkbar"><i style="width:' + pct + '%"></i></div></td><td class="num">' + (Math.round(s.costPerG * 100) / 100) + '</td>' +
+        '<td style="white-space:nowrap"><div class="pkmini"><input class="i" id="pks_' + esc(s.id) + '" inputmode="decimal" placeholder="g left"><button class="btn small" type="button" data-pk="spset" data-id="' + esc(s.id) + '">Set</button><button class="btn small" type="button" data-pk="spfin" data-id="' + esc(s.id) + '">Finished</button></div></td></tr>'; }).join('') + '</tbody></table></div>' : '<div class="empty">No open spool. Open one below when you start printing from it.</div>') +
+    '<h3 style="margin:14px 0 4px">Open a spool</h3><div class="pkform"><div class="w2"><label class="f" for="pko_sku">Filament on the shelf</label>' + pkSel('pko_sku', PK.filaments.map(function (x) { return [x.sku, x.name + ' (stock ' + fmt(x.stock) + ', cost ' + pkMoney(x.cost) + ')']; }), '', 'pick\u2026') + '</div>' + pkF('pko_g', 'Grams in a full spool', 1000, ' inputmode="numeric"') + pkF('pko_note', 'Note (which printer, who)', '') + '</div>' +
+    '<div class="row" style="margin-top:10px"><button class="btn primary" type="button" data-pk="spopen">Open the spool</button></div>' +
+    (PK.finished.length ? '<h3 style="margin:14px 0 4px">Finished spools</h3><div class="sku">' + PK.finished.slice(0, 20).map(function (s) { return esc(s.name) + ' (' + esc(s.finished) + (s.note ? ', ' + esc(s.note) : '') + ')'; }).join(' \u00b7 ') + '</div>' : '');
+  return h + '</div></section>';
+}
+// ---- Requests
+function pkRequestsHtml() {
+  var S = PK.settings;
+  var h = '<section><div class="card"><h2>Your quote link</h2><div class="sub" data-c5x="1" style="display:block">Put it on your Facebook page, your WhatsApp status, your business card. A customer writes what he wants (material, colour, how many, a link to the file); it lands below; you quote a price; he accepts on his link; "Make a job" puts it on the board.</div>' +
+    (PK.quoteUrl ? '<div class="row" style="gap:8px;flex-wrap:wrap;align-items:center"><code style="font-size:12px;word-break:break-all">' + esc(PK.quoteUrl) + '</code><button class="btn small" type="button" data-copy="' + esc(PK.quoteUrl) + '">Copy</button><a class="btn small" href="https://wa.me/?text=' + encodeURIComponent('Want something 3D printed? Ask for a price here: ' + PK.quoteUrl) + '" target="_blank" rel="noopener">Share on WhatsApp</a><a class="btn small" href="' + esc(PK.quoteUrl) + '" target="_blank" rel="noopener">Open</a></div>' : '<div class="note"><div class="ico">i</div><div>The quote link works on ERPs run by the provider.</div></div>') +
+    (PK.canManage ? '<div class="row" style="margin-top:8px;align-items:center;gap:10px;flex-wrap:wrap"><label class="chk"><input type="checkbox" id="pkq_on"' + (S.quoteOn ? ' checked' : '') + '> Taking requests (off = the page says you are not taking requests)</label></div><label class="f" for="pkq_text">What the page says at the top (materials, turnaround, minimum order)</label><input class="i" id="pkq_text" value="' + esc(S.quoteText) + '" maxlength="400"><div class="row" style="margin-top:8px"><button class="btn primary small" type="button" data-pk="qsave">Save</button></div>' : '<div class="sku" style="margin-top:6px">' + (S.quoteOn ? 'Taking requests.' : 'Not taking requests (a manager switches it on under Rates).') + '</div>') + '</div></section>';
+  if (!PK_REQ) { pkReqLoad(); return h + '<div class="loading">Reading the requests\u2026</div>'; }
+  var list = PK_REQ.requests;
+  var printers = PK.printers.filter(function (p) { return p.status === 'active'; }).map(function (p) { return [p.id, p.name]; });
+  h += '<section><div class="card"><h2>Requests</h2>' + (list.length ? '<div class="scroll"><table><thead><tr><th>Request</th><th>Customer</th><th>Wants</th><th>State</th><th></th></tr></thead><tbody>' + list.map(function (r) {
+    var st = r.status === 'new' ? '<span class="pill">new</span>' : r.status === 'quoted' ? '<span class="pill">quoted ' + pkMoney(r.price) + '</span>' : r.status === 'accepted' ? '<span class="pill" style="background:#e6f4f1;color:#0f766e">accepted ' + pkMoney(r.price) + '</span>' : r.status === 'job' ? '<span class="pill">job ' + esc(r.jobNo) + '</span>' : '<span class="pill out">' + esc(r.status) + '</span>';
+    var act = '';
+    if (r.status === 'new' || r.status === 'quoted') act = '<div class="pkmini"><input class="i" id="pkr_p_' + esc(r.id) + '" placeholder="price" inputmode="decimal" value="' + (r.price || '') + '"><input class="i" id="pkr_n_' + esc(r.id) + '" placeholder="note to the customer" style="max-width:220px" value="' + esc(r.quoteNote) + '"><button class="btn small primary" type="button" data-pk="rquote" data-id="' + esc(r.id) + '">Quote</button><button class="btn small" type="button" data-pk="rdecline" data-id="' + esc(r.id) + '">Decline</button></div>';
+    if (r.status === 'accepted' || r.status === 'quoted') act += '<div class="pkmini">' + pkSel('pkr_prn_' + r.id, printers, '', 'printer') + '<input class="i" id="pkr_g_' + esc(r.id) + '" placeholder="g" inputmode="decimal"><input class="i" id="pkr_h_' + esc(r.id) + '" placeholder="h" inputmode="decimal"><button class="btn small" type="button" data-pk="rjob" data-id="' + esc(r.id) + '">Make a job</button></div>';
+    return '<tr><td class="nm">' + esc(r.reqNo) + '<br><span class="sku">' + esc(r.sent) + '</span></td><td>' + esc(r.name) + '<br><span class="sku">' + esc(r.phone) + (r.email ? ' \u00b7 ' + esc(r.email) : '') + '</span></td><td>' + esc([r.material, r.colour].filter(Boolean).join(' ')) + ' \u00d7 ' + fmt(r.qty) + (r.notes ? '<br><span class="sku">' + esc(r.notes) + '</span>' : '') + (r.link ? '<br><a href="' + esc(r.link) + '" target="_blank" rel="noopener">file link</a>' : '') + '</td><td>' + st + (r.quoteNote && r.status !== 'new' ? '<br><span class="sku">' + esc(r.quoteNote) + '</span>' : '') + '</td><td>' + act + '</td></tr>'; }).join('') + '</tbody></table></div>' : '<div class="empty">No requests yet. Share the link.</div>') + '</div></section>';
+  return h;
+}
+function pkReqLoad() { srv('erpPrintRequests', [], function (r) { PK_REQ = r; if (VIEW === 'printjobs') repaint(); }, function (e) { PK_REQ = { requests: [] }; toast(esc((e && e.message) || e), true); }); }
+// ---- Rates
+function pkSettingsHtml() {
+  var S = PK.settings, ro = PK.canManage ? '' : ' disabled';
+  return '<section><div class="card"><h2>Rates for the cost</h2><div class="sub" data-c5x="1" style="display:block">Used by every job and by the calculator. The true cost is what a job really took; the suggested price adds a failure allowance and your margin.</div><div class="pkform">' +
+    pkF('pkr_kwh', 'Electricity, taka per kWh', S.kwh, ' inputmode="decimal"' + ro) + pkF('pkr_lab', 'Labour, taka per hour', S.labourHr, ' inputmode="decimal"' + ro) + pkF('pkr_fail', 'Failure allowance, % of filament + machine', S.failPct, ' inputmode="decimal"' + ro) + pkF('pkr_margin', 'Margin, % on top of cost', S.marginPct, ' inputmode="decimal"' + ro) + pkF('pkr_pack', 'Packaging per job, taka', S.pack, ' inputmode="decimal"' + ro) + '</div>' +
+    (PK.canManage ? '<div class="row" style="margin-top:10px"><button class="btn primary" type="button" data-pk="rates">Save rates</button></div>' : '<div class="sku" style="margin-top:6px">A manager or the owner changes these.</div>') + '</div></section>';
+}
+// ---- clicks
+document.addEventListener('click', function (ev) {
+  var tb = ev.target && ev.target.closest ? ev.target.closest('[data-pktab]') : null;
+  if (tb) { PK_TAB = tb.getAttribute('data-pktab'); repaint(); return; }
+  var b = ev.target && ev.target.closest ? ev.target.closest('[data-pk]') : null; if (!b) return;
+  var k = b.getAttribute('data-pk'), job = b.getAttribute('data-job'), id = b.getAttribute('data-id');
+  var fail = function (e) { toast(esc((e && e.message) || e), true, 9000); }, again = function (msg) { return function () { if (msg) toast(msg); pkLoad(); }; };
+  var jobOf = function (no) { return PK.jobs.filter(function (j) { return j.jobNo === no; })[0]; };
+  if (k === 'new') { PK_FORM = { plannedG: '', plannedH: '', labourMin: 0, extraCost: 0, price: '' }; PK_COST = null; repaint(); return; }
+  if (k === 'edit') { var j = jobOf(job); if (!j) return; PK_FORM = { jobNo: j.jobNo, title: j.title, customer: j.customer, phone: j.phone, printerId: j.printerId || '', spoolId: j.spoolId || '', sku: j.sku, plannedG: j.plannedG, plannedH: j.plannedH, labourMin: j.labourMin, extraCost: j.extraCost, price: j.price, fileName: j.fileName, notes: j.notes }; PK_COST = null; repaint(); window.scrollTo(0, 0); pkCostPreview(); return; }
+  if (k === 'cancel') { PK_FORM = null; repaint(); return; }
+  if (k === 'usesuggest') { if (PK_COST && el('pk_price')) { el('pk_price').value = PK_COST.suggested; PK_FORM.price = PK_COST.suggested; } return; }
+  if (k === 'save') { var f = pkFormRead(); if (PK_FORM.jobNo) f.jobNo = PK_FORM.jobNo; srv('erpPrintJobSave', [f], function () { PK_FORM = null; toast('Job saved.'); pkLoad(); }, fail); return; }
+  if (k === 'st') { srv('erpPrintJobSave', [{ jobNo: job, status: b.getAttribute('data-to') }], again('Job moved.'), fail); return; }
+  if (k === 'done') { PK_OPEN[job] = 'done'; repaint(); return; }
+  if (k === 'fail') { PK_OPEN[job] = 'fail'; repaint(); return; }
+  if (k === 'donego') { srv('erpPrintJobSave', [{ jobNo: job, status: b.getAttribute('data-to'), actualG: el('pkd_g_' + job).value, actualH: el('pkd_h_' + job).value, failedG: el('pkd_f_' + job).value }], function () { delete PK_OPEN[job]; toast('Recorded - the grams left the spool.'); pkLoad(); }, fail); return; }
+  if (k === 'failgo') { srv('erpPrintJobSave', [{ jobNo: job, status: 'failed', failedG: el('pkd_f_' + job).value }], function () { delete PK_OPEN[job]; toast('Marked failed.'); pkLoad(); }, fail); return; }
+  if (k === 'prnnew') { PK_PRN = { lifeHours: 5000, powerW: 150, maintenanceHr: 0, status: 'active' }; repaint(); return; }
+  if (k === 'prn') { PK_PRN = Object.assign({}, PK.printers.filter(function (p) { return p.id === id; })[0]); repaint(); return; }
+  if (k === 'prncancel') { PK_PRN = null; repaint(); return; }
+  if (k === 'prnsave') { srv('erpPrinterSave', [{ id: PK_PRN.id || '', name: el('pkp_name').value, model: el('pkp_model').value, serial: el('pkp_serial').value, boughtAt: el('pkp_bought').value, cost: el('pkp_cost').value, lifeHours: el('pkp_life').value, powerW: el('pkp_w').value, maintenanceHr: el('pkp_maint').value, status: el('pkp_status').value, notes: el('pkp_notes').value }], function () { PK_PRN = null; toast('Printer saved.'); pkLoad(); }, fail); return; }
+  if (k === 'spopen') { srv('erpSpoolOpen', [{ sku: el('pko_sku').value, netG: el('pko_g').value, note: el('pko_note').value }], again('Spool opened - one unit left the shelf.'), fail); return; }
+  if (k === 'spset') { srv('erpSpoolSet', [{ id: id, remainingG: el('pks_' + id).value }], again('Spool corrected.'), fail); return; }
+  if (k === 'spfin') { srv('erpSpoolSet', [{ id: id, finished: true }], again('Spool finished.'), fail); return; }
+  if (k === 'rates') { srv('erpPrintSettingsSave', [{ kwh: el('pkr_kwh').value, labourHr: el('pkr_lab').value, failPct: el('pkr_fail').value, marginPct: el('pkr_margin').value, pack: el('pkr_pack').value }], again('Rates saved.'), fail); return; }
+  if (k === 'qsave') { srv('erpPrintSettingsSave', [{ quoteOn: el('pkq_on').checked, quoteText: el('pkq_text').value }], again('Saved.'), fail); return; }
+  if (k === 'rquote') { srv('erpPrintRequestAnswer', [{ id: id, price: el('pkr_p_' + id).value, note: el('pkr_n_' + id).value }], function () { toast('Quoted - the customer sees it on his link.'); PK_REQ = null; pkLoad(); }, fail); return; }
+  if (k === 'rdecline') { srv('erpPrintRequestAnswer', [{ id: id, decline: true, note: el('pkr_n_' + id).value }], function () { toast('Declined.'); PK_REQ = null; pkLoad(); }, fail); return; }
+  if (k === 'rjob') { srv('erpPrintRequestJob', [{ id: id, printerId: (el('pkr_prn_' + id) || {}).value || '', plannedG: (el('pkr_g_' + id) || {}).value, plannedH: (el('pkr_h_' + id) || {}).value }], function (r) { toast('Job ' + r.job.jobNo + ' is on the board.'); PK_REQ = null; PK_TAB = 'jobs'; pkLoad(); }, fail); }
 });
 </script>
 </body>
