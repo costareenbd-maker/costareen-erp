@@ -26,6 +26,19 @@ check('set-up: 10 in the pool', r.ok && r.result.stock[0].stock === 10, r);
 await owner('erpJointBook', [{ pool: POOL, kind: 'capital_in', partner: A, amount: 14000 }]);
 await other('erpJointBook', [{ pool: POOL, kind: 'capital_in', partner: B3, amount: 14000 }]);
 
+// ---- privacy: the partner sees the joint stock, never Costareen's own shelf; he cannot bring in a third company
+check('nobody shows their own stock counts by default', (await sql`select count(*)::int as n from pool_partners where share_stock`)[0].n === 0);
+r = await other('erpPartnerStock', [{ partner: A }]);
+check('the partner cannot read Costareen own stock counts', !r.ok || r.result.products.length === 0, r);
+r = await other('erpJointSettings', [{ pool: POOL, invite: true }]);
+check('a joined partner cannot invite a third company', !r.ok && /started this joint stock/.test(r.error), r);
+r = await other('erpJoint', [{ pool: POOL }]);
+check('...and does not see invite codes', r.ok && r.result.book.invites.length === 0 && r.result.book.canInvite === false, r.ok && r.result.book.invites);
+r = await owner('erpJointSettings', [{ pool: POOL, invite: true }]);
+check('the starter can', r.ok && r.result.book.canInvite === true && r.result.book.invites.length >= 1, r.ok && r.result.book.invites);
+r = await other('erpJointStart', [{ action: 'company', business: 'Spam Co', ownerName: 'X' }]);
+check('a partner cannot make companies on the provider server', !r.ok && /provider/.test(r.error), r);
+
 r = await sales('erpJointCatalog', []);
 const JS = r.result.products[0].sku;
 check('the joint code carries the pool', /^PM-PLA-BLK~J[0-9a-f]{4}$/.test(JS), JS);

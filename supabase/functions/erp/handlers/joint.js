@@ -323,7 +323,8 @@ export async function erpJointStart(ctx, payload) {
     return { ok: true, joined: { id: r.id, name: r.name } };
   }
   if (action === 'company') {
-    if (isRemote(ctx)) throw new Error('Not available here.');
+    // making a company on the provider's server is the provider's job (Platform), never a partner's
+    if (isRemote(ctx) || !(await isPlatformAdmin(ctx.sql, ctx.s.userId))) throw new Error('Only the provider of this ERP makes new companies.');
     const names = new Set((await ctx.sql`select lower(name) as n from businesses`).map((r) => r.n));
     if (names.has(str(payload.business).toLowerCase())) throw new Error('A company called "' + str(payload.business) + '" already exists.');
     const r = await erpPartnerCompany(ctx, { business: payload.business, ownerName: payload.ownerName, email: payload.email });

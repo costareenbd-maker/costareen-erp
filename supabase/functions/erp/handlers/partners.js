@@ -82,7 +82,11 @@ export async function erpPartnership(ctx, payload) {
                voided: l.voided_at ? 'struck out ' + day(l.voided_at) + ' by ' + (str(l.voided_by) || '?') + ': ' + str(l.void_reason) : '',
                locked: !!(lockRow && lockRow.d && d < lockRow.d) };
     });
-    const invites = owner ? (await ctx.tx`
+    // only the partner who started the pool lets anyone else in: a joined partner cannot bring a third company into your book
+    const meNow = ctx.jointMe || (await ctx.tx`select my_partner_in(${ctx.biz}) as p`)[0].p;
+    const starter = await poolStarter(ctx);
+    const canInvite = owner && !!meNow && meNow === starter;
+    const invites = canInvite ? (await ctx.tx`
       select code, expires_at from pool_invites
       where pool_id = ${ctx.biz} and used_at is null and expires_at > now() order by expires_at desc`)
       .map((i) => ({ code: i.code, until: day(i.expires_at) })) : [];
@@ -90,7 +94,7 @@ export async function erpPartnership(ctx, payload) {
     const me = ctx.jointMe || (await ctx.tx`select my_partner_in(${ctx.biz}) as p`)[0].p;
 
     return { isPool: true, name: str(b.name), month, label: monthLabel(month), isCurrent: month === nowMonth,
-             canEdit: owner, me: me || '', partners, report, ledger, closedMonths: closed, invites,
+             canEdit: owner, me: me || '', partners, report, ledger, closedMonths: closed, invites, canInvite,
              today: formatDate(ctx.now, 'yyyy-MM-dd'), currency: 'BDT' };
   }
 
@@ -151,8 +155,15 @@ export async function erpPoolCreate(ctx, payload) {
 }
 
 /** A fresh invite code for the other partner (good for 7 days, used once). */
+/** The partner who started the pool (the first to be in it). */
+async function poolStarter(ctx) {
+  const r = (await ctx.tx`select partner_business_id from pool_partners where pool_id = ${ctx.biz} order by joined_at, partner_business_id limit 1`)[0];
+  return r ? r.partner_business_id : null;
+}
 export async function erpPoolInvite(ctx) {
   await needPool(ctx);
+  const me = ctx.jointMe || (await ctx.tx`select my_partner_in(${ctx.biz}) as p`)[0].p;
+  if (!me || me !== await poolStarter(ctx)) throw new Error('Only the partner who started this joint stock can invite another company into it.');
   await ctx.tx`select create_pool_invite(${ctx.biz})`;
   return erpPartnership(ctx, {});
 }
