@@ -15,6 +15,9 @@
 
 import { num, formatDate } from '../lib/time.js';
 import { getConfig, setConfig } from '../lib/ext.js';
+import { platformAdmin } from './platform.js';
+import { sealJSON, openJSON } from '../lib/bridge.js';
+import { formatDate as fmtDate } from '../lib/time.js';
 
 const str = (v) => String(v == null ? '' : v).trim();
 const norm = (v) => str(v).toLowerCase().replace(/[™®]/g, '').replace(/[^\p{L}\p{N}+.]+/gu, ' ').replace(/\s+/g, ' ').trim();
@@ -224,10 +227,68 @@ const AI_PROMPT = 'This is a photo or scan of a supplier document for a 3D-print
   '"qty": the quantity as a number, "price": the unit price as a number or 0, "currency": "USD"/"RMB"/"BDT"/"" }. Skip headings, totals and addresses. ' +
   'If a column is in Chinese, keep the English words only. Answer with the JSON array and nothing else.';
 
+// ---- the provider's key: set from the Platform screen (sealed in erp_provider_secrets), else the server's environment
+const ctl = (deps, sql) => (deps && deps.control) || sql;
+async function storedSecret(ctx, name) {
+  try {
+    const r = (await ctl(ctx.deps, ctx.sql)`select value_enc, updated_at from erp_provider_secrets where key = ${name}`)[0];
+    if (!r) return null;
+    const v = str(r.value_enc);
+    let value = '';
+    if (v.startsWith('v1.')) value = str((await openJSON(ctx.deps.bridgeKey, v)).v);
+    else if (v.startsWith('v0.')) value = v.slice(3);
+    return { value, at: r.updated_at };
+  } catch (_) { return null; }
+}
+async function aiKey(ctx) {
+  const st = await storedSecret(ctx, 'GEMINI_KEY');
+  if (st && st.value) return { key: st.value, source: 'stored', at: st.at };
+  const env = str(ctx.deps && ctx.deps.geminiKey);
+  return { key: env, source: env ? 'server' : 'none', at: null };
+}
+async function needAdmin(ctx) { if (!(await platformAdmin(ctx))) throw new Error('Only the provider sets the AI reader.'); }
+
+/** Platform screen: is the AI reader set up, and from where. The key itself is never shown. */
+export async function erpAiReader(ctx) {
+  await needAdmin(ctx);
+  const k = await aiKey(ctx);
+  return { set: !!k.key, source: k.source, last4: k.key ? k.key.slice(-4) : '', updated: k.at ? fmtDate(new Date(k.at), 'd MMM yyyy, h:mm a') : '', daily: AI_DAILY, models: GEMINI_MODELS };
+}
+/** Platform screen: a new key (used from the next read), or empty to go back to the server's own. */
+export async function erpAiReaderSet(ctx, payload) {
+  await needAdmin(ctx);
+  const key = str(payload && payload.key);
+  const c = ctl(ctx.deps, ctx.sql);
+  if (!key) { await c`delete from erp_provider_secrets where key = 'GEMINI_KEY'`; return erpAiReader(ctx); }
+  if (!/^[A-Za-z0-9_-]{20,120}$/.test(key)) throw new Error('That does not look like a Gemini API key (letters, digits, - and _ only).');
+  const enc = ctx.deps.bridgeKey ? await sealJSON(ctx.deps.bridgeKey, { v: key }) : 'v0.' + key;
+  await c`insert into erp_provider_secrets (key, value_enc, updated_at, updated_by) values ('GEMINI_KEY', ${enc}, now(), ${ctx.s.userId})
+           on conflict (key) do update set value_enc = excluded.value_enc, updated_at = now(), updated_by = excluded.updated_by`;
+  return erpAiReader(ctx);
+}
+/** Platform screen: one tiny request to Google with the key in use, so a wrong key shows up now, not on a photo. */
+export async function erpAiReaderTest(ctx) {
+  await needAdmin(ctx);
+  const k = await aiKey(ctx);
+  if (!k.key) throw new Error('No key is set.');
+  const body = { contents: [{ parts: [{ text: 'Reply with the single word OK.' }] }], generationConfig: { temperature: 0 } };
+  let last = '';
+  for (const model of GEMINI_MODELS) {
+    let res;
+    try { res = await ctx.deps.fetch('https://generativelanguage.googleapis.com/v1beta/models/' + model + ':generateContent?key=' + encodeURIComponent(k.key), { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) }); }
+    catch (e) { last = 'unreachable'; continue; }
+    const txt = await res.text();
+    if (res.ok) return { ok: true, model, source: k.source };
+    last = res.status + ' ' + txt.slice(0, 120);
+    if (res.status === 400 || res.status === 401 || res.status === 403) throw new Error('Google refused the key (' + res.status + '). Check it at aistudio.google.com.');
+  }
+  throw new Error('No model answered: ' + last);
+}
+
 /** A photo (or a scan) read by the provider's AI, then matched like any file. The page sends the OCR text as a hint. */
 export async function erpReceiveRead(ctx, payload) {
   const p = payload || {};
-  const key = str(ctx.deps && ctx.deps.geminiKey);
+  const key = (await aiKey(ctx)).key;
   if (!key) throw new Error('The AI reader is not set up on this server. The photo was read on your device only - correct the lines by hand, or ask the provider to switch the reader on.');
   const m = /^data:(image\/(jpeg|png|webp));base64,([A-Za-z0-9+/=]+)$/.exec(str(p.image));
   if (!m) throw new Error('Send a JPEG, PNG or WebP photo.');
@@ -286,4 +347,4 @@ export async function erpReceiveLearn(ctx, payload) {
   return { ok: true, saved };
 }
 
-export const HANDLERS = { erpReceiveMatch, erpReceiveRead, erpReceiveLearn };
+export const HANDLERS = { erpReceiveMatch, erpReceiveRead, erpReceiveLearn, erpAiReader, erpAiReaderSet, erpAiReaderTest };

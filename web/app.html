@@ -8426,7 +8426,7 @@ function srv(name, args, ok, bad) {
 
 var SRV_ACTIVE = 0, SRV_WRITING = false, SRV_TIMED = {};
 // the same list the server uses to know a call changes nothing (ERP_READS)
-var SRV_READS = /^(erpReceiveMatch|erpApps|erpAppQr|erpFeedback|erpRestockOffers|erpRestockList|erpWarrantyRules|erpWarrantyCard|erpMyLink|erpPlatformRegister|erpPlatformDoctor|erpPlatformCommunity|erpMarketWaiting|erpBoard|erpPlatformDesign|erpResell|erpResellerProgramme|erpLoyalty|erpCustomerPoints|erpRefillDue|erpDeliveryHistory|erpDeliveryHistoryMany|erpPrintKit|erpPrintJobs|erpPrintJob|erpPrintCost|erpSpools|erpPrintRequests|erpJoint|erpJointCatalog|erpJointCard|erpInvoiceDesign|erpInvoicePreview|erpMarket|erpMarketMine|erpMarketRequests|erpMarketHints|erpMarketNames|erpWanted|erpBrand|erpComplianceLog|erpProviderKey|erpNews|erpAccessKeys|erpAccessWarning|erpAdmin|erpAiKeys|erpAlertRules|erpAlerts|erpArena|erpBackupStatus|erpBg|erpBnWords|erpBookedParcels|erpBrandLogo|erpBundle|erpBusinessLinks|erpBusinesses|erpBusinessesDeleted|erpCampaignAudience|erpCampaignGet|erpCampaignList|erpCapital|erpCashBook|erpCatalog|erpConnStatus|erpConnections|erpCostBook|erpCourier|erpCourierKeyStatus|erpCurrencies|erpCustomerAccount|erpCustomerCredit|erpCustomerList|erpCustomerPage|erpCustomerStatement|erpCustomers|erpDashboardData|erpDaySales|erpDeliveryOptions|erpDevices|erpDiscontinued|erpDues|erpEvoQr|erpEvoStatus|erpExpenseExport|erpExpenseReceiptUrl|erpExpenses|erpFamilies|erpFighters|erpFormOptions|erpGame|erpGetTheme|erpGoogle|erpHello|erpInstalls|erpInvoice|erpInvoicePdf|erpJob|erpJobs|erpListView|erpLookupCustomer|erpLookupUsage|erpMe|erpMoney|erpNoteFileUrl|erpNotes|erpOwnerChange|erpOwnerChanges|erpParcelLabels|erpParcelPreview|erpPartnerStock|erpPartnership|erpPayReasons|erpPeople|erpPlatform|erpPlatformErrors|erpPnl|erpPnlMonth|erpPoList|erpPoolCatalog|erpProduct|erpProductListShare|erpProductPage|erpProductPhotoUrl|erpProductThumbs|erpProfile|erpQuoteAsset|erpQuoteBoot|erpQuoteGet|erpQuoteList|erpRecentInvoices|erpRecovery|erpReorderPlan|erpRestorePreview|erpReturnPreview|erpRisks|erpSales|erpSearch|erpSecurity|erpSelfTest|erpSerialLookup|erpSerialsFor|erpSessions|erpSetTheme|erpSettingsFull|erpSettingsLists|erpSfPayoutLines|erpSfPayouts|erpShareFile|erpSharedStock|erpSheet|erpStatementPdf|erpStockHistory|erpSupplierPage|erpSuppliers|erpToday|erpUsers|erpWaProductPdf|erpWebMatches|erpWebOrderInvoices|erpWebOrders|erpWebsiteTest)$/;
+var SRV_READS = /^(erpReceiveMatch|erpAiReader|erpApps|erpAppQr|erpFeedback|erpRestockOffers|erpRestockList|erpWarrantyRules|erpWarrantyCard|erpMyLink|erpPlatformRegister|erpPlatformDoctor|erpPlatformCommunity|erpMarketWaiting|erpBoard|erpPlatformDesign|erpResell|erpResellerProgramme|erpLoyalty|erpCustomerPoints|erpRefillDue|erpDeliveryHistory|erpDeliveryHistoryMany|erpPrintKit|erpPrintJobs|erpPrintJob|erpPrintCost|erpSpools|erpPrintRequests|erpJoint|erpJointCatalog|erpJointCard|erpInvoiceDesign|erpInvoicePreview|erpMarket|erpMarketMine|erpMarketRequests|erpMarketHints|erpMarketNames|erpWanted|erpBrand|erpComplianceLog|erpProviderKey|erpNews|erpAccessKeys|erpAccessWarning|erpAdmin|erpAiKeys|erpAlertRules|erpAlerts|erpArena|erpBackupStatus|erpBg|erpBnWords|erpBookedParcels|erpBrandLogo|erpBundle|erpBusinessLinks|erpBusinesses|erpBusinessesDeleted|erpCampaignAudience|erpCampaignGet|erpCampaignList|erpCapital|erpCashBook|erpCatalog|erpConnStatus|erpConnections|erpCostBook|erpCourier|erpCourierKeyStatus|erpCurrencies|erpCustomerAccount|erpCustomerCredit|erpCustomerList|erpCustomerPage|erpCustomerStatement|erpCustomers|erpDashboardData|erpDaySales|erpDeliveryOptions|erpDevices|erpDiscontinued|erpDues|erpEvoQr|erpEvoStatus|erpExpenseExport|erpExpenseReceiptUrl|erpExpenses|erpFamilies|erpFighters|erpFormOptions|erpGame|erpGetTheme|erpGoogle|erpHello|erpInstalls|erpInvoice|erpInvoicePdf|erpJob|erpJobs|erpListView|erpLookupCustomer|erpLookupUsage|erpMe|erpMoney|erpNoteFileUrl|erpNotes|erpOwnerChange|erpOwnerChanges|erpParcelLabels|erpParcelPreview|erpPartnerStock|erpPartnership|erpPayReasons|erpPeople|erpPlatform|erpPlatformErrors|erpPnl|erpPnlMonth|erpPoList|erpPoolCatalog|erpProduct|erpProductListShare|erpProductPage|erpProductPhotoUrl|erpProductThumbs|erpProfile|erpQuoteAsset|erpQuoteBoot|erpQuoteGet|erpQuoteList|erpRecentInvoices|erpRecovery|erpReorderPlan|erpRestorePreview|erpReturnPreview|erpRisks|erpSales|erpSearch|erpSecurity|erpSelfTest|erpSerialLookup|erpSerialsFor|erpSessions|erpSetTheme|erpSettingsFull|erpSettingsLists|erpSfPayoutLines|erpSfPayouts|erpShareFile|erpSharedStock|erpSheet|erpStatementPdf|erpStockHistory|erpSupplierPage|erpSuppliers|erpToday|erpUsers|erpWaProductPdf|erpWebMatches|erpWebOrderInvoices|erpWebOrders|erpWebsiteTest)$/;
 function srvPump() {
   if (!SRV_Q.length) return;
   var isRead = SRV_READS.test(SRV_Q[0].name);
@@ -22070,6 +22070,50 @@ document.addEventListener('change', function (ev) {
     if (v) { l.sku = v; l.isNew = false; l.how = l.how === 'sku' ? 'sku' : 'words'; l.confidence = 1; var c = (l.candidates || []).filter(function (x) { return x.sku === v; })[0]; if (c) l.name = c.name; }
     else { l.sku = ''; l.isNew = true; l.how = ''; l.confidence = 0; }
     repaint();
+  }
+});
+</script>
+<!-- Platform > AI reader: the provider's Gemini key for photos of supplier documents (handlers/receivefile.js).
+     Set from here, sealed on the provider's database, used from the next read; never shown back. -->
+<script>
+var AIR = null, AIR_ERR = '', AIR_BUSY = '';
+function airLoad() { srv('erpAiReader', [], function (r) { AIR = r; AIR_ERR = ''; if (VIEW === 'platform') repaint(); }, function (e) { AIR_ERR = (e && e.message) || String(e); if (VIEW === 'platform') repaint(); }); }
+function airCardHtml() {
+  var h = '<section><div class="card"><h2>AI reader (photos of supplier documents)</h2><div class="sub" data-c5x="1" style="display:block">When a company photographs a packing list or price list, the page reads it on the device first; <b>Read it better</b> sends the photo to Google\u2019s Gemini with this key. One key for every company; ' + (AIR ? AIR.daily : 40) + ' reads per company per day. Get a free key at aistudio.google.com \u2192 Get API key. The key is sealed on this server and never shown back.</div>';
+  if (AIR_ERR) return h + '<div class="note err"><div class="ico">!</div><div>' + esc(AIR_ERR) + '</div></div></div></section>';
+  if (!AIR) { airLoad(); return h + '<div class="loading">Loading\u2026</div></div></section>'; }
+  h += '<div class="ap-row" style="margin-top:4px">' + (AIR.set ? '<span class="rf-conf hi">Set</span><span>\u2026' + esc(AIR.last4) + ' \u00b7 ' + (AIR.source === 'stored' ? 'set from here' + (AIR.updated ? ' on ' + esc(AIR.updated) : '') : 'the server\u2019s own key') + '</span>' : '<span class="rf-conf no">Not set</span><span>Photos are read on the device only.</span>') +
+       (AIR.set ? '<button class="btn small" type="button" id="air_test"' + (AIR_BUSY ? ' disabled' : '') + '>' + (AIR_BUSY === 'test' ? 'Asking Google\u2026' : 'Test the key') + '</button>' : '') + '</div>' +
+       '<div class="ap-row" style="margin-top:10px"><input class="i" id="air_key" type="password" autocomplete="off" style="flex:1;min-width:240px" placeholder="' + (AIR.set ? 'Paste a new key to replace it' : 'Paste the Gemini API key') + '">' +
+       '<button class="btn small primary" type="button" id="air_save"' + (AIR_BUSY ? ' disabled' : '') + '>' + (AIR_BUSY === 'save' ? 'Saving\u2026' : 'Save') + '</button>' +
+       (AIR.set && AIR.source === 'stored' ? '<button class="btn small" type="button" id="air_clear"' + (AIR_BUSY ? ' disabled' : '') + '>Remove</button>' : '') + '</div>';
+  return h + '</div></section>';
+}
+var viewPlatformAir = viewPlatform;
+viewPlatform = function () {
+  var h = viewPlatformAir.apply(this, arguments);
+  if (!ME || !ME.platform) return h;
+  return h + airCardHtml();
+};
+document.addEventListener('click', function (ev) {
+  if (VIEW !== 'platform') return;
+  var t = ev.target && ev.target.closest ? ev.target.closest('#air_save,#air_test,#air_clear') : null; if (!t) return;
+  var fail = function (e) { AIR_BUSY = ''; repaint(); toast(esc((e && e.message) || e), true, 10000); };
+  if (t.id === 'air_save') {
+    var k = (el('air_key') || {}).value || ''; if (!k.trim()) { toast('Paste the key first.', true); return; }
+    AIR_BUSY = 'save'; repaint();
+    srv('erpAiReaderSet', [{ key: k.trim() }], function (r) { AIR = r; AIR_BUSY = ''; repaint(); toast('Saved. The next photo read uses this key.'); }, fail);
+    return;
+  }
+  if (t.id === 'air_clear') {
+    if (!confirm('Remove the key set from here? The server\u2019s own key is used if it has one; otherwise photos are read on the device only.')) return;
+    AIR_BUSY = 'save'; repaint();
+    srv('erpAiReaderSet', [{ key: '' }], function (r) { AIR = r; AIR_BUSY = ''; repaint(); toast('Removed.'); }, fail);
+    return;
+  }
+  if (t.id === 'air_test') {
+    AIR_BUSY = 'test'; repaint();
+    srv('erpAiReaderTest', [], function (r) { AIR_BUSY = ''; repaint(); toast('Google answered with ' + r.model + '. The key works.'); }, fail);
   }
 });
 </script>

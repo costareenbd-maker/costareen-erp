@@ -1104,3 +1104,13 @@ is retired - names change, so a list). Live on the Sunlu price-list photo: 35 of
 the Refill product, "PLA+ Black" → the spool: `isRefill`, ±0.06), treats transparent/translucent as colours, and when
 every word of a row was a type word ("PLA wood / Wood") takes the last plain word as the colour. `receivefile_test.mjs`
 (37).
+
+## Platform → AI reader key, set from the ERP (tag ai-key-1, 8 Oct 2026)
+
+The owner asked where the Gemini key lives and to be able to change it himself. A card on the Platform screen (provider
+only): status (Set · …last 4 · "set from here on <date>" / "the server's own key" / Not set), a field to paste a new
+key, **Save** (used from the next read), **Remove** (back to the server's key or none), **Test the key** (one tiny
+request to Google, says which model answered or that Google refused the key). Stored in `094_provider_secrets.sql`
+(control-only `erp_provider_secrets`), sealed with ERP_BRIDGE_KEY (`sealJSON`); the key is never shown back. The
+reader (`erpReceiveRead`) uses the stored key first, else the function's `ERP_GEMINI_KEY`. Handlers `erpAiReader`,
+`erpAiReaderSet`, `erpAiReaderTest` in receivefile.js, platform admin only. `receivefile_test.mjs` (46).

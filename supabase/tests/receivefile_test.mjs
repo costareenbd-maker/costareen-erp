@@ -1,6 +1,7 @@
 // Receive stock from a file (handlers/receivefile.js): a Bambu order sheet without brand or SKU, a Polymaker
 // proforma with supplier codes, the text of a packing-list PDF with wrapped names, a photo-table of a Sunlu price
 // list; matching by words, by our SKU, by a remembered alias; new products suggested, never guessed.
+import { randomBytes } from 'node:crypto';
 import { sql, FIX, owner, mgr, sales, check, done, deps, web } from './harness.mjs';
 
 const add = (name, brand, color, sku) => mgr('erpSaveProduct', [{ isNew: true, sku, product_name: name, brand, color, category: 'Filaments', unit: 'Roll', sell_price: 1700 }]);
@@ -97,4 +98,29 @@ for (const [n, b, c, s2] of [['Sunlu Pla+2.0 Refill Black', 'Sunlu', 'Black', 's
 r = await mgr('erpReceiveMatch', [{ rows: [['Type', 'Color', 'Order List', 'Unit Price'], ['PLA+', 'Black', 250, 48], ['PLA+2.0ï¼disklessï¼', 'Black', 50, 48], ['PLA+', 'Transparent', 30, 48], ['PLA wood', 'Wood', 10, 68], ['PLA wood', 'Maple Wood', 10, 68]], supplier: 'Sunlu' }]);
 const V = r.ok ? r.result.lines.map((l) => l.sku) : r;
 check('PLA+ Black -> the spool; PLA+2.0 (diskless) Black -> the refill; Transparent, Wood and Maple Wood each to their own', r.ok && V[0] === 'sp+b002' && V[1] === 'sp+2.0refillb124' && V[2] === 'sp+tp013' && V[3] === 'spww032' && V[4] === 'spwmw033', V);
+
+// 9. the provider sets the key from the ERP: stored (sealed) and used before the server's own; a test call; removal
+r = await mgr('erpAiReader', []);
+check('not the provider: refused', !r.ok, r);
+await sql`insert into platform_admins (user_id, note) values (${FIX.U.owner}, 'test') on conflict do nothing`;
+deps.geminiKey = ''; deps.bridgeKey = randomBytes(32).toString('base64');   // live: ERP_BRIDGE_KEY seals the stored key
+r = await owner('erpAiReader', []);
+check('nothing set anywhere', r.ok && r.result.set === false && r.result.source === 'none', r);
+r = await owner('erpAiReaderSet', [{ key: 'short' }]);
+check('a key that does not look like one is refused', !r.ok, r);
+r = await owner('erpAiReaderSet', [{ key: 'AIzaSy_test_key_1234567890abcdefXYZ' }]);
+check('stored: set, source stored, only the last 4 shown', r.ok && r.result.set && r.result.source === 'stored' && r.result.last4 === 'fXYZ' && r.result.updated, r);
+const row = (await sql`select value_enc from erp_provider_secrets where key = 'GEMINI_KEY'`)[0];
+check('the key is not stored in clear', row && !/AIzaSy_test_key/.test(row.value_enc), row);
+web.on(/generativelanguage\.googleapis\.com/, (url) => (/key=AIzaSy_test_key_1234567890abcdefXYZ/.test(url) ? { status: 200, body: { candidates: [{ content: { parts: [{ text: 'OK' }] } }] } } : { status: 403, body: { error: 'bad key' } }));
+r = await owner('erpAiReaderTest', []);
+check('the test call uses the stored key', r.ok && r.result.ok && r.result.source === 'stored', r);
+r = await owner('erpAiReaderSet', [{ key: '' }]);
+check('removed: back to nothing', r.ok && r.result.set === false, r);
+deps.geminiKey = 'server-env-key-abcdefghijklmnop';
+r = await owner('erpAiReader', []);
+check('the server’s own key shows as source server', r.ok && r.result.set && r.result.source === 'server', r);
+r = await owner('erpAiReaderTest', []);
+check('the server key is refused by the fake Google: a plain sentence', !r.ok && /refused the key/.test(r.error), r);
+deps.geminiKey = '';
 await done();
