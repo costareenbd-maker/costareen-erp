@@ -1180,3 +1180,10 @@ Owner: "why only 95 of my 141?" - the catalogue read the market listing, which c
 product of a sharing company, in or out of stock, and the catalogue reads that feed (Find stock still shows only what
 is on the shelf). And the Platform → Catalogue card is **folded by default**: one line "Catalogue · N items · M
 products linked · all linked / K waiting · Open ▸", remembered per device (`cz_catl_open`).
+
+## Catalogue: unshared products too (tag catalogue-3, 8 Oct 2026)
+
+The feed carried only the products ticked for the market (96). Now every active product of a company that is on the
+market goes into `erp_catalog_products`, shared or not; the listing is unchanged. Live: 141 of 141 Costareen products
+linked, 134 items; the catalogue shows the owner's own duplicates (two "Sunlu PLA+ Red", three Klein Blue/Oak/Silver
+variants) as one item each.

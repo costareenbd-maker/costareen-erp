@@ -98,8 +98,10 @@ export async function marketRefresh(ctx) {
     price: r.price_mode === 'ask' || !(Number(r.sell_price) > 0) ? null : Number(r.sell_price), city: c.city || null,
   }));
   const ctl = ctx.deps.control;
-  // the catalogue's feed: every active product, in or out of stock (the listing only what is on the shelf)
-  const all = rows.map((r) => ({ source: src, business_id: ctx.biz, product_id: r.id, name: str(r.name), category: str(r.category) || null, brand: str(r.brand) || null, color: str(r.color) || null, unit: str(r.unit) || null }));
+  // the catalogue's feed: every active product of a company on the market - shared or not, in or out of stock
+  // (the listing carries only what is shared and on the shelf)
+  const allRows = c.on ? await ctx.tx`select id, name, category, brand, color, unit from products where business_id = ${ctx.biz} and coalesce(status, 'Active') = 'Active'` : [];
+  const all = allRows.map((r) => ({ source: src, business_id: ctx.biz, product_id: r.id, name: str(r.name), category: str(r.category) || null, brand: str(r.brand) || null, color: str(r.color) || null, unit: str(r.unit) || null }));
   await ctl.begin(async (t) => {
     await t`delete from erp_market_listings where source = ${src} and business_id = ${ctx.biz}`;
     if (list.length) await t`insert into erp_market_listings ${t(list, 'source', 'business_id', 'product_id', 'name', 'category', 'brand', 'color', 'color_hex', 'unit', 'band', 'price', 'city')}`;
