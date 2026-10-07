@@ -1222,3 +1222,22 @@ business_config `push_rules`). Tick rows and **Start a campaign with the ticked 
 the name and message pre-filled (product, price, offer price and % off, stock left). `push_test.mjs` (17).
 - Not done: no product photos in the message; offer prices are advice only (nothing changes the sell price); no
   seasonal or website-traffic signals; lists capped at 25 rows each.
+
+## Advertisement tab on Campaigns (tag ads-1, 8 Oct 2026)
+
+Owner: the push card was the wrong shape - he wants advice on what to advertise and how, for Facebook, Marketplace,
+the website, not a WhatsApp send list. New tab **Campaigns > Advertisement** (owner-only through the same "push" app
+flag; the card moved off the Campaigns list): **This week** - a seven-day rhythm (product post, reel, tip, offer post,
+bundle, customer prints, product list) with the product for each day picked from the lists and a **Write it** button;
+**What to advertise** - the four lists (advertise / clear out with an offer / rising / reorder first), each row with
+**Write a post**; a draft box with channel chips (Facebook post, Reel shot list, Offer post, Bundle, Marketplace
+listing, Story, Website banner; stars mark the fit), a plain template written on the device from the product's own
+figures, **Improve with AI** (`erpAdDraft`, Gemini on the provider's key, English / Bangla / Banglish, facts only,
+owner notes sent along; counts against the 300-a-day AI allowance) and **Copy**; **Product list for customers** -
+every in-stock product with price by category, one click to copy (for a pinned post or anyone asking for the full
+list); **Playbook** - eleven points from Bangladesh f-commerce practice and 3D-printing sellers abroad (price in every
+post, one product per post, reels of timelapses, "only N left" with a deadline then stop, Marketplace for the top 10,
+weekly pinned list, bundles over deep discounts, customer prints, seasonal timing, fast inbox replies, help in groups).
+"Send the ticked ones to customers" stays as the secondary button. push_test.mjs now 22.
+- Not done: no photos attached to drafts (copy text, add the product photo yourself); no posting to Facebook from the
+  ERP (would need a Meta app review); no ad-spend or reach figures; rules for the week plan are fixed (one post a day).

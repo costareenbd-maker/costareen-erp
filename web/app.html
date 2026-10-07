@@ -22345,12 +22345,12 @@ function puRow(r, kind) {
   var id = kind + ':' + r.sku;
   return '<label class="pu-row"><input type="checkbox" data-pupick="' + esc(id) + '"' + (PU_PICK[id] ? ' checked' : '') + ' style="margin-top:3px"><div><b>' + esc(r.name) + '</b><br><span class="why">' + esc(r.why) + '</span>' +
          (kind === 'clear' && r.offer ? '<br><span class="pu-off">Offer \u09f3' + fmt(r.offer) + ' instead of \u09f3' + fmt(r.sell) + ' (' + r.offPct + '% off)</span>' : '') + '</div>' +
-         '<div class="n">' + fmt(r.stock) + ' in stock<br><span class="sku">' + fmt(r.sold90) + ' sold / 90 d' + (r.margin !== null ? ' \u00b7 ' + r.margin + '%' : '') + '</span></div></label>';
+         '<div class="n">' + fmt(r.stock) + ' in stock<br><span class="sku">' + fmt(r.sold90) + ' sold / 90 d' + (r.margin !== null ? ' \u00b7 ' + r.margin + '%' : '') + '</span><br><button class="btn small" type="button" data-adpost="' + esc(id) + '" style="margin-top:4px">Write a post</button></div></label>';
 }
 function puCardHtml() {
   if (!puOn()) return '';
   var h = '<section><div class="card"><div class="row" style="justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px"><h2 style="margin:0">What to push next</h2>' +
-          '<span class="row" style="gap:6px"><button class="btn small" type="button" id="pu_rules">Rules</button><button class="btn small primary" type="button" id="pu_go">Start a campaign with the ticked ones</button></span></div>' +
+          '<span class="row" style="gap:6px"><button class="btn small" type="button" id="pu_rules">Rules</button><button class="btn small" type="button" id="pu_go">Send the ticked ones to customers</button></span></div>' +
           '<div class="sub" data-c5x="1" style="display:block">From your own sales and stock, no guesswork: what sells and has stock to spare, what sits unsold with money in it (with an offer that still keeps a margin), what is picking up, and what would sell out if advertised.' + (ME && ME.platform && !(APPS && APPS.apps.some(function (a) { return a.key === 'push' && a.on; })) ? ' <span class="rf-conf mid">Only you see this</span>' : '') + '</div>';
   if (PU_ERR) return h + '<div class="note err"><div class="ico">!</div><div>' + esc(PU_ERR) + '</div></div></div></section>';
   if (!PU) { puLoad(); return h + '<div class="loading">Working it out\u2026</div></div></section>'; }
@@ -22370,14 +22370,19 @@ function puCardHtml() {
 }
 var viewCampaignsPU = viewCampaigns;
 viewCampaigns = function () {
-  var h = viewCampaignsPU.apply(this, arguments);
-  if (!puOn() || (typeof CP !== 'undefined' && CP.tab && CP.tab !== 'list')) return h;
-  var at = h.indexOf('</section>'); // after the tabs/header
-  return at > 0 ? h.slice(0, at + 10) + puCardHtml() + h.slice(at + 10) : h + puCardHtml();
+  if (puOn() && CP.tab === 'ads' && !CP.camp) return cpTabsHtml() + adsHtml();
+  return viewCampaignsPU.apply(this, arguments);
+};
+var cpTabsHtmlPU = cpTabsHtml;
+cpTabsHtml = function () {
+  var h = cpTabsHtmlPU.apply(this, arguments);
+  if (!puOn()) return h;
+  return h.replace('<button class="chip" type="button" data-cptab="contacts">', '<button class="chip' + (CP.tab === 'ads' && !CP.camp ? ' on' : '') + '" type="button" data-cptab="ads">Advertisement</button><button class="chip" type="button" data-cptab="contacts">');
 };
 document.addEventListener('click', function (ev) {
   if (VIEW !== 'campaigns') return;
-  var t = ev.target && ev.target.closest ? ev.target.closest('#pu_rules,#pu_save,#pu_go') : null; if (!t) return;
+  var t = ev.target && ev.target.closest ? ev.target.closest('#pu_rules,#pu_save,#pu_go,[data-adpost],[data-adch],#ad_ai,#ad_copy,#ad_close,#ad_list,#ad_play,[data-adlang]') : null; if (!t) return;
+  if (adsClick(t)) return;
   var fail = function (e) { PU_BUSY = ''; repaint(); toast(esc((e && e.message) || e), true, 9000); };
   if (t.id === 'pu_rules') { PU_RULES = !PU_RULES; repaint(); return; }
   if (t.id === 'pu_save') {
@@ -22393,7 +22398,7 @@ document.addEventListener('click', function (ev) {
       else { lines.push('\u2022 ' + r.name + ' \u2014 \u09f3' + fmt(r.sell) + ', in stock'); name = name || 'This week\u2019s picks'; }
     });
     if (!lines.length) { toast('Tick the products first.', true); return; }
-    CP.name = name + ' ' + (PU.today || ''); CP.msg = 'Hello {name}! ' + name + ' at ' + ((typeof BIZ !== 'undefined' && BIZ && BIZ.name) || 'our shop') + ':\n' + lines.join('\n') + '\nReply to order or ask.';
+    CP.name = name + ' ' + (PU.today || ''); CP.msg = 'Hello {name}! ' + name + ' at ' + ((el('bizName') && el('bizName').textContent.trim()) || 'our shop') + ':\n' + lines.join('\n') + '\nReply to order or ask.';
     CP.tab = 'new'; CP.step = 1; PU_PICK = {}; repaint(); window.scrollTo(0, 0);
     toast('Campaign pre-filled with ' + lines.length + ' product(s). Pick the customers and send.');
   }
@@ -22403,6 +22408,114 @@ document.addEventListener('change', function (ev) {
   var t = ev.target; if (!t || !t.getAttribute || !t.getAttribute('data-pupick')) return;
   PU_PICK[t.getAttribute('data-pupick')] = !!t.checked;
 });
+</script>
+<!-- Advertisement tab on Campaigns: what to advertise, where, ready post text (template, improved by the AI), a week
+     plan, the product list for customers, and a playbook. Owner-only through the same "push" app flag. -->
+<style>
+.ad-week{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;margin-top:10px}
+.ad-day{border:1px solid var(--ring);border-radius:12px;padding:10px 12px;background:var(--surface);font-size:13px}
+.ad-day b{display:block;font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+.ad-day .t{font-weight:600;margin:2px 0}
+.ad-day .p{color:var(--muted)}
+.ad-draft{border:1px solid var(--ring);border-radius:12px;padding:12px;background:var(--surface);margin-top:10px}
+.ad-draft textarea{width:100%;min-height:150px;box-sizing:border-box;font:inherit;font-size:13px;line-height:1.45}
+.ad-play ol{margin:6px 0 0 18px;padding:0}
+.ad-play li{margin:4px 0;font-size:13px}
+</style>
+<script>
+var AD = { draft: null, busy: false, play: false, list: false, lang: 'en' };
+var AD_CH = [['post', 'Facebook post'], ['reel', 'Reel / video'], ['offer', 'Offer post'], ['bundle', 'Bundle'], ['marketplace', 'Marketplace'], ['story', 'Story'], ['website', 'Website banner']];
+var AD_SUGGEST = { adv: ['post', 'reel', 'marketplace'], clear: ['offer', 'story', 'bundle'], rise: ['reel', 'post', 'story'], hold: ['story'] };
+function adRowOf(id) {
+  var kind = id.split(':')[0], sku = id.slice(kind.length + 1);
+  var L = kind === 'clear' ? PU.clear : kind === 'adv' ? PU.advertise : kind === 'rise' ? PU.rising : PU.hold;
+  var r = L.filter(function (x) { return x.sku === sku; })[0]; return r ? { kind: kind, r: r } : null;
+}
+function adShop() { return (el('bizName') && el('bizName').textContent.trim()) || 'our shop'; }
+/** The plain template, written on the device; the AI button rewrites it. */
+function adTemplate(kind, r, ch) {
+  var n = r.name, p = '\u09f3' + fmt(r.sell), best = (PU.advertise[0] && PU.advertise[0].sku !== r.sku ? PU.advertise[0] : PU.advertise[1]) || null;
+  if (ch === 'offer') return n + ' \u2014 clearance offer\n' + 'Now \u09f3' + fmt(r.offer || Math.round(r.sell * 0.85)) + ' (was ' + p + ')\nOnly ' + fmt(r.stock) + ' left. Offer ends this week.\nOrder: inbox us or call. Delivery anywhere in Bangladesh.\n#3dprinting #filament #' + n.split(' ')[0].toLowerCase();
+  if (ch === 'bundle') return 'Bundle deal: ' + n + (best ? ' + ' + best.name : '') + '\nTogether for \u09f3' + fmt(Math.round((r.sell + (best ? best.sell : 0)) * 0.95)) + ' (save 5%)\nIn stock now, ready to ship.\nInbox to order.';
+  if (ch === 'reel') return 'REEL \u2014 ' + n + '\nScene 1: the spool in hand, label to camera (2 s)\nScene 2: printer starting the first layer (4 s)\nScene 3: timelapse of the print (8 s)\nScene 4: finished part, turned in the light (4 s)\nScene 5: price card: ' + p + ', in stock (3 s)\nCaption: ' + n + ' \u2014 ' + p + '. In stock, ships today. Inbox to order.';
+  if (ch === 'marketplace') return n + ' \u2014 ' + p + '\n\n' + n + ', original and sealed.\nPrice ' + p + '. ' + fmt(r.stock) + ' in stock.\nPick-up or delivery anywhere in Bangladesh.\nMessage for more colours and types.';
+  if (ch === 'story') return n + ' \u2014 ' + (r.offer ? 'now \u09f3' + fmt(r.offer) + ', only ' + fmt(r.stock) + ' left' : p + ', in stock today') + '. Swipe up / inbox to order.';
+  if (ch === 'website') return 'Headline: ' + n + (r.offer ? ' \u2014 ' + r.offPct + '% off' : ' \u2014 in stock') + '\nSub-line: ' + (r.offer ? 'Now \u09f3' + fmt(r.offer) + ' while ' + fmt(r.stock) + ' last' : p + ', ships today from ' + adShop()) + '\nButton: Shop now';
+  return n + '\nPrice ' + p + ' \u2014 in stock, ships today.\n' + (kind === 'rise' ? 'Our fastest-moving pick this month.\n' : '') + 'Order: inbox us or call.\n#3dprinting #filament #bangladesh';
+}
+function adOpen(id, ch) {
+  var x = adRowOf(id); if (!x) return;
+  ch = ch || AD_SUGGEST[x.kind][0];
+  AD.draft = { id: id, kind: x.kind, r: x.r, ch: ch, text: adTemplate(x.kind, x.r, ch), ai: '' };
+  repaint(); var d = el('ad_draft'); if (d) d.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+function adDraftHtml() {
+  var d = AD.draft; if (!d) return '';
+  return '<div class="ad-draft" id="ad_draft"><div class="row" style="justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px"><h3 style="margin:0">' + esc(d.r.name) + '</h3><button class="btn small" type="button" id="ad_close">Close</button></div>' +
+    '<div class="chips" style="margin:8px 0 6px">' + AD_CH.map(function (c) { return '<button class="chip' + (d.ch === c[0] ? ' on' : '') + '" type="button" data-adch="' + c[0] + '">' + c[1] + (AD_SUGGEST[d.kind].indexOf(c[0]) >= 0 ? ' \u2605' : '') + '</button>'; }).join('') + '</div>' +
+    '<div class="sub" style="display:block;margin:0 0 6px">\u2605 = fits this product. Edit the text as you like; <b>Improve with AI</b> rewrites it from the same facts' + (d.ai ? ' (' + esc(d.ai) + ')' : '') + '.</div>' +
+    '<textarea class="i" id="ad_text">' + esc(d.text) + '</textarea>' +
+    '<div class="ap-row" style="margin-top:8px;flex-wrap:wrap"><span class="chips" style="margin:0">' + [['en', 'English'], ['bn', '\u09ac\u09be\u0982\u09b2\u09be'], ['mix', 'Banglish']].map(function (l) { return '<button class="chip' + (AD.lang === l[0] ? ' on' : '') + '" type="button" data-adlang="' + l[0] + '">' + l[1] + '</button>'; }).join('') + '</span>' +
+    '<button class="btn small primary" type="button" id="ad_ai"' + (AD.busy ? ' disabled' : '') + '>' + (AD.busy ? 'Writing\u2026' : 'Improve with AI') + '</button><button class="btn small" type="button" id="ad_copy">Copy</button></div></div>';
+}
+var AD_WEEK = [['Mon', 'Product post', 'adv', 0, 'post'], ['Tue', 'Reel / video', 'rise', 0, 'reel'], ['Wed', 'Tip or how-to', null, 0, null], ['Thu', 'Offer post', 'clear', 0, 'offer'], ['Fri', 'Bundle', 'adv', 1, 'bundle'], ['Sat', 'Customer prints', null, 0, null], ['Sun', 'Product list', null, 0, null]];
+function adWeekHtml() {
+  return '<div class="ad-week">' + AD_WEEK.map(function (w) {
+    var L = w[2] === 'adv' ? PU.advertise : w[2] === 'rise' ? PU.rising : w[2] === 'clear' ? PU.clear : null;
+    var r = L ? (L[w[3]] || L[0]) : null, id = r ? w[2] + ':' + r.sku : '';
+    var p = r ? esc(r.name) : w[0] === 'Wed' ? 'A 60-second tip: drying filament, first-layer, nozzle temperature for ' + esc((PU.advertise[0] || {}).name || 'your best seller') : w[0] === 'Sat' ? 'Share a customer\u2019s print and tag them; ask "what did you print this week?"' : 'Post the full product list with prices (button below) and pin it';
+    return '<div class="ad-day"><b>' + w[0] + '</b><div class="t">' + w[1] + '</div><div class="p">' + p + '</div>' + (r ? '<button class="btn small" type="button" data-adpost="' + esc(id) + '" data-adch="' + w[4] + '" style="margin-top:6px">Write it</button>' : '') + '</div>';
+  }).join('') + '</div>';
+}
+function adListText() {
+  var byCat = {}; (PU.all || []).forEach(function (p) { (byCat[p.cat || 'Other'] = byCat[p.cat || 'Other'] || []).push(p); });
+  return adShop() + ' \u2014 product list, ' + (PU.today || '') + '\n\n' + Object.keys(byCat).sort().map(function (c) { return c.toUpperCase() + '\n' + byCat[c].map(function (p) { return '\u2022 ' + p.name + ' \u2014 \u09f3' + fmt(p.sell); }).join('\n'); }).join('\n\n') + '\n\nAll in stock today. Inbox or call to order.';
+}
+var AD_PLAY = [
+  'Put the price in every post. Bangladeshi buyers scroll past "inbox for price".',
+  'One product per post, one photo of the real spool or part, your price, how to order. Short beats clever.',
+  'Reels of a print timelapse are the cheapest reach you have: 15-30 seconds, the spool first, the finished part last, price card at the end.',
+  'Post the clear-out offers with "only N left" and a deadline, then stop. Do not keep repeating a dead product; the list above tells you when it is gone.',
+  'Marketplace listings for the top 10 sellers: free, found by people who never saw your page. Keep titles plain: brand, material, colour, price.',
+  'Pin the full product list once a week; customers share it in their groups and chats.',
+  'Bundle a slow product with a best seller at a small saving, instead of a deep discount on the slow one alone.',
+  'Show customer prints and tag them. Ask "what did you print this week?" - comments feed the next posts.',
+  'Seasonal: Eid, Pohela Boishakh, exam-project season (engineering students) and new-printer season after Chinese sales (11.11, 12.12). Plan the offer post a week before.',
+  'Answer inbox within minutes during the day; a post that gets replies in the first hour is shown to more people.',
+  'Join the big Bangladesh 3D-printing Facebook groups; post help and prints there, not ads, with your page name on the photo.'
+];
+function adsHtml() {
+  var h = '<section><div class="card"><h2 style="margin:0 0 2px">Advertisement</h2><div class="sub" data-c5x="1" style="display:block">What to advertise this week, where, and the words. The lists come from your own sales and stock (rules under the next card). Nothing here is sent anywhere; you copy a post and put it on Facebook, Marketplace or the website yourself.</div>';
+  if (PU_ERR) return h + '<div class="note err"><div class="ico">!</div><div>' + esc(PU_ERR) + '</div></div></div></section>';
+  if (!PU) { puLoad(); return h + '<div class="loading">Working it out\u2026</div></div></section>'; }
+  h += adDraftHtml() + '<h3 style="margin:14px 0 2px">This week</h3><div class="sub" style="display:block">A simple rhythm: one post a day, each from a different list. Click <b>Write it</b> for the words.</div>' + adWeekHtml() + '</div></section>';
+  h += puCardHtml().replace('<h2 style="margin:0">What to push next</h2>', '<h2 style="margin:0">What to advertise</h2>');
+  h += '<section><div class="card"><div class="row" style="justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px"><h2 style="margin:0">Product list for customers</h2><button class="btn small" type="button" id="ad_list">' + (AD.list ? 'Hide' : 'Show and copy') + '</button></div>' +
+       '<div class="sub" style="display:block">Every product in stock with its price, grouped by category - ' + fmt((PU.all || []).length) + ' lines. Paste it as a pinned post or send it to customers who ask for the full list.</div>' +
+       (AD.list ? '<textarea class="i" id="ad_listtext" style="width:100%;min-height:220px;box-sizing:border-box;font:inherit;font-size:13px;margin-top:8px">' + esc(adListText()) + '</textarea>' : '') + '</div></section>';
+  h += '<section><div class="card ad-play"><div class="row" style="justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px"><h2 style="margin:0">Playbook</h2><button class="btn small" type="button" id="ad_play">' + (AD.play ? 'Hide' : 'Show') + '</button></div>' +
+       '<div class="sub" style="display:block">What works for small Facebook-first shops in Bangladesh and for 3D-printing sellers abroad, in one list.</div>' + (AD.play ? '<ol>' + AD_PLAY.map(function (x) { return '<li>' + esc(x) + '</li>'; }).join('') + '</ol>' : '') + '</div></section>';
+  return h;
+}
+function adsClick(t) {
+  if (t.getAttribute('data-adpost')) { adOpen(t.getAttribute('data-adpost'), t.getAttribute('data-adch') || ''); return true; }
+  if (t.id === 'ad_close') { AD.draft = null; repaint(); return true; }
+  if (t.id === 'ad_list') { AD.list = !AD.list; repaint(); if (AD.list) { var ta = el('ad_listtext'); if (ta) { ta.select(); try { document.execCommand('copy'); toast('Product list copied.'); } catch (_) {} } } return true; }
+  if (t.id === 'ad_play') { AD.play = !AD.play; repaint(); return true; }
+  if (!AD.draft) return false;
+  var keep = function () { var ta = el('ad_text'); if (ta) AD.draft.text = ta.value; };
+  if (t.getAttribute('data-adch')) { keep(); AD.draft.ch = t.getAttribute('data-adch'); AD.draft.text = adTemplate(AD.draft.kind, AD.draft.r, AD.draft.ch); AD.draft.ai = ''; repaint(); return true; }
+  if (t.getAttribute('data-adlang')) { keep(); AD.lang = t.getAttribute('data-adlang'); repaint(); return true; }
+  if (t.id === 'ad_copy') { var ta = el('ad_text'); if (ta) { ta.select(); try { document.execCommand('copy'); toast('Copied. Paste it on Facebook.'); } catch (_) { toast('Select the text and copy it.', true); } } return true; }
+  if (t.id === 'ad_ai') {
+    keep(); var d = AD.draft, r = d.r; AD.busy = true; repaint();
+    srv('erpAdDraft', [{ channel: d.ch, name: r.name, sell: r.sell, offer: d.ch === 'offer' || d.ch === 'story' ? r.offer : 0, offPct: r.offPct, stock: r.stock, why: r.why, lang: AD.lang, notes: d.text.slice(0, 400) }],
+        function (x) { AD.busy = false; if (AD.draft) { AD.draft.text = x.text; AD.draft.ai = 'written by the AI, ' + x.model; } repaint(); },
+        function (e) { AD.busy = false; repaint(); toast(esc((e && e.message) || e), true, 9000); });
+    return true;
+  }
+  return false;
+}
 </script>
 </body>
 </html>

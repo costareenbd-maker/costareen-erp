@@ -1,6 +1,6 @@
 // What to push next (handlers/push.js): the four lists from the shop's own sales and stock; the offer that keeps a
 // margin; the rules; and the "Only me" switch: off for every company until the provider opens it.
-import { sql, FIX, owner, mgr, sales, check, done } from './harness.mjs';
+import { sql, FIX, owner, mgr, sales, check, done, deps, web } from './harness.mjs';
 
 const add = (sku, name, cost, sell, stock) => mgr('erpSaveProduct', [{ isNew: true, sku, product_name: name, brand: 'Sunlu', category: 'Filaments', unit: 'Roll', cost_price: cost, sell_price: sell, opening_stock: stock }]);
 let r;
@@ -38,4 +38,22 @@ r = await owner('erpAppSet', [{ key: 'push', on: true, scope: 'all' }]);
 check('the provider opens it to everyone', r.ok && r.result.apps.find((a) => a.key === 'push').on === true, r);
 r = await owner('erpAppSet', [{ key: 'push', on: false, scope: 'all' }]);
 check('...and closes it again', r.ok && r.result.apps.find((a) => a.key === 'push').on === false, r);
+
+// the full in-stock list for customers
+check('the in-stock product list comes along, sorted by category and name', L.all.length >= 4 && ['DEAD', 'HOT', 'LOW', 'UP'].every((k) => L.all.some((x) => x.sku === k)) && L.all.every((x) => x.sell > 0 && x.stock > 0), L.all.map((x) => x.sku + ':' + x.sell + ':' + x.stock));
+
+// Advertisement: the AI writes a caption from the facts; owner only; no key = plain refusal
+let seen = null;
+web.on(/generativelanguage\.googleapis\.com/, (url, opts) => { seen = JSON.parse(opts.body); return { status: 200, body: { candidates: [{ content: { parts: [{ text: 'Dead stock now BDT 1,250. Only 12 left.' }] } }] } }; });
+deps.geminiKey = '';
+r = await owner('erpAdDraft', [{ channel: 'offer', name: 'Dead stock', sell: 1500, offer: 1250, offPct: 17, stock: 12 }]);
+check('no key: a plain refusal', !r.ok && /not set up/.test(r.error), r);
+deps.geminiKey = 'k';
+r = await mgr('erpAdDraft', [{ channel: 'offer', name: 'Dead stock', sell: 1500 }]);
+check('a manager cannot ask for advertisements', !r.ok, r);
+r = await owner('erpAdDraft', [{ channel: 'offer', name: 'Dead stock', sell: 1500, offer: 1250, offPct: 17, stock: 12, lang: 'bn', notes: 'mention free delivery' }]);
+const sent = seen ? JSON.stringify(seen) : '';
+check('the caption comes back, the facts and the language went to the model', r.ok && /1,250/.test(r.result.text) && r.result.channel === 'offer' && /Offer price: BDT 1250/.test(sent) && /Bangla/.test(sent) && /free delivery/.test(sent), r.ok ? sent.slice(0, 300) : r);
+r = await owner('erpAdDraft', [{ channel: 'nonsense', name: 'Dead stock', sell: 1500 }]);
+check('an unknown channel falls back to a post', r.ok && r.result.channel === 'post', r);
 await done();
