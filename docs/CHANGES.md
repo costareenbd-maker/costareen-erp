@@ -1077,3 +1077,20 @@ owner's four samples (docs/samples: Polymaker packing list PDF - 33 lines, 1,170
 66 matched by words; Polymaker proforma; a photo of a Sunlu price list typed as a table). `receivefile_test.mjs` (26).
 - Not done: photos / scanned PDFs (no text inside - needs an AI key; Settings → Connections → AI is for AI clients,
   not a model); per-line cost into the cost book (the shipment total is used, as the form always did); Bangla.
+
+## Photos of supplier documents: on-device OCR first, the provider's AI reader second (tag ocr-1, 8 Oct 2026)
+
+"From a file or photo" now takes a JPEG/PNG (or the phone camera) and a scanned PDF. **1. On the device:** Tesseract
+(self-hosted in `web/vendor/tess/`, 8.6 MB cached after first use; the CSP gained `'wasm-unsafe-eval'`) reads the
+picture - enlarged to ~2,400 px, greyed, contrast-stretched, page mode 6 - and the lines go to `erpReceiveMatch` as
+text (`reader: 'ocr'`); the text reader now also makes one record per "words + numbers" line (a table off a photo),
+and strips table rules and OCR noise. The card says "Read on this device (N% sure). Nothing was sent anywhere." **2. The
+provider's AI reader:** a button "Read it better" (shown always after a photo, also when the OCR found nothing) sends
+the shrunk JPEG plus the OCR text as a hint to `erpReceiveRead` → Gemini (`gemini-2.0-flash`, the PROVIDER's key
+`ERP_GEMINI_KEY` on the function, reaching every company's deps) → JSON lines → the same matcher. 40 reads per
+business per day (`business_config ai_reads:<day>`), plain sentences for no key / 429 / nothing found; the card says
+"Read by the provider's AI reader · N reads left today". Tested on the owner's Sunlu price-list photo (800 px): the
+OCR alone gets ~25% and two right matches - the AI path is the real reader for such photos. `receivefile_test.mjs`
+(32, Gemini faked with `web.on`).
+- Not done: the key is not set yet (owner to give it: `python deploy.py secrets ERP_GEMINI_KEY=...`); no per-company
+  key override; Chinese columns ignored; a "which reader was used" note on the stock movement.

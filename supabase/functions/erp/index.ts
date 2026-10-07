@@ -26,6 +26,8 @@ const ANON = Deno.env.get('SUPABASE_ANON_KEY') ?? '';
 const SERVICE = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
 const RENDER_URL = (Deno.env.get('RENDER_URL') ?? '').replace(/\/+$/, '');
 const RENDER_KEY = Deno.env.get('RENDER_KEY') ?? '';
+// the provider's AI reader for photos of supplier documents (handlers/receivefile.js); empty = photos read on the device only
+const GEMINI_KEY = Deno.env.get('ERP_GEMINI_KEY') ?? '';
 const CRON_KEY = Deno.env.get('CRON_KEY') ?? '';
 // the bridge (lib/bridge.js): seals each company's database URL and service key in erp_tenants
 const BRIDGE_KEY = Deno.env.get('ERP_BRIDGE_KEY') ?? '';
@@ -307,7 +309,7 @@ const INSTALL_ENV = { controlUrl: SUPABASE_URL + '/functions/v1/erp', appUrl: De
   // the provider's own domain where each company gets <name>.<zone> by itself (Stage 1b)
   freeZone: Deno.env.get('ERP_FREE_ZONE') ?? '', freeZoneId: Deno.env.get('ERP_FREE_ZONE_ID') ?? '' };
 const own = projectParts({ url: SUPABASE_URL, anon: ANON, service: SERVICE, appUrl: Deno.env.get('ERP_APP_URL') ?? 'https://erp.costareen.com/' });
-const deps: any = { install: INSTALL, installEnv: INSTALL_ENV, google: GOOGLE, smtpNote: SMTP_NOTE, linkOnly: false, sql, sqlAux, control: ctlSql, fetch: globalThis.fetch.bind(globalThis), renderPdf,
+const deps: any = { install: INSTALL, installEnv: INSTALL_ENV, google: GOOGLE, smtpNote: SMTP_NOTE, linkOnly: false, sql, sqlAux, control: ctlSql, fetch: globalThis.fetch.bind(globalThis), renderPdf, geminiKey: GEMINI_KEY,
                ...own, hookBase: FN_URL };
 
 // A company on the bridge: its own database, sign-in, files and e-mails; the provider's logic and PDF service.
@@ -325,7 +327,7 @@ async function buildTenant(t: any) {
     installEnv: INSTALL_ENV,
     google: { ...GOOGLE, redirect: FN_URL + '?google=back&t=' + t.id, appUrl },
     // control: the provider's own tables (the market list, joint pools)
-    smtpNote: '', linkOnly: false, sql: tsql, sqlAux: tAux, control: ctlSql, fetch: globalThis.fetch.bind(globalThis), renderPdf,
+    smtpNote: '', linkOnly: false, sql: tsql, sqlAux: tAux, control: ctlSql, fetch: globalThis.fetch.bind(globalThis), renderPdf, geminiKey: GEMINI_KEY,
     ...parts, hookBase: FN_URL + '?t=' + t.id,
     close() { try { tsql.end({ timeout: 2 }); tAux.end({ timeout: 2 }); } catch (_) { /* gone */ } },
   };

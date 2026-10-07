@@ -1,7 +1,7 @@
 // Receive stock from a file (handlers/receivefile.js): a Bambu order sheet without brand or SKU, a Polymaker
 // proforma with supplier codes, the text of a packing-list PDF with wrapped names, a photo-table of a Sunlu price
 // list; matching by words, by our SKU, by a remembered alias; new products suggested, never guessed.
-import { sql, FIX, owner, mgr, sales, check, done } from './harness.mjs';
+import { sql, FIX, owner, mgr, sales, check, done, deps, web } from './harness.mjs';
 
 const add = (name, brand, color, sku) => mgr('erpSaveProduct', [{ isNew: true, sku, product_name: name, brand, color, category: 'Filaments', unit: 'Roll', sell_price: 1700 }]);
 for (const [n, b, c, s] of [['Bambulab Pla Basic Jade White', 'Bambulab', 'Jade White', 'bpbjw055'], ['Bambulab Pla Basic Black', 'Bambulab', 'Black', 'bpbb001'],
@@ -62,4 +62,33 @@ check('quantities and prices', P[1].qty === 250 && P[1].price === 48 && r.result
 // 6. an unreadable file
 r = await mgr('erpReceiveMatch', [{ rows: [['hello'], ['world']] }]);
 check('no product lines: a plain refusal', !r.ok && /No product lines/.test(r.error), r);
+
+// 7. a photo through the provider's AI reader: not set up -> a plain refusal that says the device reading stands
+const PNG = 'data:image/png;base64,' + Buffer.from('fake-png-bytes').toString('base64');
+r = await mgr('erpReceiveRead', [{ image: PNG, hint: 'PLA+ Black 250 48', supplier: 'Sunlu Direct' }]);
+check('no key on this server: refused, with what to do', !r.ok && /not set up/.test(r.error), r);
+deps.geminiKey = 'test-key';
+web.on(/generativelanguage\.googleapis\.com/, (url, opts) => {
+  const body = JSON.parse(opts.body);
+  const parts = body.contents[0].parts;
+  const hasImage = parts.some((x) => x.inline_data && x.inline_data.mime_type === 'image/png'), hasHint = /PLA\+ Black 250 48/.test(parts[0].text);
+  if (!hasImage || !hasHint) return { status: 400, body: { error: 'bad request' } };
+  return { status: 200, body: { candidates: [{ content: { parts: [{ text: JSON.stringify([
+    { code: '', name: 'PLA+ Black', qty: 250, price: 48, currency: 'RMB' }, { code: '', name: 'PETG Black', qty: 40, price: 37, currency: 'RMB' },
+    { code: '', name: 'TPU-95A Grey', qty: 5, price: 86, currency: 'RMB' }, { code: '', name: 'Total', qty: 0, price: 0, currency: '' }]) }] } }] } };
+});
+r = await mgr('erpReceiveRead', [{ image: PNG, hint: 'PLA+ Black 250 48', supplier: 'Sunlu Direct' }]);
+check('the AI reader\u2019s lines are matched like a file: PLA+ Black -> Sunlu pla+, PETG -> Sunlu petg, TPU new; the total line dropped', r.ok && r.result.reader === 'gemini' && r.result.lines.length === 3 && r.result.lines[0].sku === 'sp+b002' && r.result.lines[1].sku === 'spegb040' && r.result.lines[2].isNew && r.result.currency === 'RMB' && r.result.readsLeft === 39, r.ok ? r.result.lines.map((l) => l.text + ' -> ' + l.sku) : r);
+r = await mgr('erpReceiveRead', [{ image: 'data:text/plain;base64,QUJD' }]);
+check('not a photo: refused', !r.ok, r);
+r = await sales('erpReceiveRead', [{ image: PNG }]);
+check('sales staff cannot', !r.ok, r);
+await sql`update business_config set value = '40' where business_id = ${FIX.B} and key like 'ai_reads:%'`;
+r = await mgr('erpReceiveRead', [{ image: PNG }]);
+check('the day\u2019s allowance protects the provider\u2019s quota', !r.ok && /allowance/.test(r.error), r);
+web.on(/generativelanguage\.googleapis\.com/, () => ({ status: 429, body: { error: 'quota' } }));
+await sql`update business_config set value = '1' where business_id = ${FIX.B} and key like 'ai_reads:%'`;
+r = await mgr('erpReceiveRead', [{ image: PNG }]);
+check('Google busy: a plain sentence', !r.ok && /busy/.test(r.error), r);
+deps.geminiKey = '';
 await done();

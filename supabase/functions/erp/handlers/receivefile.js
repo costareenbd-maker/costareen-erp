@@ -4,6 +4,8 @@
 //   erpReceiveMatch({rows, kind, supplier})   rows: a grid (arrays of cells) from a spreadsheet, or lines of text from
 //                                             a PDF (kind 'text'); -> {lines: [{row, text, code, qty, price, currency,
 //                                             sku, name, stock, confidence, candidates, isNew, newProduct}], ...}
+//   erpReceiveRead({image, hint, supplier})   a photo / scan: the provider's AI reader (Gemini, the provider's key) turns it
+//                                             into lines, the page's own OCR text as a hint; then matched the same way
 //   erpReceiveLearn({pairs: [{alias, sku}]})  the owner confirmed matches: remembered per supplier code / wording
 //
 // Matching, in order: 1. a remembered alias (the supplier's code or wording seen before) 2. our own SKU in the row
@@ -11,7 +13,8 @@
 // the colour, scored against every product's name and colour. Below the bar it is "new product" with a suggested
 // name - never a silent wrong guess.
 
-import { num } from '../lib/time.js';
+import { num, formatDate } from '../lib/time.js';
+import { getConfig, setConfig } from '../lib/ext.js';
 
 const str = (v) => String(v == null ? '' : v).trim();
 const norm = (v) => str(v).toLowerCase().replace(/[™®]/g, '').replace(/[^\p{L}\p{N}+.]+/gu, ' ').replace(/\s+/g, ' ').trim();
@@ -132,7 +135,8 @@ function textRecords(lines) {
   const isCode = (t) => CODE_RE.test(t) && /\d/.test(t) && !/^\d+$/.test(t) && !/^\d+(\.\d+)?(kg|g|mm)$/i.test(t) && !/^\d{2,4}-\d{3,}$/.test(t);
   const takeNums = (ns) => { if (!ns.length) return; if (!cur.qty) cur.qty = ns.find((n) => Number.isInteger(n) && n > 0 && n < 100000) || 0; if (money && !cur.price) cur.price = ns.find((n) => !Number.isInteger(n) && n > 0) || 0; };
   for (let i = 0; i < lines.length; i++) {
-    const l = str(lines[i]); if (!l) continue;
+    // table rules and OCR noise ([ | ] { } ~ _ =) are not words
+    const l = str(lines[i]).replace(/[|\[\]{}~_=]+/g, ' ').replace(/\s+/g, ' ').trim(); if (!l) continue;
     if (/\b(sku|qty|quantity|product\s*name|hs\s*code|packing\s*list|proforma|total|page\s*:)\b/i.test(l) && !isCode(l.split(/\s+/)[0] || '')) { if (/\b(total|page\s*:)\b/i.test(l)) flush(); continue; }
     const toks = l.split(/\s+/);
     const codeAt = toks.findIndex(isCode);
@@ -145,26 +149,25 @@ function textRecords(lines) {
       takeNums(rest.filter((t) => isNumCell(t)).map(numCell));
       continue;
     }
+    const ws = toks.filter((t) => !isNumCell(t)), ns = toks.filter((t) => isNumCell(t)).map(numCell);
     if (cur) {
-      const ws = toks.filter((t) => !isNumCell(t)), ns = toks.filter((t) => isNumCell(t)).map(numCell);
       cur.text = (cur.text + ' ' + ws.join(' ')).trim();
       if (ns.length >= 2) { takeNums(ns); flush(); }
       else if (ns.length === 1 && !ws.length) { takeNums(ns); flush(); }
+    } else if (ws.length && ns.length && ws.join(' ').replace(/[^a-z]/gi, '').length >= 3) {
+      // a table read off a photo: words and numbers on one line, no code - one record per line
+      cur = { row: i + 1, code: '', text: ws.join(' '), qty: 0, price: 0, currency: '' };
+      takeNums(ns); if (!cur.price && money && ns.length >= 2) cur.price = ns.filter((n) => n !== cur.qty)[0] || 0;
+      flush();
     }
   }
   flush();
   return out;
 }
 
-export async function erpReceiveMatch(ctx, payload) {
-  const p = payload || {};
-  const kind = p.kind === 'text' ? 'text' : 'grid';
-  const rows = Array.isArray(p.rows) ? p.rows.slice(0, 3000) : [];
-  if (!rows.length) throw new Error('The file has nothing to read.');
-  const supplier = str(p.supplier);
-  const fileBrand = brandOf(supplier) || brandOf(str(p.fileName));
-  const records = kind === 'text' ? textRecords(rows.map((r) => (Array.isArray(r) ? r.join(' ') : r))) : gridRecords(rows);
-  if (!records.length) throw new Error('No product lines found in the file. A line needs a product name and a quantity.');
+/** Every record against the catalogue: the lines of the review card. */
+async function matchRecords(ctx, records, opts) {
+  const supplier = str(opts.supplier), fileBrand = brandOf(supplier) || brandOf(str(opts.fileName));
   const cat = await catalogue(ctx);
   const bySku = Object.fromEntries(cat.map((c) => [c.sku.toLowerCase(), c]));
   const aliases = {};
@@ -183,15 +186,73 @@ export async function erpReceiveMatch(ctx, payload) {
       cands = scored.slice(0, 4).map((x) => ({ sku: x.c.sku, name: x.c.name, score: Math.round(x.s * 100) / 100 }));
       if (scored.length && scored[0].s >= 0.55 && (scored.length < 2 || scored[0].s - scored[1].s >= 0.08)) { best = scored[0].c; how = 'words'; conf = scored[0].s; }
     }
-    const suggested = [row.brand ? row.brand.charAt(0).toUpperCase() + row.brand.slice(1) : '', row.type ? row.type.replace(/\b\w/g, (m) => m.toUpperCase()).replace('Pla', 'PLA').replace('Petg', 'PETG').replace('Abs', 'ABS').replace('Asa', 'ASA').replace('Tpu', 'TPU') : '', row.colour.replace(/\b\w/g, (m) => m.toUpperCase())].filter(Boolean).join(' ');
+    const cap = (t) => t.replace(/\b\w/g, (m) => m.toUpperCase());
+    const typeName = row.type ? cap(row.type).replace('Pla', 'PLA').replace('Petg', 'PETG').replace('Abs', 'ABS').replace('Asa', 'ASA').replace('Tpu', 'TPU').replace('Pc', 'PC').replace('Cf', 'CF').replace('Gf', 'GF') : '';
+    const brandName = row.brand ? cap(row.brand) : '';
+    const suggested = [brandName, typeName, cap(row.colour)].filter(Boolean).join(' ');
     return { row: r.row, code: r.code, text: r.text, qty: r.qty, price: r.price, currency: r.currency || currency,
              sku: best ? best.sku : '', name: best ? best.name : '', stock: best ? best.stock : 0,
              how, confidence: best ? (how === 'words' ? Math.min(0.99, Math.round(conf * 100) / 100) : 1) : 0,
-             candidates: cands, isNew: !best, newProduct: best ? null : { product_name: suggested || r.text, brand: row.brand ? row.brand.charAt(0).toUpperCase() + row.brand.slice(1) : '', color: row.colour.replace(/\b\w/g, (m) => m.toUpperCase()), unit: 'Roll' } };
+             candidates: cands, isNew: !best, newProduct: best ? null : { product_name: suggested || r.text, brand: brandName, color: cap(row.colour), unit: 'Roll' } };
   });
   const matched = lines.filter((l) => l.sku).length;
-  return { kind, supplier, brand: fileBrand, currency, lines, matched, unmatched: lines.length - matched,
+  return { supplier, brand: fileBrand, currency, lines, matched, unmatched: lines.length - matched,
            totalQty: lines.reduce((s, l) => s + num(l.qty), 0), totalPrice: Math.round(lines.reduce((s, l) => s + num(l.qty) * num(l.price), 0) * 100) / 100 };
+}
+
+export async function erpReceiveMatch(ctx, payload) {
+  const p = payload || {};
+  const kind = p.kind === 'text' ? 'text' : 'grid';
+  const rows = Array.isArray(p.rows) ? p.rows.slice(0, 3000) : [];
+  if (!rows.length) throw new Error('The file has nothing to read.');
+  const records = kind === 'text' ? textRecords(rows.map((r) => (Array.isArray(r) ? r.join(' ') : r))) : gridRecords(rows);
+  if (!records.length) throw new Error('No product lines found in the file. A line needs a product name and a quantity.');
+  return { kind, reader: p.reader === 'ocr' ? 'ocr' : 'file', ...(await matchRecords(ctx, records, { supplier: p.supplier, fileName: p.fileName })) };
+}
+
+// ---------------------------------------------------------------- the provider's AI reader (a photo, a scanned PDF)
+const AI_DAILY = 40;        // photos per business per day through the provider's key
+const GEMINI_MODEL = 'gemini-2.0-flash';
+const AI_PROMPT = 'This is a photo or scan of a supplier document for a 3D-printing shop in Bangladesh: a packing list, proforma invoice, price list or order sheet. ' +
+  'Extract every product line as JSON only - an array of objects {"code": supplier item code or "", "name": the product words (brand, material/type, colour, size) as written, ' +
+  '"qty": the quantity as a number, "price": the unit price as a number or 0, "currency": "USD"/"RMB"/"BDT"/"" }. Skip headings, totals and addresses. ' +
+  'If a column is in Chinese, keep the English words only. Answer with the JSON array and nothing else.';
+
+/** A photo (or a scan) read by the provider's AI, then matched like any file. The page sends the OCR text as a hint. */
+export async function erpReceiveRead(ctx, payload) {
+  const p = payload || {};
+  const key = str(ctx.deps && ctx.deps.geminiKey);
+  if (!key) throw new Error('The AI reader is not set up on this server. The photo was read on your device only - correct the lines by hand, or ask the provider to switch the reader on.');
+  const m = /^data:(image\/(jpeg|png|webp));base64,([A-Za-z0-9+/=]+)$/.exec(str(p.image));
+  if (!m) throw new Error('Send a JPEG, PNG or WebP photo.');
+  if (m[3].length > 6_000_000) throw new Error('The photo is too big - the page should have shrunk it.');
+  // a day's allowance per business, so one shop cannot use up the provider's quota
+  const day = formatDate(ctx.now, 'yyyy-MM-dd'), k = 'ai_reads:' + day;
+  const used = num(await getConfig(ctx, k, '0'));
+  if (used >= AI_DAILY) throw new Error('Today\u2019s allowance of ' + AI_DAILY + ' AI reads is used up. Try tomorrow, or correct the lines by hand.');
+  await setConfig(ctx, k, String(used + 1));
+  const hint = str(p.hint).slice(0, 4000);
+  const body = { contents: [{ parts: [{ text: AI_PROMPT + (hint ? '\n\nA rough machine reading of the same image, for reference (it may have errors):\n' + hint : '') }, { inline_data: { mime_type: m[1], data: m[3] } }] }],
+                 generationConfig: { temperature: 0, response_mime_type: 'application/json' } };
+  let res;
+  try {
+    res = await ctx.deps.fetch('https://generativelanguage.googleapis.com/v1beta/models/' + GEMINI_MODEL + ':generateContent?key=' + encodeURIComponent(key),
+                               { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) });
+  } catch (e) { throw new Error('The AI reader could not be reached: ' + str((e && e.message) || e).slice(0, 120)); }
+  const txt = await res.text();
+  if (!res.ok) {
+    if (res.status === 429) throw new Error('The AI reader is busy (its free allowance for the minute is used). Wait a little and press again.');
+    throw new Error('The AI reader refused (' + res.status + '). ' + txt.slice(0, 160));
+  }
+  let out = '';
+  try { const j = JSON.parse(txt); out = str(((((j.candidates || [])[0] || {}).content || {}).parts || []).map((x) => x.text || '').join('')); } catch (_) { out = txt; }
+  let arr = null;
+  try { arr = JSON.parse(out); } catch (_) { const s0 = out.indexOf('['), s1 = out.lastIndexOf(']'); if (s0 >= 0 && s1 > s0) { try { arr = JSON.parse(out.slice(s0, s1 + 1)); } catch (_2) { arr = null; } } }
+  if (!Array.isArray(arr) || !arr.length) throw new Error('The AI reader found no product lines in the photo.');
+  const records = arr.slice(0, 500).map((r, i) => ({ row: i + 1, code: str(r && r.code).slice(0, 40), text: str(r && r.name).slice(0, 200), qty: num(r && r.qty), price: num(r && r.price), currency: str(r && r.currency).toUpperCase().slice(0, 4) }))
+                     .filter((r) => (r.text || r.code) && r.qty > 0);
+  if (!records.length) throw new Error('The AI reader found no lines with a quantity.');
+  return { kind: 'photo', reader: 'gemini', readsLeft: AI_DAILY - used - 1, ...(await matchRecords(ctx, records, { supplier: p.supplier, fileName: p.fileName })) };
 }
 
 /** The owner confirmed: this code / wording is that product. Next time it matches at once. */
@@ -211,4 +272,4 @@ export async function erpReceiveLearn(ctx, payload) {
   return { ok: true, saved };
 }
 
-export const HANDLERS = { erpReceiveMatch, erpReceiveLearn };
+export const HANDLERS = { erpReceiveMatch, erpReceiveRead, erpReceiveLearn };
