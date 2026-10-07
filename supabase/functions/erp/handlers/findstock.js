@@ -27,9 +27,11 @@ function shopRow(s) { return { slug: str(s.slug), name: str(s.name), city: str(s
 function wa(phone) { const d = str(phone).replace(/[^0-9]/g, ''); return d ? 'https://wa.me/' + (d.startsWith('0') ? '88' + d : d) : ''; }
 async function publicListings(deps, where) {
   return deps.control`
-    select l.*, s.slug, s.name as shop_name, s.city as shop_city, s.orders as shop_orders
+    select l.*, s.slug, s.name as shop_name, s.city as shop_city, s.orders as shop_orders, k.item_id, ci.name as item_name, ci.brand as item_brand, ci.colour as item_colour
       from erp_market_listings l
       join erp_market_shops s on s.source = l.source and s.business_id = l.business_id and s.public
+      left join erp_catalog_links k on k.source = l.source and k.product_id = l.product_id
+      left join erp_catalog_items ci on ci.id = k.item_id
       left join erp_tenants t on l.source <> 'self' and t.id::text = l.source
      where l.updated_at > now() - make_interval(days => ${STALE_DAYS})
        and (l.source = 'self' or t.status = 'active') ${where}
@@ -44,8 +46,9 @@ export async function find(deps, params, ip) {
     (!qw.length || qw.every((w) => (str(l.name) + ' ' + str(l.brand) + ' ' + str(l.color) + ' ' + str(l.category)).toLowerCase().indexOf(w) >= 0)));
   const groups = {}, facets = { brands: {}, colours: {}, categories: {} };
   for (const l of rows) {
-    const key = words(l.name).join(' ');
-    const g = groups[key] || (groups[key] = { key, name: str(l.name), brand: str(l.brand), category: str(l.category), colour: str(l.color), unit: str(l.unit), shops: [] });
+    // the master catalogue groups the same physical thing across shops, whatever each shop calls it; else the words of the name
+    const key = l.item_id ? 'item:' + l.item_id : words(l.name).join(' ');
+    const g = groups[key] || (groups[key] = { key, name: l.item_id ? str(l.item_name) : str(l.name), brand: str(l.brand), category: str(l.category), colour: str(l.color), unit: str(l.unit), shops: [], item: l.item_id ? Number(l.item_id) : 0 });
     g.shops.push({ slug: str(l.slug), shop: str(l.shop_name), city: str(l.shop_city), band: str(l.band), price: l.price == null ? null : num(l.price), orders: !!l.shop_orders, productId: l.product_id, updated: ago(l.updated_at), hex: str(l.color_hex) });
     if (!g.hex && str(l.color_hex)) g.hex = str(l.color_hex);
     if (l.brand) facets.brands[str(l.brand)] = (facets.brands[str(l.brand)] || 0) + 1;

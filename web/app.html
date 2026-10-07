@@ -8427,7 +8427,7 @@ function srv(name, args, ok, bad) {
 
 var SRV_ACTIVE = 0, SRV_WRITING = false, SRV_TIMED = {};
 // the same list the server uses to know a call changes nothing (ERP_READS)
-var SRV_READS = /^(erpReceiveMatch|erpAiReader|erpProductSuggest|erpApps|erpAppQr|erpFeedback|erpRestockOffers|erpRestockList|erpWarrantyRules|erpWarrantyCard|erpMyLink|erpPlatformRegister|erpPlatformDoctor|erpPlatformCommunity|erpMarketWaiting|erpBoard|erpPlatformDesign|erpResell|erpResellerProgramme|erpLoyalty|erpCustomerPoints|erpRefillDue|erpDeliveryHistory|erpDeliveryHistoryMany|erpPrintKit|erpPrintJobs|erpPrintJob|erpPrintCost|erpSpools|erpPrintRequests|erpJoint|erpJointCatalog|erpJointCard|erpInvoiceDesign|erpInvoicePreview|erpMarket|erpMarketMine|erpMarketRequests|erpMarketHints|erpMarketNames|erpWanted|erpBrand|erpComplianceLog|erpProviderKey|erpNews|erpAccessKeys|erpAccessWarning|erpAdmin|erpAiKeys|erpAlertRules|erpAlerts|erpArena|erpBackupStatus|erpBg|erpBnWords|erpBookedParcels|erpBrandLogo|erpBundle|erpBusinessLinks|erpBusinesses|erpBusinessesDeleted|erpCampaignAudience|erpCampaignGet|erpCampaignList|erpCapital|erpCashBook|erpCatalog|erpConnStatus|erpConnections|erpCostBook|erpCourier|erpCourierKeyStatus|erpCurrencies|erpCustomerAccount|erpCustomerCredit|erpCustomerList|erpCustomerPage|erpCustomerStatement|erpCustomers|erpDashboardData|erpDaySales|erpDeliveryOptions|erpDevices|erpDiscontinued|erpDues|erpEvoQr|erpEvoStatus|erpExpenseExport|erpExpenseReceiptUrl|erpExpenses|erpFamilies|erpFighters|erpFormOptions|erpGame|erpGetTheme|erpGoogle|erpHello|erpInstalls|erpInvoice|erpInvoicePdf|erpJob|erpJobs|erpListView|erpLookupCustomer|erpLookupUsage|erpMe|erpMoney|erpNoteFileUrl|erpNotes|erpOwnerChange|erpOwnerChanges|erpParcelLabels|erpParcelPreview|erpPartnerStock|erpPartnership|erpPayReasons|erpPeople|erpPlatform|erpPlatformErrors|erpPnl|erpPnlMonth|erpPoList|erpPoolCatalog|erpProduct|erpProductListShare|erpProductPage|erpProductPhotoUrl|erpProductThumbs|erpProfile|erpQuoteAsset|erpQuoteBoot|erpQuoteGet|erpQuoteList|erpRecentInvoices|erpRecovery|erpReorderPlan|erpRestorePreview|erpReturnPreview|erpRisks|erpSales|erpSearch|erpSecurity|erpSelfTest|erpSerialLookup|erpSerialsFor|erpSessions|erpSetTheme|erpSettingsFull|erpSettingsLists|erpSfPayoutLines|erpSfPayouts|erpShareFile|erpSharedStock|erpSheet|erpStatementPdf|erpStockHistory|erpSupplierPage|erpSuppliers|erpToday|erpUsers|erpWaProductPdf|erpWebMatches|erpWebOrderInvoices|erpWebOrders|erpWebsiteTest)$/;
+var SRV_READS = /^(erpReceiveMatch|erpAiReader|erpProductSuggest|erpCatalogue|erpApps|erpAppQr|erpFeedback|erpRestockOffers|erpRestockList|erpWarrantyRules|erpWarrantyCard|erpMyLink|erpPlatformRegister|erpPlatformDoctor|erpPlatformCommunity|erpMarketWaiting|erpBoard|erpPlatformDesign|erpResell|erpResellerProgramme|erpLoyalty|erpCustomerPoints|erpRefillDue|erpDeliveryHistory|erpDeliveryHistoryMany|erpPrintKit|erpPrintJobs|erpPrintJob|erpPrintCost|erpSpools|erpPrintRequests|erpJoint|erpJointCatalog|erpJointCard|erpInvoiceDesign|erpInvoicePreview|erpMarket|erpMarketMine|erpMarketRequests|erpMarketHints|erpMarketNames|erpWanted|erpBrand|erpComplianceLog|erpProviderKey|erpNews|erpAccessKeys|erpAccessWarning|erpAdmin|erpAiKeys|erpAlertRules|erpAlerts|erpArena|erpBackupStatus|erpBg|erpBnWords|erpBookedParcels|erpBrandLogo|erpBundle|erpBusinessLinks|erpBusinesses|erpBusinessesDeleted|erpCampaignAudience|erpCampaignGet|erpCampaignList|erpCapital|erpCashBook|erpCatalog|erpConnStatus|erpConnections|erpCostBook|erpCourier|erpCourierKeyStatus|erpCurrencies|erpCustomerAccount|erpCustomerCredit|erpCustomerList|erpCustomerPage|erpCustomerStatement|erpCustomers|erpDashboardData|erpDaySales|erpDeliveryOptions|erpDevices|erpDiscontinued|erpDues|erpEvoQr|erpEvoStatus|erpExpenseExport|erpExpenseReceiptUrl|erpExpenses|erpFamilies|erpFighters|erpFormOptions|erpGame|erpGetTheme|erpGoogle|erpHello|erpInstalls|erpInvoice|erpInvoicePdf|erpJob|erpJobs|erpListView|erpLookupCustomer|erpLookupUsage|erpMe|erpMoney|erpNoteFileUrl|erpNotes|erpOwnerChange|erpOwnerChanges|erpParcelLabels|erpParcelPreview|erpPartnerStock|erpPartnership|erpPayReasons|erpPeople|erpPlatform|erpPlatformErrors|erpPnl|erpPnlMonth|erpPoList|erpPoolCatalog|erpProduct|erpProductListShare|erpProductPage|erpProductPhotoUrl|erpProductThumbs|erpProfile|erpQuoteAsset|erpQuoteBoot|erpQuoteGet|erpQuoteList|erpRecentInvoices|erpRecovery|erpReorderPlan|erpRestorePreview|erpReturnPreview|erpRisks|erpSales|erpSearch|erpSecurity|erpSelfTest|erpSerialLookup|erpSerialsFor|erpSessions|erpSetTheme|erpSettingsFull|erpSettingsLists|erpSfPayoutLines|erpSfPayouts|erpShareFile|erpSharedStock|erpSheet|erpStatementPdf|erpStockHistory|erpSupplierPage|erpSuppliers|erpToday|erpUsers|erpWaProductPdf|erpWebMatches|erpWebOrderInvoices|erpWebOrders|erpWebsiteTest)$/;
 function srvPump() {
   if (!SRV_Q.length) return;
   var isRead = SRV_READS.test(SRV_Q[0].name);
@@ -22195,6 +22195,49 @@ document.addEventListener('click', function (ev) {
     AIR_BUSY = 'test'; repaint();
     srv('erpAiReaderTest', [], function (r) { AIR_BUSY = ''; repaint(); toast('Google answered with ' + r.model + '. The key works.'); }, fail);
   }
+});
+</script>
+<!-- Platform > Catalogue: the master catalogue the server keeps by itself (handlers/catalogue.js). The provider sees
+     what was decided, runs it now, unlinks a wrong link, renames an item. -->
+<style>
+.cat-log{font-size:12.5px;max-height:260px;overflow:auto;border:1px solid var(--ring);border-radius:8px;padding:6px 10px}
+.cat-log div{padding:3px 0;border-bottom:1px solid var(--grid)}
+.cat-k{font-size:11px;padding:1px 7px;border-radius:999px;background:var(--grid);font-weight:700;margin-right:6px}
+.cat-k.ai{background:var(--warning-soft);color:var(--warning)} .cat-k.created{background:var(--good-soft);color:var(--good)} .cat-k.unlinked,.cat-k.renamed{background:var(--critical-soft);color:var(--critical)}
+</style>
+<script>
+var CATL = null, CATL_ERR = '', CATL_BUSY = '';
+function catlLoad() { srv('erpCatalogue', [], function (r) { CATL = r; CATL_ERR = ''; if (VIEW === 'platform') repaint(); }, function (e) { CATL_ERR = (e && e.message) || String(e); if (VIEW === 'platform') repaint(); }); }
+function catlCardHtml() {
+  var h = '<section><div class="card"><h2>Catalogue</h2><div class="sub" data-c5x="1" style="display:block">One record per physical thing, kept by the server on its own: every product a shop lists is linked to it from its words (brand, line, colour, size, spool or refill); the unsure names are asked of the AI reader each night. Find stock and the Market show one item with every shop under it, whatever each shop calls it. Nobody has to learn a code.</div>';
+  if (CATL_ERR) return h + '<div class="note err"><div class="ico">!</div><div>' + esc(CATL_ERR) + '</div></div></div></section>';
+  if (!CATL) { catlLoad(); return h + '<div class="loading">Loading\u2026</div></div></section>'; }
+  var c = CATL;
+  h += '<div class="ap-row"><span><b>' + fmt(c.items) + '</b> items</span><span><b>' + fmt(c.linked) + '</b> listed products linked</span><span class="rf-conf ' + (c.unlinked ? 'mid' : 'hi') + '">' + fmt(c.unlinked) + ' not yet</span><span class="sku">' + fmt(c.byAi) + ' decided by the AI reader</span>' +
+       '<button class="btn small" type="button" id="catl_run"' + (CATL_BUSY ? ' disabled' : '') + ' style="margin-left:auto">' + (CATL_BUSY === 'run' ? 'Running\u2026' : 'Run now') + '</button></div>';
+  if (c.loose.length) {
+    h += '<h3 style="margin:14px 0 4px">Not linked yet (' + fmt(c.loose.length) + ')</h3><div class="sub">A name with no brand, or one the AI reader could not settle. The shop improves the name, or it waits.</div><div class="scroll"><table><thead><tr><th>Product as the shop wrote it</th><th>Shop</th></tr></thead><tbody>' +
+         c.loose.slice(0, 40).map(function (l) { return '<tr><td class="nm">' + esc(l.name) + '<br><span class="sku">' + esc([l.brand, l.colour].filter(Boolean).join(' \u00b7 ')) + '</span></td><td>' + esc(l.shop) + '</td></tr>'; }).join('') + '</tbody></table></div>';
+  }
+  if (c.list.length) {
+    h += '<h3 style="margin:14px 0 4px">Items (' + fmt(c.items) + ')</h3><div class="scroll"><table><thead><tr><th>Item</th><th class="num">Shops</th><th>Made by</th><th></th></tr></thead><tbody>' +
+         c.list.slice(0, 60).map(function (it) { return '<tr><td class="nm"><input class="i" style="min-width:220px" data-catname="' + it.id + '" value="' + esc(it.name) + '"></td><td class="num">' + fmt(it.shops) + '</td><td><span class="cat-k ' + esc(it.madeBy) + '">' + esc(it.madeBy) + '</span></td><td class="num"><button class="btn small" type="button" data-catrename="' + it.id + '">Rename</button></td></tr>'; }).join('') + '</tbody></table></div>';
+  }
+  h += '<h3 style="margin:14px 0 4px">Decided lately</h3><div class="cat-log">' + (c.log.length ? c.log.map(function (l) { return '<div><span class="cat-k ' + esc(l.what) + '">' + esc(l.what) + '</span>' + esc(l.detail) + ' <span class="sku">' + esc(l.when) + '</span></div>'; }).join('') : '<div class="sku">Nothing yet. It runs after every market refresh and each night.</div>') + '</div>';
+  return h + '</div></section>';
+}
+var viewPlatformCatl = viewPlatform;
+viewPlatform = function () {
+  var h = viewPlatformCatl.apply(this, arguments);
+  if (!ME || !ME.platform) return h;
+  return h + catlCardHtml();
+};
+document.addEventListener('click', function (ev) {
+  if (VIEW !== 'platform') return;
+  var t = ev.target && ev.target.closest ? ev.target.closest('#catl_run,[data-catrename]') : null; if (!t) return;
+  var fail = function (e) { CATL_BUSY = ''; repaint(); toast(esc((e && e.message) || e), true, 10000); };
+  if (t.id === 'catl_run') { CATL_BUSY = 'run'; repaint(); srv('erpCatalogueAct', [{ action: 'run' }], function (r) { CATL = r; CATL_BUSY = ''; repaint(); var x = r.ran || {}; toast('Looked at ' + fmt(x.looked || 0) + ': ' + fmt(x.linked || 0) + ' linked, ' + fmt(x.created || 0) + ' new items, ' + fmt(x.ai || 0) + ' by the AI reader, ' + fmt(x.left || 0) + ' left.', false, 9000); }, fail); return; }
+  if (t.hasAttribute('data-catrename')) { var id = t.getAttribute('data-catrename'), inp = document.querySelector('[data-catname="' + id + '"]'); srv('erpCatalogueAct', [{ action: 'rename', item: Number(id), name: inp ? inp.value : '' }], function (r) { CATL = r; repaint(); toast('Renamed.'); }, fail); }
 });
 </script>
 </body>

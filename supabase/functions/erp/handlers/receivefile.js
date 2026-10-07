@@ -20,11 +20,11 @@ import { sealJSON, openJSON } from '../lib/bridge.js';
 import { formatDate as fmtDate } from '../lib/time.js';
 
 const str = (v) => String(v == null ? '' : v).trim();
-const norm = (v) => str(v).toLowerCase().replace(/[™®]/g, '').replace(/[^\p{L}\p{N}+.]+/gu, ' ').replace(/\s+/g, ' ').trim();
+export const norm = (v) => str(v).toLowerCase().replace(/[™®]/g, '').replace(/[^\p{L}\p{N}+.]+/gu, ' ').replace(/\s+/g, ' ').trim();
 
 // brands we know by other names (file names, Chinese, shop names)
 const BRANDS = [
-  ['bambulab', /bambu|拓竹|bbl\b/i], ['sunlu', /sunlu|三绿/i], ['polymaker', /polymaker|panchroma|polylite|polyterra/i],
+  ['bambulab', /bambu\s*lab|bambu|拓竹|\bbbl\b/i], ['sunlu', /sunlu|三绿/i], ['polymaker', /polymaker|panchroma|polylite|polyterra/i],
   ['esun', /\besun\b|易生/i], ['creality', /creality|hyper\b|ender/i], ['elegoo', /elegoo/i], ['anycubic', /anycubic/i],
   ['kingroon', /kingroon/i], ['jayo', /\bjayo\b/i], ['eryone', /eryone/i], ['overture', /overture/i],
 ];
@@ -44,9 +44,9 @@ const HEAD_WORDS = { code: /^(sku|code|item\s*(no|code)|part|art\.?\s*no|model)$
 const CODE_RE = /^(?=.*\d)[a-z0-9][a-z0-9-]{3,14}$/i;
 const CUR_RE = /\b(usd|rmb|cny|bdt|tk|taka|eur)\b|[$¥€৳]/i;
 
-function brandOf(text) { const t = str(text); for (const [b, re] of BRANDS) if (re.test(t)) return b; return ''; }
-function typeOf(text) { const t = str(text); for (const [ty, re] of TYPES) if (re.test(t)) return ty; return ''; }
-function colourOf(text, brand, type) {
+export function brandOf(text) { const t = str(text); for (const [b, re] of BRANDS) if (re.test(t)) return b; return ''; }
+export function typeOf(text) { const t = str(text); for (const [ty, re] of TYPES) if (re.test(t)) return ty; return ''; }
+export function colourOf(text, brand, type) {
   // the colour is what is left of the words once brand, type and packaging words are gone
   let t = norm(text).replace(NOISE, ' ').replace(/\d+(\.\d+)?\s*(kg|g|mm)/g, ' ').replace(/[\d.]+/g, ' ');
   for (const [, re] of BRANDS) t = t.replace(re, ' ');
@@ -59,7 +59,7 @@ function colourOf(text, brand, type) {
   return t;
 }
 function words(s) { return norm(s).split(' ').filter((w) => w && w.length > 1); }
-const isRefill = (t) => /diskless|refill|spool-?less|without\s*spool|\b2\.0\b|re-?fill/i.test(str(t));
+export const isRefill = (t) => /diskless|refill|spool-?less|without\s*spool|\b2\.0\b|re-?fill/i.test(str(t));
 
 /** Every product, with the words a file could use for it. */
 async function catalogue(ctx) {
@@ -220,7 +220,7 @@ export async function erpReceiveMatch(ctx, payload) {
 // ---------------------------------------------------------------- the provider's AI reader (a photo, a scanned PDF)
 const AI_DAILY = 40;        // photos per business per day through the provider's key
 // the Flash models to try, in order: Google retires names and a model can be "in high demand" for a minute
-const GEMINI_MODELS = ['gemini-flash-lite-latest', 'gemini-2.5-flash', 'gemini-2.5-flash-lite'];   // measured 8 Oct 2026: lite 4 s, 2.5-flash 20 s, flash-latest hung
+export const GEMINI_MODELS = ['gemini-flash-lite-latest', 'gemini-2.5-flash', 'gemini-2.5-flash-lite'];   // measured 8 Oct 2026: lite 4 s, 2.5-flash 20 s, flash-latest hung
 const GEMINI_TIMEOUT_MS = 40000;   // the edge function itself dies at 150 s
 const AI_PROMPT = 'This is a photo or scan of a supplier document for a 3D-printing shop in Bangladesh: a packing list, proforma invoice, price list or order sheet. ' +
   'Extract every product line as JSON only - an array of objects {"code": supplier item code or "", "name": the product words (brand, material/type, colour, size) as written, ' +
@@ -239,6 +239,14 @@ async function storedSecret(ctx, name) {
     else if (v.startsWith('v0.')) value = v.slice(3);
     return { value, at: r.updated_at };
   } catch (_) { return null; }
+}
+/** The provider's key for a job with no session: the stored one, else the server's. */
+export async function providerAiKey(deps) {
+  try {
+    const r = (await ((deps && deps.control) || deps.sql)`select value_enc from erp_provider_secrets where key = 'GEMINI_KEY'`)[0];
+    if (r) { const v = str(r.value_enc); if (v.startsWith('v1.')) return str((await openJSON(deps.bridgeKey, v)).v); if (v.startsWith('v0.')) return v.slice(3); }
+  } catch (_) { /* no table yet */ }
+  return str(deps && deps.geminiKey);
 }
 async function aiKey(ctx) {
   const st = await storedSecret(ctx, 'GEMINI_KEY');

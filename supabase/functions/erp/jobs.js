@@ -79,6 +79,8 @@ export async function runJob(deps, job) {
         backup: backupNow ? await asBusiness(deps, row, 'nightly:backup', (ctx) => backupNow(ctx, 'night')) : 'skipped',
       };
     }
+    // the master catalogue: every listed product linked to its item, the unsure ones asked of the AI reader
+    if (deps.control) { try { out['catalogue'] = await (await import('./handlers/catalogue.js')).catalogSync(deps, { ai: true }); } catch (e) { out['catalogue'] = 'failed: ' + String((e && e.message) || e).slice(0, 200); } }
     out.joint = await jointCheck(deps);
   } else if (job === 'campaigns') {
     const tick = await maybe('./handlers/campaigns.js', 'campaignTick');
@@ -174,6 +176,8 @@ export async function runJob(deps, job) {
           out['market:' + row.name] = await asBusiness(deps, row, 'websync:market', (ctx) => marketRefresh(ctx));
         }
       }
+      // new or renamed listings get their catalogue item at once (by the words; the AI reader waits for the night)
+      try { const cr = await (await import('./handlers/catalogue.js')).catalogSync(deps, { ai: false }); if (cr && cr.looked) out['catalogue'] = cr; } catch (e) { out['catalogue'] = 'failed: ' + String((e && e.message) || e).slice(0, 200); }
       // Stage N9: suppliers that sell through resellers - the reseller catalogue and the order states
       const { resellerRefresh } = await import('./handlers/resellers.js');
       const resellers = (await sql`select business_id from business_config where key = 'reseller_on' and value = '1'`).map((r) => r.business_id);

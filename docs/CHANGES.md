@@ -1156,3 +1156,19 @@ end, the automatic move, a refused move, a count on one shelf, a return to the s
 - Not done: a per-shelf stock count screen (Count & adjust works per shelf via the form); the seller's own screen
   does not yet show "you hold N of this" on New invoice; the partner's remote (own-database) copy gets the same
   through the pool's database - not tried against a live remote pool (none exists yet).
+
+## Master catalogue, kept by the server (tag catalogue-1, 8 Oct 2026)
+
+Owner: many shops will enter the same physical thing differently; nobody should have to learn an SKU; the back end
+does it all. `097_catalogue.sql` (control-only): `erp_catalog_items` (one per brand|line|colour|size|variant, a shown
+name "Bambu Lab PLA Basic Jade White 1 kg (refill)"), `erp_catalog_links` (every listed product → item, how key / ai
+/ admin, the name seen), `erp_catalog_log`. `handlers/catalogue.js`: `catalogSync` runs after every market refresh
+(by the words only) and each night (the unsure names to the AI reader in batches of 40, one answer per name, cached by
+the link). Words = the receive-file matcher (`brandOf`, `typeOf`, `colourOf`, `isRefill`, now exported) + `sizeOf`;
+a filament with no size written counts as the 1 kg spool; "Bambu Lab" / "BBL" / 拓竹 are Bambu Lab. A name with no
+brand stays unlinked (shown under the shop's own name). A listing whose name changed is looked at again; a link the
+provider made by hand ('admin') is never overwritten. Find stock groups by item (`findstock.js` joins the links) and
+shows the catalogue's name. Platform → **Catalogue** card: counts, Run now, the not-yet-linked list, items with shop
+counts and Rename, the log of what was decided. `catalogue_test.mjs` (16).
+- Not done: the Market screen inside the ERP still groups by name (Find stock does by item); barcodes/GTIN; a shop
+  seeing "your product is listed as <item>"; merging two items by hand (rename only).
