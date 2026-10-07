@@ -91,4 +91,10 @@ await sql`update business_config set value = '1' where business_id = ${FIX.B} an
 r = await mgr('erpReceiveRead', [{ image: PNG }]);
 check('Google busy: a plain sentence', !r.ok && /busy/.test(r.error), r);
 deps.geminiKey = '';
+
+// 8. spool or refill: the same colour twice in the catalogue - the row's wording decides; transparent and wood are colours
+for (const [n, b, c, s2] of [['Sunlu Pla+2.0 Refill Black', 'Sunlu', 'Black', 'sp+2.0refillb124'], ['Sunlu Pla+ Transparent', 'Sunlu', 'Transparent', 'sp+tp013'], ['Sunlu Pla Wood Wood', 'Sunlu', 'Wood', 'spww032'], ['Sunlu Pla Wood Maple Wood', 'Sunlu', 'Maple Wood', 'spwmw033']]) { const q = await add(n, b, c, s2); check('fixture ' + s2, q.ok, q); }
+r = await mgr('erpReceiveMatch', [{ rows: [['Type', 'Color', 'Order List', 'Unit Price'], ['PLA+', 'Black', 250, 48], ['PLA+2.0ï¼disklessï¼', 'Black', 50, 48], ['PLA+', 'Transparent', 30, 48], ['PLA wood', 'Wood', 10, 68], ['PLA wood', 'Maple Wood', 10, 68]], supplier: 'Sunlu' }]);
+const V = r.ok ? r.result.lines.map((l) => l.sku) : r;
+check('PLA+ Black -> the spool; PLA+2.0 (diskless) Black -> the refill; Transparent, Wood and Maple Wood each to their own', r.ok && V[0] === 'sp+b002' && V[1] === 'sp+2.0refillb124' && V[2] === 'sp+tp013' && V[3] === 'spww032' && V[4] === 'spwmw033', V);
 await done();

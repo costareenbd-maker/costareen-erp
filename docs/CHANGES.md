@@ -1094,3 +1094,13 @@ OCR alone gets ~25% and two right matches - the AI path is the real reader for s
 (32, Gemini faked with `web.on`).
 - Not done: the key is not set yet (owner to give it: `python deploy.py secrets ERP_GEMINI_KEY=...`); no per-company
   key override; Chinese columns ignored; a "which reader was used" note on the stock movement.
+
+## AI reader live; spool-or-refill tie-breaker (tag ocr-2, 8 Oct 2026)
+
+The owner's Gemini key is on the function (`ERP_GEMINI_KEY`). Models, in order: `gemini-flash-lite-latest` (4 s on the
+sample photo), `gemini-2.5-flash` (20 s), `gemini-2.5-flash-lite`; 40 s cap each (`gemini-flash-latest` hung, `2.0-flash`
+is retired - names change, so a list). Live on the Sunlu price-list photo: 35 of 35 rows, every quantity and price,
+9.5 s. The matcher now breaks the tie between the same colour on a spool and as a refill ("PLA+2.0 (diskless) Black" →
+the Refill product, "PLA+ Black" → the spool: `isRefill`, ±0.06), treats transparent/translucent as colours, and when
+every word of a row was a type word ("PLA wood / Wood") takes the last plain word as the colour. `receivefile_test.mjs`
+(37).

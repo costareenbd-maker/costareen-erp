@@ -29,7 +29,7 @@ const BRANDS = [
 const TYPES = [
   ['pla matte', /pla[\s-]*matte|matte[\s-]*pla|\bmatte\b/i], ['pla basic', /pla[\s-]*basic|\bbasic\b/i],
   ['pla+', /pla\s*\+\s*2\.0|pla\s*\+|pla[\s-]*plus|pla\+/i], ['pla silk', /silk/i], ['pla wood', /\bwood\b/i], ['pla marble', /marble/i],
-  ['pla translucent', /translucent|transparent/i], ['pla meta', /\bmeta\b/i], ['pla cf', /pla[\s-]*cf\b/i], ['pla high speed', /high\s*speed|hyper/i],
+['pla meta', /\bmeta\b/i], ['pla cf', /pla[\s-]*cf\b/i], ['pla high speed', /high\s*speed|hyper/i],
   ['petg cf', /petg[\s-]*cf\b/i], ['petg', /petg/i], ['abs', /\babs\b/i], ['asa aero', /asa[\s-]*aero/i], ['asa', /\basa\b/i], ['tpu', /tpu/i],
   ['pa6 cf', /pa6[\s-]*cf/i], ['pa6 gf', /pa6[\s-]*gf/i], ['pc', /\bpc\b/i], ['support', /support/i], ['pla', /\bpla\b/i],
 ];
@@ -51,9 +51,12 @@ function colourOf(text, brand, type) {
   t = t.replace(/\b(pla|petg|abs|asa|tpu|pc|cf|gf|basic|matte|plus|silk|wood|marble|refill|spool|less|with|filament|diskless|diameter|mm|kg|g)\b/g, ' ')
        .replace(/[\p{Script=Han}\p{Script=Bengali}]+/gu, ' ').replace(/[\d.]+/g, ' ').replace(/\b\w\b/g, ' ').replace(/\s+/g, ' ').trim();
   for (const k of Object.keys(COLOUR_SYN)) t = t.replace(new RegExp('\\b' + k + '\\b', 'g'), COLOUR_SYN[k]);
+  // a colour that vanished with the type words ("PLA wood / Wood"): the last plain word of the text is the colour
+  if (!t) { const ws = norm(text).replace(NOISE, ' ').replace(/[\d.]+/g, ' ').split(' ').filter((w) => w.length > 2 && !/^(pla|petg|abs|asa|tpu|basic|matte|plus|refill|spool|less|with|filament|diskless)$/.test(w)); t = ws.length ? ws[ws.length - 1] : ''; }
   return t;
 }
 function words(s) { return norm(s).split(' ').filter((w) => w && w.length > 1); }
+const isRefill = (t) => /diskless|refill|spool-?less|without\s*spool|\b2\.0\b|re-?fill/i.test(str(t));
 
 /** Every product, with the words a file could use for it. */
 async function catalogue(ctx) {
@@ -65,7 +68,7 @@ async function catalogue(ctx) {
     const brand = brandOf(text) || norm(p.brand);
     const type = typeOf(text);
     const colour = colourOf(str(p.color) || str(p.name), brand, type);
-    return { id: p.id, sku: str(p.sku), name: str(p.name), brand, type, colour, cw: new Set(words(colour)), stock: num(p.stock), cost: num(p.cost_price) };
+    return { id: p.id, sku: str(p.sku), name: str(p.name), brand, type, colour, cw: new Set(words(colour)), refill: isRefill(text), stock: num(p.stock), cost: num(p.cost_price) };
   });
 }
 
@@ -80,7 +83,8 @@ function score(row, p) {
   let both = 0; for (const w of rw) if (p.cw.has(w)) both++;
   if (!both) return 0;
   const jac = both / (rw.size + p.cw.size - both);
-  return s + 0.5 * jac;
+  // the same colour on a spool and as a refill: the row's wording decides (a small nudge, enough to break the tie)
+  return s + 0.5 * jac + (row.refill === p.refill ? 0.06 : -0.06);
 }
 
 // ---- reading the rows of a spreadsheet, or the lines of a PDF, into records {code, text, qty, price, currency}
@@ -176,7 +180,7 @@ async function matchRecords(ctx, records, opts) {
   const currency = (records.find((r) => r.currency) || {}).currency || '';
   const lines = records.map((r) => {
     const full = [r.code, r.text].filter(Boolean).join(' ');
-    const row = { brand: fileBrand || brandOf(full), type: typeOf(full), colour: colourOf(r.text, fileBrand, '') };
+    const row = { brand: fileBrand || brandOf(full), type: typeOf(full), colour: colourOf(r.text, fileBrand, ''), refill: isRefill(full) };
     let best = null, how = '', conf = 0, cands = [];
     const al = aliases[norm(r.code)] || aliases[norm(r.text)];
     if (al && byId[al]) { best = byId[al]; how = 'remembered'; conf = 1; }
@@ -212,7 +216,9 @@ export async function erpReceiveMatch(ctx, payload) {
 
 // ---------------------------------------------------------------- the provider's AI reader (a photo, a scanned PDF)
 const AI_DAILY = 40;        // photos per business per day through the provider's key
-const GEMINI_MODEL = 'gemini-2.0-flash';
+// the Flash models to try, in order: Google retires names and a model can be "in high demand" for a minute
+const GEMINI_MODELS = ['gemini-flash-lite-latest', 'gemini-2.5-flash', 'gemini-2.5-flash-lite'];   // measured 8 Oct 2026: lite 4 s, 2.5-flash 20 s, flash-latest hung
+const GEMINI_TIMEOUT_MS = 40000;   // the edge function itself dies at 150 s
 const AI_PROMPT = 'This is a photo or scan of a supplier document for a 3D-printing shop in Bangladesh: a packing list, proforma invoice, price list or order sheet. ' +
   'Extract every product line as JSON only - an array of objects {"code": supplier item code or "", "name": the product words (brand, material/type, colour, size) as written, ' +
   '"qty": the quantity as a number, "price": the unit price as a number or 0, "currency": "USD"/"RMB"/"BDT"/"" }. Skip headings, totals and addresses. ' +
@@ -234,15 +240,23 @@ export async function erpReceiveRead(ctx, payload) {
   const hint = str(p.hint).slice(0, 4000);
   const body = { contents: [{ parts: [{ text: AI_PROMPT + (hint ? '\n\nA rough machine reading of the same image, for reference (it may have errors):\n' + hint : '') }, { inline_data: { mime_type: m[1], data: m[3] } }] }],
                  generationConfig: { temperature: 0, response_mime_type: 'application/json' } };
-  let res;
-  try {
-    res = await ctx.deps.fetch('https://generativelanguage.googleapis.com/v1beta/models/' + GEMINI_MODEL + ':generateContent?key=' + encodeURIComponent(key),
-                               { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) });
-  } catch (e) { throw new Error('The AI reader could not be reached: ' + str((e && e.message) || e).slice(0, 120)); }
-  const txt = await res.text();
-  if (!res.ok) {
-    if (res.status === 429) throw new Error('The AI reader is busy (its free allowance for the minute is used). Wait a little and press again.');
+  let res = null, txt = '', last = '';
+  for (const model of GEMINI_MODELS) {
+    const ac = typeof AbortController === 'function' ? new AbortController() : null, timer = ac ? setTimeout(() => ac.abort(), GEMINI_TIMEOUT_MS) : null;
+    try {
+      res = await ctx.deps.fetch('https://generativelanguage.googleapis.com/v1beta/models/' + model + ':generateContent?key=' + encodeURIComponent(key),
+                                 { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body), signal: ac ? ac.signal : undefined });
+    } catch (e) { last = 'timeout ' + model; res = null; continue; }   // too slow or unreachable: the next model
+    finally { if (timer) clearTimeout(timer); }
+    txt = await res.text();
+    if (res.ok) break;
+    last = res.status + ' ' + txt.slice(0, 160);
+    if (res.status === 404 || res.status === 503 || res.status === 429) continue;   // retired, busy, or this model's minute is used: the next one
     throw new Error('The AI reader refused (' + res.status + '). ' + txt.slice(0, 160));
+  }
+  if (!res || !res.ok) {
+    if (/^(429|503|timeout)/.test(last)) throw new Error('The AI reader is busy right now (Google: high demand or the free allowance for the minute is used). Wait a little and press again.');
+    throw new Error('The AI reader refused. ' + last);
   }
   let out = '';
   try { const j = JSON.parse(txt); out = str(((((j.candidates || [])[0] || {}).content || {}).parts || []).map((x) => x.text || '').join('')); } catch (_) { out = txt; }
