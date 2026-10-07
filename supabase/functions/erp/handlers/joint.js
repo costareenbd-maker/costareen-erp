@@ -153,14 +153,54 @@ async function shelf(ctx, pool, withCost) {
     from products p left join product_stock ps on ps.product_id = p.id
     where p.business_id = ${pool.id}
     order by p.name`);
+  // whose shelf: IN minus OUT per (product, partner); movements with no holder (before 096) count for nobody
+  const heldRows = await poolRead(ctx, (t) => t`
+    select p.sku, m.held_by, coalesce(sum(case when m.direction = 'IN' then m.qty else -m.qty end), 0) as n
+    from stock_movements m join products p on p.id = m.product_id
+    where m.business_id = ${pool.id} and m.held_by is not null group by p.sku, m.held_by`);
+  const held = {};
+  for (const h of heldRows) (held[str(h.sku)] = held[str(h.sku)] || {})[str(h.held_by)] = num(h.n);
   return rows.map((p) => {
     const retail = num(p.sell_price), wholesale = num(p.wholesale_price);
     const o = { sku: str(p.sku), name: str(p.name), category: str(p.category), brand: str(p.brand), color: str(p.color), unit: str(p.unit),
                 stock: num(p.stock), retail, wholesale, floor: num(p.floor_price), status: str(p.status) || 'Active',
-                price: pool.tier === 'wholesale' && wholesale > 0 ? wholesale : retail };
+                price: pool.tier === 'wholesale' && wholesale > 0 ? wholesale : retail, held: held[str(p.sku)] || {} };
     if (withCost) o.cost = num(p.cost_price);
     return o;
   });
+}
+/** How many of a pool product sit on one partner's shelf. */
+async function heldBy(pctx, pool, productId, partner) {
+  const r = (await pctx.tx`select coalesce(sum(case when direction = 'IN' then qty else -qty end), 0) as n from stock_movements
+                            where business_id = ${pool.id} and product_id = ${productId} and held_by = ${partner}`)[0];
+  return num(r && r.n);
+}
+/** A sale from a shelf that does not hold enough: the goods are marked moved from the partner holding most, first. */
+async function ensureHeld(pctx, pool, productId, name, seller, qty, note) {
+  const have = await heldBy(pctx, pool, productId, seller);
+  if (have >= qty) return null;
+  let need = qty - have, moved = [];   // called after the sale row: qty 0 and a negative shelf = what to move
+  const others = [];
+  for (const p of pool.partners) if (p.id !== seller) others.push({ id: p.id, name: p.name, n: await heldBy(pctx, pool, productId, p.id) });
+  others.sort((a, b) => b.n - a.n);
+  const at = new Date(), cost = num(((await pctx.tx`select cost_price from products where id = ${productId}`)[0] || {}).cost_price);
+  for (const o of others) {
+    if (need <= 0) break;
+    const take = Math.min(need, Math.max(0, o.n)); if (take <= 0) continue;
+    await moveRows(pctx, pool, productId, name, o.id, seller, take, cost, at, note);
+    moved.push({ from: o.name, qty: take }); need -= take;
+  }
+  if (need > 0) { // nobody's shelf had it: the seller's shelf goes negative and the count will say so
+    moved.push({ from: 'nobody', qty: need });
+  }
+  return moved;
+}
+async function moveRows(pctx, pool, productId, name, from, to, qty, cost, at, note) {
+  const op = who(pctx), tn = txnNo(at);
+  await pctx.tx`
+    insert into stock_movements (business_id, product_id, kind, direction, qty, unit_price, total, reference, supplier, note, created_by, created_at, txn_no, operator, product_name, held_by)
+    values (${pool.id}, ${productId}, 'MOVE', 'OUT', ${qty}, ${cost}, ${round2(qty * cost)}, 'Moved between partners', '', ${note}, ${pctx.s.userId}, ${at}, ${tn}, ${op}, ${name}, ${from}),
+           (${pool.id}, ${productId}, 'MOVE', 'IN', ${qty}, ${cost}, ${round2(qty * cost)}, 'Moved between partners', '', ${note}, ${pctx.s.userId}, ${at}, ${tn + '-in'}, ${op}, ${name}, ${to})`;
 }
 
 /** Joint products for New invoice. */
@@ -400,6 +440,8 @@ export async function erpJointReceive(ctx, payload) {
   if (!(unit > 0)) throw new Error('What did one cost? The settlement needs the buying price.');
   const payer = str(payload.paidBy) || await sellerId(ctx);
   if (!pool.partners.some((p) => p.id === payer)) throw new Error('Who paid? Choose one of the partners.');
+  const at_ = str(payload.receivedAt) || payer;   // whose shelf it went on; the payer's unless said otherwise
+  if (!pool.partners.some((p) => p.id === at_)) throw new Error('Received at? Choose one of the partners.');
   const today = formatDate(ctx.now, 'yyyy-MM-dd'), date = isDate(payload.date) ? payload.date : today;
   if (date > today) throw new Error('That date has not come yet.');
   await poolOpenOn(ctx, pool, date, 'stock cannot be received there');
@@ -409,9 +451,9 @@ export async function erpJointReceive(ctx, payload) {
   const at = date === today ? new Date() : new Date(date + 'T06:00:00Z');   // noon in Dhaka
   await pctx.tx`
     insert into stock_movements (business_id, product_id, kind, direction, qty, unit_price, total, reference, supplier, note,
-                                 created_by, created_at, txn_no, operator, product_name, paid_by)
+                                 created_by, created_at, txn_no, operator, product_name, paid_by, held_by)
     values (${pool.id}, ${p.id}, 'RECEIVE', 'IN', ${qty}, ${unit}, ${round2(qty * unit)}, 'Joint stock received', ${str(payload.supplier).slice(0, 80)},
-            ${str(payload.note).slice(0, 300)}, ${pctx.s.userId}, ${at}, ${txnNo(at)}, ${who(ctx)}, ${str(p.name)}, ${payer})`;
+            ${str(payload.note).slice(0, 300)}, ${pctx.s.userId}, ${at}, ${txnNo(at)}, ${who(ctx)}, ${str(p.name)}, ${payer}, ${at_})`;
   // the product's cost becomes the average of what is on the shelf and what came in
   const had = Math.max(0, num(p.stock)), old = num(p.cost_price);
   const avg = had > 0 && old > 0 ? round2((had * old + qty * unit) / (had + qty)) : unit;
@@ -420,6 +462,30 @@ export async function erpJointReceive(ctx, payload) {
   return { sku: str(p.sku), qty, unit, cost: avg };
   });
   return { ...(await erpJoint(ctx, { pool: pool.id })), received: got };
+}
+
+/** Goods handed from one partner's shelf to the other's: no sale, no money, only where they are. */
+export async function erpJointMove(ctx, payload) {
+  payload = payload || {};
+  await needOn(ctx);
+  const pool = await poolOf(ctx, payload.pool);
+  needOwner(ctx, pool);
+  const qty = num(payload.qty), from = str(payload.from), to = str(payload.to), note = str(payload.note).slice(0, 200);
+  if (!(qty > 0) || qty !== Math.round(qty)) throw new Error('How many? A whole number above 0.');
+  if (!pool.partners.some((p) => p.id === from) || !pool.partners.some((p) => p.id === to) || from === to) throw new Error('From which partner to which? Two different ones.');
+  const today = formatDate(ctx.now, 'yyyy-MM-dd');
+  await poolOpenOn(ctx, pool, today, 'its stock cannot be moved');
+  const names = {}; pool.partners.forEach((p) => { names[p.id] = p.name; });
+  const got = await withPool(ctx, pool, async (pctx) => {
+    await lock(pctx, 'stock');
+    const p = await poolProduct(pctx, pool, payload.sku);
+    const have = await heldBy(pctx, pool, p.id, from);
+    if (qty > have) throw new Error(names[from] + ' holds only ' + have + ' of ' + str(p.name) + '. Count first, or move fewer.');
+    await moveRows(pctx, pool, p.id, str(p.name), from, to, qty, num(p.cost_price), new Date(), note || ('Moved by ' + who(ctx) + ' (' + str(ctx.s.businessName) + ')'));
+    forget(pctx, 'TXN_LOG');
+    return { sku: str(p.sku), qty, from: names[from], to: names[to] };
+  });
+  return { ...(await erpJoint(ctx, { pool: pool.id })), moved: got };
 }
 
 /** Counted and found wrong: the difference, valued at cost, is the pool's gain or loss. */
@@ -431,6 +497,8 @@ export async function erpJointAdjust(ctx, payload) {
   const qty = num(payload.qty), dir = str(payload.direction).toUpperCase() === 'IN' ? 'IN' : 'OUT', reason = str(payload.reason).slice(0, 200);
   if (!(qty > 0) || qty !== Math.round(qty)) throw new Error('How many? A whole number above 0.');
   if (!reason) throw new Error('Say why the count is being corrected. Your partner sees it.');
+  const where = str(payload.at) || await sellerId(ctx);   // whose shelf was counted
+  if (!pool.partners.some((p) => p.id === where)) throw new Error('Whose shelf? Choose one of the partners.');
   const today = formatDate(ctx.now, 'yyyy-MM-dd');
   await poolOpenOn(ctx, pool, today, 'its stock cannot be corrected');
   const sku = await withPool(ctx, pool, async (pctx) => {
@@ -440,9 +508,9 @@ export async function erpJointAdjust(ctx, payload) {
   const cost = num(p.cost_price), at = new Date();
   await pctx.tx`
     insert into stock_movements (business_id, product_id, kind, direction, qty, unit_price, total, reference, supplier, note,
-                                 created_by, created_at, txn_no, operator, product_name)
+                                 created_by, created_at, txn_no, operator, product_name, held_by)
     values (${pool.id}, ${p.id}, ${dir === 'IN' ? 'RETURN' : 'ADJUST'}, ${dir}, ${qty}, ${cost}, ${round2(qty * cost)}, ${reason}, '',
-            ${'Joint stock correction by ' + who(ctx) + ' (' + str(ctx.s.businessName) + ')'}, ${pctx.s.userId}, ${at}, ${txnNo(at)}, ${who(ctx)}, ${str(p.name)})`;
+            ${'Joint stock correction by ' + who(ctx) + ' (' + str(ctx.s.businessName) + ')'}, ${pctx.s.userId}, ${at}, ${txnNo(at)}, ${who(ctx)}, ${str(p.name)}, ${where})`;
   forget(pctx, 'TXN_LOG');
   return str(p.sku);
   });
@@ -557,6 +625,14 @@ export async function mirrorJointSale(ctx, joint, sale, createInvoice) {
         items: ls.map((l) => ({ sku: l.code, qty: l.qty })), payMode: 'none', date: sale.date || '',
         note: 'Joint stock sold by ' + seller + ' on their invoice ' + sale.invoiceNo,
       }, { mirror: { seller: me, lines: ls.map((l) => ({ unit: l.unit, disc: l.disc })) } });
+      // whose shelf: the sale took it from the seller's; sold more than the seller held -> moved from the partner first
+      for (const l of ls) {
+        const pr = (await pctx.tx`select id, name from products where business_id = ${pool.id} and lower(btrim(sku)) = ${str(l.code).toLowerCase()}`)[0];
+        if (!pr) continue;
+        // the sale row is already written as OUT from the seller's shelf; top the shelf up from before the sale
+        const mv = await ensureHeld(pctx, pool, pr.id, str(pr.name), me, 0, 'Moved on sale ' + sale.invoiceNo);
+        if (mv && mv.length) (sale.moved = sale.moved || []).push({ pool: pool.name, product: str(pr.name), moved: mv });
+      }
       await pctx.tx`
         insert into joint_sales (pool_id, seller_business_id, seller_invoice_no, pool_invoice_no, joint_total, below_floor, status)
         values (${pool.id}, ${me}, ${sale.invoiceNo}, ${r.invoiceNo}, ${total}, ${num((sale.shortfall || {})[pool.id])}, ${remote ? 'pending' : 'ok'})`;
@@ -730,9 +806,9 @@ async function mirrorJointReturnNow(ctx, invoiceNo, mine, rid, reason, at) {
         if (t.good && sold.product_id) {
           await tx`
             insert into stock_movements (business_id, product_id, kind, direction, qty, unit_price, total, reference, supplier, note, invoice_id,
-                                         created_by, created_at, txn_no, operator, product_name)
+                                         created_by, created_at, txn_no, operator, product_name, held_by)
             values (${pool.id}, ${sold.product_id}, 'RETURN', 'IN', ${t.qty}, 0, 0, ${'Return: ' + link.pool_invoice_no}, ${str(head.customer_name)},
-                    ${prid + ' - ' + reason}, ${rtn}, ${pctx.s.userId}, ${at}, ${txnNo(at)}, ${who(ctx)}, ${str(sold.name)})`;
+                    ${prid + ' - ' + reason}, ${rtn}, ${pctx.s.userId}, ${at}, ${txnNo(at)}, ${who(ctx)}, ${str(sold.name)}, ${head.sold_by})`;
         }
       }
       value = round2(value);
@@ -826,5 +902,5 @@ export async function erpPlatformJointCopy(ctx, payload) {
   return { ok: true, id, joint: on };
 }
 
-export const HANDLERS = { erpJoint, erpJointCatalog, erpJointStart, erpJointProduct, erpJointReceive, erpJointAdjust, erpJointBook, erpJointSettings,
+export const HANDLERS = { erpJointMove, erpJoint, erpJointCatalog, erpJointStart, erpJointProduct, erpJointReceive, erpJointAdjust, erpJointBook, erpJointSettings,
                           erpJointAgree, erpJointCard, erpJointStatementPdf, erpPlatformJointCopy };

@@ -288,10 +288,10 @@ export async function createInvoice(ctx, payload, opts = {}) {
               ${l.disc}, ${l.total}, ${i + 1}, ${costNow(l.sku)})`;
     await ctx.tx`
       insert into stock_movements (business_id, product_id, kind, direction, qty, unit_price, total,
-                                   reference, invoice_id, created_by, created_at, txn_no, operator, product_name)
+                                   reference, invoice_id, created_by, created_at, txn_no, operator, product_name, held_by)
       values (${ctx.biz}, ${l.productId}, 'SALE', 'OUT', ${l.qty}, ${l.unit}, ${l.total},
               ${'Invoice: ' + invoiceNo}, ${invoiceId}, ${ctx.s.userId}, ${ts}, ${txnId(now)},
-              ${who(ctx)}, ${l.name})`;
+              ${who(ctx)}, ${l.name}, ${opts.mirror ? opts.mirror.seller : null})`;
   }
 
   // plan D1: which units went out, and the warranty each one carries from today

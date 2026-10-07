@@ -1139,3 +1139,20 @@ after a photo. `receivefile_test.mjs` (51).
 which on Supabase lives in the "extensions" schema a `search_path = public` function cannot see (023 had already
 moved it to gen_random_uuid once). `095_pool_invite_fix.sql` restores the uuid-based code. The local test database
 has pgcrypto in public, so the suites never saw it - a live-only failure.
+
+## Joint stock: where the goods are (tag joint-held-1, 8 Oct 2026)
+
+Owner's case: 1,000 kg imported, 700 on his shelf, 300 on the partner's; the partner gets a big order and collects
+250 more from him; both sell. The pool now keeps **whose shelf** every unit is on, separate from who paid for it.
+`096_pool_held.sql`: `stock_movements.held_by` (the partner business), enum value `MOVE`, backfill (receipts on the
+payer's shelf, sales off the seller's). Receive stock asks **Received at** (default: who paid); a mirror sale leaves
+the seller's shelf (`held_by = opts.mirror.seller` in invoice.js); a mirror return comes back to it; Correct a count
+asks **Whose shelf was counted**; new **Move between shelves** (`erpJointMove`: an OUT from one shelf and an IN to the
+other, same note, refused above what the shelf holds, owners only). A seller who sells more than his shelf holds is
+not refused: the shortfall is written as moved from the partner holding most, note "Moved on sale INV-…"
+(`ensureHeld` in `mirrorJointSale`). The Stock tab shows a column per partner ("At Costareen · At PrototypeBD"),
+red when negative. Ownership and profit unchanged (by money). `joint5_test.mjs` (15: the owner's scenario end to
+end, the automatic move, a refused move, a count on one shelf, a return to the seller's shelf).
+- Not done: a per-shelf stock count screen (Count & adjust works per shelf via the form); the seller's own screen
+  does not yet show "you hold N of this" on New invoice; the partner's remote (own-database) copy gets the same
+  through the pool's database - not tried against a live remote pool (none exists yet).
