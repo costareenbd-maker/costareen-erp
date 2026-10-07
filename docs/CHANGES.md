@@ -1132,3 +1132,10 @@ letters + colour initials + next running number, checked free). A note above the
 suggestion came from; every box is editable; on Create the new product takes the red row's place with the file's
 quantity. The old review card is gone; the small "From the file" card only reports counts and offers the AI reader
 after a photo. `receivefile_test.mjs` (51).
+
+## Joint stock: "Start it" failed live (tag joint-fix, 8 Oct 2026)
+
+`function gen_random_bytes(integer) does not exist`: 075 had rewritten `create_pool_invite` with gen_random_bytes,
+which on Supabase lives in the "extensions" schema a `search_path = public` function cannot see (023 had already
+moved it to gen_random_uuid once). `095_pool_invite_fix.sql` restores the uuid-based code. The local test database
+has pgcrypto in public, so the suites never saw it - a live-only failure.
