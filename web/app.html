@@ -5545,12 +5545,13 @@ function viewStock() {
        '<input class="i" id="rv_search" type="search" placeholder="Search by name, SKU or brand">'+
        '<div class="results" id="rv_results"></div></div>'+quickCardHtml('receive');
   if (RECV.lines.length) {
-    h += '<div class="scroll" style="margin-top:12px"><table><thead><tr><th>Product</th>'+
+    h += (typeof rvOpenBar === 'function' ? rvOpenBar() : '') + '<div class="scroll" style="margin-top:12px"><table><thead><tr><th>Product</th>'+
          '<th class="num">In stock now</th><th class="num">Receiving</th><th class="num">New stock</th><th></th></tr></thead><tbody>';
     RECV.lines.forEach(function (l, i) {
-      h += '<tr'+(l.isNew?' class="grp-new"':'')+'><td class="nm">'+esc(l.name)+
+      h += '<tr'+(l.isNew?' class="grp-new"':'')+(l.state ? ' class="rv-'+l.state+'"' : '')+(typeof RV_ONLY_OPEN !== 'undefined' && RV_ONLY_OPEN && !l.state ? ' style="display:none"' : '')+'>'+
+           (typeof rvNameCell === 'function' ? rvNameCell(l, i) : '<td class="nm">'+esc(l.name)+
            (l.isNew ? '<br><span class="pill low">new product \u2014 not saved yet</span>'
-                    : '<br><span class="sku">'+esc(l.sku)+'</span>')+'</td>'+
+                    : '<br><span class="sku">'+esc(l.sku)+'</span>')+'</td>')+
            '<td class="num">'+(l.isNew?'<span class="sku">\u2014</span>':fmt(l.stock))+'</td>'+
            '<td class="num"><input class="i qty" type="number" min="1" step="1" data-rvqty="'+i+'" value="'+l.qty+'"></td>'+
            '<td class="num"><strong data-rvnew="'+i+'">'+fmt((l.isNew?0:num(l.stock))+num(l.qty))+'</strong></td>'+
@@ -5559,8 +5560,8 @@ function viewStock() {
     h += '</tbody></table></div>';
     h += '<div class="row" style="justify-content:flex-end; margin-top:14px">'+
          '<button class="btn" type="button" id="rv_clear">Clear</button>'+
-         '<button class="btn primary" type="button" id="rv_save"'+(BUSY==='receive'?' disabled':'')+'>'+
-         (BUSY==='receive'?'Receiving…':'Receive '+RECV.lines.length+' product(s)')+'</button></div>';
+         '<button class="btn primary" type="button" id="rv_save"'+(BUSY==='receive' || (typeof rvOpenCount === 'function' && rvOpenCount()) ? ' disabled':'')+'>'+
+         (BUSY==='receive'?'Receiving…': (typeof rvOpenCount === 'function' && rvOpenCount() ? rvOpenCount()+' row(s) need a choice' : 'Receive '+RECV.lines.length+' product(s)'))+'</button></div>';
     h += '<div id="rv_costsum">' + recvCostSummary() + '</div>';
   } else {
     h += '<div class="empty">No products added yet.</div>';
@@ -8426,7 +8427,7 @@ function srv(name, args, ok, bad) {
 
 var SRV_ACTIVE = 0, SRV_WRITING = false, SRV_TIMED = {};
 // the same list the server uses to know a call changes nothing (ERP_READS)
-var SRV_READS = /^(erpReceiveMatch|erpAiReader|erpApps|erpAppQr|erpFeedback|erpRestockOffers|erpRestockList|erpWarrantyRules|erpWarrantyCard|erpMyLink|erpPlatformRegister|erpPlatformDoctor|erpPlatformCommunity|erpMarketWaiting|erpBoard|erpPlatformDesign|erpResell|erpResellerProgramme|erpLoyalty|erpCustomerPoints|erpRefillDue|erpDeliveryHistory|erpDeliveryHistoryMany|erpPrintKit|erpPrintJobs|erpPrintJob|erpPrintCost|erpSpools|erpPrintRequests|erpJoint|erpJointCatalog|erpJointCard|erpInvoiceDesign|erpInvoicePreview|erpMarket|erpMarketMine|erpMarketRequests|erpMarketHints|erpMarketNames|erpWanted|erpBrand|erpComplianceLog|erpProviderKey|erpNews|erpAccessKeys|erpAccessWarning|erpAdmin|erpAiKeys|erpAlertRules|erpAlerts|erpArena|erpBackupStatus|erpBg|erpBnWords|erpBookedParcels|erpBrandLogo|erpBundle|erpBusinessLinks|erpBusinesses|erpBusinessesDeleted|erpCampaignAudience|erpCampaignGet|erpCampaignList|erpCapital|erpCashBook|erpCatalog|erpConnStatus|erpConnections|erpCostBook|erpCourier|erpCourierKeyStatus|erpCurrencies|erpCustomerAccount|erpCustomerCredit|erpCustomerList|erpCustomerPage|erpCustomerStatement|erpCustomers|erpDashboardData|erpDaySales|erpDeliveryOptions|erpDevices|erpDiscontinued|erpDues|erpEvoQr|erpEvoStatus|erpExpenseExport|erpExpenseReceiptUrl|erpExpenses|erpFamilies|erpFighters|erpFormOptions|erpGame|erpGetTheme|erpGoogle|erpHello|erpInstalls|erpInvoice|erpInvoicePdf|erpJob|erpJobs|erpListView|erpLookupCustomer|erpLookupUsage|erpMe|erpMoney|erpNoteFileUrl|erpNotes|erpOwnerChange|erpOwnerChanges|erpParcelLabels|erpParcelPreview|erpPartnerStock|erpPartnership|erpPayReasons|erpPeople|erpPlatform|erpPlatformErrors|erpPnl|erpPnlMonth|erpPoList|erpPoolCatalog|erpProduct|erpProductListShare|erpProductPage|erpProductPhotoUrl|erpProductThumbs|erpProfile|erpQuoteAsset|erpQuoteBoot|erpQuoteGet|erpQuoteList|erpRecentInvoices|erpRecovery|erpReorderPlan|erpRestorePreview|erpReturnPreview|erpRisks|erpSales|erpSearch|erpSecurity|erpSelfTest|erpSerialLookup|erpSerialsFor|erpSessions|erpSetTheme|erpSettingsFull|erpSettingsLists|erpSfPayoutLines|erpSfPayouts|erpShareFile|erpSharedStock|erpSheet|erpStatementPdf|erpStockHistory|erpSupplierPage|erpSuppliers|erpToday|erpUsers|erpWaProductPdf|erpWebMatches|erpWebOrderInvoices|erpWebOrders|erpWebsiteTest)$/;
+var SRV_READS = /^(erpReceiveMatch|erpAiReader|erpProductSuggest|erpApps|erpAppQr|erpFeedback|erpRestockOffers|erpRestockList|erpWarrantyRules|erpWarrantyCard|erpMyLink|erpPlatformRegister|erpPlatformDoctor|erpPlatformCommunity|erpMarketWaiting|erpBoard|erpPlatformDesign|erpResell|erpResellerProgramme|erpLoyalty|erpCustomerPoints|erpRefillDue|erpDeliveryHistory|erpDeliveryHistoryMany|erpPrintKit|erpPrintJobs|erpPrintJob|erpPrintCost|erpSpools|erpPrintRequests|erpJoint|erpJointCatalog|erpJointCard|erpInvoiceDesign|erpInvoicePreview|erpMarket|erpMarketMine|erpMarketRequests|erpMarketHints|erpMarketNames|erpWanted|erpBrand|erpComplianceLog|erpProviderKey|erpNews|erpAccessKeys|erpAccessWarning|erpAdmin|erpAiKeys|erpAlertRules|erpAlerts|erpArena|erpBackupStatus|erpBg|erpBnWords|erpBookedParcels|erpBrandLogo|erpBundle|erpBusinessLinks|erpBusinesses|erpBusinessesDeleted|erpCampaignAudience|erpCampaignGet|erpCampaignList|erpCapital|erpCashBook|erpCatalog|erpConnStatus|erpConnections|erpCostBook|erpCourier|erpCourierKeyStatus|erpCurrencies|erpCustomerAccount|erpCustomerCredit|erpCustomerList|erpCustomerPage|erpCustomerStatement|erpCustomers|erpDashboardData|erpDaySales|erpDeliveryOptions|erpDevices|erpDiscontinued|erpDues|erpEvoQr|erpEvoStatus|erpExpenseExport|erpExpenseReceiptUrl|erpExpenses|erpFamilies|erpFighters|erpFormOptions|erpGame|erpGetTheme|erpGoogle|erpHello|erpInstalls|erpInvoice|erpInvoicePdf|erpJob|erpJobs|erpListView|erpLookupCustomer|erpLookupUsage|erpMe|erpMoney|erpNoteFileUrl|erpNotes|erpOwnerChange|erpOwnerChanges|erpParcelLabels|erpParcelPreview|erpPartnerStock|erpPartnership|erpPayReasons|erpPeople|erpPlatform|erpPlatformErrors|erpPnl|erpPnlMonth|erpPoList|erpPoolCatalog|erpProduct|erpProductListShare|erpProductPage|erpProductPhotoUrl|erpProductThumbs|erpProfile|erpQuoteAsset|erpQuoteBoot|erpQuoteGet|erpQuoteList|erpRecentInvoices|erpRecovery|erpReorderPlan|erpRestorePreview|erpReturnPreview|erpRisks|erpSales|erpSearch|erpSecurity|erpSelfTest|erpSerialLookup|erpSerialsFor|erpSessions|erpSetTheme|erpSettingsFull|erpSettingsLists|erpSfPayoutLines|erpSfPayouts|erpShareFile|erpSharedStock|erpSheet|erpStatementPdf|erpStockHistory|erpSupplierPage|erpSuppliers|erpToday|erpUsers|erpWaProductPdf|erpWebMatches|erpWebOrderInvoices|erpWebOrders|erpWebsiteTest)$/;
 function srvPump() {
   if (!SRV_Q.length) return;
   var isRead = SRV_READS.test(SRV_Q[0].name);
@@ -21571,6 +21572,8 @@ document.addEventListener('click', function (ev) {
 .ap-mrow{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:6px 0;border-bottom:1px solid var(--ring);min-width:0}
 .ap-mrow .nm{font-weight:600}
 .fb-kind .btn{padding:4px 12px}
+tr.rv-amber td{background:var(--warning-soft)}
+tr.rv-red td{background:var(--critical-soft)}
 .fb-item{border-top:1px solid var(--ring);padding:10px 0}
 .fb-item:first-child{border-top:0}
 .fb-meta{font-size:12px;color:var(--muted);display:flex;gap:8px;flex-wrap:wrap;align-items:center}
@@ -21861,34 +21864,70 @@ function rfCardHtml() {
   if (!RF.file && !RF.busy && !RF.err) return '';
   var h = '<section><div class="card" id="rf_card"><h2>From the file' + (RF.file ? ': ' + esc(RF.file) : '') + '</h2>';
   if (RF.err) return h + '<div class="note err"><div class="ico">!</div><div>' + esc(RF.err) + '</div></div><div class="ap-row">' +
-    (RF.image ? '<button class="btn small primary" type="button" id="rf_ai">Read it better with the provider’s AI reader</button>' : '') +
+    (RF.image ? '<button class="btn small primary" type="button" id="rf_ai">Read it better with the provider\u2019s AI reader</button>' : '') +
     '<button class="btn small" type="button" id="rf_close">Close</button></div></div></section>';
   if (RF.busy) return h + '<div class="loading">' + esc(RF.busy) + '</div></div></section>';
-  var r = RF.res, L = RF.lines;
-  var ok = L.filter(function (l) { return !l.skip && l.sku; }).length, nw = L.filter(function (l) { return !l.skip && !l.sku; }).length, qty = 0, money = 0;
-  L.forEach(function (l) { if (!l.skip) { qty += num(l.qty); money += num(l.qty) * num(l.price); } });
-  h += '<div class="sub" data-c5x="1" style="display:block">Check every line: the product it matched, the quantity, the price. Change a product from the list, mark a line <b>New product</b> or <b>Skip</b>. Nothing enters stock until you press <b>Receive</b> on the form.</div>' +
-       (r.reader === 'ocr' ? '<div class="note" style="margin:6px 0 10px"><div class="ico">\u25cf</div><div>Read on this device' + (RF.ocrConf ? ' (' + Math.round(RF.ocrConf) + '% sure)' : '') + '. Nothing was sent anywhere. ' +
-            (RF.ocrConf && RF.ocrConf < 75 ? 'The photo was hard to read - ' : 'If the lines look wrong, ') + '<button class="btn small" type="button" id="rf_ai" style="vertical-align:middle">Read it better with the provider\u2019s AI reader</button> (the photo goes to the provider\u2019s AI).</div></div>'
-        : r.reader === 'gemini' ? '<div class="note" style="margin:6px 0 10px"><div class="ico">\u25cf</div><div>Read by the provider\u2019s AI reader' + (r.readsLeft != null ? ' \u00b7 ' + r.readsLeft + ' reads left today' : '') + '.</div></div>' : '') +
-       '<div class="rf-sum"><span><b>' + fmt(L.length) + '</b> lines</span><span class="rf-conf hi">' + fmt(ok) + ' matched</span>' + (nw ? '<span class="rf-conf no">' + fmt(nw) + ' new</span>' : '') +
-       '<span>' + fmt(qty) + ' units</span>' + (money ? '<span>' + fmt(money) + ' ' + esc(r.currency || '') + '</span>' : '') + (r.brand ? '<span class="sku">brand: ' + esc(r.brand) + '</span>' : '') + '</div>' +
-       '<div class="scroll"><table class="rf-tbl"><thead><tr><th>In the file</th><th>Our product</th><th class="num">Qty</th><th class="num">Unit price</th><th></th></tr></thead><tbody>';
-  L.forEach(function (l, i) {
-    var opts = '<option value="">\u2014 pick a product \u2014</option>';
-    var seen = {};
-    (l.candidates || []).forEach(function (c) { seen[c.sku] = 1; opts += '<option value="' + esc(c.sku) + '"' + (c.sku === l.sku ? ' selected' : '') + '>' + esc(c.name) + ' (' + esc(c.sku) + ')</option>'; });
-    if (l.sku && !seen[l.sku]) opts += '<option value="' + esc(l.sku) + '" selected>' + esc(l.name) + ' (' + esc(l.sku) + ')</option>';
-    opts += '<option value="__search">Search all products\u2026</option>';
-    h += '<tr' + (l.skip ? ' style="opacity:.45"' : '') + '><td><div>' + esc(l.text || l.code) + '</div><div class="rf-src">' + (l.code ? 'code ' + esc(l.code) + ' \u00b7 ' : '') + 'line ' + l.row + '</div></td>' +
-         '<td>' + rfConfHtml(l) + '<br>' + (l.skip ? '' : (l.sku ? '<select class="i rf-pick" data-rfpick="' + i + '">' + opts + '</select>'
-                                                   : '<input class="i rf-pick" data-rfnew="' + i + '" value="' + esc((l.newProduct || {}).product_name || '') + '" placeholder="Name of the new product"> <select class="i rf-pick" data-rfpick="' + i + '" style="margin-top:4px">' + opts + '</select>')) + '</td>' +
-         '<td class="num"><input class="i qty" type="number" min="0" step="1" data-rfqty="' + i + '" value="' + num(l.qty) + '"' + (l.skip ? ' disabled' : '') + '></td>' +
-         '<td class="num"><input class="i qty" type="number" min="0" step="0.01" data-rfprice="' + i + '" value="' + num(l.price) + '"' + (l.skip ? ' disabled' : '') + '></td>' +
-         '<td class="num" style="white-space:nowrap">' + (l.skip ? '<button class="btn small" type="button" data-rfun="' + i + '">Keep</button>' : '<button class="btn small" type="button" data-rfskip="' + i + '">Skip</button>') + '</td></tr>';
-  });
-  h += '</tbody></table></div><div class="ap-row"><button class="btn primary" type="button" id="rf_add">Add ' + fmt(ok + nw) + ' line(s) to the receive list</button><button class="btn small" type="button" id="rf_close">Close</button></div>';
+  var r = RF.res || {};
+  h += '<div class="sub" data-c5x="1" style="display:block">' + fmt(RF.added || 0) + ' line(s) went into the receive list below' + (r.matched != null ? ': ' + fmt(r.matched) + ' matched, ' + fmt(r.unmatched) + ' to decide' : '') + '. ' +
+       (r.reader === 'ocr' ? 'Read on this device' + (RF.ocrConf ? ' (' + Math.round(RF.ocrConf) + '% sure)' : '') + '; nothing was sent anywhere. ' + (RF.ocrConf && RF.ocrConf < 75 ? 'The photo was hard to read \u2014 ' : 'If the lines look wrong, ') + '<button class="btn small" type="button" id="rf_ai" style="vertical-align:middle">Read it better with the provider\u2019s AI reader</button>'
+        : r.reader === 'gemini' ? 'Read by the provider\u2019s AI reader' + (r.readsLeft != null ? ' \u00b7 ' + r.readsLeft + ' reads left today' : '') + '.' : '') + '</div>' +
+       '<div class="ap-row"><button class="btn small" type="button" id="rf_close">Close</button></div>';
   return h + '</div></section>';
+}
+// ---- the rows a file made: green (sure), amber (a guess - pick one), red (unknown - set up the product)
+var RV_ONLY_OPEN = false, RF_FIX_ROW = null;
+function rvOpenCount() { var n = 0; RECV.lines.forEach(function (l) { if (l.state === 'amber' || l.state === 'red') n++; }); return n; }
+function rvOpenBar() {
+  var n = rvOpenCount(); if (!n && !RV_ONLY_OPEN) return '';
+  return '<div class="ap-row" style="margin-top:12px"><span class="rf-conf ' + (n ? 'mid' : 'hi') + '">' + (n ? fmt(n) + ' row(s) need a choice' : 'Every row is settled') + '</span>' +
+         '<label class="mk-sw" style="font-size:12.5px"><input type="checkbox" id="rv_onlyopen"' + (RV_ONLY_OPEN ? ' checked' : '') + '> Show only those</label></div>';
+}
+function rvSrcLine(l) {
+  var sct = l.src; if (!sct) return '';
+  return '<br><span class="rf-src">from file: ' + esc(sct.text || sct.code) + (sct.price ? ' \u00b7 ' + fmt(sct.price) + ' ' + esc(sct.currency || '') : '') +
+         (sct.how === 'remembered' ? ' \u00b7 remembered' : sct.how === 'sku' ? ' \u00b7 our SKU' : sct.confidence ? ' \u00b7 ' + Math.round(sct.confidence * 100) + '% match' : '') + '</span>';
+}
+function rvNameCell(l, i) {
+  var sct = l.src;
+  if (l.state === 'amber') {
+    var opts = '';
+    (sct.candidates || []).forEach(function (c) { opts += '<option value="' + esc(c.sku) + '"' + (c.sku === l.sku ? ' selected' : '') + '>' + esc(c.name) + ' (' + esc(c.sku) + ')</option>'; });
+    return '<td class="nm"><span class="rf-conf mid">which one?</span> <select class="i rf-pick" data-rvpick="' + i + '" style="display:inline-block;width:auto;max-width:100%">' + opts + '<option value="__search">Search all products\u2026</option></select>' +
+           ' <button class="btn small primary" type="button" data-rvkeep="' + i + '">Keep this</button>' + rvSrcLine(l) + '</td>';
+  }
+  if (l.state === 'red') {
+    return '<td class="nm"><span class="rf-conf no">not in your products</span> <b>' + esc(l.name) + '</b><br>' +
+           '<button class="btn small primary" type="button" data-rvsetup="' + i + '" style="margin-top:4px">Set up product</button> ' +
+           '<select class="i rf-pick" data-rvpick="' + i + '" style="display:inline-block;width:auto;margin-top:4px"><option value="">\u2026or an existing product</option>' + (sct.candidates || []).map(function (c) { return '<option value="' + esc(c.sku) + '">' + esc(c.name) + ' (' + esc(c.sku) + ')</option>'; }).join('') + '<option value="__search">Search all products\u2026</option></select>' + rvSrcLine(l) + '</td>';
+  }
+  return '<td class="nm">' + esc(l.name) + (l.isNew ? '<br><span class="pill low">new product \u2014 not saved yet</span>' : '<br><span class="sku">' + esc(l.sku) + '</span>') + rvSrcLine(l) + '</td>';
+}
+/** The matched lines into the receive table. */
+function rfIntoTable(r) {
+  var added = 0, money = 0, cur = '', pairs = [];
+  (r.lines || []).forEach(function (l) {
+    if (!(num(l.qty) > 0)) return;
+    var src = { text: l.text, code: l.code, price: l.price, currency: l.currency, confidence: l.confidence, how: l.how, candidates: l.candidates || [], newProduct: l.newProduct };
+    var p = l.sku ? (CAT || []).filter(function (x) { return x.sku === l.sku; })[0] : null;
+    if (l.sku && (l.how === 'sku' || l.how === 'remembered' || l.confidence >= 0.9)) {
+      var hit = null; for (var j = 0; j < RECV.lines.length; j++) if (RECV.lines[j].sku === l.sku) hit = RECV.lines[j];
+      if (hit) { hit.qty = num(hit.qty) + num(l.qty); if (!hit.src) hit.src = src; } else RECV.lines.push({ sku: l.sku, name: p ? p.name : l.name, qty: num(l.qty), stock: p ? p.stock : num(l.stock), src: src });
+      if (l.how !== 'sku') pairs.push({ alias: l.code || l.text, sku: l.sku });
+    } else if (l.sku) {
+      RECV.lines.push({ sku: l.sku, name: p ? p.name : l.name, qty: num(l.qty), stock: p ? p.stock : num(l.stock), src: src, state: 'amber' });
+    } else {
+      RECV.lines.push({ sku: '', name: (l.newProduct || {}).product_name || l.text, qty: num(l.qty), stock: 0, src: src, state: 'red' });
+    }
+    added++; money += num(l.qty) * num(l.price); if (l.currency) cur = l.currency;
+  });
+  if (r.supplier && !RECV.supplier) RECV.supplier = r.supplier;
+  if (money > 0 && !num(RECV.totalRmb)) { RECV.mode = 'fx'; RECV.currency = (cur || r.currency || 'RMB').toUpperCase().replace('CNY', 'RMB'); RECV.totalRmb = String(Math.round(money * 100) / 100); if (!RECV.rate && typeof fxRate === 'function' && fxRate(RECV.currency) > 0) RECV.rate = String(fxRate(RECV.currency)); }
+  if (!RECV.reference && RF.file) RECV.reference = RF.file.replace(/\.(pdf|xlsx|csv|jpe?g|png|webp)$/i, '');
+  if (pairs.length) srv('erpReceiveLearn', [{ pairs: pairs, supplier: RECV.supplier || r.supplier || '' }], function () {}, function () {});
+  RF.added = added; RV_ONLY_OPEN = rvOpenCount() > 0 && added > 8;
+  repaint();
+  var n = rvOpenCount();
+  toast(added + ' line(s) in the receive list' + (n ? '; ' + n + ' need a choice before you can receive.' : '. Check and press Receive.'), false, 9000);
 }
 var viewStockRF = viewStock;
 viewStock = function () {
@@ -22006,69 +22045,84 @@ function rfStart(file) {
   rfReadFile(file).then(function (read) {
     RF.busy = 'Matching the lines to your products\u2026'; repaint();
     srv('erpReceiveMatch', [{ rows: read.rows, kind: read.kind, reader: read.reader || 'file', supplier: RECV.supplier || '', fileName: file.name }], function (r) {
-      RF.busy = ''; RF.res = r; RF.lines = r.lines.map(function (l) { return Object.assign({ skip: false }, l); }); repaint();
-      var c = el('rf_card'); if (c) c.scrollIntoView({ block: 'start', behavior: 'smooth' });
+      RF.busy = ''; RF.res = r; rfIntoTable(r);
     }, function (e) { RF.busy = ''; RF.err = (e && e.message) || String(e); repaint(); });
   }, function (e) { RF.busy = ''; RF.err = (e && e.message) || String(e); repaint(); });
 }
 // ---- wiring
 document.addEventListener('click', function (ev) {
   if (VIEW !== 'stock') return;
-  var t = ev.target && ev.target.closest ? ev.target.closest('#rv_fileBtn,#rf_close,#rf_add,#rf_ai,[data-rfskip],[data-rfun]') : null; if (!t) return;
+  var t = ev.target && ev.target.closest ? ev.target.closest('#rv_fileBtn,#rf_close,#rf_ai,[data-rvkeep],[data-rvsetup]') : null; if (!t) return;
   if (t.id === 'rv_fileBtn') { var inp = el('rv_file'); if (inp) { inp.value = ''; inp.click(); } return; }
   if (t.id === 'rf_ai') {
     if (!RF.image) { toast('No photo to send.', true); return; }
     var keep = RF; RF.busy = 'The provider\u2019s AI reader is reading the photo\u2026'; repaint();
     srv('erpReceiveRead', [{ image: RF.image, hint: RF.hint, supplier: RECV.supplier || '', fileName: RF.file }], function (r) {
-      RF.busy = ''; RF.res = r; RF.lines = r.lines.map(function (l) { return Object.assign({ skip: false }, l); }); repaint();
+      // the device's rows from this photo make way for the AI reader's
+      RECV.lines = RECV.lines.filter(function (l) { return !(l.src && l.src.fromFile === RF.file); });
+      RECV.lines = RECV.lines.filter(function (l) { return !l.src || l.src.file !== RF.file; });
+      RF.busy = ''; RF.res = r; rfIntoTable(r);
     }, function (e) { RF.busy = ''; repaint(); toast(esc((e && e.message) || e), true, 12000); });
     return;
   }
   if (t.id === 'rf_close') { RF = { busy: '', err: '', file: '', res: null, lines: null, image: '', hint: '', ocrConf: 0 }; repaint(); return; }
   if (t.hasAttribute('data-rfskip')) { RF.lines[Number(t.getAttribute('data-rfskip'))].skip = true; repaint(); return; }
   if (t.hasAttribute('data-rfun')) { RF.lines[Number(t.getAttribute('data-rfun'))].skip = false; repaint(); return; }
-  if (t.id === 'rf_add') {
-    var pairs = [], added = 0, cur = '', money = 0;
-    RF.lines.forEach(function (l) {
-      if (l.skip || !(num(l.qty) > 0)) return;
-      if (l.sku) {
-        var hit = null; for (var j = 0; j < RECV.lines.length; j++) if (RECV.lines[j].sku === l.sku) hit = RECV.lines[j];
-        if (hit) hit.qty = num(hit.qty) + num(l.qty); else { var p = (CAT || []).filter(function (x) { return x.sku === l.sku; })[0]; RECV.lines.push({ sku: l.sku, name: p ? p.name : l.name, qty: num(l.qty), stock: p ? p.stock : num(l.stock) }); }
-        if (l.how !== 'sku') pairs.push({ alias: l.code || l.text, sku: l.sku });
-      } else {
-        var np = l.newProduct || {}; var nm = String(np.product_name || l.text).trim(); if (!nm) return;
-        RECV.lines.push({ isNew: true, name: nm, qty: num(l.qty), stock: 0, product: { product_name: nm, brand: np.brand || '', color: np.color || '', category: np.category || 'Filaments', unit: np.unit || 'Roll', sell_price: 0, cost_price: 0, status: 'Active' } });
-      }
-      added++; money += num(l.qty) * num(l.price); if (l.currency) cur = l.currency;
-    });
-    if (RF.res && RF.res.supplier && !RECV.supplier) RECV.supplier = RF.res.supplier;
-    if (money > 0 && !num(RECV.totalRmb)) { RECV.mode = 'fx'; RECV.currency = (cur || RF.res.currency || 'RMB').toUpperCase().replace('CNY', 'RMB'); RECV.totalRmb = String(Math.round(money * 100) / 100); if (!RECV.rate && typeof fxRate === 'function' && fxRate(RECV.currency) > 0) RECV.rate = String(fxRate(RECV.currency)); }
-    if (!RECV.reference && RF.file) RECV.reference = RF.file.replace(/\.(pdf|xlsx|csv)$/i, '');
-    if (pairs.length) srv('erpReceiveLearn', [{ pairs: pairs, supplier: RECV.supplier || RF.res.supplier || '' }], function () {}, function () {});
-    RF = { busy: '', err: '', file: '', res: null, lines: null, image: '', hint: '', ocrConf: 0 };
-    repaint(); toast(added + ' line(s) added to the receive list. Check them, then press Receive.');
+  if (t.hasAttribute('data-rvkeep')) { var kl = RECV.lines[Number(t.getAttribute('data-rvkeep'))]; if (kl) { delete kl.state; if (kl.src) srv('erpReceiveLearn', [{ pairs: [{ alias: kl.src.code || kl.src.text, sku: kl.sku }], supplier: RECV.supplier || '' }], function () {}, function () {}); } repaint(); return; }
+  if (t.hasAttribute('data-rvsetup')) {
+    var ri = Number(t.getAttribute('data-rvsetup')), rl = RECV.lines[ri]; if (!rl) return;
+    t.disabled = true; t.textContent = 'Preparing\u2026';
+    var np = (rl.src && rl.src.newProduct) || {};
+    srv('erpProductSuggest', [{ name: rl.src ? rl.src.text : rl.name, brand: np.brand || '', colour: np.color || '', price: rl.src ? rl.src.price : 0, currency: rl.src ? rl.src.currency : '', supplier: RECV.supplier || '' }], function (r) {
+      PRODUCT_FORM = Object.assign(blankProduct(), r.product, { isNew: true, returnTo: 'receive', opening_stock: 0 });
+      RF_FIX_ROW = ri; RECV_NEWQTY = num(rl.qty) || 1; RF_SUGGEST = r;
+      if (!LISTS) loadLists();
+      repaint(); var f = el('pf_name') || el('pf_sku'); if (f) f.scrollIntoView({ block: 'center' });
+    }, function (e) { t.disabled = false; t.textContent = 'Set up product'; toast(esc((e && e.message) || e), true, 9000); });
+    return;
   }
 });
+var RF_SUGGEST = null;
+var quickCardHtmlRF = quickCardHtml;
+quickCardHtml = function (target) {
+  var h = quickCardHtmlRF.apply(this, arguments);
+  if (!h || target !== 'receive' || RF_FIX_ROW === null || !RF_SUGGEST) return h;
+  var note = '<div class="note" style="margin:0 0 10px"><div class="ico">\u25cf</div><div>Every box below is a <b>suggestion</b> from ' + (RF_SUGGEST.siblings ? fmt(RF_SUGGEST.siblings) + ' similar product(s) (' + esc(RF_SUGGEST.basis) + (RF_SUGGEST.examples && RF_SUGGEST.examples.length ? ': ' + esc(RF_SUGGEST.examples.join(', ')) : '') + ')' : 'the file line') + '. Change anything; nothing is saved until you press Create.</div></div>';
+  var at = h.indexOf('<h2>'); return at >= 0 ? h.slice(0, at) + note + h.slice(at) : note + h;
+};
+// the created product takes the red row's place, with the file's quantity
+var attachNewProductRF = attachNewProduct;
+attachNewProduct = function (target, sku) {
+  if (target !== 'receive' || RF_FIX_ROW === null) return attachNewProductRF.apply(this, arguments);
+  var ri = RF_FIX_ROW; RF_FIX_ROW = null; RF_SUGGEST = null; RECV_NEWQTY = 0;
+  srv('erpCatalog', [], function (cat) {
+    CAT = cat; var p = null; for (var i = 0; i < CAT.length; i++) if (CAT[i].sku === sku) { p = CAT[i]; break; }
+    var row = RECV.lines[ri];
+    if (row) { row.sku = sku; row.name = p ? p.name : sku; row.stock = p ? p.stock : 0; delete row.state; if (row.src) srv('erpReceiveLearn', [{ pairs: [{ alias: row.src.code || row.src.text, sku: sku }], supplier: RECV.supplier || '' }], function () {}, function () {}); }
+    else RECV.lines.push({ sku: sku, name: p ? p.name : sku, qty: 1, stock: p ? p.stock : 0 });
+    toast('Product created and placed on its line. ' + (rvOpenCount() ? rvOpenCount() + ' row(s) still need a choice.' : 'Press Receive when ready.'), false, 8000);
+    D = null; loadDashboardOnly(); updateCounts(); repaint();
+  }, function (e) { toast(esc((e && e.message) || e), true, 9000); });
+};
 document.addEventListener('change', function (ev) {
   if (VIEW !== 'stock') return;
   var t = ev.target; if (!t || !t.getAttribute) return;
   if (t.id === 'rv_file') { if (t.files && t.files[0]) rfStart(t.files[0]); return; }
-  var i;
-  if (t.hasAttribute('data-rfqty')) { i = Number(t.getAttribute('data-rfqty')); RF.lines[i].qty = Math.max(0, Math.round(num(t.value))); return; }
-  if (t.hasAttribute('data-rfprice')) { i = Number(t.getAttribute('data-rfprice')); RF.lines[i].price = num(t.value); return; }
-  if (t.hasAttribute('data-rfnew')) { i = Number(t.getAttribute('data-rfnew')); RF.lines[i].newProduct = Object.assign({}, RF.lines[i].newProduct || {}, { product_name: t.value }); return; }
-  if (t.hasAttribute('data-rfpick')) {
-    i = Number(t.getAttribute('data-rfpick')); var l = RF.lines[i], v = t.value;
+  if (t.id === 'rv_onlyopen') { RV_ONLY_OPEN = !!t.checked; repaint(); return; }
+  if (t.hasAttribute('data-rvpick')) {
+    var pi = Number(t.getAttribute('data-rvpick')), pl = RECV.lines[pi], v = t.value; if (!pl) return;
     if (v === '__search') {
-      var q = prompt('Search a product (name or SKU)', l.text || ''); if (q === null) { repaint(); return; }
+      var q = prompt('Search a product (name or SKU)', pl.src ? pl.src.text : pl.name); if (q === null) { repaint(); return; }
       var qq = String(q).toLowerCase(), hits = (CAT || []).filter(function (p) { return (p.name + ' ' + p.sku + ' ' + (p.brand || '')).toLowerCase().indexOf(qq) >= 0; }).slice(0, 8);
       if (!hits.length) { toast('No product like "' + esc(q) + '".', true); repaint(); return; }
       var pick = hits.length === 1 ? hits[0] : hits[Number(prompt(hits.map(function (p, k) { return (k + 1) + '. ' + p.name + ' (' + p.sku + ')'; }).join('\n') + '\n\nWhich number?', '1')) - 1];
       if (!pick) { repaint(); return; }
-      l.candidates = [{ sku: pick.sku, name: pick.name, score: 1 }].concat(l.candidates || []); v = pick.sku; l.name = pick.name; l.stock = pick.stock;
+      v = pick.sku;
     }
-    if (v) { l.sku = v; l.isNew = false; l.how = l.how === 'sku' ? 'sku' : 'words'; l.confidence = 1; var c = (l.candidates || []).filter(function (x) { return x.sku === v; })[0]; if (c) l.name = c.name; }
-    else { l.sku = ''; l.isNew = true; l.how = ''; l.confidence = 0; }
+    if (!v) { repaint(); return; }
+    var cp = (CAT || []).filter(function (x) { return x.sku === v; })[0];
+    pl.sku = v; pl.name = cp ? cp.name : v; pl.stock = cp ? cp.stock : 0; delete pl.state;
+    if (pl.src) srv('erpReceiveLearn', [{ pairs: [{ alias: pl.src.code || pl.src.text, sku: v }], supplier: RECV.supplier || '' }], function () {}, function () {});
     repaint();
   }
 });

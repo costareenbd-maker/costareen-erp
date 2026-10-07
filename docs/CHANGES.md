@@ -1114,3 +1114,21 @@ request to Google, says which model answered or that Google refused the key). St
 (control-only `erp_provider_secrets`), sealed with ERP_BRIDGE_KEY (`sealJSON`); the key is never shown back. The
 reader (`erpReceiveRead`) uses the stored key first, else the function's `ERP_GEMINI_KEY`. Handlers `erpAiReader`,
 `erpAiReaderSet`, `erpAiReaderTest` in receivefile.js, platform admin only. `receivefile_test.mjs` (46).
+
+## One receive list; unknown lines set up as products with suggested boxes (tag one-list-1, 8 Oct 2026)
+
+Owner: two lists was wrong. A file or photo now puts its lines **straight into the receive table**, beside the rows
+added by hand. Three row states: **green** (sure, remembered or our SKU - a normal row, with "from file: … · 48 RMB
+· 99% match" under the name), **amber** ("which one?": a dropdown of the closest products or search, **Keep this**),
+**red** ("not in your products": **Set up product**, or pick an existing one). The Receive button is locked while any
+row is amber or red and says "N row(s) need a choice"; a "Show only those" filter (on by itself when a file brought
+more than 8 rows) hides the settled ones. Quantities merge into rows already there; the file's money total and name
+fill the shipment total and the reference as before. Choices (keep, pick, set up) are remembered as aliases.
+**Set up product** opens the ordinary New product form on the receive tab, **pre-filled by `erpProductSuggest`**: name
+in the owner's pattern ("Sunlu PLA+ Klein Blue"), brand, type, category, unit, supplier, reorder level and lead time
+taken from the most common values among the siblings (same brand and type, else brand, else all), sell price = the
+siblings' usual one, cost = the file price when it is in taka, a SKU in the owner's pattern (brand initial + type
+letters + colour initials + next running number, checked free). A note above the form says how many siblings the
+suggestion came from; every box is editable; on Create the new product takes the red row's place with the file's
+quantity. The old review card is gone; the small "From the file" card only reports counts and offers the AI reader
+after a photo. `receivefile_test.mjs` (51).

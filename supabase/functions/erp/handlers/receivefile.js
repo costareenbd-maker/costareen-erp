@@ -347,4 +347,48 @@ export async function erpReceiveLearn(ctx, payload) {
   return { ok: true, saved };
 }
 
-export const HANDLERS = { erpReceiveMatch, erpReceiveRead, erpReceiveLearn, erpAiReader, erpAiReaderSet, erpAiReaderTest };
+
+// ---------------------------------------------------------------- a new product, suggested from its nearest siblings
+const mode = (arr) => { const c = {}; let best = '', n = 0; for (const v of arr) { const k = str(v); if (!k) continue; c[k] = (c[k] || 0) + 1; if (c[k] > n) { n = c[k]; best = k; } } return best; };
+const cap = (t) => str(t).replace(/\b\w/g, (m) => m.toUpperCase());
+const prettyType = (t) => t ? cap(t).replace('Pla', 'PLA').replace('Petg', 'PETG').replace('Abs', 'ABS').replace('Asa', 'ASA').replace('Tpu', 'TPU').replace('Pc', 'PC').replace('Cf', 'CF').replace('Gf', 'GF') : '';
+
+/** The form for an unknown line, pre-filled from the products most like it. Every field stays editable. */
+export async function erpProductSuggest(ctx, payload) {
+  const p = payload || {};
+  const text = [p.brand, p.type, p.name, p.colour].map(str).join(' ');
+  const brand = norm(p.brand) || brandOf(text);
+  const type = typeOf(text);
+  const colour = str(p.colour) || colourOf(str(p.name), brand, type);
+  const rows = await ctx.tx`select sku, name, brand, type, category, color, unit, supplier, sell_price, cost_price, reorder_level, lead_time_days
+                            from products where business_id = ${ctx.biz} and coalesce(status, 'Active') <> 'Discontinued'`;
+  const typed = rows.map((r) => ({ r, b: brandOf([r.brand, r.name].join(' ')) || norm(r.brand), t: typeOf([r.name, r.type].join(' ')) }));
+  let sib = typed.filter((x) => brand && x.b === brand && type && x.t === type), basis = 'brand and type';
+  if (!sib.length) { sib = typed.filter((x) => brand && x.b === brand); basis = 'brand'; }
+  if (!sib.length) { sib = typed; basis = 'every product'; }
+  const S = sib.map((x) => x.r);
+  const out = {
+    product_name: [brand ? cap(brand) : '', prettyType(type), cap(colour)].filter(Boolean).join(' ') || str(p.name),
+    brand: S.length && mode(S.map((r) => r.brand)) ? mode(S.map((r) => r.brand)) : (brand ? cap(brand) : ''),
+    type: mode(S.map((r) => r.type)) || '',
+    category: mode(S.map((r) => r.category)) || '',
+    color: cap(colour),
+    unit: mode(S.map((r) => r.unit)) || 'Piece',
+    supplier: mode(S.map((r) => r.supplier)) || str(p.supplier),
+    sell_price: basis === 'every product' ? 0 : num(mode(S.map((r) => (num(r.sell_price) > 0 ? num(r.sell_price) : '')))),
+    cost_price: /^(bdt|tk|taka)$/i.test(str(p.currency)) ? num(p.price) : 0,
+    reorder_level: basis === 'every product' ? 5 : num(mode(S.map((r) => num(r.reorder_level)))) || 5,
+    lead_time_days: basis === 'every product' ? 60 : num(mode(S.map((r) => num(r.lead_time_days)))) || 60,
+  };
+  // a SKU in the owner's own pattern: brand initial + type letters + colour initials + the next running number
+  const initials = (t) => norm(t).split(' ').filter(Boolean).map((w) => (w === 'pla+' ? 'p+' : w[0])).join('');
+  const used = new Set(rows.map((r) => str(r.sku).toLowerCase()));
+  let n = 0; for (const r of rows) { const m = /(\d{3})$/.exec(str(r.sku)); if (m) n = Math.max(n, Number(m[1])); }
+  let base = ((brand ? brand[0] : 'x') + initials(type) + initials(colour)).replace(/[^a-z0-9+]/g, '') || 'new';
+  let sku = base + String(n + 1).padStart(3, '0'); let guard = 0;
+  while (used.has(sku) && guard++ < 50) sku = base + String(n + 1 + guard).padStart(3, '0');
+  out.sku = sku;
+  return { product: out, siblings: S.length, basis, examples: S.slice(0, 3).map((r) => str(r.name)) };
+}
+
+export const HANDLERS = { erpReceiveMatch, erpReceiveRead, erpReceiveLearn, erpAiReader, erpAiReaderSet, erpAiReaderTest, erpProductSuggest };

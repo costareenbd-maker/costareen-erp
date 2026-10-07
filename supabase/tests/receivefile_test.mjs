@@ -123,4 +123,15 @@ check('the server’s own key shows as source server', r.ok && r.result.set && r
 r = await owner('erpAiReaderTest', []);
 check('the server key is refused by the fake Google: a plain sentence', !r.ok && /refused the key/.test(r.error), r);
 deps.geminiKey = '';
+
+// 10. an unknown line: the new-product form pre-filled from its siblings (same brand and type), every box a suggestion
+r = await mgr('erpProductSuggest', [{ name: 'PLA+ Klein Blue 1 KG', brand: 'Sunlu', colour: 'Klein Blue', price: 48, currency: 'RMB', supplier: 'Sunlu Direct' }]);
+check('name in the owner’s pattern, brand, unit and sell price from the Sunlu PLA+ siblings, cost left 0 (RMB)', r.ok && r.result.product.product_name === 'Sunlu PLA+ Klein Blue' && r.result.product.brand === 'Sunlu' && r.result.product.unit === 'Roll' && r.result.product.sell_price === 1700 && r.result.product.cost_price === 0 && r.result.basis === 'brand and type' && r.result.siblings >= 3, r);
+check('a SKU in the pattern, not in use', r.ok && /^sp\+kb\d{3}$/.test(r.result.product.sku), r.result.product.sku);
+r = await mgr('erpProductSuggest', [{ name: 'Polymaker PLA Marble White', price: 300, currency: 'BDT' }]);
+check('a brand with one product: siblings by brand; a taka price becomes the cost', r.ok && r.result.basis === 'brand' && r.result.product.cost_price === 300 && r.result.product.brand === 'Polymaker', r);
+r = await mgr('erpProductSuggest', [{ name: 'Mystery gadget 3000' }]);
+check('nothing alike: no guessed prices, the defaults', r.ok && r.result.basis === 'every product' && r.result.product.sell_price === 0 && r.result.product.reorder_level === 5, r);
+r = await sales('erpProductSuggest', [{ name: 'x' }]);
+check('sales staff cannot', !r.ok, r);
 await done();
