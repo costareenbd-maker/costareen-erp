@@ -1057,3 +1057,23 @@ a reply per report (`erpFeedbackSet`); a **Report a problem** button in the side
 Companies never see each other's reports. `apps_test.mjs` (38).
 - Not done: a public "report a problem" form on the customer pages (not open to customers yet); Bangla on the app
   screens; e-mail/WhatsApp notice to the provider when feedback arrives.
+
+## Receive stock from a file (tag receive-file-1, 8 Oct 2026)
+
+Stock entry → Receive stock → **From a file**: a supplier's packing list, proforma or order sheet (PDF, .xlsx, .csv)
+becomes lines on the receive form. The browser reads the file (spreadsheets with the page's own reader; PDFs with
+pdf.js from cdn.jsdelivr.net, loaded on demand, no worker - the CSP allows that script source); the server
+(`handlers/receivefile.js`, `erpReceiveMatch`) finds the heading row and the columns (code / name words / qty /
+price / currency) or, for a PDF, rebuilds records from the lines (a supplier code, the name wrapped over lines, the
+quantity on a numbers line), then matches every line: 1. a remembered alias, 2. our own SKU, 3. the words - brand
+(from the supplier, the file name - 拓竹 = Bambu Lab - or the row), filament type (PLA Basic / Matte / PLA+ / PETG /
+ABS / ASA / TPU ...) and colour, scored against every product's name and colour. Below the bar it is a **new product**
+with a suggested name ("Sunlu TPU Grey"), never a silent guess. The review card: file text, our product (a list of
+the closest, or search), qty, unit price, confidence pill, Skip; **Add to the receive list** fills the form (quantities
+merge into existing lines, new products as drafts, the file's money total as the shipment total in its currency, the
+file name as the reference) - nothing enters stock until Receive. Confirmed matches are remembered per business
+(`093_product_aliases.sql`, `erpReceiveLearn`), so the next file from the same supplier matches at once. Tuned on the
+owner's four samples (docs/samples: Polymaker packing list PDF - 33 lines, 1,170 units; Bambu order sheet - 73 lines,
+66 matched by words; Polymaker proforma; a photo of a Sunlu price list typed as a table). `receivefile_test.mjs` (26).
+- Not done: photos / scanned PDFs (no text inside - needs an AI key; Settings → Connections → AI is for AI clients,
+  not a model); per-line cost into the cost book (the shipment total is used, as the form always did); Bangla.

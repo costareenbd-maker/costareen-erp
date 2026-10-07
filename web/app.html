@@ -5538,8 +5538,10 @@ function viewStock() {
   h += '<div style="margin-top:12px">'+
        '<div class="row" style="justify-content:space-between;align-items:flex-end;margin-bottom:6px">'+
          '<label class="f" for="rv_search" style="margin:0">Add product</label>'+
-         '<button class="btn primary" type="button" id="newProductStock">+ New product</button>'+
+         '<span class="row" style="gap:6px"><button class="btn" type="button" id="rv_fileBtn" title="A packing list, proforma or order sheet: PDF, Excel or CSV">From a file</button>'+
+         '<button class="btn primary" type="button" id="newProductStock">+ New product</button></span>'+
        '</div>'+
+       '<input type="file" id="rv_file" accept=".xlsx,.csv,.pdf,application/pdf,text/csv" style="display:none">'+
        '<input class="i" id="rv_search" type="search" placeholder="Search by name, SKU or brand">'+
        '<div class="results" id="rv_results"></div></div>'+quickCardHtml('receive');
   if (RECV.lines.length) {
@@ -8424,7 +8426,7 @@ function srv(name, args, ok, bad) {
 
 var SRV_ACTIVE = 0, SRV_WRITING = false, SRV_TIMED = {};
 // the same list the server uses to know a call changes nothing (ERP_READS)
-var SRV_READS = /^(erpApps|erpAppQr|erpFeedback|erpRestockOffers|erpRestockList|erpWarrantyRules|erpWarrantyCard|erpMyLink|erpPlatformRegister|erpPlatformDoctor|erpPlatformCommunity|erpMarketWaiting|erpBoard|erpPlatformDesign|erpResell|erpResellerProgramme|erpLoyalty|erpCustomerPoints|erpRefillDue|erpDeliveryHistory|erpDeliveryHistoryMany|erpPrintKit|erpPrintJobs|erpPrintJob|erpPrintCost|erpSpools|erpPrintRequests|erpJoint|erpJointCatalog|erpJointCard|erpInvoiceDesign|erpInvoicePreview|erpMarket|erpMarketMine|erpMarketRequests|erpMarketHints|erpMarketNames|erpWanted|erpBrand|erpComplianceLog|erpProviderKey|erpNews|erpAccessKeys|erpAccessWarning|erpAdmin|erpAiKeys|erpAlertRules|erpAlerts|erpArena|erpBackupStatus|erpBg|erpBnWords|erpBookedParcels|erpBrandLogo|erpBundle|erpBusinessLinks|erpBusinesses|erpBusinessesDeleted|erpCampaignAudience|erpCampaignGet|erpCampaignList|erpCapital|erpCashBook|erpCatalog|erpConnStatus|erpConnections|erpCostBook|erpCourier|erpCourierKeyStatus|erpCurrencies|erpCustomerAccount|erpCustomerCredit|erpCustomerList|erpCustomerPage|erpCustomerStatement|erpCustomers|erpDashboardData|erpDaySales|erpDeliveryOptions|erpDevices|erpDiscontinued|erpDues|erpEvoQr|erpEvoStatus|erpExpenseExport|erpExpenseReceiptUrl|erpExpenses|erpFamilies|erpFighters|erpFormOptions|erpGame|erpGetTheme|erpGoogle|erpHello|erpInstalls|erpInvoice|erpInvoicePdf|erpJob|erpJobs|erpListView|erpLookupCustomer|erpLookupUsage|erpMe|erpMoney|erpNoteFileUrl|erpNotes|erpOwnerChange|erpOwnerChanges|erpParcelLabels|erpParcelPreview|erpPartnerStock|erpPartnership|erpPayReasons|erpPeople|erpPlatform|erpPlatformErrors|erpPnl|erpPnlMonth|erpPoList|erpPoolCatalog|erpProduct|erpProductListShare|erpProductPage|erpProductPhotoUrl|erpProductThumbs|erpProfile|erpQuoteAsset|erpQuoteBoot|erpQuoteGet|erpQuoteList|erpRecentInvoices|erpRecovery|erpReorderPlan|erpRestorePreview|erpReturnPreview|erpRisks|erpSales|erpSearch|erpSecurity|erpSelfTest|erpSerialLookup|erpSerialsFor|erpSessions|erpSetTheme|erpSettingsFull|erpSettingsLists|erpSfPayoutLines|erpSfPayouts|erpShareFile|erpSharedStock|erpSheet|erpStatementPdf|erpStockHistory|erpSupplierPage|erpSuppliers|erpToday|erpUsers|erpWaProductPdf|erpWebMatches|erpWebOrderInvoices|erpWebOrders|erpWebsiteTest)$/;
+var SRV_READS = /^(erpReceiveMatch|erpApps|erpAppQr|erpFeedback|erpRestockOffers|erpRestockList|erpWarrantyRules|erpWarrantyCard|erpMyLink|erpPlatformRegister|erpPlatformDoctor|erpPlatformCommunity|erpMarketWaiting|erpBoard|erpPlatformDesign|erpResell|erpResellerProgramme|erpLoyalty|erpCustomerPoints|erpRefillDue|erpDeliveryHistory|erpDeliveryHistoryMany|erpPrintKit|erpPrintJobs|erpPrintJob|erpPrintCost|erpSpools|erpPrintRequests|erpJoint|erpJointCatalog|erpJointCard|erpInvoiceDesign|erpInvoicePreview|erpMarket|erpMarketMine|erpMarketRequests|erpMarketHints|erpMarketNames|erpWanted|erpBrand|erpComplianceLog|erpProviderKey|erpNews|erpAccessKeys|erpAccessWarning|erpAdmin|erpAiKeys|erpAlertRules|erpAlerts|erpArena|erpBackupStatus|erpBg|erpBnWords|erpBookedParcels|erpBrandLogo|erpBundle|erpBusinessLinks|erpBusinesses|erpBusinessesDeleted|erpCampaignAudience|erpCampaignGet|erpCampaignList|erpCapital|erpCashBook|erpCatalog|erpConnStatus|erpConnections|erpCostBook|erpCourier|erpCourierKeyStatus|erpCurrencies|erpCustomerAccount|erpCustomerCredit|erpCustomerList|erpCustomerPage|erpCustomerStatement|erpCustomers|erpDashboardData|erpDaySales|erpDeliveryOptions|erpDevices|erpDiscontinued|erpDues|erpEvoQr|erpEvoStatus|erpExpenseExport|erpExpenseReceiptUrl|erpExpenses|erpFamilies|erpFighters|erpFormOptions|erpGame|erpGetTheme|erpGoogle|erpHello|erpInstalls|erpInvoice|erpInvoicePdf|erpJob|erpJobs|erpListView|erpLookupCustomer|erpLookupUsage|erpMe|erpMoney|erpNoteFileUrl|erpNotes|erpOwnerChange|erpOwnerChanges|erpParcelLabels|erpParcelPreview|erpPartnerStock|erpPartnership|erpPayReasons|erpPeople|erpPlatform|erpPlatformErrors|erpPnl|erpPnlMonth|erpPoList|erpPoolCatalog|erpProduct|erpProductListShare|erpProductPage|erpProductPhotoUrl|erpProductThumbs|erpProfile|erpQuoteAsset|erpQuoteBoot|erpQuoteGet|erpQuoteList|erpRecentInvoices|erpRecovery|erpReorderPlan|erpRestorePreview|erpReturnPreview|erpRisks|erpSales|erpSearch|erpSecurity|erpSelfTest|erpSerialLookup|erpSerialsFor|erpSessions|erpSetTheme|erpSettingsFull|erpSettingsLists|erpSfPayoutLines|erpSfPayouts|erpShareFile|erpSharedStock|erpSheet|erpStatementPdf|erpStockHistory|erpSupplierPage|erpSuppliers|erpToday|erpUsers|erpWaProductPdf|erpWebMatches|erpWebOrderInvoices|erpWebOrders|erpWebsiteTest)$/;
 function srvPump() {
   if (!SRV_Q.length) return;
   var isRead = SRV_READS.test(SRV_Q[0].name);
@@ -21831,6 +21833,160 @@ document.addEventListener('click', function (ev) {
     t.disabled = true;
     srv('erpFeedbackSet', [{ id: Number(id), status: el('fb_s_' + id).value, reply: el('fb_r_' + id).value }], function (r) { FB = r; repaint(); toast('Saved - they see it on their Feedback screen.'); }, function (e) { t.disabled = false; fail(e); });
     return;
+  }
+});
+</script>
+<!-- Receive stock from a file (handlers/receivefile.js): a supplier's packing list / proforma / order sheet becomes
+     lines on the Receive stock form. The browser reads the file (a spreadsheet with the page's own reader, a PDF with
+     pdf.js loaded on demand), the server matches every line to our products, the owner checks the review table,
+     presses "Add to the receive list", and then receives as always. Confirmed matches are remembered (aliases). -->
+<style>
+.rf-tbl td{vertical-align:top}
+.rf-src{font-size:12px;color:var(--muted);word-break:break-word}
+.rf-conf{font-size:11px;padding:1px 7px;border-radius:999px;font-weight:700;white-space:nowrap}
+.rf-conf.hi{background:var(--good-soft);color:var(--good)} .rf-conf.mid{background:var(--warning-soft);color:var(--warning)} .rf-conf.no{background:var(--critical-soft);color:var(--critical)}
+.rf-pick{min-width:220px}
+.rf-sum{display:flex;gap:14px;flex-wrap:wrap;align-items:center;margin:8px 0}
+</style>
+<script>
+var RF = { busy: '', err: '', file: '', res: null, lines: null };
+function rfConfHtml(l) {
+  if (l.skip) return '<span class="rf-conf">skipped</span>';
+  if (l.isNew) return '<span class="rf-conf no">new product</span>';
+  if (l.how === 'remembered') return '<span class="rf-conf hi">remembered</span>';
+  if (l.how === 'sku') return '<span class="rf-conf hi">our SKU</span>';
+  return '<span class="rf-conf ' + (l.confidence >= 0.8 ? 'hi' : 'mid') + '">' + Math.round(l.confidence * 100) + '% match</span>';
+}
+function rfCardHtml() {
+  if (!RF.file && !RF.busy && !RF.err) return '';
+  var h = '<section><div class="card" id="rf_card"><h2>From the file' + (RF.file ? ': ' + esc(RF.file) : '') + '</h2>';
+  if (RF.err) return h + '<div class="note err"><div class="ico">!</div><div>' + esc(RF.err) + '</div></div><div class="ap-row"><button class="btn small" type="button" id="rf_close">Close</button></div></div></section>';
+  if (RF.busy) return h + '<div class="loading">' + esc(RF.busy) + '</div></div></section>';
+  var r = RF.res, L = RF.lines;
+  var ok = L.filter(function (l) { return !l.skip && l.sku; }).length, nw = L.filter(function (l) { return !l.skip && !l.sku; }).length, qty = 0, money = 0;
+  L.forEach(function (l) { if (!l.skip) { qty += num(l.qty); money += num(l.qty) * num(l.price); } });
+  h += '<div class="sub" data-c5x="1" style="display:block">Check every line: the product it matched, the quantity, the price. Change a product from the list, mark a line <b>New product</b> or <b>Skip</b>. Nothing enters stock until you press <b>Receive</b> on the form.</div>' +
+       '<div class="rf-sum"><span><b>' + fmt(L.length) + '</b> lines</span><span class="rf-conf hi">' + fmt(ok) + ' matched</span>' + (nw ? '<span class="rf-conf no">' + fmt(nw) + ' new</span>' : '') +
+       '<span>' + fmt(qty) + ' units</span>' + (money ? '<span>' + fmt(money) + ' ' + esc(r.currency || '') + '</span>' : '') + (r.brand ? '<span class="sku">brand: ' + esc(r.brand) + '</span>' : '') + '</div>' +
+       '<div class="scroll"><table class="rf-tbl"><thead><tr><th>In the file</th><th>Our product</th><th class="num">Qty</th><th class="num">Unit price</th><th></th></tr></thead><tbody>';
+  L.forEach(function (l, i) {
+    var opts = '<option value="">\u2014 pick a product \u2014</option>';
+    var seen = {};
+    (l.candidates || []).forEach(function (c) { seen[c.sku] = 1; opts += '<option value="' + esc(c.sku) + '"' + (c.sku === l.sku ? ' selected' : '') + '>' + esc(c.name) + ' (' + esc(c.sku) + ')</option>'; });
+    if (l.sku && !seen[l.sku]) opts += '<option value="' + esc(l.sku) + '" selected>' + esc(l.name) + ' (' + esc(l.sku) + ')</option>';
+    opts += '<option value="__search">Search all products\u2026</option>';
+    h += '<tr' + (l.skip ? ' style="opacity:.45"' : '') + '><td><div>' + esc(l.text || l.code) + '</div><div class="rf-src">' + (l.code ? 'code ' + esc(l.code) + ' \u00b7 ' : '') + 'line ' + l.row + '</div></td>' +
+         '<td>' + rfConfHtml(l) + '<br>' + (l.skip ? '' : (l.sku ? '<select class="i rf-pick" data-rfpick="' + i + '">' + opts + '</select>'
+                                                   : '<input class="i rf-pick" data-rfnew="' + i + '" value="' + esc((l.newProduct || {}).product_name || '') + '" placeholder="Name of the new product"> <select class="i rf-pick" data-rfpick="' + i + '" style="margin-top:4px">' + opts + '</select>')) + '</td>' +
+         '<td class="num"><input class="i qty" type="number" min="0" step="1" data-rfqty="' + i + '" value="' + num(l.qty) + '"' + (l.skip ? ' disabled' : '') + '></td>' +
+         '<td class="num"><input class="i qty" type="number" min="0" step="0.01" data-rfprice="' + i + '" value="' + num(l.price) + '"' + (l.skip ? ' disabled' : '') + '></td>' +
+         '<td class="num" style="white-space:nowrap">' + (l.skip ? '<button class="btn small" type="button" data-rfun="' + i + '">Keep</button>' : '<button class="btn small" type="button" data-rfskip="' + i + '">Skip</button>') + '</td></tr>';
+  });
+  h += '</tbody></table></div><div class="ap-row"><button class="btn primary" type="button" id="rf_add">Add ' + fmt(ok + nw) + ' line(s) to the receive list</button><button class="btn small" type="button" id="rf_close">Close</button></div>';
+  return h + '</div></section>';
+}
+var viewStockRF = viewStock;
+viewStock = function () {
+  var h = viewStockRF.apply(this, arguments);
+  if (STOCK_TAB !== 'receive' || (!RF.file && !RF.busy && !RF.err)) return h;
+  var at = h.indexOf('<div style="margin-top:12px">');          // the "Add product" block of the form: the review goes above it
+  return at > 0 ? h.slice(0, at) + rfCardHtml() + h.slice(at) : h + rfCardHtml();
+};
+// ---- reading the file in the browser
+var RF_PDFJS = null;
+function rfPdfLib() {
+  if (RF_PDFJS) return RF_PDFJS;
+  RF_PDFJS = new Promise(function (ok, bad) {
+    var sc = document.createElement('script'); sc.src = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/legacy/build/pdf.min.js';
+    sc.onload = function () { try { window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/legacy/build/pdf.worker.min.js'; ok(window.pdfjsLib); } catch (e) { bad(e); } };
+    sc.onerror = function () { RF_PDFJS = null; bad(new Error('Could not load the PDF reader (no internet?).')); };
+    document.head.appendChild(sc);
+  });
+  return RF_PDFJS;
+}
+async function rfPdfLines(buf) {
+  var lib = await rfPdfLib();
+  var doc = await lib.getDocument({ data: buf, disableWorker: true, isEvalSupported: false }).promise;
+  var lines = [];
+  for (var p = 1; p <= doc.numPages; p++) {
+    var page = await doc.getPage(p), tc = await page.getTextContent();
+    // items into lines by their y position (rounded), left to right
+    var rows = {};
+    tc.items.forEach(function (it) { if (!it.str || !it.str.trim()) return; var y = Math.round(it.transform[5] / 3) * 3; (rows[y] = rows[y] || []).push({ x: it.transform[4], t: it.str }); });
+    Object.keys(rows).map(Number).sort(function (a, b) { return b - a; }).forEach(function (y) {
+      lines.push(rows[y].sort(function (a, b) { return a.x - b.x; }).map(function (i) { return i.t; }).join(' ').replace(/\s+/g, ' ').trim());
+    });
+  }
+  return lines;
+}
+async function rfReadFile(file) {
+  var name = file.name || '';
+  if (/\.pdf$/i.test(name) || file.type === 'application/pdf') return { kind: 'text', rows: await rfPdfLines(await file.arrayBuffer()) };
+  if (/\.xlsx$/i.test(name)) return { kind: 'grid', rows: await xlReadXlsx(await file.arrayBuffer()) };
+  if (/\.csv$/i.test(name) || /csv/.test(file.type)) return { kind: 'grid', rows: xlReadCsv(await file.text()) };
+  throw new Error('Choose a PDF, an .xlsx or a .csv file.');
+}
+function rfStart(file) {
+  RF = { busy: 'Reading ' + file.name + '\u2026', err: '', file: file.name, res: null, lines: null }; repaint();
+  rfReadFile(file).then(function (read) {
+    RF.busy = 'Matching the lines to your products\u2026'; repaint();
+    srv('erpReceiveMatch', [{ rows: read.rows, kind: read.kind, supplier: RECV.supplier || '', fileName: file.name }], function (r) {
+      RF.busy = ''; RF.res = r; RF.lines = r.lines.map(function (l) { return Object.assign({ skip: false }, l); }); repaint();
+      var c = el('rf_card'); if (c) c.scrollIntoView({ block: 'start', behavior: 'smooth' });
+    }, function (e) { RF.busy = ''; RF.err = (e && e.message) || String(e); repaint(); });
+  }, function (e) { RF.busy = ''; RF.err = (e && e.message) || String(e); repaint(); });
+}
+// ---- wiring
+document.addEventListener('click', function (ev) {
+  if (VIEW !== 'stock') return;
+  var t = ev.target && ev.target.closest ? ev.target.closest('#rv_fileBtn,#rf_close,#rf_add,[data-rfskip],[data-rfun]') : null; if (!t) return;
+  if (t.id === 'rv_fileBtn') { var inp = el('rv_file'); if (inp) { inp.value = ''; inp.click(); } return; }
+  if (t.id === 'rf_close') { RF = { busy: '', err: '', file: '', res: null, lines: null }; repaint(); return; }
+  if (t.hasAttribute('data-rfskip')) { RF.lines[Number(t.getAttribute('data-rfskip'))].skip = true; repaint(); return; }
+  if (t.hasAttribute('data-rfun')) { RF.lines[Number(t.getAttribute('data-rfun'))].skip = false; repaint(); return; }
+  if (t.id === 'rf_add') {
+    var pairs = [], added = 0, cur = '', money = 0;
+    RF.lines.forEach(function (l) {
+      if (l.skip || !(num(l.qty) > 0)) return;
+      if (l.sku) {
+        var hit = null; for (var j = 0; j < RECV.lines.length; j++) if (RECV.lines[j].sku === l.sku) hit = RECV.lines[j];
+        if (hit) hit.qty = num(hit.qty) + num(l.qty); else { var p = (CAT || []).filter(function (x) { return x.sku === l.sku; })[0]; RECV.lines.push({ sku: l.sku, name: p ? p.name : l.name, qty: num(l.qty), stock: p ? p.stock : num(l.stock) }); }
+        if (l.how !== 'sku') pairs.push({ alias: l.code || l.text, sku: l.sku });
+      } else {
+        var np = l.newProduct || {}; var nm = String(np.product_name || l.text).trim(); if (!nm) return;
+        RECV.lines.push({ isNew: true, name: nm, qty: num(l.qty), stock: 0, product: { product_name: nm, brand: np.brand || '', color: np.color || '', category: np.category || 'Filaments', unit: np.unit || 'Roll', sell_price: 0, cost_price: 0, status: 'Active' } });
+      }
+      added++; money += num(l.qty) * num(l.price); if (l.currency) cur = l.currency;
+    });
+    if (RF.res && RF.res.supplier && !RECV.supplier) RECV.supplier = RF.res.supplier;
+    if (money > 0 && !num(RECV.totalRmb)) { RECV.mode = 'fx'; RECV.currency = (cur || RF.res.currency || 'RMB').toUpperCase().replace('CNY', 'RMB'); RECV.totalRmb = String(Math.round(money * 100) / 100); if (!RECV.rate && typeof fxRate === 'function' && fxRate(RECV.currency) > 0) RECV.rate = String(fxRate(RECV.currency)); }
+    if (!RECV.reference && RF.file) RECV.reference = RF.file.replace(/\.(pdf|xlsx|csv)$/i, '');
+    if (pairs.length) srv('erpReceiveLearn', [{ pairs: pairs, supplier: RECV.supplier || RF.res.supplier || '' }], function () {}, function () {});
+    RF = { busy: '', err: '', file: '', res: null, lines: null };
+    repaint(); toast(added + ' line(s) added to the receive list. Check them, then press Receive.');
+  }
+});
+document.addEventListener('change', function (ev) {
+  if (VIEW !== 'stock') return;
+  var t = ev.target; if (!t || !t.getAttribute) return;
+  if (t.id === 'rv_file') { if (t.files && t.files[0]) rfStart(t.files[0]); return; }
+  var i;
+  if (t.hasAttribute('data-rfqty')) { i = Number(t.getAttribute('data-rfqty')); RF.lines[i].qty = Math.max(0, Math.round(num(t.value))); return; }
+  if (t.hasAttribute('data-rfprice')) { i = Number(t.getAttribute('data-rfprice')); RF.lines[i].price = num(t.value); return; }
+  if (t.hasAttribute('data-rfnew')) { i = Number(t.getAttribute('data-rfnew')); RF.lines[i].newProduct = Object.assign({}, RF.lines[i].newProduct || {}, { product_name: t.value }); return; }
+  if (t.hasAttribute('data-rfpick')) {
+    i = Number(t.getAttribute('data-rfpick')); var l = RF.lines[i], v = t.value;
+    if (v === '__search') {
+      var q = prompt('Search a product (name or SKU)', l.text || ''); if (q === null) { repaint(); return; }
+      var qq = String(q).toLowerCase(), hits = (CAT || []).filter(function (p) { return (p.name + ' ' + p.sku + ' ' + (p.brand || '')).toLowerCase().indexOf(qq) >= 0; }).slice(0, 8);
+      if (!hits.length) { toast('No product like "' + esc(q) + '".', true); repaint(); return; }
+      var pick = hits.length === 1 ? hits[0] : hits[Number(prompt(hits.map(function (p, k) { return (k + 1) + '. ' + p.name + ' (' + p.sku + ')'; }).join('\n') + '\n\nWhich number?', '1')) - 1];
+      if (!pick) { repaint(); return; }
+      l.candidates = [{ sku: pick.sku, name: pick.name, score: 1 }].concat(l.candidates || []); v = pick.sku; l.name = pick.name; l.stock = pick.stock;
+    }
+    if (v) { l.sku = v; l.isNew = false; l.how = l.how === 'sku' ? 'sku' : 'words'; l.confidence = 1; var c = (l.candidates || []).filter(function (x) { return x.sku === v; })[0]; if (c) l.name = c.name; }
+    else { l.sku = ''; l.isNew = true; l.how = ''; l.confidence = 0; }
+    repaint();
   }
 });
 </script>
