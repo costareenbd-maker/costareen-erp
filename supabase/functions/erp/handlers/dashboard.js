@@ -108,7 +108,7 @@ async function bookRows(ctx) {
 }
 
 /** erpBookCostMap_: price-book key -> landed, for rows with landed > 0. */
-async function bookCostMap(ctx) {
+export async function bookCostMap(ctx) {
   if (ctx.memo.bookCost) return ctx.memo.bookCost;
   const cfg = await costConfig(ctx);
   const map = {};

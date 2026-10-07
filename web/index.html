@@ -564,13 +564,15 @@ svg { display:block; width:100%; overflow:visible; }
     <nav id="nav">
       <div class="navgrp">Overview</div>
       <button type="button" data-view="dash" aria-selected="true"><span class="ic"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg></span>Dashboard</button>
+      <button type="button" data-view="apps" aria-selected="false"><span class="ic"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg></span>Apps</button>
+      <button type="button" data-view="chat" aria-selected="false"><span class="ic"><svg viewBox="0 0 24 24"><path d="M4 5h16v11H9l-5 4z"/><path d="M8 9h8M8 12h5"/></svg></span>Ask your ERP</button>
       <div class="navgrp">Sell</div>
       <button type="button" data-view="invoice" aria-selected="false"><span class="ic"><svg viewBox="0 0 24 24"><path d="M14 3v4a1 1 0 0 0 1 1h4"/><path d="M17 21H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2z"/><path d="M12 11v6M9 14h6"/></svg></span>New invoice<span class="count" id="cCart"></span></button>
       <button type="button" data-view="sales" aria-selected="false"><span class="ic"><svg viewBox="0 0 24 24"><path d="M4 2v20l3-2 3 2 3-2 3 2 3-2 1 .7V2z"/><path d="M8 7h8M8 11h8M8 15h5"/></svg></span>Sales<span class="count" id="cSend"></span></button>
       <button type="button" data-view="weborders" aria-selected="false"><span class="ic"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15 15 0 0 1 0 20M12 2a15 15 0 0 0 0 20"/></svg></span>Web orders<span class="count" id="cWeb"></span></button>
       <button type="button" data-view="quotes" aria-selected="false"><span class="ic"><svg viewBox="0 0 24 24"><path d="M14 3v4a1 1 0 0 0 1 1h4"/><path d="M17 21H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2z"/><path d="M9 13h6M9 17h6"/></svg></span>Quotations</button>
       <button type="button" data-view="repairs" aria-selected="false"><span class="ic"><svg viewBox="0 0 24 24"><path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 0 0 5.4-5.4l-2.7 2.7-2.1-2.1z"/></svg></span>Repairs</button>
-      <button type="button" data-view="printjobs" aria-selected="false"><span class="ic"><svg viewBox="0 0 24 24"><path d="M6 9V3h12v6"/><rect x="3" y="9" width="18" height="8" rx="2"/><path d="M7 17v4h10v-4"/></svg></span>Print jobs</button>
+      <button type="button" data-view="printjobs" aria-selected="false"><span class="ic"><svg viewBox="0 0 24 24"><path d="M5 3h14"/><path d="M6 3v15M18 3v15"/><path d="M3 18h18"/><rect x="9" y="7" width="6" height="3" rx="1"/><path d="M12 10v3"/><path d="M8 21h8"/></svg></span>Print jobs</button>
       <button type="button" data-view="resell" aria-selected="false"><span class="ic"><svg viewBox="0 0 24 24"><path d="M3 7h13l4 4v6H3z"/><circle cx="7" cy="18" r="2"/><circle cx="16" cy="18" r="2"/><path d="M8 11h4"/></svg></span>Resell</button>
       <button type="button" data-view="customers" aria-selected="false"><span class="ic"><svg viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.9M16 3.1a4 4 0 0 1 0 7.8"/></svg></span>Customers</button>
       <button type="button" data-view="campaigns" aria-selected="false"><span class="ic"><svg viewBox="0 0 24 24"><path d="M3 11v2a1 1 0 0 0 1 1h2l5 4V6L6 10H4a1 1 0 0 0-1 1z"/><path d="M15 9a3 3 0 0 1 0 6M18 6a7 7 0 0 1 0 12"/></svg></span>Campaigns</button>
@@ -591,7 +593,7 @@ svg { display:block; width:100%; overflow:visible; }
       <button type="button" data-view="tools" aria-selected="false"><span class="ic"><svg viewBox="0 0 24 24"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.8-3.8a6 6 0 0 1-7.9 7.9l-7 7a2.1 2.1 0 0 1-3-3l7-7a6 6 0 0 1 7.9-7.9z"/></svg></span>Maintenance</button>
       <button type="button" data-view="platform" aria-selected="false" style="display:none"><span class="ic"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="6" rx="1.5"/><rect x="3" y="14" width="18" height="6" rx="1.5"/><path d="M7 7h.01M7 17h.01"/></svg></span>Platform</button>
     </nav>
-    <div class="sidefoot"><span id="whoami" title="Signed in as"></span><button class="btn small" id="signoutBtn" type="button" style="display:none">Sign out</button></div>
+    <div class="sidefoot"><span id="whoami" title="Signed in as"></span><button class="btn small" id="fbBtn" type="button" title="Tell the provider about a problem">Report a problem</button><button class="btn small" id="signoutBtn" type="button" style="display:none">Sign out</button></div>
   </aside>
   <div class="main">
     <header class="topbar">
@@ -613,7 +615,7 @@ svg { display:block; width:100%; overflow:visible; }
   <button type="button" data-tab="invoice"><svg viewBox="0 0 24 24"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M12 11v6M9 14h6"/></svg><span>Invoice</span><i class="tb-n" id="tbCart"></i></button>
   <button type="button" data-tab="sales"><svg viewBox="0 0 24 24"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6"/></svg><span>Sales</span><i class="tb-n" id="tbSend"></i></button>
   <button type="button" data-tab="customers"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.700 6 6M16 5.2a3 3 0 0 1 0 5.600M17.500 14.500c2.100.800 3.500 2.900 3.500 5.500"/></svg><span>Customers</span></button>
-  <button type="button" data-tab="products"><svg viewBox="0 0 24 24"><path d="M21 8l-9-5-9 5v8l9 5 9-5z"/><path d="M3 8l9 5 9-5M12 13v8"/></svg><span>Products</span></button>
+  <button type="button" data-tab="apps"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg><span>Apps</span></button>
   <button type="button" data-tab="__menu"><svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></svg><span>More</span></button>
 </nav>
 
@@ -5537,17 +5539,20 @@ function viewStock() {
   h += '<div style="margin-top:12px">'+
        '<div class="row" style="justify-content:space-between;align-items:flex-end;margin-bottom:6px">'+
          '<label class="f" for="rv_search" style="margin:0">Add product</label>'+
-         '<button class="btn primary" type="button" id="newProductStock">+ New product</button>'+
+         '<span class="row" style="gap:6px"><button class="btn" type="button" id="rv_fileBtn" title="A packing list, proforma or order sheet: PDF, Excel, CSV, or a photo of it">From a file or photo</button>'+
+         '<button class="btn primary" type="button" id="newProductStock">+ New product</button></span>'+
        '</div>'+
+       '<input type="file" id="rv_file" accept=".xlsx,.csv,.pdf,application/pdf,text/csv,image/*" style="display:none">'+
        '<input class="i" id="rv_search" type="search" placeholder="Search by name, SKU or brand">'+
        '<div class="results" id="rv_results"></div></div>'+quickCardHtml('receive');
   if (RECV.lines.length) {
-    h += '<div class="scroll" style="margin-top:12px"><table><thead><tr><th>Product</th>'+
+    h += (typeof rvOpenBar === 'function' ? rvOpenBar() : '') + '<div class="scroll" style="margin-top:12px"><table><thead><tr><th>Product</th>'+
          '<th class="num">In stock now</th><th class="num">Receiving</th><th class="num">New stock</th><th></th></tr></thead><tbody>';
     RECV.lines.forEach(function (l, i) {
-      h += '<tr'+(l.isNew?' class="grp-new"':'')+'><td class="nm">'+esc(l.name)+
+      h += '<tr'+(l.isNew?' class="grp-new"':'')+(l.state ? ' class="rv-'+l.state+'"' : '')+(typeof RV_ONLY_OPEN !== 'undefined' && RV_ONLY_OPEN && !l.state ? ' style="display:none"' : '')+'>'+
+           (typeof rvNameCell === 'function' ? rvNameCell(l, i) : '<td class="nm">'+esc(l.name)+
            (l.isNew ? '<br><span class="pill low">new product \u2014 not saved yet</span>'
-                    : '<br><span class="sku">'+esc(l.sku)+'</span>')+'</td>'+
+                    : '<br><span class="sku">'+esc(l.sku)+'</span>')+'</td>')+
            '<td class="num">'+(l.isNew?'<span class="sku">\u2014</span>':fmt(l.stock))+'</td>'+
            '<td class="num"><input class="i qty" type="number" min="1" step="1" data-rvqty="'+i+'" value="'+l.qty+'"></td>'+
            '<td class="num"><strong data-rvnew="'+i+'">'+fmt((l.isNew?0:num(l.stock))+num(l.qty))+'</strong></td>'+
@@ -5556,8 +5561,8 @@ function viewStock() {
     h += '</tbody></table></div>';
     h += '<div class="row" style="justify-content:flex-end; margin-top:14px">'+
          '<button class="btn" type="button" id="rv_clear">Clear</button>'+
-         '<button class="btn primary" type="button" id="rv_save"'+(BUSY==='receive'?' disabled':'')+'>'+
-         (BUSY==='receive'?'Receiving…':'Receive '+RECV.lines.length+' product(s)')+'</button></div>';
+         '<button class="btn primary" type="button" id="rv_save"'+(BUSY==='receive' || (typeof rvOpenCount === 'function' && rvOpenCount()) ? ' disabled':'')+'>'+
+         (BUSY==='receive'?'Receiving…': (typeof rvOpenCount === 'function' && rvOpenCount() ? rvOpenCount()+' row(s) need a choice' : 'Receive '+RECV.lines.length+' product(s)'))+'</button></div>';
     h += '<div id="rv_costsum">' + recvCostSummary() + '</div>';
   } else {
     h += '<div class="empty">No products added yet.</div>';
@@ -8232,7 +8237,7 @@ var SRV_Q = [], SRV_BUSY = false, SRV_TIMEOUT = 45000;
 // Reading the sales history and the customer list is minutes of work for a
 // big sheet; a button press is not. One watchdog for both meant the slow
 // ones were killed while still working.
-var SRV_SLOW = { erpPoCreate: 180000, erpPoArrive: 180000, erpPoDiffDecide: 120000, erpBackupRun: 300000, erpBackupStatus: 90000, erpCourier: 120000,
+var SRV_SLOW = { erpAssistant: 95000, erpPoCreate: 180000, erpPoArrive: 180000, erpPoDiffDecide: 120000, erpBackupRun: 300000, erpBackupStatus: 90000, erpCourier: 120000,
                  erpBookParcel: 120000, erpBookedParcels: 180000, erpCourierTest: 60000, erpBundle: 120000, erpAdmin: 90000, erpCustomers: 90000,
                  erpMergeCustomers: 300000, erpTool: 300000,
                  erpDeployBusiness: 300000, erpCreateBusiness: 300000,
@@ -8423,7 +8428,7 @@ function srv(name, args, ok, bad) {
 
 var SRV_ACTIVE = 0, SRV_WRITING = false, SRV_TIMED = {};
 // the same list the server uses to know a call changes nothing (ERP_READS)
-var SRV_READS = /^(erpRestockOffers|erpRestockList|erpWarrantyRules|erpWarrantyCard|erpMyLink|erpPlatformRegister|erpPlatformDoctor|erpPlatformCommunity|erpMarketWaiting|erpBoard|erpPlatformDesign|erpResell|erpResellerProgramme|erpLoyalty|erpCustomerPoints|erpRefillDue|erpDeliveryHistory|erpDeliveryHistoryMany|erpPrintKit|erpPrintJobs|erpPrintJob|erpPrintCost|erpSpools|erpPrintRequests|erpJoint|erpJointCatalog|erpJointCard|erpInvoiceDesign|erpInvoicePreview|erpMarket|erpMarketMine|erpMarketRequests|erpMarketHints|erpMarketNames|erpWanted|erpBrand|erpComplianceLog|erpProviderKey|erpNews|erpAccessKeys|erpAccessWarning|erpAdmin|erpAiKeys|erpAlertRules|erpAlerts|erpArena|erpBackupStatus|erpBg|erpBnWords|erpBookedParcels|erpBrandLogo|erpBundle|erpBusinessLinks|erpBusinesses|erpBusinessesDeleted|erpCampaignAudience|erpCampaignGet|erpCampaignList|erpCapital|erpCashBook|erpCatalog|erpConnStatus|erpConnections|erpCostBook|erpCourier|erpCourierKeyStatus|erpCurrencies|erpCustomerAccount|erpCustomerCredit|erpCustomerList|erpCustomerPage|erpCustomerStatement|erpCustomers|erpDashboardData|erpDaySales|erpDeliveryOptions|erpDevices|erpDiscontinued|erpDues|erpEvoQr|erpEvoStatus|erpExpenseExport|erpExpenseReceiptUrl|erpExpenses|erpFamilies|erpFighters|erpFormOptions|erpGame|erpGetTheme|erpGoogle|erpHello|erpInstalls|erpInvoice|erpInvoicePdf|erpJob|erpJobs|erpListView|erpLookupCustomer|erpLookupUsage|erpMe|erpMoney|erpNoteFileUrl|erpNotes|erpOwnerChange|erpOwnerChanges|erpParcelLabels|erpParcelPreview|erpPartnerStock|erpPartnership|erpPayReasons|erpPeople|erpPlatform|erpPlatformErrors|erpPnl|erpPnlMonth|erpPoList|erpPoolCatalog|erpProduct|erpProductListShare|erpProductPage|erpProductPhotoUrl|erpProductThumbs|erpProfile|erpQuoteAsset|erpQuoteBoot|erpQuoteGet|erpQuoteList|erpRecentInvoices|erpRecovery|erpReorderPlan|erpRestorePreview|erpReturnPreview|erpRisks|erpSales|erpSearch|erpSecurity|erpSelfTest|erpSerialLookup|erpSerialsFor|erpSessions|erpSetTheme|erpSettingsFull|erpSettingsLists|erpSfPayoutLines|erpSfPayouts|erpShareFile|erpSharedStock|erpSheet|erpStatementPdf|erpStockHistory|erpSupplierPage|erpSuppliers|erpToday|erpUsers|erpWaProductPdf|erpWebMatches|erpWebOrderInvoices|erpWebOrders|erpWebsiteTest)$/;
+var SRV_READS = /^(erpReceiveMatch|erpAiReader|erpProductSuggest|erpCatalogue|erpPushList|erpApps|erpAppQr|erpFeedback|erpRestockOffers|erpRestockList|erpWarrantyRules|erpWarrantyCard|erpMyLink|erpPlatformRegister|erpPlatformDoctor|erpPlatformCommunity|erpMarketWaiting|erpBoard|erpPlatformDesign|erpResell|erpResellerProgramme|erpLoyalty|erpCustomerPoints|erpRefillDue|erpDeliveryHistory|erpDeliveryHistoryMany|erpPrintKit|erpPrintJobs|erpPrintJob|erpPrintCost|erpSpools|erpPrintRequests|erpJoint|erpJointCatalog|erpJointCard|erpInvoiceDesign|erpInvoicePreview|erpMarket|erpMarketMine|erpMarketRequests|erpMarketHints|erpMarketNames|erpWanted|erpBrand|erpComplianceLog|erpProviderKey|erpNews|erpAccessKeys|erpAccessWarning|erpAdmin|erpAiKeys|erpAlertRules|erpAlerts|erpArena|erpBackupStatus|erpBg|erpBnWords|erpBookedParcels|erpBrandLogo|erpBundle|erpBusinessLinks|erpBusinesses|erpBusinessesDeleted|erpCampaignAudience|erpCampaignGet|erpCampaignList|erpCapital|erpCashBook|erpCatalog|erpConnStatus|erpConnections|erpCostBook|erpCourier|erpCourierKeyStatus|erpCurrencies|erpCustomerAccount|erpCustomerCredit|erpCustomerList|erpCustomerPage|erpCustomerStatement|erpCustomers|erpDashboardData|erpDaySales|erpDeliveryOptions|erpDevices|erpDiscontinued|erpDues|erpEvoQr|erpEvoStatus|erpExpenseExport|erpExpenseReceiptUrl|erpExpenses|erpFamilies|erpFighters|erpFormOptions|erpGame|erpGetTheme|erpGoogle|erpHello|erpInstalls|erpInvoice|erpInvoicePdf|erpJob|erpJobs|erpListView|erpLookupCustomer|erpLookupUsage|erpMe|erpMoney|erpNoteFileUrl|erpNotes|erpOwnerChange|erpOwnerChanges|erpParcelLabels|erpParcelPreview|erpPartnerStock|erpPartnership|erpPayReasons|erpPeople|erpPlatform|erpPlatformErrors|erpPnl|erpPnlMonth|erpPoList|erpPoolCatalog|erpProduct|erpProductListShare|erpProductPage|erpProductPhotoUrl|erpProductThumbs|erpProfile|erpQuoteAsset|erpQuoteBoot|erpQuoteGet|erpQuoteList|erpRecentInvoices|erpRecovery|erpReorderPlan|erpRestorePreview|erpReturnPreview|erpRisks|erpSales|erpSearch|erpSecurity|erpSelfTest|erpSerialLookup|erpSerialsFor|erpSessions|erpSetTheme|erpSettingsFull|erpSettingsLists|erpSfPayoutLines|erpSfPayouts|erpShareFile|erpSharedStock|erpSheet|erpStatementPdf|erpStockHistory|erpSupplierPage|erpSuppliers|erpToday|erpUsers|erpWaProductPdf|erpWebMatches|erpWebOrderInvoices|erpWebOrders|erpWebsiteTest)$/;
 function srvPump() {
   if (!SRV_Q.length) return;
   var isRead = SRV_READS.test(SRV_Q[0].name);
@@ -9864,7 +9869,7 @@ function tabbarSync() {
 function go(view, param) {
   VIEW = view;
   // a record page inside a screen: one invoice, one customer
-  param = (view === 'sales' || view === 'customers' || view === 'products' || view === 'suppliers' || view === 'repairs') ? String(param || '') : '';
+  param = (view === 'sales' || view === 'customers' || view === 'products' || view === 'suppliers' || view === 'repairs' || view === 'app') ? String(param || '') : '';
   if (view === 'repairs') { if (JOBP.no !== param) JOBP = { no: param, data: null, err: null }; }
   if (view === 'suppliers') { if (SUPP.name !== param) SUPP = { name: param, data: null, err: null }; }
   if (view === 'products') { if (PRODP.sku !== param) { PRODP = { sku: param, data: null, err: null }; PRODUCT_FORM = null; } }
@@ -10518,7 +10523,14 @@ function runSelfTest() {
 
 /* search in the top bar */
 .gsearch { position:relative; flex:1 1 260px; max-width:440px; margin:0 12px; }
-.gsearch input { width:100%; min-height:38px; }
+.gsearch input { width:100%; min-height:38px; padding-right:40px; }
+.scanbtn svg { width:16px; height:16px; stroke:currentColor; fill:none; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; vertical-align:-3px; }
+.gsearch .scanbtn { position:absolute; right:3px; top:calc(50% - 15px); transform:none; margin:0 !important; min-height:0; width:30px; height:30px; padding:0; border:0; border-radius:6px; background:transparent; box-shadow:none; line-height:0; display:grid; place-items:center; color:inherit; opacity:1; filter:none; transition:none; }
+.gsearch .scanbtn svg { width:22px; height:22px; stroke-width:2; transition:transform .12s; }
+.gsearch .scanbtn:hover, .gsearch .scanbtn:focus { background:rgba(127,127,127,.18); color:inherit; filter:none; }
+.gsearch .scanbtn:hover svg { transform:scale(1.15); }
+.topbar .gsearch .scanbtn, .topbar .gsearch .scanbtn:hover { color:#fff; }
+.topbar .gsearch input:focus ~ .scanbtn { color:var(--ink); }
 #gs_out { position:absolute; left:0; right:0; top:calc(100% + 6px); z-index:90; background:var(--surface); border:1px solid var(--ring);
   border-radius:12px; box-shadow:var(--shadow-lg, 0 18px 50px rgba(0,0,0,.35)); max-height:70vh; overflow:auto; padding:6px; }
 #gs_out .gs-h { font-size:11px; font-weight:700; letter-spacing:.05em; text-transform:uppercase; color:var(--muted); padding:8px 10px 4px; }
@@ -12287,7 +12299,7 @@ var APPS = [
   { id: 'settings', name: 'Settings', color: '#5f6b7a', views: ['settings', 'tools', 'platform'],
     icon: '<circle cx="12" cy="12" r="3.2"/><path d="M12 2.500v3M12 18.500v3M2.500 12h3M18.500 12h3M5.300 5.300l2.100 2.100M16.600 16.600l2.100 2.100M5.300 18.700l2.100-2.100M16.600 7.400l2.100-2.100"/>' }
 ];
-var VIEW_NAMES = { invoice: 'New invoice', sales: 'Invoices', weborders: 'Web orders', quotes: 'Quotations', repairs: 'Repairs', printjobs: 'Print jobs', resell: 'Resell', customers: 'Customers', campaigns: 'Campaigns',
+var VIEW_NAMES = { apps: 'Apps', chat: 'Ask your ERP', invoice: 'New invoice', sales: 'Invoices', weborders: 'Web orders', quotes: 'Quotations', repairs: 'Repairs', printjobs: 'Print jobs', resell: 'Resell', customers: 'Customers', campaigns: 'Campaigns',
                    products: 'Products', stock: 'Stock', costs: 'Product cost', market: 'Market', joint: 'Joint stock', profit: 'Profitability', expenses: 'Expenses', capital: 'Capital', cash: 'Money', suppliers: 'Suppliers',
                    settings: 'Settings', tools: 'Maintenance', platform: 'Platform', dash: 'Dashboard', home: 'Home' };
 var VIEW_COUNT = { invoice: 'cCart', sales: 'cSend', weborders: 'cWeb', costs: 'cCosts', market: 'cMarket' };
@@ -12311,6 +12323,7 @@ function homeHtml() {
 /** Where am I: Invoices / INV-1883. The first part goes back to the list. */
 function crumbs() {
   var out = [{ t: VIEW_NAMES[VIEW] || VIEW, go: VIEW }], rec = '';
+  if (VIEW === 'app') { var apN = (typeof apOf === 'function' && apOf(APP_KEY)) || null; out = [{ t: 'Apps', go: 'apps' }]; if (apN) rec = apN.name; }
   if (VIEW === 'sales' && INVP.no) rec = INVP.no;
   if (VIEW === 'customers' && CUSP.key) rec = (CUSP.data && CUSP.data.name) || 'Customer';
   if (VIEW === 'products' && PRODP.sku) rec = (PRODP.data && PRODP.data.name) || PRODP.sku;
@@ -12902,6 +12915,8 @@ nav#nav .ic { width:26px; height:26px; flex:0 0 26px; border-radius:7px; backgro
   display:grid; place-items:center; box-shadow:inset 0 -2px 0 rgba(0,0,0,.14); }
 nav#nav .ic svg { width:15px; height:15px; stroke:#fff; stroke-width:2; }
 nav#nav button[data-view="dash"] { --app:#7c6bb1; }
+nav#nav button[data-view="apps"] { --app:#2f6fed; }
+nav#nav button[data-view="chat"] { --app:#2a9d8f; }
 nav#nav button[data-view="invoice"], nav#nav button[data-view="sales"], nav#nav button[data-view="weborders"], nav#nav button[data-view="quotes"], nav#nav button[data-view="repairs"] { --app:#e39a2d; }
 nav#nav button[data-view="customers"], nav#nav button[data-view="campaigns"] { --app:#2a9d8f; }
 nav#nav button[data-view="suppliers"], nav#nav button[data-view="products"], nav#nav button[data-view="stock"], nav#nav button[data-view="costs"] { --app:#c8553d; }
@@ -19965,7 +19980,9 @@ function jtStockHtml(d, pool) {
     h += '<section><div class="row" style="gap:8px;flex-wrap:wrap">' +
       '<button class="btn primary" type="button" data-jt="f-receive">+ Receive stock</button>' +
       '<button class="btn" type="button" data-jt="f-new">+ New joint product</button>' +
-      '<button class="btn" type="button" data-jt="f-adjust">Correct a count</button></div>';
+      '<button class="btn" type="button" data-jt="f-adjust">Correct a count</button>' +
+      '<button class="btn" type="button" data-jt="f-move">Move between shelves</button></div>';
+    if (f && f.kind === 'move') h += jtMoveForm(d, pool, f);
     if (f && f.kind === 'product') h += jtProductForm(d, pool, f);
     if (f && f.kind === 'receive') h += jtReceiveForm(d, pool, f);
     if (f && f.kind === 'adjust') h += jtAdjustForm(d, pool, f);
@@ -19975,12 +19992,13 @@ function jtStockHtml(d, pool) {
   h += '<section><div class="card"><h2>' + esc(pool.name) + ' — what is on the shelf</h2><div class="sub">' +
     (ed ? 'Both owners see this list, with cost. Staff see the name, the price, the floor price and the count — never the cost. Any price can be typed on the invoice, down to the floor.' : 'Sell these from New invoice like any product: they carry a <span class="jt-tag">Joint</span> tag there. Type a lower price on the invoice if the deal needs it, never below the floor.') + '</div>';
   if (!st.length) h += '<div class="empty">No joint product yet.</div>';
-  else h += '<div class="scroll"><table><thead><tr><th>Product</th><th class="num">In stock</th>' + (ed ? '<th class="num">Cost</th>' : '') +
+  else h += '<div class="scroll"><table><thead><tr><th>Product</th><th class="num">In stock</th>' + (pool.partners || []).map(function (p) { return '<th class="num">At ' + esc(p.name) + '</th>'; }).join('') + (ed ? '<th class="num">Cost</th>' : '') +
     '<th class="num">Price</th><th class="num">Floor</th>' + (ed ? '<th></th>' : '') + '</tr></thead><tbody>' +
     st.map(function (s) {
       return '<tr' + (s.status === 'Discontinued' ? ' style="opacity:.55"' : '') + '><td class="nm">' + esc(s.name) + (s.status === 'Discontinued' ? ' <span class="pill">not sold any more</span>' : '') +
         '<br><span class="sku">' + esc([s.sku, s.brand, s.category, s.color].filter(Boolean).join(' · ')) + '</span></td>' +
         '<td class="num"><strong' + (s.stock <= 0 ? ' class="jt-low"' : '') + '>' + fmt(s.stock) + '</strong> <span class="sku">' + esc(s.unit || '') + '</span></td>' +
+        (pool.partners || []).map(function (p) { var n = (s.held || {})[p.id] || 0; return '<td class="num"' + (n < 0 ? ' style="color:var(--critical)"' : '') + '>' + fmt(n) + '</td>'; }).join('') +
         (ed ? '<td class="num">' + fmt(s.cost) + '</td>' : '') + '<td class="num">' + fmt(s.price) + '</td>' +
         '<td class="num">' + (s.floor > 0 ? fmt(s.floor) : '<span class="sku">none</span>') + '</td>' +
         (ed ? '<td class="num" style="white-space:nowrap"><button class="btn small" type="button" data-jt="f-edit" data-sku="' + esc(s.sku) + '">Change</button> <button class="btn small" type="button" data-jt="f-receive" data-sku="' + esc(s.sku) + '">Receive</button></td>'
@@ -20015,10 +20033,25 @@ function jtReceiveForm(d, pool, f) {
     '<div><label class="f" for="jr_qty">How many</label><input class="i" id="jr_qty" inputmode="numeric" value="' + esc(f.qty) + '"></div>' +
     '<div><label class="f" for="jr_cost">Cost of one</label><input class="i" id="jr_cost" inputmode="decimal" value="' + esc(f.unitCost) + '"></div>' +
     '<div><label class="f" for="jr_by">Who paid</label><select class="i" id="jr_by">' + pool.partners.map(function (p) { return '<option value="' + esc(p.id) + '"' + (p.id === (f.paidBy || jtMe(d, pool)) ? ' selected' : '') + '>' + esc(p.name) + '</option>'; }).join('') + '</select></div>' +
+    '<div><label class="f" for="jr_at">Received at <span class="sku">(whose shelf)</span></label><select class="i" id="jr_at">' + pool.partners.map(function (p) { return '<option value="' + esc(p.id) + '"' + (p.id === (f.receivedAt || f.paidBy || jtMe(d, pool)) ? ' selected' : '') + '>' + esc(p.name) + '</option>'; }).join('') + '</select></div>' +
     '<div><label class="f" for="jr_date">Date <span class="sku">(empty = today)</span></label><input class="i" id="jr_date" type="date" max="' + esc(d.today) + '" value="' + esc(f.date) + '"></div>' +
     '<div><label class="f" for="jr_sup">Bought from <span class="sku">(optional)</span></label><input class="i" id="jr_sup" maxlength="80" value="' + esc(f.supplier) + '"></div>' +
     '<div class="wide"><label class="f" for="jr_note">Note <span class="sku">(optional)</span></label><input class="i" id="jr_note" maxlength="300" value="' + esc(f.note) + '"></div>' +
     '</div><div class="row" style="margin-top:12px;gap:8px"><button class="btn primary" type="button" data-jt="save-receive"' + dis + '>' + (JT.busy ? 'Saving…' : 'Receive') + '</button><button class="btn" type="button" data-jt="f-close">Cancel</button></div></div>';
+}
+function jtMoveForm(d, pool, f) {
+  var dis = JT.busy ? ' disabled' : '';
+  if (!(d.stock || []).length) return '<div class="card" style="margin-top:12px"><div class="empty">Add a joint product first.</div></div>';
+  var sel = function (id, val, skip) { return '<select class="i" id="' + id + '">' + pool.partners.filter(function (p) { return p.id !== skip; }).map(function (p) { return '<option value="' + esc(p.id) + '"' + (p.id === val ? ' selected' : '') + '>' + esc(p.name) + '</option>'; }).join('') + '</select>'; };
+  var from = f.from || pool.partners.filter(function (p) { return p.id !== jtMe(d, pool); }).map(function (p) { return p.id; })[0] || '';
+  var to = f.to || jtMe(d, pool);
+  return '<div class="card" style="margin-top:12px"><h2>Move between shelves</h2><div class="sub">Goods handed from one partner\u2019s shop to the other\u2019s. No sale, no money \u2014 only where they are. Both of you see it.</div>' +
+    '<div class="jt-form"><div class="wide"><label class="f" for="jm_sku">Product</label>' + jtSkuSel(d, 'jm_sku', f.sku) + '</div>' +
+    '<div><label class="f" for="jm_from">From</label>' + sel('jm_from', from, '') + '</div>' +
+    '<div><label class="f" for="jm_to">To</label>' + sel('jm_to', to, '') + '</div>' +
+    '<div><label class="f" for="jm_qty">How many</label><input class="i" id="jm_qty" inputmode="numeric" value="' + esc(f.qty) + '"></div>' +
+    '<div class="wide"><label class="f" for="jm_note">Note <span class="sku">(optional: who carried it, when)</span></label><input class="i" id="jm_note" maxlength="200" value="' + esc(f.note) + '"></div>' +
+    '</div><div class="row" style="margin-top:12px;gap:8px"><button class="btn primary" type="button" data-jt="save-move"' + dis + '>' + (JT.busy ? 'Saving\u2026' : 'Move it') + '</button><button class="btn" type="button" data-jt="f-close">Cancel</button></div></div>';
 }
 function jtAdjustForm(d, pool, f) {
   var dis = JT.busy ? ' disabled' : '';
@@ -20027,6 +20060,7 @@ function jtAdjustForm(d, pool, f) {
     '<div class="jt-form"><div class="wide"><label class="f" for="ja_sku">Product</label>' + jtSkuSel(d, 'ja_sku', f.sku) + '</div>' +
     '<div><label class="f" for="ja_dir">What</label><select class="i" id="ja_dir"><option value="out"' + (f.direction !== 'in' ? ' selected' : '') + '>Fewer than the list says</option><option value="in"' + (f.direction === 'in' ? ' selected' : '') + '>More than the list says</option></select></div>' +
     '<div><label class="f" for="ja_qty">By how many</label><input class="i" id="ja_qty" inputmode="numeric" value="' + esc(f.qty) + '"></div>' +
+    '<div><label class="f" for="ja_at">Whose shelf was counted</label><select class="i" id="ja_at">' + pool.partners.map(function (p) { return '<option value="' + esc(p.id) + '"' + (p.id === (f.at || jtMe(d, pool)) ? ' selected' : '') + '>' + esc(p.name) + '</option>'; }).join('') + '</select></div>' +
     '<div class="wide"><label class="f" for="ja_why">Why</label><input class="i" id="ja_why" maxlength="200" placeholder="e.g. 2 rolls water damaged" value="' + esc(f.reason) + '"></div>' +
     '</div><div class="row" style="margin-top:12px;gap:8px"><button class="btn primary" type="button" data-jt="save-adjust"' + dis + '>' + (JT.busy ? 'Saving…' : 'Correct it') + '</button><button class="btn" type="button" data-jt="f-close">Cancel</button></div></div>';
 }
@@ -20107,12 +20141,13 @@ function jtVal(id) { var n = el(id); return n ? n.value : ''; }
 function jtKeepForm() {
   var f = JT.form; if (!f) return;
   if (f.kind === 'product') { ['name', 'sku', 'category:cat', 'brand', 'color', 'unit', 'retail', 'floor', 'cost', 'status'].forEach(function (k) { var a = k.split(':'), n = el('jf_' + (a[1] || a[0])); if (n) f[a[0]] = n.value; }); }
-  if (f.kind === 'receive') { f.sku = jtVal('jr_sku') || f.sku; f.qty = jtVal('jr_qty'); f.unitCost = jtVal('jr_cost'); f.paidBy = jtVal('jr_by'); f.date = jtVal('jr_date'); f.supplier = jtVal('jr_sup'); f.note = jtVal('jr_note'); }
-  if (f.kind === 'adjust') { f.sku = jtVal('ja_sku') || f.sku; f.direction = jtVal('ja_dir'); f.qty = jtVal('ja_qty'); f.reason = jtVal('ja_why'); }
+  if (f.kind === 'receive') { f.sku = jtVal('jr_sku') || f.sku; f.qty = jtVal('jr_qty'); f.unitCost = jtVal('jr_cost'); f.paidBy = jtVal('jr_by'); f.receivedAt = jtVal('jr_at'); f.date = jtVal('jr_date'); f.supplier = jtVal('jr_sup'); f.note = jtVal('jr_note'); }
+  if (f.kind === 'adjust') { f.sku = jtVal('ja_sku') || f.sku; f.direction = jtVal('ja_dir'); f.qty = jtVal('ja_qty'); f.reason = jtVal('ja_why'); f.at = jtVal('ja_at'); }
+  if (f.kind === 'move') { f.sku = jtVal('jm_sku') || f.sku; f.from = jtVal('jm_from'); f.to = jtVal('jm_to'); f.qty = jtVal('jm_qty'); f.note = jtVal('jm_note'); }
 }
 function jtKeepNew() { var n = JT.newp, m = { jn_biz: 'business', jn_owner: 'ownerName', jn_email: 'email', jn_name: 'name', jn_disp: 'displayName', jn_tier: 'tier', jn_code: 'code', jn_jdisp: 'joinName', jn_jtier: 'joinTier' }; for (var k in m) { var x = el(k); if (x) n[m[k]] = x.value; } }
 function jtKeepEntry() { var e = JT.entry; if (!el('je_kind')) return; e.kind = jtVal('je_kind'); e.partner = jtVal('je_who'); e.to = jtVal('je_to'); e.amount = jtVal('je_amt'); e.date = jtVal('je_date'); e.category = jtVal('je_cat'); e.note = jtVal('je_note'); }
-document.addEventListener('input', function (ev) { if (VIEW !== 'joint' || !ev.target || !ev.target.id) return; if (/^jf_|^jr_|^ja_/.test(ev.target.id)) jtKeepForm(); else if (/^jn_/.test(ev.target.id)) jtKeepNew(); else if (/^je_/.test(ev.target.id)) jtKeepEntry(); });
+document.addEventListener('input', function (ev) { if (VIEW !== 'joint' || !ev.target || !ev.target.id) return; if (/^jf_|^jr_|^ja_|^jm_/.test(ev.target.id)) jtKeepForm(); else if (/^jn_/.test(ev.target.id)) jtKeepNew(); else if (/^je_/.test(ev.target.id)) jtKeepEntry(); });
 document.addEventListener('change', function (ev) {
   if (VIEW !== 'joint' || !ev.target) return;
   var t = ev.target;
@@ -20167,7 +20202,8 @@ document.addEventListener('click', async function (ev) {
   if (a === 'f-new') { JT.form = { kind: 'product', isNew: true, name: '', sku: '', category: '', brand: '', color: '', unit: '', retail: '', wholesale: '', floor: '', cost: '' }; repaint(); return; }
   if (a === 'f-edit') { var s = (d.stock || []).filter(function (x) { return x.sku === b.getAttribute('data-sku'); })[0]; if (!s) return;
     JT.form = { kind: 'product', isNew: false, name: s.name, sku: s.sku, category: s.category, brand: s.brand, color: s.color, unit: s.unit, retail: s.retail, wholesale: s.wholesale || '', floor: s.floor || '', cost: '', status: s.status }; repaint(); window.scrollTo(0, 0); return; }
-  if (a === 'f-receive') { JT.form = { kind: 'receive', sku: b.getAttribute('data-sku') || '', qty: '', unitCost: '', paidBy: '', date: '', supplier: '', note: '' }; repaint(); window.scrollTo(0, 0); return; }
+  if (a === 'f-receive') { JT.form = { kind: 'receive', sku: b.getAttribute('data-sku') || '', qty: '', unitCost: '', paidBy: '', receivedAt: '', date: '', supplier: '', note: '' }; repaint(); window.scrollTo(0, 0); return; }
+  if (a === 'f-move') { JT.form = { kind: 'move', sku: b.getAttribute('data-sku') || '', qty: '', from: '', to: '', note: '' }; repaint(); window.scrollTo(0, 0); return; }
   if (a === 'f-adjust') { JT.form = { kind: 'adjust', sku: '', direction: 'out', qty: '', reason: '' }; repaint(); return; }
   var f = JT.form;
   if (a === 'save-product' && f) {
@@ -20178,13 +20214,18 @@ document.addEventListener('click', async function (ev) {
   }
   if (a === 'save-receive' && f) {
     jtKeepForm();
-    jtSave('erpJointReceive', { pool: JT.pool, sku: f.sku, qty: f.qty, unitCost: f.unitCost, paidBy: f.paidBy, date: f.date, supplier: f.supplier, note: f.note }, 'Received into the joint stock.', function () { JT.form = null; JCAT = null; });
+    jtSave('erpJointReceive', { pool: JT.pool, sku: f.sku, qty: f.qty, unitCost: f.unitCost, paidBy: f.paidBy, receivedAt: f.receivedAt, date: f.date, supplier: f.supplier, note: f.note }, 'Received into the joint stock.', function () { JT.form = null; JCAT = null; });
     return;
   }
   if (a === 'save-adjust' && f) {
     jtKeepForm();
     if (!(await uiConfirm('Correct the count of this product by ' + (f.direction === 'in' ? '+' : '−') + (f.qty || '?') + '?\n\nThe difference, at cost, is shared by both partners. It cannot be removed afterwards, only corrected back.'))) return;
-    jtSave('erpJointAdjust', { pool: JT.pool, sku: f.sku, qty: f.qty, direction: f.direction, reason: f.reason }, 'Count corrected.', function () { JT.form = null; JCAT = null; });
+    jtSave('erpJointAdjust', { pool: JT.pool, sku: f.sku, qty: f.qty, direction: f.direction, reason: f.reason, at: f.at }, 'Count corrected.', function () { JT.form = null; JCAT = null; });
+    return;
+  }
+  if (a === 'save-move' && f) {
+    jtKeepForm();
+    jtSave('erpJointMove', { pool: JT.pool, sku: f.sku, qty: f.qty, from: f.from, to: f.to, note: f.note }, 'Moved.', function () { JT.form = null; JCAT = null; });
     return;
   }
   if (a === 'save-entry') {
@@ -20517,7 +20558,8 @@ function scanOpen(opts) {
   });
 }
 // a scan button beside every place a serial number is typed; appended lines for the multi-line boxes
-function scanBtn(id, label) { return '<button class="btn small scanbtn" type="button" data-scan="' + id + '">\uD83D\uDCF7 ' + (label || 'Scan') + '</button>'; }
+var SCAN_SVG = '<svg viewBox="0 0 24 24"><path d="M4 8V5a1 1 0 0 1 1-1h3M16 4h3a1 1 0 0 1 1 1v3M20 16v3a1 1 0 0 1-1 1h-3M8 20H5a1 1 0 0 1-1-1v-3"/><path d="M7 12h10"/></svg>';
+function scanBtn(id, label) { return '<button class="btn small scanbtn" type="button" data-scan="' + id + '">' + SCAN_SVG + ' ' + (label || 'Scan') + '</button>'; }
 function scanWire() {
   if (!scanSupported()) return;
   function after(node, html) { if (!node || node.nextElementSibling && node.nextElementSibling.hasAttribute && node.nextElementSibling.hasAttribute('data-scan')) return; node.insertAdjacentHTML('afterend', html); }
@@ -20526,7 +20568,7 @@ function scanWire() {
   document.querySelectorAll('.snpick').forEach(function (row) { if (row.querySelector('[data-scan]')) return; var sel = row.querySelector('select[data-snsel]'); if (sel) row.insertAdjacentHTML('beforeend', scanBtn('snpick:' + sel.getAttribute('data-snsel'), 'Scan')); });
   document.querySelectorAll('input[data-rsn]').forEach(function (i) { after(i, scanBtn('rsn:' + i.getAttribute('data-rsn'))); });
   var j = el('jn_serial'); if (j) after(j, scanBtn('jn_serial'));
-  var q = el('gs_q'); if (q && !q.parentNode.querySelector('[data-scan]')) q.insertAdjacentHTML('afterend', '<button class="btn small scanbtn" type="button" data-scan="gs_q" title="Scan a serial number" style="margin-left:4px">\uD83D\uDCF7</button>');
+  var q = el('gs_q'); if (q && !q.parentNode.querySelector('[data-scan]')) q.insertAdjacentHTML('afterend', '<button class="btn small scanbtn" type="button" data-scan="gs_q" title="Scan a serial number" style="margin-left:4px">' + SCAN_SVG + '</button>');
 }
 document.addEventListener('click', function (ev) {
   var b = ev.target && ev.target.closest ? ev.target.closest('[data-scan]') : null; if (!b) return;
@@ -20698,7 +20740,7 @@ function n1Buttons() {
      registrations made by owners themselves (declared / confirmed by a Lite seller) and the Lite sellers. -->
 <script>
 var PREG = null, PREG_ERR = '';
-function pregLoad() { srv('erpPlatformRegister', [], function (r) { PREG = r; PREG_ERR = ''; if (VIEW === 'platform') repaint(); }, function (e) { PREG_ERR = (e && e.message) || String(e); if (VIEW === 'platform') repaint(); }); }
+function pregLoad() { srv('erpPlatformRegister', [], function (r) { PREG = r; PREG_ERR = ''; if (VIEW === 'platform' || VIEW === 'app') repaint(); }, function (e) { PREG_ERR = (e && e.message) || String(e); if (VIEW === 'platform' || VIEW === 'app') repaint(); }); }
 function pregCard() {
   var h = '<section><div class="card"><div class="row" style="justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap"><h2 style="margin:0">Public register (Printer Passport)</h2>' +
     (PREG ? '<a class="btn small" href="' + esc(PREG.checkUrl) + '" target="_blank" rel="noopener">Open the check page</a>' : '') + '</div>' +
@@ -20761,7 +20803,7 @@ document.addEventListener('click', function (ev) {
 });
 // Platform: the guide's card
 var PDOC = null, PDOC_ERR = '', PDOC_OPEN = {};
-function pdocLoad() { srv('erpPlatformDoctor', [], function (r) { PDOC = r; PDOC_ERR = ''; DOCTOR_URL = r.doctorUrl || DOCTOR_URL; if (VIEW === 'platform') repaint(); }, function (e) { PDOC_ERR = (e && e.message) || String(e); if (VIEW === 'platform') repaint(); }); }
+function pdocLoad() { srv('erpPlatformDoctor', [], function (r) { PDOC = r; PDOC_ERR = ''; DOCTOR_URL = r.doctorUrl || DOCTOR_URL; if (VIEW === 'platform' || VIEW === 'app') repaint(); }, function (e) { PDOC_ERR = (e && e.message) || String(e); if (VIEW === 'platform' || VIEW === 'app') repaint(); }); }
 function pdocCard() {
   var h = '<section><div class="card"><div class="row" style="justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap"><h2 style="margin:0">Print Doctor \u2014 cases, settings, tips</h2>' + (PDOC ? '<a class="btn small" href="' + esc(PDOC.doctorUrl) + '" target="_blank" rel="noopener">Open the Print Doctor</a>' : '') + '</div>' +
     '<div class="sub" data-c5x="1" style="display:block">Members send a failed print with its story; you answer on their case link. Tick "publish" to show the answer under the problem with the member\u2019s first name. Settings members share are shown only after you approve them.</div>';
@@ -21013,7 +21055,7 @@ document.addEventListener('click', function (ev) {
      public updates to write (optionally announced inside every ERP), the guides. -->
 <script>
 var PCOM = null, PCOM_ERR = '';
-function pcomLoad() { srv('erpPlatformCommunity', [], function (r) { PCOM = r; PCOM_ERR = ''; if (VIEW === 'platform') repaint(); }, function (e) { PCOM_ERR = (e && e.message) || String(e); if (VIEW === 'platform') repaint(); }); }
+function pcomLoad() { srv('erpPlatformCommunity', [], function (r) { PCOM = r; PCOM_ERR = ''; if (VIEW === 'platform' || VIEW === 'app') repaint(); }, function (e) { PCOM_ERR = (e && e.message) || String(e); if (VIEW === 'platform' || VIEW === 'app') repaint(); }); }
 function pcomCard() {
   var h = '<section><div class="card"><div class="row" style="justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap"><h2 style="margin:0">Community \u2014 ideas, updates, guides</h2>' + (PCOM ? '<a class="btn small" href="' + esc(PCOM.boardUrl) + '" target="_blank" rel="noopener">Open the public board</a>' : '') + '</div>' +
     '<div class="sub" data-c5x="1" style="display:block">Anyone proposes an idea and votes; you answer each one and set where it stands (planned, being built, done, not for now). Updates are the public "what changed" page; tick "announce" to also show one inside every ERP. Guides are the volunteers named on the credits page.</div>';
@@ -21377,7 +21419,7 @@ document.addEventListener('click', function (ev) {
 });
 // Platform: the design desk card
 var PDES = null, PDES_ERR = '';
-function pdesLoad() { srv('erpPlatformDesign', [], function (r) { PDES = r; PDES_ERR = ''; DESIGN_URL = r.deskUrl || DESIGN_URL; if (VIEW === 'platform') repaint(); }, function (e) { PDES_ERR = (e && e.message) || String(e); if (VIEW === 'platform') repaint(); }); }
+function pdesLoad() { srv('erpPlatformDesign', [], function (r) { PDES = r; PDES_ERR = ''; DESIGN_URL = r.deskUrl || DESIGN_URL; if (VIEW === 'platform' || VIEW === 'app') repaint(); }, function (e) { PDES_ERR = (e && e.message) || String(e); if (VIEW === 'platform' || VIEW === 'app') repaint(); }); }
 function pdesCard() {
   var h = '<section><div class="card"><div class="row" style="justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap"><h2 style="margin:0">Design desk \u2014 designers and requests</h2>' + (PDES ? '<a class="btn small" href="' + esc(PDES.deskUrl) + '" target="_blank" rel="noopener">Open the public desk</a>' : '') + '</div>' +
     '<div class="sub" data-c5x="1" style="display:block">Anyone posts a sketch, a broken part or a personalised thing; designers who joined the desk offer a price; the buyer chooses, the designer delivers the file on the request, the buyer accepts and rates. The platform holds no money. Here: block a designer who misbehaves, give a designer a new link when his is lost, take an abusive request down.</div>';
@@ -21525,6 +21567,841 @@ document.addEventListener('click', function (ev) {
   if (k === 'slip') { srv('erpResellerSlip', [{ id: id }], function (r) { window.open(r.url, '_blank', 'noopener'); }, fail); return; }
   if (k === 'book') { t.disabled = true; srv('erpResellerBook', [{ id: id }], function (r) { toast('Parcel booked: ' + r.consignment + ' - collects \u09f3' + fmt(r.collect) + '.'); RZS.data = null; repaint(); }, function (e) { t.disabled = false; fail(e); }); return; }
   if (k === 'pay') { if (t.getAttribute('data-sure') !== '1') { t.setAttribute('data-sure', '1'); t.textContent = 'Paid \u09f3' + fmt(Number(t.getAttribute('data-amt'))) + '? Press again'; return; } srv('erpResellerPay', [{ linkId: id, month: t.getAttribute('data-month') }], function (r) { toast('\u09f3' + fmt(r.paid) + ' to ' + r.reseller + ' booked as an expense (Reseller commission).'); RZS.data = null; repaint(); }, fail); }
+});
+</script>
+<!-- Apps page: the special features customers reach from outside, as app icons (a phone's home screen). One icon
+     opens the app's own screen: what it is, the public page and its QR, the company's settings for it, and - for the
+     provider only - the management panel (moved here from Platform). The provider's switch "On for everyone" lives
+     on that screen. Edit menu bar (Settings > Business) decides who in a company sees the ordinary menu screens.
+     handlers/apps.js; erpHello carries ME.apps = {off, hidden, gone} so the menu is right on first paint. -->
+<style>
+.ap-home{display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:18px 6px;margin:14px 0 6px}
+.ap-app{display:flex;flex-direction:column;align-items:center;gap:8px;background:none;border:0;padding:6px 2px;cursor:pointer;color:var(--ink);font:inherit;border-radius:12px;min-width:0}
+.ap-app:hover .ap-ico{transform:translateY(-2px);box-shadow:var(--shadow-lg)}
+.ap-ico{position:relative;width:62px;height:62px;border-radius:16px;display:flex;align-items:center;justify-content:center;background:var(--c);color:#fff;box-shadow:inset 0 -3px 0 rgba(0,0,0,.14),var(--shadow);transition:transform .12s,box-shadow .12s}
+.ap-ico svg{width:32px;height:32px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.ap-app.off .ap-ico{background:var(--baseline);color:#fff}
+.ap-dot{position:absolute;top:-3px;right:-3px;width:12px;height:12px;border-radius:50%;background:var(--critical);border:2px solid var(--surface)}
+.ap-lbl{font-size:12px;font-weight:600;line-height:1.25;text-align:center;max-width:96px}
+.ap-app.off .ap-lbl{color:var(--muted)}
+.ap-h3{margin:16px 0 2px;font-size:11px;text-transform:uppercase;letter-spacing:.09em;color:var(--muted);font-weight:700}
+.ap-head{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.ap-head .ap-ico{width:52px;height:52px;border-radius:14px;box-shadow:inset 0 -3px 0 rgba(0,0,0,.14)}
+.ap-head h2{margin:0}
+.ap-what{font-size:13px;color:var(--ink-2);line-height:1.45;margin-top:6px}
+.ap-where{font-size:12px;color:var(--muted)}
+.ap-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:12px}
+.ap-pill{font-size:11px;padding:2px 8px;border-radius:999px;background:var(--critical-soft);color:var(--critical);font-weight:700}
+.ap-share{display:flex;gap:16px;align-items:center;flex-wrap:wrap}
+.ap-share img{width:148px;height:148px;border-radius:10px;background:#fff;padding:6px;border:1px solid var(--ring)}
+.ap-url{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12.5px;word-break:break-all}
+.seg[data-apseg] .btn{padding:3px 10px}
+.ap-mrows{display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:0 28px;margin-top:8px}
+.ap-mrow{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:6px 0;border-bottom:1px solid var(--ring);min-width:0}
+.ap-mrow .nm{font-weight:600}
+.fb-kind .btn{padding:4px 12px}
+tr.rv-amber td{background:var(--warning-soft)}
+tr.rv-red td{background:var(--critical-soft)}
+.fb-item{border-top:1px solid var(--ring);padding:10px 0}
+.fb-item:first-child{border-top:0}
+.fb-meta{font-size:12px;color:var(--muted);display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.fb-txt{margin:4px 0;white-space:pre-wrap}
+.fb-reply{margin-top:6px;padding:8px 10px;border-left:3px solid var(--series-1);background:var(--series-1-soft);border-radius:0 8px 8px 0;font-size:13px;white-space:pre-wrap}
+.fb-k{font-size:11px;padding:1px 7px;border-radius:999px;background:var(--grid);font-weight:700}
+.fb-k.complaint{background:var(--critical-soft);color:var(--critical)} .fb-k.problem{background:var(--warning-soft);color:var(--warning)} .fb-k.praise{background:var(--good-soft);color:var(--good)}
+.fb-s{font-size:11px;padding:1px 7px;border-radius:999px;background:var(--grid);font-weight:700}
+.fb-s.new{background:var(--series-1-soft);color:var(--series-1)} .fb-s.fixed{background:var(--good-soft);color:var(--good)}
+#fbBtn{margin-left:auto}
+</style>
+<script>
+var APPS = null, APPS_ERR = '', APP_KEY = '', AP_QR = {}, FB = null, FB_ERR = '', FB_FORM = { kind: 'problem', text: '', contact: '' };
+var APPS_CORE = { dash: 1, apps: 1, app: 1, chat: 1, invoice: 1, sales: 1, customers: 1, products: 1, stock: 1, cash: 1, settings: 1, platform: 1, orders: 1, home: 1 };
+// icon and colour per app, in the ERP's own palette (the menu's --app colours)
+var AP_LOOK = {
+  find:     { c: '#2a9d8f', i: '<circle cx="11" cy="11" r="6"/><path d="M16 16l5 5"/>' },
+  choose:   { c: '#e39a2d', i: '<path d="M12 3s6 6.5 6 11a6 6 0 0 1-12 0c0-4.5 6-11 6-11z"/>' },
+  check:    { c: '#3a86c8', i: '<path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/><path d="M9 12l2 2 4-4"/>' },
+  my:       { c: '#7c6bb1', i: '<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-7 8-7s8 3 8 7"/>' },
+  doctor:   { c: '#c8553d', i: '<rect x="3" y="6" width="18" height="14" rx="2"/><path d="M9 6V4h6v2"/><path d="M12 10v6M9 13h6"/>' },
+  print:    { c: '#2f6fed', i: '<path d="M5 3h14"/><path d="M6 3v15M18 3v15"/><path d="M3 18h18"/><rect x="9" y="7" width="6" height="3" rx="1"/><path d="M12 10v3"/><path d="M8 21h8"/>' },
+  quote:    { c: '#e39a2d', i: '<path d="M3 12l8-9h10v10l-9 8z"/><circle cx="16" cy="8" r="1.5"/>' },
+  design:   { c: '#7c6bb1', i: '<path d="M4 20l4-1 11-11-3-3L5 16z"/><path d="M14 7l3 3"/>' },
+  ideas:    { c: '#2a9d8f', i: '<path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0 0 12 3z"/>' },
+  feedback: { c: '#c8553d', i: '<path d="M4 5h16v11H9l-5 4z"/><path d="M8 9h8M8 12h5"/>' },
+  push:     { c: '#e39a2d', i: '<path d="M3 17l6-6 4 4 8-8"/><path d="M14 7h7v7"/>' }
+};
+var AP_PANEL = { check: 'preg', doctor: 'pdoc', ideas: 'pcom', design: 'pdes' };   // the provider's panels, moved here from Platform
+function apState() { var a = (ME && ME.apps) || {}; return { off: a.off || [], hidden: a.hidden || [], gone: a.gone || [] }; }
+function apSyncMe(r) {
+  if (!ME) return;
+  var hid = {}, gone = {};
+  (r.menu || []).forEach(function (m) { if (m.mode === 'owner') hid[m.key] = 1; if (m.mode === 'off') gone[m.key] = 1; });
+  ME.apps = { off: r.apps.filter(function (a) { return !a.on; }).map(function (a) { return a.key; }), hidden: Object.keys(hid), gone: Object.keys(gone) };
+}
+function apOf(key) { return APPS ? APPS.apps.filter(function (a) { return a.key === key; })[0] : null; }
+function apIcon(key) { var l = AP_LOOK[key] || { c: '#5f6b7a', i: '<circle cx="12" cy="12" r="9"/>' }; return '<svg viewBox="0 0 24 24">' + l.i + '</svg>'; }
+function apStyle(key) { var c = (AP_LOOK[key] || { c: '#5f6b7a' }).c; return 'style="--c:' + c + ';--c-soft:' + c + '1f"'; }
+// the menu: an app the provider switched off, or a screen the owner set to Off, is gone for everyone here; one set to
+// Only owners is out of the STAFF's menu
+var applyRoleApps = applyRole;
+applyRole = function () {
+  applyRoleApps.apply(this, arguments);
+  var st = apState(), btns = document.querySelectorAll('#nav button[data-view]');
+  for (var i = 0; i < btns.length; i++) {
+    var v = btns[i].getAttribute('data-view');
+    btns[i].removeAttribute('data-apphidden');
+    if (APPS_CORE[v] || btns[i].style.display === 'none') continue;   // core, or the role / the joint flag already hid it
+    var off = st.off.indexOf(v) >= 0 || st.gone.indexOf(v) >= 0, hid = !!(ME && ME.role !== 'owner') && st.hidden.indexOf(v) >= 0;
+    if (off || hid) btns[i].style.display = 'none';
+    if (!off && hid) btns[i].setAttribute('data-apphidden', '1');
+  }
+  var grps = document.querySelectorAll('#nav .navgrp');
+  for (var g = 0; g < grps.length; g++) {
+    var any = false, n = grps[g].nextElementSibling;
+    while (n && !n.classList.contains('navgrp')) { if (n.style.display !== 'none') any = true; n = n.nextElementSibling; }
+    grps[g].style.display = any ? '' : 'none';
+  }
+  var fb = el('fbBtn'); if (fb) fb.style.display = ME ? '' : 'none';
+};
+var routeAllowedApps = routeAllowed;
+routeAllowed = function (view) {
+  if (view === 'apps' || view === 'app') return !!ME;
+  var b = el('nav').querySelector('button[data-view="' + view + '"]');
+  if (b && b.getAttribute('data-apphidden') === '1') return true;
+  return routeAllowedApps.apply(this, arguments);
+};
+var repaintApps = repaint;
+repaint = function () {
+  if (VIEW !== 'apps' && VIEW !== 'app') return repaintApps.apply(this, arguments);
+  el('view').innerHTML = VIEW === 'apps' ? viewApps() : viewApp();
+  try { bindTips(el('view')); } catch (e) {}
+};
+var goApps = go;
+go = function (view, param) {
+  if (view === 'app') APP_KEY = String(param || APP_KEY || '');
+  goApps.apply(this, arguments);
+  if ((view === 'apps' || view === 'app' || view === 'settings') && !APPS) apLoad();
+  if (view === 'app') {
+    var a = apOf(APP_KEY), pt = el('pageTitle'); if (pt) pt.textContent = a ? a.name : 'Apps';
+    var tb = el('tabbar'); if (tb) { var t = tb.querySelector('button[data-tab="apps"]'); if (t) t.setAttribute('aria-current', 'page'); }
+    apScreenLoad();
+  }
+};
+function apLoad() {
+  srv('erpApps', [], function (r) { APPS = r; APPS_ERR = ''; apSyncMe(r); applyRole(); tabbarSync(); if (VIEW === 'apps' || VIEW === 'app' || VIEW === 'settings') repaint(); if (VIEW === 'app') apScreenLoad(); },
+      function (e) { APPS_ERR = (e && e.message) || String(e); if (VIEW === 'apps' || VIEW === 'app') repaint(); });
+}
+function apScreenLoad() {
+  var a = apOf(APP_KEY); if (!a) return;
+  if (a.url && !AP_QR[a.key]) srv('erpAppQr', [{ key: a.key }], function (r) { AP_QR[a.key] = r; if (VIEW === 'app') repaint(); }, function () {});
+  if (a.key === 'feedback' && !FB) fbLoad();
+  if (APPS.admin && AP_PANEL[a.key]) {
+    var p = AP_PANEL[a.key];
+    if (p === 'preg' && !PREG && !PREG_ERR) pregLoad();
+    if (p === 'pdoc' && !PDOC && !PDOC_ERR) pdocLoad();
+    if (p === 'pcom' && !PCOM && !PCOM_ERR) pcomLoad();
+    if (p === 'pdes' && !PDES && !PDES_ERR) pdesLoad();
+  }
+}
+// ---- the home screen: icons
+function viewApps() {
+  var h = '<section><div class="card"><h2 style="margin:0 0 2px">Apps</h2><div class="sub" data-c5x="1" style="display:block">The special features customers reach from outside. Tap one to see what it does, share its page, and set it up.</div>';
+  if (APPS_ERR) return h + '<div class="note err"><div class="ico">!</div><div>' + esc(APPS_ERR) + '</div></div></div></section>';
+  if (!APPS) return h + '<div class="loading">Loading\u2026</div></div></section>';
+  var list = APPS.apps.filter(function (a) { return a.on || APPS.admin; });
+  var byGroup = function (g) { return list.filter(function (a) { return (a.group || 'For customers') === g; }); };
+  h += ['For customers', 'Only me'].map(function (g) { var L = byGroup(g); if (!L.length) return ''; return (g === 'Only me' ? '<h3 style="margin:14px 0 2px;font-size:14px">Only me</h3><div class="sub" data-c5x="1" style="display:block">New things. Yours alone until you switch one on for everyone.</div>' : '') + '<div class="ap-home">' + L.map(function (a) {
+    return '<button type="button" class="ap-app' + (a.on || a.labs ? '' : ' off') + '" data-apopen="' + esc(a.key) + '" ' + apStyle(a.key) + '>' +
+           '<span class="ap-ico">' + apIcon(a.key) + (a.on ? '' : '<span class="ap-dot" title="Off for everyone"></span>') + '</span>' +
+           '<span class="ap-lbl">' + esc(a.name) + '</span></button>';
+  }).join('') + '</div>'; }).join('');
+  return h + '</div></section>';
+}
+// ---- one app's screen
+function viewApp() {
+  if (APPS_ERR) return '<section><div class="note err"><div class="ico">!</div><div>' + esc(APPS_ERR) + '</div></div></section>';
+  if (!APPS) return '<div class="loading">Loading\u2026</div>';
+  var a = apOf(APP_KEY);
+  if (!a) return '<section><div class="empty">No such app. <a href="#" data-apback="1">Back to Apps</a></div></section>';
+  var admin = APPS.admin;
+  var h = '<section><div class="card"><div class="ap-head" ' + apStyle(a.key) + '><span class="ap-ico">' + apIcon(a.key) + '</span><div><h2>' + esc(a.name) + '</h2>' +
+          (a.on ? '' : '<span class="ap-pill">Off for everyone</span>') + '</div></div>' +
+          '<div class="ap-what">' + esc(a.what) + '</div>' + (a.where && a.key !== 'feedback' ? '<div class="ap-where">Settings: ' + esc(a.where) + '</div>' : '') +
+          '<div class="ap-row">' +
+          (a.url && a.on ? '<a class="btn small primary" href="' + esc(a.url) + '" target="_blank" rel="noopener">Open the page \u2197</a>' : '') +
+          (a.view && a.view !== 'app' && a.view !== 'platform' ? '<button class="btn small" type="button" data-apgo="' + esc(a.view) + '" data-aptab="' + esc(a.tab || '') + '">Settings</button>' : '') +
+          '<button class="btn small" type="button" data-apback="1">All apps</button>' +
+          (admin && !a.sameAs ? '<span class="seg" style="margin-left:auto"><button class="btn small' + (a.on ? ' on' : '') + '" type="button" data-apall="' + esc(a.key) + '" data-on="1">On for everyone</button><button class="btn small' + (a.on ? '' : ' on') + '" type="button" data-apall="' + esc(a.key) + '" data-on="0">Off</button></span>' : '') +
+          (admin && a.sameAs ? '<span class="sku" style="margin-left:auto">Follows Find stock.</span>' : '') +
+          '</div></div>';
+  if (a.url && a.on) {
+    var q = AP_QR[a.key];
+    h += '<div class="card"><h2>Share</h2><div class="sub" data-c5x="1" style="display:block">Print the code for the counter, or send the link. It opens on any phone, no sign-in.</div>' +
+         '<div class="ap-share">' + (q ? '<img src="' + esc(q.qr) + '" alt="QR">' : '<div class="loading" style="width:148px">Loading\u2026</div>') +
+         '<div><div class="ap-url">' + esc(a.url) + '</div><div class="ap-row" style="margin-top:8px"><button class="btn small" type="button" data-apcopy="' + esc(a.url) + '">Copy the link</button>' +
+         (q ? '<a class="btn small" href="' + esc(q.qr) + '" download="' + esc(a.key) + '-qr.svg">Download the code</a>' : '') + '</div></div></div></div>';
+  }
+  if (a.key === 'feedback') h += fbMineHtml();
+  if (admin) {
+    if (a.key === 'feedback') h += fbInboxHtml();
+    else if (AP_PANEL[a.key]) {
+      var p = AP_PANEL[a.key];
+      h += '<h3 class="ap-h3">Provider</h3>' + (p === 'preg' ? pregCard() : p === 'pdoc' ? pdocCard() : p === 'pcom' ? pcomCard() : pdesCard());
+    }
+  }
+  return h + '</section>';
+}
+// the provider's panels left Platform for the app screens; Platform says where they went
+var pregCardA = pregCard, pdocCardA = pdocCard, pcomCardA = pcomCard, pdesCardA = pdesCard;
+pregCard = function () { return VIEW === 'platform' ? '' : pregCardA.apply(this, arguments); };
+pdocCard = function () { return VIEW === 'platform' ? '' : pdocCardA.apply(this, arguments); };
+pcomCard = function () { return VIEW === 'platform' ? '' : pcomCardA.apply(this, arguments); };
+pdesCard = function () { return VIEW === 'platform' ? '' : pdesCardA.apply(this, arguments); };
+var viewPlatformApps = viewPlatform;
+viewPlatform = function () {
+  var h = viewPlatformApps.apply(this, arguments);
+  if (!ME || !ME.platform) return h;
+  return h + '<section><div class="card"><h2>Moved to Apps</h2><div class="sub" data-c5x="1" style="display:block">Ideas and updates, the Print Doctor, the Design desk, the Passport register and Feedback are now each on their own screen under <b>Apps</b>, with their public page, share code and switch.</div></div></section>';
+};
+// ---- Feedback: what this company sent, and the provider's inbox
+function fbLoad() { srv('erpFeedback', [], function (r) { FB = r; FB_ERR = ''; if (VIEW === 'app') repaint(); }, function (e) { FB_ERR = (e && e.message) || String(e); if (VIEW === 'app') repaint(); }); }
+var FB_KINDS = [['problem', 'Something is wrong'], ['complaint', 'A complaint'], ['idea', 'An idea'], ['praise', 'It works well']];
+var FB_STATUS = { new: 'New', looking: 'Looking at it', fixed: 'Fixed', wont: 'Not planned' };
+function fbItem(r, admin) {
+  return '<div class="fb-item"><div class="fb-meta"><span class="fb-k ' + esc(r.kind) + '">' + esc((FB_KINDS.filter(function (k) { return k[0] === r.kind; })[0] || [0, r.kind])[1]) + '</span>' +
+         '<span class="fb-s ' + esc(r.status) + '">' + esc(FB_STATUS[r.status] || r.status) + '</span>' +
+         (admin ? '<b>' + esc(r.company || '?') + '</b> \u00b7 ' + esc(r.who) + (r.role ? ' (' + esc(r.role) + ')' : '') : '') +
+         (r.screen ? ' \u00b7 ' + esc(r.screen) : '') + ' \u00b7 ' + esc(fmtWhen(r.at)) + (admin && r.contact ? ' \u00b7 ' + esc(r.contact) : '') + '</div>' +
+         '<div class="fb-txt">' + esc(r.text) + '</div>' +
+         (r.reply ? '<div class="fb-reply"><b>Answer:</b> ' + esc(r.reply) + '</div>' : '') +
+         (admin ? '<div class="ap-row" style="margin-top:6px"><select class="i" style="width:auto" id="fb_s_' + r.id + '">' + Object.keys(FB_STATUS).map(function (k) { return '<option value="' + k + '"' + (k === r.status ? ' selected' : '') + '>' + FB_STATUS[k] + '</option>'; }).join('') + '</select>' +
+          '<input class="i" style="flex:1;min-width:180px" id="fb_r_' + r.id + '" placeholder="Your answer (they see it on their Feedback screen)" value="' + esc(r.reply || '') + '">' +
+          '<button class="btn small primary" type="button" data-fbset="' + r.id + '">Save</button></div>' : '') + '</div>';
+}
+function fmtWhen(v) { try { return new Date(v).toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' }); } catch (e) { return String(v).slice(0, 16); } }
+function fbMineHtml() {
+  var h = '<div class="card"><h2>Tell the provider</h2><div class="sub" data-c5x="1" style="display:block">A problem, a complaint, an idea or praise. It goes to the people who run this ERP, not to anyone else. You see the answer here.</div>' +
+          '<div class="seg fb-kind" style="margin:8px 0">' + FB_KINDS.map(function (k) { return '<button class="btn small' + (FB_FORM.kind === k[0] ? ' on' : '') + '" type="button" data-fbkind="' + k[0] + '">' + k[1] + '</button>'; }).join('') + '</div>' +
+          '<textarea class="i" id="fb_text" rows="4" placeholder="What happened, where, and what you expected" style="width:100%">' + esc(FB_FORM.text) + '</textarea>' +
+          '<div class="ap-row"><input class="i" id="fb_contact" style="flex:1;min-width:200px" placeholder="Phone or e-mail if you want an answer back (optional)" value="' + esc(FB_FORM.contact) + '">' +
+          '<button class="btn primary" type="button" id="fb_send">Send</button></div></div>';
+  if (FB_ERR) return h + '<div class="note err"><div class="ico">!</div><div>' + esc(FB_ERR) + '</div></div>';
+  if (!FB) return h + '<div class="loading">Loading\u2026</div>';
+  if (FB.mine.length) h += '<div class="card"><h2>Sent from this business</h2>' + FB.mine.map(function (r) { return fbItem(r, false); }).join('') + '</div>';
+  return h;
+}
+function fbInboxHtml() {
+  if (!FB) return '<h3 class="ap-h3">Provider</h3><div class="loading">Loading\u2026</div>';
+  var c = FB.counts || {};
+  var h = '<h3 class="ap-h3">Provider</h3><div class="card"><h2>Inbox</h2><div class="sub" data-c5x="1" style="display:block">' +
+          (c.new ? '<b>' + fmt(c.new) + ' new</b>' : 'Nothing new') + ' \u00b7 ' + fmt(c.looking || 0) + ' looking at \u00b7 ' + fmt(c.fixed || 0) + ' fixed \u00b7 ' + fmt(c.wont || 0) + ' not planned. Every company sees only its own reports and your answers.</div>';
+  if (!FB.inbox.length) return h + '<div class="empty">No feedback yet.</div></div>';
+  return h + FB.inbox.map(function (r) { return fbItem(r, true); }).join('') + '</div>';
+}
+// ---- Edit menu bar (Settings > Business): who in this company sees each ordinary screen
+function apModeSeg(key, mode) {
+  return '<span class="seg" data-apseg="' + esc(key) + '">' + [['all', 'Everyone'], ['owner', 'Only owners'], ['off', 'Off']].map(function (x) {
+    return '<button class="btn small' + (x[0] === mode ? ' on' : '') + '" type="button" data-apmode="' + esc(key) + '" data-mode="' + x[0] + '">' + x[1] + '</button>';
+  }).join('') + '</span>';
+}
+function menuCardHtml() {
+  if (!ME || ME.role !== 'owner') return '';
+  if (!APPS) { apLoad(); return '<section><div class="card"><h2>Edit menu bar</h2><div class="loading">Loading\u2026</div></div></section>'; }
+  var h = '<section><div class="card"><h2>Edit menu bar</h2><div class="sub" data-c5x="1" style="display:block">Who sees each screen in this business. <b>Everyone</b>: you and your staff. <b>Only owners</b>: you use it, staff do not see it. <b>Off</b>: nobody here, until you switch it back. Only an owner changes this; nothing is deleted. The main screens are not listed - they always stay. (What a person may DO on a screen is set under Users.)</div>' +
+          '<div class="ap-mrows">';
+  APPS.menu.forEach(function (m) {
+    h += '<div class="ap-mrow"><span class="nm">' + esc(m.name) + '</span>' + apModeSeg(m.key, m.mode) + '</div>';
+  });
+  return h + '</div></div></section>';
+}
+var brandCardHtmlMenu = brandCardHtml;
+brandCardHtml = function () { return brandCardHtmlMenu.apply(this, arguments) + menuCardHtml(); };
+// ---- wiring
+function apAfterSet(r, msg) { APPS = r; apSyncMe(r); applyRole(); tabbarSync(); repaint(); if (msg) toast(msg); }
+document.addEventListener('click', function (ev) {
+  var fb = ev.target && ev.target.closest ? ev.target.closest('#fbBtn') : null;
+  if (fb) { go('app', 'feedback'); return; }
+  if (VIEW !== 'apps' && VIEW !== 'app' && VIEW !== 'settings') return;
+  var t = ev.target && ev.target.closest ? ev.target.closest('[data-apopen],[data-apback],[data-apgo],[data-apall],[data-apmode],[data-apcopy],[data-fbkind],#fb_send,[data-fbset]') : null;
+  if (!t) return;
+  var fail = function (e) { toast(esc((e && e.message) || e), true, 9000); };
+  if (t.hasAttribute('data-apopen')) { go('app', t.getAttribute('data-apopen')); return; }
+  if (t.hasAttribute('data-apback')) { ev.preventDefault(); go('apps'); return; }
+  if (t.hasAttribute('data-apgo')) {
+    var v = t.getAttribute('data-apgo'), tab = t.getAttribute('data-aptab');
+    if (v === 'market' && tab) MK.tab = tab;
+    if (v === 'printjobs' && tab) PK_TAB = tab;
+    go(v); return;
+  }
+  if (t.hasAttribute('data-apall')) {
+    if (t.classList.contains('on')) return;
+    var on = t.getAttribute('data-on') === '1';
+    srv('erpAppSet', [{ key: t.getAttribute('data-apall'), on: on, scope: 'all' }], function (r) { apAfterSet(r, on ? 'On for every company.' : 'Off for every company. Its page answers \u201cnot open yet\u201d.'); }, fail);
+    return;
+  }
+  if (t.hasAttribute('data-apmode')) {
+    if (t.classList.contains('on')) return;
+    var seg = t.parentNode; [].forEach.call(seg.querySelectorAll('button'), function (b) { b.disabled = true; });
+    srv('erpAppSet', [{ key: t.getAttribute('data-apmode'), mode: t.getAttribute('data-mode'), scope: 'mine' }], function (r) {
+      apAfterSet(r, { all: 'Everyone here sees it.', owner: 'Only owners see it now.', off: 'Off for this business. Switch it back here any time.' }[t.getAttribute('data-mode')]);
+    }, function (e) { [].forEach.call(seg.querySelectorAll('button'), function (b) { b.disabled = false; }); fail(e); });
+    return;
+  }
+  if (t.hasAttribute('data-apcopy')) {
+    var u = t.getAttribute('data-apcopy');
+    try { navigator.clipboard.writeText(u).then(function () { toast('Copied.'); }, function () { prompt('Copy the link', u); }); } catch (e) { prompt('Copy the link', u); }
+    return;
+  }
+  if (t.hasAttribute('data-fbkind')) { FB_FORM.kind = t.getAttribute('data-fbkind'); FB_FORM.text = (el('fb_text') || {}).value || ''; FB_FORM.contact = (el('fb_contact') || {}).value || ''; repaint(); return; }
+  if (t.id === 'fb_send') {
+    FB_FORM.text = el('fb_text').value; FB_FORM.contact = el('fb_contact').value;
+    t.disabled = true;
+    srv('erpFeedbackSend', [{ kind: FB_FORM.kind, text: FB_FORM.text, contact: FB_FORM.contact, screen: 'Apps' }], function (r) {
+      FB_FORM = { kind: 'problem', text: '', contact: '' }; FB = null; fbLoad(); toast('Sent. Thank you - the answer shows here when there is one.');
+    }, function (e) { t.disabled = false; fail(e); });
+    return;
+  }
+  if (t.hasAttribute('data-fbset')) {
+    var id = t.getAttribute('data-fbset');
+    t.disabled = true;
+    srv('erpFeedbackSet', [{ id: Number(id), status: el('fb_s_' + id).value, reply: el('fb_r_' + id).value }], function (r) { FB = r; repaint(); toast('Saved - they see it on their Feedback screen.'); }, function (e) { t.disabled = false; fail(e); });
+    return;
+  }
+});
+</script>
+<!-- Receive stock from a file (handlers/receivefile.js): a supplier's packing list / proforma / order sheet becomes
+     lines on the Receive stock form. The browser reads the file (a spreadsheet with the page's own reader, a PDF with
+     pdf.js loaded on demand), the server matches every line to our products, the owner checks the review table,
+     presses "Add to the receive list", and then receives as always. Confirmed matches are remembered (aliases). -->
+<style>
+.rf-tbl td{vertical-align:top}
+.rf-src{font-size:12px;color:var(--muted);word-break:break-word}
+.rf-conf{font-size:11px;padding:1px 7px;border-radius:999px;font-weight:700;white-space:nowrap}
+.rf-conf.hi{background:var(--good-soft);color:var(--good)} .rf-conf.mid{background:var(--warning-soft);color:var(--warning)} .rf-conf.no{background:var(--critical-soft);color:var(--critical)}
+.rf-pick{min-width:220px}
+.rf-sum{display:flex;gap:14px;flex-wrap:wrap;align-items:center;margin:8px 0}
+</style>
+<script>
+var RF = { busy: '', err: '', file: '', res: null, lines: null, image: '', hint: '', ocrConf: 0 };
+function rfConfHtml(l) {
+  if (l.skip) return '<span class="rf-conf">skipped</span>';
+  if (l.isNew) return '<span class="rf-conf no">new product</span>';
+  if (l.how === 'remembered') return '<span class="rf-conf hi">remembered</span>';
+  if (l.how === 'sku') return '<span class="rf-conf hi">our SKU</span>';
+  return '<span class="rf-conf ' + (l.confidence >= 0.8 ? 'hi' : 'mid') + '">' + Math.round(l.confidence * 100) + '% match</span>';
+}
+function rfCardHtml() {
+  if (!RF.file && !RF.busy && !RF.err) return '';
+  var h = '<section><div class="card" id="rf_card"><h2>From the file' + (RF.file ? ': ' + esc(RF.file) : '') + '</h2>';
+  if (RF.err) return h + '<div class="note err"><div class="ico">!</div><div>' + esc(RF.err) + '</div></div><div class="ap-row">' +
+    (RF.image ? '<button class="btn small primary" type="button" id="rf_ai">Read it better with the provider\u2019s AI reader</button>' : '') +
+    '<button class="btn small" type="button" id="rf_close">Close</button></div></div></section>';
+  if (RF.busy) return h + '<div class="loading">' + esc(RF.busy) + '</div></div></section>';
+  var r = RF.res || {};
+  h += '<div class="sub" data-c5x="1" style="display:block">' + fmt(RF.added || 0) + ' line(s) went into the receive list below' + (r.matched != null ? ': ' + fmt(r.matched) + ' matched, ' + fmt(r.unmatched) + ' to decide' : '') + '. ' +
+       (r.reader === 'ocr' ? 'Read on this device' + (RF.ocrConf ? ' (' + Math.round(RF.ocrConf) + '% sure)' : '') + '; nothing was sent anywhere. ' + (RF.ocrConf && RF.ocrConf < 75 ? 'The photo was hard to read \u2014 ' : 'If the lines look wrong, ') + '<button class="btn small" type="button" id="rf_ai" style="vertical-align:middle">Read it better with the provider\u2019s AI reader</button>'
+        : r.reader === 'gemini' ? 'Read by the provider\u2019s AI reader' + (r.readsLeft != null ? ' \u00b7 ' + r.readsLeft + ' reads left today' : '') + '.' : '') + '</div>' +
+       '<div class="ap-row"><button class="btn small" type="button" id="rf_close">Close</button></div>';
+  return h + '</div></section>';
+}
+// ---- the rows a file made: green (sure), amber (a guess - pick one), red (unknown - set up the product)
+var RV_ONLY_OPEN = false, RF_FIX_ROW = null;
+function rvOpenCount() { var n = 0; RECV.lines.forEach(function (l) { if (l.state === 'amber' || l.state === 'red') n++; }); return n; }
+function rvOpenBar() {
+  var n = rvOpenCount(); if (!n && !RV_ONLY_OPEN) return '';
+  return '<div class="ap-row" style="margin-top:12px"><span class="rf-conf ' + (n ? 'mid' : 'hi') + '">' + (n ? fmt(n) + ' row(s) need a choice' : 'Every row is settled') + '</span>' +
+         '<label class="mk-sw" style="font-size:12.5px"><input type="checkbox" id="rv_onlyopen"' + (RV_ONLY_OPEN ? ' checked' : '') + '> Show only those</label></div>';
+}
+function rvSrcLine(l) {
+  var sct = l.src; if (!sct) return '';
+  return '<br><span class="rf-src">from file: ' + esc(sct.text || sct.code) + (sct.price ? ' \u00b7 ' + fmt(sct.price) + ' ' + esc(sct.currency || '') : '') +
+         (sct.how === 'remembered' ? ' \u00b7 remembered' : sct.how === 'sku' ? ' \u00b7 our SKU' : sct.confidence ? ' \u00b7 ' + Math.round(sct.confidence * 100) + '% match' : '') + '</span>';
+}
+function rvNameCell(l, i) {
+  var sct = l.src;
+  if (l.state === 'amber') {
+    var opts = '';
+    (sct.candidates || []).forEach(function (c) { opts += '<option value="' + esc(c.sku) + '"' + (c.sku === l.sku ? ' selected' : '') + '>' + esc(c.name) + ' (' + esc(c.sku) + ')</option>'; });
+    return '<td class="nm"><span class="rf-conf mid">which one?</span> <select class="i rf-pick" data-rvpick="' + i + '" style="display:inline-block;width:auto;max-width:100%">' + opts + '<option value="__search">Search all products\u2026</option></select>' +
+           ' <button class="btn small primary" type="button" data-rvkeep="' + i + '">Keep this</button>' + rvSrcLine(l) + '</td>';
+  }
+  if (l.state === 'red') {
+    return '<td class="nm"><span class="rf-conf no">not in your products</span> <b>' + esc(l.name) + '</b><br>' +
+           '<button class="btn small primary" type="button" data-rvsetup="' + i + '" style="margin-top:4px">Set up product</button> ' +
+           '<select class="i rf-pick" data-rvpick="' + i + '" style="display:inline-block;width:auto;margin-top:4px"><option value="">\u2026or an existing product</option>' + (sct.candidates || []).map(function (c) { return '<option value="' + esc(c.sku) + '">' + esc(c.name) + ' (' + esc(c.sku) + ')</option>'; }).join('') + '<option value="__search">Search all products\u2026</option></select>' + rvSrcLine(l) + '</td>';
+  }
+  return '<td class="nm">' + esc(l.name) + (l.isNew ? '<br><span class="pill low">new product \u2014 not saved yet</span>' : '<br><span class="sku">' + esc(l.sku) + '</span>') + rvSrcLine(l) + '</td>';
+}
+/** The matched lines into the receive table. */
+function rfIntoTable(r) {
+  var added = 0, money = 0, cur = '', pairs = [];
+  (r.lines || []).forEach(function (l) {
+    if (!(num(l.qty) > 0)) return;
+    var src = { text: l.text, code: l.code, price: l.price, currency: l.currency, confidence: l.confidence, how: l.how, candidates: l.candidates || [], newProduct: l.newProduct };
+    var p = l.sku ? (CAT || []).filter(function (x) { return x.sku === l.sku; })[0] : null;
+    if (l.sku && (l.how === 'sku' || l.how === 'remembered' || l.confidence >= 0.9)) {
+      var hit = null; for (var j = 0; j < RECV.lines.length; j++) if (RECV.lines[j].sku === l.sku) hit = RECV.lines[j];
+      if (hit) { hit.qty = num(hit.qty) + num(l.qty); if (!hit.src) hit.src = src; } else RECV.lines.push({ sku: l.sku, name: p ? p.name : l.name, qty: num(l.qty), stock: p ? p.stock : num(l.stock), src: src });
+      if (l.how !== 'sku') pairs.push({ alias: l.code || l.text, sku: l.sku });
+    } else if (l.sku) {
+      RECV.lines.push({ sku: l.sku, name: p ? p.name : l.name, qty: num(l.qty), stock: p ? p.stock : num(l.stock), src: src, state: 'amber' });
+    } else {
+      RECV.lines.push({ sku: '', name: (l.newProduct || {}).product_name || l.text, qty: num(l.qty), stock: 0, src: src, state: 'red' });
+    }
+    added++; money += num(l.qty) * num(l.price); if (l.currency) cur = l.currency;
+  });
+  if (r.supplier && !RECV.supplier) RECV.supplier = r.supplier;
+  if (money > 0 && !num(RECV.totalRmb)) { RECV.mode = 'fx'; RECV.currency = (cur || r.currency || 'RMB').toUpperCase().replace('CNY', 'RMB'); RECV.totalRmb = String(Math.round(money * 100) / 100); if (!RECV.rate && typeof fxRate === 'function' && fxRate(RECV.currency) > 0) RECV.rate = String(fxRate(RECV.currency)); }
+  if (!RECV.reference && RF.file) RECV.reference = RF.file.replace(/\.(pdf|xlsx|csv|jpe?g|png|webp)$/i, '');
+  if (pairs.length) srv('erpReceiveLearn', [{ pairs: pairs, supplier: RECV.supplier || r.supplier || '' }], function () {}, function () {});
+  RF.added = added; RV_ONLY_OPEN = rvOpenCount() > 0 && added > 8;
+  repaint();
+  var n = rvOpenCount();
+  toast(added + ' line(s) in the receive list' + (n ? '; ' + n + ' need a choice before you can receive.' : '. Check and press Receive.'), false, 9000);
+}
+var viewStockRF = viewStock;
+viewStock = function () {
+  var h = viewStockRF.apply(this, arguments);
+  if (STOCK_TAB !== 'receive' || (!RF.file && !RF.busy && !RF.err)) return h;
+  var at = h.indexOf('<div style="margin-top:12px">');          // the "Add product" block of the form: the review goes above it
+  return at > 0 ? h.slice(0, at) + rfCardHtml() + h.slice(at) : h + rfCardHtml();
+};
+// ---- reading the file in the browser
+var RF_PDFJS = null;
+function rfPdfLib() {
+  if (RF_PDFJS) return RF_PDFJS;
+  RF_PDFJS = new Promise(function (ok, bad) {
+    var sc = document.createElement('script'); sc.src = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/legacy/build/pdf.min.js';
+    sc.onload = function () { try { window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/legacy/build/pdf.worker.min.js'; ok(window.pdfjsLib); } catch (e) { bad(e); } };
+    sc.onerror = function () { RF_PDFJS = null; bad(new Error('Could not load the PDF reader (no internet?).')); };
+    document.head.appendChild(sc);
+  });
+  return RF_PDFJS;
+}
+async function rfPdfLines(buf) {
+  var lib = await rfPdfLib();
+  var doc = await lib.getDocument({ data: buf, disableWorker: true, isEvalSupported: false }).promise;
+  var lines = [];
+  for (var p = 1; p <= doc.numPages; p++) {
+    var page = await doc.getPage(p), tc = await page.getTextContent();
+    // items into lines by their y position (rounded), left to right
+    var rows = {};
+    tc.items.forEach(function (it) { if (!it.str || !it.str.trim()) return; var y = Math.round(it.transform[5] / 3) * 3; (rows[y] = rows[y] || []).push({ x: it.transform[4], t: it.str }); });
+    Object.keys(rows).map(Number).sort(function (a, b) { return b - a; }).forEach(function (y) {
+      lines.push(rows[y].sort(function (a, b) { return a.x - b.x; }).map(function (i) { return i.t; }).join(' ').replace(/\s+/g, ' ').trim());
+    });
+  }
+  return lines;
+}
+var RF_OCR = null;
+function rfOcrWorker() {
+  if (RF_OCR) return RF_OCR;
+  RF_OCR = new Promise(function (ok, bad) {
+    var sc = document.createElement('script'); sc.src = 'vendor/tess/tesseract.min.js';
+    sc.onload = function () {
+      window.Tesseract.createWorker('eng', 1, { workerPath: 'vendor/tess/worker.min.js', corePath: 'vendor/tess/', langPath: 'vendor/tess/', workerBlobURL: false, logger: function (m) { if (m && m.status && RF.busy && /recogn/i.test(m.status)) { RF.busy = 'Reading the photo\u2026 ' + Math.round((m.progress || 0) * 100) + '%'; var c = el('rf_card'); if (c) { var l = c.querySelector('.loading'); if (l) l.textContent = RF.busy; } } } })
+        .then(ok, function (e) { RF_OCR = null; bad(e); });
+    };
+    sc.onerror = function () { RF_OCR = null; bad(new Error('Could not load the photo reader.')); };
+    document.head.appendChild(sc);
+  });
+  return RF_OCR;
+}
+/** A picture shrunk to at most 1800 px, as a canvas and as a JPEG for the AI reader. */
+function rfPicture(src) {
+  return new Promise(function (ok, bad) {
+    var img = new Image();
+    img.onload = function () {
+      var big = Math.max(img.naturalWidth, img.naturalHeight), k = big > 1800 ? 1800 / big : 1, w = Math.round(img.naturalWidth * k), h = Math.round(img.naturalHeight * k);
+      var cv = document.createElement('canvas'); cv.width = w; cv.height = h; var g = cv.getContext('2d'); g.drawImage(img, 0, 0, w, h);
+      var jpeg = cv.toDataURL('image/jpeg', 0.82);
+      // for the OCR: at least ~2400 px wide, grey, contrast stretched - small photos read far better this way
+      var k2 = Math.max(1, 2400 / Math.max(w, h)), ocr = document.createElement('canvas'); ocr.width = Math.round(w * k2); ocr.height = Math.round(h * k2);
+      var g2 = ocr.getContext('2d'); g2.imageSmoothingQuality = 'high'; g2.drawImage(cv, 0, 0, ocr.width, ocr.height);
+      try {
+        var d = g2.getImageData(0, 0, ocr.width, ocr.height), px = d.data, lo = 255, hi = 0, i;
+        for (i = 0; i < px.length; i += 4) { var y = (px[i] * 299 + px[i + 1] * 587 + px[i + 2] * 114) / 1000; px[i] = y; if (y < lo) lo = y; if (y > hi) hi = y; }
+        var span = Math.max(1, hi - lo);
+        for (i = 0; i < px.length; i += 4) { var v = Math.round((px[i] - lo) * 255 / span); px[i] = px[i + 1] = px[i + 2] = v; }
+        g2.putImageData(d, 0, 0);
+      } catch (e) {}
+      try { URL.revokeObjectURL(img.src); } catch (e) {}
+      ok({ canvas: ocr, jpeg: jpeg });
+    };
+    img.onerror = function () { bad(new Error('That picture could not be opened.')); };
+    img.src = src;
+  });
+}
+async function rfOcrCanvas(canvas) {
+  var w = await rfOcrWorker();
+  try { await w.setParameters({ tessedit_pageseg_mode: '6', preserve_interword_spaces: '1' }); } catch (e) {}
+  var res = await w.recognize(canvas);
+  var lines = [], confs = [];
+  (res.data.lines || []).forEach(function (l) { var t = (l.text || '').replace(/\s+/g, ' ').trim(); if (t) { lines.push(t); confs.push(l.confidence || 0); } });
+  RF.ocrConf = confs.length ? confs.reduce(function (a, b) { return a + b; }, 0) / confs.length : 0;
+  return lines;
+}
+async function rfReadFile(file) {
+  var name = file.name || '';
+  if (/^image\//.test(file.type) || /\.(jpe?g|png|webp)$/i.test(name)) {
+    RF.busy = 'Loading the photo reader\u2026'; repaint();
+    var pic = await rfPicture(URL.createObjectURL(file));
+    RF.image = pic.jpeg;
+    var lines = await rfOcrCanvas(pic.canvas);
+    RF.hint = lines.join('\n');
+    return { kind: 'text', reader: 'ocr', rows: lines };
+  }
+  if (/\.pdf$/i.test(name) || file.type === 'application/pdf') {
+    var buf = await file.arrayBuffer(), text = await rfPdfLines(buf);
+    if (text.join('').replace(/\s+/g, '').length > 40) return { kind: 'text', rows: text };
+    // a scanned PDF: no text inside - draw the first pages and read them as photos
+    RF.busy = 'A scanned PDF: drawing the pages\u2026'; repaint();
+    var lib = await rfPdfLib(), doc = await lib.getDocument({ data: buf, disableWorker: true, isEvalSupported: false }).promise, all = [];
+    for (var p = 1; p <= Math.min(doc.numPages, 4); p++) {
+      var page = await doc.getPage(p), vp = page.getViewport({ scale: 2 }), cv = document.createElement('canvas'); cv.width = vp.width; cv.height = vp.height;
+      await page.render({ canvasContext: cv.getContext('2d'), viewport: vp }).promise;
+      if (p === 1) RF.image = cv.toDataURL('image/jpeg', 0.8);
+      all = all.concat(await rfOcrCanvas(cv));
+    }
+    RF.hint = all.join('\n');
+    return { kind: 'text', reader: 'ocr', rows: all };
+  }
+  if (/\.xlsx$/i.test(name)) return { kind: 'grid', rows: await xlReadXlsx(await file.arrayBuffer()) };
+  if (/\.csv$/i.test(name) || /csv/.test(file.type)) return { kind: 'grid', rows: xlReadCsv(await file.text()) };
+  throw new Error('Choose a PDF, an .xlsx or a .csv file.');
+}
+function rfStart(file) {
+  RF = { busy: 'Reading ' + file.name + '\u2026', err: '', file: file.name, res: null, lines: null, image: '', hint: '', ocrConf: 0 }; repaint();
+  rfReadFile(file).then(function (read) {
+    RF.busy = 'Matching the lines to your products\u2026'; repaint();
+    srv('erpReceiveMatch', [{ rows: read.rows, kind: read.kind, reader: read.reader || 'file', supplier: RECV.supplier || '', fileName: file.name }], function (r) {
+      RF.busy = ''; RF.res = r; rfIntoTable(r);
+    }, function (e) { RF.busy = ''; RF.err = (e && e.message) || String(e); repaint(); });
+  }, function (e) { RF.busy = ''; RF.err = (e && e.message) || String(e); repaint(); });
+}
+// ---- wiring
+document.addEventListener('click', function (ev) {
+  if (VIEW !== 'stock') return;
+  var t = ev.target && ev.target.closest ? ev.target.closest('#rv_fileBtn,#rf_close,#rf_ai,[data-rvkeep],[data-rvsetup]') : null; if (!t) return;
+  if (t.id === 'rv_fileBtn') { var inp = el('rv_file'); if (inp) { inp.value = ''; inp.click(); } return; }
+  if (t.id === 'rf_ai') {
+    if (!RF.image) { toast('No photo to send.', true); return; }
+    var keep = RF; RF.busy = 'The provider\u2019s AI reader is reading the photo\u2026'; repaint();
+    srv('erpReceiveRead', [{ image: RF.image, hint: RF.hint, supplier: RECV.supplier || '', fileName: RF.file }], function (r) {
+      // the device's rows from this photo make way for the AI reader's
+      RECV.lines = RECV.lines.filter(function (l) { return !(l.src && l.src.fromFile === RF.file); });
+      RECV.lines = RECV.lines.filter(function (l) { return !l.src || l.src.file !== RF.file; });
+      RF.busy = ''; RF.res = r; rfIntoTable(r);
+    }, function (e) { RF.busy = ''; repaint(); toast(esc((e && e.message) || e), true, 12000); });
+    return;
+  }
+  if (t.id === 'rf_close') { RF = { busy: '', err: '', file: '', res: null, lines: null, image: '', hint: '', ocrConf: 0 }; repaint(); return; }
+  if (t.hasAttribute('data-rfskip')) { RF.lines[Number(t.getAttribute('data-rfskip'))].skip = true; repaint(); return; }
+  if (t.hasAttribute('data-rfun')) { RF.lines[Number(t.getAttribute('data-rfun'))].skip = false; repaint(); return; }
+  if (t.hasAttribute('data-rvkeep')) { var kl = RECV.lines[Number(t.getAttribute('data-rvkeep'))]; if (kl) { delete kl.state; if (kl.src) srv('erpReceiveLearn', [{ pairs: [{ alias: kl.src.code || kl.src.text, sku: kl.sku }], supplier: RECV.supplier || '' }], function () {}, function () {}); } repaint(); return; }
+  if (t.hasAttribute('data-rvsetup')) {
+    var ri = Number(t.getAttribute('data-rvsetup')), rl = RECV.lines[ri]; if (!rl) return;
+    t.disabled = true; t.textContent = 'Preparing\u2026';
+    var np = (rl.src && rl.src.newProduct) || {};
+    srv('erpProductSuggest', [{ name: rl.src ? rl.src.text : rl.name, brand: np.brand || '', colour: np.color || '', price: rl.src ? rl.src.price : 0, currency: rl.src ? rl.src.currency : '', supplier: RECV.supplier || '' }], function (r) {
+      PRODUCT_FORM = Object.assign(blankProduct(), r.product, { isNew: true, returnTo: 'receive', opening_stock: 0 });
+      RF_FIX_ROW = ri; RECV_NEWQTY = num(rl.qty) || 1; RF_SUGGEST = r;
+      if (!LISTS) loadLists();
+      repaint(); var f = el('pf_name') || el('pf_sku'); if (f) f.scrollIntoView({ block: 'center' });
+    }, function (e) { t.disabled = false; t.textContent = 'Set up product'; toast(esc((e && e.message) || e), true, 9000); });
+    return;
+  }
+});
+var RF_SUGGEST = null;
+var quickCardHtmlRF = quickCardHtml;
+quickCardHtml = function (target) {
+  var h = quickCardHtmlRF.apply(this, arguments);
+  if (!h || target !== 'receive' || RF_FIX_ROW === null || !RF_SUGGEST) return h;
+  var note = '<div class="note" style="margin:0 0 10px"><div class="ico">\u25cf</div><div>Every box below is a <b>suggestion</b> from ' + (RF_SUGGEST.siblings ? fmt(RF_SUGGEST.siblings) + ' similar product(s) (' + esc(RF_SUGGEST.basis) + (RF_SUGGEST.examples && RF_SUGGEST.examples.length ? ': ' + esc(RF_SUGGEST.examples.join(', ')) : '') + ')' : 'the file line') + '. Change anything; nothing is saved until you press Create.</div></div>';
+  var at = h.indexOf('<h2>'); return at >= 0 ? h.slice(0, at) + note + h.slice(at) : note + h;
+};
+// the created product takes the red row's place, with the file's quantity
+var attachNewProductRF = attachNewProduct;
+attachNewProduct = function (target, sku) {
+  if (target !== 'receive' || RF_FIX_ROW === null) return attachNewProductRF.apply(this, arguments);
+  var ri = RF_FIX_ROW; RF_FIX_ROW = null; RF_SUGGEST = null; RECV_NEWQTY = 0;
+  srv('erpCatalog', [], function (cat) {
+    CAT = cat; var p = null; for (var i = 0; i < CAT.length; i++) if (CAT[i].sku === sku) { p = CAT[i]; break; }
+    var row = RECV.lines[ri];
+    if (row) { row.sku = sku; row.name = p ? p.name : sku; row.stock = p ? p.stock : 0; delete row.state; if (row.src) srv('erpReceiveLearn', [{ pairs: [{ alias: row.src.code || row.src.text, sku: sku }], supplier: RECV.supplier || '' }], function () {}, function () {}); }
+    else RECV.lines.push({ sku: sku, name: p ? p.name : sku, qty: 1, stock: p ? p.stock : 0 });
+    toast('Product created and placed on its line. ' + (rvOpenCount() ? rvOpenCount() + ' row(s) still need a choice.' : 'Press Receive when ready.'), false, 8000);
+    D = null; loadDashboardOnly(); updateCounts(); repaint();
+  }, function (e) { toast(esc((e && e.message) || e), true, 9000); });
+};
+document.addEventListener('change', function (ev) {
+  if (VIEW !== 'stock') return;
+  var t = ev.target; if (!t || !t.getAttribute) return;
+  if (t.id === 'rv_file') { if (t.files && t.files[0]) rfStart(t.files[0]); return; }
+  if (t.id === 'rv_onlyopen') { RV_ONLY_OPEN = !!t.checked; repaint(); return; }
+  if (t.hasAttribute('data-rvpick')) {
+    var pi = Number(t.getAttribute('data-rvpick')), pl = RECV.lines[pi], v = t.value; if (!pl) return;
+    if (v === '__search') {
+      var q = prompt('Search a product (name or SKU)', pl.src ? pl.src.text : pl.name); if (q === null) { repaint(); return; }
+      var qq = String(q).toLowerCase(), hits = (CAT || []).filter(function (p) { return (p.name + ' ' + p.sku + ' ' + (p.brand || '')).toLowerCase().indexOf(qq) >= 0; }).slice(0, 8);
+      if (!hits.length) { toast('No product like "' + esc(q) + '".', true); repaint(); return; }
+      var pick = hits.length === 1 ? hits[0] : hits[Number(prompt(hits.map(function (p, k) { return (k + 1) + '. ' + p.name + ' (' + p.sku + ')'; }).join('\n') + '\n\nWhich number?', '1')) - 1];
+      if (!pick) { repaint(); return; }
+      v = pick.sku;
+    }
+    if (!v) { repaint(); return; }
+    var cp = (CAT || []).filter(function (x) { return x.sku === v; })[0];
+    pl.sku = v; pl.name = cp ? cp.name : v; pl.stock = cp ? cp.stock : 0; delete pl.state;
+    if (pl.src) srv('erpReceiveLearn', [{ pairs: [{ alias: pl.src.code || pl.src.text, sku: v }], supplier: RECV.supplier || '' }], function () {}, function () {});
+    repaint();
+  }
+});
+</script>
+<!-- Platform > AI reader: the provider's Gemini key for photos of supplier documents (handlers/receivefile.js).
+     Set from here, sealed on the provider's database, used from the next read; never shown back. -->
+<script>
+var AIR = null, AIR_ERR = '', AIR_BUSY = '';
+function airLoad() { srv('erpAiReader', [], function (r) { AIR = r; AIR_ERR = ''; if (VIEW === 'platform') repaint(); }, function (e) { AIR_ERR = (e && e.message) || String(e); if (VIEW === 'platform') repaint(); }); }
+function airCardHtml() {
+  var h = '<section><div class="card"><h2>AI reader (photos of supplier documents)</h2><div class="sub" data-c5x="1" style="display:block">When a company photographs a packing list or price list, the page reads it on the device first; <b>Read it better</b> sends the photo to Google\u2019s Gemini with this key. One key for every company; ' + (AIR ? AIR.daily : 40) + ' reads per company per day. Get a free key at aistudio.google.com \u2192 Get API key. The key is sealed on this server and never shown back.</div>';
+  if (AIR_ERR) return h + '<div class="note err"><div class="ico">!</div><div>' + esc(AIR_ERR) + '</div></div></div></section>';
+  if (!AIR) { airLoad(); return h + '<div class="loading">Loading\u2026</div></div></section>'; }
+  h += '<div class="ap-row" style="margin-top:4px">' + (AIR.set ? '<span class="rf-conf hi">Set</span><span>\u2026' + esc(AIR.last4) + ' \u00b7 ' + (AIR.source === 'stored' ? 'set from here' + (AIR.updated ? ' on ' + esc(AIR.updated) : '') : 'the server\u2019s own key') + '</span>' : '<span class="rf-conf no">Not set</span><span>Photos are read on the device only.</span>') +
+       (AIR.set ? '<button class="btn small" type="button" id="air_test"' + (AIR_BUSY ? ' disabled' : '') + '>' + (AIR_BUSY === 'test' ? 'Asking Google\u2026' : 'Test the key') + '</button>' : '') + '</div>' +
+       '<div class="ap-row" style="margin-top:10px"><input class="i" id="air_key" type="password" autocomplete="off" style="flex:1;min-width:240px" placeholder="' + (AIR.set ? 'Paste a new key to replace it' : 'Paste the Gemini API key') + '">' +
+       '<button class="btn small primary" type="button" id="air_save"' + (AIR_BUSY ? ' disabled' : '') + '>' + (AIR_BUSY === 'save' ? 'Saving\u2026' : 'Save') + '</button>' +
+       (AIR.set && AIR.source === 'stored' ? '<button class="btn small" type="button" id="air_clear"' + (AIR_BUSY ? ' disabled' : '') + '>Remove</button>' : '') + '</div>';
+  return h + '</div></section>';
+}
+var viewPlatformAir = viewPlatform;
+viewPlatform = function () {
+  var h = viewPlatformAir.apply(this, arguments);
+  if (!ME || !ME.platform) return h;
+  return h + airCardHtml();
+};
+document.addEventListener('click', function (ev) {
+  if (VIEW !== 'platform') return;
+  var t = ev.target && ev.target.closest ? ev.target.closest('#air_save,#air_test,#air_clear') : null; if (!t) return;
+  var fail = function (e) { AIR_BUSY = ''; repaint(); toast(esc((e && e.message) || e), true, 10000); };
+  if (t.id === 'air_save') {
+    var k = (el('air_key') || {}).value || ''; if (!k.trim()) { toast('Paste the key first.', true); return; }
+    AIR_BUSY = 'save'; repaint();
+    srv('erpAiReaderSet', [{ key: k.trim() }], function (r) { AIR = r; AIR_BUSY = ''; repaint(); toast('Saved. The next photo read uses this key.'); }, fail);
+    return;
+  }
+  if (t.id === 'air_clear') {
+    if (!confirm('Remove the key set from here? The server\u2019s own key is used if it has one; otherwise photos are read on the device only.')) return;
+    AIR_BUSY = 'save'; repaint();
+    srv('erpAiReaderSet', [{ key: '' }], function (r) { AIR = r; AIR_BUSY = ''; repaint(); toast('Removed.'); }, fail);
+    return;
+  }
+  if (t.id === 'air_test') {
+    AIR_BUSY = 'test'; repaint();
+    srv('erpAiReaderTest', [], function (r) { AIR_BUSY = ''; repaint(); toast('Google answered with ' + r.model + '. The key works.'); }, fail);
+  }
+});
+</script>
+<!-- Platform > Catalogue: the master catalogue the server keeps by itself (handlers/catalogue.js). The provider sees
+     what was decided, runs it now, unlinks a wrong link, renames an item. -->
+<style>
+.cat-log{font-size:12.5px;max-height:260px;overflow:auto;border:1px solid var(--ring);border-radius:8px;padding:6px 10px}
+.cat-log div{padding:3px 0;border-bottom:1px solid var(--grid)}
+.cat-k{font-size:11px;padding:1px 7px;border-radius:999px;background:var(--grid);font-weight:700;margin-right:6px}
+.cat-k.ai{background:var(--warning-soft);color:var(--warning)} .cat-k.created{background:var(--good-soft);color:var(--good)} .cat-k.unlinked,.cat-k.renamed{background:var(--critical-soft);color:var(--critical)}
+</style>
+<script>
+var CATL = null, CATL_ERR = '', CATL_BUSY = '', CATL_OPEN = (function () { try { return localStorage.getItem('cz_catl_open') === '1'; } catch (e) { return false; } })();
+function catlLoad() { srv('erpCatalogue', [], function (r) { CATL = r; CATL_ERR = ''; if (VIEW === 'platform') repaint(); }, function (e) { CATL_ERR = (e && e.message) || String(e); if (VIEW === 'platform') repaint(); }); }
+function catlCardHtml() {
+  // folded by default: one line with the counts; the owner opens it when he wants it
+  if (!CATL_OPEN) {
+    if (!CATL && !CATL_ERR) catlLoad();
+    var c0 = CATL || {};
+    return '<section><div class="card" style="padding:12px 20px"><button type="button" id="catl_toggle" class="btn" style="border:0;background:none;padding:0;box-shadow:none;width:100%;text-align:left;display:flex;align-items:center;gap:10px;font:inherit"><h2 style="margin:0;font-size:15px">Catalogue</h2>' +
+      (CATL ? '<span class="sku">' + fmt(c0.items) + ' items · ' + fmt(c0.linked) + ' products linked</span>' + (c0.unlinked ? '<span class="rf-conf mid">' + fmt(c0.unlinked) + ' waiting</span>' : '<span class="rf-conf hi">all linked</span>') : '<span class="sku">' + (CATL_ERR ? esc(CATL_ERR) : 'Loading…') + '</span>') +
+      '<span style="margin-left:auto" class="sku">Open ▸</span></button></div></section>';
+  }
+  var h = '<section><div class="card"><div class="row" style="justify-content:space-between;align-items:center"><h2 style="margin:0">Catalogue</h2><button class="btn small" type="button" id="catl_toggle">Fold ▾</button></div><div class="sub" data-c5x="1" style="display:block">One record per physical thing, kept by the server on its own: every product a shop lists is linked to it from its words (brand, line, colour, size, spool or refill); the unsure names are asked of the AI reader each night. Find stock and the Market show one item with every shop under it, whatever each shop calls it. Nobody has to learn a code.</div>';
+  if (CATL_ERR) return h + '<div class="note err"><div class="ico">!</div><div>' + esc(CATL_ERR) + '</div></div></div></section>';
+  if (!CATL) { catlLoad(); return h + '<div class="loading">Loading\u2026</div></div></section>'; }
+  var c = CATL;
+  h += '<div class="ap-row"><span><b>' + fmt(c.items) + '</b> items</span><span><b>' + fmt(c.linked) + '</b> listed products linked</span><span class="rf-conf ' + (c.unlinked ? 'mid' : 'hi') + '">' + fmt(c.unlinked) + ' not yet</span><span class="sku">' + fmt(c.byAi) + ' decided by the AI reader</span>' +
+       '<button class="btn small" type="button" id="catl_run"' + (CATL_BUSY ? ' disabled' : '') + ' style="margin-left:auto">' + (CATL_BUSY === 'run' ? 'Running\u2026' : 'Run now') + '</button></div>';
+  if (c.loose.length) {
+    h += '<h3 style="margin:14px 0 4px">Not linked yet (' + fmt(c.loose.length) + ')</h3><div class="sub">A name with no brand, or one the AI reader could not settle. The shop improves the name, or it waits.</div><div class="scroll"><table><thead><tr><th>Product as the shop wrote it</th><th>Shop</th></tr></thead><tbody>' +
+         c.loose.slice(0, 40).map(function (l) { return '<tr><td class="nm">' + esc(l.name) + '<br><span class="sku">' + esc([l.brand, l.colour].filter(Boolean).join(' \u00b7 ')) + '</span></td><td>' + esc(l.shop) + '</td></tr>'; }).join('') + '</tbody></table></div>';
+  }
+  if (c.list.length) {
+    h += '<h3 style="margin:14px 0 4px">Items (' + fmt(c.items) + ')</h3><div class="scroll"><table><thead><tr><th>Item</th><th class="num">Shops</th><th>Made by</th><th></th></tr></thead><tbody>' +
+         c.list.slice(0, 60).map(function (it) { return '<tr><td class="nm"><input class="i" style="min-width:220px" data-catname="' + it.id + '" value="' + esc(it.name) + '"></td><td class="num">' + fmt(it.shops) + '</td><td><span class="cat-k ' + esc(it.madeBy) + '">' + esc(it.madeBy) + '</span></td><td class="num"><button class="btn small" type="button" data-catrename="' + it.id + '">Rename</button></td></tr>'; }).join('') + '</tbody></table></div>';
+  }
+  h += '<h3 style="margin:14px 0 4px">Decided lately</h3><div class="cat-log">' + (c.log.length ? c.log.map(function (l) { return '<div><span class="cat-k ' + esc(l.what) + '">' + esc(l.what) + '</span>' + esc(l.detail) + ' <span class="sku">' + esc(l.when) + '</span></div>'; }).join('') : '<div class="sku">Nothing yet. It runs after every market refresh and each night.</div>') + '</div>';
+  return h + '</div></section>';
+}
+var viewPlatformCatl = viewPlatform;
+viewPlatform = function () {
+  var h = viewPlatformCatl.apply(this, arguments);
+  if (!ME || !ME.platform) return h;
+  return h + catlCardHtml();
+};
+document.addEventListener('click', function (ev) {
+  if (VIEW !== 'platform') return;
+  var t = ev.target && ev.target.closest ? ev.target.closest('#catl_run,#catl_toggle,[data-catrename]') : null; if (!t) return;
+  var fail = function (e) { CATL_BUSY = ''; repaint(); toast(esc((e && e.message) || e), true, 10000); };
+  if (t.id === 'catl_toggle') { CATL_OPEN = !CATL_OPEN; try { localStorage.setItem('cz_catl_open', CATL_OPEN ? '1' : '0'); } catch (e) {} repaint(); return; }
+  if (t.id === 'catl_run') { CATL_BUSY = 'run'; repaint(); srv('erpCatalogueAct', [{ action: 'run' }], function (r) { CATL = r; CATL_BUSY = ''; repaint(); var x = r.ran || {}; toast('Looked at ' + fmt(x.looked || 0) + ': ' + fmt(x.linked || 0) + ' linked, ' + fmt(x.created || 0) + ' new items, ' + fmt(x.ai || 0) + ' by the AI reader, ' + fmt(x.left || 0) + ' left.', false, 9000); }, fail); return; }
+  if (t.hasAttribute('data-catrename')) { var id = t.getAttribute('data-catrename'), inp = document.querySelector('[data-catname="' + id + '"]'); srv('erpCatalogueAct', [{ action: 'rename', item: Number(id), name: inp ? inp.value : '' }], function (r) { CATL = r; repaint(); toast('Renamed.'); }, fail); }
+});
+</script>
+<!-- Ask your ERP: a chat inside the ERP (handlers/assistant.js). Questions answered through the ERP's own
+     functions; an invoice comes back as a proposal to confirm; the role decides what may be asked. -->
+<style>
+.ch-wrap{display:flex;flex-direction:column;height:calc(100vh - 170px);min-height:380px}
+.ch-log{flex:1;overflow:auto;padding:4px 2px;display:flex;flex-direction:column;gap:10px}
+.ch-m{max-width:78%;padding:9px 12px;border-radius:14px;line-height:1.45;font-size:14px;white-space:pre-wrap;word-break:break-word}
+.ch-m.u{align-self:flex-end;background:var(--series-1);color:#fff;border-bottom-right-radius:4px}
+.ch-m.a{align-self:flex-start;background:var(--surface);border:1px solid var(--ring);border-bottom-left-radius:4px}
+.ch-m.sys{align-self:center;background:none;color:var(--muted);font-size:12px}
+.ch-prop{align-self:flex-start;max-width:92%;border:1px solid var(--warning);background:var(--warning-soft);border-radius:12px;padding:10px 12px}
+.ch-prop .ap-row{margin-top:8px}
+.ch-in{display:flex;gap:8px;margin-top:10px;align-items:flex-end}
+.ch-in textarea{flex:1;min-height:44px;max-height:140px;resize:vertical}
+.ch-chips{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0 0}
+.ch-chips .btn{font-size:12px;padding:3px 10px}
+@media (max-width:760px){.ch-wrap{height:calc(100vh - 215px)}.ch-m{max-width:90%}}
+</style>
+<script>
+var CH = { msgs: [], busy: false, prop: null, left: null };
+try { var chS = JSON.parse(localStorage.getItem('cz_chat') || '[]'); if (Array.isArray(chS)) CH.msgs = chS.slice(-40); } catch (e) {}
+function chSave() { try { localStorage.setItem('cz_chat', JSON.stringify(CH.msgs.slice(-40))); } catch (e) {} }
+function chHtml() {
+  var h = '<section><div class="card ch-wrap"><div class="row" style="justify-content:space-between;align-items:center;margin-bottom:6px"><h2 style="margin:0">Ask your ERP</h2>' +
+          '<span class="sku">' + (CH.left != null ? CH.left + ' left today \u00b7 ' : '') + '<a href="#" id="ch_clear">clear</a></span></div><div class="ch-log" id="ch_log">';
+  if (!CH.msgs.length) h += '<div class="ch-m sys">Ask in Bangla or English: \u201csales today?\u201d, \u201chow much does Rakin owe?\u201d, \u201cinvoice for Karim, 2 jade white, COD\u201d, \u201chow do I receive stock?\u201d. Figures come from your ERP; an invoice is made only after you confirm it.</div>';
+  CH.msgs.forEach(function (m) {
+    if (m.role === 'user') h += '<div class="ch-m u">' + esc(m.text) + '</div>';
+    else h += '<div class="ch-m a">' + esc(m.text) + (m.pdf ? ' <a href="' + esc(m.pdf) + '" target="_blank" rel="noopener">Open the PDF</a>' : '') + '</div>';
+  });
+  if (CH.prop) h += '<div class="ch-prop"><b>Confirm?</b><br>' + esc(CH.prop.summary) + (CH.prop.warnings && CH.prop.warnings.length ? '<br><span style="color:var(--critical)">' + esc(CH.prop.warnings.join('; ')) + '</span>' : '') +
+                    '<div class="ap-row"><button class="btn small primary" type="button" id="ch_yes"' + (CH.busy ? ' disabled' : '') + '>Yes, make it</button><button class="btn small" type="button" id="ch_no">No</button></div></div>';
+  if (CH.busy) h += '<div class="ch-m sys">Thinking\u2026</div>';
+  h += '</div>';
+  h += '<div class="ch-chips">' + ['Sales today?', 'Who owes money?', 'Stock of jade white', 'How do I receive stock?'].map(function (c) { return '<button class="btn" type="button" data-chq="' + esc(c) + '">' + esc(c) + '</button>'; }).join('') + '</div>';
+  h += '<div class="ch-in"><textarea class="i" id="ch_q" placeholder="Type here\u2026" rows="1"' + (CH.busy ? ' disabled' : '') + '></textarea><button class="btn primary" type="button" id="ch_send"' + (CH.busy ? ' disabled' : '') + '>Send</button></div>';
+  return h + '</div></section>';
+}
+var repaintChat = repaint;
+repaint = function () {
+  if (VIEW !== 'chat') return repaintChat.apply(this, arguments);
+  el('view').innerHTML = chHtml();
+  var lg = el('ch_log'); if (lg) lg.scrollTop = lg.scrollHeight;
+  var q = el('ch_q'); if (q && !CH.busy && window.innerWidth > 760) q.focus();
+};
+var routeAllowedChat = routeAllowed;
+routeAllowed = function (view) { if (view === 'chat') return !!ME; return routeAllowedChat.apply(this, arguments); };
+function chSend(text) {
+  text = String(text || '').trim(); if (!text || CH.busy) return;
+  CH.msgs.push({ role: 'user', text: text }); CH.prop = null; CH.busy = true; chSave(); repaint();
+  srv('erpAssistant', [{ messages: CH.msgs.slice(-12).map(function (m) { return { role: m.role, text: m.text }; }) }], function (r) {
+    CH.busy = false; CH.left = r.left; CH.msgs.push({ role: 'assistant', text: r.text }); CH.prop = r.proposal || null; chSave(); repaint();
+  }, function (e) { CH.busy = false; CH.msgs.push({ role: 'assistant', text: 'Sorry \u2014 ' + ((e && e.message) || String(e)) }); chSave(); repaint(); });
+}
+document.addEventListener('click', function (ev) {
+  if (VIEW !== 'chat') return;
+  var t = ev.target && ev.target.closest ? ev.target.closest('#ch_send,#ch_yes,#ch_no,#ch_clear,[data-chq]') : null; if (!t) return;
+  if (t.id === 'ch_send') { chSend((el('ch_q') || {}).value); return; }
+  if (t.hasAttribute('data-chq')) { chSend(t.getAttribute('data-chq')); return; }
+  if (t.id === 'ch_clear') { ev.preventDefault(); CH.msgs = []; CH.prop = null; chSave(); repaint(); return; }
+  if (t.id === 'ch_no') { CH.prop = null; CH.msgs.push({ role: 'assistant', text: 'Not made.' }); chSave(); repaint(); return; }
+  if (t.id === 'ch_yes') {
+    var prop = CH.prop; CH.prop = null; CH.busy = true; repaint();
+    srv('erpAssistant', [{ confirm: prop }], function (r) { CH.busy = false; CH.msgs.push({ role: 'assistant', text: r.text, pdf: r.pdf || '' }); chSave(); repaint(); D = null; try { loadDashboardOnly(); updateCounts(); } catch (e) {} },
+        function (e) { CH.busy = false; CH.msgs.push({ role: 'assistant', text: 'Could not make it: ' + ((e && e.message) || String(e)) }); chSave(); repaint(); });
+  }
+});
+document.addEventListener('keydown', function (ev) {
+  if (VIEW !== 'chat' || !ev.target || ev.target.id !== 'ch_q') return;
+  if (ev.key === 'Enter' && !ev.shiftKey) { ev.preventDefault(); chSend(ev.target.value); }
+});
+</script>
+<!-- What to push next (handlers/push.js): on Campaigns, for the platform admin, or for everyone once the provider
+     switches the "push" app on. Four lists with the figures behind each call; tick rows -> a campaign pre-filled. -->
+<style>
+.pu-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:12px;margin-top:10px}
+.pu-box{border:1px solid var(--ring);border-radius:12px;padding:10px 12px;background:var(--surface)}
+.pu-box h3{margin:0 0 2px;font-size:14px}
+.pu-box .sub{margin:0 0 8px}
+.pu-row{display:flex;gap:8px;align-items:flex-start;padding:6px 0;border-top:1px solid var(--grid);font-size:13px}
+.pu-row:first-of-type{border-top:0}
+.pu-row .why{color:var(--muted);font-size:12px}
+.pu-row .n{margin-left:auto;white-space:nowrap;text-align:right}
+.pu-off{color:var(--good);font-weight:700}
+</style>
+<script>
+var PU = null, PU_ERR = '', PU_BUSY = '', PU_PICK = {}, PU_RULES = false;
+function puOn() { if (!ME) return false; if (ME.platform) return true; var off = (ME.apps && ME.apps.off) || []; return off.indexOf('push') < 0 && typeof APPS !== 'undefined' && APPS && APPS.apps.some(function (a) { return a.key === 'push' && a.on; }); }
+function puLoad() { srv('erpPushList', [], function (r) { PU = r; PU_ERR = ''; if (VIEW === 'campaigns') repaint(); }, function (e) { PU_ERR = (e && e.message) || String(e); if (VIEW === 'campaigns') repaint(); }); }
+function puRow(r, kind) {
+  var id = kind + ':' + r.sku;
+  return '<label class="pu-row"><input type="checkbox" data-pupick="' + esc(id) + '"' + (PU_PICK[id] ? ' checked' : '') + ' style="margin-top:3px"><div><b>' + esc(r.name) + '</b><br><span class="why">' + esc(r.why) + '</span>' +
+         (kind === 'clear' && r.offer ? '<br><span class="pu-off">Offer \u09f3' + fmt(r.offer) + ' instead of \u09f3' + fmt(r.sell) + ' (' + r.offPct + '% off)</span>' : '') + '</div>' +
+         '<div class="n">' + fmt(r.stock) + ' in stock<br><span class="sku">' + fmt(r.sold90) + ' sold / 90 d' + (r.margin !== null ? ' \u00b7 ' + r.margin + '%' : '') + '</span></div></label>';
+}
+function puCardHtml() {
+  if (!puOn()) return '';
+  var h = '<section><div class="card"><div class="row" style="justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px"><h2 style="margin:0">What to push next</h2>' +
+          '<span class="row" style="gap:6px"><button class="btn small" type="button" id="pu_rules">Rules</button><button class="btn small primary" type="button" id="pu_go">Start a campaign with the ticked ones</button></span></div>' +
+          '<div class="sub" data-c5x="1" style="display:block">From your own sales and stock, no guesswork: what sells and has stock to spare, what sits unsold with money in it (with an offer that still keeps a margin), what is picking up, and what would sell out if advertised.' + (ME && ME.platform && !(APPS && APPS.apps.some(function (a) { return a.key === 'push' && a.on; })) ? ' <span class="rf-conf mid">Only you see this</span>' : '') + '</div>';
+  if (PU_ERR) return h + '<div class="note err"><div class="ico">!</div><div>' + esc(PU_ERR) + '</div></div></div></section>';
+  if (!PU) { puLoad(); return h + '<div class="loading">Working it out\u2026</div></div></section>'; }
+  var R = PU.rules;
+  if (PU_RULES) {
+    h += '<div class="jt-form" style="margin-top:8px">' + [['coverDays', 'Advertise only with at least this many days of stock'], ['slowDays', 'Clear out when not sold for this many days'], ['minValue', '\u2026and at least this much (\u09f3) on the shelf'], ['marginFloor', 'Advertise only above this margin %'], ['keepMargin', 'An offer keeps at least this % over cost'], ['lowCover', 'Do not advertise under this many days of stock']].map(function (x) {
+      return '<div><label class="f" for="pu_' + x[0] + '">' + x[1] + '</label><input class="i" id="pu_' + x[0] + '" inputmode="numeric" value="' + esc(R[x[0]]) + '"></div>'; }).join('') +
+      '</div><div class="ap-row"><button class="btn small primary" type="button" id="pu_save">Save rules</button><button class="btn small" type="button" id="pu_rules">Close</button></div>';
+  }
+  var box = function (title, sub, list, kind) { return '<div class="pu-box"><h3>' + title + '</h3><div class="sub">' + sub + '</div>' + (list.length ? list.map(function (r) { return puRow(r, kind); }).join('') : '<div class="empty" style="padding:10px 0">Nothing here.</div>') + '</div>'; };
+  h += '<div class="pu-grid">' +
+       box('Advertise now', 'Sell well, enough stock, healthy margin.', PU.advertise, 'adv') +
+       box('Clear out with an offer', 'Unsold for long \u00b7 \u09f3' + fmt(PU.tied) + ' tied up in all.', PU.clear, 'clear') +
+       box('Rising', 'Last 30 days well above the 30 before.', PU.rising, 'rise') +
+       box('Not now \u2014 reorder first', 'Selling, but would run out.', PU.hold, 'hold') + '</div>';
+  return h + '</div></section>';
+}
+var viewCampaignsPU = viewCampaigns;
+viewCampaigns = function () {
+  var h = viewCampaignsPU.apply(this, arguments);
+  if (!puOn() || (typeof CP !== 'undefined' && CP.tab && CP.tab !== 'list')) return h;
+  var at = h.indexOf('</section>'); // after the tabs/header
+  return at > 0 ? h.slice(0, at + 10) + puCardHtml() + h.slice(at + 10) : h + puCardHtml();
+};
+document.addEventListener('click', function (ev) {
+  if (VIEW !== 'campaigns') return;
+  var t = ev.target && ev.target.closest ? ev.target.closest('#pu_rules,#pu_save,#pu_go') : null; if (!t) return;
+  var fail = function (e) { PU_BUSY = ''; repaint(); toast(esc((e && e.message) || e), true, 9000); };
+  if (t.id === 'pu_rules') { PU_RULES = !PU_RULES; repaint(); return; }
+  if (t.id === 'pu_save') {
+    var p = {}; ['coverDays', 'slowDays', 'minValue', 'marginFloor', 'keepMargin', 'lowCover'].forEach(function (k) { p[k] = num((el('pu_' + k) || {}).value); });
+    srv('erpPushRulesSave', [p], function (r) { PU = r; PU_RULES = false; repaint(); toast('Rules saved.'); }, fail); return;
+  }
+  if (t.id === 'pu_go') {
+    var lines = [], name = '';
+    Object.keys(PU_PICK).forEach(function (id) {
+      if (!PU_PICK[id]) return; var kind = id.split(':')[0], sku = id.slice(kind.length + 1);
+      var r = (kind === 'clear' ? PU.clear : kind === 'adv' ? PU.advertise : kind === 'rise' ? PU.rising : PU.hold).filter(function (x) { return x.sku === sku; })[0]; if (!r) return;
+      if (kind === 'clear' && r.offer) { lines.push('\u2022 ' + r.name + ': \u09f3' + fmt(r.offer) + ' (was \u09f3' + fmt(r.sell) + ', ' + r.offPct + '% off) \u2014 ' + fmt(r.stock) + ' left'); name = name || 'Clearance offer'; }
+      else { lines.push('\u2022 ' + r.name + ' \u2014 \u09f3' + fmt(r.sell) + ', in stock'); name = name || 'This week\u2019s picks'; }
+    });
+    if (!lines.length) { toast('Tick the products first.', true); return; }
+    CP.name = name + ' ' + (PU.today || ''); CP.msg = 'Hello {name}! ' + name + ' at ' + ((typeof BIZ !== 'undefined' && BIZ && BIZ.name) || 'our shop') + ':\n' + lines.join('\n') + '\nReply to order or ask.';
+    CP.tab = 'new'; CP.step = 1; PU_PICK = {}; repaint(); window.scrollTo(0, 0);
+    toast('Campaign pre-filled with ' + lines.length + ' product(s). Pick the customers and send.');
+  }
+});
+document.addEventListener('change', function (ev) {
+  if (VIEW !== 'campaigns') return;
+  var t = ev.target; if (!t || !t.getAttribute || !t.getAttribute('data-pupick')) return;
+  PU_PICK[t.getAttribute('data-pupick')] = !!t.checked;
 });
 </script>
 </body>

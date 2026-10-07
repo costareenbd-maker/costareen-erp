@@ -8428,7 +8428,7 @@ function srv(name, args, ok, bad) {
 
 var SRV_ACTIVE = 0, SRV_WRITING = false, SRV_TIMED = {};
 // the same list the server uses to know a call changes nothing (ERP_READS)
-var SRV_READS = /^(erpReceiveMatch|erpAiReader|erpProductSuggest|erpCatalogue|erpApps|erpAppQr|erpFeedback|erpRestockOffers|erpRestockList|erpWarrantyRules|erpWarrantyCard|erpMyLink|erpPlatformRegister|erpPlatformDoctor|erpPlatformCommunity|erpMarketWaiting|erpBoard|erpPlatformDesign|erpResell|erpResellerProgramme|erpLoyalty|erpCustomerPoints|erpRefillDue|erpDeliveryHistory|erpDeliveryHistoryMany|erpPrintKit|erpPrintJobs|erpPrintJob|erpPrintCost|erpSpools|erpPrintRequests|erpJoint|erpJointCatalog|erpJointCard|erpInvoiceDesign|erpInvoicePreview|erpMarket|erpMarketMine|erpMarketRequests|erpMarketHints|erpMarketNames|erpWanted|erpBrand|erpComplianceLog|erpProviderKey|erpNews|erpAccessKeys|erpAccessWarning|erpAdmin|erpAiKeys|erpAlertRules|erpAlerts|erpArena|erpBackupStatus|erpBg|erpBnWords|erpBookedParcels|erpBrandLogo|erpBundle|erpBusinessLinks|erpBusinesses|erpBusinessesDeleted|erpCampaignAudience|erpCampaignGet|erpCampaignList|erpCapital|erpCashBook|erpCatalog|erpConnStatus|erpConnections|erpCostBook|erpCourier|erpCourierKeyStatus|erpCurrencies|erpCustomerAccount|erpCustomerCredit|erpCustomerList|erpCustomerPage|erpCustomerStatement|erpCustomers|erpDashboardData|erpDaySales|erpDeliveryOptions|erpDevices|erpDiscontinued|erpDues|erpEvoQr|erpEvoStatus|erpExpenseExport|erpExpenseReceiptUrl|erpExpenses|erpFamilies|erpFighters|erpFormOptions|erpGame|erpGetTheme|erpGoogle|erpHello|erpInstalls|erpInvoice|erpInvoicePdf|erpJob|erpJobs|erpListView|erpLookupCustomer|erpLookupUsage|erpMe|erpMoney|erpNoteFileUrl|erpNotes|erpOwnerChange|erpOwnerChanges|erpParcelLabels|erpParcelPreview|erpPartnerStock|erpPartnership|erpPayReasons|erpPeople|erpPlatform|erpPlatformErrors|erpPnl|erpPnlMonth|erpPoList|erpPoolCatalog|erpProduct|erpProductListShare|erpProductPage|erpProductPhotoUrl|erpProductThumbs|erpProfile|erpQuoteAsset|erpQuoteBoot|erpQuoteGet|erpQuoteList|erpRecentInvoices|erpRecovery|erpReorderPlan|erpRestorePreview|erpReturnPreview|erpRisks|erpSales|erpSearch|erpSecurity|erpSelfTest|erpSerialLookup|erpSerialsFor|erpSessions|erpSetTheme|erpSettingsFull|erpSettingsLists|erpSfPayoutLines|erpSfPayouts|erpShareFile|erpSharedStock|erpSheet|erpStatementPdf|erpStockHistory|erpSupplierPage|erpSuppliers|erpToday|erpUsers|erpWaProductPdf|erpWebMatches|erpWebOrderInvoices|erpWebOrders|erpWebsiteTest)$/;
+var SRV_READS = /^(erpReceiveMatch|erpAiReader|erpProductSuggest|erpCatalogue|erpPushList|erpApps|erpAppQr|erpFeedback|erpRestockOffers|erpRestockList|erpWarrantyRules|erpWarrantyCard|erpMyLink|erpPlatformRegister|erpPlatformDoctor|erpPlatformCommunity|erpMarketWaiting|erpBoard|erpPlatformDesign|erpResell|erpResellerProgramme|erpLoyalty|erpCustomerPoints|erpRefillDue|erpDeliveryHistory|erpDeliveryHistoryMany|erpPrintKit|erpPrintJobs|erpPrintJob|erpPrintCost|erpSpools|erpPrintRequests|erpJoint|erpJointCatalog|erpJointCard|erpInvoiceDesign|erpInvoicePreview|erpMarket|erpMarketMine|erpMarketRequests|erpMarketHints|erpMarketNames|erpWanted|erpBrand|erpComplianceLog|erpProviderKey|erpNews|erpAccessKeys|erpAccessWarning|erpAdmin|erpAiKeys|erpAlertRules|erpAlerts|erpArena|erpBackupStatus|erpBg|erpBnWords|erpBookedParcels|erpBrandLogo|erpBundle|erpBusinessLinks|erpBusinesses|erpBusinessesDeleted|erpCampaignAudience|erpCampaignGet|erpCampaignList|erpCapital|erpCashBook|erpCatalog|erpConnStatus|erpConnections|erpCostBook|erpCourier|erpCourierKeyStatus|erpCurrencies|erpCustomerAccount|erpCustomerCredit|erpCustomerList|erpCustomerPage|erpCustomerStatement|erpCustomers|erpDashboardData|erpDaySales|erpDeliveryOptions|erpDevices|erpDiscontinued|erpDues|erpEvoQr|erpEvoStatus|erpExpenseExport|erpExpenseReceiptUrl|erpExpenses|erpFamilies|erpFighters|erpFormOptions|erpGame|erpGetTheme|erpGoogle|erpHello|erpInstalls|erpInvoice|erpInvoicePdf|erpJob|erpJobs|erpListView|erpLookupCustomer|erpLookupUsage|erpMe|erpMoney|erpNoteFileUrl|erpNotes|erpOwnerChange|erpOwnerChanges|erpParcelLabels|erpParcelPreview|erpPartnerStock|erpPartnership|erpPayReasons|erpPeople|erpPlatform|erpPlatformErrors|erpPnl|erpPnlMonth|erpPoList|erpPoolCatalog|erpProduct|erpProductListShare|erpProductPage|erpProductPhotoUrl|erpProductThumbs|erpProfile|erpQuoteAsset|erpQuoteBoot|erpQuoteGet|erpQuoteList|erpRecentInvoices|erpRecovery|erpReorderPlan|erpRestorePreview|erpReturnPreview|erpRisks|erpSales|erpSearch|erpSecurity|erpSelfTest|erpSerialLookup|erpSerialsFor|erpSessions|erpSetTheme|erpSettingsFull|erpSettingsLists|erpSfPayoutLines|erpSfPayouts|erpShareFile|erpSharedStock|erpSheet|erpStatementPdf|erpStockHistory|erpSupplierPage|erpSuppliers|erpToday|erpUsers|erpWaProductPdf|erpWebMatches|erpWebOrderInvoices|erpWebOrders|erpWebsiteTest)$/;
 function srvPump() {
   if (!SRV_Q.length) return;
   var isRead = SRV_READS.test(SRV_Q[0].name);
@@ -21627,7 +21627,8 @@ var AP_LOOK = {
   quote:    { c: '#e39a2d', i: '<path d="M3 12l8-9h10v10l-9 8z"/><circle cx="16" cy="8" r="1.5"/>' },
   design:   { c: '#7c6bb1', i: '<path d="M4 20l4-1 11-11-3-3L5 16z"/><path d="M14 7l3 3"/>' },
   ideas:    { c: '#2a9d8f', i: '<path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0 0 12 3z"/>' },
-  feedback: { c: '#c8553d', i: '<path d="M4 5h16v11H9l-5 4z"/><path d="M8 9h8M8 12h5"/>' }
+  feedback: { c: '#c8553d', i: '<path d="M4 5h16v11H9l-5 4z"/><path d="M8 9h8M8 12h5"/>' },
+  push:     { c: '#e39a2d', i: '<path d="M3 17l6-6 4 4 8-8"/><path d="M14 7h7v7"/>' }
 };
 var AP_PANEL = { check: 'preg', doctor: 'pdoc', ideas: 'pcom', design: 'pdes' };   // the provider's panels, moved here from Platform
 function apState() { var a = (ME && ME.apps) || {}; return { off: a.off || [], hidden: a.hidden || [], gone: a.gone || [] }; }
@@ -21708,11 +21709,12 @@ function viewApps() {
   if (APPS_ERR) return h + '<div class="note err"><div class="ico">!</div><div>' + esc(APPS_ERR) + '</div></div></div></section>';
   if (!APPS) return h + '<div class="loading">Loading\u2026</div></div></section>';
   var list = APPS.apps.filter(function (a) { return a.on || APPS.admin; });
-  h += '<div class="ap-home">' + list.map(function (a) {
-    return '<button type="button" class="ap-app' + (a.on ? '' : ' off') + '" data-apopen="' + esc(a.key) + '" ' + apStyle(a.key) + '>' +
+  var byGroup = function (g) { return list.filter(function (a) { return (a.group || 'For customers') === g; }); };
+  h += ['For customers', 'Only me'].map(function (g) { var L = byGroup(g); if (!L.length) return ''; return (g === 'Only me' ? '<h3 style="margin:14px 0 2px;font-size:14px">Only me</h3><div class="sub" data-c5x="1" style="display:block">New things. Yours alone until you switch one on for everyone.</div>' : '') + '<div class="ap-home">' + L.map(function (a) {
+    return '<button type="button" class="ap-app' + (a.on || a.labs ? '' : ' off') + '" data-apopen="' + esc(a.key) + '" ' + apStyle(a.key) + '>' +
            '<span class="ap-ico">' + apIcon(a.key) + (a.on ? '' : '<span class="ap-dot" title="Off for everyone"></span>') + '</span>' +
            '<span class="ap-lbl">' + esc(a.name) + '</span></button>';
-  }).join('') + '</div>';
+  }).join('') + '</div>'; }).join('');
   return h + '</div></section>';
 }
 // ---- one app's screen
@@ -22320,6 +22322,86 @@ document.addEventListener('click', function (ev) {
 document.addEventListener('keydown', function (ev) {
   if (VIEW !== 'chat' || !ev.target || ev.target.id !== 'ch_q') return;
   if (ev.key === 'Enter' && !ev.shiftKey) { ev.preventDefault(); chSend(ev.target.value); }
+});
+</script>
+<!-- What to push next (handlers/push.js): on Campaigns, for the platform admin, or for everyone once the provider
+     switches the "push" app on. Four lists with the figures behind each call; tick rows -> a campaign pre-filled. -->
+<style>
+.pu-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:12px;margin-top:10px}
+.pu-box{border:1px solid var(--ring);border-radius:12px;padding:10px 12px;background:var(--surface)}
+.pu-box h3{margin:0 0 2px;font-size:14px}
+.pu-box .sub{margin:0 0 8px}
+.pu-row{display:flex;gap:8px;align-items:flex-start;padding:6px 0;border-top:1px solid var(--grid);font-size:13px}
+.pu-row:first-of-type{border-top:0}
+.pu-row .why{color:var(--muted);font-size:12px}
+.pu-row .n{margin-left:auto;white-space:nowrap;text-align:right}
+.pu-off{color:var(--good);font-weight:700}
+</style>
+<script>
+var PU = null, PU_ERR = '', PU_BUSY = '', PU_PICK = {}, PU_RULES = false;
+function puOn() { if (!ME) return false; if (ME.platform) return true; var off = (ME.apps && ME.apps.off) || []; return off.indexOf('push') < 0 && typeof APPS !== 'undefined' && APPS && APPS.apps.some(function (a) { return a.key === 'push' && a.on; }); }
+function puLoad() { srv('erpPushList', [], function (r) { PU = r; PU_ERR = ''; if (VIEW === 'campaigns') repaint(); }, function (e) { PU_ERR = (e && e.message) || String(e); if (VIEW === 'campaigns') repaint(); }); }
+function puRow(r, kind) {
+  var id = kind + ':' + r.sku;
+  return '<label class="pu-row"><input type="checkbox" data-pupick="' + esc(id) + '"' + (PU_PICK[id] ? ' checked' : '') + ' style="margin-top:3px"><div><b>' + esc(r.name) + '</b><br><span class="why">' + esc(r.why) + '</span>' +
+         (kind === 'clear' && r.offer ? '<br><span class="pu-off">Offer \u09f3' + fmt(r.offer) + ' instead of \u09f3' + fmt(r.sell) + ' (' + r.offPct + '% off)</span>' : '') + '</div>' +
+         '<div class="n">' + fmt(r.stock) + ' in stock<br><span class="sku">' + fmt(r.sold90) + ' sold / 90 d' + (r.margin !== null ? ' \u00b7 ' + r.margin + '%' : '') + '</span></div></label>';
+}
+function puCardHtml() {
+  if (!puOn()) return '';
+  var h = '<section><div class="card"><div class="row" style="justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px"><h2 style="margin:0">What to push next</h2>' +
+          '<span class="row" style="gap:6px"><button class="btn small" type="button" id="pu_rules">Rules</button><button class="btn small primary" type="button" id="pu_go">Start a campaign with the ticked ones</button></span></div>' +
+          '<div class="sub" data-c5x="1" style="display:block">From your own sales and stock, no guesswork: what sells and has stock to spare, what sits unsold with money in it (with an offer that still keeps a margin), what is picking up, and what would sell out if advertised.' + (ME && ME.platform && !(APPS && APPS.apps.some(function (a) { return a.key === 'push' && a.on; })) ? ' <span class="rf-conf mid">Only you see this</span>' : '') + '</div>';
+  if (PU_ERR) return h + '<div class="note err"><div class="ico">!</div><div>' + esc(PU_ERR) + '</div></div></div></section>';
+  if (!PU) { puLoad(); return h + '<div class="loading">Working it out\u2026</div></div></section>'; }
+  var R = PU.rules;
+  if (PU_RULES) {
+    h += '<div class="jt-form" style="margin-top:8px">' + [['coverDays', 'Advertise only with at least this many days of stock'], ['slowDays', 'Clear out when not sold for this many days'], ['minValue', '\u2026and at least this much (\u09f3) on the shelf'], ['marginFloor', 'Advertise only above this margin %'], ['keepMargin', 'An offer keeps at least this % over cost'], ['lowCover', 'Do not advertise under this many days of stock']].map(function (x) {
+      return '<div><label class="f" for="pu_' + x[0] + '">' + x[1] + '</label><input class="i" id="pu_' + x[0] + '" inputmode="numeric" value="' + esc(R[x[0]]) + '"></div>'; }).join('') +
+      '</div><div class="ap-row"><button class="btn small primary" type="button" id="pu_save">Save rules</button><button class="btn small" type="button" id="pu_rules">Close</button></div>';
+  }
+  var box = function (title, sub, list, kind) { return '<div class="pu-box"><h3>' + title + '</h3><div class="sub">' + sub + '</div>' + (list.length ? list.map(function (r) { return puRow(r, kind); }).join('') : '<div class="empty" style="padding:10px 0">Nothing here.</div>') + '</div>'; };
+  h += '<div class="pu-grid">' +
+       box('Advertise now', 'Sell well, enough stock, healthy margin.', PU.advertise, 'adv') +
+       box('Clear out with an offer', 'Unsold for long \u00b7 \u09f3' + fmt(PU.tied) + ' tied up in all.', PU.clear, 'clear') +
+       box('Rising', 'Last 30 days well above the 30 before.', PU.rising, 'rise') +
+       box('Not now \u2014 reorder first', 'Selling, but would run out.', PU.hold, 'hold') + '</div>';
+  return h + '</div></section>';
+}
+var viewCampaignsPU = viewCampaigns;
+viewCampaigns = function () {
+  var h = viewCampaignsPU.apply(this, arguments);
+  if (!puOn() || (typeof CP !== 'undefined' && CP.tab && CP.tab !== 'list')) return h;
+  var at = h.indexOf('</section>'); // after the tabs/header
+  return at > 0 ? h.slice(0, at + 10) + puCardHtml() + h.slice(at + 10) : h + puCardHtml();
+};
+document.addEventListener('click', function (ev) {
+  if (VIEW !== 'campaigns') return;
+  var t = ev.target && ev.target.closest ? ev.target.closest('#pu_rules,#pu_save,#pu_go') : null; if (!t) return;
+  var fail = function (e) { PU_BUSY = ''; repaint(); toast(esc((e && e.message) || e), true, 9000); };
+  if (t.id === 'pu_rules') { PU_RULES = !PU_RULES; repaint(); return; }
+  if (t.id === 'pu_save') {
+    var p = {}; ['coverDays', 'slowDays', 'minValue', 'marginFloor', 'keepMargin', 'lowCover'].forEach(function (k) { p[k] = num((el('pu_' + k) || {}).value); });
+    srv('erpPushRulesSave', [p], function (r) { PU = r; PU_RULES = false; repaint(); toast('Rules saved.'); }, fail); return;
+  }
+  if (t.id === 'pu_go') {
+    var lines = [], name = '';
+    Object.keys(PU_PICK).forEach(function (id) {
+      if (!PU_PICK[id]) return; var kind = id.split(':')[0], sku = id.slice(kind.length + 1);
+      var r = (kind === 'clear' ? PU.clear : kind === 'adv' ? PU.advertise : kind === 'rise' ? PU.rising : PU.hold).filter(function (x) { return x.sku === sku; })[0]; if (!r) return;
+      if (kind === 'clear' && r.offer) { lines.push('\u2022 ' + r.name + ': \u09f3' + fmt(r.offer) + ' (was \u09f3' + fmt(r.sell) + ', ' + r.offPct + '% off) \u2014 ' + fmt(r.stock) + ' left'); name = name || 'Clearance offer'; }
+      else { lines.push('\u2022 ' + r.name + ' \u2014 \u09f3' + fmt(r.sell) + ', in stock'); name = name || 'This week\u2019s picks'; }
+    });
+    if (!lines.length) { toast('Tick the products first.', true); return; }
+    CP.name = name + ' ' + (PU.today || ''); CP.msg = 'Hello {name}! ' + name + ' at ' + ((typeof BIZ !== 'undefined' && BIZ && BIZ.name) || 'our shop') + ':\n' + lines.join('\n') + '\nReply to order or ask.';
+    CP.tab = 'new'; CP.step = 1; PU_PICK = {}; repaint(); window.scrollTo(0, 0);
+    toast('Campaign pre-filled with ' + lines.length + ' product(s). Pick the customers and send.');
+  }
+});
+document.addEventListener('change', function (ev) {
+  if (VIEW !== 'campaigns') return;
+  var t = ev.target; if (!t || !t.getAttribute || !t.getAttribute('data-pupick')) return;
+  PU_PICK[t.getAttribute('data-pupick')] = !!t.checked;
 });
 </script>
 </body>

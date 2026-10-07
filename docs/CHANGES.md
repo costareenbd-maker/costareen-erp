@@ -1204,3 +1204,21 @@ The provider's key (the one the photo reader uses), the model list with 40-s cap
 assistant". `assistant_test.mjs` (9, Gemini faked by script).
 - Not done: push notifications; more writes (receive stock, payments) - invoices only for now; voice; the chat on
   the phone's bottom bar (it is under More).
+
+## What to push next - the first "Only me" feature (tag push-1, 8 Oct 2026)
+
+Owner's rule from today: new things are built for him alone; later he may open any of them to everyone. Mechanism:
+an app in `handlers/apps.js` marked `labs: true` sits in an **Only me** group on the Apps page. It is off for every
+company until a flag row `enabled=true` exists (provider switch on the app's own screen, "Switch on for everyone");
+the platform admin always sees it. Bridged companies and staff never see it while off.
+
+The feature: a card **What to push next** at the top of Campaigns (`handlers/push.js`, `erpPushList`), rules not AI,
+every row says why. Four lists from the shop's own sales and stock: **Advertise now** (sold in 90 days, at least
+30 days of cover, margin at or above 15%); **Clear out with an offer** (nothing sold for 60 days and at least BDT 2,000
+on the shelf; the offer is cost + 10% rounded up, or 15% off when there is no cost; money tied up totalled); **Rising**
+(last 30 days at least 1.5x the 30 before); **Not now - reorder first** (selling but under 14 days of cover). Cost comes
+from the cost book, falling back to the product's own cost. Rules editable by the owner (`erpPushRulesSave`,
+business_config `push_rules`). Tick rows and **Start a campaign with the ticked ones** opens the New campaign form with
+the name and message pre-filled (product, price, offer price and % off, stock left). `push_test.mjs` (17).
+- Not done: no product photos in the message; offer prices are advice only (nothing changes the sell price); no
+  seasonal or website-traffic signals; lists capped at 25 rows each.

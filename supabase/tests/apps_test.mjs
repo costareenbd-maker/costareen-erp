@@ -13,7 +13,7 @@ const menu = (r, k) => r.result.menu.find((m) => m.key === k);
 
 // 1. the catalogue, as anyone
 let r = await sales('erpApps', []);
-check('sales staff read the catalogue: 10 features, every one on, no switches for them', r.ok && r.result.apps.length === 10 && r.result.apps.every((a) => a.on && !a.hidden) && !r.result.owner && !r.result.admin, r);
+check('sales staff read the catalogue: 10 public features on, the Only-me one off, no switches for them', r.ok && r.result.apps.length === 11 && r.result.apps.filter((a) => !a.labs).length === 10 && r.result.apps.every((a) => (a.labs ? !a.on : a.on) && !a.hidden) && !r.result.owner && !r.result.admin, r);
 check('the public ones carry a link; every tile names its screen (Platform ones only for the admin)', r.ok && r.result.apps.filter((a) => a.url).length === 9 && r.result.apps.filter((a) => a.view).length === 8 && r.result.apps.every((a) => typeof a.where === 'string'), r.result.apps.map((a) => a.key + ':' + a.view + ':' + a.url));
 check('the menu list: 14 screens, all for everyone', r.ok && r.result.menu.length === 14 && r.result.menu.every((m) => m.mode === 'all' && !m.off), r.result.menu);
 

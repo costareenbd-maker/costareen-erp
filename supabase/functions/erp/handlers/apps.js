@@ -31,6 +31,8 @@ export const APPS = [
   { key: 'print', group: 'For customers', name: 'Get it printed', view: 'printjobs', tab: 'board', path: 'print', what: 'Anyone posts a file; print farms offer a price; the chosen farm prints and delivers.', where: 'Print jobs \u2192 Jobs board' },
   { key: 'quote', group: 'For customers', name: 'Print quote', view: 'printjobs', tab: 'requests', path: 'quote', what: 'A customer asks THIS shop for a print price.', where: 'Print jobs \u2192 Requests \u2192 Taking requests' },
   { key: 'design', group: 'For customers', name: 'Design desk', view: 'platform', path: 'design', what: 'Designers take sketches and repair-part requests; the part goes to a print farm.', where: 'Platform \u2192 Design desk' },
+  // Only me (owner's rule, 8 Oct 2026): new features ship for the platform admin alone; a flag row enabled=true opens them to everyone
+  { key: 'push', group: 'Only me', labs: true, name: 'What to push next', view: 'campaigns', what: 'On Campaigns: which products to advertise, which to clear out with an offer, which are rising, which would sell out.', where: 'Campaigns \u2192 What to push next' },
   { key: 'feedback', group: 'For customers', name: 'Feedback', view: 'app', what: 'Problems, complaints, ideas and praise from anyone who uses an ERP on this platform; the provider answers in one inbox.', where: 'Apps \u2192 Feedback' },
   { key: 'ideas', group: 'For customers', name: 'Ideas and updates', view: 'platform', path: 'ideas', what: 'Visitors post and vote on ideas for the ERP; you answer in public.', where: 'Platform \u2192 Ideas' },
 ];
@@ -54,12 +56,13 @@ function ctl(deps, sql) { return (deps && deps.control) || sql; }
 
 /** The provider's switches: {key: false} for every app switched off. */
 async function offMap(deps, sql) {
+  const off = {};
+  for (const a of APPS) if (a.labs) off[a.key] = true;   // an "Only me" app is off until a flag row says enabled
   try {
     const rows = await ctl(deps, sql)`select key, enabled from erp_app_flags`;
-    const off = {};
-    for (const r of rows) if (!r.enabled && BY_KEY[r.key]) off[r.key] = true;
+    for (const r of rows) if (BY_KEY[r.key]) { if (r.enabled) delete off[r.key]; else off[r.key] = true; }
     return off;
-  } catch (_) { return {}; }   // the table is not there yet: everything on
+  } catch (_) { return off; }   // the table is not there yet
 }
 const MODES = ['all', 'owner', 'off'];
 /** This company's menu: {key: 'all' | 'owner' | 'off'} for the screens in MENU (missing = 'all'). */
@@ -108,6 +111,7 @@ export async function erpApps(ctx) {
       view: (a.view === 'platform' && !admin) ? '' : a.view, tab: a.tab || '',
       url: a.path ? pageUrl(ctx.deps, a.path) : '',
       on: !(off[a.key] || (a.sameAs && off[a.sameAs])),
+      labs: !!a.labs,
       mode: HIDEABLE(a.key) ? (modes[a.key] || 'all') : '',
       hidden: modes[a.key] === 'owner',
       sameAs: a.sameAs || '',
