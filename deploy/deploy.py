@@ -105,9 +105,10 @@ def step_web():
     need('CLOUDFLARE_API_TOKEN'); need('CLOUDFLARE_ACCOUNT_ID')
     subprocess.check_call([sys.executable, os.path.join(ROOT, 'web', 'build.py')])
     out = tempfile.mkdtemp(prefix='erp-web-')
-    for f in ['index.html', 'manifest.webmanifest', 'sw.js', '_headers', 'check.html', 'my.html', 'confirm.html', 'lite.html', 'doctor.html', 'doctor-data.js', 'quote.html', 'find.html', 'ideas.html', 'choose.html', 'colour-math.js', 'colour-data.js', 'print.html', 'design.html']:
+    for f in ['index.html', 'manifest.webmanifest', 'sw.js', '_headers', 'check.html', 'my.html', 'confirm.html', 'lite.html', 'doctor.html', 'doctor-data.js', 'quote.html', 'find.html', 'ideas.html', 'choose.html', 'colour-math.js', 'colour-data.js', 'print.html', 'design.html', 'creator.html', 'sponsor.html']:
         shutil.copy(os.path.join(ROOT, 'web', f), out)
     shutil.copytree(os.path.join(ROOT, 'web', 'icons'), os.path.join(out, 'icons'))
+    shutil.copytree(os.path.join(ROOT, 'web', 'brand'), os.path.join(out, 'brand'))     # sponsoring brands' logos (creator / sponsor pages)
     shutil.copytree(os.path.join(ROOT, 'web', 'vendor'), os.path.join(out, 'vendor'))   # the barcode reader (loaded only when scanning)
     shutil.copytree(os.path.join(ROOT, 'web', 'games'), os.path.join(out, 'games'))   # games load on demand (no photos in them)
     # Stage 1e: only the published copy is minified (the source stays readable); a failed minify stops the deploy

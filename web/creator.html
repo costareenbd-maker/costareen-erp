@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<meta name="referrer" content="no-referrer">
+<title>Creator programme</title>
+<link rel="icon" href="icons/favicon-32.png">
+<style>
+/* The creator's own page (handlers/creatorportal.js): request filament for the next project, paste the links when the
+   video is live, see the numbers. One permanent link per creator. */
+:root{--bg:#f4f5f7;--card:#fff;--ink:#141a22;--mute:#5f6b7a;--line:#e3e7ec;--acc:#1e4fa3;--acc2:#51bfca;--ok:#0f766e;--okbg:#e6f4f1;--warn:#9a5b00;--warnbg:#fff4df;--bad:#b42318;--badbg:#fdecea;--head:#0f1a2b}
+@media (prefers-color-scheme:dark){:root{--bg:#0e1218;--card:#161c25;--ink:#eef2f6;--mute:#9aa6b5;--line:#273040;--okbg:#0f2b27;--warnbg:#2b2210;--badbg:#2d1614;--head:#0a111c}}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans","Noto Sans Bengali",sans-serif}
+header{background:var(--head);color:#fff;padding:calc(18px + env(safe-area-inset-top,0px)) 16px 18px}
+.hd{max-width:720px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap}
+.logos{display:flex;align-items:center;gap:14px}
+.logos img{height:34px;max-width:150px;object-fit:contain}
+.logos .shoplogo{background:#fff;border-radius:8px;padding:4px 8px;height:42px}
+.logos .x{color:#8fa0b8;font-size:20px}
+.logos .nm{font-weight:700;font-size:18px;letter-spacing:.2px}
+.hd .sub{color:#b9c5d6;font-size:13px;margin-top:2px}
+.who{text-align:right}.who b{display:block;font-size:17px}.who span{color:#b9c5d6;font-size:13px}
+main{max-width:720px;margin:0 auto;padding:16px 16px calc(40px + env(safe-area-inset-bottom,0px))}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px 18px;margin-bottom:14px}
+h2{font-size:13px;color:var(--mute);margin:0 0 10px;text-transform:uppercase;letter-spacing:.7px}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px}
+.kpi{background:var(--bg);border-radius:12px;padding:10px 12px}
+.kpi b{display:block;font-size:22px;font-variant-numeric:tabular-nums;line-height:1.2}
+.kpi span{font-size:12px;color:var(--mute)}
+.badge{display:inline-block;font-size:12px;font-weight:600;padding:3px 10px;border-radius:999px;white-space:nowrap}
+.b-ok{background:var(--okbg);color:var(--ok)}.b-warn{background:var(--warnbg);color:var(--warn)}.b-bad{background:var(--badbg);color:var(--bad)}.b-mute{background:var(--bg);color:var(--mute)}.b-acc{background:#e6edfa;color:var(--acc)}
+.proj{border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-top:10px}
+.proj .h{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;flex-wrap:wrap}
+.proj .h b{font-size:16px}.proj .m{color:var(--mute);font-size:13px;margin-top:2px}
+.post{display:flex;justify-content:space-between;gap:10px;align-items:center;border-top:1px solid var(--line);padding:8px 0;font-size:14px;flex-wrap:wrap}
+.post a{color:var(--acc);text-decoration:none;overflow-wrap:anywhere}
+.post .n{color:var(--mute);font-variant-numeric:tabular-nums;white-space:nowrap}
+label{display:block;font-size:13px;color:var(--mute);margin:10px 0 4px}
+input,select,textarea{width:100%;font:inherit;font-size:15px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--card);color:var(--ink)}
+textarea{min-height:70px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:0 12px}
+@media (max-width:480px){.grid2{grid-template-columns:1fr}}
+button,a.btn{font:inherit;font-size:15px;padding:11px 16px;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--ink);cursor:pointer;text-decoration:none;display:inline-block}
+.pri{background:var(--acc)!important;border-color:var(--acc)!important;color:#fff!important;font-weight:600}
+.sm{font-size:13px;padding:7px 12px}
+button:disabled{opacity:.55;cursor:default}
+.row{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;align-items:center}
+.msg{font-size:14px;color:var(--mute)}
+.err{color:var(--bad)}
+.rules{font-size:14px;color:var(--mute);margin:0;padding-left:18px}
+.rules li{margin:3px 0}
+footer{font-size:13px;color:var(--mute);text-align:center;margin-top:22px}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
+<header><div class="hd" id="hd"><div class="logos"><span class="nm">Creator programme</span></div></div></header>
+<main>
+  <div id="out"><div class="card"><p class="msg">Loading your page…</p></div></div>
+  <footer>This page opens only with your link. Keep it to yourself. Every entry is recorded with its time.</footer>
+</main>
+<script>
+var API = (new URLSearchParams(location.search).get('api') || 'https://oqzcuuytytqadqjlwdsh.supabase.co/functions/v1/erp').replace(/\/+$/, '');
+var TOKEN = new URLSearchParams(location.search).get('t') || '';
+var BRAND_LOGOS = { polymaker: 'brand/polymaker.svg' };
+var D = null, FORM = null, BUSY = false, ERR = '', out = document.getElementById('out');
+function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+function n(v) { return Number(v || 0).toLocaleString('en-US'); }
+function tk(v) { return '৳' + n(Math.round(v || 0)); }
+function dt(iso) { if (!iso) return ''; var d = new Date(iso); return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) + ' ' + d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }); }
+function api(body) {
+  return fetch(API + '?pub=creator&t=' + encodeURIComponent(TOKEN), body ? { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) } : {}).then(function (r) { return r.json(); });
+}
+function head() {
+  if (!D) return;
+  var b = (D.creator.brand || '').toLowerCase(), bl = BRAND_LOGOS[b];
+  document.getElementById('hd').innerHTML = '<div><div class="logos">' + (D.shop.logo ? '<img class="shoplogo" src="' + esc(D.shop.logo) + '" alt="">' : '<span class="nm">' + esc(D.shop.name) + '</span>') +
+    (D.creator.brand ? '<span class="x">×</span>' + (bl ? '<img src="' + esc(bl) + '" alt="' + esc(D.creator.brand) + '">' : '<span class="nm">' + esc(D.creator.brand) + '</span>') : '') + '</div><div class="sub">Creator programme · ' + esc(D.shop.name) + '</div></div>' +
+    '<div class="who"><b>' + esc(D.creator.name) + '</b><span>' + esc([D.creator.handle, D.creator.platforms].filter(Boolean).join(' · ')) + '</span></div>';
+}
+function statusBadge(s) { return s === 'requested' ? '<span class="badge b-warn">Waiting for approval</span>' : s === 'approved' ? '<span class="badge b-acc">Approved · collect it</span>' : s === 'given' ? '<span class="badge b-warn">Filament received · paste your link</span>' : s === 'done' ? '<span class="badge b-ok">Done</span>' : '<span class="badge b-bad">Declined</span>'; }
+function postHtml(p) {
+  return '<div class="post"><div><a href="' + esc(p.url) + '" target="_blank" rel="noopener">' + esc(p.platform || '') + ' ' + esc(p.kind) + ' · ' + esc(p.url.replace(/^https?:\/\/(www\.)?/, '').slice(0, 42)) + '</a><br><span class="n">' + esc(p.date) + ' · ' + (p.verified ? '<span class="badge b-ok">verified by YouTube</span>' : '<span class="badge b-mute">reported</span>') + '</span></div>' +
+    '<div class="n">' + n(p.views) + ' views · ' + n(p.likes) + ' likes · ' + n(p.comments) + ' comments' + (p.leads ? ' · ' + n(p.leads) + ' enquiries' : '') + (p.verified ? '' : ' <button class="sm" data-nums="' + p.id + '">Update</button>') + '</div></div>';
+}
+function render() {
+  if (ERR) { out.innerHTML = '<div class="card"><p class="msg err">' + esc(ERR) + '</p></div>'; return; }
+  if (!D) return;
+  head();
+  var c = D.creator, h = '';
+  // the agreement and this month
+  h += '<div class="card"><h2>' + esc(D.month.name) + '</h2><div class="kpis"><div class="kpi"><b>' + D.month.videos + ' / ' + c.videos_month + '</b><span>videos this month</span></div><div class="kpi"><b>' + D.month.posts + ' / ' + c.posts_month + '</b><span>posts this month</span></div><div class="kpi"><b>' + n(D.month.views) + '</b><span>views this month</span></div><div class="kpi"><b>' + n(D.total.rolls) + '</b><span>rolls received in all</span></div></div>' +
+       '<p class="msg" style="margin:10px 0 0">Agreement: ' + c.videos_month + ' videos and ' + c.posts_month + ' posts a month, ' + c.rolls_video + ' rolls per video' + (c.filament ? ' (' + esc(c.filament) + ')' : '') + (c.trial_until ? ' · trial until ' + esc(c.trial_until) : '') + '. More is welcome; less is fine for a month, but the next filament waits for the links.</p>' +
+       (c.status !== 'active' ? '<p class="msg err" style="margin:8px 0 0">The programme is ' + esc(c.status) + ' for you right now.</p>' : '') + '</div>';
+  // request the next filament
+  h += '<div class="card"><h2>Next project</h2>';
+  if (FORM === 'request') {
+    h += '<label>What is the video about?</label><input id="f_title" maxlength="160" placeholder="e.g. Strength test: PLA vs PLA+">' +
+         '<div class="grid2"><div><label>Filament (in stock now)</label><select id="f_sku">' + D.stock.map(function (s) { return '<option value="' + esc(s.sku) + '">' + esc(s.name) + ' (' + n(s.stock) + ' in stock)</option>'; }).join('') + '</select></div><div><label>Rolls</label><input id="f_qty" inputmode="numeric" value="' + c.rolls_video + '"></div></div>' +
+         '<label>Anything else (optional)</label><textarea id="f_note" maxlength="500" placeholder="Colour preference, pickup day, a second product…"></textarea>' +
+         '<div class="row"><button class="pri" id="f_send"' + (BUSY ? ' disabled' : '') + '>' + (BUSY ? 'Sending…' : 'Send the request') + '</button><button id="f_cancel">Cancel</button><span class="msg" id="f_msg"></span></div>';
+  } else {
+    h += D.canRequest ? '<p class="msg" style="margin:0 0 10px">Pick the filament for your next video. The shop answers here and by message; collect it when it says approved.</p><button class="pri" id="f_open">Request filament for the next video</button>' : '<p class="msg" style="margin:0">' + esc(D.why) + '</p>';
+  }
+  h += '</div>';
+  // projects
+  h += '<div class="card"><h2>Your projects</h2>';
+  if (!D.requests.length) h += '<p class="msg" style="margin:0">No project yet. Request your first filament above.</p>';
+  D.requests.forEach(function (r) {
+    var posts = D.posts.filter(function (p) { return p.request_id === r.id; });
+    h += '<div class="proj"><div class="h"><div><b>' + esc(r.title || r.product) + '</b><div class="m">' + n(r.qty_ok != null ? r.qty_ok : r.qty) + ' × ' + esc(r.product) + ' · requested ' + esc(dt(r.requested_at)) + (r.given_at ? ' · received ' + esc(dt(r.given_at)) : r.decided_at ? ' · answered ' + esc(dt(r.decided_at)) : '') + '</div>' + (r.owner_note ? '<div class="m">Shop: ' + esc(r.owner_note) + '</div>' : '') + '</div>' + statusBadge(r.status) + '</div>';
+    posts.forEach(function (p) { h += postHtml(p); });
+    if (r.status === 'given' || r.status === 'done') {
+      if (FORM && FORM.link === r.id) {
+        h += '<label>Link to the video or post</label><input id="l_url" placeholder="https://youtu.be/… or a Facebook post link">' +
+             '<div id="l_more"><div class="grid2"><div><label>Platform</label><select id="l_platform"><option>YouTube</option><option>Facebook</option><option>Instagram</option><option>TikTok</option></select></div><div><label>Type</label><select id="l_kind"><option value="video">Video</option><option value="post">Post</option><option value="reel">Reel</option></select></div></div>' +
+             '<p class="msg" style="margin:8px 0 0">For YouTube the numbers are fetched automatically. For other platforms type what you see now; you can update them later.</p><div class="grid2"><div><label>Views</label><input id="l_views" inputmode="numeric"></div><div><label>Likes</label><input id="l_likes" inputmode="numeric"></div><div><label>Comments</label><input id="l_comments" inputmode="numeric"></div><div><label>Customer enquiries you got</label><input id="l_leads" inputmode="numeric"></div></div></div>' +
+             '<div class="row"><button class="pri" data-lsend="' + r.id + '"' + (BUSY ? ' disabled' : '') + '>' + (BUSY ? 'Saving…' : 'Save the link') + '</button><button id="f_cancel">Cancel</button></div>';
+      } else h += '<div class="row"><button class="sm' + (r.status === 'given' ? ' pri' : '') + '" data-link="' + r.id + '">' + (posts.length ? '+ Add another link' : 'Paste the video link') + '</button></div>';
+    }
+    h += '</div>';
+  });
+  var loose = D.posts.filter(function (p) { return !p.request_id; });
+  if (loose.length) { h += '<div class="proj"><div class="h"><b>Other posts</b></div>' + loose.map(postHtml).join('') + '</div>'; }
+  h += '</div>';
+  if (FORM && FORM.nums) {
+    var p = D.posts.filter(function (x) { return x.id === FORM.nums; })[0] || {};
+    h += '<div class="card"><h2>Update the numbers</h2><p class="msg" style="margin:0">' + esc(p.url || '') + '</p><div class="grid2"><div><label>Views</label><input id="u_views" inputmode="numeric" value="' + p.views + '"></div><div><label>Likes</label><input id="u_likes" inputmode="numeric" value="' + p.likes + '"></div><div><label>Comments</label><input id="u_comments" inputmode="numeric" value="' + p.comments + '"></div><div><label>Shares</label><input id="u_shares" inputmode="numeric" value="' + p.shares + '"></div><div><label>Customer enquiries</label><input id="u_leads" inputmode="numeric" value="' + p.leads + '"></div></div><div class="row"><button class="pri" id="u_send"' + (BUSY ? ' disabled' : '') + '>Save</button><button id="f_cancel">Cancel</button></div></div>';
+  }
+  h += '<div class="card"><h2>In every video and post</h2><ul class="rules"><li>Tag ' + esc(c.brand || 'the brand') + ' and link ' + esc(D.shop.name) + (D.shop.website ? ' (' + esc(D.shop.website) + ')' : '') + ' as the place to buy.</li><li>Show the raw filament on camera.' + (c.code ? ' Mention your code <b>' + esc(c.code) + '</b>.' : '') + '</li><li>Before publishing, send the shop any product claims (strength, heat, comparisons) or anything that could affect the market.</li><li>Paste the link here when it is live. Update non-YouTube numbers after 30 days.</li></ul></div>';
+  out.innerHTML = h;
+  var ta = document.getElementById('l_url'); if (ta) ta.focus();
+}
+function fail(e) { BUSY = false; render(); var m = document.getElementById('f_msg'); var txt = (e && e.error) || (e && e.message) || 'Something went wrong. Try again.'; if (m) m.textContent = txt; else alert(txt); }
+document.addEventListener('click', function (ev) {
+  var t = ev.target.closest('button'); if (!t || BUSY) return;
+  if (t.id === 'f_open') { FORM = 'request'; render(); return; }
+  if (t.id === 'f_cancel') { FORM = null; render(); return; }
+  if (t.getAttribute('data-link')) { FORM = { link: +t.getAttribute('data-link') }; render(); return; }
+  if (t.getAttribute('data-nums')) { FORM = { nums: +t.getAttribute('data-nums') }; render(); window.scrollTo(0, document.body.scrollHeight); return; }
+  var v = function (id) { var e = document.getElementById(id); return e ? e.value : ''; };
+  if (t.id === 'f_send') {
+    var body = { action: 'request', sku: v('f_sku'), qty: Number(v('f_qty')), title: v('f_title'), note: v('f_note') };
+    BUSY = true; render();
+    api(body).then(function (r) { if (!r.ok) return fail(r); BUSY = false; FORM = null; Object.assign(D, r); render(); }, fail);
+  }
+  if (t.getAttribute('data-lsend')) {
+    var body = { action: 'link', request_id: +t.getAttribute('data-lsend'), url: v('l_url'), platform: v('l_platform'), kind: v('l_kind'), views: Number(v('l_views')), likes: Number(v('l_likes')), comments: Number(v('l_comments')), leads: Number(v('l_leads')) };
+    BUSY = true; render();
+    api(body).then(function (r) { if (!r.ok) return fail(r); BUSY = false; FORM = null; Object.assign(D, r); render(); }, fail);
+  }
+  if (t.id === 'u_send' && FORM && FORM.nums) {
+    var body = { action: 'numbers', post_id: FORM.nums, views: Number(v('u_views')), likes: Number(v('u_likes')), comments: Number(v('u_comments')), shares: Number(v('u_shares')), leads: Number(v('u_leads')) };
+    BUSY = true; render();
+    api(body).then(function (r) { if (!r.ok) return fail(r); BUSY = false; FORM = null; Object.assign(D, r); render(); }, fail);
+  }
+});
+document.addEventListener('input', function (ev) {
+  if (ev.target.id !== 'l_url') return;
+  var yt = /youtu\.be\/|youtube\.com\//.test(ev.target.value), more = document.getElementById('l_more');
+  if (more) more.querySelectorAll('input').forEach(function (i) { i.disabled = yt; i.placeholder = yt ? 'fetched from YouTube' : ''; });
+  var pl = document.getElementById('l_platform'), kd = document.getElementById('l_kind'); if (pl && yt) pl.value = 'YouTube'; if (kd) kd.value = yt ? 'video' : 'post';
+  if (pl && /facebook\.com|fb\.watch/.test(ev.target.value)) pl.value = 'Facebook';
+});
+if (!TOKEN) { ERR = 'This link is not complete. Ask the shop for your link again.'; render(); }
+else api().then(function (r) { if (!r.ok) { ERR = r.error || 'This link does not work.'; } else D = r; render(); }, function () { ERR = 'The page could not be loaded. Check your connection and try again.'; render(); });
+</script>
+</body>
+</html>

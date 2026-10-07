@@ -1262,3 +1262,28 @@ with student teams), copy and send. `creators_test.mjs` (22).
 - Not done: no reminders to creators or to the owner (the Behind pill is the reminder); no automatic views from
   YouTube or Facebook (typed in); sales counted only by the code in the invoice note (type "code SETU10" in the
   note at sale time) - website coupons are not read; no photos or files attached.
+
+## Creator portal: creator pages, sponsor dashboard, YouTube numbers (tag portal-1, 8 Oct 2026)
+
+Owner: "I do nothing" - the creators fill their own forms, the brand sees everything live, every step trackable;
+professional look with both logos. Built on the Creators tracker (handlers/creatorportal.js, migrations 100 + 101):
+- **Creator's page** `web/creator.html` (`?pub=creator&t=…`, one permanent link per creator from Campaigns >
+  Creators > the creator > **Creator's link**, with QR). Header: shop logo × brand logo (Polymaker's from
+  `web/brand/`). The unit is a **project**: Request filament for the next video (pick from what is in stock, rolls,
+  one line about the video) → the owner approves / declines with a note → **Handed over** writes the filament line and
+  value → the creator pastes the video / post links into that project (YouTube: platform and type guessed, numbers
+  fetched by the ERP, **verified**, cannot be typed over; other platforms: typed, **reported**, "Update" later) → the
+  project closes; the next request is allowed only when the last project has its link (owner can raise
+  `open_limit`). Shows the agreement, this month's count, rules for every post. Paused / stopped creators cannot request.
+- **Sponsor's page** `web/sponsor.html` (`?pub=sponsor&t=…`, one permanent read-only link per brand from **Brand's
+  live link**): programme totals, per creator KPIs (rolls and value, content and verified count, views, engagement,
+  enquiries, orders by code, filament per 1,000 views), six-month bars (views, rolls), every project with its links,
+  numbers, source and timestamps, filament lines with when they were recorded, proposed student projects. CSV
+  download, Print / PDF.
+- **ERP**: Creator requests card on top of Creators (Approve with rolls + note / Decline / Handed over), Projects
+  section per creator, **Activity** (the audit trail: who, what, when, creator's address), **YouTube key** (business
+  setting `youtube_key`), **Fetch YouTube numbers now**; nightly job fetches every YouTube link older than 20 h.
+  Posts show verified / by the creator. `creatorportal_test.mjs` (29, YouTube faked).
+- Not done: stock is not moved when filament is handed over (adjust stock as before); no WhatsApp / push message to
+  the creator on approval (he sees it on his page); no screenshot upload for reported numbers; Facebook / Instagram /
+  TikTok numbers stay reported; the owner must paste a YouTube Data API key once for verified numbers.

@@ -77,6 +77,7 @@ export async function runJob(deps, job) {
       out[row.name] = {
         steadfast: sfNightly ? await asBusiness(deps, row, 'nightly:steadfast', (ctx) => sfNightly(ctx)) : 'skipped',
         backup: backupNow ? await asBusiness(deps, row, 'nightly:backup', (ctx) => backupNow(ctx, 'night')) : 'skipped',
+        youtube: await asBusiness(deps, row, 'nightly:youtube', async (ctx) => { try { return await (await import('./handlers/creatorportal.js')).ytRefresh(ctx, {}); } catch (e) { return 'failed: ' + String((e && e.message) || e).slice(0, 120); } }),
       };
     }
     // the master catalogue: every listed product linked to its item, the unsure ones asked of the AI reader

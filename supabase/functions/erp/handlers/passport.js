@@ -292,6 +292,12 @@ export async function pubRoute(deps, req, R) {
     if (req.method === 'POST') { try { body = await req.json(); } catch (_) { body = {}; } }
     // the Apps page (handlers/apps.js): a page the provider switched off answers the same to everyone
     if (await (await import('./apps.js')).appOff(deps, what)) return { status: 200, body: { ok: false, off: true, error: 'This page is not open yet.' } };
+    // the creator portal and the sponsor's dashboard (handlers/creatorportal.js): the links are the gate
+    if (what === 'creator' || what === 'sponsor') {
+      const r = await (await import('./creatorportal.js')).route(deps, R || {}, what, req.method, u.searchParams, body, ip);
+      if (!r) return { status: 405, body: { ok: false } };
+      return { status: 200, body: { ok: true, ...r } };
+    }
     // Stage N8 (handlers/designdesk.js): the design desk and repair-part requests
     if (what === 'design') {
       const r = await (await import('./designdesk.js')).route(deps, what, req.method, u.searchParams, body, ip);
