@@ -1172,3 +1172,11 @@ shows the catalogue's name. Platform → **Catalogue** card: counts, Run now, th
 counts and Rename, the log of what was decided. `catalogue_test.mjs` (16).
 - Not done: the Market screen inside the ERP still groups by name (Find stock does by item); barcodes/GTIN; a shop
   seeing "your product is listed as <item>"; merging two items by hand (rename only).
+
+## Catalogue: every product, folded card (tag catalogue-2, 8 Oct 2026)
+
+Owner: "why only 95 of my 141?" - the catalogue read the market listing, which carries only products with stock. Now
+`098_catalogue_products.sql` (control-only `erp_catalog_products`): the market refresh also writes every active
+product of a sharing company, in or out of stock, and the catalogue reads that feed (Find stock still shows only what
+is on the shelf). And the Platform → Catalogue card is **folded by default**: one line "Catalogue · N items · M
+products linked · all linked / K waiting · Open ▸", remembered per device (`cz_catl_open`).

@@ -22206,10 +22206,18 @@ document.addEventListener('click', function (ev) {
 .cat-k.ai{background:var(--warning-soft);color:var(--warning)} .cat-k.created{background:var(--good-soft);color:var(--good)} .cat-k.unlinked,.cat-k.renamed{background:var(--critical-soft);color:var(--critical)}
 </style>
 <script>
-var CATL = null, CATL_ERR = '', CATL_BUSY = '';
+var CATL = null, CATL_ERR = '', CATL_BUSY = '', CATL_OPEN = (function () { try { return localStorage.getItem('cz_catl_open') === '1'; } catch (e) { return false; } })();
 function catlLoad() { srv('erpCatalogue', [], function (r) { CATL = r; CATL_ERR = ''; if (VIEW === 'platform') repaint(); }, function (e) { CATL_ERR = (e && e.message) || String(e); if (VIEW === 'platform') repaint(); }); }
 function catlCardHtml() {
-  var h = '<section><div class="card"><h2>Catalogue</h2><div class="sub" data-c5x="1" style="display:block">One record per physical thing, kept by the server on its own: every product a shop lists is linked to it from its words (brand, line, colour, size, spool or refill); the unsure names are asked of the AI reader each night. Find stock and the Market show one item with every shop under it, whatever each shop calls it. Nobody has to learn a code.</div>';
+  // folded by default: one line with the counts; the owner opens it when he wants it
+  if (!CATL_OPEN) {
+    if (!CATL && !CATL_ERR) catlLoad();
+    var c0 = CATL || {};
+    return '<section><div class="card" style="padding:12px 20px"><button type="button" id="catl_toggle" class="btn" style="border:0;background:none;padding:0;box-shadow:none;width:100%;text-align:left;display:flex;align-items:center;gap:10px;font:inherit"><h2 style="margin:0;font-size:15px">Catalogue</h2>' +
+      (CATL ? '<span class="sku">' + fmt(c0.items) + ' items · ' + fmt(c0.linked) + ' products linked</span>' + (c0.unlinked ? '<span class="rf-conf mid">' + fmt(c0.unlinked) + ' waiting</span>' : '<span class="rf-conf hi">all linked</span>') : '<span class="sku">' + (CATL_ERR ? esc(CATL_ERR) : 'Loading…') + '</span>') +
+      '<span style="margin-left:auto" class="sku">Open ▸</span></button></div></section>';
+  }
+  var h = '<section><div class="card"><div class="row" style="justify-content:space-between;align-items:center"><h2 style="margin:0">Catalogue</h2><button class="btn small" type="button" id="catl_toggle">Fold ▾</button></div><div class="sub" data-c5x="1" style="display:block">One record per physical thing, kept by the server on its own: every product a shop lists is linked to it from its words (brand, line, colour, size, spool or refill); the unsure names are asked of the AI reader each night. Find stock and the Market show one item with every shop under it, whatever each shop calls it. Nobody has to learn a code.</div>';
   if (CATL_ERR) return h + '<div class="note err"><div class="ico">!</div><div>' + esc(CATL_ERR) + '</div></div></div></section>';
   if (!CATL) { catlLoad(); return h + '<div class="loading">Loading\u2026</div></div></section>'; }
   var c = CATL;
@@ -22234,8 +22242,9 @@ viewPlatform = function () {
 };
 document.addEventListener('click', function (ev) {
   if (VIEW !== 'platform') return;
-  var t = ev.target && ev.target.closest ? ev.target.closest('#catl_run,[data-catrename]') : null; if (!t) return;
+  var t = ev.target && ev.target.closest ? ev.target.closest('#catl_run,#catl_toggle,[data-catrename]') : null; if (!t) return;
   var fail = function (e) { CATL_BUSY = ''; repaint(); toast(esc((e && e.message) || e), true, 10000); };
+  if (t.id === 'catl_toggle') { CATL_OPEN = !CATL_OPEN; try { localStorage.setItem('cz_catl_open', CATL_OPEN ? '1' : '0'); } catch (e) {} repaint(); return; }
   if (t.id === 'catl_run') { CATL_BUSY = 'run'; repaint(); srv('erpCatalogueAct', [{ action: 'run' }], function (r) { CATL = r; CATL_BUSY = ''; repaint(); var x = r.ran || {}; toast('Looked at ' + fmt(x.looked || 0) + ': ' + fmt(x.linked || 0) + ' linked, ' + fmt(x.created || 0) + ' new items, ' + fmt(x.ai || 0) + ' by the AI reader, ' + fmt(x.left || 0) + ' left.', false, 9000); }, fail); return; }
   if (t.hasAttribute('data-catrename')) { var id = t.getAttribute('data-catrename'), inp = document.querySelector('[data-catname="' + id + '"]'); srv('erpCatalogueAct', [{ action: 'rename', item: Number(id), name: inp ? inp.value : '' }], function (r) { CATL = r; repaint(); toast('Renamed.'); }, fail); }
 });

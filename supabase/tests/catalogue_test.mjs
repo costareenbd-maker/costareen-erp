@@ -27,8 +27,13 @@ await sql`insert into erp_market_listings (source, business_id, product_id, name
   ('self', ${FIX.B2}, ${P2}, 'BBL PLA Basic - Jade White 1kg', 'Filament', '', '', 'pc', 'in', 1650, 'Chittagong'),
   ('self', ${FIX.B2}, ${P3}, 'PLA Black', '', '', '', 'pc', 'in', 900, 'Chittagong'),
   ('self', ${FIX.B2}, ${P4}, 'SL Silk Rnbw 1kg', 'Filament', '', '', 'pc', 'low', 1800, 'Chittagong')`;
+// the catalogue's own feed carries every active product, in or out of stock (the listing only what is on the shelf)
+await sql`insert into erp_catalog_products (source, business_id, product_id, name, category, brand, color, unit)
+  select source, business_id, product_id, name, category, brand, color, unit from erp_market_listings`;
+const P5 = crypto.randomUUID();
+await sql`insert into erp_catalog_products (source, business_id, product_id, name, category, brand, color, unit) values ('self', ${FIX.B}, ${P5}, 'Sunlu petg Green', 'Filaments', 'Sunlu', 'Green', 'Roll')`;
 let r = await catalogSync(deps, { ai: false });
-check('the job without AI: the two Jade White names linked to one item, "PLA Black" and the typo left', r.linked === 2 && r.created === 1 && r.left === 2, r);
+check('the job without AI: the two Jade White names to one item, the out-of-stock PETG to its own, "PLA Black" and the typo left', r.linked === 3 && r.created === 2 && r.left === 2, r);
 const items = await sql`select i.id, i.name, (select count(*)::int from erp_catalog_links k where k.item_id = i.id) as n from erp_catalog_items i order by i.id`;
 const jade = items.find((i) => /Jade White/.test(i.name));
 check('one item "Bambu Lab PLA Basic Jade White 1 kg"... with both shops', !!jade && jade.n === 2 && !/refill/.test(jade.name), items);
@@ -58,9 +63,9 @@ r = await mgr('erpCatalogue', []);
 check('not the provider: refused', !r.ok, r);
 await sql`insert into platform_admins (user_id, note) values (${FIX.U.owner}, 'test') on conflict do nothing`;
 r = await owner('erpCatalogue', []);
-check('counts, the loose list, the log', r.ok && r.result.items >= 2 && r.result.linked >= 3 && r.result.loose.some((x) => x.name === 'PLA Black') && r.result.log.length >= 2, r);
+check('counts, the loose list, the log', r.ok && r.result.items >= 3 && r.result.linked >= 4 && r.result.loose.some((x) => x.name === 'PLA Black') && r.result.log.length >= 2, r);
 r = await owner('erpCatalogueAct', [{ action: 'unlink', source: 'self', productId: P2 }]);
-check('unlinked by the provider', r.ok && r.result.linked === 2, r.ok ? r.result.linked : r);
+check('unlinked by the provider', r.ok && r.result.linked === 3, r.ok ? r.result.linked : r);
 r = await catalogSync(deps, { ai: false });
 const again = (await sql`select item_id, how from erp_catalog_links where product_id = ${P2}`)[0];
 check('the next run leaves the admin’s decision alone', again && again.how === 'admin' && again.item_id === null, again);
@@ -69,7 +74,7 @@ check('renamed', r.ok && r.result.list.some((x) => x.name === 'Bambu Lab PLA Bas
 r = await get('pub=find&q=jade');
 check('Find stock shows the new name, now one shop (the other was unlinked and shows under its own name)', r.ok && r.items.some((x) => x.name === 'Bambu Lab PLA Basic Jade White (1 kg spool)' && x.shops.length === 1) && r.items.some((x) => x.name === 'BBL PLA Basic - Jade White 1kg'), r.items.map((x) => x.name + ':' + x.shops.length));
 // a renamed listing is looked at again; a 'self' listing with a changed name
-await sql`update erp_market_listings set name = 'Bambulab Pla Basic Black', color = 'Black' where product_id = ${P1}`;
+await sql`update erp_catalog_products set name = 'Bambulab Pla Basic Black', color = 'Black' where product_id = ${P1}`;
 r = await catalogSync(deps, { ai: false });
 const moved = (await sql`select i.name from erp_catalog_items i join erp_catalog_links k on k.item_id = i.id where k.product_id = ${P1}`)[0];
 check('a shop renames its product: re-linked to the right item', moved && /Black/.test(moved.name), moved);

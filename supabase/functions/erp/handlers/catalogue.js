@@ -95,7 +95,7 @@ export async function catalogSync(deps, opts) {
   const useAi = !(opts && opts.ai === false);
   const rows = await c`
     select l.source, l.business_id, l.product_id, l.name, l.brand, l.color, l.category
-      from erp_market_listings l
+      from erp_catalog_products l
       left join erp_catalog_links k on k.source = l.source and k.product_id = l.product_id
      where k.product_id is null or (k.how <> 'admin' and k.name_seen is distinct from l.name)
      limit 2000`;
@@ -138,13 +138,15 @@ export async function erpCatalogue(ctx) {
   const c = ctx.deps.control; if (!c) throw new Error('This server has no catalogue.');
   const n = (await c`select (select count(*)::int from erp_catalog_items) as items,
                             (select count(*)::int from erp_catalog_links where item_id is not null) as linked,
-                            (select count(*)::int from erp_market_listings l left join erp_catalog_links k on k.source = l.source and k.product_id = l.product_id where k.item_id is null) as unlinked,
+                            (select count(*)::int from erp_catalog_products l left join erp_catalog_links k on k.source = l.source and k.product_id = l.product_id where k.item_id is null) as unlinked,
                             (select count(*)::int from erp_catalog_links where how = 'ai') as byAi`)[0];
   const last = await c`select at, what, detail from erp_catalog_log order by id desc limit 60`;
   const items = await c`select i.id, i.name, i.made_by, (select count(*)::int from erp_catalog_links k where k.item_id = i.id) as shops
                         from erp_catalog_items i order by shops desc, i.name limit 200`;
-  const loose = await c`select l.source, l.product_id, l.name, l.brand, l.color, s.name as shop
-                        from erp_market_listings l join erp_market_shops s on s.source = l.source and s.business_id = l.business_id
+  const loose = await c`select l.source, l.product_id, l.name, l.brand, l.color, coalesce(s.name, b.name, '?') as shop
+                        from erp_catalog_products l
+                        left join erp_market_shops s on s.source = l.source and s.business_id = l.business_id
+                        left join businesses b on l.source = 'self' and b.id = l.business_id
                         left join erp_catalog_links k on k.source = l.source and k.product_id = l.product_id
                         where k.item_id is null order by l.name limit 100`;
   return { items: Number(n.items), linked: Number(n.linked), unlinked: Number(n.unlinked), byAi: Number(n.byai),
@@ -159,7 +161,7 @@ export async function erpCatalogueAct(ctx, payload) {
   if (a === 'run') { const r = await catalogSync(ctx.deps, { ai: p.ai !== false }); return { ...(await erpCatalogue(ctx)), ran: r }; }
   if (a === 'unlink') {
     await c`insert into erp_catalog_links (source, business_id, product_id, item_id, how, confidence, name_seen)
-            select source, business_id, product_id, null, 'admin', 1, name from erp_market_listings where source = ${str(p.source)} and product_id = ${str(p.productId)}::uuid
+            select source, business_id, product_id, null, 'admin', 1, name from erp_catalog_products where source = ${str(p.source)} and product_id = ${str(p.productId)}::uuid
             on conflict (source, product_id) do update set item_id = null, how = 'admin', updated_at = now()`;
     await log(c, 'unlinked', str(p.source) + ' ' + str(p.productId)); return erpCatalogue(ctx);
   }
