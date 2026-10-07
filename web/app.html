@@ -8428,7 +8428,7 @@ function srv(name, args, ok, bad) {
 
 var SRV_ACTIVE = 0, SRV_WRITING = false, SRV_TIMED = {};
 // the same list the server uses to know a call changes nothing (ERP_READS)
-var SRV_READS = /^(erpReceiveMatch|erpAiReader|erpProductSuggest|erpCatalogue|erpPushList|erpApps|erpAppQr|erpFeedback|erpRestockOffers|erpRestockList|erpWarrantyRules|erpWarrantyCard|erpMyLink|erpPlatformRegister|erpPlatformDoctor|erpPlatformCommunity|erpMarketWaiting|erpBoard|erpPlatformDesign|erpResell|erpResellerProgramme|erpLoyalty|erpCustomerPoints|erpRefillDue|erpDeliveryHistory|erpDeliveryHistoryMany|erpPrintKit|erpPrintJobs|erpPrintJob|erpPrintCost|erpSpools|erpPrintRequests|erpJoint|erpJointCatalog|erpJointCard|erpInvoiceDesign|erpInvoicePreview|erpMarket|erpMarketMine|erpMarketRequests|erpMarketHints|erpMarketNames|erpWanted|erpBrand|erpComplianceLog|erpProviderKey|erpNews|erpAccessKeys|erpAccessWarning|erpAdmin|erpAiKeys|erpAlertRules|erpAlerts|erpArena|erpBackupStatus|erpBg|erpBnWords|erpBookedParcels|erpBrandLogo|erpBundle|erpBusinessLinks|erpBusinesses|erpBusinessesDeleted|erpCampaignAudience|erpCampaignGet|erpCampaignList|erpCapital|erpCashBook|erpCatalog|erpConnStatus|erpConnections|erpCostBook|erpCourier|erpCourierKeyStatus|erpCurrencies|erpCustomerAccount|erpCustomerCredit|erpCustomerList|erpCustomerPage|erpCustomerStatement|erpCustomers|erpDashboardData|erpDaySales|erpDeliveryOptions|erpDevices|erpDiscontinued|erpDues|erpEvoQr|erpEvoStatus|erpExpenseExport|erpExpenseReceiptUrl|erpExpenses|erpFamilies|erpFighters|erpFormOptions|erpGame|erpGetTheme|erpGoogle|erpHello|erpInstalls|erpInvoice|erpInvoicePdf|erpJob|erpJobs|erpListView|erpLookupCustomer|erpLookupUsage|erpMe|erpMoney|erpNoteFileUrl|erpNotes|erpOwnerChange|erpOwnerChanges|erpParcelLabels|erpParcelPreview|erpPartnerStock|erpPartnership|erpPayReasons|erpPeople|erpPlatform|erpPlatformErrors|erpPnl|erpPnlMonth|erpPoList|erpPoolCatalog|erpProduct|erpProductListShare|erpProductPage|erpProductPhotoUrl|erpProductThumbs|erpProfile|erpQuoteAsset|erpQuoteBoot|erpQuoteGet|erpQuoteList|erpRecentInvoices|erpRecovery|erpReorderPlan|erpRestorePreview|erpReturnPreview|erpRisks|erpSales|erpSearch|erpSecurity|erpSelfTest|erpSerialLookup|erpSerialsFor|erpSessions|erpSetTheme|erpSettingsFull|erpSettingsLists|erpSfPayoutLines|erpSfPayouts|erpShareFile|erpSharedStock|erpSheet|erpStatementPdf|erpStockHistory|erpSupplierPage|erpSuppliers|erpToday|erpUsers|erpWaProductPdf|erpWebMatches|erpWebOrderInvoices|erpWebOrders|erpWebsiteTest)$/;
+var SRV_READS = /^(erpReceiveMatch|erpAiReader|erpProductSuggest|erpCatalogue|erpPushList|erpCreators|erpApps|erpAppQr|erpFeedback|erpRestockOffers|erpRestockList|erpWarrantyRules|erpWarrantyCard|erpMyLink|erpPlatformRegister|erpPlatformDoctor|erpPlatformCommunity|erpMarketWaiting|erpBoard|erpPlatformDesign|erpResell|erpResellerProgramme|erpLoyalty|erpCustomerPoints|erpRefillDue|erpDeliveryHistory|erpDeliveryHistoryMany|erpPrintKit|erpPrintJobs|erpPrintJob|erpPrintCost|erpSpools|erpPrintRequests|erpJoint|erpJointCatalog|erpJointCard|erpInvoiceDesign|erpInvoicePreview|erpMarket|erpMarketMine|erpMarketRequests|erpMarketHints|erpMarketNames|erpWanted|erpBrand|erpComplianceLog|erpProviderKey|erpNews|erpAccessKeys|erpAccessWarning|erpAdmin|erpAiKeys|erpAlertRules|erpAlerts|erpArena|erpBackupStatus|erpBg|erpBnWords|erpBookedParcels|erpBrandLogo|erpBundle|erpBusinessLinks|erpBusinesses|erpBusinessesDeleted|erpCampaignAudience|erpCampaignGet|erpCampaignList|erpCapital|erpCashBook|erpCatalog|erpConnStatus|erpConnections|erpCostBook|erpCourier|erpCourierKeyStatus|erpCurrencies|erpCustomerAccount|erpCustomerCredit|erpCustomerList|erpCustomerPage|erpCustomerStatement|erpCustomers|erpDashboardData|erpDaySales|erpDeliveryOptions|erpDevices|erpDiscontinued|erpDues|erpEvoQr|erpEvoStatus|erpExpenseExport|erpExpenseReceiptUrl|erpExpenses|erpFamilies|erpFighters|erpFormOptions|erpGame|erpGetTheme|erpGoogle|erpHello|erpInstalls|erpInvoice|erpInvoicePdf|erpJob|erpJobs|erpListView|erpLookupCustomer|erpLookupUsage|erpMe|erpMoney|erpNoteFileUrl|erpNotes|erpOwnerChange|erpOwnerChanges|erpParcelLabels|erpParcelPreview|erpPartnerStock|erpPartnership|erpPayReasons|erpPeople|erpPlatform|erpPlatformErrors|erpPnl|erpPnlMonth|erpPoList|erpPoolCatalog|erpProduct|erpProductListShare|erpProductPage|erpProductPhotoUrl|erpProductThumbs|erpProfile|erpQuoteAsset|erpQuoteBoot|erpQuoteGet|erpQuoteList|erpRecentInvoices|erpRecovery|erpReorderPlan|erpRestorePreview|erpReturnPreview|erpRisks|erpSales|erpSearch|erpSecurity|erpSelfTest|erpSerialLookup|erpSerialsFor|erpSessions|erpSetTheme|erpSettingsFull|erpSettingsLists|erpSfPayoutLines|erpSfPayouts|erpShareFile|erpSharedStock|erpSheet|erpStatementPdf|erpStockHistory|erpSupplierPage|erpSuppliers|erpToday|erpUsers|erpWaProductPdf|erpWebMatches|erpWebOrderInvoices|erpWebOrders|erpWebsiteTest)$/;
 function srvPump() {
   if (!SRV_Q.length) return;
   var isRead = SRV_READS.test(SRV_Q[0].name);
@@ -21628,7 +21628,8 @@ var AP_LOOK = {
   design:   { c: '#7c6bb1', i: '<path d="M4 20l4-1 11-11-3-3L5 16z"/><path d="M14 7l3 3"/>' },
   ideas:    { c: '#2a9d8f', i: '<path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0 0 12 3z"/>' },
   feedback: { c: '#c8553d', i: '<path d="M4 5h16v11H9l-5 4z"/><path d="M8 9h8M8 12h5"/>' },
-  push:     { c: '#e39a2d', i: '<path d="M3 17l6-6 4 4 8-8"/><path d="M14 7h7v7"/>' }
+  push:     { c: '#e39a2d', i: '<path d="M3 17l6-6 4 4 8-8"/><path d="M14 7h7v7"/>' },
+  creators: { c: '#7c5cbf', i: '<circle cx="12" cy="8" r="3.5"/><path d="M5 20a7 7 0 0 1 14 0"/><path d="M17 4l1.5 1.5L21 3"/>' }
 };
 var AP_PANEL = { check: 'preg', doctor: 'pdoc', ideas: 'pcom', design: 'pdes' };   // the provider's panels, moved here from Platform
 function apState() { var a = (ME && ME.apps) || {}; return { off: a.off || [], hidden: a.hidden || [], gone: a.gone || [] }; }
@@ -22371,13 +22372,16 @@ function puCardHtml() {
 var viewCampaignsPU = viewCampaigns;
 viewCampaigns = function () {
   if (puOn() && CP.tab === 'ads' && !CP.camp) return cpTabsHtml() + adsHtml();
+  if (crOn() && CP.tab === 'creators' && !CP.camp) return cpTabsHtml() + crHtml();
   return viewCampaignsPU.apply(this, arguments);
 };
 var cpTabsHtmlPU = cpTabsHtml;
 cpTabsHtml = function () {
   var h = cpTabsHtmlPU.apply(this, arguments);
-  if (!puOn()) return h;
-  return h.replace('<button class="chip" type="button" data-cptab="contacts">', '<button class="chip' + (CP.tab === 'ads' && !CP.camp ? ' on' : '') + '" type="button" data-cptab="ads">Advertisement</button><button class="chip" type="button" data-cptab="contacts">');
+  var add = (puOn() ? '<button class="chip' + (CP.tab === 'ads' && !CP.camp ? ' on' : '') + '" type="button" data-cptab="ads">Advertisement</button>' : '') +
+            (crOn() ? '<button class="chip' + (CP.tab === 'creators' && !CP.camp ? ' on' : '') + '" type="button" data-cptab="creators">Creators</button>' : '');
+  if (!add) return h;
+  return h.replace('<button class="chip" type="button" data-cptab="contacts">', add + '<button class="chip" type="button" data-cptab="contacts">');
 };
 document.addEventListener('click', function (ev) {
   if (VIEW !== 'campaigns') return;
@@ -22516,6 +22520,122 @@ function adsClick(t) {
   }
   return false;
 }
+</script>
+<!-- Creators (handlers/creators.js): influencer sponsorships run for a brand as its reseller. Campaigns > Creators,
+     owner-only through the "creators" app flag. Summary per creator for a month, the brand's report, the brief,
+     filament given, posts with numbers, projects for the brand. -->
+<style>
+.cr-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px;margin-top:10px}
+.cr-card{border:1px solid var(--ring);border-radius:12px;padding:12px;background:var(--surface);cursor:pointer}
+.cr-card:hover{border-color:var(--accent)}
+.cr-card h3{margin:0 0 2px;font-size:15px}
+.cr-card .m{color:var(--muted);font-size:12px}
+.cr-nums{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:8px}
+.cr-nums div{font-size:12px;color:var(--muted)}
+.cr-nums b{display:block;font-size:15px;color:var(--ink)}
+.cr-sec{margin-top:16px}
+.cr-sec h3{margin:0 0 4px;font-size:14px}
+.cr-ta{width:100%;min-height:200px;box-sizing:border-box;font:inherit;font-size:13px;line-height:1.45;margin-top:8px}
+table.list.cr td,table.list.cr th{font-size:13px}
+</style>
+<script>
+var CR = { data: null, err: '', month: '', open: 0, form: null, show: '', busy: false };
+function crOn() { if (!ME) return false; if (ME.platform) return true; return typeof APPS !== 'undefined' && APPS && APPS.apps.some(function (a) { return a.key === 'creators' && a.on; }); }
+function crLoad() { srv('erpCreators', [{ month: CR.month }], function (r) { CR.data = r; CR.err = ''; CR.month = r.month; if (VIEW === 'campaigns') repaint(); }, function (e) { CR.err = (e && e.message) || String(e); if (VIEW === 'campaigns') repaint(); }); }
+function crCall(name, p, okMsg) {
+  if (CR.busy) return; CR.busy = true; p.month = CR.month; repaint();
+  srv(name, [p], function (r) { CR.busy = false; CR.data = r; CR.form = null; repaint(); if (okMsg) toast(okMsg); }, function (e) { CR.busy = false; repaint(); toast(esc((e && e.message) || e), true, 9000); });
+}
+function crField(id, label, val, attrs, wide) { return '<div' + (wide ? ' class="wide"' : '') + '><label class="f" for="' + id + '">' + label + '</label><input class="i" id="' + id + '" value="' + esc(val == null ? '' : val) + '"' + (attrs || '') + '></div>'; }
+function crSel(id, label, val, opts) { return '<div><label class="f" for="' + id + '">' + label + '</label><select class="i" id="' + id + '">' + opts.map(function (o) { return '<option value="' + o[0] + '"' + (o[0] === val ? ' selected' : '') + '>' + o[1] + '</option>'; }).join('') + '</select></div>'; }
+function crV(id) { var e = el(id); return e ? e.value : ''; }
+function crMonthBar() {
+  var d = CR.data, m = CR.month || (d && d.month) || '';
+  return '<span class="row" style="gap:6px;align-items:center"><button class="btn small" type="button" data-crmon="-1">\u2039</button><b>' + esc(d ? d.monthName : m) + '</b><button class="btn small" type="button" data-crmon="1">\u203a</button></span>';
+}
+function crCreatorForm(c) {
+  c = c || { status: 'active', videos_month: 2, posts_month: 2, rolls_video: 2, brand: 'Polymaker' };
+  return '<div class="jt-form">' + crField('cr_name', 'Name', c.name) + crField('cr_handle', 'Channel / page / group', c.handle) + crField('cr_platforms', 'Platforms', c.platforms, ' placeholder="YouTube, Facebook"') + crField('cr_followers', 'Followers', c.followers, ' placeholder="12k group, 3k YouTube"') +
+    crField('cr_brand', 'Brand (whose filament)', c.brand) + crField('cr_code', 'Their code (on invoices)', c.code, ' placeholder="SETU10" autocapitalize="characters"') + crField('cr_videos', 'Videos a month', c.videos_month, ' inputmode="numeric"') + crField('cr_posts', 'Posts a month', c.posts_month, ' inputmode="numeric"') + crField('cr_rolls', 'Rolls per video', c.rolls_video, ' inputmode="numeric"') +
+    crField('cr_filament', 'Filament', c.filament, ' placeholder="general, from stock"') + crField('cr_trial', 'Trial until', c.trial_until, ' type="date"') + crSel('cr_status', 'Status', c.status, [['active', 'Active'], ['paused', 'Paused'], ['stopped', 'Stopped']]) +
+    crField('cr_notes', 'Notes (student teams, script rule...)', c.notes, '', true) + '</div><div class="ap-row"><button class="btn small primary" type="button" id="cr_save"' + (CR.busy ? ' disabled' : '') + '>' + (c.id ? 'Save' : 'Add creator') + '</button><button class="btn small" type="button" id="cr_cancel">Cancel</button></div>';
+}
+function crHtml() {
+  var h = '<section><div class="card"><div class="row" style="justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px"><h2 style="margin:0">Creators</h2>' + crMonthBar() + '</div>' +
+          '<div class="sub" data-c5x="1" style="display:block">Influencers you sponsor with a brand\u2019s filament as its reseller. Record what each one got and what they posted; the monthly report for the brand writes itself from this. Sales are counted from invoices that carry the creator\u2019s code in the note.</div>';
+  if (CR.err) return h + '<div class="note err"><div class="ico">!</div><div>' + esc(CR.err) + '</div></div></div></section>';
+  if (!CR.data) { crLoad(); return h + '<div class="loading">Loading\u2026</div></div></section>'; }
+  var d = CR.data, open = CR.open ? d.creators.filter(function (c) { return c.id === CR.open; })[0] : null;
+  if (CR.form === 'new') return h + '<h3 style="margin:12px 0 0">New creator</h3>' + crCreatorForm(null) + '</div></section>';
+  if (open) return h + '</div></section>' + crOneHtml(open);
+  var tot = d.creators.reduce(function (a, c) { a.rolls += c.month.rolls; a.value += c.month.value; a.views += c.month.views; a.leads += c.month.leads; a.orders += c.month.orders; a.revenue += c.month.revenue; return a; }, { rolls: 0, value: 0, views: 0, leads: 0, orders: 0, revenue: 0 });
+  h += '<div class="ap-row"><button class="btn small primary" type="button" id="cr_new">+ Add a creator</button><button class="btn small" type="button" id="cr_report">' + (CR.show === 'report' ? 'Hide the report' : 'Report for the brand') + '</button></div>';
+  if (CR.show === 'report') h += '<textarea class="i cr-ta" id="cr_reporttext">' + esc(d.report) + '</textarea><div class="ap-row"><button class="btn small" type="button" id="cr_copy" data-crcopy="cr_reporttext">Copy</button><span class="sub" style="margin:0">Paste into the e-mail to the brand. Edit first if you like.</span></div>';
+  if (!d.creators.length) h += '<div class="empty" style="padding:14px 0">No creators yet. Add the first one; its terms become the brief you send them.</div>';
+  else {
+    h += '<div class="sub" style="display:block;margin-top:10px">' + esc(d.monthName) + ': ' + fmt(tot.rolls) + ' rolls (\u09f3' + fmt(tot.value) + '), ' + fmt(tot.views) + ' views, ' + fmt(tot.leads) + ' enquiries, ' + fmt(tot.orders) + ' orders (\u09f3' + fmt(tot.revenue) + ').</div><div class="cr-grid">';
+    h += d.creators.map(function (c) {
+      return '<div class="cr-card" data-cropen="' + c.id + '"><h3>' + esc(c.name) + (c.status !== 'active' ? ' <span class="pill low">' + esc(c.status) + '</span>' : '') + '</h3><div class="m">' + esc([c.handle, c.platforms, c.followers].filter(Boolean).join(' \u00b7 ')) + '</div>' +
+        '<div class="cr-nums"><div><b>' + fmt(c.month.rolls) + '</b>rolls</div><div><b>' + fmt(c.month.videos) + '+' + fmt(c.month.posts) + '</b>videos+posts</div><div><b>' + fmt(c.month.views) + '</b>views</div><div><b>' + c.month.rate + '%</b>engagement</div><div><b>' + fmt(c.month.leads) + '</b>enquiries</div><div><b>' + fmt(c.month.orders) + '</b>orders' + (c.code ? ' (' + esc(c.code) + ')' : '') + '</div></div>' +
+        (c.month.behind.length ? '<div style="margin-top:8px"><span class="pill low">Behind: ' + esc(c.month.behind.join(', ')) + '</span></div>' : (c.status === 'active' ? '<div style="margin-top:8px"><span class="pill ok">On track</span></div>' : '')) + '</div>';
+    }).join('') + '</div>';
+  }
+  return h + '</div></section>';
+}
+function crOneHtml(c) {
+  var h = '<section><div class="card"><div class="row" style="justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px"><h2 style="margin:0">' + esc(c.name) + '</h2><span class="row" style="gap:6px"><button class="btn small" type="button" id="cr_edit">Edit</button><button class="btn small" type="button" id="cr_brief">' + (CR.show === 'brief' ? 'Hide the brief' : 'Brief for the creator') + '</button><button class="btn small" type="button" id="cr_back">\u2190 All creators</button></span></div>' +
+    '<div class="sub" style="display:block">' + esc([c.handle, c.platforms, c.followers, c.brand ? c.brand + ' filament' : '', c.code ? 'code ' + c.code : '', c.trial_until ? 'trial until ' + c.trial_until : ''].filter(Boolean).join(' \u00b7 ')) + ' \u00b7 agreed ' + fmt(c.videos_month) + ' videos + ' + fmt(c.posts_month) + ' posts a month, ' + fmt(c.rolls_video) + ' rolls per video' + (c.filament ? ' (' + esc(c.filament) + ')' : '') + '.</div>';
+  if (CR.form === 'edit') return h + crCreatorForm(c) + '</div></section>';
+  if (CR.show === 'brief') h += '<textarea class="i cr-ta" id="cr_brieftext">' + esc(CR.data.briefs[c.id] || '') + '</textarea><div class="ap-row"><button class="btn small" type="button" data-crcopy="cr_brieftext">Copy</button><span class="sub" style="margin:0">Send it on WhatsApp and get their OK back.</span></div>';
+  h += '<div class="cr-nums" style="max-width:560px"><div><b>' + fmt(c.month.rolls) + '</b>rolls this month (\u09f3' + fmt(c.month.value) + ')</div><div><b>' + fmt(c.total.rolls) + '</b>rolls in all (\u09f3' + fmt(c.total.value) + ')</div><div><b>' + fmt(c.month.views) + '</b>views this month</div><div><b>' + c.month.rate + '%</b>engagement</div><div><b>' + fmt(c.month.leads) + '</b>enquiries</div><div><b>' + fmt(c.month.orders) + '</b>orders (\u09f3' + fmt(c.month.revenue) + ')</div></div>' +
+       (c.month.behind.length ? '<div style="margin-top:8px"><span class="pill low">Behind this month: ' + esc(c.month.behind.join(', ')) + '</span></div>' : '');
+  // filament given
+  h += '<div class="cr-sec"><div class="row" style="justify-content:space-between;align-items:center"><h3>Filament given</h3><button class="btn small" type="button" data-crform="ship">+ Add</button></div>';
+  if (CR.form === 'ship') h += '<div class="jt-form">' + crField('cs_date', 'Date', todayISO(), ' type="date"') + crField('cs_sku', 'SKU (from stock, optional)', '', ' placeholder="fills the name and value"') + crField('cs_product', 'Product', '', ' placeholder="PolyLite PLA Red"') + crField('cs_qty', 'Rolls', 2, ' inputmode="numeric"') + crField('cs_value', 'Retail value \u09f3 (optional)', '', ' inputmode="numeric"') + crField('cs_note', 'Note', '') + '</div><div class="ap-row"><button class="btn small primary" type="button" id="cs_save">Save</button><button class="btn small" type="button" id="cr_cancel">Cancel</button></div>';
+  h += c.ships.length ? '<table class="list cr"><thead><tr><th>Date</th><th>Product</th><th class="num">Rolls</th><th class="num">Value</th><th></th></tr></thead><tbody>' + c.ships.map(function (s) { return '<tr><td>' + esc(s.on_date) + '</td><td>' + esc((s.sku ? s.sku + ' ' : '') + s.product) + (s.note ? '<br><span class="sku">' + esc(s.note) + '</span>' : '') + '</td><td class="num">' + fmt(s.qty) + '</td><td class="num">\u09f3' + fmt(s.value) + '</td><td><button class="btn small" type="button" data-crrm="ship:' + s.id + '">\u2715</button></td></tr>'; }).join('') + '</tbody></table>' : '<div class="empty" style="padding:8px 0">Nothing given yet.</div>';
+  h += '</div>';
+  // posts
+  h += '<div class="cr-sec"><div class="row" style="justify-content:space-between;align-items:center"><h3>Videos and posts</h3><button class="btn small" type="button" data-crform="post">+ Add</button></div>';
+  if (CR.form === 'post' || (CR.form && CR.form.edit)) {
+    var e = CR.form && CR.form.edit ? c.posts.filter(function (p) { return p.id === CR.form.edit; })[0] || {} : {};
+    h += '<div class="jt-form">' + (e.id ? '' : crField('cp2_date', 'Date', todayISO(), ' type="date"') + crSel('cp2_platform', 'Platform', 'YouTube', [['YouTube', 'YouTube'], ['Facebook', 'Facebook'], ['Instagram', 'Instagram'], ['TikTok', 'TikTok']]) + crSel('cp2_kind', 'Type', 'video', [['video', 'Video'], ['post', 'Post'], ['reel', 'Reel']]) + crField('cp2_product', 'Product featured', '')) +
+         crField('cp2_url', 'Link', e.url, '', true) + crField('cp2_views', 'Views', e.views || '', ' inputmode="numeric"') + crField('cp2_likes', 'Likes', e.likes || '', ' inputmode="numeric"') + crField('cp2_comments', 'Comments', e.comments || '', ' inputmode="numeric"') + crField('cp2_shares', 'Shares', e.shares || '', ' inputmode="numeric"') + crField('cp2_leads', 'Customer enquiries', e.leads || '', ' inputmode="numeric"') + crField('cp2_note', 'Note', e.note) +
+         '</div><div class="ap-row"><button class="btn small primary" type="button" id="cp2_save" data-edit="' + (e.id || '') + '">' + (e.id ? 'Update the numbers' : 'Save') + '</button><button class="btn small" type="button" id="cr_cancel">Cancel</button></div>';
+  }
+  h += c.posts.length ? '<table class="list cr"><thead><tr><th>Date</th><th>What</th><th class="num">Views</th><th class="num">Likes</th><th class="num">Comments</th><th class="num">Enquiries</th><th></th></tr></thead><tbody>' + c.posts.map(function (p) { return '<tr><td>' + esc(p.on_date) + '</td><td>' + esc((p.platform || '') + ' ' + p.kind + (p.product ? ' \u2014 ' + p.product : '')) + (p.url ? '<br><a href="' + esc(p.url) + '" target="_blank" rel="noopener" class="sku">' + esc(p.url.slice(0, 50)) + '</a>' : '') + '</td><td class="num">' + fmt(p.views) + '</td><td class="num">' + fmt(p.likes) + '</td><td class="num">' + fmt(p.comments) + '</td><td class="num">' + fmt(p.leads) + '</td><td style="white-space:nowrap"><button class="btn small" type="button" data-credit="' + p.id + '" title="Update the numbers">\u270e</button> <button class="btn small" type="button" data-crrm="post:' + p.id + '">\u2715</button></td></tr>'; }).join('') + '</tbody></table>' : '<div class="empty" style="padding:8px 0">Nothing posted yet.</div>';
+  h += '</div>';
+  // projects
+  h += '<div class="cr-sec"><div class="row" style="justify-content:space-between;align-items:center"><h3>Projects for the brand</h3><button class="btn small" type="button" data-crform="project">+ Add</button></div><div class="sub" style="display:block">Student or robotics teams this creator brings: the brand reviews them for a sponsorship of its own.</div>';
+  if (CR.form === 'project') h += '<div class="jt-form">' + crField('cj_team', 'Team', '') + crField('cj_project', 'Project', '') + crField('cj_competition', 'Competition / background', '') + crField('cj_material', 'Material needed', '') + crField('cj_qty', 'Quantity', '', ' placeholder="6 rolls"') + crField('cj_note', 'Note', '') + '</div><div class="ap-row"><button class="btn small primary" type="button" id="cj_save">Save</button><button class="btn small" type="button" id="cr_cancel">Cancel</button></div>';
+  h += c.projects.length ? '<table class="list cr"><thead><tr><th>Team</th><th>Project</th><th>Needs</th><th>Status</th><th></th></tr></thead><tbody>' + c.projects.map(function (p) { return '<tr><td>' + esc(p.team) + '</td><td>' + esc((p.project || '') + (p.competition ? ' (' + p.competition + ')' : '')) + '</td><td>' + esc((p.material || '') + (p.qty ? ' \u00d7 ' + p.qty : '')) + '</td><td><select class="i" data-crpstat="' + p.id + '">' + [['new', 'New'], ['sent', 'Sent to the brand'], ['approved', 'Approved'], ['declined', 'Declined']].map(function (o) { return '<option value="' + o[0] + '"' + (o[0] === p.status ? ' selected' : '') + '>' + o[1] + '</option>'; }).join('') + '</select></td><td><button class="btn small" type="button" data-crrm="project:' + p.id + '">\u2715</button></td></tr>'; }).join('') + '</tbody></table>' : '<div class="empty" style="padding:8px 0">None yet.</div>';
+  return h + '</div></div></section>';
+}
+document.addEventListener('click', function (ev) {
+  if (VIEW !== 'campaigns' || CP.tab !== 'creators') return;
+  var t = ev.target && ev.target.closest ? ev.target.closest('[data-crmon],[data-cropen],[data-crform],[data-crrm],[data-credit],[data-crcopy],#cr_new,#cr_report,#cr_edit,#cr_brief,#cr_back,#cr_save,#cr_cancel,#cs_save,#cp2_save,#cj_save') : null; if (!t) return;
+  var c = CR.data && CR.open ? CR.data.creators.filter(function (x) { return x.id === CR.open; })[0] : null;
+  if (t.getAttribute('data-crmon')) { var p = (CR.month || CR.data.month).split('-'), y = +p[0], m = +p[1] + (+t.getAttribute('data-crmon')); if (m < 1) { m = 12; y--; } if (m > 12) { m = 1; y++; } CR.month = y + '-' + (m < 10 ? '0' : '') + m; CR.data = null; CR.show = ''; repaint(); return; }
+  if (t.getAttribute('data-cropen')) { CR.open = +t.getAttribute('data-cropen'); CR.form = null; CR.show = ''; repaint(); window.scrollTo(0, 0); return; }
+  if (t.id === 'cr_back') { CR.open = 0; CR.form = null; CR.show = ''; repaint(); return; }
+  if (t.id === 'cr_new') { CR.form = 'new'; repaint(); return; }
+  if (t.id === 'cr_edit') { CR.form = 'edit'; repaint(); return; }
+  if (t.id === 'cr_cancel') { CR.form = null; repaint(); return; }
+  if (t.id === 'cr_report') { CR.show = CR.show === 'report' ? '' : 'report'; repaint(); return; }
+  if (t.id === 'cr_brief') { CR.show = CR.show === 'brief' ? '' : 'brief'; repaint(); return; }
+  if (t.getAttribute('data-crcopy')) { var ta = el(t.getAttribute('data-crcopy')); if (ta) { ta.select(); try { document.execCommand('copy'); toast('Copied.'); } catch (_) { toast('Select the text and copy it.', true); } } return; }
+  if (t.getAttribute('data-crform')) { CR.form = t.getAttribute('data-crform'); repaint(); return; }
+  if (t.getAttribute('data-credit')) { CR.form = { edit: +t.getAttribute('data-credit') }; repaint(); return; }
+  if (t.getAttribute('data-crrm')) { var k = t.getAttribute('data-crrm').split(':'); if (!confirm('Remove this line?')) return; crCall('erpCreatorRemove', { kind: k[0], id: +k[1] }, 'Removed.'); return; }
+  if (t.id === 'cr_save') { crCall('erpCreatorSave', { id: CR.form === 'edit' && c ? c.id : 0, name: crV('cr_name'), handle: crV('cr_handle'), platforms: crV('cr_platforms'), followers: crV('cr_followers'), brand: crV('cr_brand'), code: crV('cr_code'), videos_month: num(crV('cr_videos')), posts_month: num(crV('cr_posts')), rolls_video: num(crV('cr_rolls')), filament: crV('cr_filament'), trial_until: crV('cr_trial'), status: crV('cr_status'), notes: crV('cr_notes') }, 'Saved.'); return; }
+  if (t.id === 'cs_save' && c) { crCall('erpCreatorShip', { creator_id: c.id, date: crV('cs_date'), sku: crV('cs_sku'), product: crV('cs_product'), qty: num(crV('cs_qty')), value: num(crV('cs_value')), note: crV('cs_note') }, 'Recorded.'); return; }
+  if (t.id === 'cp2_save' && c) { var ed = +t.getAttribute('data-edit'); crCall('erpCreatorPost', { id: ed || 0, creator_id: c.id, date: crV('cp2_date'), platform: crV('cp2_platform'), kind: crV('cp2_kind'), product: crV('cp2_product'), url: crV('cp2_url'), views: num(crV('cp2_views')), likes: num(crV('cp2_likes')), comments: num(crV('cp2_comments')), shares: num(crV('cp2_shares')), leads: num(crV('cp2_leads')), note: crV('cp2_note') }, 'Recorded.'); return; }
+  if (t.id === 'cj_save' && c) { crCall('erpCreatorProject', { creator_id: c.id, team: crV('cj_team'), project: crV('cj_project'), competition: crV('cj_competition'), material: crV('cj_material'), qty: crV('cj_qty'), note: crV('cj_note') }, 'Recorded.'); return; }
+});
+document.addEventListener('change', function (ev) {
+  if (VIEW !== 'campaigns' || CP.tab !== 'creators') return;
+  var t = ev.target; if (!t || !t.getAttribute || !t.getAttribute('data-crpstat')) return;
+  crCall('erpCreatorProject', { id: +t.getAttribute('data-crpstat'), status: t.value }, 'Status saved.');
+});
 </script>
 </body>
 </html>

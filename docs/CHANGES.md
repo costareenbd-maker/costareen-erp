@@ -1241,3 +1241,24 @@ weekly pinned list, bundles over deep discounts, customer prints, seasonal timin
 "Send the ticked ones to customers" stays as the secondary button. push_test.mjs now 22.
 - Not done: no photos attached to drafts (copy text, add the product photo yourself); no posting to Facebook from the
   ERP (would need a Meta app review); no ad-spend or reach figures; rules for the week plan are fixed (one post a day).
+
+## Creators - influencer sponsorships for a brand (tag creators-1, 8 Oct 2026)
+
+Owner (from his "Influencer reports for resellers" chat, 6 Oct): Polymaker approved sponsoring three creators (Rana,
+Robin, Setu) with filament through Costareen as reseller and asked for a simple record per collaboration - creator,
+SKU and quantity, link, date, performance, enquiries and sales. He chose the ERP over a Google Sheet, owner-only.
+New tab **Campaigns > Creators** (second "Only me" app, key `creators`; `handlers/creators.js`, migration 099:
+erp_creators / erp_creator_ships / erp_creator_posts / erp_creator_projects, owner RLS). Per creator: terms (videos
+and posts a month, rolls per video, filament kind, code, trial end, status active / paused / stopped, notes);
+**Filament given** (date, SKU from stock fills name and retail value, or typed by hand); **Videos and posts** (date,
+platform, type, link, product, views, likes, comments, shares, enquiries; update the numbers later); **Projects for
+the brand** (team, project, competition, material, quantity; new / sent / approved / declined). Month arrows.
+Summary per creator and month: rolls and value, videos + posts against the agreement ("Behind: 1 of 2 videos" or "On
+track"), views, engagement rate, enquiries, orders and revenue from invoices whose note carries the creator's code,
+filament value per 1,000 views. **Report for the brand** - the month's report text in the shape Polymaker asked for,
+copy and e-mail. **Brief for the creator** - a one-page brief from the terms (what they get, what they deliver, tag
+the brand, link the store, code, the claims rule, the 30-day numbers, trial and review; projects line for creators
+with student teams), copy and send. `creators_test.mjs` (22).
+- Not done: no reminders to creators or to the owner (the Behind pill is the reminder); no automatic views from
+  YouTube or Facebook (typed in); sales counted only by the code in the invoice note (type "code SETU10" in the
+  note at sale time) - website coupons are not read; no photos or files attached.
