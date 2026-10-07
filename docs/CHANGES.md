@@ -1187,3 +1187,20 @@ The feed carried only the products ticked for the market (96). Now every active 
 market goes into `erp_catalog_products`, shared or not; the listing is unchanged. Live: 141 of 141 Costareen products
 linked, 134 items; the catalogue shows the owner's own duplicates (two "Sunlu PLA+ Red", three Klein Blue/Oak/Silver
 variants) as one item each.
+
+## Ask your ERP - the chat inside the ERP (tag assistant-1, 8 Oct 2026)
+
+Owner: a user should get everything through a chat, with only their credentials - no WhatsApp, no number from
+anyone. New menu item **Ask your ERP** (core, after Apps; `#/chat`): a chat screen, Bangla or English, with quick
+chips ("Sales today?", "Who owes money?"...). `handlers/assistant.js` (`erpAssistant`): Gemini with function calling
+over a small set of the ERP's own functions - find_products, customer, sales_day, dues, invoice, invoice_pdf,
+month_profit, help (a built-in where-things-are guide), propose_invoice. Reads run at once through the ordinary
+handlers, so the role gate (`callAllowed`) applies exactly as on the screens ("Not allowed for your role" goes back to
+the model, which says so). A write never runs from the model: propose_invoice returns a **proposal** (summary, total,
+stock warnings) the page shows with **Yes, make it / No**; Yes calls `erpCreateInvoice` through the same gate, notes
+"(via chat)", and returns the PDF link. Cash on delivery goes out by Steadfast unless the person named another way.
+The provider's key (the one the photo reader uses), the model list with 40-s caps, 300 turns per business per day
+(`ai_chat:<day>`), conversation kept on the device (`cz_chat`, last 40). Every call is logged "Used the chat
+assistant". `assistant_test.mjs` (9, Gemini faked by script).
+- Not done: push notifications; more writes (receive stock, payments) - invoices only for now; voice; the chat on
+  the phone's bottom bar (it is under More).

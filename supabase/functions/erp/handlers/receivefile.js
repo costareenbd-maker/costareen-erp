@@ -248,7 +248,7 @@ export async function providerAiKey(deps) {
   } catch (_) { /* no table yet */ }
   return str(deps && deps.geminiKey);
 }
-async function aiKey(ctx) {
+export async function aiKey(ctx) {
   const st = await storedSecret(ctx, 'GEMINI_KEY');
   if (st && st.value) return { key: st.value, source: 'stored', at: st.at };
   const env = str(ctx.deps && ctx.deps.geminiKey);

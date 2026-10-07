@@ -565,6 +565,7 @@ svg { display:block; width:100%; overflow:visible; }
       <div class="navgrp">Overview</div>
       <button type="button" data-view="dash" aria-selected="true"><span class="ic"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg></span>Dashboard</button>
       <button type="button" data-view="apps" aria-selected="false"><span class="ic"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg></span>Apps</button>
+      <button type="button" data-view="chat" aria-selected="false"><span class="ic"><svg viewBox="0 0 24 24"><path d="M4 5h16v11H9l-5 4z"/><path d="M8 9h8M8 12h5"/></svg></span>Ask your ERP</button>
       <div class="navgrp">Sell</div>
       <button type="button" data-view="invoice" aria-selected="false"><span class="ic"><svg viewBox="0 0 24 24"><path d="M14 3v4a1 1 0 0 0 1 1h4"/><path d="M17 21H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2z"/><path d="M12 11v6M9 14h6"/></svg></span>New invoice<span class="count" id="cCart"></span></button>
       <button type="button" data-view="sales" aria-selected="false"><span class="ic"><svg viewBox="0 0 24 24"><path d="M4 2v20l3-2 3 2 3-2 3 2 3-2 1 .7V2z"/><path d="M8 7h8M8 11h8M8 15h5"/></svg></span>Sales<span class="count" id="cSend"></span></button>
@@ -8236,7 +8237,7 @@ var SRV_Q = [], SRV_BUSY = false, SRV_TIMEOUT = 45000;
 // Reading the sales history and the customer list is minutes of work for a
 // big sheet; a button press is not. One watchdog for both meant the slow
 // ones were killed while still working.
-var SRV_SLOW = { erpPoCreate: 180000, erpPoArrive: 180000, erpPoDiffDecide: 120000, erpBackupRun: 300000, erpBackupStatus: 90000, erpCourier: 120000,
+var SRV_SLOW = { erpAssistant: 95000, erpPoCreate: 180000, erpPoArrive: 180000, erpPoDiffDecide: 120000, erpBackupRun: 300000, erpBackupStatus: 90000, erpCourier: 120000,
                  erpBookParcel: 120000, erpBookedParcels: 180000, erpCourierTest: 60000, erpBundle: 120000, erpAdmin: 90000, erpCustomers: 90000,
                  erpMergeCustomers: 300000, erpTool: 300000,
                  erpDeployBusiness: 300000, erpCreateBusiness: 300000,
@@ -12298,7 +12299,7 @@ var APPS = [
   { id: 'settings', name: 'Settings', color: '#5f6b7a', views: ['settings', 'tools', 'platform'],
     icon: '<circle cx="12" cy="12" r="3.2"/><path d="M12 2.500v3M12 18.500v3M2.500 12h3M18.500 12h3M5.300 5.300l2.100 2.100M16.600 16.600l2.100 2.100M5.300 18.700l2.100-2.100M16.600 7.400l2.100-2.100"/>' }
 ];
-var VIEW_NAMES = { apps: 'Apps', invoice: 'New invoice', sales: 'Invoices', weborders: 'Web orders', quotes: 'Quotations', repairs: 'Repairs', printjobs: 'Print jobs', resell: 'Resell', customers: 'Customers', campaigns: 'Campaigns',
+var VIEW_NAMES = { apps: 'Apps', chat: 'Ask your ERP', invoice: 'New invoice', sales: 'Invoices', weborders: 'Web orders', quotes: 'Quotations', repairs: 'Repairs', printjobs: 'Print jobs', resell: 'Resell', customers: 'Customers', campaigns: 'Campaigns',
                    products: 'Products', stock: 'Stock', costs: 'Product cost', market: 'Market', joint: 'Joint stock', profit: 'Profitability', expenses: 'Expenses', capital: 'Capital', cash: 'Money', suppliers: 'Suppliers',
                    settings: 'Settings', tools: 'Maintenance', platform: 'Platform', dash: 'Dashboard', home: 'Home' };
 var VIEW_COUNT = { invoice: 'cCart', sales: 'cSend', weborders: 'cWeb', costs: 'cCosts', market: 'cMarket' };
@@ -12915,6 +12916,7 @@ nav#nav .ic { width:26px; height:26px; flex:0 0 26px; border-radius:7px; backgro
 nav#nav .ic svg { width:15px; height:15px; stroke:#fff; stroke-width:2; }
 nav#nav button[data-view="dash"] { --app:#7c6bb1; }
 nav#nav button[data-view="apps"] { --app:#2f6fed; }
+nav#nav button[data-view="chat"] { --app:#2a9d8f; }
 nav#nav button[data-view="invoice"], nav#nav button[data-view="sales"], nav#nav button[data-view="weborders"], nav#nav button[data-view="quotes"], nav#nav button[data-view="repairs"] { --app:#e39a2d; }
 nav#nav button[data-view="customers"], nav#nav button[data-view="campaigns"] { --app:#2a9d8f; }
 nav#nav button[data-view="suppliers"], nav#nav button[data-view="products"], nav#nav button[data-view="stock"], nav#nav button[data-view="costs"] { --app:#c8553d; }
@@ -21613,7 +21615,7 @@ tr.rv-red td{background:var(--critical-soft)}
 </style>
 <script>
 var APPS = null, APPS_ERR = '', APP_KEY = '', AP_QR = {}, FB = null, FB_ERR = '', FB_FORM = { kind: 'problem', text: '', contact: '' };
-var APPS_CORE = { dash: 1, apps: 1, app: 1, invoice: 1, sales: 1, customers: 1, products: 1, stock: 1, cash: 1, settings: 1, platform: 1, orders: 1, home: 1 };
+var APPS_CORE = { dash: 1, apps: 1, app: 1, chat: 1, invoice: 1, sales: 1, customers: 1, products: 1, stock: 1, cash: 1, settings: 1, platform: 1, orders: 1, home: 1 };
 // icon and colour per app, in the ERP's own palette (the menu's --app colours)
 var AP_LOOK = {
   find:     { c: '#2a9d8f', i: '<circle cx="11" cy="11" r="6"/><path d="M16 16l5 5"/>' },
@@ -22247,6 +22249,77 @@ document.addEventListener('click', function (ev) {
   if (t.id === 'catl_toggle') { CATL_OPEN = !CATL_OPEN; try { localStorage.setItem('cz_catl_open', CATL_OPEN ? '1' : '0'); } catch (e) {} repaint(); return; }
   if (t.id === 'catl_run') { CATL_BUSY = 'run'; repaint(); srv('erpCatalogueAct', [{ action: 'run' }], function (r) { CATL = r; CATL_BUSY = ''; repaint(); var x = r.ran || {}; toast('Looked at ' + fmt(x.looked || 0) + ': ' + fmt(x.linked || 0) + ' linked, ' + fmt(x.created || 0) + ' new items, ' + fmt(x.ai || 0) + ' by the AI reader, ' + fmt(x.left || 0) + ' left.', false, 9000); }, fail); return; }
   if (t.hasAttribute('data-catrename')) { var id = t.getAttribute('data-catrename'), inp = document.querySelector('[data-catname="' + id + '"]'); srv('erpCatalogueAct', [{ action: 'rename', item: Number(id), name: inp ? inp.value : '' }], function (r) { CATL = r; repaint(); toast('Renamed.'); }, fail); }
+});
+</script>
+<!-- Ask your ERP: a chat inside the ERP (handlers/assistant.js). Questions answered through the ERP's own
+     functions; an invoice comes back as a proposal to confirm; the role decides what may be asked. -->
+<style>
+.ch-wrap{display:flex;flex-direction:column;height:calc(100vh - 170px);min-height:380px}
+.ch-log{flex:1;overflow:auto;padding:4px 2px;display:flex;flex-direction:column;gap:10px}
+.ch-m{max-width:78%;padding:9px 12px;border-radius:14px;line-height:1.45;font-size:14px;white-space:pre-wrap;word-break:break-word}
+.ch-m.u{align-self:flex-end;background:var(--series-1);color:#fff;border-bottom-right-radius:4px}
+.ch-m.a{align-self:flex-start;background:var(--surface);border:1px solid var(--ring);border-bottom-left-radius:4px}
+.ch-m.sys{align-self:center;background:none;color:var(--muted);font-size:12px}
+.ch-prop{align-self:flex-start;max-width:92%;border:1px solid var(--warning);background:var(--warning-soft);border-radius:12px;padding:10px 12px}
+.ch-prop .ap-row{margin-top:8px}
+.ch-in{display:flex;gap:8px;margin-top:10px;align-items:flex-end}
+.ch-in textarea{flex:1;min-height:44px;max-height:140px;resize:vertical}
+.ch-chips{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0 0}
+.ch-chips .btn{font-size:12px;padding:3px 10px}
+@media (max-width:760px){.ch-wrap{height:calc(100vh - 215px)}.ch-m{max-width:90%}}
+</style>
+<script>
+var CH = { msgs: [], busy: false, prop: null, left: null };
+try { var chS = JSON.parse(localStorage.getItem('cz_chat') || '[]'); if (Array.isArray(chS)) CH.msgs = chS.slice(-40); } catch (e) {}
+function chSave() { try { localStorage.setItem('cz_chat', JSON.stringify(CH.msgs.slice(-40))); } catch (e) {} }
+function chHtml() {
+  var h = '<section><div class="card ch-wrap"><div class="row" style="justify-content:space-between;align-items:center;margin-bottom:6px"><h2 style="margin:0">Ask your ERP</h2>' +
+          '<span class="sku">' + (CH.left != null ? CH.left + ' left today \u00b7 ' : '') + '<a href="#" id="ch_clear">clear</a></span></div><div class="ch-log" id="ch_log">';
+  if (!CH.msgs.length) h += '<div class="ch-m sys">Ask in Bangla or English: \u201csales today?\u201d, \u201chow much does Rakin owe?\u201d, \u201cinvoice for Karim, 2 jade white, COD\u201d, \u201chow do I receive stock?\u201d. Figures come from your ERP; an invoice is made only after you confirm it.</div>';
+  CH.msgs.forEach(function (m) {
+    if (m.role === 'user') h += '<div class="ch-m u">' + esc(m.text) + '</div>';
+    else h += '<div class="ch-m a">' + esc(m.text) + (m.pdf ? ' <a href="' + esc(m.pdf) + '" target="_blank" rel="noopener">Open the PDF</a>' : '') + '</div>';
+  });
+  if (CH.prop) h += '<div class="ch-prop"><b>Confirm?</b><br>' + esc(CH.prop.summary) + (CH.prop.warnings && CH.prop.warnings.length ? '<br><span style="color:var(--critical)">' + esc(CH.prop.warnings.join('; ')) + '</span>' : '') +
+                    '<div class="ap-row"><button class="btn small primary" type="button" id="ch_yes"' + (CH.busy ? ' disabled' : '') + '>Yes, make it</button><button class="btn small" type="button" id="ch_no">No</button></div></div>';
+  if (CH.busy) h += '<div class="ch-m sys">Thinking\u2026</div>';
+  h += '</div>';
+  h += '<div class="ch-chips">' + ['Sales today?', 'Who owes money?', 'Stock of jade white', 'How do I receive stock?'].map(function (c) { return '<button class="btn" type="button" data-chq="' + esc(c) + '">' + esc(c) + '</button>'; }).join('') + '</div>';
+  h += '<div class="ch-in"><textarea class="i" id="ch_q" placeholder="Type here\u2026" rows="1"' + (CH.busy ? ' disabled' : '') + '></textarea><button class="btn primary" type="button" id="ch_send"' + (CH.busy ? ' disabled' : '') + '>Send</button></div>';
+  return h + '</div></section>';
+}
+var repaintChat = repaint;
+repaint = function () {
+  if (VIEW !== 'chat') return repaintChat.apply(this, arguments);
+  el('view').innerHTML = chHtml();
+  var lg = el('ch_log'); if (lg) lg.scrollTop = lg.scrollHeight;
+  var q = el('ch_q'); if (q && !CH.busy && window.innerWidth > 760) q.focus();
+};
+var routeAllowedChat = routeAllowed;
+routeAllowed = function (view) { if (view === 'chat') return !!ME; return routeAllowedChat.apply(this, arguments); };
+function chSend(text) {
+  text = String(text || '').trim(); if (!text || CH.busy) return;
+  CH.msgs.push({ role: 'user', text: text }); CH.prop = null; CH.busy = true; chSave(); repaint();
+  srv('erpAssistant', [{ messages: CH.msgs.slice(-12).map(function (m) { return { role: m.role, text: m.text }; }) }], function (r) {
+    CH.busy = false; CH.left = r.left; CH.msgs.push({ role: 'assistant', text: r.text }); CH.prop = r.proposal || null; chSave(); repaint();
+  }, function (e) { CH.busy = false; CH.msgs.push({ role: 'assistant', text: 'Sorry \u2014 ' + ((e && e.message) || String(e)) }); chSave(); repaint(); });
+}
+document.addEventListener('click', function (ev) {
+  if (VIEW !== 'chat') return;
+  var t = ev.target && ev.target.closest ? ev.target.closest('#ch_send,#ch_yes,#ch_no,#ch_clear,[data-chq]') : null; if (!t) return;
+  if (t.id === 'ch_send') { chSend((el('ch_q') || {}).value); return; }
+  if (t.hasAttribute('data-chq')) { chSend(t.getAttribute('data-chq')); return; }
+  if (t.id === 'ch_clear') { ev.preventDefault(); CH.msgs = []; CH.prop = null; chSave(); repaint(); return; }
+  if (t.id === 'ch_no') { CH.prop = null; CH.msgs.push({ role: 'assistant', text: 'Not made.' }); chSave(); repaint(); return; }
+  if (t.id === 'ch_yes') {
+    var prop = CH.prop; CH.prop = null; CH.busy = true; repaint();
+    srv('erpAssistant', [{ confirm: prop }], function (r) { CH.busy = false; CH.msgs.push({ role: 'assistant', text: r.text, pdf: r.pdf || '' }); chSave(); repaint(); D = null; try { loadDashboardOnly(); updateCounts(); } catch (e) {} },
+        function (e) { CH.busy = false; CH.msgs.push({ role: 'assistant', text: 'Could not make it: ' + ((e && e.message) || String(e)) }); chSave(); repaint(); });
+  }
+});
+document.addEventListener('keydown', function (ev) {
+  if (VIEW !== 'chat' || !ev.target || ev.target.id !== 'ch_q') return;
+  if (ev.key === 'Enter' && !ev.shiftKey) { ev.preventDefault(); chSend(ev.target.value); }
 });
 </script>
 </body>
