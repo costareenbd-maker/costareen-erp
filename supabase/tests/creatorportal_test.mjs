@@ -133,10 +133,12 @@ r = await getAs('pub=creator', 'Bearer owner:00000000-0000-0000-0000-00000000000
 check('a login without a creator profile is refused', !r.ok, r);
 r = await get('pub=creator');
 check('no session, no token: please sign in', !r.ok && /sign in/i.test(r.error), r);
-r = await post('pub=creator', { action: 'profile', handle: 'Rana 3D', platforms: 'YouTube, Facebook group' }, '10.0.0.2', AUTH);
-check('a half profile is refused', !r.ok, r);
-r = await post('pub=creator', { action: 'profile', handle: 'Rana 3D', platforms: 'YouTube, Facebook group', followers: '12k group, 2k YouTube', links: 'https://youtube.com/@rana, https://facebook.com/groups/3dbd', niche: '3D printing', city: 'Dhaka', about: 'Makers and students', whatsapp: '01711111111', filament: 'PLA, PETG' }, '10.0.0.2', AUTH);
-check('the profile is saved and marked done', r.ok && r.creator.profileDone === true && r.creator.followers === '12k group, 2k YouTube' && r.canRequest === false, r);
+r = await post('pub=creator', { action: 'profile', channels: [], city: 'Dhaka' }, '10.0.0.2', AUTH);
+check('a profile without a channel is refused', !r.ok, r);
+r = await post('pub=creator', { action: 'profile', channels: [{ platform: 'YouTube', name: 'Rana 3D', count: 2000, url: 'youtube.com/@rana' }] }, '10.0.0.2', AUTH);
+check('a link without https:// is refused', !r.ok && /https/.test(r.error), r);
+r = await post('pub=creator', { action: 'profile', channels: [{ platform: 'YouTube', name: 'Rana 3D', count: 2300, url: 'https://youtube.com/@rana' }, { platform: 'Facebook group', name: '3D Printing Bangladesh', count: 12000, url: 'https://facebook.com/groups/3dbd' }], niche: '3D printing', city: 'Dhaka', about: 'Makers and students', whatsapp: '01711111111' }, '10.0.0.2', AUTH);
+check('the profile is saved and marked done; the one-line strings are derived from the channels', r.ok && r.creator.profileDone === true && r.creator.channels.length === 2 && r.creator.followers === 'YouTube 2,300 · Facebook group 12,000' && r.creator.platforms === 'YouTube, Facebook group' && /Rana 3D \(YouTube\)/.test(r.creator.handle) && r.canRequest === false, r);
 r = await owner('erpCreatorSave', [{ id: rana.id, name: 'Rana', brand: 'Polymaker', status: 'active', videos_month: 2, posts_month: 2, rolls_video: 2, trial_until: '2026-12-31', code: 'RANA10' }]);
 check('the owner activates him with the terms', r.ok && r.result.creators.find((c) => c.id === rana.id).status === 'active', r);
 r = await getAs('pub=creator', AUTH);

@@ -1329,3 +1329,13 @@ Owner wants to try the whole flow himself first, then wipe it and send the real 
 project, activity line and link of the business, removes the creators' Supabase logins (never one that is also an
 ERP member), and makes a new join code so a test link shared anywhere stops working. Stock and invoices untouched.
 Tests: 7 more in `creatorportal_test.mjs` (59).
+
+## Creator profile per channel (tag accounts-4, 8 Oct 2026)
+
+Owner (screenshot): the profile fields overlapped - channel names, platforms, followers and links asked the same
+thing three ways; Facebook profile was missing; filament preference is pointless (he picks filament per request);
+too small on a monitor. Now: tick a platform (YouTube, Facebook page, Facebook group, Facebook profile, Instagram,
+TikTok) and its own block appears - name, subscribers / followers / members / friends, link (https:// required).
+Stored as JSON (`erp_creators.channels`, migration 103); the one-line strings the ERP and the sponsor page show
+(handle, platforms, followers, links) are derived from it. Filament field gone from the profile. On a monitor
+(>= 900 px) the page is wider (1040 px), type 17 px, channel blocks two abreast; phones unchanged. 60 tests.

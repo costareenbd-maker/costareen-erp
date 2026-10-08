@@ -37,8 +37,28 @@ function pageUrl(deps, name) {
   const own = str(deps && deps.installEnv && deps.installEnv.creatorUrl);
   return (own ? own.replace(/\/?$/, '/') : pubBase(deps).check.replace(/check$/, '')) + name;
 }
-const PROFILE = ['handle', 'platforms', 'followers', 'links', 'niche', 'city', 'about', 'whatsapp', 'filament'];
-function profileDone(c) { return !!(str(c.handle) && str(c.platforms) && str(c.followers) && str(c.links)); }
+const PROFILE = ['niche', 'city', 'about', 'whatsapp'];
+const PLATFORMS = ['YouTube', 'Facebook page', 'Facebook group', 'Facebook profile', 'Instagram', 'TikTok'];
+function profileDone(c) { return !!(str(c.handle) && str(c.platforms) && str(c.links)); }
+/** The creator's channels, cleaned: [{platform, name, count, url}] - at least a platform and a link each. */
+function cleanChannels(list) {
+  const out = [];
+  for (const x of (Array.isArray(list) ? list : []).slice(0, 12)) {
+    const platform = PLATFORMS.find((p) => p.toLowerCase() === str(x && x.platform).toLowerCase());
+    const url = str(x && x.url).slice(0, 300), name = str(x && x.name).slice(0, 120), count = Math.max(0, Math.round(num(x && x.count)));
+    if (!platform) continue;
+    if (!/^https?:\/\/\S+$/.test(url)) throw new Error('A full link for ' + platform + ', starting with https://');
+    if (!name) throw new Error('The name of your ' + platform + ', please.');
+    out.push({ platform, name, count, url });
+  }
+  return out;
+}
+/** The one-line strings the ERP and the sponsor page show, from the channels. */
+function derived(ch) {
+  return { handle: ch.map((c) => c.name + ' (' + c.platform + ')').join(', ').slice(0, 400), platforms: [...new Set(ch.map((c) => c.platform))].join(', '),
+           followers: ch.map((c) => c.platform + ' ' + c.count.toLocaleString('en-US')).join(' \u00b7 ').slice(0, 400), links: ch.map((c) => c.url).join('\n').slice(0, 2000) };
+}
+function parseChannels(c) { try { const j = JSON.parse(str(c.channels) || '[]'); return Array.isArray(j) ? j : []; } catch (_) { return []; } }
 function randomCode(n) { const a = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789', b = crypto.getRandomValues(new Uint8Array(n)); return [...b].map((x) => a[x % a.length]).join(''); }
 const okEmail = (e) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);
 /** The programme's join code of this business (made once): the public join link carries only this. */
@@ -258,7 +278,7 @@ async function creatorData(ctx, c) {
   const stock = cat.filter((p) => (!p.status || p.status === 'Active') && num(p.stock) > 0 && /filament/i.test(p.cat || '')).map((p) => ({ sku: p.sku, name: p.name, stock: num(p.stock) })).sort((a, b) => a.name.localeCompare(b.name)).slice(0, 300);
   const sum = (l, k) => l.reduce((a, x) => a + num(x[k]), 0);
   return {
-    creator: { name: str(c.name), email: str(c.email), handle: str(c.handle), platforms: str(c.platforms), followers: str(c.followers), links: str(c.links), niche: str(c.niche), city: str(c.city), about: str(c.about), whatsapp: str(c.whatsapp), brand: str(c.brand), code: str(c.code), status: str(c.status), videos_month: num(c.videos_month), posts_month: num(c.posts_month), rolls_video: num(c.rolls_video), filament: str(c.filament), trial_until: day(c.trial_until), notes: str(c.notes), profileDone: profileDone(c), needProfile: !!c.applied_at && !profileDone(c) },
+    creator: { name: str(c.name), email: str(c.email), channels: parseChannels(c), handle: str(c.handle), platforms: str(c.platforms), followers: str(c.followers), links: str(c.links), niche: str(c.niche), city: str(c.city), about: str(c.about), whatsapp: str(c.whatsapp), brand: str(c.brand), code: str(c.code), status: str(c.status), videos_month: num(c.videos_month), posts_month: num(c.posts_month), rolls_video: num(c.rolls_video), filament: str(c.filament), trial_until: day(c.trial_until), notes: str(c.notes), profileDone: profileDone(c), needProfile: !!c.applied_at && !profileDone(c) },
     month: { name: formatDate(ctx.now, 'MMMM yyyy'), videos, posts: others, views: sum(mPosts, 'views') },
     total: { rolls: reqs.filter((r) => r.status === 'given').reduce((a, r) => a + num(r.qty_ok), 0), posts: posts.length, views: sum(posts, 'views') },
     requests: reqs, posts, stock, canRequest, why: canRequest ? '' : (c.status === 'applied' ? 'Your application is being reviewed. You will see the agreement here once it is approved.' : c.status !== 'active' ? 'The programme is ' + c.status + ' for you right now.' : needProfile ? 'Complete your profile first.' : pending ? (reqs.some((r) => r.status === 'requested') ? 'Your last request is still waiting for an answer.' : 'Collect the approved filament first.') : 'Paste the link of your last project first, then request the next filament.'),
@@ -276,12 +296,14 @@ async function creatorAct(ctx, l, b, ip) {
   const action = str(b.action);
   if (action === 'profile') {
     const row = {};
-    for (const k of PROFILE) row[k] = str(b[k]).slice(0, k === 'about' || k === 'links' ? 1000 : 200) || null;
-    if (!str(row.handle) || !str(row.platforms) || !str(row.followers) || !str(row.links)) throw new Error('Channel name, platforms, followers and links are needed.');
+    for (const k of PROFILE) row[k] = str(b[k]).slice(0, k === 'about' ? 1000 : 200) || null;
+    const ch = cleanChannels(b.channels);
+    if (!ch.length) throw new Error('Tick at least one platform and give its name and link.');
+    Object.assign(row, derived(ch), { channels: JSON.stringify(ch) });
     if (str(b.name).length >= 2) row.name = str(b.name).slice(0, 80);
     row.profile_at = ctx.now; row.updated_at = ctx.now;
     await ctx.tx`update erp_creators set ${ctx.tx(row)} where id = ${c.id} and business_id = ${ctx.biz}`;
-    await ev(ctx, { creator_id: c.id, who: 'creator', what: 'profile', detail: PROFILE.map((k) => k + ': ' + str(row[k])).filter((x) => !/: $/.test(x)).join(' | ').slice(0, 480), ip });
+    await ev(ctx, { creator_id: c.id, who: 'creator', what: 'profile', detail: (row.handle + ' | ' + row.followers + ' | ' + PROFILE.map((k) => k + ': ' + str(row[k])).filter((x) => !/: $/.test(x)).join(' | ')).slice(0, 480), ip });
     return creatorData(ctx, { ...c, ...row });
   }
   if (action === 'request') {

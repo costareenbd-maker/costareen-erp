@@ -26,6 +26,10 @@ header{background:var(--head);color:#fff;padding:calc(18px + env(safe-area-inset
 .who{text-align:right}.who b{display:block;font-size:17px}.who span{color:#b9c5d6;font-size:13px}
 .who button{margin-top:4px;background:transparent;color:#b9c5d6;border-color:#3a4a62;font-size:12px;padding:4px 10px}
 main{max-width:720px;margin:0 auto;padding:16px 16px calc(40px + env(safe-area-inset-bottom,0px))}
+.chans{display:grid;grid-template-columns:1fr;gap:10px;margin-top:10px}
+.chan{border:1px solid var(--line);border-radius:12px;padding:4px 14px 12px;background:var(--bg)}
+.chan b{display:block;margin-top:8px;font-size:14px;color:var(--acc)}
+@media (min-width:900px){html,body{font-size:17px}main{max-width:1040px;padding:24px 24px 60px}.hd{max-width:1040px}.card{padding:22px 26px;border-radius:18px}h1.t{font-size:30px}.chans{grid-template-columns:1fr 1fr}.kpis{grid-template-columns:repeat(4,1fr)}input,select,textarea{font-size:16px;padding:12px 14px}}
 .card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px 18px;margin-bottom:14px}
 h2{font-size:13px;color:var(--mute);margin:0 0 10px;text-transform:uppercase;letter-spacing:.7px}
 h1.t{font-size:24px;margin:0 0 6px;line-height:1.2}
@@ -78,7 +82,8 @@ var API = (new URLSearchParams(location.search).get('api') || 'https://oqzcuuyty
 var SB_URL = 'https://oqzcuuytytqadqjlwdsh.supabase.co', SB_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9xemN1dXl0eXRxYWRxamx3ZHNoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODk4Nzk4MDEsImV4cCI6MjEwNTQ1NTgwMX0.fwdCTTde1fS2SPfT5ULNqLI4-YQLa__3pHjufarZG_0';
 var Q = new URLSearchParams(location.search), TOKEN = Q.get('t') || '', PCODE = (Q.get('p') || '').toUpperCase();
 var BRAND_LOGOS = { polymaker: 'brand/polymaker.svg' };
-var PLATFORMS = ['YouTube', 'Facebook page', 'Facebook group', 'Instagram', 'TikTok'];
+var PLATFORMS = ['YouTube', 'Facebook page', 'Facebook group', 'Facebook profile', 'Instagram', 'TikTok'];
+var PL_WORD = { 'YouTube': ['Channel name', 'Subscribers', 'https://youtube.com/@…'], 'Facebook page': ['Page name', 'Followers', 'https://facebook.com/…'], 'Facebook group': ['Group name', 'Members', 'https://facebook.com/groups/…'], 'Facebook profile': ['Profile name', 'Friends / followers', 'https://facebook.com/…'], 'Instagram': ['Account name', 'Followers', 'https://instagram.com/…'], 'TikTok': ['Account name', 'Followers', 'https://tiktok.com/@…'] };
 var D = null, PROG = null, FORM = null, BUSY = false, ERR = '', MODE = '', SESS = null, out = document.getElementById('out');
 function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
 function n(v) { return Number(v || 0).toLocaleString('en-US'); }
@@ -130,17 +135,18 @@ function signinFormHtml() {
 function setPassHtml() {
   return '<div class="card"><h1 class="t">Choose your password</h1><p class="lead">At least 8 characters. You will use it with your e-mail to sign in.</p><label>New password</label><input id="p_1" type="password" autocomplete="new-password"><label>Again</label><input id="p_2" type="password" autocomplete="new-password"><div class="row"><button class="pri" id="p_go"' + (BUSY ? ' disabled' : '') + '>' + (BUSY ? 'Saving…' : 'Save and continue') + '</button><span class="msg" id="f_msg"></span></div></div>';
 }
+var CH = null;   // the channel blocks being edited: {platform: {name, count, url}}
+function chInit(c) { CH = {}; (c.channels || []).forEach(function (x) { CH[x.platform] = { name: x.name || '', count: x.count || '', url: x.url || '' }; }); }
+function chRead() { Object.keys(CH).forEach(function (pl) { var k = pl.replace(/\W/g, ''); CH[pl] = { name: v('ch_name_' + k), count: v('ch_count_' + k), url: v('ch_url_' + k) }; }); }
 function profileHtml(c, first) {
-  var picked = (c.platforms || '').split(',').map(function (x) { return x.trim(); });
+  if (!CH) chInit(c);
   return '<div class="card"><h1 class="t">' + (first ? 'Tell us about your channel' : 'Your profile') + '</h1><p class="lead">' + (first ? 'This is what the shop and the brand see when they review your application.' : 'Changes are recorded.') + '</p>' +
     '<label>Your name</label><input id="pf_name" value="' + esc(c.name) + '" maxlength="80">' +
-    '<label>Channel / page / group names</label><input id="pf_handle" value="' + esc(c.handle) + '" placeholder="e.g. Rana 3D (YouTube), 3D Printing Bangladesh (group)">' +
-    '<label>Platforms you publish on</label><div class="checks">' + PLATFORMS.map(function (p) { return '<label><input type="checkbox" name="pf_pl" value="' + p + '"' + (picked.indexOf(p) >= 0 ? ' checked' : '') + '>' + p + '</label>'; }).join('') + '</div>' +
-    '<label>Followers / members on each</label><input id="pf_followers" value="' + esc(c.followers) + '" placeholder="e.g. YouTube 2,300 · group 12,000">' +
-    '<label>Links to your channels and pages (one per line)</label><textarea id="pf_links" placeholder="https://youtube.com/@…&#10;https://facebook.com/…">' + esc(c.links) + '</textarea>' +
+    '<label>Where you publish - tick each one</label><div class="checks">' + PLATFORMS.map(function (p) { return '<label><input type="checkbox" name="pf_pl" value="' + p + '"' + (CH[p] ? ' checked' : '') + '>' + p + '</label>'; }).join('') + '</div>' +
+    '<div class="chans">' + PLATFORMS.filter(function (p) { return CH[p]; }).map(function (p) { var k = p.replace(/\W/g, ''), w = PL_WORD[p], x = CH[p]; return '<div class="chan"><b>' + esc(p) + '</b><div class="grid2"><div><label>' + w[0] + '</label><input id="ch_name_' + k + '" value="' + esc(x.name) + '"></div><div><label>' + w[1] + '</label><input id="ch_count_' + k + '" inputmode="numeric" value="' + esc(x.count) + '" placeholder="number"></div></div><label>Link</label><input id="ch_url_' + k + '" value="' + esc(x.url) + '" placeholder="' + w[2] + '" inputmode="url"></div>'; }).join('') + '</div>' +
     '<div class="grid2"><div><label>What you make</label><input id="pf_niche" value="' + esc(c.niche) + '" placeholder="3D printing, maker, education, cosplay…"></div><div><label>City</label><input id="pf_city" value="' + esc(c.city) + '"></div></div>' +
     '<label>Your audience, in a few words</label><textarea id="pf_about" placeholder="Who watches you, what they ask for">' + esc(c.about) + '</textarea>' +
-    '<div class="grid2"><div><label>WhatsApp number</label><input id="pf_whatsapp" value="' + esc(c.whatsapp) + '" inputmode="tel"></div><div><label>Filament you want to work with</label><input id="pf_filament" value="' + esc(c.filament) + '" placeholder="PLA, PETG, engineering…"></div></div>' +
+    '<label>WhatsApp number</label><input id="pf_whatsapp" value="' + esc(c.whatsapp) + '" inputmode="tel" style="max-width:320px">' +
     '<div class="row"><button class="pri" id="pf_save"' + (BUSY ? ' disabled' : '') + '>' + (BUSY ? 'Saving…' : 'Save profile') + '</button>' + (first ? '' : '<button id="f_cancel">Cancel</button>') + '<span class="msg" id="f_msg"></span></div></div>';
 }
 function statusBadge(s) { return s === 'requested' ? '<span class="badge b-warn">Waiting for approval</span>' : s === 'approved' ? '<span class="badge b-acc">Approved · collect it</span>' : s === 'given' ? '<span class="badge b-warn">Filament received · paste your link</span>' : s === 'done' ? '<span class="badge b-ok">Done</span>' : '<span class="badge b-bad">Declined</span>'; }
@@ -213,7 +219,8 @@ document.addEventListener('click', function (ev) {
   if (t.id === 'to_join') { FORM = null; MODE = 'landing'; render(); return; }
   if (t.id === 'f_open') { FORM = 'request'; render(); return; }
   if (t.id === 'f_cancel') { FORM = null; render(); return; }
-  if (t.id === 'pf_edit') { FORM = 'profile'; render(); window.scrollTo(0, 0); return; }
+  if (t.id === 'pf_edit') { FORM = 'profile'; CH = null; render(); window.scrollTo(0, 0); return; }
+  if (t.id === 'f_cancel' && FORM === 'profile') { CH = null; }
   if (t.getAttribute('data-link')) { FORM = { link: +t.getAttribute('data-link') }; render(); return; }
   if (t.getAttribute('data-nums')) { FORM = { nums: +t.getAttribute('data-nums') }; render(); window.scrollTo(0, document.body.scrollHeight); return; }
   var done = function (r) { if (!r.ok) return fail(r); BUSY = false; FORM = null; Object.assign(D, r); render(); };
@@ -244,9 +251,10 @@ document.addEventListener('click', function (ev) {
     authFetch('user', { password: p1 }, 'PUT').then(function (j) { if (!j.id) return fail(j); BUSY = false; history.replaceState(null, '', location.pathname + (PCODE ? '?p=' + PCODE : '')); loadMine(); }, fail); return;
   }
   if (t.id === 'pf_save') {
-    var pb = { action: 'profile', name: v('pf_name'), handle: v('pf_handle'), platforms: Array.prototype.map.call(document.querySelectorAll('input[name=pf_pl]:checked'), function (x) { return x.value; }).join(', '), followers: v('pf_followers'), links: v('pf_links'), niche: v('pf_niche'), city: v('pf_city'), about: v('pf_about'), whatsapp: v('pf_whatsapp'), filament: v('pf_filament') };
+    chRead();
+    var pb = { action: 'profile', name: v('pf_name'), channels: PLATFORMS.filter(function (p) { return CH[p]; }).map(function (p) { return { platform: p, name: CH[p].name, count: Number(String(CH[p].count).replace(/[^0-9]/g, '')), url: CH[p].url }; }), niche: v('pf_niche'), city: v('pf_city'), about: v('pf_about'), whatsapp: v('pf_whatsapp') };
     BUSY = true; render();
-    api(pb).then(done, fail); return;
+    api(pb).then(function (r) { if (!r.ok) return fail(r); CH = null; done(r); }, fail); return;
   }
   if (t.id === 'f_send') {
     var body = { action: 'request', sku: v('f_sku'), qty: Number(v('f_qty')), title: v('f_title'), note: v('f_note') };
@@ -263,6 +271,12 @@ document.addEventListener('click', function (ev) {
     BUSY = true; render();
     api(ub).then(done, fail); return;
   }
+});
+document.addEventListener('change', function (ev) {
+  if (ev.target.name !== 'pf_pl' || !CH) return;
+  chRead();
+  if (ev.target.checked) CH[ev.target.value] = CH[ev.target.value] || { name: '', count: '', url: '' }; else delete CH[ev.target.value];
+  render();
 });
 document.addEventListener('input', function (ev) {
   if (ev.target.id !== 'l_url') return;
