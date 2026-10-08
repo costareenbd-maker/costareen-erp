@@ -140,7 +140,7 @@ function signinFormHtml() {
     '<div class="row"><button class="pri" id="s_go"' + (BUSY ? ' disabled' : '') + '>' + (BUSY ? 'Signing in…' : 'Sign in') + '</button><button class="lnk" id="to_forgot">Forgot the password?</button><span class="msg" id="f_msg"></span></div>' + (PCODE ? '<p class="msg" style="margin:12px 0 0">New here? <button class="lnk" id="to_join">Join the programme</button></p>' : '');
 }
 function setPassHtml() {
-  return '<div class="card"><h1 class="t">' + (SETUPINFO ? 'Welcome' + (SETUPINFO.name && SETUPINFO.name.indexOf('@') < 0 ? ', ' + esc(SETUPINFO.name) : '') + '!' : 'Choose your password') + '</h1><p class="lead">' + (SETUPINFO ? 'Choose a password for <b>' + esc(SETUPINFO.email) + '</b>. At least 8 characters. You will sign in with this e-mail and password.' : 'At least 8 characters. You will use it with your e-mail to sign in.') + '</p><label>New password</label><input id="p_1" type="password" autocomplete="new-password"><label>Again</label><input id="p_2" type="password" autocomplete="new-password"><div class="row"><button class="pri" id="p_go"' + (BUSY ? ' disabled' : '') + '>' + (BUSY ? 'Saving…' : 'Save and continue') + '</button><span class="msg" id="f_msg"></span></div></div>';
+  return '<div class="card"><h1 class="t">' + (SETUPINFO ? 'Welcome' + (SETUPINFO.name && SETUPINFO.name.indexOf('@') < 0 ? ', ' + esc(SETUPINFO.name) : '') + '!' : 'Choose your password') + '</h1><p class="lead">' + (SETUPINFO ? 'Choose a password for <b>' + esc(SETUPINFO.email) + '</b>. At least <b>10 characters</b>. You will sign in with this e-mail and password.' : 'At least 10 characters. You will use it with your e-mail to sign in.') + '</p><label>New password</label><input id="p_1" type="password" autocomplete="new-password"><label>Again</label><input id="p_2" type="password" autocomplete="new-password"><div class="row"><button class="pri" id="p_go"' + (BUSY ? ' disabled' : '') + '>' + (BUSY ? 'Saving…' : 'Save and continue') + '</button><span class="msg" id="f_msg"></span></div></div>';
 }
 var CH = null;   // the channel blocks being edited: {platform: {name, count, url}}
 function chInit(c) { CH = {}; (c.channels || []).forEach(function (x) { CH[x.platform] = { name: x.name || '', count: x.count || '', url: x.url || '' }; }); }
@@ -208,7 +208,7 @@ function render() {
   if (ERR) { out.innerHTML = '<div class="card"><p class="msg err">' + esc(ERR) + '</p>' + (SESS ? '<div class="row"><button class="sm" id="signout">Sign out</button></div>' : '') + '</div>'; return; }
   if (MODE === 'setpass') { head(SETUPINFO && SETUPINFO.shop, SETUPINFO && SETUPINFO.brand, null); out.innerHTML = setPassHtml(); return; }
   if (MODE === 'landing' || MODE === 'joined') { head(PROG && PROG.shop, PROG && PROG.brands && PROG.brands[0], null); out.innerHTML = landingHtml(); return; }
-  if (MODE === 'signin') { head(null, '', null); out.innerHTML = '<div class="card">' + signinFormHtml() + '</div>'; return; }
+  if (MODE === 'signin') { head((SETUPINFO && SETUPINFO.shop) || (PROG && PROG.shop), (SETUPINFO && SETUPINFO.brand) || (PROG && PROG.brands && PROG.brands[0]), null); out.innerHTML = '<div class="card">' + signinFormHtml() + '</div>'; return; }
   if (!D) return;
   head(D.shop, D.creator.brand, D.creator);
   if (PREVIEW) { document.body.classList.add('pv'); if (!document.querySelector('.pvbar')) document.body.insertAdjacentHTML('afterbegin', '<div class="pvbar">Preview \u2014 what this creator sees right now. Read-only; it refreshes by itself.</div>'); }
@@ -255,7 +255,7 @@ document.addEventListener('click', function (ev) {
   }
   if (t.id === 'p_go') {
     var p1 = v('p_1'), p2 = v('p_2'), m1 = document.getElementById('f_msg');
-    if (p1.length < 8) { if (m1) m1.textContent = 'At least 8 characters.'; return; }
+    if (p1.length < 10) { if (m1) m1.textContent = 'At least 10 characters, please.'; return; }
     if (p1 !== p2) { if (m1) m1.textContent = 'The two passwords differ.'; return; }
     BUSY = true; render();
     if (SETUP) {
@@ -317,7 +317,17 @@ document.addEventListener('keydown', function (ev) { if (ev.key === 'Enter' && e
   if (SETUP) {
     fetch(API + '?pub=creator&setup=' + encodeURIComponent(SETUP)).then(function (r) { return r.json(); }).then(function (r) {
       if (!r.ok) { SETUP = ''; history.replaceState(null, '', location.pathname); if (SESS && SESS.access_token) { loadMine(); return; } ERR = ''; MODE = 'signin'; FORM = 'signin'; render(); var m = document.getElementById('f_msg'); if (m) m.textContent = r.error || ''; return; }
-      SETUPINFO = r; MODE = 'setpass'; render();
+      SETUPINFO = r;
+      if (r.used) {
+        SETUP = ''; history.replaceState(null, '', location.pathname);
+        if (SESS && SESS.access_token) { loadMine(); return; }
+        MODE = 'signin'; FORM = 'signin'; render();
+        var se = document.getElementById('s_email'); if (se) se.value = r.email;
+        var sp = document.getElementById('s_pass'); if (sp) sp.focus();
+        var m2 = document.getElementById('f_msg'); if (m2) m2.textContent = 'Welcome back. Your password is set - type it to sign in.';
+        return;
+      }
+      MODE = 'setpass'; render();
     }, function () { ERR = 'The page could not be loaded. Check your connection and try again.'; render(); });
     return;
   }

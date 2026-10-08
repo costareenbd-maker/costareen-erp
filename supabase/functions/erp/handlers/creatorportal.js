@@ -127,7 +127,7 @@ async function setupLink(ctx, creatorId) {
   const src = sourceOf(ctx.deps) || (ctx.deps && ctx.deps.control ? 'self' : null);
   if (!src) throw new Error('Links need the provider server.');
   const token = await tokenFor(ctx.deps, 'setup', src, ctx.biz, String(creatorId));
-  await ctx.deps.control`insert into erp_creator_links (token_hash, source, business_id, kind, ref) values (${await sha256hex(token)}, ${src}, ${ctx.biz}, 'setup', ${String(creatorId)}) on conflict (token_hash) do nothing`;
+  await ctx.deps.control`insert into erp_creator_links (token_hash, source, business_id, kind, ref) values (${await sha256hex(token)}, ${src}, ${ctx.biz}, 'setup', ${String(creatorId)}) on conflict (token_hash) do update set kind = 'setup'`;
   return pageUrl(ctx.deps, 'creator') + '?setup=' + token;
 }
 async function setupInfo(ctx, l) {
@@ -481,15 +481,23 @@ export async function route(deps, R, what, method, params, body, ip, authHeader)
     // the set-up link: show who it is for; set the password (the link is spent then)
     if (params.get('setup') || action === 'setup') {
       const code = str(params.get('setup') || b.setup);
-      let d, l;
-      try { ({ d, l } = await openLink(deps, R, code, 'setup', ip)); }
-      catch (e) { if (/not known/.test(String(e.message))) throw new Error('This link was already used. Sign in with your e-mail and password, or press "Forgot the password?".'); throw e; }
-      if (method === 'GET') return runAs(d, R, l.business_id, 'pub:creator', (ctx) => setupInfo(ctx, l));
+      if (!/^[A-Za-z0-9_-]{16,32}$/.test(code)) throw new Error('This link is not complete.');
+      await limit(deps, ip, 'setup', 120);
+      const h = await sha256hex(code);
+      const row = (await deps.control`select source, business_id, kind, ref from erp_creator_links where token_hash = ${h}`)[0];
+      if (!row || (row.kind !== 'setup' && row.kind !== 'setup-used')) throw new Error('This link is not known. Ask for a new one.');
+      await deps.control`update erp_creator_links set last_seen = now() where token_hash = ${h}`;
+      let d = deps;
+      if (row.source !== 'self') { if (!R.tenantDeps) throw new Error('This page is not available right now.'); d = await R.tenantDeps(row.source); }
+      const l = { business_id: row.business_id, ref: row.ref, source: row.source };
+      const used = row.kind === 'setup-used';
+      if (method === 'GET') return runAs(d, R, l.business_id, 'pub:creator', async (ctx) => ({ ...(await setupInfo(ctx, l)), used }));
+      if (used) throw new Error('Your password is already set. Sign in with it below, or press "Forgot the password?".');
       const pw = String(b.password || '');
-      if (pw.length < 8) throw new Error('At least 8 characters.');
+      if (pw.length < 10) throw new Error('At least 10 characters, please.');
       if (pw.length > 72) throw new Error('At most 72 characters.');
       const out = await runAs(d, R, l.business_id, 'pub:creator', (ctx) => setupDone(ctx, l, pw, ip));
-      await deps.control`delete from erp_creator_links where token_hash = ${await sha256hex(code)}`;   // spent
+      await deps.control`update erp_creator_links set kind = 'setup-used' where token_hash = ${h}`;   // from now on it opens his sign-in
       return out;
     }
     // forgotten password: a fresh link, always the same answer (no e-mail guessing)

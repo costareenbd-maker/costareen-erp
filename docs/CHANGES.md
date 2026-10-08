@@ -1433,3 +1433,18 @@ trail. Verified live end to end (open twice, set, real sign-in, spent), test rem
 real creators (ids 5-7) for the owner to resend. "E-mail it to him" still uses Supabase's one-hour e-mail.
 creatorportal_test 84.
 - Note: capital_test failed once in the full run (2 checks on a struck-out return line) and passed 49/49 alone right after; capital code untouched - a timing flake, to watch.
+
+## Set-up link: 10-character passwords, never "expired", approve before the profile (tag setup-2, 8 Oct 2026)
+
+Owner: a creator set his password but the owner saw no details and no Approve button; "the link should not expire,
+I cannot ask him to log in again". Live trail: hello.goyenda set his password at 14:23 and was signed in, then left
+the profile form unsaved (so no details; Approve was locked until a profile). raihanmokerrobin opened his link four
+times and no password was saved: the login system's minimum is **10** characters (Supabase `password_min_length`)
+while the page asked for 8 - a 8-9 character password was refused. Fixed:
+- 10 characters asked for and checked (page and server), said plainly.
+- After the password is set the link is marked `setup-used` instead of deleted: opening it again goes straight to his
+  page when that phone is signed in, else to his sign-in with his e-mail filled in and both logos ("Welcome back").
+  It cannot set a password a second time; the owner's button makes it a set-up link again. hello.goyenda's link,
+  deleted by the old code, was restored as `setup-used` (same address he has).
+- **Approve** works before the profile (with a confirm); he is still asked for his profile on his next visit.
+creatorportal_test 86.
