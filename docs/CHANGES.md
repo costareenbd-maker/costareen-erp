@@ -1368,3 +1368,11 @@ copied to the clipboard and shown to copy again. One use, one hour (Auth `mailer
 stays. Guard (both ways): an e-mail that signs in to an ERP here is refused - its password link would change that
 ERP password. Verified live with a throwaway creator (303 to the creator page with a recovery session), then removed.
 creatorportal_test 58.
+
+## Fix: Advertisement / Creators tabs vanished on Contacts; "Only me" label (tag labs-fix-1, 8 Oct 2026)
+
+Owner (screenshot): on Campaigns > Contacts the Advertisement and Creators tabs disappeared, and the Creators app
+said "Off for everyone" although he uses it. The tabs were inserted before the plain Contacts chip, which carries
+" on" while Contacts is open - now matched either way (checked on all six tabs). An "Only me" app seen by the
+provider now says **On for you · off for everyone else**, the switch reads **On for everyone / Only me**, and its
+Apps tile has no red dot. Page only.

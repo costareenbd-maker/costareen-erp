@@ -21713,7 +21713,7 @@ function viewApps() {
   var byGroup = function (g) { return list.filter(function (a) { return (a.group || 'For customers') === g; }); };
   h += ['For customers', 'Only me'].map(function (g) { var L = byGroup(g); if (!L.length) return ''; return (g === 'Only me' ? '<h3 style="margin:14px 0 2px;font-size:14px">Only me</h3><div class="sub" data-c5x="1" style="display:block">New things. Yours alone until you switch one on for everyone.</div>' : '') + '<div class="ap-home">' + L.map(function (a) {
     return '<button type="button" class="ap-app' + (a.on || a.labs ? '' : ' off') + '" data-apopen="' + esc(a.key) + '" ' + apStyle(a.key) + '>' +
-           '<span class="ap-ico">' + apIcon(a.key) + (a.on ? '' : '<span class="ap-dot" title="Off for everyone"></span>') + '</span>' +
+           '<span class="ap-ico">' + apIcon(a.key) + (a.on || (a.labs && APPS.admin) ? '' : '<span class="ap-dot" title="Off for everyone"></span>') + '</span>' +
            '<span class="ap-lbl">' + esc(a.name) + '</span></button>';
   }).join('') + '</div>'; }).join('');
   return h + '</div></section>';
@@ -21726,13 +21726,13 @@ function viewApp() {
   if (!a) return '<section><div class="empty">No such app. <a href="#" data-apback="1">Back to Apps</a></div></section>';
   var admin = APPS.admin;
   var h = '<section><div class="card"><div class="ap-head" ' + apStyle(a.key) + '><span class="ap-ico">' + apIcon(a.key) + '</span><div><h2>' + esc(a.name) + '</h2>' +
-          (a.on ? '' : '<span class="ap-pill">Off for everyone</span>') + '</div></div>' +
+          (a.on ? '' : a.labs && admin ? '<span class="ap-pill" style="background:var(--good-soft,#e6f4f1);color:var(--good,#0f766e)">On for you \u00b7 off for everyone else</span>' : '<span class="ap-pill">Off for everyone</span>') + '</div></div>' +
           '<div class="ap-what">' + esc(a.what) + '</div>' + (a.where && a.key !== 'feedback' ? '<div class="ap-where">Settings: ' + esc(a.where) + '</div>' : '') +
           '<div class="ap-row">' +
           (a.url && a.on ? '<a class="btn small primary" href="' + esc(a.url) + '" target="_blank" rel="noopener">Open the page \u2197</a>' : '') +
           (a.view && a.view !== 'app' && a.view !== 'platform' ? '<button class="btn small" type="button" data-apgo="' + esc(a.view) + '" data-aptab="' + esc(a.tab || '') + '">Settings</button>' : '') +
           '<button class="btn small" type="button" data-apback="1">All apps</button>' +
-          (admin && !a.sameAs ? '<span class="seg" style="margin-left:auto"><button class="btn small' + (a.on ? ' on' : '') + '" type="button" data-apall="' + esc(a.key) + '" data-on="1">On for everyone</button><button class="btn small' + (a.on ? '' : ' on') + '" type="button" data-apall="' + esc(a.key) + '" data-on="0">Off</button></span>' : '') +
+          (admin && !a.sameAs ? '<span class="seg" style="margin-left:auto"><button class="btn small' + (a.on ? ' on' : '') + '" type="button" data-apall="' + esc(a.key) + '" data-on="1">On for everyone</button><button class="btn small' + (a.on ? '' : ' on') + '" type="button" data-apall="' + esc(a.key) + '" data-on="0">' + (a.labs ? 'Only me' : 'Off') + '</button></span>' : '') +
           (admin && a.sameAs ? '<span class="sku" style="margin-left:auto">Follows Find stock.</span>' : '') +
           '</div></div>';
   if (a.url && a.on) {
@@ -22394,7 +22394,7 @@ cpTabsHtml = function () {
   var add = (puOn() ? '<button class="chip' + (CP.tab === 'ads' && !CP.camp ? ' on' : '') + '" type="button" data-cptab="ads">Advertisement</button>' : '') +
             (crOn() ? '<button class="chip' + (CP.tab === 'creators' && !CP.camp ? ' on' : '') + '" type="button" data-cptab="creators">Creators</button>' : '');
   if (!add) return h;
-  return h.replace('<button class="chip" type="button" data-cptab="contacts">', add + '<button class="chip" type="button" data-cptab="contacts">');
+  return h.replace(/<button class="chip(?: on)?" type="button" data-cptab="contacts">/, function (m) { return add + m; });
 };
 document.addEventListener('click', function (ev) {
   if (VIEW !== 'campaigns') return;
