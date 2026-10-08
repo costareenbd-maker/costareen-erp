@@ -187,7 +187,7 @@ export async function erpSponsorLink(ctx, payload) {
 }
 
 // ---------------------------------------------------------------- requests (owner side)
-const reqRow = (r) => ({ id: Number(r.id), creator_id: Number(r.creator_id), status: r.status, title: str(r.title), sku: str(r.sku), product: str(r.product), qty: num(r.qty), qty_ok: r.qty_ok == null ? null : num(r.qty_ok),
+const reqRow = (r) => ({ onRequest: !!r.on_request, id: Number(r.id), creator_id: Number(r.creator_id), status: r.status, title: str(r.title), sku: str(r.sku), product: str(r.product), qty: num(r.qty), qty_ok: r.qty_ok == null ? null : num(r.qty_ok),
                          value: num(r.value), note: str(r.note), owner_note: str(r.owner_note), requested_at: when(r.requested_at), decided_at: when(r.decided_at), given_at: when(r.given_at), links: num(r.links), code: str(r.link_code), clicks: num(r.clicks), link_to: str(r.link_to) });
 async function requests(ctx, creatorId) {
   const rows = creatorId
@@ -341,9 +341,8 @@ async function creatorData(ctx, c) {
   const pending = reqs.some((r) => r.status === 'requested' || r.status === 'approved');
   const needProfile = !!c.applied_at && !profileDone(c);   // self-joined creators fill their profile first; hand-added ones are the owner's job
   const canRequest = c.status === 'active' && !needProfile && openNoLink < num(c.open_limit) && !pending;
-  // what he can ask for: filament in stock
-  const cat = await erpCatalog(ctx);
-  const stock = cat.filter((p) => (!p.status || p.status === 'Active') && num(p.stock) > 0 && /filament/i.test(p.cat || '')).map((p) => ({ sku: p.sku, name: p.name, stock: num(p.stock) })).sort((a, b) => a.name.localeCompare(b.name)).slice(0, 300);
+  // what he can ask for: the programme brand only (never the shop's other brands)
+  const stock = (await brandItems(ctx, str(c.brand) || await progBrand(ctx))).filter((x) => !x.hidden);
   const sum = (l, k) => l.reduce((a, x) => a + num(x[k]), 0);
   return {
     creator: { name: str(c.name), email: str(c.email), channels: parseChannels(c), handle: str(c.handle), platforms: str(c.platforms), followers: str(c.followers), links: str(c.links), niche: str(c.niche), city: str(c.city), about: str(c.about), whatsapp: str(c.whatsapp), brand: str(c.brand), code: str(c.code), status: str(c.status), videos_month: num(c.videos_month), posts_month: num(c.posts_month), rolls_video: num(c.rolls_video), filament: str(c.filament), trial_until: day(c.trial_until), notes: str(c.notes), profileDone: profileDone(c), needProfile: !!c.applied_at && !profileDone(c) },
@@ -379,11 +378,12 @@ async function creatorAct(ctx, l, b, ip) {
     if (!d.canRequest) throw new Error(d.why);
     const qty = Math.round(num(b.qty)); if (!(qty > 0)) throw new Error('How many rolls?');
     if (qty > num(c.rolls_video) * 3) throw new Error('That is more than the programme allows at once (' + num(c.rolls_video) * 3 + '). Ask the shop directly for more.');
-    let sku = str(b.sku), product = str(b.product);
-    if (sku) { const s = d.stock.find((x) => x.sku.toLowerCase() === sku.toLowerCase()); if (!s) throw new Error('That product is not in stock right now.'); sku = s.sku; product = s.name; }
-    if (!product) throw new Error('Which filament?');
+    let sku = str(b.sku), product = '', onRequest = false;
+    const pick = d.stock.find((x) => (x.key || x.sku).toLowerCase() === sku.toLowerCase());
+    if (!pick) throw new Error('Pick a product from the list.');
+    sku = pick.sku; product = pick.name; onRequest = pick.stock <= 0;
     const title = str(b.title).slice(0, 160); if (!title) throw new Error('One line about the video, please.');
-    const r = (await ctx.tx`insert into erp_creator_requests ${ctx.tx({ business_id: ctx.biz, creator_id: c.id, title, sku: sku || null, product, qty, note: str(b.note).slice(0, 500) || null })} returning id`)[0];
+    const r = (await ctx.tx`insert into erp_creator_requests ${ctx.tx({ business_id: ctx.biz, creator_id: c.id, title, sku: sku || null, product, qty, on_request: onRequest, note: str(b.note).slice(0, 500) || null })} returning id`)[0];
     await makeGo(ctx, Number(r.id));
     await ev(ctx, { creator_id: c.id, request_id: Number(r.id), who: 'creator', what: 'requested', detail: qty + ' x ' + product + ' - ' + title, ip });
     return creatorData(ctx, c);
@@ -587,4 +587,72 @@ async function goClick(ctx, requestId, ip, referer) {
   if (!seen) await ctx.tx`update erp_creator_requests set clicks = clicks + 1 where id = ${requestId}`;   // one visitor a day counts once
   return { url: await goTarget(ctx, r) };
 }
-export const HANDLERS = { erpCreatorLinkTo, erpCreatorApprove, erpCreatorPreview, erpCreatorPortalLink, erpSponsorLink, erpCreatorRequests, erpCreatorDecide, erpCreatorEvents, erpYoutubeKey, erpCreatorRefresh, erpCreatorProgramme, erpCreatorInvite };
+// ---------------------------------------------------------------- the brand's products for creators
+const brandRe = (b) => str(b).toLowerCase().replace(/[^a-z0-9]/g, '');
+/** The programme brand's products: the shop's own products of that brand (with stock) merged with the brand range the
+ *  owner keeps (erp_creator_catalog) - by SKU. In stock first, then on request. */
+async function brandItems(ctx, brand) {
+  if (!str(brand)) return [];
+  const want = brandRe(brand);
+  const cat = await erpCatalog(ctx);
+  const own = cat.filter((p) => (!p.status || p.status === 'Active') && brandRe(p.brand) === want);
+  const kept = await ctx.tx`select * from erp_creator_catalog where business_id = ${ctx.biz} and lower(regexp_replace(brand, '[^A-Za-z0-9]', '', 'g')) = ${want} order by line nulls last, name`;
+  const hiddenSku = new Set(kept.filter((k) => k.hidden && k.sku).map((k) => str(k.sku).toLowerCase()));
+  const out = [], seen = new Set();
+  for (const p of own) {
+    const k = str(p.sku).toLowerCase(); seen.add(k);
+    out.push({ key: p.sku, sku: p.sku, name: p.name, stock: num(p.stock), hidden: hiddenSku.has(k), source: 'stock' });
+  }
+  for (const k of kept) {
+    const ks = str(k.sku).toLowerCase();
+    if (ks && seen.has(ks)) continue;
+    out.push({ key: k.sku || 'c' + k.id, sku: str(k.sku), name: str(k.name), line: str(k.line), colour: str(k.colour), stock: 0, hidden: !!k.hidden, source: 'range', id: Number(k.id) });
+  }
+  out.sort((a, b) => (b.stock > 0) - (a.stock > 0) || a.name.localeCompare(b.name));
+  return out.slice(0, 500);
+}
+/** Owner: the products creators may request - his stock of the brand and the brand's range; hidden ones included. */
+export async function erpCreatorCatalog(ctx) {
+  needOwner(ctx);
+  const brand = await progBrand(ctx);
+  const items = await brandItems(ctx, brand);
+  return { brand, items, inStock: items.filter((x) => x.stock > 0 && !x.hidden).length, onRequest: items.filter((x) => x.stock <= 0 && !x.hidden).length, hidden: items.filter((x) => x.hidden).length };
+}
+/** Owner: show or hide one product for creators (by SKU, or a range row by id). */
+export async function erpCreatorCatalogSet(ctx, payload) {
+  needOwner(ctx);
+  const p = payload || {}, hidden = !!p.hidden, brand = await progBrand(ctx);
+  if (num(p.id) > 0) await ctx.tx`update erp_creator_catalog set hidden = ${hidden} where business_id = ${ctx.biz} and id = ${num(p.id)}`;
+  else {
+    const sku = str(p.sku); if (!sku) throw new Error('Which product?');
+    const had = (await ctx.tx`select id from erp_creator_catalog where business_id = ${ctx.biz} and lower(sku) = ${sku.toLowerCase()}`)[0];
+    if (had) await ctx.tx`update erp_creator_catalog set hidden = ${hidden} where id = ${had.id}`;
+    else await ctx.tx`insert into erp_creator_catalog ${ctx.tx({ business_id: ctx.biz, brand, sku, name: str(p.name) || sku, hidden })}`;
+  }
+  return erpCreatorCatalog(ctx);
+}
+/** Owner: add the brand's products the shop does not stock - lines of "SKU, name" (or name alone), or rows. */
+export async function erpCreatorCatalogAdd(ctx, payload) {
+  needOwner(ctx);
+  const p = payload || {}, brand = str(p.brand) || await progBrand(ctx);
+  if (!brand) throw new Error('Set the programme brand first (Creators > Join link for creators).');
+  let rows = Array.isArray(p.rows) ? p.rows : [];
+  if (!rows.length) rows = str(p.text).split(/\r?\n/).map((l) => l.trim()).filter(Boolean).map((l) => { const m = /^([A-Za-z0-9][\w.-]{2,30})\s*[,;\t]\s*(.+)$/.exec(l); return m ? { sku: m[1], name: m[2] } : { name: l }; });
+  let added = 0, kept = 0;
+  for (const r of rows.slice(0, 1000)) {
+    const sku = str(r.sku).slice(0, 40), name = str(r.name).slice(0, 160);
+    if (!name) continue;
+    if (sku && (await ctx.tx`select 1 from erp_creator_catalog where business_id = ${ctx.biz} and lower(sku) = ${sku.toLowerCase()}`)[0]) { kept++; continue; }
+    if (!sku && (await ctx.tx`select 1 from erp_creator_catalog where business_id = ${ctx.biz} and sku is null and lower(name) = ${name.toLowerCase()}`)[0]) { kept++; continue; }
+    await ctx.tx`insert into erp_creator_catalog ${ctx.tx({ business_id: ctx.biz, brand, sku: sku || null, name, line: str(r.line).slice(0, 80) || null, colour: str(r.colour).slice(0, 60) || null })}`;
+    added++;
+  }
+  return { ...(await erpCreatorCatalog(ctx)), added, kept };
+}
+/** Owner: take a range row out (only rows he added; his stock items are hidden instead). */
+export async function erpCreatorCatalogRemove(ctx, payload) {
+  needOwner(ctx);
+  await ctx.tx`delete from erp_creator_catalog where business_id = ${ctx.biz} and id = ${num((payload || {}).id)}`;
+  return erpCreatorCatalog(ctx);
+}
+export const HANDLERS = { erpCreatorCatalog, erpCreatorCatalogSet, erpCreatorCatalogAdd, erpCreatorCatalogRemove, erpCreatorLinkTo, erpCreatorApprove, erpCreatorPreview, erpCreatorPortalLink, erpSponsorLink, erpCreatorRequests, erpCreatorDecide, erpCreatorEvents, erpYoutubeKey, erpCreatorRefresh, erpCreatorProgramme, erpCreatorInvite };

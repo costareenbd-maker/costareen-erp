@@ -73,6 +73,7 @@ footer{font-size:13px;color:var(--mute);text-align:center;margin-top:22px}
 .golink div:first-child{flex:1;min-width:200px}.golink b{display:block;font-size:13px}.golink span{display:block;font-size:12px;color:var(--mute)}
 .golink code{display:block;margin-top:4px;font-size:13px;color:var(--acc);overflow-wrap:anywhere}
 .gocount{text-align:center;font-size:12px;color:var(--mute)}.gocount b{font-size:20px;color:var(--ink)}
+.allp{display:flex!important;align-items:center;gap:6px;margin:6px 0 0!important;font-size:13px;color:var(--mute);cursor:pointer}.allp input{width:auto}
 .pvbar{background:#1e4fa3;color:#fff;text-align:center;font-size:13px;padding:6px 10px}
 .pv main button,.pv main input,.pv main select,.pv main textarea,.pv .who button{pointer-events:none}
 .pv main .card{opacity:.97}
@@ -161,6 +162,15 @@ function postHtml(p) {
   return '<div class="post"><div><a href="' + esc(p.url) + '" target="_blank" rel="noopener">' + esc(p.platform || '') + ' ' + esc(p.kind) + ' · ' + esc(p.url.replace(/^https?:\/\/(www\.)?/, '').slice(0, 42)) + '</a><br><span class="n">' + esc(p.date) + ' · ' + (p.verified ? '<span class="badge b-ok">verified by YouTube</span>' : '<span class="badge b-mute">reported</span>') + '</span></div>' +
     '<div class="n">' + n(p.views) + ' views · ' + n(p.likes) + ' likes · ' + n(p.comments) + ' comments' + (p.leads ? ' · ' + n(p.leads) + ' enquiries' : '') + (p.verified ? '' : ' <button class="sm" data-nums="' + p.id + '">Update</button>') + '</div></div>';
 }
+var SHOWALL = false;
+function pickOptions() {
+  var have = D.stock.filter(function (x) { return x.stock > 0; }), rest = D.stock.filter(function (x) { return x.stock <= 0; });
+  if (!have.length && !SHOWALL) SHOWALL = true;   // nothing in stock: the range is all there is
+  var opt = function (x) { return '<option value="' + esc(x.key || x.sku) + '">' + esc(x.name) + (x.stock > 0 ? ' (' + n(x.stock) + ' in stock)' : '') + '</option>'; };
+  var h = have.length ? '<optgroup label="In stock">' + have.map(opt).join('') + '</optgroup>' : '';
+  if (SHOWALL && rest.length) h += '<optgroup label="On request - not in stock now">' + rest.map(opt).join('') + '</optgroup>';
+  return h || '<option value="">No products yet - ask the shop</option>';
+}
 function dashHtml() {
   var c = D.creator, h = '';
   if (c.status === 'applied') h += '<div class="card" style="background:var(--warnbg);border-color:var(--warnbg)"><b>Application received.</b><p class="msg" style="margin:6px 0 0">' + (c.profileDone ? 'The shop is reviewing your profile. Your agreement (videos a month, rolls per video) appears here once you are approved.' : 'Complete your profile so the shop can review it.') + '</p>' + (c.profileDone ? '<div class="row"><button class="sm" id="pf_edit">Edit profile</button></div>' : '') + '</div>';
@@ -171,7 +181,7 @@ function dashHtml() {
     h += '<div class="card"><h2>Next project</h2>';
     if (FORM === 'request') {
       h += '<label>What is the video about?</label><input id="f_title" maxlength="160" placeholder="e.g. Strength test: PLA vs PLA+">' +
-           '<div class="grid2"><div><label>Filament (in stock now)</label><select id="f_sku">' + D.stock.map(function (s) { return '<option value="' + esc(s.sku) + '">' + esc(s.name) + ' (' + n(s.stock) + ' in stock)</option>'; }).join('') + '</select></div><div><label>Rolls</label><input id="f_qty" inputmode="numeric" value="' + c.rolls_video + '"></div></div>' +
+           '<div class="grid2"><div><label>Filament</label><select id="f_sku">' + pickOptions() + '</select>' + (D.stock.some(function (x) { return x.stock <= 0; }) ? '<label class="allp"><input type="checkbox" id="f_all"' + (SHOWALL ? ' checked' : '') + '> Show products we do not have in stock (on request)</label>' : '') + '</div><div><label>Rolls</label><input id="f_qty" inputmode="numeric" value="' + c.rolls_video + '"></div></div>' +
            '<label>Anything else (optional)</label><textarea id="f_note" maxlength="500" placeholder="Colour preference, pickup day, a second product…"></textarea>' +
            '<div class="row"><button class="pri" id="f_send"' + (BUSY ? ' disabled' : '') + '>' + (BUSY ? 'Sending…' : 'Send the request') + '</button><button id="f_cancel">Cancel</button><span class="msg" id="f_msg"></span></div>';
     } else h += D.canRequest ? '<p class="msg" style="margin:0 0 10px">Pick the filament for your next video. The shop answers here; collect it when it says approved.</p><button class="pri" id="f_open">Request filament for the next video</button>' : '<p class="msg" style="margin:0">' + esc(D.why) + '</p>';
@@ -181,7 +191,7 @@ function dashHtml() {
   if (!D.requests.length) h += '<p class="msg" style="margin:0">No project yet.' + (c.status === 'active' ? ' Request your first filament above.' : '') + '</p>';
   D.requests.forEach(function (r) {
     var posts = D.posts.filter(function (p) { return p.request_id === r.id; });
-    h += '<div class="proj"><div class="h"><div><b>' + esc(r.title || r.product) + '</b><div class="m">' + n(r.qty_ok != null ? r.qty_ok : r.qty) + ' × ' + esc(r.product) + ' · requested ' + esc(dt(r.requested_at)) + (r.given_at ? ' · received ' + esc(dt(r.given_at)) : r.decided_at ? ' · answered ' + esc(dt(r.decided_at)) : '') + '</div>' + (r.owner_note ? '<div class="m">Shop: ' + esc(r.owner_note) + '</div>' : '') + '</div>' + statusBadge(r.status) + '</div>';
+    h += '<div class="proj"><div class="h"><div><b>' + esc(r.title || r.product) + '</b><div class="m">' + n(r.qty_ok != null ? r.qty_ok : r.qty) + ' × ' + esc(r.product) + ' · requested ' + esc(dt(r.requested_at)) + (r.given_at ? ' · received ' + esc(dt(r.given_at)) : r.decided_at ? ' · answered ' + esc(dt(r.decided_at)) : '') + '</div>' + (r.owner_note ? '<div class="m">Shop: ' + esc(r.owner_note) + '</div>' : '') + '</div><div>' + (r.onRequest && (r.status === 'requested' || r.status === 'approved') ? '<span class="badge b-mute" style="margin-right:6px">on request</span>' : '') + statusBadge(r.status) + '</div></div>';
     if (r.go && r.status !== 'declined') h += '<div class="golink"><div><b>Your link for this video</b><span>Put it in the video description / post. Every click is counted.</span><code>' + esc(r.go) + '</code></div><div class="gocount"><b>' + n(r.clicks) + '</b>clicks</div><button class="sm" data-copy="' + esc(r.go) + '">Copy</button></div>';
     posts.forEach(function (p) { h += postHtml(p); });
     if (r.status === 'given' || r.status === 'done') {
@@ -304,6 +314,12 @@ document.addEventListener('change', function (ev) {
   chRead();
   if (ev.target.checked) CH[ev.target.value] = CH[ev.target.value] || { name: '', count: '', url: '' }; else delete CH[ev.target.value];
   render();
+});
+document.addEventListener('change', function (ev) {
+  if (ev.target.id !== 'f_all') return;
+  var keep = { t: v('f_title'), q: v('f_qty'), n: v('f_note') };
+  SHOWALL = ev.target.checked; render();
+  var a = document.getElementById('f_title'); if (a) a.value = keep.t; var b = document.getElementById('f_qty'); if (b) b.value = keep.q; var c = document.getElementById('f_note'); if (c) c.value = keep.n;
 });
 document.addEventListener('input', function (ev) {
   if (ev.target.id !== 'l_url') return;

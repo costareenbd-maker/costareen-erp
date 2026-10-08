@@ -11,6 +11,9 @@ const get = async (q, ip) => (await pubRoute(deps, new Request('https://ctl.test
 const post = async (q, body, ip, auth) => (await pubRoute(deps, new Request('https://ctl.test/erp?' + q, { method: 'POST', headers: { 'content-type': 'application/json', 'x-forwarded-for': ip || '10.0.0.1', ...(auth ? { authorization: auth } : {}) }, body: JSON.stringify(body) }), R)).body;
 const getAs = async (q, auth) => (await pubRoute(deps, new Request('https://ctl.test/erp?' + q, { method: 'GET', headers: { 'x-forwarded-for': '10.0.0.2', authorization: auth } }), R)).body;
 const PLA = 'FIL-SUN-PLA-BLA-001';
+// the programme is Polymaker: the test product plays a Polymaker one; a Sunlu product stays out of the creators' list
+await sql`update products set brand = 'Polymaker' where business_id = ${FIX.B} and sku = ${PLA}`;
+await mgr('erpSaveProduct', [{ isNew: true, sku: 'SUN-OTHER-1', product_name: 'Sunlu PETG Grey', brand: 'Sunlu', category: 'Filaments', unit: 'Roll', sell_price: 1400, opening_stock: 20 }]);
 
 // the YouTube API, faked: one video with known numbers
 let ytCalls = 0;
@@ -258,4 +261,25 @@ r = await post('pub=creator', { action: 'hint', email: 'newbie@example.com' }, '
 check('a creator who has set his password: no hint (just a wrong password)', r.ok && r.hint === '', r);
 r = await post('pub=creator', { action: 'hint', email: 'nobody@example.com' }, '10.0.6.1');
 check('an unknown e-mail: no hint', r.ok && r.hint === '', r);
+
+// the products creators may request: the programme brand only; in stock + the brand range on request; hidden ones out
+r = await getAs('pub=creator', 'Bearer owner:' + nbUser);
+check('the creator never sees another brand (Sunlu)', r.ok && !r.stock.some((x) => /Sunlu PETG/.test(x.name)) && r.stock.some((x) => x.sku === PLA && x.stock > 0), r.ok ? r.stock : r);
+r = await owner('erpCreatorCatalogAdd', [{ text: ['CA04072, Panchroma PLA Matte Sapphire Blue 1kg', 'PolyTerra PLA Charcoal Black 1kg', 'CA04072, duplicate line'].join('\n') }]);
+check('the brand range is added (SKU or name), duplicates skipped', r.ok && r.result.added === 2 && r.result.kept === 1 && r.result.onRequest === 2, r);
+r = await getAs('pub=creator', 'Bearer owner:' + nbUser);
+check('the creator sees them, with no stock (on request)', r.ok && r.stock.some((x) => x.sku === 'CA04072' && x.stock === 0) && r.stock.some((x) => /PolyTerra/.test(x.name)), r.ok ? r.stock : r);
+r = await owner('erpCreatorCatalogSet', [{ sku: PLA, hidden: true, name: 'x' }]);
+check('the owner hides a stock product', r.ok && r.result.hidden === 1, r);
+r = await getAs('pub=creator', 'Bearer owner:' + nbUser);
+check('hidden: gone from the creator’s list', r.ok && !r.stock.some((x) => x.sku === PLA), r.ok ? r.stock : r);
+await owner('erpCreatorCatalogSet', [{ sku: PLA, hidden: false }]);
+await owner('erpCreatorApprove', [{ creator_id: NEWID }]);
+await sql`update erp_creator_requests set status = 'done' where creator_id = ${NEWID}`;
+r = await post('pub=creator', { action: 'request', sku: 'SUN-OTHER-1', qty: 1, title: 'x' }, '10.0.4.4', 'Bearer owner:' + nbUser);
+check('a request for another brand is refused', !r.ok, r);
+r = await post('pub=creator', { action: 'request', sku: 'CA04072', qty: 2, title: 'Matte colours review' }, '10.0.4.4', 'Bearer owner:' + nbUser);
+check('a request for a product not in stock goes through, marked on request', r.ok && r.requests[0].onRequest === true && r.requests[0].product === 'Panchroma PLA Matte Sapphire Blue 1kg', r.ok ? r.requests[0] : r);
+r = await owner('erpCreatorRequests', []);
+check('the owner sees it marked on request', r.ok && r.result.waiting.some((x) => x.onRequest && x.sku === 'CA04072'), r);
 await done();

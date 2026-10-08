@@ -1458,3 +1458,16 @@ set-up link is still open and no "password set" is on his trail, the page says "
 the link we sent you on WhatsApp and choose a password there (at least 10 characters)" instead of "Wrong e-mail or
 password". Rate-limited; unknown e-mails and creators with a password get no hint. Checked live for both cases.
 creatorportal_test 89.
+
+## Creators see only the programme brand; the brand's range on request (tag brandlist-1, 9 Oct 2026)
+
+Owner: creators could see the whole inventory (Sunlu, Bambulab...); they must see only what is allowed - the
+programme brand - and also the brand's products the shop does not stock, to request them. Live: no Polymaker product
+was in stock at all. Now (`brandItems`, migration 105 `erp_creator_catalog`, `on_request` on requests): a creator's
+picker lists only the programme brand: the shop's stock of that brand ("In stock") and the brand range the owner keeps
+("On request - not in stock now", behind a "Show products we do not have in stock" tick; shown at once when nothing is
+in stock). A request for another brand is refused; an on-request one is marked for the creator and the owner.
+Creators > **Products creators can request**: the list with stock, Hide / Show per product, remove range rows, add
+products ("SKU, name" per line). Loaded live: the 82 Polymaker products of the owner's proforma (Panchroma PLA, Matte,
+Marble ... with SKUs). Checked live: each of the three creators sees 82 Polymaker products and no other brand.
+creatorportal_test 97.
