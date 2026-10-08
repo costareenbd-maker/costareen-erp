@@ -517,6 +517,43 @@ export async function erpJointAdjust(ctx, payload) {
   return { ...(await erpJoint(ctx, { pool: pool.id })), adjusted: { sku, qty, direction: dir } };
 }
 
+/** Creators (handlers/creatorportal.js): sponsorship rolls leave a pool, or come back when the brand replaces them.
+ *  Zero value - no gain, no loss, nothing in the settlement; only the quantity on this company's shelf moves. */
+export async function poolSponsorMove(ctx, { pool: poolId, sku, qty, dir, note }) {
+  await needOn(ctx);
+  const pool = await poolOf(ctx, poolId);
+  needOwner(ctx, pool);
+  const n = num(qty), out = dir !== 'IN';
+  if (!(n > 0)) throw new Error('How many?');
+  await poolOpenOn(ctx, pool, formatDate(ctx.now, 'yyyy-MM-dd'), 'its stock cannot change');
+  return withPool(ctx, pool, async (pctx) => {
+    await lock(pctx, 'stock'); await lock(pctx, 'sale');
+    const p = await poolProduct(pctx, pool, sku);
+    if (out && n > num(p.stock)) throw new Error('Only ' + num(p.stock) + ' of ' + str(p.name) + ' are in ' + pool.name + '.');
+    const at = new Date();
+    await pctx.tx`
+      insert into stock_movements (business_id, product_id, kind, direction, qty, unit_price, total, reference, supplier, note,
+                                   created_by, created_at, txn_no, operator, product_name, held_by)
+      values (${pool.id}, ${p.id}, ${out ? 'ADJUST' : 'RETURN'}, ${out ? 'OUT' : 'IN'}, ${n}, 0, 0, ${str(note).slice(0, 200)}, '',
+              ${(out ? 'Sponsorship rolls taken by ' : 'Sponsorship rolls replaced by the brand, booked by ') + who(ctx) + ' (' + str(ctx.s.businessName) + ')'},
+              ${pctx.s.userId}, ${at}, ${txnNo(at)}, ${who(ctx)}, ${str(p.name)}, ${pctx.jointMe || null})`;
+    forget(pctx, 'TXN_LOG');
+    return { sku: str(p.sku), name: str(p.name), pool: pool.name };
+  });
+}
+/** Creators: the pools this company owns into that hold a SKU, with what is on their shelf. */
+export async function poolsWithSku(ctx, sku) {
+  if (!(await jointOn(ctx))) return [];
+  const out = [];
+  for (const pool of await myPools(ctx)) {
+    if (!pool.member || ctx.s.role !== 'owner') continue;
+    try {
+      const r = await withPool(ctx, pool, async (pctx) => (await pctx.tx`select coalesce(ps.stock, 0) as stock from products p left join product_stock ps on ps.product_id = p.id where p.business_id = ${pool.id} and lower(btrim(p.sku)) = ${str(sku).toLowerCase()} limit 1`)[0]);
+      if (r) out.push({ id: pool.id, name: pool.name, stock: num(r.stock) });
+    } catch (_) { /* a pool that cannot be read now is left out */ }
+  }
+  return out;
+}
 /** A line in the pool's money book, or striking one out. */
 export async function erpJointBook(ctx, payload) {
   payload = payload || {};

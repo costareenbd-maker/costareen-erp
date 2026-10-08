@@ -8428,7 +8428,7 @@ function srv(name, args, ok, bad) {
 
 var SRV_ACTIVE = 0, SRV_WRITING = false, SRV_TIMED = {};
 // the same list the server uses to know a call changes nothing (ERP_READS)
-var SRV_READS = /^(erpReceiveMatch|erpAiReader|erpProductSuggest|erpCatalogue|erpPushList|erpCreators|erpCreatorPortalLink|erpSponsorLink|erpCreatorRequests|erpCreatorEvents|erpCreatorProgramme|erpCreatorPreview|erpCreatorCatalog|erpApps|erpAppQr|erpFeedback|erpRestockOffers|erpRestockList|erpWarrantyRules|erpWarrantyCard|erpMyLink|erpPlatformRegister|erpPlatformDoctor|erpPlatformCommunity|erpMarketWaiting|erpBoard|erpPlatformDesign|erpResell|erpResellerProgramme|erpLoyalty|erpCustomerPoints|erpRefillDue|erpDeliveryHistory|erpDeliveryHistoryMany|erpPrintKit|erpPrintJobs|erpPrintJob|erpPrintCost|erpSpools|erpPrintRequests|erpJoint|erpJointCatalog|erpJointCard|erpInvoiceDesign|erpInvoicePreview|erpMarket|erpMarketMine|erpMarketRequests|erpMarketHints|erpMarketNames|erpWanted|erpBrand|erpComplianceLog|erpProviderKey|erpNews|erpAccessKeys|erpAccessWarning|erpAdmin|erpAiKeys|erpAlertRules|erpAlerts|erpArena|erpBackupStatus|erpBg|erpBnWords|erpBookedParcels|erpBrandLogo|erpBundle|erpBusinessLinks|erpBusinesses|erpBusinessesDeleted|erpCampaignAudience|erpCampaignGet|erpCampaignList|erpCapital|erpCashBook|erpCatalog|erpConnStatus|erpConnections|erpCostBook|erpCourier|erpCourierKeyStatus|erpCurrencies|erpCustomerAccount|erpCustomerCredit|erpCustomerList|erpCustomerPage|erpCustomerStatement|erpCustomers|erpDashboardData|erpDaySales|erpDeliveryOptions|erpDevices|erpDiscontinued|erpDues|erpEvoQr|erpEvoStatus|erpExpenseExport|erpExpenseReceiptUrl|erpExpenses|erpFamilies|erpFighters|erpFormOptions|erpGame|erpGetTheme|erpGoogle|erpHello|erpInstalls|erpInvoice|erpInvoicePdf|erpJob|erpJobs|erpListView|erpLookupCustomer|erpLookupUsage|erpMe|erpMoney|erpNoteFileUrl|erpNotes|erpOwnerChange|erpOwnerChanges|erpParcelLabels|erpParcelPreview|erpPartnerStock|erpPartnership|erpPayReasons|erpPeople|erpPlatform|erpPlatformErrors|erpPnl|erpPnlMonth|erpPoList|erpPoolCatalog|erpProduct|erpProductListShare|erpProductPage|erpProductPhotoUrl|erpProductThumbs|erpProfile|erpQuoteAsset|erpQuoteBoot|erpQuoteGet|erpQuoteList|erpRecentInvoices|erpRecovery|erpReorderPlan|erpRestorePreview|erpReturnPreview|erpRisks|erpSales|erpSearch|erpSecurity|erpSelfTest|erpSerialLookup|erpSerialsFor|erpSessions|erpSetTheme|erpSettingsFull|erpSettingsLists|erpSfPayoutLines|erpSfPayouts|erpShareFile|erpSharedStock|erpSheet|erpStatementPdf|erpStockHistory|erpSupplierPage|erpSuppliers|erpToday|erpUsers|erpWaProductPdf|erpWebMatches|erpWebOrderInvoices|erpWebOrders|erpWebsiteTest)$/;
+var SRV_READS = /^(erpReceiveMatch|erpAiReader|erpProductSuggest|erpCatalogue|erpPushList|erpCreators|erpCreatorPortalLink|erpSponsorLink|erpCreatorRequests|erpCreatorEvents|erpCreatorProgramme|erpCreatorPreview|erpCreatorCatalog|erpCreatorSources|erpCreatorClaims|erpApps|erpAppQr|erpFeedback|erpRestockOffers|erpRestockList|erpWarrantyRules|erpWarrantyCard|erpMyLink|erpPlatformRegister|erpPlatformDoctor|erpPlatformCommunity|erpMarketWaiting|erpBoard|erpPlatformDesign|erpResell|erpResellerProgramme|erpLoyalty|erpCustomerPoints|erpRefillDue|erpDeliveryHistory|erpDeliveryHistoryMany|erpPrintKit|erpPrintJobs|erpPrintJob|erpPrintCost|erpSpools|erpPrintRequests|erpJoint|erpJointCatalog|erpJointCard|erpInvoiceDesign|erpInvoicePreview|erpMarket|erpMarketMine|erpMarketRequests|erpMarketHints|erpMarketNames|erpWanted|erpBrand|erpComplianceLog|erpProviderKey|erpNews|erpAccessKeys|erpAccessWarning|erpAdmin|erpAiKeys|erpAlertRules|erpAlerts|erpArena|erpBackupStatus|erpBg|erpBnWords|erpBookedParcels|erpBrandLogo|erpBundle|erpBusinessLinks|erpBusinesses|erpBusinessesDeleted|erpCampaignAudience|erpCampaignGet|erpCampaignList|erpCapital|erpCashBook|erpCatalog|erpConnStatus|erpConnections|erpCostBook|erpCourier|erpCourierKeyStatus|erpCurrencies|erpCustomerAccount|erpCustomerCredit|erpCustomerList|erpCustomerPage|erpCustomerStatement|erpCustomers|erpDashboardData|erpDaySales|erpDeliveryOptions|erpDevices|erpDiscontinued|erpDues|erpEvoQr|erpEvoStatus|erpExpenseExport|erpExpenseReceiptUrl|erpExpenses|erpFamilies|erpFighters|erpFormOptions|erpGame|erpGetTheme|erpGoogle|erpHello|erpInstalls|erpInvoice|erpInvoicePdf|erpJob|erpJobs|erpListView|erpLookupCustomer|erpLookupUsage|erpMe|erpMoney|erpNoteFileUrl|erpNotes|erpOwnerChange|erpOwnerChanges|erpParcelLabels|erpParcelPreview|erpPartnerStock|erpPartnership|erpPayReasons|erpPeople|erpPlatform|erpPlatformErrors|erpPnl|erpPnlMonth|erpPoList|erpPoolCatalog|erpProduct|erpProductListShare|erpProductPage|erpProductPhotoUrl|erpProductThumbs|erpProfile|erpQuoteAsset|erpQuoteBoot|erpQuoteGet|erpQuoteList|erpRecentInvoices|erpRecovery|erpReorderPlan|erpRestorePreview|erpReturnPreview|erpRisks|erpSales|erpSearch|erpSecurity|erpSelfTest|erpSerialLookup|erpSerialsFor|erpSessions|erpSetTheme|erpSettingsFull|erpSettingsLists|erpSfPayoutLines|erpSfPayouts|erpShareFile|erpSharedStock|erpSheet|erpStatementPdf|erpStockHistory|erpSupplierPage|erpSuppliers|erpToday|erpUsers|erpWaProductPdf|erpWebMatches|erpWebOrderInvoices|erpWebOrders|erpWebsiteTest)$/;
 function srvPump() {
   if (!SRV_Q.length) return;
   var isRead = SRV_READS.test(SRV_Q[0].name);
@@ -22558,18 +22558,29 @@ function adsClick(t) {
 table.list.cr td,table.list.cr th{font-size:13px}
 </style>
 <script>
-var CR = { data: null, err: '', month: '', open: 0, form: null, show: '', busy: false, reqs: null, link: {}, sponsor: null, events: {}, ytkey: false, prog: null, signlink: null, invite: null, pv: null, pvId: 0, cat: null };
+var CR = { data: null, err: '', month: '', open: 0, form: null, show: '', busy: false, reqs: null, link: {}, sponsor: null, events: {}, ytkey: false, prog: null, signlink: null, invite: null, pv: null, pvId: 0, cat: null, claims: null, giving: null };
 function crProgHtml() {
   if (!CR.prog) { CR.prog = { loading: true }; srv('erpCreatorProgramme', [], function (r) { CR.prog = r; repaint(); }, function (e) { CR.prog = { error: (e && e.message) || String(e) }; repaint(); }); return '<div class="loading">Making the link\u2026</div>'; }
   var l = CR.prog; if (l.loading) return '<div class="loading">Making the link\u2026</div>'; if (l.error) return '<div class="note err"><div class="ico">!</div><div>' + esc(l.error) + '</div></div>';
   return '<div class="ap-share" style="margin-top:8px"><img src="' + esc(l.qr) + '" alt="QR" style="width:148px;height:148px"><div><div class="ap-url">' + esc(l.url) + '</div><div class="ap-row" style="margin-top:8px"><button class="btn small" type="button" data-apcopy="' + esc(l.url) + '">Copy the link</button><a class="btn small" href="' + esc(l.url) + '" target="_blank" rel="noopener">Open</a></div><div class="sub" style="display:block;margin-top:6px">Post this on social media or send it to a creator. No company name in it. A creator joins with name, e-mail and phone, chooses a password from the e-mail, fills his profile, and appears here as <b>Applied</b> for your review. Sign-in page for everyone: ' + esc(l.signin) + '</div><div class="ap-row"><input class="i" id="cr_progbrand" value="' + esc(l.brand || '') + '" placeholder="Brand on the join page, e.g. Polymaker" style="max-width:260px"><button class="btn small" type="button" id="cr_progsave">Save</button><span class="sub" style="margin:0">Shown with its logo on the join page; new creators start under this brand.</span></div></div></div>';
 }
 function crReqsLoad() { srv('erpCreatorRequests', [], function (r) { CR.reqs = r; if (VIEW === 'campaigns') repaint(); }, function () { CR.reqs = { waiting: [], approved: [], open: [], all: [] }; }); }
-function crDecide(id, action, qty, note) { if (CR.busy) return; CR.busy = true; repaint(); srv('erpCreatorDecide', [{ id: id, action: action, qty: qty, note: note }], function (r) { CR.busy = false; CR.reqs = r; CR.data = null; repaint(); toast(action === 'approve' ? 'Approved. The creator sees it on his page.' : action === 'given' ? 'Recorded as given.' : 'Declined.'); }, function (e) { CR.busy = false; repaint(); toast(esc((e && e.message) || e), true, 9000); }); }
+function crDecide(id, action, qty, note, source) { if (CR.busy) return; CR.busy = true; repaint(); srv('erpCreatorDecide', [{ id: id, action: action, qty: qty, note: note, source: source }], function (r) { CR.busy = false; CR.reqs = r; CR.data = null; CR.giving = null; CR.claims = null; repaint(); toast(action === 'approve' ? 'Approved. The creator sees it on his page.' : action === 'given' ? 'Recorded as given.' : 'Declined.'); }, function (e) { CR.busy = false; repaint(); toast(esc((e && e.message) || e), true, 9000); }); }
 function crReqRow(r, kind) {
   var h = '<div class="pu-row" style="align-items:center"><div><b>' + esc(r.creator) + '</b> \u2014 ' + esc(r.title || r.product) + (r.onRequest ? ' <span class="pill low" title="Not in stock when he asked">on request</span>' : '') + '<br><span class="why">' + fmt(r.qty_ok != null ? r.qty_ok : r.qty) + ' \u00d7 ' + esc((r.sku ? r.sku + ' ' : '') + r.product) + (r.note ? ' \u00b7 ' + esc(r.note) : '') + ' \u00b7 ' + esc(new Date(r.requested_at).toLocaleString()) + (r.owner_note ? '<br>You: ' + esc(r.owner_note) : '') + (r.go ? '<br>Link <a href="' + esc(r.go) + '" target="_blank" rel="noopener">' + esc(r.go.replace(/^https?:\/\//, '')) + '</a> · <b>' + fmt(r.clicks) + '</b> clicks · <a href="#" data-crlinkto="' + r.id + '" data-cur="' + esc(r.link_to || '') + '">' + (r.link_to ? 'goes to your link' : 'goes to the product') + ' ✎</a>' : '') + '</span></div><div class="n">';
   if (kind === 'waiting') h += '<input class="i" id="crq_' + r.id + '" inputmode="numeric" value="' + fmt(r.qty) + '" style="width:60px;display:inline-block" title="Rolls to approve"> <input class="i" id="crn_' + r.id + '" placeholder="Note to the creator" style="width:160px;display:inline-block"> <button class="btn small primary" type="button" data-crdec="approve:' + r.id + '">Approve</button> <button class="btn small" type="button" data-crdec="decline:' + r.id + '">Decline</button>';
-  else if (kind === 'approved') h += '<button class="btn small primary" type="button" data-crdec="given:' + r.id + '">Handed over</button> <button class="btn small" type="button" data-crdec="decline:' + r.id + '">Decline</button>';
+  else if (kind === 'approved') {
+    var g = CR.giving && CR.giving.id === r.id ? CR.giving : null;
+    if (!g) h += '<button class="btn small primary" type="button" data-crgiving="' + r.id + '">Handed over\u2026</button> <button class="btn small" type="button" data-crdec="decline:' + r.id + '">Decline</button>';
+    else if (g.loading) h += '<span class="sku">Checking stock\u2026</span>';
+    else {
+      var need = r.qty_ok != null ? r.qty_ok : r.qty;
+      h += '<span class="sku" style="display:block;margin-bottom:4px">Take ' + fmt(need) + ' roll(s) from:</span>' +
+        (g.own != null ? '<button class="btn small' + (g.own >= need ? ' primary' : '') + '" type="button" data-crgive="own:' + r.id + '"' + (g.own >= need ? '' : ' disabled') + '>My stock (' + fmt(g.own) + ')</button> ' : '') +
+        (g.pools || []).map(function (p) { return '<button class="btn small' + (p.stock >= need ? ' primary' : '') + '" type="button" data-crgive="pool:' + esc(p.id) + ':' + r.id + '"' + (p.stock >= need ? '' : ' disabled') + '>' + esc(p.name) + ' (' + fmt(p.stock) + ')</button> '; }).join('') +
+        '<button class="btn small" type="button" data-crgive="none:' + r.id + '" title="The brand sent it straight to him - nothing to replace">Not from our stock</button> <button class="btn small" type="button" data-crgiving="0">Cancel</button>';
+    }
+  }
   else h += '<span class="pill low">Waiting for the link</span>';
   return h + '</div></div>';
 }
@@ -22625,6 +22636,22 @@ document.addEventListener('change', function (ev) {
   CR.pvId = +t.value; CR.pv = null; repaint();
 });
 /** Creators > Products creators can request: only the programme brand; his stock of it + the brand's range. */
+/** Creators > Rolls the brand owes back: quantities only - handed over from a stock, replaced in a later shipment. */
+function crClaimsHtml() {
+  var open = CR.show === 'claims';
+  if (!CR.claims) { CR.claims = { loading: true }; srv('erpCreatorClaims', [], function (r) { CR.claims = r; if (VIEW === 'campaigns') repaint(); }, function () { CR.claims = { lines: [], bySku: [], open: 0, given: 0, replaced: 0 }; }); }
+  var c = CR.claims;
+  var h = '<div class="cr-invite" style="margin-top:10px"><div class="row" style="justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px"><b>Rolls the brand owes back' + (c.loading ? '' : ' \u00b7 ' + fmt(c.open) + ' open') + '</b><button class="btn small" type="button" id="cr_claims">' + (open ? 'Close' : 'Show') + '</button></div>';
+  if (!open) return h + '<div class="sub" style="display:block;margin:2px 0 0">Rolls handed over from your stock or a joint stock. No money - the brand replaces them in a later shipment; then they go back into the same stock.</div></div>';
+  if (c.loading) return h + '<div class="loading">Loading\u2026</div></div>';
+  h += '<div class="sub" style="display:block;margin:2px 0 8px">Given ' + fmt(c.given) + ' \u00b7 replaced ' + fmt(c.replaced) + ' \u00b7 <b>still owed ' + fmt(c.open) + '</b>. The brand sees the same list on its page.</div>';
+  if (c.bySku.length) h += '<table class="list cr"><thead><tr><th>Product</th><th class="num">Given</th><th class="num">Replaced</th><th class="num">Owed</th></tr></thead><tbody>' + c.bySku.map(function (x) { return '<tr><td>' + esc((x.sku ? x.sku + ' ' : '') + x.product) + '</td><td class="num">' + fmt(x.given) + '</td><td class="num">' + fmt(x.replaced) + '</td><td class="num"><b>' + fmt(x.open) + '</b></td></tr>'; }).join('') + '</tbody></table>';
+  if (c.lines.length) h += '<h3 style="margin:12px 0 4px;font-size:13px">Every handover</h3><table class="list cr"><thead><tr><th>Date</th><th>Creator</th><th>Product</th><th>From</th><th class="num">Rolls</th><th class="num">Owed</th><th></th></tr></thead><tbody>' + c.lines.map(function (l) {
+    return '<tr><td>' + esc(l.date) + '</td><td>' + esc(l.creator) + (l.project ? '<br><span class="sku">' + esc(l.project) + '</span>' : '') + '</td><td>' + esc((l.sku ? l.sku + ' ' : '') + l.product) + '</td><td>' + esc(l.from) + '</td><td class="num">' + fmt(l.qty) + '</td><td class="num">' + (l.open ? '<b>' + fmt(l.open) + '</b>' : '<span class="pill ok">replaced</span>') + (l.replaced_note ? '<br><span class="sku">' + esc(l.replaced_note) + '</span>' : '') + '</td><td>' + (l.open ? '<button class="btn small" type="button" data-crrepl="' + l.id + '" data-open="' + l.open + '">Replaced\u2026</button>' : '') + '</td></tr>';
+  }).join('') + '</tbody></table>';
+  else h += '<div class="empty" style="padding:8px 0">Nothing handed over from a stock yet.</div>';
+  return h + '</div>';
+}
 function crCatHtml() {
   var open = CR.show === 'cat';
   var h = '<div class="cr-invite" style="margin-top:10px"><div class="row" style="justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px"><b>Products creators can request</b><button class="btn small" type="button" id="cr_cat">' + (open ? 'Close' : 'Show the list') + '</button></div>';
@@ -22668,6 +22695,7 @@ function crHtml() {
        '<div class="ap-row" style="margin-top:0"><input class="i" id="cr_newmail" type="email" inputmode="email" placeholder="his e-mail, e.g. name@gmail.com" style="max-width:300px"><button class="btn small primary" type="button" id="cr_newlink">Copy sign-in link</button><button class="btn small" type="button" id="cr_newsend">E-mail it to him</button></div>' +
        (CR.invite ? '<div class="ap-share" style="margin-top:8px"><div><div class="ap-url">' + esc(CR.invite.link) + '</div><div class="ap-row" style="margin-top:6px"><button class="btn small" type="button" data-apcopy="' + esc(CR.invite.link) + '">Copy again</button><span class="sub" style="margin:0">For ' + esc(CR.invite.email) + ' \u00b7 send on WhatsApp \u00b7 no expiry; spent when he sets his password</span></div></div></div>' : '') + '</div>';
   h += crCatHtml();
+  h += crClaimsHtml();
   h += '<div class="ap-row"><button class="btn small" type="button" id="cr_report">' + (CR.show === 'report' ? 'Hide the report' : 'Report for the brand') + '</button><button class="btn small primary" type="button" id="cr_prog">' + (CR.show === 'prog' ? 'Hide the join link' : 'Join link for creators') + '</button><button class="btn small" type="button" id="cr_sponsor">' + (CR.show === 'sponsor' ? 'Hide the brand link' : 'Brand\u2019s live link') + '</button><button class="btn small" type="button" id="cr_yt">' + (CR.show === 'yt' ? 'Close' : 'YouTube key') + '</button><button class="btn small" type="button" id="cr_fetch">Fetch YouTube numbers now</button></div>';
   if (CR.show === 'prog') h += crProgHtml();
   if (CR.show === 'sponsor') { var brands = []; d.creators.forEach(function (c) { if (c.brand && brands.indexOf(c.brand) < 0) brands.push(c.brand); }); if (!brands.length) h += '<div class="empty" style="padding:10px 0">Give a creator a brand first (e.g. Polymaker).</div>'; brands.forEach(function (b) { crLinkLoad('sponsor', b); h += '<h3 style="margin:10px 0 0;font-size:14px">' + esc(b) + '</h3>' + crLinkHtml('sponsor', b); }); }
@@ -22675,7 +22703,7 @@ function crHtml() {
   if (CR.show === 'report') h += '<textarea class="i cr-ta" id="cr_reporttext">' + esc(d.report) + '</textarea><div class="ap-row"><button class="btn small" type="button" id="cr_copy" data-crcopy="cr_reporttext">Copy</button><span class="sub" style="margin:0">Paste into the e-mail to the brand. Edit first if you like.</span></div>';
   if (!d.creators.length) h += '<div class="empty" style="padding:14px 0">No creators yet. Add the first one; its terms become the brief you send them.</div>';
   else {
-    h += '<div class="sub" style="display:block;margin-top:10px">' + esc(d.monthName) + ': ' + fmt(tot.rolls) + ' rolls (\u09f3' + fmt(tot.value) + '), ' + fmt(tot.views) + ' views, ' + fmt(tot.leads) + ' enquiries, ' + fmt(tot.orders) + ' orders (\u09f3' + fmt(tot.revenue) + ').</div><div class="cr-grid">';
+    h += '<div class="sub" style="display:block;margin-top:10px">' + esc(d.monthName) + ': ' + fmt(tot.rolls) + ' rolls, ' + fmt(tot.views) + ' views, ' + fmt(tot.leads) + ' enquiries, ' + fmt(tot.orders) + ' orders (\u09f3' + fmt(tot.revenue) + ').</div><div class="cr-grid">';
     h += d.creators.map(function (c) {
       return '<div class="cr-card" data-cropen="' + c.id + '"><h3>' + esc(c.name) + (c.status === 'applied' ? ' <span class="pill crit" style="background:var(--critical);color:#fff">Applied \u2014 review</span>' : c.status !== 'active' ? ' <span class="pill low">' + esc(c.status) + '</span>' : '') + '</h3><div class="m">' + esc([c.handle, c.platforms, c.followers].filter(Boolean).join(' \u00b7 ')) + '</div>' +
         '<div class="cr-nums"><div><b>' + fmt(c.month.rolls) + '</b>rolls</div><div><b>' + fmt(c.month.videos) + '+' + fmt(c.month.posts) + '</b>videos+posts</div><div><b>' + fmt(c.month.views) + '</b>views</div><div><b>' + c.month.rate + '%</b>engagement</div><div><b>' + fmt(c.month.leads) + '</b>enquiries</div><div><b>' + fmt(c.month.orders) + '</b>orders' + (c.code ? ' (' + esc(c.code) + ')' : '') + '</div></div>' +
@@ -22729,9 +22757,17 @@ function crOneHtml(c) {
 }
 document.addEventListener('click', function (ev) {
   if (VIEW !== 'campaigns' || CP.tab !== 'creators') return;
-  var t = ev.target && ev.target.closest ? ev.target.closest('[data-crmon],[data-cropen],[data-crform],[data-crrm],[data-credit],[data-crcopy],[data-crdec],#cr_new,#cr_report,#cr_edit,#cr_brief,#cr_back,#cr_save,#cr_cancel,#cs_save,#cp2_save,#cj_save,#cr_sponsor,#cr_yt,#cr_ytsave,#cr_fetch,#cr_link,#cr_act,#cr_prog,#cr_invite,#cr_signlink,#cr_newlink,#cr_newsend,[data-crapp],[data-crlinkto],#cr_cat,#cr_catsave,[data-crcat],[data-crcatrm]') : null; if (!t) return;
+  var t = ev.target && ev.target.closest ? ev.target.closest('[data-crmon],[data-cropen],[data-crform],[data-crrm],[data-credit],[data-crcopy],[data-crdec],#cr_new,#cr_report,#cr_edit,#cr_brief,#cr_back,#cr_save,#cr_cancel,#cs_save,#cp2_save,#cj_save,#cr_sponsor,#cr_yt,#cr_ytsave,#cr_fetch,#cr_link,#cr_act,#cr_prog,#cr_invite,#cr_signlink,#cr_newlink,#cr_newsend,[data-crapp],[data-crlinkto],#cr_cat,#cr_catsave,[data-crcat],[data-crcatrm],#cr_claims,[data-crrepl],[data-crgiving],[data-crgive]') : null; if (!t) return;
   c = CR.data && CR.open ? CR.data.creators.filter(function (x) { return x.id === CR.open; })[0] : null;   // the open creator, before any button below needs him
   if (t.id === 'cr_prog') { CR.show = CR.show === 'prog' ? '' : 'prog'; repaint(); return; }
+  if (t.id === 'cr_claims') { CR.show = CR.show === 'claims' ? '' : 'claims'; CR.claims = null; repaint(); return; }
+  if (t.getAttribute('data-crrepl')) {
+    var op = +t.getAttribute('data-open'), qs = prompt('How many of these rolls came in the brand\u2019s shipment? (up to ' + op + ')', String(op)); if (qs === null) return;
+    var rq = num(qs); if (!(rq > 0)) { toast('A number above 0.', true); return; }
+    var sh = prompt('Which shipment? (invoice / date - optional)', ''); if (sh === null) return;
+    srv('erpCreatorReplace', [{ id: +t.getAttribute('data-crrepl'), qty: rq, note: sh }], function (r) { CR.claims = r; repaint(); toast(fmt(rq) + ' roll(s) back in stock.'); }, function (e) { toast(esc((e && e.message) || e), true, 9000); });
+    return;
+  }
   if (t.id === 'cr_cat') { CR.show = CR.show === 'cat' ? '' : 'cat'; CR.cat = null; repaint(); return; }
   if (t.getAttribute('data-crcat')) {
     var ref = t.getAttribute('data-crcat'), body = { hidden: t.getAttribute('data-hide') === '1', name: t.getAttribute('data-name') };
@@ -22778,6 +22814,16 @@ document.addEventListener('click', function (ev) {
       try { navigator.clipboard.writeText(r.link).then(function () { toast('Link copied. Send it to him on WhatsApp.'); }, function () { toast('Link ready below. Copy it.'); }); } catch (e) { toast('Link ready below. Copy it.'); }
     }, function (e) { t.disabled = false; toast(esc((e && e.message) || e), true, 9000); });
     return;
+  }
+  if (t.getAttribute('data-crgiving') !== null && t.getAttribute('data-crgiving') !== undefined && t.hasAttribute('data-crgiving')) {
+    var gid = +t.getAttribute('data-crgiving'); if (!gid) { CR.giving = null; repaint(); return; }
+    CR.giving = { id: gid, loading: true }; repaint();
+    srv('erpCreatorSources', [{ id: gid }], function (r) { CR.giving = { id: gid, own: r.own, pools: r.pools }; repaint(); }, function (e) { CR.giving = null; repaint(); toast(esc((e && e.message) || e), true, 9000); });
+    return;
+  }
+  if (t.getAttribute('data-crgive')) {
+    var gv = t.getAttribute('data-crgive').split(':'), gr = +gv[gv.length - 1], srcv = gv[0] === 'pool' ? 'pool:' + gv[1] : gv[0];
+    crDecide(gr, 'given', 0, '', srcv); return;
   }
   if (t.getAttribute('data-crdec')) { var dk = t.getAttribute('data-crdec').split(':'), rid = +dk[1]; var qn = el('crq_' + rid), nn = el('crn_' + rid); if (dk[0] === 'decline' && !confirm('Decline this request?')) return; crDecide(rid, dk[0], qn ? num(qn.value) : 0, nn ? nn.value : ''); return; }
   if (t.id === 'cr_sponsor') { CR.show = CR.show === 'sponsor' ? '' : 'sponsor'; repaint(); return; }

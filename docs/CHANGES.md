@@ -1471,3 +1471,22 @@ Creators > **Products creators can request**: the list with stock, Hide / Show p
 products ("SKU, name" per line). Loaded live: the 82 Polymaker products of the owner's proforma (Panchroma PLA, Matte,
 Marble ... with SKUs). Checked live: each of the three creators sees 82 Polymaker products and no other brand.
 creatorportal_test 97.
+
+## Rolls the brand owes back - quantities only (tag claims-1, 9 Oct 2026)
+
+Owner: the brand does not pay for sponsorship filament - it replaces the rolls in a later shipment. No prices: the
+quantity leaves the stock it came from and is out of every money calculation; both the brand and the ERP see what was
+taken. Sponsorship rolls may also come from a joint stock.
+- **Handed over…** on an approved request now asks where the rolls come from: **My stock (n)**, each **joint stock**
+  that holds the SKU (n on the shelf), or **Not from our stock** (the brand sent them straight - nothing owed).
+  `erpCreatorSources`; `erpCreatorDecide` given + `source`. My stock: `ADJUST OUT` with unit 0 / total 0 (like a stock
+  count - no report values it). Joint: `joint.js poolSponsorMove` - the same zero-value move inside the pool, on this
+  company's shelf (`held_by`); the pool settlement is cash-based and never values stock moves, so no gain or loss.
+- **Rolls the brand owes back** (Creators): owed per product (given / replaced / owed) and every handover (date,
+  creator, project, product, from where, rolls, owed). **Replaced…** books a shipment's rolls (how many, which
+  shipment): `RETURN IN` zero-value back into the same stock or pool (`erpCreatorReplace`). Migration 106 (`source`,
+  `source_name`, `replaced`, `replaced_at`, `replaced_note` on erp_creator_ships).
+- The brand's page shows the same list: "Rolls to replace in the next shipment" (given, replaced, still to replace,
+  every handover). Filament prices removed from the brand's page and the owner's creator summary (rolls only); sales
+  by creator code keep their amounts. `creatorclaims_test.mjs` (22: own stock, joint pool, refusals, list, brand page,
+  part / full replacement, zero values, "not from our stock").

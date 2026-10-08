@@ -248,11 +248,29 @@ export async function erpCreatorDecide(ctx, payload) {
   } else if (action === 'given') {
     if (r.status !== 'approved' && r.status !== 'requested') throw new Error('Approve it first, or it was already given.');
     const q = num(p.qty) > 0 ? num(p.qty) : (r.qty_ok != null ? num(r.qty_ok) : num(r.qty));
+    // where the rolls come from: the shop's own stock, a joint pool, or nowhere (the brand sent them straight)
+    const src = str(p.source) || 'own', snote = 'Sponsorship: ' + str(r.product) + (str(r.title) ? ' - ' + str(r.title) : '');
+    let source = 'none', sourceName = 'Not from our stock';
+    if (src === 'own') {
+      const pr = (await ctx.tx`select p.id, p.name, coalesce(ps.stock, 0) as stock from products p left join product_stock ps on ps.product_id = p.id where p.business_id = ${ctx.biz} and lower(btrim(p.sku)) = ${str(r.sku).toLowerCase()} limit 1`)[0];
+      if (!pr) throw new Error('This product is not in your stock. Choose a joint stock, or "Not from our stock".');
+      if (q > num(pr.stock)) throw new Error('Only ' + num(pr.stock) + ' of ' + str(pr.name) + ' in your stock.');
+      const at = new Date(), no = 'TXN-' + formatDate(at, 'yyyyMMdd') + '-' + (Math.floor(Math.random() * 9000) + 1000);
+      await ctx.tx`insert into stock_movements (business_id, product_id, kind, direction, qty, unit_price, total, reference, supplier, note, created_by, created_at, txn_no, operator, product_name)
+                   values (${ctx.biz}, ${pr.id}, 'ADJUST', 'OUT', ${q}, 0, 0, ${snote.slice(0, 200)}, '', 'Sponsorship rolls - the brand replaces them; no money', ${ctx.s.userId}, ${at}, ${no}, ${str(ctx.s.name) || 'Owner'}, ${str(pr.name)})`;
+      source = 'own'; sourceName = 'My stock';
+    } else if (src.startsWith('pool:')) {
+      const J = await import('./joint.js');
+      const m = await J.poolSponsorMove(ctx, { pool: src.slice(5), sku: r.sku, qty: q, dir: 'OUT', note: snote });
+      source = src; sourceName = m.pool;
+    }
+    try { const T = await import('../lib/tabs.js'); T.forget(ctx, 'TXN_LOG'); } catch (_) { /* no cached log */ }
+    delete ctx.memo.catalog;
     let value = num(p.value), sku = str(r.sku);
     if (!(value > 0) && sku) { const pr = (await ctx.tx`select sell_price from products where business_id = ${ctx.biz} and lower(sku) = ${sku.toLowerCase()}`)[0]; if (pr) value = num(pr.sell_price) * q; }
     await ctx.tx`update erp_creator_requests set status = 'given', qty_ok = ${q}, value = ${value}, owner_note = coalesce(${note}, owner_note), decided_at = coalesce(decided_at, ${ctx.now}), given_at = ${ctx.now}, updated_at = ${ctx.now} where id = ${id}`;
-    await ctx.tx`insert into erp_creator_ships ${ctx.tx({ business_id: ctx.biz, creator_id: r.creator_id, request_id: id, on_date: formatDate(ctx.now, 'yyyy-MM-dd'), sku: sku || null, product: str(r.product), qty: q, value, note: str(r.title) ? 'Project: ' + str(r.title) : null })}`;
-    await ev(ctx, { creator_id: r.creator_id, request_id: id, who: 'owner', what: 'given', detail: q + ' x ' + r.product + ' (৳' + Math.round(value) + ')' });
+    await ctx.tx`insert into erp_creator_ships ${ctx.tx({ business_id: ctx.biz, creator_id: r.creator_id, request_id: id, on_date: formatDate(ctx.now, 'yyyy-MM-dd'), sku: sku || null, product: str(r.product), qty: q, value, source, source_name: sourceName, note: str(r.title) ? 'Project: ' + str(r.title) : null })}`;
+    await ev(ctx, { creator_id: r.creator_id, request_id: id, who: 'owner', what: 'given', detail: q + ' x ' + r.product + ' from ' + sourceName });
   } else throw new Error('Approve, decline or given?');
   return erpCreatorRequests(ctx);
 }
@@ -441,7 +459,7 @@ async function sponsorPage(ctx, l) {
       totals: { clicks: myReqs.reduce((a, r) => a + num(r.clicks), 0), rolls: sum(myShips, 'qty'), value: Math.round(value), posts: myPosts.length, views, engagement: views > 0 ? Math.round((sum(myPosts, 'likes') + sum(myPosts, 'comments') + sum(myPosts, 'shares')) / views * 1000) / 10 : 0, leads: sum(myPosts, 'leads'), orders: series.reduce((a, s) => a + s.orders, 0), revenue: series.reduce((a, s) => a + s.revenue, 0), cpm: views > 0 ? Math.round(value / views * 1000) : 0, verified: myPosts.filter((p) => p.verified).length },
       series, projects: myReqs.map((r) => ({ ...r, posts: myPosts.filter((p) => p.request_id === r.id) })), ships: myShips.map((s) => ({ id: Number(s.id), date: day(s.on_date), sku: str(s.sku), product: str(s.product), qty: num(s.qty), value: num(s.value), request_id: s.request_id ? Number(s.request_id) : 0, at: when(s.created_at) })), loose: myPosts.filter((p) => !p.request_id) };
   });
-  return { shop: await shopInfo(ctx), brand: creators.length ? str(creators[0].brand) : brand, creators: out, months, teams: projects.map((p) => ({ team: str(p.team), project: str(p.project), competition: str(p.competition), material: str(p.material), qty: str(p.qty), status: str(p.status), creator: (creators.find((c) => Number(c.id) === Number(p.creator_id)) || {}).name || '' })), generated: when(ctx.now) };
+  return { claims: ids.length ? await claimRows(ctx, ids) : { lines: [], bySku: [], open: 0, given: 0, replaced: 0 }, shop: await shopInfo(ctx), brand: creators.length ? str(creators[0].brand) : brand, creators: out, months, teams: projects.map((p) => ({ team: str(p.team), project: str(p.project), competition: str(p.competition), material: str(p.material), qty: str(p.qty), status: str(p.status), creator: (creators.find((c) => Number(c.id) === Number(p.creator_id)) || {}).name || '' })), generated: when(ctx.now) };
 }
 /** Public: the programme's front page (logos, intro) for a join link. */
 async function programmePage(ctx) {
@@ -655,4 +673,54 @@ export async function erpCreatorCatalogRemove(ctx, payload) {
   await ctx.tx`delete from erp_creator_catalog where business_id = ${ctx.biz} and id = ${num((payload || {}).id)}`;
   return erpCreatorCatalog(ctx);
 }
-export const HANDLERS = { erpCreatorCatalog, erpCreatorCatalogSet, erpCreatorCatalogAdd, erpCreatorCatalogRemove, erpCreatorLinkTo, erpCreatorApprove, erpCreatorPreview, erpCreatorPortalLink, erpSponsorLink, erpCreatorRequests, erpCreatorDecide, erpCreatorEvents, erpYoutubeKey, erpCreatorRefresh, erpCreatorProgramme, erpCreatorInvite };
+// ---------------------------------------------------------------- what the brand owes back (quantities only)
+/** Where a request's rolls can come from: own stock and the joint pools that hold the SKU. */
+export async function erpCreatorSources(ctx, payload) {
+  needOwner(ctx);
+  const r = (await ctx.tx`select sku from erp_creator_requests where business_id = ${ctx.biz} and id = ${num((payload || {}).id)}`)[0];
+  if (!r) throw new Error('No such request.');
+  const sku = str(r.sku);
+  const own = sku ? (await ctx.tx`select coalesce(ps.stock, 0) as stock from products p left join product_stock ps on ps.product_id = p.id where p.business_id = ${ctx.biz} and lower(btrim(p.sku)) = ${sku.toLowerCase()} limit 1`)[0] : null;
+  let pools = [];
+  if (sku) { try { pools = await (await import('./joint.js')).poolsWithSku(ctx, sku); } catch (_) { pools = []; } }
+  return { own: own ? num(own.stock) : null, pools };
+}
+const claimRow = (x) => ({ id: Number(x.id), creator_id: Number(x.creator_id), creator: str(x.creator), date: day(x.on_date), sku: str(x.sku), product: str(x.product), qty: num(x.qty), replaced: num(x.replaced), open: Math.max(0, num(x.qty) - num(x.replaced)),
+                           source: str(x.source), from: str(x.source_name), replaced_at: when(x.replaced_at), replaced_note: str(x.replaced_note), project: str(x.title) });
+async function claimRows(ctx, creatorIds) {
+  const rows = creatorIds
+    ? await ctx.tx`select s.*, c.name as creator, r.title from erp_creator_ships s join erp_creators c on c.id = s.creator_id left join erp_creator_requests r on r.id = s.request_id where s.business_id = ${ctx.biz} and s.creator_id = any(${creatorIds}) and coalesce(s.source, 'none') <> 'none' order by s.on_date desc, s.id desc`
+    : await ctx.tx`select s.*, c.name as creator, r.title from erp_creator_ships s join erp_creators c on c.id = s.creator_id left join erp_creator_requests r on r.id = s.request_id where s.business_id = ${ctx.biz} and coalesce(s.source, 'none') <> 'none' order by s.on_date desc, s.id desc`;
+  const lines = rows.map(claimRow);
+  const bySku = {};
+  for (const l of lines) { const k = l.sku || l.product; const t = bySku[k] = bySku[k] || { sku: l.sku, product: l.product, given: 0, replaced: 0, open: 0 }; t.given += l.qty; t.replaced += l.replaced; t.open += l.open; }
+  return { lines, bySku: Object.values(bySku).sort((a, b) => b.open - a.open || a.product.localeCompare(b.product)), open: lines.reduce((a, l) => a + l.open, 0), given: lines.reduce((a, l) => a + l.qty, 0), replaced: lines.reduce((a, l) => a + l.replaced, 0) };
+}
+/** Owner: what the brand owes back - every roll handed over from a stock, and what has been replaced. */
+export async function erpCreatorClaims(ctx) { needOwner(ctx); return claimRows(ctx, null); }
+/** Owner: the brand's shipment replaced rolls - they go back into the stock they came from (no money). */
+export async function erpCreatorReplace(ctx, payload) {
+  needOwner(ctx);
+  const p = payload || {}, id = num(p.id), note = str(p.note).slice(0, 200);
+  const x = (await ctx.tx`select * from erp_creator_ships where business_id = ${ctx.biz} and id = ${id}`)[0];
+  if (!x || !x.source || x.source === 'none') throw new Error('No such roll line.');
+  const open = num(x.qty) - num(x.replaced), q = num(p.qty) > 0 ? num(p.qty) : open;
+  if (!(open > 0)) throw new Error('Already fully replaced.');
+  if (q > open) throw new Error('Only ' + open + ' still open on this line.');
+  const ref = 'Sponsorship replaced' + (note ? ': ' + note : '') + ' - ' + str(x.product);
+  if (x.source === 'own') {
+    const pr = (await ctx.tx`select id, name from products where business_id = ${ctx.biz} and lower(btrim(sku)) = ${str(x.sku).toLowerCase()} limit 1`)[0];
+    if (!pr) throw new Error('The product is no longer in your products.');
+    const at = new Date(), no = 'TXN-' + formatDate(at, 'yyyyMMdd') + '-' + (Math.floor(Math.random() * 9000) + 1000);
+    await ctx.tx`insert into stock_movements (business_id, product_id, kind, direction, qty, unit_price, total, reference, supplier, note, created_by, created_at, txn_no, operator, product_name)
+                 values (${ctx.biz}, ${pr.id}, 'RETURN', 'IN', ${q}, 0, 0, ${ref.slice(0, 200)}, '', 'Replaced by the brand; no money', ${ctx.s.userId}, ${at}, ${no}, ${str(ctx.s.name) || 'Owner'}, ${str(pr.name)})`;
+  } else if (str(x.source).startsWith('pool:')) {
+    await (await import('./joint.js')).poolSponsorMove(ctx, { pool: str(x.source).slice(5), sku: x.sku, qty: q, dir: 'IN', note: ref });
+  }
+  try { const T = await import('../lib/tabs.js'); T.forget(ctx, 'TXN_LOG'); } catch (_) { /* no cached log */ }
+  delete ctx.memo.catalog;
+  await ctx.tx`update erp_creator_ships set replaced = replaced + ${q}, replaced_at = ${ctx.now}, replaced_note = ${note || null} where id = ${id}`;
+  await ev(ctx, { creator_id: x.creator_id, request_id: x.request_id, who: 'owner', what: 'replaced', detail: q + ' x ' + str(x.product) + ' back into ' + str(x.source_name) + (note ? ' (' + note + ')' : '') });
+  return claimRows(ctx, null);
+}
+export const HANDLERS = { erpCreatorSources, erpCreatorClaims, erpCreatorReplace, erpCreatorCatalog, erpCreatorCatalogSet, erpCreatorCatalogAdd, erpCreatorCatalogRemove, erpCreatorLinkTo, erpCreatorApprove, erpCreatorPreview, erpCreatorPortalLink, erpSponsorLink, erpCreatorRequests, erpCreatorDecide, erpCreatorEvents, erpYoutubeKey, erpCreatorRefresh, erpCreatorProgramme, erpCreatorInvite };
