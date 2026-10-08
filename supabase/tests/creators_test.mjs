@@ -64,4 +64,12 @@ check('paused: no longer counted as behind', r.ok && r.result.creators.find((c) 
 r = await owner('erpApps', []);
 const app = r.result.apps.find((a) => a.key === 'creators');
 check('the Creators app exists, labs, off for everyone', app && app.labs && app.on === false, app);
+
+// a new creator added with his e-mail: the answer says which one was made, the e-mail is kept for his login
+r = await owner('erpCreatorSave', [{ name: 'Mr. Rana', email: 'Rana@Example.com', brand: 'Polymaker', videos_month: 2, posts_month: 2, rolls_video: 2, whatsapp: '01700000000' }]);
+check('added with the e-mail; the new id comes back', r.ok && r.result.created > 0 && r.result.creators.find((c) => c.id === r.result.created).email === 'rana@example.com', r);
+r = await owner('erpCreatorSave', [{ name: 'Copy', email: 'rana@example.com', brand: 'Polymaker' }]);
+check('the same e-mail twice is refused', !r.ok, r);
+r = await owner('erpCreatorSave', [{ name: 'Bad', email: 'not-an-email', brand: 'Polymaker' }]);
+check('a bad e-mail is refused', !r.ok, r);
 await done();

@@ -1376,3 +1376,13 @@ said "Off for everyone" although he uses it. The tabs were inserted before the p
 " on" while Contacts is open - now matched either way (checked on all six tabs). An "Only me" app seen by the
 provider now says **On for you · off for everyone else**, the switch reads **On for everyone / Only me**, and its
 Apps tile has no red dot. Page only.
+
+## Add a creator with his e-mail; sign-in link buttons fixed (tag signlink-2, 8 Oct 2026)
+
+Owner (screenshot of the New creator form): could not find the sign-in link. Two causes. (1) A bug: the
+**Copy sign-in link** and **E-mail it to him** clicks used the open creator before it was looked up, so both did
+nothing (live since signlink-1 / accounts-1). Fixed. (2) The link sat below the profile table. Now: the New creator
+form asks for **his e-mail** (and WhatsApp) instead of channel / platforms / followers / filament (those are his own
+profile, filled after he signs in); **Add creator** opens his screen straight away with a **His login** box at the
+top - e-mail pre-filled, **Copy sign-in link**, **E-mail it to him**. `erpCreatorSave` keeps the e-mail of a new
+creator (format and uniqueness checked) and returns `created`. Checked on screen locally end to end. creators_test 25.

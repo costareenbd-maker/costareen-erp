@@ -22595,11 +22595,17 @@ function crMonthBar() {
   return '<span class="row" style="gap:6px;align-items:center"><button class="btn small" type="button" data-crmon="-1">\u2039</button><b>' + esc(d ? d.monthName : m) + '</b><button class="btn small" type="button" data-crmon="1">\u203a</button></span>';
 }
 function crCreatorForm(c) {
-  c = c || { status: 'active', videos_month: 2, posts_month: 2, rolls_video: 2, brand: 'Polymaker' };
-  return '<div class="jt-form">' + crField('cr_name', 'Name', c.name) + crField('cr_handle', 'Channel / page / group', c.handle) + crField('cr_platforms', 'Platforms', c.platforms, ' placeholder="YouTube, Facebook"') + crField('cr_followers', 'Followers', c.followers, ' placeholder="12k group, 3k YouTube"') +
-    crField('cr_brand', 'Brand (whose filament)', c.brand) + crField('cr_code', 'Their code (on invoices)', c.code, ' placeholder="SETU10" autocapitalize="characters"') + crField('cr_videos', 'Videos a month', c.videos_month, ' inputmode="numeric"') + crField('cr_posts', 'Posts a month', c.posts_month, ' inputmode="numeric"') + crField('cr_rolls', 'Rolls per video', c.rolls_video, ' inputmode="numeric"') +
-    crField('cr_filament', 'Filament', c.filament, ' placeholder="general, from stock"') + crField('cr_trial', 'Trial until', c.trial_until, ' type="date"') + crSel('cr_status', 'Status', c.status, [['applied', 'Applied (under review)'], ['active', 'Active'], ['paused', 'Paused'], ['stopped', 'Stopped']]) + crField('cr_open', 'Projects open without a link', c.open_limit || 1, ' inputmode="numeric"') +
-    crField('cr_notes', 'Notes (student teams, script rule...)', c.notes, '', true) + '</div><div class="ap-row"><button class="btn small primary" type="button" id="cr_save"' + (CR.busy ? ' disabled' : '') + '>' + (c.id ? 'Save' : 'Add creator') + '</button><button class="btn small" type="button" id="cr_cancel">Cancel</button></div>';
+  var isNew = !c;
+  c = c || { status: 'active', videos_month: 2, posts_month: 2, rolls_video: 2, brand: 'Polymaker', open_limit: 1 };
+  return '<div class="jt-form">' + crField('cr_name', 'Name', c.name) +
+    (isNew ? crField('cr_email', 'His e-mail (for his login)', '', ' type="email" inputmode="email" placeholder="name@gmail.com"') : '') +
+    crField('cr_whatsapp', 'WhatsApp', c.whatsapp, ' inputmode="tel"') +
+    crField('cr_brand', 'Brand (whose filament)', c.brand) + crField('cr_code', 'His code (on invoices)', c.code, ' placeholder="SETU10" autocapitalize="characters"') +
+    crField('cr_videos', 'Videos a month', c.videos_month, ' inputmode="numeric"') + crField('cr_posts', 'Posts a month', c.posts_month, ' inputmode="numeric"') + crField('cr_rolls', 'Rolls per video', c.rolls_video, ' inputmode="numeric"') +
+    crField('cr_trial', 'Trial until', c.trial_until, ' type="date"') + crSel('cr_status', 'Status', c.status, [['applied', 'Applied (under review)'], ['active', 'Active'], ['paused', 'Paused'], ['stopped', 'Stopped']]) + crField('cr_open', 'Projects open without a link', c.open_limit || 1, ' inputmode="numeric"') +
+    crField('cr_notes', 'Notes (student teams, script rule\u2026)', c.notes, '', true) + '</div>' +
+    (isNew ? '<div class="sub" style="display:block;margin-top:6px">His channels, followers and links he fills himself after he signs in. Next screen: <b>Copy sign-in link</b> to send him.</div>' : '') +
+    '<div class="ap-row"><button class="btn small primary" type="button" id="cr_save"' + (CR.busy ? ' disabled' : '') + '>' + (isNew ? 'Add creator' : 'Save') + '</button><button class="btn small" type="button" id="cr_cancel">Cancel</button></div>';
 }
 function crHtml() {
   var h = '<section><div class="card"><div class="row" style="justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px"><h2 style="margin:0">Creators</h2>' + crMonthBar() + '</div>' +
@@ -22632,10 +22638,11 @@ function crOneHtml(c) {
     '<div class="sub" style="display:block">' + esc([c.handle, c.platforms, c.followers, c.brand ? c.brand + ' filament' : '', c.code ? 'code ' + c.code : '', c.trial_until ? 'trial until ' + c.trial_until : ''].filter(Boolean).join(' \u00b7 ')) + ' \u00b7 agreed ' + fmt(c.videos_month) + ' videos + ' + fmt(c.posts_month) + ' posts a month, ' + fmt(c.rolls_video) + ' rolls per video' + (c.filament ? ' (' + esc(c.filament) + ')' : '') + '.</div>';
   if (CR.form === 'edit') return h + crCreatorForm(c) + '</div></section>';
   if (c.status === 'applied') h += '<div class="note" style="margin-top:8px"><div class="ico">!</div><div><b>Applied' + (c.applied_at ? ' ' + esc(new Date(c.applied_at).toLocaleString()) : '') + '</b>' + (c.profile_at ? ', profile filled ' + esc(new Date(c.profile_at).toLocaleString()) : ', profile not filled yet') + '. Read what he wrote below, then <b>Edit</b>: set the brand, the terms, the trial and switch him to <b>Active</b>.</div></div>';
-  h += '<div class="cr-sec"><h3>Profile</h3><table class="list cr"><tbody>' + [['E-mail', c.email], ['WhatsApp', c.whatsapp], ['Channels', c.handle], ['Followers', c.followers], ['Links', c.links], ['Makes', c.niche], ['City', c.city], ['Audience', c.about], ['Login', c.hasLogin ? 'yes' : 'none yet']].map(function (x) { return '<tr><td style="color:var(--muted);white-space:nowrap">' + x[0] + '</td><td style="white-space:pre-wrap">' + (x[1] ? esc(x[1]).replace(/(https?:\/\/\S+)/g, '<a href="$1" target="_blank" rel="noopener">$1</a>') : '<span class="sku">\u2014</span>') + '</td></tr>'; }).join('') + '</tbody></table>' +
+  h += '<div class="cr-sec"><h3>His login</h3>' +
        '<div class="ap-row"><input class="i" id="cr_invmail" placeholder="His e-mail" value="' + esc(c.email || '') + '" style="max-width:260px" inputmode="email"><button class="btn small primary" type="button" id="cr_signlink">Copy sign-in link</button><button class="btn small" type="button" id="cr_invite">E-mail it to him</button></div>' +
        '<div class="sub" style="display:block;margin-top:4px">' + (c.hasLogin ? 'He has a login. A new link lets him choose a new password.' : 'Send the link on WhatsApp: he opens it, chooses his password, and is in. Works once, for one hour - make a new one any time.') + '</div>' +
        (CR.signlink && CR.signlink.id === c.id ? '<div class="ap-share" style="margin-top:8px"><div><div class="ap-url">' + esc(CR.signlink.link) + '</div><div class="ap-row" style="margin-top:8px"><button class="btn small" type="button" data-apcopy="' + esc(CR.signlink.link) + '">Copy again</button><span class="sub" style="margin:0">For ' + esc(CR.signlink.email) + ' \u00b7 one use, one hour</span></div></div></div>' : '') + '</div>';
+  h += '<div class="cr-sec"><h3>Profile</h3><table class="list cr"><tbody>' + [['E-mail', c.email], ['WhatsApp', c.whatsapp], ['Channels', c.handle], ['Followers', c.followers], ['Links', c.links], ['Makes', c.niche], ['City', c.city], ['Audience', c.about], ['Login', c.hasLogin ? 'yes' : 'none yet']].map(function (x) { return '<tr><td style="color:var(--muted);white-space:nowrap">' + x[0] + '</td><td style="white-space:pre-wrap">' + (x[1] ? esc(x[1]).replace(/(https?:\/\/\S+)/g, '<a href="$1" target="_blank" rel="noopener">$1</a>') : '<span class="sku">\u2014</span>') + '</td></tr>'; }).join('') + '</tbody></table>' + '</div>';
   if (CR.show === 'link') { crLinkLoad('creator', c.id); h += crLinkHtml('creator', c.id); }
   if (CR.show === 'brief') h += '<textarea class="i cr-ta" id="cr_brieftext">' + esc(CR.data.briefs[c.id] || '') + '</textarea><div class="ap-row"><button class="btn small" type="button" data-crcopy="cr_brieftext">Copy</button><span class="sub" style="margin:0">Send it on WhatsApp and get their OK back.</span></div>';
   h += '<div class="cr-nums" style="max-width:560px"><div><b>' + fmt(c.month.rolls) + '</b>rolls this month (\u09f3' + fmt(c.month.value) + ')</div><div><b>' + fmt(c.total.rolls) + '</b>rolls in all (\u09f3' + fmt(c.total.value) + ')</div><div><b>' + fmt(c.month.views) + '</b>views this month</div><div><b>' + c.month.rate + '%</b>engagement</div><div><b>' + fmt(c.month.leads) + '</b>enquiries</div><div><b>' + fmt(c.month.orders) + '</b>orders (\u09f3' + fmt(c.month.revenue) + ')</div></div>' +
@@ -22672,6 +22679,7 @@ function crOneHtml(c) {
 document.addEventListener('click', function (ev) {
   if (VIEW !== 'campaigns' || CP.tab !== 'creators') return;
   var t = ev.target && ev.target.closest ? ev.target.closest('[data-crmon],[data-cropen],[data-crform],[data-crrm],[data-credit],[data-crcopy],[data-crdec],#cr_new,#cr_report,#cr_edit,#cr_brief,#cr_back,#cr_save,#cr_cancel,#cs_save,#cp2_save,#cj_save,#cr_sponsor,#cr_yt,#cr_ytsave,#cr_fetch,#cr_link,#cr_act,#cr_prog,#cr_invite,#cr_signlink') : null; if (!t) return;
+  c = CR.data && CR.open ? CR.data.creators.filter(function (x) { return x.id === CR.open; })[0] : null;   // the open creator, before any button below needs him
   if (t.id === 'cr_prog') { CR.show = CR.show === 'prog' ? '' : 'prog'; repaint(); return; }
   if (t.id === 'cr_progsave') { srv('erpCreatorProgramme', [{ brand: (el('cr_progbrand') || {}).value || '' }], function (r) { CR.prog = r; repaint(); toast('Saved.'); }, function (e) { toast(esc((e && e.message) || e), true); }); return; }
   if (t.id === 'cr_invite' && c) { var em = (el('cr_invmail') || {}).value || ''; if (!em) { toast('His e-mail first.', true); return; } crCall('erpCreatorInvite', { creator_id: c.id, email: em }, 'Sent. He chooses a password from the e-mail.'); return; }
@@ -22704,7 +22712,18 @@ document.addEventListener('click', function (ev) {
   if (t.getAttribute('data-crform')) { CR.form = t.getAttribute('data-crform'); repaint(); return; }
   if (t.getAttribute('data-credit')) { CR.form = { edit: +t.getAttribute('data-credit') }; repaint(); return; }
   if (t.getAttribute('data-crrm')) { var k = t.getAttribute('data-crrm').split(':'); if (!confirm('Remove this line?')) return; crCall('erpCreatorRemove', { kind: k[0], id: +k[1] }, 'Removed.'); return; }
-  if (t.id === 'cr_save') { crCall('erpCreatorSave', { id: CR.form === 'edit' && c ? c.id : 0, name: crV('cr_name'), handle: crV('cr_handle'), platforms: crV('cr_platforms'), followers: crV('cr_followers'), brand: crV('cr_brand'), code: crV('cr_code'), videos_month: num(crV('cr_videos')), posts_month: num(crV('cr_posts')), rolls_video: num(crV('cr_rolls')), filament: crV('cr_filament'), trial_until: crV('cr_trial'), status: crV('cr_status'), notes: crV('cr_notes'), open_limit: num(crV('cr_open')) }, 'Saved.'); return; }
+  if (t.id === 'cr_save') {
+    var isNew = !(CR.form === 'edit' && c);
+    var body = { id: isNew ? 0 : c.id, name: crV('cr_name'), whatsapp: crV('cr_whatsapp'), brand: crV('cr_brand'), code: crV('cr_code'), videos_month: num(crV('cr_videos')), posts_month: num(crV('cr_posts')), rolls_video: num(crV('cr_rolls')), trial_until: crV('cr_trial'), status: crV('cr_status'), notes: crV('cr_notes'), open_limit: num(crV('cr_open')), month: CR.month };
+    if (isNew) body.email = crV('cr_email');
+    if (CR.busy) return; CR.busy = true; repaint();
+    srv('erpCreatorSave', [body], function (r) {
+      CR.busy = false; CR.data = r; CR.form = null;
+      if (r.created) { CR.open = r.created; CR.show = ''; toast(body.email ? 'Added. Now press Copy sign-in link and send it to him.' : 'Added. Type his e-mail, then Copy sign-in link.'); } else toast('Saved.');
+      repaint(); window.scrollTo(0, 0);
+    }, function (e) { CR.busy = false; repaint(); toast(esc((e && e.message) || e), true, 9000); });
+    return;
+  }
   if (t.id === 'cs_save' && c) { crCall('erpCreatorShip', { creator_id: c.id, date: crV('cs_date'), sku: crV('cs_sku'), product: crV('cs_product'), qty: num(crV('cs_qty')), value: num(crV('cs_value')), note: crV('cs_note') }, 'Recorded.'); return; }
   if (t.id === 'cp2_save' && c) { var ed = +t.getAttribute('data-edit'); crCall('erpCreatorPost', { id: ed || 0, creator_id: c.id, date: crV('cp2_date'), platform: crV('cp2_platform'), kind: crV('cp2_kind'), product: crV('cp2_product'), url: crV('cp2_url'), views: num(crV('cp2_views')), likes: num(crV('cp2_likes')), comments: num(crV('cp2_comments')), shares: num(crV('cp2_shares')), leads: num(crV('cp2_leads')), note: crV('cp2_note') }, 'Recorded.'); return; }
   if (t.id === 'cj_save' && c) { crCall('erpCreatorProject', { creator_id: c.id, team: crV('cj_team'), project: crV('cj_project'), competition: crV('cj_competition'), material: crV('cj_material'), qty: crV('cj_qty'), note: crV('cj_note') }, 'Recorded.'); return; }

@@ -133,7 +133,15 @@ export async function erpCreatorSave(ctx, payload) {
     for (const k of Object.keys(keys)) if (p[k] !== undefined) upd[k] = row[k];
     await ctx.tx`update erp_creators set ${ctx.tx(upd)} where id = ${num(p.id)} and business_id = ${ctx.biz}`;
   }
-  else await ctx.tx`insert into erp_creators ${ctx.tx({ ...row, business_id: ctx.biz })}`;
+  else {
+    const email = str(p.email).toLowerCase();
+    if (email) {
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new Error('That is not an e-mail address.');
+      if ((await ctx.tx`select 1 from erp_creators where business_id = ${ctx.biz} and lower(email) = ${email}`)[0]) throw new Error('Another creator already uses that e-mail.');
+    }
+    const made = (await ctx.tx`insert into erp_creators ${ctx.tx({ ...row, email: email || null, business_id: ctx.biz })} returning id`)[0];
+    return { ...(await erpCreators(ctx, { month: p.month })), created: Number(made.id) };
+  }
   return erpCreators(ctx, { month: p.month });
 }
 
