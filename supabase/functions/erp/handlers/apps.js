@@ -65,6 +65,15 @@ async function offMap(deps, sql) {
     return off;
   } catch (_) { return off; }   // the table is not there yet
 }
+/** The provider's menu switches: menu screens (MENU) switched off for EVERY company - rows 'menu:<key>' enabled=false. */
+async function menuOffAll(deps, sql) {
+  const off = {};
+  try {
+    const rows = await ctl(deps, sql)`select key, enabled from erp_app_flags where key like 'menu:%'`;
+    for (const r of rows) { const k = str(r.key).slice(5); if (HIDEABLE(k) && !r.enabled) off[k] = true; }
+  } catch (_) { /* the table is not there yet */ }
+  return off;
+}
 const MODES = ['all', 'owner', 'off'];
 /** This company's menu: {key: 'all' | 'owner' | 'off'} for the screens in MENU (missing = 'all'). */
 function parseModes(raw, legacyHidden) {
@@ -79,7 +88,7 @@ async function menuModes(ctx) { return parseModes(await getConfig(ctx, 'apps_men
 
 /** What erpHello sends: the apps the provider switched off; this company's screens only owners see; the ones nobody here sees. */
 export async function appsState(deps, sql, biz, getCfg) {
-  const off = Object.keys(await offMap(deps, sql));
+  const off = Object.keys(await offMap(deps, sql)).concat(Object.keys(await menuOffAll(deps, sql)));   // a screen the provider took out is gone everywhere
   let modes = {};
   try { modes = parseModes(await getCfg('apps_menu'), await getCfg('apps_hidden')); } catch (_) { modes = {}; }
   return { off, hidden: Object.keys(modes).filter((k) => modes[k] === 'owner'), gone: Object.keys(modes).filter((k) => modes[k] === 'off') };
@@ -102,6 +111,7 @@ function pageUrl(deps, path) {
 
 export async function erpApps(ctx) {
   const off = await offMap(ctx.deps, ctx.sql);
+  const forced = await menuOffAll(ctx.deps, ctx.sql);
   const modes = await menuModes(ctx);
   const admin = await platformAdmin(ctx);
   const owner = ctx.s.role === 'owner';
@@ -118,7 +128,8 @@ export async function erpApps(ctx) {
       sameAs: a.sameAs || '',
     })),
     // Settings > Business > Menu: which menu screens this company shows
-    menu: MENU.map((m) => ({ key: m.key, name: m.name, mode: modes[m.key] || 'all', hidden: modes[m.key] === 'owner', off: !!off[m.key] })),
+    // forced: the provider took this screen out of every company's menu (this company's own choice is kept for when it comes back)
+    menu: MENU.map((m) => ({ key: m.key, name: m.name, mode: modes[m.key] || 'all', hidden: modes[m.key] === 'owner', off: !!off[m.key], forced: !!forced[m.key] })),
   };
 }
 
@@ -127,14 +138,16 @@ export async function erpAppSet(ctx, payload) {
   const key = str(p.key), on = !!p.on, scope = p.scope === 'all' ? 'all' : 'mine';
   const mode = MODES.includes(p.mode) ? p.mode : (p.on === undefined ? 'all' : (on ? 'all' : 'owner'));   // the old on/off still means everyone / only owners
   const a = BY_KEY[key];
-  if (scope === 'all' && !a) throw new Error('No such app.');
+  if (scope === 'all' && !a && !HIDEABLE(key)) throw new Error('No such app.');
   if (scope === 'mine' && !HIDEABLE(key)) throw new Error(a ? 'A public page is not in the menu; the provider switches it on or off.' : 'That screen stays in the menu.');
   if (scope === 'all') {
     if (!(await platformAdmin(ctx))) throw new Error('Only the provider switches an app on or off for every company.');
-    await ctl(ctx.deps, ctx.sql)`insert into erp_app_flags (key, enabled, updated_at, updated_by) values (${key}, ${on}, now(), ${ctx.s.userId})
+    const flag = a ? key : 'menu:' + key;   // an app, or a menu screen for every company
+    await ctl(ctx.deps, ctx.sql)`insert into erp_app_flags (key, enabled, updated_at, updated_by) values (${flag}, ${on}, now(), ${ctx.s.userId})
                                   on conflict (key) do update set enabled = excluded.enabled, updated_at = now(), updated_by = excluded.updated_by`;
   } else {
     if (!ctx.s.role || ctx.s.role !== 'owner') throw new Error('Only an owner changes this company’s menu.');
+    if ((await menuOffAll(ctx.deps, ctx.sql))[key]) throw new Error('The provider has switched this screen off for every company.');
     const modes = await menuModes(ctx);
     if (mode === 'all') delete modes[key]; else modes[key] = mode;
     await setConfig(ctx, 'apps_menu', JSON.stringify(modes));

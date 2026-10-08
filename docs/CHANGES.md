@@ -1344,3 +1344,16 @@ Stored as JSON (`erp_creators.channels`, migration 103); the one-line strings th
 
 Owner, after his trial run and one live wipe: "every data must stay". `erpCreatorReset`, its button and its tests
 are gone; there is no way to wipe the creator programme from the ERP any more. 53 tests.
+
+## Joint stock on for PrototypeBD + provider menu switch (tag menu-all-1, 8 Oct 2026)
+
+Owner: his friend (PrototypeBD) could not see Joint stock though the owner had set it to "Everyone", and screens the
+owner had switched off still showed in PrototypeBD. Cause: the Edit menu bar is saved per company (Costareen's
+`apps_menu` only), and a company copy's joint stock is a separate provider switch (`erp_tenants.joint`), which was
+off. Fixed: PrototypeBD's copy `762c178e…` joint = true (live; invite code 73D0C62536 valid to 14 Oct).
+New: **Settings > Business > Menu for every company** (platform admin only): per menu screen **Allowed / Off**.
+Off = rows `menu:<key>` enabled=false in `erp_app_flags` (control DB); `appsState` adds them to `off`, so the screen
+leaves every company's menu, the provider's own too; a company owner sees "Off by the provider" and cannot switch it
+back (`erpAppSet` scope mine refuses); the company's own choice is kept for when it is allowed again. Core screens
+cannot be taken out. apps_test 44.
+- Not done: no server-side refusal of a hidden screen's calls (as before: the menu hides; roles still guard money).

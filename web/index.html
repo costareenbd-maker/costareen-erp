@@ -21637,7 +21637,7 @@ function apSyncMe(r) {
   if (!ME) return;
   var hid = {}, gone = {};
   (r.menu || []).forEach(function (m) { if (m.mode === 'owner') hid[m.key] = 1; if (m.mode === 'off') gone[m.key] = 1; });
-  ME.apps = { off: r.apps.filter(function (a) { return !a.on; }).map(function (a) { return a.key; }), hidden: Object.keys(hid), gone: Object.keys(gone) };
+  ME.apps = { off: r.apps.filter(function (a) { return !a.on; }).map(function (a) { return a.key; }).concat((r.menu || []).filter(function (m) { return m.forced; }).map(function (m) { return m.key; })), hidden: Object.keys(hid), gone: Object.keys(gone) };
 }
 function apOf(key) { return APPS ? APPS.apps.filter(function (a) { return a.key === key; })[0] : null; }
 function apIcon(key) { var l = AP_LOOK[key] || { c: '#5f6b7a', i: '<circle cx="12" cy="12" r="9"/>' }; return '<svg viewBox="0 0 24 24">' + l.i + '</svg>'; }
@@ -21811,9 +21811,21 @@ function menuCardHtml() {
   var h = '<section><div class="card"><h2>Edit menu bar</h2><div class="sub" data-c5x="1" style="display:block">Who sees each screen in this business. <b>Everyone</b>: you and your staff. <b>Only owners</b>: you use it, staff do not see it. <b>Off</b>: nobody here, until you switch it back. Only an owner changes this; nothing is deleted. The main screens are not listed - they always stay. (What a person may DO on a screen is set under Users.)</div>' +
           '<div class="ap-mrows">';
   APPS.menu.forEach(function (m) {
-    h += '<div class="ap-mrow"><span class="nm">' + esc(m.name) + '</span>' + apModeSeg(m.key, m.mode) + '</div>';
+    h += '<div class="ap-mrow"><span class="nm">' + esc(m.name) + '</span>' + (m.forced ? '<span class="pill">Off by the provider</span>' : apModeSeg(m.key, m.mode)) + '</div>';
   });
-  return h + '</div></div></section>';
+  h += '</div></div></section>';
+  // the provider (platform admin): a screen on or off for EVERY company - the company's own choice cannot bring it back
+  if (APPS.admin) {
+    h += '<section><div class="card"><h2>Menu for every company</h2><div class="sub" data-c5x="1" style="display:block">You are the provider. <b>Off</b> here takes the screen out of every company\u2019s menu, yours too, and their owners cannot switch it back. <b>Allowed</b>: each company decides in its own Edit menu bar. Nothing is deleted.</div><div class="ap-mrows">';
+    APPS.menu.forEach(function (m) {
+      h += '<div class="ap-mrow"><span class="nm">' + esc(m.name) + '</span><span class="seg">' + [['1', 'Allowed'], ['0', 'Off']].map(function (x) {
+        var cur = m.forced ? '0' : '1';
+        return '<button class="btn small' + (x[0] === cur ? ' on' : '') + '" type="button" data-apall="' + esc(m.key) + '" data-on="' + x[0] + '">' + x[1] + '</button>';
+      }).join('') + '</span></div>';
+    });
+    h += '</div></div></section>';
+  }
+  return h;
 }
 var brandCardHtmlMenu = brandCardHtml;
 brandCardHtml = function () { return brandCardHtmlMenu.apply(this, arguments) + menuCardHtml(); };
@@ -21837,7 +21849,8 @@ document.addEventListener('click', function (ev) {
   if (t.hasAttribute('data-apall')) {
     if (t.classList.contains('on')) return;
     var on = t.getAttribute('data-on') === '1';
-    srv('erpAppSet', [{ key: t.getAttribute('data-apall'), on: on, scope: 'all' }], function (r) { apAfterSet(r, on ? 'On for every company.' : 'Off for every company. Its page answers \u201cnot open yet\u201d.'); }, fail);
+    var isMenu = VIEW === 'settings';
+    srv('erpAppSet', [{ key: t.getAttribute('data-apall'), on: on, scope: 'all' }], function (r) { apAfterSet(r, isMenu ? (on ? 'Allowed again: each company decides in its own menu.' : 'Off in every company\u2019s menu.') : on ? 'On for every company.' : 'Off for every company. Its page answers \u201cnot open yet\u201d.'); }, fail);
     return;
   }
   if (t.hasAttribute('data-apmode')) {
