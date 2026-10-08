@@ -294,7 +294,7 @@ export async function pubRoute(deps, req, R) {
     if (await (await import('./apps.js')).appOff(deps, what)) return { status: 200, body: { ok: false, off: true, error: 'This page is not open yet.' } };
     // the creator portal and the sponsor's dashboard (handlers/creatorportal.js): the links are the gate
     if (what === 'creator' || what === 'sponsor') {
-      const r = await (await import('./creatorportal.js')).route(deps, R || {}, what, req.method, u.searchParams, body, ip);
+      const r = await (await import('./creatorportal.js')).route(deps, R || {}, what, req.method, u.searchParams, body, ip, req.headers.get('authorization') || '');
       if (!r) return { status: 405, body: { ok: false } };
       return { status: 200, body: { ok: true, ...r } };
     }

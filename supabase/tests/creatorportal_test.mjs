@@ -8,7 +8,8 @@ const { pubRoute } = await import(pathToFileURL(path.join(fnDir, 'handlers', 'pa
 const { asBusiness, owners } = await import(pathToFileURL(path.join(fnDir, 'jobs.js')));
 const R = { asBusiness, owners, tenantDeps: null };
 const get = async (q, ip) => (await pubRoute(deps, new Request('https://ctl.test/erp?' + q, { method: 'GET', headers: { 'x-forwarded-for': ip || '10.0.0.1' } }), R)).body;
-const post = async (q, body, ip) => (await pubRoute(deps, new Request('https://ctl.test/erp?' + q, { method: 'POST', headers: { 'content-type': 'application/json', 'x-forwarded-for': ip || '10.0.0.1' }, body: JSON.stringify(body) }), R)).body;
+const post = async (q, body, ip, auth) => (await pubRoute(deps, new Request('https://ctl.test/erp?' + q, { method: 'POST', headers: { 'content-type': 'application/json', 'x-forwarded-for': ip || '10.0.0.1', ...(auth ? { authorization: auth } : {}) }, body: JSON.stringify(body) }), R)).body;
+const getAs = async (q, auth) => (await pubRoute(deps, new Request('https://ctl.test/erp?' + q, { method: 'GET', headers: { 'x-forwarded-for': '10.0.0.2', authorization: auth } }), R)).body;
 const PLA = 'FIL-SUN-PLA-BLA-001';
 
 // the YouTube API, faked: one video with known numbers
@@ -98,4 +99,62 @@ check('the sponsor page takes no writes', !r.ok, r);
 await owner('erpCreatorSave', [{ id: setu, name: 'Mr. Setu', brand: 'Polymaker', status: 'paused', videos_month: 2, posts_month: 2, rolls_video: 2 }]);
 r = await post('pub=creator&t=' + CT, { action: 'request', sku: PLA, qty: 2, title: 'x' });
 check('paused: no requests', !r.ok && /paused/.test(r.error), r);
+
+// ---- accounts: the join link, joining, the password e-mail, the session, the profile, the owner's review
+r = await owner('erpCreatorProgramme', []);
+check('the join link carries only a code (the neutral address live)', r.ok && /^https:\/\/[^/]*\/creator\?p=[A-Z0-9]{10}$/.test(r.result.url) && /^data:image/.test(r.result.qr), r);
+const CODE = r.result.code;
+r = await owner('erpCreatorProgramme', []);
+check('the same code every time', r.ok && r.result.code === CODE, r);
+r = await get('pub=creator&p=' + CODE);
+check('the programme front page: shop and the brand (from the first creator)', r.ok && r.shop.name && r.brands.includes('Polymaker'), r);
+r = await owner('erpCreatorProgramme', [{ brand: 'Bambu Lab' }]);
+check('the owner names the programme brand', r.ok && r.result.brand === 'Bambu Lab', r);
+r = await get('pub=creator&p=' + CODE);
+check('the join page shows it', r.ok && r.brands[0] === 'Bambu Lab', r);
+await owner('erpCreatorProgramme', [{ brand: 'Polymaker' }]);
+r = await get('pub=creator&p=NOPE');
+check('a wrong code is refused', !r.ok, r);
+deps.resets.length = 0;
+r = await post('pub=creator', { action: 'signup', p: CODE, name: 'Rana', email: 'Rana@Example.com', phone: '01711111111' });
+check('joined: a creator row (applied), a login, the choose-your-password e-mail to the creator page', r.ok && r.joined && deps.resets.length === 1 && deps.resets[0].email === 'rana@example.com' && /\/creator$/.test(deps.resets[0].to), r.ok ? deps.resets : r);
+r = await post('pub=creator', { action: 'signup', p: CODE, name: 'Xy', email: 'rana@example.com', phone: '01711111111' });
+check('joining again with the same e-mail: no second row, a fresh link', r.ok && r.again && deps.resets.length === 2, r);
+r = await post('pub=creator', { action: 'signup', p: CODE, name: 'Y', email: 'bad', phone: '01711111111' });
+check('a bad e-mail is refused', !r.ok, r);
+r = await owner('erpCreators', [{}]);
+const rana = r.result.creators.find((c) => c.name === 'Rana');
+check('the owner sees him as applied, with a login, e-mail and phone', rana && rana.status === 'applied' && rana.hasLogin && rana.email === 'rana@example.com' && rana.whatsapp === '01711111111' && rana.brand === 'Polymaker', rana);
+const ranaUser = (await sql`select user_id from erp_creators where id = ${rana.id}`)[0].user_id;
+const AUTH = 'Bearer owner:' + ranaUser;
+r = await getAs('pub=creator', AUTH);
+check('signed in: his page, application under review, profile not done, cannot request', r.ok && r.creator.name === 'Rana' && r.creator.status === 'applied' && r.creator.profileDone === false && r.canRequest === false && /reviewed/.test(r.why), r);
+r = await getAs('pub=creator', 'Bearer owner:00000000-0000-0000-0000-000000000000');
+check('a login without a creator profile is refused', !r.ok, r);
+r = await get('pub=creator');
+check('no session, no token: please sign in', !r.ok && /sign in/i.test(r.error), r);
+r = await post('pub=creator', { action: 'profile', handle: 'Rana 3D', platforms: 'YouTube, Facebook group' }, '10.0.0.2', AUTH);
+check('a half profile is refused', !r.ok, r);
+r = await post('pub=creator', { action: 'profile', handle: 'Rana 3D', platforms: 'YouTube, Facebook group', followers: '12k group, 2k YouTube', links: 'https://youtube.com/@rana, https://facebook.com/groups/3dbd', niche: '3D printing', city: 'Dhaka', about: 'Makers and students', whatsapp: '01711111111', filament: 'PLA, PETG' }, '10.0.0.2', AUTH);
+check('the profile is saved and marked done', r.ok && r.creator.profileDone === true && r.creator.followers === '12k group, 2k YouTube' && r.canRequest === false, r);
+r = await owner('erpCreatorSave', [{ id: rana.id, name: 'Rana', brand: 'Polymaker', status: 'active', videos_month: 2, posts_month: 2, rolls_video: 2, trial_until: '2026-12-31', code: 'RANA10' }]);
+check('the owner activates him with the terms', r.ok && r.result.creators.find((c) => c.id === rana.id).status === 'active', r);
+r = await getAs('pub=creator', AUTH);
+check('now he can request', r.ok && r.canRequest === true && r.creator.code === 'RANA10', r);
+r = await post('pub=creator', { action: 'request', sku: PLA, qty: 2, title: 'Group review' }, '10.0.0.2', AUTH);
+check('a request through the session', r.ok && r.requests.length === 1, r);
+r = await owner('erpCreatorEvents', [{ creator_id: rana.id }]);
+check('joined, profile and request are on his trail', r.ok && ['creator:joined', 'creator:profile', 'creator:requested'].every((x) => r.result.events.some((e) => e.who + ':' + e.what === x)), r.result.events.map((e) => e.who + ':' + e.what));
+// forgot: always the same answer
+deps.resets.length = 0;
+r = await post('pub=creator', { action: 'forgot', email: 'rana@example.com' });
+check('forgot: a link goes out', r.ok && r.sent && deps.resets.length === 1, r);
+r = await post('pub=creator', { action: 'forgot', email: 'nobody@example.com' }, '10.0.0.3');
+check('forgot for an unknown e-mail: same answer, nothing sent', r.ok && r.sent && deps.resets.length === 1, r);
+// the owner invites a hand-added creator
+deps.resets.length = 0;
+r = await owner('erpCreatorInvite', [{ creator_id: setu, email: 'setu@example.com' }]);
+check('invite: a login and the e-mail for the hand-added creator', r.ok && r.result.sent && deps.resets.length === 1, r);
+r = await owner('erpCreatorInvite', [{ creator_id: setu, email: 'rana@example.com' }]);
+check('an e-mail another creator uses is refused', !r.ok, r);
 await done();

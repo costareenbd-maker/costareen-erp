@@ -267,6 +267,15 @@ function projectParts(p: Project) {
     });
     if (!r.ok) throw new Error('mail ' + r.status);
   }
+  // the same e-mail, but the link brings the person back to a given page (the creator portal)
+  async function sendResetTo(email: string, redirectTo: string) {
+    const r = await fetch(SUPABASE_URL + '/auth/v1/recover?redirect_to=' + encodeURIComponent(redirectTo), {
+      method: 'POST',
+      headers: { apikey: ANON, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email }),
+    });
+    if (!r.ok) throw new Error('The e-mail could not be sent (' + r.status + ').');
+  }
   // the same "choose your password" link, made without an e-mail (the platform admin hands it over, e.g. on WhatsApp)
   async function recoveryLink(email: string) {
     const r = await fetch(SUPABASE_URL + '/auth/v1/admin/generate_link', {
@@ -278,7 +287,7 @@ function projectParts(p: Project) {
     if (!r.ok || !link) throw new Error('The link could not be made (' + r.status + (j && (j.msg || j.message) ? ': ' + String(j.msg || j.message).slice(0, 120) : '') + ').');
     return String(link);
   }
-  return { verifyUser, storage, createAuthUser, createOwner, removeUser, sendMagic, sendReset, recoveryLink };
+  return { verifyUser, storage, createAuthUser, createOwner, removeUser, sendMagic, sendReset, sendResetTo, recoveryLink };
 }
 
 // --------------------------------------------------------------- PDF render

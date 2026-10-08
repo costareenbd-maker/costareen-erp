@@ -1287,3 +1287,28 @@ professional look with both logos. Built on the Creators tracker (handlers/creat
 - Not done: stock is not moved when filament is handed over (adjust stock as before); no WhatsApp / push message to
   the creator on approval (he sees it on his page); no screenshot upload for reported numbers; Facebook / Instagram /
   TikTok numbers stay reported; the owner must paste a YouTube Data API key once for verified numbers.
+
+## Creator accounts: creators join by themselves, neutral link, owner reviews (tag accounts-1, 8 Oct 2026)
+
+Owner: no company name in the link; the creator fills everything himself (name, e-mail, phone, then a profile);
+he logs in; the owner sees the data and sets active / trial / terms; "super professional, e-mail must work".
+- **Join link** `https://erp.3dowala.com/creator?p=<10-letter code>` (Campaigns > Creators > **Join link for
+  creators**, with QR): the programme's front page (shop logo x brand logo, three steps), **Join** with name, e-mail,
+  phone. A Supabase Auth login is made (confirmed, no password) and the **Choose your password** e-mail goes out through
+  the project's Gmail SMTP - the same path the ERP's own sign-in uses (200/hour; tested live on the owner's own
+  address, `recovery_sent_at` confirmed). The e-mail template was made neutral ("Choose your password", no "ERP"),
+  and `erp.3dowala.com/**` + `prototypebd.3dowala.com/**` were added to the Auth redirect allow-list.
+- **Sign in** at `erp.3dowala.com/creator`: e-mail + password (Supabase `token?grant_type=password`), session kept on
+  the device with refresh; **Forgot the password?** sends a new link (same answer for unknown e-mails). The old
+  token links (`?t=`) still work.
+- **Profile** (required before anything else for self-joined creators): channel / page / group names, platforms
+  (chips), followers per platform, links, what he makes, city, audience, WhatsApp, filament wanted. Editable later;
+  every save is an event.
+- **Review**: a self-joined creator is `applied`; his page says "Application received"; he cannot request until the
+  owner opens him (Creators card shows **Applied - review**, the detail screen shows everything he typed with the
+  times; **Edit** sets brand, terms, trial, code, open-limit, **Active**). Hand-added creators: **Send him a login**
+  by e-mail (`erpCreatorInvite`). `erpCreatorSave` now changes only the fields it is sent (the owner's form never
+  wipes the creator's own profile). `creatorportal_test.mjs` now 50.
+- Not done: no e-mail to the creator when approved (he sees it on his page); no e-mail to the owner when someone
+  joins (the Applied badge is the signal); one creator per e-mail across the provider; the sender name of the e-mail
+  is still "Costareen ERP" (Supabase SMTP sender).

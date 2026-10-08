@@ -65,7 +65,7 @@ export async function erpCreators(ctx, payload) {
     }
     const fmt = (r) => ({ ...r, on_date: r.on_date ? formatDate(new Date(r.on_date), 'yyyy-MM-dd') : '' });
     return {
-      ...c, trial_until: c.trial_until ? formatDate(new Date(c.trial_until), 'yyyy-MM-dd') : '',
+      ...c, trial_until: c.trial_until ? formatDate(new Date(c.trial_until), 'yyyy-MM-dd') : '', hasLogin: !!c.user_id, applied_at: c.applied_at ? new Date(c.applied_at).toISOString() : '', profile_at: c.profile_at ? new Date(c.profile_at).toISOString() : '',
       month: { rolls: rollsM, value: valueM, videos, posts: others, views, engagement: eng, rate: views > 0 ? Math.round(eng / views * 1000) / 10 : 0,
                leads: sum(mPosts, 'leads'), orders: sales.orders, revenue: Math.round(sales.revenue), behind, cpm: views > 0 ? Math.round(valueM / views * 1000) : 0 },
       total: { rolls: rollsAll, value: valueAll, posts: myPosts.length, views: sum(myPosts, 'views') },
@@ -119,12 +119,20 @@ export async function erpCreatorSave(ctx, payload) {
   needOwner(ctx);
   const p = payload || {}, name = str(p.name);
   if (!name) throw new Error('The creator needs a name.');
-  const status = ['active', 'paused', 'stopped'].includes(str(p.status)) ? str(p.status) : 'active';
+  const status = ['active', 'paused', 'stopped', 'applied'].includes(str(p.status)) ? str(p.status) : 'active';
   const trial = str(p.trial_until) ? dateOf(p.trial_until, ctx) : null;
   const row = { name, handle: str(p.handle) || null, platforms: str(p.platforms) || null, followers: str(p.followers) || null, brand: str(p.brand), code: str(p.code).toUpperCase() || null,
                 videos_month: Math.max(0, Math.round(num(p.videos_month))), posts_month: Math.max(0, Math.round(num(p.posts_month))), rolls_video: Math.max(0, Math.round(num(p.rolls_video))),
-                filament: str(p.filament) || null, trial_until: trial, status, notes: str(p.notes) || null, updated_at: ctx.now };
-  if (num(p.id) > 0) { await own(ctx, p.id); await ctx.tx`update erp_creators set ${ctx.tx(row)} where id = ${num(p.id)} and business_id = ${ctx.biz}`; }
+                filament: str(p.filament) || null, trial_until: trial, status, notes: str(p.notes) || null, open_limit: Math.max(1, Math.round(num(p.open_limit)) || 1),
+                links: str(p.links) || null, niche: str(p.niche) || null, city: str(p.city) || null, about: str(p.about) || null, whatsapp: str(p.whatsapp) || null, updated_at: ctx.now };
+  if (num(p.id) > 0) {
+    await own(ctx, p.id);
+    // only what the payload names changes (the creator's own profile fields stay when the owner's form does not send them)
+    const keys = { handle: 'handle', platforms: 'platforms', followers: 'followers', brand: 'brand', code: 'code', videos_month: 'videos_month', posts_month: 'posts_month', rolls_video: 'rolls_video', filament: 'filament', trial_until: 'trial_until', status: 'status', notes: 'notes', open_limit: 'open_limit', links: 'links', niche: 'niche', city: 'city', about: 'about', whatsapp: 'whatsapp' };
+    const upd = { name, updated_at: ctx.now };
+    for (const k of Object.keys(keys)) if (p[k] !== undefined) upd[k] = row[k];
+    await ctx.tx`update erp_creators set ${ctx.tx(upd)} where id = ${num(p.id)} and business_id = ${ctx.biz}`;
+  }
   else await ctx.tx`insert into erp_creators ${ctx.tx({ ...row, business_id: ctx.biz })}`;
   return erpCreators(ctx, { month: p.month });
 }

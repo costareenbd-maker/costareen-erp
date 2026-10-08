@@ -90,6 +90,8 @@ export const deps = {
   },
   async removeUser(id) { await sql`delete from auth.users where id = ${id}`; },
   async sendReset(email) { deps.mails.push(email); },
+  resets: [],
+  async sendResetTo(email, to) { deps.resets.push({ email, to }); },
   magic: [],
   async sendMagic(email, to) { deps.magic.push({ email, to }); },
   async createAuthUser(name) {

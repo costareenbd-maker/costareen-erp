@@ -32,7 +32,68 @@ async function tokenFor(deps, kind, source, biz, ref) {
   const sig = new Uint8Array(await crypto.subtle.sign('HMAC', k, enc.encode(kind + '|' + source + '|' + biz + '|' + ref)));
   return btoa(String.fromCharCode(...sig)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '').slice(0, 24);
 }
-function pageUrl(deps, name) { return pubBase(deps).my.replace(/my$/, name); }
+function pageUrl(deps, name) { return pubBase(deps).check.replace(/check$/, name); }   // the neutral address: no company name in the link
+const PROFILE = ['handle', 'platforms', 'followers', 'links', 'niche', 'city', 'about', 'whatsapp', 'filament'];
+function profileDone(c) { return !!(str(c.handle) && str(c.platforms) && str(c.followers) && str(c.links)); }
+function randomCode(n) { const a = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789', b = crypto.getRandomValues(new Uint8Array(n)); return [...b].map((x) => a[x % a.length]).join(''); }
+const okEmail = (e) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);
+/** The programme's join code of this business (made once): the public join link carries only this. */
+async function progCode(ctx) {
+  let code = str(await getConfig(ctx, 'creator_programme_code', ''));
+  if (!code) { code = randomCode(10); await setConfig(ctx, 'creator_programme_code', code); }
+  return code;
+}
+export async function erpCreatorProgramme(ctx, payload) {
+  needOwner(ctx);
+  const p = payload || {};
+  if (p.brand !== undefined) await setConfig(ctx, 'creator_programme_brand', str(p.brand).slice(0, 80));
+  const code = await progCode(ctx), url = pageUrl(ctx.deps, 'creator') + '?p=' + code;
+  return { code, url, qr: qrDataUrl(url), signin: pageUrl(ctx.deps, 'creator'), brand: await progBrand(ctx) };
+}
+/** The brand the programme is run for: set by the owner, else the brand of the first creator. */
+async function progBrand(ctx) {
+  const b = str(await getConfig(ctx, 'creator_programme_brand', ''));
+  if (b) return b;
+  const first = (await ctx.tx`select brand from erp_creators where business_id = ${ctx.biz} and brand <> '' order by id limit 1`)[0];
+  return first ? str(first.brand) : '';
+}
+/** A login for an e-mail: the existing user, or a new confirmed one with no password yet (set from the e-mailed link). */
+async function userFor(deps, email, name) {
+  const had = (await deps.sql`select id from auth.users where lower(email) = ${email} limit 1`)[0];
+  if (had) return String(had.id);
+  return deps.createOwner(email, name);
+}
+/** Owner: give a creator added by hand a login - a user is made (or found) and the choose-your-password e-mail goes out. */
+export async function erpCreatorInvite(ctx, payload) {
+  needOwner(ctx);
+  const p = payload || {}, id = num(p.creator_id), email = str(p.email).toLowerCase();
+  if (!okEmail(email)) throw new Error('That is not an e-mail address.');
+  const c = (await ctx.tx`select * from erp_creators where business_id = ${ctx.biz} and id = ${id}`)[0];
+  if (!c) throw new Error('No such creator.');
+  const taken = (await ctx.tx`select id from erp_creators where business_id = ${ctx.biz} and lower(email) = ${email} and id <> ${id}`)[0];
+  if (taken) throw new Error('Another creator already uses that e-mail.');
+  const userId = await userFor(ctx.deps, email, str(c.name));
+  await ctx.tx`update erp_creators set user_id = ${userId}, email = ${email}, updated_at = ${ctx.now} where id = ${id}`;
+  await ctx.deps.sendResetTo(email, pageUrl(ctx.deps, 'creator'));
+  await ev(ctx, { creator_id: id, who: 'owner', what: 'invited', detail: email });
+  return { sent: true, email };
+}
+/** The business behind a programme code (public join link). */
+async function bizByCode(deps, code) {
+  const c = str(code).toUpperCase();
+  if (!/^[A-Z0-9]{6,16}$/.test(c)) throw new Error('This join link is not complete.');
+  const r = (await deps.sql`select business_id from business_config where key = 'creator_programme_code' and value = ${c} limit 1`)[0];
+  if (!r) throw new Error('This join link is not known.');
+  return r.business_id;
+}
+/** The creator behind a signed-in session (Authorization: Bearer <Supabase session>). */
+async function creatorBySession(deps, authHeader) {
+  const uid = authHeader ? await deps.verifyUser(authHeader) : null;
+  if (!uid) throw new Error('Please sign in.');
+  const r = (await deps.sql`select id, business_id from erp_creators where user_id = ${uid} limit 1`)[0];
+  if (!r) throw new Error('This login has no creator profile. Join the programme first.');
+  return { biz: r.business_id, ref: String(r.id) };
+}
 async function ev(ctx, e) {
   await ctx.tx`insert into erp_creator_events ${ctx.tx({ business_id: ctx.biz, creator_id: e.creator_id || null, request_id: e.request_id || null, post_id: e.post_id || null, who: e.who, what: e.what, detail: str(e.detail).slice(0, 500) || null, ip: str(e.ip).slice(0, 80) || null })}`;
 }
@@ -186,16 +247,17 @@ async function creatorData(ctx, c) {
   const videos = mPosts.filter((p) => p.kind === 'video').length, others = mPosts.length - videos;
   const openNoLink = reqs.filter((r) => r.status === 'given' && r.links === 0).length;
   const pending = reqs.some((r) => r.status === 'requested' || r.status === 'approved');
-  const canRequest = c.status === 'active' && openNoLink < num(c.open_limit) && !pending;
+  const needProfile = !!c.applied_at && !profileDone(c);   // self-joined creators fill their profile first; hand-added ones are the owner's job
+  const canRequest = c.status === 'active' && !needProfile && openNoLink < num(c.open_limit) && !pending;
   // what he can ask for: filament in stock
   const cat = await erpCatalog(ctx);
   const stock = cat.filter((p) => (!p.status || p.status === 'Active') && num(p.stock) > 0 && /filament/i.test(p.cat || '')).map((p) => ({ sku: p.sku, name: p.name, stock: num(p.stock) })).sort((a, b) => a.name.localeCompare(b.name)).slice(0, 300);
   const sum = (l, k) => l.reduce((a, x) => a + num(x[k]), 0);
   return {
-    creator: { name: str(c.name), handle: str(c.handle), platforms: str(c.platforms), brand: str(c.brand), code: str(c.code), status: str(c.status), videos_month: num(c.videos_month), posts_month: num(c.posts_month), rolls_video: num(c.rolls_video), filament: str(c.filament), trial_until: day(c.trial_until), notes: str(c.notes) },
+    creator: { name: str(c.name), email: str(c.email), handle: str(c.handle), platforms: str(c.platforms), followers: str(c.followers), links: str(c.links), niche: str(c.niche), city: str(c.city), about: str(c.about), whatsapp: str(c.whatsapp), brand: str(c.brand), code: str(c.code), status: str(c.status), videos_month: num(c.videos_month), posts_month: num(c.posts_month), rolls_video: num(c.rolls_video), filament: str(c.filament), trial_until: day(c.trial_until), notes: str(c.notes), profileDone: profileDone(c), needProfile: !!c.applied_at && !profileDone(c) },
     month: { name: formatDate(ctx.now, 'MMMM yyyy'), videos, posts: others, views: sum(mPosts, 'views') },
     total: { rolls: reqs.filter((r) => r.status === 'given').reduce((a, r) => a + num(r.qty_ok), 0), posts: posts.length, views: sum(posts, 'views') },
-    requests: reqs, posts, stock, canRequest, why: canRequest ? '' : (c.status !== 'active' ? 'The programme is ' + c.status + ' for you right now.' : pending ? (reqs.some((r) => r.status === 'requested') ? 'Your last request is still waiting for an answer.' : 'Collect the approved filament first.') : 'Paste the link of your last project first, then request the next filament.'),
+    requests: reqs, posts, stock, canRequest, why: canRequest ? '' : (c.status === 'applied' ? 'Your application is being reviewed. You will see the agreement here once it is approved.' : c.status !== 'active' ? 'The programme is ' + c.status + ' for you right now.' : needProfile ? 'Complete your profile first.' : pending ? (reqs.some((r) => r.status === 'requested') ? 'Your last request is still waiting for an answer.' : 'Collect the approved filament first.') : 'Paste the link of your last project first, then request the next filament.'),
     today: formatDate(ctx.now, 'yyyy-MM-dd'),
   };
 }
@@ -208,6 +270,16 @@ async function creatorAct(ctx, l, b, ip) {
   const c = (await ctx.tx`select * from erp_creators where business_id = ${ctx.biz} and id = ${num(l.ref)}`)[0];
   if (!c) throw new Error('This link is not known. Ask for a new one.');
   const action = str(b.action);
+  if (action === 'profile') {
+    const row = {};
+    for (const k of PROFILE) row[k] = str(b[k]).slice(0, k === 'about' || k === 'links' ? 1000 : 200) || null;
+    if (!str(row.handle) || !str(row.platforms) || !str(row.followers) || !str(row.links)) throw new Error('Channel name, platforms, followers and links are needed.');
+    if (str(b.name).length >= 2) row.name = str(b.name).slice(0, 80);
+    row.profile_at = ctx.now; row.updated_at = ctx.now;
+    await ctx.tx`update erp_creators set ${ctx.tx(row)} where id = ${c.id} and business_id = ${ctx.biz}`;
+    await ev(ctx, { creator_id: c.id, who: 'creator', what: 'profile', detail: PROFILE.map((k) => k + ': ' + str(row[k])).filter((x) => !/: $/.test(x)).join(' | ').slice(0, 480), ip });
+    return creatorData(ctx, { ...c, ...row });
+  }
   if (action === 'request') {
     const d = await creatorData(ctx, c);
     if (!d.canRequest) throw new Error(d.why);
@@ -276,12 +348,56 @@ async function sponsorPage(ctx, l) {
   });
   return { shop: await shopInfo(ctx), brand: creators.length ? str(creators[0].brand) : brand, creators: out, months, teams: projects.map((p) => ({ team: str(p.team), project: str(p.project), competition: str(p.competition), material: str(p.material), qty: str(p.qty), status: str(p.status), creator: (creators.find((c) => Number(c.id) === Number(p.creator_id)) || {}).name || '' })), generated: when(ctx.now) };
 }
-export async function route(deps, R, what, method, params, body, ip) {
+/** Public: the programme's front page (logos, intro) for a join link. */
+async function programmePage(ctx) {
+  const b = await progBrand(ctx);
+  return { shop: await shopInfo(ctx), brands: b ? [b] : [] };
+}
+/** Public: join - a creator row (applied), a login, the choose-your-password e-mail. */
+async function signup(ctx, b, ip) {
+  const name = str(b.name).slice(0, 80), email = str(b.email).toLowerCase().slice(0, 160), phone = str(b.phone).slice(0, 40);
+  if (name.length < 2) throw new Error('Your name, please.');
+  if (!okEmail(email)) throw new Error('That is not an e-mail address.');
+  if (phone.replace(/[^0-9]/g, '').length < 8) throw new Error('A phone number we can reach you on, please.');
+  const mine = (await ctx.tx`select id, user_id from erp_creators where business_id = ${ctx.biz} and lower(email) = ${email}`)[0];
+  if (mine) { await ctx.deps.sendResetTo(email, pageUrl(ctx.deps, 'creator')); return { joined: true, again: true }; }   // already joined: a fresh password link, no second profile
+  const other = (await ctx.deps.sql`select id from erp_creators where user_id in (select id from auth.users where lower(email) = ${email}) limit 1`)[0];
+  if (other) throw new Error('That e-mail is already in a creator programme. Sign in instead.');
+  const userId = await userFor(ctx.deps, email, name);
+  const brand = await progBrand(ctx);
+  const r = (await ctx.tx`insert into erp_creators ${ctx.tx({ business_id: ctx.biz, name, email, whatsapp: phone, user_id: userId, brand, status: 'applied', applied_at: ctx.now, videos_month: 2, posts_month: 2, rolls_video: 2 })} returning id`)[0];
+  await ev(ctx, { creator_id: Number(r.id), who: 'creator', what: 'joined', detail: name + ' <' + email + '> ' + phone, ip });
+  await ctx.deps.sendResetTo(email, pageUrl(ctx.deps, 'creator'));
+  return { joined: true };
+}
+export async function route(deps, R, what, method, params, body, ip, authHeader) {
   const t = params.get('t');
   if (what === 'creator') {
-    const { d, l } = await openLink(deps, R, t, 'creator', ip);
+    const b = body || {}, action = str(b.action);
+    // the join link: the programme's front page, and joining
+    if (params.get('p') || action === 'signup') {
+      const biz = await bizByCode(deps, params.get('p') || b.p);
+      await limit(deps, ip, 'creator-join', 30);
+      if (method === 'GET') return runAs(deps, R, biz, 'pub:creator', (ctx) => programmePage(ctx));
+      if (action !== 'signup') throw new Error('Unknown action.');
+      await limit(deps, str(b.email).toLowerCase(), 'creator-mail', 3);
+      return runAs(deps, R, biz, 'pub:creator', (ctx) => signup(ctx, b, ip));
+    }
+    // forgotten password: a fresh link, always the same answer (no e-mail guessing)
+    if (action === 'forgot') {
+      const email = str(b.email).toLowerCase();
+      if (!okEmail(email)) throw new Error('That is not an e-mail address.');
+      await limit(deps, ip, 'creator-join', 30); await limit(deps, email, 'creator-mail', 3);
+      const has = (await deps.sql`select 1 from erp_creators where lower(email) = ${email} and user_id is not null limit 1`)[0];
+      if (has) { try { await deps.sendResetTo(email, pageUrl(deps, 'creator')); } catch (_) { /* the earlier link still works */ } }
+      return { sent: true };
+    }
+    // the old token link still works; a signed-in creator comes with his session
+    let d = deps, l;
+    if (t) ({ d, l } = await openLink(deps, R, t, 'creator', ip));
+    else { const sess = await creatorBySession(deps, authHeader); l = { business_id: sess.biz, ref: sess.ref, source: 'self' }; await limit(deps, ip, 'creator', 300); }
     if (method === 'GET') return runAs(d, R, l.business_id, 'pub:creator', (ctx) => creatorPage(ctx, l));
-    return runAs(d, R, l.business_id, 'pub:creator', (ctx) => creatorAct(ctx, l, body || {}, ip));
+    return runAs(d, R, l.business_id, 'pub:creator', (ctx) => creatorAct(ctx, l, b, ip));
   }
   if (what === 'sponsor') {
     if (method !== 'GET') return null;
@@ -290,4 +406,4 @@ export async function route(deps, R, what, method, params, body, ip) {
   }
   return null;
 }
-export const HANDLERS = { erpCreatorPortalLink, erpSponsorLink, erpCreatorRequests, erpCreatorDecide, erpCreatorEvents, erpYoutubeKey, erpCreatorRefresh };
+export const HANDLERS = { erpCreatorPortalLink, erpSponsorLink, erpCreatorRequests, erpCreatorDecide, erpCreatorEvents, erpYoutubeKey, erpCreatorRefresh, erpCreatorProgramme, erpCreatorInvite };
