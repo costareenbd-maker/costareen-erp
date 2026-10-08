@@ -90,8 +90,19 @@ async function userFor(deps, email, name) {
 /** Owner: give a creator added by hand a login - a user is made (or found) and the choose-your-password e-mail goes out. */
 export async function erpCreatorInvite(ctx, payload) {
   needOwner(ctx);
-  const p = payload || {}, id = num(p.creator_id), email = str(p.email).toLowerCase();
+  const p = payload || {}, email = str(p.email).toLowerCase();
+  let id = num(p.creator_id);
   if (!okEmail(email)) throw new Error('That is not an e-mail address.');
+  let created = 0;
+  if (!id) {
+    // the owner types only the e-mail: the creator is made here, applied, and fills everything else himself
+    const had = (await ctx.tx`select id from erp_creators where business_id = ${ctx.biz} and lower(email) = ${email}`)[0];
+    if (had) id = Number(had.id);
+    else {
+      const r = (await ctx.tx`insert into erp_creators ${ctx.tx({ business_id: ctx.biz, name: email.split('@')[0].slice(0, 80), email, brand: await progBrand(ctx), status: 'applied', applied_at: ctx.now, videos_month: 2, posts_month: 2, rolls_video: 2 })} returning id`)[0];
+      id = created = Number(r.id);
+    }
+  }
   const c = (await ctx.tx`select * from erp_creators where business_id = ${ctx.biz} and id = ${id}`)[0];
   if (!c) throw new Error('No such creator.');
   const taken = (await ctx.tx`select id from erp_creators where business_id = ${ctx.biz} and lower(email) = ${email} and id <> ${id}`)[0];
@@ -105,11 +116,11 @@ export async function erpCreatorInvite(ctx, payload) {
     if (!ctx.deps.recoveryLink) throw new Error('This server cannot make the link.');
     const link = await ctx.deps.recoveryLink(email, pageUrl(ctx.deps, 'creator'));
     await ev(ctx, { creator_id: id, who: 'owner', what: 'sign-in link', detail: email });
-    return { link, email };
+    return { link, email, creator_id: id, created };
   }
   await ctx.deps.sendResetTo(email, pageUrl(ctx.deps, 'creator'));
   await ev(ctx, { creator_id: id, who: 'owner', what: 'invited', detail: email });
-  return { sent: true, email };
+  return { sent: true, email, creator_id: id, created };
 }
 /** The business behind a programme code (public join link). */
 async function bizByCode(deps, code) {
@@ -441,4 +452,26 @@ export async function route(deps, R, what, method, params, body, ip, authHeader)
   }
   return null;
 }
-export const HANDLERS = { erpCreatorPortalLink, erpSponsorLink, erpCreatorRequests, erpCreatorDecide, erpCreatorEvents, erpYoutubeKey, erpCreatorRefresh, erpCreatorProgramme, erpCreatorInvite };
+/** Owner: approve an application (he becomes active with the terms on his card) or decline it (stopped). */
+export async function erpCreatorApprove(ctx, payload) {
+  needOwner(ctx);
+  const p = payload || {}, id = num(p.creator_id), ok = p.action !== 'decline';
+  const c = (await ctx.tx`select id, status from erp_creators where business_id = ${ctx.biz} and id = ${id}`)[0];
+  if (!c) throw new Error('No such creator.');
+  await ctx.tx`update erp_creators set status = ${ok ? 'active' : 'stopped'}, updated_at = ${ctx.now} where id = ${id}`;
+  await ev(ctx, { creator_id: id, who: 'owner', what: ok ? 'approved' : 'declined', detail: str(p.note).slice(0, 300) });
+  return { status: ok ? 'active' : 'stopped' };
+}
+/** Owner: the two live pages to look at - the creator's own (read-only preview) and the brand's. */
+export async function erpCreatorPreview(ctx, payload) {
+  needOwner(ctx);
+  const id = num((payload || {}).creator_id);
+  const out = {};
+  if (id) { const l = await erpCreatorPortalLink(ctx, { creator_id: id }); out.creator = l.url + '&preview=1'; }
+  const c = id ? (await ctx.tx`select brand from erp_creators where business_id = ${ctx.biz} and id = ${id}`)[0] : null;
+  const brand = str(c && c.brand) || await progBrand(ctx);
+  if (brand) out.sponsor = (await erpSponsorLink(ctx, { brand })).url;
+  out.brand = brand;
+  return out;
+}
+export const HANDLERS = { erpCreatorApprove, erpCreatorPreview, erpCreatorPortalLink, erpSponsorLink, erpCreatorRequests, erpCreatorDecide, erpCreatorEvents, erpYoutubeKey, erpCreatorRefresh, erpCreatorProgramme, erpCreatorInvite };

@@ -1386,3 +1386,22 @@ form asks for **his e-mail** (and WhatsApp) instead of channel / platforms / fol
 profile, filled after he signs in); **Add creator** opens his screen straight away with a **His login** box at the
 top - e-mail pre-filled, **Copy sign-in link**, **E-mail it to him**. `erpCreatorSave` keeps the e-mail of a new
 creator (format and uniqueness checked) and returns `created`. Checked on screen locally end to end. creators_test 25.
+
+## Creators: invite by e-mail only, approve, live view of both sides (tag creators-flow-1, 8 Oct 2026)
+
+Owner's story: he collects a creator's e-mail on social media / WhatsApp, types only that, sends the one-time link on
+WhatsApp; the creator sets his password and fills his whole profile himself; the owner reviews and approves, then
+may edit anything; in Apps he sees what the creator sees and what the brand sees, live.
+- **Invite a creator** box on Creators (replaces "+ Add a creator"): e-mail only -> **Copy sign-in link** /
+  **E-mail it to him**. `erpCreatorInvite` without `creator_id` makes the creator (status applied, name from the
+  e-mail until he types his own, programme brand) or reuses the one with that e-mail; returns `creator_id`/`created`.
+- He signs in -> profile first (name, WhatsApp, channels...) -> "Application received".
+- The applied creator's screen: **Approve** (disabled until he has filled his profile) / **Decline**
+  (`erpCreatorApprove`: active / stopped, on his trail). **Edit** changes the terms any time after.
+- **Apps > Creators > Live view**: pick a creator; his page (read-only preview: `?preview=1` blocks every button, a
+  banner says so, refreshes every 20 s) and the brand's page side by side (one column on narrow screens), each with
+  "open". `erpCreatorPreview`. The brand's page now refreshes itself every 30 s (keeps the scroll).
+- Headers: creatorsdesk gets its own `_headers` (`web/_headers.creator`) allowing framing only by the ERP's own
+  addresses; the ERP's CSP `frame-src` allows creatorsdesk.pages.dev. Verified live; end-to-end on the live server
+  with a throwaway creator (invite -> applied, needs profile, Polymaker -> approve -> active), then removed.
+  creatorportal_test 68.

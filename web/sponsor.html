@@ -111,7 +111,11 @@ function csv() {
 }
 document.addEventListener('click', function (ev) { if (ev.target.id === 'csv') csv(); });
 if (!TOKEN) out.innerHTML = '<div class="card"><p class="msg">This link is not complete.</p></div>';
-else fetch(API + '?pub=sponsor&t=' + encodeURIComponent(TOKEN)).then(function (r) { return r.json(); }).then(function (r) { if (!r.ok) { out.innerHTML = '<div class="card"><p class="msg">' + esc(r.error || 'This link does not work.') + '</p></div>'; return; } D = r; render(); }, function () { out.innerHTML = '<div class="card"><p class="msg">The page could not be loaded. Check your connection and try again.</p></div>'; });
+else {
+  fetch(API + '?pub=sponsor&t=' + encodeURIComponent(TOKEN)).then(function (r) { return r.json(); }).then(function (r) { if (!r.ok) { out.innerHTML = '<div class="card"><p class="msg">' + esc(r.error || 'This link does not work.') + '</p></div>'; return; } D = r; render(); }, function () { out.innerHTML = '<div class="card"><p class="msg">The page could not be loaded. Check your connection and try again.</p></div>'; });
+  // live: new requests, links and numbers appear without reloading
+  setInterval(function () { if (document.hidden) return; fetch(API + '?pub=sponsor&t=' + encodeURIComponent(TOKEN)).then(function (r) { return r.json(); }).then(function (r) { if (r.ok) { var y = window.scrollY; D = r; render(); window.scrollTo(0, y); } }, function () {}); }, 30000);
+}
 </script>
 </body>
 </html>

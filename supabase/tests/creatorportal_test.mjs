@@ -176,4 +176,30 @@ r = await owner('erpCreatorInvite', [{ creator_id: robin2, email: ownerMail, mod
 check('never for an e-mail that signs in to an ERP (would change that password)', !r.ok && /ERP/.test(r.error), r);
 r = await owner('erpCreatorEvents', [{ creator_id: robin2 }]);
 check('the link is on his trail', r.ok && r.result.events.some((e) => e.what === 'sign-in link'), r);
+
+// the owner's flow: only an e-mail -> an applied creator + a sign-in link; he fills his profile; approve; preview
+deps.links.length = 0;
+r = await owner('erpCreatorInvite', [{ email: 'Newbie@Example.com', mode: 'link' }]);
+check('e-mail only: a creator is made (applied, programme brand) and the link comes back', r.ok && r.result.created > 0 && /type=recovery/.test(r.result.link) && deps.links.length === 1, r);
+const NEWID = r.result.created;
+r = await owner('erpCreators', [{}]);
+const nb = r.result.creators.find((c) => c.id === NEWID);
+check('he is listed as applied, with a login, name from the e-mail until he types his own', nb && nb.status === 'applied' && nb.hasLogin && nb.name === 'newbie' && nb.email === 'newbie@example.com', nb);
+r = await owner('erpCreatorInvite', [{ email: 'newbie@example.com', mode: 'link' }]);
+check('the same e-mail again: the same creator, a fresh link, no second row', r.ok && r.result.creator_id === NEWID && !r.result.created, r);
+const nbUser = (await sql`select user_id from erp_creators where id = ${NEWID}`)[0].user_id;
+r = await getAs('pub=creator', 'Bearer owner:' + nbUser);
+check('he signs in: profile first', r.ok && r.creator.needProfile === true && r.canRequest === false, r);
+r = await post('pub=creator', { action: 'profile', name: 'Mr. Newbie', whatsapp: '01799999999', channels: [{ platform: 'Facebook profile', name: 'Newbie Prints', count: 900, url: 'https://facebook.com/newbie' }] }, '10.0.0.4', 'Bearer owner:' + nbUser);
+check('his own name and phone are saved with the profile', r.ok && r.creator.name === 'Mr. Newbie' && r.creator.whatsapp === '01799999999' && r.creator.profileDone, r);
+r = await mgr('erpCreatorApprove', [{ creator_id: NEWID }]);
+check('a manager cannot approve', !r.ok, r);
+r = await owner('erpCreatorApprove', [{ creator_id: NEWID }]);
+check('approved: active', r.ok && r.result.status === 'active', r);
+r = await getAs('pub=creator', 'Bearer owner:' + nbUser);
+check('he can request now', r.ok && r.creator.status === 'active' && r.canRequest === true, r);
+r = await owner('erpCreatorPreview', [{ creator_id: NEWID }]);
+check('preview: his page read-only and the brand page', r.ok && /creator\?t=.+&preview=1$/.test(r.result.creator) && /sponsor\?t=/.test(r.result.sponsor) && r.result.brand === 'Polymaker', r);
+r = await owner('erpCreatorApprove', [{ creator_id: NEWID, action: 'decline' }]);
+check('declined: stopped', r.ok && r.result.status === 'stopped', r);
 await done();

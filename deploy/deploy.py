@@ -130,8 +130,9 @@ def step_web():
         subprocess.check_call(cmd, shell=(os.name == 'nt'))
     # the creator / sponsor pages on their own host: only those two pages, the logos and the icons
     cdir = tempfile.mkdtemp(prefix='erp-creator-')
-    for f in ['creator.html', 'sponsor.html', '_headers']:
+    for f in ['creator.html', 'sponsor.html']:
         shutil.copy(os.path.join(ROOT, 'web', f), cdir)
+    shutil.copy(os.path.join(ROOT, 'web', '_headers.creator'), os.path.join(cdir, '_headers'))   # may be framed by the ERP (owner's preview)
     shutil.copytree(os.path.join(ROOT, 'web', 'brand'), os.path.join(cdir, 'brand'))
     shutil.copytree(os.path.join(ROOT, 'web', 'icons'), os.path.join(cdir, 'icons'))
     open(os.path.join(cdir, 'index.html'), 'w', encoding='utf-8').write('<!doctype html><meta charset="utf-8"><meta http-equiv="refresh" content="0; url=/creator"><title>Creator programme</title>')

@@ -69,6 +69,9 @@ button:disabled{opacity:.55;cursor:default}
 .steps b{display:block;color:var(--acc);font-size:12px;text-transform:uppercase;letter-spacing:.6px;margin-bottom:2px}
 footer{font-size:13px;color:var(--mute);text-align:center;margin-top:22px}
 [hidden]{display:none!important}
+.pvbar{background:#1e4fa3;color:#fff;text-align:center;font-size:13px;padding:6px 10px}
+.pv main button,.pv main input,.pv main select,.pv main textarea,.pv .who button{pointer-events:none}
+.pv main .card{opacity:.97}
 </style>
 </head>
 <body>
@@ -80,7 +83,7 @@ footer{font-size:13px;color:var(--mute);text-align:center;margin-top:22px}
 <script>
 var API = (new URLSearchParams(location.search).get('api') || 'https://oqzcuuytytqadqjlwdsh.supabase.co/functions/v1/erp').replace(/\/+$/, '');
 var SB_URL = 'https://oqzcuuytytqadqjlwdsh.supabase.co', SB_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9xemN1dXl0eXRxYWRxamx3ZHNoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODk4Nzk4MDEsImV4cCI6MjEwNTQ1NTgwMX0.fwdCTTde1fS2SPfT5ULNqLI4-YQLa__3pHjufarZG_0';
-var Q = new URLSearchParams(location.search), TOKEN = Q.get('t') || '', PCODE = (Q.get('p') || '').toUpperCase();
+var Q = new URLSearchParams(location.search), TOKEN = Q.get('t') || '', PCODE = (Q.get('p') || '').toUpperCase(), PREVIEW = Q.get('preview') === '1';
 var BRAND_LOGOS = { polymaker: 'brand/polymaker.svg' };
 var PLATFORMS = ['YouTube', 'Facebook page', 'Facebook group', 'Facebook profile', 'Instagram', 'TikTok'];
 var PL_WORD = { 'YouTube': ['Channel name', 'Subscribers', 'https://youtube.com/@…'], 'Facebook page': ['Page name', 'Followers', 'https://facebook.com/…'], 'Facebook group': ['Group name', 'Members', 'https://facebook.com/groups/…'], 'Facebook profile': ['Profile name', 'Friends / followers', 'https://facebook.com/…'], 'Instagram': ['Account name', 'Followers', 'https://instagram.com/…'], 'TikTok': ['Account name', 'Followers', 'https://tiktok.com/@…'] };
@@ -203,6 +206,7 @@ function render() {
   if (MODE === 'signin') { head(null, '', null); out.innerHTML = '<div class="card">' + signinFormHtml() + '</div>'; return; }
   if (!D) return;
   head(D.shop, D.creator.brand, D.creator);
+  if (PREVIEW) { document.body.classList.add('pv'); if (!document.querySelector('.pvbar')) document.body.insertAdjacentHTML('afterbegin', '<div class="pvbar">Preview \u2014 what this creator sees right now. Read-only; it refreshes by itself.</div>'); }
   if (FORM === 'profile' || D.creator.needProfile) { out.innerHTML = profileHtml(D.creator, D.creator.needProfile); return; }
   out.innerHTML = dashHtml();
   var ta = document.getElementById('l_url'); if (ta) ta.focus();
@@ -212,7 +216,7 @@ function loadMine() {
   return api().then(function (r) { if (!r.ok) { if (/sign in/i.test(r.error || '')) { saveSess(null); MODE = 'signin'; } else ERR = r.error || 'This page does not work right now.'; } else { D = r; MODE = 'in'; } render(); }, function () { ERR = 'The page could not be loaded. Check your connection and try again.'; render(); });
 }
 document.addEventListener('click', function (ev) {
-  var t = ev.target.closest('button'); if (!t || BUSY) return;
+  var t = ev.target.closest('button'); if (!t || BUSY || PREVIEW) return;
   if (t.id === 'signout') { saveSess(null); D = null; MODE = PCODE ? 'landing' : 'signin'; FORM = null; ERR = ''; render(); return; }
   if (t.id === 'to_signin') { FORM = 'signin'; if (MODE !== 'landing') MODE = 'signin'; render(); return; }
   if (t.id === 'to_forgot') { FORM = 'forgot'; render(); return; }
@@ -293,7 +297,7 @@ document.addEventListener('keydown', function (ev) { if (ev.key === 'Enter' && e
   var hp = new URLSearchParams((location.hash || '').replace(/^#/, ''));
   if (hp.get('access_token')) { saveSess({ access_token: hp.get('access_token'), refresh_token: hp.get('refresh_token'), at: Date.now() }); MODE = 'setpass'; render(); return; }
   if (hp.get('error_description')) { ERR = decodeURIComponent(hp.get('error_description').replace(/\+/g, ' ')) + ' Ask for a new link with "Forgot the password?".'; MODE = 'signin'; render(); return; }
-  if (TOKEN) { loadMine(); return; }
+  if (TOKEN) { loadMine(); if (PREVIEW) setInterval(function () { api().then(function (r) { if (r.ok) { D = r; render(); } }, function () {}); }, 20000); return; }
   if (SESS && SESS.access_token) { loadMine(); return; }
   if (PCODE) {
     MODE = 'landing'; render();
