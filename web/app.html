@@ -22552,7 +22552,7 @@ function adsClick(t) {
 table.list.cr td,table.list.cr th{font-size:13px}
 </style>
 <script>
-var CR = { data: null, err: '', month: '', open: 0, form: null, show: '', busy: false, reqs: null, link: {}, sponsor: null, events: {}, ytkey: false, prog: null };
+var CR = { data: null, err: '', month: '', open: 0, form: null, show: '', busy: false, reqs: null, link: {}, sponsor: null, events: {}, ytkey: false, prog: null, signlink: null };
 function crProgHtml() {
   if (!CR.prog) { CR.prog = { loading: true }; srv('erpCreatorProgramme', [], function (r) { CR.prog = r; repaint(); }, function (e) { CR.prog = { error: (e && e.message) || String(e) }; repaint(); }); return '<div class="loading">Making the link\u2026</div>'; }
   var l = CR.prog; if (l.loading) return '<div class="loading">Making the link\u2026</div>'; if (l.error) return '<div class="note err"><div class="ico">!</div><div>' + esc(l.error) + '</div></div>';
@@ -22633,7 +22633,9 @@ function crOneHtml(c) {
   if (CR.form === 'edit') return h + crCreatorForm(c) + '</div></section>';
   if (c.status === 'applied') h += '<div class="note" style="margin-top:8px"><div class="ico">!</div><div><b>Applied' + (c.applied_at ? ' ' + esc(new Date(c.applied_at).toLocaleString()) : '') + '</b>' + (c.profile_at ? ', profile filled ' + esc(new Date(c.profile_at).toLocaleString()) : ', profile not filled yet') + '. Read what he wrote below, then <b>Edit</b>: set the brand, the terms, the trial and switch him to <b>Active</b>.</div></div>';
   h += '<div class="cr-sec"><h3>Profile</h3><table class="list cr"><tbody>' + [['E-mail', c.email], ['WhatsApp', c.whatsapp], ['Channels', c.handle], ['Followers', c.followers], ['Links', c.links], ['Makes', c.niche], ['City', c.city], ['Audience', c.about], ['Login', c.hasLogin ? 'yes' : 'none yet']].map(function (x) { return '<tr><td style="color:var(--muted);white-space:nowrap">' + x[0] + '</td><td style="white-space:pre-wrap">' + (x[1] ? esc(x[1]).replace(/(https?:\/\/\S+)/g, '<a href="$1" target="_blank" rel="noopener">$1</a>') : '<span class="sku">\u2014</span>') + '</td></tr>'; }).join('') + '</tbody></table>' +
-       (c.hasLogin ? '' : '<div class="ap-row"><input class="i" id="cr_invmail" placeholder="His e-mail" style="max-width:260px"><button class="btn small" type="button" id="cr_invite">Send him a login</button><span class="sub" style="margin:0">He gets the choose-your-password e-mail and signs in on the creator page.</span></div>') + '</div>';
+       '<div class="ap-row"><input class="i" id="cr_invmail" placeholder="His e-mail" value="' + esc(c.email || '') + '" style="max-width:260px" inputmode="email"><button class="btn small primary" type="button" id="cr_signlink">Copy sign-in link</button><button class="btn small" type="button" id="cr_invite">E-mail it to him</button></div>' +
+       '<div class="sub" style="display:block;margin-top:4px">' + (c.hasLogin ? 'He has a login. A new link lets him choose a new password.' : 'Send the link on WhatsApp: he opens it, chooses his password, and is in. Works once, for one hour - make a new one any time.') + '</div>' +
+       (CR.signlink && CR.signlink.id === c.id ? '<div class="ap-share" style="margin-top:8px"><div><div class="ap-url">' + esc(CR.signlink.link) + '</div><div class="ap-row" style="margin-top:8px"><button class="btn small" type="button" data-apcopy="' + esc(CR.signlink.link) + '">Copy again</button><span class="sub" style="margin:0">For ' + esc(CR.signlink.email) + ' \u00b7 one use, one hour</span></div></div></div>' : '') + '</div>';
   if (CR.show === 'link') { crLinkLoad('creator', c.id); h += crLinkHtml('creator', c.id); }
   if (CR.show === 'brief') h += '<textarea class="i cr-ta" id="cr_brieftext">' + esc(CR.data.briefs[c.id] || '') + '</textarea><div class="ap-row"><button class="btn small" type="button" data-crcopy="cr_brieftext">Copy</button><span class="sub" style="margin:0">Send it on WhatsApp and get their OK back.</span></div>';
   h += '<div class="cr-nums" style="max-width:560px"><div><b>' + fmt(c.month.rolls) + '</b>rolls this month (\u09f3' + fmt(c.month.value) + ')</div><div><b>' + fmt(c.total.rolls) + '</b>rolls in all (\u09f3' + fmt(c.total.value) + ')</div><div><b>' + fmt(c.month.views) + '</b>views this month</div><div><b>' + c.month.rate + '%</b>engagement</div><div><b>' + fmt(c.month.leads) + '</b>enquiries</div><div><b>' + fmt(c.month.orders) + '</b>orders (\u09f3' + fmt(c.month.revenue) + ')</div></div>' +
@@ -22669,10 +22671,19 @@ function crOneHtml(c) {
 }
 document.addEventListener('click', function (ev) {
   if (VIEW !== 'campaigns' || CP.tab !== 'creators') return;
-  var t = ev.target && ev.target.closest ? ev.target.closest('[data-crmon],[data-cropen],[data-crform],[data-crrm],[data-credit],[data-crcopy],[data-crdec],#cr_new,#cr_report,#cr_edit,#cr_brief,#cr_back,#cr_save,#cr_cancel,#cs_save,#cp2_save,#cj_save,#cr_sponsor,#cr_yt,#cr_ytsave,#cr_fetch,#cr_link,#cr_act,#cr_prog,#cr_invite') : null; if (!t) return;
+  var t = ev.target && ev.target.closest ? ev.target.closest('[data-crmon],[data-cropen],[data-crform],[data-crrm],[data-credit],[data-crcopy],[data-crdec],#cr_new,#cr_report,#cr_edit,#cr_brief,#cr_back,#cr_save,#cr_cancel,#cs_save,#cp2_save,#cj_save,#cr_sponsor,#cr_yt,#cr_ytsave,#cr_fetch,#cr_link,#cr_act,#cr_prog,#cr_invite,#cr_signlink') : null; if (!t) return;
   if (t.id === 'cr_prog') { CR.show = CR.show === 'prog' ? '' : 'prog'; repaint(); return; }
   if (t.id === 'cr_progsave') { srv('erpCreatorProgramme', [{ brand: (el('cr_progbrand') || {}).value || '' }], function (r) { CR.prog = r; repaint(); toast('Saved.'); }, function (e) { toast(esc((e && e.message) || e), true); }); return; }
   if (t.id === 'cr_invite' && c) { var em = (el('cr_invmail') || {}).value || ''; if (!em) { toast('His e-mail first.', true); return; } crCall('erpCreatorInvite', { creator_id: c.id, email: em }, 'Sent. He chooses a password from the e-mail.'); return; }
+  if (t.id === 'cr_signlink' && c) {
+    var em2 = ((el('cr_invmail') || {}).value || '').trim(); if (!em2) { toast('His e-mail first.', true); return; }
+    t.disabled = true;
+    srv('erpCreatorInvite', [{ creator_id: c.id, email: em2, mode: 'link' }], function (r) {
+      CR.signlink = { id: c.id, link: r.link, email: r.email }; CR.data = null; repaint();
+      try { navigator.clipboard.writeText(r.link).then(function () { toast('Link copied. Send it to him on WhatsApp.'); }, function () { toast('Link ready below. Copy it.'); }); } catch (e) { toast('Link ready below. Copy it.'); }
+    }, function (e) { t.disabled = false; toast(esc((e && e.message) || e), true, 9000); });
+    return;
+  }
   if (t.getAttribute('data-crdec')) { var dk = t.getAttribute('data-crdec').split(':'), rid = +dk[1]; var qn = el('crq_' + rid), nn = el('crn_' + rid); if (dk[0] === 'decline' && !confirm('Decline this request?')) return; crDecide(rid, dk[0], qn ? num(qn.value) : 0, nn ? nn.value : ''); return; }
   if (t.id === 'cr_sponsor') { CR.show = CR.show === 'sponsor' ? '' : 'sponsor'; repaint(); return; }
   if (t.id === 'cr_yt') { CR.show = CR.show === 'yt' ? '' : 'yt'; repaint(); return; }

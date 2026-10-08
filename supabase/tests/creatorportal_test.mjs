@@ -160,4 +160,20 @@ check('invite: a login and the e-mail for the hand-added creator', r.ok && r.res
 r = await owner('erpCreatorInvite', [{ creator_id: setu, email: 'rana@example.com' }]);
 check('an e-mail another creator uses is refused', !r.ok, r);
 
+
+// a one-time sign-in link to send on WhatsApp instead of the e-mail
+deps.links.length = 0;
+r = await owner('erpCreatorSave', [{ name: 'Mr. Robin', brand: 'Polymaker', videos_month: 2, posts_month: 2, rolls_video: 2 }]);
+const robin2 = r.result.creators.find((c) => c.name === 'Mr. Robin').id;
+r = await owner('erpCreatorInvite', [{ creator_id: robin2, email: 'Robin@Example.com', mode: 'link' }]);
+check('the link comes back (nothing mailed), it leads to the creator page, his login is made', r.ok && /type=recovery/.test(r.result.link) && /creator/.test(decodeURIComponent(r.result.link)) && deps.links.length === 1 && deps.links[0].email === 'robin@example.com', r);
+r = await owner('erpCreators', [{}]);
+check('he now has a login and his e-mail on the card', r.ok && r.result.creators.find((c) => c.id === robin2).hasLogin && r.result.creators.find((c) => c.id === robin2).email === 'robin@example.com', r);
+r = await mgr('erpCreatorInvite', [{ creator_id: robin2, email: 'robin@example.com', mode: 'link' }]);
+check('a manager cannot make it', !r.ok, r);
+const ownerMail = (await sql`select email from auth.users where id = ${FIX.U.owner}`)[0].email;
+r = await owner('erpCreatorInvite', [{ creator_id: robin2, email: ownerMail, mode: 'link' }]);
+check('never for an e-mail that signs in to an ERP (would change that password)', !r.ok && /ERP/.test(r.error), r);
+r = await owner('erpCreatorEvents', [{ creator_id: robin2 }]);
+check('the link is on his trail', r.ok && r.result.events.some((e) => e.what === 'sign-in link'), r);
 await done();

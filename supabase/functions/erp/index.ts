@@ -277,10 +277,10 @@ function projectParts(p: Project) {
     if (!r.ok) throw new Error('The e-mail could not be sent (' + r.status + ').');
   }
   // the same "choose your password" link, made without an e-mail (the platform admin hands it over, e.g. on WhatsApp)
-  async function recoveryLink(email: string) {
+  async function recoveryLink(email: string, redirectTo?: string) {
     const r = await fetch(SUPABASE_URL + '/auth/v1/admin/generate_link', {
       method: 'POST', headers: { ...svc, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ type: 'recovery', email, redirect_to: appBack() }),
+      body: JSON.stringify({ type: 'recovery', email, redirect_to: redirectTo || appBack() }),
     });
     const j: any = await r.json().catch(() => null);
     const link = j && (j.action_link || (j.properties && j.properties.action_link));

@@ -92,6 +92,8 @@ export const deps = {
   async sendReset(email) { deps.mails.push(email); },
   resets: [],
   async sendResetTo(email, to) { deps.resets.push({ email, to }); },
+  links: [],
+  async recoveryLink(email, to) { deps.links.push({ email, to }); return 'https://auth.test/verify?type=recovery&email=' + encodeURIComponent(email) + '&redirect_to=' + encodeURIComponent(to || ''); },
   magic: [],
   async sendMagic(email, to) { deps.magic.push({ email, to }); },
   async createAuthUser(name) {

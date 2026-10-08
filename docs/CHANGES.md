@@ -1357,3 +1357,14 @@ leaves every company's menu, the provider's own too; a company owner sees "Off b
 back (`erpAppSet` scope mine refuses); the company's own choice is kept for when it is allowed again. Core screens
 cannot be taken out. apps_test 44.
 - Not done: no server-side refusal of a hidden screen's calls (as before: the menu hides; roles still guard money).
+
+## Creator sign-in link without e-mail (tag signlink-1, 8 Oct 2026)
+
+Owner: the creator gives his e-mail; the owner hands him a link that asks him to set a password. Creators > the
+creator > e-mail row (always shown, pre-filled) > **Copy sign-in link**: `erpCreatorInvite` with `mode: 'link'` makes
+or finds his login and returns a one-time Supabase recovery link (`deps.recoveryLink(email, redirect)` now takes a
+redirect) that lands on creatorsdesk.pages.dev/creator -> "Choose your password" -> his page. Nothing is mailed;
+copied to the clipboard and shown to copy again. One use, one hour (Auth `mailer_otp_exp`). **E-mail it to him**
+stays. Guard (both ways): an e-mail that signs in to an ERP here is refused - its password link would change that
+ERP password. Verified live with a throwaway creator (303 to the creator page with a recovery session), then removed.
+creatorportal_test 58.

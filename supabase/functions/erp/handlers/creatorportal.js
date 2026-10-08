@@ -96,8 +96,17 @@ export async function erpCreatorInvite(ctx, payload) {
   if (!c) throw new Error('No such creator.');
   const taken = (await ctx.tx`select id from erp_creators where business_id = ${ctx.biz} and lower(email) = ${email} and id <> ${id}`)[0];
   if (taken) throw new Error('Another creator already uses that e-mail.');
+  // an e-mail that signs in to an ERP: its password link would change that ERP password - never hand it to a creator
+  const erpUser = (await ctx.deps.sql`select 1 from auth.users u join memberships m on m.user_id = u.id where lower(u.email) = ${email} limit 1`)[0];
+  if (erpUser) throw new Error('That e-mail signs in to an ERP here. Ask the creator for his own e-mail.');
   const userId = await userFor(ctx.deps, email, str(c.name));
   await ctx.tx`update erp_creators set user_id = ${userId}, email = ${email}, updated_at = ${ctx.now} where id = ${id}`;
+  if (p.mode === 'link') {
+    if (!ctx.deps.recoveryLink) throw new Error('This server cannot make the link.');
+    const link = await ctx.deps.recoveryLink(email, pageUrl(ctx.deps, 'creator'));
+    await ev(ctx, { creator_id: id, who: 'owner', what: 'sign-in link', detail: email });
+    return { link, email };
+  }
   await ctx.deps.sendResetTo(email, pageUrl(ctx.deps, 'creator'));
   await ev(ctx, { creator_id: id, who: 'owner', what: 'invited', detail: email });
   return { sent: true, email };
