@@ -66,13 +66,13 @@ const ALLOWED_ORIGINS = [
 ];
 
 // the page's own address (a company copy's ERP_APP_URL, the provider's public copy ERP_PUBLIC_URL) is always allowed
-const OWN_ORIGINS = [Deno.env.get('ERP_APP_URL'), Deno.env.get('ERP_PUBLIC_URL')]
+const OWN_ORIGINS = [Deno.env.get('ERP_APP_URL'), Deno.env.get('ERP_PUBLIC_URL'), Deno.env.get('ERP_CREATOR_URL')]
   .map((u) => { try { return u ? new URL(u).origin : ''; } catch (_) { return ''; } }).filter(Boolean);
 
 // open: the public installer routes (no sign-in, nothing private) answer any page, wherever the install link was opened
 function cors(origin: string | null, open = false) {
   const ok = origin && (open || ALLOWED_ORIGINS.includes(origin) || OWN_ORIGINS.includes(origin) ||
-    /^https:\/\/([a-z0-9-]+\.)?(costareen-erp|office-erp)\.pages\.dev$/.test(origin) || inFreeZone(origin));
+    /^https:\/\/([a-z0-9-]+\.)?(costareen-erp|office-erp|creatorsdesk)\.pages\.dev$/.test(origin) || inFreeZone(origin));
   return {
     'Access-Control-Allow-Origin': ok ? origin! : ALLOWED_ORIGINS[0],
     'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-erp-session, x-region, x-erp-tenant',
@@ -93,7 +93,7 @@ function pageAllowed(origin: string | null, domain: string): boolean {
   if (!origin) return true;
   // https only: a copy run on someone's own computer (localhost) is refused too
   if ((ALLOWED_ORIGINS.includes(origin) || OWN_ORIGINS.includes(origin)) && origin.startsWith('https://')) return true;
-  if (/^https:\/\/([a-z0-9-]+\.)?(costareen-erp|office-erp)\.pages\.dev$/.test(origin)) return true;
+  if (/^https:\/\/([a-z0-9-]+\.)?(costareen-erp|office-erp|creatorsdesk)\.pages\.dev$/.test(origin)) return true;
   let host = '';
   try { const u = new URL(origin); if (u.protocol !== 'https:') return false; host = u.hostname.toLowerCase(); } catch (_) { return false; }
   if (FREE_ZONE && (host === FREE_ZONE || host.endsWith('.' + FREE_ZONE))) return true;
@@ -313,6 +313,7 @@ const INSTALL = { id: Deno.env.get('ERP_INSTALL_ID') ?? '', key: Deno.env.get('E
 const INSTALL_ENV = { controlUrl: SUPABASE_URL + '/functions/v1/erp', appUrl: Deno.env.get('ERP_APP_URL') ?? 'https://erp.costareen.com/', renderUrl: RENDER_URL, renderKey: RENDER_KEY,
   // the neutral address customers see (install links, a copy without its own address), set by deploy/set_installer.py
   publicUrl: Deno.env.get('ERP_PUBLIC_URL') ?? '',
+  creatorUrl: Deno.env.get('ERP_CREATOR_URL') ?? '',   // the creator / sponsor pages: an address with no company name at all
   oauth: { clientId: Deno.env.get('SUPABASE_OAUTH_CLIENT_ID') ?? '', clientSecret: Deno.env.get('SUPABASE_OAUTH_CLIENT_SECRET') ?? '', redirect: SUPABASE_URL + '/functions/v1/erp?install=oauth_back' },
   cloudflare: { token: Deno.env.get('ERP_CF_TOKEN') ?? '', account: Deno.env.get('ERP_CF_ACCOUNT') ?? '', project: Deno.env.get('ERP_PUBLIC_PROJECT') ?? '' },
   // the provider's own domain where each company gets <name>.<zone> by itself (Stage 1b)

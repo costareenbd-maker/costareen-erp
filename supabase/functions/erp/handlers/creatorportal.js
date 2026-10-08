@@ -32,7 +32,11 @@ async function tokenFor(deps, kind, source, biz, ref) {
   const sig = new Uint8Array(await crypto.subtle.sign('HMAC', k, enc.encode(kind + '|' + source + '|' + biz + '|' + ref)));
   return btoa(String.fromCharCode(...sig)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '').slice(0, 24);
 }
-function pageUrl(deps, name) { return pubBase(deps).check.replace(/check$/, name); }   // the neutral address: no company name in the link
+/** The creator / sponsor pages' address: ERP_CREATOR_URL (a name-free host) when set, else the neutral public address. */
+function pageUrl(deps, name) {
+  const own = str(deps && deps.installEnv && deps.installEnv.creatorUrl);
+  return (own ? own.replace(/\/?$/, '/') : pubBase(deps).check.replace(/check$/, '')) + name;
+}
 const PROFILE = ['handle', 'platforms', 'followers', 'links', 'niche', 'city', 'about', 'whatsapp', 'filament'];
 function profileDone(c) { return !!(str(c.handle) && str(c.platforms) && str(c.followers) && str(c.links)); }
 function randomCode(n) { const a = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789', b = crypto.getRandomValues(new Uint8Array(n)); return [...b].map((x) => a[x % a.length]).join(''); }

@@ -22,6 +22,7 @@ REF = 'oqzcuuytytqadqjlwdsh'
 PAGES_PROJECT = 'costareen-erp'
 # the neutral address customers see (install links; a company copy without its own address): no company name in it
 PUBLIC_PROJECT = 'office-erp'
+CREATOR_PROJECT = 'creatorsdesk'      # the creator / sponsor pages alone, on a host with no company name (ERP_CREATOR_URL)
 DOMAIN = 'erp.costareen.com'
 ZONE = 'costareen.com'
 
@@ -127,6 +128,16 @@ def step_web():
                '--branch=main', '--commit-dirty=true']
         print(' '.join(cmd))
         subprocess.check_call(cmd, shell=(os.name == 'nt'))
+    # the creator / sponsor pages on their own host: only those two pages, the logos and the icons
+    cdir = tempfile.mkdtemp(prefix='erp-creator-')
+    for f in ['creator.html', 'sponsor.html', '_headers']:
+        shutil.copy(os.path.join(ROOT, 'web', f), cdir)
+    shutil.copytree(os.path.join(ROOT, 'web', 'brand'), os.path.join(cdir, 'brand'))
+    shutil.copytree(os.path.join(ROOT, 'web', 'icons'), os.path.join(cdir, 'icons'))
+    open(os.path.join(cdir, 'index.html'), 'w', encoding='utf-8').write('<!doctype html><meta charset="utf-8"><meta http-equiv="refresh" content="0; url=/creator"><title>Creator programme</title>')
+    cmd = ['npx', '-y', 'wrangler@3', 'pages', 'deploy', cdir, '--project-name=' + CREATOR_PROJECT, '--branch=main', '--commit-dirty=true']
+    print(' '.join(cmd))
+    subprocess.check_call(cmd, shell=(os.name == 'nt'))
 
 
 def step_domain():

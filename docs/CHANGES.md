@@ -1312,3 +1312,12 @@ he logs in; the owner sees the data and sets active / trial / terms; "super prof
 - Not done: no e-mail to the creator when approved (he sees it on his page); no e-mail to the owner when someone
   joins (the Applied badge is the signal); one creator per e-mail across the provider; the sender name of the e-mail
   is still "Costareen ERP" (Supabase SMTP sender).
+
+## Creator pages on a name-free host (tag accounts-2, 8 Oct 2026)
+
+Owner: no "3dowala" in the link either. The creator and sponsor pages now live on their own Cloudflare Pages
+project **creatorsdesk** (`https://creatorsdesk.pages.dev/creator`, `/sponsor`; root redirects to /creator; only
+those two pages, the brand logos, the icons and `_headers` are published there - `deploy.py web` does it). Function
+secret `ERP_CREATOR_URL` tells `pageUrl()` where the pages are (falls back to the neutral public address); the host
+is in CORS (`OWN_ORIGINS` + the pages.dev rule) and in the Supabase Auth redirect allow-list. The first name tried,
+`creator-desk`, got a suffixed subdomain (`creator-desk-55l`, the plain one is someone else's site) and was deleted.
