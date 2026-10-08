@@ -249,4 +249,13 @@ check('"password set" is on his trail with the address', r.ok && r.result.events
 r = await owner('erpCreatorInvite', [{ creator_id: NEWID, email: 'newbie@example.com', mode: 'link' }]);
 r = await get('pub=creator&setup=' + SETUP);
 check('the owner can make the same link set a password again', r.ok && r.setup && !r.used, r);
+
+// a failed sign-in: a creator whose set-up link is still open is told to use it
+r = await owner('erpCreatorInvite', [{ email: 'never.set@example.com', mode: 'link' }]);
+r = await post('pub=creator', { action: 'hint', email: 'never.set@example.com' }, '10.0.6.1');
+check('never set a password: the hint says so', r.ok && r.hint === 'setup', r);
+r = await post('pub=creator', { action: 'hint', email: 'newbie@example.com' }, '10.0.6.1');
+check('a creator who has set his password: no hint (just a wrong password)', r.ok && r.hint === '', r);
+r = await post('pub=creator', { action: 'hint', email: 'nobody@example.com' }, '10.0.6.1');
+check('an unknown e-mail: no hint', r.ok && r.hint === '', r);
 await done();

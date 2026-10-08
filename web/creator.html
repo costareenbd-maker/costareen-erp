@@ -244,7 +244,13 @@ document.addEventListener('click', function (ev) {
     var email = v('s_email'), pass = v('s_pass'); if (!email || !pass) return;
     BUSY = true; render();
     fetch(SB_URL + '/auth/v1/token?grant_type=password', { method: 'POST', headers: { apikey: SB_ANON, 'content-type': 'application/json' }, body: JSON.stringify({ email: email, password: pass }) }).then(function (r) { return r.json(); }).then(function (j) {
-      if (!j.access_token) return fail(j);
+      if (!j.access_token) {
+        // never set a password? say so, instead of "wrong password"
+        return api({ action: 'hint', email: email }).then(function (h) {
+          if (h && h.ok && h.hint === 'setup') return fail({ error: 'Your password is not set yet. Open the link we sent you on WhatsApp and choose a password there (at least 10 characters). Then you are in.' });
+          fail(j);
+        }, function () { fail(j); });
+      }
       saveSess({ access_token: j.access_token, refresh_token: j.refresh_token, at: Date.now() }); BUSY = false; FORM = null; loadMine();
     }, fail); return;
   }

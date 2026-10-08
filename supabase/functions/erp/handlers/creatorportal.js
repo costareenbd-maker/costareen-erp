@@ -500,6 +500,17 @@ export async function route(deps, R, what, method, params, body, ip, authHeader)
       await deps.control`update erp_creator_links set kind = 'setup-used' where token_hash = ${h}`;   // from now on it opens his sign-in
       return out;
     }
+    // a sign-in failed: was his password ever set? (a creator who never finished his set-up link is told so)
+    if (action === 'hint') {
+      const email = str(b.email).toLowerCase();
+      if (!okEmail(email)) return { hint: '' };
+      await limit(deps, ip, 'creator-hint', 30);
+      const c = (await deps.sql`select id, business_id from erp_creators where lower(email) = ${email} and user_id is not null limit 1`)[0];
+      if (!c) return { hint: '' };
+      const open = (await deps.control`select 1 from erp_creator_links where business_id = ${c.business_id} and kind = 'setup' and ref = ${String(c.id)} limit 1`)[0];
+      const done = (await deps.sql`select 1 from erp_creator_events where creator_id = ${c.id} and what = 'password set' limit 1`)[0];
+      return { hint: open && !done ? 'setup' : '' };
+    }
     // forgotten password: a fresh link, always the same answer (no e-mail guessing)
     if (action === 'forgot') {
       const email = str(b.email).toLowerCase();

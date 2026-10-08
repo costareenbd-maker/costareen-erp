@@ -1448,3 +1448,13 @@ while the page asked for 8 - a 8-9 character password was refused. Fixed:
   deleted by the old code, was restored as `setup-used` (same address he has).
 - **Approve** works before the profile (with a confirm); he is still asked for his profile on his next visit.
 creatorportal_test 86.
+
+## Sign-in tells a creator his password was never set (tag setup-3, 8 Oct 2026)
+
+Owner: raihanmokerrobin could not log in. Live: his password was never saved (only tries at 14:23, before the
+10-character fix) and he had not opened his set-up link since; he was typing a password on the sign-in page that did
+not exist. His link answers correctly. Now a failed sign-in asks `?pub=creator action:'hint'`: when that e-mail's
+set-up link is still open and no "password set" is on his trail, the page says "Your password is not set yet. Open
+the link we sent you on WhatsApp and choose a password there (at least 10 characters)" instead of "Wrong e-mail or
+password". Rate-limited; unknown e-mails and creators with a password get no hint. Checked live for both cases.
+creatorportal_test 89.
