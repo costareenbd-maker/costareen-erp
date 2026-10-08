@@ -432,28 +432,4 @@ export async function route(deps, R, what, method, params, body, ip, authHeader)
   }
   return null;
 }
-/** Owner: wipe the programme after a trial run - every creator, request, filament line, post, project, event and
- *  link of this business; the creators' logins too (never a login that is also an ERP member). Stock is untouched.
- *  A new join code is made, so a test link shared anywhere stops working. Type RESET to confirm. */
-export async function erpCreatorReset(ctx, payload) {
-  needOwner(ctx);
-  if (str((payload || {}).confirm) !== 'RESET') throw new Error('Type RESET to wipe the creator programme.');
-  const creators = await ctx.tx`select id, user_id from erp_creators where business_id = ${ctx.biz}`;
-  const n = { creators: creators.length, logins: 0 };
-  for (const c of creators) {
-    if (!c.user_id) continue;
-    const member = (await ctx.tx`select 1 from memberships where user_id = ${c.user_id} limit 1`)[0];
-    if (member) continue;   // an ERP person who also tried the creator page keeps his login
-    try { await ctx.deps.removeUser(String(c.user_id)); n.logins++; } catch (_) { /* already gone */ }
-  }
-  n.events = (await ctx.tx`delete from erp_creator_events where business_id = ${ctx.biz}`).count;
-  n.posts = (await ctx.tx`delete from erp_creator_posts where business_id = ${ctx.biz}`).count;
-  n.ships = (await ctx.tx`delete from erp_creator_ships where business_id = ${ctx.biz}`).count;
-  n.requests = (await ctx.tx`delete from erp_creator_requests where business_id = ${ctx.biz}`).count;
-  n.projects = (await ctx.tx`delete from erp_creator_projects where business_id = ${ctx.biz}`).count;
-  await ctx.tx`delete from erp_creators where business_id = ${ctx.biz}`;
-  if (ctx.deps.control) { try { await ctx.deps.control`delete from erp_creator_links where business_id = ${ctx.biz}`; } catch (_) { /* no links yet */ } }
-  await setConfig(ctx, 'creator_programme_code', randomCode(10));
-  return { reset: true, ...n, programme: await erpCreatorProgramme(ctx, {}) };
-}
-export const HANDLERS = { erpCreatorPortalLink, erpSponsorLink, erpCreatorRequests, erpCreatorDecide, erpCreatorEvents, erpYoutubeKey, erpCreatorRefresh, erpCreatorProgramme, erpCreatorInvite, erpCreatorReset };
+export const HANDLERS = { erpCreatorPortalLink, erpSponsorLink, erpCreatorRequests, erpCreatorDecide, erpCreatorEvents, erpYoutubeKey, erpCreatorRefresh, erpCreatorProgramme, erpCreatorInvite };

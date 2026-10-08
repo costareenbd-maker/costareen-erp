@@ -1339,3 +1339,8 @@ TikTok) and its own block appears - name, subscribers / followers / members / fr
 Stored as JSON (`erp_creators.channels`, migration 103); the one-line strings the ERP and the sponsor page show
 (handle, platforms, followers, links) are derived from it. Filament field gone from the profile. On a monitor
 (>= 900 px) the page is wider (1040 px), type 17 px, channel blocks two abreast; phones unchanged. 60 tests.
+
+## Reset removed (tag accounts-5, 8 Oct 2026)
+
+Owner, after his trial run and one live wipe: "every data must stay". `erpCreatorReset`, its button and its tests
+are gone; there is no way to wipe the creator programme from the ERP any more. 53 tests.

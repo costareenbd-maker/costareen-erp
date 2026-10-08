@@ -160,19 +160,4 @@ check('invite: a login and the e-mail for the hand-added creator', r.ok && r.res
 r = await owner('erpCreatorInvite', [{ creator_id: setu, email: 'rana@example.com' }]);
 check('an e-mail another creator uses is refused', !r.ok, r);
 
-// the reset after a trial run
-r = await mgr('erpCreatorReset', [{ confirm: 'RESET' }]);
-check('a manager cannot reset', !r.ok, r);
-r = await owner('erpCreatorReset', [{ confirm: 'reset' }]);
-check('the word must be RESET', !r.ok, r);
-const before = (await sql`select count(*)::int as n from auth.users where id = ${ranaUser}`)[0].n;
-r = await owner('erpCreatorReset', [{ confirm: 'RESET' }]);
-check('reset: creators, logins, lines gone; a new join code', r.ok && r.result.creators === 2 && r.result.logins >= 1 && r.result.programme.code !== CODE && before === 1 && (await sql`select count(*)::int as n from auth.users where id = ${ranaUser}`)[0].n === 0, r);
-r = await owner('erpCreators', [{}]);
-check('nothing left', r.ok && r.result.creators.length === 0, r);
-r = await get('pub=creator&p=' + CODE);
-check('the old join link is dead', !r.ok, r);
-r = await get('pub=creator&t=' + CT);
-check('the old creator link is dead', !r.ok, r);
-check('the other business is untouched', (await sql`select count(*)::int as n from erp_creators where business_id = ${FIX.B2}`)[0].n === 0, 'ok');
 await done();
