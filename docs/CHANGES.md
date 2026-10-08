@@ -1321,3 +1321,11 @@ those two pages, the brand logos, the icons and `_headers` are published there -
 secret `ERP_CREATOR_URL` tells `pageUrl()` where the pages are (falls back to the neutral public address); the host
 is in CORS (`OWN_ORIGINS` + the pages.dev rule) and in the Supabase Auth redirect allow-list. The first name tried,
 `creator-desk`, got a suffixed subdomain (`creator-desk-55l`, the plain one is someone else's site) and was deleted.
+
+## Reset the creator programme after a trial run (tag accounts-3, 8 Oct 2026)
+
+Owner wants to try the whole flow himself first, then wipe it and send the real links. Campaigns > Creators >
+**Reset the programme…** (type RESET): `erpCreatorReset` deletes every creator, request, filament line, post,
+project, activity line and link of the business, removes the creators' Supabase logins (never one that is also an
+ERP member), and makes a new join code so a test link shared anywhere stops working. Stock and invoices untouched.
+Tests: 7 more in `creatorportal_test.mjs` (59).
