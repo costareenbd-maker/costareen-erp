@@ -89,6 +89,8 @@ export const deps = {
     return r[0].id;
   },
   async removeUser(id) { await sql`delete from auth.users where id = ${id}`; },
+  passwords: {},
+  async setUserPassword(id, pw) { deps.passwords[id] = pw; },
   async sendReset(email) { deps.mails.push(email); },
   resets: [],
   async sendResetTo(email, to) { deps.resets.push({ email, to }); },

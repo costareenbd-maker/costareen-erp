@@ -166,7 +166,7 @@ deps.links.length = 0;
 r = await owner('erpCreatorSave', [{ name: 'Mr. Robin', brand: 'Polymaker', videos_month: 2, posts_month: 2, rolls_video: 2 }]);
 const robin2 = r.result.creators.find((c) => c.name === 'Mr. Robin').id;
 r = await owner('erpCreatorInvite', [{ creator_id: robin2, email: 'Robin@Example.com', mode: 'link' }]);
-check('the link comes back (nothing mailed), it leads to the creator page, his login is made', r.ok && /type=recovery/.test(r.result.link) && /creator/.test(decodeURIComponent(r.result.link)) && deps.links.length === 1 && deps.links[0].email === 'robin@example.com', r);
+check('the set-up link comes back (nothing mailed), on the creator page, his login is made', r.ok && /\/creator\?setup=[A-Za-z0-9_-]{16,}$/.test(r.result.link), r);
 r = await owner('erpCreators', [{}]);
 check('he now has a login and his e-mail on the card', r.ok && r.result.creators.find((c) => c.id === robin2).hasLogin && r.result.creators.find((c) => c.id === robin2).email === 'robin@example.com', r);
 r = await mgr('erpCreatorInvite', [{ creator_id: robin2, email: 'robin@example.com', mode: 'link' }]);
@@ -180,7 +180,7 @@ check('the link is on his trail', r.ok && r.result.events.some((e) => e.what ===
 // the owner's flow: only an e-mail -> an applied creator + a sign-in link; he fills his profile; approve; preview
 deps.links.length = 0;
 r = await owner('erpCreatorInvite', [{ email: 'Newbie@Example.com', mode: 'link' }]);
-check('e-mail only: a creator is made (applied, programme brand) and the link comes back', r.ok && r.result.created > 0 && /type=recovery/.test(r.result.link) && deps.links.length === 1, r);
+check('e-mail only: a creator is made (applied, programme brand) and the set-up link comes back', r.ok && r.result.created > 0 && /\?setup=/.test(r.result.link), r);
 const NEWID = r.result.created;
 r = await owner('erpCreators', [{}]);
 const nb = r.result.creators.find((c) => c.id === NEWID);
@@ -225,4 +225,24 @@ r = await get('pub=go&c=ZZZZZZZ', '10.0.1.3');
 check('an unknown link is refused', !r.ok, r);
 r = await get('pub=sponsor&t=' + ST);
 check('the brand sees the clicks per creator', r.ok && r.creators.some((c) => c.totals.clicks === 3), r.ok ? r.creators.map((c) => c.totals) : r);
+
+// the set-up link: no expiry, opening it changes nothing, setting the password spends it
+const SETUP = (await owner('erpCreatorInvite', [{ creator_id: NEWID, email: 'newbie@example.com', mode: 'link' }])).result.link.split('setup=')[1];
+r = await owner('erpCreatorInvite', [{ creator_id: NEWID, email: 'newbie@example.com', mode: 'link' }]);
+check('the same creator gets the same link every time', r.ok && r.result.link.split('setup=')[1] === SETUP, r);
+r = await get('pub=creator&setup=' + SETUP);
+check('opening it shows who it is for', r.ok && r.setup && r.email === 'newbie@example.com', r);
+r = await get('pub=creator&setup=' + SETUP);
+check('opening it again (a WhatsApp preview) still works', r.ok && r.setup, r);
+r = await post('pub=creator', { action: 'setup', setup: SETUP, password: 'short' });
+check('a short password is refused, the link still works', !r.ok && /8/.test(r.error), r);
+r = await post('pub=creator', { action: 'setup', setup: SETUP, password: 'a-good-password' }, '10.0.5.5');
+check('the password is set on his login', r.ok && r.email === 'newbie@example.com' && deps.passwords[nbUser] === 'a-good-password', r);
+r = await get('pub=creator&setup=' + SETUP);
+check('then the link is spent: a plain message to sign in', !r.ok && /already used/.test(r.error), r);
+r = await owner('erpCreatorEvents', [{ creator_id: NEWID }]);
+check('"password set" is on his trail with the address', r.ok && r.result.events.some((e) => e.what === 'password set' && e.ip === '10.0.5.5'), r);
+r = await owner('erpCreatorInvite', [{ creator_id: NEWID, email: 'newbie@example.com', mode: 'link' }]);
+r = await get('pub=creator&setup=' + SETUP);
+check('the owner can make the same link work again', r.ok && r.setup, r);
 await done();

@@ -1418,3 +1418,18 @@ product page) or a link the owner sets per project (**goes to … ✎** on the p
 creator page (project slot: "Your link for this video", clicks, Copy), owner's request rows, the brand's page
 (clicks per project, per creator, in total - "counted by the system"). Live test with a throwaway creator, removed.
 creatorportal_test 76.
+
+## Set-up links that never run out (tag setup-1, 8 Oct 2026)
+
+Owner: the links he had sent should keep working, no expiry. Found: all three live sign-in links were spent 6-8
+seconds after they were made (WhatsApp's link preview or the owner opening them) - Supabase recovery links are
+one-use and one-hour, so the creators could never get in; none had filled a profile. Those three cannot be revived.
+New: **Copy sign-in link** now gives our own set-up link `creatorsdesk.pages.dev/creator?setup=<24 chars>`: the
+same address every time for the same creator (HMAC of the creator, control `erp_creator_links` kind `setup`), no
+expiry, opening it (or a preview bot) changes nothing; it shows "Welcome - choose a password for <e-mail>", the
+server sets the password (`deps.setUserPassword`, Supabase admin PUT) and the page signs him in; then the link is
+spent ("already used - sign in"); pressing the button again makes the same link work again. "password set" is on his
+trail. Verified live end to end (open twice, set, real sign-in, spent), test removed. New links made for the three
+real creators (ids 5-7) for the owner to resend. "E-mail it to him" still uses Supabase's one-hour e-mail.
+creatorportal_test 84.
+- Note: capital_test failed once in the full run (2 checks on a struck-out return line) and passed 49/49 alone right after; capital code untouched - a timing flake, to watch.

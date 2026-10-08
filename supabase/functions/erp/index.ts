@@ -242,6 +242,12 @@ function projectParts(p: Project) {
     if (!r.ok || !j.id) throw new Error('Could not create the login (' + r.status + ').');
     return String(j.id);
   }
+  async function setUserPassword(id: string, password: string) {
+    const r = await fetch(SUPABASE_URL + '/auth/v1/admin/users/' + encodeURIComponent(id), {
+      method: 'PUT', headers: { ...svc, 'Content-Type': 'application/json' }, body: JSON.stringify({ password, email_confirm: true }),
+    });
+    if (!r.ok) { const j: any = await r.json().catch(() => ({})); throw new Error(String(j.msg || j.message || 'The password could not be saved (' + r.status + ').')); }
+  }
   async function removeUser(id: string) {
     await fetch(SUPABASE_URL + '/auth/v1/admin/users/' + encodeURIComponent(id), { method: 'DELETE', headers: svc });
   }
@@ -287,7 +293,7 @@ function projectParts(p: Project) {
     if (!r.ok || !link) throw new Error('The link could not be made (' + r.status + (j && (j.msg || j.message) ? ': ' + String(j.msg || j.message).slice(0, 120) : '') + ').');
     return String(link);
   }
-  return { verifyUser, storage, createAuthUser, createOwner, removeUser, sendMagic, sendReset, sendResetTo, recoveryLink };
+  return { verifyUser, storage, createAuthUser, createOwner, removeUser, sendMagic, sendReset, sendResetTo, recoveryLink, setUserPassword };
 }
 
 // --------------------------------------------------------------- PDF render

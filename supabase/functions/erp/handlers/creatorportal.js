@@ -113,14 +113,35 @@ export async function erpCreatorInvite(ctx, payload) {
   const userId = await userFor(ctx.deps, email, str(c.name));
   await ctx.tx`update erp_creators set user_id = ${userId}, email = ${email}, updated_at = ${ctx.now} where id = ${id}`;
   if (p.mode === 'link') {
-    if (!ctx.deps.recoveryLink) throw new Error('This server cannot make the link.');
-    const link = await ctx.deps.recoveryLink(email, pageUrl(ctx.deps, 'creator'));
+    const link = await setupLink(ctx, id);
     await ev(ctx, { creator_id: id, who: 'owner', what: 'sign-in link', detail: email });
     return { link, email, creator_id: id, created };
   }
   await ctx.deps.sendResetTo(email, pageUrl(ctx.deps, 'creator'));
   await ev(ctx, { creator_id: id, who: 'owner', what: 'invited', detail: email });
   return { sent: true, email, creator_id: id, created };
+}
+/** The creator's set-up link: the same address every time for the same creator, no expiry. Opening it (or a
+ *  WhatsApp preview) changes nothing; it is spent when he sets his password, and the owner can make it work again. */
+async function setupLink(ctx, creatorId) {
+  const src = sourceOf(ctx.deps) || (ctx.deps && ctx.deps.control ? 'self' : null);
+  if (!src) throw new Error('Links need the provider server.');
+  const token = await tokenFor(ctx.deps, 'setup', src, ctx.biz, String(creatorId));
+  await ctx.deps.control`insert into erp_creator_links (token_hash, source, business_id, kind, ref) values (${await sha256hex(token)}, ${src}, ${ctx.biz}, 'setup', ${String(creatorId)}) on conflict (token_hash) do nothing`;
+  return pageUrl(ctx.deps, 'creator') + '?setup=' + token;
+}
+async function setupInfo(ctx, l) {
+  const c = (await ctx.tx`select id, name, email, user_id from erp_creators where business_id = ${ctx.biz} and id = ${num(l.ref)}`)[0];
+  if (!c || !c.user_id) throw new Error('This link is not known. Ask for a new one.');
+  return { setup: true, email: str(c.email), name: str(c.name), shop: await shopInfo(ctx), brand: await progBrand(ctx) };
+}
+async function setupDone(ctx, l, password, ip) {
+  const c = (await ctx.tx`select id, email, user_id from erp_creators where business_id = ${ctx.biz} and id = ${num(l.ref)}`)[0];
+  if (!c || !c.user_id) throw new Error('This link is not known. Ask for a new one.');
+  if (!ctx.deps.setUserPassword) throw new Error('This server cannot set passwords.');
+  await ctx.deps.setUserPassword(String(c.user_id), password);
+  await ev(ctx, { creator_id: c.id, who: 'creator', what: 'password set', detail: str(c.email), ip });
+  return { email: str(c.email) };
 }
 /** The business behind a programme code (public join link). */
 async function bizByCode(deps, code) {
@@ -456,6 +477,20 @@ export async function route(deps, R, what, method, params, body, ip, authHeader)
       if (action !== 'signup') throw new Error('Unknown action.');
       await limit(deps, str(b.email).toLowerCase(), 'creator-mail', 3);
       return runAs(deps, R, biz, 'pub:creator', (ctx) => signup(ctx, b, ip));
+    }
+    // the set-up link: show who it is for; set the password (the link is spent then)
+    if (params.get('setup') || action === 'setup') {
+      const code = str(params.get('setup') || b.setup);
+      let d, l;
+      try { ({ d, l } = await openLink(deps, R, code, 'setup', ip)); }
+      catch (e) { if (/not known/.test(String(e.message))) throw new Error('This link was already used. Sign in with your e-mail and password, or press "Forgot the password?".'); throw e; }
+      if (method === 'GET') return runAs(d, R, l.business_id, 'pub:creator', (ctx) => setupInfo(ctx, l));
+      const pw = String(b.password || '');
+      if (pw.length < 8) throw new Error('At least 8 characters.');
+      if (pw.length > 72) throw new Error('At most 72 characters.');
+      const out = await runAs(d, R, l.business_id, 'pub:creator', (ctx) => setupDone(ctx, l, pw, ip));
+      await deps.control`delete from erp_creator_links where token_hash = ${await sha256hex(code)}`;   // spent
+      return out;
     }
     // forgotten password: a fresh link, always the same answer (no e-mail guessing)
     if (action === 'forgot') {

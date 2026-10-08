@@ -87,7 +87,7 @@ footer{font-size:13px;color:var(--mute);text-align:center;margin-top:22px}
 <script>
 var API = (new URLSearchParams(location.search).get('api') || 'https://oqzcuuytytqadqjlwdsh.supabase.co/functions/v1/erp').replace(/\/+$/, '');
 var SB_URL = 'https://oqzcuuytytqadqjlwdsh.supabase.co', SB_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9xemN1dXl0eXRxYWRxamx3ZHNoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODk4Nzk4MDEsImV4cCI6MjEwNTQ1NTgwMX0.fwdCTTde1fS2SPfT5ULNqLI4-YQLa__3pHjufarZG_0';
-var Q = new URLSearchParams(location.search), TOKEN = Q.get('t') || '', PCODE = (Q.get('p') || '').toUpperCase(), PREVIEW = Q.get('preview') === '1';
+var Q = new URLSearchParams(location.search), SETUP = Q.get('setup') || '', SETUPINFO = null, TOKEN = Q.get('t') || '', PCODE = (Q.get('p') || '').toUpperCase(), PREVIEW = Q.get('preview') === '1';
 var BRAND_LOGOS = { polymaker: 'brand/polymaker.svg' };
 var PLATFORMS = ['YouTube', 'Facebook page', 'Facebook group', 'Facebook profile', 'Instagram', 'TikTok'];
 var PL_WORD = { 'YouTube': ['Channel name', 'Subscribers', 'https://youtube.com/@…'], 'Facebook page': ['Page name', 'Followers', 'https://facebook.com/…'], 'Facebook group': ['Group name', 'Members', 'https://facebook.com/groups/…'], 'Facebook profile': ['Profile name', 'Friends / followers', 'https://facebook.com/…'], 'Instagram': ['Account name', 'Followers', 'https://instagram.com/…'], 'TikTok': ['Account name', 'Followers', 'https://tiktok.com/@…'] };
@@ -140,7 +140,7 @@ function signinFormHtml() {
     '<div class="row"><button class="pri" id="s_go"' + (BUSY ? ' disabled' : '') + '>' + (BUSY ? 'Signing in…' : 'Sign in') + '</button><button class="lnk" id="to_forgot">Forgot the password?</button><span class="msg" id="f_msg"></span></div>' + (PCODE ? '<p class="msg" style="margin:12px 0 0">New here? <button class="lnk" id="to_join">Join the programme</button></p>' : '');
 }
 function setPassHtml() {
-  return '<div class="card"><h1 class="t">Choose your password</h1><p class="lead">At least 8 characters. You will use it with your e-mail to sign in.</p><label>New password</label><input id="p_1" type="password" autocomplete="new-password"><label>Again</label><input id="p_2" type="password" autocomplete="new-password"><div class="row"><button class="pri" id="p_go"' + (BUSY ? ' disabled' : '') + '>' + (BUSY ? 'Saving…' : 'Save and continue') + '</button><span class="msg" id="f_msg"></span></div></div>';
+  return '<div class="card"><h1 class="t">' + (SETUPINFO ? 'Welcome' + (SETUPINFO.name && SETUPINFO.name.indexOf('@') < 0 ? ', ' + esc(SETUPINFO.name) : '') + '!' : 'Choose your password') + '</h1><p class="lead">' + (SETUPINFO ? 'Choose a password for <b>' + esc(SETUPINFO.email) + '</b>. At least 8 characters. You will sign in with this e-mail and password.' : 'At least 8 characters. You will use it with your e-mail to sign in.') + '</p><label>New password</label><input id="p_1" type="password" autocomplete="new-password"><label>Again</label><input id="p_2" type="password" autocomplete="new-password"><div class="row"><button class="pri" id="p_go"' + (BUSY ? ' disabled' : '') + '>' + (BUSY ? 'Saving…' : 'Save and continue') + '</button><span class="msg" id="f_msg"></span></div></div>';
 }
 var CH = null;   // the channel blocks being edited: {platform: {name, count, url}}
 function chInit(c) { CH = {}; (c.channels || []).forEach(function (x) { CH[x.platform] = { name: x.name || '', count: x.count || '', url: x.url || '' }; }); }
@@ -206,7 +206,7 @@ function dashHtml() {
 }
 function render() {
   if (ERR) { out.innerHTML = '<div class="card"><p class="msg err">' + esc(ERR) + '</p>' + (SESS ? '<div class="row"><button class="sm" id="signout">Sign out</button></div>' : '') + '</div>'; return; }
-  if (MODE === 'setpass') { head(null, '', null); out.innerHTML = setPassHtml(); return; }
+  if (MODE === 'setpass') { head(SETUPINFO && SETUPINFO.shop, SETUPINFO && SETUPINFO.brand, null); out.innerHTML = setPassHtml(); return; }
   if (MODE === 'landing' || MODE === 'joined') { head(PROG && PROG.shop, PROG && PROG.brands && PROG.brands[0], null); out.innerHTML = landingHtml(); return; }
   if (MODE === 'signin') { head(null, '', null); out.innerHTML = '<div class="card">' + signinFormHtml() + '</div>'; return; }
   if (!D) return;
@@ -258,6 +258,17 @@ document.addEventListener('click', function (ev) {
     if (p1.length < 8) { if (m1) m1.textContent = 'At least 8 characters.'; return; }
     if (p1 !== p2) { if (m1) m1.textContent = 'The two passwords differ.'; return; }
     BUSY = true; render();
+    if (SETUP) {
+      // our own set-up link: the server sets the password, then he is signed in with it
+      fetch(API + '?pub=creator', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ action: 'setup', setup: SETUP, password: p1 }) }).then(function (r) { return r.json(); }).then(function (r) {
+        if (!r.ok) return fail(r);
+        return fetch(SB_URL + '/auth/v1/token?grant_type=password', { method: 'POST', headers: { apikey: SB_ANON, 'content-type': 'application/json' }, body: JSON.stringify({ email: r.email, password: p1 }) }).then(function (x) { return x.json(); }).then(function (j) {
+          if (!j.access_token) return fail(j);
+          saveSess({ access_token: j.access_token, refresh_token: j.refresh_token, at: Date.now() }); BUSY = false; SETUP = ''; history.replaceState(null, '', location.pathname); loadMine();
+        });
+      }, fail);
+      return;
+    }
     authFetch('user', { password: p1 }, 'PUT').then(function (j) { if (!j.id) return fail(j); BUSY = false; history.replaceState(null, '', location.pathname + (PCODE ? '?p=' + PCODE : '')); loadMine(); }, fail); return;
   }
   if (t.id === 'pf_save') {
@@ -303,6 +314,13 @@ document.addEventListener('keydown', function (ev) { if (ev.key === 'Enter' && e
   var hp = new URLSearchParams((location.hash || '').replace(/^#/, ''));
   if (hp.get('access_token')) { saveSess({ access_token: hp.get('access_token'), refresh_token: hp.get('refresh_token'), at: Date.now() }); MODE = 'setpass'; render(); return; }
   if (hp.get('error_description')) { ERR = decodeURIComponent(hp.get('error_description').replace(/\+/g, ' ')) + ' Ask for a new link with "Forgot the password?".'; MODE = 'signin'; render(); return; }
+  if (SETUP) {
+    fetch(API + '?pub=creator&setup=' + encodeURIComponent(SETUP)).then(function (r) { return r.json(); }).then(function (r) {
+      if (!r.ok) { SETUP = ''; history.replaceState(null, '', location.pathname); if (SESS && SESS.access_token) { loadMine(); return; } ERR = ''; MODE = 'signin'; FORM = 'signin'; render(); var m = document.getElementById('f_msg'); if (m) m.textContent = r.error || ''; return; }
+      SETUPINFO = r; MODE = 'setpass'; render();
+    }, function () { ERR = 'The page could not be loaded. Check your connection and try again.'; render(); });
+    return;
+  }
   if (TOKEN) { loadMine(); if (PREVIEW) setInterval(function () { api().then(function (r) { if (r.ok) { D = r; render(); } }, function () {}); }, 20000); return; }
   if (SESS && SESS.access_token) { loadMine(); return; }
   if (PCODE) {
