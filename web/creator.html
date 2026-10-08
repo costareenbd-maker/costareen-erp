@@ -69,6 +69,10 @@ button:disabled{opacity:.55;cursor:default}
 .steps b{display:block;color:var(--acc);font-size:12px;text-transform:uppercase;letter-spacing:.6px;margin-bottom:2px}
 footer{font-size:13px;color:var(--mute);text-align:center;margin-top:22px}
 [hidden]{display:none!important}
+.golink{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:10px;padding:10px 12px;border-radius:10px;background:var(--bg);border:1px dashed var(--line)}
+.golink div:first-child{flex:1;min-width:200px}.golink b{display:block;font-size:13px}.golink span{display:block;font-size:12px;color:var(--mute)}
+.golink code{display:block;margin-top:4px;font-size:13px;color:var(--acc);overflow-wrap:anywhere}
+.gocount{text-align:center;font-size:12px;color:var(--mute)}.gocount b{font-size:20px;color:var(--ink)}
 .pvbar{background:#1e4fa3;color:#fff;text-align:center;font-size:13px;padding:6px 10px}
 .pv main button,.pv main input,.pv main select,.pv main textarea,.pv .who button{pointer-events:none}
 .pv main .card{opacity:.97}
@@ -178,6 +182,7 @@ function dashHtml() {
   D.requests.forEach(function (r) {
     var posts = D.posts.filter(function (p) { return p.request_id === r.id; });
     h += '<div class="proj"><div class="h"><div><b>' + esc(r.title || r.product) + '</b><div class="m">' + n(r.qty_ok != null ? r.qty_ok : r.qty) + ' × ' + esc(r.product) + ' · requested ' + esc(dt(r.requested_at)) + (r.given_at ? ' · received ' + esc(dt(r.given_at)) : r.decided_at ? ' · answered ' + esc(dt(r.decided_at)) : '') + '</div>' + (r.owner_note ? '<div class="m">Shop: ' + esc(r.owner_note) + '</div>' : '') + '</div>' + statusBadge(r.status) + '</div>';
+    if (r.go && r.status !== 'declined') h += '<div class="golink"><div><b>Your link for this video</b><span>Put it in the video description / post. Every click is counted.</span><code>' + esc(r.go) + '</code></div><div class="gocount"><b>' + n(r.clicks) + '</b>clicks</div><button class="sm" data-copy="' + esc(r.go) + '">Copy</button></div>';
     posts.forEach(function (p) { h += postHtml(p); });
     if (r.status === 'given' || r.status === 'done') {
       if (FORM && FORM.link === r.id) {
@@ -216,6 +221,7 @@ function loadMine() {
   return api().then(function (r) { if (!r.ok) { if (/sign in/i.test(r.error || '')) { saveSess(null); MODE = 'signin'; } else ERR = r.error || 'This page does not work right now.'; } else { D = r; MODE = 'in'; } render(); }, function () { ERR = 'The page could not be loaded. Check your connection and try again.'; render(); });
 }
 document.addEventListener('click', function (ev) {
+  var cp = ev.target.closest('[data-copy]'); if (cp && !PREVIEW) { var u = cp.getAttribute('data-copy'); try { navigator.clipboard.writeText(u).then(function () { cp.textContent = 'Copied'; setTimeout(function () { cp.textContent = 'Copy'; }, 1500); }, function () { prompt('Copy the link', u); }); } catch (e) { prompt('Copy the link', u); } return; }
   var t = ev.target.closest('button'); if (!t || BUSY || PREVIEW) return;
   if (t.id === 'signout') { saveSess(null); D = null; MODE = PCODE ? 'landing' : 'signin'; FORM = null; ERR = ''; render(); return; }
   if (t.id === 'to_signin') { FORM = 'signin'; if (MODE !== 'landing') MODE = 'signin'; render(); return; }

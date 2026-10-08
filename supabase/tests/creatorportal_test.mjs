@@ -202,4 +202,27 @@ r = await owner('erpCreatorPreview', [{ creator_id: NEWID }]);
 check('preview: his page read-only and the brand page', r.ok && /creator\?t=.+&preview=1$/.test(r.result.creator) && /sponsor\?t=/.test(r.result.sponsor) && r.result.brand === 'Polymaker', r);
 r = await owner('erpCreatorApprove', [{ creator_id: NEWID, action: 'decline' }]);
 check('declined: stopped', r.ok && r.result.status === 'stopped', r);
+
+// the project link: one per request, counted, on to the product
+r = await owner('erpCreatorApprove', [{ creator_id: NEWID }]);
+r = await post('pub=creator', { action: 'request', sku: PLA, qty: 2, title: 'Link test video' }, '10.0.0.4', 'Bearer owner:' + nbUser);
+const proj = r.ok && r.requests.find((x) => x.title === 'Link test video');
+check('the request carries its own link on the creator host', proj && /\/go\?c=[A-Z0-9]{7}$/.test(proj.go) && proj.clicks === 0, r.ok ? proj : r);
+const GO = proj.go.split('c=')[1];
+r = await get('pub=go&c=' + GO + '&r=' + encodeURIComponent('https://www.youtube.com/watch?v=x'), '10.0.1.1');
+check('a click goes to the product search on the website', r.ok && /\?s=FIL-SUN-PLA-BLA-001&post_type=product$/.test(r.url), r);
+await get('pub=go&c=' + GO, '10.0.1.1');
+await get('pub=go&c=' + GO, '10.0.1.2');
+r = await getAs('pub=creator', 'Bearer owner:' + nbUser);
+check('two visitors counted (the same visitor twice in a day counts once)', r.ok && r.requests.find((x) => x.id === proj.id).clicks === 2, r.ok ? r.requests : r);
+const ref = await sql`select referer from erp_creator_clicks where request_id = ${proj.id} and referer is not null`;
+check('the site the click came from is kept (host only)', ref.length === 1 && ref[0].referer === 'youtube.com', ref);
+r = await owner('erpCreatorLinkTo', [{ id: proj.id, url: 'https://costareen.com/product/pla-black/' }]);
+check('the owner points the link somewhere else', r.ok, r);
+r = await get('pub=go&c=' + GO, '10.0.1.3');
+check('...and clicks go there', r.ok && r.url === 'https://costareen.com/product/pla-black/', r);
+r = await get('pub=go&c=ZZZZZZZ', '10.0.1.3');
+check('an unknown link is refused', !r.ok, r);
+r = await get('pub=sponsor&t=' + ST);
+check('the brand sees the clicks per creator', r.ok && r.creators.some((c) => c.totals.clicks === 3), r.ok ? r.creators.map((c) => c.totals) : r);
 await done();

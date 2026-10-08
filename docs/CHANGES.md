@@ -1405,3 +1405,16 @@ may edit anything; in Apps he sees what the creator sees and what the brand sees
   addresses; the ERP's CSP `frame-src` allows creatorsdesk.pages.dev. Verified live; end-to-end on the live server
   with a throwaway creator (invite -> applied, needs profile, Polymaker -> approve -> active), then removed.
   creatorportal_test 68.
+
+## A link per project, with real click counts (tag golink-1, 8 Oct 2026)
+
+Owner: after each filament request the creator should see, in that project's slot, the link he must put in that
+video. Every request now gets its own short link `creatorsdesk.pages.dev/go?c=XXXXXXX` (7 letters, migration 104:
+`link_code`, `link_to`, `clicks` on requests + `erp_creator_clicks`; control `erp_creator_links` kind `go`).
+`web/go.html` (creator host) asks `?pub=go&c=…`: the click is stored (visitor = hash of address + day + project,
+one visitor a day counts once; the referring site's host kept), then the buyer goes on to the product: the shop's
+website search by SKU (`/?s=<sku>&post_type=product`; WooCommerce opens the single match - checked live, lands on the
+product page) or a link the owner sets per project (**goes to … ✎** on the project row, `erpCreatorLinkTo`). Shown:
+creator page (project slot: "Your link for this video", clicks, Copy), owner's request rows, the brand's page
+(clicks per project, per creator, in total - "counted by the system"). Live test with a throwaway creator, removed.
+creatorportal_test 76.

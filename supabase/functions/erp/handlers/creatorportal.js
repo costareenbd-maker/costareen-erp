@@ -167,16 +167,43 @@ export async function erpSponsorLink(ctx, payload) {
 
 // ---------------------------------------------------------------- requests (owner side)
 const reqRow = (r) => ({ id: Number(r.id), creator_id: Number(r.creator_id), status: r.status, title: str(r.title), sku: str(r.sku), product: str(r.product), qty: num(r.qty), qty_ok: r.qty_ok == null ? null : num(r.qty_ok),
-                         value: num(r.value), note: str(r.note), owner_note: str(r.owner_note), requested_at: when(r.requested_at), decided_at: when(r.decided_at), given_at: when(r.given_at), links: num(r.links) });
+                         value: num(r.value), note: str(r.note), owner_note: str(r.owner_note), requested_at: when(r.requested_at), decided_at: when(r.decided_at), given_at: when(r.given_at), links: num(r.links), code: str(r.link_code), clicks: num(r.clicks), link_to: str(r.link_to) });
 async function requests(ctx, creatorId) {
   const rows = creatorId
     ? await ctx.tx`select r.*, (select count(*) from erp_creator_posts p where p.request_id = r.id) as links from erp_creator_requests r where r.business_id = ${ctx.biz} and r.creator_id = ${creatorId} order by r.id desc limit 100`
     : await ctx.tx`select r.*, (select count(*) from erp_creator_posts p where p.request_id = r.id) as links from erp_creator_requests r where r.business_id = ${ctx.biz} order by r.id desc limit 300`;
   return rows.map(reqRow);
 }
+/** The project link of each request (made when he asks; one per project). */
+function goUrl(deps, code) { return code ? pageUrl(deps, 'go') + '?c=' + code : ''; }
+function withGo(ctx, list) { return list.map((r) => ({ ...r, go: goUrl(ctx.deps, r.code) })); }
+async function makeGo(ctx, requestId) {
+  const src = sourceOf(ctx.deps) || (ctx.deps && ctx.deps.control ? 'self' : null);
+  for (let i = 0; i < 5; i++) {
+    const code = randomCode(7);
+    if (src) {
+      const hit = (await ctx.deps.control`insert into erp_creator_links (token_hash, source, business_id, kind, ref) values (${await sha256hex('go|' + code)}, ${src}, ${ctx.biz}, 'go', ${String(requestId)}) on conflict (token_hash) do nothing returning token_hash`)[0];
+      if (!hit) continue;
+    }
+    await ctx.tx`update erp_creator_requests set link_code = ${code} where id = ${requestId} and business_id = ${ctx.biz}`;
+    return code;
+  }
+  return '';
+}
+/** Where a click on a project link goes: the owner's own link, else the product on the shop's website. */
+async function goTarget(ctx, r) {
+  if (/^https?:\/\//.test(str(r.link_to))) return str(r.link_to);
+  const S = await import('./sales.js');
+  let site = '';
+  try { site = str((await S.qProfile(ctx)).website); } catch (_) { site = ''; }
+  if (!site) site = 'costareen.com';
+  if (!/^https?:\/\//.test(site)) site = 'https://' + site;
+  const q = str(r.sku) || str(r.product);
+  return site.replace(/\/+$/, '') + '/?s=' + encodeURIComponent(q) + '&post_type=product';   // one match: the shop opens the product itself
+}
 export async function erpCreatorRequests(ctx) {
   needOwner(ctx);
-  const all = await requests(ctx, 0);
+  const all = withGo(ctx, await requests(ctx, 0));
   const names = Object.fromEntries((await ctx.tx`select id, name from erp_creators where business_id = ${ctx.biz}`).map((c) => [Number(c.id), str(c.name)]));
   const withName = all.map((r) => ({ ...r, creator: names[r.creator_id] || '' }));
   return { waiting: withName.filter((r) => r.status === 'requested'), approved: withName.filter((r) => r.status === 'approved'),
@@ -284,7 +311,7 @@ async function shopInfo(ctx) {
 const postRow = (p) => ({ id: Number(p.id), request_id: p.request_id ? Number(p.request_id) : 0, date: day(p.on_date), platform: str(p.platform), kind: str(p.kind), url: str(p.url), product: str(p.product),
                           views: num(p.views), likes: num(p.likes), comments: num(p.comments), shares: num(p.shares), leads: num(p.leads), verified: !!p.verified, by: str(p.by), fetched_at: when(p.fetched_at), updated_at: when(p.updated_at) });
 async function creatorData(ctx, c) {
-  const reqs = await requests(ctx, c.id);
+  const reqs = withGo(ctx, await requests(ctx, c.id));
   const posts = (await ctx.tx`select * from erp_creator_posts where business_id = ${ctx.biz} and creator_id = ${c.id} order by on_date desc, id desc limit 100`).map(postRow);
   const month = formatDate(ctx.now, 'yyyy-MM');
   const mPosts = posts.filter((p) => p.date.startsWith(month));
@@ -336,6 +363,7 @@ async function creatorAct(ctx, l, b, ip) {
     if (!product) throw new Error('Which filament?');
     const title = str(b.title).slice(0, 160); if (!title) throw new Error('One line about the video, please.');
     const r = (await ctx.tx`insert into erp_creator_requests ${ctx.tx({ business_id: ctx.biz, creator_id: c.id, title, sku: sku || null, product, qty, note: str(b.note).slice(0, 500) || null })} returning id`)[0];
+    await makeGo(ctx, Number(r.id));
     await ev(ctx, { creator_id: c.id, request_id: Number(r.id), who: 'creator', what: 'requested', detail: qty + ' x ' + product + ' - ' + title, ip });
     return creatorData(ctx, c);
   }
@@ -369,7 +397,7 @@ async function sponsorPage(ctx, l) {
   const brand = str(l.ref);
   const creators = await ctx.tx`select * from erp_creators where business_id = ${ctx.biz} and lower(brand) = ${brand} order by name`;
   const ids = creators.map((c) => Number(c.id));
-  const reqs = ids.length ? (await ctx.tx`select r.*, (select count(*) from erp_creator_posts p where p.request_id = r.id) as links from erp_creator_requests r where r.business_id = ${ctx.biz} and r.creator_id = any(${ids}) order by r.id desc`).map(reqRow) : [];
+  const reqs = ids.length ? withGo(ctx, (await ctx.tx`select r.*, (select count(*) from erp_creator_posts p where p.request_id = r.id) as links from erp_creator_requests r where r.business_id = ${ctx.biz} and r.creator_id = any(${ids}) order by r.id desc`).map(reqRow)) : [];
   const ships = ids.length ? await ctx.tx`select * from erp_creator_ships where business_id = ${ctx.biz} and creator_id = any(${ids}) order by on_date desc, id desc` : [];
   const posts = ids.length ? (await ctx.tx`select * from erp_creator_posts where business_id = ${ctx.biz} and creator_id = any(${ids}) order by on_date desc, id desc`).map((p) => ({ ...postRow(p), creator_id: Number(p.creator_id) })) : [];
   const projects = ids.length ? await ctx.tx`select * from erp_creator_projects where business_id = ${ctx.biz} and creator_id = any(${ids}) and status in ('sent', 'approved') order by id desc` : [];
@@ -389,7 +417,7 @@ async function sponsorPage(ctx, l) {
       return { month: m, rolls: sum(sh, 'qty'), value: Math.round(sum(sh, 'value')), posts: ps.length, views: sum(ps, 'views'), engagement: sum(ps, 'likes') + sum(ps, 'comments') + sum(ps, 'shares'), leads: sum(ps, 'leads'), orders: sl.orders, revenue: Math.round(sl.revenue) }; });
     const views = sum(myPosts, 'views'), value = sum(myShips, 'value');
     return { id, name: str(c.name), handle: str(c.handle), platforms: str(c.platforms), followers: str(c.followers), status: str(c.status), code: str(c.code), videos_month: num(c.videos_month), posts_month: num(c.posts_month), rolls_video: num(c.rolls_video), filament: str(c.filament), trial_until: day(c.trial_until),
-      totals: { rolls: sum(myShips, 'qty'), value: Math.round(value), posts: myPosts.length, views, engagement: views > 0 ? Math.round((sum(myPosts, 'likes') + sum(myPosts, 'comments') + sum(myPosts, 'shares')) / views * 1000) / 10 : 0, leads: sum(myPosts, 'leads'), orders: series.reduce((a, s) => a + s.orders, 0), revenue: series.reduce((a, s) => a + s.revenue, 0), cpm: views > 0 ? Math.round(value / views * 1000) : 0, verified: myPosts.filter((p) => p.verified).length },
+      totals: { clicks: myReqs.reduce((a, r) => a + num(r.clicks), 0), rolls: sum(myShips, 'qty'), value: Math.round(value), posts: myPosts.length, views, engagement: views > 0 ? Math.round((sum(myPosts, 'likes') + sum(myPosts, 'comments') + sum(myPosts, 'shares')) / views * 1000) / 10 : 0, leads: sum(myPosts, 'leads'), orders: series.reduce((a, s) => a + s.orders, 0), revenue: series.reduce((a, s) => a + s.revenue, 0), cpm: views > 0 ? Math.round(value / views * 1000) : 0, verified: myPosts.filter((p) => p.verified).length },
       series, projects: myReqs.map((r) => ({ ...r, posts: myPosts.filter((p) => p.request_id === r.id) })), ships: myShips.map((s) => ({ id: Number(s.id), date: day(s.on_date), sku: str(s.sku), product: str(s.product), qty: num(s.qty), value: num(s.value), request_id: s.request_id ? Number(s.request_id) : 0, at: when(s.created_at) })), loose: myPosts.filter((p) => !p.request_id) };
   });
   return { shop: await shopInfo(ctx), brand: creators.length ? str(creators[0].brand) : brand, creators: out, months, teams: projects.map((p) => ({ team: str(p.team), project: str(p.project), competition: str(p.competition), material: str(p.material), qty: str(p.qty), status: str(p.status), creator: (creators.find((c) => Number(c.id) === Number(p.creator_id)) || {}).name || '' })), generated: when(ctx.now) };
@@ -445,6 +473,16 @@ export async function route(deps, R, what, method, params, body, ip, authHeader)
     if (method === 'GET') return runAs(d, R, l.business_id, 'pub:creator', (ctx) => creatorPage(ctx, l));
     return runAs(d, R, l.business_id, 'pub:creator', (ctx) => creatorAct(ctx, l, b, ip));
   }
+  if (what === 'go') {
+    const code = str(params.get('c')).toUpperCase();
+    if (!/^[A-Z0-9]{6,10}$/.test(code)) throw new Error('This link is not complete.');
+    await limit(deps, ip, 'go', 300);
+    const l = (await deps.control`select source, business_id, kind, ref from erp_creator_links where token_hash = ${await sha256hex('go|' + code)}`)[0];
+    if (!l || l.kind !== 'go') throw new Error('This link is not known.');
+    let d = deps;
+    if (l.source !== 'self') { if (!R.tenantDeps) throw new Error('This page is not available right now.'); d = await R.tenantDeps(l.source); }
+    return runAs(d, R, l.business_id, 'pub:go', (ctx) => goClick(ctx, num(l.ref), ip, params.get('r')));
+  }
   if (what === 'sponsor') {
     if (method !== 'GET') return null;
     const { d, l } = await openLink(deps, R, t, 'sponsor', ip);
@@ -474,4 +512,25 @@ export async function erpCreatorPreview(ctx, payload) {
   out.brand = brand;
   return out;
 }
-export const HANDLERS = { erpCreatorApprove, erpCreatorPreview, erpCreatorPortalLink, erpSponsorLink, erpCreatorRequests, erpCreatorDecide, erpCreatorEvents, erpYoutubeKey, erpCreatorRefresh, erpCreatorProgramme, erpCreatorInvite };
+/** Owner: where a project's link goes (empty = the product on the website). */
+export async function erpCreatorLinkTo(ctx, payload) {
+  needOwner(ctx);
+  const p = payload || {}, url = str(p.url);
+  if (url && !/^https?:\/\/\S+$/.test(url)) throw new Error('A full link, starting with https://');
+  const r = (await ctx.tx`update erp_creator_requests set link_to = ${url || null}, updated_at = ${ctx.now} where business_id = ${ctx.biz} and id = ${num(p.id)} returning creator_id`)[0];
+  if (!r) throw new Error('No such project.');
+  await ev(ctx, { creator_id: r.creator_id, request_id: num(p.id), who: 'owner', what: 'link target', detail: url || 'the product on the website' });
+  return erpCreatorRequests(ctx);
+}
+/** Public: a click on a project link - counted, then on to the product. */
+async function goClick(ctx, requestId, ip, referer) {
+  const r = (await ctx.tx`select * from erp_creator_requests where business_id = ${ctx.biz} and id = ${requestId}`)[0];
+  if (!r) throw new Error('This link is not known.');
+  const visitor = (await sha256hex(str(ip) + '|' + formatDate(ctx.now, 'yyyy-MM-dd') + '|' + requestId)).slice(0, 24);
+  let host = ''; try { host = referer ? new URL(referer).hostname.replace(/^www\./, '') : ''; } catch (_) { host = ''; }
+  const seen = (await ctx.tx`select 1 from erp_creator_clicks where business_id = ${ctx.biz} and request_id = ${requestId} and visitor = ${visitor} limit 1`)[0];
+  await ctx.tx`insert into erp_creator_clicks ${ctx.tx({ business_id: ctx.biz, request_id: requestId, visitor, referer: host.slice(0, 80) || null })}`;
+  if (!seen) await ctx.tx`update erp_creator_requests set clicks = clicks + 1 where id = ${requestId}`;   // one visitor a day counts once
+  return { url: await goTarget(ctx, r) };
+}
+export const HANDLERS = { erpCreatorLinkTo, erpCreatorApprove, erpCreatorPreview, erpCreatorPortalLink, erpSponsorLink, erpCreatorRequests, erpCreatorDecide, erpCreatorEvents, erpYoutubeKey, erpCreatorRefresh, erpCreatorProgramme, erpCreatorInvite };

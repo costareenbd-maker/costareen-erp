@@ -22567,7 +22567,7 @@ function crProgHtml() {
 function crReqsLoad() { srv('erpCreatorRequests', [], function (r) { CR.reqs = r; if (VIEW === 'campaigns') repaint(); }, function () { CR.reqs = { waiting: [], approved: [], open: [], all: [] }; }); }
 function crDecide(id, action, qty, note) { if (CR.busy) return; CR.busy = true; repaint(); srv('erpCreatorDecide', [{ id: id, action: action, qty: qty, note: note }], function (r) { CR.busy = false; CR.reqs = r; CR.data = null; repaint(); toast(action === 'approve' ? 'Approved. The creator sees it on his page.' : action === 'given' ? 'Recorded as given.' : 'Declined.'); }, function (e) { CR.busy = false; repaint(); toast(esc((e && e.message) || e), true, 9000); }); }
 function crReqRow(r, kind) {
-  var h = '<div class="pu-row" style="align-items:center"><div><b>' + esc(r.creator) + '</b> \u2014 ' + esc(r.title || r.product) + '<br><span class="why">' + fmt(r.qty_ok != null ? r.qty_ok : r.qty) + ' \u00d7 ' + esc((r.sku ? r.sku + ' ' : '') + r.product) + (r.note ? ' \u00b7 ' + esc(r.note) : '') + ' \u00b7 ' + esc(new Date(r.requested_at).toLocaleString()) + (r.owner_note ? '<br>You: ' + esc(r.owner_note) : '') + '</span></div><div class="n">';
+  var h = '<div class="pu-row" style="align-items:center"><div><b>' + esc(r.creator) + '</b> \u2014 ' + esc(r.title || r.product) + '<br><span class="why">' + fmt(r.qty_ok != null ? r.qty_ok : r.qty) + ' \u00d7 ' + esc((r.sku ? r.sku + ' ' : '') + r.product) + (r.note ? ' \u00b7 ' + esc(r.note) : '') + ' \u00b7 ' + esc(new Date(r.requested_at).toLocaleString()) + (r.owner_note ? '<br>You: ' + esc(r.owner_note) : '') + (r.go ? '<br>Link <a href="' + esc(r.go) + '" target="_blank" rel="noopener">' + esc(r.go.replace(/^https?:\/\//, '')) + '</a> · <b>' + fmt(r.clicks) + '</b> clicks · <a href="#" data-crlinkto="' + r.id + '" data-cur="' + esc(r.link_to || '') + '">' + (r.link_to ? 'goes to your link' : 'goes to the product') + ' ✎</a>' : '') + '</span></div><div class="n">';
   if (kind === 'waiting') h += '<input class="i" id="crq_' + r.id + '" inputmode="numeric" value="' + fmt(r.qty) + '" style="width:60px;display:inline-block" title="Rolls to approve"> <input class="i" id="crn_' + r.id + '" placeholder="Note to the creator" style="width:160px;display:inline-block"> <button class="btn small primary" type="button" data-crdec="approve:' + r.id + '">Approve</button> <button class="btn small" type="button" data-crdec="decline:' + r.id + '">Decline</button>';
   else if (kind === 'approved') h += '<button class="btn small primary" type="button" data-crdec="given:' + r.id + '">Handed over</button> <button class="btn small" type="button" data-crdec="decline:' + r.id + '">Decline</button>';
   else h += '<span class="pill low">Waiting for the link</span>';
@@ -22711,9 +22711,16 @@ function crOneHtml(c) {
 }
 document.addEventListener('click', function (ev) {
   if (VIEW !== 'campaigns' || CP.tab !== 'creators') return;
-  var t = ev.target && ev.target.closest ? ev.target.closest('[data-crmon],[data-cropen],[data-crform],[data-crrm],[data-credit],[data-crcopy],[data-crdec],#cr_new,#cr_report,#cr_edit,#cr_brief,#cr_back,#cr_save,#cr_cancel,#cs_save,#cp2_save,#cj_save,#cr_sponsor,#cr_yt,#cr_ytsave,#cr_fetch,#cr_link,#cr_act,#cr_prog,#cr_invite,#cr_signlink,#cr_newlink,#cr_newsend,[data-crapp]') : null; if (!t) return;
+  var t = ev.target && ev.target.closest ? ev.target.closest('[data-crmon],[data-cropen],[data-crform],[data-crrm],[data-credit],[data-crcopy],[data-crdec],#cr_new,#cr_report,#cr_edit,#cr_brief,#cr_back,#cr_save,#cr_cancel,#cs_save,#cp2_save,#cj_save,#cr_sponsor,#cr_yt,#cr_ytsave,#cr_fetch,#cr_link,#cr_act,#cr_prog,#cr_invite,#cr_signlink,#cr_newlink,#cr_newsend,[data-crapp],[data-crlinkto]') : null; if (!t) return;
   c = CR.data && CR.open ? CR.data.creators.filter(function (x) { return x.id === CR.open; })[0] : null;   // the open creator, before any button below needs him
   if (t.id === 'cr_prog') { CR.show = CR.show === 'prog' ? '' : 'prog'; repaint(); return; }
+  if (t.getAttribute('data-crlinkto')) {
+    ev.preventDefault();
+    var u = prompt('Where should clicks on this project link go? Leave empty for the product on your website.', t.getAttribute('data-cur') || 'https://');
+    if (u === null) return; u = u.trim(); if (u === 'https://') u = '';
+    srv('erpCreatorLinkTo', [{ id: +t.getAttribute('data-crlinkto'), url: u }], function (r) { CR.reqs = r; repaint(); toast(u ? 'Clicks now go to your link.' : 'Clicks go to the product.'); }, function (e) { toast(esc((e && e.message) || e), true, 9000); });
+    return;
+  }
   if (t.id === 'cr_newlink' || t.id === 'cr_newsend') {
     var nm = ((el('cr_newmail') || {}).value || '').trim(); if (!nm) { toast('His e-mail first.', true); return; }
     var asLink = t.id === 'cr_newlink'; t.disabled = true;

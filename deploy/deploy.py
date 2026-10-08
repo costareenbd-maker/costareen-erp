@@ -132,6 +132,7 @@ def step_web():
     cdir = tempfile.mkdtemp(prefix='erp-creator-')
     for f in ['creator.html', 'sponsor.html']:
         shutil.copy(os.path.join(ROOT, 'web', f), cdir)
+    shutil.copy(os.path.join(ROOT, 'web', 'go.html'), cdir)   # a creator's project link: counted, then on to the product
     shutil.copy(os.path.join(ROOT, 'web', '_headers.creator'), os.path.join(cdir, '_headers'))   # may be framed by the ERP (owner's preview)
     shutil.copytree(os.path.join(ROOT, 'web', 'brand'), os.path.join(cdir, 'brand'))
     shutil.copytree(os.path.join(ROOT, 'web', 'icons'), os.path.join(cdir, 'icons'))
