@@ -34086,5 +34086,167 @@ bgPaint = function () { var r = bgPaintFdt.apply(this, arguments); var b = el('f
 }
 </style>
 
+<!-- fd-31 (owner 14 Oct 2026): one sale screen. "New invoice" (the screen the staff know) takes in what New sale had:
+     where the customer came from, the seller (a manager or the owner may name one), the 5 % price band with its reason,
+     and a live checklist right above "Save invoice" - Save stays off until every line of it is ticked. The phone box
+     takes digits only, must start 01 (anything else cannot be typed), turns red until it has 11 digits, and a sale cannot
+     be saved without one. "New sale" leaves the menu (its address opens New invoice). -->
+<style>
+.inv-chk { margin-top:16px; border:1px solid var(--fd-border, var(--ring)); border-radius:14px; padding:12px 14px; background:var(--fd-surface-2, var(--field)); }
+.inv-chk h3 { margin:0 0 6px; font-size:13px; font-weight:700; letter-spacing:.04em; text-transform:uppercase; color:var(--fd-text-3, var(--muted)); display:flex; justify-content:space-between; }
+.inv-chk h3 b { color:var(--fd-positive-text, var(--up)); letter-spacing:0; text-transform:none; }
+.inv-chk h3 b.no { color:var(--fd-negative-text, var(--critical)); }
+.inv-chk ul { list-style:none; margin:0; padding:0; display:grid; grid-template-columns:repeat(auto-fill, minmax(230px, 1fr)); gap:2px 14px; }
+.inv-chk li { display:flex; gap:8px; align-items:flex-start; padding:4px 0; font-size:13.5px; }
+.inv-chk li .d { width:18px; height:18px; border-radius:50%; flex:0 0 auto; display:inline-flex; align-items:center; justify-content:center; font-size:11px; font-weight:800; margin-top:1px; }
+.inv-chk li.ok .d { background:var(--fd-positive-soft, var(--good-soft)); color:var(--fd-positive-text, var(--up)); }
+.inv-chk li.no .d { background:var(--fd-negative-soft, var(--critical-soft)); color:var(--fd-negative-text, var(--critical)); }
+.inv-chk li.no { color:var(--fd-negative-text, var(--critical)); font-weight:600; }
+.inv-chan { display:flex; flex-wrap:wrap; gap:6px; }
+.inv-chan button { height:32px; padding:0 12px; border-radius:999px; border:1px solid var(--fd-border, var(--ring)); background:var(--fd-card, var(--surface)); color:inherit; font:inherit; font-size:13px; cursor:pointer; }
+.inv-chan button[aria-pressed="true"] { background:var(--fd-accent, var(--series-1)); border-color:var(--fd-accent, var(--series-1)); color:var(--fd-text-on-accent, #fff); font-weight:700; }
+#cphone.bad { border-color:var(--fd-negative, var(--critical)) !important; box-shadow:0 0 0 3px var(--fd-negative-soft, rgba(220,38,38,.15)) !important; }
+#cphone.good { border-color:var(--fd-positive, var(--good)) !important; }
+.inv-ph-msg { font-size:12.5px; margin-top:4px; color:var(--fd-negative-text, var(--critical)); min-height:16px; }
+:root[data-skin="fd"] #nav button[data-view="sale"] { display:none !important; }
+</style>
+<script>
+/* ---------- the phone: 01 + 9 digits, nothing else can be typed ---------- */
+phoneClean = function (v) {
+  var d = String(v == null ? '' : v).replace(/\D/g, '');
+  if (d.indexOf('8801') === 0) d = d.slice(2);
+  // a number that does not start with 0 is not taken (owner): no 0 is added in front
+  // keep the longest start that can still become a Bangladesh mobile number (01, then 3-9, then digits)
+  var ok = '';
+  for (var i = 0; i < d.length && ok.length < 11; i++) {
+    var next = ok + d.charAt(i);
+    if (/^(0|01|01[3-9]\d{0,8})$/.test(next)) ok = next; else break;
+  }
+  return ok;
+};
+var cartProblemsInv = cartProblems;
+cartProblems = function () {
+  var p = cartProblemsInv.apply(this, arguments);
+  if (!String(FORM.phone || '').trim()) p.unshift('Phone number is required (11 digits, starting 01).');
+  return p;
+};
+function invPhoneMark() {
+  var n = el('cphone'); if (!n) return;
+  var v = n.value.trim(), good = /^01[3-9]\d{8}$/.test(v);
+  n.classList.toggle('bad', !good); n.classList.toggle('good', good);
+  var m = el('invPhMsg'); if (m) m.textContent = good ? '' : !v ? 'Required: 11 digits starting 01' : (11 - v.length) + ' more digit' + (11 - v.length === 1 ? '' : 's') + ' needed';
+}
+
+/* ---------- channel, seller, price band ---------- */
+var INV_CHANNELS = ['Walk-in', 'Facebook', 'WhatsApp', 'Phone', 'Website', 'Instagram', 'Other'];
+function invLow() { return CART.filter(function (l) { return num(l.price) > 0 && num(l.discEach) / num(l.price) > 0.05 + 1e-9; }); }
+function invChecks() {
+  var t = cartTotals(), ph = String(FORM.phone || '').trim(), low = invLow();
+  var short = CART.filter(function (l) { return l.qty > l.stock; });
+  var cap = (ME && ME.discountCap != null) ? Number(ME.discountCap) : 100;
+  var paid = typeof payNow === 'function' ? payNow(t.grand) : 0;
+  return [
+    { ok: /^01[3-9]\d{8}$/.test(ph), t: ph ? 'Phone has 11 digits' + (ph.length < 11 ? ' (' + ph.length + ' typed)' : '') : 'Phone number (11 digits, 01…)' },
+    { ok: !!String(FORM.name || '').trim(), t: 'Customer name' },
+    { ok: CART.length > 0 && CART.every(function (l) { return l.qty >= 1; }), t: 'At least one product, each with a quantity' },
+    { ok: !short.length, t: short.length ? 'Not enough stock: ' + short.map(function (l) { return l.name; }).join(', ') : 'Stock covers every line' },
+    { ok: !CART.some(function (l) { return num(l.discEach) > num(l.price); }), t: 'No discount larger than its price' },
+    { ok: !low.length || !!String(FORM.priceReason || '').trim(), t: low.length ? 'More than 5% under the price: give the reason' : 'Prices within 5% of the list' },
+    { ok: t.invDisc <= t.sub - t.itemDisc + 0.001 && !(cap < 100 && t.disc > t.sub * cap / 100 + 0.5), t: cap < 100 ? 'Discount within your limit (' + cap + '%)' : 'Discount not more than the goods' },
+    { ok: paid <= t.grand + 0.001, t: 'Paid now not more than the total' }
+  ];
+}
+function invChkHtml() {
+  var c = invChecks(), ok = c.every(function (x) { return x.ok; }), n = c.filter(function (x) { return !x.ok; }).length;
+  var low = invLow();
+  return '<div class="inv-chk" id="invChk"><h3>Before you save <b class="' + (ok ? '' : 'no') + '">' + (ok ? '✓ Ready to save' : n + ' to fix') + '</b></h3><ul>' +
+    c.map(function (x) { return '<li class="' + (x.ok ? 'ok' : 'no') + '"><span class="d">' + (x.ok ? '✓' : '!') + '</span><span>' + esc(x.t) + '</span></li>'; }).join('') + '</ul>' +
+    (low.length ? '<div style="margin-top:8px"><label class="f" for="invReason">Why the lower price? <span class="sku">' + esc(low.map(function (l) { return l.name + ' ' + Math.round(num(l.discEach) / num(l.price) * 100) + '% off'; }).join(', ')) + '</span></label>' +
+      '<input class="i" id="invReason" value="' + esc(FORM.priceReason || '') + '" placeholder="e.g. regular customer, owner agreed"></div>' : '') + '</div>';
+}
+function invChkPaint() {
+  if (VIEW !== 'invoice') return;
+  var box = el('invChk'), f = document.activeElement && document.activeElement.id === 'invReason';
+  if (box) { box.outerHTML = invChkHtml(); if (f && el('invReason')) { var r = el('invReason'); r.focus(); r.setSelectionRange(r.value.length, r.value.length); } }
+  var ok = invChecks().every(function (x) { return x.ok; }), s = el('saveInv');
+  if (s && !SAVING) { s.disabled = !ok; s.title = ok ? '' : 'Tick every line of "Before you save" first'; }
+  invPhoneMark();
+}
+var NS_SELLERS_INV = null;
+function invSellersHtml() {
+  if (!NS_SELLERS_INV) { NS_SELLERS_INV = { sellers: [], canChoose: false };
+    srv('erpSellers', [], function (r) { NS_SELLERS_INV = r; if (VIEW === 'invoice') repaint(); }, function () {}); }
+  var s = NS_SELLERS_INV.sellers || [];
+  if (!NS_SELLERS_INV.canChoose) return '';
+  return '<div><label class="f" for="invSeller">Seller <span class="sku">commission goes to them</span></label><select class="i" id="invSeller">' +
+    s.map(function (p) { var v = p.me ? '' : p.id; return '<option value="' + esc(v) + '"' + ((FORM.seller || '') === v ? ' selected' : '') + '>' + esc(p.name) + (p.me ? ' (me)' : '') + '</option>'; }).join('') + '</select></div>';
+}
+var viewInvoiceOne = viewInvoice;
+viewInvoice = function () {
+  var h = viewInvoiceOne.apply(this, arguments);
+  if (!CAT || !OPT) return h;
+  if (!FORM.channel) FORM.channel = 'Walk-in';
+  // phone message under the box
+  h = h.replace(/(<input class="i" id="cphone"[^>]*>)/, '$1<div class="inv-ph-msg" id="invPhMsg"></div>');
+  // where the customer came from + seller, in the Customer card
+  var extra = '<div class="fields" style="margin-top:10px"><div style="grid-column:1/-1"><label class="f">Where the customer came from</label><div class="inv-chan">' +
+    INV_CHANNELS.map(function (c) { return '<button type="button" data-invch="' + esc(c) + '" aria-pressed="' + (FORM.channel === c) + '">' + esc(c) + '</button>'; }).join('') + '</div></div>' + invSellersHtml() + '</div>';
+  h = h.replace('</div><div id="custHint"></div>', '</div>' + extra + '<div id="custHint"></div>');
+  // the old red list of problems gives way to the checklist, right above Save
+  h = h.replace(/<div class="note err" style="margin-top:16px"><div class="ico">✕<\/div><div>[\s\S]*?<\/div><\/div>(?=<div class="row" style="margin-top:16px; justify-content:flex-end">)/, '');
+  h = h.replace('<div class="row" style="margin-top:16px; justify-content:flex-end">', invChkHtml() + '<div class="row" style="margin-top:16px; justify-content:flex-end">');
+  var ok = invChecks().every(function (x) { return x.ok; });
+  if (!ok) h = h.replace('id="saveInv"', 'id="saveInv" disabled title="Tick every line of &quot;Before you save&quot; first"');
+  return h;
+};
+var repaintInv = repaint;
+repaint = function () { var r = repaintInv.apply(this, arguments); if (VIEW === 'invoice') { try { invPhoneMark(); } catch (e) {} } return r; };
+var INV_T = null;
+document.addEventListener('input', function (e) {
+  if (VIEW !== 'invoice') return;
+  if (e.target.id === 'invReason') FORM.priceReason = e.target.value;
+  if (e.target.id === 'cphone') invPhoneMark();
+  clearTimeout(INV_T); INV_T = setTimeout(invChkPaint, 120);
+});
+document.addEventListener('change', function (e) {
+  if (VIEW !== 'invoice') return;
+  if (e.target.id === 'invSeller') FORM.seller = e.target.value;
+  clearTimeout(INV_T); INV_T = setTimeout(invChkPaint, 60);
+});
+document.addEventListener('click', function (e) {
+  if (VIEW !== 'invoice' || !e.target.closest) return;
+  var b = e.target.closest('[data-invch]');
+  if (b) { FORM.channel = b.getAttribute('data-invch'); [].forEach.call(document.querySelectorAll('[data-invch]'), function (x) { x.setAttribute('aria-pressed', String(x === b)); }); return; }
+  setTimeout(invChkPaint, 80);   // qty / remove / pay chips change the checks
+  var s = e.target.closest('#saveInv');
+  if (s && !invChecks().every(function (x) { return x.ok; })) { e.preventDefault(); e.stopImmediatePropagation(); invChkPaint(); toast('Fix the red lines of "Before you save" first.', true); }
+}, true);
+// the sale carries channel, seller and the price band
+var srvInv = srv;
+srv = function (name, args, ok, bad) {
+  if (name === 'erpCreateInvoice' && VIEW === 'invoice' && args && args[0] && args[0].channel === undefined) {
+    var a = args.slice(); a[0] = Object.assign({}, a[0], { channel: FORM.channel || 'Walk-in', seller: FORM.seller || '', priceCheck: true, priceReason: String(FORM.priceReason || '').trim() });
+    var done = ok;
+    ok = function (r) { FORM.channel = 'Walk-in'; FORM.priceReason = ''; return done.apply(this, arguments); };
+    return srvInv.call(this, name, a, ok, bad);
+  }
+  return srvInv.apply(this, arguments);
+};
+// every way of saving (button, Enter, the sticky bar) waits for the checklist
+var saveInvoiceOne = saveInvoice;
+saveInvoice = function () {
+  if (VIEW === 'invoice' && !invChecks().every(function (x) { return x.ok; })) { invChkPaint(); toast('Fix the red lines of "Before you save" first.', true); return; }
+  return saveInvoiceOne.apply(this, arguments);
+};
+/* ---------- New sale leaves: its address opens New invoice ---------- */
+var goInv = go;
+go = function (v) { if (v === 'sale') v = 'invoice'; return goInv.apply(this, [v].concat([].slice.call(arguments, 1))); };
+if (typeof fdQuickAdd === 'function') {
+  fdQuickAdd = (function (old) { return function (anchor) { old(anchor); var p = document.querySelector('.fdpop'); if (!p) return;
+    [].forEach.call(p.querySelectorAll('.fdpop-it'), function (b) { var t = b.textContent; if (/^New sale/.test(t)) b.remove(); else if (/^New invoice \(classic\)/.test(t)) { var tx = b.querySelector('.fdpop-tx'); if (tx) tx.innerHTML = 'New invoice<span class="fdpop-h">Phone sale, walk-in, courier</span>'; } }); }; })(fdQuickAdd);
+}
+if (/#\/sale\b/.test(location.hash)) setTimeout(function () { go('invoice'); }, 0);
+</script>
+
 </body>
 </html>

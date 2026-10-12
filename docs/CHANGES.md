@@ -1788,3 +1788,8 @@ marked paid while October rent was a one-off (counted twice on the Expenses scre
   title removed; product-group / business drop-down beside "Dashboard" (taken out of the top bar).
 - fd-29: one theme window: the old "Themes" window can no longer open; its background photo lives in the new picker.
 - fd-30: Settings uses pill tabs like every other screen (no side list).
+- fd-31 (owner): one sale screen = New invoice (the staff's familiar screen) with New sale's extras: where the customer
+  came from, seller (manager/owner may name one), the 5 % price band with a reason box, and a live "Before you save"
+  checklist right above Save - Save stays off (button, Enter and the sticky bar) until every line is ticked. Phone:
+  digits only, must start 01 (nothing else can be typed, no 0 is added for you; +880 numbers still convert), red
+  until 11 digits, required. "New sale" left the menu and the + menu; its address opens New invoice.
