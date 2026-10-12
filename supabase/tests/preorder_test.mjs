@@ -61,6 +61,34 @@ check('Nadia owes nothing and holds no credit', (await credit('01912345678')).cr
 r = await owner('erpPreorderPay', [{ id: P3, amount: 100 }]);
 check('a closed pre-order takes no more money', !r.ok, r);
 
+// ---- held units: what arrived for a pre-order is not for anyone else
+await sql`insert into products (business_id, sku, name, category, brand, type, cost_price, sell_price, status) values
+  (${B}, 'HOLD-1', 'Held Printer', 'Printers', 'T', 'Printer', 1000, 2000, 'Active')`;
+r = await sales('erpPreorderSave', [{ customer: { name: 'Ali', phone: '01512345678' }, lines: [{ sku: 'HOLD-1', qty: 1, price: 1900 }], advance: 500 }]);
+const PH = r.result.no;
+await mgr('erpReceiveShipment', [{ reference: 'HOLD-SHIP', mode: 'bdt', totalBdt: 2000, lines: [{ sku: 'HOLD-1', qty: 2 }] }]);
+let cat = (await sales('erpCatalog', [])).result.find((x) => x.sku === 'HOLD-1');
+check('2 arrived, 1 held for Ali: 1 available, saying for whom', cat.stock === 2 && cat.available === 1 && cat.held === 1 && cat.heldFor.includes(PH) && cat.heldFor.includes('Ali'), cat);
+r = await sales('erpCreateInvoice', [{ customer: { name: 'Walk In', phone: '01311111111' }, items: [{ sku: 'HOLD-1', qty: 1 }], payMode: 'full' }]);
+check('the free one can be sold', r.ok, r);
+r = await sales('erpCreateInvoice', [{ customer: { name: 'Walk In', phone: '01311111111' }, items: [{ sku: 'HOLD-1', qty: 1 }], payMode: 'full' }]);
+check('the held one cannot: the message names the pre-order', !r.ok && /^HELD: Held Printer - 1 held for pre-order PRE-.*Ali.*only 0 free\. Only the owner/.test(r.error), r);
+r = await mgr('erpCreateInvoice', [{ customer: { name: 'Walk In', phone: '01311111111' }, items: [{ sku: 'HOLD-1', qty: 1 }], payMode: 'full', overrideHold: { reason: 'manager says so' } }]);
+check('a manager cannot override', !r.ok && /HELD/.test(r.error), r);
+r = await owner('erpCreateInvoice', [{ customer: { name: 'Walk In', phone: '01311111111' }, items: [{ sku: 'HOLD-1', qty: 1 }], payMode: 'full' }]);
+check('the owner is asked for a reason', !r.ok && /Sell it anyway only with a reason/.test(r.error), r);
+r = await sales('erpPreorderFulfil', [{ id: PH }]);
+check('Ali\'s own unit is not held from Ali: handed over', r.ok && r.result.grandTotal === 1900, r);
+await mgr('erpReceiveShipment', [{ reference: 'HOLD-SHIP-2', mode: 'bdt', totalBdt: 1000, lines: [{ sku: 'HOLD-1', qty: 1 }] }]);
+r = await sales('erpPreorderSave', [{ customer: { name: 'Babu', phone: '01412345678' }, lines: [{ sku: 'HOLD-1', qty: 1, price: 1900 }], advance: 500 }]);
+const PB = r.result.no;
+r = await owner('erpCreateInvoice', [{ customer: { name: 'VIP', phone: '01322222222' }, items: [{ sku: 'HOLD-1', qty: 1 }], payMode: 'full', overrideHold: { reason: 'Babu agreed to wait' } }]);
+check('the owner sells a held unit with a reason', r.ok, r);
+const note = (await sql`select note from invoices where business_id = ${B} and invoice_no = ${r.result.invoiceNo}`)[0].note;
+check('...and the reason is written on the invoice', note.includes('sold held stock of ' + PB) && note.includes('Babu agreed to wait'), note);
+r = await sales('erpPreorders', [{}]);
+check('Babu waits again (not ready)', !r.result.preorders.find((x) => x.no === PB).ready, 0);
+
 // ---- the other business is untouched
 const other = await sql`select count(*)::int as n from preorders where business_id = ${FIX.B2}`;
 check('no pre-orders in the other business', other[0].n === 0, other);

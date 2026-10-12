@@ -153,6 +153,21 @@ export async function createInvoice(ctx, payload, opts = {}) {
         seen[sk.toLowerCase()] + ' requested.');
     }
   }
+  // 115: units held for a pre-order go to that customer (a website order is never refused; the pool's copy is not checked)
+  let holdNote = '';
+  if (!opts.mirror && !opts.webEntry) {
+    const held = await (await import('./preorders.js')).heldMap(ctx, opts.preorderNo || '');
+    for (const k of Object.keys(seen)) {
+      const h = held[k], rec = bySku[k];
+      if (!h || !rec || rec.joint) continue;
+      const free = Math.max(0, num(rec.stock) - h.held);
+      if (seen[k] <= free) continue;
+      const why = String((payload.overrideHold && payload.overrideHold.reason) || '').trim();
+      if (ctx.s.role === 'owner' && why) { holdNote += ' [sold held stock of ' + h.nos.join(', ') + ': ' + why.slice(0, 120) + ']'; continue; }
+      throw new Error('HELD: ' + rec.name + ' - ' + h.held + ' held for pre-order ' + h.nos.map((n, x) => n + ' (' + h.who[x] + ')').join(', ') +
+        '; only ' + free + ' free. ' + (ctx.s.role === 'owner' ? 'Sell it anyway only with a reason.' : 'Only the owner can sell held units.'));
+    }
+  }
 
   // discounts: so much off each piece, and so much off the whole
   // the pool's copy of a partner company's sale takes its prices and discounts as they were given to the customer
@@ -246,7 +261,7 @@ export async function createInvoice(ctx, payload, opts = {}) {
     priorBalance = (await erpCustomerAccount(ctx, { phone: String(payload.customer.phone || ''), name })).balance;
   } catch (_) { /* as original */ }
 
-  let noteText = String(payload.note || '');
+  let noteText = String(payload.note || '') + holdNote;
   if (DSC.invDisc > 0) {
     noteText = (noteText || 'Invoice submission') + ' [discount: items ' + Math.round(DSC.itemDisc) +
       ' + invoice ' + Math.round(DSC.invDisc) + ']';

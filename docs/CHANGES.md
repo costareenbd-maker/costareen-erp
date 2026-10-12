@@ -1660,3 +1660,14 @@ Cancel (manager): the deposit paid back (a negative payment from the account nam
 kept: a 'Forfeited' payment (no account, no cash moves) and preorders.forfeited, counted in pnlFor as income of that month
 (month.forfeited; net profit "+ Pre-order deposits kept"). Tests: preorder (22). Page fd-12.
 NOT done: holding the arrived units back from other sales (Ready only tells; New invoice does not warn yet).
+
+## pre-2 - pre-order hold and warning (13 Oct 2026)
+
+Units that arrived for an open pre-order are held for it (preorders.heldMap: the shelf goes to the oldest open
+pre-orders first; the one being handed over keeps its turn but its own units are not held from itself). erpCatalog:
+`available` = stock - held, with `held` and `heldFor` (pre-order no. and customer). createInvoice refuses a sale that would
+take held units ("HELD: <product> - n held for pre-order PRE-... (name); only m free"); the owner may sell anyway with
+overrideHold.reason, written on the invoice note ([sold held stock of PRE-...: reason]); website orders are not refused.
+Page fd-13: the owner is asked for the reason and the sale is saved; others see the warning.
+Found while building it: handing over the oldest pre-order gave its unit to the next one - fixed (allocation keeps turns).
+Tests: preorder now 31; all 108 suites green.

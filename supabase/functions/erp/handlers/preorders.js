@@ -25,6 +25,34 @@ async function paidOn(ctx, no) {
   return round2(num(r[0].s));
 }
 
+/**
+ * Units held for open pre-orders: { sku (lower case): { held, nos: [no], who: [customer] } }. The stock on the shelf goes
+ * to the oldest open pre-orders first, so a unit is held only once it has arrived. `except` leaves one pre-order out
+ * (the one being handed over: its own units are not held from itself).
+ */
+export async function heldMap(ctx, except) {
+  const key = 'held:' + (except || '');
+  if (ctx.memo[key]) return ctx.memo[key];
+  const rows = await ctx.tx`select h.no, h.customer, lower(btrim(l.sku)) as k, l.qty from preorders h join preorder_lines l on l.preorder_id = h.id
+                            where h.business_id = ${ctx.biz} and h.status = 'open' and coalesce(l.sku, '') <> '' order by h.created_at, l.line_no`;
+  const out = {};
+  if (!rows.length) return (ctx.memo[key] = out);
+  const stock = {};
+  for (const r of await ctx.tx`select lower(btrim(p.sku)) as k, ps.stock from products p join product_stock ps on ps.product_id = p.id
+                               where p.business_id = ${ctx.biz} and lower(btrim(p.sku)) = any(${Array.from(new Set(rows.map((r) => r.k)))})`) stock[r.k] = num(r.stock);
+  const used = {};                                  // every open pre-order takes its turn, the one handed over too
+  for (const r of rows) {
+    const left = Math.max(0, (stock[r.k] || 0) - (used[r.k] || 0));
+    const take = Math.min(left, num(r.qty));
+    if (!(take > 0)) continue;
+    used[r.k] = (used[r.k] || 0) + take;
+    if (str(r.no) === str(except)) continue;         // its own units are not held from itself
+    const o = out[r.k] = out[r.k] || { held: 0, nos: [], who: [] };
+    o.held += take; o.nos.push(str(r.no)); o.who.push(str(r.customer));
+  }
+  return (ctx.memo[key] = out);
+}
+
 export async function erpPreorders(ctx, payload) {
   const all = !!(payload && payload.all);
   const heads = await ctx.tx`select * from preorders where business_id = ${ctx.biz}
@@ -145,7 +173,7 @@ export async function erpPreorderFulfil(ctx, payload) {
     customer: { name: h.customer, phone: str(h.phone), address: str(payload.address) },
     items: me.items.map((l) => ({ sku: l.sku, qty: l.qty })),
     payMode: 'none', deliveryCharge: num(payload.deliveryCharge), note: 'pre-order ' + h.no,
-  }, { agreed: me.items.map((l) => l.price) });
+  }, { agreed: me.items.map((l) => l.price), preorderNo: h.no });
   await ctx.tx`update preorders set status = 'done', invoice_no = ${res.invoiceNo}, closed_at = now() where id = ${h.id}`;
   return { ok: true, invoiceNo: res.invoiceNo, grandTotal: res.grandTotal, paidByDeposit: res.creditUsed, due: round2(res.grandTotal - res.creditUsed), list: await erpPreorders(ctx) };
 }
@@ -168,6 +196,7 @@ export async function erpPreorderCancel(ctx, payload) {
                             method: mode === 'forfeit' ? 'Forfeited' : (str(payload.method) || 'Cash'),
                             note: (mode === 'forfeit' ? 'deposit kept: ' : 'deposit paid back: ') + reason + ' [advance] [preorder:' + h.no + '] [acct:' + h.customer_key + ']' });
   }
+  Object.keys(ctx.memo).forEach((k) => { if (k.indexOf('held:') === 0 || k === 'catalog') delete ctx.memo[k]; });
   await ctx.tx`update preorders set status = 'cancelled', cancel_reason = ${reason.slice(0, 200)}, closed_at = now(),
                refunded = ${mode === 'refund' ? amount : 0}, forfeited = ${mode === 'forfeit' ? amount : 0},
                forfeit_month = ${mode === 'forfeit' && amount > 0 ? formatDate(ctx.now, 'yyyy-MM') : null} where id = ${h.id}`;

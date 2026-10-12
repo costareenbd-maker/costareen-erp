@@ -24706,5 +24706,26 @@ var preAfterWrite = pagesAfterWrite;
 pagesAfterWrite = function () { PRE.data = null; return preAfterWrite.apply(this, arguments); };
 </script>
 
+<!-- fd-13 (pre-order hold): units that arrived for a pre-order are held for that customer. Saving a sale that would take
+     them is refused by the server ("HELD: ... held for pre-order PRE-... (name)"); the owner is asked for a reason and may
+     sell anyway (the reason is written on the invoice). The product list shows held units as not available. -->
+<script>
+var srvHold = srv;
+srv = function (name, args, ok, bad) {
+  if (name !== 'erpCreateInvoice') return srvHold.apply(this, arguments);
+  return srvHold(name, args, ok, function (e) {
+    var msg = String(e && e.message ? e.message : e);
+    if (!/^HELD: /.test(msg)) { if (bad) bad(e); return; }
+    var text = msg.replace(/^HELD: /, '');
+    if (!(ME && String(ME.role) === 'owner')) { uiAlert('Held for a pre-order\n\n' + text); if (bad) bad(new Error(text)); return; }
+    uiPrompt('Held for a pre-order\n\n' + text + '\n\nSell it anyway? Type the reason (it is written on the invoice), or Cancel.', '').then(function (why) {
+      if (!why || !String(why).trim()) { if (bad) bad(new Error(text)); return; }
+      var a = (args || []).slice(); a[0] = Object.assign({}, a[0], { overrideHold: { reason: String(why).trim() } });
+      srvHold(name, a, ok, bad);
+    });
+  });
+};
+</script>
+
 </body>
 </html>

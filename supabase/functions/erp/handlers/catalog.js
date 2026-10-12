@@ -97,7 +97,7 @@ export async function erpCatalog(ctx) {
       unit: String(p.unit || '').trim(),
       supplier: String(p.supplier || '').trim(),
       stock,
-      available: stock,
+      available: stock,                // less what is held for pre-orders (below)
       reorder: rl,
       sell,
       state,
@@ -113,6 +113,15 @@ export async function erpCatalog(ctx) {
       lastSoldDays: h.last ? Math.floor((nowMs - h.last) / DAY_MS) : null,
     };
   });
+  // 115: units that arrived for an open pre-order are held for it: not available to anyone else
+  try {
+    const { heldMap } = await import('./preorders.js');
+    const hm = await ctx.tx.savepoint(() => heldMap(ctx));
+    for (const p of out) {
+      const h = hm[p.sku.toLowerCase()];
+      if (h && h.held > 0) { p.available = Math.max(0, p.stock - h.held); p.held = h.held; p.heldFor = h.nos.map((n, k) => n + ' (' + h.who[k] + ')').join(', '); }
+    }
+  } catch (_) { /* before 115: nothing is held */ }
   out.sort((a, c) => (a.name < c.name ? -1 : a.name > c.name ? 1 : 0));
   ctx.memo.catalog = out;
   return out.map((p) => ({ ...p }));
