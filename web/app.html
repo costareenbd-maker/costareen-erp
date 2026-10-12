@@ -25357,7 +25357,7 @@ function fdTk(v, cur) {
 fddMoney = function (v, cur) { return fdTk(v, cur); };
 
 /* ---------- small icons for the shell ---------- */
-var FDI = {
+var FD17I = {
   chev: '<path d="M6 9l6 6 6-6"/>', plus: '<path d="M12 5v14M5 12h14"/>', layers: '<path d="M12 3l9 5-9 5-9-5z"/><path d="M3 13l9 5 9-5"/><path d="M3 17.5l9 5 9-5" opacity=".55"/>',
   biz: '<path d="M3 21h18M5 21V7l7-4 7 4v14"/><path d="M9 21v-5h6v5"/>', group: '<circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3"/>',
   cart: '<path d="M6 6h15l-1.5 9h-12z"/><path d="M6 6L5 3H2"/><circle cx="9" cy="20" r="1.5"/><circle cx="18" cy="20" r="1.5"/>',
@@ -25368,7 +25368,7 @@ var FDI = {
   check: '<path d="M5 12l5 5L20 7"/>', info: '<circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/>', search: '<circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/>',
   add: '<circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/>'
 };
-function fdI(n, sz) { return '<svg viewBox="0 0 24 24" width="' + (sz || 18) + '" height="' + (sz || 18) + '" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + (FDI[n] || '') + '</svg>'; }
+function fdI(n, sz) { return '<svg viewBox="0 0 24 24" width="' + (sz || 18) + '" height="' + (sz || 18) + '" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + (FD17I[n] || '') + '</svg>'; }
 function fdLogoSvg() {
   return '<svg class="fdlogo" viewBox="0 0 44 44" aria-hidden="true"><defs><linearGradient id="fdlg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" style="stop-color:var(--fd-logo-1)"/>' +
     '<stop offset=".55" style="stop-color:var(--fd-logo-2)"/><stop offset="1" style="stop-color:var(--fd-logo-3)"/></linearGradient></defs>' +
@@ -28479,7 +28479,7 @@ var FD22I = {
   globe2: '<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3.5 3 14.5 0 18M12 3c-3 3.5-3 14.5 0 18"/>'
 };
 function fd22Ic(n, sz) {
-  var p = FD22I[n] || (typeof FDD_IC !== 'undefined' && FDD_IC[n]) || (typeof FDI !== 'undefined' && FDI[n]) || FD22I.infoc;
+  var p = FD22I[n] || (typeof FDD_IC !== 'undefined' && FDD_IC[n]) || (typeof FD17I !== 'undefined' && FD17I[n]) || FD22I.infoc;
   return '<svg viewBox="0 0 24 24" width="' + (sz || 18) + '" height="' + (sz || 18) + '" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + p + '</svg>';
 }
 function fd22Badge(icon, tone, size) { return '<span class="fd22-ib' + (size ? ' ' + size : ' sm') + (tone ? ' t-' + tone : '') + '">' + fd22Ic(icon, 22) + '</span>'; }
@@ -29220,6 +29220,1173 @@ repaint = function () {
 // leaving the look closes the drawer; the guide drawer never outlives a screen change
 var goFd22 = go;
 go = function () { fd22DrawerClose(); return goFd22.apply(this, arguments); };
+</script>
+
+<!-- fd-20 (FilaDash merge, owner 13 Oct 2026: "his design is the top priority and inspiration; apply every small detail"):
+     his Inventory (Materials / Printers) and Shipments screens laid over ours, FilaDash look only (Classic untouched).
+     Products = his Materials screen: Count / Adjust stock in the head, category pills (his scope) + Items / Lots / Grouped,
+     his four cards (Units on hand hero, Stock value at cost, Items low or out, Dead stock 120+ days idle with the holding it
+     carried, each with "i" = how it is worked out), his table card (round colour swatch, name + brand · SKU, On hand, Lots,
+     Value at cost, Days of cover in red under lead + 14, status badge with a dot, price), phone = card rows; a row opens his
+     right-hand drawer (status, details, units sold per month, the FIFO queue with landed cost and holding per lot, Adjust /
+     Receive / Edit / Add / Open full page). Lots = every FIFO lot. Grouped = our Group by in his group rows. Under the list:
+     Low stock & days of cover, and Receipts, returns and adjustments. Shipments = his lifecycle board (Planned > Ordered >
+     In transit > Received > Sold out, from our orders and our received shipments) or the table (our full lists), six cards
+     (his three + ours); one shipment = his page (lifecycle stepper, six cards incl. ROI after holding, "Costing · posted").
+     Stock entry: his costing stepper over Receive. Suppliers, Product cost, the product page: his card heads, tables, empty
+     states. Figures: ours (FIFO lots, landed cost, holding); new read-only call erpFdInventory (handlers/fd20.js). -->
+<style>
+/* ---- tokens his kit needs that fd-1 did not bring */
+[data-skin="fd"] { --fd-neutral-soft:#F1F2F7; --fd-neutral-text:#4B5068; --fd-violet-soft:#F0E9FF; --fd-violet-text:#6D28D9;
+  --fd-swatch-ring:rgba(20,23,43,.12); --fd-swatch-ring-light:rgba(20,23,43,.30); --fd-overlay:rgba(20,23,43,.45); --fd-bar:#2F7CF6; }
+[data-skin="fd"][data-theme="dark"] { --fd-neutral-soft:#222C3A; --fd-neutral-text:#C5CCD8; --fd-violet-soft:rgba(167,139,250,.16); --fd-violet-text:#C4B5FD;
+  --fd-swatch-ring:rgba(255,255,255,.14); --fd-swatch-ring-light:rgba(255,255,255,.14); --fd-overlay:rgba(0,0,0,.60); --fd-bar:var(--fd-accent); }
+
+/* ---- badges (his UI.badge / UI.status), swatches, item cell */
+[data-skin="fd"] .fd20-b { display:inline-flex; align-items:center; gap:6px; height:28px; padding:0 10px; border-radius:999px; font-size:13px; font-weight:600; white-space:nowrap;
+  line-height:1; vertical-align:middle; background:var(--fd-neutral-soft); color:var(--fd-neutral-text); }
+[data-skin="fd"] .fd20-b.sm { height:24px; padding:0 8px; font-size:12.5px; }
+[data-skin="fd"] .fd20-b > i { width:8px; height:8px; border-radius:999px; background:currentColor; display:inline-block; flex:0 0 8px; }
+[data-skin="fd"] .fd20-b.t-pos { background:var(--fd-positive-soft); color:var(--fd-positive-text); }
+[data-skin="fd"] .fd20-b.t-neg { background:var(--fd-negative-soft); color:var(--fd-negative-text); }
+[data-skin="fd"] .fd20-b.t-warn { background:var(--fd-warning-soft); color:var(--fd-warning-text); }
+[data-skin="fd"] .fd20-b.t-info { background:var(--fd-info-soft); color:var(--fd-info-text); }
+[data-skin="fd"] .fd20-b.t-acc { background:var(--fd-accent-soft); color:var(--fd-accent-text); }
+[data-skin="fd"] .fd20-b.t-vio { background:var(--fd-violet-soft); color:var(--fd-violet-text); }
+[data-skin="fd"][data-theme="dark"] .fd20-b { box-shadow:inset 0 0 0 1px color-mix(in srgb, currentColor 25%, transparent); }
+[data-skin="fd"] .fd20-sw { width:14px; height:14px; border-radius:999px; flex:0 0 14px; display:inline-block; box-shadow:inset 0 0 0 1px var(--fd-swatch-ring); }
+[data-skin="fd"] .fd20-sw.lt { box-shadow:inset 0 0 0 1.5px var(--fd-swatch-ring-light); }
+[data-skin="fd"] .fd20-swl { display:inline-flex; align-items:center; gap:8px; white-space:nowrap; }
+[data-skin="fd"] .fd20-gl { width:22px; height:22px; border-radius:999px; display:inline-grid; place-items:center; background:var(--fd-accent-soft); color:var(--fd-accent); flex:0 0 22px; }
+[data-skin="fd"] .fd20-gl svg { width:13px; height:13px; }
+[data-skin="fd"] .fd20-it { display:inline-flex; align-items:flex-start; gap:10px; min-width:0; vertical-align:middle; }
+[data-skin="fd"] .fd20-it > .fd20-sw { margin-top:4px; }
+[data-skin="fd"] .fd20-p { display:block; font-weight:600; color:var(--fd-text); white-space:normal; line-height:1.35; }
+[data-skin="fd"] .fd20-s { display:block; font-size:13px; font-weight:400; color:var(--fd-text-3); line-height:1.3; white-space:nowrap; }
+[data-skin="fd"] .fd20-faint { color:var(--fd-text-faint); font-weight:500; }
+[data-skin="fd"] .fd20-neg { color:var(--fd-negative-text) !important; }
+[data-skin="fd"] .fd20-num { font-variant-numeric:tabular-nums; }
+[data-skin="fd"] .pth + .fd20-it > .fd20-sw, [data-skin="fd"] .pth + .fd20-it > .fd20-gl { display:none; }
+[data-skin="fd"] td > .pth { width:30px; height:30px; border-radius:8px; object-fit:cover; float:left; margin:2px 10px 0 0; }
+
+/* ---- page head: actions, segmented bars */
+[data-skin="fd"] .fd20-acts { display:flex; align-items:center; gap:8px; margin-left:auto; flex-wrap:wrap; }
+[data-skin="fd"] .fd20-btn { display:inline-flex; align-items:center; justify-content:center; gap:8px; height:34px; padding:0 14px; border-radius:999px; border:1px solid transparent;
+  font:inherit; font-size:13px; font-weight:600; white-space:nowrap; cursor:pointer; background:var(--fd-surface-2); color:var(--fd-text);
+  transition:background .15s cubic-bezier(.2,.8,.2,1), box-shadow .15s cubic-bezier(.2,.8,.2,1); }
+[data-skin="fd"][data-theme="dark"] .fd20-btn { border-color:var(--fd-border); }
+[data-skin="fd"] .fd20-btn:hover { background:var(--fd-surface-3); }
+[data-skin="fd"] .fd20-btn.pri { background:var(--fd-accent); color:var(--fd-text-on-accent); border-color:transparent; }
+[data-skin="fd"] .fd20-btn.pri:hover { background:var(--fd-accent-hover); box-shadow:var(--fd-accent-glow); }
+[data-skin="fd"][data-theme="dark"] .fd20-btn.pri { box-shadow:var(--fd-glow-badge); }
+[data-skin="fd"] .fd20-btn.ghost { background:transparent; color:var(--fd-text-2); }
+[data-skin="fd"] .fd20-btn.ghost:hover { background:var(--fd-surface-2); color:var(--fd-text); }
+[data-skin="fd"] .fd20-btn svg { width:16px; height:16px; flex:0 0 16px; }
+[data-skin="fd"] .fd20-bar { display:flex; flex-wrap:wrap; gap:10px; align-items:center; margin:0 0 20px; }
+[data-skin="fd"] .fd20-bar .sp { flex:1 1 auto; }
+[data-skin="fd"] .fd20-seg { display:inline-flex; align-items:center; gap:6px; flex-wrap:wrap; }
+[data-skin="fd"] .fd20-seg .fdd-pill, [data-skin="fd"] .fdd-pill.fd20-pillb { display:inline-flex; height:38px; padding:0 18px; margin:0; align-items:center; gap:6px; font:inherit; font-size:14px; font-weight:600; cursor:pointer; white-space:nowrap; }
+[data-skin="fd"] .fd20-seg .fdd-pill svg, [data-skin="fd"] .fdd-pill.fd20-pillb svg { width:16px; height:16px; flex:0 0 16px; }
+[data-skin="fd"] .fd20-seg.sm .fdd-pill { height:32px; padding:0 12px; font-size:13px; }
+[data-skin="fd"]:not([data-theme="dark"]) .fd20-seg .fdd-pill[aria-pressed="true"] { background:linear-gradient(180deg, color-mix(in srgb, var(--fd-accent) 92%, #fff), var(--fd-accent)); }
+[data-skin="fd"][data-theme="dark"] .fd20-seg .fdd-pill[aria-pressed="true"] { background:#1A1813; color:var(--fd-accent); border-color:var(--fd-accent); box-shadow:var(--fd-glow-badge); }
+[data-skin="fd"] .fd20-k6 { grid-template-columns:repeat(3, minmax(0, 1fr)); }
+@media (min-width:1700px) { [data-skin="fd"] .fd20-k6 { grid-template-columns:repeat(6, minmax(0, 1fr)); } }
+@media (max-width:900px) { [data-skin="fd"] .fd20-k6 { grid-template-columns:repeat(2, minmax(0, 1fr)); } }
+[data-skin="fd"] .fd20-kgrid .fdd-k { min-height:168px; }
+[data-skin="fd"] .fd20-kgrid .fdd-kn { font-size:12.5px; color:var(--fd-text-3); margin-top:6px; padding-right:26px; }
+[data-skin="fd"] .fd20-kgrid .fdd-c.fdhero .fdd-kn { color:rgba(255,255,255,.85); }
+[data-skin="fd"][data-theme="dark"] .fd20-kgrid .fdd-c.fdhero .fdd-kn { color:var(--fd-text-3); }
+[data-skin="fd"] .fd20-kgrid .fdd-num.neg { color:var(--fd-negative-text); }
+
+/* ---- his card with a table (UI.dataTable / UI.card) */
+[data-skin="fd"] .fd20-card { position:relative; background:var(--fd-card); border:1px solid var(--fd-border); border-radius:20px; box-shadow:var(--fd-shadow-card), var(--fd-glow-card); min-width:0; margin-bottom:20px; }
+[data-skin="fd"] .fd20-card.pad { padding:24px; }
+[data-skin="fd"] .fd20-ch { display:flex; align-items:center; gap:14px; min-height:44px; }
+[data-skin="fd"] .fd20-card:not(.pad) > .fd20-ch { padding:20px 24px 0; }
+[data-skin="fd"] .fd20-ch.rule { padding-bottom:14px; border-bottom:1px solid var(--fd-border); margin-bottom:12px; }
+[data-skin="fd"] .fd20-ib { width:48px; height:48px; flex:0 0 48px; border-radius:999px; display:inline-grid; place-items:center; background:var(--fd-badge-bg, var(--fd-accent-soft)); color:var(--fd-accent); box-shadow:var(--fd-glow-badge); }
+[data-skin="fd"] .fd20-ib svg { width:22px; height:22px; }
+[data-skin="fd"] .fd20-ib.sm { width:40px; height:40px; flex-basis:40px; } [data-skin="fd"] .fd20-ib.sm svg { width:19px; height:19px; }
+[data-skin="fd"] .fd20-ib.t-warn { background:var(--fd-warning-soft); color:var(--fd-warning); } [data-skin="fd"] .fd20-ib.t-neg { background:var(--fd-negative-soft); color:var(--fd-negative); }
+[data-skin="fd"] .fd20-ib.t-pos { background:var(--fd-positive-soft); color:var(--fd-positive); }
+[data-skin="fd"] .fd20-ct { font-size:19px; font-weight:700; letter-spacing:-.01em; line-height:1.3; color:var(--fd-text); }
+[data-skin="fd"] .fd20-cs { font-size:13px; color:var(--fd-text-3); font-weight:500; margin-top:1px; }
+[data-skin="fd"] .fd20-tools { margin-left:auto; display:flex; align-items:center; gap:8px; flex-wrap:wrap; justify-content:flex-end; }
+[data-skin="fd"] .fd20-tb { display:flex; align-items:center; gap:10px; padding:16px 24px 12px; flex-wrap:wrap; }
+[data-skin="fd"] .fd20-search { position:relative; display:flex; align-items:center; width:320px; max-width:100%; height:40px; border-radius:12px; background:var(--fd-surface-2); border:1px solid transparent; }
+[data-skin="fd"][data-theme="dark"] .fd20-search { border-color:var(--fd-border-strong); }
+[data-skin="fd"] .fd20-search:focus-within { border-color:var(--fd-accent-border); box-shadow:var(--fd-focus-ring); }
+[data-skin="fd"] .fd20-search svg { width:18px; height:18px; margin:0 8px 0 12px; color:var(--fd-text-3); flex:0 0 18px; }
+[data-skin="fd"] .fd20-search input { flex:1 1 auto; min-width:0; height:100%; border:0; background:transparent; outline:none; font:inherit; font-size:14.5px; font-weight:500; color:var(--fd-text); padding-right:12px; }
+[data-skin="fd"] .fd20-tw { overflow-x:auto; margin:0 16px; padding:0 0 8px; }
+[data-skin="fd"] .fd20-card.pad .fd20-tw { margin:0 -8px; padding:0 8px; }
+[data-skin="fd"] #view table.fd20-t { width:100%; }
+[data-skin="fd"] #view table.fd20-t tbody td { height:48px; padding:6px 12px; white-space:nowrap; vertical-align:middle; }
+[data-skin="fd"] #view table.fd20-t tbody td:first-child { padding-left:16px; } [data-skin="fd"] #view table.fd20-t tbody td:last-child { padding-right:16px; }
+[data-skin="fd"] #view table.fd20-t.mini tbody td { height:42px; padding:0 12px; }
+[data-skin="fd"] #view table.fd20-t.mini tbody tr:last-child td { border-bottom:0; }
+[data-skin="fd"] #view table.fd20-t tr.click { cursor:pointer; }
+[data-skin="fd"] #view table.fd20-t tr.gone td { color:var(--fd-text-3); }
+[data-skin="fd"] #view table.fd20-t th.n, [data-skin="fd"] #view table.fd20-t td.n { text-align:right; }
+[data-skin="fd"] .fd20-foot { display:flex; align-items:center; gap:12px; padding:12px 24px 18px; flex-wrap:wrap; color:var(--fd-text-3); font-size:13.5px; }
+[data-skin="fd"] .fd20-note { font-size:13px; color:var(--fd-text-3); margin:4px 0 20px; line-height:1.5; }
+[data-skin="fd"] .fd20-g2 { display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:20px; }
+[data-skin="fd"] .fd20-g2 > .fd20-card { margin-bottom:0; }
+@media (max-width:1279px) { [data-skin="fd"] .fd20-g2 { grid-template-columns:minmax(0, 1fr); } }
+[data-skin="fd"] .fd20-g2wrap { margin-bottom:20px; }
+
+/* ---- the product list (our list view) as his table card */
+[data-skin="fd"] body[data-fd20v="products"] .o_lv[data-lv="products"] { background:var(--fd-card); border:1px solid var(--fd-border); border-radius:20px;
+  box-shadow:var(--fd-shadow-card), var(--fd-glow-card); padding:0 0 8px; margin-bottom:20px; }
+[data-skin="fd"] body[data-fd20v="products"] .o_lv[data-lv="products"] > .fd20-ch { padding:20px 24px 0; }
+[data-skin="fd"] body[data-fd20v="products"] .o_lv[data-lv="products"] .o_lv_bar { padding:16px 24px 12px; margin:0; gap:10px; }
+[data-skin="fd"] .o_lv[data-lv="products"] .o_sbox { flex:0 1 380px; min-height:40px; border-radius:12px; background:var(--fd-surface-2); border:1px solid transparent; padding:3px 4px 3px 12px; }
+[data-skin="fd"][data-theme="dark"] .o_lv[data-lv="products"] .o_sbox { border-color:var(--fd-border-strong); }
+[data-skin="fd"] .o_lv[data-lv="products"] .o_sbox:focus-within { border-color:var(--fd-accent-border); box-shadow:var(--fd-focus-ring); }
+[data-skin="fd"] .o_lv[data-lv="products"] .o_sbox input { font-size:14.5px; font-weight:500; color:var(--fd-text); }
+[data-skin="fd"] .o_lv[data-lv="products"] .o_sbox input::placeholder { color:var(--fd-text-faint); }
+[data-skin="fd"] .o_lv[data-lv="products"] .o_facet { border:0; border-radius:999px; background:var(--fd-accent-soft); color:var(--fd-accent-text); font-weight:600; font-size:13px; height:28px; align-items:center; }
+[data-skin="fd"] .o_lv[data-lv="products"] .o_facet b, [data-skin="fd"] .o_lv[data-lv="products"] .o_facet b.f, [data-skin="fd"] .o_lv[data-lv="products"] .o_facet b.g { background:transparent; color:inherit; padding:0 0 0 10px; font-size:11px; }
+[data-skin="fd"] .o_lv[data-lv="products"] .o_facet button { color:inherit; border-radius:999px; width:24px; height:24px; padding:0; }
+[data-skin="fd"] .o_lv[data-lv="products"] .o_facet button:hover { background:var(--fd-accent-soft-2); color:inherit; }
+[data-skin="fd"] .o_lv[data-lv="products"] .o_stoggle { font-size:0 !important; border:0 !important; height:32px; padding:0 12px; border-radius:999px; background:var(--fd-card); color:var(--fd-text-2); align-self:center; }
+[data-skin="fd"][data-theme="dark"] .o_lv[data-lv="products"] .o_stoggle { background:var(--fd-surface-3); }
+[data-skin="fd"] .o_lv[data-lv="products"] .o_stoggle::before { content:"+ Filter"; font-size:13px; font-weight:600; }
+[data-skin="fd"] .o_lv[data-lv="products"] .o_stoggle[aria-expanded="true"] { background:var(--fd-accent); color:var(--fd-text-on-accent); }
+[data-skin="fd"] .o_lv[data-lv="products"] .o_fdd { border-radius:16px; border:1px solid var(--fd-border); background:var(--fd-card); box-shadow:var(--fd-shadow-popover); padding:12px 0; }
+[data-skin="fd"] .o_lv[data-lv="products"] .o_fdd button.it { border-radius:10px; min-height:36px; font-size:14px; }
+[data-skin="fd"] .o_lv[data-lv="products"] .o_fdd button.it:hover { background:var(--fd-surface-2); }
+[data-skin="fd"] .o_lv[data-lv="products"] .o_sugg { border-radius:14px; border:1px solid var(--fd-border); background:var(--fd-card); box-shadow:var(--fd-shadow-popover); }
+[data-skin="fd"] .o_lv[data-lv="products"] .o_sort select { height:32px; border-radius:999px; border:1px solid transparent; background:var(--fd-surface-2); color:var(--fd-text-2); font-weight:600; padding:0 10px; }
+[data-skin="fd"] .o_lv[data-lv="products"] .o_sort .o_sdir { height:32px; width:32px; border-radius:999px; border:1px solid transparent; background:var(--fd-surface-2); color:var(--fd-text-2); }
+[data-skin="fd"][data-theme="dark"] .o_lv[data-lv="products"] .o_sort select, [data-skin="fd"][data-theme="dark"] .o_lv[data-lv="products"] .o_sort .o_sdir { border-color:var(--fd-border); }
+[data-skin="fd"] .o_lv[data-lv="products"] .o_sort label { color:var(--fd-text-3); font-weight:600; }
+[data-skin="fd"] .o_lv[data-lv="products"] .o_pager { color:var(--fd-text-3); font-weight:600; }
+[data-skin="fd"] .o_lv[data-lv="products"] .o_pager button { border-radius:999px; border:1px solid transparent; background:var(--fd-surface-2); color:var(--fd-text-2); width:32px; height:32px; }
+[data-skin="fd"] .o_lv[data-lv="products"] .o_selbar { margin:0 24px 10px; border-radius:12px; border:0; background:var(--fd-accent-soft); color:var(--fd-accent-text); padding:8px 12px; }
+[data-skin="fd"] .o_lv[data-lv="products"] .o_tbl { border:0; background:transparent; border-radius:0; margin:0 16px; }
+[data-skin="fd"] .o_lv[data-lv="products"] .fdt-bar { margin:0 0 10px; }
+[data-skin="fd"] #view table.o_list.fd20-t thead th { white-space:nowrap; }
+[data-skin="fd"] #view table.o_list.fd20-t td.m { min-width:240px; }
+[data-skin="fd"] #view table.fd20-t .fd20-p { white-space:normal; }
+[data-skin="fd"] #view table.o_list.fd20-t thead th[data-lv-sort] { cursor:pointer; }
+[data-skin="fd"] #view table.o_list.fd20-t thead th .fd20-so { display:inline-flex; align-items:center; gap:4px; }
+[data-skin="fd"] #view table.o_list.fd20-t thead th .fd20-so svg { width:12px; height:12px; opacity:.45; }
+[data-skin="fd"] #view table.o_list.fd20-t thead th.on .fd20-so svg { opacity:1; color:var(--fd-accent-text); }
+[data-skin="fd"] #view table.o_list.fd20-t thead th.on { color:var(--fd-text); }
+[data-skin="fd"] #view table.o_list.fd20-t td.cb, [data-skin="fd"] #view table.o_list.fd20-t th.cb { width:34px; padding-left:16px; padding-right:2px; }
+[data-skin="fd"] #view table.o_list.fd20-t td.cb input, [data-skin="fd"] #view table.o_list.fd20-t th.cb input { accent-color:var(--fd-accent); width:16px; height:16px; }
+[data-skin="fd"] #view table.o_list.fd20-t tr.r.sel > td { background:var(--fd-accent-soft); }
+[data-skin="fd"] #view table.o_list.fd20-t td.o_acts { text-align:right; }
+[data-skin="fd"] #view table.o_list.fd20-t td.o_acts .btn.small { min-height:30px; height:30px; padding:0 12px; font-size:12.5px; margin-left:4px; }
+[data-skin="fd"] #view table.o_list.fd20-t tr.g > td { background:transparent; border-bottom:1px solid var(--fd-border); height:52px; cursor:pointer; }
+[data-skin="fd"] #view table.o_list.fd20-t tr.g:hover > td { background:var(--fd-surface-2); }
+[data-skin="fd"] .fd20-gh { display:flex; align-items:center; gap:12px; }
+[data-skin="fd"] .fd20-gh > svg { width:18px; height:18px; color:var(--fd-text-3); flex:0 0 18px; transition:transform .15s cubic-bezier(.2,.8,.2,1); }
+[data-skin="fd"] .fd20-gh.open > svg { transform:rotate(90deg); }
+[data-skin="fd"] .fd20-gh b { font-weight:700; color:var(--fd-text); }
+[data-skin="fd"] .fd20-gm { font-size:13px; color:var(--fd-text-3); font-variant-numeric:tabular-nums; white-space:nowrap; font-weight:500; }
+[data-skin="fd"] #view table.o_list.fd20-t tfoot td { background:var(--fd-surface-2); height:44px; font-weight:700; }
+[data-skin="fd"] #view table.o_list.fd20-t tfoot td:first-child { border-radius:12px 0 0 12px; } [data-skin="fd"] #view table.o_list.fd20-t tfoot td:last-child { border-radius:0 12px 12px 0; }
+
+/* ---- phone: card rows instead of the table (his .fd-card-row) */
+[data-skin="fd"] .fd20-ml { display:none; }
+[data-skin="fd"] .fd20-mr { display:flex; align-items:center; gap:12px; min-height:72px; padding:12px 16px; border-bottom:1px solid var(--fd-border); cursor:pointer; }
+[data-skin="fd"] .fd20-mr:last-child { border-bottom:0; }
+[data-skin="fd"] .fd20-mr:hover { background:var(--fd-surface-2); }
+[data-skin="fd"] .fd20-mr > input { accent-color:var(--fd-accent); width:18px; height:18px; flex:0 0 18px; }
+[data-skin="fd"] .fd20-mr-m { flex:1 1 auto; min-width:0; }
+[data-skin="fd"] .fd20-mr-t { display:flex; align-items:center; gap:8px; font-weight:600; color:var(--fd-text); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+[data-skin="fd"] .fd20-mr-t > span:last-child { overflow:hidden; text-overflow:ellipsis; }
+[data-skin="fd"] .fd20-mr-s { font-size:13px; color:var(--fd-text-3); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; margin-top:2px; }
+[data-skin="fd"] .fd20-mr-e { text-align:right; display:flex; flex-direction:column; align-items:flex-end; gap:4px; flex:0 0 auto; }
+[data-skin="fd"] .fd20-mr-v { font-weight:700; font-variant-numeric:tabular-nums; white-space:nowrap; }
+[data-skin="fd"] .fd20-mr > svg { width:18px; height:18px; color:var(--fd-text-faint); flex:0 0 18px; }
+@media (max-width:767px) {
+  [data-skin="fd"] .fd20-ml { display:block; margin:0 -16px; }
+  [data-skin="fd"] .fd20-card .fd20-ml { margin:0; }
+  [data-skin="fd"] body[data-fd20v="products"] .o_lv[data-lv="products"] table.o_list, [data-skin="fd"] body[data-fd20v="products"] .o_lv[data-lv="products"] .fdt-bar,
+  [data-skin="fd"] .fd20-card .fd20-tw.hidephone { display:none; }
+  [data-skin="fd"] body[data-fd20v="products"] .o_lv[data-lv="products"] .o_lv_bar { padding:14px 16px 10px; }
+  [data-skin="fd"] .o_lv[data-lv="products"] .o_sbox { flex-basis:100%; }
+  [data-skin="fd"] .fd20-ch { flex-wrap:wrap; gap:10px; }
+  [data-skin="fd"] .fd20-card:not(.pad) > .fd20-ch { padding:16px 16px 0; }
+  [data-skin="fd"] .fd20-card.pad { padding:20px; }
+  [data-skin="fd"] .fd20-ch > div:not(.fd20-tools) { flex:1 1 160px; }
+  [data-skin="fd"] .fd20-tools { margin-left:0; width:100%; justify-content:flex-start; }
+  [data-skin="fd"] .fd20-ct { font-size:17px; }
+  [data-skin="fd"] .fd20-ib { width:40px; height:40px; flex-basis:40px; } [data-skin="fd"] .fd20-ib svg { width:19px; height:19px; }
+  [data-skin="fd"] .fd20-bar { flex-wrap:nowrap; overflow-x:auto; margin:0 -16px 14px; padding:2px 16px 4px; scrollbar-width:none; }
+  [data-skin="fd"] .fd20-bar::-webkit-scrollbar { display:none; }
+  [data-skin="fd"] .fd20-bar > * { flex:0 0 auto; }
+  [data-skin="fd"] .fd20-seg { flex-wrap:nowrap; }
+  [data-skin="fd"] .fd20-tb { padding:12px 16px 10px; }
+  [data-skin="fd"] .fd20-search { width:100%; }
+  [data-skin="fd"] .fd20-acts { margin-left:0; width:100%; }
+  [data-skin="fd"] .fd20-g2 { gap:12px; }
+}
+
+/* ---- his drawer (UI.drawer), sheet on a phone */
+[data-skin="fd"] .fd20-ov { position:fixed; inset:0; background:var(--fd-overlay); z-index:80; backdrop-filter:blur(4px); -webkit-backdrop-filter:blur(4px); animation:fd20fade .2s cubic-bezier(.2,.8,.2,1); }
+[data-skin="fd"] .fd20-dr { position:fixed; top:0; right:0; bottom:0; width:560px; max-width:100vw; z-index:81; background:var(--fd-card); border-left:1px solid var(--fd-border);
+  box-shadow:var(--fd-shadow-popover); display:flex; flex-direction:column; animation:fd20slide .2s cubic-bezier(.2,.8,.2,1); color:var(--fd-text); font-family:var(--fd-font); }
+@keyframes fd20fade { from { opacity:0; } to { opacity:1; } }
+@keyframes fd20slide { from { transform:translateX(32px); opacity:0; } to { transform:none; opacity:1; } }
+@keyframes fd20rise { from { transform:translateY(32px); opacity:0; } to { transform:none; opacity:1; } }
+[data-skin="fd"] .fd20-dr-h { display:flex; align-items:center; gap:12px; min-height:64px; padding:12px 20px 12px 24px; border-bottom:1px solid var(--fd-border); }
+[data-skin="fd"] .fd20-dr-tt { font-size:19px; font-weight:700; letter-spacing:-.01em; line-height:1.25; }
+[data-skin="fd"] .fd20-dr-s { font-size:13px; color:var(--fd-text-3); margin-top:2px; }
+[data-skin="fd"] .fd20-dr-h > div { flex:1 1 auto; min-width:0; }
+[data-skin="fd"] .fd20-x { width:36px; height:36px; border-radius:999px; background:var(--fd-surface-2); display:grid; place-items:center; color:var(--fd-text-2); flex:0 0 36px; border:0; cursor:pointer; padding:0; }
+[data-skin="fd"] .fd20-x:hover { background:var(--fd-surface-3); color:var(--fd-text); }
+[data-skin="fd"] .fd20-x svg { width:18px; height:18px; }
+[data-skin="fd"] .fd20-dr-b { flex:1 1 auto; overflow-y:auto; padding:24px; display:flex; flex-direction:column; gap:16px; }
+[data-skin="fd"] .fd20-dr-f { display:flex; align-items:center; gap:10px; padding:14px 24px; border-top:1px solid var(--fd-border); background:var(--fd-card); flex-wrap:wrap; }
+[data-skin="fd"] .fd20-dr-f .sp { flex:1 1 auto; }
+[data-skin="fd"] .fd20-dr-f .fd20-btn { height:44px; padding:0 18px; font-size:14px; }
+[data-skin="fd"] .fd20-row { display:flex; flex-wrap:wrap; gap:8px; align-items:center; }
+[data-skin="fd"] .fd20-kv { width:100%; border-collapse:collapse; font-size:14px; }
+[data-skin="fd"] .fd20-kv td { padding:8px 0; border-bottom:1px solid var(--fd-border); vertical-align:top; }
+[data-skin="fd"] .fd20-kv td:first-child { color:var(--fd-text-3); width:42%; padding-right:12px; }
+[data-skin="fd"] .fd20-kv td:last-child { color:var(--fd-text); font-weight:500; text-align:right; }
+[data-skin="fd"] .fd20-kv tr:last-child td { border-bottom:0; }
+[data-skin="fd"] .fd20-lbl { font-size:13px; font-weight:600; color:var(--fd-text-2); margin-bottom:6px; }
+[data-skin="fd"] .fd20-st { font-size:15px; font-weight:700; color:var(--fd-text); margin:6px 0 0; display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+[data-skin="fd"] .fd20-st span { font-weight:500; font-size:13px; color:var(--fd-text-3); }
+[data-skin="fd"] .fd20-bars { display:flex; align-items:flex-end; gap:14px; height:150px; padding:0 4px; }
+[data-skin="fd"] .fd20-b1 { flex:1 1 0; display:flex; flex-direction:column; align-items:center; justify-content:flex-end; height:100%; min-width:0; }
+[data-skin="fd"] .fd20-b1 b { font-size:12.5px; font-weight:700; color:var(--fd-text-2); margin-bottom:4px; font-variant-numeric:tabular-nums; }
+[data-skin="fd"] .fd20-b1 i { display:block; width:100%; max-width:56px; border-radius:6px 6px 4px 4px; background:var(--fd-bar); min-height:3px; }
+[data-skin="fd"] .fd20-b1 span { font-size:12.5px; font-weight:500; color:var(--fd-text-3); margin-top:6px; }
+[data-skin="fd"] .fd20-q { display:flex; flex-direction:column; gap:8px; }
+[data-skin="fd"] .fd20-qi { display:flex; align-items:center; gap:12px; padding:10px 12px; border-radius:12px; background:var(--fd-surface-2); width:100%; text-align:left; color:var(--fd-text);
+  min-height:44px; border:0; font:inherit; cursor:pointer; }
+[data-skin="fd"] .fd20-qi:hover { background:var(--fd-surface-3); }
+[data-skin="fd"] .fd20-qn { width:26px; height:26px; border-radius:999px; display:grid; place-items:center; background:var(--fd-accent-soft); color:var(--fd-accent-text); font-weight:800; font-size:12px; flex:0 0 26px; }
+[data-skin="fd"] .fd20-qm { flex:1 1 auto; min-width:0; }
+[data-skin="fd"] .fd20-qm b { display:block; font-weight:700; } [data-skin="fd"] .fd20-qm span { display:block; font-size:13px; color:var(--fd-text-3); }
+[data-skin="fd"] .fd20-qs { text-align:right; font-variant-numeric:tabular-nums; font-size:13px; color:var(--fd-text-2); }
+[data-skin="fd"] .fd20-qs b { display:block; color:var(--fd-text); font-weight:700; }
+[data-skin="fd"] .fd20-hint { font-size:13px; color:var(--fd-text-3); line-height:1.5; }
+[data-skin="fd"] .fd20-calc { padding:4px 8px 6px; font-size:13px; color:var(--fd-text-2); max-width:396px; }
+[data-skin="fd"] .fd20-calc p { margin:0 0 8px; line-height:1.45; }
+[data-skin="fd"] .fd20-calc table { width:100%; border-collapse:collapse; }
+[data-skin="fd"] .fd20-calc td { padding:5px 0; border-bottom:1px solid var(--fd-border); vertical-align:top; }
+[data-skin="fd"] .fd20-calc td:last-child { text-align:right; font-weight:700; color:var(--fd-text); white-space:nowrap; padding-left:10px; font-variant-numeric:tabular-nums; }
+[data-skin="fd"] .fd20-calc tr.t td { border-bottom:0; border-top:2px solid var(--fd-border-strong); color:var(--fd-text); font-weight:700; }
+[data-skin="fd"] .fd20-calc small { display:block; color:var(--fd-text-3); font-size:12px; }
+@media (max-width:767px) {
+  [data-skin="fd"] .fd20-dr { top:auto; left:0; width:100%; max-height:92vh; border-left:0; border-top:1px solid var(--fd-border); border-radius:20px 20px 0 0; animation:fd20rise .2s cubic-bezier(.2,.8,.2,1); }
+  [data-skin="fd"] .fd20-dr::before { content:""; display:block; width:44px; height:5px; border-radius:999px; background:var(--fd-surface-3); margin:8px auto 0; flex:0 0 auto; }
+  [data-skin="fd"] .fd20-dr-b { padding:18px 16px; }
+  [data-skin="fd"] .fd20-dr-f { padding:12px 16px calc(12px + env(safe-area-inset-bottom)); }
+  [data-skin="fd"] .fd20-dr-f .fd20-btn { flex:1 1 auto; height:48px; }
+  [data-skin="fd"] .fd20-dr-f .sp { display:none; }
+}
+
+/* ---- his empty state (UI.emptyState) */
+[data-skin="fd"] .fd20-empty { display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; gap:10px; padding:36px 20px; }
+[data-skin="fd"] .fd20-empty.sm { padding:18px 12px; gap:8px; }
+[data-skin="fd"] .fd20-empty .fd20-ib { width:64px; height:64px; flex-basis:64px; } [data-skin="fd"] .fd20-empty .fd20-ib svg { width:28px; height:28px; }
+[data-skin="fd"] .fd20-empty.sm .fd20-ib { width:48px; height:48px; flex-basis:48px; } [data-skin="fd"] .fd20-empty.sm .fd20-ib svg { width:22px; height:22px; }
+[data-skin="fd"] .fd20-empty b { font-size:18px; font-weight:700; color:var(--fd-text); } [data-skin="fd"] .fd20-empty.sm b { font-size:16px; }
+[data-skin="fd"] .fd20-empty span { font-size:15px; color:var(--fd-text-2); max-width:460px; } [data-skin="fd"] .fd20-empty.sm span { font-size:14px; }
+/* our own ".empty" lines on these screens, his way */
+[data-skin="fd"] body[data-fd20v] #view .empty { position:relative; display:flex; flex-direction:column; align-items:center; text-align:center; gap:6px; padding:84px 20px 26px;
+  font-size:15px; color:var(--fd-text-2); font-weight:500; border:0; background:transparent; }
+[data-skin="fd"] body[data-fd20v] #view .empty::before { content:""; position:absolute; top:18px; left:50%; width:52px; height:52px; margin-left:-26px; border-radius:999px; background:var(--fd-accent-soft); box-shadow:var(--fd-glow-badge); }
+[data-skin="fd"] body[data-fd20v] #view .empty::after { content:""; position:absolute; top:31px; left:50%; width:26px; height:26px; margin-left:-13px; background:var(--fd-accent);
+  -webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 8l9-5 9 5v8l-9 5-9-5z'/%3E%3Cpath d='M3 8l9 5 9-5M12 13v8'/%3E%3C/svg%3E") center/26px no-repeat;
+  mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 8l9-5 9 5v8l-9 5-9-5z'/%3E%3Cpath d='M3 8l9 5 9-5M12 13v8'/%3E%3C/svg%3E") center/26px no-repeat; }
+
+/* ---- shipments: his lifecycle board, cards, stepper */
+[data-skin="fd"] .fd20-board { display:grid; grid-template-columns:repeat(5, minmax(0, 1fr)); gap:14px; padding:4px 24px 24px; }
+@media (max-width:1279px) { [data-skin="fd"] .fd20-board { grid-template-columns:repeat(auto-fit, minmax(230px, 1fr)); } }
+[data-skin="fd"] .fd20-col { background:var(--fd-surface-2); border-radius:16px; padding:12px; display:flex; flex-direction:column; gap:10px; min-width:0; }
+[data-skin="fd"] .fd20-colh { display:flex; align-items:center; gap:8px; padding:2px 4px 4px; font-weight:700; color:var(--fd-text); }
+[data-skin="fd"] .fd20-colh .n { margin-left:auto; font-size:13px; color:var(--fd-text-3); font-weight:600; font-variant-numeric:tabular-nums; }
+[data-skin="fd"] .fd20-sc { display:flex; flex-direction:column; gap:6px; width:100%; text-align:left; padding:12px 14px; border-radius:12px; background:var(--fd-card); border:1px solid var(--fd-border);
+  color:var(--fd-text); min-height:44px; cursor:pointer; transition:border-color .15s cubic-bezier(.2,.8,.2,1); font:inherit; }
+[data-skin="fd"] .fd20-sc:hover { border-color:var(--fd-accent-border); }
+[data-skin="fd"] .fd20-sc:focus-visible { outline:none; box-shadow:var(--fd-focus-ring); }
+[data-skin="fd"] .fd20-sc-r { display:flex; justify-content:space-between; gap:8px; align-items:baseline; }
+[data-skin="fd"] .fd20-sc-ref { font-weight:700; font-size:14px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+[data-skin="fd"] .fd20-sc-mode { font-size:13px; color:var(--fd-text-3); white-space:nowrap; }
+[data-skin="fd"] .fd20-sc-name { font-size:13.5px; color:var(--fd-text-2); line-height:1.35; }
+[data-skin="fd"] .fd20-sc-meta { font-size:12.5px; color:var(--fd-text-3); display:flex; flex-wrap:wrap; gap:4px 10px; font-variant-numeric:tabular-nums; }
+[data-skin="fd"] .fd20-sc .fd20-row { gap:6px; }
+[data-skin="fd"] .fd20-sc .btn.small { min-height:28px; height:28px; padding:0 10px; font-size:12px; }
+[data-skin="fd"] .fd20-colx { font-size:13px; color:var(--fd-text-3); padding:10px 4px; }
+[data-skin="fd"] .fd20-prog { height:8px; border-radius:999px; background:var(--fd-surface-3); overflow:hidden; }
+[data-skin="fd"] .fd20-prog > i { display:block; height:100%; border-radius:999px; background:var(--fd-accent); }
+[data-skin="fd"] .fd20-life { display:flex; align-items:flex-start; width:100%; overflow-x:auto; padding:4px 2px 2px; }
+[data-skin="fd"] .fd20-ls { flex:1 1 0; min-width:96px; display:flex; flex-direction:column; align-items:center; gap:6px; position:relative; text-align:center; }
+[data-skin="fd"] .fd20-ls::before { content:""; position:absolute; top:14px; left:-50%; right:50%; height:1px; background:var(--fd-border-strong); }
+[data-skin="fd"] .fd20-ls:first-child::before { display:none; }
+[data-skin="fd"] .fd20-ls.done::before, [data-skin="fd"] .fd20-ls.cur::before { background:var(--fd-accent-border); }
+[data-skin="fd"] .fd20-ld { position:relative; z-index:1; width:28px; height:28px; border-radius:999px; display:grid; place-items:center; background:var(--fd-surface-2); color:var(--fd-text-3); font-size:12px; font-weight:800; }
+[data-skin="fd"] .fd20-ld svg { width:14px; height:14px; }
+[data-skin="fd"] .fd20-ls.done .fd20-ld { background:var(--fd-accent-soft); color:var(--fd-accent-text); }
+[data-skin="fd"] .fd20-ls.cur .fd20-ld { background:var(--fd-accent); color:var(--fd-text-on-accent); box-shadow:var(--fd-glow-badge); }
+[data-skin="fd"] .fd20-ll { font-size:13px; font-weight:700; color:var(--fd-text-2); }
+[data-skin="fd"] .fd20-ldt { font-size:12px; color:var(--fd-text-3); }
+@media (max-width:767px) {
+  [data-skin="fd"] .fd20-board { padding:4px 16px 16px; }
+  [data-skin="fd"] .fd20-life { flex-direction:column; align-items:stretch; overflow:visible; padding:0; }
+  [data-skin="fd"] .fd20-ls { flex-direction:row; align-items:center; gap:12px; min-width:0; min-height:44px; text-align:left; }
+  [data-skin="fd"] .fd20-ls::before { top:-50%; bottom:50%; left:13px; right:auto; width:1px; height:auto; }
+  [data-skin="fd"] .fd20-ldt { margin-left:auto; }
+}
+/* his stepper (UI.stepper) */
+[data-skin="fd"] .fd20-stp { display:flex; align-items:center; width:100%; list-style:none; margin:0; padding:0; }
+[data-skin="fd"] .fd20-stp li { display:flex; align-items:center; flex:0 0 auto; }
+[data-skin="fd"] .fd20-stp li.ln { flex:1 1 auto; height:1px; background:var(--fd-border-strong); margin:0 12px; min-width:16px; }
+[data-skin="fd"] .fd20-stp li.done + li.ln { background:var(--fd-accent-border); }
+[data-skin="fd"] .fd20-stp button { display:flex; align-items:center; gap:10px; min-height:44px; padding:0 6px; border-radius:12px; border:0; background:none; font:inherit; font-size:14px;
+  font-weight:600; color:var(--fd-text-3); cursor:pointer; }
+[data-skin="fd"] .fd20-stp button:hover { background:var(--fd-surface-2); }
+[data-skin="fd"] .fd20-stp .num { width:28px; height:28px; border-radius:999px; display:grid; place-items:center; background:var(--fd-surface-2); color:var(--fd-text-3); font-size:13px; font-weight:700; flex:0 0 28px; }
+[data-skin="fd"] .fd20-stp .num svg { width:14px; height:14px; }
+[data-skin="fd"] .fd20-stp li.done button { color:var(--fd-text-2); } [data-skin="fd"] .fd20-stp li.done .num { background:var(--fd-accent-soft); color:var(--fd-accent-text); }
+[data-skin="fd"] .fd20-stp li.cur button { color:var(--fd-text); } [data-skin="fd"] .fd20-stp li.cur .num { background:var(--fd-accent); color:var(--fd-text-on-accent); box-shadow:var(--fd-glow-badge); }
+@media (max-width:767px) {
+  [data-skin="fd"] .fd20-stp .tx { display:none; } [data-skin="fd"] .fd20-stp li.cur .tx { display:inline; }
+  [data-skin="fd"] .fd20-stp li.ln { margin:0 4px; min-width:8px; }
+}
+[data-skin="fd"] .fd20-info { display:flex; align-items:flex-start; gap:10px; padding:10px 14px; border-radius:12px; background:var(--fd-info-soft); color:var(--fd-info-text); font-size:13.5px; line-height:1.45; margin:12px 0 4px; }
+[data-skin="fd"] .fd20-info svg { width:18px; height:18px; flex:0 0 18px; margin-top:1px; }
+[data-skin="fd"] .fd20-dhead .fdd-title { gap:10px; }
+[data-skin="fd"] .fd20-back { display:inline-flex; align-items:center; gap:6px; font:inherit; font-size:14px; font-weight:600; color:var(--fd-text-2); background:none; border:0; cursor:pointer; padding:6px 8px; border-radius:10px; margin-left:auto; align-self:flex-start; }
+[data-skin="fd"] .fd20-back:hover { color:var(--fd-accent-text); background:var(--fd-surface-2); }
+[data-skin="fd"] .fd20-back svg { width:16px; height:16px; }
+
+/* ---- our cards on these screens: his card head (icon badge + 19px title), his tables */
+[data-skin="fd"] body[data-fd20v] #view .card h2[data-fd20ic] { display:flex; align-items:center; gap:14px; font-size:19px; font-weight:700; letter-spacing:-.01em; min-height:44px; margin:0 0 4px; }
+[data-skin="fd"] body[data-fd20v] #view .card h2[data-fd20ic] .fd20-ib { width:44px; height:44px; flex-basis:44px; }
+[data-skin="fd"] body[data-fd20v] #view .card h2[data-fd20ic] .fd20-ib svg { width:20px; height:20px; }
+[data-skin="fd"] body[data-fd20v] #view .card .chead { display:flex; align-items:center; gap:14px; flex-wrap:wrap; }
+[data-skin="fd"] body[data-fd20v] #view .card .chead > :not(h2) { margin-left:auto; }
+[data-skin="fd"] body[data-fd20v] #view .card > .sub, [data-skin="fd"] body[data-fd20v] #view .card .chead + .sub { margin:0 0 12px 58px; font-size:13px; font-weight:500; color:var(--fd-text-3); }
+@media (max-width:767px) { [data-skin="fd"] body[data-fd20v] #view .card > .sub, [data-skin="fd"] body[data-fd20v] #view .card .chead + .sub { margin-left:0; } }
+[data-skin="fd"] body[data-fd20v="suppliers"] .o_tbl { border:1px solid var(--fd-border); border-radius:20px; background:var(--fd-card); box-shadow:var(--fd-shadow-card), var(--fd-glow-card); padding:16px; }
+[data-skin="fd"] body[data-fd20v="suppliers"] .cash_tot { display:flex; align-items:center; gap:12px; flex-wrap:wrap; padding:16px 20px; border-radius:16px; background:var(--fd-card);
+  border:1px solid var(--fd-border); box-shadow:var(--fd-shadow-card), var(--fd-glow-card); font-size:15px; color:var(--fd-text-2); }
+[data-skin="fd"] body[data-fd20v="suppliers"] .cash_tot b { color:var(--fd-text); font-weight:800; }
+[data-skin="fd"] body[data-fd20v] .cash_form { border-radius:16px; border:1px solid var(--fd-border); background:var(--fd-card); padding:16px 20px; margin-top:12px; box-shadow:var(--fd-shadow-card); }
+[data-skin="fd"] body[data-fd20v] #view .pagehead { align-items:center; margin:2px 0 20px; }
+[data-skin="fd"] body[data-fd20v] #view .pagehead h2 { font-size:28px; font-weight:800; letter-spacing:-.02em; line-height:1.2; color:var(--fd-text); }
+[data-skin="fd"] body[data-fd20v] #view .pagehead .meta { font-size:14px; color:var(--fd-text-3); font-weight:500; margin-top:4px; line-height:1.6; }
+[data-skin="fd"] body[data-fd20v] #view .pagehead .acts .btn { min-height:34px; padding:0 14px; font-size:13px; }
+@media (max-width:767px) { [data-skin="fd"] body[data-fd20v] #view .pagehead h2 { font-size:22px; } }
+[data-skin="fd"] body[data-fd20v="products"] #view .mbars .b { background:var(--fd-bar); border-radius:6px 6px 4px 4px; }
+[data-skin="fd"] body[data-fd20v="products"] #view .mbars .v { font-weight:700; color:var(--fd-text-2); }
+[data-skin="fd"] body[data-fd20v] #view .list > div { border-radius:12px; }
+[data-skin="fd"] body[data-fd20v="shipments"] #view .shp-st { height:28px; padding:0 10px; font-size:13px; font-weight:600; gap:6px; }
+[data-skin="fd"] body[data-fd20v="shipments"] #view .shp-st::before { content:""; width:8px; height:8px; border-radius:999px; background:currentColor; }
+[data-skin="fd"] body[data-fd20v="shipments"] #view .fdw-stage { height:28px; padding:0 10px; font-size:13px; font-weight:600; gap:6px; }
+[data-skin="fd"] body[data-fd20v="shipments"] #view .fdw-stage::before { content:""; width:8px; height:8px; border-radius:999px; background:currentColor; }
+[data-skin="fd"] body[data-fd20v="shipments"] #view .shp-bar { height:8px; }
+[data-skin="fd"] body[data-fd20v="shipments"] #view .note { border-radius:16px; }
+</style>
+<script>
+// ===================================================================== fd-20: his Inventory and Shipments
+var FD20 = { inv: null, invAt: 0, invBusy: false, lots: null, lotsBusy: false, lotsErr: '', off: false, lotf: 'open', lotq: '', shpq: '',
+             dr: null, dsku: '', dpage: null, dq: null, calc: [] };
+(function () { try { FD20.view = localStorage.getItem('fd20:view') === 'lots' ? 'lots' : 'items'; FD20.shpView = localStorage.getItem('fd20:shpview') === 'table' ? 'table' : 'board'; FD20.grp = localStorage.getItem('fd20:grp') || ''; } catch (e) { FD20.view = 'items'; FD20.shpView = 'board'; FD20.grp = ''; } })();
+function fd20Keep(k, v) { try { localStorage.setItem('fd20:' + k, v); } catch (e) {} }
+function fd20On() { return document.documentElement.getAttribute('data-skin') === 'fd'; }
+// erpFdInventory only reads: the page must not treat it as a save (keep in step with ERP_READS on the server)
+if (typeof SRV_READS !== 'undefined' && !SRV_READS.test('erpFdInventory')) SRV_READS = new RegExp(SRV_READS.source.replace('^(', '^(erpFdInventory|'));
+
+var FD20_IC = {
+  spool: '<ellipse cx="12" cy="6" rx="7" ry="3"/><path d="M5 6v12c0 1.7 3.1 3 7 3s7-1.3 7-3V6"/><ellipse cx="12" cy="6" rx="2" ry="1"/>',
+  printer: '<rect x="4" y="3" width="16" height="12" rx="2"/><path d="M8 15v3h8v-3M7 21h10M9 7h6M12 7v4"/>',
+  layers: '<path d="M12 3l9 5-9 5-9-5z"/><path d="M3 13l9 5 9-5"/>', box: '<path d="M3 8l9-5 9 5v8l-9 5-9-5z"/><path d="M3 8l9 5 9-5M12 13v8"/>',
+  bell: '<path d="M6 16V11a6 6 0 0 1 12 0v5l2 2H4z"/><path d="M10 21h4"/>', warn: '<path d="M12 3l10 18H2z"/><path d="M12 10v5M12 18v.5"/>',
+  taka: '<path d="M7 4c2 0 3 1 3 3v10c0 2 1.5 3 3.5 3S17 19 17 16.5c0-1.6-.8-2.5-2-2.5"/><path d="M5 9h9"/>',
+  ship: '<path d="M3 17l2 3h14l2-3"/><path d="M5 17V10h14v7"/><path d="M9 10V6h6v4"/>', columns: '<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M9 4v16M15 4v16"/>',
+  density: '<path d="M4 6h16M4 10h16M4 14h16M4 18h16"/>', search: '<circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/>', chevR: '<path d="M9 6l6 6-6 6"/>',
+  chevL: '<path d="M15 6l-6 6 6 6"/>', sort: '<path d="M8 9l4-4 4 4M8 15l4 4 4-4"/>', close: '<path d="M6 6l12 12M18 6L6 18"/>', edit: '<path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M14 6l4 4"/>',
+  scan: '<path d="M4 8V5a1 1 0 0 1 1-1h3M16 4h3a1 1 0 0 1 1 1v3M20 16v3a1 1 0 0 1-1 1h-3M8 20H5a1 1 0 0 1-1-1v-3M7 12h10"/>',
+  archive: '<rect x="3" y="4" width="18" height="5" rx="1"/><path d="M5 9v10h14V9M10 13h4"/>', trend: '<path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/>',
+  target: '<circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r="1"/>', percent: '<path d="M19 5L5 19"/><circle cx="7" cy="7" r="2.5"/><circle cx="17" cy="17" r="2.5"/>',
+  clip: '<rect x="6" y="4" width="12" height="17" rx="2"/><path d="M9 4h6v3H9zM9 12h6M9 16h4"/>', plus: '<path d="M12 5v14M5 12h14"/>', arrow: '<path d="M5 12h14M13 6l6 6-6 6"/>',
+  reset: '<path d="M4 12a8 8 0 1 0 2.3-5.6"/><path d="M4 4v4h4"/>', info: '<circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/>', check: '<path d="M5 12l5 5L20 7"/>',
+  cart: '<path d="M3 4h2l2.5 11h11L21 7H6.2"/><circle cx="9" cy="19.5" r="1.4"/><circle cx="17" cy="19.5" r="1.4"/>', users: '<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7M18 14a6 6 0 0 1 3.5 6"/>',
+  list: '<path d="M8 6h12M8 12h12M8 18h12"/><circle cx="4" cy="6" r="1"/><circle cx="4" cy="12" r="1"/><circle cx="4" cy="18" r="1"/>', truck: '<path d="M3 6h11v10H3zM14 10h4l3 3v3h-7"/><circle cx="7" cy="18" r="1.6"/><circle cx="17" cy="18" r="1.6"/>',
+  download: '<path d="M12 4v11M7 10l5 5 5-5M5 20h14"/>', ruler: '<path d="M3 17L17 3l4 4L7 21z"/><path d="M7 13l2 2M10 10l2 2M13 7l2 2"/>'
+};
+function fd20Ic(n, sz) { return '<svg viewBox="0 0 24 24" width="' + (sz || 18) + '" height="' + (sz || 18) + '" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + (FD20_IC[n] || '') + '</svg>'; }
+function fd20Tk(v) { return typeof fdTk === 'function' ? fdTk(v, 'BDT') : 'BDT ' + fmt(v); }                     // ৳1.58L, as his cards
+function fd20Tk0(v) { var n = Math.round(Number(v) || 0); return (n < 0 ? '−' : '') + '৳' + Math.abs(n).toLocaleString('en-IN'); }   // ৳95,933, as his tables
+function fd20Tk2(v) { var n = Number(v) || 0; return (n < 0 ? '−' : '') + '৳' + Math.abs(n).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+function fd20B(label, tone, dot, sm) { return '<span class="fd20-b' + (tone ? ' t-' + tone : '') + (sm === false ? '' : ' sm') + '">' + (dot === false ? '' : '<i></i>') + esc(label) + '</span>'; }
+var FD20_ST = { in_stock: ['In stock', 'pos'], low: ['Low', 'warn'], out: ['Out', 'neg'], dead: ['Dead', ''] };
+function fd20Status(st) { var s = FD20_ST[st] || FD20_ST.in_stock; return fd20B(s[0], s[1]); }
+function fd20Sw(color) {
+  if (!color) return '<span class="fd20-gl">' + fd20Ic('box', 13) + '</span>';
+  var hex = typeof fdSwatch === 'function' ? fdSwatch(color) : 'var(--fd-surface-3)';
+  return '<span class="fd20-sw' + (/white|clear|transparent|natural|beige|silver/i.test(color) ? ' lt' : '') + '" style="background:' + esc(hex) + '" title="' + esc(color) + '"></span>';
+}
+function fd20Cat(sku) { var c = CAT || []; for (var i = 0; i < c.length; i++) if (c[i].sku === sku) return c[i]; return null; }
+function fd20It(name, sub, color) { return '<span class="fd20-it">' + fd20Sw(color) + '<span style="min-width:0"><span class="fd20-p">' + esc(name) + '</span>' + (sub ? '<span class="fd20-s">' + esc(sub) + '</span>' : '') + '</span></span>'; }
+function fd20Empty(icon, title, text, sm) { return '<div class="fd20-empty' + (sm ? ' sm' : '') + '"><span class="fd20-ib">' + fd20Ic(icon) + '</span><b>' + esc(title) + '</b>' + (text ? '<span>' + esc(text) + '</span>' : '') + '</div>'; }
+function fd20Head(icon, title, sub, tools, rule) {
+  return '<div class="fd20-ch' + (rule ? ' rule' : '') + '"><span class="fd20-ib">' + fd20Ic(icon) + '</span><div style="min-width:0"><div class="fd20-ct">' + esc(title) + '</div>' +
+    (sub ? '<div class="fd20-cs">' + esc(sub) + '</div>' : '') + '</div>' + (tools ? '<div class="fd20-tools">' + tools + '</div>' : '') + '</div>';
+}
+function fd20Seg(opts, cur, attr, sm, label) {
+  return '<div class="fd20-seg' + (sm ? ' sm' : '') + '" role="group" aria-label="' + esc(label || '') + '">' + opts.map(function (o) {
+    return '<button type="button" class="fdd-pill" ' + attr + '="' + esc(o[0]) + '" aria-pressed="' + (String(o[0]) === String(cur)) + '">' + (o[2] ? fd20Ic(o[2], 16) : '') + esc(o[1]) + '</button>'; }).join('') + '</div>';
+}
+var FD20_CUBE = '<svg class="fdd-cube" viewBox="0 0 64 64" aria-hidden="true"><path d="M32 6l24 13-24 13L8 19z" fill="rgba(255,255,255,.55)" stroke="rgba(255,255,255,.75)" stroke-width="1.2"/><path d="M8 19l24 13v26L8 45z" fill="rgba(255,255,255,.28)" stroke="rgba(255,255,255,.75)" stroke-width="1.2"/><path d="M56 19L32 32v26l24-13z" fill="rgba(255,255,255,.40)" stroke="rgba(255,255,255,.75)" stroke-width="1.2"/></svg>';
+/** One of his KPI cards. o: { title, icon, val (html), hero, tone ('warn'|'bad'), note, neg, calc: { text, rows: [[label, value, small]], total }, attrs } */
+function fd20Kpi(o) {
+  var ci = -1;
+  if (o.calc) { ci = FD20.calc.length; FD20.calc.push({ title: o.title, c: o.calc }); }
+  return '<div class="fdd-c fdd-k' + (o.hero ? ' fdhero' : '') + '"' + (o.attrs || '') + '><div class="fdd-ktop"><span class="fdd-badge' + (o.tone ? ' t-' + o.tone : '') + '">' + fd20Ic(o.icon, 22) + '</span>' + (o.chip || '') + '</div>' +
+    (o.hero ? FD20_CUBE : '') + '<div class="fdd-num' + (o.neg ? ' neg' : '') + '">' + o.val + '</div><div class="fdd-lbl">' + esc(o.title) + '</div>' + (o.note ? '<div class="fdd-kn">' + esc(o.note) + '</div>' : '') +
+    (ci >= 0 ? '<button type="button" class="fdd-i" data-fd20calc="' + ci + '" title="Show calculation" aria-label="How ' + esc(o.title) + ' is worked out">i</button>' : '') + '</div>';
+}
+document.addEventListener('click', function (e) {
+  var b = e.target.closest && e.target.closest('[data-fd20calc]'); if (!b) return;
+  e.preventDefault(); e.stopPropagation();
+  var x = FD20.calc[+b.getAttribute('data-fd20calc')]; if (!x || typeof fdPop !== 'function') return;
+  var c = x.c, all = (c.rows || []).filter(function (r) { return r[0]; }), rows = all.slice(0, 14);
+  c = { text: c.text, rows: all, total: c.total };
+  fdPop(b, [{ section: x.title }, { html: '<div class="fd20-calc">' + (c.text ? '<p>' + esc(c.text) + '</p>' : '') + (rows.length || c.total ? '<table>' + rows.map(function (r) {
+    return '<tr><td>' + esc(r[0]) + (r[2] ? '<small>' + esc(r[2]) + '</small>' : '') + '</td><td>' + esc(r[1]) + '</td></tr>'; }).join('') +
+    ((c.rows || []).length > 14 ? '<tr><td colspan="2"><small>and ' + ((c.rows || []).length - 14) + ' more</small></td></tr>' : '') +
+    (c.total ? '<tr class="t"><td>' + esc(c.total[0]) + '</td><td>' + esc(c.total[1]) + '</td></tr>' : '') + '</table>' : '') + '</div>' }], { end: true });
+}, true);
+
+// ------------------------------------------------------------------ the drawer
+function fd20DrawerClose() {
+  if (!FD20.dr) return;
+  var d = FD20.dr; FD20.dr = null; FD20.dsku = '';
+  if (d.back.parentNode) d.back.parentNode.removeChild(d.back);
+  if (d.panel.parentNode) d.panel.parentNode.removeChild(d.panel);
+  if (d.from && d.from.focus) try { d.from.focus(); } catch (e) {}
+}
+function fd20Drawer(o) {
+  var from = document.activeElement;
+  fd20DrawerClose();
+  var back = document.createElement('div'); back.className = 'fd20-ov';
+  var p = document.createElement('aside'); p.className = 'fd20-dr'; p.setAttribute('role', 'dialog'); p.setAttribute('aria-modal', 'true'); p.setAttribute('aria-label', o.title);
+  p.innerHTML = '<div class="fd20-dr-h"><div><div class="fd20-dr-tt">' + esc(o.title) + '</div>' + (o.sub ? '<div class="fd20-dr-s">' + esc(o.sub) + '</div>' : '') + '</div>' +
+    '<button type="button" class="fd20-x" data-fd20x="1" aria-label="Close">' + fd20Ic('close') + '</button></div><div class="fd20-dr-b">' + o.body + '</div>' + (o.foot ? '<div class="fd20-dr-f">' + o.foot + '</div>' : '');
+  document.body.appendChild(back); document.body.appendChild(p);
+  back.addEventListener('click', fd20DrawerClose);
+  FD20.dr = { back: back, panel: p, from: from, kind: o.kind || '' };
+  var x = p.querySelector('.fd20-x'); if (x) x.focus();
+  return p;
+}
+function fd20DrawerBody(html, foot) {
+  if (!FD20.dr) return;
+  var b = FD20.dr.panel.querySelector('.fd20-dr-b'); if (b) { var st = b.scrollTop; b.innerHTML = html; b.scrollTop = st; }
+  if (foot !== undefined) { var f = FD20.dr.panel.querySelector('.fd20-dr-f'); if (f) f.innerHTML = foot; }
+}
+document.addEventListener('click', function (e) { if (e.target.closest && e.target.closest('[data-fd20x]')) fd20DrawerClose(); });
+document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && FD20.dr && !document.querySelector('.fdpop')) fd20DrawerClose(); });
+
+// ------------------------------------------------------------------ the figures (handlers/fd20.js)
+function fd20Load(force) {
+  if (FD20.invBusy || FD20.off) return;
+  if (!force && FD20.inv && Date.now() - FD20.invAt < 120000) return;
+  FD20.invBusy = true;
+  srv('erpFdInventory', [{}], function (r) { FD20.invBusy = false; FD20.inv = r; FD20.invAt = Date.now(); fd20Refresh(); },
+    function (e) { FD20.invBusy = false; FD20.invAt = Date.now(); if (e && /Unknown action|not allowed|permission/i.test(String(e.message || e))) FD20.off = true; });
+}
+function fd20LoadLots() {
+  if (FD20.lotsBusy || FD20.off) return;
+  FD20.lotsBusy = true; FD20.lotsErr = '';
+  srv('erpFdInventory', [{ lots: true }], function (r) { FD20.lotsBusy = false; FD20.lots = r.lots || []; FD20.inv = r; FD20.invAt = Date.now(); fd20Refresh(); },
+    function (e) { FD20.lotsBusy = false; FD20.lotsErr = (e && e.message) || String(e); fd20Refresh(); });
+}
+/** New figures arrived: redraw the parts in place (the search box keeps its caret). */
+function fd20Refresh() {
+  if (VIEW !== 'products' || (typeof PRODP !== 'undefined' && PRODP.sku)) return;
+  try { fdhPaint(); } catch (e) {}
+  if (FD20.view === 'lots') { var lc = el('fd20lots'); if (lc) lc.outerHTML = fd20LotsCard(); }
+  else try { lvPaint('products'); } catch (e) {}
+  var below = el('fd20below'); if (below) below.outerHTML = fd20Below();
+  try { fdtEnhance(); } catch (e) {}
+}
+var fd20AfterWrite = pagesAfterWrite;
+pagesAfterWrite = function () { FD20.inv = null; FD20.invAt = 0; FD20.lots = null; FD20.dpage = null; FD20.dq = null; return fd20AfterWrite.apply(this, arguments); };
+
+// ================================================================== PRODUCTS = his Materials screen
+function fd20Scope() {
+  var st = lvSt('products'), f = (st.search || []).filter(function (x) { return x.field === 'category'; })[0];
+  return f && f.values.length === 1 ? f.values[0] : '';
+}
+function fd20Cats() {
+  var n = {}; (CAT || []).forEach(function (p) { if (p.cat && String(p.status).toLowerCase() !== 'discontinued') n[p.cat] = (n[p.cat] || 0) + 1; });
+  return Object.keys(n).sort(function (a, b) { return n[b] - n[a] || (a < b ? -1 : 1); });
+}
+var FD20_CATIC = function (c) { c = String(c || '').toLowerCase(); return /printer|machine|laser/.test(c) ? 'printer' : /filament|resin|material/.test(c) ? 'spool' : /part|nozzle|spare/.test(c) ? 'clip' : 'layers'; };
+function fd20State(p, x) { if (x && x.status) return x.status; var s = p ? String(p.state || '') : ''; return s === 'out' ? 'out' : s === 'low' ? 'low' : 'in_stock'; }
+/** His four cards, for the category picked above (or everything). */
+function fd20ProdKpis() {
+  var inv = FD20.inv, scope = fd20Scope(), items = inv ? inv.items : {}, money = !!(inv && inv.canCost);
+  var units = 0, value = 0, lo = [], dead = [], dv = 0, dh = 0, byU = [], byV = [], n = 0;
+  (CAT || []).forEach(function (p) {
+    if (String(p.status).toLowerCase() === 'discontinued' || (scope && p.cat !== scope)) return;
+    var x = items[p.sku] || null, s = fd20State(p, x), u = Math.max(0, Number(p.stock) || 0);
+    n++; units += u; if (u) byU.push([p.name, fmt(u), (x ? x.lots : 0) + ' open lot(s)']);
+    if (money && x) { value += x.value || 0; if (x.value) byV.push([p.name, fd20Tk0(x.value), fmt(u) + ' on hand' + (x.avgUnit ? ' · avg ' + fd20Tk2(x.avgUnit) : '')]); }
+    if ((s === 'low' || s === 'out') && (u > 0 || (p.sold90 || 0) > 0)) lo.push([p.name, s === 'out' ? 'Out' : 'Low', 'on hand ' + fmt(u) + ' · reorder at ' + fmt(p.reorder)]);
+    if (s === 'dead') { dead.push([p.name, money && x ? fd20Tk0(x.value) : fmt(u) + ' u', (x && x.idle !== null ? 'idle ' + x.idle + ' days · ' : '') + fmt(u) + ' on hand' + (money && x && x.holding ? ' · holding ' + fd20Tk0(x.holding) : '')]); if (x) { dv += x.value || 0; dh += x.holding || 0; } }
+  });
+  if (!(CAT && CAT.length) && inv) {        // the catalogue is not here yet: the server's own totals (all categories)
+    units = inv.kpi.units; value = inv.kpi.value || 0; dv = inv.kpi.dead.value || 0; dh = inv.kpi.dead.holding || 0;
+    for (var i = 0; i < inv.kpi.lowOrOut; i++) lo.push(['', '', '']);
+    for (var j = 0; j < inv.kpi.dead.items; j++) dead.push(['', '', '']);
+    n = Object.keys(items).length;
+  }
+  byU.sort(function (a, b) { return num(b[1]) - num(a[1]); }); byV.sort(function (a, b) { return num(b[1].replace(/[^0-9.-]/g, '')) - num(a[1].replace(/[^0-9.-]/g, '')); });
+  var label = scope || 'All stock', dd = inv ? inv.kpi.deadDays : 120, h = '<div class="fdd-grid fd20-kgrid">';
+  h += fd20Kpi({ title: 'Units on hand', icon: FD20_CATIC(scope) === 'printer' ? 'printer' : 'spool', val: fmt(units), hero: true, note: n + ' item' + (n === 1 ? '' : 's') + (scope ? ' · ' + scope : ''),
+    calc: { text: 'Units on the shelf of every active item in ' + label + ' (pre-orders not taken off).', rows: byU, total: [label, fmt(units) + ' units'] } });
+  if (money) h += fd20Kpi({ title: 'Stock value at cost', icon: 'taka', val: fd20Tk(value), note: 'landed cost, FIFO lots',
+    calc: { text: 'Σ (units left in each open lot × that lot’s landed cost). Stock from before lots began is at the cost book. Landed cost only: holding cost is never added to stock value.', rows: byV, total: ['Stock value (' + label + ')', fd20Tk0(value)] } });
+  else if (!inv) {
+    // the figures are on their way (or this server does not have them yet): the screen head's own stock value meanwhile
+    var fc = FDH.data.products && (FDH.data.products.cards || []).filter(function (c) { return c.key === 'stockValue'; })[0];
+    h += fc ? fd20Kpi({ title: 'Stock value at cost', icon: 'taka', val: fd20Tk(fc.v), note: scope ? 'all categories' : 'landed cost, FIFO lots' }) : '<div class="fdh-sk"></div>';
+  } else h += fd20Kpi({ title: 'Stock value at cost', icon: 'taka', val: '<span style="letter-spacing:.08em;color:var(--fd-text-faint)">••••</span>', note: 'shown to people with the Product cost ability' });
+  h += fd20Kpi({ title: 'Items low or out', icon: 'bell', val: fmt(lo.length), tone: lo.length ? 'warn' : '', attrs: ' data-fd20lo="1" style="cursor:pointer"',
+    calc: { text: 'Items at or below their reorder point, or with nothing on hand while they still sell. Click the card to list them.', rows: lo } });
+  h += fd20Kpi({ title: 'Dead stock (' + dd + '+ days idle)', icon: 'warn', val: money ? fd20Tk(dv) : fmt(dead.length), tone: dead.length ? 'bad' : '',
+    note: dead.length + ' item' + (dead.length === 1 ? '' : 's') + (money && dh ? ' · holding so far ' + fd20Tk0(dh) : ''),
+    calc: { text: 'Items with stock and no sale (and no new lot) for ' + dd + ' days, at cost, with the holding cost they have carried so far (not in stock value).', rows: dead,
+            total: money ? ['Dead stock at cost', fd20Tk0(dv)] : null } });
+  return h + '</div>';
+}
+document.addEventListener('click', function (e) {
+  if (!e.target.closest || e.target.closest('[data-fd20calc]')) return;
+  if (e.target.closest('[data-fd20lo]')) {
+    var st = lvSt('products'); FD20.view = 'items'; fd20Keep('view', 'items');
+    st.filters = st.filters.filter(function (n) { return ['instock', 'low', 'out'].indexOf(n) < 0; }).concat(['low', 'out']);
+    st.groupBy = ''; st.open = {}; lvRefresh('products'); repaint();
+    var t = el('lv_products'); if (t) t.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+});
+/** Page head (his: title left, Count / Adjust stock right), the scope pills and Items / Lots / Grouped, the four cards. */
+function fd20ProdHeadHtml() {
+  var biz = (el('bizName') && el('bizName').textContent) || '';
+  var stock = typeof navOn === 'function' && navOn('stock');
+  var help = typeof HG !== 'undefined' ? '<button type="button" class="btn small fdh-help" data-hghelp="products">সাহায্য / Help</button>' : '';
+  var acts = '<div class="fd20-acts">' +
+    (stock ? '<button type="button" class="fd20-btn" data-fd20stock="count">' + fd20Ic('scan', 16) + 'Count</button><button type="button" class="fd20-btn" data-fd20stock="receive">' + fd20Ic('box', 16) + 'Receive</button>' +
+             '<button type="button" class="fd20-btn pri" data-fd20stock="count">' + fd20Ic('edit', 16) + 'Adjust stock</button>' : '') + '</div>';
+  var h = '<div class="fdd-head"><div><div class="fdd-eyebrow">' + esc(biz) + '</div><h1 class="fdd-title">' + esc(typeof fdhName === 'function' ? fdhName('products') : 'Products') + '</h1>' +
+    '<div class="fdd-sub">Stock by lot: brand, type, colour and where it came from</div>' + help + '</div>' + acts + '</div>';
+  var scope = fd20Scope(), st = lvSt('products'), view = FD20.view === 'lots' ? 'lots' : (st.groupBy ? 'grouped' : 'items');
+  var opts = [['', 'All stock', 'layers']].concat(fd20Cats().slice(0, 7).map(function (c) { return [c, c, FD20_CATIC(c)]; }));
+  h += '<div class="fd20-bar">' + fd20Seg(opts, scope, 'data-fd20scope', false, 'Category') + '<span class="sp"></span>' +
+    fd20Seg([['items', 'Items'], ['lots', 'Lots'], ['grouped', 'Grouped']], view, 'data-fd20view', true, 'View') + '</div>';
+  return h + fd20ProdKpis();
+}
+var fdhHtmlFd20 = fdhHtml;
+fdhHtml = function (v) {
+  if (v === 'products' && fd20On()) { FD20.calc = []; if (!FD20.inv) fd20Load(); return fd20ProdHeadHtml(); }
+  var h = fdhHtmlFd20.apply(this, arguments);
+  if (v === 'shipments' && fd20On() && !SHP.ref) h = h.replace(/<\/div><\/div>$/, '</div>' + fd20ShpActs() + '</div>');
+  return h;
+};
+document.addEventListener('click', function (e) {
+  if (!e.target.closest) return;
+  var b;
+  if ((b = e.target.closest('[data-fd20scope]'))) {
+    var c = b.getAttribute('data-fd20scope'), st = lvSt('products');
+    st.search = (st.search || []).filter(function (x) { return x.field !== 'category'; });
+    if (c) st.search.push({ field: 'category', values: [c] });
+    st.open = {}; lvRefresh('products'); FD20.calc = []; try { fdhPaint(); } catch (x) {}
+    if (FD20.view === 'lots') { var lc = el('fd20lots'); if (lc) lc.outerHTML = fd20LotsCard(); }
+    var bl = el('fd20below'); if (bl) bl.outerHTML = fd20Below();
+    return;
+  }
+  if ((b = e.target.closest('[data-fd20view]'))) {
+    var v = b.getAttribute('data-fd20view'), s2 = lvSt('products');
+    if (v === 'lots') { FD20.view = 'lots'; fd20Keep('view', 'lots'); }
+    else {
+      FD20.view = 'items'; fd20Keep('view', 'items');
+      if (v === 'grouped' && !s2.groupBy) { s2.groupBy = FD20.grp || 'category'; s2.open = {}; s2.offset = 0; s2.data = null; }
+      if (v === 'items' && s2.groupBy) { s2.groupBy = ''; s2.open = {}; s2.offset = 0; s2.data = null; }
+    }
+    repaint(); return;
+  }
+  if ((b = e.target.closest('[data-fd20grp]'))) {
+    var s3 = lvSt('products'); s3.groupBy = b.getAttribute('data-fd20grp'); FD20.grp = s3.groupBy; fd20Keep('grp', s3.groupBy); s3.open = {}; lvRefresh('products'); try { fdhPaint(); } catch (x) {} return;
+  }
+  if ((b = e.target.closest('[data-fd20stock]'))) {
+    var t = b.getAttribute('data-fd20stock');
+    if (t === 'plan') STOCK_TAB = 'plan'; else if (t === 'count') STOCK_TAB = 'count'; else if (t === 'orders') STOCK_TAB = 'orders'; else STOCK_TAB = 'receive';
+    if (b.getAttribute('data-sku')) { if (t === 'count') ADJ.sku = b.getAttribute('data-sku'); else fd20RecvAdd(b.getAttribute('data-sku')); }
+    fd20DrawerClose(); go('stock'); window.scrollTo(0, 0);
+  }
+});
+function fd20RecvAdd(sku) {
+  var c = fd20Cat(sku);
+  if (c && !RECV.lines.some(function (l) { return l.sku === sku; })) RECV.lines.push({ sku: c.sku, name: c.name, qty: 1, stock: c.stock });
+}
+
+// ---- the list card: his head on our list view, his table
+var lvInnerFd20 = lvInner;
+lvInner = function (m) {
+  var h = lvInnerFd20.apply(this, arguments);
+  if (m !== 'products' || !fd20On() || VIEW !== 'products') return h;
+  var st = lvSt(m), sp = st.spec, scope = fd20Scope();
+  var title = (scope || 'Products') + (st.groupBy ? ' · grouped' : ' · items');
+  var sub = st.groupBy ? 'Totals are sums of the products in each group' : (st.data ? fmt(st.data.total) + ' item' + (st.data.total === 1 ? '' : 's') + ' · click one to see its lots' : '');
+  var tools = st.groupBy && sp ? fd20Seg(sp.groups.map(function (g) { return [g.field, g.label.replace(/ \(.*\)$/, '')]; }), st.groupBy, 'data-fd20grp', true, 'Group by') : '';
+  return fd20Head(st.groupBy ? 'layers' : FD20_CATIC(scope) === 'printer' ? 'printer' : 'spool', title, sub, tools) + h;
+};
+var lvTableFd20 = lvTable;
+lvTable = function (m) {
+  if (m !== 'products' || !fd20On()) return lvTableFd20.apply(this, arguments);
+  return fd20ProdTable(m);
+};
+function fd20ProdTable(m) {
+  var st = lvSt(m), sp = st.spec, d = st.data, ord = st.order || sp.order, inv = FD20.inv, items = inv ? inv.items : {}, money = !!(inv && inv.canCost);
+  st.rows = {};
+  var pageRows = d.rows || [], allOn = pageRows.length && pageRows.every(function (r) { return st.sel[r.key]; });
+  var cols = [
+    { k: 'name', l: 'Item', s: 'name' }, { k: 'cat', l: 'Category', s: 'category', np: 1 }, { k: 'brand', l: 'Brand', s: 'brand', np: 1 },
+    { k: 'stock', l: 'On hand', s: 'stock', n: 1 }, { k: 'lots', l: 'Lots', n: 1, np: 1 }];
+  if (money) cols.push({ k: 'value', l: 'Value at cost', n: 1, np: 1 });
+  cols.push({ k: 'cover', l: 'Days of cover', s: 'cover', n: 1, np: 1 }, { k: 'status', l: 'Status', s: 'stateText', np: 1 }, { k: 'sell', l: 'Price', s: 'sell', n: 1, np: 1 });
+  var h = '<table class="o_list fd20-t"><thead><tr><th class="cb">' + (st.groupBy ? '' : '<input type="checkbox" data-lv-selall="1"' + (allOn || st.all ? ' checked' : '') + ' aria-label="Select all">') + '</th>' +
+    cols.map(function (c) {
+      var on = c.s && ord && ord.field === c.s;
+      return '<th' + (c.s ? ' data-lv-sort="' + c.s + '"' : '') + ' class="' + (c.n ? 'n' : '') + (c.np ? ' o_np' : '') + (on ? ' on' : '') + '"' + (on ? ' aria-sort="' + (ord.dir === 'asc' ? 'ascending' : 'descending') + '"' : '') + '>' +
+        (c.s ? '<span class="fd20-so">' + esc(c.l) + fd20Ic(on ? (ord.dir === 'asc' ? 'chevR' : 'chevR') : 'sort', 12).replace('<svg', on ? '<svg style="transform:rotate(' + (ord.dir === 'asc' ? '-90' : '90') + 'deg)"' : '<svg') + '</span>' : esc(c.l)) + '</th>'; }).join('') +
+    '<th class="o_np o_acts"></th></tr></thead><tbody>';
+  var ml = '', pageVal = 0, pageLots = 0;
+  function cell(c, r, p, x) {
+    if (c.k === 'name') { var color = (p && p.color) || (String(r.line2 || '').split(' · ')[1] || ''); return fd20It(r.name, [r.brand || (p && p.brand), r.key].filter(Boolean).join(' · '), color); }
+    if (c.k === 'cat') return esc(r.category || '');
+    if (c.k === 'brand') return esc(r.brand || '');
+    if (c.k === 'stock') return '<span class="fd20-num">' + fmt(r.stock) + '</span>';
+    if (c.k === 'lots') return x ? '<span class="fd20-num">' + fmt(x.lots) + '</span>' : '<span class="fd20-faint">—</span>';
+    if (c.k === 'value') return x && x.value ? fd20Tk0(x.value) : '<span class="fd20-faint">—</span>';
+    if (c.k === 'cover') {
+      if (!p || !(p.rate > 0)) return '<span class="fd20-faint">no sales</span>';
+      var cv = p.cover === null || p.cover === undefined ? null : Math.round(p.cover);
+      return cv === null ? '<span class="fd20-faint">—</span>' : '<span class="fd20-num' + (cv < (Number(p.lead) || 30) + 14 ? ' fd20-neg' : '') + '">' + fmt(cv) + '</span>';
+    }
+    if (c.k === 'status') return String(p ? p.status : '').toLowerCase() === 'discontinued' ? fd20B('Discontinued', '') : fd20Status(fd20State(p || { state: r.state }, x));
+    if (c.k === 'sell') return r.sell ? fd20Tk0(r.sell) : '<span class="fd20-faint">—</span>';
+    return '';
+  }
+  function row(r) {
+    st.rows[r.key] = r;
+    var p = fd20Cat(r.key), x = items[r.key] || null, on = st.sel[r.key] || st.all;
+    if (x) { pageVal += x.value || 0; pageLots += x.lots || 0; }
+    var color = (p && p.color) || (String(r.line2 || '').split(' · ')[1] || '');
+    ml += '<div class="fd20-mr" data-fd20open="' + esc(r.key) + '" role="button" tabindex="0"><input type="checkbox" data-lv-sel="' + esc(r.key) + '"' + (on ? ' checked' : '') + ' aria-label="Select ' + esc(r.name) + '">' +
+      '<div class="fd20-mr-m"><div class="fd20-mr-t">' + fd20Sw(color) + '<span>' + esc(r.name) + '</span></div><div class="fd20-mr-s">' + esc([r.brand, r.category, p && p.rate > 0 && p.cover !== null ? Math.round(p.cover) + ' days of cover' : 'no sales'].filter(Boolean).join(' · ')) + '</div></div>' +
+      '<div class="fd20-mr-e"><span class="fd20-mr-v">' + fmt(r.stock) + ' on hand</span>' + cell({ k: 'status' }, r, p, x) + '</div>' + fd20Ic('chevR') + '</div>';
+    return '<tr class="r click' + (on ? ' sel' : '') + '" data-lv-open="' + esc(r.key) + '"><td class="cb"><input type="checkbox" data-lv-sel="' + esc(r.key) + '"' + (on ? ' checked' : '') + ' aria-label="Select"></td>' +
+      cols.map(function (c) { return '<td class="' + (c.n ? 'n' : '') + (c.k === 'name' ? ' m' : '') + (c.np ? ' o_np' : '') + '">' + cell(c, r, p, x) + '</td>'; }).join('') +
+      '<td class="o_np o_acts">' + lvRowActs(m, r) + '</td></tr>';
+  }
+  var groupSum = function (key) {
+    var u = 0, v = 0, n = 0;
+    (CAT || []).forEach(function (p) {
+      var k = st.groupBy === 'category' ? p.cat : st.groupBy === 'brand' ? p.brand : st.groupBy === 'family' ? p.family : st.groupBy === 'supplier' ? p.supplier : st.groupBy === 'state' ? p.state : st.groupBy === 'status' ? p.status : null;
+      if (k === null || String(k || '') !== String(key || '')) return;
+      n++; u += Math.max(0, p.stock || 0); var x = items[p.sku]; if (x && x.value) v += x.value;
+    });
+    return { n: n, u: u, v: v };
+  };
+  if (st.groupBy && d.groups) {
+    if (!d.groups.length) h += '<tr><td colspan="' + (cols.length + 2) + '">' + fd20Empty('layers', 'Nothing to group', '', true) + '</td></tr>';
+    d.groups.forEach(function (g) {
+      var open = !!st.open[g.key], gs = money ? groupSum(g.key) : null;
+      var meta = fmt(g.count) + ' item' + (g.count === 1 ? '' : 's') + (g.sums && g.sums.stock !== undefined ? ' · ' + fmt(g.sums.stock) + ' on hand' : '') + (gs && gs.n && gs.v ? ' · ' + fd20Tk0(gs.v) : '');
+      h += '<tr class="g" data-lv-g="' + esc(g.key) + '"><td class="cb"></td><td colspan="' + cols.length + '"><span class="fd20-gh' + (open ? ' open' : '') + '" aria-expanded="' + open + '">' + fd20Ic('chevR') + '<b>' + esc(g.label) + '</b><span class="fd20-gm">' + esc(meta) + '</span></span></td><td class="o_np"></td></tr>';
+      ml += '<div class="fd20-mr" data-fd20g="' + esc(g.key) + '" role="button" tabindex="0"><div class="fd20-mr-m"><div class="fd20-mr-t"><span>' + esc(g.label) + '</span></div><div class="fd20-mr-s">' + esc(meta) + '</div></div>' + fd20Ic(open ? 'chevR' : 'chevR').replace('<svg', '<svg style="transform:rotate(' + (open ? 90 : 0) + 'deg)"') + '</div>';
+      if (open) {
+        var gr = st.grows[g.key];
+        if (!gr) h += '<tr class="o_ghost"><td></td><td colspan="' + (cols.length + 1) + '">Loading&hellip;</td></tr>';
+        else {
+          gr.rows.forEach(function (r) { h += row(r); });
+          if (gr.rows.length < gr.total) h += '<tr class="more"><td colspan="' + (cols.length + 2) + '"><button class="linkbtn" type="button" data-lv-more="' + esc(g.key) + '">Show ' + fmt(Math.min(80, gr.total - gr.rows.length)) + ' more of ' + fmt(gr.total - gr.rows.length) + '</button></td></tr>';
+        }
+      }
+    });
+  } else {
+    if (!pageRows.length) h += '<tr><td colspan="' + (cols.length + 2) + '">' + fd20Empty('box', 'No items match', st.search.length || st.filters.length ? 'Change the search or the filters.' : 'Items appear when a shipment is received or a product is added.', true) +
+      (st.search.length || st.filters.length ? '<div style="text-align:center;margin:-6px 0 14px"><button class="fd20-btn" type="button" data-lv-clear="1">Clear the search</button></div>' : '') + '</td></tr>';
+    pageRows.forEach(function (r) { h += row(r); });
+  }
+  h += '</tbody>';
+  if (!st.groupBy && d.sums && d.total) {
+    h += '<tfoot><tr><td class="cb"></td>' + cols.map(function (c) {
+      var v = c.k === 'name' ? 'Total' + (d.total > pageRows.length ? ' (all ' + fmt(d.total) + ')' : '') : c.k === 'stock' ? fmt(d.sums.stock) : c.k === 'lots' && inv ? fmt(pageLots) : c.k === 'value' && inv ? fd20Tk0(pageVal) : '';
+      return '<td class="' + (c.n ? 'n' : '') + (c.np ? ' o_np' : '') + '">' + v + '</td>'; }).join('') + '<td class="o_np"></td></tr></tfoot>';
+  }
+  h += '</table>';
+  if (!pageRows.length && !st.groupBy) ml = '';
+  return h + '<div class="fd20-ml">' + ml + '</div>';
+}
+// a row opens his drawer (the product page stays one button away inside it)
+document.addEventListener('click', function (e) {
+  if (!fd20On() || VIEW !== 'products' || !e.target.closest) return;
+  var t = e.target, r = t.closest('.o_lv[data-lv="products"] tr[data-lv-open]');
+  var mr = t.closest('[data-fd20open]');
+  if (!r && !mr) {
+    var g = t.closest('[data-fd20g]');
+    if (g) { var st = lvSt('products'), k = g.getAttribute('data-fd20g'); st.open[k] = !st.open[k]; lvPaint('products'); if (st.open[k] && !st.grows[k]) lvLoadGroup('products', k); }
+    return;
+  }
+  if (t.closest('td.cb, td.o_acts, button, a, input, select, label')) return;
+  e.stopPropagation(); e.preventDefault();
+  fd20ItemDrawer((r || mr).getAttribute(r ? 'data-lv-open' : 'data-fd20open'));
+}, true);
+document.addEventListener('keydown', function (e) {
+  if ((e.key === 'Enter' || e.key === ' ') && e.target.getAttribute && (e.target.getAttribute('data-fd20open') || e.target.getAttribute('data-fd20g') || e.target.getAttribute('data-fd20lot') || e.target.getAttribute('data-fd20shp'))) { e.preventDefault(); e.target.click(); }
+});
+
+// ---- his item drawer
+function fd20ItemDrawer(sku) {
+  var p = fd20Cat(sku);
+  FD20.dsku = sku; FD20.dpage = null; FD20.dq = null;
+  fd20Drawer({ title: p ? p.name : sku, sub: 'Item · ' + sku, body: fd20ItemBody(sku), foot: fd20ItemFoot(sku), kind: 'item' });
+  srv('erpProductPage', [{ sku: sku }], function (r) { if (FD20.dsku !== sku) return; FD20.dpage = r; fd20DrawerBody(fd20ItemBody(sku), fd20ItemFoot(sku)); },
+    function (e) { if (FD20.dsku !== sku) return; FD20.dpage = { err: (e && e.message) || String(e) }; fd20DrawerBody(fd20ItemBody(sku)); });
+  if (!FD20.off) srv('erpFdInventory', [{ sku: sku }], function (r) { if (FD20.dsku !== sku) return; FD20.dq = r; if (!FD20.inv) { FD20.inv = r; FD20.invAt = Date.now(); } fd20DrawerBody(fd20ItemBody(sku)); },
+    function () { if (FD20.dsku !== sku) return; FD20.dq = { queue: null }; fd20DrawerBody(fd20ItemBody(sku)); });
+}
+function fd20ItemBody(sku) {
+  var p = fd20Cat(sku) || {}, pg = FD20.dpage && !FD20.dpage.err ? FD20.dpage : null, q = FD20.dq, x = (FD20.inv && FD20.inv.items[sku]) || (q && q.items && q.items[sku]) || null;
+  var money = !!((q && q.canCost) || (FD20.inv && FD20.inv.canCost));
+  var gone = String(p.status || (pg && pg.status) || '').toLowerCase() === 'discontinued';
+  var h = '<div class="fd20-row">' + (gone ? fd20B('Discontinued', '', true, false) : fd20Status(fd20State(p, x)).replace(' sm"', '"')) +
+    (p.serialised ? fd20B('Serial numbers', '', false) : '') + (pg && pg.onOrder && pg.onOrder.length ? fd20B('On order', 'info', false) : '') + '</div>';
+  var onOrder = 0; if (pg && pg.onOrder) pg.onOrder.forEach(function (o) { onOrder += Number(o.left) || 0; });
+  var lead = Number(p.lead) || (pg && pg.lead) || 0;
+  var rows = [['SKU', esc(sku)], ['Category', esc(p.cat || (pg && pg.category) || '—')],
+    ['Brand · type', esc([p.brand || (pg && pg.brand), pg && pg.type].filter(Boolean).join(' · ') || '—')],
+    (p.color || (pg && pg.color)) ? ['Colour', '<span class="fd20-swl">' + fd20Sw(p.color || pg.color) + esc(p.color || pg.color) + '</span>'] : null,
+    ['Unit', esc(p.unit || (pg && pg.unit) || '—')],
+    (pg && pg.supplier) || p.supplier ? ['Supplier', esc((pg && pg.supplier) || p.supplier)] : null,
+    (pg && pg.bin) ? ['Kept at', esc(pg.bin)] : null,
+    ['On hand', fmt(p.stock !== undefined ? p.stock : pg ? pg.stock : 0) + (onOrder ? ' · ' + fmt(onOrder) + ' on order' : '')],
+    ['Velocity', p.sold30 !== undefined ? fmt(p.sold30) + ' / 30 days · ' + (Math.round((p.sold90 || 0) / 3 * 10) / 10) + ' / 30 days over 90' : (pg ? fmt(pg.perMonth) + ' a month' : '—')],
+    ['Days of cover', p.rate > 0 && p.cover !== null && p.cover !== undefined ? fmt(Math.round(p.cover)) + ' days (lead ' + fmt(lead) + ' + safety 14 = ' + fmt(lead + 14) + ')' : 'no recent sales'],
+    ['Reorder point', fmt(p.reorder !== undefined ? p.reorder : pg ? pg.reorder : 0) + (lead ? ' · lead time ' + fmt(lead) + ' days' : '') + (p.suggested && p.suggested !== p.reorder ? ' · sales say ' + fmt(p.suggested) : '')],
+    x && x.lastSale ? ['Last sale', esc(x.lastSale) + (x.idle !== null && x.idle !== undefined ? ' · ' + (x.idle ? fmt(x.idle) + ' days idle' : 'today') : '')] : null,
+    money && x ? ['Value at cost', x.value ? fd20Tk2(x.value) : '—'] : null,
+    money && x && x.avgUnit ? ['Average unit cost', fd20Tk2(x.avgUnit)] : null,
+    money && x && x.holding ? ['Holding cost to date', fd20Tk2(x.holding) + ' <span class="fd20-faint">(not in stock value)</span>'] : null,
+    pg && pg.canSeeMoney && pg.cost ? ['Cost (cost book)', fd20Tk2(pg.cost) + (pg.margin !== null && pg.margin !== undefined ? ' · ' + pg.margin + '% margin' : '')] : null,
+    ['Price', p.sell || (pg && pg.sell) ? fd20Tk2(p.sell || pg.sell) + (pg && pg.wholesale ? ' · wholesale ' + fd20Tk0(pg.wholesale) : '') : '—']];
+  h += '<table class="fd20-kv">' + rows.filter(Boolean).map(function (r) { return '<tr><td>' + r[0] + '</td><td>' + r[1] + '</td></tr>'; }).join('') + '</table>';
+  // units sold per month: the last six months
+  if (pg && pg.months && pg.months.length) {
+    var ms = pg.months.slice(-6), mx = 1; ms.forEach(function (m) { if (m.units > mx) mx = m.units; });
+    h += '<div><div class="fd20-lbl">Units sold per month</div><div class="fd20-bars" role="img" aria-label="Units sold per month: ' + esc(ms.map(function (m) { return m.label + ' ' + m.units; }).join(', ')) + '">' +
+      ms.map(function (m) { var u = Math.max(0, Number(m.units) || 0); return '<div class="fd20-b1"><b>' + fmt(u) + '</b><i style="height:' + Math.max(2, Math.round(u / mx * 100)) + '%"></i><span>' + esc(String(m.label).split(' ')[0]) + '</span></div>'; }).join('') + '</div></div>';
+  } else if (FD20.dpage && FD20.dpage.err) h += '<div class="fd20-hint">' + esc(FD20.dpage.err) + '</div>';
+  else if (!FD20.dpage) h += '<div class="fd20-hint">Reading the sales…</div>';
+  // the FIFO queue
+  h += '<div class="fd20-st">FIFO queue <span>the oldest open lot sells first</span></div>';
+  if (!q) h += '<div class="fd20-hint">Reading the lots…</div>';
+  else if (!q.queue) h += '<div class="fd20-hint">The lots are not available here yet.</div>';
+  else if (!q.queue.length) h += '<p class="fd20-hint" style="margin:0">No open lot.' + (q.exhausted ? ' ' + q.exhausted + ' exhausted lot(s) stay listed in the Lots view.' : '') + '</p>';
+  else {
+    h += '<div class="fd20-q">' + q.queue.map(function (l, i) {
+      return '<button type="button" class="fd20-qi" data-fd20lotshp="' + esc(l.source === 'opening' ? 'Stock before lots began' : l.source === 'receive' ? l.shipment : '') + '"><span class="fd20-qn">' + (i + 1) + '</span>' +
+        '<span class="fd20-qm"><b>' + esc(l.lot) + (i === 0 ? ' · next to sell' : '') + '</b><span>' + esc([l.shipment, l.date, l.supplier].filter(Boolean).join(' · ')) + '</span>' +
+        (l.costKnown ? '' : '<span style="margin-top:4px">' + fd20B('Cost from the cost book', 'warn', false) + '</span>') + '</span>' +
+        '<span class="fd20-qs"><b>' + fmt(l.qtyLeft) + ' of ' + fmt(l.qtyIn) + '</b>' + (money && l.unitCost !== null && l.unitCost !== undefined ? '<span style="display:block">' + fd20Tk2(l.unitCost) + ' landed</span>' : '') +
+        (money && l.holding ? '<span style="display:block">+ ' + fd20Tk0(l.holding) + ' holding</span>' : '') + '</span></button>'; }).join('') + '</div>' +
+      (q.exhausted ? '<div class="fd20-hint">' + q.exhausted + ' exhausted lot(s) are in the Lots view.</div>' : '');
+  }
+  return h;
+}
+function fd20ItemFoot(sku) {
+  var p = fd20Cat(sku) || {}, pg = FD20.dpage && !FD20.dpage.err ? FD20.dpage : null, stockOn = typeof navOn === 'function' && navOn('stock');
+  var mgr = typeof pageCan === 'function' && (pageCan('products') || pageCan('stock'));
+  var gone = String(p.status || (pg && pg.status) || '').toLowerCase() === 'discontinued';
+  var canAdd = (p.stock > 0 || (pg && pg.stock > 0)) && (p.sell > 0 || (pg && pg.sell > 0)) && !gone;
+  return (mgr && stockOn ? '<button type="button" class="fd20-btn" data-fd20stock="count" data-sku="' + esc(sku) + '">' + fd20Ic('edit', 16) + 'Adjust</button>' +
+      '<button type="button" class="fd20-btn" data-fd20stock="receive" data-sku="' + esc(sku) + '">' + fd20Ic('box', 16) + 'Receive</button>' : '') +
+    (mgr ? '<button type="button" class="fd20-btn" data-fd20edit="' + esc(sku) + '">' + fd20Ic('edit', 16) + 'Edit</button>' : '') +
+    (canAdd ? '<button type="button" class="fd20-btn" data-fd20add="' + esc(sku) + '">' + fd20Ic('cart', 16) + 'Add to invoice</button>' : '') +
+    '<span class="sp"></span><button type="button" class="fd20-btn pri" data-fd20page="' + esc(sku) + '">Open full page' + fd20Ic('arrow', 16) + '</button>';
+}
+document.addEventListener('click', function (e) {
+  if (!e.target.closest) return;
+  var b;
+  if ((b = e.target.closest('[data-fd20page]'))) { var s = b.getAttribute('data-fd20page'); fd20DrawerClose(); openProductPage(s); window.scrollTo(0, 0); return; }
+  if ((b = e.target.closest('[data-fd20add]'))) {
+    addToCart(b.getAttribute('data-fd20add'));
+    toast('Added to the invoice. <a href="#" id="goInv">Open New Invoice</a>');
+    var g = el('goInv'); if (g) g.addEventListener('click', function (ev) { ev.preventDefault(); fd20DrawerClose(); go('invoice'); });
+    return;
+  }
+  if ((b = e.target.closest('[data-fd20edit]'))) {
+    var sku = b.getAttribute('data-fd20edit');
+    fd20DrawerClose();
+    if (!LISTS) loadLists();
+    srv('erpProduct', [sku], function (p) {
+      if (!p) { toast('That product is no longer on the list.', true); return; }
+      p.isNew = false; PRODUCT_FORM = p; repaint(); window.scrollTo(0, 0);
+    }, function (er) { toast('Could not open that product: ' + esc((er && er.message) || er), true); });
+    return;
+  }
+  if ((b = e.target.closest('[data-fd20lotshp]'))) {
+    var ref = b.getAttribute('data-fd20lotshp');
+    if (!ref || typeof navOn !== 'function' || !navOn('costs')) { toast('This lot came from ' + (ref || 'a return or an adjustment') + '.'); return; }
+    fd20DrawerClose(); SHP.ref = ref; SHP.one = null; SHP.oneErr = ''; go('shipments'); window.scrollTo(0, 0);
+  }
+});
+
+// ---- the Lots view
+function fd20LotRows() {
+  var scope = fd20Scope(), q = FD20.lotq.trim().toLowerCase(), f = FD20.lotf;
+  return (FD20.lots || []).filter(function (l) {
+    if (scope) { var p = fd20Cat(l.sku); if (!p || p.cat !== scope) return false; }
+    if (f === 'open' && !(l.qtyLeft > 0)) return false;
+    if (f === 'exhausted' && l.qtyLeft > 0) return false;
+    if (f === 'unknown' && l.costKnown) return false;
+    if (q && (l.lot + ' ' + l.shipment + ' ' + l.name + ' ' + l.sku + ' ' + l.supplier).toLowerCase().indexOf(q) < 0) return false;
+    return true;
+  });
+}
+var FD20_SRC = { receive: ['Shipment', 'acc'], opening: ['Opening', 'info'], 'return': ['Return in', 'vio'], adjust: ['Adjustment', ''] };
+function fd20LotsCard() {
+  var money = !!(FD20.inv && FD20.inv.canCost), hold = !!(FD20.inv && FD20.inv.holdingOn), scope = fd20Scope();
+  var tools = fd20Seg([['open', 'Open lots'], ['all', 'All'], ['unknown', 'Unknown cost'], ['exhausted', 'Exhausted']], FD20.lotf, 'data-fd20lotf', true, 'Show');
+  var h = '<div class="fd20-card" id="fd20lots">' + fd20Head('layers', (scope || 'Products') + ' · lots (FIFO)', 'Each receipt makes one lot per product at its landed cost; sales take the oldest lot first', tools);
+  if (!FD20.lots) {
+    if (!FD20.lotsBusy && !FD20.lotsErr) setTimeout(fd20LoadLots, 0);
+    return h + (FD20.lotsErr ? fd20Empty('warn', 'Could not read the lots', FD20.lotsErr, true) : '<div class="loading" style="padding:24px">Reading the lots…</div>') + '</div>';
+  }
+  var rows = fd20LotRows(), val = 0, left = 0;
+  rows.forEach(function (l) { val += l.valueLeft || 0; left += l.qtyLeft || 0; });
+  h += '<div class="fd20-tb"><label class="fd20-search">' + fd20Ic('search') + '<input type="search" id="fd20lotq" placeholder="Search lot, shipment, item or supplier…" aria-label="Search the lots" value="' + esc(FD20.lotq) + '"></label>' +
+    '<span class="fd20-cs" style="margin-left:auto">' + fmt(rows.length) + ' lot' + (rows.length === 1 ? '' : 's') + ' · ' + fmt(left) + ' units left' + (money ? ' · ' + fd20Tk0(val) : '') + '</span></div>';
+  if (!rows.length) return h + fd20Empty('layers', 'No lots here', FD20.lots.length ? 'Change the filter above.' : 'Lots are made only by receiving goods (or the opening count).', true) + '</div>';
+  var cap = rows.slice(0, 300);
+  h += '<div class="fd20-tw hidephone"><table class="fd20-t"><thead><tr><th>Lot</th><th>Item</th><th>Received</th><th>Kind</th><th>Cost quality</th><th class="n">Remaining</th>' +
+    (money ? '<th class="n">Landed unit</th>' + (hold ? '<th class="n">Holding to date</th>' : '') + '<th class="n">Value left</th>' : '') + '<th>Status</th></tr></thead><tbody>' +
+    cap.map(function (l, i) {
+      var p = fd20Cat(l.sku), k = FD20_SRC[l.source] || [l.source, ''];
+      return '<tr class="click' + (l.qtyLeft > 0 ? '' : ' gone') + '" data-fd20lot="' + i + '" tabindex="0"><td><span class="fd20-p">' + esc(l.lot) + '</span><span class="fd20-s">' + esc(l.shipment) + '</span></td>' +
+        '<td>' + fd20It(l.name, [p && p.brand, l.sku].filter(Boolean).join(' · '), p && p.color) + '</td><td>' + esc(l.date) + '</td><td>' + fd20B(k[0], k[1], false) + '</td>' +
+        '<td>' + (l.costKnown ? fd20B('Actual cost', 'pos', false) : fd20B('Cost book', 'warn', false)) + '</td><td class="n fd20-num">' + fmt(l.qtyLeft) + ' / ' + fmt(l.qtyIn) + '</td>' +
+        (money ? '<td class="n">' + (l.unitCost === null || l.unitCost === undefined ? '<span class="fd20-faint">—</span>' : fd20Tk2(l.unitCost)) + '</td>' + (hold ? '<td class="n">' + (l.holding ? fd20Tk0(l.holding) : '<span class="fd20-faint">—</span>') + '</td>' : '') +
+          '<td class="n">' + (l.valueLeft ? fd20Tk0(l.valueLeft) : '<span class="fd20-faint">—</span>') + '</td>' : '') +
+        '<td>' + (l.qtyLeft > 0 ? fd20B('Open', 'pos') : fd20B('Exhausted', '')) + '</td></tr>'; }).join('') + '</tbody></table></div>';
+  h += '<div class="fd20-ml">' + cap.map(function (l, i) {
+    var p = fd20Cat(l.sku);
+    return '<div class="fd20-mr" data-fd20lot="' + i + '" role="button" tabindex="0"><div class="fd20-mr-m"><div class="fd20-mr-t">' + fd20Sw(p && p.color) + '<span>' + esc(l.lot + ' · ' + l.name) + '</span></div>' +
+      '<div class="fd20-mr-s">' + esc(l.shipment + ' · received ' + l.date + ' · ' + fmt(l.qtyLeft) + ' of ' + fmt(l.qtyIn) + ' left') + '</div></div><div class="fd20-mr-e">' +
+      (money && l.unitCost !== null && l.unitCost !== undefined ? '<span class="fd20-mr-v">' + fd20Tk2(l.unitCost) + '</span>' : '') + (l.qtyLeft > 0 ? fd20B('Open', 'pos') : fd20B('Exhausted', '')) + '</div>' + fd20Ic('chevR') + '</div>'; }).join('') + '</div>';
+  if (rows.length > cap.length) h += '<div class="fd20-foot">Showing ' + fmt(cap.length) + ' of ' + fmt(rows.length) + ' lots — search to narrow them.</div>';
+  return h + '</div>';
+}
+function fd20LotDrawer(l) {
+  var money = !!(FD20.inv && FD20.inv.canCost), k = FD20_SRC[l.source] || [l.source, ''], p = fd20Cat(l.sku);
+  var rows = [['Item', fd20It(l.name, l.sku, p && p.color).replace('fd20-it"', 'fd20-it" style="text-align:left"')], ['Came from', esc(l.shipment)], ['Kind', fd20B(k[0], k[1], false)],
+    l.supplier ? ['Supplier', esc(l.supplier)] : null, ['Received', esc(l.date)], ['Remaining', fmt(l.qtyLeft) + ' of ' + fmt(l.qtyIn)],
+    money ? ['Landed unit cost (capitalised)', l.unitCost === null || l.unitCost === undefined ? '—' : fd20Tk2(l.unitCost) + (l.costKnown ? '' : ' <span class="fd20-faint">(cost book)</span>')] : null,
+    money && FD20.inv.holdingOn ? ['Holding cost to date (not capitalised)', l.holding ? fd20Tk2(l.holding) : '—'] : null,
+    money ? ['Value left at cost', fd20Tk2(l.valueLeft || 0)] : null, ['Status', l.qtyLeft > 0 ? fd20B('Open', 'pos') : fd20B('Exhausted', '')]];
+  var shp = l.source === 'opening' ? 'Stock before lots began' : l.source === 'receive' ? l.shipment : '';
+  fd20Drawer({ title: l.lot, sub: 'Lot · ' + l.name, kind: 'lot',
+    body: '<table class="fd20-kv">' + rows.filter(Boolean).map(function (r) { return '<tr><td>' + r[0] + '</td><td>' + r[1] + '</td></tr>'; }).join('') + '</table>' +
+      '<div class="fd20-info">' + fd20Ic('info') + '<span>A lot is never edited: a sale takes units from the oldest open lot first, a return puts them back, a count or adjustment is its own movement with a reason. Holding cost is shown beside the lot, never inside its value.</span></div>',
+    foot: '<button type="button" class="fd20-btn" data-fd20openitem="' + esc(l.sku) + '">' + fd20Ic('spool', 16) + 'Open the item</button><span class="sp"></span>' +
+      (shp && typeof navOn === 'function' && navOn('costs') ? '<button type="button" class="fd20-btn pri" data-fd20lotshp="' + esc(shp) + '">Open the shipment' + fd20Ic('arrow', 16) + '</button>' : '') });
+}
+document.addEventListener('click', function (e) {
+  if (!e.target.closest) return;
+  var b;
+  if ((b = e.target.closest('[data-fd20lotf]'))) { FD20.lotf = b.getAttribute('data-fd20lotf'); var lc = el('fd20lots'); if (lc) lc.outerHTML = fd20LotsCard(); try { fdtEnhance(); } catch (x) {} return; }
+  if ((b = e.target.closest('[data-fd20lot]'))) { var l = fd20LotRows()[+b.getAttribute('data-fd20lot')]; if (l) fd20LotDrawer(l); return; }
+  if ((b = e.target.closest('[data-fd20openitem]'))) { fd20ItemDrawer(b.getAttribute('data-fd20openitem')); }
+});
+document.addEventListener('input', function (e) {
+  if (e.target.id !== 'fd20lotq') return;
+  FD20.lotq = e.target.value; var pos = e.target.selectionStart;
+  var lc = el('fd20lots'); if (lc) lc.outerHTML = fd20LotsCard();
+  var n = el('fd20lotq'); if (n) { n.focus(); try { n.setSelectionRange(pos, pos); } catch (x) {} }
+});
+
+// ---- under the list: low stock & days of cover, receipts / returns / adjustments
+function fd20Below() {
+  var scope = fd20Scope(), stockOn = typeof navOn === 'function' && navOn('stock');
+  var low = (CAT || []).filter(function (p) {
+    if (String(p.status).toLowerCase() === 'discontinued' || (scope && p.cat !== scope)) return false;
+    var lead = (Number(p.lead) || 30) + 14;
+    return (p.rate > 0 && (p.cover === null || p.cover === undefined || p.cover < lead)) || ((p.state === 'low' || p.state === 'out') && (p.sold90 || 0) > 0);
+  }).sort(function (a, b) { return (a.cover === null || a.cover === undefined ? -1 : a.cover) - (b.cover === null || b.cover === undefined ? -1 : b.cover); });
+  var items = FD20.inv ? FD20.inv.items : {};
+  var h = '<div class="fd20-g2wrap" id="fd20below"><div class="fd20-g2"><div class="fd20-card pad">' +
+    fd20Head('bell', 'Low stock & days of cover', 'Cover = on hand ÷ what sells a day; under lead time + 14 days is red', stockOn ? '<button type="button" class="fd20-btn ghost" data-fd20stock="plan">Reorder plan ' + fd20Ic('arrow', 16) + '</button>' : '', true);
+  if (!low.length) h += fd20Empty('check', 'Nothing is running low', 'Every selling item has more than its lead time + 14 days of cover.', true);
+  else h += '<div class="fd20-tw" style="margin:0 -8px;padding:0 8px"><table class="fd20-t mini"><thead><tr><th>Item</th><th class="n">On hand</th><th class="n">Cover</th><th class="n">Reorder at</th><th>Status</th></tr></thead><tbody>' +
+    low.slice(0, 10).map(function (p) {
+      var cv = p.rate > 0 && p.cover !== null && p.cover !== undefined ? Math.round(p.cover) : null;
+      return '<tr class="click" data-fd20open="' + esc(p.sku) + '"><td>' + fd20It(p.name, p.sku, p.color) + '</td><td class="n fd20-num">' + fmt(p.stock) + '</td>' +
+        '<td class="n">' + (cv === null ? '—' : '<span class="fd20-num' + (cv < 30 ? ' fd20-neg' : '') + '" style="font-weight:' + (cv < 30 ? 700 : 500) + '">' + fmt(cv) + ' d</span>') + '</td>' +
+        '<td class="n fd20-num"><b>' + fmt(p.reorder) + '</b></td><td>' + fd20Status(fd20State(p, items[p.sku])) + '</td></tr>'; }).join('') + '</tbody></table></div>' +
+    (low.length > 10 ? '<div class="fd20-hint" style="margin-top:8px">' + fmt(low.length - 10) + ' more — Reorder plan lists them all.</div>' : '');
+  h += '</div><div class="fd20-card pad">' + fd20Head('clip', 'Receipts, returns and adjustments', 'Stock moves other than sales (sales are on the invoices)',
+    stockOn ? '<button type="button" class="fd20-btn" data-fd20stock="count">' + fd20Ic('edit', 16) + 'Adjust</button><button type="button" class="fd20-btn" data-fd20stock="count">' + fd20Ic('scan', 16) + 'Count</button><button type="button" class="fd20-btn" data-fd20stock="receive">' + fd20Ic('box', 16) + 'Receive</button>' : '', true);
+  var mv = FD20.inv ? FD20.inv.moves : null;
+  if (!mv) h += FD20.off ? fd20Empty('clip', 'Not available yet', 'The stock moves show here once the server is updated.', true) : '<div class="fd20-hint">Reading the stock moves…</div>';
+  else if (!mv.length) h += fd20Empty('clip', 'No moves yet', '', true);
+  else h += '<div class="fd20-q">' + mv.slice(0, 7).map(function (m) {
+    var ic = m.kind === 'Received' ? 'ship' : m.kind === 'Write-off' ? 'warn' : m.kind === 'Return in' ? 'reset' : 'clip';
+    return '<button type="button" class="fd20-qi" data-fd20openitem="' + esc(m.sku) + '" style="background:transparent;padding:8px 4px"><span class="fd20-ib sm' + (m.kind === 'Write-off' ? ' t-warn' : '') + '">' + fd20Ic(ic) + '</span>' +
+      '<span class="fd20-qm"><b>' + esc(m.kind + ' · ' + m.name + (m.ref ? ' · ' + m.ref : '')) + '</b><span>' + esc(m.when + (m.note ? ' · ' + m.note : '')) + '</span></span>' +
+      '<span class="fd20-qs"><b>' + (m.dir === 'IN' ? '+' : '−') + fmt(m.qty) + '</b></span></button>'; }).join('') + '</div>';
+  h += '</div></div><p class="fd20-note">As of ' + esc(FD20.inv ? FD20.inv.asOf : 'now') + ' · stock value is landed cost only (FIFO lots; stock from before lots began at the cost book); holding cost is shown beside lots, never inside them.</p></div>';
+  return h;
+}
+var viewProductsFd20 = viewProducts;
+viewProducts = function () {
+  if (!fd20On() || (typeof PRODP !== 'undefined' && PRODP.sku)) return viewProductsFd20.apply(this, arguments);
+  if (!FD20.inv) fd20Load();
+  var h = viewProductsFd20.apply(this, arguments);
+  if (FD20.view === 'lots') {
+    var a = h.indexOf('<div class="o_lv" id="lv_products"');
+    if (a >= 0) {
+      // the list view is a single div with its own inner divs: cut it out by counting
+      var depth = 0, i = a, re = /<div\b|<\/div>/g, mt; re.lastIndex = a;
+      while ((mt = re.exec(h))) { depth += mt[0] === '</div>' ? -1 : 1; if (depth === 0) { i = re.lastIndex; break; } }
+      h = h.slice(0, a) + fd20LotsCard() + h.slice(i);
+    }
+  }
+  return h + fd20Below();
+};
+
+// ================================================================== SHIPMENTS = his lifecycle board
+function fd20ShpActs() {
+  var stockOn = typeof navOn === 'function' && navOn('stock');
+  return '<div class="fd20-acts">' + (stockOn ? '<button type="button" class="fd20-btn" data-fd20stock="receive">' + fd20Ic('box', 16) + 'Receive</button>' +
+    '<button type="button" class="fd20-btn pri" data-fd20stock="orders">' + fd20Ic('plus', 16) + 'New order</button>' : '') + '</div>';
+}
+function fd20Ord(o) {
+  var st = o.stage || { key: 'ordered', label: 'Ordered' }, units = 0, goods = 0, qty = 0;
+  (o.lines || []).forEach(function (l) { units += Number(l.left) || 0; qty += Number(l.qty) || 0; goods += (Number(l.left) || 0) * (Number(l.rmbUnit) || 0) * (Number(o.rate) || 0); });
+  if (!o.lines || !o.lines.length) { units = Number(o.left) || 0; goods = (Number(o.rmb) || 0) * (Number(o.rate) || 0); }
+  return { st: st, units: units, goods: goods, freight: Number(st.freightEstimate) || 0, kg: Number(st.kg) || 0 };
+}
+function fd20ShpKpis(d, orders) {
+  var water = 0, onway = 0, wrows = [], urows = [], inU = 0, soldU = 0, srows = [];
+  orders.forEach(function (o) {
+    var x = fd20Ord(o); onway += x.units; urows.push([o.id + ' · ' + (o.supplier || '—'), fmt(x.units) + ' u', x.st.label + (x.kg ? ' · ' + fmt(x.kg) + ' kg' : '')]);
+    if (x.st.key !== 'planned') { water += x.goods + x.freight; wrows.push([o.id + ' · ' + x.st.label, fd20Tk0(x.goods + x.freight), 'goods ' + fd20Tk0(x.goods) + (x.freight ? ' + freight est. ' + fd20Tk0(x.freight) : '') + (o.rate ? ' · rate ' + o.rate : '')]); }
+  });
+  d.shipments.forEach(function (s) { if (s.opening) return; inU += s.unitsIn; soldU += s.sold; srows.push([s.reference, s.soldPct + '%', fmt(s.sold) + ' of ' + fmt(s.unitsIn) + ' sold']); });
+  var t = d.totals, sell = inU ? Math.round(soldU / inU * 100) : 0, prof = d.holdingOn ? t.net : t.profit;
+  return '<div class="fdd-grid fd20-kgrid fd20-k6">' +
+    fd20Kpi({ title: 'Capital on the water', icon: 'taka', val: fd20Tk(water), hero: true, note: wrows.length + ' order' + (wrows.length === 1 ? '' : 's') + ' ordered or in transit',
+      calc: { text: 'What is paid for and not here yet: units still to come × the order’s price × its rate, plus the freight estimate given when it went in transit. Planned orders are not counted.', rows: wrows, total: ['On the water', fd20Tk0(water)] } }) +
+    fd20Kpi({ title: 'Units on the way', icon: 'ship', val: fmt(onway), note: orders.length + ' open order' + (orders.length === 1 ? '' : 's'),
+      calc: { text: 'Units on open supplier orders not received yet, every stage.', rows: urows, total: ['Units on the way', fmt(onway)] } }) +
+    fd20Kpi({ title: 'Sell-through of received', icon: 'trend', val: fmt(sell) + '<small style="margin-left:2px">%</small>', note: fmt(soldU) + ' of ' + fmt(inU) + ' units sold',
+      calc: { text: 'Units sold (returns put back) ÷ units received, over every shipment since lots began (stock from before is left out).', rows: srows, total: ['Sell-through', sell + '%'] } }) +
+    fd20Kpi({ title: 'Landed cost of goods', icon: 'box', val: fd20Tk(t.landed), note: t.count + ' shipment' + (t.count === 1 ? '' : 's') + ' · goods + freight + duty',
+      calc: { text: 'Units received × each lot’s landed cost (goods plus its share of freight, duty and the other costs), every shipment.', rows: d.shipments.filter(function (s) { return !s.opening; }).map(function (s) { return [s.reference, fd20Tk0(s.landed), s.date]; }), total: ['Landed', fd20Tk0(t.landed)] } }) +
+    fd20Kpi({ title: 'Still on the shelf', icon: 'archive', val: fd20Tk(t.leftValue), note: 'what is left, at each lot’s cost',
+      calc: { text: 'Units left in each lot × that lot’s landed cost.', rows: d.shipments.filter(function (s) { return !s.opening && s.unitsLeft; }).map(function (s) { return [s.reference, fd20Tk0(s.leftValue), fmt(s.unitsLeft) + ' units left']; }), total: ['On the shelf', fd20Tk0(t.leftValue)] } }) +
+    fd20Kpi({ title: d.holdingOn ? 'Profit after holding' : 'Gross profit made', icon: 'target', val: fd20Tk(prof), neg: prof < 0, tone: prof < 0 ? 'bad' : '',
+      note: d.holdingOn ? 'holding cost ' + fd20Tk0(t.holding) + ' taken off' : 'sold units: price − their landed cost',
+      calc: { text: d.holdingOn ? 'What sold units brought in − their landed cost − the holding cost the lots carried (rent shared by kg × days). Net profit on the P&L is not changed by holding.' : 'What sold units brought in − their landed cost (FIFO).',
+              rows: d.shipments.filter(function (s) { return !s.opening; }).map(function (s) { return [s.reference, fd20Tk0(d.holdingOn ? s.net : s.profit), 'sold for ' + fd20Tk0(s.revenue) + (d.holdingOn ? ' · holding ' + fd20Tk0(s.holding) : '')]; }),
+              total: ['Total', fd20Tk0(prof)] } }) + '</div>';
+}
+function fd20ShpMatch(txt) { var q = FD20.shpq.trim().toLowerCase(); return !q || String(txt).toLowerCase().indexOf(q) >= 0; }
+function fd20Board(d, orders) {
+  var cols = { planned: [], ordered: [], in_transit: [], received: [], sold_out: [] };
+  orders.forEach(function (o) {
+    var x = fd20Ord(o), k = x.st.key === 'planned' ? 'planned' : x.st.key === 'in_transit' ? 'in_transit' : 'ordered';
+    if (!fd20ShpMatch(o.id + ' ' + (o.supplier || '') + ' ' + (x.st.shipmentNo || '') + ' ' + (x.st.agent || ''))) return;
+    var next = x.st.key === 'planned' ? '<button class="btn small primary" type="button" data-fdwstage="ordered" data-po="' + esc(o.id) + '">Mark ordered</button>'
+      : '<button class="btn small' + (x.st.key === 'ordered' ? ' primary' : '') + '" type="button" data-fdwtransit="' + esc(o.id) + '">' + (x.st.key === 'in_transit' ? 'Edit shipment' : 'In transit…') + '</button>';
+    cols[k].push('<div class="fd20-sc" role="group" aria-label="' + esc(o.id + ', ' + x.st.label) + '"><div class="fd20-sc-r"><span class="fd20-sc-ref">' + esc(o.id) + '</span><span class="fd20-sc-mode">' + esc(o.shipBy || x.st.shipBy || '') + '</span></div>' +
+      '<div class="fd20-sc-name">' + esc(o.supplier || 'No supplier named') + (x.st.shipmentNo ? ' · ' + esc(x.st.shipmentNo) : '') + '</div>' +
+      '<div class="fd20-sc-meta"><span>' + fmt(x.units) + ' u' + (x.kg ? ' · ' + fmt(x.kg) + ' kg' : '') + '</span>' + (x.goods ? '<span>' + fd20Tk0(x.goods + x.freight) + '</span>' : '') + '</div>' +
+      '<div class="fd20-sc-meta"><span>' + (x.st.eta ? 'Expected ' + esc(x.st.eta) : 'Ordered ' + esc(o.when || '')) + '</span>' + (x.st.agent ? '<span>' + esc(x.st.agent) + '</span>' : '') + '</div>' +
+      '<div class="fd20-row">' + next + '</div></div>');
+  });
+  d.shipments.forEach(function (s, i) {
+    if (!fd20ShpMatch(s.reference + ' ' + (s.supplier || ''))) return;
+    var k = s.status === 'Sold out' ? 'sold_out' : 'received';
+    cols[k].push('<div class="fd20-sc" role="button" tabindex="0" data-fd20shp="' + esc(s.reference) + '" aria-label="' + esc(s.reference + ', ' + s.status) + '"><div class="fd20-sc-r"><span class="fd20-sc-ref">' + esc(s.reference) + '</span>' +
+      '<span class="fd20-sc-mode">' + fmt(s.products) + ' item' + (s.products === 1 ? '' : 's') + '</span></div><div class="fd20-sc-name">' + esc(s.supplier || (s.opening ? 'What was on the shelf' : 'No supplier named')) + '</div>' +
+      '<div class="fd20-sc-meta"><span>' + fmt(s.unitsIn) + ' u in · ' + fmt(s.unitsLeft) + ' left</span>' + (s.opening ? '' : '<span>' + fd20Tk0(s.landed) + '</span>') + '</div>' +
+      '<div class="fd20-sc-meta"><span>Received ' + esc(s.date) + '</span><span>Sold ' + fmt(s.soldPct) + '%</span></div>' +
+      '<div class="fd20-prog" aria-hidden="true"><i style="width:' + Math.min(100, s.soldPct) + '%"></i></div>' +
+      '<div class="fd20-row">' + (s.revenue ? fd20B((d.holdingOn ? 'After holding ' : 'Profit ') + fd20Tk0(d.holdingOn ? s.net : s.profit), (d.holdingOn ? s.net : s.profit) < 0 ? 'neg' : 'pos', false) : '') +
+      (s.costKnown ? '' : fd20B(s.opening ? 'Cost book' : 'Cost not known', 'warn', false)) + (s.status === 'Selling' ? fd20B('Selling', 'warn') : s.status === 'In stock' && !s.opening ? fd20B('In stock', 'info') : '') + '</div></div>');
+  });
+  var L = [['planned', 'Planned', 'vio'], ['ordered', 'Ordered', 'info'], ['in_transit', 'In transit', 'warn'], ['received', 'Received', 'pos'], ['sold_out', 'Sold out', 'acc']];
+  return '<div class="fd20-board">' + L.map(function (c) {
+    var list = cols[c[0]];
+    return '<section class="fd20-col" aria-label="' + c[1] + ' shipments"><div class="fd20-colh">' + fd20B(c[1], c[2]) + '<span class="n">' + list.length + (list.length === 1 ? ' shipment' : ' shipments') + '</span></div>' +
+      (list.length ? list.join('') : '<div class="fd20-colx">' + (c[0] === 'sold_out' ? 'A received shipment moves here when its last unit is sold.' : c[0] === 'planned' ? 'Orders written but not placed yet.' : 'Nothing here.') + '</div>') + '</section>';
+  }).join('') + '</div>';
+}
+var viewShipmentsFd20 = viewShipments;
+viewShipments = function () {
+  var h = viewShipmentsFd20.apply(this, arguments);
+  if (!fd20On() || SHP.ref || !SHP.list) return h;
+  FD20.calc = [];
+  var d = SHP.list, orders = ((typeof FDW !== 'undefined' && FDW.po && FDW.po.orders) || []).filter(function (o) { return o.left > 0; });
+  var owner = ME && String(ME.role) === 'owner';
+  // our own parts after the four cards: holding note, tools, On the way, All shipments
+  var cut = [h.indexOf('<div class="note" style="margin:0 0 14px;align-items:center">'), h.indexOf('<div class="row" style="margin:0 0 14px;gap:8px">'), h.indexOf('<div class="card"')].filter(function (i) { return i >= 0; });
+  var rest = cut.length ? h.slice(Math.min.apply(null, cut)) : h;
+  var bar = '<div class="fd20-bar">' + fd20Seg([['board', 'Shipments', 'ship']], 'board', 'data-fd20noop', false, 'Section') +
+    (typeof navOn === 'function' && navOn('products') ? '<button type="button" class="fdd-pill fd20-pillb" data-fdwsizes="1">' + fd20Ic('ruler', 16) + 'Product sizes</button>' : '') +
+    (owner && navOn('capital') ? '<button type="button" class="fdd-pill fd20-pillb" data-fdhc="1">' + fd20Ic('archive', 16) + 'Holding cost…</button>' : '') + '<span class="sp"></span></div>';
+  var out = bar + fd20ShpKpis(d, orders);
+  if (navOn('capital')) out += '<p class="fd20-note" style="margin-top:-6px">' + (d.holdingOn ? 'Holding cost is on: ' + esc((d.holdingCategories || []).join(', ')) + ' is shared over the stock on the shelf each month by kg × days; net profit is not changed.' +
+    (d.noWeight && d.noWeight.length ? ' ' + d.noWeight.length + ' product(s) have no weight and count as 1 kg.' : '') : 'Holding cost is off.') + '</p>';
+  var viewSeg = fd20Seg([['board', 'Board', 'columns'], ['table', 'Table', 'density']], FD20.shpView, 'data-fd20shpv', true, 'Board or table');
+  if (FD20.shpView === 'table') return out + '<div class="fd20-bar" style="margin-bottom:14px"><span class="sp"></span>' + viewSeg + '</div>' + rest;
+  out += '<div class="fd20-card">' + fd20Head('columns', 'Lifecycle board', 'Planned → Ordered → In transit → Received → Sold out', viewSeg, false) +
+    '<div class="fd20-tb"><label class="fd20-search">' + fd20Ic('search') + '<input type="search" id="fd20shpq" placeholder="Search ref, supplier, tracking…" aria-label="Search shipments" value="' + esc(FD20.shpq) + '"></label>' +
+    '<span class="sp" style="flex:1 1 auto"></span><button type="button" class="fd20-btn ghost" data-fd20shpcsv="1" title="Export CSV of the shown shipments">' + fd20Ic('download', 16) + 'Export</button></div>' +
+    '<div id="fd20board">' + (FDW && FDW.po ? fd20Board(d, orders) : '<div class="loading" style="padding:24px">Reading the orders…</div>') + '</div></div>';
+  out += '<p class="fd20-note">Orders come from Stock entry › Supplier orders; a shipment is received there (or as a local buy) and its lots sell oldest first. Switch to Table for every figure line by line.</p>';
+  return out;
+};
+document.addEventListener('click', function (e) {
+  if (!e.target.closest) return;
+  var b;
+  if ((b = e.target.closest('[data-fd20shpv]'))) { FD20.shpView = b.getAttribute('data-fd20shpv'); fd20Keep('shpview', FD20.shpView); repaint(); return; }
+  if ((b = e.target.closest('[data-fd20shp]')) && !e.target.closest('button')) { SHP.ref = b.getAttribute('data-fd20shp'); SHP.one = null; SHP.oneErr = ''; repaint(); window.scrollTo(0, 0); return; }
+  if (e.target.closest('[data-fd20shpcsv]') && SHP.list) {
+    var rows = [['Ref', 'Supplier', 'Stage', 'Units', 'Left', 'Landed', 'Sold %', 'Profit', 'Date']];
+    ((FDW && FDW.po && FDW.po.orders) || []).filter(function (o) { return o.left > 0; }).forEach(function (o) { var x = fd20Ord(o); if (fd20ShpMatch(o.id + ' ' + (o.supplier || ''))) rows.push([o.id, o.supplier || '', x.st.label, x.units, x.units, Math.round(x.goods + x.freight), '', '', x.st.eta || o.when || '']); });
+    SHP.list.shipments.forEach(function (s) { if (fd20ShpMatch(s.reference + ' ' + (s.supplier || ''))) rows.push([s.reference, s.supplier || '', s.status === 'Sold out' ? 'Sold out' : 'Received', s.unitsIn, s.unitsLeft, s.landed, s.soldPct, SHP.list.holdingOn ? s.net : s.profit, s.date]); });
+    downloadText('Shipments ' + todayISO() + '.csv', rows.map(function (r) { return r.map(function (v) { v = String(v == null ? '' : v); return /[",\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; }).join(','); }).join('\r\n'));
+  }
+});
+document.addEventListener('input', function (e) {
+  if (e.target.id !== 'fd20shpq' || !SHP.list) return;
+  FD20.shpq = e.target.value;
+  var bd = el('fd20board'); if (bd) bd.innerHTML = fd20Board(SHP.list, ((FDW && FDW.po && FDW.po.orders) || []).filter(function (o) { return o.left > 0; }));
+});
+
+// ---- one shipment: his page
+var viewShipmentFd20 = viewShipment;
+viewShipment = function () {
+  var h = viewShipmentFd20.apply(this, arguments), d = SHP.one;
+  if (!fd20On() || !d || d.reference !== SHP.ref) return h;
+  FD20.calc = [];
+  var units = 0, left = 0, landed = 0, rev = 0, profit = 0, sold = 0, hold = 0, net = 0;
+  d.lines.forEach(function (l) { units += l.unitsIn; left += l.unitsLeft; landed += (l.unitCost || 0) * l.unitsIn; rev += l.revenue; profit += l.profit; sold += l.sold; hold += l.holding || 0; net += l.net || 0; });
+  if (d.lateSold) { profit -= d.lateSold; net -= d.lateSold; }
+  if (!d.holdingOn) net = profit;
+  var stage = d.opening ? 3 : left <= 0 ? 4 : 3, soldPct = units ? Math.round(sold / units * 100) : 0, roi = landed > 0 ? Math.round(net / landed * 1000) / 10 : null;
+  var head = '<div class="fdd-head fd20-dhead"><div><div class="fdd-eyebrow">' + (d.opening ? 'Opening stock' : 'Shipment') + (d.supplier ? ' · ' + esc(d.supplier) : '') + '</div><h1 class="fdd-title">' + esc(d.reference) + '</h1>' +
+    '<div class="fdd-sub" style="display:block !important">Received ' + esc(d.date) + ' · ' + fmt(d.lines.length) + ' line' + (d.lines.length === 1 ? '' : 's') + (d.bill ? ' · supplier bill ' + fd20Tk0(d.bill.amount) : '') + '</div></div>' +
+    '<button type="button" class="fd20-back" data-shpback="1">' + fd20Ic('chevL', 16) + 'All shipments</button></div>';
+  var life = '';
+  if (!d.opening) {
+    var L = [['Planned', '—'], ['Ordered', '—'], ['In transit', '—'], ['Received', d.date.split(',')[0]], ['Sold out', left <= 0 ? 'every unit sold' : '—']];
+    life = '<div class="fd20-card pad">' + fd20Head('ship', 'Lifecycle', fmt(units) + ' units · ' + (d.extra.length ? d.extra.map(function (x) { return x.label; }).join(', ') : 'goods only'),
+      fd20B(left <= 0 ? 'Sold out' : sold > 0 ? 'Selling' : 'Received', left <= 0 ? 'acc' : sold > 0 ? 'warn' : 'pos'), true) +
+      '<div class="fd20-life">' + L.map(function (s, i) {
+        var cls = i < stage ? 'done' : i === stage ? 'cur' : '';
+        return '<div class="fd20-ls ' + cls + '"><span class="fd20-ld">' + (i < stage || (i === stage && i === 4) ? fd20Ic('check', 14) : i + 1) + '</span><span class="fd20-ll">' + s[0] + '</span><span class="fd20-ldt">' + esc(s[1]) + '</span></div>'; }).join('') + '</div></div>';
+  }
+  var lines = d.lines.map(function (l) { return [l.name, fd20Tk0((l.unitCost || 0) * l.unitsIn), fmt(l.unitsIn) + ' × ' + (l.unitCost === null ? 'book ' + fd20Tk0(l.bookCost) : fd20Tk2(l.unitCost))]; });
+  var k = '<div class="fdd-grid fd20-kgrid fd20-k6">' +
+    fd20Kpi({ title: 'Landed capital', icon: 'taka', val: fd20Tk(landed), hero: true, note: d.opening ? 'stock from before lots began' : 'goods + freight + duty + agent',
+      calc: { text: 'Units received × each line’s landed cost per unit (goods + its share of the shipment costs).', rows: lines, total: ['Landed', fd20Tk0(landed)] } }) +
+    fd20Kpi({ title: 'Units', icon: 'box', val: fmt(units), note: fmt(left) + ' left on the shelf' }) +
+    fd20Kpi({ title: 'Sold', icon: 'trend', val: fmt(soldPct) + '<small style="margin-left:2px">%</small>', note: fmt(sold) + ' of ' + fmt(units) + ' sold' }) +
+    fd20Kpi({ title: 'Sold for', icon: 'cart', val: fd20Tk(rev), note: fmt(sold) + ' unit' + (sold === 1 ? '' : 's') + ' sold' }) +
+    fd20Kpi({ title: d.holdingOn ? 'Realised net after holding' : 'Gross profit', icon: 'target', val: fd20Tk(d.holdingOn ? net : profit), neg: (d.holdingOn ? net : profit) < 0, tone: (d.holdingOn ? net : profit) < 0 ? 'bad' : '',
+      note: d.holdingOn ? 'gross ' + fd20Tk0(profit) + ' − holding ' + fd20Tk0(hold) : rev > 0 ? Math.round(profit / rev * 100) + '% of what sold' : 'nothing sold yet',
+      calc: { text: 'Sold for − landed cost of the units sold (FIFO)' + (d.lateSold ? ' − late bills for sold units' : '') + (d.holdingOn ? ' − holding cost the lots carried.' : '.'),
+              rows: d.lines.map(function (l) { return [l.name, fd20Tk0(d.holdingOn ? l.net : l.profit), 'sold for ' + fd20Tk0(l.revenue) + ' · cost ' + fd20Tk0(l.cost) + (d.holdingOn ? ' · holding ' + fd20Tk0(l.holding) : '')]; }),
+              total: ['Total', fd20Tk0(d.holdingOn ? net : profit)] } }) +
+    fd20Kpi({ title: d.holdingOn ? 'ROI after holding' : 'ROI', icon: 'percent', val: roi === null ? '—' : fmt(roi) + '<small style="margin-left:2px">%</small>', neg: roi !== null && roi < 0,
+      note: 'on the landed capital', calc: { text: (d.holdingOn ? 'Profit after holding' : 'Gross profit') + ' ÷ landed capital. It grows while the shipment still sells.', rows: [['Profit', fd20Tk0(net)], ['Landed capital', fd20Tk0(landed)]], total: ['ROI', roi === null ? '—' : roi + '%'] } }) + '</div>';
+  // our cards from "Line by line" on (lines, costs of bringing it in, funded by, a late bill, selling prices)
+  var at = h.indexOf('<div class="card"><div class="chead"><h2>Line by line</h2>');
+  var rest = at >= 0 ? h.slice(at) : '';
+  if (at < 0) return h;
+  if (!d.opening) rest = rest.replace('<div class="card"><div class="chead"><h2>Line by line</h2></div>', '<div class="card"><div class="chead"><h2>Costing · posted</h2>' + fd20B('Received ' + d.date.split(',')[0], 'pos') + '</div>' +
+    '<ol class="fd20-stp" aria-label="Costing steps, all done">' + ['Lines', 'Rates', 'Shipment costs', 'Review landed cost', 'Receive into lots'].map(function (s, i) {
+      return (i ? '<li class="ln" aria-hidden="true"></li>' : '') + '<li class="done"><button type="button" tabindex="-1"><span class="num">' + fd20Ic('check', 14) + '</span><span class="tx">' + s + '</span></button></li>'; }).join('') + '</ol>' +
+    '<div class="fd20-info">' + fd20Ic('info') + '<span>Received ' + esc(d.date) + ' into ' + fmt(d.lines.length) + ' lot' + (d.lines.length === 1 ? '' : 's') + '. Receiving is the only thing that makes lots; a correction after this is a stock adjustment with a reason, and a bill that comes later is added below.</span></div>');
+  return head + life + k + rest;
+};
+
+// ================================================================== STOCK ENTRY: his costing stepper over Receive
+var viewStockFd20 = viewStock;
+viewStock = function () {
+  var h = viewStockFd20.apply(this, arguments);
+  if (!fd20On() || STOCK_TAB !== 'receive' || !CAT) return h;
+  var s = RECV.ship || {}, n = RECV.lines.length;
+  var steps = [['sup', 'Supplier & reference', !!(RECV.supplier || RECV.reference)], ['cost', 'Goods cost', !!(RECV.mode && RECV.mode !== 'none')], ['ship', 'Shipping & costs', !!(s.mode && s.mode !== 'none')],
+               ['lines', 'Lines', n > 0], ['save', 'Review & receive into lots', false]];
+  var cur = n ? 4 : 3;
+  var stp = '<div class="fd20-card pad" style="padding:14px 20px;margin:0 0 16px"><ol class="fd20-stp" aria-label="Receiving steps">' + steps.map(function (x, i) {
+    var cls = i === cur ? 'cur' : x[2] ? 'done' : '';
+    return (i ? '<li class="ln" aria-hidden="true"></li>' : '') + '<li class="' + cls + '"><button type="button" data-fd20step="' + x[0] + '"' + (i === cur ? ' aria-current="step"' : '') + '><span class="num">' + (x[2] && i !== cur ? fd20Ic('check', 14) : i + 1) + '</span><span class="tx">' + x[1] + '</span></button></li>'; }).join('') + '</ol></div>';
+  var t = h.indexOf('</div>'); // the tabs row is the first div of the screen
+  return t >= 0 ? h.slice(0, t + 6) + stp + h.slice(t + 6) : stp + h;
+};
+document.addEventListener('click', function (e) {
+  var b = e.target.closest && e.target.closest('[data-fd20step]'); if (!b) return;
+  var k = b.getAttribute('data-fd20step'), target = null;
+  var lab = function (txt) { var ls = document.querySelectorAll('#view label.f'); for (var i = 0; i < ls.length; i++) if (ls[i].textContent.indexOf(txt) === 0) return ls[i]; return null; };
+  if (k === 'sup') target = el('rv_sup'); else if (k === 'cost') target = lab('What did this shipment cost'); else if (k === 'ship') target = lab('Shipping paid on arrival');
+  else if (k === 'lines') target = el('rv_search'); else if (k === 'save') target = el('rv_save') || el('rv_search');
+  if (target) { target.scrollIntoView({ behavior: 'smooth', block: 'center' }); if (target.focus && /INPUT|SELECT|BUTTON/.test(target.tagName)) setTimeout(function () { try { target.focus({ preventScroll: true }); } catch (x) { target.focus(); } }, 250); }
+});
+
+// ================================================================== his card heads on our cards (these five screens)
+var FD20_VIEWS = { products: 1, stock: 1, shipments: 1, suppliers: 1, costs: 1 };
+function fd20HeadIcon(t) {
+  t = String(t || '').toLowerCase();
+  return /ship|on the way|transit|lifecycle/.test(t) ? 'ship' : /fund|investor/.test(t) ? 'users' : /count|adjust/.test(t) ? 'clip' : /receive|bringing/.test(t) ? 'box' :
+    /order|to order|reorder/.test(t) ? 'cart' : /lot|group|line by line|costing/.test(t) ? 'layers' : /cost|price|bill|account|pay|rate|margin/.test(t) ? 'taka' :
+    /movement|ledger/.test(t) ? 'list' : /sold|sale/.test(t) ? 'trend' : /product|stock/.test(t) ? 'spool' : 'list';
+}
+function fd20Decorate() {
+  var on = fd20On() && FD20_VIEWS[VIEW];
+  if (on) document.body.setAttribute('data-fd20v', VIEW); else document.body.removeAttribute('data-fd20v');
+  if (!on) return;
+  [].forEach.call(document.querySelectorAll('#view .card h2:not([data-fd20ic])'), function (h2) {
+    if (h2.closest('.fdd-c, .fd20-card, .dlg')) return;
+    h2.setAttribute('data-fd20ic', '1');
+    var s = document.createElement('span'); s.className = 'fd20-ib'; s.setAttribute('aria-hidden', 'true'); s.innerHTML = fd20Ic(fd20HeadIcon(h2.textContent));
+    h2.insertBefore(s, h2.firstChild);
+  });
+}
+var repaintFd20 = repaint;
+repaint = function () {
+  if (FD20.dr && VIEW !== 'products' && FD20.dr.kind) fd20DrawerClose();
+  var r = repaintFd20.apply(this, arguments);
+  try { fd20Decorate(); } catch (e) {}
+  return r;
+};
+(function () {
+  var v = el('view'), tm = null;
+  if (!v || !window.MutationObserver) return;
+  new MutationObserver(function () { clearTimeout(tm); tm = setTimeout(function () { try { fd20Decorate(); } catch (e) {} }, 120); }).observe(v, { childList: true, subtree: true });
+})();
+// switching between FilaDash and Classic: close the drawer, drop the marks
+var fdSkinFd20 = fdSkin;
+fdSkin = function () { fd20DrawerClose(); var r = fdSkinFd20.apply(this, arguments); try { fd20Decorate(); } catch (e) {} return r; };
 </script>
 
 </body>
