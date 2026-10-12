@@ -34,6 +34,8 @@ const groupKey = (cat) => (str(cat) || 'Uncategorised').toLowerCase();
 async function lines(ctx, months) {
   const want = new Set(months);
   const { bySku } = await products(ctx);
+  const chan = {};                                   // 117: where the customer came from, where the sale says
+  for (const r of await ctx.tx`select invoice_no, channel from invoices where business_id = ${ctx.biz} and channel is not null`) chan[str(r.invoice_no)] = str(r.channel);
   const inv = {}, order = [];
   for (const r of await salesLog(ctx)) {
     const oid = str(r[SL.order_id]);
@@ -45,7 +47,7 @@ async function lines(ctx, months) {
     let o = inv[oid];
     if (!o) {
       o = inv[oid] = { id: oid, month: m, at: d, lines: [], sum: 0, gross: 0, discount: 0,
-                       source: str(r[SL.customer_source]) || 'Walk-in / direct' };
+                       source: chan[oid] || str(r[SL.customer_source]) || 'Walk-in / direct' };
       order.push(oid);
     }
     const sku = str(r[SL.sku]).toLowerCase(), p = bySku[sku];

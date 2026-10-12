@@ -186,6 +186,17 @@ export async function createInvoice(ctx, payload, opts = {}) {
                                 : phone11(payload.customer.phone);
   const address = String(payload.customer.address || '').trim();
   const source = String(payload.customer.source || '').trim() || 'Walk-in';
+  // 117: who the sale belongs to (commission) - sales staff always sell as themselves; a manager or the owner may name a member
+  let sellerId = null;
+  const wantSeller = String(payload.seller || '').trim();
+  if (wantSeller && wantSeller !== String(ctx.s.userId) && !opts.mirror) {
+    if (!['manager', 'shareholder', 'owner'].includes(String(ctx.s.role))) throw new Error('Only a manager or the owner can put a sale in someone else\u2019s name.');
+    const m = await ctx.tx`select 1 from memberships where business_id = ${ctx.biz} and user_id = ${wantSeller} and coalesce(active, true)`;
+    if (!m.length) throw new Error('That seller does not work here.');
+    sellerId = wantSeller;
+  }
+  const CHANNELS = ['Walk-in', 'Facebook', 'WhatsApp', 'Phone', 'Website', 'Instagram', 'Other'];
+  const channel = CHANNELS.includes(String(payload.channel || '')) ? String(payload.channel) : null;
   // one phone = one customer: a phone already on the list keeps its saved name, whatever was typed
   // (the name is changed on the customer's own page, and then on every invoice of theirs)
   if (phoneIn) {
@@ -224,6 +235,18 @@ export async function createInvoice(ctx, payload, opts = {}) {
   // nobody sells joint stock under its floor price (the owner may: it is flagged for the partner)
   const shortfall = {};
   if (joint) for (const pool of joint.pools) shortfall[pool.id] = J.floorCheck(ctx, lines.filter((l) => l.poolId === pool.id));
+  // 117: the New sale screen's price band - a price more than 5 % under the product's own price needs a reason
+  const priceReason = String(payload.priceReason || '').trim().slice(0, 200);
+  if (payload.priceCheck) {
+    const low = [];
+    for (let i = 0; i < lines.length; i++) {
+      const l = lines[i];
+      if (l.poolId || !(l.qty > 0)) continue;
+      const list = l.qty * l.unit;
+      if (list > 0 && l.disc / list > 0.05 + 1e-9) low.push(l.name + ' (' + Math.round(l.disc / list * 100) + '% off)');
+    }
+    if (low.length && !priceReason) throw new Error('PRICE: more than 5% under the price: ' + low.join(', ') + '. Give the reason, or keep the price.');
+  }
   const sub = lines.reduce((a, l) => a + l.qty * l.unit, 0);
   const discount = lines.reduce((a, l) => a + l.disc, 0);
   const delivery = num(payload.deliveryCharge);
@@ -274,11 +297,12 @@ export async function createInvoice(ctx, payload, opts = {}) {
     insert into invoices (business_id, invoice_no, customer_name, customer_phone, customer_address,
       source, subtotal, discount, delivery_charge, grand_total, advance_paid, due_amount,
       payment_method, payment_status, delivery_status, note, created_by, created_at,
-      item_discount, invoice_discount, customer_key, web_order_no, sold_by)
+      item_discount, invoice_discount, customer_key, web_order_no, sold_by, seller_id, channel, price_reason)
     values (${ctx.biz}, ${invoiceNo}, ${name}, ${phoneIn}, ${address}, ${source}, ${round2(sub)},
       ${round2(discount)}, ${delivery}, ${grand}, ${round2(advance)}, ${round2(grand - advance)},
       ${method}, ${status}, 'Processing', ${noteText || 'Invoice submission'}, ${ctx.s.userId}, ${ts},
-      ${round2(DSC.itemDisc)}, ${DSC.invDisc}, ${key}, ${opts.webOrderNo || null}, ${opts.mirror ? opts.mirror.seller : null})
+      ${round2(DSC.itemDisc)}, ${DSC.invDisc}, ${key}, ${opts.webOrderNo || null}, ${opts.mirror ? opts.mirror.seller : null},
+      ${sellerId}, ${channel}, ${payload.priceCheck && priceReason ? priceReason : null})
     returning id`;
   const invoiceId = inv[0].id;
 

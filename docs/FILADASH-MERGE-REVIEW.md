@@ -110,5 +110,6 @@ The live ERP keeps running unchanged until P5.
 | P1 | Done: fd-1 design system over every screen (Look: FilaDash / Classic) |
 | P2 | Done: fd-2 dashboard (erpFdDash, group drop-down), fd-3 screen heads (erpFdHead), fd-4 table toolbar |
 | P3 | Done: FIFO lots + Shipments (107), chargeable weight + order stages (108), investors per shipment (109), holding cost, commission (110), late bills (111), investor page (112), System check, Analytics, ERP Mind Map |
-| P4 | Next: our own extras in his layout (courier, website, campaigns, quotations, repairs, print jobs, network pages, joint stock, creators, AI) |
-| P5 | Later: sign-in back on, cost book up to date, then live data moves to the merged ERP after a dry run |
+| P4 | Done (core): cards on 8 more screens, public pages styled. Deep layouts of quotations/joint/creators/AI not redone |
+| After dry run | Done on dev: cash-up + agent + asking prices (114), pre-orders + hold (115), customer extras (116), Bangla help, his New sale screen (117, classic kept) |
+| P5 | Dry run done (identical figures). Left: sign-in back on, cost book up to date, then live data moves to the merged ERP after a dry run |

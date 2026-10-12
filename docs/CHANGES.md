@@ -1692,3 +1692,19 @@ the cost book, money/cash-up/agent advance, expenses/holding cost, capital/inves
 Profitability, Analytics, System check, a glossary), each in Bangla and English (82 steps each). Page fd-15: System >
 Help - searchable, Bangla by default with an English switch (kept per device), "Open the screen" from each guide; every
 screen's head has a "সাহায্য / Help" button opening its guide. deploy.py ships help-guides.js. Page only.
+
+## sale-1 - his New sale screen, classic kept (13 Oct 2026)
+
+Sell > New sale (page fd-16), next to the classic New invoice (unchanged). Five cards like his prototype: 1 Customer
+(phone first, existing customer looked up), 2 Items (search, best sellers of 90 days as quick picks, available = stock
+less pre-order holds, price editable per line), 3 Details (where the customer came from, seller, delivery, order
+discount, delivery charge, note), 4 Payment (Cash / bKash / Nagad / Bank Transfer / Not paid, amount received ->
+full / part / none), 5 Review & confirm (sticky: total, paid, due and a live checklist; Confirm stays off until every
+check passes). A draft is kept on the device. Server (117): invoices.seller_id (a manager/owner may name a member;
+sales staff always sell as themselves; commission goes to the seller), invoices.channel (the Sales Channel chart counts
+it), the 5 % price band (priceCheck: a line more than 5 % under its price needs a reason, kept in price_reason; the
+classic screen does not ask). erpSellers. Tests: sale (13). Deployed to dev (db, function, web), no demo data.
+Bangla: the screen's own words (NS_BN + nsT in fd-16, shown when the language is Bangla; the business's own words
+still win); only "New sale" and its head line were added to the page-wide list, so generic words like Cash/Phone do not
+change other screens. Not done: serial numbers / warranty months / backdating / quotation-to-invoice
+are only on the classic screen (use it for those).

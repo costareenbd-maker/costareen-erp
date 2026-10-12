@@ -42,7 +42,7 @@ export async function commissionFor(ctx, months) {
   const rs = await rules(ctx);
   if (!rs.length || !months.length) return (ctx.memo[key] = out);
   const lines = await ctx.tx`
-    select coalesce(o.created_by, i.created_by) as seller, to_char(public.dhaka_date(i.created_at), 'YYYY-MM') as m,
+    select coalesce(o.seller_id, o.created_by, i.seller_id, i.created_by) as seller, to_char(public.dhaka_date(i.created_at), 'YYYY-MM') as m,
            l.qty, l.line_total, coalesce(l.unit_cost, 0) as unit_cost, coalesce(p.sku, l.sku) as sku, p.category, p.brand,
            coalesce(i.invoice_discount, 0) as inv_disc,
            (select sum(x.line_total) from invoice_lines x where x.invoice_id = i.id and x.line_total > 0) as inv_sum
@@ -147,4 +147,15 @@ export async function erpCommissionPay(ctx, payload) {
   return erpCommission(ctx, { month });
 }
 
-export const HANDLERS = { erpCommission, erpCommissionRuleSave, erpCommissionRuleVoid, erpCommissionPay };
+/** Who can be named the seller on a sale (active members), the person asking first. */
+export async function erpSellers(ctx) {
+  const rows = await ctx.tx`select m.user_id, coalesce(pe.name, pr.full_name, pr.email, 'Someone') as n, m.role
+                            from memberships m left join erp_people pe on pe.user_id = m.user_id left join profiles pr on pr.id = m.user_id
+                            where m.business_id = ${ctx.biz} and coalesce(m.active, true) order by 2`;
+  const me = String(ctx.s.userId);
+  const list = rows.map((r) => ({ id: String(r.user_id), name: str(r.n), role: str(r.role), me: String(r.user_id) === me }));
+  list.sort((a, b) => (b.me ? 1 : 0) - (a.me ? 1 : 0));
+  return { sellers: list, canChoose: ['manager', 'shareholder', 'owner'].includes(String(ctx.s.role)) };
+}
+
+export const HANDLERS = { erpSellers, erpCommission, erpCommissionRuleSave, erpCommissionRuleVoid, erpCommissionPay };

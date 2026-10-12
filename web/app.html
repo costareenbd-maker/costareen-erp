@@ -8434,7 +8434,7 @@ function srv(name, args, ok, bad) {
 
 var SRV_ACTIVE = 0, SRV_WRITING = false, SRV_TIMED = {};
 // the same list the server uses to know a call changes nothing (ERP_READS)
-var SRV_READS = /^(erpFollowups|erpCustomerInsight|erpPreorders|erpCashUps|erpAskingPrices|erpSystemCheck|erpAnalytics|erpCommission|erpHolding|erpLotFunding|erpShipments|erpShipment|erpLots|erpFdHead|erpFdDash|erpReceiveMatch|erpAiReader|erpProductSuggest|erpCatalogue|erpPushList|erpCreators|erpCreatorPortalLink|erpSponsorLink|erpCreatorRequests|erpCreatorEvents|erpCreatorProgramme|erpCreatorPreview|erpCreatorCatalog|erpCreatorSources|erpCreatorClaims|erpApps|erpAppQr|erpFeedback|erpRestockOffers|erpRestockList|erpWarrantyRules|erpWarrantyCard|erpMyLink|erpPlatformRegister|erpPlatformDoctor|erpPlatformCommunity|erpMarketWaiting|erpBoard|erpPlatformDesign|erpResell|erpResellerProgramme|erpLoyalty|erpCustomerPoints|erpRefillDue|erpDeliveryHistory|erpDeliveryHistoryMany|erpPrintKit|erpPrintJobs|erpPrintJob|erpPrintCost|erpSpools|erpPrintRequests|erpJoint|erpJointCatalog|erpJointCard|erpInvoiceDesign|erpInvoicePreview|erpMarket|erpMarketMine|erpMarketRequests|erpMarketHints|erpMarketNames|erpWanted|erpBrand|erpComplianceLog|erpProviderKey|erpNews|erpAccessKeys|erpAccessWarning|erpAdmin|erpAiKeys|erpAlertRules|erpAlerts|erpArena|erpBackupStatus|erpBg|erpBnWords|erpBookedParcels|erpBrandLogo|erpBundle|erpBusinessLinks|erpBusinesses|erpBusinessesDeleted|erpCampaignAudience|erpCampaignGet|erpCampaignList|erpCapital|erpCashBook|erpCatalog|erpConnStatus|erpConnections|erpCostBook|erpCourier|erpCourierKeyStatus|erpCurrencies|erpCustomerAccount|erpCustomerCredit|erpCustomerList|erpCustomerPage|erpCustomerStatement|erpCustomers|erpDashboardData|erpDaySales|erpDeliveryOptions|erpDevices|erpDiscontinued|erpDues|erpEvoQr|erpEvoStatus|erpExpenseExport|erpExpenseReceiptUrl|erpExpenses|erpFamilies|erpFighters|erpFormOptions|erpGame|erpGetTheme|erpGoogle|erpHello|erpInstalls|erpInvoice|erpInvoicePdf|erpJob|erpJobs|erpListView|erpLookupCustomer|erpLookupUsage|erpMe|erpMoney|erpNoteFileUrl|erpNotes|erpOwnerChange|erpOwnerChanges|erpParcelLabels|erpParcelPreview|erpPartnerStock|erpPartnership|erpPayReasons|erpPeople|erpPlatform|erpPlatformErrors|erpPnl|erpPnlMonth|erpPoList|erpPoolCatalog|erpProduct|erpProductListShare|erpProductPage|erpProductPhotoUrl|erpProductThumbs|erpProfile|erpQuoteAsset|erpQuoteBoot|erpQuoteGet|erpQuoteList|erpRecentInvoices|erpRecovery|erpReorderPlan|erpRestorePreview|erpReturnPreview|erpRisks|erpSales|erpSearch|erpSecurity|erpSelfTest|erpSerialLookup|erpSerialsFor|erpSessions|erpSetTheme|erpSettingsFull|erpSettingsLists|erpSfPayoutLines|erpSfPayouts|erpShareFile|erpSharedStock|erpSheet|erpStatementPdf|erpStockHistory|erpSupplierPage|erpSuppliers|erpToday|erpUsers|erpWaProductPdf|erpWebMatches|erpWebOrderInvoices|erpWebOrders|erpWebsiteTest)$/;
+var SRV_READS = /^(erpSellers|erpFollowups|erpCustomerInsight|erpPreorders|erpCashUps|erpAskingPrices|erpSystemCheck|erpAnalytics|erpCommission|erpHolding|erpLotFunding|erpShipments|erpShipment|erpLots|erpFdHead|erpFdDash|erpReceiveMatch|erpAiReader|erpProductSuggest|erpCatalogue|erpPushList|erpCreators|erpCreatorPortalLink|erpSponsorLink|erpCreatorRequests|erpCreatorEvents|erpCreatorProgramme|erpCreatorPreview|erpCreatorCatalog|erpCreatorSources|erpCreatorClaims|erpApps|erpAppQr|erpFeedback|erpRestockOffers|erpRestockList|erpWarrantyRules|erpWarrantyCard|erpMyLink|erpPlatformRegister|erpPlatformDoctor|erpPlatformCommunity|erpMarketWaiting|erpBoard|erpPlatformDesign|erpResell|erpResellerProgramme|erpLoyalty|erpCustomerPoints|erpRefillDue|erpDeliveryHistory|erpDeliveryHistoryMany|erpPrintKit|erpPrintJobs|erpPrintJob|erpPrintCost|erpSpools|erpPrintRequests|erpJoint|erpJointCatalog|erpJointCard|erpInvoiceDesign|erpInvoicePreview|erpMarket|erpMarketMine|erpMarketRequests|erpMarketHints|erpMarketNames|erpWanted|erpBrand|erpComplianceLog|erpProviderKey|erpNews|erpAccessKeys|erpAccessWarning|erpAdmin|erpAiKeys|erpAlertRules|erpAlerts|erpArena|erpBackupStatus|erpBg|erpBnWords|erpBookedParcels|erpBrandLogo|erpBundle|erpBusinessLinks|erpBusinesses|erpBusinessesDeleted|erpCampaignAudience|erpCampaignGet|erpCampaignList|erpCapital|erpCashBook|erpCatalog|erpConnStatus|erpConnections|erpCostBook|erpCourier|erpCourierKeyStatus|erpCurrencies|erpCustomerAccount|erpCustomerCredit|erpCustomerList|erpCustomerPage|erpCustomerStatement|erpCustomers|erpDashboardData|erpDaySales|erpDeliveryOptions|erpDevices|erpDiscontinued|erpDues|erpEvoQr|erpEvoStatus|erpExpenseExport|erpExpenseReceiptUrl|erpExpenses|erpFamilies|erpFighters|erpFormOptions|erpGame|erpGetTheme|erpGoogle|erpHello|erpInstalls|erpInvoice|erpInvoicePdf|erpJob|erpJobs|erpListView|erpLookupCustomer|erpLookupUsage|erpMe|erpMoney|erpNoteFileUrl|erpNotes|erpOwnerChange|erpOwnerChanges|erpParcelLabels|erpParcelPreview|erpPartnerStock|erpPartnership|erpPayReasons|erpPeople|erpPlatform|erpPlatformErrors|erpPnl|erpPnlMonth|erpPoList|erpPoolCatalog|erpProduct|erpProductListShare|erpProductPage|erpProductPhotoUrl|erpProductThumbs|erpProfile|erpQuoteAsset|erpQuoteBoot|erpQuoteGet|erpQuoteList|erpRecentInvoices|erpRecovery|erpReorderPlan|erpRestorePreview|erpReturnPreview|erpRisks|erpSales|erpSearch|erpSecurity|erpSelfTest|erpSerialLookup|erpSerialsFor|erpSessions|erpSetTheme|erpSettingsFull|erpSettingsLists|erpSfPayoutLines|erpSfPayouts|erpShareFile|erpSharedStock|erpSheet|erpStatementPdf|erpStockHistory|erpSupplierPage|erpSuppliers|erpToday|erpUsers|erpWaProductPdf|erpWebMatches|erpWebOrderInvoices|erpWebOrders|erpWebsiteTest)$/;
 function srvPump() {
   if (!SRV_Q.length) return;
   var isRead = SRV_READS.test(SRV_Q[0].name);
@@ -24889,6 +24889,261 @@ document.addEventListener('click', function (e) {
   if (tt) { var id = tt.getAttribute('data-hgt'); HG.open[id] = !HG.open[id]; if (HG.focus === id && !HG.open[id]) HG.focus = ''; repaint(); }
 });
 try { HG.lang = localStorage.getItem('erp_help_lang') || ''; } catch (e) {}
+</script>
+
+<!-- fd-16 (FilaDash merge): Sell > New sale (Bangla: NS_BN, this screen only) - his 5-step sale screen (1 Customer, 2 Items, 3 Details, 4 Payment,
+     5 Review & confirm with a live checklist). The classic New invoice stays as it was. Same server call
+     (erpCreateInvoice) plus 117: seller (a manager/owner may name a member), channel, and the 5 % price band
+     (priceCheck: a price more than 5 % under needs a reason, kept on the invoice). A draft is kept on this device. -->
+<style>
+.ns-wrap { display:grid; grid-template-columns:minmax(0,1fr) 340px; gap:16px; align-items:start; }
+.ns-side { position:sticky; top:12px; }
+@media (max-width:980px) { .ns-wrap { grid-template-columns:minmax(0,1fr); } .ns-side { position:static; } }
+.ns-card { margin-bottom:14px; }
+.ns-h { display:flex; align-items:center; gap:10px; margin-bottom:10px; }
+.ns-h h2 { margin:0; font-size:16px; }
+.ns-n { width:26px; height:26px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; font-weight:800; font-size:13px;
+        background:var(--fd-brand-soft, var(--field)); color:var(--fd-brand-text, var(--accent, #333)); flex:0 0 auto; }
+.ns-pills { display:flex; flex-wrap:wrap; gap:6px; }
+.ns-pill { height:32px; padding:0 12px; border-radius:999px; border:1px solid var(--fd-border, var(--line)); background:var(--fd-surface, var(--card)); cursor:pointer; font:inherit; font-size:13px; color:inherit; }
+.ns-pill[aria-pressed="true"] { background:var(--fd-brand, var(--accent, #222)); border-color:var(--fd-brand, var(--accent, #222)); color:#fff; font-weight:700; }
+.ns-res { margin-top:8px; max-height:260px; overflow:auto; }
+.ns-res button { display:flex; width:100%; justify-content:space-between; gap:10px; text-align:left; padding:8px 10px; border:0; border-bottom:1px solid var(--fd-border, var(--line)); background:none; cursor:pointer; font:inherit; color:inherit; }
+.ns-res button:hover { background:var(--fd-surface-2, var(--field)); }
+.ns-quick { display:flex; flex-wrap:wrap; gap:6px; margin-top:8px; }
+.ns-line { display:grid; grid-template-columns:minmax(0,1fr) 70px 110px 90px 28px; gap:8px; align-items:center; padding:8px 0; border-bottom:1px solid var(--fd-border, var(--line)); }
+.ns-line .i { height:34px; }
+.ns-line .x { border:0; background:none; cursor:pointer; font-size:18px; color:var(--fd-text-3, var(--muted)); }
+.ns-line .warn { color:var(--fd-negative-text, var(--critical)); }
+@media (max-width:560px) { .ns-line { grid-template-columns:minmax(0,1fr) 60px 90px 28px; } .ns-line .lt { display:none; } }
+.ns-sum div.r { display:flex; justify-content:space-between; padding:4px 0; }
+.ns-sum .big { font-size:24px; font-weight:800; }
+.ns-chk { list-style:none; padding:0; margin:12px 0; }
+.ns-chk li { display:flex; gap:8px; padding:4px 0; font-size:13px; }
+.ns-chk li .d { width:18px; height:18px; border-radius:50%; flex:0 0 auto; display:inline-flex; align-items:center; justify-content:center; font-size:11px; font-weight:800; }
+.ns-chk li.ok .d { background:var(--fd-positive-soft, var(--good-soft)); color:var(--fd-positive-text, var(--up)); }
+.ns-chk li.no .d { background:var(--fd-negative-soft, var(--critical-soft)); color:var(--fd-negative-text, var(--critical)); }
+.ns-side .btn.primary { width:100%; height:44px; font-size:15px; }
+</style>
+<script>
+var NS_CHANNELS = ['Walk-in', 'Facebook', 'WhatsApp', 'Phone', 'Website', 'Instagram', 'Other'];
+var NS_METHODS = ['Cash', 'bKash', 'Nagad', 'Bank Transfer', 'Not paid'];
+var NS = null, NS_SELLERS = null, NS_SAVING = false;
+// Bangla for this screen only (generic words like "Cash" are not added to the global list, which would change other screens);
+// the business's own words (Settings > Bangla words) still win.
+var NS_BN = {
+  'Customer': 'কাস্টমার', 'Items': 'পণ্য', 'Details': 'বিস্তারিত', 'Payment': 'পেমেন্ট', 'Review & confirm': 'দেখে নিশ্চিত করুন',
+  'Phone (first)': 'ফোন (আগে)', 'Name': 'নাম', 'Address': 'ঠিকানা', 'Search a product or SKU': 'পণ্য বা SKU খুঁজুন',
+  'Best sellers (90 days)': 'বেশি বিক্রি (৯০ দিন)', 'Where the customer came from': 'কাস্টমার কোথা থেকে এসেছেন', 'Seller': 'বিক্রেতা',
+  'Delivery': 'ডেলিভারি', 'Order discount': 'অর্ডারে ছাড়', 'Delivery charge': 'ডেলিভারি চার্জ', 'Note': 'নোট',
+  'Amount received (blank = the full total)': 'কত টাকা পেলেন (খালি = পুরো টাকা)', 'The whole total goes on the customer’s due.': 'পুরো টাকা কাস্টমারের বাকিতে যাবে।',
+  'Item': 'পণ্য', 'Qty': 'পরিমাণ', 'Price': 'দাম', 'Line': 'মোট', 'Remove': 'সরান',
+  'No items yet. Search above or tap a best seller.': 'এখনও কোনো পণ্য নেই। উপরে খুঁজুন বা বেশি বিক্রির একটিতে চাপুন।', 'Nothing found.': 'কিছু পাওয়া যায়নি।',
+  '{0} available': '{0}টি আছে', '({0} held for pre-orders)': '({0}টি প্রি-অর্ডারের জন্য রাখা)', '{0}% under {1}': '{1}-এর চেয়ে {0}% কম',
+  'not enough stock': 'স্টক যথেষ্ট নয়', 'none available': 'একটিও নেই',
+  'Existing customer': 'পুরনো কাস্টমার', '{0} order(s), {1} spent': '{0}টি অর্ডার, {1} খরচ করেছেন', 'New customer — created on save.': 'নতুন কাস্টমার — সেভ করলে তৈরি হবে।',
+  'Loading products…': 'পণ্য লোড হচ্ছে…', 'Me': 'আমি', '(me)': '(আমি)',
+  'Walk-in': 'দোকানে এসে', 'Phone': 'ফোন', 'Website': 'ওয়েবসাইট', 'Other': 'অন্যান্য',
+  'Cash': 'নগদ', 'Bank Transfer': 'ব্যাংক ট্রান্সফার', 'Not paid': 'টাকা দেননি',
+  'Total': 'মোট', 'Paid now': 'এখন পেলেন', 'Due': 'বাকি',
+  'Phone number has 11 digits (01…)': 'ফোন নম্বরে ১১টি সংখ্যা (01…)', 'Customer name given': 'কাস্টমারের নাম দেওয়া হয়েছে',
+  'At least one item, each with a quantity': 'অন্তত একটি পণ্য, প্রতিটির পরিমাণসহ', 'Not enough stock: {0}': 'স্টক যথেষ্ট নয়: {0}',
+  'Stock covers every line': 'প্রতিটি পণ্যের স্টক আছে', 'More than 5% under the price: give the reason': 'দামের চেয়ে ৫%-এর বেশি কম: কারণ লিখুন',
+  'Prices within 5% of the list': 'দাম তালিকার ৫%-এর মধ্যে', 'Order discount not more than the items': 'অর্ডারের ছাড় পণ্যের দামের বেশি নয়',
+  'Amount received not more than the total': 'পাওয়া টাকা মোটের বেশি নয়',
+  'Why the lower price?': 'দাম কম কেন?', 'e.g. regular customer, owner agreed': 'যেমন: নিয়মিত কাস্টমার, মালিক রাজি',
+  'Confirm sale': 'বিক্রি নিশ্চিত করুন', 'Saving…': 'সেভ হচ্ছে…', 'Start over': 'নতুন করে শুরু',
+  'Confirm this sale?': 'এই বিক্রি নিশ্চিত করবেন?', '{0} line(s)': '{0}টি পণ্যের লাইন', 'Total: {0}': 'মোট: {0}', 'Paid now: {0}': 'এখন পেলেন: {0}',
+  'Due: {0}': 'বাকি: {0}', 'Stock will be deducted and the invoice PDF made.': 'স্টক কমবে এবং ইনভয়েস PDF তৈরি হবে।',
+  'Clear this sale and start over?': 'এই বিক্রি মুছে নতুন করে শুরু করবেন?', 'Could not save: {0}': 'সেভ করা যায়নি: {0}'
+};
+/** This screen's words in the chosen language; {0}, {1} filled from args. */
+function nsT(en, args) {
+  var t = en;
+  if (typeof LANG !== 'undefined' && LANG === 'bn') {
+    var own = (typeof BN_OWN !== 'undefined' && BN_OWN) || {};
+    t = own[en] || NS_BN[en] || (typeof I18N_BN !== 'undefined' && I18N_BN[en]) || en;
+  }
+  return t.replace(/\{(\d)\}/g, function (_, k) { return args && args[+k] !== undefined ? args[+k] : ''; });
+}
+// the menu name and the head line go through the page-wide list (exact phrases only)
+(function () {
+  var w = { 'New sale': 'নতুন বিক্রি', 'Customer, items, details, payment, then confirm. The classic New invoice is still there.': 'কাস্টমার, পণ্য, বিস্তারিত, পেমেন্ট, তারপর নিশ্চিত করুন। আগের "নতুন ইনভয়েস" স্ক্রিনও আছে।' };
+  for (var k in w) {
+    if (typeof I18N_BN !== 'undefined' && I18N_BN[k] === undefined) I18N_BN[k] = w[k];
+    if (typeof BN_BASE !== 'undefined' && BN_BASE && BN_BASE.s[k] === undefined) BN_BASE.s[k] = w[k];
+  }
+  if (typeof BN_OWN !== 'undefined' && BN_OWN && typeof bnApplyOwn === 'function') bnApplyOwn(BN_OWN);
+})();
+function nsBlank() { return { phone: '', name: '', address: '', cust: null, lines: [], channel: 'Walk-in', seller: '', disc: '', delivery: '', note: '', source: '', method: 'Cash', paid: '', reason: '', q: '' }; }
+function nsLoad() { if (NS) return; try { NS = JSON.parse(localStorage.getItem('fd_newsale') || 'null'); } catch (e) { NS = null; } if (!NS || !NS.lines) NS = nsBlank(); }
+function nsKeep() { try { localStorage.setItem('fd_newsale', JSON.stringify(NS)); } catch (e) {} }
+fdxNav('sale', 'New sale', '<path d="M6 6h15l-1.5 9h-12z"/><path d="M6 6L5 3H2"/><circle cx="9" cy="20" r="1.5"/><circle cx="18" cy="20" r="1.5"/>', 'invoice');
+FDH_SUB.sale = 'Customer, items, details, payment, then confirm. The classic New invoice is still there.';
+function nsProd(sku) { for (var i = 0; i < (CAT || []).length; i++) if (CAT[i].sku === sku) return CAT[i]; return null; }
+function nsAvail(p) { return p ? (p.available === undefined ? num(p.stock) : num(p.available)) : 0; }
+function nsTotals() {
+  var sub = 0, list = 0;
+  NS.lines.forEach(function (l) { sub += num(l.qty) * num(l.price); list += num(l.qty) * num(l.list); });
+  var disc = Math.max(0, Math.round(num(NS.disc))), del = Math.max(0, num(NS.delivery));
+  var total = Math.max(0, sub - disc) + del;
+  var paid = NS.method === 'Not paid' ? 0 : (String(NS.paid).trim() === '' ? total : Math.max(0, num(NS.paid)));
+  return { sub: sub, list: list, disc: disc, del: del, total: total, paid: Math.min(paid, total), over: paid > total + 0.001, due: Math.max(0, total - paid) };
+}
+function nsLow() { return NS.lines.filter(function (l) { var lt = num(l.list); return lt > 0 && (lt - num(l.price)) / lt > 0.05 + 1e-9; }); }
+function nsChecks() {
+  var t = nsTotals(), low = nsLow();
+  var short = NS.lines.filter(function (l) { return num(l.qty) > nsAvail(nsProd(l.sku)); });
+  return [
+    { ok: /^01\d{9}$/.test(String(NS.phone).replace(/[^0-9]/g, '')), t: nsT('Phone number has 11 digits (01…)') },
+    { ok: !!String(NS.name).trim(), t: nsT('Customer name given') },
+    { ok: NS.lines.length > 0 && NS.lines.every(function (l) { return num(l.qty) > 0; }), t: nsT('At least one item, each with a quantity') },
+    { ok: !short.length, t: short.length ? nsT('Not enough stock: {0}', [short.map(function (l) { return l.name; }).join(', ')]) : nsT('Stock covers every line') },
+    { ok: !low.length || !!String(NS.reason).trim(), t: low.length ? nsT('More than 5% under the price: give the reason') : nsT('Prices within 5% of the list') },
+    { ok: t.disc <= t.sub, t: nsT('Order discount not more than the items') },
+    { ok: !t.over, t: nsT('Amount received not more than the total') }
+  ];
+}
+function nsLinesHtml() {
+  if (!NS.lines.length) return '<div class="empty">' + nsT('No items yet. Search above or tap a best seller.') + '</div>';
+  return '<div class="ns-line sku" style="font-weight:700"><span>' + nsT('Item') + '</span><span>' + nsT('Qty') + '</span><span>' + nsT('Price') + '</span><span class="lt num">' + nsT('Line') + '</span><span></span></div>' +
+    NS.lines.map(function (l, i) {
+      var p = nsProd(l.sku), av = nsAvail(p), off = num(l.list) > 0 ? Math.round((num(l.list) - num(l.price)) / num(l.list) * 100) : 0;
+      return '<div class="ns-line"><div><b>' + esc(l.name) + '</b><div class="sku">' + esc(l.sku) + ' · ' + nsT('{0} available', [fmt(av)]) + (p && p.held ? ' ' + nsT('({0} held for pre-orders)', [fmt(p.held)]) : '') +
+        (off > 0 ? ' · <span class="' + (off > 5 ? 'warn' : '') + '">' + nsT('{0}% under {1}', [off, fmt(l.list)]) + '</span>' : '') + (num(l.qty) > av ? ' · <span class="warn">' + nsT('not enough stock') + '</span>' : '') + '</div></div>' +
+        '<input class="i" inputmode="numeric" data-nsq="' + i + '" value="' + esc(l.qty) + '"><input class="i" inputmode="decimal" data-nsp="' + i + '" value="' + esc(l.price) + '">' +
+        '<span class="lt num">' + fmt(num(l.qty) * num(l.price)) + '</span><button class="x" type="button" data-nsx="' + i + '" aria-label="' + nsT('Remove') + '">×</button></div>';
+    }).join('');
+}
+function nsSumHtml() {
+  var t = nsTotals(), c = nsChecks(), ready = c.every(function (x) { return x.ok; }), cur = OPT ? OPT.currency : 'BDT';
+  return '<div class="ns-sum"><div class="r"><span>' + nsT('Items') + '</span><b>' + fmt(t.sub) + '</b></div>' + (t.disc ? '<div class="r"><span>' + nsT('Order discount') + '</span><b>− ' + fmt(t.disc) + '</b></div>' : '') +
+    (t.del ? '<div class="r"><span>' + nsT('Delivery') + '</span><b>' + fmt(t.del) + '</b></div>' : '') +
+    '<div class="r" style="margin-top:6px"><span>' + nsT('Total') + '</span><span class="big">' + esc(cur) + ' ' + fmt(t.total) + '</span></div>' +
+    '<div class="r"><span>' + nsT('Paid now') + '</span><b>' + fmt(t.paid) + (t.paid > 0 ? ' · ' + esc(nsT(NS.method)) : '') + '</b></div><div class="r"><span>' + nsT('Due') + '</span><b>' + fmt(t.due) + '</b></div></div>' +
+    '<ul class="ns-chk">' + c.map(function (x) { return '<li class="' + (x.ok ? 'ok' : 'no') + '"><span class="d">' + (x.ok ? '✓' : '!') + '</span><span>' + esc(x.t) + '</span></li>'; }).join('') + '</ul>' +
+    (nsLow().length ? '<label class="f" for="ns_reason">' + nsT('Why the lower price?') + '</label><input class="i" id="ns_reason" value="' + esc(NS.reason) + '" placeholder="' + nsT('e.g. regular customer, owner agreed') + '" style="margin-bottom:10px">' : '') +
+    '<button class="btn primary" type="button" id="ns_go"' + (ready && !NS_SAVING ? '' : ' disabled') + '>' + nsT(NS_SAVING ? 'Saving…' : 'Confirm sale') + '</button>' +
+    '<button class="btn small" type="button" id="ns_clear" style="width:100%;margin-top:8px">' + nsT('Start over') + '</button>';
+}
+function nsResHtml() {
+  var q = String(NS.q || '').trim().toLowerCase();
+  if (!q) return '';
+  var hits = (CAT || []).filter(function (p) { return String(p.status || 'Active') !== 'Discontinued' && (String(p.sku).toLowerCase().indexOf(q) >= 0 || String(p.name).toLowerCase().indexOf(q) >= 0); }).slice(0, 30);
+  if (!hits.length) return '<div class="sub" style="margin-top:8px">' + nsT('Nothing found.') + '</div>';
+  return '<div class="ns-res">' + hits.map(function (p) { var av = nsAvail(p);
+    return '<button type="button" data-nsadd="' + esc(p.sku) + '"><span><b>' + esc(p.name) + '</b><span class="sku"> ' + esc(p.sku) + '</span></span><span class="sku">' + fmt(p.sell) + ' · ' + (av > 0 ? nsT('{0} available', [fmt(av)]) : '<span style="color:var(--fd-negative-text,var(--critical))">' + nsT('none available') + '</span>') + '</span></button>'; }).join('') + '</div>';
+}
+function nsSources() { return (OPT && OPT.sources && OPT.sources.length) ? OPT.sources : ['Customer pickup']; }
+function viewSale() {
+  nsLoad();
+  if (!CAT) { srv('erpBundle', [['catalog']], function (r) { applyBundle(r); if (VIEW === 'sale') repaint(); }, function () {}); return '<div class="loading">' + nsT('Loading products…') + '</div>'; }
+  if (!NS_SELLERS) { NS_SELLERS = { sellers: [], canChoose: false, loading: true };
+    srv('erpSellers', [], function (r) { NS_SELLERS = r; if (VIEW === 'sale') repaint(); }, function () { NS_SELLERS = { sellers: [], canChoose: false }; }); }
+  if (!NS.source) NS.source = nsSources()[0];
+  var best = (CAT || []).filter(function (p) { return nsAvail(p) > 0 && num(p.sold90) > 0; }).sort(function (a, b) { return num(b.sold90) - num(a.sold90); }).slice(0, 8);
+  var pill = function (attr, v, on) { return '<button type="button" class="ns-pill" ' + attr + '="' + esc(v) + '" aria-pressed="' + (on ? 'true' : 'false') + '">' + esc(nsT(v)) + '</button>'; };
+  var card = function (n, title, body) { return '<div class="card ns-card"><div class="ns-h"><span class="ns-n">' + n + '</span><h2>' + nsT(title) + '</h2></div>' + body + '</div>'; };
+  var sel = NS_SELLERS.sellers || [];
+  var left =
+    card(1, 'Customer', '<div class="fields"><div><label class="f" for="ns_ph">' + nsT('Phone (first)') + '</label><input class="i" id="ns_ph" inputmode="tel" placeholder="01XXXXXXXXX" value="' + esc(NS.phone) + '"></div>' +
+      '<div><label class="f" for="ns_nm">' + nsT('Name') + '</label><input class="i' + (NS.cust ? ' locked' : '') + '" id="ns_nm" value="' + esc(NS.name) + '"' + (NS.cust ? ' readonly' : '') + '></div></div>' +
+      '<div class="fields"><div><label class="f" for="ns_ad">' + nsT('Address') + '</label><input class="i" id="ns_ad" value="' + esc(NS.address) + '"></div></div><div id="ns_hint">' +
+      (NS.cust ? '<div class="note ok" style="margin-top:10px"><div class="ico">✓</div><div>' + nsT('Existing customer') + ' — <b>' + esc(NS.cust.name) + '</b>, ' + nsT('{0} order(s), {1} spent', [fmt(NS.cust.orders), fmt(NS.cust.spent)]) + '.</div></div>' : '') + '</div>') +
+    card(2, 'Items', '<input class="i" id="ns_q" placeholder="' + nsT('Search a product or SKU') + '" value="' + esc(NS.q) + '" autocomplete="off"><div id="ns_res">' + nsResHtml() + '</div>' +
+      (best.length ? '<div class="sub" style="margin-top:10px">' + nsT('Best sellers (90 days)') + '</div><div class="ns-quick">' + best.map(function (p) { return '<button type="button" class="ns-pill" data-nsadd="' + esc(p.sku) + '">' + esc(p.name) + '</button>'; }).join('') + '</div>' : '') +
+      '<div id="ns_lines" style="margin-top:10px">' + nsLinesHtml() + '</div>') +
+    card(3, 'Details', '<label class="f">' + nsT('Where the customer came from') + '</label><div class="ns-pills">' + NS_CHANNELS.map(function (c) { return pill('data-nsch', c, NS.channel === c); }).join('') + '</div>' +
+      '<div class="fields" style="margin-top:10px"><div><label class="f" for="ns_sel">' + nsT('Seller') + '</label><select class="i" id="ns_sel"' + (NS_SELLERS.canChoose ? '' : ' disabled') + '>' +
+      (sel.length ? sel.map(function (s) { return '<option value="' + esc(s.me ? '' : s.id) + '"' + ((s.me && !NS.seller) || NS.seller === s.id ? ' selected' : '') + '>' + esc(s.name) + (s.me ? ' ' + nsT('(me)') : '') + '</option>'; }).join('') : '<option value="">' + nsT('Me') + '</option>') + '</select></div>' +
+      '<div><label class="f" for="ns_src">' + nsT('Delivery') + '</label><select class="i" id="ns_src">' + nsSources().map(function (s) { return '<option value="' + esc(s) + '"' + (NS.source === s ? ' selected' : '') + '>' + esc(nsT(s)) + '</option>'; }).join('') + '</select></div></div>' +
+      '<div class="fields"><div><label class="f" for="ns_disc">' + nsT('Order discount') + '</label><input class="i" id="ns_disc" inputmode="numeric" placeholder="0" value="' + esc(NS.disc) + '"></div>' +
+      '<div><label class="f" for="ns_del">' + nsT('Delivery charge') + '</label><input class="i" id="ns_del" inputmode="decimal" placeholder="0" value="' + esc(NS.delivery) + '"></div></div>' +
+      '<div class="fields"><div><label class="f" for="ns_note">' + nsT('Note') + '</label><input class="i" id="ns_note" value="' + esc(NS.note) + '"></div></div>') +
+    card(4, 'Payment', '<div class="ns-pills">' + NS_METHODS.map(function (m) { return pill('data-nsm', m, NS.method === m); }).join('') + '</div>' +
+      (NS.method === 'Not paid' ? '<div class="sub" style="margin-top:10px">' + nsT('The whole total goes on the customer’s due.') + '</div>' :
+       '<div class="fields" style="margin-top:10px"><div><label class="f" for="ns_paid">' + nsT('Amount received (blank = the full total)') + '</label><input class="i" id="ns_paid" inputmode="decimal" value="' + esc(NS.paid) + '"></div></div>'));
+  return '<div class="ns-wrap" data-noi18n="1"><div>' + left + '</div><div class="ns-side">' + card(5, 'Review & confirm', '<div id="ns_sum">' + nsSumHtml() + '</div>') + '</div></div>';
+}
+function nsPaint(parts) {
+  nsKeep();
+  if (parts.indexOf('lines') >= 0 && el('ns_lines')) el('ns_lines').innerHTML = nsLinesHtml();
+  if (parts.indexOf('res') >= 0 && el('ns_res')) el('ns_res').innerHTML = nsResHtml();
+  if (el('ns_sum')) { var f = document.activeElement && document.activeElement.id === 'ns_reason'; el('ns_sum').innerHTML = nsSumHtml(); if (f && el('ns_reason')) { var r = el('ns_reason'); r.focus(); r.setSelectionRange(r.value.length, r.value.length); } }
+}
+var repaintNs = repaint;
+repaint = function () {
+  if (VIEW !== 'sale') return repaintNs.apply(this, arguments);
+  el('view').innerHTML = viewSale();
+  try { fdhPaint(); } catch (e) {}
+};
+function nsAdd(sku) {
+  var p = nsProd(sku); if (!p) return;
+  for (var i = 0; i < NS.lines.length; i++) if (NS.lines[i].sku === sku) { NS.lines[i].qty = num(NS.lines[i].qty) + 1; return; }
+  NS.lines.push({ sku: p.sku, name: p.name, list: num(p.sell), price: num(p.sell), qty: 1 });
+}
+document.addEventListener('input', function (e) {
+  if (VIEW !== 'sale' || !NS) return;
+  var id = e.target.id, v = e.target.value;
+  var map = { ns_ph: 'phone', ns_nm: 'name', ns_ad: 'address', ns_disc: 'disc', ns_del: 'delivery', ns_note: 'note', ns_paid: 'paid', ns_reason: 'reason' };
+  if (map[id]) { NS[map[id]] = v; if (id === 'ns_ph' && NS.cust) { NS.cust = null; var nm = el('ns_nm'); if (nm) { nm.readOnly = false; nm.classList.remove('locked'); } } nsPaint([]); return; }
+  if (id === 'ns_q') { NS.q = v; nsPaint(['res']); return; }
+  var q = e.target.getAttribute('data-nsq'), p = e.target.getAttribute('data-nsp');
+  if (q !== null) { NS.lines[+q].qty = Math.max(0, Math.round(num(v))); nsPaint([]); return; }
+  if (p !== null) { NS.lines[+p].price = Math.max(0, num(v)); nsPaint([]); return; }
+});
+document.addEventListener('change', function (e) {
+  if (VIEW !== 'sale' || !NS) return;
+  if (e.target.id === 'ns_sel') { NS.seller = e.target.value; nsKeep(); }
+  if (e.target.id === 'ns_src') { NS.source = e.target.value; nsKeep(); }
+  if (e.target.getAttribute('data-nsq') !== null || e.target.getAttribute('data-nsp') !== null) nsPaint(['lines']);
+});
+document.addEventListener('focusout', function (e) {
+  if (VIEW !== 'sale' || !NS || e.target.id !== 'ns_ph') return;
+  var v = String(e.target.value || '').trim();
+  if (!v || phoneProblem(v)) return;
+  srv('erpLookupCustomer', [v], function (c) {
+    if (!c) { NS.cust = null; var h = el('ns_hint'); if (h) h.innerHTML = '<div class="sub" style="margin-top:10px">' + nsT('New customer — created on save.') + '</div>'; return; }
+    NS.cust = { name: c.name, orders: c.orders, spent: c.spent }; NS.name = c.name; NS.address = NS.address || c.address || ''; if (c.phone) NS.phone = c.phone;
+    nsKeep(); repaint();
+  }, function () {});
+});
+document.addEventListener('click', function (e) {
+  if (VIEW !== 'sale' || !NS || !e.target.closest) return;
+  var a = e.target.closest('[data-nsadd]');
+  if (a) { nsAdd(a.getAttribute('data-nsadd')); NS.q = ''; var qi = el('ns_q'); if (qi) qi.value = ''; nsPaint(['lines', 'res']); return; }
+  var x = e.target.closest('[data-nsx]');
+  if (x) { NS.lines.splice(+x.getAttribute('data-nsx'), 1); nsPaint(['lines']); return; }
+  var ch = e.target.closest('[data-nsch]');
+  if (ch) { NS.channel = ch.getAttribute('data-nsch'); nsKeep(); repaint(); return; }
+  var m = e.target.closest('[data-nsm]');
+  if (m) { NS.method = m.getAttribute('data-nsm'); nsKeep(); repaint(); return; }
+  if (e.target.closest('#ns_clear')) { uiConfirm(nsT('Clear this sale and start over?')).then(function (ok) { if (ok) { NS = nsBlank(); nsKeep(); repaint(); } }); return; }
+  if (e.target.closest('#ns_go')) nsSave();
+});
+function nsSave() {
+  if (NS_SAVING || !nsChecks().every(function (x) { return x.ok; })) return;
+  var t = nsTotals(), cur = OPT ? OPT.currency : 'BDT';
+  uiConfirm(nsT('Confirm this sale?') + '\n\n' + NS.name.trim() + ' · ' + NS.phone.trim() + '\n' + nsT('{0} line(s)', [NS.lines.length]) + '\n' + nsT('Total: {0}', [cur + ' ' + fmt(t.total)]) +
+    '\n' + nsT('Paid now: {0}', [cur + ' ' + fmt(t.paid)]) + (t.paid > 0 ? ' (' + nsT(NS.method) + ')' : '') + (t.due > 0 ? '\n' + nsT('Due: {0}', [cur + ' ' + fmt(t.due)]) : '') + '\n\n' + nsT('Stock will be deducted and the invoice PDF made.')).then(function (ok) {
+    if (!ok) return;
+    NS_SAVING = true; nsPaint([]);
+    var mode = t.paid <= 0 ? 'none' : t.paid >= t.total ? 'full' : 'part';
+    srv('erpCreateInvoice', [{
+      customer: { name: NS.name.trim(), phone: NS.phone.trim(), address: NS.address.trim(), source: NS.source },
+      items: NS.lines.map(function (l) { return { sku: l.sku, qty: num(l.qty), discEach: Math.max(0, num(l.list) - num(l.price)) }; }),
+      invoiceDiscount: t.disc, deliveryCharge: t.del, payMode: mode, paidNow: mode === 'part' ? t.paid : 0,
+      paymentMethod: mode === 'none' ? '' : NS.method, note: NS.note.trim(),
+      seller: NS.seller || '', channel: NS.channel, priceCheck: true, priceReason: String(NS.reason || '').trim()
+    }], function (res) {
+      NS_SAVING = false; NS = nsBlank(); nsKeep();
+      invoiceDone(res);
+      D = null; ORDERS = null; HIST = null; PLAN = null; DUES = null;
+      srv('erpBundle', [['catalog']], function (r) { applyBundle(r); if (VIEW === 'sale') repaint(); }, function () {});
+      repaint();
+    }, function (er) { NS_SAVING = false; nsPaint([]); toast(nsT('Could not save: {0}', [esc(er && er.message ? er.message : er)]), true, 12000); });
+  });
+}
 </script>
 
 </body>
