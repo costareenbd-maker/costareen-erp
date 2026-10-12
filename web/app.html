@@ -8434,7 +8434,7 @@ function srv(name, args, ok, bad) {
 
 var SRV_ACTIVE = 0, SRV_WRITING = false, SRV_TIMED = {};
 // the same list the server uses to know a call changes nothing (ERP_READS)
-var SRV_READS = /^(erpSellers|erpFollowups|erpCustomerInsight|erpPreorders|erpCashUps|erpAskingPrices|erpSystemCheck|erpAnalytics|erpCommission|erpHolding|erpLotFunding|erpShipments|erpShipment|erpLots|erpFdHead|erpFdDash|erpReceiveMatch|erpAiReader|erpProductSuggest|erpCatalogue|erpPushList|erpCreators|erpCreatorPortalLink|erpSponsorLink|erpCreatorRequests|erpCreatorEvents|erpCreatorProgramme|erpCreatorPreview|erpCreatorCatalog|erpCreatorSources|erpCreatorClaims|erpApps|erpAppQr|erpFeedback|erpRestockOffers|erpRestockList|erpWarrantyRules|erpWarrantyCard|erpMyLink|erpPlatformRegister|erpPlatformDoctor|erpPlatformCommunity|erpMarketWaiting|erpBoard|erpPlatformDesign|erpResell|erpResellerProgramme|erpLoyalty|erpCustomerPoints|erpRefillDue|erpDeliveryHistory|erpDeliveryHistoryMany|erpPrintKit|erpPrintJobs|erpPrintJob|erpPrintCost|erpSpools|erpPrintRequests|erpJoint|erpJointCatalog|erpJointCard|erpInvoiceDesign|erpInvoicePreview|erpMarket|erpMarketMine|erpMarketRequests|erpMarketHints|erpMarketNames|erpWanted|erpBrand|erpComplianceLog|erpProviderKey|erpNews|erpAccessKeys|erpAccessWarning|erpAdmin|erpAiKeys|erpAlertRules|erpAlerts|erpArena|erpBackupStatus|erpBg|erpBnWords|erpBookedParcels|erpBrandLogo|erpBundle|erpBusinessLinks|erpBusinesses|erpBusinessesDeleted|erpCampaignAudience|erpCampaignGet|erpCampaignList|erpCapital|erpCashBook|erpCatalog|erpConnStatus|erpConnections|erpCostBook|erpCourier|erpCourierKeyStatus|erpCurrencies|erpCustomerAccount|erpCustomerCredit|erpCustomerList|erpCustomerPage|erpCustomerStatement|erpCustomers|erpDashboardData|erpDaySales|erpDeliveryOptions|erpDevices|erpDiscontinued|erpDues|erpEvoQr|erpEvoStatus|erpExpenseExport|erpExpenseReceiptUrl|erpExpenses|erpFamilies|erpFighters|erpFormOptions|erpGame|erpGetTheme|erpGoogle|erpHello|erpInstalls|erpInvoice|erpInvoicePdf|erpJob|erpJobs|erpListView|erpLookupCustomer|erpLookupUsage|erpMe|erpMoney|erpNoteFileUrl|erpNotes|erpOwnerChange|erpOwnerChanges|erpParcelLabels|erpParcelPreview|erpPartnerStock|erpPartnership|erpPayReasons|erpPeople|erpPlatform|erpPlatformErrors|erpPnl|erpPnlMonth|erpPoList|erpPoolCatalog|erpProduct|erpProductListShare|erpProductPage|erpProductPhotoUrl|erpProductThumbs|erpProfile|erpQuoteAsset|erpQuoteBoot|erpQuoteGet|erpQuoteList|erpRecentInvoices|erpRecovery|erpReorderPlan|erpRestorePreview|erpReturnPreview|erpRisks|erpSales|erpSearch|erpSecurity|erpSelfTest|erpSerialLookup|erpSerialsFor|erpSessions|erpSetTheme|erpSettingsFull|erpSettingsLists|erpSfPayoutLines|erpSfPayouts|erpShareFile|erpSharedStock|erpSheet|erpStatementPdf|erpStockHistory|erpSupplierPage|erpSuppliers|erpToday|erpUsers|erpWaProductPdf|erpWebMatches|erpWebOrderInvoices|erpWebOrders|erpWebsiteTest)$/;
+var SRV_READS = /^(erpNavigator|erpSellers|erpFollowups|erpCustomerInsight|erpPreorders|erpCashUps|erpAskingPrices|erpSystemCheck|erpAnalytics|erpCommission|erpHolding|erpLotFunding|erpShipments|erpShipment|erpLots|erpFdHead|erpFdDash|erpReceiveMatch|erpAiReader|erpProductSuggest|erpCatalogue|erpPushList|erpCreators|erpCreatorPortalLink|erpSponsorLink|erpCreatorRequests|erpCreatorEvents|erpCreatorProgramme|erpCreatorPreview|erpCreatorCatalog|erpCreatorSources|erpCreatorClaims|erpApps|erpAppQr|erpFeedback|erpRestockOffers|erpRestockList|erpWarrantyRules|erpWarrantyCard|erpMyLink|erpPlatformRegister|erpPlatformDoctor|erpPlatformCommunity|erpMarketWaiting|erpBoard|erpPlatformDesign|erpResell|erpResellerProgramme|erpLoyalty|erpCustomerPoints|erpRefillDue|erpDeliveryHistory|erpDeliveryHistoryMany|erpPrintKit|erpPrintJobs|erpPrintJob|erpPrintCost|erpSpools|erpPrintRequests|erpJoint|erpJointCatalog|erpJointCard|erpInvoiceDesign|erpInvoicePreview|erpMarket|erpMarketMine|erpMarketRequests|erpMarketHints|erpMarketNames|erpWanted|erpBrand|erpComplianceLog|erpProviderKey|erpNews|erpAccessKeys|erpAccessWarning|erpAdmin|erpAiKeys|erpAlertRules|erpAlerts|erpArena|erpBackupStatus|erpBg|erpBnWords|erpBookedParcels|erpBrandLogo|erpBundle|erpBusinessLinks|erpBusinesses|erpBusinessesDeleted|erpCampaignAudience|erpCampaignGet|erpCampaignList|erpCapital|erpCashBook|erpCatalog|erpConnStatus|erpConnections|erpCostBook|erpCourier|erpCourierKeyStatus|erpCurrencies|erpCustomerAccount|erpCustomerCredit|erpCustomerList|erpCustomerPage|erpCustomerStatement|erpCustomers|erpDashboardData|erpDaySales|erpDeliveryOptions|erpDevices|erpDiscontinued|erpDues|erpEvoQr|erpEvoStatus|erpExpenseExport|erpExpenseReceiptUrl|erpExpenses|erpFamilies|erpFighters|erpFormOptions|erpGame|erpGetTheme|erpGoogle|erpHello|erpInstalls|erpInvoice|erpInvoicePdf|erpJob|erpJobs|erpListView|erpLookupCustomer|erpLookupUsage|erpMe|erpMoney|erpNoteFileUrl|erpNotes|erpOwnerChange|erpOwnerChanges|erpParcelLabels|erpParcelPreview|erpPartnerStock|erpPartnership|erpPayReasons|erpPeople|erpPlatform|erpPlatformErrors|erpPnl|erpPnlMonth|erpPoList|erpPoolCatalog|erpProduct|erpProductListShare|erpProductPage|erpProductPhotoUrl|erpProductThumbs|erpProfile|erpQuoteAsset|erpQuoteBoot|erpQuoteGet|erpQuoteList|erpRecentInvoices|erpRecovery|erpReorderPlan|erpRestorePreview|erpReturnPreview|erpRisks|erpSales|erpSearch|erpSecurity|erpSelfTest|erpSerialLookup|erpSerialsFor|erpSessions|erpSetTheme|erpSettingsFull|erpSettingsLists|erpSfPayoutLines|erpSfPayouts|erpShareFile|erpSharedStock|erpSheet|erpStatementPdf|erpStockHistory|erpSupplierPage|erpSuppliers|erpToday|erpUsers|erpWaProductPdf|erpWebMatches|erpWebOrderInvoices|erpWebOrders|erpWebsiteTest)$/;
 function srvPump() {
   if (!SRV_Q.length) return;
   var isRead = SRV_READS.test(SRV_Q[0].name);
@@ -25502,6 +25502,11 @@ document.addEventListener('mousedown', function (e) {
 var repaintShell = repaint;
 repaint = function () { var r = repaintShell.apply(this, arguments); try { fdShellPaint(); } catch (e) {} return r; };
 setTimeout(function () { try { fdShellPaint(); } catch (e) {} }, 0);
+// later blocks wrap repaint for their own screens without calling ours: refresh the shell whenever the screen changes
+(function () {
+  var t = null, v = el('view');
+  if (v) try { new MutationObserver(function () { clearTimeout(t); t = setTimeout(function () { try { fdShellPaint(); } catch (e) {} }, 60); }).observe(v, { childList: true }); } catch (e) {}
+})();
 
 /* ---------- the dashboard in his order ---------- */
 var FD_SW = { black:'#1F2329', white:'#F4F5F7', red:'#E5484D', blue:'#3B82F6', green:'#22C55E', yellow:'#FACC15', orange:'#F97316', purple:'#8B5CF6', pink:'#EC4899',
@@ -25681,6 +25686,1537 @@ document.addEventListener('click', function (e) {
   if (!e.target.closest) return;
   if (e.target.closest('[data-fddallg]')) { FDD.group = ''; fddSave(); repaint(); return; }
 });
+</script>
+
+<!-- fd-18 (FilaDash merge): Overview > ERP Navigator - the partner's "ERP Mind Map" screen ported onto our data
+     (handlers/navigator.js, erpNavigator). Replaces the old menu-built map of fd-10 for VIEW 'mindmap'.
+     Head with range pills (whole months: This month / 3 / 6 / 12 months / Custom, so net profit = the P&L), a search
+     (module, invoice, customer, shipment, SKU) and filter chips (Brand, Type, Category, Investor, Shipment, Order
+     source); six KPI cards with trend and "i" (Show calculation); the map card: 2D SVG map (his radial layout, pan,
+     wheel zoom, expand / collapse, connections only, dashed flow arrows with counts, hover path, keyboard), 3D view
+     (his hand-rolled perspective on a canvas: orbits, drag rotate, auto-rotate unless reduced motion, zoom, pick),
+     a collapsible tree on phones; the Module Details panel (Overview / Data / Rules / Access / Audit); the Business
+     Workflow with Play; Module health, Money flow (sankey), What needs action, Future. Every node and action opens
+     our real screen with go(view). Figures a role may not see arrive locked and show a lock. UI state is kept on the
+     device in localStorage 'fd_nav_v1'. -->
+<style>
+.nvg { --nv-card:var(--fd-card, var(--surface, #fff)); --nv-bg:var(--fd-bg, var(--plane, #F6F7FB)); --nv-s2:var(--fd-surface-2, var(--field, #F1F2F7)); --nv-s3:var(--fd-surface-3, #E8EAF2);
+  --nv-border:var(--fd-border, var(--ring, #E8EAF1)); --nv-border-strong:var(--fd-border-strong, var(--baseline, #D5D8E4));
+  --nv-text:var(--fd-text, var(--ink, #14172B)); --nv-text2:var(--fd-text-2, var(--ink-2, #4B5068)); --nv-text3:var(--fd-text-3, var(--muted, #6B7190)); --nv-faint:var(--fd-text-faint, #8A90A6);
+  --nv-accent:var(--fd-accent, var(--series-1, #5B4FE9)); --nv-accent-text:var(--fd-accent-text, var(--series-1, #4C41D6)); --nv-accent-soft:var(--fd-accent-soft, var(--series-1-soft, #EDEBFF));
+  --nv-accent-border:var(--fd-accent-border, rgba(91,79,233,.35)); --nv-on-accent:var(--fd-text-on-accent, #fff); --nv-accent-glow:var(--fd-accent-glow, 0 8px 20px rgba(91,79,233,.30));
+  --nv-pos:var(--fd-positive, #1DBF73); --nv-pos-text:var(--fd-positive-text, #0B7F49); --nv-pos-soft:var(--fd-positive-soft, #E3F7EC);
+  --nv-neg:var(--fd-negative, #EF4444); --nv-neg-text:var(--fd-negative-text, #DC2626); --nv-neg-soft:var(--fd-negative-soft, #FDE8E8);
+  --nv-warn:var(--fd-warning, #F59E0B); --nv-warn-text:var(--fd-warning-text, #9A5B00); --nv-warn-soft:var(--fd-warning-soft, #FFF3DC);
+  --nv-info:#2F7CF6; --nv-info-soft:var(--fd-info-soft, #E3F0FF); --nv-info-text:var(--fd-info-text, #1D5FD1); --nv-violet:#8B5CF6;
+  --nv-shadow:var(--fd-shadow-card, var(--shadow, 0 1px 2px rgba(20,23,43,.04), 0 10px 30px rgba(20,23,43,.06))); --nv-shadow-hover:var(--fd-shadow-card-hover, var(--shadow-lg, 0 16px 40px rgba(20,23,43,.10)));
+  --nv-shadow-pop:var(--fd-shadow-popover, 0 12px 40px rgba(20,23,43,.14)); --nv-focus:var(--fd-focus-ring, 0 0 0 3px rgba(91,79,233,.35));
+  --nv-canvas:#F3F4F8; --nv-logo-1:#2F7CF6; --nv-logo-2:#5B4FE9; --nv-logo-3:#8B5CF6;
+  --nv-c1:#2F7CF6; --nv-c2:#6B4FE6; --nv-c3:#E24BE5; --nv-c4:#26CDF4; --nv-c5:#1DBF73; --nv-c6:#F59E0B; --nv-c7:#EF4444; --nv-c8:#8A90A6;
+  --nv-m-inventory:#2F7CF6; --nv-m-orders:#1DBF73; --nv-m-customers:#26CDF4; --nv-m-procurement:#F59E0B; --nv-m-analytics:#6B4FE6; --nv-m-roles:#E24BE5;
+  --nv-m-expenses:#EF4444; --nv-m-investors:#8B5CF6; --nv-m-audit:#8A90A6; --nv-m-core:#5B4FE9;
+  display:flex; flex-direction:column; gap:20px; min-width:0; color:var(--nv-text); }
+:root[data-theme="dark"] .nvg { --nv-canvas:#0A0F18; --nv-info:#60A5FA; --nv-violet:#A78BFA; --nv-logo-1:#F59E0B; --nv-logo-2:#FB923C; --nv-logo-3:#F5A623;
+  --nv-c1:#F97316; --nv-c2:#FACC15; --nv-c3:#EF5A4C; --nv-c4:#6B7A90; --nv-c5:#22C55E; --nv-c6:#38BDF8; --nv-c7:#A78BFA; --nv-c8:#F472B6;
+  --nv-m-inventory:#60A5FA; --nv-m-orders:#22C55E; --nv-m-customers:#38BDF8; --nv-m-procurement:#F97316; --nv-m-analytics:#FACC15; --nv-m-roles:#F472B6;
+  --nv-m-expenses:#EF5A4C; --nv-m-investors:#A78BFA; --nv-m-audit:#6B7A90; --nv-m-core:var(--fd-accent, #F5A623); }
+.nvg svg.nvi { fill:none; stroke:currentColor; stroke-width:1.9; stroke-linecap:round; stroke-linejoin:round; flex:none; }
+.nvg-card { position:relative; background:var(--nv-card); border:1px solid var(--nv-border); border-radius:20px; padding:22px 24px; box-shadow:var(--nv-shadow), var(--fd-glow-card, 0 0 0 transparent); min-width:0; }
+.nvg-card-head { display:flex; align-items:center; gap:14px; min-height:44px; }
+.nvg-card-head.has-rule { padding-bottom:14px; border-bottom:1px solid var(--nv-border); margin-bottom:12px; }
+.nvg-card-title { font-size:18px; font-weight:700; letter-spacing:-.01em; line-height:1.3; color:var(--nv-text); margin:0; }
+.nvg-card-sub { font-size:13px; color:var(--nv-text3); font-weight:500; }
+.nvg-card-tools { margin-left:auto; display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+.nvg-badge { width:48px; height:48px; flex:0 0 48px; border-radius:999px; display:inline-grid; place-items:center; background:var(--nv-accent-soft); color:var(--nv-accent); box-shadow:var(--fd-glow-badge, none); }
+.nvg-badge.sm { width:40px; height:40px; flex-basis:40px; }
+.nvg-badge.t-warn { background:var(--nv-warn-soft); color:var(--nv-warn); } .nvg-badge.t-bad { background:var(--nv-neg-soft); color:var(--nv-neg); }
+.nvg-badge.t-good { background:var(--nv-pos-soft); color:var(--nv-pos); } .nvg-badge.t-info { background:var(--nv-info-soft); color:var(--nv-info); } .nvg-badge.t-neutral { background:var(--nv-s2); color:var(--nv-text3); box-shadow:none; }
+.nvg-btn { display:inline-flex; align-items:center; gap:7px; height:34px; padding:0 14px; border-radius:999px; border:1px solid transparent; background:var(--nv-s2); color:var(--nv-text);
+  font:inherit; font-size:13px; font-weight:600; cursor:pointer; white-space:nowrap; position:relative; }
+:root[data-theme="dark"] .nvg-btn { border-color:var(--nv-border); }
+.nvg-btn:hover { background:var(--nv-s3); } .nvg-btn.primary { background:var(--nv-accent); color:var(--nv-on-accent); border-color:transparent; }
+.nvg-btn.primary:hover { box-shadow:var(--nv-accent-glow); } .nvg-btn[disabled] { opacity:.45; cursor:not-allowed; }
+.nvg-btn[aria-pressed="true"] { background:var(--nv-accent-soft); color:var(--nv-accent-text); border-color:var(--nv-accent-border); }
+.nvg-btn::before { content:""; position:absolute; inset:-5px 0; }
+.nvg-ibtn { width:40px; height:40px; border-radius:999px; border:0; background:transparent; color:var(--nv-text2); display:inline-grid; place-items:center; cursor:pointer; }
+.nvg-ibtn:hover { background:var(--nv-s2); color:var(--nv-text); }
+.nvg-seg { display:inline-flex; padding:3px; gap:2px; border-radius:999px; background:var(--nv-s2); }
+.nvg-seg button { display:inline-flex; align-items:center; gap:6px; height:30px; padding:0 12px; border-radius:999px; border:0; background:transparent; color:var(--nv-text2); font:inherit; font-size:13px; font-weight:600; cursor:pointer; }
+.nvg-seg button[aria-pressed="true"] { background:var(--nv-accent); color:var(--nv-on-accent); box-shadow:var(--nv-accent-glow); }
+.nvg-pill { display:inline-flex; align-items:center; gap:5px; height:24px; padding:0 9px; border-radius:999px; font-size:12px; font-weight:700; white-space:nowrap; background:var(--nv-s2); color:var(--nv-text2); }
+.nvg-pill.pos { background:var(--nv-pos-soft); color:var(--nv-pos-text); } .nvg-pill.neg { background:var(--nv-neg-soft); color:var(--nv-neg-text); }
+.nvg-pill.warn { background:var(--nv-warn-soft); color:var(--nv-warn-text); } .nvg-pill.info { background:var(--nv-info-soft); color:var(--nv-info-text); }
+.nvg-lock { display:inline-flex; align-items:center; gap:5px; height:24px; padding:0 9px; border-radius:999px; font-size:12px; font-weight:600; background:var(--nv-s2); color:var(--nv-text3); white-space:nowrap; }
+.nvg-small { font-size:13px; } .nvg-muted { color:var(--nv-text3); }
+.nvg-bar { display:flex; flex-wrap:wrap; gap:10px; align-items:center; }
+.nvg-search { position:relative; flex:1 1 340px; min-width:0; }
+.nvg-search input { width:100%; height:44px; border-radius:999px; border:1px solid var(--nv-border); background:var(--nv-card); color:var(--nv-text); padding:0 16px 0 44px; font:inherit; font-size:15px; box-sizing:border-box; }
+.nvg-search input:focus { outline:none; box-shadow:var(--nv-focus); border-color:var(--nv-accent-border); }
+.nvg-search > svg { position:absolute; left:16px; top:50%; transform:translateY(-50%); color:var(--nv-text3); }
+.nvg-results, .nvg-menu { position:absolute; left:0; right:0; top:calc(100% + 6px); z-index:60; background:var(--nv-card); border:1px solid var(--nv-border); border-radius:16px; box-shadow:var(--nv-shadow-pop); max-height:360px; overflow:auto; padding:6px; }
+.nvg-menu { position:fixed; right:auto; min-width:220px; max-width:320px; }
+.nvg-menu .nvg-mh { font-size:11px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:var(--nv-faint); padding:6px 10px 4px; }
+.nvg-res, .nvg-mi { display:flex; align-items:center; gap:10px; min-height:40px; padding:6px 10px; border-radius:12px; cursor:pointer; width:100%; text-align:left; background:none; border:0; color:var(--nv-text); font:inherit; font-size:14px; }
+.nvg-res:hover, .nvg-res:focus-visible, .nvg-mi:hover, .nvg-mi:focus-visible { background:var(--nv-s2); outline:none; }
+.nvg-mi[aria-checked="true"] { color:var(--nv-accent-text); font-weight:700; }
+.nvg-mi small { margin-left:auto; color:var(--nv-text3); font-size:12px; }
+.nvg-res .k { font-size:12px; color:var(--nv-text3); margin-left:auto; white-space:nowrap; }
+.nvg-resrow { display:flex; align-items:center; gap:2px; }
+.nvg-open { font-size:13px; color:var(--nv-accent-text); white-space:nowrap; min-height:40px; display:inline-flex; align-items:center; gap:4px; padding:0 8px; background:none; border:0; cursor:pointer; font:inherit; font-weight:600; }
+.nvg-filters { display:flex; gap:8px; flex-wrap:wrap; align-items:center; min-width:0; color:var(--nv-text3); }
+.nvg-fchip { display:inline-flex; align-items:center; gap:6px; height:38px; padding:0 12px 0 14px; border-radius:999px; border:1px solid var(--nv-border); background:var(--nv-card); color:var(--nv-text2);
+  font:inherit; font-size:14px; font-weight:600; cursor:pointer; position:relative; white-space:nowrap; }
+.nvg-fchip.is-on { background:var(--nv-accent-soft); color:var(--nv-accent-text); border-color:var(--nv-accent-border); }
+.nvg-fchip.is-locked { opacity:.6; cursor:not-allowed; }
+.nvg-kpis { display:grid; grid-template-columns:repeat(6, minmax(0, 1fr)); gap:14px; }
+.nvg-kpi { display:flex; flex-direction:column; padding:16px 16px 14px; border-radius:20px; cursor:default; }
+.nvg-kpi[data-go] { cursor:pointer; transition:transform .15s, box-shadow .15s; } .nvg-kpi[data-go]:hover { transform:translateY(-2px); box-shadow:var(--nv-shadow-hover); }
+.nvg-kpi .top { display:flex; align-items:flex-start; justify-content:space-between; gap:8px; }
+.nvg-kpi .num { font-size:26px; font-weight:800; letter-spacing:-.02em; line-height:1.1; margin-top:10px; color:var(--nv-text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-variant-numeric:tabular-nums; }
+.nvg-kpi .num small { font-size:.6em; font-weight:700; color:var(--nv-text3); margin-right:3px; } .nvg-kpi .num.neg { color:var(--nv-neg-text); }
+.nvg-kpi .lbl { font-size:14px; font-weight:500; color:var(--nv-text2); margin-top:4px; padding-right:22px; line-height:1.3; }
+.nvg-kpi .nvg-knote { font-size:12px; color:var(--nv-text3); margin-top:2px; padding-right:22px; }
+.nvg-kpi .nvg-i { position:absolute; right:14px; bottom:14px; }
+.nvg-i { width:20px; height:20px; border-radius:999px; border:0; padding:0; cursor:pointer; background:var(--nv-accent); color:var(--nv-on-accent); font:800 12px/20px var(--fd-font, inherit); text-align:center; }
+.nvg-trend { display:inline-flex; align-items:center; gap:4px; height:24px; padding:0 9px; border-radius:999px; font-size:12.5px; font-weight:700; white-space:nowrap; background:var(--nv-pos-soft); color:var(--nv-pos-text); }
+.nvg-trend.bad { background:var(--nv-neg-soft); color:var(--nv-neg-text); } .nvg-trend.flat { background:var(--nv-s2); color:var(--nv-text3); }
+@media (max-width:1280px) { .nvg-kpis { grid-template-columns:repeat(3, minmax(0, 1fr)); } }
+@media (max-width:767px) { .nvg-kpis { grid-template-columns:repeat(2, minmax(0, 1fr)); gap:10px; } .nvg-kpi .num { font-size:22px; } }
+.nvg-main { display:grid; grid-template-columns:minmax(0, 1fr) 360px; gap:20px; align-items:start; }
+.nvg-main.is-nopanel { grid-template-columns:minmax(0, 1fr); }
+@media (max-width:1180px) { .nvg-main { grid-template-columns:minmax(0, 1fr); } }
+.nvg-mapcard { padding:14px 14px 10px; }
+.nvg-tools { display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin-bottom:8px; }
+.nvg-tools { gap:6px; } .nvg-tools .nvg-btn { padding:0 12px; } .nvg-tgrp { display:flex; gap:2px; margin-left:auto; } .nvg-tgrp .nvg-ibtn { width:36px; height:36px; }
+.nvg-canvas { position:relative; height:800px; border-radius:16px; background:var(--nv-bg); overflow:hidden; touch-action:none; outline:none; }
+:root[data-theme="dark"] .nvg-canvas { background:radial-gradient(120% 90% at 50% 45%, var(--nv-s2) 0%, var(--nv-canvas) 70%); }
+.nvg-canvas:focus-visible { box-shadow:var(--nv-focus); }
+.nvg-canvas > svg { width:100%; height:100%; display:block; cursor:grab; user-select:none; -webkit-user-select:none; }
+.nvg-canvas.is-drag > svg { cursor:grabbing; }
+.nvg-canvas canvas { width:100%; height:100%; display:block; cursor:grab; }
+.nvg-hint { position:absolute; left:12px; bottom:10px; font-size:12px; color:var(--nv-text3); background:var(--nv-card); border:1px solid var(--nv-border); border-radius:999px; padding:4px 10px; pointer-events:none; }
+.nvg-legend { position:absolute; right:12px; bottom:10px; display:flex; gap:10px; flex-wrap:wrap; align-items:center; font-size:12px; color:var(--nv-text3); background:var(--nv-card); border:1px solid var(--nv-border); border-radius:999px; padding:4px 12px; pointer-events:none; }
+.nvg-legend i { display:inline-block; width:8px; height:8px; border-radius:99px; margin-right:5px; vertical-align:middle; }
+.nvg-autob { position:absolute; top:10px; left:10px; }
+.nvg-flowlist { display:flex; flex-wrap:wrap; gap:6px; margin-top:10px; }
+.nvg-flowchip { display:inline-flex; align-items:center; gap:6px; min-height:30px; padding:0 10px; border-radius:999px; border:1px solid var(--nv-border); background:var(--nv-card); color:var(--nv-text2); font:inherit; font-size:12.5px; font-weight:600; cursor:pointer; }
+.nvg-flowchip b { color:var(--nv-accent-text); font-weight:800; } .nvg-flowchip[aria-pressed="true"] { border-color:var(--nv-accent); color:var(--nv-text); }
+/* svg map (his) */
+.nvg-edge { fill:none; stroke:var(--mm-c); stroke-linecap:round; opacity:.85; transition:opacity .15s; }
+.nvg-edge.is-spoke { stroke-width:9; } .nvg-edge.is-l2 { stroke-width:2.6; } .nvg-edge.is-l3 { stroke-width:1.8; opacity:.7; }
+:root[data-theme="dark"] .nvg-edge { filter:url(#nvg-glow); }
+.nvg-flow { fill:none; stroke:var(--nv-text3); stroke-width:1.6; stroke-dasharray:5 5; opacity:.75; }
+:root[data-theme="dark"] .nvg-flow { stroke:var(--nv-text2); opacity:.6; }
+.nvg-flowhead { fill:var(--nv-text3); }
+.nvg-flowlab rect { fill:var(--nv-card); stroke:var(--nv-border); stroke-width:1; }
+.nvg-flowlab text { font-size:12px; fill:var(--nv-text2); font-weight:600; font-family:var(--fd-font, inherit); }
+.nvg-flowlab .n { fill:var(--nv-accent-text); font-weight:800; }
+.nvg-node { cursor:pointer; outline:none; }
+.nvg-node text { font-family:var(--fd-font, inherit); }
+.nvg-node .ring { fill:none; stroke:var(--nv-accent); stroke-width:3; opacity:0; }
+.nvg-node:focus-visible .ring, .nvg-node.is-sel .ring { opacity:1; }
+.nvg-mod .disc { fill:var(--mm-c); } .nvg-mod .shade { fill:url(#nvg-shade); }
+.nvg-mod text { fill:#fff; text-anchor:middle; font-weight:700; } .nvg-mod .mn { font-size:22px; font-weight:800; } .nvg-mod .ml { font-size:13px; } .nvg-mod .mi { color:#fff; }
+:root[data-theme="dark"] .nvg-mod .disc { fill:var(--nv-card); stroke:var(--mm-c); stroke-width:3.5; filter:url(#nvg-glow-strong); }
+:root[data-theme="dark"] .nvg-mod .shade { fill:var(--mm-c); opacity:.18; }
+:root[data-theme="dark"] .nvg-mod text { fill:var(--nv-text); } :root[data-theme="dark"] .nvg-mod .mi { color:var(--mm-c); }
+.nvg-mod.is-locked .disc { fill:var(--nv-s3); stroke:var(--nv-border-strong); filter:none; } .nvg-mod.is-locked text { fill:var(--nv-text2); } .nvg-mod.is-locked .mi { color:var(--nv-text3); }
+.nvg-core .disc { fill:url(#nvg-coregrad); }
+:root[data-theme="dark"] .nvg-core .disc { fill:var(--nv-card); stroke:var(--nv-accent); stroke-width:4; filter:url(#nvg-glow-strong); }
+.nvg-core text { fill:#fff; text-anchor:middle; } :root[data-theme="dark"] .nvg-core text { fill:var(--nv-text); }
+.nvg-core .ct { font-size:26px; font-weight:800; } .nvg-core .cs { font-size:12.5px; opacity:.92; }
+.nvg-core .cb rect { fill:rgba(255,255,255,.2); stroke:rgba(255,255,255,.55); }
+:root[data-theme="dark"] .nvg-core .cb rect { fill:var(--nv-pos-soft); stroke:var(--nv-pos); }
+.nvg-core .cb text { font-size:11.5px; font-weight:700; } :root[data-theme="dark"] .nvg-core .cb text { fill:var(--nv-pos-text); }
+.nvg-core .ci { color:#fff; } :root[data-theme="dark"] .nvg-core .ci { color:var(--nv-accent); }
+.nvg-pl .bg { fill:var(--nv-card); stroke:var(--mm-c); stroke-width:1.4; stroke-opacity:.6; } .nvg-pl .tint { fill:var(--mm-c); opacity:.1; }
+:root[data-theme="dark"] .nvg-pl .bg { stroke-opacity:.9; filter:url(#nvg-glow); } :root[data-theme="dark"] .nvg-pl .tint { opacity:.08; }
+.nvg-pl .dot { fill:var(--mm-c); } .nvg-pl .pi { color:#fff; } :root[data-theme="dark"] .nvg-pl .pi { color:var(--nv-card); }
+.nvg-pl .t1 { font-size:14px; font-weight:700; fill:var(--nv-text); } .nvg-pl .t2 { font-size:12px; fill:var(--nv-text3); font-weight:500; }
+.nvg-pl .tn { font-size:14px; font-weight:800; fill:var(--nv-text); text-anchor:end; }
+.nvg-pl.l3 .t1 { font-size:12.5px; font-weight:600; } .nvg-pl.l3 .tn { font-size:12.5px; font-weight:700; fill:var(--nv-text2); }
+.nvg-pl.is-locked .bg { stroke:var(--nv-border-strong); stroke-dasharray:4 3; filter:none; } .nvg-pl.is-locked .dot { fill:var(--nv-faint); }
+.nvg-st-warn { fill:var(--nv-warn); } .nvg-st-fail { fill:var(--nv-neg); } .nvg-st-info { fill:var(--nv-info); } .nvg-st-off { fill:var(--nv-faint); }
+.nvg-tog { cursor:pointer; } .nvg-tog circle { fill:var(--nv-card); stroke:var(--mm-c); stroke-width:1.6; } .nvg-tog path { stroke:var(--nv-text); stroke-width:1.8; fill:none; stroke-linecap:round; }
+.nvg-tog .nvg-hit { fill:transparent; stroke:none; }
+svg.has-hover .nvg-node, svg.has-hover .nvg-edge, svg.has-hover .nvg-flowg { opacity:.28; } svg.has-hover .is-path { opacity:1; }
+svg.has-step .nvg-node, svg.has-step .nvg-edge { opacity:.32; } svg.has-step .is-step { opacity:1; }
+svg.has-step .nvg-node.is-step .ring { opacity:1; stroke:var(--nv-warn); }
+.nvg-flowg.is-conn .nvg-flow { stroke:var(--nv-accent); opacity:1; stroke-width:2.4; }
+/* details panel */
+.nvg-panel { padding:20px 18px; position:sticky; top:76px; display:flex; flex-direction:column; gap:14px; max-height:calc(100vh - 90px); overflow:auto; }
+.nvg-phead { display:flex; gap:12px; align-items:flex-start; }
+.nvg-ptitle { font-size:18px; font-weight:800; line-height:1.25; color:var(--nv-text); } .nvg-psub { font-size:13px; color:var(--nv-text3); margin-top:4px; }
+.nvg-desc { font-size:14px; line-height:1.5; color:var(--nv-text2); margin:0; }
+.nvg-tabs { display:flex; gap:2px; overflow-x:auto; scrollbar-width:none; justify-content:space-between; border-bottom:1px solid var(--nv-border); padding-bottom:8px; }
+.nvg-tab { flex:0 0 auto; min-height:36px; padding:0 8px; border-radius:999px; border:0; background:none; color:var(--nv-text2); font:inherit; font-size:13.5px; font-weight:600; cursor:pointer; }
+.nvg-tab[aria-selected="true"] { background:var(--nv-accent-soft); color:var(--nv-accent-text); }
+.nvg-minis { display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:8px; }
+.nvg-mini { border:1px solid var(--nv-border); border-radius:12px; padding:10px 10px 8px; min-width:0; background:var(--nv-card); }
+.nvg-mini b { display:block; font-size:15.5px; font-weight:800; color:var(--nv-accent-text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-variant-numeric:tabular-nums; }
+.nvg-mini span { display:block; font-size:12px; color:var(--nv-text3); line-height:1.3; margin-top:2px; }
+.nvg-chips { display:flex; flex-wrap:wrap; gap:6px; }
+.nvg-conn { display:inline-flex; align-items:center; gap:6px; min-height:32px; padding:0 10px; border-radius:999px; border:1px solid var(--nv-border); background:var(--nv-s2); color:var(--nv-text); font:inherit; font-size:12.5px; font-weight:600; cursor:pointer; }
+.nvg-conn i { width:8px; height:8px; border-radius:99px; background:var(--mm-c); }
+.nvg-st { font-size:13px; font-weight:700; color:var(--nv-text); margin:2px 0 6px; display:flex; align-items:center; gap:6px; }
+.nvg-rule { display:flex; gap:10px; align-items:flex-start; padding:8px 0; border-bottom:1px solid var(--nv-border); font-size:13px; line-height:1.45; color:var(--nv-text2); }
+.nvg-rule:last-child { border-bottom:0; } .nvg-rule b { color:var(--nv-text); font-weight:700; } .nvg-rule > svg { color:var(--nv-pos); margin-top:1px; }
+.nvg-access { width:100%; border-collapse:collapse; font-size:13px; }
+.nvg-access th, .nvg-access td { padding:7px 6px; border-bottom:1px solid var(--nv-border); text-align:left; vertical-align:middle; }
+.nvg-access th { font-weight:600; color:var(--nv-text3); font-size:12px; }
+.nvg-yes { color:var(--nv-pos-text); display:inline-flex; align-items:center; gap:4px; font-weight:600; } .nvg-no { color:var(--nv-text3); display:inline-flex; align-items:center; gap:4px; }
+.nvg-actions { display:flex; gap:8px; flex-wrap:wrap; } .nvg-actions .nvg-btn { flex:1 1 auto; justify-content:center; }
+.nvg-hbars { display:flex; flex-direction:column; gap:6px; }
+.nvg-hbar { display:grid; grid-template-columns:minmax(0, 110px) minmax(0, 1fr) auto; gap:8px; align-items:center; font-size:12.5px; min-height:22px; }
+.nvg-hbar .l { color:var(--nv-text2); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; } .nvg-hbar .v { font-weight:700; color:var(--nv-text); font-variant-numeric:tabular-nums; }
+.nvg-hbar .t { height:10px; border-radius:999px; background:var(--nv-s2); overflow:hidden; } .nvg-hbar .t i { display:block; height:100%; border-radius:999px; }
+.nvg-line svg { width:100%; height:auto; display:block; overflow:visible; }
+.nvg-tbl { width:100%; border-collapse:separate; border-spacing:0; font-size:13px; }
+.nvg-tbl th { background:var(--nv-s2); height:34px; padding:0 8px; font-size:12px; font-weight:600; color:var(--nv-text3); text-align:left; white-space:nowrap; }
+.nvg-tbl th:first-child { border-radius:10px 0 0 10px; } .nvg-tbl th:last-child { border-radius:0 10px 10px 0; }
+.nvg-tbl td { padding:7px 8px; border-bottom:1px solid var(--nv-border); vertical-align:middle; }
+.nvg-tbl td.n, .nvg-tbl th.n { text-align:right; font-variant-numeric:tabular-nums; }
+.nvg-tbl tr[data-row] { cursor:pointer; } .nvg-tbl tr[data-row]:hover td { background:var(--nv-s2); }
+.nvg-tbl .p { display:block; font-weight:600; color:var(--nv-text); } .nvg-tbl .s { display:block; font-size:12px; color:var(--nv-text3); }
+.nvg-empty { color:var(--nv-text3); font-size:13.5px; padding:18px 4px; text-align:center; }
+.nvg-hidden { display:flex; gap:12px; align-items:flex-start; padding:14px; border-radius:14px; background:var(--nv-s2); color:var(--nv-text2); font-size:13.5px; line-height:1.45; }
+/* workflow */
+.nvg-strip { display:flex; gap:10px; overflow-x:auto; padding:4px 2px 10px; scroll-snap-type:x proximity; scrollbar-width:thin; }
+.nvg-step { flex:0 0 200px; scroll-snap-align:start; display:flex; flex-direction:column; gap:6px; text-align:left; border:1px solid var(--nv-border); border-radius:16px; background:var(--nv-card); padding:12px; cursor:pointer; font:inherit; color:var(--nv-text); min-height:96px; }
+.nvg-step:hover { box-shadow:var(--nv-shadow-hover); } .nvg-step[aria-pressed="true"] { border-color:var(--nv-accent); box-shadow:var(--nv-accent-glow); }
+.nvg-step .sn { font-size:12px; color:var(--nv-text3); font-weight:600; } .nvg-step .stt { font-size:14px; font-weight:700; line-height:1.3; } .nvg-step .ss { font-size:12px; color:var(--nv-text3); line-height:1.4; }
+.nvg-step-arrow { flex:0 0 18px; align-self:center; color:var(--nv-faint); display:grid; place-items:center; }
+.nvg-stepcard { border:1px solid var(--nv-border); border-radius:16px; padding:14px 16px; background:var(--nv-s2); display:grid; grid-template-columns:minmax(0, 1.3fr) minmax(0, 1fr); gap:16px; margin-top:6px; }
+@media (max-width:900px) { .nvg-stepcard { grid-template-columns:minmax(0, 1fr); } }
+.nvg-stepcard h3 { margin:0 0 6px; font-size:16px; } .nvg-stepcard p { margin:0 0 8px; font-size:14px; line-height:1.5; color:var(--nv-text2); }
+.nvg-figchip { display:inline-flex; align-items:center; gap:8px; min-height:36px; padding:0 12px; border-radius:999px; background:var(--nv-card); border:1px solid var(--nv-border); font:inherit; font-size:13px; color:var(--nv-text); cursor:pointer; }
+.nvg-figchip b { font-weight:800; color:var(--nv-accent-text); }
+/* sections */
+.nvg-grid2 { display:grid; grid-template-columns:minmax(0, 1.25fr) minmax(0, 1fr); gap:20px; }
+@media (max-width:1100px) { .nvg-grid2 { grid-template-columns:minmax(0, 1fr); } }
+.nvg-collapse { display:inline-flex; align-items:center; gap:6px; min-height:40px; border:0; background:none; color:var(--nv-text2); font:inherit; font-size:13px; font-weight:600; cursor:pointer; padding:0 6px; }
+.nvg-act { display:flex; gap:12px; align-items:center; padding:10px 0; border-bottom:1px solid var(--nv-border); min-height:56px; color:inherit; background:none; border-left:0; border-right:0; border-top:0; width:100%; text-align:left; font:inherit; }
+.nvg-act[data-go] { cursor:pointer; } .nvg-act:last-child { border-bottom:0; }
+.nvg-act .at { font-weight:700; font-size:14px; color:var(--nv-text); } .nvg-act .as { font-size:12.5px; color:var(--nv-text3); }
+.nvg-act > svg:last-child { margin-left:auto; color:var(--nv-accent); }
+.nvg-sankey { width:100%; overflow-x:auto; } .nvg-sankey svg { display:block; min-width:760px; width:100%; height:auto; }
+.nvg-skn { cursor:pointer; } .nvg-skb { opacity:.28; transition:opacity .15s; } .nvg-skb:hover { opacity:.5; }
+.nvg-skl { font-size:12.5px; font-weight:700; fill:var(--nv-text); font-family:var(--fd-font, inherit); } .nvg-skv { font-size:12px; fill:var(--nv-text3); font-family:var(--fd-font, inherit); }
+.nvg-fut { border:1px solid var(--nv-border); border-radius:16px; padding:14px; display:flex; gap:12px; align-items:flex-start; margin-bottom:12px; }
+.nvg-fut:last-child { margin-bottom:0; } .nvg-fut b { display:block; font-size:14px; margin-bottom:4px; } .nvg-fut p { margin:0; font-size:13px; color:var(--nv-text3); line-height:1.45; }
+.nvg-tdot { width:12px; height:12px; border-radius:99px; background:var(--mm-c); flex:0 0 12px; display:inline-block; }
+/* phone tree */
+.nvg-tree { display:flex; flex-direction:column; gap:8px; }
+.nvg-tmod { border:1px solid var(--nv-border); border-radius:16px; background:var(--nv-card); overflow:hidden; }
+.nvg-trow { display:flex; align-items:center; gap:10px; width:100%; min-height:52px; padding:6px 10px 6px 12px; background:none; border:0; font:inherit; color:var(--nv-text); text-align:left; cursor:pointer; }
+.nvg-trow .tl { flex:1 1 auto; min-width:0; } .nvg-trow .tl b { display:block; font-size:15px; font-weight:700; line-height:1.25; }
+.nvg-trow .tl span { display:block; font-size:12.5px; color:var(--nv-text3); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.nvg-trow .tn { font-weight:800; font-size:15px; color:var(--nv-text); white-space:nowrap; }
+.nvg-tkids { padding:0 0 6px 22px; border-top:1px solid var(--nv-border); } .nvg-tkids .nvg-tkids { padding-left:14px; border-top:0; }
+.nvg-tline { display:flex; align-items:center; }
+.nvg-tinfo { flex:0 0 44px; width:44px; height:44px; border-radius:99px; border:0; background:none; color:var(--nv-text3); display:grid; place-items:center; cursor:pointer; }
+.nvg-chev { transition:transform .15s; } .nvg-trow[aria-expanded="true"] .nvg-chev { transform:rotate(90deg); }
+.nvg-skel { height:120px; border-radius:20px; background:linear-gradient(90deg, var(--nv-s2) 25%, var(--nv-s3) 50%, var(--nv-s2) 75%); background-size:200% 100%; animation:fddSk 1.2s infinite; }
+.nvg-sheet { position:fixed; left:0; right:0; bottom:0; max-height:86vh; overflow:auto; background:var(--nv-card); border-radius:20px 20px 0 0; padding:18px 16px 28px; box-shadow:var(--nv-shadow-pop); z-index:1001; }
+@media (max-width:767px) {
+  .nvg-canvas { height:440px; } .nvg-mapcard { padding:12px; }
+  .nvg-filters { flex-wrap:nowrap; overflow-x:auto; margin:0 -14px; padding:2px 14px 6px; scrollbar-width:none; } .nvg-filters::-webkit-scrollbar { display:none; }
+  .nvg-fchip { flex:0 0 auto; height:44px; } .nvg-step { flex-basis:180px; } .nvg-tools .nvg-ibtn { width:44px; height:44px; }
+  .nvg-card { padding:16px; border-radius:16px; } .nvg-hide-phone { display:none !important; }
+}
+
+/* the page's own global rules must not reach this screen (svg { width:100% }, #view table cells, section margins) */
+.nvg svg.nvi { display:inline-block; overflow:visible; }
+:root[data-skin] #view .nvg section, #view .nvg section { margin:0; }
+:root[data-skin] #view .nvg table.nvg-tbl, :root[data-skin] #view .nvg table.nvg-access { border-collapse:separate; border-spacing:0; font-size:13px; width:100%; }
+:root[data-skin] #view .nvg table.nvg-access { border-collapse:collapse; }
+:root[data-skin] #view .nvg table.nvg-tbl thead th, #view .nvg table.nvg-tbl thead th { background:var(--nv-s2); height:34px; padding:0 8px; font-size:12px; font-weight:600; color:var(--nv-text3); text-align:left; white-space:nowrap; text-transform:none; letter-spacing:0; border:0; position:static; }
+:root[data-skin] #view .nvg table.nvg-tbl thead th:first-child { border-radius:10px 0 0 10px; padding-left:8px; } :root[data-skin] #view .nvg table.nvg-tbl thead th:last-child { border-radius:0 10px 10px 0; padding-right:8px; }
+:root[data-skin] #view .nvg table.nvg-tbl tbody td, #view .nvg table.nvg-tbl tbody td { padding:7px 8px; border-bottom:1px solid var(--nv-border); vertical-align:middle; font-weight:400; color:var(--nv-text); background:transparent; }
+:root[data-skin] #view .nvg table.nvg-tbl tbody td:first-child { padding-left:8px; } :root[data-skin] #view .nvg table.nvg-tbl tbody td:last-child { padding-right:8px; }
+:root[data-skin] #view .nvg table.nvg-tbl tbody tr:last-child td { border-bottom:0; }
+:root[data-skin] #view .nvg table.nvg-tbl td.n, :root[data-skin] #view .nvg table.nvg-tbl th.n { text-align:right; }
+:root[data-skin] #view .nvg table.nvg-tbl tbody tr[data-row]:hover > td { background:var(--nv-s2); }
+:root[data-skin] #view .nvg table.nvg-access th, :root[data-skin] #view .nvg table.nvg-access td { padding:7px 6px; border-bottom:1px solid var(--nv-border); text-align:left; vertical-align:middle; background:transparent; height:auto; border-radius:0; font-size:13px; color:var(--nv-text); }
+:root[data-skin] #view .nvg table.nvg-access th { font-weight:600; color:var(--nv-text3); font-size:12px; }
+.nvg-tline .nvg-trow { flex:1 1 auto; min-width:0; } .nvg-trow .tn, .nvg-trow .nvg-pill, .nvg-trow .nvg-lock { flex:none; }
+@media (max-width:767px) { .nvg .fdd-head > .fdd-tools { width:100%; justify-content:flex-start; flex-wrap:nowrap; overflow-x:auto; scrollbar-width:none; } .nvg .fdd-head > .fdd-tools .fdd-pill { flex:none; } }
+@media (prefers-reduced-motion:reduce) { .nvg * { transition:none !important; animation:none !important; } }
+</style>
+<script>
+var NAV = { data: null, key: '', busy: false, err: '', selected: null, tab: 'overview', step: null, playing: false, vb: null, rot: { yaw: -0.5, pitch: 0.32, zoom: 1 }, map: null, timer: null, query: '', hlFlow: null,
+  st: { expanded: {}, view: '2d', connOnly: false, details: true, filters: {}, sections: {}, auto: true, range: '30d', custom: null } };
+(function () {
+  try {
+    var s = JSON.parse(localStorage.getItem('fd_nav_v1') || '{}') || {};
+    ['expanded', 'filters', 'sections'].forEach(function (k) { if (s[k] && typeof s[k] === 'object') NAV.st[k] = s[k]; });
+    if (s.view === '3d' || s.view === '2d') NAV.st.view = s.view;
+    if (typeof s.details === 'boolean') NAV.st.details = s.details;
+    if (typeof s.auto === 'boolean') NAV.st.auto = s.auto;
+    if (typeof s.connOnly === 'boolean') NAV.st.connOnly = s.connOnly;
+    if (['30d', '90d', '6m', '12m', 'custom'].indexOf(s.range) >= 0) NAV.st.range = s.range;
+    if (s.custom && s.custom.from) NAV.st.custom = s.custom;
+  } catch (e) {}
+})();
+function navSave() { try { localStorage.setItem('fd_nav_v1', JSON.stringify(NAV.st)); } catch (e) {} }
+// the menu item: his name for the screen
+(function () {
+  var b = document.querySelector('#nav button[data-view="mindmap"]');
+  if (b) { b.setAttribute('data-name', 'ERP Navigator'); var t = b.lastChild; if (t && t.nodeType === 3) t.nodeValue = 'ERP Navigator'; }
+  if (typeof FDH_SUB !== 'undefined') FDH_SUB.mindmap = 'Every part of the ERP on one map, its figures and how they connect, step by step';
+})();
+
+// ---- small helpers (his FD.h / FD.s / FD.icon, locally)
+var NV_IC = {
+  box: '<path d="M3 8l9-5 9 5v8l-9 5-9-5z"/><path d="M3 8l9 5 9-5M12 13v8"/>', cube: '<path d="M12 2l9 5v10l-9 5-9-5V7z"/><path d="M3 7l9 5 9-5M12 12v10"/>',
+  users: '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.9M16 3.1a4 4 0 0 1 0 7.8"/>',
+  user: '<circle cx="12" cy="8" r="4"/><path d="M4 21v-1a6 6 0 0 1 6-6h4a6 6 0 0 1 6 6v1"/>',
+  ship: '<path d="M3 15l2 5h14l2-5z"/><path d="M5 15V9h14v6"/><path d="M12 9V3M9 5h6"/>', truck: '<path d="M3 6h11v10H3zM14 10h4l3 3v3h-7"/><circle cx="7" cy="18" r="1.6"/><circle cx="17" cy="18" r="1.6"/>',
+  bars: '<path d="M4 20V10M10 20V4M16 20v-8M22 20H2"/>', gear: '<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/>',
+  shield: '<path d="M12 3l8 4v5c0 5-3.5 8-8 9-4.5-1-8-4-8-9V7z"/><path d="M8.5 12l2.5 2.5 4.5-5"/>', receipt: '<path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6"/>',
+  briefcase: '<rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M3 13h18"/>', orders: '<path d="M4 2v20l3-2 3 2 3-2 3 2 3-2 1 .7V2z"/><path d="M8 7h8M8 11h8M8 15h5"/>',
+  tag: '<path d="M20 12l-8 8-9-9V3h8z"/><circle cx="7.5" cy="7.5" r="1.5"/>', spool: '<ellipse cx="12" cy="6" rx="7" ry="3"/><path d="M5 6v12c0 1.7 3.1 3 7 3s7-1.3 7-3V6"/><ellipse cx="12" cy="6" rx="2" ry="1"/>',
+  layers: '<path d="M12 3l9 5-9 5-9-5z"/><path d="M3 13l9 5 9-5"/>', warn: '<path d="M12 3l10 18H2z"/><path d="M12 10v5M12 18v.5"/>', x: '<path d="M6 6l12 12M18 6L6 18"/>',
+  taka: '<path d="M7 4c2 0 3 1 3 3v10c0 2 1.5 3 3.5 3S17 19 17 16.5c0-1.6-.8-2.5-2-2.5"/><path d="M5 9h9"/>', globe: '<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3.5 3 14.5 0 18M12 3c-3 3.5-3 14.5 0 18"/>',
+  wallet: '<rect x="3" y="6" width="18" height="13" rx="3"/><path d="M16 12h2M3 9h15V6"/>', calendar: '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/>',
+  reset: '<path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/>', heart: '<path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8L12 21l8.8-8.6a5.5 5.5 0 0 0 0-7.8z"/>',
+  sparkle: '<path d="M12 3l2 6 6 2-6 2-2 6-2-6-6-2 6-2z"/>', bell: '<path d="M6 16V11a6 6 0 0 1 12 0v5l2 2H4z"/><path d="M10 21h4"/>', clock: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+  check: '<path d="M5 12l5 5 9-10"/>', store: '<path d="M3 9l1.5-5h15L21 9"/><path d="M3 9h18v2a3 3 0 0 1-6 0 3 3 0 0 1-6 0 3 3 0 0 1-6 0z"/><path d="M5 13v8h14v-8"/>',
+  target: '<circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r="1"/>', trend: '<path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/>',
+  percent: '<path d="M19 5L5 19"/><circle cx="7" cy="7" r="2.5"/><circle cx="17" cy="17" r="2.5"/>', palette: '<path d="M12 3a9 9 0 1 0 0 18c1 0 1.5-.8 1.5-1.5 0-1.5-1-1.5-1-3s1-2 2.5-2H18a3 3 0 0 0 3-3c0-4.7-4-8.5-9-8.5z"/><circle cx="7.5" cy="11" r="1"/><circle cx="10" cy="7" r="1"/><circle cx="15" cy="7.5" r="1"/>',
+  eye: '<path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>', lock: '<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>',
+  list: '<path d="M8 6h12M8 12h12M8 18h12"/><circle cx="4" cy="6" r="1"/><circle cx="4" cy="12" r="1"/><circle cx="4" cy="18" r="1"/>', archive: '<rect x="3" y="4" width="18" height="5" rx="1"/><path d="M5 9v11h14V9M10 13h4"/>',
+  link: '<path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7"/><path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"/>', search: '<circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/>',
+  mindmap: '<circle cx="12" cy="12" r="3"/><circle cx="4" cy="5" r="2"/><circle cx="20" cy="5" r="2"/><circle cx="4" cy="19" r="2"/><circle cx="20" cy="19" r="2"/><path d="M6 6l4 4M18 6l-4 4M6 18l4-4M18 18l-4-4"/>',
+  plus: '<path d="M12 5v14M5 12h14"/>', minus: '<path d="M5 12h14"/>', filter: '<path d="M3 5h18l-7 8v6l-4 2v-8z"/>', chevDown: '<path d="M6 9l6 6 6-6"/>', chevUp: '<path d="M6 15l6-6 6 6"/>', chevRight: '<path d="M9 6l6 6-6 6"/>',
+  close: '<path d="M6 6l12 12M18 6L6 18"/>', arrowRight: '<path d="M5 12h14M13 6l6 6-6 6"/>', help: '<circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .9-1 1.7v.5M12 17v.5"/>',
+  info: '<circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/>', columns: '<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M15 4v16"/>', rocket: '<path d="M5 15c-1 1-2 4-2 6 2 0 5-1 6-2M9 15l-3-3c1.5-5 6-9 13-9 0 7-4 11.5-9 13z"/><circle cx="15" cy="9" r="1.5"/>',
+  swap: '<path d="M4 7h14l-3-3M20 17H6l3 3"/>', play: '<path d="M7 4l13 8-13 8z"/>', stop: '<rect x="6" y="6" width="12" height="12" rx="2"/>'
+};
+function nvIcon(k, size, cls) {
+  var e = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  var sz = size || 18; e.setAttribute('viewBox', '0 0 24 24'); e.setAttribute('width', sz); e.setAttribute('height', sz);
+  e.setAttribute('style', 'width:' + sz + 'px;height:' + sz + 'px;min-width:' + sz + 'px;display:inline-block;overflow:visible');   // the page's own rule makes every svg display:block, width:100%
+  e.setAttribute('class', 'nvi' + (cls ? ' ' + cls : '')); e.setAttribute('aria-hidden', 'true');
+  e.innerHTML = NV_IC[k] || NV_IC.sparkle;
+  return e;
+}
+function nvAdd(el, kids) {
+  for (var i = 0; i < kids.length; i++) {
+    var c = kids[i];
+    if (c === null || c === undefined || c === false || c === '') continue;
+    if (Array.isArray(c)) nvAdd(el, c); else el.appendChild(typeof c === 'object' ? c : document.createTextNode(String(c)));
+  }
+}
+function nvH(tag, attrs) {
+  var el = document.createElement(tag), a = attrs || {};
+  for (var k in a) {
+    if (!Object.prototype.hasOwnProperty.call(a, k) || a[k] === null || a[k] === undefined || a[k] === false) continue;
+    if (k === 'class') el.className = a[k]; else if (k === 'text') el.textContent = a[k]; else if (k.indexOf('on') === 0 && typeof a[k] === 'function') el.addEventListener(k.slice(2), a[k]);
+    else el.setAttribute(k, a[k] === true ? '' : a[k]);
+  }
+  nvAdd(el, Array.prototype.slice.call(arguments, 2));
+  return el;
+}
+function nvS(tag, attrs) {
+  var el = document.createElementNS('http://www.w3.org/2000/svg', tag), a = attrs || {};
+  for (var k in a) { if (!Object.prototype.hasOwnProperty.call(a, k) || a[k] === null || a[k] === undefined) continue; if (k === 'text') el.textContent = a[k]; else el.setAttribute(k, a[k]); }
+  nvAdd(el, Array.prototype.slice.call(arguments, 2));
+  return el;
+}
+function nvClear(el) { while (el && el.firstChild) el.removeChild(el.firstChild); }
+function nvTrunc(t, n) { t = String(t === null || t === undefined ? '' : t); return t.length > n ? t.slice(0, n - 1) + '…' : t; }
+function nvShort(v) { var a = Math.abs(Number(v) || 0); return (v < 0 ? '−' : '') + (a >= 1e7 ? (a / 1e7).toFixed(a >= 1e8 ? 0 : 2) + 'Cr' : a >= 1e5 ? (a / 1e5).toFixed(2) + 'L' : a >= 1e3 ? (a / 1e3).toFixed(a >= 1e4 ? 0 : 1) + 'k' : String(Math.round(a))); }
+function nvTk(v) { return typeof fdTk === 'function' ? fdTk(v, 'BDT') : (v < 0 ? '−' : '') + '৳' + nvShort(Math.abs(v)); }
+function nvMoney(v) { return 'BDT ' + fmt(v); }
+function nvReduced() { try { return window.matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) { return false; } }
+function nvDark() { return document.documentElement.getAttribute('data-theme') === 'dark'; }
+function nvPhone() { return window.innerWidth < 768; }
+var NV_LOCK = { cost: 'Hidden for your role (Product cost ability)', profit: 'Hidden for your role (Dashboard ability)', dues: 'Hidden for your role (Dues and payments ability)',
+  investor: 'Shareholders and the owner only', perm: 'Hidden for your role' };
+function nvLockChip(why, text) { return nvH('span', { class: 'nvg-lock', title: NV_LOCK[why] || NV_LOCK.perm }, nvIcon('lock', 13), text || 'Hidden'); }
+function nvDisp(n) {
+  if (!n || n.locked) return null;
+  if (n.display !== undefined && n.display !== null) return String(n.display);
+  if (n.value === null || n.value === undefined) return null;
+  return n.money ? nvTk(n.value) : n.pct ? fmt(n.value) + '%' : fmt(n.value);
+}
+function nvCol(key) { return 'var(--nv-m-' + (key || 'core') + ')'; }
+function nvGo(view, param) {
+  if (!view) return false;
+  if (!navOn(view)) { toast('That screen is not open to your role.', true); return false; }
+  NAV.stopPlay && NAV.stopPlay();
+  go(view, param); window.scrollTo(0, 0);
+  return true;
+}
+function nvCalc(title, rows, sub) {
+  if (!rows || !rows.length) { toast('There is no calculation to show for this.'); return; }
+  var back = nvH('div', { class: 'dlg-back' });
+  var box = nvH('div', { class: 'dlg', role: 'dialog', 'aria-modal': 'true', style: 'max-width:540px' }, nvH('div', { class: 'dlg-t', text: title + ' · how it is worked out' }),
+    sub ? nvH('div', { class: 'dlg-b', style: 'white-space:normal', text: sub }) : null,
+    nvH('table', { class: 'fdd-calc' }, nvH('tbody', null, rows.map(function (r) { return nvH('tr', null, nvH('td', { text: r[0] }), nvH('td', { text: typeof r[1] === 'number' ? fmt(r[1]) : (r[1] === null || r[1] === undefined ? '' : String(r[1])) })); }))),
+    nvH('div', { class: 'dlg-f' }, nvH('button', { class: 'btn primary', type: 'button', text: 'Close' })));
+  back.appendChild(box); document.body.appendChild(back);
+  var close = function () { if (back.parentNode) back.parentNode.removeChild(back); document.removeEventListener('keydown', kd, true); };
+  var kd = function (e) { if (e.key === 'Escape') close(); };
+  back.addEventListener('mousedown', function (e) { if (e.target === back) close(); });
+  box.querySelector('.btn').addEventListener('click', close);
+  document.addEventListener('keydown', kd, true);
+  box.querySelector('.btn').focus();
+}
+var NV_MENU = null;
+function nvMenuClose() { if (NV_MENU && NV_MENU.parentNode) NV_MENU.parentNode.removeChild(NV_MENU); NV_MENU = null; }
+function nvMenu(anchor, title, items) {
+  nvMenuClose();
+  var r = anchor.getBoundingClientRect(), m = nvH('div', { class: 'nvg-menu nvg', role: 'menu' }, title ? nvH('div', { class: 'nvg-mh', text: title }) : null);
+  items.forEach(function (it) {
+    var b = nvH('button', { class: 'nvg-mi', type: 'button', role: 'menuitemradio', 'aria-checked': it.checked ? 'true' : 'false' }, it.checked ? nvIcon('check', 16) : nvH('span', { style: 'width:16px' }), nvH('span', { text: it.label }), it.help ? nvH('small', { text: it.help }) : null);
+    b.addEventListener('click', function (e) { e.stopPropagation(); nvMenuClose(); it.onClick(); });
+    m.appendChild(b);
+  });
+  m.style.top = Math.min(window.innerHeight - 60, r.bottom + 6) + 'px'; m.style.left = Math.max(8, Math.min(window.innerWidth - 330, r.left)) + 'px';
+  m.style.maxHeight = Math.max(160, window.innerHeight - r.bottom - 20) + 'px';
+  document.body.appendChild(m); NV_MENU = m;
+  var f = m.querySelector('button'); if (f) f.focus();
+}
+document.addEventListener('mousedown', function (e) { if (NV_MENU && !NV_MENU.contains(e.target)) nvMenuClose(); });
+document.addEventListener('keydown', function (e) { if (e.key === 'Escape') nvMenuClose(); });
+window.addEventListener('scroll', function () { nvMenuClose(); }, true);
+
+// ---- data
+function navArgs() { return { range: NAV.st.range === 'custom' && NAV.st.custom ? NAV.st.custom : NAV.st.range === 'custom' ? '30d' : NAV.st.range, filters: NAV.st.filters || {} }; }
+function navLoad() {
+  var key = JSON.stringify(navArgs());
+  if (NAV.busy || (NAV.data && NAV.key === key)) return;
+  NAV.busy = true; NAV.err = '';
+  srv('erpNavigator', [navArgs()], function (r) { NAV.busy = false; NAV.data = r; NAV.key = key; navTree(); if (VIEW === 'mindmap') repaint(); },
+    function (e) { NAV.busy = false; NAV.err = e && e.message ? e.message : String(e); if (VIEW === 'mindmap') repaint(); });
+}
+var NV_T = null;     // the tree: core -> modules -> leaves, with parent / level / module on each node
+function navTree() {
+  var d = NAV.data; if (!d) { NV_T = null; return; }
+  var mods = d.modules.map(function (m) {
+    return { id: m.id, label: m.label, lines: m.lines, icon: m.icon, angle: m.angle, value: m.count, display: m.display, sub: m.locked ? (m.locked === 'investor' ? 'Shareholders and the owner only' : 'Hidden for your role') : m.sub,
+      status: m.status || 'ok', locked: m.locked || '', view: m.view, children: m.children || [], m: m };
+  });
+  var core = { id: 'core', label: 'ERP Core', sub: 'Connected business logic', children: mods, status: d.core.status, def: 'The one engine behind every module: invoices, payments, stock lots and the capital book are written once, every figure is worked out from them, and the system check proves they agree.' };
+  var byId = {};
+  (function walk(n, parent, mod, level) {
+    n.parent = parent; n.level = level; n.module = level === 0 ? null : level === 1 ? n.id : mod; byId[n.id] = n;
+    (n.children || []).forEach(function (c) { walk(c, n, level === 0 ? c.id : n.module, level + 1); });
+  })(core, null, null, 0);
+  var MOD = {}; mods.forEach(function (m) { MOD[m.id] = m; });
+  NV_T = { core: core, modules: mods, byId: byId, MOD: MOD, flows: d.flows };
+}
+function nvIsOpen(n) { if (n.locked || !n.children || !n.children.length) return false; if (NAV.st.expanded[n.id] !== undefined && NAV.st.expanded[n.id] !== null) return !!NAV.st.expanded[n.id]; return n.level <= 1; }
+function nvSetAll(open) { Object.keys(NV_T.byId).forEach(function (id) { var n = NV_T.byId[id]; if (n.children && n.children.length && n.level >= 1) NAV.st.expanded[id] = open; }); navSave(); }
+
+// ---- the screen
+function viewNavigator() {
+  navLoad();
+  if (NAV.err && !NAV.data) return '<div class="note err"><div class="ico">!</div><div>Could not load the ERP Navigator: ' + esc(NAV.err) + ' <button class="btn small" type="button" data-navretry="1">Try again</button></div></div>';
+  if (!NAV.data) return '<div class="nvg"><div class="nvg-skel" style="height:96px"></div><div class="nvg-kpis">' + '<div class="nvg-skel"></div>'.repeat(6) + '</div><div class="nvg-skel" style="height:520px"></div></div>';
+  return '<div class="nvg" id="nvgRoot"></div>';
+}
+function navMount() {
+  var root = el('nvgRoot'); if (!root || !NV_T) return;
+  if (NAV.map && NAV.map.destroy) NAV.map.destroy();
+  NAV.map = null;
+  var d = NAV.data, T = NV_T, phone = nvPhone();
+  if (!NAV.selected || !T.byId[NAV.selected]) NAV.selected = T.byId.investors && !T.byId.investors.locked && d.can.owner ? 'investors' : 'inventory';
+  root.appendChild(navHead(d));
+  root.appendChild(navSearch(d, T));
+  root.appendChild(navKpis(d));
+  if (d.filtered) root.appendChild(nvH('p', { class: 'nvg-small nvg-muted', style: 'margin:-10px 0 0', text: 'Filters narrow the map, the panel and the lists below (products, sales, customers, shipments). The six cards follow the range only.' }));
+  var main = nvH('div', { class: 'nvg-main' + (NAV.st.details && !phone ? '' : ' is-nopanel') });
+  root.appendChild(main);
+  var mapCard = nvH('section', { class: 'nvg-card nvg-mapcard', 'aria-label': 'ERP map' });
+  main.appendChild(mapCard);
+  var panel = nvH('section', { class: 'nvg-card nvg-panel', 'aria-label': 'Module details' });
+  if (NAV.st.details && !phone) main.appendChild(panel);
+  var api = { T: T, d: d, panel: panel, phone: phone };
+  api.select = function (id, o) {
+    if (!T.byId[id]) return;
+    NAV.selected = id;
+    if (o && o.tab) NAV.tab = o.tab;
+    if (api.map) api.map.markSelected(id);
+    if (phone || !NAV.st.details) navSheet(api, id); else navPanel(api);
+  };
+  NAV.api = api;
+  navMapCard(mapCard, api);
+  if (NAV.st.details && !phone) navPanel(api);
+  root.appendChild(navWorkflow(api));
+  root.appendChild(navSection('health', 'Module health', 'shield', 'Counts, open issues, last activity and the owner’s next step per module', function () { return navHealth(api); }));
+  root.appendChild(navSection('flow', 'Money flow', 'swap', d.money && d.money.since ? 'Since ' + d.money.since + ': capital → stock → sales → profit → investors’ and owners’ share' : 'Capital → stock → sales → profit → investors’ and owners’ share', function () { return navSankey(api); }));
+  var g2 = nvH('div', { class: 'nvg-grid2' });
+  g2.appendChild(navSection('action', 'What needs action', 'bell', 'Failing checks, low stock, dues, returns owed, follow-ups', function () { return navActions(api); }));
+  g2.appendChild(navSection('future', 'Future', 'rocket', 'What this map is ready for next', function () { return navFuture(); }));
+  root.appendChild(g2);
+}
+
+// ---- head: eyebrow, title, subtitle, range pills (his page head)
+var NV_RANGES = [['30d', 'This month'], ['90d', '3 months'], ['6m', '6 months'], ['12m', '12 months'], ['custom', 'Custom']];
+function navSetRange(k) {
+  if (k === 'custom') {
+    var cu = NAV.st.custom || { from: '', to: '' };
+    fdwDialog('Custom range (whole months)', '<div class="fields"><div><label class="f" for="nv_from">From month</label><input class="i" id="nv_from" type="month" value="' + esc(cu.from || '') + '"></div>' +
+      '<div><label class="f" for="nv_to">To month</label><input class="i" id="nv_to" type="month" value="' + esc(cu.to || '') + '"></div></div><div class="fdw-note">Whole calendar months, up to 24, so net profit is the same as Profit &amp; loss.</div>',
+      function (back, close) {
+        var f = fdwVal(back, 'nv_from'), t = fdwVal(back, 'nv_to');
+        if (!/^\d{4}-\d{2}$/.test(f) && !/^\d{4}-\d{2}$/.test(t)) { toast('Pick at least one month.', true); return; }
+        NAV.st.custom = { from: f || t, to: t || f }; NAV.st.range = 'custom'; navSave(); close(); repaint();
+      });
+    return;
+  }
+  NAV.st.range = k; navSave(); repaint();
+}
+function navHead(d) {
+  var biz = (el('bizName') && el('bizName').textContent) || '';
+  var pills = nvH('div', { class: 'fdd-tools' }, NV_RANGES.map(function (r) {
+    var b = nvH('button', { type: 'button', class: 'fdd-pill', 'aria-pressed': NAV.st.range === r[0] ? 'true' : 'false' }, r[0] === 'custom' && NAV.st.range === 'custom' ? nvIcon('calendar', 15) : null, r[0] === 'custom' && NAV.st.range === 'custom' ? ' ' + d.range.label : r[1]);
+    b.addEventListener('click', function () { navSetRange(r[0]); });
+    return b;
+  }));
+  var info = nvH('button', { type: 'button', class: 'nvg-i', title: 'What this screen is', text: 'i', style: 'position:static' });
+  info.addEventListener('click', function () {
+    nvCalc('ERP Navigator', [['One page with every part of the ERP, its sub-parts and live counts', ''], ['Click a circle or a pill: the panel shows its figures, rows, rules, who may see it and its changes', ''],
+      ['Every action opens the real screen; the map itself never changes anything', ''], ['Figures your role may not see show a lock: they are never sent to your screen', ''],
+      ['Range = whole months, so net profit is the same as on Profit & loss', d.range.label]], 'How to read it');
+  });
+  return nvH('div', { class: 'fdd-head', style: 'margin:0' },
+    nvH('div', null, nvH('div', { class: 'fdd-eyebrow', text: biz }), nvH('h1', { class: 'fdd-title' }, 'ERP Navigator ', info),
+      nvH('div', { class: 'fdd-sub', text: (FDH_SUB && FDH_SUB.mindmap ? FDH_SUB.mindmap : '') + ' · ' + d.range.label + ' compared with ' + d.range.prevLabel + (NAV.busy ? ' · updating…' : '') })),
+    pills);
+}
+
+// ---- search + filter chips
+function navSearch(d, T) {
+  var wrap = nvH('div', { style: 'display:flex;flex-direction:column;gap:10px' });
+  var box = nvH('div', { class: 'nvg-search' });
+  var input = nvH('input', { type: 'search', placeholder: 'Search module, invoice, customer, shipment or SKU…', 'aria-label': 'Search the ERP', autocomplete: 'off' });
+  input.value = NAV.query || '';
+  var results = nvH('div', { class: 'nvg-results', role: 'listbox', 'aria-label': 'Search results', style: 'display:none' });
+  box.appendChild(nvIcon('search', 20)); box.appendChild(input); box.appendChild(results);
+  wrap.appendChild(nvH('div', { class: 'nvg-bar' }, box));
+  function run() {
+    var q = input.value.trim().toLowerCase(); NAV.query = input.value;
+    nvClear(results);
+    if (q.length < 2) { results.style.display = 'none'; return; }
+    var out = navSearchAll(q, d, T).slice(0, 12);
+    if (!out.length) out = [{ label: 'No match for "' + input.value + '"', kind: '', none: true }];
+    out.forEach(function (r) {
+      var row = nvH('div', { class: 'nvg-resrow' });
+      var b = nvH('button', { class: 'nvg-res', type: 'button', role: 'option', disabled: !!r.none }, r.icon ? nvIcon(r.icon, 18) : null, nvH('span', { style: 'min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap', text: r.label }), nvH('span', { class: 'k', text: r.kind }));
+      b.addEventListener('click', function () { results.style.display = 'none'; if (r.node && NAV.api) { NAV.api.select(r.node); if (NAV.api.map) NAV.api.map.focusNode(r.node); } });
+      row.appendChild(b);
+      if (r.open) { var a = nvH('button', { class: 'nvg-open', type: 'button' }, 'Open', nvIcon('arrowRight', 14)); a.addEventListener('click', function () { results.style.display = 'none'; r.open(); }); row.appendChild(a); }
+      results.appendChild(row);
+    });
+    results.style.display = '';
+  }
+  input.addEventListener('input', run);
+  input.addEventListener('focus', function () { if (input.value.trim().length >= 2) run(); });
+  input.addEventListener('keydown', function (e) { if (e.key === 'Escape') results.style.display = 'none'; if (e.key === 'ArrowDown') { var f = results.querySelector('button:not([disabled])'); if (f) { e.preventDefault(); f.focus(); } } });
+  document.addEventListener('mousedown', function onDoc(e) { if (!document.body.contains(box)) { document.removeEventListener('mousedown', onDoc); return; } if (!box.contains(e.target)) results.style.display = 'none'; });
+
+  var chips = nvH('div', { class: 'nvg-filters', role: 'group', 'aria-label': 'Filters' }, nvIcon('filter', 18));
+  var o = d.filters.options, f = NAV.st.filters || {};
+  var defs = [['brand', 'Brand'], ['type', 'Type'], ['category', 'Category'], ['investor', 'Investor'], ['shipment', 'Shipment'], ['source', 'Order source']];
+  defs.forEach(function (df) {
+    var key = df[0], opts = o[key], locked = opts === null;
+    var cur = !locked && f[key] ? f[key] : null;
+    var curLabel = cur ? ((opts.filter(function (x) { return String(x.value) === String(cur); })[0] || {}).label || cur) : null;
+    var b = nvH('button', { class: 'nvg-fchip' + (cur ? ' is-on' : '') + (locked ? ' is-locked' : ''), type: 'button', 'aria-haspopup': 'menu', title: locked ? NV_LOCK.investor : null,
+      'aria-label': locked ? df[1] + ' filter, hidden for your role' : cur ? df[1] + ' filter: ' + curLabel + '. Change or clear' : df[1] + ' filter' },
+      locked ? nvIcon('lock', 14) : null, cur ? df[1] + ': ' + curLabel : df[1], nvIcon(cur ? 'close' : 'chevDown', 16));
+    b.addEventListener('click', function () {
+      if (locked) { toast('The Investor filter is for shareholders and the owner.'); return; }
+      var items = [{ label: 'All', checked: !cur, onClick: function () { delete NAV.st.filters[key]; navSave(); repaint(); } }];
+      opts.slice(0, 200).forEach(function (x) { items.push({ label: x.label, checked: String(x.value) === String(cur), onClick: function () { NAV.st.filters[key] = x.value; navSave(); repaint(); } }); });
+      if (!opts.length) items.push({ label: 'Nothing to choose yet', checked: false, onClick: function () {} });
+      nvMenu(b, df[1], items);
+    });
+    chips.appendChild(b);
+  });
+  var dr = nvH('button', { class: 'nvg-fchip is-on', type: 'button', 'aria-haspopup': 'menu', 'aria-label': 'Range: ' + d.range.label + '. Change' }, nvIcon('calendar', 16), d.range.label, nvIcon('chevDown', 16));
+  dr.addEventListener('click', function () { nvMenu(dr, 'Range', NV_RANGES.map(function (r) { return { label: r[1] + (r[0] === 'custom' ? '…' : ''), checked: NAV.st.range === r[0], onClick: function () { navSetRange(r[0]); } }; })); });
+  chips.appendChild(dr);
+  if (Object.keys(f).length) {
+    var clr = nvH('button', { class: 'nvg-fchip', type: 'button' }, nvIcon('reset', 16), 'Clear filters');
+    clr.addEventListener('click', function () { NAV.st.filters = {}; navSave(); repaint(); });
+    chips.appendChild(clr);
+  }
+  wrap.appendChild(chips);
+  return wrap;
+}
+function navSearchAll(q, d, T) {
+  var out = [], has = function (t) { return t && String(t).toLowerCase().indexOf(q) >= 0; };
+  Object.keys(T.byId).forEach(function (id) {
+    var n = T.byId[id]; if (n.level < 1 || !has(n.label)) return;
+    var v = nvDisp(n);
+    out.push({ label: n.label + (n.locked ? '' : v ? ' · ' + v : ''), kind: n.level === 1 ? 'Module' : 'In ' + T.MOD[n.module].label, icon: n.locked ? 'lock' : n.level === 1 ? n.icon : (n.icon || 'sparkle'), node: id,
+      open: n.view && navOn(n.view) ? function () { nvGo(n.view); } : null });
+  });
+  if (navOn('sales')) d.search.invoices.forEach(function (x) { if (has(x.no) || has(x.customer)) out.push({ label: x.no + ' · ' + x.customer, kind: 'Invoice · ' + x.date, icon: 'receipt', node: 'ord_invoices', open: function () { nvGo('sales', x.no); } }); });
+  if (navOn('customers')) d.search.customers.forEach(function (c) { if (has(c.name) || has(c.phone)) out.push({ label: c.name + (c.phone ? ' · ' + c.phone : ''), kind: 'Customer', icon: 'user', node: 'customers', open: function () { if (typeof openCustomerPage === 'function') openCustomerPage(c.phone, c.name); } }); });
+  d.search.shipments.forEach(function (x) { if (has(x.ref)) out.push({ label: x.ref, kind: x.kind, icon: 'ship', node: x.kind === 'Received' ? 'prc_received' : 'prc_open', open: function () { nvGo(x.kind === 'Received' ? (navOn('shipments') ? 'shipments' : 'stock') : (navOn('suppliers') ? 'suppliers' : 'stock')); } }); });
+  if (navOn('products')) d.search.skus.forEach(function (p) { if (has(p.sku) || has(p.name)) out.push({ label: p.sku + ' · ' + p.name, kind: 'SKU', icon: 'spool', node: 'inventory', open: function () { nvGo('products', p.sku); } }); });
+  return out;
+}
+
+// ---- KPI strip
+function navTrendChip(k) {
+  if (k.prev === undefined || k.prev === null || k.locked) return null;
+  var now = Number(k.v) || 0, prev = Number(k.prev) || 0;
+  if (!prev) return now ? nvH('span', { class: 'nvg-trend flat', text: 'new' }) : null;
+  var pc = (now - prev) / Math.abs(prev) * 100, up = pc >= 0, good = k.key === 'pending' ? true : up;
+  if (Math.abs(pc) < 0.5) return nvH('span', { class: 'nvg-trend flat', text: '= same' });
+  return nvH('span', { class: 'nvg-trend' + (good ? '' : ' bad'), title: 'vs ' + NAV.data.range.prevLabel + ': ' + fmt(prev), text: (up ? '▲ ' : '▼ ') + Math.abs(pc).toFixed(0) + '%' });
+}
+function navKpis(d) {
+  var grid = nvH('div', { class: 'nvg-kpis' });
+  d.kpis.forEach(function (k) {
+    var c = nvH('div', { class: 'nvg-card nvg-kpi' });
+    if (!k.locked && k.go && navOn(k.go)) { c.setAttribute('data-go', k.go); c.addEventListener('click', function (e) { if (e.target.closest('.nvg-i')) return; if (k.f && typeof dashFilter === 'function') dashFilter(k.f); nvGo(k.go); }); }
+    c.appendChild(nvH('div', { class: 'top' }, nvH('span', { class: 'nvg-badge sm' + (k.tone ? ' t-' + k.tone : '') + (k.locked ? ' t-neutral' : '') }, nvIcon(k.locked ? 'lock' : k.icon, 19)), navTrendChip(k)));
+    if (k.locked) { c.appendChild(nvH('div', { class: 'num', 'aria-hidden': 'true', text: '••••' })); c.appendChild(nvH('div', { class: 'lbl', text: k.label })); c.appendChild(nvH('div', { class: 'nvg-knote' }, nvLockChip(k.locked))); }
+    else {
+      var num2 = nvH('div', { class: 'num' + (Number(k.v) < 0 ? ' neg' : ''), title: k.money ? nvMoney(k.v) : null });
+      if (k.money) { num2.textContent = nvTk(k.v); } else num2.textContent = fmt(k.v);
+      c.appendChild(num2); c.appendChild(nvH('div', { class: 'lbl', text: k.label }));
+      if (k.note) c.appendChild(nvH('div', { class: 'nvg-knote', text: k.note }));
+      if (k.calc && k.calc.length) { var i = nvH('button', { type: 'button', class: 'nvg-i', title: 'Show calculation', text: 'i' }); i.addEventListener('click', function (e) { e.stopPropagation(); nvCalc(k.label, k.calc, d.range.label); }); c.appendChild(i); }
+    }
+    grid.appendChild(c);
+  });
+  return grid;
+}
+
+// ---- the map card (tools + 2D svg / 3D canvas / phone tree)
+function navMapCard(card, api) {
+  var tools = nvH('div', { class: 'nvg-tools' });
+  card.appendChild(tools);
+  var seg = nvH('div', { class: 'nvg-seg', role: 'group', 'aria-label': 'Map view' });
+  [['2d', api.phone ? 'Tree' : '2D map', 'mindmap'], ['3d', '3D view', 'cube']].forEach(function (o) {
+    var b = nvH('button', { type: 'button', 'aria-pressed': NAV.st.view === o[0] ? 'true' : 'false' }, nvIcon(o[2], 15), o[1]);
+    b.addEventListener('click', function () { if (NAV.st.view === o[0]) return; NAV.st.view = o[0]; navSave(); repaint(); });   // the tools differ per view: draw the card again
+    seg.appendChild(b);
+  });
+  tools.appendChild(seg);
+  var ex = nvH('button', { type: 'button', class: 'nvg-btn' }, nvIcon('plus', 15), 'Expand all'); ex.addEventListener('click', function () { nvSetAll(true); NAV.st.connOnly = false; navSave(); redraw(); });
+  var co = nvH('button', { type: 'button', class: 'nvg-btn' }, nvIcon('minus', 15), 'Collapse all'); co.addEventListener('click', function () { nvSetAll(false); redraw(); });
+  tools.appendChild(ex); tools.appendChild(co);
+  var conn = null;
+  if (!api.phone || NAV.st.view === '3d') {
+    conn = nvH('button', { type: 'button', class: 'nvg-btn', 'aria-pressed': NAV.st.connOnly ? 'true' : 'false' }, nvIcon('link', 15), nvH('span', { text: NAV.st.connOnly ? 'Show all nodes' : 'Connections only' }));
+    conn.addEventListener('click', function () { NAV.st.connOnly = !NAV.st.connOnly; navSave(); conn.querySelector('span').textContent = NAV.st.connOnly ? 'Show all nodes' : 'Connections only'; redraw(); });
+    tools.appendChild(conn);
+  }
+  var tg = nvH('div', { class: 'nvg-tgrp' });   // zoom / fit / panel stay together and wrap as one group
+  tools.appendChild(tg);
+  var ib = function (icon, label, fn) { var b = nvH('button', { type: 'button', class: 'nvg-ibtn', title: label, 'aria-label': label }, nvIcon(icon, 18)); b.addEventListener('click', fn); return b; };
+  if (!(api.phone && NAV.st.view === '2d')) {
+    tg.appendChild(ib('minus', 'Zoom out', function () { if (NAV.map) NAV.map.zoom(1.25); }));
+    tg.appendChild(ib('plus', 'Zoom in', function () { if (NAV.map) NAV.map.zoom(0.8); }));
+    tg.appendChild(ib('target', 'Fit to view', function () { if (NAV.map) NAV.map.fit(); }));
+  }
+  if (!api.phone) tg.appendChild(ib('columns', NAV.st.details ? 'Hide details panel' : 'Show details panel', function () { NAV.st.details = !NAV.st.details; navSave(); repaint(); }));
+  var host = nvH('div');
+  card.appendChild(host);
+  // the flows with their counts (his legend of connections), each one lights up its two modules
+  var fl = nvH('div', { class: 'nvg-flowlist nvg-hide-phone', 'aria-label': 'Connections between modules' });
+  api.T.flows.forEach(function (f) {
+    var b = nvH('button', { type: 'button', class: 'nvg-flowchip', title: f.def, 'aria-pressed': 'false' }, nvH('i', { class: 'nvg-tdot', style: '--mm-c:' + nvCol(f.from) + ';width:8px;height:8px;flex-basis:8px' }), f.label, f.count === null || f.count === undefined ? nvIcon('lock', 12) : nvH('b', { text: fmt(f.count) }));
+    b.addEventListener('click', function () {
+      var on = b.getAttribute('aria-pressed') !== 'true';
+      [].forEach.call(fl.children, function (x) { x.setAttribute('aria-pressed', 'false'); });
+      b.setAttribute('aria-pressed', on ? 'true' : 'false');
+      if (NAV.map && NAV.map.highlight) NAV.map.highlight(on ? [f.from, f.to] : null);
+    });
+    fl.appendChild(b);
+  });
+  card.appendChild(fl);
+  function redraw() {
+    nvClear(host);
+    if (NAV.map && NAV.map.destroy) NAV.map.destroy();
+    NAV.map = null; api.map = null;
+    if (conn) conn.setAttribute('aria-pressed', NAV.st.connOnly ? 'true' : 'false');
+    if (NAV.st.view === '3d') NAV.map = navBuild3D(host, api);
+    else if (api.phone) NAV.map = navBuildTree(host, api);
+    else NAV.map = navBuildSvg(host, api);
+    api.map = NAV.map;
+    if (NAV.map && NAV.step !== null && NAV.map.highlight) NAV.map.highlight(NV_STEPS[NAV.step] ? NV_STEPS[NAV.step].nodes : null);
+  }
+  api.redraw = redraw;
+  redraw();
+}
+
+// ---- 2D layout (his radial layout: modules on an ellipse, children in side columns, the top module's in a row)
+var NV_RX = 340, NV_RY = 280, NV_RC = 96, NV_RM = 64, NV_C2 = 530, NV_C3 = 750, NV_P2W = 186, NV_P2H = 40, NV_P3W = 176, NV_P3H = 30, NV_G2 = 6, NV_G3 = 6, NV_TOP = 176;
+function nvSweep(groups, gap) { var cur = -Infinity; groups.forEach(function (g) { if (g.top < cur + gap) g.top = cur + gap; cur = g.top + g.hgt; }); }
+function nvLift(groups, targetMid, topLimit) {
+  if (!groups.length) return;
+  var lo = groups[0].top, hi = groups[groups.length - 1].top + groups[groups.length - 1].hgt, mid = (lo + hi) / 2, up = Math.min(mid - targetMid, lo - topLimit);
+  if (up > 0) groups.forEach(function (g) { g.top -= up; });
+}
+function nvSum(a, f) { var t = 0; a.forEach(function (x) { t += f(x); }); return t; }
+function nvLayout(T) {
+  var pos = { core: { x: 0, y: 0, r: NV_RC, kind: 'core' } };
+  T.modules.forEach(function (m) { var a = m.angle * Math.PI / 180; pos[m.id] = { x: NV_RX * Math.cos(a), y: NV_RY * Math.sin(a), r: NV_RM, kind: 'module', side: Math.cos(a) > 0.2 ? 1 : Math.cos(a) < -0.2 ? -1 : 0 }; });
+  if (NAV.st.connOnly) return pos;
+  var topMod = T.modules.filter(function (m) { return pos[m.id].side === 0 && nvIsOpen(m); })[0];
+  var topLimit = topMod ? pos[topMod.id].y - NV_TOP + NV_P2H / 2 + 26 : -Infinity;
+  [-1, 1].forEach(function (side) {
+    var mods = T.modules.filter(function (m) { return pos[m.id].side === side && nvIsOpen(m); }).sort(function (a, b) { return pos[a.id].y - pos[b.id].y; });
+    var groups = mods.map(function (m) { var n = m.children.length, hgt = n * NV_P2H + (n - 1) * NV_G2; return { m: m, hgt: hgt, top: pos[m.id].y - hgt / 2 }; });
+    nvSweep(groups, 20);
+    nvLift(groups, mods.length ? nvSum(mods, function (m) { return pos[m.id].y; }) / mods.length : 0, topLimit);
+    groups.forEach(function (g) { g.m.children.forEach(function (c, i) { pos[c.id] = { x: side * NV_C2, y: g.top + i * (NV_P2H + NV_G2) + NV_P2H / 2, w: NV_P2W, h: NV_P2H, kind: 'pill', side: side }; }); });
+    var g3 = [];
+    groups.forEach(function (g) { g.m.children.forEach(function (c) { if (!nvIsOpen(c)) return; var nc = c.children.length > 3 ? 2 : 1, n = Math.ceil(c.children.length / nc), hgt = n * NV_P3H + (n - 1) * NV_G3; g3.push({ c: c, nc: nc, hgt: hgt, top: pos[c.id].y - hgt / 2, mid: pos[c.id].y }); }); });
+    nvSweep(g3, 12);
+    if (g3.length) nvLift(g3, nvSum(g3, function (g) { return g.mid; }) / g3.length, topLimit - 40);
+    g3.forEach(function (g) { var rows = Math.ceil(g.c.children.length / g.nc); g.c.children.forEach(function (k, i) { var col = Math.floor(i / rows), row = i % rows; pos[k.id] = { x: side * (NV_C3 + col * (NV_P3W + 12)), y: g.top + row * (NV_P3H + NV_G3) + NV_P3H / 2, w: NV_P3W, h: NV_P3H, kind: 'pill3', side: side, col: col }; }); });
+  });
+  T.modules.filter(function (m) { return pos[m.id].side === 0 && nvIsOpen(m); }).forEach(function (m) {
+    var p = pos[m.id], n = m.children.length, step = 168, w = 158, y = p.y - NV_TOP;
+    m.children.forEach(function (c, i) {
+      pos[c.id] = { x: p.x + (i - (n - 1) / 2) * step, y: y, w: w, h: NV_P2H, kind: 'pill', side: 0 };
+      if (nvIsOpen(c)) c.children.forEach(function (k, j) { pos[k.id] = { x: pos[c.id].x, y: y - NV_P2H / 2 - 14 - j * (NV_P3H + NV_G3) - NV_P3H / 2, w: 150, h: NV_P3H, kind: 'pill3', side: 0 }; });
+    });
+  });
+  return pos;
+}
+function nvBBox(pos) {
+  var x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+  Object.keys(pos).forEach(function (k) { var p = pos[k], hw = p.r || p.w / 2, hh = p.r || p.h / 2; x0 = Math.min(x0, p.x - hw); x1 = Math.max(x1, p.x + hw); y0 = Math.min(y0, p.y - hh); y1 = Math.max(y1, p.y + hh); });
+  return { x: x0, y: y0, w: x1 - x0, h: y1 - y0 };
+}
+function nvSvgIcon(k, size, x, y, cls) { var i = nvIcon(k, size, cls); i.setAttribute('x', x); i.setAttribute('y', y); return i; }
+
+function navBuildSvg(host, api) {
+  var T = api.T;
+  var box = nvH('div', { class: 'nvg-canvas', tabindex: '-1' });
+  host.appendChild(box);
+  var svg = nvS('svg', { role: 'tree', 'aria-label': 'ERP map: core, ' + T.modules.length + ' modules and their parts. Arrow keys move, Enter opens details, plus and minus expand or collapse.', preserveAspectRatio: 'xMidYMid meet' });
+  box.appendChild(svg);
+  box.appendChild(nvH('div', { class: 'nvg-hint nvg-hide-phone', text: 'Drag to pan · wheel to zoom · click a node for details' }));
+  box.appendChild(nvH('div', { class: 'nvg-legend nvg-hide-phone' }, nvH('span', null, nvH('i', { style: 'background:var(--nv-warn)' }), 'to look at'), nvH('span', null, nvH('i', { style: 'background:var(--nv-neg)' }), 'failing'), nvH('span', null, nvIcon('lock', 12), ' hidden for your role')));
+  svg.appendChild(nvS('defs', null,
+    nvS('filter', { id: 'nvg-glow', x: '-30%', y: '-30%', width: '160%', height: '160%' }, nvS('feGaussianBlur', { stdDeviation: '3', result: 'b' }), nvS('feMerge', null, nvS('feMergeNode', { in: 'b' }), nvS('feMergeNode', { in: 'SourceGraphic' }))),
+    nvS('filter', { id: 'nvg-glow-strong', x: '-40%', y: '-40%', width: '180%', height: '180%' }, nvS('feGaussianBlur', { stdDeviation: '7', result: 'b' }), nvS('feMerge', null, nvS('feMergeNode', { in: 'b' }), nvS('feMergeNode', { in: 'b' }), nvS('feMergeNode', { in: 'SourceGraphic' }))),
+    nvS('linearGradient', { id: 'nvg-shade', x1: '0', y1: '0', x2: '0', y2: '1' }, nvS('stop', { offset: '0', style: 'stop-color:#000;stop-opacity:0' }), nvS('stop', { offset: '1', style: 'stop-color:#000;stop-opacity:.28' })),
+    nvS('linearGradient', { id: 'nvg-coregrad', x1: '0', y1: '0', x2: '1', y2: '1' }, nvS('stop', { offset: '0', style: 'stop-color:var(--nv-logo-1)' }), nvS('stop', { offset: '.55', style: 'stop-color:var(--nv-logo-2)' }), nvS('stop', { offset: '1', style: 'stop-color:var(--nv-logo-3)' }))));
+  var gE = nvS('g'), gF = nvS('g'), gN = nvS('g');
+  svg.appendChild(gE); svg.appendChild(gF); svg.appendChild(gN);
+  var pos = nvLayout(T), nodeEls = {}, edgeEls = {}, moved = false;
+  function edgeTo(n) {
+    var p = pos[n.id], q = pos[n.parent.id], dd;
+    if (n.level === 1) { var dx = p.x - q.x, dy = p.y - q.y; dd = 'M' + q.x + ' ' + q.y + ' C' + (q.x + dx * 0.35) + ' ' + (q.y + dy * 0.05) + ' ' + (q.x + dx * 0.6) + ' ' + (q.y + dy * 0.9) + ' ' + p.x + ' ' + p.y; }
+    else if (p.side === 0) { var y0 = q.y - (q.r || q.h / 2), y1 = p.y + p.h / 2; dd = 'M' + q.x + ' ' + y0 + ' C' + q.x + ' ' + (y0 + y1) / 2 + ' ' + p.x + ' ' + (y0 + y1) / 2 + ' ' + p.x + ' ' + y1; }
+    else { var sx = q.x + p.side * (q.r || q.w / 2), ex = p.x - p.side * p.w / 2, mx = (sx + ex) / 2; dd = 'M' + sx + ' ' + q.y + ' C' + mx + ' ' + q.y + ' ' + mx + ' ' + p.y + ' ' + ex + ' ' + p.y; }
+    var e = nvS('path', { class: 'nvg-edge ' + (n.level === 1 ? 'is-spoke' : n.level === 2 ? 'is-l2' : 'is-l3'), d: dd, style: '--mm-c:' + nvCol(n.module) + (n.locked ? ';stroke:var(--nv-border-strong)' : '') });
+    edgeEls[n.id] = e; gE.appendChild(e);
+  }
+  function drawNode(n) {
+    var p = pos[n.id]; if (!p) return;
+    var disp = nvDisp(n);
+    var g = nvS('g', { class: 'nvg-node', tabindex: '0', role: 'treeitem', 'data-id': n.id, style: '--mm-c:' + nvCol(n.level === 0 ? 'core' : n.module), 'aria-level': String(n.level + 1),
+      'aria-label': n.label + (n.locked ? ', hidden for your role' : disp ? ', ' + disp : '') + (n.children && n.children.length ? (nvIsOpen(n) ? ', expanded' : ', collapsed') : '') });
+    if (n.children && n.children.length && !n.locked && n.level > 0) g.setAttribute('aria-expanded', nvIsOpen(n) ? 'true' : 'false');
+    if (n.level === 0) {
+      g.classList.add('nvg-core');
+      g.appendChild(nvS('circle', { class: 'ring', cx: p.x, cy: p.y, r: p.r + 7 }));
+      g.appendChild(nvS('circle', { class: 'disc', cx: p.x, cy: p.y, r: p.r }));
+      g.appendChild(nvSvgIcon('cube', 34, p.x - 17, p.y - 66, 'ci'));
+      g.appendChild(nvS('text', { class: 'ct', x: p.x, y: p.y + 6, text: 'ERP Core' }));
+      g.appendChild(nvS('text', { class: 'cs', x: p.x, y: p.y + 26, text: 'Connected business logic' }));
+      var ck = NAV.data.core.checks;
+      g.appendChild(nvS('g', { class: 'cb' }, nvS('rect', { x: p.x - 62, y: p.y + 38, width: 124, height: 24, rx: 12 }),
+        nvS('text', { x: p.x, y: p.y + 54.5, text: ck ? '✓ ' + ck.pass + '/' + (ck.pass + ck.warn + ck.fail) + ' checks pass' : '✓ Nothing deleted' })));
+    } else if (n.level === 1) {
+      g.classList.add('nvg-mod'); if (n.locked) g.classList.add('is-locked');
+      g.appendChild(nvS('circle', { class: 'ring', cx: p.x, cy: p.y, r: p.r + 7 }));
+      g.appendChild(nvS('circle', { class: 'disc', cx: p.x, cy: p.y, r: p.r }));
+      g.appendChild(nvS('circle', { class: 'shade', cx: p.x, cy: p.y, r: p.r }));
+      g.appendChild(nvSvgIcon(n.locked ? 'lock' : n.icon, 24, p.x - 12, p.y - 52, 'mi'));
+      g.appendChild(nvS('text', { class: 'ml', x: p.x, y: p.y - 10, text: n.lines[0] }));
+      g.appendChild(nvS('text', { class: 'ml', x: p.x, y: p.y + 6, text: n.lines[1] }));
+      g.appendChild(nvS('text', { class: 'mn', x: p.x, y: p.y + 34, text: n.locked ? '••' : (disp || '—') }));
+      if (n.status !== 'ok' && !n.locked) g.appendChild(nvS('circle', { class: 'nvg-st-' + n.status, cx: p.x + p.r * 0.7, cy: p.y - p.r * 0.7, r: 7, stroke: 'var(--nv-card)', 'stroke-width': 2 }));
+    } else {
+      var l3 = n.level >= 3, w = p.w, hh = p.h, x = p.x - w / 2, y = p.y - hh / 2;
+      g.classList.add('nvg-pl'); if (l3) g.classList.add('l3'); if (n.locked) g.classList.add('is-locked');
+      g.appendChild(nvS('rect', { class: 'ring', x: x - 4, y: y - 4, width: w + 8, height: hh + 8, rx: (hh + 8) / 2 }));
+      g.appendChild(nvS('rect', { class: 'bg', x: x, y: y, width: w, height: hh, rx: hh / 2 }));
+      g.appendChild(nvS('rect', { class: 'tint', x: x, y: y, width: w, height: hh, rx: hh / 2 }));
+      var r = l3 ? 9 : 12, cx = x + r + 6;
+      g.appendChild(nvS('circle', { class: 'dot', cx: cx, cy: p.y, r: r }));
+      g.appendChild(nvSvgIcon(n.locked ? 'lock' : (n.icon || 'sparkle'), l3 ? 11 : 14, cx - (l3 ? 5.5 : 7), p.y - (l3 ? 5.5 : 7), 'pi'));
+      var tx = cx + r + 7, maxc = Math.floor((w - (tx - x) - 14) / (l3 ? 6.8 : 7.6)), val = n.locked ? '' : (disp || '');
+      if (l3) {
+        g.appendChild(nvS('text', { class: 't1', x: tx, y: p.y + 4, text: nvTrunc(n.label, Math.max(6, maxc - Math.min(val.length, 12) - 1)) }));
+        if (val) g.appendChild(nvS('text', { class: 'tn', x: x + w - 12, y: p.y + 4, text: nvTrunc(val, 14) }));
+        if (n.locked) g.appendChild(nvS('text', { class: 't2', x: x + w - 12, y: p.y + 4, 'text-anchor': 'end', text: 'Hidden' }));
+      } else {
+        g.appendChild(nvS('text', { class: 't1', x: tx, y: p.y - 2, text: nvTrunc(n.label, maxc) }));
+        g.appendChild(nvS('text', { class: 't2', x: tx, y: p.y + 13, text: nvTrunc(n.locked ? 'Hidden for your role' : (n.sub || ''), Math.max(8, maxc - Math.min(val.length, 9) - 1)) }));
+        if (val) g.appendChild(nvS('text', { class: 'tn', x: x + w - 14, y: p.y + 13, text: nvTrunc(val, 10) }));
+      }
+      if (n.status && n.status !== 'ok' && !n.locked) g.appendChild(nvS('circle', { class: 'nvg-st-' + n.status, cx: x + w - 6, cy: y + 6, r: 5, stroke: 'var(--nv-card)', 'stroke-width': 1.5 }));
+    }
+    if (n.level >= 1 && n.children && n.children.length && !n.locked && !NAV.st.connOnly) {
+      var open = nvIsOpen(n), tp;
+      if (n.level === 1) { var side = pos[n.id].side; tp = side === 0 ? { x: p.x, y: p.y - p.r - 2 } : { x: p.x + side * (p.r + 2), y: p.y }; }
+      else tp = p.side === 0 ? { x: p.x, y: p.y - p.h / 2 - 1 } : { x: p.x + p.side * (p.w / 2 + 1), y: p.y };
+      var tg = nvS('g', { class: 'nvg-tog', role: 'button', 'aria-label': (open ? 'Collapse ' : 'Expand ') + n.label });
+      tg.appendChild(nvS('circle', { class: 'nvg-hit', cx: tp.x, cy: tp.y, r: 16 }));
+      tg.appendChild(nvS('circle', { cx: tp.x, cy: tp.y, r: 9 }));
+      tg.appendChild(nvS('path', { d: 'M' + (tp.x - 4.5) + ' ' + tp.y + 'h9' + (open ? '' : 'M' + tp.x + ' ' + (tp.y - 4.5) + 'v9') }));
+      tg.addEventListener('click', function (e) { e.stopPropagation(); toggle(n); });
+      tg.addEventListener('pointerdown', function (e) { e.stopPropagation(); });
+      g.appendChild(tg);
+    }
+    g.addEventListener('click', function () { if (moved) return; api.select(n.id); });
+    g.addEventListener('dblclick', function () { if (n.view) nvGo(n.view); });
+    g.addEventListener('pointerenter', function () { hoverPath(n, true); });
+    g.addEventListener('pointerleave', function () { hoverPath(n, false); });
+    g.addEventListener('focus', function () { hoverPath(n, true); });
+    g.addEventListener('blur', function () { hoverPath(n, false); });
+    nodeEls[n.id] = g; gN.appendChild(g);
+  }
+  function walk(n) {
+    if (n.level >= 1) edgeTo(n);
+    drawNode(n);
+    if (n.level === 0 || (nvIsOpen(n) && !NAV.st.connOnly)) (n.children || []).forEach(function (c) { if (pos[c.id]) walk(c); });
+  }
+  function drawFlows() {
+    var placed = [];
+    function freeSpot(lx, ly, w) {
+      var tries = [[0, 0]], i, j, t;
+      for (i = 1; i <= 8; i++) { tries.push([i * 18, 0], [-i * 18, 0]); }
+      for (j = 1; j <= 4; j++) { tries.push([0, j * 16], [0, -j * 16]); }
+      for (t = 0; t < tries.length; t++) {
+        var x = lx + tries[t][0], y = ly + tries[t][1], ok = true;
+        Object.keys(pos).forEach(function (k) { var p = pos[k]; if (!ok || !p.r) return; var cx = Math.max(x - w / 2, Math.min(p.x, x + w / 2)), cy = Math.max(y - 11, Math.min(p.y, y + 11)); if (Math.hypot(cx - p.x, cy - p.y) < p.r + 4) ok = false; });
+        placed.forEach(function (q) { if (ok && Math.abs(q.x - x) < (q.w + w) / 2 + 4 && Math.abs(q.y - y) < 26) ok = false; });
+        if (ok) { placed.push({ x: x, y: y, w: w }); return { x: x, y: y }; }
+      }
+      placed.push({ x: lx, y: ly, w: w }); return { x: lx, y: ly };
+    }
+    T.flows.forEach(function (f) {
+      var a = pos[f.from], b = pos[f.to]; if (!a || !b) return;
+      var k = f.inner ? 0.22 : 0.5, cx = (a.x + b.x) / 2 * k, cy = (a.y + b.y) / 2 * k;
+      var g = nvS('g', { class: 'nvg-flowg' + (NAV.st.connOnly ? ' is-conn' : ''), 'data-from': f.from, 'data-to': f.to });
+      g.appendChild(nvS('path', { class: 'nvg-flow', d: 'M' + a.x + ' ' + a.y + ' Q' + cx + ' ' + cy + ' ' + b.x + ' ' + b.y }));
+      var t = 0.62, px = (1 - t) * (1 - t) * a.x + 2 * (1 - t) * t * cx + t * t * b.x, py = (1 - t) * (1 - t) * a.y + 2 * (1 - t) * t * cy + t * t * b.y;
+      var tx = 2 * (1 - t) * (cx - a.x) + 2 * t * (b.x - cx), ty = 2 * (1 - t) * (cy - a.y) + 2 * t * (b.y - cy), ang = Math.atan2(ty, tx) * 180 / Math.PI;
+      g.appendChild(nvS('path', { class: 'nvg-flowhead', d: 'M-6 -5 L6 0 L-6 5Z', transform: 'translate(' + px + ' ' + py + ') rotate(' + ang + ')' }));
+      var mt = 0.5, lx = (1 - mt) * (1 - mt) * a.x + 2 * (1 - mt) * mt * cx + mt * mt * b.x, ly = (1 - mt) * (1 - mt) * a.y + 2 * (1 - mt) * mt * cy + mt * mt * b.y;
+      var num2 = f.count === null || f.count === undefined ? '' : fmt(f.count), wl = Math.max(70, f.label.length * 6.3 + (num2 ? num2.length * 7.4 + 10 : 0) + 18);
+      var sp = freeSpot(lx, ly, wl); lx = sp.x; ly = sp.y;
+      var lg = nvS('g', { class: 'nvg-flowlab' }, nvS('title', { text: f.label + (num2 ? ': ' + num2 + ' ' + f.unit : ' (hidden for your role)') + '. ' + f.def }));
+      lg.appendChild(nvS('rect', { x: lx - wl / 2, y: ly - 11, width: wl, height: 22, rx: 11 }));
+      var tt = nvS('text', { x: lx - wl / 2 + 9, y: ly + 4 });
+      tt.appendChild(document.createTextNode(f.label + (num2 ? ' ' : '')));
+      if (num2) tt.appendChild(nvS('tspan', { class: 'n', text: num2 }));
+      lg.appendChild(tt); g.appendChild(lg); gF.appendChild(g);
+    });
+  }
+  function draw() { nvClear(gE); nvClear(gF); nvClear(gN); nodeEls = {}; edgeEls = {}; pos = nvLayout(T); walk(T.core); drawFlows(); markSelected(NAV.selected); }
+  function toggle(n) { NAV.st.expanded[n.id] = !nvIsOpen(n); navSave(); var keep = NAV.vb; draw(); if (keep) setVB(keep); if (nodeEls[n.id]) nodeEls[n.id].focus({ preventScroll: true }); }
+  function hoverPath(n, on) {
+    svg.classList.toggle('has-hover', on);
+    [].forEach.call(svg.querySelectorAll('.is-path'), function (x) { x.classList.remove('is-path'); });
+    if (!on) return;
+    var cur = n;
+    while (cur) { if (nodeEls[cur.id]) nodeEls[cur.id].classList.add('is-path'); if (edgeEls[cur.id]) edgeEls[cur.id].classList.add('is-path'); cur = cur.parent; }
+    (n.children || []).forEach(function (c) { if (nodeEls[c.id]) nodeEls[c.id].classList.add('is-path'); if (edgeEls[c.id]) edgeEls[c.id].classList.add('is-path'); });
+    if (n.level === 1) [].forEach.call(gF.children, function (fg) { if (fg.getAttribute('data-from') === n.id || fg.getAttribute('data-to') === n.id) fg.classList.add('is-path'); });
+  }
+  function markSelected(id) { Object.keys(nodeEls).forEach(function (k) { nodeEls[k].classList.toggle('is-sel', k === id); nodeEls[k].setAttribute('aria-selected', k === id ? 'true' : 'false'); }); }
+  function setVB(vb) { NAV.vb = vb; svg.setAttribute('viewBox', vb.x + ' ' + vb.y + ' ' + vb.w + ' ' + vb.h); }
+  function fit() { var b = nvBBox(pos), pad = 44; setVB({ x: b.x - pad, y: b.y - pad, w: b.w + pad * 2, h: b.h + pad * 2 }); }
+  function zoom(f, cx, cy) {
+    var vb = NAV.vb; if (!vb) return;
+    var nw = Math.max(260, Math.min(4200, vb.w * f)), k = nw / vb.w, nh = vb.h * k;
+    if (cx === undefined) { cx = vb.x + vb.w / 2; cy = vb.y + vb.h / 2; }
+    setVB({ x: cx - (cx - vb.x) * k, y: cy - (cy - vb.y) * k, w: nw, h: nh });
+  }
+  function toSvg(e) {
+    var r = svg.getBoundingClientRect(), vb = NAV.vb, sc = Math.max(vb.w / r.width, vb.h / r.height);
+    var ox = (r.width * sc - vb.w) / 2, oy = (r.height * sc - vb.h) / 2;
+    return { x: vb.x - ox + (e.clientX - r.left) * sc, y: vb.y - oy + (e.clientY - r.top) * sc, sc: sc };
+  }
+  svg.addEventListener('wheel', function (e) { e.preventDefault(); var pt = toSvg(e); zoom(e.deltaY > 0 ? 1.12 : 0.89, pt.x, pt.y); }, { passive: false });
+  var ptrs = {}, dragStart = null, pinch0 = null;
+  svg.addEventListener('pointerdown', function (e) {
+    ptrs[e.pointerId] = { x: e.clientX, y: e.clientY };
+    var ids = Object.keys(ptrs); moved = false;
+    if (ids.length === 1) dragStart = { x: e.clientX, y: e.clientY, vb: { x: NAV.vb.x, y: NAV.vb.y, w: NAV.vb.w, h: NAV.vb.h }, sc: toSvg(e).sc };
+    else if (ids.length === 2) { var a = ptrs[ids[0]], b = ptrs[ids[1]]; pinch0 = { d: Math.hypot(a.x - b.x, a.y - b.y), vb: { x: NAV.vb.x, y: NAV.vb.y, w: NAV.vb.w, h: NAV.vb.h } }; dragStart = null; }
+  });
+  svg.addEventListener('pointermove', function (e) {
+    if (!ptrs[e.pointerId]) return;
+    ptrs[e.pointerId] = { x: e.clientX, y: e.clientY };
+    var ids = Object.keys(ptrs);
+    if (ids.length === 2 && pinch0) { var a = ptrs[ids[0]], b = ptrs[ids[1]], dd = Math.hypot(a.x - b.x, a.y - b.y) || 1; NAV.vb = { x: pinch0.vb.x, y: pinch0.vb.y, w: pinch0.vb.w, h: pinch0.vb.h }; zoom(pinch0.d / dd); moved = true; return; }
+    if (!dragStart) return;
+    var dx = e.clientX - dragStart.x, dy = e.clientY - dragStart.y;
+    if (!moved && Math.hypot(dx, dy) < 5) return;
+    if (!moved) { moved = true; try { svg.setPointerCapture(e.pointerId); } catch (x) {} box.classList.add('is-drag'); }
+    setVB({ x: dragStart.vb.x - dx * dragStart.sc, y: dragStart.vb.y - dy * dragStart.sc, w: dragStart.vb.w, h: dragStart.vb.h });
+  });
+  function up(e) { delete ptrs[e.pointerId]; if (Object.keys(ptrs).length < 2) pinch0 = null; if (!Object.keys(ptrs).length) { dragStart = null; box.classList.remove('is-drag'); setTimeout(function () { moved = false; }, 0); } }
+  svg.addEventListener('pointerup', up); svg.addEventListener('pointercancel', up);
+  svg.addEventListener('keydown', function (e) {
+    var a = document.activeElement && document.activeElement.closest && document.activeElement.closest('.nvg-node');
+    var n = a ? T.byId[a.getAttribute('data-id')] : null;
+    if (!n) return;
+    var goTo = function (m) { if (m && nodeEls[m.id]) { e.preventDefault(); nodeEls[m.id].focus(); ensureVisible(m); } };
+    var sibs = n.parent ? n.parent.children.filter(function (c) { return nodeEls[c.id]; }) : [n], i = sibs.indexOf(n);
+    if (e.key === 'ArrowDown') goTo(sibs[(i + 1) % sibs.length]);
+    else if (e.key === 'ArrowUp') goTo(sibs[(i - 1 + sibs.length) % sibs.length]);
+    else if (e.key === 'ArrowRight') { if (n.children && n.children.length && !n.locked) { if (!nvIsOpen(n) && n.level > 0) toggle(n); goTo(n.children[0]); } }
+    else if (e.key === 'ArrowLeft') { if (n.level > 1 && nvIsOpen(n)) toggle(n); else goTo(n.parent); }
+    else if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); api.select(n.id); }
+    else if ((e.key === '+' || e.key === '=') && n.children && n.children.length && !nvIsOpen(n)) { e.preventDefault(); toggle(n); }
+    else if ((e.key === '-' || e.key === '_') && nvIsOpen(n) && n.level > 0) { e.preventDefault(); toggle(n); }
+    else if (e.key === 'Home') goTo(T.core);
+  });
+  function ensureVisible(n) { var p = pos[n.id], vb = NAV.vb; if (!p || !vb) return; if (p.x < vb.x || p.x > vb.x + vb.w || p.y < vb.y || p.y > vb.y + vb.h) setVB({ x: p.x - vb.w / 2, y: p.y - vb.h / 2, w: vb.w, h: vb.h }); }
+  function focusNode(id) {
+    var n = T.byId[id]; if (!n) return;
+    var cur = n.parent, changed = false;
+    while (cur && cur.level >= 1) { if (!nvIsOpen(cur)) { NAV.st.expanded[cur.id] = true; changed = true; } cur = cur.parent; }
+    if (changed) { navSave(); draw(); fit(); }
+    if (nodeEls[id]) { nodeEls[id].focus({ preventScroll: true }); ensureVisible(n); hoverPath(n, true); setTimeout(function () { hoverPath(n, false); }, 1600); }
+  }
+  function highlight(ids) {
+    svg.classList.toggle('has-step', !!ids);
+    [].forEach.call(svg.querySelectorAll('.is-step'), function (x) { x.classList.remove('is-step'); });
+    if (!ids) return;
+    ids.forEach(function (id) { if (nodeEls[id]) nodeEls[id].classList.add('is-step'); if (edgeEls[id]) edgeEls[id].classList.add('is-step'); });
+    if (nodeEls.core) nodeEls.core.classList.add('is-step');
+  }
+  draw();
+  if (NAV.vb && NAV.keepVb) setVB(NAV.vb); else fit();
+  NAV.keepVb = true;
+  return { fit: fit, zoom: function (f) { zoom(f); }, markSelected: markSelected, focusNode: focusNode, highlight: highlight };
+}
+
+// ---- phone: the map as a collapsible tree
+function navBuildTree(host, api) {
+  var T = api.T, wrap = nvH('div', { class: 'nvg-tree', role: 'tree', 'aria-label': 'ERP map as a list' });
+  host.appendChild(wrap);
+  var cb = nvH('button', { class: 'nvg-trow', type: 'button' }, nvH('span', { class: 'nvg-badge sm' }, nvIcon('cube', 18)), nvH('span', { class: 'tl' }, nvH('b', { text: 'ERP Core' }), nvH('span', { text: 'Connected business logic · nothing is deleted' })), nvH('span', { class: 'nvg-pill pos', text: 'Safe' }));
+  cb.addEventListener('click', function () { api.select('core'); });
+  wrap.appendChild(nvH('div', { class: 'nvg-tmod', style: '--mm-c:' + nvCol('core') }, cb));
+  function row(n, depth) {
+    var hasKids = n.children && n.children.length && !n.locked, open = nvIsOpen(n), disp = nvDisp(n);
+    var b = nvH('button', { class: 'nvg-trow', type: 'button', role: 'treeitem', 'aria-level': String(depth), 'aria-expanded': hasKids ? String(open) : null },
+      hasKids ? nvIcon('chevRight', 18, 'nvg-chev') : nvH('span', { style: 'width:18px;flex:0 0 18px' }), depth === 1 ? nvH('i', { class: 'nvg-tdot', 'aria-hidden': 'true' }) : null,
+      nvH('span', { class: 'tl' }, nvH('b', { text: n.label }), nvH('span', { text: n.locked ? 'Hidden for your role' : (n.sub || '') })),
+      n.locked ? nvLockChip(n.locked) : nvH('span', { class: 'tn', text: disp || '' }),
+      n.status === 'fail' || n.status === 'warn' ? nvH('span', { class: 'nvg-pill ' + (n.status === 'fail' ? 'neg' : 'warn'), text: n.status === 'fail' ? 'Failing' : 'Look' }) : null);
+    var info = nvH('button', { class: 'nvg-tinfo', type: 'button', 'aria-label': 'Details: ' + n.label }, nvIcon('info', 20));
+    info.addEventListener('click', function () { api.select(n.id); });
+    var kids = nvH('div', { class: 'nvg-tkids', role: 'group' });
+    if (!open || !hasKids) kids.style.display = 'none';
+    b.addEventListener('click', function () {
+      if (!hasKids) { api.select(n.id); return; }
+      open = !open; NAV.st.expanded[n.id] = open; navSave();
+      b.setAttribute('aria-expanded', String(open)); kids.style.display = open ? '' : 'none';
+      if (open && !kids.childNodes.length) n.children.forEach(function (c) { kids.appendChild(row(c, depth + 1)); });
+    });
+    if (open && hasKids) n.children.forEach(function (c) { kids.appendChild(row(c, depth + 1)); });
+    return nvH('div', null, nvH('div', { class: 'nvg-tline' }, b, info), kids);
+  }
+  T.modules.forEach(function (m) {
+    if (NAV.st.expanded[m.id] === undefined) NAV.st.expanded[m.id] = false;
+    wrap.appendChild(nvH('div', { class: 'nvg-tmod', style: '--mm-c:' + nvCol(m.id) }, row(m, 1)));
+  });
+  wrap.appendChild(nvH('div', { class: 'nvg-st', style: 'margin-top:6px' }, nvIcon('link', 16), 'Connections'));
+  T.flows.forEach(function (f) { wrap.appendChild(nvH('div', { class: 'nvg-small' }, nvH('b', { text: T.MOD[f.from].label }), ' → ', nvH('b', { text: T.MOD[f.to].label }), ': ' + f.label + (f.count === null || f.count === undefined ? '' : ' · ' + fmt(f.count) + ' ' + f.unit))); });
+  var noop = function () {};
+  return { fit: noop, zoom: noop, markSelected: noop, highlight: noop, focusNode: function (id) { var n = T.byId[id], cur = n && n.parent; while (cur && cur.level >= 1) { NAV.st.expanded[cur.id] = true; cur = cur.parent; } navSave(); } };
+}
+
+// ---- 3D view: his hand-rolled perspective projection on a canvas
+function navBuild3D(host, api) {
+  var T = api.T;
+  var box = nvH('div', { class: 'nvg-canvas', tabindex: '0', role: 'img', 'aria-label': '3D view of the ERP map. Drag or use the arrow keys to rotate, plus and minus to zoom, click a node for details.' });
+  host.appendChild(box);
+  var cv = nvH('canvas');
+  box.appendChild(cv);
+  var g2 = cv.getContext ? cv.getContext('2d') : null;
+  var noop = function () {};
+  if (!g2) { nvClear(box); box.appendChild(nvH('div', { class: 'nvg-empty', text: 'This browser cannot draw the 3D view. Use the 2D map.' })); return { fit: noop, zoom: noop, markSelected: noop, focusNode: noop, highlight: noop }; }
+  var rm = nvReduced();
+  var autoBtn = nvH('button', { type: 'button', class: 'nvg-btn nvg-autob' }, nvIcon('reset', 15), nvH('span', { text: NAV.st.auto && !rm ? 'Auto-rotate: on' : 'Auto-rotate: off' }));
+  autoBtn.addEventListener('click', function () {
+    if (rm) { toast('Auto-rotate stays off: your device asks for reduced motion.'); return; }
+    NAV.st.auto = !NAV.st.auto; navSave(); autoBtn.querySelector('span').textContent = NAV.st.auto ? 'Auto-rotate: on' : 'Auto-rotate: off'; kick();
+  });
+  box.appendChild(autoBtn);
+  box.appendChild(nvH('div', { class: 'nvg-hint', text: 'Drag to rotate · wheel or pinch to zoom · click a node' }));
+  var root = el('nvgRoot') || box, cs = getComputedStyle(root);
+  var cvar = function (n, fb) { var v = cs.getPropertyValue(n).trim(); return v || fb; };
+  var cols = { core: cvar('--nv-m-core', '#5B4FE9') };
+  T.modules.forEach(function (m) { cols[m.id] = cvar('--nv-m-' + m.id, '#5B4FE9'); });
+  var textCol = cvar('--nv-text', '#14172B'), text2 = cvar('--nv-text3', '#6B7190'), cardCol = cvar('--nv-card', '#FFFFFF'), dark = nvDark();
+  if (/^var\(/.test(textCol)) textCol = dark ? '#F4F6FA' : '#14172B';
+  if (/^var\(/.test(text2)) text2 = dark ? '#8B95A7' : '#6B7190';
+  if (/^var\(/.test(cardCol)) cardCol = dark ? '#161E2B' : '#FFFFFF';
+  var nodes = [], links = [];
+  nodes.push({ n: T.core, x: 0, y: 0, z: 0, r: 46, col: cols.core });
+  T.modules.forEach(function (m, i) {
+    var a = m.angle * Math.PI / 180, tilt = (i % 2 ? 1 : -1) * 120;
+    var mx = 330 * Math.cos(a), mz = 330 * Math.sin(a), my = tilt;
+    var mn = { n: m, x: mx, y: my, z: mz, r: 26, col: m.locked ? '#8A90A6' : cols[m.id] };
+    nodes.push(mn); links.push([nodes[0], mn, 4]);
+    if (NAV.st.connOnly || !nvIsOpen(m)) return;
+    var len = Math.hypot(mx, my, mz), ux = mx / len, uy = my / len, uz = mz / len;
+    var tx = -uz, tz = ux, ty = 0, tl = Math.hypot(tx, ty, tz) || 1; tx /= tl; tz /= tl;
+    var bx = uy * tz - uz * ty, by = uz * tx - ux * tz, bz = ux * ty - uy * tx;
+    var kidsL = m.children, nk = kidsL.length;
+    kidsL.forEach(function (c, j) {
+      var ang = (j / nk) * Math.PI * 2, spread = 120;
+      var cx = ux * 560 + (tx * Math.cos(ang) + bx * Math.sin(ang)) * spread, cy = uy * 560 + (ty * Math.cos(ang) + by * Math.sin(ang)) * spread, cz = uz * 560 + (tz * Math.cos(ang) + bz * Math.sin(ang)) * spread;
+      var cn = { n: c, x: cx, y: cy, z: cz, r: 12, col: c.locked ? '#8A90A6' : cols[m.id] };
+      nodes.push(cn); links.push([mn, cn, 1.6]);
+      if (!nvIsOpen(c)) return;
+      c.children.forEach(function (k, q) {
+        var a2 = ang + (q - (c.children.length - 1) / 2) * 0.35, l2 = Math.hypot(cx, cy, cz);
+        var kn = { n: k, x: cx / l2 * 740 + (tx * Math.cos(a2) + bx * Math.sin(a2)) * 150, y: cy / l2 * 740 + (ty * Math.cos(a2) + by * Math.sin(a2)) * 150, z: cz / l2 * 740 + (tz * Math.cos(a2) + bz * Math.sin(a2)) * 150, r: 7, col: k.locked ? '#8A90A6' : cols[m.id] };
+        nodes.push(kn); links.push([cn, kn, 1]);
+      });
+    });
+  });
+  var byNode = {}; nodes.forEach(function (x) { byNode[x.n.id] = x; });
+  var flows3 = T.flows.map(function (f) { var a = byNode[f.from], b = byNode[f.to]; return a && b ? [a, b, f] : null; }).filter(Boolean);
+  var W = 0, H = 0, dpr = Math.min(2, window.devicePixelRatio || 1), proj = [], hl = null, alive = true, last = 0, running = false, drag = null, ptrs = {}, pinch0 = null;
+  function size() { var r = box.getBoundingClientRect(); W = Math.max(280, r.width); H = Math.max(280, r.height); cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr); }
+  function project(p) {
+    var R0 = NAV.rot, cyw = Math.cos(R0.yaw), syw = Math.sin(R0.yaw), cp = Math.cos(R0.pitch), sp = Math.sin(R0.pitch);
+    var x1 = p.x * cyw - p.z * syw, z1 = p.x * syw + p.z * cyw, y2 = p.y * cp - z1 * sp, z2 = p.y * sp + z1 * cp;
+    var f = Math.min(W, H) * 1.3 * R0.zoom, k = f / (1700 - z2);
+    return { x: W / 2 + x1 * k, y: H / 2 + y2 * k, k: k, z: z2 };
+  }
+  function alpha(z) { return Math.max(0.25, Math.min(1, 0.62 + z / 1400)); }
+  function draw() {
+    if (!W) size();
+    g2.setTransform(dpr, 0, 0, dpr, 0, 0); g2.clearRect(0, 0, W, H);
+    [330, 560].forEach(function (rad, ri) {
+      g2.beginPath();
+      for (var i = 0; i <= 72; i++) { var a = i / 72 * Math.PI * 2, pp = project({ x: rad * Math.cos(a), y: 0, z: rad * Math.sin(a) }); if (i) g2.lineTo(pp.x, pp.y); else g2.moveTo(pp.x, pp.y); }
+      g2.strokeStyle = dark ? 'rgba(245,166,35,' + (ri ? 0.12 : 0.22) + ')' : 'rgba(91,79,233,' + (ri ? 0.10 : 0.18) + ')'; g2.lineWidth = 1; g2.setLineDash([4, 6]); g2.stroke(); g2.setLineDash([]);
+    });
+    proj = nodes.map(function (p) { var q = project(p); q.p = p; return q; });
+    var P = {}; proj.forEach(function (q) { P[q.p.n.id] = q; });
+    links.forEach(function (l) {
+      var a = P[l[0].n.id], b = P[l[1].n.id]; if (!a || !b) return;
+      g2.beginPath(); g2.moveTo(a.x, a.y); g2.lineTo(b.x, b.y);
+      g2.strokeStyle = l[1].col; g2.globalAlpha = alpha((a.z + b.z) / 2) * (hl && !hl[l[1].n.id] ? 0.25 : 0.85); g2.lineWidth = l[2] * Math.max(0.6, b.k * 1.4);
+      if (dark) { g2.shadowColor = l[1].col; g2.shadowBlur = 8; }
+      g2.stroke(); g2.shadowBlur = 0; g2.globalAlpha = 1;
+    });
+    flows3.forEach(function (fw) {
+      var a = P[fw[0].n.id], b = P[fw[1].n.id]; if (!a || !b) return;
+      var mx = (a.x + b.x) / 2 * 0.6 + W / 2 * 0.4, my = (a.y + b.y) / 2 * 0.6 + H / 2 * 0.4;
+      g2.beginPath(); g2.moveTo(a.x, a.y); g2.quadraticCurveTo(mx, my, b.x, b.y);
+      g2.strokeStyle = text2; g2.globalAlpha = NAV.st.connOnly ? 0.9 : 0.45; g2.setLineDash([4, 5]); g2.lineWidth = 1.2; g2.stroke(); g2.setLineDash([]); g2.globalAlpha = 1;
+      if (NAV.st.connOnly) { g2.font = '600 11px Inter, system-ui, sans-serif'; g2.fillStyle = textCol; g2.textAlign = 'center'; g2.fillText(fw[2].label + (fw[2].count === null || fw[2].count === undefined ? '' : ' · ' + fmt(fw[2].count)), mx, my); }
+    });
+    proj.slice().sort(function (a, b) { return a.z - b.z; }).forEach(function (q) {
+      var p = q.p, r = Math.max(3, p.r * q.k * 1.6), al = alpha(q.z) * (hl && !hl[p.n.id] ? 0.3 : 1);
+      q.rr = r; g2.globalAlpha = al;
+      var grad = g2.createRadialGradient(q.x - r * 0.35, q.y - r * 0.35, r * 0.1, q.x, q.y, r);
+      grad.addColorStop(0, dark ? '#ffffff' : 'rgba(255,255,255,0.9)'); grad.addColorStop(0.25, p.col); grad.addColorStop(1, p.col);
+      if (dark) { g2.shadowColor = p.col; g2.shadowBlur = p.n.level <= 1 ? 26 : 12; }
+      g2.beginPath(); g2.arc(q.x, q.y, r, 0, Math.PI * 2); g2.fillStyle = grad; g2.fill(); g2.shadowBlur = 0;
+      if (p.n.id === NAV.selected) { g2.beginPath(); g2.arc(q.x, q.y, r + 5, 0, Math.PI * 2); g2.strokeStyle = textCol; g2.lineWidth = 2; g2.stroke(); }
+      var lvl = p.n.level, showLab = lvl <= 1 || (lvl === 2 && q.k > 0.55) || (lvl === 3 && q.k > 0.8) || (hl && hl[p.n.id]);
+      if (showLab) {
+        var fs = lvl === 0 ? 15 : lvl === 1 ? 13 : 11;
+        g2.font = (lvl <= 1 ? '700 ' : '600 ') + fs + 'px Inter, system-ui, sans-serif'; g2.textAlign = 'center';
+        var label = lvl === 0 ? 'ERP Core' : W < 560 && lvl === 1 ? nvTrunc(p.n.lines[0].replace(/ &$|,$/, ''), 16) : nvTrunc(p.n.label, lvl === 1 ? 30 : 22), val = p.n.locked ? 'Hidden' : (nvDisp(p.n) || '');
+        var ly = lvl === 0 ? q.y + 4 : q.y + r + fs + 3;
+        if (lvl > 0) { var tw = g2.measureText(label).width; g2.fillStyle = cardCol; g2.globalAlpha = al * 0.82; g2.fillRect(q.x - tw / 2 - 4, ly - fs, tw + 8, fs + (val ? fs + 4 : 4)); g2.globalAlpha = al; }
+        g2.fillStyle = lvl === 0 ? '#ffffff' : textCol; g2.fillText(label, q.x, ly);
+        if (val && lvl > 0) { g2.font = '800 ' + (fs - 1) + 'px Inter, system-ui, sans-serif'; g2.fillStyle = p.n.locked ? text2 : p.col; g2.fillText(nvTrunc(val, 16), q.x, ly + fs + 1); }
+      }
+      g2.globalAlpha = 1;
+    });
+  }
+  function frame(t) {
+    if (!alive || VIEW !== 'mindmap' || !document.body.contains(cv)) { alive = false; running = false; return; }
+    var dt = last ? Math.min(64, t - last) : 16; last = t;
+    if (NAV.st.auto && !rm && !drag) { NAV.rot.yaw += 0.00022 * dt; draw(); }
+    if (NAV.st.auto && !rm) requestAnimationFrame(frame); else running = false;
+  }
+  function kick() { if (!running && NAV.st.auto && !rm && alive) { running = true; last = 0; requestAnimationFrame(frame); } else draw(); }
+  function pick(e) {
+    var r = cv.getBoundingClientRect(), x = e.clientX - r.left, y = e.clientY - r.top, best = null;
+    proj.forEach(function (q) { var dd = Math.hypot(q.x - x, q.y - y); if (dd <= Math.max(10, (q.rr || 6) + 4) && (!best || q.z > best.z)) best = q; });
+    return best;
+  }
+  function pathSet(n) { var o = {}, c = n; while (c) { o[c.id] = 1; c = c.parent; } (n.children || []).forEach(function (k) { o[k.id] = 1; }); return o; }
+  cv.addEventListener('pointerdown', function (e) {
+    ptrs[e.pointerId] = { x: e.clientX, y: e.clientY }; var ids = Object.keys(ptrs);
+    if (ids.length === 1) drag = { x: e.clientX, y: e.clientY, yaw: NAV.rot.yaw, pitch: NAV.rot.pitch, moved: false };
+    else if (ids.length === 2) { var a = ptrs[ids[0]], b = ptrs[ids[1]]; pinch0 = { d: Math.hypot(a.x - b.x, a.y - b.y), z: NAV.rot.zoom }; drag = null; }
+    try { cv.setPointerCapture(e.pointerId); } catch (x) {}
+  });
+  cv.addEventListener('pointermove', function (e) {
+    if (ptrs[e.pointerId]) ptrs[e.pointerId] = { x: e.clientX, y: e.clientY };
+    var ids = Object.keys(ptrs);
+    if (ids.length === 2 && pinch0) { var a = ptrs[ids[0]], b = ptrs[ids[1]]; NAV.rot.zoom = Math.max(0.45, Math.min(3, pinch0.z * Math.hypot(a.x - b.x, a.y - b.y) / (pinch0.d || 1))); draw(); return; }
+    if (drag) {
+      var dx = e.clientX - drag.x, dy = e.clientY - drag.y;
+      if (Math.hypot(dx, dy) > 4) drag.moved = true;
+      NAV.rot.yaw = drag.yaw + dx * 0.008; NAV.rot.pitch = Math.max(-1.2, Math.min(1.2, drag.pitch + dy * 0.006)); draw(); return;
+    }
+    var hit = pick(e), nh = hit ? pathSet(hit.p.n) : null;
+    if ((nh && !hl) || (!nh && hl) || (nh && hl && Object.keys(nh).join() !== Object.keys(hl).join())) { hl = nh; cv.style.cursor = hit ? 'pointer' : 'grab'; draw(); }
+  });
+  cv.addEventListener('pointerup', function (e) {
+    var wasClick = drag && !drag.moved;
+    delete ptrs[e.pointerId]; if (Object.keys(ptrs).length < 2) pinch0 = null;
+    if (wasClick) { var hit = pick(e); if (hit) { api.select(hit.p.n.id); draw(); } }
+    drag = null; kick();
+  });
+  cv.addEventListener('pointercancel', function (e) { delete ptrs[e.pointerId]; drag = null; pinch0 = null; });
+  cv.addEventListener('pointerleave', function () { if (hl) { hl = null; draw(); } });
+  cv.addEventListener('wheel', function (e) { e.preventDefault(); NAV.rot.zoom = Math.max(0.45, Math.min(3, NAV.rot.zoom * (e.deltaY > 0 ? 0.9 : 1.1))); draw(); }, { passive: false });
+  box.addEventListener('keydown', function (e) {
+    var k = e.key, R0 = NAV.rot;
+    if (k === 'ArrowLeft') R0.yaw -= 0.12; else if (k === 'ArrowRight') R0.yaw += 0.12;
+    else if (k === 'ArrowUp') R0.pitch = Math.max(-1.2, R0.pitch - 0.1); else if (k === 'ArrowDown') R0.pitch = Math.min(1.2, R0.pitch + 0.1);
+    else if (k === '+' || k === '=') R0.zoom = Math.min(3, R0.zoom * 1.1); else if (k === '-') R0.zoom = Math.max(0.45, R0.zoom * 0.9);
+    else return;
+    e.preventDefault(); draw();
+  });
+  var ro = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(function () { size(); draw(); }) : null;
+  if (ro) ro.observe(box);
+  size(); draw(); kick();
+  return {
+    fit: function () { NAV.rot = { yaw: -0.5, pitch: 0.32, zoom: 1 }; draw(); },
+    zoom: function (f) { NAV.rot.zoom = Math.max(0.45, Math.min(3, NAV.rot.zoom / f)); draw(); },
+    markSelected: function () { draw(); },
+    focusNode: function (id) { var n = T.byId[id]; hl = n ? pathSet(n) : null; draw(); setTimeout(function () { hl = null; draw(); }, 1600); },
+    highlight: function (ids) { if (!ids) { hl = null; draw(); return; } hl = {}; ids.forEach(function (id) { hl[id] = 1; }); hl.core = 1; draw(); },
+    destroy: function () { alive = false; if (ro) ro.disconnect(); }
+  };
+}
+
+// ---- Module Details: panel (desktop) and bottom sheet (phone)
+function navPanel(api) {
+  var panel = api.panel; nvClear(panel);
+  var x = nvH('button', { type: 'button', class: 'nvg-ibtn', title: 'Hide details panel', 'aria-label': 'Hide details panel' }, nvIcon('close', 18));
+  x.addEventListener('click', function () { NAV.st.details = false; navSave(); repaint(); });
+  panel.appendChild(nvH('div', { style: 'display:flex;align-items:center;justify-content:space-between' }, nvH('h2', { class: 'nvg-card-title', text: 'Module Details' }), x));
+  navDetails(panel, api, NAV.selected);
+}
+function navSheet(api, id) {
+  var back = nvH('div', { class: 'dlg-back' }), sh = nvH('div', { class: 'nvg-sheet nvg', role: 'dialog', 'aria-modal': 'true' });
+  var x = nvH('button', { type: 'button', class: 'nvg-ibtn', 'aria-label': 'Close' }, nvIcon('close', 18));
+  var n = api.T.byId[id];
+  sh.appendChild(nvH('div', { style: 'display:flex;align-items:center;justify-content:space-between;margin-bottom:10px' }, nvH('h2', { class: 'nvg-card-title', text: n.level === 0 ? 'ERP Core' : n.label }), x));
+  navDetails(sh, api, id);
+  back.appendChild(sh); document.body.appendChild(back);
+  var close = function () { if (back.parentNode) back.parentNode.removeChild(back); };
+  x.addEventListener('click', close);
+  back.addEventListener('mousedown', function (e) { if (e.target === back) close(); });
+  sh.addEventListener('click', function (e) { if (e.target.closest('[data-closes]')) close(); });
+}
+function navDetails(container, api, id) {
+  var T = api.T, n = T.byId[id] || T.core, mod = n.level >= 1 ? T.MOD[n.module] : null, M = mod ? mod.m : null;
+  var wrap = nvH('div', { style: 'display:flex;flex-direction:column;gap:14px' });
+  container.appendChild(wrap);
+  var locked = mod && mod.locked;
+  var badge = !mod ? (NAV.data.core.status === 'fail' ? nvH('span', { class: 'nvg-pill neg', text: 'A check is failing' }) : nvH('span', { class: 'nvg-pill pos' }, nvIcon('check', 13), 'Nothing is deleted · every figure traceable'))
+    : locked ? nvLockChip(locked, 'Hidden for your role') : mod.status === 'fail' ? nvH('span', { class: 'nvg-pill neg', text: 'A check is failing' }) : mod.status === 'warn' ? nvH('span', { class: 'nvg-pill warn', text: 'Something to look at' }) : nvH('span', { class: 'nvg-pill pos' }, nvIcon('check', 13), 'All checks pass');
+  var nd = nvDisp(n);
+  wrap.appendChild(nvH('div', { class: 'nvg-phead', style: '--mm-c:' + nvCol(mod ? mod.id : 'core') },
+    nvH('span', { class: 'nvg-badge', style: 'background:color-mix(in srgb, var(--mm-c) 16%, transparent);color:var(--mm-c)' }, nvIcon(mod ? mod.icon : 'cube', 22)),
+    nvH('div', { style: 'min-width:0' }, nvH('div', { class: 'nvg-ptitle', text: mod ? mod.label : 'ERP Core' }), nvH('div', { style: 'margin-top:6px' }, badge),
+      n.level >= 2 ? nvH('div', { class: 'nvg-psub' }, 'Selected: ', nvH('b', { text: n.label }), n.locked ? ' · hidden' : nd ? ' · ' + nd : '') : null)));
+  wrap.appendChild(nvH('p', { class: 'nvg-desc', text: n.level >= 2 && n.def ? n.def : M ? M.desc : T.core.def }));
+  if (locked) {
+    wrap.appendChild(nvH('div', { class: 'nvg-hidden' }, nvIcon('lock', 20), nvH('div', null, nvH('b', { text: 'Hidden for your role' }), nvH('div', { text: locked === 'investor' ? 'Investors and capital are for shareholders and the owner. Its counts are not sent to your screen.' : 'This part needs an ability your role does not have, so its counts and rows are not sent to your screen. The owner can switch abilities on per person under Settings > Users.' }))));
+    wrap.appendChild(navAccessTab(M));
+    return;
+  }
+  var TABS = [['overview', 'Overview'], ['data', 'Data'], ['rules', 'Rules'], ['access', 'Access'], ['audit', 'Audit']];
+  var bar = nvH('div', { class: 'nvg-tabs', role: 'tablist', 'aria-label': 'Module details' }), body = nvH('div', { role: 'tabpanel' });
+  var btns = TABS.map(function (t) {
+    var b = nvH('button', { class: 'nvg-tab', type: 'button', role: 'tab', 'aria-selected': NAV.tab === t[0] ? 'true' : 'false', tabindex: NAV.tab === t[0] ? '0' : '-1', text: t[1] });
+    b.addEventListener('click', function () { NAV.tab = t[0]; btns.forEach(function (x, i) { x.setAttribute('aria-selected', TABS[i][0] === NAV.tab ? 'true' : 'false'); x.setAttribute('tabindex', TABS[i][0] === NAV.tab ? '0' : '-1'); }); fill(); });
+    b.addEventListener('keydown', function (e) { var i = btns.indexOf(b); if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') { e.preventDefault(); var nb = btns[(i + (e.key === 'ArrowRight' ? 1 : btns.length - 1)) % btns.length]; nb.focus(); nb.click(); } });
+    bar.appendChild(b); return b;
+  });
+  wrap.appendChild(bar); wrap.appendChild(body);
+  function fill() {
+    nvClear(body);
+    try {
+      if (NAV.tab === 'overview') body.appendChild(navOverviewTab(api, M, n));
+      else if (NAV.tab === 'data') body.appendChild(M ? navDataTab(M) : navHealth(api));
+      else if (NAV.tab === 'rules') body.appendChild(navRulesTab(M));
+      else if (NAV.tab === 'access') body.appendChild(navAccessTab(M));
+      else body.appendChild(navAuditTab(M));
+    } catch (e) { body.appendChild(nvH('div', { class: 'nvg-empty', text: 'This tab could not be drawn: ' + (e && e.message ? e.message : e) })); }
+  }
+  fill();
+  var acts = nvH('div', { class: 'nvg-actions' });
+  var view = n.level >= 2 && n.view ? n.view : M ? M.view : 'syscheck';
+  var open = nvH('button', { type: 'button', class: 'nvg-btn primary', 'data-closes': '1', disabled: !navOn(view) }, nvIcon('arrowRight', 15), n.level >= 2 ? 'Open screen' : 'Open module');
+  open.addEventListener('click', function () { nvGo(view); });
+  var calc = nvH('button', { type: 'button', class: 'nvg-btn' }, nvIcon('bars', 15), 'Show calculation');
+  calc.addEventListener('click', function () { navNodeCalc(n, M); });
+  var guide = nvH('button', { type: 'button', class: 'nvg-btn', 'data-closes': '1' }, nvIcon('help', 15), 'Guide');
+  guide.addEventListener('click', function () { if (navOn('guide')) nvGo('guide'); else nvCalc(M ? M.label : 'ERP Core', (M ? M.rules : []).map(function (r) { return [r, '']; }), M ? M.desc : T.core.def); });
+  acts.appendChild(open); acts.appendChild(calc); acts.appendChild(guide);
+  wrap.appendChild(acts);
+}
+function navNodeCalc(n, M) {
+  var R0 = NAV.data.range.label;
+  if (n.level === 0) { var c = NAV.data.core.checks; if (c) nvCalc('ERP Core', [['Checks passed', c.pass], ['To look at', c.warn], ['Failed', c.fail]], 'The system check'); else toast('The system check is for shareholders and the owner.'); return; }
+  if (n.locked) { toast('Hidden for your role: there is no calculation to show.'); return; }
+  if (n.level === 1) { nvCalc(n.label, M.calc || [], R0); return; }
+  var rows = (n.children || []).filter(function (k) { return !k.locked; }).map(function (k) { return [k.label, nvDisp(k) || '']; });
+  rows.push([n.label, nvDisp(n) || '']);
+  nvCalc(n.label, rows, (n.def ? n.def + ' · ' : '') + (n.sub || '') + ' · ' + R0);
+}
+function navMini(q) {
+  var e = nvH('div', { class: 'nvg-mini' });
+  if (q.locked) { e.appendChild(nvH('b', { 'aria-hidden': 'true', text: '••••' })); e.appendChild(nvH('span', { text: q.label })); e.appendChild(nvLockChip(q.locked)); return e; }
+  var v = q.display !== undefined ? q.display : q.money ? nvTk(q.v) : q.pct ? fmt(q.v) + '%' : fmt(q.v);
+  e.appendChild(nvH('b', { title: q.money ? nvMoney(q.v) : null, text: v })); e.appendChild(nvH('span', { text: q.label }));
+  return e;
+}
+function navBars(ch) {
+  var items = (ch.items || []).filter(function (x) { return x.value > 0; });
+  if (!items.length) return nvH('div', { class: 'nvg-empty', text: 'Nothing to show for this range yet.' });
+  var mx = Math.max.apply(null, items.map(function (x) { return x.value; }).concat([1]));
+  var tones = { pass: 'var(--nv-pos)', warn: 'var(--nv-warn)', fail: 'var(--nv-neg)' };
+  return nvH('div', { class: 'nvg-hbars', role: 'img', 'aria-label': ch.title + ': ' + items.map(function (x) { return x.label + ' ' + x.value; }).join('; ') }, items.map(function (x, i) {
+    return nvH('div', { class: 'nvg-hbar' }, nvH('span', { class: 'l', title: x.label, text: x.label }), nvH('span', { class: 't' }, nvH('i', { style: 'width:' + Math.max(2, x.value / mx * 100) + '%;background:' + (tones[x.tone] || 'var(--nv-c' + (i % 8 + 1) + ')') })),
+      nvH('span', { class: 'v', text: ch.money ? nvTk(x.value) : fmt(x.value) }));
+  }));
+}
+function navLine(ch) {
+  var items = ch.items || [];
+  if (items.length < 2) return navBars(ch);
+  var W = 320, H = 150, L = 34, Tp = 8, B = 22, iw = W - L - 8, ih = H - Tp - B;
+  var mx = Math.max.apply(null, items.map(function (x) { return x.value; }).concat([1])), mn = Math.min.apply(null, items.map(function (x) { return x.value; }).concat([0]));
+  var x = function (i) { return L + i * iw / (items.length - 1); }, y = function (v) { return Tp + ih - (v - mn) / ((mx - mn) || 1) * ih; };
+  var pts = items.map(function (it, i) { return [x(i), y(it.value)]; });
+  var line = 'M' + pts.map(function (p) { return p[0].toFixed(1) + ',' + p[1].toFixed(1); }).join(' L'), area = line + ' L' + pts[pts.length - 1][0].toFixed(1) + ',' + (Tp + ih) + ' L' + pts[0][0].toFixed(1) + ',' + (Tp + ih) + ' Z';
+  var svg = nvS('svg', { viewBox: '0 0 ' + W + ' ' + H, role: 'img', 'aria-label': ch.title + ': ' + items.map(function (it) { return it.label + ' ' + it.value; }).join('; ') },
+    nvS('defs', null, nvS('linearGradient', { id: 'nvgLA', x1: '0', y1: '0', x2: '0', y2: '1' }, nvS('stop', { offset: '0', 'stop-color': 'var(--nv-accent)', 'stop-opacity': '.28' }), nvS('stop', { offset: '1', 'stop-color': 'var(--nv-accent)', 'stop-opacity': '0' }))),
+    [mn, (mn + mx) / 2, mx].map(function (v) { return [nvS('line', { x1: L, x2: W - 8, y1: y(v), y2: y(v), stroke: 'var(--nv-border)' }), nvS('text', { x: L - 6, y: y(v) + 4, 'text-anchor': 'end', style: 'font-size:10px;fill:var(--nv-text3)', text: ch.money ? nvShort(v) : fmt(v) })]; }),
+    items.map(function (it, i) { return nvS('text', { x: x(i), y: H - 6, 'text-anchor': 'middle', style: 'font-size:10px;fill:var(--nv-text3)', text: String(it.label).split(" '")[0] }); }),
+    nvS('path', { d: area, fill: 'url(#nvgLA)' }), nvS('path', { d: line, fill: 'none', stroke: 'var(--nv-accent)', 'stroke-width': 2.5, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }),
+    pts.map(function (p, i) { return nvS('circle', { cx: p[0], cy: p[1], r: 3.5, fill: 'var(--nv-accent)', stroke: 'var(--nv-card)', 'stroke-width': 2 }, nvS('title', { text: items[i].label + ': ' + (ch.money ? nvMoney(items[i].value) : fmt(items[i].value)) })); }));
+  return nvH('div', { class: 'nvg-line' }, svg);
+}
+function navOverviewTab(api, M, n) {
+  var T = api.T, out = nvH('div', { style: 'display:flex;flex-direction:column;gap:14px' }), key = M ? M.id : null, d = NAV.data;
+  var minis = M ? M.minis : (function () {
+    var c = d.core.checks, open = d.modules.filter(function (m) { return !m.locked; }).length;
+    return [c ? { label: 'Checks healthy', display: c.pass + '/' + (c.pass + c.warn + c.fail) } : { label: 'Checks healthy', locked: 'perm' }, { label: 'Modules open to you', display: open + '/' + d.modules.length }, { label: 'Needs action', v: d.actions.filter(function (a) { return a.tone !== 'neutral'; }).length }];
+  })();
+  if (minis && minis.length) out.appendChild(nvH('div', { class: 'nvg-minis' }, minis.map(navMini)));
+  var ch = M ? M.chart : d.core.checks ? { title: 'System check results', items: [{ label: 'Pass', value: d.core.checks.pass, tone: 'pass' }, { label: 'Look', value: d.core.checks.warn, tone: 'warn' }, { label: 'Fail', value: d.core.checks.fail, tone: 'fail' }] } : null;
+  if (ch) out.appendChild(nvH('div', null, nvH('div', { class: 'nvg-st' }, nvIcon('bars', 16), ch.title), key === 'orders' || key === 'analytics' ? navLine(ch) : navBars(ch)));
+  var con = nvH('div', { class: 'nvg-chips' }), seen = {};
+  T.flows.forEach(function (f) {
+    var other = !key ? f.from : f.from === key ? f.to : f.to === key ? f.from : null;
+    if (!other || seen[other]) return; seen[other] = 1;
+    var b = nvH('button', { class: 'nvg-conn', type: 'button', style: '--mm-c:' + nvCol(other), title: f.label + ': ' + f.def }, nvH('i', { 'aria-hidden': 'true' }), T.MOD[other].label);
+    b.addEventListener('click', function () { api.select(other); if (api.map) api.map.focusNode(other); });
+    con.appendChild(b);
+  });
+  out.appendChild(nvH('div', null, nvH('div', { class: 'nvg-st' }, nvIcon('link', 16), 'Connected to'), con));
+  if (key) out.appendChild(nvH('div', { style: 'display:flex;flex-direction:column;gap:4px' }, T.flows.filter(function (f) { return f.from === key || f.to === key; }).map(function (f) {
+    return nvH('div', { class: 'nvg-small nvg-muted' }, T.MOD[f.from].label + ' → ' + T.MOD[f.to].label + ': ', nvH('b', { style: 'color:var(--nv-text)', text: f.label }), f.count === null || f.count === undefined ? ' (hidden)' : ' · ' + fmt(f.count) + ' ' + f.unit);
+  })));
+  return out;
+}
+function navDataTab(M) {
+  var dt = M.data;
+  if (!dt || !dt.rows || !dt.rows.length) return nvH('div', { class: 'nvg-empty', text: 'No rows for this range and these filters yet.' });
+  var page = 6, shown = page, wrap = nvH('div');
+  var cols = dt.columns, sub = !!dt.sub;
+  function rowClick(r) {
+    if (M.id === 'inventory') return nvGo('products', r[1]);
+    if (M.id === 'orders') return nvGo('sales', r[0]);
+    if (M.id === 'customers' && typeof openCustomerPage === 'function' && navOn('customers')) return openCustomerPage(r[1], r[0]);
+    nvGo(dt.view);
+  }
+  function draw() {
+    nvClear(wrap);
+    var tb = nvH('tbody');
+    dt.rows.slice(0, shown).forEach(function (r) {
+      var cells = [], i = 0;
+      if (sub) { cells.push(nvH('td', null, nvH('span', { class: 'p', text: r[0] }), nvH('span', { class: 's', text: r[1] }))); i = 2; }
+      for (; i < r.length; i++) cells.push(nvH('td', { class: typeof r[i] === 'number' ? 'n' : null, text: typeof r[i] === 'number' ? fmt(r[i]) : String(r[i]) }));
+      var tr = nvH('tr', { 'data-row': '1' }, cells);
+      tr.addEventListener('click', function () { rowClick(r); });
+      tb.appendChild(tr);
+    });
+    var numCol = function (ci) { var j = sub && ci > 0 ? ci + 1 : ci; return dt.rows.length && typeof dt.rows[0][j] === 'number'; };
+    wrap.appendChild(nvH('div', { style: 'overflow-x:auto' }, nvH('table', { class: 'nvg-tbl', 'data-fdt': 'nvg' }, nvH('thead', null, nvH('tr', null, cols.map(function (c, ci) { return nvH('th', { class: numCol(ci) ? 'n' : null, text: c }); }))), tb)));
+    var foot = nvH('div', { style: 'display:flex;align-items:center;justify-content:space-between;margin-top:8px', class: 'nvg-small nvg-muted' }, Math.min(shown, dt.rows.length) + ' of ' + dt.rows.length + ' rows');
+    if (shown < dt.rows.length) { var more = nvH('button', { type: 'button', class: 'nvg-btn', text: 'Show more' }); more.addEventListener('click', function () { shown += page * 2; draw(); }); foot.appendChild(more); }
+    else if (navOn(dt.view)) { var o = nvH('button', { type: 'button', class: 'nvg-btn', 'data-closes': '1' }, 'Open the full list', nvIcon('arrowRight', 14)); o.addEventListener('click', function () { nvGo(dt.view); }); foot.appendChild(o); }
+    wrap.appendChild(foot);
+  }
+  draw();
+  return wrap;
+}
+function navRulesTab(M) {
+  var out = nvH('div', { style: 'display:flex;flex-direction:column;gap:12px' });
+  var checks = M ? M.checks : [];
+  var ck = nvH('div', null, nvH('div', { class: 'nvg-st' }, nvIcon('shield', 16), 'Checks that protect this part'));
+  if (!checks.length) ck.appendChild(nvH('div', { class: 'nvg-rule' }, nvIcon('info', 16), nvH('div', { text: NAV.data.can.pnl ? 'No system check is tied to this part; the rules below hold it.' : 'The system check is for shareholders and the owner.' })));
+  checks.forEach(function (c) {
+    ck.appendChild(nvH('div', { class: 'nvg-rule' }, nvH('span', { class: 'nvg-pill ' + (c.status === 'pass' ? 'pos' : c.status === 'warn' ? 'warn' : 'neg'), text: c.status === 'pass' ? 'Pass' : c.status === 'warn' ? 'Look' : 'Fail' }),
+      nvH('div', null, nvH('b', { text: c.id + ' · ' + c.title }), c.detail ? nvH('div', { text: c.detail }) : null)));
+  });
+  out.appendChild(ck);
+  var rl = nvH('div', null, nvH('div', { class: 'nvg-st' }, nvIcon('list', 16), 'Rules in plain words'));
+  (M ? M.rules : ['Every figure is worked out from invoices, payments, stock lots and the capital book; nothing is typed as a total.', 'Nothing is deleted: a mistake is struck out with a reason.', 'A figure your role may not see is never sent to your screen.']).forEach(function (r) {
+    rl.appendChild(nvH('div', { class: 'nvg-rule' }, nvIcon('check', 16), nvH('div', { text: r })));
+  });
+  out.appendChild(rl);
+  return out;
+}
+function navAccessTab(M) {
+  var out = nvH('div', { style: 'display:flex;flex-direction:column;gap:8px' });
+  var yes = function (ok) { return ok === null || ok === undefined ? nvH('span', { class: 'nvg-no', text: '—' }) : ok ? nvH('span', { class: 'nvg-yes' }, nvIcon('check', 14), 'Yes') : nvH('span', { class: 'nvg-no' }, nvIcon('lock', 13), 'No'); };
+  var rows = M ? M.access : [['sales', 'Sales staff'], ['manager', 'Manager'], ['shareholder', 'Shareholder'], ['owner', 'Owner']].map(function (r) { return { role: r[0], label: r[1], you: NAV.data.role === r[0], screen: true, money: r[0] === 'owner' || r[0] === 'shareholder' }; });
+  out.appendChild(nvH('div', { style: 'overflow-x:auto' }, nvH('table', { class: 'nvg-access', 'data-fdt': 'nvg' },
+    nvH('thead', null, nvH('tr', null, nvH('th', { scope: 'col', text: 'Role' }), nvH('th', { scope: 'col', text: 'Screen' }), nvH('th', { scope: 'col', text: 'Money figures' }))),
+    nvH('tbody', null, rows.map(function (r) { return nvH('tr', { style: r.you ? 'background:var(--nv-accent-soft)' : null }, nvH('td', null, nvH('b', { text: r.label }), r.you ? ' (you)' : ''), nvH('td', null, yes(r.screen)), nvH('td', null, yes(r.money))); })))));
+  out.appendChild(nvH('p', { class: 'nvg-small nvg-muted', style: 'margin:0', text: 'What each role gets by default. The owner can switch single abilities on or off per person (Settings > Users); that wins over the role.' }));
+  if (NAV.data.can.owner && navOn('settings')) { var b = nvH('button', { type: 'button', class: 'nvg-btn', 'data-closes': '1' }, nvIcon('gear', 15), 'Change in Settings'); b.addEventListener('click', function () { nvGo('settings'); }); out.appendChild(nvH('div', null, b)); }
+  return out;
+}
+function navAuditTab(M) {
+  var a = M ? M.audit : null;
+  if (!M) a = [];
+  if (a && a.locked) return nvH('div', { class: 'nvg-hidden' }, nvIcon('lock', 20), nvH('div', { text: 'The activity log is for the owner. Every change is written there with who did it and when.' }));
+  if (!a || !a.length) return nvH('div', { class: 'nvg-empty', text: 'No changes logged for this part yet.' });
+  var out = nvH('div');
+  a.forEach(function (x) { out.appendChild(nvH('div', { class: 'nvg-rule' }, nvIcon('list', 16), nvH('div', { style: 'min-width:0' }, nvH('b', { text: x.what }), nvH('div', { text: x.who + ' · ' + x.when })))); });
+  if (navOn('settings')) { var b = nvH('button', { type: 'button', class: 'nvg-btn', style: 'margin-top:8px', 'data-closes': '1' }, 'Open the activity log', nvIcon('arrowRight', 14)); b.addEventListener('click', function () { nvGo('settings'); }); out.appendChild(b); }
+  return out;
+}
+
+// ---- Business Workflow (his eight steps, on our screens)
+var NV_STEPS = [
+  { key: 'capital', title: 'Capital / investor entry', sub: 'Owners’ and investors’ money in', icon: 'briefcase', nodes: ['investors', 'ivs_capital', 'ivs_profiles', 'ivs_pages'], view: 'capital',
+    todo: 'Write the money an owner or investor puts in on Capital, and each investor’s return: a fixed amount, a % a month, or a share of a shipment’s profit. Each investor can see their own statement on a private page.', figs: ['ivs_capital', 'kpi:payout'] },
+  { key: 'purchase', title: 'Supplier order / shipment', sub: 'Order from a supplier, follow it on the way', icon: 'ship', nodes: ['procurement', 'prc_open', 'prc_suppliers', 'ivs_funding'], view: 'suppliers',
+    todo: 'Place the purchase order on Suppliers, then move it Planned → Ordered → On the way with the shipment number, weight and expected date. Say on the shipment who funded what share.', figs: ['kpi:pending', 'prc_owe'] },
+  { key: 'receive', title: 'Receive stock', sub: 'Goods in at landed cost, by brand, type, colour', icon: 'cube', nodes: ['procurement', 'prc_received', 'prc_lots', 'inventory', 'inv_units'], view: 'stock',
+    todo: 'Receive the goods on Stock entry: the goods at the day’s rate plus freight, duty and agent costs, spread by weight, value or units. One stock lot is made per line at its landed cost.', figs: ['kpi:stockValue', 'inv_units'] },
+  { key: 'sale', title: 'Sale / where it came from', sub: 'Shop, phone, Facebook or the website', icon: 'cart', nodes: ['orders', 'ord_sources', 'customers', 'cus_new', 'inventory'], view: 'sale',
+    todo: 'Make the sale on New sale and say where the customer came from. Each line takes the oldest stock first (FIFO) and keeps that cost for good. Website orders come in under Web orders.', figs: ['an_g_rev', 'ord_invoices', 'an_g_units'] },
+  { key: 'payment', title: 'Invoice & payment', sub: 'Payments into accounts, dues followed up', icon: 'receipt', nodes: ['orders', 'ord_invoices', 'ord_payment', 'expenses', 'exp_pay', 'cus_dues'], view: 'sales',
+    todo: 'Take the payment on the invoice (cash, bKash, Nagad, bank or courier) into its money account. What is not paid stays a due on the customer until it is received.', figs: ['kpi:open', 'cus_dues', 'exp_pay'] },
+  { key: 'expense', title: 'Expenses & commission', sub: 'The month’s costs, sellers’ commission', icon: 'percent', nodes: ['expenses', 'exp_cats', 'exp_courier', 'exp_holding', 'exp_comm'], view: 'expenses',
+    todo: 'Write each expense for the month it belongs to. Commission is worked out from the rules on what each seller sold; courier fees come from the courier’s payouts.', figs: ['exp_cats', 'exp_courier'] },
+  { key: 'profit', title: 'Profit, ROI & returns', sub: 'Net profit, shipment ROI, investors’ returns', icon: 'bars', nodes: ['analytics', 'an_profit', 'an_roi', 'investors', 'ivs_owed'], view: 'profit',
+    todo: 'Read the month on Profit & loss: one net profit everywhere. Shipment ROI shows what each shipment made after holding cost. Close the month on Capital when it is right; investors’ returns for it become due.', figs: ['kpi:net', 'an_roi', 'kpi:payout'] },
+  { key: 'review', title: 'Audit / backup / review', sub: 'The books checked against themselves', icon: 'shield', nodes: ['audit', 'aud_checks', 'aud_log', 'aud_backup', 'roles'], view: 'syscheck',
+    todo: 'Run the System check: red results are mistakes in the books to fix before closing a month. Every change is in the activity log; nothing is deleted, only struck out with a reason.', figs: ['aud_checks', 'aud_backup'] }
+];
+NV_IC.cart = '<path d="M3 4h2l2.5 11h11L21 7H6.2"/><circle cx="9" cy="19.5" r="1.4"/><circle cx="17" cy="19.5" r="1.4"/>';
+function navFig(api, k) {
+  if (k.indexOf('kpi:') === 0) {
+    var q = NAV.data.kpis.filter(function (x) { return x.key === k.slice(4); })[0];
+    if (!q) return null;
+    return { label: q.label, locked: q.locked, disp: q.locked ? null : q.money ? nvTk(q.v) : fmt(q.v), calc: q.calc };
+  }
+  var n = api.T.byId[k]; if (!n) return { label: k, locked: 'perm' };
+  var m = n.level >= 1 ? api.T.MOD[n.module] : null;
+  if (m && m.locked) return { label: n.label, locked: m.locked };
+  return { label: n.label, locked: n.locked, disp: nvDisp(n), node: n };
+}
+function navWorkflow(api) {
+  var card = nvH('section', { class: 'nvg-card', 'aria-label': 'Business workflow' });
+  var showDet = NAV.st.sections.wfDetails !== false;
+  var playBtn = nvH('button', { type: 'button', class: 'nvg-btn primary' }, nvIcon(NAV.playing ? 'stop' : 'play', 14), nvH('span', { text: NAV.playing ? 'Stop' : 'Play' }));
+  playBtn.addEventListener('click', function () { if (NAV.playing) stop(); else play(); });
+  var cb = nvH('input', { type: 'checkbox', style: 'width:18px;height:18px' }); cb.checked = showDet;
+  var det = nvH('label', { class: 'nvg-small', style: 'display:inline-flex;align-items:center;gap:8px;min-height:44px;cursor:pointer' }, cb, 'Show details');
+  cb.addEventListener('change', function () { NAV.st.sections.wfDetails = cb.checked; navSave(); [].forEach.call(strip.querySelectorAll('.ss'), function (x) { x.style.display = cb.checked ? '' : 'none'; }); });
+  card.appendChild(nvH('div', { class: 'nvg-card-head has-rule' }, nvH('span', { class: 'nvg-badge sm' }, nvIcon('swap', 18)),
+    nvH('div', { style: 'min-width:0' }, nvH('h2', { class: 'nvg-card-title', text: 'Business Workflow' }), nvH('div', { class: 'nvg-card-sub', text: 'Step by step and traceable: click a step to see it on the map' })),
+    nvH('div', { class: 'nvg-card-tools' }, det, playBtn)));
+  var strip = nvH('div', { class: 'nvg-strip', role: 'group', 'aria-label': 'Workflow steps' });
+  card.appendChild(strip);
+  var stepCard = nvH('div');
+  card.appendChild(stepCard);
+  var btns = [];
+  NV_STEPS.forEach(function (st, i) {
+    if (i) strip.appendChild(nvH('span', { class: 'nvg-step-arrow', 'aria-hidden': 'true' }, nvIcon('chevRight', 18)));
+    var b = nvH('button', { class: 'nvg-step', type: 'button', 'aria-pressed': NAV.step === i ? 'true' : 'false' },
+      nvH('div', { style: 'display:flex;align-items:center;gap:10px' }, nvH('span', { class: 'nvg-badge sm' }, nvIcon(st.icon, 17)), nvH('span', { class: 'sn', text: 'Step ' + (i + 1) })),
+      nvH('span', { class: 'stt', text: st.title }), nvH('span', { class: 'ss', style: showDet ? '' : 'display:none', text: st.sub }));
+    b.addEventListener('click', function () { stop(); choose(NAV.step === i ? null : i); });
+    btns.push(b); strip.appendChild(b);
+  });
+  function choose(i) {
+    NAV.step = i;
+    btns.forEach(function (b, k) { b.setAttribute('aria-pressed', k === i ? 'true' : 'false'); });
+    if (api.map && api.map.highlight) api.map.highlight(i === null ? null : NV_STEPS[i].nodes);
+    nvClear(stepCard);
+    if (i === null) return;
+    var st = NV_STEPS[i], view = st.view === 'sale' && !navOn('sale') ? 'invoice' : st.view;
+    try { btns[i].scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: nvReduced() ? 'auto' : 'smooth' }); } catch (e) {}
+    var figs = nvH('div', { class: 'nvg-chips' });
+    st.figs.forEach(function (k) {
+      var f = navFig(api, k); if (!f) return;
+      var b = nvH('button', { class: 'nvg-figchip', type: 'button' }, f.locked ? nvLockChip(f.locked) : nvH('b', { text: f.disp || '—' }), f.label);
+      b.addEventListener('click', function () { if (f.locked) { toast(NV_LOCK[f.locked] || NV_LOCK.perm); return; } if (f.calc) nvCalc(f.label, f.calc, NAV.data.range.label); else if (f.node) { api.select(f.node.id); if (api.map) api.map.focusNode(f.node.id); } });
+      figs.appendChild(b);
+    });
+    var openB = navOn(view) ? nvH('button', { type: 'button', class: 'nvg-btn primary' }, nvIcon('arrowRight', 15), 'Open the screen') : nvLockChip('perm', 'Screen hidden for your role');
+    if (navOn(view)) openB.addEventListener('click', function () { nvGo(view); });
+    var hl = nvH('button', { type: 'button', class: 'nvg-btn' }, nvIcon('eye', 15), 'Highlight on map');
+    hl.addEventListener('click', function () { if (api.map) { api.map.highlight(st.nodes); api.map.focusNode(st.nodes[0]); } });
+    stepCard.appendChild(nvH('div', { class: 'nvg-stepcard' },
+      nvH('div', null, nvH('h3', { text: 'Step ' + (i + 1) + ' · ' + st.title }), nvH('p', { text: st.todo }), nvH('div', { style: 'display:flex;flex-wrap:wrap;gap:8px' }, openB, hl)),
+      nvH('div', null, nvH('div', { class: 'nvg-st' }, nvIcon('bars', 16), 'Figures this step changes'), figs)));
+  }
+  function play() {
+    NAV.playing = true; playBtn.querySelector('span').textContent = 'Stop'; playBtn.replaceChild(nvIcon('stop', 14), playBtn.firstChild);
+    var i = NAV.step === null ? 0 : (NAV.step + 1) % NV_STEPS.length;
+    (function tick() {
+      if (!NAV.playing || VIEW !== 'mindmap' || !document.body.contains(card)) { NAV.playing = false; return; }
+      choose(i); i += 1;
+      if (i >= NV_STEPS.length) { NAV.timer = setTimeout(stop, 2600); return; }
+      NAV.timer = setTimeout(tick, 2600);
+    })();
+  }
+  function stop() { NAV.playing = false; clearTimeout(NAV.timer); if (document.body.contains(playBtn)) { playBtn.querySelector('span').textContent = 'Play'; playBtn.replaceChild(nvIcon('play', 14), playBtn.firstChild); } }
+  NAV.stopPlay = stop;
+  if (NAV.step !== null) setTimeout(function () { choose(NAV.step); }, 0);
+  return card;
+}
+
+// ---- collapsible sections
+function navSection(key, title, icon, sub, build) {
+  var open = NAV.st.sections[key] !== false;
+  var body = nvH('div', { style: 'margin-top:16px' });
+  var btn = nvH('button', { class: 'nvg-collapse', type: 'button', 'aria-expanded': String(open) });
+  var label = function () { nvClear(btn); btn.appendChild(document.createTextNode(open ? 'Collapse' : 'Expand')); btn.appendChild(nvIcon(open ? 'chevUp' : 'chevDown', 16)); };
+  label();
+  var card = nvH('section', { class: 'nvg-card', 'aria-label': title },
+    nvH('div', { class: 'nvg-card-head has-rule' }, nvH('span', { class: 'nvg-badge sm' }, nvIcon(icon, 18)), nvH('div', { style: 'min-width:0' }, nvH('h2', { class: 'nvg-card-title', text: title }), nvH('div', { class: 'nvg-card-sub', text: sub })), nvH('div', { class: 'nvg-card-tools' }, btn)), body);
+  function fill() { nvClear(body); if (open) { try { body.appendChild(build()); } catch (e) { body.appendChild(nvH('div', { class: 'nvg-empty', text: 'This section could not be drawn: ' + (e && e.message ? e.message : e) })); } } body.style.display = open ? '' : 'none'; }
+  btn.addEventListener('click', function () { open = !open; NAV.st.sections[key] = open; navSave(); btn.setAttribute('aria-expanded', String(open)); label(); fill(); });
+  fill();
+  return card;
+}
+function navHealth(api) {
+  var T = api.T, tb = nvH('tbody');
+  NAV.data.health.forEach(function (r) {
+    var m = T.MOD[r.id];
+    var st = r.status === 'locked' ? nvH('span', { class: 'nvg-pill', text: 'Hidden' }) : nvH('span', { class: 'nvg-pill ' + (r.status === 'pass' ? 'pos' : r.status === 'warn' ? 'warn' : 'neg'), text: r.status === 'pass' ? 'Pass' : r.status === 'warn' ? 'Look' : 'Fail' });
+    var tr = nvH('tr', { 'data-row': '1' },
+      nvH('td', null, nvH('span', { style: 'display:inline-flex;align-items:center;gap:8px;--mm-c:' + nvCol(r.id) }, nvH('i', { class: 'nvg-tdot', 'aria-hidden': 'true' }), nvH('b', { text: m.label }))),
+      nvH('td', { class: 'n' }, r.locked ? nvLockChip(r.locked) : (nvDisp(m) || '—')),
+      nvH('td', { class: 'n', text: r.locked ? '—' : String(r.issues) }),
+      nvH('td', { text: r.locked ? '—' : (r.last || '—') }),
+      nvH('td', { style: 'white-space:normal;min-width:180px', text: r.action }), nvH('td', null, st));
+    tr.addEventListener('click', function () { api.select(r.id); if (api.map) api.map.focusNode(r.id); });
+    tb.appendChild(tr);
+  });
+  return nvH('div', { style: 'overflow-x:auto' }, nvH('table', { class: 'nvg-tbl', 'data-fdt': 'nvg' }, nvH('thead', null, nvH('tr', null, ['Module', 'Count', 'Open issues', 'Last activity', 'Owner’s next step', 'Status'].map(function (h, i) { return nvH('th', { class: i === 1 || i === 2 ? 'n' : null, text: h }); }))), tb));
+}
+function navActions(api) {
+  var out = nvH('div'), rows = NAV.data.actions;
+  if (!rows.length) return nvH('div', { class: 'nvg-empty', text: '✓ Nothing needs you for this range.' });
+  rows.forEach(function (r) {
+    var can = r.view && navOn(r.view);
+    var b = nvH(can ? 'button' : 'div', { class: 'nvg-act', type: can ? 'button' : null, 'data-go': can ? r.view : null },
+      nvH('span', { class: 'nvg-badge sm t-' + (r.tone || 'info') }, nvIcon(r.icon || 'bell', 17)),
+      nvH('div', { style: 'min-width:0' }, nvH('div', { class: 'at', text: r.title }), r.sub ? nvH('div', { class: 'as', text: nvTrunc(r.sub, 110) }) : null), can ? nvIcon('arrowRight', 18) : null);
+    if (can) b.addEventListener('click', function () { if (r.f && typeof dashFilter === 'function') dashFilter(r.f); nvGo(r.view); });
+    out.appendChild(b);
+  });
+  return out;
+}
+function navFuture() {
+  var g = nvH('div');
+  [['cube', '3D warehouse view', 'Shelves and bins in 3D, coloured by stock: the 3D view of this map already shows how it would feel. It needs a shelf place on each stock lot first.'],
+   ['layers', 'More business units', 'Each company already runs its own ERP on the platform. A new line of goods (laser, CNC, parts) can be a product group of its own with its own dashboard.'],
+   ['trend', 'Forecasting', 'What to order by sales speed and the supplier’s lead time, from the same lots and invoices this map counts.']].forEach(function (x) {
+    g.appendChild(nvH('div', { class: 'nvg-fut' }, nvH('span', { class: 'nvg-badge sm' }, nvIcon(x[0], 17)), nvH('div', null, nvH('b', { text: x[1] }), nvH('p', { text: x[2] }))));
+  });
+  return g;
+}
+
+// ---- money flow (his sankey, our figures)
+function navSankey(api) {
+  var mf = NAV.data.money;
+  if (!mf || mf.locked) return nvH('div', { class: 'nvg-hidden' }, nvIcon('lock', 20), nvH('div', null, nvH('b', { text: 'Money flow is hidden for your role' }), nvH('div', { text: 'It uses landed cost, cost of sales and profit (the Product cost and Dashboard abilities).' })));
+  var colOf = function (c) { return c === 'violet' ? 'var(--nv-violet)' : c === 'accent' ? 'var(--nv-accent)' : 'var(--nv-c' + c + ')'; };
+  var nodes = mf.nodes.map(function (x) { return { id: x.id, col: x.col, label: x.label, v: Math.max(0, x.v), c: colOf(x.c), view: x.view }; });
+  var NB = {}; nodes.forEach(function (x) { NB[x.id] = x; });
+  var W = 1240, Hh = 420, cols = 7, nodeW = 14, gap = 16, colX = function (c) { return 10 + c * (W - 190 - nodeW) / (cols - 1); };
+  var colTot = []; nodes.forEach(function (x) { colTot[x.col] = (colTot[x.col] || 0) + x.v; });
+  var maxTot = Math.max.apply(null, colTot.filter(Boolean).concat([1])), kH = (Hh - 60 - 3 * gap) / (maxTot || 1);
+  nodes.forEach(function (x) { x.h = Math.max(x.v ? 3 : 0, x.v * kH); });
+  for (var c = 0; c < cols; c++) { var yy = 30; nodes.filter(function (x) { return x.col === c; }).forEach(function (x) { x.x = colX(c); x.y = yy; x.out = 0; x.in = 0; yy += Math.max(x.h, 30) + gap; }); }
+  var svg = nvS('svg', { viewBox: '0 0 ' + W + ' ' + Hh, role: 'img', 'aria-label': 'Money flow since ' + mf.since + ': ' + nodes.map(function (x) { return x.label + ' ' + x.v; }).join('; ') });
+  mf.links.forEach(function (l) {
+    var a = NB[l[0]], b = NB[l[1]], v = Math.max(0, l[2]); if (!v || !a || !b) return;
+    var th = v * kH, y0 = a.y + a.out + th / 2, y1 = b.y + b.in + th / 2; a.out += th; b.in += th;
+    var x0 = a.x + nodeW, x1 = b.x, mx = (x0 + x1) / 2;
+    svg.appendChild(nvS('path', { class: 'nvg-skb', d: 'M' + x0 + ' ' + y0 + ' C' + mx + ' ' + y0 + ' ' + mx + ' ' + y1 + ' ' + x1 + ' ' + y1, style: 'fill:none;stroke:' + a.c + ';stroke-width:' + Math.max(1.5, th) }, nvS('title', { text: a.label + ' → ' + b.label + ': ' + nvMoney(v) })));
+  });
+  nodes.forEach(function (x) {
+    if (!x.v && x.id !== 'inv') return;
+    var g = nvS('g', { class: 'nvg-skn', tabindex: '0', role: 'button', 'aria-label': x.label + ' ' + nvMoney(x.v) + '. Open the screen' });
+    g.appendChild(nvS('rect', { x: x.x, y: x.y, width: nodeW, height: Math.max(2, x.h), rx: 4, style: 'fill:' + x.c }));
+    g.appendChild(nvS('text', { class: 'nvg-skl', x: x.x + nodeW + 6, y: x.y + Math.max(2, x.h) / 2 - 2, text: x.label }));
+    g.appendChild(nvS('text', { class: 'nvg-skv', x: x.x + nodeW + 6, y: x.y + Math.max(2, x.h) / 2 + 13, text: nvTk(x.v) }));
+    var open = function () { nvCalc(x.label, [[x.label + ' since ' + mf.since, x.v]], 'Stock bought = landed cost of every stock lot (at least what was sold at cost + what is on the shelf); investor capital = what investors put in; owner & recycled = the rest; written off & other = bought − sold at cost − on the shelf; investor returns = due + building.'); };
+    g.addEventListener('click', function () { if (x.view && navOn(x.view)) nvGo(x.view); else open(); });
+    g.addEventListener('contextmenu', function (e) { e.preventDefault(); open(); });
+    g.addEventListener('keydown', function (e) { if (e.key === 'Enter') { if (x.view && navOn(x.view)) nvGo(x.view); else open(); } });
+    svg.appendChild(g);
+  });
+  return nvH('div', null, nvH('div', { class: 'nvg-sankey' }, svg), nvH('p', { class: 'nvg-small nvg-muted', style: 'margin:8px 0 0', text: 'A simple view since ' + mf.since + ' (the first month with sales, at most 36 months). Click a block to open its screen. Owner & recycled cash includes the money that sold stock brings back.' }));
+}
+
+// ---- wiring: the 'mindmap' view is ours now
+var repaintNav = repaint;
+repaint = function () {
+  if (VIEW !== 'mindmap') return repaintNav.apply(this, arguments);
+  if (typeof fdxSync === 'function') { try { fdxSync(); } catch (e) {} }
+  nvMenuClose();
+  if (NAV.map && NAV.map.destroy) { NAV.map.destroy(); NAV.map = null; }
+  el('view').innerHTML = viewNavigator();
+  if (NAV.data && NAV.key !== JSON.stringify(navArgs())) navLoad();
+  try { navMount(); } catch (e) { if (window.console) console.error('ERP Navigator', e); var r = el('nvgRoot'); if (r) r.insertAdjacentHTML('beforeend', '<div class="note err"><div class="ico">!</div><div>The map could not be drawn: ' + esc(e && e.message ? e.message : String(e)) + '</div></div>'); }
+};
+document.addEventListener('click', function (e) {
+  if (e.target.closest && e.target.closest('[data-navretry]')) { NAV.err = ''; NAV.key = ''; repaint(); }
+});
+// leaving the screen stops Play and the 3D loop; a new range or filter loads again
+var goNav = go;
+go = function (view) { if (view !== 'mindmap') { NAV.playing = false; clearTimeout(NAV.timer); nvMenuClose(); } else NAV.keepVb = false; return goNav.apply(this, arguments); };
+var navAfterWrite = pagesAfterWrite;
+pagesAfterWrite = function () { NAV.key = ''; return navAfterWrite.apply(this, arguments); };
+// phone <-> desktop width changes the map kind
+(function () { var was = nvPhone(), t = null; window.addEventListener('resize', function () { clearTimeout(t); t = setTimeout(function () { var now = nvPhone(); if (now !== was && VIEW === 'mindmap') { was = now; repaint(); } was = now; }, 250); }); })();
 </script>
 
 </body>

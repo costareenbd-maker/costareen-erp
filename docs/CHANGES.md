@@ -1708,3 +1708,18 @@ Bangla: the screen's own words (NS_BN + nsT in fd-16, shown when the language is
 still win); only "New sale" and its head line were added to the page-wide list, so generic words like Cash/Phone do not
 change other screens. Not done: serial numbers / warranty months / backdating / quotation-to-invoice
 are only on the classic screen (use it for those).
+
+## fd-17 - his shell, his dashboard, the theme colour (13-14 Oct 2026)
+
+Owner: "his design is the top priority; do not rely on our earlier design". Shell (page block fd-17): his logo mark and
+the business as wordmark ("ERP · Business"), 46px nav items with divider lines between groups instead of captions, the
+72px icon rail between 768 and 1279px (names as tooltips), a 72px top bar with his business switcher (business, then the
+product group = his "books"; the group drop-down left the dashboard head), the round "+" quick add (New sale, classic
+invoice, receive shipment, payment, expense, pre-order, quotation, investor), the avatar + name account button; search is
+a round icon (also "/"). Theme colour: the profile's colour (Look) only set --pal, which the FilaDash look ignored; it now
+sets every --fd-accent variable (light and dark), no colour chosen = his indigo / amber. Dashboard in his order: Monthly
+Revenue curve with his tooltip + Net profit / Stock value / Dues / Investor capital at work, two donuts, Gross margin /
+Orders / Cash received / Unmatched payments, Top Colours + Needs Attention, Reorder Suggestions (full width), Recent Sales
++ Setup Checklist; ours that he lacks follow under "More figures". Money as ৳ with lakh (৳1.58L). erpFdDash adds
+topColours, kpi.capital, kpi.unmatched, setup. Not done: his "Edit layout" (drag cards), 30/90-day ranges (ours stay
+whole months so Net profit = the P&L).
