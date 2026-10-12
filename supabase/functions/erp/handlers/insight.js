@@ -66,7 +66,7 @@ export async function erpSystemCheck(ctx) {
   const uncosted = (await ctx.tx`select count(*)::int as n from invoice_lines l join invoices i on i.id = l.invoice_id
                                  where l.business_id = ${ctx.biz} and i.voided_at is null and l.qty > 0 and coalesce(l.unit_cost, 0) = 0 and l.pool_id is null
                                  and to_char(public.dhaka_date(i.created_at), 'YYYY-MM') = ${now}`)[0].n;
-  add('M4', 'Profit', 'This month’s sold lines all carry a cost', uncosted, uncosted + ' line(s) sold at no known cost (their profit looks too high)', true, 'costs');
+  add('M4', 'Profit', 'This month’s sold lines all carry a cost', uncosted, uncosted + ' line(s) were sold with no cost written on them; the P&L uses today’s cost book for them - fill in Product cost so it is right', true, 'costs');
 
   // ---- capital and shares
   const shares = num((await ctx.tx`select coalesce(sum(share_pct), 0) as s from capital_holders where business_id = ${ctx.biz} and kind = 'shareholder' and ended_month is null`)[0].s);

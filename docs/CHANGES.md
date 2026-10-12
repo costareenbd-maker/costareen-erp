@@ -1626,3 +1626,14 @@ and input shapes; deploy.py ships it (and the fonts) with the pages and to the c
 deploy.py function: retries the upload up to 3 times (it fails once now and then).
 NOT done: his own screen layouts for New invoice (his Sale screen), the quotation editor, joint stock, creators, resell,
 market, AI chat and Platform - they wear his look (fd-1), page head (fd-3) and table toolbar (fd-4), not his layouts.
+
+## p5-dry - dry run on a copy of the live data (13 Oct 2026)
+
+A read-only copy of live loaded into a scratch database on the owner's PC, upgraded with 107-113 and run with the merged
+code: P&L (12 months), dashboard, capital, cash book, expenses and dues identical to live; every new screen works on the
+real data; daily work (sale, receive, sale across lots, return) keeps lots = stock. The copy was deleted. Details with the
+real figures: private/DRYRUN-2026-10-13.md (owner's PC only).
+Fix found by it - 113_lots_begin_all.sql: every product gets its opening lot at the switch (dated the 1st of the month),
+so the month's holding cost is shared over all stock, not only over products that moved since 107.
+System check wording M4: the P&L uses today's cost book for lines sold without a cost.
+deploy.py: the function upload retries (Supabase answered 500 "internal error" now and then).
