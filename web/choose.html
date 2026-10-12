@@ -1,0 +1,239 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Help me choose: point the camera at a thing and get the closest filament colours in stock; which filament for your job; which printer for your budget.">
+<title>Help me choose</title>
+<link rel="icon" href="icons/favicon-32.png">
+<style>
+/* Stage N5b (docs/NETWORK-BLUEPRINT.md section 4.1): the Colour Finder (camera, photo or a picked colour -> the
+   three closest filament colours shops have, "very close / close / roughly", in stock or not) and the filament and
+   printer pickers. Live stock comes from the Find stock listings (?pub=find). No sign-in. */
+:root{--bg:#f6f7f4;--card:#fff;--ink:#14201c;--mute:#5d6b66;--line:#dfe5e1;--ok:#0f766e;--okbg:#e6f4f1;--warn:#9a5b00;--warnbg:#fff4df;--bad:#b42318;--badbg:#fdecea;--acc:#0f766e}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans","Noto Sans Bengali","Hind Siliguri",sans-serif}
+body{padding:calc(16px + env(safe-area-inset-top,0px)) 16px calc(28px + env(safe-area-inset-bottom,0px))}
+main{max-width:680px;margin:0 auto}
+header{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:14px}
+header h1{font-size:22px;margin:0}header h1 small{display:block;font-size:13px;color:var(--mute);font-weight:500}
+.lang{border:1px solid var(--line);background:var(--card);border-radius:999px;padding:6px 12px;font:inherit;font-size:14px;cursor:pointer}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 12px}.tabs button{font-size:14px;padding:7px 12px;border-radius:999px}.tabs button.on{background:var(--acc);color:#fff;border-color:var(--acc)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 16px;margin-bottom:12px}
+button{font:inherit;font-size:15px;padding:10px 14px;border-radius:10px;border:1px solid var(--line);background:#fff;color:var(--ink);cursor:pointer}
+button.pri{background:var(--acc);border-color:var(--acc);color:#fff;font-weight:600}button:disabled{opacity:.6;cursor:default}
+select,input{font:inherit;font-size:16px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:#fff;color:var(--ink);width:100%}
+label.f{display:block;font-size:14px;color:var(--mute);margin:10px 0 4px}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.hint{font-size:13px;color:var(--mute)}.err{color:var(--bad);font-size:14px;margin-top:8px}
+.sw{width:44px;height:44px;border-radius:10px;border:1px solid var(--line);flex:0 0 auto}
+.res{display:flex;gap:12px;align-items:flex-start;padding:10px 0;border-top:1px solid var(--line)}
+.res b{font-size:16px}.res .m{font-size:13px;color:var(--mute)}
+.badge{display:inline-block;font-size:12px;font-weight:600;padding:2px 9px;border-radius:999px}.b-ok{background:var(--okbg);color:var(--ok)}.b-warn{background:var(--warnbg);color:var(--warn)}.b-mute{background:#eef1ee;color:var(--mute)}.b-in{background:var(--okbg);color:var(--ok)}.b-low{background:var(--warnbg);color:var(--warn)}
+.shoprow{font-size:14px;padding:4px 0}.shoprow a{color:var(--acc)}
+.cam{position:fixed;inset:0;background:#000;z-index:50;display:flex;flex-direction:column}
+.cam video{flex:1;width:100%;object-fit:cover;background:#000}
+.cam .box{position:absolute;border:3px solid #fff;border-radius:10px;box-shadow:0 0 0 2px rgba(0,0,0,.5);pointer-events:none}
+.cam .box span{position:absolute;left:0;right:0;bottom:-26px;text-align:center;color:#fff;font-size:13px;font-weight:600;text-shadow:0 1px 3px #000}
+.cam .bar{display:flex;gap:8px;justify-content:center;padding:14px 14px calc(14px + env(safe-area-inset-bottom,0px));background:#111}
+.cam .bar button{background:#222;color:#fff;border-color:#444}.cam .bar button.pri{background:var(--acc);border-color:var(--acc)}
+canvas#pc{max-width:100%;border-radius:10px;border:1px solid var(--line);touch-action:manipulation;cursor:crosshair}
+.pick{display:flex;gap:10px;align-items:center}.pick input[type=color]{width:60px;height:44px;padding:2px}
+.q{margin-top:8px}
+.rec h2{font-size:19px;margin:0 0 4px}.rec p{margin:4px 0}
+footer{font-size:13px;color:var(--mute);text-align:center;margin-top:22px}footer a{color:var(--mute)}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
+<main>
+  <header><h1><span data-t="title">Help me choose</span><small data-t="sub">Colour, filament, printer - with what shops have in stock</small></h1><button class="lang" id="lang" type="button">বাংলা</button></header>
+  <div class="tabs" id="tabs"><button type="button" data-tab="colour" class="on" data-t="tColour">Colour Finder</button><button type="button" data-tab="filament" data-t="tFil">Which filament</button><button type="button" data-tab="printer" data-t="tPrn">Which printer</button></div>
+  <div id="out"></div>
+  <footer><a href="find" data-t="find">Find stock</a> · <a href="doctor" data-t="doc">Print Doctor</a> · <a href="check" data-t="pp">Printer Passport</a> · <a href="ideas" data-t="ideas">Ideas</a> · <a href="print">Get it printed</a> · <a href="design">Design desk</a></footer>
+</main>
+<script src="colour-math.js"></script>
+<script src="colour-data.js"></script>
+<script>
+var API = (new URLSearchParams(location.search).get('api') || 'https://oqzcuuytytqadqjlwdsh.supabase.co/functions/v1/erp').replace(/\/+$/, '');
+var Q = new URLSearchParams(location.search);
+var T = {
+  en: { title: 'Help me choose', sub: 'Colour, filament, printer - with what shops have in stock', tColour: 'Colour Finder', tFil: 'Which filament', tPrn: 'Which printer', find: 'Find stock', doc: 'Print Doctor', pp: 'Printer Passport', ideas: 'Ideas', net: 'Could not reach the server. Check your connection and try again.',
+    cIntro: 'Point the camera at the thing you want to match, with a plain white paper next to it. The paper tells the phone what "white" is in that light. You get the three closest filament colours that shops list - always "closest", never "exact".', camera: 'Open the camera', photo: 'Pick from a photo', pickc: 'Pick a colour', match: 'Match', cancel: 'Cancel', paper: 'white paper', thing: 'the thing',
+    camErr: 'The camera could not be opened. Try a photo or pick a colour instead.', tap1: 'Tap the white paper in the photo', tap2: 'Now tap the thing', yours: 'Your colour', results: 'Closest filament colours', noneIn: 'None of the three is in stock right now. Closest in stock:', nothing: 'No shop lists filament publicly yet - nothing to match against.',
+    lbl: { 'very close': 'very close', 'close': 'close', 'roughly': 'roughly' }, inStock: 'in stock', low: 'running low', ask: 'ask', shop: 'Shop page', back: 'Tell me when it is back', honest: 'Phone cameras, lighting and screens all differ; silk, matte and glitter finishes change the look. Check the spool in the shop before a big print.', loading: 'Loading what shops have…',
+    fUse: 'What will you print?', fUses: [['deco', 'Decorative: models, figures, gifts'], ['func', 'Functional parts: brackets, cases, tools'], ['flex', 'Flexible: phone cases, gaskets, soft grips'], ['outdoor', 'Outdoors in the sun or rain'], ['heat', 'Near heat: hot water, car interior, lamps'], ['stiff', 'Stiff and light: drone parts, frames']],
+    fPrinter: 'Your printer', fPrinters: [['open', 'Open frame (Ender, A1, A1 mini…)'], ['enclosed', 'Enclosed (P1S, X1C, K1…)']], fDrive: 'Extruder', fDrives: [['direct', 'Direct drive (most new printers)'], ['bowden', 'Bowden tube (older Enders)']], fSkill: 'Experience', fSkills: [['new', 'New to this'], ['some', 'Comfortable with settings']],
+    fGo: 'Tell me', fWhy: 'Why', fSecond: 'Second choice', fSettings: 'Starting settings and drying times on the Print Doctor', fStock: 'In stock now', fNone: 'No shop lists it publicly right now - ask on Find stock.',
+    pBudget: 'Budget', pBudgets: [['b1', 'Under 25,000 taka'], ['b2', '25,000 - 45,000'], ['b3', '45,000 - 90,000'], ['b4', 'Above 90,000']], pUse: 'Mainly for', pUses: [['learn', 'Learning and hobby'], ['biz', 'Selling prints (small business)'], ['big', 'Large parts (over 250 mm)'], ['multi', 'Multi-colour prints']], pGo: 'Tell me', pClass: 'Look at', pWhy: 'Why', pNote: 'Also', pStock: 'Printers shops have in stock', pNone: 'No shop lists printers publicly right now.', pWarranty: 'Before you pay: ask the seller to register it on the Printer Passport and check it there. Power cuts: the Print Doctor has a UPS guide.' },
+  bn: { title: 'কোনটা নেব', sub: 'রং, ফিলামেন্ট, প্রিন্টার - দোকানে যা আছে তার সাথে', tColour: 'রং খুঁজুন', tFil: 'কোন ফিলামেন্ট', tPrn: 'কোন প্রিন্টার', find: 'স্টক খুঁজুন', doc: 'প্রিন্ট ডাক্তার', pp: 'প্রিন্টার পাসপোর্ট', ideas: 'আইডিয়া', net: 'সার্ভারে পৌঁছানো যায়নি। ইন্টারনেট দেখে আবার চেষ্টা করুন।',
+    cIntro: 'যে জিনিসটার রং মেলাতে চান, তার পাশে একটা সাদা কাগজ রেখে ক্যামেরা ধরুন। কাগজটা ফোনকে বলে ওই আলোয় "সাদা" কেমন। দোকানগুলোর তালিকা থেকে সবচেয়ে কাছের তিনটা ফিলামেন্ট রং পাবেন - সবসময় "কাছাকাছি", কখনো "হুবহু" না।', camera: 'ক্যামেরা খুলুন', photo: 'ছবি থেকে বাছুন', pickc: 'রং বাছুন', match: 'মেলান', cancel: 'বাতিল', paper: 'সাদা কাগজ', thing: 'জিনিসটা',
+    camErr: 'ক্যামেরা খোলা যায়নি। ছবি দিন বা রং বাছুন।', tap1: 'ছবিতে সাদা কাগজে চাপ দিন', tap2: 'এবার জিনিসটায় চাপ দিন', yours: 'আপনার রং', results: 'সবচেয়ে কাছের ফিলামেন্ট রং', noneIn: 'তিনটার কোনোটাই এখন স্টকে নেই। স্টকে থাকা সবচেয়ে কাছেরটা:', nothing: 'এখনো কোনো দোকান ফিলামেন্ট পাবলিকলি দেখায়নি - মেলানোর কিছু নেই।',
+    lbl: { 'very close': 'খুব কাছাকাছি', 'close': 'কাছাকাছি', 'roughly': 'মোটামুটি' }, inStock: 'স্টকে আছে', low: 'শেষের দিকে', ask: 'জিজ্ঞেস করুন', shop: 'দোকানের পেজ', back: 'এলে জানান', honest: 'ফোনের ক্যামেরা, আলো আর স্ক্রিন সব আলাদা; সিল্ক, ম্যাট, গ্লিটার ফিনিশ চেহারা বদলে দেয়। বড় প্রিন্টের আগে দোকানে স্পুল দেখে নিন।', loading: 'দোকানে কী আছে দেখা হচ্ছে…',
+    fUse: 'কী প্রিন্ট করবেন?', fUses: [['deco', 'সাজসজ্জা: মডেল, ফিগার, উপহার'], ['func', 'কাজের পার্টস: ব্র্যাকেট, কেস, টুল'], ['flex', 'নরম: ফোন কেস, গ্যাসকেট, গ্রিপ'], ['outdoor', 'বাইরে রোদে বা বৃষ্টিতে'], ['heat', 'গরমের কাছে: গরম পানি, গাড়ির ভেতর, বাতি'], ['stiff', 'শক্ত ও হালকা: ড্রোন পার্টস, ফ্রেম']],
+    fPrinter: 'আপনার প্রিন্টার', fPrinters: [['open', 'খোলা ফ্রেম (Ender, A1, A1 mini…)'], ['enclosed', 'ঢাকা (P1S, X1C, K1…)']], fDrive: 'এক্সট্রুডার', fDrives: [['direct', 'ডাইরেক্ট ড্রাইভ (বেশিরভাগ নতুন প্রিন্টার)'], ['bowden', 'বোডেন টিউব (পুরনো Ender)']], fSkill: 'অভিজ্ঞতা', fSkills: [['new', 'নতুন'], ['some', 'সেটিং নিয়ে স্বচ্ছন্দ']],
+    fGo: 'বলুন', fWhy: 'কেন', fSecond: 'দ্বিতীয় পছন্দ', fSettings: 'শুরুর সেটিং ও শুকানোর সময় প্রিন্ট ডাক্তারে', fStock: 'এখন স্টকে', fNone: 'এখন কোনো দোকান পাবলিকলি দেখাচ্ছে না - স্টক খুঁজুন পেজে জিজ্ঞেস করুন।',
+    pBudget: 'বাজেট', pBudgets: [['b1', '২৫,০০০ টাকার নিচে'], ['b2', '২৫,০০০ - ৪৫,০০০'], ['b3', '৪৫,০০০ - ৯০,০০০'], ['b4', '৯০,০০০-এর উপরে']], pUse: 'মূলত কিসের জন্য', pUses: [['learn', 'শেখা ও শখ'], ['biz', 'প্রিন্ট বিক্রি (ছোট ব্যবসা)'], ['big', 'বড় পার্টস (২৫০ মিমির বেশি)'], ['multi', 'বহু রঙের প্রিন্ট']], pGo: 'বলুন', pClass: 'দেখুন', pWhy: 'কেন', pNote: 'আরও', pStock: 'দোকানে যে প্রিন্টার আছে', pNone: 'এখন কোনো দোকান প্রিন্টার পাবলিকলি দেখাচ্ছে না।', pWarranty: 'টাকা দেওয়ার আগে: বিক্রেতাকে প্রিন্টার পাসপোর্টে নিবন্ধন করতে বলুন আর সেখানে যাচাই করুন। লোডশেডিং: প্রিন্ট ডাক্তারে UPS গাইড আছে।' }
+};
+var LANG = 'en'; try { LANG = localStorage.getItem('pp_lang') || ((navigator.language || '').indexOf('bn') === 0 ? 'bn' : 'en'); } catch (e) {}
+function t(k) { return (T[LANG] || T.en)[k] || T.en[k] || k; }
+function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+function tk(n) { return '৳' + Number(n || 0).toLocaleString('en-IN'); }
+var $ = function (id) { return document.getElementById(id); };
+var TAB = Q.get('tab') || 'colour', LIST = null, CANDS = [], LASTRGB = null, LASTRES = null, FSEL = {}, PSEL = {}, FREC = null, PREC = null;
+function paintLang() { document.documentElement.lang = LANG; document.querySelectorAll('[data-t]').forEach(function (n) { n.textContent = t(n.getAttribute('data-t')); }); $('lang').textContent = LANG === 'bn' ? 'English' : 'বাংলা'; paint(); }
+$('lang').onclick = function () { LANG = LANG === 'bn' ? 'en' : 'bn'; try { localStorage.setItem('pp_lang', LANG); } catch (e) {} paintLang(); };
+$('tabs').addEventListener('click', function (ev) { var b = ev.target.closest('[data-tab]'); if (!b) return; TAB = b.getAttribute('data-tab'); document.querySelectorAll('#tabs button').forEach(function (x) { x.classList.toggle('on', x === b); }); paint(); });
+function isFilament(it) { return /filament/i.test(it.category) || /\b(pla|petg|abs|asa|tpu|nylon|pc)\b/i.test(it.name); }
+function isPrinter(it) { return /printer/i.test(it.category) || /\b(ender|bambu|a1|p1s|x1c|k1|kobra|neptune|prusa|voron|sovol|qidi)\b/i.test(it.name); }
+function buildCandidates() {
+  var by = {};
+  (LIST || []).filter(isFilament).forEach(function (it) {
+    var hex = (it.hex || colourHexFor(it.colour) || colourHexFor(it.name) || '').toLowerCase(); if (!hex) return;
+    var key = hex + '|' + (it.colour || '').toLowerCase();
+    var c = by[key] || (by[key] = { hex: hex, colour: it.colour || it.name, measured: !!it.hex, items: [] });
+    c.items.push(it);
+  });
+  CANDS = Object.values(by);
+}
+function load() { fetch(API + '?pub=find&q=').then(function (r) { return r.json(); }).then(function (r) { LIST = r.ok ? r.items : []; buildCandidates(); paint(); }, function () { LIST = []; paint(); }); }
+
+// ---- Colour Finder
+function paintColour() {
+  var h = '<div class="card"><p style="margin:0 0 10px">' + t('cIntro') + '</p><div class="row">' + (navigator.mediaDevices && navigator.mediaDevices.getUserMedia ? '<button type="button" class="pri" data-c="cam">📷 ' + t('camera') + '</button>' : '') + '<button type="button" data-c="photo">' + t('photo') + '</button><input type="file" id="pf" accept="image/*" capture="environment" hidden><span class="pick"><input type="color" id="pcol" value="#d42a2a"><button type="button" data-c="pick">' + t('pickc') + '</button></span></div>' +
+    '<div id="photoBox" hidden style="margin-top:10px"><p class="hint" id="tapHint"></p><canvas id="pc"></canvas></div><p class="hint" style="margin:10px 0 0">' + t('honest') + '</p></div>';
+  if (LIST === null) h += '<div class="card hint">' + t('loading') + '</div>';
+  else if (!CANDS.length) h += '<div class="card hint">' + t('nothing') + '</div>';
+  if (LASTRES) h += resultsHtml();
+  $('out').innerHTML = h;
+}
+function shopsHtml(c) {
+  var rows = [];
+  c.items.forEach(function (it) { it.shops.forEach(function (s) { rows.push({ it: it, s: s }); }); });
+  rows.sort(function (a, b) { return (a.s.band === 'in' ? 0 : 1) - (b.s.band === 'in' ? 0 : 1); });
+  return rows.slice(0, 4).map(function (x) { return '<div class="shoprow">' + esc(x.it.name) + ' · <b>' + esc(x.s.shop) + '</b> ' + esc(x.s.city) + ' · <span class="badge ' + (x.s.band === 'in' ? 'b-in' : 'b-low') + '">' + (x.s.band === 'in' ? t('inStock') : t('low')) + '</span> ' + (x.s.price == null ? t('ask') : tk(x.s.price)) + ' · <a href="find?s=' + esc(x.s.slug) + '">' + t('shop') + '</a></div>'; }).join('');
+}
+function inStock(c) { return c.items.some(function (it) { return it.shops.some(function (s) { return s.band === 'in'; }); }); }
+function resultsHtml() {
+  var r = LASTRES, rgb = LASTRGB;
+  var h = '<div class="card"><div class="row"><div class="sw" style="background:' + COLOUR.toHex(rgb) + '"></div><div><b>' + t('yours') + '</b><div class="hint">' + COLOUR.toHex(rgb) + '</div></div></div>' +
+    '<h2 style="font-size:16px;margin:14px 0 4px">' + t('results') + '</h2>' + r.top.map(function (c) { return '<div class="res"><div class="sw" style="background:' + esc(c.hex) + '"></div><div style="min-width:0;flex:1"><b>' + esc(c.colour) + '</b> <span class="badge ' + (c.label === 'very close' ? 'b-ok' : c.label === 'close' ? 'b-warn' : 'b-mute') + '">' + (t('lbl')[c.label] || c.label) + '</span>' + (c.measured ? '' : ' <span class="hint">(' + t('lbl').roughly + ')</span>') + '<div class="m">ΔE ' + c.dE + '</div>' + shopsHtml(c) + (inStock(c) ? '' : '<div class="shoprow"><a href="find?q=' + encodeURIComponent(c.colour) + '">' + t('back') + '</a></div>') + '</div></div>'; }).join('');
+  if (r.top.length && !r.top.some(inStock) && r.nextIn) h += '<p class="hint" style="margin:10px 0 4px"><b>' + t('noneIn') + '</b></p><div class="res"><div class="sw" style="background:' + esc(r.nextIn.hex) + '"></div><div><b>' + esc(r.nextIn.colour) + '</b> <span class="badge b-mute">' + (t('lbl')[r.nextIn.label] || r.nextIn.label) + '</span>' + shopsHtml(r.nextIn) + '</div></div>';
+  return h + '</div>';
+}
+function matchRgb(rgb) {
+  LASTRGB = rgb;
+  var all = COLOUR.closest(rgb, CANDS.map(function (c) { return Object.assign({}, c); }), CANDS.length);
+  all.forEach(function (c) { if (!c.measured && c.label === 'very close') c.label = 'close'; });
+  LASTRES = { top: all.slice(0, 3), nextIn: all.filter(inStock)[0] || null };
+  paint();
+}
+function avg(ctx, x, y, w, h) {
+  var d = ctx.getImageData(Math.max(0, x), Math.max(0, y), Math.max(1, w), Math.max(1, h)).data, n = 0, r = 0, g = 0, b = 0;
+  for (var i = 0; i < d.length; i += 4) { r += d[i]; g += d[i + 1]; b += d[i + 2]; n++; }
+  return [r / n, g / n, b / n];
+}
+function openCamera() {
+  var w = document.createElement('div'); w.className = 'cam';
+  w.innerHTML = '<video autoplay playsinline muted></video><div class="box" id="bw" style="left:12%;top:40%;width:28%;height:18%"><span>' + t('paper') + '</span></div><div class="box" id="bt" style="left:60%;top:40%;width:28%;height:18%"><span>' + t('thing') + '</span></div><div class="bar"><button type="button" class="pri" id="cm_go">' + t('match') + '</button><button type="button" id="cm_x">' + t('cancel') + '</button></div>';
+  document.body.appendChild(w);
+  var video = w.querySelector('video'), stream = null;
+  function stop() { try { stream && stream.getTracks().forEach(function (tr) { tr.stop(); }); } catch (e) {} w.remove(); }
+  w.querySelector('#cm_x').onclick = stop;
+  w.querySelector('#cm_go').onclick = function () {
+    if (!video.videoWidth) return;
+    var cv = document.createElement('canvas'), g = cv.getContext('2d', { willReadFrequently: true }); cv.width = video.videoWidth; cv.height = video.videoHeight; g.drawImage(video, 0, 0);
+    // the boxes are placed on the viewport over an object-fit:cover video: map them back to video pixels
+    var vr = video.getBoundingClientRect(), scale = Math.max(vr.width / cv.width, vr.height / cv.height), offX = (cv.width * scale - vr.width) / 2, offY = (cv.height * scale - vr.height) / 2;
+    function sample(box) { var b = box.getBoundingClientRect(); var x = (b.left - vr.left + offX) / scale, y = (b.top - vr.top + offY) / scale, bw = b.width / scale, bh = b.height / scale; return avg(g, x + bw * 0.25, y + bh * 0.25, bw * 0.5, bh * 0.5); }
+    var ref = sample(w.querySelector('#bw')), thing = sample(w.querySelector('#bt'));
+    stop(); matchRgb(COLOUR.whiteBalance(thing, ref));
+  };
+  navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } }, audio: false }).then(function (st) { stream = st; video.srcObject = st; }, function () { stop(); alert(t('camErr')); });
+}
+var PH = { ref: null };
+function loadPhoto(file) {
+  var url = URL.createObjectURL(file), img = new Image();
+  img.onload = function () {
+    var cv = $('pc'), k = Math.min(1, 900 / Math.max(img.naturalWidth, img.naturalHeight)); cv.width = Math.round(img.naturalWidth * k); cv.height = Math.round(img.naturalHeight * k);
+    cv.getContext('2d', { willReadFrequently: true }).drawImage(img, 0, 0, cv.width, cv.height); URL.revokeObjectURL(url);
+    $('photoBox').hidden = false; PH.ref = null; $('tapHint').textContent = t('tap1');
+    cv.onclick = function (ev) {
+      var r = cv.getBoundingClientRect(), x = (ev.clientX - r.left) * cv.width / r.width, y = (ev.clientY - r.top) * cv.height / r.height;
+      var s = avg(cv.getContext('2d', { willReadFrequently: true }), x - 6, y - 6, 12, 12);
+      if (!PH.ref) { PH.ref = s; $('tapHint').textContent = t('tap2'); return; }
+      var rgb = COLOUR.whiteBalance(s, PH.ref); PH.ref = null; $('tapHint').textContent = t('tap1'); matchRgb(rgb);
+    };
+  };
+  img.src = url;
+}
+$('out').addEventListener('click', function (ev) {
+  var b = ev.target.closest('[data-c],[data-f],[data-p]'); if (!b) return;
+  if (b.getAttribute('data-c') === 'cam') openCamera();
+  else if (b.getAttribute('data-c') === 'photo') { $('pf').onchange = function () { if (this.files && this.files[0]) loadPhoto(this.files[0]); }; $('pf').click(); }
+  else if (b.getAttribute('data-c') === 'pick') matchRgb(COLOUR.parseHex($('pcol').value));
+  else if (b.hasAttribute('data-f')) { FSEL = { use: $('f_use').value, printer: $('f_printer').value, drive: $('f_drive').value, skill: $('f_skill').value }; FREC = recommendFilament(FSEL); paint(); }
+  else if (b.hasAttribute('data-p')) { PSEL = { budget: $('p_budget').value, use: $('p_use').value }; PREC = recommendPrinter(PSEL); paint(); }
+});
+
+// ---- Which filament
+var MATS = {
+  PLA: { en: ['PLA', 'Easiest to print, sharp detail, every colour and finish (silk, matte, glitter). Softens at 55-60 °C - not for a car dashboard or hot water.'], bn: ['PLA', 'সবচেয়ে সহজ, সূক্ষ্ম ডিটেইল, সব রং ও ফিনিশ (সিল্ক, ম্যাট, গ্লিটার)। ৫৫-৬০ °C-তে নরম হয় - গাড়ির ড্যাশবোর্ড বা গরম পানির জন্য নয়।'], re: /\bpla\b(?![\s-]*(\+|plus|cf))/i },
+  'PLA+': { en: ['PLA+ (tough PLA)', 'As easy as PLA, bends a little before it snaps - for parts that get knocked.'], bn: ['PLA+ (টাফ PLA)', 'PLA-র মতোই সহজ, ভাঙার আগে একটু বাঁকে - যে পার্টসে ধাক্কা লাগে।'], re: /pla\s*(\+|plus)/i },
+  PETG: { en: ['PETG', 'Strong, a little flexible, takes 70-75 °C, water and sun better than PLA. Strings a bit; needs a slightly higher nozzle on the first layer.'], bn: ['PETG', 'মজবুত, একটু নমনীয়, ৭০-৭৫ °C, পানি ও রোদ PLA-র চেয়ে ভালো সহ্য করে। একটু স্ট্রিং করে; প্রথম লেয়ারে নজল একটু উঁচু।'], re: /\bpetg\b/i },
+  ABS: { en: ['ABS', 'Takes 90-100 °C and can be smoothed with acetone. Warps and smells: needs an enclosed printer and ventilation.'], bn: ['ABS', '৯০-১০০ °C সহ্য করে, অ্যাসিটোনে মসৃণ করা যায়। বাঁকে ও গন্ধ ছাড়ে: ঢাকা প্রিন্টার আর বাতাস চলাচল লাগে।'], re: /\babs\b/i },
+  ASA: { en: ['ASA', 'Like ABS but holds colour in the sun - for anything outdoors. Enclosed printer, ventilation.'], bn: ['ASA', 'ABS-এর মতো, কিন্তু রোদে রং টেকে - বাইরের যেকোনো কিছুর জন্য। ঢাকা প্রিন্টার, বাতাস চলাচল।'], re: /\basa\b/i },
+  TPU: { en: ['TPU (95A)', 'Rubber-like. Slow printing, best with a direct-drive extruder; dry it well.'], bn: ['TPU (95A)', 'রাবারের মতো। ধীরে প্রিন্ট, ডাইরেক্ট-ড্রাইভে সবচেয়ে ভালো; ভালোভাবে শুকান।'], re: /\btpu\b/i },
+  'PLA-CF': { en: ['PLA-CF / PETG-CF', 'Stiff, light, matte, hides layer lines. Needs a hardened steel nozzle (0.4 mm or bigger) - carbon fibre eats brass.'], bn: ['PLA-CF / PETG-CF', 'শক্ত, হালকা, ম্যাট, লেয়ার লাইন ঢাকে। হার্ডেন্ড স্টিল নজল লাগে (০.৪ মিমি বা বড়) - কার্বন ফাইবার ব্রাস ক্ষয় করে।'], re: /\b(pla|petg)[\s-]*cf\b|carbon/i }
+};
+function recommendFilament(s) {
+  var first, second, notes = [];
+  if (s.use === 'flex') { first = 'TPU'; second = 'PETG'; if (s.drive === 'bowden') notes.push(LANG === 'bn' ? 'বোডেন টিউবে TPU কঠিন: খুব ধীরে (১৫-২০ মিমি/সে) আর রিট্র্যাকশন বন্ধ রাখুন, বা শক্ত TPU (98A) নিন।' : 'TPU through a bowden tube is hard: print very slowly (15-20 mm/s) with retraction off, or pick a harder TPU (98A).'); }
+  else if (s.use === 'outdoor') { first = s.printer === 'enclosed' ? 'ASA' : 'PETG'; second = s.printer === 'enclosed' ? 'PETG' : 'ASA'; if (s.printer !== 'enclosed') notes.push(LANG === 'bn' ? 'খোলা প্রিন্টারে ASA বাঁকে; PETG রোদে ২-৩ বছর টেকে, কালো বা গাঢ় রং বাছুন।' : 'ASA warps on an open printer; PETG lasts 2-3 years in the sun - pick black or a dark colour.'); }
+  else if (s.use === 'heat') { first = s.printer === 'enclosed' ? 'ABS' : 'PETG'; second = s.printer === 'enclosed' ? 'ASA' : 'PLA+'; notes.push(LANG === 'bn' ? 'গরম পানি ৭০ °C-র উপরে বা গাড়ির ভেতরে PETG-ও নরম হতে পারে; তখন ABS/ASA আর ঢাকা প্রিন্টার লাগে।' : 'Above 70 °C (hot water, a car in the sun) even PETG softens; then it has to be ABS or ASA on an enclosed printer.'); }
+  else if (s.use === 'stiff') { first = 'PLA-CF'; second = 'PETG'; notes.push(LANG === 'bn' ? 'হার্ডেন্ড নজল না থাকলে PETG বা PLA+ দিয়ে শুরু করুন।' : 'No hardened nozzle yet? Start with PETG or PLA+ and more walls.'); }
+  else if (s.use === 'func') { first = s.skill === 'new' ? 'PLA+' : 'PETG'; second = s.skill === 'new' ? 'PETG' : 'PLA+'; notes.push(LANG === 'bn' ? 'মজবুতির জন্য বেশি লেয়ারের চেয়ে ৩-৪টা দেয়াল আর বেশি ইনফিল বেশি কাজ দেয়।' : 'For strength, 3-4 walls and more infill do more than any material change.'); }
+  else { first = 'PLA'; second = 'PLA+'; notes.push(LANG === 'bn' ? 'সিল্ক ও ম্যাট ফিনিশ সাজসজ্জায় সুন্দর; সিল্ক একটু দুর্বল।' : 'Silk and matte finishes look best for display pieces; silk is a little weaker.'); }
+  if (s.skill === 'new') notes.push(LANG === 'bn' ? 'বর্ষায় যেকোনো ফিলামেন্ট আগে শুকান - বেশিরভাগ "খারাপ প্রিন্ট" ভেজা ফিলামেন্ট।' : 'In the monsoon dry any filament first - most "bad prints" are wet filament.');
+  return { first: first, second: second, notes: notes };
+}
+function stockFor(key) { var re = MATS[key].re; return (LIST || []).filter(function (it) { return isFilament(it) && re.test(it.name + ' ' + it.category); }).slice(0, 8); }
+function stockListHtml(items) { return items.length ? items.map(function (it) { var s = it.shops[0]; return '<div class="shoprow">' + esc(it.name) + (it.colour ? ' · ' + esc(it.colour) : '') + ' · <b>' + esc(s.shop) + '</b> ' + esc(s.city) + ' · <span class="badge ' + (s.band === 'in' ? 'b-in' : 'b-low') + '">' + (s.band === 'in' ? t('inStock') : t('low')) + '</span> ' + (s.price == null ? t('ask') : tk(s.price)) + (it.shops.length > 1 ? ' · +' + (it.shops.length - 1) : '') + ' · <a href="find?s=' + esc(s.slug) + '">' + t('shop') + '</a></div>'; }).join('') : '<p class="hint" style="margin:4px 0">' + t('fNone') + '</p>'; }
+function sel(id, opts, cur) { return '<select id="' + id + '">' + opts.map(function (o) { return '<option value="' + o[0] + '"' + (o[0] === cur ? ' selected' : '') + '>' + esc(o[1]) + '</option>'; }).join('') + '</select>'; }
+function paintFilament() {
+  var h = '<div class="card"><label class="f" for="f_use">' + t('fUse') + '</label>' + sel('f_use', t('fUses'), FSEL.use) + '<label class="f" for="f_printer">' + t('fPrinter') + '</label>' + sel('f_printer', t('fPrinters'), FSEL.printer) + '<label class="f" for="f_drive">' + t('fDrive') + '</label>' + sel('f_drive', t('fDrives'), FSEL.drive) + '<label class="f" for="f_skill">' + t('fSkill') + '</label>' + sel('f_skill', t('fSkills'), FSEL.skill) + '<div class="row" style="margin-top:12px"><button type="button" class="pri" data-f="go">' + t('fGo') + '</button></div></div>';
+  if (FREC) {
+    var m = MATS[FREC.first][LANG] || MATS[FREC.first].en, m2 = MATS[FREC.second][LANG] || MATS[FREC.second].en;
+    h += '<div class="card rec"><h2>' + esc(m[0]) + '</h2><p><b>' + t('fWhy') + ':</b> ' + esc(m[1]) + '</p>' + FREC.notes.map(function (n) { return '<p class="hint">' + esc(n) + '</p>'; }).join('') + '<p><b>' + t('fSecond') + ':</b> ' + esc(m2[0]) + ' - ' + esc(m2[1]) + '</p><p class="hint"><a href="doctor#settings">' + t('fSettings') + '</a></p>' +
+      '<h3 style="font-size:14px;color:var(--mute);margin:12px 0 4px;text-transform:uppercase;letter-spacing:.4px">' + t('fStock') + ' · ' + esc(m[0]) + '</h3>' + (LIST === null ? '<p class="hint">' + t('loading') + '</p>' : stockListHtml(stockFor(FREC.first))) + '</div>';
+  }
+  $('out').innerHTML = h;
+}
+
+// ---- Which printer
+function recommendPrinter(s) {
+  var out = { cls: '', why: '', notes: [] };
+  var bn = LANG === 'bn';
+  if (s.use === 'big') { out.cls = bn ? '৩০০ মিমি বা বড় বেড: Creality K1 Max শ্রেণি, Ender-5 Plus শ্রেণি' : 'A 300 mm or bigger bed: Creality K1 Max class, Ender-5 Plus class'; out.why = bn ? '২৫০ মিমির বড় পার্টস ছোট বেডে টুকরো করে আঠা দিতে হয়; বড় বেড সময় ও জোড়া বাঁচায়।' : 'Parts over 250 mm have to be split and glued on a small bed; a big bed saves time and seams.'; if (s.budget === 'b1' || s.budget === 'b2') out.notes.push(bn ? 'এই বাজেটে বড় বেড মানে পুরনো ডিজাইন (ধীর, হাতে লেভেল)। ৪৫,০০০-এর উপরে গেলে অনেক ভালো।' : 'At this budget a big bed means an older design (slow, manual levelling). Above 45,000 the choice gets much better.'); }
+  else if (s.use === 'multi') { out.cls = bn ? 'AMS-ওয়ালা Bambu: A1 mini + AMS lite, A1 + AMS lite, P1S + AMS' : 'A Bambu with an AMS: A1 mini + AMS lite, A1 + AMS lite, P1S + AMS'; out.why = bn ? 'বহু রঙে এক প্রিন্টে চার স্পুল বদলায় প্রিন্টার নিজেই; অন্য উপায় হাতে পজ করে বদলানো।' : 'Four spools swapped by the printer itself in one print; the only other way is pausing and swapping by hand.'; out.notes.push(bn ? 'বহু রঙে অনেক ফিলামেন্ট নষ্ট হয় (পার্জ) - দামের হিসাবে রাখুন।' : 'Multi-colour wastes a lot of filament in purging - count it in the price.'); }
+  else if (s.budget === 'b1') { out.cls = bn ? 'Ender-3 শ্রেণি (V3 SE / KE), Kingroon KP3S, বা ব্যবহৃত A1 mini' : 'Ender-3 class (V3 SE / KE), Kingroon KP3S, or a used A1 mini'; out.why = bn ? 'এই দামে শেখার জন্য যথেষ্ট; হাতে কিছু টিউন করতে হবে।' : 'Enough to learn on at this price; expect some tuning by hand.'; out.notes.push(bn ? 'অটো-লেভেল আর ডাইরেক্ট ড্রাইভ আছে এমনটা নিন (V3 SE/KE); পুরনো V2 নয়।' : 'Take one with auto-levelling and direct drive (V3 SE / KE), not the old V2.'); }
+  else if (s.budget === 'b2') { out.cls = bn ? 'Bambu A1 mini (১৮০ মিমি) বা A1 (২৫৬ মিমি); Creality K1C' : 'Bambu A1 mini (180 mm) or A1 (256 mm); Creality K1C'; out.why = bn ? 'দ্রুত, অটো সবকিছু, প্রথম দিন থেকে ভালো প্রিন্ট - শেখা আর ছোট ব্যবসা দুটোতেই।' : 'Fast, everything automatic, good prints from day one - for learning and a small business alike.'; if (s.use === 'biz') out.notes.push(bn ? 'ব্যবসায় দুটো A1 mini একটা বড় প্রিন্টারের চেয়ে বেশি কাজ দেয়: একটা নষ্ট হলেও কাজ চলে।' : 'For a business two A1 minis beat one bigger printer: one down, the other still earns.'); }
+  else if (s.budget === 'b3') { out.cls = bn ? 'Bambu P1S (ঢাকা, ২৫৬ মিমি) বা Creality K1 Max (৩০০ মিমি)' : 'Bambu P1S (enclosed, 256 mm) or Creality K1 Max (300 mm)'; out.why = bn ? 'ঢাকা চেম্বার ABS/ASA প্রিন্ট করে, ধুলো ও বাতাস থেকে বাঁচায়; ব্যবসার জন্য নির্ভরযোগ্য।' : 'An enclosed chamber prints ABS/ASA and keeps dust and draughts out; dependable for a business.'; }
+  else { out.cls = bn ? 'Bambu X1C / X1E, বা বড় ফরম্যাট (Elegoo OrangeStorm Giga শ্রেণি)' : 'Bambu X1C / X1E, or large format (Elegoo OrangeStorm Giga class)'; out.why = bn ? 'ক্যামেরা, লিডার, হার্ডেন্ড নজল - CF ফিলামেন্ট ও দিনরাত চালানোর জন্য।' : 'Camera, lidar, hardened nozzle - for CF filaments and printing around the clock.'; }
+  out.notes.push(bn ? 'দাম বদলায়; দোকান বলবে। চীনা (CN) ভার্সন সস্তা কিন্তু ক্লাউড/ভাষা আলাদা - পাসপোর্টে ভার্সন দেখুন।' : 'Prices move; the shop quotes. A China (CN) version is cheaper but its cloud and language differ - the Passport shows the version.');
+  return out;
+}
+function paintPrinter() {
+  var h = '<div class="card"><label class="f" for="p_budget">' + t('pBudget') + '</label>' + sel('p_budget', t('pBudgets'), PSEL.budget) + '<label class="f" for="p_use">' + t('pUse') + '</label>' + sel('p_use', t('pUses'), PSEL.use) + '<div class="row" style="margin-top:12px"><button type="button" class="pri" data-p="go">' + t('pGo') + '</button></div></div>';
+  if (PREC) {
+    var printers = (LIST || []).filter(isPrinter).sort(function (a, b) { return (a.low || 1e12) - (b.low || 1e12); }).slice(0, 10);
+    h += '<div class="card rec"><h2>' + t('pClass') + ': ' + esc(PREC.cls) + '</h2><p><b>' + t('pWhy') + ':</b> ' + esc(PREC.why) + '</p>' + PREC.notes.map(function (n) { return '<p class="hint">' + esc(n) + '</p>'; }).join('') + '<p class="hint">' + t('pWarranty') + '</p>' +
+      '<h3 style="font-size:14px;color:var(--mute);margin:12px 0 4px;text-transform:uppercase;letter-spacing:.4px">' + t('pStock') + '</h3>' + (LIST === null ? '<p class="hint">' + t('loading') + '</p>' : printers.length ? printers.map(function (it) { var s = it.shops[0]; return '<div class="shoprow">' + esc(it.name) + ' · <b>' + esc(s.shop) + '</b> ' + esc(s.city) + ' · <span class="badge ' + (s.band === 'in' ? 'b-in' : 'b-low') + '">' + (s.band === 'in' ? t('inStock') : t('low')) + '</span> ' + (s.price == null ? t('ask') : tk(s.price)) + ' · <a href="find?s=' + esc(s.slug) + '">' + t('shop') + '</a></div>'; }).join('') : '<p class="hint" style="margin:4px 0">' + t('pNone') + '</p>') + '</div>';
+  }
+  $('out').innerHTML = h;
+}
+function paint() { if (TAB === 'filament') paintFilament(); else if (TAB === 'printer') paintPrinter(); else paintColour(); }
+paintLang(); document.querySelectorAll('#tabs button').forEach(function (x) { x.classList.toggle('on', x.getAttribute('data-tab') === TAB); }); load();
+</script>
+</body>
+</html>

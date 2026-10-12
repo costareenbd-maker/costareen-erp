@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Find stock: which 3D printing shop has the filament, printer or part you need right now - in stock, price, city. Order straight from the shop.">
+<title>Find stock</title>
+<link rel="icon" href="icons/favicon-32.png">
+<style>
+/* Stage N5 (docs/NETWORK-BLUEPRINT.md section 4.1): Find stock. ?q= searches; ?s=<slug> opens a shop's page with
+   ordering. Talks to the server's ?pub=find / shop / order / alert routes; no sign-in. */
+:root{--bg:#f6f7f4;--card:#fff;--ink:#14201c;--mute:#5d6b66;--line:#dfe5e1;--ok:#0f766e;--okbg:#e6f4f1;--warn:#9a5b00;--warnbg:#fff4df;--bad:#b42318;--badbg:#fdecea;--acc:#0f766e}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans","Noto Sans Bengali","Hind Siliguri",sans-serif}
+body{padding:calc(16px + env(safe-area-inset-top,0px)) 16px calc(28px + env(safe-area-inset-bottom,0px))}
+main{max-width:720px;margin:0 auto}
+header{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:14px}
+header h1{font-size:22px;margin:0}header h1 small{display:block;font-size:13px;color:var(--mute);font-weight:500}
+.lang{border:1px solid var(--line);background:var(--card);border-radius:999px;padding:6px 12px;font:inherit;font-size:14px;cursor:pointer}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 16px;margin-bottom:12px}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+input,select,textarea{font:inherit;font-size:16px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:#fff;color:var(--ink);width:100%}
+input#q{flex:1 1 200px;width:auto;font-size:17px}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--acc);outline-offset:1px;border-color:var(--acc)}
+button{font:inherit;font-size:15px;padding:10px 14px;border-radius:10px;border:1px solid var(--line);background:#fff;color:var(--ink);cursor:pointer}
+button.pri{background:var(--acc);border-color:var(--acc);color:#fff;font-weight:600}button.sm{font-size:13px;padding:6px 10px}button:disabled{opacity:.6;cursor:default}
+a.wa{display:inline-block;font-size:13px;padding:6px 10px;border-radius:10px;background:#1f9d55;color:#fff;font-weight:600;text-decoration:none}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}.chips button{font-size:13px;padding:5px 10px;border-radius:999px}.chips button.on{background:var(--acc);color:#fff;border-color:var(--acc)}
+.item h2{font-size:17px;margin:0 0 2px}.item .sub{font-size:13px;color:var(--mute);margin:0 0 8px}
+.shop{display:flex;justify-content:space-between;gap:10px;align-items:center;padding:8px 0;border-top:1px solid var(--line);flex-wrap:wrap}
+.shop b{font-size:15px}.shop .m{font-size:13px;color:var(--mute)}
+.badge{display:inline-block;font-size:12px;font-weight:600;padding:2px 9px;border-radius:999px}.b-in{background:var(--okbg);color:var(--ok)}.b-low{background:var(--warnbg);color:var(--warn)}.b-mute{background:#eef1ee;color:var(--mute)}
+.price{font-weight:700;font-variant-numeric:tabular-nums}
+.hint{font-size:13px;color:var(--mute)}.err{color:var(--bad);font-size:14px;margin-top:8px}
+.qty{display:inline-flex;align-items:center;gap:4px}.qty button{padding:4px 10px;font-size:15px}.qty span{min-width:22px;text-align:center;font-variant-numeric:tabular-nums}
+label.f{display:block;font-size:14px;color:var(--mute);margin:10px 0 4px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:8px}@media (max-width:460px){.two{grid-template-columns:1fr}}
+.chk{display:flex;gap:8px;align-items:flex-start;font-size:14px;margin:12px 0 0}.chk input{width:auto;margin-top:3px}
+.cartbar{position:sticky;bottom:0;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:10px 14px;display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:12px;box-shadow:0 -4px 16px rgba(0,0,0,.06)}
+code{font-size:13px;word-break:break-all}
+footer{font-size:13px;color:var(--mute);text-align:center;margin-top:22px}footer a{color:var(--mute)}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
+<main>
+  <header><h1><span data-t="title">Find stock</span><small data-t="sub">Which shop has it right now</small></h1><button class="lang" id="lang" type="button">বাংলা</button></header>
+  <div id="search">
+    <form class="card" id="f"><div class="row"><input id="q" type="search" autocomplete="off"><button type="submit" class="pri" data-t="go">Search</button></div><div class="chips" id="chips"></div></form>
+    <div id="out"></div>
+  </div>
+  <div id="shop" hidden></div>
+  <footer><span data-t="foot">Shops list their own stock; prices and delivery are the shop's. The platform holds no money.</span> · <a href="doctor" data-t="doc">Print Doctor</a> · <a href="check" data-t="pp">Printer Passport</a> · <a href="ideas">Ideas</a> · <a href="choose" data-t="choose">Help me choose</a> · <a href="print">Get it printed</a> · <a href="design">Design desk</a></footer>
+</main>
+<script>
+var API = (new URLSearchParams(location.search).get('api') || 'https://oqzcuuytytqadqjlwdsh.supabase.co/functions/v1/erp').replace(/\/+$/, '');
+var Q = new URLSearchParams(location.search);
+var T = {
+  en: { title: 'Find stock', sub: 'Which shop has it right now', go: 'Search', search: 'Filament, printer, part, brand, colour…', foot: 'Shops list their own stock; prices and delivery are the shop’s. The platform holds no money.', doc: 'Print Doctor', pp: 'Printer Passport', choose: 'Help me choose',
+    loading: 'Searching…', none: 'No shop lists that right now.', net: 'Could not reach the server. Check your connection and try again.', inStock: 'In stock', low: 'Running low', ask: 'ask', shops: 'shops', shop: 'shop', order: 'Order', open: 'Shop page', more: 'more',
+    alertBtn: 'Tell me when it is back', alertH: 'Tell me when it is back', alertBody: 'Shops that sell it get your number and message you when it is back. Nothing else is done with it.', phone: 'Your mobile number', consent: 'The shops that sell this product may message me on this number when it is back in stock. Nothing else is done with it.', send: 'Send', sending: 'Sending…', noted: 'Noted. A shop will message you when it is back.',
+    back: '← Search', items: 'What the shop has', delivery: 'Delivery', noOrders: 'This shop takes orders on WhatsApp, not here.', cart: 'Your order', pieces: 'items', checkout: 'Order', name: 'Your name', address: 'Delivery address (area, road, house)', note: 'Note for the shop (optional)', ordConsent: 'The shop keeps my name, number and address to deliver this order and to reach me about it. Nothing else is done with them.',
+    place: 'Send the order', placed: 'Order sent', placedBody: 'The shop will call or message you to confirm the price, payment and delivery. Keep this number:', askNote: 'Some prices are "ask" - the shop tells you the total.', total: 'Total of listed prices', waMsg: 'Send the shop a WhatsApp too', call: 'Call', updated: 'updated' },
+  bn: { title: 'স্টক খুঁজুন', sub: 'এখন কোন দোকানে আছে', go: 'খুঁজুন', search: 'ফিলামেন্ট, প্রিন্টার, পার্টস, ব্র্যান্ড, রং…', foot: 'দোকানগুলো নিজেদের স্টক দেখায়; দাম ও ডেলিভারি দোকানের। প্ল্যাটফর্ম কোনো টাকা রাখে না।', doc: 'প্রিন্ট ডাক্তার', pp: 'প্রিন্টার পাসপোর্ট', choose: 'কোনটা নেব',
+    loading: 'খোঁজা হচ্ছে…', none: 'এখন কোনো দোকান এটা দেখাচ্ছে না।', net: 'সার্ভারে পৌঁছানো যায়নি। ইন্টারনেট দেখে আবার চেষ্টা করুন।', inStock: 'স্টকে আছে', low: 'শেষের দিকে', ask: 'জিজ্ঞেস করুন', shops: 'দোকান', shop: 'দোকান', order: 'অর্ডার', open: 'দোকানের পেজ', more: 'আরও',
+    alertBtn: 'এলে আমাকে জানান', alertH: 'এলে আমাকে জানান', alertBody: 'যে দোকানগুলো এটা বিক্রি করে, তারা আপনার নম্বর পাবে এবং এলে মেসেজ দেবে। এর বাইরে কিছু করা হবে না।', phone: 'আপনার মোবাইল নম্বর', consent: 'এই পণ্য বিক্রি করা দোকানগুলো স্টকে এলে এই নম্বরে মেসেজ দিতে পারবে। এর বাইরে কিছু করা হবে না।', send: 'পাঠান', sending: 'পাঠানো হচ্ছে…', noted: 'লেখা হলো। এলে কোনো দোকান আপনাকে মেসেজ দেবে।',
+    back: '← খোঁজা', items: 'দোকানে যা আছে', delivery: 'ডেলিভারি', noOrders: 'এই দোকান এখানে নয়, WhatsApp-এ অর্ডার নেয়।', cart: 'আপনার অর্ডার', pieces: 'টি', checkout: 'অর্ডার', name: 'আপনার নাম', address: 'ডেলিভারি ঠিকানা (এলাকা, রোড, বাসা)', note: 'দোকানের জন্য নোট (ঐচ্ছিক)', ordConsent: 'দোকান এই অর্ডার পৌঁছে দিতে ও যোগাযোগ করতে আমার নাম, নম্বর ও ঠিকানা রাখবে। এর বাইরে কিছু করা হবে না।',
+    place: 'অর্ডার পাঠান', placed: 'অর্ডার পাঠানো হয়েছে', placedBody: 'দাম, পেমেন্ট ও ডেলিভারি নিশ্চিত করতে দোকান আপনাকে কল বা মেসেজ দেবে। এই নম্বরটি রাখুন:', askNote: 'কিছু দাম "জিজ্ঞেস করুন" - মোট দাম দোকান জানাবে।', total: 'দেখানো দামের মোট', waMsg: 'দোকানে WhatsApp-ও পাঠান', call: 'কল', updated: 'হালনাগাদ' }
+};
+var LANG = 'en'; try { LANG = localStorage.getItem('pp_lang') || ((navigator.language || '').indexOf('bn') === 0 ? 'bn' : 'en'); } catch (e) {}
+function t(k) { return (T[LANG] || T.en)[k] || T.en[k] || k; }
+function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+function tk(n) { return '৳' + Number(n || 0).toLocaleString('en-IN'); }
+var $ = function (id) { return document.getElementById(id); };
+var RES = null, FIL = { brand: '', colour: '', cat: '' }, SHOP = null, CART = {}, ALERT = null, DONE = null;
+function paintLang() { document.documentElement.lang = LANG; document.querySelectorAll('[data-t]').forEach(function (n) { n.textContent = t(n.getAttribute('data-t')); }); $('lang').textContent = LANG === 'bn' ? 'English' : 'বাংলা'; $('q').placeholder = t('search'); if (SHOP) paintShop(); else if (RES) paint(RES); }
+$('lang').onclick = function () { LANG = LANG === 'bn' ? 'en' : 'bn'; try { localStorage.setItem('pp_lang', LANG); } catch (e) {} paintLang(); };
+function apiQ() { return Q.get('api') ? '&api=' + encodeURIComponent(Q.get('api')) : ''; }
+
+// ---- search
+function search() {
+  var q = $('q').value.trim();
+  $('out').innerHTML = '<div class="card hint">' + t('loading') + '</div>';
+  try { history.replaceState(null, '', location.pathname + '?q=' + encodeURIComponent(q) + apiQ()); } catch (e) {}
+  fetch(API + '?pub=find&q=' + encodeURIComponent(q) + '&brand=' + encodeURIComponent(FIL.brand) + '&colour=' + encodeURIComponent(FIL.colour) + '&cat=' + encodeURIComponent(FIL.cat)).then(function (r) { return r.json(); }).then(paint, function () { paint({ ok: false, error: t('net') }); });
+}
+$('f').addEventListener('submit', function (ev) { ev.preventDefault(); FIL = { brand: '', colour: '', cat: '' }; search(); });
+function paint(r) {
+  RES = r;
+  if (!r.ok) { $('out').innerHTML = '<div class="card"><p class="err" style="margin:0">' + esc(r.error || t('net')) + '</p></div>'; return; }
+  var chips = [];
+  ['brands', 'colours', 'categories'].forEach(function (k) { var key = k === 'brands' ? 'brand' : k === 'colours' ? 'colour' : 'cat'; (r.facets[k] || []).slice(0, 8).forEach(function (v) { chips.push('<button type="button" data-chip="' + key + '" data-v="' + esc(v) + '" class="' + (FIL[key] === v ? 'on' : '') + '">' + esc(v) + '</button>'); }); });
+  $('chips').innerHTML = chips.join('');
+  if (!r.items.length) { $('out').innerHTML = '<div class="card"><p class="hint" style="margin:0 0 8px">' + t('none') + '</p>' + ($('q').value.trim() ? '<button type="button" class="sm" data-alert="' + esc($('q').value.trim()) + '">' + t('alertBtn') + '</button><div id="alertbox"></div>' : '') + '</div>'; return; }
+  $('out').innerHTML = r.items.map(function (it) {
+    return '<div class="card item"><h2>' + esc(it.name) + '</h2><p class="sub">' + esc([it.brand, it.category, it.colour, it.unit].filter(Boolean).join(' · ')) + ' · ' + it.shops.length + ' ' + (it.shops.length === 1 ? t('shop') : t('shops')) + (it.low ? ' · ' + tk(it.low) + '+' : '') + '</p>' +
+      it.shops.slice(0, 6).map(function (s) { return '<div class="shop"><div><b>' + esc(s.shop) + '</b> <span class="m">' + esc(s.city) + ' · ' + t('updated') + ' ' + esc(s.updated) + '</span><br><span class="badge ' + (s.band === 'in' ? 'b-in' : 'b-low') + '">' + (s.band === 'in' ? t('inStock') : t('low')) + '</span> <span class="price">' + (s.price == null ? t('ask') : tk(s.price)) + '</span></div><div class="row"><button type="button" class="sm' + (s.orders ? ' pri' : '') + '" data-shop="' + esc(s.slug) + '">' + (s.orders ? t('order') : t('open')) + '</button></div></div>'; }).join('') +
+      (it.inStock === 0 ? '<div class="row" style="margin-top:8px"><button type="button" class="sm" data-alert="' + esc(it.name) + '">' + t('alertBtn') + '</button></div><div id="alertbox"></div>' : '') + '</div>'; }).join('') + (r.total > r.items.length ? '<p class="hint">' + (r.total - r.items.length) + ' ' + t('more') + '</p>' : '');
+}
+$('chips').addEventListener('click', function (ev) { var b = ev.target.closest('[data-chip]'); if (!b) return; var k = b.getAttribute('data-chip'), v = b.getAttribute('data-v'); FIL[k] = FIL[k] === v ? '' : v; search(); });
+$('out').addEventListener('click', function (ev) {
+  var b = ev.target.closest('[data-shop],[data-alert],[data-alertgo]'); if (!b) return;
+  if (b.hasAttribute('data-shop')) { openShop(b.getAttribute('data-shop')); return; }
+  if (b.hasAttribute('data-alert')) { var box = b.parentNode.parentNode.querySelector('#alertbox') || b.parentNode.querySelector('#alertbox'); if (!box) return; ALERT = b.getAttribute('data-alert'); box.innerHTML = '<div style="margin-top:8px"><b>' + t('alertH') + '</b><p class="hint" style="margin:4px 0">' + t('alertBody') + '</p><label class="f" for="al_phone">' + t('phone') + '</label><input id="al_phone" inputmode="tel" placeholder="01XXXXXXXXX"><label class="chk"><input type="checkbox" id="al_consent"> <span>' + t('consent') + '</span></label><div class="row" style="margin-top:8px"><button type="button" class="pri" data-alertgo="1">' + t('send') + '</button></div><div class="err" id="al_err"></div></div>'; return; }
+  if (b.hasAttribute('data-alertgo')) {
+    b.disabled = true; b.textContent = t('sending');
+    fetch(API + '?pub=alert', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ name: ALERT, phone: $('al_phone').value, consent: $('al_consent').checked }) }).then(function (r) { return r.json(); }).then(function (r) {
+      if (!r.ok) { b.disabled = false; b.textContent = t('send'); $('al_err').textContent = r.error || t('net'); return; }
+      b.parentNode.parentNode.innerHTML = '<p class="hint" style="margin:8px 0 0"><b>' + t('noted') + '</b></p>';
+    }, function () { b.disabled = false; b.textContent = t('send'); $('al_err').textContent = t('net'); });
+  }
+});
+
+// ---- a shop's page
+function openShop(slug) {
+  CART = {}; DONE = null;
+  try { history.replaceState(null, '', location.pathname + '?s=' + encodeURIComponent(slug) + apiQ()); } catch (e) {}
+  $('shop').innerHTML = '<div class="card hint">' + t('loading') + '</div>'; $('shop').hidden = false; $('search').hidden = true; window.scrollTo(0, 0);
+  fetch(API + '?pub=shop&s=' + encodeURIComponent(slug)).then(function (r) { return r.json(); }).then(function (r) { SHOP = r; paintShop(); }, function () { SHOP = { ok: false, error: t('net') }; paintShop(); });
+}
+function cartCount() { return Object.keys(CART).reduce(function (a, k) { return a + CART[k]; }, 0); }
+function paintShop() {
+  var r = SHOP;
+  if (!r.ok) { $('shop').innerHTML = '<div class="card"><button type="button" data-back="1">' + t('back') + '</button><p class="err">' + esc(r.error || t('net')) + '</p></div>'; return; }
+  var s = r.shop;
+  if (DONE) { $('shop').innerHTML = '<div class="card"><button type="button" data-back="1">' + t('back') + '</button><h2 style="margin:12px 0 4px">' + t('placed') + '</h2><p class="hint">' + t('placedBody') + '</p><p style="font-size:22px;font-weight:700;margin:4px 0">' + esc(DONE.orderNo) + '</p>' + (DONE.ask ? '<p class="hint">' + t('askNote') + '</p>' : '<p>' + t('total') + ': <b>' + tk(DONE.total) + '</b></p>') + '<div class="row">' + (s.whatsapp ? '<a class="wa" href="' + esc(s.whatsapp) + '?text=' + encodeURIComponent(DONE.message) + '" target="_blank" rel="noopener">' + t('waMsg') + '</a>' : '') + (s.phone ? '<a class="wa" style="background:#5d6b66" href="tel:' + esc(s.phone.replace(/[^0-9+]/g, '')) + '">' + t('call') + ' ' + esc(s.phone) + '</a>' : '') + '</div></div>'; return; }
+  var h = '<div class="card"><button type="button" data-back="1">' + t('back') + '</button><h2 style="margin:12px 0 2px;font-size:20px">' + esc(s.name) + '</h2><p class="hint" style="margin:0">' + esc([s.city, s.address, s.phone].filter(Boolean).join(' · ')) + '</p>' + (s.note ? '<p style="margin:8px 0 0"><b>' + t('delivery') + ':</b> ' + esc(s.note) + '</p>' : '') + '<div class="row" style="margin-top:8px">' + (s.whatsapp ? '<a class="wa" href="' + esc(s.whatsapp) + '" target="_blank" rel="noopener">WhatsApp</a>' : '') + '</div>' + (!s.orders ? '<p class="hint" style="margin:8px 0 0">' + t('noOrders') + '</p>' : '') + '</div>';
+  h += '<div class="card"><h2 style="font-size:17px;margin:0 0 4px">' + t('items') + '</h2>' + r.items.map(function (it) {
+    var n = CART[it.productId] || 0;
+    return '<div class="shop"><div><b>' + esc(it.name) + '</b><br><span class="m">' + esc([it.brand, it.colour, it.unit].filter(Boolean).join(' · ')) + '</span><br><span class="badge ' + (it.band === 'in' ? 'b-in' : 'b-low') + '">' + (it.band === 'in' ? t('inStock') : t('low')) + '</span> <span class="price">' + (it.price == null ? t('ask') : tk(it.price)) + '</span></div>' +
+      (s.orders ? '<div class="qty"><button type="button" data-q="-1" data-p="' + esc(it.productId) + '">−</button><span>' + n + '</span><button type="button" data-q="1" data-p="' + esc(it.productId) + '">+</button></div>' : '') + '</div>'; }).join('') + '</div>';
+  if (s.orders && cartCount()) {
+    var total = 0, ask = 0; r.items.forEach(function (it) { if (CART[it.productId]) { if (it.price == null) ask++; else total += it.price * CART[it.productId]; } });
+    h += '<form class="card" id="of"><h2 style="font-size:17px;margin:0">' + t('cart') + ': ' + cartCount() + ' ' + t('pieces') + (total ? ' · ' + tk(total) : '') + (ask ? ' · ' + t('ask') : '') + '</h2>' +
+      '<div class="two"><div><label class="f" for="o_name">' + t('name') + '</label><input id="o_name" maxlength="60" required></div><div><label class="f" for="o_phone">' + t('phone') + '</label><input id="o_phone" inputmode="tel" placeholder="01XXXXXXXXX" required></div></div>' +
+      '<label class="f" for="o_addr">' + t('address') + '</label><input id="o_addr" maxlength="300" required><label class="f" for="o_note">' + t('note') + '</label><input id="o_note" maxlength="300"><label class="chk"><input type="checkbox" id="o_consent"> <span>' + t('ordConsent') + '</span></label>' +
+      '<div class="row" style="margin-top:10px"><button type="submit" class="pri" id="o_go">' + t('place') + '</button></div><div class="err" id="o_err"></div></form>';
+  }
+  $('shop').innerHTML = h;
+  var f = $('of'); if (f) f.addEventListener('submit', placeOrder);
+}
+$('shop').addEventListener('click', function (ev) {
+  var b = ev.target.closest('[data-back],[data-q]'); if (!b) return;
+  if (b.hasAttribute('data-back')) { SHOP = null; $('shop').hidden = true; $('search').hidden = false; try { history.replaceState(null, '', location.pathname + '?q=' + encodeURIComponent($('q').value.trim()) + apiQ()); } catch (e) {} if (!RES) search(); return; }
+  var p = b.getAttribute('data-p'), keep = { name: ($('o_name') || {}).value, phone: ($('o_phone') || {}).value, addr: ($('o_addr') || {}).value, note: ($('o_note') || {}).value };
+  CART[p] = Math.max(0, Math.min(50, (CART[p] || 0) + Number(b.getAttribute('data-q')))); if (!CART[p]) delete CART[p];
+  paintShop(); if ($('o_name')) { $('o_name').value = keep.name || ''; $('o_phone').value = keep.phone || ''; $('o_addr').value = keep.addr || ''; $('o_note').value = keep.note || ''; }
+});
+function placeOrder(ev) {
+  ev.preventDefault(); var go = $('o_go'); go.disabled = true; go.textContent = t('sending'); $('o_err').textContent = '';
+  var body = { s: SHOP.shop.slug, items: Object.keys(CART).map(function (k) { return { productId: k, qty: CART[k] }; }), name: $('o_name').value, phone: $('o_phone').value, address: $('o_addr').value, note: $('o_note').value, consent: $('o_consent').checked };
+  fetch(API + '?pub=order', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) }).then(function (r) { return r.json(); }).then(function (r) {
+    if (!r.ok) { go.disabled = false; go.textContent = t('place'); $('o_err').textContent = r.error || t('net'); return; }
+    DONE = r; CART = {}; paintShop(); window.scrollTo(0, 0);
+  }, function () { go.disabled = false; go.textContent = t('place'); $('o_err').textContent = t('net'); });
+}
+paintLang();
+if (Q.get('s')) openShop(Q.get('s')); else { $('q').value = Q.get('q') || ''; search(); }
+</script>
+</body>
+</html>

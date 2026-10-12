@@ -1,0 +1,234 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Print Doctor: failed 3D print? Tap the picture that looks like yours - the cause and the fix in Bangla and English. Tested settings, monsoon guide, power cuts and UPS.">
+<title>Print Doctor</title>
+<link rel="icon" href="icons/favicon-32.png">
+<style>
+/* Stage N3 (docs/NETWORK-BLUEPRINT.md): the Print Doctor. Content in doctor-data.js; community parts through the
+   server's ?pub=doctor... routes (tips with credit, "did this help" votes, members' cases and settings). */
+:root{--bg:#f6f7f4;--card:#fff;--ink:#14201c;--mute:#5d6b66;--line:#dfe5e1;--ok:#0f766e;--okbg:#e6f4f1;--warn:#9a5b00;--warnbg:#fff4df;--bad:#b42318;--badbg:#fdecea;--acc:#0f766e}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans","Noto Sans Bengali","Hind Siliguri",sans-serif}
+body{padding:calc(16px + env(safe-area-inset-top,0px)) 16px calc(28px + env(safe-area-inset-bottom,0px))}
+main{max-width:720px;margin:0 auto}
+header{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:14px}
+header h1{font-size:22px;margin:0}header h1 small{display:block;font-size:13px;color:var(--mute);font-weight:500}
+.lang{border:1px solid var(--line);background:var(--card);border-radius:999px;padding:6px 12px;font:inherit;font-size:14px;cursor:pointer}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:14px}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 12px}.tabs button{font-size:14px;padding:7px 12px;border-radius:999px}
+.tabs button.on{background:var(--acc);color:#fff;border-color:var(--acc)}
+input,select,textarea{font:inherit;font-size:16px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:#fff;color:var(--ink);width:100%}
+textarea{min-height:90px}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--acc);outline-offset:1px;border-color:var(--acc)}
+button{font:inherit;font-size:15px;padding:10px 14px;border-radius:10px;border:1px solid var(--line);background:#fff;color:var(--ink);cursor:pointer}
+button.pri{background:var(--acc);border-color:var(--acc);color:#fff;font-weight:600}button:disabled{opacity:.6;cursor:default}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+.pb{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:10px;cursor:pointer;text-align:left;display:flex;flex-direction:column;gap:6px}
+.pb:hover{border-color:var(--acc)}.pb svg{width:100%;height:auto;display:block;background:#fbfcfb;border-radius:8px}
+.pb b{font-size:14px;line-height:1.3}.pb span{font-size:12px;color:var(--mute)}
+.detail svg{width:160px;height:auto;float:right;margin:0 0 8px 12px;background:#fbfcfb;border-radius:10px;border:1px solid var(--line)}
+.detail h2{font-size:21px;margin:0 0 6px}.detail .looks{color:var(--mute);margin:0 0 12px}
+.steps{list-style:none;margin:0;padding:0;counter-reset:s}.steps li{display:flex;gap:10px;align-items:flex-start;padding:9px 0;border-top:1px solid var(--line)}
+.steps input{width:20px;height:20px;margin-top:3px;flex:0 0 auto}.steps label{cursor:pointer}
+.steps li.done label{color:var(--mute);text-decoration:line-through}
+.note{font-size:14px;padding:10px 12px;border-radius:10px;margin-top:12px}.note.mat{background:#eef1ee}.note.seller{background:var(--warnbg);color:var(--warn)}
+.tip{border-left:3px solid var(--acc);padding:6px 12px;margin:8px 0;font-size:15px}.tip small{display:block;color:var(--mute);font-size:13px}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:12px}
+.hint{font-size:13px;color:var(--mute)}.err{color:var(--bad);font-size:14px;margin-top:8px}
+.badge{display:inline-block;font-size:13px;font-weight:600;padding:3px 10px;border-radius:999px}.b-ok{background:var(--okbg);color:var(--ok)}.b-mute{background:#eef1ee;color:var(--mute)}.b-warn{background:var(--warnbg);color:var(--warn)}
+h2.sec{font-size:17px;margin:22px 0 8px}
+table{border-collapse:collapse;width:100%;font-size:14px}th,td{text-align:left;padding:7px 8px;border-bottom:1px solid var(--line);vertical-align:top}th{color:var(--mute);font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:.4px}
+.scroll{overflow-x:auto}
+label.f{display:block;font-size:14px;color:var(--mute);margin:10px 0 4px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:8px}@media (max-width:460px){.two{grid-template-columns:1fr}}
+.chk{display:flex;gap:8px;align-items:flex-start;font-size:14px;margin:12px 0 0}.chk input{width:auto;margin-top:3px}
+.photo{display:flex;gap:10px;align-items:center;margin-top:4px}.photo img{width:64px;height:64px;object-fit:cover;border-radius:8px;border:1px solid var(--line);background:#eee}.photo input{width:auto;flex:1;padding:8px;font-size:14px}
+.calc{display:grid;grid-template-columns:1fr 1fr;gap:10px;align-items:end}@media (max-width:460px){.calc{grid-template-columns:1fr}}
+.out{background:#eef1ee;border-radius:10px;padding:10px 12px;font-size:15px;margin-top:10px}.out b{font-variant-numeric:tabular-nums}
+code{font-size:13px;word-break:break-all}
+footer{font-size:13px;color:var(--mute);text-align:center;margin-top:22px}footer a{color:var(--mute)}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
+<main>
+  <header><h1><span data-t="title">Print Doctor</span><small data-t="sub">Failed print? Tap the picture that looks like yours.</small></h1><button class="lang" id="lang" type="button">বাংলা</button></header>
+  <div id="top">
+    <div class="card" style="padding:12px"><input id="q" type="search" autocomplete="off"><div class="tabs" id="cats" style="margin:10px 0 0"></div></div>
+    <div class="grid" id="grid"></div>
+  </div>
+  <div id="detail" hidden></div>
+  <div id="case" hidden></div>
+  <div id="more">
+    <h2 class="sec" id="settings" data-t="setH">Tested settings</h2>
+    <div class="card"><p class="hint" style="margin:0 0 8px" data-t="setHint">Starting points. The filament's own label wins. Change one thing at a time, in 5 °C steps.</p><div class="scroll" id="settab"></div>
+      <h3 style="font-size:15px;margin:16px 0 4px" data-t="comH">Settings that worked for members</h3><div id="comset"></div>
+      <div class="row"><button type="button" id="shareBtn" data-t="share">Share your settings</button></div><div id="shareForm" hidden></div></div>
+    <h2 class="sec" id="monsoon" data-t="monH">Monsoon guide: humidity and filament</h2><div class="card" id="mon"></div>
+    <h2 class="sec" id="power" data-t="powH">Power cuts, flickers and UPS</h2><div class="card" id="pow"></div>
+  </div>
+  <footer><span data-t="foot">Made with its community: cases and settings sent by members, checked by guides. Warranty of your printer:</span> <a href="check" data-t="pp">Printer Passport</a> · <a href="ideas">Ideas</a> · <a href="choose">Help me choose</a> · <a href="print">Get it printed</a> · <a href="design">Design desk</a></footer>
+</main>
+<script src="doctor-data.js"></script>
+<script>
+var API = (new URLSearchParams(location.search).get('api') || 'https://oqzcuuytytqadqjlwdsh.supabase.co/functions/v1/erp').replace(/\/+$/, '');
+var Q = new URLSearchParams(location.search);
+var T = {
+  en: { title: 'Print Doctor', sub: 'Failed print? Tap the picture that looks like yours.', search: 'Search: stringing, warping, clog, first layer…', all: 'All', back: '← All problems', looks: 'What it looks like', steps: 'Check these in order',
+    helped: 'Did this fix it?', yes: 'Yes', no: 'No', thanks: 'Thanks - noted.', helpedN: 'helped {n} people', tips: 'From members', sendCase: 'Still stuck? Send your case', sellerH: 'Warranty?',
+    caseH: 'Send your case', caseWhy: 'A guide looks at it and answers on your case link. If your case helps others, it is shown under the problem with your first name.', printer: 'Printer', material: 'Material', story: 'What happened? What did you print, what did you see?', tried: 'What did you try already?',
+    photo: 'Photo of the failed print', name: 'Your first name', contact: 'Phone or e-mail, only to answer you (optional)', consent: 'I agree that my story, my photo and my first name may be shown on the Print Doctor to help others. My phone or e-mail is used only to answer me and is never shown.',
+    send: 'Send', sending: 'Sending…', cancel: 'Cancel', sent: 'Sent. Your case link - save it, the answer appears there:', copy: 'Copy', copied: 'Copied', net: 'Could not reach the server. Check your connection and try again.',
+    myCase: 'Your case', status: { new: 'Waiting for a guide', answered: 'Answered', published: 'Answered and published to help others' }, reply: 'The guide’s answer', noreply: 'No answer yet. Check back in a day or two.',
+    setH: 'Tested settings', setHint: 'Starting points. The filament’s own label wins. Change one thing at a time, in 5 °C steps.', comH: 'Settings that worked for members', comNone: 'None yet - be the first.', works: 'Works for me too', worksN: 'confirmed by {n}', share: 'Share your settings',
+    shBrand: 'Filament brand', shNozzle: 'Nozzle °C', shBed: 'Bed °C', shSpeed: 'Speed', shCool: 'Cooling', shRet: 'Retraction', shNotes: 'Notes (what made it work)', shSent: 'Thank you. A guide checks it before it is shown.',
+    cols: ['Material', 'Nozzle °C', 'Bed °C', 'Speed mm/s', 'Cooling', 'Retraction', 'Drying', 'Notes'],
+    monH: 'Monsoon guide: humidity and filament', powH: 'Power cuts, flickers and UPS', calcH: 'How much battery do I need?', printerClass: 'Your printer', hours: 'Hours to bridge', calcOut: 'Average about <b>{avg} W</b>, peaks to <b>{peak} W</b>. For {h} h you need about <b>{wh} Wh</b>: a 12 V battery of about <b>{ah} Ah</b> (IPS), or a UPS rated at least <b>{va} VA</b> for the peak.',
+    foot: 'Made with its community: cases and settings sent by members, checked by guides. Warranty of your printer:', pp: 'Printer Passport' },
+  bn: { title: 'প্রিন্ট ডাক্তার', sub: 'প্রিন্ট নষ্ট? যে ছবিটা আপনারটার মতো, সেটায় চাপ দিন।', search: 'খুঁজুন: স্ট্রিংিং, কোনা ওঠা, ক্লগ, প্রথম লেয়ার…', all: 'সব', back: '← সব সমস্যা', looks: 'দেখতে কেমন', steps: 'এই ক্রমে দেখুন',
+    helped: 'এতে ঠিক হলো?', yes: 'হ্যাঁ', no: 'না', thanks: 'ধন্যবাদ - লেখা হলো।', helpedN: '{n} জনের কাজে লেগেছে', tips: 'সদস্যদের কাছ থেকে', sendCase: 'তবুও আটকে আছেন? আপনার কেস পাঠান', sellerH: 'ওয়ারেন্টি?',
+    caseH: 'আপনার কেস পাঠান', caseWhy: 'একজন গাইড দেখে আপনার কেস-লিংকে উত্তর দেবেন। আপনার কেস অন্যদের কাজে লাগলে সমস্যার নিচে আপনার নামসহ দেখানো হবে।', printer: 'প্রিন্টার', material: 'ম্যাটেরিয়াল', story: 'কী হয়েছে? কী প্রিন্ট করছিলেন, কী দেখলেন?', tried: 'এর মধ্যে কী কী চেষ্টা করেছেন?',
+    photo: 'নষ্ট প্রিন্টের ছবি', name: 'আপনার নাম (প্রথম অংশ)', contact: 'ফোন বা ই-মেইল, শুধু উত্তর দিতে (ঐচ্ছিক)', consent: 'আমি সম্মত যে আমার ঘটনা, ছবি ও নাম প্রিন্ট ডাক্তারে অন্যদের সাহায্যের জন্য দেখানো যাবে। ফোন বা ই-মেইল শুধু উত্তর দিতে ব্যবহার হবে, কখনো দেখানো হবে না।',
+    send: 'পাঠান', sending: 'পাঠানো হচ্ছে…', cancel: 'বাতিল', sent: 'পাঠানো হয়েছে। আপনার কেস-লিংক - সংরক্ষণ করুন, উত্তর এখানেই আসবে:', copy: 'কপি', copied: 'কপি হয়েছে', net: 'সার্ভারে পৌঁছানো যায়নি। ইন্টারনেট দেখে আবার চেষ্টা করুন।',
+    myCase: 'আপনার কেস', status: { new: 'গাইডের অপেক্ষায়', answered: 'উত্তর দেওয়া হয়েছে', published: 'উত্তর দেওয়া ও অন্যদের জন্য প্রকাশিত' }, reply: 'গাইডের উত্তর', noreply: 'এখনো উত্তর নেই। এক-দুই দিন পর আবার দেখুন।',
+    setH: 'পরীক্ষিত সেটিং', setHint: 'শুরুর মান। ফিলামেন্টের নিজের লেবেলই শেষ কথা। একবারে একটা জিনিস বদলান, ৫ °C করে।', comH: 'সদস্যদের যে সেটিং কাজ করেছে', comNone: 'এখনো নেই - আপনিই প্রথম হোন।', works: 'আমারও কাজ করেছে', worksN: '{n} জন নিশ্চিত করেছেন', share: 'আপনার সেটিং শেয়ার করুন',
+    shBrand: 'ফিলামেন্ট ব্র্যান্ড', shNozzle: 'নজল °C', shBed: 'বেড °C', shSpeed: 'স্পিড', shCool: 'কুলিং', shRet: 'রিট্র্যাকশন', shNotes: 'নোট (কী করলে কাজ হলো)', shSent: 'ধন্যবাদ। দেখানোর আগে একজন গাইড যাচাই করবেন।',
+    cols: ['ম্যাটেরিয়াল', 'নজল °C', 'বেড °C', 'স্পিড মিমি/সে', 'কুলিং', 'রিট্র্যাকশন', 'শুকানো', 'নোট'],
+    monH: 'বর্ষা গাইড: আর্দ্রতা ও ফিলামেন্ট', powH: 'বিদ্যুৎ চলে যাওয়া, ঝাঁকুনি ও UPS', calcH: 'কতটুকু ব্যাটারি লাগবে?', printerClass: 'আপনার প্রিন্টার', hours: 'কত ঘণ্টা চালাতে চান', calcOut: 'গড়ে প্রায় <b>{avg} W</b>, পিক <b>{peak} W</b>। {h} ঘণ্টার জন্য প্রায় <b>{wh} Wh</b> লাগবে: ১২ V-র প্রায় <b>{ah} Ah</b> ব্যাটারি (IPS), বা পিকের জন্য অন্তত <b>{va} VA</b>-র UPS।',
+    foot: 'কমিউনিটির সাথে তৈরি: সদস্যদের পাঠানো কেস ও সেটিং, গাইডদের যাচাই করা। আপনার প্রিন্টারের ওয়ারেন্টি:', pp: 'প্রিন্টার পাসপোর্ট' }
+};
+var LANG = 'en'; try { LANG = localStorage.getItem('pp_lang') || ((navigator.language || '').indexOf('bn') === 0 ? 'bn' : 'en'); } catch (e) {}
+function t(k) { return (T[LANG] || T.en)[k] || T.en[k] || k; }
+function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+function L(o) { return o[LANG] || o.en; }
+var COM = { tips: [], votes: {}, settings: [] }, CAT = 'all', OPEN = null, PH = null;
+var $ = function (id) { return document.getElementById(id); };
+
+function paintLang() {
+  document.documentElement.lang = LANG;
+  document.querySelectorAll('[data-t]').forEach(function (n) { n.textContent = t(n.getAttribute('data-t')); });
+  $('lang').textContent = LANG === 'bn' ? 'English' : 'বাংলা'; $('q').placeholder = t('search');
+  paintCats(); paintGrid(); paintSettings(); paintGuides(); if (OPEN) openProblem(OPEN);
+}
+$('lang').onclick = function () { LANG = LANG === 'bn' ? 'en' : 'bn'; try { localStorage.setItem('pp_lang', LANG); } catch (e) {} paintLang(); };
+function paintCats() { $('cats').innerHTML = '<button type="button" data-cat="all" class="' + (CAT === 'all' ? 'on' : '') + '">' + t('all') + '</button>' + DOCTOR.cats.map(function (c) { return '<button type="button" data-cat="' + c.id + '" class="' + (CAT === c.id ? 'on' : '') + '">' + esc(L(c)) + '</button>'; }).join(''); }
+$('cats').addEventListener('click', function (ev) { var b = ev.target.closest('[data-cat]'); if (!b) return; CAT = b.getAttribute('data-cat'); paintCats(); paintGrid(); });
+function matches(p, q) { if (!q) return true; var s = (L(p).name + ' ' + L(p).looks + ' ' + p.en.name + ' ' + p.en.looks + ' ' + p.id).toLowerCase(); return q.toLowerCase().split(/\s+/).every(function (w) { return s.indexOf(w) >= 0; }); }
+function paintGrid() {
+  var q = $('q').value.trim();
+  var list = DOCTOR.problems.filter(function (p) { return (CAT === 'all' || p.cat === CAT) && matches(p, q); });
+  $('grid').innerHTML = list.map(function (p) { var v = COM.votes[p.id]; return '<button type="button" class="pb" data-p="' + p.id + '">' + p.svg + '<b>' + esc(L(p).name) + '</b>' + (v && v.yes ? '<span>' + t('helpedN').replace('{n}', v.yes) + '</span>' : '') + '</button>'; }).join('') || '<div class="card hint">—</div>';
+}
+$('q').addEventListener('input', paintGrid);
+$('grid').addEventListener('click', function (ev) { var b = ev.target.closest('[data-p]'); if (b) { openProblem(b.getAttribute('data-p')); window.scrollTo(0, 0); } });
+function doneKey(id) { return 'pd_done_' + id; }
+function openProblem(id) {
+  var p = DOCTOR.problems.filter(function (x) { return x.id === id; })[0]; if (!p) return;
+  OPEN = id; var d = L(p), done = {}; try { done = JSON.parse(localStorage.getItem(doneKey(id)) || '{}'); } catch (e) {}
+  try { history.replaceState(null, '', location.pathname + '?p=' + id + (Q.get('api') ? '&api=' + encodeURIComponent(Q.get('api')) : '')); } catch (e) {}
+  var tips = COM.tips.filter(function (x) { return x.problem === id; }), v = COM.votes[id];
+  var h = '<div class="card detail"><button type="button" data-act="back" style="margin-bottom:10px">' + t('back') + '</button>' + p.svg + '<h2>' + esc(d.name) + '</h2><p class="looks">' + esc(d.looks) + '</p>' +
+    '<h3 style="font-size:14px;color:var(--mute);margin:0 0 4px;text-transform:uppercase;letter-spacing:.4px">' + t('steps') + '</h3><ol class="steps">' + d.checks.map(function (c, i) { return '<li class="' + (done[i] ? 'done' : '') + '"><input type="checkbox" id="st' + i + '" data-step="' + i + '"' + (done[i] ? ' checked' : '') + '><label for="st' + i + '">' + esc(c) + '</label></li>'; }).join('') + '</ol>' +
+    (d.mat ? '<div class="note mat">' + esc(d.mat) + '</div>' : '') + (d.note ? '<div class="note mat">' + esc(d.note) + '</div>' : '') + (d.seller ? '<div class="note seller"><b>' + t('sellerH') + '</b> ' + esc(d.seller) + ' <a href="check">' + t('pp') + '</a></div>' : '') +
+    (tips.length ? '<h3 style="font-size:14px;color:var(--mute);margin:16px 0 4px;text-transform:uppercase;letter-spacing:.4px">' + t('tips') + '</h3>' + tips.map(function (x) { return '<div class="tip">' + esc(x.text) + '<small>' + esc(x.credit) + (x.month ? ' · ' + esc(x.month) : '') + '</small></div>'; }).join('') : '') +
+    '<div class="row"><span>' + t('helped') + '</span><button type="button" data-vote="1">' + t('yes') + '</button><button type="button" data-vote="0">' + t('no') + '</button><span class="hint" id="vmsg">' + (v && v.yes ? t('helpedN').replace('{n}', v.yes) : '') + '</span></div>' +
+    '<div class="row"><button type="button" class="pri" data-act="case">' + t('sendCase') + '</button></div></div>';
+  $('detail').innerHTML = h; $('detail').hidden = false; $('top').hidden = true; $('case').hidden = true;
+}
+$('detail').addEventListener('change', function (ev) { var c = ev.target.closest('[data-step]'); if (!c || !OPEN) return; var done = {}; try { done = JSON.parse(localStorage.getItem(doneKey(OPEN)) || '{}'); } catch (e) {} done[c.getAttribute('data-step')] = c.checked; try { localStorage.setItem(doneKey(OPEN), JSON.stringify(done)); } catch (e) {} c.closest('li').classList.toggle('done', c.checked); });
+$('detail').addEventListener('click', function (ev) {
+  var b = ev.target.closest('[data-act],[data-vote]'); if (!b) return;
+  if (b.getAttribute('data-act') === 'back') { OPEN = null; $('detail').hidden = true; $('top').hidden = false; try { history.replaceState(null, '', location.pathname + (Q.get('api') ? '?api=' + encodeURIComponent(Q.get('api')) : '')); } catch (e) {} return; }
+  if (b.getAttribute('data-act') === 'case') { showCaseForm(OPEN); return; }
+  if (b.hasAttribute('data-vote')) {
+    var helped = b.getAttribute('data-vote') === '1'; $('detail').querySelectorAll('[data-vote]').forEach(function (x) { x.disabled = true; });
+    fetch(API + '?pub=doctorvote', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ problem: OPEN, helped: helped }) }).then(function (r) { return r.json(); }).then(function (r) {
+      if (r.ok) { COM.votes[r.problem] = { yes: r.yes, no: r.no }; $('vmsg').textContent = t('thanks') + (r.yes ? ' ' + t('helpedN').replace('{n}', r.yes) : ''); } else $('vmsg').textContent = r.error || t('net');
+    }, function () { $('vmsg').textContent = t('net'); });
+  }
+});
+
+// ---- a member's case
+function shrink(file) {
+  return new Promise(function (ok, bad) {
+    var url = URL.createObjectURL(file), img = new Image();
+    img.onload = function () { var W = img.naturalWidth, H = img.naturalHeight, k = Math.min(1, 1600 / Math.max(W, H)), cv = document.createElement('canvas'); cv.width = Math.round(W * k); cv.height = Math.round(H * k); cv.getContext('2d').drawImage(img, 0, 0, cv.width, cv.height); URL.revokeObjectURL(url); ok(cv.toDataURL('image/jpeg', 0.82)); };
+    img.onerror = function () { URL.revokeObjectURL(url); bad(new Error('not an image')); }; img.src = url;
+  });
+}
+function showCaseForm(problem) {
+  var p = DOCTOR.problems.filter(function (x) { return x.id === problem; })[0];
+  $('case').innerHTML = '<form class="card" id="cf"><h2 style="font-size:19px;margin:0 0 4px">' + t('caseH') + (p ? ' · ' + esc(L(p).name) : '') + '</h2><p class="hint" style="margin:0">' + t('caseWhy') + '</p>' +
+    '<div class="two"><div><label class="f" for="c_printer">' + t('printer') + '</label><input id="c_printer" maxlength="60" placeholder="Ender-3 V3, A1 mini…"></div><div><label class="f" for="c_mat">' + t('material') + '</label><select id="c_mat">' + ['PLA', 'PLA+', 'PETG', 'ABS', 'ASA', 'TPU', 'Nylon', 'PC', 'PLA-CF', 'PETG-CF', 'Other'].map(function (m) { return '<option>' + m + '</option>'; }).join('') + '</select></div></div>' +
+    '<label class="f" for="c_story">' + t('story') + '</label><textarea id="c_story" maxlength="2000" required></textarea><label class="f" for="c_tried">' + t('tried') + '</label><textarea id="c_tried" maxlength="1000" style="min-height:60px"></textarea>' +
+    '<label class="f">' + t('photo') + '</label><div class="photo"><img id="c_img" alt=""><input type="file" id="c_photo" accept="image/*" capture="environment"></div>' +
+    '<div class="two"><div><label class="f" for="c_name">' + t('name') + '</label><input id="c_name" maxlength="40" required></div><div><label class="f" for="c_contact">' + t('contact') + '</label><input id="c_contact" maxlength="80"></div></div>' +
+    '<label class="chk"><input type="checkbox" id="c_consent"> <span>' + t('consent') + '</span></label><div class="row"><button type="submit" class="pri" id="c_go">' + t('send') + '</button><button type="button" data-act="cancel">' + t('cancel') + '</button></div><div class="err" id="c_err"></div></form>';
+  $('case').hidden = false; PH = null;
+  $('c_photo').onchange = function () { var f = this.files && this.files[0]; if (!f) return; shrink(f).then(function (d) { PH = d; $('c_img').src = d; }, function () { PH = null; }); };
+  $('cf').addEventListener('submit', function (ev) {
+    ev.preventDefault(); var go = $('c_go'); go.disabled = true; go.textContent = t('sending'); $('c_err').textContent = '';
+    var body = { problem: problem || 'other', printer: $('c_printer').value, material: $('c_mat').value, story: $('c_story').value, tried: $('c_tried').value, name: $('c_name').value, contact: $('c_contact').value, consent: $('c_consent').checked, photo: PH ? { data: PH } : null };
+    fetch(API + '?pub=doctorcase', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) }).then(function (r) { return r.json(); }).then(function (r) {
+      if (!r.ok) { go.disabled = false; go.textContent = t('send'); $('c_err').textContent = r.error || t('net'); return; }
+      $('case').innerHTML = '<div class="card"><span class="badge b-ok">' + t('sent') + '</span><p><code>' + esc(r.caseUrl) + '</code></p><div class="row"><button type="button" data-copy="' + esc(r.caseUrl) + '">' + t('copy') + '</button></div></div>';
+    }, function () { go.disabled = false; go.textContent = t('send'); $('c_err').textContent = t('net'); });
+  });
+  $('case').scrollIntoView({ behavior: 'smooth' });
+}
+$('case').addEventListener('click', function (ev) { var b = ev.target.closest('[data-act],[data-copy]'); if (!b) return; if (b.getAttribute('data-act') === 'cancel') { $('case').hidden = true; return; } if (b.hasAttribute('data-copy')) copy(b); });
+function copy(b) { var txt = b.getAttribute('data-copy'), old = b.textContent; try { navigator.clipboard.writeText(txt).then(function () { b.textContent = t('copied'); setTimeout(function () { b.textContent = old; }, 1500); }, function () { prompt('', txt); }); } catch (e) { prompt('', txt); } }
+function showMyCase(r) {
+  var p = DOCTOR.problems.filter(function (x) { return x.id === r.problem; })[0];
+  $('case').innerHTML = '<div class="card"><h2 style="font-size:19px;margin:0 0 6px">' + t('myCase') + (p ? ' · ' + esc(L(p).name) : '') + '</h2>' + (r.ok ? '<span class="badge ' + (r.status === 'new' ? 'b-warn' : 'b-ok') + '">' + (t('status')[r.status] || r.status) + '</span><p class="hint">' + esc([r.printer, r.material, r.sent].filter(Boolean).join(' · ')) + '</p><p>' + esc(r.story) + '</p>' + (r.photo ? '<img src="' + esc(r.photo) + '" alt="" style="max-width:200px;border-radius:10px;border:1px solid var(--line)">' : '') +
+    '<h3 style="font-size:14px;color:var(--mute);margin:14px 0 4px">' + t('reply') + '</h3>' + (r.reply ? '<div class="tip">' + esc(r.reply).replace(/\n/g, '<br>') + '</div>' : '<p class="hint">' + t('noreply') + '</p>') : '<p class="err">' + esc(r.error || t('net')) + '</p>') + '</div>';
+  $('case').hidden = false; $('top').hidden = true;
+}
+
+// ---- settings
+function paintSettings() {
+  var c = t('cols');
+  $('settab').innerHTML = '<table><thead><tr>' + c.map(function (x) { return '<th>' + x + '</th>'; }).join('') + '</tr></thead><tbody>' + DOCTOR.settings.map(function (s) { return '<tr><td><b>' + esc(s.mat) + '</b></td><td>' + esc(s.nozzle) + '</td><td>' + esc(s.bed) + '</td><td>' + esc(s.speed) + '</td><td>' + esc(s.cooling) + '</td><td>' + esc(s.retract) + '</td><td>' + esc(s.dry) + '</td><td>' + esc(L(s)) + '</td></tr>'; }).join('') + '</tbody></table>';
+  $('comset').innerHTML = COM.settings.length ? '<div class="scroll"><table><thead><tr><th>' + t('printer') + '</th><th>' + t('material') + '</th><th>' + t('shNozzle') + '</th><th>' + t('shBed') + '</th><th>' + t('shSpeed') + '</th><th>' + t('shCool') + '</th><th>' + t('shRet') + '</th><th>' + t('shNotes') + '</th><th></th></tr></thead><tbody>' +
+    COM.settings.map(function (s) { return '<tr><td>' + esc(s.printer) + '</td><td>' + esc(s.material) + (s.brand ? '<br><span class="hint">' + esc(s.brand) + '</span>' : '') + '</td><td>' + (s.nozzle == null ? '' : s.nozzle) + '</td><td>' + (s.bed == null ? '' : s.bed) + '</td><td>' + esc(s.speed) + '</td><td>' + esc(s.cooling) + '</td><td>' + esc(s.retraction) + '</td><td>' + esc(s.notes) + '<br><span class="hint">' + esc(s.name) + (s.month ? ' · ' + esc(s.month) : '') + '</span></td><td style="white-space:nowrap"><button type="button" data-conf="' + esc(s.id) + '" style="font-size:13px;padding:6px 10px">' + t('works') + '</button><br><span class="hint">' + (s.confirms ? t('worksN').replace('{n}', s.confirms) : '') + '</span></td></tr>'; }).join('') + '</tbody></table></div>' : '<p class="hint" style="margin:0">' + t('comNone') + '</p>';
+}
+$('comset').addEventListener('click', function (ev) { var b = ev.target.closest('[data-conf]'); if (!b) return; b.disabled = true; fetch(API + '?pub=doctorconfirm', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ id: b.getAttribute('data-conf') }) }).then(function (r) { return r.json(); }).then(function (r) { if (r.ok && r.confirms != null) { var s = COM.settings.filter(function (x) { return x.id === r.id; })[0]; if (s) s.confirms = r.confirms; paintSettings(); } else b.textContent = r.already ? '✓' : (r.error || t('net')); }, function () { b.disabled = false; }); });
+$('shareBtn').onclick = function () {
+  $('shareForm').hidden = false; $('shareBtn').hidden = true;
+  $('shareForm').innerHTML = '<form id="sf" style="margin-top:10px"><div class="two"><div><label class="f" for="s_printer">' + t('printer') + '</label><input id="s_printer" maxlength="60" required></div><div><label class="f" for="s_mat">' + t('material') + '</label><select id="s_mat">' + ['PLA', 'PLA+', 'PETG', 'ABS', 'ASA', 'TPU', 'Nylon', 'PC', 'PLA-CF', 'PETG-CF', 'Other'].map(function (m) { return '<option>' + m + '</option>'; }).join('') + '</select></div>' +
+    '<div><label class="f" for="s_brand">' + t('shBrand') + '</label><input id="s_brand" maxlength="40"></div><div><label class="f" for="s_nozzle">' + t('shNozzle') + '</label><input id="s_nozzle" inputmode="numeric"></div><div><label class="f" for="s_bed">' + t('shBed') + '</label><input id="s_bed" inputmode="numeric"></div><div><label class="f" for="s_speed">' + t('shSpeed') + '</label><input id="s_speed" maxlength="40"></div>' +
+    '<div><label class="f" for="s_cool">' + t('shCool') + '</label><input id="s_cool" maxlength="40"></div><div><label class="f" for="s_ret">' + t('shRet') + '</label><input id="s_ret" maxlength="40"></div></div><label class="f" for="s_notes">' + t('shNotes') + '</label><textarea id="s_notes" maxlength="500" style="min-height:60px"></textarea><label class="f" for="s_name">' + t('name') + '</label><input id="s_name" maxlength="40" required>' +
+    '<div class="row"><button type="submit" class="pri" id="s_go">' + t('send') + '</button></div><div class="err" id="s_err"></div></form>';
+  $('sf').addEventListener('submit', function (ev) {
+    ev.preventDefault(); var go = $('s_go'); go.disabled = true; go.textContent = t('sending');
+    var body = { printer: $('s_printer').value, material: $('s_mat').value, brand: $('s_brand').value, nozzle: $('s_nozzle').value, bed: $('s_bed').value, speed: $('s_speed').value, cooling: $('s_cool').value, retraction: $('s_ret').value, notes: $('s_notes').value, name: $('s_name').value };
+    fetch(API + '?pub=doctorsettings', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) }).then(function (r) { return r.json(); }).then(function (r) { if (!r.ok) { go.disabled = false; go.textContent = t('send'); $('s_err').textContent = r.error || t('net'); return; } $('shareForm').innerHTML = '<p class="hint">' + t('shSent') + '</p>'; }, function () { go.disabled = false; go.textContent = t('send'); $('s_err').textContent = t('net'); });
+  });
+};
+
+// ---- guides
+function paintGuides() {
+  $('mon').innerHTML = L(DOCTOR.monsoon).map(function (p) { return '<p style="margin:0 0 10px">' + esc(p) + '</p>'; }).join('');
+  var sel = $('pw_class') ? $('pw_class').value : DOCTOR.power.classes[1].id, hrs = $('pw_h') ? $('pw_h').value : '2';
+  $('pow').innerHTML = L(DOCTOR.power).map(function (p) { return '<p style="margin:0 0 10px">' + esc(p) + '</p>'; }).join('') +
+    '<h3 style="font-size:15px;margin:14px 0 6px">' + t('calcH') + '</h3><div class="calc"><div><label class="f" for="pw_class">' + t('printerClass') + '</label><select id="pw_class">' + DOCTOR.power.classes.map(function (c) { return '<option value="' + c.id + '"' + (c.id === sel ? ' selected' : '') + '>' + esc(L(c)) + '</option>'; }).join('') + '</select></div><div><label class="f" for="pw_h">' + t('hours') + '</label><input id="pw_h" inputmode="decimal" value="' + esc(hrs) + '"></div></div><div class="out" id="pw_out"></div>';
+  $('pw_class').onchange = calc; $('pw_h').oninput = calc; calc();
+}
+function calc() {
+  var c = DOCTOR.power.classes.filter(function (x) { return x.id === $('pw_class').value; })[0], h = Math.max(0.1, Math.min(48, parseFloat($('pw_h').value) || 0));
+  var wh = Math.round(c.avg * h), ah = Math.ceil(wh / 12 / 0.8 / 5) * 5, va = Math.ceil(c.peak / 0.65 / 100) * 100;
+  $('pw_out').innerHTML = t('calcOut').replace('{avg}', c.avg).replace('{peak}', c.peak).replace('{h}', h).replace('{wh}', wh).replace('{ah}', ah).replace('{va}', va);
+}
+
+// ---- start
+paintLang();
+fetch(API + '?pub=doctor').then(function (r) { return r.json(); }).then(function (r) { if (r.ok) { COM = r; paintGrid(); paintSettings(); if (OPEN) openProblem(OPEN); } }, function () {});
+if (Q.get('q')) { $('q').value = Q.get('q'); paintGrid(); }
+if (Q.get('p')) openProblem(Q.get('p'));
+if (Q.get('c')) fetch(API + '?pub=doctorcase&t=' + encodeURIComponent(Q.get('c'))).then(function (r) { return r.json(); }).then(showMyCase, function () { showMyCase({ ok: false, error: t('net') }); });
+</script>
+</body>
+</html>

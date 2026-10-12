@@ -1,0 +1,21 @@
+node_modules/
+desktop/dist/
+.env*
+web/index-local.html
+deploy/before-start-fresh-*.json
+__pycache__/
+deploy/secrets.env
+deploy/* - backup *.json
+deploy/sheet_stock.json
+
+deploy/.tools/
+supabase/supabase/.temp/
+local/pgenv/
+local/node/node_modules/
+local/data/
+local/seed/
+local/.owner-key
+local/run.log
+
+# owner-only: real business documents (supplier files, real figures) - never on GitHub
+private/

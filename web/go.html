@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Opening the shop…</title>
+<link rel="icon" href="icons/favicon-32.png">
+<style>html,body{margin:0;height:100%;font:16px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:#f4f5f7;color:#141a22}main{display:flex;height:100%;align-items:center;justify-content:center;text-align:center;padding:16px}a{color:#1e4fa3}@media (prefers-color-scheme:dark){html,body{background:#0e1218;color:#eef2f6}a{color:#8fb0ff}}</style>
+</head>
+<body><main><p id="m">Opening the shop…</p></main>
+<script>
+// a creator's project link: counted, then on to the product (handlers/creatorportal.js, ?pub=go)
+(function () {
+  var Q = new URLSearchParams(location.search), API = (Q.get('api') || 'https://oqzcuuytytqadqjlwdsh.supabase.co/functions/v1/erp').replace(/\/+$/, '');
+  var c = (Q.get('c') || '').trim(), m = document.getElementById('m');
+  var fallback = 'https://costareen.com/';
+  if (!c) { location.replace(fallback); return; }
+  var done = false, t = setTimeout(function () { if (!done) location.replace(fallback); }, 6000);
+  fetch(API + '?pub=go&c=' + encodeURIComponent(c) + '&r=' + encodeURIComponent(document.referrer || '')).then(function (r) { return r.json(); }).then(function (r) {
+    done = true; clearTimeout(t);
+    location.replace(r && r.ok && r.url ? r.url : fallback);
+  }, function () { done = true; clearTimeout(t); location.replace(fallback); });
+  m.innerHTML = 'Opening the shop\u2026 <a href="' + fallback + '">tap here</a> if nothing happens.';
+})();
+</script>
+</body>
+</html>

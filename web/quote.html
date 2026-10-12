@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>Ask for a print quote</title>
+<link rel="icon" href="icons/favicon-32.png">
+<style>
+/* Stage N4: a print shop's own quote link. ?b=<shop> shows the request form; ?t=<token>&b=<shop> shows the customer
+   his request, the shop's price, and Accept / Decline. Talks to the server's ?pub=printquote / ?pub=printreq routes. */
+:root{--bg:#f6f7f4;--card:#fff;--ink:#14201c;--mute:#5d6b66;--line:#dfe5e1;--ok:#0f766e;--okbg:#e6f4f1;--warn:#9a5b00;--warnbg:#fff4df;--bad:#b42318;--badbg:#fdecea;--acc:#0f766e}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans","Noto Sans Bengali","Hind Siliguri",sans-serif}
+body{padding:calc(16px + env(safe-area-inset-top,0px)) 16px calc(28px + env(safe-area-inset-bottom,0px))}
+main{max-width:560px;margin:0 auto}
+header{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:16px}
+header h1{font-size:21px;margin:0}header h1 small{display:block;font-size:13px;color:var(--mute);font-weight:500}
+.lang{border:1px solid var(--line);background:var(--card);border-radius:999px;padding:6px 12px;font:inherit;font-size:14px;cursor:pointer}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:14px}
+.state{color:var(--mute);margin:0}
+label{display:block;font-size:14px;color:var(--mute);margin:10px 0 4px}
+input,select,textarea{width:100%;font:inherit;font-size:16px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:#fff;color:var(--ink)}
+textarea{min-height:90px}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--acc);outline-offset:1px;border-color:var(--acc)}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:8px}@media (max-width:440px){.two{grid-template-columns:1fr}}
+.chk{display:flex;gap:8px;align-items:flex-start;font-size:14px;margin:12px 0 0}.chk input{width:auto;margin-top:3px}
+.row{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px;align-items:center}
+button{font:inherit;font-size:15px;padding:11px 16px;border-radius:10px;border:1px solid var(--line);background:#fff;color:var(--ink);cursor:pointer}
+button.pri{background:var(--acc);border-color:var(--acc);color:#fff;font-weight:600}button.bad{color:var(--bad)}button:disabled{opacity:.6;cursor:default}
+a.wa{display:inline-block;font-size:15px;padding:11px 16px;border-radius:10px;background:#1f9d55;color:#fff;font-weight:600;text-decoration:none}
+.badge{display:inline-block;font-size:13px;font-weight:600;padding:3px 10px;border-radius:999px}.b-ok{background:var(--okbg);color:var(--ok)}.b-warn{background:var(--warnbg);color:var(--warn)}.b-bad{background:var(--badbg);color:var(--bad)}.b-mute{background:#eef1ee;color:var(--mute)}
+.big{font-size:26px;font-weight:700;font-variant-numeric:tabular-nums}
+dl{display:grid;grid-template-columns:minmax(90px,36%) 1fr;gap:6px 12px;margin:10px 0 0;font-size:15px}dt{color:var(--mute)}dd{margin:0;font-weight:600;overflow-wrap:anywhere}
+.err{color:var(--bad);font-size:14px;margin-top:8px}.hint{font-size:13px;color:var(--mute)}
+code{font-size:13px;word-break:break-all}
+footer{font-size:13px;color:var(--mute);text-align:center;margin-top:22px}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
+<main>
+  <header><h1 id="h1"><span data-t="title">Ask for a print quote</span><small id="sub"></small></h1><button class="lang" id="lang" type="button">বাংলা</button></header>
+  <div id="out"><div class="card"><p class="state" data-t="loading">Loading…</p></div></div>
+  <footer data-t="foot">The shop quotes and prints; payment is between you and the shop. Your name and number stay with the shop only.</footer>
+</main>
+<script>
+var API = (new URLSearchParams(location.search).get('api') || 'https://oqzcuuytytqadqjlwdsh.supabase.co/functions/v1/erp').replace(/\/+$/, '');
+var Q = new URLSearchParams(location.search), B = Q.get('b') || '', TOKEN = Q.get('t') || '';
+var T = {
+  en: { title: 'Ask for a print quote', loading: 'Loading…', foot: 'The shop quotes and prints; payment is between you and the shop. Your name and number stay with the shop only.', nolink: 'This link is not complete. Ask the shop for its quote link.', net: 'Could not reach the server. Check your connection and try again.',
+    what: 'What do you want printed?', material: 'Material', any: 'Let the shop choose', colour: 'Colour', qty: 'How many', notes: 'Describe it: size, purpose, deadline - or paste a link to the file (Google Drive, Printables, Thingiverse)', link: 'Link to the file (optional)',
+    you: 'You', name: 'Your name', phone: 'Your mobile number', email: 'E-mail (optional)', consent: 'The shop keeps my name and number to answer this request and to deliver the print. Nothing else is done with them.',
+    send: 'Send the request', sending: 'Sending…', sent: 'Sent. Your request number is', keep: 'Keep this link - the shop’s price appears there and you accept or decline on it:', copy: 'Copy', copied: 'Copied', wa: 'Send the file to the shop on WhatsApp',
+    myReq: 'Your request', status: { new: 'Waiting for the shop’s price', quoted: 'The shop has quoted', accepted: 'You accepted - the shop will contact you', declined: 'Declined', job: 'In production', closed: 'Closed' }, price: 'Price', note: 'From the shop', accept: 'Accept the price', decline: 'No, thanks', answered: 'Thank you - recorded.', call: 'Call the shop', sentOn: 'sent' },
+  bn: { title: 'প্রিন্টের দাম জানতে চান', loading: 'লোড হচ্ছে…', foot: 'দোকান দাম দেয় ও প্রিন্ট করে; টাকা-পয়সা আপনার ও দোকানের মধ্যে। আপনার নাম ও নম্বর শুধু দোকানের কাছে থাকে।', nolink: 'লিংকটি সম্পূর্ণ নয়। দোকানের কাছে তাদের কোটেশন লিংক চান।', net: 'সার্ভারে পৌঁছানো যায়নি। ইন্টারনেট দেখে আবার চেষ্টা করুন।',
+    what: 'কী প্রিন্ট করাতে চান?', material: 'ম্যাটেরিয়াল', any: 'দোকান বেছে নিক', colour: 'রং', qty: 'কয়টা', notes: 'বর্ণনা দিন: মাপ, কাজ, কবে লাগবে - বা ফাইলের লিংক দিন (Google Drive, Printables, Thingiverse)', link: 'ফাইলের লিংক (ঐচ্ছিক)',
+    you: 'আপনি', name: 'আপনার নাম', phone: 'আপনার মোবাইল নম্বর', email: 'ই-মেইল (ঐচ্ছিক)', consent: 'দোকান এই অনুরোধের উত্তর দিতে ও প্রিন্ট পৌঁছে দিতে আমার নাম ও নম্বর রাখবে। এর বাইরে কিছু করা হবে না।',
+    send: 'অনুরোধ পাঠান', sending: 'পাঠানো হচ্ছে…', sent: 'পাঠানো হয়েছে। আপনার অনুরোধ নম্বর', keep: 'এই লিংক রাখুন - দোকানের দাম এখানে আসবে, এখানেই গ্রহণ বা প্রত্যাখ্যান করবেন:', copy: 'কপি', copied: 'কপি হয়েছে', wa: 'WhatsApp-এ দোকানে ফাইল পাঠান',
+    myReq: 'আপনার অনুরোধ', status: { new: 'দোকানের দামের অপেক্ষায়', quoted: 'দোকান দাম দিয়েছে', accepted: 'আপনি গ্রহণ করেছেন - দোকান যোগাযোগ করবে', declined: 'প্রত্যাখ্যাত', job: 'তৈরি হচ্ছে', closed: 'বন্ধ' }, price: 'দাম', note: 'দোকানের কথা', accept: 'দাম গ্রহণ করুন', decline: 'না, ধন্যবাদ', answered: 'ধন্যবাদ - লেখা হলো।', call: 'দোকানে কল', sentOn: 'পাঠানো' }
+};
+var LANG = 'en'; try { LANG = localStorage.getItem('pp_lang') || ((navigator.language || '').indexOf('bn') === 0 ? 'bn' : 'en'); } catch (e) {}
+function t(k) { return (T[LANG] || T.en)[k] || T.en[k] || k; }
+function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+function tk(n) { return '৳' + Number(n || 0).toLocaleString('en-IN'); }
+var DATA = null, MODE = '', out = document.getElementById('out');
+function paintLang() { document.documentElement.lang = LANG; document.querySelectorAll('[data-t]').forEach(function (n) { n.textContent = t(n.getAttribute('data-t')); }); document.getElementById('lang').textContent = LANG === 'bn' ? 'English' : 'বাংলা'; if (DATA) (MODE === 'req' ? showReq : MODE === 'done' ? showDone : showForm)(DATA); }
+document.getElementById('lang').onclick = function () { LANG = LANG === 'bn' ? 'en' : 'bn'; try { localStorage.setItem('pp_lang', LANG); } catch (e) {} paintLang(); };
+function val(id) { var n = document.getElementById(id); return n ? n.value : ''; }
+function showForm(r) {
+  DATA = r; MODE = 'form';
+  if (!r.ok) { out.innerHTML = '<div class="card"><p class="state">' + esc(r.error || t('net')) + '</p></div>'; return; }
+  document.getElementById('sub').textContent = r.shop.name + (r.shop.address ? ' · ' + r.shop.address : '');
+  var keep = { name: val('q_name'), phone: val('q_phone'), notes: val('q_notes'), link: val('q_link'), qty: val('q_qty') || '1' };
+  var mats = r.materials || [];
+  out.innerHTML = (r.text ? '<div class="card"><p style="margin:0">' + esc(r.text) + '</p></div>' : '') +
+    '<form class="card" id="f"><h2 style="font-size:17px;margin:0">' + t('what') + '</h2>' +
+    '<div class="two"><div><label for="q_mat">' + t('material') + '</label><select id="q_mat"><option value="">' + t('any') + '</option>' + mats.map(function (m) { return '<option>' + esc(m.name) + '</option>'; }).join('') + '</select></div><div><label for="q_col">' + t('colour') + '</label><input id="q_col" list="cols" maxlength="40"><datalist id="cols">' + mats.map(function (m) { return m.colours.map(function (c) { return '<option value="' + esc(c) + '">'; }).join(''); }).join('') + '</datalist></div></div>' +
+    '<label for="q_qty">' + t('qty') + '</label><input id="q_qty" inputmode="numeric" value="' + esc(keep.qty) + '">' +
+    '<label for="q_notes">' + t('notes') + '</label><textarea id="q_notes" maxlength="1500">' + esc(keep.notes) + '</textarea><label for="q_link">' + t('link') + '</label><input id="q_link" maxlength="400" value="' + esc(keep.link) + '">' +
+    '<h2 style="font-size:17px;margin:16px 0 0">' + t('you') + '</h2><div class="two"><div><label for="q_name">' + t('name') + '</label><input id="q_name" maxlength="60" value="' + esc(keep.name) + '" required></div><div><label for="q_phone">' + t('phone') + '</label><input id="q_phone" inputmode="tel" placeholder="01XXXXXXXXX" value="' + esc(keep.phone) + '" required></div></div>' +
+    '<label for="q_email">' + t('email') + '</label><input id="q_email" type="email" maxlength="80"><label class="chk"><input type="checkbox" id="q_consent"> <span>' + t('consent') + '</span></label>' +
+    '<div class="row"><button type="submit" class="pri" id="q_go">' + t('send') + '</button></div><div class="err" id="q_err"></div></form>';
+  document.getElementById('f').addEventListener('submit', function (ev) {
+    ev.preventDefault(); var go = document.getElementById('q_go'); go.disabled = true; go.textContent = t('sending'); document.getElementById('q_err').textContent = '';
+    var body = { b: B, material: val('q_mat'), colour: val('q_col'), qty: val('q_qty'), notes: val('q_notes'), link: val('q_link'), name: val('q_name'), phone: val('q_phone'), email: val('q_email'), consent: document.getElementById('q_consent').checked };
+    fetch(API + '?pub=printquote', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) }).then(function (x) { return x.json(); }).then(function (x) {
+      if (!x.ok) { go.disabled = false; go.textContent = t('send'); document.getElementById('q_err').textContent = x.error || t('net'); return; }
+      showDone(x);
+    }, function () { go.disabled = false; go.textContent = t('send'); document.getElementById('q_err').textContent = t('net'); });
+  });
+}
+function showDone(x) {
+  DATA = x; MODE = 'done';
+  try { history.replaceState(null, '', location.pathname + '?t=' + encodeURIComponent(/t=([^&]+)/.exec(x.requestUrl)[1]) + '&b=' + encodeURIComponent(B) + (Q.get('api') ? '&api=' + encodeURIComponent(Q.get('api')) : '')); } catch (e) {}
+  out.innerHTML = '<div class="card"><span class="badge b-ok">' + t('sent') + ' ' + esc(x.reqNo) + '</span><p class="hint" style="margin:12px 0 6px">' + t('keep') + '</p><code>' + esc(x.requestUrl) + '</code><div class="row"><button type="button" id="cp">' + t('copy') + '</button>' + (x.whatsapp ? '<a class="wa" href="' + esc(x.whatsapp) + '" target="_blank" rel="noopener">' + t('wa') + '</a>' : '') + '</div></div>';
+  document.getElementById('cp').onclick = function () { var b = this; try { navigator.clipboard.writeText(x.requestUrl).then(function () { b.textContent = t('copied'); }); } catch (e) { prompt('', x.requestUrl); } };
+}
+function showReq(r) {
+  DATA = r; MODE = 'req';
+  if (!r.ok) { out.innerHTML = '<div class="card"><p class="state">' + esc(r.error || t('net')) + '</p></div>'; return; }
+  document.getElementById('sub').textContent = r.shop.name;
+  var st = t('status')[r.status] || r.status, cls = r.status === 'quoted' ? 'b-warn' : r.status === 'declined' ? 'b-bad' : r.status === 'new' ? 'b-mute' : 'b-ok';
+  out.innerHTML = '<div class="card"><h2 style="font-size:17px;margin:0 0 8px">' + t('myReq') + ' ' + esc(r.reqNo) + '</h2><span class="badge ' + cls + '">' + st + '</span>' +
+    (r.price != null ? '<div style="margin-top:12px"><div class="hint">' + t('price') + '</div><div class="big">' + tk(r.price) + '</div>' + (r.quoteNote ? '<div class="hint" style="margin-top:4px">' + t('note') + ': ' + esc(r.quoteNote) + '</div>' : '') + '</div>' : (r.quoteNote && r.status === 'declined' ? '<p class="hint">' + esc(r.quoteNote) + '</p>' : '')) +
+    '<dl><dt>' + t('material') + '</dt><dd>' + esc([r.material, r.colour].filter(Boolean).join(' · ') || t('any')) + '</dd><dt>' + t('qty') + '</dt><dd>' + r.qty + '</dd>' + (r.notes ? '<dt>' + t('what') + '</dt><dd style="font-weight:400">' + esc(r.notes) + '</dd>' : '') + (r.link ? '<dt>' + t('link') + '</dt><dd><a href="' + esc(r.link) + '" target="_blank" rel="noopener">' + esc(r.link) + '</a></dd>' : '') + '<dt>' + t('sentOn') + '</dt><dd>' + esc(r.sent) + '</dd></dl>' +
+    (r.status === 'quoted' ? '<div class="row"><button type="button" class="pri" data-a="accept">' + t('accept') + '</button><button type="button" class="bad" data-a="decline">' + t('decline') + '</button></div><div class="err" id="r_err"></div>' : '') +
+    (r.shop.phone ? '<div class="row"><a class="wa" href="tel:' + esc(r.shop.phone.replace(/[^0-9+]/g, '')) + '">' + t('call') + ' ' + esc(r.shop.phone) + '</a></div>' : '') + '</div>';
+}
+out.addEventListener('click', function (ev) {
+  var b = ev.target.closest('[data-a]'); if (!b) return;
+  out.querySelectorAll('[data-a]').forEach(function (x) { x.disabled = true; });
+  fetch(API + '?pub=printreq', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ t: TOKEN, b: B, action: b.getAttribute('data-a') }) }).then(function (x) { return x.json(); }).then(function (x) {
+    if (!x.ok) { out.querySelectorAll('[data-a]').forEach(function (y) { y.disabled = false; }); document.getElementById('r_err').textContent = x.error || t('net'); return; }
+    load();
+  }, function () { out.querySelectorAll('[data-a]').forEach(function (y) { y.disabled = false; }); document.getElementById('r_err').textContent = t('net'); });
+});
+function load() {
+  if (!B) { showForm({ ok: false, error: t('nolink') }); return; }
+  if (TOKEN) fetch(API + '?pub=printreq&t=' + encodeURIComponent(TOKEN) + '&b=' + encodeURIComponent(B)).then(function (r) { return r.json(); }).then(showReq, function () { showReq({ ok: false, error: t('net') }); });
+  else fetch(API + '?pub=printquote&b=' + encodeURIComponent(B)).then(function (r) { return r.json(); }).then(showForm, function () { showForm({ ok: false, error: t('net') }); });
+}
+paintLang(); load();
+</script>
+</body>
+</html>

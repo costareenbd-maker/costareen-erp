@@ -1,0 +1,46 @@
+// Plan D5: notes and files on a record.
+import { sql, FIX, owner, mgr, sales, check, done, files } from './harness.mjs';
+const PLA = 'FIL-SUN-PLA-BLA-001';
+const png = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==';
+
+let r = await sales('erpNotes', [{ kind: 'product', ref: PLA }]);
+check('nothing written yet', r.ok && r.result.notes.length === 0 && r.result.canVoid === false, r);
+r = await sales('erpNotes', [{ kind: 'spaceship', ref: 'x' }]);
+check('only the four kinds of record', !r.ok && /product, a customer, a supplier or an invoice/.test(r.error), r);
+r = await sales('erpNoteAdd', [{ kind: 'product', ref: PLA, body: '  ' }]);
+check('a note or a file is needed', !r.ok && /Write a note or attach a file/.test(r.error), r);
+r = await sales('erpNoteAdd', [{ kind: 'product', ref: PLA, body: 'Customer asked for matte black' }]);
+check('a note on a product, by name and time', r.ok && r.result.notes.length === 1 && r.result.notes[0].body === 'Customer asked for matte black' && r.result.notes[0].by === 'Rina' && !!r.result.notes[0].when, r.result);
+r = await sales('erpNoteAdd', [{ kind: 'product', ref: PLA.toLowerCase(), body: '', file: { data: png, mime: 'image/png', name: 'shelf/photo.png' } }]);
+check('a file alone, found whatever the case of the code', r.ok && r.result.notes.length === 2 && r.result.notes[0].file === 'shelf photo.png' && files.list().some((k) => k.startsWith(FIX.B + '/notes/product-')), r.result && r.result.notes[0]);
+const fid = r.result.notes[0].id, nid = r.result.notes[1].id;
+r = await sales('erpNoteAdd', [{ kind: 'product', ref: PLA, body: 'x', file: { data: png, mime: 'text/html', name: 'a.html' } }]);
+check('only photos and PDFs', !r.ok && /photo \(JPG, PNG, WebP\) or a PDF/.test(r.error), r);
+r = await sales('erpNoteFileUrl', [{ id: fid }]);
+check('a link to the file', r.ok && /^https:\/\/files\.test\/.+notes/.test(r.result.url), r);
+r = await sales('erpNoteFileUrl', [{ id: nid }]);
+check('no link for a note without a file', !r.ok && /No file/.test(r.error), r);
+r = await sales('erpNoteVoid', [{ id: nid, reason: 'wrong' }]);
+check('sales staff cannot strike out', !r.ok, r);
+r = await mgr('erpNoteVoid', [{ id: nid, reason: '' }]);
+check('striking out needs a reason', !r.ok && /Say why/.test(r.error), r);
+r = await mgr('erpNoteVoid', [{ id: nid, reason: 'wrong product' }]);
+check('struck out, still readable', r.ok && r.result.notes.length === 2 && /^struck out .* by Mehedi: wrong product$/.test(r.result.notes.find((n) => n.id === nid).voided) && r.result.canVoid === true, r.result && r.result.notes);
+r = await mgr('erpNoteVoid', [{ id: nid, reason: 'again' }]);
+check('once only', !r.ok && /already struck out/.test(r.error), r);
+
+r = await sales('erpNoteAdd', [{ kind: 'supplier', ref: 'Sunlu', body: 'x' }]);
+check('supplier notes are a manager matter', !r.ok && /does not have access/.test(r.error), r);
+r = await mgr('erpNoteAdd', [{ kind: 'supplier', ref: 'Sunlu', body: 'Pays in RMB, 30% advance' }]);
+check('a note on a supplier', r.ok && r.result.notes.length === 1, r);
+r = await sales('erpNotes', [{ kind: 'supplier', ref: 'Sunlu' }]);
+check('...which sales staff cannot read', !r.ok, r);
+r = await sales('erpNoteAdd', [{ kind: 'customer', ref: '01712345678', body: 'Prefers bKash' }]);
+check('a note on a customer', r.ok && r.result.notes.length === 1, r);
+r = await sales('erpNoteAdd', [{ kind: 'invoice', ref: 'INV-1', body: 'Deliver after 5pm' }]);
+check('a note on an invoice', r.ok && r.result.notes.length === 1, r);
+r = await sales('erpNotes', [{ kind: 'product', ref: 'INV-1' }]);
+check('kinds do not leak into each other', r.ok && r.result.notes.length === 0, r);
+const o2 = await sql`select count(*)::int n from record_notes where business_id = ${FIX.B2}`;
+check('another business has none', o2[0].n === 0);
+await done();

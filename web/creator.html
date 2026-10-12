@@ -1,0 +1,367 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<meta name="referrer" content="no-referrer">
+<title>Creator programme</title>
+<link rel="icon" href="icons/favicon-32.png">
+<style>
+/* The creator's own page (handlers/creatorportal.js). Join with the programme's link (?p=code), choose a password from
+   the e-mailed link, sign in, fill the profile, then: request filament for the next project, paste the links when the
+   video is live, see the numbers. */
+:root{--bg:#f4f5f7;--card:#fff;--ink:#141a22;--mute:#5f6b7a;--line:#e3e7ec;--acc:#1e4fa3;--acc2:#51bfca;--ok:#0f766e;--okbg:#e6f4f1;--warn:#9a5b00;--warnbg:#fff4df;--bad:#b42318;--badbg:#fdecea;--head:#0f1a2b}
+@media (prefers-color-scheme:dark){:root{--bg:#0e1218;--card:#161c25;--ink:#eef2f6;--mute:#9aa6b5;--line:#273040;--okbg:#0f2b27;--warnbg:#2b2210;--badbg:#2d1614;--head:#0a111c}}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans","Noto Sans Bengali",sans-serif}
+header{background:var(--head);color:#fff;padding:calc(18px + env(safe-area-inset-top,0px)) 16px 18px}
+.hd{max-width:720px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap}
+.logos{display:flex;align-items:center;gap:14px}
+.logos img{height:40px;max-width:170px;object-fit:contain}
+.logos .shoplogo{background:#fff;border-radius:14px;padding:5px;height:72px;width:72px;box-shadow:0 2px 10px rgba(0,0,0,.25)}
+.logos .x{color:#8fa0b8;font-size:24px}
+.logos .nm{font-weight:700;font-size:18px;letter-spacing:.2px}
+.hd .sub{color:#b9c5d6;font-size:13px;margin-top:2px}
+.who{text-align:right}.who b{display:block;font-size:17px}.who span{color:#b9c5d6;font-size:13px}
+.who button{margin-top:4px;background:transparent;color:#b9c5d6;border-color:#3a4a62;font-size:12px;padding:4px 10px}
+main{max-width:720px;margin:0 auto;padding:16px 16px calc(40px + env(safe-area-inset-bottom,0px))}
+.chans{display:grid;grid-template-columns:1fr;gap:10px;margin-top:10px}
+.chan{border:1px solid var(--line);border-radius:12px;padding:4px 14px 12px;background:var(--bg)}
+.chan b{display:block;margin-top:8px;font-size:14px;color:var(--acc)}
+@media (min-width:900px){html,body{font-size:17px}main{max-width:1040px;padding:24px 24px 60px}.hd{max-width:1040px}.card{padding:22px 26px;border-radius:18px}h1.t{font-size:30px}.chans{grid-template-columns:1fr 1fr}.kpis{grid-template-columns:repeat(4,1fr)}input,select,textarea{font-size:16px;padding:12px 14px}}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px 18px;margin-bottom:14px}
+h2{font-size:13px;color:var(--mute);margin:0 0 10px;text-transform:uppercase;letter-spacing:.7px}
+h1.t{font-size:24px;margin:0 0 6px;line-height:1.2}
+.lead{font-size:16px;color:var(--mute);margin:0 0 12px}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px}
+.kpi{background:var(--bg);border-radius:12px;padding:10px 12px}
+.kpi b{display:block;font-size:22px;font-variant-numeric:tabular-nums;line-height:1.2}
+.kpi span{font-size:12px;color:var(--mute)}
+.badge{display:inline-block;font-size:12px;font-weight:600;padding:3px 10px;border-radius:999px;white-space:nowrap}
+.b-ok{background:var(--okbg);color:var(--ok)}.b-warn{background:var(--warnbg);color:var(--warn)}.b-bad{background:var(--badbg);color:var(--bad)}.b-mute{background:var(--bg);color:var(--mute)}.b-acc{background:#e6edfa;color:var(--acc)}
+.proj{border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-top:10px}
+.proj .h{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;flex-wrap:wrap}
+.proj .h b{font-size:16px}.proj .m{color:var(--mute);font-size:13px;margin-top:2px}
+.post{display:flex;justify-content:space-between;gap:10px;align-items:center;border-top:1px solid var(--line);padding:8px 0;font-size:14px;flex-wrap:wrap}
+.post a{color:var(--acc);text-decoration:none;overflow-wrap:anywhere}
+.post .n{color:var(--mute);font-variant-numeric:tabular-nums;white-space:nowrap}
+label{display:block;font-size:13px;color:var(--mute);margin:10px 0 4px}
+input,select,textarea{width:100%;font:inherit;font-size:15px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--card);color:var(--ink)}
+textarea{min-height:70px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:0 12px}
+@media (max-width:480px){.grid2{grid-template-columns:1fr}}
+.checks{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px}
+.checks label{margin:0;display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:999px;padding:6px 12px;font-size:14px;color:var(--ink);cursor:pointer}
+.checks input{width:auto;margin:0}
+button,a.btn{font:inherit;font-size:15px;padding:11px 16px;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--ink);cursor:pointer;text-decoration:none;display:inline-block}
+.pri{background:var(--acc)!important;border-color:var(--acc)!important;color:#fff!important;font-weight:600}
+.sm{font-size:13px;padding:7px 12px}
+.lnk{border:none;background:none;color:var(--acc);padding:0;font-size:14px}
+button:disabled{opacity:.55;cursor:default}
+.row{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;align-items:center}
+.msg{font-size:14px;color:var(--mute)}
+.err{color:var(--bad)}
+.rules{font-size:14px;color:var(--mute);margin:0;padding-left:18px}
+.rules li{margin:3px 0}
+.steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:14px 0}
+.steps div{background:var(--bg);border-radius:12px;padding:10px 12px;font-size:14px}
+.steps b{display:block;color:var(--acc);font-size:12px;text-transform:uppercase;letter-spacing:.6px;margin-bottom:2px}
+footer{font-size:13px;color:var(--mute);text-align:center;margin-top:22px}
+[hidden]{display:none!important}
+.golink{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:10px;padding:10px 12px;border-radius:10px;background:var(--bg);border:1px dashed var(--line)}
+.golink div:first-child{flex:1;min-width:200px}.golink b{display:block;font-size:13px}.golink span{display:block;font-size:12px;color:var(--mute)}
+.golink code{display:block;margin-top:4px;font-size:13px;color:var(--acc);overflow-wrap:anywhere}
+.gocount{text-align:center;font-size:12px;color:var(--mute)}.gocount b{font-size:20px;color:var(--ink)}
+.allp{display:flex!important;align-items:center;gap:6px;margin:6px 0 0!important;font-size:13px;color:var(--mute);cursor:pointer}.allp input{width:auto}
+.pvbar{background:#1e4fa3;color:#fff;text-align:center;font-size:13px;padding:6px 10px}
+.pv main button,.pv main input,.pv main select,.pv main textarea,.pv .who button{pointer-events:none}
+.pv main .card{opacity:.97}
+</style>
+</head>
+<body>
+<header><div class="hd" id="hd"><div class="logos"><span class="nm">Creator programme</span></div></div></header>
+<main>
+  <div id="out"><div class="card"><p class="msg">Loading…</p></div></div>
+  <footer>Every entry is recorded with its time. Keep your password to yourself.</footer>
+</main>
+<script>
+var API = (new URLSearchParams(location.search).get('api') || 'https://oqzcuuytytqadqjlwdsh.supabase.co/functions/v1/erp').replace(/\/+$/, '');
+var SB_URL = 'https://oqzcuuytytqadqjlwdsh.supabase.co', SB_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9xemN1dXl0eXRxYWRxamx3ZHNoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODk4Nzk4MDEsImV4cCI6MjEwNTQ1NTgwMX0.fwdCTTde1fS2SPfT5ULNqLI4-YQLa__3pHjufarZG_0';
+var Q = new URLSearchParams(location.search), SETUP = Q.get('setup') || '', SETUPINFO = null, TOKEN = Q.get('t') || '', PCODE = (Q.get('p') || '').toUpperCase(), PREVIEW = Q.get('preview') === '1';
+var BRAND_LOGOS = { polymaker: 'brand/polymaker.svg' };
+var PLATFORMS = ['YouTube', 'Facebook page', 'Facebook group', 'Facebook profile', 'Instagram', 'TikTok'];
+var PL_WORD = { 'YouTube': ['Channel name', 'Subscribers', 'https://youtube.com/@…'], 'Facebook page': ['Page name', 'Followers', 'https://facebook.com/…'], 'Facebook group': ['Group name', 'Members', 'https://facebook.com/groups/…'], 'Facebook profile': ['Profile name', 'Friends / followers', 'https://facebook.com/…'], 'Instagram': ['Account name', 'Followers', 'https://instagram.com/…'], 'TikTok': ['Account name', 'Followers', 'https://tiktok.com/@…'] };
+var D = null, PROG = null, FORM = null, BUSY = false, ERR = '', MODE = '', SESS = null, out = document.getElementById('out');
+function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+function n(v) { return Number(v || 0).toLocaleString('en-US'); }
+function dt(iso) { if (!iso) return ''; var d = new Date(iso); return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) + ' ' + d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }); }
+function v(id) { var e = document.getElementById(id); return e ? e.value.trim() : ''; }
+// ---- the session (Supabase Auth, kept on this device)
+function loadSess() { try { SESS = JSON.parse(localStorage.getItem('cr_session') || 'null'); } catch (e) { SESS = null; } }
+function saveSess(s) { SESS = s; try { if (s) localStorage.setItem('cr_session', JSON.stringify(s)); else localStorage.removeItem('cr_session'); } catch (e) {} }
+function authFetch(path, body, method) {
+  return fetch(SB_URL + '/auth/v1/' + path, { method: method || 'POST', headers: { apikey: SB_ANON, 'content-type': 'application/json', authorization: 'Bearer ' + (SESS && SESS.access_token ? SESS.access_token : SB_ANON) }, body: body ? JSON.stringify(body) : undefined })
+    .then(function (r) { return r.json().then(function (j) { j._status = r.status; return j; }); });
+}
+function refreshSess() {
+  if (!SESS || !SESS.refresh_token) return Promise.resolve(false);
+  return fetch(SB_URL + '/auth/v1/token?grant_type=refresh_token', { method: 'POST', headers: { apikey: SB_ANON, 'content-type': 'application/json' }, body: JSON.stringify({ refresh_token: SESS.refresh_token }) })
+    .then(function (r) { return r.json(); }).then(function (j) { if (j.access_token) { saveSess({ access_token: j.access_token, refresh_token: j.refresh_token, at: Date.now() }); return true; } saveSess(null); return false; }, function () { return false; });
+}
+function api(body, retry) {
+  var q = TOKEN ? '&t=' + encodeURIComponent(TOKEN) : '', h = { 'content-type': 'application/json' };
+  if (!TOKEN && SESS && SESS.access_token) h.authorization = 'Bearer ' + SESS.access_token;
+  return fetch(API + '?pub=creator' + q, body ? { method: 'POST', headers: h, body: JSON.stringify(body) } : { headers: h }).then(function (r) { return r.json(); }).then(function (r) {
+    if (!r.ok && !TOKEN && SESS && /sign in/i.test(r.error || '') && !retry) return refreshSess().then(function (ok) { return ok ? api(body, true) : r; });
+    return r;
+  });
+}
+// ---- header
+function head(shop, brand, who) {
+  var bl = BRAND_LOGOS[(brand || '').toLowerCase()];
+  document.getElementById('hd').innerHTML = '<div><div class="logos">' + (shop && shop.logo ? '<img class="shoplogo" src="' + esc(shop.logo) + '" alt="">' : '<span class="nm">' + esc(shop && shop.name || 'Creator programme') + '</span>') +
+    (brand ? '<span class="x">×</span>' + (bl ? '<img src="' + esc(bl) + '" alt="' + esc(brand) + '">' : '<span class="nm">' + esc(brand) + '</span>') : '') + '</div><div class="sub">Creator programme' + (shop && shop.name ? ' · ' + esc(shop.name) : '') + '</div></div>' +
+    (who ? '<div class="who"><b>' + esc(who.name) + '</b><span>' + esc([who.handle, who.platforms].filter(Boolean).join(' · ')) + '</span><br><button class="sm" id="signout">Sign out</button></div>' : '');
+}
+// ---- screens
+function landingHtml() {
+  var s = PROG && PROG.shop || {}, brand = PROG && PROG.brands && PROG.brands[0] || '';
+  var h = '<div class="card"><h1 class="t">Create with ' + esc(brand || 'us') + '. We supply the filament.</h1><p class="lead">' + esc(s.name || 'The shop') + ' sponsors creators with ' + esc(brand ? brand + ' filament' : 'filament') + '. You make videos and posts, we keep you stocked, the brand sees the results.</p>' +
+    '<div class="steps"><div><b>1 · Join</b>Your name, e-mail and phone. We send you a link to choose a password.</div><div><b>2 · Profile</b>Your channels, followers and what you make. We review and approve.</div><div><b>3 · Create</b>Request filament for each video, paste the link when it is live. Repeat.</div></div>';
+  if (MODE === 'joined') return h + '<div class="card" style="margin:0;background:var(--okbg);border-color:var(--okbg)"><b>Check your e-mail.</b><p class="msg" style="margin:6px 0 0">We sent a link to choose your password. Open it, choose a password, and you are in. Not there in two minutes? Look in spam, or join again with the same e-mail for a fresh link.</p></div></div>';
+  h += (FORM === 'signin' || FORM === 'forgot' || FORM === 'sent' ? signinFormHtml() : '<h2 style="margin-top:6px">Join the programme</h2><div class="grid2"><div><label>Your name</label><input id="j_name" maxlength="80" autocomplete="name"></div><div><label>Phone / WhatsApp</label><input id="j_phone" inputmode="tel" autocomplete="tel" placeholder="017…"></div></div><label>E-mail</label><input id="j_email" type="email" autocomplete="email" inputmode="email">' +
+    '<div class="row"><button class="pri" id="j_send"' + (BUSY ? ' disabled' : '') + '>' + (BUSY ? 'Sending…' : 'Join') + '</button><span class="msg" id="f_msg"></span></div><p class="msg" style="margin:12px 0 0">Already joined? <button class="lnk" id="to_signin">Sign in</button></p>');
+  return h + '</div>';
+}
+function signinFormHtml() {
+  if (FORM === 'forgot') return '<h2 style="margin-top:6px">Forgot the password</h2><label>E-mail</label><input id="s_email" type="email" autocomplete="email" inputmode="email"><div class="row"><button class="pri" id="s_forgot"' + (BUSY ? ' disabled' : '') + '>Send me a link</button><button class="lnk" id="to_signin">Back</button><span class="msg" id="f_msg"></span></div>';
+  if (FORM === 'sent') return '<p class="msg">If that e-mail is in the programme, a link to choose a new password is on its way. <button class="lnk" id="to_signin">Back to sign in</button></p>';
+  return '<h2 style="margin-top:6px">Sign in</h2><label>E-mail</label><input id="s_email" type="email" autocomplete="email" inputmode="email"><label>Password</label><input id="s_pass" type="password" autocomplete="current-password">' +
+    '<div class="row"><button class="pri" id="s_go"' + (BUSY ? ' disabled' : '') + '>' + (BUSY ? 'Signing in…' : 'Sign in') + '</button><button class="lnk" id="to_forgot">Forgot the password?</button><span class="msg" id="f_msg"></span></div>' + (PCODE ? '<p class="msg" style="margin:12px 0 0">New here? <button class="lnk" id="to_join">Join the programme</button></p>' : '');
+}
+function setPassHtml() {
+  return '<div class="card"><h1 class="t">' + (SETUPINFO ? 'Welcome' + (SETUPINFO.name && SETUPINFO.name.indexOf('@') < 0 ? ', ' + esc(SETUPINFO.name) : '') + '!' : 'Choose your password') + '</h1><p class="lead">' + (SETUPINFO ? 'Choose a password for <b>' + esc(SETUPINFO.email) + '</b>. At least <b>10 characters</b>. You will sign in with this e-mail and password.' : 'At least 10 characters. You will use it with your e-mail to sign in.') + '</p><label>New password</label><input id="p_1" type="password" autocomplete="new-password"><label>Again</label><input id="p_2" type="password" autocomplete="new-password"><div class="row"><button class="pri" id="p_go"' + (BUSY ? ' disabled' : '') + '>' + (BUSY ? 'Saving…' : 'Save and continue') + '</button><span class="msg" id="f_msg"></span></div></div>';
+}
+var CH = null;   // the channel blocks being edited: {platform: {name, count, url}}
+function chInit(c) { CH = {}; (c.channels || []).forEach(function (x) { CH[x.platform] = { name: x.name || '', count: x.count || '', url: x.url || '' }; }); }
+function chRead() { Object.keys(CH).forEach(function (pl) { var k = pl.replace(/\W/g, ''); CH[pl] = { name: v('ch_name_' + k), count: v('ch_count_' + k), url: v('ch_url_' + k) }; }); }
+function profileHtml(c, first) {
+  if (!CH) chInit(c);
+  return '<div class="card"><h1 class="t">' + (first ? 'Tell us about your channel' : 'Your profile') + '</h1><p class="lead">' + (first ? 'This is what the shop and the brand see when they review your application.' : 'Changes are recorded.') + '</p>' +
+    '<label>Your name</label><input id="pf_name" value="' + esc(c.name) + '" maxlength="80">' +
+    '<label>Where you publish - tick each one</label><div class="checks">' + PLATFORMS.map(function (p) { return '<label><input type="checkbox" name="pf_pl" value="' + p + '"' + (CH[p] ? ' checked' : '') + '>' + p + '</label>'; }).join('') + '</div>' +
+    '<div class="chans">' + PLATFORMS.filter(function (p) { return CH[p]; }).map(function (p) { var k = p.replace(/\W/g, ''), w = PL_WORD[p], x = CH[p]; return '<div class="chan"><b>' + esc(p) + '</b><div class="grid2"><div><label>' + w[0] + '</label><input id="ch_name_' + k + '" value="' + esc(x.name) + '"></div><div><label>' + w[1] + '</label><input id="ch_count_' + k + '" inputmode="numeric" value="' + esc(x.count) + '" placeholder="number"></div></div><label>Link</label><input id="ch_url_' + k + '" value="' + esc(x.url) + '" placeholder="' + w[2] + '" inputmode="url"></div>'; }).join('') + '</div>' +
+    '<div class="grid2"><div><label>What you make</label><input id="pf_niche" value="' + esc(c.niche) + '" placeholder="3D printing, maker, education, cosplay…"></div><div><label>City</label><input id="pf_city" value="' + esc(c.city) + '"></div></div>' +
+    '<label>Your audience, in a few words</label><textarea id="pf_about" placeholder="Who watches you, what they ask for">' + esc(c.about) + '</textarea>' +
+    '<label>WhatsApp number</label><input id="pf_whatsapp" value="' + esc(c.whatsapp) + '" inputmode="tel" style="max-width:320px">' +
+    '<div class="row"><button class="pri" id="pf_save"' + (BUSY ? ' disabled' : '') + '>' + (BUSY ? 'Saving…' : 'Save profile') + '</button>' + (first ? '' : '<button id="f_cancel">Cancel</button>') + '<span class="msg" id="f_msg"></span></div></div>';
+}
+function statusBadge(s) { return s === 'requested' ? '<span class="badge b-warn">Waiting for approval</span>' : s === 'approved' ? '<span class="badge b-acc">Approved · collect it</span>' : s === 'given' ? '<span class="badge b-warn">Filament received · paste your link</span>' : s === 'done' ? '<span class="badge b-ok">Done</span>' : '<span class="badge b-bad">Declined</span>'; }
+function postHtml(p) {
+  return '<div class="post"><div><a href="' + esc(p.url) + '" target="_blank" rel="noopener">' + esc(p.platform || '') + ' ' + esc(p.kind) + ' · ' + esc(p.url.replace(/^https?:\/\/(www\.)?/, '').slice(0, 42)) + '</a><br><span class="n">' + esc(p.date) + ' · ' + (p.verified ? '<span class="badge b-ok">verified by YouTube</span>' : '<span class="badge b-mute">reported</span>') + '</span></div>' +
+    '<div class="n">' + n(p.views) + ' views · ' + n(p.likes) + ' likes · ' + n(p.comments) + ' comments' + (p.leads ? ' · ' + n(p.leads) + ' enquiries' : '') + (p.verified ? '' : ' <button class="sm" data-nums="' + p.id + '">Update</button>') + '</div></div>';
+}
+var SHOWALL = false;
+function pickOptions() {
+  var have = D.stock.filter(function (x) { return x.stock > 0; }), rest = D.stock.filter(function (x) { return x.stock <= 0; });
+  if (!have.length && !SHOWALL) SHOWALL = true;   // nothing in stock: the range is all there is
+  var opt = function (x) { return '<option value="' + esc(x.key || x.sku) + '">' + esc(x.name) + (x.stock > 0 ? ' (' + n(x.stock) + ' in stock)' : '') + '</option>'; };
+  var h = have.length ? '<optgroup label="In stock">' + have.map(opt).join('') + '</optgroup>' : '';
+  if (SHOWALL && rest.length) h += '<optgroup label="On request - not in stock now">' + rest.map(opt).join('') + '</optgroup>';
+  return h || '<option value="">No products yet - ask the shop</option>';
+}
+function dashHtml() {
+  var c = D.creator, h = '';
+  if (c.status === 'applied') h += '<div class="card" style="background:var(--warnbg);border-color:var(--warnbg)"><b>Application received.</b><p class="msg" style="margin:6px 0 0">' + (c.profileDone ? 'The shop is reviewing your profile. Your agreement (videos a month, rolls per video) appears here once you are approved.' : 'Complete your profile so the shop can review it.') + '</p>' + (c.profileDone ? '<div class="row"><button class="sm" id="pf_edit">Edit profile</button></div>' : '') + '</div>';
+  else {
+    h += '<div class="card"><h2>' + esc(D.month.name) + '</h2><div class="kpis"><div class="kpi"><b>' + D.month.videos + ' / ' + c.videos_month + '</b><span>videos this month</span></div><div class="kpi"><b>' + D.month.posts + ' / ' + c.posts_month + '</b><span>posts this month</span></div><div class="kpi"><b>' + n(D.month.views) + '</b><span>views this month</span></div><div class="kpi"><b>' + n(D.total.rolls) + '</b><span>rolls received in all</span></div></div>' +
+      '<p class="msg" style="margin:10px 0 0">Agreement: ' + c.videos_month + ' videos and ' + c.posts_month + ' posts a month, ' + c.rolls_video + ' rolls per video' + (c.filament ? ' (' + esc(c.filament) + ')' : '') + (c.trial_until ? ' · trial until ' + esc(c.trial_until) : '') + '. More is welcome; less is fine for a month, but the next filament waits for the links.</p>' +
+      (c.status !== 'active' ? '<p class="msg err" style="margin:8px 0 0">The programme is ' + esc(c.status) + ' for you right now.</p>' : '') + '<div class="row"><button class="sm" id="pf_edit">Edit profile</button></div></div>';
+    h += '<div class="card"><h2>Next project</h2>';
+    if (FORM === 'request') {
+      h += '<label>What is the video about?</label><input id="f_title" maxlength="160" placeholder="e.g. Strength test: PLA vs PLA+">' +
+           '<div class="grid2"><div><label>Filament</label><select id="f_sku">' + pickOptions() + '</select>' + (D.stock.some(function (x) { return x.stock <= 0; }) ? '<label class="allp"><input type="checkbox" id="f_all"' + (SHOWALL ? ' checked' : '') + '> Show products we do not have in stock (on request)</label>' : '') + '</div><div><label>Rolls</label><input id="f_qty" inputmode="numeric" value="' + c.rolls_video + '"></div></div>' +
+           '<label>Anything else (optional)</label><textarea id="f_note" maxlength="500" placeholder="Colour preference, pickup day, a second product…"></textarea>' +
+           '<div class="row"><button class="pri" id="f_send"' + (BUSY ? ' disabled' : '') + '>' + (BUSY ? 'Sending…' : 'Send the request') + '</button><button id="f_cancel">Cancel</button><span class="msg" id="f_msg"></span></div>';
+    } else h += D.canRequest ? '<p class="msg" style="margin:0 0 10px">Pick the filament for your next video. The shop answers here; collect it when it says approved.</p><button class="pri" id="f_open">Request filament for the next video</button>' : '<p class="msg" style="margin:0">' + esc(D.why) + '</p>';
+    h += '</div>';
+  }
+  h += '<div class="card"><h2>Your projects</h2>';
+  if (!D.requests.length) h += '<p class="msg" style="margin:0">No project yet.' + (c.status === 'active' ? ' Request your first filament above.' : '') + '</p>';
+  D.requests.forEach(function (r) {
+    var posts = D.posts.filter(function (p) { return p.request_id === r.id; });
+    h += '<div class="proj"><div class="h"><div><b>' + esc(r.title || r.product) + '</b><div class="m">' + n(r.qty_ok != null ? r.qty_ok : r.qty) + ' × ' + esc(r.product) + ' · requested ' + esc(dt(r.requested_at)) + (r.given_at ? ' · received ' + esc(dt(r.given_at)) : r.decided_at ? ' · answered ' + esc(dt(r.decided_at)) : '') + '</div>' + (r.owner_note ? '<div class="m">Shop: ' + esc(r.owner_note) + '</div>' : '') + '</div><div>' + (r.onRequest && (r.status === 'requested' || r.status === 'approved') ? '<span class="badge b-mute" style="margin-right:6px">on request</span>' : '') + statusBadge(r.status) + '</div></div>';
+    if (r.go && r.status !== 'declined') h += '<div class="golink"><div><b>Your link for this video</b><span>Put it in the video description / post. Every click is counted.</span><code>' + esc(r.go) + '</code></div><div class="gocount"><b>' + n(r.clicks) + '</b>clicks</div><button class="sm" data-copy="' + esc(r.go) + '">Copy</button></div>';
+    posts.forEach(function (p) { h += postHtml(p); });
+    if (r.status === 'given' || r.status === 'done') {
+      if (FORM && FORM.link === r.id) {
+        h += '<label>Link to the video or post</label><input id="l_url" placeholder="https://youtu.be/… or a Facebook post link">' +
+             '<div id="l_more"><div class="grid2"><div><label>Platform</label><select id="l_platform"><option>YouTube</option><option>Facebook</option><option>Instagram</option><option>TikTok</option></select></div><div><label>Type</label><select id="l_kind"><option value="video">Video</option><option value="post">Post</option><option value="reel">Reel</option></select></div></div>' +
+             '<p class="msg" style="margin:8px 0 0">For YouTube the numbers are fetched automatically. For other platforms type what you see now; you can update them later.</p><div class="grid2"><div><label>Views</label><input id="l_views" inputmode="numeric"></div><div><label>Likes</label><input id="l_likes" inputmode="numeric"></div><div><label>Comments</label><input id="l_comments" inputmode="numeric"></div><div><label>Customer enquiries you got</label><input id="l_leads" inputmode="numeric"></div></div></div>' +
+             '<div class="row"><button class="pri" data-lsend="' + r.id + '"' + (BUSY ? ' disabled' : '') + '>' + (BUSY ? 'Saving…' : 'Save the link') + '</button><button id="f_cancel">Cancel</button><span class="msg" id="f_msg"></span></div>';
+      } else h += '<div class="row"><button class="sm' + (r.status === 'given' ? ' pri' : '') + '" data-link="' + r.id + '">' + (posts.length ? '+ Add another link' : 'Paste the video link') + '</button></div>';
+    }
+    h += '</div>';
+  });
+  var loose = D.posts.filter(function (p) { return !p.request_id; });
+  if (loose.length) h += '<div class="proj"><div class="h"><b>Other posts</b></div>' + loose.map(postHtml).join('') + '</div>';
+  h += '</div>';
+  if (FORM && FORM.nums) {
+    var p = D.posts.filter(function (x) { return x.id === FORM.nums; })[0] || {};
+    h += '<div class="card"><h2>Update the numbers</h2><p class="msg" style="margin:0">' + esc(p.url || '') + '</p><div class="grid2"><div><label>Views</label><input id="u_views" inputmode="numeric" value="' + p.views + '"></div><div><label>Likes</label><input id="u_likes" inputmode="numeric" value="' + p.likes + '"></div><div><label>Comments</label><input id="u_comments" inputmode="numeric" value="' + p.comments + '"></div><div><label>Shares</label><input id="u_shares" inputmode="numeric" value="' + p.shares + '"></div><div><label>Customer enquiries</label><input id="u_leads" inputmode="numeric" value="' + p.leads + '"></div></div><div class="row"><button class="pri" id="u_send"' + (BUSY ? ' disabled' : '') + '>Save</button><button id="f_cancel">Cancel</button><span class="msg" id="f_msg"></span></div></div>';
+  }
+  if (c.status !== 'applied') h += '<div class="card"><h2>In every video and post</h2><ul class="rules"><li>Tag ' + esc(c.brand || 'the brand') + ' and link ' + esc(D.shop.name) + (D.shop.website ? ' (' + esc(D.shop.website) + ')' : '') + ' as the place to buy.</li><li>Show the raw filament on camera.' + (c.code ? ' Mention your code <b>' + esc(c.code) + '</b>.' : '') + '</li><li>Before publishing, send the shop any product claims (strength, heat, comparisons) or anything that could affect the market.</li><li>Paste the link here when it is live. Update non-YouTube numbers after 30 days.</li></ul></div>';
+  return h;
+}
+function render() {
+  if (ERR) { out.innerHTML = '<div class="card"><p class="msg err">' + esc(ERR) + '</p>' + (SESS ? '<div class="row"><button class="sm" id="signout">Sign out</button></div>' : '') + '</div>'; return; }
+  if (MODE === 'setpass') { head(SETUPINFO && SETUPINFO.shop, SETUPINFO && SETUPINFO.brand, null); out.innerHTML = setPassHtml(); return; }
+  if (MODE === 'landing' || MODE === 'joined') { head(PROG && PROG.shop, PROG && PROG.brands && PROG.brands[0], null); out.innerHTML = landingHtml(); return; }
+  if (MODE === 'signin') { head((SETUPINFO && SETUPINFO.shop) || (PROG && PROG.shop), (SETUPINFO && SETUPINFO.brand) || (PROG && PROG.brands && PROG.brands[0]), null); out.innerHTML = '<div class="card">' + signinFormHtml() + '</div>'; return; }
+  if (!D) return;
+  head(D.shop, D.creator.brand, D.creator);
+  if (PREVIEW) { document.body.classList.add('pv'); if (!document.querySelector('.pvbar')) document.body.insertAdjacentHTML('afterbegin', '<div class="pvbar">Preview \u2014 what this creator sees right now. Read-only; it refreshes by itself.</div>'); }
+  if (FORM === 'profile' || D.creator.needProfile) { out.innerHTML = profileHtml(D.creator, D.creator.needProfile); return; }
+  out.innerHTML = dashHtml();
+  var ta = document.getElementById('l_url'); if (ta) ta.focus();
+}
+function fail(e) { BUSY = false; render(); var m = document.getElementById('f_msg'); var txt = (e && e.error) || (e && e.msg) || (e && e.error_description) || (e && e.message) || 'Something went wrong. Try again.'; if (/invalid login|invalid_grant|invalid credentials/i.test(txt)) txt = 'Wrong e-mail or password.'; if (m) m.textContent = txt; else alert(txt); }
+function loadMine() {
+  return api().then(function (r) { if (!r.ok) { if (/sign in/i.test(r.error || '')) { saveSess(null); MODE = 'signin'; } else ERR = r.error || 'This page does not work right now.'; } else { D = r; MODE = 'in'; } render(); }, function () { ERR = 'The page could not be loaded. Check your connection and try again.'; render(); });
+}
+document.addEventListener('click', function (ev) {
+  var cp = ev.target.closest('[data-copy]'); if (cp && !PREVIEW) { var u = cp.getAttribute('data-copy'); try { navigator.clipboard.writeText(u).then(function () { cp.textContent = 'Copied'; setTimeout(function () { cp.textContent = 'Copy'; }, 1500); }, function () { prompt('Copy the link', u); }); } catch (e) { prompt('Copy the link', u); } return; }
+  var t = ev.target.closest('button'); if (!t || BUSY || PREVIEW) return;
+  if (t.id === 'signout') { saveSess(null); D = null; MODE = PCODE ? 'landing' : 'signin'; FORM = null; ERR = ''; render(); return; }
+  if (t.id === 'to_signin') { FORM = 'signin'; if (MODE !== 'landing') MODE = 'signin'; render(); return; }
+  if (t.id === 'to_forgot') { FORM = 'forgot'; render(); return; }
+  if (t.id === 'to_join') { FORM = null; MODE = 'landing'; render(); return; }
+  if (t.id === 'f_open') { FORM = 'request'; render(); return; }
+  if (t.id === 'f_cancel') { FORM = null; render(); return; }
+  if (t.id === 'pf_edit') { FORM = 'profile'; CH = null; render(); window.scrollTo(0, 0); return; }
+  if (t.id === 'f_cancel' && FORM === 'profile') { CH = null; }
+  if (t.getAttribute('data-link')) { FORM = { link: +t.getAttribute('data-link') }; render(); return; }
+  if (t.getAttribute('data-nums')) { FORM = { nums: +t.getAttribute('data-nums') }; render(); window.scrollTo(0, document.body.scrollHeight); return; }
+  var done = function (r) { if (!r.ok) return fail(r); BUSY = false; FORM = null; Object.assign(D, r); render(); };
+  if (t.id === 'j_send') {
+    var jb = { action: 'signup', p: PCODE, name: v('j_name'), email: v('j_email'), phone: v('j_phone') };
+    if (!jb.name || !jb.email || !jb.phone) { var m0 = document.getElementById('f_msg'); if (m0) m0.textContent = 'Name, e-mail and phone, please.'; return; }
+    BUSY = true; render();
+    api(jb).then(function (r) { if (!r.ok) return fail(r); BUSY = false; MODE = 'joined'; render(); }, fail); return;
+  }
+  if (t.id === 's_go') {
+    var email = v('s_email'), pass = v('s_pass'); if (!email || !pass) return;
+    BUSY = true; render();
+    fetch(SB_URL + '/auth/v1/token?grant_type=password', { method: 'POST', headers: { apikey: SB_ANON, 'content-type': 'application/json' }, body: JSON.stringify({ email: email, password: pass }) }).then(function (r) { return r.json(); }).then(function (j) {
+      if (!j.access_token) {
+        // never set a password? say so, instead of "wrong password"
+        return api({ action: 'hint', email: email }).then(function (h) {
+          if (h && h.ok && h.hint === 'setup') return fail({ error: 'Your password is not set yet. Open the link we sent you on WhatsApp and choose a password there (at least 10 characters). Then you are in.' });
+          fail(j);
+        }, function () { fail(j); });
+      }
+      saveSess({ access_token: j.access_token, refresh_token: j.refresh_token, at: Date.now() }); BUSY = false; FORM = null; loadMine();
+    }, fail); return;
+  }
+  if (t.id === 's_forgot') {
+    var fe = v('s_email'); if (!fe) return;
+    BUSY = true; render();
+    api({ action: 'forgot', email: fe }).then(function (r) { if (!r.ok) return fail(r); BUSY = false; FORM = 'sent'; render(); }, fail); return;
+  }
+  if (t.id === 'p_go') {
+    var p1 = v('p_1'), p2 = v('p_2'), m1 = document.getElementById('f_msg');
+    if (p1.length < 10) { if (m1) m1.textContent = 'At least 10 characters, please.'; return; }
+    if (p1 !== p2) { if (m1) m1.textContent = 'The two passwords differ.'; return; }
+    BUSY = true; render();
+    if (SETUP) {
+      // our own set-up link: the server sets the password, then he is signed in with it
+      fetch(API + '?pub=creator', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ action: 'setup', setup: SETUP, password: p1 }) }).then(function (r) { return r.json(); }).then(function (r) {
+        if (!r.ok) return fail(r);
+        return fetch(SB_URL + '/auth/v1/token?grant_type=password', { method: 'POST', headers: { apikey: SB_ANON, 'content-type': 'application/json' }, body: JSON.stringify({ email: r.email, password: p1 }) }).then(function (x) { return x.json(); }).then(function (j) {
+          if (!j.access_token) return fail(j);
+          saveSess({ access_token: j.access_token, refresh_token: j.refresh_token, at: Date.now() }); BUSY = false; SETUP = ''; history.replaceState(null, '', location.pathname); loadMine();
+        });
+      }, fail);
+      return;
+    }
+    authFetch('user', { password: p1 }, 'PUT').then(function (j) { if (!j.id) return fail(j); BUSY = false; history.replaceState(null, '', location.pathname + (PCODE ? '?p=' + PCODE : '')); loadMine(); }, fail); return;
+  }
+  if (t.id === 'pf_save') {
+    chRead();
+    var pb = { action: 'profile', name: v('pf_name'), channels: PLATFORMS.filter(function (p) { return CH[p]; }).map(function (p) { return { platform: p, name: CH[p].name, count: Number(String(CH[p].count).replace(/[^0-9]/g, '')), url: CH[p].url }; }), niche: v('pf_niche'), city: v('pf_city'), about: v('pf_about'), whatsapp: v('pf_whatsapp') };
+    BUSY = true; render();
+    api(pb).then(function (r) { if (!r.ok) return fail(r); CH = null; done(r); }, fail); return;
+  }
+  if (t.id === 'f_send') {
+    var body = { action: 'request', sku: v('f_sku'), qty: Number(v('f_qty')), title: v('f_title'), note: v('f_note') };
+    BUSY = true; render();
+    api(body).then(done, fail); return;
+  }
+  if (t.getAttribute('data-lsend')) {
+    var lb = { action: 'link', request_id: +t.getAttribute('data-lsend'), url: v('l_url'), platform: v('l_platform'), kind: v('l_kind'), views: Number(v('l_views')), likes: Number(v('l_likes')), comments: Number(v('l_comments')), leads: Number(v('l_leads')) };
+    BUSY = true; render();
+    api(lb).then(done, fail); return;
+  }
+  if (t.id === 'u_send' && FORM && FORM.nums) {
+    var ub = { action: 'numbers', post_id: FORM.nums, views: Number(v('u_views')), likes: Number(v('u_likes')), comments: Number(v('u_comments')), shares: Number(v('u_shares')), leads: Number(v('u_leads')) };
+    BUSY = true; render();
+    api(ub).then(done, fail); return;
+  }
+});
+document.addEventListener('change', function (ev) {
+  if (ev.target.name !== 'pf_pl' || !CH) return;
+  chRead();
+  if (ev.target.checked) CH[ev.target.value] = CH[ev.target.value] || { name: '', count: '', url: '' }; else delete CH[ev.target.value];
+  render();
+});
+document.addEventListener('change', function (ev) {
+  if (ev.target.id !== 'f_all') return;
+  var keep = { t: v('f_title'), q: v('f_qty'), n: v('f_note') };
+  SHOWALL = ev.target.checked; render();
+  var a = document.getElementById('f_title'); if (a) a.value = keep.t; var b = document.getElementById('f_qty'); if (b) b.value = keep.q; var c = document.getElementById('f_note'); if (c) c.value = keep.n;
+});
+document.addEventListener('input', function (ev) {
+  if (ev.target.id !== 'l_url') return;
+  var yt = /youtu\.be\/|youtube\.com\//.test(ev.target.value), more = document.getElementById('l_more');
+  if (more) more.querySelectorAll('input').forEach(function (i) { i.disabled = yt; i.placeholder = yt ? 'fetched from YouTube' : ''; });
+  var pl = document.getElementById('l_platform'), kd = document.getElementById('l_kind'); if (pl && yt) pl.value = 'YouTube'; if (kd) kd.value = yt ? 'video' : 'post';
+  if (pl && /facebook\.com|fb\.watch/.test(ev.target.value)) pl.value = 'Facebook';
+});
+document.addEventListener('keydown', function (ev) { if (ev.key === 'Enter' && ev.target && ev.target.id === 's_pass') { var b = document.getElementById('s_go'); if (b) b.click(); } });
+// ---- start
+(function () {
+  loadSess();
+  // back from the e-mailed link: Supabase puts the session in the hash
+  var hp = new URLSearchParams((location.hash || '').replace(/^#/, ''));
+  if (hp.get('access_token')) { saveSess({ access_token: hp.get('access_token'), refresh_token: hp.get('refresh_token'), at: Date.now() }); MODE = 'setpass'; render(); return; }
+  if (hp.get('error_description')) { ERR = decodeURIComponent(hp.get('error_description').replace(/\+/g, ' ')) + ' Ask for a new link with "Forgot the password?".'; MODE = 'signin'; render(); return; }
+  if (SETUP) {
+    fetch(API + '?pub=creator&setup=' + encodeURIComponent(SETUP)).then(function (r) { return r.json(); }).then(function (r) {
+      if (!r.ok) { SETUP = ''; history.replaceState(null, '', location.pathname); if (SESS && SESS.access_token) { loadMine(); return; } ERR = ''; MODE = 'signin'; FORM = 'signin'; render(); var m = document.getElementById('f_msg'); if (m) m.textContent = r.error || ''; return; }
+      SETUPINFO = r;
+      if (r.used) {
+        SETUP = ''; history.replaceState(null, '', location.pathname);
+        if (SESS && SESS.access_token) { loadMine(); return; }
+        MODE = 'signin'; FORM = 'signin'; render();
+        var se = document.getElementById('s_email'); if (se) se.value = r.email;
+        var sp = document.getElementById('s_pass'); if (sp) sp.focus();
+        var m2 = document.getElementById('f_msg'); if (m2) m2.textContent = 'Welcome back. Your password is set - type it to sign in.';
+        return;
+      }
+      MODE = 'setpass'; render();
+    }, function () { ERR = 'The page could not be loaded. Check your connection and try again.'; render(); });
+    return;
+  }
+  if (TOKEN) { loadMine(); if (PREVIEW) setInterval(function () { api().then(function (r) { if (r.ok) { D = r; render(); } }, function () {}); }, 20000); return; }
+  if (SESS && SESS.access_token) { loadMine(); return; }
+  if (PCODE) {
+    MODE = 'landing'; render();
+    fetch(API + '?pub=creator&p=' + encodeURIComponent(PCODE)).then(function (r) { return r.json(); }).then(function (r) { if (!r.ok) { ERR = r.error || 'This join link does not work.'; } else PROG = r; render(); }, function () { ERR = 'The page could not be loaded. Check your connection and try again.'; render(); });
+    return;
+  }
+  MODE = 'signin'; render();
+})();
+</script>
+</body>
+</html>

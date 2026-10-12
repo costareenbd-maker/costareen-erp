@@ -1,0 +1,726 @@
+// Creator portal: a creator's own page behind a permanent link (web/creator.html, ?pub=creator&t=...) and the
+// sponsoring brand's read-only dashboard (web/sponsor.html, ?pub=sponsor&t=...). Projects are the unit: the creator
+// requests filament for the next video, the owner approves and hands it over, the creator pastes the links into that
+// project, YouTube numbers are fetched by the ERP (verified), other platforms are typed (reported). Every step is an
+// event with who / when / from where. Owner-only inside the ERP (the "creators" app); the links are the gate outside.
+//
+//   owner:  erpCreatorPortalLink({creator_id})   the creator's permanent link + QR
+//           erpSponsorLink({brand})               the brand's permanent link + QR
+//           erpCreatorRequests()                  requests waiting + open projects
+//           erpCreatorDecide({id, action, qty, note})   approve | decline | given (writes the filament line)
+//           erpCreatorEvents({creator_id})        the audit trail
+//           erpYoutubeKey({key})                  save the YouTube Data API key (business_config youtube_key)
+//           erpCreatorRefresh()                   fetch YouTube numbers now
+//   public: route(deps, R, what, method, params, body, ip)   what = creator | sponsor
+
+import { num, formatDate } from '../lib/time.js';
+import { getConfig, setConfig } from '../lib/ext.js';
+import { qrDataUrl } from '../lib/qr.js';
+import { limit, pubBase } from './passport.js';
+import { sourceOf } from './market.js';
+import { erpCatalog } from './catalog.js';
+
+const str = (v) => String(v == null ? '' : v).trim();
+const enc = new TextEncoder();
+const day = (d) => (d ? formatDate(new Date(d), 'yyyy-MM-dd') : '');
+const when = (d) => (d ? new Date(d).toISOString() : '');
+function needOwner(ctx) { if (ctx.s.role !== 'owner') throw new Error('Only an owner runs the creator programme.'); }
+async function sha256hex(s) { const b = await crypto.subtle.digest('SHA-256', enc.encode(s)); return [...new Uint8Array(b)].map((x) => x.toString(16).padStart(2, '0')).join(''); }
+async function tokenFor(deps, kind, source, biz, ref) {
+  const secret = str(deps && (deps.bridgeKey || deps.pubSecret)) || 'local-test-secret';
+  const k = await crypto.subtle.importKey('raw', enc.encode(secret), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
+  const sig = new Uint8Array(await crypto.subtle.sign('HMAC', k, enc.encode(kind + '|' + source + '|' + biz + '|' + ref)));
+  return btoa(String.fromCharCode(...sig)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '').slice(0, 24);
+}
+/** The creator / sponsor pages' address: ERP_CREATOR_URL (a name-free host) when set, else the neutral public address. */
+function pageUrl(deps, name) {
+  const own = str(deps && deps.installEnv && deps.installEnv.creatorUrl);
+  return (own ? own.replace(/\/?$/, '/') : pubBase(deps).check.replace(/check$/, '')) + name;
+}
+const PROFILE = ['niche', 'city', 'about', 'whatsapp'];
+const PLATFORMS = ['YouTube', 'Facebook page', 'Facebook group', 'Facebook profile', 'Instagram', 'TikTok'];
+function profileDone(c) { return !!(str(c.handle) && str(c.platforms) && str(c.links)); }
+/** The creator's channels, cleaned: [{platform, name, count, url}] - at least a platform and a link each. */
+function cleanChannels(list) {
+  const out = [];
+  for (const x of (Array.isArray(list) ? list : []).slice(0, 12)) {
+    const platform = PLATFORMS.find((p) => p.toLowerCase() === str(x && x.platform).toLowerCase());
+    const url = str(x && x.url).slice(0, 300), name = str(x && x.name).slice(0, 120), count = Math.max(0, Math.round(num(x && x.count)));
+    if (!platform) continue;
+    if (!/^https?:\/\/\S+$/.test(url)) throw new Error('A full link for ' + platform + ', starting with https://');
+    if (!name) throw new Error('The name of your ' + platform + ', please.');
+    out.push({ platform, name, count, url });
+  }
+  return out;
+}
+/** The one-line strings the ERP and the sponsor page show, from the channels. */
+function derived(ch) {
+  return { handle: ch.map((c) => c.name + ' (' + c.platform + ')').join(', ').slice(0, 400), platforms: [...new Set(ch.map((c) => c.platform))].join(', '),
+           followers: ch.map((c) => c.platform + ' ' + c.count.toLocaleString('en-US')).join(' \u00b7 ').slice(0, 400), links: ch.map((c) => c.url).join('\n').slice(0, 2000) };
+}
+function parseChannels(c) { try { const j = JSON.parse(str(c.channels) || '[]'); return Array.isArray(j) ? j : []; } catch (_) { return []; } }
+function randomCode(n) { const a = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789', b = crypto.getRandomValues(new Uint8Array(n)); return [...b].map((x) => a[x % a.length]).join(''); }
+const okEmail = (e) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);
+/** The programme's join code of this business (made once): the public join link carries only this. */
+async function progCode(ctx) {
+  let code = str(await getConfig(ctx, 'creator_programme_code', ''));
+  if (!code) { code = randomCode(10); await setConfig(ctx, 'creator_programme_code', code); }
+  return code;
+}
+export async function erpCreatorProgramme(ctx, payload) {
+  needOwner(ctx);
+  const p = payload || {};
+  if (p.brand !== undefined) await setConfig(ctx, 'creator_programme_brand', str(p.brand).slice(0, 80));
+  const code = await progCode(ctx), url = pageUrl(ctx.deps, 'creator') + '?p=' + code;
+  return { code, url, qr: qrDataUrl(url), signin: pageUrl(ctx.deps, 'creator'), brand: await progBrand(ctx) };
+}
+/** The brand the programme is run for: set by the owner, else the brand of the first creator. */
+async function progBrand(ctx) {
+  const b = str(await getConfig(ctx, 'creator_programme_brand', ''));
+  if (b) return b;
+  const first = (await ctx.tx`select brand from erp_creators where business_id = ${ctx.biz} and brand <> '' order by id limit 1`)[0];
+  return first ? str(first.brand) : '';
+}
+/** A login for an e-mail: the existing user, or a new confirmed one with no password yet (set from the e-mailed link). */
+async function userFor(deps, email, name) {
+  const had = (await deps.sql`select id from auth.users where lower(email) = ${email} limit 1`)[0];
+  if (had) return String(had.id);
+  return deps.createOwner(email, name);
+}
+/** Owner: give a creator added by hand a login - a user is made (or found) and the choose-your-password e-mail goes out. */
+export async function erpCreatorInvite(ctx, payload) {
+  needOwner(ctx);
+  const p = payload || {}, email = str(p.email).toLowerCase();
+  let id = num(p.creator_id);
+  if (!okEmail(email)) throw new Error('That is not an e-mail address.');
+  let created = 0;
+  if (!id) {
+    // the owner types only the e-mail: the creator is made here, applied, and fills everything else himself
+    const had = (await ctx.tx`select id from erp_creators where business_id = ${ctx.biz} and lower(email) = ${email}`)[0];
+    if (had) id = Number(had.id);
+    else {
+      const r = (await ctx.tx`insert into erp_creators ${ctx.tx({ business_id: ctx.biz, name: email.split('@')[0].slice(0, 80), email, brand: await progBrand(ctx), status: 'applied', applied_at: ctx.now, videos_month: 2, posts_month: 2, rolls_video: 2 })} returning id`)[0];
+      id = created = Number(r.id);
+    }
+  }
+  const c = (await ctx.tx`select * from erp_creators where business_id = ${ctx.biz} and id = ${id}`)[0];
+  if (!c) throw new Error('No such creator.');
+  const taken = (await ctx.tx`select id from erp_creators where business_id = ${ctx.biz} and lower(email) = ${email} and id <> ${id}`)[0];
+  if (taken) throw new Error('Another creator already uses that e-mail.');
+  // an e-mail that signs in to an ERP: its password link would change that ERP password - never hand it to a creator
+  const erpUser = (await ctx.deps.sql`select 1 from auth.users u join memberships m on m.user_id = u.id where lower(u.email) = ${email} limit 1`)[0];
+  if (erpUser) throw new Error('That e-mail signs in to an ERP here. Ask the creator for his own e-mail.');
+  const userId = await userFor(ctx.deps, email, str(c.name));
+  await ctx.tx`update erp_creators set user_id = ${userId}, email = ${email}, updated_at = ${ctx.now} where id = ${id}`;
+  if (p.mode === 'link') {
+    const link = await setupLink(ctx, id);
+    await ev(ctx, { creator_id: id, who: 'owner', what: 'sign-in link', detail: email });
+    return { link, email, creator_id: id, created };
+  }
+  await ctx.deps.sendResetTo(email, pageUrl(ctx.deps, 'creator'));
+  await ev(ctx, { creator_id: id, who: 'owner', what: 'invited', detail: email });
+  return { sent: true, email, creator_id: id, created };
+}
+/** The creator's set-up link: the same address every time for the same creator, no expiry. Opening it (or a
+ *  WhatsApp preview) changes nothing; it is spent when he sets his password, and the owner can make it work again. */
+async function setupLink(ctx, creatorId) {
+  const src = sourceOf(ctx.deps) || (ctx.deps && ctx.deps.control ? 'self' : null);
+  if (!src) throw new Error('Links need the provider server.');
+  const token = await tokenFor(ctx.deps, 'setup', src, ctx.biz, String(creatorId));
+  await ctx.deps.control`insert into erp_creator_links (token_hash, source, business_id, kind, ref) values (${await sha256hex(token)}, ${src}, ${ctx.biz}, 'setup', ${String(creatorId)}) on conflict (token_hash) do update set kind = 'setup'`;
+  return pageUrl(ctx.deps, 'creator') + '?setup=' + token;
+}
+async function setupInfo(ctx, l) {
+  const c = (await ctx.tx`select id, name, email, user_id from erp_creators where business_id = ${ctx.biz} and id = ${num(l.ref)}`)[0];
+  if (!c || !c.user_id) throw new Error('This link is not known. Ask for a new one.');
+  return { setup: true, email: str(c.email), name: str(c.name), shop: await shopInfo(ctx), brand: await progBrand(ctx) };
+}
+async function setupDone(ctx, l, password, ip) {
+  const c = (await ctx.tx`select id, email, user_id from erp_creators where business_id = ${ctx.biz} and id = ${num(l.ref)}`)[0];
+  if (!c || !c.user_id) throw new Error('This link is not known. Ask for a new one.');
+  if (!ctx.deps.setUserPassword) throw new Error('This server cannot set passwords.');
+  await ctx.deps.setUserPassword(String(c.user_id), password);
+  await ev(ctx, { creator_id: c.id, who: 'creator', what: 'password set', detail: str(c.email), ip });
+  return { email: str(c.email) };
+}
+/** The business behind a programme code (public join link). */
+async function bizByCode(deps, code) {
+  const c = str(code).toUpperCase();
+  if (!/^[A-Z0-9]{6,16}$/.test(c)) throw new Error('This join link is not complete.');
+  const r = (await deps.sql`select business_id from business_config where key = 'creator_programme_code' and value = ${c} limit 1`)[0];
+  if (!r) throw new Error('This join link is not known.');
+  return r.business_id;
+}
+/** The creator behind a signed-in session (Authorization: Bearer <Supabase session>). */
+async function creatorBySession(deps, authHeader) {
+  const uid = authHeader ? await deps.verifyUser(authHeader) : null;
+  if (!uid) throw new Error('Please sign in.');
+  const r = (await deps.sql`select id, business_id from erp_creators where user_id = ${uid} limit 1`)[0];
+  if (!r) throw new Error('This login has no creator profile. Join the programme first.');
+  return { biz: r.business_id, ref: String(r.id) };
+}
+async function ev(ctx, e) {
+  await ctx.tx`insert into erp_creator_events ${ctx.tx({ business_id: ctx.biz, creator_id: e.creator_id || null, request_id: e.request_id || null, post_id: e.post_id || null, who: e.who, what: e.what, detail: str(e.detail).slice(0, 500) || null, ip: str(e.ip).slice(0, 80) || null })}`;
+}
+
+// ---------------------------------------------------------------- links (owner side)
+async function link(ctx, kind, ref) {
+  const src = sourceOf(ctx.deps) || (ctx.deps && ctx.deps.control ? 'self' : null);
+  if (!src) throw new Error('Links need the provider server.');
+  const token = await tokenFor(ctx.deps, kind, src, ctx.biz, ref);
+  await ctx.deps.control`insert into erp_creator_links (token_hash, source, business_id, kind, ref) values (${await sha256hex(token)}, ${src}, ${ctx.biz}, ${kind}, ${ref}) on conflict (token_hash) do nothing`;
+  const url = pageUrl(ctx.deps, kind === 'creator' ? 'creator' : 'sponsor') + '?t=' + token;
+  return { url, qr: qrDataUrl(url) };
+}
+export async function erpCreatorPortalLink(ctx, payload) {
+  needOwner(ctx);
+  const id = num((payload || {}).creator_id);
+  const c = (await ctx.tx`select id, name from erp_creators where business_id = ${ctx.biz} and id = ${id}`)[0];
+  if (!c) throw new Error('No such creator.');
+  return { creator: c.name, ...(await link(ctx, 'creator', String(c.id))) };
+}
+export async function erpSponsorLink(ctx, payload) {
+  needOwner(ctx);
+  const brand = str((payload || {}).brand);
+  if (!brand) throw new Error('Which brand?');
+  return { brand, ...(await link(ctx, 'sponsor', brand.toLowerCase())) };
+}
+
+// ---------------------------------------------------------------- requests (owner side)
+const reqRow = (r) => ({ onRequest: !!r.on_request, id: Number(r.id), creator_id: Number(r.creator_id), status: r.status, title: str(r.title), sku: str(r.sku), product: str(r.product), qty: num(r.qty), qty_ok: r.qty_ok == null ? null : num(r.qty_ok),
+                         value: num(r.value), note: str(r.note), owner_note: str(r.owner_note), requested_at: when(r.requested_at), decided_at: when(r.decided_at), given_at: when(r.given_at), links: num(r.links), code: str(r.link_code), clicks: num(r.clicks), link_to: str(r.link_to) });
+async function requests(ctx, creatorId) {
+  const rows = creatorId
+    ? await ctx.tx`select r.*, (select count(*) from erp_creator_posts p where p.request_id = r.id) as links from erp_creator_requests r where r.business_id = ${ctx.biz} and r.creator_id = ${creatorId} order by r.id desc limit 100`
+    : await ctx.tx`select r.*, (select count(*) from erp_creator_posts p where p.request_id = r.id) as links from erp_creator_requests r where r.business_id = ${ctx.biz} order by r.id desc limit 300`;
+  return rows.map(reqRow);
+}
+/** The project link of each request (made when he asks; one per project). */
+function goUrl(deps, code) { return code ? pageUrl(deps, 'go') + '?c=' + code : ''; }
+function withGo(ctx, list) { return list.map((r) => ({ ...r, go: goUrl(ctx.deps, r.code) })); }
+async function makeGo(ctx, requestId) {
+  const src = sourceOf(ctx.deps) || (ctx.deps && ctx.deps.control ? 'self' : null);
+  for (let i = 0; i < 5; i++) {
+    const code = randomCode(7);
+    if (src) {
+      const hit = (await ctx.deps.control`insert into erp_creator_links (token_hash, source, business_id, kind, ref) values (${await sha256hex('go|' + code)}, ${src}, ${ctx.biz}, 'go', ${String(requestId)}) on conflict (token_hash) do nothing returning token_hash`)[0];
+      if (!hit) continue;
+    }
+    await ctx.tx`update erp_creator_requests set link_code = ${code} where id = ${requestId} and business_id = ${ctx.biz}`;
+    return code;
+  }
+  return '';
+}
+/** Where a click on a project link goes: the owner's own link, else the product on the shop's website. */
+async function goTarget(ctx, r) {
+  if (/^https?:\/\//.test(str(r.link_to))) return str(r.link_to);
+  const S = await import('./sales.js');
+  let site = '';
+  try { site = str((await S.qProfile(ctx)).website); } catch (_) { site = ''; }
+  if (!site) site = 'costareen.com';
+  if (!/^https?:\/\//.test(site)) site = 'https://' + site;
+  const q = str(r.sku) || str(r.product);
+  return site.replace(/\/+$/, '') + '/?s=' + encodeURIComponent(q) + '&post_type=product';   // one match: the shop opens the product itself
+}
+export async function erpCreatorRequests(ctx) {
+  needOwner(ctx);
+  const all = withGo(ctx, await requests(ctx, 0));
+  const names = Object.fromEntries((await ctx.tx`select id, name from erp_creators where business_id = ${ctx.biz}`).map((c) => [Number(c.id), str(c.name)]));
+  const withName = all.map((r) => ({ ...r, creator: names[r.creator_id] || '' }));
+  return { waiting: withName.filter((r) => r.status === 'requested'), approved: withName.filter((r) => r.status === 'approved'),
+           open: withName.filter((r) => r.status === 'given' && r.links === 0), all: withName.slice(0, 100), youtubeKey: !!str(await getConfig(ctx, 'youtube_key', '')) };
+}
+export async function erpCreatorDecide(ctx, payload) {
+  needOwner(ctx);
+  const p = payload || {}, id = num(p.id), action = str(p.action);
+  const r = (await ctx.tx`select * from erp_creator_requests where business_id = ${ctx.biz} and id = ${id}`)[0];
+  if (!r) throw new Error('No such request.');
+  const note = str(p.note).slice(0, 300) || null;
+  if (action === 'approve') {
+    if (r.status !== 'requested') throw new Error('This request was already decided.');
+    const q = num(p.qty) > 0 ? num(p.qty) : num(r.qty);
+    await ctx.tx`update erp_creator_requests set status = 'approved', qty_ok = ${q}, owner_note = ${note}, decided_at = ${ctx.now}, updated_at = ${ctx.now} where id = ${id}`;
+    await ev(ctx, { creator_id: r.creator_id, request_id: id, who: 'owner', what: 'approved', detail: q + ' x ' + r.product + (note ? ' - ' + note : '') });
+  } else if (action === 'decline') {
+    if (r.status !== 'requested' && r.status !== 'approved') throw new Error('This request cannot be declined now.');
+    await ctx.tx`update erp_creator_requests set status = 'declined', owner_note = ${note}, decided_at = ${ctx.now}, updated_at = ${ctx.now} where id = ${id}`;
+    await ev(ctx, { creator_id: r.creator_id, request_id: id, who: 'owner', what: 'declined', detail: note || '' });
+  } else if (action === 'given') {
+    if (r.status !== 'approved' && r.status !== 'requested') throw new Error('Approve it first, or it was already given.');
+    const q = num(p.qty) > 0 ? num(p.qty) : (r.qty_ok != null ? num(r.qty_ok) : num(r.qty));
+    // where the rolls come from: the shop's own stock, a joint pool, or nowhere (the brand sent them straight)
+    const src = str(p.source) || 'own', snote = 'Sponsorship: ' + str(r.product) + (str(r.title) ? ' - ' + str(r.title) : '');
+    let source = 'none', sourceName = 'Not from our stock';
+    if (src === 'own') {
+      const pr = (await ctx.tx`select p.id, p.name, coalesce(ps.stock, 0) as stock from products p left join product_stock ps on ps.product_id = p.id where p.business_id = ${ctx.biz} and lower(btrim(p.sku)) = ${str(r.sku).toLowerCase()} limit 1`)[0];
+      if (!pr) throw new Error('This product is not in your stock. Choose a joint stock, or "Not from our stock".');
+      if (q > num(pr.stock)) throw new Error('Only ' + num(pr.stock) + ' of ' + str(pr.name) + ' in your stock.');
+      const at = new Date(), no = 'TXN-' + formatDate(at, 'yyyyMMdd') + '-' + (Math.floor(Math.random() * 9000) + 1000);
+      await ctx.tx`insert into stock_movements (business_id, product_id, kind, direction, qty, unit_price, total, reference, supplier, note, created_by, created_at, txn_no, operator, product_name)
+                   values (${ctx.biz}, ${pr.id}, 'ADJUST', 'OUT', ${q}, 0, 0, ${snote.slice(0, 200)}, '', 'Sponsorship rolls - the brand replaces them; no money', ${ctx.s.userId}, ${at}, ${no}, ${str(ctx.s.name) || 'Owner'}, ${str(pr.name)})`;
+      source = 'own'; sourceName = 'My stock';
+    } else if (src.startsWith('pool:')) {
+      const J = await import('./joint.js');
+      const m = await J.poolSponsorMove(ctx, { pool: src.slice(5), sku: r.sku, qty: q, dir: 'OUT', note: snote });
+      source = src; sourceName = m.pool;
+    }
+    try { const T = await import('../lib/tabs.js'); T.forget(ctx, 'TXN_LOG'); } catch (_) { /* no cached log */ }
+    delete ctx.memo.catalog;
+    let value = num(p.value), sku = str(r.sku);
+    if (!(value > 0) && sku) { const pr = (await ctx.tx`select sell_price from products where business_id = ${ctx.biz} and lower(sku) = ${sku.toLowerCase()}`)[0]; if (pr) value = num(pr.sell_price) * q; }
+    await ctx.tx`update erp_creator_requests set status = 'given', qty_ok = ${q}, value = ${value}, owner_note = coalesce(${note}, owner_note), decided_at = coalesce(decided_at, ${ctx.now}), given_at = ${ctx.now}, updated_at = ${ctx.now} where id = ${id}`;
+    await ctx.tx`insert into erp_creator_ships ${ctx.tx({ business_id: ctx.biz, creator_id: r.creator_id, request_id: id, on_date: formatDate(ctx.now, 'yyyy-MM-dd'), sku: sku || null, product: str(r.product), qty: q, value, source, source_name: sourceName, note: str(r.title) ? 'Project: ' + str(r.title) : null })}`;
+    await ev(ctx, { creator_id: r.creator_id, request_id: id, who: 'owner', what: 'given', detail: q + ' x ' + r.product + ' from ' + sourceName });
+  } else throw new Error('Approve, decline or given?');
+  return erpCreatorRequests(ctx);
+}
+export async function erpCreatorEvents(ctx, payload) {
+  needOwner(ctx);
+  const id = num((payload || {}).creator_id);
+  const rows = await ctx.tx`select * from erp_creator_events where business_id = ${ctx.biz} and creator_id = ${id} order by id desc limit 200`;
+  return { events: rows.map((e) => ({ id: Number(e.id), who: e.who, what: e.what, detail: str(e.detail), ip: str(e.ip), at: when(e.at), request_id: e.request_id ? Number(e.request_id) : 0, post_id: e.post_id ? Number(e.post_id) : 0 })) };
+}
+
+// ---------------------------------------------------------------- YouTube numbers (facts, no AI)
+export function ytId(url) {
+  const u = str(url);
+  const m = /(?:youtu\.be\/|youtube\.com\/(?:watch\?(?:.*&)?v=|shorts\/|embed\/|live\/))([A-Za-z0-9_-]{11})/.exec(u);
+  return m ? m[1] : '';
+}
+export async function erpYoutubeKey(ctx, payload) {
+  needOwner(ctx);
+  const key = str((payload || {}).key);
+  await setConfig(ctx, 'youtube_key', key);
+  return { set: !!key };
+}
+/** Fetch views / likes / comments for every YouTube post of this business (new ones, and those older than 20 hours). */
+export async function ytRefresh(ctx, { all } = {}) {
+  const key = str(await getConfig(ctx, 'youtube_key', '')) || str(ctx.deps && ctx.deps.youtubeKey);
+  if (!key) return { skipped: 'no key' };
+  const rows = await ctx.tx`select id, url, creator_id, fetched_at from erp_creator_posts where business_id = ${ctx.biz} and url ilike '%youtu%' order by id desc limit 200`;
+  const todo = rows.filter((r) => ytId(r.url) && (all || !r.fetched_at || Date.now() - new Date(r.fetched_at).getTime() > 20 * 3600e3));
+  if (!todo.length) return { fetched: 0 };
+  let done = 0;
+  for (let i = 0; i < todo.length; i += 50) {
+    const batch = todo.slice(i, i + 50), ids = batch.map((r) => ytId(r.url));
+    const res = await ctx.deps.fetch('https://www.googleapis.com/youtube/v3/videos?part=statistics&id=' + ids.join(',') + '&key=' + encodeURIComponent(key));
+    const txt = await res.text();
+    if (!res.ok) throw new Error('YouTube answered ' + res.status + ': ' + txt.slice(0, 160));
+    let j; try { j = JSON.parse(txt); } catch (_) { throw new Error('YouTube gave no answer.'); }
+    const stats = {}; for (const it of (j.items || [])) stats[it.id] = it.statistics || {};
+    for (const r of batch) {
+      const s = stats[ytId(r.url)]; if (!s) continue;
+      const views = num(s.viewCount), likes = num(s.likeCount), comments = num(s.commentCount);
+      await ctx.tx`update erp_creator_posts set views = ${views}, likes = ${likes}, comments = ${comments}, verified = true, fetched_at = ${ctx.now}, updated_at = ${ctx.now} where id = ${r.id}`;
+      await ev(ctx, { creator_id: r.creator_id, post_id: r.id, who: 'youtube', what: 'fetched', detail: views + ' views, ' + likes + ' likes, ' + comments + ' comments' });
+      done++;
+    }
+  }
+  return { fetched: done };
+}
+export async function erpCreatorRefresh(ctx) { needOwner(ctx); return ytRefresh(ctx, { all: true }); }
+
+// ---------------------------------------------------------------- the public pages
+async function runAs(deps, R, biz, label, fn) {
+  const rows = await R.owners(deps.sql, [biz]);
+  if (!rows.length) throw new Error('This page is not available right now.');
+  const out = await R.asBusiness(deps, rows[0], label, fn);
+  if (out && out.error) throw new Error(out.error);
+  return out;
+}
+async function openLink(deps, R, token, kind, ip) {
+  const t = str(token);
+  if (!/^[A-Za-z0-9_-]{16,32}$/.test(t)) throw new Error('This link is not complete.');
+  await limit(deps, ip, kind, 120);
+  const h = await sha256hex(t);
+  const l = (await deps.control`select source, business_id, kind, ref from erp_creator_links where token_hash = ${h}`)[0];
+  if (!l || l.kind !== kind) throw new Error('This link is not known. Ask for a new one.');
+  await deps.control`update erp_creator_links set last_seen = now() where token_hash = ${h}`;
+  let d = deps;
+  if (l.source !== 'self') { if (!R.tenantDeps) throw new Error('This page is not available right now.'); d = await R.tenantDeps(l.source); }
+  return { d, l };
+}
+async function shopInfo(ctx) {
+  const S = await import('./sales.js');
+  let p = {}; try { p = await S.qProfile(ctx); } catch (_) { p = {}; }
+  const out = { name: str(p.name) || str(ctx.s.businessName), phone: str(p.phone), website: str(p.website), logo: '' };
+  try { out.logo = (await S.docImg(ctx, p.logoTrimId)) || (await S.docImg(ctx, p.logoId)) || ''; } catch (_) { out.logo = ''; }
+  return out;
+}
+const postRow = (p) => ({ id: Number(p.id), request_id: p.request_id ? Number(p.request_id) : 0, date: day(p.on_date), platform: str(p.platform), kind: str(p.kind), url: str(p.url), product: str(p.product),
+                          views: num(p.views), likes: num(p.likes), comments: num(p.comments), shares: num(p.shares), leads: num(p.leads), verified: !!p.verified, by: str(p.by), fetched_at: when(p.fetched_at), updated_at: when(p.updated_at) });
+async function creatorData(ctx, c) {
+  const reqs = withGo(ctx, await requests(ctx, c.id));
+  const posts = (await ctx.tx`select * from erp_creator_posts where business_id = ${ctx.biz} and creator_id = ${c.id} order by on_date desc, id desc limit 100`).map(postRow);
+  const month = formatDate(ctx.now, 'yyyy-MM');
+  const mPosts = posts.filter((p) => p.date.startsWith(month));
+  const videos = mPosts.filter((p) => p.kind === 'video').length, others = mPosts.length - videos;
+  const openNoLink = reqs.filter((r) => r.status === 'given' && r.links === 0).length;
+  const pending = reqs.some((r) => r.status === 'requested' || r.status === 'approved');
+  const needProfile = !!c.applied_at && !profileDone(c);   // self-joined creators fill their profile first; hand-added ones are the owner's job
+  const canRequest = c.status === 'active' && !needProfile && openNoLink < num(c.open_limit) && !pending;
+  // what he can ask for: the programme brand only (never the shop's other brands)
+  const stock = (await brandItems(ctx, str(c.brand) || await progBrand(ctx))).filter((x) => !x.hidden);
+  const sum = (l, k) => l.reduce((a, x) => a + num(x[k]), 0);
+  return {
+    creator: { name: str(c.name), email: str(c.email), channels: parseChannels(c), handle: str(c.handle), platforms: str(c.platforms), followers: str(c.followers), links: str(c.links), niche: str(c.niche), city: str(c.city), about: str(c.about), whatsapp: str(c.whatsapp), brand: str(c.brand), code: str(c.code), status: str(c.status), videos_month: num(c.videos_month), posts_month: num(c.posts_month), rolls_video: num(c.rolls_video), filament: str(c.filament), trial_until: day(c.trial_until), notes: str(c.notes), profileDone: profileDone(c), needProfile: !!c.applied_at && !profileDone(c) },
+    month: { name: formatDate(ctx.now, 'MMMM yyyy'), videos, posts: others, views: sum(mPosts, 'views') },
+    total: { rolls: reqs.filter((r) => r.status === 'given').reduce((a, r) => a + num(r.qty_ok), 0), posts: posts.length, views: sum(posts, 'views') },
+    requests: reqs, posts, stock, canRequest, why: canRequest ? '' : (c.status === 'applied' ? 'Your application is being reviewed. You will see the agreement here once it is approved.' : c.status !== 'active' ? 'The programme is ' + c.status + ' for you right now.' : needProfile ? 'Complete your profile first.' : pending ? (reqs.some((r) => r.status === 'requested') ? 'Your last request is still waiting for an answer.' : 'Collect the approved filament first.') : 'Paste the link of your last project first, then request the next filament.'),
+    today: formatDate(ctx.now, 'yyyy-MM-dd'),
+  };
+}
+async function creatorPage(ctx, l) {
+  const c = (await ctx.tx`select * from erp_creators where business_id = ${ctx.biz} and id = ${num(l.ref)}`)[0];
+  if (!c) throw new Error('This link is not known. Ask for a new one.');
+  return { shop: await shopInfo(ctx), ...(await creatorData(ctx, c)) };
+}
+async function creatorAct(ctx, l, b, ip) {
+  const c = (await ctx.tx`select * from erp_creators where business_id = ${ctx.biz} and id = ${num(l.ref)}`)[0];
+  if (!c) throw new Error('This link is not known. Ask for a new one.');
+  const action = str(b.action);
+  if (action === 'profile') {
+    const row = {};
+    for (const k of PROFILE) row[k] = str(b[k]).slice(0, k === 'about' ? 1000 : 200) || null;
+    const ch = cleanChannels(b.channels);
+    if (!ch.length) throw new Error('Tick at least one platform and give its name and link.');
+    Object.assign(row, derived(ch), { channels: JSON.stringify(ch) });
+    if (str(b.name).length >= 2) row.name = str(b.name).slice(0, 80);
+    row.profile_at = ctx.now; row.updated_at = ctx.now;
+    await ctx.tx`update erp_creators set ${ctx.tx(row)} where id = ${c.id} and business_id = ${ctx.biz}`;
+    await ev(ctx, { creator_id: c.id, who: 'creator', what: 'profile', detail: (row.handle + ' | ' + row.followers + ' | ' + PROFILE.map((k) => k + ': ' + str(row[k])).filter((x) => !/: $/.test(x)).join(' | ')).slice(0, 480), ip });
+    return creatorData(ctx, { ...c, ...row });
+  }
+  if (action === 'request') {
+    const d = await creatorData(ctx, c);
+    if (!d.canRequest) throw new Error(d.why);
+    const qty = Math.round(num(b.qty)); if (!(qty > 0)) throw new Error('How many rolls?');
+    if (qty > num(c.rolls_video) * 3) throw new Error('That is more than the programme allows at once (' + num(c.rolls_video) * 3 + '). Ask the shop directly for more.');
+    let sku = str(b.sku), product = '', onRequest = false;
+    const pick = d.stock.find((x) => (x.key || x.sku).toLowerCase() === sku.toLowerCase());
+    if (!pick) throw new Error('Pick a product from the list.');
+    sku = pick.sku; product = pick.name; onRequest = pick.stock <= 0;
+    const title = str(b.title).slice(0, 160); if (!title) throw new Error('One line about the video, please.');
+    const r = (await ctx.tx`insert into erp_creator_requests ${ctx.tx({ business_id: ctx.biz, creator_id: c.id, title, sku: sku || null, product, qty, on_request: onRequest, note: str(b.note).slice(0, 500) || null })} returning id`)[0];
+    await makeGo(ctx, Number(r.id));
+    await ev(ctx, { creator_id: c.id, request_id: Number(r.id), who: 'creator', what: 'requested', detail: qty + ' x ' + product + ' - ' + title, ip });
+    return creatorData(ctx, c);
+  }
+  if (action === 'link') {
+    const url = str(b.url).slice(0, 500); if (!/^https?:\/\/\S+$/.test(url)) throw new Error('Paste the full link, starting with https://');
+    const rid = num(b.request_id);
+    let req = null;
+    if (rid) { req = (await ctx.tx`select * from erp_creator_requests where business_id = ${ctx.biz} and creator_id = ${c.id} and id = ${rid}`)[0]; if (!req || req.status !== 'given' && req.status !== 'done') throw new Error('That project is not open for links.'); }
+    const kind = ['video', 'post', 'reel'].includes(str(b.kind)) ? str(b.kind) : (ytId(url) ? 'video' : 'post');
+    const platform = str(b.platform) || (ytId(url) ? 'YouTube' : /facebook\.com|fb\.watch/.test(url) ? 'Facebook' : /instagram\.com/.test(url) ? 'Instagram' : /tiktok\.com/.test(url) ? 'TikTok' : '');
+    const nums = { views: Math.max(0, Math.round(num(b.views))), likes: Math.max(0, Math.round(num(b.likes))), comments: Math.max(0, Math.round(num(b.comments))), shares: Math.max(0, Math.round(num(b.shares))), leads: Math.max(0, Math.round(num(b.leads))) };
+    const p = (await ctx.tx`insert into erp_creator_posts ${ctx.tx({ business_id: ctx.biz, creator_id: c.id, request_id: req ? req.id : null, on_date: formatDate(ctx.now, 'yyyy-MM-dd'), platform, kind, url, product: req ? str(req.product) : str(b.product).slice(0, 160) || null, ...nums, by: 'creator', note: str(b.note).slice(0, 300) || null })} returning id`)[0];
+    if (req && req.status === 'given') await ctx.tx`update erp_creator_requests set status = 'done', updated_at = ${ctx.now} where id = ${req.id}`;
+    await ev(ctx, { creator_id: c.id, request_id: req ? req.id : null, post_id: Number(p.id), who: 'creator', what: 'linked', detail: platform + ' ' + kind + ' ' + url, ip });
+    if (ytId(url)) { try { await ytRefresh(ctx, { all: false }); } catch (e) { await ev(ctx, { creator_id: c.id, post_id: Number(p.id), who: 'system', what: 'fetch-failed', detail: String(e.message || e) }); } }
+    return creatorData(ctx, c);
+  }
+  if (action === 'numbers') {
+    const pid = num(b.post_id);
+    const p = (await ctx.tx`select * from erp_creator_posts where business_id = ${ctx.biz} and creator_id = ${c.id} and id = ${pid}`)[0];
+    if (!p) throw new Error('No such post.');
+    if (p.verified) throw new Error('These numbers come from YouTube itself and cannot be typed over.');
+    const nums = { views: Math.max(0, Math.round(num(b.views))), likes: Math.max(0, Math.round(num(b.likes))), comments: Math.max(0, Math.round(num(b.comments))), shares: Math.max(0, Math.round(num(b.shares))), leads: Math.max(0, Math.round(num(b.leads))) };
+    await ctx.tx`update erp_creator_posts set ${ctx.tx({ ...nums, by: 'creator', updated_at: ctx.now })} where id = ${pid}`;
+    await ev(ctx, { creator_id: c.id, post_id: pid, who: 'creator', what: 'numbers', detail: nums.views + ' views, ' + nums.likes + ' likes, ' + nums.comments + ' comments, ' + nums.leads + ' enquiries', ip });
+    return creatorData(ctx, c);
+  }
+  throw new Error('Unknown action.');
+}
+async function sponsorPage(ctx, l) {
+  const brand = str(l.ref);
+  const creators = await ctx.tx`select * from erp_creators where business_id = ${ctx.biz} and lower(brand) = ${brand} order by name`;
+  const ids = creators.map((c) => Number(c.id));
+  const reqs = ids.length ? withGo(ctx, (await ctx.tx`select r.*, (select count(*) from erp_creator_posts p where p.request_id = r.id) as links from erp_creator_requests r where r.business_id = ${ctx.biz} and r.creator_id = any(${ids}) order by r.id desc`).map(reqRow)) : [];
+  const ships = ids.length ? await ctx.tx`select * from erp_creator_ships where business_id = ${ctx.biz} and creator_id = any(${ids}) order by on_date desc, id desc` : [];
+  const posts = ids.length ? (await ctx.tx`select * from erp_creator_posts where business_id = ${ctx.biz} and creator_id = any(${ids}) order by on_date desc, id desc`).map((p) => ({ ...postRow(p), creator_id: Number(p.creator_id) })) : [];
+  const projects = ids.length ? await ctx.tx`select * from erp_creator_projects where business_id = ${ctx.biz} and creator_id = any(${ids}) and status in ('sent', 'approved') order by id desc` : [];
+  const codes = creators.map((c) => str(c.code).toLowerCase()).filter(Boolean);
+  const sales = {};
+  if (codes.length) {
+    const rows = await ctx.tx`select lower(coalesce(note, '') || ' ' || coalesce(source, '')) as hay, grand_total, created_at from invoices where business_id = ${ctx.biz} and voided_at is null and created_at >= now() - interval '12 months'`;
+    for (const r of rows) for (const code of codes) if (r.hay.includes(code)) { const m = formatDate(new Date(r.created_at), 'yyyy-MM'); const s = sales[code] = sales[code] || {}; const x = s[m] = s[m] || { orders: 0, revenue: 0 }; x.orders++; x.revenue += num(r.grand_total); }
+  }
+  const [y0, m0] = formatDate(ctx.now, 'yyyy-MM').split('-').map(Number);
+  const months = []; for (let i = 5; i >= 0; i--) { let y = y0, m = m0 - i; while (m < 1) { m += 12; y--; } months.push(y + '-' + String(m).padStart(2, '0')); }
+  const sum = (l, k) => l.reduce((a, x) => a + num(x[k]), 0);
+  const out = creators.map((c) => {
+    const id = Number(c.id), myShips = ships.filter((s) => Number(s.creator_id) === id), myPosts = posts.filter((p) => p.creator_id === id), myReqs = reqs.filter((r) => r.creator_id === id);
+    const code = str(c.code).toLowerCase();
+    const series = months.map((m) => { const sh = myShips.filter((s) => day(s.on_date).startsWith(m)), ps = myPosts.filter((p) => p.date.startsWith(m)), sl = (sales[code] || {})[m] || { orders: 0, revenue: 0 };
+      return { month: m, rolls: sum(sh, 'qty'), value: Math.round(sum(sh, 'value')), posts: ps.length, views: sum(ps, 'views'), engagement: sum(ps, 'likes') + sum(ps, 'comments') + sum(ps, 'shares'), leads: sum(ps, 'leads'), orders: sl.orders, revenue: Math.round(sl.revenue) }; });
+    const views = sum(myPosts, 'views'), value = sum(myShips, 'value');
+    return { id, name: str(c.name), handle: str(c.handle), platforms: str(c.platforms), followers: str(c.followers), status: str(c.status), code: str(c.code), videos_month: num(c.videos_month), posts_month: num(c.posts_month), rolls_video: num(c.rolls_video), filament: str(c.filament), trial_until: day(c.trial_until),
+      totals: { clicks: myReqs.reduce((a, r) => a + num(r.clicks), 0), rolls: sum(myShips, 'qty'), value: Math.round(value), posts: myPosts.length, views, engagement: views > 0 ? Math.round((sum(myPosts, 'likes') + sum(myPosts, 'comments') + sum(myPosts, 'shares')) / views * 1000) / 10 : 0, leads: sum(myPosts, 'leads'), orders: series.reduce((a, s) => a + s.orders, 0), revenue: series.reduce((a, s) => a + s.revenue, 0), cpm: views > 0 ? Math.round(value / views * 1000) : 0, verified: myPosts.filter((p) => p.verified).length },
+      series, projects: myReqs.map((r) => ({ ...r, posts: myPosts.filter((p) => p.request_id === r.id) })), ships: myShips.map((s) => ({ id: Number(s.id), date: day(s.on_date), sku: str(s.sku), product: str(s.product), qty: num(s.qty), value: num(s.value), request_id: s.request_id ? Number(s.request_id) : 0, at: when(s.created_at) })), loose: myPosts.filter((p) => !p.request_id) };
+  });
+  return { claims: ids.length ? await claimRows(ctx, ids) : { lines: [], bySku: [], open: 0, given: 0, replaced: 0 }, shop: await shopInfo(ctx), brand: creators.length ? str(creators[0].brand) : brand, creators: out, months, teams: projects.map((p) => ({ team: str(p.team), project: str(p.project), competition: str(p.competition), material: str(p.material), qty: str(p.qty), status: str(p.status), creator: (creators.find((c) => Number(c.id) === Number(p.creator_id)) || {}).name || '' })), generated: when(ctx.now) };
+}
+/** Public: the programme's front page (logos, intro) for a join link. */
+async function programmePage(ctx) {
+  const b = await progBrand(ctx);
+  return { shop: await shopInfo(ctx), brands: b ? [b] : [] };
+}
+/** Public: join - a creator row (applied), a login, the choose-your-password e-mail. */
+async function signup(ctx, b, ip) {
+  const name = str(b.name).slice(0, 80), email = str(b.email).toLowerCase().slice(0, 160), phone = str(b.phone).slice(0, 40);
+  if (name.length < 2) throw new Error('Your name, please.');
+  if (!okEmail(email)) throw new Error('That is not an e-mail address.');
+  if (phone.replace(/[^0-9]/g, '').length < 8) throw new Error('A phone number we can reach you on, please.');
+  const mine = (await ctx.tx`select id, user_id from erp_creators where business_id = ${ctx.biz} and lower(email) = ${email}`)[0];
+  if (mine) { await ctx.deps.sendResetTo(email, pageUrl(ctx.deps, 'creator')); return { joined: true, again: true }; }   // already joined: a fresh password link, no second profile
+  const other = (await ctx.deps.sql`select id from erp_creators where user_id in (select id from auth.users where lower(email) = ${email}) limit 1`)[0];
+  if (other) throw new Error('That e-mail is already in a creator programme. Sign in instead.');
+  const userId = await userFor(ctx.deps, email, name);
+  const brand = await progBrand(ctx);
+  const r = (await ctx.tx`insert into erp_creators ${ctx.tx({ business_id: ctx.biz, name, email, whatsapp: phone, user_id: userId, brand, status: 'applied', applied_at: ctx.now, videos_month: 2, posts_month: 2, rolls_video: 2 })} returning id`)[0];
+  await ev(ctx, { creator_id: Number(r.id), who: 'creator', what: 'joined', detail: name + ' <' + email + '> ' + phone, ip });
+  await ctx.deps.sendResetTo(email, pageUrl(ctx.deps, 'creator'));
+  return { joined: true };
+}
+export async function route(deps, R, what, method, params, body, ip, authHeader) {
+  const t = params.get('t');
+  if (what === 'creator') {
+    const b = body || {}, action = str(b.action);
+    // the join link: the programme's front page, and joining
+    if (params.get('p') || action === 'signup') {
+      const biz = await bizByCode(deps, params.get('p') || b.p);
+      await limit(deps, ip, 'creator-join', 30);
+      if (method === 'GET') return runAs(deps, R, biz, 'pub:creator', (ctx) => programmePage(ctx));
+      if (action !== 'signup') throw new Error('Unknown action.');
+      await limit(deps, str(b.email).toLowerCase(), 'creator-mail', 3);
+      return runAs(deps, R, biz, 'pub:creator', (ctx) => signup(ctx, b, ip));
+    }
+    // the set-up link: show who it is for; set the password (the link is spent then)
+    if (params.get('setup') || action === 'setup') {
+      const code = str(params.get('setup') || b.setup);
+      if (!/^[A-Za-z0-9_-]{16,32}$/.test(code)) throw new Error('This link is not complete.');
+      await limit(deps, ip, 'setup', 120);
+      const h = await sha256hex(code);
+      const row = (await deps.control`select source, business_id, kind, ref from erp_creator_links where token_hash = ${h}`)[0];
+      if (!row || (row.kind !== 'setup' && row.kind !== 'setup-used')) throw new Error('This link is not known. Ask for a new one.');
+      await deps.control`update erp_creator_links set last_seen = now() where token_hash = ${h}`;
+      let d = deps;
+      if (row.source !== 'self') { if (!R.tenantDeps) throw new Error('This page is not available right now.'); d = await R.tenantDeps(row.source); }
+      const l = { business_id: row.business_id, ref: row.ref, source: row.source };
+      const used = row.kind === 'setup-used';
+      if (method === 'GET') return runAs(d, R, l.business_id, 'pub:creator', async (ctx) => ({ ...(await setupInfo(ctx, l)), used }));
+      if (used) throw new Error('Your password is already set. Sign in with it below, or press "Forgot the password?".');
+      const pw = String(b.password || '');
+      if (pw.length < 10) throw new Error('At least 10 characters, please.');
+      if (pw.length > 72) throw new Error('At most 72 characters.');
+      const out = await runAs(d, R, l.business_id, 'pub:creator', (ctx) => setupDone(ctx, l, pw, ip));
+      await deps.control`update erp_creator_links set kind = 'setup-used' where token_hash = ${h}`;   // from now on it opens his sign-in
+      return out;
+    }
+    // a sign-in failed: was his password ever set? (a creator who never finished his set-up link is told so)
+    if (action === 'hint') {
+      const email = str(b.email).toLowerCase();
+      if (!okEmail(email)) return { hint: '' };
+      await limit(deps, ip, 'creator-hint', 30);
+      const c = (await deps.sql`select id, business_id from erp_creators where lower(email) = ${email} and user_id is not null limit 1`)[0];
+      if (!c) return { hint: '' };
+      const open = (await deps.control`select 1 from erp_creator_links where business_id = ${c.business_id} and kind = 'setup' and ref = ${String(c.id)} limit 1`)[0];
+      const done = (await deps.sql`select 1 from erp_creator_events where creator_id = ${c.id} and what = 'password set' limit 1`)[0];
+      return { hint: open && !done ? 'setup' : '' };
+    }
+    // forgotten password: a fresh link, always the same answer (no e-mail guessing)
+    if (action === 'forgot') {
+      const email = str(b.email).toLowerCase();
+      if (!okEmail(email)) throw new Error('That is not an e-mail address.');
+      await limit(deps, ip, 'creator-join', 30); await limit(deps, email, 'creator-mail', 3);
+      const has = (await deps.sql`select 1 from erp_creators where lower(email) = ${email} and user_id is not null limit 1`)[0];
+      if (has) { try { await deps.sendResetTo(email, pageUrl(deps, 'creator')); } catch (_) { /* the earlier link still works */ } }
+      return { sent: true };
+    }
+    // the old token link still works; a signed-in creator comes with his session
+    let d = deps, l;
+    if (t) ({ d, l } = await openLink(deps, R, t, 'creator', ip));
+    else { const sess = await creatorBySession(deps, authHeader); l = { business_id: sess.biz, ref: sess.ref, source: 'self' }; await limit(deps, ip, 'creator', 300); }
+    if (method === 'GET') return runAs(d, R, l.business_id, 'pub:creator', (ctx) => creatorPage(ctx, l));
+    return runAs(d, R, l.business_id, 'pub:creator', (ctx) => creatorAct(ctx, l, b, ip));
+  }
+  if (what === 'go') {
+    const code = str(params.get('c')).toUpperCase();
+    if (!/^[A-Z0-9]{6,10}$/.test(code)) throw new Error('This link is not complete.');
+    await limit(deps, ip, 'go', 300);
+    const l = (await deps.control`select source, business_id, kind, ref from erp_creator_links where token_hash = ${await sha256hex('go|' + code)}`)[0];
+    if (!l || l.kind !== 'go') throw new Error('This link is not known.');
+    let d = deps;
+    if (l.source !== 'self') { if (!R.tenantDeps) throw new Error('This page is not available right now.'); d = await R.tenantDeps(l.source); }
+    return runAs(d, R, l.business_id, 'pub:go', (ctx) => goClick(ctx, num(l.ref), ip, params.get('r')));
+  }
+  if (what === 'sponsor') {
+    if (method !== 'GET') return null;
+    const { d, l } = await openLink(deps, R, t, 'sponsor', ip);
+    return runAs(d, R, l.business_id, 'pub:sponsor', (ctx) => sponsorPage(ctx, l));
+  }
+  return null;
+}
+/** Owner: approve an application (he becomes active with the terms on his card) or decline it (stopped). */
+export async function erpCreatorApprove(ctx, payload) {
+  needOwner(ctx);
+  const p = payload || {}, id = num(p.creator_id), ok = p.action !== 'decline';
+  const c = (await ctx.tx`select id, status from erp_creators where business_id = ${ctx.biz} and id = ${id}`)[0];
+  if (!c) throw new Error('No such creator.');
+  await ctx.tx`update erp_creators set status = ${ok ? 'active' : 'stopped'}, updated_at = ${ctx.now} where id = ${id}`;
+  await ev(ctx, { creator_id: id, who: 'owner', what: ok ? 'approved' : 'declined', detail: str(p.note).slice(0, 300) });
+  return { status: ok ? 'active' : 'stopped' };
+}
+/** Owner: the two live pages to look at - the creator's own (read-only preview) and the brand's. */
+export async function erpCreatorPreview(ctx, payload) {
+  needOwner(ctx);
+  const id = num((payload || {}).creator_id);
+  const out = {};
+  if (id) { const l = await erpCreatorPortalLink(ctx, { creator_id: id }); out.creator = l.url + '&preview=1'; }
+  const c = id ? (await ctx.tx`select brand from erp_creators where business_id = ${ctx.biz} and id = ${id}`)[0] : null;
+  const brand = str(c && c.brand) || await progBrand(ctx);
+  if (brand) out.sponsor = (await erpSponsorLink(ctx, { brand })).url;
+  out.brand = brand;
+  return out;
+}
+/** Owner: where a project's link goes (empty = the product on the website). */
+export async function erpCreatorLinkTo(ctx, payload) {
+  needOwner(ctx);
+  const p = payload || {}, url = str(p.url);
+  if (url && !/^https?:\/\/\S+$/.test(url)) throw new Error('A full link, starting with https://');
+  const r = (await ctx.tx`update erp_creator_requests set link_to = ${url || null}, updated_at = ${ctx.now} where business_id = ${ctx.biz} and id = ${num(p.id)} returning creator_id`)[0];
+  if (!r) throw new Error('No such project.');
+  await ev(ctx, { creator_id: r.creator_id, request_id: num(p.id), who: 'owner', what: 'link target', detail: url || 'the product on the website' });
+  return erpCreatorRequests(ctx);
+}
+/** Public: a click on a project link - counted, then on to the product. */
+async function goClick(ctx, requestId, ip, referer) {
+  const r = (await ctx.tx`select * from erp_creator_requests where business_id = ${ctx.biz} and id = ${requestId}`)[0];
+  if (!r) throw new Error('This link is not known.');
+  const visitor = (await sha256hex(str(ip) + '|' + formatDate(ctx.now, 'yyyy-MM-dd') + '|' + requestId)).slice(0, 24);
+  let host = ''; try { host = referer ? new URL(referer).hostname.replace(/^www\./, '') : ''; } catch (_) { host = ''; }
+  const seen = (await ctx.tx`select 1 from erp_creator_clicks where business_id = ${ctx.biz} and request_id = ${requestId} and visitor = ${visitor} limit 1`)[0];
+  await ctx.tx`insert into erp_creator_clicks ${ctx.tx({ business_id: ctx.biz, request_id: requestId, visitor, referer: host.slice(0, 80) || null })}`;
+  if (!seen) await ctx.tx`update erp_creator_requests set clicks = clicks + 1 where id = ${requestId}`;   // one visitor a day counts once
+  return { url: await goTarget(ctx, r) };
+}
+// ---------------------------------------------------------------- the brand's products for creators
+const brandRe = (b) => str(b).toLowerCase().replace(/[^a-z0-9]/g, '');
+/** The programme brand's products: the shop's own products of that brand (with stock) merged with the brand range the
+ *  owner keeps (erp_creator_catalog) - by SKU. In stock first, then on request. */
+async function brandItems(ctx, brand) {
+  if (!str(brand)) return [];
+  const want = brandRe(brand);
+  const cat = await erpCatalog(ctx);
+  const own = cat.filter((p) => (!p.status || p.status === 'Active') && brandRe(p.brand) === want);
+  const kept = await ctx.tx`select * from erp_creator_catalog where business_id = ${ctx.biz} and lower(regexp_replace(brand, '[^A-Za-z0-9]', '', 'g')) = ${want} order by line nulls last, name`;
+  const hiddenSku = new Set(kept.filter((k) => k.hidden && k.sku).map((k) => str(k.sku).toLowerCase()));
+  const out = [], seen = new Set();
+  for (const p of own) {
+    const k = str(p.sku).toLowerCase(); seen.add(k);
+    out.push({ key: p.sku, sku: p.sku, name: p.name, stock: num(p.stock), hidden: hiddenSku.has(k), source: 'stock' });
+  }
+  for (const k of kept) {
+    const ks = str(k.sku).toLowerCase();
+    if (ks && seen.has(ks)) continue;
+    out.push({ key: k.sku || 'c' + k.id, sku: str(k.sku), name: str(k.name), line: str(k.line), colour: str(k.colour), stock: 0, hidden: !!k.hidden, source: 'range', id: Number(k.id) });
+  }
+  out.sort((a, b) => (b.stock > 0) - (a.stock > 0) || a.name.localeCompare(b.name));
+  return out.slice(0, 500);
+}
+/** Owner: the products creators may request - his stock of the brand and the brand's range; hidden ones included. */
+export async function erpCreatorCatalog(ctx) {
+  needOwner(ctx);
+  const brand = await progBrand(ctx);
+  const items = await brandItems(ctx, brand);
+  return { brand, items, inStock: items.filter((x) => x.stock > 0 && !x.hidden).length, onRequest: items.filter((x) => x.stock <= 0 && !x.hidden).length, hidden: items.filter((x) => x.hidden).length };
+}
+/** Owner: show or hide one product for creators (by SKU, or a range row by id). */
+export async function erpCreatorCatalogSet(ctx, payload) {
+  needOwner(ctx);
+  const p = payload || {}, hidden = !!p.hidden, brand = await progBrand(ctx);
+  if (num(p.id) > 0) await ctx.tx`update erp_creator_catalog set hidden = ${hidden} where business_id = ${ctx.biz} and id = ${num(p.id)}`;
+  else {
+    const sku = str(p.sku); if (!sku) throw new Error('Which product?');
+    const had = (await ctx.tx`select id from erp_creator_catalog where business_id = ${ctx.biz} and lower(sku) = ${sku.toLowerCase()}`)[0];
+    if (had) await ctx.tx`update erp_creator_catalog set hidden = ${hidden} where id = ${had.id}`;
+    else await ctx.tx`insert into erp_creator_catalog ${ctx.tx({ business_id: ctx.biz, brand, sku, name: str(p.name) || sku, hidden })}`;
+  }
+  return erpCreatorCatalog(ctx);
+}
+/** Owner: add the brand's products the shop does not stock - lines of "SKU, name" (or name alone), or rows. */
+export async function erpCreatorCatalogAdd(ctx, payload) {
+  needOwner(ctx);
+  const p = payload || {}, brand = str(p.brand) || await progBrand(ctx);
+  if (!brand) throw new Error('Set the programme brand first (Creators > Join link for creators).');
+  let rows = Array.isArray(p.rows) ? p.rows : [];
+  if (!rows.length) rows = str(p.text).split(/\r?\n/).map((l) => l.trim()).filter(Boolean).map((l) => { const m = /^([A-Za-z0-9][\w.-]{2,30})\s*[,;\t]\s*(.+)$/.exec(l); return m ? { sku: m[1], name: m[2] } : { name: l }; });
+  let added = 0, kept = 0;
+  for (const r of rows.slice(0, 1000)) {
+    const sku = str(r.sku).slice(0, 40), name = str(r.name).slice(0, 160);
+    if (!name) continue;
+    if (sku && (await ctx.tx`select 1 from erp_creator_catalog where business_id = ${ctx.biz} and lower(sku) = ${sku.toLowerCase()}`)[0]) { kept++; continue; }
+    if (!sku && (await ctx.tx`select 1 from erp_creator_catalog where business_id = ${ctx.biz} and sku is null and lower(name) = ${name.toLowerCase()}`)[0]) { kept++; continue; }
+    await ctx.tx`insert into erp_creator_catalog ${ctx.tx({ business_id: ctx.biz, brand, sku: sku || null, name, line: str(r.line).slice(0, 80) || null, colour: str(r.colour).slice(0, 60) || null })}`;
+    added++;
+  }
+  return { ...(await erpCreatorCatalog(ctx)), added, kept };
+}
+/** Owner: take a range row out (only rows he added; his stock items are hidden instead). */
+export async function erpCreatorCatalogRemove(ctx, payload) {
+  needOwner(ctx);
+  await ctx.tx`delete from erp_creator_catalog where business_id = ${ctx.biz} and id = ${num((payload || {}).id)}`;
+  return erpCreatorCatalog(ctx);
+}
+// ---------------------------------------------------------------- what the brand owes back (quantities only)
+/** Where a request's rolls can come from: own stock and the joint pools that hold the SKU. */
+export async function erpCreatorSources(ctx, payload) {
+  needOwner(ctx);
+  const r = (await ctx.tx`select sku from erp_creator_requests where business_id = ${ctx.biz} and id = ${num((payload || {}).id)}`)[0];
+  if (!r) throw new Error('No such request.');
+  const sku = str(r.sku);
+  const own = sku ? (await ctx.tx`select coalesce(ps.stock, 0) as stock from products p left join product_stock ps on ps.product_id = p.id where p.business_id = ${ctx.biz} and lower(btrim(p.sku)) = ${sku.toLowerCase()} limit 1`)[0] : null;
+  let pools = [];
+  if (sku) { try { pools = await (await import('./joint.js')).poolsWithSku(ctx, sku); } catch (_) { pools = []; } }
+  return { own: own ? num(own.stock) : null, pools };
+}
+const claimRow = (x) => ({ id: Number(x.id), creator_id: Number(x.creator_id), creator: str(x.creator), date: day(x.on_date), sku: str(x.sku), product: str(x.product), qty: num(x.qty), replaced: num(x.replaced), open: Math.max(0, num(x.qty) - num(x.replaced)),
+                           source: str(x.source), from: str(x.source_name), replaced_at: when(x.replaced_at), replaced_note: str(x.replaced_note), project: str(x.title) });
+async function claimRows(ctx, creatorIds) {
+  const rows = creatorIds
+    ? await ctx.tx`select s.*, c.name as creator, r.title from erp_creator_ships s join erp_creators c on c.id = s.creator_id left join erp_creator_requests r on r.id = s.request_id where s.business_id = ${ctx.biz} and s.creator_id = any(${creatorIds}) and coalesce(s.source, 'none') <> 'none' order by s.on_date desc, s.id desc`
+    : await ctx.tx`select s.*, c.name as creator, r.title from erp_creator_ships s join erp_creators c on c.id = s.creator_id left join erp_creator_requests r on r.id = s.request_id where s.business_id = ${ctx.biz} and coalesce(s.source, 'none') <> 'none' order by s.on_date desc, s.id desc`;
+  const lines = rows.map(claimRow);
+  const bySku = {};
+  for (const l of lines) { const k = l.sku || l.product; const t = bySku[k] = bySku[k] || { sku: l.sku, product: l.product, given: 0, replaced: 0, open: 0 }; t.given += l.qty; t.replaced += l.replaced; t.open += l.open; }
+  return { lines, bySku: Object.values(bySku).sort((a, b) => b.open - a.open || a.product.localeCompare(b.product)), open: lines.reduce((a, l) => a + l.open, 0), given: lines.reduce((a, l) => a + l.qty, 0), replaced: lines.reduce((a, l) => a + l.replaced, 0) };
+}
+/** Owner: what the brand owes back - every roll handed over from a stock, and what has been replaced. */
+export async function erpCreatorClaims(ctx) { needOwner(ctx); return claimRows(ctx, null); }
+/** Owner: the brand's shipment replaced rolls - they go back into the stock they came from (no money). */
+export async function erpCreatorReplace(ctx, payload) {
+  needOwner(ctx);
+  const p = payload || {}, id = num(p.id), note = str(p.note).slice(0, 200);
+  const x = (await ctx.tx`select * from erp_creator_ships where business_id = ${ctx.biz} and id = ${id}`)[0];
+  if (!x || !x.source || x.source === 'none') throw new Error('No such roll line.');
+  const open = num(x.qty) - num(x.replaced), q = num(p.qty) > 0 ? num(p.qty) : open;
+  if (!(open > 0)) throw new Error('Already fully replaced.');
+  if (q > open) throw new Error('Only ' + open + ' still open on this line.');
+  const ref = 'Sponsorship replaced' + (note ? ': ' + note : '') + ' - ' + str(x.product);
+  if (x.source === 'own') {
+    const pr = (await ctx.tx`select id, name from products where business_id = ${ctx.biz} and lower(btrim(sku)) = ${str(x.sku).toLowerCase()} limit 1`)[0];
+    if (!pr) throw new Error('The product is no longer in your products.');
+    const at = new Date(), no = 'TXN-' + formatDate(at, 'yyyyMMdd') + '-' + (Math.floor(Math.random() * 9000) + 1000);
+    await ctx.tx`insert into stock_movements (business_id, product_id, kind, direction, qty, unit_price, total, reference, supplier, note, created_by, created_at, txn_no, operator, product_name)
+                 values (${ctx.biz}, ${pr.id}, 'RETURN', 'IN', ${q}, 0, 0, ${ref.slice(0, 200)}, '', 'Replaced by the brand; no money', ${ctx.s.userId}, ${at}, ${no}, ${str(ctx.s.name) || 'Owner'}, ${str(pr.name)})`;
+  } else if (str(x.source).startsWith('pool:')) {
+    await (await import('./joint.js')).poolSponsorMove(ctx, { pool: str(x.source).slice(5), sku: x.sku, qty: q, dir: 'IN', note: ref });
+  }
+  try { const T = await import('../lib/tabs.js'); T.forget(ctx, 'TXN_LOG'); } catch (_) { /* no cached log */ }
+  delete ctx.memo.catalog;
+  await ctx.tx`update erp_creator_ships set replaced = replaced + ${q}, replaced_at = ${ctx.now}, replaced_note = ${note || null} where id = ${id}`;
+  await ev(ctx, { creator_id: x.creator_id, request_id: x.request_id, who: 'owner', what: 'replaced', detail: q + ' x ' + str(x.product) + ' back into ' + str(x.source_name) + (note ? ' (' + note + ')' : '') });
+  return claimRows(ctx, null);
+}
+export const HANDLERS = { erpCreatorSources, erpCreatorClaims, erpCreatorReplace, erpCreatorCatalog, erpCreatorCatalogSet, erpCreatorCatalogAdd, erpCreatorCatalogRemove, erpCreatorLinkTo, erpCreatorApprove, erpCreatorPreview, erpCreatorPortalLink, erpSponsorLink, erpCreatorRequests, erpCreatorDecide, erpCreatorEvents, erpYoutubeKey, erpCreatorRefresh, erpCreatorProgramme, erpCreatorInvite };

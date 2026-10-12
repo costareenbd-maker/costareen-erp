@@ -1,0 +1,11 @@
+{
+  "name": "costareen-erp-local",
+  "private": true,
+  "type": "commonjs",
+  "description": "node packages for the local ERP (API server + tests + page syntax check)",
+  "dependencies": {
+    "acorn": "^8.18.0",
+    "acorn-walk": "^8.3.5",
+    "postgres": "3.4.5"
+  }
+}

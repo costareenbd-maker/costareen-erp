@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<meta name="referrer" content="no-referrer">
+<title>Creator programme — sponsor view</title>
+<link rel="icon" href="icons/favicon-32.png">
+<style>
+/* The sponsoring brand's read-only dashboard (handlers/creatorportal.js): every creator, every project, every link
+   and number, with when it was recorded and by whom. One permanent link per brand. */
+:root{--bg:#f4f5f7;--card:#fff;--ink:#141a22;--mute:#5f6b7a;--line:#e3e7ec;--acc:#1e4fa3;--bar:#51bfca;--bar2:#1e4fa3;--ok:#0f766e;--okbg:#e6f4f1;--warn:#9a5b00;--warnbg:#fff4df;--bad:#b42318;--badbg:#fdecea;--head:#0f1a2b}
+@media (prefers-color-scheme:dark){:root{--bg:#0e1218;--card:#161c25;--ink:#eef2f6;--mute:#9aa6b5;--line:#273040;--okbg:#0f2b27;--warnbg:#2b2210;--badbg:#2d1614;--head:#0a111c}}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans",sans-serif}
+header{background:var(--head);color:#fff;padding:18px 20px}
+.hd{max-width:1080px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap}
+.logos{display:flex;align-items:center;gap:14px}
+.logos img{height:40px;max-width:170px;object-fit:contain}
+.logos .shoplogo{background:#fff;border-radius:14px;padding:5px;height:72px;width:72px;box-shadow:0 2px 10px rgba(0,0,0,.25)}
+.logos .x{color:#8fa0b8;font-size:24px}.logos .nm{font-weight:700;font-size:19px}
+.hd .sub{color:#b9c5d6;font-size:13px;margin-top:2px}
+.tools{display:flex;gap:8px;flex-wrap:wrap}
+main{max-width:1080px;margin:0 auto;padding:18px 20px 40px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px 18px;margin-bottom:14px}
+h2{font-size:13px;color:var(--mute);margin:0 0 10px;text-transform:uppercase;letter-spacing:.7px}
+h3{margin:0;font-size:17px}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px}
+.kpi{background:var(--bg);border-radius:12px;padding:10px 12px}
+.kpi b{display:block;font-size:22px;font-variant-numeric:tabular-nums;line-height:1.2}
+.kpi span{font-size:12px;color:var(--mute)}
+.badge{display:inline-block;font-size:12px;font-weight:600;padding:3px 10px;border-radius:999px;white-space:nowrap}
+.b-ok{background:var(--okbg);color:var(--ok)}.b-warn{background:var(--warnbg);color:var(--warn)}.b-bad{background:var(--badbg);color:var(--bad)}.b-mute{background:var(--bg);color:var(--mute)}
+.cr{display:grid;grid-template-columns:1fr;gap:14px}
+.cr .top{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:flex-start}
+.cr .m{color:var(--mute);font-size:13px}
+.chart{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;align-items:end;height:120px;margin-top:12px;padding-top:6px;border-bottom:1px solid var(--line)}
+.chart div{position:relative;background:var(--bar);border-radius:6px 6px 0 0;min-height:2px}
+.chart div span{position:absolute;top:-18px;left:0;right:0;text-align:center;font-size:11px;color:var(--mute);font-variant-numeric:tabular-nums}
+.months{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;font-size:11px;color:var(--mute);text-align:center;margin-top:4px}
+table{width:100%;border-collapse:collapse;font-size:13.5px;margin-top:8px}
+th{text-align:left;color:var(--mute);font-weight:600;font-size:12px;padding:6px 8px;border-bottom:1px solid var(--line);white-space:nowrap}
+td{padding:7px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+td.n,th.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+td a{color:var(--acc);text-decoration:none;overflow-wrap:anywhere}
+.ts{color:var(--mute);font-size:12px;white-space:nowrap}
+.proj{border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin-top:10px}
+.proj .h{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+button{font:inherit;font-size:13px;padding:7px 12px;border-radius:9px;border:1px solid #3a4a62;background:transparent;color:#fff;cursor:pointer}
+.msg{color:var(--mute)}
+footer{font-size:12px;color:var(--mute);text-align:center;margin-top:22px}
+@media print{header{background:#fff;color:#000;-webkit-print-color-adjust:exact}.hd .sub,.hd .tools{display:none}.card{break-inside:avoid}body{background:#fff}}
+</style>
+</head>
+<body>
+<header><div class="hd" id="hd"><div class="logos"><span class="nm">Creator programme</span></div></div></header>
+<main>
+  <div id="out"><div class="card"><p class="msg">Loading…</p></div></div>
+  <footer>Read-only. Numbers marked "verified" were fetched from YouTube by the system; "reported" numbers were typed by the creator. Every line shows when it was recorded.</footer>
+</main>
+<script>
+var API = (new URLSearchParams(location.search).get('api') || 'https://oqzcuuytytqadqjlwdsh.supabase.co/functions/v1/erp').replace(/\/+$/, '');
+var TOKEN = new URLSearchParams(location.search).get('t') || '';
+var BRAND_LOGOS = { polymaker: 'brand/polymaker.svg' };
+var D = null, out = document.getElementById('out');
+function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+function n(v) { return Number(v || 0).toLocaleString('en-US'); }
+function tk(v) { return '৳' + n(Math.round(v || 0)); }
+function dt(iso) { if (!iso) return ''; var d = new Date(iso); return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) + ' ' + d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }); }
+function mon(m) { var p = m.split('-'); return ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][+p[1] - 1] + ' ' + p[0].slice(2); }
+function head() {
+  var bl = BRAND_LOGOS[(D.brand || '').toLowerCase()];
+  document.getElementById('hd').innerHTML = '<div><div class="logos">' + (D.shop.logo ? '<img class="shoplogo" src="' + esc(D.shop.logo) + '" alt="">' : '<span class="nm">' + esc(D.shop.name) + '</span>') + '<span class="x">×</span>' + (bl ? '<img src="' + esc(bl) + '" alt="' + esc(D.brand) + '">' : '<span class="nm">' + esc(D.brand) + '</span>') + '</div><div class="sub">Creator programme run by ' + esc(D.shop.name) + ' · sponsor view · updated ' + esc(dt(D.generated)) + '</div></div>' +
+    '<div class="tools"><button id="csv">Download CSV</button><button onclick="window.print()">Print / PDF</button></div>';
+}
+function status(s) { return s === 'requested' ? '<span class="badge b-warn">requested</span>' : s === 'approved' ? '<span class="badge b-warn">approved</span>' : s === 'given' ? '<span class="badge b-warn">filament given · awaiting content</span>' : s === 'done' ? '<span class="badge b-ok">content live</span>' : '<span class="badge b-bad">declined</span>'; }
+function chart(series, key, label) {
+  var max = Math.max.apply(null, series.map(function (s) { return s[key]; }).concat([1]));
+  return '<div class="m" style="margin-top:12px">' + label + '</div><div class="chart">' + series.map(function (s) { return '<div style="height:' + Math.round(s[key] / max * 100) + '%"><span>' + n(s[key]) + '</span></div>'; }).join('') + '</div><div class="months">' + series.map(function (s) { return mon(s.month); }).join('</div><div>') + '</div>';
+}
+function render() {
+  head();
+  var T = D.creators.reduce(function (a, c) { a.clicks += c.totals.clicks || 0; a.rolls += c.totals.rolls; a.value += c.totals.value; a.posts += c.totals.posts; a.views += c.totals.views; a.leads += c.totals.leads; a.orders += c.totals.orders; a.revenue += c.totals.revenue; a.verified += c.totals.verified; return a; }, { clicks: 0, rolls: 0, value: 0, posts: 0, views: 0, leads: 0, orders: 0, revenue: 0, verified: 0 });
+  var h = '<div class="card"><h2>Programme in total</h2><div class="kpis"><div class="kpi"><b>' + D.creators.length + '</b><span>creators</span></div><div class="kpi"><b>' + n(T.rolls) + '</b><span>rolls given</span></div><div class="kpi"><b>' + n(T.posts) + '</b><span>videos & posts · ' + T.verified + ' verified</span></div><div class="kpi"><b>' + n(T.views) + '</b><span>views</span></div><div class="kpi"><b>' + n(T.clicks) + '</b><span>clicks on creator links</span></div><div class="kpi"><b>' + n(T.leads) + '</b><span>customer enquiries</span></div><div class="kpi"><b>' + n(T.orders) + '</b><span>orders with creator codes · ' + tk(T.revenue) + '</span></div></div></div>';
+  D.creators.forEach(function (c) {
+    h += '<div class="card cr"><div class="top"><div><h3>' + esc(c.name) + ' ' + (c.status === 'active' ? '<span class="badge b-ok">active</span>' : '<span class="badge b-mute">' + esc(c.status) + '</span>') + '</h3><div class="m">' + esc([c.handle, c.platforms, c.followers].filter(Boolean).join(' · ')) + '</div><div class="m">Agreement: ' + c.videos_month + ' videos + ' + c.posts_month + ' posts a month · ' + c.rolls_video + ' rolls per video' + (c.filament ? ' · ' + esc(c.filament) : '') + (c.trial_until ? ' · trial until ' + esc(c.trial_until) : '') + (c.code ? ' · code ' + esc(c.code) : '') + '</div></div></div>' +
+      '<div class="kpis"><div class="kpi"><b>' + n(c.totals.rolls) + '</b><span>rolls</span></div><div class="kpi"><b>' + n(c.totals.posts) + '</b><span>videos & posts · ' + c.totals.verified + ' verified</span></div><div class="kpi"><b>' + n(c.totals.views) + '</b><span>views</span></div><div class="kpi"><b>' + c.totals.engagement + '%</b><span>engagement</span></div><div class="kpi"><b>' + n(c.totals.clicks) + '</b><span>link clicks</span></div><div class="kpi"><b>' + n(c.totals.leads) + '</b><span>enquiries</span></div><div class="kpi"><b>' + n(c.totals.orders) + '</b><span>orders · ' + tk(c.totals.revenue) + '</span></div></div>' +
+      '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:18px">' + chart(c.series, 'views', 'Views by month') + chart(c.series, 'rolls', 'Rolls given by month') + '</div>';
+    h += '<h2 style="margin-top:16px">Projects</h2>';
+    if (!c.projects.length) h += '<p class="msg">None yet.</p>';
+    c.projects.forEach(function (r) {
+      h += '<div class="proj"><div class="h"><div><b>' + esc(r.title || r.product) + '</b><div class="m">' + n(r.qty_ok != null ? r.qty_ok : r.qty) + ' × ' + esc((r.sku ? r.sku + ' ' : '') + r.product) + '</div>' + (r.go ? '<div class="m">Project link: ' + esc(r.go.replace(/^https?:\/\//, '')) + ' \u00b7 <b>' + n(r.clicks) + '</b> clicks (counted by the system)</div>' : '') + '<div class="ts">requested ' + esc(dt(r.requested_at)) + (r.decided_at ? ' · decided ' + esc(dt(r.decided_at)) : '') + (r.given_at ? ' · given ' + esc(dt(r.given_at)) : '') + '</div></div>' + status(r.status) + '</div>';
+      if (r.posts.length) h += '<table><tr><th>When</th><th>Content</th><th class="n">Views</th><th class="n">Likes</th><th class="n">Comments</th><th class="n">Enquiries</th><th>Source</th></tr>' + r.posts.map(function (p) { return '<tr><td class="ts">' + esc(p.date) + '</td><td><a href="' + esc(p.url) + '" target="_blank" rel="noopener">' + esc(p.platform + ' ' + p.kind) + '</a><div class="ts">' + esc(p.url.replace(/^https?:\/\/(www\.)?/, '').slice(0, 60)) + '</div></td><td class="n">' + n(p.views) + '</td><td class="n">' + n(p.likes) + '</td><td class="n">' + n(p.comments) + '</td><td class="n">' + n(p.leads) + '</td><td>' + (p.verified ? '<span class="badge b-ok">verified</span><div class="ts">YouTube · ' + esc(dt(p.fetched_at)) + '</div>' : '<span class="badge b-mute">reported</span><div class="ts">by the creator · ' + esc(dt(p.updated_at)) + '</div>') + '</td></tr>'; }).join('') + '</table>';
+      h += '</div>';
+    });
+    if (c.loose.length) h += '<div class="proj"><div class="h"><b>Other content</b></div><table>' + c.loose.map(function (p) { return '<tr><td class="ts">' + esc(p.date) + '</td><td><a href="' + esc(p.url) + '" target="_blank" rel="noopener">' + esc(p.platform + ' ' + p.kind) + '</a></td><td class="n">' + n(p.views) + ' views</td><td>' + (p.verified ? '<span class="badge b-ok">verified</span>' : '<span class="badge b-mute">reported</span>') + '</td></tr>'; }).join('') + '</table></div>';
+    h += '<h2 style="margin-top:16px">Filament given</h2>' + (c.ships.length ? '<table><tr><th>Date</th><th>Product</th><th class="n">Rolls</th><th>Recorded</th></tr>' + c.ships.map(function (s) { return '<tr><td>' + esc(s.date) + '</td><td>' + esc((s.sku ? s.sku + ' ' : '') + s.product) + '</td><td class="n">' + n(s.qty) + '</td><td class="ts">' + esc(dt(s.at)) + '</td></tr>'; }).join('') + '</table>' : '<p class="msg">Nothing yet.</p>') + '</div>';
+  });
+  var C = D.claims || { bySku: [], lines: [], open: 0, given: 0, replaced: 0 };
+  if (C.lines.length) h += '<div class="card"><h2>Rolls to replace in the next shipment</h2><div class="kpis" style="margin-bottom:10px"><div class="kpi"><b>' + n(C.given) + '</b><span>rolls given from our stock</span></div><div class="kpi"><b>' + n(C.replaced) + '</b><span>replaced so far</span></div><div class="kpi"><b>' + n(C.open) + '</b><span>still to replace</span></div></div>' +
+    '<table><tr><th>Product</th><th class="n">Given</th><th class="n">Replaced</th><th class="n">To replace</th></tr>' + C.bySku.map(function (x) { return '<tr><td>' + esc((x.sku ? x.sku + ' ' : '') + x.product) + '</td><td class="n">' + n(x.given) + '</td><td class="n">' + n(x.replaced) + '</td><td class="n"><b>' + n(x.open) + '</b></td></tr>'; }).join('') + '</table>' +
+    '<h2 style="margin-top:14px">Every handover</h2><table><tr><th>Date</th><th>Creator</th><th>Project</th><th>Product</th><th class="n">Rolls</th><th>Replaced</th></tr>' + C.lines.map(function (l) { return '<tr><td>' + esc(l.date) + '</td><td>' + esc(l.creator) + '</td><td>' + esc(l.project) + '</td><td>' + esc((l.sku ? l.sku + ' ' : '') + l.product) + '</td><td class="n">' + n(l.qty) + '</td><td>' + (l.replaced ? n(l.replaced) + (l.replaced_note ? ' \u00b7 ' + esc(l.replaced_note) : '') : '\u2014') + '</td></tr>'; }).join('') + '</table></div>';
+  if (D.teams.length) h += '<div class="card"><h2>Projects proposed for your sponsorship</h2><table><tr><th>Team</th><th>Project</th><th>Needs</th><th>Via</th><th>Status</th></tr>' + D.teams.map(function (t) { return '<tr><td>' + esc(t.team) + '</td><td>' + esc(t.project + (t.competition ? ' (' + t.competition + ')' : '')) + '</td><td>' + esc(t.material + (t.qty ? ' × ' + t.qty : '')) + '</td><td>' + esc(t.creator) + '</td><td>' + esc(t.status) + '</td></tr>'; }).join('') + '</table></div>';
+  out.innerHTML = h;
+}
+function csv() {
+  var rows = [['Creator', 'Project', 'Status', 'Product', 'Rolls', 'Retail value', 'Requested', 'Given', 'Content date', 'Platform', 'Type', 'Link', 'Views', 'Likes', 'Comments', 'Enquiries', 'Source', 'Recorded']];
+  D.creators.forEach(function (c) { c.projects.forEach(function (r) {
+    if (!r.posts.length) rows.push([c.name, r.title, r.status, r.product, r.qty_ok != null ? r.qty_ok : r.qty, r.value, r.requested_at, r.given_at, '', '', '', '', '', '', '', '', '', '']);
+    r.posts.forEach(function (p) { rows.push([c.name, r.title, r.status, r.product, r.qty_ok != null ? r.qty_ok : r.qty, r.value, r.requested_at, r.given_at, p.date, p.platform, p.kind, p.url, p.views, p.likes, p.comments, p.leads, p.verified ? 'YouTube (verified)' : 'creator (reported)', p.verified ? p.fetched_at : p.updated_at]); });
+  }); });
+  var text = rows.map(function (r) { return r.map(function (v) { v = String(v == null ? '' : v); return /[",\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; }).join(','); }).join('\n');
+  var a = document.createElement('a'); a.href = URL.createObjectURL(new Blob(['﻿' + text], { type: 'text/csv' })); a.download = 'creator-programme-' + (D.brand || 'brand').toLowerCase() + '.csv'; a.click();
+}
+document.addEventListener('click', function (ev) { if (ev.target.id === 'csv') csv(); });
+if (!TOKEN) out.innerHTML = '<div class="card"><p class="msg">This link is not complete.</p></div>';
+else {
+  fetch(API + '?pub=sponsor&t=' + encodeURIComponent(TOKEN)).then(function (r) { return r.json(); }).then(function (r) { if (!r.ok) { out.innerHTML = '<div class="card"><p class="msg">' + esc(r.error || 'This link does not work.') + '</p></div>'; return; } D = r; render(); }, function () { out.innerHTML = '<div class="card"><p class="msg">The page could not be loaded. Check your connection and try again.</p></div>'; });
+  // live: new requests, links and numbers appear without reloading
+  setInterval(function () { if (document.hidden) return; fetch(API + '?pub=sponsor&t=' + encodeURIComponent(TOKEN)).then(function (r) { return r.json(); }).then(function (r) { if (r.ok) { var y = window.scrollY; D = r; render(); window.scrollTo(0, y); } }, function () {}); }, 30000);
+}
+</script>
+</body>
+</html>

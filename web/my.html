@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<meta name="referrer" content="no-referrer">
+<title>My orders &amp; warranty</title>
+<link rel="icon" href="icons/favicon-32.png">
+<style>
+/* Stage N1 (docs/NETWORK-BLUEPRINT.md section 6): the customer's own page, behind the QR on every invoice.
+   The link carries a token; the server answers only with that customer's invoices, dues, parcels and warranties. */
+:root{--bg:#f6f7f4;--card:#fff;--ink:#14201c;--mute:#5d6b66;--line:#dfe5e1;--ok:#0f766e;--okbg:#e6f4f1;--warn:#9a5b00;--warnbg:#fff4df;--bad:#b42318;--badbg:#fdecea;--acc:#0f766e}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans","Noto Sans Bengali","Hind Siliguri",sans-serif}
+body{padding:calc(16px + env(safe-area-inset-top,0px)) 16px calc(28px + env(safe-area-inset-bottom,0px))}
+main{max-width:560px;margin:0 auto}
+.top{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:14px}
+.lang{border:1px solid var(--line);background:var(--card);border-radius:999px;padding:6px 12px;font:inherit;font-size:14px;cursor:pointer}
+.shop{display:flex;gap:12px;align-items:center}
+.shop img{width:48px;height:48px;object-fit:contain;border-radius:10px;background:#fff;border:1px solid var(--line)}
+.shop h1{font-size:19px;margin:0;line-height:1.25}
+.shop .c{font-size:13px;color:var(--mute)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 16px;margin-bottom:12px}
+h2{font-size:14px;color:var(--mute);margin:18px 0 8px;text-transform:uppercase;letter-spacing:.6px}
+.state{color:var(--mute);margin:0}
+.badge{display:inline-block;font-size:13px;font-weight:600;padding:3px 10px;border-radius:999px}
+.b-ok{background:var(--okbg);color:var(--ok)}.b-warn{background:var(--warnbg);color:var(--warn)}.b-bad{background:var(--badbg);color:var(--bad)}.b-mute{background:#eef1ee;color:var(--mute)}
+.due{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.due b{font-size:22px;font-variant-numeric:tabular-nums}
+.inv .h{display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap}
+.inv .h b{font-size:16px}.inv .h span{color:var(--mute);font-size:13px}
+.inv ul{margin:6px 0 8px;padding-left:18px;font-size:14px;color:var(--mute)}
+.inv .m{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;font-size:14px;font-variant-numeric:tabular-nums}
+.inv .m span{color:var(--mute);display:block;font-size:12px}
+.inv .acts{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;align-items:center}
+button,a.btn{font:inherit;font-size:14px;padding:9px 14px;border-radius:10px;border:1px solid var(--line);background:#fff;color:var(--ink);cursor:pointer;text-decoration:none;display:inline-block}
+.pri{background:var(--acc)!important;border-color:var(--acc)!important;color:#fff!important;font-weight:600}
+button:disabled{opacity:.6;cursor:default}
+.w{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;flex-wrap:wrap}
+.w .n{min-width:0}.w .n b{display:block}.w .n span{color:var(--mute);font-size:13px;overflow-wrap:anywhere}
+.row{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+footer{font-size:13px;color:var(--mute);text-align:center;margin-top:22px}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
+<main>
+  <div class="top">
+    <div class="shop" id="shop"><div><h1 data-t="title">My orders &amp; warranty</h1></div></div>
+    <button class="lang" id="lang" type="button" aria-label="Language">বাংলা</button>
+  </div>
+  <div id="out"><div class="card"><p class="state" data-t="loading">Loading your page…</p></div></div>
+  <footer><a href="doctor" data-t="doctor">Print Doctor</a> · <span data-t="foot">This page opens only with your link. Keep the link to yourself.</span></footer>
+</main>
+
+<script>
+var API = (new URLSearchParams(location.search).get('api') || 'https://oqzcuuytytqadqjlwdsh.supabase.co/functions/v1/erp').replace(/\/+$/, '');
+var TOKEN = new URLSearchParams(location.search).get('t') || '';
+var T = {
+  en: { title: 'My orders & warranty', loading: 'Loading your page…', foot: 'This page opens only with your link. Keep the link to yourself.', hello: 'Hello', nolink: 'This link is not complete. Scan the QR on your invoice again.',
+    net: 'The page could not be loaded. Check your connection and try again.', due: 'Total due', allpaid: 'All paid', orders: 'Orders', none: 'No orders yet.', total: 'Total', paid: 'Paid', dueW: 'Due',
+    pdf: 'Invoice PDF', pdfWait: 'Preparing…', pdfErr: 'The PDF could not be opened right now.', parcel: 'Parcel', warr: 'Warranties', wUntil: 'until', wDays: 'days left', wEnded: 'ended', wNone: 'no warranty recorded', checkIt: 'Check in the register',
+    doctor: 'Failed print? Print Doctor', pts: 'Your points', level: 'Level', toNext: '{n} more points to {lvl}', top: 'Top level', perk: 'Your perk', remind: 'Message me on WhatsApp when I am likely to run out (switch off any time)', nextRefill: 'You usually buy again around', saved: 'Saved', reorder: 'Order again', lastOrder: 'Your last order:', wa: 'Order on WhatsApp', call: 'Call', waText: 'Hello, I want to order again: ', contact: 'Contact the shop',
+    pw: { 'Delivered': 'Delivered', 'With the courier': 'With the courier', 'Booked with the courier': 'Booked with the courier', 'Cancelled': 'Cancelled', 'On hold': 'On hold', 'Partly delivered': 'Partly delivered', 'Being checked': 'Being checked', 'In review': 'In review' } },
+  bn: { title: 'আমার অর্ডার ও ওয়ারেন্টি', loading: 'আপনার পেজ লোড হচ্ছে…', foot: 'এই পেজ শুধু আপনার লিংকে খোলে। লিংকটি অন্যকে দেবেন না।', hello: 'স্বাগতম', nolink: 'লিংকটি সম্পূর্ণ নয়। ইনভয়েসের QR আবার স্ক্যান করুন।',
+    net: 'পেজ লোড করা যায়নি। ইন্টারনেট দেখে আবার চেষ্টা করুন।', due: 'মোট বাকি', allpaid: 'সব পরিশোধিত', orders: 'অর্ডার', none: 'এখনো কোনো অর্ডার নেই।', total: 'মোট', paid: 'পরিশোধিত', dueW: 'বাকি',
+    pdf: 'ইনভয়েস PDF', pdfWait: 'তৈরি হচ্ছে…', pdfErr: 'PDF এখন খোলা যাচ্ছে না।', parcel: 'পার্সেল', warr: 'ওয়ারেন্টি', wUntil: 'পর্যন্ত', wDays: 'দিন বাকি', wEnded: 'শেষ', wNone: 'ওয়ারেন্টির তথ্য নেই', checkIt: 'রেজিস্টারে যাচাই',
+    doctor: 'প্রিন্ট নষ্ট? প্রিন্ট ডাক্তার', pts: 'আপনার পয়েন্ট', level: 'লেভেল', toNext: '{lvl}-এ যেতে আর {n} পয়েন্ট', top: 'সর্বোচ্চ লেভেল', perk: 'আপনার সুবিধা', remind: 'ফুরিয়ে আসার সময় হলে WhatsApp-এ জানান (যেকোনো সময় বন্ধ করা যায়)', nextRefill: 'আপনি সাধারণত আবার কেনেন', saved: 'সংরক্ষিত', reorder: 'আবার অর্ডার', lastOrder: 'আপনার শেষ অর্ডার:', wa: 'WhatsApp-এ অর্ডার করুন', call: 'কল', waText: 'আসসালামু আলাইকুম, আমি আবার অর্ডার করতে চাই: ', contact: 'দোকানে যোগাযোগ',
+    pw: { 'Delivered': 'ডেলিভারি হয়েছে', 'With the courier': 'কুরিয়ারে', 'Booked with the courier': 'কুরিয়ারে বুক হয়েছে', 'Cancelled': 'বাতিল', 'On hold': 'আটকে আছে', 'Partly delivered': 'আংশিক ডেলিভারি', 'Being checked': 'যাচাই চলছে', 'In review': 'যাচাই চলছে' } }
+};
+var LANG = 'en';
+try { LANG = localStorage.getItem('pp_lang') || ((navigator.language || '').indexOf('bn') === 0 ? 'bn' : 'en'); } catch (e) {}
+function t(k) { return (T[LANG] || T.en)[k] || T.en[k] || k; }
+function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+function tk(n) { return '৳' + Number(n || 0).toLocaleString('en-IN'); }
+var DATA = null, out = document.getElementById('out');
+function paintLang() {
+  document.documentElement.lang = LANG;
+  document.querySelectorAll('[data-t]').forEach(function (n) { n.textContent = t(n.getAttribute('data-t')); });
+  document.getElementById('lang').textContent = LANG === 'bn' ? 'English' : 'বাংলা';
+  if (DATA) show(DATA);
+}
+document.getElementById('lang').onclick = function () { LANG = LANG === 'bn' ? 'en' : 'bn'; try { localStorage.setItem('pp_lang', LANG); } catch (e) {} paintLang(); };
+
+function show(r) {
+  DATA = r;
+  if (!r.ok) { out.innerHTML = '<div class="card"><p class="state">' + esc(r.error || t('net')) + '</p></div>'; return; }
+  var s = r.seller || {}, c = r.customer || {};
+  var wa = (s.phone || '').replace(/[^0-9]/g, ''); wa = wa ? (wa.charAt(0) === '0' ? '88' + wa : wa) : '';
+  document.getElementById('shop').innerHTML = (s.logo ? '<img src="' + esc(s.logo) + '" alt="">' : '') + '<div><h1>' + esc(s.name || t('title')) + '</h1><div class="c">' + esc([s.phone, s.address].filter(Boolean).join(' · ')) + '</div></div>';
+  var h = '<div class="card due"><div><div style="color:var(--mute);font-size:14px">' + t('hello') + (c.name ? ', <b>' + esc(c.name) + '</b>' : '') + '</div><div style="font-size:13px;color:var(--mute)">' + t('due') + '</div></div>' +
+    (r.totalDue > 0 ? '<b style="color:var(--bad)">' + tk(r.totalDue) + '</b>' : '<span class="badge b-ok">' + t('allpaid') + '</span>') + '</div>';
+  if (r.points) h += '<div class="card"><div class="due"><div><div style="font-size:13px;color:var(--mute)">' + t('pts') + '</div><b>' + Number(r.points.total).toLocaleString('en-IN') + '</b></div><div style="text-align:right"><span class="badge b-ok">' + t('level') + ': ' + esc(r.points.level) + '</span>' + (r.points.perk ? '<div style="font-size:13px;color:var(--mute);margin-top:4px">' + t('perk') + ': ' + esc(r.points.perk) + '</div>' : '') + '</div></div>' +
+    (r.points.next ? '<div style="margin-top:8px;height:8px;background:#eef1ee;border-radius:4px;overflow:hidden"><i style="display:block;height:100%;width:' + Math.max(2, Math.min(100, r.points.pct)) + '%;background:var(--ok)"></i></div><div style="font-size:13px;color:var(--mute);margin-top:4px">' + t('toNext').replace('{n}', r.points.toNext).replace('{lvl}', r.points.next) + '</div>' : '<div style="font-size:13px;color:var(--mute);margin-top:4px">' + t('top') + '</div>') + '</div>';
+  h += '<div class="card"><label style="display:flex;gap:8px;align-items:flex-start;font-size:14px;cursor:pointer"><input type="checkbox" id="rem"' + (r.reminders ? ' checked' : '') + ' style="margin-top:3px"> <span>' + t('remind') + '</span></label>' + (r.refill && r.refill.nextAt ? '<div style="font-size:13px;color:var(--mute);margin-top:6px">' + t('nextRefill') + ' <b>' + esc(r.refill.nextAt) + '</b></div>' : '') + '<div class="hint" id="remmsg" style="margin-top:4px"></div></div>';
+  h += '<h2>' + t('orders') + '</h2>';
+  if (!r.invoices || !r.invoices.length) h += '<div class="card"><p class="state">' + t('none') + '</p></div>';
+  (r.invoices || []).forEach(function (i) {
+    var pl = i.parcel ? (T[LANG].pw[i.parcel.label] || i.parcel.label) : '';
+    h += '<div class="card inv"><div class="h"><b>' + esc(i.no) + '</b><span>' + esc(i.date) + '</span><span class="badge ' + (i.due > 0 ? 'b-bad' : 'b-ok') + '">' + (i.due > 0 ? t('dueW') : t('paid')) + '</span></div>' +
+      '<ul>' + (i.items || []).map(function (x) { return '<li>' + x.qty + ' × ' + esc(x.name) + '</li>'; }).join('') + '</ul>' +
+      '<div class="m"><div><span>' + t('total') + '</span>' + tk(i.total) + '</div><div><span>' + t('paid') + '</span>' + tk(i.paid) + '</div><div><span>' + t('dueW') + '</span>' + (i.due > 0 ? '<b style="color:var(--bad)">' + tk(i.due) + '</b>' : tk(0)) + '</div></div>' +
+      '<div class="acts"><button type="button" data-pdf="' + esc(i.no) + '">' + t('pdf') + '</button>' + (pl ? '<span class="badge b-mute">' + t('parcel') + ': ' + esc(pl) + (i.parcel.consignment ? ' · ' + esc(i.parcel.consignment) : '') + '</span>' : '') + '</div></div>';
+  });
+  if (r.warranties && r.warranties.length) {
+    h += '<h2>' + t('warr') + '</h2>';
+    r.warranties.forEach(function (w) {
+      var st = w.state === 'active' ? '<span class="badge b-ok">' + t('wUntil') + ' ' + esc(w.until) + ' · ' + w.daysLeft + ' ' + t('wDays') + '</span>' : w.state === 'ended' ? '<span class="badge b-mute">' + t('wEnded') + ' ' + esc(w.until) + '</span>' : '<span class="badge b-mute">' + t('wNone') + '</span>';
+      h += '<div class="card w"><div class="n"><b>' + esc(w.product) + '</b><span>' + esc(w.serial) + (w.sold ? ' · ' + esc(w.sold) : '') + '</span><div style="margin-top:6px">' + st + '</div></div><a class="btn" href="' + esc(w.check) + '" target="_blank" rel="noopener">' + t('checkIt') + '</a></div>';
+    });
+  }
+  if (r.reorder && (r.reorder.text || wa)) {
+    h += '<h2>' + t('reorder') + '</h2><div class="card">' + (r.reorder.text ? '<div style="font-size:14px;color:var(--mute)">' + t('lastOrder') + '</div><div>' + esc(r.reorder.text) + '</div>' : '<div>' + t('contact') + '</div>') +
+      '<div class="row">' + (wa ? '<a class="btn pri" href="https://wa.me/' + wa + '?text=' + encodeURIComponent(t('waText') + (r.reorder.text || '')) + '" target="_blank" rel="noopener">' + t('wa') + '</a>' : '') + (s.phone ? '<a class="btn" href="tel:' + esc(s.phone.replace(/[^0-9+]/g, '')) + '">' + t('call') + ' ' + esc(s.phone) + '</a>' : '') + '</div></div>';
+  }
+  out.innerHTML = h;
+}
+out.addEventListener('change', function (ev) {
+  if (!ev.target || ev.target.id !== 'rem') return;
+  var on = ev.target.checked;
+  fetch(API + '?pub=my', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ t: TOKEN, action: 'reminders', on: on }) }).then(function (r) { return r.json(); }).then(function (r) { document.getElementById('remmsg').textContent = r.ok ? t('saved') : (r.error || t('net')); if (r.ok) DATA.reminders = on; }, function () { document.getElementById('remmsg').textContent = t('net'); });
+});
+out.addEventListener('click', function (ev) {
+  var b = ev.target.closest('[data-pdf]'); if (!b) return;
+  var no = b.getAttribute('data-pdf'), w = window.open('', '_blank'); b.disabled = true; b.textContent = t('pdfWait');
+  fetch(API + '?pub=my&t=' + encodeURIComponent(TOKEN) + '&pdf=' + encodeURIComponent(no)).then(function (r) { return r.json(); }).then(function (r) {
+    b.disabled = false; b.textContent = t('pdf');
+    if (!r.ok || !r.pdf) { if (w) w.close(); alert(r.error || t('pdfErr')); return; }
+    if (w) w.location = r.pdf; else location.href = r.pdf;
+  }, function () { b.disabled = false; b.textContent = t('pdf'); if (w) w.close(); alert(t('pdfErr')); });
+});
+
+paintLang();
+if (!/^[A-Za-z0-9_-]{16,32}$/.test(TOKEN)) show({ ok: false, error: t('nolink') });
+else fetch(API + '?pub=my&t=' + encodeURIComponent(TOKEN)).then(function (r) { return r.json(); }).then(show, function () { show({ ok: false, error: t('net') }); });
+</script>
+</body>
+</html>

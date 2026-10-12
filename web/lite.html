@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<meta name="referrer" content="no-referrer">
+<title>My confirmed sales</title>
+<link rel="icon" href="icons/favicon-32.png">
+<style>
+/* Stage N2: the Lite seller's own page - the units he confirmed on the Printer Passport register and a digital
+   warranty card for each. Behind a secret link; no sign-in. */
+:root{--bg:#f6f7f4;--card:#fff;--ink:#14201c;--mute:#5d6b66;--line:#dfe5e1;--ok:#0f766e;--okbg:#e6f4f1;--warn:#9a5b00;--warnbg:#fff4df;--bad:#b42318;--badbg:#fdecea;--acc:#0f766e}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans","Noto Sans Bengali","Hind Siliguri",sans-serif}
+body{padding:calc(16px + env(safe-area-inset-top,0px)) 16px calc(28px + env(safe-area-inset-bottom,0px))}
+main{max-width:560px;margin:0 auto}
+header{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:14px}
+header h1{font-size:20px;margin:0}header h1 small{display:block;font-size:13px;color:var(--mute);font-weight:500}
+.lang{border:1px solid var(--line);background:var(--card);border-radius:999px;padding:6px 12px;font:inherit;font-size:14px;cursor:pointer}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 16px;margin-bottom:12px}
+h2{font-size:14px;color:var(--mute);margin:18px 0 8px;text-transform:uppercase;letter-spacing:.6px}
+.state{color:var(--mute);margin:0}
+.badge{display:inline-block;font-size:13px;font-weight:600;padding:3px 10px;border-radius:999px}.b-ok{background:var(--okbg);color:var(--ok)}.b-mute{background:#eef1ee;color:var(--mute)}.b-bad{background:var(--badbg);color:var(--bad)}
+.u{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:flex-start}.u .n{min-width:0}.u .n b{display:block}.u .n span{color:var(--mute);font-size:13px;overflow-wrap:anywhere}
+button,a.btn{font:inherit;font-size:14px;padding:9px 14px;border-radius:10px;border:1px solid var(--line);background:#fff;color:var(--ink);cursor:pointer;text-decoration:none;display:inline-block}
+.pri{background:var(--acc)!important;border-color:var(--acc)!important;color:#fff!important;font-weight:600}
+label{display:block;font-size:14px;color:var(--mute);margin:10px 0 4px}
+input{width:100%;font:inherit;font-size:16px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:#fff;color:var(--ink)}
+.chk{display:flex;gap:8px;align-items:flex-start;font-size:14px;margin:12px 0 0}.chk input{width:auto;margin-top:3px}
+.row{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;align-items:center}
+.hint{font-size:13px;color:var(--mute)}
+footer{font-size:13px;color:var(--mute);text-align:center;margin-top:22px}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
+<main>
+  <header><h1 id="h1"><span data-t="title">My confirmed sales</span><small data-t="sub">Printer Passport · seller page</small></h1><button class="lang" id="lang" type="button">বাংলা</button></header>
+  <div id="out"><div class="card"><p class="state" data-t="loading">Loading…</p></div></div>
+  <footer data-t="foot">This page opens only with your link. Keep it to yourself; it is the only way in.</footer>
+</main>
+<script>
+var API = (new URLSearchParams(location.search).get('api') || 'https://oqzcuuytytqadqjlwdsh.supabase.co/functions/v1/erp').replace(/\/+$/, '');
+var TOKEN = new URLSearchParams(location.search).get('t') || '';
+var T = {
+  en: { title: 'My confirmed sales', sub: 'Printer Passport · seller page', loading: 'Loading…', foot: 'This page opens only with your link. Keep it to yourself; it is the only way in.', nolink: 'This link is not complete.', net: 'The page could not be loaded. Check your connection and try again.',
+    since: 'on the register since', confirms: 'confirmed units', units: 'Units you confirmed', none: 'Nothing confirmed yet. When a customer sends you a confirm link and you press Confirm, the unit appears here.',
+    sold: 'sold', buyer: 'customer', until: 'warranty until', days: 'days left', ended: 'warranty ended', nowarr: 'no warranty', card: 'Warranty card', checkIt: 'Check page', rejected: 'not ours',
+    settings: 'Your shop on the register', city: 'City or area', email: 'E-mail (optional)', show: 'Show my shop’s name on the register (otherwise “Supplier · city”)', save: 'Save', saved: 'Saved', saving: 'Saving…',
+    cardTitle: 'Warranty card', cProduct: 'Product', cSerial: 'Serial number', cSold: 'Sold', cWarr: 'Warranty', cUntil: 'until', cNone: 'none recorded', cScan: 'Scan to check this warranty', cConfirmed: 'Confirmed by the seller on the Printer Passport register', print: 'Print' },
+  bn: { title: 'আমার নিশ্চিত করা বিক্রি', sub: 'প্রিন্টার পাসপোর্ট · বিক্রেতার পেজ', loading: 'লোড হচ্ছে…', foot: 'এই পেজ শুধু আপনার লিংকে খোলে। লিংকটি গোপন রাখুন; এটিই একমাত্র প্রবেশপথ।', nolink: 'লিংকটি সম্পূর্ণ নয়।', net: 'পেজ লোড হয়নি। ইন্টারনেট দেখে আবার চেষ্টা করুন।',
+    since: 'রেজিস্টারে আছেন', confirms: 'নিশ্চিত ইউনিট', units: 'আপনার নিশ্চিত করা ইউনিট', none: 'এখনো কিছু নিশ্চিত করা হয়নি। ক্রেতা লিংক পাঠিয়ে আপনি নিশ্চিত করলে ইউনিট এখানে দেখাবে।',
+    sold: 'বিক্রি', buyer: 'ক্রেতা', until: 'ওয়ারেন্টি', days: 'দিন বাকি', ended: 'ওয়ারেন্টি শেষ', nowarr: 'ওয়ারেন্টি নেই', card: 'ওয়ারেন্টি কার্ড', checkIt: 'চেক পেজ', rejected: 'আমাদের নয়',
+    settings: 'রেজিস্টারে আপনার দোকান', city: 'শহর বা এলাকা', email: 'ই-মেইল (ঐচ্ছিক)', show: 'রেজিস্টারে দোকানের নাম দেখান (না হলে “Supplier · শহর”)', save: 'সংরক্ষণ', saved: 'সংরক্ষিত', saving: 'সংরক্ষণ হচ্ছে…',
+    cardTitle: 'ওয়ারেন্টি কার্ড', cProduct: 'পণ্য', cSerial: 'সিরিয়াল নম্বর', cSold: 'বিক্রি', cWarr: 'ওয়ারেন্টি', cUntil: 'পর্যন্ত', cNone: 'তথ্য নেই', cScan: 'ওয়ারেন্টি যাচাই করতে স্ক্যান করুন', cConfirmed: 'প্রিন্টার পাসপোর্ট রেজিস্টারে বিক্রেতা নিশ্চিত করেছেন', print: 'প্রিন্ট' }
+};
+var LANG = 'en'; try { LANG = localStorage.getItem('pp_lang') || ((navigator.language || '').indexOf('bn') === 0 ? 'bn' : 'en'); } catch (e) {}
+function t(k) { return (T[LANG] || T.en)[k] || T.en[k] || k; }
+function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+var DATA = null, out = document.getElementById('out');
+function paintLang() { document.documentElement.lang = LANG; document.querySelectorAll('[data-t]').forEach(function (n) { n.textContent = t(n.getAttribute('data-t')); }); document.getElementById('lang').textContent = LANG === 'bn' ? 'English' : 'বাংলা'; if (DATA) show(DATA); }
+document.getElementById('lang').onclick = function () { LANG = LANG === 'bn' ? 'en' : 'bn'; try { localStorage.setItem('pp_lang', LANG); } catch (e) {} paintLang(); };
+function show(r) {
+  DATA = r;
+  if (!r.ok) { out.innerHTML = '<div class="card"><p class="state">' + esc(r.error || t('net')) + '</p></div>'; return; }
+  var s = r.shop;
+  document.getElementById('h1').innerHTML = esc(s.name) + '<small>' + esc([s.phone, s.city].filter(Boolean).join(' · ')) + '</small>';
+  var h = '<div class="card"><span class="badge b-ok">' + s.confirms + ' ' + t('confirms') + '</span> <span class="hint">' + t('since') + ' ' + esc(s.since) + '</span></div>';
+  h += '<h2>' + t('units') + '</h2>';
+  if (!r.units.length) h += '<div class="card"><p class="state">' + t('none') + '</p></div>';
+  r.units.forEach(function (u, i) {
+    var w = u.level !== 'confirmed' ? '<span class="badge b-bad">' + t('rejected') + '</span>' : u.warrantyState === 'active' ? '<span class="badge b-ok">' + t('until') + ' ' + esc(u.warrantyUntil) + ' · ' + u.daysLeft + ' ' + t('days') + '</span>' : u.warrantyState === 'ended' ? '<span class="badge b-mute">' + t('ended') + ' ' + esc(u.warrantyUntil) + '</span>' : '<span class="badge b-mute">' + t('nowarr') + '</span>';
+    h += '<div class="card u"><div class="n"><b>' + esc(u.product) + '</b><span>' + esc(u.serial) + ' · ' + t('sold') + ' ' + esc(u.soldMonth) + ' · ' + t('buyer') + ' ' + esc(u.buyerName) + '</span><div style="margin-top:6px">' + w + '</div></div>' +
+      '<div class="row" style="margin:0">' + (u.level === 'confirmed' ? '<button type="button" class="pri" data-card="' + i + '">' + t('card') + '</button>' : '') + '<a class="btn" href="' + esc(u.checkUrl) + '" target="_blank" rel="noopener">' + t('checkIt') + '</a></div></div>';
+  });
+  h += '<h2>' + t('settings') + '</h2><div class="card"><label for="l_city">' + t('city') + '</label><input id="l_city" maxlength="40" value="' + esc(s.city) + '"><label for="l_email">' + t('email') + '</label><input id="l_email" type="email" maxlength="80" value="' + esc(s.email) + '">' +
+    '<label class="chk"><input type="checkbox" id="l_show"' + (s.showName ? ' checked' : '') + '> <span>' + t('show') + '</span></label><div class="row"><button type="button" class="pri" id="save">' + t('save') + '</button><span class="hint" id="saved"></span></div></div>';
+  out.innerHTML = h;
+  document.getElementById('save').onclick = function () {
+    var b = this; b.disabled = true; b.textContent = t('saving');
+    fetch(API + '?pub=lite', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ t: TOKEN, city: document.getElementById('l_city').value, email: document.getElementById('l_email').value, showName: document.getElementById('l_show').checked }) }).then(function (x) { return x.json(); }).then(function (x) {
+      b.disabled = false; b.textContent = t('save'); document.getElementById('saved').textContent = x.ok ? t('saved') : (x.error || t('net'));
+      if (x.ok) { s.city = document.getElementById('l_city').value; s.email = document.getElementById('l_email').value; s.showName = document.getElementById('l_show').checked; }
+    }, function () { b.disabled = false; b.textContent = t('save'); document.getElementById('saved').textContent = t('net'); });
+  };
+}
+function printCard(u) {
+  var s = DATA.shop;
+  var html = '<!doctype html><html><head><meta charset="utf-8"><title>' + esc(t('cardTitle')) + ' ' + esc(u.serial) + '</title><style>@page{size:A6 landscape;margin:8mm}body{font-family:system-ui,sans-serif;color:#111;margin:0;padding:10mm}' +
+    '.card{display:flex;gap:8mm;align-items:flex-start;border:1px solid #bbb;border-radius:4mm;padding:7mm}.card h1{font-size:15pt;margin:0 0 2mm}.k{font-size:8.5pt;color:#666;margin-top:2mm}.v{font-size:11.5pt;font-weight:600}.big{font-size:13pt;color:#166534;font-weight:800}' +
+    '.qr{text-align:center;font-size:8pt;color:#444;flex:0 0 38mm}.qr img{width:36mm;height:36mm;display:block;margin:0 auto 1mm}.foot{font-size:8pt;color:#666;margin-top:4mm}@media print{.np{display:none}}</style></head><body>' +
+    '<div class="card"><div style="flex:1"><h1>' + esc(s.showName ? s.name : 'Supplier' + (s.city ? ' · ' + s.city : '')) + '</h1><div class="k">' + t('cProduct') + '</div><div class="v">' + esc(u.product) + '</div><div class="k">' + t('cSerial') + '</div><div class="v">' + esc(u.serial) + '</div>' +
+    '<div class="k">' + t('cSold') + '</div><div class="v">' + esc(u.soldMonth) + '</div><div class="k">' + t('cWarr') + '</div><div class="big">' + (u.warrantyUntil ? t('cUntil') + ' ' + esc(u.warrantyUntil) + (u.warrantyMonths ? ' (' + u.warrantyMonths + ' ' + (LANG === 'bn' ? 'মাস' : 'months') + ')' : '') : t('cNone')) + '</div>' +
+    '<div class="foot">' + esc([s.phone, s.city].filter(Boolean).join(' · ')) + '<br>' + t('cConfirmed') + '</div></div>' +
+    '<div class="qr"><img src="' + u.qr + '">' + t('cScan') + '<br>' + esc(u.checkUrl.replace(/^https?:\/\//, '')) + '</div></div><p class="np" style="margin-top:8mm"><button onclick="window.print()">' + t('print') + '</button></p></body></html>';
+  var w = null; try { w = window.open('', '_blank'); } catch (e) { w = null; }
+  if (w) { w.document.write(html); w.document.close(); return; }
+  var f = document.createElement('iframe'); f.style.cssText = 'position:fixed;right:0;bottom:0;width:0;height:0;border:0;opacity:0'; document.body.appendChild(f);
+  f.contentDocument.open(); f.contentDocument.write(html); f.contentDocument.close();
+  setTimeout(function () { try { f.contentWindow.focus(); f.contentWindow.print(); } catch (e) {} setTimeout(function () { f.remove(); }, 90000); }, 400);
+}
+out.addEventListener('click', function (ev) { var b = ev.target.closest('[data-card]'); if (b) printCard(DATA.units[Number(b.getAttribute('data-card'))]); });
+paintLang();
+if (!/^[A-Za-z0-9_-]{16,32}$/.test(TOKEN)) show({ ok: false, error: t('nolink') });
+else fetch(API + '?pub=lite&t=' + encodeURIComponent(TOKEN)).then(function (r) { return r.json(); }).then(show, function () { show({ ok: false, error: t('net') }); });
+</script>
+</body>
+</html>
