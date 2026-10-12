@@ -33811,5 +33811,280 @@ applyBusinesses = function (b) {
 };
 </script>
 
+<!-- fd-28 (owner 14 Oct 2026): the dashboard edited in place. "Customise" turns on edit mode: drag any card with the
+     mouse or a finger to where it should go, × removes it, "+ Add card" opens a gallery of every card - the dashboard's
+     own and 21 more from the ERP's existing figures (erpFdCards: money in hand, supplier dues, pre-order deposits, dead
+     stock, commission, holding cost, investor returns, returns, delivery, courier fees, new customers...), locked ones
+     greyed for people whose role cannot open that screen. "Done" keeps it (to the person's account, fd-27).
+     The business name above every title is gone; the product-group / business drop-down sits beside "Dashboard"
+     (not in the top bar any more). -->
+<style>
+:root[data-skin="fd"] .fdd-eyebrow { display:none !important; }
+:root[data-skin="fd"] #fdws { display:none !important; }
+:root[data-skin="fd"] #fdplus { margin-left:0; }
+.fdd-scope { display:inline-flex; align-items:center; gap:8px; height:38px; padding:0 12px 0 14px; margin-left:6px; border-radius:999px; border:1px solid var(--fd-border); background:var(--fd-card);
+  color:var(--fd-text-2); font:inherit; font-size:14px; font-weight:600; letter-spacing:0; cursor:pointer; vertical-align:middle; transition:background .15s, border-color .15s; }
+.fdd-scope:hover { background:var(--fd-surface-2); border-color:var(--fd-accent-border); color:var(--fd-text); }
+.fdd-scope svg { width:16px; height:16px; }
+.fdd-scope .ic { color:var(--fd-accent-text); display:inline-flex; }
+/* edit mode */
+.fdd-editbar { display:flex; align-items:center; gap:10px; flex-wrap:wrap; padding:12px 16px; margin:0 0 16px; border-radius:16px; background:var(--fd-accent-soft); border:1px dashed var(--fd-accent-border); color:var(--fd-text); }
+.fdd-editbar .t { flex:1 1 240px; font-size:14px; }
+.fdd-editbar .t b { display:block; }
+.fdd-editbar .t span { color:var(--fd-text-3); font-size:13px; }
+.fdd-one.editing > [data-fdw] { position:relative; cursor:grab; touch-action:none; user-select:none; -webkit-user-select:none; outline:2px dashed var(--fd-accent-border); outline-offset:-2px;
+  animation:fdw-wob .9s ease-in-out infinite alternate; }
+.fdd-one.editing > [data-fdw]:nth-child(2n) { animation-delay:-.45s; }
+@keyframes fdw-wob { from { transform:rotate(-.25deg); } to { transform:rotate(.25deg); } }
+@media (prefers-reduced-motion:reduce) { .fdd-one.editing > [data-fdw] { animation:none; } }
+.fdd-one.editing > [data-fdw] * { pointer-events:none; }
+.fdd-one.editing > [data-fdw] .fdw-x, .fdd-one.editing > [data-fdw] .fdw-h { pointer-events:auto; }
+.fdw-x { position:absolute; top:8px; right:8px; z-index:3; width:28px; height:28px; border-radius:50%; border:0; background:var(--fd-negative); color:#fff; font-size:16px; font-weight:800;
+  line-height:28px; text-align:center; cursor:pointer; box-shadow:0 4px 12px rgba(0,0,0,.25); padding:0; }
+.fdw-h { position:absolute; top:10px; left:50%; transform:translateX(-50%); z-index:3; padding:2px 10px; border-radius:999px; background:var(--fd-card); border:1px solid var(--fd-border);
+  font-size:11px; font-weight:700; color:var(--fd-text-3); letter-spacing:.06em; }
+.fdd-one > [data-fdw].fdw-dragging { opacity:.25; animation:none; }
+.fdw-ghost { position:fixed; z-index:200; pointer-events:none; opacity:.92; box-shadow:0 24px 60px rgba(0,0,0,.35); transform:rotate(1.5deg) scale(1.02); border-radius:20px; }
+.fdw-add { border:2px dashed var(--fd-border-strong); border-radius:20px; display:flex; align-items:center; justify-content:center; flex-direction:column; gap:6px; min-height:150px;
+  color:var(--fd-text-3); font-weight:700; cursor:pointer; background:transparent; font:inherit; }
+.fdw-add:hover { border-color:var(--fd-accent); color:var(--fd-accent-text); background:var(--fd-accent-soft); }
+.fdw-add b { font-size:28px; line-height:1; }
+/* the gallery */
+.fdg-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(200px, 1fr)); gap:10px; max-height:62vh; overflow:auto; padding:2px; }
+.fdg-sec { grid-column:1 / -1; font-size:12px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:var(--fd-text-3); margin-top:6px; }
+.fdg-it { display:flex; flex-direction:column; gap:4px; text-align:left; padding:12px; border-radius:14px; border:1px solid var(--fd-border); background:var(--fd-card); cursor:pointer; font:inherit; color:var(--fd-text); transition:border-color .15s, transform .15s; }
+.fdg-it:hover:not([disabled]) { border-color:var(--fd-accent); transform:translateY(-1px); }
+.fdg-it b { font-size:14px; }
+.fdg-it span { font-size:12px; color:var(--fd-text-3); }
+.fdg-it[disabled] { opacity:.5; cursor:not-allowed; }
+.fdg-it .tag { align-self:flex-start; font-size:11px; font-weight:700; padding:2px 8px; border-radius:999px; background:var(--fd-surface-2); color:var(--fd-text-3); }
+</style>
+<script>
+/* ---------- the drop-down beside the title ---------- */
+function fddScopeLabel() { var g = fdGroupLabel(); return g || 'All products'; }
+var FDD_EDIT = false, FDX = { key: '', data: null, list: null, busy: false };
+var FDX_INFO = {
+  cashInHand: ['Money in hand', 'Money', 'wallet'], supplierDue: ['We owe suppliers', 'Money', 'truck'], supplierAhead: ['Paid ahead to suppliers', 'Money', 'truck'],
+  preordersOpen: ['Open pre-orders', 'Sales', 'list'], depositsHeld: ['Pre-order deposits held', 'Sales', 'wallet'], followupsDue: ['Follow-ups due', 'Customers', 'clock'],
+  deadStock: ['Dead stock (at cost)', 'Stock', 'box'], bestRoi: ['Best shipment ROI', 'Stock', 'trend'], commissionDue: ['Commission this month', 'Money', 'percent'],
+  holdingMonth: ['Holding cost this month', 'Stock', 'clock'], onTheWater: ['Shipments on the shelf', 'Stock', 'box'], shipmentProfit: ['Shipments’ profit after holding', 'Stock', 'trend'],
+  investorReturns: ['Investor returns owed', 'Capital', 'wallet'], ownersCapital: ['Owners’ capital', 'Capital', 'target'], webPending: ['Website orders waiting', 'Sales', 'globe'],
+  returnsMonth: ['Goods returned', 'Profit', 'receipt'], deliveryIncome: ['Delivery charged', 'Profit', 'truck'], courierFees: ['Courier and COD fees', 'Profit', 'truck'],
+  repairsIncome: ['Repairs income (after parts)', 'Profit', 'receipt'], netMargin: ['Net margin', 'Profit', 'percent'], newCustomers: ['New customers', 'Customers', 'cart']
+};
+function fdxIds() { var L = fdwLayout(); return L ? L.order.filter(function (id) { return /^x_/.test(id) && !(L.hidden || {})[id]; }).map(function (id) { return id.slice(2); }) : []; }
+function fdxLoad(force) {
+  var ids = fdxIds(), key = FDD.months + '|' + ids.join(',');
+  if (!force && (FDX.key === key || FDX.busy)) return;
+  if (!ids.length && FDX.list && !force) { FDX.key = key; FDX.data = {}; return; }
+  FDX.busy = true;
+  srv('erpFdCards', [{ ids: ids, months: FDD.months }], function (r) { FDX.busy = false; FDX.key = key; FDX.data = r.cards || {}; FDX.list = r.list || []; if (VIEW === 'dash') repaint(); },
+    function () { FDX.busy = false; FDX.key = key; FDX.data = {}; });
+}
+function fdxCard(id) {
+  var info = FDX_INFO[id] || [id, '', 'list'], c = FDX.data && FDX.data[id];
+  var body;
+  if (!c) body = '<div class="fdd-num" style="opacity:.4">…</div><div class="fdd-lbl">' + esc(info[0]) + '</div>';
+  else if (c.locked) body = '<div class="fdd-num" style="font-size:18px;opacity:.6">🔒 Hidden for your role</div><div class="fdd-lbl">' + esc(info[0]) + '</div>';
+  else if (c.error) body = '<div class="fdd-num" style="font-size:16px;opacity:.6">Could not work it out</div><div class="fdd-lbl">' + esc(info[0]) + '</div><div class="fdd-kn">' + esc(c.error) + '</div>';
+  else body = '<div class="fdd-num' + (Number(c.v) < 0 ? ' neg' : '') + '">' + (c.money ? fdTk(c.v, 'BDT') : c.pct ? fmt(c.v) + '<small style="margin-left:2px">%</small>' : fmt(c.v)) + '</div>' +
+    '<div class="fdd-lbl">' + esc(info[0]) + '</div>' + (c.note ? '<div class="fdd-kn">' + esc(c.note) + '</div>' : '');
+  var go = c && c.go && navOn(c.go) ? ' data-go="' + esc(c.go) + '"' + (c.f ? ' data-f="' + esc(c.f) + '"' : '') : '';
+  return '<div class="fdd-c fdd-k"' + go + '><div class="fdd-ktop"><span class="fdd-badge' + (c && c.tone ? ' t-' + c.tone : '') + '">' + fddIc(info[2]) + '</span></div>' + body + '</div>';
+}
+// the extra cards join the widget list
+var fddWidgetsX = fddWidgets;
+fddWidgets = function (d) {
+  var W = fddWidgetsX.apply(this, arguments);
+  fdxLoad(false);
+  fdxIds().forEach(function (id) { if (FDX_INFO[id]) W.push({ id: 'x_' + id, title: FDX_INFO[id][0], note: FDX_INFO[id][1], html: fdxCard(id) }); });
+  return W;
+};
+// every widget carries its id, so it can be dragged and removed
+var fddOrderedX = fddOrdered;
+fddOrdered = function (W) {
+  return fddOrderedX(W).map(function (w) { return { id: w.id, title: w.title, note: w.note, html: String(w.html).replace(/^\s*<div /, '<div data-fdw="' + esc(w.id) + '" ') }; });
+};
+// the head: no business line, the drop-down beside the title, Customise = edit mode
+var fddViewX = fddView;
+fddView = function () {
+  var h = fddViewX.apply(this, arguments);
+  var scope = '<button type="button" class="fdd-scope" id="fddScope" aria-haspopup="menu" title="Business and product group"><span class="ic">' + fdI(FDD.group ? 'group' : 'layers', 16) + '</span>' +
+    esc(fddScopeLabel()) + fdI('chev', 16) + '</button>';
+  h = h.replace(/(<h1 class="fdd-title">Dashboard <button type="button" class="fdd-ti"[^>]*>i<\/button>)/, '$1' + scope);
+  h = h.replace(/<button type="button" class="fdd-pill" data-fddallg="1"[^>]*>[^<]*<\/button>/, '');
+  if (FDD_EDIT) {
+    h = h.replace(/>(<svg[^>]*><path d="M12 20h9"\/>[\s\S]*?<\/svg>)Customise</, '>$1Done<');
+    var bar = '<div class="fdd-editbar"><div class="t"><b>Editing the dashboard</b><span>Drag a card to move it · × removes it · + Add card brings any card back or a new one.</span></div>' +
+      '<button class="btn" type="button" data-fdwadd="1">+ Add card</button><button class="btn" type="button" data-fdwreset="1">Reset</button><button class="btn primary" type="button" data-fdwdone="1">Done</button></div>';
+    h = h.replace('<div class="fdd-grid fdd-one">', bar + '<div class="fdd-grid fdd-one editing">');
+    h = h.replace(/(<div class="fdd-grid fdd-one editing">[\s\S]*?)(<\/div><div class="fdd-classic">)/, function (m, a, b) { return a + '<button type="button" class="fdw-add" data-fdwadd="1"><b>+</b>Add card</button>' + b; });
+  }
+  return h;
+};
+function fdwCurrentOrder() { return [].map.call(document.querySelectorAll('.fdd-one > [data-fdw]'), function (n) { return n.getAttribute('data-fdw'); }); }
+function fdwCommit(order, hidden) {
+  var L = fdwLayout() || { order: FDW_LAST.map(function (w) { return w.id; }), hidden: {} };
+  var all = order.slice(); (L.order || []).forEach(function (id) { if (all.indexOf(id) < 0) all.push(id); });
+  FDW_LAST.forEach(function (w) { if (all.indexOf(w.id) < 0) all.push(w.id); });
+  fdwSave({ order: all, hidden: hidden || L.hidden || {} });
+}
+function fdwDecorate() {
+  if (!FDD_EDIT || VIEW !== 'dash') return;
+  [].forEach.call(document.querySelectorAll('.fdd-one.editing > [data-fdw]'), function (n) {
+    if (n.querySelector('.fdw-x')) return;
+    var x = document.createElement('button'); x.type = 'button'; x.className = 'fdw-x'; x.title = 'Remove this card'; x.setAttribute('aria-label', 'Remove'); x.textContent = '×'; x.setAttribute('data-fdwx', n.getAttribute('data-fdw'));
+    n.appendChild(x);
+    var hd = document.createElement('span'); hd.className = 'fdw-h'; hd.textContent = '⠿ DRAG'; n.appendChild(hd);
+  });
+}
+var repaintFdw = repaint;
+repaint = function () { var r = repaintFdw.apply(this, arguments); try { fdwDecorate(); } catch (e) {} return r; };
+
+/* ---------- drag to move (mouse, pen or finger) ---------- */
+(function () {
+  var drag = null;
+  document.addEventListener('pointerdown', function (e) {
+    if (!FDD_EDIT || e.button > 0) return;
+    var card = e.target.closest && e.target.closest('.fdd-one.editing > [data-fdw]');
+    if (!card || e.target.closest('.fdw-x')) return;
+    drag = { card: card, x0: e.clientX, y0: e.clientY, on: false, id: e.pointerId };
+    e.preventDefault();
+  });
+  document.addEventListener('pointermove', function (e) {
+    if (!drag) return;
+    if (!drag.on) {
+      if (Math.abs(e.clientX - drag.x0) + Math.abs(e.clientY - drag.y0) < 6) return;
+      var r = drag.card.getBoundingClientRect();
+      drag.dx = drag.x0 - r.left; drag.dy = drag.y0 - r.top;
+      drag.ghost = drag.card.cloneNode(true); drag.ghost.classList.add('fdw-ghost'); drag.ghost.style.width = r.width + 'px'; drag.ghost.style.height = r.height + 'px';
+      document.body.appendChild(drag.ghost); drag.card.classList.add('fdw-dragging'); drag.on = true;
+    }
+    drag.ghost.style.left = (e.clientX - drag.dx) + 'px'; drag.ghost.style.top = (e.clientY - drag.dy) + 'px';
+    var t = null;   // the card under the pointer, by position (works for mouse, pen and finger alike)
+    [].some.call(document.querySelectorAll('.fdd-one.editing > [data-fdw]'), function (n) {
+      if (n === drag.card) return false;
+      var q = n.getBoundingClientRect();
+      if (e.clientX >= q.left && e.clientX <= q.right && e.clientY >= q.top && e.clientY <= q.bottom) { t = n; return true; }
+      return false;
+    });
+    if (t && t !== drag.card) {
+      var tr = t.getBoundingClientRect(), after = (e.clientY > tr.top + tr.height / 2) || (e.clientY > tr.top && e.clientX > tr.left + tr.width / 2 && e.clientY > tr.top + tr.height * 0.25);
+      var par = t.parentNode;
+      if (after) par.insertBefore(drag.card, t.nextSibling); else par.insertBefore(drag.card, t);
+    }
+    // near the window's edge the page scrolls
+    if (e.clientY < 60) window.scrollBy(0, -14); else if (e.clientY > innerHeight - 60) window.scrollBy(0, 14);
+  });
+  var end = function () {
+    if (!drag) return;
+    var was = drag.on; if (drag.ghost) drag.ghost.remove(); drag.card.classList.remove('fdw-dragging');
+    drag = null;
+    if (was) fdwCommit(fdwCurrentOrder());
+  };
+  document.addEventListener('pointerup', end); document.addEventListener('pointercancel', end);
+})();
+
+/* ---------- the gallery ---------- */
+function fdwGallery() {
+  var L = fdwLayout() || { order: FDW_LAST.map(function (w) { return w.id; }), hidden: {} }, hidden = L.hidden || {};
+  var shown = {}; fdwCurrentOrder().forEach(function (id) { shown[id] = 1; });
+  var own = FDW_LAST.filter(function (w) { return !/^x_/.test(w.id) && !shown[w.id]; });
+  var lockedOf = {}; (FDX.list || []).forEach(function (x) { lockedOf[x.id] = x.locked; });
+  var extra = Object.keys(FDX_INFO).filter(function (id) { return !shown['x_' + id]; });
+  var groups = {}; extra.forEach(function (id) { var g = FDX_INFO[id][1]; (groups[g] = groups[g] || []).push(id); });
+  var html = '<div class="fdg-grid">' +
+    (own.length ? '<div class="fdg-sec">Dashboard cards you removed</div>' + own.map(function (w) { return '<button type="button" class="fdg-it" data-fdgadd="' + esc(w.id) + '"><b>' + esc(w.title) + '</b><span>' + esc(w.note || 'card') + '</span></button>'; }).join('') : '') +
+    Object.keys(groups).map(function (g) { return '<div class="fdg-sec">' + esc(g) + '</div>' + groups[g].map(function (id) { var lk = lockedOf[id];
+      return '<button type="button" class="fdg-it" data-fdgadd="x_' + id + '"' + (lk ? ' disabled' : '') + '><b>' + esc(FDX_INFO[id][0]) + '</b><span>' + (lk ? 'not open to your role' : 'from the ' + esc(g) + ' figures') + '</span>' + (lk ? '<span class="tag">🔒</span>' : '') + '</button>'; }).join(''); }).join('') +
+    (!own.length && !extra.length ? '<div class="fdg-sec">Every card is on the dashboard.</div>' : '') + '</div>';
+  fdwDialog('Add a card', html, function (back, close) { close(); });
+  var dl = document.querySelector('.dlg-back .dlg'); if (dl) dl.style.maxWidth = '820px';
+  var grid = document.querySelector('.dlg-back .fdg-grid');
+  if (grid) grid.addEventListener('click', function (e) {
+    var b = e.target.closest('[data-fdgadd]'); if (!b || b.disabled) return;
+    var id = b.getAttribute('data-fdgadd'), cur = fdwLayout() || { order: FDW_LAST.map(function (w) { return w.id; }), hidden: {} };
+    var order = fdwCurrentOrder().filter(function (x) { return x !== id; }); order.push(id);
+    var hid = Object.assign({}, cur.hidden || {}); delete hid[id];
+    fdwCommit(order, hid);
+    b.remove(); toast('Added: ' + (b.querySelector('b') || b).textContent);
+    if (/^x_/.test(id)) fdxLoad(true);
+    repaint();
+  });
+}
+if (!FDX.list) srv('erpFdCards', [{ ids: [] }], function (r) { FDX.list = r.list || []; }, function () {});
+
+/* ---------- clicks ---------- */
+document.addEventListener('click', function (e) {
+  if (!e.target.closest) return;
+  var c = e.target.closest('[data-fddcust]');
+  if (c) { e.preventDefault(); e.stopImmediatePropagation(); FDD_EDIT = !FDD_EDIT; repaint(); return; }
+  if (e.target.closest('[data-fdwdone]')) { FDD_EDIT = false; repaint(); toast('Dashboard saved.'); return; }
+  if (e.target.closest('[data-fdwreset]')) { uiConfirm('Back to the standard dashboard? Cards you added are taken off.').then(function (ok) { if (ok) { fdwSave(null); repaint(); } }); return; }
+  if (e.target.closest('[data-fdwadd]')) { e.preventDefault(); fdwGallery(); return; }
+  var x = e.target.closest('[data-fdwx]');
+  if (x) {
+    e.preventDefault(); e.stopPropagation();
+    var id = x.getAttribute('data-fdwx'), L = fdwLayout() || { order: FDW_LAST.map(function (w) { return w.id; }), hidden: {} };
+    var hid = Object.assign({}, L.hidden || {}); hid[id] = 1;
+    fdwCommit(fdwCurrentOrder().filter(function (k) { return k !== id; }).concat([id]), hid);
+    repaint(); return;
+  }
+  if (FDD_EDIT && e.target.closest('.fdd-one.editing > [data-fdw]')) { e.preventDefault(); e.stopImmediatePropagation(); return; }   // no opening screens while editing
+  var sc = e.target.closest('#fddScope');
+  if (sc) { e.preventDefault(); fdWsMenu(sc); }
+}, true);
+// leaving the dashboard ends edit mode
+var goFdw = go; go = function (v) { if (v !== 'dash') FDD_EDIT = false; return goFdw.apply(this, arguments); };
+// a new range brings the extra cards again
+var fddLoadX = fddLoad; fddLoad = function () { var r = fddLoadX.apply(this, arguments); fdxLoad(false); return r; };
+</script>
+
+<!-- fd-29: one theme window. The old "Themes" window (colour pairs) is gone for good: anything that opened it now opens the
+     new picker, which also holds the background photo (add, change, remove, how strong, show it for me). -->
+<style>
+#fdt_box .th_bg { margin:0; padding:0; border:0; }
+#fdt_box .th_bg > h3 { display:none; }
+#fdt_box .th_bg .row { display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-top:8px; }
+#fdt_box .th_bg img { width:140px; height:84px; object-fit:cover; border-radius:12px; border:1px solid var(--fd-border); }
+#fdt_box .th_bg .sub { color:var(--fd-text-3); font-size:13px; }
+</style>
+<script>
+themeBoxOpen = function () { var o = el('th_back'); if (o) o.remove(); fdtOpen(); };
+var fdtOpenOne = fdtOpen;
+fdtOpen = function () { if (el('fdt_box')) return; return fdtOpenOne.apply(this, arguments); };
+var fdtBodyBg = fdtBody;
+fdtBody = function () {
+  var h = fdtBodyBg.apply(this, arguments), bg = '';
+  try { bg = typeof themeBgHtml === 'function' ? themeBgHtml() : ''; } catch (e) {}
+  return h.replace('<button class="btn" type="button" id="fdt_bg">Background photo…</button>', bg || '<div class="sub">The owner or a manager sets the background photo.</div>');
+};
+var bgPaintFdt = bgPaint;
+bgPaint = function () { var r = bgPaintFdt.apply(this, arguments); var b = el('fdt_box'); if (b) { var y = b.scrollTop; b.innerHTML = fdtBody(); b.scrollTop = y; } return r; };
+</script>
+
+<!-- fd-30 (owner): Settings uses the same pill tabs as every other screen (no side list), at every width; on a phone the
+     tabs scroll sideways like the others. -->
+<style>
+:root[data-skin="fd"] .fd22-stl { display:block !important; }
+:root[data-skin="fd"] .fd22-stl > .fd22-stmain { margin-top:0; }
+:root[data-skin="fd"] #view .fd22-stnav { display:flex !important; flex-direction:row; align-items:center; gap:8px; flex-wrap:wrap; background:none !important; border:0 !important;
+  box-shadow:none !important; padding:0 !important; margin:0 0 20px; border-radius:0; position:static !important; }
+:root[data-skin="fd"] #view .fd22-stnav button.fd22-sti { width:auto !important; flex:0 0 auto; min-height:38px; height:38px; padding:0 16px !important; gap:8px; border-radius:999px !important;
+  background:var(--fd-surface-2) !important; color:var(--fd-text-2); font-size:14px; font-weight:600; border:1px solid transparent !important; white-space:nowrap; }
+:root[data-skin="fd"][data-theme="dark"] #view .fd22-stnav button.fd22-sti { border-color:var(--fd-border) !important; }
+:root[data-skin="fd"] #view .fd22-stnav button.fd22-sti:hover { background:var(--fd-surface-3) !important; color:var(--fd-text); }
+:root[data-skin="fd"] #view .fd22-stnav button.fd22-sti[aria-selected="true"] { background:linear-gradient(180deg, color-mix(in srgb, var(--fd-accent) 92%, #fff), var(--fd-accent)) !important;
+  color:var(--fd-text-on-accent) !important; box-shadow:var(--fd-accent-glow) !important; }
+:root[data-skin="fd"] #view .fd22-stnav .fd22-sti span { flex:0 0 auto; }
+:root[data-skin="fd"] #view .fd22-stnav .fd22-sti svg { width:16px; height:16px; flex-basis:16px; }
+:root[data-skin="fd"] #view .fd22-stnav .fd22-stsep { width:1px; height:24px; margin:0 4px; }
+:root[data-skin="fd"] #view .fd22-stsel { display:none !important; }
+@media (max-width:760px) {
+  :root[data-skin="fd"] #view .fd22-stnav { flex-wrap:nowrap; overflow-x:auto; margin:0 -14px 16px; padding:2px 14px 4px !important; scrollbar-width:none; }
+  :root[data-skin="fd"] #view .fd22-stnav::-webkit-scrollbar { display:none; }
+}
+</style>
+
 </body>
 </html>

@@ -1782,3 +1782,9 @@ marked paid while October rent was a one-off (counted twice on the Expenses scre
 - fd-27 + 118: the look (theme, accent, chart colours, text size, density, corners) AND the dashboard layout are saved
   with the person (erp_prefs.fd, erpSetFdPrefs; only known keys / colour codes kept) and taken on every device when the
   ERP opens. Tests fdprefs (7).
+- fd-28: dashboard edited in place: Customise = edit mode, drag cards (mouse, pen, finger) to move, × removes, "+ Add
+  card" gallery = removed cards + 21 cards from existing figures (handlers/fdcards.js erpFdCards: each from the handler
+  of its own screen, locked when that screen is not open to the person; test fdcards 10). The business name above every
+  title removed; product-group / business drop-down beside "Dashboard" (taken out of the top bar).
+- fd-29: one theme window: the old "Themes" window can no longer open; its background photo lives in the new picker.
+- fd-30: Settings uses pill tabs like every other screen (no side list).
