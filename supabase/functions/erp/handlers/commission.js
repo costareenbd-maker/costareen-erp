@@ -13,12 +13,17 @@ const R = (v) => Math.round(num(v));
 const isMonth = (m) => /^\d{4}-(0[1-9]|1[0-2])$/.test(String(m || ''));
 export const isCommissionPaid = (category, description) => str(category) === 'Commission' && /^Commission paid to /.test(str(description));
 
-async function rules(ctx) {
-  return ctx.tx`select r.id, r.seller, r.scope, r.match, r.basis, r.pct, r.note, r.at,
+async function rules(ctx, withEnded) {
+  return ctx.tx`select r.id, r.seller, r.scope, r.match, r.basis, r.pct, r.note, r.at, r.voided_at,
+                       to_char(public.dhaka_date(r.at), 'YYYY-MM') as from_m,
+                       case when r.voided_at is null then null else to_char(public.dhaka_date(r.voided_at), 'YYYY-MM') end as until_m,
                        coalesce(pe.name, pr.full_name, pr.email, '') as seller_name
                 from commission_rules r left join erp_people pe on pe.user_id = r.seller left join profiles pr on pr.id = r.seller
-                where r.business_id = ${ctx.biz} and r.voided_at is null order by r.at`;
+                where r.business_id = ${ctx.biz} and (${!!withEnded} or r.voided_at is null) order by r.at`;
 }
+// a rule counts from the month it starts; a struck-out rule still counts for the months before it was struck out,
+// so a new or removed rule never rewrites months already reported (or closed)
+const ruleOn = (r, m) => m >= String(r.from_m) && (!r.until_m || m < String(r.until_m));
 
 const LEVEL = { sku: 3, brand: 2, category: 1, all: 0 };
 function ruleFor(rs, seller, line) {
@@ -40,7 +45,7 @@ export async function commissionFor(ctx, months) {
   const key = 'commission:' + months.join(',');
   if (ctx.memo[key]) return ctx.memo[key];
   const out = { bySeller: {}, byMonth: {} };
-  const rs = await rules(ctx);
+  const rs = await rules(ctx, true);
   if (!rs.length || !months.length) return (ctx.memo[key] = out);
   const lines = await ctx.tx`
     select coalesce(o.seller_id, o.created_by, i.seller_id, i.created_by) as seller, to_char(public.dhaka_date(i.created_at), 'YYYY-MM') as m,
@@ -62,7 +67,7 @@ export async function commissionFor(ctx, months) {
     const total = num(l.line_total), sum = num(l.inv_sum);
     const sales = total > 0 ? total - (sum > 0 ? num(l.inv_disc) * total / sum : 0) : total;
     const profit = sales - num(l.qty) * num(l.unit_cost);
-    const rule = ruleFor(rs, l.seller, l);
+    const rule = ruleFor(rs.filter((r) => ruleOn(r, str(l.m))), l.seller, l);
     if (!rule) continue;
     const due = (rule.basis === 'profit' ? profit : sales) * num(rule.pct) / 100;
     const id = String(l.seller), m = str(l.m);
@@ -119,8 +124,17 @@ export async function erpCommissionRuleSave(ctx, payload) {
   if (scope !== 'all' && !match) throw new Error('Which ' + (scope === 'sku' ? 'product' : scope) + '?');
   const seller = str(payload.seller);
   if (seller && !(await ctx.tx`select 1 from memberships where business_id = ${ctx.biz} and user_id = ${seller}`).length) throw new Error('That person does not work here.');
-  await ctx.tx`insert into commission_rules (business_id, seller, scope, match, basis, pct, note, by)
-               values (${ctx.biz}, ${seller || null}, ${scope}, ${match.slice(0, 120)}, ${basis}, ${pct}, ${str(payload.note).slice(0, 200) || null}, ${str(ctx.s.name) || 'Owner'})`;
+  // from this month, or from an earlier month that is still open (the owner agreed it then)
+  const nowM = formatDate(ctx.now, 'yyyy-MM');
+  const since = isMonth(payload.since) && payload.since < nowM ? payload.since : nowM;
+  if (since < nowM) {
+    const { assertOpen } = await import('../lib/period.js');
+    await assertOpen(ctx, since, 'a commission rule cannot start there');
+  }
+  const at = since < nowM ? since + '-01T00:00:00+06:00' : null;
+  await ctx.tx`insert into commission_rules (business_id, seller, scope, match, basis, pct, note, by, at)
+               values (${ctx.biz}, ${seller || null}, ${scope}, ${match.slice(0, 120)}, ${basis}, ${pct}, ${str(payload.note).slice(0, 200) || null}, ${str(ctx.s.name) || 'Owner'},
+                       coalesce(${at}::timestamptz, now()))`;
   Object.keys(ctx.memo).forEach((k) => { if (k.indexOf('commission:') === 0 || k.indexOf('pnl:') === 0) delete ctx.memo[k]; });
   return erpCommission(ctx, { month: payload.month });
 }

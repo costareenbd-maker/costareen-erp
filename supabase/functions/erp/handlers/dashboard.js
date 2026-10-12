@@ -56,6 +56,17 @@ async function soft(ctx, fn, fallback) {
  * today's cost stand in - filling in a missing cost completes the past, it
  * does not change it.
  */
+
+// stock at cost the FIFO way (lots.js lotStock); before lots or if lots cannot be read: stock x the product's cost
+async function atLots(ctx) {
+  try { const { lotStock } = await import('./lots.js'); return await ctx.tx.savepoint(() => lotStock(ctx)); } catch (_) { return null; }
+}
+function lotValue(LS, p, stock) {
+  const x = LS && LS.bySku[String(p.sku).toLowerCase()];
+  if (x && num(x.units) > 0) return num(x.value) * Math.min(1, stock / num(x.units));
+  return stock * (p.cost > 0 ? p.cost : 0);
+}
+
 export function soldCost(row, today) {
   const then = num(row[SL.unit_cost]);
   return then > 0 ? then : (num(today) || 0);
@@ -250,6 +261,8 @@ export async function monthGross(ctx, month) {
     revenue += L.total < 0 ? L.total : Math.max(0, L.total - share);
     cogs += L.cost * L.qty;
   }
+  // 111: a late shipment bill's part for units already sold is cost of the month it was entered in (as pnlFor)
+  cogs += await soft(ctx, async () => num((await ctx.tx`select coalesce(sum(sold_part), 0) as s from late_costs where business_id = ${ctx.biz} and month = ${month}`)[0].s), 0);
   return { revenue: Math.round(revenue), cost: Math.round(cogs), gross: Math.round(revenue - cogs) };
 }
 
@@ -471,6 +484,7 @@ export async function erpDashboardData(ctx) {
   // ---- STOCK_VIEW
   let inStock = 0, reorder = 0, outOfStock = 0, stockValue = 0, stockUnits = 0, stockCost = 0;
   const byCat = {}, catOrder = [], low = [];
+  const LSd = await atLots(ctx);   // stock at cost = what is left in each lot x its landed cost (FIFO), as everywhere else
   for (const p of plist) {
     const stock = p.stock, rl = p.reorder;
     const value = stock * p.sell;
@@ -485,7 +499,8 @@ export async function erpDashboardData(ctx) {
     byCat[cat].units += stock;
     byCat[cat].skus++;
     if (stock > 0) {
-      if (p.cost > 0) { byCat[cat].cost += stock * p.cost; stockCost += stock * p.cost; } else byCat[cat].uncosted++;
+      const lv = lotValue(LSd, p, stock);
+      if (lv > 0) { byCat[cat].cost += lv; stockCost += lv; } else byCat[cat].uncosted++;
     }
     if (stock <= rl) {
       low.push({ sku: p.sku, name: p.name, cat, stock, reorder: rl,
@@ -985,18 +1000,18 @@ export async function erpMoney(ctx, payload) {
   }
   const dead = [];
   let deadCash = 0, stockCash = 0;
+  const LSm = await atLots(ctx);
   for (const pr of plist) {
     const stock = pr.stock;
     if (stock <= 0) continue;
-    const unit = pr.cost || 0;
-    const tied = Math.round(unit * stock);
+    const tied = Math.round(lotValue(LSm, pr, stock));
     stockCash += tied;
     const last = sold[pr.sku.toLowerCase()] || 0;
     const since = last ? Math.floor((now - last) / DAY_MS) : null;
     if (since === null || since > deadAfter) {
       deadCash += tied;
       dead.push({ sku: pr.sku, name: pr.name, brand: pr.brand || '', cat: pr.cat || '',
-                  stock, unitCost: Math.round(unit), tied, lastSoldDays: since });
+                  stock, unitCost: Math.round(tied / stock), tied, lastSoldDays: since });
     }
   }
   dead.sort((a, b) => b.tied - a.tied);

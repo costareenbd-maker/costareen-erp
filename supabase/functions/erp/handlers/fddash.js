@@ -375,7 +375,10 @@ export async function erpFdHead(ctx, payload) {
       }
       cards.push(card('inHand', 'Money in hand', 'wallet', cb.inHand || 0, { money: true, hero: true, note: (cb.accounts || []).length + ' account(s), courier balance apart' }));
       cards.push(card('cashIn', 'Received this month', 'taka', cin, { prev: R(cprev), money: true }));
-      cards.push(card('loose', 'Payments in no account', 'warn', (cb.loose || []).length, { tone: (cb.loose || []).length ? 'warn' : '', note: 'say which account they went to' }));
+      // every such payment counted (the cash book's list stops at 200), the same count as the dashboard and System check
+      const looseN = (await ctx.tx`select count(*)::int as n from payments where business_id = ${ctx.biz} and account_id is null and coalesce(amount, 0) <> 0
+                                   and lower(btrim(coalesce(method, ''))) not in ('adjusted', 'returned', 'advance', 'undone', 'return / refund', '')`)[0].n;
+      cards.push(card('loose', 'Payments in no account', 'warn', looseN, { tone: looseN ? 'warn' : '', note: 'say which account they went to' }));
       if (canDues) {
         const o = await owedTotal();
         cards.push(card('dues', 'Dues receivable', 'bell', o.t, { money: true, tone: o.t > 0 ? 'warn' : '', go: 'sales', f: 'due' }));

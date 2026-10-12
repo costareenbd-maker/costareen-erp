@@ -642,7 +642,9 @@ export async function erpNavigator(ctx, payload) {
       const invOK = !!capital, cap = invOK ? Math.max(0, num(capital.totals.outsideCapital)) : 0;
       const I = invOK ? Math.max(0, num(capital.totals.returnDue) + num(capital.totals.returnBuilding)) : 0;
       const capIn = Math.min(cap, B), own = Math.max(0, B - capIn), other = Math.max(0, B - Math.min(k, B) - Math.min(sv, B)), unknown = Math.max(0, r - k - g), exp = Math.max(0, g - n);
-      const inv = Math.min(I, n), ownS = Math.max(0, n - inv);
+      // investor returns are already a cost inside expenses (dashboard.js pnlFor): they flow from gross profit, the
+      // owners' share is the whole net profit (it was taken off twice before)
+      const inv = invOK ? Math.min(I, exp) : 0, expOnly = Math.max(0, exp - inv), ownS = n;
       const nodes = [
         { id: 'cap', col: 0, label: invOK ? 'Investor capital' : 'Investor capital (hidden)', v: R(capIn), c: 'violet', view: 'capital' },
         { id: 'own', col: 0, label: 'Owner & recycled cash', v: R(own), c: 2, view: 'capital' },
@@ -654,13 +656,13 @@ export async function erpNavigator(ctx, payload) {
         { id: 'rev', col: 3, label: 'Sales revenue', v: R(r), c: 5, view: 'profit' },
         { id: 'gross', col: 4, label: 'Gross profit', v: R(g), c: 5, view: 'profit' },
         { id: 'unk', col: 4, label: 'Revenue with no cost', v: R(unknown), c: 8, view: 'costs' },
-        { id: 'exp', col: 5, label: 'Expenses & fees', v: R(exp), c: 7, view: 'expenses' },
+        { id: 'exp', col: 5, label: invOK ? 'Expenses & fees (less delivery charged)' : 'Expenses & fees', v: R(invOK ? expOnly : exp), c: 7, view: 'expenses' },
         { id: 'net', col: 5, label: 'Net profit', v: R(n), c: 5, view: 'profit' },
-        { id: 'inv', col: 6, label: invOK ? 'Investor returns' : 'Investor returns (hidden)', v: R(inv), c: 'violet', view: 'capital' },
-        { id: 'ownS', col: 6, label: invOK ? 'Owners’ share' : 'Owners + investors', v: R(invOK ? ownS : n), c: 'accent', view: 'capital' },
+        { id: 'inv', col: 5, label: invOK ? 'Investor returns' : 'Investor returns (hidden)', v: R(inv), c: 'violet', view: 'capital' },
+        { id: 'ownS', col: 6, label: 'Owners’ share (net profit)', v: R(ownS), c: 'accent', view: 'capital' },
       ];
       const links = [['cap', 'bought', capIn], ['own', 'bought', own], ['bought', 'sold', Math.min(k, B)], ['bought', 'stock', Math.min(sv, B)], ['bought', 'other', other], ['sold', 'rev', k], ['margin', 'rev', Math.max(0, r - k)],
-                     ['rev', 'gross', g], ['rev', 'unk', unknown], ['gross', 'exp', exp], ['gross', 'net', n], ['net', 'inv', invOK ? inv : 0], ['net', 'ownS', invOK ? ownS : n]].map((x) => [x[0], x[1], R(x[2])]);
+                     ['rev', 'gross', g], ['rev', 'unk', unknown], ['gross', 'exp', invOK ? expOnly : exp], ['gross', 'inv', inv], ['gross', 'net', n], ['net', 'ownS', n]].map((x) => [x[0], x[1], R(x[2])]);
       return { since: monthLabel(ms[0]), nodes, links };
     }, LOCK('cost'));
   }

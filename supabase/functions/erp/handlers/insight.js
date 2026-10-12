@@ -80,6 +80,16 @@ export async function erpSystemCheck(ctx) {
   const d = await erpFdDash(ctx, { months: 1 });
   const same = !d.kpi.net || d.kpi.net.v === p.net;
   add('P1', 'Profit', 'The dashboard’s net profit is the P&L’s', same ? 0 : 1, 'dashboard ' + (d.kpi.net && d.kpi.net.v) + ', P&L ' + p.net, false, 'profit');
+  // a closed month keeps the net profit it was closed with (investor and shareholder shares were worked out on it):
+  // the books must still give the same figure
+  const closed = await ctx.tx`select month, net_profit from capital_closed where business_id = ${ctx.biz} order by month`;
+  if (closed.length) {
+    const live = await pnlFor(ctx, closed.map((c) => str(c.month)));
+    const by = {}; for (const x of live) by[x.month] = num(x.net);
+    const moved = closed.filter((c) => Math.abs(num(by[str(c.month)]) - num(c.net_profit)) > 1);
+    add('P2', 'Profit', 'Closed months still give the net profit they were closed with', moved.length,
+      moved.slice(0, 5).map((c) => str(c.month) + ': closed ' + R(c.net_profit) + ', now ' + R(by[str(c.month)])).join('; ') + ' - something was changed in a closed month', false, 'capital');
+  } else add('P2', 'Profit', 'Closed months still give the net profit they were closed with', 0, '', false, 'capital');
 
   const counts = { pass: 0, warn: 0, fail: 0 };
   out.forEach((c) => { counts[c.status]++; });

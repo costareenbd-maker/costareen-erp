@@ -75,6 +75,19 @@ const rid = (await owner('erpCommission', [{ month }])).result.rules.find((x) =>
 r = await owner('erpCommissionRuleVoid', [{ id: rid, month }]);
 check('everyone\'s rule removed: sales staff earn nothing now', r.ok && !r.result.sellers.some((s) => s.id === FIX.U.sales && s.earned > 0), r.result.sellers);
 
+// ---- a rule counts from its own month on: it never rewrites the months before
+const prevM = (() => { const [y, m] = month.split('-').map(Number); return m === 1 ? (y - 1) + '-12' : y + '-' + String(m - 1).padStart(2, '0'); })();
+await sql`insert into invoices (business_id, invoice_no, customer_name, subtotal, grand_total, created_at, created_by)
+          values (${FIX.B}, 'INV-OLD-COMM', 'Old', 1000, 1000, ${prevM + '-10T12:00:00+06:00'}, ${FIX.U.mgr})`;
+await sql`insert into invoice_lines (business_id, invoice_id, sku, qty, line_total, unit_cost)
+          select ${FIX.B}, id, 'CM-PLA', 1, 1000, 500 from invoices where business_id = ${FIX.B} and invoice_no = 'INV-OLD-COMM'`;
+r = await owner('erpCommission', [{ month: prevM }]);
+check('last month: rules made this month do not count there', r.ok && r.result.total === 0, r.result && r.result.total);
+r = await owner('erpCommissionRuleSave', [{ scope: 'all', basis: 'sales', pct: 1, since: prevM }]);
+check('a rule may start in an earlier open month', r.ok, r);
+r = await owner('erpCommission', [{ month: prevM }]);
+check('...and then counts there (1% of 1000)', r.ok && r.result.total === 10, r.result && r.result.total);
+
 // ---- the other business is untouched
 const other = await sql`select count(*)::int as n from commission_rules where business_id = ${FIX.B2}`;
 check('no rules in the other business', other[0].n === 0, other);

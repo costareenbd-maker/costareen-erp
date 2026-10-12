@@ -24256,9 +24256,11 @@ document.addEventListener('click', function (e) {
       Object.keys(cats).concat(Object.keys(brands)).map(function (x) { return '<option value="' + esc(x) + '">'; }).join('') +
       (CAT || []).slice(0, 300).map(function (p) { return '<option value="' + esc(p.sku) + '">' + esc(p.name) + '</option>'; }).join('') + '</datalist></div>' +
       '<div><label class="f" for="cr_pct">%</label><input class="i" id="cr_pct" inputmode="decimal" placeholder="2"></div>' +
-      '<div><label class="f" for="cr_basis">Of</label><select class="i" id="cr_basis"><option value="sales">the sales</option><option value="profit">the gross profit</option></select></div></div>',
+      '<div><label class="f" for="cr_basis">Of</label><select class="i" id="cr_basis"><option value="sales">the sales</option><option value="profit">the gross profit</option></select></div>' +
+      '<div><label class="f" for="cr_since">From month</label><input class="i" id="cr_since" type="month" value="' + esc(CMS.data.thisMonth || '') + '" max="' + esc(CMS.data.thisMonth || '') + '"></div></div>' +
+      '<div class="fdw-note">A rule counts from its month on. An earlier month is allowed while it is not closed; months before stay as they were.</div>',
       function (back, close) {
-        srv('erpCommissionRuleSave', [{ seller: fdwVal(back, 'cr_who'), scope: fdwVal(back, 'cr_scope'), match: fdwVal(back, 'cr_match'), pct: num(fdwVal(back, 'cr_pct')), basis: fdwVal(back, 'cr_basis'), month: CMS.data.month }],
+        srv('erpCommissionRuleSave', [{ seller: fdwVal(back, 'cr_who'), scope: fdwVal(back, 'cr_scope'), match: fdwVal(back, 'cr_match'), pct: num(fdwVal(back, 'cr_pct')), basis: fdwVal(back, 'cr_basis'), since: fdwVal(back, 'cr_since'), month: CMS.data.month }],
           function (r) { close(); CMS.data = r; toast('Rule added.'); repaint(); }, function (er) { toast(esc(er && er.message ? er.message : er), true); });
       });
     return;
