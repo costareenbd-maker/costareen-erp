@@ -31624,5 +31624,82 @@ pagesAfterWrite = function () { FD19.prof = {}; FD19.profQ = {}; return fd19Afte
 try { fd19After(); } catch (e) {}
 </script>
 
+<!-- fd-23 (audit 14 Oct 2026): fixes from the live click-through. Selected tabs/chips/pills use the accent (not a
+     fixed purple); the empty title bar under the top bar is hidden (it stays when it carries a back link or buttons);
+     Stock entry's stepper fits 1024; Products/Shipments bar fits a phone; Escape closes the account menu and alerts;
+     the Appearance switch in the account menu on one line; Help button / Help title follow the screen language;
+     screen-head cards show money as ৳ lakh like the rest; the FilaDash top bar items never show in Classic. -->
+<style>
+:root[data-skin="fd"]:not([data-theme="dark"]) .chip.on,
+:root[data-skin="fd"]:not([data-theme="dark"]) .tabs button[aria-selected="true"],
+:root[data-skin="fd"]:not([data-theme="dark"]) .fdd-pill[aria-pressed="true"] { background:var(--fd-accent) !important; color:var(--fd-text-on-accent) !important; }
+:root[data-skin="fd"] .seg button.on, :root[data-skin="fd"] .seg .on { background:var(--fd-accent); color:var(--fd-text-on-accent); }
+:root[data-skin="fd"] body.fd-nocp #o_cp { display:none !important; }
+@media (max-width:1279px) {
+  [data-skin="fd"] .fd20-stp { overflow-x:auto; scrollbar-width:none; }
+  [data-skin="fd"] .fd20-stp::-webkit-scrollbar { display:none; }
+  [data-skin="fd"] .fd20-stp li.ln { min-width:10px; margin:0 6px; }
+  [data-skin="fd"] .fd20-stp button { font-size:13px; white-space:nowrap; }
+}
+@media (max-width:760px) {
+  [data-skin="fd"] .fd20-bar { margin-left:0; margin-right:0; padding-left:0; padding-right:0; max-width:100%; }
+}
+:root[data-skin="fd"] .u6 .seg { display:inline-flex !important; flex-wrap:nowrap; white-space:nowrap; overflow:hidden; }
+:root[data-skin="fd"] .u6 .seg button { flex:0 0 auto; white-space:nowrap; min-height:30px !important; height:30px; border-radius:999px !important; padding:0 12px !important; }
+:root:not([data-skin="fd"]) .fdws, :root:not([data-skin="fd"]) .fdplus, :root:not([data-skin="fd"]) .fdu { display:none !important; }
+</style>
+<script>
+(function () {
+  // the empty crumbs bar: hide it when it has nothing to click
+  function cpSync() {
+    var on = document.documentElement.getAttribute('data-skin') === 'fd', c = el('o_cp');
+    if (!on || !c) { document.body.classList.remove('fd-nocp'); return; }
+    var useful = c.querySelector('.crumbs button, .crumbs a, .o_acts button, .o_acts a, .o_acts select, .o_acts input');
+    document.body.classList.toggle('fd-nocp', !useful);
+  }
+  var t = null, v = el('view');
+  var kick = function () { clearTimeout(t); t = setTimeout(cpSync, 80); };
+  try { if (v) new MutationObserver(kick).observe(v, { childList: true }); } catch (e) {}
+  try { var c = el('o_cp'); if (c) new MutationObserver(kick).observe(c, { childList: true, subtree: true }); } catch (e) {}
+  try { new MutationObserver(kick).observe(document.documentElement, { attributes: true, attributeFilter: ['data-skin'] }); } catch (e) {}
+  setTimeout(cpSync, 0);
+})();
+// Escape closes the account menu and the alerts panel too
+document.addEventListener('keydown', function (e) {
+  if (e.key !== 'Escape') return;
+  var um = el('o_usermenu'); if (um && um.classList.contains('open')) um.classList.remove('open');
+  if (typeof ALERT_OPEN !== 'undefined' && ALERT_OPEN) { ALERT_OPEN = false; try { paintAlerts(); } catch (er) {} }
+});
+// the alerts panel closes when the screen changes
+var goFd23 = go;
+go = function () { if (typeof ALERT_OPEN !== 'undefined' && ALERT_OPEN) { ALERT_OPEN = false; try { paintAlerts(); } catch (er) {} } return goFd23.apply(this, arguments); };
+// Help in the screen's language (the guides themselves still open in Bangla first, as the owner asked)
+(function () {
+  var bnUi = function () { return typeof LANG !== 'undefined' && LANG === 'bn'; };
+  function helpFix() {
+    if (document.documentElement.getAttribute('data-skin') !== 'fd') return;
+    [].forEach.call(document.querySelectorAll('.fdh-help'), function (b) { var want = bnUi() ? 'সাহায্য' : 'Help'; if (b.textContent !== want) b.textContent = want; });
+    if (VIEW === 'guide' && !bnUi()) {
+      [].forEach.call(document.querySelectorAll('#view h1, #view .fdd-title, #view .fdh-title'), function (h) {
+        var n = h.firstChild; if (n && n.nodeType === 3 && /সাহায্য/.test(n.nodeValue)) n.nodeValue = n.nodeValue.replace('সাহায্য', 'Help');
+      });
+    }
+  }
+  var t = null, v = el('view');
+  try { if (v) new MutationObserver(function () { clearTimeout(t); t = setTimeout(helpFix, 50); }).observe(v, { childList: true, subtree: true }); } catch (e) {}
+  setTimeout(helpFix, 0);
+})();
+// screen-head cards: money as ৳ lakh like every other FilaDash figure
+if (typeof fdhCard === 'function') {
+  var fdhCardFd23 = fdhCard;
+  fdhCard = function (c, cur) {
+    var h = fdhCardFd23.apply(this, arguments);
+    if (!c || !c.money || typeof fdTk !== 'function' || document.documentElement.getAttribute('data-skin') !== 'fd') return h;
+    var old = '<small>' + esc(cur) + '</small>' + fmt(c.v);
+    return h.indexOf(old) >= 0 ? h.replace(old, fdTk(c.v, cur)) : h;
+  };
+}
+</script>
+
 </body>
 </html>

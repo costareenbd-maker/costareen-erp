@@ -1744,3 +1744,24 @@ Not done (no data behind them): his bank-statement reconciliation, per-sale comm
 adherence, website counter, transfers between locations, sea/air shipment mode, stage dates on received shipments,
 30/90-day ranges (ours stay whole months so net profit = the P&L). Blocks find some of our cards by their heading text:
 rewording such a heading makes that screen fall back to the previous layout (it does not break).
+
+## audit - 14 Oct 2026 (night): three audits, fixes on dev
+
+Code review, live click-through (34 screens × 3 widths × light/dark + Classic: no console errors, no failed calls) and
+figures cross-check (every headline figure equal on every screen). Fixed:
+- New sale: an order discount no longer counts as a line price cut (the sale could not be saved); a price above list
+  is flagged. Test added.
+- Abilities: fd22 analytics needs Profitability; fdHead profit/cash cards follow Profitability/Dues; supplier names on
+  lots only for managers or the suppliers ability; Navigator investor filter refuses private investors for non-owners;
+  commission profit only with the costs ability.
+- Figures: Navigator money flow took investor returns off twice (owners' share = net profit now); commission rules
+  count from their own month (optional earlier open month, closed months refused) instead of rewriting history;
+  System check P2 - closed months still give the net they were closed with; Money screen + classic dashboard stock at
+  cost the FIFO way (was cost book × stock); late bills in monthGross; full count of payments in no account.
+- Page (fd-23): selected chips/tabs use the accent, empty title bar hidden, Stock entry stepper fits 1024,
+  Products/Shipments fit a phone, Escape closes the account menu and alerts, alerts close on a screen change, account
+  menu Appearance switch on one line, Help label in the screen's language, head cards in ৳ lakh, FilaDash top bar
+  items never in Classic, one Escape closes only a menu, Navigator menus scroll.
+Not changed: the stick-fight game (owner's own feature, Settings), his Custom range / Edit layout, donut colours.
+Data on dev to sort before go-live: 103 payments and all expenses in no money account; fixed "Shop rent" never
+marked paid while October rent was a one-off (counted twice on the Expenses screen; Jun-Sep rent missing).
