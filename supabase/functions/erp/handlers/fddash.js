@@ -158,11 +158,16 @@ export async function erpFdDash(ctx, payload) {
   reorder.sort((a, b) => a.stock - b.stock || a.name.localeCompare(b.name));
 
   const curL = L.filter((x) => months.includes(x.month));
-  const byGroup = {}, byBrand = {}, byChannel = {}, byProduct = {};
+  const colourOf = {};                               // his "Top Colours" card: sales by the product's colour
+  for (const r of await ctx.tx`select lower(sku) as k, nullif(btrim(color), '') as c from products where business_id = ${ctx.biz}`) colourOf[str(r.k)] = str(r.c);
+  const byGroup = {}, byBrand = {}, byChannel = {}, byProduct = {}, byColour = {};
   for (const x of curL) {
     byGroup[(groupsMap[x.group] || { label: x.group }).label] = (byGroup[(groupsMap[x.group] || { label: x.group }).label] || 0) + x.revenue;
     byBrand[x.brand] = (byBrand[x.brand] || 0) + x.revenue;
     byChannel[x.source] = (byChannel[x.source] || 0) + x.revenue;
+    const col = colourOf[x.sku] || 'No colour';
+    const cc = byColour[col] || (byColour[col] = { label: col, units: 0, value: 0 });
+    cc.units += x.qty; cc.value += x.revenue;
     const p = byProduct[x.sku] || (byProduct[x.sku] = { sku: x.sku, name: x.name, units: 0, revenue: 0, gross: 0 });
     p.units += x.qty; p.revenue += x.revenue; p.gross += x.revenue - x.cost;
   }
@@ -202,6 +207,7 @@ export async function erpFdDash(ctx, payload) {
       byBrand: slices(byBrand, 6),
       byChannel: slices(byChannel, 6),
     },
+    topColours: Object.values(byColour).sort((a, b) => b.value - a.value).slice(0, 8).map((c) => ({ label: c.label, units: R(c.units), value: R(c.value) })),
     calc: {
       revenue: group
         ? [['Sales of ' + groupsMap[group].label + ', after each invoice’s discount share', R(cur.revenue)]]
@@ -255,6 +261,37 @@ export async function erpFdDash(ctx, payload) {
     out.kpi.dues = { v: R(dues) };
     out.duesByAge = Object.entries(age).map(([band, x]) => ({ band, amount: R(x[0]), count: x[1] }));
     out.calc.dues = [['What every invoice still owes (total − payments and advance), today', R(dues)]];
+  }
+  if (!group && full) {
+    // his "Investor capital at work": what investors still in have put in, less what they took back
+    try {
+      const c = (await ctx.tx.savepoint(() => ctx.tx`
+        select coalesce(sum(case when b.type = 'invest' then b.amount when b.type = 'withdraw' then -b.amount else 0 end), 0) as cap,
+               count(distinct h.holder_no)::int as n
+        from capital_book b join capital_holders h on h.business_id = b.business_id and h.holder_no = b.holder_no
+        where b.business_id = ${ctx.biz} and h.kind = 'investor' and h.ended_month is null and coalesce(btrim(b.voided), '') = ''`))[0];
+      out.kpi.capital = { v: R(c.cap), investors: c.n };
+      out.calc.capital = [['Money put in by investors still in the business − what they took back', R(c.cap)]];
+    } catch (_) { /* before capital: no card */ }
+    // his "Unmatched payments": money taken that sits in no money account
+    const acc = (await ctx.tx`select count(*)::int as n from money_accounts where business_id = ${ctx.biz}`)[0].n;
+    const u = (await ctx.tx`select count(*)::int as n, coalesce(sum(amount), 0) as a from payments
+                            where business_id = ${ctx.biz} and account_id is null and coalesce(amount, 0) <> 0
+                              and lower(btrim(coalesce(method, ''))) not in ('adjusted', 'returned', 'advance', 'undone', 'return / refund', '')`)[0];
+    out.kpi.unmatched = { v: acc ? u.n : 0, amount: acc ? R(u.a) : 0 };
+    out.calc.unmatched = [['Payments that are in no money account (Money screen: give each its account)', acc ? R(u.a) : 0]];
+    // his "Setup checklist": what to finish before the books are trusted
+    const noCost = (await products(ctx)).list.filter((p) => p.stock > 0 && !(p.cost > 0) && !/discontinued/i.test(p.status)).length;
+    const noW = (await ctx.tx`select count(*)::int as n from products p join product_stock ps on ps.product_id = p.id where p.business_id = ${ctx.biz} and ps.stock > 0
+                              and coalesce(p.weight_g, 0) = 0`)[0].n;
+    const staff = (await ctx.tx`select count(*)::int as n from memberships where business_id = ${ctx.biz} and coalesce(active, true)`)[0].n;
+    out.setup = [
+      { title: 'Money accounts set up', done: acc > 0, go: 'cash', note: acc ? acc + ' account(s)' : 'Cash, bKash, bank…' },
+      { title: 'Every payment in an account', done: acc > 0 && !u.n, go: 'cash', note: u.n ? u.n + ' payment(s) to place' : '' },
+      { title: 'Everything in stock has a cost', done: !noCost, go: 'costs', note: noCost ? noCost + ' product(s) without cost' : '' },
+      { title: 'Products in stock have a weight', done: !noW, go: 'products', note: noW ? noW + ' product(s) without weight' : '' },
+      { title: 'Staff added', done: staff > 1, go: 'settings', note: staff > 1 ? staff + ' people' : 'only you so far' },
+    ];
   }
   out.generatedAt = formatDate(ctx.now, 'd MMM yyyy, h:mm a');
   return out;

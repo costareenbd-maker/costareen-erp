@@ -25146,5 +25146,542 @@ function nsSave() {
 }
 </script>
 
+<!-- fd-17 (FilaDash merge, owner 13 Oct 2026: "his design is the top priority"): his shell and dashboard, detail for detail.
+     Shell: his logo mark + business wordmark, 46px nav items with dividers between groups (no captions), the rail
+     (72px, icons only) between 768 and 1279px, a 72px top bar with his business switcher (business + product group =
+     his "books"), the round "+" quick add, and the avatar + name account button; search becomes a round icon ("/").
+     Theme colour: the profile's colour (Look) now drives every FilaDash colour (it set --pal, which the new look ignored).
+     Dashboard: his order (revenue curve + 4 cards, two donuts, 4 cards, Top Colours + Needs Attention, Reorder
+     Suggestions, Recent Sales + Setup Checklist), money as ৳ with lakh (৳1.58L), his tooltip on the curve; our extra
+     figures follow under "More figures". Figures are the same erpFdDash ones (our formulas). -->
+<style>
+/* ---- shell: sidebar */
+:root[data-skin="fd"] { --side-w:228px; --fd-logo-1:#2F7CF6; --fd-logo-2:#5B4FE9; --fd-logo-3:#8B5CF6; }
+:root[data-skin="fd"][data-theme="dark"] { --fd-logo-1:#F59E0B; --fd-logo-2:#FB923C; --fd-logo-3:#F5A623; }
+:root[data-skin="fd"] #side { padding:26px 0 18px; }
+:root[data-skin="fd"] .brand { padding:0 16px 0 20px; margin-bottom:26px; gap:10px; align-items:center; }
+:root[data-skin="fd"] .brand .logo:not(.has-img) { width:44px; height:44px; flex:0 0 44px; background:none !important; box-shadow:none !important; border-radius:0; padding:0; color:transparent; font-size:0; }
+:root[data-skin="fd"] .brand .logo:not(.has-img) .fdlogo { width:44px; height:44px; display:block; }
+:root[data-skin="fd"] .brand h1 { font-size:20px; font-weight:800; letter-spacing:-.03em; line-height:1.1; max-width:140px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; color:var(--fd-text); }
+:root[data-skin="fd"] .brand h1 b { color:var(--fd-accent); font-weight:800; }
+:root[data-skin="fd"] .brand .tag { font-size:11px; font-weight:600; color:var(--fd-text-3); line-height:1.3; margin-top:2px; }
+:root[data-skin="fd"] nav#nav .navgrp { height:1px; padding:0 !important; margin:12px 16px 12px 18px; background:var(--fd-border); font-size:0 !important; overflow:hidden; flex:0 0 auto; }
+:root[data-skin="fd"] nav#nav .navgrp:first-child { display:none; }
+:root[data-skin="fd"] nav#nav button { min-height:46px; height:46px; padding:0 12px 0 24px; gap:14px; font-size:16px; font-weight:500; }
+:root[data-skin="fd"] nav#nav .ic, :root[data-skin="fd"] nav#nav .ic svg { width:22px; height:22px; }
+:root[data-skin="fd"][data-theme="dark"] nav#nav button { padding:0 10px 0 20px; }
+@media (min-width:761px) and (max-width:1279px) {
+  :root[data-skin="fd"] body { --side-w:72px; }
+  :root[data-skin="fd"] #side { padding-top:16px; }
+  :root[data-skin="fd"] .brand { padding:0; justify-content:center; margin-bottom:18px; }
+  :root[data-skin="fd"] .brand > div:not(.logo), :root[data-skin="fd"] #sideFold, :root[data-skin="fd"] .sidefoot { display:none !important; }
+  :root[data-skin="fd"] nav#nav button, :root[data-skin="fd"][data-theme="dark"] nav#nav button { margin:0 10px; width:calc(100% - 20px); padding:0; justify-content:center; border-radius:14px; font-size:0; gap:0; }
+  :root[data-skin="fd"] nav#nav button .count { position:absolute; top:6px; right:6px; min-width:8px; width:8px; height:8px; padding:0; font-size:0; }
+  :root[data-skin="fd"] nav#nav button[aria-selected="true"]::after { right:-11px; }
+  :root[data-skin="fd"] nav#nav .navgrp { margin:10px 14px; }
+}
+
+/* ---- shell: top bar */
+:root[data-skin="fd"] .topbar { min-height:72px; height:72px; padding:0 28px; gap:12px; background:var(--fd-sidebar); border-bottom:none; position:sticky; top:0; z-index:25; }
+:root[data-skin="fd"] .topbar::after { content:""; position:absolute; left:28px; right:28px; bottom:0; height:1px; background:var(--fd-border); }
+:root[data-skin="fd"] .topbar .bizsel, :root[data-skin="fd"] .topbar #langBtn { display:none !important; }
+:root[data-skin="fd"] #o_user { display:none !important; }
+.fdws { display:flex; align-items:center; gap:12px; min-width:0; border:0; background:none; padding:0; cursor:pointer; border-radius:12px; font:inherit; color:inherit; text-align:left; }
+.fdws-ic { width:44px; height:44px; flex:0 0 44px; border-radius:12px; background:#1E2235; color:#fff; display:grid; place-items:center; border:1px solid transparent; }
+:root[data-theme="dark"] .fdws-ic { background:#1A2230; color:var(--fd-accent); border-color:#2A3545; }
+.fdws-ic svg { width:24px; height:24px; }
+.fdws-t { display:flex; flex-direction:column; min-width:0; line-height:1.2; }
+.fdws-n { font-size:16px; font-weight:700; color:var(--fd-text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:260px; }
+.fdws-s { font-size:12px; font-weight:500; color:var(--fd-text-3); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:260px; }
+.fdchev { width:28px; height:28px; flex:0 0 28px; border-radius:999px; background:var(--fd-surface-2); color:var(--fd-text-2); display:grid; place-items:center; }
+:root[data-theme="dark"] .fdchev { border-radius:8px; border:1px solid var(--fd-border); }
+.fdchev svg { width:16px; height:16px; }
+.fdws:hover .fdchev, .fdu:hover .fdchev { background:var(--fd-surface-3); color:var(--fd-text); }
+.fdplus { width:30px; height:30px; flex:0 0 30px; border-radius:999px; margin-left:10px; background:var(--fd-accent); color:var(--fd-text-on-accent); border:1.5px solid transparent;
+  display:grid; place-items:center; cursor:pointer; padding:0; transition:box-shadow .15s, background .15s; }
+.fdplus:hover { background:var(--fd-accent-hover); box-shadow:var(--fd-accent-glow); }
+:root[data-theme="dark"] .fdplus { width:38px; height:38px; flex-basis:38px; background:transparent; color:var(--fd-accent); border-color:var(--fd-accent); box-shadow:var(--fd-glow-badge); }
+:root[data-theme="dark"] .fdplus:hover { background:rgba(245,166,35,.12); }
+.fdplus svg { width:18px; height:18px; }
+:root[data-skin="fd"] header.topbar .fdplus { background:var(--fd-accent) !important; color:var(--fd-text-on-accent) !important; border-color:transparent !important; }
+:root[data-skin="fd"][data-theme="dark"] header.topbar .fdplus { background:transparent !important; color:var(--fd-accent) !important; border-color:var(--fd-accent) !important; }
+:root[data-skin="fd"][data-theme="dark"] header.topbar .fdplus:hover { background:rgba(245,166,35,.12) !important; }
+:root[data-skin="fd"] header.topbar #gs_btn { background:var(--fd-surface-2) !important; color:var(--fd-text-2) !important; border:0 !important; padding:0 !important; }
+:root[data-skin="fd"] header.topbar #gs_btn:hover { background:var(--fd-surface-3) !important; color:var(--fd-text) !important; }
+:root[data-skin="fd"] header.topbar .fdws, :root[data-skin="fd"] header.topbar .fdu { background:none !important; border:0 !important; box-shadow:none !important; min-height:0 !important; }
+.fdu { display:flex; align-items:center; gap:12px; margin-left:4px; border:0; background:none; cursor:pointer; padding:0; border-radius:999px; font:inherit; color:inherit; }
+.fdu-av { width:40px; height:40px; flex:0 0 40px; border-radius:999px; border:1px solid var(--fd-border); background:var(--fd-accent-gradient); color:#fff; display:grid; place-items:center; font-weight:800; font-size:16px; overflow:hidden; }
+.fdu-n { font-size:16px; font-weight:700; color:var(--fd-text); white-space:nowrap; max-width:180px; overflow:hidden; text-overflow:ellipsis; }
+.fdu-r { display:block; font-size:12px; font-weight:500; color:var(--fd-text-3); line-height:1.1; }
+:root[data-skin="fd"] .topbar .spacer { flex:1 1 auto; }
+:root[data-skin="fd"] #gs_btn { display:inline-flex !important; width:40px; height:40px; min-width:40px; border-radius:999px !important; align-items:center; justify-content:center; background:var(--fd-surface-2) !important; }
+:root[data-skin="fd"] .topbar .gsearch { display:none; position:absolute; left:50%; transform:translateX(-50%); top:14px; width:min(640px, calc(100% - 32px)); margin:0; max-width:none; z-index:95; }
+:root[data-skin="fd"] .topbar.searching .gsearch { display:block; }
+:root[data-skin="fd"] .topbar .gsearch input { min-height:44px; box-shadow:var(--fd-shadow-popover); background:var(--fd-card); border:1px solid var(--fd-accent-border); }
+:root[data-skin="fd"] #o_usermenu { top:76px !important; right:24px !important; min-width:280px; padding:8px; }
+:root[data-skin="fd"] #o_usermenu button { min-height:40px; border-radius:10px; font-size:14.5px; }
+:root[data-skin="fd"] #o_usermenu button:hover { background:var(--fd-surface-2); }
+@media (max-width:760px) {
+  :root[data-skin="fd"] .topbar { height:56px; min-height:56px; padding:0 12px; gap:8px; }
+  :root[data-skin="fd"] .topbar::after { left:12px; right:12px; }
+  .fdws-ic { width:36px; height:36px; flex-basis:36px; }
+  .fdws-s, .fdu-t { display:none; }
+  .fdws-n { max-width:150px; font-size:15px; }
+  .fdplus { margin-left:0; }
+  .fdws > .fdchev, .fdu > .fdchev { display:none; }
+  :root[data-skin="fd"] header.topbar #gs_btn { width:36px; height:36px; min-width:36px; }
+  .fdu-av { width:36px; height:36px; flex-basis:36px; }
+  :root[data-skin="fd"] .fdd-tools { flex-wrap:nowrap; overflow-x:auto; justify-content:flex-start; width:100%; scrollbar-width:none; margin:0 -16px; padding:2px 16px 6px; }
+  :root[data-skin="fd"] .fdd-tools::-webkit-scrollbar { display:none; }
+  :root[data-skin="fd"] .fdd-pill { flex:0 0 auto; }
+  .fdrev-tip { display:none; }
+  .fdrev .fdd-ct { font-size:16px; }
+}
+
+/* ---- his popover menus */
+.fdpop { position:fixed; z-index:96; min-width:240px; max-width:min(420px, calc(100vw - 24px)); background:var(--fd-card); border:1px solid var(--fd-border); border-radius:16px;
+  box-shadow:var(--fd-shadow-popover); padding:8px; max-height:calc(100vh - 24px); overflow-y:auto; animation:fdpop-in .15s cubic-bezier(.2,.8,.2,1); }
+@keyframes fdpop-in { from { opacity:0; transform:translateY(-4px); } to { opacity:1; transform:none; } }
+.fdpop-sec { padding:6px 8px 4px; font-size:12.5px; font-weight:600; color:var(--fd-text-3); }
+.fdpop-sep { height:1px; background:var(--fd-border); margin:6px 4px; }
+.fdpop-it { display:flex; align-items:center; gap:12px; width:100%; min-height:40px; padding:8px 10px; border:0; background:none; border-radius:10px; text-align:left; color:var(--fd-text);
+  font:inherit; font-size:14.5px; font-weight:500; cursor:pointer; }
+.fdpop-it > svg { width:18px; height:18px; color:var(--fd-text-3); flex:0 0 18px; }
+.fdpop-it:hover, .fdpop-it:focus-visible { background:var(--fd-surface-2); outline:none; }
+.fdpop-it[aria-checked="true"] { background:var(--fd-accent-soft); color:var(--fd-accent-text); }
+.fdpop-it[aria-checked="true"] > svg { color:var(--fd-accent-text); }
+.fdpop-it[disabled] { opacity:.45; cursor:not-allowed; }
+.fdpop-tx { flex:1 1 auto; min-width:0; }
+.fdpop-h { display:block; font-size:12.5px; color:var(--fd-text-3); font-weight:400; margin-top:1px; white-space:normal; }
+
+/* ---- page head: his title row (title + "i" left, pills right, one line) */
+:root[data-skin="fd"] .fdd-head { align-items:center; margin:0 0 20px; }
+:root[data-skin="fd"] .fdd-head .fdd-sub, :root[data-skin="fd"] .fdd-qa, :root[data-skin="fd"] #fddGroup { display:none !important; }
+.fdd-ti { width:20px; height:20px; border-radius:999px; border:0; padding:0; background:var(--fd-accent); color:var(--fd-text-on-accent); font-size:12px; font-weight:800; display:inline-grid; place-items:center; cursor:pointer; font-family:var(--fd-font); }
+.fdd-ti:hover { transform:scale(1.12); }
+:root[data-skin="fd"]:not([data-theme="dark"]) .fdd-pill[aria-pressed="true"] { background:linear-gradient(180deg, color-mix(in srgb, var(--fd-accent) 92%, #fff), var(--fd-accent)); }
+
+/* ---- dashboard: hero revenue curve */
+.fdrev .fdd-ch { align-items:flex-start; }
+.fdrev-fig { margin-left:auto; text-align:right; line-height:1.15; }
+.fdrev-fig b { display:block; font-size:28px; font-weight:800; letter-spacing:-.02em; color:var(--fd-accent-text); }
+.fdrev-up { display:block; font-size:14px; font-weight:700; color:var(--fd-positive-text); margin-top:2px; }
+.fdrev-up.bad { color:var(--fd-negative-text); }
+.fdrev-vs { display:block; font-size:13px; color:var(--fd-text-3); font-weight:500; margin-top:2px; }
+.fdrev-plot { position:relative; margin-top:8px; }
+.fdrev-plot svg { width:100%; height:auto; display:block; overflow:visible; }
+.fdrev-plot .gl { stroke:var(--fd-border); stroke-width:1; }
+.fdrev-plot .vl { stroke:var(--fd-border); stroke-width:1; }
+.fdrev-plot .ax { fill:var(--fd-text-3); font-size:12px; font-weight:500; font-family:var(--fd-font); }
+.fdrev-plot .ln { fill:none; stroke:var(--fd-accent); stroke-width:2.5; stroke-linecap:round; }
+.fdrev-plot .dot { fill:var(--fd-accent); stroke:var(--fd-card); stroke-width:2; cursor:pointer; }
+.fdrev-plot .dot.last { r:7; stroke-width:2.5; }
+.fdrev-plot .cur { stroke:var(--fd-accent); stroke-width:1.5; stroke-dasharray:3 3; }
+.fdrev-tip { position:absolute; transform:translate(-100%, -50%); margin-left:-14px; background:var(--fd-tooltip-bg, #1E2235); color:#fff; border-radius:10px; padding:8px 12px;
+  box-shadow:0 8px 24px rgba(20,23,43,.25); pointer-events:none; white-space:nowrap; z-index:2; }
+:root[data-theme="dark"] .fdrev-tip { background:#1C2432; border:1px solid var(--fd-border); }
+.fdrev-tip b { display:block; font-size:16px; font-weight:700; line-height:1.2; }
+.fdrev-tip span { display:block; font-size:12.5px; font-weight:500; color:rgba(255,255,255,.72); line-height:1.3; }
+.fdrev-tip.right { transform:translate(0, -50%); margin-left:14px; }
+
+/* ---- dashboard: lists */
+.fdd-att2 { list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:8px; }
+.fdd-att2 li { display:flex; align-items:center; gap:12px; padding:10px 12px; border-radius:12px; background:var(--fd-surface-2); cursor:pointer; }
+.fdd-att2 li:hover { background:var(--fd-surface-3); }
+.fdd-att2 .t { flex:1 1 auto; min-width:0; }
+.fdd-att2 .t b { display:block; font-size:14px; font-weight:700; color:var(--fd-text); }
+.fdd-att2 .t span { display:block; font-size:12.5px; color:var(--fd-text-3); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.fdd-att2 .chv { color:var(--fd-text-3); font-size:18px; }
+.fdd-setup .bar { height:8px; border-radius:999px; background:var(--fd-surface-2); overflow:hidden; margin:6px 0 12px; }
+.fdd-setup .bar i { display:block; height:100%; border-radius:999px; background:var(--fd-accent-gradient); }
+.fdd-setup .hd { display:flex; justify-content:space-between; font-size:13px; color:var(--fd-text-3); font-weight:600; }
+.fdd-setup ul { list-style:none; margin:0; padding:0; }
+.fdd-setup li { display:flex; align-items:center; gap:10px; padding:8px 0; border-bottom:1px solid var(--fd-border); font-size:14px; cursor:pointer; }
+.fdd-setup li:last-child { border-bottom:0; }
+.fdd-setup li .d { width:20px; height:20px; border-radius:50%; flex:0 0 auto; display:grid; place-items:center; font-size:11px; font-weight:800; border:1.5px solid var(--fd-border-strong); color:transparent; }
+.fdd-setup li.ok .d { background:var(--fd-positive); border-color:var(--fd-positive); color:#fff; }
+.fdd-setup li.ok .nm { color:var(--fd-text-3); text-decoration:line-through; }
+.fdd-setup li small { display:block; color:var(--fd-text-3); font-size:12px; }
+.fdd-more-h { font-size:12px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:var(--fd-text-3); margin:8px 0 12px; }
+.fdd-grid .s3 { grid-column:span 3; }
+.fdd-grid .s4 { grid-column:1 / -1; }
+@media (max-width:1100px) { .fdd-grid .s3 { grid-column:span 2; } }
+@media (max-width:760px) { .fdd-grid .s3 { grid-column:auto; } }
+</style>
+<script>
+/* ---------- the profile's theme colour drives the FilaDash colours ---------- */
+function fdHexMix(hex, other, t) {
+  var a = parseInt(hex.slice(1), 16), b = parseInt(other.slice(1), 16);
+  var r = Math.round(((a >> 16) & 255) * (1 - t) + ((b >> 16) & 255) * t), g = Math.round(((a >> 8) & 255) * (1 - t) + ((b >> 8) & 255) * t), bl = Math.round((a & 255) * (1 - t) + (b & 255) * t);
+  return '#' + ((1 << 24) + (r << 16) + (g << 8) + bl).toString(16).slice(1);
+}
+function fdRgba(hex, al) { var n = parseInt(hex.slice(1), 16); return 'rgba(' + ((n >> 16) & 255) + ',' + ((n >> 8) & 255) + ',' + (n & 255) + ',' + al + ')'; }
+var FD_ACC_KEYS = ['--fd-accent', '--fd-accent-hover', '--fd-accent-text', '--fd-accent-soft', '--fd-accent-soft-2', '--fd-accent-border', '--fd-accent-glow', '--fd-accent-gradient',
+  '--fd-hero-shadow', '--fd-focus-ring', '--fd-text-on-accent', '--fd-logo-1', '--fd-logo-2', '--fd-logo-3', '--fd-nav-active-bg', '--fd-glow-badge'];
+function fdAccentApply() {
+  var root = document.documentElement, t = (typeof lookParse === 'function') ? lookParse(LOOK || '') : null;
+  FD_ACC_KEYS.forEach(function (k) { root.style.removeProperty(k); });
+  if (!t || !/^#[0-9a-f]{6}$/i.test(t.main)) return;          // no colour chosen: his indigo (light) / amber (dark)
+  var dark = root.getAttribute('data-theme') === 'dark', m = t.main, l = /^#[0-9a-f]{6}$/i.test(t.link || '') ? t.link : fdHexMix(m, '#ffffff', 0.25);
+  var set = function (k, v) { root.style.setProperty(k, v); };
+  set('--fd-accent', m);
+  set('--fd-accent-hover', dark ? fdHexMix(m, '#ffffff', 0.15) : fdHexMix(m, '#000000', 0.12));
+  set('--fd-accent-text', dark ? fdHexMix(m, '#ffffff', 0.2) : fdHexMix(m, '#000000', 0.12));
+  set('--fd-accent-soft', dark ? fdRgba(m, 0.14) : fdHexMix(m, '#ffffff', 0.9));
+  set('--fd-accent-soft-2', dark ? fdRgba(m, 0.22) : fdHexMix(m, '#ffffff', 0.84));
+  set('--fd-accent-border', fdRgba(m, dark ? 0.45 : 0.35));
+  set('--fd-accent-glow', dark ? '0 0 0 1px ' + fdRgba(m, 0.35) + ', 0 0 18px ' + fdRgba(m, 0.30) : '0 8px 20px ' + fdRgba(m, 0.30));
+  set('--fd-accent-gradient', 'linear-gradient(135deg, ' + l + ' 0%, ' + m + ' 100%)');
+  set('--fd-hero-shadow', dark ? '0 12px 36px rgba(0,0,0,.45)' : '0 14px 34px ' + fdRgba(m, 0.35));
+  set('--fd-focus-ring', '0 0 0 3px ' + fdRgba(m, 0.38));
+  set('--fd-text-on-accent', lookInk(m));
+  set('--fd-logo-1', l); set('--fd-logo-2', m); set('--fd-logo-3', fdHexMix(m, '#ffffff', 0.2));
+  set('--fd-nav-active-bg', dark ? 'linear-gradient(90deg, ' + fdRgba(m, 0.30) + ', ' + fdRgba(m, 0.10) + ')' : fdHexMix(m, '#ffffff', 0.84));
+  if (dark) set('--fd-glow-badge', '0 0 0 1px ' + fdRgba(m, 0.18) + ', 0 0 12px ' + fdRgba(m, 0.25));
+}
+if (typeof lookApply === 'function') {
+  var lookApplyFd = lookApply;
+  lookApply = function () { var r = lookApplyFd.apply(this, arguments); try { fdAccentApply(); } catch (e) {} return r; };
+}
+try { new MutationObserver(function () { fdAccentApply(); }).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme', 'data-skin'] }); } catch (e) {}
+try { fdAccentApply(); } catch (e) {}
+
+/* ---------- money the FilaDash way: ৳ and lakh ---------- */
+function fdTk(v, cur) {
+  var n = Number(v) || 0, a = Math.abs(n), sg = n < 0 ? '−' : '';
+  if ((cur || 'BDT') !== 'BDT') return sg + esc(cur) + ' ' + fmt(a);
+  if (a >= 1e7) return sg + '৳' + (a / 1e7).toFixed(2) + 'Cr';
+  if (a >= 1e5) return sg + '৳' + (a / 1e5).toFixed(2) + 'L';
+  return sg + '৳' + Math.round(a).toLocaleString('en-IN');
+}
+fddMoney = function (v, cur) { return fdTk(v, cur); };
+
+/* ---------- small icons for the shell ---------- */
+var FDI = {
+  chev: '<path d="M6 9l6 6 6-6"/>', plus: '<path d="M12 5v14M5 12h14"/>', layers: '<path d="M12 3l9 5-9 5-9-5z"/><path d="M3 13l9 5 9-5"/><path d="M3 17.5l9 5 9-5" opacity=".55"/>',
+  biz: '<path d="M3 21h18M5 21V7l7-4 7 4v14"/><path d="M9 21v-5h6v5"/>', group: '<circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3"/>',
+  cart: '<path d="M6 6h15l-1.5 9h-12z"/><path d="M6 6L5 3H2"/><circle cx="9" cy="20" r="1.5"/><circle cx="18" cy="20" r="1.5"/>',
+  ship: '<path d="M3 17l2 3h14l2-3"/><path d="M5 17V10h14v7"/><path d="M9 10V6h6v4"/>', wallet: '<rect x="3" y="6" width="18" height="13" rx="2"/><path d="M16 12h3"/>',
+  receipt: '<path d="M5 3v18l2-1.5L9 21l2-1.5L13 21l2-1.5L17 21l2-1.5V3z"/><path d="M8 8h8M8 12h8"/>', quote: '<path d="M14 3v4h4"/><path d="M17 21H7V3h7l4 4v14z"/><path d="M9 13h6M9 17h4"/>',
+  pre: '<path d="M7 3h10v4H7z"/><path d="M5 7h14v14H5z"/><path d="M9 12h6M9 16h4"/>', inv: '<circle cx="9" cy="8" r="4"/><path d="M2 21v-1a6 6 0 0 1 12 0v1"/><path d="M17 11v6M14 14h6"/>',
+  inv2: '<path d="M14 3v4a1 1 0 0 0 1 1h4"/><path d="M17 21H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2z"/><path d="M12 11v6M9 14h6"/>',
+  check: '<path d="M5 12l5 5L20 7"/>', info: '<circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/>', search: '<circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/>',
+  add: '<circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/>'
+};
+function fdI(n, sz) { return '<svg viewBox="0 0 24 24" width="' + (sz || 18) + '" height="' + (sz || 18) + '" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + (FDI[n] || '') + '</svg>'; }
+function fdLogoSvg() {
+  return '<svg class="fdlogo" viewBox="0 0 44 44" aria-hidden="true"><defs><linearGradient id="fdlg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" style="stop-color:var(--fd-logo-1)"/>' +
+    '<stop offset=".55" style="stop-color:var(--fd-logo-2)"/><stop offset="1" style="stop-color:var(--fd-logo-3)"/></linearGradient></defs>' +
+    '<path d="M22 2.5 39.5 12.5v19L22 41.5 4.5 31.5v-19Zm0 9.3-9.2 5.2v10L22 32.2l9.2-5.2v-10Z" fill="url(#fdlg)" fill-rule="evenodd"/>' +
+    '<path d="M22 11.8 31.2 17 22 22.2 12.8 17Z" style="fill:var(--fd-logo-1);opacity:.55"/><path d="M12.8 17 22 22.2v10L12.8 27Z" style="fill:var(--fd-logo-2);opacity:.35"/>' +
+    '<path d="M31.2 17 22 22.2v10l9.2-5.2Z" style="fill:var(--fd-logo-3);opacity:.22"/></svg>';
+}
+
+/* ---------- popover menus (his FD.ui.menu) ---------- */
+var FDPOP = null;
+function fdPopClose() { if (FDPOP && FDPOP.parentNode) FDPOP.parentNode.removeChild(FDPOP); FDPOP = null; }
+function fdPop(anchor, items, opts) {
+  fdPopClose(); opts = opts || {};
+  var p = document.createElement('div'); p.className = 'fdpop'; p.setAttribute('role', 'menu');
+  p.innerHTML = items.map(function (it, i) {
+    if (it.section) return '<div class="fdpop-sec">' + esc(it.section) + '</div>';
+    if (it.sep) return '<div class="fdpop-sep"></div>';
+    if (it.html) return it.html;
+    return '<button type="button" class="fdpop-it" role="menuitem' + (it.checked !== undefined ? 'radio' : '') + '" data-fdpi="' + i + '"' + (it.checked ? ' aria-checked="true"' : '') + (it.disabled ? ' disabled' : '') + '>' +
+      fdI(it.icon || 'add') + '<span class="fdpop-tx">' + esc(it.label) + (it.help ? '<span class="fdpop-h">' + esc(it.help) + '</span>' : '') + '</span>' + (it.checked ? fdI('check', 16) : '') + '</button>';
+  }).join('');
+  document.body.appendChild(p); FDPOP = p;
+  var r = anchor.getBoundingClientRect(), w = p.offsetWidth;
+  var left = opts.end ? r.right - w : r.left;
+  p.style.left = Math.max(12, Math.min(left, window.innerWidth - w - 12)) + 'px';
+  p.style.top = (r.bottom + 8) + 'px';
+  p.addEventListener('click', function (e) {
+    var b = e.target.closest('[data-fdpi]'); if (!b) return;
+    var it = items[+b.getAttribute('data-fdpi')]; fdPopClose(); if (it && it.onClick) it.onClick();
+  });
+  var first = p.querySelector('.fdpop-it:not([disabled])'); if (first) first.focus();
+  return p;
+}
+document.addEventListener('mousedown', function (e) { if (FDPOP && !e.target.closest('.fdpop') && !e.target.closest('.fdws,.fdplus')) fdPopClose(); });
+document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && FDPOP) fdPopClose(); });
+window.addEventListener('resize', fdPopClose);
+
+/* ---------- the top bar: business switcher, +, account ---------- */
+function fdBizName() { var n = el('bizName'); return (n && n.textContent.trim()) || (ME && (ME.business || ME.bizName)) || 'Business'; }
+function fdGroupLabel() {
+  if (!FDD.group) return '';
+  var g = ((FDD.data && FDD.data.groups) || []).filter(function (x) { return x.key === FDD.group; })[0];
+  return g ? g.label : FDD.group;
+}
+function fdShellPaint() {
+  if (document.documentElement.getAttribute('data-skin') !== 'fd') return;
+  var bar = document.querySelector('header.topbar'); if (!bar) return;
+  var ws = el('fdws');
+  if (!ws) {
+    ws = document.createElement('button'); ws.type = 'button'; ws.id = 'fdws'; ws.className = 'fdws'; ws.setAttribute('aria-haspopup', 'menu');
+    var plus = document.createElement('button'); plus.type = 'button'; plus.id = 'fdplus'; plus.className = 'fdplus'; plus.setAttribute('aria-label', 'Quick add'); plus.setAttribute('aria-haspopup', 'menu'); plus.innerHTML = fdI('plus');
+    var u = document.createElement('button'); u.type = 'button'; u.id = 'fdu'; u.className = 'fdu'; u.setAttribute('aria-haspopup', 'menu');
+    var anchor = bar.querySelector('.gsearch') || bar.firstChild;
+    bar.insertBefore(ws, anchor); bar.insertBefore(plus, anchor);
+    bar.appendChild(u);
+    ws.addEventListener('click', function () { fdWsMenu(ws); });
+    plus.addEventListener('click', function () { fdQuickAdd(plus); });
+    u.addEventListener('mousedown', function (e) { e.stopPropagation(); });
+    u.addEventListener('click', function () { var m = el('o_usermenu'); if (m) m.classList.toggle('open'); });
+    var gb = el('gs_btn'); if (gb) { gb.innerHTML = fdI('search', 18); gb.title = 'Search (/)'; }
+  }
+  var g = fdGroupLabel(), nm = fdBizName();
+  ws.setAttribute('aria-label', 'Business: ' + nm + '. Switch business or product group');
+  ws.innerHTML = '<span class="fdws-ic">' + fdI(g ? 'group' : 'layers', 24) + '</span><span class="fdws-t"><span class="fdws-n">' + esc(nm) + '</span><span class="fdws-s">' +
+    esc(g ? 'Group: ' + g : nm + ' · All products') + '</span></span><span class="fdchev">' + fdI('chev', 16) + '</span>';
+  var who = (ME && ME.name) || '', role = (ME && ME.role) || '';
+  el('fdu').setAttribute('aria-label', 'Account menu: ' + who);
+  el('fdu').innerHTML = '<span class="fdu-av">' + esc(String(who || '•').trim().charAt(0).toUpperCase()) + '</span><span class="fdu-t" style="text-align:left"><span class="fdu-n">' + esc(who || 'Account') + '</span>' +
+    (role && role !== 'owner' ? '<span class="fdu-r">' + esc(role.charAt(0).toUpperCase() + role.slice(1)) + '</span>' : '') + '</span><span class="fdchev">' + fdI('chev', 16) + '</span>';
+  // the logo and the wordmark
+  var mk = el('bizMark');
+  if (mk && !mk.classList.contains('has-img') && !mk.querySelector('.fdlogo')) mk.innerHTML = fdLogoSvg();
+  var tag = document.querySelector('#side .brand .tag'); if (tag && tag.textContent !== 'ERP · Business') tag.textContent = 'ERP · Business';
+  // the rail needs a name on every icon
+  [].forEach.call(document.querySelectorAll('#nav > button[data-view]'), function (b) { if (!b.title) b.title = b.textContent.replace(/\d+$/, '').trim(); });
+}
+function fdWsMenu(anchor) {
+  var items = [], sel = el('bizSel');
+  var biz = sel ? [].filter.call(sel.options, function (o) { return o.value && !/^\+|^__/.test(o.value) && !/^\+/.test(o.textContent.trim()); }) : [];
+  if (biz.length > 1) {
+    items.push({ section: 'Business' });
+    biz.forEach(function (o) { items.push({ label: o.textContent.trim(), icon: 'biz', checked: o.selected, onClick: function () { if (o.selected) return; sel.value = o.value; sel.dispatchEvent(new Event('change', { bubbles: true })); } }); });
+    items.push({ sep: true });
+  }
+  items.push({ section: 'Product group (scopes the dashboard)' });
+  items.push({ label: 'All products', help: 'The whole business', icon: 'layers', checked: !FDD.group, onClick: function () { FDD.group = ''; fddSave(); if (VIEW !== 'dash') go('dash'); else repaint(); fdShellPaint(); } });
+  var groups = (FDD.data && FDD.data.groups) || [];
+  groups.forEach(function (gr) { items.push({ label: gr.label, help: gr.products + ' product(s)', icon: 'group', checked: FDD.group === gr.key, onClick: function () { FDD.group = gr.key; fddSave(); if (VIEW !== 'dash') go('dash'); else repaint(); fdShellPaint(); } }); });
+  if (!groups.length) items.push({ label: 'Groups load with the dashboard', icon: 'info', disabled: true });
+  items.push({ sep: true });
+  items.push({ label: 'Groups are views, not copies', help: 'Σ groups = All products. Expenses, net profit, dues and cash stay whole-business.', icon: 'info', disabled: true });
+  if (sel && [].some.call(sel.options, function (o) { return /^\+/.test(o.textContent.trim()); })) {
+    var add = [].filter.call(sel.options, function (o) { return /^\+/.test(o.textContent.trim()); })[0];
+    items.push({ label: add.textContent.replace(/^\+\s*/, '').trim(), icon: 'add', onClick: function () { sel.value = add.value; sel.dispatchEvent(new Event('change', { bubbles: true })); } });
+  }
+  fdPop(anchor, items);
+}
+function fdQuickAdd(anchor) {
+  var owner = ME && String(ME.role) === 'owner';
+  var Q = [
+    { v: 'sale', label: 'New sale', icon: 'cart', help: 'One-minute phone sale' },
+    { v: 'invoice', label: 'New invoice (classic)', icon: 'inv2', help: 'Serials, warranty, backdating' },
+    { v: 'stock', label: 'Receive shipment', icon: 'ship', help: 'Stock in, landed cost, lots' },
+    { v: 'sales', label: 'Record payment', icon: 'wallet', help: 'A due paid by bKash, Nagad, cash…', f: 'due' },
+    { v: 'expenses', label: 'Add expense', icon: 'receipt', help: 'Rent, salary, courier…' },
+    { v: 'preorders', label: 'New pre-order', icon: 'pre', help: 'Agreed price and a deposit', click: '[data-prenew]' },
+    { v: 'quotes', label: 'New quotation', icon: 'quote', help: 'A price offer to send' },
+    { v: 'capital', label: 'New investor', icon: 'inv', help: 'Capital and its return', owner: true }
+  ].filter(function (q) { return navOn(q.v) && (!q.owner || owner); });
+  var items = [{ section: 'Quick add' }];
+  Q.forEach(function (q) { items.push({ label: q.label, help: q.help, icon: q.icon, onClick: function () {
+    if (q.f && typeof dashFilter === 'function') { try { dashFilter(q.f); } catch (e) {} }
+    go(q.v);
+    if (q.click) setTimeout(function () { var b = document.querySelector(q.click); if (b) b.click(); }, 400);
+  } }); });
+  if (items.length === 1) items.push({ label: 'Nothing to add with this role', icon: 'info', disabled: true });
+  fdPop(anchor, items);
+}
+// "/" opens the search (it is an icon now)
+document.addEventListener('keydown', function (e) {
+  if (e.key !== '/' || e.ctrlKey || e.metaKey || e.altKey) return;
+  var t = e.target; if (t && (/^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName) || t.isContentEditable)) return;
+  if (document.documentElement.getAttribute('data-skin') !== 'fd') return;
+  var bar = document.querySelector('header.topbar'), q = el('gs_q'); if (!bar || !q) return;
+  e.preventDefault(); bar.classList.add('searching'); setTimeout(function () { q.focus(); }, 0);
+}, true);
+document.addEventListener('mousedown', function (e) {
+  var bar = document.querySelector('header.topbar');
+  if (bar && bar.classList.contains('searching') && !e.target.closest('.gsearch') && !e.target.closest('#gs_btn') && innerWidth > 640) bar.classList.remove('searching');
+});
+var repaintShell = repaint;
+repaint = function () { var r = repaintShell.apply(this, arguments); try { fdShellPaint(); } catch (e) {} return r; };
+setTimeout(function () { try { fdShellPaint(); } catch (e) {} }, 0);
+
+/* ---------- the dashboard in his order ---------- */
+var FD_SW = { black:'#1F2329', white:'#F4F5F7', red:'#E5484D', blue:'#3B82F6', green:'#22C55E', yellow:'#FACC15', orange:'#F97316', purple:'#8B5CF6', pink:'#EC4899',
+  grey:'#9CA3AF', gray:'#9CA3AF', silver:'#C0C4CC', gold:'#D4A72C', brown:'#8B5E3C', clear:'#DDEBF2', transparent:'#DDEBF2', natural:'#EADFC8', beige:'#E8D9B5', cyan:'#06B6D4', teal:'#14B8A6' };
+function fdSwatch(name) {
+  var n = String(name || '').toLowerCase();
+  for (var k in FD_SW) if (n.indexOf(k) >= 0) return FD_SW[k];
+  return 'var(--fd-surface-3)';
+}
+function fdRevChart(series, cur, rangeTo) {
+  var W = 560, H = 300, L = 44, T = 14, B = 28, Rr = 14, iw = W - L - Rr, ih = H - T - B;
+  var vals = series.map(function (s) { return s.revenue; });
+  var mx = Math.max.apply(null, vals.concat([1]));
+  var step = Math.pow(10, Math.floor(Math.log10(mx / 5))), nice = [1, 2, 2.5, 5, 10], unit = step;
+  for (var q = 0; q < nice.length; q++) { if (mx / (step * nice[q]) <= 5) { unit = step * nice[q]; break; } }
+  var top = Math.ceil(mx / unit) * unit || unit;
+  var y = function (v) { return T + ih - Math.max(0, v) / top * ih; };
+  var x = function (i) { return L + (series.length === 1 ? iw / 2 : i * iw / (series.length - 1)); };
+  var g = '', ax = '';
+  for (var v = 0; v <= top + 1e-6; v += unit) {
+    g += '<line class="gl" x1="' + L + '" x2="' + (W - Rr) + '" y1="' + y(v).toFixed(1) + '" y2="' + y(v).toFixed(1) + '"/>';
+    ax += '<text class="ax" x="' + (L - 10) + '" y="' + (y(v) + 4).toFixed(1) + '" text-anchor="end">' + (v ? fddShort(v) : '0') + '</text>';
+  }
+  series.forEach(function (s, i) {
+    g += '<line class="vl" x1="' + x(i).toFixed(1) + '" x2="' + x(i).toFixed(1) + '" y1="' + T + '" y2="' + (T + ih) + '"/>';
+    ax += '<text class="ax" x="' + x(i).toFixed(1) + '" y="' + (H - 6) + '" text-anchor="middle">' + esc(String(s.label).split(" '")[0]) + '</text>';
+  });
+  var pts = series.map(function (s, i) { return [Number(x(i).toFixed(1)), Number(y(s.revenue).toFixed(1))]; });
+  var line = fddSmooth(pts), last = pts[pts.length - 1];
+  var area = line + ' L' + last[0] + ',' + (T + ih) + ' L' + pts[0][0] + ',' + (T + ih) + ' Z';
+  var dots = pts.map(function (p, i) { return '<circle class="dot' + (i === pts.length - 1 ? ' last' : '') + '" data-fdrev="' + i + '" cx="' + p[0] + '" cy="' + p[1] + '" r="' + (i === pts.length - 1 ? 7 : 5) + '"/>'; }).join('');
+  var svg = '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Revenue by month"><defs><linearGradient id="fdrevA" x1="0" y1="0" x2="0" y2="1">' +
+    '<stop offset="0" stop-color="var(--fd-accent)" stop-opacity=".32"/><stop offset="1" stop-color="var(--fd-accent)" stop-opacity="0"/></linearGradient></defs>' +
+    g + ax + '<path d="' + area + '" fill="url(#fdrevA)"/><path class="ln" d="' + line + '"/>' +
+    '<line class="cur" x1="' + last[0] + '" x2="' + last[0] + '" y1="' + last[1] + '" y2="' + (T + ih) + '"/>' + dots + '</svg>';
+  var tip = function (i) {
+    var s = series[i], p = pts[i], isLast = i === series.length - 1, right = p[0] / W < 0.25;
+    var cap = String(s.label).replace(" '", ' 20') + (isLast && rangeTo ? ' · ' + rangeTo : '');
+    return '<div class="fdrev-tip' + (right ? ' right' : '') + '" style="left:' + (p[0] / W * 100).toFixed(2) + '%;top:' + (p[1] / H * 100).toFixed(2) + '%"><b>' + fdTk(s.revenue, cur) + '</b><span>' + esc(cap) + '</span></div>';
+  };
+  FDD._tip = tip;
+  return '<div class="fdrev-plot" id="fdrevPlot">' + svg + tip(series.length - 1) + '</div>';
+}
+document.addEventListener('mouseover', function (e) {
+  var d = e.target.closest && e.target.closest('[data-fdrev]'); if (!d || !FDD._tip) return;
+  var plot = el('fdrevPlot'); if (!plot) return;
+  var old = plot.querySelector('.fdrev-tip'); if (old) old.outerHTML = FDD._tip(+d.getAttribute('data-fdrev'));
+});
+function fddViewFd() {
+  var d = FDD.data;
+  fddLoad();
+  var biz = fdBizName();
+  var head = '<div class="fdd-head"><div><div class="fdd-eyebrow">' + esc(FDD.group && d ? d.groupLabel : biz) + '</div>' +
+    '<h1 class="fdd-title">Dashboard <button type="button" class="fdd-ti" data-hghelp="dash" title="' + (d ? esc(d.rangeLabel + ' · compared with ' + d.prevLabel + ' · as of ' + d.generatedAt) : 'Dashboard') + '">i</button></h1></div>' +
+    '<div class="fdd-tools">' + [[1, 'This month'], [3, '3 months'], [6, '6 months'], [12, '12 months']].map(function (x) {
+      return '<button type="button" class="fdd-pill" data-fddm="' + x[0] + '" aria-pressed="' + (FDD.months === x[0]) + '">' + x[1] + '</button>'; }).join('') +
+    (FDD.group ? '<button type="button" class="fdd-pill" data-fddallg="1" title="Back to all products">' + esc(fdGroupLabel()) + ' ×</button>' : '') + '</div></div>';
+  var h = head;
+  if (FDD.err && !d) return h + '<div class="note err"><div class="ico">!</div><div>Could not load the dashboard: ' + esc(FDD.err) + ' <button class="btn small" type="button" data-fddretry="1">Try again</button></div></div>';
+  if (!d) return h + '<div class="fdd-grid"><div class="fdd-skel" style="grid-column:span 2;height:400px"></div><div class="fdd-skel"></div><div class="fdd-skel"></div><div class="fdd-skel"></div><div class="fdd-skel"></div></div>';
+  var k = d.kpi, cur = d.currency, grp = !!d.group;
+  if (grp) h += '<div class="fdd-note">Showing <b>' + esc(d.groupLabel) + '</b> only: its sales, cost, gross profit and stock. Expenses, net profit, dues and cash belong to the whole business — pick “All products” in the business switcher to see them.</div>';
+  if (FDD.busy) h += '<div class="fdd-note">Updating…</div>';
+  var used = {};
+  var kp = function (o) { used[o.key] = 1; return fddKpi(o); };
+
+  // ---- row 1: Monthly Revenue + 4 cards
+  var rv = k.revenue, pc = rv.prev ? (rv.v - rv.prev) / Math.abs(rv.prev) * 100 : null;
+  var fig = '<div class="fdrev-fig"><b>' + fdTk(rv.v, cur) + '</b>' + (pc === null ? '' : '<span class="fdrev-up' + (pc < 0 ? ' bad' : '') + '">' + (pc < 0 ? '↓' : '↑') + ' ' + Math.abs(pc).toFixed(0) + '%</span>') +
+    '<span class="fdrev-vs">vs ' + esc(d.prevLabel) + '</span></div>';
+  var toLbl = d.months === 1 && /to date/.test(d.rangeLabel) ? 'to ' + (d.generatedAt || '').split(',')[0].split(' ').slice(0, 2).join(' ') + ' (month to date)' : '';
+  h += '<div class="fdd-grid"><div class="fdd-c s2 r2 fdrev"><div class="fdd-ch"><span class="fdd-badge">' + fddIc('taka') + '</span><div class="fdd-ct">Monthly Revenue' +
+    (d.calc.revenue ? ' <button type="button" class="fdd-i" data-fdcalc="revenue" data-fdtitle="Revenue" title="Show calculation">i</button>' : '') + '</div>' + fig + '</div>' +
+    fdRevChart(d.series, cur, toLbl) + '</div>';
+  if (!grp && k.net) h += kp({ key: 'net', title: 'Net profit', icon: 'target', money: true, k: k.net, hero: true, go: 'profit' });
+  else if (k.gross) h += kp({ key: 'gross', title: 'Gross profit', icon: 'trend', money: true, k: k.gross, hero: true, note: k.margin ? k.margin.v + '% margin' : '' });
+  else h += kp({ key: 'orders', title: 'Orders', icon: 'cart', k: k.orders, hero: true, go: 'sales' });
+  if (k.stockValue) h += kp({ key: 'stockValue', title: 'Stock value at cost', icon: 'box', money: true, k: k.stockValue, go: 'products', note: fmt(k.stockUnits.v) + ' units on hand' });
+  else h += kp({ key: 'stockUnits', title: 'Units on hand', icon: 'box', k: k.stockUnits, go: 'products' });
+  if (k.dues) h += kp({ key: 'dues', title: 'Dues receivable', icon: 'bell', money: true, k: k.dues, tone: k.dues.v > 0 ? 'warn' : '', go: 'sales', f: 'due' });
+  else h += kp({ key: 'units', title: 'Units sold', icon: 'spool', k: k.units });
+  if (k.capital) h += kp({ key: 'capital', title: 'Investor capital at work', icon: 'wallet', money: true, k: k.capital, go: 'capital', note: k.capital.investors + ' investor(s)' });
+  else if (k.cashIn) h += kp({ key: 'cashIn', title: 'Cash received', icon: 'wallet', money: true, k: k.cashIn, go: 'cash' });
+  else h += kp({ key: 'avgOrder', title: 'Average order', icon: 'receipt', money: true, k: k.avgOrder });
+  h += '</div>';
+
+  // ---- row 2: two donuts
+  h += '<div class="fdd-grid">' + (grp ? fddDonut('Sales by Brand', 'layers', d.donuts.byBrand, 'products', '', 'Brand') : fddDonut('Sales by Product Group', 'spool', d.donuts.byGroup, 'products', '', 'Group')) +
+    fddDonut('Sales Channel', 'globe', d.donuts.byChannel, 'sales', '', 'Channel') + '</div>';
+
+  // ---- row 3: four cards
+  var r3 = [];
+  if (k.margin) r3.push(kp({ key: 'margin', title: 'Gross margin', icon: 'percent', pct: true, k: k.margin }));
+  r3.push(kp({ key: 'orders', title: 'Orders', icon: 'cart', k: k.orders, go: 'sales' }));
+  if (k.cashIn && used.capital) r3.push(kp({ key: 'cashIn', title: 'Cash received', icon: 'wallet', money: true, k: k.cashIn, go: 'cash' }));
+  if (k.unmatched) r3.push(kp({ key: 'unmatched', title: 'Unmatched payments', icon: 'receipt', k: k.unmatched, tone: k.unmatched.v ? 'warn' : '', go: 'cash', note: k.unmatched.v ? fdTk(k.unmatched.amount, cur) + ' in no account' : 'every payment is in an account' }));
+  if (!used.units) r3.push(kp({ key: 'units', title: 'Units sold', icon: 'spool', k: k.units }));
+  while (r3.length < 4 && !used.avgOrder) r3.push(kp({ key: 'avgOrder', title: 'Average order', icon: 'receipt', money: true, k: k.avgOrder }));
+  h += '<div class="fdd-grid">' + r3.slice(0, 4).join('') + '</div>';
+
+  // ---- row 4: Top Colours + Needs Attention
+  var tc = (d.topColours || []).filter(function (c) { return c.value > 0; });
+  var tcH;
+  if (!tc.length) tcH = '<div class="fdd-empty">No sales in this range.</div>';
+  else {
+    var tot = tc.reduce(function (s, c) { return s + c.value; }, 0), R0 = 70, C = 2 * Math.PI * R0, off = 0, arcs = '';
+    tc.forEach(function (c) { var len = c.value / tot * C; arcs += '<circle cx="95" cy="95" r="' + R0 + '" fill="none" stroke="' + fdSwatch(c.label) + '" stroke-width="30" stroke-dasharray="' + Math.max(0, len - 2).toFixed(2) + ' ' + C.toFixed(2) +
+      '" stroke-dashoffset="' + (-off).toFixed(2) + '" transform="rotate(-90 95 95)"><title>' + esc(c.label) + ': ' + fmt(c.units) + ' units</title></circle>'; off += len; });
+    tcH = '<div class="fdd-dn"><div class="fdd-scroll"><table class="fdd-t"><thead><tr><th>Colour</th><th class="n">Units</th></tr></thead><tbody>' +
+      tc.map(function (c) { return '<tr><td class="nm"><i class="fdd-sw" style="background:' + fdSwatch(c.label) + ';box-shadow:inset 0 0 0 1px rgba(0,0,0,.12)"></i>' + esc(c.label) + '</td><td class="n">' + fmt(c.units) + '</td></tr>'; }).join('') +
+      '</tbody></table></div><svg viewBox="0 0 190 190" role="img" aria-label="Top colours"><circle cx="95" cy="95" r="70" fill="none" stroke="var(--fd-donut-track, #EEF0F6)" stroke-width="30"/>' + arcs +
+      '<text class="ctr1" x="95" y="96" text-anchor="middle">' + Math.round(tc[0].value / tot * 100) + '%</text><text class="ctr2" x="95" y="118" text-anchor="middle">' + esc(String(tc[0].label).slice(0, 16)) + '</text></svg></div>';
+  }
+  var att = [], a = (D && D.alerts) || {}, toSend = typeof sendCount === 'function' ? sendCount() : 0, cz = a.courier || {};
+  if (a.webPending) att.push(['bad', 'warn', a.webOrders + ' website orders not entered', 'Enter them as invoices', 'weborders', '']);
+  if (toSend) att.push(['warn', 'truck', toSend + ' parcel(s) to send', 'Book them with the courier', 'sales', 'tosend']);
+  if (d.attention.outOfStock) att.push(['bad', 'x', d.attention.outOfStock + ' products out of stock', 'Order more or mark discontinued', 'products', 'out']);
+  if (d.attention.reorder) att.push(['warn', 'warn', d.attention.reorder + ' at or below reorder level', 'See Reorder Suggestions below', 'stock', 'plan']);
+  if (cz.back) att.push(['bad', 'truck', cz.back + ' parcel(s) came back or part delivered', 'Take the stock back in', 'sales', '']);
+  if (cz.review) att.push(['bad', 'truck', cz.review + ' Steadfast parcel(s) to review', 'Check the courier status', 'sales', '']);
+  if (k.dues && k.dues.v > 0) att.push(['warn', 'bell', fdTk(k.dues.v, cur) + ' owed by customers', 'Follow up the oldest first', 'sales', 'due']);
+  if (k.unmatched && k.unmatched.v) att.push(['warn', 'wallet', k.unmatched.v + ' payment(s) to place in an account', fdTk(k.unmatched.amount, cur) + ' · Money screen', 'cash', '']);
+  var attH = att.length ? '<ul class="fdd-att2">' + att.map(function (x) {
+    return '<li' + (navOn(x[4]) ? ' data-go="' + x[4] + '"' + (x[5] ? ' data-f="' + x[5] + '"' : '') : '') + '><span class="fdd-badge t-' + x[0] + '">' + fddIc(x[1]) + '</span><span class="t"><b>' + esc(x[2]) + '</b><span>' + esc(x[3]) + '</span></span><span class="chv">›</span></li>'; }).join('') + '</ul>'
+    : '<div class="fdd-empty">✓ Nothing needs you.</div>';
+  h += '<div class="fdd-grid"><div class="fdd-c s2"><div class="fdd-ch"><span class="fdd-badge">' + fddIc('spool') + '</span><div class="fdd-ct">Top Colours</div>' +
+    (navOn('analytics') ? '<button type="button" class="fdd-more" data-go="analytics">View details →</button>' : '') + '</div>' + tcH + '</div>' +
+    '<div class="fdd-c s2"><div class="fdd-ch"><span class="fdd-badge t-warn">' + fddIc('bell') + '</span><div class="fdd-ct">Needs Attention</div></div>' + attH + '</div></div>';
+
+  // ---- row 5: Reorder Suggestions (full width)
+  var ro = d.reorder.length ? '<div class="fdd-scroll"><table class="fdd-t"><thead><tr><th>Item</th><th class="n">On hand</th><th class="n">Reorder at</th><th class="n">Suggested qty</th><th class="n">Price</th></tr></thead><tbody>' +
+    d.reorder.map(function (p) { var sug = Math.max(0, p.reorder * 2 - p.stock);
+      return '<tr><td class="nm" title="' + esc(p.sku) + '"><i class="fdd-sw" style="background:' + fdSwatch(p.name) + ';box-shadow:inset 0 0 0 1px rgba(0,0,0,.12)"></i>' + esc(p.name) + ' <span class="sku">(' + esc(p.sku) + ')</span></td><td class="n"' +
+        (p.stock <= 0 ? ' style="color:var(--fd-negative-text);font-weight:700"' : '') + '>' + fmt(p.stock) + '</td><td class="n">' + fmt(p.reorder) + '</td><td class="n"><b>' + fmt(sug) + '</b></td><td class="n">' + (p.sell ? fdTk(p.sell, cur) : '—') + '</td></tr>'; }).join('') +
+    '</tbody></table></div>' : '<div class="fdd-empty">Nothing at its reorder level.</div>';
+  h += '<div class="fdd-grid"><div class="fdd-c s4"><div class="fdd-ch"><span class="fdd-badge t-warn">' + fddIc('box') + '</span><div class="fdd-ct">Reorder Suggestions</div>' +
+    (navOn('stock') ? '<button type="button" class="fdd-more" data-go="stock" data-f="plan">View all →</button>' : '') + '</div>' + ro + '</div></div>';
+
+  // ---- row 6: Recent Sales + Setup Checklist
+  var rc = d.recent.length ? '<div class="fdd-scroll"><table class="fdd-t"><thead><tr><th>Sale</th><th>Customer</th><th class="n">Total</th><th>Status</th></tr></thead><tbody>' +
+    d.recent.map(function (x) { return '<tr data-inv="' + esc(x.id) + '"><td><b>' + esc(x.id) + '</b><div class="sku">' + esc(x.date) + '</div></td><td class="nm">' + esc(x.customer) + '</td><td class="n">' + fdTk(x.total, cur) + '</td><td>' +
+      (x.owed > 0 ? '<span class="fdd-chip due">Partial · ' + fdTk(x.owed, cur) + ' due</span>' : '<span class="fdd-chip paid">Paid</span>') + '</td></tr>'; }).join('') + '</tbody></table></div>' : '<div class="fdd-empty">No invoices yet.</div>';
+  h += '<div class="fdd-grid"><div class="fdd-c ' + (d.setup ? 's3' : 's4') + '"><div class="fdd-ch"><span class="fdd-badge">' + fddIc('cart') + '</span><div class="fdd-ct">Recent Sales</div>' +
+    (navOn('sales') ? '<button type="button" class="fdd-more" data-go="sales">View all →</button>' : '') + '</div>' + rc + '</div>';
+  if (d.setup) {
+    var done = d.setup.filter(function (x) { return x.done; }).length, pcs = Math.round(done / d.setup.length * 100);
+    h += '<div class="fdd-c fdd-setup"><div class="fdd-ch"><span class="fdd-badge">' + fdI('check', 20) + '</span><div class="fdd-ct">Setup Checklist</div></div>' +
+      '<div class="hd"><span>' + done + ' of ' + d.setup.length + ' done</span><span>' + pcs + '%</span></div><div class="bar"><i style="width:' + pcs + '%"></i></div><ul>' +
+      d.setup.map(function (x) { return '<li class="' + (x.done ? 'ok' : '') + '"' + (navOn(x.go) ? ' data-go="' + esc(x.go) + '"' : '') + '><span class="d">✓</span><span><span class="nm">' + esc(x.title) + '</span>' + (x.note ? '<small>' + esc(x.note) + '</small>' : '') + '</span></li>'; }).join('') + '</ul></div>';
+  }
+  h += '</div>';
+
+  // ---- ours, after his: the other figures
+  var more = [];
+  if (k.gross && !grp && !used.gross) more.push(kp({ key: 'gross', title: 'Gross profit', icon: 'trend', money: true, k: k.gross, note: k.margin ? k.margin.v + '% margin' : '' }));
+  if (!used.units) more.push(kp({ key: 'units', title: 'Units sold', icon: 'spool', k: k.units }));
+  if (!used.avgOrder) more.push(kp({ key: 'avgOrder', title: 'Average order', icon: 'receipt', money: true, k: k.avgOrder }));
+  if (k.expenses) more.push(kp({ key: 'expenses', title: 'Expenses', icon: 'receipt', money: true, k: k.expenses, flip: true, tone: 'warn', go: 'expenses' }));
+  if (k.cashIn && !used.cashIn) more.push(kp({ key: 'cashIn', title: 'Cash received', icon: 'wallet', money: true, k: k.cashIn, go: 'cash' }));
+  while (more.length % 4) more.push('<div class="fdd-c" style="visibility:hidden"></div>');
+  h += '<div class="fdd-more-h">More figures</div>';
+  if (more.length) h += '<div class="fdd-grid">' + more.join('') + '</div>';
+  h += '<div class="fdd-grid">' + (!grp && d.donuts.byMethod ? fddDonut('Payments by Method', 'wallet', d.donuts.byMethod, 'cash', '', 'Method') : '') +
+    (!grp ? fddDonut('Sales by Brand', 'layers', d.donuts.byBrand, 'products', '', 'Brand') : '') + '</div>';
+  var tp = d.topProducts.length ? '<div class="fdd-scroll"><table class="fdd-t"><thead><tr><th>Product</th><th class="n">Units</th><th class="n">Revenue</th>' + (d.full ? '<th class="n">Gross</th>' : '') + '</tr></thead><tbody>' +
+    d.topProducts.map(function (p) { return '<tr><td class="nm" title="' + esc(p.sku) + '">' + esc(p.name) + '</td><td class="n">' + fmt(p.units) + '</td><td class="n">' + fdTk(p.revenue, cur) + '</td>' + (d.full ? '<td class="n">' + fdTk(p.gross, cur) + '</td>' : '') + '</tr>'; }).join('') +
+    '</tbody></table></div>' : '<div class="fdd-empty">No sales in this range.</div>';
+  h += '<div class="fdd-grid"><div class="fdd-c s2"><div class="fdd-ch"><span class="fdd-badge">' + fddIc('list') + '</span><div class="fdd-ct">Top Products</div></div>' + tp + '</div>';
+  if (d.duesByAge) h += '<div class="fdd-c s2"><div class="fdd-ch"><span class="fdd-badge">' + fddIc('clock') + '</span><div class="fdd-ct">Dues by Age</div></div><table class="fdd-t"><thead><tr><th>Age</th><th class="n">Amount</th></tr></thead><tbody>' +
+    d.duesByAge.map(function (x) { return '<tr' + (navOn('sales') ? ' data-go="sales" data-f="due" style="cursor:pointer"' : '') + '><td>' + esc(x.band) + ' <span class="sku">(' + x.count + ')</span></td><td class="n">' + fdTk(x.amount, cur) + '</td></tr>'; }).join('') + '</tbody></table></div>';
+  h += '</div>';
+  h += '<div class="fdd-classic"><button type="button" class="btn" data-fddclassic="1">' + (FDD.classic ? '▴ Hide the classic dashboard' : '▾ More: the classic dashboard (today, a chosen day, charts, tabs)') + '</button></div>';
+  return h;
+}
+fddView = fddViewFd;
+document.addEventListener('click', function (e) {
+  if (!e.target.closest) return;
+  if (e.target.closest('[data-fddallg]')) { FDD.group = ''; fddSave(); repaint(); return; }
+});
+</script>
+
 </body>
 </html>
