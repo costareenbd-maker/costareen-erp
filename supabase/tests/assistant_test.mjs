@@ -57,6 +57,32 @@ check('the invoice says it came via chat; COD, total 2700', inv && /via chat/.te
 r = await sales('erpAssistant', [{ confirm: { tool: 'create_invoice', args: { customer: { name: 'X' }, items: [{ sku: 'NOPE', qty: 1 }] } } }]);
 check('a bad confirmation is refused by the invoice function', !r.ok, r);
 
+// 4b. 14 Oct 2026: the corner chat sees more and can prepare a follow-up, an expense, a payment
+const answerWith = (fn) => (body) => { const fr = body.contents[body.contents.length - 1].parts[0].functionResponse; return [{ text: fn(fr.response) }]; };
+script = [[{ functionCall: { name: 'open_screen', args: { screen: 'customers' } } }], answerWith(() => 'Opening Customers.')];
+r = await mgr('erpAssistant', [{ messages: [{ role: 'user', text: 'open customers' }] }]);
+check('open a screen: the page is told where to go', r.ok && r.result.navigate === 'customers', r.ok ? r.result : r);
+script = [[{ functionCall: { name: 'business_summary', args: { months: 1 } } }], answerWith((x) => 'Revenue ' + x.revenue + ', net ' + x.netProfit)];
+r = await owner('erpAssistant', [{ messages: [{ role: 'user', text: 'how is the business this month?' }] }]);
+check('business summary from the dashboard figures', r.ok && /Revenue \d+, net -?\d+/.test(r.result.text), r.ok ? r.result.text : r);
+script = [[{ functionCall: { name: 'stock_low', args: {} } }], answerWith((x) => 'Low: ' + x.count)];
+r = await mgr('erpAssistant', [{ messages: [{ role: 'user', text: 'what is low?' }] }]);
+check('low stock list', r.ok && /^Low: \d+/.test(r.result.text), r.ok ? r.result.text : r);
+script = [[{ functionCall: { name: 'propose_followup', args: { phone: '01712345678', name: 'Karim', due: '2026-12-01', note: 'ask about the printer' } } }], answerWith((x) => 'Ready: ' + x.summary)];
+r = await sales('erpAssistant', [{ messages: [{ role: 'user', text: 'remind me to call Karim on 1 Dec' }] }]);
+const fu0 = (await sql`select count(*)::int as n from customer_followups where business_id = ${FIX.B}`)[0].n;
+check('a follow-up is proposed, not written', r.ok && r.result.proposal && r.result.proposal.tool === 'followup', r.ok ? r.result : r);
+r = await sales('erpAssistant', [{ confirm: r.result.proposal }]);
+check('...Yes writes it', r.ok && /^Done: follow-up/.test(r.result.text) && (await sql`select count(*)::int as n from customer_followups where business_id = ${FIX.B}`)[0].n === fu0 + 1, r);
+script = [[{ functionCall: { name: 'propose_expense', args: { amount: 500, description: 'tea for the shop' } } }], answerWith((x) => x.error ? 'No: ' + x.error : 'Ready')];
+r = await sales('erpAssistant', [{ messages: [{ role: 'user', text: 'add an expense 500 for tea' }] }]);
+check('sales staff cannot prepare an expense (role)', r.ok && /Not allowed/.test(r.result.text) && !r.result.proposal, r.ok ? r.result : r);
+script = [[{ functionCall: { name: 'propose_expense', args: { amount: 500, description: 'tea for the shop', category: 'Other' } } }], answerWith((x) => 'Ready: ' + x.summary)];
+r = await owner('erpAssistant', [{ messages: [{ role: 'user', text: 'add an expense 500 for tea' }] }]);
+check('the owner prepares an expense', r.ok && r.result.proposal && r.result.proposal.tool === 'expense', r.ok ? r.result : r);
+r = await owner('erpAssistant', [{ confirm: r.result.proposal }]);
+check('...Yes writes it', r.ok && /^Done: expense ৳500/.test(r.result.text), r);
+
 // 5. the allowance
 await sql`update business_config set value = '300' where business_id = ${FIX.B} and key like 'ai_chat:%'`;
 r = await mgr('erpAssistant', [{ messages: [{ role: 'user', text: 'hi' }] }]);

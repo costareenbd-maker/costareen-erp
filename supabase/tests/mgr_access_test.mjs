@@ -9,7 +9,7 @@ check('manager: a 74% discount is saved', r.ok, r.error);
 r = await sale(sales, 500);
 check('sales: 18.5% is saved', r.ok, r.error);
 r = await sale(sales, 600);
-check('sales: 22.2% is refused at 20%', !r.ok && /Your limit is 20%/.test(r.error), r.error);
+check('sales: 22.2% is saved too (no default limit since 14 Oct 2026)', r.ok, r.error);
 
 r = await mgr('erpBundle', [['settings', 'costs']]);
 check('manager: settings part gives the lists, no business values', r.ok && r.result.settings && r.result.settings.lists && r.result.settings.config.length === 0, r.result && r.result.errors);

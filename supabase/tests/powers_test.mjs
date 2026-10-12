@@ -10,7 +10,7 @@ const hello = (fn) => fn('erpHello', []);
 // 1. the list the owner sees
 let r = await owner('erpUsers', []);
 const rina = r.ok && r.result.users.find((u) => u.id === SALES);
-check('users list carries the abilities and each person\'s', r.ok && r.result.abilities.length === 12 && rina && rina.powers.list.dash.on === false && rina.powers.discount === 20, r.ok ? [r.result.abilities.length, rina && rina.powers] : r);
+check('users list carries the abilities and each person\'s', r.ok && r.result.abilities.length === 12 && rina && rina.powers.list.dash.on === false && rina.powers.discount === 100, r.ok ? [r.result.abilities.length, rina && rina.powers] : r);
 
 // 2. before: sales cannot open a manager screen
 r = await sales('erpStockHistory', []);
@@ -84,5 +84,5 @@ r = await set(SALES, { discount: 150 });
 check('discount above 100 refused', !r.ok, r.ok);
 r = await set(SALES, { discount: null });
 const h2 = await hello(sales);
-check('discount back to the role\'s 20%', h2.ok && h2.result.discountCap === 20, h2.result);
+check('discount back to the role\'s default: no limit', h2.ok && h2.result.discountCap === 100, h2.result);
 await done();

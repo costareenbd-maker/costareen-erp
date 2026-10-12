@@ -34387,5 +34387,221 @@ var fuLoadX = fuLoad;
 fuLoad = function () { var r = fuLoadX.apply(this, arguments); return r; };
 </script>
 
+<!-- fd-34 (owner 14 Oct 2026, wholesale): no 5 % rule and no discount limit any more; a line that would make less than
+     10 % profit (after its discount and its share of the invoice discount, against the FIFO cost the sale will draw)
+     gets an amber warning - it never stops the sale (erpLineMargins; the % only for people who may see cost). Save is
+     greyed out and cannot be pressed until every box is right (the big button and the bar at the bottom alike); the
+     wrong boxes turn red as soon as the form is being filled in. -->
+<style>
+.inv-low { display:inline-flex; align-items:center; gap:6px; margin-top:4px; padding:2px 8px; border-radius:999px; font-size:12px; font-weight:700;
+  background:var(--fd-warning-soft, #FFF3DC); color:var(--fd-warning-text, #9A5B00); }
+:root[data-skin="fd"] #saveInv:disabled, :root[data-skin="fd"] #c3save:disabled { opacity:.45 !important; cursor:not-allowed !important; box-shadow:none !important; filter:grayscale(.35); }
+.inv-save-hint { font-size:12.5px; color:var(--fd-text-3, var(--muted)); margin-right:auto; align-self:center; }
+</style>
+<script>
+/* ---------- no 5 % rule ---------- */
+invLow = function () { return []; };
+var srvInv34 = srv;
+srv = function (name, args, ok, bad) {
+  if (name === 'erpCreateInvoice' && VIEW === 'invoice' && args && args[0]) { var a = args.slice(); a[0] = Object.assign({}, a[0], { priceCheck: false, priceReason: '' }); return srvInv34.call(this, name, a, ok, bad); }
+  return srvInv34.apply(this, arguments);
+};
+
+/* ---------- Save only when every box is right ---------- */
+function invAllOk() { return invChecks().every(function (x) { return x.ok; }); }
+function invSaveState() {
+  if (VIEW !== 'invoice') return;
+  var ok = invAllOk();
+  ['saveInv', 'c3save'].forEach(function (id) {
+    var b = el(id); if (!b || SAVING) return;
+    b.disabled = !ok || (id === 'c3save' && !CART.length);
+    b.title = ok ? '' : 'Fill in the boxes marked red to save';
+  });
+  var row = el('saveInv') && el('saveInv').parentNode, hint = el('invSaveHint');
+  if (row && !ok && !hint) row.insertAdjacentHTML('afterbegin', '<span class="inv-save-hint" id="invSaveHint">Save turns on when every box is right</span>');
+  if (ok && hint) hint.remove();
+}
+// the red marks show as soon as the form is being filled in (before that, a fresh form is not shouted at)
+document.addEventListener('input', function (e) { if (VIEW === 'invoice' && e.target.closest && e.target.closest('#view')) INV_TRIED = true; }, true);
+document.addEventListener('click', function (e) { if (VIEW === 'invoice' && e.target.closest && e.target.closest('#view [data-pick], #view [data-paymode], #view #iresults')) INV_TRIED = true; }, true);
+var invChkPaint34 = invChkPaint;
+invChkPaint = function () { var r = invChkPaint34.apply(this, arguments); invSaveState(); invMarginPaint(); return r; };
+var repaintInv34 = repaint;
+repaint = function () { var r = repaintInv34.apply(this, arguments); if (VIEW === 'invoice') { try { invSaveState(); invMarginAsk(); invMarginPaint(); } catch (e) {} } return r; };
+
+/* ---------- under 10 % profit: a warning, never a stop ---------- */
+var INV_MG = { key: '', lines: {}, t: null };
+function invMarginAsk() {
+  var items = CART.map(function (l) { return { sku: l.sku, qty: l.qty, discEach: num(l.discEach) }; });
+  var key = JSON.stringify(items) + '|' + num(FORM.invDisc);
+  if (key === INV_MG.key) return;
+  INV_MG.key = key; clearTimeout(INV_MG.t);
+  if (!items.length) { INV_MG.lines = {}; return; }
+  INV_MG.t = setTimeout(function () {
+    srv('erpLineMargins', [{ items: items, invoiceDiscount: num(FORM.invDisc) }], function (r) {
+      var m = {}; (r.lines || []).forEach(function (x) { m[String(x.sku).toLowerCase()] = x; });
+      INV_MG.lines = m; invMarginPaint();
+    }, function () {});
+  }, 250);
+}
+function invMarginPaint() {
+  if (VIEW !== 'invoice') return;
+  var rows = document.querySelectorAll('#view .inv2-r tbody tr');
+  CART.forEach(function (l, i) {
+    var tr = rows[i]; if (!tr) return;
+    var cell = tr.querySelector('td.nm') || tr.firstElementChild; if (!cell) return;
+    var old = cell.querySelector('.inv-lowwrap'), x = INV_MG.lines[String(l.sku).toLowerCase()];
+    var html = x && x.low ? '<div class="inv-lowwrap"><span class="inv-low" title="Selling this way makes under 10% profit. It can still be saved.">⚠ Under 10% profit' + (typeof x.margin === 'number' ? ' (' + x.margin + '%)' : '') + '</span></div>' : '';
+    if (old) old.remove();
+    if (html) cell.insertAdjacentHTML('beforeend', html);
+  });
+}
+document.addEventListener('input', function (e) { if (VIEW === 'invoice' && /^(finvdisc)$/.test(e.target.id || '') || (e.target.getAttribute && (e.target.getAttribute('data-disc') !== null || e.target.getAttribute('data-sellat') !== null || e.target.getAttribute('data-qty') !== null))) setTimeout(invMarginAsk, 50); });
+</script>
+
+<!-- fd-35 (owner 14 Oct 2026): the assistant lives in a chat bubble in the corner of every screen instead of the menu.
+     The bubble opens a chat panel at the side (full screen on a phone); the same assistant as before (handlers/
+     assistant.js) can now also open screens, give the business summary, low stock, expenses, money accounts, shipments,
+     pre-orders, follow-ups, commission, the system check and supplier dues, and prepare a follow-up, an expense or a
+     payment - every write still waits for the person's "Yes". The conversation is kept on the device. -->
+<style>
+:root[data-skin="fd"] #nav button[data-view="chat"] { display:none !important; }
+#skBtn { bottom:92px !important; right:26px !important; }
+.aw-fab { position:fixed; right:22px; bottom:22px; z-index:120; width:58px; height:58px; border-radius:50%; border:0; cursor:pointer; display:grid; place-items:center;
+  background:var(--fd-accent-gradient, var(--fd-accent, #5B4FE9)); color:#fff; box-shadow:0 10px 28px var(--fd-accent-border, rgba(91,79,233,.35)), 0 0 0 1px rgba(255,255,255,.06) inset;
+  transition:transform .2s cubic-bezier(.2,.8,.2,1), box-shadow .2s; }
+.aw-fab:hover { transform:translateY(-2px) scale(1.05); box-shadow:0 14px 36px var(--fd-accent-border, rgba(91,79,233,.45)), 0 0 24px var(--fd-accent-soft, rgba(91,79,233,.25)); }
+.aw-fab svg { width:26px; height:26px; }
+.aw-fab .dot { position:absolute; top:6px; right:6px; width:12px; height:12px; border-radius:50%; background:var(--fd-positive, #22C55E); border:2px solid var(--fd-card, #fff); }
+.aw-fab.open { transform:rotate(90deg); }
+.aw-panel { position:fixed; right:22px; bottom:92px; z-index:121; width:400px; max-width:calc(100vw - 32px); height:min(620px, calc(100vh - 120px)); display:flex; flex-direction:column;
+  background:var(--fd-card, var(--surface)); color:var(--fd-text, var(--ink)); border:1px solid var(--fd-border, var(--ring)); border-radius:20px; box-shadow:var(--fd-shadow-popover, 0 18px 50px rgba(0,0,0,.3));
+  overflow:hidden; animation:aw-in .2s cubic-bezier(.2,.8,.2,1); }
+@keyframes aw-in { from { opacity:0; transform:translateY(12px) scale(.98); } to { opacity:1; transform:none; } }
+.aw-head { display:flex; align-items:center; gap:10px; padding:14px 16px; border-bottom:1px solid var(--fd-border, var(--ring)); background:var(--fd-surface-2, var(--field)); }
+.aw-head .av { width:36px; height:36px; border-radius:50%; display:grid; place-items:center; background:var(--fd-accent-gradient, var(--fd-accent)); color:#fff; flex:0 0 36px; }
+.aw-head .av svg { width:20px; height:20px; }
+.aw-head .t { flex:1 1 auto; min-width:0; }
+.aw-head .t b { display:block; font-size:15px; }
+.aw-head .t span { display:block; font-size:12px; color:var(--fd-text-3, var(--muted)); }
+.aw-head button { width:32px; height:32px; border-radius:10px; border:0; background:none; color:var(--fd-text-2, var(--ink-2)); cursor:pointer; font-size:18px; display:grid; place-items:center; }
+.aw-head button:hover { background:var(--fd-surface-3, var(--ring)); }
+.aw-log { flex:1 1 auto; overflow:auto; padding:14px; display:flex; flex-direction:column; gap:10px; }
+.aw-m { max-width:85%; padding:9px 12px; border-radius:14px; font-size:14px; line-height:1.45; white-space:pre-wrap; word-break:break-word; }
+.aw-m.u { align-self:flex-end; background:var(--fd-accent, var(--series-1)); color:var(--fd-text-on-accent, #fff); border-bottom-right-radius:4px; }
+.aw-m.a { align-self:flex-start; background:var(--fd-surface-2, var(--field)); border-bottom-left-radius:4px; }
+.aw-m.sys { align-self:center; text-align:center; color:var(--fd-text-3, var(--muted)); font-size:13px; background:none; max-width:95%; }
+.aw-prop { align-self:stretch; border:1px solid var(--fd-warning, #F59E0B); background:var(--fd-warning-soft, #FFF3DC); border-radius:12px; padding:10px 12px; font-size:13.5px; }
+.aw-prop .w { color:var(--fd-negative-text, var(--critical)); margin-top:4px; }
+.aw-prop .row { display:flex; gap:8px; margin-top:8px; }
+.aw-typing { align-self:flex-start; display:flex; gap:4px; padding:12px; border-radius:14px; background:var(--fd-surface-2, var(--field)); }
+.aw-typing i { width:7px; height:7px; border-radius:50%; background:var(--fd-text-3, var(--muted)); animation:aw-b 1s infinite ease-in-out; }
+.aw-typing i:nth-child(2) { animation-delay:.15s; } .aw-typing i:nth-child(3) { animation-delay:.3s; }
+@keyframes aw-b { 0%, 80%, 100% { opacity:.3; transform:translateY(0); } 40% { opacity:1; transform:translateY(-3px); } }
+.aw-chips { display:flex; gap:6px; flex-wrap:wrap; padding:0 14px 8px; }
+.aw-chips button { height:30px; padding:0 12px; border-radius:999px; border:1px solid var(--fd-border, var(--ring)); background:var(--fd-card, var(--surface)); color:var(--fd-text-2, var(--ink-2)); font:inherit; font-size:12.5px; cursor:pointer; }
+.aw-chips button:hover { border-color:var(--fd-accent, var(--series-1)); color:var(--fd-accent-text, var(--series-1)); }
+.aw-in { display:flex; gap:8px; align-items:flex-end; padding:10px 12px 12px; border-top:1px solid var(--fd-border, var(--ring)); }
+.aw-in textarea { flex:1 1 auto; min-height:42px; max-height:120px; resize:none; border-radius:14px; }
+.aw-in .send { width:42px; height:42px; border-radius:12px; border:0; background:var(--fd-accent, var(--series-1)); color:var(--fd-text-on-accent, #fff); cursor:pointer; display:grid; place-items:center; flex:0 0 42px; }
+.aw-in .send:disabled { opacity:.45; cursor:default; }
+.aw-in .send svg { width:18px; height:18px; }
+.aw-foot { font-size:11px; color:var(--fd-text-faint, var(--muted)); text-align:center; padding:0 12px 8px; }
+@media (max-width:640px) {
+  .aw-panel { right:0; bottom:0; width:100vw; max-width:100vw; height:100dvh; border-radius:0; }
+  .aw-fab { bottom:84px; right:16px; width:54px; height:54px; }
+  .aw-fab.open { display:none; }
+}
+</style>
+<script>
+var AW = { open: false };
+try { AW.open = sessionStorage.getItem('aw_open') === '1'; } catch (e) {}
+var AW_I = {
+  bot: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3c4.97 0 9 3.58 9 8 0 2.09-.9 4-2.38 5.42L19 21l-4.5-2.2c-.8.13-1.64.2-2.5.2-4.97 0-9-3.58-9-8s4.03-8 9-8z"/><path d="M8.5 11h.01M12 11h.01M15.5 11h.01"/></svg>',
+  x: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>',
+  send: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4z"/></svg>',
+  trash: '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/></svg>'
+};
+function awHtml() {
+  var who = (ME && ME.name) || '';
+  var h = '<div class="aw-head"><span class="av">' + AW_I.bot + '</span><span class="t"><b>ERP assistant</b><span>' + (CH.left != null ? CH.left + ' questions left today' : 'Ask, or tell it what to do') + '</span></span>' +
+    '<button type="button" id="aw_clear" title="Start a new chat" aria-label="Clear the chat">' + AW_I.trash + '</button><button type="button" id="aw_close" title="Close" aria-label="Close">' + AW_I.x + '</button></div>';
+  h += '<div class="aw-log" id="aw_log">';
+  if (!CH.msgs.length) h += '<div class="aw-m sys">Hi' + (who ? ' ' + esc(String(who).split(' ')[0]) : '') + '! Ask in Bangla or English - figures, customers, stock - or tell me what to do: make an invoice, add a follow-up, an expense, record a payment, open a screen. Nothing is written until you say Yes.</div>';
+  CH.msgs.forEach(function (m) {
+    h += '<div class="aw-m ' + (m.role === 'user' ? 'u' : 'a') + '">' + esc(m.text) + (m.pdf ? ' <a href="' + esc(m.pdf) + '" target="_blank" rel="noopener">Open the PDF</a>' : '') + '</div>';
+  });
+  if (CH.prop) h += '<div class="aw-prop"><b>Confirm?</b><br>' + esc(CH.prop.summary) + (CH.prop.warnings && CH.prop.warnings.length ? '<div class="w">' + esc(CH.prop.warnings.join(' · ')) + '</div>' : '') +
+    '<div class="row"><button class="btn small primary" type="button" id="aw_yes"' + (CH.busy ? ' disabled' : '') + '>Yes, do it</button><button class="btn small" type="button" id="aw_no">No</button></div></div>';
+  if (CH.busy) h += '<div class="aw-typing" aria-label="Thinking"><i></i><i></i><i></i></div>';
+  h += '</div>';
+  if (!CH.msgs.length) h += '<div class="aw-chips">' + ['How is the business this month?', 'Who owes money?', 'What is low on stock?', 'Sales today?', 'Open Customers'].map(function (c) {
+    return '<button type="button" data-awq="' + esc(c) + '">' + esc(c) + '</button>'; }).join('') + '</div>';
+  h += '<div class="aw-in"><textarea class="i" id="aw_q" rows="1" placeholder="Message the assistant…"' + (CH.busy ? ' disabled' : '') + '></textarea>' +
+    '<button type="button" class="send" id="aw_send" aria-label="Send"' + (CH.busy ? ' disabled' : '') + '>' + AW_I.send + '</button></div>' +
+    '<div class="aw-foot">Uses your role: it sees and does only what you may.</div>';
+  return h;
+}
+function awPaint() {
+  if (!ME) return;
+  var fab = el('aw_fab');
+  if (!fab) {
+    fab = document.createElement('button'); fab.type = 'button'; fab.id = 'aw_fab'; fab.className = 'aw-fab'; fab.setAttribute('aria-label', 'Open the ERP assistant');
+    fab.innerHTML = AW_I.bot + '<span class="dot"></span>'; document.body.appendChild(fab);
+  }
+  fab.classList.toggle('open', AW.open);
+  fab.setAttribute('aria-expanded', String(AW.open));
+  var p = el('aw_panel');
+  if (!AW.open) { if (p) p.remove(); return; }
+  var draft = el('aw_q') ? el('aw_q').value : '', had = document.activeElement && document.activeElement.id === 'aw_q';
+  if (!p) { p = document.createElement('div'); p.id = 'aw_panel'; p.className = 'aw-panel'; p.setAttribute('role', 'dialog'); p.setAttribute('aria-label', 'ERP assistant'); document.body.appendChild(p); had = true; }
+  p.innerHTML = awHtml();
+  var q = el('aw_q'); if (q) { q.value = draft; if (had && !CH.busy && innerWidth > 640) q.focus(); }
+  var lg = el('aw_log'); if (lg) lg.scrollTop = lg.scrollHeight;
+}
+function awToggle(on) { AW.open = on === undefined ? !AW.open : !!on; try { sessionStorage.setItem('aw_open', AW.open ? '1' : '0'); } catch (e) {} awPaint(); }
+// the assistant's answers repaint the panel, and "open a screen" takes the person there
+var repaintAw = repaint;
+repaint = function () { var r = repaintAw.apply(this, arguments); try { awPaint(); } catch (e) {} return r; };
+var srvAw = srv;
+srv = function (name, args, ok, bad) {
+  if (name !== 'erpAssistant') return srvAw.apply(this, arguments);
+  return srvAw(name, args, function (r) {
+    var res = ok ? ok.apply(this, arguments) : undefined;
+    if (r && r.navigate && typeof go === 'function') { go(r.navigate); if (innerWidth <= 640) awToggle(false); }
+    try { awPaint(); } catch (e) {}
+    return res;
+  }, function () { var res = bad ? bad.apply(this, arguments) : undefined; try { awPaint(); } catch (e) {} return res; });
+};
+document.addEventListener('click', function (e) {
+  if (!e.target.closest) return;
+  if (e.target.closest('#aw_fab')) { awToggle(); return; }
+  if (!e.target.closest('#aw_panel')) return;
+  var t = e.target.closest('#aw_close,#aw_clear,#aw_send,#aw_yes,#aw_no,[data-awq]'); if (!t) return;
+  if (t.id === 'aw_close') { awToggle(false); return; }
+  if (t.id === 'aw_clear') { CH.msgs = []; CH.prop = null; chSave(); awPaint(); return; }
+  if (t.id === 'aw_send') { var q = el('aw_q'); var v = q ? q.value : ''; if (q) q.value = ''; chSend(v); awPaint(); return; }
+  if (t.hasAttribute('data-awq')) { chSend(t.getAttribute('data-awq')); awPaint(); return; }
+  if (t.id === 'aw_no') { CH.prop = null; CH.msgs.push({ role: 'assistant', text: 'Not done.' }); chSave(); awPaint(); return; }
+  if (t.id === 'aw_yes') {
+    var prop = CH.prop; CH.prop = null; CH.busy = true; awPaint();
+    srv('erpAssistant', [{ confirm: prop }], function (r) {
+      CH.busy = false; CH.msgs.push({ role: 'assistant', text: r.text, pdf: r.pdf || '' }); chSave();
+      D = null; FDD.key = ''; try { if (typeof pagesAfterWrite === 'function') pagesAfterWrite(); } catch (er) {}
+      repaint();
+    }, function (er) { CH.busy = false; CH.msgs.push({ role: 'assistant', text: 'Could not do it: ' + ((er && er.message) || String(er)) }); chSave(); awPaint(); });
+  }
+});
+document.addEventListener('keydown', function (e) {
+  if (e.target && e.target.id === 'aw_q' && e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); var v = e.target.value; e.target.value = ''; chSend(v); awPaint(); return; }
+  if (e.key === 'Escape' && AW.open && document.activeElement && document.activeElement.closest && document.activeElement.closest('#aw_panel')) awToggle(false);
+});
+document.addEventListener('input', function (e) { if (e.target && e.target.id === 'aw_q') { e.target.style.height = 'auto'; e.target.style.height = Math.min(120, e.target.scrollHeight) + 'px'; } });
+// the old menu screen opens the bubble instead
+var goAw = go;
+go = function (v) { if (v === 'chat') { awToggle(true); return; } return goAw.apply(this, arguments); };
+setTimeout(function () { try { awPaint(); } catch (e) {} }, 0);
+</script>
+
 </body>
 </html>

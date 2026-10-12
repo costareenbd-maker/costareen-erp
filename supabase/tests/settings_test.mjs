@@ -80,7 +80,7 @@ check('staff lists this business’s people', names.includes('Mehedi') && names.
 const meh = r.result.staff.people.find((p) => p.name === 'Mehedi');
 check('person row shape', meh.role === 'manager' && meh.roleLabel === 'Manager' && meh.code === '111111' &&
   meh.status === 'approved' && meh.devices[0].id === 'dev-mgr' && meh.devices[0].status === 'approved', meh);
-check('roles with caps, iAm', r.result.staff.roles.length === 4 && r.result.staff.roles.find((x) => x.id === 'sales').cap === 20 &&
+check('roles with caps, iAm', r.result.staff.roles.length === 4 && r.result.staff.roles.find((x) => x.id === 'sales').cap === 100 &&
   r.result.staff.iAm === 'owner', r.result.staff);
 check('links: every business on the one address', r.result.links.businesses[0].isHome === true &&
   r.result.links.businesses[0].url === 'https://erp.costareen.com' && r.result.links.canAdd === true, r.result.links);

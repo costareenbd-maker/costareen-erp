@@ -1808,3 +1808,14 @@ marked paid while October rent was a one-off (counted twice on the Expenses scre
 - Server (owner): a sale always belongs to the person signed in and making it - erpCreateInvoice refuses any other
   seller for everyone, the owner included ("A sale belongs to the person making it..."); erpSellers.canChoose is
   false. Commission follows the maker. Tests sale (15).
+- fd-34 + handlers/margins.js (owner, wholesale): the 5 % rule is gone and there is no default discount limit
+  (ERP_DISCOUNT_CAP sales 100; a per-person limit set in Users still applies). A line under 10 % profit (after its
+  discount and its share of the invoice discount, against the FIFO cost the sale draws) gets an amber warning; it never
+  stops the sale; the % only for people who may see cost (erpLineMargins, test margins 6). Save is greyed out and cannot
+  be pressed until every box is right (main button and the bottom bar); red marks show once the form is being filled.
+  Tests updated for no default limit: erp_server, mgr_access, powers, settings.
+- fd-35 (owner): the assistant moved from the menu to a chat bubble in the corner of every screen (panel at the side,
+  full screen on a phone). handlers/assistant.js learnt: open_screen, business_summary, stock_low, expenses_month,
+  money_accounts, shipments, preorders, followups, commission, system_check, supplier_dues, and propose_followup /
+  propose_expense / propose_payment (each written only on the person's Yes, role gates as on the screens). Test
+  assistant (17). The dev copy has no AI key, so it answers "not set up" there until a Gemini key is added.
