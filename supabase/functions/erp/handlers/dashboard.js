@@ -21,6 +21,7 @@ import { ratesMap, landedCost, saveRate } from './currency.js';
 import { returnsFor } from './returns.js';
 import { serviceFor } from './repairs.js';
 import { poolExpenses } from '../lib/pool.js';
+import { commissionDue } from './commission.js';
 
 // ------------------------------------------------------------------ months
 
@@ -163,7 +164,9 @@ async function expRows(ctx, month) {
            amount, coalesce(item_no, '') as item_no, coalesce(btrim(voided), '') as voided
     from expenses where business_id = ${ctx.biz} and month = ${month}
       -- plan A6: an investor's return is a cost of the month it fell due in, not of the day it was paid
-      and not (category = 'Investor returns' and description like 'Return paid to %')`;
+      and not (category = 'Investor returns' and description like 'Return paid to %')
+      -- 110: commission is a cost of the month it was earned in; paying it later is not a second cost
+      and not (category = 'Commission' and description like 'Commission paid to %')`;
 }
 
 /** erpExpenseTotal_: everything entered for the month and not struck out. */
@@ -171,6 +174,7 @@ export async function expenseTotal(ctx, month) {
   let total = 0;
   for (const r of await expRows(ctx, month)) if (!r.voided) total += num(r.amount);
   total += await returnsFor(ctx, month);
+  total += await commissionDue(ctx, month);
   for (const e of await poolExpenses(ctx, month)) total += e.amount;
   return Math.round(total);
 }
@@ -209,7 +213,9 @@ export async function expByCat(ctx, month) {
   }
   for (const e of await poolExpenses(ctx, month)) { by[e.category] = (by[e.category] || 0) + e.amount; total += e.amount; }
   const due = await returnsFor(ctx, month);
-  if (due > 0) { by['Investor returns'] = (by['Investor returns'] || 0) + due; total += due; }
+  if (due) { by['Investor returns'] = (by['Investor returns'] || 0) + due; total += due; }
+  const com = await commissionDue(ctx, month);
+  if (com) { by['Commission'] = (by['Commission'] || 0) + com; total += com; }
   for (const c of Object.keys(by)) by[c] = Math.round(by[c]);
   return { total, byCat: by };
 }

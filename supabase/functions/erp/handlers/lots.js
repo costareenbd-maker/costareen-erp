@@ -10,6 +10,9 @@
 import { str } from '../lib/tabs.js';
 import { formatDate, num, round2 } from '../lib/time.js';
 import { products } from './dashboard.js';
+import { holdingFor, lotMonths } from './holding.js';
+
+const sumM = (o) => Object.values(o || {}).reduce((t, v) => t + num(v), 0);
 
 const R = (v) => Math.round(num(v));
 
@@ -110,10 +113,13 @@ export async function erpShipments(ctx) {
              cost: R(s.cost), profit: R(s.revenue - s.cost), margin: s.revenue > 0 ? Math.round((s.revenue - s.cost) / s.revenue * 1000) / 10 : 0,
              costKnown: s.uncosted === 0, status: s.unitsLeft <= 0 ? 'Sold out' : s.sold > 0 ? 'Selling' : 'In stock' };
   });
+  const hold = await holdingFor(ctx, await lotMonths(ctx));
+  list.forEach((x) => { x.holding = R(sumM(hold.byRef[x.reference])); x.net = x.profit - x.holding; });
   const t = list.filter((x) => !x.opening);
-  return { currency: 'BDT', shipments: list,
+  return { currency: 'BDT', shipments: list, holdingOn: hold.on, holdingCategories: hold.categories, noWeight: hold.noWeight,
            totals: { count: t.length, landed: t.reduce((a, x) => a + x.landed, 0), leftValue: t.reduce((a, x) => a + x.leftValue, 0),
-                     profit: t.reduce((a, x) => a + x.profit, 0), revenue: t.reduce((a, x) => a + x.revenue, 0) } };
+                     profit: t.reduce((a, x) => a + x.profit, 0), revenue: t.reduce((a, x) => a + x.revenue, 0),
+                     holding: t.reduce((a, x) => a + x.holding, 0), net: t.reduce((a, x) => a + x.net, 0) } };
 }
 
 export async function erpShipment(ctx, payload) {
@@ -129,17 +135,21 @@ export async function erpShipment(ctx, payload) {
   const draws = {};
   for (const d of await drawRows(ctx, opening ? null : ref)) (draws[d.lot] = draws[d.lot] || []).push(d);
   const { bySku } = await products(ctx);
+  const hold = await holdingFor(ctx, await lotMonths(ctx));
   const lines = lots.map((l) => {
     const x = sums(l, draws[l.id] || []);
     const book = bySku[str(l.sku).toLowerCase()];
+    const holding = R(sumM(hold.byLot[l.id]));
     return { sku: str(l.sku), name: str(l.name), unitCost: l.unit_cost === null ? null : num(l.unit_cost), bookCost: book ? R(book.cost) : 0,
-             unitsIn: num(l.qty_in), unitsLeft: num(l.qty_left), sold: x.sold, other: x.other, revenue: R(x.revenue), cost: R(x.cost), profit: R(x.revenue - x.cost) };
+             unitsIn: num(l.qty_in), unitsLeft: num(l.qty_left), sold: x.sold, other: x.other, revenue: R(x.revenue), cost: R(x.cost), profit: R(x.revenue - x.cost),
+             holding, net: R(x.revenue - x.cost) - holding };
   });
   const extra = opening ? [] : (await ctx.tx`select label, amount, at from shipment_costs where business_id = ${ctx.biz} and reference = ${ref} order by at`)
     .map((c) => ({ label: str(c.label), amount: R(c.amount) }));
   const bill = opening ? null : (await ctx.tx`select supplier, amount, fx_amount, fx_currency, fx_rate from supplier_bills
                                                where business_id = ${ctx.biz} and reference = ${ref} limit 1`)[0] || null;
   return { reference: ref, opening, supplier: str(lots[0].supplier), date: formatDate(lots[0].received_at, 'd MMM yyyy, h:mm a'), currency: 'BDT', lines, extra,
+           holdingOn: hold.on, holdingCategories: hold.categories,
            bill: bill ? { supplier: str(bill.supplier), amount: R(bill.amount), fx: num(bill.fx_amount) ? num(bill.fx_amount) + ' ' + str(bill.fx_currency) + ' @ ' + num(bill.fx_rate) : '' } : null };
 }
 
@@ -181,9 +191,11 @@ export async function erpLotFunding(ctx, payload) {
       unitsIn += num(l.qty_in); landed += num(l.qty_in) * num(l.unit_cost);
     }
     const p = num(f.pct) / 100;
+    const held = sumM((await holdingFor(ctx, await lotMonths(ctx))).byRef[str(f.reference)]);
     out.push({ id: f.id, holder: str(f.holder_no), name: str(f.name) || str(f.holder_no), reference: str(f.reference), pct: num(f.pct), profitShare: num(f.return_value),
                funded: R(landed * p), unitsFunded: Math.round(unitsIn * p * 100) / 100, soldUnits: Math.round(sold * p * 100) / 100,
-               recovered: R(cost * p), profit: R((revenue - cost) * p), earned: R((revenue - cost) * p * num(f.return_value) / 100),
+               recovered: R(cost * p), profit: R((revenue - cost) * p), holding: R(held * p),
+               earned: R((revenue - cost - held) * p * num(f.return_value) / 100),
                since: formatDate(f.at, 'd MMM yyyy'), note: str(f.note) });
   }
   return { currency: 'BDT', funding: out };

@@ -7,6 +7,7 @@
 // The month still running counts up to today; it falls due when the month ends.
 
 import { formatDate, num, monthStr } from '../lib/time.js';
+import { holdingFor, lotMonths } from './holding.js';
 
 const str = (v) => String(v == null ? '' : v).trim();
 function nextMonth(m) {
@@ -61,26 +62,36 @@ export async function investorReturns(ctx) {
     const terms = {};
     lotHs.forEach((h) => { terms[str(h.holder_no)] = { val: num(h.return_value), since: str(h.since_month), ended: str(h.ended_month) }; });
     const rows = await ctx.tx`
-      select f.holder_no, to_char(public.dhaka_date(d.at), 'YYYY-MM') as m,
+      select f.id as fid, to_char(public.dhaka_date(d.at), 'YYYY-MM') as m,
              sum(d.qty * (coalesce(case when mv.kind::text = 'SALE'
                    then (select il.line_total / nullif(il.qty, 0) from invoice_lines il
                          where il.invoice_id = mv.invoice_id and il.product_id = d.product_id and il.qty > 0 order by il.line_no limit 1)
                    else (select il.line_total / nullif(il.qty, 0) from invoice_lines il join invoices i on i.id = il.invoice_id
                          where i.business_id = mv.business_id and i.invoice_no = btrim(substr(mv.reference, 9)) and il.product_id = d.product_id and il.qty > 0
-                         order by il.line_no limit 1) end, 0) - d.unit_cost) * f.pct / 100) as profit
+                         order by il.line_no limit 1) end, 0) - d.unit_cost)) as profit
       from lot_funding f
       join stock_lots l on l.business_id = f.business_id and l.reference = f.reference and l.source = 'receive'
       join lot_draws d on d.lot_id = l.id and d.unit_cost is not null
       join stock_movements mv on mv.id = d.movement_id and mv.kind::text in ('SALE', 'RETURN')
       where f.business_id = ${ctx.biz} and f.voided_at is null
       group by 1, 2`;
-    for (const r of rows) {
-      const id = str(r.holder_no), t = terms[id], m = str(r.m);
-      if (!t || (t.ended && m > t.ended) || m > nowMonth) continue;
-      const due = Math.round(num(r.profit) * t.val / 100);
-      const mine = out.byHolder[id] = out.byHolder[id] || {};
-      mine[m] = (mine[m] || 0) + due;
-      out.byMonth[m] = (out.byMonth[m] || 0) + due;
+    // per funding and month: the shipment's sales profit less what holding its stock cost that month (F3)
+    const funds = await ctx.tx`select id, holder_no, reference, pct from lot_funding where business_id = ${ctx.biz} and voided_at is null`;
+    const prof = {};
+    for (const r of rows) (prof[r.fid] = prof[r.fid] || {})[str(r.m)] = num(r.profit);
+    const hold = funds.length ? await holdingFor(ctx, await lotMonths(ctx)) : { byRef: {} };
+    for (const f of funds) {
+      const id = str(f.holder_no), t = terms[id];
+      if (!t) continue;
+      const p = prof[f.id] || {}, h = hold.byRef[str(f.reference)] || {};
+      for (const m of Array.from(new Set(Object.keys(p).concat(Object.keys(h))))) {
+        if ((t.ended && m > t.ended) || m > nowMonth) continue;
+        const due = Math.round((num(p[m]) - num(h[m])) * num(f.pct) / 100 * t.val / 100);
+        if (!due) continue;
+        const mine = out.byHolder[id] = out.byHolder[id] || {};
+        mine[m] = (mine[m] || 0) + due;
+        out.byMonth[m] = (out.byMonth[m] || 0) + due;
+      }
     }
   }
   return (ctx.memo.invReturns = out);

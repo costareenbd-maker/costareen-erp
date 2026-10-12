@@ -18,6 +18,8 @@ const WORDS = {
   erpCreateInvoice: 'Saved an invoice', erpCancelInvoice: 'Cancelled a sale', erpVoidInvoice: 'Cancelled a sale',
   erpFixInvoice: 'Changed an invoice', erpReturnGoods: 'Took goods back', erpSettleDue: 'Received a payment',
   erpTakeAdvance: 'Took an advance', erpSaveProduct: 'Saved a product', erpSetProductStatus: 'Changed a product’s status',
+  erpCommissionRuleSave: 'Set a commission rule', erpCommissionRuleVoid: 'Removed a commission rule', erpCommissionPay: 'Paid commission',
+  erpHoldingSave: 'Changed how holding cost is shared',
   erpLotFund: 'Recorded who funded a shipment', erpLotFundVoid: 'Struck out a shipment funding',
   erpPoStage: 'Moved an order along', erpProductSizes: 'Set product sizes',
   erpReceiveShipment: 'Received stock', erpReceiveStock: 'Received stock', erpAdjustStock: 'Adjusted stock',

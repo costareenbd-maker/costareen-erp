@@ -1577,3 +1577,20 @@ out), Capital form "Share of profit on shipments they fund". Tests: shipweight (
 Dev demo: Filaments 1300 g 210x210x80, Printers 12.2 kg 600x600x500; Demo Investor (50% of profit) funds 40% of
 SHP-DEMO-001; PO-261013-0044 in transit (AWB-DEMO-1, 39 kg x 780).
 NOT done: investor portal (secret link + code), investor statement PDF, holding cost, a bill that arrives after the goods.
+
+## hold-1 + com-1 - holding cost and commission, merge phase P3 (13 Oct 2026)
+
+Holding cost (decision F3, ON by default, handlers/holding.js): expenses of the holding categories (default Rent; owner
+changes them: Shipments > Holding cost, erpHoldingSave) are shared every month over the lots on the shelf by kg x days
+(chargeable weight per unit; no weight = 1 kg, listed). Net profit is NOT changed (rent is an expense either way);
+shipments show holding and profit after holding (list and line by line); investors per shipment earn on the profit after
+their part's holding (a month with holding and no sales gives a negative month - it nets against later sales).
+Commission (110_commission.sql, handlers/commission.js): owner rules (everyone or one person; everything / category /
+brand / product; % of sales after discount or of gross profit; most specific wins). The seller of an invoice is who made
+it; a return takes it back from the original seller. Earned commission is a cost of its month (P&L byCat Commission,
+Expenses screen) - expenseTotal / expByCat / erpExpenses; paying (erpCommissionPay, an expense 'Commission paid to X for
+yyyy-MM') is excluded from cost like investor return payments. Money > Commission screen (sellers, rules, Pay); sales staff
+see only their own. Investor returns may now be negative (holding) and count as such in expenses.
+Tests: holding (20), commission (22); all 103 suites green. Dev demo: rules 2% of sales for everyone, 10% of printer profit;
+October shop rent 15,000 (Rent); opening lots dated 1 Oct.
+NOT done: commission per salesperson from sold_by on mirrored invoices (pools); a month close that freezes commission.

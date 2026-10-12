@@ -13,6 +13,7 @@ import { who } from './money.js';
 import { monthGross, monthNet } from './dashboard.js';
 import { expenseAccount, cashRules } from './cash.js';
 import { returnsFor, isReturnPaid } from './returns.js';
+import { commissionDue, isCommissionPaid } from './commission.js';
 import { assertOpen, lockedThrough } from '../lib/period.js';
 import { isPool, notInPool, poolExpenses } from '../lib/pool.js';
 
@@ -147,8 +148,9 @@ export async function erpExpenses(ctx, payload) {
   const month = isMonth(payload.month) ? payload.month : nowMonth;
 
   // plan A6: a return paid to an investor is not this month's cost; what fell due this month is
-  const rows = (await expRows(ctx, month)).filter((r) => !isReturnPaid(r.category, r.description));
+  const rows = (await expRows(ctx, month)).filter((r) => !isReturnPaid(r.category, r.description) && !isCommissionPaid(r.category, r.description));
   const investorReturns = await returnsFor(ctx, month);
+  const commission = await commissionDue(ctx, month);
   const items = (await expItems(ctx)).filter((it) => itemActive(it, month));
 
   const entered = {};
@@ -185,7 +187,8 @@ export async function erpExpenses(ctx, payload) {
     if (!(r.category in byCat)) { byCat[r.category] = 0; catOrder.push(r.category); }
     byCat[r.category] += r.amount;
   }
-  if (investorReturns > 0) { if (!('Investor returns' in byCat)) { byCat['Investor returns'] = 0; catOrder.push('Investor returns'); } byCat['Investor returns'] += investorReturns; }
+  if (investorReturns) { if (!('Investor returns' in byCat)) { byCat['Investor returns'] = 0; catOrder.push('Investor returns'); } byCat['Investor returns'] += investorReturns; }
+  if (commission) { if (!('Commission' in byCat)) { byCat['Commission'] = 0; catOrder.push('Commission'); } byCat['Commission'] += commission; }
   const cats = catOrder.map((c) => ({ name: c, amount: Math.round(byCat[c]) }));
   cats.sort((a, b) => b.amount - a.amount);
 
@@ -198,7 +201,7 @@ export async function erpExpenses(ctx, payload) {
   const pool = await poolExpenses(ctx, month);
   let poolTotal = 0;
   for (const e of pool) { poolTotal += e.amount; const hit = cats.find((c) => c.name === e.category); if (hit) hit.amount += Math.round(e.amount); else cats.push({ name: e.category, amount: Math.round(e.amount) }); }
-  const total = Math.round(sums.fixed + sums.recurring + sums.oneoff + investorReturns + poolTotal);
+  const total = Math.round(sums.fixed + sums.recurring + sums.oneoff + investorReturns + commission + poolTotal);
   const p = month.split('-');
   return {
     month, label: MONTH_NAMES[Number(p[1]) - 1] + ' ' + p[0],
@@ -209,7 +212,7 @@ export async function erpExpenses(ctx, payload) {
     byCategory: cats,
     fixed: Math.round(sums.fixed), fixedPaid: Math.round(sums.fixed),
     fixedUnpaid: Math.round(fixedUnpaid), recurring: Math.round(sums.recurring),
-    oneoffTotal: Math.round(sums.oneoff), total, investorReturns, poolBook: await isPool(ctx), poolExpenses: Math.round(poolTotal), lockedThrough: await lockedThrough(ctx),
+    oneoffTotal: Math.round(sums.oneoff), total, investorReturns, commission, poolBook: await isPool(ctx), poolExpenses: Math.round(poolTotal), lockedThrough: await lockedThrough(ctx),
     revenue: g.netSales, goodsCost: g.cost, gross: g.gross,
     delivery: g.delivery, courier: g.courier, courierExtra: g.courierExtra, courierShort: g.courierShort, other,
     net: g.gross + other - total,
