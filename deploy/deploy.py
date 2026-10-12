@@ -13,13 +13,20 @@
     python deploy.py domains     # add company copies' own web addresses to the Pages project
     python deploy.py all         # db + function + web + release in one go: everything live, every company copy follows within the hour
 
+    set ERP_TARGET=dev             the shared DEVELOPMENT project instead (demo data, both developers). Only db, function,
+                                   secrets and web work there; the live project and its pages are never touched.
+
 Each step prints what it did and stops at the first error.
 """
-import glob, json, os, shutil, subprocess, sys, tempfile, urllib.request
+import glob, json, os, shutil, subprocess, sys, tempfile, time, urllib.request
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 REF = 'oqzcuuytytqadqjlwdsh'
 PAGES_PROJECT = 'costareen-erp'
+DEV = os.environ.get('ERP_TARGET', '').strip().lower() == 'dev'
+if DEV:
+    REF = 'zukqxkcpmxcogbhkdpyw'          # costareen-dev: demo data only, shared by both developers
+    PAGES_PROJECT = 'costareen-erp-dev'
 # the neutral address customers see (install links; a company copy without its own address): no company name in it
 PUBLIC_PROJECT = 'office-erp'
 CREATOR_PROJECT = 'creatorsdesk'      # the creator / sponsor pages alone, on a host with no company name (ERP_CREATOR_URL)
@@ -51,7 +58,12 @@ def api(url, method='GET', body=None, token=None, headers=None):
 
 def sql(query):
     tok = need('SUPABASE_ACCESS_TOKEN')
-    code, out = api('https://api.supabase.com/v1/projects/%s/database/query' % REF, 'POST', {'query': query}, tok)
+    for wait in (0, 10, 20, 40, 60, 90):
+        if wait:
+            print('  Supabase says too many requests; waiting %d s' % wait); time.sleep(wait)
+        code, out = api('https://api.supabase.com/v1/projects/%s/database/query' % REF, 'POST', {'query': query}, tok)
+        if code != 429:
+            break
     if code >= 300:
         raise SystemExit('SQL failed (%s): %s' % (code, out))
     return out
@@ -66,7 +78,7 @@ def step_db():
     # 002 changed after it was first applied (create_invoice now prices through
     # sale_price_for). Re-apply it once, BEFORE 005, which replaces
     # sale_price_for with the partner-aware version.
-    if '005_partnership.sql' not in done:
+    if '005_partnership.sql' not in done and not DEV:
         print('re-apply 002_functions.sql')
         sql(open(os.path.join(ROOT, 'supabase', '002_functions.sql'), encoding='utf-8').read())
     # 001-004 were applied by hand on 2026-09-20, before this log existed
@@ -75,7 +87,7 @@ def step_db():
         name = os.path.basename(f)
         if name in done:
             continue
-        if name in by_hand and '--all' not in sys.argv:
+        if name in by_hand and '--all' not in sys.argv and not DEV:
             print('skip (applied by hand 2026-09-20):', name)
             continue
         print('apply', name)
@@ -104,7 +116,14 @@ def step_secrets(pairs):
 
 def step_web():
     need('CLOUDFLARE_API_TOKEN'); need('CLOUDFLARE_ACCOUNT_ID')
-    subprocess.check_call([sys.executable, os.path.join(ROOT, 'web', 'build.py')])
+    env = None
+    if DEV:
+        tok = need('SUPABASE_ACCESS_TOKEN')
+        code, keys = api('https://api.supabase.com/v1/projects/%s/api-keys' % REF, token=tok)
+        anon = [k['api_key'] for k in keys if k.get('name') == 'anon'][0]
+        env = dict(os.environ, ERP_API='https://%s.supabase.co/functions/v1/erp' % REF,
+                   ERP_SB_URL='https://%s.supabase.co' % REF, ERP_SB_ANON=anon)
+    subprocess.check_call([sys.executable, os.path.join(ROOT, 'web', 'build.py')], env=env)
     out = tempfile.mkdtemp(prefix='erp-web-')
     for f in ['index.html', 'manifest.webmanifest', 'sw.js', '_headers', 'check.html', 'my.html', 'confirm.html', 'lite.html', 'doctor.html', 'doctor-data.js', 'quote.html', 'find.html', 'ideas.html', 'choose.html', 'colour-math.js', 'colour-data.js', 'print.html', 'design.html', 'creator.html', 'sponsor.html']:
         shutil.copy(os.path.join(ROOT, 'web', f), out)
@@ -116,8 +135,8 @@ def step_web():
     games = [os.path.join(out, 'games', f) for f in os.listdir(os.path.join(out, 'games')) if f.endswith('.js')]
     subprocess.check_call(['node', os.path.join(ROOT, 'deploy', 'minify.mjs'), os.path.join(out, 'index.html')] + games)
     # never publish web/.env.local, web/src, web/original or the old app
-    for proj in [PAGES_PROJECT, PUBLIC_PROJECT]:
-        if proj == PUBLIC_PROJECT:
+    for proj in ([PAGES_PROJECT] if DEV else [PAGES_PROJECT, PUBLIC_PROJECT]):
+        if proj == PUBLIC_PROJECT or DEV:
             # made once, on first use
             base = 'https://api.cloudflare.com/client/v4/accounts/%s/pages/projects' % os.environ['CLOUDFLARE_ACCOUNT_ID']
             code, _ = api(base + '/' + proj, token=os.environ['CLOUDFLARE_API_TOKEN'])
@@ -128,6 +147,10 @@ def step_web():
                '--branch=main', '--commit-dirty=true']
         print(' '.join(cmd))
         subprocess.check_call(cmd, shell=(os.name == 'nt'))
+    if DEV:
+        subprocess.check_call([sys.executable, os.path.join(ROOT, 'web', 'build.py')])   # leave index.html built for live
+        print('dev page: https://%s.pages.dev' % PAGES_PROJECT)
+        return
     # the creator / sponsor pages on their own host: only those two pages, the logos and the icons
     cdir = tempfile.mkdtemp(prefix='erp-creator-')
     for f in ['creator.html', 'sponsor.html']:
@@ -210,6 +233,9 @@ if __name__ == '__main__':
     if len(sys.argv) < 2:
         sys.exit(__doc__)
     s = sys.argv[1]
+    if DEV and s not in ('db', 'function', 'secrets', 'web'):
+        sys.exit('ERP_TARGET=dev allows only db, function, secrets and web.')
+    print('target:', 'DEV project ' + REF if DEV else 'LIVE project ' + REF)
     {'db': step_db, 'function': step_function, 'web': step_web, 'domain': step_domain, 'cron': step_cron, 'release': step_release, 'domains': step_domains,
      'all': lambda: [step_db(), step_function(), step_web(), step_release()]}.get(
         s, lambda: step_secrets(sys.argv[2:]) if s == 'secrets' else sys.exit(__doc__))()

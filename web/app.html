@@ -8356,7 +8356,7 @@ function erpSaveBackend(id, j) { try { localStorage.setItem('erp_backend', JSON.
 })();
 if (ERP_BACKEND && ERP_BACKEND.name) { try { document.title = ERP_BACKEND.name + ' ERP'; } catch (e) {} }
 // the provider's own addresses; anywhere else the page is "public": it never opens the provider's ERP
-var ERP_PUBLIC_MODE = !/(^|\.)costareen\.com$|^costareen-erp\.pages\.dev$|^localhost$|^127\./.test(String(location.hostname || '').toLowerCase());
+var ERP_PUBLIC_MODE = !/(^|\.)costareen\.com$|^costareen-erp(-dev)?\.pages\.dev$|^localhost$|^127\./.test(String(location.hostname || '').toLowerCase());
 // #/use/<install id> opens a company's own copy on this device; #/use/main goes back to the provider's
 (function () {
   var m = /^#\/use\/([\w-]+)/.exec(location.hash || '');
