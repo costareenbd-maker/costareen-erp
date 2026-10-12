@@ -1671,3 +1671,15 @@ overrideHold.reason, written on the invoice note ([sold held stock of PRE-...: r
 Page fd-13: the owner is asked for the reason and the sale is saved; others see the warning.
 Found while building it: handing over the oldest pre-order gave its unit to the next one - fixed (allocation keeps turns).
 Tests: preorder now 31; all 108 suites green.
+
+## cust-1 - customer extras (13 Oct 2026)
+
+116_customer_extras.sql + handlers/custextra.js. Follow-ups (customer_followups: when, about what, done with what came of
+it; overdue flagged) on Customers and on a customer's page. "At a glance" on a customer's page (erpCustomerInsight:
+favourite colour / brand / product, first and last purchase, days since, orders, spent, average order, first source).
+"Remove personal data" (owner, erpCustomerErase -> security-definer erase_customer): name, phone, address, e-mail replaced
+by "Removed customer N" in every table that holds them (invoices, payments incl. those of their invoices and [acct:] notes,
+returns, parcels, campaigns, reminders, points, consent, links, passports, serials, repairs, print jobs/requests,
+pre-orders, restock orders, follow-ups); amounts unchanged; refused while they owe, hold credit or have an open
+pre-order; the exact name must be typed; customer_erasures logs when, who, why and row counts only. Tests: custextra (17).
+Page fd-14. Deployed to dev without demo data.

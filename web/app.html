@@ -8434,7 +8434,7 @@ function srv(name, args, ok, bad) {
 
 var SRV_ACTIVE = 0, SRV_WRITING = false, SRV_TIMED = {};
 // the same list the server uses to know a call changes nothing (ERP_READS)
-var SRV_READS = /^(erpPreorders|erpCashUps|erpAskingPrices|erpSystemCheck|erpAnalytics|erpCommission|erpHolding|erpLotFunding|erpShipments|erpShipment|erpLots|erpFdHead|erpFdDash|erpReceiveMatch|erpAiReader|erpProductSuggest|erpCatalogue|erpPushList|erpCreators|erpCreatorPortalLink|erpSponsorLink|erpCreatorRequests|erpCreatorEvents|erpCreatorProgramme|erpCreatorPreview|erpCreatorCatalog|erpCreatorSources|erpCreatorClaims|erpApps|erpAppQr|erpFeedback|erpRestockOffers|erpRestockList|erpWarrantyRules|erpWarrantyCard|erpMyLink|erpPlatformRegister|erpPlatformDoctor|erpPlatformCommunity|erpMarketWaiting|erpBoard|erpPlatformDesign|erpResell|erpResellerProgramme|erpLoyalty|erpCustomerPoints|erpRefillDue|erpDeliveryHistory|erpDeliveryHistoryMany|erpPrintKit|erpPrintJobs|erpPrintJob|erpPrintCost|erpSpools|erpPrintRequests|erpJoint|erpJointCatalog|erpJointCard|erpInvoiceDesign|erpInvoicePreview|erpMarket|erpMarketMine|erpMarketRequests|erpMarketHints|erpMarketNames|erpWanted|erpBrand|erpComplianceLog|erpProviderKey|erpNews|erpAccessKeys|erpAccessWarning|erpAdmin|erpAiKeys|erpAlertRules|erpAlerts|erpArena|erpBackupStatus|erpBg|erpBnWords|erpBookedParcels|erpBrandLogo|erpBundle|erpBusinessLinks|erpBusinesses|erpBusinessesDeleted|erpCampaignAudience|erpCampaignGet|erpCampaignList|erpCapital|erpCashBook|erpCatalog|erpConnStatus|erpConnections|erpCostBook|erpCourier|erpCourierKeyStatus|erpCurrencies|erpCustomerAccount|erpCustomerCredit|erpCustomerList|erpCustomerPage|erpCustomerStatement|erpCustomers|erpDashboardData|erpDaySales|erpDeliveryOptions|erpDevices|erpDiscontinued|erpDues|erpEvoQr|erpEvoStatus|erpExpenseExport|erpExpenseReceiptUrl|erpExpenses|erpFamilies|erpFighters|erpFormOptions|erpGame|erpGetTheme|erpGoogle|erpHello|erpInstalls|erpInvoice|erpInvoicePdf|erpJob|erpJobs|erpListView|erpLookupCustomer|erpLookupUsage|erpMe|erpMoney|erpNoteFileUrl|erpNotes|erpOwnerChange|erpOwnerChanges|erpParcelLabels|erpParcelPreview|erpPartnerStock|erpPartnership|erpPayReasons|erpPeople|erpPlatform|erpPlatformErrors|erpPnl|erpPnlMonth|erpPoList|erpPoolCatalog|erpProduct|erpProductListShare|erpProductPage|erpProductPhotoUrl|erpProductThumbs|erpProfile|erpQuoteAsset|erpQuoteBoot|erpQuoteGet|erpQuoteList|erpRecentInvoices|erpRecovery|erpReorderPlan|erpRestorePreview|erpReturnPreview|erpRisks|erpSales|erpSearch|erpSecurity|erpSelfTest|erpSerialLookup|erpSerialsFor|erpSessions|erpSetTheme|erpSettingsFull|erpSettingsLists|erpSfPayoutLines|erpSfPayouts|erpShareFile|erpSharedStock|erpSheet|erpStatementPdf|erpStockHistory|erpSupplierPage|erpSuppliers|erpToday|erpUsers|erpWaProductPdf|erpWebMatches|erpWebOrderInvoices|erpWebOrders|erpWebsiteTest)$/;
+var SRV_READS = /^(erpFollowups|erpCustomerInsight|erpPreorders|erpCashUps|erpAskingPrices|erpSystemCheck|erpAnalytics|erpCommission|erpHolding|erpLotFunding|erpShipments|erpShipment|erpLots|erpFdHead|erpFdDash|erpReceiveMatch|erpAiReader|erpProductSuggest|erpCatalogue|erpPushList|erpCreators|erpCreatorPortalLink|erpSponsorLink|erpCreatorRequests|erpCreatorEvents|erpCreatorProgramme|erpCreatorPreview|erpCreatorCatalog|erpCreatorSources|erpCreatorClaims|erpApps|erpAppQr|erpFeedback|erpRestockOffers|erpRestockList|erpWarrantyRules|erpWarrantyCard|erpMyLink|erpPlatformRegister|erpPlatformDoctor|erpPlatformCommunity|erpMarketWaiting|erpBoard|erpPlatformDesign|erpResell|erpResellerProgramme|erpLoyalty|erpCustomerPoints|erpRefillDue|erpDeliveryHistory|erpDeliveryHistoryMany|erpPrintKit|erpPrintJobs|erpPrintJob|erpPrintCost|erpSpools|erpPrintRequests|erpJoint|erpJointCatalog|erpJointCard|erpInvoiceDesign|erpInvoicePreview|erpMarket|erpMarketMine|erpMarketRequests|erpMarketHints|erpMarketNames|erpWanted|erpBrand|erpComplianceLog|erpProviderKey|erpNews|erpAccessKeys|erpAccessWarning|erpAdmin|erpAiKeys|erpAlertRules|erpAlerts|erpArena|erpBackupStatus|erpBg|erpBnWords|erpBookedParcels|erpBrandLogo|erpBundle|erpBusinessLinks|erpBusinesses|erpBusinessesDeleted|erpCampaignAudience|erpCampaignGet|erpCampaignList|erpCapital|erpCashBook|erpCatalog|erpConnStatus|erpConnections|erpCostBook|erpCourier|erpCourierKeyStatus|erpCurrencies|erpCustomerAccount|erpCustomerCredit|erpCustomerList|erpCustomerPage|erpCustomerStatement|erpCustomers|erpDashboardData|erpDaySales|erpDeliveryOptions|erpDevices|erpDiscontinued|erpDues|erpEvoQr|erpEvoStatus|erpExpenseExport|erpExpenseReceiptUrl|erpExpenses|erpFamilies|erpFighters|erpFormOptions|erpGame|erpGetTheme|erpGoogle|erpHello|erpInstalls|erpInvoice|erpInvoicePdf|erpJob|erpJobs|erpListView|erpLookupCustomer|erpLookupUsage|erpMe|erpMoney|erpNoteFileUrl|erpNotes|erpOwnerChange|erpOwnerChanges|erpParcelLabels|erpParcelPreview|erpPartnerStock|erpPartnership|erpPayReasons|erpPeople|erpPlatform|erpPlatformErrors|erpPnl|erpPnlMonth|erpPoList|erpPoolCatalog|erpProduct|erpProductListShare|erpProductPage|erpProductPhotoUrl|erpProductThumbs|erpProfile|erpQuoteAsset|erpQuoteBoot|erpQuoteGet|erpQuoteList|erpRecentInvoices|erpRecovery|erpReorderPlan|erpRestorePreview|erpReturnPreview|erpRisks|erpSales|erpSearch|erpSecurity|erpSelfTest|erpSerialLookup|erpSerialsFor|erpSessions|erpSetTheme|erpSettingsFull|erpSettingsLists|erpSfPayoutLines|erpSfPayouts|erpShareFile|erpSharedStock|erpSheet|erpStatementPdf|erpStockHistory|erpSupplierPage|erpSuppliers|erpToday|erpUsers|erpWaProductPdf|erpWebMatches|erpWebOrderInvoices|erpWebOrders|erpWebsiteTest)$/;
 function srvPump() {
   if (!SRV_Q.length) return;
   var isRead = SRV_READS.test(SRV_Q[0].name);
@@ -24725,6 +24725,91 @@ srv = function (name, args, ok, bad) {
     });
   });
 };
+</script>
+
+<!-- fd-14 (FilaDash merge): customer extras. Customers: the follow-ups (call someone on a day about something; overdue in
+     red; Done with what came of it). One customer's page: "At a glance" (favourite colour, brand and product, first / last
+     purchase, days since, orders, spent, average, how they first came), their follow-ups, and for the owner "Remove
+     personal data" (on the customer's request; refused while they owe, hold credit or have an open pre-order; the exact
+     name must be typed). handlers/custextra.js. -->
+<style>
+.fu-over td { background:color-mix(in srgb, var(--fd-negative, var(--critical)) 8%, transparent) !important; }
+.ci-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(150px, 1fr)); gap:12px; margin-top:10px; }
+.ci-grid div { font-size:12.5px; color:var(--fd-text-3, var(--muted)); } .ci-grid b { display:block; font-size:16px; color:var(--fd-text, var(--ink)); margin-top:2px; }
+</style>
+<script>
+var FU = { data: null, busy: false }, CI = { key: '', data: null, busy: false };
+function fuLoad() {
+  if (FU.busy) return; FU.busy = true;
+  srv('erpFollowups', [{}], function (r) { FU.busy = false; FU.data = r; if (VIEW === 'customers') repaint(); }, function () { FU.busy = false; FU.data = { followups: [], totals: {} }; });
+}
+function fuTable(list, withWho) {
+  return '<div class="scroll"><table><thead><tr><th>When</th>' + (withWho ? '<th>Customer</th>' : '') + '<th>About</th><th>Done</th><th></th></tr></thead><tbody>' + list.map(function (f) {
+    return '<tr class="' + (f.overdue ? 'fu-over' : '') + '"><td>' + esc(f.dueLabel) + (f.overdue ? ' <span class="pill out">overdue</span>' : f.today ? ' <span class="pill low">today</span>' : '') + '</td>' +
+      (withWho ? '<td>' + esc(f.customer) + '<div class="sku">' + esc(f.phone) + '</div></td>' : '') + '<td style="white-space:normal">' + esc(f.note) + '<div class="sku">by ' + esc(f.by) + '</div></td>' +
+      '<td style="white-space:normal">' + (f.status === 'done' ? esc(f.outcome || 'done') + '<div class="sku">' + esc(f.doneBy) + ', ' + esc(f.doneAt) + '</div>' : '') + '</td>' +
+      '<td>' + (f.status === 'open' ? '<button class="btn small primary" type="button" data-fudone="' + esc(f.id) + '">Done</button>' : '') + '</td></tr>'; }).join('') + '</tbody></table></div>';
+}
+var viewCustomersFu = viewCustomers;
+viewCustomers = function () {
+  var h = viewCustomersFu.apply(this, arguments);
+  if (CUSP.key) {
+    if (!CUSP.data) return h;
+    if (CI.key !== CUSP.key) { CI.key = CUSP.key; CI.data = null; }
+    if (!CI.data && !CI.busy) { CI.busy = true; srv('erpCustomerInsight', [{ phone: CUSP.data.phone, name: CUSP.data.name }], function (r) { CI.busy = false; CI.data = r; if (VIEW === 'customers' && CUSP.key === CI.key) repaint(); }, function () { CI.busy = false; CI.data = { error: true }; }); }
+    var x = CI.data; if (!x || x.error) return h;
+    var fav = function (f) { return f ? esc(f.name) + ' <span class="sku">(' + fmt(f.units) + ')</span>' : '—'; };
+    var owner = ME && String(ME.role) === 'owner';
+    return h + '<div class="card" style="margin-top:16px"><div class="chead"><h2>At a glance</h2><button class="btn small" type="button" data-fuadd="1">+ Follow-up</button></div>' +
+      '<div class="ci-grid"><div>Favourite colour<b>' + fav(x.favouriteColour) + '</b></div><div>Favourite brand<b>' + fav(x.favouriteBrand) + '</b></div><div>Buys most<b>' + fav(x.favouriteProduct) + '</b></div>' +
+      '<div>Orders<b>' + fmt(x.orders) + '</b></div><div>Spent<b>' + fmt(x.spent) + '</b></div><div>Average order<b>' + fmt(x.avgOrder) + '</b></div>' +
+      '<div>First purchase<b>' + esc(x.first || '—') + '</b></div><div>Last purchase<b>' + esc(x.last || '—') + (x.daysSince !== null ? ' <span class="sku">' + x.daysSince + ' days ago</span>' : '') + '</b></div>' +
+      '<div>First came from<b>' + esc(x.firstSource || '—') + '</b></div></div>' +
+      (x.followups.length ? '<h3 style="margin-top:16px">Follow-ups</h3>' + fuTable(x.followups, false) : '') +
+      (owner ? '<div style="margin-top:16px;border-top:1px solid var(--ring);padding-top:12px"><button class="btn small danger" type="button" data-cierase="1">Remove personal data…</button>' +
+        '<span class="sku" style="margin-left:8px">when the customer asks: name, phone and address go everywhere, the amounts stay</span></div>' : '') + '</div>';
+  }
+  if (!FU.data) { fuLoad(); return h; }
+  var open = FU.data.followups.filter(function (f) { return f.status === 'open'; });
+  var card = '<div class="card" style="margin-bottom:16px"><div class="chead"><h2>Follow-ups' + (FU.data.totals.overdue ? ' <span class="pill out">' + FU.data.totals.overdue + ' overdue</span>' : '') + '</h2>' +
+    '<button class="btn small primary" type="button" data-fuadd="1">+ Follow-up</button></div>' +
+    (open.length ? fuTable(open, true) : '<div class="empty">Nobody to call back. Add one from here or from a customer’s page.</div>') + '</div>';
+  var i = h.indexOf('<div class="card');
+  return i >= 0 ? h.slice(0, i) + card + h.slice(i) : card + h;
+};
+document.addEventListener('click', function (e) {
+  if (!e.target.closest) return;
+  var fail = function (er) { toast(esc(er && er.message ? er.message : er), true); };
+  if (e.target.closest('[data-fuadd]')) {
+    var onPage = !!(CUSP.key && CUSP.data);
+    var d = new Date(Date.now() + 2 * 864e5).toISOString().slice(0, 10);
+    fdwDialog('Follow-up' + (onPage ? ' with ' + CUSP.data.name : ''),
+      '<div class="fields">' + (onPage ? '' : '<div><label class="f" for="fu_ph">Customer phone</label><input class="i" id="fu_ph" inputmode="tel"></div><div><label class="f" for="fu_nm">Name</label><input class="i" id="fu_nm"></div>') +
+      '<div><label class="f" for="fu_d">When</label><input class="i" id="fu_d" type="date" value="' + d + '"></div></div>' +
+      '<div class="fields"><div><label class="f" for="fu_n">About</label><input class="i" id="fu_n" placeholder="e.g. ask if the A1 is still wanted"></div></div>',
+      function (back, close) {
+        srv('erpFollowupSave', [{ phone: onPage ? CUSP.data.phone : fdwVal(back, 'fu_ph'), name: onPage ? CUSP.data.name : fdwVal(back, 'fu_nm'), due: fdwVal(back, 'fu_d'), note: fdwVal(back, 'fu_n') }],
+          function (r) { close(); FU.data = r; CI.data = null; toast('Follow-up saved.'); repaint(); }, fail);
+      });
+    return;
+  }
+  var dn = e.target.closest('[data-fudone]');
+  if (dn) { uiPrompt('What came of it?', '').then(function (o) { if (o === null || o === undefined) return;
+    srv('erpFollowupDone', [{ id: dn.getAttribute('data-fudone'), outcome: o }], function (r) { FU.data = r; CI.data = null; toast('Done.'); repaint(); }, fail); }); return; }
+  if (e.target.closest('[data-cierase]')) {
+    var nm = CUSP.data.name || CUSP.data.phone;
+    fdwDialog('Remove ' + nm + '’s personal data',
+      '<div class="dlg-b" style="white-space:normal"><b>This cannot be undone.</b> Their name, phone, address and e-mail are taken out of every invoice, payment, parcel, campaign, repair, print job, pre-order and warranty record, and replaced by “Removed customer N”. The amounts stay, so the books do not change. It is refused while they owe money, hold credit or have an open pre-order.</div>' +
+      '<div class="fields"><div><label class="f" for="ce_r">Why (when and how they asked)</label><input class="i" id="ce_r"></div>' +
+      '<div><label class="f" for="ce_c">Type their name to confirm: ' + esc(nm) + '</label><input class="i" id="ce_c" autocomplete="off"></div></div>',
+      function (back, close) {
+        srv('erpCustomerErase', [{ phone: CUSP.data.phone, name: CUSP.data.name, reason: fdwVal(back, 'ce_r'), confirm: fdwVal(back, 'ce_c') }],
+          function (r) { close(); toast('Removed: now “' + esc(r.label) + '” (' + r.rows + ' rows).'); CUSP = { key: '', data: null, err: null }; go('customers'); }, fail);
+      });
+  }
+});
+var fuAfterWrite = pagesAfterWrite;
+pagesAfterWrite = function () { FU.data = null; CI.data = null; return fuAfterWrite.apply(this, arguments); };
 </script>
 
 </body>
