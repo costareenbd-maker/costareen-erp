@@ -8433,7 +8433,7 @@ function srv(name, args, ok, bad) {
 
 var SRV_ACTIVE = 0, SRV_WRITING = false, SRV_TIMED = {};
 // the same list the server uses to know a call changes nothing (ERP_READS)
-var SRV_READS = /^(erpReceiveMatch|erpAiReader|erpProductSuggest|erpCatalogue|erpPushList|erpCreators|erpCreatorPortalLink|erpSponsorLink|erpCreatorRequests|erpCreatorEvents|erpCreatorProgramme|erpCreatorPreview|erpCreatorCatalog|erpCreatorSources|erpCreatorClaims|erpApps|erpAppQr|erpFeedback|erpRestockOffers|erpRestockList|erpWarrantyRules|erpWarrantyCard|erpMyLink|erpPlatformRegister|erpPlatformDoctor|erpPlatformCommunity|erpMarketWaiting|erpBoard|erpPlatformDesign|erpResell|erpResellerProgramme|erpLoyalty|erpCustomerPoints|erpRefillDue|erpDeliveryHistory|erpDeliveryHistoryMany|erpPrintKit|erpPrintJobs|erpPrintJob|erpPrintCost|erpSpools|erpPrintRequests|erpJoint|erpJointCatalog|erpJointCard|erpInvoiceDesign|erpInvoicePreview|erpMarket|erpMarketMine|erpMarketRequests|erpMarketHints|erpMarketNames|erpWanted|erpBrand|erpComplianceLog|erpProviderKey|erpNews|erpAccessKeys|erpAccessWarning|erpAdmin|erpAiKeys|erpAlertRules|erpAlerts|erpArena|erpBackupStatus|erpBg|erpBnWords|erpBookedParcels|erpBrandLogo|erpBundle|erpBusinessLinks|erpBusinesses|erpBusinessesDeleted|erpCampaignAudience|erpCampaignGet|erpCampaignList|erpCapital|erpCashBook|erpCatalog|erpConnStatus|erpConnections|erpCostBook|erpCourier|erpCourierKeyStatus|erpCurrencies|erpCustomerAccount|erpCustomerCredit|erpCustomerList|erpCustomerPage|erpCustomerStatement|erpCustomers|erpDashboardData|erpDaySales|erpDeliveryOptions|erpDevices|erpDiscontinued|erpDues|erpEvoQr|erpEvoStatus|erpExpenseExport|erpExpenseReceiptUrl|erpExpenses|erpFamilies|erpFighters|erpFormOptions|erpGame|erpGetTheme|erpGoogle|erpHello|erpInstalls|erpInvoice|erpInvoicePdf|erpJob|erpJobs|erpListView|erpLookupCustomer|erpLookupUsage|erpMe|erpMoney|erpNoteFileUrl|erpNotes|erpOwnerChange|erpOwnerChanges|erpParcelLabels|erpParcelPreview|erpPartnerStock|erpPartnership|erpPayReasons|erpPeople|erpPlatform|erpPlatformErrors|erpPnl|erpPnlMonth|erpPoList|erpPoolCatalog|erpProduct|erpProductListShare|erpProductPage|erpProductPhotoUrl|erpProductThumbs|erpProfile|erpQuoteAsset|erpQuoteBoot|erpQuoteGet|erpQuoteList|erpRecentInvoices|erpRecovery|erpReorderPlan|erpRestorePreview|erpReturnPreview|erpRisks|erpSales|erpSearch|erpSecurity|erpSelfTest|erpSerialLookup|erpSerialsFor|erpSessions|erpSetTheme|erpSettingsFull|erpSettingsLists|erpSfPayoutLines|erpSfPayouts|erpShareFile|erpSharedStock|erpSheet|erpStatementPdf|erpStockHistory|erpSupplierPage|erpSuppliers|erpToday|erpUsers|erpWaProductPdf|erpWebMatches|erpWebOrderInvoices|erpWebOrders|erpWebsiteTest)$/;
+var SRV_READS = /^(erpFdDash|erpReceiveMatch|erpAiReader|erpProductSuggest|erpCatalogue|erpPushList|erpCreators|erpCreatorPortalLink|erpSponsorLink|erpCreatorRequests|erpCreatorEvents|erpCreatorProgramme|erpCreatorPreview|erpCreatorCatalog|erpCreatorSources|erpCreatorClaims|erpApps|erpAppQr|erpFeedback|erpRestockOffers|erpRestockList|erpWarrantyRules|erpWarrantyCard|erpMyLink|erpPlatformRegister|erpPlatformDoctor|erpPlatformCommunity|erpMarketWaiting|erpBoard|erpPlatformDesign|erpResell|erpResellerProgramme|erpLoyalty|erpCustomerPoints|erpRefillDue|erpDeliveryHistory|erpDeliveryHistoryMany|erpPrintKit|erpPrintJobs|erpPrintJob|erpPrintCost|erpSpools|erpPrintRequests|erpJoint|erpJointCatalog|erpJointCard|erpInvoiceDesign|erpInvoicePreview|erpMarket|erpMarketMine|erpMarketRequests|erpMarketHints|erpMarketNames|erpWanted|erpBrand|erpComplianceLog|erpProviderKey|erpNews|erpAccessKeys|erpAccessWarning|erpAdmin|erpAiKeys|erpAlertRules|erpAlerts|erpArena|erpBackupStatus|erpBg|erpBnWords|erpBookedParcels|erpBrandLogo|erpBundle|erpBusinessLinks|erpBusinesses|erpBusinessesDeleted|erpCampaignAudience|erpCampaignGet|erpCampaignList|erpCapital|erpCashBook|erpCatalog|erpConnStatus|erpConnections|erpCostBook|erpCourier|erpCourierKeyStatus|erpCurrencies|erpCustomerAccount|erpCustomerCredit|erpCustomerList|erpCustomerPage|erpCustomerStatement|erpCustomers|erpDashboardData|erpDaySales|erpDeliveryOptions|erpDevices|erpDiscontinued|erpDues|erpEvoQr|erpEvoStatus|erpExpenseExport|erpExpenseReceiptUrl|erpExpenses|erpFamilies|erpFighters|erpFormOptions|erpGame|erpGetTheme|erpGoogle|erpHello|erpInstalls|erpInvoice|erpInvoicePdf|erpJob|erpJobs|erpListView|erpLookupCustomer|erpLookupUsage|erpMe|erpMoney|erpNoteFileUrl|erpNotes|erpOwnerChange|erpOwnerChanges|erpParcelLabels|erpParcelPreview|erpPartnerStock|erpPartnership|erpPayReasons|erpPeople|erpPlatform|erpPlatformErrors|erpPnl|erpPnlMonth|erpPoList|erpPoolCatalog|erpProduct|erpProductListShare|erpProductPage|erpProductPhotoUrl|erpProductThumbs|erpProfile|erpQuoteAsset|erpQuoteBoot|erpQuoteGet|erpQuoteList|erpRecentInvoices|erpRecovery|erpReorderPlan|erpRestorePreview|erpReturnPreview|erpRisks|erpSales|erpSearch|erpSecurity|erpSelfTest|erpSerialLookup|erpSerialsFor|erpSessions|erpSetTheme|erpSettingsFull|erpSettingsLists|erpSfPayoutLines|erpSfPayouts|erpShareFile|erpSharedStock|erpSheet|erpStatementPdf|erpStockHistory|erpSupplierPage|erpSuppliers|erpToday|erpUsers|erpWaProductPdf|erpWebMatches|erpWebOrderInvoices|erpWebOrders|erpWebsiteTest)$/;
 function srvPump() {
   if (!SRV_Q.length) return;
   var isRead = SRV_READS.test(SRV_Q[0].name);
@@ -23179,6 +23179,394 @@ document.addEventListener('click', function (e) {
   fdSkin(b.getAttribute('data-fdskin'));
   [].forEach.call(document.querySelectorAll('[data-fdskin]'), function (x) { x.classList.toggle('on', x.getAttribute('data-fdskin') === FD_SKIN); });
 }, true);
+</script>
+
+<!-- fd-2 (FilaDash merge P2): the dashboard in FilaDash's layout, on our figures (handlers/fddash.js, erpFdDash).
+     Page head with range pills (whole months: This month / 3 / 6 / 12, so Net profit = the P&L) and the owner's
+     product-group drop-down (decision F5: one business, a group narrows the sales side). His card grid: revenue curve,
+     KPI cards with icon badge + trend chip + "i" (Show calculation), donuts, tables, needs attention.
+     The previous dashboard (today / a chosen day, charts, tabs) stays below behind "More: the classic dashboard". -->
+<style>
+.fdd-head { display:flex; align-items:flex-end; justify-content:space-between; gap:16px; flex-wrap:wrap; margin:4px 0 20px; }
+.fdd-eyebrow { font-size:12px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:var(--fd-text-3, var(--muted)); }
+.fdd-title { display:flex; align-items:center; gap:10px; font-size:28px; font-weight:800; letter-spacing:-.02em; line-height:1.2; margin:2px 0 0; color:var(--fd-text, var(--ink)); }
+.fdd-sub { font-size:14px; color:var(--fd-text-3, var(--muted)); font-weight:500; margin-top:4px; }
+.fdd-tools { display:flex; align-items:center; gap:8px; flex-wrap:wrap; justify-content:flex-end; }
+.fdd-pill { height:38px; padding:0 16px; border-radius:999px; border:1px solid transparent; background:var(--fd-surface-2, var(--field)); color:var(--fd-text-2, var(--ink-2));
+  font:inherit; font-size:14px; font-weight:600; cursor:pointer; white-space:nowrap; }
+:root[data-theme="dark"] .fdd-pill { border-color:var(--fd-border, var(--ring)); }
+.fdd-pill:hover { background:var(--fd-surface-3, var(--ring)); color:var(--fd-text, var(--ink)); }
+.fdd-pill[aria-pressed="true"] { background:var(--fd-accent, var(--series-1)); color:var(--fd-text-on-accent, #fff); box-shadow:var(--fd-accent-glow, none); }
+:root[data-skin="fd"]:not([data-theme="dark"]) .fdd-pill[aria-pressed="true"] { background:linear-gradient(180deg, #5F5BF0, #5A4BE6); }
+:root[data-theme="dark"] .fdd-pill[aria-pressed="true"] { background:#1A1813; color:var(--fd-accent, var(--series-1)); border-color:var(--fd-accent, var(--series-1)); }
+.fdd-group { height:38px; border-radius:999px; border:1px solid var(--fd-accent-border, var(--ring)); background:var(--fd-accent-soft, var(--series-1-soft)); color:var(--fd-accent-text, var(--series-1));
+  font:inherit; font-size:14px; font-weight:700; padding:0 34px 0 16px; cursor:pointer; appearance:none; -webkit-appearance:none;
+  background-image:linear-gradient(45deg, transparent 50%, currentColor 50%), linear-gradient(135deg, currentColor 50%, transparent 50%);
+  background-position:calc(100% - 18px) 16px, calc(100% - 13px) 16px; background-size:5px 5px; background-repeat:no-repeat; }
+.fdd-qa { display:flex; gap:8px; flex-wrap:wrap; margin:-6px 0 20px; }
+.fdd-note { margin:-8px 0 18px; font-size:13px; color:var(--fd-text-3, var(--muted)); }
+.fdd-grid { display:grid; grid-template-columns:repeat(4, minmax(0, 1fr)); gap:20px; margin-bottom:20px; }
+.fdd-c { position:relative; background:var(--fd-card, var(--surface)); border:1px solid var(--fd-border, var(--ring)); border-radius:20px; padding:22px 24px;
+  box-shadow:var(--fd-shadow-card, var(--shadow)), var(--fd-glow-card, 0 0 0 transparent); min-width:0; }
+.fdd-c.s2 { grid-column:span 2; } .fdd-c.r2 { grid-row:span 2; } .fdd-c.s4 { grid-column:1 / -1; }
+.fdd-c[data-go] { cursor:pointer; transition:transform .15s, box-shadow .15s; }
+.fdd-c[data-go]:hover { transform:translateY(-2px); box-shadow:var(--fd-shadow-card-hover, var(--shadow-lg)); }
+.fdd-ch { display:flex; align-items:center; gap:14px; min-height:44px; }
+.fdd-ct { font-size:18px; font-weight:700; letter-spacing:-.01em; color:var(--fd-text, var(--ink)); display:flex; align-items:center; gap:8px; min-width:0; }
+.fdd-ch .fdd-more { margin-left:auto; font-size:14px; font-weight:500; color:var(--fd-text-2, var(--ink-2)); background:none; border:0; cursor:pointer; white-space:nowrap; font-family:inherit; }
+.fdd-ch .fdd-more:hover { color:var(--fd-accent-text, var(--series-1)); }
+.fdd-badge { width:48px; height:48px; flex:0 0 48px; border-radius:999px; display:inline-grid; place-items:center; background:var(--fd-accent-soft, var(--series-1-soft));
+  color:var(--fd-accent, var(--series-1)); box-shadow:var(--fd-glow-badge, none); }
+.fdd-badge svg { width:22px; height:22px; fill:none; stroke:currentColor; stroke-width:1.9; stroke-linecap:round; stroke-linejoin:round; }
+.fdd-badge.t-warn { background:var(--fd-warning-soft, var(--warning-soft)); color:var(--fd-warning, var(--warning)); }
+.fdd-badge.t-bad { background:var(--fd-negative-soft, var(--critical-soft)); color:var(--fd-negative, var(--critical)); }
+.fdd-badge.t-good { background:var(--fd-positive-soft, var(--good-soft)); color:var(--fd-positive, var(--good)); }
+.fdd-k { display:flex; flex-direction:column; min-height:176px; }
+.fdd-ktop { display:flex; align-items:flex-start; justify-content:space-between; gap:8px; }
+.fdd-num { font-size:clamp(24px, 1.2vw + 14px, 34px); font-weight:800; letter-spacing:-.02em; line-height:1.1; margin-top:16px; color:var(--fd-text, var(--ink));
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-variant-numeric:tabular-nums; }
+.fdd-num small { font-size:.62em; font-weight:700; color:var(--fd-text-3, var(--muted)); margin-right:3px; }
+.fdd-num.neg { color:var(--fd-negative-text, var(--critical)); }
+.fdd-lbl { font-size:15px; font-weight:500; color:var(--fd-text-2, var(--ink-2)); margin-top:6px; padding-right:26px; line-height:1.3; }
+.fdd-kn { font-size:12.5px; color:var(--fd-text-3, var(--muted)); margin-top:6px; padding-right:26px; }
+.fdd-trend { display:inline-flex; align-items:center; gap:4px; height:26px; padding:0 10px; border-radius:999px; font-size:13px; font-weight:700; white-space:nowrap;
+  background:var(--fd-positive-soft, var(--good-soft)); color:var(--fd-positive-text, var(--up)); }
+.fdd-trend.bad { background:var(--fd-negative-soft, var(--critical-soft)); color:var(--fd-negative-text, var(--critical)); }
+.fdd-trend.flat { background:var(--fd-surface-2, var(--field)); color:var(--fd-text-3, var(--muted)); }
+.fdd-i { position:absolute; right:22px; bottom:22px; width:20px; height:20px; border-radius:999px; border:0; padding:0; cursor:pointer;
+  background:var(--fd-accent, var(--series-1)); color:var(--fd-text-on-accent, #fff); font:800 12px/20px var(--fd-font, inherit); text-align:center; }
+.fdd-i:hover { transform:scale(1.12); }
+.fdd-ct .fdd-i { position:static; flex:none; }
+/* hero: his gradient card */
+.fdd-c.fdhero { background:var(--fd-accent-gradient, var(--series-1)); border-color:transparent; box-shadow:var(--fd-hero-shadow, var(--shadow-lg)); color:#fff; overflow:hidden; }
+.fdd-c.fdhero .fdd-num, .fdd-c.fdhero .fdd-num small { color:#fff; } .fdd-c.fdhero .fdd-lbl { color:rgba(255,255,255,.92); } .fdd-c.fdhero .fdd-kn { color:rgba(255,255,255,.85); }
+.fdd-c.fdhero .fdd-badge { background:rgba(255,255,255,.22); color:#fff; box-shadow:none; }
+.fdd-c.fdhero .fdd-trend { background:rgba(255,255,255,.2); color:#fff; }
+.fdd-c.fdhero .fdd-i { background:#fff; color:#5B4FE9; }
+.fdd-c.fdhero .fdd-cube { position:absolute; right:22px; top:50%; width:66px; height:66px; margin-top:-38px; opacity:.95; pointer-events:none; }
+:root[data-theme="dark"] .fdd-c.fdhero { background:radial-gradient(120% 110% at 0% 0%, rgba(245,166,35,.18), transparent 60%), var(--fd-card, var(--surface));
+  border-color:var(--fd-accent-border, var(--ring)); color:var(--fd-text, var(--ink)); box-shadow:var(--fd-shadow-card), 0 0 0 1px rgba(245,166,35,.12), 0 0 28px rgba(245,166,35,.16); }
+:root[data-theme="dark"] .fdd-c.fdhero .fdd-num, :root[data-theme="dark"] .fdd-c.fdhero .fdd-num small { color:var(--fd-accent, var(--series-1)); }
+:root[data-theme="dark"] .fdd-c.fdhero .fdd-lbl { color:var(--fd-text-2, var(--ink-2)); } :root[data-theme="dark"] .fdd-c.fdhero .fdd-kn { color:var(--fd-text-3, var(--muted)); }
+:root[data-theme="dark"] .fdd-c.fdhero .fdd-badge { background:var(--fd-badge-bg, rgba(245,166,35,.12)); color:var(--fd-accent, var(--series-1)); }
+:root[data-theme="dark"] .fdd-c.fdhero .fdd-trend { background:var(--fd-positive-soft, var(--good-soft)); color:var(--fd-positive-text, var(--up)); }
+:root[data-theme="dark"] .fdd-c.fdhero .fdd-i { background:var(--fd-accent, var(--series-1)); color:var(--fd-text-on-accent, #000); }
+:root[data-theme="dark"] .fdd-c.fdhero .fdd-cube path { fill:transparent !important; stroke:var(--fd-accent, #F5A623); }
+/* revenue curve */
+.fdd-big { margin-left:auto; text-align:right; }
+.fdd-big b { display:block; font-size:30px; font-weight:800; letter-spacing:-.02em; color:var(--fd-accent-text, var(--series-1)); line-height:1.1; font-variant-numeric:tabular-nums; }
+.fdd-big span { font-size:12.5px; color:var(--fd-text-3, var(--muted)); }
+.fdd-line { margin-top:14px; }
+.fdd-line svg { width:100%; height:auto; display:block; overflow:visible; }
+.fdd-line .gl { stroke:var(--fd-chart-grid, var(--grid)); stroke-width:1; }
+.fdd-line .ax { font-size:11px; fill:var(--fd-text-3, var(--muted)); font-family:var(--fd-font, inherit); }
+.fdd-line .ln { fill:none; stroke:var(--fd-accent, var(--series-1)); stroke-width:3; stroke-linecap:round; stroke-linejoin:round; }
+.fdd-line .ln2 { fill:none; stroke:var(--fd-positive, var(--good)); stroke-width:2; stroke-dasharray:5 5; }
+.fdd-line .dot { fill:var(--fd-accent, var(--series-1)); stroke:var(--fd-card, #fff); stroke-width:2.5; }
+.fdd-line .dot:hover { r:7; }
+.fdd-legend { display:flex; gap:16px; margin-top:8px; font-size:12.5px; color:var(--fd-text-3, var(--muted)); }
+.fdd-legend i { display:inline-block; width:14px; height:3px; border-radius:2px; vertical-align:middle; margin-right:6px; }
+/* donut + its table */
+.fdd-dn { display:grid; grid-template-columns:minmax(0, 1fr) 150px; gap:16px; align-items:center; margin-top:14px; }
+.fdd-dn svg { width:150px; height:150px; display:block; }
+.fdd-dn .fdd-t th, .fdd-dn .fdd-t td { padding:0 6px !important; }
+.fdd-dn .fdd-t th:first-child, .fdd-dn .fdd-t td:first-child { padding-left:12px !important; }
+.fdd-dn .fdd-t .nm { max-width:130px; }
+.fdd-dn .ctr1 { font-size:30px; font-weight:800; fill:var(--fd-accent-text, var(--series-1)); font-family:var(--fd-font, inherit); }
+.fdd-dn .ctr2 { font-size:13px; fill:var(--fd-text-3, var(--muted)); font-family:var(--fd-font, inherit); }
+.fdd-sw { display:inline-block; width:10px; height:10px; border-radius:999px; margin-right:9px; vertical-align:0; }
+/* small tables inside cards */
+.fdd-t { width:100%; border-collapse:separate !important; border-spacing:0; font-size:14px; margin-top:12px; }
+.fdd-t th { background:var(--fd-surface-2, var(--thead)) !important; height:36px; padding:0 10px !important; font-size:12.5px !important; font-weight:600 !important; color:var(--fd-text-3, var(--muted)) !important;
+  text-transform:none !important; letter-spacing:0 !important; text-align:left; white-space:nowrap; border:0 !important; }
+.fdd-t th:first-child { border-radius:12px 0 0 12px; padding-left:14px !important; } .fdd-t th:last-child { border-radius:0 12px 12px 0; padding-right:14px !important; }
+.fdd-t td { height:42px; padding:0 10px !important; border-bottom:1px solid var(--fd-border, var(--grid)) !important; white-space:nowrap; font-weight:500; }
+.fdd-t td:first-child { padding-left:14px !important; } .fdd-t td:last-child { padding-right:14px !important; }
+.fdd-t tr:last-child td { border-bottom:0 !important; }
+.fdd-t .n { text-align:right; font-variant-numeric:tabular-nums; }
+.fdd-t .nm { max-width:200px; overflow:hidden; text-overflow:ellipsis; }
+.fdd-scroll { overflow-x:auto; max-width:100%; }
+.fdd-c { overflow:hidden; }
+.fdd-t tr[data-inv] { cursor:pointer; }
+.fdd-chip { display:inline-flex; align-items:center; height:24px; padding:0 9px; border-radius:999px; font-size:12px; font-weight:700; }
+.fdd-chip.paid { background:var(--fd-positive-soft, var(--good-soft)); color:var(--fd-positive-text, var(--up)); }
+.fdd-chip.due { background:var(--fd-warning-soft, var(--warning-soft)); color:var(--fd-warning-text, var(--warning)); }
+.fdd-att { list-style:none; margin:10px 0 0; padding:0; }
+.fdd-att li { display:flex; align-items:center; gap:12px; padding:10px 0; border-bottom:1px solid var(--fd-border, var(--grid)); cursor:pointer; }
+.fdd-att li:last-child { border-bottom:0; }
+.fdd-att li b { font-size:18px; font-weight:800; min-width:44px; font-variant-numeric:tabular-nums; }
+.fdd-att li span { color:var(--fd-text-2, var(--ink-2)); }
+.fdd-att .fdd-badge { width:36px; height:36px; flex-basis:36px; }
+.fdd-att .fdd-badge svg { width:17px; height:17px; }
+.fdd-empty { color:var(--fd-text-3, var(--muted)); font-size:13.5px; padding:22px 0 8px; text-align:center; }
+.fdd-classic { margin:6px 0 18px; }
+.fdd-calc { width:100%; border-collapse:collapse; margin-top:10px; font-size:13.5px; }
+.fdd-calc td { padding:7px 0; border-bottom:1px solid var(--fd-border, var(--grid)); }
+.fdd-calc td:last-child { text-align:right; font-variant-numeric:tabular-nums; font-weight:700; padding-left:16px; white-space:nowrap; }
+.fdd-calc tr:last-child td { border-bottom:0; font-size:15px; }
+.fdd-skel { height:176px; border-radius:20px; background:linear-gradient(90deg, var(--fd-surface-2, var(--field)) 25%, var(--fd-surface-3, var(--ring)) 50%, var(--fd-surface-2, var(--field)) 75%);
+  background-size:200% 100%; animation:fddSk 1.2s infinite; }
+@keyframes fddSk { from { background-position:200% 0; } to { background-position:-200% 0; } }
+@media (max-width:1180px) { .fdd-grid { grid-template-columns:repeat(2, minmax(0, 1fr)); } .fdd-c.s2 { grid-column:1 / -1; } .fdd-c.r2 { grid-row:auto; } }
+@media (max-width:640px) {
+  .fdd-grid { grid-template-columns:minmax(0, 1fr) minmax(0, 1fr); gap:12px; }
+  .fdd-c { padding:16px; border-radius:16px; } .fdd-c.s2, .fdd-c.wide { grid-column:1 / -1; }
+  .fdd-k { min-height:128px; } .fdd-badge { width:38px; height:38px; flex-basis:38px; } .fdd-badge svg { width:18px; height:18px; }
+  .fdd-num { margin-top:10px; font-size:21px; } .fdd-lbl { font-size:13px; padding-right:20px; } .fdd-kn { display:none; }
+  .fdd-trend { height:22px; padding:0 7px; font-size:11.5px; } .fdd-i { right:14px; bottom:14px; }
+  .fdd-dn { grid-template-columns:1fr; justify-items:center; } .fdd-dn > div:first-child { width:100%; }
+  .fdd-title { font-size:22px; } .fdd-big b { font-size:22px; }
+  .fdd-c.fdhero .fdd-cube { display:none; }
+  .fdd-scroll { overflow-x:auto; }
+}
+</style>
+<script>
+var FDD = { months: 1, group: '', data: null, key: '', busy: false, err: '', classic: false };
+try { var _fdd = JSON.parse(localStorage.getItem('erp_fdd') || '{}'); if ([1, 3, 6, 12].indexOf(_fdd.months) >= 0) FDD.months = _fdd.months; FDD.group = _fdd.group || ''; FDD.classic = !!_fdd.classic; } catch (e) {}
+function fddSave() { try { localStorage.setItem('erp_fdd', JSON.stringify({ months: FDD.months, group: FDD.group, classic: FDD.classic })); } catch (e) {} }
+var FDD_IC = {
+  taka: '<path d="M7 4c2 0 3 1 3 3v10c0 2 1.5 3 3.5 3S17 19 17 16.5c0-1.6-.8-2.5-2-2.5"/><path d="M5 9h9"/>',
+  target: '<circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r="1"/>',
+  box: '<path d="M3 8l9-5 9 5v8l-9 5-9-5z"/><path d="M3 8l9 5 9-5M12 13v8"/>',
+  bell: '<path d="M6 16V11a6 6 0 0 1 12 0v5l2 2H4z"/><path d="M10 21h4"/>',
+  wallet: '<rect x="3" y="6" width="18" height="13" rx="3"/><path d="M16 12h2M3 9h15V6"/>',
+  cart: '<path d="M3 4h2l2.5 11h11L21 7H6.2"/><circle cx="9" cy="19.5" r="1.4"/><circle cx="17" cy="19.5" r="1.4"/>',
+  trend: '<path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/>',
+  percent: '<path d="M19 5L5 19"/><circle cx="7" cy="7" r="2.5"/><circle cx="17" cy="17" r="2.5"/>',
+  receipt: '<path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6"/>',
+  spool: '<ellipse cx="12" cy="6" rx="7" ry="3"/><path d="M5 6v12c0 1.7 3.1 3 7 3s7-1.3 7-3V6"/><ellipse cx="12" cy="6" rx="2" ry="1"/>',
+  layers: '<path d="M12 3l9 5-9 5-9-5z"/><path d="M3 13l9 5 9-5"/>',
+  globe: '<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3.5 3 14.5 0 18M12 3c-3 3.5-3 14.5 0 18"/>',
+  list: '<path d="M8 6h12M8 12h12M8 18h12"/><circle cx="4" cy="6" r="1"/><circle cx="4" cy="12" r="1"/><circle cx="4" cy="18" r="1"/>',
+  clock: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+  warn: '<path d="M12 3l10 18H2z"/><path d="M12 10v5M12 18v.5"/>',
+  x: '<path d="M6 6l12 12M18 6L6 18"/>',
+  truck: '<path d="M3 6h11v10H3zM14 10h4l3 3v3h-7"/><circle cx="7" cy="18" r="1.6"/><circle cx="17" cy="18" r="1.6"/>'
+};
+function fddIc(k) { return '<svg viewBox="0 0 24 24">' + (FDD_IC[k] || '') + '</svg>'; }
+var FDD_COL = ['var(--fd-chart-1,#2F7CF6)', 'var(--fd-chart-2,#6B4FE6)', 'var(--fd-chart-3,#E24BE5)', 'var(--fd-chart-4,#26CDF4)', 'var(--fd-chart-5,#1DBF73)', 'var(--fd-chart-6,#F59E0B)'];
+function fddLoad() {
+  var key = FDD.months + '|' + FDD.group;
+  if (FDD.busy || (FDD.data && FDD.key === key)) return;
+  FDD.busy = true; FDD.err = '';
+  srv('erpFdDash', [{ months: FDD.months, group: FDD.group }], function (r) {
+    FDD.busy = false; FDD.data = r; FDD.key = key;
+    if (r && r.group !== FDD.group) { FDD.group = r.group || ''; FDD.key = FDD.months + '|' + FDD.group; fddSave(); }
+    if (VIEW === 'dash') repaint();
+  }, function (e) {
+    FDD.busy = false; FDD.err = e && e.message ? e.message : String(e);
+    if (VIEW === 'dash') repaint();
+  });
+}
+function fddMoney(v, cur) { return '<small>' + esc(cur || 'BDT') + '</small>' + fmt(v); }
+function fddTrend(k, flip) {
+  if (!k || k.prev === undefined || k.prev === null) return '';
+  var now = Number(k.v) || 0, prev = Number(k.prev) || 0;
+  if (!prev) return now ? '<span class="fdd-trend flat">new</span>' : '';
+  var pc = (now - prev) / Math.abs(prev) * 100, up = pc >= 0, good = flip ? !up : up;
+  if (Math.abs(pc) < 0.5) return '<span class="fdd-trend flat">= same</span>';
+  return '<span class="fdd-trend' + (good ? '' : ' bad') + '" title="vs ' + esc(FDD.data.prevLabel) + ': ' + fmt(prev) + '">' + (up ? '▲' : '▼') + ' ' + Math.abs(pc).toFixed(0) + '%</span>';
+}
+function fddKpi(o) {
+  // o: { key, title, icon, money, k, hero, tone, note, go, f, flip }
+  var k = o.k || { v: 0 }, cur = FDD.data.currency;
+  var calc = FDD.data.calc && FDD.data.calc[o.key];
+  var num = o.money ? fddMoney(k.v, cur) : o.pct ? fmt(k.v) + '<small style="margin-left:2px">%</small>' : fmt(k.v);
+  return '<div class="fdd-c fdd-k' + (o.hero ? ' fdhero' : '') + '"' + (o.go && navOn(o.go) ? ' data-go="' + o.go + '"' + (o.f ? ' data-f="' + o.f + '"' : '') : '') + '>' +
+    '<div class="fdd-ktop"><span class="fdd-badge' + (o.tone ? ' t-' + o.tone : '') + '">' + fddIc(o.icon) + '</span>' + fddTrend(k, o.flip) + '</div>' +
+    (o.hero ? '<svg class="fdd-cube" viewBox="0 0 64 64"><path d="M32 6l24 13-24 13L8 19z" fill="rgba(255,255,255,.55)" stroke="rgba(255,255,255,.75)" stroke-width="1.2"/><path d="M8 19l24 13v26L8 45z" fill="rgba(255,255,255,.28)" stroke="rgba(255,255,255,.75)" stroke-width="1.2"/><path d="M56 19L32 32v26l24-13z" fill="rgba(255,255,255,.40)" stroke="rgba(255,255,255,.75)" stroke-width="1.2"/></svg>' : '') +
+    '<div class="fdd-num' + (Number(k.v) < 0 ? ' neg' : '') + '">' + num + '</div>' +
+    '<div class="fdd-lbl">' + esc(o.title) + '</div>' + (o.note ? '<div class="fdd-kn">' + o.note + '</div>' : '') +
+    (calc ? '<button type="button" class="fdd-i" data-fdcalc="' + esc(o.key) + '" data-fdtitle="' + esc(o.title) + '" title="Show calculation">i</button>' : '') + '</div>';
+}
+function fddSmooth(pts) {
+  if (!pts.length) return '';
+  var d = 'M' + pts[0][0] + ',' + pts[0][1];
+  for (var i = 0; i < pts.length - 1; i++) {
+    var p0 = pts[i - 1] || pts[i], p1 = pts[i], p2 = pts[i + 1], p3 = pts[i + 2] || p2;
+    var c1x = p1[0] + (p2[0] - p0[0]) / 6, c1y = p1[1] + (p2[1] - p0[1]) / 6, c2x = p2[0] - (p3[0] - p1[0]) / 6, c2y = p2[1] - (p3[1] - p1[1]) / 6;
+    d += ' C' + c1x.toFixed(1) + ',' + c1y.toFixed(1) + ' ' + c2x.toFixed(1) + ',' + c2y.toFixed(1) + ' ' + p2[0] + ',' + p2[1];
+  }
+  return d;
+}
+function fddLine(series, showGross) {
+  var W = 560, H = 230, L = 46, T = 10, B = 26, Rr = 10, iw = W - L - Rr, ih = H - T - B;
+  var vals = series.map(function (s) { return s.revenue; }).concat(showGross ? series.map(function (s) { return s.gross; }) : []);
+  var mx = Math.max.apply(null, vals.concat([1])), mn = Math.min.apply(null, vals.concat([0]));
+  var step = Math.pow(10, Math.floor(Math.log10(Math.max(1, mx - mn) / 4))), nice = [1, 2, 2.5, 5, 10];
+  var unit = step; for (var q = 0; q < nice.length; q++) { if ((mx - mn) / (step * nice[q]) <= 5) { unit = step * nice[q]; break; } }
+  var top = Math.ceil(mx / unit) * unit || unit, bot = Math.floor(mn / unit) * unit;
+  var y = function (v) { return T + ih - (v - bot) / (top - bot) * ih; };
+  var x = function (i) { return L + (series.length === 1 ? iw / 2 : i * iw / (series.length - 1)); };
+  var g = '', ax = '';
+  for (var v = bot; v <= top + 1e-6; v += unit) {
+    g += '<line class="gl" x1="' + L + '" x2="' + (W - Rr) + '" y1="' + y(v).toFixed(1) + '" y2="' + y(v).toFixed(1) + '"/>';
+    ax += '<text class="ax" x="' + (L - 8) + '" y="' + (y(v) + 4).toFixed(1) + '" text-anchor="end">' + fddShort(v) + '</text>';
+  }
+  series.forEach(function (s, i) { ax += '<text class="ax" x="' + x(i).toFixed(1) + '" y="' + (H - 6) + '" text-anchor="middle">' + esc(s.label.split(" '")[0]) + '</text>'; });
+  var pts = series.map(function (s, i) { return [Number(x(i).toFixed(1)), Number(y(s.revenue).toFixed(1))]; });
+  var line = fddSmooth(pts), area = line + ' L' + pts[pts.length - 1][0] + ',' + (T + ih) + ' L' + pts[0][0] + ',' + (T + ih) + ' Z';
+  var gl = showGross ? '<path class="ln2" d="' + fddSmooth(series.map(function (s, i) { return [Number(x(i).toFixed(1)), Number(y(s.gross).toFixed(1))]; })) + '"/>' : '';
+  var dots = pts.map(function (p, i) { return '<circle class="dot" cx="' + p[0] + '" cy="' + p[1] + '" r="5"><title>' + esc(series[i].label) + ': ' + FDD.data.currency + ' ' + fmt(series[i].revenue) +
+    (showGross ? ' · gross ' + fmt(series[i].gross) : '') + '</title></circle>'; }).join('');
+  return '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Revenue by month"><defs><linearGradient id="fddA" x1="0" y1="0" x2="0" y2="1">' +
+    '<stop offset="0" stop-color="var(--fd-accent, #5B4FE9)" stop-opacity=".30"/><stop offset="1" stop-color="var(--fd-accent, #5B4FE9)" stop-opacity="0"/></linearGradient></defs>' +
+    g + ax + '<path d="' + area + '" fill="url(#fddA)"/>' + gl + '<path class="ln" d="' + line + '"/>' + dots + '</svg>';
+}
+function fddShort(v) { var a = Math.abs(v); return (v < 0 ? '-' : '') + (a >= 1e7 ? (a / 1e7).toFixed(a >= 1e8 ? 0 : 1) + 'Cr' : a >= 1e5 ? (a / 1e5).toFixed(a >= 1e6 ? 0 : 1) + 'L' : a >= 1e3 ? (a / 1e3).toFixed(0) + 'k' : String(Math.round(a))); }
+function fddDonut(title, icon, sl, go, f, hint) {
+  var body;
+  if (!sl || !sl.length) body = '<div class="fdd-empty">No sales in this range.</div>';
+  else {
+    var total = sl.reduce(function (s, x) { return s + x.value; }, 0), r = 70, c = 2 * Math.PI * r, off = 0, arcs = '';
+    sl.forEach(function (s, i) {
+      var len = s.value / total * c;
+      arcs += '<circle cx="95" cy="95" r="' + r + '" fill="none" stroke="' + FDD_COL[i % FDD_COL.length] + '" stroke-width="30" stroke-dasharray="' + Math.max(0, len - 2).toFixed(2) + ' ' + c.toFixed(2) +
+        '" stroke-dashoffset="' + (-off).toFixed(2) + '" transform="rotate(-90 95 95)"><title>' + esc(s.label) + ': ' + fmt(s.value) + '</title></circle>';
+      off += len;
+    });
+    var top = sl[0], p = Math.round(top.value / total * 100);
+    body = '<div class="fdd-dn"><div class="fdd-scroll"><table class="fdd-t"><thead><tr><th>' + esc(hint || 'Name') + '</th><th class="n">' + esc(FDD.data.currency) + '</th><th class="n">%</th></tr></thead><tbody>' +
+      sl.map(function (s, i) { return '<tr><td class="nm"><i class="fdd-sw" style="background:' + FDD_COL[i % FDD_COL.length] + '"></i>' + esc(s.label) + '</td><td class="n">' + fmt(s.value) + '</td><td class="n">' + Math.round(s.value / total * 100) + '</td></tr>'; }).join('') +
+      '</tbody></table></div><svg viewBox="0 0 190 190" role="img" aria-label="' + esc(title) + '"><circle cx="95" cy="95" r="70" fill="none" stroke="var(--fd-donut-track, #EEF0F6)" stroke-width="30"/>' + arcs +
+      '<text class="ctr1" x="95" y="96" text-anchor="middle">' + p + '%</text><text class="ctr2" x="95" y="118" text-anchor="middle">' + esc(String(top.label).slice(0, 16)) + '</text></svg></div>';
+  }
+  return '<div class="fdd-c s2"><div class="fdd-ch"><span class="fdd-badge">' + fddIc(icon) + '</span><div class="fdd-ct">' + esc(title) + '</div>' +
+    (go && navOn(go) ? '<button type="button" class="fdd-more" data-go="' + go + '"' + (f ? ' data-f="' + f + '"' : '') + '>View details →</button>' : '') + '</div>' + body + '</div>';
+}
+function fddView() {
+  var d = FDD.data;
+  fddLoad();
+  var biz = (ME && (ME.business || ME.bizName)) || (el('bizName') && el('bizName').textContent) || '';
+  var head = '<div class="fdd-head"><div><div class="fdd-eyebrow">' + esc(FDD.group && d ? d.groupLabel : biz || 'All products') + '</div>' +
+    '<h1 class="fdd-title">Dashboard</h1><div class="fdd-sub">' + (d ? esc(d.rangeLabel) + ' · compared with ' + esc(d.prevLabel) + ' · as of ' + esc(d.generatedAt) : 'Loading…') + '</div></div>' +
+    '<div class="fdd-tools">' + [[1, 'This month'], [3, '3 months'], [6, '6 months'], [12, '12 months']].map(function (x) {
+      return '<button type="button" class="fdd-pill" data-fddm="' + x[0] + '" aria-pressed="' + (FDD.months === x[0]) + '">' + x[1] + '</button>'; }).join('') +
+    '<select class="fdd-group" id="fddGroup" title="Show one product group"><option value="">All products</option>' +
+    ((d && d.groups) || []).map(function (g) { return '<option value="' + esc(g.key) + '"' + (FDD.group === g.key ? ' selected' : '') + '>' + esc(g.label) + ' (' + g.products + ')</option>'; }).join('') +
+    '</select></div></div>';
+  var qa = [];
+  if (navOn('invoice')) qa.push('<button class="btn primary" type="button" data-go="invoice">+ New invoice</button>');
+  if (navOn('stock')) qa.push('<button class="btn" type="button" data-go="stock">Receive stock</button>');
+  if (navOn('quotes')) qa.push('<button class="btn" type="button" data-go="quotes">New quotation</button>');
+  if (navOn('campaigns')) qa.push('<button class="btn" type="button" data-go="campaigns">Campaign</button>');
+  var h = head + '<div class="fdd-qa">' + qa.join('') + '</div>';
+  if (FDD.err && !d) return h + '<div class="note err"><div class="ico">!</div><div>Could not load the dashboard: ' + esc(FDD.err) + ' <button class="btn small" type="button" data-fddretry="1">Try again</button></div></div>';
+  if (!d) return h + '<div class="fdd-grid"><div class="fdd-skel" style="grid-column:span 2;height:372px"></div><div class="fdd-skel"></div><div class="fdd-skel"></div><div class="fdd-skel"></div><div class="fdd-skel"></div></div>';
+  var k = d.kpi, cur = d.currency, grp = !!d.group;
+  if (grp) h += '<div class="fdd-note">Showing <b>' + esc(d.groupLabel) + '</b> only: its sales, cost, gross profit and stock. Expenses, net profit, dues and cash belong to the whole business — pick “All products” to see them.</div>';
+  if (FDD.busy) h += '<div class="fdd-note">Updating…</div>';
+
+  // ---- row 1: the revenue curve and four headline cards
+  var big = '<div class="fdd-big"><b>' + esc(cur) + ' ' + fmt(k.revenue.v) + '</b><span>' + fddTrend(k.revenue) + ' vs ' + esc(d.prevLabel) + '</span></div>';
+  h += '<div class="fdd-grid"><div class="fdd-c s2 r2"><div class="fdd-ch"><span class="fdd-badge">' + fddIc('taka') + '</span><div class="fdd-ct">Revenue' +
+    (d.calc.revenue ? ' <button type="button" class="fdd-i" data-fdcalc="revenue" data-fdtitle="Revenue" title="Show calculation">i</button>' : '') + '</div>' + big + '</div>' +
+    '<div class="fdd-line">' + fddLine(d.series, d.full) + '</div>' +
+    '<div class="fdd-legend"><span><i style="background:var(--fd-accent,#5B4FE9)"></i>Revenue by month</span>' + (d.full ? '<span><i style="background:var(--fd-positive,#1DBF73)"></i>Gross profit</span>' : '') + '</div></div>';
+  if (!grp && k.net) h += fddKpi({ key: 'net', title: 'Net profit', icon: 'target', money: true, k: k.net, hero: true, go: 'profit', note: d.rangeLabel });
+  else if (k.gross) h += fddKpi({ key: 'gross', title: 'Gross profit', icon: 'trend', money: true, k: k.gross, hero: true, note: k.margin ? k.margin.v + '% margin' : '' });
+  else h += fddKpi({ key: 'orders', title: 'Orders', icon: 'cart', k: k.orders, hero: true, go: 'sales' });
+  if (k.stockValue) h += fddKpi({ key: 'stockValue', title: 'Stock value at cost', icon: 'box', money: true, k: k.stockValue, go: 'products', note: fmt(k.stockUnits.v) + ' units on hand' + (k.stockValue.uncosted ? ' · ' + k.stockValue.uncosted + ' without cost' : '') });
+  else h += fddKpi({ key: 'stockUnits', title: 'Units on hand', icon: 'box', k: k.stockUnits, go: 'products' });
+  if (k.dues) h += fddKpi({ key: 'dues', title: 'Dues receivable', icon: 'bell', money: true, k: k.dues, tone: k.dues.v > 0 ? 'warn' : '', go: 'sales', f: 'due', note: 'owed by customers today' });
+  else h += fddKpi({ key: 'units', title: 'Units sold', icon: 'spool', k: k.units, note: d.rangeLabel });
+  if (k.cashIn) h += fddKpi({ key: 'cashIn', title: 'Cash received', icon: 'wallet', money: true, k: k.cashIn, go: 'cash' });
+  else h += fddKpi({ key: 'orders', title: 'Orders', icon: 'cart', k: k.orders, go: 'sales' });
+  h += '</div>';
+
+  // ---- row 2: the rest of the numbers
+  var row = [];
+  if (k.gross && !grp) row.push(fddKpi({ key: 'gross', title: 'Gross profit', icon: 'trend', money: true, k: k.gross, note: k.margin ? k.margin.v + '% margin' : '' }));
+  if (k.margin) row.push(fddKpi({ key: 'margin', title: 'Gross margin', icon: 'percent', pct: true, k: k.margin }));
+  if (!grp || k.net) row.push(fddKpi({ key: 'orders', title: 'Orders', icon: 'cart', k: k.orders, go: 'sales' }));
+  if (!grp) row.push(fddKpi({ key: 'units', title: 'Units sold', icon: 'spool', k: k.units }));
+  row.push(fddKpi({ key: 'avgOrder', title: 'Average order', icon: 'receipt', money: true, k: k.avgOrder }));
+  if (k.expenses) row.push(fddKpi({ key: 'expenses', title: 'Expenses', icon: 'receipt', money: true, k: k.expenses, flip: true, tone: 'warn', go: 'expenses' }));
+  if (grp && k.stockValue) row.push(fddKpi({ key: 'stockUnits', title: 'Units on hand', icon: 'box', k: k.stockUnits, go: 'products' }));
+  while (row.length % 4) row.push('<div class="fdd-c" style="visibility:hidden"></div>');
+  h += '<div class="fdd-grid">' + row.join('') + '</div>';
+
+  // ---- row 3: where the money came from
+  h += '<div class="fdd-grid">' + (grp ? fddDonut('Sales by Brand', 'layers', d.donuts.byBrand, 'products', '', 'Brand') : fddDonut('Sales by Product Group', 'spool', d.donuts.byGroup, 'products', '', 'Group')) +
+    fddDonut('Sales Channel', 'globe', d.donuts.byChannel, 'sales', '', 'Channel') +
+    (!grp && d.donuts.byMethod ? fddDonut('Payments by Method', 'wallet', d.donuts.byMethod, 'cash', '', 'Method') : '') +
+    (!grp ? fddDonut('Sales by Brand', 'layers', d.donuts.byBrand, 'products', '', 'Brand') : '') + '</div>';
+
+  // ---- row 4: tables
+  var tp = d.topProducts.length ? '<div class="fdd-scroll"><table class="fdd-t"><thead><tr><th>Product</th><th class="n">Units</th><th class="n">Revenue</th>' + (d.full ? '<th class="n">Gross</th>' : '') + '</tr></thead><tbody>' +
+    d.topProducts.map(function (p) { return '<tr><td class="nm" title="' + esc(p.sku) + '">' + esc(p.name) + '</td><td class="n">' + fmt(p.units) + '</td><td class="n">' + fmt(p.revenue) + '</td>' + (d.full ? '<td class="n">' + fmt(p.gross) + '</td>' : '') + '</tr>'; }).join('') +
+    '</tbody></table></div>' : '<div class="fdd-empty">No sales in this range.</div>';
+  var rc = d.recent.length ? '<div class="fdd-scroll"><table class="fdd-t"><thead><tr><th>Invoice</th><th>Date</th><th>Customer</th><th class="n">Total</th><th>Status</th></tr></thead><tbody>' +
+    d.recent.map(function (x) { return '<tr data-inv="' + esc(x.id) + '"><td>' + esc(x.id) + '</td><td>' + esc(x.date) + '</td><td class="nm">' + esc(x.customer) + '</td><td class="n">' + fmt(x.total) + '</td><td>' +
+      (x.owed > 0 ? '<span class="fdd-chip due">Due ' + fmt(x.owed) + '</span>' : '<span class="fdd-chip paid">Paid</span>') + '</td></tr>'; }).join('') + '</tbody></table></div>' : '<div class="fdd-empty">No invoices yet.</div>';
+  h += '<div class="fdd-grid"><div class="fdd-c s2"><div class="fdd-ch"><span class="fdd-badge">' + fddIc('list') + '</span><div class="fdd-ct">Top Products</div>' +
+    (navOn('products') ? '<button type="button" class="fdd-more" data-go="products">View details →</button>' : '') + '</div>' + tp + '</div>' +
+    '<div class="fdd-c s2"><div class="fdd-ch"><span class="fdd-badge">' + fddIc('cart') + '</span><div class="fdd-ct">Recent Sales</div>' +
+    (navOn('sales') ? '<button type="button" class="fdd-more" data-go="sales">View details →</button>' : '') + '</div>' + rc + '</div></div>';
+
+  // ---- row 5: needs attention, dues by age, reorder
+  var att = [], a = (D && D.alerts) || {}, toSend = typeof sendCount === 'function' ? sendCount() : 0, cz = a.courier || {};
+  if (a.webPending) att.push(['bad', 'warn', a.webOrders, 'website orders not entered', 'weborders', '']);
+  if (toSend) att.push(['warn', 'truck', toSend, 'parcel(s) to send', 'sales', 'tosend']);
+  if (d.attention.outOfStock) att.push(['bad', 'x', d.attention.outOfStock, 'products out of stock', 'products', 'out']);
+  if (d.attention.reorder) att.push(['warn', 'warn', d.attention.reorder, 'at or below reorder level', 'stock', 'plan']);
+  if (cz.back) att.push(['bad', 'truck', cz.back, 'parcel(s) came back or part delivered', 'sales', '']);
+  if (cz.review) att.push(['bad', 'truck', cz.review, 'Steadfast parcel(s) to review', 'sales', '']);
+  if (k.dues && k.dues.v > 0) att.push(['warn', 'bell', fddShort(k.dues.v), 'owed by customers', 'sales', 'due']);
+  var attH = att.length ? '<ul class="fdd-att">' + att.map(function (x) {
+    return '<li' + (navOn(x[4]) ? ' data-go="' + x[4] + '"' + (x[5] ? ' data-f="' + x[5] + '"' : '') : '') + '><span class="fdd-badge t-' + x[0] + '">' + fddIc(x[1]) + '</span><b>' + esc(String(x[2])) + '</b><span>' + esc(x[3]) + '</span></li>'; }).join('') + '</ul>'
+    : '<div class="fdd-empty">✓ Nothing needs you.</div>';
+  var ro = d.reorder.length ? '<div class="fdd-scroll"><table class="fdd-t"><thead><tr><th>Product</th><th class="n">On hand</th><th class="n">Reorder at</th></tr></thead><tbody>' +
+    d.reorder.map(function (p) { return '<tr><td class="nm" title="' + esc(p.sku) + '">' + esc(p.name) + '</td><td class="n"' + (p.stock <= 0 ? ' style="color:var(--fd-negative-text,var(--critical));font-weight:700"' : '') + '>' + fmt(p.stock) + '</td><td class="n">' + fmt(p.reorder) + '</td></tr>'; }).join('') +
+    '</tbody></table></div>' : '<div class="fdd-empty">Nothing at its reorder level.</div>';
+  h += '<div class="fdd-grid"><div class="fdd-c"><div class="fdd-ch"><span class="fdd-badge t-warn">' + fddIc('bell') + '</span><div class="fdd-ct">Needs Attention</div></div>' + attH + '</div>';
+  if (d.duesByAge) h += '<div class="fdd-c"><div class="fdd-ch"><span class="fdd-badge">' + fddIc('clock') + '</span><div class="fdd-ct">Dues by Age</div></div><table class="fdd-t"><thead><tr><th>Age</th><th class="n">' + esc(cur) + '</th></tr></thead><tbody>' +
+    d.duesByAge.map(function (x) { return '<tr' + (navOn('sales') ? ' data-go="sales" data-f="due" style="cursor:pointer"' : '') + '><td>' + esc(x.band) + ' <span class="sku">(' + x.count + ')</span></td><td class="n">' + fmt(x.amount) + '</td></tr>'; }).join('') + '</tbody></table></div>';
+  h += '<div class="fdd-c ' + (d.duesByAge ? 's2' : 's2') + '"><div class="fdd-ch"><span class="fdd-badge t-warn">' + fddIc('box') + '</span><div class="fdd-ct">Reorder Suggestions</div>' +
+    (navOn('stock') ? '<button type="button" class="fdd-more" data-go="stock" data-f="plan">View details →</button>' : '') + '</div>' + ro + '</div></div>';
+  h += '<div class="fdd-classic"><button type="button" class="btn" data-fddclassic="1">' + (FDD.classic ? '▴ Hide the classic dashboard' : '▾ More: the classic dashboard (today, a chosen day, charts, tabs)') + '</button></div>';
+  return h;
+}
+var viewDashFd = viewDash;
+viewDash = function () {
+  if (document.documentElement.getAttribute('data-skin') !== 'fd') return viewDashFd.apply(this, arguments);
+  var h = fddView();
+  if (FDD.classic) h += '<div id="fddClassic">' + viewDashFd.apply(this, arguments) + '</div>';
+  return h;
+};
+function fddCalc(key, title) {
+  var rows = FDD.data && FDD.data.calc && FDD.data.calc[key];
+  if (!rows) return;
+  var back = document.createElement('div'); back.className = 'dlg-back';
+  back.innerHTML = '<div class="dlg" role="dialog" aria-modal="true" style="max-width:520px"><div class="dlg-t">' + esc(title) + ' · how it is worked out</div>' +
+    '<div class="dlg-b" style="white-space:normal">' + esc(FDD.data.rangeLabel) + (FDD.data.group ? ' · ' + esc(FDD.data.groupLabel) + ' only' : ' · the whole business') + '</div>' +
+    '<table class="fdd-calc">' + rows.filter(function (r, i) { return i === 0 || i === rows.length - 1 || r[1] !== 0 || /not counted/.test(r[0]); }).map(function (r) { return '<tr><td>' + esc(r[0]) + '</td><td>' + (r[1] === 0 && /not counted/.test(r[0]) ? '' : esc(FDD.data.currency) + ' ' + fmt(r[1])) + '</td></tr>'; }).join('') + '</table>' +
+    '<div class="dlg-f"><button class="btn primary" type="button">Close</button></div></div>';
+  document.body.appendChild(back);
+  var close = function () { if (back.parentNode) back.parentNode.removeChild(back); document.removeEventListener('keydown', kd, true); };
+  var kd = function (e) { if (e.key === 'Escape') close(); };
+  back.addEventListener('mousedown', function (e) { if (e.target === back) close(); });
+  back.querySelector('.btn').addEventListener('click', close);
+  document.addEventListener('keydown', kd, true);
+  back.querySelector('.btn').focus();
+}
+document.addEventListener('click', function (e) {
+  var t = e.target.closest ? e.target : null; if (!t) return;
+  var c = t.closest('[data-fdcalc]');
+  if (c) { e.preventDefault(); e.stopPropagation(); fddCalc(c.getAttribute('data-fdcalc'), c.getAttribute('data-fdtitle')); return; }
+  var m = t.closest('[data-fddm]');
+  if (m) { FDD.months = Number(m.getAttribute('data-fddm')) || 1; fddSave(); repaint(); return; }
+  if (t.closest('[data-fddretry]')) { FDD.err = ''; FDD.key = ''; repaint(); return; }
+  if (t.closest('[data-fddclassic]')) { FDD.classic = !FDD.classic; fddSave(); repaint(); return; }
+  var inv = t.closest('.fdd-t tr[data-inv]');
+  if (inv && typeof openInvoicePage === 'function' && navOn('sales')) { openInvoicePage(inv.getAttribute('data-inv')); }
+}, true);
+document.addEventListener('change', function (e) {
+  if (e.target && e.target.id === 'fddGroup') { FDD.group = e.target.value; fddSave(); repaint(); }
+});
+// after a sale, payment or stock change the figures are read again on the next visit
+var fddAfterWrite = typeof pagesAfterWrite === 'function' ? pagesAfterWrite : null;
+if (fddAfterWrite) pagesAfterWrite = function () { FDD.key = ''; return fddAfterWrite.apply(this, arguments); };
 </script>
 
 </body>

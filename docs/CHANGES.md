@@ -1502,3 +1502,19 @@ Account menu > Look: FilaDash / Classic (per device, `erp_skin`; html[data-skin=
 Checked locally: dashboard, Sales, New invoice, light, dark, phone (375 px, no sideways scroll), the Look switch.
 NOT done (later phases): his page header (title + subtitle) on every screen, his screen layouts (P2), his extras (P3);
 the user's own theme colours (Themes window) do not tint the FilaDash look; not deployed to the dev copy yet (owner reviews locally first).
+
+## fd-2 - FilaDash dashboard, merge phase P2 (part 1: Dashboard) (13 Oct 2026)
+
+Server: `erpFdDash` (handlers/fddash.js, shareholder and up, in the "dash" ability, read only). Whole calendar months
+(1/3/6/12), so Revenue, Gross profit, Expenses and Net profit ARE the P&L's figures (pnlFor) - tested equal for 1, 3, 6
+and 12 months. The owner's product-group drop-down (decision F5): groups = product categories; a group narrows
+revenue, cost (the cost frozen on each invoice line), gross, units, orders, stock value, top products, recent invoices;
+net profit / expenses / dues / cash are whole-business figures and are not shown for a group (the page says so).
+Every money figure carries `calc` (FilaDash's "Show calculation": the "i" on a card opens the lines it is made of).
+`owedMap` in dashboard.js is now exported (shared). Tests: supabase/tests/fddash_test.mjs (27).
+Page: block "fd-2" - his page head (eyebrow, title, range pills, group drop-down), revenue curve with gross profit,
+KPI cards with icon badge + trend chip vs the previous equal range + "i", gradient hero (Net profit; Gross profit for
+a group), donuts (group / channel / payment method / brand), Top products, Recent sales (click opens the invoice),
+Needs attention, Dues by age, Reorder suggestions. The previous dashboard is kept under "More: the classic dashboard".
+Classic look (account menu) shows the old dashboard unchanged. Demo data: payments now dated on/after their invoice.
+NOT done: his widget editing (add/move/resize cards), custom date range, ranges in days (30/90) - months keep one net profit.

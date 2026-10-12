@@ -250,7 +250,7 @@ export async function monthGross(ctx, month) {
 // ----------------------------------------------------------------- courier
 
 /** erpOwedMap_ (ERP.js:8841): what every invoice still owes. */
-async function owedMap(ctx) {
+export async function owedMap(ctx) {
   const g = {}, s = {}, st = {};
   for (const r of await salesLog(ctx)) {
     const id = str(r[SL.order_id]);

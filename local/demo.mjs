@@ -115,6 +115,9 @@ for (let ago = 118; ago >= 0; ago -= between(2, 6)) {
   if (!r.ok) console.log('expense skipped:', r.error);
 }
 await sql`update expenses set recorded_at = now() - (random() * 118 || ' days')::interval where business_id = ${B}`.catch(() => {});
+// payments on the invoice's own day (paid at the counter) or some days later (dues paid later), never in the future
+await sql`update payments p set paid_at = least(now(), i.created_at + (case when p.amount >= i.grand_total and random() < 0.75 then 0 else 1 + random() * 14 end || ' days')::interval)
+          from invoices i where p.business_id = ${B} and i.business_id = ${B} and i.invoice_no = p.invoice_no`.catch((e) => console.log('payment dates skipped:', e.message));
 
 console.log('DEMO: ' + products.length + ' products, ' + customers.length + ' customers, ' + invoices + ' invoices, ' + dues.length + ' on credit');
 await sql.end({ timeout: 2 }).catch(() => {});
