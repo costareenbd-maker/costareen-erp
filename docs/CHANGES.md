@@ -1612,3 +1612,17 @@ dead stock 90+ days unsold for 60, colours 90 days, 12 months). Page fd-10: ship
 pages", Overview > Analytics, Overview > ERP Mind Map (built from the menu), Settings > System check.
 Tests: latecost (18), investorportal (13), insight (14).
 NOT done: an investor statement PDF; investor pages for company copies (tenants) - own business only.
+
+## p4 - our own screens and public pages in the FilaDash look, merge phase P4 (13 Oct 2026)
+
+erpFdHead now also gives four cards (this month vs last, money behind the matching ability) to Web orders (waiting,
+their value, orders, value ordered), Quotations (this month, value, finished, drafts), Repairs (in, to collect, handed
+back, charges), Print jobs (on the printers, ready, printed value, failed), Campaigns (campaigns, sent, leads, opt-outs),
+Suppliers (we owe, suppliers, open orders, on the way), Product cost (with / without cost, average margin, book rows),
+Capital (money in, from investors, returns owed, shares given). Tests: p4head (12).
+web/fd-public.css: the 13 public pages (check, my, confirm, lite, doctor, quote, find, ideas, choose, print, design,
+creator, sponsor) re-point their shared colour names at FilaDash's tokens (indigo / amber dark), his fonts, card, pill
+and input shapes; deploy.py ships it (and the fonts) with the pages and to the creator host.
+deploy.py function: retries the upload up to 3 times (it fails once now and then).
+NOT done: his own screen layouts for New invoice (his Sale screen), the quotation editor, joint stock, creators, resell,
+market, AI chat and Platform - they wear his look (fd-1), page head (fd-3) and table toolbar (fd-4), not his layouts.

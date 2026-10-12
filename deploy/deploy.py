@@ -101,7 +101,13 @@ def step_function():
     cmd = ['npx', '-y', 'supabase@latest', 'functions', 'deploy', 'erp', '--project-ref', REF,
            '--no-verify-jwt', '--use-api']
     print(' '.join(cmd))
-    subprocess.check_call(cmd, cwd=ROOT, shell=(os.name == 'nt'))
+    # the upload sometimes fails once for no reason of ours: try again before giving up
+    for attempt in (1, 2, 3):
+        if subprocess.call(cmd, cwd=ROOT, shell=(os.name == 'nt')) == 0:
+            return
+        print('  the function upload failed (try %d of 3)' % attempt)
+        time.sleep(5 * attempt)
+    raise SystemExit('The function upload failed three times.')
 
 
 def step_secrets(pairs):
@@ -126,7 +132,7 @@ def step_web():
                    ERP_OPEN_KEY=os.environ.get('ERP_DEV_OPEN_KEY', ''))   # demo data only: the dev page opens with no sign-in
     subprocess.check_call([sys.executable, os.path.join(ROOT, 'web', 'build.py')], env=env)
     out = tempfile.mkdtemp(prefix='erp-web-')
-    for f in ['index.html', 'manifest.webmanifest', 'sw.js', '_headers', 'check.html', 'my.html', 'confirm.html', 'lite.html', 'doctor.html', 'doctor-data.js', 'quote.html', 'find.html', 'ideas.html', 'choose.html', 'colour-math.js', 'colour-data.js', 'print.html', 'design.html', 'creator.html', 'sponsor.html', 'investor.html']:
+    for f in ['index.html', 'manifest.webmanifest', 'sw.js', '_headers', 'check.html', 'my.html', 'confirm.html', 'lite.html', 'doctor.html', 'doctor-data.js', 'quote.html', 'find.html', 'ideas.html', 'choose.html', 'colour-math.js', 'colour-data.js', 'print.html', 'design.html', 'creator.html', 'sponsor.html', 'investor.html', 'fd-public.css']:
         shutil.copy(os.path.join(ROOT, 'web', f), out)
     shutil.copytree(os.path.join(ROOT, 'web', 'icons'), os.path.join(out, 'icons'))
     shutil.copytree(os.path.join(ROOT, 'web', 'brand'), os.path.join(out, 'brand'))     # sponsoring brands' logos (creator / sponsor pages)
@@ -160,6 +166,8 @@ def step_web():
     shutil.copy(os.path.join(ROOT, 'web', 'go.html'), cdir)   # a creator's project link: counted, then on to the product
     shutil.copy(os.path.join(ROOT, 'web', '_headers.creator'), os.path.join(cdir, '_headers'))   # may be framed by the ERP (owner's preview)
     shutil.copytree(os.path.join(ROOT, 'web', 'brand'), os.path.join(cdir, 'brand'))
+    shutil.copy(os.path.join(ROOT, 'web', 'fd-public.css'), cdir)                       # the FilaDash look of the public pages
+    shutil.copytree(os.path.join(ROOT, 'web', 'fonts'), os.path.join(cdir, 'fonts'))
     shutil.copytree(os.path.join(ROOT, 'web', 'icons'), os.path.join(cdir, 'icons'))
     open(os.path.join(cdir, 'index.html'), 'w', encoding='utf-8').write('<!doctype html><meta charset="utf-8"><meta http-equiv="refresh" content="0; url=/creator"><title>Creator programme</title>')
     cmd = ['npx', '-y', 'wrangler@3', 'pages', 'deploy', cdir, '--project-name=' + CREATOR_PROJECT, '--branch=main', '--commit-dirty=true']

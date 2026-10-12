@@ -340,6 +340,95 @@ export async function erpFdHead(ctx, payload) {
       cards.push(card('dues', 'Dues receivable', 'bell', o.t, { money: true, tone: o.t > 0 ? 'warn' : '', go: 'sales', f: 'due' }));
     }
   }
+  // ---- P4: our own screens get the same four cards
+  const mgr = roleAtLeast(ctx.s.role, 'manager');
+  const inMonth = (col, m) => ctx.tx`to_char(public.dhaka_date(${ctx.tx(col)}), 'YYYY-MM') = ${m}`;
+  if (view === 'weborders' && powerOn(ctx.s, 'weborders')) {
+    const w = (await ctx.tx`select count(*) filter (where not entered and invoice_id is null)::int as waiting,
+                              coalesce(sum(order_total) filter (where not entered and invoice_id is null), 0) as waiting_value,
+                              count(*) filter (where ${inMonth('order_date', now)})::int as this_m,
+                              count(*) filter (where ${inMonth('order_date', prev)})::int as last_m,
+                              coalesce(sum(order_total) filter (where ${inMonth('order_date', now)}), 0) as value_m,
+                              max(pulled_at) as pulled
+                            from web_orders where business_id = ${ctx.biz}`)[0];
+    cards.push(card('waiting', 'Waiting to be entered', 'globe', w.waiting, { hero: true, tone: w.waiting ? 'warn' : '', note: 'website orders not on an invoice yet' }));
+    if (mgr) cards.push(card('waitingValue', 'Their value', 'taka', w.waiting_value, { money: true }));
+    cards.push(card('orders', 'Website orders this month', 'cart', w.this_m, { prev: w.last_m }));
+    if (mgr) cards.push(card('value', 'Ordered online this month', 'trend', w.value_m, { money: true, note: w.pulled ? 'last fetched ' + formatDate(new Date(w.pulled), 'd MMM, h:mm a') : '' }));
+  } else if (view === 'quotes') {
+    const q = (await ctx.tx`select count(*) filter (where ${inMonth('created_at', now)})::int as this_m,
+                              count(*) filter (where ${inMonth('created_at', prev)})::int as last_m,
+                              coalesce(sum(total) filter (where ${inMonth('created_at', now)}), 0) as value_m,
+                              count(*) filter (where status = 'Draft')::int as drafts,
+                              count(*) filter (where status = 'Ready' and ${inMonth('created_at', now)})::int as ready_m
+                            from quotations where business_id = ${ctx.biz}`)[0];
+    cards.push(card('quotes', 'Quotations this month', 'receipt', q.this_m, { prev: q.last_m, hero: true }));
+    if (mgr) cards.push(card('value', 'Quoted this month', 'taka', q.value_m, { money: true }));
+    cards.push(card('ready', 'Finished and sent', 'trend', q.ready_m, { note: 'this month' }));
+    cards.push(card('drafts', 'Drafts', 'clock', q.drafts, { tone: q.drafts ? 'warn' : '', note: 'not finished yet' }));
+  } else if (view === 'repairs') {
+    const j = (await ctx.tx`select count(*) filter (where status in ('received', 'diagnosed', 'waiting'))::int as open,
+                              count(*) filter (where status = 'waiting')::int as waiting,
+                              count(*) filter (where status = 'repaired')::int as ready,
+                              count(*) filter (where status = 'returned' and ${inMonth('received_at', now)})::int as done_m,
+                              coalesce(sum(charge) filter (where status = 'returned' and ${inMonth('received_at', now)}), 0) as income_m
+                            from service_jobs where business_id = ${ctx.biz}`)[0];
+    cards.push(card('open', 'Machines in for repair', 'box', j.open, { hero: true, note: j.waiting + ' waiting for parts' }));
+    cards.push(card('ready', 'Repaired, to collect', 'trend', j.ready, { tone: j.ready ? 'warn' : '' }));
+    cards.push(card('done', 'Handed back this month', 'cart', j.done_m));
+    if (mgr) cards.push(card('income', 'Repair charges this month', 'taka', j.income_m, { money: true }));
+  } else if (view === 'printjobs') {
+    const p = (await ctx.tx`select count(*) filter (where status in ('queued', 'printing', 'finishing'))::int as open,
+                              count(*) filter (where status = 'ready')::int as ready,
+                              count(*) filter (where status = 'delivered' and ${inMonth('created_at', now)})::int as done_m,
+                              coalesce(sum(price) filter (where status in ('ready', 'delivered') and ${inMonth('created_at', now)}), 0) as value_m,
+                              count(*) filter (where status = 'failed' and ${inMonth('created_at', now)})::int as failed_m
+                            from print_jobs where business_id = ${ctx.biz}`)[0];
+    cards.push(card('open', 'Jobs on the printers', 'spool', p.open, { hero: true }));
+    cards.push(card('ready', 'Ready to hand over', 'trend', p.ready, { tone: p.ready ? 'warn' : '' }));
+    if (mgr) cards.push(card('value', 'Printed this month', 'taka', p.value_m, { money: true, note: p.done_m + ' delivered' }));
+    cards.push(card('failed', 'Failed prints this month', 'x', p.failed_m, { tone: p.failed_m ? 'bad' : '' }));
+  } else if (view === 'campaigns' && powerOn(ctx.s, 'campaigns')) {
+    const c = (await ctx.tx`select (select count(*)::int from campaigns where business_id = ${ctx.biz} and ${inMonth('created_at', now)}) as this_m,
+                              (select count(*)::int from campaigns where business_id = ${ctx.biz} and ${inMonth('created_at', prev)}) as last_m,
+                              (select count(*)::int from campaign_sends where business_id = ${ctx.biz} and status = 'sent' and ${inMonth('updated_at', now)}) as sent_m,
+                              (select count(*)::int from campaign_leads where business_id = ${ctx.biz} and ${inMonth('added_at', now)}) as leads_m,
+                              (select count(*)::int from campaign_optouts where business_id = ${ctx.biz}) as optouts`)[0];
+    cards.push(card('campaigns', 'Campaigns this month', 'globe', c.this_m, { prev: c.last_m, hero: true }));
+    cards.push(card('sent', 'Messages sent', 'cart', c.sent_m, { note: 'this month' }));
+    cards.push(card('leads', 'New leads', 'trend', c.leads_m, { note: 'this month' }));
+    cards.push(card('optouts', 'Asked to stop', 'x', c.optouts, { note: 'never messaged again' }));
+  } else if (view === 'suppliers' && powerOn(ctx.s, 'suppliers')) {
+    const s = (await ctx.tx`select (select count(*)::int from suppliers where business_id = ${ctx.biz}) as n,
+                              (select coalesce(sum(amount), 0) from supplier_bills where business_id = ${ctx.biz} and coalesce(btrim(voided), '') = '') as billed,
+                              (select coalesce(sum(amount), 0) from supplier_payments where business_id = ${ctx.biz} and coalesce(btrim(voided), '') = '') as paid,
+                              (select count(distinct po_no)::int from po_lines where business_id = ${ctx.biz} and status = 'open') as open_po,
+                              (select count(*)::int from po_stages where business_id = ${ctx.biz} and stage = 'in_transit') as transit`)[0];
+    cards.push(card('owed', 'We owe suppliers', 'taka', num(s.billed) - num(s.paid), { money: true, hero: true, tone: 'warn' }));
+    cards.push(card('suppliers', 'Suppliers', 'list', s.n));
+    cards.push(card('open', 'Open orders', 'cart', s.open_po, { go: 'shipments' }));
+    cards.push(card('transit', 'On the way', 'truck', s.transit, { go: 'shipments' }));
+  } else if (view === 'costs' && powerOn(ctx.s, 'costs')) {
+    const { list } = await products(ctx);
+    let withCost = 0, without = 0, margin = 0, mN = 0;
+    for (const p of list) {
+      if (/discontinued/i.test(p.status)) continue;
+      if (p.cost > 0) { withCost++; if (p.sell > 0) { margin += (p.sell - p.cost) / p.sell * 100; mN++; } } else without++;
+    }
+    const rows = (await ctx.tx`select count(*)::int as n from cost_book where business_id = ${ctx.biz}`)[0].n;
+    cards.push(card('withCost', 'Products with a cost', 'box', withCost, { hero: true }));
+    cards.push(card('without', 'Without a cost', 'warn', without, { tone: without ? 'warn' : '', note: 'their sales show no profit' }));
+    cards.push(card('margin', 'Average margin', 'percent', mN ? margin / mN : 0, { pct: true, note: 'on the selling price' }));
+    cards.push(card('rows', 'Cost book rows', 'list', rows));
+  } else if (view === 'capital' && roleAtLeast(ctx.s.role, 'shareholder')) {
+    const { erpCapital } = await import('./capital.js');
+    const c = await erpCapital(ctx);
+    const t = c.totals || {};
+    cards.push(card('all', 'Money in the business', 'wallet', t.allCapital, { money: true, hero: true, note: 'owners + investors' }));
+    cards.push(card('outside', 'From investors', 'taka', t.outsideCapital, { money: true }));
+    cards.push(card('due', 'Returns still owed', 'bell', num(t.returnDue) - num(t.returnPaid), { money: true, tone: num(t.returnDue) - num(t.returnPaid) > 0 ? 'warn' : '', note: num(t.returnBuilding) ? R(t.returnBuilding) + ' building this month' : '' }));
+    cards.push(card('pct', 'Shares given out', 'percent', t.pctGiven, { pct: true, note: R(t.pctFree) + '% free' }));
+  }
   return { view, cards, month: monthLabel(now), prevMonth: monthLabel(prev), currency: 'BDT' };
 }
 

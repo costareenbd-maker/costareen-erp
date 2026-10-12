@@ -551,6 +551,8 @@ svg { display:block; width:100%; overflow:visible; }
     else if (c === 'dark' || c === 'light') t = c;
   } catch (e) {}
   document.documentElement.setAttribute('data-theme', t === 'light' ? 'light' : 'dark');
+  // fd-1: the FilaDash look from the first paint (the block at the end of the page adds the switch)
+  try { if ((localStorage.getItem('erp_skin') || 'fd') === 'fd') document.documentElement.setAttribute('data-skin', 'fd'); } catch (e) { document.documentElement.setAttribute('data-skin', 'fd'); }
 })();
 </script>
 <div id="dbg">booting…</div>
@@ -6821,7 +6823,8 @@ function capMonth(m) {
 }
 function capTerms(h, cur) {
   return h.returnKind === 'monthly' ? cur + ' ' + fmt(h.returnValue) + ' a month'
-       : h.returnKind === 'percent' ? fmt(h.returnValue) + '% of their money a month (' + cur + ' ' + fmt(h.monthlyReturn) + ' now)' : 'no fixed return';
+       : h.returnKind === 'percent' ? fmt(h.returnValue) + '% of their money a month (' + cur + ' ' + fmt(h.monthlyReturn) + ' now)'
+       : h.returnKind === 'lot' ? fmt(h.returnValue) + '% of the profit on the shipments they fund' : 'no fixed return';
 }
 
 function viewCapital() {
@@ -6891,9 +6894,9 @@ function viewCapital() {
     '<div style="flex:2 1 170px"><label class="f" for="ci_name">' + (CAP_IN.id ? 'Change investor' : 'New investor') + '</label><input class="i" id="ci_name" maxlength="80" value="' + esc(CAP_IN.name) + '" placeholder="Name"></div>' +
     '<div style="flex:1 1 130px"><label class="f" for="ci_phone">Phone <span class="sku">(optional)</span></label><input class="i" id="ci_phone" inputmode="numeric" value="' + esc(CAP_IN.phone) + '" placeholder="01XXXXXXXXX"></div>' +
     '<div style="flex:1 1 170px"><label class="f" for="ci_kind">They get</label><select class="i" id="ci_kind">' +
-      [['monthly', 'A fixed amount every month'], ['percent', '% of their money every month'], ['none', 'Nothing fixed']].map(function (o) {
+      [['monthly', 'A fixed amount every month'], ['percent', '% of their money every month'], ['lot', 'Share of profit on shipments they fund'], ['none', 'Nothing fixed']].map(function (o) {
         return '<option value="' + o[0] + '"' + (CAP_IN.returnKind === o[0] ? ' selected' : '') + '>' + o[1] + '</option>'; }).join('') + '</select></div>' +
-    (CAP_IN.returnKind === 'none' ? '' : '<div style="flex:0 0 120px"><label class="f" for="ci_val">' + (CAP_IN.returnKind === 'percent' ? '% a month' : 'Taka a month') + '</label><input class="i" id="ci_val" inputmode="decimal" value="' + esc(CAP_IN.returnValue) + '" placeholder="' + (CAP_IN.returnKind === 'percent' ? '2' : '10000') + '"></div>') +
+    (CAP_IN.returnKind === 'none' ? '' : '<div style="flex:0 0 120px"><label class="f" for="ci_val">' + (CAP_IN.returnKind === 'percent' ? '% a month' : CAP_IN.returnKind === 'lot' ? '% of the profit' : 'Taka a month') + '</label><input class="i" id="ci_val" inputmode="decimal" value="' + esc(CAP_IN.returnValue) + '" placeholder="' + (CAP_IN.returnKind === 'percent' ? '2' : CAP_IN.returnKind === 'lot' ? '50' : '10000') + '"></div>') +
     (CAP_IN.id ? '' : '<div style="flex:1 1 130px"><label class="f" for="ci_amt">Amount invested</label><input class="i" id="ci_amt" inputmode="decimal" value="' + esc(CAP_IN.invested || '') + '" placeholder="0"></div>') +
     '<label class="chk" style="padding-bottom:9px" title="Shown to the owner only. The others see the totals."><input type="checkbox" id="ci_priv"' + (CAP_IN.private ? ' checked' : '') + '> Private</label>' +
     '<button class="btn primary" type="button" id="ci_save"' + (CAP_BUSY ? ' disabled' : '') + '>' + (CAP_IN.id ? 'Save change' : 'Add') + '</button>' +
@@ -8284,8 +8287,11 @@ function erpSetCode(c) {
 }
 
 /** The access key this device holds (it arrived once, in the private link). */
+// Shared demo/dev copy only: build.py stamps a key here so the page opens without any sign-in.
+// Always '' in the live build (build.py refuses to stamp it for the live server).
+var ERP_OPEN_KEY = '';
 function erpKey() {
-  try { return window.localStorage.getItem('erp_key') || ''; } catch (e) { return ''; }
+  try { return window.localStorage.getItem('erp_key') || ERP_OPEN_KEY; } catch (e) { return ERP_OPEN_KEY; }
 }
 function erpSetKey(k) {
   try {
@@ -8356,7 +8362,7 @@ function erpSaveBackend(id, j) { try { localStorage.setItem('erp_backend', JSON.
 })();
 if (ERP_BACKEND && ERP_BACKEND.name) { try { document.title = ERP_BACKEND.name + ' ERP'; } catch (e) {} }
 // the provider's own addresses; anywhere else the page is "public": it never opens the provider's ERP
-var ERP_PUBLIC_MODE = !/(^|\.)costareen\.com$|^costareen-erp\.pages\.dev$|^localhost$|^127\./.test(String(location.hostname || '').toLowerCase());
+var ERP_PUBLIC_MODE = !/(^|\.)costareen\.com$|^costareen-erp(-dev)?\.pages\.dev$|^localhost$|^127\./.test(String(location.hostname || '').toLowerCase());
 // #/use/<install id> opens a company's own copy on this device; #/use/main goes back to the provider's
 (function () {
   var m = /^#\/use\/([\w-]+)/.exec(location.hash || '');
@@ -8428,7 +8434,7 @@ function srv(name, args, ok, bad) {
 
 var SRV_ACTIVE = 0, SRV_WRITING = false, SRV_TIMED = {};
 // the same list the server uses to know a call changes nothing (ERP_READS)
-var SRV_READS = /^(erpReceiveMatch|erpAiReader|erpProductSuggest|erpCatalogue|erpPushList|erpCreators|erpCreatorPortalLink|erpSponsorLink|erpCreatorRequests|erpCreatorEvents|erpCreatorProgramme|erpCreatorPreview|erpCreatorCatalog|erpCreatorSources|erpCreatorClaims|erpApps|erpAppQr|erpFeedback|erpRestockOffers|erpRestockList|erpWarrantyRules|erpWarrantyCard|erpMyLink|erpPlatformRegister|erpPlatformDoctor|erpPlatformCommunity|erpMarketWaiting|erpBoard|erpPlatformDesign|erpResell|erpResellerProgramme|erpLoyalty|erpCustomerPoints|erpRefillDue|erpDeliveryHistory|erpDeliveryHistoryMany|erpPrintKit|erpPrintJobs|erpPrintJob|erpPrintCost|erpSpools|erpPrintRequests|erpJoint|erpJointCatalog|erpJointCard|erpInvoiceDesign|erpInvoicePreview|erpMarket|erpMarketMine|erpMarketRequests|erpMarketHints|erpMarketNames|erpWanted|erpBrand|erpComplianceLog|erpProviderKey|erpNews|erpAccessKeys|erpAccessWarning|erpAdmin|erpAiKeys|erpAlertRules|erpAlerts|erpArena|erpBackupStatus|erpBg|erpBnWords|erpBookedParcels|erpBrandLogo|erpBundle|erpBusinessLinks|erpBusinesses|erpBusinessesDeleted|erpCampaignAudience|erpCampaignGet|erpCampaignList|erpCapital|erpCashBook|erpCatalog|erpConnStatus|erpConnections|erpCostBook|erpCourier|erpCourierKeyStatus|erpCurrencies|erpCustomerAccount|erpCustomerCredit|erpCustomerList|erpCustomerPage|erpCustomerStatement|erpCustomers|erpDashboardData|erpDaySales|erpDeliveryOptions|erpDevices|erpDiscontinued|erpDues|erpEvoQr|erpEvoStatus|erpExpenseExport|erpExpenseReceiptUrl|erpExpenses|erpFamilies|erpFighters|erpFormOptions|erpGame|erpGetTheme|erpGoogle|erpHello|erpInstalls|erpInvoice|erpInvoicePdf|erpJob|erpJobs|erpListView|erpLookupCustomer|erpLookupUsage|erpMe|erpMoney|erpNoteFileUrl|erpNotes|erpOwnerChange|erpOwnerChanges|erpParcelLabels|erpParcelPreview|erpPartnerStock|erpPartnership|erpPayReasons|erpPeople|erpPlatform|erpPlatformErrors|erpPnl|erpPnlMonth|erpPoList|erpPoolCatalog|erpProduct|erpProductListShare|erpProductPage|erpProductPhotoUrl|erpProductThumbs|erpProfile|erpQuoteAsset|erpQuoteBoot|erpQuoteGet|erpQuoteList|erpRecentInvoices|erpRecovery|erpReorderPlan|erpRestorePreview|erpReturnPreview|erpRisks|erpSales|erpSearch|erpSecurity|erpSelfTest|erpSerialLookup|erpSerialsFor|erpSessions|erpSetTheme|erpSettingsFull|erpSettingsLists|erpSfPayoutLines|erpSfPayouts|erpShareFile|erpSharedStock|erpSheet|erpStatementPdf|erpStockHistory|erpSupplierPage|erpSuppliers|erpToday|erpUsers|erpWaProductPdf|erpWebMatches|erpWebOrderInvoices|erpWebOrders|erpWebsiteTest)$/;
+var SRV_READS = /^(erpSystemCheck|erpAnalytics|erpCommission|erpHolding|erpLotFunding|erpShipments|erpShipment|erpLots|erpFdHead|erpFdDash|erpReceiveMatch|erpAiReader|erpProductSuggest|erpCatalogue|erpPushList|erpCreators|erpCreatorPortalLink|erpSponsorLink|erpCreatorRequests|erpCreatorEvents|erpCreatorProgramme|erpCreatorPreview|erpCreatorCatalog|erpCreatorSources|erpCreatorClaims|erpApps|erpAppQr|erpFeedback|erpRestockOffers|erpRestockList|erpWarrantyRules|erpWarrantyCard|erpMyLink|erpPlatformRegister|erpPlatformDoctor|erpPlatformCommunity|erpMarketWaiting|erpBoard|erpPlatformDesign|erpResell|erpResellerProgramme|erpLoyalty|erpCustomerPoints|erpRefillDue|erpDeliveryHistory|erpDeliveryHistoryMany|erpPrintKit|erpPrintJobs|erpPrintJob|erpPrintCost|erpSpools|erpPrintRequests|erpJoint|erpJointCatalog|erpJointCard|erpInvoiceDesign|erpInvoicePreview|erpMarket|erpMarketMine|erpMarketRequests|erpMarketHints|erpMarketNames|erpWanted|erpBrand|erpComplianceLog|erpProviderKey|erpNews|erpAccessKeys|erpAccessWarning|erpAdmin|erpAiKeys|erpAlertRules|erpAlerts|erpArena|erpBackupStatus|erpBg|erpBnWords|erpBookedParcels|erpBrandLogo|erpBundle|erpBusinessLinks|erpBusinesses|erpBusinessesDeleted|erpCampaignAudience|erpCampaignGet|erpCampaignList|erpCapital|erpCashBook|erpCatalog|erpConnStatus|erpConnections|erpCostBook|erpCourier|erpCourierKeyStatus|erpCurrencies|erpCustomerAccount|erpCustomerCredit|erpCustomerList|erpCustomerPage|erpCustomerStatement|erpCustomers|erpDashboardData|erpDaySales|erpDeliveryOptions|erpDevices|erpDiscontinued|erpDues|erpEvoQr|erpEvoStatus|erpExpenseExport|erpExpenseReceiptUrl|erpExpenses|erpFamilies|erpFighters|erpFormOptions|erpGame|erpGetTheme|erpGoogle|erpHello|erpInstalls|erpInvoice|erpInvoicePdf|erpJob|erpJobs|erpListView|erpLookupCustomer|erpLookupUsage|erpMe|erpMoney|erpNoteFileUrl|erpNotes|erpOwnerChange|erpOwnerChanges|erpParcelLabels|erpParcelPreview|erpPartnerStock|erpPartnership|erpPayReasons|erpPeople|erpPlatform|erpPlatformErrors|erpPnl|erpPnlMonth|erpPoList|erpPoolCatalog|erpProduct|erpProductListShare|erpProductPage|erpProductPhotoUrl|erpProductThumbs|erpProfile|erpQuoteAsset|erpQuoteBoot|erpQuoteGet|erpQuoteList|erpRecentInvoices|erpRecovery|erpReorderPlan|erpRestorePreview|erpReturnPreview|erpRisks|erpSales|erpSearch|erpSecurity|erpSelfTest|erpSerialLookup|erpSerialsFor|erpSessions|erpSetTheme|erpSettingsFull|erpSettingsLists|erpSfPayoutLines|erpSfPayouts|erpShareFile|erpSharedStock|erpSheet|erpStatementPdf|erpStockHistory|erpSupplierPage|erpSuppliers|erpToday|erpUsers|erpWaProductPdf|erpWebMatches|erpWebOrderInvoices|erpWebOrders|erpWebsiteTest)$/;
 function srvPump() {
   if (!SRV_Q.length) return;
   var isRead = SRV_READS.test(SRV_Q[0].name);
@@ -22867,5 +22873,1605 @@ document.addEventListener('change', function (ev) {
   crCall('erpCreatorProject', { id: +t.getAttribute('data-crpstat'), status: t.value }, 'Status saved.');
 });
 </script>
+<!-- fd-1 (FilaDash merge P1, docs/FILADASH-MERGE-REVIEW.md): the partner's FilaDash design system laid over every screen.
+     His tokens (fd.css section 1: light = indigo, dark = amber), his fonts (web/fonts: Inter + Noto Sans Bengali, OFL),
+     his shell (white sidebar with pill items, a white top bar, a soft page), his cards, KPI tiles (the first one is the
+     gradient "hero"), pill buttons, soft inputs, rounded table heads, pill tabs and badges. Screens are the same code;
+     only the look changes. The old look stays one click away: account menu > Look > Classic (html[data-skin]). -->
+<style>
+@font-face { font-family:"Inter"; font-style:normal; font-weight:100 900; font-display:swap; src:url("fonts/Inter-latin-var.woff2") format("woff2");
+  unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+@font-face { font-family:"Inter"; font-style:normal; font-weight:100 900; font-display:swap; src:url("fonts/Inter-latin-ext-var.woff2") format("woff2");
+  unicode-range:U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF; }
+@font-face { font-family:"Noto Sans Bengali"; font-style:normal; font-weight:100 599; font-display:swap; src:url("fonts/NotoSansBengali-Regular.ttf") format("truetype");
+  unicode-range:U+0980-09FF, U+200C-200D, U+25CC; size-adjust:92%; }
+@font-face { font-family:"Noto Sans Bengali"; font-style:normal; font-weight:600 900; font-display:swap; src:url("fonts/NotoSansBengali-Bold.ttf") format("truetype");
+  unicode-range:U+0980-09FF, U+200C-200D, U+25CC; size-adjust:92%; }
+
+/* ---- 1. tokens (his fd.css section 1), and our variables pointed at them */
+:root[data-skin="fd"] {
+  --fd-bg:#F6F7FB; --fd-sidebar:#FBFBFE; --fd-card:#FFFFFF; --fd-surface-2:#F1F2F7; --fd-surface-3:#E8EAF2;
+  --fd-border:#E8EAF1; --fd-border-strong:#D5D8E4;
+  --fd-text:#14172B; --fd-text-2:#4B5068; --fd-text-3:#6B7190; --fd-text-faint:#8A90A6; --fd-text-on-accent:#FFFFFF;
+  --fd-accent:#5B4FE9; --fd-accent-hover:#4C41D6; --fd-accent-text:#4C41D6; --fd-accent-soft:#EDEBFF; --fd-accent-soft-2:#E3E0FF;
+  --fd-accent-border:rgba(91,79,233,.35); --fd-accent-glow:0 8px 20px rgba(91,79,233,.30);
+  --fd-accent-gradient:linear-gradient(135deg, #3D8BFD 0%, #6B5CFF 52%, #A84CFB 100%);
+  --fd-hero-shadow:0 14px 34px rgba(99,91,255,.35);
+  --fd-positive:#1DBF73; --fd-positive-text:#0B7F49; --fd-positive-soft:#E3F7EC;
+  --fd-negative:#EF4444; --fd-negative-text:#DC2626; --fd-negative-soft:#FDE8E8;
+  --fd-warning:#F59E0B; --fd-warning-text:#9A5B00; --fd-warning-soft:#FFF3DC;
+  --fd-info-soft:#E3F0FF; --fd-info-text:#1D5FD1;
+  --fd-shadow-card:0 1px 2px rgba(20,23,43,.04), 0 10px 30px rgba(20,23,43,.06);
+  --fd-shadow-card-hover:0 2px 4px rgba(20,23,43,.05), 0 16px 40px rgba(20,23,43,.10);
+  --fd-shadow-popover:0 12px 40px rgba(20,23,43,.14);
+  --fd-glow-card:0 0 0 0 transparent; --fd-glow-badge:0 0 0 0 transparent;
+  --fd-focus-ring:0 0 0 3px rgba(91,79,233,.35);
+  --fd-nav-active-bg:var(--fd-accent-soft-2);
+  --fd-font:"Inter", "Noto Sans Bengali", "Segoe UI", "Nirmala UI", system-ui, -apple-system, Roboto, "Helvetica Neue", Arial, sans-serif;
+
+  --plane:var(--fd-bg); --surface:var(--fd-card); --ink:var(--fd-text); --ink-2:var(--fd-text-2); --muted:var(--fd-text-3);
+  --grid:var(--fd-border); --baseline:var(--fd-border-strong); --ring:var(--fd-border); --field:var(--fd-surface-2);
+  --series-1:var(--fd-accent); --series-1-soft:var(--fd-accent-soft); --accent-2:var(--fd-accent-text);
+  --nav:var(--fd-sidebar); --nav-ink:var(--fd-text); --thead:var(--fd-surface-2);
+  --good:var(--fd-positive); --good-soft:var(--fd-positive-soft); --up:var(--fd-positive-text);
+  --warning:var(--fd-warning); --warning-soft:var(--fd-warning-soft);
+  --critical:var(--fd-negative); --critical-soft:var(--fd-negative-soft);
+  --shadow:var(--fd-shadow-card); --shadow-lg:var(--fd-shadow-popover);
+  --side-w:232px; --on-pal:#fff;
+}
+:root[data-skin="fd"][data-theme="dark"] {
+  color-scheme:dark;
+  --fd-bg:#0F1621; --fd-sidebar:#121926; --fd-card:#161E2B; --fd-surface-2:#1E2735; --fd-surface-3:#283243;
+  --fd-border:#273142; --fd-border-strong:#36425A;
+  --fd-text:#F4F6FA; --fd-text-2:#C5CCD8; --fd-text-3:#8B95A7; --fd-text-faint:#6B7589; --fd-text-on-accent:#1A1304;
+  --fd-accent:#F5A623; --fd-accent-hover:#FFB83D; --fd-accent-text:#F5A623;
+  --fd-accent-soft:rgba(245,166,35,.14); --fd-accent-soft-2:rgba(245,166,35,.22); --fd-accent-border:rgba(245,166,35,.45);
+  --fd-accent-glow:0 0 0 1px rgba(245,166,35,.35), 0 0 18px rgba(245,166,35,.30);
+  --fd-accent-gradient:linear-gradient(135deg, #F59E0B 0%, #FB923C 100%);
+  --fd-hero-shadow:0 12px 36px rgba(0,0,0,.45);
+  --fd-positive:#22C55E; --fd-positive-text:#4ADE80; --fd-positive-soft:rgba(34,197,94,.14);
+  --fd-negative:#F87171; --fd-negative-text:#FCA5A5; --fd-negative-soft:rgba(239,68,68,.16);
+  --fd-warning:#FACC15; --fd-warning-text:#FACC15; --fd-warning-soft:rgba(250,204,21,.14);
+  --fd-info-soft:rgba(59,130,246,.16); --fd-info-text:#93C5FD;
+  --fd-shadow-card:0 10px 30px rgba(0,0,0,.35);
+  --fd-shadow-card-hover:0 12px 36px rgba(0,0,0,.45), 0 0 0 1px rgba(245,166,35,.18);
+  --fd-shadow-popover:0 16px 48px rgba(0,0,0,.6);
+  --fd-glow-card:0 0 0 1px rgba(245,166,35,.06), 0 0 24px rgba(245,166,35,.08);
+  --fd-glow-badge:0 0 0 1px rgba(245,166,35,.18), 0 0 12px rgba(245,166,35,.25);
+  --fd-focus-ring:0 0 0 3px rgba(245,166,35,.40);
+  --fd-nav-active-bg:linear-gradient(90deg, rgba(245,166,35,.30), rgba(245,166,35,.10));
+  --on-pal:#1A1304;
+}
+
+/* ---- 2. base */
+:root[data-skin="fd"] body { font-family:var(--fd-font); font-size:14.5px; line-height:1.5; background:var(--fd-bg); color:var(--fd-text);
+  -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility; font-feature-settings:normal; }
+:root[data-skin="fd"] input, :root[data-skin="fd"] select, :root[data-skin="fd"] textarea, :root[data-skin="fd"] button { font-family:var(--fd-font); }
+:root[data-skin="fd"] a, :root[data-skin="fd"] .linkbtn { color:var(--fd-accent-text); }
+:root[data-skin="fd"] ::-webkit-scrollbar { width:10px; height:10px; }
+:root[data-skin="fd"] ::-webkit-scrollbar-thumb { background:var(--fd-surface-3); border-radius:999px; border:2px solid transparent; background-clip:padding-box; }
+:root[data-skin="fd"] ::-webkit-scrollbar-track { background:transparent; }
+:root[data-skin="fd"][data-theme="dark"] .main {
+  background:radial-gradient(900px 420px at 18% -6%, rgba(245,166,35,.05), transparent 70%),
+             radial-gradient(700px 500px at 100% 100%, rgba(245,166,35,.035), transparent 70%), var(--fd-bg); }
+
+/* ---- 3. shell: sidebar */
+:root[data-skin="fd"] #side { background:var(--fd-sidebar); border-right:1px solid var(--fd-border); padding:22px 0 16px; }
+:root[data-skin="fd"] .brand { padding:0 14px 0 18px; margin-bottom:20px; gap:10px; }
+:root[data-skin="fd"] .brand .logo { width:42px; height:42px; flex:0 0 42px; border-radius:12px; background:var(--fd-accent-gradient);
+  color:#fff; font-size:18px; font-weight:800; box-shadow:var(--fd-glow-badge); }
+:root[data-skin="fd"] .brand .logo.has-img { background:#fff; }
+:root[data-skin="fd"] .brand h1 { font-size:17px; font-weight:800; letter-spacing:-.03em; color:var(--fd-text); max-width:130px; }
+:root[data-skin="fd"] .brand .tag { font-size:11px; font-weight:600; letter-spacing:0; text-transform:none; color:var(--fd-text-3); }
+:root[data-skin="fd"] #sideFold { border-radius:999px; background:var(--fd-surface-2); border-color:transparent; color:var(--fd-text-2); }
+:root[data-skin="fd"] nav#nav { gap:2px; }
+:root[data-skin="fd"] .navgrp, :root[data-skin="fd"] nav#nav .navgrp { padding:16px 14px 6px 24px; font-size:11px; font-weight:700; letter-spacing:.08em; color:var(--fd-text-faint); }
+:root[data-skin="fd"] nav#nav button { position:relative; min-height:42px; padding:0 12px 0 22px; margin-left:4px; width:calc(100% - 4px);
+  border-radius:14px 0 0 14px; border:1px solid transparent; gap:12px; font-size:14.5px; font-weight:500; color:var(--fd-text-2); box-shadow:none;
+  transition:background .15s cubic-bezier(.2,.8,.2,1), color .15s cubic-bezier(.2,.8,.2,1); }
+:root[data-skin="fd"] nav#nav button:hover { background:var(--fd-surface-2); color:var(--fd-text); }
+:root[data-skin="fd"] nav#nav button[aria-selected="true"] { background:var(--fd-nav-active-bg); color:var(--fd-accent-text); font-weight:600; box-shadow:none; }
+:root[data-skin="fd"] nav#nav button[aria-selected="true"]::after { content:""; position:absolute; top:0; bottom:0; right:-1px; width:3px; border-radius:2px; background:var(--fd-accent); }
+:root[data-skin="fd"] nav#nav .ic { width:22px; height:22px; flex:0 0 22px; background:none; box-shadow:none; border-radius:0; color:inherit; opacity:1; }
+:root[data-skin="fd"] nav#nav .ic svg { width:21px; height:21px; stroke:currentColor; stroke-width:1.8; }
+:root[data-skin="fd"] nav#nav .count { background:var(--fd-accent); color:var(--fd-text-on-accent); min-width:20px; height:20px; line-height:20px; padding:0 6px; font-size:11.5px; }
+:root[data-skin="fd"][data-theme="dark"] nav#nav button { margin:0 8px; width:calc(100% - 16px); border-radius:16px; padding:0 10px 0 18px; }
+:root[data-skin="fd"][data-theme="dark"] nav#nav button[aria-selected="true"] { box-shadow:0 0 0 1px rgba(245,166,35,.10), 0 0 16px rgba(245,166,35,.16); }
+:root[data-skin="fd"][data-theme="dark"] nav#nav button[aria-selected="true"]::after { display:none; }
+@media (min-width:761px) {
+  :root[data-skin="fd"] body.side-mini { --side-w:72px; }
+  :root[data-skin="fd"] body.side-mini nav#nav button, :root[data-skin="fd"][data-theme="dark"] body.side-mini nav#nav button { margin:0 10px; width:calc(100% - 20px); padding:0; border-radius:14px; justify-content:center; }
+  :root[data-skin="fd"] body.side-mini nav#nav button[aria-selected="true"]::after { display:none; }
+  :root[data-skin="fd"] body.side-mini .brand { padding:0; }
+}
+
+/* ---- 3b. shell: top bar and the title row */
+:root[data-skin="fd"] .topbar { background:var(--fd-sidebar); color:var(--fd-text); min-height:64px; padding:0 22px 0 18px; gap:10px;
+  border-bottom:1px solid var(--fd-border); backdrop-filter:none; -webkit-backdrop-filter:none; }
+:root[data-skin="fd"] .topbar button.act { background:transparent; color:var(--fd-text-2); border:1px solid transparent; border-radius:999px;
+  min-height:38px; min-width:38px; padding:0 10px; }
+:root[data-skin="fd"] .topbar button.act:hover { background:var(--fd-surface-2); color:var(--fd-text); }
+:root[data-skin="fd"] .topbar .gsearch input { background:var(--fd-surface-2); color:var(--fd-text); border:1px solid transparent; border-radius:12px; min-height:40px; }
+:root[data-skin="fd"] .topbar .gsearch input::placeholder { color:var(--fd-text-faint); }
+:root[data-skin="fd"] .topbar .gsearch input:focus { background:var(--fd-card); border-color:var(--fd-accent-border); box-shadow:var(--fd-focus-ring); }
+:root[data-skin="fd"] .topbar .bizsel { background:var(--fd-surface-2); color:var(--fd-text); border:1px solid transparent; border-radius:12px; min-height:40px; font-weight:700; }
+:root[data-skin="fd"] .topbar .bizsel option { color:#14172B; background:#fff; }
+:root[data-skin="fd"] #o_user { width:40px !important; height:40px; min-height:40px !important; border-radius:999px !important;
+  background:var(--fd-accent-gradient) !important; color:#fff !important; border:1px solid var(--fd-border) !important; }
+:root[data-skin="fd"] #o_cp { background:transparent; border-bottom:none; min-height:56px; padding:14px 28px 0; }
+:root[data-skin="fd"] #o_cp .crumbs { font-size:15px; }
+:root[data-skin="fd"] #o_cp .crumbs .here { font-size:24px; font-weight:800; letter-spacing:-.02em; color:var(--fd-text); }
+:root[data-skin="fd"] #o_cp .crumbs button { color:var(--fd-accent-text); font-weight:600; }
+:root[data-skin="fd"] #view { padding:18px 28px 48px; max-width:1456px; }
+:root[data-skin="fd"] #o_usermenu, :root[data-skin="fd"] #alertPanel { border-radius:16px; border:1px solid var(--fd-border); box-shadow:var(--fd-shadow-popover); background:var(--fd-card); }
+:root[data-skin="fd"] .u6 .seg { border-radius:999px; border-color:var(--fd-border); }
+:root[data-skin="fd"] .u6 .seg button.on { background:var(--fd-accent); color:var(--fd-text-on-accent); }
+:root[data-skin="fd"] .u6 .u6a:hover { background:var(--fd-surface-2); }
+
+/* ---- 4. buttons, chips, pills, tabs */
+:root[data-skin="fd"] button.act, :root[data-skin="fd"] .btn { border-radius:999px; min-height:40px; padding:0 18px; font-size:14px; font-weight:600;
+  background:var(--fd-surface-2); color:var(--fd-text); border:1px solid transparent; box-shadow:none;
+  transition:background .15s cubic-bezier(.2,.8,.2,1), box-shadow .15s cubic-bezier(.2,.8,.2,1), color .15s cubic-bezier(.2,.8,.2,1); }
+:root[data-skin="fd"][data-theme="dark"] .btn { border-color:var(--fd-border); }
+:root[data-skin="fd"] .btn:hover, :root[data-skin="fd"] button.act:hover { background:var(--fd-surface-3); color:var(--fd-text); border-color:transparent; filter:none; }
+:root[data-skin="fd"] .btn.primary { background:var(--fd-accent); color:var(--fd-text-on-accent); border-color:transparent; }
+:root[data-skin="fd"] .btn.primary:hover { background:var(--fd-accent-hover); color:var(--fd-text-on-accent); box-shadow:var(--fd-accent-glow); }
+:root[data-skin="fd"][data-theme="dark"] .btn.primary { box-shadow:var(--fd-glow-badge); }
+:root[data-skin="fd"] .btn.small { min-height:32px; padding:0 13px; font-size:13px; border-radius:999px; }
+:root[data-skin="fd"] .btn.danger { background:transparent; color:var(--fd-negative-text); border-color:var(--fd-negative); }
+:root[data-skin="fd"] .btn.danger:hover { background:var(--fd-negative-soft); color:var(--fd-negative-text); }
+:root[data-skin="fd"] .btn.danger.solid { background:var(--fd-negative); color:#fff; }
+:root[data-skin="fd"] .btn:disabled { opacity:.45; box-shadow:none; }
+:root[data-skin="fd"] .seg .btn.on { background:var(--fd-accent); color:var(--fd-text-on-accent); }
+:root[data-skin="fd"] .chip { border-radius:999px; background:var(--fd-surface-2); border-color:transparent; color:var(--fd-text-2); font-weight:600; font-size:13px; padding:6px 14px; }
+:root[data-skin="fd"][data-theme="dark"] .chip { border-color:var(--fd-border); }
+:root[data-skin="fd"] .chip:hover { background:var(--fd-surface-3); color:var(--fd-text); }
+:root[data-skin="fd"] .chip.on, :root[data-skin="fd"] .chip.ckcat.on { background:var(--fd-accent); color:var(--fd-text-on-accent); border-color:transparent; box-shadow:var(--fd-accent-glow); }
+:root[data-skin="fd"]:not([data-theme="dark"]) .chip.on { background:linear-gradient(180deg, #5F5BF0, #5A4BE6); }
+:root[data-skin="fd"][data-theme="dark"] .chip.on { background:#1A1813; color:var(--fd-accent); border-color:var(--fd-accent); box-shadow:var(--fd-glow-badge); }
+:root[data-skin="fd"] .tabs { border:none; background:none; gap:8px; padding:0 0 4px; border-bottom:none; flex-wrap:wrap; }
+:root[data-skin="fd"] .tabs button { border-radius:999px; border:1px solid transparent; background:var(--fd-surface-2); color:var(--fd-text-2);
+  min-height:38px; padding:0 18px; margin:0; font-size:14px; font-weight:600; }
+:root[data-skin="fd"][data-theme="dark"] .tabs button { border-color:var(--fd-border); }
+:root[data-skin="fd"] .tabs button:hover { background:var(--fd-surface-3); color:var(--fd-text); }
+:root[data-skin="fd"] .tabs button[aria-selected="true"] { background:var(--fd-accent); color:var(--fd-text-on-accent); border-color:transparent; box-shadow:var(--fd-accent-glow); }
+:root[data-skin="fd"]:not([data-theme="dark"]) .tabs button[aria-selected="true"] { background:linear-gradient(180deg, #5F5BF0, #5A4BE6); }
+:root[data-skin="fd"][data-theme="dark"] .tabs button[aria-selected="true"] { background:#1A1813; color:var(--fd-accent); border-color:var(--fd-accent); box-shadow:var(--fd-glow-badge); }
+:root[data-skin="fd"] .pill { border-radius:999px; font-size:12.5px; font-weight:600; padding:3px 10px; background:var(--fd-surface-2); color:var(--fd-text-2); }
+:root[data-skin="fd"] .pill.ok { background:var(--fd-positive-soft); color:var(--fd-positive-text); }
+:root[data-skin="fd"] .pill.low { background:var(--fd-warning-soft); color:var(--fd-warning-text); }
+:root[data-skin="fd"] .pill.out { background:var(--fd-negative-soft); color:var(--fd-negative-text); }
+:root[data-skin="fd"][data-theme="dark"] .pill { box-shadow:inset 0 0 0 1px color-mix(in srgb, currentColor 25%, transparent); }
+
+/* ---- 5. cards, KPI tiles (first = hero), alerts, dashboard head */
+:root[data-skin="fd"] .card { background:var(--fd-card); border:1px solid var(--fd-border); border-radius:20px; padding:22px 24px;
+  box-shadow:var(--fd-shadow-card), var(--fd-glow-card); }
+:root[data-skin="fd"] .card h2 { font-size:18px; font-weight:700; letter-spacing:-.01em; color:var(--fd-text); }
+:root[data-skin="fd"] .card .sub, :root[data-skin="fd"] .sub { color:var(--fd-text-3); font-size:13px; }
+:root[data-skin="fd"] .grid { gap:20px; }
+:root[data-skin="fd"] section { margin-bottom:22px; }
+:root[data-skin="fd"] .sect h3 { font-size:12px; font-weight:700; letter-spacing:.08em; color:var(--fd-text-3); }
+:root[data-skin="fd"] .hero h1 { font-size:28px; font-weight:800; letter-spacing:-.02em; line-height:1.2; }
+:root[data-skin="fd"] .hero .sub { font-size:14px; font-weight:500; }
+:root[data-skin="fd"] .kpi { position:relative; background:var(--fd-card); border:1px solid var(--fd-border); border-top-width:1px; border-radius:20px; padding:22px 24px;
+  box-shadow:var(--fd-shadow-card), var(--fd-glow-card); min-height:150px; display:flex; flex-direction:column; }
+:root[data-skin="fd"] .kpi .lbl { font-size:15px; font-weight:500; color:var(--fd-text-2); letter-spacing:0; order:2; margin-top:4px; }
+:root[data-skin="fd"] .kpi .val { font-size:clamp(22px, 1.1vw + 14px, 32px); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-weight:800; letter-spacing:-.02em; line-height:1.1; color:var(--fd-text); order:1; margin:4px 0 0; }
+:root[data-skin="fd"] .kpi .val .cur { font-size:.5em; font-weight:700; color:var(--fd-text-3); }
+:root[data-skin="fd"] .kpi .delta { order:3; margin-top:auto; padding-top:12px; font-size:13px; color:var(--fd-text-3); }
+:root[data-skin="fd"] .kpi .delta .up { color:var(--fd-positive-text); background:var(--fd-positive-soft); border-radius:999px; padding:2px 9px; }
+:root[data-skin="fd"] .kpi .delta .down { color:var(--fd-negative-text); background:var(--fd-negative-soft); border-radius:999px; padding:2px 9px; }
+/* tones as a small dot by the label instead of a top border */
+:root[data-skin="fd"] .kpi.tone-good, :root[data-skin="fd"] .kpi.tone-warn, :root[data-skin="fd"] .kpi.tone-bad, :root[data-skin="fd"] .kpi.tone-accent { border-top-color:var(--fd-border); }
+:root[data-skin="fd"] .kpi.tone-good .lbl::before, :root[data-skin="fd"] .kpi.tone-warn .lbl::before, :root[data-skin="fd"] .kpi.tone-bad .lbl::before {
+  content:""; display:inline-block; width:8px; height:8px; border-radius:999px; margin-right:8px; vertical-align:1px; background:var(--fd-positive); }
+:root[data-skin="fd"] .kpi.tone-warn .lbl::before { background:var(--fd-warning); }
+:root[data-skin="fd"] .kpi.tone-bad .lbl::before { background:var(--fd-negative); }
+/* the first accent tile of a row is his gradient hero card */
+:root[data-skin="fd"] .g-kpi > .kpi.tone-accent:first-child { background:var(--fd-accent-gradient); border-color:transparent; box-shadow:var(--fd-hero-shadow); color:#fff; overflow:hidden; }
+:root[data-skin="fd"] .g-kpi > .kpi.tone-accent:first-child .val, :root[data-skin="fd"] .g-kpi > .kpi.tone-accent:first-child .val .cur { color:#fff; }
+:root[data-skin="fd"] .g-kpi > .kpi.tone-accent:first-child .lbl { color:rgba(255,255,255,.92); }
+:root[data-skin="fd"] .g-kpi > .kpi.tone-accent:first-child .delta { color:rgba(255,255,255,.85); }
+:root[data-skin="fd"] .g-kpi > .kpi.tone-accent:first-child .delta .up, :root[data-skin="fd"] .g-kpi > .kpi.tone-accent:first-child .delta .down { background:rgba(255,255,255,.2); color:#fff; }
+:root[data-skin="fd"] .g-kpi > .kpi.tone-accent:first-child::after { content:""; position:absolute; right:-30px; top:-30px; width:120px; height:120px; border-radius:999px; background:rgba(255,255,255,.12); pointer-events:none; }
+:root[data-skin="fd"][data-theme="dark"] .g-kpi > .kpi.tone-accent:first-child { background:radial-gradient(120% 110% at 0% 0%, rgba(245,166,35,.18), transparent 60%), var(--fd-card);
+  border-color:var(--fd-accent-border); color:var(--fd-text); box-shadow:var(--fd-shadow-card), 0 0 0 1px rgba(245,166,35,.12), 0 0 28px rgba(245,166,35,.16); }
+:root[data-skin="fd"][data-theme="dark"] .g-kpi > .kpi.tone-accent:first-child .val, :root[data-skin="fd"][data-theme="dark"] .g-kpi > .kpi.tone-accent:first-child .val .cur { color:var(--fd-accent); }
+:root[data-skin="fd"][data-theme="dark"] .g-kpi > .kpi.tone-accent:first-child .lbl { color:var(--fd-text-2); }
+:root[data-skin="fd"][data-theme="dark"] .g-kpi > .kpi.tone-accent:first-child .delta { color:var(--fd-text-3); }
+:root[data-skin="fd"][data-theme="dark"] .g-kpi > .kpi.tone-accent:first-child::after { display:none; }
+:root[data-skin="fd"] .alert { border-radius:20px; border:1px solid var(--fd-border); background:var(--fd-card); padding:18px 20px; box-shadow:var(--fd-shadow-card), var(--fd-glow-card); gap:14px; }
+:root[data-skin="fd"] .alert .ico { width:44px; height:44px; flex:0 0 44px; border-radius:999px; font-size:15px; box-shadow:var(--fd-glow-badge); }
+:root[data-skin="fd"] .alert.critical .ico { background:var(--fd-negative-soft); color:var(--fd-negative); }
+:root[data-skin="fd"] .alert.warning .ico { background:var(--fd-warning-soft); color:var(--fd-warning); }
+:root[data-skin="fd"] .alert.good .ico { background:var(--fd-positive-soft); color:var(--fd-positive); }
+:root[data-skin="fd"] .alert .n { font-size:24px; font-weight:800; }
+:root[data-skin="fd"] .note { border-radius:16px; border:1px solid var(--fd-border); background:var(--fd-card); }
+:root[data-skin="fd"] .rank .tr i, :root[data-skin="fd"] .rank .tr { border-radius:999px; }
+
+/* ---- 6. tables: soft rounded head, roomy rows */
+:root[data-skin="fd"] #view table { border-collapse:separate; border-spacing:0; font-size:14px; }
+:root[data-skin="fd"] #view table thead th, :root[data-skin="fd"] #view .tall thead th { background:var(--fd-surface-2); color:var(--fd-text-3); height:40px;
+  padding:0 12px; font-size:12.5px; font-weight:600; letter-spacing:.01em; text-transform:none; border-bottom:none; }
+:root[data-skin="fd"] #view table thead th:first-child { border-radius:12px 0 0 12px; padding-left:16px; }
+:root[data-skin="fd"] #view table thead th:last-child { border-radius:0 12px 12px 0; padding-right:16px; }
+:root[data-skin="fd"] #view table tbody td { padding:10px 12px; border-bottom:1px solid var(--fd-border); color:var(--fd-text); font-weight:500; }
+:root[data-skin="fd"] #view table tbody td:first-child { padding-left:16px; }
+:root[data-skin="fd"] #view table tbody td:last-child { padding-right:16px; }
+:root[data-skin="fd"] #view table tbody tr:hover > td { background:var(--fd-surface-2); }
+:root[data-skin="fd"] #view table tfoot td { background:var(--fd-surface-2); font-weight:700; padding:10px 12px; border-bottom:none; }
+:root[data-skin="fd"] #view tr.grp td { background:var(--fd-surface-2); color:var(--fd-text-3); }
+:root[data-skin="fd"] .sku { color:var(--fd-text-3); font-size:12.5px; }
+
+/* ---- 7. forms */
+:root[data-skin="fd"] label.f { font-size:13px; font-weight:600; color:var(--fd-text-2); letter-spacing:0; margin-bottom:6px; }
+:root[data-skin="fd"] input.i, :root[data-skin="fd"] select.i, :root[data-skin="fd"] textarea.i { background:var(--fd-surface-2); border:1px solid transparent; border-radius:12px;
+  min-height:42px; padding:9px 14px; font-size:14.5px; font-weight:500; color:var(--fd-text); }
+:root[data-skin="fd"][data-theme="dark"] input.i, :root[data-skin="fd"][data-theme="dark"] select.i, :root[data-skin="fd"][data-theme="dark"] textarea.i { border-color:var(--fd-border-strong); }
+:root[data-skin="fd"] input.i::placeholder, :root[data-skin="fd"] textarea.i::placeholder { color:var(--fd-text-faint); }
+:root[data-skin="fd"] input.i:focus, :root[data-skin="fd"] select.i:focus, :root[data-skin="fd"] textarea.i:focus { border-color:var(--fd-accent-border); box-shadow:var(--fd-focus-ring); outline:none; background:var(--fd-card); }
+:root[data-skin="fd"] input.i.qty { min-height:36px; padding:5px 10px; }
+:root[data-skin="fd"] .day-pick input.i { min-height:38px; }
+:root[data-skin="fd"] .results { border-radius:14px; border-color:var(--fd-border); background:var(--fd-card); }
+:root[data-skin="fd"] .results div.r:hover { background:var(--fd-accent-soft); }
+:root[data-skin="fd"] .pick { border-radius:14px; }
+:root[data-skin="fd"] .pick.on { border-color:var(--fd-accent-border); background:var(--fd-accent-soft); }
+:root[data-skin="fd"] .stp.on b { background:var(--fd-accent); border-color:var(--fd-accent); color:var(--fd-text-on-accent); box-shadow:var(--fd-glow-badge); }
+
+/* ---- 8. dialogs, toast, tooltip */
+:root[data-skin="fd"] .dlg-back { background:rgba(20,23,43,.45); backdrop-filter:blur(4px); -webkit-backdrop-filter:blur(4px); }
+:root[data-skin="fd"][data-theme="dark"] .dlg-back { background:rgba(0,0,0,.6); }
+:root[data-skin="fd"] .dlg, :root[data-skin="fd"] .dlg .box, :root[data-skin="fd"] .dlgbox { border-radius:20px; border:1px solid var(--fd-border); background:var(--fd-card); box-shadow:var(--fd-shadow-popover); }
+:root[data-skin="fd"] .dlg-t { font-size:19px; font-weight:700; letter-spacing:-.01em; }
+:root[data-skin="fd"] #toast { border-radius:14px; background:#1E2235; color:#fff; border-left:4px solid var(--fd-positive); }
+:root[data-skin="fd"] #toast.bad { border-left-color:var(--fd-negative); }
+:root[data-skin="fd"][data-theme="dark"] #toast { background:#1C2432; color:#fff; border:1px solid #2F3B4D; border-left:4px solid var(--fd-positive); }
+:root[data-skin="fd"] #toast a { color:#A5B4FC; }
+:root[data-skin="fd"] #tip, :root[data-skin="fd"][data-theme="dark"] #tip { background:#1E2235; color:#fff; border-radius:10px; }
+:root[data-skin="fd"][data-theme="dark"] #tip { background:#1C2432; border:1px solid #2F3B4D; }
+
+/* ---- 9. phone */
+@media (max-width:960px) {
+  :root[data-skin="fd"] #side { padding-top:18px; }
+  :root[data-skin="fd"] .topbar { min-height:56px; padding:0 8px 0 4px; }
+}
+@media (max-width:760px) {
+  :root[data-skin="fd"] #view { padding:14px 14px 56px; }
+  :root[data-skin="fd"] #o_cp { padding:10px 14px 0; }
+  :root[data-skin="fd"] #o_cp .crumbs .here { font-size:20px; }
+  :root[data-skin="fd"] .card, :root[data-skin="fd"] .kpi { border-radius:16px; padding:16px 18px; }
+  :root[data-skin="fd"] .kpi { min-height:118px; }
+  :root[data-skin="fd"] .kpi .val { font-size:26px; }
+  :root[data-skin="fd"] .hero h1 { font-size:22px; }
+  :root[data-skin="fd"] .grid { gap:12px; }
+}
+@media (max-width:640px) {
+  :root[data-skin="fd"] #tabbar:not([hidden]) { background:var(--fd-sidebar); border-top:1px solid var(--fd-border); }
+  :root[data-skin="fd"] #tabbar button[aria-current="page"] { color:var(--fd-accent-text); }
+  :root[data-skin="fd"] #tabbar .tb-n { background:var(--fd-accent); color:var(--fd-text-on-accent); }
+}
+@media (prefers-reduced-motion:reduce) { :root[data-skin="fd"] * { transition:none !important; } }
+</style>
+<script>
+// fd-1: the FilaDash look is the main look; "Classic" (the old one) stays in the account menu, kept per device
+var FD_SKIN = (function () { try { return localStorage.getItem('erp_skin') || 'fd'; } catch (e) { return 'fd'; } })();
+function fdSkin(s) {
+  FD_SKIN = s === 'classic' ? 'classic' : 'fd';
+  try { localStorage.setItem('erp_skin', FD_SKIN); } catch (e) {}
+  if (FD_SKIN === 'fd') document.documentElement.setAttribute('data-skin', 'fd');
+  else document.documentElement.removeAttribute('data-skin');
+}
+fdSkin(FD_SKIN);
+var umPaintFd = umPaint;
+umPaint = function () {
+  var r = umPaintFd.apply(this, arguments);
+  var s = document.querySelector('#o_usermenu .u6s');
+  if (s && !s.querySelector('[data-fdskin]')) {
+    var row = document.createElement('div'); row.className = 'u6row';
+    row.innerHTML = '<span>Look</span><span class="seg">' + [['fd', 'FilaDash'], ['classic', 'Classic']].map(function (x) {
+      return '<button type="button" data-fdskin="' + x[0] + '" class="' + (FD_SKIN === x[0] ? 'on' : '') + '">' + x[1] + '</button>'; }).join('') + '</span>';
+    s.appendChild(row);
+  }
+  return r;
+};
+document.addEventListener('click', function (e) {
+  var b = e.target.closest && e.target.closest('[data-fdskin]'); if (!b) return;
+  e.preventDefault(); e.stopPropagation();
+  fdSkin(b.getAttribute('data-fdskin'));
+  [].forEach.call(document.querySelectorAll('[data-fdskin]'), function (x) { x.classList.toggle('on', x.getAttribute('data-fdskin') === FD_SKIN); });
+}, true);
+</script>
+
+<!-- fd-2 (FilaDash merge P2): the dashboard in FilaDash's layout, on our figures (handlers/fddash.js, erpFdDash).
+     Page head with range pills (whole months: This month / 3 / 6 / 12, so Net profit = the P&L) and the owner's
+     product-group drop-down (decision F5: one business, a group narrows the sales side). His card grid: revenue curve,
+     KPI cards with icon badge + trend chip + "i" (Show calculation), donuts, tables, needs attention.
+     The previous dashboard (today / a chosen day, charts, tabs) stays below behind "More: the classic dashboard". -->
+<style>
+.fdd-head { display:flex; align-items:flex-end; justify-content:space-between; gap:16px; flex-wrap:wrap; margin:4px 0 20px; }
+.fdd-eyebrow { font-size:12px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:var(--fd-text-3, var(--muted)); }
+.fdd-title { display:flex; align-items:center; gap:10px; font-size:28px; font-weight:800; letter-spacing:-.02em; line-height:1.2; margin:2px 0 0; color:var(--fd-text, var(--ink)); }
+.fdd-sub { font-size:14px; color:var(--fd-text-3, var(--muted)); font-weight:500; margin-top:4px; }
+.fdd-tools { display:flex; align-items:center; gap:8px; flex-wrap:wrap; justify-content:flex-end; }
+.fdd-pill { height:38px; padding:0 16px; border-radius:999px; border:1px solid transparent; background:var(--fd-surface-2, var(--field)); color:var(--fd-text-2, var(--ink-2));
+  font:inherit; font-size:14px; font-weight:600; cursor:pointer; white-space:nowrap; }
+:root[data-theme="dark"] .fdd-pill { border-color:var(--fd-border, var(--ring)); }
+.fdd-pill:hover { background:var(--fd-surface-3, var(--ring)); color:var(--fd-text, var(--ink)); }
+.fdd-pill[aria-pressed="true"] { background:var(--fd-accent, var(--series-1)); color:var(--fd-text-on-accent, #fff); box-shadow:var(--fd-accent-glow, none); }
+:root[data-skin="fd"]:not([data-theme="dark"]) .fdd-pill[aria-pressed="true"] { background:linear-gradient(180deg, #5F5BF0, #5A4BE6); }
+:root[data-theme="dark"] .fdd-pill[aria-pressed="true"] { background:#1A1813; color:var(--fd-accent, var(--series-1)); border-color:var(--fd-accent, var(--series-1)); }
+.fdd-group { height:38px; border-radius:999px; border:1px solid var(--fd-accent-border, var(--ring)); background:var(--fd-accent-soft, var(--series-1-soft)); color:var(--fd-accent-text, var(--series-1));
+  font:inherit; font-size:14px; font-weight:700; padding:0 34px 0 16px; cursor:pointer; appearance:none; -webkit-appearance:none;
+  background-image:linear-gradient(45deg, transparent 50%, currentColor 50%), linear-gradient(135deg, currentColor 50%, transparent 50%);
+  background-position:calc(100% - 18px) 16px, calc(100% - 13px) 16px; background-size:5px 5px; background-repeat:no-repeat; }
+.fdd-qa { display:flex; gap:8px; flex-wrap:wrap; margin:-6px 0 20px; }
+.fdd-note { margin:-8px 0 18px; font-size:13px; color:var(--fd-text-3, var(--muted)); }
+.fdd-grid { display:grid; grid-template-columns:repeat(4, minmax(0, 1fr)); gap:20px; margin-bottom:20px; }
+.fdd-c { position:relative; background:var(--fd-card, var(--surface)); border:1px solid var(--fd-border, var(--ring)); border-radius:20px; padding:22px 24px;
+  box-shadow:var(--fd-shadow-card, var(--shadow)), var(--fd-glow-card, 0 0 0 transparent); min-width:0; }
+.fdd-c.s2 { grid-column:span 2; } .fdd-c.r2 { grid-row:span 2; } .fdd-c.s4 { grid-column:1 / -1; }
+.fdd-c[data-go] { cursor:pointer; transition:transform .15s, box-shadow .15s; }
+.fdd-c[data-go]:hover { transform:translateY(-2px); box-shadow:var(--fd-shadow-card-hover, var(--shadow-lg)); }
+.fdd-ch { display:flex; align-items:center; gap:14px; min-height:44px; }
+.fdd-ct { font-size:18px; font-weight:700; letter-spacing:-.01em; color:var(--fd-text, var(--ink)); display:flex; align-items:center; gap:8px; min-width:0; }
+.fdd-ch .fdd-more { margin-left:auto; font-size:14px; font-weight:500; color:var(--fd-text-2, var(--ink-2)); background:none; border:0; cursor:pointer; white-space:nowrap; font-family:inherit; }
+.fdd-ch .fdd-more:hover { color:var(--fd-accent-text, var(--series-1)); }
+.fdd-badge { width:48px; height:48px; flex:0 0 48px; border-radius:999px; display:inline-grid; place-items:center; background:var(--fd-accent-soft, var(--series-1-soft));
+  color:var(--fd-accent, var(--series-1)); box-shadow:var(--fd-glow-badge, none); }
+.fdd-badge svg { width:22px; height:22px; fill:none; stroke:currentColor; stroke-width:1.9; stroke-linecap:round; stroke-linejoin:round; }
+.fdd-badge.t-warn { background:var(--fd-warning-soft, var(--warning-soft)); color:var(--fd-warning, var(--warning)); }
+.fdd-badge.t-bad { background:var(--fd-negative-soft, var(--critical-soft)); color:var(--fd-negative, var(--critical)); }
+.fdd-badge.t-good { background:var(--fd-positive-soft, var(--good-soft)); color:var(--fd-positive, var(--good)); }
+.fdd-k { display:flex; flex-direction:column; min-height:176px; }
+.fdd-ktop { display:flex; align-items:flex-start; justify-content:space-between; gap:8px; }
+.fdd-num { font-size:clamp(24px, 1.2vw + 14px, 34px); font-weight:800; letter-spacing:-.02em; line-height:1.1; margin-top:16px; color:var(--fd-text, var(--ink));
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-variant-numeric:tabular-nums; }
+.fdd-num small { font-size:.62em; font-weight:700; color:var(--fd-text-3, var(--muted)); margin-right:3px; }
+.fdd-num.neg { color:var(--fd-negative-text, var(--critical)); }
+.fdd-lbl { font-size:15px; font-weight:500; color:var(--fd-text-2, var(--ink-2)); margin-top:6px; padding-right:26px; line-height:1.3; }
+.fdd-kn { font-size:12.5px; color:var(--fd-text-3, var(--muted)); margin-top:6px; padding-right:26px; }
+.fdd-trend { display:inline-flex; align-items:center; gap:4px; height:26px; padding:0 10px; border-radius:999px; font-size:13px; font-weight:700; white-space:nowrap;
+  background:var(--fd-positive-soft, var(--good-soft)); color:var(--fd-positive-text, var(--up)); }
+.fdd-trend.bad { background:var(--fd-negative-soft, var(--critical-soft)); color:var(--fd-negative-text, var(--critical)); }
+.fdd-trend.flat { background:var(--fd-surface-2, var(--field)); color:var(--fd-text-3, var(--muted)); }
+.fdd-i { position:absolute; right:22px; bottom:22px; width:20px; height:20px; border-radius:999px; border:0; padding:0; cursor:pointer;
+  background:var(--fd-accent, var(--series-1)); color:var(--fd-text-on-accent, #fff); font:800 12px/20px var(--fd-font, inherit); text-align:center; }
+.fdd-i:hover { transform:scale(1.12); }
+.fdd-ct .fdd-i { position:static; flex:none; }
+/* hero: his gradient card */
+.fdd-c.fdhero { background:var(--fd-accent-gradient, var(--series-1)); border-color:transparent; box-shadow:var(--fd-hero-shadow, var(--shadow-lg)); color:#fff; overflow:hidden; }
+.fdd-c.fdhero .fdd-num, .fdd-c.fdhero .fdd-num small { color:#fff; } .fdd-c.fdhero .fdd-lbl { color:rgba(255,255,255,.92); } .fdd-c.fdhero .fdd-kn { color:rgba(255,255,255,.85); }
+.fdd-c.fdhero .fdd-badge { background:rgba(255,255,255,.22); color:#fff; box-shadow:none; }
+.fdd-c.fdhero .fdd-trend { background:rgba(255,255,255,.2); color:#fff; }
+.fdd-c.fdhero .fdd-i { background:#fff; color:#5B4FE9; }
+.fdd-c.fdhero .fdd-cube { position:absolute; right:22px; top:50%; width:66px; height:66px; margin-top:-38px; opacity:.95; pointer-events:none; }
+:root[data-theme="dark"] .fdd-c.fdhero { background:radial-gradient(120% 110% at 0% 0%, rgba(245,166,35,.18), transparent 60%), var(--fd-card, var(--surface));
+  border-color:var(--fd-accent-border, var(--ring)); color:var(--fd-text, var(--ink)); box-shadow:var(--fd-shadow-card), 0 0 0 1px rgba(245,166,35,.12), 0 0 28px rgba(245,166,35,.16); }
+:root[data-theme="dark"] .fdd-c.fdhero .fdd-num, :root[data-theme="dark"] .fdd-c.fdhero .fdd-num small { color:var(--fd-accent, var(--series-1)); }
+:root[data-theme="dark"] .fdd-c.fdhero .fdd-lbl { color:var(--fd-text-2, var(--ink-2)); } :root[data-theme="dark"] .fdd-c.fdhero .fdd-kn { color:var(--fd-text-3, var(--muted)); }
+:root[data-theme="dark"] .fdd-c.fdhero .fdd-badge { background:var(--fd-badge-bg, rgba(245,166,35,.12)); color:var(--fd-accent, var(--series-1)); }
+:root[data-theme="dark"] .fdd-c.fdhero .fdd-trend { background:var(--fd-positive-soft, var(--good-soft)); color:var(--fd-positive-text, var(--up)); }
+:root[data-theme="dark"] .fdd-c.fdhero .fdd-i { background:var(--fd-accent, var(--series-1)); color:var(--fd-text-on-accent, #000); }
+:root[data-theme="dark"] .fdd-c.fdhero .fdd-cube path { fill:transparent !important; stroke:var(--fd-accent, #F5A623); }
+/* revenue curve */
+.fdd-big { margin-left:auto; text-align:right; }
+.fdd-big b { display:block; font-size:30px; font-weight:800; letter-spacing:-.02em; color:var(--fd-accent-text, var(--series-1)); line-height:1.1; font-variant-numeric:tabular-nums; }
+.fdd-big span { font-size:12.5px; color:var(--fd-text-3, var(--muted)); }
+.fdd-line { margin-top:14px; }
+.fdd-line svg { width:100%; height:auto; display:block; overflow:visible; }
+.fdd-line .gl { stroke:var(--fd-chart-grid, var(--grid)); stroke-width:1; }
+.fdd-line .ax { font-size:11px; fill:var(--fd-text-3, var(--muted)); font-family:var(--fd-font, inherit); }
+.fdd-line .ln { fill:none; stroke:var(--fd-accent, var(--series-1)); stroke-width:3; stroke-linecap:round; stroke-linejoin:round; }
+.fdd-line .ln2 { fill:none; stroke:var(--fd-positive, var(--good)); stroke-width:2; stroke-dasharray:5 5; }
+.fdd-line .dot { fill:var(--fd-accent, var(--series-1)); stroke:var(--fd-card, #fff); stroke-width:2.5; }
+.fdd-line .dot:hover { r:7; }
+.fdd-legend { display:flex; gap:16px; margin-top:8px; font-size:12.5px; color:var(--fd-text-3, var(--muted)); }
+.fdd-legend i { display:inline-block; width:14px; height:3px; border-radius:2px; vertical-align:middle; margin-right:6px; }
+/* donut + its table */
+.fdd-dn { display:grid; grid-template-columns:minmax(0, 1fr) 150px; gap:16px; align-items:center; margin-top:14px; }
+.fdd-dn svg { width:150px; height:150px; display:block; }
+.fdd-dn .fdd-t th, .fdd-dn .fdd-t td { padding:0 6px !important; }
+.fdd-dn .fdd-t th:first-child, .fdd-dn .fdd-t td:first-child { padding-left:12px !important; }
+.fdd-dn .fdd-t .nm { max-width:130px; }
+.fdd-dn .ctr1 { font-size:30px; font-weight:800; fill:var(--fd-accent-text, var(--series-1)); font-family:var(--fd-font, inherit); }
+.fdd-dn .ctr2 { font-size:13px; fill:var(--fd-text-3, var(--muted)); font-family:var(--fd-font, inherit); }
+.fdd-sw { display:inline-block; width:10px; height:10px; border-radius:999px; margin-right:9px; vertical-align:0; }
+/* small tables inside cards */
+.fdd-t { width:100%; border-collapse:separate !important; border-spacing:0; font-size:14px; margin-top:12px; }
+.fdd-t th { background:var(--fd-surface-2, var(--thead)) !important; height:36px; padding:0 10px !important; font-size:12.5px !important; font-weight:600 !important; color:var(--fd-text-3, var(--muted)) !important;
+  text-transform:none !important; letter-spacing:0 !important; text-align:left; white-space:nowrap; border:0 !important; }
+.fdd-t th:first-child { border-radius:12px 0 0 12px; padding-left:14px !important; } .fdd-t th:last-child { border-radius:0 12px 12px 0; padding-right:14px !important; }
+.fdd-t td { height:42px; padding:0 10px !important; border-bottom:1px solid var(--fd-border, var(--grid)) !important; white-space:nowrap; font-weight:500; }
+.fdd-t td:first-child { padding-left:14px !important; } .fdd-t td:last-child { padding-right:14px !important; }
+.fdd-t tr:last-child td { border-bottom:0 !important; }
+.fdd-t .n { text-align:right; font-variant-numeric:tabular-nums; }
+.fdd-t .nm { max-width:200px; overflow:hidden; text-overflow:ellipsis; }
+.fdd-scroll { overflow-x:auto; max-width:100%; }
+.fdd-c { overflow:hidden; }
+.fdd-t tr[data-inv] { cursor:pointer; }
+.fdd-chip { display:inline-flex; align-items:center; height:24px; padding:0 9px; border-radius:999px; font-size:12px; font-weight:700; }
+.fdd-chip.paid { background:var(--fd-positive-soft, var(--good-soft)); color:var(--fd-positive-text, var(--up)); }
+.fdd-chip.due { background:var(--fd-warning-soft, var(--warning-soft)); color:var(--fd-warning-text, var(--warning)); }
+.fdd-att { list-style:none; margin:10px 0 0; padding:0; }
+.fdd-att li { display:flex; align-items:center; gap:12px; padding:10px 0; border-bottom:1px solid var(--fd-border, var(--grid)); cursor:pointer; }
+.fdd-att li:last-child { border-bottom:0; }
+.fdd-att li b { font-size:18px; font-weight:800; min-width:44px; font-variant-numeric:tabular-nums; }
+.fdd-att li span { color:var(--fd-text-2, var(--ink-2)); }
+.fdd-att .fdd-badge { width:36px; height:36px; flex-basis:36px; }
+.fdd-att .fdd-badge svg { width:17px; height:17px; }
+.fdd-empty { color:var(--fd-text-3, var(--muted)); font-size:13.5px; padding:22px 0 8px; text-align:center; }
+.fdd-classic { margin:6px 0 18px; }
+.fdd-calc { width:100%; border-collapse:collapse; margin-top:10px; font-size:13.5px; }
+.fdd-calc td { padding:7px 0; border-bottom:1px solid var(--fd-border, var(--grid)); }
+.fdd-calc td:last-child { text-align:right; font-variant-numeric:tabular-nums; font-weight:700; padding-left:16px; white-space:nowrap; }
+.fdd-calc tr:last-child td { border-bottom:0; font-size:15px; }
+.fdd-skel { height:176px; border-radius:20px; background:linear-gradient(90deg, var(--fd-surface-2, var(--field)) 25%, var(--fd-surface-3, var(--ring)) 50%, var(--fd-surface-2, var(--field)) 75%);
+  background-size:200% 100%; animation:fddSk 1.2s infinite; }
+@keyframes fddSk { from { background-position:200% 0; } to { background-position:-200% 0; } }
+@media (max-width:1180px) { .fdd-grid { grid-template-columns:repeat(2, minmax(0, 1fr)); } .fdd-c.s2 { grid-column:1 / -1; } .fdd-c.r2 { grid-row:auto; } }
+@media (max-width:640px) {
+  .fdd-grid { grid-template-columns:minmax(0, 1fr) minmax(0, 1fr); gap:12px; }
+  .fdd-c { padding:16px; border-radius:16px; } .fdd-c.s2, .fdd-c.wide { grid-column:1 / -1; }
+  .fdd-k { min-height:128px; } .fdd-badge { width:38px; height:38px; flex-basis:38px; } .fdd-badge svg { width:18px; height:18px; }
+  .fdd-num { margin-top:10px; font-size:21px; } .fdd-lbl { font-size:13px; padding-right:20px; } .fdd-kn { display:none; }
+  .fdd-trend { height:22px; padding:0 7px; font-size:11.5px; } .fdd-i { right:14px; bottom:14px; }
+  .fdd-dn { grid-template-columns:1fr; justify-items:center; } .fdd-dn > div:first-child { width:100%; }
+  .fdd-title { font-size:22px; } .fdd-big b { font-size:22px; }
+  .fdd-c.fdhero .fdd-cube { display:none; }
+  .fdd-scroll { overflow-x:auto; }
+}
+</style>
+<script>
+var FDD = { months: 1, group: '', data: null, key: '', busy: false, err: '', classic: false };
+try { var _fdd = JSON.parse(localStorage.getItem('erp_fdd') || '{}'); if ([1, 3, 6, 12].indexOf(_fdd.months) >= 0) FDD.months = _fdd.months; FDD.group = _fdd.group || ''; FDD.classic = !!_fdd.classic; } catch (e) {}
+function fddSave() { try { localStorage.setItem('erp_fdd', JSON.stringify({ months: FDD.months, group: FDD.group, classic: FDD.classic })); } catch (e) {} }
+var FDD_IC = {
+  taka: '<path d="M7 4c2 0 3 1 3 3v10c0 2 1.5 3 3.5 3S17 19 17 16.5c0-1.6-.8-2.5-2-2.5"/><path d="M5 9h9"/>',
+  target: '<circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r="1"/>',
+  box: '<path d="M3 8l9-5 9 5v8l-9 5-9-5z"/><path d="M3 8l9 5 9-5M12 13v8"/>',
+  bell: '<path d="M6 16V11a6 6 0 0 1 12 0v5l2 2H4z"/><path d="M10 21h4"/>',
+  wallet: '<rect x="3" y="6" width="18" height="13" rx="3"/><path d="M16 12h2M3 9h15V6"/>',
+  cart: '<path d="M3 4h2l2.5 11h11L21 7H6.2"/><circle cx="9" cy="19.5" r="1.4"/><circle cx="17" cy="19.5" r="1.4"/>',
+  trend: '<path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/>',
+  percent: '<path d="M19 5L5 19"/><circle cx="7" cy="7" r="2.5"/><circle cx="17" cy="17" r="2.5"/>',
+  receipt: '<path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6"/>',
+  spool: '<ellipse cx="12" cy="6" rx="7" ry="3"/><path d="M5 6v12c0 1.7 3.1 3 7 3s7-1.3 7-3V6"/><ellipse cx="12" cy="6" rx="2" ry="1"/>',
+  layers: '<path d="M12 3l9 5-9 5-9-5z"/><path d="M3 13l9 5 9-5"/>',
+  globe: '<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3.5 3 14.5 0 18M12 3c-3 3.5-3 14.5 0 18"/>',
+  list: '<path d="M8 6h12M8 12h12M8 18h12"/><circle cx="4" cy="6" r="1"/><circle cx="4" cy="12" r="1"/><circle cx="4" cy="18" r="1"/>',
+  clock: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+  warn: '<path d="M12 3l10 18H2z"/><path d="M12 10v5M12 18v.5"/>',
+  x: '<path d="M6 6l12 12M18 6L6 18"/>',
+  truck: '<path d="M3 6h11v10H3zM14 10h4l3 3v3h-7"/><circle cx="7" cy="18" r="1.6"/><circle cx="17" cy="18" r="1.6"/>'
+};
+function fddIc(k) { return '<svg viewBox="0 0 24 24">' + (FDD_IC[k] || '') + '</svg>'; }
+var FDD_COL = ['var(--fd-chart-1,#2F7CF6)', 'var(--fd-chart-2,#6B4FE6)', 'var(--fd-chart-3,#E24BE5)', 'var(--fd-chart-4,#26CDF4)', 'var(--fd-chart-5,#1DBF73)', 'var(--fd-chart-6,#F59E0B)'];
+function fddLoad() {
+  var key = FDD.months + '|' + FDD.group;
+  if (FDD.busy || (FDD.data && FDD.key === key)) return;
+  FDD.busy = true; FDD.err = '';
+  srv('erpFdDash', [{ months: FDD.months, group: FDD.group }], function (r) {
+    FDD.busy = false; FDD.data = r; FDD.key = key;
+    if (r && r.group !== FDD.group) { FDD.group = r.group || ''; FDD.key = FDD.months + '|' + FDD.group; fddSave(); }
+    if (VIEW === 'dash') repaint();
+  }, function (e) {
+    FDD.busy = false; FDD.err = e && e.message ? e.message : String(e);
+    if (VIEW === 'dash') repaint();
+  });
+}
+function fddMoney(v, cur) { return '<small>' + esc(cur || 'BDT') + '</small>' + fmt(v); }
+function fddTrend(k, flip) {
+  if (!k || k.prev === undefined || k.prev === null) return '';
+  var now = Number(k.v) || 0, prev = Number(k.prev) || 0;
+  if (!prev) return now ? '<span class="fdd-trend flat">new</span>' : '';
+  var pc = (now - prev) / Math.abs(prev) * 100, up = pc >= 0, good = flip ? !up : up;
+  if (Math.abs(pc) < 0.5) return '<span class="fdd-trend flat">= same</span>';
+  return '<span class="fdd-trend' + (good ? '' : ' bad') + '" title="vs ' + esc(FDD.data.prevLabel) + ': ' + fmt(prev) + '">' + (up ? '▲' : '▼') + ' ' + Math.abs(pc).toFixed(0) + '%</span>';
+}
+function fddKpi(o) {
+  // o: { key, title, icon, money, k, hero, tone, note, go, f, flip }
+  var k = o.k || { v: 0 }, cur = FDD.data.currency;
+  var calc = FDD.data.calc && FDD.data.calc[o.key];
+  var num = o.money ? fddMoney(k.v, cur) : o.pct ? fmt(k.v) + '<small style="margin-left:2px">%</small>' : fmt(k.v);
+  return '<div class="fdd-c fdd-k' + (o.hero ? ' fdhero' : '') + '"' + (o.go && navOn(o.go) ? ' data-go="' + o.go + '"' + (o.f ? ' data-f="' + o.f + '"' : '') : '') + '>' +
+    '<div class="fdd-ktop"><span class="fdd-badge' + (o.tone ? ' t-' + o.tone : '') + '">' + fddIc(o.icon) + '</span>' + fddTrend(k, o.flip) + '</div>' +
+    (o.hero ? '<svg class="fdd-cube" viewBox="0 0 64 64"><path d="M32 6l24 13-24 13L8 19z" fill="rgba(255,255,255,.55)" stroke="rgba(255,255,255,.75)" stroke-width="1.2"/><path d="M8 19l24 13v26L8 45z" fill="rgba(255,255,255,.28)" stroke="rgba(255,255,255,.75)" stroke-width="1.2"/><path d="M56 19L32 32v26l24-13z" fill="rgba(255,255,255,.40)" stroke="rgba(255,255,255,.75)" stroke-width="1.2"/></svg>' : '') +
+    '<div class="fdd-num' + (Number(k.v) < 0 ? ' neg' : '') + '">' + num + '</div>' +
+    '<div class="fdd-lbl">' + esc(o.title) + '</div>' + (o.note ? '<div class="fdd-kn">' + o.note + '</div>' : '') +
+    (calc ? '<button type="button" class="fdd-i" data-fdcalc="' + esc(o.key) + '" data-fdtitle="' + esc(o.title) + '" title="Show calculation">i</button>' : '') + '</div>';
+}
+function fddSmooth(pts) {
+  if (!pts.length) return '';
+  var d = 'M' + pts[0][0] + ',' + pts[0][1];
+  for (var i = 0; i < pts.length - 1; i++) {
+    var p0 = pts[i - 1] || pts[i], p1 = pts[i], p2 = pts[i + 1], p3 = pts[i + 2] || p2;
+    var c1x = p1[0] + (p2[0] - p0[0]) / 6, c1y = p1[1] + (p2[1] - p0[1]) / 6, c2x = p2[0] - (p3[0] - p1[0]) / 6, c2y = p2[1] - (p3[1] - p1[1]) / 6;
+    d += ' C' + c1x.toFixed(1) + ',' + c1y.toFixed(1) + ' ' + c2x.toFixed(1) + ',' + c2y.toFixed(1) + ' ' + p2[0] + ',' + p2[1];
+  }
+  return d;
+}
+function fddLine(series, showGross) {
+  var W = 560, H = 230, L = 46, T = 10, B = 26, Rr = 10, iw = W - L - Rr, ih = H - T - B;
+  var vals = series.map(function (s) { return s.revenue; }).concat(showGross ? series.map(function (s) { return s.gross; }) : []);
+  var mx = Math.max.apply(null, vals.concat([1])), mn = Math.min.apply(null, vals.concat([0]));
+  var step = Math.pow(10, Math.floor(Math.log10(Math.max(1, mx - mn) / 4))), nice = [1, 2, 2.5, 5, 10];
+  var unit = step; for (var q = 0; q < nice.length; q++) { if ((mx - mn) / (step * nice[q]) <= 5) { unit = step * nice[q]; break; } }
+  var top = Math.ceil(mx / unit) * unit || unit, bot = Math.floor(mn / unit) * unit;
+  var y = function (v) { return T + ih - (v - bot) / (top - bot) * ih; };
+  var x = function (i) { return L + (series.length === 1 ? iw / 2 : i * iw / (series.length - 1)); };
+  var g = '', ax = '';
+  for (var v = bot; v <= top + 1e-6; v += unit) {
+    g += '<line class="gl" x1="' + L + '" x2="' + (W - Rr) + '" y1="' + y(v).toFixed(1) + '" y2="' + y(v).toFixed(1) + '"/>';
+    ax += '<text class="ax" x="' + (L - 8) + '" y="' + (y(v) + 4).toFixed(1) + '" text-anchor="end">' + fddShort(v) + '</text>';
+  }
+  series.forEach(function (s, i) { ax += '<text class="ax" x="' + x(i).toFixed(1) + '" y="' + (H - 6) + '" text-anchor="middle">' + esc(s.label.split(" '")[0]) + '</text>'; });
+  var pts = series.map(function (s, i) { return [Number(x(i).toFixed(1)), Number(y(s.revenue).toFixed(1))]; });
+  var line = fddSmooth(pts), area = line + ' L' + pts[pts.length - 1][0] + ',' + (T + ih) + ' L' + pts[0][0] + ',' + (T + ih) + ' Z';
+  var gl = showGross ? '<path class="ln2" d="' + fddSmooth(series.map(function (s, i) { return [Number(x(i).toFixed(1)), Number(y(s.gross).toFixed(1))]; })) + '"/>' : '';
+  var dots = pts.map(function (p, i) { return '<circle class="dot" cx="' + p[0] + '" cy="' + p[1] + '" r="5"><title>' + esc(series[i].label) + ': ' + FDD.data.currency + ' ' + fmt(series[i].revenue) +
+    (showGross ? ' · gross ' + fmt(series[i].gross) : '') + '</title></circle>'; }).join('');
+  return '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Revenue by month"><defs><linearGradient id="fddA" x1="0" y1="0" x2="0" y2="1">' +
+    '<stop offset="0" stop-color="var(--fd-accent, #5B4FE9)" stop-opacity=".30"/><stop offset="1" stop-color="var(--fd-accent, #5B4FE9)" stop-opacity="0"/></linearGradient></defs>' +
+    g + ax + '<path d="' + area + '" fill="url(#fddA)"/>' + gl + '<path class="ln" d="' + line + '"/>' + dots + '</svg>';
+}
+function fddShort(v) { var a = Math.abs(v); return (v < 0 ? '-' : '') + (a >= 1e7 ? (a / 1e7).toFixed(a >= 1e8 ? 0 : 1) + 'Cr' : a >= 1e5 ? (a / 1e5).toFixed(a >= 1e6 ? 0 : 1) + 'L' : a >= 1e3 ? (a / 1e3).toFixed(0) + 'k' : String(Math.round(a))); }
+function fddDonut(title, icon, sl, go, f, hint) {
+  var body;
+  if (!sl || !sl.length) body = '<div class="fdd-empty">No sales in this range.</div>';
+  else {
+    var total = sl.reduce(function (s, x) { return s + x.value; }, 0), r = 70, c = 2 * Math.PI * r, off = 0, arcs = '';
+    sl.forEach(function (s, i) {
+      var len = s.value / total * c;
+      arcs += '<circle cx="95" cy="95" r="' + r + '" fill="none" stroke="' + FDD_COL[i % FDD_COL.length] + '" stroke-width="30" stroke-dasharray="' + Math.max(0, len - 2).toFixed(2) + ' ' + c.toFixed(2) +
+        '" stroke-dashoffset="' + (-off).toFixed(2) + '" transform="rotate(-90 95 95)"><title>' + esc(s.label) + ': ' + fmt(s.value) + '</title></circle>';
+      off += len;
+    });
+    var top = sl[0], p = Math.round(top.value / total * 100);
+    body = '<div class="fdd-dn"><div class="fdd-scroll"><table class="fdd-t"><thead><tr><th>' + esc(hint || 'Name') + '</th><th class="n">' + esc(FDD.data.currency) + '</th><th class="n">%</th></tr></thead><tbody>' +
+      sl.map(function (s, i) { return '<tr><td class="nm"><i class="fdd-sw" style="background:' + FDD_COL[i % FDD_COL.length] + '"></i>' + esc(s.label) + '</td><td class="n">' + fmt(s.value) + '</td><td class="n">' + Math.round(s.value / total * 100) + '</td></tr>'; }).join('') +
+      '</tbody></table></div><svg viewBox="0 0 190 190" role="img" aria-label="' + esc(title) + '"><circle cx="95" cy="95" r="70" fill="none" stroke="var(--fd-donut-track, #EEF0F6)" stroke-width="30"/>' + arcs +
+      '<text class="ctr1" x="95" y="96" text-anchor="middle">' + p + '%</text><text class="ctr2" x="95" y="118" text-anchor="middle">' + esc(String(top.label).slice(0, 16)) + '</text></svg></div>';
+  }
+  return '<div class="fdd-c s2"><div class="fdd-ch"><span class="fdd-badge">' + fddIc(icon) + '</span><div class="fdd-ct">' + esc(title) + '</div>' +
+    (go && navOn(go) ? '<button type="button" class="fdd-more" data-go="' + go + '"' + (f ? ' data-f="' + f + '"' : '') + '>View details →</button>' : '') + '</div>' + body + '</div>';
+}
+function fddView() {
+  var d = FDD.data;
+  fddLoad();
+  var biz = (ME && (ME.business || ME.bizName)) || (el('bizName') && el('bizName').textContent) || '';
+  var head = '<div class="fdd-head"><div><div class="fdd-eyebrow">' + esc(FDD.group && d ? d.groupLabel : biz || 'All products') + '</div>' +
+    '<h1 class="fdd-title">Dashboard</h1><div class="fdd-sub">' + (d ? esc(d.rangeLabel) + ' · compared with ' + esc(d.prevLabel) + ' · as of ' + esc(d.generatedAt) : 'Loading…') + '</div></div>' +
+    '<div class="fdd-tools">' + [[1, 'This month'], [3, '3 months'], [6, '6 months'], [12, '12 months']].map(function (x) {
+      return '<button type="button" class="fdd-pill" data-fddm="' + x[0] + '" aria-pressed="' + (FDD.months === x[0]) + '">' + x[1] + '</button>'; }).join('') +
+    '<select class="fdd-group" id="fddGroup" title="Show one product group"><option value="">All products</option>' +
+    ((d && d.groups) || []).map(function (g) { return '<option value="' + esc(g.key) + '"' + (FDD.group === g.key ? ' selected' : '') + '>' + esc(g.label) + ' (' + g.products + ')</option>'; }).join('') +
+    '</select></div></div>';
+  var qa = [];
+  if (navOn('invoice')) qa.push('<button class="btn primary" type="button" data-go="invoice">+ New invoice</button>');
+  if (navOn('stock')) qa.push('<button class="btn" type="button" data-go="stock">Receive stock</button>');
+  if (navOn('quotes')) qa.push('<button class="btn" type="button" data-go="quotes">New quotation</button>');
+  if (navOn('campaigns')) qa.push('<button class="btn" type="button" data-go="campaigns">Campaign</button>');
+  var h = head + '<div class="fdd-qa">' + qa.join('') + '</div>';
+  if (FDD.err && !d) return h + '<div class="note err"><div class="ico">!</div><div>Could not load the dashboard: ' + esc(FDD.err) + ' <button class="btn small" type="button" data-fddretry="1">Try again</button></div></div>';
+  if (!d) return h + '<div class="fdd-grid"><div class="fdd-skel" style="grid-column:span 2;height:372px"></div><div class="fdd-skel"></div><div class="fdd-skel"></div><div class="fdd-skel"></div><div class="fdd-skel"></div></div>';
+  var k = d.kpi, cur = d.currency, grp = !!d.group;
+  if (grp) h += '<div class="fdd-note">Showing <b>' + esc(d.groupLabel) + '</b> only: its sales, cost, gross profit and stock. Expenses, net profit, dues and cash belong to the whole business — pick “All products” to see them.</div>';
+  if (FDD.busy) h += '<div class="fdd-note">Updating…</div>';
+
+  // ---- row 1: the revenue curve and four headline cards
+  var big = '<div class="fdd-big"><b>' + esc(cur) + ' ' + fmt(k.revenue.v) + '</b><span>' + fddTrend(k.revenue) + ' vs ' + esc(d.prevLabel) + '</span></div>';
+  h += '<div class="fdd-grid"><div class="fdd-c s2 r2"><div class="fdd-ch"><span class="fdd-badge">' + fddIc('taka') + '</span><div class="fdd-ct">Revenue' +
+    (d.calc.revenue ? ' <button type="button" class="fdd-i" data-fdcalc="revenue" data-fdtitle="Revenue" title="Show calculation">i</button>' : '') + '</div>' + big + '</div>' +
+    '<div class="fdd-line">' + fddLine(d.series, d.full) + '</div>' +
+    '<div class="fdd-legend"><span><i style="background:var(--fd-accent,#5B4FE9)"></i>Revenue by month</span>' + (d.full ? '<span><i style="background:var(--fd-positive,#1DBF73)"></i>Gross profit</span>' : '') + '</div></div>';
+  if (!grp && k.net) h += fddKpi({ key: 'net', title: 'Net profit', icon: 'target', money: true, k: k.net, hero: true, go: 'profit', note: d.rangeLabel });
+  else if (k.gross) h += fddKpi({ key: 'gross', title: 'Gross profit', icon: 'trend', money: true, k: k.gross, hero: true, note: k.margin ? k.margin.v + '% margin' : '' });
+  else h += fddKpi({ key: 'orders', title: 'Orders', icon: 'cart', k: k.orders, hero: true, go: 'sales' });
+  if (k.stockValue) h += fddKpi({ key: 'stockValue', title: 'Stock value at cost', icon: 'box', money: true, k: k.stockValue, go: 'products', note: fmt(k.stockUnits.v) + ' units on hand' + (k.stockValue.uncosted ? ' · ' + k.stockValue.uncosted + ' without cost' : '') });
+  else h += fddKpi({ key: 'stockUnits', title: 'Units on hand', icon: 'box', k: k.stockUnits, go: 'products' });
+  if (k.dues) h += fddKpi({ key: 'dues', title: 'Dues receivable', icon: 'bell', money: true, k: k.dues, tone: k.dues.v > 0 ? 'warn' : '', go: 'sales', f: 'due', note: 'owed by customers today' });
+  else h += fddKpi({ key: 'units', title: 'Units sold', icon: 'spool', k: k.units, note: d.rangeLabel });
+  if (k.cashIn) h += fddKpi({ key: 'cashIn', title: 'Cash received', icon: 'wallet', money: true, k: k.cashIn, go: 'cash' });
+  else h += fddKpi({ key: 'orders', title: 'Orders', icon: 'cart', k: k.orders, go: 'sales' });
+  h += '</div>';
+
+  // ---- row 2: the rest of the numbers
+  var row = [];
+  if (k.gross && !grp) row.push(fddKpi({ key: 'gross', title: 'Gross profit', icon: 'trend', money: true, k: k.gross, note: k.margin ? k.margin.v + '% margin' : '' }));
+  if (k.margin) row.push(fddKpi({ key: 'margin', title: 'Gross margin', icon: 'percent', pct: true, k: k.margin }));
+  if (!grp || k.net) row.push(fddKpi({ key: 'orders', title: 'Orders', icon: 'cart', k: k.orders, go: 'sales' }));
+  if (!grp) row.push(fddKpi({ key: 'units', title: 'Units sold', icon: 'spool', k: k.units }));
+  row.push(fddKpi({ key: 'avgOrder', title: 'Average order', icon: 'receipt', money: true, k: k.avgOrder }));
+  if (k.expenses) row.push(fddKpi({ key: 'expenses', title: 'Expenses', icon: 'receipt', money: true, k: k.expenses, flip: true, tone: 'warn', go: 'expenses' }));
+  if (grp && k.stockValue) row.push(fddKpi({ key: 'stockUnits', title: 'Units on hand', icon: 'box', k: k.stockUnits, go: 'products' }));
+  while (row.length % 4) row.push('<div class="fdd-c" style="visibility:hidden"></div>');
+  h += '<div class="fdd-grid">' + row.join('') + '</div>';
+
+  // ---- row 3: where the money came from
+  h += '<div class="fdd-grid">' + (grp ? fddDonut('Sales by Brand', 'layers', d.donuts.byBrand, 'products', '', 'Brand') : fddDonut('Sales by Product Group', 'spool', d.donuts.byGroup, 'products', '', 'Group')) +
+    fddDonut('Sales Channel', 'globe', d.donuts.byChannel, 'sales', '', 'Channel') +
+    (!grp && d.donuts.byMethod ? fddDonut('Payments by Method', 'wallet', d.donuts.byMethod, 'cash', '', 'Method') : '') +
+    (!grp ? fddDonut('Sales by Brand', 'layers', d.donuts.byBrand, 'products', '', 'Brand') : '') + '</div>';
+
+  // ---- row 4: tables
+  var tp = d.topProducts.length ? '<div class="fdd-scroll"><table class="fdd-t"><thead><tr><th>Product</th><th class="n">Units</th><th class="n">Revenue</th>' + (d.full ? '<th class="n">Gross</th>' : '') + '</tr></thead><tbody>' +
+    d.topProducts.map(function (p) { return '<tr><td class="nm" title="' + esc(p.sku) + '">' + esc(p.name) + '</td><td class="n">' + fmt(p.units) + '</td><td class="n">' + fmt(p.revenue) + '</td>' + (d.full ? '<td class="n">' + fmt(p.gross) + '</td>' : '') + '</tr>'; }).join('') +
+    '</tbody></table></div>' : '<div class="fdd-empty">No sales in this range.</div>';
+  var rc = d.recent.length ? '<div class="fdd-scroll"><table class="fdd-t"><thead><tr><th>Invoice</th><th>Date</th><th>Customer</th><th class="n">Total</th><th>Status</th></tr></thead><tbody>' +
+    d.recent.map(function (x) { return '<tr data-inv="' + esc(x.id) + '"><td>' + esc(x.id) + '</td><td>' + esc(x.date) + '</td><td class="nm">' + esc(x.customer) + '</td><td class="n">' + fmt(x.total) + '</td><td>' +
+      (x.owed > 0 ? '<span class="fdd-chip due">Due ' + fmt(x.owed) + '</span>' : '<span class="fdd-chip paid">Paid</span>') + '</td></tr>'; }).join('') + '</tbody></table></div>' : '<div class="fdd-empty">No invoices yet.</div>';
+  h += '<div class="fdd-grid"><div class="fdd-c s2"><div class="fdd-ch"><span class="fdd-badge">' + fddIc('list') + '</span><div class="fdd-ct">Top Products</div>' +
+    (navOn('products') ? '<button type="button" class="fdd-more" data-go="products">View details →</button>' : '') + '</div>' + tp + '</div>' +
+    '<div class="fdd-c s2"><div class="fdd-ch"><span class="fdd-badge">' + fddIc('cart') + '</span><div class="fdd-ct">Recent Sales</div>' +
+    (navOn('sales') ? '<button type="button" class="fdd-more" data-go="sales">View details →</button>' : '') + '</div>' + rc + '</div></div>';
+
+  // ---- row 5: needs attention, dues by age, reorder
+  var att = [], a = (D && D.alerts) || {}, toSend = typeof sendCount === 'function' ? sendCount() : 0, cz = a.courier || {};
+  if (a.webPending) att.push(['bad', 'warn', a.webOrders, 'website orders not entered', 'weborders', '']);
+  if (toSend) att.push(['warn', 'truck', toSend, 'parcel(s) to send', 'sales', 'tosend']);
+  if (d.attention.outOfStock) att.push(['bad', 'x', d.attention.outOfStock, 'products out of stock', 'products', 'out']);
+  if (d.attention.reorder) att.push(['warn', 'warn', d.attention.reorder, 'at or below reorder level', 'stock', 'plan']);
+  if (cz.back) att.push(['bad', 'truck', cz.back, 'parcel(s) came back or part delivered', 'sales', '']);
+  if (cz.review) att.push(['bad', 'truck', cz.review, 'Steadfast parcel(s) to review', 'sales', '']);
+  if (k.dues && k.dues.v > 0) att.push(['warn', 'bell', fddShort(k.dues.v), 'owed by customers', 'sales', 'due']);
+  var attH = att.length ? '<ul class="fdd-att">' + att.map(function (x) {
+    return '<li' + (navOn(x[4]) ? ' data-go="' + x[4] + '"' + (x[5] ? ' data-f="' + x[5] + '"' : '') : '') + '><span class="fdd-badge t-' + x[0] + '">' + fddIc(x[1]) + '</span><b>' + esc(String(x[2])) + '</b><span>' + esc(x[3]) + '</span></li>'; }).join('') + '</ul>'
+    : '<div class="fdd-empty">✓ Nothing needs you.</div>';
+  var ro = d.reorder.length ? '<div class="fdd-scroll"><table class="fdd-t"><thead><tr><th>Product</th><th class="n">On hand</th><th class="n">Reorder at</th></tr></thead><tbody>' +
+    d.reorder.map(function (p) { return '<tr><td class="nm" title="' + esc(p.sku) + '">' + esc(p.name) + '</td><td class="n"' + (p.stock <= 0 ? ' style="color:var(--fd-negative-text,var(--critical));font-weight:700"' : '') + '>' + fmt(p.stock) + '</td><td class="n">' + fmt(p.reorder) + '</td></tr>'; }).join('') +
+    '</tbody></table></div>' : '<div class="fdd-empty">Nothing at its reorder level.</div>';
+  h += '<div class="fdd-grid"><div class="fdd-c"><div class="fdd-ch"><span class="fdd-badge t-warn">' + fddIc('bell') + '</span><div class="fdd-ct">Needs Attention</div></div>' + attH + '</div>';
+  if (d.duesByAge) h += '<div class="fdd-c"><div class="fdd-ch"><span class="fdd-badge">' + fddIc('clock') + '</span><div class="fdd-ct">Dues by Age</div></div><table class="fdd-t"><thead><tr><th>Age</th><th class="n">' + esc(cur) + '</th></tr></thead><tbody>' +
+    d.duesByAge.map(function (x) { return '<tr' + (navOn('sales') ? ' data-go="sales" data-f="due" style="cursor:pointer"' : '') + '><td>' + esc(x.band) + ' <span class="sku">(' + x.count + ')</span></td><td class="n">' + fmt(x.amount) + '</td></tr>'; }).join('') + '</tbody></table></div>';
+  h += '<div class="fdd-c ' + (d.duesByAge ? 's2' : 's2') + '"><div class="fdd-ch"><span class="fdd-badge t-warn">' + fddIc('box') + '</span><div class="fdd-ct">Reorder Suggestions</div>' +
+    (navOn('stock') ? '<button type="button" class="fdd-more" data-go="stock" data-f="plan">View details →</button>' : '') + '</div>' + ro + '</div></div>';
+  h += '<div class="fdd-classic"><button type="button" class="btn" data-fddclassic="1">' + (FDD.classic ? '▴ Hide the classic dashboard' : '▾ More: the classic dashboard (today, a chosen day, charts, tabs)') + '</button></div>';
+  return h;
+}
+var viewDashFd = viewDash;
+viewDash = function () {
+  if (document.documentElement.getAttribute('data-skin') !== 'fd') return viewDashFd.apply(this, arguments);
+  var h = fddView();
+  if (FDD.classic) h += '<div id="fddClassic">' + viewDashFd.apply(this, arguments) + '</div>';
+  return h;
+};
+function fddCalc(key, title) {
+  var rows = FDD.data && FDD.data.calc && FDD.data.calc[key];
+  if (!rows) return;
+  var back = document.createElement('div'); back.className = 'dlg-back';
+  back.innerHTML = '<div class="dlg" role="dialog" aria-modal="true" style="max-width:520px"><div class="dlg-t">' + esc(title) + ' · how it is worked out</div>' +
+    '<div class="dlg-b" style="white-space:normal">' + esc(FDD.data.rangeLabel) + (FDD.data.group ? ' · ' + esc(FDD.data.groupLabel) + ' only' : ' · the whole business') + '</div>' +
+    '<table class="fdd-calc">' + rows.filter(function (r, i) { return i === 0 || i === rows.length - 1 || r[1] !== 0 || /not counted/.test(r[0]); }).map(function (r) { return '<tr><td>' + esc(r[0]) + '</td><td>' + (r[1] === 0 && /not counted/.test(r[0]) ? '' : esc(FDD.data.currency) + ' ' + fmt(r[1])) + '</td></tr>'; }).join('') + '</table>' +
+    '<div class="dlg-f"><button class="btn primary" type="button">Close</button></div></div>';
+  document.body.appendChild(back);
+  var close = function () { if (back.parentNode) back.parentNode.removeChild(back); document.removeEventListener('keydown', kd, true); };
+  var kd = function (e) { if (e.key === 'Escape') close(); };
+  back.addEventListener('mousedown', function (e) { if (e.target === back) close(); });
+  back.querySelector('.btn').addEventListener('click', close);
+  document.addEventListener('keydown', kd, true);
+  back.querySelector('.btn').focus();
+}
+document.addEventListener('click', function (e) {
+  var t = e.target.closest ? e.target : null; if (!t) return;
+  var c = t.closest('[data-fdcalc]');
+  if (c) { e.preventDefault(); e.stopPropagation(); fddCalc(c.getAttribute('data-fdcalc'), c.getAttribute('data-fdtitle')); return; }
+  var m = t.closest('[data-fddm]');
+  if (m) { FDD.months = Number(m.getAttribute('data-fddm')) || 1; fddSave(); repaint(); return; }
+  if (t.closest('[data-fddretry]')) { FDD.err = ''; FDD.key = ''; repaint(); return; }
+  if (t.closest('[data-fddclassic]')) { FDD.classic = !FDD.classic; fddSave(); repaint(); return; }
+  var inv = t.closest('.fdd-t tr[data-inv]');
+  if (inv && typeof openInvoicePage === 'function' && navOn('sales')) { openInvoicePage(inv.getAttribute('data-inv')); }
+}, true);
+document.addEventListener('change', function (e) {
+  if (e.target && e.target.id === 'fddGroup') { FDD.group = e.target.value; fddSave(); repaint(); }
+});
+// after a sale, payment or stock change the figures are read again on the next visit
+var fddAfterWrite = typeof pagesAfterWrite === 'function' ? pagesAfterWrite : null;
+if (fddAfterWrite) pagesAfterWrite = function () { FDD.key = ''; return fddAfterWrite.apply(this, arguments); };
+</script>
+
+<!-- fd-3 (FilaDash merge P2): every screen opens the FilaDash way - eyebrow (business), big title with the screen's
+     name, a line saying what it is - and the list screens get his four cards on top (the first one the gradient hero),
+     this month against last month, from erpFdHead (handlers/fddash.js; money only for the people allowed to see it).
+     Sub-pages (one invoice, one customer...) keep their own heading. The screens below are unchanged. -->
+<style>
+#fdHead { margin:2px 0 22px; }
+#fdHead .fdd-head { margin-bottom:16px; }
+#fdHead .fdd-grid { margin-bottom:0; }
+#fdHead .fdd-k { min-height:150px; }
+#fdHead .fdh-sk { height:150px; border-radius:20px; background:linear-gradient(90deg, var(--fd-surface-2, var(--field)) 25%, var(--fd-surface-3, var(--ring)) 50%, var(--fd-surface-2, var(--field)) 75%);
+  background-size:200% 100%; animation:fddSk 1.2s infinite; }
+@media (max-width:640px) { #fdHead .fdd-k { min-height:118px; } #fdHead { margin-bottom:14px; } }
+</style>
+<script>
+var FDH = { data: {}, busy: {}, at: {} };
+var FDH_VIEWS = { sales: 1, customers: 1, products: 1, stock: 1, expenses: 1, cash: 1, profit: 1,
+  weborders: 1, quotes: 1, repairs: 1, printjobs: 1, campaigns: 1, suppliers: 1, costs: 1, capital: 1 };   // P4: our own screens
+var FDH_SUB = {
+  invoice: 'Make a sale: customer, products, payment', sales: 'Invoices, parcels, dues and courier money', weborders: 'Orders from the website, ready to enter',
+  quotes: 'Price offers that turn into invoices', repairs: 'Machines in for repair, parts and charges', printjobs: 'Print jobs with their true cost',
+  resell: 'Sell other suppliers’ stock without holding it', customers: 'Everyone who bought, what they owe, how often they come back',
+  campaigns: 'WhatsApp campaigns, leads, adverts and creators', products: 'Every product with its price, stock and photo',
+  stock: 'Receive goods, count, adjust, what to order', suppliers: 'Suppliers, purchase orders and what you owe them',
+  costs: 'What each product cost to land in the shop', market: 'Stock shared with other shops', joint: 'Goods owned together with a partner company',
+  cash: 'Money accounts: cash, bank, bKash, courier', profit: 'Profit and loss, month by month', expenses: 'Rent, bills and every other cost',
+  capital: 'Owners’ and investors’ money in the business', settings: 'How the ERP works for this business', tools: 'Checks, imports and repairs',
+  platform: 'Companies, health and the provider’s tools', apps: 'Features customers reach from outside', chat: 'Ask questions about your own figures'
+};
+function fdhName(v) {
+  var b = document.querySelector('#nav button[data-view="' + v + '"]');
+  return (b && (b.getAttribute('data-name') || b.textContent.trim())) || v.charAt(0).toUpperCase() + v.slice(1);
+}
+function fdhIsSub() {
+  // a sub-page (one invoice, one customer...) shows a breadcrumb with a way back: it keeps its own heading
+  // the record page inside a screen (go(view, param)): one invoice, customer, product, supplier, repair job
+  try {
+    if ((VIEW === 'sales' && INVP && INVP.no) || (VIEW === 'customers' && CUSP && CUSP.key) || (VIEW === 'products' && PRODP && PRODP.sku) ||
+        (VIEW === 'suppliers' && SUPP && SUPP.name) || (VIEW === 'repairs' && JOBP && JOBP.no)) return true;
+  } catch (e) {}
+  var c = document.querySelector('#o_cp .crumbs');
+  return !!(c && c.querySelector('button'));
+}
+function fdhCard(c, cur) {
+  var num = c.money ? '<small>' + esc(cur) + '</small>' + fmt(c.v) : c.pct ? fmt(c.v) + '<small style="margin-left:2px">%</small>' : fmt(c.v);
+  var trend = '';
+  if (c.prev !== undefined && c.prev !== null) {
+    var p = Number(c.prev) || 0, n = Number(c.v) || 0;
+    if (!p) trend = n ? '<span class="fdd-trend flat">new</span>' : '';
+    else { var pc = (n - p) / Math.abs(p) * 100, up = pc >= 0, good = c.flip ? !up : up;
+      trend = Math.abs(pc) < 0.5 ? '<span class="fdd-trend flat">= same</span>' : '<span class="fdd-trend' + (good ? '' : ' bad') + '" title="last month: ' + fmt(p) + '">' + (up ? '▲' : '▼') + ' ' + Math.abs(pc).toFixed(0) + '%</span>'; }
+  }
+  var go = c.go || (c.f ? VIEW : '');
+  return '<div class="fdd-c fdd-k' + (c.hero ? ' fdhero' : '') + '"' + (go && navOn(go) ? ' data-fdhgo="' + esc(go) + '"' + (c.f ? ' data-fdhf="' + esc(c.f) + '"' : '') + ' style="cursor:pointer"' : '') + '>' +
+    '<div class="fdd-ktop"><span class="fdd-badge' + (c.tone ? ' t-' + c.tone : '') + '">' + fddIc(FDD_IC[c.icon] ? c.icon : ({ users: 'list', plus: 'trend', reset: 'trend', calendar: 'clock' })[c.icon] || 'list') + '</span>' + trend + '</div>' +
+    '<div class="fdd-num' + (Number(c.v) < 0 ? ' neg' : '') + '">' + num + '</div><div class="fdd-lbl">' + esc(c.title) + '</div>' + (c.note ? '<div class="fdd-kn">' + esc(c.note) + '</div>' : '') + '</div>';
+}
+function fdhHtml(v) {
+  var biz = (el('bizName') && el('bizName').textContent) || '';
+  var d = FDH.data[v], h = '<div class="fdd-head"><div><div class="fdd-eyebrow">' + esc(biz) + '</div><h1 class="fdd-title">' + esc(fdhName(v)) + '</h1>' +
+    '<div class="fdd-sub">' + esc(FDH_SUB[v] || '') + (FDH_VIEWS[v] && d && d.cards.length ? ' · ' + esc(d.month) + ' compared with ' + esc(d.prevMonth) : '') + '</div></div></div>';
+  if (FDH_VIEWS[v]) {
+    if (d && d.cards.length) h += '<div class="fdd-grid">' + d.cards.map(function (c) { return fdhCard(c, d.currency); }).join('') + '</div>';
+    else if (!d) h += '<div class="fdd-grid"><div class="fdh-sk"></div><div class="fdh-sk"></div><div class="fdh-sk"></div><div class="fdh-sk"></div></div>';
+  }
+  return h;
+}
+function fdhLoad(v) {
+  if (!FDH_VIEWS[v] || FDH.busy[v]) return;
+  if (FDH.data[v] && Date.now() - (FDH.at[v] || 0) < 120000) return;
+  FDH.busy[v] = true;
+  srv('erpFdHead', [{ view: v }], function (r) {
+    FDH.busy[v] = false; FDH.data[v] = r; FDH.at[v] = Date.now();
+    var box = el('fdHead');
+    if (box && VIEW === v) box.innerHTML = fdhHtml(v);
+  }, function () { FDH.busy[v] = false; FDH.data[v] = { cards: [] }; FDH.at[v] = Date.now(); var box = el('fdHead'); if (box && VIEW === v) box.innerHTML = fdhHtml(v); });
+}
+function fdhPaint() {
+  var view = el('view'); if (!view) return;
+  var old = el('fdHead'); if (old && old.parentNode) old.parentNode.removeChild(old);
+  if (document.documentElement.getAttribute('data-skin') !== 'fd') return;
+  if (VIEW === 'dash' || VIEW === 'home' || fdhIsSub()) return;
+  var box = document.createElement('div'); box.id = 'fdHead';
+  box.innerHTML = fdhHtml(VIEW);
+  view.insertBefore(box, view.firstChild);
+  fdhLoad(VIEW);
+}
+var repaintFdh = repaint;
+repaint = function () {
+  var r = repaintFdh.apply(this, arguments);
+  try { fdhPaint(); } catch (e) {}
+  return r;
+};
+document.addEventListener('click', function (e) {
+  var t = e.target.closest && e.target.closest('[data-fdhgo]'); if (!t) return;
+  var v = t.getAttribute('data-fdhgo'), f = t.getAttribute('data-fdhf');
+  if (f && typeof dashFilter === 'function') dashFilter(f);
+  if (v === VIEW) repaint(); else go(v);
+  window.scrollTo(0, 0);
+});
+// fresh figures after anything is saved
+var fdhAfterWrite = pagesAfterWrite;
+pagesAfterWrite = function () { FDH.at = {}; return fdhAfterWrite.apply(this, arguments); };
+// switching the look repaints the screen (the head comes or goes)
+var fdSkinFdh = fdSkin;
+fdSkin = function (s) { var r = fdSkinFdh.apply(this, arguments); try { repaint(); } catch (e) {} return r; };
+</script>
+
+<!-- fd-4 (FilaDash merge P2): his table card toolbar on every big list. Above each list of 5+ rows: a quick search that
+     narrows the rows already on screen ("n of m"), Columns (hide / show columns, kept per screen on this device),
+     Compact (tighter rows) and Export (a CSV of the rows and columns as shown). Nothing is sent anywhere; the lists,
+     their own filters and buttons are unchanged. -->
+<style>
+.fdt-bar { display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin:6px 0 12px; }
+.fdt-search { position:relative; display:flex; align-items:center; width:300px; max-width:100%; height:40px; border-radius:12px;
+  background:var(--fd-surface-2, var(--field)); border:1px solid transparent; }
+:root[data-theme="dark"] .fdt-search { border-color:var(--fd-border-strong, var(--ring)); }
+.fdt-search:focus-within { border-color:var(--fd-accent-border, var(--series-1)); box-shadow:var(--fd-focus-ring, none); }
+.fdt-search svg { width:17px; height:17px; margin:0 6px 0 12px; flex:0 0 17px; fill:none; stroke:var(--fd-text-3, var(--muted)); stroke-width:2; stroke-linecap:round; }
+.fdt-search input { flex:1 1 auto; min-width:0; height:100%; border:0 !important; background:transparent !important; outline:none; box-shadow:none !important;
+  font:inherit; font-size:14px; font-weight:500; color:var(--fd-text, var(--ink)); padding:0 10px 0 0; }
+.fdt-count { font-size:13px; color:var(--fd-text-3, var(--muted)); font-weight:600; white-space:nowrap; }
+.fdt-right { margin-left:auto; display:flex; align-items:center; gap:6px; position:relative; }
+.fdt-btn { height:36px; padding:0 13px; border-radius:999px; border:1px solid transparent; background:transparent; color:var(--fd-text-2, var(--ink-2));
+  font:inherit; font-size:13.5px; font-weight:600; cursor:pointer; display:inline-flex; align-items:center; gap:6px; white-space:nowrap; }
+.fdt-btn:hover, .fdt-btn[aria-pressed="true"] { background:var(--fd-surface-2, var(--field)); color:var(--fd-text, var(--ink)); }
+.fdt-btn svg { width:16px; height:16px; fill:none; stroke:currentColor; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
+.fdt-menu { position:absolute; right:0; top:42px; z-index:40; min-width:220px; max-height:340px; overflow:auto; padding:8px; border-radius:14px;
+  background:var(--fd-card, var(--surface)); border:1px solid var(--fd-border, var(--ring)); box-shadow:var(--fd-shadow-popover, var(--shadow-lg)); }
+.fdt-menu label { display:flex; align-items:center; gap:10px; padding:7px 8px; border-radius:8px; font-size:13.5px; cursor:pointer; color:var(--fd-text, var(--ink)); }
+.fdt-menu label:hover { background:var(--fd-surface-2, var(--field)); }
+.fdt-menu .t { font-size:12px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:var(--fd-text-3, var(--muted)); padding:4px 8px 6px; }
+.fdt-hide { display:none !important; }
+table.fdt-compact tbody td { padding-top:4px !important; padding-bottom:4px !important; }
+.fdt-none td { text-align:center; color:var(--fd-text-3, var(--muted)); padding:18px !important; }
+@media (max-width:640px) { .fdt-search { width:100%; } .fdt-right { margin-left:0; } .fdt-btn span { display:none; } }
+</style>
+<script>
+var FDT_IC = {
+  search: '<svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>',
+  cols: '<svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M9 4v16M15 4v16"/></svg>',
+  dense: '<svg viewBox="0 0 24 24"><path d="M4 6h16M4 10h16M4 14h16M4 18h16"/></svg>',
+  dl: '<svg viewBox="0 0 24 24"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg>'
+};
+function fdtStore(k, v) { try { if (v === undefined) return JSON.parse(localStorage.getItem('fdt:' + k) || 'null'); localStorage.setItem('fdt:' + k, JSON.stringify(v)); } catch (e) { return null; } }
+function fdtHeads(t) { var r = t.tHead && t.tHead.rows[t.tHead.rows.length - 1]; return r ? [].map.call(r.cells, function (c) { return c.innerText.replace(/[⇅▲▼↑↓]/g, '').trim(); }) : []; }
+function fdtKey(t, heads) { return VIEW + ':' + heads.filter(Boolean).slice(0, 4).join('|'); }
+function fdtCols(t, hidden) {
+  [].forEach.call(t.rows, function (row) {
+    [].forEach.call(row.cells, function (c, i) { c.classList.toggle('fdt-hide', !!hidden[i] && row.cells.length > 1); });
+  });
+}
+function fdtFilter(t, q, count) {
+  var rows = t.tBodies[0] ? [].slice.call(t.tBodies[0].rows).filter(function (r) { return !r.classList.contains('fdt-none'); }) : [];
+  var words = String(q || '').toLowerCase().split(/\s+/).filter(Boolean), shown = 0;
+  rows.forEach(function (r) {
+    var txt = r.innerText.toLowerCase(), ok = words.every(function (w) { return txt.indexOf(w) >= 0; });
+    r.style.display = ok ? '' : 'none'; if (ok) shown++;
+  });
+  var none = t.tBodies[0] && t.tBodies[0].querySelector('tr.fdt-none');
+  if (!shown && words.length && t.tBodies[0]) {
+    if (!none) { none = document.createElement('tr'); none.className = 'fdt-none'; none.innerHTML = '<td colspan="99">Nothing on this list matches.</td>'; t.tBodies[0].appendChild(none); }
+  } else if (none) none.parentNode.removeChild(none);
+  if (count) count.textContent = words.length ? shown + ' of ' + rows.length : rows.length + ' rows';
+}
+function fdtCsv(t, name) {
+  var out = [];
+  [].forEach.call(t.rows, function (row) {
+    if (row.style.display === 'none' || row.classList.contains('fdt-none')) return;
+    var cells = [].filter.call(row.cells, function (c) { return !c.classList.contains('fdt-hide'); });
+    var vals = cells.map(function (c) { var v = c.innerText.replace(/[⇅▲▼]/g, '').replace(/\s+/g, ' ').trim(); return /[",\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; });
+    if (vals.some(Boolean)) out.push(vals.join(','));
+  });
+  var blob = new Blob(['﻿' + out.join('\r\n')], { type: 'text/csv;charset=utf-8' });
+  var a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+  a.download = (name || VIEW).replace(/[^a-z0-9]+/gi, '-').toLowerCase() + '-' + new Date().toISOString().slice(0, 10) + '.csv';
+  document.body.appendChild(a); a.click(); setTimeout(function () { URL.revokeObjectURL(a.href); a.parentNode.removeChild(a); }, 500);
+}
+function fdtEnhance() {
+  if (document.documentElement.getAttribute('data-skin') !== 'fd') return;
+  var view = el('view'); if (!view) return;
+  [].forEach.call(view.querySelectorAll('table'), function (t) {
+    if (t.getAttribute('data-fdt')) { var hk = t.getAttribute('data-fdtkey'); if (hk) fdtCols(t, fdtStore('cols:' + hk) || {}); return; }
+    if (t.closest('.fdd-c, .dlg, #fdHead, .fdd-calc') || t.classList.contains('fdd-t')) return;
+    if (!t.tHead || !t.tBodies[0] || t.tBodies[0].rows.length < 5) return;
+    var heads = fdtHeads(t); if (heads.filter(Boolean).length < 2) return;
+    t.setAttribute('data-fdt', '1');
+    var key = fdtKey(t, heads); t.setAttribute('data-fdtkey', key);
+    var hidden = fdtStore('cols:' + key) || {}, dense = !!fdtStore('dense:' + VIEW);
+    var anchor = t.closest('.scroll, .tall') || t;
+    if (anchor.parentNode && anchor.parentNode.classList && anchor.parentNode.classList.contains('scroll')) anchor = anchor.parentNode;
+    var bar = document.createElement('div'); bar.className = 'fdt-bar';
+    bar.innerHTML = '<label class="fdt-search">' + FDT_IC.search + '<input type="search" placeholder="Search this list" aria-label="Search this list"></label>' +
+      '<span class="fdt-count"></span><div class="fdt-right">' +
+      '<button type="button" class="fdt-btn" data-fdt="cols" title="Choose columns">' + FDT_IC.cols + '<span>Columns</span></button>' +
+      '<button type="button" class="fdt-btn" data-fdt="dense" aria-pressed="' + dense + '" title="Compact rows">' + FDT_IC.dense + '<span>Compact</span></button>' +
+      '<button type="button" class="fdt-btn" data-fdt="csv" title="Download the rows as shown (CSV)">' + FDT_IC.dl + '<span>Export</span></button></div>';
+    anchor.parentNode.insertBefore(bar, anchor);
+    // a list that already has its own search keeps only that one (no second box)
+    var own = [].some.call(view.querySelectorAll('input'), function (x) {
+      return !x.closest('.fdt-bar') && /search|find/i.test((x.placeholder || '') + ' ' + (x.getAttribute('aria-label') || '') + ' ' + (x.type === 'search' ? 'search' : ''));
+    });
+    if (own) { var sb = bar.querySelector('.fdt-search'); sb.parentNode.removeChild(sb); }
+    var input = bar.querySelector('.fdt-search input'), count = bar.querySelector('.fdt-count');
+    t.classList.toggle('fdt-compact', dense);
+    fdtCols(t, hidden);
+    fdtFilter(t, '', count);
+    if (input) input.addEventListener('input', function () { fdtFilter(t, input.value, count); });
+    bar.addEventListener('click', function (e) {
+      var b = e.target.closest('[data-fdt]'); if (!b) return;
+      var what = b.getAttribute('data-fdt');
+      if (what === 'dense') { dense = !dense; fdtStore('dense:' + VIEW, dense); t.classList.toggle('fdt-compact', dense); b.setAttribute('aria-pressed', String(dense)); }
+      if (what === 'csv') fdtCsv(t, fdhName ? fdhName(VIEW) : VIEW);
+      if (what === 'cols') {
+        var m = bar.querySelector('.fdt-menu');
+        if (m) { m.parentNode.removeChild(m); return; }
+        m = document.createElement('div'); m.className = 'fdt-menu';
+        m.innerHTML = '<div class="t">Columns</div>' + heads.map(function (h, i) {
+          return h ? '<label><input type="checkbox" data-fdtcol="' + i + '"' + (hidden[i] ? '' : ' checked') + '> ' + esc(h) + '</label>' : ''; }).join('');
+        bar.querySelector('.fdt-right').appendChild(m);
+        m.addEventListener('change', function (ev) {
+          var i = Number(ev.target.getAttribute('data-fdtcol'));
+          if (ev.target.checked) delete hidden[i]; else hidden[i] = 1;
+          fdtStore('cols:' + key, hidden); fdtCols(t, hidden);
+        });
+      }
+    });
+  });
+}
+document.addEventListener('click', function (e) {
+  if (!e.target.closest || e.target.closest('.fdt-menu, [data-fdt="cols"]')) return;
+  [].forEach.call(document.querySelectorAll('.fdt-menu'), function (m) { m.parentNode.removeChild(m); });
+});
+var repaintFdt = repaint;
+repaint = function () { var r = repaintFdt.apply(this, arguments); try { fdtEnhance(); } catch (e) {} return r; };
+// lists that arrive after the screen (loaded from the server, sorted, filtered) are picked up too
+(function () {
+  var v = el('view'), tm = null;
+  if (!v || !window.MutationObserver) return;
+  new MutationObserver(function () { clearTimeout(tm); tm = setTimeout(function () { try { fdtEnhance(); } catch (e) {} }, 150); })
+    .observe(v, { childList: true, subtree: true });
+})();
+</script>
+
+<!-- fd-5 (FilaDash merge P3): Shipments - every receiving (a shipment, a local buy) with its FIFO lots: what came
+     in at what landed cost, what is left, what sold, the profit it made. One shipment opens line by line with its
+     freight / duty / agent costs and the supplier bill. Who sees it: whoever sees Product cost. Data: handlers/lots.js. -->
+<style>
+.shp-st { display:inline-flex; align-items:center; height:24px; padding:0 9px; border-radius:999px; font-size:12px; font-weight:700; white-space:nowrap; }
+.shp-st.s0 { background:var(--fd-info-soft, #E3F0FF); color:var(--fd-info-text, #1D5FD1); }
+.shp-st.s1 { background:var(--fd-warning-soft, var(--warning-soft)); color:var(--fd-warning-text, var(--warning)); }
+.shp-st.s2 { background:var(--fd-positive-soft, var(--good-soft)); color:var(--fd-positive-text, var(--up)); }
+.shp-bar { height:6px; border-radius:999px; background:var(--fd-surface-3, var(--grid)); overflow:hidden; min-width:70px; }
+.shp-bar i { display:block; height:100%; border-radius:999px; background:var(--fd-accent, var(--series-1)); }
+#view table tr[data-shp] { cursor:pointer; }
+.shp-steps { display:flex; align-items:center; gap:0; margin:4px 0 18px; flex-wrap:wrap; }
+.shp-step { display:flex; align-items:center; gap:8px; font-size:13.5px; font-weight:600; color:var(--fd-text-3, var(--muted)); }
+.shp-step b { width:26px; height:26px; border-radius:999px; display:grid; place-items:center; background:var(--fd-surface-2, var(--field)); font-size:12px; }
+.shp-step.on { color:var(--fd-text, var(--ink)); } .shp-step.on b { background:var(--fd-accent, var(--series-1)); color:var(--fd-text-on-accent, #fff); }
+.shp-step.done b { background:var(--fd-accent-soft, var(--series-1-soft)); color:var(--fd-accent-text, var(--series-1)); }
+.shp-line { flex:1 1 24px; height:1px; background:var(--fd-border-strong, var(--ring)); margin:0 10px; min-width:16px; }
+.shp-kv { display:grid; grid-template-columns:repeat(auto-fit, minmax(160px, 1fr)); gap:14px; margin-top:10px; }
+.shp-kv div { font-size:13px; color:var(--fd-text-3, var(--muted)); } .shp-kv b { display:block; font-size:18px; color:var(--fd-text, var(--ink)); font-weight:800; margin-top:2px; }
+</style>
+<script>
+var SHP = { list: null, err: '', ref: '', one: null, oneErr: '', busy: false };
+(function () {
+  // the menu item, under Goods after Stock entry
+  var after = document.querySelector('#nav button[data-view="stock"]');
+  if (after && !document.querySelector('#nav button[data-view="shipments"]')) {
+    var b = document.createElement('button'); b.type = 'button'; b.setAttribute('data-view', 'shipments'); b.setAttribute('aria-selected', 'false'); b.setAttribute('data-name', 'Shipments');
+    b.innerHTML = '<span class="ic"><svg viewBox="0 0 24 24"><path d="M3 7h11v9H3zM14 10h4l3 3v3h-7"/><circle cx="7" cy="18" r="1.8"/><circle cx="17.5" cy="18" r="1.8"/><path d="M6 10h5"/></svg></span>Shipments';
+    after.parentNode.insertBefore(b, after.nextSibling);
+    b.addEventListener('click', function () { SHP.ref = ''; go('shipments'); });
+  }
+})();
+function shpNavSync() {
+  var b = document.querySelector('#nav button[data-view="shipments"]');
+  if (b) b.style.display = navOn('costs') ? '' : 'none';
+}
+FDH_SUB.shipments = 'Every shipment with its landed cost, what is left, what sold and the profit it made (FIFO)';
+function shpLoad() {
+  if (SHP.busy) return; SHP.busy = true;
+  if (SHP.ref) srv('erpShipment', [{ reference: SHP.ref }], function (r) { SHP.busy = false; SHP.one = r; SHP.oneErr = ''; if (VIEW === 'shipments') repaint(); },
+    function (e) { SHP.busy = false; SHP.oneErr = e && e.message ? e.message : String(e); if (VIEW === 'shipments') repaint(); });
+  else srv('erpShipments', [{}], function (r) { SHP.busy = false; SHP.list = r; SHP.err = ''; if (VIEW === 'shipments') repaint(); },
+    function (e) { SHP.busy = false; SHP.err = e && e.message ? e.message : String(e); if (VIEW === 'shipments') repaint(); });
+}
+function shpStatus(s) { var k = s === 'Sold out' ? 2 : s === 'Selling' ? 1 : 0; return '<span class="shp-st s' + k + '">' + esc(s) + '</span>'; }
+function viewShipments() {
+  if (SHP.ref) return viewShipment();
+  var d = SHP.list;
+  if (!d) { shpLoad(); return SHP.err ? '<div class="note err"><div class="ico">!</div><div>' + esc(SHP.err) + '</div></div>' : '<div class="loading">Loading shipments…</div>'; }
+  var t = d.totals, h = '<div class="fdd-grid">' +
+    fdhCard({ key: 'n', title: 'Shipments received', icon: 'truck', v: t.count, hero: true, note: 'each receiving is one shipment' }, d.currency) +
+    fdhCard({ key: 'l', title: 'Landed cost of goods', icon: 'box', v: t.landed, money: true, note: 'goods + freight + duty, all shipments' }, d.currency) +
+    fdhCard({ key: 'v', title: 'Still on the shelf', icon: 'spool', v: t.leftValue, money: true, note: 'what is left, at each lot’s cost' }, d.currency) +
+    fdhCard({ key: 'p', title: d.holdingOn ? 'Profit after holding' : 'Gross profit made', icon: 'trend', v: d.holdingOn ? t.net : t.profit, money: true,
+      note: d.holdingOn ? 'sold units: price − landed cost − ' + fmt(t.holding) + ' holding cost' : 'sold units: price − their landed cost' }, d.currency) + '</div>';
+  h += '<div class="card"><div class="chead"><h2>All shipments</h2>' + (navOn('stock') ? '<button class="btn primary small" type="button" data-go="stock">+ Receive a shipment</button>' : '') + '</div>' +
+    '<div class="sub">Newest first. Stock sells oldest first (FIFO): each sale is costed from the shipment its units came in. Click a shipment to see it line by line.</div>';
+  if (!d.shipments.length) h += '<div class="empty">Nothing received since lots began. Receive goods on Stock entry.</div>';
+  else h += '<div class="scroll"><table><thead><tr><th>Shipment</th><th>Received</th><th>Supplier</th><th class="num">Units in</th><th class="num">Left</th><th>Sold</th><th class="num">Landed cost</th><th class="num">Profit</th>' + (d.holdingOn ? '<th class="num">Holding</th><th class="num">After holding</th>' : '') + '<th>Status</th></tr></thead><tbody>' +
+    d.shipments.map(function (s) {
+      return '<tr data-shp="' + esc(s.reference) + '"><td><b>' + esc(s.reference) + '</b>' + (s.costKnown ? '' : '<div class="sku">cost not known for some lines</div>') + '</td><td>' + esc(s.date) + '</td><td>' + esc(s.supplier || '—') + '</td>' +
+        '<td class="num">' + fmt(s.unitsIn) + '</td><td class="num">' + fmt(s.unitsLeft) + '</td><td><div class="shp-bar" title="' + s.soldPct + '% sold"><i style="width:' + Math.min(100, s.soldPct) + '%"></i></div></td>' +
+        '<td class="num">' + (s.opening ? '—' : fmt(s.landed)) + '</td><td class="num"' + (s.profit < 0 ? ' style="color:var(--critical)"' : '') + '>' + fmt(s.profit) + '</td>' + (d.holdingOn ? '<td class="num">' + fmt(s.holding) + '</td><td class="num"' + (s.net < 0 ? ' style="color:var(--critical)"' : '') + '><b>' + fmt(s.net) + '</b></td>' : '') + '<td>' + shpStatus(s.status) + '</td></tr>';
+    }).join('') + '</tbody></table></div>';
+  return h + '</div>';
+}
+function viewShipment() {
+  var d = SHP.one;
+  var back = '<div style="margin:0 0 12px"><button class="btn small" type="button" data-shpback="1">← All shipments</button></div>';
+  if (!d || d.reference !== SHP.ref) { if (!SHP.oneErr) shpLoad(); return back + (SHP.oneErr ? '<div class="note err"><div class="ico">!</div><div>' + esc(SHP.oneErr) + '</div></div>' : '<div class="loading">Loading…</div>'); }
+  var units = 0, left = 0, landed = 0, rev = 0, profit = 0, sold = 0;
+  d.lines.forEach(function (l) { units += l.unitsIn; left += l.unitsLeft; landed += (l.unitCost || 0) * l.unitsIn; rev += l.revenue; profit += l.profit; sold += l.sold; });
+  var stage = left <= 0 ? 3 : sold > 0 ? 2 : 1;
+  var steps = ['Received', 'In stock', 'Selling', 'Sold out'].map(function (x, i) {
+    return (i ? '<span class="shp-line"></span>' : '') + '<span class="shp-step' + (i === stage ? ' on' : i < stage ? ' done' : '') + '"><b>' + (i < stage ? '✓' : i + 1) + '</b>' + x + '</span>'; }).join('');
+  var h = back + '<div class="fdd-head" style="margin-top:0"><div><div class="fdd-eyebrow">Shipment' + (d.supplier ? ' · ' + esc(d.supplier) : '') + '</div><h1 class="fdd-title">' + esc(d.reference) + '</h1>' +
+    '<div class="fdd-sub">Received ' + esc(d.date) + '</div></div></div>' + (d.opening ? '' : '<div class="shp-steps">' + steps + '</div>');
+  h += '<div class="fdd-grid">' +
+    fdhCard({ key: 'u', title: 'Units in', icon: 'box', v: units, hero: true, note: fmt(left) + ' left on the shelf' }, d.currency) +
+    fdhCard({ key: 'c', title: 'Landed cost', icon: 'taka', v: landed, money: true, note: d.extra.length ? 'includes ' + d.extra.map(function (x) { return x.label; }).join(', ') : 'goods' }, d.currency) +
+    fdhCard({ key: 'r', title: 'Sold for', icon: 'cart', v: rev, money: true, note: fmt(sold) + ' unit(s) sold' }, d.currency) +
+    fdhCard({ key: 'p', title: 'Gross profit', icon: 'trend', v: profit, money: true, tone: profit < 0 ? 'bad' : 'good', note: rev > 0 ? Math.round(profit / rev * 100) + '% of what sold' : 'nothing sold yet' }, d.currency) + '</div>';
+  h += '<div class="card"><div class="chead"><h2>Line by line</h2></div><div class="sub">Each line is one lot: its landed cost per unit (goods + its share of freight and the other costs, split by value).' +
+    (d.opening ? ' Stock from before lots began has no known lot cost: it sells at the product’s cost-book price.' : '') + '</div>' +
+    '<div class="scroll"><table><thead><tr><th>Product</th><th class="num">Landed / unit</th><th class="num">In</th><th class="num">Sold</th><th class="num">Other out</th><th class="num">Left</th><th class="num">Sold for</th><th class="num">Profit</th>' + (d.holdingOn ? '<th class="num">Holding</th><th class="num">After holding</th>' : '') + '</tr></thead><tbody>' +
+    d.lines.map(function (l) {
+      return '<tr><td>' + esc(l.name) + '<div class="sku">' + esc(l.sku) + '</div></td><td class="num">' + (l.unitCost === null ? '<span class="sku">book ' + fmt(l.bookCost) + '</span>' : fmt(l.unitCost)) + '</td>' +
+        '<td class="num">' + fmt(l.unitsIn) + '</td><td class="num">' + fmt(l.sold) + '</td><td class="num">' + (l.other ? fmt(l.other) : '—') + '</td><td class="num">' + fmt(l.unitsLeft) + '</td>' +
+        '<td class="num">' + fmt(l.revenue) + '</td><td class="num"' + (l.profit < 0 ? ' style="color:var(--critical)"' : '') + '>' + fmt(l.profit) + '</td>' + (d.holdingOn ? '<td class="num">' + fmt(l.holding) + '</td><td class="num"><b>' + fmt(l.net) + '</b></td>' : '') + '</tr>'; }).join('') +
+    '</tbody></table></div></div>';
+  if (d.extra.length || d.bill) h += '<div class="card" style="margin-top:16px"><div class="chead"><h2>Costs of bringing it in</h2></div><div class="shp-kv">' +
+    d.extra.map(function (x) { return '<div>' + esc(x.label) + '<b>' + esc(d.currency) + ' ' + fmt(x.amount) + '</b></div>'; }).join('') +
+    (d.bill ? '<div>Supplier bill (' + esc(d.bill.supplier) + ')<b>' + esc(d.currency) + ' ' + fmt(d.bill.amount) + '</b>' + (d.bill.fx ? '<span class="sku">' + esc(d.bill.fx) + '</span>' : '') + '</div>' : '') + '</div></div>';
+  return h;
+}
+var repaintShp = repaint;
+repaint = function () {
+  shpNavSync();
+  if (VIEW !== 'shipments') return repaintShp.apply(this, arguments);
+  el('view').innerHTML = viewShipments();
+  try { wireDash(); } catch (e) {}
+  try { fdhPaint(); } catch (e) {}
+  try { fdtEnhance(); } catch (e) {}
+};
+var fdhIsSubShp = fdhIsSub;
+fdhIsSub = function () { return (VIEW === 'shipments' && !!SHP.ref) || fdhIsSubShp.apply(this, arguments); };
+document.addEventListener('click', function (e) {
+  if (!e.target.closest) return;
+  var r = e.target.closest('tr[data-shp]');
+  if (r && VIEW === 'shipments') { SHP.ref = r.getAttribute('data-shp'); SHP.one = null; SHP.oneErr = ''; repaint(); window.scrollTo(0, 0); return; }
+  if (e.target.closest('[data-shpback]')) { SHP.ref = ''; repaint(); window.scrollTo(0, 0); }
+});
+// fresh figures after anything is saved (a receive, a sale, a return)
+var shpAfterWrite = pagesAfterWrite;
+pagesAfterWrite = function () { SHP.list = null; SHP.one = null; return shpAfterWrite.apply(this, arguments); };
+</script>
+
+<!-- fd-6 (FilaDash merge P3): shipment costing by weight + order stages (108_ship_weight.sql, handlers/stock.js).
+     Stock entry > receiving: Sea / Air with the weight left empty = the ERP works out each line's CHARGEABLE weight
+     (the larger of the real weight and the box-size weight, L x W x H / 6000) from the products' sizes and charges
+     freight per kg; "Split costs by" Weight / Value / Units for freight and the other costs. Shipments: an "On the
+     way" list of orders with their stage (Planned > Ordered > In transit), moved along there, and "Product sizes"
+     to give products their weight and box. -->
+<style>
+.fdw-note { font-size:12.5px; color:var(--fd-text-3, var(--muted)); margin-top:6px; }
+.fdw-way td .btn { margin-right:4px; }
+.fdw-stage { display:inline-flex; align-items:center; height:24px; padding:0 9px; border-radius:999px; font-size:12px; font-weight:700; white-space:nowrap;
+  background:var(--fd-surface-2, var(--field)); color:var(--fd-text-2, var(--ink-2)); }
+.fdw-stage.planned { background:var(--fd-violet-soft, #F0E9FF); color:var(--fd-violet-text, #6D28D9); }
+.fdw-stage.ordered { background:var(--fd-info-soft, #E3F0FF); color:var(--fd-info-text, #1D5FD1); }
+.fdw-stage.in_transit { background:var(--fd-warning-soft, var(--warning-soft)); color:var(--fd-warning-text, var(--warning)); }
+.fdw-form .fields { margin-top:8px; }
+</style>
+<script>
+// ---- receiving: chargeable weight and how costs are shared
+var recvShipHtmlFdw = recvShipHtml;
+recvShipHtml = function () {
+  var h = recvShipHtmlFdw.apply(this, arguments), s = RECV.ship || {};
+  var b = RECV.basis || '';
+  var chip = function (v, label) { return '<button type="button" class="chip ckcat' + (b === v ? ' on' : '') + '" data-rvbasis="' + v + '">' + label + '</button>'; };
+  var tip = (s.mode === 'Sea' || s.mode === 'Air')
+    ? '<div class="fdw-note">Leave the weight empty: the ERP takes each product’s <b>chargeable weight</b> (its real weight or its box-size weight, whichever is more) × the taka per kg. Products need a weight for that: Shipments › Product sizes.</div>' : '';
+  return h.replace(/<\/div>$/, tip + '<div style="margin-top:10px"><label class="f">Split shipping and the other costs by</label><div class="chips">' +
+    chip('', 'Usual') + chip('weight', 'Weight') + chip('value', 'Value') + chip('units', 'Units') + '</div>' +
+    '<div class="fdw-note">Usual: freight per kg by weight, everything else by value. Weight = chargeable weight of each line.</div></div></div>');
+};
+var recvPayloadFdw = recvPayload;
+recvPayload = function () {
+  var p = recvPayloadFdw.apply(this, arguments), s = RECV.ship || {};
+  if ((s.mode === 'Sea' || s.mode === 'Air') && !(num(s.kg) > 0)) {
+    p.shippingBdt = 0;
+    p.freightPerKg = num(s.rate || SHIP_RATE[s.mode]);
+    p.shipNote = s.mode.toLowerCase();
+  }
+  if (RECV.basis) { p.basis = RECV.basis; p.freightBasis = RECV.basis; }
+  else if (p.freightPerKg > 0) p.freightBasis = 'weight';
+  return p;
+};
+var recvShipBdtFdw = recvShipBdt;
+recvShipBdt = function () { var s = RECV.ship || {}; if ((s.mode === 'Sea' || s.mode === 'Air') && !(num(s.kg) > 0)) return 0; return recvShipBdtFdw.apply(this, arguments); };
+document.addEventListener('click', function (e) {
+  var c = e.target.closest && e.target.closest('[data-rvbasis]');
+  if (!c) return;
+  RECV.basis = c.getAttribute('data-rvbasis'); repaint();
+});
+
+// ---- Shipments: orders on the way, moved along; product sizes
+var FDW = { po: null, busy: false };
+function fdwLoad() {
+  if (FDW.busy) return; FDW.busy = true;
+  srv('erpPoList', [], function (r) { FDW.busy = false; FDW.po = r; if (VIEW === 'shipments' && !SHP.ref) repaint(); }, function () { FDW.busy = false; FDW.po = { orders: [] }; });
+}
+var viewShipmentsFdw = viewShipments;
+viewShipments = function () {
+  var h = viewShipmentsFdw.apply(this, arguments);
+  if (SHP.ref || !SHP.list) return h;
+  if (!FDW.po) { fdwLoad(); return h; }
+  var orders = (FDW.po.orders || []).filter(function (o) { return o.left > 0; });
+  var tools = '<div class="row" style="margin:0 0 14px;gap:8px">' + (navOn('products') ? '<button class="btn" type="button" data-fdwsizes="1">Product sizes (weight and box)</button>' : '') +
+    (navOn('stock') ? '<button class="btn" type="button" data-go="stock">New order / receive on Stock entry</button>' : '') + '</div>';
+  var way = '<div class="card" style="margin-bottom:16px"><div class="chead"><h2>On the way</h2></div><div class="sub">Orders not fully received. Move each one along: Planned › Ordered › In transit. It becomes Received when you receive it on Stock entry; freight is worked out from the rate per kg you give here.</div>';
+  if (!orders.length) way += '<div class="empty">No open orders.</div>';
+  else way += '<div class="scroll"><table class="fdw-way"><thead><tr><th>Order</th><th>Supplier</th><th class="num">Units to come</th><th>Stage</th><th>Shipment</th><th class="num">Freight (est.)</th><th>Expected</th><th></th></tr></thead><tbody>' +
+    orders.map(function (o) {
+      var st = o.stage || { key: 'ordered', label: 'Ordered' };
+      var next = st.key === 'planned' ? '<button class="btn small primary" type="button" data-fdwstage="ordered" data-po="' + esc(o.id) + '">Mark ordered</button>'
+        : '<button class="btn small' + (st.key === 'ordered' ? ' primary' : '') + '" type="button" data-fdwtransit="' + esc(o.id) + '">' + (st.key === 'in_transit' ? 'Edit shipment' : 'In transit…') + '</button>';
+      return '<tr><td><b>' + esc(o.id) + '</b><div class="sku">' + esc(o.shipBy || st.shipBy || '') + '</div></td><td>' + esc(o.supplier || '—') + '</td><td class="num">' + fmt(o.left) + '</td>' +
+        '<td><span class="fdw-stage ' + esc(st.key) + '">' + esc(st.label) + '</span></td><td>' + esc(st.shipmentNo || '—') + (st.agent ? '<div class="sku">' + esc(st.agent) + '</div>' : '') + '</td>' +
+        '<td class="num">' + (st.freightEstimate ? fmt(st.freightEstimate) + '<div class="sku">' + fmt(st.kg) + ' kg × ' + fmt(st.freightPerKg) + '</div>' : '—') + '</td><td>' + esc(st.eta || '—') + '</td><td>' + next + '</td></tr>';
+    }).join('') + '</tbody></table></div>';
+  way += '</div>';
+  // after the four cards, before the list of received shipments
+  var i = h.indexOf('<div class="card">');
+  return i >= 0 ? h.slice(0, i) + tools + way + h.slice(i) : h + tools + way;
+};
+function fdwDialog(title, body, onOk) {
+  var back = document.createElement('div'); back.className = 'dlg-back';
+  back.innerHTML = '<div class="dlg fdw-form" role="dialog" aria-modal="true" style="max-width:560px"><div class="dlg-t">' + esc(title) + '</div>' + body +
+    '<div class="dlg-f"><button class="btn" type="button" data-x="1">Cancel</button><button class="btn primary" type="button" data-ok="1">Save</button></div></div>';
+  document.body.appendChild(back);
+  var close = function () { if (back.parentNode) back.parentNode.removeChild(back); };
+  back.addEventListener('click', function (e) {
+    if (e.target === back || e.target.closest('[data-x]')) close();
+    if (e.target.closest('[data-ok]')) onOk(back, close);
+  });
+  var f = back.querySelector('input, select'); if (f) f.focus();
+}
+function fdwVal(back, id) { var x = back.querySelector('#' + id); return x ? String(x.value || '').trim() : ''; }
+document.addEventListener('click', function (e) {
+  if (!e.target.closest) return;
+  var a = e.target.closest('[data-fdwstage]');
+  if (a) {
+    srv('erpPoStage', [{ poId: a.getAttribute('data-po'), stage: a.getAttribute('data-fdwstage') }], function () { toast('Order marked ' + a.getAttribute('data-fdwstage') + '.'); FDW.po = null; repaint(); },
+      function (er) { toast(esc(er && er.message ? er.message : er), true); });
+    return;
+  }
+  var t = e.target.closest('[data-fdwtransit]');
+  if (t) {
+    var id = t.getAttribute('data-fdwtransit'), o = ((FDW.po && FDW.po.orders) || []).filter(function (x) { return x.id === id; })[0] || {}, st = o.stage || {};
+    var inp = function (k, label, v, ph, type) { return '<div><label class="f" for="fdw_' + k + '">' + label + '</label><input class="i" id="fdw_' + k + '"' + (type ? ' type="' + type + '"' : '') + ' value="' + esc(v || '') + '" placeholder="' + esc(ph || '') + '"></div>'; };
+    fdwDialog('Order ' + id + ' is on the way',
+      '<div class="dlg-b" style="white-space:normal">What you know about the shipment. The rate per kg is used when it arrives (chargeable weight × rate), unless you type the freight then.</div>' +
+      '<div class="fields">' + inp('no', 'Shipment / tracking no.', st.shipmentNo, 'AWB / B/L') + inp('agent', 'Agent', st.agent, 'cargo agent') +
+      '<div><label class="f" for="fdw_by">By</label><select class="i" id="fdw_by"><option' + ((st.shipBy || o.shipBy) === 'Sea' ? ' selected' : '') + '>Sea</option><option' + ((st.shipBy || o.shipBy) === 'Air' ? ' selected' : '') + '>Air</option></select></div>' +
+      inp('kg', 'Chargeable weight (kg)', st.kg || '', 'from the agent') + inp('rate', 'Freight per kg (TK)', st.freightPerKg || '', 'e.g. 244 sea, 780 air') + inp('eta', 'Expected', st.eta, '', 'date') + '</div>',
+      function (back, close) {
+        srv('erpPoStage', [{ poId: id, stage: 'in_transit', shipmentNo: fdwVal(back, 'fdw_no'), agent: fdwVal(back, 'fdw_agent'), shipBy: fdwVal(back, 'fdw_by'),
+          kg: num(fdwVal(back, 'fdw_kg')), freightPerKg: num(fdwVal(back, 'fdw_rate')), eta: fdwVal(back, 'fdw_eta') }],
+          function () { close(); toast('Order ' + esc(id) + ' is in transit.'); FDW.po = null; repaint(); }, function (er) { toast(esc(er && er.message ? er.message : er), true); });
+      });
+    return;
+  }
+  if (e.target.closest('[data-fdwsizes]')) {
+    var cats = {};
+    (CAT || []).forEach(function (p) { if (p.cat) cats[p.cat] = 1; });
+    fdwDialog('Product sizes',
+      '<div class="dlg-b" style="white-space:normal">Weight per unit in grams, and the box it ships in (mm), for a whole category or one product. Freight is charged on the larger of the real weight and the box weight (L × W × H ÷ 6000).</div>' +
+      '<div class="fields"><div><label class="f" for="fdw_cat">Category</label><select class="i" id="fdw_cat"><option value="">— one product —</option>' +
+      Object.keys(cats).sort().map(function (c) { return '<option>' + esc(c) + '</option>'; }).join('') + '</select></div>' +
+      '<div><label class="f" for="fdw_sku">or one product (SKU)</label><input class="i" id="fdw_sku" list="fdw_skus" placeholder="SKU"><datalist id="fdw_skus">' +
+      (CAT || []).slice(0, 400).map(function (p) { return '<option value="' + esc(p.sku) + '">' + esc(p.name) + '</option>'; }).join('') + '</datalist></div>' +
+      '<div><label class="f" for="fdw_g">Weight (g)</label><input class="i" id="fdw_g" inputmode="decimal" placeholder="1300"></div>' +
+      '<div><label class="f" for="fdw_l">Box L (mm)</label><input class="i" id="fdw_l" inputmode="decimal" placeholder="210"></div>' +
+      '<div><label class="f" for="fdw_w">W (mm)</label><input class="i" id="fdw_w" inputmode="decimal" placeholder="210"></div>' +
+      '<div><label class="f" for="fdw_h">H (mm)</label><input class="i" id="fdw_h" inputmode="decimal" placeholder="80"></div></div>',
+      function (back, close) {
+        var pl = { weight_g: num(fdwVal(back, 'fdw_g')) }, L = fdwVal(back, 'fdw_l'), W = fdwVal(back, 'fdw_w'), H = fdwVal(back, 'fdw_h');
+        if (L || W || H) { pl.length_mm = num(L); pl.width_mm = num(W); pl.height_mm = num(H); }
+        if (fdwVal(back, 'fdw_cat')) pl.category = fdwVal(back, 'fdw_cat'); else pl.skus = [fdwVal(back, 'fdw_sku')];
+        srv('erpProductSizes', [pl], function (r) { close(); toast('Size saved on ' + r.changed + ' product(s).'); }, function (er) { toast(esc(er && er.message ? er.message : er), true); });
+      });
+  }
+});
+var fdwAfterWrite = pagesAfterWrite;
+pagesAfterWrite = function () { FDW.po = null; return fdwAfterWrite.apply(this, arguments); };
+</script>
+
+<!-- fd-7 (FilaDash merge P3, decision F2): investors per shipment. On one shipment: who funded what share, what
+     their part sold for, the money recovered, the profit on it and what they have earned (their % of that profit).
+     The owner adds "Funded by" (investors whose return on Capital is "Share of profit on shipments they fund") or
+     strikes one out. What they earn each month is due on Capital and is a cost of that month, like other returns. -->
+<script>
+var FDI = { ref: '', data: null, busy: false, holders: null };
+function fdiLoad(ref) {
+  if (FDI.busy) return; FDI.busy = true;
+  srv('erpLotFunding', [{ reference: ref }], function (r) { FDI.busy = false; FDI.ref = ref; FDI.data = r; if (VIEW === 'shipments' && SHP.ref === ref) repaint(); },
+    function () { FDI.busy = false; FDI.ref = ref; FDI.data = { funding: [], denied: true }; });
+}
+var viewShipmentFdi = viewShipment;
+viewShipment = function () {
+  var h = viewShipmentFdi.apply(this, arguments), d = SHP.one;
+  if (!d || d.reference !== SHP.ref || d.opening || !navOn('capital')) return h;
+  if (FDI.ref !== d.reference) { FDI.data = null; fdiLoad(d.reference); return h; }
+  var x = FDI.data; if (!x || x.denied) return h;
+  var owner = ME && String(ME.role) === 'owner', used = 0;
+  x.funding.forEach(function (f) { used += f.pct; });
+  var card = '<div class="card" style="margin-top:16px"><div class="chead"><h2>Funded by</h2>' +
+    (owner && used < 100 ? '<button class="btn small primary" type="button" data-fdifund="1">+ An investor funded part of it</button>' : '') + '</div>' +
+    '<div class="sub">An investor’s part earns them their % of the profit when it sells (returns taken off). It is due on Capital each month and counted as a cost of that month.' +
+    (used ? ' Funded: ' + fmt(used) + '% of this shipment.' : '') + '</div>';
+  if (!x.funding.length) card += '<div class="empty">Paid by the business alone.</div>';
+  else card += '<div class="scroll"><table><thead><tr><th>Investor</th><th class="num">Share</th><th class="num">Their money</th><th class="num">Units sold</th><th class="num">Recovered</th><th class="num">Profit on it</th><th class="num">They earn</th><th></th></tr></thead><tbody>' +
+    x.funding.map(function (f) {
+      return '<tr><td><b>' + esc(f.name) + '</b><div class="sku">since ' + esc(f.since) + ' · gets ' + fmt(f.profitShare) + '% of the profit</div></td><td class="num">' + fmt(f.pct) + '%</td><td class="num">' + fmt(f.funded) + '</td>' +
+        '<td class="num">' + f.soldUnits + ' of ' + f.unitsFunded + '</td><td class="num">' + fmt(f.recovered) + '</td><td class="num">' + fmt(f.profit) + '</td><td class="num"><b>' + fmt(f.earned) + '</b></td>' +
+        '<td>' + (owner ? '<button class="btn small danger" type="button" data-fdivoid="' + esc(f.id) + '">Strike out</button>' : '') + '</td></tr>'; }).join('') + '</tbody></table></div>';
+  return h + card + '</div>';
+};
+document.addEventListener('click', function (e) {
+  if (!e.target.closest) return;
+  if (e.target.closest('[data-fdifund]')) {
+    var open = function () {
+      var hs = (FDI.holders || []).filter(function (h) { return h.kind === 'investor' && h.returnKind === 'lot' && !h.ended; });
+      if (!hs.length) { uiAlert('No investor is paid by shipment profit yet. On Capital, add an investor and choose "Share of profit on shipments they fund".'); return; }
+      fdwDialog('Funded by an investor',
+        '<div class="dlg-b" style="white-space:normal">Which investor paid for part of ' + esc(SHP.ref) + ', and what share of it. Their money itself goes on Capital (Add money).</div>' +
+        '<div class="fields"><div><label class="f" for="fdi_h">Investor</label><select class="i" id="fdi_h">' + hs.map(function (h) {
+          return '<option value="' + esc(h.id) + '">' + esc(h.name) + ' (' + fmt(h.returnValue) + '% of the profit)</option>'; }).join('') + '</select></div>' +
+        '<div><label class="f" for="fdi_p">Share of this shipment (%)</label><input class="i" id="fdi_p" inputmode="decimal" placeholder="e.g. 40"></div>' +
+        '<div><label class="f" for="fdi_n">Note</label><input class="i" id="fdi_n" placeholder="optional"></div></div>',
+        function (back, close) {
+          srv('erpLotFund', [{ reference: SHP.ref, holder: fdwVal(back, 'fdi_h'), pct: num(fdwVal(back, 'fdi_p')), note: fdwVal(back, 'fdi_n') }],
+            function (r) { close(); FDI.data = r; toast('Funding recorded.'); repaint(); }, function (er) { toast(esc(er && er.message ? er.message : er), true); });
+        });
+    };
+    if (FDI.holders) open();
+    else srv('erpCapital', [], function (r) { FDI.holders = r.holders || []; open(); }, function (er) { toast(esc(er && er.message ? er.message : er), true); });
+    return;
+  }
+  var v = e.target.closest('[data-fdivoid]');
+  if (v) {
+    uiPrompt('Why is this funding struck out?', '').then(function (why) {
+      if (!why) return;
+      srv('erpLotFundVoid', [{ id: v.getAttribute('data-fdivoid'), reason: why }], function (r) { FDI.data = r; toast('Struck out.'); repaint(); },
+        function (er) { toast(esc(er && er.message ? er.message : er), true); });
+    });
+  }
+});
+var fdiAfterWrite = pagesAfterWrite;
+pagesAfterWrite = function () { FDI.data = null; FDI.ref = ''; FDI.holders = null; return fdiAfterWrite.apply(this, arguments); };
+</script>
+
+<!-- fd-9 (FilaDash merge P3): holding cost settings + the Commission screen.
+     Shipments > "Holding cost": on/off and which expense categories are the cost of holding stock (handlers/holding.js),
+     each month's pool and how many kg-days shared it, products with no weight. Money > Commission: the month's sellers -
+     sales, profit, earned, paid, left (owner: Pay) - and the rules (owner: add / remove). handlers/commission.js. -->
+<script>
+// ---- holding cost settings (Shipments)
+var viewShipmentsHc = viewShipments;
+viewShipments = function () {
+  var h = viewShipmentsHc.apply(this, arguments);
+  if (SHP.ref || !SHP.list || !navOn('capital')) return h;
+  var d = SHP.list, owner = ME && String(ME.role) === 'owner';
+  var bar = '<div class="note" style="margin:0 0 14px;align-items:center"><div class="ico">⚖</div><div style="flex:1">' +
+    (d.holdingOn ? '<b>Holding cost is on:</b> ' + esc((d.holdingCategories || []).join(', ')) + ' is shared over the stock on the shelf each month, by kg × days. Net profit is not changed; each shipment’s profit after holding is.' +
+      (d.noWeight && d.noWeight.length ? ' <span style="color:var(--warning)">' + d.noWeight.length + ' product(s) have no weight and count as 1 kg.</span>' : '')
+      : '<b>Holding cost is off.</b>') + '</div>' + (owner ? '<button class="btn small" type="button" data-fdhc="1">Holding cost…</button>' : '') + '</div>';
+  var i = h.indexOf('<div class="row" style="margin:0 0 14px;gap:8px">');
+  return i >= 0 ? h.slice(0, i) + bar + h.slice(i) : h + bar;
+};
+document.addEventListener('click', function (e) {
+  if (!e.target.closest || !e.target.closest('[data-fdhc]')) return;
+  srv('erpHolding', [{}], function (x) {
+    var cats = (x.allCategories || []).slice();
+    (x.categories || []).forEach(function (c) { if (cats.indexOf(c) < 0) cats.push(c); });
+    fdwDialog('Holding cost',
+      '<div class="dlg-b" style="white-space:normal">What it costs to keep stock — rent of the shop or warehouse, and anything else you tick — is shared every month over the stock lots on the shelf, by kg × days. It changes each shipment’s profit after holding and what investors in a shipment earn; the month’s net profit stays the same.</div>' +
+      '<label class="chk" style="margin-top:10px"><input type="checkbox" id="hc_on"' + (x.on ? ' checked' : '') + '> Share holding cost over stock</label>' +
+      '<div style="margin-top:8px;max-height:200px;overflow:auto">' + cats.map(function (c) {
+        return '<label class="chk" style="display:flex"><input type="checkbox" data-hccat="' + esc(c) + '"' + ((x.categories || []).indexOf(c) >= 0 ? ' checked' : '') + '> ' + esc(c) + '</label>'; }).join('') + '</div>' +
+      '<table style="margin-top:10px"><thead><tr><th>Month</th><th class="num">Holding cost</th><th class="num">kg × days</th></tr></thead><tbody>' +
+      (x.months || []).slice(0, 6).map(function (m) { return '<tr><td>' + esc(m.month) + '</td><td class="num">' + fmt(m.pool) + '</td><td class="num">' + fmt(m.kgDays) + '</td></tr>'; }).join('') + '</tbody></table>' +
+      (x.noWeight && x.noWeight.length ? '<div class="fdw-note">No weight yet (counted as 1 kg): ' + esc(x.noWeight.slice(0, 12).join(', ')) + (x.noWeight.length > 12 ? '…' : '') + '</div>' : ''),
+      function (back, close) {
+        var picked = [].map.call(back.querySelectorAll('[data-hccat]:checked'), function (c) { return c.getAttribute('data-hccat'); });
+        srv('erpHoldingSave', [{ on: back.querySelector('#hc_on').checked, categories: picked }], function () { close(); toast('Holding cost saved.'); SHP.list = null; repaint(); },
+          function (er) { toast(esc(er && er.message ? er.message : er), true); });
+      });
+  }, function (er) { toast(esc(er && er.message ? er.message : er), true); });
+});
+
+// ---- the Commission screen (Money)
+var CMS = { month: '', data: null, busy: false };
+(function () {
+  var after = document.querySelector('#nav button[data-view="expenses"]');
+  if (after && !document.querySelector('#nav button[data-view="commission"]')) {
+    var b = document.createElement('button'); b.type = 'button'; b.setAttribute('data-view', 'commission'); b.setAttribute('aria-selected', 'false'); b.setAttribute('data-name', 'Commission');
+    b.innerHTML = '<span class="ic"><svg viewBox="0 0 24 24"><path d="M19 5L5 19"/><circle cx="7" cy="7" r="2.5"/><circle cx="17" cy="17" r="2.5"/></svg></span>Commission';
+    after.parentNode.insertBefore(b, after.nextSibling);
+    b.addEventListener('click', function () { go('commission'); });
+  }
+})();
+FDH_SUB.commission = 'What each seller earns on what they sell, and the rules for it';
+function cmsLoad() {
+  if (CMS.busy) return; CMS.busy = true;
+  srv('erpCommission', [{ month: CMS.month }], function (r) { CMS.busy = false; CMS.data = r; CMS.month = r.month; if (VIEW === 'commission') repaint(); },
+    function (e) { CMS.busy = false; CMS.data = { error: e && e.message ? e.message : String(e) }; if (VIEW === 'commission') repaint(); });
+}
+function cmsShift(m, n) { var y = Number(m.slice(0, 4)), mo = Number(m.slice(5, 7)) + n; while (mo < 1) { mo += 12; y--; } while (mo > 12) { mo -= 12; y++; } return y + '-' + (mo < 10 ? '0' : '') + mo; }
+function viewCommission() {
+  var d = CMS.data;
+  if (!d || (CMS.month && d.month && d.month !== CMS.month)) { cmsLoad(); return '<div class="loading">Loading commission…</div>'; }
+  if (d.error) return '<div class="note err"><div class="ico">!</div><div>' + esc(d.error) + '</div></div>';
+  var earned = 0, paid = 0, left = 0;
+  d.sellers.forEach(function (s) { earned += s.earned; paid += s.paid; left += s.left; });
+  var h = '<div class="row" style="margin:0 0 14px;gap:8px;align-items:center"><button class="btn small" type="button" data-cmsm="-1">←</button><b>' + esc(d.month) + '</b>' +
+    (d.month < d.thisMonth ? '<button class="btn small" type="button" data-cmsm="1">→</button>' : '') + '</div>';
+  h += '<div class="fdd-grid">' + fdhCard({ key: 'e', title: 'Earned this month', icon: 'percent', v: earned, money: true, hero: true, note: d.sellers.length + ' seller(s)' }, d.currency) +
+    fdhCard({ key: 'p', title: 'Paid', icon: 'wallet', v: paid, money: true }, d.currency) +
+    fdhCard({ key: 'l', title: 'Left to pay', icon: 'clock', v: left, money: true, tone: left > 0 ? 'warn' : '' }, d.currency) +
+    fdhCard({ key: 'r', title: 'Rules', icon: 'list', v: d.rules.length, note: 'the most specific one wins' }, d.currency) + '</div>';
+  h += '<div class="card" style="margin-bottom:16px"><div class="chead"><h2>Sellers</h2></div><div class="sub">Commission is a cost of the month it is earned in (Expenses, Commission); paying it later is not counted again. A return takes it back from whoever sold it.</div>';
+  if (!d.sellers.length) h += '<div class="empty">No commission earned in ' + esc(d.month) + '.' + (d.rules.length ? '' : ' Add a rule below.') + '</div>';
+  else h += '<div class="scroll"><table><thead><tr><th>Seller</th><th class="num">Sales</th><th class="num">Profit</th><th class="num">Earned</th><th class="num">Paid</th><th class="num">Left</th><th></th></tr></thead><tbody>' +
+    d.sellers.map(function (s) {
+      return '<tr><td><b>' + esc(s.name) + '</b></td><td class="num">' + fmt(s.sales) + '</td><td class="num">' + fmt(s.profit) + '</td><td class="num"><b>' + fmt(s.earned) + '</b></td><td class="num">' + fmt(s.paid) + '</td><td class="num">' + fmt(s.left) + '</td>' +
+        '<td>' + (d.canEdit && s.left > 0 ? '<button class="btn small primary" type="button" data-cmspay="' + esc(s.id) + '" data-left="' + s.left + '" data-name="' + esc(s.name) + '">Pay</button>' : '') + '</td></tr>'; }).join('') + '</tbody></table></div>';
+  h += '</div><div class="card"><div class="chead"><h2>Rules</h2>' + (d.canEdit ? '<button class="btn small primary" type="button" data-cmsrule="1">+ Rule</button>' : '') + '</div>' +
+    '<div class="sub">On each sold line the most specific rule wins: one product, then a brand, then a category, then everything; a person’s own rule before everyone’s.</div>';
+  var SC = { all: 'Everything', category: 'Category', brand: 'Brand', sku: 'Product' };
+  if (!d.rules.length) h += '<div class="empty">No rules yet: nobody earns commission.</div>';
+  else h += '<div class="scroll"><table><thead><tr><th>Who</th><th>On</th><th class="num">%</th><th>Of</th><th>Since</th><th></th></tr></thead><tbody>' +
+    d.rules.map(function (r) {
+      return '<tr><td>' + esc(r.sellerName) + '</td><td>' + esc(SC[r.scope] || r.scope) + (r.match ? ': <b>' + esc(r.match) + '</b>' : '') + '</td><td class="num">' + fmt(r.pct) + '</td><td>' + (r.basis === 'profit' ? 'gross profit' : 'sales') + '</td><td>' + esc(r.since) + '</td>' +
+        '<td>' + (d.canEdit ? '<button class="btn small danger" type="button" data-cmsvoid="' + esc(r.id) + '">Remove</button>' : '') + '</td></tr>'; }).join('') + '</tbody></table></div>';
+  return h + '</div>';
+}
+var repaintCms = repaint;
+repaint = function () {
+  if (VIEW !== 'commission') return repaintCms.apply(this, arguments);
+  el('view').innerHTML = viewCommission();
+  try { fdhPaint(); } catch (e) {}
+  try { fdtEnhance(); } catch (e) {}
+};
+document.addEventListener('click', function (e) {
+  if (!e.target.closest) return;
+  var m = e.target.closest('[data-cmsm]');
+  if (m) { CMS.month = cmsShift(CMS.month || (CMS.data && CMS.data.month), Number(m.getAttribute('data-cmsm'))); CMS.data = null; repaint(); return; }
+  var pay = e.target.closest('[data-cmspay]');
+  if (pay) {
+    var opts = (typeof fxAccOpts === 'function') ? fxAccOpts('', 'Paid from…') : '';
+    fdwDialog('Pay ' + pay.getAttribute('data-name'),
+      '<div class="dlg-b" style="white-space:normal">Commission for ' + esc(CMS.data.month) + '. Left to pay: ' + fmt(Number(pay.getAttribute('data-left'))) + '.</div><div class="fields">' +
+      '<div><label class="f" for="cms_a">Amount</label><input class="i" id="cms_a" inputmode="decimal" value="' + esc(pay.getAttribute('data-left')) + '"></div>' +
+      (opts ? '<div><label class="f" for="cms_acc">Paid from</label><select class="i" id="cms_acc">' + opts + '</select></div>' : '') + '</div>',
+      function (back, close) {
+        srv('erpCommissionPay', [{ seller: pay.getAttribute('data-cmspay'), amount: num(fdwVal(back, 'cms_a')), month: CMS.data.month, account: fdwVal(back, 'cms_acc') }],
+          function (r) { close(); CMS.data = r; toast('Commission paid.'); repaint(); }, function (er) { toast(esc(er && er.message ? er.message : er), true); });
+      });
+    return;
+  }
+  if (e.target.closest('[data-cmsrule]')) {
+    var cats = {}, brands = {};
+    (CAT || []).forEach(function (p) { if (p.cat) cats[p.cat] = 1; if (p.brand) brands[p.brand] = 1; });
+    fdwDialog('Commission rule',
+      '<div class="fields"><div><label class="f" for="cr_who">Who</label><select class="i" id="cr_who"><option value="">Everyone who sells</option>' +
+      (CMS.data.people || []).map(function (p) { return '<option value="' + esc(p.id) + '">' + esc(p.name) + ' (' + esc(p.role) + ')</option>'; }).join('') + '</select></div>' +
+      '<div><label class="f" for="cr_scope">On</label><select class="i" id="cr_scope"><option value="all">Everything</option><option value="category">A category</option><option value="brand">A brand</option><option value="sku">One product</option></select></div>' +
+      '<div><label class="f" for="cr_match">Which</label><input class="i" id="cr_match" list="cr_list" placeholder="category / brand / SKU"><datalist id="cr_list">' +
+      Object.keys(cats).concat(Object.keys(brands)).map(function (x) { return '<option value="' + esc(x) + '">'; }).join('') +
+      (CAT || []).slice(0, 300).map(function (p) { return '<option value="' + esc(p.sku) + '">' + esc(p.name) + '</option>'; }).join('') + '</datalist></div>' +
+      '<div><label class="f" for="cr_pct">%</label><input class="i" id="cr_pct" inputmode="decimal" placeholder="2"></div>' +
+      '<div><label class="f" for="cr_basis">Of</label><select class="i" id="cr_basis"><option value="sales">the sales</option><option value="profit">the gross profit</option></select></div></div>',
+      function (back, close) {
+        srv('erpCommissionRuleSave', [{ seller: fdwVal(back, 'cr_who'), scope: fdwVal(back, 'cr_scope'), match: fdwVal(back, 'cr_match'), pct: num(fdwVal(back, 'cr_pct')), basis: fdwVal(back, 'cr_basis'), month: CMS.data.month }],
+          function (r) { close(); CMS.data = r; toast('Rule added.'); repaint(); }, function (er) { toast(esc(er && er.message ? er.message : er), true); });
+      });
+    return;
+  }
+  var v = e.target.closest('[data-cmsvoid]');
+  if (v) uiConfirm('Remove this rule? Commission already earned with it is worked out again without it.').then(function (ok) {
+    if (!ok) return;
+    srv('erpCommissionRuleVoid', [{ id: v.getAttribute('data-cmsvoid'), month: CMS.data.month }], function (r) { CMS.data = r; toast('Rule removed.'); repaint(); },
+      function (er) { toast(esc(er && er.message ? er.message : er), true); });
+  });
+});
+var cmsAfterWrite = pagesAfterWrite;
+pagesAfterWrite = function () { CMS.data = null; return cmsAfterWrite.apply(this, arguments); };
+</script>
+
+<!-- fd-10 (FilaDash merge P3): the rest of P3 on the page.
+     Shipment page: "+ A bill after the goods" (erpShipmentLateCost: sold part = cost of sales now, the rest onto the
+     units on the shelf). Capital: "Investor pages" - a private link + 8-digit code per investor (erpInvestorLink).
+     New screens: Overview > Analytics (shipment ROI after holding, dead stock, colours, 12 months), Overview > ERP Mind
+     Map (every screen as a map, built from the menu), Settings > System check (the books checked against themselves). -->
+<style>
+.fdk-st { display:inline-flex; align-items:center; height:24px; padding:0 10px; border-radius:999px; font-size:12px; font-weight:700; }
+.fdk-st.pass { background:var(--fd-positive-soft, var(--good-soft)); color:var(--fd-positive-text, var(--up)); }
+.fdk-st.warn { background:var(--fd-warning-soft, var(--warning-soft)); color:var(--fd-warning-text, var(--warning)); }
+.fdk-st.fail { background:var(--fd-negative-soft, var(--critical-soft)); color:var(--fd-negative-text, var(--critical)); }
+.fdmap svg { width:100%; height:auto; display:block; }
+.fdmap .nd { cursor:pointer; }
+.fdmap .nd rect { fill:var(--fd-card, var(--surface)); stroke:var(--fd-border-strong, var(--ring)); }
+.fdmap .nd:hover rect { stroke:var(--fd-accent, var(--series-1)); stroke-width:2; }
+.fdmap .nd text { font:600 12.5px var(--fd-font, inherit); fill:var(--fd-text, var(--ink)); }
+.fdmap .grp rect { fill:var(--fd-accent-soft, var(--series-1-soft)); stroke:var(--fd-accent-border, var(--series-1)); }
+.fdmap .grp text { font:800 13px var(--fd-font, inherit); fill:var(--fd-accent-text, var(--series-1)); text-transform:uppercase; letter-spacing:.06em; }
+.fdmap .ctr circle { fill:url(#fdmapG); } .fdmap .ctr text { font:800 16px var(--fd-font, inherit); fill:#fff; }
+.fdmap .ln { stroke:var(--fd-border-strong, var(--ring)); stroke-width:1.5; fill:none; }
+</style>
+<script>
+// ---- a bill after the goods, on one shipment
+var viewShipmentLc = viewShipment;
+viewShipment = function () {
+  var h = viewShipmentLc.apply(this, arguments), d = SHP.one;
+  if (!d || d.reference !== SHP.ref || d.opening || !navOn('costs')) return h;
+  var note = '<div class="card" style="margin-top:16px"><div class="chead"><h2>A bill that came after the goods</h2><button class="btn small" type="button" data-lcadd="1">+ Add a bill</button></div>' +
+    '<div class="sub">Duty, freight or an agent’s bill that arrives later. Its part for the units already sold is cost of sales of this month; the rest is added to the cost of the units still on the shelf. Sales already made keep their cost.' +
+    (d.lateSold ? ' So far ' + fmt(d.lateSold) + ' of late bills went to cost of sales.' : '') + '</div></div>';
+  return h + note;
+};
+document.addEventListener('click', function (e) {
+  if (!e.target.closest || !e.target.closest('[data-lcadd]')) return;
+  var opts = (typeof fxAccOpts === 'function') ? fxAccOpts('', 'Paid from…') : '';
+  fdwDialog('A bill for ' + SHP.ref + ' after the goods',
+    '<div class="fields"><div><label class="f" for="lc_l">What for</label><input class="i" id="lc_l" list="l_rvcost" placeholder="Customs duty"></div>' +
+    '<div><label class="f" for="lc_a">Amount (TK)</label><input class="i" id="lc_a" inputmode="decimal"></div>' +
+    '<div><label class="f" for="lc_b">Share it by</label><select class="i" id="lc_b"><option value="value">Value</option><option value="weight">Weight</option><option value="units">Units</option></select></div>' +
+    (opts ? '<div><label class="f" for="lc_acc">Paid from</label><select class="i" id="lc_acc">' + opts + '</select></div>' : '') + '</div>',
+    function (back, close) {
+      srv('erpShipmentLateCost', [{ reference: SHP.ref, label: fdwVal(back, 'lc_l'), amount: num(fdwVal(back, 'lc_a')), basis: fdwVal(back, 'lc_b'), account: fdwVal(back, 'lc_acc') }],
+        function (r) { close(); toast('Added: ' + fmt(r.soldPart) + ' to cost of sales now, ' + fmt(r.shelfPart) + ' onto the units on the shelf.'); SHP.one = null; SHP.list = null; repaint(); },
+        function (er) { toast(esc(er && er.message ? er.message : er), true); });
+    });
+});
+
+// ---- Capital: investor pages
+var viewCapitalFdp = viewCapital;
+viewCapital = function () {
+  var h = viewCapitalFdp.apply(this, arguments);
+  var c = typeof CAPD !== 'undefined' ? CAPD : null;
+  if (!c || !c.canEdit || !c.holders || CAP_TAB === 'partner') return h;
+  var inv = c.holders.filter(function (x) { return x.kind === 'investor' && !x.ended; });
+  if (!inv.length) return h;
+  return h + '<div class="card" style="margin-top:16px"><div class="chead"><h2>Investor pages</h2></div><div class="sub">Each investor can see their own statement on a private page: a link plus an 8-digit code you give them separately. A new link stops the old one.</div>' +
+    '<div class="scroll"><table><thead><tr><th>Investor</th><th>Return</th><th></th></tr></thead><tbody>' + inv.map(function (x) {
+      return '<tr><td><b>' + esc(x.name) + '</b></td><td>' + esc(x.returnKind === 'lot' ? fmt(x.returnValue) + '% of shipment profit' : x.returnKind === 'percent' ? fmt(x.returnValue) + '% a month' : x.returnKind === 'monthly' ? fmt(x.returnValue) + ' a month' : 'nothing fixed') + '</td>' +
+        '<td><button class="btn small primary" type="button" data-invlink="' + esc(x.id) + '">Make page link</button> <button class="btn small" type="button" data-invoff="' + esc(x.id) + '">Switch off</button></td></tr>'; }).join('') + '</tbody></table></div></div>';
+};
+document.addEventListener('click', function (e) {
+  if (!e.target.closest) return;
+  var a = e.target.closest('[data-invlink]');
+  if (a) {
+    srv('erpInvestorLink', [{ holder: a.getAttribute('data-invlink'), api: ERP_API }], function (r) {
+      fdwDialog('Page for ' + r.name,
+        '<div class="dlg-b" style="white-space:normal">Send the link, and give the code separately (say it on the phone). The code is shown only now.</div>' +
+        '<label class="f" style="margin-top:10px">Link</label><input class="i" readonly value="' + esc(r.url) + '" onclick="this.select()">' +
+        '<label class="f" style="margin-top:10px">Code</label><div style="font-size:28px;font-weight:800;letter-spacing:.25em">' + esc(r.code) + '</div>',
+        function (back, close) { close(); });
+    }, function (er) { toast(esc(er && er.message ? er.message : er), true); });
+    return;
+  }
+  var o = e.target.closest('[data-invoff]');
+  if (o) srv('erpInvestorLinkOff', [{ holder: o.getAttribute('data-invoff') }], function (r) { toast(r.off ? 'Their page is switched off.' : 'They had no page.'); }, function (er) { toast(esc(er && er.message ? er.message : er), true); });
+});
+
+// ---- new screens: Analytics, ERP Mind Map, System check
+var FDX = { an: null, anTab: 'roi', chk: null, busy: {} };
+function fdxNav(view, name, icon, afterView) {
+  var after = document.querySelector('#nav button[data-view="' + afterView + '"]');
+  if (!after || document.querySelector('#nav button[data-view="' + view + '"]')) return;
+  var b = document.createElement('button'); b.type = 'button'; b.setAttribute('data-view', view); b.setAttribute('aria-selected', 'false'); b.setAttribute('data-name', name);
+  b.innerHTML = '<span class="ic"><svg viewBox="0 0 24 24">' + icon + '</svg></span>' + name;
+  after.parentNode.insertBefore(b, after.nextSibling);
+  b.addEventListener('click', function () { go(view); });
+}
+fdxNav('analytics', 'Analytics', '<path d="M4 20V10M10 20V4M16 20v-8M22 20H2"/>', 'dash');
+fdxNav('mindmap', 'ERP Mind Map', '<circle cx="12" cy="12" r="3"/><circle cx="4" cy="5" r="2"/><circle cx="20" cy="5" r="2"/><circle cx="4" cy="19" r="2"/><circle cx="20" cy="19" r="2"/><path d="M6 6l4 4M18 6l-4 4M6 18l4-4M18 18l-4-4"/>', 'analytics');
+fdxNav('syscheck', 'System check', '<path d="M12 3l8 4v5c0 5-3.5 8-8 9-4.5-1-8-4-8-9V7z"/><path d="M8.5 12l2.5 2.5 4.5-5"/>', 'tools');
+FDH_SUB.analytics = 'What each shipment really made, what is not selling, colours, a year at a glance';
+FDH_SUB.mindmap = 'Every part of the ERP on one map: click one to open it';
+FDH_SUB.syscheck = 'The books checked against themselves';
+function fdxSync() {
+  var on = navOn('profit');
+  ['analytics', 'syscheck'].forEach(function (v) { var b = document.querySelector('#nav button[data-view="' + v + '"]'); if (b) b.style.display = on ? '' : 'none'; });
+}
+function fdxLoad(name, key) {
+  if (FDX.busy[key]) return; FDX.busy[key] = true;
+  srv(name, [], function (r) { FDX.busy[key] = false; FDX[key] = r; if (VIEW === (key === 'an' ? 'analytics' : 'syscheck')) repaint(); },
+    function (e) { FDX.busy[key] = false; FDX[key] = { error: e && e.message ? e.message : String(e) }; repaint(); });
+}
+function viewAnalytics() {
+  var d = FDX.an;
+  if (!d) { fdxLoad('erpAnalytics', 'an'); return '<div class="loading">Working it out…</div>'; }
+  if (d.error) return '<div class="note err"><div class="ico">!</div><div>' + esc(d.error) + '</div></div>';
+  var tabs = [['roi', 'Shipment ROI'], ['dead', 'Dead stock'], ['colours', 'Colours'], ['growth', '12 months']];
+  var h = '<div class="tabs">' + tabs.map(function (t) { return '<button type="button" data-fxtab="' + t[0] + '" aria-selected="' + (FDX.anTab === t[0]) + '">' + t[1] + '</button>'; }).join('') + '</div><div class="card" style="margin-top:12px">';
+  if (FDX.anTab === 'roi') {
+    h += '<div class="chead"><h2>Shipment ROI</h2></div><div class="sub">Profit after holding cost on what each shipment cost to land. A shipment still selling grows.</div>' +
+      (d.roi.length ? '<div class="scroll"><table><thead><tr><th>Shipment</th><th>Received</th><th class="num">Landed cost</th><th class="num">Sold for</th><th class="num">After holding</th><th class="num">ROI</th><th class="num">Sold</th></tr></thead><tbody>' +
+        d.roi.map(function (x) { return '<tr><td><b>' + esc(x.reference) + '</b><div class="sku">' + esc(x.supplier || '') + '</div></td><td>' + esc(x.date) + '</td><td class="num">' + fmt(x.landed) + '</td><td class="num">' + fmt(x.revenue) + '</td><td class="num">' + fmt(x.net) + '</td><td class="num"><b' + (x.roi < 0 ? ' style="color:var(--critical)"' : '') + '>' + x.roi + '%</b></td><td class="num">' + x.soldPct + '%</td></tr>'; }).join('') + '</tbody></table></div>' : '<div class="empty">No shipments yet.</div>');
+  } else if (FDX.anTab === 'dead') {
+    h += '<div class="chead"><h2>Dead stock</h2></div><div class="sub">Lots on the shelf for 90 days or more with nothing sold from them for 60 days: ' + esc(d.currency) + ' ' + fmt(d.deadValue) + ' sitting still. Think twice before ordering these again.</div>' +
+      (d.dead.length ? '<div class="scroll"><table><thead><tr><th>Product</th><th>Shipment</th><th class="num">Days</th><th class="num">Units</th><th class="num">Worth</th><th>Last sale</th></tr></thead><tbody>' +
+        d.dead.map(function (x) { return '<tr><td>' + esc(x.name) + '<div class="sku">' + esc(x.sku) + '</div></td><td>' + esc(x.reference) + '</td><td class="num">' + x.days + '</td><td class="num">' + fmt(x.units) + '</td><td class="num">' + fmt(x.value) + '</td><td>' + esc(x.lastSale) + '</td></tr>'; }).join('') + '</tbody></table></div>' : '<div class="empty">✓ Nothing is sitting still.</div>');
+  } else if (FDX.anTab === 'colours') {
+    var max = Math.max.apply(null, d.colours.map(function (c) { return c.revenue; }).concat([1]));
+    h += '<div class="chead"><h2>Colours that sell</h2></div><div class="sub">The last 90 days.</div>' +
+      (d.colours.length ? '<div class="rank">' + d.colours.map(function (c) { return '<div><span class="nm">' + esc(c.colour) + ' <span class="sku">' + fmt(c.units) + ' sold</span></span><span class="tr"><i style="width:' + Math.round(c.revenue / max * 100) + '%"></i></span><b>' + fmt(c.revenue) + '</b></div>'; }).join('') + '</div>' : '<div class="empty">No sales in 90 days.</div>');
+  } else {
+    var mx = Math.max.apply(null, d.growth.map(function (g) { return Math.max(g.revenue, Math.abs(g.net)); }).concat([1]));
+    h += '<div class="chead"><h2>12 months</h2></div><div class="sub">Revenue, gross profit and net profit month by month (the P&amp;L’s figures).</div>' +
+      '<div class="scroll"><table><thead><tr><th>Month</th><th class="num">Revenue</th><th class="num">Gross</th><th class="num">Net</th><th style="width:40%"></th></tr></thead><tbody>' +
+      d.growth.slice().reverse().map(function (g) { return '<tr><td>' + esc(g.month) + '</td><td class="num">' + fmt(g.revenue) + '</td><td class="num">' + fmt(g.gross) + '</td><td class="num"' + (g.net < 0 ? ' style="color:var(--critical)"' : '') + '>' + fmt(g.net) + '</td>' +
+        '<td><div class="shp-bar" style="height:8px"><i style="width:' + Math.round(g.revenue / mx * 100) + '%"></i></div></td></tr>'; }).join('') + '</tbody></table></div>';
+  }
+  return h + '</div>';
+}
+function viewSysCheck() {
+  var d = FDX.chk;
+  if (!d) { fdxLoad('erpSystemCheck', 'chk'); return '<div class="loading">Checking the books…</div>'; }
+  if (d.error) return '<div class="note err"><div class="ico">!</div><div>' + esc(d.error) + '</div></div>';
+  var h = '<div class="fdd-grid">' +
+    fdhCard({ key: 'p', title: 'Checks passed', icon: 'trend', v: d.counts.pass, hero: true, note: 'as of ' + d.at }, 'BDT') +
+    fdhCard({ key: 'w', title: 'To look at', icon: 'warn', v: d.counts.warn, tone: d.counts.warn ? 'warn' : '' }, 'BDT') +
+    fdhCard({ key: 'f', title: 'Failed', icon: 'x', v: d.counts.fail, tone: d.counts.fail ? 'bad' : '' }, 'BDT') +
+    '<div class="fdd-c fdd-k" style="justify-content:center;align-items:flex-start"><button class="btn primary" type="button" data-fxrecheck="1">Check again</button></div></div>';
+  h += '<div class="card"><div class="scroll"><table><thead><tr><th></th><th>Check</th><th>Area</th><th>What was found</th></tr></thead><tbody>' +
+    d.checks.slice().sort(function (a, b) { var o = { fail: 0, warn: 1, pass: 2 }; return o[a.status] - o[b.status]; }).map(function (c) {
+      return '<tr' + (c.go && c.status !== 'pass' && navOn(c.go) ? ' data-fdhgo="' + esc(c.go) + '" style="cursor:pointer"' : '') + '><td><span class="fdk-st ' + c.status + '">' + (c.status === 'pass' ? '✓ Pass' : c.status === 'warn' ? '! Look' : '✕ Fail') + '</span></td>' +
+        '<td><b>' + esc(c.title) + '</b><div class="sku">' + esc(c.id) + '</div></td><td>' + esc(c.area) + '</td><td style="white-space:normal">' + esc(c.detail || '') + '</td></tr>'; }).join('') + '</tbody></table></div></div>';
+  return h;
+}
+function viewMindMap() {
+  // the map is the menu itself: groups and their screens, so it never goes out of date
+  var groups = [], cur = null;
+  [].forEach.call(document.querySelectorAll('#nav > *'), function (n) {
+    if (n.classList.contains('navgrp')) { cur = { name: n.textContent.replace(/[▾▸]/g, '').trim(), items: [] }; groups.push(cur); return; }
+    if (n.tagName === 'BUTTON' && n.style.display !== 'none' && n.getAttribute('data-view') && n.getAttribute('data-view') !== 'home' && n.getAttribute('data-view') !== 'mindmap') {
+      if (!cur) { cur = { name: 'Overview', items: [] }; groups.push(cur); }
+      cur.items.push({ view: n.getAttribute('data-view'), name: (n.getAttribute('data-name') || n.textContent).replace(/\d+$/, '').trim() });
+    }
+  });
+  groups = groups.filter(function (g) { return g.items.length; });
+  var W = 1100, cx = W / 2, cy = 420, H = 840, n = groups.length, out = '';
+  groups.forEach(function (g, i) {
+    var a = -Math.PI / 2 + i * 2 * Math.PI / n, gx = cx + Math.cos(a) * 230, gy = cy + Math.sin(a) * 200;
+    out += '<path class="ln" d="M' + cx + ',' + cy + ' L' + gx.toFixed(0) + ',' + gy.toFixed(0) + '"/>';
+    g.items.forEach(function (it, j) {
+      var spread = Math.min(1.1, 0.24 * g.items.length), b = a + (g.items.length > 1 ? (j / (g.items.length - 1) - 0.5) * spread : 0);
+      var ix = cx + Math.cos(b) * 400, iy = cy + Math.sin(b) * 350;
+      it.x = ix; it.y = iy;
+      out += '<path class="ln" d="M' + gx.toFixed(0) + ',' + gy.toFixed(0) + ' L' + ix.toFixed(0) + ',' + iy.toFixed(0) + '"/>';
+    });
+    g.x = gx; g.y = gy;
+  });
+  groups.forEach(function (g) {
+    var w = Math.max(90, g.name.length * 10 + 24);
+    out += '<g class="grp"><rect x="' + (g.x - w / 2).toFixed(0) + '" y="' + (g.y - 16).toFixed(0) + '" width="' + w + '" height="32" rx="16"/><text x="' + g.x.toFixed(0) + '" y="' + (g.y + 5).toFixed(0) + '" text-anchor="middle">' + esc(g.name) + '</text></g>';
+    g.items.forEach(function (it) {
+      var w2 = Math.max(80, it.name.length * 7.4 + 22);
+      out += '<g class="nd" data-mapgo="' + esc(it.view) + '"><rect x="' + (it.x - w2 / 2).toFixed(0) + '" y="' + (it.y - 15).toFixed(0) + '" width="' + w2.toFixed(0) + '" height="30" rx="10"/><text x="' + it.x.toFixed(0) + '" y="' + (it.y + 4).toFixed(0) + '" text-anchor="middle">' + esc(it.name) + '</text></g>';
+    });
+  });
+  var biz = (el('bizName') && el('bizName').textContent) || 'ERP';
+  return '<div class="card fdmap"><svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="ERP mind map"><defs><linearGradient id="fdmapG" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="var(--fd-accent, #5B4FE9)"/><stop offset="1" stop-color="#A84CFB"/></linearGradient></defs>' +
+    out + '<g class="ctr"><circle cx="' + cx + '" cy="' + cy + '" r="62"/><text x="' + cx + '" y="' + (cy + 6) + '" text-anchor="middle">' + esc(biz.slice(0, 14)) + '</text></g></svg></div>';
+}
+var repaintFdx = repaint;
+repaint = function () {
+  fdxSync();
+  var fn = VIEW === 'analytics' ? viewAnalytics : VIEW === 'syscheck' ? viewSysCheck : VIEW === 'mindmap' ? viewMindMap : null;
+  if (!fn) return repaintFdx.apply(this, arguments);
+  el('view').innerHTML = fn();
+  try { fdhPaint(); } catch (e) {}
+  try { fdtEnhance(); } catch (e) {}
+};
+document.addEventListener('click', function (e) {
+  if (!e.target.closest) return;
+  var t = e.target.closest('[data-fxtab]');
+  if (t) { FDX.anTab = t.getAttribute('data-fxtab'); repaint(); return; }
+  if (e.target.closest('[data-fxrecheck]')) { FDX.chk = null; repaint(); return; }
+  var m = e.target.closest('[data-mapgo]');
+  if (m) { go(m.getAttribute('data-mapgo')); window.scrollTo(0, 0); }
+});
+var fdxAfterWrite = pagesAfterWrite;
+pagesAfterWrite = function () { FDX.an = null; FDX.chk = null; return fdxAfterWrite.apply(this, arguments); };
+</script>
+
 </body>
 </html>

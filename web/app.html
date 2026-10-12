@@ -23585,7 +23585,8 @@ if (fddAfterWrite) pagesAfterWrite = function () { FDD.key = ''; return fddAfter
 </style>
 <script>
 var FDH = { data: {}, busy: {}, at: {} };
-var FDH_VIEWS = { sales: 1, customers: 1, products: 1, stock: 1, expenses: 1, cash: 1, profit: 1 };
+var FDH_VIEWS = { sales: 1, customers: 1, products: 1, stock: 1, expenses: 1, cash: 1, profit: 1,
+  weborders: 1, quotes: 1, repairs: 1, printjobs: 1, campaigns: 1, suppliers: 1, costs: 1, capital: 1 };   // P4: our own screens
 var FDH_SUB = {
   invoice: 'Make a sale: customer, products, payment', sales: 'Invoices, parcels, dues and courier money', weborders: 'Orders from the website, ready to enter',
   quotes: 'Price offers that turn into invoices', repairs: 'Machines in for repair, parts and charges', printjobs: 'Print jobs with their true cost',

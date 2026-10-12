@@ -1,0 +1,43 @@
+/* FilaDash merge P4: the public pages (customer page, register, Find stock, Print Doctor, ideas, colour finder,
+   Get it printed, design desk, creator and sponsor pages, confirm, lite) in the FilaDash look.
+   Loaded after each page's own <style>: it re-points the pages' shared colour names (--bg --card --ink --mute --line
+   --ok --warn --bad --acc ...) at FilaDash's tokens (indigo light / amber dark) and gives cards, buttons and inputs
+   his shapes. A colour a page sets itself at run time (a brand's own colour) still wins. */
+@font-face { font-family:"Inter"; font-style:normal; font-weight:100 900; font-display:swap; src:url("fonts/Inter-latin-var.woff2") format("woff2");
+  unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+@font-face { font-family:"Inter"; font-style:normal; font-weight:100 900; font-display:swap; src:url("fonts/Inter-latin-ext-var.woff2") format("woff2");
+  unicode-range:U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF; }
+@font-face { font-family:"Noto Sans Bengali"; font-style:normal; font-weight:100 599; font-display:swap; src:url("fonts/NotoSansBengali-Regular.ttf") format("truetype"); unicode-range:U+0980-09FF, U+200C-200D, U+25CC; size-adjust:92%; }
+@font-face { font-family:"Noto Sans Bengali"; font-style:normal; font-weight:600 900; font-display:swap; src:url("fonts/NotoSansBengali-Bold.ttf") format("truetype"); unicode-range:U+0980-09FF, U+200C-200D, U+25CC; size-adjust:92%; }
+
+:root {
+  --bg:#F6F7FB; --card:#FFFFFF; --ink:#14172B; --mute:#6B7190; --line:#E8EAF1;
+  --ok:#0B7F49; --okbg:#E3F7EC; --warn:#9A5B00; --warnbg:#FFF3DC; --bad:#DC2626; --badbg:#FDE8E8;
+  --acc:#5B4FE9; --acc2:#4C41D6; --blue:#1D5FD1; --bluebg:#E3F0FF; --head:#14172B;
+  --fdp-surface:#F1F2F7; --fdp-accent-soft:#EDEBFF; --fdp-on-acc:#FFFFFF;
+  --fdp-shadow:0 1px 2px rgba(20,23,43,.04), 0 10px 30px rgba(20,23,43,.06);
+  --fdp-ring:0 0 0 3px rgba(91,79,233,.30);
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg:#0F1621; --card:#161E2B; --ink:#F4F6FA; --mute:#8B95A7; --line:#273142;
+    --ok:#4ADE80; --okbg:rgba(34,197,94,.14); --warn:#FACC15; --warnbg:rgba(250,204,21,.14); --bad:#FCA5A5; --badbg:rgba(239,68,68,.16);
+    --acc:#F5A623; --acc2:#FFB83D; --blue:#93C5FD; --bluebg:rgba(59,130,246,.16); --head:#0A0F18;
+    --fdp-surface:#1E2735; --fdp-accent-soft:rgba(245,166,35,.14); --fdp-on-acc:#1A1304;
+    --fdp-shadow:0 10px 30px rgba(0,0,0,.35); --fdp-ring:0 0 0 3px rgba(245,166,35,.40);
+  }
+}
+html, body { font-family:"Inter", "Noto Sans Bengali", "Segoe UI", "Nirmala UI", system-ui, -apple-system, Roboto, sans-serif !important; -webkit-font-smoothing:antialiased; }
+body { background:var(--bg); color:var(--ink); }
+h1, h2 { letter-spacing:-.02em; }
+h1 { font-weight:800; }
+.card, section.card, .box { border-radius:20px !important; border-color:var(--line) !important; box-shadow:var(--fdp-shadow); }
+button, .btn, a.btn, input[type="submit"] { border-radius:999px; }
+button.primary, .btn.primary, .primary, button[type="submit"] { background:var(--acc); border-color:var(--acc); color:var(--fdp-on-acc); }
+input:not([type="checkbox"]):not([type="radio"]), select, textarea { border-radius:12px; background-color:var(--fdp-surface); color:var(--ink); border-color:transparent; }
+input:not([type="checkbox"]):not([type="radio"]):focus, select:focus, textarea:focus { outline:none; border-color:var(--acc) !important; box-shadow:var(--fdp-ring); }
+table { border-collapse:separate; border-spacing:0; }
+th { background:var(--fdp-surface); color:var(--mute); font-weight:600; }
+th:first-child { border-radius:12px 0 0 12px; } th:last-child { border-radius:0 12px 12px 0; }
+.pill, .tag, .chip, .badge { border-radius:999px; }
+a { color:var(--acc); }
