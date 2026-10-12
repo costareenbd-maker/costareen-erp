@@ -79,6 +79,10 @@ export async function investorReturns(ctx) {
     const funds = await ctx.tx`select id, holder_no, reference, pct from lot_funding where business_id = ${ctx.biz} and voided_at is null`;
     const prof = {};
     for (const r of rows) (prof[r.fid] = prof[r.fid] || {})[str(r.m)] = num(r.profit);
+    // a late bill's part for units already sold lowers that month's profit on the shipment (111)
+    const late = {};
+    for (const r of await ctx.tx`select reference, month, sum(sold_part) as s from late_costs where business_id = ${ctx.biz} group by 1, 2`) (late[str(r.reference)] = late[str(r.reference)] || {})[str(r.month)] = num(r.s);
+    for (const f of funds) { const lt = late[str(f.reference)] || {}; for (const m of Object.keys(lt)) { const p = prof[f.id] = prof[f.id] || {}; p[m] = num(p[m]) - lt[m]; } }
     const hold = funds.length ? await holdingFor(ctx, await lotMonths(ctx)) : { byRef: {} };
     for (const f of funds) {
       const id = str(f.holder_no), t = terms[id];

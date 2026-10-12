@@ -340,6 +340,11 @@ export async function pubRoute(deps, req, R) {
       if (!r) return { status: 405, body: { ok: false } };
       return { status: 200, body: { ok: true, ...r } };
     }
+    // the investor's own page (handlers/investorportal.js): the link and the 8-digit code are the gate
+    if (what === 'investor') {
+      const r = await (await import('./investorportal.js')).route(deps, R || {}, req.method, u.searchParams, body, ip);
+      return { status: 200, body: { ok: true, ...r } };
+    }
     if (what === 'my' && req.method === 'POST') return { status: 200, body: { ok: true, ...(await myAction(deps, R || {}, body, ip)) } };
     if (req.method !== 'GET') return { status: 405, body: { ok: false } };
     if (what === 'check') return { status: 200, body: { ok: true, ...(await checkSerial(deps, u.searchParams.get('s'), ip)) } };

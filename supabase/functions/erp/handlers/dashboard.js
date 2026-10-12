@@ -779,6 +779,14 @@ export async function pnlFor(ctx, months) {
     return c;
   }, {});
 
+  // 111: the part of a late shipment bill for units already sold is cost of goods of the month it was entered in
+  const lateM = await soft(ctx, async () => {
+    const c = {};
+    for (const r of await ctx.tx`select month, sum(sold_part) as s from late_costs where business_id = ${ctx.biz} group by month`) c[String(r.month)] = num(r.s);
+    return c;
+  }, {});
+  for (const m of months) if (lateM[m]) want[m].cost += lateM[m];
+
   const out = [];
   for (const m of months) {
     const x = want[m];

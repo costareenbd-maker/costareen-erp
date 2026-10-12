@@ -8434,7 +8434,7 @@ function srv(name, args, ok, bad) {
 
 var SRV_ACTIVE = 0, SRV_WRITING = false, SRV_TIMED = {};
 // the same list the server uses to know a call changes nothing (ERP_READS)
-var SRV_READS = /^(erpCommission|erpHolding|erpLotFunding|erpShipments|erpShipment|erpLots|erpFdHead|erpFdDash|erpReceiveMatch|erpAiReader|erpProductSuggest|erpCatalogue|erpPushList|erpCreators|erpCreatorPortalLink|erpSponsorLink|erpCreatorRequests|erpCreatorEvents|erpCreatorProgramme|erpCreatorPreview|erpCreatorCatalog|erpCreatorSources|erpCreatorClaims|erpApps|erpAppQr|erpFeedback|erpRestockOffers|erpRestockList|erpWarrantyRules|erpWarrantyCard|erpMyLink|erpPlatformRegister|erpPlatformDoctor|erpPlatformCommunity|erpMarketWaiting|erpBoard|erpPlatformDesign|erpResell|erpResellerProgramme|erpLoyalty|erpCustomerPoints|erpRefillDue|erpDeliveryHistory|erpDeliveryHistoryMany|erpPrintKit|erpPrintJobs|erpPrintJob|erpPrintCost|erpSpools|erpPrintRequests|erpJoint|erpJointCatalog|erpJointCard|erpInvoiceDesign|erpInvoicePreview|erpMarket|erpMarketMine|erpMarketRequests|erpMarketHints|erpMarketNames|erpWanted|erpBrand|erpComplianceLog|erpProviderKey|erpNews|erpAccessKeys|erpAccessWarning|erpAdmin|erpAiKeys|erpAlertRules|erpAlerts|erpArena|erpBackupStatus|erpBg|erpBnWords|erpBookedParcels|erpBrandLogo|erpBundle|erpBusinessLinks|erpBusinesses|erpBusinessesDeleted|erpCampaignAudience|erpCampaignGet|erpCampaignList|erpCapital|erpCashBook|erpCatalog|erpConnStatus|erpConnections|erpCostBook|erpCourier|erpCourierKeyStatus|erpCurrencies|erpCustomerAccount|erpCustomerCredit|erpCustomerList|erpCustomerPage|erpCustomerStatement|erpCustomers|erpDashboardData|erpDaySales|erpDeliveryOptions|erpDevices|erpDiscontinued|erpDues|erpEvoQr|erpEvoStatus|erpExpenseExport|erpExpenseReceiptUrl|erpExpenses|erpFamilies|erpFighters|erpFormOptions|erpGame|erpGetTheme|erpGoogle|erpHello|erpInstalls|erpInvoice|erpInvoicePdf|erpJob|erpJobs|erpListView|erpLookupCustomer|erpLookupUsage|erpMe|erpMoney|erpNoteFileUrl|erpNotes|erpOwnerChange|erpOwnerChanges|erpParcelLabels|erpParcelPreview|erpPartnerStock|erpPartnership|erpPayReasons|erpPeople|erpPlatform|erpPlatformErrors|erpPnl|erpPnlMonth|erpPoList|erpPoolCatalog|erpProduct|erpProductListShare|erpProductPage|erpProductPhotoUrl|erpProductThumbs|erpProfile|erpQuoteAsset|erpQuoteBoot|erpQuoteGet|erpQuoteList|erpRecentInvoices|erpRecovery|erpReorderPlan|erpRestorePreview|erpReturnPreview|erpRisks|erpSales|erpSearch|erpSecurity|erpSelfTest|erpSerialLookup|erpSerialsFor|erpSessions|erpSetTheme|erpSettingsFull|erpSettingsLists|erpSfPayoutLines|erpSfPayouts|erpShareFile|erpSharedStock|erpSheet|erpStatementPdf|erpStockHistory|erpSupplierPage|erpSuppliers|erpToday|erpUsers|erpWaProductPdf|erpWebMatches|erpWebOrderInvoices|erpWebOrders|erpWebsiteTest)$/;
+var SRV_READS = /^(erpSystemCheck|erpAnalytics|erpCommission|erpHolding|erpLotFunding|erpShipments|erpShipment|erpLots|erpFdHead|erpFdDash|erpReceiveMatch|erpAiReader|erpProductSuggest|erpCatalogue|erpPushList|erpCreators|erpCreatorPortalLink|erpSponsorLink|erpCreatorRequests|erpCreatorEvents|erpCreatorProgramme|erpCreatorPreview|erpCreatorCatalog|erpCreatorSources|erpCreatorClaims|erpApps|erpAppQr|erpFeedback|erpRestockOffers|erpRestockList|erpWarrantyRules|erpWarrantyCard|erpMyLink|erpPlatformRegister|erpPlatformDoctor|erpPlatformCommunity|erpMarketWaiting|erpBoard|erpPlatformDesign|erpResell|erpResellerProgramme|erpLoyalty|erpCustomerPoints|erpRefillDue|erpDeliveryHistory|erpDeliveryHistoryMany|erpPrintKit|erpPrintJobs|erpPrintJob|erpPrintCost|erpSpools|erpPrintRequests|erpJoint|erpJointCatalog|erpJointCard|erpInvoiceDesign|erpInvoicePreview|erpMarket|erpMarketMine|erpMarketRequests|erpMarketHints|erpMarketNames|erpWanted|erpBrand|erpComplianceLog|erpProviderKey|erpNews|erpAccessKeys|erpAccessWarning|erpAdmin|erpAiKeys|erpAlertRules|erpAlerts|erpArena|erpBackupStatus|erpBg|erpBnWords|erpBookedParcels|erpBrandLogo|erpBundle|erpBusinessLinks|erpBusinesses|erpBusinessesDeleted|erpCampaignAudience|erpCampaignGet|erpCampaignList|erpCapital|erpCashBook|erpCatalog|erpConnStatus|erpConnections|erpCostBook|erpCourier|erpCourierKeyStatus|erpCurrencies|erpCustomerAccount|erpCustomerCredit|erpCustomerList|erpCustomerPage|erpCustomerStatement|erpCustomers|erpDashboardData|erpDaySales|erpDeliveryOptions|erpDevices|erpDiscontinued|erpDues|erpEvoQr|erpEvoStatus|erpExpenseExport|erpExpenseReceiptUrl|erpExpenses|erpFamilies|erpFighters|erpFormOptions|erpGame|erpGetTheme|erpGoogle|erpHello|erpInstalls|erpInvoice|erpInvoicePdf|erpJob|erpJobs|erpListView|erpLookupCustomer|erpLookupUsage|erpMe|erpMoney|erpNoteFileUrl|erpNotes|erpOwnerChange|erpOwnerChanges|erpParcelLabels|erpParcelPreview|erpPartnerStock|erpPartnership|erpPayReasons|erpPeople|erpPlatform|erpPlatformErrors|erpPnl|erpPnlMonth|erpPoList|erpPoolCatalog|erpProduct|erpProductListShare|erpProductPage|erpProductPhotoUrl|erpProductThumbs|erpProfile|erpQuoteAsset|erpQuoteBoot|erpQuoteGet|erpQuoteList|erpRecentInvoices|erpRecovery|erpReorderPlan|erpRestorePreview|erpReturnPreview|erpRisks|erpSales|erpSearch|erpSecurity|erpSelfTest|erpSerialLookup|erpSerialsFor|erpSessions|erpSetTheme|erpSettingsFull|erpSettingsLists|erpSfPayoutLines|erpSfPayouts|erpShareFile|erpSharedStock|erpSheet|erpStatementPdf|erpStockHistory|erpSupplierPage|erpSuppliers|erpToday|erpUsers|erpWaProductPdf|erpWebMatches|erpWebOrderInvoices|erpWebOrders|erpWebsiteTest)$/;
 function srvPump() {
   if (!SRV_Q.length) return;
   var isRead = SRV_READS.test(SRV_Q[0].name);
@@ -24271,6 +24271,205 @@ document.addEventListener('click', function (e) {
 });
 var cmsAfterWrite = pagesAfterWrite;
 pagesAfterWrite = function () { CMS.data = null; return cmsAfterWrite.apply(this, arguments); };
+</script>
+
+<!-- fd-10 (FilaDash merge P3): the rest of P3 on the page.
+     Shipment page: "+ A bill after the goods" (erpShipmentLateCost: sold part = cost of sales now, the rest onto the
+     units on the shelf). Capital: "Investor pages" - a private link + 8-digit code per investor (erpInvestorLink).
+     New screens: Overview > Analytics (shipment ROI after holding, dead stock, colours, 12 months), Overview > ERP Mind
+     Map (every screen as a map, built from the menu), Settings > System check (the books checked against themselves). -->
+<style>
+.fdk-st { display:inline-flex; align-items:center; height:24px; padding:0 10px; border-radius:999px; font-size:12px; font-weight:700; }
+.fdk-st.pass { background:var(--fd-positive-soft, var(--good-soft)); color:var(--fd-positive-text, var(--up)); }
+.fdk-st.warn { background:var(--fd-warning-soft, var(--warning-soft)); color:var(--fd-warning-text, var(--warning)); }
+.fdk-st.fail { background:var(--fd-negative-soft, var(--critical-soft)); color:var(--fd-negative-text, var(--critical)); }
+.fdmap svg { width:100%; height:auto; display:block; }
+.fdmap .nd { cursor:pointer; }
+.fdmap .nd rect { fill:var(--fd-card, var(--surface)); stroke:var(--fd-border-strong, var(--ring)); }
+.fdmap .nd:hover rect { stroke:var(--fd-accent, var(--series-1)); stroke-width:2; }
+.fdmap .nd text { font:600 12.5px var(--fd-font, inherit); fill:var(--fd-text, var(--ink)); }
+.fdmap .grp rect { fill:var(--fd-accent-soft, var(--series-1-soft)); stroke:var(--fd-accent-border, var(--series-1)); }
+.fdmap .grp text { font:800 13px var(--fd-font, inherit); fill:var(--fd-accent-text, var(--series-1)); text-transform:uppercase; letter-spacing:.06em; }
+.fdmap .ctr circle { fill:url(#fdmapG); } .fdmap .ctr text { font:800 16px var(--fd-font, inherit); fill:#fff; }
+.fdmap .ln { stroke:var(--fd-border-strong, var(--ring)); stroke-width:1.5; fill:none; }
+</style>
+<script>
+// ---- a bill after the goods, on one shipment
+var viewShipmentLc = viewShipment;
+viewShipment = function () {
+  var h = viewShipmentLc.apply(this, arguments), d = SHP.one;
+  if (!d || d.reference !== SHP.ref || d.opening || !navOn('costs')) return h;
+  var note = '<div class="card" style="margin-top:16px"><div class="chead"><h2>A bill that came after the goods</h2><button class="btn small" type="button" data-lcadd="1">+ Add a bill</button></div>' +
+    '<div class="sub">Duty, freight or an agent’s bill that arrives later. Its part for the units already sold is cost of sales of this month; the rest is added to the cost of the units still on the shelf. Sales already made keep their cost.' +
+    (d.lateSold ? ' So far ' + fmt(d.lateSold) + ' of late bills went to cost of sales.' : '') + '</div></div>';
+  return h + note;
+};
+document.addEventListener('click', function (e) {
+  if (!e.target.closest || !e.target.closest('[data-lcadd]')) return;
+  var opts = (typeof fxAccOpts === 'function') ? fxAccOpts('', 'Paid from…') : '';
+  fdwDialog('A bill for ' + SHP.ref + ' after the goods',
+    '<div class="fields"><div><label class="f" for="lc_l">What for</label><input class="i" id="lc_l" list="l_rvcost" placeholder="Customs duty"></div>' +
+    '<div><label class="f" for="lc_a">Amount (TK)</label><input class="i" id="lc_a" inputmode="decimal"></div>' +
+    '<div><label class="f" for="lc_b">Share it by</label><select class="i" id="lc_b"><option value="value">Value</option><option value="weight">Weight</option><option value="units">Units</option></select></div>' +
+    (opts ? '<div><label class="f" for="lc_acc">Paid from</label><select class="i" id="lc_acc">' + opts + '</select></div>' : '') + '</div>',
+    function (back, close) {
+      srv('erpShipmentLateCost', [{ reference: SHP.ref, label: fdwVal(back, 'lc_l'), amount: num(fdwVal(back, 'lc_a')), basis: fdwVal(back, 'lc_b'), account: fdwVal(back, 'lc_acc') }],
+        function (r) { close(); toast('Added: ' + fmt(r.soldPart) + ' to cost of sales now, ' + fmt(r.shelfPart) + ' onto the units on the shelf.'); SHP.one = null; SHP.list = null; repaint(); },
+        function (er) { toast(esc(er && er.message ? er.message : er), true); });
+    });
+});
+
+// ---- Capital: investor pages
+var viewCapitalFdp = viewCapital;
+viewCapital = function () {
+  var h = viewCapitalFdp.apply(this, arguments);
+  var c = typeof CAPD !== 'undefined' ? CAPD : null;
+  if (!c || !c.canEdit || !c.holders || CAP_TAB === 'partner') return h;
+  var inv = c.holders.filter(function (x) { return x.kind === 'investor' && !x.ended; });
+  if (!inv.length) return h;
+  return h + '<div class="card" style="margin-top:16px"><div class="chead"><h2>Investor pages</h2></div><div class="sub">Each investor can see their own statement on a private page: a link plus an 8-digit code you give them separately. A new link stops the old one.</div>' +
+    '<div class="scroll"><table><thead><tr><th>Investor</th><th>Return</th><th></th></tr></thead><tbody>' + inv.map(function (x) {
+      return '<tr><td><b>' + esc(x.name) + '</b></td><td>' + esc(x.returnKind === 'lot' ? fmt(x.returnValue) + '% of shipment profit' : x.returnKind === 'percent' ? fmt(x.returnValue) + '% a month' : x.returnKind === 'monthly' ? fmt(x.returnValue) + ' a month' : 'nothing fixed') + '</td>' +
+        '<td><button class="btn small primary" type="button" data-invlink="' + esc(x.id) + '">Make page link</button> <button class="btn small" type="button" data-invoff="' + esc(x.id) + '">Switch off</button></td></tr>'; }).join('') + '</tbody></table></div></div>';
+};
+document.addEventListener('click', function (e) {
+  if (!e.target.closest) return;
+  var a = e.target.closest('[data-invlink]');
+  if (a) {
+    srv('erpInvestorLink', [{ holder: a.getAttribute('data-invlink'), api: ERP_API }], function (r) {
+      fdwDialog('Page for ' + r.name,
+        '<div class="dlg-b" style="white-space:normal">Send the link, and give the code separately (say it on the phone). The code is shown only now.</div>' +
+        '<label class="f" style="margin-top:10px">Link</label><input class="i" readonly value="' + esc(r.url) + '" onclick="this.select()">' +
+        '<label class="f" style="margin-top:10px">Code</label><div style="font-size:28px;font-weight:800;letter-spacing:.25em">' + esc(r.code) + '</div>',
+        function (back, close) { close(); });
+    }, function (er) { toast(esc(er && er.message ? er.message : er), true); });
+    return;
+  }
+  var o = e.target.closest('[data-invoff]');
+  if (o) srv('erpInvestorLinkOff', [{ holder: o.getAttribute('data-invoff') }], function (r) { toast(r.off ? 'Their page is switched off.' : 'They had no page.'); }, function (er) { toast(esc(er && er.message ? er.message : er), true); });
+});
+
+// ---- new screens: Analytics, ERP Mind Map, System check
+var FDX = { an: null, anTab: 'roi', chk: null, busy: {} };
+function fdxNav(view, name, icon, afterView) {
+  var after = document.querySelector('#nav button[data-view="' + afterView + '"]');
+  if (!after || document.querySelector('#nav button[data-view="' + view + '"]')) return;
+  var b = document.createElement('button'); b.type = 'button'; b.setAttribute('data-view', view); b.setAttribute('aria-selected', 'false'); b.setAttribute('data-name', name);
+  b.innerHTML = '<span class="ic"><svg viewBox="0 0 24 24">' + icon + '</svg></span>' + name;
+  after.parentNode.insertBefore(b, after.nextSibling);
+  b.addEventListener('click', function () { go(view); });
+}
+fdxNav('analytics', 'Analytics', '<path d="M4 20V10M10 20V4M16 20v-8M22 20H2"/>', 'dash');
+fdxNav('mindmap', 'ERP Mind Map', '<circle cx="12" cy="12" r="3"/><circle cx="4" cy="5" r="2"/><circle cx="20" cy="5" r="2"/><circle cx="4" cy="19" r="2"/><circle cx="20" cy="19" r="2"/><path d="M6 6l4 4M18 6l-4 4M6 18l4-4M18 18l-4-4"/>', 'analytics');
+fdxNav('syscheck', 'System check', '<path d="M12 3l8 4v5c0 5-3.5 8-8 9-4.5-1-8-4-8-9V7z"/><path d="M8.5 12l2.5 2.5 4.5-5"/>', 'tools');
+FDH_SUB.analytics = 'What each shipment really made, what is not selling, colours, a year at a glance';
+FDH_SUB.mindmap = 'Every part of the ERP on one map: click one to open it';
+FDH_SUB.syscheck = 'The books checked against themselves';
+function fdxSync() {
+  var on = navOn('profit');
+  ['analytics', 'syscheck'].forEach(function (v) { var b = document.querySelector('#nav button[data-view="' + v + '"]'); if (b) b.style.display = on ? '' : 'none'; });
+}
+function fdxLoad(name, key) {
+  if (FDX.busy[key]) return; FDX.busy[key] = true;
+  srv(name, [], function (r) { FDX.busy[key] = false; FDX[key] = r; if (VIEW === (key === 'an' ? 'analytics' : 'syscheck')) repaint(); },
+    function (e) { FDX.busy[key] = false; FDX[key] = { error: e && e.message ? e.message : String(e) }; repaint(); });
+}
+function viewAnalytics() {
+  var d = FDX.an;
+  if (!d) { fdxLoad('erpAnalytics', 'an'); return '<div class="loading">Working it out…</div>'; }
+  if (d.error) return '<div class="note err"><div class="ico">!</div><div>' + esc(d.error) + '</div></div>';
+  var tabs = [['roi', 'Shipment ROI'], ['dead', 'Dead stock'], ['colours', 'Colours'], ['growth', '12 months']];
+  var h = '<div class="tabs">' + tabs.map(function (t) { return '<button type="button" data-fxtab="' + t[0] + '" aria-selected="' + (FDX.anTab === t[0]) + '">' + t[1] + '</button>'; }).join('') + '</div><div class="card" style="margin-top:12px">';
+  if (FDX.anTab === 'roi') {
+    h += '<div class="chead"><h2>Shipment ROI</h2></div><div class="sub">Profit after holding cost on what each shipment cost to land. A shipment still selling grows.</div>' +
+      (d.roi.length ? '<div class="scroll"><table><thead><tr><th>Shipment</th><th>Received</th><th class="num">Landed cost</th><th class="num">Sold for</th><th class="num">After holding</th><th class="num">ROI</th><th class="num">Sold</th></tr></thead><tbody>' +
+        d.roi.map(function (x) { return '<tr><td><b>' + esc(x.reference) + '</b><div class="sku">' + esc(x.supplier || '') + '</div></td><td>' + esc(x.date) + '</td><td class="num">' + fmt(x.landed) + '</td><td class="num">' + fmt(x.revenue) + '</td><td class="num">' + fmt(x.net) + '</td><td class="num"><b' + (x.roi < 0 ? ' style="color:var(--critical)"' : '') + '>' + x.roi + '%</b></td><td class="num">' + x.soldPct + '%</td></tr>'; }).join('') + '</tbody></table></div>' : '<div class="empty">No shipments yet.</div>');
+  } else if (FDX.anTab === 'dead') {
+    h += '<div class="chead"><h2>Dead stock</h2></div><div class="sub">Lots on the shelf for 90 days or more with nothing sold from them for 60 days: ' + esc(d.currency) + ' ' + fmt(d.deadValue) + ' sitting still. Think twice before ordering these again.</div>' +
+      (d.dead.length ? '<div class="scroll"><table><thead><tr><th>Product</th><th>Shipment</th><th class="num">Days</th><th class="num">Units</th><th class="num">Worth</th><th>Last sale</th></tr></thead><tbody>' +
+        d.dead.map(function (x) { return '<tr><td>' + esc(x.name) + '<div class="sku">' + esc(x.sku) + '</div></td><td>' + esc(x.reference) + '</td><td class="num">' + x.days + '</td><td class="num">' + fmt(x.units) + '</td><td class="num">' + fmt(x.value) + '</td><td>' + esc(x.lastSale) + '</td></tr>'; }).join('') + '</tbody></table></div>' : '<div class="empty">✓ Nothing is sitting still.</div>');
+  } else if (FDX.anTab === 'colours') {
+    var max = Math.max.apply(null, d.colours.map(function (c) { return c.revenue; }).concat([1]));
+    h += '<div class="chead"><h2>Colours that sell</h2></div><div class="sub">The last 90 days.</div>' +
+      (d.colours.length ? '<div class="rank">' + d.colours.map(function (c) { return '<div><span class="nm">' + esc(c.colour) + ' <span class="sku">' + fmt(c.units) + ' sold</span></span><span class="tr"><i style="width:' + Math.round(c.revenue / max * 100) + '%"></i></span><b>' + fmt(c.revenue) + '</b></div>'; }).join('') + '</div>' : '<div class="empty">No sales in 90 days.</div>');
+  } else {
+    var mx = Math.max.apply(null, d.growth.map(function (g) { return Math.max(g.revenue, Math.abs(g.net)); }).concat([1]));
+    h += '<div class="chead"><h2>12 months</h2></div><div class="sub">Revenue, gross profit and net profit month by month (the P&amp;L’s figures).</div>' +
+      '<div class="scroll"><table><thead><tr><th>Month</th><th class="num">Revenue</th><th class="num">Gross</th><th class="num">Net</th><th style="width:40%"></th></tr></thead><tbody>' +
+      d.growth.slice().reverse().map(function (g) { return '<tr><td>' + esc(g.month) + '</td><td class="num">' + fmt(g.revenue) + '</td><td class="num">' + fmt(g.gross) + '</td><td class="num"' + (g.net < 0 ? ' style="color:var(--critical)"' : '') + '>' + fmt(g.net) + '</td>' +
+        '<td><div class="shp-bar" style="height:8px"><i style="width:' + Math.round(g.revenue / mx * 100) + '%"></i></div></td></tr>'; }).join('') + '</tbody></table></div>';
+  }
+  return h + '</div>';
+}
+function viewSysCheck() {
+  var d = FDX.chk;
+  if (!d) { fdxLoad('erpSystemCheck', 'chk'); return '<div class="loading">Checking the books…</div>'; }
+  if (d.error) return '<div class="note err"><div class="ico">!</div><div>' + esc(d.error) + '</div></div>';
+  var h = '<div class="fdd-grid">' +
+    fdhCard({ key: 'p', title: 'Checks passed', icon: 'trend', v: d.counts.pass, hero: true, note: 'as of ' + d.at }, 'BDT') +
+    fdhCard({ key: 'w', title: 'To look at', icon: 'warn', v: d.counts.warn, tone: d.counts.warn ? 'warn' : '' }, 'BDT') +
+    fdhCard({ key: 'f', title: 'Failed', icon: 'x', v: d.counts.fail, tone: d.counts.fail ? 'bad' : '' }, 'BDT') +
+    '<div class="fdd-c fdd-k" style="justify-content:center;align-items:flex-start"><button class="btn primary" type="button" data-fxrecheck="1">Check again</button></div></div>';
+  h += '<div class="card"><div class="scroll"><table><thead><tr><th></th><th>Check</th><th>Area</th><th>What was found</th></tr></thead><tbody>' +
+    d.checks.slice().sort(function (a, b) { var o = { fail: 0, warn: 1, pass: 2 }; return o[a.status] - o[b.status]; }).map(function (c) {
+      return '<tr' + (c.go && c.status !== 'pass' && navOn(c.go) ? ' data-fdhgo="' + esc(c.go) + '" style="cursor:pointer"' : '') + '><td><span class="fdk-st ' + c.status + '">' + (c.status === 'pass' ? '✓ Pass' : c.status === 'warn' ? '! Look' : '✕ Fail') + '</span></td>' +
+        '<td><b>' + esc(c.title) + '</b><div class="sku">' + esc(c.id) + '</div></td><td>' + esc(c.area) + '</td><td style="white-space:normal">' + esc(c.detail || '') + '</td></tr>'; }).join('') + '</tbody></table></div></div>';
+  return h;
+}
+function viewMindMap() {
+  // the map is the menu itself: groups and their screens, so it never goes out of date
+  var groups = [], cur = null;
+  [].forEach.call(document.querySelectorAll('#nav > *'), function (n) {
+    if (n.classList.contains('navgrp')) { cur = { name: n.textContent.replace(/[▾▸]/g, '').trim(), items: [] }; groups.push(cur); return; }
+    if (n.tagName === 'BUTTON' && n.style.display !== 'none' && n.getAttribute('data-view') && n.getAttribute('data-view') !== 'home' && n.getAttribute('data-view') !== 'mindmap') {
+      if (!cur) { cur = { name: 'Overview', items: [] }; groups.push(cur); }
+      cur.items.push({ view: n.getAttribute('data-view'), name: (n.getAttribute('data-name') || n.textContent).replace(/\d+$/, '').trim() });
+    }
+  });
+  groups = groups.filter(function (g) { return g.items.length; });
+  var W = 1100, cx = W / 2, cy = 420, H = 840, n = groups.length, out = '';
+  groups.forEach(function (g, i) {
+    var a = -Math.PI / 2 + i * 2 * Math.PI / n, gx = cx + Math.cos(a) * 230, gy = cy + Math.sin(a) * 200;
+    out += '<path class="ln" d="M' + cx + ',' + cy + ' L' + gx.toFixed(0) + ',' + gy.toFixed(0) + '"/>';
+    g.items.forEach(function (it, j) {
+      var spread = Math.min(1.1, 0.24 * g.items.length), b = a + (g.items.length > 1 ? (j / (g.items.length - 1) - 0.5) * spread : 0);
+      var ix = cx + Math.cos(b) * 400, iy = cy + Math.sin(b) * 350;
+      it.x = ix; it.y = iy;
+      out += '<path class="ln" d="M' + gx.toFixed(0) + ',' + gy.toFixed(0) + ' L' + ix.toFixed(0) + ',' + iy.toFixed(0) + '"/>';
+    });
+    g.x = gx; g.y = gy;
+  });
+  groups.forEach(function (g) {
+    var w = Math.max(90, g.name.length * 10 + 24);
+    out += '<g class="grp"><rect x="' + (g.x - w / 2).toFixed(0) + '" y="' + (g.y - 16).toFixed(0) + '" width="' + w + '" height="32" rx="16"/><text x="' + g.x.toFixed(0) + '" y="' + (g.y + 5).toFixed(0) + '" text-anchor="middle">' + esc(g.name) + '</text></g>';
+    g.items.forEach(function (it) {
+      var w2 = Math.max(80, it.name.length * 7.4 + 22);
+      out += '<g class="nd" data-mapgo="' + esc(it.view) + '"><rect x="' + (it.x - w2 / 2).toFixed(0) + '" y="' + (it.y - 15).toFixed(0) + '" width="' + w2.toFixed(0) + '" height="30" rx="10"/><text x="' + it.x.toFixed(0) + '" y="' + (it.y + 4).toFixed(0) + '" text-anchor="middle">' + esc(it.name) + '</text></g>';
+    });
+  });
+  var biz = (el('bizName') && el('bizName').textContent) || 'ERP';
+  return '<div class="card fdmap"><svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="ERP mind map"><defs><linearGradient id="fdmapG" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="var(--fd-accent, #5B4FE9)"/><stop offset="1" stop-color="#A84CFB"/></linearGradient></defs>' +
+    out + '<g class="ctr"><circle cx="' + cx + '" cy="' + cy + '" r="62"/><text x="' + cx + '" y="' + (cy + 6) + '" text-anchor="middle">' + esc(biz.slice(0, 14)) + '</text></g></svg></div>';
+}
+var repaintFdx = repaint;
+repaint = function () {
+  fdxSync();
+  var fn = VIEW === 'analytics' ? viewAnalytics : VIEW === 'syscheck' ? viewSysCheck : VIEW === 'mindmap' ? viewMindMap : null;
+  if (!fn) return repaintFdx.apply(this, arguments);
+  el('view').innerHTML = fn();
+  try { fdhPaint(); } catch (e) {}
+  try { fdtEnhance(); } catch (e) {}
+};
+document.addEventListener('click', function (e) {
+  if (!e.target.closest) return;
+  var t = e.target.closest('[data-fxtab]');
+  if (t) { FDX.anTab = t.getAttribute('data-fxtab'); repaint(); return; }
+  if (e.target.closest('[data-fxrecheck]')) { FDX.chk = null; repaint(); return; }
+  var m = e.target.closest('[data-mapgo]');
+  if (m) { go(m.getAttribute('data-mapgo')); window.scrollTo(0, 0); }
+});
+var fdxAfterWrite = pagesAfterWrite;
+pagesAfterWrite = function () { FDX.an = null; FDX.chk = null; return fdxAfterWrite.apply(this, arguments); };
 </script>
 
 </body>

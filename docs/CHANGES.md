@@ -1594,3 +1594,21 @@ see only their own. Investor returns may now be negative (holding) and count as 
 Tests: holding (20), commission (22); all 103 suites green. Dev demo: rules 2% of sales for everyone, 10% of printer profit;
 October shop rent 15,000 (Rent); opening lots dated 1 Oct.
 NOT done: commission per salesperson from sold_by on mirrored invoices (pools); a month close that freezes commission.
+
+## p3-end - late bills, investor page, System check, Analytics, Mind Map (13 Oct 2026)
+
+111_late_cost.sql + erpShipmentLateCost: a bill for a shipment after the goods - a shipment_costs row (money out), shared
+over its lots by value / weight / units; per lot the part for units already gone is cost of goods of this month (pnlFor
+adds late_costs.sold_part by month; shipments and shipment investors count it), the rest raises the unit cost of the
+lots' units still on the shelf. Sales already made keep their cost.
+112_investor_links.sql + handlers/investorportal.js + web/investor.html: owner makes a link (secret, hash kept) + an
+8-digit code (hash kept, shown once) per investor; ?pub=investor GET says whose page (no figures), POST with the code
+gives their statement (capital, earned by month, paid, owed, shipments funded with holding and earned); 5 wrong codes
+lock it 15 min, 60 tries an hour per address; a new link replaces the old; switch off. deploy.py ships investor.html.
+handlers/insight.js: erpSystemCheck (S1 lots = stock, S2 lot arithmetic, S3 no negative stock, S4 stock without cost,
+S5 weights when holding is on, M1 invoices add up, M2 overpaid, M3 payments in no account, M4 uncosted lines this month,
+C1 shares <= 100%, C2 shipment funding <= 100%, P1 dashboard net = P&L net); erpAnalytics (shipment ROI after holding,
+dead stock 90+ days unsold for 60, colours 90 days, 12 months). Page fd-10: shipment "+ Add a bill", Capital "Investor
+pages", Overview > Analytics, Overview > ERP Mind Map (built from the menu), Settings > System check.
+Tests: latecost (18), investorportal (13), insight (14).
+NOT done: an investor statement PDF; investor pages for company copies (tenants) - own business only.

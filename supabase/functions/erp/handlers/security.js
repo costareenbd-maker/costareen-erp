@@ -19,6 +19,8 @@ const WORDS = {
   erpFixInvoice: 'Changed an invoice', erpReturnGoods: 'Took goods back', erpSettleDue: 'Received a payment',
   erpTakeAdvance: 'Took an advance', erpSaveProduct: 'Saved a product', erpSetProductStatus: 'Changed a product’s status',
   erpCommissionRuleSave: 'Set a commission rule', erpCommissionRuleVoid: 'Removed a commission rule', erpCommissionPay: 'Paid commission',
+  erpInvestorLink: 'Made an investor page link', erpInvestorLinkOff: 'Switched an investor page off',
+  erpShipmentLateCost: 'Added a cost after the goods',
   erpHoldingSave: 'Changed how holding cost is shared',
   erpLotFund: 'Recorded who funded a shipment', erpLotFundVoid: 'Struck out a shipment funding',
   erpPoStage: 'Moved an order along', erpProductSizes: 'Set product sizes',

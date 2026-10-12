@@ -11,6 +11,15 @@ import { str } from '../lib/tabs.js';
 import { formatDate, num, round2 } from '../lib/time.js';
 import { products } from './dashboard.js';
 import { holdingFor, lotMonths } from './holding.js';
+import { powerOn } from '../allow.js';
+import { assertOpen } from '../lib/period.js';
+
+/** The sold part of late costs: { reference: amount } (cost of sales of the month they were entered in). */
+export async function lateSold(ctx) {
+  const out = {};
+  for (const r of await ctx.tx`select reference, sum(sold_part) as s from late_costs where business_id = ${ctx.biz} group by reference`) out[str(r.reference)] = num(r.s);
+  return out;
+}
 
 const sumM = (o) => Object.values(o || {}).reduce((t, v) => t + num(v), 0);
 
@@ -114,7 +123,12 @@ export async function erpShipments(ctx) {
              costKnown: s.uncosted === 0, status: s.unitsLeft <= 0 ? 'Sold out' : s.sold > 0 ? 'Selling' : 'In stock' };
   });
   const hold = await holdingFor(ctx, await lotMonths(ctx));
-  list.forEach((x) => { x.holding = R(sumM(hold.byRef[x.reference])); x.net = x.profit - x.holding; });
+  const late = await lateSold(ctx);
+  list.forEach((x) => {
+    // a cost that came after the goods: the part for units already sold is a cost of these sales (111)
+    if (late[x.reference]) { x.cost += R(late[x.reference]); x.profit -= R(late[x.reference]); x.margin = x.revenue > 0 ? Math.round(x.profit / x.revenue * 1000) / 10 : 0; }
+    x.holding = R(sumM(hold.byRef[x.reference])); x.net = x.profit - x.holding;
+  });
   const t = list.filter((x) => !x.opening);
   return { currency: 'BDT', shipments: list, holdingOn: hold.on, holdingCategories: hold.categories, noWeight: hold.noWeight,
            totals: { count: t.length, landed: t.reduce((a, x) => a + x.landed, 0), leftValue: t.reduce((a, x) => a + x.leftValue, 0),
@@ -149,7 +163,7 @@ export async function erpShipment(ctx, payload) {
   const bill = opening ? null : (await ctx.tx`select supplier, amount, fx_amount, fx_currency, fx_rate from supplier_bills
                                                where business_id = ${ctx.biz} and reference = ${ref} limit 1`)[0] || null;
   return { reference: ref, opening, supplier: str(lots[0].supplier), date: formatDate(lots[0].received_at, 'd MMM yyyy, h:mm a'), currency: 'BDT', lines, extra,
-           holdingOn: hold.on, holdingCategories: hold.categories,
+           holdingOn: hold.on, holdingCategories: hold.categories, lateSold: opening ? 0 : R((await lateSold(ctx))[ref] || 0),
            bill: bill ? { supplier: str(bill.supplier), amount: R(bill.amount), fx: num(bill.fx_amount) ? num(bill.fx_amount) + ' ' + str(bill.fx_currency) + ' @ ' + num(bill.fx_rate) : '' } : null };
 }
 
@@ -235,4 +249,59 @@ export async function erpLotFundVoid(ctx, payload) {
   return erpLotFunding(ctx, { reference: str(r[0].reference) });
 }
 
-export const HANDLERS = { erpShipments, erpShipment, erpLots, erpLotFunding, erpLotFund, erpLotFundVoid };
+/**
+ * A bill for a shipment that came after the goods (111): the money leaves the account named (a shipment cost, as
+ * freight does); shared over the shipment's lots by value, weight or units; per lot the units already gone take
+ * their part as cost of sales of this month, the units still on the shelf get the rest added to their cost.
+ */
+export async function erpShipmentLateCost(ctx, payload) {
+  payload = payload || {};
+  if (!powerOn(ctx.s, 'costs')) throw new Error('Your account cannot change what goods cost.');
+  const ref = str(payload.reference), label = str(payload.label).slice(0, 60), amount = round2(num(payload.amount));
+  const basis = str(payload.basis) || 'value';
+  if (!ref) throw new Error('Which shipment?');
+  if (!label) throw new Error('Say what the bill is for (duty, freight, agent...).');
+  if (!(amount > 0)) throw new Error('How much is the bill?');
+  if (!{ value: 1, weight: 1, units: 1 }[basis]) throw new Error('Share it by value, by weight or by units.');
+  await assertOpen(ctx, ctx.now, 'a cost cannot be added to it');
+  await ctx.tx`select pg_advisory_xact_lock(hashtext(${'stock:' + ctx.biz}))`;
+  const lots = await ctx.tx`
+    select l.id, l.qty_in, l.qty_left, coalesce(l.unit_cost, 0) as unit_cost,
+           greatest(coalesce(p.weight_g, 0), case when p.length_mm > 0 and p.width_mm > 0 and p.height_mm > 0 then p.length_mm * p.width_mm * p.height_mm / 6000 else 0 end) as g,
+           p.name
+    from stock_lots l join products p on p.id = l.product_id
+    where l.business_id = ${ctx.biz} and l.reference = ${ref} and l.source = 'receive' and l.qty_in > 0 for update of l`;
+  if (!lots.length) throw new Error('No shipment called "' + ref + '".');
+  const measure = (l) => basis === 'weight' ? num(l.g) * num(l.qty_in) : basis === 'units' ? num(l.qty_in) : num(l.unit_cost) * num(l.qty_in);
+  if (basis === 'weight') { const miss = lots.filter((l) => !(num(l.g) > 0)); if (miss.length) throw new Error('Give the weight of ' + miss.map((l) => str(l.name)).slice(0, 3).join(', ') + ' to share it by weight.'); }
+  let of = lots.reduce((t, l) => t + measure(l), 0);
+  const byUnits = !(of > 0);
+  if (byUnits) of = lots.reduce((t, l) => t + num(l.qty_in), 0);
+  let sold = 0, shelf = 0;
+  const split = [];
+  for (const l of lots) {
+    const share = amount * (byUnits ? num(l.qty_in) : measure(l)) / of;
+    const left = num(l.qty_left), inq = num(l.qty_in);
+    const onShelf = left > 0 ? share * left / inq : 0;
+    const gone = share - onShelf;
+    const before = num(l.unit_cost), after = left > 0 ? round2(before + onShelf / left) : before;
+    if (left > 0) await ctx.tx`update stock_lots set unit_cost = ${after} where id = ${l.id}`;
+    sold += gone; shelf += onShelf;
+    split.push({ lot: l.id, product: str(l.name), share: round2(share), sold: round2(gone), shelf: round2(onShelf), before, after });
+  }
+  sold = round2(sold); shelf = round2(amount - sold);
+  let acc = null;
+  if (str(payload.account)) {
+    const a = await ctx.tx`select id from money_accounts where business_id = ${ctx.biz} and id::text = ${str(payload.account)} and not archived`;
+    acc = a[0] ? a[0].id : null;
+  }
+  const who = str(ctx.s.name) || 'Someone';
+  const c = await ctx.tx`insert into shipment_costs (business_id, reference, at, label, amount, account_id, by)
+                         values (${ctx.biz}, ${ref}, ${ctx.now}, ${label + ' (after the goods)'}, ${amount}, ${acc}, ${who}) returning id`;
+  await ctx.tx`insert into late_costs (business_id, reference, month, label, amount, basis, sold_part, shelf_part, split, cost_id, by)
+               values (${ctx.biz}, ${ref}, ${formatDate(ctx.now, 'yyyy-MM')}, ${label}, ${amount}, ${basis}, ${sold}, ${shelf}, ${JSON.stringify(split)}::jsonb, ${c[0].id}, ${who})`;
+  Object.keys(ctx.memo).forEach((k) => { if (k.indexOf('pnl:') === 0 || k === 'lotStock' || k === 'invReturns') delete ctx.memo[k]; });
+  return { ok: true, reference: ref, amount, soldPart: sold, shelfPart: shelf, split };
+}
+
+export const HANDLERS = { erpShipments, erpShipment, erpLots, erpLotFunding, erpLotFund, erpLotFundVoid, erpShipmentLateCost };

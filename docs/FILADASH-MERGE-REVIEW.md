@@ -101,3 +101,14 @@ The live ERP keeps running unchanged until P5.
 - **No sign-in on the dev copy and the local copy (owner's decision):** the page carries an "Open demo" key
   (`ERP_DEV_OPEN_KEY` in secrets.env; locally the owner key). `build.py` refuses to stamp it for the live server.
   **Before the merged ERP goes live (P5): sign-in comes back** - the open key is not stamped and is revoked.
+
+## 7. Progress (13 Oct 2026)
+
+| Phase | State |
+|---|---|
+| P0 | Done: costareen-dev project, demo data, GitHub repo, dev + local copies open without sign-in |
+| P1 | Done: fd-1 design system over every screen (Look: FilaDash / Classic) |
+| P2 | Done: fd-2 dashboard (erpFdDash, group drop-down), fd-3 screen heads (erpFdHead), fd-4 table toolbar |
+| P3 | Done: FIFO lots + Shipments (107), chargeable weight + order stages (108), investors per shipment (109), holding cost, commission (110), late bills (111), investor page (112), System check, Analytics, ERP Mind Map |
+| P4 | Next: our own extras in his layout (courier, website, campaigns, quotations, repairs, print jobs, network pages, joint stock, creators, AI) |
+| P5 | Later: sign-in back on, cost book up to date, then live data moves to the merged ERP after a dry run |

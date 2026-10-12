@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<meta name="referrer" content="no-referrer">
+<title>Investor statement</title>
+<style>
+@font-face { font-family:"Inter"; font-style:normal; font-weight:100 900; font-display:swap; src:url("fonts/Inter-latin-var.woff2") format("woff2"); }
+@font-face { font-family:"Noto Sans Bengali"; font-style:normal; font-weight:100 900; font-display:swap; src:url("fonts/NotoSansBengali-Regular.ttf") format("truetype"); unicode-range:U+0980-09FF; size-adjust:92%; }
+:root { --bg:#F6F7FB; --card:#FFFFFF; --s2:#F1F2F7; --border:#E8EAF1; --text:#14172B; --text2:#4B5068; --text3:#6B7190;
+  --accent:#5B4FE9; --onaccent:#fff; --grad:linear-gradient(135deg, #3D8BFD 0%, #6B5CFF 52%, #A84CFB 100%); --pos:#0B7F49; --neg:#DC2626;
+  --shadow:0 1px 2px rgba(20,23,43,.04), 0 10px 30px rgba(20,23,43,.06); color-scheme:light; }
+@media (prefers-color-scheme: dark) {
+  :root { --bg:#0F1621; --card:#161E2B; --s2:#1E2735; --border:#273142; --text:#F4F6FA; --text2:#C5CCD8; --text3:#8B95A7;
+    --accent:#F5A623; --onaccent:#1A1304; --grad:radial-gradient(120% 110% at 0% 0%, rgba(245,166,35,.25), transparent 60%), #161E2B; --pos:#4ADE80; --neg:#FCA5A5;
+    --shadow:0 10px 30px rgba(0,0,0,.35); color-scheme:dark; }
+}
+* { box-sizing:border-box; }
+body { margin:0; background:var(--bg); color:var(--text); font:15px/1.5 "Inter", "Noto Sans Bengali", "Segoe UI", system-ui, sans-serif; -webkit-font-smoothing:antialiased; }
+.wrap { max-width:980px; margin:0 auto; padding:28px 16px 48px; }
+.eyebrow { font-size:12px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:var(--text3); }
+h1 { font-size:28px; font-weight:800; letter-spacing:-.02em; margin:2px 0 4px; }
+.sub { color:var(--text3); font-size:14px; }
+.card { background:var(--card); border:1px solid var(--border); border-radius:20px; padding:22px 24px; box-shadow:var(--shadow); margin-top:18px; }
+.grid { display:grid; grid-template-columns:repeat(4, minmax(0,1fr)); gap:16px; margin-top:20px; }
+.k { background:var(--card); border:1px solid var(--border); border-radius:20px; padding:20px; box-shadow:var(--shadow); min-height:120px; display:flex; flex-direction:column; }
+.k.hero { background:var(--grad); color:#fff; border-color:transparent; }
+.k b { font-size:clamp(22px, 3vw, 30px); font-weight:800; letter-spacing:-.02em; margin-top:auto; white-space:nowrap; }
+.k b small { font-size:.55em; opacity:.75; margin-right:4px; }
+.k span { font-size:14px; color:var(--text2); margin-top:4px; } .k.hero span { color:rgba(255,255,255,.9); }
+@media (prefers-color-scheme: dark) { .k.hero { color:var(--text); } .k.hero b { color:var(--accent); } .k.hero span { color:var(--text2); } }
+h2 { font-size:18px; margin:0 0 4px; }
+table { width:100%; border-collapse:separate; border-spacing:0; font-size:14px; margin-top:12px; }
+th { background:var(--s2); color:var(--text3); font-size:12.5px; font-weight:600; text-align:left; height:38px; padding:0 12px; white-space:nowrap; }
+th:first-child { border-radius:12px 0 0 12px; } th:last-child { border-radius:0 12px 12px 0; }
+td { padding:10px 12px; border-bottom:1px solid var(--border); white-space:nowrap; }
+tr:last-child td { border-bottom:0; }
+.n { text-align:right; font-variant-numeric:tabular-nums; }
+.neg { color:var(--neg); } .pos { color:var(--pos); }
+.scroll { overflow-x:auto; }
+.gate { max-width:420px; margin:12vh auto 0; text-align:center; }
+.gate input { width:100%; font:inherit; font-size:26px; letter-spacing:.3em; text-align:center; padding:12px; border-radius:14px; border:1px solid var(--border); background:var(--s2); color:var(--text); margin-top:14px; }
+.gate input:focus { outline:none; border-color:var(--accent); box-shadow:0 0 0 3px rgba(91,79,233,.3); }
+button { font:inherit; font-weight:700; border:0; border-radius:999px; height:44px; padding:0 22px; background:var(--accent); color:var(--onaccent); cursor:pointer; margin-top:14px; width:100%; }
+.err { color:var(--neg); margin-top:12px; min-height:20px; }
+.foot { margin-top:22px; color:var(--text3); font-size:12.5px; text-align:center; }
+@media (max-width:700px) { .grid { grid-template-columns:repeat(2, minmax(0,1fr)); gap:10px; } .k { min-height:96px; padding:14px; } h1 { font-size:22px; } .card { padding:16px; } }
+</style>
+</head>
+<body>
+<div class="wrap" id="app"><div class="gate"><div class="sub">Loading…</div></div></div>
+<script>
+(function () {
+  var q = new URLSearchParams(location.search);
+  var T = q.get('t') || '';
+  var API = q.get('api') || 'https://oqzcuuytytqadqjlwdsh.supabase.co/functions/v1/erp';
+  if (!/^https:\/\/[a-z0-9.-]+\/functions\/v1\/erp$|^http:\/\/localhost:\d+\/$/.test(API)) API = 'https://oqzcuuytytqadqjlwdsh.supabase.co/functions/v1/erp';
+  try { history.replaceState(null, '', location.pathname); } catch (e) {}     // the secret leaves the address bar
+  var app = document.getElementById('app');
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+  function fmt(n) { return Math.round(Number(n) || 0).toLocaleString('en-US'); }
+  function money(n) { return '<small>BDT</small>' + fmt(n); }
+  function api(method, body) {
+    var url = API + (API.indexOf('?') >= 0 ? '&' : '?') + 'pub=investor' + (method === 'GET' ? '&t=' + encodeURIComponent(T) : '');
+    return fetch(url, method === 'GET' ? { method: 'GET' } : { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) })
+      .then(function (r) { return r.json(); });
+  }
+  function gate(info, err) {
+    app.innerHTML = '<div class="gate"><div class="eyebrow">' + esc(info.business || '') + '</div><h1>Hello' + (info.name ? ', ' + esc(info.name) : '') + '</h1>' +
+      '<div class="sub">Type the 8-digit code you were given to see your statement.</div>' +
+      '<input id="code" inputmode="numeric" autocomplete="one-time-code" maxlength="8" placeholder="••••••••">' +
+      '<button id="go" type="button">Open my statement</button><div class="err" id="err">' + esc(err || '') + '</div></div>';
+    var c = document.getElementById('code'), b = document.getElementById('go');
+    c.focus();
+    function send() {
+      b.disabled = true; b.textContent = 'Opening…';
+      api('POST', { t: T, code: c.value }).then(function (r) {
+        if (!r.ok) { gate(info, r.error || 'Could not open it.'); return; }
+        show(r);
+      }).catch(function () { gate(info, 'No connection. Try again.'); });
+    }
+    b.addEventListener('click', send);
+    c.addEventListener('keydown', function (e) { if (e.key === 'Enter') send(); });
+  }
+  function show(d) {
+    var h = '<div class="eyebrow">' + esc(d.business) + ' · investor statement</div><h1>' + esc(d.name) + '</h1>' +
+      '<div class="sub">' + esc(d.terms) + (d.since ? ' · since ' + esc(d.since) : '') + ' · as of ' + esc(d.asOf) + '</div>' +
+      '<div class="grid"><div class="k hero"><b>' + money(d.capital) + '</b><span>Your money in the business</span></div>' +
+      '<div class="k"><b>' + money(d.earnedDue) + '</b><span>Earned (months finished)</span></div>' +
+      '<div class="k"><b>' + money(d.paid) + '</b><span>Paid to you</span></div>' +
+      '<div class="k"><b class="' + (d.owed < 0 ? 'neg' : '') + '">' + money(d.owed) + '</b><span>Still owed to you' + (d.building ? ' · ' + fmt(d.building) + ' building this month' : '') + '</span></div></div>';
+    if (d.shipments && d.shipments.length) h += '<div class="card"><h2>Shipments you funded</h2><div class="sub">Your share of each shipment: what it cost, what of it sold, the money that came back, the profit on it (after the cost of holding the stock) and what you earn of it.</div>' +
+      '<div class="scroll"><table><thead><tr><th>Shipment</th><th class="n">Your share</th><th class="n">Your money</th><th class="n">Units sold</th><th class="n">Money back</th><th class="n">Profit</th><th class="n">Holding</th><th class="n">You earn</th></tr></thead><tbody>' +
+      d.shipments.map(function (s) {
+        return '<tr><td><b>' + esc(s.reference) + '</b></td><td class="n">' + fmt(s.share) + '%</td><td class="n">' + fmt(s.funded) + '</td><td class="n">' + s.soldUnits + ' of ' + s.unitsFunded + '</td>' +
+          '<td class="n">' + fmt(s.recovered) + '</td><td class="n">' + fmt(s.profit) + '</td><td class="n">' + fmt(s.holding) + '</td><td class="n ' + (s.earned < 0 ? 'neg' : 'pos') + '"><b>' + fmt(s.earned) + '</b></td></tr>'; }).join('') +
+      '</tbody></table></div></div>';
+    if (d.months && d.months.length) h += '<div class="card"><h2>Month by month</h2><div class="scroll"><table><thead><tr><th>Month</th><th class="n">Earned</th></tr></thead><tbody>' +
+      d.months.map(function (m) { return '<tr><td>' + esc(m.month) + (m.running ? ' <span class="sub">(so far)</span>' : '') + '</td><td class="n ' + (m.earned < 0 ? 'neg' : '') + '">' + fmt(m.earned) + '</td></tr>'; }).join('') + '</tbody></table></div></div>';
+    if (d.lines && d.lines.length) h += '<div class="card"><h2>Money in and out</h2><div class="scroll"><table><thead><tr><th>Date</th><th>What</th><th class="n">Amount</th><th>Note</th></tr></thead><tbody>' +
+      d.lines.map(function (l) { return '<tr><td>' + esc(l.date) + '</td><td>' + esc(l.what) + '</td><td class="n">' + fmt(l.amount) + '</td><td>' + esc(l.note) + '</td></tr>'; }).join('') + '</tbody></table></div></div>';
+    h += '<div class="foot">This page shows only your own figures. Keep the link and the code to yourself.</div>';
+    app.innerHTML = h;
+  }
+  if (!T) { app.innerHTML = '<div class="gate"><h1>Investor statement</h1><div class="sub">Open the link you were given.</div></div>'; return; }
+  api('GET').then(function (r) {
+    if (!r.ok) { app.innerHTML = '<div class="gate"><h1>Investor statement</h1><div class="err">' + esc(r.error || 'This link does not work.') + '</div></div>'; return; }
+    gate(r, '');
+  }).catch(function () { app.innerHTML = '<div class="gate"><h1>Investor statement</h1><div class="err">No connection. Try again.</div></div>'; });
+})();
+</script>
+</body>
+</html>
