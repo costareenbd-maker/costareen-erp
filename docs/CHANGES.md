@@ -1637,3 +1637,14 @@ Fix found by it - 113_lots_begin_all.sql: every product gets its opening lot at 
 so the month's holding cost is shared over all stock, not only over products that moved since 107.
 System check wording M4: the P&L uses today's cost book for lines sold without a cost.
 deploy.py: the function upload retries (Supabase answered 500 "internal error" now and then).
+
+## cash-1 - daily cash-up, agent advance account, asking prices (13 Oct 2026)
+
+From FilaDash's Payments and Shipments: 114_cash_up.sql + handlers/cashup.js. Money > Cash-up (shareholder and up, as the
+accounts are): count an account by notes (1000..1) or a total; book vs counted; a difference needs a reason and is booked
+at once as a correction (money_moves 'adjust', note 'cash-up: ...'), struck out like any other; the history shows every
+count and difference. Money account kind 'agent' ("Agent advance"): advance money to a cargo agent by transfer, pay
+freight / costs from it on receiving; not counted as money in hand. Shipment page: suggested selling prices = landed x
+(1 + markup) rounded up to 10, markup by brand or the usual one (default 40%, owner sets them: erpAskingSave); tick and
+use (erpAskingApply, 'products' ability). Tests: cashup (19). Page fd-11.
+Note: after a deploy a browser can keep the old page from its offline cache until it is reloaded.

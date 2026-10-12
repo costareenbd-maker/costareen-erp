@@ -23,7 +23,7 @@ import { roleAtLeast } from '../allow.js';
 import { assertOpen } from '../lib/period.js';
 
 const str = (v) => String(v == null ? '' : v).trim();
-const KINDS = { cash: 'Cash', bank: 'Bank', wallet: 'Mobile wallet', courier: 'Courier (holds collected cash)' };
+const KINDS = { cash: 'Cash', bank: 'Bank', wallet: 'Mobile wallet', courier: 'Courier (holds collected cash)', agent: 'Agent advance (money held by a shipping agent)' };
 const isId = (v) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(String(v || ''));
 const when = (d) => (d ? formatDate(new Date(d), 'd MMM yyyy, h:mm a') : '');
 const whoIs = (ctx) => str(ctx.s && ctx.s.name) || 'User';
@@ -171,7 +171,7 @@ export async function erpCashBook(ctx, payload) {
     setup: false, canEdit: owner, currency: 'BDT', kinds: KINDS, methods, rules,
     loose: loose.map((p) => ({ id: p.id, when: when(p.paid_at), customer: str(p.customer), invoice: str(p.invoice_no), amount: num(p.amount), method: str(p.method) })),
     accounts: list, total: list.filter((a) => !a.archived).reduce((t, a) => t + a.balance, 0),
-    inHand: list.filter((a) => !a.archived && a.kind !== 'courier').reduce((t, a) => t + a.balance, 0),
+    inHand: list.filter((a) => !a.archived && a.kind !== 'courier' && a.kind !== 'agent').reduce((t, a) => t + a.balance, 0),   // an agent's advance is not in hand
     account: pick, entries, more,
     unassigned: un.map((p) => ({ id: p.id, payout: str(p.payout_id), when: when(looseDate(p.paid_at) || looseDate(p.created_src)), amount: Math.round(num(p.paid_to_bank)) })),
     today: formatDate(ctx.now, 'yyyy-MM-dd'),

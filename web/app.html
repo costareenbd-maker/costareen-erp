@@ -8434,7 +8434,7 @@ function srv(name, args, ok, bad) {
 
 var SRV_ACTIVE = 0, SRV_WRITING = false, SRV_TIMED = {};
 // the same list the server uses to know a call changes nothing (ERP_READS)
-var SRV_READS = /^(erpSystemCheck|erpAnalytics|erpCommission|erpHolding|erpLotFunding|erpShipments|erpShipment|erpLots|erpFdHead|erpFdDash|erpReceiveMatch|erpAiReader|erpProductSuggest|erpCatalogue|erpPushList|erpCreators|erpCreatorPortalLink|erpSponsorLink|erpCreatorRequests|erpCreatorEvents|erpCreatorProgramme|erpCreatorPreview|erpCreatorCatalog|erpCreatorSources|erpCreatorClaims|erpApps|erpAppQr|erpFeedback|erpRestockOffers|erpRestockList|erpWarrantyRules|erpWarrantyCard|erpMyLink|erpPlatformRegister|erpPlatformDoctor|erpPlatformCommunity|erpMarketWaiting|erpBoard|erpPlatformDesign|erpResell|erpResellerProgramme|erpLoyalty|erpCustomerPoints|erpRefillDue|erpDeliveryHistory|erpDeliveryHistoryMany|erpPrintKit|erpPrintJobs|erpPrintJob|erpPrintCost|erpSpools|erpPrintRequests|erpJoint|erpJointCatalog|erpJointCard|erpInvoiceDesign|erpInvoicePreview|erpMarket|erpMarketMine|erpMarketRequests|erpMarketHints|erpMarketNames|erpWanted|erpBrand|erpComplianceLog|erpProviderKey|erpNews|erpAccessKeys|erpAccessWarning|erpAdmin|erpAiKeys|erpAlertRules|erpAlerts|erpArena|erpBackupStatus|erpBg|erpBnWords|erpBookedParcels|erpBrandLogo|erpBundle|erpBusinessLinks|erpBusinesses|erpBusinessesDeleted|erpCampaignAudience|erpCampaignGet|erpCampaignList|erpCapital|erpCashBook|erpCatalog|erpConnStatus|erpConnections|erpCostBook|erpCourier|erpCourierKeyStatus|erpCurrencies|erpCustomerAccount|erpCustomerCredit|erpCustomerList|erpCustomerPage|erpCustomerStatement|erpCustomers|erpDashboardData|erpDaySales|erpDeliveryOptions|erpDevices|erpDiscontinued|erpDues|erpEvoQr|erpEvoStatus|erpExpenseExport|erpExpenseReceiptUrl|erpExpenses|erpFamilies|erpFighters|erpFormOptions|erpGame|erpGetTheme|erpGoogle|erpHello|erpInstalls|erpInvoice|erpInvoicePdf|erpJob|erpJobs|erpListView|erpLookupCustomer|erpLookupUsage|erpMe|erpMoney|erpNoteFileUrl|erpNotes|erpOwnerChange|erpOwnerChanges|erpParcelLabels|erpParcelPreview|erpPartnerStock|erpPartnership|erpPayReasons|erpPeople|erpPlatform|erpPlatformErrors|erpPnl|erpPnlMonth|erpPoList|erpPoolCatalog|erpProduct|erpProductListShare|erpProductPage|erpProductPhotoUrl|erpProductThumbs|erpProfile|erpQuoteAsset|erpQuoteBoot|erpQuoteGet|erpQuoteList|erpRecentInvoices|erpRecovery|erpReorderPlan|erpRestorePreview|erpReturnPreview|erpRisks|erpSales|erpSearch|erpSecurity|erpSelfTest|erpSerialLookup|erpSerialsFor|erpSessions|erpSetTheme|erpSettingsFull|erpSettingsLists|erpSfPayoutLines|erpSfPayouts|erpShareFile|erpSharedStock|erpSheet|erpStatementPdf|erpStockHistory|erpSupplierPage|erpSuppliers|erpToday|erpUsers|erpWaProductPdf|erpWebMatches|erpWebOrderInvoices|erpWebOrders|erpWebsiteTest)$/;
+var SRV_READS = /^(erpCashUps|erpAskingPrices|erpSystemCheck|erpAnalytics|erpCommission|erpHolding|erpLotFunding|erpShipments|erpShipment|erpLots|erpFdHead|erpFdDash|erpReceiveMatch|erpAiReader|erpProductSuggest|erpCatalogue|erpPushList|erpCreators|erpCreatorPortalLink|erpSponsorLink|erpCreatorRequests|erpCreatorEvents|erpCreatorProgramme|erpCreatorPreview|erpCreatorCatalog|erpCreatorSources|erpCreatorClaims|erpApps|erpAppQr|erpFeedback|erpRestockOffers|erpRestockList|erpWarrantyRules|erpWarrantyCard|erpMyLink|erpPlatformRegister|erpPlatformDoctor|erpPlatformCommunity|erpMarketWaiting|erpBoard|erpPlatformDesign|erpResell|erpResellerProgramme|erpLoyalty|erpCustomerPoints|erpRefillDue|erpDeliveryHistory|erpDeliveryHistoryMany|erpPrintKit|erpPrintJobs|erpPrintJob|erpPrintCost|erpSpools|erpPrintRequests|erpJoint|erpJointCatalog|erpJointCard|erpInvoiceDesign|erpInvoicePreview|erpMarket|erpMarketMine|erpMarketRequests|erpMarketHints|erpMarketNames|erpWanted|erpBrand|erpComplianceLog|erpProviderKey|erpNews|erpAccessKeys|erpAccessWarning|erpAdmin|erpAiKeys|erpAlertRules|erpAlerts|erpArena|erpBackupStatus|erpBg|erpBnWords|erpBookedParcels|erpBrandLogo|erpBundle|erpBusinessLinks|erpBusinesses|erpBusinessesDeleted|erpCampaignAudience|erpCampaignGet|erpCampaignList|erpCapital|erpCashBook|erpCatalog|erpConnStatus|erpConnections|erpCostBook|erpCourier|erpCourierKeyStatus|erpCurrencies|erpCustomerAccount|erpCustomerCredit|erpCustomerList|erpCustomerPage|erpCustomerStatement|erpCustomers|erpDashboardData|erpDaySales|erpDeliveryOptions|erpDevices|erpDiscontinued|erpDues|erpEvoQr|erpEvoStatus|erpExpenseExport|erpExpenseReceiptUrl|erpExpenses|erpFamilies|erpFighters|erpFormOptions|erpGame|erpGetTheme|erpGoogle|erpHello|erpInstalls|erpInvoice|erpInvoicePdf|erpJob|erpJobs|erpListView|erpLookupCustomer|erpLookupUsage|erpMe|erpMoney|erpNoteFileUrl|erpNotes|erpOwnerChange|erpOwnerChanges|erpParcelLabels|erpParcelPreview|erpPartnerStock|erpPartnership|erpPayReasons|erpPeople|erpPlatform|erpPlatformErrors|erpPnl|erpPnlMonth|erpPoList|erpPoolCatalog|erpProduct|erpProductListShare|erpProductPage|erpProductPhotoUrl|erpProductThumbs|erpProfile|erpQuoteAsset|erpQuoteBoot|erpQuoteGet|erpQuoteList|erpRecentInvoices|erpRecovery|erpReorderPlan|erpRestorePreview|erpReturnPreview|erpRisks|erpSales|erpSearch|erpSecurity|erpSelfTest|erpSerialLookup|erpSerialsFor|erpSessions|erpSetTheme|erpSettingsFull|erpSettingsLists|erpSfPayoutLines|erpSfPayouts|erpShareFile|erpSharedStock|erpSheet|erpStatementPdf|erpStockHistory|erpSupplierPage|erpSuppliers|erpToday|erpUsers|erpWaProductPdf|erpWebMatches|erpWebOrderInvoices|erpWebOrders|erpWebsiteTest)$/;
 function srvPump() {
   if (!SRV_Q.length) return;
   var isRead = SRV_READS.test(SRV_Q[0].name);
@@ -24471,6 +24471,121 @@ document.addEventListener('click', function (e) {
 });
 var fdxAfterWrite = pagesAfterWrite;
 pagesAfterWrite = function () { FDX.an = null; FDX.chk = null; return fdxAfterWrite.apply(this, arguments); };
+</script>
+
+<!-- fd-11 (FilaDash merge): Money > Cash-up (count an account by notes or a total; a difference is booked with its reason;
+     the history) and, on a shipment, suggested selling prices (landed cost x the markup by brand, rounded up to 10;
+     tick and use; the owner sets the markups). handlers/cashup.js. The agent's advance is a money account kind
+     ("Agent advance") chosen like any other account; freight paid from it lowers its balance. -->
+<style>
+.cu-notes { display:grid; grid-template-columns:repeat(5, minmax(0, 1fr)); gap:8px; margin-top:8px; }
+.cu-notes label { font-size:12px; color:var(--fd-text-3, var(--muted)); font-weight:600; }
+.cu-notes input { width:100%; }
+.cu-total { font-size:22px; font-weight:800; margin-top:10px; }
+@media (max-width:640px) { .cu-notes { grid-template-columns:repeat(3, minmax(0, 1fr)); } }
+</style>
+<script>
+var CU = { hist: null, busy: false };
+var CU_NOTES = [1000, 500, 200, 100, 50, 20, 10, 5, 2, 1];
+function cuLoad() {
+  if (CU.busy) return; CU.busy = true;
+  srv('erpCashUps', [{}], function (r) { CU.busy = false; CU.hist = r.history || []; if (VIEW === 'cash') repaint(); }, function () { CU.busy = false; CU.hist = []; });
+}
+var viewCashCu = viewCash;
+viewCash = function () {
+  var h = viewCashCu.apply(this, arguments);
+  if (!CASH || CASH.setup || !navOn('cash')) return h;
+  if (!CU.hist) cuLoad();
+  var hist = CU.hist || [];
+  var card = '<div class="card" style="margin-top:16px"><div class="chead"><h2>Cash-up</h2><button class="btn small primary" type="button" data-cuopen="1">Count an account</button></div>' +
+    '<div class="sub">At the end of the day, count what the drawer (or any account) really holds. If it differs from the book, say why: the difference is booked on the account so the book equals the count.</div>';
+  if (!hist.length) card += '<div class="empty">No counts yet.</div>';
+  else card += '<div class="scroll"><table><thead><tr><th>When</th><th>Account</th><th class="num">Book</th><th class="num">Counted</th><th class="num">Difference</th><th>Why</th><th>By</th></tr></thead><tbody>' +
+    hist.slice(0, 30).map(function (x) {
+      return '<tr' + (x.struck ? ' style="opacity:.55;text-decoration:line-through"' : '') + '><td>' + esc(x.when) + '</td><td>' + esc(x.account) + '</td><td class="num">' + fmt(x.book) + '</td><td class="num">' + fmt(x.counted) + '</td>' +
+        '<td class="num"' + (x.variance < 0 ? ' style="color:var(--critical);font-weight:700"' : x.variance > 0 ? ' style="color:var(--good);font-weight:700"' : '') + '>' + (x.variance ? (x.variance > 0 ? '+' : '') + fmt(x.variance) : '✓') + '</td>' +
+        '<td>' + esc(x.note || '') + '</td><td>' + esc(x.by) + '</td></tr>'; }).join('') + '</tbody></table></div>';
+  return h + card + '</div>';
+};
+document.addEventListener('click', function (e) {
+  if (!e.target.closest || !e.target.closest('[data-cuopen]')) return;
+  var accs = (CASH && CASH.accounts || []).filter(function (a) { return !a.archived; });
+  var cashFirst = accs.slice().sort(function (a, b) { return (a.kind === 'cash' ? 0 : 1) - (b.kind === 'cash' ? 0 : 1); });
+  fdwDialog('Count an account',
+    '<div class="fields"><div><label class="f" for="cu_acc">Account</label><select class="i" id="cu_acc">' + cashFirst.map(function (a) {
+      return '<option value="' + esc(a.id) + '" data-bal="' + a.balance + '">' + esc(a.name) + ' (book ' + fmt(a.balance) + ')</option>'; }).join('') + '</select></div></div>' +
+    '<label class="f" style="margin-top:10px">Notes and coins counted</label><div class="cu-notes">' + CU_NOTES.map(function (n) {
+      return '<div><label for="cu_n' + n + '">৳' + n + '</label><input class="i" id="cu_n' + n + '" data-cun="' + n + '" inputmode="numeric" placeholder="0"></div>'; }).join('') + '</div>' +
+    '<div class="fields" style="margin-top:8px"><div><label class="f" for="cu_tot">or type the total</label><input class="i" id="cu_tot" inputmode="decimal" placeholder="total counted"></div>' +
+    '<div><label class="f" for="cu_note">Why it differs (if it does)</label><input class="i" id="cu_note" placeholder="e.g. change given twice"></div></div>' +
+    '<div class="cu-total" id="cu_show"></div>',
+    function (back, close) {
+      var notes = {}, any = false;
+      [].forEach.call(back.querySelectorAll('[data-cun]'), function (i) { var v = Math.round(num(i.value)); if (v) { notes[i.getAttribute('data-cun')] = v; any = true; } });
+      var pl = { account: fdwVal(back, 'cu_acc'), note: fdwVal(back, 'cu_note') };
+      if (any) pl.notes = notes; else pl.counted = fdwVal(back, 'cu_tot');
+      srv('erpCashUp', [pl], function (r) {
+        close(); CU.hist = r.history; CASH = null; loadCash();
+        toast(r.variance ? 'Counted ' + fmt(r.counted) + ': ' + (r.variance > 0 ? '+' : '') + fmt(r.variance) + ' booked on ' + esc(r.account) + '.' : 'Counted ' + fmt(r.counted) + ': the book is right.');
+      }, function (er) { toast(esc(er && er.message ? er.message : er), true); });
+    });
+  // a live total and difference while counting
+  setTimeout(function () {
+    var dlg = document.querySelector('.dlg-back:last-of-type'); if (!dlg) return;
+    var show = function () {
+      var t = 0, any = false;
+      [].forEach.call(dlg.querySelectorAll('[data-cun]'), function (i) { var v = num(i.value); if (v) { any = true; t += v * Number(i.getAttribute('data-cun')); } });
+      if (!any) t = num(fdwVal(dlg, 'cu_tot'));
+      var sel = dlg.querySelector('#cu_acc'), bal = sel ? num(sel.options[sel.selectedIndex].getAttribute('data-bal')) : 0, d = t - bal;
+      dlg.querySelector('#cu_show').innerHTML = (any || fdwVal(dlg, 'cu_tot')) ? 'Counted ৳' + fmt(t) + ' · <span style="color:' + (Math.abs(d) < 0.5 ? 'var(--good)' : 'var(--critical)') + '">' + (Math.abs(d) < 0.5 ? 'matches the book' : (d > 0 ? '+' : '') + fmt(d) + ' against the book') + '</span>' : '';
+    };
+    dlg.addEventListener('input', show); dlg.addEventListener('change', show);
+  }, 0);
+});
+
+// ---- suggested selling prices on one shipment
+var ASK = { ref: '', data: null, busy: false };
+var viewShipmentAsk = viewShipment;
+viewShipment = function () {
+  var h = viewShipmentAsk.apply(this, arguments), d = SHP.one;
+  if (!d || d.reference !== SHP.ref || d.opening || !navOn('costs')) return h;
+  if (ASK.ref !== d.reference) { ASK.ref = d.reference; ASK.data = null; }
+  if (!ASK.data && !ASK.busy) { ASK.busy = true; srv('erpAskingPrices', [{ reference: d.reference }], function (r) { ASK.busy = false; ASK.data = r; if (VIEW === 'shipments' && SHP.ref === r.reference) repaint(); }, function () { ASK.busy = false; ASK.data = { lines: [] }; }); }
+  var x = ASK.data; if (!x || !x.lines.length) return h;
+  var owner = ME && String(ME.role) === 'owner';
+  return h + '<div class="card" style="margin-top:16px"><div class="chead"><h2>Suggested selling prices</h2>' + (owner ? '<button class="btn small" type="button" data-askmk="1">Markups…</button>' : '') + '</div>' +
+    '<div class="sub">Landed cost × (1 + markup), rounded up to 10. Usual markup ' + fmt(x.markup) + '%' + (Object.keys(x.brands || {}).length ? '; by brand: ' + Object.keys(x.brands).map(function (b) { return esc(b) + ' ' + fmt(x.brands[b]) + '%'; }).join(', ') : '') + '. Tick the ones to use; you can change a price first.</div>' +
+    '<div class="scroll"><table><thead><tr><th></th><th>Product</th><th class="num">Landed</th><th class="num">Markup</th><th class="num">Price now</th><th class="num">Suggested</th></tr></thead><tbody>' +
+    x.lines.map(function (l, i) {
+      return '<tr><td><input type="checkbox" data-askck="' + i + '"' + (l.asking !== l.now ? ' checked' : '') + '></td><td>' + esc(l.name) + '<div class="sku">' + esc(l.sku) + ' · ' + esc(l.brand || '') + '</div></td>' +
+        '<td class="num">' + fmt(l.landed) + '</td><td class="num">' + fmt(l.markup) + '%</td><td class="num">' + fmt(l.now) + (l.change !== null && l.change !== 0 ? '<div class="sku">' + (l.change > 0 ? '+' : '') + l.change + '%</div>' : '') + '</td>' +
+        '<td class="num"><input class="i qty" style="width:96px" data-askp="' + i + '" value="' + l.asking + '"></td></tr>'; }).join('') +
+    '</tbody></table></div><div style="margin-top:10px"><button class="btn primary" type="button" data-askuse="1">Use the ticked prices</button></div></div>';
+};
+document.addEventListener('click', function (e) {
+  if (!e.target.closest) return;
+  if (e.target.closest('[data-askuse]')) {
+    var items = [];
+    [].forEach.call(document.querySelectorAll('[data-askck]:checked'), function (c) {
+      var i = Number(c.getAttribute('data-askck')), p = document.querySelector('[data-askp="' + i + '"]');
+      items.push({ sku: ASK.data.lines[i].sku, price: num(p && p.value) });
+    });
+    srv('erpAskingApply', [{ items: items }], function (r) { toast(r.changed + ' selling price(s) set.'); ASK.data = null; repaint(); }, function (er) { toast(esc(er && er.message ? er.message : er), true); });
+    return;
+  }
+  if (e.target.closest('[data-askmk]')) {
+    var b = ASK.data.brands || {}, rows = Object.keys(b).map(function (k) { return k + ' ' + b[k]; }).join('\n');
+    fdwDialog('Markups',
+      '<div class="fields"><div><label class="f" for="mk_def">Usual markup (%)</label><input class="i" id="mk_def" inputmode="decimal" value="' + esc(ASK.data.markup) + '"></div></div>' +
+      '<label class="f" for="mk_b" style="margin-top:10px">By brand: one per line, brand then %</label><textarea class="i" id="mk_b" rows="5" placeholder="Sunlu 35&#10;Bambulab 25">' + esc(rows) + '</textarea>',
+      function (back, close) {
+        var brands = {};
+        String(fdwVal(back, 'mk_b')).split(/\n/).forEach(function (line) { var m = /^(.+?)\s+([\d.]+)\s*%?$/.exec(line.trim()); if (m) brands[m[1].trim()] = Number(m[2]); });
+        srv('erpAskingSave', [{ def: num(fdwVal(back, 'mk_def')), brands: brands, reference: ASK.ref }], function (r) { close(); ASK.data = r; toast('Markups saved.'); repaint(); },
+          function (er) { toast(esc(er && er.message ? er.message : er), true); });
+      });
+  }
+});
 </script>
 
 </body>
