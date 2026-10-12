@@ -34333,5 +34333,59 @@ body:not([data-fdview="dash"]) #view .g-kpi .kpi .v, body:not([data-fdview="dash
 })();
 </script>
 
+<!-- fd-33 (owner 14 Oct 2026): Customers - "Dues by age" removed; the Follow-ups card removed and turned into a
+     "Follow-ups" button beside New invoice / New customer, with the number still open as a badge (red when any is
+     overdue) until they are ticked done. The button opens the list: Done (with what came of it) and + Follow-up. -->
+<style>
+body[data-fdview="customers"] #view .fd19-row2 { display:none !important; }
+.fu-btn { position:relative; display:inline-flex; align-items:center; gap:8px; }
+.fu-btn svg { width:16px; height:16px; }
+.fu-badge { min-width:20px; height:20px; padding:0 6px; border-radius:999px; background:var(--fd-accent, var(--series-1)); color:var(--fd-text-on-accent, #fff); font-size:11.5px; font-weight:800;
+  display:inline-flex; align-items:center; justify-content:center; line-height:1; }
+.fu-badge.late { background:var(--fd-negative, var(--critical)); color:#fff; box-shadow:0 0 0 3px var(--fd-negative-soft, rgba(220,38,38,.15)); }
+#fu_box .empty { padding:18px 0; text-align:center; color:var(--fd-text-3, var(--muted)); }
+#fu_box .fu-top { display:flex; justify-content:space-between; align-items:center; gap:10px; margin-bottom:10px; flex-wrap:wrap; }
+</style>
+<script>
+function fuOpenList() { return ((FU.data && FU.data.followups) || []).filter(function (f) { return f.status === 'open'; }); }
+function fuBtnHtml() {
+  var t = (FU.data && FU.data.totals) || {}, n = fuOpenList().length, late = num(t.overdue) > 0;
+  return '<button class="btn fu-btn" type="button" id="fuBtn" title="' + (n ? n + ' follow-up(s) to do' + (late ? ', ' + t.overdue + ' overdue' : '') : 'Follow-ups') + '">' +
+    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.4 1.8.7 2.7a2 2 0 0 1-.5 2.1L8 9.8a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.7.7a2 2 0 0 1 1.7 2z"/></svg>' +
+    'Follow-ups' + (n ? '<span class="fu-badge' + (late ? ' late' : '') + '">' + n + '</span>' : '') + '</button>';
+}
+function fuBoxHtml() {
+  var open = fuOpenList(), t = (FU.data && FU.data.totals) || {};
+  return '<div class="fu-top"><span class="sub" style="margin:0">' + (open.length ? open.length + ' to call' + (num(t.overdue) ? ' · <b style="color:var(--fd-negative-text,var(--critical))">' + t.overdue + ' overdue</b>' : '') + (num(t.today) ? ' · ' + t.today + ' today' : '') : 'Nobody to call back.') + '</span>' +
+    '<button class="btn small primary" type="button" data-fuadd="1">+ Follow-up</button></div>' +
+    (open.length ? fuTable(open, true) : '<div class="empty">✓ Nothing to follow up. Add one here or from a customer’s page.</div>');
+}
+function fuShowList() {
+  if (!FU.data) fuLoad();
+  fdwDialog('Follow-ups', '<div id="fu_box">' + fuBoxHtml() + '</div>', function (back, close) { close(); });
+  var d = document.querySelector('.dlg-back .dlg'); if (d) d.style.maxWidth = '760px';
+  var ok = d && d.querySelector('.dlg-f .btn.primary'); if (ok) ok.textContent = 'Close';
+}
+function fuHeadPaint() {
+  if (VIEW !== 'customers' || (typeof CUSP !== 'undefined' && CUSP && CUSP.key)) return;
+  if (!FU.data) fuLoad();
+  var old = el('fuBtn'), html = fuBtnHtml();
+  if (old) { if (old.outerHTML !== html) old.outerHTML = html; }
+  else {
+    var nb = [].filter.call(document.querySelectorAll('#view button'), function (b) { return /^\s*(New invoice)\s*$/i.test(b.textContent); })[0];
+    if (nb) nb.insertAdjacentHTML('beforebegin', html);
+  }
+  var box = el('fu_box'); if (box) box.innerHTML = fuBoxHtml();
+}
+var repaintFu = repaint;
+repaint = function () { var r = repaintFu.apply(this, arguments); try { fuHeadPaint(); } catch (e) {} var box = el('fu_box'); if (box) try { box.innerHTML = fuBoxHtml(); } catch (e) {} return r; };
+document.addEventListener('click', function (e) {
+  if (e.target.closest && e.target.closest('#fuBtn')) { e.preventDefault(); fuShowList(); }
+});
+// the list window follows every change (Done, + Follow-up) even when repaint happens behind it
+var fuLoadX = fuLoad;
+fuLoad = function () { var r = fuLoadX.apply(this, arguments); return r; };
+</script>
+
 </body>
 </html>

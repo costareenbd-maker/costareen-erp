@@ -1802,3 +1802,6 @@ marked paid while October rent was a one-off (counted twice on the Expenses scre
   qty / discount, invoice discount, paid), the first is scrolled to, nothing is saved. A price more than 5 % under the
   product's price shows a plain box under the lines asking why.
 - fd-32 widened: the slim figure cards on every screen except the Dashboard.
+- fd-33 (owner): Customers - "Dues by age" removed; the Follow-ups card became a "Follow-ups" button beside New invoice /
+  New customer with a badge of open follow-ups (red when any is overdue) until ticked done; it opens the list (Done,
+  + Follow-up).
