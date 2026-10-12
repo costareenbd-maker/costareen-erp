@@ -1793,3 +1793,6 @@ marked paid while October rent was a one-off (counted twice on the Expenses scre
   checklist right above Save - Save stays off (button, Enter and the sticky bar) until every line is ticked. Phone:
   digits only, must start 01 (nothing else can be typed, no 0 is added for you; +880 numbers still convert), red
   until 11 digits, required. "New sale" left the menu and the + menu; its address opens New invoice.
+- fd-32 (owner): Customers - figure cards a slim strip (377 -> 95 px), Dues by age a short chart, Follow-ups slim
+  (kept: calls due show there), so the list starts much higher. body[data-fdview] marks the open screen for such rules.
+  Walk-in customers keep needing a phone (owner).

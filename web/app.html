@@ -34248,5 +34248,42 @@ if (typeof fdQuickAdd === 'function') {
 if (/#\/sale\b/.test(location.hash)) setTimeout(function () { go('invoice'); }, 0);
 </script>
 
+<!-- fd-32 (owner): Customers - the list is the point. The four figure cards become one slim strip (icon, figure, name,
+     note on one line each), Dues by age a short chart, Follow-ups a slim card (it stays: calls due show there). -->
+<style>
+body[data-fdview="customers"] #view .fd19-kpis { gap:12px; margin-bottom:14px; }
+body[data-fdview="customers"] #view .fd19-kpis .fdd-k { display:grid; grid-template-columns:40px minmax(0, 1fr) auto; grid-template-rows:auto auto; column-gap:12px; row-gap:0;
+  align-items:center; min-height:0 !important; height:auto; padding:12px 14px !important; }
+body[data-fdview="customers"] #view .fd19-kpis .fdd-k .fdd-ktop { grid-row:1 / span 2; grid-column:1; margin:0; display:block; }
+body[data-fdview="customers"] #view .fd19-kpis .fdd-k .fdd-trend { display:none !important; }
+body[data-fdview="customers"] #view .fd19-kpis .fdd-k .fdd-badge { width:40px; height:40px; }
+body[data-fdview="customers"] #view .fd19-kpis .fdd-k .fdd-badge svg { width:19px; height:19px; }
+body[data-fdview="customers"] #view .fd19-kpis .fdd-k .fdd-num { grid-column:2; grid-row:1; font-size:22px !important; line-height:1.15; margin:0 !important; }
+body[data-fdview="customers"] #view .fd19-kpis .fdd-k .fdd-lbl { grid-column:2; grid-row:2; font-size:12.5px; margin:0 !important; line-height:1.3; }
+body[data-fdview="customers"] #view .fd19-kpis .fdd-k .fdd-kn { display:none; }
+body[data-fdview="customers"] #view .fd19-kpis .fdd-k .fdd-i { position:static !important; grid-column:3; grid-row:1 / span 2; }
+body[data-fdview="customers"] #view .fd19-kpis .fdd-k .fdd-cube, body[data-fdview="customers"] #view .fd19-kpis .fdd-k > svg { display:none !important; }
+body[data-fdview="customers"] #view .fd19-row2 { align-items:start !important; gap:12px; margin-bottom:14px; }
+body[data-fdview="customers"] #view .fd19-age { padding:14px 16px !important; }
+body[data-fdview="customers"] #view .fd19-age .fd19-chead { padding-bottom:8px; margin-bottom:6px; }
+body[data-fdview="customers"] #view .fd19-bars svg { height:150px; width:100%; display:block; }
+body[data-fdview="customers"] #view .fd19-row2 > .card { padding:14px 16px !important; min-height:0; height:auto; }
+body[data-fdview="customers"] #view .fd19-row2 > .card .fd19-empty, body[data-fdview="customers"] #view .fd19-row2 > .card .empty { padding:12px 0 !important; min-height:0 !important; display:flex; align-items:center; gap:10px; text-align:left; justify-content:flex-start; }
+body[data-fdview="customers"] #view .fd19-row2 > .card .fd19-empty .fd19-ib { width:32px; height:32px; margin:0; flex:0 0 32px; }
+@media (max-width:760px) {
+  body[data-fdview="customers"] #view .fd19-kpis { grid-template-columns:repeat(2, minmax(0, 1fr)); }
+  body[data-fdview="customers"] #view .fd19-bars svg { height:120px; }
+}
+</style>
+<script>
+// which screen is open, for screen-only styles
+(function () {
+  var mark = function () { try { document.body.setAttribute('data-fdview', VIEW || ''); } catch (e) {} };
+  var t = null, v = el('view');
+  try { if (v) new MutationObserver(function () { clearTimeout(t); t = setTimeout(mark, 0); }).observe(v, { childList: true }); } catch (e) {}
+  mark();
+})();
+</script>
+
 </body>
 </html>
