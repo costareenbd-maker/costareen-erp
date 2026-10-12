@@ -1796,3 +1796,9 @@ marked paid while October rent was a one-off (counted twice on the Expenses scre
 - fd-32 (owner): Customers - figure cards a slim strip (377 -> 95 px), Dues by age a short chart, Follow-ups slim
   (kept: calls due show there), so the list starts much higher. body[data-fdview] marks the open screen for such rules.
   Walk-in customers keep needing a phone (owner).
+- fd-31 revised (owner): no "where the customer came from", no seller pick (the sale is the signed-in person's;
+  commission follows), no "+ New product" on the invoice (Stock entry has it). The checklist box is gone: Save stays
+  clickable and, if anything is wrong, each wrong box turns red with its message (phone, name, product search, a line's
+  qty / discount, invoice discount, paid), the first is scrolled to, nothing is saved. A price more than 5 % under the
+  product's price shows a plain box under the lines asking why.
+- fd-32 widened: the slim figure cards on every screen except the Dashboard.
