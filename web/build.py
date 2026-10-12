@@ -25,5 +25,12 @@ if os.environ.get('ERP_SB_URL') and os.environ.get('ERP_SB_ANON'):
     s = re.sub(r'<link rel="preconnect" href="https://[a-z0-9]+\.supabase\.co"', '<link rel="preconnect" href="%s"' % os.environ['ERP_SB_URL'], s, count=1)
     if n1 != 1 or n2 != 1:
         sys.exit('SB_URL / SB_ANON line not found in app.html')
+# the shared demo/dev copy opens with no sign-in at all; never the live server
+if os.environ.get('ERP_OPEN_KEY'):
+    if api == LIVE or 'oqzcuuytytqadqjlwdsh' in api:
+        sys.exit('ERP_OPEN_KEY is for the dev copy only - refused for the live server')
+    s, n3 = re.subn(r"^var ERP_OPEN_KEY = '[^']*';", "var ERP_OPEN_KEY = '%s';" % os.environ['ERP_OPEN_KEY'], s, count=1, flags=re.M)
+    if n3 != 1:
+        sys.exit('ERP_OPEN_KEY line not found in app.html')
 open(out, 'w', encoding='utf-8', newline='\n').write(s)
 print('built', out, len(s), 'bytes ->', api)

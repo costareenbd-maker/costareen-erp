@@ -122,7 +122,8 @@ def step_web():
         code, keys = api('https://api.supabase.com/v1/projects/%s/api-keys' % REF, token=tok)
         anon = [k['api_key'] for k in keys if k.get('name') == 'anon'][0]
         env = dict(os.environ, ERP_API='https://%s.supabase.co/functions/v1/erp' % REF,
-                   ERP_SB_URL='https://%s.supabase.co' % REF, ERP_SB_ANON=anon)
+                   ERP_SB_URL='https://%s.supabase.co' % REF, ERP_SB_ANON=anon,
+                   ERP_OPEN_KEY=os.environ.get('ERP_DEV_OPEN_KEY', ''))   # demo data only: the dev page opens with no sign-in
     subprocess.check_call([sys.executable, os.path.join(ROOT, 'web', 'build.py')], env=env)
     out = tempfile.mkdtemp(prefix='erp-web-')
     for f in ['index.html', 'manifest.webmanifest', 'sw.js', '_headers', 'check.html', 'my.html', 'confirm.html', 'lite.html', 'doctor.html', 'doctor-data.js', 'quote.html', 'find.html', 'ideas.html', 'choose.html', 'colour-math.js', 'colour-data.js', 'print.html', 'design.html', 'creator.html', 'sponsor.html']:

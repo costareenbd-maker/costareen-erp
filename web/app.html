@@ -8284,8 +8284,11 @@ function erpSetCode(c) {
 }
 
 /** The access key this device holds (it arrived once, in the private link). */
+// Shared demo/dev copy only: build.py stamps a key here so the page opens without any sign-in.
+// Always '' in the live build (build.py refuses to stamp it for the live server).
+var ERP_OPEN_KEY = '';
 function erpKey() {
-  try { return window.localStorage.getItem('erp_key') || ''; } catch (e) { return ''; }
+  try { return window.localStorage.getItem('erp_key') || ERP_OPEN_KEY; } catch (e) { return ERP_OPEN_KEY; }
 }
 function erpSetKey(k) {
   try {

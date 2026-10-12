@@ -93,3 +93,11 @@ The live ERP keeps running unchanged until P5.
   side-by-side run on the same data before they replace anything live.
 - FilaDash's spec was written for prototypebd.com's platform (nginx, FastAPI workers, its order tables). Those
   parts do not apply here and are left out.
+
+## 6. Shared dev copy (P0, 13 Oct 2026)
+
+- `https://costareen-erp-dev.pages.dev` on Supabase project `costareen-dev` (zukqxkcpmxcogbhkdpyw), demo data only.
+  Deploy there with `ERP_TARGET=dev python deploy.py db|function|secrets|web`; other steps are refused.
+- **No sign-in on the dev copy and the local copy (owner's decision):** the page carries an "Open demo" key
+  (`ERP_DEV_OPEN_KEY` in secrets.env; locally the owner key). `build.py` refuses to stamp it for the live server.
+  **Before the merged ERP goes live (P5): sign-in comes back** - the open key is not stamped and is revoked.

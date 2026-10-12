@@ -13,8 +13,8 @@ Needs Python 3.12 and Node 20+ on the PATH.
 
     local\start.cmd
 
-It prints a line `LINK http://localhost:8793/index-local.html#k=...` - open that in the browser; that is the owner.
-Only the link signs in (owner e-mail sign-in is not simulated here). Ctrl+C stops it. The data stays in `local/data`.
+Open http://localhost:8793/index-local.html - no sign-in (demo data only; the page carries the owner key).
+The very first start prints `LINK http://localhost:8793/index-local.html#k=...`: open that once. Ctrl+C stops it. The data stays in `local/data`.
 
     local\start.cmd --fresh      throw the local database away, build it again with fresh demo data
     local\start.cmd --no-seed    first build with an empty business (no demo data)

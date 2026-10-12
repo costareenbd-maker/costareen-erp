@@ -118,12 +118,13 @@ first = migrate()
 fx = fixture(first)
 conn.close()
 
-# the page, built for this computer
+# the page, built for this computer; demo data only, so it opens with no sign-in (the owner key is stamped in;
+# on the very first start the key is made by the API below, so the link is needed once)
+link_key = open(KEYFILE).read().strip() if os.path.exists(KEYFILE) else ''
 subprocess.check_call([sys.executable, os.path.join(ROOT, 'web', 'build.py')],
-                      env=dict(os.environ, ERP_API='http://localhost:%d/' % API_PORT, ERP_OUT='index-local.html'))
+                      env=dict(os.environ, ERP_API='http://localhost:%d/' % API_PORT, ERP_OUT='index-local.html', ERP_OPEN_KEY=link_key))
 
 # the API (the real function code) and the static web server
-link_key = open(KEYFILE).read().strip() if os.path.exists(KEYFILE) else ''
 env = dict(os.environ, DB_URL=uri, FIX=json.dumps({'U': {'owner': fx['owner'], 'other': fx['other']}, 'B': fx['biz'], 'B2': fx['b2'], 'IMP': fx['biz']}),
            ERP_NODE_CWD=NODE, LINK_ONLY='1', LINK_KEY=link_key, LINK_KEY_FILE=KEYFILE, PORT=str(API_PORT), AUTO_APPROVE='1')
 api = subprocess.Popen(['node', os.path.join(TESTS, 'local_server.mjs')], env=env, cwd=NODE)
