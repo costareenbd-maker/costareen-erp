@@ -23675,5 +23675,141 @@ var fdSkinFdh = fdSkin;
 fdSkin = function (s) { var r = fdSkinFdh.apply(this, arguments); try { repaint(); } catch (e) {} return r; };
 </script>
 
+<!-- fd-4 (FilaDash merge P2): his table card toolbar on every big list. Above each list of 5+ rows: a quick search that
+     narrows the rows already on screen ("n of m"), Columns (hide / show columns, kept per screen on this device),
+     Compact (tighter rows) and Export (a CSV of the rows and columns as shown). Nothing is sent anywhere; the lists,
+     their own filters and buttons are unchanged. -->
+<style>
+.fdt-bar { display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin:6px 0 12px; }
+.fdt-search { position:relative; display:flex; align-items:center; width:300px; max-width:100%; height:40px; border-radius:12px;
+  background:var(--fd-surface-2, var(--field)); border:1px solid transparent; }
+:root[data-theme="dark"] .fdt-search { border-color:var(--fd-border-strong, var(--ring)); }
+.fdt-search:focus-within { border-color:var(--fd-accent-border, var(--series-1)); box-shadow:var(--fd-focus-ring, none); }
+.fdt-search svg { width:17px; height:17px; margin:0 6px 0 12px; flex:0 0 17px; fill:none; stroke:var(--fd-text-3, var(--muted)); stroke-width:2; stroke-linecap:round; }
+.fdt-search input { flex:1 1 auto; min-width:0; height:100%; border:0 !important; background:transparent !important; outline:none; box-shadow:none !important;
+  font:inherit; font-size:14px; font-weight:500; color:var(--fd-text, var(--ink)); padding:0 10px 0 0; }
+.fdt-count { font-size:13px; color:var(--fd-text-3, var(--muted)); font-weight:600; white-space:nowrap; }
+.fdt-right { margin-left:auto; display:flex; align-items:center; gap:6px; position:relative; }
+.fdt-btn { height:36px; padding:0 13px; border-radius:999px; border:1px solid transparent; background:transparent; color:var(--fd-text-2, var(--ink-2));
+  font:inherit; font-size:13.5px; font-weight:600; cursor:pointer; display:inline-flex; align-items:center; gap:6px; white-space:nowrap; }
+.fdt-btn:hover, .fdt-btn[aria-pressed="true"] { background:var(--fd-surface-2, var(--field)); color:var(--fd-text, var(--ink)); }
+.fdt-btn svg { width:16px; height:16px; fill:none; stroke:currentColor; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
+.fdt-menu { position:absolute; right:0; top:42px; z-index:40; min-width:220px; max-height:340px; overflow:auto; padding:8px; border-radius:14px;
+  background:var(--fd-card, var(--surface)); border:1px solid var(--fd-border, var(--ring)); box-shadow:var(--fd-shadow-popover, var(--shadow-lg)); }
+.fdt-menu label { display:flex; align-items:center; gap:10px; padding:7px 8px; border-radius:8px; font-size:13.5px; cursor:pointer; color:var(--fd-text, var(--ink)); }
+.fdt-menu label:hover { background:var(--fd-surface-2, var(--field)); }
+.fdt-menu .t { font-size:12px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:var(--fd-text-3, var(--muted)); padding:4px 8px 6px; }
+.fdt-hide { display:none !important; }
+table.fdt-compact tbody td { padding-top:4px !important; padding-bottom:4px !important; }
+.fdt-none td { text-align:center; color:var(--fd-text-3, var(--muted)); padding:18px !important; }
+@media (max-width:640px) { .fdt-search { width:100%; } .fdt-right { margin-left:0; } .fdt-btn span { display:none; } }
+</style>
+<script>
+var FDT_IC = {
+  search: '<svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>',
+  cols: '<svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M9 4v16M15 4v16"/></svg>',
+  dense: '<svg viewBox="0 0 24 24"><path d="M4 6h16M4 10h16M4 14h16M4 18h16"/></svg>',
+  dl: '<svg viewBox="0 0 24 24"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg>'
+};
+function fdtStore(k, v) { try { if (v === undefined) return JSON.parse(localStorage.getItem('fdt:' + k) || 'null'); localStorage.setItem('fdt:' + k, JSON.stringify(v)); } catch (e) { return null; } }
+function fdtHeads(t) { var r = t.tHead && t.tHead.rows[t.tHead.rows.length - 1]; return r ? [].map.call(r.cells, function (c) { return c.innerText.replace(/[⇅▲▼↑↓]/g, '').trim(); }) : []; }
+function fdtKey(t, heads) { return VIEW + ':' + heads.filter(Boolean).slice(0, 4).join('|'); }
+function fdtCols(t, hidden) {
+  [].forEach.call(t.rows, function (row) {
+    [].forEach.call(row.cells, function (c, i) { c.classList.toggle('fdt-hide', !!hidden[i] && row.cells.length > 1); });
+  });
+}
+function fdtFilter(t, q, count) {
+  var rows = t.tBodies[0] ? [].slice.call(t.tBodies[0].rows).filter(function (r) { return !r.classList.contains('fdt-none'); }) : [];
+  var words = String(q || '').toLowerCase().split(/\s+/).filter(Boolean), shown = 0;
+  rows.forEach(function (r) {
+    var txt = r.innerText.toLowerCase(), ok = words.every(function (w) { return txt.indexOf(w) >= 0; });
+    r.style.display = ok ? '' : 'none'; if (ok) shown++;
+  });
+  var none = t.tBodies[0] && t.tBodies[0].querySelector('tr.fdt-none');
+  if (!shown && words.length && t.tBodies[0]) {
+    if (!none) { none = document.createElement('tr'); none.className = 'fdt-none'; none.innerHTML = '<td colspan="99">Nothing on this list matches.</td>'; t.tBodies[0].appendChild(none); }
+  } else if (none) none.parentNode.removeChild(none);
+  if (count) count.textContent = words.length ? shown + ' of ' + rows.length : rows.length + ' rows';
+}
+function fdtCsv(t, name) {
+  var out = [];
+  [].forEach.call(t.rows, function (row) {
+    if (row.style.display === 'none' || row.classList.contains('fdt-none')) return;
+    var cells = [].filter.call(row.cells, function (c) { return !c.classList.contains('fdt-hide'); });
+    var vals = cells.map(function (c) { var v = c.innerText.replace(/[⇅▲▼]/g, '').replace(/\s+/g, ' ').trim(); return /[",\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; });
+    if (vals.some(Boolean)) out.push(vals.join(','));
+  });
+  var blob = new Blob(['﻿' + out.join('\r\n')], { type: 'text/csv;charset=utf-8' });
+  var a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+  a.download = (name || VIEW).replace(/[^a-z0-9]+/gi, '-').toLowerCase() + '-' + new Date().toISOString().slice(0, 10) + '.csv';
+  document.body.appendChild(a); a.click(); setTimeout(function () { URL.revokeObjectURL(a.href); a.parentNode.removeChild(a); }, 500);
+}
+function fdtEnhance() {
+  if (document.documentElement.getAttribute('data-skin') !== 'fd') return;
+  var view = el('view'); if (!view) return;
+  [].forEach.call(view.querySelectorAll('table'), function (t) {
+    if (t.getAttribute('data-fdt')) { var hk = t.getAttribute('data-fdtkey'); if (hk) fdtCols(t, fdtStore('cols:' + hk) || {}); return; }
+    if (t.closest('.fdd-c, .dlg, #fdHead, .fdd-calc') || t.classList.contains('fdd-t')) return;
+    if (!t.tHead || !t.tBodies[0] || t.tBodies[0].rows.length < 5) return;
+    var heads = fdtHeads(t); if (heads.filter(Boolean).length < 2) return;
+    t.setAttribute('data-fdt', '1');
+    var key = fdtKey(t, heads); t.setAttribute('data-fdtkey', key);
+    var hidden = fdtStore('cols:' + key) || {}, dense = !!fdtStore('dense:' + VIEW);
+    var anchor = t.closest('.scroll, .tall') || t;
+    if (anchor.parentNode && anchor.parentNode.classList && anchor.parentNode.classList.contains('scroll')) anchor = anchor.parentNode;
+    var bar = document.createElement('div'); bar.className = 'fdt-bar';
+    bar.innerHTML = '<label class="fdt-search">' + FDT_IC.search + '<input type="search" placeholder="Search this list" aria-label="Search this list"></label>' +
+      '<span class="fdt-count"></span><div class="fdt-right">' +
+      '<button type="button" class="fdt-btn" data-fdt="cols" title="Choose columns">' + FDT_IC.cols + '<span>Columns</span></button>' +
+      '<button type="button" class="fdt-btn" data-fdt="dense" aria-pressed="' + dense + '" title="Compact rows">' + FDT_IC.dense + '<span>Compact</span></button>' +
+      '<button type="button" class="fdt-btn" data-fdt="csv" title="Download the rows as shown (CSV)">' + FDT_IC.dl + '<span>Export</span></button></div>';
+    anchor.parentNode.insertBefore(bar, anchor);
+    // a list that already has its own search keeps only that one (no second box)
+    var own = [].some.call(view.querySelectorAll('input'), function (x) {
+      return !x.closest('.fdt-bar') && /search|find/i.test((x.placeholder || '') + ' ' + (x.getAttribute('aria-label') || '') + ' ' + (x.type === 'search' ? 'search' : ''));
+    });
+    if (own) { var sb = bar.querySelector('.fdt-search'); sb.parentNode.removeChild(sb); }
+    var input = bar.querySelector('.fdt-search input'), count = bar.querySelector('.fdt-count');
+    t.classList.toggle('fdt-compact', dense);
+    fdtCols(t, hidden);
+    fdtFilter(t, '', count);
+    if (input) input.addEventListener('input', function () { fdtFilter(t, input.value, count); });
+    bar.addEventListener('click', function (e) {
+      var b = e.target.closest('[data-fdt]'); if (!b) return;
+      var what = b.getAttribute('data-fdt');
+      if (what === 'dense') { dense = !dense; fdtStore('dense:' + VIEW, dense); t.classList.toggle('fdt-compact', dense); b.setAttribute('aria-pressed', String(dense)); }
+      if (what === 'csv') fdtCsv(t, fdhName ? fdhName(VIEW) : VIEW);
+      if (what === 'cols') {
+        var m = bar.querySelector('.fdt-menu');
+        if (m) { m.parentNode.removeChild(m); return; }
+        m = document.createElement('div'); m.className = 'fdt-menu';
+        m.innerHTML = '<div class="t">Columns</div>' + heads.map(function (h, i) {
+          return h ? '<label><input type="checkbox" data-fdtcol="' + i + '"' + (hidden[i] ? '' : ' checked') + '> ' + esc(h) + '</label>' : ''; }).join('');
+        bar.querySelector('.fdt-right').appendChild(m);
+        m.addEventListener('change', function (ev) {
+          var i = Number(ev.target.getAttribute('data-fdtcol'));
+          if (ev.target.checked) delete hidden[i]; else hidden[i] = 1;
+          fdtStore('cols:' + key, hidden); fdtCols(t, hidden);
+        });
+      }
+    });
+  });
+}
+document.addEventListener('click', function (e) {
+  if (!e.target.closest || e.target.closest('.fdt-menu, [data-fdt="cols"]')) return;
+  [].forEach.call(document.querySelectorAll('.fdt-menu'), function (m) { m.parentNode.removeChild(m); });
+});
+var repaintFdt = repaint;
+repaint = function () { var r = repaintFdt.apply(this, arguments); try { fdtEnhance(); } catch (e) {} return r; };
+// lists that arrive after the screen (loaded from the server, sorted, filtered) are picked up too
+(function () {
+  var v = el('view'), tm = null;
+  if (!v || !window.MutationObserver) return;
+  new MutationObserver(function () { clearTimeout(tm); tm = setTimeout(function () { try { fdtEnhance(); } catch (e) {} }, 150); })
+    .observe(v, { childList: true, subtree: true });
+})();
+</script>
+
 </body>
 </html>

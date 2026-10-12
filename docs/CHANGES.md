@@ -1530,3 +1530,13 @@ open that list (e.g. Out of stock -> Products filtered). Tests: fddash_test now 
 equal the P&L / dashboard). Demo data: customers dated by their first invoice.
 NOT done: his table card (toolbar with search chips, Views, column chooser) around our existing lists, and his
 tab-pill sub-views - the lists below the cards are our own screens, restyled by fd-1 only.
+
+## fd-4 - FilaDash table toolbar, merge phase P2 (part 3) (13 Oct 2026)
+
+Every list of 5+ rows (not on the dashboard, not in dialogs) gets his toolbar above it: Search this list (narrows the
+rows on screen, "n of m"; left out where the screen already has its own search, e.g. Products, Sales, Customers),
+Columns (hide/show, kept per screen and list on this device), Compact rows, Export (CSV of the rows and columns as
+shown, made in the browser). Lists that load later or re-sort are picked up (MutationObserver on #view). Page only.
+Checked on dev: Products, Sales, Customers, Money; search, a column hidden and shown again, desktop and phone.
+NOT done: his saved "Views" and filter chips (our screens keep their own filters), server-side export of every row
+(Export takes what is on screen; the screens' own Excel buttons still export everything).
