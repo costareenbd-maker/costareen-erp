@@ -180,12 +180,13 @@ export async function erpCapitalHolderSave(ctx, payload) {
   const pct = kind === 'shareholder' ? r2(num(payload.pct)) : 0;
   if (kind === 'shareholder' && !(pct > 0 && pct <= 100)) throw new Error('The share is a percentage above 0 and up to 100.');
   const rk = kind === 'investor'
-    ? (String(payload.returnKind) === 'percent' ? 'percent' : String(payload.returnKind) === 'none' ? 'none' : 'monthly') : '';
+    ? (String(payload.returnKind) === 'percent' ? 'percent' : String(payload.returnKind) === 'lot' ? 'lot' : String(payload.returnKind) === 'none' ? 'none' : 'monthly') : '';
   const rv = kind === 'investor' && rk !== 'none' ? num(payload.returnValue) : 0;
   if (kind === 'investor' && rk !== 'none' && !(rv > 0)) {
-    throw new Error(rk === 'percent' ? 'What percentage of their money each month?' : 'How much are they paid each month?');
+    throw new Error(rk === 'percent' ? 'What percentage of their money each month?' : rk === 'lot' ? 'What share of the profit do they get (%)?' : 'How much are they paid each month?');
   }
   if (rk === 'percent' && rv > 100) throw new Error('A monthly return above 100% cannot be right.');
+  if (rk === 'lot' && rv > 100) throw new Error('A share of the profit above 100% cannot be right.');
   const nowMonth = monthStr(ctx.now);
   const since = isMonth(payload.since) ? payload.since : nowMonth;
   const phone = String(payload.phone || '').trim() ? phone11(payload.phone) : '';

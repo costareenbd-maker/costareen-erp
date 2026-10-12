@@ -1557,3 +1557,23 @@ Tests: fifo_test (25); g3 bound raised (a sale now also rewrites the two lot tab
 Dev: one demo shipment SHP-DEMO-001 (2400 RMB @ 17 + freight 4500 + duty 3000) and one sale from it.
 NOT done: chargeable weight (volumetric) and freight per kg, cost lines split by weight/units, Planned/Ordered/In transit
 stages on purchase orders, a bill arriving after the goods (cost adjustment split sold/unsold), lots on the product page.
+
+## ship-1 + inv-1 - chargeable weight, order stages, investors per shipment, merge phase P3 (13 Oct 2026)
+
+108_ship_weight.sql: products.weight_g / length_mm / width_mm / height_mm; po_stages. receiveShipment: chargeable weight
+per unit = max(real g, L x W x H mm / divisor (default 6000) = g); freightPerKg x chargeable kg when the freight amount is
+not typed; every cost line shared by its own basis (value = as before and still the default, weight = chargeable weight,
+units); a line without weight is refused when weight is needed; result carries the working (calc, bases, chargeKg).
+erpProductSizes (one product / a whole category). Orders: erpPoCreate {planned} -> Planned or Ordered; erpPoStage moves
+to Ordered / In transit with shipment no., agent, by, kg, freight per kg, ETA (freight estimate); erpPoArrive uses the
+stage's shipment no. and rate per kg (by weight) unless freight is typed, then Received (or back to Ordered if part).
+109_lot_investors.sql (decision F2): Capital return kind 'lot' = return_value % of the profit on the share (lot_funding.pct)
+of each shipment they fund, per month of sale (returns off), through the existing investor returns: due on Capital,
+a cost of the month in the P&L. erpLotFund / erpLotFundVoid (owner), erpLotFunding (shareholder+): funded money, units
+sold, cost recovered, profit on their part, earned.
+Page: fd-6 (receive form: empty kg = chargeable weight x rate; Split costs by Usual / Weight / Value / Units; Shipments:
+On the way with stages and "In transit..." dialog, Product sizes dialog), fd-7 (shipment page: Funded by, add / strike
+out), Capital form "Share of profit on shipments they fund". Tests: shipweight (27), lotinvest (18); all 100 suites green.
+Dev demo: Filaments 1300 g 210x210x80, Printers 12.2 kg 600x600x500; Demo Investor (50% of profit) funds 40% of
+SHP-DEMO-001; PO-261013-0044 in transit (AWB-DEMO-1, 39 kg x 780).
+NOT done: investor portal (secret link + code), investor statement PDF, holding cost, a bill that arrives after the goods.

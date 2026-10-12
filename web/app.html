@@ -6823,7 +6823,8 @@ function capMonth(m) {
 }
 function capTerms(h, cur) {
   return h.returnKind === 'monthly' ? cur + ' ' + fmt(h.returnValue) + ' a month'
-       : h.returnKind === 'percent' ? fmt(h.returnValue) + '% of their money a month (' + cur + ' ' + fmt(h.monthlyReturn) + ' now)' : 'no fixed return';
+       : h.returnKind === 'percent' ? fmt(h.returnValue) + '% of their money a month (' + cur + ' ' + fmt(h.monthlyReturn) + ' now)'
+       : h.returnKind === 'lot' ? fmt(h.returnValue) + '% of the profit on the shipments they fund' : 'no fixed return';
 }
 
 function viewCapital() {
@@ -6893,9 +6894,9 @@ function viewCapital() {
     '<div style="flex:2 1 170px"><label class="f" for="ci_name">' + (CAP_IN.id ? 'Change investor' : 'New investor') + '</label><input class="i" id="ci_name" maxlength="80" value="' + esc(CAP_IN.name) + '" placeholder="Name"></div>' +
     '<div style="flex:1 1 130px"><label class="f" for="ci_phone">Phone <span class="sku">(optional)</span></label><input class="i" id="ci_phone" inputmode="numeric" value="' + esc(CAP_IN.phone) + '" placeholder="01XXXXXXXXX"></div>' +
     '<div style="flex:1 1 170px"><label class="f" for="ci_kind">They get</label><select class="i" id="ci_kind">' +
-      [['monthly', 'A fixed amount every month'], ['percent', '% of their money every month'], ['none', 'Nothing fixed']].map(function (o) {
+      [['monthly', 'A fixed amount every month'], ['percent', '% of their money every month'], ['lot', 'Share of profit on shipments they fund'], ['none', 'Nothing fixed']].map(function (o) {
         return '<option value="' + o[0] + '"' + (CAP_IN.returnKind === o[0] ? ' selected' : '') + '>' + o[1] + '</option>'; }).join('') + '</select></div>' +
-    (CAP_IN.returnKind === 'none' ? '' : '<div style="flex:0 0 120px"><label class="f" for="ci_val">' + (CAP_IN.returnKind === 'percent' ? '% a month' : 'Taka a month') + '</label><input class="i" id="ci_val" inputmode="decimal" value="' + esc(CAP_IN.returnValue) + '" placeholder="' + (CAP_IN.returnKind === 'percent' ? '2' : '10000') + '"></div>') +
+    (CAP_IN.returnKind === 'none' ? '' : '<div style="flex:0 0 120px"><label class="f" for="ci_val">' + (CAP_IN.returnKind === 'percent' ? '% a month' : CAP_IN.returnKind === 'lot' ? '% of the profit' : 'Taka a month') + '</label><input class="i" id="ci_val" inputmode="decimal" value="' + esc(CAP_IN.returnValue) + '" placeholder="' + (CAP_IN.returnKind === 'percent' ? '2' : CAP_IN.returnKind === 'lot' ? '50' : '10000') + '"></div>') +
     (CAP_IN.id ? '' : '<div style="flex:1 1 130px"><label class="f" for="ci_amt">Amount invested</label><input class="i" id="ci_amt" inputmode="decimal" value="' + esc(CAP_IN.invested || '') + '" placeholder="0"></div>') +
     '<label class="chk" style="padding-bottom:9px" title="Shown to the owner only. The others see the totals."><input type="checkbox" id="ci_priv"' + (CAP_IN.private ? ' checked' : '') + '> Private</label>' +
     '<button class="btn primary" type="button" id="ci_save"' + (CAP_BUSY ? ' disabled' : '') + '>' + (CAP_IN.id ? 'Save change' : 'Add') + '</button>' +
@@ -8433,7 +8434,7 @@ function srv(name, args, ok, bad) {
 
 var SRV_ACTIVE = 0, SRV_WRITING = false, SRV_TIMED = {};
 // the same list the server uses to know a call changes nothing (ERP_READS)
-var SRV_READS = /^(erpShipments|erpShipment|erpLots|erpFdHead|erpFdDash|erpReceiveMatch|erpAiReader|erpProductSuggest|erpCatalogue|erpPushList|erpCreators|erpCreatorPortalLink|erpSponsorLink|erpCreatorRequests|erpCreatorEvents|erpCreatorProgramme|erpCreatorPreview|erpCreatorCatalog|erpCreatorSources|erpCreatorClaims|erpApps|erpAppQr|erpFeedback|erpRestockOffers|erpRestockList|erpWarrantyRules|erpWarrantyCard|erpMyLink|erpPlatformRegister|erpPlatformDoctor|erpPlatformCommunity|erpMarketWaiting|erpBoard|erpPlatformDesign|erpResell|erpResellerProgramme|erpLoyalty|erpCustomerPoints|erpRefillDue|erpDeliveryHistory|erpDeliveryHistoryMany|erpPrintKit|erpPrintJobs|erpPrintJob|erpPrintCost|erpSpools|erpPrintRequests|erpJoint|erpJointCatalog|erpJointCard|erpInvoiceDesign|erpInvoicePreview|erpMarket|erpMarketMine|erpMarketRequests|erpMarketHints|erpMarketNames|erpWanted|erpBrand|erpComplianceLog|erpProviderKey|erpNews|erpAccessKeys|erpAccessWarning|erpAdmin|erpAiKeys|erpAlertRules|erpAlerts|erpArena|erpBackupStatus|erpBg|erpBnWords|erpBookedParcels|erpBrandLogo|erpBundle|erpBusinessLinks|erpBusinesses|erpBusinessesDeleted|erpCampaignAudience|erpCampaignGet|erpCampaignList|erpCapital|erpCashBook|erpCatalog|erpConnStatus|erpConnections|erpCostBook|erpCourier|erpCourierKeyStatus|erpCurrencies|erpCustomerAccount|erpCustomerCredit|erpCustomerList|erpCustomerPage|erpCustomerStatement|erpCustomers|erpDashboardData|erpDaySales|erpDeliveryOptions|erpDevices|erpDiscontinued|erpDues|erpEvoQr|erpEvoStatus|erpExpenseExport|erpExpenseReceiptUrl|erpExpenses|erpFamilies|erpFighters|erpFormOptions|erpGame|erpGetTheme|erpGoogle|erpHello|erpInstalls|erpInvoice|erpInvoicePdf|erpJob|erpJobs|erpListView|erpLookupCustomer|erpLookupUsage|erpMe|erpMoney|erpNoteFileUrl|erpNotes|erpOwnerChange|erpOwnerChanges|erpParcelLabels|erpParcelPreview|erpPartnerStock|erpPartnership|erpPayReasons|erpPeople|erpPlatform|erpPlatformErrors|erpPnl|erpPnlMonth|erpPoList|erpPoolCatalog|erpProduct|erpProductListShare|erpProductPage|erpProductPhotoUrl|erpProductThumbs|erpProfile|erpQuoteAsset|erpQuoteBoot|erpQuoteGet|erpQuoteList|erpRecentInvoices|erpRecovery|erpReorderPlan|erpRestorePreview|erpReturnPreview|erpRisks|erpSales|erpSearch|erpSecurity|erpSelfTest|erpSerialLookup|erpSerialsFor|erpSessions|erpSetTheme|erpSettingsFull|erpSettingsLists|erpSfPayoutLines|erpSfPayouts|erpShareFile|erpSharedStock|erpSheet|erpStatementPdf|erpStockHistory|erpSupplierPage|erpSuppliers|erpToday|erpUsers|erpWaProductPdf|erpWebMatches|erpWebOrderInvoices|erpWebOrders|erpWebsiteTest)$/;
+var SRV_READS = /^(erpLotFunding|erpShipments|erpShipment|erpLots|erpFdHead|erpFdDash|erpReceiveMatch|erpAiReader|erpProductSuggest|erpCatalogue|erpPushList|erpCreators|erpCreatorPortalLink|erpSponsorLink|erpCreatorRequests|erpCreatorEvents|erpCreatorProgramme|erpCreatorPreview|erpCreatorCatalog|erpCreatorSources|erpCreatorClaims|erpApps|erpAppQr|erpFeedback|erpRestockOffers|erpRestockList|erpWarrantyRules|erpWarrantyCard|erpMyLink|erpPlatformRegister|erpPlatformDoctor|erpPlatformCommunity|erpMarketWaiting|erpBoard|erpPlatformDesign|erpResell|erpResellerProgramme|erpLoyalty|erpCustomerPoints|erpRefillDue|erpDeliveryHistory|erpDeliveryHistoryMany|erpPrintKit|erpPrintJobs|erpPrintJob|erpPrintCost|erpSpools|erpPrintRequests|erpJoint|erpJointCatalog|erpJointCard|erpInvoiceDesign|erpInvoicePreview|erpMarket|erpMarketMine|erpMarketRequests|erpMarketHints|erpMarketNames|erpWanted|erpBrand|erpComplianceLog|erpProviderKey|erpNews|erpAccessKeys|erpAccessWarning|erpAdmin|erpAiKeys|erpAlertRules|erpAlerts|erpArena|erpBackupStatus|erpBg|erpBnWords|erpBookedParcels|erpBrandLogo|erpBundle|erpBusinessLinks|erpBusinesses|erpBusinessesDeleted|erpCampaignAudience|erpCampaignGet|erpCampaignList|erpCapital|erpCashBook|erpCatalog|erpConnStatus|erpConnections|erpCostBook|erpCourier|erpCourierKeyStatus|erpCurrencies|erpCustomerAccount|erpCustomerCredit|erpCustomerList|erpCustomerPage|erpCustomerStatement|erpCustomers|erpDashboardData|erpDaySales|erpDeliveryOptions|erpDevices|erpDiscontinued|erpDues|erpEvoQr|erpEvoStatus|erpExpenseExport|erpExpenseReceiptUrl|erpExpenses|erpFamilies|erpFighters|erpFormOptions|erpGame|erpGetTheme|erpGoogle|erpHello|erpInstalls|erpInvoice|erpInvoicePdf|erpJob|erpJobs|erpListView|erpLookupCustomer|erpLookupUsage|erpMe|erpMoney|erpNoteFileUrl|erpNotes|erpOwnerChange|erpOwnerChanges|erpParcelLabels|erpParcelPreview|erpPartnerStock|erpPartnership|erpPayReasons|erpPeople|erpPlatform|erpPlatformErrors|erpPnl|erpPnlMonth|erpPoList|erpPoolCatalog|erpProduct|erpProductListShare|erpProductPage|erpProductPhotoUrl|erpProductThumbs|erpProfile|erpQuoteAsset|erpQuoteBoot|erpQuoteGet|erpQuoteList|erpRecentInvoices|erpRecovery|erpReorderPlan|erpRestorePreview|erpReturnPreview|erpRisks|erpSales|erpSearch|erpSecurity|erpSelfTest|erpSerialLookup|erpSerialsFor|erpSessions|erpSetTheme|erpSettingsFull|erpSettingsLists|erpSfPayoutLines|erpSfPayouts|erpShareFile|erpSharedStock|erpSheet|erpStatementPdf|erpStockHistory|erpSupplierPage|erpSuppliers|erpToday|erpUsers|erpWaProductPdf|erpWebMatches|erpWebOrderInvoices|erpWebOrders|erpWebsiteTest)$/;
 function srvPump() {
   if (!SRV_Q.length) return;
   var isRead = SRV_READS.test(SRV_Q[0].name);
@@ -23925,6 +23926,212 @@ document.addEventListener('click', function (e) {
 // fresh figures after anything is saved (a receive, a sale, a return)
 var shpAfterWrite = pagesAfterWrite;
 pagesAfterWrite = function () { SHP.list = null; SHP.one = null; return shpAfterWrite.apply(this, arguments); };
+</script>
+
+<!-- fd-6 (FilaDash merge P3): shipment costing by weight + order stages (108_ship_weight.sql, handlers/stock.js).
+     Stock entry > receiving: Sea / Air with the weight left empty = the ERP works out each line's CHARGEABLE weight
+     (the larger of the real weight and the box-size weight, L x W x H / 6000) from the products' sizes and charges
+     freight per kg; "Split costs by" Weight / Value / Units for freight and the other costs. Shipments: an "On the
+     way" list of orders with their stage (Planned > Ordered > In transit), moved along there, and "Product sizes"
+     to give products their weight and box. -->
+<style>
+.fdw-note { font-size:12.5px; color:var(--fd-text-3, var(--muted)); margin-top:6px; }
+.fdw-way td .btn { margin-right:4px; }
+.fdw-stage { display:inline-flex; align-items:center; height:24px; padding:0 9px; border-radius:999px; font-size:12px; font-weight:700; white-space:nowrap;
+  background:var(--fd-surface-2, var(--field)); color:var(--fd-text-2, var(--ink-2)); }
+.fdw-stage.planned { background:var(--fd-violet-soft, #F0E9FF); color:var(--fd-violet-text, #6D28D9); }
+.fdw-stage.ordered { background:var(--fd-info-soft, #E3F0FF); color:var(--fd-info-text, #1D5FD1); }
+.fdw-stage.in_transit { background:var(--fd-warning-soft, var(--warning-soft)); color:var(--fd-warning-text, var(--warning)); }
+.fdw-form .fields { margin-top:8px; }
+</style>
+<script>
+// ---- receiving: chargeable weight and how costs are shared
+var recvShipHtmlFdw = recvShipHtml;
+recvShipHtml = function () {
+  var h = recvShipHtmlFdw.apply(this, arguments), s = RECV.ship || {};
+  var b = RECV.basis || '';
+  var chip = function (v, label) { return '<button type="button" class="chip ckcat' + (b === v ? ' on' : '') + '" data-rvbasis="' + v + '">' + label + '</button>'; };
+  var tip = (s.mode === 'Sea' || s.mode === 'Air')
+    ? '<div class="fdw-note">Leave the weight empty: the ERP takes each product’s <b>chargeable weight</b> (its real weight or its box-size weight, whichever is more) × the taka per kg. Products need a weight for that: Shipments › Product sizes.</div>' : '';
+  return h.replace(/<\/div>$/, tip + '<div style="margin-top:10px"><label class="f">Split shipping and the other costs by</label><div class="chips">' +
+    chip('', 'Usual') + chip('weight', 'Weight') + chip('value', 'Value') + chip('units', 'Units') + '</div>' +
+    '<div class="fdw-note">Usual: freight per kg by weight, everything else by value. Weight = chargeable weight of each line.</div></div></div>');
+};
+var recvPayloadFdw = recvPayload;
+recvPayload = function () {
+  var p = recvPayloadFdw.apply(this, arguments), s = RECV.ship || {};
+  if ((s.mode === 'Sea' || s.mode === 'Air') && !(num(s.kg) > 0)) {
+    p.shippingBdt = 0;
+    p.freightPerKg = num(s.rate || SHIP_RATE[s.mode]);
+    p.shipNote = s.mode.toLowerCase();
+  }
+  if (RECV.basis) { p.basis = RECV.basis; p.freightBasis = RECV.basis; }
+  else if (p.freightPerKg > 0) p.freightBasis = 'weight';
+  return p;
+};
+var recvShipBdtFdw = recvShipBdt;
+recvShipBdt = function () { var s = RECV.ship || {}; if ((s.mode === 'Sea' || s.mode === 'Air') && !(num(s.kg) > 0)) return 0; return recvShipBdtFdw.apply(this, arguments); };
+document.addEventListener('click', function (e) {
+  var c = e.target.closest && e.target.closest('[data-rvbasis]');
+  if (!c) return;
+  RECV.basis = c.getAttribute('data-rvbasis'); repaint();
+});
+
+// ---- Shipments: orders on the way, moved along; product sizes
+var FDW = { po: null, busy: false };
+function fdwLoad() {
+  if (FDW.busy) return; FDW.busy = true;
+  srv('erpPoList', [], function (r) { FDW.busy = false; FDW.po = r; if (VIEW === 'shipments' && !SHP.ref) repaint(); }, function () { FDW.busy = false; FDW.po = { orders: [] }; });
+}
+var viewShipmentsFdw = viewShipments;
+viewShipments = function () {
+  var h = viewShipmentsFdw.apply(this, arguments);
+  if (SHP.ref || !SHP.list) return h;
+  if (!FDW.po) { fdwLoad(); return h; }
+  var orders = (FDW.po.orders || []).filter(function (o) { return o.left > 0; });
+  var tools = '<div class="row" style="margin:0 0 14px;gap:8px">' + (navOn('products') ? '<button class="btn" type="button" data-fdwsizes="1">Product sizes (weight and box)</button>' : '') +
+    (navOn('stock') ? '<button class="btn" type="button" data-go="stock">New order / receive on Stock entry</button>' : '') + '</div>';
+  var way = '<div class="card" style="margin-bottom:16px"><div class="chead"><h2>On the way</h2></div><div class="sub">Orders not fully received. Move each one along: Planned › Ordered › In transit. It becomes Received when you receive it on Stock entry; freight is worked out from the rate per kg you give here.</div>';
+  if (!orders.length) way += '<div class="empty">No open orders.</div>';
+  else way += '<div class="scroll"><table class="fdw-way"><thead><tr><th>Order</th><th>Supplier</th><th class="num">Units to come</th><th>Stage</th><th>Shipment</th><th class="num">Freight (est.)</th><th>Expected</th><th></th></tr></thead><tbody>' +
+    orders.map(function (o) {
+      var st = o.stage || { key: 'ordered', label: 'Ordered' };
+      var next = st.key === 'planned' ? '<button class="btn small primary" type="button" data-fdwstage="ordered" data-po="' + esc(o.id) + '">Mark ordered</button>'
+        : '<button class="btn small' + (st.key === 'ordered' ? ' primary' : '') + '" type="button" data-fdwtransit="' + esc(o.id) + '">' + (st.key === 'in_transit' ? 'Edit shipment' : 'In transit…') + '</button>';
+      return '<tr><td><b>' + esc(o.id) + '</b><div class="sku">' + esc(o.shipBy || st.shipBy || '') + '</div></td><td>' + esc(o.supplier || '—') + '</td><td class="num">' + fmt(o.left) + '</td>' +
+        '<td><span class="fdw-stage ' + esc(st.key) + '">' + esc(st.label) + '</span></td><td>' + esc(st.shipmentNo || '—') + (st.agent ? '<div class="sku">' + esc(st.agent) + '</div>' : '') + '</td>' +
+        '<td class="num">' + (st.freightEstimate ? fmt(st.freightEstimate) + '<div class="sku">' + fmt(st.kg) + ' kg × ' + fmt(st.freightPerKg) + '</div>' : '—') + '</td><td>' + esc(st.eta || '—') + '</td><td>' + next + '</td></tr>';
+    }).join('') + '</tbody></table></div>';
+  way += '</div>';
+  // after the four cards, before the list of received shipments
+  var i = h.indexOf('<div class="card">');
+  return i >= 0 ? h.slice(0, i) + tools + way + h.slice(i) : h + tools + way;
+};
+function fdwDialog(title, body, onOk) {
+  var back = document.createElement('div'); back.className = 'dlg-back';
+  back.innerHTML = '<div class="dlg fdw-form" role="dialog" aria-modal="true" style="max-width:560px"><div class="dlg-t">' + esc(title) + '</div>' + body +
+    '<div class="dlg-f"><button class="btn" type="button" data-x="1">Cancel</button><button class="btn primary" type="button" data-ok="1">Save</button></div></div>';
+  document.body.appendChild(back);
+  var close = function () { if (back.parentNode) back.parentNode.removeChild(back); };
+  back.addEventListener('click', function (e) {
+    if (e.target === back || e.target.closest('[data-x]')) close();
+    if (e.target.closest('[data-ok]')) onOk(back, close);
+  });
+  var f = back.querySelector('input, select'); if (f) f.focus();
+}
+function fdwVal(back, id) { var x = back.querySelector('#' + id); return x ? String(x.value || '').trim() : ''; }
+document.addEventListener('click', function (e) {
+  if (!e.target.closest) return;
+  var a = e.target.closest('[data-fdwstage]');
+  if (a) {
+    srv('erpPoStage', [{ poId: a.getAttribute('data-po'), stage: a.getAttribute('data-fdwstage') }], function () { toast('Order marked ' + a.getAttribute('data-fdwstage') + '.'); FDW.po = null; repaint(); },
+      function (er) { toast(esc(er && er.message ? er.message : er), true); });
+    return;
+  }
+  var t = e.target.closest('[data-fdwtransit]');
+  if (t) {
+    var id = t.getAttribute('data-fdwtransit'), o = ((FDW.po && FDW.po.orders) || []).filter(function (x) { return x.id === id; })[0] || {}, st = o.stage || {};
+    var inp = function (k, label, v, ph, type) { return '<div><label class="f" for="fdw_' + k + '">' + label + '</label><input class="i" id="fdw_' + k + '"' + (type ? ' type="' + type + '"' : '') + ' value="' + esc(v || '') + '" placeholder="' + esc(ph || '') + '"></div>'; };
+    fdwDialog('Order ' + id + ' is on the way',
+      '<div class="dlg-b" style="white-space:normal">What you know about the shipment. The rate per kg is used when it arrives (chargeable weight × rate), unless you type the freight then.</div>' +
+      '<div class="fields">' + inp('no', 'Shipment / tracking no.', st.shipmentNo, 'AWB / B/L') + inp('agent', 'Agent', st.agent, 'cargo agent') +
+      '<div><label class="f" for="fdw_by">By</label><select class="i" id="fdw_by"><option' + ((st.shipBy || o.shipBy) === 'Sea' ? ' selected' : '') + '>Sea</option><option' + ((st.shipBy || o.shipBy) === 'Air' ? ' selected' : '') + '>Air</option></select></div>' +
+      inp('kg', 'Chargeable weight (kg)', st.kg || '', 'from the agent') + inp('rate', 'Freight per kg (TK)', st.freightPerKg || '', 'e.g. 244 sea, 780 air') + inp('eta', 'Expected', st.eta, '', 'date') + '</div>',
+      function (back, close) {
+        srv('erpPoStage', [{ poId: id, stage: 'in_transit', shipmentNo: fdwVal(back, 'fdw_no'), agent: fdwVal(back, 'fdw_agent'), shipBy: fdwVal(back, 'fdw_by'),
+          kg: num(fdwVal(back, 'fdw_kg')), freightPerKg: num(fdwVal(back, 'fdw_rate')), eta: fdwVal(back, 'fdw_eta') }],
+          function () { close(); toast('Order ' + esc(id) + ' is in transit.'); FDW.po = null; repaint(); }, function (er) { toast(esc(er && er.message ? er.message : er), true); });
+      });
+    return;
+  }
+  if (e.target.closest('[data-fdwsizes]')) {
+    var cats = {};
+    (CAT || []).forEach(function (p) { if (p.cat) cats[p.cat] = 1; });
+    fdwDialog('Product sizes',
+      '<div class="dlg-b" style="white-space:normal">Weight per unit in grams, and the box it ships in (mm), for a whole category or one product. Freight is charged on the larger of the real weight and the box weight (L × W × H ÷ 6000).</div>' +
+      '<div class="fields"><div><label class="f" for="fdw_cat">Category</label><select class="i" id="fdw_cat"><option value="">— one product —</option>' +
+      Object.keys(cats).sort().map(function (c) { return '<option>' + esc(c) + '</option>'; }).join('') + '</select></div>' +
+      '<div><label class="f" for="fdw_sku">or one product (SKU)</label><input class="i" id="fdw_sku" list="fdw_skus" placeholder="SKU"><datalist id="fdw_skus">' +
+      (CAT || []).slice(0, 400).map(function (p) { return '<option value="' + esc(p.sku) + '">' + esc(p.name) + '</option>'; }).join('') + '</datalist></div>' +
+      '<div><label class="f" for="fdw_g">Weight (g)</label><input class="i" id="fdw_g" inputmode="decimal" placeholder="1300"></div>' +
+      '<div><label class="f" for="fdw_l">Box L (mm)</label><input class="i" id="fdw_l" inputmode="decimal" placeholder="210"></div>' +
+      '<div><label class="f" for="fdw_w">W (mm)</label><input class="i" id="fdw_w" inputmode="decimal" placeholder="210"></div>' +
+      '<div><label class="f" for="fdw_h">H (mm)</label><input class="i" id="fdw_h" inputmode="decimal" placeholder="80"></div></div>',
+      function (back, close) {
+        var pl = { weight_g: num(fdwVal(back, 'fdw_g')) }, L = fdwVal(back, 'fdw_l'), W = fdwVal(back, 'fdw_w'), H = fdwVal(back, 'fdw_h');
+        if (L || W || H) { pl.length_mm = num(L); pl.width_mm = num(W); pl.height_mm = num(H); }
+        if (fdwVal(back, 'fdw_cat')) pl.category = fdwVal(back, 'fdw_cat'); else pl.skus = [fdwVal(back, 'fdw_sku')];
+        srv('erpProductSizes', [pl], function (r) { close(); toast('Size saved on ' + r.changed + ' product(s).'); }, function (er) { toast(esc(er && er.message ? er.message : er), true); });
+      });
+  }
+});
+var fdwAfterWrite = pagesAfterWrite;
+pagesAfterWrite = function () { FDW.po = null; return fdwAfterWrite.apply(this, arguments); };
+</script>
+
+<!-- fd-7 (FilaDash merge P3, decision F2): investors per shipment. On one shipment: who funded what share, what
+     their part sold for, the money recovered, the profit on it and what they have earned (their % of that profit).
+     The owner adds "Funded by" (investors whose return on Capital is "Share of profit on shipments they fund") or
+     strikes one out. What they earn each month is due on Capital and is a cost of that month, like other returns. -->
+<script>
+var FDI = { ref: '', data: null, busy: false, holders: null };
+function fdiLoad(ref) {
+  if (FDI.busy) return; FDI.busy = true;
+  srv('erpLotFunding', [{ reference: ref }], function (r) { FDI.busy = false; FDI.ref = ref; FDI.data = r; if (VIEW === 'shipments' && SHP.ref === ref) repaint(); },
+    function () { FDI.busy = false; FDI.ref = ref; FDI.data = { funding: [], denied: true }; });
+}
+var viewShipmentFdi = viewShipment;
+viewShipment = function () {
+  var h = viewShipmentFdi.apply(this, arguments), d = SHP.one;
+  if (!d || d.reference !== SHP.ref || d.opening || !navOn('capital')) return h;
+  if (FDI.ref !== d.reference) { FDI.data = null; fdiLoad(d.reference); return h; }
+  var x = FDI.data; if (!x || x.denied) return h;
+  var owner = ME && String(ME.role) === 'owner', used = 0;
+  x.funding.forEach(function (f) { used += f.pct; });
+  var card = '<div class="card" style="margin-top:16px"><div class="chead"><h2>Funded by</h2>' +
+    (owner && used < 100 ? '<button class="btn small primary" type="button" data-fdifund="1">+ An investor funded part of it</button>' : '') + '</div>' +
+    '<div class="sub">An investor’s part earns them their % of the profit when it sells (returns taken off). It is due on Capital each month and counted as a cost of that month.' +
+    (used ? ' Funded: ' + fmt(used) + '% of this shipment.' : '') + '</div>';
+  if (!x.funding.length) card += '<div class="empty">Paid by the business alone.</div>';
+  else card += '<div class="scroll"><table><thead><tr><th>Investor</th><th class="num">Share</th><th class="num">Their money</th><th class="num">Units sold</th><th class="num">Recovered</th><th class="num">Profit on it</th><th class="num">They earn</th><th></th></tr></thead><tbody>' +
+    x.funding.map(function (f) {
+      return '<tr><td><b>' + esc(f.name) + '</b><div class="sku">since ' + esc(f.since) + ' · gets ' + fmt(f.profitShare) + '% of the profit</div></td><td class="num">' + fmt(f.pct) + '%</td><td class="num">' + fmt(f.funded) + '</td>' +
+        '<td class="num">' + f.soldUnits + ' of ' + f.unitsFunded + '</td><td class="num">' + fmt(f.recovered) + '</td><td class="num">' + fmt(f.profit) + '</td><td class="num"><b>' + fmt(f.earned) + '</b></td>' +
+        '<td>' + (owner ? '<button class="btn small danger" type="button" data-fdivoid="' + esc(f.id) + '">Strike out</button>' : '') + '</td></tr>'; }).join('') + '</tbody></table></div>';
+  return h + card + '</div>';
+};
+document.addEventListener('click', function (e) {
+  if (!e.target.closest) return;
+  if (e.target.closest('[data-fdifund]')) {
+    var open = function () {
+      var hs = (FDI.holders || []).filter(function (h) { return h.kind === 'investor' && h.returnKind === 'lot' && !h.ended; });
+      if (!hs.length) { uiAlert('No investor is paid by shipment profit yet. On Capital, add an investor and choose "Share of profit on shipments they fund".'); return; }
+      fdwDialog('Funded by an investor',
+        '<div class="dlg-b" style="white-space:normal">Which investor paid for part of ' + esc(SHP.ref) + ', and what share of it. Their money itself goes on Capital (Add money).</div>' +
+        '<div class="fields"><div><label class="f" for="fdi_h">Investor</label><select class="i" id="fdi_h">' + hs.map(function (h) {
+          return '<option value="' + esc(h.id) + '">' + esc(h.name) + ' (' + fmt(h.returnValue) + '% of the profit)</option>'; }).join('') + '</select></div>' +
+        '<div><label class="f" for="fdi_p">Share of this shipment (%)</label><input class="i" id="fdi_p" inputmode="decimal" placeholder="e.g. 40"></div>' +
+        '<div><label class="f" for="fdi_n">Note</label><input class="i" id="fdi_n" placeholder="optional"></div></div>',
+        function (back, close) {
+          srv('erpLotFund', [{ reference: SHP.ref, holder: fdwVal(back, 'fdi_h'), pct: num(fdwVal(back, 'fdi_p')), note: fdwVal(back, 'fdi_n') }],
+            function (r) { close(); FDI.data = r; toast('Funding recorded.'); repaint(); }, function (er) { toast(esc(er && er.message ? er.message : er), true); });
+        });
+    };
+    if (FDI.holders) open();
+    else srv('erpCapital', [], function (r) { FDI.holders = r.holders || []; open(); }, function (er) { toast(esc(er && er.message ? er.message : er), true); });
+    return;
+  }
+  var v = e.target.closest('[data-fdivoid]');
+  if (v) {
+    uiPrompt('Why is this funding struck out?', '').then(function (why) {
+      if (!why) return;
+      srv('erpLotFundVoid', [{ id: v.getAttribute('data-fdivoid'), reason: why }], function (r) { FDI.data = r; toast('Struck out.'); repaint(); },
+        function (er) { toast(esc(er && er.message ? er.message : er), true); });
+    });
+  }
+});
+var fdiAfterWrite = pagesAfterWrite;
+pagesAfterWrite = function () { FDI.data = null; FDI.ref = ''; FDI.holders = null; return fdiAfterWrite.apply(this, arguments); };
 </script>
 
 </body>

@@ -156,4 +156,71 @@ export async function erpLots(ctx, payload) {
                                      unitsIn: num(l.qty_in), unitsLeft: num(l.qty_left), unitCost: l.unit_cost === null ? null : num(l.unit_cost), supplier: str(l.supplier) })) };
 }
 
-export const HANDLERS = { erpShipments, erpShipment, erpLots };
+// ------------------------------------------------------------- investors per shipment (109)
+
+async function fundingRows(ctx, ref) {
+  return ctx.tx`
+    select f.id, f.holder_no, f.reference, f.pct, f.note, f.at, h.name, h.return_value, h.private
+    from lot_funding f left join capital_holders h on h.business_id = f.business_id and h.holder_no = f.holder_no
+    where f.business_id = ${ctx.biz} and f.voided_at is null ${ref ? ctx.tx`and f.reference = ${ref}` : ctx.tx``}
+    order by f.at`;
+}
+
+/** Each funding with what it has earned so far: profit on its share of the units sold, and the cost recovered. */
+export async function erpLotFunding(ctx, payload) {
+  const ref = str(payload && payload.reference);
+  const owner = ctx.s.role === 'owner';
+  const rows = await fundingRows(ctx, ref);
+  const out = [];
+  for (const f of rows) {
+    if (f.private && !owner) continue;
+    const ds = await drawRows(ctx, str(f.reference));
+    let sold = 0, revenue = 0, cost = 0, unitsIn = 0, landed = 0;
+    for (const d of ds) if (d.kind === 'SALE' || d.kind === 'RETURN') { sold += num(d.qty); revenue += num(d.qty) * num(d.price); cost += num(d.qty) * num(d.unit_cost); }
+    for (const l of await ctx.tx`select qty_in, unit_cost from stock_lots where business_id = ${ctx.biz} and reference = ${str(f.reference)} and source = 'receive'`) {
+      unitsIn += num(l.qty_in); landed += num(l.qty_in) * num(l.unit_cost);
+    }
+    const p = num(f.pct) / 100;
+    out.push({ id: f.id, holder: str(f.holder_no), name: str(f.name) || str(f.holder_no), reference: str(f.reference), pct: num(f.pct), profitShare: num(f.return_value),
+               funded: R(landed * p), unitsFunded: Math.round(unitsIn * p * 100) / 100, soldUnits: Math.round(sold * p * 100) / 100,
+               recovered: R(cost * p), profit: R((revenue - cost) * p), earned: R((revenue - cost) * p * num(f.return_value) / 100),
+               since: formatDate(f.at, 'd MMM yyyy'), note: str(f.note) });
+  }
+  return { currency: 'BDT', funding: out };
+}
+
+/** The owner says who funded what share of a shipment. All shares of one shipment together stay within 100%. */
+export async function erpLotFund(ctx, payload) {
+  if (ctx.s.role !== 'owner') throw new Error('Only the owner says who funded a shipment.');
+  payload = payload || {};
+  const ref = str(payload.reference), holder = str(payload.holder), pct = Math.round(num(payload.pct) * 1000) / 1000;
+  if (!ref) throw new Error('Which shipment?');
+  if (!(pct > 0 && pct <= 100)) throw new Error('Their share of the shipment is a percentage above 0 and up to 100.');
+  const h = (await ctx.tx`select holder_no, name, kind, return_kind, ended_month from capital_holders where business_id = ${ctx.biz} and holder_no = ${holder}`)[0];
+  if (!h) throw new Error('Choose an investor from Capital.');
+  if (str(h.kind) !== 'investor' || str(h.return_kind) !== 'lot') throw new Error(str(h.name) + ' is not paid by shipment profit. On Capital, set their return to "Share of profit on shipments they fund".');
+  if (h.ended_month) throw new Error(str(h.name) + ' has left.');
+  const has = await ctx.tx`select 1 from stock_lots where business_id = ${ctx.biz} and reference = ${ref} and source = 'receive' limit 1`;
+  if (!has.length) throw new Error('No shipment called "' + ref + '".');
+  await ctx.tx`select pg_advisory_xact_lock(hashtext(${'lotfund:' + ctx.biz}))`;
+  const used = num((await ctx.tx`select coalesce(sum(pct), 0) as s from lot_funding where business_id = ${ctx.biz} and reference = ${ref} and voided_at is null`)[0].s);
+  if (used + pct > 100.0001) throw new Error('That would fund ' + (used + pct) + '% of ' + ref + '. ' + used + '% is already funded, so at most ' + (100 - used) + '% is free.');
+  await ctx.tx`insert into lot_funding (business_id, holder_no, reference, pct, note, by)
+               values (${ctx.biz}, ${holder}, ${ref}, ${pct}, ${str(payload.note).slice(0, 200) || null}, ${str(ctx.s.name) || 'Owner'})`;
+  delete ctx.memo.invReturns;
+  return erpLotFunding(ctx, { reference: ref });
+}
+
+/** A funding written by mistake is struck out with a reason (its returns stop counting). */
+export async function erpLotFundVoid(ctx, payload) {
+  if (ctx.s.role !== 'owner') throw new Error('Only the owner changes who funded a shipment.');
+  const id = str(payload && payload.id), why = str(payload && payload.reason);
+  if (!why) throw new Error('Say why it is struck out.');
+  const r = await ctx.tx`update lot_funding set voided_at = now(), voided_why = ${why.slice(0, 200)}
+                         where business_id = ${ctx.biz} and id = ${id} and voided_at is null returning reference`;
+  if (!r.length) throw new Error('That funding is not there.');
+  delete ctx.memo.invReturns;
+  return erpLotFunding(ctx, { reference: str(r[0].reference) });
+}
+
+export const HANDLERS = { erpShipments, erpShipment, erpLots, erpLotFunding, erpLotFund, erpLotFundVoid };

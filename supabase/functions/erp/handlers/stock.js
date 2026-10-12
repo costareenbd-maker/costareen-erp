@@ -39,7 +39,7 @@ function txnId(now) {
 /** All of this business's PRODUCT_MASTER rows, in sheet (insertion) order. */
 async function pmRows(ctx) {
   return ctx.tx`
-    select id, sku, name, category, brand, type, cost_price, reorder_level, status
+    select id, sku, name, category, brand, type, cost_price, reorder_level, status, weight_g, length_mm, width_mm, height_mm
     from products where business_id = ${ctx.biz}
     order by date_added, created_at, sku`;
 }
@@ -181,6 +181,35 @@ export async function addProduct(ctx, data) {
   return { success: true, sku, id, product_name: data.product_name };
 }
 
+/** 108: a product's shipping size - only the fields that were sent; '' or 0 clears one. */
+async function saveSize(ctx, id, d) {
+  const f = { weight_g: 'weight_g', length_mm: 'length_mm', width_mm: 'width_mm', height_mm: 'height_mm' };
+  const set = {};
+  for (const k of Object.keys(f)) {
+    if (d[k] === undefined) continue;
+    const v = num(d[k]);
+    if (v < 0 || v > 1e6) throw new Error('That size or weight looks wrong (' + d[k] + ').');
+    set[k] = v > 0 ? v : null;
+  }
+  if (!Object.keys(set).length) return;
+  await ctx.tx`update products set ${ctx.tx(set)}, updated_at = now() where id = ${id} and business_id = ${ctx.biz}`;
+}
+
+/** 108: the same size for many products at once (e.g. every 1 kg spool: 1300 g, box 210 x 210 x 80 mm). */
+export async function erpProductSizes(ctx, payload) {
+  payload = payload || {};
+  if (!powerOn(ctx.s, 'products')) throw new Error('Your account cannot change products.');
+  const skus = (Array.isArray(payload.skus) ? payload.skus : []).map((x) => str(x).toLowerCase()).filter(Boolean);
+  const cat = str(payload.category).toLowerCase();
+  if (!skus.length && !cat) throw new Error('Which products? Choose some, or a category.');
+  const rows = await ctx.tx`select id from products where business_id = ${ctx.biz}
+                            and (lower(btrim(sku)) = any(${skus}) or (${cat} <> '' and lower(btrim(category)) = ${cat}))`;
+  if (!rows.length) throw new Error('No products matched.');
+  for (const r of rows) await saveSize(ctx, r.id, payload);
+  delete ctx.memo.catalog;
+  return { ok: true, changed: rows.length };
+}
+
 /** erpRefuseDiscontinue_ (ERP:1846) */
 async function refuseDiscontinue(ctx, sku, name) {
   let left = 0;
@@ -213,6 +242,7 @@ export async function erpSaveProduct(ctx, data) {
       opening_stock: num(data.opening_stock),
     });
     if (!res || !res.success) throw new Error((res && res.error) || 'Could not add the product.');
+    await saveSize(ctx, res.id, data);
     if (num(data.wholesale_price) > 0) {
       await ctx.tx`update products set wholesale_price = ${num(data.wholesale_price)}
                    where business_id = ${ctx.biz} and lower(btrim(sku)) = ${String(res.sku).toLowerCase()}`;
@@ -241,6 +271,7 @@ export async function erpSaveProduct(ctx, data) {
       location_bin = ${String(data.location_bin || '')}, status = ${String(data.status || 'Active')},
       updated_at = now()
     where id = ${cur.row}`;
+  await saveSize(ctx, cur.row, data);
   delete ctx.memo.catalog;
   return { ok: true, sku: cur.sku, created: false };
 }
@@ -285,8 +316,17 @@ export async function receiveShipment(ctx, payload) {
   let mode = String(payload.mode || 'none').toLowerCase();
   const fxCur = (mode === 'rmb' ? 'RMB' : str(payload.currency).toUpperCase()) || 'RMB';
   if (mode === 'fx') mode = 'rmb';
-  const freight = round2(num(payload.shippingBdt));
+  let freight = round2(num(payload.shippingBdt));
   if (freight < 0) throw new Error('Shipping cannot be negative.');
+  // 108: how each cost is shared out - 'value' (as always), 'weight' (chargeable weight) or 'units'
+  const BASES = { value: 1, weight: 1, units: 1 };
+  const basisOf = (b) => { const v = str(b).toLowerCase(); if (v && !BASES[v]) throw new Error('Share a cost by weight, by value or by units.'); return v; };
+  const defBasis = basisOf(payload.basis) || 'value';
+  const freightBasis = basisOf(payload.freightBasis) || defBasis;
+  const perKg = round2(num(payload.freightPerKg));
+  if (perKg < 0) throw new Error('The freight rate per kg cannot be negative.');
+  const divisor = num(payload.divisor) > 0 ? num(payload.divisor) : 6000;
+  if (divisor < 1000 || divisor > 10000) throw new Error('The box-size divisor is usually 6000 (between 1000 and 10000).');
   // the other costs of bringing it in: duty, VAT at the port, the C&F agent...
   const extras = [];
   for (const c of Array.isArray(payload.costs) ? payload.costs : []) {
@@ -294,9 +334,8 @@ export async function receiveShipment(ctx, payload) {
     if (!amt) continue;
     if (amt < 0) throw new Error('A cost cannot be negative.');
     if (!str(c.label)) throw new Error('Say what each extra cost was (duty, agent, ...).');
-    extras.push({ label: str(c.label).slice(0, 60), amount: amt, account: str(c.account) });
+    extras.push({ label: str(c.label).slice(0, 60), amount: amt, account: str(c.account), basis: basisOf(c.basis) || defBasis });
   }
-  const shipping = round2(freight + extras.reduce((t, c) => t + c.amount, 0));
   const rate = num(payload.rate);
   const totalRmb = num(payload.totalFx !== undefined ? payload.totalFx : payload.totalRmb);
   let totalBdt = num(payload.totalBdt);
@@ -323,7 +362,8 @@ export async function receiveShipment(ctx, payload) {
   for (const p of await pmRows(ctx)) {
     const s = str(p.sku);
     if (s) existing[s.toLowerCase()] = { id: p.id, sku: s, name: String(p.name || ''), cat: str(p.category),
-                                         brand: str(p.brand), type: str(p.type), cost: num(p.cost_price) };
+                                         brand: str(p.brand), type: str(p.type), cost: num(p.cost_price),
+                                         weightG: num(p.weight_g), lengthMm: num(p.length_mm), widthMm: num(p.width_mm), heightMm: num(p.height_mm) };
   }
   for (const l of lines) {
     if (!l.isNew) {
@@ -353,6 +393,7 @@ export async function receiveShipment(ctx, payload) {
     }
     l.sku = res.sku;
     created.push(res.sku);
+    await saveSize(ctx, res.id, d);
     existing[String(res.sku).toLowerCase()] = {
       id: res.id, sku: res.sku, name: d.product_name, cat: str(d.category), brand: str(d.brand),
       type: str(d.type), cost: num(d.cost_price), fresh: true,
@@ -360,6 +401,28 @@ export async function receiveShipment(ctx, payload) {
   }
 
   // ---- 2. what each unit cost
+  // 108: the chargeable weight of one unit (grams): the larger of its real weight and its box-size weight
+  const sizes = lines.map((l) => {
+    const info = existing[str(l.sku).toLowerCase()] || {}, np = l.product || {};
+    const pick = (a, b, c) => num(a) > 0 ? num(a) : num(b) > 0 ? num(b) : num(c);
+    const g = pick(l.weightG, info.weightG, np.weight_g);
+    const L = pick(l.lengthMm, info.lengthMm, np.length_mm), W = pick(l.widthMm, info.widthMm, np.width_mm), H = pick(l.heightMm, info.heightMm, np.height_mm);
+    const vol = L > 0 && W > 0 && H > 0 ? Math.round(L * W * H / divisor) : 0;
+    return { weightG: g, volG: vol, chargeG: Math.max(g, vol), name: info.name || np.product_name || str(l.sku) };
+  });
+  const needWeight = (why) => {
+    const miss = sizes.filter((z) => !(z.chargeG > 0)).map((z) => z.name);
+    if (miss.length) throw new Error('Give the weight (or box size) of ' + miss.slice(0, 3).join(', ') + (miss.length > 3 ? ' and ' + (miss.length - 3) + ' more' : '') + ' to ' + why + '.');
+  };
+  const chargeKg = round2(sizes.reduce((t, z, i) => t + z.chargeG * num(lines[i].qty), 0) / 1000);
+  // freight by the kilo: chargeable kg x this shipment's rate (when the amount itself is not typed)
+  let freightNote = '';
+  if (!(freight > 0) && perKg > 0) {
+    needWeight('charge freight per kg');
+    freight = round2(chargeKg * perKg);
+    freightNote = chargeKg + ' kg \u00d7 ' + perKg + ' TK/kg';
+  }
+  const shipping = round2(freight + extras.reduce((t, c) => t + c.amount, 0));
   const book = await bookCostMap(ctx);
   const onHand = await onHandMap(ctx);
   const weights = [];
@@ -373,11 +436,21 @@ export async function receiveShipment(ctx, payload) {
     sumW += basis * q;
     sumQty += q;
   }
+  // every cost line shared out by its own basis (108); value falls back to units where nothing has a value
+  const costLines = (freight > 0 ? [{ label: 'Freight', amount: freight, basis: freightBasis }] : []).concat(extras);
+  if (costLines.some((c) => c.basis === 'weight')) needWeight('share costs by weight');
+  const measure = (basis, x) => basis === 'weight' ? sizes[x].chargeG * num(lines[x].qty) : basis === 'units' ? num(lines[x].qty) : (sumW > 0 ? weights[x] : num(lines[x].qty));
+  const shares = lines.map(() => 0);
+  for (const c of costLines) {
+    let of = 0;
+    for (let x = 0; x < lines.length; x++) of += measure(c.basis, x);
+    for (let x = 0; x < lines.length; x++) shares[x] += of > 0 ? c.amount * measure(c.basis, x) / of : 0;
+  }
   const costs = [];
   for (let x = 0; x < lines.length; x++) {
     const q = num(lines[x].qty);
     let unit;
-    const shipShare = shipping > 0 ? (sumW > 0 ? shipping * weights[x] / sumW : shipping * q / sumQty) / q : 0;
+    const shipShare = shipping > 0 ? shares[x] / q : 0;
     if (totalBdt > 0) {
       const share = sumW > 0 ? (totalBdt * weights[x] / sumW) : (totalBdt * q / sumQty);
       unit = share / q;
@@ -395,7 +468,7 @@ export async function receiveShipment(ctx, payload) {
   else if (mode === 'bdt') stampNote = (stampNote ? stampNote + ' | ' : '') + 'local, TK ' + totalBdt;
   if (shipping > 0) {
     stampNote = (stampNote ? stampNote + ' | ' : '') + 'shipping TK ' + shipping +
-                (payload.shipNote ? ' (' + String(payload.shipNote) + ')' : '');
+                (payload.shipNote || freightNote ? ' (' + [String(payload.shipNote || ''), freightNote].filter(Boolean).join(', ') + ')' : '');
   }
   if (payload.poId) stampNote = (stampNote ? stampNote + ' | ' : '') + 'order ' + String(payload.poId);
 
@@ -448,7 +521,8 @@ export async function receiveShipment(ctx, payload) {
     try { (await ctx.tx.savepoint(() => ctx.tx`select id from money_accounts where business_id = ${ctx.biz} and not archived`)).forEach((a) => { accOk[a.id] = true; }); }
     catch (_) { /* someone who cannot see the accounts cannot name one */ }
   }
-  const costRows = (freight > 0 ? [{ label: 'Freight' + (payload.shipNote ? ' (' + String(payload.shipNote) + ')' : ''), amount: freight, account: str(payload.shippingAccount) }] : []).concat(extras);
+  const fNote = [String(payload.shipNote || ''), freightNote].filter(Boolean).join(', ');
+  const costRows = (freight > 0 ? [{ label: 'Freight' + (fNote ? ' (' + fNote + ')' : ''), amount: freight, account: str(payload.shippingAccount) }] : []).concat(extras);
   for (const c of costRows) {
     await ctx.tx`insert into shipment_costs (business_id, reference, at, label, amount, account_id, by)
                  values (${ctx.biz}, ${reference}, ${now}, ${c.label}, ${c.amount}, ${accOk[c.account] ? c.account : null}, ${who(ctx)})`;
@@ -482,6 +556,10 @@ export async function receiveShipment(ctx, payload) {
     ok: true, numbered, reference, billed: !!billId, paidNow, costs: costRows.length, currency: mode === 'rmb' ? fxCur : '', received: updated.length || lines.length,
     units: lines.reduce((n, l) => n + num(l.qty), 0),
     shipping, createdProducts: created, lines: updated, totalCost: round2(totalBdt),
+    freight, chargeKg, freightPerKg: perKg, divisor,
+    calc: lines.map((l, x) => ({ sku: str(l.sku), qty: num(l.qty), chargeG: sizes[x].chargeG, weightG: sizes[x].weightG, volG: sizes[x].volG,
+                                 costsPerUnit: round2(shares[x] / num(l.qty)), unitCost: costs[x] })),
+    bases: costLines.map((c) => ({ label: c.label, amount: c.amount, basis: c.basis })),
     rate: mode === 'rmb' ? rate : 0, rateSaved,
     costed: totalBdt > 0 ? 'shipment total' : 'price book',
   };
@@ -780,8 +858,52 @@ export async function erpPoList(ctx) {
       units: num(r.units) });
   }
   const orders = (await poOpen(ctx)).orders;
-  orders.forEach((o) => { o.boxes = boxes[o.id] || []; });
+  const stages = {};
+  for (const r of await ctx.tx`select * from po_stages where business_id = ${ctx.biz}`) stages[str(r.po_no)] = r;
+  orders.forEach((o) => { o.boxes = boxes[o.id] || []; o.stage = stageOut(stages[o.id], o); });
   return { orders, differences: m.open, balances: m.balances };
+}
+
+// ------------------------------------------------------------------ stages (108)
+const STAGES = { planned: 'Planned', ordered: 'Ordered', in_transit: 'In transit', received: 'Received' };
+function stageOut(r, o) {
+  const key = r ? str(r.stage) : 'ordered';
+  return { key, label: STAGES[key] || 'Ordered', shipmentNo: str(r && r.shipment_no), agent: str(r && r.agent), shipBy: str(r && r.ship_by) || (o && o.shipBy) || '',
+           kg: num(r && r.weight_kg), freightPerKg: num(r && r.freight_per_kg), divisor: num(r && r.divisor) || 6000,
+           eta: r && r.eta ? formatDate(new Date(r.eta), 'yyyy-MM-dd') : '', note: str(r && r.note),
+           freightEstimate: r && num(r.weight_kg) > 0 && num(r.freight_per_kg) > 0 ? round2(num(r.weight_kg) * num(r.freight_per_kg)) : 0 };
+}
+async function stageSet(ctx, poId, f) {
+  await ctx.tx`
+    insert into po_stages (business_id, po_no, stage, shipment_no, agent, ship_by, weight_kg, freight_per_kg, divisor, eta, note, updated_by, updated_at)
+    values (${ctx.biz}, ${poId}, ${f.stage}, ${f.shipmentNo || null}, ${f.agent || null}, ${f.shipBy || null}, ${f.kg || null}, ${f.freightPerKg || null},
+            ${f.divisor || null}, ${f.eta || null}, ${f.note || null}, ${who(ctx)}, now())
+    on conflict (business_id, po_no) do update set stage = excluded.stage,
+      shipment_no = coalesce(excluded.shipment_no, po_stages.shipment_no), agent = coalesce(excluded.agent, po_stages.agent),
+      ship_by = coalesce(excluded.ship_by, po_stages.ship_by), weight_kg = coalesce(excluded.weight_kg, po_stages.weight_kg),
+      freight_per_kg = coalesce(excluded.freight_per_kg, po_stages.freight_per_kg), divisor = coalesce(excluded.divisor, po_stages.divisor),
+      eta = coalesce(excluded.eta, po_stages.eta), note = coalesce(excluded.note, po_stages.note), updated_by = excluded.updated_by, updated_at = now()`;
+}
+
+/** Move an order along: Planned -> Ordered -> In transit (with what is known of the shipment). Received comes from erpPoArrive. */
+export async function erpPoStage(ctx, payload) {
+  payload = payload || {};
+  if (!powerOn(ctx.s, 'suppliers')) throw new Error('Your account cannot change orders.');
+  const id = str(payload.poId);
+  const order = (await poOpen(ctx)).orders.find((o) => o.id === id);
+  if (!order) throw new Error('No open order called ' + id + '.');
+  const stage = str(payload.stage);
+  if (!STAGES[stage] || stage === 'received') throw new Error('An order is Planned, Ordered or In transit; it becomes Received when you receive it.');
+  const kg = num(payload.kg), perKg = num(payload.freightPerKg), div = num(payload.divisor);
+  if (kg < 0 || perKg < 0) throw new Error('Weight and freight rate cannot be negative.');
+  if (div && (div < 1000 || div > 10000)) throw new Error('The box-size divisor is usually 6000 (between 1000 and 10000).');
+  const eta = str(payload.eta);
+  if (eta && !/^\d{4}-\d{2}-\d{2}$/.test(eta)) throw new Error('The expected date looks wrong.');
+  const shipBy = str(payload.shipBy);
+  if (shipBy && shipBy !== 'Sea' && shipBy !== 'Air') throw new Error('By sea or by air?');
+  await stageSet(ctx, id, { stage, shipmentNo: str(payload.shipmentNo), agent: str(payload.agent), shipBy, kg, freightPerKg: perKg, divisor: div, eta, note: str(payload.note) });
+  const r = (await ctx.tx`select * from po_stages where business_id = ${ctx.biz} and po_no = ${id}`)[0];
+  return { ok: true, poId: id, stage: stageOut(r, order) };
 }
 
 /** A PO / difference id not used yet in this business (fix: the original's could collide). */
@@ -876,7 +998,8 @@ export async function erpPoCreate(ctx, payload) {
       values (${ctx.biz}, ${id}, ${now}, ${l.sku}, ${l.name}, ${l.qty}, 0, ${shipBy}, ${note},
               'open', ${by}, null, ${l.rmb || null}, ${rate || null}, ${supplier})`;
   }
-  return { ok: true, poId: id, lines: lines.length, created,
+  await stageSet(ctx, id, { stage: payload.planned ? 'planned' : 'ordered', shipBy });
+  return { ok: true, poId: id, lines: lines.length, created, stage: payload.planned ? 'planned' : 'ordered',
            units: lines.reduce((t, l) => t + l.qty, 0),
            rmb: round2(lines.reduce((t, l) => t + l.qty * l.rmb, 0)) };
 }
@@ -927,10 +1050,13 @@ export async function erpPoArrive(ctx, payload) {
   if (!lines.length) throw new Error('Type what arrived on at least one line.');
 
   const now = new Date();
-  const shipNo = str(sp.no);
+  const st = (await ctx.tx`select * from po_stages where business_id = ${ctx.biz} and po_no = ${id}`)[0];
+  const shipNo = str(sp.no) || str(st && st.shipment_no);
+  const perKg = num(sp.freightPerKg) || (shipping > 0 ? 0 : num(st && st.freight_per_kg));
   const res = await receiveShipment(ctx, {
     mode: 'none', reference: shipNo || (id + ' / ' + formatDate(now, 'd MMM yyyy')), poId: id, lines,
-    shippingBdt: shipping, supplier: order.supplier,
+    shippingBdt: shipping, supplier: order.supplier, freightPerKg: perKg, divisor: num(sp.divisor) || num(st && st.divisor) || 0,
+    basis: str(sp.basis) || '', freightBasis: str(sp.freightBasis) || (perKg > 0 ? 'weight' : ''), costs: Array.isArray(sp.costs) ? sp.costs : [],
     shipNote: [sp.agent ? 'agent ' + sp.agent : '', num(sp.kg) > 0 ? num(sp.kg) + ' kg' : ''].filter((x) => x).join(', '),
     notes: order.rate > 0 ? 'priced on the order @ ' + order.rate + ' TK/RMB' : '',
   });
@@ -971,6 +1097,9 @@ export async function erpPoArrive(ctx, payload) {
     left = o.left;
     o.lines.forEach((l) => { if (l.left > 0 && l.received > 0) short++; });
   });
+  // the order is Received when nothing is left to come; otherwise the rest is still Ordered
+  await ctx.tx`update po_stages set stage = ${left > 0 ? 'ordered' : 'received'}, updated_by = ${by}, updated_at = now()
+               where business_id = ${ctx.biz} and po_no = ${id}`;
   return { ok: true, poId: id, received: res.received, units: res.units, shipping: res.shipping,
            lines: res.lines, stillToCome: left, shortLines: short, differences: diffs.length,
            created: res.createdProducts || [] };
@@ -1087,6 +1216,7 @@ export async function erpPoSettle(ctx, payload) {
 }
 
 export const HANDLERS = {
+  erpPoStage, erpProductSizes,
   erpSaveProduct, erpSetProductStatus, erpDiscontinued,
   erpReceiveShipment, erpReceiveStock, erpAdjustStock, erpStockHistory,
   erpReorderPlan, erpApplyReorderLevels,

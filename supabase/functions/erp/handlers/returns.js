@@ -54,6 +54,35 @@ export async function investorReturns(ctx) {
       out.byMonth[m] = (out.byMonth[m] || 0) + due;
     }
   }
+  // 109: an investor in shipments earns return_value % of the profit on their share (pct) of each shipment they fund,
+  // in the month the units sold (returns taken off); price = the sold line's price per unit, cost = the lot's landed cost
+  const lotHs = hs.filter((h) => str(h.return_kind) === 'lot' && num(h.return_value) > 0);
+  if (lotHs.length) {
+    const terms = {};
+    lotHs.forEach((h) => { terms[str(h.holder_no)] = { val: num(h.return_value), since: str(h.since_month), ended: str(h.ended_month) }; });
+    const rows = await ctx.tx`
+      select f.holder_no, to_char(public.dhaka_date(d.at), 'YYYY-MM') as m,
+             sum(d.qty * (coalesce(case when mv.kind::text = 'SALE'
+                   then (select il.line_total / nullif(il.qty, 0) from invoice_lines il
+                         where il.invoice_id = mv.invoice_id and il.product_id = d.product_id and il.qty > 0 order by il.line_no limit 1)
+                   else (select il.line_total / nullif(il.qty, 0) from invoice_lines il join invoices i on i.id = il.invoice_id
+                         where i.business_id = mv.business_id and i.invoice_no = btrim(substr(mv.reference, 9)) and il.product_id = d.product_id and il.qty > 0
+                         order by il.line_no limit 1) end, 0) - d.unit_cost) * f.pct / 100) as profit
+      from lot_funding f
+      join stock_lots l on l.business_id = f.business_id and l.reference = f.reference and l.source = 'receive'
+      join lot_draws d on d.lot_id = l.id and d.unit_cost is not null
+      join stock_movements mv on mv.id = d.movement_id and mv.kind::text in ('SALE', 'RETURN')
+      where f.business_id = ${ctx.biz} and f.voided_at is null
+      group by 1, 2`;
+    for (const r of rows) {
+      const id = str(r.holder_no), t = terms[id], m = str(r.m);
+      if (!t || (t.ended && m > t.ended) || m > nowMonth) continue;
+      const due = Math.round(num(r.profit) * t.val / 100);
+      const mine = out.byHolder[id] = out.byHolder[id] || {};
+      mine[m] = (mine[m] || 0) + due;
+      out.byMonth[m] = (out.byMonth[m] || 0) + due;
+    }
+  }
   return (ctx.memo.invReturns = out);
 }
 
