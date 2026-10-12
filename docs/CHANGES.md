@@ -1490,3 +1490,15 @@ taken. Sponsorship rolls may also come from a joint stock.
   every handover). Filament prices removed from the brand's page and the owner's creator summary (rolls only); sales
   by creator code keep their amounts. `creatorclaims_test.mjs` (22: own stock, joint pool, refusals, list, brand page,
   part / full replacement, zero values, "not from our stock").
+
+## fd-1 - FilaDash look, merge phase P1 (13 Oct 2026)
+
+The partner's FilaDash design system is laid over every screen (block "fd-1" at the end of web/app.html): his tokens
+(light = indigo, dark = amber), his fonts (web/fonts: Inter + Noto Sans Bengali, OFL licences beside them), white
+sidebar with pill menu items and the accent bar, white top bar, soft page, 20 px cards with his shadows, KPI tiles in
+his layout (number first; the first accent tile of a row is his gradient "hero" card), pill buttons/chips/tabs, soft
+inputs with the focus ring, tables with the rounded grey head, his dialogs/toast. Screens, server and data unchanged.
+Account menu > Look: FilaDash / Classic (per device, `erp_skin`; html[data-skin="fd"]). deploy.py web ships web/fonts.
+Checked locally: dashboard, Sales, New invoice, light, dark, phone (375 px, no sideways scroll), the Look switch.
+NOT done (later phases): his page header (title + subtitle) on every screen, his screen layouts (P2), his extras (P3);
+the user's own theme colours (Themes window) do not tint the FilaDash look; not deployed to the dev copy yet (owner reviews locally first).

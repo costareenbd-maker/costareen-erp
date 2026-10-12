@@ -132,6 +132,7 @@ def step_web():
     shutil.copytree(os.path.join(ROOT, 'web', 'brand'), os.path.join(out, 'brand'))     # sponsoring brands' logos (creator / sponsor pages)
     shutil.copytree(os.path.join(ROOT, 'web', 'vendor'), os.path.join(out, 'vendor'))   # the barcode reader (loaded only when scanning)
     shutil.copytree(os.path.join(ROOT, 'web', 'games'), os.path.join(out, 'games'))   # games load on demand (no photos in them)
+    shutil.copytree(os.path.join(ROOT, 'web', 'fonts'), os.path.join(out, 'fonts'))   # the FilaDash look's fonts (Inter + Noto Sans Bengali, OFL)
     # Stage 1e: only the published copy is minified (the source stays readable); a failed minify stops the deploy
     games = [os.path.join(out, 'games', f) for f in os.listdir(os.path.join(out, 'games')) if f.endswith('.js')]
     subprocess.check_call(['node', os.path.join(ROOT, 'deploy', 'minify.mjs'), os.path.join(out, 'index.html')] + games)
