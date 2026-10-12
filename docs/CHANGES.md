@@ -1518,3 +1518,15 @@ a group), donuts (group / channel / payment method / brand), Top products, Recen
 Needs attention, Dues by age, Reorder suggestions. The previous dashboard is kept under "More: the classic dashboard".
 Classic look (account menu) shows the old dashboard unchanged. Demo data: payments now dated on/after their invoice.
 NOT done: his widget editing (add/move/resize cards), custom date range, ranges in days (30/90) - months keep one net profit.
+
+## fd-3 - FilaDash screen heads, merge phase P2 (part 2) (13 Oct 2026)
+
+Every screen (not the dashboard, not a record page such as one invoice/customer/product) opens the FilaDash way:
+eyebrow with the business, the screen's name as a 28 px title, one line saying what it is for. Sales, Customers,
+Products, Stock, Expenses, Money and Profitability get his four cards on top (first = gradient hero), this month vs
+last month, from `erpFdHead` (handlers/fddash.js; role 'sales'; money only with the matching ability: dues ->
+"dues", stock value -> "costs", expenses -> "expenses", Money/Profit -> shareholder). Cards that point somewhere
+open that list (e.g. Out of stock -> Products filtered). Tests: fddash_test now 38 (who sees which card, figures
+equal the P&L / dashboard). Demo data: customers dated by their first invoice.
+NOT done: his table card (toolbar with search chips, Views, column chooser) around our existing lists, and his
+tab-pill sub-views - the lists below the cards are our own screens, restyled by fd-1 only.

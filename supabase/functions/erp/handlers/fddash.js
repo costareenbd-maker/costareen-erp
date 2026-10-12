@@ -10,7 +10,7 @@
 
 import { salesLog, paymentsTab, asDate, str, SL, PAY } from '../lib/tabs.js';
 import { formatDate, num } from '../lib/time.js';
-import { powerOn } from '../allow.js';
+import { powerOn, roleAtLeast } from '../allow.js';
 import { discLeft } from './money.js';
 import { products, pnlFor, soldCost, owedMap } from './dashboard.js';
 
@@ -254,4 +254,89 @@ export async function erpFdDash(ctx, payload) {
   return out;
 }
 
-export const HANDLERS = { erpFdDash };
+// ------------------------------------------------------------------ screen heads
+// FilaDash's list screens open with four cards (the first one the "hero"). erpFdHead gives them for one screen:
+// this month against last month. Anyone who may open the screen may ask; money only reaches the people the
+// matching ability allows (dues: "dues", stock value: "costs", expenses: "expenses", money: shareholder).
+
+function card(key, title, icon, v, o) { return Object.assign({ key, title, icon, v: R(v) }, o || {}); }
+
+export async function erpFdHead(ctx, payload) {
+  const view = String((payload && payload.view) || '');
+  const now = monthKey(ctx.now), prev = shiftMonth(now, -1);
+  const cards = [];
+  const canDues = powerOn(ctx.s, 'dues'), canCost = powerOn(ctx.s, 'costs');
+  const owedTotal = async () => { let t = 0, n = 0; for (const v of Object.values(await owedMap(ctx))) if (v > 0.5) { t += v; n++; } return { t, n }; };
+
+  if (view === 'sales' || view === 'orders') {
+    const L = await lines(ctx, [prev, now]);
+    const cur = sumUp(L.filter((x) => x.month === now)), last = sumUp(L.filter((x) => x.month === prev));
+    if (canDues) cards.push(card('revenue', 'Revenue this month', 'taka', cur.revenue, { prev: R(last.revenue), money: true, hero: true }));
+    cards.push(card('orders', 'Orders this month', 'cart', cur.orders, { prev: last.orders, hero: !canDues }));
+    const o = await owedTotal();
+    if (canDues) cards.push(card('dues', 'Dues receivable', 'bell', o.t, { money: true, tone: o.t > 0 ? 'warn' : '', f: 'due', note: o.n + ' invoice(s) owe' }));
+    else cards.push(card('duesN', 'Invoices with a due', 'bell', o.n, { tone: o.n ? 'warn' : '', f: 'due' }));
+    cards.push(card('units', 'Units sold this month', 'spool', cur.units, { prev: R(last.units) }));
+  } else if (view === 'customers') {
+    const c = (await ctx.tx`select count(*)::int as n,
+                 count(*) filter (where to_char(public.dhaka_date(created_at), 'YYYY-MM') = ${now})::int as fresh,
+                 count(*) filter (where to_char(public.dhaka_date(created_at), 'YYYY-MM') = ${prev})::int as fresh_prev
+               from customers where business_id = ${ctx.biz}`)[0];
+    const b = (await ctx.tx`select count(*) filter (where n >= 1)::int as buyers, count(*) filter (where n >= 2)::int as repeat
+               from (select right(regexp_replace(coalesce(customer_phone, ''), '[^0-9]', '', 'g'), 10) as k, count(*) as n
+                     from invoices where business_id = ${ctx.biz} and voided_at is null and invoice_no not like 'RTN-%'
+                       and coalesce(customer_phone, '') <> '' group by 1) t`)[0];
+    cards.push(card('customers', 'Customers', 'users', c.n, { hero: true, note: 'in the customer list' }));
+    cards.push(card('fresh', 'New this month', 'plus', c.fresh, { prev: c.fresh_prev }));
+    cards.push(card('repeat', 'Repeat buyers', 'reset', b.buyers ? b.repeat / b.buyers * 100 : 0, { pct: true, note: b.repeat + ' of ' + b.buyers + ' buyers bought twice or more' }));
+    const o = await owedTotal();
+    if (canDues) cards.push(card('dues', 'Owed by customers', 'bell', o.t, { money: true, tone: o.t > 0 ? 'warn' : '', go: 'sales', f: 'due', note: o.n + ' invoice(s)' }));
+    else cards.push(card('duesN', 'Invoices with a due', 'bell', o.n, { tone: o.n ? 'warn' : '', go: 'sales', f: 'due' }));
+  } else if (view === 'products' || view === 'stock') {
+    const { list } = await products(ctx);
+    let value = 0, units = 0, out = 0, low = 0, uncosted = 0;
+    for (const p of list) {
+      if (/discontinued|inactive/i.test(p.status)) continue;
+      if (p.stock > 0) { units += p.stock; if (p.cost > 0) value += p.stock * p.cost; else uncosted++; }
+      if (p.stock <= 0) out++; else if (p.stock <= p.reorder) low++;
+    }
+    if (canCost) cards.push(card('stockValue', 'Stock value at cost', 'box', value, { money: true, hero: true, note: uncosted ? uncosted + ' product(s) in stock without a cost' : list.length + ' products' }));
+    cards.push(card('units', 'Units on hand', 'spool', units, { hero: !canCost }));
+    cards.push(card('out', 'Out of stock', 'x', out, { tone: out ? 'bad' : '', go: 'products', f: 'out' }));
+    cards.push(card('low', 'At or below reorder', 'warn', low, { tone: low ? 'warn' : '', go: 'stock', f: 'plan' }));
+  } else if (view === 'expenses' && powerOn(ctx.s, 'expenses')) {
+    const { expByCat, expenseUnpaid } = await import('./dashboard.js');
+    const a = await expByCat(ctx, now), b = await expByCat(ctx, prev);
+    const top = Object.entries(a.byCat).sort((x, y) => y[1] - x[1])[0];
+    cards.push(card('expenses', 'Expenses this month', 'receipt', a.total, { prev: R(b.total), money: true, hero: true, flip: true }));
+    cards.push(card('unpaid', 'Fixed costs not yet paid', 'clock', await expenseUnpaid(ctx, now), { money: true, tone: 'warn', note: 'this month’s fixed items' }));
+    cards.push(card('top', top ? top[0] : 'Biggest category', 'layers', top ? top[1] : 0, { money: true, note: 'biggest category this month' }));
+    cards.push(card('last', 'Last month', 'calendar', b.total, { money: true, note: monthLabel(prev) }));
+  } else if ((view === 'cash' || view === 'profit') && roleAtLeast(ctx.s.role, 'shareholder')) {
+    const p = (await pnlFor(ctx, [prev, now]));
+    const [pm, cm] = p;
+    if (view === 'profit') {
+      cards.push(card('net', 'Net profit this month', 'target', cm.net, { prev: pm.net, money: true, hero: true }));
+      cards.push(card('revenue', 'Revenue', 'taka', cm.netSales, { prev: pm.netSales, money: true }));
+      cards.push(card('gross', 'Gross profit', 'trend', cm.gross, { prev: pm.gross, money: true, note: cm.grossMargin + '% margin' }));
+      cards.push(card('expenses', 'Expenses', 'receipt', cm.expenses, { prev: pm.expenses, money: true, flip: true }));
+    } else {
+      const { erpCashBook } = await import('./cash.js');
+      const cb = await erpCashBook(ctx, {});
+      let cin = 0, cprev = 0;
+      for (const r of await paymentsTab(ctx)) {
+        const amt = num(r[PAY.amount]), meth = str(r[PAY.method]), d = asDate(r[PAY.timestamp]);
+        if (!(amt > 0) || NOT_MONEY.test(meth) || !d) continue;
+        if (monthKey(d) === now) cin += amt; else if (monthKey(d) === prev) cprev += amt;
+      }
+      cards.push(card('inHand', 'Money in hand', 'wallet', cb.inHand || 0, { money: true, hero: true, note: (cb.accounts || []).length + ' account(s), courier balance apart' }));
+      cards.push(card('cashIn', 'Received this month', 'taka', cin, { prev: R(cprev), money: true }));
+      cards.push(card('loose', 'Payments in no account', 'warn', (cb.loose || []).length, { tone: (cb.loose || []).length ? 'warn' : '', note: 'say which account they went to' }));
+      const o = await owedTotal();
+      cards.push(card('dues', 'Dues receivable', 'bell', o.t, { money: true, tone: o.t > 0 ? 'warn' : '', go: 'sales', f: 'due' }));
+    }
+  }
+  return { view, cards, month: monthLabel(now), prevMonth: monthLabel(prev), currency: 'BDT' };
+}
+
+export const HANDLERS = { erpFdDash, erpFdHead };

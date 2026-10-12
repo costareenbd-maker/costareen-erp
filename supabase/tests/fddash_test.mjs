@@ -65,4 +65,31 @@ check('an odd range falls back to one month', r.ok && r.result.months === 1, r.r
 const other = (await sql`select count(*)::int as n from invoices where business_id = ${FIX.B2}`)[0].n;
 check('the other business has its own books (not counted here)', d.recent.every((x) => !/B2/.test(x.id)) && other >= 0, other);
 
+// ---- the four cards on top of each list screen (erpFdHead)
+const head = async (who, view) => { const x = await who('erpFdHead', [{ view }]); return x.ok ? Object.fromEntries(x.result.cards.map((c) => [c.key, c])) : x; };
+let h = await head(owner, 'sales');
+check('Sales: revenue (hero), orders, dues, units', h.revenue && h.revenue.hero && h.orders && h.dues && h.units && h.revenue.v === d.kpi.revenue.v, h);
+h = await head(sales, 'sales');
+check('Sales for sales staff: counts only, no money', !h.revenue && !h.dues && h.orders && h.orders.hero && h.duesN && h.duesN.v >= 1, h);
+h = await head(owner, 'customers');
+check('Customers: count, new, repeat %, owed', h.customers.v >= 2 && h.fresh && h.repeat && h.repeat.pct && h.dues.v === d.kpi.dues.v, h);
+h = await head(sales, 'customers');
+check('Customers for sales staff: no money', !h.dues && h.duesN, h);
+h = await head(owner, 'products');
+check('Products: stock value, units, out, low', h.stockValue && h.units && h.out && h.low && h.stockValue.v === d.kpi.stockValue.v, h);
+await sql`update memberships set powers = '{"costs": false}'::jsonb where business_id = ${B} and user_id = ${FIX.U.mgr}`;
+h = await head(mgr, 'stock');
+check('Stock without the Product cost ability: no stock value', !h.stockValue && h.units.hero, h);
+await sql`update memberships set powers = '{}'::jsonb where business_id = ${B} and user_id = ${FIX.U.mgr}`;
+h = await head(owner, 'expenses');
+check('Expenses: this month = the P&L expenses', h.expenses && h.expenses.v === d.kpi.expenses.v && h.unpaid && h.last, h);
+r = await sales('erpFdHead', [{ view: 'expenses' }]);
+check('Expenses for sales staff: nothing', r.ok && r.result.cards.length === 0, r);
+h = await head(owner, 'profit');
+check('Profit: net = the P&L net', h.net.v === m.net && h.revenue.v === m.netSales, h);
+r = await mgr('erpFdHead', [{ view: 'cash' }]);
+check('Money for a manager: nothing', r.ok && r.result.cards.length === 0, r);
+h = await head(owner, 'cash');
+check('Money for the owner: in hand, received, loose, dues', h.inHand && h.cashIn && h.loose && h.dues, h);
+
 await done();

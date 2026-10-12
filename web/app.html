@@ -8433,7 +8433,7 @@ function srv(name, args, ok, bad) {
 
 var SRV_ACTIVE = 0, SRV_WRITING = false, SRV_TIMED = {};
 // the same list the server uses to know a call changes nothing (ERP_READS)
-var SRV_READS = /^(erpFdDash|erpReceiveMatch|erpAiReader|erpProductSuggest|erpCatalogue|erpPushList|erpCreators|erpCreatorPortalLink|erpSponsorLink|erpCreatorRequests|erpCreatorEvents|erpCreatorProgramme|erpCreatorPreview|erpCreatorCatalog|erpCreatorSources|erpCreatorClaims|erpApps|erpAppQr|erpFeedback|erpRestockOffers|erpRestockList|erpWarrantyRules|erpWarrantyCard|erpMyLink|erpPlatformRegister|erpPlatformDoctor|erpPlatformCommunity|erpMarketWaiting|erpBoard|erpPlatformDesign|erpResell|erpResellerProgramme|erpLoyalty|erpCustomerPoints|erpRefillDue|erpDeliveryHistory|erpDeliveryHistoryMany|erpPrintKit|erpPrintJobs|erpPrintJob|erpPrintCost|erpSpools|erpPrintRequests|erpJoint|erpJointCatalog|erpJointCard|erpInvoiceDesign|erpInvoicePreview|erpMarket|erpMarketMine|erpMarketRequests|erpMarketHints|erpMarketNames|erpWanted|erpBrand|erpComplianceLog|erpProviderKey|erpNews|erpAccessKeys|erpAccessWarning|erpAdmin|erpAiKeys|erpAlertRules|erpAlerts|erpArena|erpBackupStatus|erpBg|erpBnWords|erpBookedParcels|erpBrandLogo|erpBundle|erpBusinessLinks|erpBusinesses|erpBusinessesDeleted|erpCampaignAudience|erpCampaignGet|erpCampaignList|erpCapital|erpCashBook|erpCatalog|erpConnStatus|erpConnections|erpCostBook|erpCourier|erpCourierKeyStatus|erpCurrencies|erpCustomerAccount|erpCustomerCredit|erpCustomerList|erpCustomerPage|erpCustomerStatement|erpCustomers|erpDashboardData|erpDaySales|erpDeliveryOptions|erpDevices|erpDiscontinued|erpDues|erpEvoQr|erpEvoStatus|erpExpenseExport|erpExpenseReceiptUrl|erpExpenses|erpFamilies|erpFighters|erpFormOptions|erpGame|erpGetTheme|erpGoogle|erpHello|erpInstalls|erpInvoice|erpInvoicePdf|erpJob|erpJobs|erpListView|erpLookupCustomer|erpLookupUsage|erpMe|erpMoney|erpNoteFileUrl|erpNotes|erpOwnerChange|erpOwnerChanges|erpParcelLabels|erpParcelPreview|erpPartnerStock|erpPartnership|erpPayReasons|erpPeople|erpPlatform|erpPlatformErrors|erpPnl|erpPnlMonth|erpPoList|erpPoolCatalog|erpProduct|erpProductListShare|erpProductPage|erpProductPhotoUrl|erpProductThumbs|erpProfile|erpQuoteAsset|erpQuoteBoot|erpQuoteGet|erpQuoteList|erpRecentInvoices|erpRecovery|erpReorderPlan|erpRestorePreview|erpReturnPreview|erpRisks|erpSales|erpSearch|erpSecurity|erpSelfTest|erpSerialLookup|erpSerialsFor|erpSessions|erpSetTheme|erpSettingsFull|erpSettingsLists|erpSfPayoutLines|erpSfPayouts|erpShareFile|erpSharedStock|erpSheet|erpStatementPdf|erpStockHistory|erpSupplierPage|erpSuppliers|erpToday|erpUsers|erpWaProductPdf|erpWebMatches|erpWebOrderInvoices|erpWebOrders|erpWebsiteTest)$/;
+var SRV_READS = /^(erpFdHead|erpFdDash|erpReceiveMatch|erpAiReader|erpProductSuggest|erpCatalogue|erpPushList|erpCreators|erpCreatorPortalLink|erpSponsorLink|erpCreatorRequests|erpCreatorEvents|erpCreatorProgramme|erpCreatorPreview|erpCreatorCatalog|erpCreatorSources|erpCreatorClaims|erpApps|erpAppQr|erpFeedback|erpRestockOffers|erpRestockList|erpWarrantyRules|erpWarrantyCard|erpMyLink|erpPlatformRegister|erpPlatformDoctor|erpPlatformCommunity|erpMarketWaiting|erpBoard|erpPlatformDesign|erpResell|erpResellerProgramme|erpLoyalty|erpCustomerPoints|erpRefillDue|erpDeliveryHistory|erpDeliveryHistoryMany|erpPrintKit|erpPrintJobs|erpPrintJob|erpPrintCost|erpSpools|erpPrintRequests|erpJoint|erpJointCatalog|erpJointCard|erpInvoiceDesign|erpInvoicePreview|erpMarket|erpMarketMine|erpMarketRequests|erpMarketHints|erpMarketNames|erpWanted|erpBrand|erpComplianceLog|erpProviderKey|erpNews|erpAccessKeys|erpAccessWarning|erpAdmin|erpAiKeys|erpAlertRules|erpAlerts|erpArena|erpBackupStatus|erpBg|erpBnWords|erpBookedParcels|erpBrandLogo|erpBundle|erpBusinessLinks|erpBusinesses|erpBusinessesDeleted|erpCampaignAudience|erpCampaignGet|erpCampaignList|erpCapital|erpCashBook|erpCatalog|erpConnStatus|erpConnections|erpCostBook|erpCourier|erpCourierKeyStatus|erpCurrencies|erpCustomerAccount|erpCustomerCredit|erpCustomerList|erpCustomerPage|erpCustomerStatement|erpCustomers|erpDashboardData|erpDaySales|erpDeliveryOptions|erpDevices|erpDiscontinued|erpDues|erpEvoQr|erpEvoStatus|erpExpenseExport|erpExpenseReceiptUrl|erpExpenses|erpFamilies|erpFighters|erpFormOptions|erpGame|erpGetTheme|erpGoogle|erpHello|erpInstalls|erpInvoice|erpInvoicePdf|erpJob|erpJobs|erpListView|erpLookupCustomer|erpLookupUsage|erpMe|erpMoney|erpNoteFileUrl|erpNotes|erpOwnerChange|erpOwnerChanges|erpParcelLabels|erpParcelPreview|erpPartnerStock|erpPartnership|erpPayReasons|erpPeople|erpPlatform|erpPlatformErrors|erpPnl|erpPnlMonth|erpPoList|erpPoolCatalog|erpProduct|erpProductListShare|erpProductPage|erpProductPhotoUrl|erpProductThumbs|erpProfile|erpQuoteAsset|erpQuoteBoot|erpQuoteGet|erpQuoteList|erpRecentInvoices|erpRecovery|erpReorderPlan|erpRestorePreview|erpReturnPreview|erpRisks|erpSales|erpSearch|erpSecurity|erpSelfTest|erpSerialLookup|erpSerialsFor|erpSessions|erpSetTheme|erpSettingsFull|erpSettingsLists|erpSfPayoutLines|erpSfPayouts|erpShareFile|erpSharedStock|erpSheet|erpStatementPdf|erpStockHistory|erpSupplierPage|erpSuppliers|erpToday|erpUsers|erpWaProductPdf|erpWebMatches|erpWebOrderInvoices|erpWebOrders|erpWebsiteTest)$/;
 function srvPump() {
   if (!SRV_Q.length) return;
   var isRead = SRV_READS.test(SRV_Q[0].name);
@@ -23567,6 +23567,112 @@ document.addEventListener('change', function (e) {
 // after a sale, payment or stock change the figures are read again on the next visit
 var fddAfterWrite = typeof pagesAfterWrite === 'function' ? pagesAfterWrite : null;
 if (fddAfterWrite) pagesAfterWrite = function () { FDD.key = ''; return fddAfterWrite.apply(this, arguments); };
+</script>
+
+<!-- fd-3 (FilaDash merge P2): every screen opens the FilaDash way - eyebrow (business), big title with the screen's
+     name, a line saying what it is - and the list screens get his four cards on top (the first one the gradient hero),
+     this month against last month, from erpFdHead (handlers/fddash.js; money only for the people allowed to see it).
+     Sub-pages (one invoice, one customer...) keep their own heading. The screens below are unchanged. -->
+<style>
+#fdHead { margin:2px 0 22px; }
+#fdHead .fdd-head { margin-bottom:16px; }
+#fdHead .fdd-grid { margin-bottom:0; }
+#fdHead .fdd-k { min-height:150px; }
+#fdHead .fdh-sk { height:150px; border-radius:20px; background:linear-gradient(90deg, var(--fd-surface-2, var(--field)) 25%, var(--fd-surface-3, var(--ring)) 50%, var(--fd-surface-2, var(--field)) 75%);
+  background-size:200% 100%; animation:fddSk 1.2s infinite; }
+@media (max-width:640px) { #fdHead .fdd-k { min-height:118px; } #fdHead { margin-bottom:14px; } }
+</style>
+<script>
+var FDH = { data: {}, busy: {}, at: {} };
+var FDH_VIEWS = { sales: 1, customers: 1, products: 1, stock: 1, expenses: 1, cash: 1, profit: 1 };
+var FDH_SUB = {
+  invoice: 'Make a sale: customer, products, payment', sales: 'Invoices, parcels, dues and courier money', weborders: 'Orders from the website, ready to enter',
+  quotes: 'Price offers that turn into invoices', repairs: 'Machines in for repair, parts and charges', printjobs: 'Print jobs with their true cost',
+  resell: 'Sell other suppliers’ stock without holding it', customers: 'Everyone who bought, what they owe, how often they come back',
+  campaigns: 'WhatsApp campaigns, leads, adverts and creators', products: 'Every product with its price, stock and photo',
+  stock: 'Receive goods, count, adjust, what to order', suppliers: 'Suppliers, purchase orders and what you owe them',
+  costs: 'What each product cost to land in the shop', market: 'Stock shared with other shops', joint: 'Goods owned together with a partner company',
+  cash: 'Money accounts: cash, bank, bKash, courier', profit: 'Profit and loss, month by month', expenses: 'Rent, bills and every other cost',
+  capital: 'Owners’ and investors’ money in the business', settings: 'How the ERP works for this business', tools: 'Checks, imports and repairs',
+  platform: 'Companies, health and the provider’s tools', apps: 'Features customers reach from outside', chat: 'Ask questions about your own figures'
+};
+function fdhName(v) {
+  var b = document.querySelector('#nav button[data-view="' + v + '"]');
+  return (b && (b.getAttribute('data-name') || b.textContent.trim())) || v.charAt(0).toUpperCase() + v.slice(1);
+}
+function fdhIsSub() {
+  // a sub-page (one invoice, one customer...) shows a breadcrumb with a way back: it keeps its own heading
+  // the record page inside a screen (go(view, param)): one invoice, customer, product, supplier, repair job
+  try {
+    if ((VIEW === 'sales' && INVP && INVP.no) || (VIEW === 'customers' && CUSP && CUSP.key) || (VIEW === 'products' && PRODP && PRODP.sku) ||
+        (VIEW === 'suppliers' && SUPP && SUPP.name) || (VIEW === 'repairs' && JOBP && JOBP.no)) return true;
+  } catch (e) {}
+  var c = document.querySelector('#o_cp .crumbs');
+  return !!(c && c.querySelector('button'));
+}
+function fdhCard(c, cur) {
+  var num = c.money ? '<small>' + esc(cur) + '</small>' + fmt(c.v) : c.pct ? fmt(c.v) + '<small style="margin-left:2px">%</small>' : fmt(c.v);
+  var trend = '';
+  if (c.prev !== undefined && c.prev !== null) {
+    var p = Number(c.prev) || 0, n = Number(c.v) || 0;
+    if (!p) trend = n ? '<span class="fdd-trend flat">new</span>' : '';
+    else { var pc = (n - p) / Math.abs(p) * 100, up = pc >= 0, good = c.flip ? !up : up;
+      trend = Math.abs(pc) < 0.5 ? '<span class="fdd-trend flat">= same</span>' : '<span class="fdd-trend' + (good ? '' : ' bad') + '" title="last month: ' + fmt(p) + '">' + (up ? '▲' : '▼') + ' ' + Math.abs(pc).toFixed(0) + '%</span>'; }
+  }
+  var go = c.go || (c.f ? VIEW : '');
+  return '<div class="fdd-c fdd-k' + (c.hero ? ' fdhero' : '') + '"' + (go && navOn(go) ? ' data-fdhgo="' + esc(go) + '"' + (c.f ? ' data-fdhf="' + esc(c.f) + '"' : '') + ' style="cursor:pointer"' : '') + '>' +
+    '<div class="fdd-ktop"><span class="fdd-badge' + (c.tone ? ' t-' + c.tone : '') + '">' + fddIc(FDD_IC[c.icon] ? c.icon : ({ users: 'list', plus: 'trend', reset: 'trend', calendar: 'clock' })[c.icon] || 'list') + '</span>' + trend + '</div>' +
+    '<div class="fdd-num' + (Number(c.v) < 0 ? ' neg' : '') + '">' + num + '</div><div class="fdd-lbl">' + esc(c.title) + '</div>' + (c.note ? '<div class="fdd-kn">' + esc(c.note) + '</div>' : '') + '</div>';
+}
+function fdhHtml(v) {
+  var biz = (el('bizName') && el('bizName').textContent) || '';
+  var d = FDH.data[v], h = '<div class="fdd-head"><div><div class="fdd-eyebrow">' + esc(biz) + '</div><h1 class="fdd-title">' + esc(fdhName(v)) + '</h1>' +
+    '<div class="fdd-sub">' + esc(FDH_SUB[v] || '') + (FDH_VIEWS[v] && d && d.cards.length ? ' · ' + esc(d.month) + ' compared with ' + esc(d.prevMonth) : '') + '</div></div></div>';
+  if (FDH_VIEWS[v]) {
+    if (d && d.cards.length) h += '<div class="fdd-grid">' + d.cards.map(function (c) { return fdhCard(c, d.currency); }).join('') + '</div>';
+    else if (!d) h += '<div class="fdd-grid"><div class="fdh-sk"></div><div class="fdh-sk"></div><div class="fdh-sk"></div><div class="fdh-sk"></div></div>';
+  }
+  return h;
+}
+function fdhLoad(v) {
+  if (!FDH_VIEWS[v] || FDH.busy[v]) return;
+  if (FDH.data[v] && Date.now() - (FDH.at[v] || 0) < 120000) return;
+  FDH.busy[v] = true;
+  srv('erpFdHead', [{ view: v }], function (r) {
+    FDH.busy[v] = false; FDH.data[v] = r; FDH.at[v] = Date.now();
+    var box = el('fdHead');
+    if (box && VIEW === v) box.innerHTML = fdhHtml(v);
+  }, function () { FDH.busy[v] = false; FDH.data[v] = { cards: [] }; FDH.at[v] = Date.now(); var box = el('fdHead'); if (box && VIEW === v) box.innerHTML = fdhHtml(v); });
+}
+function fdhPaint() {
+  var view = el('view'); if (!view) return;
+  var old = el('fdHead'); if (old && old.parentNode) old.parentNode.removeChild(old);
+  if (document.documentElement.getAttribute('data-skin') !== 'fd') return;
+  if (VIEW === 'dash' || VIEW === 'home' || fdhIsSub()) return;
+  var box = document.createElement('div'); box.id = 'fdHead';
+  box.innerHTML = fdhHtml(VIEW);
+  view.insertBefore(box, view.firstChild);
+  fdhLoad(VIEW);
+}
+var repaintFdh = repaint;
+repaint = function () {
+  var r = repaintFdh.apply(this, arguments);
+  try { fdhPaint(); } catch (e) {}
+  return r;
+};
+document.addEventListener('click', function (e) {
+  var t = e.target.closest && e.target.closest('[data-fdhgo]'); if (!t) return;
+  var v = t.getAttribute('data-fdhgo'), f = t.getAttribute('data-fdhf');
+  if (f && typeof dashFilter === 'function') dashFilter(f);
+  if (v === VIEW) repaint(); else go(v);
+  window.scrollTo(0, 0);
+});
+// fresh figures after anything is saved
+var fdhAfterWrite = pagesAfterWrite;
+pagesAfterWrite = function () { FDH.at = {}; return fdhAfterWrite.apply(this, arguments); };
+// switching the look repaints the screen (the head comes or goes)
+var fdSkinFdh = fdSkin;
+fdSkin = function (s) { var r = fdSkinFdh.apply(this, arguments); try { repaint(); } catch (e) {} return r; };
 </script>
 
 </body>

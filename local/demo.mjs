@@ -115,6 +115,10 @@ for (let ago = 118; ago >= 0; ago -= between(2, 6)) {
   if (!r.ok) console.log('expense skipped:', r.error);
 }
 await sql`update expenses set recorded_at = now() - (random() * 118 || ' days')::interval where business_id = ${B}`.catch(() => {});
+// a customer joined the day of their first invoice
+await sql`update customers c set created_at = f.first from (select right(regexp_replace(coalesce(customer_phone, ''), '[^0-9]', '', 'g'), 10) as k, min(created_at) as first
+          from invoices where business_id = ${B} group by 1) f
+          where c.business_id = ${B} and right(regexp_replace(coalesce(c.phone, ''), '[^0-9]', '', 'g'), 10) = f.k`.catch((e) => console.log('customer dates skipped:', e.message));
 // payments on the invoice's own day (paid at the counter) or some days later (dues paid later), never in the future
 await sql`update payments p set paid_at = least(now(), i.created_at + (case when p.amount >= i.grand_total and random() < 0.75 then 0 else 1 + random() * 14 end || ' days')::interval)
           from invoices i where p.business_id = ${B} and i.business_id = ${B} and i.invoice_no = p.invoice_no`.catch((e) => console.log('payment dates skipped:', e.message));
