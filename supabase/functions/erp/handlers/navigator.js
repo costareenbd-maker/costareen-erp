@@ -131,6 +131,10 @@ export async function erpNavigator(ctx, payload) {
   const F = {};
   for (const k of ['brand', 'type', 'category', 'investor', 'shipment', 'source']) if (str(F0[k])) F[k] = str(F0[k]);
   if (F.investor && !can.investors) delete F.investor;            // the Investor filter is not open below shareholder
+  if (F.investor && String(ctx.s.role) !== 'owner') {               // a private investor's shipments are the owner's to see
+    const pv = await ctx.tx`select 1 from capital_holders where business_id = ${ctx.biz} and holder_no = ${F.investor} and private`;
+    if (pv.length) delete F.investor;
+  }
   const itemF = !!(F.brand || F.type || F.category);
   const items = live.filter((p) => (!F.brand || lc(p.brand) === lc(F.brand)) && (!F.type || lc(p.type) === lc(F.type)) && (!F.category || lc(p.cat) === lc(F.category)));
   const itemSet = new Set(items.map((p) => p.sku.toLowerCase()));

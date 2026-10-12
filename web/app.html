@@ -24951,6 +24951,7 @@ var NS_BN = {
   'Stock covers every line': 'প্রতিটি পণ্যের স্টক আছে', 'More than 5% under the price: give the reason': 'দামের চেয়ে ৫%-এর বেশি কম: কারণ লিখুন',
   'Prices within 5% of the list': 'দাম তালিকার ৫%-এর মধ্যে', 'Order discount not more than the items': 'অর্ডারের ছাড় পণ্যের দামের বেশি নয়',
   'Amount received not more than the total': 'পাওয়া টাকা মোটের বেশি নয়',
+  'A price is above the list price: lower it or change the product price': 'একটি দাম তালিকার দামের বেশি: কমান বা পণ্যের দাম বদলান', 'No price above the list': 'কোনো দাম তালিকার বেশি নয়',
   'Why the lower price?': 'দাম কম কেন?', 'e.g. regular customer, owner agreed': 'যেমন: নিয়মিত কাস্টমার, মালিক রাজি',
   'Confirm sale': 'বিক্রি নিশ্চিত করুন', 'Saving…': 'সেভ হচ্ছে…', 'Start over': 'নতুন করে শুরু',
   'Confirm this sale?': 'এই বিক্রি নিশ্চিত করবেন?', '{0} line(s)': '{0}টি পণ্যের লাইন', 'Total: {0}': 'মোট: {0}', 'Paid now: {0}': 'এখন পেলেন: {0}',
@@ -25000,6 +25001,7 @@ function nsChecks() {
     { ok: NS.lines.length > 0 && NS.lines.every(function (l) { return num(l.qty) > 0; }), t: nsT('At least one item, each with a quantity') },
     { ok: !short.length, t: short.length ? nsT('Not enough stock: {0}', [short.map(function (l) { return l.name; }).join(', ')]) : nsT('Stock covers every line') },
     { ok: !low.length || !!String(NS.reason).trim(), t: low.length ? nsT('More than 5% under the price: give the reason') : nsT('Prices within 5% of the list') },
+    { ok: !NS.lines.some(function (l) { return num(l.price) > num(l.list) + 1e-9; }), t: nsT(NS.lines.some(function (l) { return num(l.price) > num(l.list) + 1e-9; }) ? 'A price is above the list price: lower it or change the product price' : 'No price above the list') },
     { ok: t.disc <= t.sub, t: nsT('Order discount not more than the items') },
     { ok: !t.over, t: nsT('Amount received not more than the total') }
   ];
@@ -25403,7 +25405,7 @@ function fdPop(anchor, items, opts) {
   return p;
 }
 document.addEventListener('mousedown', function (e) { if (FDPOP && !e.target.closest('.fdpop') && !e.target.closest('.fdws,.fdplus')) fdPopClose(); });
-document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && FDPOP) fdPopClose(); });
+document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && FDPOP) { fdPopClose(); e.stopImmediatePropagation(); } }, true);   // one Escape closes only the menu, not a drawer behind it
 window.addEventListener('resize', fdPopClose);
 
 /* ---------- the top bar: business switcher, +, account ---------- */
@@ -26081,7 +26083,7 @@ function nvMenu(anchor, title, items) {
 }
 document.addEventListener('mousedown', function (e) { if (NV_MENU && !NV_MENU.contains(e.target)) nvMenuClose(); });
 document.addEventListener('keydown', function (e) { if (e.key === 'Escape') nvMenuClose(); });
-window.addEventListener('scroll', function () { nvMenuClose(); }, true);
+window.addEventListener('scroll', function (e) { if (NV_MENU && e.target && e.target.nodeType === 1 && NV_MENU.contains(e.target)) return; nvMenuClose(); }, true);
 
 // ---- data
 function navArgs() { return { range: NAV.st.range === 'custom' && NAV.st.custom ? NAV.st.custom : NAV.st.range === 'custom' ? '30d' : NAV.st.range, filters: NAV.st.filters || {} }; }

@@ -356,7 +356,7 @@ export async function erpFdHead(ctx, payload) {
     cards.push(card('unpaid', 'Fixed costs not yet paid', 'clock', await expenseUnpaid(ctx, now), { money: true, tone: 'warn', note: 'this month’s fixed items' }));
     cards.push(card('top', top ? top[0] : 'Biggest category', 'layers', top ? top[1] : 0, { money: true, note: 'biggest category this month' }));
     cards.push(card('last', 'Last month', 'calendar', b.total, { money: true, note: monthLabel(prev) }));
-  } else if ((view === 'cash' || view === 'profit') && roleAtLeast(ctx.s.role, 'shareholder')) {
+  } else if ((view === 'cash' || view === 'profit') && roleAtLeast(ctx.s.role, 'shareholder') && (view !== 'profit' || powerOn(ctx.s, 'profit'))) {
     const p = (await pnlFor(ctx, [prev, now]));
     const [pm, cm] = p;
     if (view === 'profit') {
@@ -376,8 +376,10 @@ export async function erpFdHead(ctx, payload) {
       cards.push(card('inHand', 'Money in hand', 'wallet', cb.inHand || 0, { money: true, hero: true, note: (cb.accounts || []).length + ' account(s), courier balance apart' }));
       cards.push(card('cashIn', 'Received this month', 'taka', cin, { prev: R(cprev), money: true }));
       cards.push(card('loose', 'Payments in no account', 'warn', (cb.loose || []).length, { tone: (cb.loose || []).length ? 'warn' : '', note: 'say which account they went to' }));
-      const o = await owedTotal();
-      cards.push(card('dues', 'Dues receivable', 'bell', o.t, { money: true, tone: o.t > 0 ? 'warn' : '', go: 'sales', f: 'due' }));
+      if (canDues) {
+        const o = await owedTotal();
+        cards.push(card('dues', 'Dues receivable', 'bell', o.t, { money: true, tone: o.t > 0 ? 'warn' : '', go: 'sales', f: 'due' }));
+      }
     }
   }
   // ---- P4: our own screens get the same four cards

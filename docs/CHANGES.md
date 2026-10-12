@@ -1723,3 +1723,24 @@ Orders / Cash received / Unmatched payments, Top Colours + Needs Attention, Reor
 + Setup Checklist; ours that he lacks follow under "More figures". Money as ৳ with lakh (৳1.58L). erpFdDash adds
 topColours, kpi.capital, kpi.unmatched, setup. Not done: his "Edit layout" (drag cards), 30/90-day ranges (ours stay
 whole months so Net profit = the P&L).
+
+## fd-18..fd-22 - every screen in his layout (14 Oct 2026, night, owner asleep)
+
+Built by five parallel agents, each from his screen files and his running prototype, merged and checked on dev:
+- fd-18 ERP Navigator (his mind map): 2D SVG map with pan/zoom/expand, hand-drawn 3D canvas view, Module Details
+  panel (Overview / Data / Rules / Access / Audit), 8-step workflow with Play, module health, money flow, needs action,
+  future. handlers/navigator.js erpNavigator (figures from our handlers; locks for staff). Tests navigator (41).
+- fd-19 Sales, Web orders, Quotations, Customers: his table card (filter chips, views, columns, CSV), status pills,
+  drawers for an invoice and a customer, Dues by age. handlers/fd19.js erpFd19Profit (profit per invoice, cost ability
+  only). Row buttons moved into the row menu / drawer except "Receive due". Tests fd19 (24).
+- fd-20 Products, Stock entry, Shipments, Suppliers, Product cost: his Materials cards, Items/Lots/Grouped, product
+  drawer with the FIFO queue, the shipment board (Planned → Sold out), shipment lifecycle + ROI. handlers/fd20.js
+  erpFdInventory. Tests fd20 (26). Fixed: fd-17's icon map was named FDI and replaced fd-7's funding state (now FD17I).
+- fd-21 Money, Expenses, Capital, Commission, Profitability: his pill tabs, ledger with method chips and drawers,
+  cash-up rows, investor profile cards, expense drawer form. Page only.
+- fd-22 Analytics, System check, Settings, Audit, Backup, Maintenance, Help: his views, check cards with how-to-fix,
+  settings section list, guide drawer for every "i"/Help. handlers/fd22.js erpFd22Analytics. Tests fd22 (23).
+Not done (no data behind them): his bank-statement reconciliation, per-sale commission entries, FX simulator, price
+adherence, website counter, transfers between locations, sea/air shipment mode, stage dates on received shipments,
+30/90-day ranges (ours stay whole months so net profit = the P&L). Blocks find some of our cards by their heading text:
+rewording such a heading makes that screen fall back to the previous layout (it does not break).

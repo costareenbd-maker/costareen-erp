@@ -44,5 +44,7 @@ r = await sales('erpCreateInvoice', [{ ...base, items: [{ sku: PLA, qty: 1, disc
 check('4% under needs no reason', r.ok, r);
 r = await sales('erpCreateInvoice', [{ ...base, items: [{ sku: PLA, qty: 1, discEach: off(10) }] }]);
 check('the classic screen (no price check) is unchanged', r.ok, r);
+r = await mgr('erpCreateInvoice', [{ ...base, items: [{ sku: PLA, qty: 2 }], invoiceDiscount: off(20), priceCheck: true }]);
+check('an order discount is not a price cut on the lines (no reason asked)', r.ok, r);
 
 await done();

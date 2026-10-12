@@ -16,6 +16,7 @@ import { salesLog, asDate, str, SL } from '../lib/tabs.js';
 import { formatDate, num } from '../lib/time.js';
 import { pnlFor, products, soldCost } from './dashboard.js';
 import { lockedThrough } from '../lib/period.js';
+import { powerOn } from '../allow.js';
 
 const MON3 = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 const R = (v) => Math.round(num(v));
@@ -37,6 +38,7 @@ async function soft(ctx, fn, fallback) {
 }
 
 export async function erpFd22Analytics(ctx, payload) {
+  if (!powerOn(ctx.s, 'profit')) throw new Error('Profitability is not open to you.');
   payload = payload || {};
   const n = [1, 3, 6, 12].includes(Number(payload.months)) ? Number(payload.months) : 1;
   const now = monthKey(ctx.now);

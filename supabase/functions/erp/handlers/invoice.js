@@ -230,7 +230,8 @@ export async function createInvoice(ctx, payload, opts = {}) {
     const qty = num(items[i].qty);
     const disc = DSC.line[i];
     lines.push({ productId: pr[0].id, sku: rec.sku, name: rec.name || pr[0].name, qty, unit,
-                 disc, total: Math.max(0, qty * unit - disc) });
+                 disc, total: Math.max(0, qty * unit - disc),
+                 own: Math.min(qty * unit, Math.max(0, num(items[i].discEach)) * qty) });   // this line's own discount, not its share of the order discount
   }
   // nobody sells joint stock under its floor price (the owner may: it is flagged for the partner)
   const shortfall = {};
@@ -243,7 +244,8 @@ export async function createInvoice(ctx, payload, opts = {}) {
       const l = lines[i];
       if (l.poolId || !(l.qty > 0)) continue;
       const list = l.qty * l.unit;
-      if (list > 0 && l.disc / list > 0.05 + 1e-9) low.push(l.name + ' (' + Math.round(l.disc / list * 100) + '% off)');
+      const own = num(l.own);   // the order discount is not a price cut on the line
+      if (list > 0 && own / list > 0.05 + 1e-9) low.push(l.name + ' (' + Math.round(own / list * 100) + '% off)');
     }
     if (low.length && !priceReason) throw new Error('PRICE: more than 5% under the price: ' + low.join(', ') + '. Give the reason, or keep the price.');
   }

@@ -6,6 +6,7 @@
 //   erpCommissionPay  paying a seller: an expense 'Commission paid to ...' (not counted a second time)
 
 import { str } from '../lib/tabs.js';
+import { powerOn } from '../allow.js';
 import { num, round2, formatDate } from '../lib/time.js';
 
 const R = (v) => Math.round(num(v));
@@ -91,9 +92,10 @@ export async function erpCommission(ctx, payload) {
     paid[who] = (paid[who] || 0) + num(e.amount);
   }
   const me = String(ctx.s.userId);
+  const canProfit = owner || powerOn(ctx.s, 'costs');   // sellers never see cost or profit
   const sellers = Object.entries(c.bySeller).filter(([id]) => owner || id === me).map(([id, s]) => {
     const x = s.months[month] || { sales: 0, profit: 0, due: 0 };
-    return { id, name: s.name, sales: R(x.sales), profit: R(x.profit), earned: R(x.due), paid: R(paid[s.name] || 0), left: R(x.due - (paid[s.name] || 0)) };
+    return { id, name: s.name, sales: R(x.sales), profit: canProfit ? R(x.profit) : undefined, earned: R(x.due), paid: R(paid[s.name] || 0), left: R(x.due - (paid[s.name] || 0)) };
   }).sort((a, b) => b.earned - a.earned);
   const rs = (await rules(ctx)).map((r) => ({ id: r.id, seller: r.seller ? String(r.seller) : '', sellerName: r.seller ? str(r.seller_name) || 'Someone' : 'Everyone',
     scope: r.scope, match: str(r.match), basis: r.basis, pct: num(r.pct), note: str(r.note), since: formatDate(r.at, 'd MMM yyyy') }));

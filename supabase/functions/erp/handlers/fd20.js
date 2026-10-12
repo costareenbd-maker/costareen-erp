@@ -16,7 +16,7 @@
 
 import { str } from '../lib/tabs.js';
 import { formatDate, num } from '../lib/time.js';
-import { powerOn } from '../allow.js';
+import { powerOn, roleAtLeast } from '../allow.js';
 import { products } from './dashboard.js';
 import { lotStock } from './lots.js';
 import { holdingFor, lotMonths } from './holding.js';
@@ -93,7 +93,7 @@ export async function erpFdInventory(ctx, payload) {
   const lotRow = (l) => {
     const book = bySku[str(l.sku).toLowerCase()], left = num(l.qty_left);
     const r = { lot: lotNo(l.seq), shipment: l.source === 'opening' ? 'Stock before lots began' : str(l.reference) || (l.source === 'return' ? 'Return' : l.source === 'adjust' ? 'Adjustment' : '—'),
-                source: str(l.source), supplier: str(l.supplier), sku: str(l.sku), name: str(l.name), date: formatDate(new Date(l.received_at), 'd MMM yyyy'),
+                source: str(l.source), supplier: (roleAtLeast(ctx.s.role, 'manager') || powerOn(ctx.s, 'suppliers')) ? str(l.supplier) : '', sku: str(l.sku), name: str(l.name), date: formatDate(new Date(l.received_at), 'd MMM yyyy'),
                 qtyIn: num(l.qty_in), qtyLeft: left, status: left > 0 ? 'open' : 'exhausted', costKnown: l.unit_cost !== null };
     if (canCost) {
       const unit = l.unit_cost === null ? (book && book.cost > 0 ? num(book.cost) : null) : num(l.unit_cost);
