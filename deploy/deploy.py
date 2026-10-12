@@ -132,7 +132,7 @@ def step_web():
                    ERP_OPEN_KEY=os.environ.get('ERP_DEV_OPEN_KEY', ''))   # demo data only: the dev page opens with no sign-in
     subprocess.check_call([sys.executable, os.path.join(ROOT, 'web', 'build.py')], env=env)
     out = tempfile.mkdtemp(prefix='erp-web-')
-    for f in ['index.html', 'manifest.webmanifest', 'sw.js', '_headers', 'check.html', 'my.html', 'confirm.html', 'lite.html', 'doctor.html', 'doctor-data.js', 'quote.html', 'find.html', 'ideas.html', 'choose.html', 'colour-math.js', 'colour-data.js', 'print.html', 'design.html', 'creator.html', 'sponsor.html', 'investor.html', 'fd-public.css']:
+    for f in ['index.html', 'manifest.webmanifest', 'sw.js', '_headers', 'check.html', 'my.html', 'confirm.html', 'lite.html', 'doctor.html', 'doctor-data.js', 'quote.html', 'find.html', 'ideas.html', 'choose.html', 'colour-math.js', 'colour-data.js', 'print.html', 'design.html', 'creator.html', 'sponsor.html', 'investor.html', 'fd-public.css', 'help-guides.js']:
         shutil.copy(os.path.join(ROOT, 'web', f), out)
     shutil.copytree(os.path.join(ROOT, 'web', 'icons'), os.path.join(out, 'icons'))
     shutil.copytree(os.path.join(ROOT, 'web', 'brand'), os.path.join(out, 'brand'))     # sponsoring brands' logos (creator / sponsor pages)

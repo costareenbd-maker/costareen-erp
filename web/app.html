@@ -24812,5 +24812,84 @@ var fuAfterWrite = pagesAfterWrite;
 pagesAfterWrite = function () { FU.data = null; CI.data = null; return fuAfterWrite.apply(this, arguments); };
 </script>
 
+<!-- fd-15 (FilaDash merge): the ERP's own help in Bangla and English. System > Help (সাহায্য): a guide per task, step by
+     step, searchable, in the person's language (switch on the screen). Every screen's head has a "সাহায্য / Help" button
+     that opens the guide for that screen. The guides are web/help-guides.js (loaded the first time Help opens). -->
+<style>
+.hg-bar { display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin:0 0 14px; }
+.hg-bar input { max-width:360px; }
+.hg-card { margin-bottom:12px; }
+.hg-card h2 { cursor:pointer; display:flex; justify-content:space-between; align-items:center; gap:10px; }
+.hg-card ol { margin:10px 0 0; padding-left:22px; line-height:1.7; font-size:14.5px; }
+.hg-card ol li { margin-bottom:6px; }
+.hg-card.focus { box-shadow:0 0 0 2px var(--fd-accent, var(--series-1)), var(--fd-shadow-card, var(--shadow)); }
+.hg-open { font-size:13px; font-weight:600; color:var(--fd-accent-text, var(--series-1)); background:none; border:0; cursor:pointer; font-family:inherit; }
+.fdh-help { margin-left:auto; align-self:flex-start; }
+:lang(bn) .hg-card ol, .hg-bn ol { font-family:"Noto Sans Bengali", "Inter", system-ui, sans-serif; }
+</style>
+<script>
+var HG = { lang: '', q: '', focus: '', open: {}, loading: false };
+fdxNav('guide', 'Help', '<circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .9-1 1.7v.5"/><path d="M12 17h.01"/>', 'syscheck');
+FDH_SUB.guide = 'How to do each job, step by step · প্রতিটা কাজ ধাপে ধাপে';
+function hgLang() { return HG.lang || ((typeof LANG !== 'undefined' && LANG === 'bn') ? 'bn' : 'bn'); }
+function hgLoad() {
+  if (window.ERP_HELP || HG.loading) return;
+  HG.loading = true;
+  var s = document.createElement('script'); s.src = 'help-guides.js?v=1';
+  s.onload = function () { HG.loading = false; if (VIEW === 'guide') repaint(); };
+  s.onerror = function () { HG.loading = false; HG.err = true; if (VIEW === 'guide') repaint(); };
+  document.head.appendChild(s);
+}
+function viewGuide() {
+  if (!window.ERP_HELP) { hgLoad(); return HG.err ? '<div class="note err"><div class="ico">!</div><div>The help could not be loaded. Check the connection and open it again.</div></div>' : '<div class="loading">Loading help…</div>'; }
+  var L = hgLang(), q = HG.q.toLowerCase();
+  var h = '<div class="hg-bar" data-noi18n="1"><input class="i" id="hg_q" placeholder="' + (L === 'bn' ? 'খুঁজুন (যেমন: প্রি-অর্ডার, cash-up)' : 'Search (e.g. pre-order, cash-up)') + '" value="' + esc(HG.q) + '">' +
+    '<span class="seg"><button type="button" class="btn small' + (L === 'bn' ? ' on' : '') + '" data-hglang="bn">বাংলা</button><button type="button" class="btn small' + (L === 'en' ? ' on' : '') + '" data-hglang="en">English</button></span></div>';
+  var list = window.ERP_HELP.filter(function (g) {
+    if (!q) return true;
+    var t = [g.bn.t, g.en.t].concat(g.bn.s, g.en.s).join(' ').toLowerCase();
+    return t.indexOf(q) >= 0;
+  });
+  if (!list.length) h += '<div class="empty">' + (L === 'bn' ? 'কিছু পাওয়া যায়নি।' : 'Nothing found.') + '</div>';
+  h += '<div data-noi18n="1" class="' + (L === 'bn' ? 'hg-bn' : '') + '" lang="' + L + '">' + list.map(function (g) {
+    var x = g[L] || g.en, open = !!HG.open[g.id] || !!q || HG.focus === g.id;
+    return '<div class="card hg-card' + (HG.focus === g.id ? ' focus' : '') + '" id="hg_' + g.id + '"><h2 data-hgt="' + g.id + '"><span>' + esc(x.t) + '</span>' +
+      (g.view && navOn(g.view) ? '<button type="button" class="hg-open" data-hggo="' + g.view + '">' + (L === 'bn' ? 'স্ক্রিনটা খুলুন →' : 'Open the screen →') + '</button>' : '') + '</h2>' +
+      (open ? '<ol>' + x.s.map(function (s) { return '<li>' + esc(s) + '</li>'; }).join('') + '</ol>' : '') + '</div>';
+  }).join('') + '</div>';
+  return h;
+}
+var repaintHg = repaint;
+repaint = function () {
+  if (VIEW !== 'guide') return repaintHg.apply(this, arguments);
+  el('view').innerHTML = viewGuide();
+  try { fdhPaint(); } catch (e) {}
+  if (HG.focus) { var f = el('hg_' + HG.focus); if (f) setTimeout(function () { f.scrollIntoView({ block: 'start' }); window.scrollBy(0, -80); }, 0); }
+  var qi = el('hg_q'); if (qi) qi.addEventListener('input', function () { HG.q = qi.value; HG.focus = ''; var pos = qi.selectionStart; repaint(); var n = el('hg_q'); if (n) { n.focus(); try { n.setSelectionRange(pos, pos); } catch (e) {} } });
+};
+// a "সাহায্য / Help" button on every screen's head that has a guide
+var fdhHtmlHg = fdhHtml;
+fdhHtml = function (v) {
+  var h = fdhHtmlHg.apply(this, arguments);
+  if (v === 'guide') return h;
+  var map = { stock: 'receive' }, id = map[v] || v;
+  var known = { dash: 1, invoice: 1, sales: 1, preorders: 1, customers: 1, receive: 1, shipments: 1, products: 1, costs: 1, cash: 1, expenses: 1, capital: 1, commission: 1, profit: 1, analytics: 1, syscheck: 1 };
+  if (!known[id]) return h;
+  return h.replace('</div></div>', '</div><button type="button" class="btn small fdh-help" data-hghelp="' + id + '">সাহায্য / Help</button></div>');
+};
+document.addEventListener('click', function (e) {
+  if (!e.target.closest) return;
+  var hb = e.target.closest('[data-hghelp]');
+  if (hb) { HG.focus = hb.getAttribute('data-hghelp'); HG.q = ''; go('guide'); return; }
+  var lg = e.target.closest('[data-hglang]');
+  if (lg) { HG.lang = lg.getAttribute('data-hglang'); try { localStorage.setItem('erp_help_lang', HG.lang); } catch (e2) {} repaint(); return; }
+  var gt = e.target.closest('[data-hggo]');
+  if (gt) { e.stopPropagation(); go(gt.getAttribute('data-hggo')); return; }
+  var tt = e.target.closest('[data-hgt]');
+  if (tt) { var id = tt.getAttribute('data-hgt'); HG.open[id] = !HG.open[id]; if (HG.focus === id && !HG.open[id]) HG.focus = ''; repaint(); }
+});
+try { HG.lang = localStorage.getItem('erp_help_lang') || ''; } catch (e) {}
+</script>
+
 </body>
 </html>

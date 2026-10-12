@@ -1683,3 +1683,12 @@ returns, parcels, campaigns, reminders, points, consent, links, passports, seria
 pre-orders, restock orders, follow-ups); amounts unchanged; refused while they owe, hold credit or have an open
 pre-order; the exact name must be typed; customer_erasures logs when, who, why and row counts only. Tests: custextra (17).
 Page fd-14. Deployed to dev without demo data.
+
+## help-1 - Bangla help guide (13 Oct 2026)
+
+web/help-guides.js: 17 step-by-step guides (dashboard, New invoice, sales/dues/returns, pre-orders, customers incl.
+follow-ups and removing data, receiving a shipment, shipments/on the way/late bills/asking prices, products and sizes,
+the cost book, money/cash-up/agent advance, expenses/holding cost, capital/investors/investor page, commission,
+Profitability, Analytics, System check, a glossary), each in Bangla and English (82 steps each). Page fd-15: System >
+Help - searchable, Bangla by default with an English switch (kept per device), "Open the screen" from each guide; every
+screen's head has a "সাহায্য / Help" button opening its guide. deploy.py ships help-guides.js. Page only.
