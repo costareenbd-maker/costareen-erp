@@ -1765,3 +1765,17 @@ figures cross-check (every headline figure equal on every screen). Fixed:
 Not changed: the stick-fight game (owner's own feature, Settings), his Custom range / Edit layout, donut colours.
 Data on dev to sort before go-live: 103 payments and all expenses in no money account; fixed "Shop rent" never
 marked paid while October rent was a one-off (counted twice on the Expenses screen; Jun-Sep rent missing).
+
+## fd-24..fd-26 - owner's review (14 Oct 2026)
+
+- fd-24: FilaDash is the only look (Classic and the Look switch removed). Account menu his way: name the person goes by
+  (not "Owner"), role · business, Appearance System / Light / Dark (Dark had been cut off), Language, chart colours,
+  Theme, My account, Help, Sign out. Business / product-group switcher only on the Dashboard. Dashboard "Customise":
+  show / hide and order all 24 cards, Reset to the standard layout (per device).
+- fd-25: his glow and hover life: the "+" glows (dark) and lights up on hover, primary buttons glow, clickable cards
+  lift, info dots grow, selected pills glow.
+- fd-26: theme system from the research (docs/THEMES.md): 15 complete themes light + dark, contrast-checked, MIT
+  sources credited (FilaDash, Ocean, Emerald, Violet, Rose, Sunset, Slate, Catppuccin, Nord, Dracula, Tokyo Night, Rose
+  Pine, Solarized, Flexoki, Gruvbox); accent colour (any, contrast kept; picking a theme resets it); chart colours
+  (theme, accent, amber, indigo, mixed, colour-blind safe); text size, density, corners; background photo kept.
+  Kept per device (not yet synced across devices; the old Look colour is taken over as the accent once).
