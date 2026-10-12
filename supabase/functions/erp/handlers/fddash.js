@@ -125,7 +125,7 @@ export async function erpFdDash(ctx, payload) {
     for (const x of all) by[x.month] = x;
     const add = (ms) => ms.reduce((t, m) => {
       const x = by[m] || {};
-      for (const k of ['sales', 'returns', 'netSales', 'cost', 'gross', 'expenses', 'net', 'delivery', 'courier', 'courierExtra', 'courierShort', 'serviceIncome', 'serviceParts']) t[k] = (t[k] || 0) + num(x[k]);
+      for (const k of ['sales', 'returns', 'netSales', 'cost', 'gross', 'expenses', 'net', 'delivery', 'courier', 'courierExtra', 'courierShort', 'serviceIncome', 'serviceParts', 'forfeited']) t[k] = (t[k] || 0) + num(x[k]);
       return t;
     }, {});
     pnl = add(months); pnlPrev = add(prevMonths);
@@ -219,6 +219,7 @@ export async function erpFdDash(ctx, payload) {
     out.calc.net = [['Gross profit', R(pnl.gross)], ['+ Delivery charged to customers', R(pnl.delivery)],
       ['+ Courier paid more than expected', R(pnl.courierExtra)], ['− Courier paid less (written off)', -R(pnl.courierShort)],
       ['− Courier delivery + COD fees', -R(pnl.courier)], ['+ Repairs income − parts', R(pnl.serviceIncome - pnl.serviceParts)],
+      ['+ Pre-order deposits kept on cancelling', R(pnl.forfeited)],
       ['− Expenses', -R(pnl.expenses)], ['= Net profit (same as Profit & loss)', R(pnl.net)]];
     out.calc.expenses = [['Expenses entered for these months, not struck out, + investor returns due + joint-stock share', R(pnl.expenses)]];
   }

@@ -8434,7 +8434,7 @@ function srv(name, args, ok, bad) {
 
 var SRV_ACTIVE = 0, SRV_WRITING = false, SRV_TIMED = {};
 // the same list the server uses to know a call changes nothing (ERP_READS)
-var SRV_READS = /^(erpCashUps|erpAskingPrices|erpSystemCheck|erpAnalytics|erpCommission|erpHolding|erpLotFunding|erpShipments|erpShipment|erpLots|erpFdHead|erpFdDash|erpReceiveMatch|erpAiReader|erpProductSuggest|erpCatalogue|erpPushList|erpCreators|erpCreatorPortalLink|erpSponsorLink|erpCreatorRequests|erpCreatorEvents|erpCreatorProgramme|erpCreatorPreview|erpCreatorCatalog|erpCreatorSources|erpCreatorClaims|erpApps|erpAppQr|erpFeedback|erpRestockOffers|erpRestockList|erpWarrantyRules|erpWarrantyCard|erpMyLink|erpPlatformRegister|erpPlatformDoctor|erpPlatformCommunity|erpMarketWaiting|erpBoard|erpPlatformDesign|erpResell|erpResellerProgramme|erpLoyalty|erpCustomerPoints|erpRefillDue|erpDeliveryHistory|erpDeliveryHistoryMany|erpPrintKit|erpPrintJobs|erpPrintJob|erpPrintCost|erpSpools|erpPrintRequests|erpJoint|erpJointCatalog|erpJointCard|erpInvoiceDesign|erpInvoicePreview|erpMarket|erpMarketMine|erpMarketRequests|erpMarketHints|erpMarketNames|erpWanted|erpBrand|erpComplianceLog|erpProviderKey|erpNews|erpAccessKeys|erpAccessWarning|erpAdmin|erpAiKeys|erpAlertRules|erpAlerts|erpArena|erpBackupStatus|erpBg|erpBnWords|erpBookedParcels|erpBrandLogo|erpBundle|erpBusinessLinks|erpBusinesses|erpBusinessesDeleted|erpCampaignAudience|erpCampaignGet|erpCampaignList|erpCapital|erpCashBook|erpCatalog|erpConnStatus|erpConnections|erpCostBook|erpCourier|erpCourierKeyStatus|erpCurrencies|erpCustomerAccount|erpCustomerCredit|erpCustomerList|erpCustomerPage|erpCustomerStatement|erpCustomers|erpDashboardData|erpDaySales|erpDeliveryOptions|erpDevices|erpDiscontinued|erpDues|erpEvoQr|erpEvoStatus|erpExpenseExport|erpExpenseReceiptUrl|erpExpenses|erpFamilies|erpFighters|erpFormOptions|erpGame|erpGetTheme|erpGoogle|erpHello|erpInstalls|erpInvoice|erpInvoicePdf|erpJob|erpJobs|erpListView|erpLookupCustomer|erpLookupUsage|erpMe|erpMoney|erpNoteFileUrl|erpNotes|erpOwnerChange|erpOwnerChanges|erpParcelLabels|erpParcelPreview|erpPartnerStock|erpPartnership|erpPayReasons|erpPeople|erpPlatform|erpPlatformErrors|erpPnl|erpPnlMonth|erpPoList|erpPoolCatalog|erpProduct|erpProductListShare|erpProductPage|erpProductPhotoUrl|erpProductThumbs|erpProfile|erpQuoteAsset|erpQuoteBoot|erpQuoteGet|erpQuoteList|erpRecentInvoices|erpRecovery|erpReorderPlan|erpRestorePreview|erpReturnPreview|erpRisks|erpSales|erpSearch|erpSecurity|erpSelfTest|erpSerialLookup|erpSerialsFor|erpSessions|erpSetTheme|erpSettingsFull|erpSettingsLists|erpSfPayoutLines|erpSfPayouts|erpShareFile|erpSharedStock|erpSheet|erpStatementPdf|erpStockHistory|erpSupplierPage|erpSuppliers|erpToday|erpUsers|erpWaProductPdf|erpWebMatches|erpWebOrderInvoices|erpWebOrders|erpWebsiteTest)$/;
+var SRV_READS = /^(erpPreorders|erpCashUps|erpAskingPrices|erpSystemCheck|erpAnalytics|erpCommission|erpHolding|erpLotFunding|erpShipments|erpShipment|erpLots|erpFdHead|erpFdDash|erpReceiveMatch|erpAiReader|erpProductSuggest|erpCatalogue|erpPushList|erpCreators|erpCreatorPortalLink|erpSponsorLink|erpCreatorRequests|erpCreatorEvents|erpCreatorProgramme|erpCreatorPreview|erpCreatorCatalog|erpCreatorSources|erpCreatorClaims|erpApps|erpAppQr|erpFeedback|erpRestockOffers|erpRestockList|erpWarrantyRules|erpWarrantyCard|erpMyLink|erpPlatformRegister|erpPlatformDoctor|erpPlatformCommunity|erpMarketWaiting|erpBoard|erpPlatformDesign|erpResell|erpResellerProgramme|erpLoyalty|erpCustomerPoints|erpRefillDue|erpDeliveryHistory|erpDeliveryHistoryMany|erpPrintKit|erpPrintJobs|erpPrintJob|erpPrintCost|erpSpools|erpPrintRequests|erpJoint|erpJointCatalog|erpJointCard|erpInvoiceDesign|erpInvoicePreview|erpMarket|erpMarketMine|erpMarketRequests|erpMarketHints|erpMarketNames|erpWanted|erpBrand|erpComplianceLog|erpProviderKey|erpNews|erpAccessKeys|erpAccessWarning|erpAdmin|erpAiKeys|erpAlertRules|erpAlerts|erpArena|erpBackupStatus|erpBg|erpBnWords|erpBookedParcels|erpBrandLogo|erpBundle|erpBusinessLinks|erpBusinesses|erpBusinessesDeleted|erpCampaignAudience|erpCampaignGet|erpCampaignList|erpCapital|erpCashBook|erpCatalog|erpConnStatus|erpConnections|erpCostBook|erpCourier|erpCourierKeyStatus|erpCurrencies|erpCustomerAccount|erpCustomerCredit|erpCustomerList|erpCustomerPage|erpCustomerStatement|erpCustomers|erpDashboardData|erpDaySales|erpDeliveryOptions|erpDevices|erpDiscontinued|erpDues|erpEvoQr|erpEvoStatus|erpExpenseExport|erpExpenseReceiptUrl|erpExpenses|erpFamilies|erpFighters|erpFormOptions|erpGame|erpGetTheme|erpGoogle|erpHello|erpInstalls|erpInvoice|erpInvoicePdf|erpJob|erpJobs|erpListView|erpLookupCustomer|erpLookupUsage|erpMe|erpMoney|erpNoteFileUrl|erpNotes|erpOwnerChange|erpOwnerChanges|erpParcelLabels|erpParcelPreview|erpPartnerStock|erpPartnership|erpPayReasons|erpPeople|erpPlatform|erpPlatformErrors|erpPnl|erpPnlMonth|erpPoList|erpPoolCatalog|erpProduct|erpProductListShare|erpProductPage|erpProductPhotoUrl|erpProductThumbs|erpProfile|erpQuoteAsset|erpQuoteBoot|erpQuoteGet|erpQuoteList|erpRecentInvoices|erpRecovery|erpReorderPlan|erpRestorePreview|erpReturnPreview|erpRisks|erpSales|erpSearch|erpSecurity|erpSelfTest|erpSerialLookup|erpSerialsFor|erpSessions|erpSetTheme|erpSettingsFull|erpSettingsLists|erpSfPayoutLines|erpSfPayouts|erpShareFile|erpSharedStock|erpSheet|erpStatementPdf|erpStockHistory|erpSupplierPage|erpSuppliers|erpToday|erpUsers|erpWaProductPdf|erpWebMatches|erpWebOrderInvoices|erpWebOrders|erpWebsiteTest)$/;
 function srvPump() {
   if (!SRV_Q.length) return;
   var isRead = SRV_READS.test(SRV_Q[0].name);
@@ -24586,6 +24586,124 @@ document.addEventListener('click', function (e) {
       });
   }
 });
+</script>
+
+<!-- fd-12 (FilaDash merge): Sell > Pre-orders. A customer orders what is not on the shelf at an agreed price and pays a
+     deposit (held as their credit, not income). The list shows what is paid / to pay and "Ready" when the goods are on the
+     shelf (oldest first); "Hand over" makes the invoice at the agreed prices, paid by the deposit. Cancel: pay back, or the
+     owner keeps it with a reason (income of the month). handlers/preorders.js. -->
+<style>
+.pre-st { display:inline-flex; align-items:center; height:24px; padding:0 9px; border-radius:999px; font-size:12px; font-weight:700; white-space:nowrap; }
+.pre-st.wait { background:var(--fd-info-soft, #E3F0FF); color:var(--fd-info-text, #1D5FD1); }
+.pre-st.ready { background:var(--fd-positive-soft, var(--good-soft)); color:var(--fd-positive-text, var(--up)); }
+.pre-st.done { background:var(--fd-surface-2, var(--field)); color:var(--fd-text-3, var(--muted)); }
+.pre-st.cancelled { background:var(--fd-negative-soft, var(--critical-soft)); color:var(--fd-negative-text, var(--critical)); }
+.pre-lines .row { align-items:center; margin-top:6px; }
+</style>
+<script>
+var PRE = { data: null, busy: false };
+fdxNav('preorders', 'Pre-orders', '<path d="M7 3h10v4H7z"/><path d="M5 7h14v14H5z"/><path d="M9 12h6M9 16h4"/>', 'quotes');
+FDH_SUB.preorders = 'Orders for what is not on the shelf yet, with the customer’s deposit';
+function preLoad() {
+  if (PRE.busy) return; PRE.busy = true;
+  srv('erpPreorders', [{}], function (r) { PRE.busy = false; PRE.data = r; if (VIEW === 'preorders') repaint(); }, function (e) { PRE.busy = false; PRE.data = { error: e && e.message ? e.message : String(e) }; repaint(); });
+}
+function preState(x) {
+  if (x.status === 'done') return '<span class="pre-st done">Handed over</span>';
+  if (x.status === 'cancelled') return '<span class="pre-st cancelled">' + (x.forfeited ? 'Cancelled · deposit kept' : 'Cancelled · paid back') + '</span>';
+  return x.ready ? '<span class="pre-st ready">Ready</span>' : '<span class="pre-st wait">Waiting for stock</span>';
+}
+function viewPreorders() {
+  var d = PRE.data;
+  if (!d) { preLoad(); return '<div class="loading">Loading pre-orders…</div>'; }
+  if (d.error) return '<div class="note err"><div class="ico">!</div><div>' + esc(d.error) + '</div></div>';
+  var t = d.totals, h = '<div class="fdd-grid">' +
+    fdhCard({ key: 'o', title: 'Open pre-orders', icon: 'list', v: t.open, hero: true, note: 'worth ' + fmt(t.value) }, d.currency) +
+    fdhCard({ key: 'r', title: 'Ready to hand over', icon: 'trend', v: t.ready, tone: t.ready ? 'good' : '' }, d.currency) +
+    fdhCard({ key: 'h', title: 'Deposits held', icon: 'wallet', v: t.held, money: true, note: 'the customers’ money until handed over' }, d.currency) +
+    '<div class="fdd-c fdd-k" style="justify-content:center;align-items:flex-start"><button class="btn primary" type="button" data-prenew="1">+ New pre-order</button></div></div>';
+  h += '<div class="card"><div class="chead"><h2>Pre-orders</h2></div><div class="sub">The oldest pre-orders get the stock first. A deposit is the customer’s money until the goods are handed over; then it pays the invoice.</div>';
+  if (!d.preorders.length) h += '<div class="empty">No pre-orders yet.</div>';
+  else h += '<div class="scroll"><table><thead><tr><th>Pre-order</th><th>Customer</th><th>What</th><th class="num">Agreed</th><th class="num">Paid</th><th class="num">To pay</th><th>State</th><th></th></tr></thead><tbody>' +
+    d.preorders.map(function (x) {
+      var what = x.items.map(function (l) { return esc(l.name) + (l.qty !== 1 ? ' ×' + l.qty : '') + (l.needsProduct ? ' <span class="sku">(no product yet)</span>' : ''); }).join('<br>');
+      var btns = '';
+      if (x.status === 'open') {
+        if (x.ready) btns += '<button class="btn small primary" type="button" data-prego="' + esc(x.no) + '">Hand over</button> ';
+        btns += '<button class="btn small" type="button" data-prepay="' + esc(x.no) + '">+ Deposit</button> ';
+        if (x.items.some(function (l) { return l.needsProduct; })) btns += '<button class="btn small" type="button" data-prelink="' + esc(x.no) + '">Give product</button> ';
+        btns += '<button class="btn small danger" type="button" data-precancel="' + esc(x.no) + '">Cancel</button>';
+      } else if (x.invoice && navOn('sales')) btns = '<button class="btn small" type="button" data-preinv="' + esc(x.invoice) + '">' + esc(x.invoice) + '</button>';
+      return '<tr><td><b>' + esc(x.no) + '</b><div class="sku">' + esc(x.created) + (x.eta ? ' · expected ' + esc(x.eta) : '') + '</div></td><td>' + esc(x.customer) + '<div class="sku">' + esc(x.phone) + '</div></td>' +
+        '<td style="white-space:normal">' + what + '</td><td class="num">' + fmt(x.total) + '</td><td class="num">' + fmt(x.paid) + '</td><td class="num">' + (x.status === 'open' ? fmt(x.toPay) : '—') + '</td>' +
+        '<td>' + preState(x) + (x.cancelReason ? '<div class="sku">' + esc(x.cancelReason) + '</div>' : '') + '</td><td style="white-space:nowrap">' + btns + '</td></tr>'; }).join('') + '</tbody></table></div>';
+  return h + '</div>';
+}
+var repaintPre = repaint;
+repaint = function () {
+  if (VIEW !== 'preorders') return repaintPre.apply(this, arguments);
+  el('view').innerHTML = viewPreorders();
+  try { fdhPaint(); } catch (e) {}
+  try { fdtEnhance(); } catch (e) {}
+};
+function preRow(i) {
+  return '<div class="row" data-preline="' + i + '"><input class="i" style="flex:3 1 200px" list="pre_cat" placeholder="Product (SKU) or a model name" data-pf="what">' +
+    '<input class="i" style="flex:0 0 70px" inputmode="numeric" value="1" data-pf="qty"><input class="i" style="flex:1 1 110px" inputmode="decimal" placeholder="Agreed price" data-pf="price"></div>';
+}
+document.addEventListener('click', function (e) {
+  if (!e.target.closest) return;
+  var fail = function (er) { toast(esc(er && er.message ? er.message : er), true); };
+  var done = function (msg) { return function (r) { PRE.data = r.list || r; toast(msg); repaint(); }; };
+  if (e.target.closest('[data-prenew]')) {
+    var opts = (CAT || []).slice(0, 600).map(function (p) { return '<option value="' + esc(p.sku) + '">' + esc(p.name) + ' · ' + fmt(p.sell) + '</option>'; }).join('');
+    fdwDialog('New pre-order',
+      '<div class="fields"><div><label class="f" for="pre_ph">Phone</label><input class="i" id="pre_ph" inputmode="tel" placeholder="01XXXXXXXXX"></div><div><label class="f" for="pre_nm">Name</label><input class="i" id="pre_nm"></div></div>' +
+      '<label class="f" style="margin-top:10px">What they order (a product, or a model not in the list yet) · quantity · agreed price</label><div class="pre-lines" id="pre_lines">' + preRow(0) + '</div>' +
+      '<datalist id="pre_cat">' + opts + '</datalist><button class="btn small" type="button" id="pre_add" style="margin-top:6px">+ Another line</button>' +
+      '<div class="fields" style="margin-top:10px"><div><label class="f" for="pre_adv">Deposit now</label><input class="i" id="pre_adv" inputmode="decimal" placeholder="0"></div>' +
+      '<div><label class="f" for="pre_m">Paid by</label><select class="i" id="pre_m"><option>Cash</option><option>bKash</option><option>Nagad</option><option>Bank Transfer</option></select></div>' +
+      '<div><label class="f" for="pre_eta">Expected</label><input class="i" id="pre_eta" type="date"></div></div>' +
+      '<div class="fields"><div><label class="f" for="pre_note">Note</label><input class="i" id="pre_note"></div></div>',
+      function (back, close) {
+        var lines = [];
+        [].forEach.call(back.querySelectorAll('[data-preline]'), function (row) {
+          var w = row.querySelector('[data-pf="what"]').value.trim(); if (!w) return;
+          var known = (CAT || []).some(function (p) { return String(p.sku).toLowerCase() === w.toLowerCase(); });
+          lines.push({ sku: known ? w : '', name: known ? '' : w, qty: num(row.querySelector('[data-pf="qty"]').value), price: num(row.querySelector('[data-pf="price"]').value) });
+        });
+        srv('erpPreorderSave', [{ customer: { phone: fdwVal(back, 'pre_ph'), name: fdwVal(back, 'pre_nm') }, lines: lines, advance: num(fdwVal(back, 'pre_adv')),
+          method: fdwVal(back, 'pre_m'), eta: fdwVal(back, 'pre_eta'), note: fdwVal(back, 'pre_note') }], function (r) { close(); done('Pre-order ' + r.no + ' saved.')(r); }, fail);
+      });
+    var add = document.getElementById('pre_add');
+    if (add) add.addEventListener('click', function () { var box = document.getElementById('pre_lines'); box.insertAdjacentHTML('beforeend', preRow(box.children.length)); });
+    return;
+  }
+  var go = e.target.closest('[data-prego]');
+  if (go) { uiConfirm('Hand over ' + go.getAttribute('data-prego') + '? An invoice is made at the agreed prices and the deposit pays it.').then(function (ok) {
+    if (ok) srv('erpPreorderFulfil', [{ id: go.getAttribute('data-prego') }], function (r) { PRE.data = r.list; toast('Invoice ' + esc(r.invoiceNo) + ': ' + fmt(r.paidByDeposit) + ' paid by the deposit, ' + fmt(r.due) + ' still to pay.'); repaint(); }, fail); }); return; }
+  var pay = e.target.closest('[data-prepay]');
+  if (pay) { fdwDialog('Deposit for ' + pay.getAttribute('data-prepay'),
+    '<div class="fields"><div><label class="f" for="pp_a">Amount</label><input class="i" id="pp_a" inputmode="decimal"></div><div><label class="f" for="pp_m">Paid by</label><select class="i" id="pp_m"><option>Cash</option><option>bKash</option><option>Nagad</option><option>Bank Transfer</option></select></div></div>',
+    function (back, close) { srv('erpPreorderPay', [{ id: pay.getAttribute('data-prepay'), amount: num(fdwVal(back, 'pp_a')), method: fdwVal(back, 'pp_m') }], function (r) { close(); done('Deposit taken.')(r); }, fail); }); return; }
+  var ln = e.target.closest('[data-prelink]');
+  if (ln) { var x = PRE.data.preorders.filter(function (y) { return y.no === ln.getAttribute('data-prelink'); })[0];
+    var i = x.items.findIndex(function (l) { return l.needsProduct; });
+    fdwDialog('Which product is "' + x.items[i].name + '"?', '<div class="fields"><div><label class="f" for="pl_sku">Product (SKU)</label><input class="i" id="pl_sku" list="pl_cat"><datalist id="pl_cat">' +
+      (CAT || []).slice(0, 600).map(function (p) { return '<option value="' + esc(p.sku) + '">' + esc(p.name) + '</option>'; }).join('') + '</datalist></div></div><div class="fdw-note">Not in the list yet? Add it on Products first.</div>',
+      function (back, close) { srv('erpPreorderLink', [{ id: x.no, line: i + 1, sku: fdwVal(back, 'pl_sku') }], function (r) { close(); done('Product given.')(r); }, fail); }); return; }
+  var c = e.target.closest('[data-precancel]');
+  if (c) { var owner = ME && String(ME.role) === 'owner';
+    fdwDialog('Cancel ' + c.getAttribute('data-precancel'),
+      '<div class="fields"><div><label class="f" for="pc_r">Why</label><input class="i" id="pc_r"></div>' +
+      '<div><label class="f" for="pc_mode">The deposit</label><select class="i" id="pc_mode"><option value="refund">Pay it back</option>' + (owner ? '<option value="forfeit">Keep it (income of this month)</option>' : '') + '</select></div>' +
+      '<div><label class="f" for="pc_m">Paid back by</label><select class="i" id="pc_m"><option>Cash</option><option>bKash</option><option>Nagad</option><option>Bank Transfer</option></select></div></div>',
+      function (back, close) { srv('erpPreorderCancel', [{ id: c.getAttribute('data-precancel'), reason: fdwVal(back, 'pc_r'), mode: fdwVal(back, 'pc_mode'), method: fdwVal(back, 'pc_m') }],
+        function (r) { close(); done(r.mode === 'forfeit' ? 'Cancelled: ' + fmt(r.amount) + ' kept.' : 'Cancelled: ' + fmt(r.amount) + ' paid back.')(r); }, fail); }); return; }
+  var inv = e.target.closest('[data-preinv]');
+  if (inv) openInvoicePage(inv.getAttribute('data-preinv'));
+});
+var preAfterWrite = pagesAfterWrite;
+pagesAfterWrite = function () { PRE.data = null; return preAfterWrite.apply(this, arguments); };
 </script>
 
 </body>

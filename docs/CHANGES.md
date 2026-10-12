@@ -1648,3 +1648,15 @@ freight / costs from it on receiving; not counted as money in hand. Shipment pag
 (1 + markup) rounded up to 10, markup by brand or the usual one (default 40%, owner sets them: erpAskingSave); tick and
 use (erpAskingApply, 'products' ability). Tests: cashup (19). Page fd-11.
 Note: after a deploy a browser can keep the old page from its offline cache until it is reloaded.
+
+## pre-1 - pre-orders with advances (13 Oct 2026)
+
+115_preorders.sql + handlers/preorders.js (FilaDash spec D25). Sell > Pre-orders: a customer orders what is not on the
+shelf (a product, or a model typed by name - given its product later) at an agreed price; the deposit is a payment
+[advance] [preorder:PRE-...] [acct:<customer>], i.e. the customer's credit, not income (advances held). Ready = the
+goods are on the shelf, the oldest open pre-orders taking the stock first. Hand over (sales and up): an invoice at the
+agreed prices (createInvoice opts.agreed) that the credit pays as always; the pre-order is done with its invoice.
+Cancel (manager): the deposit paid back (a negative payment from the account named), or - owner only, with a reason -
+kept: a 'Forfeited' payment (no account, no cash moves) and preorders.forfeited, counted in pnlFor as income of that month
+(month.forfeited; net profit "+ Pre-order deposits kept"). Tests: preorder (22). Page fd-12.
+NOT done: holding the arrived units back from other sales (Ready only tells; New invoice does not warn yet).

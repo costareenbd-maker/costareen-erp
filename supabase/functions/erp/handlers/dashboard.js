@@ -786,6 +786,12 @@ export async function pnlFor(ctx, months) {
     return c;
   }, {});
   for (const m of months) if (lateM[m]) want[m].cost += lateM[m];
+  // 115: a pre-order deposit the owner kept on cancelling is income of that month
+  const forfM = await soft(ctx, async () => {
+    const c = {};
+    for (const r of await ctx.tx`select forfeit_month, sum(forfeited) as s from preorders where business_id = ${ctx.biz} and forfeited > 0 group by 1`) c[String(r.forfeit_month)] = num(r.s);
+    return c;
+  }, {});
 
   const out = [];
   for (const m of months) {
@@ -796,7 +802,8 @@ export async function pnlFor(ctx, months) {
     const cour = Math.round(courier[m] || 0);
     const cx = chkM[m] || { extra: 0, short: 0 };
     const svc = await serviceFor(ctx, m);                       // plan D2: repairs made, parts used
-    const profit = gross + x.delivery + cx.extra - cx.short - cour - exp.total + svc.income - svc.parts;
+    const forfeited = Math.round(forfM[m] || 0);
+    const profit = gross + x.delivery + cx.extra - cx.short - cour - exp.total + svc.income - svc.parts + forfeited;
     out.push({ month: m, sales: Math.round(x.sales), returns: Math.round(x.returns), netSales: Math.round(net),
                cost: Math.round(x.cost), gross: Math.round(gross),
                grossMargin: net > 0 ? Math.round(gross / net * 1000) / 10 : 0,
@@ -805,7 +812,7 @@ export async function pnlFor(ctx, months) {
                delivery: Math.round(x.delivery), courier: cour,
                courierExtra: Math.round(cx.extra), courierShort: Math.round(cx.short),
                uncosted: Math.round(x.uncosted), current: m === now,
-               serviceIncome: svc.income, serviceParts: svc.parts, serviceJobs: svc.jobs, joint: Math.round(jointM[m] || 0) });
+               serviceIncome: svc.income, serviceParts: svc.parts, serviceJobs: svc.jobs, joint: Math.round(jointM[m] || 0), forfeited });
   }
   return out;
 }

@@ -199,6 +199,7 @@ export async function createInvoice(ctx, payload, opts = {}) {
     // Stage N9: a reseller's order is sold at the reseller's own prices, line by line
     const unit = opts.mirror ? num(opts.mirror.lines[i].unit)
                : opts.resale && num(opts.resale.unitPrices && opts.resale.unitPrices[i]) > 0 ? num(opts.resale.unitPrices[i])
+               : opts.agreed && num(opts.agreed[i]) > 0 ? num(opts.agreed[i])          // 115: a pre-order's agreed price
                : opts.partnerDeal && opts.unitPrice > 0 ? opts.unitPrice : (num(pr[0].price) || num(rec.sell));
     const qty = num(items[i].qty);
     const disc = DSC.line[i];
