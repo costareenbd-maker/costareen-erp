@@ -171,7 +171,7 @@ export async function erpSellers(ctx) {
   const me = String(ctx.s.userId);
   const list = rows.map((r) => ({ id: String(r.user_id), name: str(r.n), role: str(r.role), me: String(r.user_id) === me }));
   list.sort((a, b) => (b.me ? 1 : 0) - (a.me ? 1 : 0));
-  return { sellers: list, canChoose: ['manager', 'shareholder', 'owner'].includes(String(ctx.s.role)) };
+  return { sellers: list, canChoose: false };   // a sale is always the signed-in person's (owner 14 Oct 2026)
 }
 
 export const HANDLERS = { erpSellers, erpCommission, erpCommissionRuleSave, erpCommissionRuleVoid, erpCommissionPay };

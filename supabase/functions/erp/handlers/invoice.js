@@ -186,15 +186,11 @@ export async function createInvoice(ctx, payload, opts = {}) {
                                 : phone11(payload.customer.phone);
   const address = String(payload.customer.address || '').trim();
   const source = String(payload.customer.source || '').trim() || 'Walk-in';
-  // 117: who the sale belongs to (commission) - sales staff always sell as themselves; a manager or the owner may name a member
-  let sellerId = null;
+  // who the sale belongs to (commission): always the person signed in and making it - nobody, the owner included,
+  // can put a sale in someone else's name (owner 14 Oct 2026). seller_id stays empty; created_by is the seller.
+  const sellerId = null;
   const wantSeller = String(payload.seller || '').trim();
-  if (wantSeller && wantSeller !== String(ctx.s.userId) && !opts.mirror) {
-    if (!['manager', 'shareholder', 'owner'].includes(String(ctx.s.role))) throw new Error('Only a manager or the owner can put a sale in someone else\u2019s name.');
-    const m = await ctx.tx`select 1 from memberships where business_id = ${ctx.biz} and user_id = ${wantSeller} and coalesce(active, true)`;
-    if (!m.length) throw new Error('That seller does not work here.');
-    sellerId = wantSeller;
-  }
+  if (wantSeller && wantSeller !== String(ctx.s.userId) && !opts.mirror) throw new Error('A sale belongs to the person making it; it cannot be put in someone else’s name.');
   const CHANNELS = ['Walk-in', 'Facebook', 'WhatsApp', 'Phone', 'Website', 'Instagram', 'Other'];
   const channel = CHANNELS.includes(String(payload.channel || '')) ? String(payload.channel) : null;
   // one phone = one customer: a phone already on the list keeps its saved name, whatever was typed

@@ -1805,3 +1805,6 @@ marked paid while October rent was a one-off (counted twice on the Expenses scre
 - fd-33 (owner): Customers - "Dues by age" removed; the Follow-ups card became a "Follow-ups" button beside New invoice /
   New customer with a badge of open follow-ups (red when any is overdue) until ticked done; it opens the list (Done,
   + Follow-up).
+- Server (owner): a sale always belongs to the person signed in and making it - erpCreateInvoice refuses any other
+  seller for everyone, the owner included ("A sale belongs to the person making it..."); erpSellers.canChoose is
+  false. Commission follows the maker. Tests sale (15).
