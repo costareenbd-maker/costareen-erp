@@ -33766,5 +33766,50 @@ document.addEventListener('click', function (e) {
 try { umPaint(); } catch (e) {}
 </script>
 
+<!-- fd-27: the FilaDash look (theme, accent, chart colours, text size, density, corners) and the dashboard layout follow
+     the person to every device: saved with their preferences (erp_prefs.fd, 118, erpSetFdPrefs) on every change, and
+     taken from there when the ERP opens. A device with choices made before this keeps them and sends them up once. -->
+<script>
+var FDP_T = null, FDP_FROM_SERVER = false;
+function fdpCollect() { return { theme: FDT.theme, accent: FDT.accent || '', text: FDT.text, density: FDT.density, radius: FDT.radius, pal: FD_PAL, dash: fdwLayout() }; }
+function fdpPush() {
+  if (FDP_FROM_SERVER) return;
+  clearTimeout(FDP_T);
+  FDP_T = setTimeout(function () { if (!ME) return; srv('erpSetFdPrefs', [fdpCollect()], function () {}, function () {}); }, 700);
+}
+var fdtSaveP = fdtSave; fdtSave = function () { var r = fdtSaveP.apply(this, arguments); fdpPush(); return r; };
+var fdPalSetP = fdPalSet; fdPalSet = function () { var r = fdPalSetP.apply(this, arguments); fdpPush(); return r; };
+var fdwSaveP = fdwSave; fdwSave = function () { var r = fdwSaveP.apply(this, arguments); fdpPush(); return r; };
+function fdpAdopt(fd) {
+  FDP_FROM_SERVER = true;
+  try {
+    var same = JSON.stringify(fd) === JSON.stringify(fdpCollect());
+    if (!same) {
+      if (FD_THEMES[fd.theme]) FDT.theme = fd.theme;
+      FDT.accent = /^#[0-9a-f]{6}$/i.test(fd.accent || '') ? fd.accent : '';
+      ['text', 'density', 'radius'].forEach(function (k) { if (fd[k]) FDT[k] = fd[k]; });
+      fdtSaveP();
+      if (fd.pal && FD_PALS[fd.pal]) { FD_PAL = fd.pal; try { localStorage.setItem('fd_chart_pal', FD_PAL); } catch (e) {} }
+      fdwSaveP(fd.dash && fd.dash.order ? fd.dash : null);
+      fdThemeNow();
+      try { umPaint(); } catch (e) {}
+      repaint();
+    }
+  } catch (e) {}
+  FDP_FROM_SERVER = false;
+}
+var applyBusinessesFdp = applyBusinesses;
+applyBusinesses = function (b) {
+  var r = applyBusinessesFdp.apply(this, arguments);
+  if (b && b.fd && typeof b.fd === 'object') fdpAdopt(b.fd);
+  else if (b && b.fd === null) {
+    // nothing saved yet: a device that already has its own choices sends them up once
+    var c = fdpCollect();
+    if (c.theme !== 'filadash' || c.accent || c.text !== 'm' || c.density !== 'comfortable' || c.radius !== 'rounded' || c.pal !== 'theme' || c.dash) fdpPush();
+  }
+  return r;
+};
+</script>
+
 </body>
 </html>

@@ -90,6 +90,7 @@ const core = {
   erpSetTheme: shell.erpSetTheme,
   erpBusinesses: shell.erpBusinesses,
   erpSetLook: shell.erpSetLook,
+  erpSetFdPrefs: shell.erpSetFdPrefs,
   erpSetLang: shell.erpSetLang,
   erpProfile: shell.erpProfile, erpProfileSave: shell.erpProfileSave, erpBg: shell.erpBg, erpBgSave: shell.erpBgSave, erpBgOff: shell.erpBgOff, erpGame: shell.erpGame, erpGameSet: shell.erpGameSet, erpFighters: shell.erpFighters, erpFightersSet: shell.erpFightersSet, erpFighterMine: shell.erpFighterMine, erpFighterRemove: shell.erpFighterRemove,
   erpDocLang: shell.erpDocLang,

@@ -1779,3 +1779,6 @@ marked paid while October rent was a one-off (counted twice on the Expenses scre
   Pine, Solarized, Flexoki, Gruvbox); accent colour (any, contrast kept; picking a theme resets it); chart colours
   (theme, accent, amber, indigo, mixed, colour-blind safe); text size, density, corners; background photo kept.
   Kept per device (not yet synced across devices; the old Look colour is taken over as the accent once).
+- fd-27 + 118: the look (theme, accent, chart colours, text size, density, corners) AND the dashboard layout are saved
+  with the person (erp_prefs.fd, erpSetFdPrefs; only known keys / colour codes kept) and taken on every device when the
+  ERP opens. Tests fdprefs (7).

@@ -26,8 +26,38 @@ export async function erpSetTheme(ctx, t) {
 export async function erpBusinesses(ctx) {
   const list = ctx.s.memberships.map((m) => ({ id: m.business_id, name: m.name, pool: !!m.is_pool }));
   const canAdd = roleAtLeast(ctx.s.role, 'owner');
-  const look = await ctx.tx`select look, lang from erp_prefs where user_id = ${ctx.s.userId}`;
-  return { businesses: list, active: ctx.biz, canAdd, theme: await erpGetTheme(ctx), look: (look[0] && look[0].look) || '', lang: (look[0] && look[0].lang) || '' };
+  let look;
+  try { look = await ctx.tx.savepoint(() => ctx.tx`select look, lang, fd from erp_prefs where user_id = ${ctx.s.userId}`); }
+  catch (_) { look = await ctx.tx`select look, lang from erp_prefs where user_id = ${ctx.s.userId}`; }   // before 118
+  return { businesses: list, active: ctx.biz, canAdd, theme: await erpGetTheme(ctx), look: (look[0] && look[0].look) || '', lang: (look[0] && look[0].lang) || '',
+           fd: (look[0] && look[0].fd) || null };
+}
+
+/**
+ * 118: the FilaDash look and dashboard layout this person chose, for every device. Only known keys, short ids and
+ * colour codes are kept, so nothing saved here can reach a page as markup or style.
+ */
+export async function erpSetFdPrefs(ctx, payload) {
+  const p = payload && typeof payload === 'object' ? payload : {};
+  const pick = (v, ok, def) => (ok.includes(String(v)) ? String(v) : def);
+  const out = {
+    theme: /^[a-z]{2,20}$/.test(String(p.theme || '')) ? String(p.theme) : 'filadash',
+    accent: /^#[0-9a-fA-F]{6}$/.test(String(p.accent || '')) ? String(p.accent).toLowerCase() : '',
+    text: pick(p.text, ['s', 'm', 'l'], 'm'),
+    density: pick(p.density, ['comfortable', 'compact'], 'comfortable'),
+    radius: pick(p.radius, ['rounded', 'soft', 'sharp'], 'rounded'),
+    pal: /^[a-z]{2,12}$/.test(String(p.pal || '')) ? String(p.pal) : 'theme',
+  };
+  if (p.dash && typeof p.dash === 'object' && Array.isArray(p.dash.order)) {
+    const id = (x) => /^[A-Za-z0-9_]{1,24}$/.test(String(x));
+    const order = p.dash.order.filter(id).slice(0, 60).map(String);
+    const hidden = {};
+    for (const k of Object.keys(p.dash.hidden || {})) if (id(k) && p.dash.hidden[k]) hidden[k] = 1;
+    out.dash = { order, hidden };
+  } else out.dash = null;
+  await ctx.tx`insert into erp_prefs (user_id, fd) values (${ctx.s.userId}, ${ctx.tx.json(out)})
+               on conflict (user_id) do update set fd = excluded.fd`;
+  return { ok: true, fd: out };
 }
 
 /**
