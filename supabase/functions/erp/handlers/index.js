@@ -80,6 +80,7 @@ import { HANDLERS as cashup } from './cashup.js';
 import { HANDLERS as preorders } from './preorders.js';
 import { HANDLERS as custextra } from './custextra.js';
 import { HANDLERS as navigator } from './navigator.js';
+import { HANDLERS as fd22 } from './fd22.js';
 
 const core = {
   erpToday: shell.erpToday,
@@ -115,7 +116,7 @@ const core = {
 
 export const HANDLERS = {};
 for (const [group, table] of Object.entries({ core, sales, courier, customers, stock, dashboard,
-                                              expenses, weborders, quotes, settings, campaigns, capital, pages, goods, partners, security, alerts, access, listview, cash, suppliers, currency, notes, serials, repairs, excel, users, compliance, market, invoicedesign, passport, publicreg, doctor, printkit, community, loyalty, printboard, restock, designdesk, resellers, apps, receivefile, catalogue, assistant, push, creators, creatorportal, platform, risk, connections, google, sheet, restore, shop, cod, installer, bizdelete, owners, arena, wooauth, joint, fddash, lots, holding, commission, investorportal, insight, cashup, preorders, custextra, navigator })) {
+                                              expenses, weborders, quotes, settings, campaigns, capital, pages, goods, partners, security, alerts, access, listview, cash, suppliers, currency, notes, serials, repairs, excel, users, compliance, market, invoicedesign, passport, publicreg, doctor, printkit, community, loyalty, printboard, restock, designdesk, resellers, apps, receivefile, catalogue, assistant, push, creators, creatorportal, platform, risk, connections, google, sheet, restore, shop, cod, installer, bizdelete, owners, arena, wooauth, joint, fddash, lots, holding, commission, investorportal, insight, cashup, preorders, custextra, navigator, fd22 })) {
   for (const [name, fn] of Object.entries(table)) {
     if (HANDLERS[name]) throw new Error('Handler ' + name + ' is defined twice (' + group + ').');
     HANDLERS[name] = fn;

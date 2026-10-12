@@ -28150,5 +28150,1077 @@ repaint = function () {
 };
 </script>
 
+<!-- fd-22 (FilaDash merge, owner 13 Oct 2026: "his design is the top priority"): his Analytics, Settings, System check, Audit,
+     Backup and Help screens, detail for detail, on our screens and our figures (Classic look untouched).
+     Analytics: his page head + range pills + ten-view pill row cut to ours (Growth, Monthly P&L, Shipment ROI, Colours & items,
+     Reorder, Cost unknown); Growth = his 8 KPI cards (Revenue hero, gross, net, orders, new / returning customers, average
+     order, units), his "Revenue by month" chart (13 months, gross dashed, tooltip) and "Month by month" table with MoM / YoY;
+     every figure is erpFdDash / erpAnalytics / Profitability's (pnlFor), so net profit stays one figure.
+     System check: his 4 KPI cards (health hero, last run, warnings, passing), Health strip, search + status pills, the
+     checks as two columns of cards with code, status, meaning, "How to fix" and Open / Check again.
+     Settings: his left section list (a drop-down on a phone) + section head, every card with his icon-badge head.
+     Audit (Settings > Security > Activity): 4 KPI cards + his audit table. Backup: 4 KPI cards, status strip, copies table,
+     "Warnings, explained". Maintenance: his card rows. Help: his search, guide cards, glossary, screen guides, "what never
+     happens"; every "i" / Help on a screen head opens the screen's guide in his side drawer.
+     New read-only call erpFd22Analytics (handlers/fd22.js): orders / customers per month, new vs returning, sales with no
+     cost, health signals. Until the server carries it the screens show what the older calls give. -->
+<style>
+/* ---- shared: his page head, card head with rule, icon badges, chips, search, pills with icons */
+:root[data-skin="fd"] body.fd22-own #o_cp { display:none !important; }
+:root[data-skin="fd"] .fd22-head { display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap; margin:4px 0 20px; }
+:root[data-skin="fd"] .fd22-head .fdd-title { margin:2px 0 0; }
+:root[data-skin="fd"] .fd22-sub { font-size:14px; font-weight:500; color:var(--fd-text-3); margin-top:6px; line-height:1.45; max-width:860px; }
+:root[data-skin="fd"] .fd22-acts { display:flex; align-items:center; gap:8px; flex-wrap:wrap; justify-content:flex-end; }
+:root[data-skin="fd"] .fd22-btn { display:inline-flex; align-items:center; gap:8px; height:36px; padding:0 14px; border-radius:999px; border:1px solid transparent; cursor:pointer;
+  background:var(--fd-surface-2); color:var(--fd-text); font:inherit; font-size:13.5px; font-weight:600; white-space:nowrap; text-decoration:none !important; }
+:root[data-skin="fd"][data-theme="dark"] .fd22-btn { border-color:var(--fd-border); }
+:root[data-skin="fd"] .fd22-btn:hover { background:var(--fd-surface-3); color:var(--fd-text); }
+:root[data-skin="fd"] .fd22-btn svg { width:16px; height:16px; flex:0 0 16px; }
+:root[data-skin="fd"] .fd22-btn.pri { background:var(--fd-accent); color:var(--fd-text-on-accent); }
+:root[data-skin="fd"] .fd22-btn.pri:hover { background:var(--fd-accent-hover); box-shadow:var(--fd-accent-glow); }
+:root[data-skin="fd"][data-theme="dark"] .fd22-btn.pri { box-shadow:var(--fd-glow-badge); }
+:root[data-skin="fd"] .fd22-btn[disabled] { opacity:.5; cursor:default; }
+:root[data-skin="fd"] .fd22-ib { width:48px; height:48px; flex:0 0 48px; border-radius:999px; display:inline-grid; place-items:center; background:var(--fd-accent-soft); color:var(--fd-accent); box-shadow:var(--fd-glow-badge); }
+:root[data-skin="fd"] .fd22-ib.sm { width:44px; height:44px; flex-basis:44px; }
+:root[data-skin="fd"] .fd22-ib.xs { width:36px; height:36px; flex-basis:36px; }
+:root[data-skin="fd"] .fd22-ib svg { width:22px; height:22px; }
+:root[data-skin="fd"] .fd22-ib.xs svg { width:18px; height:18px; }
+:root[data-skin="fd"] .fd22-ib.t-warn { background:var(--fd-warning-soft); color:var(--fd-warning); }
+:root[data-skin="fd"] .fd22-ib.t-bad { background:var(--fd-negative-soft); color:var(--fd-negative); }
+:root[data-skin="fd"] .fd22-ib.t-good { background:var(--fd-positive-soft); color:var(--fd-positive); }
+:root[data-skin="fd"] .fd22-ib.t-mute { background:var(--fd-surface-2); color:var(--fd-text-3); box-shadow:none; }
+:root[data-skin="fd"] .fd22-card { position:relative; background:var(--fd-card); border:1px solid var(--fd-border); border-radius:20px; padding:24px; box-shadow:var(--fd-shadow-card), var(--fd-glow-card); min-width:0; margin-bottom:20px; }
+:root[data-skin="fd"] .fd22-ch { display:flex; align-items:center; gap:14px; min-height:44px; }
+:root[data-skin="fd"] .fd22-ch.rule { padding-bottom:14px; border-bottom:1px solid var(--fd-border); margin-bottom:14px; }
+:root[data-skin="fd"] .fd22-ch > .fd22-cht { flex:1 1 auto; min-width:0; }
+:root[data-skin="fd"] .fd22-ct { font-size:19px; font-weight:700; letter-spacing:-.01em; line-height:1.3; color:var(--fd-text); margin:0; display:flex; align-items:center; gap:10px; }
+:root[data-skin="fd"] .fd22-cs { font-size:13px; font-weight:500; color:var(--fd-text-3); margin-top:2px; line-height:1.4; }
+:root[data-skin="fd"] .fd22-tools { margin-left:auto; display:flex; align-items:center; gap:8px; flex-wrap:wrap; justify-content:flex-end; }
+:root[data-skin="fd"] .fd22-chip { display:inline-flex; align-items:center; gap:6px; height:28px; padding:0 12px; border-radius:999px; background:var(--fd-surface-2); color:var(--fd-text-2); font-size:12.5px; font-weight:600; white-space:nowrap; }
+:root[data-skin="fd"] .fd22-chip svg { width:13px; height:13px; }
+:root[data-skin="fd"] .fd22-st { display:inline-flex; align-items:center; gap:6px; height:24px; padding:0 9px; border-radius:999px; font-size:12.5px; font-weight:600; white-space:nowrap; background:var(--fd-surface-2); color:var(--fd-text-2); }
+:root[data-skin="fd"] .fd22-st > i { width:7px; height:7px; border-radius:999px; background:currentColor; display:inline-block; }
+:root[data-skin="fd"] .fd22-st.pass, :root[data-skin="fd"] .fd22-st.ok { background:var(--fd-positive-soft); color:var(--fd-positive-text); }
+:root[data-skin="fd"] .fd22-st.warn { background:var(--fd-warning-soft); color:var(--fd-warning-text); }
+:root[data-skin="fd"] .fd22-st.fail, :root[data-skin="fd"] .fd22-st.bad { background:var(--fd-negative-soft); color:var(--fd-negative-text); }
+:root[data-skin="fd"] .fd22-st.acc { background:var(--fd-accent-soft); color:var(--fd-accent-text); }
+:root[data-skin="fd"] .fd22-st.info { background:var(--fd-info-soft); color:var(--fd-info-text); }
+:root[data-skin="fd"][data-theme="dark"] .fd22-st { box-shadow:inset 0 0 0 1px color-mix(in srgb, currentColor 25%, transparent); }
+:root[data-skin="fd"] .fd22-search { position:relative; display:flex; align-items:center; width:340px; max-width:100%; height:44px; border-radius:12px; background:var(--fd-surface-2); border:1px solid transparent; }
+:root[data-skin="fd"][data-theme="dark"] .fd22-search { border-color:var(--fd-border-strong); }
+:root[data-skin="fd"] .fd22-search:focus-within { border-color:var(--fd-accent-border); box-shadow:var(--fd-focus-ring); }
+:root[data-skin="fd"] .fd22-search svg { width:18px; height:18px; margin:0 8px 0 12px; color:var(--fd-text-3); flex:0 0 18px; }
+:root[data-skin="fd"] .fd22-search input { flex:1 1 auto; min-width:0; height:100%; border:0 !important; background:transparent !important; box-shadow:none !important; outline:none; font:inherit; font-size:14.5px; font-weight:500; color:var(--fd-text); padding:0 12px 0 0; }
+:root[data-skin="fd"] .fd22-search input::placeholder { color:var(--fd-text-faint); }
+:root[data-skin="fd"] .fd22-pills { display:flex; align-items:center; gap:8px; flex-wrap:wrap; row-gap:8px; }
+:root[data-skin="fd"] .fd22-pill { height:32px; padding:0 12px; border-radius:999px; border:1px solid transparent; background:var(--fd-surface-2); color:var(--fd-text-2); font:inherit; font-size:13px; font-weight:600;
+  display:inline-flex; align-items:center; gap:6px; white-space:nowrap; cursor:pointer; transition:background .15s, box-shadow .15s, color .15s; }
+:root[data-skin="fd"] .fd22-pill.lg { height:38px; padding:0 18px; font-size:14px; }
+:root[data-skin="fd"][data-theme="dark"] .fd22-pill { border-color:var(--fd-border); }
+:root[data-skin="fd"] .fd22-pill svg { width:15px; height:15px; }
+:root[data-skin="fd"] .fd22-pill:hover { background:var(--fd-surface-3); color:var(--fd-text); }
+:root[data-skin="fd"] .fd22-pill[aria-pressed="true"] { background:var(--fd-accent); color:var(--fd-text-on-accent); box-shadow:var(--fd-accent-glow); }
+:root[data-skin="fd"]:not([data-theme="dark"]) .fd22-pill[aria-pressed="true"] { background:linear-gradient(180deg, color-mix(in srgb, var(--fd-accent) 92%, #fff), var(--fd-accent)); }
+:root[data-skin="fd"][data-theme="dark"] .fd22-pill[aria-pressed="true"] { background:#1A1813; color:var(--fd-accent); border-color:var(--fd-accent); box-shadow:var(--fd-glow-badge); }
+:root[data-skin="fd"] .fd22-row2 { display:flex; flex-direction:column; gap:10px; margin:0 0 20px; }
+:root[data-skin="fd"] .fd22-kpis { display:grid; grid-template-columns:repeat(4, minmax(0, 1fr)); gap:20px; margin-bottom:20px; }
+:root[data-skin="fd"] .fd22-kpis .fdd-k { min-height:188px; }
+:root[data-skin="fd"] .fd22-kpis .fdd-c[data-fd22go], :root[data-skin="fd"] .fd22-kpis .fdd-c[data-fd22cf] { cursor:pointer; transition:transform .15s, box-shadow .15s; }
+:root[data-skin="fd"] .fd22-kpis .fdd-c[data-fd22go]:hover, :root[data-skin="fd"] .fd22-kpis .fdd-c[data-fd22cf]:hover { transform:translateY(-2px); box-shadow:var(--fd-shadow-card-hover); }
+:root[data-skin="fd"] .fd22-kpis .fdd-num.txt { font-size:clamp(20px, 1vw + 12px, 28px); }
+:root[data-skin="fd"] .fd22-grid2 { display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:20px; align-items:start; }
+:root[data-skin="fd"] .fd22-grid2 > .fd22-card { margin-bottom:0; }
+:root[data-skin="fd"] .fd22-grid2 + * { margin-top:20px; }
+:root[data-skin="fd"] .fd22-foot { font-size:13px; color:var(--fd-text-3); margin:6px 0 0; }
+:root[data-skin="fd"] .fd22-note { display:flex; gap:10px; align-items:flex-start; font-size:13.5px; color:var(--fd-text-2); background:var(--fd-warning-soft); border-radius:12px; padding:10px 12px; margin:0 0 16px; line-height:1.45; }
+:root[data-skin="fd"] .fd22-note.info { background:var(--fd-info-soft); }
+:root[data-skin="fd"] .fd22-note svg { width:16px; height:16px; flex:0 0 16px; margin-top:2px; color:var(--fd-warning); }
+:root[data-skin="fd"] .fd22-note.info svg { color:var(--fd-info-text); }
+:root[data-skin="fd"] .fd22-empty { padding:26px 12px; text-align:center; color:var(--fd-text-3); font-size:14px; font-weight:500; }
+:root[data-skin="fd"] .fd22-mono { font-family:ui-monospace, "JetBrains Mono", "Cascadia Mono", Menlo, Consolas, monospace; font-size:12.5px; }
+:root[data-skin="fd"] .fd22-p { display:block; font-weight:600; color:var(--fd-text); }
+:root[data-skin="fd"] .fd22-s { display:block; font-size:13px; font-weight:400; color:var(--fd-text-3); line-height:1.3; white-space:normal; }
+:root[data-skin="fd"] .fd22-neg { color:var(--fd-negative-text) !important; }
+:root[data-skin="fd"] .fd22-up { color:var(--fd-positive-text); font-weight:700; white-space:nowrap; }
+:root[data-skin="fd"] .fd22-dn { color:var(--fd-negative-text); font-weight:700; white-space:nowrap; }
+:root[data-skin="fd"] .fd22-faint { color:var(--fd-text-faint); font-weight:500; }
+/* table cards (his dataTable): the fd-4 toolbar sits inside */
+:root[data-skin="fd"] .fd22-tcard { background:var(--fd-card); border:1px solid var(--fd-border); border-radius:20px; box-shadow:var(--fd-shadow-card), var(--fd-glow-card); padding:20px 24px 18px; margin-bottom:20px; min-width:0; }
+:root[data-skin="fd"] .fd22-tcard > .fd22-ch { margin-bottom:8px; }
+:root[data-skin="fd"] .fd22-tcard .scroll { overflow-x:auto; }
+:root[data-skin="fd"] #view .fd22-tcard table { width:100%; font-size:14.5px; }
+:root[data-skin="fd"] #view .fd22-tcard tbody td { height:52px; padding-top:6px; padding-bottom:6px; white-space:nowrap; }
+:root[data-skin="fd"] #view .fd22-tcard td.num, :root[data-skin="fd"] #view .fd22-tcard th.num { text-align:right; font-variant-numeric:tabular-nums; }
+:root[data-skin="fd"] #view .fd22-tcard tfoot td { height:44px; }
+:root[data-skin="fd"] #view .fd22-tcard tfoot td:first-child { border-radius:12px 0 0 12px; color:var(--fd-text-2); font-weight:600; }
+:root[data-skin="fd"] #view .fd22-tcard tfoot td:last-child { border-radius:0 12px 12px 0; }
+:root[data-skin="fd"] #view .fd22-tcard tbody tr[data-fd22row] { cursor:pointer; }
+:root[data-skin="fd"] .fd22-mbar { display:inline-block; vertical-align:middle; width:64px; height:6px; border-radius:999px; background:var(--fd-surface-3); overflow:hidden; margin-left:8px; }
+:root[data-skin="fd"] .fd22-mbar i { display:block; height:100%; border-radius:999px; background:var(--fd-accent); }
+/* horizontal bars (his barChart) */
+:root[data-skin="fd"] .fd22-bars { display:flex; flex-direction:column; gap:12px; }
+:root[data-skin="fd"] .fd22-bar { display:grid; grid-template-columns:minmax(90px, 160px) minmax(0, 1fr) auto; gap:12px; align-items:center; font-size:14px; }
+:root[data-skin="fd"] .fd22-bar .l { display:flex; align-items:center; gap:8px; min-width:0; font-weight:600; color:var(--fd-text); }
+:root[data-skin="fd"] .fd22-bar .l span { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+:root[data-skin="fd"] .fd22-bar .t { height:14px; border-radius:999px; background:var(--fd-surface-2); overflow:hidden; position:relative; }
+:root[data-skin="fd"] .fd22-bar .t i { position:absolute; top:0; bottom:0; left:0; border-radius:999px; background:var(--fd-chart-1, var(--fd-accent)); }
+:root[data-skin="fd"] .fd22-bar .t i.neg { background:var(--fd-negative); }
+:root[data-skin="fd"] .fd22-bar .v { font-weight:700; font-variant-numeric:tabular-nums; color:var(--fd-text); text-align:right; min-width:56px; }
+:root[data-skin="fd"] .fd22-sw { width:14px; height:14px; border-radius:4px; flex:0 0 14px; box-shadow:inset 0 0 0 1px rgba(0,0,0,.14); display:inline-block; }
+/* revenue by month (his chart head + line chart) */
+:root[data-skin="fd"] .fd22-chh { display:flex; align-items:flex-start; gap:14px; }
+:root[data-skin="fd"] .fd22-chh .fd22-ct { padding-top:10px; }
+:root[data-skin="fd"] .fd22-chv { margin-left:auto; text-align:right; line-height:1.15; }
+:root[data-skin="fd"] .fd22-chv b { display:block; font-size:30px; font-weight:800; letter-spacing:-.02em; color:var(--fd-accent-text); white-space:nowrap; }
+:root[data-skin="fd"] .fd22-chv .d { display:block; font-size:17px; font-weight:700; margin-top:4px; }
+:root[data-skin="fd"] .fd22-chv .c { display:block; font-size:14px; font-weight:500; color:var(--fd-text-3); margin-top:2px; white-space:nowrap; }
+:root[data-skin="fd"] .fd22-plot { position:relative; margin-top:6px; }
+:root[data-skin="fd"] .fd22-plot svg { width:100%; height:auto; display:block; overflow:visible; }
+:root[data-skin="fd"] .fd22-plot .gl { stroke:var(--fd-border); stroke-width:1; }
+:root[data-skin="fd"] .fd22-plot .vl { stroke:var(--fd-border); stroke-width:1; opacity:.7; }
+:root[data-skin="fd"] .fd22-plot .ax { fill:var(--fd-text-3); font-size:12px; font-weight:500; font-family:var(--fd-font); }
+:root[data-skin="fd"] .fd22-plot .ln { fill:none; stroke:var(--fd-accent); stroke-width:2.5; stroke-linecap:round; }
+:root[data-skin="fd"] .fd22-plot .ln2 { fill:none; stroke:var(--fd-chart-5, var(--fd-positive)); stroke-width:2; stroke-dasharray:5 5; }
+:root[data-skin="fd"] .fd22-plot .hit { fill:transparent; cursor:pointer; }
+:root[data-skin="fd"] .fd22-plot .dot { fill:var(--fd-accent); stroke:var(--fd-card); stroke-width:2.5; pointer-events:none; }
+:root[data-skin="fd"] .fd22-plot .cur { stroke:var(--fd-accent); stroke-width:1.5; stroke-dasharray:3 3; }
+:root[data-skin="fd"] .fd22-tip { position:absolute; transform:translate(-100%, -50%); margin-left:-14px; background:#1E2235; color:#fff; border-radius:10px; padding:8px 12px; box-shadow:0 8px 24px rgba(20,23,43,.25); pointer-events:none; white-space:nowrap; z-index:2; }
+:root[data-skin="fd"][data-theme="dark"] .fd22-tip { background:#1C2432; border:1px solid var(--fd-border); }
+:root[data-skin="fd"] .fd22-tip.right { transform:translate(0, -50%); margin-left:14px; }
+:root[data-skin="fd"] .fd22-tip b { display:block; font-size:16px; font-weight:700; line-height:1.2; }
+:root[data-skin="fd"] .fd22-tip span { display:block; font-size:12.5px; font-weight:500; color:rgba(255,255,255,.72); line-height:1.35; }
+:root[data-skin="fd"] .fd22-tip span i { display:inline-block; width:8px; height:8px; border-radius:999px; background:var(--fd-chart-5, #1DBF73); margin-right:6px; }
+:root[data-skin="fd"] .fd22-legend { display:flex; flex-wrap:wrap; gap:14px; font-size:13px; color:var(--fd-text-3); margin-top:6px; }
+:root[data-skin="fd"] .fd22-legend span { display:inline-flex; align-items:center; gap:6px; }
+:root[data-skin="fd"] .fd22-legend i { width:14px; height:3px; border-radius:2px; display:inline-block; }
+/* analytics: tabs row */
+:root[data-skin="fd"] .fd22-antabs { overflow-x:auto; scrollbar-width:none; padding:3px 2px 6px; margin:0 0 14px; }
+:root[data-skin="fd"] .fd22-antabs::-webkit-scrollbar { display:none; }
+/* system check */
+:root[data-skin="fd"] .fd22-health { display:grid; grid-template-columns:repeat(auto-fill, minmax(230px, 1fr)); gap:10px; }
+:root[data-skin="fd"] .fd22-hi { display:flex; gap:12px; align-items:flex-start; padding:10px 12px; border-radius:16px; background:var(--fd-surface-2); color:var(--fd-text); min-height:44px; border:0; font:inherit; text-align:left; }
+:root[data-skin="fd"] button.fd22-hi { cursor:pointer; } :root[data-skin="fd"] button.fd22-hi:hover { background:var(--fd-surface-3); }
+:root[data-skin="fd"] .fd22-hi .tx { display:flex; flex-direction:column; gap:2px; min-width:0; }
+:root[data-skin="fd"] .fd22-hi .tx small { font-size:13px; color:var(--fd-text-3); font-weight:500; }
+:root[data-skin="fd"] .fd22-hi .tx b { font-size:15px; font-weight:700; color:var(--fd-text); font-variant-numeric:tabular-nums; }
+:root[data-skin="fd"] .fd22-hi .tx em { font-style:normal; font-size:12.5px; color:var(--fd-text-faint); line-height:1.35; }
+:root[data-skin="fd"] .fd22-filter { display:flex; flex-wrap:wrap; gap:12px; align-items:center; margin:20px 0 14px; }
+:root[data-skin="fd"] .fd22-chk { display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:20px; align-items:start; }
+:root[data-skin="fd"] .fd22-chk > .fd22-card { margin:0; display:flex; flex-direction:column; gap:8px; }
+:root[data-skin="fd"] .fd22-chk .meta { display:flex; flex-wrap:wrap; gap:8px; margin-top:2px; }
+:root[data-skin="fd"] .fd22-chk .mean { font-size:14.5px; color:var(--fd-text); line-height:1.5; margin:4px 0 0; }
+:root[data-skin="fd"] .fd22-chk .det { font-size:13.5px; color:var(--fd-text-3); margin:0; line-height:1.45; }
+:root[data-skin="fd"] .fd22-chk .det.bad { color:var(--fd-negative-text); }
+:root[data-skin="fd"] .fd22-how { border-radius:12px; background:var(--fd-surface-2); padding:0 12px; }
+:root[data-skin="fd"] .fd22-how summary { min-height:44px; display:flex; align-items:center; gap:8px; font-weight:600; font-size:14px; cursor:pointer; color:var(--fd-text); list-style:none; }
+:root[data-skin="fd"] .fd22-how summary::-webkit-details-marker { display:none; }
+:root[data-skin="fd"] .fd22-how summary svg { width:16px; height:16px; color:var(--fd-accent-text); }
+:root[data-skin="fd"] .fd22-how ol { margin:0 0 12px; padding-left:22px; display:flex; flex-direction:column; gap:6px; font-size:14px; color:var(--fd-text-2); line-height:1.5; }
+:root[data-skin="fd"] .fd22-chk .acts { display:flex; justify-content:flex-end; gap:8px; margin-top:4px; flex-wrap:wrap; }
+:root[data-skin="fd"] .fd22-chk .fd22-card.focus { box-shadow:0 0 0 2px var(--fd-accent), var(--fd-shadow-card); }
+/* settings: his sections nav + main */
+:root[data-skin="fd"] .fd22-stl { display:grid; grid-template-columns:260px minmax(0, 1fr); gap:20px; align-items:start; }
+:root[data-skin="fd"] .fd22-stnav { background:var(--fd-card); border:1px solid var(--fd-border); border-radius:20px; box-shadow:var(--fd-shadow-card), var(--fd-glow-card); padding:10px;
+  position:sticky; top:88px; display:flex; flex-direction:column; gap:2px; }
+:root[data-skin="fd"] #view .fd22-stnav button.fd22-sti { display:flex; align-items:center; gap:12px; min-height:44px; width:100%; padding:0 12px; margin:0; border-radius:12px; border:0; background:transparent;
+  color:var(--fd-text-2); font:inherit; font-weight:500; font-size:14.5px; text-align:left; cursor:pointer; box-shadow:none; }
+:root[data-skin="fd"] #view .fd22-stnav button.fd22-sti:hover { background:var(--fd-surface-2); color:var(--fd-text); }
+:root[data-skin="fd"] #view .fd22-stnav button.fd22-sti[aria-selected="true"] { background:var(--fd-nav-active-bg); color:var(--fd-accent-text); font-weight:600; box-shadow:none; }
+:root[data-skin="fd"] .fd22-sti svg { width:18px; height:18px; flex:0 0 18px; }
+:root[data-skin="fd"] .fd22-sti span { flex:1 1 auto; min-width:0; }
+:root[data-skin="fd"] .fd22-sti .go { width:14px; height:14px; flex-basis:14px; }
+:root[data-skin="fd"] .fd22-stsep { height:1px; background:var(--fd-border); margin:6px 8px; }
+:root[data-skin="fd"] .fd22-stmain { min-width:0; display:flex; flex-direction:column; gap:20px; }
+:root[data-skin="fd"] .fd22-stmain > section, :root[data-skin="fd"] .fd22-stmain > .card, :root[data-skin="fd"] .fd22-stmain > * { margin-top:0; margin-bottom:0; }
+:root[data-skin="fd"] .fd22-sth { display:flex; align-items:center; gap:14px; }
+:root[data-skin="fd"] .fd22-sth .t { font-size:19px; font-weight:700; color:var(--fd-text); line-height:1.3; }
+:root[data-skin="fd"] .fd22-sth .s { font-size:13px; color:var(--fd-text-3); font-weight:500; }
+:root[data-skin="fd"] .fd22-stsel { display:none; }
+:root[data-skin="fd"] #view .card > .fd22-xh { display:flex; align-items:center; gap:14px; min-height:44px; padding-bottom:14px; border-bottom:1px solid var(--fd-border); margin-bottom:14px; }
+:root[data-skin="fd"] #view .card > .fd22-xh > .fd22-cht { flex:1 1 auto; min-width:0; }
+:root[data-skin="fd"] #view .card > .fd22-xh h2 { font-size:19px; font-weight:700; margin:0; }
+:root[data-skin="fd"] #view .card > .fd22-xh .sub { margin:2px 0 0 !important; }
+:root[data-skin="fd"] #view .card .chead.fd22-xh2 { gap:14px; padding-bottom:14px; border-bottom:1px solid var(--fd-border); margin-bottom:14px; align-items:center; }
+:root[data-skin="fd"] #view .card .chead.fd22-xh2 h2 { font-size:19px; }
+/* backup + audit */
+:root[data-skin="fd"] .fd22-bkstrip { display:flex; align-items:center; gap:10px; padding:12px 16px; border-radius:14px; background:var(--fd-negative-soft); color:var(--fd-negative-text); font-size:14.5px; font-weight:600; margin:0 0 14px; }
+:root[data-skin="fd"] .fd22-bkstrip.ok { background:var(--fd-positive-soft); color:var(--fd-positive-text); }
+:root[data-skin="fd"] .fd22-bkstrip.warn { background:var(--fd-warning-soft); color:var(--fd-warning-text); }
+:root[data-skin="fd"] .fd22-bkstrip svg { width:18px; height:18px; flex:0 0 18px; }
+:root[data-skin="fd"] .fd22-list { margin:0; padding-left:20px; display:flex; flex-direction:column; gap:6px; font-size:14px; color:var(--fd-text-2); line-height:1.5; }
+:root[data-skin="fd"] .fd22-people { display:flex; flex-wrap:wrap; gap:8px; margin:0 0 12px; }
+/* maintenance rows (his card rows) */
+:root[data-skin="fd"] .fd22-rows { display:flex; flex-direction:column; }
+:root[data-skin="fd"] .fd22-r { display:flex; align-items:center; gap:14px; padding:14px 4px; border-bottom:1px solid var(--fd-border); }
+:root[data-skin="fd"] .fd22-r:last-child { border-bottom:0; }
+:root[data-skin="fd"] .fd22-r .m { flex:1 1 auto; min-width:0; }
+:root[data-skin="fd"] .fd22-r .m b { display:block; font-size:15px; font-weight:600; color:var(--fd-text); }
+:root[data-skin="fd"] .fd22-r .m span { display:block; font-size:13.5px; color:var(--fd-text-3); margin-top:2px; line-height:1.4; }
+/* help */
+:root[data-skin="fd"] .fd22-hgrid { display:grid; grid-template-columns:repeat(auto-fill, minmax(300px, 1fr)); gap:12px; }
+:root[data-skin="fd"] .fd22-gcard { display:flex; align-items:center; gap:14px; text-align:left; width:100%; padding:14px 16px; border-radius:16px; background:var(--fd-surface-2); color:var(--fd-text); min-height:72px; border:0; font:inherit; cursor:pointer; transition:background .15s; }
+:root[data-skin="fd"] .fd22-gcard:hover { background:var(--fd-surface-3); }
+:root[data-skin="fd"] .fd22-gcard > svg { width:18px; height:18px; flex:0 0 18px; color:var(--fd-text-3); }
+:root[data-skin="fd"] .fd22-gtx { display:flex; flex-direction:column; gap:3px; flex:1 1 auto; min-width:0; }
+:root[data-skin="fd"] .fd22-gt { font-weight:700; font-size:15px; line-height:1.35; }
+:root[data-skin="fd"] .fd22-gm { font-size:13px; color:var(--fd-text-3); }
+:root[data-skin="fd"] .fd22-two { display:grid; grid-template-columns:minmax(0, 1.2fr) minmax(0, 1fr); gap:20px; align-items:start; }
+:root[data-skin="fd"] .fd22-two > .fd22-card { margin:0; }
+:root[data-skin="fd"] .fd22-gloss { margin:0; }
+:root[data-skin="fd"] .fd22-gloss dt { font-weight:700; font-size:14.5px; padding-top:10px; color:var(--fd-text); }
+:root[data-skin="fd"] .fd22-gloss dd { margin:2px 0 0; padding-bottom:10px; border-bottom:1px solid var(--fd-border); font-size:14px; color:var(--fd-text-2); line-height:1.5; }
+:root[data-skin="fd"] .fd22-gloss dd:last-child { border-bottom:0; }
+/* the guide drawer (his UI.drawer, wide) */
+.fd22-dback { position:fixed; inset:0; z-index:120; background:rgba(20,23,43,.45); backdrop-filter:blur(3px); -webkit-backdrop-filter:blur(3px); animation:fd22-fade .15s ease; }
+:root[data-theme="dark"] .fd22-dback { background:rgba(0,0,0,.6); }
+.fd22-drw { position:fixed; top:0; right:0; bottom:0; z-index:121; width:min(640px, 100vw); background:var(--fd-card); border-left:1px solid var(--fd-border); box-shadow:var(--fd-shadow-popover);
+  display:flex; flex-direction:column; animation:fd22-in .22s cubic-bezier(.2,.8,.2,1); font-family:var(--fd-font); color:var(--fd-text); }
+@keyframes fd22-in { from { transform:translateX(24px); opacity:0; } to { transform:none; opacity:1; } }
+@keyframes fd22-fade { from { opacity:0; } to { opacity:1; } }
+.fd22-dh { display:flex; align-items:flex-start; gap:14px; padding:22px 24px 16px; border-bottom:1px solid var(--fd-border); }
+.fd22-dh .t { flex:1 1 auto; min-width:0; }
+.fd22-dh h2 { font-size:20px; font-weight:800; letter-spacing:-.01em; margin:0; line-height:1.3; color:var(--fd-text); }
+.fd22-dh .s { font-size:13px; font-weight:500; color:var(--fd-text-3); margin-top:2px; }
+.fd22-dx { width:40px; height:40px; flex:0 0 40px; border-radius:999px; border:0; background:var(--fd-surface-2); color:var(--fd-text-2); display:grid; place-items:center; cursor:pointer; }
+.fd22-dx:hover { background:var(--fd-surface-3); color:var(--fd-text); }
+.fd22-dx svg { width:18px; height:18px; }
+.fd22-db { flex:1 1 auto; overflow-y:auto; padding:18px 24px 24px; }
+.fd22-df { display:flex; gap:8px; justify-content:flex-end; flex-wrap:wrap; padding:14px 24px; border-top:1px solid var(--fd-border); }
+.fd22-db h3 { font-size:15px; font-weight:700; margin:18px 0 10px; color:var(--fd-text); }
+.fd22-one { background:var(--fd-accent-soft); border-radius:14px; padding:14px 16px; font-size:14.5px; line-height:1.6; color:var(--fd-text); }
+.fd22-steps { list-style:none; padding:0; margin:0; display:flex; flex-direction:column; gap:14px; }
+.fd22-steps li { display:flex; gap:12px; align-items:flex-start; font-size:14.5px; line-height:1.6; color:var(--fd-text-2); }
+.fd22-stepn { width:26px; height:26px; flex:0 0 26px; border-radius:999px; background:var(--fd-accent-soft); color:var(--fd-accent-text); display:grid; place-items:center; font-weight:700; font-size:13px; margin-top:1px; }
+.fd22-dlink { display:inline-flex; align-items:center; gap:6px; color:var(--fd-accent-text); font-weight:600; font-size:14px; background:none; border:0; padding:0; cursor:pointer; font-family:inherit; margin-top:16px; }
+.fd22-dlink svg { width:16px; height:16px; }
+.fd22-drw .fd22-chip { display:inline-flex; align-items:center; height:28px; padding:0 12px; border-radius:999px; background:var(--fd-surface-2); color:var(--fd-text-2); font-size:12.5px; font-weight:600; }
+.fd22-drw .fd22-btn { display:inline-flex; align-items:center; gap:8px; height:38px; padding:0 16px; border-radius:999px; border:1px solid transparent; cursor:pointer; background:var(--fd-surface-2); color:var(--fd-text); font:inherit; font-size:14px; font-weight:600; }
+.fd22-drw .fd22-btn:hover { background:var(--fd-surface-3); }
+.fd22-drw .fd22-btn.pri { background:var(--fd-accent); color:var(--fd-text-on-accent); }
+.fd22-drw .fd22-btn svg { width:16px; height:16px; }
+.fd22-drw [lang="bn"], .fd22-drw .bn { font-family:"Noto Sans Bengali", var(--fd-font); }
+/* responsive */
+@media (max-width:1100px) {
+  :root[data-skin="fd"] .fd22-kpis { grid-template-columns:repeat(2, minmax(0, 1fr)); }
+  :root[data-skin="fd"] .fd22-grid2, :root[data-skin="fd"] .fd22-chk, :root[data-skin="fd"] .fd22-two { grid-template-columns:minmax(0, 1fr); }
+  :root[data-skin="fd"] .fd22-stl { grid-template-columns:220px minmax(0, 1fr); }
+}
+@media (max-width:767px) {
+  :root[data-skin="fd"] .fd22-head { flex-direction:column; align-items:stretch; gap:12px; margin-bottom:14px; }
+  :root[data-skin="fd"] .fd22-acts { justify-content:flex-start; }
+  :root[data-skin="fd"] .fd22-kpis { gap:12px; }
+  :root[data-skin="fd"] .fd22-kpis .fdd-k { min-height:140px; padding:16px; }
+  :root[data-skin="fd"] .fd22-kpis .fdd-badge { width:40px; height:40px; flex-basis:40px; }
+  :root[data-skin="fd"] .fd22-kpis .fdd-num { font-size:22px; margin-top:12px; }
+  :root[data-skin="fd"] .fd22-kpis .fdd-lbl { font-size:13.5px; }
+  :root[data-skin="fd"] .fd22-kpis .fdd-trend { font-size:12px; height:24px; padding:0 8px; }
+  :root[data-skin="fd"] .fd22-kpis .fdd-i { right:14px; bottom:14px; }
+  :root[data-skin="fd"] .fd22-card, :root[data-skin="fd"] .fd22-tcard { padding:16px; border-radius:16px; margin-bottom:14px; }
+  :root[data-skin="fd"] .fd22-ch { flex-wrap:wrap; gap:10px; }
+  :root[data-skin="fd"] .fd22-ch > .fd22-cht { flex:1 1 calc(100% - 60px); }
+  :root[data-skin="fd"] .fd22-tools { margin-left:0; justify-content:flex-start; }
+  :root[data-skin="fd"] .fd22-chh { flex-wrap:wrap; }
+  :root[data-skin="fd"] .fd22-chv { margin-left:0; text-align:left; width:100%; }
+  :root[data-skin="fd"] .fd22-chv b { font-size:24px; }
+  :root[data-skin="fd"] .fd22-tip { display:none; }
+  :root[data-skin="fd"] .fd22-antabs { margin:0 -14px 12px; padding:2px 14px 6px; -webkit-mask-image:linear-gradient(to right, #000 calc(100% - 40px), transparent); mask-image:linear-gradient(to right, #000 calc(100% - 40px), transparent); }
+  :root[data-skin="fd"] .fd22-antabs .fd22-pills { flex-wrap:nowrap; }
+  :root[data-skin="fd"] .fd22-antabs .fd22-pill, :root[data-skin="fd"] .fd22-row2 .fd22-pill { height:40px; }
+  :root[data-skin="fd"] .fd22-row2 > .fd22-pills { flex-wrap:nowrap; overflow-x:auto; scrollbar-width:none; }
+  :root[data-skin="fd"] .fd22-stl { grid-template-columns:minmax(0, 1fr); }
+  :root[data-skin="fd"] .fd22-stnav { display:none; }
+  :root[data-skin="fd"] .fd22-stsel { display:block; width:100%; }
+  :root[data-skin="fd"] .fd22-bar { grid-template-columns:minmax(70px, 110px) minmax(0, 1fr) auto; gap:8px; font-size:13px; }
+  :root[data-skin="fd"] .fd22-hgrid { grid-template-columns:minmax(0, 1fr); }
+  :root[data-skin="fd"] .fd22-search { width:100%; height:48px; }
+  :root[data-skin="fd"] .fd22-filter > .fd22-pills { flex-wrap:nowrap; overflow-x:auto; scrollbar-width:none; max-width:100%; }
+  :root[data-skin="fd"] .fd22-r { flex-wrap:wrap; }
+  :root[data-skin="fd"] .fd22-r .m { flex-basis:calc(100% - 60px); }
+  .fd22-dh { padding:16px; } .fd22-db { padding:14px 16px 20px; } .fd22-df { padding:12px 16px; }
+}
+</style>
+<script>
+/* ======================================================================================================
+   fd-22: his Analytics, Settings, System check, Audit, Backup and Help, on our screens and our figures.
+   ====================================================================================================== */
+var FD22 = { months: 1, tab: 'growth', dash: {}, dashBusy: {}, x: {}, xBusy: {}, xMissing: false, chkF: 'all', chkQ: '', calc: {}, tip: null };
+try { var _fd22 = JSON.parse(localStorage.getItem('erp_fd22') || '{}'); if ([1, 3, 6, 12].indexOf(_fd22.months) >= 0) FD22.months = _fd22.months; if (_fd22.tab) FD22.tab = _fd22.tab; } catch (e) {}
+function fd22Save() { try { localStorage.setItem('erp_fd22', JSON.stringify({ months: FD22.months, tab: FD22.tab })); } catch (e) {} }
+function fd22On() { return document.documentElement.getAttribute('data-skin') === 'fd'; }
+var FD22_VIEWS = { analytics: 1, syscheck: 1, guide: 1, settings: 1, tools: 1 };
+// the new call is a read: never "the books changed" (SRV_READS is the page's copy of the server's ERP_READS)
+try { if (!SRV_READS.test('erpFd22Analytics')) SRV_READS = new RegExp(SRV_READS.source.replace('^(', '^(erpFd22Analytics|')); } catch (e) {}
+
+/* ---------- icons ---------- */
+var FD22I = {
+  rocket: '<path d="M5 15c-1.5 1.5-2 4-2 6 2 0 4.5-.5 6-2"/><path d="M9 15l-3-3C7 8 10 4 21 3c-1 11-5 14-9 15z"/><circle cx="15" cy="9" r="1.6"/>',
+  palette: '<path d="M12 3a9 9 0 1 0 0 18c1.1 0 1.5-.8 1.5-1.5 0-1.2-1-1.5-1-2.5 0-.8.7-1.5 1.5-1.5H16a5 5 0 0 0 5-5c0-4-4-7.5-9-7.5z"/><circle cx="7.5" cy="11" r="1"/><circle cx="10" cy="7" r="1"/><circle cx="15" cy="7" r="1"/>',
+  calendar: '<rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4M16 3v4"/>',
+  shield: '<path d="M12 3l8 4v5c0 5-3.5 8-8 9-4.5-1-8-4-8-9V7z"/><path d="M8.5 12l2.5 2.5 4.5-5"/>',
+  checkc: '<circle cx="12" cy="12" r="9"/><path d="M8 12.5l2.8 2.8L16 9.5"/>', xc: '<circle cx="12" cy="12" r="9"/><path d="M9 9l6 6M15 9l-6 6"/>',
+  infoc: '<circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/>', search: '<circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/>',
+  gear: '<circle cx="12" cy="12" r="3"/><path d="M12 2.5v3M12 18.5v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2.5 12h3M18.5 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/>',
+  users: '<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7M18 14a6 6 0 0 1 3.5 6"/>',
+  user: '<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>',
+  link: '<path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/>',
+  store: '<path d="M3 9l2-5h14l2 5"/><path d="M4 9v11h16V9"/><path d="M3 9h18"/><path d="M9 20v-6h6v6"/>',
+  archive: '<rect x="3" y="4" width="18" height="5" rx="1.5"/><path d="M5 9v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V9M10 13h4"/>',
+  clip: '<rect x="6" y="4" width="12" height="17" rx="2"/><path d="M9 4V3h6v1M9 10h6M9 14h6M9 18h3"/>',
+  refresh: '<path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 4v7h-7"/>', arrowR: '<path d="M5 12h14M13 6l6 6-6 6"/>', chevR: '<path d="M9 6l6 6-6 6"/>',
+  wrench: '<path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 0 0 5.4-5.4l-2.5 2.5-2.4-.6-.6-2.4z"/>',
+  cloud: '<path d="M7 18a4.5 4.5 0 0 1-.5-9A6 6 0 0 1 18 8.5a4 4 0 0 1-.5 9.5z"/>', chat: '<path d="M4 5h16v11H9l-5 4z"/>',
+  bolt: '<path d="M13 2L4 14h7l-1 8 9-12h-7z"/>', image: '<rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="M21 16l-5-5-9 9"/>',
+  trash: '<path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/>', lock: '<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>',
+  book: '<path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"/><path d="M4 21V5M19 19v2H6"/>',
+  help: '<circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .9-1 1.7v.5"/><path d="M12 17h.01"/>',
+  download: '<path d="M12 4v11M7 10l5 5 5-5M5 20h14"/>', game: '<rect x="2" y="7" width="20" height="11" rx="5"/><path d="M7 11v3M5.5 12.5h3M15 12h.01M18 13h.01"/>',
+  swap: '<path d="M4 8h14l-3-3M20 16H6l3 3"/>', tag: '<path d="M3 12V4h8l10 10-8 8z"/><circle cx="7.5" cy="8.5" r="1.5"/>',
+  pulse: '<path d="M3 12h4l3-8 4 16 3-8h4"/>', ship: '<path d="M3 17l2 3h14l2-3"/><path d="M5 17V10h14v7"/><path d="M9 10V6h6v4"/>',
+  globe2: '<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3.5 3 14.5 0 18M12 3c-3 3.5-3 14.5 0 18"/>'
+};
+function fd22Ic(n, sz) {
+  var p = FD22I[n] || (typeof FDD_IC !== 'undefined' && FDD_IC[n]) || (typeof FDI !== 'undefined' && FDI[n]) || FD22I.infoc;
+  return '<svg viewBox="0 0 24 24" width="' + (sz || 18) + '" height="' + (sz || 18) + '" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + p + '</svg>';
+}
+function fd22Badge(icon, tone, size) { return '<span class="fd22-ib' + (size ? ' ' + size : ' sm') + (tone ? ' t-' + tone : '') + '">' + fd22Ic(icon, 22) + '</span>'; }
+function fd22Card(o) {
+  return '<section class="fd22-card' + (o.cls ? ' ' + o.cls : '') + '"' + (o.id ? ' id="' + o.id + '"' : '') + (o.attr || '') + '><div class="fd22-ch' + (o.rule === false ? '' : ' rule') + '">' + fd22Badge(o.icon || 'infoc', o.tone) +
+    '<div class="fd22-cht"><h2 class="fd22-ct">' + o.title + '</h2>' + (o.sub ? '<div class="fd22-cs">' + o.sub + '</div>' : '') + '</div>' + (o.tools ? '<div class="fd22-tools">' + o.tools + '</div>' : '') + '</div>' + (o.body || '') + '</section>';
+}
+function fd22TCard(o) {     // his table card: head, then the fd-4 toolbar and the table
+  return '<section class="fd22-tcard"' + (o.id ? ' id="' + o.id + '"' : '') + '><div class="fd22-ch">' + fd22Badge(o.icon || 'list') + '<div class="fd22-cht"><h2 class="fd22-ct">' + o.title + '</h2>' +
+    (o.sub ? '<div class="fd22-cs">' + o.sub + '</div>' : '') + '</div>' + (o.tools ? '<div class="fd22-tools">' + o.tools + '</div>' : '') + '</div>' + o.body + '</section>';
+}
+function fd22Btn(label, attr, icon, pri) { return '<button type="button" class="fd22-btn' + (pri ? ' pri' : '') + '" ' + attr + '>' + (icon ? fd22Ic(icon, 16) : '') + '<span>' + label + '</span></button>'; }
+function fd22Trend(now, prev, flip, prevLabel) {
+  if (prev === undefined || prev === null) return '';
+  now = Number(now) || 0; prev = Number(prev) || 0;
+  if (!prev) return now ? '<span class="fdd-trend flat">new</span>' : '';
+  var pc = (now - prev) / Math.abs(prev) * 100, up = pc >= 0, good = flip ? !up : up;
+  if (Math.abs(pc) < 0.5) return '<span class="fdd-trend flat">= same</span>';
+  return '<span class="fdd-trend' + (good ? '' : ' bad') + '" title="' + esc((prevLabel ? prevLabel + ': ' : 'before: ') + fmt(prev)) + '">' + (up ? '▲' : '▼') + ' ' + Math.abs(pc).toFixed(0) + '%</span>';
+}
+function fd22Pct(p, cap) {
+  if (p === null || p === undefined) return '<span class="fd22-faint">' + esc(cap || '—') + '</span>';
+  return '<span class="' + (p >= 0 ? 'fd22-up' : 'fd22-dn') + '">' + (p >= 0 ? '▲ ' : '▼ ') + fmt(Math.abs(Math.round(p))) + '%</span>';
+}
+/* a KPI card in his shape (the dashboard's fdd-* classes): icon badge, trend chip, big figure, label, "i" */
+function fd22Kpi(o) {
+  // o: { key, title, icon, v (html), neg, trend, hero, tone, note, go, f, cf, calc: { title, sub, rows: [[label, value, kind]] } }
+  if (o.calc) FD22.calc[o.key] = o.calc;
+  var attr = o.go && navOn(o.go) ? ' data-fd22go="' + esc(o.go) + '"' + (o.f ? ' data-fd22f="' + esc(o.f) + '"' : '') : o.cf ? ' data-fd22cf="' + esc(o.cf) + '"' : '';
+  return '<div class="fdd-c fdd-k' + (o.hero ? ' fdhero' : '') + '"' + attr + '><div class="fdd-ktop"><span class="fdd-badge' + (o.tone ? ' t-' + o.tone : '') + '">' + fd22Ic(o.icon, 22) + '</span>' + (o.trend || '') + '</div>' +
+    (o.hero ? '<svg class="fdd-cube" viewBox="0 0 64 64"><path d="M32 6l24 13-24 13L8 19z" fill="rgba(255,255,255,.55)" stroke="rgba(255,255,255,.75)" stroke-width="1.2"/><path d="M8 19l24 13v26L8 45z" fill="rgba(255,255,255,.28)" stroke="rgba(255,255,255,.75)" stroke-width="1.2"/><path d="M56 19L32 32v26l24-13z" fill="rgba(255,255,255,.40)" stroke="rgba(255,255,255,.75)" stroke-width="1.2"/></svg>' : '') +
+    '<div class="fdd-num' + (o.neg ? ' neg' : '') + (o.txt ? ' txt' : '') + '">' + o.v + '</div><div class="fdd-lbl">' + esc(o.title) + '</div>' + (o.note ? '<div class="fdd-kn">' + o.note + '</div>' : '') +
+    (o.calc ? '<button type="button" class="fdd-i" data-fd22calc="' + esc(o.key) + '" title="Show calculation">i</button>' : '') + '</div>';
+}
+function fd22CalcOpen(key) {
+  var c = FD22.calc[key]; if (!c) return;
+  var back = document.createElement('div'); back.className = 'dlg-back';
+  back.innerHTML = '<div class="dlg" role="dialog" aria-modal="true" style="max-width:540px"><div class="dlg-t">' + esc(c.title) + ' · how it is worked out</div>' +
+    (c.sub ? '<div class="dlg-b" style="white-space:normal">' + esc(c.sub) + '</div>' : '') +
+    '<table class="fdd-calc">' + c.rows.map(function (r) { return '<tr><td>' + esc(r[0]) + '</td><td>' + (r[1] === null || r[1] === undefined ? '' : r[2] === 'n' ? fmt(r[1]) : r[2] === 't' ? esc(r[1]) : r[2] === 'p' ? fmt(r[1]) + '%' : fdTk(r[1])) + '</td></tr>'; }).join('') + '</table>' +
+    '<div class="dlg-f"><button class="btn primary" type="button">Close</button></div></div>';
+  document.body.appendChild(back);
+  var close = function () { if (back.parentNode) back.parentNode.removeChild(back); document.removeEventListener('keydown', kd, true); };
+  var kd = function (e) { if (e.key === 'Escape') close(); };
+  back.addEventListener('mousedown', function (e) { if (e.target === back) close(); });
+  back.querySelector('.btn').addEventListener('click', close);
+  document.addEventListener('keydown', kd, true);
+  back.querySelector('.btn').focus();
+}
+function fd22Biz() { try { return fdBizName(); } catch (e) { var n = el('bizName'); return (n && n.textContent.trim()) || ''; } }
+/* his page head: eyebrow, title + "i", one line under it, actions on the right */
+function fd22HeadHtml(o) {
+  var info = o.help ? '<button type="button" class="fdd-ti" data-hghelp="' + esc(o.help) + '" title="How this screen works">i</button>'
+    : o.info ? '<button type="button" class="fdd-ti" data-fd22info="' + esc(o.info) + '" title="How this screen works">i</button>' : '';
+  return '<div class="fd22-head" id="fd22Head"><div style="min-width:0"><div class="fdd-eyebrow">' + esc(fd22Biz()) + '</div><h1 class="fdd-title">' + esc(o.title) + ' ' + info + '</h1>' +
+    (o.sub ? '<div class="fd22-sub">' + o.sub + '</div>' : '') + '</div>' + (o.actions ? '<div class="fd22-acts">' + o.actions + '</div>' : '') + '</div>';
+}
+
+/* ---------- the guide drawer (his UI.openGuide): the screen's guide beside the screen ---------- */
+var FD22_SCREEN = { dash: 'Dashboard', invoice: 'New invoice', sales: 'Sales', preorders: 'Pre-orders', customers: 'Customers', stock: 'Stock', shipments: 'Shipments', products: 'Products',
+  costs: 'Product cost', cash: 'Money', expenses: 'Expenses', capital: 'Capital', commission: 'Commission', profit: 'Profitability', analytics: 'Analytics', syscheck: 'System check', settings: 'Settings', tools: 'Maintenance', guide: 'Help' };
+var FD22_VIEWIC = { dash: 'layers', invoice: 'receipt', sales: 'receipt', preorders: 'calendar', customers: 'users', receive: 'box', stock: 'box', shipments: 'ship', products: 'spool', costs: 'tag',
+  cash: 'wallet', expenses: 'receipt', capital: 'wallet', commission: 'percent', profit: 'taka', analytics: 'trend', syscheck: 'shield', words: 'book' };
+/* his screen guides for the three screens that have no guide in help-guides.js yet (one minute each) */
+var FD22_INFO = {
+  settings: { en: { t: 'Settings', s: ['The list on the left is every part of the settings; the one you open shows on the right. On a phone it is the drop-down at the top.',
+      'Business: the logo, which screens the menu shows, the defaults the forms read, the language of documents.', 'Lists: what the drop-downs offer. Removing a value only stops it being offered; old records keep their text.',
+      'Users: people, their role and what each may do. Security: access links, the activity log and the backups ("Backup & restore" at the top goes straight there).', 'Every change is written to the activity log with who made it.'] },
+    bn: { t: 'সেটিংস', s: ['বাঁদিকের তালিকায় সেটিংসের সব অংশ; যেটা খুলবেন সেটা ডানদিকে দেখাবে। ফোনে উপরের ড্রপডাউন থেকে বাছুন।',
+      'Business: লোগো, মেনুতে কোন স্ক্রিন দেখাবে, ফর্মের ডিফল্ট মান, ডকুমেন্টের ভাষা।', 'Lists: ড্রপডাউনে কী কী আসবে। কোনো মান মুছলে শুধু আর দেখাবে না; পুরনো রেকর্ডে লেখা থেকে যায়।',
+      'Users: মানুষ, তাদের রোল আর কে কী করতে পারবে। Security: অ্যাক্সেস লিংক, কাজের লগ আর ব্যাকআপ (উপরের "Backup & restore" সরাসরি সেখানে নেয়)।', 'প্রতিটা পরিবর্তন কে করেছে তা কাজের লগে লেখা থাকে।'] } },
+  tools: { en: { t: 'Maintenance', s: ['Occasional jobs: each row says what it does and reports what it did when you press Run.', 'Rows marked with a warning change data (website stock, reorder levels, merged customers) and ask before they run.',
+      'Preview and Check rows change nothing - run them first.', 'The game setting stays at the bottom.'] },
+    bn: { t: 'রক্ষণাবেক্ষণ', s: ['মাঝে মাঝে দরকারি কাজ: প্রতিটা সারিতে লেখা আছে কী করে, আর Run চাপলে কী করল তা জানায়।', 'সতর্ক চিহ্ন দেওয়া সারিগুলো ডেটা বদলায় (ওয়েবসাইটের স্টক, রিঅর্ডার লেভেল, কাস্টমার একত্র করা) — চালানোর আগে জিজ্ঞেস করে।',
+      'Preview আর Check সারিগুলো কিছু বদলায় না — আগে ওগুলো চালান।', 'গেমের সেটিং নিচে থাকে।'] } },
+  guide: { en: { t: 'Help', s: ['Every job has a guide in Bangla and English; open one and it slides in beside the screen.', 'Search by the job or a word, in either language.', 'The "i" next to every screen\'s title opens that screen\'s guide.', '"Open the screen" at the end of a guide takes you there.'] },
+    bn: { t: 'সাহায্য', s: ['প্রতিটা কাজের বাংলা আর ইংরেজি গাইড আছে; খুললে স্ক্রিনের পাশে খুলে যায়।', 'কাজের নাম বা কোনো শব্দ দিয়ে খুঁজুন, যেকোনো ভাষায়।', 'প্রতিটা স্ক্রিনের নামের পাশের "i" সেই স্ক্রিনের গাইড খোলে।', 'গাইডের শেষে "স্ক্রিনটা খুলুন" চাপলে সেখানে যাবেন।'] } }
+};
+function fd22Lang() { try { return hgLang(); } catch (e) { return 'bn'; } }
+var FD22_DRW = null;
+function fd22DrawerClose() { if (FD22_DRW) { FD22_DRW.forEach(function (n) { if (n.parentNode) n.parentNode.removeChild(n); }); FD22_DRW = null; } document.removeEventListener('keydown', fd22DrawerKey, true); }
+function fd22DrawerKey(e) { if (e.key === 'Escape') { e.stopPropagation(); fd22DrawerClose(); } }
+function fd22Drawer(title, sub, body, foot, lang) {
+  fd22DrawerClose();
+  var back = document.createElement('div'); back.className = 'fd22-dback';
+  var d = document.createElement('aside'); d.className = 'fd22-drw'; d.setAttribute('role', 'dialog'); d.setAttribute('aria-modal', 'true'); d.setAttribute('aria-label', title); d.setAttribute('data-noi18n', '1');
+  if (lang) d.setAttribute('lang', lang);
+  d.innerHTML = '<div class="fd22-dh"><div class="t"><h2>' + esc(title) + '</h2>' + (sub ? '<div class="s">' + esc(sub) + '</div>' : '') + '</div><button type="button" class="fd22-dx" data-fd22x="1" aria-label="Close">' + fd22Ic('x', 18) + '</button></div>' +
+    '<div class="fd22-db">' + body + '</div>' + (foot ? '<div class="fd22-df">' + foot + '</div>' : '');
+  document.body.appendChild(back); document.body.appendChild(d);
+  FD22_DRW = [back, d];
+  back.addEventListener('mousedown', fd22DrawerClose);
+  document.addEventListener('keydown', fd22DrawerKey, true);
+  var x = d.querySelector('[data-fd22x]'); if (x) x.focus();
+  return d;
+}
+function fd22Guide(id, langIn) {
+  var L = langIn || fd22Lang(), bn = L === 'bn';
+  var g = null, own = FD22_INFO[id];
+  if (!own) {
+    if (!window.ERP_HELP) {          // the guides load the first time they are needed
+      try { hgLoad(); } catch (e) {}
+      var tries = 0, t = setInterval(function () { tries++; if (window.ERP_HELP) { clearInterval(t); fd22Guide(id, langIn); } else if (tries > 40) { clearInterval(t); toast('The help could not be loaded. Check the connection.', true); } }, 250);
+      return;
+    }
+    g = window.ERP_HELP.filter(function (x) { return x.id === id; })[0];
+    if (!g) { toast('No guide for this screen yet.'); return; }
+  }
+  var x = own ? (own[L] || own.en) : (g[L] || g.en), view = own ? id : g.view;
+  var steps = x.s || [];
+  var body = '<div class="fd22-row" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px"><span class="fd22-chip">' + esc(FD22_SCREEN[view] || (bn ? 'সাধারণ' : 'General')) + '</span><span class="fd22-chip">' + steps.length + (bn ? ' ধাপ' : ' steps') + '</span>' +
+    '<span class="fd22-chip">~' + Math.max(1, Math.round(steps.length * 0.7)) + (bn ? ' মিনিট' : ' min') + '</span></div>';
+  if (id === 'words') {
+    body += '<dl class="fd22-gloss">' + steps.map(function (s) { var i = s.indexOf(':'); return i > 0 ? '<dt>' + esc(s.slice(0, i)) + '</dt><dd>' + esc(s.slice(i + 1).trim()) + '</dd>' : '<dd>' + esc(s) + '</dd>'; }).join('') + '</dl>';
+  } else {
+    body += '<h3 style="margin-top:4px">' + (bn ? 'ধাপে ধাপে' : 'Step by step') + '</h3><ol class="fd22-steps">' +
+      steps.map(function (s, i) { return '<li><span class="fd22-stepn" aria-hidden="true">' + (i + 1) + '</span><div>' + esc(s) + '</div></li>'; }).join('') + '</ol>';
+  }
+  if (view && view !== VIEW && navOn(view)) body += '<button type="button" class="fd22-dlink" data-fd22open="' + esc(view) + '">' + (bn ? 'স্ক্রিনটা খুলুন: ' : 'Open: ') + esc(FD22_SCREEN[view] || view) + fd22Ic('arrowR', 16) + '</button>';
+  var foot = '<button type="button" class="fd22-btn" data-fd22glang="' + (bn ? 'en' : 'bn') + '" data-fd22gid="' + esc(id) + '">' + fd22Ic('globe2', 16) + (bn ? 'English' : 'বাংলা') + '</button>' +
+    (VIEW !== 'guide' ? '<button type="button" class="fd22-btn" data-fd22open="guide">' + fd22Ic('help', 16) + (bn ? 'সব গাইড' : 'All guides') + '</button>' : '') +
+    '<button type="button" class="fd22-btn pri" data-fd22x="1">' + (bn ? 'বন্ধ' : 'Close') + '</button>';
+  fd22Drawer(x.t, bn ? 'স্ক্রিনের গাইড' : 'Screen guide', body, foot, L);
+}
+// every "i" / "সাহায্য / Help" on a screen head opens the guide beside the screen (his drawer), instead of leaving the screen
+document.addEventListener('click', function (e) {
+  if (!fd22On() || !e.target.closest) return;
+  var hb = e.target.closest('[data-hghelp]'), ib = e.target.closest('[data-fd22info]');
+  if (!hb && !ib) return;
+  e.preventDefault(); e.stopPropagation();
+  fd22Guide(hb ? hb.getAttribute('data-hghelp') : ib.getAttribute('data-fd22info'));
+}, true);
+document.addEventListener('click', function (e) {
+  if (!e.target.closest) return;
+  if (e.target.closest('[data-fd22x]')) { fd22DrawerClose(); return; }
+  var o = e.target.closest('[data-fd22open]');
+  if (o) { fd22DrawerClose(); go(o.getAttribute('data-fd22open')); window.scrollTo(0, 0); return; }
+  var gl = e.target.closest('[data-fd22glang]');
+  if (gl) { var nl = gl.getAttribute('data-fd22glang'); HG.lang = nl; try { localStorage.setItem('erp_help_lang', nl); } catch (e2) {} fd22Guide(gl.getAttribute('data-fd22gid'), nl); if (VIEW === 'guide') repaint(); return; }
+  var gc = e.target.closest('[data-fd22g]');
+  if (gc) { fd22Guide(gc.getAttribute('data-fd22g')); return; }
+  var c = e.target.closest('[data-fd22calc]');
+  if (c) { e.stopPropagation(); fd22CalcOpen(c.getAttribute('data-fd22calc')); return; }
+  var k = e.target.closest('[data-fd22go]');
+  if (k) { var f = k.getAttribute('data-fd22f'); if (f && typeof dashFilter === 'function') { try { dashFilter(f); } catch (e3) {} } go(k.getAttribute('data-fd22go')); window.scrollTo(0, 0); }
+});
+
+/* ====================================================== Analytics ====================================================== */
+var FD22_TABS = [['growth', 'Growth', 'rocket'], ['pnl', 'Monthly P&L', 'taka'], ['roi', 'Shipment ROI', 'ship'], ['colours', 'Colours & items', 'palette'], ['reorder', 'Reorder', 'cart'], ['unknown', 'Cost unknown', 'warn']];
+var FD22_NOTE = {
+  growth: 'Range cards follow the pills (whole months, so net profit is the P&L’s); the monthly view shows the last 12 months and this month to date.',
+  pnl: 'Month by month, the Profitability screen’s own figures. Closed months are final; the open month is provisional.',
+  roi: 'Lifetime of each shipment to today, after holding cost; the range pills are hidden here.',
+  colours: 'Colours sold in the last 90 days; dead stock is lots on the shelf 90+ days with nothing sold from them for 60.',
+  reorder: 'As of today: products at or below their reorder level, with the quantity to order.',
+  unknown: 'Sales with no cost on the day and none in Product cost today. Their profit is overstated until the cost is filled in.'
+};
+function fd22LoadDash(m) {
+  if (FD22.dash[m] || FD22.dashBusy[m]) return;
+  FD22.dashBusy[m] = true;
+  srv('erpFdDash', [{ months: m }], function (r) { FD22.dashBusy[m] = false; FD22.dash[m] = r; if (VIEW === 'analytics') repaint(); },
+    function (e) { FD22.dashBusy[m] = false; FD22.dash[m] = { error: e && e.message ? e.message : String(e) }; if (VIEW === 'analytics') repaint(); });
+}
+function fd22LoadX(m, then) {
+  if (FD22.xMissing || FD22.x[m] || FD22.xBusy[m]) return;
+  FD22.xBusy[m] = true;
+  // straight to the server (not the queue): before the server carries erpFd22Analytics it answers "Unknown action", which must not raise
+  // the page's "the ERP was updated" banner; the screen then shows what the older calls give
+  var done = function (r) { FD22.xBusy[m] = false; if (r && r.ok) FD22.x[m] = r.result; else { if (/Unknown action/.test(String(r && r.error))) FD22.xMissing = true; else FD22.x[m] = { error: (r && r.error) || 'no answer' }; }
+    if (then) then(); else if (VIEW === 'analytics' || VIEW === 'syscheck') repaint(); };
+  try { erpPost('erpFd22Analytics', [{ months: m }]).then(done, function (e) { done({ ok: false, error: e && e.message }); }); } catch (e) { done({ ok: false, error: String(e) }); }
+}
+function fd22Months() { var x = FD22.x[FD22.months] || FD22.x[1] || FD22.x[3] || FD22.x[6] || FD22.x[12]; return x && x.months ? x : null; }
+function fd22MonthName(r) { return r.label + (r.current ? ' (to ' + new Date().getDate() + ' ' + r.label.split(' ')[0] + ')' : ''); }
+
+function fd22AnGrowth() {
+  var m = FD22.months, d = FD22.dash[m], X = FD22.x[m], h = '';
+  if (!d) { fd22LoadDash(m); return '<div class="fd22-kpis">' + [1, 2, 3, 4, 5, 6, 7, 8].map(function () { return '<div class="fdh-sk" style="height:188px;border-radius:20px;background:var(--fd-surface-2)"></div>'; }).join('') + '</div>'; }
+  if (d.error) return '<div class="fd22-note">' + fd22Ic('warn', 16) + '<span>' + esc(d.error) + '</span></div>';
+  var k = d.kpi, rl = d.rangeLabel, pl = d.prevLabel, cards = [];
+  cards.push(fd22Kpi({ key: 'rev', title: 'Revenue', icon: 'taka', hero: true, v: fdTk(k.revenue.v), neg: k.revenue.v < 0, trend: fd22Trend(k.revenue.v, k.revenue.prev, false, pl), go: 'profit',
+    calc: d.calc.revenue ? { title: 'Revenue', sub: rl + ' · the whole business', rows: d.calc.revenue } : null }));
+  if (k.gross) cards.push(fd22Kpi({ key: 'gross', title: 'Gross profit', icon: 'trend', v: fdTk(k.gross.v), neg: k.gross.v < 0, trend: fd22Trend(k.gross.v, k.gross.prev, false, pl), note: k.margin ? fmt(k.margin.v) + '% margin' : '',
+    calc: d.calc.gross ? { title: 'Gross profit', sub: rl, rows: d.calc.gross } : null }));
+  if (k.net) cards.push(fd22Kpi({ key: 'net', title: 'Net profit', icon: 'target', v: fdTk(k.net.v), neg: k.net.v < 0, trend: fd22Trend(k.net.v, k.net.prev, false, pl), go: 'profit',
+    calc: d.calc.net ? { title: 'Net profit', sub: rl + ' · same as Profitability', rows: d.calc.net } : null }));
+  cards.push(fd22Kpi({ key: 'orders', title: 'Orders', icon: 'cart', v: fmt(k.orders.v), trend: fd22Trend(k.orders.v, k.orders.prev, false, pl), go: 'sales',
+    calc: { title: 'Orders', sub: rl, rows: [['Invoices with a sale in the range (returns not counted)', k.orders.v, 'n'], [pl, k.orders.prev, 'n']] } }));
+  if (X && X.range) {
+    var R = X.range;
+    cards.push(fd22Kpi({ key: 'newc', title: 'New customers', icon: 'user', v: fmt(R.newCustomers), trend: fd22Trend(R.newCustomers, R.prev.newCustomers, false, pl), go: 'customers', note: fmt(R.returning) + ' returning',
+      calc: { title: 'New customers', sub: rl + ' · a customer is their phone number', rows: [['Buying customers in the range', R.buyers, 'n'], ['First purchase in the range (new)', R.newCustomers, 'n'], ['Bought before it (returning)', R.returning, 'n'], ['New, ' + pl, R.prev.newCustomers, 'n']] } }));
+    cards.push(fd22Kpi({ key: 'retc', title: 'Returning customers', icon: 'users', v: fmt(R.returning), trend: fd22Trend(R.returning, R.prev.returning, false, pl), go: 'customers',
+      calc: { title: 'Returning customers', sub: rl, rows: [['Customers buying in the range who had bought before it', R.returning, 'n'], [pl, R.prev.returning, 'n']] } }));
+  } else {
+    var why = FD22.xMissing ? 'arrives with the server update' : 'working it out…';
+    if (!FD22.xMissing) fd22LoadX(m);
+    cards.push(fd22Kpi({ key: 'newc', title: 'New customers', icon: 'user', v: '—', note: why }));
+    cards.push(fd22Kpi({ key: 'retc', title: 'Returning customers', icon: 'users', v: '—', note: why }));
+  }
+  cards.push(fd22Kpi({ key: 'aov', title: 'Average order value', icon: 'wallet', v: fdTk(k.avgOrder.v), trend: fd22Trend(k.avgOrder.v, k.avgOrder.prev, false, pl),
+    calc: { title: 'Average order value', sub: rl, rows: [['Sales of the invoices in the range', k.avgOrder.v * k.orders.v, ''], ['÷ Orders', k.orders.v, 'n'], ['= Average order', k.avgOrder.v, '']] } }));
+  cards.push(fd22Kpi({ key: 'units', title: 'Units sold', icon: 'spool', v: fmt(k.units.v), trend: fd22Trend(k.units.v, k.units.prev, false, pl) }));
+  h += '<div class="fd22-kpis">' + cards.join('') + '</div>';
+
+  // revenue by month: 13 months from our server call, else the 12 of erpAnalytics
+  var rows = fd22Months() ? fd22Months().months : null, A = FDX.an && !FDX.an.error ? FDX.an : null;
+  if (!rows && A) rows = A.growth.map(function (g) { return { month: g.month, label: g.month, revenue: g.revenue, gross: g.gross, net: g.net, current: false }; });
+  if (!rows) { if (!A && !FDX.busy.an) fdxLoad('erpAnalytics', 'an'); return h + '<div class="loading">Working out the months…</div>'; }
+  h += fd22RevCard(rows, !!k.gross);
+  h += fd22MonthTable(rows, !!k.gross);
+  return h;
+}
+function fd22RevCard(rows, showGross) {
+  var last = rows.length > 1 ? rows[rows.length - 2] : rows[0], before = rows.length > 2 ? rows[rows.length - 3] : null;
+  var mom = before && before.revenue ? (last.revenue - before.revenue) / Math.abs(before.revenue) * 100 : null;
+  var big = '<div class="fd22-chv"><b>' + fdTk(last.revenue) + '</b>' + (mom === null ? '' : '<span class="d ' + (mom >= 0 ? 'fd22-up' : 'fd22-dn') + '">' + (mom >= 0 ? '▲ ' : '▼ ') + Math.abs(mom).toFixed(0) + '%</span>') +
+    '<span class="c">' + esc(fd22Lbl(last)) + (before ? ' vs ' + esc(fd22Lbl(before)) : '') + '</span></div>';
+  FD22.calc.revm = { title: 'Revenue by month', sub: 'The Profitability screen’s revenue (sales after discounts − returns)', rows: rows.slice().reverse().map(function (r) { return [fd22Lbl(r) + (r.current ? ' (to date)' : ''), r.revenue, '']; }) };
+  return '<section class="fd22-card" aria-label="Monthly revenue"><div class="fd22-chh">' + fd22Badge('trend') + '<h2 class="fd22-ct">Revenue by month <button type="button" class="fdd-i" style="position:static" data-fd22calc="revm" title="Show calculation">i</button></h2>' + big + '</div>' +
+    fd22Line(rows, showGross) + (showGross ? '<div class="fd22-legend"><span><i style="background:var(--fd-accent)"></i>Revenue</span><span><i style="background:var(--fd-chart-5, #1DBF73)"></i>Gross profit (dashed)</span></div>' : '') + '</section>';
+}
+function fd22Lbl(r) { var m = String(r.month || ''); if (/^\d{4}-\d{2}$/.test(m)) { var n = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][Number(m.slice(5, 7)) - 1]; return n + ' ' + m.slice(0, 4); } return String(r.label || m); }
+function fd22Line(rows, showGross) {
+  var W = 1000, H = 260, L = 46, T = 14, B = 30, Rr = 16, iw = W - L - Rr, ih = H - T - B;
+  var vals = rows.map(function (r) { return r.revenue; }).concat(showGross ? rows.map(function (r) { return r.gross; }) : []);
+  var mx = Math.max.apply(null, vals.concat([1])), mn = Math.min.apply(null, vals.concat([0]));
+  var span = Math.max(1, mx - mn), step = Math.pow(10, Math.floor(Math.log10(span / 5))), nice = [1, 2, 2.5, 5, 10], unit = step;
+  for (var q = 0; q < nice.length; q++) { if (span / (step * nice[q]) <= 5) { unit = step * nice[q]; break; } }
+  var top = Math.ceil(mx / unit) * unit || unit, bot = Math.min(0, Math.floor(mn / unit) * unit);
+  var y = function (v) { return T + ih - (v - bot) / (top - bot) * ih; };
+  var x = function (i) { return L + (rows.length === 1 ? iw / 2 : i * iw / (rows.length - 1)); };
+  var g = '', ax = '';
+  for (var v = bot; v <= top + 1e-6; v += unit) {
+    g += '<line class="gl" x1="' + L + '" x2="' + (W - Rr) + '" y1="' + y(v).toFixed(1) + '" y2="' + y(v).toFixed(1) + '"/>';
+    ax += '<text class="ax" x="' + (L - 10) + '" y="' + (y(v) + 4).toFixed(1) + '" text-anchor="end">' + (v ? fddShort(v) : '0') + '</text>';
+  }
+  rows.forEach(function (r, i) {
+    g += '<line class="vl" x1="' + x(i).toFixed(1) + '" x2="' + x(i).toFixed(1) + '" y1="' + T + '" y2="' + (T + ih) + '"/>';
+    ax += '<text class="ax" x="' + x(i).toFixed(1) + '" y="' + (H - 8) + '" text-anchor="middle">' + esc(fd22Lbl(r).split(' ')[0]) + '</text>';
+  });
+  var pts = rows.map(function (r, i) { return [Number(x(i).toFixed(1)), Number(y(r.revenue).toFixed(1))]; });
+  var line = fddSmooth(pts), base = y(Math.max(bot, 0)).toFixed(1);
+  var area = line + ' L' + pts[pts.length - 1][0] + ',' + base + ' L' + pts[0][0] + ',' + base + ' Z';
+  var gl = showGross ? '<path class="ln2" d="' + fddSmooth(rows.map(function (r, i) { return [Number(x(i).toFixed(1)), Number(y(r.gross).toFixed(1))]; })) + '"/>' : '';
+  var act = rows.length > 1 ? rows.length - 2 : 0, ap = pts[act];
+  var hits = pts.map(function (p, i) { var w = rows.length > 1 ? iw / (rows.length - 1) : iw; return '<rect class="hit" data-fd22pt="' + i + '" x="' + (p[0] - w / 2).toFixed(1) + '" y="' + T + '" width="' + w.toFixed(1) + '" height="' + ih + '"/>'; }).join('');
+  FD22.tip = { rows: rows, pts: pts, W: W, H: H, gross: showGross };
+  return '<div class="fd22-plot" id="fd22Plot"><svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Revenue by month: ' + esc(rows.map(function (r) { return fd22Lbl(r) + ' ' + fdTk(r.revenue); }).join('; ')) + '">' +
+    '<defs><linearGradient id="fd22A" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="var(--fd-accent)" stop-opacity=".22"/><stop offset="1" stop-color="var(--fd-accent)" stop-opacity="0"/></linearGradient></defs>' +
+    g + ax + '<path d="' + area + '" fill="url(#fd22A)"/>' + gl + '<path class="ln" d="' + line + '"/>' +
+    '<line class="cur" id="fd22Cur" x1="' + ap[0] + '" x2="' + ap[0] + '" y1="' + ap[1] + '" y2="' + (T + ih) + '"/><circle class="dot" id="fd22Dot" cx="' + ap[0] + '" cy="' + ap[1] + '" r="7"/>' + hits + '</svg>' + fd22Tip(act) + '</div>';
+}
+function fd22Tip(i) {
+  var t = FD22.tip; if (!t) return '';
+  var r = t.rows[i], p = t.pts[i], right = p[0] / t.W < 0.25;
+  return '<div class="fd22-tip' + (right ? ' right' : '') + '" style="left:' + (p[0] / t.W * 100).toFixed(2) + '%;top:' + (p[1] / t.H * 100).toFixed(2) + '%"><b>' + fdTk(r.revenue) + '</b><span>' + esc(fd22Lbl(r)) + (r.current ? ' · to date' : '') + '</span>' +
+    (t.gross ? '<span><i></i>Gross profit ' + fdTk(r.gross) + '</span>' : '') + '</div>';
+}
+document.addEventListener('mouseover', function (e) {
+  var hp = e.target.closest && e.target.closest('[data-fd22pt]'); if (!hp || !FD22.tip) return;
+  var plot = el('fd22Plot'); if (!plot) return;
+  var i = +hp.getAttribute('data-fd22pt'), p = FD22.tip.pts[i];
+  var old = plot.querySelector('.fd22-tip'); if (old) old.outerHTML = fd22Tip(i);
+  var c = el('fd22Cur'), d = el('fd22Dot');
+  if (c) { c.setAttribute('x1', p[0]); c.setAttribute('x2', p[0]); c.setAttribute('y1', p[1]); }
+  if (d) { d.setAttribute('cx', p[0]); d.setAttribute('cy', p[1]); }
+});
+function fd22MonthTable(rows, full) {
+  var has = !!(rows[0] && rows[0].orders !== undefined), list = rows.slice().reverse();
+  var tot = { revenue: 0, gross: 0, net: 0, orders: 0, newCustomers: 0 };
+  list.forEach(function (r) { tot.revenue += r.revenue || 0; tot.gross += r.gross || 0; tot.net += r.net || 0; tot.orders += r.orders || 0; tot.newCustomers += r.newCustomers || 0; });
+  var head = '<tr><th>Month</th><th class="num">Revenue</th>' + (has ? '<th class="num">MoM</th><th class="num">YoY</th>' : '') + (full ? '<th class="num">Gross profit</th><th class="num">Net profit</th>' : '') +
+    (has ? '<th class="num">Orders</th><th class="num">New customers</th><th class="num">Buying customers</th>' : '') + '</tr>';
+  var body = list.map(function (r) {
+    var st = r.closed ? 'Closed' : r.current ? 'Open · to date' : has ? 'Open · provisional' : '';
+    return '<tr' + (navOn('profit') ? ' data-fd22row="profit"' : '') + '><td><span class="fd22-p">' + esc(fd22Lbl(r)) + '</span>' + (st ? '<span class="fd22-s">' + st + '</span>' : '') + '</td><td class="num">' + fdTk(r.revenue) + '</td>' +
+      (has ? '<td class="num">' + fd22Pct(r.mom, 'no month before') + '</td><td class="num">' + fd22Pct(r.yoy, 'no year before') + '</td>' : '') +
+      (full ? '<td class="num' + (r.gross < 0 ? ' fd22-neg' : '') + '">' + fdTk(r.gross) + '</td><td class="num' + (r.net < 0 ? ' fd22-neg' : '') + '">' + fdTk(r.net) + '</td>' : '') +
+      (has ? '<td class="num">' + fmt(r.orders) + '</td><td class="num">' + fmt(r.newCustomers) + '</td><td class="num">' + fmt(r.buyers) + '</td>' : '') + '</tr>';
+  }).join('');
+  var foot = '<tr><td>Total of ' + list.length + ' months</td><td class="num">' + fdTk(tot.revenue) + '</td>' + (has ? '<td></td><td></td>' : '') + (full ? '<td class="num">' + fdTk(tot.gross) + '</td><td class="num">' + fdTk(tot.net) + '</td>' : '') +
+    (has ? '<td class="num">' + fmt(tot.orders) + '</td><td class="num">' + fmt(tot.newCustomers) + '</td><td></td>' : '') + '</tr>';
+  return fd22TCard({ title: 'Month by month', icon: 'calendar', sub: has ? '' : 'Orders and customers per month arrive with the server update', body: '<div class="scroll"><table class="fd22-t"><thead>' + head + '</thead><tbody>' + body + '</tbody><tfoot>' + foot + '</tfoot></table></div>' });
+}
+function fd22AnPnl() {
+  var X = fd22Months(), A = FDX.an && !FDX.an.error ? FDX.an : null, rows;
+  if (X) rows = X.months;
+  else { if (!FD22.xMissing) fd22LoadX(FD22.months); if (!A) { if (!FDX.busy.an) fdxLoad('erpAnalytics', 'an'); return '<div class="loading">Working out the months…</div>'; } rows = A.growth.map(function (g) { return { month: g.month, revenue: g.revenue, gross: g.gross, net: g.net }; }); }
+  var has = rows[0] && rows[0].cost !== undefined, list = rows.slice().reverse(), t = { revenue: 0, cost: 0, gross: 0, expenses: 0, other: 0, net: 0 };
+  var body = list.map(function (r) {
+    var other = has ? r.net - r.gross + r.expenses : 0, mg = r.revenue ? Math.round(r.gross / r.revenue * 1000) / 10 : null;
+    t.revenue += r.revenue; t.gross += r.gross; t.net += r.net; if (has) { t.cost += r.cost; t.expenses += r.expenses; t.other += other; }
+    var st = has ? (r.closed ? '<span class="fd22-st ok"><i></i>Closed</span>' : '<span class="fd22-st warn"><i></i>' + (r.current ? 'Open · to date' : 'Open') + '</span>') : '';
+    return '<tr' + (navOn('profit') ? ' data-fd22row="profit"' : '') + '><td><span class="fd22-p">' + esc(fd22Lbl(r)) + '</span></td><td class="num">' + fdTk(r.revenue) + '</td>' + (has ? '<td class="num">' + fdTk(r.cost) + '</td>' : '') +
+      '<td class="num' + (r.gross < 0 ? ' fd22-neg' : '') + '">' + fdTk(r.gross) + '</td><td class="num">' + (mg === null ? '—' : fmt(mg) + '%') + '</td>' +
+      (has ? '<td class="num">' + fdTk(r.expenses) + '</td><td class="num">' + (other < 0 ? '− ' : '+ ') + fdTk(Math.abs(other)) + '</td>' : '') +
+      '<td class="num' + (r.net < 0 ? ' fd22-neg' : '') + '"><b>' + fdTk(r.net) + '</b></td>' + (has ? '<td>' + st + '</td>' : '') + '</tr>';
+  }).join('');
+  var head = '<tr><th>Month</th><th class="num">Revenue</th>' + (has ? '<th class="num">Cost of goods</th>' : '') + '<th class="num">Gross</th><th class="num">Margin</th>' +
+    (has ? '<th class="num">Expenses</th><th class="num" title="Delivery charged, courier fees, repairs, deposits kept">Delivery & other</th>' : '') + '<th class="num">Net</th>' + (has ? '<th>Status</th>' : '') + '</tr>';
+  var foot = '<tr><td>Total of ' + list.length + ' months</td><td class="num">' + fdTk(t.revenue) + '</td>' + (has ? '<td class="num">' + fdTk(t.cost) + '</td>' : '') + '<td class="num">' + fdTk(t.gross) + '</td><td class="num">' +
+    (t.revenue ? fmt(Math.round(t.gross / t.revenue * 1000) / 10) + '%' : '—') + '</td>' + (has ? '<td class="num">' + fdTk(t.expenses) + '</td><td class="num">' + (t.other < 0 ? '− ' : '+ ') + fdTk(Math.abs(t.other)) + '</td>' : '') +
+    '<td class="num">' + fdTk(t.net) + '</td>' + (has ? '<td></td>' : '') + '</tr>';
+  var h = fd22Card({ title: 'Monthly profit', icon: 'taka', sub: 'Revenue, cost of goods, gross, expenses and net, month by month: the Profitability screen’s own figures. A row opens Profitability for the month’s full breakdown.',
+    tools: navOn('profit') ? fd22Btn('Open Profitability', 'data-fd22go="profit"', 'arrowR') : '', body: '' });
+  return h + fd22TCard({ title: 'Profit by month', icon: 'calendar', body: '<div class="scroll"><table class="fd22-t"><thead>' + head + '</thead><tbody>' + body + '</tbody><tfoot>' + foot + '</tfoot></table></div>' });
+}
+function fd22AnRoi() {
+  var d = FDX.an;
+  if (!d) { fdxLoad('erpAnalytics', 'an'); return '<div class="loading">Working it out…</div>'; }
+  if (d.error) return '<div class="fd22-note">' + fd22Ic('warn', 16) + '<span>' + esc(d.error) + '</span></div>';
+  var best = d.roi[0], landed = d.roi.reduce(function (t, x) { return t + x.landed; }, 0), netAll = d.roi.reduce(function (t, x) { return t + x.net; }, 0);
+  var h = '<div class="fd22-kpis">' +
+    fd22Kpi({ key: 'roib', title: best ? 'Best ROI after holding · ' + best.reference : 'Best ROI after holding', icon: 'target', hero: true, v: best ? fmt(best.roi) + '<small style="margin-left:2px">%</small>' : '—', neg: best && best.roi < 0,
+      calc: best ? { title: 'Shipment ROI · ' + best.reference, sub: (best.supplier || '') + ' · received ' + best.date, rows: [['Landed cost', best.landed, ''], ['Sold for so far', best.revenue, ''], ['Profit after holding cost', best.net, ''], ['ROI = profit ÷ landed cost', best.roi, 'p'], ['Units sold', best.soldPct, 'p']] } : null }) +
+    fd22Kpi({ key: 'roic', title: 'Capital in shipments', icon: 'ship', v: fdTk(landed), go: 'shipments', note: d.roi.length + ' shipment(s) with a landed cost',
+      calc: { title: 'Capital in shipments', rows: d.roi.map(function (x) { return [x.reference, x.landed, '']; }).concat([['Total landed cost', landed, '']]) } }) +
+    fd22Kpi({ key: 'roin', title: 'Profit after holding', icon: 'trend', v: fdTk(netAll), neg: netAll < 0, note: landed ? fmt(Math.round(netAll / landed * 1000) / 10) + '% on all of it' : '' }) +
+    fd22Kpi({ key: 'dead', title: 'Dead stock', icon: 'box', tone: d.deadValue ? 'warn' : '', v: fdTk(d.deadValue), note: d.dead.length + ' lot(s) sitting still', go: '' }) + '</div>';
+  if (!d.roi.length) return h + fd22Card({ title: 'ROI per shipment', icon: 'ship', body: '<div class="fd22-empty">No shipments with a landed cost yet.</div>' });
+  h += fd22TCard({ title: 'ROI per shipment', icon: 'ship', sub: 'Profit after holding cost on what each shipment cost to land. A shipment still selling grows.',
+    body: '<div class="scroll"><table class="fd22-t"><thead><tr><th>Shipment</th><th>Received</th><th class="num">Landed cost</th><th class="num">Sold for</th><th class="num">After holding</th><th class="num">ROI</th><th class="num">Sold</th></tr></thead><tbody>' +
+      d.roi.map(function (x) { return '<tr' + (navOn('shipments') ? ' data-fd22row="shipments"' : '') + '><td><span class="fd22-p">' + esc(x.reference) + '</span><span class="fd22-s">' + esc(x.supplier || '') + '</span></td><td>' + esc(x.date) + '</td><td class="num">' + fdTk(x.landed) + '</td><td class="num">' + fdTk(x.revenue) + '</td>' +
+        '<td class="num' + (x.net < 0 ? ' fd22-neg' : '') + '">' + fdTk(x.net) + '</td><td class="num"><b class="' + (x.roi < 0 ? 'fd22-neg' : '') + '">' + fmt(x.roi) + '%</b></td><td class="num">' + fmt(x.soldPct) + '%<span class="fd22-mbar"><i style="width:' + Math.max(0, Math.min(100, x.soldPct)) + '%"></i></span></td></tr>'; }).join('') +
+      '</tbody></table></div>' });
+  var sorted = d.roi.slice().sort(function (a, b) { return String(a.date) < String(b.date) ? -1 : 1; }), mx = Math.max.apply(null, d.roi.map(function (x) { return Math.abs(x.roi); }).concat([1]));
+  h += fd22Card({ title: 'ROI by shipment', icon: 'trend', sub: 'After holding cost; projections excluded',
+    body: '<div class="fd22-bars" role="img" aria-label="ROI by shipment: ' + esc(sorted.map(function (x) { return x.reference + ' ' + x.roi + '%'; }).join(', ')) + '">' + sorted.map(function (x) {
+      return '<div class="fd22-bar"><span class="l"><span>' + esc(x.reference) + '</span></span><span class="t"><i class="' + (x.roi < 0 ? 'neg' : '') + '" style="width:' + Math.max(2, Math.abs(x.roi) / mx * 100).toFixed(1) + '%"></i></span><span class="v' + (x.roi < 0 ? ' fd22-neg' : '') + '">' + fmt(x.roi) + '%</span></div>'; }).join('') + '</div>' });
+  return h;
+}
+function fd22AnColours() {
+  var d = FDX.an;
+  if (!d) { fdxLoad('erpAnalytics', 'an'); return '<div class="loading">Working it out…</div>'; }
+  if (d.error) return '<div class="fd22-note">' + fd22Ic('warn', 16) + '<span>' + esc(d.error) + '</span></div>';
+  var top = d.colours.slice(0, 10), mx = Math.max.apply(null, top.map(function (c) { return c.units; }).concat([1])), tot = d.colours.reduce(function (t, c) { return t + c.revenue; }, 0);
+  var sw = function (c) { return '<i class="fd22-sw" style="background:' + (typeof fdSwatch === 'function' ? fdSwatch(c) : 'var(--fd-surface-3)') + '"></i>'; };
+  var bars = top.length ? '<div class="fd22-bars">' + top.map(function (c) {
+    return '<div class="fd22-bar"><span class="l">' + sw(c.colour) + '<span>' + esc(c.colour) + '</span></span><span class="t"><i style="width:' + Math.max(2, c.units / mx * 100).toFixed(1) + '%;background:' + (typeof fdSwatch === 'function' && fdSwatch(c.colour).charAt(0) === '#' ? fdSwatch(c.colour) : 'var(--fd-chart-1, var(--fd-accent))') + ';box-shadow:inset 0 0 0 1px var(--fd-border-strong)"></i></span><span class="v">' + fmt(c.units) + ' u</span></div>'; }).join('') + '</div>'
+    : '<div class="fd22-empty">No sales in 90 days.</div>';
+  var tbl = d.colours.length ? '<div class="scroll"><table class="fdd-t"><thead><tr><th>Colour</th><th class="n">Units</th><th class="n">Revenue</th><th class="n">Share</th></tr></thead><tbody>' + d.colours.map(function (c) {
+    return '<tr><td class="nm">' + sw(c.colour) + ' ' + esc(c.colour) + '</td><td class="n">' + fmt(c.units) + '</td><td class="n">' + fdTk(c.revenue) + '</td><td class="n">' + (tot ? fmt(Math.round(c.revenue / tot * 1000) / 10) + '%' : '—') + '</td></tr>'; }).join('') + '</tbody></table></div>' : '<div class="fd22-empty">No sales in 90 days.</div>';
+  var h = '<div class="fd22-grid2">' + fd22Card({ title: 'Best-selling colours', icon: 'palette', sub: 'Units sold in the last 90 days', body: bars }) +
+    fd22Card({ title: 'Colours by revenue', icon: 'taka', sub: 'The last 90 days', body: tbl }) + '</div>';
+  h += fd22TCard({ title: 'Dead stock', icon: 'box', sub: 'Lots on the shelf for 90 days or more with nothing sold from them for 60 days: ' + fdTk(d.deadValue) + ' sitting still. Think twice before ordering these again.',
+    body: d.dead.length ? '<div class="scroll"><table class="fd22-t"><thead><tr><th>Product</th><th>Shipment</th><th class="num">Days</th><th class="num">Units</th><th class="num">Worth</th><th>Last sale</th></tr></thead><tbody>' +
+      d.dead.map(function (x) { return '<tr><td><span class="fd22-p">' + esc(x.name) + '</span><span class="fd22-s">' + esc(x.sku) + '</span></td><td>' + esc(x.reference) + '</td><td class="num">' + fmt(x.days) + '</td><td class="num">' + fmt(x.units) + '</td><td class="num">' + fdTk(x.value) + '</td><td>' + esc(x.lastSale) + '</td></tr>'; }).join('') +
+      '</tbody></table></div>' : '<div class="fd22-empty">✓ Nothing is sitting still.</div>' });
+  return h;
+}
+function fd22AnReorder() {
+  var m = FD22.months, d = FD22.dash[m];
+  if (!d) { fd22LoadDash(m); return '<div class="loading">Reading the stock…</div>'; }
+  if (d.error) return '<div class="fd22-note">' + fd22Ic('warn', 16) + '<span>' + esc(d.error) + '</span></div>';
+  var k = d.kpi, a = d.attention || {};
+  var h = '<div class="fd22-kpis">' +
+    fd22Kpi({ key: 'ro1', title: 'At or below reorder level', icon: 'cart', hero: true, v: fmt(a.reorder || 0), go: 'stock', f: 'plan' }) +
+    fd22Kpi({ key: 'ro2', title: 'Out of stock', icon: 'x', tone: a.outOfStock ? 'bad' : '', v: fmt(a.outOfStock || 0), go: 'products', f: 'out' }) +
+    fd22Kpi({ key: 'ro3', title: 'Units on hand', icon: 'box', v: fmt(k.stockUnits ? k.stockUnits.v : 0), go: 'products' }) +
+    (k.stockValue ? fd22Kpi({ key: 'ro4', title: 'Stock value at cost', icon: 'wallet', v: fdTk(k.stockValue.v), note: k.stockValue.uncosted ? k.stockValue.uncosted + ' product(s) without cost not counted' : '',
+      calc: d.calc.stockValue ? { title: 'Stock value at cost', rows: d.calc.stockValue } : null }) : fd22Kpi({ key: 'ro4', title: 'Units sold', icon: 'spool', v: fmt(k.units.v) })) + '</div>';
+  var ro = d.reorder || [];
+  h += fd22TCard({ title: 'Reorder suggestions', icon: 'cart', sub: 'The ' + ro.length + ' lowest; the full plan with lead times and suppliers is under Stock',
+    tools: navOn('stock') ? fd22Btn('Open the reorder plan', 'data-fd22go="stock" data-fd22f="plan"', 'arrowR') : '',
+    body: ro.length ? '<div class="scroll"><table class="fd22-t"><thead><tr><th>Item</th><th class="num">On hand</th><th class="num">Reorder at</th><th class="num">Suggested qty</th><th class="num">Price</th></tr></thead><tbody>' +
+      ro.map(function (p) { var sug = Math.max(0, p.reorder * 2 - p.stock);
+        return '<tr><td><span class="fd22-p"><i class="fd22-sw" style="vertical-align:-2px;margin-right:8px;background:' + (typeof fdSwatch === 'function' ? fdSwatch(p.name) : 'var(--fd-surface-3)') + '"></i>' + esc(p.name) + '</span><span class="fd22-s">' + esc(p.sku) + '</span></td>' +
+          '<td class="num' + (p.stock <= 0 ? ' fd22-neg' : '') + '">' + fmt(p.stock) + '</td><td class="num">' + fmt(p.reorder) + '</td><td class="num"><b>' + fmt(sug) + '</b></td><td class="num">' + (p.sell ? fdTk(p.sell) : '—') + '</td></tr>'; }).join('') +
+      '</tbody></table></div>' : '<div class="fd22-empty">✓ Nothing at its reorder level.</div>' });
+  return h;
+}
+function fd22AnUnknown() {
+  var X = fd22Months();
+  if (!X) {
+    var xe = FD22.x[FD22.months] && FD22.x[FD22.months].error;
+    if (!FD22.xMissing && !xe) { fd22LoadX(FD22.months); return '<div class="loading">Looking for sales without a cost…</div>'; }
+    if (xe) return '<div class="fd22-note">' + fd22Ic('warn', 16) + '<span>' + esc(xe) + '</span></div>';
+    var chk = FDX.chk && FDX.chk.checks ? FDX.chk.checks.filter(function (c) { return c.id === 'M4' || c.id === 'S4'; }) : [];
+    if (!FDX.chk && !FDX.busy.chk) { FDX.busy.chk = true; srv('erpSystemCheck', [], function (r) { FDX.busy.chk = false; FDX.chk = r; if (VIEW === 'analytics') repaint(); }, function (e) { FDX.busy.chk = false; FDX.chk = { error: e && e.message ? e.message : String(e) }; if (VIEW === 'analytics') repaint(); }); }
+    return fd22Card({ title: 'Cost unknown', icon: 'warn', tone: 'warn', sub: 'The list of each sale arrives with the server update. Until then, the System check counts them:',
+      body: chk.length ? '<div class="fd22-rows">' + chk.map(function (c) { return '<div class="fd22-r">' + fd22Badge(c.status === 'pass' ? 'checkc' : 'warn', c.status === 'pass' ? 'good' : 'warn', 'xs') + '<div class="m"><b>' + esc(c.title) + '</b><span>' + esc(c.detail || 'Nothing found.') + '</span></div></div>'; }).join('') + '</div>' : '<div class="loading">Checking…</div>',
+      tools: navOn('costs') ? fd22Btn('Open Product cost', 'data-fd22go="costs"', 'arrowR') : '' });
+  }
+  var u = X.uncosted || [], thisM = X.health ? X.health.uncostedThisMonth : 0;
+  var h = '<div class="fd22-kpis">' +
+    fd22Kpi({ key: 'uc1', title: 'Sale lines with no cost', icon: 'warn', tone: X.uncostedCount ? 'warn' : 'good', v: fmt(X.uncostedCount), note: 'last 13 months', go: 'costs' }) +
+    fd22Kpi({ key: 'uc2', title: 'Their sales value', icon: 'taka', v: fdTk(X.uncostedValue), note: 'profit overstated by up to this' }) +
+    fd22Kpi({ key: 'uc3', title: 'This month', icon: 'calendar', tone: thisM ? 'warn' : '', v: fmt(thisM), note: 'line(s) sold with no cost' }) +
+    fd22Kpi({ key: 'uc4', title: 'Stock without cost', icon: 'box', tone: X.health && X.health.stockNoCost ? 'warn' : '', v: fmt(X.health ? X.health.stockNoCost : 0), note: 'product(s) in stock', go: 'costs' }) + '</div>';
+  h += fd22TCard({ title: 'Sales whose cost is unknown', icon: 'warn', sub: 'Newest first' + (X.uncostedCount > u.length ? ' · the newest ' + u.length + ' of ' + fmt(X.uncostedCount) : '') + '. Fill in Product cost: later P&L figures use it, sales keep the cost they were made with.',
+    tools: navOn('costs') ? fd22Btn('Open Product cost', 'data-fd22go="costs"', 'arrowR', true) : '',
+    body: u.length ? '<div class="scroll"><table class="fd22-t"><thead><tr><th>Invoice</th><th>Customer</th><th>Product</th><th class="num">Qty</th><th class="num">Amount</th></tr></thead><tbody>' +
+      u.map(function (x) { return '<tr data-fd22inv="' + esc(x.invoice) + '"><td><span class="fd22-p">' + esc(x.invoice) + '</span><span class="fd22-s">' + esc(x.date) + '</span></td><td>' + esc(x.customer || '—') + '</td><td><span class="fd22-p">' + esc(x.name) + '</span><span class="fd22-s">' + esc(x.sku) + '</span></td>' +
+        '<td class="num">' + fmt(x.qty) + '</td><td class="num">' + fdTk(x.total) + '</td></tr>'; }).join('') + '</tbody></table></div>' : '<div class="fd22-empty">✓ Every sale carries a cost.</div>' });
+  return h;
+}
+var viewAnalyticsFd22 = viewAnalytics;
+viewAnalytics = function () {
+  if (!fd22On()) return viewAnalyticsFd22.apply(this, arguments);
+  if (!FD22_TABS.some(function (t) { return t[0] === FD22.tab; })) FD22.tab = 'growth';
+  var tab = FD22.tab, h = '';
+  var tabs = '<div class="fd22-antabs"><div class="fd22-pills" role="tablist" aria-label="Analytics views">' + FD22_TABS.map(function (t) {
+    return '<button type="button" class="fd22-pill" role="tab" data-fd22t="' + t[0] + '" aria-pressed="' + (tab === t[0]) + '" aria-selected="' + (tab === t[0]) + '">' + fd22Ic(t[2], 15) + t[1] + '</button>'; }).join('') + '</div></div>';
+  if (tab === 'growth') h += '<div class="fd22-row2"><div class="fd22-pills" aria-label="Range">' + [[1, 'This month'], [3, '3 months'], [6, '6 months'], [12, '12 months']].map(function (x) {
+    return '<button type="button" class="fd22-pill lg" data-fd22m="' + x[0] + '" aria-pressed="' + (FD22.months === x[0]) + '">' + x[1] + '</button>'; }).join('') + '</div></div>';
+  h += tabs;
+  h += (tab === 'pnl' ? fd22AnPnl() : tab === 'roi' ? fd22AnRoi() : tab === 'colours' ? fd22AnColours() : tab === 'reorder' ? fd22AnReorder() : tab === 'unknown' ? fd22AnUnknown() : fd22AnGrowth());
+  var X = fd22Months(), at = (X && X.at) || (FD22.dash[FD22.months] && FD22.dash[FD22.months].generatedAt) || '';
+  h += '<p class="fd22-foot">' + (at ? 'Figures as of ' + esc(at) + ' · ' : '') + 'the whole business · Profitability’s formulas' + (FD22.xMissing ? ' · new-customer and cost-unknown figures arrive with the server update' : '') + '</p>';
+  return h;
+};
+document.addEventListener('click', function (e) {
+  if (!e.target.closest) return;
+  var t = e.target.closest('[data-fd22t]');
+  if (t) { FD22.tab = t.getAttribute('data-fd22t'); fd22Save(); repaint(); return; }
+  var m = e.target.closest('[data-fd22m]');
+  if (m) { FD22.months = Number(m.getAttribute('data-fd22m')) || 1; fd22Save(); repaint(); return; }
+  var r = e.target.closest('tr[data-fd22row]');
+  if (r) { go(r.getAttribute('data-fd22row')); window.scrollTo(0, 0); return; }
+  var iv = e.target.closest('tr[data-fd22inv]');
+  if (iv && typeof openInvoicePage === 'function' && navOn('sales')) openInvoicePage(iv.getAttribute('data-fd22inv'));
+});
+var fd22AfterWrite = pagesAfterWrite;
+pagesAfterWrite = function () { FD22.dash = {}; FD22.x = {}; return fd22AfterWrite.apply(this, arguments); };
+
+/* ====================================================== System check ====================================================== */
+var FD22_CHK = {
+  S1: ['The units in the stock lots add up to each product’s stock. If they differ, cost of goods and stock value are worked out on the wrong units.',
+    ['Open the product named here and look at its stock history.', 'A count or an adjustment made outside a lot is the usual cause: save a stock count for the product.', 'Run the check again.']],
+  S2: ['For every lot: what came in − what was taken out = what is left. A lot that does not add up gives the wrong FIFO cost.',
+    ['Open Shipments and find the lot named here.', 'Compare its received units with the sales and returns drawn from it.', 'Report it if the numbers cannot be explained: lots are never edited by hand.']],
+  S3: ['No product shows less than zero in stock. Selling below zero means a sale had no unit (and no cost) behind it.',
+    ['Receive the goods that were sold, or save a stock count.', 'Pre-orders are the right way to sell what is not on the shelf.']],
+  S4: ['Everything in stock has a cost, so stock value and profit are right.', ['Open Product cost.', 'Fill in the cost for the products named here (by category, brand and type).', 'Run the check again.']],
+  S5: ['Products in stock have a weight, because holding cost (rent) is shared out by kg.', ['Open the product and type its weight in grams (or its box size).', 'Run the check again.']],
+  M1: ['Every invoice: products − discount + delivery = total.', ['Open the invoice named here.', 'If a line or the discount is wrong, return or correct it the usual way - invoices are never edited in place.']],
+  M2: ['Nobody paid more than their invoice. Extra money belongs on the customer’s account as an advance.', ['Open the invoice.', 'Move the extra to the customer’s advance or refund it.']],
+  M3: ['Every payment is in a money account (cash, bank, bKash…), so each account’s balance is right.', ['Open Money.', 'Give each payment in no account its account.']],
+  M4: ['This month’s sold lines all carry a cost. A line with no cost makes the month’s profit look bigger than it is.', ['Open Product cost.', 'Fill in the cost of the products sold without one.', 'Analytics → Cost unknown lists each sale.']],
+  C1: ['Shareholders together hold 100% or less.', ['Open Capital.', 'Correct the share of the holders named.']],
+  C2: ['No shipment is funded more than 100% by investors.', ['Open the shipment.', 'Correct the investors’ shares on it.']],
+  P1: ['The dashboard’s net profit is exactly the Profitability screen’s: one net profit everywhere.', ['Run the check again after a minute (figures are kept for a short while).', 'If it still differs, report it: the two must always agree.']]
+};
+var viewSysCheckFd22 = viewSysCheck;
+viewSysCheck = function () {
+  if (!fd22On()) return viewSysCheckFd22.apply(this, arguments);
+  var d = FDX.chk;
+  if (!d) { fdxLoad('erpSystemCheck', 'chk'); return '<div class="fd22-kpis">' + [1, 2, 3, 4].map(function () { return '<div class="fdh-sk" style="height:188px;border-radius:20px;background:var(--fd-surface-2)"></div>'; }).join('') + '</div><div class="loading">Checking the books…</div>'; }
+  if (d.error) return '<div class="fd22-note">' + fd22Ic('warn', 16) + '<span>' + esc(d.error) + '</span></div>';
+  var c = d.counts, total = d.checks.length, F = FD22.chkF;
+  var h = '<div class="fd22-kpis">' +
+    fd22Kpi({ key: 'sy1', title: Math.round(c.pass / Math.max(1, total) * 100) + '% healthy · ' + c.warn + ' to look at', icon: 'shield', hero: true, txt: true, v: c.fail ? c.fail + ' failing' : c.warn ? 'No failures' : 'All ' + total + ' pass', cf: c.fail ? 'fail' : 'all',
+      calc: { title: 'System check', sub: 'as of ' + d.at, rows: [['Checks', total, 'n'], ['Passed', c.pass, 'n'], ['To look at', c.warn, 'n'], ['Failed', c.fail, 'n']] } }) +
+    fd22Kpi({ key: 'sy2', title: 'Last run · ' + String(d.at).split(',')[0], icon: 'clock', txt: true, v: esc(String(d.at).split(', ')[1] || d.at), note: 'every time this screen opens' }) +
+    fd22Kpi({ key: 'sy3', title: 'Warnings', icon: 'warn', tone: c.warn ? 'warn' : 'good', v: fmt(c.warn), cf: 'warn' }) +
+    fd22Kpi({ key: 'sy4', title: 'Passing', icon: 'checkc', tone: 'good', v: fmt(c.pass), cf: 'pass' }) + '</div>';
+  // health strip: live signals (with the server update)
+  var X = fd22Months();
+  if (!X && !FD22.xMissing) fd22LoadX(FD22.months);
+  if (X && X.health) {
+    var H = X.health, it = [];
+    if (H.backup) it.push(['archive', 'Last backup', H.backup.at || 'none yet', H.backup.nightly ? 'nightly copy on · ' + (H.backup.ageHours === null ? '' : H.backup.ageHours + ' h ago') : 'no nightly copy in 36 h', H.backup.nightly && H.backup.ageHours !== null && H.backup.ageHours <= 36 ? 'good' : 'warn', 'fd22bk']);
+    if (H.unplaced) it.push(['wallet', 'Payments in no account', fmt(H.unplaced.n), H.unplaced.accounts ? fdTk(H.unplaced.amount) + ' to place' : 'no money accounts yet', H.unplaced.n ? 'warn' : 'good', 'cash']);
+    it.push(['calendar', 'Month close', H.monthClose.openLabel ? H.monthClose.openLabel + ' open' : 'no month closed yet', H.monthClose.lockedLabel ? 'closed up to ' + H.monthClose.lockedLabel : 'close months under Capital', H.monthClose.lockedLabel ? 'good' : 'warn', 'capital']);
+    it.push(['box', 'Stock without cost', fmt(H.stockNoCost), 'product(s) in stock', H.stockNoCost ? 'warn' : 'good', 'costs']);
+    it.push(['warn', 'Sales with unknown cost', fmt(H.uncostedThisMonth), 'this month · profit overstated until fixed', H.uncostedThisMonth ? 'warn' : 'good', 'an:unknown']);
+    if (H.lastActivity) it.push(['pulse', 'Last change', H.lastActivity.at, 'by ' + H.lastActivity.who, '', '']);
+    h += fd22Card({ title: 'Health', icon: 'bolt', sub: 'Live signals the checks depend on', body: '<div class="fd22-health">' + it.map(function (x) {
+      var go = x[5] === 'fd22bk' ? (ME && ME.role === 'owner' && navOn('settings') ? 'data-fd22bkgo="1"' : '') : x[5] === 'an:unknown' ? (navOn('analytics') ? 'data-fd22antab="unknown"' : '') : x[5] && navOn(x[5]) ? 'data-fd22go="' + x[5] + '"' : '';
+      return '<' + (go ? 'button type="button" ' + go : 'div') + ' class="fd22-hi">' + fd22Badge(x[0], x[4] === 'warn' ? 'warn' : x[4] === 'good' ? 'good' : '', 'xs') + '<span class="tx"><small>' + esc(x[1]) + '</small><b>' + esc(x[2]) + '</b><em>' + esc(x[3]) + '</em></span></' + (go ? 'button' : 'div') + '>'; }).join('') + '</div>' });
+  }
+  h += '<div class="fd22-filter"><label class="fd22-search">' + fd22Ic('search', 18) + '<input type="search" id="fd22_chq" placeholder="Search checks, codes, records…" aria-label="Search checks" value="' + esc(FD22.chkQ) + '"></label>' +
+    '<div class="fd22-pills" aria-label="Filter by status">' + [['all', 'All ' + total], ['fail', 'Fail (' + c.fail + ')'], ['warn', 'Warn (' + c.warn + ')'], ['pass', 'Pass (' + c.pass + ')']].map(function (p) {
+      return '<button type="button" class="fd22-pill" data-fd22cf="' + p[0] + '" aria-pressed="' + (F === p[0]) + '">' + p[1] + '</button>'; }).join('') + '</div></div>';
+  var order = { fail: 0, warn: 1, pass: 2 };
+  h += '<div class="fd22-chk" id="fd22Chk">' + d.checks.slice().sort(function (a, b) { return (order[a.status] - order[b.status]) || String(a.id).localeCompare(String(b.id)); }).map(function (k) {
+    var info = FD22_CHK[k.id] || ['', []], tone = k.status === 'fail' ? 'bad' : k.status === 'warn' ? 'warn' : 'good';
+    var hay = [k.id, k.area, k.title, k.detail, info[0]].join(' ').toLowerCase();
+    var foc = FD22.chkFocus === k.id;
+    return '<section class="fd22-card' + (foc ? ' focus' : '') + '" data-fd22st="' + k.status + '" data-hay="' + esc(hay) + '" data-code="' + esc(k.id) + '">' +
+      '<div class="fd22-ch">' + fd22Badge(k.status === 'fail' ? 'xc' : k.status === 'warn' ? 'warn' : 'checkc', tone) + '<div class="fd22-cht"><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><span class="fd22-mono" style="color:var(--fd-text-3)">' + esc(k.id) + ' · ' + esc(String(k.area).toLowerCase()) + '</span>' +
+      '<span class="fd22-st ' + k.status + '"><i></i>' + (k.status === 'pass' ? 'Pass' : k.status === 'warn' ? 'Warn' : 'Fail') + '</span></div><h2 class="fd22-ct">' + esc(k.title) + '</h2></div></div>' +
+      (info[0] ? '<p class="mean">' + esc(info[0]) + '</p>' : '') + '<p class="det' + (k.status === 'fail' ? ' bad' : '') + '">' + esc(k.detail || (k.status === 'pass' ? 'Nothing found.' : '')) + '</p>' +
+      '<div class="meta"><span class="fd22-chip">' + fd22Ic('clock', 13) + 'Checked ' + esc(d.at) + '</span><span class="fd22-chip">Area: ' + esc(k.area) + '</span><span class="fd22-chip">' + fmt(k.count || 0) + ' affected</span></div>' +
+      (info[1].length ? '<details class="fd22-how"' + (k.status === 'fail' || foc ? ' open' : '') + '><summary>' + fd22Ic('help', 16) + 'How to fix</summary><ol>' + info[1].map(function (s) { return '<li>' + esc(s) + '</li>'; }).join('') + '</ol></details>' : '') +
+      '<div class="acts">' + (k.go && k.status !== 'pass' && navOn(k.go) ? fd22Btn('Open ' + esc(FD22_SCREEN[k.go] || (typeof fdhName === 'function' ? fdhName(k.go) : k.go)), 'data-fdhgo="' + esc(k.go) + '"', 'arrowR') : '') +
+      fd22Btn('Check again', 'data-fxrecheck="1"', 'refresh') + '</div></section>';
+  }).join('') + '</div><div class="fd22-empty" id="fd22ChkNone" hidden>No check matches with this status. <button type="button" class="fd22-btn" data-fd22cf="all" data-fd22clr="1" style="margin-left:8px">Show all</button></div>';
+  return h;
+};
+function fd22ChkFilter() {
+  var q = FD22.chkQ.trim().toLowerCase(), F = FD22.chkF, n = 0;
+  [].forEach.call(document.querySelectorAll('#fd22Chk > [data-code]'), function (s) {
+    var ok = (F === 'all' || s.getAttribute('data-fd22st') === F) && (!q || s.getAttribute('data-hay').indexOf(q) >= 0);
+    s.style.display = ok ? '' : 'none'; if (ok) n++;
+  });
+  var none = el('fd22ChkNone'); if (none) none.hidden = !!n;
+  [].forEach.call(document.querySelectorAll('.fd22-filter [data-fd22cf]'), function (b) { b.setAttribute('aria-pressed', String(b.getAttribute('data-fd22cf') === F)); });
+}
+document.addEventListener('click', function (e) {
+  if (!e.target.closest) return;
+  var f = e.target.closest('[data-fd22cf]');
+  if (f && VIEW === 'syscheck') { FD22.chkF = f.getAttribute('data-fd22cf'); if (f.getAttribute('data-fd22clr')) { FD22.chkQ = ''; var qi = el('fd22_chq'); if (qi) qi.value = ''; } fd22ChkFilter(); var g = el('fd22Chk'); if (g && !f.closest('.fd22-filter')) g.scrollIntoView({ block: 'start', behavior: 'smooth' }); return; }
+  var at = e.target.closest('[data-fd22antab]');
+  if (at) { FD22.tab = at.getAttribute('data-fd22antab'); fd22Save(); go('analytics'); window.scrollTo(0, 0); return; }
+  if (e.target.closest('[data-fd22bkgo]')) { SET_TAB = 'security'; SEC = null; SEC_ERR = null; go('settings'); try { loadSecurity(); } catch (e2) {} setTimeout(function () { var b = el('fd22bk'); if (b) b.scrollIntoView({ block: 'start' }); }, 120); return; }
+  if (e.target.closest('[data-fd22audit]')) { SET_TAB = 'security'; SEC = null; SEC_ERR = null; go('settings'); try { loadSecurity(); } catch (e3) {} setTimeout(function () { var b = el('fd22au'); if (b) b.scrollIntoView({ block: 'start' }); }, 120); }
+});
+document.addEventListener('input', function (e) { if (e.target && e.target.id === 'fd22_chq') { FD22.chkQ = e.target.value; fd22ChkFilter(); } });
+
+/* ====================================================== Settings ====================================================== */
+var FD22_SET = {
+  business: ['store', 'Logo, the menu bar, the defaults the forms read, documents'], lists: ['list', 'What the drop-downs on the forms offer'], users: ['users', 'People, their roles and what each may do'],
+  alerts: ['bell', 'What raises a red dot and a message'], connections: ['link', 'Website, courier, Google, AI and WhatsApp'], security: ['shield', 'Access links, the activity log and the backups'], people: ['users', 'Requests, staff and their links']
+};
+var FD22_CARDIC = [[/logo|brand|photo|background/i, 'image'], [/menu|screen/i, 'list'], [/backup|copy|sheet/i, 'archive'], [/activity|log|audit/i, 'clip'], [/access|link|device|session|sign/i, 'link'],
+  [/courier|steadfast|deliver|parcel/i, 'truck'], [/\bai\b|assistant|reader|key/i, 'bolt'], [/user|staff|people|owner|person|request/i, 'users'], [/alert|remind|notif/i, 'bell'],
+  [/google|drive/i, 'cloud'], [/website|woo|shop/i, 'globe2'], [/whatsapp|evolution|message/i, 'chat'], [/list|categor|brand|option|word/i, 'list'], [/game|stick|brawl/i, 'game'],
+  [/recover|security|two|factor|2-step|database|provider/i, 'shield'], [/delete|remove/i, 'trash'], [/currenc|rate/i, 'swap'], [/invoice|document|language|letter/i, 'receipt'], [/default|setting/i, 'gear']];
+function fd22CardIcon(t) { for (var i = 0; i < FD22_CARDIC.length; i++) if (FD22_CARDIC[i][0].test(t)) return FD22_CARDIC[i][1]; return 'gear'; }
+/* his card head on our cards: icon badge + title (+ the line under it), then a rule */
+function fd22CardHeads(root) {
+  [].forEach.call(root.querySelectorAll('.card'), function (c) {
+    if (c.getAttribute('data-fd22h') || c.closest('.fd22-card, .fdd-c, .dlg')) return;
+    c.setAttribute('data-fd22h', '1');
+    var f = c.firstElementChild; if (!f) return;
+    if (f.tagName === 'H2') {
+      var hd = document.createElement('div'); hd.className = 'fd22-xh';
+      var tx = document.createElement('div'); tx.className = 'fd22-cht';
+      hd.innerHTML = fd22Badge(fd22CardIcon(f.textContent), '', 'sm');
+      c.insertBefore(hd, f); tx.appendChild(f);
+      var nx = hd.nextElementSibling;
+      if (nx && nx.classList.contains('sub') && nx.textContent.length < 400) tx.appendChild(nx);
+      hd.appendChild(tx);
+    } else if (f.classList.contains('chead') && f.querySelector('h2')) {
+      f.classList.add('fd22-xh2');
+      var b = document.createElement('span'); b.innerHTML = fd22Badge(fd22CardIcon(f.querySelector('h2').textContent), '', 'sm'); f.insertBefore(b.firstChild, f.firstChild);
+    }
+  });
+}
+function fd22SettingsLayout(v) {
+  var tabs = null;
+  for (var i = 0; i < v.children.length; i++) if (v.children[i].classList.contains('tabs') && v.children[i].querySelector('button[data-settab]')) { tabs = v.children[i]; break; }
+  if (!tabs || v.querySelector('.fd22-stl')) return;
+  var lay = document.createElement('div'); lay.className = 'fd22-stl';
+  var nav = document.createElement('nav'); nav.className = 'fd22-stnav'; nav.setAttribute('aria-label', 'Settings sections');
+  var main = document.createElement('div'); main.className = 'fd22-stmain';
+  var btns = [].slice.call(tabs.querySelectorAll('button[data-settab]')), cur = null;
+  var sel = '<select class="i fd22-stsel" id="fd22_stsel" aria-label="Section">';
+  btns.forEach(function (b) {
+    var k = b.getAttribute('data-settab'), meta = FD22_SET[k] || ['gear', ''], lbl = b.textContent.trim(), on = b.getAttribute('aria-selected') === 'true';
+    if (on) cur = { k: k, label: lbl, meta: meta };
+    b.classList.add('fd22-sti'); b.innerHTML = fd22Ic(meta[0], 18) + '<span>' + esc(lbl) + '</span>';
+    if (on) b.setAttribute('aria-current', 'page');
+    nav.appendChild(b);
+    sel += '<option value="' + esc(k) + '"' + (on ? ' selected' : '') + '>' + esc(lbl) + '</option>';
+  });
+  sel += '</select>';
+  if (ME && ME.role === 'owner' && btns.some(function (b) { return b.getAttribute('data-settab') === 'security'; })) {
+    var sep = document.createElement('div'); sep.className = 'fd22-stsep'; nav.appendChild(sep);
+    var bk = document.createElement('button'); bk.type = 'button'; bk.className = 'fd22-sti'; bk.setAttribute('data-fd22bkgo', '1');
+    bk.innerHTML = fd22Ic('archive', 18) + '<span>Backup &amp; restore</span>' + '<svg class="go" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + FD22I.arrowR + '</svg>';
+    nav.appendChild(bk);
+  }
+  var head = document.createElement('div');
+  head.innerHTML = btns.length > 1 ? sel : '';
+  if (cur) head.innerHTML += '<div class="fd22-sth">' + fd22Badge(cur.meta[0], '', 'sm') + '<div><div class="t">' + esc(cur.label) + '</div><div class="s">' + esc(cur.meta[1]) + '</div></div></div>';
+  head.style.cssText = 'display:flex;flex-direction:column;gap:12px';
+  main.appendChild(head);
+  var rest = [], n = tabs.nextSibling;
+  while (n) { rest.push(n); n = n.nextSibling; }
+  rest.forEach(function (x) { main.appendChild(x); });
+  tabs.parentNode.replaceChild(lay, tabs);
+  lay.appendChild(nav); lay.appendChild(main);
+  var s = el('fd22_stsel');
+  if (s) s.addEventListener('change', function () { var b = nav.querySelector('button[data-settab="' + s.value + '"]'); if (b) b.click(); });
+  var hd = el('fd22Head'); if (hd && cur) { var t = hd.querySelector('.fdd-title'); if (t && t.firstChild && t.firstChild.nodeType === 3) t.firstChild.nodeValue = 'Settings · ' + cur.label + ' '; }
+}
+
+/* ---------- Audit: the activity log in his shape (Settings > Security) ---------- */
+function fd22AuditHtml() {
+  var head = { title: 'Audit log', icon: 'clip', sub: 'Who opened the app and who changed what, newest first. Kept for 90 days. Looking at a screen is not recorded - only sign-ins and changes.' };
+  if (SEC_ERR) return '<div id="fd22au">' + fd22Card({ title: head.title, icon: head.icon, sub: head.sub, body: '<div class="fd22-note">' + fd22Ic('warn', 16) + '<span>' + esc(SEC_ERR) + '</span></div>' }) + '</div>';
+  if (!SEC) return '<div id="fd22au">' + fd22Card({ title: head.title, icon: head.icon, sub: head.sub, body: '<div class="loading">Reading the log…</div>' }) + '</div>';
+  var A = SEC.activity || [], mons = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'], now = new Date();
+  var dayOf = function (w) { var m = /^(\d{1,2}) ([A-Z][a-z]{2})/.exec(String(w || '')); if (!m) return null; var d = new Date(now.getFullYear(), mons.indexOf(m[2]), Number(m[1])); if (d > now) d.setFullYear(now.getFullYear() - 1); return d; };
+  var today = new Date(now.getFullYear(), now.getMonth(), now.getDate()), d7 = new Date(today.getTime() - 6 * 864e5), d30 = new Date(today.getTime() - 29 * 864e5);
+  var isSet = function (a) { return /setting|key|link|access|role|abilit|rules|connection|switched|menu|app |device|password|owner/i.test(a.what) && !a.signIn; };
+  var isUndo = function (a) { return /struck|undo|void|reopen|went back|cancel|withdrew|removed|deleted/i.test(a.what); };
+  var cnt = function (fn) { return A.filter(fn).length; };
+  var nToday = cnt(function (a) { var d = dayOf(a.when); return d && d >= today; }), n7 = cnt(function (a) { var d = dayOf(a.when); return d && d >= d7; });
+  var nSet = cnt(function (a) { var d = dayOf(a.when); return d && d >= d30 && isSet(a); }), nUndo = cnt(function (a) { var d = dayOf(a.when); return d && d >= d30 && isUndo(a); });
+  var h = '<div id="fd22au"><div class="fd22-kpis">' +
+    fd22Kpi({ key: 'au1', title: 'Events today', icon: 'clock', v: fmt(nToday) }) + fd22Kpi({ key: 'au2', title: 'Last 7 days', icon: 'calendar', v: fmt(n7) }) +
+    fd22Kpi({ key: 'au3', title: 'Settings & access · 30 d', icon: 'gear', v: fmt(nSet) }) + fd22Kpi({ key: 'au4', title: 'Struck out or undone · 30 d', icon: 'refresh', v: fmt(nUndo) }) + '</div>';
+  var rows = A.filter(function (a) { return SEC_F === 'all' || (SEC_F === 'in') === !!a.signIn; });
+  var tools = [['all', 'Everything'], ['in', 'Sign-ins'], ['ch', 'Changes']].map(function (f) { return '<button class="fd22-pill' + (SEC_F === f[0] ? ' on' : '') + '" aria-pressed="' + (SEC_F === f[0]) + '" type="button" data-secf="' + f[0] + '">' + f[1] + '</button>'; }).join('') +
+    '<button class="fd22-btn" type="button" id="sec_reload">' + fd22Ic('refresh', 16) + '<span>Read again</span></button>';
+  var people = SEC.people && SEC.people.length ? '<div class="fd22-people">' + SEC.people.map(function (p) { return '<span class="fd22-chip">' + fd22Ic('user', 13) + esc(p.name) + ' · ' + esc(p.role) + ' · last ' + esc(p.last) + '</span>'; }).join('') + '</div>' : '';
+  var body = people + (rows.length ? '<div class="scroll"><table class="fd22-t"><thead><tr><th>When</th><th>Who</th><th>Action</th><th>What</th><th>From</th></tr></thead><tbody>' + rows.map(function (a) {
+    var kind = a.signIn ? ['info', 'Sign-in'] : isUndo(a) ? ['warn', 'Undone'] : isSet(a) ? ['acc', 'Setting'] : ['ok', 'Change'];
+    var w = String(a.when || ''), parts = w.split(', ');
+    return '<tr><td><span class="fd22-p">' + esc(parts[1] || w) + '</span><span class="fd22-s">' + esc(parts[0] || '') + '</span></td><td><span class="fd22-p">' + esc(a.who) + '</span><span class="fd22-s">' + esc(a.role) + '</span></td>' +
+      '<td><span class="fd22-st ' + kind[0] + '"><i></i>' + kind[1] + '</span></td><td style="white-space:normal;min-width:220px"><span class="fd22-p" style="font-weight:500">' + esc(a.what) + '</span>' + (a.detail ? '<span class="fd22-s">' + esc(a.detail) + '</span>' : '') + '</td>' +
+      '<td><span class="fd22-p" style="font-weight:500">' + esc(a.device || '—') + '</span>' + (a.ip ? '<span class="fd22-s fd22-mono">' + esc(a.ip) + '</span>' : '') + '</td></tr>'; }).join('') + '</tbody></table></div>' : '<div class="fd22-empty">Nothing recorded yet.</div>');
+  return h + fd22TCard({ title: head.title, icon: head.icon, sub: head.sub, tools: tools, body: body }) + '</div>';
+}
+var securityHtmlFd22 = securityHtml;
+securityHtml = function () {
+  if (!fd22On() || !ME || ME.role !== 'owner') return securityHtmlFd22.apply(this, arguments);
+  return (typeof providerKeyHtml === 'function' ? providerKeyHtml() : '') + accessCardHtml() + fd22AuditHtml();
+};
+
+/* ---------- Backup: his backup screen inside Settings > Security ---------- */
+var backupCardHtmlFd22 = backupCardHtml;
+backupCardHtml = function () {
+  if (!fd22On()) return backupCardHtmlFd22.apply(this, arguments);
+  if (!BKUP) { backupCardHtmlFd22.apply(this, arguments); return '<div id="fd22bk">' + fd22Card({ title: 'Backups', icon: 'archive', body: '<div class="loading">Checking the backups…</div>' }) + '</div>'; }
+  var b = BKUP, sub = 'A full copy of the business every night at 3 AM and whenever you press Back up now; the newest ' + fmt(b.keep || 14) + ' are kept' + (b.folderUrl ? ', and every copy also goes to your Google Drive' : '') + '.';
+  var tools = '<button class="fd22-btn pri" type="button" id="bk_now"' + (BKUP_BUSY ? ' disabled' : '') + '>' + fd22Ic('archive', 16) + '<span>' + (BKUP_BUSY ? 'Copying…' : 'Back up now') + '</span></button>' +
+    (b.folderUrl ? '<a class="fd22-btn" href="' + esc(b.folderUrl) + '" target="_blank" rel="noopener">' + fd22Ic('cloud', 16) + '<span>Open the folder</span></a>' : '') +
+    (navOn('syscheck') ? '<button type="button" class="fd22-btn" data-fd22go="syscheck">' + fd22Ic('shield', 16) + '<span>System check</span></button>' : '');
+  if (b.error) return '<div id="fd22bk">' + fd22Card({ title: 'Backups', icon: 'archive', sub: sub, tools: tools, body: '<div class="fd22-note">' + fd22Ic('warn', 16) + '<span>' + esc(b.error) + '</span></div>' }) + '</div>';
+  var stale = b.lastAgeHours === null || b.lastAgeHours > 36;
+  var h = '<div id="fd22bk"><div class="fd22-kpis">' +
+    fd22Kpi({ key: 'bk1', title: b.lastAt ? 'Last copy · ' + b.lastAt.split(',')[0] : 'Last copy', icon: 'archive', txt: true, v: b.lastAt ? esc(b.lastAt.split(', ')[1] || b.lastAt) : 'None yet', tone: stale ? 'warn' : '', note: b.lastAgeHours === null ? '' : fmt(b.lastAgeHours) + ' hours ago' }) +
+    fd22Kpi({ key: 'bk2', title: 'Copies kept', icon: 'layers', v: fmt(b.count), note: 'the newest ' + fmt(b.keep || 14) }) +
+    fd22Kpi({ key: 'bk3', title: 'Nightly timer', icon: b.timer ? 'checkc' : 'warn', tone: b.timer ? 'good' : 'bad', txt: true, v: b.timer ? 'On' : 'Missing', note: b.timer ? 'a copy every night at 3 AM' : 'no nightly copy in 36 hours' }) +
+    fd22Kpi({ key: 'bk4', title: 'Google Drive copy', icon: 'cloud', tone: b.folderUrl ? 'good' : 'warn', txt: true, v: b.folderUrl ? 'On' : 'Not connected', note: b.folderUrl ? 'every copy goes to your Drive' : 'Connections → Google Drive' }) + '</div>';
+  var strip = !b.timer ? '<div class="fd22-bkstrip">' + fd22Ic('warn', 18) + '<span>The nightly copy did not run in the last 36 hours</span></div>'
+    : stale ? '<div class="fd22-bkstrip warn">' + fd22Ic('warn', 18) + '<span>The last copy is more than 36 hours old</span></div>'
+    : '<div class="fd22-bkstrip ok">' + fd22Ic('checkc', 18) + '<span>Backups are running every night</span></div>';
+  var extra = '';
+  if (b.lastFailed && b.lastFailed.length) extra += '<div class="fd22-note">' + fd22Ic('warn', 16) + '<span>Could not copy: ' + b.lastFailed.map(esc).join('<br>') + '</span></div>';
+  var lk = b.links;
+  if (lk && lk.links) extra += '<p class="fd22-cs" style="margin:0 0 12px">Partner links: ' + fmt(lk.links) + ' business(es) have their own link. They are brought up to today’s code every night' + (lk.updated.length ? ' - updated ' + esc(lk.when) + ': ' + lk.updated.map(esc).join(', ') : ' - all up to date as of ' + esc(lk.when)) + '.</p>';
+  if (lk && lk.failed && lk.failed.length) extra += '<div class="fd22-note">' + fd22Ic('warn', 16) + '<span><b>A partner link could not be updated</b> and is running older code:<br>' + lk.failed.map(esc).join('<br>') + '</span></div>';
+  var files = b.files && b.files.length ? '<div class="scroll"><table class="fd22-t"><thead><tr><th>Copy</th><th>Made</th><th></th></tr></thead><tbody>' + b.files.map(function (f) {
+    return '<tr><td><span class="fd22-p fd22-mono">' + esc(f.name) + '</span></td><td>' + esc(f.when) + '</td><td class="num" style="white-space:nowrap"><a class="fd22-btn" href="' + esc(f.url) + '" target="_blank" rel="noopener">' + fd22Ic('download', 16) + '<span>Open</span></a> ' +
+      '<button class="btn small" type="button" data-bkback="' + esc(f.name) + '">Go back to this copy</button></td></tr>'; }).join('') + '</tbody></table></div>' : '<div class="fd22-empty">No copy kept yet.</div>';
+  h += fd22TCard({ title: 'Backups', icon: 'archive', sub: sub, tools: tools, body: strip + extra + files });
+  h += fd22Card({ title: 'Warnings, explained', icon: 'infoc', body: '<ul class="fd22-list">' +
+    '<li><b>Going back is not undo. </b>“Go back to this copy” puts the whole business back as it was in that copy. A single mistake is corrected the usual way (struck out with a reason).</li>' +
+    '<li><b>Today is copied first. </b>Going back can itself be undone from the copy made just before it.</li>' +
+    '<li><b>Users and sign-in are never changed by it. </b>Nobody loses access because of a restore.</li>' +
+    '<li><b>A copy holds everything. </b>Costs, capital and customer phones are inside; only the owner sees this card.</li></ul>' });
+  return h + '</div>';
+};
+
+/* ---------- Maintenance (tools): his card rows ---------- */
+var FD22_TOOLIC = { previewPush: 'globe2', pushStock: 'globe2', pullOrders: 'download', previewReorder: 'cart', applyReorder: 'cart', mergeCustomers: 'users' };
+var viewToolsFd22 = viewTools;
+viewTools = function () {
+  var h = viewToolsFd22.apply(this, arguments);
+  if (!fd22On()) return h;
+  var rows = TOOLS.map(function (t) {
+    var busy = BUSY === 'tool' + t.id;
+    return '<div class="fd22-r">' + fd22Badge(FD22_TOOLIC[t.id] || 'wrench', t.danger ? 'warn' : '', 'sm') + '<div class="m"><b>' + esc(t.name) + (t.danger ? ' <span class="fd22-st warn" style="margin-left:6px;vertical-align:1px"><i></i>Changes data</span>' : ' <span class="fd22-st ok" style="margin-left:6px;vertical-align:1px"><i></i>Safe</span>') + '</b><span>' + t.desc + '</span></div>' +
+      '<button class="btn small' + (t.danger ? ' danger' : ' primary') + '" type="button" data-tool="' + esc(t.id) + '"' + (busy ? ' disabled' : '') + '>' + (busy ? 'Running…' : 'Run') + '</button></div>';
+  }).join('');
+  var card = fd22Card({ title: 'Maintenance', icon: 'wrench', sub: 'Occasional jobs. Each one reports what it did.', body: '<div class="fd22-rows">' + rows + '</div>' });
+  var re = /<section><div class="card"><h2>Maintenance<\/h2>[\s\S]*?<\/tbody><\/table><\/div><\/div><\/section>/;
+  return re.test(h) ? h.replace(re, card) : card + h;
+};
+
+/* ====================================================== Help ====================================================== */
+var FD22_NEVER = {
+  en: ['Nothing is deleted: a mistake is struck out with a reason, and both stay visible.', 'A closed month never changes: nothing can be dated into it until the owner reopens it.', 'There is one net profit: the dashboard, Analytics and Profitability show the same figure.',
+    'A sale keeps the cost it was made with; a later price or rate never rewrites it.', 'Every figure can be traced: the "i" beside it shows how it is worked out.'],
+  bn: ['কিছু মোছা হয় না: ভুল হলে কারণসহ কেটে দেওয়া হয়, দুটোই দেখা যায়।', 'বন্ধ মাস কখনো বদলায় না: মালিক আবার না খোলা পর্যন্ত সেই মাসে কিছু লেখা যায় না।', 'নেট লাভ একটাই: ড্যাশবোর্ড, অ্যানালিটিক্স আর প্রফিটেবিলিটি একই সংখ্যা দেখায়।',
+    'বিক্রি যে খরচে হয়েছে সেটাই থাকে; পরের দাম বা রেট পুরনো বিক্রি বদলায় না।', 'প্রতিটা সংখ্যার হিসাব দেখা যায়: পাশের "i" চাপলে দেখায় কীভাবে বের হলো।']
+};
+var viewGuideFd22 = viewGuide;
+viewGuide = function () {
+  if (!fd22On()) return viewGuideFd22.apply(this, arguments);
+  if (!window.ERP_HELP) return viewGuideFd22.apply(this, arguments);
+  var L = fd22Lang(), bn = L === 'bn', q = String(HG.q || '').toLowerCase();
+  var all = window.ERP_HELP, words = all.filter(function (g) { return g.id === 'words'; })[0];
+  var list = all.filter(function (g) { if (g.id === 'words') return false; if (!q) return true; return [g.bn.t, g.en.t].concat(g.bn.s, g.en.s).join(' ').toLowerCase().indexOf(q) >= 0; });
+  var h = '<div class="fd22-row2" data-noi18n="1"><label class="fd22-search" style="width:560px">' + fd22Ic('search', 18) + '<input class="i" id="hg_q" type="search" placeholder="' + (bn ? 'গাইড বা শব্দ খুঁজুন (যেমন: প্রি-অর্ডার, cash-up)' : 'Search guides and terms (e.g. pre-order, cash-up)') + '" aria-label="Search help" value="' + esc(HG.q) + '"></label></div>';
+  var grid = list.length ? '<div class="fd22-hgrid">' + list.map(function (g) {
+    var x = g[L] || g.en;
+    return '<button type="button" class="fd22-gcard" data-fd22g="' + esc(g.id) + '" aria-label="' + esc(x.t) + '">' + fd22Badge(FD22_VIEWIC[g.id] || FD22_VIEWIC[g.view] || 'help', '', 'xs') + '<span class="fd22-gtx"><span class="fd22-gt">' + esc(x.t) + '</span>' +
+      '<span class="fd22-gm">' + esc(FD22_SCREEN[g.view] || '') + (g.view ? ' · ' : '') + x.s.length + (bn ? ' ধাপ' : ' steps') + ' · ~' + Math.max(1, Math.round(x.s.length * 0.7)) + (bn ? ' মিনিট' : ' min') + '</span></span>' + fd22Ic('chevR', 18) + '</button>'; }).join('') + '</div>'
+    : '<div class="fd22-empty">' + (bn ? 'কোনো গাইড মেলেনি: ' : 'No guide matches ') + '“' + esc(HG.q) + '”.</div>';
+  h += '<div data-noi18n="1" lang="' + L + '"' + (bn ? ' class="hg-bn"' : '') + '>';
+  h += fd22Card({ title: bn ? 'কাজের গাইড' : 'Job guides', icon: 'help', sub: bn ? 'প্রতিটা গাইড স্ক্রিনের পাশে খোলে; শেষে “স্ক্রিনটা খুলুন” সেখানে নেয়' : 'Each guide opens beside the screen; “Open” at its end takes you there', body: grid });
+  var terms = [];
+  if (words) { var wx = words[L] || words.en; terms = wx.s.filter(function (s) { return !q || s.toLowerCase().indexOf(q) >= 0; }); }
+  var gloss = terms.length ? '<dl class="fd22-gloss">' + terms.map(function (s) { var i = s.indexOf(':'); return i > 0 ? '<dt>' + esc(s.slice(0, i)) + '</dt><dd>' + esc(s.slice(i + 1).trim()) + '</dd>' : '<dd>' + esc(s) + '</dd>'; }).join('') + '</dl>'
+    : '<div class="fd22-empty">' + (bn ? 'কোনো শব্দ মেলেনি।' : 'No term matches.') + '</div>';
+  h += '<div class="fd22-two">' + fd22Card({ title: bn ? 'শব্দকোষ' : 'Glossary', icon: 'book', body: gloss }) +
+    '<div style="display:flex;flex-direction:column;gap:20px">' + fd22Card({ title: bn ? 'স্ক্রিনের গাইড' : 'Screen guides', icon: 'clip', sub: bn ? 'প্রতিটা স্ক্রিনের নামের পাশের “i”-ও এগুলো খোলে' : 'The “i” next to every screen’s title opens the same guide',
+      body: '<div class="fd22-hgrid" style="grid-template-columns:repeat(auto-fill, minmax(200px, 1fr));gap:6px">' + all.filter(function (g) { return g.view && navOn(g.view); }).map(function (g) {
+        return '<button type="button" class="fd22-gcard" style="min-height:44px;padding:0 12px;background:transparent" data-fd22g="' + esc(g.id) + '">' + fd22Ic(FD22_VIEWIC[g.id] || FD22_VIEWIC[g.view] || 'help', 18) + '<span class="fd22-gtx" style="font-weight:500">' + esc(FD22_SCREEN[g.view] || (g[L] || g.en).t) + '</span>' + fd22Ic('arrowR', 14) + '</button>'; }).join('') + '</div>' }) +
+    fd22Card({ title: bn ? 'যা কখনো হয় না' : 'What never happens', icon: 'shield', body: '<ul class="fd22-list">' + FD22_NEVER[bn ? 'bn' : 'en'].map(function (t) { return '<li>' + esc(t) + '</li>'; }).join('') + '</ul>' }) + '</div></div>';
+  return h + '</div>';
+};
+
+/* ====================================================== the head on these screens + after-paint ====================================================== */
+function fd22Head(v) {
+  if (v === 'analytics') return fd22HeadHtml({ title: 'Analytics', help: 'analytics', sub: esc(FD22_NOTE[FD22.tab] || FD22_NOTE.growth) });
+  if (v === 'syscheck') return fd22HeadHtml({ title: 'System check', help: 'syscheck', sub: 'The books checked against themselves, every time this screen opens. A repair is always a normal document - nothing is edited behind your back.',
+    actions: (ME && ME.role === 'owner' && navOn('settings') ? fd22Btn('Audit', 'data-fd22audit="1"', 'clip') + fd22Btn('Backup', 'data-fd22bkgo="1"', 'archive') : '') + fd22Btn('Run all now', 'data-fxrecheck="1"', 'refresh', true) });
+  if (v === 'guide') { var bn = fd22Lang() === 'bn';
+    return fd22HeadHtml({ title: bn ? 'সাহায্য' : 'Help', info: 'guide', sub: bn ? 'প্রতিটা কাজের ধাপে ধাপে গাইড, শব্দকোষ আর যা কখনো হয় না' : 'Step-by-step guides for every job, a glossary, and what never happens',
+      actions: '<div class="fd22-pills" data-noi18n="1">' + [['en', 'English'], ['bn', 'বাংলা']].map(function (x) { return '<button type="button" class="fd22-pill lg" data-hglang="' + x[0] + '" aria-pressed="' + ((bn ? 'bn' : 'en') === x[0]) + '">' + x[1] + '</button>'; }).join('') + '</div>' }); }
+  if (v === 'settings') return fd22HeadHtml({ title: 'Settings', info: 'settings', sub: 'How the ERP works for this business. Every change is written to the activity log with who made it.',
+    actions: ME && ME.role === 'owner' ? fd22Btn('Backup &amp; restore', 'data-fd22bkgo="1"', 'archive') : '' });
+  if (v === 'tools') return fd22HeadHtml({ title: 'Maintenance', info: 'tools', sub: 'Checks, imports and repairs. Each job says what it does before it runs.',
+    actions: navOn('syscheck') ? fd22Btn('System check', 'data-fd22go="syscheck"', 'shield') : '' });
+  return '';
+}
+function fd22After() {
+  var own = fd22On() && !!FD22_VIEWS[VIEW] && !!ME;
+  document.body.classList.toggle('fd22-own', own);
+  var old = el('fd22Head'); if (old && old.parentNode) old.parentNode.removeChild(old);
+  if (!own) return;
+  if (VIEW === 'guide' && !window.ERP_HELP) return;
+  var v = el('view'); if (!v) return;
+  var fh = el('fdHead'); if (fh && fh.parentNode) fh.parentNode.removeChild(fh);
+  var box = document.createElement('div'); box.innerHTML = fd22Head(VIEW);
+  if (box.firstChild) v.insertBefore(box.firstChild, v.firstChild);
+  if (VIEW === 'settings') { fd22SettingsLayout(v); fd22CardHeads(v); }
+  if (VIEW === 'tools') fd22CardHeads(v);
+  if (VIEW === 'syscheck') { fd22ChkFilter(); if (FD22.chkFocus) { var f = document.querySelector('#fd22Chk [data-code="' + FD22.chkFocus + '"]'); FD22.chkFocus = ''; if (f) setTimeout(function () { f.scrollIntoView({ block: 'start' }); }, 60); } }
+  if (VIEW === 'guide' && HG.focus) { var id = HG.focus; HG.focus = ''; setTimeout(function () { fd22Guide(id); }, 0); }
+  try { if (VIEW === 'analytics' || VIEW === 'syscheck' || VIEW === 'settings') fdtEnhance(); } catch (e) {}
+}
+var repaintFd22 = repaint;
+repaint = function () {
+  var r = repaintFd22.apply(this, arguments);
+  try { if ((VIEW === 'analytics' || VIEW === 'syscheck' || VIEW === 'guide') && typeof shellSync === 'function') shellSync(); } catch (e) {}
+  try { fd22After(); } catch (e) { try { dbgSet('fd-22: ' + (e && e.message ? e.message : e), true); } catch (e2) {} }
+  return r;
+};
+// leaving the look closes the drawer; the guide drawer never outlives a screen change
+var goFd22 = go;
+go = function () { fd22DrawerClose(); return goFd22.apply(this, arguments); };
+</script>
+
 </body>
 </html>
