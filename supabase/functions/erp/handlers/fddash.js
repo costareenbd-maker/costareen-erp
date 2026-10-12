@@ -13,6 +13,7 @@ import { formatDate, num } from '../lib/time.js';
 import { powerOn, roleAtLeast } from '../allow.js';
 import { discLeft } from './money.js';
 import { products, pnlFor, soldCost, owedMap } from './dashboard.js';
+import { lotStock } from './lots.js';
 
 const MON3 = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 const NOT_MONEY = /^(adjusted|returned|undone|advance|written off)$/i;
@@ -139,13 +140,15 @@ export async function erpFdDash(ctx, payload) {
   const gross = rev - cost, grossPrev = revPrev - costPrev;
 
   // stock now
+  // stock value at FIFO: what is left in each lot x that lot's landed cost (107)
+  const LS = await lotStock(ctx);
   let stockValue = 0, stockUnits = 0, uncosted = 0;
   const reorder = [];
   let outOfStock = 0, atReorder = 0;
   for (const p of list) {
     if (group && groupKey(p.cat) !== group) continue;
     if (/discontinued|inactive/i.test(p.status)) continue;
-    if (p.stock > 0) { stockUnits += p.stock; if (p.cost > 0) stockValue += p.stock * p.cost; else uncosted++; }
+    if (p.stock > 0) { stockUnits += p.stock; const lv = LS.bySku[p.sku.toLowerCase()]; if (lv && lv.value > 0) stockValue += lv.value; else uncosted++; }
     if (p.stock <= 0) outOfStock++;
     else if (p.stock <= p.reorder) atReorder++;
     if (p.stock <= p.reorder) reorder.push({ sku: p.sku, name: p.name, stock: p.stock, reorder: p.reorder, sell: p.sell });
@@ -208,7 +211,7 @@ export async function erpFdDash(ctx, payload) {
     out.kpi.margin = { v: pct(gross, rev), prev: pct(grossPrev, revPrev) };
     out.kpi.stockValue = { v: R(stockValue), uncosted };
     out.calc.gross = [['Revenue', R(rev)], ['− Cost of the goods sold (fixed on each invoice line the day it was sold)', -R(cost)], ['= Gross profit', R(gross)]];
-    out.calc.stockValue = [['Units on hand × each product’s cost (Product cost book)', R(stockValue)]].concat(uncosted ? [[uncosted + ' product(s) in stock have no cost yet - not counted', 0]] : []);
+    out.calc.stockValue = [['What is left in each stock lot × that lot’s landed cost (FIFO); stock from before lots at the product’s cost', R(stockValue)]].concat(uncosted ? [[uncosted + ' product(s) in stock have no cost yet - not counted', 0]] : []);
   }
   if (!group && full) {
     out.kpi.net = { v: R(pnl.net), prev: R(pnlPrev.net) };
@@ -294,10 +297,11 @@ export async function erpFdHead(ctx, payload) {
     else cards.push(card('duesN', 'Invoices with a due', 'bell', o.n, { tone: o.n ? 'warn' : '', go: 'sales', f: 'due' }));
   } else if (view === 'products' || view === 'stock') {
     const { list } = await products(ctx);
+    const LS = await lotStock(ctx);
     let value = 0, units = 0, out = 0, low = 0, uncosted = 0;
     for (const p of list) {
       if (/discontinued|inactive/i.test(p.status)) continue;
-      if (p.stock > 0) { units += p.stock; if (p.cost > 0) value += p.stock * p.cost; else uncosted++; }
+      if (p.stock > 0) { units += p.stock; const lv = LS.bySku[p.sku.toLowerCase()]; if (lv && lv.value > 0) value += lv.value; else uncosted++; }
       if (p.stock <= 0) out++; else if (p.stock <= p.reorder) low++;
     }
     if (canCost) cards.push(card('stockValue', 'Stock value at cost', 'box', value, { money: true, hero: true, note: uncosted ? uncosted + ' product(s) in stock without a cost' : list.length + ' products' }));

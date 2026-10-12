@@ -63,7 +63,8 @@ check('nothing changed: nothing written', r.Costareen.written === 0 && writes ==
 const invBefore = tabs.get('invoices').length;
 await owner('erpCreateInvoice', [{ customer: { name: 'Sheet Buyer', phone: '01799100002' }, items: [{ sku: PLA, qty: 1 }], payMode: 'full' }]);
 r = await runJob(deps, 'sheet');
-check('a sale rewrites invoices, lines, payments, stock and the customer - not the rest', r.Costareen.written >= 4 && r.Costareen.written <= 8 &&
+// since 107 a sale also moves the FIFO lots (stock_lots, lot_draws): two more tabs
+check('a sale rewrites invoices, lines, payments, stock, its lots and the customer - not the rest', r.Costareen.written >= 4 && r.Costareen.written <= 10 && r.Costareen.more === false &&
   tabs.get('invoices').length === invBefore + 1, [r, tabs.get('invoices').length, invBefore]);
 // an edit (not a new row) shows too
 const no = (await sql`select invoice_no from invoices where business_id = ${B} and customer_name = 'Sheet Buyer'`)[0].invoice_no;

@@ -1540,3 +1540,20 @@ shown, made in the browser). Lists that load later or re-sort are picked up (Mut
 Checked on dev: Products, Sales, Customers, Money; search, a column hidden and shown again, desktop and phone.
 NOT done: his saved "Views" and filter chips (our screens keep their own filters), server-side export of every row
 (Export takes what is on screen; the screens' own Excel buttons still export everything).
+
+## fifo-1 - FIFO stock lots and Shipments, merge phase P3 (13 Oct 2026)
+
+Owner decision F1 (FIFO with landed cost, Odoo's way). Migration 107: `stock_lots` + `lot_draws`, kept by a trigger on
+stock_movements, so every way stock moves is covered (invoices, receiving, counts, damage, repairs, joint pools, returns).
+IN makes a lot (RECEIVE at its landed unit cost = goods + freight + extra costs share, as the receive form already
+worked out); OUT takes oldest lots first; RETURN 'Return: INV' goes back into the very lots the sale drew (newest draw
+first); deleting a movement undoes its lot effect; MOVE (inside a joint pool) is ignored. A product's lots begin the
+first time its stock moves: what was on the shelf becomes one 'opening' lot with no known cost (sold at the
+product's cost / cost book, as before). invoice.js: each sold line's unit_cost = its draws (FIFO), fallback as before.
+Stock value (dashboard, screen heads) at FIFO. handlers/lots.js: erpShipments / erpShipment / erpLots ('costs' ability).
+Page block fd-5: Goods > Shipments (four cards, every receiving with units in/left, sold bar, landed cost, profit,
+status; one shipment line by line with freight/duty and the supplier bill, stages Received > In stock > Selling > Sold out).
+Tests: fifo_test (25); g3 bound raised (a sale now also rewrites the two lot tabs of the backup sheet). All 99 suites green.
+Dev: one demo shipment SHP-DEMO-001 (2400 RMB @ 17 + freight 4500 + duty 3000) and one sale from it.
+NOT done: chargeable weight (volumetric) and freight per kg, cost lines split by weight/units, Planned/Ordered/In transit
+stages on purchase orders, a bill arriving after the goods (cost adjustment split sold/unsold), lots on the product page.

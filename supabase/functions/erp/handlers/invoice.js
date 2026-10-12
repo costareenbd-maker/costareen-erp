@@ -8,6 +8,7 @@
 //   grand      = subtotal - discount + delivery
 //   advance    = what was taken now          due = grand - advance
 
+import { lotLineCost } from './lots.js';
 import { codAllowed } from '../lib/delivery.js';
 import { erpCatalog } from './catalog.js';
 import { forget } from '../lib/tabs.js';
@@ -281,17 +282,22 @@ export async function createInvoice(ctx, payload, opts = {}) {
                 ${l.disc}, ${l.total}, ${i + 1}, ${l.qty > 0 ? round2(l.total / l.qty) : 0}, ${l.poolId})`;
       continue;
     }
-    await ctx.tx`
+    const lineRow = await ctx.tx`
       insert into invoice_lines (business_id, invoice_id, product_id, sku, name, qty, unit_price,
                                  discount, line_total, line_no, unit_cost)
       values (${ctx.biz}, ${invoiceId}, ${l.productId}, ${l.sku}, ${l.name}, ${l.qty}, ${l.unit},
-              ${l.disc}, ${l.total}, ${i + 1}, ${costNow(l.sku)})`;
-    await ctx.tx`
+              ${l.disc}, ${l.total}, ${i + 1}, ${costNow(l.sku)})
+      returning id`;
+    const mv = await ctx.tx`
       insert into stock_movements (business_id, product_id, kind, direction, qty, unit_price, total,
                                    reference, invoice_id, created_by, created_at, txn_no, operator, product_name, held_by)
       values (${ctx.biz}, ${l.productId}, 'SALE', 'OUT', ${l.qty}, ${l.unit}, ${l.total},
               ${'Invoice: ' + invoiceNo}, ${invoiceId}, ${ctx.s.userId}, ${ts}, ${txnId(now)},
-              ${who(ctx)}, ${l.name}, ${opts.mirror ? opts.mirror.seller : null})`;
+              ${who(ctx)}, ${l.name}, ${opts.mirror ? opts.mirror.seller : null})
+      returning id`;
+    // FIFO (107): the units came from the oldest lots; what they cost is this line's cost
+    const fifo = await lotLineCost(ctx, mv[0].id, costNow(l.sku));
+    if (fifo > 0 && fifo !== costNow(l.sku)) await ctx.tx`update invoice_lines set unit_cost = ${fifo} where id = ${lineRow[0].id}`;
   }
 
   // plan D1: which units went out, and the warranty each one carries from today
