@@ -27219,5 +27219,936 @@ pagesAfterWrite = function () { NAV.key = ''; return navAfterWrite.apply(this, a
 (function () { var was = nvPhone(), t = null; window.addEventListener('resize', function () { clearTimeout(t); t = setTimeout(function () { var now = nvPhone(); if (now !== was && VIEW === 'mindmap') { was = now; repaint(); } was = now; }, 250); }); })();
 </script>
 
+<!-- fd-21 (FilaDash merge, owner 13 Oct 2026: "his design is the top priority"): his Payments, Expenses, Investors and
+     Commission screens laid over our Money (cash), Expenses, Capital, Commission and Profitability, detail for detail.
+     Every screen: his head (title + the screen's own buttons on the right), his segmented tabs with icons (switching is
+     instant: the panes are all on the page, so every form and button of ours stays wired), his table cards (search, saved
+     views as chips, 25 rows a page, "Total of N filtered rows", totals by method, Export, phone cards) and a row opens his
+     side drawer with the details and the actions. Money > Ledger is every line of every account plus the payments still
+     in no account ("Unmatched"), read from erpCashBook (no new server call); Accounts, Unmatched, Cash-up and Courier &
+     agent hold our own screens. Expenses: All expenses (his list), Expected monthly (our fixed + recurring), Categories,
+     "Add expense" in his drawer. Capital: his investor profile cards with capital tiles, the book, Month close, Portal
+     links. Commission: Sellers / Rules. Profitability: Profit & loss / Products. Our figures and formulas unchanged;
+     the Classic look is untouched (everything below runs only under html[data-skin="fd"]). -->
+<style>
+/* ---- his pills (segmented tabs, saved views) */
+.fd21-tabs { display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin:0 0 20px; }
+.fd21-tabs .fd21-sp { flex:1 1 auto; }
+.fd21-pill { height:38px; padding:0 18px; border-radius:999px; border:1px solid transparent; background:var(--fd-surface-2); color:var(--fd-text-2);
+  font:inherit; font-size:14px; font-weight:600; display:inline-flex; align-items:center; gap:7px; white-space:nowrap; cursor:pointer;
+  transition:background .15s cubic-bezier(.2,.8,.2,1), box-shadow .15s cubic-bezier(.2,.8,.2,1), color .15s cubic-bezier(.2,.8,.2,1); }
+.fd21-pill svg { width:16px; height:16px; flex:0 0 16px; }
+:root[data-theme="dark"] .fd21-pill { border-color:var(--fd-border); }
+.fd21-pill:hover { background:var(--fd-surface-3); color:var(--fd-text); }
+.fd21-pill[aria-pressed="true"] { background:linear-gradient(180deg, color-mix(in srgb, var(--fd-accent) 92%, #fff), var(--fd-accent)); color:var(--fd-text-on-accent); box-shadow:var(--fd-accent-glow); }
+:root[data-theme="dark"] .fd21-pill[aria-pressed="true"] { background:#1A1813; color:var(--fd-accent); border-color:var(--fd-accent); box-shadow:var(--fd-glow-badge); }
+.fd21-pill.sm { height:32px; padding:0 12px; font-size:13px; }
+.fd21-pill .n { min-width:20px; height:20px; padding:0 6px; border-radius:999px; background:var(--fd-warning-soft); color:var(--fd-warning-text); font-size:11.5px; font-weight:800; display:inline-grid; place-items:center; }
+.fd21-pill[aria-pressed="true"] .n { background:rgba(255,255,255,.25); color:inherit; }
+[data-f21pane][hidden] { display:none !important; }
+
+/* ---- his cards, card heads, icon badges */
+.fd21-card { position:relative; background:var(--fd-card); border:1px solid var(--fd-border); border-radius:20px; padding:24px; box-shadow:var(--fd-shadow-card), var(--fd-glow-card); min-width:0; margin-bottom:20px; }
+.fd21-ch { display:flex; align-items:center; gap:14px; min-height:44px; }
+.fd21-ch.rule { padding-bottom:14px; border-bottom:1px solid var(--fd-border); margin-bottom:12px; }
+.fd21-ch > .t { min-width:0; flex:0 1 auto; }
+.fd21-ct { font-size:19px; font-weight:700; letter-spacing:-.01em; line-height:1.3; color:var(--fd-text); }
+.fd21-cs { font-size:13px; color:var(--fd-text-3); font-weight:500; }
+.fd21-ch .tools { margin-left:auto; display:flex; align-items:center; gap:8px; flex-wrap:wrap; justify-content:flex-end; }
+.fd21-ib { width:48px; height:48px; flex:0 0 48px; border-radius:999px; display:inline-grid; place-items:center; background:var(--fd-accent-soft); color:var(--fd-accent); box-shadow:var(--fd-glow-badge); }
+.fd21-ib svg { width:22px; height:22px; }
+.fd21-ib.sm { width:40px; height:40px; flex-basis:40px; } .fd21-ib.sm svg { width:19px; height:19px; }
+.fd21-ib.t-warn { background:var(--fd-warning-soft); color:var(--fd-warning); } .fd21-ib.t-good { background:var(--fd-positive-soft); color:var(--fd-positive); }
+.fd21-ib.t-bad { background:var(--fd-negative-soft); color:var(--fd-negative); } .fd21-ib.t-violet { background:var(--fd21-violet-soft); color:var(--fd21-violet-text); }
+:root[data-skin="fd"] { --fd21-violet-soft:#F0E9FF; --fd21-violet-text:#6D28D9; --fd21-neutral-soft:#F1F2F7; --fd21-neutral-text:#4B5068; --fd21-overlay:rgba(20,23,43,.45); }
+:root[data-skin="fd"][data-theme="dark"] { --fd21-violet-soft:rgba(167,139,250,.16); --fd21-violet-text:#C4B5FD; --fd21-neutral-soft:#222C3A; --fd21-neutral-text:#C5CCD8; --fd21-overlay:rgba(0,0,0,.6); }
+
+/* ---- badges and method chips */
+.fd21-b { display:inline-flex; align-items:center; gap:6px; height:24px; padding:0 8px; border-radius:999px; font-size:12.5px; font-weight:600; white-space:nowrap; line-height:1; vertical-align:middle;
+  background:var(--fd21-neutral-soft); color:var(--fd21-neutral-text); }
+.fd21-b > i { width:7px; height:7px; border-radius:999px; background:currentColor; display:inline-block; flex:0 0 7px; }
+.fd21-b.lg { height:28px; padding:0 10px; font-size:13px; }
+.fd21-b.positive { background:var(--fd-positive-soft); color:var(--fd-positive-text); } .fd21-b.negative { background:var(--fd-negative-soft); color:var(--fd-negative-text); }
+.fd21-b.warning { background:var(--fd-warning-soft); color:var(--fd-warning-text); } .fd21-b.info { background:var(--fd-info-soft); color:var(--fd-info-text); }
+.fd21-b.violet { background:var(--fd21-violet-soft); color:var(--fd21-violet-text); } .fd21-b.accent { background:var(--fd-accent-soft); color:var(--fd-accent-text); }
+:root[data-theme="dark"] .fd21-b { box-shadow:inset 0 0 0 1px color-mix(in srgb, currentColor 25%, transparent); }
+.fd21-m { display:inline-flex; align-items:center; gap:7px; font-weight:600; color:var(--fd-text); white-space:nowrap; }
+.fd21-m > i { width:9px; height:9px; border-radius:3px; flex:0 0 9px; background:var(--fd-text-faint); }
+.fd21-m.bkash > i { background:#E2136E; } .fd21-m.nagad > i { background:#F6921E; } .fd21-m.cash > i { background:#1DBF73; } .fd21-m.bank > i { background:#2F7CF6; }
+.fd21-m.courier > i { background:#06B6D4; } .fd21-m.agent > i { background:#8B5CF6; } .fd21-m.card > i { background:#14172B; }
+.fd21-row-wrap { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+
+/* ---- his table card */
+.fd21-tc { padding:0; overflow:hidden; }
+.fd21-tc > .fd21-ch { padding:20px 24px 0; }
+.fd21-tb { display:flex; align-items:center; gap:10px; padding:16px 24px 12px; flex-wrap:wrap; }
+.fd21-search { position:relative; display:flex; align-items:center; width:320px; max-width:100%; height:40px; border-radius:12px; background:var(--fd-surface-2); border:1px solid transparent; }
+:root[data-theme="dark"] .fd21-search { border-color:var(--fd-border-strong); }
+.fd21-search:focus-within { border-color:var(--fd-accent-border); box-shadow:var(--fd-focus-ring); }
+.fd21-search svg { width:18px; height:18px; margin:0 8px 0 12px; color:var(--fd-text-3); flex:0 0 18px; }
+.fd21-search input { flex:1 1 auto; min-width:0; height:100%; border:0 !important; background:transparent !important; outline:none; box-shadow:none !important; font:inherit; font-size:14.5px; font-weight:500; color:var(--fd-text); padding:0 12px 0 0; }
+.fd21-search input::placeholder { color:var(--fd-text-faint); }
+.fd21-chips { display:flex; flex-wrap:wrap; gap:8px; align-items:center; }
+.fd21-tbr { margin-left:auto; display:flex; align-items:center; gap:6px; }
+.fd21-ib2 { width:36px; height:36px; border-radius:999px; display:inline-grid; place-items:center; color:var(--fd-text-2); background:transparent; border:0; cursor:pointer; padding:0; }
+.fd21-ib2:hover { background:var(--fd-surface-2); color:var(--fd-text); } .fd21-ib2 svg { width:18px; height:18px; }
+.fd21-scroll { overflow-x:auto; margin:0 16px; }
+#view table.fd21-t { width:100%; border-collapse:separate; border-spacing:0; font-size:15px; }
+#view table.fd21-t thead th { background:var(--fd-surface-2); height:40px; padding:0 12px; text-align:left; font-size:13px; font-weight:600; color:var(--fd-text-3); letter-spacing:.01em; white-space:nowrap; text-transform:none; border:0; }
+#view table.fd21-t thead th:first-child { border-radius:12px 0 0 12px; padding-left:16px; }
+#view table.fd21-t thead th:last-child { border-radius:0 12px 12px 0; padding-right:16px; }
+#view table.fd21-t th.n, #view table.fd21-t td.n { text-align:right; font-variant-numeric:tabular-nums; }
+#view table.fd21-t tbody td { height:48px; padding:6px 12px; border-bottom:1px solid var(--fd-border); color:var(--fd-text); font-weight:500; white-space:nowrap; vertical-align:middle; }
+#view table.fd21-t tbody td:first-child { padding-left:16px; } #view table.fd21-t tbody td:last-child { padding-right:16px; }
+#view table.fd21-t tbody tr[data-f21r] { cursor:pointer; }
+#view table.fd21-t tbody tr:hover > td { background:var(--fd-surface-2); }
+#view table.fd21-t tbody tr.is-rev > td { color:var(--fd-text-3); }
+#view table.fd21-t tbody tr.is-rev .fd21-p { text-decoration:line-through; }
+#view table.fd21-t tfoot td { height:44px; padding:0 12px; background:var(--fd-surface-2); font-weight:700; white-space:nowrap; color:var(--fd-text); border:0; }
+#view table.fd21-t tfoot td:first-child { border-radius:12px 0 0 12px; padding-left:16px; font-weight:600; color:var(--fd-text-2); }
+#view table.fd21-t tfoot td:last-child { border-radius:0 12px 12px 0; padding-right:16px; }
+#view table.fd21-t td.w { white-space:normal; min-width:160px; }
+#view table.fd21-t td.acts { text-align:right; width:1%; }
+#view table.fd21-t td.acts .btn { min-height:30px; padding:0 12px; font-size:12.5px; margin-left:4px; }
+.fd21-p { font-weight:600; color:var(--fd-text); }
+.fd21-s { display:block; font-size:13px; font-weight:400; color:var(--fd-text-3); line-height:1.3; max-width:340px; overflow:hidden; text-overflow:ellipsis; }
+.fd21-neg { color:var(--fd-negative-text) !important; } .fd21-pos { color:var(--fd-positive-text) !important; }
+.fd21-strong { font-weight:700; }
+.fd21-totby { display:flex; flex-wrap:wrap; align-items:center; gap:8px; padding:12px 24px 0; }
+.fd21-totby .l { font-size:13px; font-weight:600; color:var(--fd-text-3); margin-right:4px; }
+.fd21-totby .c { display:inline-flex; align-items:center; gap:6px; height:28px; padding:0 12px; border-radius:999px; background:var(--fd-accent-soft); color:var(--fd-accent-text); font-size:13px; font-weight:600; white-space:nowrap; }
+.fd21-totby .c b { font-weight:800; color:var(--fd-text); }
+.fd21-foot { display:flex; align-items:center; gap:12px; padding:12px 24px 18px; flex-wrap:wrap; color:var(--fd-text-3); font-size:13.5px; }
+.fd21-foot .pg { margin-left:auto; display:flex; align-items:center; gap:6px; }
+.fd21-foot .pg button { width:32px; height:32px; border-radius:999px; border:1px solid var(--fd-border); background:var(--fd-card); color:var(--fd-text-2); display:grid; place-items:center; cursor:pointer; padding:0; }
+.fd21-foot .pg button:disabled { opacity:.4; cursor:default; } .fd21-foot .pg svg { width:14px; height:14px; }
+.fd21-none { padding:28px 16px; }
+.fd21-cl { display:none; }
+.fd21-cr { display:flex; align-items:center; gap:12px; min-height:72px; padding:12px 16px; border-bottom:1px solid var(--fd-border); cursor:pointer; }
+.fd21-cr:last-child { border-bottom:0; } .fd21-cr:hover { background:var(--fd-surface-2); }
+.fd21-cr .mn { flex:1 1 auto; min-width:0; }
+.fd21-cr .tt { font-weight:600; color:var(--fd-text); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.fd21-cr .st { font-size:13px; color:var(--fd-text-3); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; margin-top:2px; }
+.fd21-cr .sd { text-align:right; display:flex; flex-direction:column; align-items:flex-end; gap:4px; }
+.fd21-cr .vl { font-weight:700; font-variant-numeric:tabular-nums; white-space:nowrap; }
+.fd21-cr > svg { width:18px; height:18px; color:var(--fd-text-faint); flex:0 0 18px; }
+.fd21-cr .ac { display:flex; gap:6px; flex-wrap:wrap; margin-top:6px; } .fd21-cr .ac .btn { min-height:30px; padding:0 12px; font-size:12.5px; }
+.fd21-totm { display:none; }
+
+/* ---- empty states */
+.fd21-empty { display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; gap:10px; padding:36px 20px; }
+.fd21-empty .et { font-size:18px; font-weight:700; color:var(--fd-text); } .fd21-empty .ex { font-size:15px; color:var(--fd-text-2); max-width:460px; }
+.fd21-empty.sm { padding:18px 12px; gap:8px; } .fd21-empty.sm .et { font-size:16px; } .fd21-empty.sm .ex { font-size:14px; }
+:root[data-skin="fd"] [data-f21pane] .empty { padding:30px 16px; text-align:center; color:var(--fd-text-2); font-size:15px; background:none; border:0; }
+
+/* ---- his drawer (the side panel) */
+.fd21-ov { position:fixed; inset:0; background:var(--fd21-overlay); z-index:80; backdrop-filter:blur(4px); -webkit-backdrop-filter:blur(4px); animation:fd21-fade .2s cubic-bezier(.2,.8,.2,1); }
+.fd21-drw { position:fixed; top:0; right:0; bottom:0; width:560px; max-width:100vw; z-index:81; background:var(--fd-card); border-left:1px solid var(--fd-border); box-shadow:var(--fd-shadow-popover);
+  display:flex; flex-direction:column; animation:fd21-in .2s cubic-bezier(.2,.8,.2,1); color:var(--fd-text); font-family:var(--fd-font); }
+@keyframes fd21-fade { from { opacity:0; } to { opacity:1; } }
+@keyframes fd21-in { from { transform:translateX(32px); opacity:0; } to { transform:none; opacity:1; } }
+@keyframes fd21-rise { from { transform:translateY(32px); opacity:0; } to { transform:none; opacity:1; } }
+.fd21-dh { display:flex; align-items:center; gap:12px; min-height:64px; padding:12px 20px 12px 24px; border-bottom:1px solid var(--fd-border); }
+.fd21-dh .tt { flex:1 1 auto; min-width:0; }
+.fd21-dh .t1 { font-size:19px; font-weight:700; letter-spacing:-.01em; line-height:1.25; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.fd21-dh .t2 { font-size:13px; color:var(--fd-text-3); margin-top:2px; }
+.fd21-x { width:36px; height:36px; border-radius:999px; background:var(--fd-surface-2); display:grid; place-items:center; color:var(--fd-text-2); flex:0 0 36px; border:0; cursor:pointer; padding:0; }
+.fd21-x:hover { background:var(--fd-surface-3); color:var(--fd-text); } .fd21-x svg { width:18px; height:18px; }
+.fd21-db { flex:1 1 auto; overflow-y:auto; padding:24px; display:flex; flex-direction:column; gap:16px; }
+.fd21-df { display:flex; align-items:center; gap:10px; padding:14px 24px; border-top:1px solid var(--fd-border); background:var(--fd-card); flex-wrap:wrap; }
+.fd21-df .sp { flex:1 1 auto; }
+.fd21-amt { font-size:28px; font-weight:800; letter-spacing:-.02em; font-variant-numeric:tabular-nums; }
+.fd21-kv { width:100%; border-collapse:collapse; font-size:14px; }
+.fd21-kv td { padding:8px 0; border-bottom:1px solid var(--fd-border); vertical-align:top; }
+.fd21-kv td:first-child { color:var(--fd-text-3); width:42%; padding-right:12px; }
+.fd21-kv td:last-child { color:var(--fd-text); font-weight:500; text-align:right; }
+.fd21-kv tr:last-child td { border-bottom:0; }
+.fd21-note { display:flex; gap:10px; align-items:flex-start; padding:12px 14px; border-radius:12px; background:var(--fd-info-soft); color:var(--fd-text-2); font-size:13.5px; line-height:1.45; }
+.fd21-note svg { width:18px; height:18px; flex:0 0 18px; color:var(--fd-info-text); margin-top:1px; }
+:root[data-skin="fd"] .fd21-ivd .fd21-db .card, :root[data-skin="fd"] .fd21-ivd .fd21-db section { margin:0; box-shadow:none; border:0; padding:0; background:none; }
+.fd21-ivd .fd21-db .card > h2 { display:none; }
+.fd21-ivd .fd21-db .row { flex-direction:column; align-items:stretch !important; gap:14px !important; }
+.fd21-ivd .fd21-db .row > div { flex:1 1 auto !important; width:100%; }
+.fd21-ivd .fd21-db .row > .btn, .fd21-ivd .fd21-db .row > div:last-child .btn { width:100%; }
+.fd21-ivd .fd21-db label.chk { padding:0 !important; }
+
+/* ---- Money: accounts pane, the account cards in his KPI-card shape */
+:root[data-skin="fd"] [data-f21pane] .cash_tot { display:flex; align-items:center; gap:12px; flex-wrap:wrap; padding:0; margin:0 0 16px; background:none; border:0; font-size:15px; }
+:root[data-skin="fd"] [data-f21pane] .cash_tot b { font-size:22px; font-weight:800; letter-spacing:-.02em; }
+:root[data-skin="fd"] [data-f21pane] .cash_grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(220px, 1fr)); gap:16px; }
+:root[data-skin="fd"] [data-f21pane] .cash_card { text-align:left; background:var(--fd-card); border:1px solid var(--fd-border); border-radius:20px; padding:20px 22px; box-shadow:var(--fd-shadow-card); min-height:128px; cursor:pointer; font:inherit; color:var(--fd-text); display:flex; flex-direction:column; }
+:root[data-skin="fd"] [data-f21pane] .cash_card:hover { box-shadow:var(--fd-shadow-card-hover); transform:translateY(-2px); }
+:root[data-skin="fd"] [data-f21pane] .cash_card[aria-pressed="true"] { border-color:var(--fd-accent-border); box-shadow:0 0 0 3px var(--fd-accent-soft), var(--fd-shadow-card); }
+:root[data-skin="fd"] [data-f21pane] .cash_card .k { font-size:12px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:var(--fd-text-3); }
+:root[data-skin="fd"] [data-f21pane] .cash_card .n { font-size:15px; font-weight:600; color:var(--fd-text-2); margin-top:2px; }
+:root[data-skin="fd"] [data-f21pane] .cash_card .b { font-size:28px; font-weight:800; letter-spacing:-.02em; margin-top:auto; padding-top:12px; font-variant-numeric:tabular-nums; }
+:root[data-skin="fd"] [data-f21pane] .cash_card .b.neg { color:var(--fd-negative-text); }
+:root[data-skin="fd"] [data-f21pane] .cash_form { background:var(--fd-card); border:1px solid var(--fd-border); border-radius:20px; padding:20px 24px; margin-top:16px; box-shadow:var(--fd-shadow-card); }
+:root[data-skin="fd"] [data-f21pane] .card[style*="border-color:var(--warning)"] { border-color:var(--fd-border) !important; }
+.fd21-cu { display:flex; align-items:center; gap:16px; flex-wrap:wrap; padding:14px 0; border-bottom:1px solid var(--fd-border); }
+.fd21-cu:last-child { border-bottom:0; }
+.fd21-cu .who { min-width:0; flex:1 1 220px; }
+.fd21-cu .fig { display:flex; flex-direction:column; gap:2px; min-width:110px; }
+.fd21-cu .fig .l { font-size:13px; font-weight:600; color:var(--fd-text-2); }
+.fd21-cu .fig .v { font-weight:700; font-variant-numeric:tabular-nums; }
+.fd21-cu .ac { display:flex; align-items:center; gap:8px; margin-left:auto; }
+.fd21-dn { display:grid; grid-template-columns:minmax(0, 1fr) 190px; gap:24px; align-items:center; }
+.fd21-dn svg { width:190px; height:190px; display:block; }
+.fd21-dn .c1 { font-size:30px; font-weight:800; fill:var(--fd-accent-text); font-family:var(--fd-font); }
+.fd21-dn .c2 { font-size:13px; fill:var(--fd-text-3); font-family:var(--fd-font); }
+.fd21-dn table { width:100%; border-collapse:separate; border-spacing:0; font-size:14.5px; }
+.fd21-dn th { background:var(--fd-surface-2); height:36px; padding:0 12px; font-size:13px; font-weight:600; color:var(--fd-text-3); text-align:left; }
+.fd21-dn th:first-child { border-radius:12px 0 0 12px; padding-left:16px; } .fd21-dn th:last-child { border-radius:0 12px 12px 0; padding-right:16px; text-align:right; }
+.fd21-dn td { height:40px; padding:0 12px; border-bottom:1px solid var(--fd-border); font-weight:500; }
+.fd21-dn td:first-child { padding-left:16px; } .fd21-dn td:last-child { text-align:right; padding-right:16px; font-variant-numeric:tabular-nums; }
+.fd21-dn tr:last-child td { border-bottom:0; }
+.fd21-dn i.sw { display:inline-block; width:10px; height:10px; border-radius:999px; margin-right:10px; }
+.fd21-small { font-size:13px; color:var(--fd-text-3); margin:4px 0 0; line-height:1.5; }
+
+:root[data-skin="fd"] #view #ex_xls { display:none; }
+/* ---- head buttons */
+.fd21-df .btn, .fd21-card .tools .btn, .fd21-empty .btn, .fd21-acts .btn { display:inline-flex; align-items:center; gap:8px; white-space:nowrap; flex:0 0 auto; }
+.fd21-df .btn svg, .fd21-acts .btn svg { flex:0 0 16px; }
+/* ---- KPI strip of his (our cards via fdhCard) */
+.fd21-kpis { margin-bottom:20px; }
+
+/* ---- Capital: his investor profile cards */
+.fd21-pcs { display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:20px; margin-bottom:12px; }
+.fd21-pc { background:var(--fd-card); border:1px solid var(--fd-border); border-radius:20px; padding:22px 24px; box-shadow:var(--fd-shadow-card), var(--fd-glow-card); display:flex; flex-direction:column; gap:12px; min-width:0; }
+.fd21-pc.ended { opacity:.62; }
+.fd21-pc .hd { display:flex; align-items:flex-start; gap:12px; }
+.fd21-pc .hd .tt { flex:1 1 auto; min-width:0; }
+.fd21-pc .nm { font-size:18px; font-weight:700; letter-spacing:-.01em; color:var(--fd-text); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.fd21-pc .sb { font-size:13px; color:var(--fd-text-3); margin-top:2px; }
+.fd21-tiles { display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:10px; }
+.fd21-tile { background:var(--fd-surface-2); border-radius:14px; padding:12px 14px; min-width:0; }
+.fd21-tile b { display:block; font-size:18px; font-weight:800; letter-spacing:-.01em; color:var(--fd-text); font-variant-numeric:tabular-nums; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.fd21-tile span { display:block; font-size:13px; color:var(--fd-text-3); margin-top:2px; }
+.fd21-tile.bad b { color:var(--fd-negative-text); }
+.fd21-pc .ft { display:flex; gap:8px; flex-wrap:wrap; margin-top:auto; padding-top:4px; }
+.fd21-pc .ft .btn { min-height:32px; padding:0 13px; font-size:13px; }
+.fd21-pc .bld { font-size:13px; color:var(--fd-text-3); }
+.fd21-sbar { display:flex; height:12px; border-radius:999px; overflow:hidden; background:var(--fd-surface-2); margin:6px 0 10px; }
+.fd21-sbar > div { height:100%; }
+.fd21-shl { display:flex; flex-wrap:wrap; gap:6px 16px; font-size:13px; color:var(--fd-text-2); }
+.fd21-shl i { display:inline-block; width:10px; height:10px; border-radius:3px; margin-right:6px; vertical-align:-1px; }
+
+@media (max-width:1100px) { .fd21-pcs { grid-template-columns:repeat(2, minmax(0, 1fr)); } }
+@media (max-width:767px) {
+  .fd21-tabs { flex-wrap:nowrap; overflow-x:auto; margin:0 -14px 16px; padding:2px 14px 4px; scrollbar-width:none; }
+  .fd21-tabs::-webkit-scrollbar { display:none; }
+  .fd21-pill { height:36px; padding:0 14px; flex:0 0 auto; }
+  .fd21-card { border-radius:16px; padding:16px; }
+  .fd21-tc { padding:0; } .fd21-tc > .fd21-ch { padding:16px 16px 0; flex-wrap:wrap; }
+  .fd21-ch .tools { margin-left:0; width:100%; justify-content:flex-start; }
+  .fd21-tb { padding:12px 16px 10px; } .fd21-tb .fd21-search { width:auto; flex:1 1 160px; } .fd21-tb .fd21-chips { order:3; width:100%; }
+  .fd21-tb .fd21-chips { flex-wrap:nowrap; overflow-x:auto; scrollbar-width:none; } .fd21-tb .fd21-chips .fd21-pill { flex:0 0 auto; }
+  .fd21-scroll { display:none; } .fd21-cl { display:block; }
+  .fd21-totm { display:flex; justify-content:space-between; padding:12px 16px; background:var(--fd-surface-2); font-weight:700; margin:8px 16px 0; border-radius:12px; }
+  .fd21-totby { padding:12px 16px 0; } .fd21-foot { padding:12px 16px 16px; }
+  .fd21-drw { top:auto; left:0; width:100vw; height:calc(100dvh - 24px); border-left:0; border-radius:16px 16px 0 0; animation:fd21-rise .2s cubic-bezier(.2,.8,.2,1); }
+  .fd21-db { padding:16px; } .fd21-dh { padding:8px 12px 8px 16px; min-height:56px; } .fd21-df { padding:12px 16px calc(12px + env(safe-area-inset-bottom)); }
+  .fd21-pcs { grid-template-columns:minmax(0, 1fr); gap:12px; }
+  .fd21-dn { grid-template-columns:minmax(0, 1fr); } .fd21-dn svg { margin:0 auto; order:-1; }
+  .fd21-cu .ac { margin-left:0; width:100%; }
+  .fd21-cu .who { flex:1 1 100%; } .fd21-cu .fig { flex:1 1 28%; min-width:0; }
+  :root[data-skin="fd"] [data-f21pane] .cash_grid { grid-template-columns:repeat(2, minmax(0, 1fr)); gap:10px; }
+  :root[data-skin="fd"] [data-f21pane] .cash_card { min-height:104px; padding:14px 16px; border-radius:16px; }
+  :root[data-skin="fd"] [data-f21pane] .cash_card .b { font-size:22px; }
+}
+</style>
+<script>
+// =====================================================================
+// fd-21: shared pieces - icons, pills, badges, the table card, the drawer
+// =====================================================================
+var FD21 = { tab: {}, ts: {}, tables: {}, act: null, led: null, ledBusy: false, ledErr: '', ivd: {}, ivdRef: {} };
+var F21I = {
+  wallet: '<rect x="3" y="6" width="18" height="13" rx="2"/><path d="M16 12h3"/><path d="M3 10h18"/>', search: '<circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/>',
+  taka: '<path d="M8 4c2 0 3 1 3 3v10a3 3 0 0 0 6 0"/><path d="M6 9h9"/>', truck: '<path d="M3 6h11v10H3z"/><path d="M14 10h4l3 3v3h-7"/><circle cx="7" cy="18" r="1.6"/><circle cx="17" cy="18" r="1.6"/>',
+  receipt: '<path d="M5 3v18l2-1.5L9 21l2-1.5L13 21l2-1.5L17 21l2-1.5V3z"/><path d="M8 8h8M8 12h8"/>', list: '<path d="M8 6h12M8 12h12M8 18h12"/><circle cx="4" cy="6" r="1"/><circle cx="4" cy="12" r="1"/><circle cx="4" cy="18" r="1"/>',
+  bank: '<path d="M3 10l9-6 9 6"/><path d="M5 10v8M9 10v8M15 10v8M19 10v8M3 20h18"/>', link: '<path d="M10 14a4 4 0 0 0 5.66 0l3-3a4 4 0 0 0-5.66-5.66l-1 1"/><path d="M14 10a4 4 0 0 0-5.66 0l-3 3a4 4 0 0 0 5.66 5.66l1-1"/>',
+  brief: '<rect x="3" y="7" width="18" height="13" rx="2"/><path d="M9 7V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2"/><path d="M3 13h18"/>', user: '<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>',
+  cal: '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/>', lock: '<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>',
+  x: '<path d="M6 6l12 12M18 6L6 18"/>', l: '<path d="M15 18l-6-6 6-6"/>', r: '<path d="M9 18l6-6-6-6"/>', dl: '<path d="M12 4v11M7 10l5 5 5-5M5 20h14"/>',
+  swap: '<path d="M7 7h13l-3-3M17 17H4l3 3"/>', pct: '<path d="M19 5L5 19"/><circle cx="7" cy="7" r="2.5"/><circle cx="17" cy="17" r="2.5"/>', tag: '<path d="M3 12V4h8l10 10-8 8z"/><circle cx="8" cy="8" r="1.5"/>',
+  plus: '<path d="M12 5v14M5 12h14"/>', check: '<path d="M5 12l5 5L20 7"/>', info: '<circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/>', chart: '<path d="M4 20V10M10 20V4M16 20v-8M22 20H2"/>',
+  box: '<path d="M3 7l9-4 9 4v10l-9 4-9-4z"/><path d="M3 7l9 4 9-4M12 11v10"/>', flag: '<path d="M5 21V4M5 4h11l-2 4 2 4H5"/>', clock: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>'
+};
+function f21i(n, sz) { return '<svg viewBox="0 0 24 24" width="' + (sz || 18) + '" height="' + (sz || 18) + '" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + (F21I[n] || '') + '</svg>'; }
+function f21On() { return document.documentElement.getAttribute('data-skin') === 'fd'; }
+function f21M(v, cur, dec) {
+  var n = Number(v) || 0, a = Math.abs(n), s = n < 0 ? '−' : '';
+  var t = dec ? a.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : fmt(a);
+  return (cur && cur !== 'BDT') ? s + esc(cur) + ' ' + t : s + '৳' + t;
+}
+function f21K(v, cur) { return typeof fdTk === 'function' ? fdTk(v, cur) : f21M(v, cur); }
+function f21B(text, tone, dot) { return '<span class="fd21-b ' + (tone || '') + '">' + (dot === false ? '' : '<i></i>') + esc(text) + '</span>'; }
+function f21Meth(label, kindHint) {
+  var s = String((kindHint || '') + ' ' + (label || '')).toLowerCase();
+  var c = /bkash/.test(s) ? 'bkash' : /nagad/.test(s) ? 'nagad' : /agent/.test(s) ? 'agent' : /courier|steadfast|cod|pathao|redx/.test(s) ? 'courier' : /bank|transfer|npsb|beftn/.test(s) ? 'bank' : /cash/.test(s) ? 'cash' : /card|visa|master/.test(s) ? 'card' : '';
+  return '<span class="fd21-m ' + c + '"><i></i>' + esc(label || '—') + '</span>';
+}
+function f21Empty(icon, title, text, act, small) {
+  return '<div class="fd21-empty' + (small ? ' sm' : '') + '"><span class="fd21-ib">' + f21i(icon || 'info', 22) + '</span><div class="et">' + esc(title) + '</div>' + (text ? '<div class="ex">' + esc(text) + '</div>' : '') + (act || '') + '</div>';
+}
+function f21Tabs(view, tabs, right) {
+  var cur = FD21.tab[view];
+  return '<div class="fd21-tabs" role="tablist">' + tabs.map(function (t) {
+    return '<button type="button" class="fd21-pill" role="tab" data-f21tab="' + esc(view) + ':' + esc(t[0]) + '" aria-pressed="' + (cur === t[0]) + '">' + f21i(t[2] || 'list', 16) + esc(t[1]) +
+      (t[3] ? '<span class="n">' + esc(t[3]) + '</span>' : '') + '</button>'; }).join('') + (right ? '<span class="fd21-sp"></span>' + right : '') + '</div>';
+}
+function f21Pane(name, view, html) { return '<div data-f21pane="' + esc(name) + '"' + (FD21.tab[view] === name ? '' : ' hidden') + '>' + html + '</div>'; }
+function f21ShowTab(view, t) {
+  FD21.tab[view] = t;
+  [].forEach.call(document.querySelectorAll('#view [data-f21tab]'), function (b) { b.setAttribute('aria-pressed', String(b.getAttribute('data-f21tab') === view + ':' + t)); });
+  [].forEach.call(document.querySelectorAll('#view [data-f21pane]'), function (p) { if (p.getAttribute('data-f21pane') === t) p.removeAttribute('hidden'); else p.setAttribute('hidden', ''); });
+  try { localStorage.setItem('fd21tab:' + view, t); } catch (e) {}
+}
+function f21TabInit(view, def, allowed) {
+  if (!FD21.tab[view]) { var s = null; try { s = localStorage.getItem('fd21tab:' + view); } catch (e) {} FD21.tab[view] = s || def; }
+  if (allowed && allowed.indexOf(FD21.tab[view]) < 0) FD21.tab[view] = def;
+}
+function f21Card(icon, title, sub, body, tools, tone) {
+  return '<div class="fd21-card"><div class="fd21-ch rule"><span class="fd21-ib' + (tone ? ' t-' + tone : '') + '">' + f21i(icon, 22) + '</span><div class="t"><div class="fd21-ct">' + esc(title) + '</div>' +
+    (sub ? '<div class="fd21-cs">' + sub + '</div>' : '') + '</div>' + (tools ? '<div class="tools">' + tools + '</div>' : '') + '</div>' + body + '</div>';
+}
+
+/* ---- the table card. cfg: { id, icon, title, sub, tools, cols:[{l, n}], rows:[{c:[html], m:{t,s,v,b,a}, x:'search text', v:number, rev, csv:[]}],
+        views:[[name, fn]], sumCol, sumLabel, totBy:fn(row)->label, totLabel, empty, onRow:fn(i) }. Every row is on the page; search,
+        views and pages only show and hide them, so buttons inside rows keep the listeners our screens gave them. */
+function f21Table(cfg) {
+  FD21.tables[cfg.id] = cfg;
+  var st = FD21.ts[cfg.id] || (FD21.ts[cfg.id] = { q: '', v: 0, p: 0 });
+  if (st.v >= (cfg.views || []).length) st.v = 0;
+  var h = '<div class="fd21-card fd21-tc" data-f21tc="' + esc(cfg.id) + '"><div class="fd21-ch"><span class="fd21-ib">' + f21i(cfg.icon || 'list', 22) + '</span><div class="t"><div class="fd21-ct">' + esc(cfg.title) + '</div>' +
+    (cfg.sub ? '<div class="fd21-cs">' + cfg.sub + '</div>' : '') + '</div>' + (cfg.tools ? '<div class="tools">' + cfg.tools + '</div>' : '') + '</div>';
+  if (!cfg.rows.length) return h + (cfg.empty || f21Empty('info', 'Nothing here yet', '')) + '</div>';
+  h += '<div class="fd21-tb"><label class="fd21-search">' + f21i('search', 18) + '<input type="search" data-f21q="' + esc(cfg.id) + '" value="' + esc(st.q) + '" placeholder="' + esc(cfg.ph || 'Search…') + '" aria-label="Search ' + esc(cfg.title) + '"></label>' +
+    ((cfg.views || []).length > 1 ? '<div class="fd21-chips">' + cfg.views.map(function (v, i) {
+      return '<button type="button" class="fd21-pill sm" data-f21v="' + esc(cfg.id) + ':' + i + '" aria-pressed="' + (st.v === i) + '">' + esc(v[0]) + '</button>'; }).join('') + '</div>' : '') +
+    '<div class="fd21-tbr"><button type="button" class="fd21-ib2" data-f21csv="' + esc(cfg.id) + '" title="Download the filtered rows (CSV)" aria-label="Export">' + f21i('dl', 18) + '</button></div></div>';
+  h += '<div class="fd21-scroll"><table class="fd21-t" data-fdt="1" data-f21t="' + esc(cfg.id) + '"><thead><tr>' + cfg.cols.map(function (c) { return '<th' + (c.n ? ' class="n"' : '') + '>' + esc(c.l) + '</th>'; }).join('') + '</tr></thead><tbody>' +
+    cfg.rows.map(function (r, i) { return '<tr data-f21r="' + i + '"' + (r.rev ? ' class="is-rev"' : '') + '>' + r.c.map(function (x, j) { var c = cfg.cols[j] || {}; return '<td' + (c.cls || c.n ? ' class="' + (c.n ? 'n ' : '') + (c.cls || '') + '"' : '') + '>' + x + '</td>'; }).join('') + '</tr>'; }).join('') +
+    '<tr class="fd21-nr" style="display:none"><td colspan="' + cfg.cols.length + '">' + f21Empty('search', 'Nothing matches', 'Clear the search or pick another view.', '', true) + '</td></tr></tbody>' +
+    (cfg.sumCol !== undefined ? '<tfoot><tr>' + cfg.cols.map(function (c, j) { return '<td' + (c.n ? ' class="n"' : '') + (j === 0 ? ' data-f21tl="1"' : j === cfg.sumCol ? ' data-f21ts="1"' : '') + '></td>'; }).join('') + '</tr></tfoot>' : '') + '</table></div>';
+  h += '<div class="fd21-cl">' + cfg.rows.map(function (r, i) {
+    var m = r.m || {};
+    return '<div class="fd21-cr" data-f21r="' + i + '" data-f21cid="' + esc(cfg.id) + '"><div class="mn"><div class="tt">' + (m.t || '') + '</div><div class="st">' + (m.s || '') + '</div>' + (m.a ? '<div class="ac">' + m.a + '</div>' : '') + '</div>' +
+      '<div class="sd"><span class="vl">' + (m.v || '') + '</span>' + (m.b || '') + '</div>' + f21i('r', 18) + '</div>'; }).join('') + '</div>';
+  if (cfg.sumCol !== undefined) h += '<div class="fd21-totm"><span data-f21ml="1"></span><span data-f21ms="1"></span></div>';
+  if (cfg.totBy) h += '<div class="fd21-totby"></div>';
+  h += '<div class="fd21-foot"><span data-f21fc="1"></span>' + (cfg.footNote ? '<span>' + cfg.footNote + '</span>' : '') +
+    '<span class="pg"><button type="button" data-f21pg="' + esc(cfg.id) + ':-1" aria-label="Previous page">' + f21i('l', 14) + '</button><span data-f21pl="1"></span><button type="button" data-f21pg="' + esc(cfg.id) + ':1" aria-label="Next page">' + f21i('r', 14) + '</button></span></div>';
+  return h + '</div>';
+}
+function f21Match(cfg, st) {
+  var words = String(st.q || '').toLowerCase().split(/\s+/).filter(Boolean), vf = cfg.views && cfg.views[st.v] ? cfg.views[st.v][1] : null, out = [];
+  cfg.rows.forEach(function (r, i) {
+    if (vf && !vf(r)) return;
+    var t = String(r.x || '').toLowerCase();
+    if (words.every(function (w) { return t.indexOf(w) >= 0; })) out.push(i);
+  });
+  return out;
+}
+function f21Apply(id) {
+  var cfg = FD21.tables[id], card = document.querySelector('#view [data-f21tc="' + id + '"]'); if (!cfg || !card) return;
+  var st = FD21.ts[id], ok = f21Match(cfg, st), size = cfg.pageSize || 25, pages = Math.max(1, Math.ceil(ok.length / size));
+  if (st.p >= pages) st.p = pages - 1; if (st.p < 0) st.p = 0;
+  var show = {}; ok.slice(st.p * size, st.p * size + size).forEach(function (i) { show[i] = 1; });
+  [].forEach.call(card.querySelectorAll('[data-f21r]'), function (n) { n.style.display = show[n.getAttribute('data-f21r')] ? '' : 'none'; });
+  var nr = card.querySelector('.fd21-nr'); if (nr) nr.style.display = ok.length ? 'none' : '';
+  var sum = 0; ok.forEach(function (i) { var r = cfg.rows[i]; if (!r.rev) sum += Number(r.v) || 0; });
+  var tl = card.querySelector('[data-f21tl]'), ts = card.querySelector('[data-f21ts]');
+  var lbl = (cfg.sumLabel || 'Total of') + ' ' + ok.length + ' ' + (st.q || st.v ? 'filtered ' : '') + 'row' + (ok.length === 1 ? '' : 's');
+  if (tl) tl.textContent = lbl; if (ts) { ts.innerHTML = f21M(sum, cfg.cur, cfg.dec); ts.className = 'n' + (sum < 0 ? ' fd21-neg' : ''); }
+  var ml = card.querySelector('[data-f21ml]'), ms = card.querySelector('[data-f21ms]'); if (ml) ml.textContent = lbl; if (ms) ms.innerHTML = f21M(sum, cfg.cur, cfg.dec);
+  var tb = card.querySelector('.fd21-totby');
+  if (tb && cfg.totBy) {
+    var g = {}, order = [];
+    ok.forEach(function (i) { var r = cfg.rows[i]; if (r.rev) return; var k = cfg.totBy(r); if (!k) return; if (!(k in g)) { g[k] = 0; order.push(k); } g[k] += Number(r.v) || 0; });
+    tb.innerHTML = order.length ? '<span class="l">' + esc(cfg.totLabel || 'Totals by method') + (st.q || st.v ? ' · filtered' : '') + '</span>' + order.sort(function (a, b) { return Math.abs(g[b]) - Math.abs(g[a]); }).map(function (k) { return '<span class="c">' + esc(k) + ' <b>' + f21M(g[k], cfg.cur, cfg.dec) + '</b></span>'; }).join('') : '';
+  }
+  var fc = card.querySelector('[data-f21fc]'), pl = card.querySelector('[data-f21pl]');
+  if (fc) fc.textContent = (ok.length ? (st.p * size + 1) + '–' + Math.min(ok.length, st.p * size + size) : '0') + ' of ' + ok.length + (ok.length !== cfg.rows.length ? ' (filtered from ' + cfg.rows.length + ')' : '');
+  if (pl) pl.textContent = 'Page ' + (st.p + 1) + ' of ' + pages;
+  var pb = card.querySelectorAll('[data-f21pg]'); if (pb[0]) pb[0].disabled = st.p <= 0; if (pb[1]) pb[1].disabled = st.p >= pages - 1;
+  [].forEach.call(card.querySelectorAll('[data-f21v]'), function (b) { b.setAttribute('aria-pressed', String(b.getAttribute('data-f21v') === id + ':' + st.v)); });
+}
+function f21ApplyAll() { Object.keys(FD21.tables).forEach(function (id) { try { f21Apply(id); } catch (e) {} }); }
+function f21Csv(id) {
+  var cfg = FD21.tables[id]; if (!cfg) return;
+  var q = function (v) { v = String(v == null ? '' : v).replace(/\s+/g, ' ').trim(); return /[",\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; };
+  var lines = [cfg.cols.filter(function (c) { return c.l; }).map(function (c) { return q(c.l); }).join(',')];
+  f21Match(cfg, FD21.ts[id]).forEach(function (i) { lines.push((cfg.rows[i].csv || []).map(q).join(',')); });
+  var blob = new Blob(['﻿' + lines.join('\r\n')], { type: 'text/csv;charset=utf-8' }), a = document.createElement('a');
+  a.href = URL.createObjectURL(blob); a.download = id + '-' + new Date().toISOString().slice(0, 10) + '.csv';
+  document.body.appendChild(a); a.click(); setTimeout(function () { URL.revokeObjectURL(a.href); a.parentNode.removeChild(a); }, 500);
+}
+
+/* ---- the drawer */
+function f21DrawerClose() { [].forEach.call(document.querySelectorAll('.fd21-dyn'), function (n) { n.parentNode.removeChild(n); }); FD21.act = null; }
+function f21Drawer(o) {
+  f21DrawerClose();
+  var ov = document.createElement('div'); ov.className = 'fd21-ov fd21-dyn'; ov.setAttribute('data-f21close', '1');
+  var d = document.createElement('aside'); d.className = 'fd21-drw fd21-dyn'; d.setAttribute('role', 'dialog'); d.setAttribute('aria-modal', 'true'); d.setAttribute('aria-label', o.title || '');
+  d.innerHTML = '<div class="fd21-dh"><div class="tt"><div class="t1">' + esc(o.title || '') + '</div>' + (o.sub ? '<div class="t2">' + esc(o.sub) + '</div>' : '') + '</div>' +
+    '<button type="button" class="fd21-x" data-f21close="1" aria-label="Close">' + f21i('x', 18) + '</button></div><div class="fd21-db">' + (o.body || '') + '</div>' +
+    (o.foot ? '<div class="fd21-df">' + o.foot + '</div>' : '');
+  document.body.appendChild(ov); document.body.appendChild(d);
+  FD21.act = o.acts || {};
+  var x = d.querySelector('.fd21-x'); if (x) x.focus();
+  return d;
+}
+function f21Kv(rows) {
+  return '<table class="fd21-kv">' + rows.filter(Boolean).map(function (r) { return '<tr><td>' + esc(r[0]) + '</td><td>' + (r[2] ? r[1] : esc(r[1] == null || r[1] === '' ? '—' : r[1])) + '</td></tr>'; }).join('') + '</table>';
+}
+function f21Btn(key, label, kind, icon) { return '<button type="button" class="btn' + (kind ? ' ' + kind : '') + '" data-f21do="' + esc(key) + '">' + (icon ? f21i(icon, 16) + ' ' : '') + esc(label) + '</button>'; }
+// a drawer kept inside the screen (so the screen's own form in it stays wired); opened and closed without a repaint
+function f21Ivd(view, name, title, sub, body) {
+  var open = FD21.ivd[view] === name;
+  return '<div class="fd21-ivd" data-f21ivd="' + esc(name) + '"' + (open ? '' : ' hidden') + '><div class="fd21-ov" data-f21ivclose="' + esc(view) + '"></div><aside class="fd21-drw" role="dialog" aria-modal="true" aria-label="' + esc(title) + '">' +
+    '<div class="fd21-dh"><div class="tt"><div class="t1">' + esc(title) + '</div>' + (sub ? '<div class="t2">' + esc(sub) + '</div>' : '') + '</div><button type="button" class="fd21-x" data-f21ivclose="' + esc(view) + '" aria-label="Close">' + f21i('x', 18) + '</button></div>' +
+    '<div class="fd21-db">' + body + '</div></aside></div>';
+}
+function f21IvdOpen(view, name, ref) {
+  FD21.ivd[view] = name; FD21.ivdRef[view] = ref;
+  [].forEach.call(document.querySelectorAll('#view [data-f21ivd]'), function (n) { if (n.getAttribute('data-f21ivd') === name) { n.removeAttribute('hidden'); var f = n.querySelector('input:not([type=hidden]), select'); if (f) try { f.focus(); } catch (e) {} } else n.setAttribute('hidden', ''); });
+}
+function f21IvdClose(view) {
+  if (view === 'capital') { var cc = document.querySelector('#view #ci_cancel, #view #cs_cancel'); if (cc) { FD21.ivd[view] = ''; cc.click(); return; } }
+  FD21.ivd[view] = ''; [].forEach.call(document.querySelectorAll('#view [data-f21ivd]'), function (n) { n.setAttribute('hidden', ''); }); }
+// a drawer opened for a form closes by itself once the screen's data came back changed (the save worked)
+function f21IvdSync(view, ref) { if (FD21.ivd[view] && FD21.ivdRef[view] !== ref) FD21.ivd[view] = ''; }
+
+/* ---- one listener for all of it */
+document.addEventListener('click', function (e) {
+  if (!e.target.closest) return;
+  var t = e.target.closest('[data-f21tab]');
+  if (t) { var p = t.getAttribute('data-f21tab').split(':'); f21ShowTab(p[0], p[1]); return; }
+  var v = e.target.closest('[data-f21v]');
+  if (v) { var q = v.getAttribute('data-f21v').split(':'); FD21.ts[q[0]].v = Number(q[1]); FD21.ts[q[0]].p = 0; f21Apply(q[0]); return; }
+  var pg = e.target.closest('[data-f21pg]');
+  if (pg) { var g = pg.getAttribute('data-f21pg').split(':'); FD21.ts[g[0]].p += Number(g[1]); f21Apply(g[0]); var c = document.querySelector('#view [data-f21tc="' + g[0] + '"]'); if (c && c.getBoundingClientRect().top < 0) c.scrollIntoView({ block: 'start' }); return; }
+  var cs = e.target.closest('[data-f21csv]'); if (cs) { f21Csv(cs.getAttribute('data-f21csv')); return; }
+  if (e.target.closest('[data-f21close]')) { f21DrawerClose(); return; }
+  var ic = e.target.closest('[data-f21ivclose]'); if (ic) { f21IvdClose(ic.getAttribute('data-f21ivclose')); return; }
+  var io = e.target.closest('[data-f21ivopen]');
+  if (io) { var w = io.getAttribute('data-f21ivopen').split(':'); f21IvdOpen(w[0], w[1], w[0] === 'expenses' ? EXP : w[0] === 'capital' ? CAPD : null); return; }
+  var dd = e.target.closest('[data-f21do]');
+  if (dd && FD21.act && FD21.act[dd.getAttribute('data-f21do')]) { FD21.act[dd.getAttribute('data-f21do')](dd); return; }
+  var px = e.target.closest('[data-f21proxy]');
+  if (px) { var n = document.querySelector('#view ' + px.getAttribute('data-f21proxy')); if (n) n.click(); return; }
+  var r = e.target.closest('[data-f21r]');
+  if (r && !e.target.closest('button, a, input, select, textarea, label')) {
+    var tb = r.closest('[data-f21tc]'), id = tb && tb.getAttribute('data-f21tc'), cfg = id && FD21.tables[id];
+    if (cfg && cfg.onRow) cfg.onRow(Number(r.getAttribute('data-f21r')));
+  }
+});
+document.addEventListener('input', function (e) {
+  var q = e.target && e.target.getAttribute && e.target.getAttribute('data-f21q'); if (!q || !FD21.ts[q]) return;
+  FD21.ts[q].q = e.target.value; FD21.ts[q].p = 0; f21Apply(q);
+});
+document.addEventListener('keydown', function (e) {
+  if (e.key !== 'Escape') return;
+  if (document.querySelector('.fd21-dyn')) { f21DrawerClose(); return; }
+  if (FD21.ivd[VIEW] && !document.querySelector('.dlg-back')) f21IvdClose(VIEW);
+});
+// screens' head buttons (his title row: title left, the screen's actions right)
+var fdhHtmlF21 = fdhHtml;
+fdhHtml = function (v) {
+  var h = fdhHtmlF21.apply(this, arguments), acts = '';
+  try { acts = f21HeadActs(v); } catch (e) { acts = ''; }
+  if (!acts) return h;
+  var i = h.indexOf('<div class="fdd-grid">'), head = i < 0 ? h : h.slice(0, i), rest = i < 0 ? '' : h.slice(i);
+  if (head.slice(-12) !== '</div></div>') return h;
+  return head.slice(0, -6) + '<div class="fdd-tools fd21-acts">' + acts + '</div></div>' + rest;
+};
+function f21HB(attr, label, primary, icon) { return '<button type="button" class="btn' + (primary ? ' primary' : '') + '" ' + attr + '>' + (icon ? f21i(icon, 16) + ' ' : '') + esc(label) + '</button>'; }
+function f21HeadActs(v) {
+  if (!f21On() || v !== VIEW) return '';
+  if (v === 'cash' && typeof CASH !== 'undefined' && CASH && !CASH.setup) {
+    return f21HB('data-f21proxy="[data-cform=&quot;transfer&quot;]" data-f21totab="cash:accounts"', 'Move money', false, 'swap') +
+      (navOn('sales') ? f21HB('data-f21recpay="1"', 'Record payment', true, 'plus') : '');
+  }
+  if (v === 'expenses' && typeof EXP !== 'undefined' && EXP && !EXP.isFuture) {
+    return f21HB('data-f21proxy="#ex_xls"', 'Download as Excel', false, 'dl') + f21HB('data-f21ivopen="expenses:add"', 'Add expense', true, 'plus');
+  }
+  if (v === 'capital' && typeof CAPD !== 'undefined' && CAPD && CAPD.canEdit && CAP_TAB !== 'partner') {
+    return f21HB('data-f21ivopen="capital:sh"', 'Add shareholder', false, 'plus') + f21HB('data-f21ivopen="capital:in"', 'Add investor', false, 'plus') +
+      (CAPD.holders && CAPD.holders.length ? f21HB('data-f21tab="capital:book"', 'Write in the book', true, 'brief') : '');
+  }
+  if (v === 'commission' && typeof CMS !== 'undefined' && CMS.data && CMS.data.canEdit) return f21HB('data-cmsrule="1"', 'Rule', true, 'plus');
+  return '';
+}
+document.addEventListener('click', function (e) {
+  if (!e.target.closest) return;
+  var a = e.target.closest('[data-f21totab]'); if (a) { var p = a.getAttribute('data-f21totab').split(':'); FD21.tab[p[0]] = p[1]; }
+  if (e.target.closest('[data-f21recpay]')) { if (typeof dashFilter === 'function') { try { dashFilter('due'); } catch (x) {} } go('sales'); }
+}, true);
+
+// =====================================================================
+// Money (view 'cash') = his Payments
+// =====================================================================
+var F21_MON = { Jan: 0, Feb: 1, Mar: 2, Apr: 3, May: 4, Jun: 5, Jul: 6, Aug: 7, Sep: 8, Oct: 9, Nov: 10, Dec: 11 };
+function f21When(s) {   // "13 Oct 2026, 2:06 AM" (the server's when()) -> ms
+  var m = /^(\d{1,2}) (\w{3}) (\d{4})(?:, (\d{1,2}):(\d{2}) ?(AM|PM))?/i.exec(String(s || ''));
+  if (!m) return 0;
+  var hr = Number(m[4] || 0) % 12 + (/pm/i.test(m[6] || '') ? 12 : 0);
+  return new Date(Number(m[3]), F21_MON[m[2]] || 0, Number(m[1]), hr, Number(m[5] || 0)).getTime();
+}
+function f21Day(ms) { if (!ms) return ''; var d = new Date(ms); return d.getDate() + ' ' + ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][d.getMonth()] + ' ' + d.getFullYear(); }
+var F21_KIND = { payment: 'Receipt', capital: 'Capital', expense: 'Expense', payout: 'Courier payout', 'payout-out': 'Courier payout', supplier: 'Supplier payment', shipcost: 'Shipment cost', opening: 'Opening balance' };
+function f21LedLoad() {
+  if (FD21.led || FD21.ledBusy || !CASH || CASH.setup) return;
+  var accs = CASH.accounts || [], left = accs.length, out = [], more = 0, err = '';
+  if (!left) { FD21.led = { rows: [], more: 0 }; return; }
+  FD21.ledBusy = true;
+  var done = function () { if (--left) return; FD21.ledBusy = false; FD21.led = { rows: out, more: more, err: err }; if (VIEW === 'cash') repaint(); };
+  accs.forEach(function (a) {
+    srv('erpCashBook', [{ account: a.id, limit: 1000 }], function (r) { (r.entries || []).forEach(function (x) { x.acc = a; out.push(x); }); more += r.more || 0; done(); },
+      function (e2) { err = (e2 && e2.message) || String(e2); done(); });
+  });
+}
+function f21LedRows() {
+  var c = CASH, rows = [], now = Date.now(), d0 = new Date(); d0.setHours(0, 0, 0, 0);
+  var cur = c.currency || 'BDT';
+  (FD21.led ? FD21.led.rows : []).forEach(function (e) {
+    var ms = f21When(e.when), a = e.acc, kind = e.src === 'payment' ? (e.amount < 0 ? 'Refund' : 'Receipt') : e.src === 'move' ? (/Correction/.test(e.what) ? 'Correction' : 'Transfer') : (F21_KIND[e.src] || e.src);
+    var meth = e.method || (e.src === 'payment' ? '' : '');
+    rows.push({ e: e, ms: ms, acc: a, kind: kind, amt: e.amount, st: 'matched', unm: false });
+  });
+  (c.loose || []).forEach(function (p) { rows.push({ e: { when: p.when, what: (p.amount < 0 ? 'Refund to ' : 'Received from ') + (p.customer || 'customer'), invoice: p.invoice, method: p.method, src: 'payment', id: p.id, by: '' }, ms: f21When(p.when), acc: null, kind: p.amount < 0 ? 'Refund' : 'Receipt', amt: p.amount, st: 'unmatched', unm: 'payment' }); });
+  (c.unassigned || []).forEach(function (p) { rows.push({ e: { when: p.when, what: 'Courier payout ' + p.payout, ref: 'Payout ' + p.payout, src: 'payout', id: p.id, by: '' }, ms: f21When(p.when), acc: null, kind: 'Courier payout', amt: p.amount, st: 'unmatched', unm: 'payout' }); });
+  rows.sort(function (a, b) { return b.ms - a.ms; });
+  return rows.map(function (r) {
+    var e = r.e, accName = r.acc ? r.acc.name : 'No account yet', mlabel = r.acc ? r.acc.name : (e.method || '—');
+    var prim = e.invoice || r.kind, sec = e.invoice ? r.kind : (e.ref && e.ref !== e.method ? e.ref : (r.acc ? (r.acc.kindLabel || '').replace(/ \(.*/, '') : (e.method || 'no account yet')));
+    var badge = r.st === 'unmatched' ? f21B('Unmatched', 'warning') : e.src === 'opening' ? f21B('Opening', 'neutral') : e.src === 'move' && r.kind === 'Correction' ? f21B('Corrected', 'info') : f21B('Matched', 'positive');
+    var amt = '<span class="' + (r.amt < 0 ? 'fd21-neg' : 'fd21-strong') + '">' + f21M(r.amt, cur) + '</span>';
+    return {
+      raw: r, v: r.amt, ms: r.ms,
+      c: ['<span class="fd21-p">' + esc(prim) + '</span><span class="fd21-s">' + esc(sec) + '</span>', esc(f21Day(r.ms) || e.when), amt,
+          '<span>' + f21Meth(mlabel, r.acc ? r.acc.kind : '') + '<span class="fd21-s">' + esc(r.acc ? (e.method && e.invoice ? e.method : (r.acc.kindLabel || '').replace(/ \(.*/, '')) : 'in no account') + '</span></span>',
+          '<span class="fd21-s" style="color:var(--fd-text);font-size:14.5px;font-weight:500;max-width:260px" title="' + esc(e.what) + '">' + esc(e.what) + '</span>', esc(e.by || '—'), badge],
+      m: { t: esc(e.what), s: esc((e.invoice ? e.invoice : r.kind) + ' · ' + mlabel + ' · ' + (f21Day(r.ms) || e.when)), v: '<span class="' + (r.amt < 0 ? 'fd21-neg' : '') + '">' + f21M(r.amt, cur) + '</span>', b: badge },
+      x: [prim, r.kind, e.what, e.ref, e.invoice, mlabel, e.method, e.by, e.when].join(' '),
+      csv: [prim + ' · ' + r.kind, f21Day(r.ms) || e.when, r.amt, mlabel + (e.method ? ' · ' + e.method : ''), e.what, e.by || '', r.st === 'unmatched' ? 'Unmatched' : 'Matched'],
+      tot: r.acc ? r.acc.name : (e.method ? e.method + ' (no account)' : 'No account')
+    };
+  });
+}
+function f21LedTable(id, rows, title, sub, extraViews) {
+  var day0 = new Date(); day0.setHours(0, 0, 0, 0); var t0 = day0.getTime(), w0 = t0 - 6 * 864e5, m0 = new Date(day0.getFullYear(), day0.getMonth(), 1).getTime();
+  var views = [['All', null], ['Today', function (r) { return r.ms >= t0; }], ['This week', function (r) { return r.ms >= w0; }], ['This month', function (r) { return r.ms >= m0; }],
+    ['Unmatched', function (r) { return r.raw.st === 'unmatched'; }], ['Money in', function (r) { return r.v > 0; }], ['Money out', function (r) { return r.v < 0; }],
+    ['Transfers', function (r) { return r.raw.e.src === 'move'; }]].concat(extraViews || []);
+  return f21Table({ id: id, icon: 'wallet', title: title, sub: sub, rows: rows, cur: CASH.currency, ph: 'Search payment, invoice, account, who…',
+    cols: [{ l: 'Payment' }, { l: 'Date' }, { l: 'Amount', n: 1 }, { l: 'Account · method' }, { l: 'Counterparty' }, { l: 'Recorded by' }, { l: 'Check' }],
+    views: views, sumCol: 2, totBy: function (r) { return r.tot; }, totLabel: 'Totals by account',
+    empty: f21Empty('wallet', 'No payments yet', 'Payments appear when a sale is paid, an expense is paid or money is moved between accounts.'),
+    onRow: function (i) { f21LedDrawer(FD21.tables[id].rows[i].raw); } });
+}
+function f21LedDrawer(r) {
+  var e = r.e, c = CASH, cur = c.currency, ed = c.canEdit, acts = {}, foot = '';
+  var badges = '<div class="fd21-row-wrap">' + f21B(r.kind, r.amt < 0 ? 'neutral' : 'accent') + (r.st === 'unmatched' ? f21B('Unmatched', 'warning') : f21B('Matched', 'positive')) + '</div>';
+  var body = badges + '<div class="fd21-amt' + (r.amt < 0 ? ' fd21-neg' : '') + '">' + f21M(r.amt, cur) + '</div>' + f21Kv([
+    ['Date', e.when], ['Account', r.acc ? r.acc.name + ' · ' + (r.acc.kindLabel || '').replace(/ \(.*/, '') : 'None yet: this money is in no balance'], e.method ? ['Method', e.method] : null,
+    ['What', e.what], e.ref && !e.invoice ? ['Reference', e.ref] : null,
+    ['Applies to', e.invoice ? '<button type="button" class="linkbtn" data-f21do="inv">' + esc(e.invoice) + '</button>' : '—', !!e.invoice],
+    ['Recorded by', e.by || '—'], r.acc && e.after !== undefined ? ['Account balance after', f21M(e.after, cur)] : null,
+    ['Source', e.src === 'payment' ? 'Customer payment' : e.src === 'move' ? 'Money moved by hand' : (F21_KIND[e.src] || e.src)]]) +
+    '<div class="fd21-note">' + f21i('info', 18) + '<span>Nothing here is edited or deleted. A line in the wrong account is moved (logged); a transfer or correction is struck out with a reason and stays listed.</span></div>';
+  if (e.invoice && navOn('sales')) acts.inv = function () { f21DrawerClose(); openInvoicePage(e.invoice); };
+  if (r.st === 'unmatched' && ed) {
+    body += '<div><label class="f" for="f21_acc">Which account did it go to?</label><select class="i" id="f21_acc"><option value="">Choose the account…</option>' + cashOpts('') + '</select></div>';
+    foot += f21Btn('place', 'Place in this account', 'primary', 'check');
+    acts.place = function () {
+      var s = document.getElementById('f21_acc'); if (!s || !s.value) { toast('Choose the account first.', true); return; }
+      f21DrawerClose(); cashDo('erpCashReassign', [{ src: r.unm, id: e.id, account: s.value, show: CASH_ACC }], 'Placed.');
+    };
+  }
+  if (r.acc && ed && (e.src === 'payment' || e.src === 'expense' || e.src === 'capital' || e.src === 'payout')) {
+    foot += f21Btn('move', 'Wrong account…', '', 'swap');
+    acts.move = function () {
+      var others = c.accounts.filter(function (a) { return !a.archived && a.id !== r.acc.id; });
+      uiPrompt('Which account did this really go through?\n\n' + others.map(function (a, i) { return (i + 1) + '. ' + a.name; }).join('\n') + '\n\nType the number:', '').then(function (pick) {
+        var a = others[Number(pick) - 1]; if (!a) return;
+        f21DrawerClose(); cashDo('erpCashReassign', [{ src: e.src, id: e.id, account: a.id, show: CASH_ACC }], 'Moved to ' + esc(a.name) + '.');
+      });
+    };
+  }
+  if (r.acc && ed && e.src === 'move') {
+    foot += f21Btn('void', 'Strike out…', 'danger', 'x');
+    acts['void'] = function () {
+      uiPrompt('Strike this line out?\n\nA transfer is struck out on both accounts. Say why:', '').then(function (why) {
+        if (!why) return; f21DrawerClose(); cashDo('erpCashMoveVoid', [{ id: e.id, reason: why }], 'Struck out.');
+      });
+    };
+  }
+  if (r.acc) { foot += '<span class="sp"></span>' + f21Btn('stmt', 'Open ' + r.acc.name + ' statement', 'ghost', 'list'); acts.stmt = function () { f21DrawerClose(); FD21.tab.cash = 'accounts'; CASH_ACC = r.acc.id; repaint(); loadCash(); window.scrollTo(0, 0); }; }
+  else if (e.invoice && navOn('sales')) foot += '<span class="sp"></span>' + f21Btn('inv', 'Open ' + e.invoice, 'ghost', 'receipt');
+  f21Drawer({ title: e.invoice || r.kind, sub: r.kind + ' · ' + e.when, body: body, foot: foot, acts: acts });
+}
+function f21Donut(title, icon, slices, cur, link) {
+  var COL = ['#2F7CF6', '#6B5CFF', '#E2136E', '#06B6D4', '#1DBF73', '#F59E0B', '#A84CFB', '#EF4444'];
+  var tot = slices.reduce(function (s, x) { return s + x.value; }, 0); if (!tot) return '';
+  var R0 = 70, C = 2 * Math.PI * R0, off = 0, arcs = '';
+  slices.forEach(function (s, i) { var len = s.value / tot * C; arcs += '<circle cx="95" cy="95" r="70" fill="none" stroke="' + COL[i % COL.length] + '" stroke-width="30" stroke-dasharray="' + Math.max(0, len - 2).toFixed(2) + ' ' + C.toFixed(2) + '" stroke-dashoffset="' + (-off).toFixed(2) + '" transform="rotate(-90 95 95)"><title>' + esc(s.label) + '</title></circle>'; off += len; });
+  return f21Card(icon, title, '', '<div class="fd21-dn"><table><thead><tr><th>Account</th><th>Received</th></tr></thead><tbody>' + slices.map(function (s, i) {
+    return '<tr><td><i class="sw" style="background:' + COL[i % COL.length] + '"></i>' + esc(s.label) + '</td><td>' + f21K(s.value, cur) + '</td></tr>'; }).join('') + '</tbody></table>' +
+    '<svg viewBox="0 0 190 190" role="img" aria-label="' + esc(title) + '"><circle cx="95" cy="95" r="70" fill="none" stroke="var(--fd-surface-2)" stroke-width="30"/>' + arcs +
+    '<text class="c1" x="95" y="96" text-anchor="middle">' + Math.round(slices[0].value / tot * 100) + '%</text><text class="c2" x="95" y="118" text-anchor="middle">' + esc(String(slices[0].label).slice(0, 16)) + '</text></svg></div>', link);
+}
+var viewCashF21 = viewCash;
+viewCash = function () {
+  var h = viewCashF21.apply(this, arguments);
+  if (!f21On()) return h;
+  if (!CASH) { FD21.led = null; return h; }
+  if (CASH.setup || !navOn('cash')) return h;
+  f21LedLoad();
+  var c = CASH, cur = c.currency;
+  // our screen in its parts: accounts (+ forms, statement, set-up), the waiting list, the cash-up card (fd-11)
+  var iW = h.indexOf('<section><div class="card" style="border-color:var(--warning)"><h2>Waiting for an account'), wait = '';
+  if (iW >= 0) { var eW = h.indexOf('</section>', iW) + 10; wait = h.slice(iW, eW); h = h.slice(0, iW) + h.slice(eW); }
+  var iC = h.indexOf('<div class="card" style="margin-top:16px"><div class="chead"><h2>Cash-up</h2>'), cu = '';
+  if (iC >= 0) { cu = h.slice(iC).replace('<h2>Cash-up</h2>', '<h2>Cash-up history</h2>'); h = h.slice(0, iC); }
+  var live = c.accounts.filter(function (a) { return !a.archived; });
+  var held = live.filter(function (a) { return a.kind === 'courier' || a.kind === 'agent'; });
+  var nWait = (c.loose || []).length + (c.unassigned || []).length;
+  var tabs = [['ledger', 'Ledger', 'wallet'], ['accounts', 'Accounts', 'bank'], ['match', 'Unmatched', 'search', nWait ? String(nWait) : ''], ['cashup', 'Cash-up', 'taka']];
+  if (held.length) tabs.push(['held', 'Courier & agent', 'truck']);
+  f21TabInit('cash', 'ledger', tabs.map(function (t) { return t[0]; }));
+  if (CASH_FORM) FD21.tab.cash = 'accounts';
+  var out = f21Tabs('cash', tabs);
+
+  // ---- Ledger
+  var led;
+  if (!FD21.led) led = '<div class="fd21-card">' + f21Empty('wallet', 'Reading every account…', 'The ledger joins the statements of ' + live.length + ' account(s) and the payments in no account.', '', true) + '</div>';
+  else {
+    var rows = f21LedRows();
+    led = f21LedTable('fd21-ledger', rows, 'Payment ledger', 'Every taka that moved, in every account · newest first · nothing is edited or deleted' + (FD21.led.more ? ' · ' + fmt(FD21.led.more) + ' older line(s) not read' : ''),
+      live.map(function (a) { return [a.name, function (r) { return r.raw.acc && r.raw.acc.id === a.id; }]; }));
+    if (FD21.led.err) led = '<div class="note err"><div class="ico">!</div><div>One account could not be read: ' + esc(FD21.led.err) + '</div></div>' + led;
+    var m0 = new Date(); m0 = new Date(m0.getFullYear(), m0.getMonth(), 1).getTime(), by = {};
+    rows.forEach(function (r) { if (r.ms >= m0 && r.v > 0 && r.raw.acc && (r.raw.e.src === 'payment' || r.raw.e.src === 'payout')) by[r.raw.acc.name] = (by[r.raw.acc.name] || 0) + r.v; });
+    var sl = Object.keys(by).map(function (k) { return { label: k, value: by[k] }; }).sort(function (a, b) { return b.value - a.value; });
+    led += f21Donut('Received by account this month', 'wallet', sl, cur, '<button type="button" class="fdd-more" data-f21tab="cash:match" style="background:none;border:0;cursor:pointer;font:inherit;color:var(--fd-text-2)">Unmatched →</button>');
+    led += '<p class="fd21-small">Matched = the payment sits in a money account (it was placed by its payment method or by hand). Unmatched = received, but nobody said which account it went to; it is in no balance until it is placed. A transfer shows on both accounts.</p>';
+  }
+  out += f21Pane('ledger', 'cash', led);
+  out += f21Pane('accounts', 'cash', h);
+  out += f21Pane('match', 'cash', wait || '<div class="fd21-card">' + f21Empty('check', 'Everything is matched', 'Every payment and every courier payout sits in a money account.') + '</div>');
+
+  // ---- Cash-up: one row per account (book, last count, difference), then the history (fd-11)
+  var hist = (typeof CU !== 'undefined' && CU.hist) || [], last = {};
+  hist.forEach(function (x) { if (!x.struck && !last[x.account]) last[x.account] = x; });
+  var cuRows = live.map(function (a) {
+    var l = last[a.name];
+    return '<div class="fd21-cu"><div class="who"><div class="fd21-p">' + esc(a.name) + '</div><div class="fd21-small" style="margin:0">' + esc((a.kindLabel || '').replace(/ \(.*/, '')) + (l ? ' · last counted ' + esc(l.when) + (l.by ? ' by ' + esc(l.by) : '') : ' · not counted yet') + '</div></div>' +
+      '<div class="fig"><span class="l">Book</span><span class="v">' + f21M(a.balance, cur) + '</span></div>' +
+      '<div class="fig"><span class="l">Counted</span><span class="v">' + (l ? f21M(l.counted, cur) : '—') + '</span></div>' +
+      '<div class="fig"><span class="l">Difference</span><span class="v ' + (l && l.variance ? (l.variance < 0 ? 'fd21-neg' : 'fd21-pos') : '') + '">' + (l ? (l.variance ? (l.variance > 0 ? '+' : '') + f21M(l.variance, cur) : 'none') : '—') + '</span></div>' +
+      '<div class="ac">' + (l ? f21B(l.variance ? 'Booked with a reason' : 'Matches the book', l.variance ? 'warning' : 'positive') : f21B('Not counted yet', 'neutral')) +
+      '<button type="button" class="btn small primary" data-cuopen="1" data-f21cu="' + esc(a.id) + '">Count</button></div></div>';
+  }).join('');
+  out += f21Pane('cashup', 'cash', f21Card('wallet', 'End-of-day cash-up', 'Count what an account really holds; a difference is booked on the account with its reason, so the book equals the count', cuRows) + cu);
+
+  // ---- Courier & agent: money someone else holds for the business
+  if (held.length) {
+    var hc = '<div class="fdd-grid">' + held.map(function (a, i) {
+      return fdhCard({ key: 'h' + i, title: a.name + ' holds', icon: a.kind === 'agent' ? 'wallet' : 'truck', v: a.balance, money: true, hero: i === 0, note: (a.kindLabel || '').replace(/ \(.*/, '') }, cur);
+    }).join('') + '</div>';
+    var hrows = FD21.led ? f21LedRows().filter(function (r) { return r.raw.acc && (r.raw.acc.kind === 'courier' || r.raw.acc.kind === 'agent'); }) : [];
+    hc += FD21.led ? f21LedTable('fd21-held', hrows, 'Courier and agent money', 'Collected by the courier until it pays out; an agent’s advance until freight is paid from it',
+      held.map(function (a) { return [a.name, function (r) { return r.raw.acc && r.raw.acc.id === a.id; }]; })) : '';
+    hc += '<div class="fd21-row-wrap" style="margin-top:-6px">' + held.map(function (a) { return '<button type="button" class="btn small" data-cacc="' + esc(a.id) + '">Open ' + esc(a.name) + ' statement</button>'; }).join('') + '</div>';
+    out += f21Pane('held', 'cash', hc);
+  }
+  return out;
+};
+// any change to the money makes the ledger stale
+var cashDoF21 = cashDo;
+cashDo = function () { FD21.led = null; return cashDoF21.apply(this, arguments); };
+var f21AfterWrite = pagesAfterWrite;
+pagesAfterWrite = function () { FD21.led = null; return f21AfterWrite.apply(this, arguments); };
+document.addEventListener('click', function (e) {
+  if (!e.target.closest || VIEW !== 'cash') return;
+  if (e.target.closest('[data-cform], [data-cacc]')) FD21.tab.cash = 'accounts';
+}, true);
+// "Count" on one account: the cash-up dialog (fd-11) opens with that account picked
+document.addEventListener('click', function (e) {
+  var b = e.target.closest && e.target.closest('[data-f21cu]'); if (!b) return;
+  var dlgs = document.querySelectorAll('.dlg-back'), d = dlgs[dlgs.length - 1], s = d && d.querySelector('#cu_acc');
+  if (s) { s.value = b.getAttribute('data-f21cu'); s.dispatchEvent(new Event('change', { bubbles: true })); }
+});
+
+// =====================================================================
+// Expenses = his Expenses
+// =====================================================================
+function f21Cut(h, start, from) { var i = h.indexOf(start, from || 0); if (i < 0) return null; var j = h.indexOf('</section>', i); return j < 0 ? null : { i: i, j: j + 10, s: h.slice(i, j + 10) }; }
+var viewExpensesF21 = viewExpenses;
+viewExpenses = function () {
+  var h = viewExpensesF21.apply(this, arguments);
+  if (!f21On() || typeof EXP === 'undefined' || !EXP || EXP_ERR) return h;
+  var e = EXP, cur = (OPT && OPT.currency) || 'BDT';
+  f21IvdSync('expenses', EXP);
+  var fx = f21Cut(h, '<section><div class="card"><h2>1 · Fixed expenses</h2>'), rc = f21Cut(h, '<section><div class="card"><h2>2 · Recurring expenses</h2>'),
+      oo = f21Cut(h, '<section><div class="card"><h2>3 · One-off expenses</h2>'), al = f21Cut(h, '<section><div class="card"><h2>Everything recorded in ');
+  if (!fx || !rc || !oo || !al) return h;     // the screen changed shape: show ours as it is
+  var top = h.slice(0, fx.i).replace(/<div class="grid g-kpi"[\s\S]*?<\/div><\/section>$/, '</section>');
+  var rest = h.slice(al.j);                    // the categories card (expCatsHtml)
+  var nMiss = e.missing || 0, unpaid = e.fixedUnpaid || 0;
+  var topCat = (e.byCategory || []).slice().sort(function (a, b) { return b.amount - a.amount; })[0];
+  // his four cards, on our month's figures
+  var cards = '<div class="fdd-grid fd21-kpis">' +
+    fdhCard({ key: 'tot', title: 'Total expenses · ' + e.label, icon: 'receipt', v: e.total, money: true, hero: true, note: 'fixed ' + fmt(e.fixed) + ' · recurring ' + fmt(e.recurring) + ' · one-off ' + fmt(e.oneoffTotal) }, cur) +
+    fdhCard({ key: 'exp', title: 'Expected monthly not done', icon: 'clock', v: unpaid, money: true, tone: unpaid > 0 || nMiss ? 'warn' : '', note: (unpaid > 0 ? 'fixed costs not marked paid' : 'every fixed cost is paid') + (nMiss ? ' · ' + nMiss + ' recurring bill(s) not entered' : '') }, cur) +
+    fdhCard({ key: 'cat', title: topCat ? topCat.name : 'Biggest category', icon: 'layers', v: topCat ? topCat.amount : 0, money: true, note: 'biggest category in ' + e.label }, cur) +
+    fdhCard({ key: 'net', title: 'Net profit · ' + e.label, icon: 'target', v: e.net, money: true, go: navOn('profit') ? 'profit' : '', note: 'gross ' + fmt(e.gross) + (e.other ? (e.other > 0 ? ' + ' : ' − ') + fmt(Math.abs(e.other)) + ' delivery and courier' : '') + ' less expenses paid' + (unpaid > 0 ? ' · ' + fmt(e.netAfterUnpaid) + ' with what is still to pay' : '') }, cur) + '</div>';
+  // the list, his way
+  var KT = { fixed: ['Fixed', 'accent'], recurring: ['Recurring', 'info'] };
+  var rows = (e.all || []).map(function (r) {
+    var gone = !!r.voided, k = KT[r.kind] || ['One-off', 'violet'];
+    var status = gone ? f21B('Struck out', 'neutral') : f21B('Posted', 'positive');
+    var acts = (typeof expReceiptBtns === 'function' ? expReceiptBtns(r, gone) : '') + (gone || r.kind === 'fixed' ? '' : '<button class="btn small" type="button" data-exvoid="' + esc(r.id) + '">Strike out</button>');
+    return { r: r, v: r.amount, rev: gone,
+      c: ['<span class="fd21-p">' + esc(r.description) + '</span><span class="fd21-s">' + esc(gone ? r.voided : r.category) + '</span>', esc(r.when), esc(r.category), f21B(k[0], k[1]),
+          '<span class="fd21-strong">' + f21M(r.amount, cur) + '</span>', status, acts],
+      m: { t: esc(r.description), s: esc(r.category + ' · ' + k[0] + ' · ' + r.when), v: f21M(r.amount, cur), b: status, a: acts },
+      x: [r.description, r.category, r.kind, r.when, r.voided].join(' '), csv: [r.description, r.when, r.category, k[0], r.amount, gone ? 'Struck out: ' + r.voided : 'Posted'], cat: r.category };
+  });
+  var cats = {}; rows.forEach(function (x) { cats[x.cat] = 1; });
+  var list = f21Table({ id: 'fd21-exp', icon: 'receipt', title: 'All expenses · ' + e.label, sub: 'Newest first · every entry stays listed; a wrong one is struck out with its reason', rows: rows, cur: cur, ph: 'Search expense, category…',
+    cols: [{ l: 'Expense' }, { l: 'Recorded' }, { l: 'Category' }, { l: 'Kind' }, { l: 'Total', n: 1 }, { l: 'Status' }, { l: '', cls: 'acts' }],
+    views: [['All', null], ['Fixed', function (x) { return x.r.kind === 'fixed'; }], ['Recurring', function (x) { return x.r.kind === 'recurring'; }], ['One-off', function (x) { return x.r.kind !== 'fixed' && x.r.kind !== 'recurring'; }],
+      ['Struck out', function (x) { return x.rev; }]].concat(Object.keys(cats).slice(0, 4).map(function (k) { return [k, function (x) { return x.cat === k; }]; })),
+    sumCol: 4, totBy: function (x) { return x.cat; }, totLabel: 'Totals by category',
+    empty: f21Empty('receipt', 'Nothing recorded for ' + e.label + ' yet', 'A fixed expense appears here on the day it is marked paid; one-off costs as you add them.', e.isFuture ? '' : '<div class="fd21-row-wrap"><button type="button" class="btn primary" data-f21ivopen="expenses:add">Add expense</button></div>'),
+    onRow: function (i) {
+      var x = FD21.tables['fd21-exp'].rows[i].r, gone = !!x.voided, k = KT[x.kind] || ['One-off', 'violet'], acts = {}, foot = '';
+      if (!gone && x.kind !== 'fixed' && document.querySelector('#view [data-exvoid="' + x.id + '"]')) { foot += f21Btn('void', 'Strike out…', 'danger', 'x'); acts['void'] = function () { f21DrawerClose(); var b = document.querySelector('#view [data-exvoid="' + x.id + '"]'); if (b) b.click(); }; }
+      f21Drawer({ title: x.description, sub: x.category + ' · ' + x.when, foot: foot, acts: acts,
+        body: '<div class="fd21-row-wrap">' + f21B(k[0], k[1]) + (gone ? f21B('Struck out', 'neutral') : f21B('Posted', 'positive')) + '</div><div class="fd21-amt">' + f21M(x.amount, cur) + '</div>' +
+          f21Kv([['Recorded', x.when], ['What for', x.description], ['Category', x.category], ['Kind', k[0] + (x.kind === 'fixed' ? ' (marked paid)' : '')], gone ? ['Struck out', x.voided] : null]) +
+          '<div class="fd21-note">' + f21i('info', 18) + '<span>Expenses are never edited or deleted. A wrong entry is struck out and stays readable; a fixed one is undone from Expected monthly (“Undo paid”). Receipts are on the row’s buttons.</span></div>' });
+    } });
+  var tabs = [['list', 'All expenses', 'receipt'], ['expected', 'Expected monthly', 'cal', (nMiss + (e.fixedItems || []).filter(function (f) { return !f.paid; }).length) && !e.isFuture ? String(nMiss + (e.fixedItems || []).filter(function (f) { return !f.paid; }).length) : ''], ['cats', 'Categories', 'tag']];
+  f21TabInit('expenses', 'list', ['list', 'expected', 'cats']);
+  var out = f21Tabs('expenses', tabs) + top + cards;
+  out += f21Pane('list', 'expenses', list + '<input type="file" id="ex_file" accept="image/*,application/pdf" hidden>' +
+    (e.byCategory && e.byCategory.length ? '<p class="fd21-small">By category: ' + e.byCategory.map(function (c2) { return esc(c2.name) + ' ' + fmt(c2.amount); }).join(' · ') + '</p>' : ''));
+  out += f21Pane('expected', 'expenses', fx.s + rc.s);
+  out += f21Pane('cats', 'expenses', rest || '<div class="fd21-card">' + f21Empty('tag', 'No categories card', '') + '</div>');
+  out += f21Ivd('expenses', 'add', 'Add expense', e.label + ' · one-off · the date and time are recorded by themselves', oo.s +
+    '<div class="fd21-note">' + f21i('info', 18) + '<span>Fixed and recurring costs (rent, salaries, the electricity bill) wait under Expected monthly: press Paid or type that month’s amount there.</span></div>');
+  return out;
+};
+
+// =====================================================================
+// Capital = his Investors
+// =====================================================================
+var viewCapitalF21 = viewCapital;
+viewCapital = function () {
+  var h = viewCapitalF21.apply(this, arguments);
+  if (!f21On() || typeof CAPD === 'undefined' || !CAPD || CAP_ERR || CAP_TAB === 'partner') return h;
+  var c = CAPD, cur = c.currency, t = c.totals, ed = c.canEdit;
+  f21IvdSync('capital', CAPD);
+  var live = function (x) { return !x.ended || x.ended >= c.thisMonth; };
+  var shS = f21Cut(h, '<section><div class="card"><h2>Shareholders</h2>'), inS = f21Cut(h, '<section><div class="card"><h2>Investors</h2>'),
+      wrS = f21Cut(h, '<section><div class="card"><h2>Write in the book</h2>'), moS = h.indexOf('<section><div class="grid g-half"><div class="card"><h2>Profit, month by month</h2>');
+  if (!shS || !inS || moS < 0) return h;
+  var tabsHtml = h.slice(0, h.indexOf('<section>'));         // the joint-stock tabs, when on
+  var FROW = '<div class="row" style="margin-top:12px;align-items:flex-end;gap:8px;flex-wrap:wrap">';
+  var f1 = shS.s.indexOf(FROW), shForm = f1 >= 0 ? shS.s.slice(f1, -('</div></section>'.length)) : '';
+  var f2 = inS.s.indexOf(FROW), inForm = f2 >= 0 ? inS.s.slice(f2, -('</div></section>'.length)) : '';
+  var tail = h.slice(h.indexOf('</section>', moS) + 10);   // fd-10 investor pages (and anything later)
+  var portal = tail.indexOf('<h2>Investor pages</h2>') >= 0 ? tail : '';
+  var sh = c.holders.filter(function (x) { return x.kind === 'shareholder'; }), inv = c.holders.filter(function (x) { return x.kind === 'investor'; });
+
+  var cards = '<div class="fdd-grid fd21-kpis">' +
+    fdhCard({ key: 'all', title: 'Total investment', icon: 'wallet', v: t.allCapital, money: true, hero: true, note: 'shareholders ' + fmt(t.ownersCapital) + ' · investors ' + fmt(t.outsideCapital) }, cur) +
+    fdhCard({ key: 'left', title: 'Profit not yet paid out', icon: 'trend', v: t.earned - t.profitPaid, money: true, tone: t.earned - t.profitPaid < 0 ? 'bad' : '', note: 'earned ' + fmt(t.earned) + ' · paid ' + fmt(t.profitPaid) }, cur) +
+    fdhCard({ key: 'owed', title: 'Owed to investors', icon: 'bell', v: Math.max(0, t.returnDue - t.returnPaid), money: true, tone: t.returnDue - t.returnPaid > 0 ? 'warn' : '', note: 'returns due ' + fmt(t.returnDue) + ' · paid ' + fmt(t.returnPaid) + (t.returnBuilding > 0 ? ' · this month so far ' + fmt(t.returnBuilding) : '') }, cur) +
+    fdhCard({ key: 'pct', title: 'Shares written down', icon: 'percent', v: t.pctGiven, pct: true, tone: t.pctFree > 0.005 ? 'warn' : '', note: t.pctFree > 0.005 ? fmt(t.pctFree) + '% has no owner yet' : 'the shares add up to 100%' }, cur) + '</div>';
+
+  // ---- profile cards
+  var COL = ['var(--fd-accent)', '#8B5CF6', '#2F7CF6', '#06B6D4', '#1DBF73', '#F59E0B'];
+  var shLive = sh.filter(live);
+  var bar = shLive.length ? '<div class="fd21-card"><div class="fd21-ch"><span class="fd21-ib t-violet">' + f21i('pct', 22) + '</span><div class="t"><div class="fd21-ct">Who owns the business</div><div class="fd21-cs">The share is what was agreed, typed in — not worked out from the money. Each month’s net profit belongs to the shareholders in that proportion, paid out or not.</div></div></div>' +
+    '<div class="fd21-sbar">' + shLive.map(function (x, i) { return '<div style="width:' + x.pct + '%;background:' + COL[i % COL.length] + '" title="' + esc(x.name + ' ' + x.pct + '%') + '"></div>'; }).join('') + '</div>' +
+    '<div class="fd21-shl">' + shLive.map(function (x, i) { return '<span><i style="background:' + COL[i % COL.length] + '"></i>' + esc(x.name) + ' ' + fmt(x.pct) + '%</span>'; }).join('') + (t.pctFree > 0.005 ? '<span><i style="background:var(--fd-surface-3)"></i>no owner ' + fmt(t.pctFree) + '%</span>' : '') + '</div>' +
+    (t.pctFree > 0.005 ? '<div class="note err" style="margin:12px 0 0"><div class="ico">!</div><div><strong>' + fmt(t.pctFree) + '% of the business has no owner written down.</strong> All of the profit belongs to the owners, kept in the business or paid out — so the shares must add up to 100%. Give the remaining ' + fmt(t.pctFree) + '% to someone (the owner, usually). A month cannot be closed until they do.</div></div>' : '') + '</div>' : '';
+  var pc = function (x) {
+    var on = live(x), isI = x.kind === 'investor';
+    var tiles = isI ? [[f21K(x.capital, cur), 'Invested'], [f21K(x.returnDue, cur), 'Due so far'], [f21K(x.returnPaid, cur), 'Paid'], [f21K(x.returnOwed, cur), 'Still owed', x.returnOwed > 0]]
+                    : [[f21K(x.capital, cur), 'Invested'], [f21K(x.earned, cur), 'Profit earned'], [f21K(x.profitPaid, cur), 'Paid out'], [f21K(x.profitLeft, cur), 'Left in the business']];
+    return '<div class="fd21-pc' + (on ? '' : ' ended') + '" data-f21pc="' + esc(x.kind) + '" data-f21pcn="' + esc((x.name + ' ' + (x.phone || '')).toLowerCase()) + '" data-f21owed="' + (isI && x.returnOwed > 0 ? 1 : 0) + '" data-f21live="' + (on ? 1 : 0) + '">' +
+      '<div class="hd"><span class="fd21-ib sm' + (isI ? '' : ' t-violet') + '">' + f21i(isI ? 'brief' : 'user', 19) + '</span><div class="tt"><div class="nm">' + esc(x.name) + '</div><div class="sb">' + (isI ? 'Investor' : 'Shareholder') + ' · since ' + esc(capMonth(x.since)) + (x.phone ? ' · ' + esc(x.phone) : '') + '</div></div>' +
+      (on ? f21B('Active', 'positive') : f21B((isI ? 'Ended ' : 'Left ') + capMonth(x.ended), 'neutral')) + '</div>' +
+      '<div class="fd21-row-wrap">' + (isI ? f21B(capTerms(x, cur), 'violet') : f21B('Share ' + fmt(x.pct) + '%', 'violet')) + (x.private ? f21B('Private · owner only', 'neutral') : '') + '</div>' +
+      '<div class="fd21-tiles">' + tiles.map(function (tt) { return '<div class="fd21-tile' + (tt[2] ? ' bad' : '') + '"><b>' + tt[0] + '</b><span>' + tt[1] + '</span></div>'; }).join('') + '</div>' +
+      (isI && x.returnBuilding > 0 ? '<div class="bld">+ ' + f21M(x.returnBuilding, cur) + ' building this month so far</div>' : '') +
+      (ed ? '<div class="ft"><button class="btn small" type="button" data-capedit="' + esc(x.id) + '">Change</button><button class="btn small" type="button" data-capend="' + esc(x.id) + '" data-undo="' + (on ? '' : '1') + '" data-n="' + esc(x.name) + '">' + (on ? (isI ? 'Ended' : 'Has left') : 'Bring back') + '</button>' +
+        '<button class="btn small primary" type="button" data-f21capw="' + esc(x.id) + '">Write in the book</button></div>' : '') + '</div>';
+  };
+  var all = sh.concat(inv);
+  var people = '<div class="fd21-card" style="padding:14px 16px"><div class="fd21-tb" style="padding:0"><label class="fd21-search">' + f21i('search', 18) + '<input type="search" data-f21pcq="1" placeholder="Search name, phone…" aria-label="Search people"></label><div class="fd21-chips">' +
+    [['all', 'All'], ['shareholder', 'Shareholders'], ['investor', 'Investors'], ['owed', 'Owed > 0'], ['ended', 'Left / ended']].map(function (v, i) { return '<button type="button" class="fd21-pill sm" data-f21pcf="' + v[0] + '" aria-pressed="' + ((FD21.pcf || 'all') === v[0]) + '">' + v[1] + '</button>'; }).join('') + '</div></div></div>' +
+    (all.length ? '<div class="fd21-pcs">' + all.map(pc).join('') + '</div>' : '<div class="fd21-card">' + f21Empty('brief', 'Nobody written down yet', 'Add the shareholders (who own the business) and the investors (money in against a return).', ed ? '<div class="fd21-row-wrap"><button type="button" class="btn" data-f21ivopen="capital:sh">Add shareholder</button><button type="button" class="btn primary" data-f21ivopen="capital:in">Add investor</button></div>' : '') + '</div>') +
+    (sh.length ? '<p class="fd21-small">All shareholders: ' + fmt(t.pctGiven) + '% · invested ' + fmt(t.ownersCapital) + ' · profit earned ' + fmt(t.earned) + ' · paid out ' + fmt(t.profitPaid) + ' · left in the business ' + fmt(t.earned - t.profitPaid) + '. Investors: money in against a fixed return (a cost of the month it falls due in), no share of the business.</p>' : '') +
+    (c.hidden ? '<div class="fd21-note">' + f21i('lock', 18) + '<span>' + fmt(c.hidden) + ' person(s) are not listed here — only the owner sees them. The totals above include them.</span></div>' : '');
+
+  // ---- the book (his payouts / allocations ledger)
+  var TY = { invest: ['Money put in', 'positive'], withdraw: ['Taken back', 'warning'], profit: ['Profit paid out', 'accent'], ret: ['Return paid', 'info'] };
+  var brows = (c.entries || []).map(function (en) {
+    var gone = !!en.voided, ty = TY[en.type] || [en.label, 'neutral'], sgn = en.type === 'invest' ? 1 : -1;
+    var act = ed && !gone ? '<button class="btn small" type="button" data-capvoid="' + esc(en.id) + '">Strike out</button>' : '';
+    return { en: en, v: sgn * en.amount, rev: gone,
+      c: ['<span class="fd21-p">' + esc(en.name) + '</span><span class="fd21-s">' + esc(en.label + (en.note ? ' · ' + en.note : '')) + '</span>', esc(en.when), f21B(ty[0], ty[1]),
+          '<span class="' + (sgn > 0 ? 'fd21-strong' : 'fd21-neg') + '">' + (sgn > 0 ? '+' : '') + f21M(sgn * en.amount, cur) + '</span>', en.method ? f21Meth(en.method) : '—', gone ? f21B('Struck out', 'neutral') : f21B('Posted', 'positive'), act],
+      m: { t: esc(en.name), s: esc(ty[0] + ' · ' + en.when), v: (sgn > 0 ? '+' : '') + f21M(sgn * en.amount, cur), b: gone ? f21B('Struck out', 'neutral') : '', a: act },
+      x: [en.name, en.label, en.note, en.method, en.when].join(' '), csv: [en.name, en.when, ty[0], sgn * en.amount, en.method || '', gone ? 'Struck out: ' + en.voided : 'Posted'], ty: ty[0] };
+  });
+  var book = (wrS ? wrS.s : '') + f21Table({ id: 'fd21-capbook', icon: 'brief', title: 'The capital book', sub: 'Every taka in from, or out to, a shareholder or investor · newest first · a wrong line is struck out, never deleted', rows: brows, cur: cur, ph: 'Search name, note…',
+    cols: [{ l: 'Who' }, { l: 'Date' }, { l: 'What' }, { l: 'Amount', n: 1 }, { l: 'Account' }, { l: 'Status' }, { l: '', cls: 'acts' }],
+    views: [['All', null], ['Money put in', function (x) { return x.en.type === 'invest'; }], ['Payouts', function (x) { return x.en.type === 'profit' || x.en.type === 'ret'; }], ['Taken back', function (x) { return x.en.type === 'withdraw'; }], ['Struck out', function (x) { return x.rev; }]],
+    sumCol: 3, sumLabel: 'Net of', totBy: function (x) { return x.ty; }, totLabel: 'Totals by kind',
+    empty: f21Empty('brief', 'Nothing written yet', 'Money put in, profit paid out and investors’ returns are written here.'),
+    onRow: function (i) {
+      var x = FD21.tables['fd21-capbook'].rows[i], en = x.en, acts = {}, foot = '';
+      if (ed && !en.voided) { foot = f21Btn('void', 'Strike out…', 'danger', 'x'); acts['void'] = function () { f21DrawerClose(); var b = document.querySelector('#view [data-capvoid="' + en.id + '"]'); if (b) b.click(); }; }
+      f21Drawer({ title: en.name, sub: en.label + ' · ' + en.when, foot: foot, acts: acts,
+        body: '<div class="fd21-row-wrap">' + f21B((TY[en.type] || [en.label])[0], (TY[en.type] || [0, 'neutral'])[1]) + (en.voided ? f21B('Struck out', 'neutral') : '') + '</div><div class="fd21-amt' + (x.v < 0 ? ' fd21-neg' : '') + '">' + f21M(x.v, cur) + '</div>' +
+          f21Kv([['Date', en.when], ['Who', en.name], ['What', en.label], ['Account', en.method || '—'], ['Note', en.note || '—'], en.voided ? ['Struck out', en.voided] : null]) +
+          '<div class="fd21-note">' + f21i('info', 18) + '<span>A return paid to an investor is also in Expenses; its cost was counted in the month it fell due. Lines in a closed month cannot be struck out.</span></div>' });
+    } });
+
+  // ---- month close
+  var mrows = (c.months || []).map(function (m) {
+    var stt = m.current ? f21B('This month, so far', 'info') : m.closed ? f21B('Closed', 'positive') : m.locked ? f21B('Locked — a later month is closed', 'neutral') : f21B('Open — still follows the books', 'warning');
+    var act = (ed && !m.current && !m.closed ? '<button class="btn small primary" type="button" data-capclose="' + esc(m.month) + '">Close</button>' : '') + (ed && m.closed && m.canReopen ? '<button class="btn small" type="button" data-capreopen="' + esc(m.month) + '">Reopen</button>' : '');
+    return '<tr><td><span class="fd21-p">' + esc(capMonth(m.month)) + '</span></td><td class="n"><span class="' + (m.net < 0 ? 'fd21-neg' : 'fd21-strong') + '">' + f21M(m.net, cur) + '</span></td><td>' + stt + '</td><td class="acts">' + act + '</td></tr>';
+  }).join('');
+  var month = f21Card('cal', 'Month close', 'Net profit as the Expenses screen shows it. Closing a month keeps its profit and the shares as they stand, and locks the books: nothing can be dated into it or struck out of it, in that month or any before it.' +
+      (c.lockedThrough ? ' <strong>Books are closed up to ' + esc(capMonth(c.lockedThrough)) + '.</strong>' : ''),
+    '<div class="fd21-scroll" style="display:block;margin:0"><table class="fd21-t" data-fdt="1"><thead><tr><th>Month</th><th class="n">Net profit</th><th>Status</th><th></th></tr></thead><tbody>' + mrows + '</tbody></table></div>');
+
+  var tabs = [['people', 'Investors', 'brief'], ['book', 'The book', 'list'], ['month', 'Month close', 'cal']];
+  if (portal) tabs.push(['portal', 'Portal links', 'link']);
+  f21TabInit('capital', 'people', tabs.map(function (x) { return x[0]; }));
+  var out = tabsHtml + f21Tabs('capital', tabs) + cards;
+  out += f21Pane('people', 'capital', bar + people);
+  out += f21Pane('book', 'capital', book);
+  out += f21Pane('month', 'capital', month);
+  if (portal) out += f21Pane('portal', 'capital', portal);
+  if (ed) {
+    out += f21Ivd('capital', 'sh', CAP_SH.id ? 'Change shareholder' : 'Add shareholder', 'Name, the agreed share and what they put in', shForm);
+    out += f21Ivd('capital', 'in', CAP_IN.id ? 'Change investor' : 'Add investor', 'Money in against a return; no share of the business', inForm);
+  }
+  return out;
+};
+document.addEventListener('click', function (e) {
+  if (!e.target.closest || VIEW !== 'capital') return;
+  var ce = e.target.closest('[data-capedit]');
+  if (ce) { var x = (CAPD.holders || []).filter(function (q) { return q.id === ce.getAttribute('data-capedit'); })[0]; if (x) { FD21.ivd.capital = x.kind === 'shareholder' ? 'sh' : 'in'; FD21.ivdRef.capital = CAPD; } }
+  if (e.target.closest('#cs_cancel, #ci_cancel')) FD21.ivd.capital = '';
+  var w = e.target.closest('[data-f21capw]');
+  if (w) { CAP_EN.holder = w.getAttribute('data-f21capw'); var hh = CAPD.holders.filter(function (q) { return q.id === CAP_EN.holder; })[0]; CAP_EN.type = hh && hh.kind === 'investor' && hh.capital > 0 ? 'ret' : 'invest'; FD21.tab.capital = 'book'; repaint(); window.scrollTo(0, 0); }
+  var f = e.target.closest('[data-f21pcf]');
+  if (f) { FD21.pcf = f.getAttribute('data-f21pcf'); f21PcApply(); }
+}, true);
+function f21PcApply() {
+  var q = ((document.querySelector('#view [data-f21pcq]') || {}).value || '').toLowerCase().trim(), f = FD21.pcf || 'all';
+  [].forEach.call(document.querySelectorAll('#view [data-f21pcf]'), function (b) { b.setAttribute('aria-pressed', String(b.getAttribute('data-f21pcf') === f)); });
+  [].forEach.call(document.querySelectorAll('#view [data-f21pc]'), function (n) {
+    var ok = (!q || n.getAttribute('data-f21pcn').indexOf(q) >= 0) && (f === 'all' || (f === 'owed' ? n.getAttribute('data-f21owed') === '1' : f === 'ended' ? n.getAttribute('data-f21live') === '0' : n.getAttribute('data-f21pc') === f));
+    n.style.display = ok ? '' : 'none';
+  });
+}
+document.addEventListener('input', function (e) { if (e.target && e.target.hasAttribute && e.target.hasAttribute('data-f21pcq')) f21PcApply(); });
+
+// =====================================================================
+// Commission (fd-9) = his Commission
+// =====================================================================
+var viewCommissionF21 = viewCommission;
+viewCommission = function () {
+  var h = viewCommissionF21.apply(this, arguments), d = CMS.data;
+  if (!f21On() || !d || d.error || !d.sellers || (CMS.month && d.month !== CMS.month)) return h;
+  var cur = d.currency || 'BDT', earned = 0, paid = 0, left = 0;
+  d.sellers.forEach(function (s) { earned += s.earned; paid += s.paid; left += s.left; });
+  var g = h.indexOf('<div class="fdd-grid">'), ge = h.indexOf('<div class="card" style="margin-bottom:16px">');
+  var cards = g >= 0 && ge > g ? h.slice(g, ge) : '';
+  var nav = '<span class="fd21-row-wrap"><button type="button" class="fd21-pill sm" data-cmsm="-1" aria-label="Earlier month">' + f21i('l', 14) + '</button><span class="fd21-pill sm" style="cursor:default" aria-pressed="true">' + f21i('cal', 14) + esc(d.month) + '</span>' +
+    (d.month < d.thisMonth ? '<button type="button" class="fd21-pill sm" data-cmsm="1" aria-label="Later month">' + f21i('r', 14) + '</button>' : '') + '</span>';
+  var srows = d.sellers.map(function (s) {
+    var st = s.left > 0 ? f21B('Payable', 'warning') : s.earned ? f21B('Paid', 'positive') : f21B('Nothing earned', 'neutral');
+    var act = d.canEdit && s.left > 0 ? '<button class="btn small primary" type="button" data-cmspay="' + esc(s.id) + '" data-left="' + s.left + '" data-name="' + esc(s.name) + '">Pay</button>' : '';
+    return { s: s, v: s.earned,
+      c: ['<span class="fd21-p">' + esc(s.name) + '</span><span class="fd21-s">' + esc(d.month) + '</span>', f21M(s.sales, cur), f21M(s.profit, cur), '<span class="fd21-strong">' + f21M(s.earned, cur) + '</span>', f21M(s.paid, cur),
+          '<span class="' + (s.left > 0 ? 'fd21-neg fd21-strong' : '') + '">' + f21M(s.left, cur) + '</span>', st, act],
+      m: { t: esc(s.name), s: 'sales ' + f21M(s.sales, cur) + ' · paid ' + f21M(s.paid, cur) + ' · left ' + f21M(s.left, cur), v: f21M(s.earned, cur), b: st, a: act },
+      x: s.name, csv: [s.name, s.sales, s.profit, s.earned, s.paid, s.left] };
+  });
+  var sellers = f21Table({ id: 'fd21-cms', icon: 'pct', title: 'Sellers · ' + d.month, sub: 'Commission is a cost of the month it is earned in (Expenses, Commission); paying it later is not counted again. A return takes it back from whoever sold it.', rows: srows, cur: cur,
+    cols: [{ l: 'Seller' }, { l: 'Sales', n: 1 }, { l: 'Profit', n: 1 }, { l: 'Earned', n: 1 }, { l: 'Paid', n: 1 }, { l: 'Left', n: 1 }, { l: 'Status' }, { l: '', cls: 'acts' }],
+    views: [['All', null], ['Payable', function (x) { return x.s.left > 0; }], ['Paid', function (x) { return x.s.earned > 0 && x.s.left <= 0; }]], sumCol: 3, ph: 'Search seller…',
+    empty: f21Empty('pct', 'No commission earned in ' + d.month, d.rules.length ? 'Nobody sold under a rule this month.' : 'Add a rule: then each seller earns on what they sell.', d.canEdit && !d.rules.length ? '<div class="fd21-row-wrap"><button type="button" class="btn primary" data-cmsrule="1">Add a rule</button></div>' : ''),
+    onRow: function (i) {
+      var s = FD21.tables['fd21-cms'].rows[i].s, acts = {}, foot = '';
+      if (d.canEdit && s.left > 0) { foot = f21Btn('pay', 'Pay ' + f21M(s.left, cur), 'primary', 'wallet'); acts.pay = function () { f21DrawerClose(); var b = document.querySelector('#view [data-cmspay="' + s.id + '"]'); if (b) b.click(); }; }
+      f21Drawer({ title: s.name, sub: 'Commission · ' + d.month, foot: foot, acts: acts,
+        body: '<div class="fd21-amt">' + f21M(s.earned, cur) + '</div>' + f21Kv([['Month', d.month], ['Sales', f21M(s.sales, cur)], ['Gross profit on them', f21M(s.profit, cur)], ['Earned', f21M(s.earned, cur)], ['Paid', f21M(s.paid, cur)], ['Left to pay', f21M(s.left, cur)]]) +
+          '<div class="fd21-note">' + f21i('info', 18) + '<span>On each sold line the most specific rule wins: one product, then a brand, then a category, then everything; a person’s own rule before everyone’s.</span></div>' });
+    } });
+  var SC = { all: 'Everything', category: 'Category', brand: 'Brand', sku: 'Product' };
+  var rrows = d.rules.map(function (r) {
+    var act = d.canEdit ? '<button class="btn small danger" type="button" data-cmsvoid="' + esc(r.id) + '">Remove</button>' : '';
+    return { r: r, v: 0, c: ['<span class="fd21-p">' + esc(r.sellerName) + '</span>', esc(SC[r.scope] || r.scope) + (r.match ? ': <b>' + esc(r.match) + '</b>' : ''), '<span class="fd21-strong">' + fmt(r.pct) + '%</span>', f21B(r.basis === 'profit' ? 'gross profit' : 'sales', r.basis === 'profit' ? 'violet' : 'info'), esc(r.since), act],
+      m: { t: esc(r.sellerName) + ' · ' + fmt(r.pct) + '%', s: esc((SC[r.scope] || r.scope) + (r.match ? ': ' + r.match : '') + ' · of ' + (r.basis === 'profit' ? 'gross profit' : 'sales') + ' · since ' + r.since), a: act },
+      x: [r.sellerName, r.scope, r.match, r.basis].join(' '), csv: [r.sellerName, (SC[r.scope] || r.scope) + (r.match ? ': ' + r.match : ''), r.pct, r.basis, r.since] };
+  });
+  var rules = f21Table({ id: 'fd21-cmsr', icon: 'list', title: 'Rules', sub: 'On each sold line the most specific rule wins: one product, then a brand, then a category, then everything; a person’s own rule before everyone’s.', rows: rrows,
+    tools: d.canEdit ? '<button class="btn small primary" type="button" data-cmsrule="1">+ Rule</button>' : '',
+    cols: [{ l: 'Who' }, { l: 'On' }, { l: '%', n: 1 }, { l: 'Of' }, { l: 'Since' }, { l: '', cls: 'acts' }], views: [['All', null]],
+    empty: f21Empty('list', 'No rules yet', 'Nobody earns commission until a rule says how much.', d.canEdit ? '<div class="fd21-row-wrap"><button type="button" class="btn primary" data-cmsrule="1">Add a rule</button></div>' : '') });
+  f21TabInit('commission', 'sellers', ['sellers', 'rules']);
+  return f21Tabs('commission', [['sellers', 'Sellers & payouts', 'wallet', left > 0 ? String(d.sellers.filter(function (s) { return s.left > 0; }).length) : ''], ['rules', 'Rules', 'list', '']], nav) +
+    cards + f21Pane('sellers', 'commission', sellers) + f21Pane('rules', 'commission', rules) +
+    '<p class="fd21-small">Sellers never see cost or profit here; the screen is for the people allowed to pay commission.</p>';
+};
+
+// =====================================================================
+// Profitability: Profit & loss / Products
+// =====================================================================
+var viewProfitF21 = viewProfit;
+viewProfit = function () {
+  var h = viewProfitF21.apply(this, arguments);
+  if (!f21On()) return h;
+  var M = '<section><div class="row" style="align-items:center;gap:8px;margin-bottom:12px"><strong>Product profitability</strong>', i = h.indexOf(M);
+  if (i < 0) return h;
+  var pnl = h.slice(0, i), prod = h.slice(i);
+  var J = '<section><div class="note"><div class="ico">i</div><div><strong>Joint stock in these sales', j = prod.indexOf(J);
+  if (j >= 0) { pnl += prod.slice(j); prod = prod.slice(0, j); }
+  prod = prod.replace('<strong>Product profitability</strong>', '<strong style="font-size:15px;margin-right:6px">Window</strong>');
+  f21TabInit('profit', 'pnl', ['pnl', 'products']);
+  return f21Tabs('profit', [['pnl', 'Profit & loss', 'chart'], ['products', 'Product profitability', 'box']]) + f21Pane('pnl', 'profit', pnl) + f21Pane('products', 'profit', prod);
+};
+
+// =====================================================================
+// after every paint: tables, the head without the month cards where the screen shows its own
+// =====================================================================
+var F21_VIEWS = { cash: 1, expenses: 1, capital: 1, commission: 1, profit: 1 };
+if (typeof FDH_VIEWS !== 'undefined') { FDH_VIEWS.expenses = 0; FDH_VIEWS.capital = 0; }
+FDH_SUB.cash = 'Every taka in and out, the accounts, matching and the cash-up';
+var repaintF21 = repaint;
+repaint = function () {
+  FD21.tables = {};
+  if (FD21.lastView !== VIEW) { f21DrawerClose(); FD21.lastView = VIEW; }
+  var r = repaintF21.apply(this, arguments);
+  if (f21On() && F21_VIEWS[VIEW]) { try { f21ApplyAll(); if (VIEW === 'capital') f21PcApply(); } catch (e) {} }
+  return r;
+};
+</script>
+
 </body>
 </html>
