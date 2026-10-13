@@ -1819,3 +1819,11 @@ marked paid while October rent was a one-off (counted twice on the Expenses scre
   money_accounts, shipments, preorders, followups, commission, system_check, supplier_dues, and propose_followup /
   propose_expense / propose_payment (each written only on the person's Yes, role gates as on the screens). Test
   assistant (17). The dev copy has no AI key, so it answers "not set up" there until a Gemini key is added.
+- Joint stock on DEV: switched on for the demo business with a demo partner company ("Demo Partner Filament"), a pool
+  "Filament JV (demo)", 4 joint products (55 units), capital 60,000 + 40,000 (an interrupted set-up run doubled two
+  capital entries and two receipts: struck out / adjusted back with reasons, visible in the pool's book).
+- fd-36 (owner): the side menu folds to icons only (round button beside the logo, remembered per device, names as
+  tooltips); the business switcher is the logo + name at the top left (all businesses, + Add a business); the
+  Dashboard drop-down keeps only product groups. No flashes on refresh: the theme is applied in the page's first lines
+  from this device's last copy, the business name, logo and the person's name are painted from the last copy before
+  the ERP answers; the logo never shows the bare letter in between.

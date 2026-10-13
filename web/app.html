@@ -552,7 +552,14 @@ svg { display:block; width:100%; overflow:visible; }
   } catch (e) {}
   document.documentElement.setAttribute('data-theme', t === 'light' ? 'light' : 'dark');
   // fd-1: the FilaDash look from the first paint (the block at the end of the page adds the switch)
-  try { if ((localStorage.getItem('erp_skin') || 'fd') === 'fd') document.documentElement.setAttribute('data-skin', 'fd'); } catch (e) { document.documentElement.setAttribute('data-skin', 'fd'); }
+  document.documentElement.setAttribute('data-skin', 'fd');   // FilaDash is the only look (fd-24)
+  // fd-36: this device's theme as it was last painted, before anything else draws (no flash of the default colours)
+  try {
+    var tc = localStorage.getItem('fd_theme_css_' + (t === 'light' ? 'light' : 'dark'));
+    if (tc) document.documentElement.style.cssText += tc;
+    var ta = JSON.parse(localStorage.getItem('fd_theme_attrs') || 'null');
+    if (ta) { document.documentElement.setAttribute('data-fd-text', ta.text || 'm'); document.documentElement.setAttribute('data-fd-density', ta.density || 'comfortable'); document.documentElement.setAttribute('data-fd-radius', ta.radius || 'rounded'); }
+  } catch (e) {}
 })();
 </script>
 <div id="dbg">booting…</div>
@@ -562,7 +569,7 @@ svg { display:block; width:100%; overflow:visible; }
 <div class="app" id="app">
   <div class="backdrop" id="navBackdrop"></div>
   <aside id="side">
-    <div class="brand"><div class="logo" id="bizMark">C</div><div><h1 id="bizName"></h1><span class="tag">ERP</span></div></div>
+    <div class="brand"><div class="logo" id="bizMark"></div><div><h1 id="bizName"></h1><span class="tag">ERP · Business</span></div></div><script>try { var fdsh = JSON.parse(localStorage.getItem('fd_shell') || 'null'); if (fdsh && fdsh.biz) document.getElementById('bizName').textContent = fdsh.biz; if (fdsh && fdsh.logo && /^data:image\//.test(fdsh.logo)) { var bm = document.getElementById('bizMark'); bm.className = 'logo has-img'; bm.innerHTML = '<img src="' + fdsh.logo.replace(/"/g, '') + '" alt="">'; } } catch (e) {}</script>
     <nav id="nav">
       <div class="navgrp">Overview</div>
       <button type="button" data-view="dash" aria-selected="true"><span class="ic"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg></span>Dashboard</button>
@@ -34601,6 +34608,122 @@ document.addEventListener('input', function (e) { if (e.target && e.target.id ==
 var goAw = go;
 go = function (v) { if (v === 'chat') { awToggle(true); return; } return goAw.apply(this, arguments); };
 setTimeout(function () { try { awPaint(); } catch (e) {} }, 0);
+</script>
+
+<!-- fd-36 (owner 14 Oct 2026): the side menu folds to icons only (no names; a name shows when pointed at) with a round
+     button beside the logo, remembered per device; the business switcher moves to the logo and name at the top left
+     (every business, + Add a business; switching changes the logo and name), the Dashboard drop-down keeps only the
+     product groups; and no more flashes on refresh: the theme, the business name and the person's name are painted
+     from this device's last copy before the ERP answers. -->
+<style>
+/* ---- the fold button beside the logo */
+:root[data-skin="fd"] #side .brand { position:relative; padding-right:48px; cursor:pointer; border-radius:14px; }
+:root[data-skin="fd"] #side .brand:hover h1 { color:var(--fd-accent-text); }
+:root[data-skin="fd"] #side .brand h1 { max-width:118px; display:flex; align-items:center; gap:4px; }
+:root[data-skin="fd"] #side .brand .fdb-chev { width:14px; height:14px; flex:0 0 14px; color:var(--fd-text-3); }
+:root[data-skin="fd"] #sideFold { position:absolute; right:12px; top:50%; transform:translateY(-50%); width:28px !important; height:28px !important; min-height:28px !important; margin:0 !important;
+  border-radius:999px !important; border:1px solid var(--fd-border) !important; background:var(--fd-card) !important; color:var(--fd-text-2) !important; font-size:0 !important; display:grid !important; place-items:center; padding:0 !important; cursor:pointer; z-index:2; }
+:root[data-skin="fd"] #sideFold::before { content:""; width:8px; height:8px; border-left:2px solid currentColor; border-bottom:2px solid currentColor; transform:translateX(1px) rotate(45deg); }
+:root[data-skin="fd"] body.side-mini #sideFold::before { transform:translateX(-1px) rotate(-135deg); }
+:root[data-skin="fd"] #sideFold:hover { color:var(--fd-accent-text) !important; border-color:var(--fd-accent-border) !important; }
+/* ---- folded: icons only, his rail */
+@media (min-width:761px) {
+  :root[data-skin="fd"] body.side-mini { --side-w:72px; }
+  :root[data-skin="fd"] body.side-mini #side { padding-top:16px; }
+  :root[data-skin="fd"] body.side-mini #side .brand { flex-direction:column; justify-content:center; padding:0 0 40px; margin-bottom:12px; }
+  :root[data-skin="fd"] body.side-mini #side .brand > div:not(.logo) { display:none !important; }
+  :root[data-skin="fd"] body.side-mini #sideFold { top:auto; bottom:4px; right:50%; transform:translateX(50%); }
+  :root[data-skin="fd"] body.side-mini .sidefoot { display:none !important; }
+  :root[data-skin="fd"] body.side-mini nav#nav button, :root[data-skin="fd"][data-theme="dark"] body.side-mini nav#nav button {
+    margin:0 10px; width:calc(100% - 20px); padding:0 !important; justify-content:center; border-radius:14px; font-size:0 !important; gap:0; }
+  :root[data-skin="fd"] body.side-mini nav#nav button .ic { margin:0 !important; }
+  :root[data-skin="fd"] body.side-mini nav#nav button .count { position:absolute; top:6px; right:6px; min-width:8px; width:8px; height:8px; padding:0; font-size:0; }
+  :root[data-skin="fd"] body.side-mini nav#nav button[aria-selected="true"]::after { right:-11px; }
+  :root[data-skin="fd"] body.side-mini nav#nav .navgrp { margin:10px 14px; }
+}
+/* between 761 and 1279 the menu is folded already: the button is not needed there */
+@media (min-width:761px) and (max-width:1279px) { :root[data-skin="fd"] #sideFold { display:none !important; } :root[data-skin="fd"] #side .brand { padding-right:0; } }
+</style>
+<script>
+/* ---------- the business switcher on the logo ---------- */
+function fdBizMenu(anchor) {
+  var b = (typeof BIZ !== 'undefined' && BIZ) || {}, list = b.businesses || [], items = [{ section: 'Business' }];
+  list.forEach(function (x) { items.push({ label: x.name + (x.pool ? ' (joint pool)' : ''), icon: x.pool ? 'layers' : 'biz', checked: x.id === b.active,
+    onClick: function () { if (x.id !== b.active && typeof switchBusiness === 'function') switchBusiness(x.id); } }); });
+  if (!list.length) items.push({ label: 'No business yet', icon: 'info', disabled: true });
+  if (b.canAdd) { items.push({ sep: true }); items.push({ label: 'Add a business…', help: 'A new company with its own books', icon: 'add', onClick: function () {
+    var sel = el('bizSel'); if (sel) { sel.value = '__new'; sel.dispatchEvent(new Event('change', { bubbles: true })); } } }); }
+  fdPop(anchor, items);
+}
+document.addEventListener('click', function (e) {
+  if (!e.target.closest || document.documentElement.getAttribute('data-skin') !== 'fd') return;
+  var br = e.target.closest('#side .brand'); if (!br || e.target.closest('#sideFold')) return;
+  e.preventDefault(); e.stopPropagation(); fdBizMenu(br);
+}, true);
+// the Dashboard's drop-down: product groups only (the business is chosen at the logo)
+fdWsMenu = function (anchor) {
+  var items = [{ section: 'Product group' }];
+  items.push({ label: 'All products', help: 'The whole business', icon: 'layers', checked: !FDD.group, onClick: function () { FDD.group = ''; fddSave(); if (VIEW !== 'dash') go('dash'); else repaint(); } });
+  var groups = (FDD.data && FDD.data.groups) || [];
+  groups.forEach(function (gr) { items.push({ label: gr.label, help: gr.products + ' product(s)', icon: 'group', checked: FDD.group === gr.key, onClick: function () { FDD.group = gr.key; fddSave(); if (VIEW !== 'dash') go('dash'); else repaint(); } }); });
+  if (!groups.length) items.push({ label: 'Groups load with the dashboard', icon: 'info', disabled: true });
+  items.push({ sep: true });
+  items.push({ label: 'Groups are views, not copies', help: 'Σ groups = All products. Expenses, net profit, dues and cash stay whole-business.', icon: 'info', disabled: true });
+  fdPop(anchor, items);
+};
+document.addEventListener('mousedown', function (e) { if (FDPOP && e.target.closest && e.target.closest('#side .brand, #fddScope')) e.stopPropagation(); }, true);
+
+/* ---------- no flashes on refresh: paint from this device's last copy ---------- */
+var FD_SHELL = (function () { try { return JSON.parse(localStorage.getItem('fd_shell') || 'null') || {}; } catch (e) { return {}; } })();
+function fdShellSave() {
+  try {
+    var cur = {}; var b = (typeof BIZ !== 'undefined' && BIZ) || null;
+    if (b && b.businesses) { var a = b.businesses.filter(function (x) { return x.id === b.active; })[0]; if (a) cur.biz = a.name; }
+    if (ME) cur.user = fdUserName();
+    if (cur.biz || cur.user) { FD_SHELL = Object.assign({}, FD_SHELL, cur); localStorage.setItem('fd_shell', JSON.stringify(FD_SHELL)); }
+  } catch (e) {}
+}
+(function early() {
+  var n = el('bizName'); if (n && !n.textContent.trim() && FD_SHELL.biz) n.textContent = FD_SHELL.biz;
+  var tag = document.querySelector('#side .brand .tag'); if (tag) tag.textContent = 'ERP · Business';
+  var mk = el('bizMark'); if (mk && !mk.classList.contains('has-img') && !mk.querySelector('.fdlogo') && typeof fdLogoSvg === 'function') mk.innerHTML = fdLogoSvg();
+})();
+var fdUserNameShell = fdUserName;
+fdUserName = function () { if (!ME && FD_SHELL.user) return FD_SHELL.user; return fdUserNameShell.apply(this, arguments); };
+var fdBizNameShell = fdBizName;
+fdBizName = function () { var n = el('bizName'); if ((!n || !n.textContent.trim()) && FD_SHELL.biz) return FD_SHELL.biz; return fdBizNameShell.apply(this, arguments); };
+var fdShellPaint36 = fdShellPaint;
+fdShellPaint = function () {
+  var r = fdShellPaint36.apply(this, arguments);
+  var h1 = document.querySelector('#side .brand h1');
+  if (h1 && !h1.querySelector('.fdb-chev')) h1.insertAdjacentHTML('beforeend', '<svg class="fdb-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>');
+  if (ME) fdShellSave();
+  return r;
+};
+// a business switch: the name and logo change with it (and the copy follows)
+var applyBusinesses36 = applyBusinesses;
+applyBusinesses = function () { var r = applyBusinesses36.apply(this, arguments); try { fdShellSave(); fdShellPaint(); } catch (e) {} return r; };
+// the theme of this device is kept as it was painted, so the next load starts with it (read in the page's first lines)
+var fdThemeNow36 = fdThemeNow;
+fdThemeNow = function () {
+  var r = fdThemeNow36.apply(this, arguments);
+  try {
+    var st = document.documentElement.style, css = '';
+    for (var i = 0; i < st.length; i++) { var k = st[i]; if (/^--fd-/.test(k)) css += k + ':' + st.getPropertyValue(k) + ';'; }
+    localStorage.setItem('fd_theme_css_' + (document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light'), css);
+    localStorage.setItem('fd_theme_attrs', JSON.stringify({ text: FDT.text, density: FDT.density, radius: FDT.radius }));
+  } catch (e) {}
+  return r;
+};
+try { fdThemeNow(); } catch (e) {}
+// the logo: the business's own picture, else the FilaDash mark - never the bare letter in between; kept for the next load
+brandPaint = function () {
+  var mk = el('bizMark'); if (!mk) return;
+  if (BRAND.src) { mk.className = 'logo has-img'; mk.innerHTML = '<img src="' + esc(BRAND.src) + '" alt="">'; }
+  else { mk.className = 'logo'; if (!mk.querySelector('.fdlogo')) mk.innerHTML = typeof fdLogoSvg === 'function' ? fdLogoSvg() : ''; }
+  try { FD_SHELL.logo = BRAND.src || ''; localStorage.setItem('fd_shell', JSON.stringify(FD_SHELL)); } catch (e) {}
+};
+setTimeout(function () { try { fdShellPaint(); sideFoldPaint(); } catch (e) {} }, 0);
 </script>
 
 </body>
