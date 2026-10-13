@@ -35354,6 +35354,13 @@ body[data-fdview="settings"] #o_cp .crumbs, body[data-fdview="tools"] #o_cp .cru
 .ib-reply { border-top:1px solid var(--fd-border); padding:10px; display:flex; flex-direction:column; gap:6px; }
 .ib-reply .row2 { display:flex; gap:6px; align-items:flex-end; }
 .ib-reply textarea { flex:1 1 auto; min-height:42px; max-height:140px; resize:vertical; border-radius:12px; padding:9px 11px; }
+.ib-compose textarea { min-width:0; width:auto; }
+.ib-compose .btn { height:42px; flex:0 0 auto; padding:0 18px; }
+.ib-tools { display:flex; gap:6px; align-items:center; flex-wrap:wrap; }
+.ib-tools .btn { height:32px; display:inline-flex; align-items:center; cursor:pointer; }
+.ib-tools select.i { width:auto; max-width:170px; height:32px; }
+.ib-tools .ib-hint { margin-left:auto; }
+.ib-notebox[hidden] { display:none !important; }
 .ib-hint { font-size:12px; color:var(--fd-text-3); }
 .ib-hint.warn { color:var(--fd-negative, #E5484D); font-weight:600; }
 .ib-side { overflow:auto; padding:12px; display:flex; flex-direction:column; gap:12px; }
@@ -35459,8 +35466,8 @@ body[data-fdview="settings"] #o_cp .crumbs, body[data-fdview="tools"] #o_cp .cru
     var nta = el('ibReply'); if (nta && draft !== null) { nta.value = draft; if (focus === 'ibReply') { nta.focus(); } }
     fit();
   }
-  // on a phone the chat fills the screen exactly: from its top down to the bottom tab bar (the reply box stays in view)
-  function fit() { var w = document.querySelector('#view .ib-wrap'); if (!w) return; if (innerWidth > 760) { w.style.height = ''; return; }
+  // the chat fills the screen exactly (desktop and phone): from its top down to the bottom tab bar (the reply box stays in view)
+  function fit() { var w = document.querySelector('#view .ib-wrap'); if (!w) return;
     var tb = el('tabbar'), tbh = tb && getComputedStyle(tb).display !== 'none' ? tb.getBoundingClientRect().height : 0; var r = w.getBoundingClientRect(), z = w.offsetHeight ? r.height / w.offsetHeight : 1;   // the page may be zoomed: rects are zoomed, style heights are not
     w.style.height = Math.max(380, (innerHeight - (r.top + scrollY) - tbh - 8) / (z || 1)) + 'px'; }
   addEventListener('resize', function () { if (VIEW === 'inbox') fit(); });
@@ -35533,11 +35540,12 @@ body[data-fdview="settings"] #o_cp .crumbs, body[data-fdview="tools"] #o_cp .cru
     var msgs = '<div class="ib-msgs">' + (more ? '<div class="ib-ev"><button class="btn small" type="button" data-ibolder="' + more + '">Load older messages</button></div>' : '') + (old ? old.msgs.map(bubble).join('') : '') + c.msgs.map(bubble).join('') + '</div>';
     var win = c.windowLeft === null ? '' : c.windowLeft > 0 ? 'Meta\'s 24-hour window: ' + (c.windowLeft >= 60 ? Math.floor(c.windowLeft / 60) + ' h ' : '') + (c.windowLeft % 60) + ' min left' : 'Past 24 hours: your reply goes with Meta\'s human-agent tag (up to 7 days).';
     var reply = '<div class="ib-reply">' + (human ? '' : '<div class="ib-hint">The AI is answering. Typing here sends as you; the AI keeps the chat unless you take over.</div>') +
-      '<div class="row2"><select class="i" data-ibsaved="1" style="width:auto;max-width:140px;height:42px"><option value="">Saved…</option>' + ((IB.saved && IB.saved.list) || []).map(function (s) { return '<option value="' + esc(s.id) + '">' + esc(s.title) + '</option>'; }).join('') + '</select>' +
-      '<textarea class="i" id="ibReply" placeholder="Write a reply…"></textarea><label class="btn small" style="height:42px;display:inline-flex;align-items:center;cursor:pointer" title="Send a photo">📷<input type="file" accept="image/*" id="ibPhoto" style="display:none"></label>' +
-      ((window.SpeechRecognition || window.webkitSpeechRecognition) ? '<button class="btn small' + (IB.dict ? ' primary' : '') + '" type="button" data-ibdict="1" style="height:42px" title="Speak - your words are typed into the reply (Bangla, or English when the customer writes English)">🎤</button>' : '') +
-      '<button class="btn primary" type="button" data-ibsend="1" style="height:42px">Send</button></div><div class="ib-hint' + (c.windowLeft === 0 ? ' warn' : '') + '">' + esc(win) + '</div>' +
-      '<div class="row2"><input class="i" id="ibNote" placeholder="Note for the team (the customer never sees it)" style="flex:1"><button class="btn small" type="button" data-ibnote="1">Add note</button></div></div>';
+      '<div class="row2 ib-compose"><textarea class="i" id="ibReply" rows="1" placeholder="Write a reply…"></textarea><button class="btn primary" type="button" data-ibsend="1">Send</button></div>' +
+      '<div class="ib-tools"><label class="btn small" title="Send a photo">📷<input type="file" accept="image/*" id="ibPhoto" style="display:none"></label>' +
+      ((window.SpeechRecognition || window.webkitSpeechRecognition) ? '<button class="btn small' + (IB.dict ? ' primary' : '') + '" type="button" data-ibdict="1" title="Speak - your words are typed into the reply (Bangla, or English when the customer writes English)">🎤</button>' : '') +
+      '<select class="i" data-ibsaved="1"><option value="">Saved replies…</option>' + ((IB.saved && IB.saved.list) || []).map(function (s) { return '<option value="' + esc(s.id) + '">' + esc(s.title) + '</option>'; }).join('') + '</select>' +
+      '<button class="btn small" type="button" data-ibnotebox="1" title="A note only the team sees">📝 Note</button><span class="ib-hint' + (c.windowLeft === 0 ? ' warn' : '') + '">' + esc(win) + '</span></div>' +
+      '<div class="row2 ib-notebox"' + (IB.noteOpen ? '' : ' hidden') + '><input class="i" id="ibNote" placeholder="Note for the team (the customer never sees it)" style="flex:1"><button class="btn small" type="button" data-ibnote="1">Add note</button></div></div>';
     return head + msgs + reply;
   }
   function sideHtml(c) {
@@ -35843,7 +35851,7 @@ body[data-fdview="settings"] #o_cp .crumbs, body[data-fdview="tools"] #o_cp .cru
   function readFileAsB64(f, cb) { var rd = new FileReader(); rd.onload = function () { cb(String(rd.result)); }; rd.readAsDataURL(f); }
   document.addEventListener('click', function (e) {
     if (VIEW !== 'inbox' || !e.target.closest) return;
-    var t = e.target.closest('[data-ibtab],[data-ibpile],[data-ibopen],[data-ibclose],[data-ibmode],[data-ibsend],[data-ibnote],[data-ibside],[data-ibai],[data-ibusedraft],[data-ibcsave],[data-ibinvoice],[data-ibgoconv],[data-ibtaskdone],[data-ibnotify],[data-ibost],[data-iboa],[data-ibinv],[data-iblead],[data-ibleadnew],[data-ibfusave],[data-ibbcsave],[data-ibbcsend],[data-ibcm],[data-ibpfsave],[data-ibundo],[data-ibhelper],[data-ibpublish],[data-ibdiscardall],[data-ibrule],[data-ibruleadd],[data-ibtest],[data-ibtestclear],[data-iboffer],[data-ibofferadd],[data-ibsavedadd],[data-ibsavedx],[data-ibkbadd],[data-ibkbtest],[data-ibkbx],[data-chsave],[data-chlive],[data-chpractice],[data-chcm],[data-chqr],[data-chremove],[data-chadd],[data-ibdays],[data-ibcost],[data-ibbkst],[data-ibbka],[data-ibduty],[data-ibexp],[data-ibolder],[data-chall],[data-ibdict]');
+    var t = e.target.closest('[data-ibtab],[data-ibpile],[data-ibopen],[data-ibclose],[data-ibmode],[data-ibsend],[data-ibnote],[data-ibside],[data-ibai],[data-ibusedraft],[data-ibcsave],[data-ibinvoice],[data-ibgoconv],[data-ibtaskdone],[data-ibnotify],[data-ibost],[data-iboa],[data-ibinv],[data-iblead],[data-ibleadnew],[data-ibfusave],[data-ibbcsave],[data-ibbcsend],[data-ibcm],[data-ibpfsave],[data-ibundo],[data-ibhelper],[data-ibpublish],[data-ibdiscardall],[data-ibrule],[data-ibruleadd],[data-ibtest],[data-ibtestclear],[data-iboffer],[data-ibofferadd],[data-ibsavedadd],[data-ibsavedx],[data-ibkbadd],[data-ibkbtest],[data-ibkbx],[data-chsave],[data-chlive],[data-chpractice],[data-chcm],[data-chqr],[data-chremove],[data-chadd],[data-ibdays],[data-ibcost],[data-ibbkst],[data-ibbka],[data-ibduty],[data-ibexp],[data-ibolder],[data-chall],[data-ibdict],[data-ibnotebox]');
     if (!t) return;
     var d = t.dataset;
     if (d.ibtab) { IB.tab = d.ibtab; if (['tasks', 'orders', 'leads', 'stats', 'cost', 'cm', 'bc', 'fu'].indexOf(d.ibtab) >= 0) IB[d.ibtab] = null; paint(); return; }
@@ -35875,6 +35883,7 @@ body[data-fdview="settings"] #o_cp .crumbs, body[data-fdview="tools"] #o_cp .cru
     if (d.ibtaskdone) { srv('erpInboxTasks', [{ done: Number(d.ibtaskdone) }], function (r) { IB.tasks = r; paint(); }, fail); return; }
     if (d.ibnotify !== undefined && t.hasAttribute('data-ibnotify')) { try { Notification.requestPermission().then(function () { paint(); }); } catch (er) {} return; }
     if (d.ibost) { IB.ostatus = d.ibost; IB.orders = null; paint(); return; }
+    if (d.ibnotebox !== undefined && t.hasAttribute('data-ibnotebox')) { IB.noteOpen = !IB.noteOpen; paint(true); var nn = el('ibNote'); if (nn && IB.noteOpen) nn.focus(); return; }
     if (d.ibbkst) { IB.bkst = d.ibbkst; IB.bk = null; paint(); return; }
     if (d.ibdict !== undefined && t.hasAttribute('data-ibdict')) {
       if (IB.dict) { try { IB.dict.stop(); } catch (er) {} return; }
