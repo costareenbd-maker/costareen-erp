@@ -94,10 +94,123 @@ only our Part 1, but a good one. What we take, and what we do better because we 
 
 Watch out:
 - Their one-click "connect your Page" works because their Meta app is approved. Ours needs its own App Review.
-- WhatsApp "scan the QR code, the phone keeps working": safe only if it is Meta's official coexistence sign-up for
-  the WhatsApp Business app. A WhatsApp-Web style connection can get a number banned. We use the official way only.
+- WhatsApp "scan the QR code, the phone keeps working": checked in their help centre - it IS a WhatsApp-Web style
+  linked device through a third party, not Meta's API; a number can be banned. We use the official API only.
 - An AI that answers by itself must be grounded: it only says prices, stock and rules the ERP gives it, and hands
   over when unsure. Every auto-sent message is in the log.
+
+### AiPraktor in detail (help centre: 120 answers, read 14 Oct 2026) - the checklist we build against
+
+**Correction to the first review:** their WhatsApp is NOT Meta's official system. It is a linked device like
+WhatsApp Web, through a third party (WaSenderAPI); they say themselves the number can be banned for good, and they
+send no broadcasts or reminders on WhatsApp because of it. We use the official WhatsApp Cloud API only.
+
+How the agent talks
+- Waits ~15 s before answering so two quick messages get one reply (owner can set 0-15 s; website chat 3 s).
+- Sends "Seen" a few seconds after a message, then "typing…".
+- Speaks as "we", one of the team; does not say it is an AI unless asked, never denies it when asked; the website
+  chat window says it is an AI assistant.
+- Calls the customer sir / madam or bhaiya / apu (owner's choice), with or without the first name; guesses from the
+  Facebook profile or a list of Bangladeshi names; male if unknown.
+- Keeps the language the customer started in; Banglish is answered in Bangla script; owner picks Bangla / English / both.
+- Owner sets the tone (formal or friendly, which emoji, what never to say); the platform keeps replies short.
+- Never invents a price, discount, stock, delivery date or rule; no haggling; offers only from a "Special offers"
+  list (product, dates, name); no price on record → hand over.
+- A missing fact is not a hand-over: it answers what it knows, says the rest is not written, offers to ask the team.
+- Hand-over reasons from a fixed list: asked for a discount, complaint, refund, wants a person, out of scope, angry,
+  ready to buy, other; repeated abuse.
+- Remembers the customer's recent history across days (not the whole history); each channel is a separate person.
+- Stock: says "in stock / out of stock", never the count.
+- Suggests up to 10 products after asking what kind; one extra offer before the order; stops pushing once the customer chose.
+- Photo → product: code in the picture, then near-copy of one of our photos, then look-alike; names it only on a strong
+  match, otherwise the 10 closest, best first; says so when the item is not ours and shows similar ones.
+  Products must be "prepared" (indexed) first, which costs AI credit.
+- Voice notes turned into text; warns that spoken phone numbers and addresses can be misheard (staff check before sending).
+- Does not read customers' videos or documents.
+
+Orders from the chat
+- Asks name, phone and full address in one message; then makes a cash-on-delivery order without asking again
+  (giving the details is the consent; a button press alone is not an order).
+- The order goes in as Pending for the team to approve; the customer gets the product card, the bill as a picture,
+  a link to the order's own page, a thank-you with the order number and a 1-5 star rating request.
+- Until the team approves, the customer can change or cancel in the chat by himself; after that the AI only writes it
+  down and hands over.
+- Delivery charge: inside / outside Dhaka from the address (Savar, Keraniganj, Tongi count as outside); if the AI said
+  another figure, that stays and the difference is written in the history.
+- No payments in chat; never asks for card, OTP or password; gives the bKash / Nagad number; staff record the payment
+  with its transaction id (an id can be used once; payments are never deleted, only cancelled with a reason; screenshot
+  can be attached); the AI never says money was received.
+- Stages: Pending → On hold (reason: not reachable, waiting for advance, pre-order, out of stock, customer asked to
+  wait, check address; a follow-up date) → Approved → Processing → Ready to ship → In transit → Delivered (payment due /
+  collected; partly delivered) - Flagged (being returned, returned, damaged) - Cancelled (with reason). The customer sees simpler words.
+- Same phone with another open order is flagged (no double parcels). Customer record per phone: addresses, all
+  orders and how they ended, staff notes and tags; the courier's record for that phone (delivered vs returned).
+- Picking list for the day; bulk invoice print with a QR code; Scan screen (scanner, typed number or phone camera) moves a
+  whole pile to the next stage; hand-over sheet per courier per day with the COD total and two signature boxes.
+- Courier webhooks move orders by themselves (picked up, delivered, returning, partly delivered, money paid out).
+- Customer told by itself: being prepared, handed to the courier (track button), out for delivery (money to keep ready),
+  delivery failed; after Meta's 24 h only through Meta-approved templates; review request one day after delivery with the page's review link.
+- Order report: orders and value, delivered / cancelled / returned against the period before, who took the order (AI,
+  product page, website, which teammate), best sellers, cancel and hold reasons, each courier, new vs returning customers.
+- "To chase": people who showed interest (pressed Buy on a product page, open lead, liked an offer) and did not order.
+- Every product has its own public page with a Buy button. Exchange = a new order linked to the old one.
+
+Comments
+- Answers under the comment by name, with the product's photo when the comment is about one; sends a private message;
+  never puts an address or phone in public; deletes certain spam / abuse, hides doubtful ones and tells the owner;
+  Comments screen: hide, delete, reply, block. Instagram comments too.
+
+Website chat
+- One line of code; the visitor gives name and mobile; the business's colour and logo; photos and voice notes; a
+  **voice call where the AI speaks**; a daily AI-reply limit per visitor, then the team; Off / Test / On switch.
+
+Team and hand-over
+- Alerts to people on duty (Off duty switch); groups choose which hand-over reasons reach which group; app badge,
+  sound; desktop alerts through the Chrome extension.
+- Take over from the inbox (30 min, 1 h, 6 h, for good) or by sending "." from Messenger / the business's WhatsApp
+  (another "." gives it back); replies from Meta Business Suite are recorded but do not pause the AI.
+- A hand-over nobody claims stays in Notifications as "never answered"; every human task (hand-over, AI alert,
+  booking, payment claim, website question) stays open until someone acts.
+- Inbox tabs Open / Later / Done; a Done chat comes back when the customer writes again.
+- Leads made by the AI (asked a product or price, wants to order, gave a phone); one open lead per customer; 6-stage
+  pipeline, list, "Today" (who to call, who is late); assign; export; open WhatsApp from the lead card to write by hand.
+- Analytics (7 / 14 / 30 days): messages, AI vs team replies, customers, solved by AI vs needed a person, first-reply
+  time, busy hours, per channel, hand-overs and why, how fast the team claimed, waiting now, leads.
+- AI off for one customer, one channel (for a time or until switched on) or the website chat; disconnect a page.
+- Saved replies, with "suggest the fitting reply" and "adapt with AI"; microphone dictation in the reply box.
+- Up to 5 businesses per login sharing one credit; several pages per business share products and rules, separate inboxes.
+- Install as a phone app (no store app) with notifications.
+
+Teaching the AI
+- Agent Desk: change rules in plain words; draft → test in a customer's-phone view → publish → undo. The helper also
+  saves facts to the knowledge base. Practice mode before going live (AI answers only test chats such as "test 12345");
+  "Go live" needs the page, rules, credit and an automatic test of three questions.
+- Knowledge base: pasted text, question-answer pairs, .txt / .md / .csv; a test box shows which passages it would find.
+- Products: WooCommerce sync (preview then approve, webhooks), CSV / Excel template (code, name, description, price,
+  photo link, old price, product link, options such as size / colour / weight, extra photos), or added one by one with a
+  phone photo; options with their own price; video links.
+- Follow-ups: the AI rates a quiet customer cold / warm / hot - cold nothing, warm one reminder, hot two; inside 24 h;
+  not when a person holds the chat or the customer already ordered.
+- Broadcasts: only to those who wrote in the last 23 h, minus chats held by a person and people who got one recently;
+  a test to yourself first, every time the text changes.
+
+Money and data
+- Credit, cost of every AI action listed, statement, low-credit e-mail at a level the owner sets; the AI stops just
+  before zero but messages are still saved.
+- Keys encrypted before they reach the database, never sent back to the browser; hashed passwords; nightly encrypted
+  backups on another server; CSV exports; a deletion procedure.
+
+Where we beat them (because we are the ERP)
+- Their orders sit in their own book and are exported to "your system"; ours ARE the system (stock, dues, cost,
+  commission, courier, returns, loyalty) - no export.
+- They never tell stock counts and know stock only if you type it; ours is live.
+- When their AI stops (no credit), nobody is alerted; ours keeps alerting the team.
+- Conversations cannot be downloaded there; ours can.
+- One person on Messenger and WhatsApp is two customers there; ours joins them by phone number.
+- Website chat there has no product cards, Instagram no receipts or reminders; ours can draw cards on the website chat.
+- Their dashboard is mostly English; ours is Bangla / English everywhere.
+- Their WhatsApp risks a ban; ours is the official API.
+- We already have Steadfast checks, the courier's COD figure, dues, follow-ups, pre-orders, warranty and points.
 
 ### Part 1 stages (after the review)
 - **1a** Inbox core: conversations, customer timeline, AI helper (summary / ask / draft), hand-over states, claim,
