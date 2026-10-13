@@ -34481,6 +34481,27 @@ viewJoint = function () {
   :root[data-skin="fd"] body[data-fdview="invoice"] #view .fields select, :root[data-skin="fd"] body[data-fdview="invoice"] #view .fields input { width:100%; min-width:0; }
 }
 </style>
+<!-- fd-41 (owner): the fold button sits on the side menu's right edge line, half in and half out (as Notion / Linear do),
+     not over the business name; the name gets the full width again. Hidden where the menu is always folded (768-1279)
+     and on phones. -->
+<style>
+:root[data-skin="fd"] #side .brand { padding-right:16px !important; }
+:root[data-skin="fd"] #side .brand > div:not(.logo) { min-width:0; flex:1 1 auto; }
+:root[data-skin="fd"] #side .brand h1 { max-width:100% !important; overflow:hidden; }
+:root[data-skin="fd"] #sideFold.fd-edge { position:fixed !important; top:44px !important; left:calc(var(--side-w, 228px) - 14px) !important; right:auto !important; bottom:auto !important;
+  transform:none !important; width:28px !important; height:28px !important; z-index:60; box-shadow:0 2px 8px rgba(0,0,0,.18); transition:left .2s cubic-bezier(.2,.8,.2,1), color .15s, border-color .15s; }
+:root[data-skin="fd"] body.side-mini #sideFold.fd-edge { top:44px !important; }
+@media (max-width:1279px) { :root[data-skin="fd"] #sideFold.fd-edge { display:none !important; } }
+</style>
+<script>
+// out of the logo row, onto the edge (fixed, so the side menu's own scrolling does not clip it)
+(function () {
+  function place() { var b = el('sideFold'); if (b && b.parentNode !== document.body) { document.body.appendChild(b); b.classList.add('fd-edge'); } }
+  var sfp = sideFoldPaint;
+  sideFoldPaint = function () { var r = sfp.apply(this, arguments); place(); return r; };
+  place(); setTimeout(place, 0);
+})();
+</script>
 <!-- fd-37: the page is styled: show it -->
 <script>(function () { var x = document.getElementById('bootHide'); if (x) x.remove(); })();</script>
 </body>

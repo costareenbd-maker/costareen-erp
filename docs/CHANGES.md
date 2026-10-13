@@ -1851,3 +1851,5 @@ marked paid while October rent was a one-off (counted twice on the Expenses scre
   stock settlement 17 px; text >= 12 px. fd-40: New invoice one field per row on a phone. Left: the business name is
   short at 360 px (the bar is full); dashboard edit chips overlap titles while editing; the Money receipt and invoice
   detail drawers stay full-screen pages.
+- fd-41 (owner): the fold button sits on the side menu's right edge line (half in, half out; fixed so the menu's own
+  scroll cannot clip it; slides with the menu when folded), no longer over the business name, which gets its full width.
