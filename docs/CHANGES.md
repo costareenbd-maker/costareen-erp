@@ -1938,3 +1938,10 @@ code (commit 4fa9c96 + this fix, branch live-fix-paid), not the new design.
 - Settings: the breadcrumb is hidden on Settings / Maintenance / System check / Platform - the title already says it.
 Not done: a "custom" card that adds any two figures together or picks its own date range - every card follows the
 dashboard's range (This month / 3 / 6 / 12 months), the classic ones their own month or day.
+- fd-45 follow-up (same day): the classic cards drawn in his look - Today and the month as his KPI tiles (icon badge,
+  trend pill, number, label, a "yesterday / Sep" line; tiles open Sales / Profit / Customers), Stock on hand / The
+  shelf / Where the cash is as his attention-list rows (badge, title, line under it, value). The ⚙ was not clickable
+  by mouse: fd-28 turns off pointer events inside a card in Customise (only × and DRAG were let through) - the ⚙ is
+  let through too, and pressing it never starts a drag. The 13 classic cards were added to the owner's dev dashboard
+  (Today and the month near the top, the two sales charts after the first four cards, stock/cash/orders after his own);
+  the 14 single-number cards were not, since Today and the month already hold those numbers (one click in + Add card).

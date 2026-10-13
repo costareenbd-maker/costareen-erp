@@ -34872,15 +34872,20 @@ body[data-fdview="settings"] #o_cp .crumbs, body[data-fdview="tools"] #o_cp .cru
 .fdc-rank em { display:block; height:10px; border-radius:999px; background:var(--fd-surface-2); overflow:hidden; } .fdc-rank em i { display:block; height:100%; border-radius:999px; background:var(--fd-accent, #F5A623); }
 .fdc-rank b { font-weight:700; white-space:nowrap; }
 /* the old dashboard's lists inside a card */
-.fdcl-list > div { display:flex; justify-content:space-between; gap:12px; padding:9px 0; border-bottom:1px solid var(--fd-border); font-size:13.5px; }
-.fdcl-list > div:last-child { border-bottom:0; }
-.fdcl-list > div > span { display:flex; flex-direction:column; color:var(--fd-text); min-width:0; } .fdcl-list > div > span .sku { font-size:11.5px; color:var(--fd-text-3); }
-.fdcl-list > div > b { font-weight:800; white-space:nowrap; }
-.fdcl-list > div.lead > span, .fdcl-list > div.lead > b { font-weight:800; }
-.fdcl-mini { display:grid; grid-template-columns:repeat(auto-fit, minmax(150px, 1fr)); gap:12px; }
-.fdcl-mini > div { padding:12px 14px; border-radius:14px; background:var(--fd-surface-2); min-width:0; }
-.fdcl-mini .l { font-size:12px; color:var(--fd-text-3); font-weight:600; } .fdcl-mini .v { font-size:20px; font-weight:800; letter-spacing:-.02em; margin:2px 0; }
-.fdcl-mini .d { font-size:11.5px; color:var(--fd-text-3); } .fdcl-mini .d .up { color:var(--fd-positive-text, var(--fd-positive)); font-weight:700; } .fdcl-mini .d .down { color:var(--fd-negative-text, var(--fd-negative)); font-weight:700; }
+/* (the old plain lists are his rows now: .fdcl-rows) */
+.fdcl-mini { display:grid; grid-template-columns:repeat(auto-fit, minmax(170px, 1fr)); gap:0; margin:0 -6px; }
+.fdcl-t { padding:6px 18px 4px; border-left:1px solid var(--fd-border); min-width:0; }
+.fdcl-t:first-child { border-left:0; }
+.fdcl-t[data-go] { cursor:pointer; border-radius:12px; transition:background .15s; } .fdcl-t[data-go]:hover { background:var(--fd-surface-2); }
+.fdcl-t .top { display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:12px; }
+.fdcl-t .v { font-size:26px; font-weight:800; letter-spacing:-.02em; line-height:1.1; color:var(--fd-text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.fdcl-t .v.neg { color:var(--fd-negative-text, var(--fd-negative)); }
+.fdcl-t .l { font-size:13.5px; font-weight:600; color:var(--fd-text-2); margin-top:4px; }
+.fdcl-t .n { font-size:12px; color:var(--fd-text-3); margin-top:2px; }
+@media (max-width:760px) { .fdcl-mini { grid-template-columns:repeat(2, minmax(0, 1fr)); row-gap:14px; } .fdcl-t { padding:4px 12px; } .fdcl-t:nth-child(2n+1) { border-left:0; } .fdcl-t .v { font-size:21px; } }
+.fdcl-rows li.still { cursor:default; } .fdcl-rows li.still:hover { transform:none; }
+.fdcl-rows .val { font-size:15px; font-weight:800; white-space:nowrap; color:var(--fd-text); } .fdcl-rows .val.bad { color:var(--fd-negative-text, var(--fd-negative)); }
+.fdd-one.editing > [data-fdw] .fdw-set { pointer-events:auto; }
 .fdcl-day { display:flex; align-items:center; gap:8px; margin-left:auto; } .fdcl-day input { height:34px; padding:0 10px; border-radius:10px; }
 /* the ⚙ on a card in edit mode, and its window */
 .fdw-set { position:absolute; top:10px; right:48px; z-index:3; width:30px; height:30px; border-radius:999px; border:1px solid var(--fd-border); background:var(--fd-card); color:var(--fd-text-2);
@@ -35054,32 +35059,47 @@ body[data-fdview="settings"] #o_cp .crumbs, body[data-fdview="tools"] #o_cp .cru
   }
 
   /* ---------- 2. the old dashboard, card by card ---------- */
-  function dlt(now, prev, word) {
+  // the classic figures in his look: tiles with an icon badge, a trend pill, the number and its label; lists as his rows
+  function pill(now, prev, vs, flip) {
     now = Number(now) || 0; prev = Number(prev) || 0;
-    if (!prev) return 'nothing ' + word + ' ' + (word === 'last month' ? '' : 'yesterday');
-    var pc = (now - prev) / prev * 100;
-    return '<span class="' + (pc >= 0 ? 'up' : 'down') + '">' + (pc >= 0 ? '▲' : '▼') + ' ' + Math.abs(pc).toFixed(0) + '%</span> vs ' + (word === 'last month' ? esc(D.prevLabel) : 'yesterday') + ' (' + fmt(prev) + ')';
+    if (prev === 0) return now ? '<span class="fdd-trend flat">new</span>' : '';
+    var pc = (now - prev) / Math.abs(prev) * 100, up = pc >= 0, good = flip ? !up : up;
+    if (Math.abs(pc) < 0.5) return '<span class="fdd-trend flat">= same</span>';
+    return '<span class="fdd-trend' + (good ? '' : ' bad') + '" title="' + esc(vs + ': ' + fmt(prev)) + '">' + (up ? '▲' : '▼') + ' ' + Math.abs(pc).toFixed(0) + '%</span>';
   }
-  function mini(l, v, dd) { return '<div><div class="l">' + esc(l) + '</div><div class="v">' + v + '</div>' + (dd ? '<div class="d">' + dd + '</div>' : '') + '</div>'; }
+  function tile(icon, label, value, trend, note, tone, go) {
+    return '<div class="fdcl-t' + (go && navOn(go) ? '" data-go="' + go : '') + '"><div class="top"><span class="fdd-badge' + (tone ? ' t-' + tone : '') + '">' + fddIc(icon) + '</span>' + (trend || '') + '</div>' +
+      '<div class="v' + (String(value).indexOf('-') === 0 ? ' neg' : '') + '">' + value + '</div><div class="l">' + esc(label) + '</div>' + (note ? '<div class="n">' + note + '</div>' : '') + '</div>';
+  }
+  function rows(list) {
+    return '<ul class="fdd-att2 fdcl-rows">' + list.map(function (x) {
+      return '<li' + (x.go && navOn(x.go) ? ' data-go="' + x.go + '"' + (x.f ? ' data-f="' + x.f + '"' : '') : ' class="still"') + '><span class="fdd-badge' + (x.tone ? ' t-' + x.tone : '') + '">' + fddIc(x.icon || 'list') + '</span>' +
+        '<span class="t"><b>' + esc(x.title) + '</b>' + (x.sub ? '<span>' + x.sub + '</span>' : '') + '</span><b class="val' + (x.tone === 'bad' ? ' bad' : '') + '">' + x.value + '</b></li>';
+    }).join('') + '</ul>';
+  }
   var C = {};   // id -> [title, note, html()]
   C.c_today = ['Today (with the day picker)', 'today or any day you pick', function () {
-    var k = D.kpi, p = D.profit, s = DAYSEL, c = cur();
+    var k = D.kpi, p = D.profit, s = DAYSEL, c = cur(), vs = 'yesterday';
     var pick = '<span class="fdcl-day"><input class="i" id="dayPick" type="date" max="' + esc(todayISO()) + '" value="' + esc(s ? s.date : todayISO()) + '">' +
-      (s ? '<button class="btn small" type="button" id="dayToday">Today</button>' : '') + (DAY_BUSY ? '<span class="sku">loading…</span>' : '') + '</span>';
-    var g = s ? mini('Revenue', fdTk(s.revenue, c), 'on ' + esc(s.label)) + mini('Orders', fmt(s.orders), fmt(s.lines) + ' product line(s)') + mini('Units sold', fmt(s.units), '') +
-        (s.gross !== undefined ? mini('Gross profit', fdTk(s.gross, c), fmt(s.margin) + '% margin') : mini('Average order', fdTk(s.orders ? s.revenue / s.orders : 0, c), ''))
-      : mini('Revenue today', fdTk(k.todayRevenue, c), dlt(k.todayRevenue, k.yestRevenue, 'taken')) + mini('Orders today', fmt(k.todayOrders), dlt(k.todayOrders, k.yestOrders, 'ordered')) +
-        mini('Units sold today', fmt(k.todayUnits), dlt(k.todayUnits, k.yestUnits, 'sold')) +
-        (p ? mini('Gross profit today', fdTk(p.todayGross, c), fmt(p.todayMargin) + '% margin') : mini('Average order today', fdTk(k.todayOrders ? k.todayRevenue / k.todayOrders : 0, c), ''));
+      (s ? '<button class="btn small" type="button" id="dayToday">Today</button>' : '') + (DAY_BUSY ? '<span class="fdc-sub" style="margin:0">loading…</span>' : '') + '</span>';
+    var g = s ? tile('taka', 'Revenue', fdTk(s.revenue, c), '', 'on ' + esc(s.label)) + tile('cart', 'Orders', fmt(s.orders), '', fmt(s.lines) + ' product line(s)') +
+        tile('spool', 'Units sold', fmt(s.units), '', '') +
+        (s.gross !== undefined ? tile('trend', 'Gross profit', fdTk(s.gross, c), '', fmt(s.margin) + '% margin', s.gross < 0 ? 'bad' : '') : tile('receipt', 'Average order', fdTk(s.orders ? s.revenue / s.orders : 0, c), '', ''))
+      : tile('taka', 'Revenue today', fdTk(k.todayRevenue, c), pill(k.todayRevenue, k.yestRevenue, vs), 'yesterday ' + fdTk(k.yestRevenue || 0, c), '', 'sales') +
+        tile('cart', 'Orders today', fmt(k.todayOrders), pill(k.todayOrders, k.yestOrders, vs), 'yesterday ' + fmt(k.yestOrders || 0), '', 'sales') +
+        tile('spool', 'Units sold today', fmt(k.todayUnits), pill(k.todayUnits, k.yestUnits, vs), 'yesterday ' + fmt(k.yestUnits || 0)) +
+        (p ? tile('trend', 'Gross profit today', fdTk(p.todayGross, c), '', fmt(p.todayMargin) + '% margin', p.todayGross < 0 ? 'bad' : '')
+           : tile('receipt', 'Average order today', fdTk(k.todayOrders ? k.todayRevenue / k.todayOrders : 0, c), '', fmt(k.todayLines) + ' product line(s)'));
     return mk('s4', head('clock', s ? s.label : 'Today', pick) + '<div class="fdcl-mini">' + g + '</div>');
   }];
   C.c_month = [function () { return (D ? D.monthLabel : 'The month') + ' so far'; }, 'revenue, profit, orders, customers', function () {
-    var k = D.kpi, p = D.profit, c = cur(), net = p && p.monthExpenses !== null && p.monthExpenses !== undefined ? (p.monthNet !== null && p.monthNet !== undefined ? p.monthNet : p.monthGross - p.monthExpenses) : null;
-    var g = mini('Revenue', fdTk(k.revenueMTD, c), dlt(k.revenueMTD, k.revenuePrev, 'last month')) +
-      (p ? mini('Gross profit', fdTk(p.monthGross, c), fmt(p.monthMargin) + '% margin · goods cost ' + fmt(p.monthCost)) : '') +
-      (net !== null ? mini('Net profit', fdTk(net, c), 'after ' + fmt(p.monthExpenses) + ' of expenses' + (p.monthUnpaid > 0 ? ' · ' + fmt(p.monthUnpaid) + ' still to pay' : '')) : '') +
-      mini('Orders', fmt(k.ordersMTD), dlt(k.ordersMTD, k.ordersPrev, 'last month')) + mini('Average order', fdTk(k.aov, c), fmt(k.unitsMTD) + ' units sold') +
-      mini('Customers', fmt(k.customers), k.newCustomers ? '<span class="up">+' + k.newCustomers + '</span> new this month' : 'no new customers yet');
+    var k = D.kpi, p = D.profit, c = cur(), vs = D.prevLabel, net = p && p.monthExpenses !== null && p.monthExpenses !== undefined ? (p.monthNet !== null && p.monthNet !== undefined ? p.monthNet : p.monthGross - p.monthExpenses) : null;
+    var g = tile('taka', 'Revenue', fdTk(k.revenueMTD, c), pill(k.revenueMTD, k.revenuePrev, vs), esc(vs) + ' ' + compact(k.revenuePrev || 0), '', 'sales') +
+      (p ? tile('trend', 'Gross profit', fdTk(p.monthGross, c), '', fmt(p.monthMargin) + '% margin · goods cost ' + compact(p.monthCost), p.monthGross < 0 ? 'bad' : '', 'profit') : '') +
+      (net !== null ? tile('target', 'Net profit', fdTk(net, c), '', 'after ' + compact(p.monthExpenses) + ' expenses' + (p.monthUnpaid > 0 ? ' · ' + compact(p.monthUnpaid) + ' still to pay' : ''), net < 0 ? 'bad' : '', 'profit') : '') +
+      tile('cart', 'Orders', fmt(k.ordersMTD), pill(k.ordersMTD, k.ordersPrev, vs), esc(vs) + ' ' + fmt(k.ordersPrev || 0), '', 'sales') +
+      tile('receipt', 'Average order', fdTk(k.aov, c), '', fmt(k.unitsMTD) + ' units sold') +
+      tile('cart', 'Customers', fmt(k.customers), k.newCustomers ? '<span class="fdd-trend">+' + k.newCustomers + ' new</span>' : '', k.newCustomers ? k.newCustomers + ' new this month' : 'no new customers yet', '', 'customers');
     return mk('s4', head('target', D.monthLabel + ' so far', '<span class="fdc-sub" style="margin:0 0 0 auto">1st to today · compared with ' + esc(D.prevLabel) + '</span>') + '<div class="fdcl-mini">' + g + '</div>');
   }];
   // each number alone
@@ -35106,30 +35126,31 @@ body[data-fdview="settings"] #o_cp .crumbs, body[data-fdview="tools"] #o_cp .cru
     }];
   });
   C.c_stockHand = ['Stock on hand', 'pieces and cost by category', function () {
-    var rows = D.stockByCat || []; if (!rows.length) return '';
-    var money = !D.hideProfit && rows.some(function (r) { return r.cost !== undefined; }), t = { skus: 0, units: 0, cost: 0, uncosted: 0 };
-    rows.forEach(function (r) { t.skus += r.skus || 0; t.units += r.units || 0; t.cost += r.cost || 0; t.uncosted += r.uncosted || 0; });
-    var line = function (n, r, lead) { return '<div' + (lead ? ' class="lead"' : '') + '><span>' + esc(n) + '<span class="sku">' + fmt(r.skus) + ' product' + (r.skus === 1 ? '' : 's') + (money ? ' · cost ' + (r.cost ? esc(cur()) + ' ' + fmt(r.cost) : 'not known') : '') + '</span></span><b>' + fmt(r.units) + ' pcs</b></div>'; };
-    var h = '<div class="fdcl-list">' + (rows.length > 1 ? line('All stock', t, true) : '') + rows.slice(0, 6).map(function (r) { return line(r.cat, r, rows.length === 1); }).join('') + '</div>';
-    if (money && t.uncosted) h += '<div class="fdc-sub" style="margin:8px 0 0">' + fmt(t.uncosted) + ' product(s) in stock have no cost on record, so they are not in the cost above.</div>';
-    return mk('s2', head('box', 'Stock on hand', navOn('products') ? '<button type="button" class="fdd-more" data-go="products">Open →</button>' : '') + h);
+    var R = D.stockByCat || []; if (!R.length) return '';
+    var money = !D.hideProfit && R.some(function (r) { return r.cost !== undefined; }), t = { skus: 0, units: 0, cost: 0, uncosted: 0 };
+    R.forEach(function (r) { t.skus += r.skus || 0; t.units += r.units || 0; t.cost += r.cost || 0; t.uncosted += r.uncosted || 0; });
+    var sub = function (r) { return fmt(r.skus) + ' product' + (r.skus === 1 ? '' : 's') + (money ? ' · cost ' + (r.cost ? fdTk(r.cost, cur()) : 'not known') : ''); };
+    var list = (R.length > 1 ? [{ icon: 'box', title: 'All stock', sub: sub(t), value: fmt(t.units) + ' pcs', go: 'products' }] : [])
+      .concat(R.slice(0, 6).map(function (r) { return { icon: /print/i.test(r.cat) ? 'cart' : /tool|part/i.test(r.cat) ? 'list' : 'spool', title: r.cat, sub: sub(r), value: fmt(r.units) + ' pcs', tone: r.units ? '' : 'warn' }; }));
+    return mk('s2', head('box', 'Stock on hand', navOn('products') ? '<button type="button" class="fdd-more" data-go="products">Open →</button>' : '') + rows(list) +
+      (money && t.uncosted ? '<div class="fdc-sub" style="margin:10px 0 0">' + fmt(t.uncosted) + ' product(s) in stock have no cost on record, so they are not in the cost above.</div>' : ''));
   }];
   C.c_shelf = ['The shelf', 'days of stock left, selling per day', function () {
     var c = D.cover; if (!c) return '';
     var shortS = c.days !== null && c.days < c.leadDays;
-    return mk('s2', head('clock', 'The shelf', navOn('stock') ? '<button type="button" class="fdd-more" data-go="stock">Order list →</button>' : '') +
-      '<div class="fdc-sub">How long stock lasts against a ' + fmt(c.leadDays) + '-day wait for a shipment.</div><div class="fdcl-list">' +
-      '<div><span>Days of stock left' + (shortS ? '<span class="sku" style="color:var(--fd-negative)">shorter than the shipment wait</span>' : '') + '</span><b>' + (c.days === null ? '—' : fmt(c.days)) + '</b></div>' +
-      '<div><span>Selling per day<span class="sku">at cost, last 90 days</span></span><b>' + fmt(c.dailyCost) + '</b></div>' +
-      '<div><span>Need reordering<span class="sku">' + fmt(c.outOfStock) + ' already out</span></span><b>' + fmt(c.reorderNow) + '</b></div></div>');
+    return mk('s2', head('clock', 'The shelf', navOn('stock') ? '<button type="button" class="fdd-more" data-go="stock" data-f="plan">Order list →</button>' : '') +
+      '<div class="fdc-sub">How long stock lasts against a ' + fmt(c.leadDays) + '-day wait for a shipment.</div>' + rows([
+        { icon: 'clock', title: 'Days of stock left', sub: shortS ? 'shorter than the shipment wait' : 'at today’s selling pace', value: c.days === null ? '—' : fmt(c.days), tone: shortS ? 'bad' : '' },
+        { icon: 'trend', title: 'Selling per day', sub: 'at cost, last 90 days', value: fdTk(c.dailyCost, cur()) },
+        { icon: 'warn', title: 'Need reordering', sub: fmt(c.outOfStock) + ' already out of stock', value: fmt(c.reorderNow), tone: c.reorderNow ? 'warn' : '', go: 'stock', f: 'plan' }]));
   }];
   C.c_cash = ['Where the cash is', 'owed, at the courier, advances', function () {
     var m = D.cash; if (!m) return '';
     var cb = m.courierBalance === null || m.courierBalance === undefined ? null : m.courierBalance;
-    return mk('s2', head('wallet', 'Where the cash is') + '<div class="fdc-sub">Money that is yours but not in the bank yet.</div><div class="fdcl-list">' +
-      '<div><span>Customers owe you<span class="sku">unpaid invoices</span></span><b>' + fmt(m.owedByCustomers) + '</b></div>' +
-      '<div><span>Steadfast is holding<span class="sku">' + (cb === null ? 'collected in 30 days — courier did not answer' : 'their figure, not paid out yet' + (Math.abs(cb - m.withCourier) > 500 ? ' · our books say ' + fmt(m.withCourier) : '')) + '</span></span><b>' + fmt(cb === null ? m.withCourier : cb) + '</b></div>' +
-      '<div><span>Advances you hold<span class="sku">owed in goods, not yours yet</span></span><b>' + fmt(m.advancesHeld) + '</b></div></div>');
+    return mk('s2', head('wallet', 'Where the cash is') + '<div class="fdc-sub">Money that is yours but not in the bank yet.</div>' + rows([
+      { icon: 'bell', title: 'Customers owe you', sub: 'unpaid invoices', value: fdTk(m.owedByCustomers, cur()), tone: m.owedByCustomers > 0 ? 'warn' : '', go: 'sales', f: 'due' },
+      { icon: 'truck', title: 'Steadfast is holding', sub: cb === null ? 'collected in 30 days — courier did not answer' : 'their figure, not paid out yet' + (Math.abs(cb - m.withCourier) > 500 ? ' · our books say ' + fmt(m.withCourier) : ''), value: fdTk(cb === null ? m.withCourier : cb, cur()) },
+      { icon: 'wallet', title: 'Advances you hold', sub: 'owed in goods, not yours yet', value: fdTk(m.advancesHeld, cur()) }]));
   }];
   C.c_recent = ['Recent orders', 'the last invoices with products', function () {
     var R = D.recentOrders || []; if (!R.length) return '';
@@ -35238,6 +35259,8 @@ body[data-fdview="settings"] #o_cp .crumbs, body[data-fdview="tools"] #o_cp .cru
 
   /* ---------- clicks ---------- */
   // the ⚙ listens on the window, before the edit mode's own guard (fd-28) that keeps cards from opening anything
+  // pressing the ⚙ must not start dragging its card (fd-28 drags from any press inside a card)
+  window.addEventListener('pointerdown', function (e) { if (e.target.closest && e.target.closest('[data-fdwset]')) e.stopPropagation(); }, true);
   window.addEventListener('click', function (e) {
     var s = e.target.closest && e.target.closest('[data-fdwset]');
     if (s) { e.preventDefault(); e.stopImmediatePropagation(); settingsDialog(s.getAttribute('data-fdwset')); }
