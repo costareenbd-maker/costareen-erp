@@ -804,6 +804,8 @@ export async function webchat(ctx, chId, a, b, ip) {
     const used = (await ctx.tx`select count(*)::int n from inbox_messages where conversation_id = ${conv.id} and author = 'ai' and created_at > ${new Date(ctx.now.getTime() - H24)}`)[0].n;
     const r = await ingest(ctx, ch, ev);
     if (used >= cap && conv.mode === 'ai') { await handOver(ctx, conv, 'other', 'The visitor used today\'s AI answers'); return { status: 200, body: { ok: true } }; }
+    // the AI is not answering here (practice mode, switched off): the message goes to the team
+    if (!(r && r.dueInMs !== undefined) && conv.mode === 'ai') await task(ctx, conv.id, 'enquiry', 'website', 'Website message from ' + (contact.name || 'a visitor') + ': ' + (str(b.text).slice(0, 160) || '(a photo or voice note)'));
     return { status: 200, body: { ok: true }, due: r && r.dueInMs !== undefined ? { id: r.conversationId, ms: r.dueInMs } : null };
   }
   if (a === 'poll') {
@@ -818,7 +820,7 @@ export async function webchat(ctx, chId, a, b, ip) {
       else if (m.kind === 'image' && m.media) one.image = m.media;
       msgs.push(one);
     }
-    const typing = !!(conv.reply_due_at) || (conv.mode === 'ai' && rows.length && rows[rows.length - 1].direction === 'in');
+    const typing = !!conv.reply_due_at;   // only while an answer is really coming
     return { status: 200, body: { ok: true, msgs, typing, person: conv.mode === 'human' } };
   }
   return { status: 400, body: { ok: false } };

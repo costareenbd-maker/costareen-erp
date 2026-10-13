@@ -8444,7 +8444,7 @@ function srv(name, args, ok, bad) {
 
 var SRV_ACTIVE = 0, SRV_WRITING = false, SRV_TIMED = {};
 // the same list the server uses to know a call changes nothing (ERP_READS)
-var SRV_READS = /^(erpCommissionSales|erpFdCards|erpLineMargins|erpFd19Profit|erpFdInventory|erpFd22Analytics|erpNavigator|erpSellers|erpFollowups|erpCustomerInsight|erpPreorders|erpCashUps|erpAskingPrices|erpSystemCheck|erpAnalytics|erpCommission|erpHolding|erpLotFunding|erpShipments|erpShipment|erpLots|erpFdHead|erpFdDash|erpReceiveMatch|erpAiReader|erpProductSuggest|erpCatalogue|erpPushList|erpCreators|erpCreatorPortalLink|erpSponsorLink|erpCreatorRequests|erpCreatorEvents|erpCreatorProgramme|erpCreatorPreview|erpCreatorCatalog|erpCreatorSources|erpCreatorClaims|erpApps|erpAppQr|erpFeedback|erpRestockOffers|erpRestockList|erpWarrantyRules|erpWarrantyCard|erpMyLink|erpPlatformRegister|erpPlatformDoctor|erpPlatformCommunity|erpMarketWaiting|erpBoard|erpPlatformDesign|erpResell|erpResellerProgramme|erpLoyalty|erpCustomerPoints|erpRefillDue|erpDeliveryHistory|erpDeliveryHistoryMany|erpPrintKit|erpPrintJobs|erpPrintJob|erpPrintCost|erpSpools|erpPrintRequests|erpJoint|erpJointCatalog|erpJointCard|erpInvoiceDesign|erpInvoicePreview|erpMarket|erpMarketMine|erpMarketRequests|erpMarketHints|erpMarketNames|erpWanted|erpBrand|erpComplianceLog|erpProviderKey|erpNews|erpAccessKeys|erpAccessWarning|erpAdmin|erpAiKeys|erpAlertRules|erpAlerts|erpArena|erpBackupStatus|erpBg|erpBnWords|erpBookedParcels|erpBrandLogo|erpBundle|erpBusinessLinks|erpBusinesses|erpBusinessesDeleted|erpCampaignAudience|erpCampaignGet|erpCampaignList|erpCapital|erpCashBook|erpCatalog|erpConnStatus|erpConnections|erpCostBook|erpCourier|erpCourierKeyStatus|erpCurrencies|erpCustomerAccount|erpCustomerCredit|erpCustomerList|erpCustomerPage|erpCustomerStatement|erpCustomers|erpDashboardData|erpDaySales|erpDeliveryOptions|erpDevices|erpDiscontinued|erpDues|erpEvoQr|erpEvoStatus|erpExpenseExport|erpExpenseReceiptUrl|erpExpenses|erpFamilies|erpFighters|erpFormOptions|erpGame|erpGetTheme|erpGoogle|erpHello|erpInstalls|erpInvoice|erpInvoicePdf|erpJob|erpJobs|erpListView|erpLookupCustomer|erpLookupUsage|erpMe|erpMoney|erpNoteFileUrl|erpNotes|erpOwnerChange|erpOwnerChanges|erpParcelLabels|erpParcelPreview|erpPartnerStock|erpPartnership|erpPayReasons|erpPeople|erpPlatform|erpPlatformErrors|erpPnl|erpPnlMonth|erpPoList|erpPoolCatalog|erpProduct|erpProductListShare|erpProductPage|erpProductPhotoUrl|erpProductThumbs|erpProfile|erpQuoteAsset|erpQuoteBoot|erpQuoteGet|erpQuoteList|erpRecentInvoices|erpRecovery|erpReorderPlan|erpRestorePreview|erpReturnPreview|erpRisks|erpSales|erpSearch|erpSecurity|erpSelfTest|erpSerialLookup|erpSerialsFor|erpSessions|erpSetTheme|erpSettingsFull|erpSettingsLists|erpSfPayoutLines|erpSfPayouts|erpShareFile|erpSharedStock|erpSheet|erpStatementPdf|erpStockHistory|erpSupplierPage|erpSuppliers|erpToday|erpUsers|erpWaProductPdf|erpWebMatches|erpWebOrderInvoices|erpWebOrders|erpWebsiteTest)$/;
+var SRV_READS = /^(erpInbox|erpInboxOpen|erpInboxChannels|erpChatOrders|erpInboxStats|erpAiWork|erpCommissionSales|erpFdCards|erpLineMargins|erpFd19Profit|erpFdInventory|erpFd22Analytics|erpNavigator|erpSellers|erpFollowups|erpCustomerInsight|erpPreorders|erpCashUps|erpAskingPrices|erpSystemCheck|erpAnalytics|erpCommission|erpHolding|erpLotFunding|erpShipments|erpShipment|erpLots|erpFdHead|erpFdDash|erpReceiveMatch|erpAiReader|erpProductSuggest|erpCatalogue|erpPushList|erpCreators|erpCreatorPortalLink|erpSponsorLink|erpCreatorRequests|erpCreatorEvents|erpCreatorProgramme|erpCreatorPreview|erpCreatorCatalog|erpCreatorSources|erpCreatorClaims|erpApps|erpAppQr|erpFeedback|erpRestockOffers|erpRestockList|erpWarrantyRules|erpWarrantyCard|erpMyLink|erpPlatformRegister|erpPlatformDoctor|erpPlatformCommunity|erpMarketWaiting|erpBoard|erpPlatformDesign|erpResell|erpResellerProgramme|erpLoyalty|erpCustomerPoints|erpRefillDue|erpDeliveryHistory|erpDeliveryHistoryMany|erpPrintKit|erpPrintJobs|erpPrintJob|erpPrintCost|erpSpools|erpPrintRequests|erpJoint|erpJointCatalog|erpJointCard|erpInvoiceDesign|erpInvoicePreview|erpMarket|erpMarketMine|erpMarketRequests|erpMarketHints|erpMarketNames|erpWanted|erpBrand|erpComplianceLog|erpProviderKey|erpNews|erpAccessKeys|erpAccessWarning|erpAdmin|erpAiKeys|erpAlertRules|erpAlerts|erpArena|erpBackupStatus|erpBg|erpBnWords|erpBookedParcels|erpBrandLogo|erpBundle|erpBusinessLinks|erpBusinesses|erpBusinessesDeleted|erpCampaignAudience|erpCampaignGet|erpCampaignList|erpCapital|erpCashBook|erpCatalog|erpConnStatus|erpConnections|erpCostBook|erpCourier|erpCourierKeyStatus|erpCurrencies|erpCustomerAccount|erpCustomerCredit|erpCustomerList|erpCustomerPage|erpCustomerStatement|erpCustomers|erpDashboardData|erpDaySales|erpDeliveryOptions|erpDevices|erpDiscontinued|erpDues|erpEvoQr|erpEvoStatus|erpExpenseExport|erpExpenseReceiptUrl|erpExpenses|erpFamilies|erpFighters|erpFormOptions|erpGame|erpGetTheme|erpGoogle|erpHello|erpInstalls|erpInvoice|erpInvoicePdf|erpJob|erpJobs|erpListView|erpLookupCustomer|erpLookupUsage|erpMe|erpMoney|erpNoteFileUrl|erpNotes|erpOwnerChange|erpOwnerChanges|erpParcelLabels|erpParcelPreview|erpPartnerStock|erpPartnership|erpPayReasons|erpPeople|erpPlatform|erpPlatformErrors|erpPnl|erpPnlMonth|erpPoList|erpPoolCatalog|erpProduct|erpProductListShare|erpProductPage|erpProductPhotoUrl|erpProductThumbs|erpProfile|erpQuoteAsset|erpQuoteBoot|erpQuoteGet|erpQuoteList|erpRecentInvoices|erpRecovery|erpReorderPlan|erpRestorePreview|erpReturnPreview|erpRisks|erpSales|erpSearch|erpSecurity|erpSelfTest|erpSerialLookup|erpSerialsFor|erpSessions|erpSetTheme|erpSettingsFull|erpSettingsLists|erpSfPayoutLines|erpSfPayouts|erpShareFile|erpSharedStock|erpSheet|erpStatementPdf|erpStockHistory|erpSupplierPage|erpSuppliers|erpToday|erpUsers|erpWaProductPdf|erpWebMatches|erpWebOrderInvoices|erpWebOrders|erpWebsiteTest)$/;
 function srvPump() {
   if (!SRV_Q.length) return;
   var isRead = SRV_READS.test(SRV_Q[0].name);
@@ -35296,6 +35296,619 @@ body[data-fdview="settings"] #o_cp .crumbs, body[data-fdview="tools"] #o_cp .cru
   var wasPhone = window.innerWidth <= 760;
   window.addEventListener('resize', function () { var p = window.innerWidth <= 760; if (p !== wasPhone && VIEW === 'dash') { wasPhone = p; repaint(); } });
   var dTimer = setInterval(function () { if (D && VIEW === 'dash' && cIds().length && !document.querySelector('.fdd-one [data-fdw^="c_"]')) repaint(); if (D) clearInterval(dTimer); }, 800);
+})();
+</script>
+<!-- fd-46 (owner 14 Oct 2026: "build everything as AiPraktor has built"): the Inbox. Every chat channel in one place
+     (Messenger, Instagram, WhatsApp - official and linked-device -, Facebook / Instagram comments, the website chat),
+     answered by the AI agent from the ERP's own products, prices and stock; a person takes over when needed.
+     Tabs: Inbox (list | conversation | the customer + AI assistant) · Notifications · Orders (chat orders -> invoices)
+     · Leads (6-stage pipeline, Today) · Follow-ups · Broadcasts · Comments · Agent Desk (details, rules as drafts,
+     test in a customer's-phone view, publish, undo, helper, offers, saved replies) · Knowledge · Channels (connect,
+     practice, Go live, AI switches) · Analytics · AI cost. Owner-only ("Only me" app 'inbox') until opened to everyone.
+     Server: handlers/inbox.js, inbox2.js, inboxch.js. -->
+<style>
+.ib-tabs { display:flex; gap:6px; flex-wrap:wrap; margin:0 0 16px; }
+.ib-tabs button { border:1px solid var(--fd-border); background:var(--fd-card); color:var(--fd-text-2); font:inherit; font-size:13.5px; font-weight:600; padding:7px 14px; border-radius:999px; cursor:pointer; display:inline-flex; gap:6px; align-items:center; }
+.ib-tabs button.on { background:var(--fd-accent, #F5A623); color:var(--fd-text-on-accent, #fff); border-color:transparent; }
+.ib-tabs .n { min-width:18px; height:18px; padding:0 5px; border-radius:999px; background:var(--fd-negative, #E5484D); color:#fff; font-size:11px; display:inline-flex; align-items:center; justify-content:center; }
+.ib-tabs button.on .n { background:#fff; color:var(--fd-negative, #E5484D); }
+.ib-wrap { display:grid; grid-template-columns:320px minmax(0,1fr) 320px; gap:14px; height:calc(100vh - 210px); min-height:520px; }
+.ib-pane { background:var(--fd-card); border:1px solid var(--fd-border); border-radius:18px; display:flex; flex-direction:column; min-height:0; overflow:hidden; }
+.ib-list-h { padding:12px; border-bottom:1px solid var(--fd-border); display:flex; flex-direction:column; gap:8px; }
+.ib-piles { display:flex; gap:4px; flex-wrap:wrap; }
+.ib-piles button { border:0; background:var(--fd-surface-2); color:var(--fd-text-2); font:inherit; font-size:12.5px; font-weight:700; padding:5px 10px; border-radius:999px; cursor:pointer; }
+.ib-piles button.on { background:var(--fd-text, #111); color:var(--fd-card, #fff); }
+.ib-list { overflow:auto; flex:1 1 auto; }
+.ib-row { display:flex; gap:10px; padding:11px 12px; border-bottom:1px solid var(--fd-border); cursor:pointer; align-items:flex-start; }
+.ib-row:hover { background:var(--fd-surface-2); } .ib-row.on { background:var(--fd-accent-soft, rgba(245,166,35,.12)); }
+.ib-av { width:38px; height:38px; flex:0 0 38px; border-radius:50%; background:var(--fd-surface-2); display:flex; align-items:center; justify-content:center; font-weight:800; color:var(--fd-text-2); overflow:hidden; position:relative; }
+.ib-av img { width:100%; height:100%; object-fit:cover; }
+.ib-av .ch { position:absolute; right:-2px; bottom:-2px; width:16px; height:16px; border-radius:50%; border:2px solid var(--fd-card); }
+.ib-ch-messenger { background:#0866FF; } .ib-ch-instagram { background:#E1306C; } .ib-ch-wa_cloud, .ib-ch-wa_evo, .ib-ch-wa_sender { background:#25D366; } .ib-ch-webchat { background:#8B5CF6; }
+.ib-row .t { flex:1 1 auto; min-width:0; } .ib-row .t b { display:flex; gap:6px; align-items:center; font-size:14px; }
+.ib-row .t b .ago { margin-left:auto; font-size:11.5px; font-weight:600; color:var(--fd-text-3); }
+.ib-row .t span { display:block; font-size:12.5px; color:var(--fd-text-3); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.ib-tag { font-size:10.5px; font-weight:800; padding:1px 7px; border-radius:999px; letter-spacing:.03em; }
+.ib-tag.human { background:rgba(229,72,77,.14); color:var(--fd-negative, #E5484D); } .ib-tag.ai { background:rgba(29,191,115,.14); color:var(--fd-positive, #1DBF73); }
+.ib-tag.test { background:var(--fd-surface-2); color:var(--fd-text-3); } .ib-tag.hot { background:rgba(245,166,35,.18); color:#B26B00; }
+.ib-unread { min-width:18px; height:18px; border-radius:999px; background:var(--fd-accent, #F5A623); color:#fff; font-size:11px; font-weight:800; display:inline-flex; align-items:center; justify-content:center; padding:0 5px; }
+.ib-conv-h { padding:12px 14px; border-bottom:1px solid var(--fd-border); display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+.ib-conv-h .who { flex:1 1 180px; min-width:0; } .ib-conv-h .who b { display:block; font-size:15px; } .ib-conv-h .who span { font-size:12.5px; color:var(--fd-text-3); }
+.ib-msgs { flex:1 1 auto; overflow:auto; padding:14px; display:flex; flex-direction:column; gap:8px; background:var(--fd-surface-1, transparent); }
+.ib-b { max-width:76%; padding:9px 12px; border-radius:16px; font-size:14px; line-height:1.4; white-space:pre-wrap; word-wrap:break-word; }
+.ib-b.in { align-self:flex-start; background:var(--fd-surface-2); border-bottom-left-radius:5px; }
+.ib-b.out { align-self:flex-end; background:var(--fd-accent-soft, rgba(245,166,35,.16)); border-bottom-right-radius:5px; }
+.ib-b.out.team { background:rgba(8,102,255,.12); }
+.ib-b .meta { display:block; font-size:10.5px; color:var(--fd-text-3); margin-top:4px; }
+.ib-b.failed { outline:1px solid var(--fd-negative, #E5484D); }
+.ib-b img { max-width:240px; border-radius:10px; display:block; margin-bottom:4px; }
+.ib-b audio { max-width:240px; display:block; }
+.ib-b .tr { font-style:italic; color:var(--fd-text-2); display:block; margin-top:4px; }
+.ib-ev { align-self:center; font-size:12px; color:var(--fd-text-3); background:var(--fd-surface-2); padding:4px 10px; border-radius:999px; text-align:center; max-width:90%; }
+.ib-note { align-self:center; font-size:13px; background:rgba(245,166,35,.12); border:1px dashed var(--fd-accent-border, #F5A623); padding:6px 10px; border-radius:10px; max-width:90%; }
+.ib-cards { display:flex; gap:8px; overflow-x:auto; max-width:100%; padding:2px; }
+.ib-card { flex:0 0 150px; border:1px solid var(--fd-border); border-radius:12px; overflow:hidden; background:var(--fd-card); font-size:12px; white-space:normal; }
+.ib-card img { width:100%; height:90px; object-fit:cover; display:block; margin:0; border-radius:0; } .ib-card div { padding:6px 8px; } .ib-card b { display:block; font-size:12.5px; }
+.ib-btns { display:flex; gap:4px; flex-wrap:wrap; margin-top:6px; } .ib-btns span { border:1px solid var(--fd-accent-border, #F5A623); border-radius:999px; padding:2px 9px; font-size:12px; }
+.ib-reply { border-top:1px solid var(--fd-border); padding:10px; display:flex; flex-direction:column; gap:6px; }
+.ib-reply .row2 { display:flex; gap:6px; align-items:flex-end; }
+.ib-reply textarea { flex:1 1 auto; min-height:42px; max-height:140px; resize:vertical; border-radius:12px; padding:9px 11px; }
+.ib-hint { font-size:12px; color:var(--fd-text-3); }
+.ib-hint.warn { color:var(--fd-negative, #E5484D); font-weight:600; }
+.ib-side { overflow:auto; padding:12px; display:flex; flex-direction:column; gap:12px; }
+.ib-box { border:1px solid var(--fd-border); border-radius:14px; padding:10px 12px; }
+.ib-box h4 { margin:0 0 8px; font-size:13px; text-transform:uppercase; letter-spacing:.06em; color:var(--fd-text-3); }
+.ib-box .line { display:flex; justify-content:space-between; gap:8px; font-size:13px; padding:4px 0; border-bottom:1px solid var(--fd-border); }
+.ib-box .line:last-child { border-bottom:0; }
+.ib-ai-out { white-space:pre-wrap; font-size:13.5px; background:var(--fd-surface-2); border-radius:10px; padding:8px 10px; margin-top:8px; }
+.ib-empty { padding:40px 16px; text-align:center; color:var(--fd-text-3); }
+.ib-grid2 { display:grid; grid-template-columns:repeat(auto-fit, minmax(300px, 1fr)); gap:14px; }
+.ib-c { background:var(--fd-card); border:1px solid var(--fd-border); border-radius:18px; padding:16px; }
+.ib-c h3 { margin:0 0 6px; font-size:16px; } .ib-c .sub { font-size:13px; color:var(--fd-text-3); margin-bottom:10px; }
+.ib-form { display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:10px; }
+.ib-form label { display:flex; flex-direction:column; gap:4px; font-size:12.5px; font-weight:600; color:var(--fd-text-2); }
+.ib-actions { display:flex; gap:6px; flex-wrap:wrap; margin-top:10px; }
+.ib-code { font-family:ui-monospace,Menlo,Consolas,monospace; font-size:12px; background:var(--fd-surface-2); padding:6px 8px; border-radius:8px; word-break:break-all; user-select:all; }
+.ib-pipe { display:grid; grid-template-columns:repeat(6, minmax(170px, 1fr)); gap:10px; overflow-x:auto; }
+.ib-col { background:var(--fd-surface-2); border-radius:14px; padding:8px; min-height:200px; }
+.ib-col h4 { margin:2px 4px 8px; font-size:12.5px; text-transform:uppercase; letter-spacing:.05em; color:var(--fd-text-3); display:flex; justify-content:space-between; }
+.ib-lead { background:var(--fd-card); border:1px solid var(--fd-border); border-radius:12px; padding:8px 10px; margin-bottom:8px; cursor:pointer; font-size:13px; }
+.ib-lead.due { border-color:var(--fd-negative, #E5484D); } .ib-lead span { display:block; color:var(--fd-text-3); font-size:12px; }
+.ib-phone { width:340px; max-width:100%; border:10px solid #111; border-radius:30px; background:#fff; height:520px; display:flex; flex-direction:column; overflow:hidden; color:#111; }
+.ib-phone .top { background:#f2f2f2; padding:10px 12px; font-weight:700; font-size:14px; border-bottom:1px solid #ddd; }
+.ib-phone .body { flex:1 1 auto; overflow:auto; padding:10px; display:flex; flex-direction:column; gap:6px; }
+.ib-phone .me { align-self:flex-end; background:#0866FF; color:#fff; padding:7px 11px; border-radius:16px; max-width:80%; font-size:13.5px; white-space:pre-wrap; }
+.ib-phone .shop { align-self:flex-start; background:#E9E9EB; color:#111; padding:7px 11px; border-radius:16px; max-width:85%; font-size:13.5px; white-space:pre-wrap; }
+.ib-phone .inp { display:flex; gap:6px; padding:8px; border-top:1px solid #ddd; }
+.ib-phone .inp input { flex:1; border:1px solid #ccc; border-radius:999px; padding:7px 12px; color:#111; background:#fff; }
+.ib-rule { border:1px solid var(--fd-border); border-radius:12px; padding:10px 12px; margin-bottom:8px; }
+.ib-rule.draft { border-style:dashed; border-color:var(--fd-accent, #F5A623); }
+.ib-rule .h { display:flex; gap:8px; align-items:center; } .ib-rule .h b { flex:1; }
+.ib-rule .body { font-size:13px; color:var(--fd-text-2); margin-top:4px; white-space:pre-wrap; }
+.ib-kpis { display:grid; grid-template-columns:repeat(auto-fit, minmax(150px, 1fr)); gap:10px; margin-bottom:14px; }
+.ib-kpi { background:var(--fd-card); border:1px solid var(--fd-border); border-radius:14px; padding:12px; } .ib-kpi b { display:block; font-size:22px; } .ib-kpi span { font-size:12px; color:var(--fd-text-3); }
+.ib-bars div { display:grid; grid-template-columns:120px 1fr 50px; gap:8px; align-items:center; font-size:12.5px; margin:4px 0; }
+.ib-bars em { height:10px; background:var(--fd-surface-2); border-radius:999px; overflow:hidden; display:block; } .ib-bars em i { display:block; height:100%; background:var(--fd-accent, #F5A623); border-radius:999px; }
+.ib-back { display:none; }
+.ib-risk { background:rgba(229,72,77,.08); border:1px solid rgba(229,72,77,.35); border-radius:12px; padding:10px 12px; font-size:13px; margin:8px 0; }
+@media (max-width:1180px) { .ib-wrap { grid-template-columns:300px minmax(0,1fr); } .ib-wrap .ib-sidepane { display:none; } .ib-wrap.side .ib-sidepane { display:flex; position:fixed; right:10px; top:80px; bottom:10px; width:340px; z-index:40; box-shadow:var(--fd-shadow-popover); } }
+@media (max-width:760px) {
+  .ib-wrap { grid-template-columns:1fr; height:calc(100vh - 170px); }
+  .ib-wrap.has-conv .ib-listpane { display:none; } .ib-wrap:not(.has-conv) .ib-convpane { display:none; }
+  .ib-back { display:inline-flex; } .ib-b { max-width:88%; }
+  .ib-wrap.side .ib-sidepane { left:8px; right:8px; width:auto; top:70px; }
+  .ib-pipe { grid-template-columns:repeat(6, 240px); }
+}
+</style>
+<script>
+(function () {
+  var IB = { tab: 'inbox', pile: 'open', q: '', list: null, conv: null, convId: '', side: false, tasks: null, orders: null, ostatus: 'pending', leads: null, desk: null, kb: null,
+             chans: null, stats: null, cost: null, bc: null, cm: null, fu: null, saved: null, offers: null, test: [], busy: {}, ai: '', counts: {} };
+  window.IB = IB;
+  var ICON = '<path d="M4 4h16v12H8l-4 4z"/><path d="M8 9h8M8 12h5"/>';
+  function ibOn() { if (!ME) return false; if (ME.platform) return true; var off = (ME.apps && ME.apps.off) || []; return off.indexOf('inbox') < 0 && typeof APPS !== 'undefined' && APPS && APPS.apps && APPS.apps.some(function (a) { return a.key === 'inbox' && a.on; }); }
+  window.ibOn = ibOn;
+  if (typeof fdxNav === 'function') fdxNav('inbox', 'Inbox', ICON, 'invoice');
+  try { VIEW_NAMES.inbox = 'Inbox'; } catch (e) {}
+  function syncNav() { var b = document.querySelector('#nav button[data-view="inbox"]'); if (!b) return; var on = ibOn(); if ((b.style.display === 'none') === on) b.style.display = on ? '' : 'none';
+    var n = (IB.counts.waiting || 0) + (IB.counts.unread || 0); var c = b.querySelector('.count'); if (!c) { c = document.createElement('span'); c.className = 'count'; b.appendChild(c); } c.textContent = n ? String(n) : ''; }
+  if (typeof applyRole === 'function') { var arIb = applyRole; applyRole = function () { var r = arIb.apply(this, arguments); try { syncNav(); } catch (e) {} return r; }; }
+  setInterval(function () { try { syncNav(); } catch (e) {} }, 1500);
+  var fail = function (e) { toast(esc((e && e.message) || e), true, 9000); };
+  var tk = function (n) { return '৳' + fmt(Math.round(Number(n) || 0)); };
+  function ini(n) { n = String(n || '?').trim(); return esc(n.charAt(0).toUpperCase()); }
+  var CHN = { messenger: 'Messenger', instagram: 'Instagram', wa_cloud: 'WhatsApp', wa_evo: 'WhatsApp (linked)', wa_sender: 'WhatsApp (WaSender)', webchat: 'Website' };
+
+  // ---------------------------------------------------------------- loading
+  function load(name, args, key, after) {
+    if (IB.busy[key]) return; IB.busy[key] = true;
+    srv(name, [args || {}], function (r) { IB.busy[key] = false; IB[key] = r; if (after) after(r); if (VIEW === 'inbox') paint(); }, function (e) { IB.busy[key] = false; IB[key] = { error: (e && e.message) || String(e) }; if (VIEW === 'inbox') paint(); });
+  }
+  function loadList() { load('erpInbox', { pile: IB.pile, q: IB.q }, 'list', function (r) { IB.counts = r.counts || {}; }); }
+  function loadConv(id) { IB.convId = id; srv('erpInboxOpen', [{ id: id }], function (r) { IB.conv = r; if (VIEW === 'inbox') paint(true); }, fail); }
+  // live: the list every 8 s and the open chat every 5 s while the Inbox is open; the menu badge every 30 s
+  setInterval(function () { if (VIEW === 'inbox' && IB.tab === 'inbox' && !document.hidden) { loadList(); if (IB.convId) srv('erpInboxOpen', [{ id: IB.convId }], function (r) { var had = IB.conv && IB.conv.msgs.length; IB.conv = r; if (!had || had !== r.msgs.length) paint(true); }, function () {}); } }, 5000);
+  setInterval(function () { if (ibOn() && !document.hidden && !(VIEW === 'inbox' && IB.tab === 'inbox')) srv('erpInbox', [{ pile: 'open' }], function (r) { var before = IB.counts.waiting || 0; IB.counts = r.counts || {}; syncNav();
+    if ((IB.counts.waiting || 0) > before && 'Notification' in window && Notification.permission === 'granted') { try { new Notification('A customer is waiting', { body: 'A chat was handed to the team.' }); } catch (e) {} } }, function () {}); }, 30000);
+
+  // ---------------------------------------------------------------- the frame
+  var TABS = [['inbox', 'Inbox'], ['tasks', 'Notifications'], ['orders', 'Orders'], ['leads', 'Leads'], ['fu', 'Follow-ups'], ['bc', 'Broadcasts'], ['cm', 'Comments'], ['desk', 'Agent Desk'], ['kb', 'Knowledge'], ['chans', 'Channels'], ['stats', 'Analytics'], ['cost', 'AI cost']];
+  function frame(inner) {
+    var n = { inbox: (IB.counts.unread || 0), tasks: (IB.counts.tasks || 0), orders: (IB.orders && IB.orders.counts ? IB.orders.counts.pending : 0) };
+    return '<div class="fdd-head" style="margin-bottom:10px"><div><h1 class="fdd-title" style="display:flex;gap:10px;align-items:center">Inbox <span class="ib-tag test">ONLY ME</span></h1></div></div>' +
+      '<div class="ib-tabs" role="tablist">' + TABS.filter(function (t) { return !(t[0] === 'cost' && ME && ME.role !== 'owner'); }).map(function (t) {
+        return '<button type="button" data-ibtab="' + t[0] + '" class="' + (IB.tab === t[0] ? 'on' : '') + '">' + esc(t[1]) + (n[t[0]] ? '<span class="n">' + n[t[0]] + '</span>' : '') + '</button>'; }).join('') + '</div>' + inner;
+  }
+  function paint(keepScroll) {
+    var v = el('view'); if (!v) return;
+    var box = v.querySelector('.ib-msgs'), atBottom = box ? box.scrollHeight - box.scrollTop - box.clientHeight < 60 : true, ta = el('ibReply'), draft = ta ? ta.value : null, focus = document.activeElement && document.activeElement.id;
+    v.innerHTML = view();
+    var nb = v.querySelector('.ib-msgs'); if (nb && (atBottom || !keepScroll)) nb.scrollTop = nb.scrollHeight;
+    var nta = el('ibReply'); if (nta && draft !== null) { nta.value = draft; if (focus === 'ibReply') { nta.focus(); } }
+  }
+  function view() {
+    var t = IB.tab;
+    if (t === 'inbox') return frame(inboxHtml());
+    if (t === 'tasks') { if (!IB.tasks) load('erpInboxTasks', {}, 'tasks'); return frame(tasksHtml()); }
+    if (t === 'orders') { if (!IB.orders) load('erpChatOrders', { status: IB.ostatus }, 'orders'); return frame(ordersHtml()); }
+    if (t === 'leads') { if (!IB.leads) load('erpInboxLeads', {}, 'leads'); return frame(leadsHtml()); }
+    if (t === 'fu') { if (!IB.fu) load('erpInboxFollowups', {}, 'fu'); return frame(fuHtml()); }
+    if (t === 'bc') { if (!IB.bc) load('erpInboxBroadcasts', {}, 'bc'); return frame(bcHtml()); }
+    if (t === 'cm') { if (!IB.cm) load('erpInboxComments', {}, 'cm'); return frame(cmHtml()); }
+    if (t === 'desk') { if (!IB.desk) load('erpAgentDesk', {}, 'desk'); if (!IB.offers) load('erpShopOffers', {}, 'offers'); if (!IB.saved) load('erpSavedReplies', {}, 'saved'); return frame(deskHtml()); }
+    if (t === 'kb') { if (!IB.kb) load('erpInboxKb', {}, 'kb'); return frame(kbHtml()); }
+    if (t === 'chans') { if (!IB.chans) load('erpInboxChannels', {}, 'chans'); return frame(chansHtml()); }
+    if (t === 'stats') { if (!IB.stats) load('erpInboxStats', { days: 7 }, 'stats'); return frame(statsHtml()); }
+    if (t === 'cost') { if (!IB.cost) load('erpAiWork', {}, 'cost'); return frame(costHtml()); }
+    return frame('');
+  }
+  function errOr(x, fn) { if (!x) return '<div class="loading">Loading…</div>'; if (x.error) return '<div class="note err"><div class="ico">!</div><div>' + esc(x.error) + '</div></div>'; return fn(x); }
+
+  // ---------------------------------------------------------------- the Inbox: list | conversation | customer
+  function inboxHtml() {
+    if (!IB.list) loadList();
+    var L = IB.list, c = IB.conv && IB.conv.id === IB.convId ? IB.conv : null;
+    var piles = [['open', 'Open'], ['waiting', 'Waiting'], ['later', 'Later'], ['done', 'Done']];
+    var list = '<div class="ib-pane ib-listpane"><div class="ib-list-h"><div class="ib-piles">' + piles.map(function (p) {
+      var n = IB.counts[p[0]]; return '<button type="button" data-ibpile="' + p[0] + '" class="' + (IB.pile === p[0] ? 'on' : '') + '">' + p[1] + (n ? ' · ' + n : '') + '</button>'; }).join('') + '</div>' +
+      '<input class="i" id="ibQ" placeholder="Search name, phone, message" value="' + esc(IB.q) + '"></div><div class="ib-list">' +
+      (!L ? '<div class="loading">Loading…</div>' : L.error ? '<div class="note err"><div>' + esc(L.error) + '</div></div>' : !L.list.length ? '<div class="ib-empty">' + (IB.pile === 'waiting' ? 'Nobody is waiting for a person. ✓' : 'No chats here yet.') + '</div>' :
+        L.list.map(function (x) {
+          return '<div class="ib-row' + (x.id === IB.convId ? ' on' : '') + '" data-ibopen="' + esc(x.id) + '"><div class="ib-av">' + (x.avatar ? '<img src="' + esc(x.avatar) + '" alt="">' : ini(x.name)) + '<i class="ch ib-ch-' + esc(x.channel) + '" title="' + esc(CHN[x.channel] || x.channel) + '"></i></div>' +
+            '<div class="t"><b>' + esc(x.name) + (x.mode === 'human' ? ' <span class="ib-tag human">' + (x.waiting && !x.claimed ? '⏱ ' + esc(x.waiting) : 'HUMAN') + '</span>' : '') + (x.test ? ' <span class="ib-tag test">TEST</span>' : '') +
+            (x.interest === 'hot' ? ' <span class="ib-tag hot">HOT</span>' : '') + '<span class="ago">' + esc(x.ago) + '</span></b><span>' + (x.reason ? '<b style="display:inline;color:var(--fd-negative)">' + esc(x.reason) + ' · </b>' : '') + esc(x.last) + '</span></div>' +
+            (x.unread ? '<span class="ib-unread">' + x.unread + '</span>' : '') + '</div>';
+        }).join('')) + '</div></div>';
+    var conv = '<div class="ib-pane ib-convpane">' + (c ? convHtml(c) : '<div class="ib-empty">Choose a chat on the left.<br><br>' + (L && L.list && !L.list.length && IB.pile === 'open' ? 'No chats yet — connect a channel on the <b>Channels</b> tab.' : '') + '</div>') + '</div>';
+    var side = '<div class="ib-pane ib-sidepane">' + (c ? sideHtml(c) : '') + '</div>';
+    return '<div class="ib-wrap' + (c ? ' has-conv' : '') + (IB.side ? ' side' : '') + '">' + list + conv + side + '</div>';
+  }
+  function bubble(m) {
+    if (m.dir === 'note' && m.author === 'system') return '<div class="ib-ev">' + esc(m.text) + ' · ' + esc(m.at) + '</div>';
+    if (m.dir === 'note') return '<div class="ib-note">📝 ' + esc(m.who) + ': ' + esc(m.text) + ' <span class="sku">' + esc(m.at) + '</span></div>';
+    var cls = 'ib-b ' + (m.dir === 'in' ? 'in' : 'out') + (m.author === 'team' ? ' team' : '') + (m.status === 'failed' ? ' failed' : '');
+    var body = '';
+    if (m.kind === 'image' && m.url) body += '<img src="' + esc(m.url) + '" alt="photo" loading="lazy">';
+    if (m.kind === 'audio' && m.url) body += '<audio controls preload="none" src="' + esc(m.url) + '"></audio>';
+    if (m.cards) body += '<div class="ib-cards">' + m.cards.map(function (x) { return '<div class="ib-card">' + (x.image ? '<img src="' + esc(x.image) + '" alt="">' : '') + '<div><b>' + esc(x.title) + '</b>' + esc(x.subtitle) + '</div></div>'; }).join('') + '</div>';
+    if (m.text) body += esc(m.text);
+    if (m.buttons) body += '<div class="ib-btns">' + m.buttons.map(function (b) { return '<span>' + esc(b) + '</span>'; }).join('') + '</div>';
+    if (m.transcript) body += '<span class="tr">🎤 ' + esc(m.transcript) + '</span>';
+    if (m.seen) body += '<span class="tr">📷 What the AI saw: ' + esc(m.seen) + '</span>';
+    var who = m.dir === 'in' ? '' : m.author === 'ai' ? 'AI' : m.author === 'team' ? (m.who || 'Team') : 'Update';
+    return '<div class="' + cls + '">' + body + '<span class="meta">' + (who ? esc(who) + ' · ' : '') + esc(m.at) + (m.status === 'failed' ? ' · ✕ not delivered: ' + esc(m.error) : '') + '</span></div>';
+  }
+  function convHtml(c) {
+    var human = c.mode === 'human';
+    var head = '<div class="ib-conv-h"><button class="btn small ib-back" type="button" data-ibclose="1">‹</button><div class="ib-av">' + (c.contact.avatar ? '<img src="' + esc(c.contact.avatar) + '" alt="">' : ini(c.contact.name)) + '</div>' +
+      '<div class="who"><b>' + esc(c.contact.name || 'Customer') + '</b><span>' + esc(c.channel.name) + ' · ' + esc(CHN[c.channel.kind] || c.channel.kind) + (c.contact.phone ? ' · ' + esc(c.contact.phone) : '') + '</span></div>' +
+      (human ? '<span class="ib-tag human">HUMAN' + (c.claimed ? ' · ' + esc(c.claimed) : '') + (c.until ? ' · until ' + esc(c.until) : '') + '</span>' : '<span class="ib-tag ai">AI is handling this chat</span>') +
+      '<span style="display:flex;gap:4px;flex-wrap:wrap">' +
+      (human ? '<button class="btn small primary" type="button" data-ibmode="back">Back to AI</button>' :
+        '<select class="i" data-ibtake="1" style="width:auto;height:32px"><option value="">Take over…</option><option value="30">30 minutes</option><option value="60">1 hour</option><option value="360">6 hours</option><option value="0">For good</option></select>') +
+      '<button class="btn small" type="button" data-ibmode="' + (c.pile === 'later' ? 'open' : 'later') + '">' + (c.pile === 'later' ? 'Open' : 'Later') + '</button>' +
+      '<button class="btn small" type="button" data-ibmode="' + (c.pile === 'done' ? 'open' : 'done') + '">' + (c.pile === 'done' ? 'Reopen' : 'Done') + '</button>' +
+      '<button class="btn small" type="button" data-ibside="1" title="The customer and the AI assistant">👤</button></span></div>';
+    if (c.reason) head += '<div class="ib-note" style="margin:8px 14px 0;align-self:stretch">The AI handed this chat to the team: <b>' + esc(c.reason) + '</b>' + (c.note ? ' — ' + esc(c.note) : '') + '</div>';
+    var msgs = '<div class="ib-msgs">' + (c.more ? '<div class="ib-ev">Older messages are kept (the newest 80 are shown).</div>' : '') + c.msgs.map(bubble).join('') + '</div>';
+    var win = c.windowLeft === null ? '' : c.windowLeft > 0 ? 'Meta\'s 24-hour window: ' + (c.windowLeft >= 60 ? Math.floor(c.windowLeft / 60) + ' h ' : '') + (c.windowLeft % 60) + ' min left' : 'Past 24 hours: your reply goes with Meta\'s human-agent tag (up to 7 days).';
+    var reply = '<div class="ib-reply">' + (human ? '' : '<div class="ib-hint">The AI is answering. Typing here sends as you; the AI keeps the chat unless you take over.</div>') +
+      '<div class="row2"><select class="i" data-ibsaved="1" style="width:auto;max-width:140px;height:42px"><option value="">Saved…</option>' + ((IB.saved && IB.saved.list) || []).map(function (s) { return '<option value="' + esc(s.id) + '">' + esc(s.title) + '</option>'; }).join('') + '</select>' +
+      '<textarea class="i" id="ibReply" placeholder="Write a reply…"></textarea><label class="btn small" style="height:42px;display:inline-flex;align-items:center;cursor:pointer" title="Send a photo">📷<input type="file" accept="image/*" id="ibPhoto" style="display:none"></label>' +
+      '<button class="btn primary" type="button" data-ibsend="1" style="height:42px">Send</button></div><div class="ib-hint' + (c.windowLeft === 0 ? ' warn' : '') + '">' + esc(win) + '</div>' +
+      '<div class="row2"><input class="i" id="ibNote" placeholder="Note for the team (the customer never sees it)" style="flex:1"><button class="btn small" type="button" data-ibnote="1">Add note</button></div></div>';
+    return head + msgs + reply;
+  }
+  function sideHtml(c) {
+    var r = c.record;
+    var cust = '<div class="ib-box"><h4>Customer</h4><div class="ib-form" style="grid-template-columns:1fr"><label>Name<input class="i" id="ibcName" value="' + esc(c.contact.name) + '"></label>' +
+      '<label>Phone<input class="i" id="ibcPhone" value="' + esc(c.contact.phone) + '" inputmode="numeric"></label><label>Note<input class="i" id="ibcNote" value="' + esc(c.contact.note) + '"></label></div>' +
+      '<div class="ib-actions"><button class="btn small" type="button" data-ibcsave="' + esc(c.contact.id) + '">Save</button>' + (c.contact.phone && navOn('invoice') ? '<button class="btn small" type="button" data-ibinvoice="1">New invoice</button>' : '') + '</div></div>';
+    var rec = '<div class="ib-box"><h4>In the ERP</h4>' + (r.invoices.length ? r.invoices.map(function (i) { return '<div class="line"><span><b>' + esc(i.no) + '</b> · ' + esc(i.date) + '<br><span class="sku">' + esc(i.delivery || '') + '</span></span><span>' + tk(i.total) + (i.due && i.paid !== 'Paid' ? '<br><span class="sku" style="color:var(--fd-negative)">due ' + tk(i.due) + '</span>' : '') + '</span></div>'; }).join('') : '<div class="sku">No invoices yet for this phone.</div>') +
+      (r.due ? '<div class="line"><b>Owes</b><b style="color:var(--fd-negative)">' + tk(r.due) + '</b></div>' : '') +
+      (r.orders.length ? '<h4 style="margin-top:10px">Chat orders</h4>' + r.orders.map(function (o) { return '<div class="line"><span><b>' + esc(o.no) + '</b> · ' + esc(o.status) + '<br><span class="sku">' + esc(o.items) + '</span></span><span>' + tk(o.total) + '</span></div>'; }).join('') : '') + '</div>';
+    var ai = '<div class="ib-box"><h4>AI assistant</h4><div class="ib-actions" style="margin-top:0"><button class="btn small" type="button" data-ibai="summary">Summary</button><button class="btn small" type="button" data-ibai="draft">Next reply</button><button class="btn small" type="button" data-ibai="lead">Create lead</button></div>' +
+      '<div class="row2" style="display:flex;gap:6px;margin-top:8px"><input class="i" id="ibAsk" placeholder="Ask about this customer…" style="flex:1"><button class="btn small" type="button" data-ibai="ask">Ask</button></div>' + (IB.ai ? '<div class="ib-ai-out">' + esc(IB.ai) + '</div>' + (IB.aiDraft ? '<div class="ib-actions"><button class="btn small primary" type="button" data-ibusedraft="1">Put in the reply box</button></div>' : '') : '') + '</div>';
+    return '<div class="ib-side">' + cust + rec + ai + '</div>';
+  }
+
+  // ---------------------------------------------------------------- Notifications
+  function tasksHtml() {
+    return errOr(IB.tasks, function (d) {
+      if (!d.tasks.length) return '<div class="ib-c"><div class="ib-empty">✓ Nothing needs you.</div></div>';
+      var KN = { handover: '🙋 Handed to the team', alert: '⚠️ AI alert', order: '🛒 New order', payment: '💰 Payment', enquiry: '❓ Question for the team', comment: '💬 Comment', change: '✏️ Change asked' };
+      return '<div class="ib-c"><div class="sub">Everything a person has to act on stays here until someone deals with it.' + ('Notification' in window && Notification.permission !== 'granted' ? ' <button class="btn small" type="button" data-ibnotify="1">Turn on desktop alerts</button>' : '') + '</div>' +
+        '<div class="fdd-scroll"><table class="fdd-t"><thead><tr><th>What</th><th>Customer</th><th>Details</th><th>When</th><th></th></tr></thead><tbody>' + d.tasks.map(function (t) {
+          return '<tr style="' + (t.open ? '' : 'opacity:.55') + '"><td><b>' + esc(KN[t.kind] || t.kind) + '</b>' + (t.reason ? '<div class="sku">' + esc(t.reason) + '</div>' : '') + (t.never ? '<div class="sku" style="color:var(--fd-negative)">never answered</div>' : '') + '</td>' +
+            '<td>' + esc(t.name || '—') + '</td><td style="white-space:normal;max-width:380px">' + esc(t.text) + '</td><td>' + esc(t.ago) + '</td><td style="white-space:nowrap">' +
+            (t.conv ? '<button class="btn small" type="button" data-ibgoconv="' + esc(t.conv) + '">Open chat</button> ' : '') + (t.open ? '<button class="btn small primary" type="button" data-ibtaskdone="' + t.id + '">Done</button>' : '<span class="sku">' + esc(t.done) + '</span>') + '</td></tr>';
+        }).join('') + '</tbody></table></div></div>';
+    });
+  }
+
+  // ---------------------------------------------------------------- Orders (chat orders)
+  function ordersHtml() {
+    return errOr(IB.orders, function (d) {
+      var st = [['pending', 'Pending'], ['hold', 'On hold'], ['today', 'To follow up today'], ['approved', 'Approved'], ['cancelled', 'Cancelled'], ['all', 'All']];
+      var h = '<div class="ib-piles" style="margin-bottom:12px">' + st.map(function (s) { var n = d.counts[s[0]]; return '<button type="button" data-ibost="' + s[0] + '" class="' + (IB.ostatus === s[0] ? 'on' : '') + '">' + s[1] + (n ? ' · ' + n : '') + '</button>'; }).join('') + '</div>';
+      if (!d.orders.length) return h + '<div class="ib-c"><div class="ib-empty">No orders here.</div></div>';
+      return h + '<div class="ib-grid2">' + d.orders.map(function (o) {
+        var items = (o.items || []).map(function (x) { return esc(x.name) + ' × ' + x.qty + ' <span class="sku">' + tk(x.price) + '</span>'; }).join('<br>');
+        var act = o.status === 'pending' ? '<button class="btn small primary" type="button" data-iboa="approve" data-id="' + o.id + '">Approve → invoice</button><button class="btn small" type="button" data-iboa="hold" data-id="' + o.id + '">Hold</button><button class="btn small" type="button" data-iboa="cancel" data-id="' + o.id + '">Cancel</button>'
+          : o.status === 'hold' ? '<button class="btn small" type="button" data-iboa="release" data-id="' + o.id + '">Release</button><button class="btn small" type="button" data-iboa="cancel" data-id="' + o.id + '">Cancel</button>'
+          : o.status === 'approved' ? '<button class="btn small" type="button" data-ibinv="' + esc(o.invoice) + '">Open ' + esc(o.invoice) + '</button>' : '';
+        return '<div class="ib-c"><div style="display:flex;justify-content:space-between;gap:8px"><h3>' + esc(o.no) + '</h3><span class="ib-tag ' + (o.status === 'pending' ? 'hot' : o.status === 'approved' ? 'ai' : 'test') + '">' + esc(o.status.toUpperCase()) + '</span></div>' +
+          '<div class="sub">' + esc(o.at) + ' · taken by ' + esc(o.takenBy === 'ai' ? 'the AI' : o.takenBy) + (o.dup ? ' · <b style="color:var(--fd-negative)">another open order on this phone</b>' : '') + '</div>' +
+          '<div style="font-size:14px"><b>' + esc(o.name) + '</b> · ' + esc(o.phone) + '<br><span class="sku">' + esc(o.address) + '</span></div><div style="margin:8px 0;font-size:13.5px">' + items + '</div>' +
+          '<div class="line" style="display:flex;justify-content:space-between"><span>Delivery ' + tk(o.delivery) + (o.deliverySaid !== null && o.deliverySaid !== undefined ? ' <span class="sku">(the AI said ' + tk(o.deliverySaid) + ')</span>' : '') + '</span><b>' + tk(o.total) + '</b></div>' +
+          (o.hold ? '<div class="sku">On hold: ' + esc(o.hold) + (o.followUp ? ' · follow up ' + esc(o.followUp) : '') + '</div>' : '') + (o.cancel ? '<div class="sku">Cancelled: ' + esc(o.cancel) + '</div>' : '') +
+          (o.change ? '<div class="ib-note" style="margin-top:6px">' + esc(o.change) + '</div>' : '') + (o.delivery_status ? '<div class="sku">Delivery: ' + esc(o.delivery_status) + ' · ' + esc(o.paid) + '</div>' : '') +
+          (o.rating ? '<div class="sku">Rated ' + '⭐'.repeat(o.rating) + '</div>' : '') +
+          '<div class="ib-actions">' + act + (o.conv ? '<button class="btn small" type="button" data-ibgoconv="' + esc(o.conv) + '">Chat</button>' : '') + '</div>' +
+          '<details style="margin-top:8px"><summary class="sku">History</summary>' + o.history.map(function (e) { return '<div class="sku">' + esc(e.at) + ' · ' + esc(e.by) + ' · ' + esc(e.what) + '</div>'; }).join('') + '</details></div>';
+      }).join('') + '</div>';
+    });
+  }
+
+  // ---------------------------------------------------------------- Leads
+  function leadsHtml() {
+    return errOr(IB.leads, function (d) {
+      var today = d.leads.filter(function (l) { return l.due; });
+      var h = '<div class="ib-c" style="margin-bottom:14px"><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><h3 style="flex:1">Today · ' + today.length + '</h3><button class="btn small" type="button" data-ibleadnew="1">+ Lead</button></div>' +
+        (today.length ? today.map(function (l) { return '<div class="ib-lead due" data-iblead="' + esc(l.id) + '"><b>' + esc(l.name || l.phone || 'Lead') + '</b><span>' + esc(l.want) + ' · follow up ' + esc(l.followUp) + '</span></div>'; }).join('') : '<div class="sku">Nobody to call today.</div>') + '</div>';
+      h += '<div class="ib-pipe">' + d.stages.map(function (s, i) {
+        var ls = d.leads.filter(function (l) { return l.stage === i + 1; });
+        return '<div class="ib-col"><h4><span>' + esc(s) + '</span><span>' + ls.length + '</span></h4>' + ls.slice(0, 60).map(function (l) {
+          return '<div class="ib-lead' + (l.due ? ' due' : '') + '" data-iblead="' + esc(l.id) + '"><b>' + esc(l.name || l.phone || 'Lead') + '</b><span>' + esc(l.want || '—') + '</span><span>' + esc(CHN[l.channel] || l.source || '') + (l.value ? ' · ' + tk(l.value) : '') + (l.assigned ? ' · ' + esc(l.assigned) : '') + '</span></div>'; }).join('') + '</div>';
+      }).join('') + '</div>';
+      return h;
+    });
+  }
+  function leadDialog(l) {
+    l = l || {};
+    var st = (IB.leads && IB.leads.stages) || [];
+    fdwDialog(l.id ? 'Lead' : 'New lead', '<div class="dlg-b" style="white-space:normal"><div class="ib-form">' +
+      '<label>Name<input class="i" id="lName" value="' + esc(l.name || '') + '"></label><label>Phone<input class="i" id="lPhone" value="' + esc(l.phone || '') + '"></label>' +
+      '<label>Wants<input class="i" id="lWant" value="' + esc(l.want || '') + '"></label><label>Value (৳)<input class="i" id="lValue" value="' + esc(l.value || '') + '"></label>' +
+      (l.id ? '<label>Stage<select class="i" id="lStage">' + st.map(function (s, i) { return '<option value="' + (i + 1) + '"' + (l.stage === i + 1 ? ' selected' : '') + '>' + esc(s) + '</option>'; }).join('') + '</select></label>' : '') +
+      '<label>Follow up on<input class="i" type="date" id="lFollow" value="' + esc(l.followUp || '') + '"></label><label>Priority<select class="i" id="lPrio"><option value="">—</option><option value="high"' + (l.priority === 'high' ? ' selected' : '') + '>High</option><option value="normal"' + (l.priority === 'normal' ? ' selected' : '') + '>Normal</option><option value="low"' + (l.priority === 'low' ? ' selected' : '') + '>Low</option></select></label>' +
+      '<label style="grid-column:1/-1">Note<input class="i" id="lNote" value="' + esc(l.note || '') + '"></label></div>' +
+      (l.phone ? '<div class="ib-actions"><a class="btn small" target="_blank" rel="noopener" href="https://wa.me/88' + esc(String(l.phone).replace(/[^0-9]/g, '').replace(/^88/, '')) + '">Write on WhatsApp</a>' + (l.conv ? '<button class="btn small" type="button" data-ibgoconv="' + esc(l.conv) + '">Open chat</button>' : '') + '</div>' : '') +
+      ((l.history || []).length ? '<details style="margin-top:8px"><summary class="sku">Timeline</summary>' + l.history.map(function (e) { return '<div class="sku">' + esc(e.at) + ' · ' + esc(e.by) + ' · ' + esc(e.what) + '</div>'; }).join('') + '</details>' : '') + '</div>',
+      function (back, close) {
+        var s = { name: fdwVal(back, 'lName'), phone: fdwVal(back, 'lPhone'), want: fdwVal(back, 'lWant'), value: fdwVal(back, 'lValue'), followUp: fdwVal(back, 'lFollow'), priority: fdwVal(back, 'lPrio'), note: fdwVal(back, 'lNote') };
+        if (l.id) { s.id = l.id; s.stage = Number(fdwVal(back, 'lStage')); }
+        srv('erpInboxLeads', [{ save: s }], function (r) { IB.leads = r; close(); paint(); toast('Saved.'); }, fail);
+      });
+  }
+
+  // ---------------------------------------------------------------- Follow-ups, Broadcasts, Comments
+  function fuHtml() {
+    return errOr(IB.fu, function (d) {
+      return '<div class="ib-grid2"><div class="ib-c"><h3>Follow-ups</h3><div class="sub">When a customer goes quiet the AI judges their interest: cold gets nothing, warm one reminder, hot two — always inside Meta\'s 24-hour window, never when a person holds the chat or the customer has ordered. Messenger and WhatsApp (official).</div>' +
+        '<label style="display:flex;gap:8px;align-items:center"><input type="checkbox" id="fuOn"' + (d.on ? ' checked' : '') + '> Follow-ups on</label><label style="display:flex;gap:8px;align-items:center"><input type="checkbox" id="fuHot"' + (d.hot ? ' checked' : '') + '> Remind hot customers</label>' +
+        '<label style="display:flex;gap:8px;align-items:center"><input type="checkbox" id="fuWarm"' + (d.warm ? ' checked' : '') + '> Remind warm customers</label><div class="ib-actions"><button class="btn primary small" type="button" data-ibfusave="1">Save</button></div></div>' +
+        '<div class="ib-c"><h3>Last 7 days</h3><div class="ib-kpis"><div class="ib-kpi"><b>' + d.counts.hot + '</b><span>HOT</span></div><div class="ib-kpi"><b>' + d.counts.warm + '</b><span>WARM</span></div><div class="ib-kpi"><b>' + d.counts.cold + '</b><span>COLD</span></div></div>' +
+        '<h3 style="font-size:14px">Planned</h3>' + (d.planned.length ? d.planned.map(function (p) { return '<div class="line" style="display:flex;justify-content:space-between;font-size:13px;padding:4px 0"><span>' + esc(p.name) + ' · ' + esc(p.interest) + '</span><span class="sku">' + esc(p.at) + '</span></div>'; }).join('') : '<div class="sku">None planned.</div>') + '</div></div>';
+    });
+  }
+  function bcHtml() {
+    return errOr(IB.bc, function (d) {
+      var own = ((IB.list && IB.list.list) || []).filter(function (x) { return x.channel === 'messenger' || x.channel === 'instagram'; });
+      return '<div class="ib-c" style="margin-bottom:14px"><h3>New broadcast</h3><div class="sub">Goes only to people who wrote to your page in the last 23 hours (<b>' + d.reach + ' can get one now</b>), not to chats a person holds, not to anyone who got one in the last ' + d.gap + ' hours. Messenger and Instagram only. You must send a test to one of your own chats first — and again after every change.</div>' +
+        '<textarea class="i" id="bcText" rows="3" style="width:100%" placeholder="Today\'s offer…"></textarea><div class="ib-actions"><button class="btn primary small" type="button" data-ibbcsave="1">Save</button></div></div>' +
+        (d.broadcasts.length ? '<div class="ib-grid2">' + d.broadcasts.map(function (b) {
+          return '<div class="ib-c"><div style="white-space:pre-wrap;font-size:14px">' + esc(b.text) + '</div><div class="sub" style="margin-top:6px">' + (b.sent ? 'Sent ' + esc(b.sent) + ' to ' + b.count : b.tested ? 'Tested ' + esc(b.testedAt) : 'Not tested yet') + '</div>' +
+            (b.sent ? '' : '<div class="ib-actions"><select class="i" data-ibbcto="' + esc(b.id) + '" style="width:auto"><option value="">Test on my chat…</option>' + own.map(function (x) { return '<option value="' + esc(x.id) + '">' + esc(x.name) + '</option>'; }).join('') + '</select>' +
+              '<button class="btn small primary" type="button" data-ibbcsend="' + esc(b.id) + '"' + (b.tested ? '' : ' disabled') + '>Send to ' + d.reach + '</button></div>') + '</div>'; }).join('') + '</div>' : '');
+    });
+  }
+  function cmHtml() {
+    return errOr(IB.cm, function (d) {
+      if (!d.comments.length) return '<div class="ib-c"><div class="ib-empty">No comments yet. Comments on your Facebook and Instagram posts arrive here once a page is live.</div></div>';
+      return '<div class="ib-c"><div class="sub">The AI replies by name (with the product\'s photo when it is about one), sends a private message, deletes certain junk and hides doubtful comments for you to decide.</div><div class="fdd-scroll"><table class="fdd-t"><thead><tr><th>From</th><th>Comment</th><th>Reply / action</th><th></th></tr></thead><tbody>' +
+        d.comments.map(function (c) {
+          return '<tr><td><b>' + esc(c.from || '—') + '</b><div class="sku">' + esc(CHN[c.channel] || c.channel) + ' · ' + esc(c.at) + '</div></td><td style="white-space:normal;max-width:300px">' + esc(c.text) + '</td>' +
+            '<td style="white-space:normal;max-width:300px">' + (c.reply ? esc(c.reply) + '<div class="sku">' + esc(c.by) + '</div>' : c.action ? '<b>' + esc(c.action) + '</b> <span class="sku">' + esc(c.by) + '</span>' : '<span class="sku">waiting</span>') + '</td>' +
+            '<td style="white-space:nowrap"><button class="btn small" type="button" data-ibcm="reply" data-id="' + esc(c.id) + '">Reply</button> <button class="btn small" type="button" data-ibcm="' + (c.action === 'hidden' ? 'unhide' : 'hide') + '" data-id="' + esc(c.id) + '">' + (c.action === 'hidden' ? 'Unhide' : 'Hide') + '</button> ' +
+            '<button class="btn small" type="button" data-ibcm="delete" data-id="' + esc(c.id) + '">Delete</button>' + (c.channel === 'messenger' ? ' <button class="btn small" type="button" data-ibcm="block" data-id="' + esc(c.id) + '">Block</button>' : '') + '</td></tr>'; }).join('') + '</tbody></table></div></div>';
+    });
+  }
+
+  // ---------------------------------------------------------------- Agent Desk
+  var PF = [['name', 'Business name'], ['sells', 'What you sell (a few words)'], ['hours', 'Opening hours'], ['phone', 'Phone'], ['address', 'Address'],
+            ['delivery_in', 'Delivery inside Dhaka (৳)'], ['days_in', 'Days inside Dhaka'], ['delivery_out', 'Delivery outside Dhaka (৳)'], ['days_out', 'Days outside Dhaka'], ['delivery_rule', 'Other delivery rules'],
+            ['payment', 'How customers pay'], ['returns', 'Return and exchange rule'], ['discount_answer', 'Answer when asked for a discount'], ['extra_offer', 'Extra offer (mentioned once before the order)'],
+            ['tone', 'Tone of voice'], ['first_message', 'First message (website chat)'], ['review_link', 'Your review link']];
+  function deskHtml() {
+    return errOr(IB.desk, function (d) {
+      var p = d.details, dd = d.detailsDraft || {};
+      var details = '<div class="ib-c"><h3>Your business</h3><div class="sub">What the AI says comes only from here, your rules, your products and the knowledge base. Saved at once; changes made with the helper below are drafts until you publish.</div><div class="ib-form">' +
+        PF.map(function (f) { var v = p[f[0]]; return '<label>' + esc(f[1]) + (dd[f[0]] !== undefined ? ' <span class="ib-tag hot">draft: ' + esc(String(dd[f[0]])) + '</span>' : '') + '<input class="i" data-pf="' + f[0] + '" value="' + esc(v === undefined ? '' : v) + '"></label>'; }).join('') +
+        '<label>Reply language<select class="i" data-pf="lang"><option value="both"' + (p.lang === 'both' ? ' selected' : '') + '>Bangla or English — as the customer writes</option><option value="bn"' + (p.lang === 'bn' ? ' selected' : '') + '>Bangla</option><option value="en"' + (p.lang === 'en' ? ' selected' : '') + '>English</option></select></label>' +
+        '<label>Calls the customer<select class="i" data-pf="style"><option value="sir"' + (p.style === 'sir' ? ' selected' : '') + '>স্যার / ম্যাম</option><option value="bhai"' + (p.style === 'bhai' ? ' selected' : '') + '>ভাইয়া / আপু</option></select></label>' +
+        '<label style="flex-direction:row;align-items:center;gap:8px"><input type="checkbox" data-pf="first_name"' + (p.first_name ? ' checked' : '') + '> With the first name</label>' +
+        '<label style="flex-direction:row;align-items:center;gap:8px"><input type="checkbox" data-pf="review_on"' + (p.review_on ? ' checked' : '') + '> Ask for a review a day after delivery</label>' +
+        '<label style="flex-direction:row;align-items:center;gap:8px"><input type="checkbox" data-pf="rating_on"' + (p.rating_on ? ' checked' : '') + '> Ask for a 1-5 star rating after an order</label>' +
+        '<label style="flex-direction:row;align-items:center;gap:8px"><input type="checkbox" data-pf="saved_ai"' + (p.saved_ai ? ' checked' : '') + '> AI helpers on saved replies</label></div>' +
+        '<div class="ib-actions"><button class="btn primary small" type="button" data-ibpfsave="1">Save details</button>' + (d.hasPrevDetails ? '<button class="btn small" type="button" data-ibundo="details">Undo the last published details</button>' : '') + '</div></div>';
+      var helper = '<div class="ib-c"><h3>Teach the AI in your own words</h3><div class="sub">e.g. “Make the delivery charge 80 taka” or “We are closed on Fridays”. The helper shows what is set now and makes a draft; test it on the phone, then publish.</div>' +
+        '<div style="display:flex;gap:6px"><input class="i" id="dkHelp" placeholder="Tell the helper…" style="flex:1"><button class="btn small primary" type="button" data-ibhelper="1">Draft it</button></div>' + (IB.helperSay ? '<div class="ib-ai-out">' + esc(IB.helperSay) + '</div>' : '') + '</div>';
+      var rules = '<div class="ib-c"><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><h3 style="flex:1">Your rules</h3>' + (d.drafts ? '<span class="ib-tag hot">' + d.drafts + ' draft(s)</span><button class="btn small primary" type="button" data-ibpublish="1">Publish</button><button class="btn small" type="button" data-ibdiscardall="1">Discard drafts</button>' : '') + '</div>' +
+        '<div class="sub">Customers keep the published version until you publish. Undo brings the previous version back.</div>' +
+        d.rules.map(function (r) {
+          return '<div class="ib-rule' + (r.draft !== null ? ' draft' : '') + '"><div class="h"><b>' + esc(r.title) + '</b><span class="sku">v' + r.version + ' · ' + esc(r.by) + '</span>' +
+            '<button class="btn small" type="button" data-ibrule="toggle" data-id="' + r.id + '">' + (r.enabled ? 'On' : 'Off') + '</button><button class="btn small" type="button" data-ibrule="edit" data-id="' + r.id + '">Edit</button>' +
+            (r.versions > 1 && r.draft === null ? '<button class="btn small" type="button" data-ibrule="undo" data-id="' + r.id + '">Undo</button>' : '') + '<button class="btn small" type="button" data-ibrule="archive" data-id="' + r.id + '">✕</button></div>' +
+            (r.body ? '<div class="body">' + esc(r.body) + '</div>' : '') + (r.draft !== null ? '<div class="body"><span class="ib-tag hot">DRAFT</span> ' + esc(r.draft) + '</div>' : '') + '</div>'; }).join('') +
+        '<div class="ib-form" style="margin-top:8px"><label>New rule — name<input class="i" id="dkTitle" placeholder="e.g. Fridays"></label><label>What it says<input class="i" id="dkBody" placeholder="e.g. We are closed on Fridays."></label></div><div class="ib-actions"><button class="btn small" type="button" data-ibruleadd="1">+ Add as draft</button></div></div>';
+      var phone = '<div class="ib-c"><h3>Test — the customer\'s view</h3><div class="sub">Uses your drafts. Nothing is sent to anyone and no order is booked. Each test spends a little AI credit.</div><div class="ib-phone"><div class="top">' + esc(p.name || 'Your page') + '</div><div class="body" id="ibTestBody">' +
+        IB.test.map(function (m) { return '<div class="' + (m.mine ? 'me' : 'shop') + '">' + esc(m.text) + '</div>'; }).join('') + (IB.testBusy ? '<div class="shop">…</div>' : '') + '</div>' +
+        '<div class="inp"><input id="ibTestIn" placeholder="Write as a customer…"><button class="btn small primary" type="button" data-ibtest="1">Send</button></div></div><div class="ib-actions"><button class="btn small" type="button" data-ibtestclear="1">Clear</button></div></div>';
+      var offers = errOr(IB.offers, function (o) {
+        return '<div class="ib-c"><h3>Special offers</h3><div class="sub">The only offers the AI may mention. Prices still come from your products.</div>' + (o.offers.length ? o.offers.map(function (x) {
+          return '<div class="line" style="display:flex;gap:8px;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--fd-border)"><span><b>' + esc(x.label) + '</b> <span class="sku">' + esc(x.sku || 'all products') + (x.ends ? ' · until ' + esc(x.ends) : '') + '</span><br><span class="sku">' + esc(x.detail) + '</span></span><button class="btn small" type="button" data-iboffer="' + x.id + '">' + (x.active ? 'On' : 'Off') + '</button></div>'; }).join('') : '<div class="sku">No offers.</div>') +
+          '<div class="ib-form" style="margin-top:8px"><label>Offer<input class="i" id="ofLabel" placeholder="Eid offer"></label><label>Product code (empty = all)<input class="i" id="ofSku"></label><label>Details<input class="i" id="ofDetail" placeholder="10% off"></label><label>Until<input class="i" type="date" id="ofEnds"></label></div>' +
+          '<div class="ib-actions"><button class="btn small" type="button" data-ibofferadd="1">+ Add offer</button></div></div>';
+      });
+      var saved = errOr(IB.saved, function (s) {
+        return '<div class="ib-c"><h3>Saved replies</h3>' + (s.list.length ? s.list.map(function (x) { return '<div class="line" style="display:flex;gap:8px;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--fd-border)"><span><b>' + esc(x.title) + '</b><br><span class="sku">' + esc(x.body) + '</span></span><button class="btn small" type="button" data-ibsavedx="' + x.id + '">✕</button></div>'; }).join('') : '<div class="sku">None yet.</div>') +
+          '<div class="ib-form" style="margin-top:8px"><label>Name<input class="i" id="svTitle"></label><label>Reply<input class="i" id="svBody"></label></div><div class="ib-actions"><button class="btn small" type="button" data-ibsavedadd="1">+ Add</button></div></div>';
+      });
+      return '<div class="ib-grid2"><div style="display:flex;flex-direction:column;gap:14px">' + helper + rules + details + '</div><div style="display:flex;flex-direction:column;gap:14px">' + phone + offers + saved + '</div></div>';
+    });
+  }
+
+  // ---------------------------------------------------------------- Knowledge
+  function kbHtml() {
+    return errOr(IB.kb, function (d) {
+      return '<div class="ib-grid2"><div class="ib-c"><h3>Add to the knowledge base</h3><div class="sub">Your own documents — policies, guides, details. The AI searches them by the question, on every channel. Paste text, add a question and its answer, or load a .txt / .md / .csv file.</div>' +
+        '<div class="ib-form"><label>Title<input class="i" id="kbTitle"></label><label>File<input class="i" type="file" id="kbFile" accept=".txt,.md,.csv,text/plain"></label></div>' +
+        '<textarea class="i" id="kbBody" rows="6" style="width:100%;margin-top:8px" placeholder="Paste the text…"></textarea><div class="ib-actions"><button class="btn small primary" type="button" data-ibkbadd="text">Add the text</button></div>' +
+        '<div class="ib-form" style="margin-top:10px"><label>Question<input class="i" id="kbQ"></label><label>Answer<input class="i" id="kbA"></label></div><div class="ib-actions"><button class="btn small" type="button" data-ibkbadd="qa">Add the question</button></div></div>' +
+        '<div class="ib-c"><h3>Test a question</h3><div style="display:flex;gap:6px"><input class="i" id="kbTest" placeholder="What is the return policy?" style="flex:1"><button class="btn small" type="button" data-ibkbtest="1">Find</button></div>' +
+        (IB.kbFound ? (IB.kbFound.length ? IB.kbFound.map(function (f) { return '<div class="ib-ai-out"><b>' + esc(f.from) + '</b><br>' + esc(f.text) + '</div>'; }).join('') : '<div class="ib-ai-out">Nothing found.</div>') : '') +
+        '<h3 style="margin-top:14px;font-size:14px">Documents · ' + d.docs.length + '</h3>' + d.docs.map(function (x) { return '<div class="line" style="display:flex;gap:8px;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--fd-border)"><span><b>' + esc(x.title) + '</b> <span class="sku">' + esc(x.kind) + ' · ' + x.chunks + ' part(s) · ' + esc(x.at) + '</span><br><span class="sku">' + esc(x.body) + '</span></span><button class="btn small" type="button" data-ibkbx="' + x.id + '">✕</button></div>'; }).join('') + '</div></div>';
+    });
+  }
+
+  // ---------------------------------------------------------------- Channels
+  var KIND_HELP = {
+    messenger: 'Facebook Page messages and comments, through Meta\'s official Graph API. Needs your Meta app (developer.facebook.com): the Page access token and the app secret. In the app\'s Webhooks, use the address and verify word below, fields: messages, messaging_postbacks, message_echoes, feed. Real customers are answered once Meta approves the app (App Review).',
+    instagram: 'Instagram messages and comments (a Business or Creator account linked to the Facebook page), through the same Meta app: the Page token and app secret; webhooks object "instagram", fields messages and comments.',
+    wa_cloud: 'WhatsApp Cloud API — Meta\'s official WhatsApp. Needs the phone number id, a permanent access token and the app secret; webhooks field "messages". Replies within 24 h of the customer\'s message are free; messages you start later are paid templates.',
+    wa_evo: 'Your own number as a linked device (like WhatsApp Web) through an Evolution API server you run. NOT Meta\'s official system: WhatsApp does not allow automated messages this way and the number can be banned for a time or for good. The AI only answers people who wrote first; no broadcasts or reminders here.',
+    wa_sender: 'Your own number as a linked device through WaSenderAPI (a paid service, wasenderapi.com). NOT official — the same ban risk. Needs its API key; set the webhook below in WaSenderAPI with a webhook secret.',
+    webchat: 'A chat bubble on your own website: the visitor gives a name and a mobile number, then chats with the same agent (photos and voice notes too). Paste the code below into your site (https).'
+  };
+  function chansHtml() {
+    return errOr(IB.chans, function (d) {
+      var h = (!d.aiKey ? '<div class="note err"><div class="ico">!</div><div>No AI key is set — the AI cannot answer until one is set (Platform → AI reader).</div></div>' : '');
+      h += '<div class="ib-grid2">' + d.channels.map(function (c) {
+        var keyFields = { messenger: ['TOKEN', 'APP_SECRET'], instagram: ['TOKEN', 'APP_SECRET'], wa_cloud: ['TOKEN', 'APP_SECRET'], wa_evo: ['URL', 'KEY'], wa_sender: ['KEY', 'HOOK_SECRET'], webchat: [] }[c.kind];
+        var KL = { TOKEN: 'Access token', APP_SECRET: 'App secret', URL: 'Server address (https://…)', KEY: 'API key', HOOK_SECRET: 'Webhook secret' };
+        var st = c.status === 'live' ? '<span class="ib-tag ai">LIVE</span>' : '<span class="ib-tag hot">PRACTICE</span>';
+        var embed = c.kind === 'webchat' ? '<div class="sub" style="margin-top:8px">Paste into your website:</div><div class="ib-code">&lt;script src="' + esc(location.origin) + '/chat-widget.js" data-chat="' + esc(c.chatUrl) + '" async&gt;&lt;/script&gt;</div>' : '';
+        return '<div class="ib-c"><div style="display:flex;gap:8px;align-items:center"><h3 style="flex:1">' + esc(c.name) + '</h3>' + st + '</div><div class="sub">' + esc(c.kindName) + (c.externalId ? ' · ' + esc(c.externalId) : '') + '</div>' +
+          (!c.official ? '<div class="ib-risk">⚠️ Not Meta\'s official system — the number can be banned. Only people who wrote first are answered.</div>' : '') +
+          '<div class="sub">' + esc(KIND_HELP[c.kind]) + '</div>' +
+          (c.hookUrl && c.kind !== 'webchat' ? '<div class="sub">Webhook address:</div><div class="ib-code">' + esc(c.hookUrl) + '</div>' + (c.verify ? '<div class="sub" style="margin-top:6px">Verify word:</div><div class="ib-code">' + esc(c.verify) + '</div>' : '') : '') + embed +
+          (keyFields.length ? '<div class="ib-form" style="margin-top:10px">' + keyFields.map(function (k) { return '<label>' + KL[k] + (c.keys[k] ? ' <span class="ib-tag ai">saved</span>' : '') + '<input class="i" type="password" autocomplete="off" data-chkey="' + k + '" placeholder="' + (c.keys[k] ? 'saved — type to replace' : '') + '"></label>'; }).join('') + '</div>' : '') +
+          '<div class="ib-form" style="margin-top:10px"><label>Wait before answering (s)<input class="i" data-chset="wait_s" value="' + esc(c.settings.wait_s) + '"></label><label>Back to the AI after (min)<input class="i" data-chset="revert_min" value="' + esc(c.settings.revert_min) + '"></label>' +
+          (c.kind === 'webchat' ? '<label>Colour<input class="i" type="color" data-chset="colour" value="' + esc(c.settings.colour || '#F5A623') + '"></label><label>Logo (https link)<input class="i" data-chset="logo" value="' + esc(c.settings.logo || '') + '"></label><label>AI answers per visitor a day<input class="i" data-chset="daily_cap" value="' + esc(c.settings.daily_cap || 40) + '"></label>' : '') + '</div>' +
+          (c.status !== 'live' ? '<div class="sub" style="margin-top:8px">Practice mode: the AI answers only test chats — send your page one message: <b>test ' + esc(c.settings.test_code) + '</b>, or use the Agent Desk\'s phone.</div>' : '') +
+          '<div class="ib-actions"><button class="btn small primary" type="button" data-chsave="' + c.id + '">Save</button>' +
+          (c.status !== 'live' ? '<button class="btn small primary" type="button" data-chlive="' + c.id + '">Go live</button>' : '<button class="btn small" type="button" data-chpractice="' + c.id + '">Back to practice</button>') +
+          '<select class="i" data-chai="' + c.id + '" style="width:auto"><option value="">AI: ' + (c.aiOn && !c.aiOffUntil ? 'on' : c.aiOffUntil ? 'off until ' + esc(c.aiOffUntil) : 'off') + '</option><option value="on">Turn the AI on</option><option value="60">Off for 1 hour</option><option value="240">Off for 4 hours</option><option value="1440">Off for a day</option><option value="off">Off until I turn it on</option></select>' +
+          (/messenger|instagram/.test(c.kind) ? '<button class="btn small" type="button" data-chcm="' + c.id + '" data-on="' + (c.commentsAi ? '0' : '1') + '">Comments AI: ' + (c.commentsAi ? 'on' : 'off') + '</button>' : '') +
+          (c.kind === 'wa_evo' ? '<button class="btn small" type="button" data-chqr="' + c.id + '">Link the phone (QR)</button>' : '') +
+          '<button class="btn small" type="button" data-chremove="' + c.id + '">Remove</button></div>' + (IB.qr && IB.qr.id === c.id ? '<div style="margin-top:10px"><img src="' + esc(IB.qr.qr) + '" alt="QR" style="width:220px;background:#fff;padding:8px;border-radius:10px"><div class="sub">' + esc(IB.qr.state) + ' — scan with WhatsApp → Linked devices.</div></div>' : '') + '</div>';
+      }).join('') + '</div>';
+      h += '<div class="ib-c" style="margin-top:14px"><h3>Connect a channel</h3><div class="ib-form"><label>What<select class="i" id="chKind">' + d.kinds.map(function (k) { return '<option value="' + k.kind + '">' + esc(k.name) + (k.official ? '' : ' — not official') + '</option>'; }).join('') + '</select></label>' +
+        '<label>Name<input class="i" id="chName" placeholder="e.g. Costareen page"></label><label>Page id / account id / phone number id / instance / number<input class="i" id="chExt"></label></div>' +
+        '<label style="display:flex;gap:8px;align-items:flex-start;margin-top:8px;font-size:13px"><input type="checkbox" id="chRisk"> I understand a linked-device WhatsApp (Evolution / WaSenderAPI) is not Meta\'s official system, WhatsApp does not allow automated messages this way, and the number can be banned for a time or for good.</label>' +
+        '<div class="ib-actions"><button class="btn primary small" type="button" data-chadd="1">Connect</button></div></div>';
+      return h;
+    });
+  }
+
+  // ---------------------------------------------------------------- Analytics, AI cost
+  function statsHtml() {
+    return errOr(IB.stats, function (d) {
+      var m = d.messages, v = d.conversations;
+      var bars = function (rows, lab, val) { var mx = Math.max.apply(null, rows.map(function (r) { return r[val]; }).concat([1])); return '<div class="ib-bars">' + rows.map(function (r) { return '<div><span>' + esc(r[lab]) + '</span><em><i style="width:' + (r[val] / mx * 100).toFixed(1) + '%"></i></em><b>' + r[val] + '</b></div>'; }).join('') + '</div>'; };
+      return '<div class="ib-piles" style="margin-bottom:12px">' + [7, 14, 30].map(function (n) { return '<button type="button" data-ibdays="' + n + '" class="' + (d.days === n ? 'on' : '') + '">' + n + ' days</button>'; }).join('') + '</div>' +
+        '<div class="ib-kpis"><div class="ib-kpi"><b>' + m.inn + '</b><span>Messages in</span></div><div class="ib-kpi"><b>' + m.ai + '</b><span>AI replies</span></div><div class="ib-kpi"><b>' + m.team + '</b><span>Team replies</span></div>' +
+        '<div class="ib-kpi"><b>' + v.n + '</b><span>Customers</span></div><div class="ib-kpi"><b>' + v.ai_alone + '</b><span>Finished by the AI alone</span></div><div class="ib-kpi"><b>' + v.handed + '</b><span>Needed a person</span></div>' +
+        '<div class="ib-kpi"><b>' + (v.median_first !== null ? v.median_first + ' s' : '—') + '</b><span>First reply (median)</span></div><div class="ib-kpi"><b>' + (d.claimMedianS !== null ? Math.round(d.claimMedianS / 60) + ' min' : '—') + '</b><span>Team picked up (median)</span></div>' +
+        '<div class="ib-kpi"><b>' + v.waiting + '</b><span>Waiting now</span></div><div class="ib-kpi"><b>' + d.leads.n + '</b><span>Leads · ' + d.leads.won + ' won</span></div><div class="ib-kpi"><b>' + d.orders.n + '</b><span>Chat orders · ' + d.orders.ai + ' by the AI</span></div><div class="ib-kpi"><b>' + tk(d.aiCost.bdt) + '</b><span>AI cost (est.)</span></div></div>' +
+        '<div class="ib-grid2"><div class="ib-c"><h3>Why chats went to a person (30 days)</h3>' + (d.reasons.length ? bars(d.reasons, 'reason', 'n') : '<div class="sku">None.</div>') + '</div>' +
+        '<div class="ib-c"><h3>Busy hours</h3>' + (d.hours.length ? bars(d.hours.map(function (x) { return { h: (x.h % 12 || 12) + (x.h < 12 ? ' am' : ' pm'), n: x.n }; }), 'h', 'n') : '<div class="sku">No messages yet.</div>') + '</div>' +
+        '<div class="ib-c"><h3>By channel</h3>' + (d.byChannel.length ? bars(d.byChannel, 'channel', 'n') : '<div class="sku">No messages yet.</div>') + '</div></div>';
+    });
+  }
+  function costHtml() {
+    return errOr(IB.cost, function (d) {
+      return '<div class="ib-c" style="margin-bottom:14px"><div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end"><label class="sku">From<br><input class="i" type="date" id="acFrom" value="' + esc(d.from) + '"></label><label class="sku">To<br><input class="i" type="date" id="acTo" value="' + esc(d.to) + '"></label>' +
+        '<button class="btn small" type="button" data-ibcost="1">Show</button><span style="margin-left:auto;font-size:20px;font-weight:800">' + tk(d.total) + '</span></div><div class="sub" style="margin-top:6px">Every piece of AI work, with its tokens and an estimated cost in taka (Gemini prices at ৳122 a dollar — an estimate, the AI provider\'s bill is the record).</div></div>' +
+        '<div class="ib-grid2"><div class="ib-c"><h3>By kind of work</h3>' + d.byPurpose.map(function (x) { return '<div class="line" style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--fd-border);font-size:13px"><span>' + esc(x.purpose) + ' · ' + x.n + '</span><b>' + '৳' + x.bdt.toFixed(2) + '</b></div>'; }).join('') + '</div>' +
+        '<div class="ib-c"><h3>By day</h3>' + d.byDay.map(function (x) { return '<div class="line" style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--fd-border);font-size:13px"><span>' + esc(x.day) + ' · ' + x.n + '</span><b>' + '৳' + x.bdt.toFixed(2) + '</b></div>'; }).join('') + '</div></div>' +
+        '<div class="ib-c" style="margin-top:14px"><div class="fdd-scroll"><table class="fdd-t"><thead><tr><th>When</th><th>Work</th><th>Chat</th><th>Model</th><th class="n">Tokens in / out</th><th class="n">৳</th></tr></thead><tbody>' +
+        d.rows.map(function (x) { return '<tr><td>' + esc(x.at) + '</td><td>' + esc(x.purpose) + '</td><td class="sku">' + esc(x.conv) + '</td><td class="sku">' + esc(x.model) + '</td><td class="n">' + fmt(x.tin) + ' / ' + fmt(x.tout) + '</td><td class="n">' + x.bdt.toFixed(4) + '</td></tr>'; }).join('') + '</tbody></table></div></div>';
+    });
+  }
+
+  // ---------------------------------------------------------------- the screen
+  var repaintIb = repaint;
+  repaint = function () {
+    if (VIEW !== 'inbox') return repaintIb.apply(this, arguments);
+    if (!ibOn()) { el('view').innerHTML = '<div class="note"><div>The Inbox is not switched on for this business.</div></div>'; return; }
+    if (!IB.saved) load('erpSavedReplies', {}, 'saved');
+    paint();
+  };
+
+  // ---------------------------------------------------------------- clicks
+  function val(id) { var x = el(id); return x ? String(x.value || '').trim() : ''; }
+  function readFileAsB64(f, cb) { var rd = new FileReader(); rd.onload = function () { cb(String(rd.result)); }; rd.readAsDataURL(f); }
+  document.addEventListener('click', function (e) {
+    if (VIEW !== 'inbox' || !e.target.closest) return;
+    var t = e.target.closest('[data-ibtab],[data-ibpile],[data-ibopen],[data-ibclose],[data-ibmode],[data-ibsend],[data-ibnote],[data-ibside],[data-ibai],[data-ibusedraft],[data-ibcsave],[data-ibinvoice],[data-ibgoconv],[data-ibtaskdone],[data-ibnotify],[data-ibost],[data-iboa],[data-ibinv],[data-iblead],[data-ibleadnew],[data-ibfusave],[data-ibbcsave],[data-ibbcsend],[data-ibcm],[data-ibpfsave],[data-ibundo],[data-ibhelper],[data-ibpublish],[data-ibdiscardall],[data-ibrule],[data-ibruleadd],[data-ibtest],[data-ibtestclear],[data-iboffer],[data-ibofferadd],[data-ibsavedadd],[data-ibsavedx],[data-ibkbadd],[data-ibkbtest],[data-ibkbx],[data-chsave],[data-chlive],[data-chpractice],[data-chcm],[data-chqr],[data-chremove],[data-chadd],[data-ibdays],[data-ibcost]');
+    if (!t) return;
+    var d = t.dataset;
+    if (d.ibtab) { IB.tab = d.ibtab; if (['tasks', 'orders', 'leads', 'stats', 'cost', 'cm', 'bc', 'fu'].indexOf(d.ibtab) >= 0) IB[d.ibtab] = null; paint(); return; }
+    if (d.ibpile) { IB.pile = d.ibpile; IB.list = null; loadList(); paint(); return; }
+    if (d.ibopen) { IB.ai = ''; IB.aiDraft = false; loadConv(d.ibopen); return; }
+    if (d.ibclose) { IB.convId = ''; IB.conv = null; paint(); return; }
+    if (d.ibside !== undefined && t.hasAttribute('data-ibside')) { IB.side = !IB.side; paint(true); return; }
+    if (d.ibgoconv) { IB.tab = 'inbox'; IB.pile = 'open'; IB.list = null; loadList(); loadConv(d.ibgoconv); var dl = document.querySelector('.dlg-back'); if (dl) dl.remove(); return; }
+    if (d.ibmode) { srv('erpInboxMode', [{ id: IB.convId, action: d.ibmode }], function (r) { IB.conv = r; loadList(); paint(true); }, fail); return; }
+    if (d.ibsend) {
+      var text = val('ibReply'), ph = el('ibPhoto'), file = ph && ph.files && ph.files[0];
+      var sendIt = function (img) { t.disabled = true; srv('erpInboxSend', [{ id: IB.convId, text: text, image: img || undefined }], function (r) { IB.conv = r; var ta = el('ibReply'); if (ta) ta.value = ''; paint(); }, function (er) { t.disabled = false; fail(er); }); };
+      if (file) { if (typeof shrinkImage === 'function') shrinkImage(file, { max: 1600, q: 0.85 }, function (u) { sendIt(u); }); else readFileAsB64(file, sendIt); } else if (text) sendIt(); else toast('Write the reply first.', true);
+      return;
+    }
+    if (d.ibnote) { var nt = val('ibNote'); if (!nt) return; srv('erpInboxMode', [{ id: IB.convId, action: 'note', text: nt }], function (r) { IB.conv = r; paint(true); }, fail); return; }
+    if (d.ibai) {
+      IB.ai = '…'; IB.aiDraft = false; paint(true);
+      srv('erpInboxAssist', [{ id: IB.convId, mode: d.ibai, question: val('ibAsk') }], function (r) {
+        if (d.ibai === 'lead') { IB.ai = 'Lead saved: ' + [r.name, r.phone, r.want].filter(Boolean).join(' · '); IB.leads = null; }
+        else { IB.ai = r.text; IB.aiDraft = d.ibai === 'draft'; }
+        paint(true);
+      }, function (er) { IB.ai = ''; paint(true); fail(er); });
+      return;
+    }
+    if (d.ibusedraft !== undefined && t.hasAttribute('data-ibusedraft')) { var ta2 = el('ibReply'); if (ta2) { ta2.value = IB.ai; ta2.focus(); } return; }
+    if (d.ibcsave) { srv('erpInboxContact', [{ id: d.ibcsave, name: val('ibcName'), phone: val('ibcPhone'), note: val('ibcNote') }], function () { toast('Saved.'); loadConv(IB.convId); }, fail); return; }
+    if (d.ibinvoice !== undefined && t.hasAttribute('data-ibinvoice')) { try { window.__ibCustomer = { name: IB.conv.contact.name, phone: IB.conv.contact.phone }; } catch (er) {} go('invoice'); setTimeout(function () { var p = el('inv_phone') || document.querySelector('[data-invf="phone"]'); if (p && IB.conv) { p.value = IB.conv.contact.phone; p.dispatchEvent(new Event('input', { bubbles: true })); } }, 600); return; }
+    if (d.ibtaskdone) { srv('erpInboxTasks', [{ done: Number(d.ibtaskdone) }], function (r) { IB.tasks = r; paint(); }, fail); return; }
+    if (d.ibnotify !== undefined && t.hasAttribute('data-ibnotify')) { try { Notification.requestPermission().then(function () { paint(); }); } catch (er) {} return; }
+    if (d.ibost) { IB.ostatus = d.ibost; IB.orders = null; paint(); return; }
+    if (d.iboa) {
+      var id = d.id, a = d.iboa;
+      if (a === 'approve') {
+        fdwDialog('Approve the order', '<div class="dlg-b" style="white-space:normal">It becomes an invoice (cash on delivery) and the stock is taken. How does it go out?<div class="ib-form" style="margin-top:8px"><label>Delivery<select class="i" id="oaDel"><option>Steadfast courier</option><option>Pathao courier</option><option>Own rider</option><option>Customer pickup</option></select></label></div></div>',
+          function (back, close) { srv('erpChatOrderAct', [{ id: id, action: 'approve', delivery: fdwVal(back, 'oaDel'), back: IB.ostatus }], function (r) { IB.orders = r; close(); paint(); toast('Invoice ' + esc(r.invoiceNo) + ' made.'); }, fail); });
+      } else if (a === 'hold') {
+        var reasons = (IB.orders && IB.orders.holdReasons) || [];
+        fdwDialog('Put on hold', '<div class="dlg-b" style="white-space:normal"><div class="ib-form"><label>Reason<select class="i" id="ohR">' + reasons.map(function (x) { return '<option>' + esc(x) + '</option>'; }).join('') + '</select></label><label>Follow up on<input class="i" type="date" id="ohF"></label><label>Note<input class="i" id="ohN"></label></div><div class="sub">The customer is not told it is on hold.</div></div>',
+          function (back, close) { srv('erpChatOrderAct', [{ id: id, action: 'hold', reason: fdwVal(back, 'ohR'), followUp: fdwVal(back, 'ohF'), note: fdwVal(back, 'ohN'), back: IB.ostatus }], function (r) { IB.orders = r; close(); paint(); }, fail); });
+      } else if (a === 'cancel') {
+        fdwDialog('Cancel the order', '<div class="dlg-b" style="white-space:normal"><div class="ib-form"><label>Reason<select class="i" id="ocR"><option>The customer changed their mind</option><option>Could not reach the customer</option><option>Out of stock</option><option>Duplicate order</option><option>Fake order</option><option>Test order</option><option>Wrong order</option><option>Other</option></select></label></div><div class="sub">The customer is told once in the chat (not for a duplicate, fake, test or wrong order).</div></div>',
+          function (back, close) { srv('erpChatOrderAct', [{ id: id, action: 'cancel', reason: fdwVal(back, 'ocR'), back: IB.ostatus }], function (r) { IB.orders = r; close(); paint(); }, fail); });
+      } else srv('erpChatOrderAct', [{ id: id, action: a, back: IB.ostatus }], function (r) { IB.orders = r; paint(); }, fail);
+      return;
+    }
+    if (d.ibinv) { if (typeof go === 'function') go('sales', d.ibinv); return; }
+    if (d.iblead) { var l = ((IB.leads && IB.leads.leads) || []).find(function (x) { return x.id === d.iblead; }); srv('erpInboxLeads', [{ open: d.iblead }], function (r) { IB.leads = r; leadDialog(r.leads.find(function (x) { return x.id === d.iblead; }) || l); }, fail); return; }
+    if (d.ibleadnew !== undefined && t.hasAttribute('data-ibleadnew')) { leadDialog(null); return; }
+    if (d.ibfusave !== undefined && t.hasAttribute('data-ibfusave')) { srv('erpInboxFollowups', [{ save: { on: el('fuOn').checked, hot: el('fuHot').checked, warm: el('fuWarm').checked } }], function (r) { IB.fu = r; paint(); toast('Saved.'); }, fail); return; }
+    if (d.ibbcsave !== undefined && t.hasAttribute('data-ibbcsave')) { srv('erpInboxBroadcasts', [{ save: { text: val('bcText') } }], function (r) { IB.bc = r; paint(); }, fail); return; }
+    if (d.ibbcsend) { srv('erpInboxBroadcasts', [{ send: d.ibbcsend }], function (r) { IB.bc = r; paint(); toast('Broadcast sent.'); }, fail); return; }
+    if (d.ibcm) {
+      var cid = d.id;
+      if (d.ibcm === 'reply') { uiPrompt('Your reply under the comment', '').then(function (tx) { if (!tx) return; srv('erpInboxComments', [{ act: { id: cid, action: 'reply', text: tx } }], function (r) { IB.cm = r; paint(); }, fail); }); return; }
+      srv('erpInboxComments', [{ act: { id: cid, action: d.ibcm } }], function (r) { IB.cm = r; paint(); }, fail); return;
+    }
+    if (d.ibpfsave !== undefined && t.hasAttribute('data-ibpfsave')) {
+      var save = {}; [].forEach.call(document.querySelectorAll('[data-pf]'), function (x) { save[x.getAttribute('data-pf')] = x.type === 'checkbox' ? x.checked : x.value; });
+      srv('erpInboxProfile', [{ save: save }], function () { IB.desk = null; paint(); toast('Saved.'); }, fail); return;
+    }
+    if (d.ibundo) { srv('erpAgentDesk', [{ action: 'undo', id: d.ibundo }], function (r) { IB.desk = r; paint(); toast('Previous version back.'); }, fail); return; }
+    if (d.ibhelper !== undefined && t.hasAttribute('data-ibhelper')) { var hx = val('dkHelp'); if (!hx) return; IB.helperSay = '…'; paint(); srv('erpAgentDesk', [{ action: 'helper', text: hx }], function (r) { IB.helperSay = r.say + (r.drafted && r.drafted.length ? '\nDrafted: ' + r.drafted.join('; ') : ''); IB.desk = r; paint(); }, function (er) { IB.helperSay = ''; paint(); fail(er); }); return; }
+    if (d.ibpublish !== undefined && t.hasAttribute('data-ibpublish')) { srv('erpAgentDesk', [{ action: 'publish' }], function (r) { IB.desk = r; paint(); toast('Published — customers get it now.'); }, fail); return; }
+    if (d.ibdiscardall !== undefined && t.hasAttribute('data-ibdiscardall')) { var drafts = ((IB.desk && IB.desk.rules) || []).filter(function (r) { return r.draft !== null; }); var n = drafts.length;
+      var next = function () { if (!drafts.length) { srv('erpAgentDesk', [{ action: 'discard', id: '00000000-0000-0000-0000-000000000000' }], function (r) { IB.desk = r; paint(); toast('Drafts discarded.'); }, fail); return; } srv('erpAgentDesk', [{ action: 'discard', id: drafts.shift().id }], next, fail); }; next(); return; }
+    if (d.ibrule) {
+      var rid = d.id, ra = d.ibrule;
+      if (ra === 'edit') { var rr = (IB.desk.rules || []).find(function (x) { return x.id === rid; }); uiPrompt('The rule (a draft until you publish)', rr ? (rr.draft !== null ? rr.draft : rr.body) : '').then(function (b) { if (b === null || b === undefined) return; srv('erpAgentDesk', [{ action: 'edit', id: rid, body: b }], function (r) { IB.desk = r; paint(); }, fail); }); return; }
+      srv('erpAgentDesk', [{ action: ra, id: rid }], function (r) { IB.desk = r; paint(); }, fail); return;
+    }
+    if (d.ibruleadd !== undefined && t.hasAttribute('data-ibruleadd')) { srv('erpAgentDesk', [{ action: 'add', title: val('dkTitle'), body: val('dkBody') }], function (r) { IB.desk = r; paint(); }, fail); return; }
+    if (d.ibtest !== undefined && t.hasAttribute('data-ibtest')) {
+      var tm = val('ibTestIn'); if (!tm) return; IB.test.push({ mine: true, text: tm }); IB.testBusy = true; paint();
+      srv('erpAgentDesk', [{ action: 'test', history: IB.test }], function (r) {
+        IB.testBusy = false;
+        (r.replies || []).forEach(function (x) { var tx = x.text || x.caption || ''; if (x.cards) tx = x.cards.map(function (c) { return '🛍️ ' + c.title + ' — ' + c.subtitle; }).join('\n'); if (x.buttons) tx += '\n' + x.buttons.map(function (b) { return '[' + b.title + ']'; }).join(' '); if (tx) IB.test.push({ mine: false, text: tx }); });
+        if (r.handover) IB.test.push({ mine: false, text: '— handed to the team: ' + r.handover + ' —' });
+        paint(); var b = el('ibTestBody'); if (b) b.scrollTop = b.scrollHeight; var ii = el('ibTestIn'); if (ii) ii.focus();
+      }, function (er) { IB.testBusy = false; paint(); fail(er); });
+      return;
+    }
+    if (d.ibtestclear !== undefined && t.hasAttribute('data-ibtestclear')) { IB.test = []; paint(); return; }
+    if (d.iboffer) { srv('erpShopOffers', [{ toggle: d.iboffer }], function (r) { IB.offers = r; paint(); }, fail); return; }
+    if (d.ibofferadd !== undefined && t.hasAttribute('data-ibofferadd')) { srv('erpShopOffers', [{ add: { label: val('ofLabel'), sku: val('ofSku'), detail: val('ofDetail'), ends: val('ofEnds') } }], function (r) { IB.offers = r; paint(); }, fail); return; }
+    if (d.ibsavedadd !== undefined && t.hasAttribute('data-ibsavedadd')) { srv('erpSavedReplies', [{ add: { title: val('svTitle'), body: val('svBody') } }], function (r) { IB.saved = r; paint(); }, fail); return; }
+    if (d.ibsavedx) { srv('erpSavedReplies', [{ archive: d.ibsavedx }], function (r) { IB.saved = r; paint(); }, fail); return; }
+    if (d.ibkbadd) {
+      var add = d.ibkbadd === 'qa' ? { kind: 'qa', q: val('kbQ'), a: val('kbA') } : { kind: 'text', title: val('kbTitle'), body: val('kbBody') };
+      var fileIn = el('kbFile'), f = fileIn && fileIn.files && fileIn.files[0];
+      var sendKb = function () { srv('erpInboxKb', [{ add: add }], function (r) { IB.kb = r; paint(); toast('Added.'); }, fail); };
+      if (d.ibkbadd === 'text' && f && !add.body) { var rd = new FileReader(); rd.onload = function () { add.body = String(rd.result); add.kind = 'file'; add.title = add.title || f.name; sendKb(); }; rd.readAsText(f); } else sendKb();
+      return;
+    }
+    if (d.ibkbtest !== undefined && t.hasAttribute('data-ibkbtest')) { srv('erpInboxKb', [{ test: val('kbTest') }], function (r) { IB.kbFound = r.found; paint(); }, fail); return; }
+    if (d.ibkbx) { srv('erpInboxKb', [{ archive: d.ibkbx }], function (r) { IB.kb = r; paint(); }, fail); return; }
+    if (d.chsave) {
+      var card = t.closest('.ib-c'), secrets = {}, settings = {};
+      [].forEach.call(card.querySelectorAll('[data-chkey]'), function (x) { if (x.value.trim()) secrets[x.getAttribute('data-chkey')] = x.value.trim(); });
+      [].forEach.call(card.querySelectorAll('[data-chset]'), function (x) { settings[x.getAttribute('data-chset')] = x.value; });
+      srv('erpInboxChannelSave', [{ id: d.chsave, secrets: secrets, settings: settings }], function (r) { IB.chans = r; paint(); toast('Saved.' + (r.done && r.done.subscribe && !r.done.subscribe.ok ? ' (Meta: ' + esc(r.done.subscribe.error) + ')' : '')); }, fail); return;
+    }
+    if (d.chlive) { t.disabled = true; t.textContent = 'Testing…'; srv('erpInboxGoLive', [{ id: d.chlive }], function (r) { IB.chans = r; paint(); toast('Live — the AI answered: ' + esc(r.answers.map(function (a) { return a.a; }).join(' / ').slice(0, 200))); }, function (er) { paint(); fail(er); }); return; }
+    if (d.chpractice) { srv('erpInboxChannelAct', [{ id: d.chpractice, action: 'practice' }], function (r) { IB.chans = r; paint(); }, fail); return; }
+    if (d.chcm) { srv('erpInboxChannelAct', [{ id: d.chcm, action: 'comments', on: d.on === '1' }], function (r) { IB.chans = r; paint(); }, fail); return; }
+    if (d.chqr) { srv('erpInboxChannelAct', [{ id: d.chqr, action: 'qr' }], function (r) { IB.qr = { id: d.chqr, qr: r.qr, state: (r.state && r.state.state) || '' }; paint(); }, fail); return; }
+    if (d.chremove) { uiConfirm('Remove this channel? Its keys are deleted; the chats already saved stay.').then(function (ok) { if (ok) srv('erpInboxChannelAct', [{ id: d.chremove, action: 'remove' }], function (r) { IB.chans = r; paint(); }, fail); }); return; }
+    if (d.chadd !== undefined && t.hasAttribute('data-chadd')) { srv('erpInboxChannelSave', [{ kind: val('chKind'), name: val('chName'), externalId: val('chExt'), acceptRisk: el('chRisk') && el('chRisk').checked }], function (r) { IB.chans = r; paint(); toast('Connected — in practice mode.'); }, fail); return; }
+    if (d.ibdays) { srv('erpInboxStats', [{ days: Number(d.ibdays) }], function (r) { IB.stats = r; paint(); }, fail); return; }
+    if (d.ibcost !== undefined && t.hasAttribute('data-ibcost')) { srv('erpAiWork', [{ from: val('acFrom'), to: val('acTo') }], function (r) { IB.cost = r; paint(); }, fail); return; }
+  });
+  document.addEventListener('change', function (e) {
+    if (VIEW !== 'inbox' || !e.target) return;
+    var t = e.target;
+    if (t.hasAttribute('data-ibtake') && t.value !== '') { srv('erpInboxMode', [{ id: IB.convId, action: 'take', minutes: Number(t.value) }], function (r) { IB.conv = r; loadList(); paint(true); }, fail); return; }
+    if (t.hasAttribute('data-ibsaved') && t.value) {
+      var s = ((IB.saved && IB.saved.list) || []).find(function (x) { return x.id === t.value; }); var ta = el('ibReply');
+      if (s && ta) { ta.value = s.body; if (IB.saved.ai) srv('erpSavedReplies', [{ adapt: s.id, conv: IB.convId }], function (r) { if (r.text && el('ibReply')) el('ibReply').value = r.text; }, function () {}); }
+      t.value = ''; return;
+    }
+    if (t.hasAttribute('data-chai') && t.value) {
+      var v = t.value, id = t.getAttribute('data-chai');
+      srv('erpInboxChannelAct', [{ id: id, action: 'ai', on: v === 'on', minutes: /^\d+$/.test(v) ? Number(v) : 0 }], function (r) { IB.chans = r; paint(); }, fail); return;
+    }
+    if (t.hasAttribute('data-ibbcto') && t.value) { var bid = t.getAttribute('data-ibbcto'); srv('erpInboxBroadcasts', [{ test: bid, to: t.value }], function (r) { IB.bc = r; paint(); toast('Test sent — look at it, then Send.'); }, fail); return; }
+  });
+  document.addEventListener('input', function (e) {
+    if (VIEW !== 'inbox' || !e.target || e.target.id !== 'ibQ') return;
+    clearTimeout(IB.qt); var v = e.target.value; IB.qt = setTimeout(function () { IB.q = v; IB.list = null; loadList(); }, 350);
+  });
+  document.addEventListener('keydown', function (e) {
+    if (VIEW !== 'inbox') return;
+    if (e.key === 'Enter' && !e.shiftKey && e.target && e.target.id === 'ibReply' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); var b = document.querySelector('[data-ibsend]'); if (b) b.click(); }
+    if (e.key === 'Enter' && e.target && e.target.id === 'ibTestIn') { e.preventDefault(); var b2 = document.querySelector('[data-ibtest]'); if (b2) b2.click(); }
+    if (e.key === 'Enter' && e.target && e.target.id === 'dkHelp') { e.preventDefault(); var b3 = document.querySelector('[data-ibhelper]'); if (b3) b3.click(); }
+  });
 })();
 </script>
 <!-- fd-37: the page is styled: show it -->
