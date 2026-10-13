@@ -21620,6 +21620,8 @@ document.addEventListener('click', function (ev) {
 .ap-mrow .nm{flex:1;min-width:0;display:flex;flex-direction:column}
 .ap-mrow .nm small{font-size:11px;font-weight:600;color:var(--critical)}
 .ap-mrow.forced .seg{opacity:.4;pointer-events:none}
+.hg-keys .hg-key{display:flex;align-items:center;gap:12px;padding:6px 0;font-size:13.5px}
+.hg-keys kbd{min-width:44px;text-align:center;padding:3px 8px;border-radius:7px;border:1px solid var(--fd-border,var(--ring));background:var(--fd-surface-2,var(--plane));font:600 12.5px ui-monospace,Menlo,Consolas,monospace}
 .ap-sw{display:inline-flex;align-items:center;gap:7px;background:none;border:0;padding:4px 0 4px 6px;cursor:pointer;color:var(--muted);font:inherit;font-size:11.5px;font-weight:600;white-space:nowrap}
 .ap-sw i{position:relative;width:30px;height:17px;border-radius:999px;background:var(--baseline,#888);transition:background .15s;flex:none}
 .ap-sw i::after{content:"";position:absolute;top:2px;left:2px;width:13px;height:13px;border-radius:50%;background:#fff;transition:transform .15s}
@@ -21845,7 +21847,9 @@ function menuCardHtml() {
   var h = '<section><div class="card"><h2>Menu</h2><div class="sub" data-c5x="1" style="display:block">Who sees each screen in this business. <b>Everyone</b>: you and your staff. <b>Only owners</b>: you use it, staff do not see it. <b>Off</b>: nobody here, until you switch it back. The main screens always stay; nothing is deleted. (What a person may DO on a screen is set under Users.)' +
           (admin ? ' <b>All companies</b> (only you see this, as the provider): switched off, the screen leaves every company’s menu, yours too, and their owners cannot bring it back.' : '') + '</div>' +
           '<div class="ap-mrows' + (admin ? ' adm' : '') + '">';
-  APPS.menu.forEach(function (m) {
+  APPS.menu.forEach(function (m0) {
+    var w = AP_WANT[m0.key], m = m0;
+    if (w) { m = Object.assign({}, m0); if (w.mode) m.mode = w.mode; if (w.on !== undefined) m.forced = !w.on; }
     h += '<div class="ap-mrow' + (m.forced ? ' forced' : '') + '"><span class="nm">' + esc(m.name) + (m.forced ? '<small>Off for every company</small>' : '') + '</span>' +
          (m.forced && !admin ? '<span class="pill">Off by the provider</span>' : apModeSeg(m.key, m.mode));
     if (admin) h += '<button class="ap-sw' + (m.forced ? '' : ' is-on') + '" type="button" role="switch" aria-checked="' + (m.forced ? 'false' : 'true') + '" data-apall="' + esc(m.key) + '" data-on="' + (m.forced ? '1' : '0') + '" title="' + (m.forced ? 'Off for every company - press to allow again' : 'Allowed for every company - press to switch off everywhere') + '"><i></i><span>All companies</span></button>';
@@ -21856,7 +21860,17 @@ function menuCardHtml() {
 var brandCardHtmlMenu = brandCardHtml;
 brandCardHtml = function () { return brandCardHtmlMenu.apply(this, arguments) + menuCardHtml(); };
 // ---- wiring
-function apAfterSet(r, msg) { APPS = r; apSyncMe(r); applyRole(); tabbarSync(); repaint(); if (msg) toast(msg); }
+// Menu clicks show at once (owner 14 Oct 2026: "I click and it stays the same"): the row changes on the click, the server
+// answer only confirms it. AP_PEND counts answers still out, so the screen is redrawn once, after the last one - a
+// redraw in between would flip rows the person already changed back to the old state.
+var AP_PEND = 0, AP_WANT = {};   // AP_WANT[key] = {mode|on, seq}: a click still waiting for its answer wins over older data
+var AP_SEQ = 0;
+function apAfterSet(r, msg) {
+  APPS = r; apSyncMe(r); applyRole(); tabbarSync();
+  if (!(AP_PEND > 0)) repaint();
+  if (msg) toast(msg);
+}
+function apFailed(e) { AP_PEND = Math.max(0, AP_PEND - 1); if (!AP_PEND) { AP_WANT = {}; repaint(); } toast('Not saved: ' + esc((e && e.message) || e), true, 9000); }
 document.addEventListener('click', function (ev) {
   var fb = ev.target && ev.target.closest ? ev.target.closest('#fbBtn') : null;
   if (fb) { go('app', 'feedback'); return; }
@@ -21876,15 +21890,32 @@ document.addEventListener('click', function (ev) {
     if (t.classList.contains('on')) return;
     var on = t.getAttribute('data-on') === '1';
     var isMenu = VIEW === 'settings';
-    srv('erpAppSet', [{ key: t.getAttribute('data-apall'), on: on, scope: 'all' }], function (r) { apAfterSet(r, isMenu ? (on ? 'Allowed again: each company decides in its own menu.' : 'Off in every company\u2019s menu.') : on ? 'On for every company.' : 'Off for every company. Its page answers \u201cnot open yet\u201d.'); }, fail);
+    if (t.classList.contains('ap-sw')) {
+      // the Menu card's switch: flip it now
+      t.classList.toggle('is-on', on); t.setAttribute('aria-checked', on ? 'true' : 'false'); t.setAttribute('data-on', on ? '0' : '1');
+      var row = t.closest('.ap-mrow');
+      if (row) {
+        row.classList.toggle('forced', !on);
+        var nm = row.querySelector('.nm'), sm = nm && nm.querySelector('small');
+        if (!on && nm && !sm) nm.insertAdjacentHTML('beforeend', '<small>Off for every company</small>');
+        if (on && sm) sm.remove();
+      }
+    }
+    AP_PEND++;
+    var akey = t.getAttribute('data-apall'), aseq = ++AP_SEQ, aw = Object.assign({}, AP_WANT[akey] || {}, { on: on, seq: aseq }); AP_WANT[akey] = aw;
+    srv('erpAppSet', [{ key: akey, on: on, scope: 'all' }], function (r) { AP_PEND = Math.max(0, AP_PEND - 1); if (AP_WANT[akey] && AP_WANT[akey].seq === aseq) delete AP_WANT[akey]; apAfterSet(r, isMenu ? (on ? 'Allowed again: each company decides in its own menu.' : 'Off in every company\u2019s menu.') : on ? 'On for every company.' : 'Off for every company. Its page answers \u201cnot open yet\u201d.'); }, apFailed);
     return;
   }
   if (t.hasAttribute('data-apmode')) {
     if (t.classList.contains('on')) return;
-    var seg = t.parentNode; [].forEach.call(seg.querySelectorAll('button'), function (b) { b.disabled = true; });
-    srv('erpAppSet', [{ key: t.getAttribute('data-apmode'), mode: t.getAttribute('data-mode'), scope: 'mine' }], function (r) {
+    // the choice lights up now; another click on the same row simply wins (the answers come back in order)
+    [].forEach.call(t.parentNode.querySelectorAll('button'), function (b) { b.classList.toggle('on', b === t); });
+    AP_PEND++;
+    var mkey = t.getAttribute('data-apmode'), mseq = ++AP_SEQ; AP_WANT[mkey] = Object.assign({}, AP_WANT[mkey] || {}, { mode: t.getAttribute('data-mode'), seq: mseq });
+    srv('erpAppSet', [{ key: mkey, mode: t.getAttribute('data-mode'), scope: 'mine' }], function (r) {
+      AP_PEND = Math.max(0, AP_PEND - 1); if (AP_WANT[mkey] && AP_WANT[mkey].seq === mseq) delete AP_WANT[mkey];
       apAfterSet(r, { all: 'Everyone here sees it.', owner: 'Only owners see it now.', off: 'Off for this business. Switch it back here any time.' }[t.getAttribute('data-mode')]);
-    }, function (e) { [].forEach.call(seg.querySelectorAll('button'), function (b) { b.disabled = false; }); fail(e); });
+    }, apFailed);
     return;
   }
   if (t.hasAttribute('data-apcopy')) {
@@ -34688,10 +34719,11 @@ viewJoint = function () {
     umPaint = function () {
       var r = umPaint43.apply(this, arguments);
       var out = el('u6out'), wrap = out && out.parentNode;
+      var oh = el('u6help'); if (oh) oh.remove();
       if (wrap && !el('u6guide')) {
         var ic = function (p) { return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' + p + '</svg>'; };
         wrap.insertAdjacentHTML('beforebegin',
-          '<button type="button" class="u6a" id="u6guide">' + ic('<path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20V3H6.5A2.5 2.5 0 0 0 4 5.5z"/><path d="M4 19.5V21h16"/>') + '<span>' + esc(tr('Help guides')) + '</span></button>' +
+          '<button type="button" class="u6a" id="u6guide">' + ic('<path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20V3H6.5A2.5 2.5 0 0 0 4 5.5z"/><path d="M4 19.5V21h16"/>') + '<span>' + esc(tr('Help')) + '</span></button>' +
           '<button type="button" class="u6a" id="u6fb">' + ic('<path d="M4 5h16v11H9l-5 4z"/><path d="M12 8v3M12 13.5h.01"/>') + '<span>' + esc(tr('Report a problem')) + '</span></button>');
       }
       return r;
@@ -34704,6 +34736,15 @@ viewJoint = function () {
     var um = el('o_usermenu'); if (um) um.classList.remove('open');
     if (t.id === 'u6guide') go('guide'); else go('app', 'feedback');
   });
+  // the keyboard shortcuts (were "Help & shortcuts" in the account menu) at the bottom of Help
+  var viewGuideKeys = viewGuide;
+  viewGuide = function () {
+    var h = viewGuideKeys.apply(this, arguments), bn = (HG.lang || (typeof LANG !== 'undefined' ? LANG : 'en')) === 'bn';
+    var K = bn ? [['/', 'ইনভয়েস, কাস্টমার আর পণ্য খুঁজুন'], ['?', 'শিরোনামের পাশে: এটা কী কাজের'], ['Enter', 'নতুন ইনভয়েসের খোঁজে: পণ্যটা যোগ করুন'], ['Esc', 'জানালা বন্ধ করুন']]
+               : [['/', 'Search invoices, customers and products'], ['?', 'Next to a title: what it is for'], ['Enter', 'In the New invoice search: add the product'], ['Esc', 'Close a window']];
+    return h + '<div class="card hg-keys" data-noi18n="1"><h2>' + (bn ? 'কিবোর্ড শর্টকাট' : 'Keyboard shortcuts') + '</h2>' +
+      K.map(function (k) { return '<div class="hg-key"><kbd>' + esc(k[0]) + '</kbd><span>' + esc(k[1]) + '</span></div>'; }).join('') + '</div>';
+  };
   all();
   setTimeout(all, 0);
 })();

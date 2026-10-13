@@ -1885,3 +1885,11 @@ under it hides. Nothing is removed: routes, abilities and the Menu card's switch
 stays in the menu when its group's first screen is not visible to that person (e.g. someone without the Dashboard
 still finds Analytics in the menu), and a tab only shows when the person may open it. On phone the tabs drop their
 icons so four fit at 360 px. Not done: the "Help & shortcuts" item (keyboard shortcuts) stays as it was.
+
+## Menu card answers at once; one Help item (14 Oct 2026)
+Owner: the Menu card "just stays the same" after a click and several clicks "work together after attempts". Now a
+click changes the row at once (button lit / switch flipped / row greyed); the server answer only confirms it. Clicks
+waiting for their answer (AP_WANT) win over any redraw in between, the screen is redrawn once after the last answer
+(AP_PEND), and a failed save puts the server's state back with a message. No message per click any more (they piled
+up). Writes still go one by one (~0.7 s each), so fast clicks all land, last one wins. Account menu: one "Help"
+(the guides); "Help & shortcuts" removed and the keyboard shortcuts are a card at the bottom of Help.
