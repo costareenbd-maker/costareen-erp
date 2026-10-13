@@ -22,7 +22,11 @@ const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
 export async function isPlatformAdmin(sql, userId) {
   if (!isId(userId)) return false;
-  try { return (await sql`select 1 from platform_admins where user_id = ${userId}`).length > 0; } catch (_) { return false; }
+  // a busy pool at page start can fail the first try; one retry, so the provider is not briefly shown as an ordinary owner
+  for (let i = 0; i < 2; i++) {
+    try { return (await sql`select 1 from platform_admins where user_id = ${userId}`).length > 0; } catch (_) { /* try again */ }
+  }
+  return false;
 }
 /** The platform admin of THIS server. A company running on the provider's server (bridged) never is:
  *  its own platform_admins row (made by the installer) only counts on a copy that runs its own server. */

@@ -22,7 +22,7 @@ const HELP = {
   profit: 'Profitability: profit and loss by month, by product, by customer. Product cost holds the cost book the figures come from.',
   market: 'Market: see other shops’ stock, ask prices, order; "What I share" switches your own listing and Find stock public.',
   joint: 'Joint stock: goods you own with a partner company; each sells from New invoice; Move between shelves; the month-end statement; both owners press Agree.',
-  users: 'Settings → Users: invite staff by e-mail, set the role (sales / manager / shareholder / owner) and what each may do; Edit menu bar sets who sees which screen.',
+  users: 'Settings → Users: invite staff by e-mail, set the role (sales / manager / shareholder / owner) and what each may do; the Menu card (Settings → Business) sets who sees which screen.',
   apps: 'Apps: the special pages customers reach from outside (Find stock, Colour finder, Printer Passport, Print Doctor...). Each has its own screen with the public link and QR.',
 };
 const TOOLS = [

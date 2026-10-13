@@ -1866,3 +1866,12 @@ marked paid while October rent was a one-off (counted twice on the Expenses scre
 - Commission > "Sales by seller" (owner: "the system should know who sold how many items"): every sale of the month
   with its seller (always whoever was signed in), units, sales after discounts and the commission it earned; a card per
   seller; the owner sees everyone, anyone else only their own; no cost or profit. erpCommissionSales; tests commission (29).
+
+## Settings > Business: one Menu card (14 Oct 2026)
+Owner asked whether "Edit menu bar" and "Menu for every company" needed two cards. They are now one card, "Menu":
+one row per screen with Everyone / Only owners / Off for this business, and - for the provider only - an
+"All companies" switch on the same row. A screen switched off for every company greys out its row with
+"Off for every company"; other companies' owners see the same card without the switch ("Off by the provider" pill).
+Each row stays on one line on desktop (two columns); on phone the switch drops its label. Also: isPlatformAdmin
+retries once on a database error, because one page load showed the provider as an ordinary owner. The assistant's
+help text now points at the Menu card. Not done: nothing.
