@@ -1945,3 +1945,9 @@ dashboard's range (This month / 3 / 6 / 12 months), the classic ones their own m
   let through too, and pressing it never starts a drag. The 13 classic cards were added to the owner's dev dashboard
   (Today and the month near the top, the two sales charts after the first four cards, stock/cash/orders after his own);
   the 14 single-number cards were not, since Today and the month already hold those numbers (one click in + Add card).
+- fd-45 phone pass (same day): charts are drawn phone-sized (360 wide) so their text stays readable, and redrawn when
+  the window crosses the phone width; a card's measure switch / year / day picker / "compared with" note goes on the
+  line under its title (the title keeps its line, "View →" goes right of the switch); his cards' "View details" no
+  longer squeezes the title to 3 lines; the line under a row wraps instead of being cut. Note: on the owner's dev
+  dashboard 21 cards are hidden (Revenue, Net profit, the KPI cards, Low stock, Recent orders...) - removed one by one
+  after the classic cards were added, by the owner's own device; left as he set them.

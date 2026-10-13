@@ -34883,6 +34883,22 @@ body[data-fdview="settings"] #o_cp .crumbs, body[data-fdview="tools"] #o_cp .cru
 .fdcl-t .l { font-size:13.5px; font-weight:600; color:var(--fd-text-2); margin-top:4px; }
 .fdcl-t .n { font-size:12px; color:var(--fd-text-3); margin-top:2px; }
 @media (max-width:760px) { .fdcl-mini { grid-template-columns:repeat(2, minmax(0, 1fr)); row-gap:14px; } .fdcl-t { padding:4px 12px; } .fdcl-t:nth-child(2n+1) { border-left:0; } .fdcl-t .v { font-size:21px; } }
+@media (max-width:760px) {
+  /* phone: a card's extras (measure switch, year, day picker, the 'compared with' note) go under its title, not beside it */
+  .fdd-c .fdd-ch:has(.fdc-ms), .fdd-c .fdd-ch:has(.fdcl-day), .fdd-c .fdd-ch:has(> .fdc-sub) { flex-wrap:wrap; row-gap:8px; }
+  .fdd-ch > .fdc-ms { order:10; margin-left:0; flex-wrap:nowrap; }
+  .fdd-ch > .fdc-ms + .fdc-ms { margin-left:6px; }
+  .fdd-ch > .fdcl-day, .fdd-ch > .fdc-sub { order:10; flex-basis:100%; margin-left:0 !important; }
+  .fdd-ch > .fdcl-day input { flex:1 1 auto; }
+  .fdd-c .fdd-ch > .fdd-ct { flex:1 1 0; min-width:0; }
+  .fdd-c .fdd-ch:has(> .fdc-ms) > .fdd-ct { flex:1 1 calc(100% - 70px); }   /* the title fills its line, so the switch starts the next one */
+  .fdd-c .fdd-ch > .fdd-more { font-size:12.5px; white-space:nowrap; padding-left:6px; padding-right:6px; }
+  .fdc-svg text { font-size:12px; } .fdc-svg text.v { font-size:11px; }
+  .fdcl-rows .t span { white-space:normal; }
+  .fdd-c .fdd-ch:has(> .fdc-ms) > .fdd-more { order:11; margin-left:auto; }   /* the line under a row wraps rather than being cut */
+}
+/* the phone draws charts again when it turns or the window narrows */
+
 .fdcl-rows li.still { cursor:default; } .fdcl-rows li.still:hover { transform:none; }
 .fdcl-rows .val { font-size:15px; font-weight:800; white-space:nowrap; color:var(--fd-text); } .fdcl-rows .val.bad { color:var(--fd-negative-text, var(--fd-negative)); }
 .fdd-one.editing > [data-fdw] .fdw-set { pointer-events:auto; }
@@ -34957,7 +34973,8 @@ body[data-fdview="settings"] #o_cp .crumbs, body[data-fdview="tools"] #o_cp .cru
     }
     // columns, line, area
     // the drawing is as wide as its card, so a full-width chart is wide and low instead of a huge square
-    var W = o.w >= 3 ? 1200 : o.w === 1 ? 380 : 600, H = o.w >= 3 ? 280 : o.w === 1 ? 230 : 240, Lm = 52, T = 18, B = 28, Rm = 10, iw = W - Lm - Rm, ih = H - T - B, n = pts.length;
+    var phone = window.innerWidth <= 760;   // on a phone every card is one column: draw it phone-sized so its text stays readable
+    var W = phone ? 360 : o.w >= 3 ? 1200 : o.w === 1 ? 380 : 600, H = phone ? 230 : o.w >= 3 ? 280 : o.w === 1 ? 230 : 240, Lm = 52, T = 18, B = 28, Rm = 10, iw = W - Lm - Rm, ih = H - T - B, n = pts.length;
     var vs = pts.map(function (p) { return Number(p.v) || 0; }), hi = Math.max.apply(null, vs.concat([0])), lo = Math.min.apply(null, vs.concat([0]));
     if (hi === lo) hi = lo + 1;
     var y = function (v) { return T + ih - (v - lo) / (hi - lo) * ih; };
@@ -35276,6 +35293,8 @@ body[data-fdview="settings"] #o_cp .crumbs, body[data-fdview="tools"] #o_cp .cru
     if (y) { e.preventDefault(); e.stopImmediatePropagation(); DASH_YEAR = y.getAttribute('data-year'); repaint(); return; }
   }, true);
   // the old dashboard's numbers come with the page's own load; when they arrive the cards fill in
+  var wasPhone = window.innerWidth <= 760;
+  window.addEventListener('resize', function () { var p = window.innerWidth <= 760; if (p !== wasPhone && VIEW === 'dash') { wasPhone = p; repaint(); } });
   var dTimer = setInterval(function () { if (D && VIEW === 'dash' && cIds().length && !document.querySelector('.fdd-one [data-fdw^="c_"]')) repaint(); if (D) clearInterval(dTimer); }, 800);
 })();
 </script>
