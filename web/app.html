@@ -21626,7 +21626,7 @@ document.addEventListener('click', function (ev) {
 .ap-sw.is-on i{background:var(--fd-accent,var(--accent))}
 .ap-sw.is-on i::after{transform:translateX(13px)}
 .ap-sw.is-on{color:var(--ink-2,var(--ink))}
-@media (max-width:560px){.ap-mrow{flex-wrap:wrap;row-gap:4px}.ap-mrow .nm{flex-basis:100%}.ap-sw{margin-left:auto}.ap-sw span{display:none}.ap-mrows.adm .nm::after{content:""}}
+@media (max-width:560px){.ap-mrow{flex-wrap:wrap;row-gap:4px}.ap-mrow .nm{flex:1 1 60%}.ap-mrows:not(.adm) .ap-mrow .nm{flex-basis:100%}.ap-sw{order:1}.ap-mrow .seg,.ap-mrow .pill{order:2}.ap-sw span{display:none}}
 .ap-mrow{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:6px 0;border-bottom:1px solid var(--ring);min-width:0}
 .ap-mrow .nm{font-weight:600}
 .fb-kind .btn{padding:4px 12px}
