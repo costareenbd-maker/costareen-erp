@@ -1827,3 +1827,13 @@ marked paid while October rent was a one-off (counted twice on the Expenses scre
   Dashboard drop-down keeps only product groups. No flashes on refresh: the theme is applied in the page's first lines
   from this device's last copy, the business name, logo and the person's name are painted from the last copy before
   the ERP answers; the logo never shows the bare letter in between.
+- fd-37 (flashes on refresh, found by recording 64 headless loads): the shell is hidden until the last block has styled
+  it (no half-styled old page while the 3 MB page loads; taken off at the end, 6 s at most); the look switch no longer
+  repaints the dashboard on every screen at load and the first load does not blank the screen startApp drew; the name
+  stays the device's copy until the profile arrives (it changed 3 times); erpFdCards / erpLineMargins / erpFd19Profit /
+  erpFdInventory / erpFd22Analytics are reads on the page (they were queued as writes: every load 1.3 s late + a dashboard
+  redraw); slim placeholders for the slim cards; the bar under the top bar only for a back link (screens keep their own
+  buttons); the game panel waits for the invoice form; the Help label drawn in the right language.
+- Dead code removed (~68 KB): the old New sale screen (fd-16), the old mind map, the old Customise dialog, the Classic /
+  FilaDash switch, the first two dashboard renderers, the "Ask your ERP" screen (the bubble keeps CH / chSend).
+  Kept: the old Themes window helpers the picker still uses, #bizSel (the business list's data source).

@@ -543,6 +543,9 @@ svg { display:block; width:100%; overflow:visible; }
 // flash, and before any data loads. The saved choice arrives a moment later
 // from the server and overrides it if the person picked light.
 (function () {
+  // fd-37: the shell stays hidden until the last block has styled it (taken off at the end of the page; 6 s at most)
+  try { var bh = document.createElement('style'); bh.id = 'bootHide'; bh.textContent = '#app,#tabbar{visibility:hidden}html[data-skin="fd"] body{background:var(--fd-bg,#F6F7FB)}html[data-skin="fd"][data-theme="dark"] body{background:var(--fd-bg,#0F1621)}';
+    document.head.appendChild(bh); setTimeout(function () { var x = document.getElementById('bootHide'); if (x) x.remove(); }, 6000); } catch (e) {}
   // the person's own choice on this device first: dark, light, or "auto" (follows the computer)
   var t = 'light';
   try {
@@ -8441,7 +8444,7 @@ function srv(name, args, ok, bad) {
 
 var SRV_ACTIVE = 0, SRV_WRITING = false, SRV_TIMED = {};
 // the same list the server uses to know a call changes nothing (ERP_READS)
-var SRV_READS = /^(erpNavigator|erpSellers|erpFollowups|erpCustomerInsight|erpPreorders|erpCashUps|erpAskingPrices|erpSystemCheck|erpAnalytics|erpCommission|erpHolding|erpLotFunding|erpShipments|erpShipment|erpLots|erpFdHead|erpFdDash|erpReceiveMatch|erpAiReader|erpProductSuggest|erpCatalogue|erpPushList|erpCreators|erpCreatorPortalLink|erpSponsorLink|erpCreatorRequests|erpCreatorEvents|erpCreatorProgramme|erpCreatorPreview|erpCreatorCatalog|erpCreatorSources|erpCreatorClaims|erpApps|erpAppQr|erpFeedback|erpRestockOffers|erpRestockList|erpWarrantyRules|erpWarrantyCard|erpMyLink|erpPlatformRegister|erpPlatformDoctor|erpPlatformCommunity|erpMarketWaiting|erpBoard|erpPlatformDesign|erpResell|erpResellerProgramme|erpLoyalty|erpCustomerPoints|erpRefillDue|erpDeliveryHistory|erpDeliveryHistoryMany|erpPrintKit|erpPrintJobs|erpPrintJob|erpPrintCost|erpSpools|erpPrintRequests|erpJoint|erpJointCatalog|erpJointCard|erpInvoiceDesign|erpInvoicePreview|erpMarket|erpMarketMine|erpMarketRequests|erpMarketHints|erpMarketNames|erpWanted|erpBrand|erpComplianceLog|erpProviderKey|erpNews|erpAccessKeys|erpAccessWarning|erpAdmin|erpAiKeys|erpAlertRules|erpAlerts|erpArena|erpBackupStatus|erpBg|erpBnWords|erpBookedParcels|erpBrandLogo|erpBundle|erpBusinessLinks|erpBusinesses|erpBusinessesDeleted|erpCampaignAudience|erpCampaignGet|erpCampaignList|erpCapital|erpCashBook|erpCatalog|erpConnStatus|erpConnections|erpCostBook|erpCourier|erpCourierKeyStatus|erpCurrencies|erpCustomerAccount|erpCustomerCredit|erpCustomerList|erpCustomerPage|erpCustomerStatement|erpCustomers|erpDashboardData|erpDaySales|erpDeliveryOptions|erpDevices|erpDiscontinued|erpDues|erpEvoQr|erpEvoStatus|erpExpenseExport|erpExpenseReceiptUrl|erpExpenses|erpFamilies|erpFighters|erpFormOptions|erpGame|erpGetTheme|erpGoogle|erpHello|erpInstalls|erpInvoice|erpInvoicePdf|erpJob|erpJobs|erpListView|erpLookupCustomer|erpLookupUsage|erpMe|erpMoney|erpNoteFileUrl|erpNotes|erpOwnerChange|erpOwnerChanges|erpParcelLabels|erpParcelPreview|erpPartnerStock|erpPartnership|erpPayReasons|erpPeople|erpPlatform|erpPlatformErrors|erpPnl|erpPnlMonth|erpPoList|erpPoolCatalog|erpProduct|erpProductListShare|erpProductPage|erpProductPhotoUrl|erpProductThumbs|erpProfile|erpQuoteAsset|erpQuoteBoot|erpQuoteGet|erpQuoteList|erpRecentInvoices|erpRecovery|erpReorderPlan|erpRestorePreview|erpReturnPreview|erpRisks|erpSales|erpSearch|erpSecurity|erpSelfTest|erpSerialLookup|erpSerialsFor|erpSessions|erpSetTheme|erpSettingsFull|erpSettingsLists|erpSfPayoutLines|erpSfPayouts|erpShareFile|erpSharedStock|erpSheet|erpStatementPdf|erpStockHistory|erpSupplierPage|erpSuppliers|erpToday|erpUsers|erpWaProductPdf|erpWebMatches|erpWebOrderInvoices|erpWebOrders|erpWebsiteTest)$/;
+var SRV_READS = /^(erpFdCards|erpLineMargins|erpFd19Profit|erpFdInventory|erpFd22Analytics|erpNavigator|erpSellers|erpFollowups|erpCustomerInsight|erpPreorders|erpCashUps|erpAskingPrices|erpSystemCheck|erpAnalytics|erpCommission|erpHolding|erpLotFunding|erpShipments|erpShipment|erpLots|erpFdHead|erpFdDash|erpReceiveMatch|erpAiReader|erpProductSuggest|erpCatalogue|erpPushList|erpCreators|erpCreatorPortalLink|erpSponsorLink|erpCreatorRequests|erpCreatorEvents|erpCreatorProgramme|erpCreatorPreview|erpCreatorCatalog|erpCreatorSources|erpCreatorClaims|erpApps|erpAppQr|erpFeedback|erpRestockOffers|erpRestockList|erpWarrantyRules|erpWarrantyCard|erpMyLink|erpPlatformRegister|erpPlatformDoctor|erpPlatformCommunity|erpMarketWaiting|erpBoard|erpPlatformDesign|erpResell|erpResellerProgramme|erpLoyalty|erpCustomerPoints|erpRefillDue|erpDeliveryHistory|erpDeliveryHistoryMany|erpPrintKit|erpPrintJobs|erpPrintJob|erpPrintCost|erpSpools|erpPrintRequests|erpJoint|erpJointCatalog|erpJointCard|erpInvoiceDesign|erpInvoicePreview|erpMarket|erpMarketMine|erpMarketRequests|erpMarketHints|erpMarketNames|erpWanted|erpBrand|erpComplianceLog|erpProviderKey|erpNews|erpAccessKeys|erpAccessWarning|erpAdmin|erpAiKeys|erpAlertRules|erpAlerts|erpArena|erpBackupStatus|erpBg|erpBnWords|erpBookedParcels|erpBrandLogo|erpBundle|erpBusinessLinks|erpBusinesses|erpBusinessesDeleted|erpCampaignAudience|erpCampaignGet|erpCampaignList|erpCapital|erpCashBook|erpCatalog|erpConnStatus|erpConnections|erpCostBook|erpCourier|erpCourierKeyStatus|erpCurrencies|erpCustomerAccount|erpCustomerCredit|erpCustomerList|erpCustomerPage|erpCustomerStatement|erpCustomers|erpDashboardData|erpDaySales|erpDeliveryOptions|erpDevices|erpDiscontinued|erpDues|erpEvoQr|erpEvoStatus|erpExpenseExport|erpExpenseReceiptUrl|erpExpenses|erpFamilies|erpFighters|erpFormOptions|erpGame|erpGetTheme|erpGoogle|erpHello|erpInstalls|erpInvoice|erpInvoicePdf|erpJob|erpJobs|erpListView|erpLookupCustomer|erpLookupUsage|erpMe|erpMoney|erpNoteFileUrl|erpNotes|erpOwnerChange|erpOwnerChanges|erpParcelLabels|erpParcelPreview|erpPartnerStock|erpPartnership|erpPayReasons|erpPeople|erpPlatform|erpPlatformErrors|erpPnl|erpPnlMonth|erpPoList|erpPoolCatalog|erpProduct|erpProductListShare|erpProductPage|erpProductPhotoUrl|erpProductThumbs|erpProfile|erpQuoteAsset|erpQuoteBoot|erpQuoteGet|erpQuoteList|erpRecentInvoices|erpRecovery|erpReorderPlan|erpRestorePreview|erpReturnPreview|erpRisks|erpSales|erpSearch|erpSecurity|erpSelfTest|erpSerialLookup|erpSerialsFor|erpSessions|erpSetTheme|erpSettingsFull|erpSettingsLists|erpSfPayoutLines|erpSfPayouts|erpShareFile|erpSharedStock|erpSheet|erpStatementPdf|erpStockHistory|erpSupplierPage|erpSuppliers|erpToday|erpUsers|erpWaProductPdf|erpWebMatches|erpWebOrderInvoices|erpWebOrders|erpWebsiteTest)$/;
 function srvPump() {
   if (!SRV_Q.length) return;
   var isRead = SRV_READS.test(SRV_Q[0].name);
@@ -10457,7 +10460,7 @@ function switchBusiness(id) {
 var DASH_SAVED = false;   // the dashboard on screen is the kept copy; a fresh one is on its way
 function loadAll(first, fresh) {
   if (!BIZ_READY) return;
-  el('view').innerHTML = '<div class="loading">Loading&hellip;</div>';
+  if (first !== true) el('view').innerHTML = '<div class="loading">Loading&hellip;</div>';   // fd-37: the first load keeps the screen startApp drew
   // Core first so the screen becomes usable quickly, then the rest. On the
   // very first load the list of businesses rides along, instead of being a
   // trip of its own that everything else waited behind.
@@ -17125,6 +17128,8 @@ h2.wo_h .wo_acts .btn { height:34px; min-height:34px; padding:0 12px; font-size:
 <script>
 function titleActions() {
   var cp = el('o_cp'), v = el('view'); if (!cp || !v) return;
+  // fd-37: in the FilaDash look a screen's own buttons stay on the screen (no bar under the top bar coming and going)
+  if (document.documentElement.getAttribute('data-skin') === 'fd') { var a0 = cp.querySelector('.o_acts'); if (a0) { a0.innerHTML = ''; a0.style.display = 'none'; } return; }
   var acts = cp.querySelector('.o_acts');
   if (!acts) { acts = document.createElement('div'); acts.className = 'o_acts'; cp.appendChild(acts); }
   acts.innerHTML = '';
@@ -17541,7 +17546,7 @@ function gamePlace() {
   var v = el('view');
   if (el('pgoff')) return;                     // the offline window holds it
   var desk = window.erpDesk ? window.erpDesk() : window.innerWidth >= 760;
-  var want = v && desk && VIEW === 'invoice' && GAMEP && GAMEP.on && !gameHidden() && window.innerWidth >= 760 && !(INVP && INVP.no);
+  var want = v && desk && VIEW === 'invoice' && CAT && OPT && GAMEP && GAMEP.on && !gameHidden() && window.innerWidth >= 760 && !(INVP && INVP.no);
   // hidden on this device: a small way back right here (Maintenance is not every role's screen)
   var back = el('pgshow'), wantBack = v && desk && VIEW === 'invoice' && GAMEP && GAMEP.on && gameHidden() && window.innerWidth >= 760 && !(INVP && INVP.no);
   if (wantBack && !back) { back = document.createElement('div'); back.id = 'pgshow'; back.style.cssText = 'margin:14px 0 20px;text-align:center'; back.innerHTML = '<button class="btn small" type="button" id="game_show">Show the game</button>'; v.parentNode.insertBefore(back, v.nextSibling); }
@@ -22284,47 +22289,11 @@ document.addEventListener('click', function (ev) {
 <!-- Ask your ERP: a chat inside the ERP (handlers/assistant.js). Questions answered through the ERP's own
      functions; an invoice comes back as a proposal to confirm; the role decides what may be asked. -->
 <style>
-.ch-wrap{display:flex;flex-direction:column;height:calc(100vh - 170px);min-height:380px}
-.ch-log{flex:1;overflow:auto;padding:4px 2px;display:flex;flex-direction:column;gap:10px}
-.ch-m{max-width:78%;padding:9px 12px;border-radius:14px;line-height:1.45;font-size:14px;white-space:pre-wrap;word-break:break-word}
-.ch-m.u{align-self:flex-end;background:var(--series-1);color:#fff;border-bottom-right-radius:4px}
-.ch-m.a{align-self:flex-start;background:var(--surface);border:1px solid var(--ring);border-bottom-left-radius:4px}
-.ch-m.sys{align-self:center;background:none;color:var(--muted);font-size:12px}
-.ch-prop{align-self:flex-start;max-width:92%;border:1px solid var(--warning);background:var(--warning-soft);border-radius:12px;padding:10px 12px}
-.ch-prop .ap-row{margin-top:8px}
-.ch-in{display:flex;gap:8px;margin-top:10px;align-items:flex-end}
-.ch-in textarea{flex:1;min-height:44px;max-height:140px;resize:vertical}
-.ch-chips{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0 0}
-.ch-chips .btn{font-size:12px;padding:3px 10px}
-@media (max-width:760px){.ch-wrap{height:calc(100vh - 215px)}.ch-m{max-width:90%}}
 </style>
 <script>
 var CH = { msgs: [], busy: false, prop: null, left: null };
 try { var chS = JSON.parse(localStorage.getItem('cz_chat') || '[]'); if (Array.isArray(chS)) CH.msgs = chS.slice(-40); } catch (e) {}
 function chSave() { try { localStorage.setItem('cz_chat', JSON.stringify(CH.msgs.slice(-40))); } catch (e) {} }
-function chHtml() {
-  var h = '<section><div class="card ch-wrap"><div class="row" style="justify-content:space-between;align-items:center;margin-bottom:6px"><h2 style="margin:0">Ask your ERP</h2>' +
-          '<span class="sku">' + (CH.left != null ? CH.left + ' left today \u00b7 ' : '') + '<a href="#" id="ch_clear">clear</a></span></div><div class="ch-log" id="ch_log">';
-  if (!CH.msgs.length) h += '<div class="ch-m sys">Ask in Bangla or English: \u201csales today?\u201d, \u201chow much does Rakin owe?\u201d, \u201cinvoice for Karim, 2 jade white, COD\u201d, \u201chow do I receive stock?\u201d. Figures come from your ERP; an invoice is made only after you confirm it.</div>';
-  CH.msgs.forEach(function (m) {
-    if (m.role === 'user') h += '<div class="ch-m u">' + esc(m.text) + '</div>';
-    else h += '<div class="ch-m a">' + esc(m.text) + (m.pdf ? ' <a href="' + esc(m.pdf) + '" target="_blank" rel="noopener">Open the PDF</a>' : '') + '</div>';
-  });
-  if (CH.prop) h += '<div class="ch-prop"><b>Confirm?</b><br>' + esc(CH.prop.summary) + (CH.prop.warnings && CH.prop.warnings.length ? '<br><span style="color:var(--critical)">' + esc(CH.prop.warnings.join('; ')) + '</span>' : '') +
-                    '<div class="ap-row"><button class="btn small primary" type="button" id="ch_yes"' + (CH.busy ? ' disabled' : '') + '>Yes, make it</button><button class="btn small" type="button" id="ch_no">No</button></div></div>';
-  if (CH.busy) h += '<div class="ch-m sys">Thinking\u2026</div>';
-  h += '</div>';
-  h += '<div class="ch-chips">' + ['Sales today?', 'Who owes money?', 'Stock of jade white', 'How do I receive stock?'].map(function (c) { return '<button class="btn" type="button" data-chq="' + esc(c) + '">' + esc(c) + '</button>'; }).join('') + '</div>';
-  h += '<div class="ch-in"><textarea class="i" id="ch_q" placeholder="Type here\u2026" rows="1"' + (CH.busy ? ' disabled' : '') + '></textarea><button class="btn primary" type="button" id="ch_send"' + (CH.busy ? ' disabled' : '') + '>Send</button></div>';
-  return h + '</div></section>';
-}
-var repaintChat = repaint;
-repaint = function () {
-  if (VIEW !== 'chat') return repaintChat.apply(this, arguments);
-  el('view').innerHTML = chHtml();
-  var lg = el('ch_log'); if (lg) lg.scrollTop = lg.scrollHeight;
-  var q = el('ch_q'); if (q && !CH.busy && window.innerWidth > 760) q.focus();
-};
 var routeAllowedChat = routeAllowed;
 routeAllowed = function (view) { if (view === 'chat') return !!ME; return routeAllowedChat.apply(this, arguments); };
 function chSend(text) {
@@ -22334,23 +22303,6 @@ function chSend(text) {
     CH.busy = false; CH.left = r.left; CH.msgs.push({ role: 'assistant', text: r.text }); CH.prop = r.proposal || null; chSave(); repaint();
   }, function (e) { CH.busy = false; CH.msgs.push({ role: 'assistant', text: 'Sorry \u2014 ' + ((e && e.message) || String(e)) }); chSave(); repaint(); });
 }
-document.addEventListener('click', function (ev) {
-  if (VIEW !== 'chat') return;
-  var t = ev.target && ev.target.closest ? ev.target.closest('#ch_send,#ch_yes,#ch_no,#ch_clear,[data-chq]') : null; if (!t) return;
-  if (t.id === 'ch_send') { chSend((el('ch_q') || {}).value); return; }
-  if (t.hasAttribute('data-chq')) { chSend(t.getAttribute('data-chq')); return; }
-  if (t.id === 'ch_clear') { ev.preventDefault(); CH.msgs = []; CH.prop = null; chSave(); repaint(); return; }
-  if (t.id === 'ch_no') { CH.prop = null; CH.msgs.push({ role: 'assistant', text: 'Not made.' }); chSave(); repaint(); return; }
-  if (t.id === 'ch_yes') {
-    var prop = CH.prop; CH.prop = null; CH.busy = true; repaint();
-    srv('erpAssistant', [{ confirm: prop }], function (r) { CH.busy = false; CH.msgs.push({ role: 'assistant', text: r.text, pdf: r.pdf || '' }); chSave(); repaint(); D = null; try { loadDashboardOnly(); updateCounts(); } catch (e) {} },
-        function (e) { CH.busy = false; CH.msgs.push({ role: 'assistant', text: 'Could not make it: ' + ((e && e.message) || String(e)) }); chSave(); repaint(); });
-  }
-});
-document.addEventListener('keydown', function (ev) {
-  if (VIEW !== 'chat' || !ev.target || ev.target.id !== 'ch_q') return;
-  if (ev.key === 'Enter' && !ev.shiftKey) { ev.preventDefault(); chSend(ev.target.value); }
-});
 </script>
 <!-- What to push next (handlers/push.js): on Campaigns, for the platform admin, or for everyone once the provider
      switches the "push" app on. Four lists with the figures behind each call; tick rows -> a campaign pre-filled. -->
@@ -23169,24 +23121,6 @@ function fdSkin(s) {
   else document.documentElement.removeAttribute('data-skin');
 }
 fdSkin(FD_SKIN);
-var umPaintFd = umPaint;
-umPaint = function () {
-  var r = umPaintFd.apply(this, arguments);
-  var s = document.querySelector('#o_usermenu .u6s');
-  if (s && !s.querySelector('[data-fdskin]')) {
-    var row = document.createElement('div'); row.className = 'u6row';
-    row.innerHTML = '<span>Look</span><span class="seg">' + [['fd', 'FilaDash'], ['classic', 'Classic']].map(function (x) {
-      return '<button type="button" data-fdskin="' + x[0] + '" class="' + (FD_SKIN === x[0] ? 'on' : '') + '">' + x[1] + '</button>'; }).join('') + '</span>';
-    s.appendChild(row);
-  }
-  return r;
-};
-document.addEventListener('click', function (e) {
-  var b = e.target.closest && e.target.closest('[data-fdskin]'); if (!b) return;
-  e.preventDefault(); e.stopPropagation();
-  fdSkin(b.getAttribute('data-fdskin'));
-  [].forEach.call(document.querySelectorAll('[data-fdskin]'), function (x) { x.classList.toggle('on', x.getAttribute('data-fdskin') === FD_SKIN); });
-}, true);
 </script>
 
 <!-- fd-2 (FilaDash merge P2): the dashboard in FilaDash's layout, on our figures (handlers/fddash.js, erpFdDash).
@@ -23442,99 +23376,7 @@ function fddDonut(title, icon, sl, go, f, hint) {
   return '<div class="fdd-c s2"><div class="fdd-ch"><span class="fdd-badge">' + fddIc(icon) + '</span><div class="fdd-ct">' + esc(title) + '</div>' +
     (go && navOn(go) ? '<button type="button" class="fdd-more" data-go="' + go + '"' + (f ? ' data-f="' + f + '"' : '') + '>View details →</button>' : '') + '</div>' + body + '</div>';
 }
-function fddView() {
-  var d = FDD.data;
-  fddLoad();
-  var biz = (ME && (ME.business || ME.bizName)) || (el('bizName') && el('bizName').textContent) || '';
-  var head = '<div class="fdd-head"><div><div class="fdd-eyebrow">' + esc(FDD.group && d ? d.groupLabel : biz || 'All products') + '</div>' +
-    '<h1 class="fdd-title">Dashboard</h1><div class="fdd-sub">' + (d ? esc(d.rangeLabel) + ' · compared with ' + esc(d.prevLabel) + ' · as of ' + esc(d.generatedAt) : 'Loading…') + '</div></div>' +
-    '<div class="fdd-tools">' + [[1, 'This month'], [3, '3 months'], [6, '6 months'], [12, '12 months']].map(function (x) {
-      return '<button type="button" class="fdd-pill" data-fddm="' + x[0] + '" aria-pressed="' + (FDD.months === x[0]) + '">' + x[1] + '</button>'; }).join('') +
-    '<select class="fdd-group" id="fddGroup" title="Show one product group"><option value="">All products</option>' +
-    ((d && d.groups) || []).map(function (g) { return '<option value="' + esc(g.key) + '"' + (FDD.group === g.key ? ' selected' : '') + '>' + esc(g.label) + ' (' + g.products + ')</option>'; }).join('') +
-    '</select></div></div>';
-  var qa = [];
-  if (navOn('invoice')) qa.push('<button class="btn primary" type="button" data-go="invoice">+ New invoice</button>');
-  if (navOn('stock')) qa.push('<button class="btn" type="button" data-go="stock">Receive stock</button>');
-  if (navOn('quotes')) qa.push('<button class="btn" type="button" data-go="quotes">New quotation</button>');
-  if (navOn('campaigns')) qa.push('<button class="btn" type="button" data-go="campaigns">Campaign</button>');
-  var h = head + '<div class="fdd-qa">' + qa.join('') + '</div>';
-  if (FDD.err && !d) return h + '<div class="note err"><div class="ico">!</div><div>Could not load the dashboard: ' + esc(FDD.err) + ' <button class="btn small" type="button" data-fddretry="1">Try again</button></div></div>';
-  if (!d) return h + '<div class="fdd-grid"><div class="fdd-skel" style="grid-column:span 2;height:372px"></div><div class="fdd-skel"></div><div class="fdd-skel"></div><div class="fdd-skel"></div><div class="fdd-skel"></div></div>';
-  var k = d.kpi, cur = d.currency, grp = !!d.group;
-  if (grp) h += '<div class="fdd-note">Showing <b>' + esc(d.groupLabel) + '</b> only: its sales, cost, gross profit and stock. Expenses, net profit, dues and cash belong to the whole business — pick “All products” to see them.</div>';
-  if (FDD.busy) h += '<div class="fdd-note">Updating…</div>';
-
-  // ---- row 1: the revenue curve and four headline cards
-  var big = '<div class="fdd-big"><b>' + esc(cur) + ' ' + fmt(k.revenue.v) + '</b><span>' + fddTrend(k.revenue) + ' vs ' + esc(d.prevLabel) + '</span></div>';
-  h += '<div class="fdd-grid"><div class="fdd-c s2 r2"><div class="fdd-ch"><span class="fdd-badge">' + fddIc('taka') + '</span><div class="fdd-ct">Revenue' +
-    (d.calc.revenue ? ' <button type="button" class="fdd-i" data-fdcalc="revenue" data-fdtitle="Revenue" title="Show calculation">i</button>' : '') + '</div>' + big + '</div>' +
-    '<div class="fdd-line">' + fddLine(d.series, d.full) + '</div>' +
-    '<div class="fdd-legend"><span><i style="background:var(--fd-accent,#5B4FE9)"></i>Revenue by month</span>' + (d.full ? '<span><i style="background:var(--fd-positive,#1DBF73)"></i>Gross profit</span>' : '') + '</div></div>';
-  if (!grp && k.net) h += fddKpi({ key: 'net', title: 'Net profit', icon: 'target', money: true, k: k.net, hero: true, go: 'profit', note: d.rangeLabel });
-  else if (k.gross) h += fddKpi({ key: 'gross', title: 'Gross profit', icon: 'trend', money: true, k: k.gross, hero: true, note: k.margin ? k.margin.v + '% margin' : '' });
-  else h += fddKpi({ key: 'orders', title: 'Orders', icon: 'cart', k: k.orders, hero: true, go: 'sales' });
-  if (k.stockValue) h += fddKpi({ key: 'stockValue', title: 'Stock value at cost', icon: 'box', money: true, k: k.stockValue, go: 'products', note: fmt(k.stockUnits.v) + ' units on hand' + (k.stockValue.uncosted ? ' · ' + k.stockValue.uncosted + ' without cost' : '') });
-  else h += fddKpi({ key: 'stockUnits', title: 'Units on hand', icon: 'box', k: k.stockUnits, go: 'products' });
-  if (k.dues) h += fddKpi({ key: 'dues', title: 'Dues receivable', icon: 'bell', money: true, k: k.dues, tone: k.dues.v > 0 ? 'warn' : '', go: 'sales', f: 'due', note: 'owed by customers today' });
-  else h += fddKpi({ key: 'units', title: 'Units sold', icon: 'spool', k: k.units, note: d.rangeLabel });
-  if (k.cashIn) h += fddKpi({ key: 'cashIn', title: 'Cash received', icon: 'wallet', money: true, k: k.cashIn, go: 'cash' });
-  else h += fddKpi({ key: 'orders', title: 'Orders', icon: 'cart', k: k.orders, go: 'sales' });
-  h += '</div>';
-
-  // ---- row 2: the rest of the numbers
-  var row = [];
-  if (k.gross && !grp) row.push(fddKpi({ key: 'gross', title: 'Gross profit', icon: 'trend', money: true, k: k.gross, note: k.margin ? k.margin.v + '% margin' : '' }));
-  if (k.margin) row.push(fddKpi({ key: 'margin', title: 'Gross margin', icon: 'percent', pct: true, k: k.margin }));
-  if (!grp || k.net) row.push(fddKpi({ key: 'orders', title: 'Orders', icon: 'cart', k: k.orders, go: 'sales' }));
-  if (!grp) row.push(fddKpi({ key: 'units', title: 'Units sold', icon: 'spool', k: k.units }));
-  row.push(fddKpi({ key: 'avgOrder', title: 'Average order', icon: 'receipt', money: true, k: k.avgOrder }));
-  if (k.expenses) row.push(fddKpi({ key: 'expenses', title: 'Expenses', icon: 'receipt', money: true, k: k.expenses, flip: true, tone: 'warn', go: 'expenses' }));
-  if (grp && k.stockValue) row.push(fddKpi({ key: 'stockUnits', title: 'Units on hand', icon: 'box', k: k.stockUnits, go: 'products' }));
-  while (row.length % 4) row.push('<div class="fdd-c" style="visibility:hidden"></div>');
-  h += '<div class="fdd-grid">' + row.join('') + '</div>';
-
-  // ---- row 3: where the money came from
-  h += '<div class="fdd-grid">' + (grp ? fddDonut('Sales by Brand', 'layers', d.donuts.byBrand, 'products', '', 'Brand') : fddDonut('Sales by Product Group', 'spool', d.donuts.byGroup, 'products', '', 'Group')) +
-    fddDonut('Sales Channel', 'globe', d.donuts.byChannel, 'sales', '', 'Channel') +
-    (!grp && d.donuts.byMethod ? fddDonut('Payments by Method', 'wallet', d.donuts.byMethod, 'cash', '', 'Method') : '') +
-    (!grp ? fddDonut('Sales by Brand', 'layers', d.donuts.byBrand, 'products', '', 'Brand') : '') + '</div>';
-
-  // ---- row 4: tables
-  var tp = d.topProducts.length ? '<div class="fdd-scroll"><table class="fdd-t"><thead><tr><th>Product</th><th class="n">Units</th><th class="n">Revenue</th>' + (d.full ? '<th class="n">Gross</th>' : '') + '</tr></thead><tbody>' +
-    d.topProducts.map(function (p) { return '<tr><td class="nm" title="' + esc(p.sku) + '">' + esc(p.name) + '</td><td class="n">' + fmt(p.units) + '</td><td class="n">' + fmt(p.revenue) + '</td>' + (d.full ? '<td class="n">' + fmt(p.gross) + '</td>' : '') + '</tr>'; }).join('') +
-    '</tbody></table></div>' : '<div class="fdd-empty">No sales in this range.</div>';
-  var rc = d.recent.length ? '<div class="fdd-scroll"><table class="fdd-t"><thead><tr><th>Invoice</th><th>Date</th><th>Customer</th><th class="n">Total</th><th>Status</th></tr></thead><tbody>' +
-    d.recent.map(function (x) { return '<tr data-inv="' + esc(x.id) + '"><td>' + esc(x.id) + '</td><td>' + esc(x.date) + '</td><td class="nm">' + esc(x.customer) + '</td><td class="n">' + fmt(x.total) + '</td><td>' +
-      (x.owed > 0 ? '<span class="fdd-chip due">Due ' + fmt(x.owed) + '</span>' : '<span class="fdd-chip paid">Paid</span>') + '</td></tr>'; }).join('') + '</tbody></table></div>' : '<div class="fdd-empty">No invoices yet.</div>';
-  h += '<div class="fdd-grid"><div class="fdd-c s2"><div class="fdd-ch"><span class="fdd-badge">' + fddIc('list') + '</span><div class="fdd-ct">Top Products</div>' +
-    (navOn('products') ? '<button type="button" class="fdd-more" data-go="products">View details →</button>' : '') + '</div>' + tp + '</div>' +
-    '<div class="fdd-c s2"><div class="fdd-ch"><span class="fdd-badge">' + fddIc('cart') + '</span><div class="fdd-ct">Recent Sales</div>' +
-    (navOn('sales') ? '<button type="button" class="fdd-more" data-go="sales">View details →</button>' : '') + '</div>' + rc + '</div></div>';
-
-  // ---- row 5: needs attention, dues by age, reorder
-  var att = [], a = (D && D.alerts) || {}, toSend = typeof sendCount === 'function' ? sendCount() : 0, cz = a.courier || {};
-  if (a.webPending) att.push(['bad', 'warn', a.webOrders, 'website orders not entered', 'weborders', '']);
-  if (toSend) att.push(['warn', 'truck', toSend, 'parcel(s) to send', 'sales', 'tosend']);
-  if (d.attention.outOfStock) att.push(['bad', 'x', d.attention.outOfStock, 'products out of stock', 'products', 'out']);
-  if (d.attention.reorder) att.push(['warn', 'warn', d.attention.reorder, 'at or below reorder level', 'stock', 'plan']);
-  if (cz.back) att.push(['bad', 'truck', cz.back, 'parcel(s) came back or part delivered', 'sales', '']);
-  if (cz.review) att.push(['bad', 'truck', cz.review, 'Steadfast parcel(s) to review', 'sales', '']);
-  if (k.dues && k.dues.v > 0) att.push(['warn', 'bell', fddShort(k.dues.v), 'owed by customers', 'sales', 'due']);
-  var attH = att.length ? '<ul class="fdd-att">' + att.map(function (x) {
-    return '<li' + (navOn(x[4]) ? ' data-go="' + x[4] + '"' + (x[5] ? ' data-f="' + x[5] + '"' : '') : '') + '><span class="fdd-badge t-' + x[0] + '">' + fddIc(x[1]) + '</span><b>' + esc(String(x[2])) + '</b><span>' + esc(x[3]) + '</span></li>'; }).join('') + '</ul>'
-    : '<div class="fdd-empty">✓ Nothing needs you.</div>';
-  var ro = d.reorder.length ? '<div class="fdd-scroll"><table class="fdd-t"><thead><tr><th>Product</th><th class="n">On hand</th><th class="n">Reorder at</th></tr></thead><tbody>' +
-    d.reorder.map(function (p) { return '<tr><td class="nm" title="' + esc(p.sku) + '">' + esc(p.name) + '</td><td class="n"' + (p.stock <= 0 ? ' style="color:var(--fd-negative-text,var(--critical));font-weight:700"' : '') + '>' + fmt(p.stock) + '</td><td class="n">' + fmt(p.reorder) + '</td></tr>'; }).join('') +
-    '</tbody></table></div>' : '<div class="fdd-empty">Nothing at its reorder level.</div>';
-  h += '<div class="fdd-grid"><div class="fdd-c"><div class="fdd-ch"><span class="fdd-badge t-warn">' + fddIc('bell') + '</span><div class="fdd-ct">Needs Attention</div></div>' + attH + '</div>';
-  if (d.duesByAge) h += '<div class="fdd-c"><div class="fdd-ch"><span class="fdd-badge">' + fddIc('clock') + '</span><div class="fdd-ct">Dues by Age</div></div><table class="fdd-t"><thead><tr><th>Age</th><th class="n">' + esc(cur) + '</th></tr></thead><tbody>' +
-    d.duesByAge.map(function (x) { return '<tr' + (navOn('sales') ? ' data-go="sales" data-f="due" style="cursor:pointer"' : '') + '><td>' + esc(x.band) + ' <span class="sku">(' + x.count + ')</span></td><td class="n">' + fmt(x.amount) + '</td></tr>'; }).join('') + '</tbody></table></div>';
-  h += '<div class="fdd-c ' + (d.duesByAge ? 's2' : 's2') + '"><div class="fdd-ch"><span class="fdd-badge t-warn">' + fddIc('box') + '</span><div class="fdd-ct">Reorder Suggestions</div>' +
-    (navOn('stock') ? '<button type="button" class="fdd-more" data-go="stock" data-f="plan">View details →</button>' : '') + '</div>' + ro + '</div></div>';
-  h += '<div class="fdd-classic"><button type="button" class="btn" data-fddclassic="1">' + (FDD.classic ? '▴ Hide the classic dashboard' : '▾ More: the classic dashboard (today, a chosen day, charts, tabs)') + '</button></div>';
-  return h;
-}
+var fddView = null;   // drawn by fd-24 / fd-28 (the first two dashboards were removed 14 Oct 2026)
 var viewDashFd = viewDash;
 viewDash = function () {
   if (document.documentElement.getAttribute('data-skin') !== 'fd') return viewDashFd.apply(this, arguments);
@@ -24293,15 +24135,6 @@ pagesAfterWrite = function () { CMS.data = null; return cmsAfterWrite.apply(this
 .fdk-st.pass { background:var(--fd-positive-soft, var(--good-soft)); color:var(--fd-positive-text, var(--up)); }
 .fdk-st.warn { background:var(--fd-warning-soft, var(--warning-soft)); color:var(--fd-warning-text, var(--warning)); }
 .fdk-st.fail { background:var(--fd-negative-soft, var(--critical-soft)); color:var(--fd-negative-text, var(--critical)); }
-.fdmap svg { width:100%; height:auto; display:block; }
-.fdmap .nd { cursor:pointer; }
-.fdmap .nd rect { fill:var(--fd-card, var(--surface)); stroke:var(--fd-border-strong, var(--ring)); }
-.fdmap .nd:hover rect { stroke:var(--fd-accent, var(--series-1)); stroke-width:2; }
-.fdmap .nd text { font:600 12.5px var(--fd-font, inherit); fill:var(--fd-text, var(--ink)); }
-.fdmap .grp rect { fill:var(--fd-accent-soft, var(--series-1-soft)); stroke:var(--fd-accent-border, var(--series-1)); }
-.fdmap .grp text { font:800 13px var(--fd-font, inherit); fill:var(--fd-accent-text, var(--series-1)); text-transform:uppercase; letter-spacing:.06em; }
-.fdmap .ctr circle { fill:url(#fdmapG); } .fdmap .ctr text { font:800 16px var(--fd-font, inherit); fill:#fff; }
-.fdmap .ln { stroke:var(--fd-border-strong, var(--ring)); stroke-width:1.5; fill:none; }
 </style>
 <script>
 // ---- a bill after the goods, on one shipment
@@ -24370,7 +24203,7 @@ function fdxNav(view, name, icon, afterView) {
   b.addEventListener('click', function () { go(view); });
 }
 fdxNav('analytics', 'Analytics', '<path d="M4 20V10M10 20V4M16 20v-8M22 20H2"/>', 'dash');
-fdxNav('mindmap', 'ERP Mind Map', '<circle cx="12" cy="12" r="3"/><circle cx="4" cy="5" r="2"/><circle cx="20" cy="5" r="2"/><circle cx="4" cy="19" r="2"/><circle cx="20" cy="19" r="2"/><path d="M6 6l4 4M18 6l-4 4M6 18l4-4M18 18l-4-4"/>', 'analytics');
+fdxNav('mindmap', 'ERP Navigator', '<circle cx="12" cy="12" r="3"/><circle cx="4" cy="5" r="2"/><circle cx="20" cy="5" r="2"/><circle cx="4" cy="19" r="2"/><circle cx="20" cy="19" r="2"/><path d="M6 6l4 4M18 6l-4 4M6 18l4-4M18 18l-4-4"/>', 'analytics');
 fdxNav('syscheck', 'System check', '<path d="M12 3l8 4v5c0 5-3.5 8-8 9-4.5-1-8-4-8-9V7z"/><path d="M8.5 12l2.5 2.5 4.5-5"/>', 'tools');
 FDH_SUB.analytics = 'What each shipment really made, what is not selling, colours, a year at a glance';
 FDH_SUB.mindmap = 'Every part of the ERP on one map: click one to open it';
@@ -24426,45 +24259,10 @@ function viewSysCheck() {
         '<td><b>' + esc(c.title) + '</b><div class="sku">' + esc(c.id) + '</div></td><td>' + esc(c.area) + '</td><td style="white-space:normal">' + esc(c.detail || '') + '</td></tr>'; }).join('') + '</tbody></table></div></div>';
   return h;
 }
-function viewMindMap() {
-  // the map is the menu itself: groups and their screens, so it never goes out of date
-  var groups = [], cur = null;
-  [].forEach.call(document.querySelectorAll('#nav > *'), function (n) {
-    if (n.classList.contains('navgrp')) { cur = { name: n.textContent.replace(/[▾▸]/g, '').trim(), items: [] }; groups.push(cur); return; }
-    if (n.tagName === 'BUTTON' && n.style.display !== 'none' && n.getAttribute('data-view') && n.getAttribute('data-view') !== 'home' && n.getAttribute('data-view') !== 'mindmap') {
-      if (!cur) { cur = { name: 'Overview', items: [] }; groups.push(cur); }
-      cur.items.push({ view: n.getAttribute('data-view'), name: (n.getAttribute('data-name') || n.textContent).replace(/\d+$/, '').trim() });
-    }
-  });
-  groups = groups.filter(function (g) { return g.items.length; });
-  var W = 1100, cx = W / 2, cy = 420, H = 840, n = groups.length, out = '';
-  groups.forEach(function (g, i) {
-    var a = -Math.PI / 2 + i * 2 * Math.PI / n, gx = cx + Math.cos(a) * 230, gy = cy + Math.sin(a) * 200;
-    out += '<path class="ln" d="M' + cx + ',' + cy + ' L' + gx.toFixed(0) + ',' + gy.toFixed(0) + '"/>';
-    g.items.forEach(function (it, j) {
-      var spread = Math.min(1.1, 0.24 * g.items.length), b = a + (g.items.length > 1 ? (j / (g.items.length - 1) - 0.5) * spread : 0);
-      var ix = cx + Math.cos(b) * 400, iy = cy + Math.sin(b) * 350;
-      it.x = ix; it.y = iy;
-      out += '<path class="ln" d="M' + gx.toFixed(0) + ',' + gy.toFixed(0) + ' L' + ix.toFixed(0) + ',' + iy.toFixed(0) + '"/>';
-    });
-    g.x = gx; g.y = gy;
-  });
-  groups.forEach(function (g) {
-    var w = Math.max(90, g.name.length * 10 + 24);
-    out += '<g class="grp"><rect x="' + (g.x - w / 2).toFixed(0) + '" y="' + (g.y - 16).toFixed(0) + '" width="' + w + '" height="32" rx="16"/><text x="' + g.x.toFixed(0) + '" y="' + (g.y + 5).toFixed(0) + '" text-anchor="middle">' + esc(g.name) + '</text></g>';
-    g.items.forEach(function (it) {
-      var w2 = Math.max(80, it.name.length * 7.4 + 22);
-      out += '<g class="nd" data-mapgo="' + esc(it.view) + '"><rect x="' + (it.x - w2 / 2).toFixed(0) + '" y="' + (it.y - 15).toFixed(0) + '" width="' + w2.toFixed(0) + '" height="30" rx="10"/><text x="' + it.x.toFixed(0) + '" y="' + (it.y + 4).toFixed(0) + '" text-anchor="middle">' + esc(it.name) + '</text></g>';
-    });
-  });
-  var biz = (el('bizName') && el('bizName').textContent) || 'ERP';
-  return '<div class="card fdmap"><svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="ERP mind map"><defs><linearGradient id="fdmapG" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="var(--fd-accent, #5B4FE9)"/><stop offset="1" stop-color="#A84CFB"/></linearGradient></defs>' +
-    out + '<g class="ctr"><circle cx="' + cx + '" cy="' + cy + '" r="62"/><text x="' + cx + '" y="' + (cy + 6) + '" text-anchor="middle">' + esc(biz.slice(0, 14)) + '</text></g></svg></div>';
-}
 var repaintFdx = repaint;
 repaint = function () {
   fdxSync();
-  var fn = VIEW === 'analytics' ? viewAnalytics : VIEW === 'syscheck' ? viewSysCheck : VIEW === 'mindmap' ? viewMindMap : null;
+  var fn = VIEW === 'analytics' ? viewAnalytics : VIEW === 'syscheck' ? viewSysCheck : null;
   if (!fn) return repaintFdx.apply(this, arguments);
   el('view').innerHTML = fn();
   try { fdhPaint(); } catch (e) {}
@@ -24475,8 +24273,6 @@ document.addEventListener('click', function (e) {
   var t = e.target.closest('[data-fxtab]');
   if (t) { FDX.anTab = t.getAttribute('data-fxtab'); repaint(); return; }
   if (e.target.closest('[data-fxrecheck]')) { FDX.chk = null; repaint(); return; }
-  var m = e.target.closest('[data-mapgo]');
-  if (m) { go(m.getAttribute('data-mapgo')); window.scrollTo(0, 0); }
 });
 var fdxAfterWrite = pagesAfterWrite;
 pagesAfterWrite = function () { FDX.an = null; FDX.chk = null; return fdxAfterWrite.apply(this, arguments); };
@@ -24884,7 +24680,7 @@ fdhHtml = function (v) {
   var map = { stock: 'receive' }, id = map[v] || v;
   var known = { dash: 1, invoice: 1, sales: 1, preorders: 1, customers: 1, receive: 1, shipments: 1, products: 1, costs: 1, cash: 1, expenses: 1, capital: 1, commission: 1, profit: 1, analytics: 1, syscheck: 1 };
   if (!known[id]) return h;
-  return h.replace('</div></div>', '</div><button type="button" class="btn small fdh-help" data-hghelp="' + id + '">সাহায্য / Help</button></div>');
+  return h.replace('</div></div>', '</div><button type="button" class="btn small fdh-help" data-hghelp="' + id + '">' + (typeof LANG !== 'undefined' && LANG === 'bn' ? 'সাহায্য' : 'Help') + '</button></div>');
 };
 document.addEventListener('click', function (e) {
   if (!e.target.closest) return;
@@ -24898,263 +24694,6 @@ document.addEventListener('click', function (e) {
   if (tt) { var id = tt.getAttribute('data-hgt'); HG.open[id] = !HG.open[id]; if (HG.focus === id && !HG.open[id]) HG.focus = ''; repaint(); }
 });
 try { HG.lang = localStorage.getItem('erp_help_lang') || ''; } catch (e) {}
-</script>
-
-<!-- fd-16 (FilaDash merge): Sell > New sale (Bangla: NS_BN, this screen only) - his 5-step sale screen (1 Customer, 2 Items, 3 Details, 4 Payment,
-     5 Review & confirm with a live checklist). The classic New invoice stays as it was. Same server call
-     (erpCreateInvoice) plus 117: seller (a manager/owner may name a member), channel, and the 5 % price band
-     (priceCheck: a price more than 5 % under needs a reason, kept on the invoice). A draft is kept on this device. -->
-<style>
-.ns-wrap { display:grid; grid-template-columns:minmax(0,1fr) 340px; gap:16px; align-items:start; }
-.ns-side { position:sticky; top:12px; }
-@media (max-width:980px) { .ns-wrap { grid-template-columns:minmax(0,1fr); } .ns-side { position:static; } }
-.ns-card { margin-bottom:14px; }
-.ns-h { display:flex; align-items:center; gap:10px; margin-bottom:10px; }
-.ns-h h2 { margin:0; font-size:16px; }
-.ns-n { width:26px; height:26px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; font-weight:800; font-size:13px;
-        background:var(--fd-brand-soft, var(--field)); color:var(--fd-brand-text, var(--accent, #333)); flex:0 0 auto; }
-.ns-pills { display:flex; flex-wrap:wrap; gap:6px; }
-.ns-pill { height:32px; padding:0 12px; border-radius:999px; border:1px solid var(--fd-border, var(--line)); background:var(--fd-surface, var(--card)); cursor:pointer; font:inherit; font-size:13px; color:inherit; }
-.ns-pill[aria-pressed="true"] { background:var(--fd-brand, var(--accent, #222)); border-color:var(--fd-brand, var(--accent, #222)); color:#fff; font-weight:700; }
-.ns-res { margin-top:8px; max-height:260px; overflow:auto; }
-.ns-res button { display:flex; width:100%; justify-content:space-between; gap:10px; text-align:left; padding:8px 10px; border:0; border-bottom:1px solid var(--fd-border, var(--line)); background:none; cursor:pointer; font:inherit; color:inherit; }
-.ns-res button:hover { background:var(--fd-surface-2, var(--field)); }
-.ns-quick { display:flex; flex-wrap:wrap; gap:6px; margin-top:8px; }
-.ns-line { display:grid; grid-template-columns:minmax(0,1fr) 70px 110px 90px 28px; gap:8px; align-items:center; padding:8px 0; border-bottom:1px solid var(--fd-border, var(--line)); }
-.ns-line .i { height:34px; }
-.ns-line .x { border:0; background:none; cursor:pointer; font-size:18px; color:var(--fd-text-3, var(--muted)); }
-.ns-line .warn { color:var(--fd-negative-text, var(--critical)); }
-@media (max-width:560px) { .ns-line { grid-template-columns:minmax(0,1fr) 60px 90px 28px; } .ns-line .lt { display:none; } }
-.ns-sum div.r { display:flex; justify-content:space-between; padding:4px 0; }
-.ns-sum .big { font-size:24px; font-weight:800; }
-.ns-chk { list-style:none; padding:0; margin:12px 0; }
-.ns-chk li { display:flex; gap:8px; padding:4px 0; font-size:13px; }
-.ns-chk li .d { width:18px; height:18px; border-radius:50%; flex:0 0 auto; display:inline-flex; align-items:center; justify-content:center; font-size:11px; font-weight:800; }
-.ns-chk li.ok .d { background:var(--fd-positive-soft, var(--good-soft)); color:var(--fd-positive-text, var(--up)); }
-.ns-chk li.no .d { background:var(--fd-negative-soft, var(--critical-soft)); color:var(--fd-negative-text, var(--critical)); }
-.ns-side .btn.primary { width:100%; height:44px; font-size:15px; }
-</style>
-<script>
-var NS_CHANNELS = ['Walk-in', 'Facebook', 'WhatsApp', 'Phone', 'Website', 'Instagram', 'Other'];
-var NS_METHODS = ['Cash', 'bKash', 'Nagad', 'Bank Transfer', 'Not paid'];
-var NS = null, NS_SELLERS = null, NS_SAVING = false;
-// Bangla for this screen only (generic words like "Cash" are not added to the global list, which would change other screens);
-// the business's own words (Settings > Bangla words) still win.
-var NS_BN = {
-  'Customer': 'কাস্টমার', 'Items': 'পণ্য', 'Details': 'বিস্তারিত', 'Payment': 'পেমেন্ট', 'Review & confirm': 'দেখে নিশ্চিত করুন',
-  'Phone (first)': 'ফোন (আগে)', 'Name': 'নাম', 'Address': 'ঠিকানা', 'Search a product or SKU': 'পণ্য বা SKU খুঁজুন',
-  'Best sellers (90 days)': 'বেশি বিক্রি (৯০ দিন)', 'Where the customer came from': 'কাস্টমার কোথা থেকে এসেছেন', 'Seller': 'বিক্রেতা',
-  'Delivery': 'ডেলিভারি', 'Order discount': 'অর্ডারে ছাড়', 'Delivery charge': 'ডেলিভারি চার্জ', 'Note': 'নোট',
-  'Amount received (blank = the full total)': 'কত টাকা পেলেন (খালি = পুরো টাকা)', 'The whole total goes on the customer’s due.': 'পুরো টাকা কাস্টমারের বাকিতে যাবে।',
-  'Item': 'পণ্য', 'Qty': 'পরিমাণ', 'Price': 'দাম', 'Line': 'মোট', 'Remove': 'সরান',
-  'No items yet. Search above or tap a best seller.': 'এখনও কোনো পণ্য নেই। উপরে খুঁজুন বা বেশি বিক্রির একটিতে চাপুন।', 'Nothing found.': 'কিছু পাওয়া যায়নি।',
-  '{0} available': '{0}টি আছে', '({0} held for pre-orders)': '({0}টি প্রি-অর্ডারের জন্য রাখা)', '{0}% under {1}': '{1}-এর চেয়ে {0}% কম',
-  'not enough stock': 'স্টক যথেষ্ট নয়', 'none available': 'একটিও নেই',
-  'Existing customer': 'পুরনো কাস্টমার', '{0} order(s), {1} spent': '{0}টি অর্ডার, {1} খরচ করেছেন', 'New customer — created on save.': 'নতুন কাস্টমার — সেভ করলে তৈরি হবে।',
-  'Loading products…': 'পণ্য লোড হচ্ছে…', 'Me': 'আমি', '(me)': '(আমি)',
-  'Walk-in': 'দোকানে এসে', 'Phone': 'ফোন', 'Website': 'ওয়েবসাইট', 'Other': 'অন্যান্য',
-  'Cash': 'নগদ', 'Bank Transfer': 'ব্যাংক ট্রান্সফার', 'Not paid': 'টাকা দেননি',
-  'Total': 'মোট', 'Paid now': 'এখন পেলেন', 'Due': 'বাকি',
-  'Phone number has 11 digits (01…)': 'ফোন নম্বরে ১১টি সংখ্যা (01…)', 'Customer name given': 'কাস্টমারের নাম দেওয়া হয়েছে',
-  'At least one item, each with a quantity': 'অন্তত একটি পণ্য, প্রতিটির পরিমাণসহ', 'Not enough stock: {0}': 'স্টক যথেষ্ট নয়: {0}',
-  'Stock covers every line': 'প্রতিটি পণ্যের স্টক আছে', 'More than 5% under the price: give the reason': 'দামের চেয়ে ৫%-এর বেশি কম: কারণ লিখুন',
-  'Prices within 5% of the list': 'দাম তালিকার ৫%-এর মধ্যে', 'Order discount not more than the items': 'অর্ডারের ছাড় পণ্যের দামের বেশি নয়',
-  'Amount received not more than the total': 'পাওয়া টাকা মোটের বেশি নয়',
-  'A price is above the list price: lower it or change the product price': 'একটি দাম তালিকার দামের বেশি: কমান বা পণ্যের দাম বদলান', 'No price above the list': 'কোনো দাম তালিকার বেশি নয়',
-  'Why the lower price?': 'দাম কম কেন?', 'e.g. regular customer, owner agreed': 'যেমন: নিয়মিত কাস্টমার, মালিক রাজি',
-  'Confirm sale': 'বিক্রি নিশ্চিত করুন', 'Saving…': 'সেভ হচ্ছে…', 'Start over': 'নতুন করে শুরু',
-  'Confirm this sale?': 'এই বিক্রি নিশ্চিত করবেন?', '{0} line(s)': '{0}টি পণ্যের লাইন', 'Total: {0}': 'মোট: {0}', 'Paid now: {0}': 'এখন পেলেন: {0}',
-  'Due: {0}': 'বাকি: {0}', 'Stock will be deducted and the invoice PDF made.': 'স্টক কমবে এবং ইনভয়েস PDF তৈরি হবে।',
-  'Clear this sale and start over?': 'এই বিক্রি মুছে নতুন করে শুরু করবেন?', 'Could not save: {0}': 'সেভ করা যায়নি: {0}'
-};
-/** This screen's words in the chosen language; {0}, {1} filled from args. */
-function nsT(en, args) {
-  var t = en;
-  if (typeof LANG !== 'undefined' && LANG === 'bn') {
-    var own = (typeof BN_OWN !== 'undefined' && BN_OWN) || {};
-    t = own[en] || NS_BN[en] || (typeof I18N_BN !== 'undefined' && I18N_BN[en]) || en;
-  }
-  return t.replace(/\{(\d)\}/g, function (_, k) { return args && args[+k] !== undefined ? args[+k] : ''; });
-}
-// the menu name and the head line go through the page-wide list (exact phrases only)
-(function () {
-  var w = { 'New sale': 'নতুন বিক্রি', 'Customer, items, details, payment, then confirm. The classic New invoice is still there.': 'কাস্টমার, পণ্য, বিস্তারিত, পেমেন্ট, তারপর নিশ্চিত করুন। আগের "নতুন ইনভয়েস" স্ক্রিনও আছে।' };
-  for (var k in w) {
-    if (typeof I18N_BN !== 'undefined' && I18N_BN[k] === undefined) I18N_BN[k] = w[k];
-    if (typeof BN_BASE !== 'undefined' && BN_BASE && BN_BASE.s[k] === undefined) BN_BASE.s[k] = w[k];
-  }
-  if (typeof BN_OWN !== 'undefined' && BN_OWN && typeof bnApplyOwn === 'function') bnApplyOwn(BN_OWN);
-})();
-function nsBlank() { return { phone: '', name: '', address: '', cust: null, lines: [], channel: 'Walk-in', seller: '', disc: '', delivery: '', note: '', source: '', method: 'Cash', paid: '', reason: '', q: '' }; }
-function nsLoad() { if (NS) return; try { NS = JSON.parse(localStorage.getItem('fd_newsale') || 'null'); } catch (e) { NS = null; } if (!NS || !NS.lines) NS = nsBlank(); }
-function nsKeep() { try { localStorage.setItem('fd_newsale', JSON.stringify(NS)); } catch (e) {} }
-fdxNav('sale', 'New sale', '<path d="M6 6h15l-1.5 9h-12z"/><path d="M6 6L5 3H2"/><circle cx="9" cy="20" r="1.5"/><circle cx="18" cy="20" r="1.5"/>', 'invoice');
-FDH_SUB.sale = 'Customer, items, details, payment, then confirm. The classic New invoice is still there.';
-function nsProd(sku) { for (var i = 0; i < (CAT || []).length; i++) if (CAT[i].sku === sku) return CAT[i]; return null; }
-function nsAvail(p) { return p ? (p.available === undefined ? num(p.stock) : num(p.available)) : 0; }
-function nsTotals() {
-  var sub = 0, list = 0;
-  NS.lines.forEach(function (l) { sub += num(l.qty) * num(l.price); list += num(l.qty) * num(l.list); });
-  var disc = Math.max(0, Math.round(num(NS.disc))), del = Math.max(0, num(NS.delivery));
-  var total = Math.max(0, sub - disc) + del;
-  var paid = NS.method === 'Not paid' ? 0 : (String(NS.paid).trim() === '' ? total : Math.max(0, num(NS.paid)));
-  return { sub: sub, list: list, disc: disc, del: del, total: total, paid: Math.min(paid, total), over: paid > total + 0.001, due: Math.max(0, total - paid) };
-}
-function nsLow() { return NS.lines.filter(function (l) { var lt = num(l.list); return lt > 0 && (lt - num(l.price)) / lt > 0.05 + 1e-9; }); }
-function nsChecks() {
-  var t = nsTotals(), low = nsLow();
-  var short = NS.lines.filter(function (l) { return num(l.qty) > nsAvail(nsProd(l.sku)); });
-  return [
-    { ok: /^01\d{9}$/.test(String(NS.phone).replace(/[^0-9]/g, '')), t: nsT('Phone number has 11 digits (01…)') },
-    { ok: !!String(NS.name).trim(), t: nsT('Customer name given') },
-    { ok: NS.lines.length > 0 && NS.lines.every(function (l) { return num(l.qty) > 0; }), t: nsT('At least one item, each with a quantity') },
-    { ok: !short.length, t: short.length ? nsT('Not enough stock: {0}', [short.map(function (l) { return l.name; }).join(', ')]) : nsT('Stock covers every line') },
-    { ok: !low.length || !!String(NS.reason).trim(), t: low.length ? nsT('More than 5% under the price: give the reason') : nsT('Prices within 5% of the list') },
-    { ok: !NS.lines.some(function (l) { return num(l.price) > num(l.list) + 1e-9; }), t: nsT(NS.lines.some(function (l) { return num(l.price) > num(l.list) + 1e-9; }) ? 'A price is above the list price: lower it or change the product price' : 'No price above the list') },
-    { ok: t.disc <= t.sub, t: nsT('Order discount not more than the items') },
-    { ok: !t.over, t: nsT('Amount received not more than the total') }
-  ];
-}
-function nsLinesHtml() {
-  if (!NS.lines.length) return '<div class="empty">' + nsT('No items yet. Search above or tap a best seller.') + '</div>';
-  return '<div class="ns-line sku" style="font-weight:700"><span>' + nsT('Item') + '</span><span>' + nsT('Qty') + '</span><span>' + nsT('Price') + '</span><span class="lt num">' + nsT('Line') + '</span><span></span></div>' +
-    NS.lines.map(function (l, i) {
-      var p = nsProd(l.sku), av = nsAvail(p), off = num(l.list) > 0 ? Math.round((num(l.list) - num(l.price)) / num(l.list) * 100) : 0;
-      return '<div class="ns-line"><div><b>' + esc(l.name) + '</b><div class="sku">' + esc(l.sku) + ' · ' + nsT('{0} available', [fmt(av)]) + (p && p.held ? ' ' + nsT('({0} held for pre-orders)', [fmt(p.held)]) : '') +
-        (off > 0 ? ' · <span class="' + (off > 5 ? 'warn' : '') + '">' + nsT('{0}% under {1}', [off, fmt(l.list)]) + '</span>' : '') + (num(l.qty) > av ? ' · <span class="warn">' + nsT('not enough stock') + '</span>' : '') + '</div></div>' +
-        '<input class="i" inputmode="numeric" data-nsq="' + i + '" value="' + esc(l.qty) + '"><input class="i" inputmode="decimal" data-nsp="' + i + '" value="' + esc(l.price) + '">' +
-        '<span class="lt num">' + fmt(num(l.qty) * num(l.price)) + '</span><button class="x" type="button" data-nsx="' + i + '" aria-label="' + nsT('Remove') + '">×</button></div>';
-    }).join('');
-}
-function nsSumHtml() {
-  var t = nsTotals(), c = nsChecks(), ready = c.every(function (x) { return x.ok; }), cur = OPT ? OPT.currency : 'BDT';
-  return '<div class="ns-sum"><div class="r"><span>' + nsT('Items') + '</span><b>' + fmt(t.sub) + '</b></div>' + (t.disc ? '<div class="r"><span>' + nsT('Order discount') + '</span><b>− ' + fmt(t.disc) + '</b></div>' : '') +
-    (t.del ? '<div class="r"><span>' + nsT('Delivery') + '</span><b>' + fmt(t.del) + '</b></div>' : '') +
-    '<div class="r" style="margin-top:6px"><span>' + nsT('Total') + '</span><span class="big">' + esc(cur) + ' ' + fmt(t.total) + '</span></div>' +
-    '<div class="r"><span>' + nsT('Paid now') + '</span><b>' + fmt(t.paid) + (t.paid > 0 ? ' · ' + esc(nsT(NS.method)) : '') + '</b></div><div class="r"><span>' + nsT('Due') + '</span><b>' + fmt(t.due) + '</b></div></div>' +
-    '<ul class="ns-chk">' + c.map(function (x) { return '<li class="' + (x.ok ? 'ok' : 'no') + '"><span class="d">' + (x.ok ? '✓' : '!') + '</span><span>' + esc(x.t) + '</span></li>'; }).join('') + '</ul>' +
-    (nsLow().length ? '<label class="f" for="ns_reason">' + nsT('Why the lower price?') + '</label><input class="i" id="ns_reason" value="' + esc(NS.reason) + '" placeholder="' + nsT('e.g. regular customer, owner agreed') + '" style="margin-bottom:10px">' : '') +
-    '<button class="btn primary" type="button" id="ns_go"' + (ready && !NS_SAVING ? '' : ' disabled') + '>' + nsT(NS_SAVING ? 'Saving…' : 'Confirm sale') + '</button>' +
-    '<button class="btn small" type="button" id="ns_clear" style="width:100%;margin-top:8px">' + nsT('Start over') + '</button>';
-}
-function nsResHtml() {
-  var q = String(NS.q || '').trim().toLowerCase();
-  if (!q) return '';
-  var hits = (CAT || []).filter(function (p) { return String(p.status || 'Active') !== 'Discontinued' && (String(p.sku).toLowerCase().indexOf(q) >= 0 || String(p.name).toLowerCase().indexOf(q) >= 0); }).slice(0, 30);
-  if (!hits.length) return '<div class="sub" style="margin-top:8px">' + nsT('Nothing found.') + '</div>';
-  return '<div class="ns-res">' + hits.map(function (p) { var av = nsAvail(p);
-    return '<button type="button" data-nsadd="' + esc(p.sku) + '"><span><b>' + esc(p.name) + '</b><span class="sku"> ' + esc(p.sku) + '</span></span><span class="sku">' + fmt(p.sell) + ' · ' + (av > 0 ? nsT('{0} available', [fmt(av)]) : '<span style="color:var(--fd-negative-text,var(--critical))">' + nsT('none available') + '</span>') + '</span></button>'; }).join('') + '</div>';
-}
-function nsSources() { return (OPT && OPT.sources && OPT.sources.length) ? OPT.sources : ['Customer pickup']; }
-function viewSale() {
-  nsLoad();
-  if (!CAT) { srv('erpBundle', [['catalog']], function (r) { applyBundle(r); if (VIEW === 'sale') repaint(); }, function () {}); return '<div class="loading">' + nsT('Loading products…') + '</div>'; }
-  if (!NS_SELLERS) { NS_SELLERS = { sellers: [], canChoose: false, loading: true };
-    srv('erpSellers', [], function (r) { NS_SELLERS = r; if (VIEW === 'sale') repaint(); }, function () { NS_SELLERS = { sellers: [], canChoose: false }; }); }
-  if (!NS.source) NS.source = nsSources()[0];
-  var best = (CAT || []).filter(function (p) { return nsAvail(p) > 0 && num(p.sold90) > 0; }).sort(function (a, b) { return num(b.sold90) - num(a.sold90); }).slice(0, 8);
-  var pill = function (attr, v, on) { return '<button type="button" class="ns-pill" ' + attr + '="' + esc(v) + '" aria-pressed="' + (on ? 'true' : 'false') + '">' + esc(nsT(v)) + '</button>'; };
-  var card = function (n, title, body) { return '<div class="card ns-card"><div class="ns-h"><span class="ns-n">' + n + '</span><h2>' + nsT(title) + '</h2></div>' + body + '</div>'; };
-  var sel = NS_SELLERS.sellers || [];
-  var left =
-    card(1, 'Customer', '<div class="fields"><div><label class="f" for="ns_ph">' + nsT('Phone (first)') + '</label><input class="i" id="ns_ph" inputmode="tel" placeholder="01XXXXXXXXX" value="' + esc(NS.phone) + '"></div>' +
-      '<div><label class="f" for="ns_nm">' + nsT('Name') + '</label><input class="i' + (NS.cust ? ' locked' : '') + '" id="ns_nm" value="' + esc(NS.name) + '"' + (NS.cust ? ' readonly' : '') + '></div></div>' +
-      '<div class="fields"><div><label class="f" for="ns_ad">' + nsT('Address') + '</label><input class="i" id="ns_ad" value="' + esc(NS.address) + '"></div></div><div id="ns_hint">' +
-      (NS.cust ? '<div class="note ok" style="margin-top:10px"><div class="ico">✓</div><div>' + nsT('Existing customer') + ' — <b>' + esc(NS.cust.name) + '</b>, ' + nsT('{0} order(s), {1} spent', [fmt(NS.cust.orders), fmt(NS.cust.spent)]) + '.</div></div>' : '') + '</div>') +
-    card(2, 'Items', '<input class="i" id="ns_q" placeholder="' + nsT('Search a product or SKU') + '" value="' + esc(NS.q) + '" autocomplete="off"><div id="ns_res">' + nsResHtml() + '</div>' +
-      (best.length ? '<div class="sub" style="margin-top:10px">' + nsT('Best sellers (90 days)') + '</div><div class="ns-quick">' + best.map(function (p) { return '<button type="button" class="ns-pill" data-nsadd="' + esc(p.sku) + '">' + esc(p.name) + '</button>'; }).join('') + '</div>' : '') +
-      '<div id="ns_lines" style="margin-top:10px">' + nsLinesHtml() + '</div>') +
-    card(3, 'Details', '<label class="f">' + nsT('Where the customer came from') + '</label><div class="ns-pills">' + NS_CHANNELS.map(function (c) { return pill('data-nsch', c, NS.channel === c); }).join('') + '</div>' +
-      '<div class="fields" style="margin-top:10px"><div><label class="f" for="ns_sel">' + nsT('Seller') + '</label><select class="i" id="ns_sel"' + (NS_SELLERS.canChoose ? '' : ' disabled') + '>' +
-      (sel.length ? sel.map(function (s) { return '<option value="' + esc(s.me ? '' : s.id) + '"' + ((s.me && !NS.seller) || NS.seller === s.id ? ' selected' : '') + '>' + esc(s.name) + (s.me ? ' ' + nsT('(me)') : '') + '</option>'; }).join('') : '<option value="">' + nsT('Me') + '</option>') + '</select></div>' +
-      '<div><label class="f" for="ns_src">' + nsT('Delivery') + '</label><select class="i" id="ns_src">' + nsSources().map(function (s) { return '<option value="' + esc(s) + '"' + (NS.source === s ? ' selected' : '') + '>' + esc(nsT(s)) + '</option>'; }).join('') + '</select></div></div>' +
-      '<div class="fields"><div><label class="f" for="ns_disc">' + nsT('Order discount') + '</label><input class="i" id="ns_disc" inputmode="numeric" placeholder="0" value="' + esc(NS.disc) + '"></div>' +
-      '<div><label class="f" for="ns_del">' + nsT('Delivery charge') + '</label><input class="i" id="ns_del" inputmode="decimal" placeholder="0" value="' + esc(NS.delivery) + '"></div></div>' +
-      '<div class="fields"><div><label class="f" for="ns_note">' + nsT('Note') + '</label><input class="i" id="ns_note" value="' + esc(NS.note) + '"></div></div>') +
-    card(4, 'Payment', '<div class="ns-pills">' + NS_METHODS.map(function (m) { return pill('data-nsm', m, NS.method === m); }).join('') + '</div>' +
-      (NS.method === 'Not paid' ? '<div class="sub" style="margin-top:10px">' + nsT('The whole total goes on the customer’s due.') + '</div>' :
-       '<div class="fields" style="margin-top:10px"><div><label class="f" for="ns_paid">' + nsT('Amount received (blank = the full total)') + '</label><input class="i" id="ns_paid" inputmode="decimal" value="' + esc(NS.paid) + '"></div></div>'));
-  return '<div class="ns-wrap" data-noi18n="1"><div>' + left + '</div><div class="ns-side">' + card(5, 'Review & confirm', '<div id="ns_sum">' + nsSumHtml() + '</div>') + '</div></div>';
-}
-function nsPaint(parts) {
-  nsKeep();
-  if (parts.indexOf('lines') >= 0 && el('ns_lines')) el('ns_lines').innerHTML = nsLinesHtml();
-  if (parts.indexOf('res') >= 0 && el('ns_res')) el('ns_res').innerHTML = nsResHtml();
-  if (el('ns_sum')) { var f = document.activeElement && document.activeElement.id === 'ns_reason'; el('ns_sum').innerHTML = nsSumHtml(); if (f && el('ns_reason')) { var r = el('ns_reason'); r.focus(); r.setSelectionRange(r.value.length, r.value.length); } }
-}
-var repaintNs = repaint;
-repaint = function () {
-  if (VIEW !== 'sale') return repaintNs.apply(this, arguments);
-  el('view').innerHTML = viewSale();
-  try { fdhPaint(); } catch (e) {}
-};
-function nsAdd(sku) {
-  var p = nsProd(sku); if (!p) return;
-  for (var i = 0; i < NS.lines.length; i++) if (NS.lines[i].sku === sku) { NS.lines[i].qty = num(NS.lines[i].qty) + 1; return; }
-  NS.lines.push({ sku: p.sku, name: p.name, list: num(p.sell), price: num(p.sell), qty: 1 });
-}
-document.addEventListener('input', function (e) {
-  if (VIEW !== 'sale' || !NS) return;
-  var id = e.target.id, v = e.target.value;
-  var map = { ns_ph: 'phone', ns_nm: 'name', ns_ad: 'address', ns_disc: 'disc', ns_del: 'delivery', ns_note: 'note', ns_paid: 'paid', ns_reason: 'reason' };
-  if (map[id]) { NS[map[id]] = v; if (id === 'ns_ph' && NS.cust) { NS.cust = null; var nm = el('ns_nm'); if (nm) { nm.readOnly = false; nm.classList.remove('locked'); } } nsPaint([]); return; }
-  if (id === 'ns_q') { NS.q = v; nsPaint(['res']); return; }
-  var q = e.target.getAttribute('data-nsq'), p = e.target.getAttribute('data-nsp');
-  if (q !== null) { NS.lines[+q].qty = Math.max(0, Math.round(num(v))); nsPaint([]); return; }
-  if (p !== null) { NS.lines[+p].price = Math.max(0, num(v)); nsPaint([]); return; }
-});
-document.addEventListener('change', function (e) {
-  if (VIEW !== 'sale' || !NS) return;
-  if (e.target.id === 'ns_sel') { NS.seller = e.target.value; nsKeep(); }
-  if (e.target.id === 'ns_src') { NS.source = e.target.value; nsKeep(); }
-  if (e.target.getAttribute('data-nsq') !== null || e.target.getAttribute('data-nsp') !== null) nsPaint(['lines']);
-});
-document.addEventListener('focusout', function (e) {
-  if (VIEW !== 'sale' || !NS || e.target.id !== 'ns_ph') return;
-  var v = String(e.target.value || '').trim();
-  if (!v || phoneProblem(v)) return;
-  srv('erpLookupCustomer', [v], function (c) {
-    if (!c) { NS.cust = null; var h = el('ns_hint'); if (h) h.innerHTML = '<div class="sub" style="margin-top:10px">' + nsT('New customer — created on save.') + '</div>'; return; }
-    NS.cust = { name: c.name, orders: c.orders, spent: c.spent }; NS.name = c.name; NS.address = NS.address || c.address || ''; if (c.phone) NS.phone = c.phone;
-    nsKeep(); repaint();
-  }, function () {});
-});
-document.addEventListener('click', function (e) {
-  if (VIEW !== 'sale' || !NS || !e.target.closest) return;
-  var a = e.target.closest('[data-nsadd]');
-  if (a) { nsAdd(a.getAttribute('data-nsadd')); NS.q = ''; var qi = el('ns_q'); if (qi) qi.value = ''; nsPaint(['lines', 'res']); return; }
-  var x = e.target.closest('[data-nsx]');
-  if (x) { NS.lines.splice(+x.getAttribute('data-nsx'), 1); nsPaint(['lines']); return; }
-  var ch = e.target.closest('[data-nsch]');
-  if (ch) { NS.channel = ch.getAttribute('data-nsch'); nsKeep(); repaint(); return; }
-  var m = e.target.closest('[data-nsm]');
-  if (m) { NS.method = m.getAttribute('data-nsm'); nsKeep(); repaint(); return; }
-  if (e.target.closest('#ns_clear')) { uiConfirm(nsT('Clear this sale and start over?')).then(function (ok) { if (ok) { NS = nsBlank(); nsKeep(); repaint(); } }); return; }
-  if (e.target.closest('#ns_go')) nsSave();
-});
-function nsSave() {
-  if (NS_SAVING || !nsChecks().every(function (x) { return x.ok; })) return;
-  var t = nsTotals(), cur = OPT ? OPT.currency : 'BDT';
-  uiConfirm(nsT('Confirm this sale?') + '\n\n' + NS.name.trim() + ' · ' + NS.phone.trim() + '\n' + nsT('{0} line(s)', [NS.lines.length]) + '\n' + nsT('Total: {0}', [cur + ' ' + fmt(t.total)]) +
-    '\n' + nsT('Paid now: {0}', [cur + ' ' + fmt(t.paid)]) + (t.paid > 0 ? ' (' + nsT(NS.method) + ')' : '') + (t.due > 0 ? '\n' + nsT('Due: {0}', [cur + ' ' + fmt(t.due)]) : '') + '\n\n' + nsT('Stock will be deducted and the invoice PDF made.')).then(function (ok) {
-    if (!ok) return;
-    NS_SAVING = true; nsPaint([]);
-    var mode = t.paid <= 0 ? 'none' : t.paid >= t.total ? 'full' : 'part';
-    srv('erpCreateInvoice', [{
-      customer: { name: NS.name.trim(), phone: NS.phone.trim(), address: NS.address.trim(), source: NS.source },
-      items: NS.lines.map(function (l) { return { sku: l.sku, qty: num(l.qty), discEach: Math.max(0, num(l.list) - num(l.price)) }; }),
-      invoiceDiscount: t.disc, deliveryCharge: t.del, payMode: mode, paidNow: mode === 'part' ? t.paid : 0,
-      paymentMethod: mode === 'none' ? '' : NS.method, note: NS.note.trim(),
-      seller: NS.seller || '', channel: NS.channel, priceCheck: true, priceReason: String(NS.reason || '').trim()
-    }], function (res) {
-      NS_SAVING = false; NS = nsBlank(); nsKeep();
-      invoiceDone(res);
-      D = null; ORDERS = null; HIST = null; PLAN = null; DUES = null;
-      srv('erpBundle', [['catalog']], function (r) { applyBundle(r); if (VIEW === 'sale') repaint(); }, function () {});
-      repaint();
-    }, function (er) { NS_SAVING = false; nsPaint([]); toast(nsT('Could not save: {0}', [esc(er && er.message ? er.message : er)]), true, 12000); });
-  });
-}
 </script>
 
 <!-- fd-17 (FilaDash merge, owner 13 Oct 2026: "his design is the top priority"): his shell and dashboard, detail for detail.
@@ -25566,133 +25105,6 @@ document.addEventListener('mouseover', function (e) {
   var plot = el('fdrevPlot'); if (!plot) return;
   var old = plot.querySelector('.fdrev-tip'); if (old) old.outerHTML = FDD._tip(+d.getAttribute('data-fdrev'));
 });
-function fddViewFd() {
-  var d = FDD.data;
-  fddLoad();
-  var biz = fdBizName();
-  var head = '<div class="fdd-head"><div><div class="fdd-eyebrow">' + esc(FDD.group && d ? d.groupLabel : biz) + '</div>' +
-    '<h1 class="fdd-title">Dashboard <button type="button" class="fdd-ti" data-hghelp="dash" title="' + (d ? esc(d.rangeLabel + ' · compared with ' + d.prevLabel + ' · as of ' + d.generatedAt) : 'Dashboard') + '">i</button></h1></div>' +
-    '<div class="fdd-tools">' + [[1, 'This month'], [3, '3 months'], [6, '6 months'], [12, '12 months']].map(function (x) {
-      return '<button type="button" class="fdd-pill" data-fddm="' + x[0] + '" aria-pressed="' + (FDD.months === x[0]) + '">' + x[1] + '</button>'; }).join('') +
-    (FDD.group ? '<button type="button" class="fdd-pill" data-fddallg="1" title="Back to all products">' + esc(fdGroupLabel()) + ' ×</button>' : '') + '</div></div>';
-  var h = head;
-  if (FDD.err && !d) return h + '<div class="note err"><div class="ico">!</div><div>Could not load the dashboard: ' + esc(FDD.err) + ' <button class="btn small" type="button" data-fddretry="1">Try again</button></div></div>';
-  if (!d) return h + '<div class="fdd-grid"><div class="fdd-skel" style="grid-column:span 2;height:400px"></div><div class="fdd-skel"></div><div class="fdd-skel"></div><div class="fdd-skel"></div><div class="fdd-skel"></div></div>';
-  var k = d.kpi, cur = d.currency, grp = !!d.group;
-  if (grp) h += '<div class="fdd-note">Showing <b>' + esc(d.groupLabel) + '</b> only: its sales, cost, gross profit and stock. Expenses, net profit, dues and cash belong to the whole business — pick “All products” in the business switcher to see them.</div>';
-  if (FDD.busy) h += '<div class="fdd-note">Updating…</div>';
-  var used = {};
-  var kp = function (o) { used[o.key] = 1; return fddKpi(o); };
-
-  // ---- row 1: Monthly Revenue + 4 cards
-  var rv = k.revenue, pc = rv.prev ? (rv.v - rv.prev) / Math.abs(rv.prev) * 100 : null;
-  var fig = '<div class="fdrev-fig"><b>' + fdTk(rv.v, cur) + '</b>' + (pc === null ? '' : '<span class="fdrev-up' + (pc < 0 ? ' bad' : '') + '">' + (pc < 0 ? '↓' : '↑') + ' ' + Math.abs(pc).toFixed(0) + '%</span>') +
-    '<span class="fdrev-vs">vs ' + esc(d.prevLabel) + '</span></div>';
-  var toLbl = d.months === 1 && /to date/.test(d.rangeLabel) ? 'to ' + (d.generatedAt || '').split(',')[0].split(' ').slice(0, 2).join(' ') + ' (month to date)' : '';
-  h += '<div class="fdd-grid"><div class="fdd-c s2 r2 fdrev"><div class="fdd-ch"><span class="fdd-badge">' + fddIc('taka') + '</span><div class="fdd-ct">Monthly Revenue' +
-    (d.calc.revenue ? ' <button type="button" class="fdd-i" data-fdcalc="revenue" data-fdtitle="Revenue" title="Show calculation">i</button>' : '') + '</div>' + fig + '</div>' +
-    fdRevChart(d.series, cur, toLbl) + '</div>';
-  if (!grp && k.net) h += kp({ key: 'net', title: 'Net profit', icon: 'target', money: true, k: k.net, hero: true, go: 'profit' });
-  else if (k.gross) h += kp({ key: 'gross', title: 'Gross profit', icon: 'trend', money: true, k: k.gross, hero: true, note: k.margin ? k.margin.v + '% margin' : '' });
-  else h += kp({ key: 'orders', title: 'Orders', icon: 'cart', k: k.orders, hero: true, go: 'sales' });
-  if (k.stockValue) h += kp({ key: 'stockValue', title: 'Stock value at cost', icon: 'box', money: true, k: k.stockValue, go: 'products', note: fmt(k.stockUnits.v) + ' units on hand' });
-  else h += kp({ key: 'stockUnits', title: 'Units on hand', icon: 'box', k: k.stockUnits, go: 'products' });
-  if (k.dues) h += kp({ key: 'dues', title: 'Dues receivable', icon: 'bell', money: true, k: k.dues, tone: k.dues.v > 0 ? 'warn' : '', go: 'sales', f: 'due' });
-  else h += kp({ key: 'units', title: 'Units sold', icon: 'spool', k: k.units });
-  if (k.capital) h += kp({ key: 'capital', title: 'Investor capital at work', icon: 'wallet', money: true, k: k.capital, go: 'capital', note: k.capital.investors + ' investor(s)' });
-  else if (k.cashIn) h += kp({ key: 'cashIn', title: 'Cash received', icon: 'wallet', money: true, k: k.cashIn, go: 'cash' });
-  else h += kp({ key: 'avgOrder', title: 'Average order', icon: 'receipt', money: true, k: k.avgOrder });
-  h += '</div>';
-
-  // ---- row 2: two donuts
-  h += '<div class="fdd-grid">' + (grp ? fddDonut('Sales by Brand', 'layers', d.donuts.byBrand, 'products', '', 'Brand') : fddDonut('Sales by Product Group', 'spool', d.donuts.byGroup, 'products', '', 'Group')) +
-    fddDonut('Sales Channel', 'globe', d.donuts.byChannel, 'sales', '', 'Channel') + '</div>';
-
-  // ---- row 3: four cards
-  var r3 = [];
-  if (k.margin) r3.push(kp({ key: 'margin', title: 'Gross margin', icon: 'percent', pct: true, k: k.margin }));
-  r3.push(kp({ key: 'orders', title: 'Orders', icon: 'cart', k: k.orders, go: 'sales' }));
-  if (k.cashIn && used.capital) r3.push(kp({ key: 'cashIn', title: 'Cash received', icon: 'wallet', money: true, k: k.cashIn, go: 'cash' }));
-  if (k.unmatched) r3.push(kp({ key: 'unmatched', title: 'Unmatched payments', icon: 'receipt', k: k.unmatched, tone: k.unmatched.v ? 'warn' : '', go: 'cash', note: k.unmatched.v ? fdTk(k.unmatched.amount, cur) + ' in no account' : 'every payment is in an account' }));
-  if (!used.units) r3.push(kp({ key: 'units', title: 'Units sold', icon: 'spool', k: k.units }));
-  while (r3.length < 4 && !used.avgOrder) r3.push(kp({ key: 'avgOrder', title: 'Average order', icon: 'receipt', money: true, k: k.avgOrder }));
-  h += '<div class="fdd-grid">' + r3.slice(0, 4).join('') + '</div>';
-
-  // ---- row 4: Top Colours + Needs Attention
-  var tc = (d.topColours || []).filter(function (c) { return c.value > 0; });
-  var tcH;
-  if (!tc.length) tcH = '<div class="fdd-empty">No sales in this range.</div>';
-  else {
-    var tot = tc.reduce(function (s, c) { return s + c.value; }, 0), R0 = 70, C = 2 * Math.PI * R0, off = 0, arcs = '';
-    tc.forEach(function (c) { var len = c.value / tot * C; arcs += '<circle cx="95" cy="95" r="' + R0 + '" fill="none" stroke="' + fdSwatch(c.label) + '" stroke-width="30" stroke-dasharray="' + Math.max(0, len - 2).toFixed(2) + ' ' + C.toFixed(2) +
-      '" stroke-dashoffset="' + (-off).toFixed(2) + '" transform="rotate(-90 95 95)"><title>' + esc(c.label) + ': ' + fmt(c.units) + ' units</title></circle>'; off += len; });
-    tcH = '<div class="fdd-dn"><div class="fdd-scroll"><table class="fdd-t"><thead><tr><th>Colour</th><th class="n">Units</th></tr></thead><tbody>' +
-      tc.map(function (c) { return '<tr><td class="nm"><i class="fdd-sw" style="background:' + fdSwatch(c.label) + ';box-shadow:inset 0 0 0 1px rgba(0,0,0,.12)"></i>' + esc(c.label) + '</td><td class="n">' + fmt(c.units) + '</td></tr>'; }).join('') +
-      '</tbody></table></div><svg viewBox="0 0 190 190" role="img" aria-label="Top colours"><circle cx="95" cy="95" r="70" fill="none" stroke="var(--fd-donut-track, #EEF0F6)" stroke-width="30"/>' + arcs +
-      '<text class="ctr1" x="95" y="96" text-anchor="middle">' + Math.round(tc[0].value / tot * 100) + '%</text><text class="ctr2" x="95" y="118" text-anchor="middle">' + esc(String(tc[0].label).slice(0, 16)) + '</text></svg></div>';
-  }
-  var att = [], a = (D && D.alerts) || {}, toSend = typeof sendCount === 'function' ? sendCount() : 0, cz = a.courier || {};
-  if (a.webPending) att.push(['bad', 'warn', a.webOrders + ' website orders not entered', 'Enter them as invoices', 'weborders', '']);
-  if (toSend) att.push(['warn', 'truck', toSend + ' parcel(s) to send', 'Book them with the courier', 'sales', 'tosend']);
-  if (d.attention.outOfStock) att.push(['bad', 'x', d.attention.outOfStock + ' products out of stock', 'Order more or mark discontinued', 'products', 'out']);
-  if (d.attention.reorder) att.push(['warn', 'warn', d.attention.reorder + ' at or below reorder level', 'See Reorder Suggestions below', 'stock', 'plan']);
-  if (cz.back) att.push(['bad', 'truck', cz.back + ' parcel(s) came back or part delivered', 'Take the stock back in', 'sales', '']);
-  if (cz.review) att.push(['bad', 'truck', cz.review + ' Steadfast parcel(s) to review', 'Check the courier status', 'sales', '']);
-  if (k.dues && k.dues.v > 0) att.push(['warn', 'bell', fdTk(k.dues.v, cur) + ' owed by customers', 'Follow up the oldest first', 'sales', 'due']);
-  if (k.unmatched && k.unmatched.v) att.push(['warn', 'wallet', k.unmatched.v + ' payment(s) to place in an account', fdTk(k.unmatched.amount, cur) + ' · Money screen', 'cash', '']);
-  var attH = att.length ? '<ul class="fdd-att2">' + att.map(function (x) {
-    return '<li' + (navOn(x[4]) ? ' data-go="' + x[4] + '"' + (x[5] ? ' data-f="' + x[5] + '"' : '') : '') + '><span class="fdd-badge t-' + x[0] + '">' + fddIc(x[1]) + '</span><span class="t"><b>' + esc(x[2]) + '</b><span>' + esc(x[3]) + '</span></span><span class="chv">›</span></li>'; }).join('') + '</ul>'
-    : '<div class="fdd-empty">✓ Nothing needs you.</div>';
-  h += '<div class="fdd-grid"><div class="fdd-c s2"><div class="fdd-ch"><span class="fdd-badge">' + fddIc('spool') + '</span><div class="fdd-ct">Top Colours</div>' +
-    (navOn('analytics') ? '<button type="button" class="fdd-more" data-go="analytics">View details →</button>' : '') + '</div>' + tcH + '</div>' +
-    '<div class="fdd-c s2"><div class="fdd-ch"><span class="fdd-badge t-warn">' + fddIc('bell') + '</span><div class="fdd-ct">Needs Attention</div></div>' + attH + '</div></div>';
-
-  // ---- row 5: Reorder Suggestions (full width)
-  var ro = d.reorder.length ? '<div class="fdd-scroll"><table class="fdd-t"><thead><tr><th>Item</th><th class="n">On hand</th><th class="n">Reorder at</th><th class="n">Suggested qty</th><th class="n">Price</th></tr></thead><tbody>' +
-    d.reorder.map(function (p) { var sug = Math.max(0, p.reorder * 2 - p.stock);
-      return '<tr><td class="nm" title="' + esc(p.sku) + '"><i class="fdd-sw" style="background:' + fdSwatch(p.name) + ';box-shadow:inset 0 0 0 1px rgba(0,0,0,.12)"></i>' + esc(p.name) + ' <span class="sku">(' + esc(p.sku) + ')</span></td><td class="n"' +
-        (p.stock <= 0 ? ' style="color:var(--fd-negative-text);font-weight:700"' : '') + '>' + fmt(p.stock) + '</td><td class="n">' + fmt(p.reorder) + '</td><td class="n"><b>' + fmt(sug) + '</b></td><td class="n">' + (p.sell ? fdTk(p.sell, cur) : '—') + '</td></tr>'; }).join('') +
-    '</tbody></table></div>' : '<div class="fdd-empty">Nothing at its reorder level.</div>';
-  h += '<div class="fdd-grid"><div class="fdd-c s4"><div class="fdd-ch"><span class="fdd-badge t-warn">' + fddIc('box') + '</span><div class="fdd-ct">Reorder Suggestions</div>' +
-    (navOn('stock') ? '<button type="button" class="fdd-more" data-go="stock" data-f="plan">View all →</button>' : '') + '</div>' + ro + '</div></div>';
-
-  // ---- row 6: Recent Sales + Setup Checklist
-  var rc = d.recent.length ? '<div class="fdd-scroll"><table class="fdd-t"><thead><tr><th>Sale</th><th>Customer</th><th class="n">Total</th><th>Status</th></tr></thead><tbody>' +
-    d.recent.map(function (x) { return '<tr data-inv="' + esc(x.id) + '"><td><b>' + esc(x.id) + '</b><div class="sku">' + esc(x.date) + '</div></td><td class="nm">' + esc(x.customer) + '</td><td class="n">' + fdTk(x.total, cur) + '</td><td>' +
-      (x.owed > 0 ? '<span class="fdd-chip due">Partial · ' + fdTk(x.owed, cur) + ' due</span>' : '<span class="fdd-chip paid">Paid</span>') + '</td></tr>'; }).join('') + '</tbody></table></div>' : '<div class="fdd-empty">No invoices yet.</div>';
-  h += '<div class="fdd-grid"><div class="fdd-c ' + (d.setup ? 's3' : 's4') + '"><div class="fdd-ch"><span class="fdd-badge">' + fddIc('cart') + '</span><div class="fdd-ct">Recent Sales</div>' +
-    (navOn('sales') ? '<button type="button" class="fdd-more" data-go="sales">View all →</button>' : '') + '</div>' + rc + '</div>';
-  if (d.setup) {
-    var done = d.setup.filter(function (x) { return x.done; }).length, pcs = Math.round(done / d.setup.length * 100);
-    h += '<div class="fdd-c fdd-setup"><div class="fdd-ch"><span class="fdd-badge">' + fdI('check', 20) + '</span><div class="fdd-ct">Setup Checklist</div></div>' +
-      '<div class="hd"><span>' + done + ' of ' + d.setup.length + ' done</span><span>' + pcs + '%</span></div><div class="bar"><i style="width:' + pcs + '%"></i></div><ul>' +
-      d.setup.map(function (x) { return '<li class="' + (x.done ? 'ok' : '') + '"' + (navOn(x.go) ? ' data-go="' + esc(x.go) + '"' : '') + '><span class="d">✓</span><span><span class="nm">' + esc(x.title) + '</span>' + (x.note ? '<small>' + esc(x.note) + '</small>' : '') + '</span></li>'; }).join('') + '</ul></div>';
-  }
-  h += '</div>';
-
-  // ---- ours, after his: the other figures
-  var more = [];
-  if (k.gross && !grp && !used.gross) more.push(kp({ key: 'gross', title: 'Gross profit', icon: 'trend', money: true, k: k.gross, note: k.margin ? k.margin.v + '% margin' : '' }));
-  if (!used.units) more.push(kp({ key: 'units', title: 'Units sold', icon: 'spool', k: k.units }));
-  if (!used.avgOrder) more.push(kp({ key: 'avgOrder', title: 'Average order', icon: 'receipt', money: true, k: k.avgOrder }));
-  if (k.expenses) more.push(kp({ key: 'expenses', title: 'Expenses', icon: 'receipt', money: true, k: k.expenses, flip: true, tone: 'warn', go: 'expenses' }));
-  if (k.cashIn && !used.cashIn) more.push(kp({ key: 'cashIn', title: 'Cash received', icon: 'wallet', money: true, k: k.cashIn, go: 'cash' }));
-  while (more.length % 4) more.push('<div class="fdd-c" style="visibility:hidden"></div>');
-  h += '<div class="fdd-more-h">More figures</div>';
-  if (more.length) h += '<div class="fdd-grid">' + more.join('') + '</div>';
-  h += '<div class="fdd-grid">' + (!grp && d.donuts.byMethod ? fddDonut('Payments by Method', 'wallet', d.donuts.byMethod, 'cash', '', 'Method') : '') +
-    (!grp ? fddDonut('Sales by Brand', 'layers', d.donuts.byBrand, 'products', '', 'Brand') : '') + '</div>';
-  var tp = d.topProducts.length ? '<div class="fdd-scroll"><table class="fdd-t"><thead><tr><th>Product</th><th class="n">Units</th><th class="n">Revenue</th>' + (d.full ? '<th class="n">Gross</th>' : '') + '</tr></thead><tbody>' +
-    d.topProducts.map(function (p) { return '<tr><td class="nm" title="' + esc(p.sku) + '">' + esc(p.name) + '</td><td class="n">' + fmt(p.units) + '</td><td class="n">' + fdTk(p.revenue, cur) + '</td>' + (d.full ? '<td class="n">' + fdTk(p.gross, cur) + '</td>' : '') + '</tr>'; }).join('') +
-    '</tbody></table></div>' : '<div class="fdd-empty">No sales in this range.</div>';
-  h += '<div class="fdd-grid"><div class="fdd-c s2"><div class="fdd-ch"><span class="fdd-badge">' + fddIc('list') + '</span><div class="fdd-ct">Top Products</div></div>' + tp + '</div>';
-  if (d.duesByAge) h += '<div class="fdd-c s2"><div class="fdd-ch"><span class="fdd-badge">' + fddIc('clock') + '</span><div class="fdd-ct">Dues by Age</div></div><table class="fdd-t"><thead><tr><th>Age</th><th class="n">Amount</th></tr></thead><tbody>' +
-    d.duesByAge.map(function (x) { return '<tr' + (navOn('sales') ? ' data-go="sales" data-f="due" style="cursor:pointer"' : '') + '><td>' + esc(x.band) + ' <span class="sku">(' + x.count + ')</span></td><td class="n">' + fdTk(x.amount, cur) + '</td></tr>'; }).join('') + '</tbody></table></div>';
-  h += '</div>';
-  h += '<div class="fdd-classic"><button type="button" class="btn" data-fddclassic="1">' + (FDD.classic ? '▴ Hide the classic dashboard' : '▾ More: the classic dashboard (today, a chosen day, charts, tabs)') + '</button></div>';
-  return h;
-}
-fddView = fddViewFd;
 document.addEventListener('click', function (e) {
   if (!e.target.closest) return;
   if (e.target.closest('[data-fddallg]')) { FDD.group = ''; fddSave(); repaint(); return; }
@@ -29788,7 +29200,7 @@ document.addEventListener('click', function (e) {
 function fd20ProdHeadHtml() {
   var biz = (el('bizName') && el('bizName').textContent) || '';
   var stock = typeof navOn === 'function' && navOn('stock');
-  var help = typeof HG !== 'undefined' ? '<button type="button" class="btn small fdh-help" data-hghelp="products">সাহায্য / Help</button>' : '';
+  var help = typeof HG !== 'undefined' ? '<button type="button" class="btn small fdh-help" data-hghelp="products">' + (typeof LANG !== 'undefined' && LANG === 'bn' ? 'সাহায্য' : 'Help') + '</button>' : '';
   var acts = '<div class="fd20-acts">' +
     (stock ? '<button type="button" class="fd20-btn" data-fd20stock="count">' + fd20Ic('scan', 16) + 'Count</button><button type="button" class="fd20-btn" data-fd20stock="receive">' + fd20Ic('box', 16) + 'Receive</button>' +
              '<button type="button" class="fd20-btn pri" data-fd20stock="count">' + fd20Ic('edit', 16) + 'Adjust stock</button>' : '') + '</div>';
@@ -31641,7 +31053,8 @@ try { fd19After(); } catch (e) {}
 :root[data-skin="fd"]:not([data-theme="dark"]) .tabs button[aria-selected="true"],
 :root[data-skin="fd"]:not([data-theme="dark"]) .fdd-pill[aria-pressed="true"] { background:var(--fd-accent) !important; color:var(--fd-text-on-accent) !important; }
 :root[data-skin="fd"] .seg button.on, :root[data-skin="fd"] .seg .on { background:var(--fd-accent); color:var(--fd-text-on-accent); }
-:root[data-skin="fd"] body.fd-nocp #o_cp { display:none !important; }
+:root[data-skin="fd"] #o_cp { display:none !important; }   /* hidden from the first paint; shown only when it has something to click (fd-36) */
+:root[data-skin="fd"] body.fd-cp-on #o_cp { display:flex !important; }
 @media (max-width:1279px) {
   [data-skin="fd"] .fd20-stp { overflow-x:auto; scrollbar-width:none; }
   [data-skin="fd"] .fd20-stp::-webkit-scrollbar { display:none; }
@@ -31653,7 +31066,6 @@ try { fd19After(); } catch (e) {}
 }
 :root[data-skin="fd"] .u6 .seg { display:inline-flex !important; flex-wrap:nowrap; white-space:nowrap; overflow:hidden; }
 :root[data-skin="fd"] .u6 .seg button { flex:0 0 auto; white-space:nowrap; min-height:30px !important; height:30px; border-radius:999px !important; padding:0 12px !important; }
-:root:not([data-skin="fd"]) .fdws, :root:not([data-skin="fd"]) .fdplus, :root:not([data-skin="fd"]) .fdu { display:none !important; }
 </style>
 <script>
 (function () {
@@ -31661,11 +31073,11 @@ try { fd19After(); } catch (e) {}
   function cpSync() {
     var on = document.documentElement.getAttribute('data-skin') === 'fd', c = el('o_cp');
     if (!on || !c) { document.body.classList.remove('fd-nocp'); return; }
-    var useful = c.querySelector('.crumbs button, .crumbs a, .o_acts button, .o_acts a, .o_acts select, .o_acts input');
-    document.body.classList.toggle('fd-nocp', !useful);
+    var useful = c.querySelector('.crumbs button, .crumbs a');   // fd-37: a back link only (actions live in each screen's head)
+    document.body.classList.toggle('fd-nocp', !useful); document.body.classList.toggle('fd-cp-on', !!useful);
   }
   var t = null, v = el('view');
-  var kick = function () { clearTimeout(t); t = setTimeout(cpSync, 80); };
+  var kick = function () { cpSync(); };   // at once (a mutation callback runs before the screen is drawn)
   try { if (v) new MutationObserver(kick).observe(v, { childList: true }); } catch (e) {}
   try { var c = el('o_cp'); if (c) new MutationObserver(kick).observe(c, { childList: true, subtree: true }); } catch (e) {}
   try { new MutationObserver(kick).observe(document.documentElement, { attributes: true, attributeFilter: ['data-skin'] }); } catch (e) {}
@@ -31755,20 +31167,11 @@ if (typeof fdhCard === 'function') {
 .fdd-cust:hover { background:var(--fd-surface-2); color:var(--fd-text); }
 .fdd-cust svg { width:16px; height:16px; }
 .fdd-one { grid-auto-flow:row dense; }
-.fdc-list { list-style:none; margin:0; padding:0; max-height:60vh; overflow:auto; }
-.fdc-list li { display:flex; align-items:center; gap:10px; padding:8px 6px; border-bottom:1px solid var(--fd-border); }
-.fdc-list li:last-child { border-bottom:0; }
-.fdc-list li.off .nm { color:var(--fd-text-3); }
-.fdc-list .nm { flex:1 1 auto; font-weight:600; }
-.fdc-list .nm small { display:block; font-weight:400; color:var(--fd-text-3); font-size:12px; }
-.fdc-list input[type="checkbox"] { width:18px; height:18px; accent-color:var(--fd-accent); }
-.fdc-list .mv { width:32px; height:32px; border-radius:8px; border:1px solid var(--fd-border); background:var(--fd-card); cursor:pointer; color:var(--fd-text-2); font-size:14px; }
-.fdc-list .mv:disabled { opacity:.35; cursor:default; }
 </style>
 <script>
 /* ---------- one look: FilaDash ---------- */
 try { localStorage.setItem('erp_skin', 'fd'); } catch (e) {}
-if (typeof fdSkin === 'function') fdSkin('fd'); else document.documentElement.setAttribute('data-skin', 'fd');
+document.documentElement.setAttribute('data-skin', 'fd');   // (fdSkin repainted the dashboard on every screen at load)
 
 /* ---------- chart colours ---------- */
 var FD_PALS = {
@@ -31809,7 +31212,6 @@ umPaint = function () {
   if (document.documentElement.getAttribute('data-skin') !== 'fd') return r;
   var um = el('o_usermenu'); if (!um) return r;
   // no more Classic / FilaDash
-  [].forEach.call(um.querySelectorAll('[data-fdskin]'), function (b) { var row = b.closest('.u6row'); if (row && row.parentNode) row.parentNode.removeChild(row); });
   // the name the person goes by
   var nb = um.querySelector('.u6n b'); if (nb) nb.textContent = fdUserName();
   // Appearance: System / Light / Dark with icons, his order
@@ -31987,35 +31389,6 @@ fddView = function () {
   h += '<div class="fdd-classic"><button type="button" class="btn" data-fddclassic="1">' + (FDD.classic ? '▴ Hide the day view and older charts' : '▾ More: the day view and older charts') + '</button></div>';
   return h;
 };
-function fddCustomise() {
-  var L = fdwLayout() || { order: FDW_LAST.map(function (w) { return w.id; }), hidden: {} };
-  var order = L.order.slice(); FDW_LAST.forEach(function (w) { if (order.indexOf(w.id) < 0) order.push(w.id); });
-  order = order.filter(function (id) { return FDW_LAST.some(function (w) { return w.id === id; }); });
-  var hidden = Object.assign({}, L.hidden || {});
-  var info = {}; FDW_LAST.forEach(function (w) { info[w.id] = w; });
-  function listHtml() {
-    return '<ul class="fdc-list">' + order.map(function (id, i) { var w = info[id], off = !!hidden[id];
-      return '<li class="' + (off ? 'off' : '') + '"><input type="checkbox" data-fdcv="' + esc(id) + '"' + (off ? '' : ' checked') + ' aria-label="Show ' + esc(w.title) + '">' +
-        '<span class="nm">' + esc(w.title) + (w.note ? '<small>' + esc(w.note) + '</small>' : '') + '</span>' +
-        '<button type="button" class="mv" data-fdcu="' + i + '" title="Move up"' + (i ? '' : ' disabled') + '>▲</button><button type="button" class="mv" data-fdcd="' + i + '" title="Move down"' + (i < order.length - 1 ? '' : ' disabled') + '>▼</button></li>'; }).join('') + '</ul>';
-  }
-  fdwDialog('Customise the dashboard',
-    '<div class="fdw-note">Tick what you want to see and move it up or down. Kept on this device. Reset brings back his layout.</div><div id="fdc_box">' + listHtml() + '</div>' +
-    '<div style="margin-top:10px"><button class="btn small" type="button" id="fdc_reset">Reset to the standard layout</button></div>',
-    function (back, close) { fdwSave({ order: order, hidden: hidden }); close(); toast('Dashboard saved.'); repaint(); });
-  var box = el('fdc_box'); if (!box) return;
-  box.addEventListener('click', function (e) {
-    var u = e.target.closest('[data-fdcu]'), dn = e.target.closest('[data-fdcd]');
-    if (u) { var i = +u.getAttribute('data-fdcu'); var t = order[i - 1]; order[i - 1] = order[i]; order[i] = t; box.innerHTML = listHtml(); }
-    if (dn) { var j = +dn.getAttribute('data-fdcd'); var t2 = order[j + 1]; order[j + 1] = order[j]; order[j] = t2; box.innerHTML = listHtml(); }
-  });
-  box.addEventListener('change', function (e) { var c = e.target.getAttribute('data-fdcv'); if (!c) return; if (e.target.checked) delete hidden[c]; else hidden[c] = 1; box.innerHTML = listHtml(); });
-  var rs = el('fdc_reset'); if (rs) rs.addEventListener('click', function () { fdwSave(null); toast('Back to the standard layout.'); var bk = document.querySelector('.dlg-back'); if (bk) bk.remove(); repaint(); });
-}
-document.addEventListener('click', function (e) {
-  if (!e.target.closest) return;
-  if (e.target.closest('[data-fddcust]')) { e.preventDefault(); fddCustomise(); }
-});
 </script>
 
 <!-- fd-25 (owner 14 Oct 2026: "our design is flat"): his glow and hover life. The "+" glows at rest in dark and lights up
@@ -34324,6 +33697,8 @@ body[data-fdview="customers"] #view .fd19-row2 > .card .fd19-empty .fd19-ib { wi
 
 /* every screen but the Dashboard: the figure cards are a slim strip (owner, same as Customers) */
 body:not([data-fdview="dash"]) #view .fdd-grid:has(> .fdd-k) { align-items:stretch; }
+body:not([data-fdview="dash"]) #fdHead .fdh-sk { height:95px; }
+body:not([data-fdview="dash"]) #view .fd19-kpis .fd19-tr, body:not([data-fdview="dash"]) #view .fdd-k [class*="-tr"] { display:none !important; }
 body:not([data-fdview="dash"]) #view .fdd-k.fdhero .fdd-num, body:not([data-fdview="dash"]) #view .fdd-k.fdhero .fdd-lbl { color:inherit; }
 body:not([data-fdview="dash"]) #view .fdd-k .fdd-num small { font-size:13px; }
 body:not([data-fdview="dash"]) #view .g-kpi { gap:12px; }
@@ -34679,7 +34054,7 @@ function fdShellSave() {
   try {
     var cur = {}; var b = (typeof BIZ !== 'undefined' && BIZ) || null;
     if (b && b.businesses) { var a = b.businesses.filter(function (x) { return x.id === b.active; })[0]; if (a) cur.biz = a.name; }
-    if (ME) cur.user = fdUserName();
+    if (ME && typeof PROF !== 'undefined' && PROF) cur.user = fdUserName();
     if (cur.biz || cur.user) { FD_SHELL = Object.assign({}, FD_SHELL, cur); localStorage.setItem('fd_shell', JSON.stringify(FD_SHELL)); }
   } catch (e) {}
 }
@@ -34689,7 +34064,7 @@ function fdShellSave() {
   var mk = el('bizMark'); if (mk && !mk.classList.contains('has-img') && !mk.querySelector('.fdlogo') && typeof fdLogoSvg === 'function') mk.innerHTML = fdLogoSvg();
 })();
 var fdUserNameShell = fdUserName;
-fdUserName = function () { if (!ME && FD_SHELL.user) return FD_SHELL.user; return fdUserNameShell.apply(this, arguments); };
+fdUserName = function () { if ((!ME || typeof PROF === 'undefined' || !PROF) && FD_SHELL.user) return FD_SHELL.user; return fdUserNameShell.apply(this, arguments); };
 var fdBizNameShell = fdBizName;
 fdBizName = function () { var n = el('bizName'); if ((!n || !n.textContent.trim()) && FD_SHELL.biz) return FD_SHELL.biz; return fdBizNameShell.apply(this, arguments); };
 var fdShellPaint36 = fdShellPaint;
@@ -34726,5 +34101,7 @@ brandPaint = function () {
 setTimeout(function () { try { fdShellPaint(); sideFoldPaint(); } catch (e) {} }, 0);
 </script>
 
+<!-- fd-37: the page is styled: show it -->
+<script>(function () { var x = document.getElementById('bootHide'); if (x) x.remove(); })();</script>
 </body>
 </html>
