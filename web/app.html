@@ -21903,7 +21903,7 @@ document.addEventListener('click', function (ev) {
     }
     AP_PEND++;
     var akey = t.getAttribute('data-apall'), aseq = ++AP_SEQ, aw = Object.assign({}, AP_WANT[akey] || {}, { on: on, seq: aseq }); AP_WANT[akey] = aw;
-    srv('erpAppSet', [{ key: akey, on: on, scope: 'all' }], function (r) { AP_PEND = Math.max(0, AP_PEND - 1); if (AP_WANT[akey] && AP_WANT[akey].seq === aseq) delete AP_WANT[akey]; apAfterSet(r, isMenu ? (on ? 'Allowed again: each company decides in its own menu.' : 'Off in every company\u2019s menu.') : on ? 'On for every company.' : 'Off for every company. Its page answers \u201cnot open yet\u201d.'); }, apFailed);
+    srv('erpAppSet', [{ key: akey, on: on, scope: 'all' }], function (r) { AP_PEND = Math.max(0, AP_PEND - 1); if (AP_WANT[akey] && AP_WANT[akey].seq === aseq) delete AP_WANT[akey]; apAfterSet(r, isMenu ? '' : on ? 'On for every company.' : 'Off for every company. Its page answers \u201cnot open yet\u201d.'); }, apFailed);
     return;
   }
   if (t.hasAttribute('data-apmode')) {
@@ -21914,7 +21914,7 @@ document.addEventListener('click', function (ev) {
     var mkey = t.getAttribute('data-apmode'), mseq = ++AP_SEQ; AP_WANT[mkey] = Object.assign({}, AP_WANT[mkey] || {}, { mode: t.getAttribute('data-mode'), seq: mseq });
     srv('erpAppSet', [{ key: mkey, mode: t.getAttribute('data-mode'), scope: 'mine' }], function (r) {
       AP_PEND = Math.max(0, AP_PEND - 1); if (AP_WANT[mkey] && AP_WANT[mkey].seq === mseq) delete AP_WANT[mkey];
-      apAfterSet(r, { all: 'Everyone here sees it.', owner: 'Only owners see it now.', off: 'Off for this business. Switch it back here any time.' }[t.getAttribute('data-mode')]);
+      apAfterSet(r, '');   // the button already shows it; a message per click only piles up
     }, apFailed);
     return;
   }
