@@ -34568,6 +34568,7 @@ viewJoint = function () {
     'Theme': 'থিম', 'Chart colours': 'চার্টের রং', 'Accent colour': 'মূল রং', 'Text size · Density · Corners': 'লেখার আকার · ঘনত্ব · কোণা',
     'Money in hand': 'হাতে টাকা', 'We owe suppliers': 'সাপ্লায়ারদের পাওনা', 'Pre-order deposits held': 'প্রি-অর্ডারের জমা টাকা',
     'Investor capital at work': 'কাজে থাকা বিনিয়োগকারীর মূলধন', 'Unmatched payments': 'অ্যাকাউন্ট ছাড়া পেমেন্ট', 'Top Colours': 'সবচেয়ে বেশি বিক্রি রং',
+    'Overview': 'সারসংক্ষেপ', 'Navigator': 'নেভিগেটর', 'Help guides': 'সাহায্য গাইড', 'Report a problem': 'সমস্যা জানান',
     'Setup Checklist': 'সেটআপের তালিকা', 'Reorder Suggestions': 'আবার অর্ডারের পরামর্শ', 'Needs Attention': 'নজর দরকার', 'Monthly Revenue': 'মাসিক আয়'
   };
   var P = [
@@ -34591,6 +34592,122 @@ viewJoint = function () {
 })();
 </script>
 
+<!-- fd-43 (owner 14 Oct 2026, "we have a lot of menus"): a shorter side menu. Analytics, Profitability and ERP Navigator
+     open as tabs at the top of the Dashboard; Maintenance, System check and Platform as tabs at the top of Settings; Ask
+     your ERP leaves the menu (the corner bubble and the phone bar's Ask button open it); Help and Report a problem move
+     to the account menu. Nothing is removed: every screen keeps its route, its abilities and its Edit-menu switch - the
+     menu button is only folded away while its group's first screen is in the menu (someone who cannot see the
+     Dashboard still gets Analytics in the menu). -->
+<style>
+#nav button.fd43-in { display:none !important; }
+#fbBtn.fd43-in { display:none !important; }
+.fd43-tabs { display:flex; gap:4px; margin:0 0 14px; border-bottom:1px solid var(--fd-border, var(--ring)); overflow-x:auto; scrollbar-width:none; }
+.fd43-tabs::-webkit-scrollbar { display:none; }
+.fd43-tabs button { background:none; border:0; border-bottom:2px solid transparent; margin-bottom:-1px; padding:9px 14px; font:inherit; font-size:14px;
+  font-weight:600; color:var(--fd-text-3, var(--muted)); cursor:pointer; white-space:nowrap; display:inline-flex; align-items:center; gap:7px; }
+.fd43-tabs button svg { width:16px; height:16px; fill:none; stroke:currentColor; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
+.fd43-tabs button:hover { color:var(--fd-text, var(--ink)); }
+.fd43-tabs button.on { color:var(--fd-accent-text, var(--fd-accent, var(--series-1))); border-bottom-color:var(--fd-accent, var(--series-1)); }
+@media (max-width:640px) { .fd43-tabs { margin:0 0 12px; gap:0; } .fd43-tabs button { flex:1 1 auto; justify-content:center; padding:9px 6px; font-size:13px; } .fd43-tabs button svg { display:none; } }
+@media (max-width:400px) { .fd43-tabs button { padding:9px 3px; font-size:12.5px; letter-spacing:-.1px; } }
+</style>
+<script>
+(function () {
+  var G = [
+    { host: 'dash', tabs: [['dash', 'Overview', '<rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/>'],
+                           ['analytics', 'Analytics', '<path d="M4 20V10M10 20V4M16 20v-8M22 20H2"/>'],
+                           ['profit', 'Profitability', '<path d="M3 17l6-6 4 4 8-8"/><path d="M14 7h7v7"/>'],
+                           ['mindmap', 'Navigator', '<circle cx="12" cy="12" r="3"/><circle cx="4" cy="5" r="2"/><circle cx="20" cy="5" r="2"/><circle cx="4" cy="19" r="2"/><circle cx="20" cy="19" r="2"/><path d="M6 6l4 4M18 6l-4 4M6 18l4-4M18 18l-4-4"/>']] },
+    { host: 'settings', tabs: [['settings', 'Settings', '<path d="M4 6h9M18 6h2M4 12h2M11 12h9M4 18h11"/><circle cx="15.5" cy="6" r="2"/><circle cx="8.5" cy="12" r="2"/><circle cx="17.5" cy="18" r="2"/>'],
+                               ['tools', 'Maintenance', '<path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.8-3.8a6 6 0 0 1-7.9 7.9l-7 7a2.1 2.1 0 0 1-3-3l7-7a6 6 0 0 1 7.9-7.9z"/>'],
+                               ['syscheck', 'System check', '<path d="M12 3l8 4v5c0 5-3.5 8-8 9-4.5-1-8-4-8-9V7z"/><path d="M8.5 12l2.5 2.5 4.5-5"/>'],
+                               ['platform', 'Platform', '<rect x="3" y="4" width="18" height="6" rx="1.5"/><rect x="3" y="14" width="18" height="6" rx="1.5"/>']] }
+  ];
+  var ALWAYS_OUT = ['chat', 'guide'];   // reachable elsewhere: the assistant bubble / Ask button, the account menu
+  function btn(v) { return document.querySelector('#nav button[data-view="' + v + '"]'); }
+  function shown(v) { var b = btn(v); return !!(b && b.style.display !== 'none'); }   // = navOn: the person may open it
+  function groupOf(v) { for (var i = 0; i < G.length; i++) for (var j = 0; j < G[i].tabs.length; j++) if (G[i].tabs[j][0] === v) return G[i]; return null; }
+  function fold() {
+    G.forEach(function (g) {
+      var hostOn = shown(g.host);
+      g.tabs.forEach(function (t) { if (t[0] === g.host) return; var b = btn(t[0]); if (b) b.classList.toggle('fd43-in', hostOn); });
+    });
+    ALWAYS_OUT.forEach(function (v) {
+      var b = btn(v); if (!b) return;
+      // Help stays in the menu only when the account menu cannot reach it (it always can) - so out; the assistant too
+      b.classList.add('fd43-in');
+    });
+    var fb = el('fbBtn'); if (fb) fb.classList.add('fd43-in');
+    // the menu's group titles: a title with nothing left under it goes
+    [].forEach.call(document.querySelectorAll('#nav .navgrp'), function (h) {
+      var n = h.nextElementSibling, any = false;
+      while (n && !n.classList.contains('navgrp')) { if (n.matches('button[data-view]') && n.style.display !== 'none' && !n.classList.contains('fd43-in') && n.getAttribute('data-view') !== 'home') { any = true; break; } n = n.nextElementSibling; }
+      h.classList.toggle('fd43-in', !any);
+    });
+  }
+  function mark() {
+    // the folded screen lights its group's first screen in the menu
+    var g = groupOf(VIEW); if (!g || g.host === VIEW) return;
+    var h = btn(g.host), me = btn(VIEW);
+    if (h && me && me.classList.contains('fd43-in')) {
+      // only when different: the menu observer watches aria-selected, so an equal write would loop
+      if (me.getAttribute('aria-selected') !== 'false') me.setAttribute('aria-selected', 'false');
+      if (h.getAttribute('aria-selected') !== 'true') h.setAttribute('aria-selected', 'true');
+    }
+  }
+  function tabsHtml(g) {
+    var list = g.tabs.filter(function (t) { return shown(t[0]); });
+    if (list.length < 2 || !shown(g.host)) return '';
+    return list.map(function (t) {
+      return '<button type="button" class="' + (t[0] === VIEW ? 'on' : '') + '" data-fd43go="' + t[0] + '"><svg viewBox="0 0 24 24">' + t[2] + '</svg><span>' + esc(tr(t[1])) + '</span></button>';
+    }).join('');
+  }
+  function tr(s) { try { if (typeof LANG !== 'undefined' && LANG === 'bn' && typeof I18N_BN !== 'undefined' && I18N_BN[s]) return I18N_BN[s]; } catch (e) {} return s; }
+  function strip() {
+    var view = el('view'); if (!view) return;
+    var g = groupOf(VIEW), cur = view.querySelector(':scope > .fd43-tabs');
+    var h = g ? tabsHtml(g) : '';   // none of these screens has a record page, so no sub-page check
+    if (!h) { if (cur) cur.remove(); return; }
+    if (!cur) { cur = document.createElement('div'); cur.className = 'fd43-tabs'; cur.setAttribute('role', 'tablist'); }
+    if (cur.getAttribute('data-k') !== VIEW + '|' + h.length) { cur.innerHTML = h; cur.setAttribute('data-k', VIEW + '|' + h.length); }
+    if (view.firstChild !== cur) view.insertBefore(cur, view.firstChild);
+  }
+  function all() { try { fold(); mark(); strip(); } catch (e) { if (window.console) console.error('fd-43', e); } }
+  // the menu's visibility is set by roles, the Edit menu, joint stock, platform...: refold whenever a button changes
+  var nav = el('nav');
+  if (nav && window.MutationObserver) new MutationObserver(function () { fold(); mark(); }).observe(nav, { subtree: true, attributes: true, attributeFilter: ['style', 'aria-selected'] });
+  var view = el('view');
+  if (view && window.MutationObserver) new MutationObserver(function () { strip(); }).observe(view, { childList: true });
+  document.addEventListener('click', function (e) {
+    var b = e.target.closest && e.target.closest('[data-fd43go]'); if (!b) return;
+    e.preventDefault(); var v = b.getAttribute('data-fd43go'); if (v !== VIEW) go(v);
+  });
+  // the account menu: Help (the guides) and Report a problem
+  if (typeof umPaint === 'function') {
+    var umPaint43 = umPaint;
+    umPaint = function () {
+      var r = umPaint43.apply(this, arguments);
+      var out = el('u6out'), wrap = out && out.parentNode;
+      if (wrap && !el('u6guide')) {
+        var ic = function (p) { return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' + p + '</svg>'; };
+        wrap.insertAdjacentHTML('beforebegin',
+          '<button type="button" class="u6a" id="u6guide">' + ic('<path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20V3H6.5A2.5 2.5 0 0 0 4 5.5z"/><path d="M4 19.5V21h16"/>') + '<span>' + esc(tr('Help guides')) + '</span></button>' +
+          '<button type="button" class="u6a" id="u6fb">' + ic('<path d="M4 5h16v11H9l-5 4z"/><path d="M12 8v3M12 13.5h.01"/>') + '<span>' + esc(tr('Report a problem')) + '</span></button>');
+      }
+      return r;
+    };
+    try { umPaint(); } catch (e) {}
+  }
+  document.addEventListener('click', function (e) {
+    var t = e.target.closest && e.target.closest('#u6guide,#u6fb'); if (!t) return;
+    e.preventDefault();
+    var um = el('o_usermenu'); if (um) um.classList.remove('open');
+    if (t.id === 'u6guide') go('guide'); else go('app', 'feedback');
+  });
+  all();
+  setTimeout(all, 0);
+})();
+</script>
 <!-- fd-37: the page is styled: show it -->
 <script>(function () { var x = document.getElementById('bootHide'); if (x) x.remove(); })();</script>
 </body>

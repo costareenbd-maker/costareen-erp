@@ -1875,3 +1875,13 @@ one row per screen with Everyone / Only owners / Off for this business, and - fo
 Each row stays on one line on desktop (two columns); on phone the switch drops its label. Also: isPlatformAdmin
 retries once on a database error, because one page load showed the provider as an ordinary owner. The assistant's
 help text now points at the Menu card. Not done: nothing.
+
+## fd-43: a shorter side menu (14 Oct 2026)
+Owner: "we have a lot of menus". The side menu goes from 32 to 24 items for the owner. Analytics, Profitability and
+ERP Navigator open as tabs at the top of the Dashboard (Overview · Analytics · Profitability · Navigator); Maintenance,
+System check and Platform as tabs at the top of Settings. Ask your ERP left the menu (corner bubble on desktop, Ask
+button in the phone bar); Help guides and Report a problem moved to the account menu. A group title with nothing left
+under it hides. Nothing is removed: routes, abilities and the Menu card's switches are unchanged; a folded screen
+stays in the menu when its group's first screen is not visible to that person (e.g. someone without the Dashboard
+still finds Analytics in the menu), and a tab only shows when the person may open it. On phone the tabs drop their
+icons so four fit at 360 px. Not done: the "Help & shortcuts" item (keyboard shortcuts) stays as it was.
