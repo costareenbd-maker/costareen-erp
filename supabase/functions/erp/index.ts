@@ -378,7 +378,7 @@ Deno.serve(async (req) => {
   const q0 = new URL(req.url).searchParams;
   const tid = tenantOf(req, q0);
   // public routes, a company on the bridge, and every company copy (calls carry their own sign-in, never a cookie) answer any page
-  const headers = { ...cors(req.headers.get('origin'), !!(tid || q0.get('install') || q0.get('control') || q0.get('signin') || q0.get('pub') || (INSTALL && INSTALL.id))), 'Content-Type': 'application/json' };
+  const headers = { ...cors(req.headers.get('origin'), !!(tid || q0.get('install') || q0.get('control') || q0.get('signin') || q0.get('pub') || q0.get('chat') || (INSTALL && INSTALL.id))), 'Content-Type': 'application/json' };
   if (req.method === 'OPTIONS') return new Response('ok', { headers });
   if (tid && !(q0.get('install') || q0.get('control'))) {
     if (!tenantDeps) return new Response(JSON.stringify({ ok: false, error: 'This server does not run company ERPs.' }), { status: 200, headers });
@@ -444,6 +444,12 @@ async function serveWith(deps: any, req: Request, q0: URLSearchParams, headers: 
       return new Response(JSON.stringify({ ok: false, error: String((e as Error).message || e) }), { status: 500, headers });
     }
   }
+  // the Inbox (handlers/inbox.js): channel webhooks ?inbox=hook&ch=<id>&k=<key> (GET = Meta's check, POST = events),
+  // and the website chat ?chat=<channel id>&a=info|start|send|poll (public; the visitor carries a signed id)
+  if (q0.get('inbox') === 'hook' || q0.get('chat')) {
+    try { return await inboxRoute(deps, req, q0, headers); }
+    catch (e) { console.error('inbox', e); return new Response('{"ok":false}', { status: 200, headers }); }
+  }
   if (req.method !== 'POST') return new Response('{"ok":false}', { status: 405, headers });
 
   let body: any = {};
@@ -490,5 +496,44 @@ async function serveWith(deps: any, req: Request, q0: URLSearchParams, headers: 
   }
   if (!out.ok && BUSY_DB.test(String(out.error || ''))) out = { ok: false, error: 'The database is busy for a moment. Try again in a few seconds.' };
   return new Response(JSON.stringify(out), { headers });
+}
+
+/** Answer after the wait, in the background (the webhook has already been answered). */
+function later(ms: number, fn: () => Promise<any>) {
+  const job = new Promise((r) => setTimeout(r, Math.max(0, ms) + 300)).then(fn).catch((e) => console.error('inbox later', e));
+  try { (globalThis as any).EdgeRuntime.waitUntil(job); } catch (_) { /* not in the edge runtime */ }
+}
+async function inboxRoute(deps: any, req: Request, q0: URLSearchParams, headers: any): Promise<Response> {
+  const ib: any = await import('./handlers/inbox.js');
+  const asOwner = async (bizId: string, label: string, fn: (ctx: any) => Promise<any>) => {
+    const rows = await owners(deps.sql, [bizId]);
+    if (!rows.length) throw new Error('unknown business');
+    return asBusiness(deps, rows[0], label, fn);
+  };
+  if (q0.get('inbox') === 'hook') {
+    const ch = await ib.hookChannel(deps.sql, q0.get('ch') || '', q0.get('k') || '');
+    if (!ch) return new Response('no', { status: 404, headers: { 'Content-Type': 'text/plain' } });
+    if (req.method === 'GET') {
+      const q = Object.fromEntries(q0.entries());
+      const r: any = await asOwner(ch.business_id, 'inbox:verify', (ctx) => ib.hookVerify(ctx, ch, q));
+      return new Response(String((r && r.text) || 'no'), { status: (r && r.status) || 200, headers: { 'Content-Type': 'text/plain' } });
+    }
+    const raw = await req.text();
+    const h: any = {}; req.headers.forEach((v, k) => { h[k.toLowerCase()] = v; });
+    const r: any = await asOwner(ch.business_id, 'inbox:hook', (ctx) => ib.hookPost(ctx, ch, raw, h));
+    for (const d of (r && r.due) || []) later(d.ms, () => asOwner(ch.business_id, 'inbox:reply', (ctx) => ib.replyDue(ctx, d.id)));
+    for (const c of (r && r.comments) || []) later(2000, () => asOwner(ch.business_id, 'inbox:comment', (ctx) => ib.answerComment(ctx, ch.id, c)));
+    return new Response('EVENT_RECEIVED', { status: (r && r.status) || 200, headers: { 'Content-Type': 'text/plain' } });
+  }
+  // the website chat
+  const chId = String(q0.get('chat') || '');
+  if (!/^[0-9a-f-]{36}$/i.test(chId)) return new Response('{"ok":false}', { status: 404, headers });
+  const row = (await deps.sql`select business_id from inbox_channels where id = ${chId} and kind = 'webchat'`)[0];
+  if (!row) return new Response('{"ok":false}', { status: 404, headers });
+  let b: any = {}; if (req.method === 'POST') { try { b = await req.json(); } catch (_) { b = {}; } }
+  const ip = (req.headers.get('cf-connecting-ip') || (req.headers.get('x-forwarded-for') || '').split(',')[0] || '').trim();
+  const r: any = await asOwner(row.business_id, 'inbox:webchat', (ctx) => ib.webchat(ctx, chId, String(q0.get('a') || b.a || 'info'), b, ip));
+  if (r && r.due) later(r.due.ms, () => asOwner(row.business_id, 'inbox:reply', (ctx) => ib.replyDue(ctx, r.due.id)));
+  return new Response(JSON.stringify((r && r.body) || { ok: false }), { status: (r && r.status) || 200, headers });
 }
 (globalThis as any).__ownDeps = deps;

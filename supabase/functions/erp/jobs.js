@@ -117,6 +117,12 @@ export async function runJob(deps, job) {
         out[row.name] = await asBusiness(deps, row, 'sheet:write', (ctx) => tick(ctx));
       }
     }
+  } else if (job === 'inbox') {
+    // every minute: answers whose wait is over, held chats whose time is up, follow-ups, comments, order updates
+    const tick = await maybe('./handlers/inbox.js', 'inboxTick');
+    let ids = [];
+    try { ids = (await sql`select distinct business_id from inbox_channels where status in ('live', 'practice')`).map((r) => r.business_id); } catch (_) { ids = []; }
+    if (tick && ids.length) for (const row of await owners(sql, ids)) out[row.name] = await asBusiness(deps, row, 'inbox:tick', (ctx) => tick(ctx));
   } else if (job === 'drive') {
     // copies of new files into each connected owner's Google Drive
     const tick = await maybe('./handlers/google.js', 'driveTick');

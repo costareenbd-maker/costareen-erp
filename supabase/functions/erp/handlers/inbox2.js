@@ -1,0 +1,595 @@
+// The Inbox's other screens (120_inbox.sql): channels (connect, practice, Go live, AI switches), the business details
+// the agent answers from, chat orders (approve -> a real invoice), leads, the Agent Desk (rules as drafts, tested in a
+// customer's-phone view, published, undone), the knowledge base, special offers, broadcasts, comments, saved replies,
+// analytics and the log of AI work with its cost.
+
+import { num, formatDate, todayStr } from '../lib/time.js';
+import { getConfig, setConfig } from '../lib/ext.js';
+import { roleAtLeast } from '../allow.js';
+import { gemini, textOf, jsonOf } from '../lib/gemini.js';
+import { aiKey } from './receivefile.js';
+import { KINDS, KIND_NAME, CAN, chSecret, chSecretSet, evoQr, evoState, evoSetHook, metaSubscribe, commentModerate, commentReply } from './inboxch.js';
+import { profile, PROFILE_DEFAULTS, agentReply, deliver, orderEvent, task, leadUpsert, kbSearch, REASONS, inWindow } from './inbox.js';
+
+const str = (v) => String(v == null ? '' : v).trim();
+const H24 = 24 * 3600e3;
+function owner(ctx) { if (ctx.s.role !== 'owner') throw new Error('Only the owner changes this.'); }
+function need(ctx, role) { if (!roleAtLeast(ctx.s.role, role || 'sales')) throw new Error('Not open to your role.'); }
+async function chOf(ctx, id) { return (await ctx.tx`select * from inbox_channels where business_id = ${ctx.biz} and id = ${id}`)[0] || null; }
+
+// ------------------------------------------------------------------ channels
+function hookUrl(ctx, ch) {
+  const base = str(ctx.deps && ctx.deps.hookBase);
+  if (!base) return '';
+  return base + (base.includes('?') ? '&' : '?') + 'inbox=hook&ch=' + ch.id + '&k=' + ch.hook_key;
+}
+function chatUrl(ctx, ch) {
+  const base = str(ctx.deps && ctx.deps.hookBase);
+  return base ? base + (base.includes('?') ? '&' : '?') + 'chat=' + ch.id : '';
+}
+const NEEDS = { messenger: ['TOKEN', 'APP_SECRET'], instagram: ['TOKEN', 'APP_SECRET'], wa_cloud: ['TOKEN', 'APP_SECRET'], wa_evo: ['URL', 'KEY'], wa_sender: ['KEY', 'HOOK_SECRET'], webchat: [] };
+
+export async function erpInboxChannels(ctx) {
+  need(ctx, 'manager');
+  const rows = await ctx.tx`select * from inbox_channels where business_id = ${ctx.biz} and status <> 'removed' order by created_at`;
+  const out = [];
+  for (const ch of rows) {
+    const keys = {};
+    for (const k of NEEDS[ch.kind].concat(ch.kind.match(/messenger|instagram|wa_cloud/) ? ['VERIFY'] : [])) keys[k] = !!(await chSecret(ctx, ch, k));
+    const verify = ctx.s.role === 'owner' && /messenger|instagram|wa_cloud/.test(ch.kind) ? await chSecret(ctx, ch, 'VERIFY') : '';
+    out.push({ id: ch.id, kind: ch.kind, kindName: KIND_NAME[ch.kind], name: ch.name, externalId: str(ch.external_id), status: ch.status, aiOn: ch.ai_on,
+      aiOffUntil: ch.ai_off_until && new Date(ch.ai_off_until) > ctx.now ? formatDate(new Date(ch.ai_off_until), 'd MMM, h:mm a') : '', commentsAi: ch.comments_ai,
+      settings: ch.settings || {}, keys, hookUrl: ctx.s.role === 'owner' ? hookUrl(ctx, ch) : '', verify, chatUrl: ch.kind === 'webchat' ? chatUrl(ctx, ch) : '',
+      official: !/wa_evo|wa_sender/.test(ch.kind), can: CAN[ch.kind] });
+  }
+  const k = await aiKey(ctx);
+  return { channels: out, kinds: KINDS.map((x) => ({ kind: x, name: KIND_NAME[x], official: !/wa_evo|wa_sender/.test(x) })), aiKey: !!k.key, profile: await profile(ctx, false) };
+}
+/** Add or change a channel. Secrets are written, never read back. */
+export async function erpInboxChannelSave(ctx, payload) {
+  owner(ctx);
+  const p = payload || {};
+  let ch = p.id ? await chOf(ctx, str(p.id)) : null;
+  if (!ch) {
+    if (!KINDS.includes(p.kind)) throw new Error('Choose what to connect.');
+    if (/wa_evo|wa_sender/.test(p.kind) && !p.acceptRisk) throw new Error('Read and accept the notice first: a linked-device WhatsApp is not Meta\'s official system and the number can be banned.');
+    const ext = str(p.externalId) || (p.kind === 'webchat' ? 'site-' + Date.now().toString(36) : '');
+    if (!ext) throw new Error(p.kind === 'wa_evo' ? 'Type the Evolution instance name.' : p.kind === 'wa_cloud' ? 'Type the WhatsApp phone number id (from Meta).' : p.kind === 'wa_sender' ? 'Type the WhatsApp number.' : 'Type the page / account id.');
+    const settings = { wait_s: p.kind === 'webchat' ? 3 : 15, revert_min: 60, test_code: String(Math.floor(10000 + Math.random() * 90000)) };
+    ch = (await ctx.tx`insert into inbox_channels (business_id, kind, name, external_id, status, settings, created_by)
+           values (${ctx.biz}, ${p.kind}, ${str(p.name) || KIND_NAME[p.kind]}, ${ext}, 'practice', ${ctx.tx.json(settings)}, ${ctx.s.name}) returning *`)[0];
+    if (/messenger|instagram|wa_cloud/.test(p.kind)) await chSecretSet(ctx, ch, 'VERIFY', 'v' + crypto.randomUUID().replace(/-/g, '').slice(0, 24));
+  } else {
+    if (p.name !== undefined || p.externalId !== undefined) await ctx.tx`update inbox_channels set name = coalesce(${str(p.name) || null}, name), external_id = coalesce(${str(p.externalId) || null}, external_id) where id = ${ch.id}`;
+  }
+  for (const k of ['TOKEN', 'APP_SECRET', 'URL', 'KEY', 'HOOK_SECRET']) if (p.secrets && str(p.secrets[k])) await chSecretSet(ctx, ch, k, str(p.secrets[k]).replace(/\/+$/, k === 'URL' ? '' : '$&'));
+  if (p.settings && typeof p.settings === 'object') {
+    const s = { ...(ch.settings || {}) };
+    if (p.settings.wait_s !== undefined) s.wait_s = Math.max(0, Math.min(15, Math.round(num(p.settings.wait_s))));
+    if (p.settings.revert_min !== undefined) s.revert_min = Math.max(5, Math.min(1440, Math.round(num(p.settings.revert_min))));
+    if (p.settings.colour !== undefined && /^#[0-9a-f]{6}$/i.test(str(p.settings.colour))) s.colour = str(p.settings.colour);
+    if (p.settings.logo !== undefined) s.logo = /^https:\/\//.test(str(p.settings.logo)) ? str(p.settings.logo) : '';
+    if (p.settings.daily_cap !== undefined) s.daily_cap = Math.max(1, Math.min(500, Math.round(num(p.settings.daily_cap))));
+    if (p.settings.site !== undefined) s.site = str(p.settings.site).slice(0, 200);
+    await ctx.tx`update inbox_channels set settings = ${ctx.tx.json(s)} where id = ${ch.id}`;
+  }
+  ch = await chOf(ctx, ch.id);
+  // connect the platform side where we can
+  const done = {};
+  if ((ch.kind === 'messenger') && await chSecret(ctx, ch, 'TOKEN')) done.subscribe = await metaSubscribe(ctx, ch);
+  if (ch.kind === 'wa_evo' && await chSecret(ctx, ch, 'URL') && hookUrl(ctx, ch)) done.hook = await evoSetHook(ctx, ch, hookUrl(ctx, ch));
+  return { ...(await erpInboxChannels(ctx)), done };
+}
+/** AI on / off for a channel (for a time, or until switched on), comments on / off, removed. */
+export async function erpInboxChannelAct(ctx, payload) {
+  owner(ctx);
+  const p = payload || {};
+  const ch = await chOf(ctx, str(p.id));
+  if (!ch) throw new Error('No such channel.');
+  if (p.action === 'ai') {
+    const mins = num(p.minutes);
+    await ctx.tx`update inbox_channels set ai_on = ${!!p.on || mins > 0}, ai_off_until = ${!p.on && mins > 0 ? new Date(ctx.now.getTime() + mins * 60e3) : null} where id = ${ch.id}`;
+  } else if (p.action === 'comments') await ctx.tx`update inbox_channels set comments_ai = ${!!p.on} where id = ${ch.id}`;
+  else if (p.action === 'remove') {
+    await ctx.tx`update inbox_channels set status = 'removed' where id = ${ch.id}`;
+    for (const k of ['TOKEN', 'APP_SECRET', 'URL', 'KEY', 'HOOK_SECRET', 'VERIFY']) await chSecretSet(ctx, ch, k, '');
+  } else if (p.action === 'practice') await ctx.tx`update inbox_channels set status = 'practice' where id = ${ch.id}`;
+  else if (p.action === 'qr') { if (ch.kind !== 'wa_evo') throw new Error('Only for an Evolution WhatsApp.'); return { qr: await evoQr(ctx, ch), state: await evoState(ctx, ch) }; }
+  else if (p.action === 'state') return { state: ch.kind === 'wa_evo' ? await evoState(ctx, ch) : { state: ch.status } };
+  else throw new Error('Unknown action.');
+  return erpInboxChannels(ctx);
+}
+/** Go live: details written, an AI key, and three usual questions answered by the agent (asked by itself). */
+export async function erpInboxGoLive(ctx, payload) {
+  owner(ctx);
+  const ch = await chOf(ctx, str(payload && payload.id));
+  if (!ch) throw new Error('No such channel.');
+  const pr = await profile(ctx, false);
+  const missing = [];
+  if (!pr.name) missing.push('the business name');
+  if (!pr.sells) missing.push('what you sell');
+  if (!(await aiKey(ctx)).key) missing.push('an AI key');
+  for (const k of NEEDS[ch.kind]) if (!(await chSecret(ctx, ch, k))) missing.push(k.toLowerCase().replace('_', ' '));
+  if (missing.length) throw new Error('Before going live: ' + missing.join(', ') + '.');
+  const qs = ['What do you sell?', 'What is the delivery charge?', 'Are you open today?'];
+  const answers = [];
+  for (const q of qs) {
+    const r = await agentReply(ctx, { id: null, channel_id: ch.id }, { test: true, channel: ch, contact: { name: 'Test', external_id: 'test' }, history: [{ direction: 'in', kind: 'text', text: q }] });
+    const t = (r.replies || []).map((x) => x.text || (x.cards ? x.cards.map((c) => c.title).join(', ') : '')).join(' ').trim();
+    answers.push({ q, a: t });
+    if (!t) throw new Error('The AI did not answer "' + q + '" - check the AI key and try again.');
+  }
+  await ctx.tx`update inbox_channels set status = 'live' where id = ${ch.id}`;
+  return { live: true, answers, ...(await erpInboxChannels(ctx)) };
+}
+
+// ------------------------------------------------------------------ the business's details (setup) - saved at once; the Agent Desk keeps drafts
+export async function erpInboxProfile(ctx, payload) {
+  need(ctx, 'manager');
+  const p = payload || {};
+  if (p.save) {
+    owner(ctx);
+    const cur = await profile(ctx, false), next = { ...cur };
+    for (const k of Object.keys(PROFILE_DEFAULTS)) {
+      if (p.save[k] === undefined) continue;
+      const d = PROFILE_DEFAULTS[k];
+      next[k] = typeof d === 'number' ? Math.max(0, num(p.save[k])) : typeof d === 'boolean' ? !!p.save[k] : typeof d === 'object' ? { ...d, ...(p.save[k] || {}) } : str(p.save[k]).slice(0, 2000);
+    }
+    if (!['bn', 'en', 'both'].includes(next.lang)) next.lang = 'both';
+    if (!['sir', 'bhai'].includes(next.style)) next.style = 'sir';
+    await setConfig(ctx, 'inbox_profile', JSON.stringify(next));
+  }
+  return { profile: await profile(ctx, false), draft: await profile(ctx, true), hasDraft: !!(await getConfig(ctx, 'inbox_profile_draft', '')) };
+}
+
+// ------------------------------------------------------------------ the Agent Desk
+/** Rules: list, add / change (a draft), publish, undo, switch on/off, archive; test (customer's-phone view). */
+export async function erpAgentDesk(ctx, payload) {
+  need(ctx, 'manager');
+  const p = payload || {};
+  const a = str(p.action);
+  if (a && a !== 'list') owner(ctx);
+  if (a === 'add') {
+    if (!str(p.title) || !str(p.body)) throw new Error('A rule needs a name and what it says.');
+    await ctx.tx`insert into agent_rules (business_id, title, body, draft, version, updated_by) values (${ctx.biz}, ${str(p.title).slice(0, 80)}, '', ${str(p.body).slice(0, 4000)}, 0, ${ctx.s.name})`;
+  } else if (a === 'edit') {
+    await ctx.tx`update agent_rules set draft = ${str(p.body).slice(0, 4000)}, title = coalesce(${str(p.title) || null}, title), updated_by = ${ctx.s.name}, updated_at = now() where business_id = ${ctx.biz} and id = ${str(p.id)}`;
+  } else if (a === 'discard') {
+    await ctx.tx`update agent_rules set draft = null where business_id = ${ctx.biz} and id = ${str(p.id)}`;
+    await setConfig(ctx, 'inbox_profile_draft', '');
+  } else if (a === 'publish') {
+    for (const r of await ctx.tx`select * from agent_rules where business_id = ${ctx.biz} and draft is not null and not archived`) {
+      const v = r.version + 1;
+      await ctx.tx`update agent_rules set body = ${r.draft}, draft = null, version = ${v}, updated_by = ${ctx.s.name}, updated_at = now() where id = ${r.id}`;
+      await ctx.tx`insert into agent_rule_versions (business_id, rule_id, version, body, by_name) values (${ctx.biz}, ${r.id}, ${v}, ${r.draft}, ${ctx.s.name})`;
+    }
+    const d = await getConfig(ctx, 'inbox_profile_draft', '');
+    if (d) {
+      const cur = await profile(ctx, false), next = { ...cur }, dj = JSON.parse(d);
+      await setConfig(ctx, 'inbox_profile_prev', JSON.stringify(cur));
+      Object.assign(next, dj);
+      await setConfig(ctx, 'inbox_profile', JSON.stringify(next));
+      await setConfig(ctx, 'inbox_profile_draft', '');
+    }
+  } else if (a === 'undo') {
+    const r = (await ctx.tx`select * from agent_rules where business_id = ${ctx.biz} and id = ${str(p.id)}`)[0];
+    if (r) {
+      if (r.draft !== null) throw new Error('Publish or discard the open draft first.');
+      const prev = (await ctx.tx`select body, version from agent_rule_versions where rule_id = ${r.id} and version < ${r.version} order by version desc limit 1`)[0];
+      if (!prev) throw new Error('There is no earlier version.');
+      await ctx.tx`update agent_rules set body = ${prev.body}, version = ${r.version + 1}, updated_by = ${ctx.s.name}, updated_at = now() where id = ${r.id}`;
+      await ctx.tx`insert into agent_rule_versions (business_id, rule_id, version, body, by_name) values (${ctx.biz}, ${r.id}, ${r.version + 1}, ${prev.body}, ${ctx.s.name + ' (undo)'})`;
+    } else if (str(p.id) === 'details') {
+      const prev = await getConfig(ctx, 'inbox_profile_prev', '');
+      if (!prev) throw new Error('There is no earlier version of the details.');
+      await setConfig(ctx, 'inbox_profile', prev);
+      await setConfig(ctx, 'inbox_profile_prev', '');
+    }
+  } else if (a === 'toggle') {
+    await ctx.tx`update agent_rules set enabled = not enabled, updated_by = ${ctx.s.name}, updated_at = now() where business_id = ${ctx.biz} and id = ${str(p.id)}`;
+  } else if (a === 'archive') {
+    await ctx.tx`update agent_rules set archived = true, updated_by = ${ctx.s.name}, updated_at = now() where business_id = ${ctx.biz} and id = ${str(p.id)}`;
+  } else if (a === 'test') {
+    // a test conversation in the customer's-phone view, with the DRAFT rules and details; nothing is sent or booked
+    const hist = (Array.isArray(p.history) ? p.history : []).slice(-20).map((m) => ({ direction: m.mine ? 'in' : 'out', kind: 'text', text: str(m.text).slice(0, 1500) }));
+    if (!hist.length || hist[hist.length - 1].direction !== 'in') throw new Error('Type a test message.');
+    const ch = (await ctx.tx`select * from inbox_channels where business_id = ${ctx.biz} and status <> 'removed' order by (kind = 'messenger') desc, created_at limit 1`)[0]
+      || { id: null, kind: 'messenger', settings: {}, status: 'practice' };
+    const r = await agentReply(ctx, { id: null, channel_id: ch.id }, { test: true, channel: ch, contact: { name: 'Test customer', external_id: 'test' }, history: hist });
+    return { replies: r.replies, handover: r.handover ? REASONS[r.handover.reason] : '', order: r.order ? r.order.no : '', tools: r.calls };
+  } else if (a === 'helper') {
+    // "make the delivery charge 80": the helper reads what is set, proposes the change as a draft (rule or detail), and says what it did
+    return deskHelper(ctx, str(p.text));
+  }
+  const rules = await ctx.tx`select r.*, (select count(*)::int from agent_rule_versions v where v.rule_id = r.id) as versions from agent_rules r where r.business_id = ${ctx.biz} and not r.archived order by r.updated_at`;
+  const pd = await getConfig(ctx, 'inbox_profile_draft', '');
+  return { rules: rules.map((r) => ({ id: r.id, title: r.title, body: r.body, draft: r.draft, enabled: r.enabled, version: r.version, versions: r.versions, by: str(r.updated_by), at: formatDate(new Date(r.updated_at), 'd MMM, h:mm a') })),
+           details: await profile(ctx, false), detailsDraft: pd ? JSON.parse(pd) : null, hasPrevDetails: !!(await getConfig(ctx, 'inbox_profile_prev', '')),
+           drafts: rules.filter((r) => r.draft !== null).length + (pd ? 1 : 0) };
+}
+async function deskHelper(ctx, text) {
+  if (!text) throw new Error('Tell the helper what to change.');
+  const cur = await profile(ctx, true);
+  const rules = await ctx.tx`select id, title, coalesce(draft, body) as body from agent_rules where business_id = ${ctx.biz} and not archived`;
+  const { parts } = await gemini(ctx, { systemInstruction: { parts: [{ text:
+    'You help a shop owner change what their customer chat agent knows. Current details (JSON): ' + JSON.stringify(cur) + '. Current rules: ' + JSON.stringify(rules.map((r) => ({ id: r.id, title: r.title, body: r.body }))) +
+    '. Reply with JSON only: {"say": a short sentence to the owner saying what is set now and what you will change (in the owner\'s language), "details": {only the changed detail fields, same keys} or null, ' +
+    '"rule": {"id": an existing rule id or "", "title": "", "body": ""} or null, "fact": a fact to file in the knowledge base or ""}. Delivery charges: delivery_in (inside Dhaka), delivery_out (outside). Do not invent anything the owner did not say.' }] },
+    contents: [{ role: 'user', parts: [{ text }] }], generationConfig: { temperature: 0 } }, 'desk', null);
+  const j = jsonOf(parts) || {};
+  const did = [];
+  if (j.details && typeof j.details === 'object' && Object.keys(j.details).length) {
+    const dPrev = await getConfig(ctx, 'inbox_profile_draft', '');
+    const d = { ...(dPrev ? JSON.parse(dPrev) : {}) };
+    for (const k of Object.keys(j.details)) if (PROFILE_DEFAULTS[k] !== undefined) d[k] = typeof PROFILE_DEFAULTS[k] === 'number' ? num(j.details[k]) : j.details[k];
+    await setConfig(ctx, 'inbox_profile_draft', JSON.stringify(d));
+    did.push('details: ' + Object.keys(j.details).join(', '));
+  }
+  if (j.rule && str(j.rule.body)) {
+    const ex = j.rule.id ? rules.find((r) => r.id === j.rule.id) : null;
+    if (ex) await ctx.tx`update agent_rules set draft = ${str(j.rule.body)}, updated_by = ${ctx.s.name}, updated_at = now() where id = ${ex.id}`;
+    else await ctx.tx`insert into agent_rules (business_id, title, body, draft, version, updated_by) values (${ctx.biz}, ${str(j.rule.title) || 'Rule'}, '', ${str(j.rule.body)}, 0, ${ctx.s.name})`;
+    did.push('rule: ' + (str(j.rule.title) || (ex && ex.title) || 'new'));
+  }
+  if (str(j.fact)) { await kbAdd(ctx, 'From the Agent Desk', 'text', str(j.fact)); did.push('knowledge base'); }
+  return { say: str(j.say) || (did.length ? 'Drafted.' : 'Nothing to change.'), drafted: did, ...(await erpAgentDesk(ctx, {})) };
+}
+
+// ------------------------------------------------------------------ knowledge base
+async function kbAdd(ctx, title, kind, body) {
+  const d = (await ctx.tx`insert into kb_docs (business_id, title, kind, body, created_by) values (${ctx.biz}, ${title}, ${kind}, ${body}, ${ctx.s.name}) returning id`)[0];
+  const parts = [];
+  if (kind === 'qa') parts.push(body);
+  else {
+    const paras = body.split(/\n\s*\n|(?<=[.!?।])\s+(?=[A-Zঀ-৿])/);
+    let cur = '';
+    for (const x of paras) { if ((cur + ' ' + x).length > 700 && cur) { parts.push(cur.trim()); cur = x; } else cur += ' ' + x; }
+    if (cur.trim()) parts.push(cur.trim());
+  }
+  for (const t of parts) await ctx.tx`insert into kb_chunks (business_id, doc_id, text) values (${ctx.biz}, ${d.id}, ${t})`;
+  return d.id;
+}
+export async function erpInboxKb(ctx, payload) {
+  need(ctx, 'manager');
+  const p = payload || {};
+  if (p.add) {
+    owner(ctx);
+    const kind = ['text', 'qa', 'file'].includes(p.add.kind) ? p.add.kind : 'text';
+    let body = str(p.add.body);
+    if (kind === 'qa') body = 'Q: ' + str(p.add.q) + '\nA: ' + str(p.add.a);
+    if (body.length < 3) throw new Error('Nothing to add.');
+    if (body.length > 200000) throw new Error('That document is too long (200,000 characters at most).');
+    await kbAdd(ctx, str(p.add.title) || (kind === 'qa' ? str(p.add.q).slice(0, 80) : 'Document'), kind, body);
+  }
+  if (p.archive) { owner(ctx); await ctx.tx`update kb_docs set archived = true where business_id = ${ctx.biz} and id = ${str(p.archive)}`; }
+  if (p.test) return { found: await kbSearch(ctx, p.test) };
+  const docs = await ctx.tx`select d.id, d.title, d.kind, left(d.body, 300) as body, d.created_at, d.created_by, (select count(*)::int from kb_chunks k where k.doc_id = d.id) as chunks
+                            from kb_docs d where d.business_id = ${ctx.biz} and not d.archived order by d.created_at desc`;
+  return { docs: docs.map((d) => ({ id: d.id, title: d.title, kind: d.kind, body: d.body, chunks: d.chunks, by: str(d.created_by), at: formatDate(new Date(d.created_at), 'd MMM yy') })) };
+}
+
+// ------------------------------------------------------------------ special offers
+export async function erpShopOffers(ctx, payload) {
+  need(ctx, 'manager');
+  const p = payload || {};
+  if (p.add) { owner(ctx); if (!str(p.add.label)) throw new Error('Name the offer.');
+    await ctx.tx`insert into shop_offers (business_id, label, sku, detail, starts_on, ends_on) values (${ctx.biz}, ${str(p.add.label)}, ${str(p.add.sku) || null}, ${str(p.add.detail) || null},
+                 ${str(p.add.starts) || null}, ${str(p.add.ends) || null})`; }
+  if (p.toggle) { owner(ctx); await ctx.tx`update shop_offers set active = not active where business_id = ${ctx.biz} and id = ${str(p.toggle)}`; }
+  const rows = await ctx.tx`select * from shop_offers where business_id = ${ctx.biz} order by active desc, created_at desc`;
+  return { offers: rows.map((r) => ({ id: r.id, label: r.label, sku: str(r.sku), detail: str(r.detail), starts: r.starts_on ? formatDate(new Date(r.starts_on), 'yyyy-MM-dd') : '', ends: r.ends_on ? formatDate(new Date(r.ends_on), 'yyyy-MM-dd') : '', active: r.active })) };
+}
+
+// ------------------------------------------------------------------ chat orders (approve -> invoice)
+const HOLD = ['Could not reach the customer', 'Waiting for the advance payment', 'Pre-order', 'Out of stock', 'The customer asked to wait', 'The address needs checking', 'Something else'];
+export async function erpChatOrders(ctx, payload) {
+  need(ctx);
+  const p = payload || {};
+  const st = ['pending', 'hold', 'approved', 'cancelled', 'all', 'today'].includes(p.status) ? p.status : 'pending';
+  const q = str(p.q).toLowerCase();
+  const today = formatDate(ctx.now, 'yyyy-MM-dd');
+  const rows = await ctx.tx`select o.*, (select count(*)::int from chat_orders x where x.business_id = o.business_id and x.phone = o.phone and x.status in ('pending', 'hold') and x.id <> o.id) as dup
+    from chat_orders o where o.business_id = ${ctx.biz}
+      and (${st} = 'all' or (${st} = 'today' and o.status = 'hold' and o.follow_up_on <= ${today}) or o.status = ${st})
+      and (${q} = '' or lower(o.no || ' ' || o.name || ' ' || o.phone) like ${'%' + q + '%'}) order by o.created_at desc limit 200`;
+  const counts = (await ctx.tx`select count(*) filter (where status = 'pending')::int pending, count(*) filter (where status = 'hold')::int hold,
+    count(*) filter (where status = 'approved')::int approved, count(*) filter (where status = 'cancelled')::int cancelled,
+    count(*) filter (where status = 'hold' and follow_up_on <= ${today})::int today from chat_orders where business_id = ${ctx.biz}`)[0];
+  const out = [];
+  for (const o of rows) {
+    let inv = null;
+    if (o.invoice_no) inv = (await ctx.tx`select delivery_status, payment_status, due_amount from invoices where business_id = ${ctx.biz} and invoice_no = ${o.invoice_no}`)[0] || null;
+    const ev = await ctx.tx`select what, by_name, at from chat_order_events where order_id = ${o.id} order by id`;
+    out.push({ id: o.id, no: o.no, name: o.name, phone: o.phone, address: o.address, items: o.items, delivery: num(o.delivery_charge), deliverySaid: o.delivery_said, note: str(o.note),
+      status: o.status, hold: str(o.hold_reason), followUp: o.follow_up_on ? formatDate(new Date(o.follow_up_on), 'yyyy-MM-dd') : '', cancel: str(o.cancel_reason), invoice: str(o.invoice_no),
+      takenBy: o.taken_by, change: str(o.change_request), rating: o.rating, dup: o.dup > 0, conv: o.conversation_id,
+      total: (o.items || []).reduce((t, x) => t + num(x.qty) * num(x.price), 0) + num(o.delivery_charge), at: formatDate(new Date(o.created_at), 'd MMM, h:mm a'),
+      delivery_status: inv ? str(inv.delivery_status) : '', paid: inv ? str(inv.payment_status) : '', history: ev.map((e) => ({ what: e.what, by: str(e.by_name), at: formatDate(new Date(e.at), 'd MMM h:mm a') })) });
+  }
+  return { orders: out, counts, holdReasons: HOLD };
+}
+export async function erpChatOrderAct(ctx, payload) {
+  need(ctx);
+  const p = payload || {};
+  const o = (await ctx.tx`select * from chat_orders where business_id = ${ctx.biz} and id = ${str(p.id)} for update`)[0];
+  if (!o) throw new Error('No such order.');
+  const by = ctx.s.name;
+  if (p.action === 'approve') {
+    if (o.status === 'approved') throw new Error('Already approved: ' + o.invoice_no);
+    if (o.status === 'cancelled') throw new Error('A cancelled order cannot be approved.');
+    const conv = o.conversation_id ? (await ctx.tx`select v.*, ch.kind from inbox_conversations v join inbox_channels ch on ch.id = v.channel_id where v.id = ${o.conversation_id}`)[0] : null;
+    const channel = conv ? ({ messenger: 'Facebook', instagram: 'Instagram', wa_cloud: 'WhatsApp', wa_evo: 'WhatsApp', wa_sender: 'WhatsApp', webchat: 'Website' }[conv.kind] || 'Other') : 'Other';
+    const H = (await import('./index.js')).HANDLERS;
+    const res = await H.erpCreateInvoice(ctx, {
+      customer: { name: o.name, phone: o.phone, address: o.address, source: str(p.delivery) || 'Steadfast courier' },
+      items: (o.items || []).map((x) => ({ sku: x.sku, qty: num(x.qty) })), deliveryCharge: num(o.delivery_charge),
+      payMode: 'cod', paymentMethod: 'COD', channel, note: 'Chat order ' + o.no + (o.note ? ' · ' + o.note : ''),
+    });
+    await ctx.tx`update chat_orders set status = 'approved', invoice_no = ${res.invoiceNo}, approved_at = now() where id = ${o.id}`;
+    await orderEvent(ctx, o.id, 'Approved → invoice ' + res.invoiceNo, by);
+    // tell the customer the order is being prepared (when that update is on)
+    await notifyOrder(ctx, { ...o, invoice_no: res.invoiceNo }, 'preparing');
+    return { invoiceNo: res.invoiceNo, ...(await erpChatOrders(ctx, { status: 'pending' })) };
+  }
+  if (p.action === 'hold') {
+    if (o.status !== 'pending') throw new Error('Only a pending order is put on hold.');
+    await ctx.tx`update chat_orders set status = 'hold', hold_reason = ${str(p.reason) || 'Something else'}, follow_up_on = ${str(p.followUp) || null} where id = ${o.id}`;
+    await orderEvent(ctx, o.id, 'On hold: ' + (str(p.reason) || 'Something else') + (p.note ? ' — ' + str(p.note) : ''), by);
+  } else if (p.action === 'release') {
+    await ctx.tx`update chat_orders set status = 'pending', hold_reason = null, follow_up_on = null where id = ${o.id} and status = 'hold'`;
+    await orderEvent(ctx, o.id, 'Released from hold', by);
+  } else if (p.action === 'cancel') {
+    if (o.status === 'approved') throw new Error('Approved: cancel the invoice ' + o.invoice_no + ' on the Sales screen instead.');
+    if (!str(p.reason)) throw new Error('Pick the reason.');
+    await ctx.tx`update chat_orders set status = 'cancelled', cancel_reason = ${str(p.reason)} where id = ${o.id}`;
+    await orderEvent(ctx, o.id, 'Cancelled: ' + str(p.reason), by);
+    if (!/duplicate|fake|test|wrong/i.test(str(p.reason))) await notifyOrder(ctx, o, 'cancelled');
+  } else if (p.action === 'edit') {
+    if (o.status === 'approved' || o.status === 'cancelled') throw new Error('This order can no longer be changed here.');
+    await ctx.tx`update chat_orders set name = coalesce(${str(p.name) || null}, name), phone = coalesce(${str(p.phone) || null}, phone), address = coalesce(${str(p.address) || null}, address),
+                 delivery_charge = coalesce(${p.delivery !== undefined && p.delivery !== '' ? num(p.delivery) : null}, delivery_charge), note = coalesce(${p.note !== undefined ? str(p.note) : null}, note),
+                 items = coalesce(${Array.isArray(p.items) ? ctx.tx.json(p.items.map((x) => ({ sku: str(x.sku), name: str(x.name), qty: Math.max(1, num(x.qty)), price: num(x.price) }))) : null}, items) where id = ${o.id}`;
+    await orderEvent(ctx, o.id, 'Edited', by);
+  } else if (p.action === 'note') {
+    if (!str(p.note)) throw new Error('Write the note.');
+    await orderEvent(ctx, o.id, 'Note: ' + str(p.note), by);
+  } else throw new Error('Unknown action.');
+  return erpChatOrders(ctx, { status: str(p.back) || 'pending' });
+}
+/** Tell the customer about their order in its chat (the updates the owner switched on; inside Meta's window). */
+async function notifyOrder(ctx, o, what, extra) {
+  if (!o.conversation_id) return false;
+  const pr = await profile(ctx, false);
+  if (!(pr.updates || {})[what === 'delivered' ? 'courier' : what] && what !== 'review') return false;
+  const v = (await ctx.tx`select * from inbox_conversations where id = ${o.conversation_id}`)[0];
+  if (!v) return false;
+  const ch = (await ctx.tx`select * from inbox_channels where id = ${v.channel_id}`)[0], c = (await ctx.tx`select * from inbox_contacts where id = ${v.contact_id}`)[0];
+  if (!ch || ch.status === 'removed') return false;
+  const bn = pr.lang !== 'en';
+  const T = {
+    preparing: bn ? 'আপনার অর্ডার ' + o.no + ' প্রস্তুত করা হচ্ছে।' : 'Your order ' + o.no + ' is being prepared.',
+    courier: bn ? 'আপনার পার্সেল কুরিয়ারে দেওয়া হয়েছে (' + o.no + ')।' : 'Your parcel has been handed to the courier (' + o.no + ').',
+    out: bn ? 'আপনার পার্সেল আজ ডেলিভারির জন্য বের হয়েছে।' : 'Your parcel is out for delivery today.',
+    failed: bn ? 'আপনার পার্সেল ডেলিভারি করা যায়নি। আমরা যোগাযোগ করব।' : 'Your parcel could not be delivered. We will get in touch.',
+    delivered: bn ? 'আপনার পার্সেল পৌঁছে গেছে। ধন্যবাদ!' : 'Your parcel has been delivered. Thank you!',
+    cancelled: bn ? 'আপনার অর্ডার ' + o.no + ' বাতিল করা হয়েছে।' : 'Your order ' + o.no + ' has been cancelled.',
+    review: (bn ? 'পণ্যটি কেমন লাগলো? আমাদের পেজে একটি রিভিউ দিলে খুব খুশি হবো: ' : 'How did you like it? A review on our page would mean a lot: ') + str(pr.review_link),
+  };
+  if (!T[what]) return false;
+  if (CAN[ch.kind].window24 && !inWindow(ch, v, ctx.now)) return false;   // after 24 h Messenger needs Meta's approved templates - not sent
+  const r = await deliver(ctx, ch, v, c, { kind: 'text', text: T[what] + (extra ? ' ' + extra : ''), payload: { courier: what } }, { author: 'system' });
+  return r.ok;
+}
+/** The timer: delivery status changes of approved chat orders go to the customer; a review request a day after delivery. */
+export async function orderUpdates(ctx) {
+  let n = 0;
+  const pr = await profile(ctx, false);
+  const rows = await ctx.tx`select o.*, i.delivery_status from chat_orders o join invoices i on i.business_id = o.business_id and i.invoice_no = o.invoice_no
+                            where o.business_id = ${ctx.biz} and o.status = 'approved' and o.approved_at > ${new Date(ctx.now.getTime() - 30 * H24)} limit 100`;
+  for (const o of rows) {
+    const ds = str(o.delivery_status).toLowerCase();
+    const stage = /deliver(ed)?$|^delivered|complete/.test(ds) ? 'delivered' : /out for|on the way/.test(ds) ? 'out' : /return|cancel|fail|hold/.test(ds) ? 'failed' : /shipped|sent|courier|transit|booked|picked/.test(ds) ? 'courier' : '';
+    if (stage && stage !== o.notified_status) {
+      await ctx.tx`update chat_orders set notified_status = ${stage} where id = ${o.id}`;
+      if (await notifyOrder(ctx, o, stage)) n++;
+    }
+    if (stage === 'delivered' && pr.review_on && pr.review_link && !o.review_asked_at && o.notified_status === 'delivered') {
+      await ctx.tx`update chat_orders set review_asked_at = now() where id = ${o.id}`;
+      if (await notifyOrder(ctx, o, 'review')) n++;
+    }
+  }
+  return n;
+}
+
+// ------------------------------------------------------------------ leads
+const STAGES = ['', 'New', 'Contacted', 'Interested', 'Quoted', 'Won', 'Lost'];
+export async function erpInboxLeads(ctx, payload) {
+  need(ctx);
+  const p = payload || {};
+  if (p.save) {
+    const s = p.save;
+    if (s.id) {
+      const old = (await ctx.tx`select * from inbox_leads where business_id = ${ctx.biz} and id = ${str(s.id)}`)[0];
+      if (!old) throw new Error('No such lead.');
+      await ctx.tx`update inbox_leads set stage = coalesce(${s.stage ? Math.max(1, Math.min(6, num(s.stage))) : null}, stage), name = coalesce(${s.name !== undefined ? str(s.name) : null}, name),
+        phone = coalesce(${s.phone !== undefined ? str(s.phone) : null}, phone), email = coalesce(${s.email !== undefined ? str(s.email) : null}, email), want = coalesce(${s.want !== undefined ? str(s.want) : null}, want),
+        value = coalesce(${s.value !== undefined && s.value !== '' ? num(s.value) : null}, value), priority = coalesce(${/^(low|normal|high)$/.test(str(s.priority)) ? str(s.priority) : null}, priority),
+        follow_up_on = case when ${s.followUp !== undefined} then ${str(s.followUp) || null}::date else follow_up_on end, note = coalesce(${s.note !== undefined ? str(s.note) : null}, note),
+        assigned_to = case when ${s.assign !== undefined} then ${str(s.assign) || null}::uuid else assigned_to end,
+        assigned_name = case when ${s.assign !== undefined} then ${str(s.assignName) || null} else assigned_name end, updated_at = now() where id = ${old.id}`;
+      if (s.stage && num(s.stage) !== old.stage) await ctx.tx`insert into inbox_lead_events (business_id, lead_id, what, by_name) values (${ctx.biz}, ${old.id}, ${'Stage: ' + STAGES[num(s.stage)]}, ${ctx.s.name})`;
+      if (s.note !== undefined && str(s.note) !== str(old.note)) await ctx.tx`insert into inbox_lead_events (business_id, lead_id, what, by_name) values (${ctx.biz}, ${old.id}, ${'Note: ' + str(s.note)}, ${ctx.s.name})`;
+    } else {
+      if (!str(s.name) && !str(s.phone)) throw new Error('A lead needs a name or a phone.');
+      const r = (await ctx.tx`insert into inbox_leads (business_id, name, phone, email, want, stage, value, source, follow_up_on, note)
+        values (${ctx.biz}, ${str(s.name) || null}, ${str(s.phone) || null}, ${str(s.email) || null}, ${str(s.want) || null}, 1, ${s.value ? num(s.value) : null}, 'team', ${str(s.followUp) || null}, ${str(s.note) || null}) returning id`)[0];
+      await ctx.tx`insert into inbox_lead_events (business_id, lead_id, what, by_name) values (${ctx.biz}, ${r.id}, 'Added by hand', ${ctx.s.name})`;
+    }
+  }
+  const today = formatDate(ctx.now, 'yyyy-MM-dd');
+  // a teammate (sales) sees the leads given to them and the unassigned ones; a manager and the owner see all
+  const mineOnly = !roleAtLeast(ctx.s.role, 'manager');
+  const rows = await ctx.tx`select * from inbox_leads where business_id = ${ctx.biz} and (${!mineOnly} or assigned_to is null or assigned_to = ${ctx.s.userId})
+                            order by (follow_up_on is not null and follow_up_on <= ${today}) desc, updated_at desc limit 500`;
+  const leads = [];
+  for (const l of rows) {
+    const ev = p.open === l.id ? await ctx.tx`select what, by_name, at from inbox_lead_events where lead_id = ${l.id} order by id` : [];
+    leads.push({ id: l.id, name: str(l.name), phone: str(l.phone), email: str(l.email), want: str(l.want), stage: l.stage, stageName: STAGES[l.stage], value: l.value === null ? null : num(l.value),
+      priority: str(l.priority), source: str(l.source), channel: str(l.channel), assigned: str(l.assigned_name), followUp: l.follow_up_on ? formatDate(new Date(l.follow_up_on), 'yyyy-MM-dd') : '',
+      due: !!(l.follow_up_on && formatDate(new Date(l.follow_up_on), 'yyyy-MM-dd') <= today && l.stage < 5), note: str(l.note), conv: l.conversation_id,
+      updated: formatDate(new Date(l.updated_at), 'd MMM'), history: ev.map((e) => ({ what: e.what, by: str(e.by_name), at: formatDate(new Date(e.at), 'd MMM h:mm a') })) });
+  }
+  return { leads, stages: STAGES.slice(1) };
+}
+
+// ------------------------------------------------------------------ broadcasts (only to people who wrote in the last 23 h)
+async function audience(ctx, gapHours) {
+  return ctx.tx`select v.* from inbox_conversations v join inbox_channels ch on ch.id = v.channel_id
+    where v.business_id = ${ctx.biz} and ch.status = 'live' and ch.kind in ('messenger', 'instagram') and v.mode = 'ai' and not v.is_test
+      and v.last_in_at > ${new Date(ctx.now.getTime() - 23 * 3600e3)}
+      and not exists (select 1 from inbox_broadcast_sends s where s.conversation_id = v.id and s.at > ${new Date(ctx.now.getTime() - gapHours * 3600e3)})`;
+}
+export async function erpInboxBroadcasts(ctx, payload) {
+  need(ctx, 'manager');
+  const p = payload || {};
+  const gap = Math.max(1, Math.min(168, num(p.gap) || 24));
+  if (p.save) {
+    owner(ctx);
+    if (!str(p.save.text)) throw new Error('Write the offer.');
+    if (p.save.id) await ctx.tx`update inbox_broadcasts set text = ${str(p.save.text)} where business_id = ${ctx.biz} and id = ${str(p.save.id)} and sent_at is null`;
+    else await ctx.tx`insert into inbox_broadcasts (business_id, text, created_by) values (${ctx.biz}, ${str(p.save.text)}, ${ctx.s.name})`;
+  }
+  if (p.test) {
+    owner(ctx);
+    const b = (await ctx.tx`select * from inbox_broadcasts where business_id = ${ctx.biz} and id = ${str(p.test)}`)[0];
+    const v = (await ctx.tx`select v.* from inbox_conversations v where v.business_id = ${ctx.biz} and v.id = ${str(p.to)}`)[0];
+    if (!b || !v) throw new Error('Choose the broadcast and one of your own chats to test on.');
+    const ch = await chOf(ctx, v.channel_id), c = (await ctx.tx`select * from inbox_contacts where id = ${v.contact_id}`)[0];
+    const r = await deliver(ctx, ch, v, c, { kind: 'text', text: b.text }, { author: 'team', userId: ctx.s.userId, userName: ctx.s.name + ' (broadcast test)' });
+    if (!r.ok) throw new Error('The test did not go: ' + r.error);
+    await ctx.tx`update inbox_broadcasts set tested_text = text, tested_at = now() where id = ${b.id}`;
+  }
+  if (p.send) {
+    owner(ctx);
+    const b = (await ctx.tx`select * from inbox_broadcasts where business_id = ${ctx.biz} and id = ${str(p.send)}`)[0];
+    if (!b || b.sent_at) throw new Error('Already sent.');
+    if (str(b.tested_text) !== str(b.text)) throw new Error('Send a test to one of your own chats first (and again after every change).');
+    const pr = await profile(ctx, false);
+    if (!pr.broadcasts) throw new Error('Broadcasts are switched off.');
+    let n = 0;
+    for (const v of await audience(ctx, gap)) {
+      const ch = await chOf(ctx, v.channel_id), c = (await ctx.tx`select * from inbox_contacts where id = ${v.contact_id}`)[0];
+      const r = await deliver(ctx, ch, v, c, { kind: 'text', text: b.text }, { author: 'team', userId: ctx.s.userId, userName: 'Broadcast' });
+      if (r.ok) { n++; await ctx.tx`insert into inbox_broadcast_sends (business_id, broadcast_id, conversation_id) values (${ctx.biz}, ${b.id}, ${v.id})`; }
+    }
+    await ctx.tx`update inbox_broadcasts set sent_at = now(), sent_count = ${n} where id = ${b.id}`;
+  }
+  const list = await ctx.tx`select * from inbox_broadcasts where business_id = ${ctx.biz} order by created_at desc limit 50`;
+  const reach = (await audience(ctx, gap)).length;
+  return { reach, gap, broadcasts: list.map((b) => ({ id: b.id, text: b.text, tested: str(b.tested_text) === str(b.text), testedAt: b.tested_at ? formatDate(new Date(b.tested_at), 'd MMM h:mm a') : '',
+    sent: b.sent_at ? formatDate(new Date(b.sent_at), 'd MMM h:mm a') : '', count: b.sent_count })) };
+}
+
+// ------------------------------------------------------------------ follow-ups (the screen)
+export async function erpInboxFollowups(ctx, payload) {
+  need(ctx, 'manager');
+  const p = payload || {};
+  if (p.save) { owner(ctx); await erpInboxProfile(ctx, { save: { followups: !!p.save.on, follow_hot: !!p.save.hot, follow_warm: !!p.save.warm } }); }
+  const pr = await profile(ctx, false);
+  const c = (await ctx.tx`select count(*) filter (where interest = 'hot')::int hot, count(*) filter (where interest = 'warm')::int warm, count(*) filter (where interest = 'cold')::int cold
+                          from inbox_conversations where business_id = ${ctx.biz} and last_in_at > ${new Date(ctx.now.getTime() - 7 * H24)}`)[0];
+  const next = await ctx.tx`select v.id, v.interest, v.next_followup, v.followups_left, ct.name from inbox_conversations v join inbox_contacts ct on ct.id = v.contact_id
+                            where v.business_id = ${ctx.biz} and v.next_followup is not null order by v.next_followup limit 50`;
+  return { on: pr.followups, hot: pr.follow_hot, warm: pr.follow_warm, counts: c,
+           planned: next.map((v) => ({ id: v.id, name: str(v.name) || 'Customer', interest: v.interest, at: formatDate(new Date(v.next_followup), 'd MMM, h:mm a'), left: v.followups_left })) };
+}
+
+// ------------------------------------------------------------------ comments (the screen)
+export async function erpInboxComments(ctx, payload) {
+  need(ctx);
+  const p = payload || {};
+  if (p.act) {
+    const c = (await ctx.tx`select * from inbox_comments where business_id = ${ctx.biz} and id = ${str(p.act.id)}`)[0];
+    if (!c) throw new Error('No such comment.');
+    const ch = await chOf(ctx, c.channel_id);
+    if (p.act.action === 'reply') {
+      if (!str(p.act.text)) throw new Error('Write the reply.');
+      const r = await commentReply(ctx, ch, c.comment_id, str(p.act.text));
+      if (!r.ok) throw new Error(r.error);
+      await ctx.tx`update inbox_comments set action = 'replied', ai_reply = ${str(p.act.text)}, by_name = ${ctx.s.name} where id = ${c.id}`;
+    } else if (['hide', 'delete', 'block', 'unhide'].includes(p.act.action)) {
+      const r = await commentModerate(ctx, ch, c.comment_id, p.act.action, c.from_id);
+      if (!r.ok) throw new Error(r.error);
+      await ctx.tx`update inbox_comments set action = ${p.act.action === 'unhide' ? 'ignored' : p.act.action === 'hide' ? 'hidden' : p.act.action === 'delete' ? 'deleted' : 'blocked'}, by_name = ${ctx.s.name} where id = ${c.id}`;
+    }
+  }
+  const rows = await ctx.tx`select c.*, ch.kind from inbox_comments c join inbox_channels ch on ch.id = c.channel_id where c.business_id = ${ctx.biz} order by c.created_at desc limit 200`;
+  return { comments: rows.map((c) => ({ id: c.id, channel: c.kind, from: str(c.from_name), text: str(c.text), reply: str(c.ai_reply), action: str(c.action), by: str(c.by_name), at: formatDate(new Date(c.created_at), 'd MMM, h:mm a') })) };
+}
+
+// ------------------------------------------------------------------ saved replies (+ the two AI helpers)
+export async function erpSavedReplies(ctx, payload) {
+  need(ctx);
+  const p = payload || {};
+  if (p.add) { need(ctx, 'manager'); if (!str(p.add.title) || !str(p.add.body)) throw new Error('A saved reply needs a name and the words.');
+    await ctx.tx`insert into saved_replies (business_id, title, body) values (${ctx.biz}, ${str(p.add.title).slice(0, 60)}, ${str(p.add.body).slice(0, 2000)})`; }
+  if (p.archive) { need(ctx, 'manager'); await ctx.tx`update saved_replies set archived = true where business_id = ${ctx.biz} and id = ${str(p.archive)}`; }
+  const list = (await ctx.tx`select id, title, body from saved_replies where business_id = ${ctx.biz} and not archived order by title`).map((r) => ({ id: r.id, title: r.title, body: r.body }));
+  const pr = await profile(ctx, false);
+  if ((p.suggest || p.adapt) && pr.saved_ai && list.length) {
+    const v = (await ctx.tx`select id from inbox_conversations where business_id = ${ctx.biz} and id = ${str(p.suggest || p.conv)}`)[0];
+    const hist = v ? (await ctx.tx`select direction, text, transcript from inbox_messages where conversation_id = ${v.id} and direction <> 'note' order by id desc limit 8`).reverse() : [];
+    const convo = hist.map((m) => (m.direction === 'in' ? 'Customer: ' : 'Shop: ') + str(m.text || m.transcript)).join('\n');
+    if (p.suggest) {
+      const { parts } = await gemini(ctx, { contents: [{ role: 'user', parts: [{ text: 'Saved replies: ' + JSON.stringify(list.map((x) => ({ id: x.id, title: x.title }))) + '\nConversation:\n' + convo +
+        '\nWhich saved replies fit the customer\'s last message? JSON only: an array of up to 3 ids, best first (empty if none).' }] }], generationConfig: { temperature: 0 } }, 'saved-suggest', v ? v.id : null);
+      const ids = jsonOf(parts) || [];
+      return { list, suggested: Array.isArray(ids) ? ids.filter((x) => list.some((y) => y.id === x)) : [] };
+    }
+    const base = list.find((x) => x.id === str(p.adapt));
+    if (!base) throw new Error('Choose the saved reply.');
+    const { parts } = await gemini(ctx, { contents: [{ role: 'user', parts: [{ text: 'Rewrite this saved reply for this customer, keeping every fact exactly, in the customer\'s language, short:\n' + base.body + '\n\nConversation:\n' + convo + '\nOnly the reply.' }] }], generationConfig: { temperature: 0.3 } }, 'saved-adapt', v ? v.id : null);
+    return { list, text: textOf(parts) };
+  }
+  return { list, ai: pr.saved_ai };
+}
+
+// ------------------------------------------------------------------ analytics and the AI work log
+export async function erpInboxStats(ctx, payload) {
+  need(ctx, 'manager');
+  const days = [7, 14, 30].includes(num(payload && payload.days)) ? num(payload.days) : 7;
+  const from = new Date(ctx.now.getTime() - days * H24);
+  const m = (await ctx.tx`select count(*) filter (where direction = 'in')::int as inn, count(*) filter (where author = 'ai')::int as ai, count(*) filter (where author = 'team')::int as team,
+    count(distinct conversation_id)::int as convs from inbox_messages where business_id = ${ctx.biz} and created_at >= ${from}`)[0];
+  const v = (await ctx.tx`select count(*)::int as n, count(*) filter (where handover_at is null)::int as ai_alone, count(*) filter (where handover_at >= ${from})::int as handed,
+    percentile_cont(0.5) within group (order by first_reply_s)::int as median_first, count(*) filter (where mode = 'human' and claimed_by is null and handover_reason is not null)::int as waiting
+    from inbox_conversations where business_id = ${ctx.biz} and last_at >= ${from}`)[0];
+  const reasons = await ctx.tx`select reason, count(*)::int n from inbox_tasks where business_id = ${ctx.biz} and kind = 'handover' and created_at >= ${new Date(ctx.now.getTime() - 30 * H24)} group by reason order by n desc`;
+  const claim = (await ctx.tx`select percentile_cont(0.5) within group (order by extract(epoch from (done_at - created_at)))::int s from inbox_tasks where business_id = ${ctx.biz} and kind = 'handover' and done_at is not null and created_at >= ${from}`)[0];
+  const hours = await ctx.tx`select extract(hour from (created_at at time zone 'Asia/Dhaka'))::int h, count(*)::int n from inbox_messages where business_id = ${ctx.biz} and direction = 'in' and created_at >= ${from} group by 1 order by 1`;
+  const byCh = await ctx.tx`select ch.kind, count(*)::int n from inbox_messages m join inbox_conversations v on v.id = m.conversation_id join inbox_channels ch on ch.id = v.channel_id
+                            where m.business_id = ${ctx.biz} and m.direction = 'in' and m.created_at >= ${from} group by 1`;
+  const leads = (await ctx.tx`select count(*)::int n, count(*) filter (where stage = 5)::int won, count(*) filter (where stage = 6)::int lost from inbox_leads where business_id = ${ctx.biz} and created_at >= ${from}`)[0];
+  const orders = (await ctx.tx`select count(*)::int n, count(*) filter (where taken_by = 'ai')::int ai from chat_orders where business_id = ${ctx.biz} and created_at >= ${from}`)[0];
+  const cost = (await ctx.tx`select coalesce(sum(cost_bdt), 0)::float as bdt, count(*)::int n from ai_work where business_id = ${ctx.biz} and at >= ${from}`)[0];
+  return { days, messages: m, conversations: v, reasons: reasons.map((r) => ({ reason: REASONS[r.reason] || r.reason || 'Other', n: r.n })), claimMedianS: claim.s,
+           hours: hours.map((h) => ({ h: h.h, n: h.n })), byChannel: byCh.map((x) => ({ channel: KIND_NAME[x.kind] || x.kind, n: x.n })), leads, orders, aiCost: { bdt: Math.round(cost.bdt * 100) / 100, n: cost.n } };
+}
+export async function erpAiWork(ctx, payload) {
+  owner(ctx);
+  const p = payload || {};
+  // the days are Dhaka days
+  const dhaka = (d) => new Date(d + 'T00:00:00+06:00');
+  const from = /^\d{4}-\d{2}-\d{2}$/.test(str(p.from)) ? str(p.from) : todayStr(new Date(ctx.now.getTime() - 30 * H24)), to = /^\d{4}-\d{2}-\d{2}$/.test(str(p.to)) ? str(p.to) : todayStr(ctx.now);
+  const a = dhaka(from), b = new Date(dhaka(to).getTime() + H24);
+  const rows = await ctx.tx`select * from ai_work where business_id = ${ctx.biz} and at >= ${a} and at < ${b} order by at desc limit 500`;
+  const byDay = await ctx.tx`select to_char(at at time zone 'Asia/Dhaka', 'YYYY-MM-DD') d, sum(cost_bdt)::float bdt, count(*)::int n from ai_work where business_id = ${ctx.biz}
+                             and at >= ${a} and at < ${b} group by 1 order by 1`;
+  const byPurpose = await ctx.tx`select purpose, sum(cost_bdt)::float bdt, count(*)::int n from ai_work where business_id = ${ctx.biz} and at >= ${a} and at < ${b} group by 1 order by 2 desc`;
+  return { from, to, total: Math.round(byDay.reduce((t, x) => t + x.bdt, 0) * 100) / 100,
+    rows: rows.map((r) => ({ at: formatDate(new Date(r.at), 'd MMM, h:mm a'), purpose: r.purpose, model: r.model, tin: r.tokens_in, tout: r.tokens_out, bdt: num(r.cost_bdt), conv: r.conversation_id ? String(r.conversation_id).slice(0, 6) : '' })),
+    byDay: byDay.map((x) => ({ day: x.d, bdt: Math.round(x.bdt * 100) / 100, n: x.n })), byPurpose: byPurpose.map((x) => ({ purpose: x.purpose, bdt: Math.round(x.bdt * 100) / 100, n: x.n })) };
+}
+
+export const HANDLERS = { erpInboxChannels, erpInboxChannelSave, erpInboxChannelAct, erpInboxGoLive, erpInboxProfile, erpAgentDesk, erpInboxKb, erpShopOffers,
+  erpChatOrders, erpChatOrderAct, erpInboxLeads, erpInboxBroadcasts, erpInboxFollowups, erpInboxComments, erpSavedReplies, erpInboxStats, erpAiWork };

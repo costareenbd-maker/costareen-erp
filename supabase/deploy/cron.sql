@@ -45,3 +45,10 @@ select cron.schedule('erp-heartbeat', '29 * * * *', $$
   select net.http_post(url := '__FN_URL__',
     headers := '{"Content-Type":"application/json","x-erp-cron":"__CRON_KEY__"}'::jsonb,
     body := '{"job":"heartbeat"}'::jsonb, timeout_milliseconds := 60000) $$);
+
+-- the Inbox (handlers/inbox.js): every minute - answers whose wait is over, held chats back to the AI, follow-ups,
+-- comments and order updates
+select cron.schedule('erp-inbox', '* * * * *', $$
+  select net.http_post(url := '__FN_URL__',
+    headers := '{"Content-Type":"application/json","x-erp-cron":"__CRON_KEY__"}'::jsonb,
+    body := '{"job":"inbox"}'::jsonb, timeout_milliseconds := 55000) $$);
