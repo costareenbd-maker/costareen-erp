@@ -34222,6 +34222,265 @@ viewJoint = function () {
 };
 </script>
 
+<!-- fd-39 (phone): the phone layout, after an audit of every screen at 375 / 360 / 414 px against the partner's phone prototype.
+     Top bar: the business switch (logo + name + chevron, opens the same business list as the logo) and an "Ask" button for
+     the assistant sit in the bar; + and the bar buttons are 40 px. The corner chat bubble is not shown on a phone (it covered
+     Save buttons, the drawers' action bars and list rows) - the bar's Ask button opens the same chat. "More" opens the menu
+     as a bottom sheet (handle, close x, full-width rows) instead of a narrow side drawer with a cut-off name, and the group
+     names (Goods, Money, System) are visible again: on a phone those groups fold (plan C5) and with the names hidden their
+     screens - Products, Stock, Money, Settings... - could not be opened from More at all. Quick add, the business list, the
+     product-group list and the account menu open as bottom sheets over a dimmed backdrop that takes the tap. Figure cards
+     off the Dashboard: small icon above, the full figure (no "৳8..."), the name on one or two lines. Dashboard: every card
+     that is not a figure takes the full width. Lists: tighter card rows (label left, value right, several lines stay
+     together), action buttons side by side, labels 12 px; wide tables that were left as sideways-scrolling tables (dashboard
+     lists, Suppliers, Products' small list, Navigator) become card rows too. Action rows (Expenses, Money, Capital) wrap
+     instead of hiding buttons off the edge. Joint stock: the "who pays whom" line 17 px, Month end full width. Settings >
+     Security / Backup and Platform no longer push the page sideways. Small "i" / "?" / link targets get a 40 px touch area
+     without changing their look; no text under 12 px in the tab bar, trends and card labels. Only below 760 px wide and
+     only in the FilaDash look. -->
+<style>
+@media (max-width:760px) {
+  /* ---------- page never scrolls sideways ---------- */
+  :root[data-skin="fd"] body.has-tabbar #view { overflow-x:clip; min-width:0; }
+  :root[data-skin="fd"] #toast { left:12px; right:12px; max-width:none; transform:none; }
+
+  /* ---------- top bar ---------- */
+  :root[data-skin="fd"] header.topbar { gap:6px; }
+  :root[data-skin="fd"] header.topbar #fdplus { width:40px; height:40px; flex:0 0 40px; }
+  :root[data-skin="fd"] header.topbar #gs_btn, :root[data-skin="fd"] header.topbar #alertBtn, :root[data-skin="fd"] header.topbar #fd39ask { width:40px; height:40px; min-width:40px; padding:0; justify-content:center; }
+  :root[data-skin="fd"] header.topbar #fdu { width:40px; height:40px; }
+  :root[data-skin="fd"] header.topbar #fdu .fdu-av { width:38px; height:38px; }
+  #fd39biz { display:flex; align-items:center; gap:8px; min-width:0; flex:0 1 auto; height:42px; padding:0 8px 0 2px; margin-left:2px; border:0; border-radius:12px;
+    background:none; color:var(--fd-text); font:inherit; cursor:pointer; text-align:left; }
+  #fd39biz:active { background:var(--fd-surface-2); }
+  #fd39biz .lg { width:32px; height:32px; flex:0 0 32px; display:grid; place-items:center; border-radius:10px; overflow:hidden; }
+  #fd39biz .lg svg, #fd39biz .lg img { width:32px; height:32px; display:block; object-fit:cover; }
+  #fd39biz .nm { font-size:15px; font-weight:700; line-height:1.15; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; min-width:0; }
+  #fd39biz .cv { width:16px; height:16px; flex:0 0 16px; color:var(--fd-text-3); margin-left:-2px; }
+  :root[data-skin="fd"] header.topbar #fdu { margin-left:0 !important; }
+  #fd39ask { display:flex; align-items:center; border:0; border-radius:999px; background:var(--fd-accent-soft); color:var(--fd-accent-text); cursor:pointer; position:relative; }
+  #fd39ask svg { width:20px; height:20px; }
+  :root[data-skin="fd"] header.topbar .spacer { min-width:0; }
+  /* the corner bubble: not on a phone (the bar's Ask button and More > Ask your ERP open the same chat) */
+  :root[data-skin="fd"] #aw_fab { display:none !important; }
+
+  /* ---------- More: the menu as a bottom sheet ---------- */
+  :root[data-skin="fd"] #side { left:0 !important; right:0; top:auto !important; bottom:0; width:100% !important; max-width:none; height:auto !important;
+    max-height:calc(100dvh - 48px); border-radius:24px 24px 0 0; transform:translateY(105%); visibility:hidden;
+    transition:transform .22s cubic-bezier(.2,.8,.2,1), visibility 0s linear .22s;
+    overflow-y:auto; overscroll-behavior:contain; z-index:95; padding:22px 12px calc(16px + env(safe-area-inset-bottom)); box-shadow:0 -12px 40px rgba(15,18,30,.25); }
+  :root[data-skin="fd"] .app.navopen #side { transform:none; visibility:visible; transition:transform .22s cubic-bezier(.2,.8,.2,1); }
+  :root[data-skin="fd"] .app.navopen .backdrop { z-index:90; }
+  :root[data-skin="fd"] #side::before { content:""; position:absolute; top:8px; left:50%; width:40px; height:5px; margin-left:-20px; border-radius:3px; background:var(--fd-border); }
+  :root[data-skin="fd"] #sideFold { display:none !important; }
+  :root[data-skin="fd"] #side .brand { padding-right:52px !important; }
+  :root[data-skin="fd"] #side .brand h1 { max-width:none !important; }
+  #fd39close { position:absolute; right:4px; top:50%; margin-top:-21px; width:42px; height:42px; border-radius:50%; border:1px solid var(--fd-border); background:var(--fd-surface-2);
+    color:var(--fd-text-2); display:grid; place-items:center; cursor:pointer; }
+  #fd39close svg { width:18px; height:18px; }
+  :root[data-skin="fd"] #side #nav button[data-view] { min-height:46px; }
+  /* the group names come back as tappable section titles: Goods, Money and System fold on a phone (plan C5) and with no
+     visible name their screens (Products, Money, Settings...) could not be opened from More */
+  :root[data-skin="fd"] #side nav#nav .navgrp { height:auto !important; min-height:44px; font-size:12.5px !important; font-weight:700; letter-spacing:.07em;
+    text-transform:uppercase; color:var(--fd-text-3); background:none !important; padding:10px 16px 6px 18px !important; margin:8px 0 0 !important;
+    border-top:1px solid var(--fd-border); display:flex; align-items:center; justify-content:space-between; overflow:visible; cursor:pointer; border-radius:0; }
+  :root[data-skin="fd"] #side nav#nav .navgrp:first-child { display:none; }
+  :root[data-skin="fd"] #side nav#nav .navgrp::after { font-size:14px; }
+  body:has(.app.navopen) #tabbar { visibility:hidden; }
+
+  /* ---------- quick add, business list, account menu: bottom sheets ---------- */
+  :root[data-skin="fd"] .fdpop, :root[data-skin="fd"] #o_usermenu.open { left:0 !important; right:0 !important; top:auto !important; bottom:0 !important; width:auto !important;
+    min-width:0 !important; max-width:none !important; max-height:82dvh !important; overflow-y:auto; border-radius:24px 24px 0 0 !important; border-bottom:0;
+    padding:22px 10px calc(14px + env(safe-area-inset-bottom)) !important; box-shadow:0 -10px 30px rgba(15,18,30,.2) !important;
+    animation:fd39-up .2s cubic-bezier(.2,.8,.2,1); z-index:130 !important; }
+  :root[data-skin="fd"] .fdpop::before, :root[data-skin="fd"] #o_usermenu.open::before { content:""; position:absolute; top:8px; left:50%; width:40px; height:5px; margin-left:-20px; border-radius:3px; background:var(--fd-border); }
+  :root[data-skin="fd"] .fdpop .fdpop-it { min-height:48px; }
+  #fd39scrim { position:fixed; inset:0; z-index:125; background:rgba(15,18,30,.45); animation:fd39-fade .2s ease; touch-action:none; }
+  :root[data-skin="fd"] #o_usermenu.open button { min-height:44px; }
+
+  /* ---------- figure cards off the Dashboard: icon small above, the full figure, the name ---------- */
+  :root[data-skin="fd"] body:not([data-fdview="dash"]) #view .fdd-k { grid-template-columns:minmax(0, 1fr) auto; grid-template-rows:auto auto auto; column-gap:6px; row-gap:4px;
+    align-items:start; padding:12px 12px 12px 14px !important; }
+  :root[data-skin="fd"] body:not([data-fdview="dash"]) #view .fdd-k .fdd-ktop { grid-row:1; grid-column:1; }
+  :root[data-skin="fd"] body:not([data-fdview="dash"]) #view .fdd-k .fdd-badge { width:30px; height:30px; border-radius:10px; }
+  :root[data-skin="fd"] body:not([data-fdview="dash"]) #view .fdd-k .fdd-badge svg { width:16px; height:16px; }
+  :root[data-skin="fd"] body:not([data-fdview="dash"]) #view .fdd-k .fdd-num { grid-column:1 / -1; grid-row:2; font-size:20px !important; white-space:normal; overflow:visible;
+    text-overflow:clip; overflow-wrap:anywhere; line-height:1.15; }
+  :root[data-skin="fd"] body:not([data-fdview="dash"]) #view .fdd-k .fdd-lbl { grid-column:1 / -1; grid-row:3; font-size:13px; line-height:1.3; }
+  :root[data-skin="fd"] body:not([data-fdview="dash"]) #view .fdd-k .fdd-i { grid-column:2; grid-row:1; align-self:start; position:relative !important; inset:auto !important; margin:0 !important; }
+  :root[data-skin="fd"] body:not([data-fdview="dash"]) #view .fdd-k > :not(.fdd-ktop):not(.fdd-num):not(.fdd-lbl):not(.fdd-i):not(.fdd-kn) { grid-column:1 / -1; }
+  :root[data-skin="fd"] body:not([data-fdview="dash"]) #view .fdd-k:not(:has(.fdd-ktop)) .fdd-num { grid-row:1; grid-column:1; }
+  :root[data-skin="fd"] body:not([data-fdview="dash"]) #view .fdd-k:not(:has(.fdd-ktop)) .fdd-lbl { grid-row:2; }
+
+  /* ---------- Dashboard: a card that is not a figure takes the whole width ---------- */
+  :root[data-skin="fd"] #view .fdd-grid > .fdd-c:not(.fdd-k) { grid-column:1 / -1; }
+  :root[data-skin="fd"] #view .fdd-k .fdd-trend { font-size:12px; }
+  :root[data-skin="fd"] #view .fdd-scope { white-space:nowrap; }
+  :root[data-skin="fd"] #view .fdd-more { padding:10px 0; margin:-10px 0; }
+
+  /* ---------- list rows as cards: tighter, label left / value right, buttons side by side ---------- */
+  :root[data-skin="fd"] #view .scroll:has(> table.m-cards), :root[data-skin="fd"] #view .fdd-scroll:has(> table.m-cards),
+  :root[data-skin="fd"] #view .o_tbl:has(> table.m-cards), :root[data-skin="fd"] #view .fd20-tw:has(> table.m-cards),
+  :root[data-skin="fd"] #view div:has(> table.m-cards.nvg-tbl) { overflow:visible !important; max-height:none !important; }
+  :root[data-skin="fd"] #view table.m-cards, :root[data-skin="fd"] #view table.m-cards > tbody { display:block; width:100% !important; min-width:0 !important; }
+  :root[data-skin="fd"] #view table.m-cards > thead { display:none; }
+  :root[data-skin="fd"] #view table.m-cards > tbody > tr { display:block; padding:10px 14px !important; margin:0 0 10px !important; border:1px solid var(--fd-border) !important;
+    border-radius:16px !important; background:var(--fd-card); box-shadow:none; }
+  :root[data-skin="fd"] #view table.m-cards > tbody > tr > td { display:block; text-align:right; padding:5px 0 !important; min-height:0; border:0 !important;
+    font-size:14px; line-height:1.4; white-space:normal !important; overflow-wrap:anywhere; height:auto; width:auto !important; max-width:none !important; }
+  :root[data-skin="fd"] #view table.m-cards > tbody > tr > td::before { content:attr(data-label); float:left; margin:0 14px 0 0; max-width:48%; text-align:left;
+    font-size:12px; font-weight:600; letter-spacing:.03em; text-transform:uppercase; color:var(--fd-text-3); line-height:1.6; }
+  :root[data-skin="fd"] #view table.m-cards > tbody > tr > td::after { content:""; display:block; clear:both; }
+  :root[data-skin="fd"] #view table.m-cards > tbody > tr > td:first-child { text-align:left; font-weight:600; padding:2px 0 8px !important; margin-bottom:4px;
+    border-bottom:1px solid var(--fd-border) !important; }
+  :root[data-skin="fd"] #view table.m-cards > tbody > tr > td:first-child::before,
+  :root[data-skin="fd"] #view table.m-cards > tbody > tr > td[data-label=""]::before,
+  :root[data-skin="fd"] #view table.m-cards > tbody > tr > td[colspan]::before { content:none; }
+  :root[data-skin="fd"] #view table.m-cards > tbody > tr > td:only-child { border-bottom:0 !important; margin:0; padding-bottom:2px !important; }
+  :root[data-skin="fd"] #view table.m-cards > tbody > tr > td[colspan] { text-align:left; }
+  :root[data-skin="fd"] #view table.m-cards > tbody > tr > td:empty { display:none; }
+  :root[data-skin="fd"] #view table.m-cards > tbody > tr > td[data-label=""]:not(:first-child) { display:flex; flex-wrap:wrap; justify-content:flex-end; gap:8px; padding-top:8px !important; }
+  :root[data-skin="fd"] #view table.m-cards > tbody > tr > td[data-label=""]:not(:first-child)::after { content:none; }
+  :root[data-skin="fd"] #view table.m-cards > tbody > tr > td[data-label=""]:not(:first-child) > .btn { flex:1 1 auto; justify-content:center; margin:0 !important; min-height:40px; }
+  :root[data-skin="fd"] #view table.m-cards > tbody > tr > td .pill { white-space:nowrap; }
+  :root[data-skin="fd"] #view table.m-cards > tbody > tr.grp { border:0 !important; background:none; padding:8px 2px 0 !important; }
+  :root[data-skin="fd"] #view table.m-cards > tbody > tr:hover { transform:none; }
+  :root[data-skin="fd"] #view .linkbtn { padding-top:9px; padding-bottom:9px; margin-top:-9px; margin-bottom:-9px; }
+  :root[data-skin="fd"] #view table.m-cards > tbody > tr > td:first-child .linkbtn { display:inline-block; }
+
+  /* ---------- action rows wrap (no button half off the edge) ---------- */
+  :root[data-skin="fd"] #view .fd21-acts { flex-wrap:wrap !important; overflow:visible !important; margin:0 !important; padding:0 !important; width:100%; }
+  :root[data-skin="fd"] #view .fd21-acts > .btn { flex:1 1 40% !important; min-width:0; justify-content:center; }
+  :root[data-skin="fd"] #view .btn.small { min-height:38px; }
+  :root[data-skin="fd"] #view .cchip { min-height:38px; }
+  :root[data-skin="fd"] #view .bal { font-size:12.5px; }
+  :root[data-skin="fd"] #side .brand .tag { font-size:12px; }
+  /* a row of chips beside a button (Campaigns) takes the whole line instead of a narrow column */
+  :root[data-skin="fd"] #view .row > .chips { flex:1 1 100% !important; }
+  /* a status badge stays the size of its words (Maintenance) */
+  :root[data-skin="fd"] #view .fd22-st { display:inline-block; width:auto; max-width:100%; }
+  :root[data-skin="fd"] #view .chip, :root[data-skin="fd"] #view .chips > button { min-height:38px; }
+
+  /* ---------- small "i" and "?" keep their look but get a finger-sized target ---------- */
+  :root[data-skin="fd"] #view .t2q, :root[data-skin="fd"] .fdd-ti { position:relative; }
+  :root[data-skin="fd"] #view .fdd-i::after, :root[data-skin="fd"] #view .t2q::after, :root[data-skin="fd"] .fdd-ti::after { content:""; position:absolute; inset:-11px; border-radius:50%; }
+
+  /* ---------- tab bar: names readable ---------- */
+  :root[data-skin="fd"] #tabbar button { font-size:12px; }
+  :root[data-skin="fd"] #tabbar .tb-n { font-size:11px; }
+
+  /* ---------- Joint stock ---------- */
+  :root[data-skin="fd"] .jt-settle { gap:12px; padding:16px; border-radius:18px; }
+  :root[data-skin="fd"] .jt-settle .ic { width:38px; height:38px; flex-basis:38px; border-radius:12px; }
+  :root[data-skin="fd"] .jt-settle .ic svg { width:20px; height:20px; }
+  :root[data-skin="fd"] .jt-settle .t { flex:1 1 200px; }
+  :root[data-skin="fd"] .jt-settle .t b { font-size:17px; line-height:1.35; letter-spacing:-.01em; }
+  :root[data-skin="fd"] .jt-settle .go { width:100%; height:44px; }
+  :root[data-skin="fd"] .jt-two { grid-template-columns:minmax(0, 1fr); gap:12px; }
+  :root[data-skin="fd"] .jt-head-sub { font-size:13px; }
+
+  /* ---------- Settings / Platform: nothing pushes the page sideways ---------- */
+  :root[data-skin="fd"] #view .fd22-people { flex-wrap:wrap; }
+  :root[data-skin="fd"] #view .fd22-chip { white-space:normal; max-width:100%; overflow-wrap:anywhere; }
+  :root[data-skin="fd"] #view .fd22-mono, :root[data-skin="fd"] #view .sku { overflow-wrap:anywhere; white-space:normal; min-width:0; }
+  :root[data-skin="fd"] #view .fd22-tcard > .scroll { overflow-x:visible; }
+}
+@media (max-width:400px) { #fd39biz .lg { display:none; } #fd39biz { gap:4px; padding-left:6px; } }
+@keyframes fd39-fade { from { opacity:0; } to { opacity:1; } }
+@keyframes fd39-up { from { transform:translateY(40px); opacity:.4; } to { transform:none; opacity:1; } }
+@media (min-width:761px) { #fd39biz, #fd39ask, #fd39close, #fd39scrim { display:none !important; } }
+</style>
+<script>
+(function () {
+  var PHONE = window.matchMedia('(max-width:760px)');
+  var I_CHEV = '<svg class="cv" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>';
+  var I_ASK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1.1-4.6A8 8 0 1 1 21 12z"/><path d="M8.5 12h.01M12 12h.01M15.5 12h.01"/></svg>';
+  var I_X = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>';
+  function fd() { return document.documentElement.getAttribute('data-skin') === 'fd'; }
+  function bizName() { try { return typeof fdBizName === 'function' ? fdBizName() : ((el('bizName') || {}).textContent || 'Business'); } catch (e) { return 'Business'; } }
+  // the top bar: business switch and the assistant
+  function bar() {
+    if (!fd()) return;
+    var tb = document.querySelector('header.topbar'), plus = el('fdplus'); if (!tb || !plus) return;
+    var b = el('fd39biz');
+    if (!b) {
+      b = document.createElement('button'); b.type = 'button'; b.id = 'fd39biz'; b.setAttribute('aria-haspopup', 'menu');
+      b.addEventListener('click', function (e) { e.stopPropagation(); if (typeof fdBizMenu === 'function') fdBizMenu(b); });
+      plus.insertAdjacentElement('afterend', b);
+    }
+    var mk = el('bizMark'), logo = mk ? mk.innerHTML.replace(/id="fdlg"/g, 'id="fdlg39"').replace(/url\(#fdlg\)/g, 'url(#fdlg39)') : '';
+    var nm = bizName(), key = nm + '|' + logo.length;
+    if (b.getAttribute('data-k') !== key) {
+      b.setAttribute('data-k', key); b.setAttribute('aria-label', 'Business: ' + nm + '. Switch business');
+      b.innerHTML = '<span class="lg">' + logo + '</span><span class="nm">' + esc(nm) + '</span>' + I_CHEV;
+    }
+    var fab = el('aw_fab'), ask = el('fd39ask');
+    if (fab && !ask) {
+      ask = document.createElement('button'); ask.type = 'button'; ask.id = 'fd39ask'; ask.className = 'act'; ask.setAttribute('aria-label', 'Ask your ERP (assistant)'); ask.title = 'Ask your ERP';
+      ask.innerHTML = I_ASK;
+      ask.addEventListener('click', function () { var f = el('aw_fab'); if (f) f.click(); });
+      var gs = el('gs_btn'); if (gs) gs.insertAdjacentElement('beforebegin', ask); else tb.appendChild(ask);
+    }
+    var br = document.querySelector('#side .brand');
+    if (br && !el('fd39close')) {
+      var x = document.createElement('button'); x.type = 'button'; x.id = 'fd39close'; x.setAttribute('aria-label', 'Close the menu'); x.innerHTML = I_X;
+      x.addEventListener('click', function (e) { e.preventDefault(); e.stopPropagation(); var a = el('app'); if (a) a.classList.remove('navopen'); }, true);
+      br.appendChild(x);
+    }
+  }
+  // wide tables outside .scroll (Dashboard lists, Suppliers, Products' small list, Navigator) become card rows on a phone
+  var WIDE = '#view .fdd-scroll > table, #view .o_tbl > table, #view .fd20-tw > table, #view table.nvg-tbl';
+  function cards() {
+    if (!fd() || !PHONE.matches) return;
+    var ts = document.querySelectorAll(WIDE);
+    for (var t = 0; t < ts.length; t++) {
+      var tb = ts[t]; if (tb.classList.contains('m-cards') && !tb.querySelector('tbody > tr > td:not([data-label])')) continue;
+      var p = tb.parentElement;
+      if (!tb.classList.contains('m-cards') && !(tb.scrollWidth > p.clientWidth + 4 || (tb.rows[0] && tb.rows[0].cells.length >= 4))) continue;
+      var heads = [], th = tb.querySelectorAll(':scope > thead th');
+      for (var h = 0; h < th.length; h++) heads.push(th[h].textContent.replace(/[⇅↑↓]/g, '').trim());
+      var rows = tb.querySelectorAll(':scope > tbody > tr');
+      for (var r = 0; r < rows.length; r++) {
+        var col = 0, cells = rows[r].children;
+        for (var c = 0; c < cells.length; c++) { if (!cells[c].hasAttribute('data-label')) cells[c].setAttribute('data-label', heads[col] || ''); col += cells[c].colSpan || 1; }
+      }
+      tb.classList.add('m-cards');
+    }
+  }
+  // a sheet (quick add, business list, account menu) gets a dimmed backdrop that takes the tap: tapping beside the sheet
+  // closes it and never presses the button that happens to be underneath
+  function scrim() {
+    var open = fd() && PHONE.matches && !!document.querySelector('.fdpop, #o_usermenu.open'), s = el('fd39scrim');
+    if (open && !s) {
+      s = document.createElement('div'); s.id = 'fd39scrim';
+      var shut = function (e) { e.preventDefault(); e.stopPropagation(); try { if (typeof fdPopClose === 'function') fdPopClose(); } catch (x) {}
+        var m = el('o_usermenu'); if (m) m.classList.remove('open'); var t = el('fd39scrim'); if (t) t.remove(); };
+      s.addEventListener('click', shut); s.addEventListener('touchend', shut);
+      document.body.appendChild(s);
+    } else if (!open && s) s.remove();
+  }
+  var q = 0;
+  function tick() { if (q) return; q = requestAnimationFrame(function () { q = 0; try { bar(); cards(); scrim(); } catch (e) {} }); }
+  try { new MutationObserver(tick).observe(document.body, { childList: true, subtree: true }); } catch (e) {}
+  (function um() { var m = el('o_usermenu'); if (!m) return setTimeout(um, 500); try { new MutationObserver(tick).observe(m, { attributes: true, attributeFilter: ['class'] }); } catch (e) {} })();
+  try { PHONE.addEventListener('change', tick); } catch (e) {}
+  // a sheet closes when its row is chosen in the menu
+  document.addEventListener('click', function (e) {
+    if (!PHONE.matches || !e.target.closest) return;
+    if (e.target.closest('#side #nav button[data-view]')) { var a = el('app'); if (a) a.classList.remove('navopen'); }
+  });
+  tick();
+})();
+</script>
+
+<!-- fd-40 (phone, New invoice): one field per row on a phone, so the 11-digit phone and "Paid by" are never cut -->
+<style>
+@media (max-width:760px) {
+  :root[data-skin="fd"] body[data-fdview="invoice"] #view .fields { grid-template-columns:minmax(0, 1fr) !important; }
+  :root[data-skin="fd"] body[data-fdview="invoice"] #view .fields > div { grid-column:auto !important; }
+  :root[data-skin="fd"] body[data-fdview="invoice"] #view .fields select, :root[data-skin="fd"] body[data-fdview="invoice"] #view .fields input { width:100%; min-width:0; }
+}
+</style>
 <!-- fd-37: the page is styled: show it -->
 <script>(function () { var x = document.getElementById('bootHide'); if (x) x.remove(); })();</script>
 </body>

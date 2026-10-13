@@ -1842,3 +1842,12 @@ marked paid while October rent was a one-off (counted twice on the Expenses scre
   bar, the joint stock with In stock / Low / Out); Stock, Sales, Money, Month end and Settings keep every form and table
   (same functions and rules), restyled. Dev demo pool cleaned: the doubled receipts and their corrections were removed
   (the corrections had been booked as a 49,000 write-off and the doubled receipts skewed "who paid"); stock 55 = lots.
+- fd-39 (phone audit of all 33 screens at 360/375/414 px, light + dark, against his phone version): the More sheet
+  could not open Products, Stock, Shipments, Suppliers, Joint stock, Money, Expenses, Capital, Settings, Help or
+  Platform (folded groups with hidden names) - now a bottom sheet with tappable group titles; a business switch and an
+  Ask (assistant) button in the phone top bar, 40 px targets; the chat bubble hidden on phones (it covered Save bars);
+  menus as bottom sheets over a backdrop; figure cards icon-above / full number / label; Dashboard non-figure cards full
+  width; lists as tighter card rows, wide tables as cards; action rows wrap; long Settings / Platform text wraps; Joint
+  stock settlement 17 px; text >= 12 px. fd-40: New invoice one field per row on a phone. Left: the business name is
+  short at 360 px (the bar is full); dashboard edit chips overlap titles while editing; the Money receipt and invoice
+  detail drawers stay full-screen pages.
