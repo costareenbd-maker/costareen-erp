@@ -1490,3 +1490,17 @@ taken. Sponsorship rolls may also come from a joint stock.
   every handover). Filament prices removed from the brand's page and the owner's creator summary (rolls only); sales
   by creator code keep their amounts. `creatorclaims_test.mjs` (22: own stock, joint pool, refusals, list, brand page,
   part / full replacement, zero values, "not from our stock").
+
+## 119: money paid before the ERP is never lost (14 Oct 2026) - LIVE BUG FIX
+Owner: Mahabub had nothing due; on 13 Oct one item of INV-20260728-1469 (3,900, 28 Jul) was returned and refunded in
+cash, and the invoice then showed 3,900 due. Cause: sales brought over from the Google Sheet were marked Paid on the
+invoice itself with no row in payments; syncInvoiceStatus (run after every payment and return) rewrote the invoice's
+paid / due / status from the payments rows alone, so the first payment or return on such an invoice wiped the
+sheet's "paid". The 13 Oct 03:00 backup shows the invoice as Paid with no payments row. Comparing the backups of
+3 Oct and 13 Oct with live found no other invoice hit. 374 sheet-era invoices (2 May - 29 Sep, 7.8M) were exposed.
+Fix: invoices.paid_outside (119_paid_outside.sql) = money paid outside the payments ledger, filled once for invoices
+marked Paid whose payments rows hold less than the total (on live: exactly those 374, nothing made inside the ERP);
+syncInvoiceStatus now counts ledger + paid_outside. paid_outside is in no money account, so cash, banks, sales and
+profit do not change. Mahabub's invoice put back (Paid, 0 due) with two rows in invoice_fixes. Test
+paidoutside_test.mjs reproduces the case (fails without the fix: Pending, whole amount due). Live was fixed on its own
+code (commit 4fa9c96 + this fix, branch live-fix-paid), not the new design.

@@ -69,10 +69,12 @@ export async function addPayment(ctx, p) {
 export async function syncInvoiceStatus(ctx, orderId) {
   const paid = await paidByOrder(ctx);
   const rows = await ctx.tx`
-    select id, invoice_no, grand_total from invoices
+    select id, invoice_no, grand_total, paid_outside from invoices
     where business_id = ${ctx.biz} ${orderId ? ctx.tx`and invoice_no = ${String(orderId)}` : ctx.tx``}`;
   for (const r of rows) {
-    const got = paid[r.invoice_no] || 0;
+    // the ledger plus what was paid before the ERP (119_paid_outside.sql): a payment or a return recorded later must
+    // never wipe the sheet's "paid" and show the whole sale as due again
+    const got = round2((paid[r.invoice_no] || 0) + num(r.paid_outside));
     const due = Math.max(0, round2(num(r.grand_total) - got));
     const status = due <= 0.5 ? 'Paid' : (got > 0 ? 'Partial' : 'Pending');
     await ctx.tx`update invoices set advance_paid = ${got}, due_amount = ${due},
