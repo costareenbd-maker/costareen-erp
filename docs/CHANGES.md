@@ -1893,3 +1893,14 @@ waiting for their answer (AP_WANT) win over any redraw in between, the screen is
 (AP_PEND), and a failed save puts the server's state back with a message. No message per click any more (they piled
 up). Writes still go one by one (~0.7 s each), so fast clicks all land, last one wins. Account menu: one "Help"
 (the guides); "Help & shortcuts" removed and the keyboard shortcuts are a card at the bottom of Help.
+
+## fd-44 message box in his design; fold control in the top bar (14 Oct 2026)
+- Messages (toast) are his .fd-toast: a card in the theme colours with a green tick / red warning icon, bottom right
+  above the assistant bubble, rising in; full width above the bottom bar on phone. The old dark box with a green bar is gone.
+- Menu card: Profitability and Maintenance say where they live now ("A tab on the Dashboard" / "A tab in Settings");
+  their switches still decide who sees those tabs.
+- fd-41 third try: the owner said the "Collapse menu" row at the bottom "looks like another menu". The fold control is
+  now a round icon at the far left of the top bar, before the + button (Gmail / YouTube style), name on hover; hidden
+  where the menu is always folded (768-1279 px) and on phones.
+- Checked why fresh loads sometimes showed the old page: sw.js is network-first and / is no-cache; it is Cloudflare
+  taking a few seconds to spread a new deploy. A page opened before a deploy needs one reload.

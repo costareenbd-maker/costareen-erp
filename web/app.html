@@ -34537,34 +34537,33 @@ viewJoint = function () {
   :root[data-skin="fd"] body[data-fdview="invoice"] #view .fields select, :root[data-skin="fd"] body[data-fdview="invoice"] #view .fields input { width:100%; min-width:0; }
 }
 </style>
-<!-- fd-41 (owner, second try): the fold control is a "Collapse menu" row at the bottom of the side menu (as Vercel / Stripe
-     do), always in the same place, out of the logo row; folded, it is the arrow icon alone (its name on hover). Hidden
-     where the menu is always folded (768-1279) and on phones. -->
+<!-- fd-41 (owner, third try 14 Oct 2026: the bottom row "looks like another menu"): the fold control is a round icon at
+     the far left of the top bar, before the + button (as Gmail / YouTube / Notion place it): it never reads as a
+     menu item. Its name shows on hover. Hidden where the menu is always folded (768-1279) and on phones. -->
 <style>
 :root[data-skin="fd"] #side .brand { padding-right:16px !important; }
 :root[data-skin="fd"] #side .brand > div:not(.logo) { min-width:0; flex:1 1 auto; }
 :root[data-skin="fd"] #side .brand h1 { max-width:100% !important; overflow:hidden; }
-:root[data-skin="fd"] #side { display:flex; flex-direction:column; }
-:root[data-skin="fd"] #side nav#nav { flex:1 1 auto; }
-:root[data-skin="fd"] #sideFold.fd-bottom { position:sticky !important; bottom:0; left:auto !important; right:auto !important; top:auto !important; transform:none !important;
-  display:flex !important; align-items:center; gap:14px; width:calc(100% - 20px) !important; height:44px !important; min-height:44px !important; margin:10px 10px 0 !important;
-  padding:0 14px !important; border-radius:14px !important; border:1px solid var(--fd-border) !important; background:var(--fd-sidebar) !important; color:var(--fd-text-2) !important;
-  font:inherit !important; font-size:14.5px !important; font-weight:600 !important; cursor:pointer; box-shadow:0 -10px 16px var(--fd-sidebar); flex:0 0 auto; z-index:2; }
-:root[data-skin="fd"] #sideFold.fd-bottom:hover { background:var(--fd-surface-2) !important; color:var(--fd-text) !important; }
-:root[data-skin="fd"] #sideFold.fd-bottom::before { content:none !important; }
-:root[data-skin="fd"] #sideFold.fd-bottom svg { width:20px; height:20px; flex:0 0 20px; transition:transform .2s; }
-:root[data-skin="fd"] body.side-mini #sideFold.fd-bottom { justify-content:center; padding:0 !important; gap:0; font-size:0 !important; }
-:root[data-skin="fd"] body.side-mini #sideFold.fd-bottom svg { transform:rotate(180deg); }
-@media (max-width:1279px) { :root[data-skin="fd"] #sideFold.fd-bottom { display:none !important; } }
+:root[data-skin="fd"] #sideFold.fd-top { position:static !important; transform:none !important; display:inline-flex !important; align-items:center; justify-content:center;
+  width:38px !important; height:38px !important; min-height:38px !important; margin:0 !important; padding:0 !important; flex:0 0 38px;
+  border-radius:999px !important; border:1px solid var(--fd-border) !important; background:var(--fd-card) !important; color:var(--fd-text-2) !important;
+  font-size:0 !important; cursor:pointer; box-shadow:none; }
+:root[data-skin="fd"] #sideFold.fd-top:hover { background:var(--fd-surface-2) !important; color:var(--fd-text) !important; border-color:var(--fd-accent-border, var(--fd-border)) !important; }
+:root[data-skin="fd"] #sideFold.fd-top::before { content:none !important; }
+:root[data-skin="fd"] #sideFold.fd-top svg { width:19px; height:19px; transition:transform .2s; }
+:root[data-skin="fd"] body.side-mini #sideFold.fd-top svg { transform:scaleX(-1); }
+@media (max-width:1279px) { :root[data-skin="fd"] #sideFold.fd-top { display:none !important; } }
 </style>
 <script>
 (function () {
   function place() {
-    var b = el('sideFold'), side = el('side'); if (!b || !side) return;
-    if (b.parentNode !== side || side.lastElementChild !== b) side.appendChild(b);
-    b.classList.remove('fd-edge'); b.classList.add('fd-bottom');
+    var b = el('sideFold'), bar = document.querySelector('.main > header.topbar'); if (!b || !bar) return;
+    var plus = el('fdplus');
+    if (plus && plus.parentNode === bar) { if (b.nextElementSibling !== plus || b.parentNode !== bar) bar.insertBefore(b, plus); }
+    else if (bar.firstElementChild !== b) bar.insertBefore(b, bar.firstElementChild);
+    b.classList.remove('fd-edge', 'fd-bottom'); b.classList.add('fd-top');
     var mini = document.body.classList.contains('side-mini');
-    b.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M9 4v16"/><path d="M15 10l-2 2 2 2"/></svg><span>' + (mini ? '' : 'Collapse menu') + '</span>';
+    if (!b.querySelector('svg')) b.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M9 4v16"/><path d="M15 10l-2 2 2 2"/></svg>';
     b.title = mini ? 'Show the menu' : 'Fold the menu to icons';
     b.setAttribute('aria-label', b.title);
   }
@@ -34747,6 +34746,63 @@ viewJoint = function () {
   };
   all();
   setTimeout(all, 0);
+})();
+</script>
+<!-- fd-44 (owner 14 Oct 2026): the message box in his design (prototype fd.css .fd-toast: a card in the theme's colours,
+     a small tone icon - green tick, red warning - bottom right, rises in; on phone full width above the bottom bar),
+     instead of the dark box with a green bar. And the Menu card says where a screen lives now that Profitability
+     and Maintenance are tabs (fd-43). -->
+<style>
+html:root[data-skin="fd"] #toast { left:auto; right:24px; bottom:92px;   /* above the assistant bubble in the corner */
+  transform:translateY(10px); display:flex; align-items:center; gap:12px;
+  min-width:260px; max-width:420px; padding:12px 42px 12px 14px; border-radius:var(--fd-radius-lg, 16px);
+  background:var(--fd-card); color:var(--fd-text); border:1px solid var(--fd-border); border-left:1px solid var(--fd-border);
+  box-shadow:var(--fd-shadow-popover); font-size:14.5px; font-weight:500; line-height:1.4;
+  transition:opacity .18s ease, transform .22s cubic-bezier(.2,.8,.2,1); }
+html:root[data-skin="fd"] #toast.show { transform:translateY(0); }
+html:root[data-skin="fd"][data-theme="dark"] #toast { background:var(--fd-card); color:var(--fd-text); border:1px solid var(--fd-border); }
+html:root[data-skin="fd"] #toast .fdt-ic { flex:0 0 20px; width:20px; height:20px; color:var(--fd-positive); display:flex; }
+html:root[data-skin="fd"] #toast.bad .fdt-ic { color:var(--fd-negative); }
+html:root[data-skin="fd"] #toast .fdt-ic svg { width:20px; height:20px; fill:none; stroke:currentColor; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
+html:root[data-skin="fd"] #toast .fdt-tx { flex:1 1 auto; min-width:0; }
+html:root[data-skin="fd"] #toast a { color:var(--fd-accent-text, var(--fd-accent)); font-weight:700; }
+html:root[data-skin="fd"] #toast .tclose { top:50%; margin-top:-12px; right:10px; color:var(--fd-text-3, var(--fd-text)); }
+@media (max-width:640px) {
+  html:root[data-skin="fd"] #toast { left:16px; right:16px; min-width:0; max-width:none; }
+  html:root[data-skin="fd"] body.has-tabbar #toast { bottom:calc(84px + env(safe-area-inset-bottom)); }
+}
+.ap-mrow .nm .ap-where { font-size:11px; font-weight:500; color:var(--fd-text-3, var(--muted)); }
+</style>
+<script>
+(function () {
+  var OK = '<path d="M20 6L9 17l-5-5"/>', BAD = '<path d="M12 9v4M12 17h.01"/><path d="M10.3 3.9L1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/>';
+  var toast44 = toast;
+  toast = function (html, bad, ms) {
+    var r = toast44.apply(this, arguments);
+    var t = el('toast'); if (!t || t.querySelector('.fdt-ic')) return r;
+    var close = t.querySelector('.tclose'); if (close) close.remove();
+    t.innerHTML = '<span class="fdt-ic"><svg viewBox="0 0 24 24">' + (bad ? BAD : OK) + '</svg></span><span class="fdt-tx">' + t.innerHTML + '</span>';
+    if (close) t.appendChild(close);
+    return r;
+  };
+  // the Menu card: where a screen lives when it is no longer in the side menu itself
+  var WHERE = { profit: 'A tab on the Dashboard', tools: 'A tab in Settings', analytics: 'A tab on the Dashboard', mindmap: 'A tab on the Dashboard', syscheck: 'A tab in Settings' };
+  if (typeof menuCardHtml === 'function') {
+    var menuCard44 = menuCardHtml;
+    menuCardHtml = function () {
+      var h = menuCard44.apply(this, arguments);
+      Object.keys(WHERE).forEach(function (k) {
+        var re = new RegExp('(data-ap(?:mode|all)="' + k + '")');
+        if (!re.test(h)) return;
+        // the row of key k: add the note after its name
+        var i = h.search(re), s = h.lastIndexOf('<span class="nm">', i);
+        if (s < 0) return;
+        var e = h.indexOf('</span>', s);
+        h = h.slice(0, e) + '<span class="ap-where">' + esc(WHERE[k]) + '</span>' + h.slice(e);
+      });
+      return h;
+    };
+  }
 })();
 </script>
 <!-- fd-37: the page is styled: show it -->
