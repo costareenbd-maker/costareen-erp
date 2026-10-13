@@ -1863,3 +1863,6 @@ marked paid while October rent was a one-off (counted twice on the Expenses scre
   failed profit call no longer hides the Sales profit column for the session; in dashboard edit mode the DRAG label
   sits at the card's bottom, not over its title. fd-42: Bangla for the 14 Oct words (invoice red marks and profit
   warning, Follow-ups, dashboard editing, Collapse menu, joint stock overview, theme and assistant).
+- Commission > "Sales by seller" (owner: "the system should know who sold how many items"): every sale of the month
+  with its seller (always whoever was signed in), units, sales after discounts and the commission it earned; a card per
+  seller; the owner sees everyone, anyone else only their own; no cost or profit. erpCommissionSales; tests commission (29).

@@ -75,6 +75,15 @@ const rid = (await owner('erpCommission', [{ month }])).result.rules.find((x) =>
 r = await owner('erpCommissionRuleVoid', [{ id: rid, month }]);
 check('everyone\'s rule removed: sales staff earn nothing now', r.ok && !r.result.sellers.some((s) => s.id === FIX.U.sales && s.earned > 0), r.result.sellers);
 
+// ---- who sold what, sale by sale
+r = await owner('erpCommissionSales', [{ month }]);
+const ms = r.ok && r.result.sales.find((x) => x.invoiceNo === INV);
+check('the owner sees every sale with its seller, units and commission', r.ok && r.result.all === true && ms && ms.sellerId === FIX.U.mgr && ms.units === 11 && ms.commission === 1500, r.ok ? r.result.sales : r);
+check('...and a total per seller (returns counted)', r.result.sellers.some((x) => x.id === FIX.U.mgr && x.commission > 0) && r.result.sellers.some((x) => x.id === FIX.U.sales), r.result.sellers);
+check('no cost or profit in it', !JSON.stringify(r.result).includes('profit') && !JSON.stringify(r.result).includes('unit_cost'), r.result);
+r = await sales('erpCommissionSales', [{ month }]);
+check('sales staff see only their own sales', r.ok && r.result.all === false && r.result.sales.length > 0 && r.result.sales.every((x) => x.sellerId === FIX.U.sales), r.ok ? r.result : r);
+
 // ---- a rule counts from its own month on: it never rewrites the months before
 const prevM = (() => { const [y, m] = month.split('-').map(Number); return m === 1 ? (y - 1) + '-12' : y + '-' + String(m - 1).padStart(2, '0'); })();
 await sql`insert into invoices (business_id, invoice_no, customer_name, subtotal, grand_total, created_at, created_by)

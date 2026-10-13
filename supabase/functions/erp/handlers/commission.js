@@ -174,4 +174,48 @@ export async function erpSellers(ctx) {
   return { sellers: list, canChoose: false };   // a sale is always the signed-in person's (owner 14 Oct 2026)
 }
 
-export const HANDLERS = { erpSellers, erpCommission, erpCommissionRuleSave, erpCommissionRuleVoid, erpCommissionPay };
+/** Who sold what in a month, sale by sale (owner 14 Oct 2026: "the system should know who sold how many items"): each
+ *  invoice of the month with its seller (the person who made it), units, sales after discounts and the commission it
+ *  earned under the rules. The owner sees everyone; anyone else only their own sales. No cost or profit is returned. */
+export async function erpCommissionSales(ctx, payload) {
+  payload = payload || {};
+  const owner = ctx.s.role === 'owner', me = String(ctx.s.userId);
+  const month = isMonth(payload.month) ? payload.month : formatDate(ctx.now, 'yyyy-MM');
+  const rs = await rules(ctx, true);
+  const rows = await ctx.tx`
+    select coalesce(o.seller_id, o.created_by, i.seller_id, i.created_by) as seller, i.invoice_no, i.customer_name, i.created_at,
+           l.qty, l.line_total, coalesce(l.unit_cost, 0) as unit_cost, coalesce(p.sku, l.sku) as sku, p.category, p.brand,
+           coalesce(i.invoice_discount, 0) as inv_disc,
+           (select sum(x.line_total) from invoice_lines x where x.invoice_id = i.id and x.line_total > 0) as inv_sum
+    from invoice_lines l join invoices i on i.id = l.invoice_id
+    left join products p on p.id = l.product_id
+    left join invoices o on i.invoice_no like 'RTN-%' and o.business_id = i.business_id
+                        and o.invoice_no = substring(i.note from 'return of ([^ ]+)')
+    where l.business_id = ${ctx.biz} and i.voided_at is null and l.pool_id is null
+      and to_char(public.dhaka_date(i.created_at), 'YYYY-MM') = ${month}
+    order by i.created_at desc`;
+  const names = {};
+  for (const r of await ctx.tx`select m.user_id, coalesce(pe.name, pr.full_name, pr.email, 'Someone') as n
+                               from memberships m left join erp_people pe on pe.user_id = m.user_id left join profiles pr on pr.id = m.user_id
+                               where m.business_id = ${ctx.biz}`) names[String(r.user_id)] = str(r.n);
+  const by = {}, order = [];
+  for (const l of rows) {
+    const seller = l.seller ? String(l.seller) : '';
+    if (!owner && seller !== me) continue;
+    const total = num(l.line_total), sum = num(l.inv_sum);
+    const sales = total > 0 ? total - (sum > 0 ? num(l.inv_disc) * total / sum : 0) : total;
+    const profit = sales - num(l.qty) * num(l.unit_cost);
+    const m = formatDate(l.created_at, 'yyyy-MM');
+    const rule = ruleFor(rs.filter((r) => ruleOn(r, m)), seller, l);
+    const due = rule ? (rule.basis === 'profit' ? profit : sales) * num(rule.pct) / 100 : 0;
+    const k = str(l.invoice_no);
+    if (!by[k]) { by[k] = { invoiceNo: k, date: formatDate(l.created_at, 'd MMM, h:mm a'), customer: str(l.customer_name), sellerId: seller, seller: seller ? (names[seller] || 'Someone') : 'Unknown seller', units: 0, sales: 0, commission: 0 }; order.push(k); }
+    by[k].units += num(l.qty); by[k].sales += sales; by[k].commission += due;
+  }
+  const sales = order.map((k) => ({ ...by[k], units: Math.round(by[k].units * 100) / 100, sales: R(by[k].sales), commission: R(by[k].commission) }));
+  const sellers = {};
+  for (const x of sales) { const s = sellers[x.sellerId] || (sellers[x.sellerId] = { id: x.sellerId, name: x.seller, invoices: 0, units: 0, sales: 0, commission: 0 }); s.invoices++; s.units += x.units; s.sales += x.sales; s.commission += x.commission; }
+  return { month, sales, sellers: Object.values(sellers).sort((a, b) => b.sales - a.sales), all: owner };
+}
+
+export const HANDLERS = { erpCommissionSales, erpSellers, erpCommission, erpCommissionRuleSave, erpCommissionRuleVoid, erpCommissionPay };
