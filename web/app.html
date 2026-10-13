@@ -28098,7 +28098,8 @@ function fd22AnGrowth() {
     cards.push(fd22Kpi({ key: 'retc', title: 'Returning customers', icon: 'users', v: fmt(R.returning), trend: fd22Trend(R.returning, R.prev.returning, false, pl), go: 'customers',
       calc: { title: 'Returning customers', sub: rl, rows: [['Customers buying in the range who had bought before it', R.returning, 'n'], [pl, R.prev.returning, 'n']] } }));
   } else {
-    var why = FD22.xMissing ? 'arrives with the server update' : 'working it out…';
+    var Xe = FD22.x[m] && FD22.x[m].error;
+    var why = FD22.xMissing ? 'arrives with the server update' : Xe ? 'not available: ' + Xe : 'working it out…';
     if (!FD22.xMissing) fd22LoadX(m);
     cards.push(fd22Kpi({ key: 'newc', title: 'New customers', icon: 'user', v: '—', note: why }));
     cards.push(fd22Kpi({ key: 'retc', title: 'Returning customers', icon: 'users', v: '—', note: why }));
@@ -30592,7 +30593,7 @@ function fd19ProfLoad() {
     ids.forEach(function (k) { FD19.prof[k] = r.rows && r.rows[k] ? r.rows[k] : null; });
     if (VIEW === 'sales' && el('lv_invoices')) lvPaint('invoices');
     if (Object.keys(FD19.profQ).length) fd19ProfLoad();
-  }, function () { FD19.profBusy = false; FD19.profOn = false; FD19.profQ = {}; });
+  }, function () { FD19.profBusy = false; FD19.profOn = null; FD19.profQ = {}; });   // a failed call: try again next time (null), only "hidden" switches it off
 }
 
 /* ---- toolbar menus: Views, Columns, row "More" */
@@ -33221,7 +33222,7 @@ applyBusinesses = function (b) {
 .fdd-one.editing > [data-fdw] .fdw-x, .fdd-one.editing > [data-fdw] .fdw-h { pointer-events:auto; }
 .fdw-x { position:absolute; top:8px; right:8px; z-index:3; width:28px; height:28px; border-radius:50%; border:0; background:var(--fd-negative); color:#fff; font-size:16px; font-weight:800;
   line-height:28px; text-align:center; cursor:pointer; box-shadow:0 4px 12px rgba(0,0,0,.25); padding:0; }
-.fdw-h { position:absolute; top:10px; left:50%; transform:translateX(-50%); z-index:3; padding:2px 10px; border-radius:999px; background:var(--fd-card); border:1px solid var(--fd-border);
+.fdw-h { position:absolute; bottom:8px; top:auto; left:50%; transform:translateX(-50%); z-index:3; padding:2px 10px; border-radius:999px; background:var(--fd-card); border:1px solid var(--fd-border);
   font-size:11px; font-weight:700; color:var(--fd-text-3); letter-spacing:.06em; }
 .fdd-one > [data-fdw].fdw-dragging { opacity:.25; animation:none; }
 .fdw-ghost { position:fixed; z-index:200; pointer-events:none; opacity:.92; box-shadow:0 24px 60px rgba(0,0,0,.35); transform:rotate(1.5deg) scale(1.02); border-radius:20px; }
@@ -34517,6 +34518,55 @@ viewJoint = function () {
   place(); setTimeout(place, 0);
 })();
 </script>
+<!-- fd-42: Bangla for the words added on 14 Oct 2026 (New invoice red marks and profit warning, Follow-ups, dashboard
+     editing, Collapse menu, the theme and assistant buttons). Exact phrases only, so nothing else on a screen changes;
+     the business's own words (Settings > Bangla words) still win. -->
+<script>
+(function () {
+  var W = {
+    'Save turns on when every box is right': 'সব ঘর ঠিক হলে সেভ চালু হবে',
+    'Phone is required: 11 digits starting 01': 'ফোন লাগবে: 01 দিয়ে শুরু ১১ সংখ্যা',
+    'Required: 11 digits starting 01': 'লাগবে: 01 দিয়ে শুরু ১১ সংখ্যা',
+    'Customer name is required': 'কাস্টমারের নাম লাগবে',
+    'Add at least one product': 'অন্তত একটি পণ্য যোগ করুন',
+    'At least 1': 'অন্তত ১',
+    'Larger than the price': 'দামের চেয়ে বেশি',
+    'Larger than the goods': 'পণ্যের দামের চেয়ে বেশি',
+    'More than the total': 'মোটের চেয়ে বেশি',
+    'Not saved: fix the boxes marked red.': 'সেভ হয়নি: লাল দাগ দেওয়া ঘরগুলো ঠিক করুন।',
+    'Follow-ups': 'ফলো-আপ', '+ Follow-up': '+ ফলো-আপ', 'Nobody to call back.': 'কাউকে ফোন করার নেই।',
+    'Customise': 'সাজান', 'Done': 'হয়ে গেছে', '+ Add card': '+ কার্ড যোগ করুন', 'Reset': 'আগের মতো', 'Add card': 'কার্ড যোগ করুন',
+    'Editing the dashboard': 'ড্যাশবোর্ড সাজানো হচ্ছে', 'Add a card': 'একটি কার্ড যোগ করুন',
+    'Collapse menu': 'মেনু ছোট করুন', 'All products': 'সব পণ্য', 'Product group': 'পণ্যের গ্রুপ',
+    'Who pays whom, as of now': 'এখন পর্যন্ত কে কাকে দেবে', 'Partners': 'অংশীদার', 'Joint stock': 'যৌথ স্টক',
+    'Month end →': 'মাস শেষ →', 'Stock at cost': 'খরচে স্টক', 'Sold this month': 'এই মাসে বিক্রি', 'Profit this month': 'এই মাসের লাভ',
+    'Customers still owe': 'কাস্টমারদের বাকি', 'ERP assistant': 'ইআরপি সহকারী', 'Ask, or tell it what to do': 'জিজ্ঞেস করুন, বা কী করতে হবে বলুন',
+    'Theme': 'থিম', 'Chart colours': 'চার্টের রং', 'Accent colour': 'মূল রং', 'Text size · Density · Corners': 'লেখার আকার · ঘনত্ব · কোণা',
+    'Money in hand': 'হাতে টাকা', 'We owe suppliers': 'সাপ্লায়ারদের পাওনা', 'Pre-order deposits held': 'প্রি-অর্ডারের জমা টাকা',
+    'Investor capital at work': 'কাজে থাকা বিনিয়োগকারীর মূলধন', 'Unmatched payments': 'অ্যাকাউন্ট ছাড়া পেমেন্ট', 'Top Colours': 'সবচেয়ে বেশি বিক্রি রং',
+    'Setup Checklist': 'সেটআপের তালিকা', 'Reorder Suggestions': 'আবার অর্ডারের পরামর্শ', 'Needs Attention': 'নজর দরকার', 'Monthly Revenue': 'মাসিক আয়'
+  };
+  var P = [
+    [/^(\d+) more digit\(s\) needed$/, 'আরও $1টি সংখ্যা লাগবে'],
+    [/^Only (.+?) in stock$/, 'স্টকে মাত্র $1টি'],
+    [/^⚠ Under 10% profit(.*)$/, '⚠ ১০%-এর কম লাভ$1'],
+    [/^Over your limit of (.+?)%$/, 'আপনার সীমা $1% ছাড়িয়েছে'],
+    [/^Say why the price is lower$/, 'দাম কম কেন লিখুন']
+  ];
+  try {
+    for (var k in W) {
+      if (typeof I18N_BN !== 'undefined' && I18N_BN[k] === undefined) I18N_BN[k] = W[k];
+      if (typeof BN_BASE !== 'undefined' && BN_BASE && BN_BASE.s[k] === undefined) BN_BASE.s[k] = W[k];
+    }
+    P.forEach(function (x) {
+      if (typeof I18N_PAT !== 'undefined') I18N_PAT.push([x[0], x[1]]);
+      if (typeof BN_BASE !== 'undefined' && BN_BASE && BN_BASE.p) BN_BASE.p.push([String(x[0].source), x[1], x[0]]);
+    });
+    if (typeof BN_OWN !== 'undefined' && BN_OWN && typeof bnApplyOwn === 'function') bnApplyOwn(BN_OWN);
+  } catch (e) {}
+})();
+</script>
+
 <!-- fd-37: the page is styled: show it -->
 <script>(function () { var x = document.getElementById('bootHide'); if (x) x.remove(); })();</script>
 </body>

@@ -1859,3 +1859,7 @@ marked paid while October rent was a one-off (counted twice on the Expenses scre
   shipments list are worked out once and reused (pnlFor is per month; erpShipments) - the Navigator ran them 5-6 times.
 - The low-profit warning knows joint stock lines: the pool's price for this company against the pool's cost
   (jointPriceCost in joint.js; cost stays on the server). Tests joint2 (52), margins (6).
+- Small fixes: Analytics says "not available: <why>" instead of "working it out…" for ever after a server error; one
+  failed profit call no longer hides the Sales profit column for the session; in dashboard edit mode the DRAG label
+  sits at the card's bottom, not over its title. fd-42: Bangla for the 14 Oct words (invoice red marks and profit
+  warning, Follow-ups, dashboard editing, Collapse menu, joint stock overview, theme and assistant).
