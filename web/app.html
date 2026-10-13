@@ -34101,6 +34101,127 @@ brandPaint = function () {
 setTimeout(function () { try { fdShellPaint(); sideFoldPaint(); } catch (e) {} }, 0);
 </script>
 
+<!-- fd-38 (owner 14 Oct 2026): Joint stock in his design. His head (title + i, the pool and its partners under it, the
+     pool switch as a pill when there are several), his pill tabs with icons, and a new Overview: the slim figure cards,
+     "who pays whom" as one big settlement card, the partners with their capital share bar, what is selling and what is
+     out. Stock, Sales, Money, Month end and Settings keep every form and table of joint-1..4 (same functions, same rules),
+     restyled. Nothing about how joint stock works changes. -->
+<style>
+.jt-head-sub { font-size:14px; color:var(--fd-text-3); font-weight:500; margin-top:4px; display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+.jt-head-sub b { color:var(--fd-text); font-weight:700; }
+.jt-chip { display:inline-flex; align-items:center; gap:6px; height:26px; padding:0 10px; border-radius:999px; background:var(--fd-accent-soft); color:var(--fd-accent-text); font-size:12.5px; font-weight:700; }
+.jt-poolsel { height:38px; border-radius:999px; padding:0 34px 0 14px; border:1px solid var(--fd-border); background:var(--fd-card); color:var(--fd-text); font:inherit; font-size:14px; font-weight:600; }
+.jt-settle { display:flex; align-items:center; gap:18px; padding:20px 22px; border-radius:20px; background:var(--fd-accent-gradient); color:#fff; box-shadow:var(--fd-hero-shadow); margin-bottom:16px; flex-wrap:wrap; }
+.jt-settle .ic { width:52px; height:52px; border-radius:16px; background:rgba(255,255,255,.18); display:grid; place-items:center; flex:0 0 52px; }
+.jt-settle .ic svg { width:26px; height:26px; }
+.jt-settle .t { flex:1 1 260px; min-width:0; }
+.jt-settle .t span { display:block; font-size:13px; opacity:.85; font-weight:600; }
+.jt-settle .t b { display:block; font-size:24px; font-weight:800; letter-spacing:-.02em; line-height:1.25; }
+.jt-settle .t i { font-style:normal; opacity:.9; font-weight:600; }
+.jt-settle .go { height:38px; padding:0 16px; border-radius:999px; border:1px solid rgba(255,255,255,.5); background:rgba(255,255,255,.14); color:#fff; font:inherit; font-weight:700; cursor:pointer; }
+.jt-settle .go:hover { background:rgba(255,255,255,.24); }
+.jt-two { display:grid; grid-template-columns:minmax(0, 1fr) minmax(0, 1fr); gap:16px; margin-bottom:16px; }
+@media (max-width:1100px) { .jt-two { grid-template-columns:minmax(0, 1fr); } }
+.jt-card { background:var(--fd-card); border:1px solid var(--fd-border); border-radius:20px; box-shadow:var(--fd-shadow-card), var(--fd-glow-card); padding:20px 22px; }
+.jt-card h3 { margin:0 0 4px; font-size:17px; font-weight:700; display:flex; align-items:center; gap:10px; }
+.jt-card h3 .b { width:36px; height:36px; border-radius:12px; display:grid; place-items:center; background:var(--fd-accent-soft); color:var(--fd-accent-text); flex:0 0 36px; }
+.jt-card h3 .b svg { width:18px; height:18px; }
+.jt-card .s { font-size:13px; color:var(--fd-text-3); margin-bottom:14px; }
+.jt-bar { display:flex; height:14px; border-radius:999px; overflow:hidden; background:var(--fd-surface-2); margin:6px 0 14px; }
+.jt-bar i { display:block; height:100%; }
+.jt-pt { display:flex; align-items:center; gap:12px; padding:10px 0; border-top:1px solid var(--fd-border); }
+.jt-pt:first-of-type { border-top:0; }
+.jt-pt .sw { width:12px; height:12px; border-radius:4px; flex:0 0 12px; }
+.jt-pt .n { flex:1 1 auto; min-width:0; font-weight:700; }
+.jt-pt .n small { display:block; font-weight:500; color:var(--fd-text-3); font-size:12px; }
+.jt-pt .v { text-align:right; font-weight:700; white-space:nowrap; }
+.jt-pt .v small { display:block; font-weight:500; color:var(--fd-text-3); font-size:12px; }
+.jt-list { list-style:none; margin:0; padding:0; }
+.jt-list li { display:flex; align-items:center; gap:10px; padding:9px 0; border-top:1px solid var(--fd-border); font-size:14px; }
+.jt-list li:first-child { border-top:0; }
+.jt-list li .n { flex:1 1 auto; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.jt-list li .q { font-weight:700; white-space:nowrap; }
+.jt-st { display:inline-flex; align-items:center; height:22px; padding:0 8px; border-radius:999px; font-size:11.5px; font-weight:700; }
+.jt-st.ok { background:var(--fd-positive-soft); color:var(--fd-positive-text); }
+.jt-st.low { background:var(--fd-warning-soft); color:var(--fd-warning-text); }
+.jt-st.out { background:var(--fd-negative-soft); color:var(--fd-negative-text); }
+:root[data-skin="fd"] body[data-fdview="joint"] #view > #fdHead { display:none !important; }   /* fd-38 draws this screen's own head */
+/* the other tabs: his cards over the old sections */
+body[data-fdview="joint"] #view section > .card { border-radius:20px; }
+body[data-fdview="joint"] #view .paybox { border-radius:14px; background:var(--fd-surface-2); padding:12px 14px; }
+body[data-fdview="joint"] #view .jt-steps .card h2 .n { background:var(--fd-accent); color:var(--fd-text-on-accent); }
+</style>
+<script>
+var JTI = {
+  overview: '<path d="M3 3h7v9H3zM14 3h7v5h-7zM14 12h7v9h-7zM3 16h7v5H3z"/>', stock: '<path d="M21 8 12 3 3 8v8l9 5 9-5z"/><path d="M3 8l9 5 9-5M12 13v8"/>',
+  sales: '<path d="M6 6h15l-1.5 9h-12z"/><path d="M6 6L5 3H2"/><circle cx="9" cy="20" r="1.5"/><circle cx="18" cy="20" r="1.5"/>', money: '<rect x="3" y="6" width="18" height="13" rx="2"/><path d="M16 12h3"/>',
+  month: '<rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 2v4M16 2v4"/>', settings: '<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/>',
+  swap: '<path d="M7 7h12l-4-4M17 17H5l4 4"/>', people: '<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7M18 14a6 6 0 0 1 3.5 6"/>',
+  trend: '<path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/>'
+};
+function jtI(n, sz) { return '<svg viewBox="0 0 24 24" width="' + (sz || 16) + '" height="' + (sz || 16) + '" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + (JTI[n] || '') + '</svg>'; }
+var JT_COL = ['var(--fd-chart-1,#5B4FE9)', 'var(--fd-chart-2,#3D8BFD)', 'var(--fd-chart-3,#A84CFB)', 'var(--fd-chart-4,#26CDF4)'];
+function jtCard(o) {   // the slim figure card (fd-32 styles every .fdd-k off the Dashboard)
+  return '<div class="fdd-c fdd-k' + (o.hero ? ' fdhero' : '') + '"><div class="fdd-ktop"><span class="fdd-badge' + (o.tone ? ' t-' + o.tone : '') + '">' + fddIc(o.icon) + '</span></div>' +
+    '<div class="fdd-num' + (Number(o.v) < 0 ? ' neg' : '') + '">' + (o.money ? fdTk(o.v, 'BDT') : fmt(o.v)) + '</div><div class="fdd-lbl">' + esc(o.title) + '</div>' + (o.note ? '<div class="fdd-kn">' + esc(o.note) + '</div>' : '') + '</div>';
+}
+function fdJtOverview(d, pool) {
+  var b = d.book || {}, r = b.report || {}, tm = r.this_month || {}, td = r.to_date || {}, ps = r.partners || [], me = jtMe(d, pool), cur = d.currency;
+  var mine = ps.filter(function (x) { return x.business_id === me; })[0] || {};
+  var names = {}; (b.partners || []).forEach(function (x) { names[x.id] = x.name; });
+  var units = (d.stock || []).reduce(function (a, s) { return a + num(s.stock); }, 0);
+  var h = '<div class="fdd-grid">' +
+    jtCard({ title: 'Stock at cost', icon: 'box', money: true, v: td.stock_at_cost || 0, note: fmt(units) + ' pieces on the shelf' }) +
+    jtCard({ title: 'Sold this month', icon: 'cart', money: true, v: tm.revenue || 0, note: 'goods cost ' + fdTk(tm.cogs || 0, cur) }) +
+    jtCard({ title: 'Profit this month', icon: 'trend', money: true, v: tm.profit || 0, tone: (tm.profit || 0) < 0 ? 'bad' : '', note: 'your share ' + (mine.ratio !== undefined ? (Math.round(mine.ratio * 1000) / 10) + '%' : '—') }) +
+    jtCard({ title: 'Customers still owe', icon: 'bell', money: true, v: td.receivables || 0, tone: (td.receivables || 0) > 0.5 ? 'warn' : '', note: 'sold on credit, not paid yet' }) + '</div>';
+  // who pays whom: the one line that matters
+  var tr = r.transfers || [];
+  h += '<div class="jt-settle"><span class="ic">' + jtI('swap', 26) + '</span><span class="t"><span>Who pays whom, as of now</span>' +
+    (tr.length ? tr.map(function (t) { return '<b>' + esc(names[t.from] || '?') + ' <i>pays</i> ' + fdTk(t.amount, cur) + ' <i>to</i> ' + esc(names[t.to] || '?') + '</b>'; }).join('')
+               : '<b>Nobody owes anything</b><span>The cash is where it should be.</span>') + '</span>' +
+    '<button type="button" class="go" data-jttab="month">Month end →</button></div>';
+  // partners and their capital
+  var capTot = ps.reduce(function (a, x) { return a + num(x.capital); }, 0) || num(td.capital) || 0;
+  var pcard = '<div class="jt-card"><h3><span class="b">' + jtI('people', 18) + '</span>Partners</h3><div class="s">Profit is shared by the capital each had in at the start of the month.</div>';
+  if (ps.length && capTot > 0) pcard += '<div class="jt-bar">' + ps.map(function (x, i) { return '<i style="width:' + (num(x.capital) / capTot * 100).toFixed(2) + '%;background:' + JT_COL[i % JT_COL.length] + '" title="' + esc(names[x.business_id] || x.name || '') + '"></i>'; }).join('') + '</div>';
+  pcard += (ps.length ? ps : (b.partners || []).map(function (x) { return { business_id: x.id }; })).map(function (x, i) {
+    return '<div class="jt-pt"><span class="sw" style="background:' + JT_COL[i % JT_COL.length] + '"></span><span class="n">' + esc(names[x.business_id] || x.name || '?') + (x.business_id === me ? ' <span class="jt-chip">You</span>' : '') +
+      '<small>' + (x.ratio !== undefined ? (Math.round(x.ratio * 1000) / 10) + '% share' : '') + '</small></span><span class="v">' + fdTk(x.capital || 0, cur) + '<small>capital in</small></span></div>'; }).join('') + '</div>';
+  // the stock: what there is, what is out
+  var st = (d.stock || []).filter(function (s) { return s.status !== 'Discontinued'; }).slice().sort(function (a, c) { return num(a.stock) - num(c.stock); });
+  var scard = '<div class="jt-card"><h3><span class="b">' + jtI('stock', 18) + '</span>Joint stock</h3><div class="s">' + fmt(st.length) + ' product(s) · sold by both companies under their own names</div>';
+  if (!st.length) scard += '<div class="fdd-empty">Nothing in the joint stock yet. <button class="linkbtn" type="button" data-jttab="stock">Add products</button></div>';
+  else scard += '<ul class="jt-list">' + st.slice(0, 8).map(function (s) { var q = num(s.stock);
+    return '<li><span class="n">' + esc(s.name) + '</span><span class="q">' + fmt(q) + '</span><span class="jt-st ' + (q <= 0 ? 'out' : q <= 3 ? 'low' : 'ok') + '">' + (q <= 0 ? 'Out' : q <= 3 ? 'Low' : 'In stock') + '</span></li>'; }).join('') + '</ul>' +
+    (st.length > 8 ? '<button class="linkbtn" type="button" data-jttab="stock" style="margin-top:8px">All ' + fmt(st.length) + ' →</button>' : '');
+  scard += '</div>';
+  return h + '<div class="jt-two">' + pcard + scard + '</div>';
+}
+var viewJointFd = viewJoint;
+viewJoint = function () {
+  var d = JT.data;
+  if (!d || !d.on || !d.pools || !d.pools.length || !d.pool) {
+    var h0 = viewJointFd.apply(this, arguments);
+    return '<div class="fdd-head"><div><h1 class="fdd-title">Joint stock <button type="button" class="fdd-ti" data-hghelp="joint" title="Joint stock">i</button></h1>' +
+      '<div class="jt-head-sub">Goods you own together with a partner company: each sells them under its own name</div></div></div>' + h0;
+  }
+  var pool = d.pools.filter(function (p) { return p.id === d.pool; })[0] || d.pools[0];
+  var tabs = jtTabs(); if (!JT.tab || !tabs.some(function (t) { return t[0] === JT.tab; })) JT.tab = tabs.length ? tabs[0][0] : 'stock';
+  // the inside of the tab, from the old screen (its own top and tab row taken off)
+  var inner = viewJointFd.apply(this, arguments);
+  inner = inner.replace(/<div class="jt-top">[\s\S]*?<\/div>(?=<div class="tabs"|<section|<div class="note|$)/, '');
+  inner = inner.replace(/<div class="tabs" role="tablist"[\s\S]*?<\/div>/, '');
+  if (JT.tab === 'overview') inner = inner.replace(jtOverviewHtml(d, pool), fdJtOverview(d, pool));
+  var head = '<div class="fdd-head"><div><h1 class="fdd-title">Joint stock <button type="button" class="fdd-ti" data-hghelp="joint" title="Joint stock">i</button></h1>' +
+    '<div class="jt-head-sub"><b>' + esc(pool.name) + '</b> with ' + esc(jtOthers(pool, d)) + (pool.tier ? ' <span class="jt-chip">You sell at ' + esc(pool.tier === 'wholesale' ? 'wholesale' : 'retail') + ' prices</span>' : '') + '</div></div>' +
+    '<div class="fdd-tools">' + (d.pools.length > 1 ? '<select class="jt-poolsel" id="jt_pool" aria-label="Joint stock">' + d.pools.map(function (p) { return '<option value="' + esc(p.id) + '"' + (p.id === d.pool ? ' selected' : '') + '>' + esc(p.name) + '</option>'; }).join('') + '</select>' : '') + '</div></div>';
+  var tabsH = tabs.length > 1 ? '<div class="fd21-tabs" role="tablist">' + tabs.map(function (t) {
+    return '<button type="button" class="fd21-pill" role="tab" data-jttab="' + t[0] + '" aria-pressed="' + (JT.tab === t[0]) + '" aria-selected="' + (JT.tab === t[0]) + '">' + jtI(t[0]) + esc(t[1]) + '</button>'; }).join('') + '</div>' : '';
+  return head + tabsH + inner;
+};
+</script>
+
 <!-- fd-37: the page is styled: show it -->
 <script>(function () { var x = document.getElementById('bootHide'); if (x) x.remove(); })();</script>
 </body>

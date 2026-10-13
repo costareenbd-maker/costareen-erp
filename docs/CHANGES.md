@@ -1837,3 +1837,8 @@ marked paid while October rent was a one-off (counted twice on the Expenses scre
 - Dead code removed (~68 KB): the old New sale screen (fd-16), the old mind map, the old Customise dialog, the Classic /
   FilaDash switch, the first two dashboard renderers, the "Ask your ERP" screen (the bubble keeps CH / chSend).
   Kept: the old Themes window helpers the picker still uses, #bizSel (the business list's data source).
+- fd-38 (owner): Joint stock in his design - his head (pool and partners under the title, pool switch as a pill),
+  icon pill tabs, a new Overview (slim figure cards, one big "who pays whom" card, partners with their capital share
+  bar, the joint stock with In stock / Low / Out); Stock, Sales, Money, Month end and Settings keep every form and table
+  (same functions and rules), restyled. Dev demo pool cleaned: the doubled receipts and their corrections were removed
+  (the corrections had been booked as a 49,000 write-off and the doubled receipts skewed "who paid"); stock 55 = lots.
