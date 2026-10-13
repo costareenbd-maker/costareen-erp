@@ -67,6 +67,48 @@ are stored with the business's files. Nothing is deleted.
 - **1c**: WhatsApp Cloud API.
 - **1d**: AI reply drafts; "answer the easy ones" switch.
 
+### Lessons from AiPraktor (aipraktor.com, reviewed 14 Oct 2026)
+
+A Bangladeshi AI agent for Messenger, Instagram, WhatsApp and Facebook comments (pay per reply, 5-20 paisa). It is
+only our Part 1, but a good one. What we take, and what we do better because we are the ERP:
+
+| Their feature | In our Inbox |
+|---|---|
+| The AI **answers by itself** 24/7, from the catalogue only, never invents a price | Same, from the ERP's live products, prices, stock and delivery rules (not a copied catalogue) |
+| Asks what you want first, then **product cards / carousel** with price, code and buttons | Same, with our photos, colours and stock |
+| **Photo → product**: code, exact photo, look-alike; if unsure shows the closest 3 and asks | Same, plus our colour data (Colour Finder) for filament colours |
+| **Voice notes** understood; Banglish understood, answers in Bangla | Same (the AI reads audio) |
+| **Order taken in chat** → receipt | Better: becomes a real ERP invoice (stock, dues, commission, courier) after the customer confirms |
+| **Courier updates** sent into the chat (Steadfast, Pathao) with a track button; **review request** after delivery | Same: we already track Steadfast parcels |
+| **Follow-up** once inside Meta's 24 h window, hot / warm chosen by the owner | Same, tied to our Follow-ups |
+| **Broadcast** an offer to everyone who wrote in the last 23 h (inside the 24 h rule) | Same |
+| **Comment replies** by name on Page posts + a private message to the inbox | Same |
+| **Human hand-over**: the AI calls the team for a complaint, refund or special request and writes why; push to the phone; one tap "Claim"; waiting timer; the chat goes back to the AI after 1 h / 4 h / never; "." from Messenger takes it over | Same; plus the ERP bell and the customer's dues and orders right there |
+| **Customer timeline + AI helper**: summary, "what did he buy before?", next reply drafted, "make a lead" | Same, with the full ERP history (invoices, returns, warranty, points) |
+| Inbox sorted by **who waited longest**; alerts stay until someone closes them | Same |
+| **Agent desk**: teach the AI in plain words ("delivery charge 80"), it shows the current value, tests it in a customer's-phone view, goes live only on "yes", one click back to the old version | Same - and where the answer is an ERP setting (delivery charge), it changes the setting itself |
+| **Knowledge base**: answers from your own documents (return policy...) | Same |
+| **Analytics**: how much the AI handled, how fast the team answered, why people were handed over | Same |
+| Team roles per page; phone app with notifications; keys encrypted; nightly encrypted backups | We have roles, the phone layout, encrypted secrets and nightly backups already |
+| Bookings for service businesses (bKash advance + TrxID, reminders) | Later, for other companies on the platform |
+
+Watch out:
+- Their one-click "connect your Page" works because their Meta app is approved. Ours needs its own App Review.
+- WhatsApp "scan the QR code, the phone keeps working": safe only if it is Meta's official coexistence sign-up for
+  the WhatsApp Business app. A WhatsApp-Web style connection can get a number banned. We use the official way only.
+- An AI that answers by itself must be grounded: it only says prices, stock and rules the ERP gives it, and hands
+  over when unsure. Every auto-sent message is in the log.
+
+### Part 1 stages (after the review)
+- **1a** Inbox core: conversations, customer timeline, AI helper (summary / ask / draft), hand-over states, claim,
+  waiting timer, alerts; website chat bubble; Telegram.
+- **1b** Facebook Messenger + Instagram + Page comments (needs the owner's Meta app; built and tested with his own
+  accounts while Meta reviews).
+- **1c** The AI agent answering by itself: product cards, photo → product, voice notes, order → invoice after the
+  customer confirms, follow-ups and broadcasts inside 24 h, courier updates and review requests.
+- **1d** WhatsApp (official Cloud API / coexistence).
+- **1e** Agent desk (teach, test, go live, versions), knowledge base, analytics.
+
 ## Part 2 – AI marketing
 
 - **Market research report** (weekly or on request): our own sales, margins, stock age and returns + what the AI
