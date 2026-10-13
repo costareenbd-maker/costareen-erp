@@ -50,10 +50,23 @@ export async function erpSetFdPrefs(ctx, payload) {
   };
   if (p.dash && typeof p.dash === 'object' && Array.isArray(p.dash.order)) {
     const id = (x) => /^[A-Za-z0-9_]{1,24}$/.test(String(x));
-    const order = p.dash.order.filter(id).slice(0, 60).map(String);
+    const order = p.dash.order.filter(id).slice(0, 120).map(String);
     const hidden = {};
     for (const k of Object.keys(p.dash.hidden || {})) if (id(k) && p.dash.hidden[k]) hidden[k] = 1;
     out.dash = { order, hidden };
+    // fd-45: each card's size (1-4 columns), chart type and measure - known values only
+    const opts = {};
+    const T = ['bar', 'hbar', 'line', 'area', 'pie', 'donut', 'table'];
+    for (const k of Object.keys(p.dash.opts || {}).slice(0, 120)) {
+      const o = p.dash.opts[k];
+      if (!id(k) || !o || typeof o !== 'object') continue;
+      const one = {};
+      if ([1, 2, 3, 4].includes(Number(o.w))) one.w = Number(o.w);
+      if (T.includes(String(o.t))) one.t = String(o.t);
+      if (/^[a-z]{1,12}$/i.test(String(o.m || ''))) one.m = String(o.m);
+      if (Object.keys(one).length) opts[k] = one;
+    }
+    if (Object.keys(opts).length) out.dash.opts = opts;
   } else out.dash = null;
   await ctx.tx`insert into erp_prefs (user_id, fd) values (${ctx.s.userId}, ${ctx.tx.json(out)})
                on conflict (user_id) do update set fd = excluded.fd`;

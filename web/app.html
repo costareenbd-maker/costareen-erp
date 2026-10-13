@@ -34686,6 +34686,8 @@ viewJoint = function () {
     }
   }
   function tabsHtml(g) {
+    // the Dashboard's three are cards on the Dashboard now (fd-45): no tabs there, a way back on the screens themselves
+    if (g.host === 'dash') return VIEW === 'dash' || !shown('dash') ? '' : '<button type="button" data-fd43go="dash"><svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg><span>' + esc(tr('Dashboard')) + '</span></button>';
     var list = g.tabs.filter(function (t) { return shown(t[0]); });
     if (list.length < 2 || !shown(g.host)) return '';
     return list.map(function (t) {
@@ -34699,6 +34701,7 @@ viewJoint = function () {
     var h = g ? tabsHtml(g) : '';   // none of these screens has a record page, so no sub-page check
     if (!h) { if (cur) cur.remove(); return; }
     if (!cur) { cur = document.createElement('div'); cur.className = 'fd43-tabs'; cur.setAttribute('role', 'tablist'); }
+    cur.classList.toggle('fd45-back', !!(g && g.host === 'dash'));
     if (cur.getAttribute('data-k') !== VIEW + '|' + h.length) { cur.innerHTML = h; cur.setAttribute('data-k', VIEW + '|' + h.length); }
     if (view.firstChild !== cur) view.insertBefore(cur, view.firstChild);
   }
@@ -34803,6 +34806,454 @@ html:root[data-skin="fd"] #toast .tclose { top:50%; margin-top:-12px; right:10px
       return h;
     };
   }
+})();
+</script>
+<!-- fd-45 (owner 14 Oct 2026): the dashboard as the owner's own.
+     1. Analytics, Profitability and ERP Navigator are three clickable cards at the top of the Dashboard, each with a small
+        live figure and one line of analysis, instead of tabs (those screens get a "← Dashboard" link back).
+     2. Every figure of the old dashboard is a card to add: today (with the day picker), the month so far, each of their
+        numbers alone, sales per month, sales per day, stock on hand, the shelf, where the cash is, top products, stock
+        health, stock by category, recent orders, low stock. "+ Add card" has them under "Classic dashboard", and one button
+        adds them all.
+     3. Every card can be sized (1-4 columns) and every chart card drawn as columns, bars, line, area, pie, donut or a
+        table, with the measure it shows (taka, units, orders, gross, net...) - set from the ⚙ on the card in Customise.
+        Kept with the layout, so it follows the person to every device (fd-27).
+     4. Settings: the breadcrumb ("Settings / Business") is gone on the Settings screens - the title already says it. -->
+<style>
+/* 4. one title on Settings */
+body[data-fdview="settings"] #o_cp .crumbs, body[data-fdview="tools"] #o_cp .crumbs, body[data-fdview="syscheck"] #o_cp .crumbs, body[data-fdview="platform"] #o_cp .crumbs { display:none !important; }
+/* 1. the three cards */
+.fdsc-row { display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:16px; }
+.fdsc { display:flex; align-items:flex-start; gap:14px; text-align:left; padding:16px 18px; border-radius:18px; border:1px solid var(--fd-border); background:var(--fd-card);
+  color:var(--fd-text); font:inherit; cursor:pointer; transition:transform .15s, box-shadow .15s, border-color .15s; min-width:0; }
+.fdsc:hover { transform:translateY(-2px); border-color:var(--fd-accent-border, var(--fd-border)); box-shadow:var(--fd-shadow-popover, 0 8px 24px rgba(0,0,0,.12)); }
+.fdsc .fdd-badge { flex:0 0 auto; }
+.fdsc .tx { flex:1 1 auto; min-width:0; display:flex; flex-direction:column; gap:3px; }
+.fdsc .t { font-size:15px; font-weight:700; display:flex; align-items:center; gap:8px; }
+.fdsc .t .go { margin-left:auto; color:var(--fd-accent-text, var(--fd-accent)); font-size:13px; font-weight:700; white-space:nowrap; }
+.fdsc .fig { font-size:22px; font-weight:800; letter-spacing:-.02em; line-height:1.15; }
+.fdsc .an { font-size:12.5px; color:var(--fd-text-3); line-height:1.35; overflow:hidden; text-overflow:ellipsis; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; }
+.fdsc .an b { color:var(--fd-text-2); font-weight:700; }
+.fdsc .tag { font-size:10.5px; font-weight:800; letter-spacing:.08em; text-transform:uppercase; color:var(--fd-accent-text, var(--fd-accent)); }
+.fdd-c.fdsc-wrap { padding:0; background:none; border:0; box-shadow:none; }
+.fdd-c.fdsc-wrap::before, .fdd-c.fdsc-wrap::after { display:none !important; }
+@media (max-width:760px) { .fdsc-row { display:flex; gap:10px; overflow-x:auto; scroll-snap-type:x mandatory; scrollbar-width:none; margin:0 -4px; padding:2px 4px 4px; }
+  .fdsc-row::-webkit-scrollbar { display:none; } .fdsc { flex:0 0 78%; scroll-snap-align:start; padding:12px 14px; } .fdsc .fig { font-size:19px; } }
+.fd43-tabs.fd45-back { border-bottom:0; margin-bottom:6px; }
+.fd43-tabs.fd45-back button { padding:6px 2px; border-bottom:0; color:var(--fd-text-3); font-size:13.5px; flex:0 0 auto !important; }
+.fd43-tabs.fd45-back button:hover { color:var(--fd-accent-text, var(--fd-accent)); }
+/* 3. sizes */
+.fdd-grid > .fdd-c.fdw-w1 { grid-column:span 1 !important; } .fdd-grid > .fdd-c.fdw-w2 { grid-column:span 2 !important; }
+.fdd-grid > .fdd-c.fdw-w3 { grid-column:span 3 !important; } .fdd-grid > .fdd-c.fdw-w4 { grid-column:1 / -1 !important; }
+@media (max-width:1180px) { .fdd-grid > .fdd-c.fdw-w2, .fdd-grid > .fdd-c.fdw-w3, .fdd-grid > .fdd-c.fdw-w4 { grid-column:1 / -1 !important; } }
+/* chart cards */
+.fdc-sub { font-size:12.5px; color:var(--fd-text-3); margin:-4px 0 10px; }
+.fdc-ms { display:inline-flex; gap:2px; padding:2px; border-radius:999px; background:var(--fd-surface-2); margin-left:auto; flex-wrap:wrap; }
+.fdc-ms button { border:0; background:none; font:inherit; font-size:12px; font-weight:700; color:var(--fd-text-3); padding:4px 10px; border-radius:999px; cursor:pointer; }
+.fdc-ms button.on { background:var(--fd-card); color:var(--fd-text); box-shadow:0 1px 2px rgba(0,0,0,.12); }
+.fdd-ch .fdc-ms + .fdd-more { margin-left:8px; }
+.fdc-svg { width:100%; height:auto; display:block; overflow:visible; }
+.fdc-svg text { font-size:11px; fill:var(--fd-text-3); font-family:inherit; }
+.fdc-svg text.v { fill:var(--fd-text-2); font-weight:700; font-size:10.5px; }
+.fdc-svg .grid { stroke:var(--fd-border); stroke-dasharray:3 4; }
+.fdc-svg .b { fill:var(--fd-accent, #F5A623); transition:opacity .15s; } .fdc-svg .b:hover { opacity:.75; }
+.fdc-svg .ln { fill:none; stroke:var(--fd-accent, #F5A623); stroke-width:2.5; stroke-linejoin:round; stroke-linecap:round; }
+.fdc-svg .ar { fill:var(--fd-accent, #F5A623); opacity:.16; }
+.fdc-svg .dot { fill:var(--fd-card); stroke:var(--fd-accent, #F5A623); stroke-width:2; }
+.fdc-pie { display:flex; align-items:center; gap:18px; flex-wrap:wrap; }
+.fdc-pie svg { width:180px; height:180px; flex:0 0 180px; }
+.fdc-pie svg text.c1 { font-size:22px; font-weight:800; fill:var(--fd-text); } .fdc-pie svg text.c2 { font-size:11px; fill:var(--fd-text-3); }
+.fdc-leg { flex:1 1 160px; min-width:0; display:flex; flex-direction:column; gap:6px; font-size:13px; }
+.fdc-leg div { display:flex; align-items:center; gap:8px; min-width:0; } .fdc-leg i { width:10px; height:10px; border-radius:3px; flex:0 0 10px; }
+.fdc-leg span { flex:1 1 auto; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:var(--fd-text-2); } .fdc-leg b { font-weight:700; white-space:nowrap; }
+.fdc-rank { display:flex; flex-direction:column; gap:8px; }
+.fdc-rank div { display:grid; grid-template-columns:minmax(80px, 38%) 1fr auto; gap:10px; align-items:center; font-size:13px; }
+.fdc-rank span { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:var(--fd-text-2); }
+.fdc-rank em { display:block; height:10px; border-radius:999px; background:var(--fd-surface-2); overflow:hidden; } .fdc-rank em i { display:block; height:100%; border-radius:999px; background:var(--fd-accent, #F5A623); }
+.fdc-rank b { font-weight:700; white-space:nowrap; }
+/* the old dashboard's lists inside a card */
+.fdcl-list > div { display:flex; justify-content:space-between; gap:12px; padding:9px 0; border-bottom:1px solid var(--fd-border); font-size:13.5px; }
+.fdcl-list > div:last-child { border-bottom:0; }
+.fdcl-list > div > span { display:flex; flex-direction:column; color:var(--fd-text); min-width:0; } .fdcl-list > div > span .sku { font-size:11.5px; color:var(--fd-text-3); }
+.fdcl-list > div > b { font-weight:800; white-space:nowrap; }
+.fdcl-list > div.lead > span, .fdcl-list > div.lead > b { font-weight:800; }
+.fdcl-mini { display:grid; grid-template-columns:repeat(auto-fit, minmax(150px, 1fr)); gap:12px; }
+.fdcl-mini > div { padding:12px 14px; border-radius:14px; background:var(--fd-surface-2); min-width:0; }
+.fdcl-mini .l { font-size:12px; color:var(--fd-text-3); font-weight:600; } .fdcl-mini .v { font-size:20px; font-weight:800; letter-spacing:-.02em; margin:2px 0; }
+.fdcl-mini .d { font-size:11.5px; color:var(--fd-text-3); } .fdcl-mini .d .up { color:var(--fd-positive-text, var(--fd-positive)); font-weight:700; } .fdcl-mini .d .down { color:var(--fd-negative-text, var(--fd-negative)); font-weight:700; }
+.fdcl-day { display:flex; align-items:center; gap:8px; margin-left:auto; } .fdcl-day input { height:34px; padding:0 10px; border-radius:10px; }
+/* the ⚙ on a card in edit mode, and its window */
+.fdw-set { position:absolute; top:10px; right:48px; z-index:3; width:30px; height:30px; border-radius:999px; border:1px solid var(--fd-border); background:var(--fd-card); color:var(--fd-text-2);
+  cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:15px; }
+.fdw-set:hover { color:var(--fd-accent-text, var(--fd-accent)); border-color:var(--fd-accent-border, var(--fd-border)); }
+.fdws-sec { font-size:12px; font-weight:800; letter-spacing:.06em; text-transform:uppercase; color:var(--fd-text-3); margin:14px 0 8px; }
+.fdws-opts { display:flex; flex-wrap:wrap; gap:8px; }
+.fdws-opts button { display:inline-flex; align-items:center; gap:7px; padding:8px 12px; border-radius:12px; border:1px solid var(--fd-border); background:var(--fd-card); color:var(--fd-text-2); font:inherit; font-size:13.5px; font-weight:600; cursor:pointer; }
+.fdws-opts button svg { width:18px; height:18px; fill:none; stroke:currentColor; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
+.fdws-opts button.on { border-color:var(--fd-accent, #F5A623); color:var(--fd-accent-text, var(--fd-accent)); background:var(--fd-accent-soft, transparent); }
+.fdg-all { margin:4px 0 2px; }
+.fdd-one.editing > .fdd-c > .fdd-ch { padding-right:76px; }
+.fdd-one.editing > .fdd-c.fdsc-wrap { padding-top:46px; }
+</style>
+<script>
+(function () {
+  if (typeof fddWidgets !== 'function') return;
+  var cur = function () { return (FDD.data && FDD.data.currency) || (D && D.currency) || 'BDT'; };
+  var mk = function (cls, inner) { return '<div class="fdd-c ' + (cls || '') + '">' + inner + '</div>'; };
+  var head = function (icon, title, extra) { return '<div class="fdd-ch"><span class="fdd-badge">' + fddIc(icon) + '</span><div class="fdd-ct">' + esc(title) + '</div>' + (extra || '') + '</div>'; };
+
+  /* ---------- per-card settings, kept with the layout ---------- */
+  function L0() { return fdwLayout() || { order: FDW_LAST.map(function (w) { return w.id; }), hidden: {} }; }
+  function optsOf(id) { var L = fdwLayout(); return (L && L.opts && L.opts[id]) || {}; }
+  function setOpts(id, o) {
+    var L = L0(); L.opts = L.opts || {};
+    var n = Object.assign({}, L.opts[id] || {}, o); Object.keys(n).forEach(function (k) { if (n[k] === null || n[k] === '') delete n[k]; });
+    if (Object.keys(n).length) L.opts[id] = n; else delete L.opts[id];
+    fdwSave(L);
+  }
+
+  /* ---------- the chart engine: one set of points, any kind of chart ---------- */
+  var TYPES = { bar: 'Columns', hbar: 'Bars', line: 'Line', area: 'Area', pie: 'Pie', donut: 'Donut', table: 'Table' };
+  var TIC = { bar: '<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>', hbar: '<path d="M4 6h12M4 12h16M4 18h8"/>', line: '<path d="M3 17l6-6 4 4 8-8"/>',
+    area: '<path d="M3 17l6-6 4 4 8-8v12H3z"/>', pie: '<path d="M12 3v9h9a9 9 0 1 1-9-9z"/>', donut: '<circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3"/>', table: '<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M9 4v16"/>' };
+  function fv(v, o) { return o.money ? fdTk(v, cur()) : o.pct ? fmt(v) + '%' : fmt(v); }
+  function short(v, o) { return o.money ? compact(v) : fmt(v); }
+  function colour(i, p) { return p && p.c ? p.c : FDD_COL[i % FDD_COL.length]; }
+  function fdcChart(pts, type, o) {
+    o = o || {};
+    pts = (pts || []).filter(function (p) { return p && p.l !== undefined; });
+    if (!pts.length || !pts.some(function (p) { return Number(p.v); })) return '<div class="fdd-empty">Nothing to show for this yet.</div>';
+    var tot = pts.reduce(function (s, p) { return s + Math.max(0, Number(p.v) || 0); }, 0);
+    if (type === 'table') {
+      return '<div class="fdd-scroll"><table class="fdd-t"><thead><tr><th>' + esc(o.label || 'Item') + '</th><th class="n">' + esc(o.measure || 'Value') + '</th>' + (o.share !== false ? '<th class="n">Share</th>' : '') + '</tr></thead><tbody>' +
+        pts.map(function (p, i) { return '<tr><td class="nm">' + (o.swatch ? '<i class="fdd-sw" style="background:' + colour(i, p) + '"></i>' : '') + esc(p.l) + '</td><td class="n">' + fv(p.v, o) + '</td>' +
+          (o.share !== false ? '<td class="n">' + (tot ? Math.round(Math.max(0, p.v) / tot * 100) + '%' : '—') + '</td>' : '') + '</tr>'; }).join('') + '</tbody></table></div>';
+    }
+    if (type === 'hbar') {
+      var mx = Math.max.apply(null, pts.map(function (p) { return Math.abs(p.v); }).concat([1]));
+      return '<div class="fdc-rank">' + pts.slice(0, 15).map(function (p, i) {
+        return '<div title="' + esc(p.l + ' · ' + fv(p.v, o)) + '"><span>' + esc(p.l) + '</span><em><i style="width:' + Math.max(1.5, Math.abs(p.v) / mx * 100).toFixed(1) + '%' + (o.multi ? ';background:' + colour(i, p) : '') + '"></i></em><b>' + fv(p.v, o) + '</b></div>';
+      }).join('') + '</div>';
+    }
+    if (type === 'pie' || type === 'donut') {
+      var ps = pts.filter(function (p) { return p.v > 0; }), R = 80, cx = 90, cy = 90, a0 = -Math.PI / 2, arcs = '';
+      if (!ps.length) return '<div class="fdd-empty">Nothing above zero to share out.</div>';
+      ps.forEach(function (p, i) {
+        var a = p.v / tot * Math.PI * 2, a1 = a0 + a, big = a > Math.PI ? 1 : 0;
+        var x0 = cx + R * Math.cos(a0), y0 = cy + R * Math.sin(a0), x1 = cx + R * Math.cos(a1 - 0.0001), y1 = cy + R * Math.sin(a1 - 0.0001);
+        arcs += ps.length === 1 ? '<circle cx="' + cx + '" cy="' + cy + '" r="' + R + '" fill="' + colour(i, p) + '"><title>' + esc(p.l) + '</title></circle>'
+          : '<path d="M' + cx + ',' + cy + ' L' + x0.toFixed(2) + ',' + y0.toFixed(2) + ' A' + R + ',' + R + ' 0 ' + big + ' 1 ' + x1.toFixed(2) + ',' + y1.toFixed(2) + ' Z" fill="' + colour(i, p) + '" stroke="var(--fd-card)" stroke-width="2"><title>' + esc(p.l + ' · ' + fv(p.v, o) + ' · ' + Math.round(p.v / tot * 100) + '%') + '</title></path>';
+        a0 = a1;
+      });
+      var hole = type === 'donut' ? '<circle cx="' + cx + '" cy="' + cy + '" r="48" fill="var(--fd-card)"/><text class="c1" x="90" y="94" text-anchor="middle">' + Math.round(ps[0].v / tot * 100) + '%</text><text class="c2" x="90" y="112" text-anchor="middle">' + esc(String(ps[0].l).slice(0, 14)) + '</text>' : '';
+      return '<div class="fdc-pie"><svg viewBox="0 0 180 180" role="img" aria-label="' + esc(o.title || 'chart') + '">' + arcs + hole + '</svg><div class="fdc-leg">' +
+        ps.slice(0, 10).map(function (p, i) { return '<div><i style="background:' + colour(i, p) + '"></i><span>' + esc(p.l) + '</span><b>' + fv(p.v, o) + '</b></div>'; }).join('') +
+        (ps.length > 10 ? '<div><span>+ ' + (ps.length - 10) + ' more</span></div>' : '') + '</div></div>';
+    }
+    // columns, line, area
+    // the drawing is as wide as its card, so a full-width chart is wide and low instead of a huge square
+    var W = o.w >= 3 ? 1200 : o.w === 1 ? 380 : 600, H = o.w >= 3 ? 280 : o.w === 1 ? 230 : 240, Lm = 52, T = 18, B = 28, Rm = 10, iw = W - Lm - Rm, ih = H - T - B, n = pts.length;
+    var vs = pts.map(function (p) { return Number(p.v) || 0; }), hi = Math.max.apply(null, vs.concat([0])), lo = Math.min.apply(null, vs.concat([0]));
+    if (hi === lo) hi = lo + 1;
+    var y = function (v) { return T + ih - (v - lo) / (hi - lo) * ih; };
+    var g = '';
+    for (var t = 0; t <= 4; t++) { var tv = lo + (hi - lo) * t / 4, ty = y(tv); g += '<line class="grid" x1="' + Lm + '" x2="' + (W - Rm) + '" y1="' + ty.toFixed(1) + '" y2="' + ty.toFixed(1) + '"/><text x="' + (Lm - 8) + '" y="' + (ty + 4).toFixed(1) + '" text-anchor="end">' + short(tv, o) + '</text>'; }
+    var every = Math.max(1, Math.ceil(n / (W >= 1200 ? 24 : W <= 380 ? 6 : 12))), xs = '';
+    var xAt = function (i) { return type === 'bar' ? Lm + iw * (i + 0.5) / n : Lm + (n === 1 ? iw / 2 : iw * i / (n - 1)); };
+    pts.forEach(function (p, i) { if (i % every === 0 || i === n - 1) xs += '<text x="' + xAt(i).toFixed(1) + '" y="' + (H - 8) + '" text-anchor="middle">' + esc(String(p.l).slice(0, 8)) + '</text>'; });
+    var body = '';
+    if (type === 'bar') {
+      var bw = Math.max(3, iw / n * 0.62), y0 = y(Math.max(lo, 0));
+      pts.forEach(function (p, i) {
+        var v = Number(p.v) || 0, yy = y(v), x = xAt(i) - bw / 2, top = Math.min(yy, y0), hh = Math.max(v ? 1 : 0, Math.abs(y0 - yy));
+        body += '<rect class="b" x="' + x.toFixed(1) + '" y="' + top.toFixed(1) + '" width="' + bw.toFixed(1) + '" height="' + hh.toFixed(1) + '" rx="' + Math.min(6, bw / 3).toFixed(1) + '"' + (o.multi ? ' style="fill:' + colour(i, p) + '"' : '') + '><title>' + esc(p.l + ' · ' + fv(v, o)) + '</title></rect>';
+        if (n <= (W >= 1200 ? 31 : 14) && v) body += '<text class="v" x="' + xAt(i).toFixed(1) + '" y="' + (top - 5).toFixed(1) + '" text-anchor="middle">' + short(v, o) + '</text>';
+      });
+    } else {
+      var P = pts.map(function (p, i) { return [Number(xAt(i).toFixed(1)), Number(y(Number(p.v) || 0).toFixed(1))]; });
+      var dl = 'M' + P.map(function (q) { return q[0] + ',' + q[1]; }).join(' L');
+      if (type === 'area') body += '<path class="ar" d="' + dl + ' L' + P[P.length - 1][0] + ',' + y(Math.max(lo, 0)).toFixed(1) + ' L' + P[0][0] + ',' + y(Math.max(lo, 0)).toFixed(1) + ' Z"/>';
+      body += '<path class="ln" d="' + dl + '"/>';
+      if (n <= 40) P.forEach(function (q, i) { body += '<circle class="dot" cx="' + q[0] + '" cy="' + q[1] + '" r="' + (n > 20 ? 2.5 : 3.5) + '"><title>' + esc(pts[i].l + ' · ' + fv(pts[i].v, o)) + '</title></circle>'; });
+    }
+    return '<svg class="fdc-svg" viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="' + esc(o.title || 'chart') + '">' + g + body + xs + '</svg>';
+  }
+  window.fdcChart = fdcChart;
+
+  /* ---------- chart cards: where each one's points come from ---------- */
+  // CH[id] = { title, icon, def, types?, measures: [[key, label, money?]], pts(m) -> [{l, v, c?}], sub?(m), go?, own? (the card keeps its own look until a type is chosen) }
+  var DN = { groupDonut: ['byGroup', 'Sales by Product Group', 'spool', 'products'], channelDonut: ['byChannel', 'Sales Channel', 'globe', 'sales'],
+             brandDonut: ['byBrand', 'Sales by Brand', 'layers', 'products'], methodDonut: ['byMethod', 'Payments by Method', 'wallet', 'cash'] };
+  var CH = {};
+  Object.keys(DN).forEach(function (id) {
+    CH[id] = { title: DN[id][1], icon: DN[id][2], def: 'donut', own: true, go: DN[id][3], measures: [['value', 'Taka', true]],
+      pts: function () { var d = FDD.data; return ((d && d.donuts && d.donuts[DN[id][0]]) || []).map(function (s) { return { l: s.label, v: s.value }; }); } };
+  });
+  CH.revenue = { title: 'Monthly Revenue', icon: 'taka', def: 'area', own: true, measures: [['revenue', 'Revenue', true], ['gross', 'Gross profit', true], ['net', 'Net profit', true]],
+    pts: function (m) { var d = FDD.data; return ((d && d.series) || []).map(function (s) { return { l: s.label, v: s[m] }; }); } };
+  CH.colours = { title: 'Top Colours', icon: 'spool', def: 'donut', own: true, measures: [['units', 'Units'], ['value', 'Taka', true]],
+    pts: function (m) { var d = FDD.data; return ((d && d.topColours) || []).map(function (c) { return { l: c.label, v: c[m], c: fdSwatch(c.label) }; }); } };
+  CH.topProducts = { title: 'Top Products', icon: 'list', def: 'table', own: true, measures: [['units', 'Units'], ['revenue', 'Taka', true], ['gross', 'Gross profit', true]],
+    pts: function (m) { var d = FDD.data; return ((d && d.topProducts) || []).map(function (p) { return { l: p.name, v: p[m] || 0 }; }); } };
+  // the old dashboard's charts
+  CH.c_salesMonth = { title: 'Sales per month', icon: 'trend', def: 'bar', measures: [['revenue', 'Taka', true], ['units', 'Units'], ['orders', 'Orders']],
+    year: true, pts: function (m) { var Y = (D && D.years) || {}, ys = Object.keys(Y).sort(); if (!ys.length) return []; var yr = DASH_YEAR && Y[DASH_YEAR] ? DASH_YEAR : ys[ys.length - 1];
+      return Y[yr].map(function (r) { return { l: r.label, v: r[m] || 0 }; }); },
+    sub: function (m) { var Y = (D && D.years) || {}, ys = Object.keys(Y).sort(); return ys.length ? (DASH_YEAR && Y[DASH_YEAR] ? DASH_YEAR : ys[ys.length - 1]) : ''; } };
+  CH.c_salesDay = { title: 'Sales per day — last 30 days', icon: 'trend', def: 'line', measures: [['revenue', 'Taka', true], ['units', 'Units'], ['orders', 'Orders']],
+    pts: function (m) { return ((D && D.days) || []).map(function (r) { return { l: r.label, v: r[m] || 0 }; }); },
+    sub: function (m) { var ds = (D && D.days) || [], t = ds.reduce(function (s, r) { return s + (r[m] || 0); }, 0); return 'Total ' + (m === 'revenue' ? fdTk(t, cur()) : fmt(t) + (m === 'units' ? ' pcs' : ' orders')) + ' · average ' + (m === 'revenue' ? fdTk(ds.length ? t / ds.length : 0, cur()) : fmt(ds.length ? Math.round(t / ds.length) : 0)) + ' a day'; } };
+  CH.c_topProducts = { title: 'Top products this month', icon: 'list', def: 'hbar', go: 'products', measures: [['units', 'Units'], ['revenue', 'Taka', true]],
+    pts: function (m) { return ((D && D.topProducts) || []).map(function (r) { return { l: r.name, v: r[m] || 0 }; }); } };
+  CH.c_stockHealth = { title: 'Stock health', icon: 'box', def: 'donut', go: 'products', measures: [['n', 'Products']],
+    pts: function () { var s = (D && D.stock) || {}; return [{ l: 'In stock', v: s.inStock || 0, c: 'var(--fd-positive, #1DBF73)' }, { l: 'At reorder', v: s.reorder || 0, c: 'var(--fd-warning, #F59E0B)' }, { l: 'Out of stock', v: s.outOfStock || 0, c: 'var(--fd-negative, #E5484D)' }]; } };
+  CH.c_stockByCat = { title: 'Stock by category', icon: 'layers', def: 'hbar', go: 'products', measures: [['units', 'Units'], ['cost', 'At cost', true], ['value', 'At price', true]],
+    pts: function (m) { return ((D && D.stockByCat) || []).map(function (r) { return { l: r.cat, v: r[m] || 0 }; }); } };
+  CH.c_months = { title: 'Last months', icon: 'trend', def: 'bar', measures: [['revenue', 'Taka', true], ['units', 'Units'], ['orders', 'Orders']],
+    pts: function (m) { return ((D && D.months) || []).map(function (r) { return { l: r.label, v: r[m] || 0 }; }); } };
+
+  function measureOf(id) { var c = CH[id], m = optsOf(id).m; return c.measures.some(function (x) { return x[0] === m; }) ? m : c.measures[0][0]; }
+  function chartCard(id, cls) {
+    var c = CH[id], m = measureOf(id), mm = c.measures.filter(function (x) { return x[0] === m; })[0] || c.measures[0];
+    var type = optsOf(id).t || c.def;
+    var seg = c.measures.length > 1 ? '<span class="fdc-ms">' + c.measures.map(function (x) { return '<button type="button" data-fdcm="' + id + '|' + x[0] + '" class="' + (x[0] === m ? 'on' : '') + '">' + esc(x[1]) + '</button>'; }).join('') + '</span>' : '';
+    var yrs = c.year && D && D.years ? Object.keys(D.years).sort() : [];
+    if (yrs.length > 1) seg += '<span class="fdc-ms">' + yrs.map(function (y) { var on = (DASH_YEAR && D.years[DASH_YEAR] ? DASH_YEAR : yrs[yrs.length - 1]) === y; return '<button type="button" data-year="' + y + '" class="' + (on ? 'on' : '') + '">' + y + '</button>'; }).join('') + '</span>';
+    var more = c.go && navOn(c.go) ? '<button type="button" class="fdd-more" data-go="' + c.go + '">View →</button>' : '';
+    var title = c.title + (c.sub && c.year ? ' — ' + c.sub(m) : '');
+    var sub = c.sub && !c.year ? '<div class="fdc-sub">' + esc(c.sub(m)) + '</div>' : '';
+    var pts = c.pts(m), multi = id === 'c_stockHealth' || id === 'colours' || /Donut$/.test(id);
+    var ow = optsOf(id).w || (cls === 's4' ? 4 : 2);
+    return mk(cls || 's2', head(c.icon, title, seg + more) + sub + fdcChart(pts, type, { w: ow, money: !!mm[2], title: c.title, measure: mm[1], swatch: multi || type === 'pie' || type === 'donut', multi: multi }));
+  }
+
+  /* ---------- 1. the three cards at the top ---------- */
+  function shortcutsHtml(d) {
+    var k = (d && d.kpi) || {}, out = [];
+    if (navOn('analytics')) {
+      var tc = ((d && d.topColours) || []).filter(function (c) { return c.units > 0 && !/^no colou?r$/i.test(String(c.label).trim()); })[0];
+      out.push(['analytics', 'chart', 'Analytics', k.margin ? fmt(k.margin.v) + '% gross margin' : (k.units ? fmt(k.units.v) + ' units sold' : '—'),
+        tc ? 'Top colour <b>' + esc(tc.label) + '</b> · ' + fmt(tc.units) + ' units. Shipments, slow sellers, colours, the year.' : 'Shipments, slow sellers, colours, the year at a glance.']);
+    }
+    if (navOn('profit')) {
+      var net = k.net || k.gross, rev = k.revenue ? k.revenue.v : 0;
+      out.push(['profit', 'trend', 'Profitability', net ? fdTk(net.v, cur()) + (k.net ? ' net' : ' gross') : '—',
+        net && rev ? (k.net ? 'Net margin <b>' + Math.round(net.v / rev * 100) + '%</b>' : 'Gross margin <b>' + Math.round(net.v / rev * 100) + '%</b>') + ' on ' + fdTk(rev, cur()) + ' sales · month by month.' : 'Profit and loss, month by month.']);
+    }
+    if (navOn('mindmap')) {
+      var screens = [].filter.call(document.querySelectorAll('#nav button[data-view]'), function (b) { return b.style.display !== 'none' && b.getAttribute('data-view') !== 'home'; }).length;
+      out.push(['mindmap', 'nav', 'ERP Navigator', fmt(screens) + ' screens', 'Every part of the ERP on one map, with live counts. <b>Find anything</b> in one click.']);
+    }
+    if (!out.length) return '';
+    var IC = { chart: '<path d="M4 20V10M10 20V4M16 20v-8M22 20H2"/>', trend: '<path d="M3 17l6-6 4 4 8-8"/><path d="M14 7h7v7"/>',
+      nav: '<circle cx="12" cy="12" r="3"/><circle cx="4" cy="5" r="2"/><circle cx="20" cy="5" r="2"/><circle cx="4" cy="19" r="2"/><circle cx="20" cy="19" r="2"/><path d="M6 6l4 4M18 6l-4 4M6 18l4-4M18 18l-4-4"/>' };
+    return '<div class="fdd-c s4 fdsc-wrap"><div class="fdsc-row">' + out.map(function (x) {
+      return '<button type="button" class="fdsc" data-fd45go="' + x[0] + '"><span class="fdd-badge"><svg viewBox="0 0 24 24">' + IC[x[1]] + '</svg></span><span class="tx"><span class="tag">Analysis</span>' +
+        '<span class="t">' + esc(x[2]) + '<span class="go">Open →</span></span><span class="fig">' + x[3] + '</span><span class="an">' + x[4] + '</span></span></button>';
+    }).join('') + '</div></div>';
+  }
+
+  /* ---------- 2. the old dashboard, card by card ---------- */
+  function dlt(now, prev, word) {
+    now = Number(now) || 0; prev = Number(prev) || 0;
+    if (!prev) return 'nothing ' + word + ' ' + (word === 'last month' ? '' : 'yesterday');
+    var pc = (now - prev) / prev * 100;
+    return '<span class="' + (pc >= 0 ? 'up' : 'down') + '">' + (pc >= 0 ? '▲' : '▼') + ' ' + Math.abs(pc).toFixed(0) + '%</span> vs ' + (word === 'last month' ? esc(D.prevLabel) : 'yesterday') + ' (' + fmt(prev) + ')';
+  }
+  function mini(l, v, dd) { return '<div><div class="l">' + esc(l) + '</div><div class="v">' + v + '</div>' + (dd ? '<div class="d">' + dd + '</div>' : '') + '</div>'; }
+  var C = {};   // id -> [title, note, html()]
+  C.c_today = ['Today (with the day picker)', 'today or any day you pick', function () {
+    var k = D.kpi, p = D.profit, s = DAYSEL, c = cur();
+    var pick = '<span class="fdcl-day"><input class="i" id="dayPick" type="date" max="' + esc(todayISO()) + '" value="' + esc(s ? s.date : todayISO()) + '">' +
+      (s ? '<button class="btn small" type="button" id="dayToday">Today</button>' : '') + (DAY_BUSY ? '<span class="sku">loading…</span>' : '') + '</span>';
+    var g = s ? mini('Revenue', fdTk(s.revenue, c), 'on ' + esc(s.label)) + mini('Orders', fmt(s.orders), fmt(s.lines) + ' product line(s)') + mini('Units sold', fmt(s.units), '') +
+        (s.gross !== undefined ? mini('Gross profit', fdTk(s.gross, c), fmt(s.margin) + '% margin') : mini('Average order', fdTk(s.orders ? s.revenue / s.orders : 0, c), ''))
+      : mini('Revenue today', fdTk(k.todayRevenue, c), dlt(k.todayRevenue, k.yestRevenue, 'taken')) + mini('Orders today', fmt(k.todayOrders), dlt(k.todayOrders, k.yestOrders, 'ordered')) +
+        mini('Units sold today', fmt(k.todayUnits), dlt(k.todayUnits, k.yestUnits, 'sold')) +
+        (p ? mini('Gross profit today', fdTk(p.todayGross, c), fmt(p.todayMargin) + '% margin') : mini('Average order today', fdTk(k.todayOrders ? k.todayRevenue / k.todayOrders : 0, c), ''));
+    return mk('s4', head('clock', s ? s.label : 'Today', pick) + '<div class="fdcl-mini">' + g + '</div>');
+  }];
+  C.c_month = [function () { return (D ? D.monthLabel : 'The month') + ' so far'; }, 'revenue, profit, orders, customers', function () {
+    var k = D.kpi, p = D.profit, c = cur(), net = p && p.monthExpenses !== null && p.monthExpenses !== undefined ? (p.monthNet !== null && p.monthNet !== undefined ? p.monthNet : p.monthGross - p.monthExpenses) : null;
+    var g = mini('Revenue', fdTk(k.revenueMTD, c), dlt(k.revenueMTD, k.revenuePrev, 'last month')) +
+      (p ? mini('Gross profit', fdTk(p.monthGross, c), fmt(p.monthMargin) + '% margin · goods cost ' + fmt(p.monthCost)) : '') +
+      (net !== null ? mini('Net profit', fdTk(net, c), 'after ' + fmt(p.monthExpenses) + ' of expenses' + (p.monthUnpaid > 0 ? ' · ' + fmt(p.monthUnpaid) + ' still to pay' : '')) : '') +
+      mini('Orders', fmt(k.ordersMTD), dlt(k.ordersMTD, k.ordersPrev, 'last month')) + mini('Average order', fdTk(k.aov, c), fmt(k.unitsMTD) + ' units sold') +
+      mini('Customers', fmt(k.customers), k.newCustomers ? '<span class="up">+' + k.newCustomers + '</span> new this month' : 'no new customers yet');
+    return mk('s4', head('target', D.monthLabel + ' so far', '<span class="fdc-sub" style="margin:0 0 0 auto">1st to today · compared with ' + esc(D.prevLabel) + '</span>') + '<div class="fdcl-mini">' + g + '</div>');
+  }];
+  // each number alone
+  var K1 = [
+    ['c_revToday', 'Revenue today', 'taka', function () { return { v: D.kpi.todayRevenue, prev: D.kpi.yestRevenue }; }, true],
+    ['c_ordToday', 'Orders today', 'cart', function () { return { v: D.kpi.todayOrders, prev: D.kpi.yestOrders }; }],
+    ['c_unitsToday', 'Units sold today', 'spool', function () { return { v: D.kpi.todayUnits, prev: D.kpi.yestUnits }; }],
+    ['c_grossToday', 'Gross profit today', 'trend', function () { return D.profit ? { v: D.profit.todayGross } : null; }, true],
+    ['c_revMonth', 'Revenue this month', 'taka', function () { return { v: D.kpi.revenueMTD, prev: D.kpi.revenuePrev }; }, true],
+    ['c_grossMonth', 'Gross profit this month', 'trend', function () { return D.profit ? { v: D.profit.monthGross } : null; }, true],
+    ['c_netMonth', 'Net profit this month', 'target', function () { var p = D.profit; return p && p.monthNet !== null && p.monthNet !== undefined ? { v: p.monthNet } : null; }, true],
+    ['c_ordMonth', 'Orders this month', 'cart', function () { return { v: D.kpi.ordersMTD, prev: D.kpi.ordersPrev }; }],
+    ['c_aov', 'Average order', 'receipt', function () { return { v: D.kpi.aov }; }, true],
+    ['c_customers', 'Customers', 'cart', function () { return { v: D.kpi.customers }; }, false, function () { return D.kpi.newCustomers ? '+' + D.kpi.newCustomers + ' new this month' : ''; }],
+    ['c_daysLeft', 'Days of stock left', 'clock', function () { return D.cover && D.cover.days !== null ? { v: D.cover.days } : null; }, false, function () { return D.cover ? 'against a ' + fmt(D.cover.leadDays) + '-day wait for a shipment' : ''; }],
+    ['c_owed', 'Customers owe you', 'bell', function () { return D.cash ? { v: D.cash.owedByCustomers } : null; }, true],
+    ['c_courier', 'Steadfast is holding', 'truck', function () { var m = D.cash; return m ? { v: m.courierBalance === null || m.courierBalance === undefined ? m.withCourier : m.courierBalance } : null; }, true],
+    ['c_advances', 'Advances you hold', 'wallet', function () { return D.cash ? { v: D.cash.advancesHeld } : null; }, true]
+  ];
+  K1.forEach(function (x) {
+    C[x[0]] = [x[1], 'one number', function () {
+      var k = x[3](); if (!k) return '';
+      return fddKpi({ key: x[0], title: x[1], icon: x[2], money: !!x[4], k: k, note: x[5] ? x[5]() : '' });
+    }];
+  });
+  C.c_stockHand = ['Stock on hand', 'pieces and cost by category', function () {
+    var rows = D.stockByCat || []; if (!rows.length) return '';
+    var money = !D.hideProfit && rows.some(function (r) { return r.cost !== undefined; }), t = { skus: 0, units: 0, cost: 0, uncosted: 0 };
+    rows.forEach(function (r) { t.skus += r.skus || 0; t.units += r.units || 0; t.cost += r.cost || 0; t.uncosted += r.uncosted || 0; });
+    var line = function (n, r, lead) { return '<div' + (lead ? ' class="lead"' : '') + '><span>' + esc(n) + '<span class="sku">' + fmt(r.skus) + ' product' + (r.skus === 1 ? '' : 's') + (money ? ' · cost ' + (r.cost ? esc(cur()) + ' ' + fmt(r.cost) : 'not known') : '') + '</span></span><b>' + fmt(r.units) + ' pcs</b></div>'; };
+    var h = '<div class="fdcl-list">' + (rows.length > 1 ? line('All stock', t, true) : '') + rows.slice(0, 6).map(function (r) { return line(r.cat, r, rows.length === 1); }).join('') + '</div>';
+    if (money && t.uncosted) h += '<div class="fdc-sub" style="margin:8px 0 0">' + fmt(t.uncosted) + ' product(s) in stock have no cost on record, so they are not in the cost above.</div>';
+    return mk('s2', head('box', 'Stock on hand', navOn('products') ? '<button type="button" class="fdd-more" data-go="products">Open →</button>' : '') + h);
+  }];
+  C.c_shelf = ['The shelf', 'days of stock left, selling per day', function () {
+    var c = D.cover; if (!c) return '';
+    var shortS = c.days !== null && c.days < c.leadDays;
+    return mk('s2', head('clock', 'The shelf', navOn('stock') ? '<button type="button" class="fdd-more" data-go="stock">Order list →</button>' : '') +
+      '<div class="fdc-sub">How long stock lasts against a ' + fmt(c.leadDays) + '-day wait for a shipment.</div><div class="fdcl-list">' +
+      '<div><span>Days of stock left' + (shortS ? '<span class="sku" style="color:var(--fd-negative)">shorter than the shipment wait</span>' : '') + '</span><b>' + (c.days === null ? '—' : fmt(c.days)) + '</b></div>' +
+      '<div><span>Selling per day<span class="sku">at cost, last 90 days</span></span><b>' + fmt(c.dailyCost) + '</b></div>' +
+      '<div><span>Need reordering<span class="sku">' + fmt(c.outOfStock) + ' already out</span></span><b>' + fmt(c.reorderNow) + '</b></div></div>');
+  }];
+  C.c_cash = ['Where the cash is', 'owed, at the courier, advances', function () {
+    var m = D.cash; if (!m) return '';
+    var cb = m.courierBalance === null || m.courierBalance === undefined ? null : m.courierBalance;
+    return mk('s2', head('wallet', 'Where the cash is') + '<div class="fdc-sub">Money that is yours but not in the bank yet.</div><div class="fdcl-list">' +
+      '<div><span>Customers owe you<span class="sku">unpaid invoices</span></span><b>' + fmt(m.owedByCustomers) + '</b></div>' +
+      '<div><span>Steadfast is holding<span class="sku">' + (cb === null ? 'collected in 30 days — courier did not answer' : 'their figure, not paid out yet' + (Math.abs(cb - m.withCourier) > 500 ? ' · our books say ' + fmt(m.withCourier) : '')) + '</span></span><b>' + fmt(cb === null ? m.withCourier : cb) + '</b></div>' +
+      '<div><span>Advances you hold<span class="sku">owed in goods, not yours yet</span></span><b>' + fmt(m.advancesHeld) + '</b></div></div>');
+  }];
+  C.c_recent = ['Recent orders', 'the last invoices with products', function () {
+    var R = D.recentOrders || []; if (!R.length) return '';
+    return mk('s4', head('cart', 'Recent orders', navOn('sales') ? '<button type="button" class="fdd-more" data-go="sales">All sales →</button>' : '') +
+      '<div class="fdd-scroll"><table class="fdd-t"><thead><tr><th>Invoice</th><th>Date</th><th>Customer</th><th>Products</th><th class="n">Total</th><th>Status</th></tr></thead><tbody>' +
+      R.map(function (o) { var st = String(o.status || '').toLowerCase();
+        return '<tr' + (navOn('sales') && !/^RTN-/.test(o.id) ? ' data-inv="' + esc(o.id) + '"' : '') + '><td><b>' + esc(o.id) + '</b></td><td>' + esc(o.date) + '</td><td class="nm">' + esc(o.customer) + '</td><td class="nm">' + esc(o.product || '') +
+          (o.lines > 1 ? ' <span class="sku">+' + (o.lines - 1) + ' more</span>' : '') + '</td><td class="n">' + fmt(o.total) + '</td><td>' + (o.status ? '<span class="fdd-chip' + (/paid|deliver/.test(st) ? ' paid' : /pend|partial/.test(st) ? ' due' : '') + '">' + esc(o.status) + '</span>' : '—') + '</td></tr>'; }).join('') + '</tbody></table></div>');
+  }];
+  C.c_low = ['Low stock', 'products at or below reorder', function () {
+    var R = D.lowStock || []; if (!R.length) return '';
+    return mk('s2', head('warn', 'Low stock' + (D.lowStockTotal > R.length ? ' (' + fmt(D.lowStockTotal) + ')' : ''), navOn('stock') ? '<button type="button" class="fdd-more" data-go="stock" data-f="plan">Order list →</button>' : '') +
+      '<div class="fdd-scroll"><table class="fdd-t"><thead><tr><th>Product</th><th class="n">On hand</th><th class="n">Reorder at</th></tr></thead><tbody>' +
+      R.slice(0, 12).map(function (p) { return '<tr><td class="nm">' + esc(p.name) + '</td><td class="n"' + (p.out ? ' style="color:var(--fd-negative-text, var(--fd-negative));font-weight:700"' : '') + '>' + fmt(p.stock) + '</td><td class="n">' + fmt(p.reorder) + '</td></tr>'; }).join('') + '</tbody></table></div>' +
+      (Math.max(R.length, D.lowStockTotal || 0) > 12 ? '<div class="fdc-sub" style="margin:8px 0 0">and ' + fmt(Math.max(R.length, D.lowStockTotal || 0) - 12) + ' more on the order list</div>' : ''));
+  }];
+  ['c_salesMonth', 'c_salesDay', 'c_months', 'c_topProducts', 'c_stockHealth', 'c_stockByCat'].forEach(function (id) {
+    C[id] = [CH[id].title, 'a chart: columns, line, pie, table…', function () { return chartCard(id, id === 'c_topProducts' || id === 'c_stockHealth' || id === 'c_stockByCat' ? 's2' : 's2'); }];
+  });
+  var C_ORDER = ['c_today', 'c_month', 'c_salesMonth', 'c_salesDay', 'c_stockHand', 'c_shelf', 'c_cash', 'c_topProducts', 'c_stockHealth', 'c_recent',
+                 'c_stockByCat', 'c_months', 'c_low'].concat(K1.map(function (x) { return x[0]; }));
+  var cTitle = function (id) { var t = C[id][0]; return typeof t === 'function' ? t() : t; };
+  function cIds() { var L = fdwLayout(); return L ? L.order.filter(function (id) { return C[id] && !(L.hidden || {})[id]; }) : []; }
+
+  /* ---------- the widget list: shortcuts first, the classic cards, chart types, sizes ---------- */
+  var fddWidgets45 = fddWidgets;
+  fddWidgets = function (d) {
+    var W = fddWidgets45.apply(this, arguments);
+    // chosen chart types for the dashboard's own chart cards
+    W.forEach(function (w) { if (CH[w.id] && CH[w.id].own && optsOf(w.id).t) w.html = chartCard(w.id, /class="fdd-c s4/.test(w.html) ? 's4' : 's2'); });
+    var sc = shortcutsHtml(d);
+    if (sc) W.unshift({ id: 'shortcuts', title: 'Analytics · Profitability · Navigator', note: 'three cards that open those screens', html: sc });
+    if (D) cIds().forEach(function (id) { var h = ''; try { h = C[id][2](); } catch (e) { h = ''; } if (h) W.push({ id: id, title: cTitle(id), note: C[id][1], html: h }); });
+    return W;
+  };
+  var fddOrdered45 = fddOrdered;
+  fddOrdered = function (W) {
+    var out = fddOrdered45(W), L = fdwLayout();
+    // the three cards are new: a layout saved before them gets them on top, not at the end (once moved, they stay put)
+    if (L && L.order.indexOf('shortcuts') < 0) { var i = out.map(function (w) { return w.id; }).indexOf('shortcuts'); if (i > 0) out.unshift(out.splice(i, 1)[0]); }
+    return out.map(function (w) {
+      var o = optsOf(w.id); if (!o.w) return w;
+      return Object.assign({}, w, { html: String(w.html).replace(/class="fdd-c([^"]*)"/, function (m, cls) { return 'class="fdd-c' + cls.replace(/\s(s2|s3|s4|r2|wide)\b/g, '') + ' fdw-w' + o.w + '"'; }) });
+    });
+  };
+  // no more "More: the day view and older charts" - every part of it is a card now
+  FDD.classic = false;
+  var fddView45 = fddView;
+  fddView = function () { FDD.classic = false; return String(fddView45.apply(this, arguments)).replace(/<div class="fdd-classic">[\s\S]*?<\/div>\s*$/, ''); };
+
+  /* ---------- the ⚙ on each card in Customise ---------- */
+  var fdwDecorate45 = fdwDecorate;
+  fdwDecorate = function () {
+    var r = fdwDecorate45.apply(this, arguments);
+    if (!FDD_EDIT || VIEW !== 'dash') return r;
+    [].forEach.call(document.querySelectorAll('.fdd-one.editing > [data-fdw]'), function (n) {
+      if (n.querySelector('.fdw-set')) return;
+      var b = document.createElement('button'); b.type = 'button'; b.className = 'fdw-set'; b.title = 'Size and chart type'; b.setAttribute('aria-label', 'Card settings'); b.textContent = '⚙';
+      b.setAttribute('data-fdwset', n.getAttribute('data-fdw')); n.appendChild(b);
+    });
+    return r;
+  };
+  function settingsDialog(id) {
+    var o = optsOf(id), c = CH[id], title = (FDW_LAST.filter(function (w) { return w.id === id; })[0] || {}).title || (C[id] ? cTitle(id) : (c ? c.title : 'Card'));
+    var S = { w: o.w || 0, t: o.t || (c ? c.def : ''), m: c ? measureOf(id) : '' };
+    var opt = function (k, v, lbl, ic) { return '<button type="button" data-k="' + k + '" data-v="' + v + '" class="' + (String(S[k]) === String(v) ? 'on' : '') + '">' + (ic ? '<svg viewBox="0 0 24 24">' + ic + '</svg>' : '') + esc(lbl) + '</button>'; };
+    var body = '<div class="dlg-b" style="white-space:normal">' +
+      '<div class="fdws-sec">Size</div><div class="fdws-opts">' + opt('w', 0, 'As designed') + opt('w', 1, '1 column') + opt('w', 2, '2 columns') + opt('w', 3, '3 columns') + opt('w', 4, 'Full width') + '</div>' +
+      (c ? '<div class="fdws-sec">Show it as</div><div class="fdws-opts">' + Object.keys(TYPES).map(function (t) { return opt('t', t, TYPES[t] + (t === c.def ? ' (as designed)' : ''), TIC[t]); }).join('') + '</div>' +
+        (c.measures.length > 1 ? '<div class="fdws-sec">What it measures</div><div class="fdws-opts">' + c.measures.map(function (x) { return opt('m', x[0], x[1]); }).join('') + '</div>' : '') : '') +
+      '</div>';
+    fdwDialog(title, body, function (back, close) {
+      setOpts(id, { w: S.w ? S.w : null, t: c && S.t && S.t !== c.def ? S.t : null, m: c && S.m && S.m !== c.measures[0][0] ? S.m : null });
+      close(); repaint(); toast('Card updated.');
+    });
+    var dl = document.querySelector('.dlg-back:last-child .dlg'); if (!dl) return;
+    dl.addEventListener('click', function (e) {
+      var b = e.target.closest('[data-k]'); if (!b) return;
+      S[b.getAttribute('data-k')] = b.getAttribute('data-k') === 'w' ? Number(b.getAttribute('data-v')) : b.getAttribute('data-v');
+      [].forEach.call(b.parentNode.querySelectorAll('button'), function (x) { x.classList.toggle('on', x === b); });
+    });
+  }
+
+  /* ---------- the gallery: the classic dashboard, and everything at once ---------- */
+  var fdwGallery45 = fdwGallery;
+  fdwGallery = function () {
+    fdwGallery45.apply(this, arguments);
+    var grid = document.querySelector('.dlg-back:last-child .fdg-grid'); if (!grid || !D) return;
+    var shown = {}; fdwCurrentOrder().forEach(function (id) { shown[id] = 1; });
+    var miss = C_ORDER.filter(function (id) { return !shown[id]; });
+    var h = '<div class="fdg-sec">Classic dashboard — the figures of the old dashboard</div>' +
+      (miss.length > 1 ? '<button type="button" class="btn fdg-all" data-fdgaddall="1">+ Add all ' + miss.length + ' classic cards</button>' : '') +
+      miss.map(function (id) { return '<button type="button" class="fdg-it" data-fdgadd="' + id + '"><b>' + esc(cTitle(id)) + '</b><span>' + esc(C[id][1]) + '</span></button>'; }).join('') +
+      (!miss.length ? '<div class="fdg-sec" style="text-transform:none;letter-spacing:0">Every classic card is on the dashboard.</div>' : '');
+    grid.insertAdjacentHTML('afterbegin', h);
+    var all = grid.querySelector('[data-fdgaddall]');
+    if (all) all.addEventListener('click', function (e) {
+      e.stopPropagation();
+      var L = L0(), order = fdwCurrentOrder().filter(function (x) { return miss.indexOf(x) < 0; }).concat(miss), hid = Object.assign({}, L.hidden || {});
+      miss.forEach(function (id) { delete hid[id]; });
+      fdwCommit(order, hid);
+      var bk = grid.closest('.dlg-back'); if (bk) bk.remove();
+      repaint(); toast('Added ' + miss.length + ' classic cards. Drag them where you want them.');
+    }, true);
+  };
+
+  /* ---------- clicks ---------- */
+  // the ⚙ listens on the window, before the edit mode's own guard (fd-28) that keeps cards from opening anything
+  window.addEventListener('click', function (e) {
+    var s = e.target.closest && e.target.closest('[data-fdwset]');
+    if (s) { e.preventDefault(); e.stopImmediatePropagation(); settingsDialog(s.getAttribute('data-fdwset')); }
+  }, true);
+  document.addEventListener('click', function (e) {
+    if (!e.target.closest) return;
+    if (FDD_EDIT && e.target.closest('.fdd-one.editing')) return;   // editing: the cards do not open anything
+    var g = e.target.closest('[data-fd45go]');
+    if (g) { e.preventDefault(); go(g.getAttribute('data-fd45go')); return; }
+    var m = e.target.closest('[data-fdcm]');
+    if (m) { e.preventDefault(); var p = m.getAttribute('data-fdcm').split('|'), c = CH[p[0]]; setOpts(p[0], { m: c && p[1] !== c.measures[0][0] ? p[1] : null }); repaint(); return; }
+    var y = e.target.closest('.fdc-ms [data-year]');
+    if (y) { e.preventDefault(); e.stopImmediatePropagation(); DASH_YEAR = y.getAttribute('data-year'); repaint(); return; }
+  }, true);
+  // the old dashboard's numbers come with the page's own load; when they arrive the cards fill in
+  var dTimer = setInterval(function () { if (D && VIEW === 'dash' && cIds().length && !document.querySelector('.fdd-one [data-fdw^="c_"]')) repaint(); if (D) clearInterval(dTimer); }, 800);
 })();
 </script>
 <!-- fd-37: the page is styled: show it -->

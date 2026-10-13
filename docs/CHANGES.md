@@ -1918,3 +1918,23 @@ syncInvoiceStatus now counts ledger + paid_outside. paid_outside is in no money 
 profit do not change. The customer's invoice put back (Paid, 0 due) with two rows in invoice_fixes. Test
 paidoutside_test.mjs reproduces the case (fails without the fix: Pending, whole amount due). Live was fixed on its own
 code (commit 4fa9c96 + this fix, branch live-fix-paid), not the new design.
+
+## fd-45: the dashboard as the owner's own (14 Oct 2026)
+- Analytics, Profitability and ERP Navigator are three clickable cards at the top of the Dashboard (an "Analysis" tag,
+  a live figure - gross margin / net profit / screens - and one line: top colour, net margin on sales, what the map
+  does); on a phone they are a swipe strip. A saved layout gets them on top once. Those three screens show
+  "‹ Dashboard" instead of tabs (fd-43 keeps the tabs for Settings only).
+- Every figure of the old dashboard is a card ("+ Add card" > Classic dashboard, or "+ Add all N classic cards"):
+  Today with the day picker, the month so far, 14 single numbers (revenue/orders/units/gross today, revenue/gross/net/
+  orders this month, average order, customers, days of stock left, owed, at the courier, advances), sales per month
+  (year switch), sales per day, last months, stock on hand, the shelf, where the cash is, top products, stock health,
+  stock by category, recent orders, low stock (12 rows + "and N more"). The "More: the day view and older charts"
+  button is gone - those are cards now.
+- Every card has a ⚙ in Customise: size (as designed, 1-4 columns) and, for every chart card (the dashboard's own
+  revenue curve, donuts, colours and top products too), Columns / Bars / Line / Area / Pie / Donut / Table and the
+  measure (taka, units, orders, gross, net...). One chart engine (fdcChart) draws them, as wide as the card.
+  Kept with the layout; erpSetFdPrefs now keeps dash.opts (known sizes / types / short measure keys only) and up
+  to 120 cards (fdprefs_test extended).
+- Settings: the breadcrumb is hidden on Settings / Maintenance / System check / Platform - the title already says it.
+Not done: a "custom" card that adds any two figures together or picks its own date range - every card follows the
+dashboard's range (This month / 3 / 6 / 12 months), the classic ones their own month or day.

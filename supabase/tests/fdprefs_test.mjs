@@ -17,6 +17,13 @@ r = await sales('erpSetFdPrefs', [{ theme: '<script>', accent: 'red;background:u
   dash: { order: ['ok_1', '<b>', 'x'.repeat(40)], hidden: { '"': 1 } } }]);
 check('anything odd is replaced by the defaults, never kept', r.ok && r.result.fd.theme === 'filadash' && r.result.fd.accent === '' && r.result.fd.text === 'm' &&
   r.result.fd.density === 'comfortable' && r.result.fd.radius === 'rounded' && r.result.fd.pal === 'theme' && r.result.fd.dash.order.join() === 'ok_1' && !Object.keys(r.result.fd.dash.hidden).length, r.result.fd);
+r = await sales('erpSetFdPrefs', [{ dash: { order: ['c_salesDay', 'channelDonut'], hidden: {}, opts: { c_salesDay: { w: 4, t: 'bar', m: 'units' }, channelDonut: { t: 'pie' },
+  bad: { w: 9, t: '<svg>', m: 'x y' }, '<i>': { w: 2 } } } }]);
+check('card sizes, chart types and measures are kept (fd-45)', r.ok && r.result.fd.dash.opts.c_salesDay.w === 4 && r.result.fd.dash.opts.c_salesDay.t === 'bar' &&
+  r.result.fd.dash.opts.c_salesDay.m === 'units' && r.result.fd.dash.opts.channelDonut.t === 'pie', r.result.fd.dash);
+check('...but no unknown size, chart or odd key', !r.result.fd.dash.opts.bad && !r.result.fd.dash.opts['<i>'], r.result.fd.dash.opts);
+r = await sales('erpSetFdPrefs', [{ dash: { order: Array.from({ length: 90 }, (_, i) => 'c_' + i), hidden: {} } }]);
+check('a long dashboard (90 cards) is kept whole', r.ok && r.result.fd.dash.order.length === 90, r.result.fd.dash.order.length);
 r = await owner('erpBusinesses', []);
 check('the owner\'s look is untouched by that', r.result.fd.theme === 'nord', r.result.fd);
 await done();
