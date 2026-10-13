@@ -35312,6 +35312,7 @@ body[data-fdview="settings"] #o_cp .crumbs, body[data-fdview="tools"] #o_cp .cru
 .ib-tabs button.on { background:var(--fd-accent, #F5A623); color:var(--fd-text-on-accent, #fff); border-color:transparent; }
 .ib-tabs .n { min-width:18px; height:18px; padding:0 5px; border-radius:999px; background:var(--fd-negative, #E5484D); color:#fff; font-size:11px; display:inline-flex; align-items:center; justify-content:center; }
 .ib-tabs button.on .n { background:#fff; color:var(--fd-negative, #E5484D); }
+@media (max-width:760px) { html body .ib-tabs { flex-wrap:nowrap; overflow-x:auto; scrollbar-width:none; margin-left:-16px; margin-right:-16px; padding:0 16px 2px; } html body .ib-piles { flex-wrap:nowrap; overflow-x:auto; scrollbar-width:none; } .ib-tabs::-webkit-scrollbar, .ib-piles::-webkit-scrollbar { display:none; } html body .ib-tabs button, html body .ib-piles button { flex:0 0 auto; white-space:nowrap; } }
 .ib-wrap { display:grid; grid-template-columns:320px minmax(0,1fr) 320px; gap:14px; height:calc(100vh - 210px); min-height:520px; }
 .ib-pane { background:var(--fd-card); border:1px solid var(--fd-border); border-radius:18px; display:flex; flex-direction:column; min-height:0; overflow:hidden; }
 .ib-list-h { padding:12px; border-bottom:1px solid var(--fd-border); display:flex; flex-direction:column; gap:8px; }
@@ -35403,11 +35404,13 @@ body[data-fdview="settings"] #o_cp .crumbs, body[data-fdview="tools"] #o_cp .cru
 <script>
 (function () {
   var IB = { tab: 'inbox', pile: 'open', q: '', list: null, conv: null, convId: '', side: false, tasks: null, orders: null, ostatus: 'pending', leads: null, desk: null, kb: null,
-             chans: null, stats: null, cost: null, bc: null, cm: null, fu: null, saved: null, offers: null, test: [], busy: {}, ai: '', counts: {} };
+             chans: null, stats: null, cost: null, bc: null, cm: null, fu: null, saved: null, offers: null, test: [], busy: {}, ai: '', counts: {},
+             bk: null, bkst: 'requested', oq: '', lq: '', older: null, bcgap: 24, duty: (function () { try { return localStorage.getItem('ibDuty') === '1'; } catch (e) { return false; } })() };
   window.IB = IB;
   var ICON = '<path d="M4 4h16v12H8l-4 4z"/><path d="M8 9h8M8 12h5"/>';
   function ibOn() { if (!ME) return false; if (ME.platform) return true; var off = (ME.apps && ME.apps.off) || []; return off.indexOf('inbox') < 0 && typeof APPS !== 'undefined' && APPS && APPS.apps && APPS.apps.some(function (a) { return a.key === 'inbox' && a.on; }); }
   window.ibOn = ibOn;
+  window.ibPaint = function () { if (VIEW === 'inbox') paint(true); };
   if (typeof fdxNav === 'function') fdxNav('inbox', 'Inbox', ICON, 'invoice');
   try { VIEW_NAMES.inbox = 'Inbox'; } catch (e) {}
   function syncNav() { var b = document.querySelector('#nav button[data-view="inbox"]'); if (!b) return; var on = ibOn(); if ((b.style.display === 'none') === on) b.style.display = on ? '' : 'none';
@@ -35424,18 +35427,27 @@ body[data-fdview="settings"] #o_cp .crumbs, body[data-fdview="tools"] #o_cp .cru
     if (IB.busy[key]) return; IB.busy[key] = true;
     srv(name, [args || {}], function (r) { IB.busy[key] = false; IB[key] = r; if (after) after(r); if (VIEW === 'inbox') paint(); }, function (e) { IB.busy[key] = false; IB[key] = { error: (e && e.message) || String(e) }; if (VIEW === 'inbox') paint(); });
   }
-  function loadList() { load('erpInbox', { pile: IB.pile, q: IB.q }, 'list', function (r) { IB.counts = r.counts || {}; }); }
+  function ding() {
+    if (!IB.duty) return;
+    try { var A = window.AudioContext || window.webkitAudioContext, ac = new A(); [0, 0.22].forEach(function (t, i) { var o = ac.createOscillator(), g = ac.createGain(); o.frequency.value = i ? 1046 : 784; g.gain.setValueAtTime(0.0001, ac.currentTime + t);
+      g.gain.exponentialRampToValueAtTime(0.25, ac.currentTime + t + 0.02); g.gain.exponentialRampToValueAtTime(0.0001, ac.currentTime + t + 0.2); o.connect(g); g.connect(ac.destination); o.start(ac.currentTime + t); o.stop(ac.currentTime + t + 0.22); }); } catch (e) {}
+  }
+  function loadList() { load('erpInbox', { pile: IB.pile, q: IB.q }, 'list', function (r) { var before = IB.counts.waiting || 0; IB.counts = r.counts || {}; if ((IB.counts.waiting || 0) > before && IB.list) ding(); }); }
+  function saveFile(name, text, type) { var b = new Blob([(type === 'text/csv' ? '\ufeff' : '') + text], { type: (type || 'text/plain') + ';charset=utf-8' }), a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = name; document.body.appendChild(a); a.click(); setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 500); }
+  function csvOf(head, rows) { var q = function (v) { v = v === null || v === undefined ? '' : String(v); return /[",\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; }; return [head].concat(rows).map(function (r) { return r.map(q).join(','); }).join('\r\n'); }
+  function exportIt(what, id) { srv('erpInboxExport', [{ what: what, id: id }], function (r) { if (r.text !== undefined) saveFile(r.name, r.text); else saveFile(r.name, csvOf(r.head, r.rows), 'text/csv'); }, fail); }
   function loadConv(id) { IB.convId = id; srv('erpInboxOpen', [{ id: id }], function (r) { IB.conv = r; if (VIEW === 'inbox') paint(true); }, fail); }
   // live: the list every 8 s and the open chat every 5 s while the Inbox is open; the menu badge every 30 s
   setInterval(function () { if (VIEW === 'inbox' && IB.tab === 'inbox' && !document.hidden) { loadList(); if (IB.convId) srv('erpInboxOpen', [{ id: IB.convId }], function (r) { var had = IB.conv && IB.conv.msgs.length; IB.conv = r; if (!had || had !== r.msgs.length) paint(true); }, function () {}); } }, 5000);
   setInterval(function () { if (ibOn() && !document.hidden && !(VIEW === 'inbox' && IB.tab === 'inbox')) srv('erpInbox', [{ pile: 'open' }], function (r) { var before = IB.counts.waiting || 0; IB.counts = r.counts || {}; syncNav();
+    if ((IB.counts.waiting || 0) > before) ding();
     if ((IB.counts.waiting || 0) > before && 'Notification' in window && Notification.permission === 'granted') { try { new Notification('A customer is waiting', { body: 'A chat was handed to the team.' }); } catch (e) {} } }, function () {}); }, 30000);
 
   // ---------------------------------------------------------------- the frame
-  var TABS = [['inbox', 'Inbox'], ['tasks', 'Notifications'], ['orders', 'Orders'], ['leads', 'Leads'], ['fu', 'Follow-ups'], ['bc', 'Broadcasts'], ['cm', 'Comments'], ['desk', 'Agent Desk'], ['kb', 'Knowledge'], ['chans', 'Channels'], ['stats', 'Analytics'], ['cost', 'AI cost']];
+  var TABS = [['inbox', 'Inbox'], ['tasks', 'Notifications'], ['orders', 'Orders'], ['bk', 'Bookings'], ['leads', 'Leads'], ['fu', 'Follow-ups'], ['bc', 'Broadcasts'], ['cm', 'Comments'], ['desk', 'Agent Desk'], ['kb', 'Knowledge'], ['chans', 'Channels'], ['stats', 'Analytics'], ['cost', 'AI cost']];
   function frame(inner) {
-    var n = { inbox: (IB.counts.unread || 0), tasks: (IB.counts.tasks || 0), orders: (IB.orders && IB.orders.counts ? IB.orders.counts.pending : 0) };
-    return '<div class="fdd-head" style="margin-bottom:10px"><div><h1 class="fdd-title" style="display:flex;gap:10px;align-items:center">Inbox <span class="ib-tag test">ONLY ME</span></h1></div></div>' +
+    var n = { inbox: (IB.counts.unread || 0), tasks: (IB.counts.tasks || 0), orders: (IB.orders && IB.orders.counts ? IB.orders.counts.pending : 0), bk: (IB.bk && IB.bk.counts ? IB.bk.counts.requested : 0) };
+    return '<div class="fdd-head" style="margin-bottom:10px"><div><h1 class="fdd-title" style="display:flex;gap:10px;align-items:center">Inbox <span class="ib-tag test">ONLY ME</span></h1></div><button type="button" class="btn small' + (IB.duty ? ' primary' : '') + '" data-ibduty="1" title="On duty: a sound when a customer waits for a person">' + (IB.duty ? '🔔 On duty' : '🔕 Off duty') + '</button></div>' +
       '<div class="ib-tabs" role="tablist">' + TABS.filter(function (t) { return !(t[0] === 'cost' && ME && ME.role !== 'owner'); }).map(function (t) {
         return '<button type="button" data-ibtab="' + t[0] + '" class="' + (IB.tab === t[0] ? 'on' : '') + '">' + esc(t[1]) + (n[t[0]] ? '<span class="n">' + n[t[0]] + '</span>' : '') + '</button>'; }).join('') + '</div>' + inner;
   }
@@ -35445,15 +35457,22 @@ body[data-fdview="settings"] #o_cp .crumbs, body[data-fdview="tools"] #o_cp .cru
     v.innerHTML = view();
     var nb = v.querySelector('.ib-msgs'); if (nb && (atBottom || !keepScroll)) nb.scrollTop = nb.scrollHeight;
     var nta = el('ibReply'); if (nta && draft !== null) { nta.value = draft; if (focus === 'ibReply') { nta.focus(); } }
+    fit();
   }
+  // on a phone the chat fills the screen exactly: from its top down to the bottom tab bar (the reply box stays in view)
+  function fit() { var w = document.querySelector('#view .ib-wrap'); if (!w) return; if (innerWidth > 760) { w.style.height = ''; return; }
+    var tb = el('tabbar'), tbh = tb && getComputedStyle(tb).display !== 'none' ? tb.getBoundingClientRect().height : 0; var r = w.getBoundingClientRect(), z = w.offsetHeight ? r.height / w.offsetHeight : 1;   // the page may be zoomed: rects are zoomed, style heights are not
+    w.style.height = Math.max(380, (innerHeight - (r.top + scrollY) - tbh - 8) / (z || 1)) + 'px'; }
+  addEventListener('resize', function () { if (VIEW === 'inbox') fit(); });
   function view() {
     var t = IB.tab;
     if (t === 'inbox') return frame(inboxHtml());
     if (t === 'tasks') { if (!IB.tasks) load('erpInboxTasks', {}, 'tasks'); return frame(tasksHtml()); }
-    if (t === 'orders') { if (!IB.orders) load('erpChatOrders', { status: IB.ostatus }, 'orders'); return frame(ordersHtml()); }
+    if (t === 'orders') { if (!IB.orders) load('erpChatOrders', { status: IB.ostatus, q: IB.oq }, 'orders'); return frame(ordersHtml()); }
+    if (t === 'bk') { if (!IB.bk) load('erpBookings', { status: IB.bkst }, 'bk'); return frame(bkHtml()); }
     if (t === 'leads') { if (!IB.leads) load('erpInboxLeads', {}, 'leads'); return frame(leadsHtml()); }
     if (t === 'fu') { if (!IB.fu) load('erpInboxFollowups', {}, 'fu'); return frame(fuHtml()); }
-    if (t === 'bc') { if (!IB.bc) load('erpInboxBroadcasts', {}, 'bc'); return frame(bcHtml()); }
+    if (t === 'bc') { if (!IB.bc) load('erpInboxBroadcasts', { gap: IB.bcgap }, 'bc'); return frame(bcHtml()); }
     if (t === 'cm') { if (!IB.cm) load('erpInboxComments', {}, 'cm'); return frame(cmHtml()); }
     if (t === 'desk') { if (!IB.desk) load('erpAgentDesk', {}, 'desk'); if (!IB.offers) load('erpShopOffers', {}, 'offers'); if (!IB.saved) load('erpSavedReplies', {}, 'saved'); return frame(deskHtml()); }
     if (t === 'kb') { if (!IB.kb) load('erpInboxKb', {}, 'kb'); return frame(kbHtml()); }
@@ -35508,13 +35527,15 @@ body[data-fdview="settings"] #o_cp .crumbs, body[data-fdview="tools"] #o_cp .cru
         '<select class="i" data-ibtake="1" style="width:auto;height:32px"><option value="">Take over…</option><option value="30">30 minutes</option><option value="60">1 hour</option><option value="360">6 hours</option><option value="0">For good</option></select>') +
       '<button class="btn small" type="button" data-ibmode="' + (c.pile === 'later' ? 'open' : 'later') + '">' + (c.pile === 'later' ? 'Open' : 'Later') + '</button>' +
       '<button class="btn small" type="button" data-ibmode="' + (c.pile === 'done' ? 'open' : 'done') + '">' + (c.pile === 'done' ? 'Reopen' : 'Done') + '</button>' +
-      '<button class="btn small" type="button" data-ibside="1" title="The customer and the AI assistant">👤</button></span></div>';
+      '<button class="btn small" type="button" data-ibexp="chat" title="Download this conversation">⤓</button><button class="btn small" type="button" data-ibside="1" title="The customer and the AI assistant">👤</button></span></div>';
     if (c.reason) head += '<div class="ib-note" style="margin:8px 14px 0;align-self:stretch">The AI handed this chat to the team: <b>' + esc(c.reason) + '</b>' + (c.note ? ' — ' + esc(c.note) : '') + '</div>';
-    var msgs = '<div class="ib-msgs">' + (c.more ? '<div class="ib-ev">Older messages are kept (the newest 80 are shown).</div>' : '') + c.msgs.map(bubble).join('') + '</div>';
+    var old = IB.older && IB.older.id === c.id ? IB.older : null, more = old ? old.more : c.more;
+    var msgs = '<div class="ib-msgs">' + (more ? '<div class="ib-ev"><button class="btn small" type="button" data-ibolder="' + more + '">Load older messages</button></div>' : '') + (old ? old.msgs.map(bubble).join('') : '') + c.msgs.map(bubble).join('') + '</div>';
     var win = c.windowLeft === null ? '' : c.windowLeft > 0 ? 'Meta\'s 24-hour window: ' + (c.windowLeft >= 60 ? Math.floor(c.windowLeft / 60) + ' h ' : '') + (c.windowLeft % 60) + ' min left' : 'Past 24 hours: your reply goes with Meta\'s human-agent tag (up to 7 days).';
     var reply = '<div class="ib-reply">' + (human ? '' : '<div class="ib-hint">The AI is answering. Typing here sends as you; the AI keeps the chat unless you take over.</div>') +
       '<div class="row2"><select class="i" data-ibsaved="1" style="width:auto;max-width:140px;height:42px"><option value="">Saved…</option>' + ((IB.saved && IB.saved.list) || []).map(function (s) { return '<option value="' + esc(s.id) + '">' + esc(s.title) + '</option>'; }).join('') + '</select>' +
       '<textarea class="i" id="ibReply" placeholder="Write a reply…"></textarea><label class="btn small" style="height:42px;display:inline-flex;align-items:center;cursor:pointer" title="Send a photo">📷<input type="file" accept="image/*" id="ibPhoto" style="display:none"></label>' +
+      ((window.SpeechRecognition || window.webkitSpeechRecognition) ? '<button class="btn small' + (IB.dict ? ' primary' : '') + '" type="button" data-ibdict="1" style="height:42px" title="Speak - your words are typed into the reply (Bangla, or English when the customer writes English)">🎤</button>' : '') +
       '<button class="btn primary" type="button" data-ibsend="1" style="height:42px">Send</button></div><div class="ib-hint' + (c.windowLeft === 0 ? ' warn' : '') + '">' + esc(win) + '</div>' +
       '<div class="row2"><input class="i" id="ibNote" placeholder="Note for the team (the customer never sees it)" style="flex:1"><button class="btn small" type="button" data-ibnote="1">Add note</button></div></div>';
     return head + msgs + reply;
@@ -35550,12 +35571,14 @@ body[data-fdview="settings"] #o_cp .crumbs, body[data-fdview="tools"] #o_cp .cru
   function ordersHtml() {
     return errOr(IB.orders, function (d) {
       var st = [['pending', 'Pending'], ['hold', 'On hold'], ['today', 'To follow up today'], ['approved', 'Approved'], ['cancelled', 'Cancelled'], ['all', 'All']];
-      var h = '<div class="ib-piles" style="margin-bottom:12px">' + st.map(function (s) { var n = d.counts[s[0]]; return '<button type="button" data-ibost="' + s[0] + '" class="' + (IB.ostatus === s[0] ? 'on' : '') + '">' + s[1] + (n ? ' · ' + n : '') + '</button>'; }).join('') + '</div>';
+      var h = '<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px"><div class="ib-piles" style="flex:1">' + st.map(function (s) { var n = d.counts[s[0]]; return '<button type="button" data-ibost="' + s[0] + '" class="' + (IB.ostatus === s[0] ? 'on' : '') + '">' + s[1] + (n ? ' · ' + n : '') + '</button>'; }).join('') + '</div>' +
+        '<input class="i" id="ibOq" placeholder="Search order, name, phone" value="' + esc(IB.oq) + '" style="width:220px;max-width:100%">' + (ME && ME.role === 'owner' ? '<button class="btn small" type="button" data-ibexp="orders">⤓ CSV</button>' : '') + '</div>';
       if (!d.orders.length) return h + '<div class="ib-c"><div class="ib-empty">No orders here.</div></div>';
       return h + '<div class="ib-grid2">' + d.orders.map(function (o) {
         var items = (o.items || []).map(function (x) { return esc(x.name) + ' × ' + x.qty + ' <span class="sku">' + tk(x.price) + '</span>'; }).join('<br>');
-        var act = o.status === 'pending' ? '<button class="btn small primary" type="button" data-iboa="approve" data-id="' + o.id + '">Approve → invoice</button><button class="btn small" type="button" data-iboa="hold" data-id="' + o.id + '">Hold</button><button class="btn small" type="button" data-iboa="cancel" data-id="' + o.id + '">Cancel</button>'
-          : o.status === 'hold' ? '<button class="btn small" type="button" data-iboa="release" data-id="' + o.id + '">Release</button><button class="btn small" type="button" data-iboa="cancel" data-id="' + o.id + '">Cancel</button>'
+        var ed = '<button class="btn small" type="button" data-iboa="edit" data-id="' + o.id + '">Edit</button>';
+        var act = o.status === 'pending' ? '<button class="btn small primary" type="button" data-iboa="approve" data-id="' + o.id + '">Approve → invoice</button><button class="btn small" type="button" data-iboa="hold" data-id="' + o.id + '">Hold</button>' + ed + '<button class="btn small" type="button" data-iboa="cancel" data-id="' + o.id + '">Cancel</button>'
+          : o.status === 'hold' ? '<button class="btn small" type="button" data-iboa="release" data-id="' + o.id + '">Release</button>' + ed + '<button class="btn small" type="button" data-iboa="cancel" data-id="' + o.id + '">Cancel</button>'
           : o.status === 'approved' ? '<button class="btn small" type="button" data-ibinv="' + esc(o.invoice) + '">Open ' + esc(o.invoice) + '</button>' : '';
         return '<div class="ib-c"><div style="display:flex;justify-content:space-between;gap:8px"><h3>' + esc(o.no) + '</h3><span class="ib-tag ' + (o.status === 'pending' ? 'hot' : o.status === 'approved' ? 'ai' : 'test') + '">' + esc(o.status.toUpperCase()) + '</span></div>' +
           '<div class="sub">' + esc(o.at) + ' · taken by ' + esc(o.takenBy === 'ai' ? 'the AI' : o.takenBy) + (o.dup ? ' · <b style="color:var(--fd-negative)">another open order on this phone</b>' : '') + '</div>' +
@@ -35564,20 +35587,59 @@ body[data-fdview="settings"] #o_cp .crumbs, body[data-fdview="tools"] #o_cp .cru
           (o.hold ? '<div class="sku">On hold: ' + esc(o.hold) + (o.followUp ? ' · follow up ' + esc(o.followUp) : '') + '</div>' : '') + (o.cancel ? '<div class="sku">Cancelled: ' + esc(o.cancel) + '</div>' : '') +
           (o.change ? '<div class="ib-note" style="margin-top:6px">' + esc(o.change) + '</div>' : '') + (o.delivery_status ? '<div class="sku">Delivery: ' + esc(o.delivery_status) + ' · ' + esc(o.paid) + '</div>' : '') +
           (o.rating ? '<div class="sku">Rated ' + '⭐'.repeat(o.rating) + '</div>' : '') +
-          '<div class="ib-actions">' + act + (o.conv ? '<button class="btn small" type="button" data-ibgoconv="' + esc(o.conv) + '">Chat</button>' : '') + '</div>' +
+          '<div class="ib-actions">' + act + (o.conv ? '<button class="btn small" type="button" data-ibgoconv="' + esc(o.conv) + '">Chat</button>' : '') + '<button class="btn small" type="button" data-iboa="note" data-id="' + o.id + '">Note</button></div>' +
           '<details style="margin-top:8px"><summary class="sku">History</summary>' + o.history.map(function (e) { return '<div class="sku">' + esc(e.at) + ' · ' + esc(e.by) + ' · ' + esc(e.what) + '</div>'; }).join('') + '</details></div>';
       }).join('') + '</div>';
     });
   }
 
+  // ---------------------------------------------------------------- Bookings (service businesses)
+  function bkHtml() {
+    return errOr(IB.bk, function (d) {
+      var st = [['requested', 'Requests'], ['proposed', 'Time proposed'], ['upcoming', 'Upcoming'], ['confirmed', 'Confirmed'], ['done', 'Done'], ['declined', 'Declined'], ['cancelled', 'Cancelled'], ['all', 'All']];
+      var h = '<div class="ib-piles" style="margin-bottom:12px">' + st.map(function (s) { var n = d.counts[s[0]]; return '<button type="button" data-ibbkst="' + s[0] + '" class="' + (IB.bkst === s[0] ? 'on' : '') + '">' + s[1] + (n ? ' · ' + n : '') + '</button>'; }).join('') + '</div>';
+      if (d.counts.unpaid) h += '<div class="ib-note" style="margin-bottom:12px">' + d.counts.unpaid + ' advance payment' + (d.counts.unpaid > 1 ? 's' : '') + ' to check.</div>';
+      if (!d.bookings.length) return h + '<div class="ib-c"><div class="ib-empty">' + (IB.bkst === 'requested' ? 'No booking requests. Set “Offers services” on the Agent Desk to let the AI take them.' : 'Nothing here.') + '</div></div>';
+      return h + '<div class="ib-grid2">' + d.bookings.map(function (b) {
+        var open = ['requested', 'proposed', 'confirmed'].indexOf(b.status) >= 0;
+        var act = (open ? '<button class="btn small primary" type="button" data-ibbka="confirm" data-id="' + b.id + '">' + (b.status === 'confirmed' ? 'Change time' : 'Confirm') + '</button>' +
+            (b.status !== 'confirmed' ? '<button class="btn small" type="button" data-ibbka="propose" data-id="' + b.id + '">Propose a time</button>' : '<button class="btn small" type="button" data-ibbka="done" data-id="' + b.id + '">Done</button>') +
+            '<button class="btn small" type="button" data-ibbka="' + (b.status === 'confirmed' ? 'cancel' : 'decline') + '" data-id="' + b.id + '">' + (b.status === 'confirmed' ? 'Cancel' : 'Decline') + '</button>' : '') +
+          (b.trx && !b.paid ? '<button class="btn small" type="button" data-ibbka="paid" data-id="' + b.id + '">Advance received</button>' : '') + (b.conv ? '<button class="btn small" type="button" data-ibgoconv="' + esc(b.conv) + '">Chat</button>' : '');
+        var ans = Object.keys(b.answers || {}).map(function (k) { return '<div class="sku"><b>' + esc(k) + ':</b> ' + esc(b.answers[k]) + '</div>'; }).join('');
+        return '<div class="ib-c"><div style="display:flex;justify-content:space-between;gap:8px"><h3>' + esc(b.no) + '</h3><span class="ib-tag ' + (b.status === 'requested' ? 'hot' : b.status === 'confirmed' || b.status === 'done' ? 'ai' : 'test') + '">' + esc(b.status.toUpperCase()) + '</span></div>' +
+          '<div style="font-size:14px"><b>' + esc(b.name) + '</b>' + (b.phone ? ' · ' + esc(b.phone) : '') + '</div><div style="margin:6px 0;font-size:14px">' + esc(b.service) + '</div>' +
+          (b.at ? '<div><b>' + esc(b.at) + '</b>' + (b.place ? ' · ' + esc(b.place) : '') + '</div>' : b.wanted ? '<div class="sku">Asked for: ' + esc(b.wanted) + '</div>' : '') + (b.bring ? '<div class="sku">Bring: ' + esc(b.bring) + '</div>' : '') + ans +
+          (b.trx ? '<div class="sku">Advance' + (b.advance ? ' ' + tk(b.advance) : '') + ' · TrxID ' + esc(b.trx) + ' · ' + (b.paid ? '<b style="color:var(--fd-positive)">received</b>' : '<b style="color:var(--fd-negative)">to check</b>') + '</div>' : '') +
+          (b.reason ? '<div class="sku">Reason: ' + esc(b.reason) + '</div>' : '') +
+          '<div class="ib-actions">' + act + '</div><details style="margin-top:8px"><summary class="sku">History</summary>' + b.history.map(function (e) { return '<div class="sku">' + esc(e.at) + ' · ' + esc(e.by) + ' · ' + esc(e.what) + '</div>'; }).join('') + '</details></div>';
+      }).join('') + '</div>';
+    });
+  }
+  function bkAct(id, a) {
+    var b = ((IB.bk && IB.bk.bookings) || []).find(function (x) { return x.id === id; }) || {};
+    var done = function (close) { return function (r) { IB.bk = r; if (close) close(); paint(); toast(r.told === true ? 'Saved — the customer was told in the chat.' : r.told === false ? 'Saved. The customer could not be told in the chat (outside Meta\'s window or the website chat) — call them.' : 'Saved.'); }; };
+    if (a === 'confirm' || a === 'propose') {
+      fdwDialog((a === 'confirm' ? 'Confirm ' : 'Propose a time for ') + esc(b.no), '<div class="dlg-b" style="white-space:normal"><div class="ib-form"><label>Date and time<input class="i" type="datetime-local" id="bkAt" value="' + esc(b.atIso || '') + '"></label>' +
+        '<label>Where<input class="i" id="bkPlace" value="' + esc(b.place || '') + '"></label>' + (a === 'confirm' ? '<label style="grid-column:1/-1">What to bring<input class="i" id="bkBring" value="' + esc(b.bring || '') + '"></label>' : '') + '</div>' +
+        (b.wanted ? '<div class="sub">The customer asked for: ' + esc(b.wanted) + '</div>' : '') + '<div class="sub">The customer gets this in the chat' + (a === 'confirm' ? ', then reminders before the time.' : ' and is asked whether it suits.') + '</div></div>',
+        function (back, close) { srv('erpBookingAct', [{ id: id, action: a, at: fdwVal(back, 'bkAt'), place: fdwVal(back, 'bkPlace'), bring: a === 'confirm' ? fdwVal(back, 'bkBring') : '', back: IB.bkst }], done(close), fail); });
+    } else if (a === 'decline' || a === 'cancel') {
+      uiPrompt(a === 'decline' ? 'Why can it not be taken? (the customer is told)' : 'Why is it cancelled? (the customer is told)', '').then(function (tx) { if (!tx) return; srv('erpBookingAct', [{ id: id, action: a, reason: tx, back: IB.bkst }], done(), fail); });
+    } else srv('erpBookingAct', [{ id: id, action: a, back: IB.bkst }], done(), fail);
+  }
+
   // ---------------------------------------------------------------- Leads
   function leadsHtml() {
     return errOr(IB.leads, function (d) {
-      var today = d.leads.filter(function (l) { return l.due; });
-      var h = '<div class="ib-c" style="margin-bottom:14px"><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><h3 style="flex:1">Today · ' + today.length + '</h3><button class="btn small" type="button" data-ibleadnew="1">+ Lead</button></div>' +
-        (today.length ? today.map(function (l) { return '<div class="ib-lead due" data-iblead="' + esc(l.id) + '"><b>' + esc(l.name || l.phone || 'Lead') + '</b><span>' + esc(l.want) + ' · follow up ' + esc(l.followUp) + '</span></div>'; }).join('') : '<div class="sku">Nobody to call today.</div>') + '</div>';
+      var lq = IB.lq.toLowerCase(), all = d.leads.filter(function (l) { return !lq || [l.name, l.phone, l.want, l.note].join(' ').toLowerCase().indexOf(lq) >= 0; });
+      var today = all.filter(function (l) { return l.due; }), chase = d.chase || [];
+      var h = '<div class="ib-grid2" style="margin-bottom:14px"><div class="ib-c"><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><h3 style="flex:1">Today · ' + today.length + '</h3><input class="i" id="ibLq" placeholder="Search leads" value="' + esc(IB.lq) + '" style="width:160px"><button class="btn small" type="button" data-ibleadnew="1">+ Lead</button>' + (ME && ME.role === 'owner' ? '<button class="btn small" type="button" data-ibexp="leads">⤓ CSV</button>' : '') + '</div>' +
+        (today.length ? today.map(function (l) { return '<div class="ib-lead due" data-iblead="' + esc(l.id) + '"><b>' + esc(l.name || l.phone || 'Lead') + '</b><span>' + esc(l.want) + ' · follow up ' + esc(l.followUp) + '</span></div>'; }).join('') : '<div class="sku">Nobody to call today.</div>') + '</div>' +
+        '<div class="ib-c"><h3>To chase · ' + chase.length + '</h3><div class="sub">Interested or quoted, and no order since.</div>' +
+        (chase.length ? chase.slice(0, 12).map(function (l) { return '<div class="ib-lead" data-iblead="' + esc(l.id) + '"><b>' + esc(l.name || l.phone || 'Lead') + '</b><span>' + esc(l.want || '—') + ' · ' + esc(l.at) + '</span></div>'; }).join('') : '<div class="sku">Nobody to chase. ✓</div>') + '</div></div>';
       h += '<div class="ib-pipe">' + d.stages.map(function (s, i) {
-        var ls = d.leads.filter(function (l) { return l.stage === i + 1; });
+        var ls = all.filter(function (l) { return l.stage === i + 1; });
         return '<div class="ib-col"><h4><span>' + esc(s) + '</span><span>' + ls.length + '</span></h4>' + ls.slice(0, 60).map(function (l) {
           return '<div class="ib-lead' + (l.due ? ' due' : '') + '" data-iblead="' + esc(l.id) + '"><b>' + esc(l.name || l.phone || 'Lead') + '</b><span>' + esc(l.want || '—') + '</span><span>' + esc(CHN[l.channel] || l.source || '') + (l.value ? ' · ' + tk(l.value) : '') + (l.assigned ? ' · ' + esc(l.assigned) : '') + '</span></div>'; }).join('') + '</div>';
       }).join('') + '</div>';
@@ -35615,7 +35677,7 @@ body[data-fdview="settings"] #o_cp .crumbs, body[data-fdview="tools"] #o_cp .cru
   function bcHtml() {
     return errOr(IB.bc, function (d) {
       var own = ((IB.list && IB.list.list) || []).filter(function (x) { return x.channel === 'messenger' || x.channel === 'instagram'; });
-      return '<div class="ib-c" style="margin-bottom:14px"><h3>New broadcast</h3><div class="sub">Goes only to people who wrote to your page in the last 23 hours (<b>' + d.reach + ' can get one now</b>), not to chats a person holds, not to anyone who got one in the last ' + d.gap + ' hours. Messenger and Instagram only. You must send a test to one of your own chats first — and again after every change.</div>' +
+      return '<div class="ib-c" style="margin-bottom:14px"><h3>New broadcast</h3><div class="sub">Goes only to people who wrote to your page in the last 23 hours (<b>' + d.reach + ' can get one now</b>), not to chats a person holds, not to anyone who got one in the last <select class="i" id="ibBcGap" style="width:auto;height:28px;display:inline-block">' + [12, 24, 48, 72, 168].map(function (g) { return '<option value="' + g + '"' + (d.gap === g ? ' selected' : '') + '>' + (g === 168 ? '7 days' : g + ' hours') + '</option>'; }).join('') + '</select>. Messenger and Instagram only. You must send a test to one of your own chats first — and again after every change.</div>' +
         '<textarea class="i" id="bcText" rows="3" style="width:100%" placeholder="Today\'s offer…"></textarea><div class="ib-actions"><button class="btn primary small" type="button" data-ibbcsave="1">Save</button></div></div>' +
         (d.broadcasts.length ? '<div class="ib-grid2">' + d.broadcasts.map(function (b) {
           return '<div class="ib-c"><div style="white-space:pre-wrap;font-size:14px">' + esc(b.text) + '</div><div class="sub" style="margin-top:6px">' + (b.sent ? 'Sent ' + esc(b.sent) + ' to ' + b.count : b.tested ? 'Tested ' + esc(b.testedAt) : 'Not tested yet') + '</div>' +
@@ -35636,6 +35698,8 @@ body[data-fdview="settings"] #o_cp .crumbs, body[data-fdview="tools"] #o_cp .cru
   }
 
   // ---------------------------------------------------------------- Agent Desk
+  var BF = [['services', 'Services, fees and durations', true, 'e.g. Consultation ৳800 (20 min); Hair cut ৳500'], ['booking_questions', 'Questions to ask before a booking', true, 'e.g. Which service? Preferred day and time? Age?'],
+            ['place', 'Where (address or online)', false, ''], ['advance_rule', 'Advance payment rule', false, 'e.g. ৳300 advance by bKash 01XXXXXXXXX'], ['cancel_rule', 'Cancellation rule', false, 'e.g. Tell us 24 hours before']];
   var PF = [['name', 'Business name'], ['sells', 'What you sell (a few words)'], ['hours', 'Opening hours'], ['phone', 'Phone'], ['address', 'Address'],
             ['delivery_in', 'Delivery inside Dhaka (৳)'], ['days_in', 'Days inside Dhaka'], ['delivery_out', 'Delivery outside Dhaka (৳)'], ['days_out', 'Days outside Dhaka'], ['delivery_rule', 'Other delivery rules'],
             ['payment', 'How customers pay'], ['returns', 'Return and exchange rule'], ['discount_answer', 'Answer when asked for a discount'], ['extra_offer', 'Extra offer (mentioned once before the order)'],
@@ -35651,6 +35715,12 @@ body[data-fdview="settings"] #o_cp .crumbs, body[data-fdview="tools"] #o_cp .cru
         '<label style="flex-direction:row;align-items:center;gap:8px"><input type="checkbox" data-pf="review_on"' + (p.review_on ? ' checked' : '') + '> Ask for a review a day after delivery</label>' +
         '<label style="flex-direction:row;align-items:center;gap:8px"><input type="checkbox" data-pf="rating_on"' + (p.rating_on ? ' checked' : '') + '> Ask for a 1-5 star rating after an order</label>' +
         '<label style="flex-direction:row;align-items:center;gap:8px"><input type="checkbox" data-pf="saved_ai"' + (p.saved_ai ? ' checked' : '') + '> AI helpers on saved replies</label></div>' +
+        '<h3 style="margin-top:16px">Products or services</h3><div class="sub">A service business (a clinic, a salon, a coaching centre, a travel agency) takes bookings: the AI asks your questions one at a time and records a request for your team to confirm.</div><div class="ib-form">' +
+        '<label>This business<select class="i" data-pf="biz_type"><option value="shop"' + (p.biz_type === 'shop' ? ' selected' : '') + '>Sells products</option><option value="services"' + (p.biz_type === 'services' ? ' selected' : '') + '>Offers services (bookings)</option><option value="both"' + (p.biz_type === 'both' ? ' selected' : '') + '>Both</option></select></label>' +
+        BF.map(function (f) { var v = p[f[0]]; return '<label' + (f[2] ? ' style="grid-column:1/-1"' : '') + '>' + esc(f[1]) + '<input class="i" data-pf="' + f[0] + '" value="' + esc(v === undefined ? '' : v) + '" placeholder="' + esc(f[3] || '') + '"></label>'; }).join('') +
+        '<label>Reminder hours before<select class="i" data-pf="remind_hours">' + [0, 1, 2, 3, 6, 12].map(function (n) { return '<option value="' + n + '"' + (Number(p.remind_hours) === n ? ' selected' : '') + '>' + (n ? n + ' hours' : 'None') + '</option>'; }).join('') + '</select></label>' +
+        '<label style="flex-direction:row;align-items:center;gap:8px"><input type="checkbox" data-pf="remind_day"' + (p.remind_day ? ' checked' : '') + '> Remind the day before</label>' +
+        '<label style="flex-direction:row;align-items:center;gap:8px"><input type="checkbox" data-pf="auto_confirm"' + (p.auto_confirm ? ' checked' : '') + '> Confirm bookings automatically</label></div>' +
         '<div class="ib-actions"><button class="btn primary small" type="button" data-ibpfsave="1">Save details</button>' + (d.hasPrevDetails ? '<button class="btn small" type="button" data-ibundo="details">Undo the last published details</button>' : '') + '</div></div>';
       var helper = '<div class="ib-c"><h3>Teach the AI in your own words</h3><div class="sub">e.g. “Make the delivery charge 80 taka” or “We are closed on Fridays”. The helper shows what is set now and makes a draft; test it on the phone, then publish.</div>' +
         '<div style="display:flex;gap:6px"><input class="i" id="dkHelp" placeholder="Tell the helper…" style="flex:1"><button class="btn small primary" type="button" data-ibhelper="1">Draft it</button></div>' + (IB.helperSay ? '<div class="ib-ai-out">' + esc(IB.helperSay) + '</div>' : '') + '</div>';
@@ -35704,6 +35774,7 @@ body[data-fdview="settings"] #o_cp .crumbs, body[data-fdview="tools"] #o_cp .cru
   function chansHtml() {
     return errOr(IB.chans, function (d) {
       var h = (!d.aiKey ? '<div class="note err"><div class="ico">!</div><div>No AI key is set — the AI cannot answer until one is set (Platform → AI reader).</div></div>' : '');
+      if (d.channels.length && ME && ME.role === 'owner') h += '<div class="ib-actions" style="margin:0 0 12px"><button class="btn small" type="button" data-chall="pauseall">⏸ Pause the AI everywhere</button><button class="btn small" type="button" data-chall="resumeall">▶ Resume the AI everywhere</button></div>';
       h += '<div class="ib-grid2">' + d.channels.map(function (c) {
         var keyFields = { messenger: ['TOKEN', 'APP_SECRET'], instagram: ['TOKEN', 'APP_SECRET'], wa_cloud: ['TOKEN', 'APP_SECRET'], wa_evo: ['URL', 'KEY'], wa_sender: ['KEY', 'HOOK_SECRET'], webchat: [] }[c.kind];
         var KL = { TOKEN: 'Access token', APP_SECRET: 'App secret', URL: 'Server address (https://…)', KEY: 'API key', HOOK_SECRET: 'Webhook secret' };
@@ -35772,7 +35843,7 @@ body[data-fdview="settings"] #o_cp .crumbs, body[data-fdview="tools"] #o_cp .cru
   function readFileAsB64(f, cb) { var rd = new FileReader(); rd.onload = function () { cb(String(rd.result)); }; rd.readAsDataURL(f); }
   document.addEventListener('click', function (e) {
     if (VIEW !== 'inbox' || !e.target.closest) return;
-    var t = e.target.closest('[data-ibtab],[data-ibpile],[data-ibopen],[data-ibclose],[data-ibmode],[data-ibsend],[data-ibnote],[data-ibside],[data-ibai],[data-ibusedraft],[data-ibcsave],[data-ibinvoice],[data-ibgoconv],[data-ibtaskdone],[data-ibnotify],[data-ibost],[data-iboa],[data-ibinv],[data-iblead],[data-ibleadnew],[data-ibfusave],[data-ibbcsave],[data-ibbcsend],[data-ibcm],[data-ibpfsave],[data-ibundo],[data-ibhelper],[data-ibpublish],[data-ibdiscardall],[data-ibrule],[data-ibruleadd],[data-ibtest],[data-ibtestclear],[data-iboffer],[data-ibofferadd],[data-ibsavedadd],[data-ibsavedx],[data-ibkbadd],[data-ibkbtest],[data-ibkbx],[data-chsave],[data-chlive],[data-chpractice],[data-chcm],[data-chqr],[data-chremove],[data-chadd],[data-ibdays],[data-ibcost]');
+    var t = e.target.closest('[data-ibtab],[data-ibpile],[data-ibopen],[data-ibclose],[data-ibmode],[data-ibsend],[data-ibnote],[data-ibside],[data-ibai],[data-ibusedraft],[data-ibcsave],[data-ibinvoice],[data-ibgoconv],[data-ibtaskdone],[data-ibnotify],[data-ibost],[data-iboa],[data-ibinv],[data-iblead],[data-ibleadnew],[data-ibfusave],[data-ibbcsave],[data-ibbcsend],[data-ibcm],[data-ibpfsave],[data-ibundo],[data-ibhelper],[data-ibpublish],[data-ibdiscardall],[data-ibrule],[data-ibruleadd],[data-ibtest],[data-ibtestclear],[data-iboffer],[data-ibofferadd],[data-ibsavedadd],[data-ibsavedx],[data-ibkbadd],[data-ibkbtest],[data-ibkbx],[data-chsave],[data-chlive],[data-chpractice],[data-chcm],[data-chqr],[data-chremove],[data-chadd],[data-ibdays],[data-ibcost],[data-ibbkst],[data-ibbka],[data-ibduty],[data-ibexp],[data-ibolder],[data-chall],[data-ibdict]');
     if (!t) return;
     var d = t.dataset;
     if (d.ibtab) { IB.tab = d.ibtab; if (['tasks', 'orders', 'leads', 'stats', 'cost', 'cm', 'bc', 'fu'].indexOf(d.ibtab) >= 0) IB[d.ibtab] = null; paint(); return; }
@@ -35804,6 +35875,22 @@ body[data-fdview="settings"] #o_cp .crumbs, body[data-fdview="tools"] #o_cp .cru
     if (d.ibtaskdone) { srv('erpInboxTasks', [{ done: Number(d.ibtaskdone) }], function (r) { IB.tasks = r; paint(); }, fail); return; }
     if (d.ibnotify !== undefined && t.hasAttribute('data-ibnotify')) { try { Notification.requestPermission().then(function () { paint(); }); } catch (er) {} return; }
     if (d.ibost) { IB.ostatus = d.ibost; IB.orders = null; paint(); return; }
+    if (d.ibbkst) { IB.bkst = d.ibbkst; IB.bk = null; paint(); return; }
+    if (d.ibdict !== undefined && t.hasAttribute('data-ibdict')) {
+      if (IB.dict) { try { IB.dict.stop(); } catch (er) {} return; }
+      var SR = window.SpeechRecognition || window.webkitSpeechRecognition, rec = new SR(), ta0 = el('ibReply'), base = ta0 ? ta0.value : '';
+      rec.lang = (IB.conv && /[a-z]/i.test((IB.conv.msgs.filter(function (m) { return m.dir === 'in'; }).slice(-1)[0] || {}).text || '') && !/[ঀ-৿]/.test((IB.conv.msgs.filter(function (m) { return m.dir === 'in'; }).slice(-1)[0] || {}).text || '')) ? 'en-US' : 'bn-BD';
+      rec.interimResults = true; rec.continuous = true;
+      rec.onresult = function (ev) { var tx = ''; for (var i = 0; i < ev.results.length; i++) tx += ev.results[i][0].transcript; var ta = el('ibReply'); if (ta) ta.value = (base ? base + ' ' : '') + tx; };
+      rec.onend = function () { IB.dict = null; paint(true); };
+      rec.onerror = function (er) { if (er && er.error === 'not-allowed') toast('Allow the microphone for this page.', true); };
+      IB.dict = rec; try { rec.start(); } catch (er) { IB.dict = null; } paint(true); toast('Listening — ' + (rec.lang === 'bn-BD' ? 'Bangla' : 'English') + '. Tap 🎤 again to stop.'); return;
+    }
+    if (d.ibbka) { bkAct(d.id, d.ibbka); return; }
+    if (d.ibduty !== undefined && t.hasAttribute('data-ibduty')) { IB.duty = !IB.duty; try { localStorage.setItem('ibDuty', IB.duty ? '1' : '0'); } catch (er) {} if (IB.duty) { ding(); try { if ('Notification' in window && Notification.permission === 'default') Notification.requestPermission(); } catch (er) {} } paint(); toast(IB.duty ? 'On duty — a sound plays when a customer waits for a person.' : 'Off duty — no sound.'); return; }
+    if (d.ibexp) { exportIt(d.ibexp, d.ibexp === 'chat' ? IB.convId : undefined); return; }
+    if (d.ibolder) { var cid0 = IB.convId; srv('erpInboxOpen', [{ id: cid0, before: Number(d.ibolder) }], function (r) { if (IB.convId !== cid0) return; var prev = IB.older && IB.older.id === cid0 ? IB.older.msgs : []; IB.older = { id: cid0, msgs: r.msgs.concat(prev), more: r.more }; var v = el('view'), box = v && v.querySelector('.ib-msgs'), h0 = box ? box.scrollHeight : 0; paint(true); var nb = el('view').querySelector('.ib-msgs'); if (nb) nb.scrollTop = nb.scrollHeight - h0; }, fail); return; }
+    if (d.chall) { srv('erpInboxChannelAct', [{ action: d.chall }], function (r) { IB.chans = r; paint(); toast(d.chall === 'pauseall' ? 'The AI is paused on every channel. Messages still arrive; the team answers.' : 'The AI answers again on every channel.'); }, fail); return; }
     if (d.iboa) {
       var id = d.id, a = d.iboa;
       if (a === 'approve') {
@@ -35816,6 +35903,19 @@ body[data-fdview="settings"] #o_cp .crumbs, body[data-fdview="tools"] #o_cp .cru
       } else if (a === 'cancel') {
         fdwDialog('Cancel the order', '<div class="dlg-b" style="white-space:normal"><div class="ib-form"><label>Reason<select class="i" id="ocR"><option>The customer changed their mind</option><option>Could not reach the customer</option><option>Out of stock</option><option>Duplicate order</option><option>Fake order</option><option>Test order</option><option>Wrong order</option><option>Other</option></select></label></div><div class="sub">The customer is told once in the chat (not for a duplicate, fake, test or wrong order).</div></div>',
           function (back, close) { srv('erpChatOrderAct', [{ id: id, action: 'cancel', reason: fdwVal(back, 'ocR'), back: IB.ostatus }], function (r) { IB.orders = r; close(); paint(); }, fail); });
+      } else if (a === 'edit') {
+        var o = ((IB.orders && IB.orders.orders) || []).find(function (x) { return x.id === id; }) || {};
+        var rowsH = (o.items || []).map(function (x, i) { return '<div class="ib-form" style="grid-template-columns:2fr 70px 100px;margin-top:6px" data-oei="' + i + '"><label>' + (i ? '' : 'Item') + '<input class="i" data-k="name" value="' + esc(x.name) + '" data-sku="' + esc(x.sku || '') + '"></label><label>' + (i ? '' : 'Qty') + '<input class="i" data-k="qty" type="number" min="0" value="' + esc(x.qty) + '"></label><label>' + (i ? '' : 'Price ৳') + '<input class="i" data-k="price" type="number" min="0" value="' + esc(x.price) + '"></label></div>'; }).join('');
+        fdwDialog('Edit ' + esc(o.no || 'order'), '<div class="dlg-b" style="white-space:normal"><div class="ib-form"><label>Name<input class="i" id="oeName" value="' + esc(o.name || '') + '"></label><label>Phone<input class="i" id="oePhone" value="' + esc(o.phone || '') + '"></label>' +
+          '<label style="grid-column:1/-1">Address<input class="i" id="oeAddr" value="' + esc(o.address || '') + '"></label><label>Delivery charge ৳<input class="i" type="number" id="oeDel" value="' + esc(o.delivery) + '"></label></div>' + rowsH +
+          '<div class="sub" style="margin-top:6px">Quantity 0 takes a line out. The customer is not told about an edit.</div></div>',
+          function (back, close) {
+            var items = [].map.call(back.querySelectorAll('[data-oei]'), function (r) { var g = function (k) { return r.querySelector('[data-k="' + k + '"]'); }; return { sku: g('name').getAttribute('data-sku'), name: g('name').value, qty: Number(g('qty').value), price: Number(g('price').value) }; }).filter(function (x) { return x.qty > 0; });
+            if (!items.length) { toast('Keep at least one item - or cancel the order.', true); return; }
+            srv('erpChatOrderAct', [{ id: id, action: 'edit', name: fdwVal(back, 'oeName'), phone: fdwVal(back, 'oePhone'), address: fdwVal(back, 'oeAddr'), delivery: fdwVal(back, 'oeDel'), items: items, back: IB.ostatus }], function (r) { IB.orders = r; close(); paint(); toast('Saved.'); }, fail);
+          });
+      } else if (a === 'note') {
+        uiPrompt('Note on this order (the team only)', '').then(function (tx) { if (!tx) return; srv('erpChatOrderAct', [{ id: id, action: 'note', note: tx, back: IB.ostatus }], function (r) { IB.orders = r; paint(); toast('Noted.'); }, fail); });
       } else srv('erpChatOrderAct', [{ id: id, action: a, back: IB.ostatus }], function (r) { IB.orders = r; paint(); }, fail);
       return;
     }
@@ -35824,7 +35924,7 @@ body[data-fdview="settings"] #o_cp .crumbs, body[data-fdview="tools"] #o_cp .cru
     if (d.ibleadnew !== undefined && t.hasAttribute('data-ibleadnew')) { leadDialog(null); return; }
     if (d.ibfusave !== undefined && t.hasAttribute('data-ibfusave')) { srv('erpInboxFollowups', [{ save: { on: el('fuOn').checked, hot: el('fuHot').checked, warm: el('fuWarm').checked } }], function (r) { IB.fu = r; paint(); toast('Saved.'); }, fail); return; }
     if (d.ibbcsave !== undefined && t.hasAttribute('data-ibbcsave')) { srv('erpInboxBroadcasts', [{ save: { text: val('bcText') } }], function (r) { IB.bc = r; paint(); }, fail); return; }
-    if (d.ibbcsend) { srv('erpInboxBroadcasts', [{ send: d.ibbcsend }], function (r) { IB.bc = r; paint(); toast('Broadcast sent.'); }, fail); return; }
+    if (d.ibbcsend) { srv('erpInboxBroadcasts', [{ send: d.ibbcsend, gap: IB.bcgap }], function (r) { IB.bc = r; paint(); toast('Broadcast sent.'); }, fail); return; }
     if (d.ibcm) {
       var cid = d.id;
       if (d.ibcm === 'reply') { uiPrompt('Your reply under the comment', '').then(function (tx) { if (!tx) return; srv('erpInboxComments', [{ act: { id: cid, action: 'reply', text: tx } }], function (r) { IB.cm = r; paint(); }, fail); }); return; }
@@ -35905,11 +36005,21 @@ body[data-fdview="settings"] #o_cp .crumbs, body[data-fdview="tools"] #o_cp .cru
   });
   document.addEventListener('keydown', function (e) {
     if (VIEW !== 'inbox') return;
+    if (e.key === 'Enter' && e.target && e.target.id === 'ibOq') { IB.oq = e.target.value.trim(); IB.orders = null; paint(); var q1 = el('ibOq'); if (q1) { q1.focus(); q1.setSelectionRange(q1.value.length, q1.value.length); } return; }
     if (e.key === 'Enter' && !e.shiftKey && e.target && e.target.id === 'ibReply' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); var b = document.querySelector('[data-ibsend]'); if (b) b.click(); }
     if (e.key === 'Enter' && e.target && e.target.id === 'ibTestIn') { e.preventDefault(); var b2 = document.querySelector('[data-ibtest]'); if (b2) b2.click(); }
     if (e.key === 'Enter' && e.target && e.target.id === 'dkHelp') { e.preventDefault(); var b3 = document.querySelector('[data-ibhelper]'); if (b3) b3.click(); }
   });
 })();
+</script>
+<script>
+/* fd-46b: the Inbox's small inputs that are not clicks - lead search as you type, the broadcast gap, the order search when cleared */
+document.addEventListener('input', function (e) {
+  var t = e.target; if (!t || !window.IB) return;
+  if (t.id === 'ibLq') { IB.lq = t.value; clearTimeout(window.__ibLqT); window.__ibLqT = setTimeout(function () { var pos = t.selectionStart; if (window.ibPaint) ibPaint(); var n = document.getElementById('ibLq'); if (n) { n.focus(); try { n.setSelectionRange(pos, pos); } catch (er) {} } }, 250); }
+  if (t.id === 'ibOq' && !t.value && IB.oq) { IB.oq = ''; IB.orders = null; if (window.ibPaint) ibPaint(); }
+});
+document.addEventListener('change', function (e) { var t = e.target; if (t && t.id === 'ibBcGap' && window.IB) { IB.bcgap = Number(t.value) || 24; IB.bc = null; if (window.ibPaint) ibPaint(); } });
 </script>
 <!-- fd-37: the page is styled: show it -->
 <script>(function () { var x = document.getElementById('bootHide'); if (x) x.remove(); })();</script>

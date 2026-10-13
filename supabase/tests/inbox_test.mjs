@@ -260,4 +260,64 @@ check('the AI cost log is the owner\'s', !r.ok, r);
 const other = (await sql`select count(*)::int n from inbox_conversations where business_id = ${FIX.B2}`)[0].n;
 check('nothing reached the other business', other === 0);
 
+// ---- 16. a service business: the AI takes a booking request, an advance by TrxID, the team confirms, reminders go out
+await owner('erpInboxProfile', [{ save: { biz_type: 'both', services: 'Printer setup visit ৳1,500 (1 hour)', booking_questions: 'Which printer? Which day suits?', advance_rule: '৳500 advance by bKash', remind_day: true, remind_hours: 3 } }]);
+graph.length = 0;
+let sysBk = '';
+raw = fbMsg('PSID7', 'printer setup er jonno ashben?');
+h = await asB(async (ctx) => ib.hookPost(ctx, await chRow(M.id), raw, { 'x-hub-signature-256': sig(raw) }));
+const conv7 = h.due[0].id;
+await sql`update inbox_conversations set reply_due_at = now() - interval '1 second' where id = ${conv7}`;
+script = [(body) => { sysBk = body.systemInstruction.parts[0].text; return [{ functionCall: { name: 'request_booking', args: { name: 'Karim', phone: '01812000222', service: 'Printer setup visit', wanted: 'Saturday evening', answers: { 'Which printer?': 'Bambu A1' } } } }]; },
+  (body) => { const fr = body.contents[body.contents.length - 1].parts[0].functionResponse; return [{ text: 'আপনার অনুরোধ ' + fr.response.no + ' নেওয়া হয়েছে, টিম নিশ্চিত করবে।' }]; }];
+await asB((ctx) => ib.replyDue(ctx, conv7));
+let bk = (await sql`select * from bookings where business_id = ${FIX.B}`)[0];
+check('the receptionist rules are in the system text (ask one at a time, never promise or confirm)', /receptionist/.test(sysBk) && /Never confirm a time yourself/.test(sysBk) && /Never promise a result/.test(sysBk), sysBk.slice(-600));
+check('a booking request is recorded with the answers; the team gets a task; a lead is made', bk && bk.status === 'requested' && bk.phone === '01812000222' && bk.answers['Which printer?'] === 'Bambu A1' &&
+  (await sql`select count(*)::int n from inbox_tasks where reason = 'booking'`)[0].n === 1 && (await sql`select stage from inbox_leads where conversation_id = ${conv7}`)[0].stage === 3, bk);
+script = [[{ functionCall: { name: 'booking_payment', args: { trx_id: 'TRX7788', amount: 500 } } }], [{ text: 'পেমেন্টটি যাচাই করা হচ্ছে।' }]];
+raw = fbMsg('PSID7', 'TrxID TRX7788 500 pathiyechi');
+await asB(async (ctx) => ib.hookPost(ctx, await chRow(M.id), raw, { 'x-hub-signature-256': sig(raw) }));
+await sql`update inbox_conversations set reply_due_at = now() - interval '1 second' where id = ${conv7}`;
+await asB((ctx) => ib.replyDue(ctx, conv7));
+bk = (await sql`select * from bookings where id = ${bk.id}`)[0];
+check('the advance TrxID is kept for the team to check, not marked paid', bk.trx_id === 'TRX7788' && Number(bk.advance) === 500 && !bk.paid && (await sql`select count(*)::int n from inbox_tasks where kind = 'payment'`)[0].n === 1, bk);
+r = await sales('erpBookings', [{}]);
+check('the Bookings list: one request, one advance to check', r.ok && r.result.bookings.length === 1 && r.result.counts.requested === 1 && r.result.counts.unpaid === 1, r.result && r.result.counts);
+r = await sales('erpBookingAct', [{ id: bk.id, action: 'decline' }]);
+check('declining needs a reason', !r.ok && /why/i.test(r.error), r);
+const dhaka = (ms) => new Date(Date.now() + ms + 6 * 3600e3).toISOString().slice(0, 16);
+graph.length = 0;
+r = await sales('erpBookingAct', [{ id: bk.id, action: 'confirm', at: dhaka(20 * 3600e3), place: 'Your home', bring: 'The printer box' }]);
+bk = (await sql`select * from bookings where id = ${bk.id}`)[0];
+check('confirmed with a time; the customer is told in the chat', r.ok && r.result.told === true && bk.status === 'confirmed' && Math.abs(new Date(bk.at).getTime() - Date.now() - 20 * 3600e3) < 120e3 &&
+  graph.some((g) => g.body && g.body.message && /BK-/.test(g.body.message.text || '') && /The printer box/.test(g.body.message.text || '')), graph.map((g) => g.body && g.body.message && g.body.message.text));
+r = await sales('erpBookingAct', [{ id: bk.id, action: 'paid' }]);
+check('advance received: marked paid, the payment task closed', r.ok && (await sql`select paid from bookings where id = ${bk.id}`)[0].paid && (await sql`select count(*)::int n from inbox_tasks where kind = 'payment' and status = 'open'`)[0].n === 0, r);
+const ib2 = await import(pathToFileURL(path.join(fnDir, 'handlers', 'inbox2.js')));
+graph.length = 0;
+let n1 = await asB((ctx) => ib2.bookingReminders(ctx));
+let n2 = await asB((ctx) => ib2.bookingReminders(ctx));
+check('the day-before reminder goes once', n1 === 1 && n2 === 0 && graph.some((g) => g.body && g.body.message && /মনে করিয়ে/.test(g.body.message.text || '')), [n1, n2]);
+await sql`update bookings set at = now() + interval '2 hours' where id = ${bk.id}`;
+n1 = await asB((ctx) => ib2.bookingReminders(ctx));
+n2 = await asB((ctx) => ib2.bookingReminders(ctx));
+check('...and the hours-before reminder once', n1 === 1 && n2 === 0, [n1, n2]);
+r = await owner('erpInboxLeads', [{}]);
+check('"To chase": an interested lead with no order since', r.ok && r.result.chase.some((l) => l.conv === conv7), r.result && r.result.chase);
+
+// ---- 17. downloads, pause the AI everywhere
+r = await owner('erpInboxExport', [{ what: 'orders' }]);
+check('orders download as rows', r.ok && r.result.name === 'chat-orders.csv' && r.result.rows.length >= 1 && r.result.head.includes('Invoice'), r);
+r = await sales('erpInboxExport', [{ what: 'orders' }]);
+check('...only for the owner', !r.ok, r);
+r = await sales('erpInboxExport', [{ what: 'chat', id: conv7 }]);
+check('a conversation downloads as text', r.ok && /Customer: printer setup/.test(r.result.text) && /AI: /.test(r.result.text), r);
+r = await owner('erpInboxChannelAct', [{ action: 'pauseall' }]);
+check('pause the AI everywhere', r.ok && (await sql`select count(*)::int n from inbox_channels where business_id = ${FIX.B} and ai_on and status <> 'removed'`)[0].n === 0, r);
+r = await mgr('erpInboxChannelAct', [{ action: 'resumeall' }]);
+check('...only the owner can', !r.ok, r);
+await owner('erpInboxChannelAct', [{ action: 'resumeall' }]);
+check('...and resume', (await sql`select count(*)::int n from inbox_channels where business_id = ${FIX.B} and not ai_on and status <> 'removed'`)[0].n === 0);
+
 await done();

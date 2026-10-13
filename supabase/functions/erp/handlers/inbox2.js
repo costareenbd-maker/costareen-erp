@@ -84,6 +84,10 @@ export async function erpInboxChannelSave(ctx, payload) {
 export async function erpInboxChannelAct(ctx, payload) {
   owner(ctx);
   const p = payload || {};
+  if (p.action === 'pauseall' || p.action === 'resumeall') {
+    await ctx.tx`update inbox_channels set ai_on = ${p.action === 'resumeall'}, ai_off_until = null where business_id = ${ctx.biz} and status <> 'removed'`;
+    return erpInboxChannels(ctx);
+  }
   const ch = await chOf(ctx, str(p.id));
   if (!ch) throw new Error('No such channel.');
   if (p.action === 'ai') {
@@ -137,6 +141,7 @@ export async function erpInboxProfile(ctx, payload) {
     }
     if (!['bn', 'en', 'both'].includes(next.lang)) next.lang = 'both';
     if (!['sir', 'bhai'].includes(next.style)) next.style = 'sir';
+    if (!['shop', 'services', 'both'].includes(next.biz_type)) next.biz_type = 'shop';
     await setConfig(ctx, 'inbox_profile', JSON.stringify(next));
   }
   return { profile: await profile(ctx, false), draft: await profile(ctx, true), hasDraft: !!(await getConfig(ctx, 'inbox_profile_draft', '')) };
@@ -401,6 +406,95 @@ export async function orderUpdates(ctx) {
   return n;
 }
 
+// ------------------------------------------------------------------ bookings (service businesses)
+export async function erpBookings(ctx, payload) {
+  need(ctx);
+  const p = payload || {};
+  const st = ['requested', 'proposed', 'confirmed', 'declined', 'cancelled', 'done', 'all', 'upcoming'].includes(p.status) ? p.status : 'requested';
+  const rows = await ctx.tx`select * from bookings where business_id = ${ctx.biz}
+    and (${st} = 'all' or (${st} = 'upcoming' and status = 'confirmed' and at >= ${ctx.now}) or status = ${st}) order by coalesce(at, created_at) ${st === 'upcoming' ? ctx.tx`asc` : ctx.tx`desc`} limit 200`;
+  const counts = (await ctx.tx`select count(*) filter (where status = 'requested')::int requested, count(*) filter (where status = 'proposed')::int proposed,
+    count(*) filter (where status = 'confirmed' and at >= ${ctx.now})::int upcoming, count(*) filter (where trx_id is not null and not paid)::int unpaid from bookings where business_id = ${ctx.biz}`)[0];
+  const out = [];
+  for (const b of rows) {
+    const ev = await ctx.tx`select what, by_name, at from booking_events where booking_id = ${b.id} order by id`;
+    out.push({ id: b.id, no: b.no, name: b.name, phone: str(b.phone), service: b.service, wanted: str(b.wanted), at: b.at ? formatDate(new Date(b.at), 'EEE d MMM, h:mm a') : '',
+      atIso: b.at ? formatDate(new Date(b.at), 'yyyy-MM-dd HH:mm').replace(' ', 'T') : '', place: str(b.place), bring: str(b.bring), answers: b.answers || {}, status: b.status, reason: str(b.reason),
+      advance: b.advance === null ? null : num(b.advance), trx: str(b.trx_id), paid: b.paid, conv: b.conversation_id,
+      history: ev.map((e) => ({ what: e.what, by: str(e.by_name), at: formatDate(new Date(e.at), 'd MMM h:mm a') })) });
+  }
+  return { bookings: out, counts };
+}
+async function bookingTell(ctx, b, text) {
+  if (!b.conversation_id) return null;     // made by hand, no chat: nothing to tell
+  const v = (await ctx.tx`select * from inbox_conversations where id = ${b.conversation_id}`)[0];
+  if (!v) return false;
+  const ch = await chOf(ctx, v.channel_id), c = (await ctx.tx`select * from inbox_contacts where id = ${v.contact_id}`)[0];
+  if (!ch || ch.status === 'removed' || ch.kind === 'webchat') return false;   // the website chat gets no confirmations yet (as AiPraktor)
+  if (CAN[ch.kind].window24 && !inWindow(ch, v, ctx.now)) return false;    // after 24 h only Meta-approved templates - not sent
+  const r = await deliver(ctx, ch, v, c, { kind: 'text', text }, { author: 'system' });
+  return r.ok;
+}
+function bookingText(pr, b) {
+  const bn = pr.lang !== 'en';
+  const when = b.at ? formatDate(new Date(b.at), 'EEEE d MMMM, h:mm a') : '';
+  return (bn ? 'আপনার বুকিং নিশ্চিত হয়েছে: ' : 'Your booking is confirmed: ') + b.service + (when ? ' — ' + when : '') + (b.place ? ' — ' + b.place : '') + (b.bring ? (bn ? '\nসাথে আনবেন: ' : '\nPlease bring: ') + b.bring : '') + ' (' + b.no + ')';
+}
+export async function erpBookingAct(ctx, payload) {
+  need(ctx);
+  const p = payload || {};
+  const b = (await ctx.tx`select * from bookings where business_id = ${ctx.biz} and id = ${str(p.id)} for update`)[0];
+  if (!b) throw new Error('No such booking.');
+  const pr = await profile(ctx, false), by = ctx.s.name, bn = pr.lang !== 'en';
+  let told = null;
+  if (p.action === 'confirm' || p.action === 'propose') {
+    const at = str(p.at) ? new Date(str(p.at) + (str(p.at).length <= 16 ? ':00+06:00' : '')) : null;
+    if (!at || isNaN(at.getTime())) throw new Error('Pick the date and time.');
+    await ctx.tx`update bookings set status = ${p.action === 'confirm' ? 'confirmed' : 'proposed'}, at = ${at}, place = coalesce(${str(p.place) || null}, place), bring = coalesce(${str(p.bring) || null}, bring),
+                 reminded_day = false, reminded_hours = false where id = ${b.id}`;
+    const nb = (await ctx.tx`select * from bookings where id = ${b.id}`)[0];
+    await ctx.tx`insert into booking_events (business_id, booking_id, what, by_name) values (${ctx.biz}, ${b.id}, ${(p.action === 'confirm' ? 'Confirmed for ' : 'Proposed ') + formatDate(at, 'd MMM h:mm a')}, ${by})`;
+    told = await bookingTell(ctx, nb, p.action === 'confirm' ? bookingText(pr, nb) : (bn ? 'এই সময়টা কি আপনার সুবিধা হবে? ' : 'Would this time suit you? ') + nb.service + ' — ' + formatDate(at, 'EEEE d MMMM, h:mm a') + ' (' + nb.no + ')');
+  } else if (p.action === 'decline' || p.action === 'cancel') {
+    if (!str(p.reason)) throw new Error('Say why.');
+    await ctx.tx`update bookings set status = ${p.action === 'decline' ? 'declined' : 'cancelled'}, reason = ${str(p.reason)} where id = ${b.id}`;
+    await ctx.tx`insert into booking_events (business_id, booking_id, what, by_name) values (${ctx.biz}, ${b.id}, ${(p.action === 'decline' ? 'Declined: ' : 'Cancelled: ') + str(p.reason)}, ${by})`;
+    told = await bookingTell(ctx, b, (bn ? 'দুঃখিত, আপনার বুকিং ' + b.no + ' নেওয়া যাচ্ছে না: ' : 'Sorry, your booking ' + b.no + ' cannot go ahead: ') + str(p.reason));
+  } else if (p.action === 'paid') {
+    if (!b.trx_id && !p.trx) throw new Error('No transaction id to confirm.');
+    try { await ctx.tx`update bookings set paid = true, trx_id = coalesce(trx_id, ${str(p.trx) || null}), advance = coalesce(${p.amount ? num(p.amount) : null}, advance) where id = ${b.id}`; }
+    catch (_) { throw new Error('That transaction id is already used on another booking.'); }
+    await ctx.tx`insert into booking_events (business_id, booking_id, what, by_name) values (${ctx.biz}, ${b.id}, 'Advance received', ${by})`;
+    await ctx.tx`update inbox_tasks set status = 'done', done_by = ${by}, done_at = now() where conversation_id = ${b.conversation_id} and kind = 'payment' and status = 'open'`;
+    told = await bookingTell(ctx, b, bn ? 'আপনার অগ্রিম পেমেন্ট পাওয়া গেছে। ধন্যবাদ! (' + b.no + ')' : 'Your advance payment has been received. Thank you! (' + b.no + ')');
+  } else if (p.action === 'done') {
+    await ctx.tx`update bookings set status = 'done' where id = ${b.id}`;
+    await ctx.tx`insert into booking_events (business_id, booking_id, what, by_name) values (${ctx.biz}, ${b.id}, 'Done', ${by})`;
+  } else throw new Error('Unknown action.');
+  const r = await erpBookings(ctx, { status: str(p.back) || 'requested' });
+  return { ...r, told: told === null ? null : !!told };
+}
+/** The timer: a reminder the day before and a few hours before a confirmed booking (inside Meta's window). */
+export async function bookingReminders(ctx) {
+  const pr = await profile(ctx, false);
+  if (pr.biz_type === 'shop') return 0;
+  let n = 0;
+  const bn = pr.lang !== 'en';
+  const hrs = Math.max(1, Math.min(12, num(pr.remind_hours) || 3));
+  for (const b of await ctx.tx`select * from bookings where business_id = ${ctx.biz} and status = 'confirmed' and at > ${ctx.now} and at < ${new Date(ctx.now.getTime() + 26 * 3600e3)} limit 100`) {
+    const left = new Date(b.at).getTime() - ctx.now.getTime();
+    const line = b.service + ' — ' + formatDate(new Date(b.at), 'EEEE d MMMM, h:mm a') + (b.place ? ' — ' + b.place : '');
+    if (pr.remind_day && !b.reminded_day && left <= H24 && left > hrs * 3600e3) {
+      await ctx.tx`update bookings set reminded_day = true where id = ${b.id}`;
+      if (await bookingTell(ctx, b, (bn ? 'মনে করিয়ে দিচ্ছি — আগামীকাল: ' : 'A reminder — tomorrow: ') + line)) n++;
+    } else if (num(pr.remind_hours) > 0 && !b.reminded_hours && left <= hrs * 3600e3) {
+      await ctx.tx`update bookings set reminded_hours = true, reminded_day = true where id = ${b.id}`;
+      if (await bookingTell(ctx, b, (bn ? 'মনে করিয়ে দিচ্ছি — আর কয়েক ঘণ্টা পর: ' : 'A reminder — in a few hours: ') + line)) n++;
+    }
+  }
+  return n;
+}
+
 // ------------------------------------------------------------------ leads
 const STAGES = ['', 'New', 'Contacted', 'Interested', 'Quoted', 'Won', 'Lost'];
 export async function erpInboxLeads(ctx, payload) {
@@ -439,7 +533,11 @@ export async function erpInboxLeads(ctx, payload) {
       due: !!(l.follow_up_on && formatDate(new Date(l.follow_up_on), 'yyyy-MM-dd') <= today && l.stage < 5), note: str(l.note), conv: l.conversation_id,
       updated: formatDate(new Date(l.updated_at), 'd MMM'), history: ev.map((e) => ({ what: e.what, by: str(e.by_name), at: formatDate(new Date(e.at), 'd MMM h:mm a') })) });
   }
-  return { leads, stages: STAGES.slice(1) };
+  // "To chase": an open lead (interested / quoted) with no chat order since it was made
+  const chase = (await ctx.tx`select l.id, l.name, l.phone, l.want, l.conversation_id, l.updated_at from inbox_leads l where l.business_id = ${ctx.biz} and l.stage between 2 and 4
+      and not exists (select 1 from chat_orders o where o.business_id = l.business_id and (o.conversation_id = l.conversation_id or (l.phone is not null and o.phone = l.phone)) and o.created_at >= l.created_at)
+      order by l.updated_at desc limit 50`).map((l) => ({ id: l.id, name: str(l.name), phone: str(l.phone), want: str(l.want), conv: l.conversation_id, at: formatDate(new Date(l.updated_at), 'd MMM') }));
+  return { leads, stages: STAGES.slice(1), chase };
 }
 
 // ------------------------------------------------------------------ broadcasts (only to people who wrote in the last 23 h)
@@ -591,5 +689,44 @@ export async function erpAiWork(ctx, payload) {
     byDay: byDay.map((x) => ({ day: x.d, bdt: Math.round(x.bdt * 100) / 100, n: x.n })), byPurpose: byPurpose.map((x) => ({ purpose: x.purpose, bdt: Math.round(x.bdt * 100) / 100, n: x.n })) };
 }
 
-export const HANDLERS = { erpInboxChannels, erpInboxChannelSave, erpInboxChannelAct, erpInboxGoLive, erpInboxProfile, erpAgentDesk, erpInboxKb, erpShopOffers,
+/** Rows for a file the page saves: orders | leads | ai | handovers | chat (one conversation, as text). */
+export async function erpInboxExport(ctx, payload) {
+  const p = payload || {};
+  const w = str(p.what);
+  if (w === 'chat') {
+    need(ctx);
+    const v = (await ctx.tx`select v.id, c.name, c.phone from inbox_conversations v join inbox_contacts c on c.id = v.contact_id where v.business_id = ${ctx.biz} and v.id = ${str(p.id)}`)[0];
+    if (!v) throw new Error('No such conversation.');
+    const rows = await ctx.tx`select created_at, direction, author, user_name, text, transcript, seen_as from inbox_messages where conversation_id = ${v.id} order by id`;
+    const who = (m) => (m.direction === 'in' ? 'Customer' : m.direction === 'note' ? 'Note' : m.author === 'ai' ? 'AI' : (str(m.user_name) || 'Team'));
+    return { name: 'chat-' + ((str(v.name) || 'customer').replace(/\s+/g, '-')) + '.txt',
+      text: (str(v.name) + ' ' + str(v.phone)).trim() + '\n\n' + rows.map((m) => formatDate(new Date(m.created_at), 'd MMM yyyy h:mm a') + '  ' + who(m) + ': ' + str(m.text) +
+        (m.transcript ? ' [voice: ' + m.transcript + ']' : '') + (m.seen_as ? ' [photo: ' + str(m.seen_as).replace(/\{[^}]*\}/, '') + ']' : '')).join('\n') };
+  }
+  owner(ctx);
+  if (w === 'orders') {
+    const r = await ctx.tx`select * from chat_orders where business_id = ${ctx.biz} order by created_at desc`;
+    return { name: 'chat-orders.csv', head: ['No', 'Date', 'Status', 'Name', 'Phone', 'Address', 'Items', 'Delivery', 'Total', 'Invoice', 'Taken by', 'Hold', 'Cancelled', 'Rating'],
+      rows: r.map((o) => [o.no, formatDate(new Date(o.created_at), 'yyyy-MM-dd HH:mm'), o.status, o.name, o.phone, o.address, (o.items || []).map((x) => x.name + ' x ' + x.qty).join('; '),
+        num(o.delivery_charge), (o.items || []).reduce((t, x) => t + num(x.qty) * num(x.price), 0) + num(o.delivery_charge), str(o.invoice_no), o.taken_by, str(o.hold_reason), str(o.cancel_reason), o.rating || '']) };
+  }
+  if (w === 'leads') {
+    const r = await ctx.tx`select * from inbox_leads where business_id = ${ctx.biz} order by created_at desc`;
+    return { name: 'leads.csv', head: ['Made', 'Stage', 'Name', 'Phone', 'Email', 'Wants', 'Value', 'Priority', 'Source', 'Channel', 'Assigned', 'Follow up', 'Note'],
+      rows: r.map((l) => [formatDate(new Date(l.created_at), 'yyyy-MM-dd'), STAGES[l.stage], str(l.name), str(l.phone), str(l.email), str(l.want), l.value === null ? '' : num(l.value), str(l.priority),
+        str(l.source), str(l.channel), str(l.assigned_name), l.follow_up_on ? formatDate(new Date(l.follow_up_on), 'yyyy-MM-dd') : '', str(l.note)]) };
+  }
+  if (w === 'ai') {
+    const r = await ctx.tx`select * from ai_work where business_id = ${ctx.biz} order by at desc limit 20000`;
+    return { name: 'ai-work.csv', head: ['When', 'Work', 'Model', 'Tokens in', 'Tokens out', 'Taka (est.)'], rows: r.map((x) => [formatDate(new Date(x.at), 'yyyy-MM-dd HH:mm:ss'), x.purpose, x.model, x.tokens_in, x.tokens_out, num(x.cost_bdt)]) };
+  }
+  if (w === 'handovers') {
+    const r = await ctx.tx`select t.*, c.name from inbox_tasks t left join inbox_conversations v on v.id = t.conversation_id left join inbox_contacts c on c.id = v.contact_id where t.business_id = ${ctx.biz} and t.kind = 'handover' order by t.created_at desc`;
+    return { name: 'handovers.csv', head: ['When', 'Customer', 'Reason', 'Details', 'Done by', 'Done at', 'Never answered'],
+      rows: r.map((t) => [formatDate(new Date(t.created_at), 'yyyy-MM-dd HH:mm'), str(t.name), REASONS[t.reason] || str(t.reason), str(t.text), str(t.done_by), t.done_at ? formatDate(new Date(t.done_at), 'yyyy-MM-dd HH:mm') : '', t.never_answered ? 'yes' : '']) };
+  }
+  throw new Error('What to download?');
+}
+
+export const HANDLERS = { erpInboxExport, erpBookings, erpBookingAct, erpInboxChannels, erpInboxChannelSave, erpInboxChannelAct, erpInboxGoLive, erpInboxProfile, erpAgentDesk, erpInboxKb, erpShopOffers,
   erpChatOrders, erpChatOrderAct, erpInboxLeads, erpInboxBroadcasts, erpInboxFollowups, erpInboxComments, erpSavedReplies, erpInboxStats, erpAiWork };

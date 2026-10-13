@@ -39,6 +39,7 @@ export const PROFILE_DEFAULTS = {
   payment: 'Cash on delivery all over Bangladesh.', returns: '', discount_answer: '', extra_offer: '',
   review_link: '', review_on: false, rating_on: true, updates: { preparing: true, courier: true, out: true, failed: true, cancelled: true },
   followups: true, follow_hot: true, follow_warm: true, broadcasts: true, saved_ai: true,
+  biz_type: 'shop', services: '', booking_questions: '', place: '', advance_rule: '', cancel_rule: '', auto_confirm: false, remind_day: true, remind_hours: 3,
 };
 export async function profile(ctx, draft) {
   let p = {};
@@ -183,7 +184,14 @@ export async function ingest(ctx, ch, ev) {
     await writeMsg(ctx, conv, { direction: 'note', author: 'system', kind: 'rating', text: 'Rated ' + '⭐'.repeat(n) });
   }
   const answerable = (ch.status === 'live' || conv.is_test) && conv.mode === 'ai' && await aiAllowed(ctx, ch);
-  if (!answerable) return { conversationId: conv.id };
+  if (!answerable) {
+    // a live channel with the AI switched off: the message must not be lost - one open task per chat for the team
+    if (ch.status === 'live' && conv.mode === 'ai' && ch.kind !== 'webchat' &&
+        !(await ctx.tx`select 1 from inbox_tasks where conversation_id = ${conv.id} and status = 'open' and kind = 'enquiry' limit 1`).length) {
+      await task(ctx, conv.id, 'enquiry', 'ai-off', 'The AI is off on ' + ch.name + ': ' + (contact.name || 'a customer') + ' wrote "' + text.slice(0, 120) + '"');
+    }
+    return { conversationId: conv.id };
+  }
   const wait = waitSeconds(ch);
   await ctx.tx`update inbox_conversations set reply_due_at = ${new Date(ctx.now.getTime() + wait * 1000)} where id = ${conv.id}`;
   // "Seen" a few seconds after the message (later for a photo or a voice note) - sent with the answer's typing
@@ -224,6 +232,10 @@ const TOOLS = [
   { name: 'cancel_order', description: 'Cancel an order the team has not approved yet, after asking the reason once.', parameters: { type: 'OBJECT', properties: { no: { type: 'STRING' }, reason: { type: 'STRING' } }, required: ['no', 'reason'] } },
   { name: 'save_lead', description: 'Record a real buying interest: when the customer asks about a specific product or its price, wants to order, or gives a phone number.',
     parameters: { type: 'OBJECT', properties: { name: { type: 'STRING' }, phone: { type: 'STRING' }, want: { type: 'STRING' }, interest: { type: 'STRING', description: 'warm (asked a product / price) or hot (also asked delivery, quantity, payment, gave an address, said they will order)' } } } },
+  { name: 'request_booking', description: 'Record a booking request (a visit, a call, an admission, a reservation) once you have asked the business\'s questions. The team confirms it.',
+    parameters: { type: 'OBJECT', properties: { name: { type: 'STRING' }, phone: { type: 'STRING' }, service: { type: 'STRING' }, wanted: { type: 'STRING', description: 'the time the customer asked for, in their words' },
+      answers: { type: 'OBJECT', description: 'question -> answer' } }, required: ['name', 'service'] } },
+  { name: 'booking_payment', description: 'The customer sent the transaction id of an advance for a booking: keep it for the team to check.', parameters: { type: 'OBJECT', properties: { trx_id: { type: 'STRING' }, amount: { type: 'NUMBER' }, booking_no: { type: 'STRING' } }, required: ['trx_id'] } },
   { name: 'ask_team', description: 'A detail you do not have (not written anywhere): tell the team the question; then tell the customer you will check and come back.', parameters: { type: 'OBJECT', properties: { question: { type: 'STRING' } }, required: ['question'] } },
   { name: 'handover', description: 'Hand the chat to a person: the customer asks for a person, complains, wants a refund, is angry, keeps abusing, insists on a discount, or the matter needs a person\'s judgement. Then tell the customer a colleague is looking into it - never promise when.',
     parameters: { type: 'OBJECT', properties: { reason: { type: 'STRING', description: 'discount | complaint | refund | person | unknown | angry | ready | abuse | other' }, note: { type: 'STRING' } }, required: ['reason'] } },
@@ -252,6 +264,13 @@ function systemPrompt(p, rules, ch, contact, extra) {
     p.returns ? 'Return and exchange rule: ' + p.returns : 'No return rule is written: pass return questions to the team (ask_team).',
     p.discount_answer ? 'When asked for a discount, say: ' + p.discount_answer : 'When asked for a discount, say politely that the price is fixed.',
     p.extra_offer ? 'Extra offer to mention once before the order: ' + p.extra_offer : '',
+    p.biz_type !== 'shop' ? 'SERVICES (bookings): ' + (p.services || 'not written') + (p.place ? '\nWhere: ' + p.place : '') +
+      '\nYou work like a receptionist: answer about the services, fees, place and hours only from what is written; then ask these questions ONE AT A TIME: ' +
+      (p.booking_questions || 'the service wanted and the time that suits') + '. Then record the request with request_booking (name, phone, service, the time they asked for, the answers). ' +
+      (p.auto_confirm ? 'Bookings are confirmed automatically for the time asked.' : 'Never confirm a time yourself: say the team will confirm the booking.') +
+      (p.advance_rule ? ' Advance: ' + p.advance_rule + ' When the customer sends a transaction id, call booking_payment and say the payment is being checked - never that it was received.' : '') +
+      (p.cancel_rule ? ' Cancellation: ' + p.cancel_rule : '') +
+      ' Never promise a result (a visa, a cure, an admission) and never diagnose or advise beyond what is written.' : '',
     'Tone: ' + (p.tone || 'polite and warm.'),
     rules.length ? '\nTHE OWNER\'S OWN RULES:\n' + rules.map((r) => '- ' + r.title + ': ' + r.body).join('\n') : '',
     extra ? '\n' + extra : '',
@@ -261,6 +280,45 @@ function systemPrompt(p, rules, ch, contact, extra) {
 async function rulesFor(ctx, draft) {
   const rows = await ctx.tx`select title, body, draft, enabled from agent_rules where business_id = ${ctx.biz} and not archived order by updated_at`;
   return rows.filter((r) => r.enabled).map((r) => ({ title: str(r.title), body: str(draft && r.draft ? r.draft : r.body) }));
+}
+
+/**
+ * The photo match, AiPraktor's three steps: a product code printed in the picture; then the customer's photo is
+ * compared with the pictures of the closest products (a near-copy of one of ours, or the same product by its look).
+ * A product is named only on a strong match. The answer is kept on the message, so it is worked out once.
+ */
+async function photoMatch(ctx, conv, m, cat) {
+  if (m.payload && m.payload.match) return m.payload.match;
+  const code = (/\[code ([^\]]+)\]/.exec(m.seen_as || '') || [])[1] || '';
+  const byCode = code ? cat.find((x) => x.sku.toLowerCase() === code.toLowerCase().trim()) : null;
+  let out;
+  if (byCode) out = { strong: byCode.sku, how: 'code', near: [] };
+  else {
+    const words = (/\{([^}]*)\}/.exec(m.seen_as || '') || [])[1] || m.seen_as || '';
+    const near = searchCat(cat, words).slice(0, 10);
+    const withPic = near.filter((x) => /^data:image\/(jpeg|png|webp);base64,/.test(x.thumb)).slice(0, 8);
+    out = { strong: '', how: '', near: near.map((x) => x.sku) };
+    const f = withPic.length && m.media ? await readFile(ctx, 'inbox', m.media) : null;
+    if (f) {
+      const parts = [{ text: 'A customer sent this photo:' }, { inline_data: { mime_type: /\.png$/.test(m.media) ? 'image/png' : 'image/jpeg', data: b64(f) } },
+        { text: 'These are products of the shop:' }];
+      for (const x of withPic) {
+        const mm = /^data:(image\/[a-z]+);base64,(.*)$/.exec(x.thumb);
+        parts.push({ text: 'Product ' + x.sku + ' - ' + x.name + ':' }, { inline_data: { mime_type: mm[1], data: mm[2] } });
+      }
+      parts.push({ text: 'Is the customer\'s photo one of these products (the same item: a near-copy of its picture, or clearly the same product by its look - type, colour, brand)? ' +
+        'Reply JSON only: {"code": the product code or "", "strong": true only when you are sure, "order": [the codes from most alike to least]}' });
+      try {
+        const r = await gemini(ctx, { contents: [{ role: 'user', parts }], generationConfig: { temperature: 0 } }, 'photo-match', conv.id);
+        const j = jsonOf(r.parts) || {};
+        const ok = withPic.some((x) => x.sku === str(j.code));
+        if (ok && j.strong === true) { out.strong = str(j.code); out.how = 'look'; }
+        if (Array.isArray(j.order)) { const ord = j.order.map(str).filter((c) => near.some((x) => x.sku === c)); out.near = ord.concat(out.near.filter((c) => !ord.includes(c))); }
+      } catch (_) { /* the description search stands */ }
+    }
+  }
+  try { await ctx.tx`update inbox_messages set payload = coalesce(payload, '{}'::jsonb) || ${ctx.tx.json({ match: out })} where id = ${m.id}`; } catch (_) { /* fine */ }
+  return out;
 }
 
 /** What the AI sees of a photo: a one-line description, a printed product code, and the shop's closest products. */
@@ -293,10 +351,10 @@ async function catalogue(ctx) {
   if (ctx.memo.inboxCat) return ctx.memo.inboxCat;
   const { list } = await products(ctx);
   const extra = {};
-  for (const r of await ctx.tx`select sku, photo, image_link, family, notes from products where business_id = ${ctx.biz}`) extra[str(r.sku).toLowerCase()] = r;
+  for (const r of await ctx.tx`select sku, photo, thumb, image_link, family, notes from products where business_id = ${ctx.biz}`) extra[str(r.sku).toLowerCase()] = r;
   ctx.memo.inboxCat = list.filter((p) => !/discontinued|inactive|archived/i.test(p.status)).map((p) => {
     const e = extra[p.sku.toLowerCase()] || {};
-    return { ...p, photo: str(e.photo), link: str(e.image_link), family: str(e.family) };
+    return { ...p, photo: str(e.photo), thumb: str(e.thumb), link: str(e.image_link), family: str(e.family) };
   });
   return ctx.memo.inboxCat;
 }
@@ -394,13 +452,12 @@ export async function agentReply(ctx, conv, opts) {
   const lastPhoto = hist.slice().reverse().find((m) => m.direction === 'in' && m.kind === 'image' && m.seen_as);
   if (lastPhoto && hist.indexOf(lastPhoto) >= hist.length - 3) {
     const cat = await catalogue(ctx);
-    const code = (/\[code ([^\]]+)\]/.exec(lastPhoto.seen_as) || [])[1] || '';
-    const byCode = code ? cat.find((x) => x.sku.toLowerCase() === code.toLowerCase().trim()) : null;
-    const words = (/\{([^}]*)\}/.exec(lastPhoto.seen_as) || [])[1] || lastPhoto.seen_as;
-    const near = searchCat(cat, words).slice(0, 10);
-    photoBlock = 'PHOTO MATCH for the customer\'s latest photo (seen: ' + lastPhoto.seen_as.replace(/\{[^}]*\}/, '') + '): ' +
-      (byCode ? 'STRONG MATCH by the printed code: ' + byCode.sku + ' ' + byCode.name + ' ৳' + byCode.sell + (byCode.stock > 0 ? ' (available)' : ' (not available)') :
-        near.length ? 'no strong match; closest products: ' + near.map((x) => x.sku + ' ' + x.name).join('; ') : 'nothing in our catalogue is like it');
+    const pm = test ? { strong: '', near: searchCat(cat, lastPhoto.seen_as).slice(0, 10).map((x) => x.sku) } : await photoMatch(ctx, conv, lastPhoto, cat);
+    const S = pm.strong ? cat.find((x) => x.sku === pm.strong) : null;
+    const near = (pm.near || []).map((c) => cat.find((x) => x.sku === c)).filter(Boolean).slice(0, 10);
+    photoBlock = 'PHOTO MATCH for the customer\'s latest photo (seen: ' + str(lastPhoto.seen_as).replace(/\{[^}]*\}/, '') + '): ' +
+      (S ? 'STRONG MATCH by ' + (pm.how === 'code' ? 'the printed code' : 'its look') + ': ' + S.sku + ' ' + S.name + ' ৳' + S.sell + (S.stock > 0 ? ' (available)' : ' (not available)') :
+        near.length ? 'no strong match; the closest products, most alike first: ' + near.map((x) => x.sku + ' ' + x.name).join('; ') + ' - show them and ask which one, or say it is not ours' : 'nothing in our catalogue is like it - say so and show similar products if any');
   }
   // the customer's record in the ERP
   let custBlock = '';
@@ -421,6 +478,7 @@ export async function agentReply(ctx, conv, opts) {
     if (m.kind === 'image') t = '[photo: ' + (str(m.seen_as).replace(/\{[^}]*\}/, '') || 'a picture') + ']' + (t ? ' ' + t : '');
     if (m.kind === 'cards') t = '[shown products: ' + ((m.payload && m.payload.cards) || []).map((c) => c.code).join(', ') + '] ' + t;
     if (m.payload && m.payload.payload && /^ORDER:/.test(m.payload.payload)) t = '[tapped Order on ' + m.payload.payload.slice(6) + '] ' + t;
+    if (m.payload && m.payload.payload && /^PHOTO:/.test(m.payload.payload)) t = '[asked for more photos of ' + m.payload.payload.slice(6) + '] ' + t;
     if (!t) continue;
     const role = m.direction === 'in' ? 'user' : 'model';
     if (contents.length && contents[contents.length - 1].role === role) contents[contents.length - 1].parts[0].text += '\n' + t;
@@ -554,6 +612,30 @@ export async function agentReply(ctx, conv, opts) {
       }
       return { saved: true };
     }
+    if (name === 'request_booking') {
+      if (p.biz_type === 'shop') return { error: 'this business takes no bookings' };
+      if (test) return { requested: true, no: 'BK-TEST' };
+      const ph = phoneOk(a.phone) || phoneOk(contact && contact.phone);
+      const no = 'BK-' + formatDate(now, 'yyMMdd') + '-' + String(Math.floor(1000 + Math.random() * 9000));
+      const auto = !!p.auto_confirm;
+      const b = (await ctx.tx`insert into bookings (business_id, no, conversation_id, name, phone, service, wanted, answers, status, place)
+                 values (${ctx.biz}, ${no}, ${conv.id}, ${str(a.name)}, ${ph || null}, ${str(a.service)}, ${str(a.wanted) || null}, ${ctx.tx.json(a.answers && typeof a.answers === 'object' ? a.answers : {})},
+                         ${auto ? 'confirmed' : 'requested'}, ${p.place || null}) returning *`)[0];
+      await ctx.tx`insert into booking_events (business_id, booking_id, what, by_name) values (${ctx.biz}, ${b.id}, ${auto ? 'Booked and confirmed automatically' : 'Requested in the chat'}, 'AI')`;
+      await task(ctx, conv.id, 'order', 'booking', 'Booking request ' + no + ': ' + str(a.name) + ' — ' + str(a.service) + (a.wanted ? ' — ' + str(a.wanted) : ''));
+      await leadUpsert(ctx, conv, contact, { name: a.name, phone: ph, want: str(a.service), stage: 3 }, 'ai');
+      return { requested: true, no, confirmed: auto };
+    }
+    if (name === 'booking_payment') {
+      if (test) return { kept: true };
+      const b = (await ctx.tx`select * from bookings where business_id = ${ctx.biz} and (no = ${str(a.booking_no)} or conversation_id = ${conv.id}) and status in ('requested', 'proposed', 'confirmed') order by created_at desc limit 1`)[0];
+      if (!b) return { error: 'no open booking for this customer' };
+      try { await ctx.tx`update bookings set trx_id = ${str(a.trx_id)}, advance = coalesce(${a.amount ? num(a.amount) : null}, advance) where id = ${b.id}`; }
+      catch (_) { return { error: 'that transaction id is already used on another booking - hand over to the team' }; }
+      await ctx.tx`insert into booking_events (business_id, booking_id, what, by_name) values (${ctx.biz}, ${b.id}, ${'Advance sent: TrxID ' + str(a.trx_id) + (a.amount ? ' ৳' + num(a.amount) : '')}, 'Customer (via AI)')`;
+      await task(ctx, conv.id, 'payment', 'booking', 'Check the advance for ' + b.no + ': TrxID ' + str(a.trx_id) + (a.amount ? ' ৳' + num(a.amount) : ''));
+      return { kept: true, note: 'say the payment is being checked' };
+    }
     if (name === 'ask_team') { if (!test) await task(ctx, conv.id, 'enquiry', 'unknown', str(a.question)); return { asked: true }; }
     if (name === 'handover') { effects.handover = { reason: REASONS[str(a.reason)] ? str(a.reason) : 'other', note: str(a.note) }; return { handed: true }; }
     if (name === 'remember_customer') {
@@ -578,7 +660,7 @@ export async function agentReply(ctx, conv, opts) {
   // after an order: the receipt and a rating request (Messenger)
   if (effects.order && effects.order.items) {
     queue.push({ kind: 'text', text: receiptText(p, effects.order), store: 'order', payload: { order: effects.order.no } });
-    if (p.rating_on && can.buttons && ch.kind !== 'webchat') queue.push({ kind: 'buttons', text: 'How was your experience ordering from us?', buttons: [1, 2, 3, 4, 5].map((n) => ({ title: '⭐'.repeat(n), payload: 'RATE:' + n })) });
+    if (p.rating_on && ch.kind === 'messenger') queue.push({ kind: 'buttons', text: 'How was your experience ordering from us?', buttons: [1, 2, 3, 4, 5].map((n) => ({ title: '⭐'.repeat(n), payload: 'RATE:' + n })) });
   }
   if (test) return { replies: queue, handover: effects.handover, order: effects.order, calls: res.calls.map((c) => c.name) };
 
@@ -697,6 +779,7 @@ export async function inboxTick(ctx) {
   }
   // delivery updates for orders taken in a chat (from the invoice's delivery status), and the review request
   try { out.updates = await (await import('./inbox2.js')).orderUpdates(ctx); } catch (_) { /* fine */ }
+  try { out.bookings = await (await import('./inbox2.js')).bookingReminders(ctx); } catch (_) { /* fine */ }
   return out;
 }
 async function followUp(ctx, ch, v) {

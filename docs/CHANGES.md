@@ -1951,3 +1951,61 @@ dashboard's range (This month / 3 / 6 / 12 months), the classic ones their own m
   longer squeezes the title to 3 lines; the line under a row wraps instead of being cut. Note: on the owner's dev
   dashboard 21 cards are hidden (Revenue, Net profit, the KPI cards, Low stock, Recent orders...) - removed one by one
   after the classic cards were added, by the owner's own device; left as he set them.
+
+## Inbox (Part 1 of docs/ONE-STOP-PLAN.md), 14 Oct 2026, dev only
+
+The owner asked for the inbox to be built "as AiPraktor has built" it, with WhatsApp kept on both routes: the
+official Cloud API and a linked device. The match check is in docs/INBOX-VS-AIPRAKTOR.md.
+
+**Database.**
+- `120_inbox.sql`:
+  - channels, contacts, conversations, messages, tasks;
+  - leads, chat orders;
+  - agent rules with versions, the knowledge base, offers;
+  - broadcasts, saved replies, comments;
+  - `ai_work`, the cost log.
+- `121_bookings.sql`: bookings and booking events, for service businesses.
+
+**Server.**
+- `handlers/inboxch.js`:
+  - each channel's send and webhook: Messenger, Instagram, WhatsApp Cloud, Evolution, WaSenderAPI and the website chat;
+  - comment reply, private message, hide, delete and block.
+- `handlers/inbox.js`: the agent.
+  - Gemini with tools.
+  - Platform rules and the business's details.
+  - Photo match in three steps: a code printed in the photo, then comparison with our product pictures, then the closest products.
+  - Voice notes.
+  - Order taking.
+  - Bookings: `request_booking` and `booking_payment`, with receptionist rules.
+  - Hand-over.
+  - Follow-ups and the minute timer.
+- `handlers/inbox2.js`: the team's screens.
+  - Channels: practice mode, Go live, pause all.
+  - Agent Desk: drafts, test, publish, undo, helper. Knowledge, offers.
+  - Orders: approve turns the order into a real ERP invoice; hold, cancel, edit, note.
+  - Bookings: confirm, propose, decline, cancel, advance received, done; reminders the day before and hours before.
+  - Leads with "To chase". Broadcasts with a test first. Follow-ups, comments, analytics, the AI cost log.
+  - Downloads: orders, leads, AI work and hand-overs as CSV; a chat as text.
+- New features stay owner-only behind the labs app `inbox` ("Only me").
+
+**Page (fd-46).**
+- Inbox tabs: Inbox, Notifications, Orders, Bookings, Leads, Follow-ups, Broadcasts, Comments, Agent Desk, Knowledge, Channels, Analytics, AI cost.
+- On duty / off duty with a sound.
+- Load older messages; download a chat.
+- 🎤 dictation in the reply box.
+- On a phone, the tabs are one row you swipe.
+- `web/chat-widget.js` is the website chat: photos, voice notes, and a voice call.
+
+**Tests.** `inbox_test` has 73 checks.
+
+**Not done.**
+- Meta templates after 24 hours. This needs the owner's Meta app.
+- The bill as a picture, and a page per order with a Track button.
+- Hand-over routing by group, and teammates limited to some pages.
+- A product page with a Buy button.
+
+**Needs the owner.**
+- A Gemini key on dev.
+- A Meta app and App Review.
+- An Evolution server or a WaSenderAPI subscription.
+- His yes before any of this goes to live.
