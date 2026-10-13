@@ -88,7 +88,14 @@ function sums(lot, draws) {
   return s;
 }
 
+/** Shipments with their lots and figures; once per read-only call (ctx.memo.__ro). */
 export async function erpShipments(ctx) {
+  if (ctx.memo && ctx.memo.__ro && ctx.memo.__ship) return ctx.memo.__ship;
+  const r = await erpShipmentsRaw(ctx);
+  if (ctx.memo && ctx.memo.__ro) ctx.memo.__ship = r;
+  return r;
+}
+async function erpShipmentsRaw(ctx) {
   const lots = await ctx.tx`
     select l.id, l.reference, l.supplier, l.source, l.received_at, l.qty_in, l.qty_left, l.unit_cost, p.sku, p.name
     from stock_lots l join products p on p.id = l.product_id

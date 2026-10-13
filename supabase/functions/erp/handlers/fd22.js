@@ -38,6 +38,7 @@ async function soft(ctx, fn, fallback) {
 }
 
 export async function erpFd22Analytics(ctx, payload) {
+  ctx.memo.__ro = true;   // read-only: figures worked out once in this call (pnlFor, erpShipments)
   if (!powerOn(ctx.s, 'profit')) throw new Error('Profitability is not open to you.');
   payload = payload || {};
   const n = [1, 3, 6, 12].includes(Number(payload.months)) ? Number(payload.months) : 1;

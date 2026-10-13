@@ -86,6 +86,7 @@ function monthEnd(m) { const n = shiftMonth(m, 1); return new Date(n + '-01T00:0
 // ------------------------------------------------------------------------------------------------ the call
 
 export async function erpNavigator(ctx, payload) {
+  ctx.memo.__ro = true;   // read-only: figures worked out once in this call (pnlFor, erpShipments)
   payload = payload || {};
   const s = ctx.s;
   const can = {

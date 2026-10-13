@@ -145,6 +145,12 @@ r = await other('erpSales', [{}]);
 r = await mgr('erpJoint', [{ pool: POOL }]);
 check('manager sees stock, not the book', r.ok && r.result.stock[0].stock === 6 && !r.result.book, r.result);
 
+// ---- 8b. the invoice's low-profit warning knows joint lines too (pool cost 1400; this company sells at its 2000 price)
+r = await owner('erpLineMargins', [{ items: [{ sku: JS, qty: 1 }] }]);
+check('a joint line at its price: 30% profit, not low', r.ok && r.result.lines[0].joint && r.result.lines[0].low === false && r.result.lines[0].margin === 30, r.result);
+r = await sales('erpLineMargins', [{ items: [{ sku: JS, qty: 1, discEach: 500 }] }]);
+check('...sold at 1500: under 10%, flagged; staff see no %', r.ok && r.result.lines[0].low === true && r.result.lines[0].margin === undefined, r.result);
+
 // ---- 9. switched off: no joint selling
 await sql`update joint_flags set enabled = false where business_id = ${A}`;
 r = await sales('erpCreateInvoice', [{ customer: { name: 'Karim', phone: '01712345678' }, items: [{ sku: JS, qty: 1 }], payMode: 'full' }]);

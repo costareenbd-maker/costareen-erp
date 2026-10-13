@@ -70,6 +70,7 @@ export function fdCardList(s) {
 }
 
 export async function erpFdCards(ctx, payload) {
+  ctx.memo.__ro = true;   // read-only: figures worked out once in this call (pnlFor, erpShipments)
   payload = payload || {};
   const n = [1, 3, 6, 12].includes(Number(payload.months)) ? Number(payload.months) : 1;
   const now = formatDate(ctx.now, 'yyyy-MM'), months = [];

@@ -1853,3 +1853,9 @@ marked paid while October rent was a one-off (counted twice on the Expenses scre
   detail drawers stay full-screen pages.
 - fd-41 (owner): the fold button sits on the side menu's right edge line (half in, half out; fixed so the menu's own
   scroll cannot clip it; slides with the menu when folded), no longer over the business name, which gets its full width.
+- fd-41 again (owner: edge placement still wrong): the fold control is a "Collapse menu" row at the bottom of the side
+  menu (sticky, always visible; folded = the icon alone, its name on hover).
+- Navigator / Analytics / dashboard cards faster: inside these read-only calls (ctx.memo.__ro) each month's P&L and the
+  shipments list are worked out once and reused (pnlFor is per month; erpShipments) - the Navigator ran them 5-6 times.
+- The low-profit warning knows joint stock lines: the pool's price for this company against the pool's cost
+  (jointPriceCost in joint.js; cost stays on the server). Tests joint2 (52), margins (6).

@@ -711,7 +711,16 @@ export async function erpDaySales(ctx, dateStr) {
  *         - what the courier kept (delivery + COD fee)
  *         - expenses
  */
+/** The P&L of these months. Inside a read-only call that asks for many figures (ctx.memo.__ro: ERP Navigator,
+ *  Analytics, dashboard cards) each month is worked out once and reused - the months are independent of each other. */
 export async function pnlFor(ctx, months) {
+  if (!ctx.memo || !ctx.memo.__ro) return pnlForRaw(ctx, months);
+  const c = ctx.memo.__pnlm || (ctx.memo.__pnlm = {});
+  const miss = months.filter((m) => !c[m]);
+  if (miss.length) for (const r of await pnlForRaw(ctx, miss)) c[r.month] = r;
+  return months.map((m) => c[m]);
+}
+async function pnlForRaw(ctx, months) {
   const now = monthKey(ctx.now);
   const want = {};
   for (const m of months) want[m] = { month: m, sales: 0, returns: 0, cost: 0, delivery: 0, uncosted: 0 };

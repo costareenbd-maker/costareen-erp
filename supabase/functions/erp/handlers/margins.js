@@ -21,11 +21,24 @@ export async function erpLineMargins(ctx, payload) {
   if (!items.length) return { lines: [], under: UNDER };
   const { bySku } = await products(ctx);
   const canCost = powerOn(ctx.s, 'costs');
+  // joint stock lines (code ~Jxxxx): the pool's price for this company and the pool's cost
+  let joint = {};
+  if (items.some((x) => /~J[0-9a-f]{4}$/i.test(x.sku))) {
+    try { const { jointPriceCost } = await import('./joint.js'); joint = await ctx.tx.savepoint(() => jointPriceCost(ctx)); } catch (_) { joint = {}; }
+  }
   // the invoice discount shared over the lines by their value, as on the invoice
-  const priced = items.map((x) => { const p = bySku[x.sku.toLowerCase()]; const unit = p ? num(p.sell) : 0; return { ...x, p, unit, gross: Math.max(0, x.qty * (unit - x.disc)) }; });
+  const priced = items.map((x) => { const p = bySku[x.sku.toLowerCase()], J = joint[x.sku.toLowerCase()]; const unit = p ? num(p.sell) : J ? num(J.price) : 0; return { ...x, p, unit, gross: Math.max(0, x.qty * (unit - x.disc)) }; });
   const sum = priced.reduce((t, x) => t + x.gross, 0), invDisc = Math.min(Math.max(0, num(payload.invoiceDiscount)), sum);
   const out = [];
   for (const x of priced) {
+    const J = joint[x.sku.toLowerCase()];
+    if (!x.p && J) {   // a joint line: its revenue against the pool's cost
+      const revenue = x.qty * (num(J.price) - x.disc) - (sum > 0 ? invDisc * x.gross / sum : 0), cost = x.qty * num(J.cost);
+      if (!(num(J.cost) > 0) || !(revenue > 0)) { out.push({ sku: x.sku, low: false, unknown: !(num(J.cost) > 0), joint: true }); continue; }
+      const margin = Math.round((revenue - cost) / revenue * 1000) / 10, line = { sku: x.sku, low: margin < UNDER, unknown: false, joint: true };
+      if (canCost) line.margin = margin;
+      out.push(line); continue;
+    }
     if (!x.p) { out.push({ sku: x.sku, low: false, unknown: true }); continue; }
     const revenue = x.gross - (sum > 0 ? invDisc * x.gross / sum : 0);
     // FIFO: the oldest open lots of this product, as many units as the line takes

@@ -34481,22 +34481,37 @@ viewJoint = function () {
   :root[data-skin="fd"] body[data-fdview="invoice"] #view .fields select, :root[data-skin="fd"] body[data-fdview="invoice"] #view .fields input { width:100%; min-width:0; }
 }
 </style>
-<!-- fd-41 (owner): the fold button sits on the side menu's right edge line, half in and half out (as Notion / Linear do),
-     not over the business name; the name gets the full width again. Hidden where the menu is always folded (768-1279)
-     and on phones. -->
+<!-- fd-41 (owner, second try): the fold control is a "Collapse menu" row at the bottom of the side menu (as Vercel / Stripe
+     do), always in the same place, out of the logo row; folded, it is the arrow icon alone (its name on hover). Hidden
+     where the menu is always folded (768-1279) and on phones. -->
 <style>
 :root[data-skin="fd"] #side .brand { padding-right:16px !important; }
 :root[data-skin="fd"] #side .brand > div:not(.logo) { min-width:0; flex:1 1 auto; }
 :root[data-skin="fd"] #side .brand h1 { max-width:100% !important; overflow:hidden; }
-:root[data-skin="fd"] #sideFold.fd-edge { position:fixed !important; top:44px !important; left:calc(var(--side-w, 228px) - 14px) !important; right:auto !important; bottom:auto !important;
-  transform:none !important; width:28px !important; height:28px !important; z-index:60; box-shadow:0 2px 8px rgba(0,0,0,.18); transition:left .2s cubic-bezier(.2,.8,.2,1), color .15s, border-color .15s; }
-:root[data-skin="fd"] body.side-mini #sideFold.fd-edge { top:44px !important; }
-@media (max-width:1279px) { :root[data-skin="fd"] #sideFold.fd-edge { display:none !important; } }
+:root[data-skin="fd"] #side { display:flex; flex-direction:column; }
+:root[data-skin="fd"] #side nav#nav { flex:1 1 auto; }
+:root[data-skin="fd"] #sideFold.fd-bottom { position:sticky !important; bottom:0; left:auto !important; right:auto !important; top:auto !important; transform:none !important;
+  display:flex !important; align-items:center; gap:14px; width:calc(100% - 20px) !important; height:44px !important; min-height:44px !important; margin:10px 10px 0 !important;
+  padding:0 14px !important; border-radius:14px !important; border:1px solid var(--fd-border) !important; background:var(--fd-sidebar) !important; color:var(--fd-text-2) !important;
+  font:inherit !important; font-size:14.5px !important; font-weight:600 !important; cursor:pointer; box-shadow:0 -10px 16px var(--fd-sidebar); flex:0 0 auto; z-index:2; }
+:root[data-skin="fd"] #sideFold.fd-bottom:hover { background:var(--fd-surface-2) !important; color:var(--fd-text) !important; }
+:root[data-skin="fd"] #sideFold.fd-bottom::before { content:none !important; }
+:root[data-skin="fd"] #sideFold.fd-bottom svg { width:20px; height:20px; flex:0 0 20px; transition:transform .2s; }
+:root[data-skin="fd"] body.side-mini #sideFold.fd-bottom { justify-content:center; padding:0 !important; gap:0; font-size:0 !important; }
+:root[data-skin="fd"] body.side-mini #sideFold.fd-bottom svg { transform:rotate(180deg); }
+@media (max-width:1279px) { :root[data-skin="fd"] #sideFold.fd-bottom { display:none !important; } }
 </style>
 <script>
-// out of the logo row, onto the edge (fixed, so the side menu's own scrolling does not clip it)
 (function () {
-  function place() { var b = el('sideFold'); if (b && b.parentNode !== document.body) { document.body.appendChild(b); b.classList.add('fd-edge'); } }
+  function place() {
+    var b = el('sideFold'), side = el('side'); if (!b || !side) return;
+    if (b.parentNode !== side || side.lastElementChild !== b) side.appendChild(b);
+    b.classList.remove('fd-edge'); b.classList.add('fd-bottom');
+    var mini = document.body.classList.contains('side-mini');
+    b.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M9 4v16"/><path d="M15 10l-2 2 2 2"/></svg><span>' + (mini ? '' : 'Collapse menu') + '</span>';
+    b.title = mini ? 'Show the menu' : 'Fold the menu to icons';
+    b.setAttribute('aria-label', b.title);
+  }
   var sfp = sideFoldPaint;
   sideFoldPaint = function () { var r = sfp.apply(this, arguments); place(); return r; };
   place(); setTimeout(place, 0);

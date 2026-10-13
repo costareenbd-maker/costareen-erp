@@ -203,6 +203,15 @@ async function moveRows(pctx, pool, productId, name, from, to, qty, cost, at, no
            (${pool.id}, ${productId}, 'MOVE', 'IN', ${qty}, ${cost}, ${round2(qty * cost)}, 'Moved between partners', '', ${note}, ${pctx.s.userId}, ${at}, ${tn + '-in'}, ${op}, ${name}, ${to})`;
 }
 
+/** For the invoice's low-profit warning (margins.js): each joint product's selling price for this company and the
+ *  pool's cost, by the marked code the invoice uses. Server side only - the cost never reaches the page. */
+export async function jointPriceCost(ctx) {
+  if (!(await jointOn(ctx))) return {};
+  const out = {};
+  for (const pool of await myPools(ctx)) for (const p of await shelf(ctx, pool, true)) out[jointSku(p.sku, pool.id).toLowerCase()] = { price: p.price, cost: p.cost };
+  return out;
+}
+
 /** Joint products for New invoice. */
 export async function erpJointCatalog(ctx) {
   if (!(await jointOn(ctx))) return { on: false, pools: [], products: [] };
