@@ -44,7 +44,7 @@ export const MENU = [
   { key: 'printjobs', name: 'Print jobs' }, { key: 'resell', name: 'Resell' }, { key: 'campaigns', name: 'Campaigns' },
   { key: 'suppliers', name: 'Suppliers' }, { key: 'costs', name: 'Product cost' }, { key: 'market', name: 'Market' },
   { key: 'joint', name: 'Joint stock' }, { key: 'profit', name: 'Profitability' }, { key: 'expenses', name: 'Expenses' },
-  { key: 'capital', name: 'Capital' }, { key: 'tools', name: 'Maintenance' },
+  { key: 'capital', name: 'Capital' }, { key: 'tools', name: 'Maintenance' }, { key: 'inbox', name: 'Inbox' },
 ];
 const MENU_KEY = Object.fromEntries(MENU.map((m) => [m.key, m]));
 const BY_KEY = Object.fromEntries(APPS.map((a) => [a.key, a]));
@@ -88,8 +88,12 @@ function parseModes(raw, legacyHidden) {
 async function menuModes(ctx) { return parseModes(await getConfig(ctx, 'apps_menu', ''), await getConfig(ctx, 'apps_hidden', '')); }
 
 /** What erpHello sends: the apps the provider switched off; this company's screens only owners see; the ones nobody here sees. */
+/** The Inbox is sold by plan (122_inbox_plans.sql): a company with a plan row has it even while it is a trial app. */
+async function hasInboxPlan(sql, biz) { try { return !!biz && (await sql`select 1 from inbox_plans where business_id = ${biz}`).length > 0; } catch (_) { return false; } }
 export async function appsState(deps, sql, biz, getCfg) {
-  const off = Object.keys(await offMap(deps, sql)).concat(Object.keys(await menuOffAll(deps, sql)));   // a screen the provider took out is gone everywhere
+  const offM = await offMap(deps, sql);
+  if (offM.inbox && await hasInboxPlan(sql, biz)) delete offM.inbox;
+  const off = Object.keys(offM).concat(Object.keys(await menuOffAll(deps, sql)));   // a screen the provider took out is gone everywhere
   let modes = {};
   try { modes = parseModes(await getCfg('apps_menu'), await getCfg('apps_hidden')); } catch (_) { modes = {}; }
   return { off, hidden: Object.keys(modes).filter((k) => modes[k] === 'owner'), gone: Object.keys(modes).filter((k) => modes[k] === 'off') };
@@ -112,6 +116,7 @@ function pageUrl(deps, path) {
 
 export async function erpApps(ctx) {
   const off = await offMap(ctx.deps, ctx.sql);
+  if (off.inbox && await hasInboxPlan(ctx.sql, ctx.biz)) delete off.inbox;
   const forced = await menuOffAll(ctx.deps, ctx.sql);
   const modes = await menuModes(ctx);
   const admin = await platformAdmin(ctx);
@@ -149,6 +154,10 @@ export async function erpAppSet(ctx, payload) {
   } else {
     if (!ctx.s.role || ctx.s.role !== 'owner') throw new Error('Only an owner changes this company’s menu.');
     if ((await menuOffAll(ctx.deps, ctx.sql))[key]) throw new Error('The provider has switched this screen off for every company.');
+    if (key === 'inbox' && !(await hasInboxPlan(ctx.sql, ctx.biz))) {
+      if (!(await platformAdmin(ctx))) throw new Error('The Inbox is not in the plan of this company yet - ask the provider.');
+      await ctx.sql`insert into inbox_plans (business_id, plan_name, set_by) values (${ctx.biz}, 'Provider', ${ctx.s.userId}) on conflict (business_id) do nothing`;
+    }
     const modes = await menuModes(ctx);
     if (mode === 'all') delete modes[key]; else modes[key] = mode;
     await setConfig(ctx, 'apps_menu', JSON.stringify(modes));

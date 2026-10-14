@@ -15,7 +15,7 @@ const menu = (r, k) => r.result.menu.find((m) => m.key === k);
 let r = await sales('erpApps', []);
 check('sales staff read the catalogue: 10 public features on, the Only-me one off, no switches for them', r.ok && r.result.apps.length === 13 && r.result.apps.filter((a) => !a.labs).length === 10 && r.result.apps.every((a) => (a.labs ? !a.on : a.on) && !a.hidden) && !r.result.owner && !r.result.admin, r);
 check('the public ones carry a link; every tile names its screen (Platform ones only for the admin)', r.ok && r.result.apps.filter((a) => a.url).length === 9 && r.result.apps.filter((a) => a.view).length === 11 && r.result.apps.every((a) => typeof a.where === 'string'), r.result.apps.map((a) => a.key + ':' + a.view + ':' + a.url));
-check('the menu list: 14 screens, all for everyone', r.ok && r.result.menu.length === 14 && r.result.menu.every((m) => m.mode === 'all' && !m.off), r.result.menu);
+check('the menu list: 15 screens, all for everyone (the Inbox off until the company has an Inbox plan)', r.ok && r.result.menu.length === 15 && r.result.menu.every((m) => m.mode === 'all' && (m.key === 'inbox' ? m.off : !m.off)), r.result.menu);
 
 // 2. the owner sets who sees a screen; staff cannot; the other business is untouched
 r = await mgr('erpAppSet', [{ key: 'repairs', mode: 'owner', scope: 'mine' }]);
@@ -117,4 +117,17 @@ r = await sales('erpFeedback', []);
 check('the sender sees the answer', r.ok && r.result.mine[0].status === 'fixed' && /thank you/.test(r.result.mine[0].reply), r);
 r = await owner('erpFeedbackSet', [{ id: 999999, status: 'fixed' }]);
 check('an unknown report is refused', !r.ok, r);
+// ---- the Inbox in the menu: Everyone / Only owners / Off (the owner, 15 Oct); a company needs an Inbox plan
+const hello = async (who) => (await who('erpHello', [])).result;
+r = await owner('erpAppSet', [{ key: 'inbox', mode: 'owner' }]);
+check('the provider\'s own company: choosing the Inbox mode gives it a plan, Only owners', r.ok && r.result.menu.find((m) => m.key === 'inbox').mode === 'owner' &&
+  (await sql`select count(*)::int n from inbox_plans where business_id = ${FIX.B}`)[0].n === 1, r);
+let ap = (await hello(sales)).apps || {};
+check('...the staff get it hidden (only owners), not switched off', ap.hidden.includes('inbox') && !ap.off.includes('inbox'), ap);
+r = await owner('erpAppSet', [{ key: 'inbox', mode: 'all' }]);
+ap = (await hello(sales)).apps || {};
+check('Everyone: the staff see the Inbox', r.ok && !ap.hidden.includes('inbox') && !ap.off.includes('inbox') && !ap.gone.includes('inbox'), ap);
+r = await owner('erpAppSet', [{ key: 'inbox', mode: 'off' }]);
+ap = (await hello(owner)).apps || {};
+check('Off: gone for everyone, the owner too', r.ok && ap.gone.includes('inbox'), ap);
 await done();

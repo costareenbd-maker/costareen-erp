@@ -35446,7 +35446,9 @@ body[data-fdview="settings"] #o_cp .crumbs, body[data-fdview="tools"] #o_cp .cru
              bk: null, bkst: 'requested', plat: '', F: null, feats: null, plans: null, team: null, meta: null, oq: '', lq: '', older: null, bcgap: 24, duty: (function () { try { return localStorage.getItem('ibDuty') === '1'; } catch (e) { return false; } })() };
   window.IB = IB;
   var ICON = '<path d="M4 4h16v12H8l-4 4z"/><path d="M8 9h8M8 12h5"/>';
-  function ibOn() { if (!ME) return false; if (ME.platform) return true; var off = (ME.apps && ME.apps.off) || []; return off.indexOf('inbox') < 0 && typeof APPS !== 'undefined' && APPS && APPS.apps && APPS.apps.some(function (a) { return a.key === 'inbox' && a.on; }); }
+  // who sees the Inbox: Settings > Business > Menu says Everyone / Only owners / Off; a company without an Inbox plan does not have it (the provider still sees it to try it)
+  function ibMode() { var a = (ME && ME.apps) || {}; return (a.gone || []).indexOf('inbox') >= 0 ? 'off' : (a.hidden || []).indexOf('inbox') >= 0 ? 'owner' : (a.off || []).indexOf('inbox') >= 0 ? 'trial' : 'all'; }
+  function ibOn() { if (!ME) return false; var m = ibMode(); if (m === 'off') return false; if (m === 'owner') return ME.role === 'owner'; if (m === 'trial') return !!ME.platform; return true; }
   window.ibOn = ibOn;
   // the menus this code draws: the Inbox (chats + the AI sales assistant), Leads, Advertisement
   var IBV = { inbox: 'Inbox' };   // Leads and Advertisement come later as their own menus (the owner, 15 Oct)
@@ -35511,7 +35513,7 @@ body[data-fdview="settings"] #o_cp .crumbs, body[data-fdview="tools"] #o_cp .cru
   }
   function frame(inner) {
     var n = { inbox: (IB.counts.unread || 0), tasks: (IB.counts.tasks || 0), orders: (IB.orders && IB.orders.counts ? IB.orders.counts.pending : 0), bk: (IB.bk && IB.bk.counts ? IB.bk.counts.requested : 0) };
-    return '<div class="fdd-head" style="margin-bottom:10px"><div><h1 class="fdd-title" style="display:flex;gap:10px;align-items:center">' + esc(IBV[VIEW] || 'Inbox') + ' <span class="ib-tag test">ONLY ME</span></h1></div>' + (VIEW === 'inbox' ? '<button type="button" class="btn small' + (IB.duty ? ' primary' : '') + '" data-ibduty="1" title="On duty: a sound when a customer waits for a person">' + (IB.duty ? '🔔 On duty' : '🔕 Off duty') + '</button>' : '') + '</div>' +
+    return '<div class="fdd-head" style="margin-bottom:10px"><div><h1 class="fdd-title" style="display:flex;gap:10px;align-items:center">' + esc(IBV[VIEW] || 'Inbox') + (ibMode() === 'owner' ? ' <span class="ib-tag test" title="Settings → Business → Menu: only owners see the Inbox">ONLY OWNERS</span>' : ibMode() === 'trial' ? ' <span class="ib-tag test" title="Not in this company plan yet: only you, the provider, see it">ONLY YOU</span>' : '') + '</h1></div>' + (VIEW === 'inbox' ? '<button type="button" class="btn small' + (IB.duty ? ' primary' : '') + '" data-ibduty="1" title="On duty: a sound when a customer waits for a person">' + (IB.duty ? '🔔 On duty' : '🔕 Off duty') + '</button>' : '') + '</div>' +
       budgetNote() +
       ((MENU_TABS[VIEW] || TABS).length < 2 ? '<div style="height:4px"></div>' : '<div class="ib-tabs" role="tablist">' + (MENU_TABS[VIEW] || TABS).filter(function (t) { return !(t[0] === 'cost' && ME && ME.role !== 'owner') && !(t[0] === 'team' && ME && ME.role !== 'owner' && ME.role !== 'manager') && (!TAB_FEAT[t[0]] || fon(TAB_FEAT[t[0]])); }).map(function (t) {
         return '<button type="button" data-ibtab="' + t[0] + '" class="' + (IB.tab === t[0] ? 'on' : '') + '">' + esc(t[1]) + (n[t[0]] ? '<span class="n">' + n[t[0]] + '</span>' : '') + '</button>'; }).join('') + '</div>') + inner;
