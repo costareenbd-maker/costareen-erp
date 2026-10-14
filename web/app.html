@@ -36425,6 +36425,19 @@ document.addEventListener('change', function (e) { var t = e.target; if (t && t.
 /* bug: the "All" platform icon was ink on ink */
 #view.ib-skin .ib-rail button[data-ibplat=""] i { background:var(--ap-raise) !important; border:1px solid var(--ap-line2); }
 #view.ib-skin .ib-rail button[data-ibplat=""] svg path { stroke:var(--ap-ink); }
+/* phone: the chat header - name on one line, the actions in one row that swipes */
+@media (max-width:760px) {
+  #view.ib-skin .ib-conv-h { flex-wrap:wrap; }
+  #view.ib-skin .ib-conv-h .who { flex:1 1 0; min-width:0; }
+  #view.ib-skin .ib-conv-h .who span { display:block; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  #view.ib-skin .ib-conv-h > span:last-child { flex:1 0 100%; display:flex; flex-wrap:nowrap !important; overflow-x:auto; scrollbar-width:none; }
+  #view.ib-skin .ib-conv-h > span:last-child > * { flex:0 0 auto; }
+  #view.ib-skin .ib-reply { padding:8px; gap:6px; }
+  #view.ib-skin .ib-reply > .ib-hint { display:none; }
+  #view.ib-skin .ib-tools { flex-wrap:nowrap; overflow-x:auto; scrollbar-width:none; }
+  #view.ib-skin .ib-tools > * { flex:0 0 auto; }
+  #view.ib-skin .ib-tools .ib-hint { display:none; }
+}
 </style>
 <script>
 /* fd-47: the skin is on while the Inbox is open */
