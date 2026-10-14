@@ -919,11 +919,15 @@ export async function erpInbox(ctx, payload) {
   const p = payload || {};
   const pile = ['open', 'later', 'done', 'waiting', 'all'].includes(p.pile) ? p.pile : 'open';
   const q = str(p.q).toLowerCase();
+  // the platform switch: one platform's chats (WhatsApp = all three WhatsApp routes)
+  const PLAT = { fb: ['messenger'], ig: ['instagram'], wa: ['wa_cloud', 'wa_evo', 'wa_sender'], web: ['webchat'] };
+  const kinds = PLAT[str(p.platform)] || null;
   const rows = await ctx.tx`select v.*, c.name, c.phone, c.avatar, c.external_id, ch.kind, ch.name as ch_name from inbox_conversations v
     join inbox_contacts c on c.id = v.contact_id join inbox_channels ch on ch.id = v.channel_id
     where v.business_id = ${ctx.biz} and ch.status <> 'removed'
       and (${pile} = 'all' or (${pile} = 'waiting' and v.mode = 'human' and v.handover_reason is not null and v.claimed_by is null) or (${pile} not in ('all', 'waiting') and v.pile = ${pile}))
       and (${str(p.channel)} = '' or v.channel_id::text = ${str(p.channel)})
+      and (${!kinds} or ch.kind = any(${kinds || ['-']}))
       and (${q} = '' or lower(coalesce(c.name, '') || ' ' || coalesce(c.phone, '') || ' ' || coalesce(v.last_text, '')) like ${'%' + q + '%'})
     order by case when ${pile} = 'waiting' then v.handover_at end asc nulls last, v.last_at desc limit 200`;
   const counts = (await ctx.tx`select
@@ -931,7 +935,17 @@ export async function erpInbox(ctx, payload) {
       count(*) filter (where mode = 'human' and handover_reason is not null and claimed_by is null)::int as waiting, coalesce(sum(unread), 0)::int as unread
       from inbox_conversations v join inbox_channels ch on ch.id = v.channel_id where v.business_id = ${ctx.biz} and ch.status <> 'removed'`)[0];
   const tasks = (await ctx.tx`select count(*)::int n from inbox_tasks where business_id = ${ctx.biz} and status = 'open'`)[0].n;
+  // per platform: connected or not, and unread
+  const platforms = {};
+  for (const r of await ctx.tx`select ch.kind, count(v.id)::int chats, coalesce(sum(v.unread), 0)::int unread from inbox_channels ch
+      left join inbox_conversations v on v.channel_id = ch.id where ch.business_id = ${ctx.biz} and ch.status <> 'removed' group by ch.kind`) {
+    const k = Object.keys(PLAT).find((x) => PLAT[x].includes(r.kind));
+    if (!k) continue;
+    platforms[k] = platforms[k] || { connected: true, unread: 0, chats: 0 };
+    platforms[k].unread += r.unread; platforms[k].chats += r.chats;
+  }
   return {
+    platforms,
     counts: { ...counts, tasks },
     list: rows.map((r) => ({ id: r.id, name: str(r.name) || 'Customer', phone: str(r.phone), avatar: str(r.avatar), channel: r.kind, channelName: r.ch_name, mode: r.mode,
       reason: r.handover_reason ? REASONS[r.handover_reason] : '', claimed: str(r.claimed_name), waiting: r.mode === 'human' && r.handover_at ? ago(r.handover_at, ctx.now) : '',

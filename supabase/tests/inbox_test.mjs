@@ -320,4 +320,10 @@ check('...only the owner can', !r.ok, r);
 await owner('erpInboxChannelAct', [{ action: 'resumeall' }]);
 check('...and resume', (await sql`select count(*)::int n from inbox_channels where business_id = ${FIX.B} and not ai_on and status <> 'removed'`)[0].n === 0);
 
+// ---- 18. the platform switch
+r = await sales('erpInbox', [{ pile: 'all', platform: 'wa' }]);
+check('WhatsApp shows only WhatsApp chats', r.ok && r.result.list.length >= 1 && r.result.list.every((x) => /^wa_/.test(x.channel)), r.result && r.result.list.map((x) => x.channel));
+r = await sales('erpInbox', [{ pile: 'all', platform: 'fb' }]);
+check('Facebook shows only Messenger chats; the connected platforms are listed', r.ok && r.result.list.every((x) => x.channel === 'messenger') && r.result.platforms.fb.connected && r.result.platforms.wa.connected && !r.result.platforms.ig, r.result && r.result.platforms);
+
 await done();

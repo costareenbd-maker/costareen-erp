@@ -35361,6 +35361,26 @@ body[data-fdview="settings"] #o_cp .crumbs, body[data-fdview="tools"] #o_cp .cru
 .ib-tools select.i { width:auto; max-width:170px; height:32px; }
 .ib-tools .ib-hint { margin-left:auto; }
 .ib-notebox[hidden] { display:none !important; }
+.ib-wrap.has-rail { grid-template-columns:62px 290px minmax(0,1fr) 280px; }
+@media (max-width:1400px) { .ib-wrap.has-rail { grid-template-columns:62px 270px minmax(0,1fr) 260px; } }
+.ib-rail { display:flex; flex-direction:column; gap:4px; padding:8px 4px; background:var(--fd-card); border:1px solid var(--fd-border); border-radius:var(--fd-radius-lg, 16px); overflow:auto; scrollbar-width:none; }
+.ib-rail::-webkit-scrollbar { display:none; }
+.ib-rail button { position:relative; border:0; background:none; padding:6px 2px 4px; border-radius:12px; cursor:pointer; display:flex; flex-direction:column; align-items:center; gap:3px; font:inherit; color:var(--fd-text-2); }
+.ib-rail button i { width:36px; height:36px; border-radius:11px; display:flex; align-items:center; justify-content:center; transition:transform .12s; }
+.ib-rail button em { font-style:normal; font-size:10px; font-weight:600; line-height:1.1; max-width:56px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.ib-rail button:hover i { transform:scale(1.06); }
+.ib-rail button.on { background:var(--fd-surface-2); color:var(--fd-text); }
+.ib-rail button.on i { box-shadow:0 0 0 2px var(--fd-card), 0 0 0 4px var(--fd-accent, #5B5BD6); }
+.ib-rail button.off i { filter:grayscale(1); opacity:.38; }
+.ib-rail .n { position:absolute; top:2px; right:4px; min-width:17px; height:17px; padding:0 4px; border-radius:999px; background:var(--fd-negative, #E5484D); color:#fff; font-size:10px; font-weight:700; display:flex; align-items:center; justify-content:center; border:2px solid var(--fd-card); }
+.ib-rail .plus { position:absolute; top:24px; right:6px; width:16px; height:16px; border-radius:50%; background:var(--fd-card); color:var(--fd-text-2); border:1px solid var(--fd-border); font-size:12px; line-height:13px; text-align:center; font-weight:700; }
+@media (max-width:1180px) { .ib-wrap.has-rail { grid-template-columns:62px 300px minmax(0,1fr); } }
+@media (max-width:760px) {
+  .ib-wrap.has-rail { grid-template-columns:1fr; grid-template-rows:auto minmax(0,1fr); }
+  .ib-wrap.has-conv .ib-rail { display:none; } .ib-wrap.has-rail.has-conv { grid-template-rows:minmax(0,1fr); }
+  .ib-rail { flex-direction:row; padding:6px; }
+  .ib-rail button { flex:0 0 58px; }
+}
 .ib-hint { font-size:12px; color:var(--fd-text-3); }
 .ib-hint.warn { color:var(--fd-negative, #E5484D); font-weight:600; }
 .ib-side { overflow:auto; padding:12px; display:flex; flex-direction:column; gap:12px; }
@@ -35412,7 +35432,7 @@ body[data-fdview="settings"] #o_cp .crumbs, body[data-fdview="tools"] #o_cp .cru
 (function () {
   var IB = { tab: 'inbox', pile: 'open', q: '', list: null, conv: null, convId: '', side: false, tasks: null, orders: null, ostatus: 'pending', leads: null, desk: null, kb: null,
              chans: null, stats: null, cost: null, bc: null, cm: null, fu: null, saved: null, offers: null, test: [], busy: {}, ai: '', counts: {},
-             bk: null, bkst: 'requested', oq: '', lq: '', older: null, bcgap: 24, duty: (function () { try { return localStorage.getItem('ibDuty') === '1'; } catch (e) { return false; } })() };
+             bk: null, bkst: 'requested', plat: '', oq: '', lq: '', older: null, bcgap: 24, duty: (function () { try { return localStorage.getItem('ibDuty') === '1'; } catch (e) { return false; } })() };
   window.IB = IB;
   var ICON = '<path d="M4 4h16v12H8l-4 4z"/><path d="M8 9h8M8 12h5"/>';
   function ibOn() { if (!ME) return false; if (ME.platform) return true; var off = (ME.apps && ME.apps.off) || []; return off.indexOf('inbox') < 0 && typeof APPS !== 'undefined' && APPS && APPS.apps && APPS.apps.some(function (a) { return a.key === 'inbox' && a.on; }); }
@@ -35439,7 +35459,7 @@ body[data-fdview="settings"] #o_cp .crumbs, body[data-fdview="tools"] #o_cp .cru
     try { var A = window.AudioContext || window.webkitAudioContext, ac = new A(); [0, 0.22].forEach(function (t, i) { var o = ac.createOscillator(), g = ac.createGain(); o.frequency.value = i ? 1046 : 784; g.gain.setValueAtTime(0.0001, ac.currentTime + t);
       g.gain.exponentialRampToValueAtTime(0.25, ac.currentTime + t + 0.02); g.gain.exponentialRampToValueAtTime(0.0001, ac.currentTime + t + 0.2); o.connect(g); g.connect(ac.destination); o.start(ac.currentTime + t); o.stop(ac.currentTime + t + 0.22); }); } catch (e) {}
   }
-  function loadList() { load('erpInbox', { pile: IB.pile, q: IB.q }, 'list', function (r) { var before = IB.counts.waiting || 0; IB.counts = r.counts || {}; if ((IB.counts.waiting || 0) > before && IB.list) ding(); }); }
+  function loadList() { load('erpInbox', { pile: IB.pile, q: IB.q, platform: IB.plat }, 'list', function (r) { var before = IB.counts.waiting || 0; IB.counts = r.counts || {}; if ((IB.counts.waiting || 0) > before && IB.list) ding(); }); }
   function saveFile(name, text, type) { var b = new Blob([(type === 'text/csv' ? '\ufeff' : '') + text], { type: (type || 'text/plain') + ';charset=utf-8' }), a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = name; document.body.appendChild(a); a.click(); setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 500); }
   function csvOf(head, rows) { var q = function (v) { v = v === null || v === undefined ? '' : String(v); return /[",\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; }; return [head].concat(rows).map(function (r) { return r.map(q).join(','); }).join('\r\n'); }
   function exportIt(what, id) { srv('erpInboxExport', [{ what: what, id: id }], function (r) { if (r.text !== undefined) saveFile(r.name, r.text); else saveFile(r.name, csvOf(r.head, r.rows), 'text/csv'); }, fail); }
@@ -35491,6 +35511,36 @@ body[data-fdview="settings"] #o_cp .crumbs, body[data-fdview="tools"] #o_cp .cru
   function errOr(x, fn) { if (!x) return '<div class="loading">Loading…</div>'; if (x.error) return '<div class="note err"><div class="ico">!</div><div>' + esc(x.error) + '</div></div>'; return fn(x); }
 
   // ---------------------------------------------------------------- the Inbox: list | conversation | customer
+  // the platform switch, as a rail left of the chat list (a row on a phone). Not connected = grey with a +.
+  var PLATS = [
+    { k: '', name: 'All chats', bg: 'var(--fd-text, #111)', ic: '<path d="M4 5h16v11H8l-4 4z" fill="none" stroke="#fff" stroke-width="2" stroke-linejoin="round"/>' },
+    { k: 'fb', name: 'Facebook', bg: '#0866FF', ic: '<path d="M13.5 21v-7.2h2.4l.4-2.8h-2.8V9.2c0-.8.3-1.4 1.4-1.4h1.5V5.3c-.3 0-1.2-.1-2.2-.1-2.2 0-3.6 1.3-3.6 3.7V11H8.2v2.8h2.4V21z" fill="#fff"/>' },
+    { k: 'ig', name: 'Instagram', bg: 'linear-gradient(45deg,#F58529,#DD2A7B 50%,#8134AF)', ic: '<rect x="4.5" y="4.5" width="15" height="15" rx="4.5" fill="none" stroke="#fff" stroke-width="2"/><circle cx="12" cy="12" r="3.6" fill="none" stroke="#fff" stroke-width="2"/><circle cx="16.6" cy="7.4" r="1.1" fill="#fff"/>' },
+    { k: 'wa', name: 'WhatsApp', bg: '#25D366', ic: '<path d="M12 3.6a8.4 8.4 0 0 0-7.2 12.7L3.7 20.4l4.2-1.1A8.4 8.4 0 1 0 12 3.6z" fill="none" stroke="#fff" stroke-width="1.8"/><path d="M9.2 8.2c.2-.4.4-.4.6-.4h.5c.2 0 .4.1.5.4l.7 1.7c.1.2 0 .4-.1.6l-.5.6c.6 1.1 1.5 2 2.6 2.6l.6-.5c.2-.2.4-.2.6-.1l1.7.7c.3.1.4.3.4.5v.5c0 .2 0 .4-.4.6-.5.3-1.2.5-1.9.3-2.6-.8-4.6-2.8-5.4-5.4-.2-.7 0-1.4.3-1.9z" fill="#fff"/>' },
+    { k: 'web', name: 'Website chat', bg: '#5B5BD6', ic: '<circle cx="12" cy="12" r="8" fill="none" stroke="#fff" stroke-width="2"/><path d="M4 12h16M12 4c2.5 2.6 2.5 13.4 0 16M12 4c-2.5 2.6-2.5 13.4 0 16" fill="none" stroke="#fff" stroke-width="1.6"/>' },
+    { k: 'li', name: 'LinkedIn', bg: '#0A66C2', ic: '<rect x="5" y="9.5" width="3" height="9" fill="#fff"/><circle cx="6.5" cy="6.3" r="1.7" fill="#fff"/><path d="M10.5 9.5h2.9v1.3c.5-.9 1.6-1.5 3-1.5 2.4 0 3.1 1.5 3.1 3.9v5.3h-3v-4.7c0-1.1-.3-1.8-1.3-1.8s-1.7.7-1.7 1.9v4.6h-3z" fill="#fff"/>', soon: 'LinkedIn lets only its approved partners read and send page messages, so page chats cannot come in yet. Comments on your company page posts can, after LinkedIn approves a Community Management app.' },
+    { k: 'x', name: 'X (Twitter)', bg: '#000', ic: '<path d="M5 4.5h3.6l10.4 15h-3.6zM18.6 4.5 5.4 19.5" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"/>', soon: 'X sends direct messages and mentions to other apps only on a paid X API plan. With that plan this can be built like Messenger.' },
+    { k: 'tt', name: 'TikTok', bg: '#000', ic: '<path d="M14 4v10.2a3.2 3.2 0 1 1-3.2-3.2" fill="none" stroke="#25F4EE" stroke-width="2.2" stroke-linecap="round"/><path d="M14 4c.4 2.4 2 4 4.5 4.2" fill="none" stroke="#FE2C55" stroke-width="2.2" stroke-linecap="round"/>', soon: 'TikTok opens its business messages only to approved partners. Comments on your videos can come in through TikTok\'s business API after TikTok approves the app.' },
+    { k: 'th', name: 'Threads', bg: '#000', ic: '<path d="M16.3 11.2c-.3-2.4-1.9-3.6-4.2-3.6-2.6 0-4.3 1.9-4.3 4.6s1.6 4.7 4.6 4.7c2.3 0 3.9-1.2 3.9-3 0-2.6-4.4-2.9-5.2-1.3-.6 1.2.4 2.2 1.6 2.2 1.8 0 2.6-1.4 2.6-3.6v-.9" fill="none" stroke="#fff" stroke-width="1.9" stroke-linecap="round"/>', soon: 'Threads has no direct messages for other apps. Replies under your Threads posts can come in and be answered here once your Threads account is connected through your Meta app.' }];
+  function railHtml(L) {
+    var pl = (L && L.platforms) || {};
+    return '<div class="ib-rail" role="tablist" aria-label="Platforms">' + PLATS.map(function (x) {
+      var st = pl[x.k] || {}, on = x.k === '' || st.connected, n = x.k === '' ? (IB.counts.unread || 0) : (st.unread || 0);
+      return '<button type="button" data-ibplat="' + x.k + '" class="' + (IB.plat === x.k ? 'on' : '') + (on ? '' : ' off') + '" title="' + esc(x.name + (on ? '' : ' — not connected')) + '">' +
+        '<i style="background:' + x.bg + '"><svg viewBox="0 0 24 24" width="20" height="20">' + x.ic + '</svg></i>' + (n ? '<span class="n">' + (n > 99 ? '99+' : n) + '</span>' : '') + (on ? '' : '<span class="plus">+</span>') +
+        '<em>' + esc(x.k === 'x' ? 'X' : x.name.split(' ')[0]) + '</em></button>'; }).join('') + '</div>';
+  }
+  function platDialog(x) {
+    var meta = { fb: 'Connect your Facebook page on the Channels tab. Real customers\' messages need Meta\'s approval of your Meta app (App Review); until then only people on the app can test.',
+      ig: 'Connect your Instagram business account (linked to your Facebook page) on the Channels tab. Same Meta app and approval as Facebook.',
+      wa: 'Three ways, all on the Channels tab: official WhatsApp (Meta\'s Cloud API, needs the Meta app), or a linked device like WhatsApp Web through Evolution (a small server) or WaSenderAPI (paid) — scan a QR code and chats arrive in minutes; a linked number can be banned by WhatsApp.',
+      web: 'Make a website chat on the Channels tab and paste one line into your website.' }[x.k];
+    fdwDialog(x.name, '<div class="dlg-b" style="white-space:normal">' + (x.soon ? '<p style="margin:0 0 8px"><b>Not connected — and not built yet.</b></p><p style="margin:0">' + esc(x.soon) + '</p><p class="sub" style="margin-top:8px">Its chats will show under this button when it is connected.</p>' : '<p style="margin:0">' + esc(meta) + '</p>') + '</div>',
+      x.soon ? function (back, close) { close(); } : function (back, close) { close(); IB.tab = 'chans'; IB.chans = null; paint(); });
+    var all = document.querySelectorAll('.dlg-back'), dl = all[all.length - 1];
+    if (dl) { var ok = dl.querySelector('[data-ok]'), cx = dl.querySelector('[data-x]'); if (ok) ok.textContent = x.soon ? 'OK' : 'Go to Channels'; if (cx && x.soon) cx.style.display = 'none'; }
+  }
+
   function inboxHtml() {
     if (!IB.list) loadList();
     var L = IB.list, c = IB.conv && IB.conv.id === IB.convId ? IB.conv : null;
@@ -35507,7 +35557,7 @@ body[data-fdview="settings"] #o_cp .crumbs, body[data-fdview="tools"] #o_cp .cru
         }).join('')) + '</div></div>';
     var conv = '<div class="ib-pane ib-convpane">' + (c ? convHtml(c) : '<div class="ib-empty">Choose a chat on the left.<br><br>' + (L && L.list && !L.list.length && IB.pile === 'open' ? 'No chats yet — connect a channel on the <b>Channels</b> tab.' : '') + '</div>') + '</div>';
     var side = '<div class="ib-pane ib-sidepane">' + (c ? sideHtml(c) : '') + '</div>';
-    return '<div class="ib-wrap' + (c ? ' has-conv' : '') + (IB.side ? ' side' : '') + '">' + list + conv + side + '</div>';
+    return '<div class="ib-wrap has-rail' + (c ? ' has-conv' : '') + (IB.side ? ' side' : '') + '">' + railHtml(L) + list + conv + side + '</div>';
   }
   function bubble(m) {
     if (m.dir === 'note' && m.author === 'system') return '<div class="ib-ev">' + esc(m.text) + ' · ' + esc(m.at) + '</div>';
@@ -35851,7 +35901,7 @@ body[data-fdview="settings"] #o_cp .crumbs, body[data-fdview="tools"] #o_cp .cru
   function readFileAsB64(f, cb) { var rd = new FileReader(); rd.onload = function () { cb(String(rd.result)); }; rd.readAsDataURL(f); }
   document.addEventListener('click', function (e) {
     if (VIEW !== 'inbox' || !e.target.closest) return;
-    var t = e.target.closest('[data-ibtab],[data-ibpile],[data-ibopen],[data-ibclose],[data-ibmode],[data-ibsend],[data-ibnote],[data-ibside],[data-ibai],[data-ibusedraft],[data-ibcsave],[data-ibinvoice],[data-ibgoconv],[data-ibtaskdone],[data-ibnotify],[data-ibost],[data-iboa],[data-ibinv],[data-iblead],[data-ibleadnew],[data-ibfusave],[data-ibbcsave],[data-ibbcsend],[data-ibcm],[data-ibpfsave],[data-ibundo],[data-ibhelper],[data-ibpublish],[data-ibdiscardall],[data-ibrule],[data-ibruleadd],[data-ibtest],[data-ibtestclear],[data-iboffer],[data-ibofferadd],[data-ibsavedadd],[data-ibsavedx],[data-ibkbadd],[data-ibkbtest],[data-ibkbx],[data-chsave],[data-chlive],[data-chpractice],[data-chcm],[data-chqr],[data-chremove],[data-chadd],[data-ibdays],[data-ibcost],[data-ibbkst],[data-ibbka],[data-ibduty],[data-ibexp],[data-ibolder],[data-chall],[data-ibdict],[data-ibnotebox]');
+    var t = e.target.closest('[data-ibtab],[data-ibpile],[data-ibopen],[data-ibclose],[data-ibmode],[data-ibsend],[data-ibnote],[data-ibside],[data-ibai],[data-ibusedraft],[data-ibcsave],[data-ibinvoice],[data-ibgoconv],[data-ibtaskdone],[data-ibnotify],[data-ibost],[data-iboa],[data-ibinv],[data-iblead],[data-ibleadnew],[data-ibfusave],[data-ibbcsave],[data-ibbcsend],[data-ibcm],[data-ibpfsave],[data-ibundo],[data-ibhelper],[data-ibpublish],[data-ibdiscardall],[data-ibrule],[data-ibruleadd],[data-ibtest],[data-ibtestclear],[data-iboffer],[data-ibofferadd],[data-ibsavedadd],[data-ibsavedx],[data-ibkbadd],[data-ibkbtest],[data-ibkbx],[data-chsave],[data-chlive],[data-chpractice],[data-chcm],[data-chqr],[data-chremove],[data-chadd],[data-ibdays],[data-ibcost],[data-ibbkst],[data-ibbka],[data-ibduty],[data-ibexp],[data-ibolder],[data-chall],[data-ibdict],[data-ibnotebox],[data-ibplat]');
     if (!t) return;
     var d = t.dataset;
     if (d.ibtab) { IB.tab = d.ibtab; if (['tasks', 'orders', 'leads', 'stats', 'cost', 'cm', 'bc', 'fu'].indexOf(d.ibtab) >= 0) IB[d.ibtab] = null; paint(); return; }
@@ -35884,6 +35934,11 @@ body[data-fdview="settings"] #o_cp .crumbs, body[data-fdview="tools"] #o_cp .cru
     if (d.ibnotify !== undefined && t.hasAttribute('data-ibnotify')) { try { Notification.requestPermission().then(function () { paint(); }); } catch (er) {} return; }
     if (d.ibost) { IB.ostatus = d.ibost; IB.orders = null; paint(); return; }
     if (d.ibnotebox !== undefined && t.hasAttribute('data-ibnotebox')) { IB.noteOpen = !IB.noteOpen; paint(true); var nn = el('ibNote'); if (nn && IB.noteOpen) nn.focus(); return; }
+    if (t.hasAttribute('data-ibplat')) {
+      var px = PLATS.find(function (x) { return x.k === d.ibplat; }), ps = (IB.list && IB.list.platforms && IB.list.platforms[d.ibplat]) || null;
+      if (px && px.k && !ps) { platDialog(px); return; }
+      IB.plat = d.ibplat; IB.list = null; paint(); return;
+    }
     if (d.ibbkst) { IB.bkst = d.ibbkst; IB.bk = null; paint(); return; }
     if (d.ibdict !== undefined && t.hasAttribute('data-ibdict')) {
       if (IB.dict) { try { IB.dict.stop(); } catch (er) {} return; }
