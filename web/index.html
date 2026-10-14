@@ -36292,29 +36292,28 @@ document.addEventListener('change', function (e) {
 });
 document.addEventListener('change', function (e) { var t = e.target; if (t && t.id === 'ibBcGap' && window.IB) { IB.bcgap = Number(t.value) || 24; IB.bc = null; if (window.ibPaint) ibPaint(); } });
 </script>
-<!-- fd-47 (owner 15 Oct 2026: "my inbox should look like the reference website"): the Inbox in AiPraktor's look.
-     Their tokens, read from aipraktor.com: ground #08090A, cards #101214 with a 1px white-7.5% hairline, ink #F3F6F2,
-     muted #858C86, ONE accent lime #C3F53C, radius 6 (cards) / 3 (buttons), no shadows; Instrument Sans + Anek Bangla
-     for text, IBM Plex Mono caps with wide tracking for labels, Chivo black for big numbers. Scoped to #view.ib-skin:
-     the Inbox's own CSS reads the --fd-* variables, so remapping them here restyles every Inbox screen at once. -->
+<!-- fd-47 (owner 15 Oct 2026: "my inbox should look like the reference website", then "act as the ERP in light and dark
+     mode, consider the theme, keep the style, the font should match the ERP"): the Inbox in AiPraktor's STYLE - flat
+     hairline cards (radius 6, buttons 3), no shadows, ONE accent, spaced capital labels, underlined tabs, an 8px rhythm -
+     drawn in the ERP's OWN theme tokens (--fd-*: light and dark, the theme's accent) and the ERP's font (Inter + Noto Sans
+     Bengali). Scoped to #view.ib-skin. -->
 <style>
 #view.ib-skin {
-  --ap-bg:#08090A; --ap-card:#101214; --ap-raise:#16191C; --ap-line:rgba(255,255,255,.075); --ap-line2:rgba(255,255,255,.13);
-  --ap-ink:#F3F6F2; --ap-ink2:#C4CAC3; --ap-mute:#858C86; --ap-acc:#C3F53C; --ap-acc-ink:#08090A; --ap-warn:#F2B84B; --ap-red:#FF6B5E;
-  --ap-sans:"Instrument Sans","Anek Bangla","Noto Sans Bengali",system-ui,sans-serif; --ap-mono:"IBM Plex Mono","Anek Bangla",ui-monospace,monospace; --ap-num:"Chivo","Instrument Sans",sans-serif;
-  --fd-card:var(--ap-card); --fd-border:var(--ap-line); --fd-text:var(--ap-ink); --fd-text-2:var(--ap-ink2); --fd-text-3:var(--ap-mute);
-  --fd-surface-1:var(--ap-bg); --fd-surface-2:var(--ap-raise); --fd-accent:var(--ap-acc); --fd-text-on-accent:var(--ap-acc-ink);
-  --fd-negative:var(--ap-red); --fd-positive:var(--ap-acc); --fd-radius-lg:6px; --fd-shadow-popover:none;
-  background:var(--ap-bg); color:var(--ap-ink); font-family:var(--ap-sans); border-radius:10px; margin:10px 14px 18px; padding:22px 24px 28px; color-scheme:dark;
+  --ap-bg:var(--fd-bg, #F6F7FB); --ap-card:var(--fd-card, #fff); --ap-raise:var(--fd-surface-2, #F1F2F7); --ap-line:var(--fd-border, #E8EAF1); --ap-line2:var(--fd-border-strong, #D5D8E4);
+  --ap-ink:var(--fd-text, #14172B); --ap-ink2:var(--fd-text-2, #4B5068); --ap-mute:var(--fd-text-3, #6B7190); --ap-acc:var(--fd-accent, #5B4FE9); --ap-acc-ink:var(--fd-text-on-accent, #fff);
+  --ap-acc-soft:var(--fd-accent-soft, #EDEBFF); --ap-acc-line:var(--fd-accent-border, rgba(91,79,233,.35)); --ap-warn:var(--fd-warning-text, #9A5B00); --ap-red:var(--fd-negative-text, #DC2626);
+  --ap-sans:var(--fd-font, "Inter", "Noto Sans Bengali", system-ui, sans-serif); --ap-mono:var(--ap-sans); --ap-num:var(--ap-sans);
+  --fd-surface-1:var(--ap-bg); --fd-radius-lg:6px;
+  font-family:var(--ap-sans);
 }
 #view.ib-skin ::selection { background:var(--ap-acc); color:var(--ap-acc-ink); }
-#view.ib-skin * { scrollbar-color:#2a2e32 transparent; }
+#view.ib-skin * { scrollbar-color:var(--ap-line2) transparent; }
 /* the head: a Bangla display title; labels are mono caps */
 #view.ib-skin .fdd-title { font-family:var(--ap-sans); font-size:26px; font-weight:700; letter-spacing:-.02em; color:var(--ap-ink); }
 #view.ib-skin .ib-tag { font-family:var(--ap-mono); font-size:10px; font-weight:500; letter-spacing:.14em; text-transform:uppercase; background:transparent; border:1px solid var(--ap-line2); color:var(--ap-mute); border-radius:3px; padding:2px 7px; }
-#view.ib-skin .ib-tag.ai { color:var(--ap-acc); border-color:rgba(195,245,60,.35); }
-#view.ib-skin .ib-tag.hot { color:var(--ap-warn); border-color:rgba(242,184,75,.35); }
-#view.ib-skin .ib-tag.human { color:var(--ap-red); border-color:rgba(255,107,94,.4); }
+#view.ib-skin .ib-tag.ai { color:var(--fd-accent-text, var(--ap-acc)); border-color:var(--ap-acc-line); }
+#view.ib-skin .ib-tag.hot { color:var(--ap-warn); border-color:var(--ap-line2); }
+#view.ib-skin .ib-tag.human { color:var(--ap-red); border-color:var(--ap-line2); }
 /* tabs: an underlined row, not pills */
 #view.ib-skin .ib-tabs { gap:0; border-bottom:1px solid var(--ap-line); margin:0 0 20px; }
 #view.ib-skin .ib-tabs button { background:none; border:0; border-bottom:2px solid transparent; border-radius:0; color:var(--ap-mute); font-family:var(--ap-mono); font-size:11.5px; font-weight:500; letter-spacing:.1em; text-transform:uppercase; padding:10px 14px 11px; margin-bottom:-1px; }
@@ -36331,19 +36330,19 @@ document.addEventListener('change', function (e) { var t = e.target; if (t && t.
 #view.ib-skin .ib-kpi span { font-family:var(--ap-mono); font-size:10.5px; letter-spacing:.14em; text-transform:uppercase; color:var(--ap-mute); }
 /* buttons: square-ish; ONE accent */
 #view.ib-skin .btn { background:transparent; border:1px solid var(--ap-line2); color:var(--ap-ink); border-radius:3px; box-shadow:none; font-family:var(--ap-sans); font-weight:600; }
-#view.ib-skin .btn:hover { background:var(--ap-raise); border-color:rgba(255,255,255,.22); color:var(--ap-ink); filter:none; }
+#view.ib-skin .btn:hover { background:var(--ap-raise); border-color:var(--ap-line2); color:var(--ap-ink); filter:none; }
 #view.ib-skin .btn.primary { background:var(--ap-acc); border-color:var(--ap-acc); color:var(--ap-acc-ink); }
-#view.ib-skin .btn.primary:hover { background:#D2FA63; border-color:#D2FA63; color:var(--ap-acc-ink); }
+#view.ib-skin .btn.primary:hover { background:var(--fd-accent-hover, var(--ap-acc)); border-color:var(--fd-accent-hover, var(--ap-acc)); color:var(--ap-acc-ink); }
 /* inputs */
 #view.ib-skin .i, #view.ib-skin input.i, #view.ib-skin select.i, #view.ib-skin textarea.i { background:var(--ap-bg); border:1px solid var(--ap-line2); color:var(--ap-ink); border-radius:3px; box-shadow:none; }
-#view.ib-skin .i:focus { border-color:var(--ap-acc); outline:none; box-shadow:0 0 0 3px rgba(195,245,60,.12); }
-#view.ib-skin .i::placeholder { color:#5E6560; }
+#view.ib-skin .i:focus { border-color:var(--ap-acc); outline:none; box-shadow:var(--fd-focus-ring, none); }
+#view.ib-skin .i::placeholder { color:var(--fd-text-faint, var(--ap-mute)); }
 #view.ib-skin .ib-form label { color:var(--ap-mute); font-family:var(--ap-mono); font-size:11px; letter-spacing:.1em; text-transform:uppercase; }
 #view.ib-skin .ib-form label .i, #view.ib-skin .ib-form label input, #view.ib-skin .ib-form label select { font-family:var(--ap-sans); letter-spacing:0; text-transform:none; font-size:14px; }
 /* notes */
 #view.ib-skin .note { background:var(--ap-raise); border:1px solid var(--ap-line); color:var(--ap-ink2); border-radius:6px; }
-#view.ib-skin .note.err { background:rgba(255,107,94,.08); border-color:rgba(255,107,94,.3); color:#FFB1A9; }
-#view.ib-skin .ib-note { background:rgba(242,184,75,.07); border:1px solid rgba(242,184,75,.25); color:#F6D9A0; border-radius:6px; }
+#view.ib-skin .note.err { background:var(--fd-negative-soft, var(--ap-raise)); border-color:var(--ap-line); color:var(--ap-red); }
+#view.ib-skin .ib-note { background:var(--fd-warning-soft, var(--ap-raise)); border:1px solid var(--ap-line); color:var(--ap-warn); border-radius:6px; }
 /* the platform rail */
 #view.ib-skin .ib-rail { background:var(--ap-card); border-color:var(--ap-line); border-radius:6px; }
 #view.ib-skin .ib-rail button { color:var(--ap-mute); border-radius:6px; }
@@ -36368,8 +36367,8 @@ document.addEventListener('change', function (e) { var t = e.target; if (t && t.
 #view.ib-skin .ib-msgs { background:var(--ap-bg); }
 #view.ib-skin .ib-b { border-radius:10px; }
 #view.ib-skin .ib-b.in { background:var(--ap-raise); color:var(--ap-ink); border:1px solid var(--ap-line); }
-#view.ib-skin .ib-b.out { background:rgba(195,245,60,.1); color:var(--ap-ink); border:1px solid rgba(195,245,60,.22); }
-#view.ib-skin .ib-b.out.team { background:#1E2A33; border-color:rgba(120,170,220,.25); }
+#view.ib-skin .ib-b.out { background:var(--ap-acc-soft); color:var(--ap-ink); border:1px solid var(--ap-acc-line); }
+#view.ib-skin .ib-b.out.team { background:var(--fd-info-soft, var(--ap-raise)); border-color:var(--ap-line); }
 #view.ib-skin .ib-ev { font-family:var(--ap-mono); font-size:10.5px; letter-spacing:.08em; color:var(--ap-mute); }
 #view.ib-skin .ib-reply { border-top:1px solid var(--ap-line); background:var(--ap-card); }
 #view.ib-skin .ib-hint { color:var(--ap-mute); }
@@ -36382,9 +36381,9 @@ document.addEventListener('change', function (e) { var t = e.target; if (t && t.
 #view.ib-skin .fdd-t td { border-bottom:1px solid var(--ap-line); color:var(--ap-ink2); }
 #view.ib-skin .ib-bars em { background:var(--ap-raise); }
 #view.ib-skin .ib-bars em i { background:var(--ap-acc); }
-#view.ib-skin .ib-sw { background:#2A2E32; }
+#view.ib-skin .ib-sw { background:var(--fd-surface-3, var(--ap-line2)); }
 #view.ib-skin .ib-sw:checked { background:var(--ap-acc); }
-#view.ib-skin .ib-sw:checked::after { background:var(--ap-acc-ink); }
+#view.ib-skin .ib-sw:checked::after { background:#fff; }
 #view.ib-skin .ib-code { background:var(--ap-bg); border:1px solid var(--ap-line); color:var(--ap-ink2); font-family:var(--ap-mono); }
 #view.ib-skin .loading { color:var(--ap-mute); font-family:var(--ap-mono); font-size:11px; letter-spacing:.12em; text-transform:uppercase; }
 /* density: one row of tabs; full platform names; the chat gets the room (the customer panel opens with 👤 below 1500px) */
@@ -36395,7 +36394,7 @@ document.addEventListener('change', function (e) { var t = e.target; if (t && t.
 @media (max-width:1500px) and (min-width:761px) {
   #view.ib-skin .ib-wrap.has-rail { grid-template-columns:62px 280px minmax(0,1fr); }
   #view.ib-skin .ib-wrap .ib-sidepane { display:none; }
-  #view.ib-skin .ib-wrap.side .ib-sidepane { display:flex; position:fixed; right:22px; top:84px; bottom:22px; width:340px; z-index:40; box-shadow:0 0 0 1px var(--ap-line2), 0 24px 60px rgba(0,0,0,.6); }
+  #view.ib-skin .ib-wrap.side .ib-sidepane { display:flex; position:fixed; right:22px; top:84px; bottom:22px; width:340px; z-index:40; box-shadow:var(--fd-shadow-popover, 0 12px 40px rgba(0,0,0,.2)); }
 }
 /* type: one label size (10.5 mono caps), one body size (14), two weights (400 / 600); 26 for the title only */
 #view.ib-skin { font-size:14px; }
@@ -36423,19 +36422,12 @@ document.addEventListener('change', function (e) { var t = e.target; if (t && t.
 #view.ib-skin .ib-c + .ib-c, #view.ib-skin .ib-grid2 + .ib-c, #view.ib-skin .ib-c + .ib-grid2 { margin-top:16px; }
 /* bug: the "All" platform icon was ink on ink */
 #view.ib-skin .ib-rail button[data-ibplat=""] i { background:var(--ap-raise) !important; border:1px solid var(--ap-line2); }
-@media (max-width:760px) { #view.ib-skin { margin:0; border-radius:0; padding:14px 14px 20px; } }
+#view.ib-skin .ib-rail button[data-ibplat=""] svg path { stroke:var(--ap-ink); }
 </style>
 <script>
-/* fd-47: the skin is on while the Inbox is open; its fonts load the first time */
+/* fd-47: the skin is on while the Inbox is open */
 (function () {
-  var fontsIn = false;
-  function fonts() {
-    if (fontsIn) return; fontsIn = true;
-    var l = document.createElement('link'); l.rel = 'stylesheet';
-    l.href = 'https://fonts.googleapis.com/css2?family=Anek+Bangla:wght@400;500;600;700&family=Chivo:wght@900&family=IBM+Plex+Mono:wght@500&family=Instrument+Sans:wght@400;500;600;700&display=swap';
-    document.head.appendChild(l);
-  }
-  function skin() { var v = document.getElementById('view'); if (!v) return; var on = VIEW === 'inbox'; if (on) fonts(); v.classList.toggle('ib-skin', on); }
+  function skin() { var v = document.getElementById('view'); if (!v) return; v.classList.toggle('ib-skin', VIEW === 'inbox'); }
   if (typeof repaint === 'function') { var rpSkin = repaint; repaint = function () { skin(); return rpSkin.apply(this, arguments); }; }
   setInterval(skin, 800);
 })();
