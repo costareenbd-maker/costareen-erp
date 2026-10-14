@@ -35852,6 +35852,17 @@ body[data-fdview="settings"] #o_cp .crumbs, body[data-fdview="tools"] #o_cp .cru
     wa_sender: 'Your own number as a linked device through WaSenderAPI (a paid service, wasenderapi.com). NOT official — the same ban risk. Needs its API key; set the webhook below in WaSenderAPI with a webhook secret.',
     webchat: 'A chat bubble on your own website: the visitor gives a name and a mobile number, then chats with the same agent (photos and voice notes too). Paste the code below into your site (https).'
   };
+  // messages after Meta's 24 hours: the templates Meta approved (Messenger, official WhatsApp)
+  var TPL_NAMES = { order_courier: 'Handed to the courier', order_out: 'Out for delivery', order_problem: 'Delivery problem', review: 'Review request', booking_confirmed: 'Booking confirmed', booking_reminder: 'Booking reminder' };
+  function tplBox(c) {
+    if (!(c.kind === 'messenger' || c.kind === 'wa_cloud') || !fon('templates') || !(ME && ME.role === 'owner')) return '';
+    var st = (c.settings && c.settings.templates) || {}, lang = (c.settings && c.settings.templates_lang) || 'bn';
+    var rows = Object.keys(TPL_NAMES).map(function (k) { var v = st['erp_' + k + '_' + lang] || ''; return '<div class="line" style="display:flex;justify-content:space-between;font-size:13px;padding:3px 0"><span>' + esc(TPL_NAMES[k]) + '</span><span class="ib-tag ' + (v === 'APPROVED' ? 'ai' : v ? 'hot' : 'test') + '">' + esc(v || 'NOT ASKED') + '</span></div>'; }).join('');
+    return '<details style="margin-top:10px"' + (Object.keys(st).length ? '' : '') + '><summary class="sub" style="cursor:pointer"><b>Messages after 24 hours</b> — Meta-approved templates for courier updates and booking reminders (never offers)</summary>' +
+      (c.kind === 'wa_cloud' ? '<div class="ib-form" style="margin-top:8px"><label>WhatsApp Business Account id (WABA id)<input class="i" data-chset="waba_id" value="' + esc((c.settings && c.settings.waba_id) || '') + '" placeholder="from Meta Business Manager"></label></div><div class="sub">Press Save on the card after typing it.</div>' : '<div class="sub" style="margin-top:6px">Needs the page_utility_messaging permission on your Meta app.</div>') +
+      '<div style="margin-top:8px">' + rows + '</div><div class="ib-actions"><select class="i" data-tpllang="' + c.id + '" style="width:auto"><option value="bn"' + (lang === 'bn' ? ' selected' : '') + '>বাংলা</option><option value="en"' + (lang === 'en' ? ' selected' : '') + '>English</option></select>' +
+      '<button class="btn small primary" type="button" data-tpl="create" data-id="' + c.id + '">Create</button><button class="btn small" type="button" data-tpl="check" data-id="' + c.id + '">Check</button></div></details>';
+  }
   function chansHtml() {
     return errOr(IB.chans, function (d) {
       var h = (!d.aiKey ? '<div class="note err"><div class="ico">!</div><div>No AI key is set — the AI cannot answer until one is set (Platform → AI reader).</div></div>' : '');
@@ -35865,6 +35876,7 @@ body[data-fdview="settings"] #o_cp .crumbs, body[data-fdview="tools"] #o_cp .cru
           (!c.official ? '<div class="ib-risk">⚠️ Not Meta\'s official system — the number can be banned. Only people who wrote first are answered.</div>' : '') +
           '<div class="sub">' + esc(KIND_HELP[c.kind]) + '</div>' +
           (c.hookUrl && c.kind !== 'webchat' ? '<div class="sub">Webhook address:</div><div class="ib-code">' + esc(c.hookUrl) + '</div>' + (c.verify ? '<div class="sub" style="margin-top:6px">Verify word:</div><div class="ib-code">' + esc(c.verify) + '</div>' : '') : '') + embed +
+          tplBox(c) +
           (keyFields.length ? '<div class="ib-form" style="margin-top:10px">' + keyFields.map(function (k) { return '<label>' + KL[k] + (c.keys[k] ? ' <span class="ib-tag ai">saved</span>' : '') + '<input class="i" type="password" autocomplete="off" data-chkey="' + k + '" placeholder="' + (c.keys[k] ? 'saved — type to replace' : '') + '"></label>'; }).join('') + '</div>' : '') +
           '<div class="ib-form" style="margin-top:10px"><label>Wait before answering (s)<input class="i" data-chset="wait_s" value="' + esc(c.settings.wait_s) + '"></label><label>Back to the AI after (min)<input class="i" data-chset="revert_min" value="' + esc(c.settings.revert_min) + '"></label>' +
           (c.kind === 'webchat' ? '<label>Colour<input class="i" type="color" data-chset="colour" value="' + esc(c.settings.colour || '#F5A623') + '"></label><label>Logo (https link)<input class="i" data-chset="logo" value="' + esc(c.settings.logo || '') + '"></label><label>AI answers per visitor a day<input class="i" data-chset="daily_cap" value="' + esc(c.settings.daily_cap || 40) + '"></label>' : '') + '</div>' +
@@ -36004,7 +36016,7 @@ body[data-fdview="settings"] #o_cp .crumbs, body[data-fdview="tools"] #o_cp .cru
   function readFileAsB64(f, cb) { var rd = new FileReader(); rd.onload = function () { cb(String(rd.result)); }; rd.readAsDataURL(f); }
   document.addEventListener('click', function (e) {
     if (VIEW !== 'inbox' || !e.target.closest) return;
-    var t = e.target.closest('[data-ibtab],[data-ibpile],[data-ibopen],[data-ibclose],[data-ibmode],[data-ibsend],[data-ibnote],[data-ibside],[data-ibai],[data-ibusedraft],[data-ibcsave],[data-ibinvoice],[data-ibgoconv],[data-ibtaskdone],[data-ibnotify],[data-ibost],[data-iboa],[data-ibinv],[data-iblead],[data-ibleadnew],[data-ibfusave],[data-ibbcsave],[data-ibbcsend],[data-ibcm],[data-ibpfsave],[data-ibundo],[data-ibhelper],[data-ibpublish],[data-ibdiscardall],[data-ibrule],[data-ibruleadd],[data-ibtest],[data-ibtestclear],[data-iboffer],[data-ibofferadd],[data-ibsavedadd],[data-ibsavedx],[data-ibkbadd],[data-ibkbtest],[data-ibkbx],[data-chsave],[data-chlive],[data-chpractice],[data-chcm],[data-chqr],[data-chremove],[data-chadd],[data-ibdays],[data-ibcost],[data-ibbkst],[data-ibbka],[data-ibduty],[data-ibexp],[data-ibolder],[data-chall],[data-ibdict],[data-ibnotebox],[data-ibplat],[data-ibplan],[data-ibgrp],[data-ibacc]');
+    var t = e.target.closest('[data-ibtab],[data-ibpile],[data-ibopen],[data-ibclose],[data-ibmode],[data-ibsend],[data-ibnote],[data-ibside],[data-ibai],[data-ibusedraft],[data-ibcsave],[data-ibinvoice],[data-ibgoconv],[data-ibtaskdone],[data-ibnotify],[data-ibost],[data-iboa],[data-ibinv],[data-iblead],[data-ibleadnew],[data-ibfusave],[data-ibbcsave],[data-ibbcsend],[data-ibcm],[data-ibpfsave],[data-ibundo],[data-ibhelper],[data-ibpublish],[data-ibdiscardall],[data-ibrule],[data-ibruleadd],[data-ibtest],[data-ibtestclear],[data-iboffer],[data-ibofferadd],[data-ibsavedadd],[data-ibsavedx],[data-ibkbadd],[data-ibkbtest],[data-ibkbx],[data-chsave],[data-chlive],[data-chpractice],[data-chcm],[data-chqr],[data-chremove],[data-chadd],[data-ibdays],[data-ibcost],[data-ibbkst],[data-ibbka],[data-ibduty],[data-ibexp],[data-ibolder],[data-chall],[data-ibdict],[data-ibnotebox],[data-ibplat],[data-ibplan],[data-ibgrp],[data-ibacc],[data-tpl]');
     if (!t) return;
     var d = t.dataset;
     if (d.ibtab) { IB.tab = d.ibtab; if (['tasks', 'orders', 'leads', 'stats', 'cost', 'cm', 'bc', 'fu'].indexOf(d.ibtab) >= 0) IB[d.ibtab] = null; paint(); return; }
@@ -36042,6 +36054,8 @@ body[data-fdview="settings"] #o_cp .crumbs, body[data-fdview="tools"] #o_cp .cru
       if (px && px.k && !ps) { platDialog(px); return; }
       IB.plat = d.ibplat; IB.list = null; paint(); return;
     }
+    if (d.tpl) { var tl = document.querySelector('[data-tpllang="' + d.id + '"]'); t.disabled = true;
+      srv('erpInboxTemplates', [{ id: d.id, action: d.tpl, lang: tl ? tl.value : 'bn' }], function (r) { IB.chans = r; paint(); toast(r.errors && r.errors.length ? 'Meta refused some: ' + esc(r.errors.join(' | ')).slice(0, 300) : d.tpl === 'create' ? 'Asked Meta. Approval usually takes seconds to a few hours — press Check.' : 'Checked.', !!(r.errors && r.errors.length), 9000); }, function (er) { t.disabled = false; fail(er); }); return; }
     if (d.ibplan) { planDialog(d.ibplan); return; }
     if (t.hasAttribute('data-ibgrp')) { groupDialog(d.ibgrp); return; }
     if (d.ibacc) { accessDialog(d.ibacc); return; }

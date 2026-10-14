@@ -419,4 +419,29 @@ r = await owner('erpInboxGroups', [{ remove: (await owner('erpInboxGroups', [{}]
 r = await sales('erpInbox', [{ pile: 'all' }]);
 check('limits taken off: all chats again', r.ok && r.result.list.some((x) => x.channel === 'messenger'));
 
+// ---- 22. messages after 24 hours: Meta-approved templates (Messenger)
+graph.length = 0;
+r = await sales('erpInboxTemplates', [{ id: M.id, action: 'create', lang: 'bn' }]);
+check('only the owner asks Meta for templates', !r.ok, r);
+r = await owner('erpInboxTemplates', [{ id: M.id, action: 'create', lang: 'bn' }]);
+const tplCalls = graph.filter((g) => /\/PAGE1\/message_templates/.test(g.url));
+check('the templates are asked from the page: utility, Bangla, numbered values, a Track button', r.ok && tplCalls.length >= 5 && tplCalls.every((g) => g.body.category === 'UTILITY' && g.body.language === 'bn') &&
+  tplCalls.some((g) => g.body.name === 'erp_order_courier_bn' && (g.body.components[1] || {}).buttons && /order\.html\?o=\{\{1\}\}$/.test(g.body.components[1].buttons[0].url)), tplCalls.map((g) => g.body.name));
+await sql`update inbox_conversations set last_in_at = now() - interval '2 days' where id = ${conv7}`;
+graph.length = 0;
+const bk7 = (await sql`select id from bookings where conversation_id = ${conv7} limit 1`)[0];
+r = await sales('erpBookingAct', [{ id: bk7.id, action: 'confirm', at: dhaka(30 * 3600e3), place: 'Your home' }]);
+check('after 24 hours, not approved yet: nothing is sent, the screen says so', r.ok && r.result.told === false && !graph.some((g) => /\/me\/messages/.test(g.url) && g.body.message), r.result && r.result.told);
+await sql`update inbox_channels set settings = jsonb_set(settings, '{templates}', ${sql.json({ erp_booking_confirmed_bn: 'APPROVED', erp_booking_reminder_bn: 'APPROVED' })}) where id = ${M.id}`;
+graph.length = 0;
+r = await sales('erpBookingAct', [{ id: bk7.id, action: 'confirm', at: dhaka(30 * 3600e3), place: 'Your home' }]);
+const tsent = graph.find((g) => g.body && g.body.messaging_type === 'UTILITY');
+check('approved: the booking confirmation goes as the template, written into the chat', r.ok && r.result.told === true && tsent && tsent.body.message.template.name === 'erp_booking_confirmed_bn' && tsent.body.message.template.components[0].parameters.length === 4 &&
+  (await sql`select count(*)::int n from inbox_messages where conversation_id = ${conv7} and text like '%[template]'`)[0].n === 1, tsent);
+await owner('erpInboxFeatures', [{ save: { templates: false } }]);
+graph.length = 0;
+r = await sales('erpBookingAct', [{ id: bk7.id, action: 'confirm', at: dhaka(30 * 3600e3) }]);
+check('templates switched off: nothing goes after 24 hours', r.ok && r.result.told === false && !graph.some((g) => g.body && g.body.messaging_type === 'UTILITY'));
+await owner('erpInboxFeatures', [{ save: { templates: true } }]);
+
 await done();

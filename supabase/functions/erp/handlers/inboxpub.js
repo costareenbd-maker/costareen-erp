@@ -21,6 +21,9 @@ function pageBase(ctx) { return String((ctx.deps && ctx.deps.google && ctx.deps.
 function api(ctx) { return String((ctx.deps && ctx.deps.hookBase) || ''); }
 function withQ(url, q) { return url + (url.includes('?') ? '&' : '?') + q; }
 const apiParam = (ctx) => (api(ctx) ? '&api=' + encodeURIComponent(api(ctx)) : '');
+/** The Track button's fixed start (a template's URL button) and its end for one order. */
+export function orderBase(ctx) { return pageBase(ctx) + '/order.html?o='; }
+export function orderSuffix(ctx, o) { return o.page_token + apiParam(ctx); }
 export function orderLink(ctx, o) { return pageBase(ctx) + '/order.html?o=' + o.page_token + apiParam(ctx); }
 export function billLink(ctx, o) { return api(ctx) ? withQ(api(ctx), 'inbox=bill&o=' + o.page_token) : ''; }
 export function itemLink(ctx, conv, sku) { return pageBase(ctx) + '/item.html?c=' + conv.shop_token + '&sku=' + encodeURIComponent(sku) + apiParam(ctx); }

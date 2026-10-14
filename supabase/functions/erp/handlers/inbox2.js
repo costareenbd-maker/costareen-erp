@@ -7,10 +7,12 @@ import { num, formatDate, todayStr } from '../lib/time.js';
 import { getConfig, setConfig } from '../lib/ext.js';
 import { roleAtLeast } from '../allow.js';
 import { platformAdmin } from './platform.js';
-import { orderLink } from './inboxpub.js';
+import { orderLink, orderBase, orderSuffix } from './inboxpub.js';
 import { gemini, textOf, jsonOf } from '../lib/gemini.js';
 import { aiKey } from './receivefile.js';
 import { feat, needFeat, budget, planOf, ownerSwitches, FEATURES, FEATURE_KEYS, KIND_FEATURE } from '../lib/inboxplan.js';
+import { templatesCreate, templatesCheck, sendTemplate, templateName, TEMPLATE_KEYS } from './inboxch.js';
+import { writeMsg } from './inbox.js';
 import { KINDS, KIND_NAME, CAN, chSecret, chSecretSet, evoQr, evoState, evoSetHook, metaSubscribe, commentModerate, commentReply } from './inboxch.js';
 import { profile, PROFILE_DEFAULTS, agentReply, deliver, orderEvent, task, leadUpsert, kbSearch, REASONS, inWindow } from './inbox.js';
 
@@ -75,6 +77,7 @@ export async function erpInboxChannelSave(ctx, payload) {
     if (p.settings.logo !== undefined) s.logo = /^https:\/\//.test(str(p.settings.logo)) ? str(p.settings.logo) : '';
     if (p.settings.daily_cap !== undefined) s.daily_cap = Math.max(1, Math.min(500, Math.round(num(p.settings.daily_cap))));
     if (p.settings.site !== undefined) s.site = str(p.settings.site).slice(0, 200);
+    if (p.settings.waba_id !== undefined) s.waba_id = str(p.settings.waba_id).replace(/[^0-9]/g, '').slice(0, 30);
     await ctx.tx`update inbox_channels set settings = ${ctx.tx.json(s)} where id = ${ch.id}`;
   }
   ch = await chOf(ctx, ch.id);
@@ -388,7 +391,14 @@ async function notifyOrder(ctx, o, what, extra) {
     review: (bn ? 'পণ্যটি কেমন লাগলো? আমাদের পেজে একটি রিভিউ দিলে খুব খুশি হবো: ' : 'How did you like it? A review on our page would mean a lot: ') + str(pr.review_link),
   };
   if (!T[what]) return false;
-  if (CAN[ch.kind].window24 && !inWindow(ch, v, ctx.now)) return false;   // after 24 h Messenger needs Meta's approved templates - not sent
+  if (CAN[ch.kind].window24 && !inWindow(ch, v, ctx.now)) {
+    // after 24 h only a template Meta approved (Messenger, official WhatsApp): courier updates and the review request - never an offer
+    const key = { courier: 'order_courier', out: 'order_out', failed: 'order_problem', review: 'review' }[what];
+    if (!key) return false;
+    const total = (o.items || []).reduce((t, x) => t + num(x.qty) * num(x.price), 0) + num(o.delivery_charge);
+    const params = key === 'order_courier' ? [o.name, o.no, pr.name] : key === 'order_out' ? [o.name, o.no, 'Tk ' + Math.round(total).toLocaleString('en-IN')] : [o.name, o.no];
+    return viaTemplate(ctx, ch, v, c, key, params, key !== 'review' && o.page_token && await feat(ctx, 'order_page') ? orderSuffix(ctx, o) : '', T[what]);
+  }
   // the order's own page carries the Track button
   const link = ['courier', 'out', 'failed', 'preparing'].includes(what) && o.page_token && await feat(ctx, 'order_page') ? (bn ? '\nঅবস্থা ও ট্র্যাক: ' : '\nStatus and tracking: ') + orderLink(ctx, o) : '';
   const r = await deliver(ctx, ch, v, c, { kind: 'text', text: T[what] + (extra ? ' ' + extra : '') + link, payload: { courier: what } }, { author: 'system' });
@@ -435,14 +445,23 @@ export async function erpBookings(ctx, payload) {
   }
   return { bookings: out, counts };
 }
-async function bookingTell(ctx, b, text) {
+async function bookingTell(ctx, b, text, tpl) {
   if (!b.conversation_id) return null;     // made by hand, no chat: nothing to tell
   const v = (await ctx.tx`select * from inbox_conversations where id = ${b.conversation_id}`)[0];
   if (!v) return false;
   const ch = await chOf(ctx, v.channel_id), c = (await ctx.tx`select * from inbox_contacts where id = ${v.contact_id}`)[0];
   if (!ch || ch.status === 'removed' || ch.kind === 'webchat') return false;   // the website chat gets no confirmations yet (as AiPraktor)
-  if (CAN[ch.kind].window24 && !inWindow(ch, v, ctx.now)) return false;    // after 24 h only Meta-approved templates - not sent
+  if (CAN[ch.kind].window24 && !inWindow(ch, v, ctx.now)) return tpl ? viaTemplate(ctx, ch, v, c, tpl.key, tpl.params, '', text) : false;   // after 24 h: a Meta-approved template or nothing
   const r = await deliver(ctx, ch, v, c, { kind: 'text', text }, { author: 'system' });
+  return r.ok;
+}
+/** A message after Meta's 24 hours: the approved template, written into the chat; false when there is none. */
+async function viaTemplate(ctx, ch, v, c, key, params, suffix, shown) {
+  if (!['messenger', 'wa_cloud'].includes(ch.kind) || !(await feat(ctx, 'templates'))) return false;
+  const st = (ch.settings || {}).templates || {}, lang = (ch.settings || {}).templates_lang || 'bn';
+  if (st[templateName(key, lang)] !== 'APPROVED') return false;
+  const r = await sendTemplate(ctx, ch, c, key, lang, params, suffix);
+  try { await writeMsg(ctx, v, { direction: 'out', author: 'system', kind: 'text', text: shown + ' [template]', status: r.ok ? 'sent' : 'failed', error: r.ok ? null : r.error, externalId: r.externalId || null }); } catch (_) { /* the history is not the reason it fails */ }
   return r.ok;
 }
 function bookingText(pr, b) {
@@ -465,7 +484,8 @@ export async function erpBookingAct(ctx, payload) {
                  reminded_day = false, reminded_hours = false where id = ${b.id}`;
     const nb = (await ctx.tx`select * from bookings where id = ${b.id}`)[0];
     await ctx.tx`insert into booking_events (business_id, booking_id, what, by_name) values (${ctx.biz}, ${b.id}, ${(p.action === 'confirm' ? 'Confirmed for ' : 'Proposed ') + formatDate(at, 'd MMM h:mm a')}, ${by})`;
-    told = await bookingTell(ctx, nb, p.action === 'confirm' ? bookingText(pr, nb) : (bn ? 'এই সময়টা কি আপনার সুবিধা হবে? ' : 'Would this time suit you? ') + nb.service + ' — ' + formatDate(at, 'EEEE d MMMM, h:mm a') + ' (' + nb.no + ')');
+    told = await bookingTell(ctx, nb, p.action === 'confirm' ? bookingText(pr, nb) : (bn ? 'এই সময়টা কি আপনার সুবিধা হবে? ' : 'Would this time suit you? ') + nb.service + ' — ' + formatDate(at, 'EEEE d MMMM, h:mm a') + ' (' + nb.no + ')',
+      p.action === 'confirm' ? { key: 'booking_confirmed', params: [nb.name, nb.no, nb.service, formatDate(at, 'EEEE d MMMM, h:mm a')] } : null);
   } else if (p.action === 'decline' || p.action === 'cancel') {
     if (!str(p.reason)) throw new Error('Say why.');
     await ctx.tx`update bookings set status = ${p.action === 'decline' ? 'declined' : 'cancelled'}, reason = ${str(p.reason)} where id = ${b.id}`;
@@ -497,10 +517,10 @@ export async function bookingReminders(ctx) {
     const line = b.service + ' — ' + formatDate(new Date(b.at), 'EEEE d MMMM, h:mm a') + (b.place ? ' — ' + b.place : '');
     if (pr.remind_day && !b.reminded_day && left <= H24 && left > hrs * 3600e3) {
       await ctx.tx`update bookings set reminded_day = true where id = ${b.id}`;
-      if (await bookingTell(ctx, b, (bn ? 'মনে করিয়ে দিচ্ছি — আগামীকাল: ' : 'A reminder — tomorrow: ') + line)) n++;
+      if (await bookingTell(ctx, b, (bn ? 'মনে করিয়ে দিচ্ছি — আগামীকাল: ' : 'A reminder — tomorrow: ') + line, { key: 'booking_reminder', params: [b.name, b.no, b.service, formatDate(new Date(b.at), 'EEEE d MMMM, h:mm a')] })) n++;
     } else if (num(pr.remind_hours) > 0 && !b.reminded_hours && left <= hrs * 3600e3) {
       await ctx.tx`update bookings set reminded_hours = true, reminded_day = true where id = ${b.id}`;
-      if (await bookingTell(ctx, b, (bn ? 'মনে করিয়ে দিচ্ছি — আর কয়েক ঘণ্টা পর: ' : 'A reminder — in a few hours: ') + line)) n++;
+      if (await bookingTell(ctx, b, (bn ? 'মনে করিয়ে দিচ্ছি — আর কয়েক ঘণ্টা পর: ' : 'A reminder — in a few hours: ') + line, { key: 'booking_reminder', params: [b.name, b.no, b.service, formatDate(new Date(b.at), 'EEEE d MMMM, h:mm a')] })) n++;
     }
   }
   return n;
@@ -842,5 +862,34 @@ export async function erpInboxGroups(ctx, payload) {
     groups: (await ctx.tx`select * from inbox_groups where business_id = ${ctx.biz} order by created_at`).map((g) => ({ id: g.id, name: g.name, hears: g.hears || [], members: (g.members || []).map(String) })) };
 }
 
-export const HANDLERS = { erpInboxGroups, erpPlatformInboxPlan, erpInboxFeatures, erpInboxFeatureMap, erpInboxExport, erpBookings, erpBookingAct, erpInboxChannels, erpInboxChannelSave, erpInboxChannelAct, erpInboxGoLive, erpInboxProfile, erpAgentDesk, erpInboxKb, erpShopOffers,
+// ------------------------------------------------------------------ templates (messages after 24 hours)
+/** create: ask Meta for every template on this channel (Bangla or English); check: read their status back. */
+export async function erpInboxTemplates(ctx, payload) {
+  owner(ctx);
+  await needFeat(ctx, 'templates');
+  const p = payload || {};
+  const ch = await chOf(ctx, str(p.id));
+  if (!ch || !['messenger', 'wa_cloud'].includes(ch.kind)) throw new Error('Templates are for a Messenger page or the official WhatsApp.');
+  const s = { ...(ch.settings || {}) };
+  const pr = await profile(ctx, false);
+  if (p.action === 'create') {
+    const lang = p.lang === 'en' ? 'en' : 'bn';
+    const r = await templatesCreate(ctx, ch, lang, { orderBase: (await feat(ctx, 'order_page')) ? orderBase(ctx) : '', reviewLink: /^https:\/\//.test(str(pr.review_link)) ? str(pr.review_link) : '' });
+    s.templates_lang = lang;
+    s.templates = { ...(s.templates || {}) };
+    for (const k of Object.keys(r)) s.templates[r[k].name] = r[k].status;
+    await ctx.tx`update inbox_channels set settings = ${ctx.tx.json(s)} where id = ${ch.id}`;
+    const errs = Object.keys(r).filter((k) => r[k].status === 'ERROR').map((k) => k + ': ' + r[k].error);
+    return { ...(await erpInboxChannels(ctx)), errors: errs };
+  }
+  if (p.action === 'check') {
+    const got = await templatesCheck(ctx, ch);
+    s.templates = { ...(s.templates || {}), ...got };
+    await ctx.tx`update inbox_channels set settings = ${ctx.tx.json(s)} where id = ${ch.id}`;
+    return erpInboxChannels(ctx);
+  }
+  throw new Error('Create or check?');
+}
+
+export const HANDLERS = { erpInboxTemplates, erpInboxGroups, erpPlatformInboxPlan, erpInboxFeatures, erpInboxFeatureMap, erpInboxExport, erpBookings, erpBookingAct, erpInboxChannels, erpInboxChannelSave, erpInboxChannelAct, erpInboxGoLive, erpInboxProfile, erpAgentDesk, erpInboxKb, erpShopOffers,
   erpChatOrders, erpChatOrderAct, erpInboxLeads, erpInboxBroadcasts, erpInboxFollowups, erpInboxComments, erpSavedReplies, erpInboxStats, erpAiWork };

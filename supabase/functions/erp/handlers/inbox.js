@@ -1170,4 +1170,4 @@ export async function erpInboxTasks(ctx, payload) {
 export const HANDLERS = { erpInbox, erpInboxOpen, erpInboxSend, erpInboxMode, erpInboxContact, erpInboxAssist, erpInboxTasks };
 
 // for the public pages (inboxpub.js)
-export { catalogue, searchCat, imageUrl, deliveryFor, nextOrderNo, chOf, contactOf, phoneOk };
+export { catalogue, searchCat, imageUrl, deliveryFor, nextOrderNo, chOf, contactOf, phoneOk, writeMsg };

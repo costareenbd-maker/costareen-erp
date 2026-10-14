@@ -320,3 +320,86 @@ export async function metaProfile(ctx, ch, id) {
   const j = r.json;
   return { name: str(j.name || [j.first_name, j.last_name].filter(Boolean).join(' ') || j.username), avatar: str(j.profile_pic) };
 }
+
+// ------------------------------------------------------------------ templates: messages after Meta's 24 hours
+// Messenger (page-owned utility templates, POST /<page>/message_templates; permission page_utility_messaging) and the
+// official WhatsApp (POST /<WABA>/message_templates). Utility only - never an offer. Positional {{1}}... params;
+// a template never starts or ends with a parameter. Instagram and the linked-device WhatsApp get no templates.
+export const TEMPLATE_KEYS = ['order_courier', 'order_out', 'order_problem', 'review', 'booking_confirmed', 'booking_reminder'];
+const TPL = {
+  order_courier: { en: 'Hello {{1}}, your order {{2}} has been handed to the courier. Thank you for shopping with {{3}}.', bn: 'হ্যালো {{1}}, আপনার অর্ডার {{2}} কুরিয়ারে দেওয়া হয়েছে। {{3}} থেকে কেনার জন্য ধন্যবাদ।',
+    ex: ['Rafi', 'CO-261014-1234', 'Our Shop'], track: true },
+  order_out: { en: 'Hello {{1}}, your order {{2}} is out for delivery today. Please keep {{3}} ready for the rider.', bn: 'হ্যালো {{1}}, আপনার অর্ডার {{2}} আজ ডেলিভারির জন্য বের হয়েছে। রাইডারের জন্য {{3}} প্রস্তুত রাখুন।',
+    ex: ['Rafi', 'CO-261014-1234', 'Tk 1,420'], track: true },
+  order_problem: { en: 'Hello {{1}}, the courier could not deliver your order {{2}}. Our team will contact you soon.', bn: 'হ্যালো {{1}}, কুরিয়ার আপনার অর্ডার {{2}} ডেলিভারি করতে পারেনি। আমাদের টিম শীঘ্রই যোগাযোগ করবে।',
+    ex: ['Rafi', 'CO-261014-1234'], track: true },
+  review: { en: 'Hello {{1}}, your order {{2}} has been delivered. Please tell us how it went using the button below.', bn: 'হ্যালো {{1}}, আপনার অর্ডার {{2}} ডেলিভারি হয়েছে। নিচের বোতাম দিয়ে আপনার অভিজ্ঞতা জানান।',
+    ex: ['Rafi', 'CO-261014-1234'], review: true },
+  booking_confirmed: { en: 'Hello {{1}}, your booking {{2}} for {{3}} is confirmed for {{4}}. See you then.', bn: 'হ্যালো {{1}}, আপনার বুকিং {{2}} ({{3}}) নিশ্চিত হয়েছে: {{4}}। দেখা হবে।',
+    ex: ['Rafi', 'BK-261014-1234', 'Consultation', 'Saturday 18 October, 5:00 PM'] },
+  booking_reminder: { en: 'Hello {{1}}, a reminder of your booking {{2}} for {{3}} on {{4}}. See you soon.', bn: 'হ্যালো {{1}}, মনে করিয়ে দিচ্ছি: আপনার বুকিং {{2}} ({{3}}) — {{4}}। শীঘ্রই দেখা হবে।',
+    ex: ['Rafi', 'BK-261014-1234', 'Consultation', 'Saturday 18 October, 5:00 PM'] },
+};
+/** The name a template has at Meta (one per language). */
+export function templateName(key, lang) { return 'erp_' + key + '_' + (lang === 'en' ? 'en' : 'bn'); }
+function templateBody(ch, key, lang, o) {
+  const t = TPL[key];
+  const comps = [{ type: 'BODY', text: t[lang === 'en' ? 'en' : 'bn'], example: { body_text: [t.ex] } }];
+  const urlEx = (u) => (ch.kind === 'messenger' ? { url_suffix_example: u } : [u]);   // Messenger and WhatsApp spell the example differently
+  if (t.track && o.orderBase) comps.push({ type: 'BUTTONS', buttons: [{ type: 'URL', text: lang === 'en' ? 'Track' : 'ট্র্যাক', url: o.orderBase + '{{1}}', example: urlEx(o.orderBase + 'abc123') }] });
+  if (t.review && o.reviewLink) comps.push({ type: 'BUTTONS', buttons: [{ type: 'URL', text: lang === 'en' ? 'Leave a review' : 'রিভিউ দিন', url: o.reviewLink }] });
+  return { name: templateName(key, lang), language: lang === 'en' ? 'en' : 'bn', category: 'UTILITY', components: comps };
+}
+async function templateHome(ctx, ch) {
+  const token = await chSecret(ctx, ch, 'TOKEN');
+  if (!token) throw new Error('This channel has no access token yet.');
+  if (ch.kind === 'messenger') return { url: GRAPH + '/' + encodeURIComponent(ch.external_id) + '/message_templates?access_token=' + encodeURIComponent(token), headers: {} };
+  if (ch.kind === 'wa_cloud') {
+    const waba = str((ch.settings || {}).waba_id);
+    if (!waba) throw new Error('Type the WhatsApp Business Account id (WABA id) on this channel first.');
+    return { url: GRAPH + '/' + encodeURIComponent(waba) + '/message_templates', headers: { Authorization: 'Bearer ' + token } };
+  }
+  throw new Error('Templates are for Messenger and the official WhatsApp only.');
+}
+/** Ask Meta for every template (one already there is taken as asked). -> {key: {name, status, error}} */
+export async function templatesCreate(ctx, ch, lang, o) {
+  const home = await templateHome(ctx, ch), out = {};
+  for (const key of TEMPLATE_KEYS) {
+    if (key === 'review' && !o.reviewLink) { out[key] = { name: templateName(key, lang), status: 'SKIPPED', error: 'No review link set.' }; continue; }
+    const body = templateBody(ch, key, lang, o);
+    const r = await call(ctx, home.url, { headers: home.headers, body });
+    out[key] = { name: body.name, status: r.ok ? str(r.json.status || 'PENDING').toUpperCase() : 'ERROR', error: r.ok ? '' : why(r) };
+    if (!r.ok && /already exists|duplicate|same name/i.test(out[key].error)) out[key] = { name: body.name, status: 'PENDING', error: '' };
+  }
+  return out;
+}
+/** What Meta says now about our templates. -> {name: status} */
+export async function templatesCheck(ctx, ch) {
+  const home = await templateHome(ctx, ch), out = {};
+  const url = home.url + (home.url.includes('?') ? '&' : '?') + 'fields=name,status,language&limit=200';
+  const r = await call(ctx, url, { method: 'GET', headers: home.headers });
+  if (!r.ok) throw new Error('Meta did not answer: ' + why(r));
+  for (const t of r.json.data || []) if (/^erp_/.test(str(t.name))) out[str(t.name)] = str(t.status || 'APPROVED').toUpperCase();
+  return out;
+}
+/** Send an approved template. params: the body's values in order; suffix: the Track button's end of address. */
+export async function sendTemplate(ctx, ch, contact, key, lang, params, suffix) {
+  const token = await chSecret(ctx, ch, 'TOKEN');
+  if (!token) return { ok: false, error: 'no token' };
+  const name = templateName(key, lang), code = lang === 'en' ? 'en' : 'bn';
+  const bodyParams = params.map((v) => ({ type: 'text', text: str(v).slice(0, 200) || '-' }));
+  if (ch.kind === 'messenger') {
+    const comps = [{ type: 'body', parameters: bodyParams }];
+    if (suffix) comps.push({ type: 'buttons', parameters: [{ type: 'URL', url: suffix }] });
+    const r = await call(ctx, GRAPH + '/me/messages?access_token=' + encodeURIComponent(token), { body: { recipient: { id: contact.external_id }, messaging_type: 'UTILITY', message: { template: { name, language: { code }, components: comps } } } });
+    return { ok: r.ok, externalId: str(r.json.message_id), error: r.ok ? '' : why(r) };
+  }
+  if (ch.kind === 'wa_cloud') {
+    const comps = [{ type: 'body', parameters: bodyParams }];
+    if (suffix) comps.push({ type: 'button', sub_type: 'url', index: '0', parameters: [{ type: 'text', text: suffix }] });
+    const r = await call(ctx, GRAPH + '/' + encodeURIComponent(ch.external_id) + '/messages', { headers: { Authorization: 'Bearer ' + token },
+      body: { messaging_product: 'whatsapp', to: waTo(contact.external_id), type: 'template', template: { name, language: { code }, components: comps } } });
+    return { ok: r.ok, externalId: str(((r.json.messages || [])[0] || {}).id), error: r.ok ? '' : why(r) };
+  }
+  return { ok: false, error: 'no templates on this channel' };
+}
