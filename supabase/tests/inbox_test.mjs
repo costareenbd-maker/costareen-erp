@@ -326,4 +326,44 @@ check('WhatsApp shows only WhatsApp chats', r.ok && r.result.list.length >= 1 &&
 r = await sales('erpInbox', [{ pile: 'all', platform: 'fb' }]);
 check('Facebook shows only Messenger chats; the connected platforms are listed', r.ok && r.result.list.every((x) => x.channel === 'messenger') && r.result.platforms.fb.connected && r.result.platforms.wa.connected && !r.result.platforms.ig, r.result && r.result.platforms);
 
+// ---- 19. the subscription: features in a plan, the owner's switches, the monthly AI budget
+r = await owner('erpPlatformInboxPlan', [{}]);
+check('only the provider sets plans', !r.ok, r);
+await sql`insert into platform_admins (user_id, note) values (${FIX.U.owner}, 'test') on conflict do nothing`;
+r = await owner('erpPlatformInboxPlan', [{ save: { businessId: FIX.B, name: 'Starter', features: { bookings: false, ch_wa_linked: false }, aiBudget: 500 } }]);
+check('the provider saves a plan: bookings and linked WhatsApp left out, ৳500 AI a month', r.ok && r.result.businesses.find((b) => b.id === FIX.B).off.length === 2 && r.result.businesses.find((b) => b.id === FIX.B).budget === 500, r.result && r.result.businesses);
+r = await sales('erpInboxFeatures', [{}]);
+check('the business sees its plan: bookings locked', r.ok && r.result.plan === 'Starter' && r.result.features.find((f) => f.key === 'bookings').inPlan === false && r.result.budget.budget === 500, r.result && r.result.budget);
+r = await sales('erpBookings', [{}]);
+check('a feature left out of the plan is refused', !r.ok && /not in your plan/.test(r.error), r);
+r = await owner('erpInboxFeatures', [{ save: { bookings: true } }]);
+check('the owner cannot switch on what the plan leaves out', !r.ok, r);
+r = await sales('erpInboxFeatures', [{ save: { leads: false } }]);
+check('staff cannot change the switches', !r.ok, r);
+r = await owner('erpInboxFeatures', [{ save: { leads: false } }]);
+check('the owner switches leads off', r.ok && r.result.features.find((f) => f.key === 'leads').on === false, r);
+r = await sales('erpInboxLeads', [{}]);
+check('...then Leads is refused (switched off)', !r.ok && /switched off/.test(r.error), r);
+r = await sales('erpInboxFeatureMap', [{}]);
+check('the page gets the map', r.ok && r.result.on.leads === false && r.result.on.bookings === false && r.result.on.orders === true, r.result && r.result.on);
+let toolsSeen = [];
+script = [(body) => { toolsSeen = (((body.tools || [])[0] || {}).function_declarations || []).map((t) => t.name); return [{ text: 'জি।' }]; }];
+await owner('erpAgentDesk', [{ action: 'test', history: [{ mine: true, text: 'hello' }] }]);
+check('the agent gets no tools for what is off (no save_lead, no request_booking)', toolsSeen.length > 3 && !toolsSeen.includes('save_lead') && !toolsSeen.includes('request_booking') && toolsSeen.includes('place_order'), toolsSeen);
+r = await owner('erpInboxChannelSave', [{ kind: 'wa_sender', name: 'x', externalId: '8801700000009', acceptRisk: true }]);
+check('a channel the plan leaves out cannot be connected', !r.ok && /not in your plan/.test(r.error), r);
+await owner('erpInboxFeatures', [{ save: { leads: true } }]);
+// the budget: spent -> the AI stops, one alert for the team
+await sql`insert into ai_work (business_id, purpose, model, tokens_in, tokens_out, cost_bdt) values (${FIX.B}, 'reply', 'gemini-2.5-flash', 1, 1, 600)`;
+r = await sales('erpInboxFeatureMap', [{}]);
+check('over the budget: the page is told the AI has stopped', r.ok && r.result.budget.stopped === true && r.result.budget.pct >= 100, r.result && r.result.budget);
+r = await sales('erpInboxAssist', [{ id: conv7, mode: 'summary' }]);
+check('...AI work is refused', !r.ok && /budget/.test(r.error), r);
+await asB((ctx) => ib.inboxTick(ctx));
+await asB((ctx) => ib.inboxTick(ctx));
+check('...and the minute timer opens one alert for the team', (await sql`select count(*)::int n from inbox_tasks where business_id = ${FIX.B} and reason = 'budget' and status = 'open'`)[0].n === 1);
+await owner('erpPlatformInboxPlan', [{ save: { businessId: FIX.B, name: '', features: {}, aiBudget: '' } }]);
+r = await sales('erpInboxFeatureMap', [{}]);
+check('a plan with everything and no limit: all on again', r.ok && Object.values(r.result.on).every(Boolean) && !r.result.budget.stopped, r.result);
+
 await done();

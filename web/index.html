@@ -8444,7 +8444,7 @@ function srv(name, args, ok, bad) {
 
 var SRV_ACTIVE = 0, SRV_WRITING = false, SRV_TIMED = {};
 // the same list the server uses to know a call changes nothing (ERP_READS)
-var SRV_READS = /^(erpInbox|erpInboxOpen|erpInboxChannels|erpChatOrders|erpInboxStats|erpAiWork|erpCommissionSales|erpFdCards|erpLineMargins|erpFd19Profit|erpFdInventory|erpFd22Analytics|erpNavigator|erpSellers|erpFollowups|erpCustomerInsight|erpPreorders|erpCashUps|erpAskingPrices|erpSystemCheck|erpAnalytics|erpCommission|erpHolding|erpLotFunding|erpShipments|erpShipment|erpLots|erpFdHead|erpFdDash|erpReceiveMatch|erpAiReader|erpProductSuggest|erpCatalogue|erpPushList|erpCreators|erpCreatorPortalLink|erpSponsorLink|erpCreatorRequests|erpCreatorEvents|erpCreatorProgramme|erpCreatorPreview|erpCreatorCatalog|erpCreatorSources|erpCreatorClaims|erpApps|erpAppQr|erpFeedback|erpRestockOffers|erpRestockList|erpWarrantyRules|erpWarrantyCard|erpMyLink|erpPlatformRegister|erpPlatformDoctor|erpPlatformCommunity|erpMarketWaiting|erpBoard|erpPlatformDesign|erpResell|erpResellerProgramme|erpLoyalty|erpCustomerPoints|erpRefillDue|erpDeliveryHistory|erpDeliveryHistoryMany|erpPrintKit|erpPrintJobs|erpPrintJob|erpPrintCost|erpSpools|erpPrintRequests|erpJoint|erpJointCatalog|erpJointCard|erpInvoiceDesign|erpInvoicePreview|erpMarket|erpMarketMine|erpMarketRequests|erpMarketHints|erpMarketNames|erpWanted|erpBrand|erpComplianceLog|erpProviderKey|erpNews|erpAccessKeys|erpAccessWarning|erpAdmin|erpAiKeys|erpAlertRules|erpAlerts|erpArena|erpBackupStatus|erpBg|erpBnWords|erpBookedParcels|erpBrandLogo|erpBundle|erpBusinessLinks|erpBusinesses|erpBusinessesDeleted|erpCampaignAudience|erpCampaignGet|erpCampaignList|erpCapital|erpCashBook|erpCatalog|erpConnStatus|erpConnections|erpCostBook|erpCourier|erpCourierKeyStatus|erpCurrencies|erpCustomerAccount|erpCustomerCredit|erpCustomerList|erpCustomerPage|erpCustomerStatement|erpCustomers|erpDashboardData|erpDaySales|erpDeliveryOptions|erpDevices|erpDiscontinued|erpDues|erpEvoQr|erpEvoStatus|erpExpenseExport|erpExpenseReceiptUrl|erpExpenses|erpFamilies|erpFighters|erpFormOptions|erpGame|erpGetTheme|erpGoogle|erpHello|erpInstalls|erpInvoice|erpInvoicePdf|erpJob|erpJobs|erpListView|erpLookupCustomer|erpLookupUsage|erpMe|erpMoney|erpNoteFileUrl|erpNotes|erpOwnerChange|erpOwnerChanges|erpParcelLabels|erpParcelPreview|erpPartnerStock|erpPartnership|erpPayReasons|erpPeople|erpPlatform|erpPlatformErrors|erpPnl|erpPnlMonth|erpPoList|erpPoolCatalog|erpProduct|erpProductListShare|erpProductPage|erpProductPhotoUrl|erpProductThumbs|erpProfile|erpQuoteAsset|erpQuoteBoot|erpQuoteGet|erpQuoteList|erpRecentInvoices|erpRecovery|erpReorderPlan|erpRestorePreview|erpReturnPreview|erpRisks|erpSales|erpSearch|erpSecurity|erpSelfTest|erpSerialLookup|erpSerialsFor|erpSessions|erpSetTheme|erpSettingsFull|erpSettingsLists|erpSfPayoutLines|erpSfPayouts|erpShareFile|erpSharedStock|erpSheet|erpStatementPdf|erpStockHistory|erpSupplierPage|erpSuppliers|erpToday|erpUsers|erpWaProductPdf|erpWebMatches|erpWebOrderInvoices|erpWebOrders|erpWebsiteTest)$/;
+var SRV_READS = /^(erpInboxFeatureMap|erpBookings|erpInbox|erpInboxOpen|erpInboxChannels|erpChatOrders|erpInboxStats|erpAiWork|erpCommissionSales|erpFdCards|erpLineMargins|erpFd19Profit|erpFdInventory|erpFd22Analytics|erpNavigator|erpSellers|erpFollowups|erpCustomerInsight|erpPreorders|erpCashUps|erpAskingPrices|erpSystemCheck|erpAnalytics|erpCommission|erpHolding|erpLotFunding|erpShipments|erpShipment|erpLots|erpFdHead|erpFdDash|erpReceiveMatch|erpAiReader|erpProductSuggest|erpCatalogue|erpPushList|erpCreators|erpCreatorPortalLink|erpSponsorLink|erpCreatorRequests|erpCreatorEvents|erpCreatorProgramme|erpCreatorPreview|erpCreatorCatalog|erpCreatorSources|erpCreatorClaims|erpApps|erpAppQr|erpFeedback|erpRestockOffers|erpRestockList|erpWarrantyRules|erpWarrantyCard|erpMyLink|erpPlatformRegister|erpPlatformDoctor|erpPlatformCommunity|erpMarketWaiting|erpBoard|erpPlatformDesign|erpResell|erpResellerProgramme|erpLoyalty|erpCustomerPoints|erpRefillDue|erpDeliveryHistory|erpDeliveryHistoryMany|erpPrintKit|erpPrintJobs|erpPrintJob|erpPrintCost|erpSpools|erpPrintRequests|erpJoint|erpJointCatalog|erpJointCard|erpInvoiceDesign|erpInvoicePreview|erpMarket|erpMarketMine|erpMarketRequests|erpMarketHints|erpMarketNames|erpWanted|erpBrand|erpComplianceLog|erpProviderKey|erpNews|erpAccessKeys|erpAccessWarning|erpAdmin|erpAiKeys|erpAlertRules|erpAlerts|erpArena|erpBackupStatus|erpBg|erpBnWords|erpBookedParcels|erpBrandLogo|erpBundle|erpBusinessLinks|erpBusinesses|erpBusinessesDeleted|erpCampaignAudience|erpCampaignGet|erpCampaignList|erpCapital|erpCashBook|erpCatalog|erpConnStatus|erpConnections|erpCostBook|erpCourier|erpCourierKeyStatus|erpCurrencies|erpCustomerAccount|erpCustomerCredit|erpCustomerList|erpCustomerPage|erpCustomerStatement|erpCustomers|erpDashboardData|erpDaySales|erpDeliveryOptions|erpDevices|erpDiscontinued|erpDues|erpEvoQr|erpEvoStatus|erpExpenseExport|erpExpenseReceiptUrl|erpExpenses|erpFamilies|erpFighters|erpFormOptions|erpGame|erpGetTheme|erpGoogle|erpHello|erpInstalls|erpInvoice|erpInvoicePdf|erpJob|erpJobs|erpListView|erpLookupCustomer|erpLookupUsage|erpMe|erpMoney|erpNoteFileUrl|erpNotes|erpOwnerChange|erpOwnerChanges|erpParcelLabels|erpParcelPreview|erpPartnerStock|erpPartnership|erpPayReasons|erpPeople|erpPlatform|erpPlatformErrors|erpPnl|erpPnlMonth|erpPoList|erpPoolCatalog|erpProduct|erpProductListShare|erpProductPage|erpProductPhotoUrl|erpProductThumbs|erpProfile|erpQuoteAsset|erpQuoteBoot|erpQuoteGet|erpQuoteList|erpRecentInvoices|erpRecovery|erpReorderPlan|erpRestorePreview|erpReturnPreview|erpRisks|erpSales|erpSearch|erpSecurity|erpSelfTest|erpSerialLookup|erpSerialsFor|erpSessions|erpSetTheme|erpSettingsFull|erpSettingsLists|erpSfPayoutLines|erpSfPayouts|erpShareFile|erpSharedStock|erpSheet|erpStatementPdf|erpStockHistory|erpSupplierPage|erpSuppliers|erpToday|erpUsers|erpWaProductPdf|erpWebMatches|erpWebOrderInvoices|erpWebOrders|erpWebsiteTest)$/;
 function srvPump() {
   if (!SRV_Q.length) return;
   var isRead = SRV_READS.test(SRV_Q[0].name);
@@ -35361,6 +35361,15 @@ body[data-fdview="settings"] #o_cp .crumbs, body[data-fdview="tools"] #o_cp .cru
 .ib-tools select.i { width:auto; max-width:170px; height:32px; }
 .ib-tools .ib-hint { margin-left:auto; }
 .ib-notebox[hidden] { display:none !important; }
+.ib-feat { display:flex; gap:12px; align-items:center; justify-content:space-between; padding:9px 0; border-top:1px solid var(--fd-border); cursor:pointer; }
+.ib-feat:first-of-type { border-top:0; }
+.ib-feat span b { display:block; font-size:14px; } .ib-feat span em { display:block; font-style:normal; font-size:12.5px; color:var(--fd-text-3); }
+.ib-feat.locked { opacity:.55; cursor:default; }
+.ib-sw { appearance:none; -webkit-appearance:none; flex:0 0 auto; width:40px; height:24px; border-radius:999px; background:var(--fd-surface-2, #ddd); position:relative; cursor:pointer; transition:background .15s; margin:0; }
+.ib-sw::after { content:''; position:absolute; top:3px; left:3px; width:18px; height:18px; border-radius:50%; background:#fff; box-shadow:0 1px 3px rgba(0,0,0,.25); transition:transform .15s; }
+.ib-sw:checked { background:var(--fd-accent, #5B5BD6); } .ib-sw:checked::after { transform:translateX(16px); }
+.ib-sw:disabled { opacity:.6; cursor:default; }
+.ib-bar { height:10px; border-radius:999px; background:var(--fd-surface-2, #eee); overflow:hidden; } .ib-bar i { display:block; height:100%; border-radius:999px; }
 .ib-wrap.has-rail { grid-template-columns:62px 290px minmax(0,1fr) 280px; }
 @media (max-width:1400px) { .ib-wrap.has-rail { grid-template-columns:62px 270px minmax(0,1fr) 260px; } }
 .ib-rail { display:flex; flex-direction:column; gap:4px; padding:8px 4px; background:var(--fd-card); border:1px solid var(--fd-border); border-radius:var(--fd-radius-lg, 16px); overflow:auto; scrollbar-width:none; }
@@ -35432,7 +35441,7 @@ body[data-fdview="settings"] #o_cp .crumbs, body[data-fdview="tools"] #o_cp .cru
 (function () {
   var IB = { tab: 'inbox', pile: 'open', q: '', list: null, conv: null, convId: '', side: false, tasks: null, orders: null, ostatus: 'pending', leads: null, desk: null, kb: null,
              chans: null, stats: null, cost: null, bc: null, cm: null, fu: null, saved: null, offers: null, test: [], busy: {}, ai: '', counts: {},
-             bk: null, bkst: 'requested', plat: '', oq: '', lq: '', older: null, bcgap: 24, duty: (function () { try { return localStorage.getItem('ibDuty') === '1'; } catch (e) { return false; } })() };
+             bk: null, bkst: 'requested', plat: '', F: null, feats: null, plans: null, oq: '', lq: '', older: null, bcgap: 24, duty: (function () { try { return localStorage.getItem('ibDuty') === '1'; } catch (e) { return false; } })() };
   window.IB = IB;
   var ICON = '<path d="M4 4h16v12H8l-4 4z"/><path d="M8 9h8M8 12h5"/>';
   function ibOn() { if (!ME) return false; if (ME.platform) return true; var off = (ME.apps && ME.apps.off) || []; return off.indexOf('inbox') < 0 && typeof APPS !== 'undefined' && APPS && APPS.apps && APPS.apps.some(function (a) { return a.key === 'inbox' && a.on; }); }
@@ -35463,6 +35472,9 @@ body[data-fdview="settings"] #o_cp .crumbs, body[data-fdview="tools"] #o_cp .cru
   function saveFile(name, text, type) { var b = new Blob([(type === 'text/csv' ? '\ufeff' : '') + text], { type: (type || 'text/plain') + ';charset=utf-8' }), a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = name; document.body.appendChild(a); a.click(); setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 500); }
   function csvOf(head, rows) { var q = function (v) { v = v === null || v === undefined ? '' : String(v); return /[",\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; }; return [head].concat(rows).map(function (r) { return r.map(q).join(','); }).join('\r\n'); }
   function exportIt(what, id) { srv('erpInboxExport', [{ what: what, id: id }], function (r) { if (r.text !== undefined) saveFile(r.name, r.text); else saveFile(r.name, csvOf(r.head, r.rows), 'text/csv'); }, fail); }
+  function fon(k) { return !IB.F || !IB.F.on || IB.F.on[k] !== false; }
+  function loadF() { srv('erpInboxFeatureMap', [{}], function (r) { IB.F = r; if (VIEW === 'inbox') paint(true); }, function () {}); }
+  setInterval(function () { if (ibOn() && !document.hidden) loadF(); }, 300000);
   function loadConv(id) { IB.convId = id; srv('erpInboxOpen', [{ id: id }], function (r) { IB.conv = r; if (VIEW === 'inbox') paint(true); }, fail); }
   // live: the list every 8 s and the open chat every 5 s while the Inbox is open; the menu badge every 30 s
   setInterval(function () { if (VIEW === 'inbox' && IB.tab === 'inbox' && !document.hidden) { loadList(); if (IB.convId) srv('erpInboxOpen', [{ id: IB.convId }], function (r) { var had = IB.conv && IB.conv.msgs.length; IB.conv = r; if (!had || had !== r.msgs.length) paint(true); }, function () {}); } }, 5000);
@@ -35471,11 +35483,18 @@ body[data-fdview="settings"] #o_cp .crumbs, body[data-fdview="tools"] #o_cp .cru
     if ((IB.counts.waiting || 0) > before && 'Notification' in window && Notification.permission === 'granted') { try { new Notification('A customer is waiting', { body: 'A chat was handed to the team.' }); } catch (e) {} } }, function () {}); }, 30000);
 
   // ---------------------------------------------------------------- the frame
-  var TABS = [['inbox', 'Inbox'], ['tasks', 'Notifications'], ['orders', 'Orders'], ['bk', 'Bookings'], ['leads', 'Leads'], ['fu', 'Follow-ups'], ['bc', 'Broadcasts'], ['cm', 'Comments'], ['desk', 'Agent Desk'], ['kb', 'Knowledge'], ['chans', 'Channels'], ['stats', 'Analytics'], ['cost', 'AI cost']];
+  var TABS = [['inbox', 'Inbox'], ['tasks', 'Notifications'], ['orders', 'Orders'], ['bk', 'Bookings'], ['leads', 'Leads'], ['fu', 'Follow-ups'], ['bc', 'Broadcasts'], ['cm', 'Comments'], ['desk', 'Agent Desk'], ['kb', 'Knowledge'], ['chans', 'Channels'], ['stats', 'Analytics'], ['cost', 'AI cost'], ['feat', 'Features']];
+  var TAB_FEAT = { orders: 'orders', bk: 'bookings', leads: 'leads', fu: 'followups', bc: 'broadcasts', cm: 'comments', kb: 'knowledge', stats: 'analytics' };
+  function budgetNote() {
+    var b = IB.F && IB.F.budget; if (!b || !b.budget || !(b.warn || b.stopped)) return '';
+    return '<div class="note' + (b.stopped ? ' err' : '') + '" style="margin-bottom:10px"><div class="ico">!</div><div>' + (b.stopped ? '<b>The AI has stopped:</b> this month\'s AI budget (' + tk(b.budget) + ') is used up. Messages still arrive here; your team answers.' :
+      'This month\'s AI budget is ' + b.pct + '% used (' + tk(b.used) + ' of ' + tk(b.budget) + ').') + '</div></div>';
+  }
   function frame(inner) {
     var n = { inbox: (IB.counts.unread || 0), tasks: (IB.counts.tasks || 0), orders: (IB.orders && IB.orders.counts ? IB.orders.counts.pending : 0), bk: (IB.bk && IB.bk.counts ? IB.bk.counts.requested : 0) };
     return '<div class="fdd-head" style="margin-bottom:10px"><div><h1 class="fdd-title" style="display:flex;gap:10px;align-items:center">Inbox <span class="ib-tag test">ONLY ME</span></h1></div><button type="button" class="btn small' + (IB.duty ? ' primary' : '') + '" data-ibduty="1" title="On duty: a sound when a customer waits for a person">' + (IB.duty ? '🔔 On duty' : '🔕 Off duty') + '</button></div>' +
-      '<div class="ib-tabs" role="tablist">' + TABS.filter(function (t) { return !(t[0] === 'cost' && ME && ME.role !== 'owner'); }).map(function (t) {
+      budgetNote() +
+      '<div class="ib-tabs" role="tablist">' + TABS.filter(function (t) { return !(t[0] === 'cost' && ME && ME.role !== 'owner') && (!TAB_FEAT[t[0]] || fon(TAB_FEAT[t[0]])); }).map(function (t) {
         return '<button type="button" data-ibtab="' + t[0] + '" class="' + (IB.tab === t[0] ? 'on' : '') + '">' + esc(t[1]) + (n[t[0]] ? '<span class="n">' + n[t[0]] + '</span>' : '') + '</button>'; }).join('') + '</div>' + inner;
   }
   function paint(keepScroll) {
@@ -35493,6 +35512,9 @@ body[data-fdview="settings"] #o_cp .crumbs, body[data-fdview="tools"] #o_cp .cru
   addEventListener('resize', function () { if (VIEW === 'inbox') fit(); });
   function view() {
     var t = IB.tab;
+    if (!IB.F) loadF();
+    if (TAB_FEAT[t] && !fon(TAB_FEAT[t])) { IB.tab = t = 'inbox'; }
+    if (t === 'feat') { if (!IB.feats) load('erpInboxFeatures', {}, 'feats'); if (ME && ME.platform && !IB.plans) load('erpPlatformInboxPlan', {}, 'plans'); return frame(featHtml()); }
     if (t === 'inbox') return frame(inboxHtml());
     if (t === 'tasks') { if (!IB.tasks) load('erpInboxTasks', {}, 'tasks'); return frame(tasksHtml()); }
     if (t === 'orders') { if (!IB.orders) load('erpChatOrders', { status: IB.ostatus, q: IB.oq }, 'orders'); return frame(ordersHtml()); }
@@ -35584,7 +35606,7 @@ body[data-fdview="settings"] #o_cp .crumbs, body[data-fdview="tools"] #o_cp .cru
         '<select class="i" data-ibtake="1" style="width:auto;height:32px"><option value="">Take over…</option><option value="30">30 minutes</option><option value="60">1 hour</option><option value="360">6 hours</option><option value="0">For good</option></select>') +
       '<button class="btn small" type="button" data-ibmode="' + (c.pile === 'later' ? 'open' : 'later') + '">' + (c.pile === 'later' ? 'Open' : 'Later') + '</button>' +
       '<button class="btn small" type="button" data-ibmode="' + (c.pile === 'done' ? 'open' : 'done') + '">' + (c.pile === 'done' ? 'Reopen' : 'Done') + '</button>' +
-      '<button class="btn small" type="button" data-ibexp="chat" title="Download this conversation">⤓</button><button class="btn small" type="button" data-ibside="1" title="The customer and the AI assistant">👤</button></span></div>';
+      (fon('exports') ? '<button class="btn small" type="button" data-ibexp="chat" title="Download this conversation">⤓</button>' : '') + '<button class="btn small" type="button" data-ibside="1" title="The customer and the AI assistant">👤</button></span></div>';
     if (c.reason) head += '<div class="ib-note" style="margin:8px 14px 0;align-self:stretch">The AI handed this chat to the team: <b>' + esc(c.reason) + '</b>' + (c.note ? ' — ' + esc(c.note) : '') + '</div>';
     var old = IB.older && IB.older.id === c.id ? IB.older : null, more = old ? old.more : c.more;
     var msgs = '<div class="ib-msgs">' + (more ? '<div class="ib-ev"><button class="btn small" type="button" data-ibolder="' + more + '">Load older messages</button></div>' : '') + (old ? old.msgs.map(bubble).join('') : '') + c.msgs.map(bubble).join('') + '</div>';
@@ -35608,7 +35630,7 @@ body[data-fdview="settings"] #o_cp .crumbs, body[data-fdview="tools"] #o_cp .cru
       (r.orders.length ? '<h4 style="margin-top:10px">Chat orders</h4>' + r.orders.map(function (o) { return '<div class="line"><span><b>' + esc(o.no) + '</b> · ' + esc(o.status) + '<br><span class="sku">' + esc(o.items) + '</span></span><span>' + tk(o.total) + '</span></div>'; }).join('') : '') + '</div>';
     var ai = '<div class="ib-box"><h4>AI assistant</h4><div class="ib-actions" style="margin-top:0"><button class="btn small" type="button" data-ibai="summary">Summary</button><button class="btn small" type="button" data-ibai="draft">Next reply</button><button class="btn small" type="button" data-ibai="lead">Create lead</button></div>' +
       '<div class="row2" style="display:flex;gap:6px;margin-top:8px"><input class="i" id="ibAsk" placeholder="Ask about this customer…" style="flex:1"><button class="btn small" type="button" data-ibai="ask">Ask</button></div>' + (IB.ai ? '<div class="ib-ai-out">' + esc(IB.ai) + '</div>' + (IB.aiDraft ? '<div class="ib-actions"><button class="btn small primary" type="button" data-ibusedraft="1">Put in the reply box</button></div>' : '') : '') + '</div>';
-    return '<div class="ib-side">' + cust + rec + ai + '</div>';
+    return '<div class="ib-side">' + cust + rec + (fon('assistant') ? ai : '') + '</div>';
   }
 
   // ---------------------------------------------------------------- Notifications
@@ -35630,7 +35652,7 @@ body[data-fdview="settings"] #o_cp .crumbs, body[data-fdview="tools"] #o_cp .cru
     return errOr(IB.orders, function (d) {
       var st = [['pending', 'Pending'], ['hold', 'On hold'], ['today', 'To follow up today'], ['approved', 'Approved'], ['cancelled', 'Cancelled'], ['all', 'All']];
       var h = '<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px"><div class="ib-piles" style="flex:1">' + st.map(function (s) { var n = d.counts[s[0]]; return '<button type="button" data-ibost="' + s[0] + '" class="' + (IB.ostatus === s[0] ? 'on' : '') + '">' + s[1] + (n ? ' · ' + n : '') + '</button>'; }).join('') + '</div>' +
-        '<input class="i" id="ibOq" placeholder="Search order, name, phone" value="' + esc(IB.oq) + '" style="width:220px;max-width:100%">' + (ME && ME.role === 'owner' ? '<button class="btn small" type="button" data-ibexp="orders">⤓ CSV</button>' : '') + '</div>';
+        '<input class="i" id="ibOq" placeholder="Search order, name, phone" value="' + esc(IB.oq) + '" style="width:220px;max-width:100%">' + (ME && ME.role === 'owner' && fon('exports') ? '<button class="btn small" type="button" data-ibexp="orders">⤓ CSV</button>' : '') + '</div>';
       if (!d.orders.length) return h + '<div class="ib-c"><div class="ib-empty">No orders here.</div></div>';
       return h + '<div class="ib-grid2">' + d.orders.map(function (o) {
         var items = (o.items || []).map(function (x) { return esc(x.name) + ' × ' + x.qty + ' <span class="sku">' + tk(x.price) + '</span>'; }).join('<br>');
@@ -35692,7 +35714,7 @@ body[data-fdview="settings"] #o_cp .crumbs, body[data-fdview="tools"] #o_cp .cru
     return errOr(IB.leads, function (d) {
       var lq = IB.lq.toLowerCase(), all = d.leads.filter(function (l) { return !lq || [l.name, l.phone, l.want, l.note].join(' ').toLowerCase().indexOf(lq) >= 0; });
       var today = all.filter(function (l) { return l.due; }), chase = d.chase || [];
-      var h = '<div class="ib-grid2" style="margin-bottom:14px"><div class="ib-c"><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><h3 style="flex:1">Today · ' + today.length + '</h3><input class="i" id="ibLq" placeholder="Search leads" value="' + esc(IB.lq) + '" style="width:160px"><button class="btn small" type="button" data-ibleadnew="1">+ Lead</button>' + (ME && ME.role === 'owner' ? '<button class="btn small" type="button" data-ibexp="leads">⤓ CSV</button>' : '') + '</div>' +
+      var h = '<div class="ib-grid2" style="margin-bottom:14px"><div class="ib-c"><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><h3 style="flex:1">Today · ' + today.length + '</h3><input class="i" id="ibLq" placeholder="Search leads" value="' + esc(IB.lq) + '" style="width:160px"><button class="btn small" type="button" data-ibleadnew="1">+ Lead</button>' + (ME && ME.role === 'owner' && fon('exports') ? '<button class="btn small" type="button" data-ibexp="leads">⤓ CSV</button>' : '') + '</div>' +
         (today.length ? today.map(function (l) { return '<div class="ib-lead due" data-iblead="' + esc(l.id) + '"><b>' + esc(l.name || l.phone || 'Lead') + '</b><span>' + esc(l.want) + ' · follow up ' + esc(l.followUp) + '</span></div>'; }).join('') : '<div class="sku">Nobody to call today.</div>') + '</div>' +
         '<div class="ib-c"><h3>To chase · ' + chase.length + '</h3><div class="sub">Interested or quoted, and no order since.</div>' +
         (chase.length ? chase.slice(0, 12).map(function (l) { return '<div class="ib-lead" data-iblead="' + esc(l.id) + '"><b>' + esc(l.name || l.phone || 'Lead') + '</b><span>' + esc(l.want || '—') + ' · ' + esc(l.at) + '</span></div>'; }).join('') : '<div class="sku">Nobody to chase. ✓</div>') + '</div></div>';
@@ -35853,7 +35875,7 @@ body[data-fdview="settings"] #o_cp .crumbs, body[data-fdview="tools"] #o_cp .cru
           (c.kind === 'wa_evo' ? '<button class="btn small" type="button" data-chqr="' + c.id + '">Link the phone (QR)</button>' : '') +
           '<button class="btn small" type="button" data-chremove="' + c.id + '">Remove</button></div>' + (IB.qr && IB.qr.id === c.id ? '<div style="margin-top:10px"><img src="' + esc(IB.qr.qr) + '" alt="QR" style="width:220px;background:#fff;padding:8px;border-radius:10px"><div class="sub">' + esc(IB.qr.state) + ' — scan with WhatsApp → Linked devices.</div></div>' : '') + '</div>';
       }).join('') + '</div>';
-      h += '<div class="ib-c" style="margin-top:14px"><h3>Connect a channel</h3><div class="ib-form"><label>What<select class="i" id="chKind">' + d.kinds.map(function (k) { return '<option value="' + k.kind + '">' + esc(k.name) + (k.official ? '' : ' — not official') + '</option>'; }).join('') + '</select></label>' +
+      h += '<div class="ib-c" style="margin-top:14px"><h3>Connect a channel</h3><div class="ib-form"><label>What<select class="i" id="chKind">' + d.kinds.filter(function (k) { return fon({ messenger: 'ch_messenger', instagram: 'ch_instagram', wa_cloud: 'ch_wa_cloud', wa_evo: 'ch_wa_linked', wa_sender: 'ch_wa_linked', webchat: 'ch_webchat' }[k.kind]); }).map(function (k) { return '<option value="' + k.kind + '">' + esc(k.name) + (k.official ? '' : ' — not official') + '</option>'; }).join('') + '</select></label>' +
         '<label>Name<input class="i" id="chName" placeholder="e.g. Costareen page"></label><label>Page id / account id / phone number id / instance / number<input class="i" id="chExt"></label></div>' +
         '<label style="display:flex;gap:8px;align-items:flex-start;margin-top:8px;font-size:13px"><input type="checkbox" id="chRisk"> I understand a linked-device WhatsApp (Evolution / WaSenderAPI) is not Meta\'s official system, WhatsApp does not allow automated messages this way, and the number can be banned for a time or for good.</label>' +
         '<div class="ib-actions"><button class="btn primary small" type="button" data-chadd="1">Connect</button></div></div>';
@@ -35875,6 +35897,45 @@ body[data-fdview="settings"] #o_cp .crumbs, body[data-fdview="tools"] #o_cp .cru
         '<div class="ib-c"><h3>Busy hours</h3>' + (d.hours.length ? bars(d.hours.map(function (x) { return { h: (x.h % 12 || 12) + (x.h < 12 ? ' am' : ' pm'), n: x.n }; }), 'h', 'n') : '<div class="sku">No messages yet.</div>') + '</div>' +
         '<div class="ib-c"><h3>By channel</h3>' + (d.byChannel.length ? bars(d.byChannel, 'channel', 'n') : '<div class="sku">No messages yet.</div>') + '</div></div>';
     });
+  }
+  function featHtml() {
+    return errOr(IB.feats, function (d) {
+      var own = ME && ME.role === 'owner', b = d.budget, groups = [];
+      d.features.forEach(function (f) { if (groups.indexOf(f.group) < 0) groups.push(f.group); });
+      var h = '<div class="ib-grid2" style="margin-bottom:14px"><div class="ib-c"><h3>Your plan' + (d.plan ? ': ' + esc(d.plan) : '') + '</h3><div class="sub">Switch on what your business needs. A feature that is not in your plan is locked.' + (own ? '' : ' Only the owner changes these.') + '</div>' +
+        '<div class="ib-kpis"><div class="ib-kpi"><b>' + d.features.filter(function (f) { return f.on; }).length + '</b><span>ON</span></div><div class="ib-kpi"><b>' + d.features.filter(function (f) { return f.inPlan; }).length + '</b><span>IN YOUR PLAN</span></div><div class="ib-kpi"><b>' + d.features.length + '</b><span>ALL</span></div></div></div>' +
+        '<div class="ib-c"><h3>AI this month</h3>' + (b.budget ? '<div class="ib-bar"><i style="width:' + Math.min(100, b.pct) + '%;background:' + (b.stopped ? 'var(--fd-negative)' : b.warn ? '#E5A000' : 'var(--fd-positive, #30A46C)') + '"></i></div><div class="sub" style="margin-top:6px">' + tk(b.used) + ' of ' + tk(b.budget) + ' (' + b.pct + '%)' + (b.stopped ? ' — <b>the AI has stopped</b>' : '') + '</div>' +
+          (own ? '<label class="sub" style="display:flex;gap:8px;align-items:center;margin-top:8px">Warn me at <select class="i" id="ftWarn" style="width:auto">' + [50, 70, 80, 90].map(function (n) { return '<option' + (b.warnAt === n ? ' selected' : '') + '>' + n + '</option>'; }).join('') + '</select> % used</label>' : '') :
+          '<div style="font-size:22px;font-weight:700">' + tk(b.used) + '</div><div class="sub">No monthly limit in your plan.</div>') + '</div></div>';
+      h += '<div class="ib-grid2">' + groups.map(function (g) {
+        return '<div class="ib-c"><h3>' + esc(g) + '</h3>' + d.features.filter(function (f) { return f.group === g; }).map(function (f) {
+          return '<label class="ib-feat' + (f.inPlan ? '' : ' locked') + '"><span><b>' + esc(f.name) + '</b><em>' + esc(f.what) + '</em></span>' +
+            (f.inPlan ? '<input type="checkbox" class="ib-sw" data-ibfeat="' + f.key + '"' + (f.on ? ' checked' : '') + (own ? '' : ' disabled') + '>' : '<span class="ib-tag test">NOT IN PLAN</span>') + '</label>'; }).join('') + '</div>'; }).join('') + '</div>';
+      if (ME && ME.platform) h += plansHtml();
+      return h;
+    });
+  }
+  function plansHtml() {
+    var P = IB.plans; if (!P) return '<div class="loading">Loading plans…</div>'; if (P.error) return '';
+    return '<div class="ib-c" style="margin-top:14px"><h3>Plans for every company <span class="ib-tag test">PROVIDER</span></h3><div class="sub">What each company\'s Inbox plan includes and its monthly AI budget. The company\'s owner switches the included features on or off.</div>' +
+      '<div class="fdd-scroll"><table class="fdd-t"><thead><tr><th>Company</th><th>Plan</th><th>Left out</th><th>AI budget / month</th><th>Used this month</th><th></th></tr></thead><tbody>' +
+      P.businesses.map(function (x) { return '<tr><td><b>' + esc(x.name) + '</b></td><td>' + esc(x.plan || '—') + '</td><td>' + (x.off.length ? x.off.length + ' features' : 'nothing') + '</td><td>' + (x.budget === null ? 'no limit' : tk(x.budget)) + '</td><td>' + tk(x.used) + '</td>' +
+        '<td><button class="btn small" type="button" data-ibplan="' + esc(x.id) + '">Edit</button></td></tr>'; }).join('') + '</tbody></table></div></div>';
+  }
+  function planDialog(id) {
+    var P = IB.plans, x = P.businesses.find(function (b) { return b.id === id; }); if (!x) return;
+    var groups = []; P.features.forEach(function (f) { if (groups.indexOf(f.group) < 0) groups.push(f.group); });
+    fdwDialog('Inbox plan — ' + x.name, '<div class="dlg-b" style="white-space:normal"><div class="ib-form"><label>Plan name<input class="i" id="plName" value="' + esc(x.plan) + '" placeholder="e.g. Starter"></label>' +
+      '<label>AI budget a month (৳, empty = no limit)<input class="i" id="plBudget" type="number" min="0" value="' + (x.budget === null ? '' : esc(x.budget)) + '"></label></div>' +
+      '<div class="ib-actions" style="margin:8px 0"><button class="btn small" type="button" data-plall="1">Everything</button><button class="btn small" type="button" data-plall="0">Nothing</button></div>' +
+      groups.map(function (g) { return '<div style="margin-top:8px"><b style="font-size:13px">' + esc(g) + '</b>' + P.features.filter(function (f) { return f.group === g; }).map(function (f) {
+        return '<label style="display:flex;gap:8px;align-items:center;font-size:13.5px;padding:3px 0"><input type="checkbox" data-plf="' + f.key + '"' + (x.off.indexOf(f.key) < 0 ? ' checked' : '') + '> ' + esc(f.name) + '</label>'; }).join('') + '</div>'; }).join('') + '</div>',
+      function (back, close) {
+        var features = {}; [].forEach.call(back.querySelectorAll('[data-plf]'), function (c) { if (!c.checked) features[c.getAttribute('data-plf')] = false; });
+        srv('erpPlatformInboxPlan', [{ save: { businessId: id, name: fdwVal(back, 'plName'), aiBudget: fdwVal(back, 'plBudget'), features: features } }], function (r) { IB.plans = r; IB.feats = null; IB.F = null; close(); paint(); toast('Plan saved.'); }, fail);
+      });
+    var all = document.querySelectorAll('.dlg-back'), dl = all[all.length - 1];
+    if (dl) dl.addEventListener('click', function (e) { var b = e.target.closest('[data-plall]'); if (!b) return; [].forEach.call(dl.querySelectorAll('[data-plf]'), function (c) { c.checked = b.getAttribute('data-plall') === '1'; }); });
   }
   function costHtml() {
     return errOr(IB.cost, function (d) {
@@ -35901,7 +35962,7 @@ body[data-fdview="settings"] #o_cp .crumbs, body[data-fdview="tools"] #o_cp .cru
   function readFileAsB64(f, cb) { var rd = new FileReader(); rd.onload = function () { cb(String(rd.result)); }; rd.readAsDataURL(f); }
   document.addEventListener('click', function (e) {
     if (VIEW !== 'inbox' || !e.target.closest) return;
-    var t = e.target.closest('[data-ibtab],[data-ibpile],[data-ibopen],[data-ibclose],[data-ibmode],[data-ibsend],[data-ibnote],[data-ibside],[data-ibai],[data-ibusedraft],[data-ibcsave],[data-ibinvoice],[data-ibgoconv],[data-ibtaskdone],[data-ibnotify],[data-ibost],[data-iboa],[data-ibinv],[data-iblead],[data-ibleadnew],[data-ibfusave],[data-ibbcsave],[data-ibbcsend],[data-ibcm],[data-ibpfsave],[data-ibundo],[data-ibhelper],[data-ibpublish],[data-ibdiscardall],[data-ibrule],[data-ibruleadd],[data-ibtest],[data-ibtestclear],[data-iboffer],[data-ibofferadd],[data-ibsavedadd],[data-ibsavedx],[data-ibkbadd],[data-ibkbtest],[data-ibkbx],[data-chsave],[data-chlive],[data-chpractice],[data-chcm],[data-chqr],[data-chremove],[data-chadd],[data-ibdays],[data-ibcost],[data-ibbkst],[data-ibbka],[data-ibduty],[data-ibexp],[data-ibolder],[data-chall],[data-ibdict],[data-ibnotebox],[data-ibplat]');
+    var t = e.target.closest('[data-ibtab],[data-ibpile],[data-ibopen],[data-ibclose],[data-ibmode],[data-ibsend],[data-ibnote],[data-ibside],[data-ibai],[data-ibusedraft],[data-ibcsave],[data-ibinvoice],[data-ibgoconv],[data-ibtaskdone],[data-ibnotify],[data-ibost],[data-iboa],[data-ibinv],[data-iblead],[data-ibleadnew],[data-ibfusave],[data-ibbcsave],[data-ibbcsend],[data-ibcm],[data-ibpfsave],[data-ibundo],[data-ibhelper],[data-ibpublish],[data-ibdiscardall],[data-ibrule],[data-ibruleadd],[data-ibtest],[data-ibtestclear],[data-iboffer],[data-ibofferadd],[data-ibsavedadd],[data-ibsavedx],[data-ibkbadd],[data-ibkbtest],[data-ibkbx],[data-chsave],[data-chlive],[data-chpractice],[data-chcm],[data-chqr],[data-chremove],[data-chadd],[data-ibdays],[data-ibcost],[data-ibbkst],[data-ibbka],[data-ibduty],[data-ibexp],[data-ibolder],[data-chall],[data-ibdict],[data-ibnotebox],[data-ibplat],[data-ibplan]');
     if (!t) return;
     var d = t.dataset;
     if (d.ibtab) { IB.tab = d.ibtab; if (['tasks', 'orders', 'leads', 'stats', 'cost', 'cm', 'bc', 'fu'].indexOf(d.ibtab) >= 0) IB[d.ibtab] = null; paint(); return; }
@@ -35939,6 +36000,7 @@ body[data-fdview="settings"] #o_cp .crumbs, body[data-fdview="tools"] #o_cp .cru
       if (px && px.k && !ps) { platDialog(px); return; }
       IB.plat = d.ibplat; IB.list = null; paint(); return;
     }
+    if (d.ibplan) { planDialog(d.ibplan); return; }
     if (d.ibbkst) { IB.bkst = d.ibbkst; IB.bk = null; paint(); return; }
     if (d.ibdict !== undefined && t.hasAttribute('data-ibdict')) {
       if (IB.dict) { try { IB.dict.stop(); } catch (er) {} return; }
@@ -36082,6 +36144,12 @@ document.addEventListener('input', function (e) {
   var t = e.target; if (!t || !window.IB) return;
   if (t.id === 'ibLq') { IB.lq = t.value; clearTimeout(window.__ibLqT); window.__ibLqT = setTimeout(function () { var pos = t.selectionStart; if (window.ibPaint) ibPaint(); var n = document.getElementById('ibLq'); if (n) { n.focus(); try { n.setSelectionRange(pos, pos); } catch (er) {} } }, 250); }
   if (t.id === 'ibOq' && !t.value && IB.oq) { IB.oq = ''; IB.orders = null; if (window.ibPaint) ibPaint(); }
+});
+document.addEventListener('change', function (e) {
+  var t = e.target; if (!t || !window.IB) return;
+  if (t.hasAttribute && t.hasAttribute('data-ibfeat')) { var sv = {}; sv[t.getAttribute('data-ibfeat')] = t.checked; t.disabled = true;
+    srv('erpInboxFeatures', [{ save: sv }], function (r) { IB.feats = r; IB.F = null; if (window.ibPaint) ibPaint(); toast(t.checked ? 'Switched on.' : 'Switched off.'); }, function (er) { t.checked = !t.checked; t.disabled = false; toast(esc((er && er.message) || er), true); }); return; }
+  if (t.id === 'ftWarn') { srv('erpInboxFeatures', [{ warnAt: Number(t.value) }], function (r) { IB.feats = r; IB.F = null; toast('Saved.'); }, function (er) { toast(esc((er && er.message) || er), true); }); return; }
 });
 document.addEventListener('change', function (e) { var t = e.target; if (t && t.id === 'ibBcGap' && window.IB) { IB.bcgap = Number(t.value) || 24; IB.bc = null; if (window.ibPaint) ibPaint(); } });
 </script>

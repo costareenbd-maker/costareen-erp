@@ -6,8 +6,10 @@
 import { num, formatDate, todayStr } from '../lib/time.js';
 import { getConfig, setConfig } from '../lib/ext.js';
 import { roleAtLeast } from '../allow.js';
+import { platformAdmin } from './platform.js';
 import { gemini, textOf, jsonOf } from '../lib/gemini.js';
 import { aiKey } from './receivefile.js';
+import { feat, needFeat, budget, planOf, ownerSwitches, FEATURES, FEATURE_KEYS, KIND_FEATURE } from '../lib/inboxplan.js';
 import { KINDS, KIND_NAME, CAN, chSecret, chSecretSet, evoQr, evoState, evoSetHook, metaSubscribe, commentModerate, commentReply } from './inboxch.js';
 import { profile, PROFILE_DEFAULTS, agentReply, deliver, orderEvent, task, leadUpsert, kbSearch, REASONS, inWindow } from './inbox.js';
 
@@ -52,6 +54,7 @@ export async function erpInboxChannelSave(ctx, payload) {
   let ch = p.id ? await chOf(ctx, str(p.id)) : null;
   if (!ch) {
     if (!KINDS.includes(p.kind)) throw new Error('Choose what to connect.');
+    await needFeat(ctx, KIND_FEATURE[p.kind]);
     if (/wa_evo|wa_sender/.test(p.kind) && !p.acceptRisk) throw new Error('Read and accept the notice first: a linked-device WhatsApp is not Meta\'s official system and the number can be banned.');
     const ext = str(p.externalId) || (p.kind === 'webchat' ? 'site-' + Date.now().toString(36) : '');
     if (!ext) throw new Error(p.kind === 'wa_evo' ? 'Type the Evolution instance name.' : p.kind === 'wa_cloud' ? 'Type the WhatsApp phone number id (from Meta).' : p.kind === 'wa_sender' ? 'Type the WhatsApp number.' : 'Type the page / account id.');
@@ -255,6 +258,7 @@ async function kbAdd(ctx, title, kind, body) {
   return d.id;
 }
 export async function erpInboxKb(ctx, payload) {
+  await needFeat(ctx, 'knowledge');
   need(ctx, 'manager');
   const p = payload || {};
   if (p.add) {
@@ -275,6 +279,7 @@ export async function erpInboxKb(ctx, payload) {
 
 // ------------------------------------------------------------------ special offers
 export async function erpShopOffers(ctx, payload) {
+  await needFeat(ctx, 'offers');
   need(ctx, 'manager');
   const p = payload || {};
   if (p.add) { owner(ctx); if (!str(p.add.label)) throw new Error('Name the offer.');
@@ -288,6 +293,7 @@ export async function erpShopOffers(ctx, payload) {
 // ------------------------------------------------------------------ chat orders (approve -> invoice)
 const HOLD = ['Could not reach the customer', 'Waiting for the advance payment', 'Pre-order', 'Out of stock', 'The customer asked to wait', 'The address needs checking', 'Something else'];
 export async function erpChatOrders(ctx, payload) {
+  await needFeat(ctx, 'orders');
   need(ctx);
   const p = payload || {};
   const st = ['pending', 'hold', 'approved', 'cancelled', 'all', 'today'].includes(p.status) ? p.status : 'pending';
@@ -408,6 +414,7 @@ export async function orderUpdates(ctx) {
 
 // ------------------------------------------------------------------ bookings (service businesses)
 export async function erpBookings(ctx, payload) {
+  await needFeat(ctx, 'bookings');
   need(ctx);
   const p = payload || {};
   const st = ['requested', 'proposed', 'confirmed', 'declined', 'cancelled', 'done', 'all', 'upcoming'].includes(p.status) ? p.status : 'requested';
@@ -441,6 +448,7 @@ function bookingText(pr, b) {
   return (bn ? 'আপনার বুকিং নিশ্চিত হয়েছে: ' : 'Your booking is confirmed: ') + b.service + (when ? ' — ' + when : '') + (b.place ? ' — ' + b.place : '') + (b.bring ? (bn ? '\nসাথে আনবেন: ' : '\nPlease bring: ') + b.bring : '') + ' (' + b.no + ')';
 }
 export async function erpBookingAct(ctx, payload) {
+  await needFeat(ctx, 'bookings');
   need(ctx);
   const p = payload || {};
   const b = (await ctx.tx`select * from bookings where business_id = ${ctx.biz} and id = ${str(p.id)} for update`)[0];
@@ -477,7 +485,7 @@ export async function erpBookingAct(ctx, payload) {
 /** The timer: a reminder the day before and a few hours before a confirmed booking (inside Meta's window). */
 export async function bookingReminders(ctx) {
   const pr = await profile(ctx, false);
-  if (pr.biz_type === 'shop') return 0;
+  if (pr.biz_type === 'shop' || !(await feat(ctx, 'bookings'))) return 0;
   let n = 0;
   const bn = pr.lang !== 'en';
   const hrs = Math.max(1, Math.min(12, num(pr.remind_hours) || 3));
@@ -498,6 +506,7 @@ export async function bookingReminders(ctx) {
 // ------------------------------------------------------------------ leads
 const STAGES = ['', 'New', 'Contacted', 'Interested', 'Quoted', 'Won', 'Lost'];
 export async function erpInboxLeads(ctx, payload) {
+  await needFeat(ctx, 'leads');
   need(ctx);
   const p = payload || {};
   if (p.save) {
@@ -568,6 +577,7 @@ export async function erpInboxBroadcasts(ctx, payload) {
     await ctx.tx`update inbox_broadcasts set tested_text = text, tested_at = now() where id = ${b.id}`;
   }
   if (p.send) {
+    await needFeat(ctx, 'broadcasts');
     owner(ctx);
     const b = (await ctx.tx`select * from inbox_broadcasts where business_id = ${ctx.biz} and id = ${str(p.send)}`)[0];
     if (!b || b.sent_at) throw new Error('Already sent.');
@@ -604,6 +614,7 @@ export async function erpInboxFollowups(ctx, payload) {
 
 // ------------------------------------------------------------------ comments (the screen)
 export async function erpInboxComments(ctx, payload) {
+  await needFeat(ctx, 'comments');
   need(ctx);
   const p = payload || {};
   if (p.act) {
@@ -634,7 +645,7 @@ export async function erpSavedReplies(ctx, payload) {
   if (p.archive) { need(ctx, 'manager'); await ctx.tx`update saved_replies set archived = true where business_id = ${ctx.biz} and id = ${str(p.archive)}`; }
   const list = (await ctx.tx`select id, title, body from saved_replies where business_id = ${ctx.biz} and not archived order by title`).map((r) => ({ id: r.id, title: r.title, body: r.body }));
   const pr = await profile(ctx, false);
-  if ((p.suggest || p.adapt) && pr.saved_ai && list.length) {
+  if ((p.suggest || p.adapt) && pr.saved_ai && list.length && await feat(ctx, 'saved_ai')) {
     const v = (await ctx.tx`select id from inbox_conversations where business_id = ${ctx.biz} and id = ${str(p.suggest || p.conv)}`)[0];
     const hist = v ? (await ctx.tx`select direction, text, transcript from inbox_messages where conversation_id = ${v.id} and direction <> 'note' order by id desc limit 8`).reverse() : [];
     const convo = hist.map((m) => (m.direction === 'in' ? 'Customer: ' : 'Shop: ') + str(m.text || m.transcript)).join('\n');
@@ -654,6 +665,7 @@ export async function erpSavedReplies(ctx, payload) {
 
 // ------------------------------------------------------------------ analytics and the AI work log
 export async function erpInboxStats(ctx, payload) {
+  await needFeat(ctx, 'analytics');
   need(ctx, 'manager');
   const days = [7, 14, 30].includes(num(payload && payload.days)) ? num(payload.days) : 7;
   const from = new Date(ctx.now.getTime() - days * H24);
@@ -691,6 +703,7 @@ export async function erpAiWork(ctx, payload) {
 
 /** Rows for a file the page saves: orders | leads | ai | handovers | chat (one conversation, as text). */
 export async function erpInboxExport(ctx, payload) {
+  await needFeat(ctx, 'exports');
   const p = payload || {};
   const w = str(p.what);
   if (w === 'chat') {
@@ -728,5 +741,62 @@ export async function erpInboxExport(ctx, payload) {
   throw new Error('What to download?');
 }
 
-export const HANDLERS = { erpInboxExport, erpBookings, erpBookingAct, erpInboxChannels, erpInboxChannelSave, erpInboxChannelAct, erpInboxGoLive, erpInboxProfile, erpAgentDesk, erpInboxKb, erpShopOffers,
+// ------------------------------------------------------------------ features (the subscription)
+/** The owner's Features screen: every feature, in the plan or not, on or off; the AI budget this month. */
+export async function erpInboxFeatures(ctx, payload) {
+  need(ctx);
+  const p = payload || {};
+  if (p.save || p.warnAt !== undefined) {
+    owner(ctx);
+    const plan = await planOf(ctx), own = { ...(await ownerSwitches(ctx)) };
+    for (const k of Object.keys(p.save || {})) {
+      if (!FEATURE_KEYS.includes(k)) continue;
+      if (p.save[k] && plan.features[k] === false) throw new Error('That feature is not in your plan.');
+      if (p.save[k]) delete own[k]; else own[k] = false;
+    }
+    await setConfig(ctx, 'inbox_features', JSON.stringify(own));
+    if (p.warnAt !== undefined) await setConfig(ctx, 'inbox_budget_warn', String(Math.max(10, Math.min(100, num(p.warnAt) || 80))));
+    ctx.memo.inboxOwn = null;
+  }
+  const plan = await planOf(ctx), own = await ownerSwitches(ctx);
+  return { plan: plan.name, budget: await budget(ctx),
+    features: FEATURES.map((f) => ({ key: f[0], group: f[1], name: f[2], what: f[3], inPlan: plan.features[f[0]] !== false, on: plan.features[f[0]] !== false && own[f[0]] !== false })) };
+}
+/** For the page: which features run (one call when the Inbox opens). */
+export async function erpInboxFeatureMap(ctx) {
+  need(ctx);
+  const out = {};
+  for (const k of FEATURE_KEYS) out[k] = await feat(ctx, k);
+  const b = await budget(ctx);
+  return { on: out, budget: { warn: b.warn, stopped: b.stopped, pct: b.pct, used: b.used, budget: b.budget } };
+}
+
+/**
+ * The provider's plans (platform admin): every business with its Inbox plan, and this month's AI use.
+ * save: {businessId, name, features: {key: false}, aiBudget (taka a month, '' = no limit)}.
+ */
+export async function erpPlatformInboxPlan(ctx, payload) {
+  if (!(await platformAdmin(ctx))) throw new Error('Your account does not have access to that.');
+  const p = payload || {};
+  if (p.save) {
+    const sv = p.save, id = str(sv.businessId);
+    if (!/^[0-9a-f-]{36}$/i.test(id) || !(await ctx.sql`select 1 from businesses where id = ${id}`).length) throw new Error('Which business?');
+    const features = {};
+    for (const k of FEATURE_KEYS) if (sv.features && sv.features[k] === false) features[k] = false;
+    const b = sv.aiBudget === '' || sv.aiBudget === null || sv.aiBudget === undefined ? null : Math.max(0, num(sv.aiBudget));
+    await ctx.sql`insert into inbox_plans (business_id, plan_name, features, ai_budget_bdt, set_by) values (${id}, ${str(sv.name) || null}, ${ctx.sql.json(features)}, ${b}, ${ctx.s.userId})
+                  on conflict (business_id) do update set plan_name = excluded.plan_name, features = excluded.features, ai_budget_bdt = excluded.ai_budget_bdt, set_by = excluded.set_by, set_at = now()`;
+    try { await ctx.tx`select platform_log(${id}, ${'Platform admin: ' + (str(ctx.s.name) || 'admin')}, 'erpPlatformInboxPlan',
+      ${('Inbox plan ' + (str(sv.name) || '') + ': ' + (Object.keys(features).length ? Object.keys(features).length + ' features left out' : 'every feature') + (b === null ? ', no AI limit' : ', AI ৳' + b + ' a month')).slice(0, 300)})`; } catch (_) { /* the log never blocks */ }
+  }
+  const d = new Date(ctx.now.getTime() + 6 * 3600e3), since = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), 1) - 6 * 3600e3);
+  const used = {};
+  for (const r of await ctx.sql`select business_id, sum(cost_bdt) as t from ai_work where at >= ${since} group by business_id`) used[r.business_id] = Math.round(Number(r.t) * 100) / 100;
+  const rows = await ctx.sql`select b.id, b.name, ip.plan_name, ip.features, ip.ai_budget_bdt, ip.set_at from businesses b left join inbox_plans ip on ip.business_id = b.id where not b.is_pool order by b.created_at`;
+  return { features: FEATURES.map((f) => ({ key: f[0], group: f[1], name: f[2] })),
+    businesses: rows.map((r) => ({ id: r.id, name: r.name, plan: str(r.plan_name), off: Object.keys(r.features || {}).filter((k) => r.features[k] === false),
+      budget: r.ai_budget_bdt === null || r.ai_budget_bdt === undefined ? null : Number(r.ai_budget_bdt), used: used[r.id] || 0, setAt: r.set_at ? formatDate(new Date(r.set_at), 'd MMM yyyy') : '' })) };
+}
+
+export const HANDLERS = { erpPlatformInboxPlan, erpInboxFeatures, erpInboxFeatureMap, erpInboxExport, erpBookings, erpBookingAct, erpInboxChannels, erpInboxChannelSave, erpInboxChannelAct, erpInboxGoLive, erpInboxProfile, erpAgentDesk, erpInboxKb, erpShopOffers,
   erpChatOrders, erpChatOrderAct, erpInboxLeads, erpInboxBroadcasts, erpInboxFollowups, erpInboxComments, erpSavedReplies, erpInboxStats, erpAiWork };

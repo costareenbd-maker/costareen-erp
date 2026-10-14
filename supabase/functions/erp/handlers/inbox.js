@@ -24,6 +24,7 @@ import { gemini, geminiTools, textOf, jsonOf, b64 } from '../lib/gemini.js';
 import { sendOut, mediaBytes, readHook, metaSignatureOk, metaProfile, chSecret, CAN, KIND_NAME,
          commentReply, commentPrivate, commentModerate } from './inboxch.js';
 import { products } from './dashboard.js';
+import { feat, needFeat, budget, KIND_FEATURE } from '../lib/inboxplan.js';
 
 const str = (v) => String(v == null ? '' : v).trim();
 const isId = (v) => /^[0-9a-f-]{36}$/i.test(str(v));
@@ -65,6 +66,8 @@ export function inWindow(ch, conv, now) {
 async function aiAllowed(ctx, ch) {
   if (!ch.ai_on) return false;
   if (ch.ai_off_until && new Date(ch.ai_off_until) > ctx.now) return false;
+  if (KIND_FEATURE[ch.kind] && !(await feat(ctx, KIND_FEATURE[ch.kind]))) return false;
+  try { if ((await budget(ctx)).stopped) return false; } catch (_) { /* no plan table yet */ }
   return true;
 }
 function extOf(mime, kind) {
@@ -444,15 +447,17 @@ export async function agentReply(ctx, conv, opts) {
   // the recent history (the last 30 entries), with photos looked at and voice notes written out
   const hist = test ? (opts.history || []) : (await ctx.tx`select * from inbox_messages where conversation_id = ${conv.id} and direction <> 'note' order by id desc limit 30`).reverse();
   let photoBlock = '';
+  const F = {};
+  for (const k of ['voice', 'photos', 'photo_match', 'orders', 'bookings', 'leads', 'knowledge', 'offers', 'product_page']) F[k] = await feat(ctx, k);
   for (const m of hist) {
     if (m.direction !== 'in') continue;
-    if (m.kind === 'audio' && !m.transcript) { try { m.transcript = await listenToVoice(ctx, conv, m); } catch (_) { m.transcript = ''; } }
-    if (m.kind === 'image' && !m.seen_as) { try { m.seen_as = await lookAtPhoto(ctx, conv, m); } catch (_) { m.seen_as = ''; } }
+    if (m.kind === 'audio' && !m.transcript && F.voice) { try { m.transcript = await listenToVoice(ctx, conv, m); } catch (_) { m.transcript = ''; } }
+    if (m.kind === 'image' && !m.seen_as && F.photos) { try { m.seen_as = await lookAtPhoto(ctx, conv, m); } catch (_) { m.seen_as = ''; } }
   }
   const lastPhoto = hist.slice().reverse().find((m) => m.direction === 'in' && m.kind === 'image' && m.seen_as);
   if (lastPhoto && hist.indexOf(lastPhoto) >= hist.length - 3) {
     const cat = await catalogue(ctx);
-    const pm = test ? { strong: '', near: searchCat(cat, lastPhoto.seen_as).slice(0, 10).map((x) => x.sku) } : await photoMatch(ctx, conv, lastPhoto, cat);
+    const pm = test || !F.photo_match ? { strong: '', near: searchCat(cat, lastPhoto.seen_as).slice(0, 10).map((x) => x.sku) } : await photoMatch(ctx, conv, lastPhoto, cat);
     const S = pm.strong ? cat.find((x) => x.sku === pm.strong) : null;
     const near = (pm.near || []).map((c) => cat.find((x) => x.sku === c)).filter(Boolean).slice(0, 10);
     photoBlock = 'PHOTO MATCH for the customer\'s latest photo (seen: ' + str(lastPhoto.seen_as).replace(/\{[^}]*\}/, '') + '): ' +
@@ -654,7 +659,10 @@ export async function agentReply(ctx, conv, opts) {
   if (!test && can.seen) { try { await sendOut(ctx, ch, contact, { kind: 'seen', replyTo: lastIn && lastIn.external_id }); } catch (_) { /* fine */ } }
   if (!test && can.typing) { try { await sendOut(ctx, ch, contact, { kind: 'typing', replyTo: lastIn && lastIn.external_id }); } catch (_) { /* fine */ } }
 
-  const res = await geminiTools(ctx, { system: systemPrompt(p, rules, ch, contact, extra), contents, tools: TOOLS, run, purpose: test ? 'test' : 'reply', conversationId: test ? null : conv.id });
+  const OFF = { place_order: 'orders', change_order: 'orders', cancel_order: 'orders', my_orders: 'orders', request_booking: 'bookings', booking_payment: 'bookings',
+                save_lead: 'leads', knowledge: 'knowledge', offers: 'offers' };
+  const tools = TOOLS.filter((t) => !OFF[t.name] || F[OFF[t.name]]);
+  const res = await geminiTools(ctx, { system: systemPrompt(p, rules, ch, contact, extra), contents, tools, run, purpose: test ? 'test' : 'reply', conversationId: test ? null : conv.id });
   const finalText = str(res.text);
   if (finalText) queue.push({ kind: 'text', text: finalText });
   // after an order: the receipt and a rating request (Messenger)
@@ -695,7 +703,7 @@ async function handleComment(ctx, ch, ev) {
                             values (${ctx.biz}, ${ch.id}, ${ev.postId || null}, ${ev.commentId}, ${ev.from || null}, ${ev.name || null}, ${ev.text || null})
                             on conflict (channel_id, comment_id) do nothing returning id`);
   if (!dup.length) return {};
-  if (!(ch.status === 'live' && ch.comments_ai && await aiAllowed(ctx, ch))) return { comment: ev.commentId };
+  if (!(ch.status === 'live' && ch.comments_ai && await feat(ctx, 'comments') && await aiAllowed(ctx, ch))) return { comment: ev.commentId };
   return { comment: ev.commentId, commentDue: true };
 }
 /** The AI answers one comment: a public reply by name (with the product's photo), a private message, or it removes junk. */
@@ -752,6 +760,13 @@ export async function kbSearch(ctx, q) {
 // ------------------------------------------------------------------ the timer (every minute)
 export async function inboxTick(ctx) {
   const out = { replies: 0, reverted: 0, followups: 0, updates: 0, comments: 0 };
+  // the plan's AI budget used up: one open alert for the team (messages are still kept; people answer)
+  try {
+    const b = await budget(ctx);
+    if (b.stopped && !(await ctx.tx`select 1 from inbox_tasks where business_id = ${ctx.biz} and reason = 'budget' and status = 'open' limit 1`).length) {
+      await task(ctx, null, 'alert', 'budget', 'The AI stopped: the AI budget for this month (৳' + b.budget + ') is used up. Messages are still kept here - your team answers until next month or a bigger budget.');
+    }
+  } catch (_) { /* no plan table yet */ }
   // answers whose wait is over (the webhook's own wait normally answers; this catches anything it missed)
   for (const v of await ctx.tx`select id from inbox_conversations where business_id = ${ctx.biz} and reply_due_at is not null and reply_due_at <= ${ctx.now} limit 20`) {
     try { await replyDue(ctx, v.id, true); out.replies++; } catch (e) { await task(ctx, v.id, 'alert', 'error', 'The AI could not answer: ' + str(e.message || e)); await ctx.tx`update inbox_conversations set reply_due_at = null where id = ${v.id}`; }
@@ -762,7 +777,7 @@ export async function inboxTick(ctx) {
   }
   // follow-ups (one for warm, two for hot; only inside 24 h; not when a person holds it or the customer ordered)
   const p = await profile(ctx, false);
-  if (p.followups) {
+  if (p.followups && await feat(ctx, 'followups')) {
     for (const v of await ctx.tx`select * from inbox_conversations where business_id = ${ctx.biz} and next_followup is not null and next_followup <= ${ctx.now} and followups_left > 0 limit 20`) {
       await ctx.tx`update inbox_conversations set next_followup = null where id = ${v.id}`;
       const ch = await chOf(ctx, v.channel_id);
@@ -854,7 +869,7 @@ export async function webchat(ctx, chId, a, b, ip) {
   if (!ch || ch.status === 'removed') return { status: 404, body: { ok: false, error: 'This chat is not available.' } };
   const p = await profile(ctx, false);
   const look = { name: p.name, colour: str(chSetting(ch, 'colour', '#F5A623')), logo: str(chSetting(ch, 'logo', '')), greeting: str(p.first_message) || ('Hello! How can we help you today?'),
-                 ai: true, open: ch.status !== 'setup' };
+                 ai: true, open: ch.status !== 'setup', call: await feat(ctx, 'voice_call') };
   if (a === 'info') return { status: 200, body: { ok: true, ...look } };
   if (!rateOk('ip:' + ip, 60, 60e3)) return { status: 429, body: { ok: false, error: 'Too many messages - wait a minute.' } };
   if (a === 'start') {
@@ -1074,6 +1089,7 @@ export async function erpInboxContact(ctx, payload) {
 /** The AI beside the chat: summary | ask | draft | lead (it sends nothing). */
 export async function erpInboxAssist(ctx, payload) {
   need(ctx);
+  await needFeat(ctx, 'assistant');
   const p = payload || {};
   const v = await convOf(ctx, str(p.id));
   if (!v) throw new Error('That conversation is not here.');

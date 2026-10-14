@@ -4,6 +4,7 @@
 // page lists every reply). Tests stand a scripted Gemini in through deps.fetch.
 
 import { aiKey, GEMINI_MODELS } from '../handlers/receivefile.js';
+import { budget } from './inboxplan.js';
 
 const str = (v) => String(v == null ? '' : v).trim();
 // rough prices in US$ per million tokens (input, output) - an estimate for the owner, not a bill
@@ -37,6 +38,7 @@ async function logWork(ctx, purpose, conversationId, model, usage) {
  * Throws a plain sentence when no model answers.
  */
 export async function gemini(ctx, body, purpose, conversationId) {
+  await budgetGate(ctx);
   const key = (await aiKey(ctx)).key;
   if (!key) throw new Error('No AI key is set on this ERP (Platform > AI reader).');
   let last = '';
@@ -55,6 +57,13 @@ export async function gemini(ctx, body, purpose, conversationId) {
     return { parts, model };
   }
   throw new Error(/429|503|timeout/.test(last) ? 'The AI is busy right now.' : 'The AI could not answer. ' + last);
+}
+
+/** The plan's monthly AI budget: once used up, no AI work (the minute timer opens the team's alert - inboxTick). */
+async function budgetGate(ctx) {
+  let b;
+  try { b = await budget(ctx); } catch (_) { return; }
+  if (b.stopped) throw new Error('The AI budget for this month is used up.');
 }
 
 /** Text of a reply. */
