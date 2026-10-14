@@ -25,6 +25,7 @@ import { sendOut, mediaBytes, readHook, metaSignatureOk, metaProfile, chSecret, 
          commentReply, commentPrivate, commentModerate } from './inboxch.js';
 import { products } from './dashboard.js';
 import { feat, needFeat, budget, KIND_FEATURE } from '../lib/inboxplan.js';
+import { orderLink, billLink, itemLink } from './inboxpub.js';
 
 const str = (v) => String(v == null ? '' : v).trim();
 const isId = (v) => /^[0-9a-f-]{36}$/i.test(str(v));
@@ -357,7 +358,7 @@ async function catalogue(ctx) {
   for (const r of await ctx.tx`select sku, photo, thumb, image_link, family, notes from products where business_id = ${ctx.biz}`) extra[str(r.sku).toLowerCase()] = r;
   ctx.memo.inboxCat = list.filter((p) => !/discontinued|inactive|archived/i.test(p.status)).map((p) => {
     const e = extra[p.sku.toLowerCase()] || {};
-    return { ...p, photo: str(e.photo), thumb: str(e.thumb), link: str(e.image_link), family: str(e.family) };
+    return { ...p, photo: str(e.photo), thumb: str(e.thumb), link: str(e.image_link), family: str(e.family), notes: str(e.notes) };
   });
   return ctx.memo.inboxCat;
 }
@@ -512,7 +513,8 @@ export async function agentReply(ctx, conv, opts) {
       const cards = [];
       for (const x of ps) {
         cards.push({ code: x.sku, title: x.name, subtitle: (x.sell ? '৳' + Math.round(x.sell).toLocaleString('en-IN') : 'Price on request') + ' · ' + x.sku + (x.stock > 0 ? '' : ' · not available now'),
-                     image: await imageUrl(ctx, x), buttons: [{ title: 'Order', payload: 'ORDER:' + x.sku }, { title: 'More photos', payload: 'PHOTO:' + x.sku }] });
+                     image: await imageUrl(ctx, x), buttons: [{ title: 'Order', payload: 'ORDER:' + x.sku }, { title: 'More photos', payload: 'PHOTO:' + x.sku }]
+                       .concat(F.product_page && !test && conv.shop_token ? [{ title: 'Details', url: itemLink(ctx, conv, x.sku) }] : []) });
       }
       if (can.cards) queue.push({ kind: 'cards', cards, text: '' });
       else if (ch.kind === 'webchat') queue.push({ kind: 'cards', cards, text: '', store: 'cards' });
@@ -667,7 +669,9 @@ export async function agentReply(ctx, conv, opts) {
   if (finalText) queue.push({ kind: 'text', text: finalText });
   // after an order: the receipt and a rating request (Messenger)
   if (effects.order && effects.order.items) {
-    queue.push({ kind: 'text', text: receiptText(p, effects.order), store: 'order', payload: { order: effects.order.no } });
+    queue.push({ kind: 'text', text: receiptText(p, effects.order) + (!test && effects.order.page_token && await feat(ctx, 'order_page') ? (p.lang !== 'en' ? '\nঅর্ডারের অবস্থা: ' : '\nYour order: ') + orderLink(ctx, effects.order) : ''),
+                 store: 'order', payload: { order: effects.order.no } });
+    if (!test && effects.order.page_token && ctx.deps.svgPng && await feat(ctx, 'bill_picture') && billLink(ctx, effects.order)) queue.push({ kind: 'image', url: billLink(ctx, effects.order) });
     if (p.rating_on && ch.kind === 'messenger') queue.push({ kind: 'buttons', text: 'How was your experience ordering from us?', buttons: [1, 2, 3, 4, 5].map((n) => ({ title: '⭐'.repeat(n), payload: 'RATE:' + n })) });
   }
   if (test) return { replies: queue, handover: effects.handover, order: effects.order, calls: res.calls.map((c) => c.name) };
@@ -1133,3 +1137,6 @@ export async function erpInboxTasks(ctx, payload) {
 }
 
 export const HANDLERS = { erpInbox, erpInboxOpen, erpInboxSend, erpInboxMode, erpInboxContact, erpInboxAssist, erpInboxTasks };
+
+// for the public pages (inboxpub.js)
+export { catalogue, searchCat, imageUrl, deliveryFor, nextOrderNo, chOf, contactOf, phoneOk };

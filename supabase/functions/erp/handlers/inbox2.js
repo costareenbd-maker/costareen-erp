@@ -7,6 +7,7 @@ import { num, formatDate, todayStr } from '../lib/time.js';
 import { getConfig, setConfig } from '../lib/ext.js';
 import { roleAtLeast } from '../allow.js';
 import { platformAdmin } from './platform.js';
+import { orderLink } from './inboxpub.js';
 import { gemini, textOf, jsonOf } from '../lib/gemini.js';
 import { aiKey } from './receivefile.js';
 import { feat, needFeat, budget, planOf, ownerSwitches, FEATURES, FEATURE_KEYS, KIND_FEATURE } from '../lib/inboxplan.js';
@@ -388,7 +389,9 @@ async function notifyOrder(ctx, o, what, extra) {
   };
   if (!T[what]) return false;
   if (CAN[ch.kind].window24 && !inWindow(ch, v, ctx.now)) return false;   // after 24 h Messenger needs Meta's approved templates - not sent
-  const r = await deliver(ctx, ch, v, c, { kind: 'text', text: T[what] + (extra ? ' ' + extra : ''), payload: { courier: what } }, { author: 'system' });
+  // the order's own page carries the Track button
+  const link = ['courier', 'out', 'failed', 'preparing'].includes(what) && o.page_token && await feat(ctx, 'order_page') ? (bn ? '\nঅবস্থা ও ট্র্যাক: ' : '\nStatus and tracking: ') + orderLink(ctx, o) : '';
+  const r = await deliver(ctx, ch, v, c, { kind: 'text', text: T[what] + (extra ? ' ' + extra : '') + link, payload: { courier: what } }, { author: 'system' });
   return r.ok;
 }
 /** The timer: delivery status changes of approved chat orders go to the customer; a review request a day after delivery. */

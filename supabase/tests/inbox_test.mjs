@@ -93,7 +93,8 @@ await asB(async (ctx) => ib.hookPost(ctx, await chRow(M.id), raw, { 'x-hub-signa
 await sql`update inbox_conversations set reply_due_at = now() - interval '1 second' where id = ${conv1}`;
 await asB((ctx) => ib.replyDue(ctx, conv1));
 const cards = graph.find((g) => g.body && g.body.message && g.body.message.attachment && g.body.message.attachment.payload.template_type === 'generic');
-check('products go as cards with price, code and buttons', cards && cards.body.message.attachment.payload.elements[0].subtitle.includes(PLA) && cards.body.message.attachment.payload.elements[0].buttons.length === 2, cards);
+check('products go as cards with price, code and buttons', cards && cards.body.message.attachment.payload.elements[0].subtitle.includes(PLA) && cards.body.message.attachment.payload.elements[0].buttons.length === 3 &&
+  /item\.html\?c=[0-9a-f]{32}&sku=/.test(cards.body.message.attachment.payload.elements[0].buttons[2].url || ''), cards);
 check('the agent is told never to invent prices, and the delivery charges', /Never invent a price/.test(sysSeen) && /৳70/.test(sysSeen) && /Savar/.test(sysSeen), sysSeen.slice(0, 200));
 const stockBefore = (await sql`select stock from product_stock ps join products p on p.id = ps.product_id where p.business_id = ${FIX.B} and p.sku = ${PLA}`)[0].stock;
 graph.length = 0;
@@ -365,5 +366,36 @@ check('...and the minute timer opens one alert for the team', (await sql`select 
 await owner('erpPlatformInboxPlan', [{ save: { businessId: FIX.B, name: '', features: {}, aiBudget: '' } }]);
 r = await sales('erpInboxFeatureMap', [{}]);
 check('a plan with everything and no limit: all on again', r.ok && Object.values(r.result.on).every(Boolean) && !r.result.budget.stopped, r.result);
+
+// ---- 20. the public pages: the order's own page, the bill as a picture, a product page with Buy
+const pub = await import(pathToFileURL(path.join(fnDir, 'handlers', 'inboxpub.js')));
+const coRow = (await sql`select * from chat_orders where id = ${co.id}`)[0];
+check('every chat order has its page token', /^[0-9a-f]{32}$/.test(coRow.page_token));
+r = await asB((ctx) => pub.orderPage(ctx, coRow.page_token));
+check('the order page: status in the customer\'s words, items, total, phone hidden', r.status === 200 && r.body.order.no === co.no && r.body.order.stage === 'preparing' && r.body.order.items[0].qty === 2 && /•/.test(r.body.order.phone) && r.body.words.bn.preparing, r.body);
+r = await asB((ctx) => pub.orderPage(ctx, 'a'.repeat(32)));
+check('a wrong token finds nothing', r.status === 404);
+let svgSeen = '';
+deps.svgPng = async (svg) => { svgSeen = svg; return new Uint8Array([137, 80, 78, 71]); };
+r = await asB((ctx) => pub.orderBill(ctx, coRow.page_token));
+check('the bill picture is drawn from the order (shop, number, items, total)', r && r[0] === 137 && svgSeen.includes(co.no) && svgSeen.includes('Total') && /৳[0-9,]+/.test(svgSeen), svgSeen.slice(0, 200));
+const cv = (await sql`select * from inbox_conversations where id = ${conv1}`)[0];
+r = await asB((ctx) => pub.itemPage(ctx, cv.shop_token, PLA));
+check('the product page: price, stock, the delivery charges, the customer\'s details filled', r.status === 200 && r.body.product.sku === PLA && r.body.product.price > 0 && r.body.delivery.inside === 70 && r.body.you.phone === '01712000111', r.body);
+await sql`update inbox_leads set stage = 6 where conversation_id = ${conv1}`;
+r = await asB((ctx) => pub.itemAct(ctx, cv.shop_token, { a: 'intent', sku: PLA }, '1.1.1.1'));
+check('pressing Buy keeps the interest as an open lead', r.status === 200 && (await sql`select count(*)::int n from inbox_leads where conversation_id = ${conv1} and stage = 2`)[0].n === 1);
+r = await asB((ctx) => pub.itemAct(ctx, cv.shop_token, { a: 'buy', sku: PLA, qty: 1, name: 'Rafi', phone: '0171', address: 'House 7, Mirpur 10, Dhaka', area: 'inside' }, '1.1.1.1'));
+check('a bad phone is refused on the page', r.body.ok === false && /11 digits/.test(r.body.error), r.body);
+graph.length = 0;
+r = await asB((ctx) => pub.itemAct(ctx, cv.shop_token, { a: 'buy', sku: PLA, qty: 1, name: 'Rafi', phone: '01712000111', address: 'House 7, Mirpur 10, Dhaka', area: 'outside' }, '1.1.1.1'));
+const po = (await sql`select * from chat_orders where business_id = ${FIX.B} and taken_by = 'product page'`)[0];
+check('Buy places an order linked to the chat, outside-Dhaka charge; the team gets a task', r.body.ok && po && po.conversation_id === conv1 && Number(po.delivery_charge) === 130 && /order\.html\?o=/.test(r.body.page) &&
+  (await sql`select count(*)::int n from inbox_tasks where kind = 'order' and text like '%product page%'`)[0].n === 1, r.body);
+await owner('erpInboxFeatures', [{ save: { product_page: false, order_page: false } }]);
+r = await asB((ctx) => pub.itemPage(ctx, cv.shop_token, PLA));
+const r2 = await asB((ctx) => pub.orderPage(ctx, coRow.page_token));
+check('switched off: the pages answer nothing', r.status === 404 && r2.status === 404);
+await owner('erpInboxFeatures', [{ save: { product_page: true, order_page: true } }]);
 
 await done();

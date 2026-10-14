@@ -324,8 +324,21 @@ const INSTALL_ENV = { controlUrl: SUPABASE_URL + '/functions/v1/erp', appUrl: De
   cloudflare: { token: Deno.env.get('ERP_CF_TOKEN') ?? '', account: Deno.env.get('ERP_CF_ACCOUNT') ?? '', project: Deno.env.get('ERP_PUBLIC_PROJECT') ?? '' },
   // the provider's own domain where each company gets <name>.<zone> by itself (Stage 1b)
   freeZone: Deno.env.get('ERP_FREE_ZONE') ?? '', freeZoneId: Deno.env.get('ERP_FREE_ZONE_ID') ?? '' };
+// The bill picture (handlers/inboxpub.js): SVG -> PNG with resvg (wasm, loaded on first use) and the bundled fonts.
+let RESVG: any = null, FONT_BUFS: Uint8Array[] = [];
+async function svgPng(svg: string): Promise<Uint8Array> {
+  if (!RESVG) {
+    const m: any = await import('npm:@resvg/resvg-wasm@2.6.2');
+    await m.initWasm(fetch('https://cdn.jsdelivr.net/npm/@resvg/resvg-wasm@2.6.2/index_bg.wasm'));
+    const f: any = await import('./lib/billfonts.js');
+    FONT_BUFS = f.FONTS_B64.map((b: string) => Uint8Array.from(atob(b), (c) => c.charCodeAt(0)));
+    RESVG = m;
+  }
+  const r = new RESVG.Resvg(svg, { font: { fontBuffers: FONT_BUFS, loadSystemFonts: false, defaultFontFamily: 'Inter' }, fitTo: { mode: 'width', value: 960 } });
+  return r.render().asPng();
+}
 const own = projectParts({ url: SUPABASE_URL, anon: ANON, service: SERVICE, appUrl: Deno.env.get('ERP_APP_URL') ?? 'https://erp.costareen.com/' });
-const deps: any = { install: INSTALL, installEnv: INSTALL_ENV, google: GOOGLE, smtpNote: SMTP_NOTE, linkOnly: false, sql, sqlAux, control: ctlSql, fetch: globalThis.fetch.bind(globalThis), renderPdf, geminiKey: GEMINI_KEY,
+const deps: any = { install: INSTALL, installEnv: INSTALL_ENV, google: GOOGLE, smtpNote: SMTP_NOTE, linkOnly: false, sql, sqlAux, control: ctlSql, fetch: globalThis.fetch.bind(globalThis), renderPdf, geminiKey: GEMINI_KEY, svgPng,
                ...own, hookBase: FN_URL };
 
 // A company on the bridge: its own database, sign-in, files and e-mails; the provider's logic and PDF service.
@@ -343,7 +356,7 @@ async function buildTenant(t: any) {
     installEnv: INSTALL_ENV,
     google: { ...GOOGLE, redirect: FN_URL + '?google=back&t=' + t.id, appUrl },
     // control: the provider's own tables (the market list, joint pools)
-    smtpNote: '', linkOnly: false, sql: tsql, sqlAux: tAux, control: ctlSql, fetch: globalThis.fetch.bind(globalThis), renderPdf, geminiKey: GEMINI_KEY,
+    smtpNote: '', linkOnly: false, sql: tsql, sqlAux: tAux, control: ctlSql, fetch: globalThis.fetch.bind(globalThis), renderPdf, geminiKey: GEMINI_KEY, svgPng,
     ...parts, hookBase: FN_URL + '?t=' + t.id,
     close() { try { tsql.end({ timeout: 2 }); tAux.end({ timeout: 2 }); } catch (_) { /* gone */ } },
   };
@@ -378,7 +391,7 @@ Deno.serve(async (req) => {
   const q0 = new URL(req.url).searchParams;
   const tid = tenantOf(req, q0);
   // public routes, a company on the bridge, and every company copy (calls carry their own sign-in, never a cookie) answer any page
-  const headers = { ...cors(req.headers.get('origin'), !!(tid || q0.get('install') || q0.get('control') || q0.get('signin') || q0.get('pub') || q0.get('chat') || (INSTALL && INSTALL.id))), 'Content-Type': 'application/json' };
+  const headers = { ...cors(req.headers.get('origin'), !!(tid || q0.get('install') || q0.get('control') || q0.get('signin') || q0.get('pub') || q0.get('chat') || /^(order|bill|item)$/.test(q0.get('inbox') || '') || (INSTALL && INSTALL.id))), 'Content-Type': 'application/json' };
   if (req.method === 'OPTIONS') return new Response('ok', { headers });
   if (tid && !(q0.get('install') || q0.get('control'))) {
     if (!tenantDeps) return new Response(JSON.stringify({ ok: false, error: 'This server does not run company ERPs.' }), { status: 200, headers });
@@ -446,7 +459,7 @@ async function serveWith(deps: any, req: Request, q0: URLSearchParams, headers: 
   }
   // the Inbox (handlers/inbox.js): channel webhooks ?inbox=hook&ch=<id>&k=<key> (GET = Meta's check, POST = events),
   // and the website chat ?chat=<channel id>&a=info|start|send|poll (public; the visitor carries a signed id)
-  if (q0.get('inbox') === 'hook' || q0.get('chat')) {
+  if (q0.get('inbox') === 'hook' || q0.get('chat') || /^(order|bill|item)$/.test(q0.get('inbox') || '')) {
     try { return await inboxRoute(deps, req, q0, headers); }
     catch (e) { console.error('inbox', e); return new Response('{"ok":false}', { status: 200, headers }); }
   }
@@ -524,6 +537,30 @@ async function inboxRoute(deps: any, req: Request, q0: URLSearchParams, headers:
     for (const d of (r && r.due) || []) later(d.ms, () => asOwner(ch.business_id, 'inbox:reply', (ctx) => ib.replyDue(ctx, d.id)));
     for (const c of (r && r.comments) || []) later(2000, () => asOwner(ch.business_id, 'inbox:comment', (ctx) => ib.answerComment(ctx, ch.id, c)));
     return new Response('EVENT_RECEIVED', { status: (r && r.status) || 200, headers: { 'Content-Type': 'text/plain' } });
+  }
+  // the public pages: an order's own page, its bill as a picture, a product page opened from a chat (handlers/inboxpub.js)
+  const what = String(q0.get('inbox') || '');
+  if (what === 'order' || what === 'bill' || what === 'item') {
+    const pub: any = await import('./handlers/inboxpub.js');
+    const tok = String(q0.get(what === 'item' ? 'c' : 'o') || '');
+    const nf = new Response('{"ok":false,"error":"This page is not available."}', { status: 404, headers });
+    if (!/^[0-9a-f]{32}$/.test(tok)) return nf;
+    const row = what === 'item' ? (await deps.sql`select business_id from inbox_conversations where shop_token = ${tok}`)[0]
+                                : (await deps.sql`select business_id from chat_orders where page_token = ${tok}`)[0];
+    if (!row) return nf;
+    if (what === 'bill') {
+      const png: any = await asOwner(row.business_id, 'inbox:bill', (ctx) => pub.orderBill(ctx, tok));
+      if (!png) return nf;
+      return new Response(png, { status: 200, headers: { 'Content-Type': 'image/png', 'Cache-Control': 'public, max-age=300', 'Access-Control-Allow-Origin': '*' } });
+    }
+    let r: any;
+    if (what === 'order') r = await asOwner(row.business_id, 'inbox:order', (ctx) => pub.orderPage(ctx, tok));
+    else if (req.method === 'POST') {
+      let b: any = {}; try { b = await req.json(); } catch (_) { b = {}; }
+      const ip = (req.headers.get('cf-connecting-ip') || (req.headers.get('x-forwarded-for') || '').split(',')[0] || '').trim();
+      r = await asOwner(row.business_id, 'inbox:item', (ctx) => pub.itemAct(ctx, tok, b, ip));
+    } else r = await asOwner(row.business_id, 'inbox:item', (ctx) => pub.itemPage(ctx, tok, String(q0.get('sku') || '')));
+    return new Response(JSON.stringify((r && r.body) || { ok: false }), { status: (r && r.status) || 200, headers });
   }
   // the website chat
   const chId = String(q0.get('chat') || '');

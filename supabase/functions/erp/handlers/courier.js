@@ -340,6 +340,8 @@ export async function erpBookParcel(ctx, payload) {
     values (${ctx.biz}, ${new Date()}, ${invoiceNo}, ${cid}, ${toName}, ${toPhone}, ${toAddress},
             ${pre.collect}, ${pre.total}, ${who(ctx)},
             ${(changed ? 'sent to a one-off address. ' : '') + str(payload.note)})`;
+  // the tracking code opens the courier's own tracking page (the Inbox's order page: Track)
+  if (res.consignment.tracking_code) { try { await ctx.tx`update courier_log set tracking_code = ${String(res.consignment.tracking_code)} where business_id = ${ctx.biz} and invoice_no = ${invoiceNo} and consignment_id = ${cid}`; } catch (_) { /* before 123 */ } }
   forgetCourier(ctx);
   return { ok: true, invoiceNo, consignment: cid, collect: pre.collect, total: pre.total,
            customer: toName, address: toAddress, changed };
