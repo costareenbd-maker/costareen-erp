@@ -2009,3 +2009,38 @@ official Cloud API and a linked device. The match check is in docs/INBOX-VS-AIPR
 - A Meta app and App Review.
 - An Evolution server or a WaSenderAPI subscription.
 - His yes before any of this goes to live.
+
+## Inbox as a subscription product + the last AiPraktor gaps (15 Oct 2026, dev only)
+
+The owner asked for every remaining AiPraktor feature, built so that each one can be switched on per subscription.
+
+1. **Plans (122_inbox_plans.sql, lib/inboxplan.js).**
+   - There are 26 features. The provider sets per company which ones its plan includes and a monthly AI budget in taka (Inbox → Features → "Plans for every company", provider only). The owner switches the included features on or off.
+   - `feat()` and `needFeat()` gate the handlers, the channels that can be connected, the AI's tools and the timers.
+   - When the budget is used up, all AI work stops and the minute timer opens one alert for the team.
+2. **Order page with Track, product page with Buy, bill as a picture (123_inbox_pages.sql).**
+   - Order page: `web/order.html`. Product page: `web/item.html`, opened from a card's Details button.
+   - The bill is an SVG made into a PNG by resvg-wasm, with Inter and Noto Sans Bengali bundled in `lib/billfonts.js`. It was checked on dev and renders correctly.
+   - Steadfast's tracking code is now kept with the booking.
+3. **Team groups and per-teammate channels (124_inbox_groups.sql, Inbox → Team).**
+   - A group hears only the hand-overs and alerts ticked for it.
+   - A teammate can be limited to some channels: the chat list, counts, Notifications and opening a chat all follow it.
+4. **Messages after 24 hours.**
+   - Meta-approved utility templates on Messenger and the official WhatsApp: courier updates with Track, the review request, booking confirmation and reminders.
+   - Create / Check on the channel card. Outside the window an approved template is sent and written into the chat; otherwise nothing is sent.
+5. **Connect with Facebook (handlers/metaconnect.js).**
+   - One login gives pages, Instagram, WhatsApp numbers and ad accounts. "Use for Messenger / Instagram / WhatsApp" makes the channel with no key pasted.
+   - The provider's Meta app comes from the META_APP_ID and META_APP_SECRET secrets (optional META_CONFIG_ID). Settings → Connections has a Facebook tile.
+6. **Analytics** now has the order report: who took the orders and their value, why orders were cancelled, why they were held.
+
+**Tests.** `inbox_test` grew to 123 checks.
+
+**Not done / needs the owner.**
+- The provider's Meta app secrets on the server.
+- A real test on a live page.
+- A Gemini key on dev.
+- His yes for live.
+- **The owner's correction (15 Oct).** The Inbox is only the chat inbox plus the AI sales assistant, like AiPraktor, with the extra platforms. Leads, Advertisement, posting, research and lead generation come later as their own menus, after the Inbox is tested.
+  - The Inbox tabs are now: Inbox, Notifications, Orders, Bookings, Follow-ups, Comments, Agent Desk, Knowledge, Chat settings, Analytics, AI cost, Team.
+  - Leads and Broadcasts are off by default: the code is kept, nothing is shown, and the AI saves no leads.
+  - Connecting accounts (Connect with Facebook, connecting a channel by hand) and Plan and features moved to Settings → Connections.

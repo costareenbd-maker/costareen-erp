@@ -65,6 +65,8 @@ async function connectionsOf(ctx) {
     google: await soft(async () => { const g = (await getSecret(ctx, 'GOOGLE_REFRESH')) ? [1] : []; const e = str(await getConfig(ctx, 'google_email', ''));
       return g.length ? { state: 'on', label: 'Copies go to ' + (e || 'your Google Drive') } : { state: 'off', label: 'Not connected - invoices, quotations and backups can be copied to your Google Drive' }; }, { state: 'off', label: 'Not connected' }),
     ai: { state: ai ? 'on' : 'off', label: ai ? ai + ' AI access key(s) in use' : 'No AI access keys' },
+    meta: await soft(async () => { const t = await getSecret(ctx, 'META_USER_TOKEN'); const n = str(await getConfig(ctx, 'meta_name', ''));
+      return t ? { state: 'on', label: 'Logged in as ' + (n || 'your Facebook') + ' - pages, Instagram, WhatsApp and ad accounts (Inbox > Channels)' } : { state: 'off', label: 'Not connected - one Facebook login for the Inbox, posting and ads (Inbox > Channels)' }; }, { state: 'off', label: 'Not connected' }),
   };
 }
 

@@ -31,6 +31,8 @@ web.on(/evo\.test/, (url, opts) => { evo.push({ url, body: opts.body ? JSON.pars
 // ---- 1. the business details and the channels
 let r = await owner('erpInboxProfile', [{ save: { name: 'Costareen', sells: '3D printer filament and printers', delivery_in: 70, delivery_out: 130, hours: '10am-8pm, closed Friday' } }]);
 check('the details are saved', r.ok && r.result.profile.sells.startsWith('3D printer') && r.result.profile.delivery_out === 130, r);
+// leads and broadcasts are off until switched on (their own menus later); the suite tests them switched on
+await owner('erpInboxFeatures', [{ save: { leads: true, broadcasts: true } }]);
 r = await sales('erpInboxChannelSave', [{ kind: 'messenger', name: 'Page', externalId: 'PAGE1' }]);
 check('sales staff cannot connect a channel', !r.ok, r);
 r = await owner('erpInboxChannelSave', [{ kind: 'messenger', name: 'Costareen page', externalId: 'PAGE1', secrets: { TOKEN: 'tok', APP_SECRET: 'sec' } }]);
@@ -443,5 +445,49 @@ graph.length = 0;
 r = await sales('erpBookingAct', [{ id: bk7.id, action: 'confirm', at: dhaka(30 * 3600e3) }]);
 check('templates switched off: nothing goes after 24 hours', r.ok && r.result.told === false && !graph.some((g) => g.body && g.body.messaging_type === 'UTILITY'));
 await owner('erpInboxFeatures', [{ save: { templates: true } }]);
+
+// ---- 23. Connect with Facebook: one login -> pages, Instagram, WhatsApp numbers -> Inbox channels without pasted keys
+const mc = await import(pathToFileURL(path.join(fnDir, 'handlers', 'metaconnect.js')));
+r = await owner('erpMetaStart', [{}]);
+check('without the provider\'s Meta app the button says so', !r.ok && /provider/.test(r.error), r);
+deps.meta = { appId: 'APP1', appSecret: 'appsecret', redirect: 'https://fn.test/functions/v1/erp?meta=back' };
+r = await owner('erpMetaStart', [{}]);
+const st = new URL(r.result.url).searchParams.get('state');
+check('the login dialog asks for messages, WhatsApp, posting and ads in one go', r.ok && /facebook\.com\/v21\.0\/dialog\/oauth/.test(r.result.url) && /pages_messaging/.test(r.result.url) && /whatsapp_business_messaging/.test(r.result.url) && /ads_management/.test(r.result.url), r.result);
+web.on(/graph\.facebook\.com\/v21\.0\/(oauth|me)/, (url) => {
+  if (/oauth\/access_token\?grant_type=fb_exchange_token/.test(url)) return { status: 200, body: { access_token: 'LONGUSER', expires_in: 5184000 } };
+  if (/oauth\/access_token/.test(url)) return { status: 200, body: { access_token: 'SHORTUSER' } };
+  if (/\/me\/accounts/.test(url)) return { status: 200, body: { data: [{ id: 'PAGE9', name: 'Demo Page', access_token: 'PAGETOKEN9', instagram_business_account: { id: 'IG9', username: 'demo.shop' } }] } };
+  if (/\/me\/businesses/.test(url)) return { status: 200, body: { data: [{ id: 'BM1', name: 'Demo BM', owned_whatsapp_business_accounts: { data: [{ id: 'WABA9', name: 'Demo WA', phone_numbers: { data: [{ id: 'PH9', display_phone_number: '+880 1700-000009', verified_name: 'Demo Shop' }] } }] } }] } };
+  if (/\/me\/adaccounts/.test(url)) return { status: 200, body: { data: [{ id: 'act_1', name: 'Demo ads', account_status: 1, currency: 'BDT' }] } };
+  if (/\/me\/permissions/.test(url)) return { status: 200, body: { data: [{ permission: 'pages_messaging', status: 'granted' }, { permission: 'ads_management', status: 'declined' }] } };
+  if (/\/me\?/.test(url)) return { status: 200, body: { id: 'U1', name: 'Rahman' } };
+  return { status: 404, body: {} };
+});
+const to = await mc.metaCallback(deps, { state: st, code: 'CODE1' }, (biz, fn) => asB(fn));
+check('back from Facebook: a long-lived key kept, the owner sent to the Inbox', /#\/inbox\?meta=ok$/.test(to), to);
+const again = await mc.metaCallback(deps, { state: st, code: 'CODE1' }, (biz, fn) => asB(fn));
+check('the same return address works once only', /meta=expired/.test(again), again);
+r = await owner('erpMetaConnect', [{}]);
+check('what the login reaches: the page with its Instagram, the WhatsApp number, the ad account; keys never shown', r.ok && r.result.connected && r.result.name === 'Rahman' && r.result.pages[0].ig.username === 'demo.shop' &&
+  r.result.wabas[0].phones[0].id === 'PH9' && r.result.adAccounts[0].id === 'act_1' && !JSON.stringify(r.result).includes('PAGETOKEN9') && !JSON.stringify(r.result).includes('LONGUSER'), r.result);
+r = await mgr('erpMetaConnect', [{}]);
+check('the Facebook login is the owner\'s', !r.ok);
+graph.length = 0;
+r = await owner('erpMetaUse', [{ page: 'PAGE9' }]);
+const mch9 = (await sql`select * from inbox_channels where business_id = ${FIX.B} and external_id = 'PAGE9'`)[0];
+check('Use for Messenger: a channel made with the page key from the login, page subscribed, practice mode', r.ok && mch9 && mch9.kind === 'messenger' && mch9.status === 'practice' &&
+  graph.some((g) => /PAGE9\/subscribed_apps\?access_token=PAGETOKEN9/.test(g.url)) && r.result.pages[0].used === true, r);
+r = await owner('erpMetaUse', [{ phone: 'PH9' }]);
+const wch9 = (await sql`select * from inbox_channels where business_id = ${FIX.B} and external_id = 'PH9'`)[0];
+check('Use for WhatsApp: the official number with its WABA id', r.ok && wch9 && wch9.kind === 'wa_cloud' && wch9.settings.waba_id === 'WABA9', wch9);
+r = await owner('erpMetaUse', [{ ig: 'IG9' }]);
+check('Use for Instagram', r.ok && (await sql`select count(*)::int n from inbox_channels where business_id = ${FIX.B} and external_id = 'IG9' and kind = 'instagram'`)[0].n === 1, r);
+r = await owner('erpMetaDisconnect', [{}]);
+check('Disconnect forgets the login; the channels stay', r.ok && !r.result.connected && (await sql`select count(*)::int n from inbox_channels where business_id = ${FIX.B} and external_id in ('PAGE9', 'PH9', 'IG9')`)[0].n === 3, r.result);
+
+// ---- 24. the order report: who took the orders
+r = await owner('erpInboxStats', [{ days: 7 }]);
+check('analytics shows who took the orders (the AI, the product page) with their value', r.ok && r.result.orders.byTaker.some((x) => x.who === 'The AI' && x.value > 0) && r.result.orders.byTaker.some((x) => x.who === 'Product page'), r.result && r.result.orders);
 
 await done();

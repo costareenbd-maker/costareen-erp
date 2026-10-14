@@ -8444,7 +8444,7 @@ function srv(name, args, ok, bad) {
 
 var SRV_ACTIVE = 0, SRV_WRITING = false, SRV_TIMED = {};
 // the same list the server uses to know a call changes nothing (ERP_READS)
-var SRV_READS = /^(erpInboxFeatureMap|erpBookings|erpInbox|erpInboxOpen|erpInboxChannels|erpChatOrders|erpInboxStats|erpAiWork|erpCommissionSales|erpFdCards|erpLineMargins|erpFd19Profit|erpFdInventory|erpFd22Analytics|erpNavigator|erpSellers|erpFollowups|erpCustomerInsight|erpPreorders|erpCashUps|erpAskingPrices|erpSystemCheck|erpAnalytics|erpCommission|erpHolding|erpLotFunding|erpShipments|erpShipment|erpLots|erpFdHead|erpFdDash|erpReceiveMatch|erpAiReader|erpProductSuggest|erpCatalogue|erpPushList|erpCreators|erpCreatorPortalLink|erpSponsorLink|erpCreatorRequests|erpCreatorEvents|erpCreatorProgramme|erpCreatorPreview|erpCreatorCatalog|erpCreatorSources|erpCreatorClaims|erpApps|erpAppQr|erpFeedback|erpRestockOffers|erpRestockList|erpWarrantyRules|erpWarrantyCard|erpMyLink|erpPlatformRegister|erpPlatformDoctor|erpPlatformCommunity|erpMarketWaiting|erpBoard|erpPlatformDesign|erpResell|erpResellerProgramme|erpLoyalty|erpCustomerPoints|erpRefillDue|erpDeliveryHistory|erpDeliveryHistoryMany|erpPrintKit|erpPrintJobs|erpPrintJob|erpPrintCost|erpSpools|erpPrintRequests|erpJoint|erpJointCatalog|erpJointCard|erpInvoiceDesign|erpInvoicePreview|erpMarket|erpMarketMine|erpMarketRequests|erpMarketHints|erpMarketNames|erpWanted|erpBrand|erpComplianceLog|erpProviderKey|erpNews|erpAccessKeys|erpAccessWarning|erpAdmin|erpAiKeys|erpAlertRules|erpAlerts|erpArena|erpBackupStatus|erpBg|erpBnWords|erpBookedParcels|erpBrandLogo|erpBundle|erpBusinessLinks|erpBusinesses|erpBusinessesDeleted|erpCampaignAudience|erpCampaignGet|erpCampaignList|erpCapital|erpCashBook|erpCatalog|erpConnStatus|erpConnections|erpCostBook|erpCourier|erpCourierKeyStatus|erpCurrencies|erpCustomerAccount|erpCustomerCredit|erpCustomerList|erpCustomerPage|erpCustomerStatement|erpCustomers|erpDashboardData|erpDaySales|erpDeliveryOptions|erpDevices|erpDiscontinued|erpDues|erpEvoQr|erpEvoStatus|erpExpenseExport|erpExpenseReceiptUrl|erpExpenses|erpFamilies|erpFighters|erpFormOptions|erpGame|erpGetTheme|erpGoogle|erpHello|erpInstalls|erpInvoice|erpInvoicePdf|erpJob|erpJobs|erpListView|erpLookupCustomer|erpLookupUsage|erpMe|erpMoney|erpNoteFileUrl|erpNotes|erpOwnerChange|erpOwnerChanges|erpParcelLabels|erpParcelPreview|erpPartnerStock|erpPartnership|erpPayReasons|erpPeople|erpPlatform|erpPlatformErrors|erpPnl|erpPnlMonth|erpPoList|erpPoolCatalog|erpProduct|erpProductListShare|erpProductPage|erpProductPhotoUrl|erpProductThumbs|erpProfile|erpQuoteAsset|erpQuoteBoot|erpQuoteGet|erpQuoteList|erpRecentInvoices|erpRecovery|erpReorderPlan|erpRestorePreview|erpReturnPreview|erpRisks|erpSales|erpSearch|erpSecurity|erpSelfTest|erpSerialLookup|erpSerialsFor|erpSessions|erpSetTheme|erpSettingsFull|erpSettingsLists|erpSfPayoutLines|erpSfPayouts|erpShareFile|erpSharedStock|erpSheet|erpStatementPdf|erpStockHistory|erpSupplierPage|erpSuppliers|erpToday|erpUsers|erpWaProductPdf|erpWebMatches|erpWebOrderInvoices|erpWebOrders|erpWebsiteTest)$/;
+var SRV_READS = /^(erpMetaConnect|erpInboxFeatureMap|erpBookings|erpInbox|erpInboxOpen|erpInboxChannels|erpChatOrders|erpInboxStats|erpAiWork|erpCommissionSales|erpFdCards|erpLineMargins|erpFd19Profit|erpFdInventory|erpFd22Analytics|erpNavigator|erpSellers|erpFollowups|erpCustomerInsight|erpPreorders|erpCashUps|erpAskingPrices|erpSystemCheck|erpAnalytics|erpCommission|erpHolding|erpLotFunding|erpShipments|erpShipment|erpLots|erpFdHead|erpFdDash|erpReceiveMatch|erpAiReader|erpProductSuggest|erpCatalogue|erpPushList|erpCreators|erpCreatorPortalLink|erpSponsorLink|erpCreatorRequests|erpCreatorEvents|erpCreatorProgramme|erpCreatorPreview|erpCreatorCatalog|erpCreatorSources|erpCreatorClaims|erpApps|erpAppQr|erpFeedback|erpRestockOffers|erpRestockList|erpWarrantyRules|erpWarrantyCard|erpMyLink|erpPlatformRegister|erpPlatformDoctor|erpPlatformCommunity|erpMarketWaiting|erpBoard|erpPlatformDesign|erpResell|erpResellerProgramme|erpLoyalty|erpCustomerPoints|erpRefillDue|erpDeliveryHistory|erpDeliveryHistoryMany|erpPrintKit|erpPrintJobs|erpPrintJob|erpPrintCost|erpSpools|erpPrintRequests|erpJoint|erpJointCatalog|erpJointCard|erpInvoiceDesign|erpInvoicePreview|erpMarket|erpMarketMine|erpMarketRequests|erpMarketHints|erpMarketNames|erpWanted|erpBrand|erpComplianceLog|erpProviderKey|erpNews|erpAccessKeys|erpAccessWarning|erpAdmin|erpAiKeys|erpAlertRules|erpAlerts|erpArena|erpBackupStatus|erpBg|erpBnWords|erpBookedParcels|erpBrandLogo|erpBundle|erpBusinessLinks|erpBusinesses|erpBusinessesDeleted|erpCampaignAudience|erpCampaignGet|erpCampaignList|erpCapital|erpCashBook|erpCatalog|erpConnStatus|erpConnections|erpCostBook|erpCourier|erpCourierKeyStatus|erpCurrencies|erpCustomerAccount|erpCustomerCredit|erpCustomerList|erpCustomerPage|erpCustomerStatement|erpCustomers|erpDashboardData|erpDaySales|erpDeliveryOptions|erpDevices|erpDiscontinued|erpDues|erpEvoQr|erpEvoStatus|erpExpenseExport|erpExpenseReceiptUrl|erpExpenses|erpFamilies|erpFighters|erpFormOptions|erpGame|erpGetTheme|erpGoogle|erpHello|erpInstalls|erpInvoice|erpInvoicePdf|erpJob|erpJobs|erpListView|erpLookupCustomer|erpLookupUsage|erpMe|erpMoney|erpNoteFileUrl|erpNotes|erpOwnerChange|erpOwnerChanges|erpParcelLabels|erpParcelPreview|erpPartnerStock|erpPartnership|erpPayReasons|erpPeople|erpPlatform|erpPlatformErrors|erpPnl|erpPnlMonth|erpPoList|erpPoolCatalog|erpProduct|erpProductListShare|erpProductPage|erpProductPhotoUrl|erpProductThumbs|erpProfile|erpQuoteAsset|erpQuoteBoot|erpQuoteGet|erpQuoteList|erpRecentInvoices|erpRecovery|erpReorderPlan|erpRestorePreview|erpReturnPreview|erpRisks|erpSales|erpSearch|erpSecurity|erpSelfTest|erpSerialLookup|erpSerialsFor|erpSessions|erpSetTheme|erpSettingsFull|erpSettingsLists|erpSfPayoutLines|erpSfPayouts|erpShareFile|erpSharedStock|erpSheet|erpStatementPdf|erpStockHistory|erpSupplierPage|erpSuppliers|erpToday|erpUsers|erpWaProductPdf|erpWebMatches|erpWebOrderInvoices|erpWebOrders|erpWebsiteTest)$/;
 function srvPump() {
   if (!SRV_Q.length) return;
   var isRead = SRV_READS.test(SRV_Q[0].name);
@@ -15559,6 +15559,7 @@ function connNext(k, st) {
     whatsapp: { on: 'Connected', warn: 'Next: scan the QR', off: 'Not set up yet' },
     email: { on: 'Connected', warn: 'Set up by the provider', off: 'Set up by the provider' },
     google: { on: 'Connected', off: 'Next: press Connect' },
+    meta: { on: 'Connected', off: 'Next: Connect with Facebook' },
     ai: { on: 'Connected', off: 'Optional' }
   }[k] || {};
   return W[st] || (st === 'on' ? 'Connected' : st === 'off' ? 'Not connected' : 'Needs a step');
@@ -15567,7 +15568,7 @@ function connLoad() { srv('erpConnections', [], function (r) { CONN = r; if (VIE
 function connHtml() {
   if (!ME || ME.role !== 'owner') return '';
   if (!CONN) { connLoad(); return '<div class="loading">Reading the connections&hellip;</div>'; }
-  var c = CONN, items = [['website', 'Website'], ['courier', 'Courier (Steadfast)'], ['whatsapp', 'WhatsApp'], ['email', 'E-mail sending'], ['google', 'Google Drive'], ['ai', 'AI access']];
+  var c = CONN, items = [['website', 'Website'], ['courier', 'Courier (Steadfast)'], ['whatsapp', 'WhatsApp'], ['email', 'E-mail sending'], ['google', 'Google Drive'], ['meta', 'Facebook (Meta)'], ['ai', 'AI access']];
   var h = '<section><div class="card"><h2>Connections</h2><div class="sub">Every outside service this business uses. Green works; amber needs a step; grey is not connected.</div><div class="conn">' +
     items.map(function (x) { var v = c[x[0]], word = connNext(x[0], v.state);
       return '<div class="' + esc(v.state) + '" data-conntile="' + esc(x[0]) + '" title="' + esc(v.label) + '"><span class="d"></span><div style="min-width:0;flex:1"><b>' + esc(x[1]) + '</b><span>' + esc(word) + '</span></div>' +
@@ -16521,6 +16522,7 @@ document.addEventListener('click', function (ev) {
   if (q) { ev.stopPropagation(); uiAlert(q.closest('[data-conntile]').querySelector('b').textContent + '\n\n' + q.getAttribute('data-conntip')); return; }
   // a tile opens its own card further down
   var tile = t.closest('[data-conntile]');
+  if (tile && tile.getAttribute('data-conntile') === 'meta' && window.IB) { IB.tab = 'chans'; IB.chans = null; go('inbox'); return; }
   if (tile) {
     var want = { website: 'Website', courier: 'courier', whatsapp: 'WhatsApp', email: 'mail', google: 'Google Drive', ai: 'AI' }[tile.getAttribute('data-conntile')] || '';
     // the card whose title starts with the tile's name (not "Any website - open door"), else one that mentions it
@@ -35441,15 +35443,21 @@ body[data-fdview="settings"] #o_cp .crumbs, body[data-fdview="tools"] #o_cp .cru
 (function () {
   var IB = { tab: 'inbox', pile: 'open', q: '', list: null, conv: null, convId: '', side: false, tasks: null, orders: null, ostatus: 'pending', leads: null, desk: null, kb: null,
              chans: null, stats: null, cost: null, bc: null, cm: null, fu: null, saved: null, offers: null, test: [], busy: {}, ai: '', counts: {},
-             bk: null, bkst: 'requested', plat: '', F: null, feats: null, plans: null, team: null, oq: '', lq: '', older: null, bcgap: 24, duty: (function () { try { return localStorage.getItem('ibDuty') === '1'; } catch (e) { return false; } })() };
+             bk: null, bkst: 'requested', plat: '', F: null, feats: null, plans: null, team: null, meta: null, oq: '', lq: '', older: null, bcgap: 24, duty: (function () { try { return localStorage.getItem('ibDuty') === '1'; } catch (e) { return false; } })() };
   window.IB = IB;
   var ICON = '<path d="M4 4h16v12H8l-4 4z"/><path d="M8 9h8M8 12h5"/>';
   function ibOn() { if (!ME) return false; if (ME.platform) return true; var off = (ME.apps && ME.apps.off) || []; return off.indexOf('inbox') < 0 && typeof APPS !== 'undefined' && APPS && APPS.apps && APPS.apps.some(function (a) { return a.key === 'inbox' && a.on; }); }
   window.ibOn = ibOn;
-  window.ibPaint = function () { if (VIEW === 'inbox') paint(true); };
-  if (typeof fdxNav === 'function') fdxNav('inbox', 'Inbox', ICON, 'invoice');
+  // the menus this code draws: the Inbox (chats + the AI sales assistant), Leads, Advertisement
+  var IBV = { inbox: 'Inbox' };   // Leads and Advertisement come later as their own menus (the owner, 15 Oct)
+  function isIbView() { return !!IBV[VIEW]; }
+  window.ibPaint = function () { if (isIbView()) paint(true); else if (VIEW === 'settings' && typeof repaint === 'function') repaint(); };
+  if (typeof fdxNav === 'function') {
+    fdxNav('inbox', 'Inbox', ICON, 'invoice');
+  }
   try { VIEW_NAMES.inbox = 'Inbox'; } catch (e) {}
-  function syncNav() { var b = document.querySelector('#nav button[data-view="inbox"]'); if (!b) return; var on = ibOn(); if ((b.style.display === 'none') === on) b.style.display = on ? '' : 'none';
+  function syncNav() {
+    var b = document.querySelector('#nav button[data-view="inbox"]'); if (!b) return; var on = ibOn(); if ((b.style.display === 'none') === on) b.style.display = on ? '' : 'none';
     var n = (IB.counts.waiting || 0) + (IB.counts.unread || 0); var c = b.querySelector('.count'); if (!c) { c = document.createElement('span'); c.className = 'count'; b.appendChild(c); } c.textContent = n ? String(n) : ''; }
   if (typeof applyRole === 'function') { var arIb = applyRole; applyRole = function () { var r = arIb.apply(this, arguments); try { syncNav(); } catch (e) {} return r; }; }
   setInterval(function () { try { syncNav(); } catch (e) {} }, 1500);
@@ -35461,7 +35469,7 @@ body[data-fdview="settings"] #o_cp .crumbs, body[data-fdview="tools"] #o_cp .cru
   // ---------------------------------------------------------------- loading
   function load(name, args, key, after) {
     if (IB.busy[key]) return; IB.busy[key] = true;
-    srv(name, [args || {}], function (r) { IB.busy[key] = false; IB[key] = r; if (after) after(r); if (VIEW === 'inbox') paint(); }, function (e) { IB.busy[key] = false; IB[key] = { error: (e && e.message) || String(e) }; if (VIEW === 'inbox') paint(); });
+    srv(name, [args || {}], function (r) { IB.busy[key] = false; IB[key] = r; if (after) after(r); if (isIbView()) paint(); else if (VIEW === 'settings') repaint(); }, function (e) { IB.busy[key] = false; IB[key] = { error: (e && e.message) || String(e) }; if (isIbView()) paint(); else if (VIEW === 'settings') repaint(); });
   }
   function ding() {
     if (!IB.duty) return;
@@ -35472,18 +35480,29 @@ body[data-fdview="settings"] #o_cp .crumbs, body[data-fdview="tools"] #o_cp .cru
   function saveFile(name, text, type) { var b = new Blob([(type === 'text/csv' ? '\ufeff' : '') + text], { type: (type || 'text/plain') + ';charset=utf-8' }), a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = name; document.body.appendChild(a); a.click(); setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 500); }
   function csvOf(head, rows) { var q = function (v) { v = v === null || v === undefined ? '' : String(v); return /[",\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; }; return [head].concat(rows).map(function (r) { return r.map(q).join(','); }).join('\r\n'); }
   function exportIt(what, id) { srv('erpInboxExport', [{ what: what, id: id }], function (r) { if (r.text !== undefined) saveFile(r.name, r.text); else saveFile(r.name, csvOf(r.head, r.rows), 'text/csv'); }, fail); }
+  (function () {
+    var h = location.hash || '', m = /[?&]meta=([a-z-]+)/.exec(h);
+    if (!m) return;
+    var why = (/[?&]why=([^&]*)/.exec(h) || [])[1];
+    IB.tab = 'chans';
+    setTimeout(function () { try { history.replaceState(null, '', location.pathname + location.search + '#/inbox'); } catch (e) {}
+      toast(m[1] === 'ok' ? 'Facebook connected — choose what to use below.' : 'Facebook did not connect' + (why ? ': ' + esc(decodeURIComponent(why)) : ' (' + m[1] + ')') + '.', m[1] !== 'ok', 9000); }, 1500);
+  })();
   function fon(k) { return !IB.F || !IB.F.on || IB.F.on[k] !== false; }
-  function loadF() { srv('erpInboxFeatureMap', [{}], function (r) { IB.F = r; if (VIEW === 'inbox') paint(true); }, function () {}); }
+  function loadF() { srv('erpInboxFeatureMap', [{}], function (r) { IB.F = r; if (isIbView()) paint(true); }, function () {}); }
   setInterval(function () { if (ibOn() && !document.hidden) loadF(); }, 300000);
-  function loadConv(id) { IB.convId = id; srv('erpInboxOpen', [{ id: id }], function (r) { IB.conv = r; if (VIEW === 'inbox') paint(true); }, fail); }
+  function loadConv(id) { IB.convId = id; srv('erpInboxOpen', [{ id: id }], function (r) { IB.conv = r; if (isIbView()) paint(true); }, fail); }
   // live: the list every 8 s and the open chat every 5 s while the Inbox is open; the menu badge every 30 s
-  setInterval(function () { if (VIEW === 'inbox' && IB.tab === 'inbox' && !document.hidden) { loadList(); if (IB.convId) srv('erpInboxOpen', [{ id: IB.convId }], function (r) { var had = IB.conv && IB.conv.msgs.length; IB.conv = r; if (!had || had !== r.msgs.length) paint(true); }, function () {}); } }, 5000);
-  setInterval(function () { if (ibOn() && !document.hidden && !(VIEW === 'inbox' && IB.tab === 'inbox')) srv('erpInbox', [{ pile: 'open' }], function (r) { var before = IB.counts.waiting || 0; IB.counts = r.counts || {}; syncNav();
+  setInterval(function () { if (isIbView() && IB.tab === 'inbox' && !document.hidden) { loadList(); if (IB.convId) srv('erpInboxOpen', [{ id: IB.convId }], function (r) { var had = IB.conv && IB.conv.msgs.length; IB.conv = r; if (!had || had !== r.msgs.length) paint(true); }, function () {}); } }, 5000);
+  setInterval(function () { if (ibOn() && !document.hidden && !(isIbView() && IB.tab === 'inbox')) srv('erpInbox', [{ pile: 'open' }], function (r) { var before = IB.counts.waiting || 0; IB.counts = r.counts || {}; syncNav();
     if ((IB.counts.waiting || 0) > before) ding();
     if ((IB.counts.waiting || 0) > before && 'Notification' in window && Notification.permission === 'granted') { try { new Notification('A customer is waiting', { body: 'A chat was handed to the team.' }); } catch (e) {} } }, function () {}); }, 30000);
 
   // ---------------------------------------------------------------- the frame
-  var TABS = [['inbox', 'Inbox'], ['tasks', 'Notifications'], ['orders', 'Orders'], ['bk', 'Bookings'], ['leads', 'Leads'], ['fu', 'Follow-ups'], ['bc', 'Broadcasts'], ['cm', 'Comments'], ['desk', 'Agent Desk'], ['kb', 'Knowledge'], ['chans', 'Channels'], ['stats', 'Analytics'], ['cost', 'AI cost'], ['team', 'Team'], ['feat', 'Features']];
+  var MENU_TABS = {
+    inbox: [['inbox', 'Inbox'], ['tasks', 'Notifications'], ['orders', 'Orders'], ['bk', 'Bookings'], ['fu', 'Follow-ups'], ['cm', 'Comments'], ['desk', 'Agent Desk'], ['kb', 'Knowledge'], ['chans', 'Chat settings'], ['stats', 'Analytics'], ['cost', 'AI cost'], ['team', 'Team']],
+  };
+  var TABS = MENU_TABS.inbox;
   var TAB_FEAT = { team: 'groups', orders: 'orders', bk: 'bookings', leads: 'leads', fu: 'followups', bc: 'broadcasts', cm: 'comments', kb: 'knowledge', stats: 'analytics' };
   function budgetNote() {
     var b = IB.F && IB.F.budget; if (!b || !b.budget || !(b.warn || b.stopped)) return '';
@@ -35492,10 +35511,10 @@ body[data-fdview="settings"] #o_cp .crumbs, body[data-fdview="tools"] #o_cp .cru
   }
   function frame(inner) {
     var n = { inbox: (IB.counts.unread || 0), tasks: (IB.counts.tasks || 0), orders: (IB.orders && IB.orders.counts ? IB.orders.counts.pending : 0), bk: (IB.bk && IB.bk.counts ? IB.bk.counts.requested : 0) };
-    return '<div class="fdd-head" style="margin-bottom:10px"><div><h1 class="fdd-title" style="display:flex;gap:10px;align-items:center">Inbox <span class="ib-tag test">ONLY ME</span></h1></div><button type="button" class="btn small' + (IB.duty ? ' primary' : '') + '" data-ibduty="1" title="On duty: a sound when a customer waits for a person">' + (IB.duty ? '🔔 On duty' : '🔕 Off duty') + '</button></div>' +
+    return '<div class="fdd-head" style="margin-bottom:10px"><div><h1 class="fdd-title" style="display:flex;gap:10px;align-items:center">' + esc(IBV[VIEW] || 'Inbox') + ' <span class="ib-tag test">ONLY ME</span></h1></div>' + (VIEW === 'inbox' ? '<button type="button" class="btn small' + (IB.duty ? ' primary' : '') + '" data-ibduty="1" title="On duty: a sound when a customer waits for a person">' + (IB.duty ? '🔔 On duty' : '🔕 Off duty') + '</button>' : '') + '</div>' +
       budgetNote() +
-      '<div class="ib-tabs" role="tablist">' + TABS.filter(function (t) { return !(t[0] === 'cost' && ME && ME.role !== 'owner') && !(t[0] === 'team' && ME && ME.role !== 'owner' && ME.role !== 'manager') && (!TAB_FEAT[t[0]] || fon(TAB_FEAT[t[0]])); }).map(function (t) {
-        return '<button type="button" data-ibtab="' + t[0] + '" class="' + (IB.tab === t[0] ? 'on' : '') + '">' + esc(t[1]) + (n[t[0]] ? '<span class="n">' + n[t[0]] + '</span>' : '') + '</button>'; }).join('') + '</div>' + inner;
+      ((MENU_TABS[VIEW] || TABS).length < 2 ? '<div style="height:4px"></div>' : '<div class="ib-tabs" role="tablist">' + (MENU_TABS[VIEW] || TABS).filter(function (t) { return !(t[0] === 'cost' && ME && ME.role !== 'owner') && !(t[0] === 'team' && ME && ME.role !== 'owner' && ME.role !== 'manager') && (!TAB_FEAT[t[0]] || fon(TAB_FEAT[t[0]])); }).map(function (t) {
+        return '<button type="button" data-ibtab="' + t[0] + '" class="' + (IB.tab === t[0] ? 'on' : '') + '">' + esc(t[1]) + (n[t[0]] ? '<span class="n">' + n[t[0]] + '</span>' : '') + '</button>'; }).join('') + '</div>') + inner;
   }
   function paint(keepScroll) {
     var v = el('view'); if (!v) return;
@@ -35509,12 +35528,14 @@ body[data-fdview="settings"] #o_cp .crumbs, body[data-fdview="tools"] #o_cp .cru
   function fit() { var w = document.querySelector('#view .ib-wrap'); if (!w) return;
     var tb = el('tabbar'), tbh = tb && getComputedStyle(tb).display !== 'none' ? tb.getBoundingClientRect().height : 0; var r = w.getBoundingClientRect(), z = w.offsetHeight ? r.height / w.offsetHeight : 1;   // the page may be zoomed: rects are zoomed, style heights are not
     w.style.height = Math.max(380, (innerHeight - (r.top + scrollY) - tbh - 8) / (z || 1)) + 'px'; }
-  addEventListener('resize', function () { if (VIEW === 'inbox') fit(); });
+  addEventListener('resize', function () { if (isIbView()) fit(); });
   function view() {
     var t = IB.tab;
     if (!IB.F) loadF();
+    var mt = MENU_TABS[VIEW] || TABS;
+    if (!mt.some(function (x) { return x[0] === IB.tab; })) IB.tab = mt[0][0];
+    t = IB.tab;
     if (TAB_FEAT[t] && !fon(TAB_FEAT[t])) { IB.tab = t = 'inbox'; }
-    if (t === 'feat') { if (!IB.feats) load('erpInboxFeatures', {}, 'feats'); if (ME && ME.platform && !IB.plans) load('erpPlatformInboxPlan', {}, 'plans'); return frame(featHtml()); }
     if (t === 'team') { if (!IB.team) load('erpInboxGroups', {}, 'team'); return frame(teamHtml()); }
     if (t === 'inbox') return frame(inboxHtml());
     if (t === 'tasks') { if (!IB.tasks) load('erpInboxTasks', {}, 'tasks'); return frame(tasksHtml()); }
@@ -35526,7 +35547,8 @@ body[data-fdview="settings"] #o_cp .crumbs, body[data-fdview="tools"] #o_cp .cru
     if (t === 'cm') { if (!IB.cm) load('erpInboxComments', {}, 'cm'); return frame(cmHtml()); }
     if (t === 'desk') { if (!IB.desk) load('erpAgentDesk', {}, 'desk'); if (!IB.offers) load('erpShopOffers', {}, 'offers'); if (!IB.saved) load('erpSavedReplies', {}, 'saved'); return frame(deskHtml()); }
     if (t === 'kb') { if (!IB.kb) load('erpInboxKb', {}, 'kb'); return frame(kbHtml()); }
-    if (t === 'chans') { if (!IB.chans) load('erpInboxChannels', {}, 'chans'); return frame(chansHtml()); }
+    if (t === 'chans') { if (!IB.chans) load('erpInboxChannels', {}, 'chans'); return frame('<div class="sub" style="margin:0 0 10px">How the AI answers on each channel. Connect a new page, Instagram, WhatsApp number or website chat in <a href="#/settings" data-ibtoconn="1">Settings → Connections</a>.</div>' + chansHtml(false)); }
+    if (t === 'adacc') { if (ME && ME.role === 'owner' && !IB.meta) load('erpMetaConnect', {}, 'meta'); return frame(adAccHtml()); }
     if (t === 'stats') { if (!IB.stats) load('erpInboxStats', { days: 7 }, 'stats'); return frame(statsHtml()); }
     if (t === 'cost') { if (!IB.cost) load('erpAiWork', {}, 'cost'); return frame(costHtml()); }
     return frame('');
@@ -35863,7 +35885,36 @@ body[data-fdview="settings"] #o_cp .crumbs, body[data-fdview="tools"] #o_cp .cru
       '<div style="margin-top:8px">' + rows + '</div><div class="ib-actions"><select class="i" data-tpllang="' + c.id + '" style="width:auto"><option value="bn"' + (lang === 'bn' ? ' selected' : '') + '>বাংলা</option><option value="en"' + (lang === 'en' ? ' selected' : '') + '>English</option></select>' +
       '<button class="btn small primary" type="button" data-tpl="create" data-id="' + c.id + '">Create</button><button class="btn small" type="button" data-tpl="check" data-id="' + c.id + '">Check</button></div></details>';
   }
-  function chansHtml() {
+  // Connect with Facebook: one login - pages, Instagram, WhatsApp numbers (and ad accounts for later)
+  function metaHtml() {
+    if (!(ME && ME.role === 'owner')) return '';
+    var m = IB.meta; if (!m) return '<div class="ib-c" style="margin-bottom:14px"><div class="loading">Reading the Facebook connection…</div></div>'; if (m.error && !m.pages) return '';
+    var head = '<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><span style="width:38px;height:38px;border-radius:11px;background:#0866FF;display:flex;align-items:center;justify-content:center"><svg viewBox="0 0 24 24" width="22" height="22"><path d="M13.5 21v-7.2h2.4l.4-2.8h-2.8V9.2c0-.8.3-1.4 1.4-1.4h1.5V5.3c-.3 0-1.2-.1-2.2-.1-2.2 0-3.6 1.3-3.6 3.7V11H8.2v2.8h2.4V21z" fill="#fff"/></svg></span>' +
+      '<div style="flex:1;min-width:180px"><h3 style="margin:0">Facebook — one login for everything</h3><div class="sub" style="margin:2px 0 0">' +
+      (m.connected ? 'Logged in as <b>' + esc(m.name) + '</b> since ' + esc(m.since) + (m.expires ? ' · key ' + (m.expires === 'does not expire' ? 'does not expire' : 'until ' + esc(m.expires)) : '') : 'Your pages, Instagram and WhatsApp numbers come in with one login — no keys to paste. The same login serves posting and ads later.') + '</div></div>' +
+      (!m.configured ? '<span class="ib-tag test">PROVIDER HAS NOT ADDED THE META APP YET</span>' : m.connected ? '<button class="btn small" type="button" data-meta="refresh">Refresh</button><button class="btn small" type="button" data-meta="start">Log in again</button><button class="btn small" type="button" data-meta="off">Disconnect</button>' :
+        '<button class="btn primary" type="button" data-meta="start">Connect with Facebook</button>') + '</div>';
+    if (m.error) head += '<div class="note err" style="margin-top:8px"><div class="ico">!</div><div>' + esc(m.error) + '</div></div>';
+    if (!m.connected) return '<div class="ib-c" style="margin-bottom:14px">' + head + '</div>';
+    var use = function (kind, id, used, label) { return used ? '<span class="ib-tag ai">IN THE INBOX</span>' : '<button class="btn small primary" type="button" data-metause="' + kind + '" data-id="' + esc(id) + '">' + esc(label) + '</button>'; };
+    var rows = (m.pages || []).map(function (p) {
+      return '<div class="line" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:8px 0;border-top:1px solid var(--fd-border)"><span style="flex:1;min-width:160px"><b>' + esc(p.name) + '</b><span class="sku"> · Facebook page</span></span>' + use('page', p.id, p.used, 'Use for Messenger') +
+        (p.ig ? '<span style="flex-basis:100%;height:0"></span><span style="flex:1;min-width:160px;padding-left:14px">↳ <b>@' + esc(p.ig.username) + '</b><span class="sku"> · Instagram</span></span>' + use('ig', p.ig.id, p.igUsed, 'Use for Instagram') : '') + '</div>'; }).join('');
+    (m.wabas || []).forEach(function (w) { (w.phones || []).forEach(function (n) {
+      rows += '<div class="line" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:8px 0;border-top:1px solid var(--fd-border)"><span style="flex:1;min-width:160px"><b>' + esc(n.number) + '</b><span class="sku"> · WhatsApp (official) · ' + esc(n.name || w.name) + '</span></span>' + use('phone', n.id, n.used, 'Use for WhatsApp') + '</div>'; }); });
+    var ads = (m.adAccounts || []).length ? '<div class="sub" style="margin-top:10px">Ad accounts on this login (for ads, later): ' + m.adAccounts.map(function (a) { return esc(a.name) + (a.active ? '' : ' (inactive)'); }).join(', ') + '</div>' : '';
+    var miss = (m.asked || []).filter(function (x) { return (m.granted || []).indexOf(x) < 0; });
+    var perms = m.granted && m.granted.length && miss.length ? '<div class="sub" style="margin-top:6px">Not allowed on Facebook\'s screen: ' + esc(miss.join(', ')) + ' — log in again and leave them on if you need them.</div>' : '';
+    return '<div class="ib-c" style="margin-bottom:14px">' + head + '<div style="margin-top:10px">' + (rows || '<div class="sub">This login reaches no page or WhatsApp number. Log in again and tick your page.</div>') + '</div>' + ads + perms + '</div>';
+  }
+  function adAccHtml() {
+    if (!(ME && ME.role === 'owner')) return '<div class="ib-c"><div class="sub">The owner connects the ad accounts.</div></div>';
+    var m = IB.meta; if (!m) return '<div class="loading">Loading…</div>';
+    if (!m.connected) return '<div class="ib-c"><h3>Ad accounts</h3><div class="sub">Your Facebook ad accounts come in with the one Facebook login in <a href="#/settings" data-ibtoconn="1">Settings → Connections</a>. Posting, videos and ad results will be built here next (Part 2).</div></div>';
+    return '<div class="ib-c"><h3>Ad accounts on your Facebook login</h3>' + ((m.adAccounts || []).length ? m.adAccounts.map(function (a) { return '<div class="line" style="display:flex;justify-content:space-between;padding:8px 0;border-top:1px solid var(--fd-border)"><span><b>' + esc(a.name) + '</b> <span class="sku">' + esc(a.id) + ' · ' + esc(a.currency) + '</span></span><span class="ib-tag ' + (a.active ? 'ai' : 'test') + '">' + (a.active ? 'ACTIVE' : 'INACTIVE') + '</span></div>'; }).join('') : '<div class="sub">No ad account on this login.</div>') +
+      '<div class="sub" style="margin-top:8px">Posting to Facebook, Instagram, TikTok, YouTube and LinkedIn, video making, market research and ad results come here next (Part 2).</div></div>';
+  }
+  function chansHtml(withConnect) {
     return errOr(IB.chans, function (d) {
       var h = (!d.aiKey ? '<div class="note err"><div class="ico">!</div><div>No AI key is set — the AI cannot answer until one is set (Platform → AI reader).</div></div>' : '');
       if (d.channels.length && ME && ME.role === 'owner') h += '<div class="ib-actions" style="margin:0 0 12px"><button class="btn small" type="button" data-chall="pauseall">⏸ Pause the AI everywhere</button><button class="btn small" type="button" data-chall="resumeall">▶ Resume the AI everywhere</button></div>';
@@ -35888,7 +35939,7 @@ body[data-fdview="settings"] #o_cp .crumbs, body[data-fdview="tools"] #o_cp .cru
           (c.kind === 'wa_evo' ? '<button class="btn small" type="button" data-chqr="' + c.id + '">Link the phone (QR)</button>' : '') +
           '<button class="btn small" type="button" data-chremove="' + c.id + '">Remove</button></div>' + (IB.qr && IB.qr.id === c.id ? '<div style="margin-top:10px"><img src="' + esc(IB.qr.qr) + '" alt="QR" style="width:220px;background:#fff;padding:8px;border-radius:10px"><div class="sub">' + esc(IB.qr.state) + ' — scan with WhatsApp → Linked devices.</div></div>' : '') + '</div>';
       }).join('') + '</div>';
-      h += '<div class="ib-c" style="margin-top:14px"><h3>Connect a channel</h3><div class="ib-form"><label>What<select class="i" id="chKind">' + d.kinds.filter(function (k) { return fon({ messenger: 'ch_messenger', instagram: 'ch_instagram', wa_cloud: 'ch_wa_cloud', wa_evo: 'ch_wa_linked', wa_sender: 'ch_wa_linked', webchat: 'ch_webchat' }[k.kind]); }).map(function (k) { return '<option value="' + k.kind + '">' + esc(k.name) + (k.official ? '' : ' — not official') + '</option>'; }).join('') + '</select></label>' +
+      if (withConnect) h += '<div class="ib-c" style="margin-top:14px"><h3>Connect a channel by hand</h3><div class="ib-form"><label>What<select class="i" id="chKind">' + d.kinds.filter(function (k) { return fon({ messenger: 'ch_messenger', instagram: 'ch_instagram', wa_cloud: 'ch_wa_cloud', wa_evo: 'ch_wa_linked', wa_sender: 'ch_wa_linked', webchat: 'ch_webchat' }[k.kind]); }).map(function (k) { return '<option value="' + k.kind + '">' + esc(k.name) + (k.official ? '' : ' — not official') + '</option>'; }).join('') + '</select></label>' +
         '<label>Name<input class="i" id="chName" placeholder="e.g. Costareen page"></label><label>Page id / account id / phone number id / instance / number<input class="i" id="chExt"></label></div>' +
         '<label style="display:flex;gap:8px;align-items:flex-start;margin-top:8px;font-size:13px"><input type="checkbox" id="chRisk"> I understand a linked-device WhatsApp (Evolution / WaSenderAPI) is not Meta\'s official system, WhatsApp does not allow automated messages this way, and the number can be banned for a time or for good.</label>' +
         '<div class="ib-actions"><button class="btn primary small" type="button" data-chadd="1">Connect</button></div></div>';
@@ -35908,7 +35959,10 @@ body[data-fdview="settings"] #o_cp .crumbs, body[data-fdview="tools"] #o_cp .cru
         '<div class="ib-kpi"><b>' + v.waiting + '</b><span>Waiting now</span></div><div class="ib-kpi"><b>' + d.leads.n + '</b><span>Leads · ' + d.leads.won + ' won</span></div><div class="ib-kpi"><b>' + d.orders.n + '</b><span>Chat orders · ' + d.orders.ai + ' by the AI</span></div><div class="ib-kpi"><b>' + tk(d.aiCost.bdt) + '</b><span>AI cost (est.)</span></div></div>' +
         '<div class="ib-grid2"><div class="ib-c"><h3>Why chats went to a person (30 days)</h3>' + (d.reasons.length ? bars(d.reasons, 'reason', 'n') : '<div class="sku">None.</div>') + '</div>' +
         '<div class="ib-c"><h3>Busy hours</h3>' + (d.hours.length ? bars(d.hours.map(function (x) { return { h: (x.h % 12 || 12) + (x.h < 12 ? ' am' : ' pm'), n: x.n }; }), 'h', 'n') : '<div class="sku">No messages yet.</div>') + '</div>' +
-        '<div class="ib-c"><h3>By channel</h3>' + (d.byChannel.length ? bars(d.byChannel, 'channel', 'n') : '<div class="sku">No messages yet.</div>') + '</div></div>';
+        '<div class="ib-c"><h3>By channel</h3>' + (d.byChannel.length ? bars(d.byChannel, 'channel', 'n') : '<div class="sku">No messages yet.</div>') + '</div>' +
+        '<div class="ib-c"><h3>Who took the orders</h3>' + ((d.orders.byTaker || []).length ? bars(d.orders.byTaker.map(function (x) { return { who: x.who + ' · ' + tk(x.value), n: x.n }; }), 'who', 'n') : '<div class="sku">No chat orders yet.</div>') +
+          ((d.orders.cancelled || []).length ? '<h3 style="font-size:14px;margin-top:12px">Why cancelled</h3>' + bars(d.orders.cancelled, 'reason', 'n') : '') +
+          ((d.orders.held || []).length ? '<h3 style="font-size:14px;margin-top:12px">Why held</h3>' + bars(d.orders.held, 'reason', 'n') : '') + '</div></div>';
     });
   }
   function teamHtml() {
@@ -36002,10 +36056,25 @@ body[data-fdview="settings"] #o_cp .crumbs, body[data-fdview="tools"] #o_cp .cru
     });
   }
 
+  // ---------------------------------------------------------------- Settings: Connections and Plan & features (the owner, 15 Oct: one hub every menu uses)
+  window.ibConnHtml = function () {
+    if (!ibOn() || !(ME && ME.role === 'owner')) return '';
+    if (!IB.meta) load('erpMetaConnect', {}, 'meta');
+    if (!IB.chans) load('erpInboxChannels', {}, 'chans');
+    return '<section class="ib-conn"><div class="card"><h2>Social accounts and chat channels</h2><div class="sub">One place for the accounts the Inbox, Leads and Advertisement use.</div>' + metaHtml() +
+      (IB.chans && !IB.chans.error ? chansHtml(true).replace(/^[\s\S]*?(<div class="ib-c" style="margin-top:14px"><h3>Connect a channel by hand)/, '$1') : '') + '</div></section>';
+  };
+  window.ibPlanHtml = function () {
+    if (!ibOn()) return '';
+    if (!IB.feats) load('erpInboxFeatures', {}, 'feats');
+    if (ME && ME.platform && !IB.plans) load('erpPlatformInboxPlan', {}, 'plans');
+    return '<section class="ib-conn"><div class="card"><h2>Plan and features</h2><div class="sub">What your plan includes for the Inbox, Leads and Advertisement — switch each on or off.</div><div style="margin-top:10px">' + featHtml() + '</div></div></section>';
+  };
+
   // ---------------------------------------------------------------- the screen
   var repaintIb = repaint;
   repaint = function () {
-    if (VIEW !== 'inbox') return repaintIb.apply(this, arguments);
+    if (!isIbView()) return repaintIb.apply(this, arguments);
     if (!ibOn()) { el('view').innerHTML = '<div class="note"><div>The Inbox is not switched on for this business.</div></div>'; return; }
     if (!IB.saved) load('erpSavedReplies', {}, 'saved');
     paint();
@@ -36015,8 +36084,10 @@ body[data-fdview="settings"] #o_cp .crumbs, body[data-fdview="tools"] #o_cp .cru
   function val(id) { var x = el(id); return x ? String(x.value || '').trim() : ''; }
   function readFileAsB64(f, cb) { var rd = new FileReader(); rd.onload = function () { cb(String(rd.result)); }; rd.readAsDataURL(f); }
   document.addEventListener('click', function (e) {
-    if (VIEW !== 'inbox' || !e.target.closest) return;
-    var t = e.target.closest('[data-ibtab],[data-ibpile],[data-ibopen],[data-ibclose],[data-ibmode],[data-ibsend],[data-ibnote],[data-ibside],[data-ibai],[data-ibusedraft],[data-ibcsave],[data-ibinvoice],[data-ibgoconv],[data-ibtaskdone],[data-ibnotify],[data-ibost],[data-iboa],[data-ibinv],[data-iblead],[data-ibleadnew],[data-ibfusave],[data-ibbcsave],[data-ibbcsend],[data-ibcm],[data-ibpfsave],[data-ibundo],[data-ibhelper],[data-ibpublish],[data-ibdiscardall],[data-ibrule],[data-ibruleadd],[data-ibtest],[data-ibtestclear],[data-iboffer],[data-ibofferadd],[data-ibsavedadd],[data-ibsavedx],[data-ibkbadd],[data-ibkbtest],[data-ibkbx],[data-chsave],[data-chlive],[data-chpractice],[data-chcm],[data-chqr],[data-chremove],[data-chadd],[data-ibdays],[data-ibcost],[data-ibbkst],[data-ibbka],[data-ibduty],[data-ibexp],[data-ibolder],[data-chall],[data-ibdict],[data-ibnotebox],[data-ibplat],[data-ibplan],[data-ibgrp],[data-ibacc],[data-tpl]');
+    if (!e.target.closest) return;
+    if (e.target.closest('[data-ibtoconn]')) { e.preventDefault(); go('settings'); return; }
+    if (!isIbView() && !(VIEW === 'settings' && e.target.closest('.ib-conn'))) return;
+    var t = e.target.closest('[data-ibtab],[data-ibpile],[data-ibopen],[data-ibclose],[data-ibmode],[data-ibsend],[data-ibnote],[data-ibside],[data-ibai],[data-ibusedraft],[data-ibcsave],[data-ibinvoice],[data-ibgoconv],[data-ibtaskdone],[data-ibnotify],[data-ibost],[data-iboa],[data-ibinv],[data-iblead],[data-ibleadnew],[data-ibfusave],[data-ibbcsave],[data-ibbcsend],[data-ibcm],[data-ibpfsave],[data-ibundo],[data-ibhelper],[data-ibpublish],[data-ibdiscardall],[data-ibrule],[data-ibruleadd],[data-ibtest],[data-ibtestclear],[data-iboffer],[data-ibofferadd],[data-ibsavedadd],[data-ibsavedx],[data-ibkbadd],[data-ibkbtest],[data-ibkbx],[data-chsave],[data-chlive],[data-chpractice],[data-chcm],[data-chqr],[data-chremove],[data-chadd],[data-ibdays],[data-ibcost],[data-ibbkst],[data-ibbka],[data-ibduty],[data-ibexp],[data-ibolder],[data-chall],[data-ibdict],[data-ibnotebox],[data-ibplat],[data-ibplan],[data-ibgrp],[data-ibacc],[data-tpl],[data-meta],[data-metause]');
     if (!t) return;
     var d = t.dataset;
     if (d.ibtab) { IB.tab = d.ibtab; if (['tasks', 'orders', 'leads', 'stats', 'cost', 'cm', 'bc', 'fu'].indexOf(d.ibtab) >= 0) IB[d.ibtab] = null; paint(); return; }
@@ -36056,6 +36127,12 @@ body[data-fdview="settings"] #o_cp .crumbs, body[data-fdview="tools"] #o_cp .cru
     }
     if (d.tpl) { var tl = document.querySelector('[data-tpllang="' + d.id + '"]'); t.disabled = true;
       srv('erpInboxTemplates', [{ id: d.id, action: d.tpl, lang: tl ? tl.value : 'bn' }], function (r) { IB.chans = r; paint(); toast(r.errors && r.errors.length ? 'Meta refused some: ' + esc(r.errors.join(' | ')).slice(0, 300) : d.tpl === 'create' ? 'Asked Meta. Approval usually takes seconds to a few hours — press Check.' : 'Checked.', !!(r.errors && r.errors.length), 9000); }, function (er) { t.disabled = false; fail(er); }); return; }
+    if (d.meta) {
+      if (d.meta === 'start') { t.disabled = true; srv('erpMetaStart', [{}], function (r) { location.href = r.url; }, function (er) { t.disabled = false; fail(er); }); return; }
+      if (d.meta === 'refresh') { t.disabled = true; srv('erpMetaRefresh', [{}], function (r) { IB.meta = r; paint(); toast('Read again.'); }, function (er) { t.disabled = false; fail(er); }); return; }
+      if (d.meta === 'off') { uiConfirm('Disconnect Facebook? The channels already in the Inbox keep working with their own keys; nothing new comes from this login.').then(function (ok) { if (ok) srv('erpMetaDisconnect', [{}], function (r) { IB.meta = r; paint(); }, fail); }); return; }
+    }
+    if (d.metause) { var a = {}; a[d.metause] = d.id; t.disabled = true; srv('erpMetaUse', [a], function (r) { IB.meta = r; IB.chans = null; paint(); toast('In the Inbox — in practice mode. Test it, then Go live.' + (r.done && r.done.subscribe && !r.done.subscribe.ok ? ' (Facebook: ' + esc(r.done.subscribe.error) + ')' : '')); }, function (er) { t.disabled = false; fail(er); }); return; }
     if (d.ibplan) { planDialog(d.ibplan); return; }
     if (t.hasAttribute('data-ibgrp')) { groupDialog(d.ibgrp); return; }
     if (d.ibacc) { accessDialog(d.ibacc); return; }
@@ -36169,7 +36246,7 @@ body[data-fdview="settings"] #o_cp .crumbs, body[data-fdview="tools"] #o_cp .cru
     if (d.ibcost !== undefined && t.hasAttribute('data-ibcost')) { srv('erpAiWork', [{ from: val('acFrom'), to: val('acTo') }], function (r) { IB.cost = r; paint(); }, fail); return; }
   });
   document.addEventListener('change', function (e) {
-    if (VIEW !== 'inbox' || !e.target) return;
+    if (!isIbView() || !e.target) return;
     var t = e.target;
     if (t.hasAttribute('data-ibtake') && t.value !== '') { srv('erpInboxMode', [{ id: IB.convId, action: 'take', minutes: Number(t.value) }], function (r) { IB.conv = r; loadList(); paint(true); }, fail); return; }
     if (t.hasAttribute('data-ibsaved') && t.value) {
@@ -36184,17 +36261,21 @@ body[data-fdview="settings"] #o_cp .crumbs, body[data-fdview="tools"] #o_cp .cru
     if (t.hasAttribute('data-ibbcto') && t.value) { var bid = t.getAttribute('data-ibbcto'); srv('erpInboxBroadcasts', [{ test: bid, to: t.value }], function (r) { IB.bc = r; paint(); toast('Test sent — look at it, then Send.'); }, fail); return; }
   });
   document.addEventListener('input', function (e) {
-    if (VIEW !== 'inbox' || !e.target || e.target.id !== 'ibQ') return;
+    if (!isIbView() || !e.target || e.target.id !== 'ibQ') return;
     clearTimeout(IB.qt); var v = e.target.value; IB.qt = setTimeout(function () { IB.q = v; IB.list = null; loadList(); }, 350);
   });
   document.addEventListener('keydown', function (e) {
-    if (VIEW !== 'inbox') return;
+    if (!isIbView()) return;
     if (e.key === 'Enter' && e.target && e.target.id === 'ibOq') { IB.oq = e.target.value.trim(); IB.orders = null; paint(); var q1 = el('ibOq'); if (q1) { q1.focus(); q1.setSelectionRange(q1.value.length, q1.value.length); } return; }
     if (e.key === 'Enter' && !e.shiftKey && e.target && e.target.id === 'ibReply' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); var b = document.querySelector('[data-ibsend]'); if (b) b.click(); }
     if (e.key === 'Enter' && e.target && e.target.id === 'ibTestIn') { e.preventDefault(); var b2 = document.querySelector('[data-ibtest]'); if (b2) b2.click(); }
     if (e.key === 'Enter' && e.target && e.target.id === 'dkHelp') { e.preventDefault(); var b3 = document.querySelector('[data-ibhelper]'); if (b3) b3.click(); }
   });
 })();
+</script>
+<script>
+/* fd-46c: Settings > Connections also shows the shared social accounts (one Facebook login, connect a chat channel) and the Plan and features */
+if (typeof connHtml === 'function') { var connHtmlIb = connHtml; connHtml = function () { var h = connHtmlIb.apply(this, arguments); if (!h) return h; try { h += (window.ibConnHtml ? ibConnHtml() : '') + (window.ibPlanHtml ? ibPlanHtml() : ''); } catch (e) {} return h; }; }
 </script>
 <script>
 /* fd-46b: the Inbox's small inputs that are not clicks - lead search as you type, the broadcast gap, the order search when cleared */

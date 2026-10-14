@@ -9,6 +9,7 @@
 //   CRON_KEY    - shared with deploy/cron.sql; lets the scheduled jobs in
 
 import { googleCallback } from './handlers/google.js';
+import { metaCallback } from './handlers/metaconnect.js';
 import { wooKeysCallback } from './handlers/wooauth.js';
 import { shopDoor } from './handlers/shop.js';
 import { installRoute } from './handlers/installer.js';
@@ -337,8 +338,10 @@ async function svgPng(svg: string): Promise<Uint8Array> {
   const r = new RESVG.Resvg(svg, { font: { fontBuffers: FONT_BUFS, loadSystemFonts: false, defaultFontFamily: 'Inter' }, fitTo: { mode: 'width', value: 960 } });
   return r.render().asPng();
 }
+// the provider's Meta app: one for every company; each company logs in with its own Facebook (handlers/metaconnect.js)
+const META = { appId: Deno.env.get('META_APP_ID') ?? '', appSecret: Deno.env.get('META_APP_SECRET') ?? '', configId: Deno.env.get('META_CONFIG_ID') ?? '', redirect: SUPABASE_URL + '/functions/v1/erp?meta=back' };
 const own = projectParts({ url: SUPABASE_URL, anon: ANON, service: SERVICE, appUrl: Deno.env.get('ERP_APP_URL') ?? 'https://erp.costareen.com/' });
-const deps: any = { install: INSTALL, installEnv: INSTALL_ENV, google: GOOGLE, smtpNote: SMTP_NOTE, linkOnly: false, sql, sqlAux, control: ctlSql, fetch: globalThis.fetch.bind(globalThis), renderPdf, geminiKey: GEMINI_KEY, svgPng,
+const deps: any = { install: INSTALL, installEnv: INSTALL_ENV, google: GOOGLE, smtpNote: SMTP_NOTE, linkOnly: false, sql, sqlAux, control: ctlSql, fetch: globalThis.fetch.bind(globalThis), renderPdf, geminiKey: GEMINI_KEY, svgPng, meta: META,
                ...own, hookBase: FN_URL };
 
 // A company on the bridge: its own database, sign-in, files and e-mails; the provider's logic and PDF service.
@@ -356,7 +359,7 @@ async function buildTenant(t: any) {
     installEnv: INSTALL_ENV,
     google: { ...GOOGLE, redirect: FN_URL + '?google=back&t=' + t.id, appUrl },
     // control: the provider's own tables (the market list, joint pools)
-    smtpNote: '', linkOnly: false, sql: tsql, sqlAux: tAux, control: ctlSql, fetch: globalThis.fetch.bind(globalThis), renderPdf, geminiKey: GEMINI_KEY, svgPng,
+    smtpNote: '', linkOnly: false, sql: tsql, sqlAux: tAux, control: ctlSql, fetch: globalThis.fetch.bind(globalThis), renderPdf, geminiKey: GEMINI_KEY, svgPng, meta: { ...META, redirect: FN_URL + '?meta=back&t=' + t.id },
     ...parts, hookBase: FN_URL + '?t=' + t.id,
     close() { try { tsql.end({ timeout: 2 }); tAux.end({ timeout: 2 }); } catch (_) { /* gone */ } },
   };
@@ -416,6 +419,19 @@ async function serveWith(deps: any, req: Request, q0: URLSearchParams, headers: 
     const q = Object.fromEntries(new URL(req.url).searchParams.entries());
     let to = deps.google.appUrl + '#/settings?google=failed';
     try { to = await googleCallback(deps, q); } catch (e) { console.error('google callback', e); to += '&why=' + encodeURIComponent(String((e && (e as Error).message) || e).slice(0, 140)); }
+    return new Response(null, { status: 302, headers: { Location: to } });
+  }
+  // Facebook sends the owner back here after Connect with Facebook (handlers/metaconnect.js)
+  if (req.method === 'GET' && new URL(req.url).searchParams.get('meta') === 'back') {
+    const q = Object.fromEntries(new URL(req.url).searchParams.entries());
+    let to = String(deps.google.appUrl).replace(/\/+$/, '') + '/#/inbox?meta=failed';
+    try {
+      to = await metaCallback(deps, q, async (biz: string, fn: (ctx: any) => Promise<any>) => {
+        const rows = await owners(deps.sql, [biz]);
+        if (!rows.length) throw new Error('unknown business');
+        return asBusiness(deps, rows[0], 'meta:back', fn);
+      });
+    } catch (e) { console.error('meta callback', e); to += '&why=' + encodeURIComponent(String((e && (e as Error).message) || e).slice(0, 140)); }
     return new Response(null, { status: 302, headers: { Location: to } });
   }
   // WooCommerce sends the shop's keys here after the owner presses Approve on their own site (handlers/wooauth.js)

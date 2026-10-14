@@ -27,10 +27,10 @@ export const FEATURES = [
   ['bill_picture', 'Sales', 'Bill as a picture', 'After an order the customer gets the bill as an image'],
   ['product_page', 'Sales', 'Product pages with Buy', 'Each product has a page with a Buy button, opened from the chat'],
   ['bookings', 'Sales', 'Bookings', 'For service businesses: booking requests, advance, reminders'],
-  ['leads', 'Growth', 'Leads', 'Interested customers kept with a follow-up date'],
-  ['followups', 'Growth', 'Follow-ups', 'A reminder to a customer who went quiet (inside 24 hours)'],
-  ['broadcasts', 'Growth', 'Broadcasts', 'An offer to everyone who wrote in the last 23 hours'],
-  ['templates', 'Growth', 'Messages after 24 hours', 'Meta-approved templates for courier updates and booking reminders'],
+  ['leads', 'Later (own menu)', 'Leads', 'Interested customers kept with a follow-up date - its own menu later; off until then'],
+  ['followups', 'Sales', 'Follow-ups', 'A reminder to a customer who went quiet (inside 24 hours)'],
+  ['broadcasts', 'Later (own menu)', 'Broadcasts', 'An offer to everyone who wrote in the last 23 hours - Advertisement menu later; off until then'],
+  ['templates', 'Sales', 'Messages after 24 hours', 'Meta-approved templates for courier updates and booking reminders'],
   ['assistant', 'Team', 'AI assistant beside a chat', 'Summary, a question about the customer, a drafted reply'],
   ['saved_ai', 'Team', 'Saved replies with AI', 'Suggest the fitting saved reply; adapt it to the chat'],
   ['groups', 'Team', 'Team groups', 'Which group hears which hand-over; teammates limited to some channels'],
@@ -60,10 +60,14 @@ export async function ownerSwitches(ctx) {
   m.inboxOwn = o;
   return o;
 }
+/** Features that stay off until the owner switches them on (their own menus come later). */
+export const DEFAULT_OFF = ['leads', 'broadcasts'];
+/** Is the owner's switch on? (a default-off feature needs an explicit yes) */
+export function ownOn(own, key) { return DEFAULT_OFF.includes(key) ? own[key] === true : own[key] !== false; }
 /** Is this feature in the plan AND switched on? */
 export async function feat(ctx, key) {
   const plan = await planOf(ctx), own = await ownerSwitches(ctx);
-  return plan.features[key] !== false && own[key] !== false;
+  return plan.features[key] !== false && ownOn(own, key);
 }
 /** A plain refusal when a feature is off. */
 export async function needFeat(ctx, key) {

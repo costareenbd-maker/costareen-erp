@@ -10,7 +10,7 @@ import { platformAdmin } from './platform.js';
 import { orderLink, orderBase, orderSuffix } from './inboxpub.js';
 import { gemini, textOf, jsonOf } from '../lib/gemini.js';
 import { aiKey } from './receivefile.js';
-import { feat, needFeat, budget, planOf, ownerSwitches, FEATURES, FEATURE_KEYS, KIND_FEATURE } from '../lib/inboxplan.js';
+import { feat, needFeat, budget, planOf, ownerSwitches, ownOn, DEFAULT_OFF, FEATURES, FEATURE_KEYS, KIND_FEATURE } from '../lib/inboxplan.js';
 import { templatesCreate, templatesCheck, sendTemplate, templateName, TEMPLATE_KEYS } from './inboxch.js';
 import { writeMsg } from './inbox.js';
 import { KINDS, KIND_NAME, CAN, chSecret, chSecretSet, evoQr, evoState, evoSetHook, metaSubscribe, commentModerate, commentReply } from './inboxch.js';
@@ -704,6 +704,18 @@ export async function erpInboxStats(ctx, payload) {
                             where m.business_id = ${ctx.biz} and m.direction = 'in' and m.created_at >= ${from} group by 1`;
   const leads = (await ctx.tx`select count(*)::int n, count(*) filter (where stage = 5)::int won, count(*) filter (where stage = 6)::int lost from inbox_leads where business_id = ${ctx.biz} and created_at >= ${from}`)[0];
   const orders = (await ctx.tx`select count(*)::int n, count(*) filter (where taken_by = 'ai')::int ai from chat_orders where business_id = ${ctx.biz} and created_at >= ${from}`)[0];
+  // the order report (AiPraktor's Orders → Report): who took them, with their value; why orders were cancelled or held
+  const val = (r) => (r.items || []).reduce((t, x) => t + num(x.qty) * num(x.price), 0);
+  const taker = {}, cancel = {}, hold = {};
+  for (const o of await ctx.tx`select taken_by, items, status, cancel_reason, hold_reason from chat_orders where business_id = ${ctx.biz} and created_at >= ${from}`) {
+    const k = o.taken_by === 'ai' ? 'The AI' : o.taken_by === 'product page' ? 'Product page' : str(o.taken_by) || 'Team';
+    taker[k] = taker[k] || { who: k, n: 0, value: 0 }; taker[k].n++; taker[k].value += val(o);
+    if (o.status === 'cancelled' && o.cancel_reason) cancel[str(o.cancel_reason)] = (cancel[str(o.cancel_reason)] || 0) + 1;
+    if (o.hold_reason) hold[str(o.hold_reason)] = (hold[str(o.hold_reason)] || 0) + 1;
+  }
+  orders.byTaker = Object.values(taker).sort((a, b) => b.n - a.n);
+  orders.cancelled = Object.keys(cancel).map((k) => ({ reason: k, n: cancel[k] })).sort((a, b) => b.n - a.n);
+  orders.held = Object.keys(hold).map((k) => ({ reason: k, n: hold[k] })).sort((a, b) => b.n - a.n);
   const cost = (await ctx.tx`select coalesce(sum(cost_bdt), 0)::float as bdt, count(*)::int n from ai_work where business_id = ${ctx.biz} and at >= ${from}`)[0];
   return { days, messages: m, conversations: v, reasons: reasons.map((r) => ({ reason: REASONS[r.reason] || r.reason || 'Other', n: r.n })), claimMedianS: claim.s,
            hours: hours.map((h) => ({ h: h.h, n: h.n })), byChannel: byCh.map((x) => ({ channel: KIND_NAME[x.kind] || x.kind, n: x.n })), leads, orders, aiCost: { bdt: Math.round(cost.bdt * 100) / 100, n: cost.n } };
@@ -775,7 +787,7 @@ export async function erpInboxFeatures(ctx, payload) {
     for (const k of Object.keys(p.save || {})) {
       if (!FEATURE_KEYS.includes(k)) continue;
       if (p.save[k] && plan.features[k] === false) throw new Error('That feature is not in your plan.');
-      if (p.save[k]) delete own[k]; else own[k] = false;
+      if (p.save[k]) { if (DEFAULT_OFF.includes(k)) own[k] = true; else delete own[k]; } else own[k] = false;
     }
     await setConfig(ctx, 'inbox_features', JSON.stringify(own));
     if (p.warnAt !== undefined) await setConfig(ctx, 'inbox_budget_warn', String(Math.max(10, Math.min(100, num(p.warnAt) || 80))));
@@ -783,7 +795,7 @@ export async function erpInboxFeatures(ctx, payload) {
   }
   const plan = await planOf(ctx), own = await ownerSwitches(ctx);
   return { plan: plan.name, budget: await budget(ctx),
-    features: FEATURES.map((f) => ({ key: f[0], group: f[1], name: f[2], what: f[3], inPlan: plan.features[f[0]] !== false, on: plan.features[f[0]] !== false && own[f[0]] !== false })) };
+    features: FEATURES.map((f) => ({ key: f[0], group: f[1], name: f[2], what: f[3], inPlan: plan.features[f[0]] !== false, on: plan.features[f[0]] !== false && ownOn(own, f[0]) })) };
 }
 /** For the page: which features run (one call when the Inbox opens). */
 export async function erpInboxFeatureMap(ctx) {
