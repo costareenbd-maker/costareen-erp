@@ -398,4 +398,25 @@ const r2 = await asB((ctx) => pub.orderPage(ctx, coRow.page_token));
 check('switched off: the pages answer nothing', r.status === 404 && r2.status === 404);
 await owner('erpInboxFeatures', [{ save: { product_page: true, order_page: true } }]);
 
+// ---- 21. team groups: who hears what; a teammate limited to some channels
+r = await mgr('erpInboxGroups', [{ save: { name: 'Payments', hears: ['payment'], members: [FIX.U.sales] } }]);
+check('only the owner makes groups', !r.ok, r);
+r = await owner('erpInboxGroups', [{ save: { name: 'Payments', hears: ['payment'], members: [FIX.U.sales] } }]);
+check('a group: hears payments, the sales teammate in it', r.ok && r.result.groups.length === 1 && r.result.groups[0].members[0] === FIX.U.sales, r);
+r = await sales('erpInboxTasks', [{}]);
+const allTasks = (await owner('erpInboxTasks', [{}])).result.tasks;
+check('the teammate\'s Notifications show only what the group hears; the owner sees all', r.ok && r.result.tasks.length >= 1 && r.result.tasks.every((t) => t.kind === 'payment') && allTasks.some((t) => t.kind !== 'payment'), r.result && r.result.tasks.map((t) => t.kind));
+r = await owner('erpInboxGroups', [{ access: { userId: FIX.U.sales, channels: [W.id] } }]);
+check('the teammate is limited to the website chat', r.ok && r.result.access[FIX.U.sales].length === 1, r);
+r = await sales('erpInbox', [{ pile: 'all' }]);
+check('...their Inbox lists only website chats', r.ok && r.result.list.length >= 1 && r.result.list.every((x) => x.channel === 'webchat'), r.result && r.result.list.map((x) => x.channel));
+r = await sales('erpInboxOpen', [{ id: conv1 }]);
+check('...and a Messenger chat cannot be opened', !r.ok, r);
+r = await owner('erpInboxOpen', [{ id: conv1 }]);
+check('the owner still opens everything', r.ok);
+await owner('erpInboxGroups', [{ access: { userId: FIX.U.sales, all: true } }]);
+r = await owner('erpInboxGroups', [{ remove: (await owner('erpInboxGroups', [{}])).result.groups[0].id }]);
+r = await sales('erpInbox', [{ pile: 'all' }]);
+check('limits taken off: all chats again', r.ok && r.result.list.some((x) => x.channel === 'messenger'));
+
 await done();

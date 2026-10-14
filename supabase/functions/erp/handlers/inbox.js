@@ -55,6 +55,29 @@ export async function profile(ctx, draft) {
 // ------------------------------------------------------------------ small helpers
 async function chOf(ctx, id) { return (await ctx.tx`select * from inbox_channels where business_id = ${ctx.biz} and id = ${id}`)[0] || null; }
 async function convOf(ctx, id) { return (await ctx.tx`select * from inbox_conversations where business_id = ${ctx.biz} and id = ${id}`)[0] || null; }
+/** What this person sees (124_inbox_groups.sql): channels (null = all) and what they hear (null = everything). The owner sees all. */
+export async function scopeOf(ctx) {
+  const m = ctx.memo || (ctx.memo = {});
+  if (m.inboxScope) return m.inboxScope;
+  const sc = { channels: null, hears: null };
+  if (ctx.s.role !== 'owner' && ctx.s.userId && await feat(ctx, 'groups')) {
+    try {
+      const a = (await ctx.tx`select channels from inbox_access where business_id = ${ctx.biz} and user_id = ${ctx.s.userId}`)[0];
+      if (a) sc.channels = (a.channels || []).map(String);
+      const g = await ctx.tx`select hears from inbox_groups where business_id = ${ctx.biz} and ${ctx.s.userId}::uuid = any(members)`;
+      if (g.length) sc.hears = [...new Set(g.flatMap((x) => x.hears || []))];
+    } catch (_) { /* before 124 */ }
+  }
+  m.inboxScope = sc;
+  return sc;
+}
+/** A conversation this person may open (a teammate limited to some channels sees only those). */
+async function seeConv(ctx, id) {
+  const v = await convOf(ctx, id);
+  if (!v) return null;
+  const sc = await scopeOf(ctx);
+  return sc.channels && !sc.channels.includes(String(v.channel_id)) ? null : v;
+}
 async function contactOf(ctx, id) { return (await ctx.tx`select * from inbox_contacts where business_id = ${ctx.biz} and id = ${id}`)[0] || null; }
 function chSetting(ch, k, def) { const s = ch && ch.settings || {}; return s[k] === undefined || s[k] === null || s[k] === '' ? def : s[k]; }
 function waitSeconds(ch) { return Math.max(0, Math.min(15, num(chSetting(ch, 'wait_s', ch.kind === 'webchat' ? 3 : 15)))); }
@@ -941,19 +964,23 @@ export async function erpInbox(ctx, payload) {
   // the platform switch: one platform's chats (WhatsApp = all three WhatsApp routes)
   const PLAT = { fb: ['messenger'], ig: ['instagram'], wa: ['wa_cloud', 'wa_evo', 'wa_sender'], web: ['webchat'] };
   const kinds = PLAT[str(p.platform)] || null;
+  const sc = await scopeOf(ctx), CH = sc.channels || ['-'], HR = sc.hears || ['-'];
   const rows = await ctx.tx`select v.*, c.name, c.phone, c.avatar, c.external_id, ch.kind, ch.name as ch_name from inbox_conversations v
     join inbox_contacts c on c.id = v.contact_id join inbox_channels ch on ch.id = v.channel_id
     where v.business_id = ${ctx.biz} and ch.status <> 'removed'
-      and (${pile} = 'all' or (${pile} = 'waiting' and v.mode = 'human' and v.handover_reason is not null and v.claimed_by is null) or (${pile} not in ('all', 'waiting') and v.pile = ${pile}))
+      and (${pile} = 'all' or (${pile} = 'waiting' and v.mode = 'human' and v.handover_reason is not null and v.claimed_by is null and (${!sc.hears} or v.handover_reason = any(${HR}))) or (${pile} not in ('all', 'waiting') and v.pile = ${pile}))
       and (${str(p.channel)} = '' or v.channel_id::text = ${str(p.channel)})
+      and (${!sc.channels} or v.channel_id::text = any(${CH}))
       and (${!kinds} or ch.kind = any(${kinds || ['-']}))
       and (${q} = '' or lower(coalesce(c.name, '') || ' ' || coalesce(c.phone, '') || ' ' || coalesce(v.last_text, '')) like ${'%' + q + '%'})
     order by case when ${pile} = 'waiting' then v.handover_at end asc nulls last, v.last_at desc limit 200`;
   const counts = (await ctx.tx`select
       count(*) filter (where pile = 'open')::int as open, count(*) filter (where pile = 'later')::int as later, count(*) filter (where pile = 'done')::int as done,
-      count(*) filter (where mode = 'human' and handover_reason is not null and claimed_by is null)::int as waiting, coalesce(sum(unread), 0)::int as unread
-      from inbox_conversations v join inbox_channels ch on ch.id = v.channel_id where v.business_id = ${ctx.biz} and ch.status <> 'removed'`)[0];
-  const tasks = (await ctx.tx`select count(*)::int n from inbox_tasks where business_id = ${ctx.biz} and status = 'open'`)[0].n;
+      count(*) filter (where mode = 'human' and handover_reason is not null and claimed_by is null and (${!sc.hears} or handover_reason = any(${HR})))::int as waiting, coalesce(sum(unread), 0)::int as unread
+      from inbox_conversations v join inbox_channels ch on ch.id = v.channel_id where v.business_id = ${ctx.biz} and ch.status <> 'removed' and (${!sc.channels} or v.channel_id::text = any(${CH}))`)[0];
+  const tasks = (await ctx.tx`select count(*)::int n from inbox_tasks t left join inbox_conversations v on v.id = t.conversation_id where t.business_id = ${ctx.biz} and t.status = 'open'
+      and (${!sc.channels} or t.conversation_id is null or v.channel_id::text = any(${CH}))
+      and (${!sc.hears} or (t.kind = 'handover' and t.reason = any(${HR})) or (t.kind <> 'handover' and t.kind = any(${HR})))`)[0].n;
   // per platform: connected or not, and unread
   const platforms = {};
   for (const r of await ctx.tx`select ch.kind, count(v.id)::int chats, coalesce(sum(v.unread), 0)::int unread from inbox_channels ch
@@ -976,7 +1003,7 @@ export async function erpInbox(ctx, payload) {
 /** One conversation: the timeline (latest 80), the customer's ERP record, its leads and chat orders. */
 export async function erpInboxOpen(ctx, payload) {
   need(ctx);
-  const v = await convOf(ctx, str(payload && payload.id));
+  const v = await seeConv(ctx, str(payload && payload.id));
   if (!v) throw new Error('That conversation is not here.');
   const ch = await chOf(ctx, v.channel_id), c = await contactOf(ctx, v.contact_id);
   const before = num(payload && payload.before);
@@ -1020,7 +1047,7 @@ export async function erpInboxOpen(ctx, payload) {
 export async function erpInboxSend(ctx, payload) {
   need(ctx);
   const p = payload || {};
-  const v = await convOf(ctx, str(p.id));
+  const v = await seeConv(ctx, str(p.id));
   if (!v) throw new Error('That conversation is not here.');
   const ch = await chOf(ctx, v.channel_id), c = await contactOf(ctx, v.contact_id);
   const text = str(p.text);
@@ -1053,7 +1080,7 @@ export async function erpInboxSend(ctx, payload) {
 export async function erpInboxMode(ctx, payload) {
   need(ctx);
   const p = payload || {};
-  const v = await convOf(ctx, str(p.id));
+  const v = await seeConv(ctx, str(p.id));
   if (!v) throw new Error('That conversation is not here.');
   const ch = await chOf(ctx, v.channel_id);
   if (p.action === 'take' || p.action === 'claim') {
@@ -1095,7 +1122,7 @@ export async function erpInboxAssist(ctx, payload) {
   need(ctx);
   await needFeat(ctx, 'assistant');
   const p = payload || {};
-  const v = await convOf(ctx, str(p.id));
+  const v = await seeConv(ctx, str(p.id));
   if (!v) throw new Error('That conversation is not here.');
   const c = await contactOf(ctx, v.contact_id);
   const hist = (await ctx.tx`select direction, author, kind, text, transcript, seen_as, created_at from inbox_messages where conversation_id = ${v.id} order by id desc limit 60`).reverse();
@@ -1130,8 +1157,12 @@ export async function erpInboxTasks(ctx, payload) {
   if (p.done) {
     await ctx.tx`update inbox_tasks set status = 'done', done_by = ${ctx.s.name}, done_at = now() where business_id = ${ctx.biz} and id = ${num(p.done)}`;
   }
+  const sc = await scopeOf(ctx), CH = sc.channels || ['-'], HR = sc.hears || ['-'];
   const rows = await ctx.tx`select t.*, c.name from inbox_tasks t left join inbox_conversations v on v.id = t.conversation_id left join inbox_contacts c on c.id = v.contact_id
-                            where t.business_id = ${ctx.biz} and (t.status = 'open' or t.done_at > ${new Date(ctx.now.getTime() - 3 * H24)}) order by t.status desc, t.created_at desc limit 200`;
+                            where t.business_id = ${ctx.biz} and (t.status = 'open' or t.done_at > ${new Date(ctx.now.getTime() - 3 * H24)})
+                              and (${!sc.channels} or t.conversation_id is null or v.channel_id::text = any(${CH}))
+                              and (${!sc.hears} or (t.kind = 'handover' and t.reason = any(${HR})) or (t.kind <> 'handover' and t.kind = any(${HR})))
+                            order by t.status desc, t.created_at desc limit 200`;
   return { tasks: rows.map((t) => ({ id: Number(t.id), conv: t.conversation_id, kind: t.kind, reason: t.reason ? (REASONS[t.reason] || t.reason) : '', text: str(t.text), name: str(t.name),
     open: t.status === 'open', never: t.never_answered, ago: ago(t.created_at, ctx.now), done: t.done_by ? t.done_by + ', ' + ago(t.done_at, ctx.now) + ' ago' : '' })) };
 }

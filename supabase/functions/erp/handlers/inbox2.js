@@ -801,5 +801,46 @@ export async function erpPlatformInboxPlan(ctx, payload) {
       budget: r.ai_budget_bdt === null || r.ai_budget_bdt === undefined ? null : Number(r.ai_budget_bdt), used: used[r.id] || 0, setAt: r.set_at ? formatDate(new Date(r.set_at), 'd MMM yyyy') : '' })) };
 }
 
-export const HANDLERS = { erpPlatformInboxPlan, erpInboxFeatures, erpInboxFeatureMap, erpInboxExport, erpBookings, erpBookingAct, erpInboxChannels, erpInboxChannelSave, erpInboxChannelAct, erpInboxGoLive, erpInboxProfile, erpAgentDesk, erpInboxKb, erpShopOffers,
+// ------------------------------------------------------------------ team groups (124_inbox_groups.sql)
+const HEARS = [['complaint', 'Complaints'], ['refund', 'Refunds'], ['angry', 'Angry customers'], ['abuse', 'Abuse'], ['person', 'Asked for a person'], ['discount', 'Asked for a discount'],
+  ['ready', 'Ready to buy'], ['unknown', 'Outside what the AI knows'], ['other', 'Something else'], ['order', 'New orders and booking requests'], ['payment', 'Payments to check'],
+  ['enquiry', 'Messages while the AI is off'], ['comment', 'Comments'], ['alert', 'AI alerts']];
+/** Groups (who hears which hand-overs) and which channels each teammate sees. Owner changes; managers read. */
+export async function erpInboxGroups(ctx, payload) {
+  need(ctx, 'manager');
+  await needFeat(ctx, 'groups');
+  const p = payload || {};
+  const okUser = async (id) => (await ctx.tx`select 1 from memberships where business_id = ${ctx.biz} and user_id = ${id} and active`).length > 0;
+  if (p.save || p.remove || p.access) owner(ctx);
+  if (p.save) {
+    const g = p.save, name = str(g.name);
+    if (!name) throw new Error('Name the group.');
+    const hears = (g.hears || []).map(str).filter((h) => HEARS.some((x) => x[0] === h));
+    const members = [];
+    for (const m of g.members || []) if (/^[0-9a-f-]{36}$/i.test(str(m)) && await okUser(str(m))) members.push(str(m));
+    if (g.id) await ctx.tx`update inbox_groups set name = ${name}, hears = ${hears}, members = ${members} where business_id = ${ctx.biz} and id = ${str(g.id)}`;
+    else await ctx.tx`insert into inbox_groups (business_id, name, hears, members) values (${ctx.biz}, ${name}, ${hears}, ${members})`;
+  }
+  if (p.remove) await ctx.tx`delete from inbox_groups where business_id = ${ctx.biz} and id = ${str(p.remove)}`;
+  if (p.access) {
+    const a = p.access, uid = str(a.userId);
+    if (!(await okUser(uid))) throw new Error('No such teammate.');
+    if (a.all || !Array.isArray(a.channels)) await ctx.tx`delete from inbox_access where business_id = ${ctx.biz} and user_id = ${uid}`;
+    else {
+      const valid = (await ctx.tx`select id from inbox_channels where business_id = ${ctx.biz} and status <> 'removed'`).map((r) => String(r.id));
+      const chs = a.channels.map(str).filter((c) => valid.includes(c));
+      await ctx.tx`insert into inbox_access (business_id, user_id, channels, set_by) values (${ctx.biz}, ${uid}, ${chs}, ${ctx.s.name})
+                   on conflict (business_id, user_id) do update set channels = excluded.channels, set_by = excluded.set_by, set_at = now()`;
+    }
+  }
+  const users = (await ctx.tx`select m.user_id, m.role, p.full_name, p.email from memberships m left join profiles p on p.id = m.user_id where m.business_id = ${ctx.biz} and m.active order by m.role, p.full_name`)
+    .map((u) => ({ id: u.user_id, name: str(u.full_name) || str(u.email).split('@')[0] || 'Teammate', role: u.role }));
+  const access = {};
+  for (const a of await ctx.tx`select user_id, channels from inbox_access where business_id = ${ctx.biz}`) access[a.user_id] = (a.channels || []).map(String);
+  return { hears: HEARS.map((h) => ({ key: h[0], name: h[1] })), users, access,
+    channels: (await ctx.tx`select id, name, kind from inbox_channels where business_id = ${ctx.biz} and status <> 'removed' order by created_at`).map((c) => ({ id: String(c.id), name: c.name, kind: c.kind })),
+    groups: (await ctx.tx`select * from inbox_groups where business_id = ${ctx.biz} order by created_at`).map((g) => ({ id: g.id, name: g.name, hears: g.hears || [], members: (g.members || []).map(String) })) };
+}
+
+export const HANDLERS = { erpInboxGroups, erpPlatformInboxPlan, erpInboxFeatures, erpInboxFeatureMap, erpInboxExport, erpBookings, erpBookingAct, erpInboxChannels, erpInboxChannelSave, erpInboxChannelAct, erpInboxGoLive, erpInboxProfile, erpAgentDesk, erpInboxKb, erpShopOffers,
   erpChatOrders, erpChatOrderAct, erpInboxLeads, erpInboxBroadcasts, erpInboxFollowups, erpInboxComments, erpSavedReplies, erpInboxStats, erpAiWork };

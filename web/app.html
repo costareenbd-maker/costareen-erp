@@ -35441,7 +35441,7 @@ body[data-fdview="settings"] #o_cp .crumbs, body[data-fdview="tools"] #o_cp .cru
 (function () {
   var IB = { tab: 'inbox', pile: 'open', q: '', list: null, conv: null, convId: '', side: false, tasks: null, orders: null, ostatus: 'pending', leads: null, desk: null, kb: null,
              chans: null, stats: null, cost: null, bc: null, cm: null, fu: null, saved: null, offers: null, test: [], busy: {}, ai: '', counts: {},
-             bk: null, bkst: 'requested', plat: '', F: null, feats: null, plans: null, oq: '', lq: '', older: null, bcgap: 24, duty: (function () { try { return localStorage.getItem('ibDuty') === '1'; } catch (e) { return false; } })() };
+             bk: null, bkst: 'requested', plat: '', F: null, feats: null, plans: null, team: null, oq: '', lq: '', older: null, bcgap: 24, duty: (function () { try { return localStorage.getItem('ibDuty') === '1'; } catch (e) { return false; } })() };
   window.IB = IB;
   var ICON = '<path d="M4 4h16v12H8l-4 4z"/><path d="M8 9h8M8 12h5"/>';
   function ibOn() { if (!ME) return false; if (ME.platform) return true; var off = (ME.apps && ME.apps.off) || []; return off.indexOf('inbox') < 0 && typeof APPS !== 'undefined' && APPS && APPS.apps && APPS.apps.some(function (a) { return a.key === 'inbox' && a.on; }); }
@@ -35483,8 +35483,8 @@ body[data-fdview="settings"] #o_cp .crumbs, body[data-fdview="tools"] #o_cp .cru
     if ((IB.counts.waiting || 0) > before && 'Notification' in window && Notification.permission === 'granted') { try { new Notification('A customer is waiting', { body: 'A chat was handed to the team.' }); } catch (e) {} } }, function () {}); }, 30000);
 
   // ---------------------------------------------------------------- the frame
-  var TABS = [['inbox', 'Inbox'], ['tasks', 'Notifications'], ['orders', 'Orders'], ['bk', 'Bookings'], ['leads', 'Leads'], ['fu', 'Follow-ups'], ['bc', 'Broadcasts'], ['cm', 'Comments'], ['desk', 'Agent Desk'], ['kb', 'Knowledge'], ['chans', 'Channels'], ['stats', 'Analytics'], ['cost', 'AI cost'], ['feat', 'Features']];
-  var TAB_FEAT = { orders: 'orders', bk: 'bookings', leads: 'leads', fu: 'followups', bc: 'broadcasts', cm: 'comments', kb: 'knowledge', stats: 'analytics' };
+  var TABS = [['inbox', 'Inbox'], ['tasks', 'Notifications'], ['orders', 'Orders'], ['bk', 'Bookings'], ['leads', 'Leads'], ['fu', 'Follow-ups'], ['bc', 'Broadcasts'], ['cm', 'Comments'], ['desk', 'Agent Desk'], ['kb', 'Knowledge'], ['chans', 'Channels'], ['stats', 'Analytics'], ['cost', 'AI cost'], ['team', 'Team'], ['feat', 'Features']];
+  var TAB_FEAT = { team: 'groups', orders: 'orders', bk: 'bookings', leads: 'leads', fu: 'followups', bc: 'broadcasts', cm: 'comments', kb: 'knowledge', stats: 'analytics' };
   function budgetNote() {
     var b = IB.F && IB.F.budget; if (!b || !b.budget || !(b.warn || b.stopped)) return '';
     return '<div class="note' + (b.stopped ? ' err' : '') + '" style="margin-bottom:10px"><div class="ico">!</div><div>' + (b.stopped ? '<b>The AI has stopped:</b> this month\'s AI budget (' + tk(b.budget) + ') is used up. Messages still arrive here; your team answers.' :
@@ -35494,7 +35494,7 @@ body[data-fdview="settings"] #o_cp .crumbs, body[data-fdview="tools"] #o_cp .cru
     var n = { inbox: (IB.counts.unread || 0), tasks: (IB.counts.tasks || 0), orders: (IB.orders && IB.orders.counts ? IB.orders.counts.pending : 0), bk: (IB.bk && IB.bk.counts ? IB.bk.counts.requested : 0) };
     return '<div class="fdd-head" style="margin-bottom:10px"><div><h1 class="fdd-title" style="display:flex;gap:10px;align-items:center">Inbox <span class="ib-tag test">ONLY ME</span></h1></div><button type="button" class="btn small' + (IB.duty ? ' primary' : '') + '" data-ibduty="1" title="On duty: a sound when a customer waits for a person">' + (IB.duty ? '🔔 On duty' : '🔕 Off duty') + '</button></div>' +
       budgetNote() +
-      '<div class="ib-tabs" role="tablist">' + TABS.filter(function (t) { return !(t[0] === 'cost' && ME && ME.role !== 'owner') && (!TAB_FEAT[t[0]] || fon(TAB_FEAT[t[0]])); }).map(function (t) {
+      '<div class="ib-tabs" role="tablist">' + TABS.filter(function (t) { return !(t[0] === 'cost' && ME && ME.role !== 'owner') && !(t[0] === 'team' && ME && ME.role !== 'owner' && ME.role !== 'manager') && (!TAB_FEAT[t[0]] || fon(TAB_FEAT[t[0]])); }).map(function (t) {
         return '<button type="button" data-ibtab="' + t[0] + '" class="' + (IB.tab === t[0] ? 'on' : '') + '">' + esc(t[1]) + (n[t[0]] ? '<span class="n">' + n[t[0]] + '</span>' : '') + '</button>'; }).join('') + '</div>' + inner;
   }
   function paint(keepScroll) {
@@ -35515,6 +35515,7 @@ body[data-fdview="settings"] #o_cp .crumbs, body[data-fdview="tools"] #o_cp .cru
     if (!IB.F) loadF();
     if (TAB_FEAT[t] && !fon(TAB_FEAT[t])) { IB.tab = t = 'inbox'; }
     if (t === 'feat') { if (!IB.feats) load('erpInboxFeatures', {}, 'feats'); if (ME && ME.platform && !IB.plans) load('erpPlatformInboxPlan', {}, 'plans'); return frame(featHtml()); }
+    if (t === 'team') { if (!IB.team) load('erpInboxGroups', {}, 'team'); return frame(teamHtml()); }
     if (t === 'inbox') return frame(inboxHtml());
     if (t === 'tasks') { if (!IB.tasks) load('erpInboxTasks', {}, 'tasks'); return frame(tasksHtml()); }
     if (t === 'orders') { if (!IB.orders) load('erpChatOrders', { status: IB.ostatus, q: IB.oq }, 'orders'); return frame(ordersHtml()); }
@@ -35898,6 +35899,47 @@ body[data-fdview="settings"] #o_cp .crumbs, body[data-fdview="tools"] #o_cp .cru
         '<div class="ib-c"><h3>By channel</h3>' + (d.byChannel.length ? bars(d.byChannel, 'channel', 'n') : '<div class="sku">No messages yet.</div>') + '</div></div>';
     });
   }
+  function teamHtml() {
+    return errOr(IB.team, function (d) {
+      var own = ME && ME.role === 'owner', HN = {}; d.hears.forEach(function (h) { HN[h.key] = h.name; });
+      var UN = {}; d.users.forEach(function (u) { UN[u.id] = u.name; });
+      var h = '<div class="ib-c" style="margin-bottom:14px"><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><h3 style="flex:1">Groups</h3>' + (own ? '<button class="btn small primary" type="button" data-ibgrp="">+ Group</button>' : '') + '</div>' +
+        '<div class="sub">A group hears only what you tick — complaints to the support people, new orders to the order desk. A teammate in no group hears everything. You (the owner) always see everything.</div>' +
+        (d.groups.length ? '<div class="ib-grid2" style="margin-top:10px">' + d.groups.map(function (g) {
+          return '<div class="ib-c" style="background:var(--fd-surface-1, transparent)"><div style="display:flex;gap:8px;align-items:center"><h3 style="flex:1;font-size:15px">' + esc(g.name) + '</h3>' + (own ? '<button class="btn small" type="button" data-ibgrp="' + esc(g.id) + '">Edit</button>' : '') + '</div>' +
+            '<div class="sku">Hears: ' + (g.hears.length ? g.hears.map(function (k) { return esc(HN[k] || k); }).join(', ') : 'nothing') + '</div>' +
+            '<div class="sku" style="margin-top:4px">People: ' + (g.members.length ? g.members.map(function (m) { return esc(UN[m] || '—'); }).join(', ') : 'nobody yet') + '</div></div>'; }).join('') + '</div>' : '<div class="ib-empty">No groups yet — everyone hears everything.</div>') + '</div>';
+      h += '<div class="ib-c"><h3>Who sees which channels</h3><div class="sub">Limit a teammate to some pages or numbers. Untick nothing = sees all channels.</div>' +
+        '<div class="fdd-scroll"><table class="fdd-t"><thead><tr><th>Teammate</th><th>Role</th><th>Sees</th><th></th></tr></thead><tbody>' + d.users.map(function (u) {
+          var lim = d.access[u.id];
+          return '<tr><td><b>' + esc(u.name) + '</b></td><td>' + esc(u.role) + '</td><td style="white-space:normal">' + (u.role === 'owner' ? 'everything' : lim ? (lim.length ? lim.map(function (c) { var x = d.channels.find(function (y) { return y.id === c; }); return esc(x ? x.name : '—'); }).join(', ') : 'no channel') : 'all channels') + '</td>' +
+            '<td>' + (own && u.role !== 'owner' ? '<button class="btn small" type="button" data-ibacc="' + esc(u.id) + '">Change</button>' : '') + '</td></tr>'; }).join('') + '</tbody></table></div></div>';
+      return h;
+    });
+  }
+  function groupDialog(id) {
+    var d = IB.team, g = d.groups.find(function (x) { return x.id === id; }) || { name: '', hears: [], members: [] };
+    fdwDialog(g.id ? 'Group — ' + g.name : 'New group', '<div class="dlg-b" style="white-space:normal"><div class="ib-form"><label style="grid-column:1/-1">Name<input class="i" id="grName" value="' + esc(g.name) + '" placeholder="e.g. Support"></label></div>' +
+      '<div style="margin-top:10px"><b style="font-size:13px">Hears</b>' + d.hears.map(function (x) { return '<label style="display:flex;gap:8px;align-items:center;font-size:13.5px;padding:3px 0"><input type="checkbox" data-grh="' + x.key + '"' + (g.hears.indexOf(x.key) >= 0 ? ' checked' : '') + '> ' + esc(x.name) + '</label>'; }).join('') + '</div>' +
+      '<div style="margin-top:10px"><b style="font-size:13px">People</b>' + d.users.filter(function (u) { return u.role !== 'owner'; }).map(function (u) { return '<label style="display:flex;gap:8px;align-items:center;font-size:13.5px;padding:3px 0"><input type="checkbox" data-grm="' + esc(u.id) + '"' + (g.members.indexOf(u.id) >= 0 ? ' checked' : '') + '> ' + esc(u.name) + ' <span class="sku">' + esc(u.role) + '</span></label>'; }).join('') + '</div>' +
+      (g.id ? '<div class="ib-actions"><button class="btn small" type="button" data-grdel="1" style="color:var(--fd-negative)">Remove this group</button></div>' : '') + '</div>',
+      function (back, close) {
+        var hears = [].filter.call(back.querySelectorAll('[data-grh]'), function (c) { return c.checked; }).map(function (c) { return c.getAttribute('data-grh'); });
+        var members = [].filter.call(back.querySelectorAll('[data-grm]'), function (c) { return c.checked; }).map(function (c) { return c.getAttribute('data-grm'); });
+        srv('erpInboxGroups', [{ save: { id: g.id, name: fdwVal(back, 'grName'), hears: hears, members: members } }], function (r) { IB.team = r; close(); paint(); toast('Saved.'); }, fail);
+      });
+    var all = document.querySelectorAll('.dlg-back'), dl = all[all.length - 1];
+    if (dl && g.id) dl.addEventListener('click', function (e) { if (!e.target.closest('[data-grdel]')) return; uiConfirm('Remove the group ' + g.name + '? Its people then hear everything again.').then(function (ok) { if (!ok) return; srv('erpInboxGroups', [{ remove: g.id }], function (r) { IB.team = r; if (dl.parentNode) dl.parentNode.removeChild(dl); paint(); }, fail); }); });
+  }
+  function accessDialog(uid) {
+    var d = IB.team, u = d.users.find(function (x) { return x.id === uid; }), lim = d.access[uid];
+    fdwDialog('Channels — ' + (u ? u.name : ''), '<div class="dlg-b" style="white-space:normal"><label style="display:flex;gap:8px;align-items:center;font-size:14px;padding:4px 0"><input type="checkbox" id="acAll"' + (lim ? '' : ' checked') + '> <b>All channels (and any added later)</b></label>' +
+      d.channels.map(function (c) { return '<label style="display:flex;gap:8px;align-items:center;font-size:13.5px;padding:3px 0 3px 22px"><input type="checkbox" data-acc="' + esc(c.id) + '"' + (!lim || lim.indexOf(c.id) >= 0 ? ' checked' : '') + '> ' + esc(c.name) + ' <span class="sku">' + esc(CHN[c.kind] || c.kind) + '</span></label>'; }).join('') + '</div>',
+      function (back, close) {
+        var all = el('acAll').checked, chs = [].filter.call(back.querySelectorAll('[data-acc]'), function (c) { return c.checked; }).map(function (c) { return c.getAttribute('data-acc'); });
+        srv('erpInboxGroups', [{ access: { userId: uid, all: all, channels: chs } }], function (r) { IB.team = r; close(); paint(); toast('Saved.'); }, fail);
+      });
+  }
   function featHtml() {
     return errOr(IB.feats, function (d) {
       var own = ME && ME.role === 'owner', b = d.budget, groups = [];
@@ -35962,7 +36004,7 @@ body[data-fdview="settings"] #o_cp .crumbs, body[data-fdview="tools"] #o_cp .cru
   function readFileAsB64(f, cb) { var rd = new FileReader(); rd.onload = function () { cb(String(rd.result)); }; rd.readAsDataURL(f); }
   document.addEventListener('click', function (e) {
     if (VIEW !== 'inbox' || !e.target.closest) return;
-    var t = e.target.closest('[data-ibtab],[data-ibpile],[data-ibopen],[data-ibclose],[data-ibmode],[data-ibsend],[data-ibnote],[data-ibside],[data-ibai],[data-ibusedraft],[data-ibcsave],[data-ibinvoice],[data-ibgoconv],[data-ibtaskdone],[data-ibnotify],[data-ibost],[data-iboa],[data-ibinv],[data-iblead],[data-ibleadnew],[data-ibfusave],[data-ibbcsave],[data-ibbcsend],[data-ibcm],[data-ibpfsave],[data-ibundo],[data-ibhelper],[data-ibpublish],[data-ibdiscardall],[data-ibrule],[data-ibruleadd],[data-ibtest],[data-ibtestclear],[data-iboffer],[data-ibofferadd],[data-ibsavedadd],[data-ibsavedx],[data-ibkbadd],[data-ibkbtest],[data-ibkbx],[data-chsave],[data-chlive],[data-chpractice],[data-chcm],[data-chqr],[data-chremove],[data-chadd],[data-ibdays],[data-ibcost],[data-ibbkst],[data-ibbka],[data-ibduty],[data-ibexp],[data-ibolder],[data-chall],[data-ibdict],[data-ibnotebox],[data-ibplat],[data-ibplan]');
+    var t = e.target.closest('[data-ibtab],[data-ibpile],[data-ibopen],[data-ibclose],[data-ibmode],[data-ibsend],[data-ibnote],[data-ibside],[data-ibai],[data-ibusedraft],[data-ibcsave],[data-ibinvoice],[data-ibgoconv],[data-ibtaskdone],[data-ibnotify],[data-ibost],[data-iboa],[data-ibinv],[data-iblead],[data-ibleadnew],[data-ibfusave],[data-ibbcsave],[data-ibbcsend],[data-ibcm],[data-ibpfsave],[data-ibundo],[data-ibhelper],[data-ibpublish],[data-ibdiscardall],[data-ibrule],[data-ibruleadd],[data-ibtest],[data-ibtestclear],[data-iboffer],[data-ibofferadd],[data-ibsavedadd],[data-ibsavedx],[data-ibkbadd],[data-ibkbtest],[data-ibkbx],[data-chsave],[data-chlive],[data-chpractice],[data-chcm],[data-chqr],[data-chremove],[data-chadd],[data-ibdays],[data-ibcost],[data-ibbkst],[data-ibbka],[data-ibduty],[data-ibexp],[data-ibolder],[data-chall],[data-ibdict],[data-ibnotebox],[data-ibplat],[data-ibplan],[data-ibgrp],[data-ibacc]');
     if (!t) return;
     var d = t.dataset;
     if (d.ibtab) { IB.tab = d.ibtab; if (['tasks', 'orders', 'leads', 'stats', 'cost', 'cm', 'bc', 'fu'].indexOf(d.ibtab) >= 0) IB[d.ibtab] = null; paint(); return; }
@@ -36001,6 +36043,8 @@ body[data-fdview="settings"] #o_cp .crumbs, body[data-fdview="tools"] #o_cp .cru
       IB.plat = d.ibplat; IB.list = null; paint(); return;
     }
     if (d.ibplan) { planDialog(d.ibplan); return; }
+    if (t.hasAttribute('data-ibgrp')) { groupDialog(d.ibgrp); return; }
+    if (d.ibacc) { accessDialog(d.ibacc); return; }
     if (d.ibbkst) { IB.bkst = d.ibbkst; IB.bk = null; paint(); return; }
     if (d.ibdict !== undefined && t.hasAttribute('data-ibdict')) {
       if (IB.dict) { try { IB.dict.stop(); } catch (er) {} return; }
