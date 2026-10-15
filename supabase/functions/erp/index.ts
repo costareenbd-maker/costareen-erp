@@ -543,9 +543,10 @@ async function inboxRoute(deps: any, req: Request, q0: URLSearchParams, headers:
     const ch = await ib.hookChannel(deps.sql, q0.get('ch') || '', q0.get('k') || '');
     if (!ch) return new Response('no', { status: 404, headers: { 'Content-Type': 'text/plain' } });
     if (req.method === 'GET') {
-      const q = Object.fromEntries(q0.entries());
-      const r: any = await asOwner(ch.business_id, 'inbox:verify', (ctx) => ib.hookVerify(ctx, ch, q));
-      return new Response(String((r && r.text) || 'no'), { status: (r && r.status) || 200, headers: { 'Content-Type': 'text/plain' } });
+      // Meta's check gives up after a few seconds: answer from one quick read of the verify word, no business session
+      const want = String(((await deps.sql`select value from business_secrets where business_id = ${ch.business_id} and key = ${'INBOX_' + ch.id + '_VERIFY'}`)[0] || {}).value || '');
+      const ok = q0.get('hub.mode') === 'subscribe' && !!want && q0.get('hub.verify_token') === want;
+      return new Response(ok ? String(q0.get('hub.challenge') || '') : 'no', { status: ok ? 200 : 403, headers: { 'Content-Type': 'text/plain' } });
     }
     const raw = await req.text();
     const h: any = {}; req.headers.forEach((v, k) => { h[k.toLowerCase()] = v; });
