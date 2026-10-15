@@ -866,6 +866,13 @@ export async function hookPost(ctx, chRow, raw, headers) {
     if (want && str(headers['x-webhook-signature']) !== want) return { status: 403, due: [] };
   }
   let body = {}; try { body = JSON.parse(raw || '{}'); } catch (_) { body = {}; }
+  return hookEvents(ctx, chRow, body);
+}
+
+/** The events of one channel's part of a webhook body (signature already checked). */
+export async function hookEvents(ctx, chRow, body) {
+  const ch = await chOf(ctx, chRow.id);
+  if (!ch) return { due: [] };
   const evs = readHook(ch.kind, body);
   const due = [], comments = [];
   for (const ev of evs) {
@@ -1171,3 +1178,32 @@ export const HANDLERS = { erpInbox, erpInboxOpen, erpInboxSend, erpInboxMode, er
 
 // for the public pages (inboxpub.js)
 export { catalogue, searchCat, imageUrl, deliveryFor, nextOrderNo, chOf, contactOf, phoneOk, writeMsg };
+
+// ------------------------------------------------------------------ one webhook for the whole Meta app (index.ts ?meta=hook)
+// Meta keeps ONE callback address per app, but each page / Instagram account / WhatsApp number can belong to a different
+// business. The body is split by the page (or account, or phone number) it is for, and each part goes to the channel
+// that has it - in whichever business added it. Parts for pages no business has added are dropped.
+export { metaSignatureOk };
+export async function metaHookSplit(sql, body) {
+  const b = body || {}, object = str(b.object), parts = [];
+  const kind = object === 'page' ? 'messenger' : object === 'instagram' ? 'instagram' : object === 'whatsapp_business_account' ? 'wa_cloud' : '';
+  if (!kind) return [];
+  for (const e of b.entry || []) {
+    if (kind === 'wa_cloud') {
+      for (const c of e.changes || []) {
+        const ph = str(c.value && c.value.metadata && c.value.metadata.phone_number_id);
+        if (ph) parts.push({ ext: ph, entry: { ...e, changes: [c] } });
+      }
+    } else parts.push({ ext: str(e.id), entry: e });
+  }
+  const out = new Map();
+  for (const pt of parts) {
+    if (!pt.ext) continue;
+    const chs = await sql`select id, business_id, kind, hook_key, status from inbox_channels where kind = ${kind} and external_id = ${pt.ext} and status <> 'removed'`;
+    for (const ch of chs) {
+      if (!out.has(ch.id)) out.set(ch.id, { ch, body: { object, entry: [] } });
+      out.get(ch.id).body.entry.push(pt.entry);
+    }
+  }
+  return [...out.values()];
+}

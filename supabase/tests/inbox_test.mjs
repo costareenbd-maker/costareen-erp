@@ -490,4 +490,20 @@ check('Disconnect forgets the login; the channels stay', r.ok && !r.result.conne
 r = await owner('erpInboxStats', [{ days: 7 }]);
 check('analytics shows who took the orders (the AI, the product page) with their value', r.ok && r.result.orders.byTaker.some((x) => x.who === 'The AI' && x.value > 0) && r.result.orders.byTaker.some((x) => x.who === 'Product page'), r.result && r.result.orders);
 
+// ---- 25. one webhook for the whole Meta app: the body is split by page; unknown pages dropped
+{
+  const ibm = await import(pathToFileURL(path.join(fnDir, 'handlers', 'inbox.js')));
+  const pg = (await sql`select id, business_id, external_id from inbox_channels where kind = 'messenger' and status <> 'removed' limit 1`)[0];
+  const body = { object: 'page', entry: [
+    { id: pg.external_id, messaging: [{ sender: { id: 'PSID-APP-1' }, recipient: { id: pg.external_id }, timestamp: Date.now(), message: { mid: 'm-app-1', text: 'hello via app hook' } }] },
+    { id: 'SOME-OTHER-PAGE', messaging: [{ sender: { id: 'x' }, message: { mid: 'm2', text: 'not ours' } }] }] };
+  const parts = await ibm.metaHookSplit(sql, body);
+  check('app webhook: only the page a business added gets its part', parts.length === 1 && parts[0].ch.id === pg.id && parts[0].body.entry.length === 1, parts.map((x) => x.ch.id));
+  const wa = await ibm.metaHookSplit(sql, { object: 'whatsapp_business_account', entry: [{ id: 'W1', changes: [{ field: 'messages', value: { metadata: { phone_number_id: 'NOPE' }, messages: [] } }] }] });
+  check('app webhook: a WhatsApp number nobody added is dropped', wa.length === 0, wa);
+  const good = await ibm.metaSignatureOk('sec', '{"a":1}', 'sha256=' + createHmac('sha256', 'sec').update('{"a":1}').digest('hex'));
+  const bad = await ibm.metaSignatureOk('sec', '{"a":1}', 'sha256=00');
+  check('app webhook: the signature check is shared', good === true && bad === false, [good, bad]);
+}
+
 await done();

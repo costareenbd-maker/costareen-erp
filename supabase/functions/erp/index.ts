@@ -475,7 +475,7 @@ async function serveWith(deps: any, req: Request, q0: URLSearchParams, headers: 
   }
   // the Inbox (handlers/inbox.js): channel webhooks ?inbox=hook&ch=<id>&k=<key> (GET = Meta's check, POST = events),
   // and the website chat ?chat=<channel id>&a=info|start|send|poll (public; the visitor carries a signed id)
-  if (q0.get('inbox') === 'hook' || q0.get('chat') || /^(order|bill|item)$/.test(q0.get('inbox') || '')) {
+  if (q0.get('inbox') === 'hook' || q0.get('meta') === 'hook' || q0.get('chat') || /^(order|bill|item)$/.test(q0.get('inbox') || '')) {
     try { return await inboxRoute(deps, req, q0, headers); }
     catch (e) { console.error('inbox', e); return new Response('{"ok":false}', { status: 200, headers }); }
   }
@@ -539,6 +539,28 @@ async function inboxRoute(deps: any, req: Request, q0: URLSearchParams, headers:
     if (!rows.length) throw new Error('unknown business');
     return asBusiness(deps, rows[0], label, fn);
   };
+  // one webhook for the whole Meta app: Meta's check answers from META_HOOK_VERIFY; events are split per page / account / number
+  if (q0.get('meta') === 'hook') {
+    if (req.method === 'GET') {
+      const want = Deno.env.get('META_HOOK_VERIFY') ?? '';
+      const ok = q0.get('hub.mode') === 'subscribe' && !!want && q0.get('hub.verify_token') === want;
+      return new Response(ok ? String(q0.get('hub.challenge') || '') : 'no', { status: ok ? 200 : 403, headers: { 'Content-Type': 'text/plain' } });
+    }
+    const raw = await req.text();
+    if (!META.appSecret || !(await ib.metaSignatureOk(META.appSecret, raw, req.headers.get('x-hub-signature-256') || ''))) {
+      return new Response('no', { status: 403, headers: { 'Content-Type': 'text/plain' } });
+    }
+    let body: any = {}; try { body = JSON.parse(raw || '{}'); } catch (_) { body = {}; }
+    for (const part of await ib.metaHookSplit(deps.sql, body)) {
+      const ch = part.ch;
+      try {
+        const r: any = await asOwner(ch.business_id, 'inbox:hook', (ctx) => ib.hookEvents(ctx, ch, part.body));
+        for (const d of (r && r.due) || []) later(d.ms, () => asOwner(ch.business_id, 'inbox:reply', (ctx) => ib.replyDue(ctx, d.id)));
+        for (const c of (r && r.comments) || []) later(2000, () => asOwner(ch.business_id, 'inbox:comment', (ctx) => ib.answerComment(ctx, ch.id, c)));
+      } catch (e) { console.error('meta hook', ch.id, e); }
+    }
+    return new Response('EVENT_RECEIVED', { status: 200, headers: { 'Content-Type': 'text/plain' } });
+  }
   if (q0.get('inbox') === 'hook') {
     const ch = await ib.hookChannel(deps.sql, q0.get('ch') || '', q0.get('k') || '');
     if (!ch) return new Response('no', { status: 404, headers: { 'Content-Type': 'text/plain' } });
