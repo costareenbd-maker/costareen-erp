@@ -2064,3 +2064,7 @@ The owner said "Now". Live moved from 8bcf1a7 (the old worktree) to main (3fb468
 - Removed the Meta app secret from the dev server, and unhooked the Evolution test instance.
 - Changed the Evolution server's main key (the business number stays linked; the new key is in the owner's Desktop note).
 - The Meta app secret still needs the owner's Reset.
+- **Fix, same day (live): the "Owed by customers" card showed ৳66.17L instead of ৳4.37L.**
+  - Cause: the new cards (Customers, Sales, ERP Navigator) added up the sheet's per-row dues. An old sheet order is one ORD- row per product line, each carrying the whole order total, so 191 rows from May–June 2026 were counted again.
+  - Fix: they now use the dues list's own figures (`duesMap`), the same method as the old sheet ERP's dues.
+  - The data was never wrong.
