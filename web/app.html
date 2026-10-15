@@ -1101,7 +1101,7 @@ function wireDash() {
 
 /** Is this screen open to the person signed in? (the nav already knows) */
 // Abilities per person (058): the server sends ME.powers; an older server does not, then the role decides.
-var POWER_MIN = { dash: 3, costs: 2, lists: 2, profit: 3, expenses: 3, stock: 2, suppliers: 2, weborders: 2, campaigns: 2, products: 2, returns: 2, dues: 2 };
+var POWER_MIN = { inbox: 1, dash: 3, costs: 2, lists: 2, profit: 3, expenses: 3, stock: 2, suppliers: 2, weborders: 2, campaigns: 2, products: 2, returns: 2, dues: 2 };
 // 15 Oct 2026: the 'act' switch - every action the owner can do, but no figures and no say over people.
 function pageActs() { return !!(ME && (ME.role === 'owner' || (ME.powers && ME.powers.act))); }
 function pageCan(id) {
@@ -16524,7 +16524,7 @@ document.addEventListener('click', function (ev) {
   if (q) { ev.stopPropagation(); uiAlert(q.closest('[data-conntile]').querySelector('b').textContent + '\n\n' + q.getAttribute('data-conntip')); return; }
   // a tile opens its own card further down
   var tile = t.closest('[data-conntile]');
-  if (tile && tile.getAttribute('data-conntile') === 'meta' && window.IB) { IB.tab = 'chans'; IB.chans = null; go('inbox'); return; }
+  if (tile && tile.getAttribute('data-conntile') === 'meta') { var fbsec = [].slice.call(document.querySelectorAll('h2,h3,strong,b')).filter(function (x) { return /Facebook . one login|Social accounts and chat channels/.test(x.textContent); })[0]; if (fbsec) { fbsec.scrollIntoView({ behavior: 'smooth', block: 'center' }); return; } if (window.IB) { IB.tab = 'chans'; IB.chans = null; go('inbox'); } return; }
   if (tile) {
     var want = { website: 'Website', courier: 'courier', whatsapp: 'WhatsApp', email: 'mail', google: 'Google Drive', ai: 'AI' }[tile.getAttribute('data-conntile')] || '';
     // the card whose title starts with the tile's name (not "Any website - open door"), else one that mentions it
@@ -35452,7 +35452,7 @@ body[data-fdview="settings"] #o_cp .crumbs, body[data-fdview="tools"] #o_cp .cru
   var ICON = '<path d="M4 4h16v12H8l-4 4z"/><path d="M8 9h8M8 12h5"/>';
   // who sees the Inbox: Settings > Business > Menu says Everyone / Only owners / Off; a company without an Inbox plan does not have it (the provider still sees it to try it)
   function ibMode() { var a = (ME && ME.apps) || {}; return (a.gone || []).indexOf('inbox') >= 0 ? 'off' : (a.hidden || []).indexOf('inbox') >= 0 ? 'owner' : (a.off || []).indexOf('inbox') >= 0 ? 'trial' : 'all'; }
-  function ibOn() { if (!ME) return false; var m = ibMode(); if (m === 'off') return false; if (m === 'owner') return ME.role === 'owner'; if (m === 'trial') return !!ME.platform; return true; }
+  function ibOn() { if (!ME) return false; if (!pageCan('inbox')) return false; var m = ibMode(); if (m === 'off') return false; if (m === 'owner') return ME.role === 'owner'; if (m === 'trial') return !!ME.platform; return true; }
   window.ibOn = ibOn;
   // the menus this code draws: the Inbox (chats + the AI sales assistant), Leads, Advertisement
   var IBV = { inbox: 'Inbox' };   // Leads and Advertisement come later as their own menus (the owner, 15 Oct)
@@ -35498,8 +35498,8 @@ body[data-fdview="settings"] #o_cp .crumbs, body[data-fdview="tools"] #o_cp .cru
   function loadF() { srv('erpInboxFeatureMap', [{}], function (r) { IB.F = r; if (isIbView()) paint(true); }, function () {}); }
   setInterval(function () { if (ibOn() && !document.hidden) loadF(); }, 300000);
   function loadConv(id) { IB.convId = id; srv('erpInboxOpen', [{ id: id }], function (r) { IB.conv = r; if (isIbView()) paint(true); }, fail); }
-  // live: the list every 8 s and the open chat every 5 s while the Inbox is open; the menu badge every 30 s
-  setInterval(function () { if (isIbView() && IB.tab === 'inbox' && !document.hidden) { loadList(); if (IB.convId) srv('erpInboxOpen', [{ id: IB.convId }], function (r) { var had = IB.conv && IB.conv.msgs.length; IB.conv = r; if (!had || had !== r.msgs.length) paint(true); }, function () {}); } }, 5000);
+  // live: the list and the open chat every 3 s while the Inbox is open; the menu badge every 30 s
+  setInterval(function () { if (isIbView() && IB.tab === 'inbox' && !document.hidden) { loadList(); if (IB.convId) srv('erpInboxOpen', [{ id: IB.convId }], function (r) { var had = IB.conv && IB.conv.msgs.length; IB.conv = r; if (!had || had !== r.msgs.length) paint(true); }, function () {}); } }, 3000);
   setInterval(function () { if (ibOn() && !document.hidden && !(isIbView() && IB.tab === 'inbox')) srv('erpInbox', [{ pile: 'open' }], function (r) { var before = IB.counts.waiting || 0; IB.counts = r.counts || {}; syncNav();
     if ((IB.counts.waiting || 0) > before) ding();
     if ((IB.counts.waiting || 0) > before && 'Notification' in window && Notification.permission === 'granted') { try { new Notification('A customer is waiting', { body: 'A chat was handed to the team.' }); } catch (e) {} } }, function () {}); }, 30000);
@@ -35598,7 +35598,7 @@ body[data-fdview="settings"] #o_cp .crumbs, body[data-fdview="tools"] #o_cp .cru
     var piles = [['open', 'Open'], ['waiting', 'Waiting'], ['later', 'Later'], ['done', 'Done']];
     var list = '<div class="ib-pane ib-listpane"><div class="ib-list-h"><div class="ib-piles">' + piles.map(function (p) {
       var n = IB.counts[p[0]]; return '<button type="button" data-ibpile="' + p[0] + '" class="' + (IB.pile === p[0] ? 'on' : '') + '">' + p[1] + (n ? ' · ' + n : '') + '</button>'; }).join('') + '</div>' +
-      '<input class="i" id="ibQ" placeholder="Search name, phone, message" value="' + esc(IB.q) + '"></div><div class="ib-list">' +
+      '<input class="i" id="ibQ" placeholder="Search name, phone, message" value="' + esc(IB.q) + '">' + (ME && /^(manager|shareholder|owner)$/.test(ME.role) && L && L.oldPending && L.oldPending.length ? '<button class="btn small" type="button" data-ibold="1" style="margin-top:6px;width:100%">' + (IB.oldBusy ? 'Bringing in old chats… ' + esc(IB.oldNote || '') : '⤓ Bring in old Facebook chats (once)') + '</button>' : '') + '</div><div class="ib-list">' +
       (!L ? '<div class="loading">Loading…</div>' : L.error ? '<div class="note err"><div>' + esc(L.error) + '</div></div>' : !L.list.length ? '<div class="ib-empty">' + (IB.pile === 'waiting' ? 'Nobody is waiting for a person. ✓' : 'No chats here yet.') + '</div>' :
         L.list.map(function (x) {
           return '<div class="ib-row' + (x.id === IB.convId ? ' on' : '') + '" data-ibopen="' + esc(x.id) + '"><div class="ib-av">' + (x.avatar ? '<img src="' + esc(x.avatar) + '" alt="">' : ini(x.name)) + '<i class="ch ib-ch-' + esc(x.channel) + '" title="' + esc(CHN[x.channel] || x.channel) + '"></i></div>' +
@@ -36497,6 +36497,46 @@ label.f .fhelp:hover, label.f .fhelp[aria-expanded="true"] { border-color:var(--
   new MutationObserver(function () { clearTimeout(t); t = setTimeout(function () { scan(document); }, 30); }).observe(document.body, { childList: true, subtree: true });
   scan(document);
 })();
+</script>
+<!-- fd-49: bring in the page's old Facebook chats (erpInboxPullOld) -->
+<script>
+document.addEventListener('click', function (e) {
+  var b = e.target.closest && e.target.closest('[data-ibold]');
+  if (!b || !window.IB || IB.oldBusy) return;
+  IB.oldBusy = true; IB.oldNote = ''; repaint();
+  function fail(err) { IB.oldBusy = false; repaint(); toast(esc((err && err.message) || err), true); }
+  srv('erpInboxChannels', [{}], function (r) {
+    var pend = (IB.list && IB.list.oldPending) || [];
+    var chs = ((r && r.channels) || []).filter(function (c) { return (c.kind === 'messenger' || c.kind === 'instagram') && c.status !== 'removed' && pend.indexOf(c.id) >= 0; });
+    if (!chs.length) { fail('No Facebook page is connected yet (Settings > Connections).'); return; }
+    var tot = { chats: 0, messages: 0 }, i = 0;
+    (function next() {
+      if (i >= chs.length) {
+        IB.oldBusy = false; IB.list = null; repaint();
+        toast(tot.messages ? 'Brought in ' + tot.messages + ' old messages from ' + tot.chats + ' chats. Older ones are filed under Done.' : 'Nothing new - the old chats are already here.');
+        return;
+      }
+      var c = chs[i++], rounds = 0;
+      (function more(after) {
+        srv('erpInboxPullOld', [{ channel: c.id, chats: 10, after: after || '' }], function (x) {
+          tot.chats += x.chats || 0; tot.messages += x.messages || 0; rounds++;
+          IB.oldNote = tot.chats + ' chats so far…'; repaint();
+          if (x.more && x.after && rounds < 40) more(x.after); else next();
+        }, fail);
+      })('');
+    })();
+  }, fail);
+});
+</script>
+<script>
+// back to the tab (after writing on Facebook, say): the chats at once, not at the next tick
+function ibFreshNow() {
+  if (document.hidden || !window.IB || VIEW !== 'inbox' || IB.tab !== 'inbox') return;
+  IB.list = null; repaint();
+  if (IB.convId) srv('erpInboxOpen', [{ id: IB.convId }], function (r) { IB.conv = r; if (VIEW === 'inbox') repaint(); }, function () {});
+}
+document.addEventListener('visibilitychange', ibFreshNow);
+window.addEventListener('focus', ibFreshNow);
 </script>
 <!-- fd-37: the page is styled: show it -->
 <script>(function () { var x = document.getElementById('bootHide'); if (x) x.remove(); })();</script>

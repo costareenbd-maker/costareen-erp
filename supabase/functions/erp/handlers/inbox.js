@@ -22,7 +22,7 @@ import { custKey } from '../lib/phone.js';
 import { roleAtLeast } from '../allow.js';
 import { gemini, geminiTools, textOf, jsonOf, b64 } from '../lib/gemini.js';
 import { sendOut, mediaBytes, readHook, metaSignatureOk, metaProfile, chSecret, CAN, KIND_NAME,
-         commentReply, commentPrivate, commentModerate } from './inboxch.js';
+         commentReply, commentPrivate, commentModerate, fetchBytes } from './inboxch.js';
 import { products } from './dashboard.js';
 import { feat, needFeat, budget, KIND_FEATURE } from '../lib/inboxplan.js';
 import { orderLink, billLink, itemLink } from './inboxpub.js';
@@ -136,7 +136,7 @@ async function upsertContact(ctx, ch, ev) {
   let c = (await ctx.tx`select * from inbox_contacts where channel_id = ${ch.id} and external_id = ${ev.from}`)[0];
   if (!c) {
     let name = str(ev.name), avatar = '';
-    if (!name && (ch.kind === 'messenger' || ch.kind === 'instagram')) { try { const p = await metaProfile(ctx, ch, ev.from); name = p.name || ''; avatar = p.avatar || ''; } catch (_) { /* fine */ } }
+    if (ch.kind === 'messenger' || ch.kind === 'instagram') { try { const p = await metaProfile(ctx, ch, ev.from); name = name || p.name || ''; avatar = p.avatar || ''; } catch (_) { /* fine */ } }
     const phone = /^wa_/.test(ch.kind) ? phoneOk(ev.from) || ('+' + ev.from) : str(ev.phone);
     c = (await ctx.tx`insert into inbox_contacts (business_id, channel_id, external_id, name, avatar, phone, customer_key)
            values (${ctx.biz}, ${ch.id}, ${ev.from}, ${name || null}, ${avatar || null}, ${phone || null}, ${phoneOk(phone) ? custKey(phoneOk(phone), name) : null})
@@ -1000,14 +1000,27 @@ export async function erpInbox(ctx, payload) {
   return {
     platforms,
     counts: { ...counts, tasks },
-    list: rows.map((r) => ({ id: r.id, name: str(r.name) || 'Customer', phone: str(r.phone), avatar: str(r.avatar), channel: r.kind, channelName: r.ch_name, mode: r.mode,
+    list: rows.map((r) => ({ id: r.id, name: str(r.name) || 'Customer', phone: str(r.phone), avatar: avatarOut(ctx, r.avatar, r.contact_id), channel: r.kind, channelName: r.ch_name, mode: r.mode,
       reason: r.handover_reason ? REASONS[r.handover_reason] : '', claimed: str(r.claimed_name), waiting: r.mode === 'human' && r.handover_at ? ago(r.handover_at, ctx.now) : '',
       last: str(r.last_text), ago: ago(r.last_at, ctx.now), unread: r.unread, pile: r.pile, interest: r.interest, test: r.is_test,
       window: CAN[r.kind] && CAN[r.kind].window24 && r.last_in_at ? Math.max(0, Math.round((H24 - (ctx.now - new Date(r.last_in_at))) / 3600e3)) : null })),
+    // pages whose old chats were never brought in (a one-time job; the button goes once it is done)
+    oldPending: roleAtLeast(ctx.s.role, 'manager') ? (await ctx.tx`select id from inbox_channels where business_id = ${ctx.biz} and kind in ('messenger', 'instagram')
+                  and status <> 'removed' and coalesce(settings->>'old_done', '') <> 'yes'`).map((x) => x.id) : [],
   };
 }
 
 /** One conversation: the timeline (latest 80), the customer's ERP record, its leads and chat orders. */
+/** The photo as the page shows it: our stored copy through ?inbox=avatar, never Facebook's own link. */
+function avatarOut(ctx, a, contactId) {
+  a = str(a);
+  if (/^data:/.test(a)) return a;
+  if (!/^file:/.test(a) || !contactId) return '';
+  const back = str(ctx.deps && ctx.deps.meta && ctx.deps.meta.redirect);
+  if (!back) return '';
+  return back.replace('meta=back', 'inbox=avatar') + '&id=' + encodeURIComponent(contactId);
+}
+const AVATAR_TRIED = new Map();   // contact id -> when its photo was last fetched again
 export async function erpInboxOpen(ctx, payload) {
   need(ctx);
   const v = await seeConv(ctx, str(payload && payload.id));
@@ -1016,13 +1029,26 @@ export async function erpInboxOpen(ctx, payload) {
   const before = num(payload && payload.before);
   const rows = (await ctx.tx`select * from inbox_messages where conversation_id = ${v.id} and (${before} = 0 or id < ${before}) order by id desc limit 80`).reverse();
   const msgs = [];
+  let copies = 0;
   for (const m of rows) {
     const one = { id: Number(m.id), dir: m.direction, author: m.author, who: str(m.user_name), kind: m.kind, text: str(m.text), transcript: str(m.transcript), seen: str(m.seen_as).replace(/\{[^}]*\}/, ''),
                   status: m.status, error: str(m.error), at: formatDate(new Date(m.created_at), 'd MMM, h:mm a') };
     if (m.payload && m.payload.cards) one.cards = m.payload.cards.map((x) => ({ code: x.code, title: x.title, subtitle: x.subtitle, image: x.image }));
     if (m.payload && m.payload.buttons) one.buttons = m.payload.buttons.map((x) => x.title);
     if (m.media && (m.kind === 'image' || m.kind === 'audio' || m.kind === 'video' || m.kind === 'file')) {
-      try { one.url = /^https?:/.test(m.media) ? m.media : await fileUrl(ctx, 'inbox', m.media); } catch (_) { /* none */ }
+      // a Facebook link (old chats brought in) is copied into our storage once: those links refuse other sites and expire
+      if (/^https?:/.test(m.media) && copies < 6 && ctx.deps && ctx.deps.storage) {
+        copies++;
+        try {
+          const f = await fetchBytes(ctx, m.media);
+          if (f.bytes.length && f.bytes.length < 15000000) {
+            const nm = v.id + '-' + Number(m.id).toString(36) + '.' + extOf(f.mime, m.kind);
+            await ctx.deps.storage.save(ctx.biz, 'inbox', nm, f.bytes, f.mime || 'application/octet-stream');
+            await ctx.tx`update inbox_messages set media = ${nm} where id = ${m.id}`; m.media = nm;
+          }
+        } catch (_) { /* the link has run out: shown as before */ }
+      }
+      try { one.url = /^https?:/.test(m.media) ? '' : await fileUrl(ctx, 'inbox', m.media); } catch (_) { /* none */ }
     }
     msgs.push(one);
   }
@@ -1038,12 +1064,16 @@ export async function erpInboxOpen(ctx, payload) {
   }
   const orders = await ctx.tx`select no, status, items, delivery_charge, invoice_no, created_at from chat_orders where business_id = ${ctx.biz} and (conversation_id = ${v.id} or (${ph || ''} <> '' and phone = ${ph || ''})) order by created_at desc limit 6`;
   const leads = await ctx.tx`select id, stage, want, follow_up_on from inbox_leads where business_id = ${ctx.biz} and conversation_id = ${v.id} order by created_at desc limit 3`;
+  if (ch && (ch.kind === 'messenger' || ch.kind === 'instagram') && !/^(data|file):/.test(str(c.avatar)) && Date.now() - (AVATAR_TRIED.get(c.id) || 0) > 3600e3) {
+    AVATAR_TRIED.set(c.id, Date.now()); if (AVATAR_TRIED.size > 5000) AVATAR_TRIED.clear();
+    try { const pr = await metaProfile(ctx, ch, c.external_id); if (pr.avatar) { await ctx.tx`update inbox_contacts set avatar = ${pr.avatar} where id = ${c.id}`; c.avatar = pr.avatar; } } catch (_) { /* fine */ }
+  }
   return {
     id: v.id, mode: v.mode, until: v.human_until ? formatDate(new Date(v.human_until), 'h:mm a') : (v.mode === 'human' ? 'for good' : ''), claimed: str(v.claimed_name),
     reason: v.handover_reason ? REASONS[v.handover_reason] : '', note: str(v.handover_note), pile: v.pile, interest: v.interest, test: v.is_test,
     channel: { id: ch.id, kind: ch.kind, name: ch.name, can: CAN[ch.kind] }, window: inWindow(ch, v, ctx.now),
     windowLeft: CAN[ch.kind].window24 && v.last_in_at ? Math.max(0, Math.round((H24 - (ctx.now - new Date(v.last_in_at))) / 60e3)) : null,
-    contact: { id: c.id, name: str(c.name), phone: str(c.phone), avatar: str(c.avatar), gender: c.gender, tags: c.tags || [], note: str(c.note), customerKey: str(c.customer_key) },
+    contact: { id: c.id, name: str(c.name), phone: str(c.phone), avatar: avatarOut(ctx, c.avatar, c.id), gender: c.gender, tags: c.tags || [], note: str(c.note), customerKey: str(c.customer_key) },
     msgs, more: rows.length === 80 ? Number(rows[0].id) : 0,
     record: { invoices, due, orders: orders.map((o) => ({ no: o.no, status: o.status, items: (o.items || []).map((x) => x.name + ' × ' + x.qty).join(', '), invoice: o.invoice_no,
       total: (o.items || []).reduce((t, x) => t + num(x.qty) * num(x.price), 0) + num(o.delivery_charge) })), leads: leads.map((l) => ({ id: l.id, stage: l.stage, want: str(l.want) })) },
@@ -1174,7 +1204,79 @@ export async function erpInboxTasks(ctx, payload) {
     open: t.status === 'open', never: t.never_answered, ago: ago(t.created_at, ctx.now), done: t.done_by ? t.done_by + ', ' + ago(t.done_at, ctx.now) + ' ago' : '' })) };
 }
 
-export const HANDLERS = { erpInbox, erpInboxOpen, erpInboxSend, erpInboxMode, erpInboxContact, erpInboxAssist, erpInboxTasks };
+// ------------------------------------------------------------------ old chats from Facebook (erpInboxPullOld)
+// The page's past Messenger conversations, with their real dates. Nothing is answered (no AI, no tasks), a message
+// already in the Inbox is skipped, and the old chats come in read and filed as Done unless the last word was the
+// customer's in the last 24 hours.
+export async function erpInboxPullOld(ctx, payload) {
+  const p = payload || {};
+  if (!roleAtLeast(ctx.s.role, 'manager')) throw new Error('A manager or the owner brings in old chats.');
+  const ch = isId(p.channel) ? await chOf(ctx, p.channel) : null;
+  if (!ch || ch.status === 'removed') throw new Error('Which channel?');
+  if (ch.kind !== 'messenger' && ch.kind !== 'instagram') throw new Error('Old chats can be brought in for a Facebook page or Instagram for now.');
+  const token = await chSecret(ctx, ch, 'TOKEN');
+  if (!token) throw new Error('This channel has no page key - connect it again under Settings > Connections.');
+  // one Facebook page of chats per call (Supabase stops a call that works too long); the page calls again with `after`
+  const want = Math.max(1, Math.min(15, Math.round(num(p.chats) || 10)));
+  const pageId = str(ch.external_id);
+  let url = 'https://graph.facebook.com/v21.0/' + encodeURIComponent(pageId) + '/conversations?platform=' + (ch.kind === 'instagram' ? 'instagram' : 'messenger') +
+    '&fields=' + encodeURIComponent('participants,updated_time,messages.limit(25){id,message,from,created_time,attachments}') + '&limit=' + want + (str(p.after) ? '&after=' + encodeURIComponent(str(p.after)) : '') + '&access_token=' + encodeURIComponent(token);
+  let chats = 0, added = 0, pages = 0;
+  const day = 24 * 3600e3;
+  let after = '';
+  while (url && chats < want && pages < 1) {
+    pages++;
+    const r = await ctx.deps.fetch(url, { method: 'GET' });
+    let j = {}; try { j = await r.json(); } catch (_) { j = {}; }
+    if (!r.ok || j.error) throw new Error('Facebook said: ' + str((j.error && j.error.message) || r.status).slice(0, 200));
+    for (const c of j.data || []) {
+      if (chats >= want) break;
+      const who = ((c.participants && c.participants.data) || []).find((x) => str(x.id) !== pageId && str(x.id) !== str(ch.settings && ch.settings.ig_id));
+      if (!who) continue;
+      chats++;
+      const contact = await upsertContact(ctx, ch, { from: str(who.id), name: str(who.name || who.username) });
+      const conv = await upsertConv(ctx, ch, contact);
+      const msgs = ((c.messages && c.messages.data) || []).slice().reverse();
+      const ids = msgs.map((m) => str(m.id)).filter(Boolean);
+      const have = new Set(ids.length ? (await ctx.tx`select external_id from inbox_messages where business_id = ${ctx.biz} and external_id = any(${ids})`).map((x) => x.external_id) : []);
+      let lastIn = null, lastOut = null, last = null, lastText = '', lastDir = '';
+      for (const m of msgs) {
+        const at = new Date(m.created_time || Date.now());
+        const mine = str(m.from && m.from.id) === pageId || (m.from && str(m.from.id) !== str(who.id));
+        const att = ((m.attachments && m.attachments.data) || [])[0];
+        const media = att ? str((att.image_data && att.image_data.url) || (att.video_data && att.video_data.url) || att.file_url) : '';
+        const kind = att ? (att.image_data ? 'image' : att.video_data ? 'video' : /audio/.test(str(att.mime_type)) ? 'audio' : 'file') : 'text';
+        const text = str(m.message);
+        if (!text && !media) continue;
+        if (m.id && have.has(str(m.id))) continue;
+        await ctx.tx`insert into inbox_messages (business_id, conversation_id, direction, author, user_name, kind, text, media, external_id, status, created_at)
+          values (${ctx.biz}, ${conv.id}, ${mine ? 'out' : 'in'}, ${mine ? 'team' : 'customer'}, ${mine ? 'From the page inbox' : null}, ${kind}, ${text || null},
+                  ${media || null}, ${str(m.id) || null}, ${mine ? 'sent' : 'received'}, ${at})`;
+        added++;
+        if (mine) lastOut = at; else lastIn = at;
+        if (!last || at > last) { last = at; lastText = text || (kind === 'image' ? '📷 Photo' : kind === 'audio' ? '🎤 Voice note' : '📎 File'); lastDir = mine ? 'out' : 'in'; }
+      }
+      if (last) {
+        const open = lastDir === 'in' && ctx.now.getTime() - last.getTime() < day;
+        // the old chat is the latest thing in this conversation unless something newer is already in it
+        const newer = (await ctx.tx`select 1 from inbox_messages where conversation_id = ${conv.id} and created_at > ${last} limit 1`).length > 0;
+        await ctx.tx`update inbox_conversations set
+            last_in_at = case when ${newer} then greatest(last_in_at, ${lastIn}) else ${lastIn} end,
+            last_out_at = case when ${newer} then greatest(last_out_at, ${lastOut}) else ${lastOut} end,
+            last_at = case when ${newer} then last_at else ${last} end,
+            last_text = case when ${newer} then last_text else ${lastText.slice(0, 140)} end,
+            pile = case when ${newer} or ${open} then pile else 'done' end
+          where id = ${conv.id}`;
+      }
+    }
+    after = (j.paging && j.paging.next && j.paging.cursors && j.paging.cursors.after) || '';
+    url = '';
+  }
+  if (!after) await ctx.tx`update inbox_channels set settings = coalesce(settings, '{}'::jsonb) || '{"old_done": "yes"}'::jsonb where id = ${ch.id}`;
+  return { chats, messages: added, more: !!after, after };
+}
+
+export const HANDLERS = { erpInbox, erpInboxOpen, erpInboxSend, erpInboxMode, erpInboxContact, erpInboxAssist, erpInboxTasks, erpInboxPullOld };
 
 // for the public pages (inboxpub.js)
 export { catalogue, searchCat, imageUrl, deliveryFor, nextOrderNo, chOf, contactOf, phoneOk, writeMsg };

@@ -394,7 +394,7 @@ Deno.serve(async (req) => {
   const q0 = new URL(req.url).searchParams;
   const tid = tenantOf(req, q0);
   // public routes, a company on the bridge, and every company copy (calls carry their own sign-in, never a cookie) answer any page
-  const headers = { ...cors(req.headers.get('origin'), !!(tid || q0.get('install') || q0.get('control') || q0.get('signin') || q0.get('pub') || q0.get('chat') || /^(order|bill|item)$/.test(q0.get('inbox') || '') || (INSTALL && INSTALL.id))), 'Content-Type': 'application/json' };
+  const headers = { ...cors(req.headers.get('origin'), !!(tid || q0.get('install') || q0.get('control') || q0.get('signin') || q0.get('pub') || q0.get('chat') || /^(order|bill|item|avatar)$/.test(q0.get('inbox') || '') || (INSTALL && INSTALL.id))), 'Content-Type': 'application/json' };
   if (req.method === 'OPTIONS') return new Response('ok', { headers });
   if (tid && !(q0.get('install') || q0.get('control'))) {
     if (!tenantDeps) return new Response(JSON.stringify({ ok: false, error: 'This server does not run company ERPs.' }), { status: 200, headers });
@@ -475,7 +475,7 @@ async function serveWith(deps: any, req: Request, q0: URLSearchParams, headers: 
   }
   // the Inbox (handlers/inbox.js): channel webhooks ?inbox=hook&ch=<id>&k=<key> (GET = Meta's check, POST = events),
   // and the website chat ?chat=<channel id>&a=info|start|send|poll (public; the visitor carries a signed id)
-  if (q0.get('inbox') === 'hook' || q0.get('meta') === 'hook' || q0.get('chat') || /^(order|bill|item)$/.test(q0.get('inbox') || '')) {
+  if (q0.get('inbox') === 'hook' || q0.get('meta') === 'hook' || q0.get('chat') || /^(order|bill|item|avatar)$/.test(q0.get('inbox') || '')) {
     try { return await inboxRoute(deps, req, q0, headers); }
     catch (e) { console.error('inbox', e); return new Response('{"ok":false}', { status: 200, headers }); }
   }
@@ -579,6 +579,18 @@ async function inboxRoute(deps: any, req: Request, q0: URLSearchParams, headers:
   }
   // the public pages: an order's own page, its bill as a picture, a product page opened from a chat (handlers/inboxpub.js)
   const what = String(q0.get('inbox') || '');
+  // a customer's photo, kept in our storage (handlers/inboxch.js avatarData)
+  if (what === 'avatar') {
+    const id = String(q0.get('id') || '');
+    const nf = new Response('', { status: 404 });
+    if (!/^[0-9a-f-]{36}$/i.test(id)) return nf;
+    const row = (await deps.sql`select business_id, avatar from inbox_contacts where id = ${id}`)[0];
+    const name = row && /^file:av-[0-9a-f]{20}\.(jpg|png)$/.test(String(row.avatar || '')) ? String(row.avatar).slice(5) : '';
+    if (!name) return nf;
+    const bytes = await deps.storage.read(row.business_id, 'inbox', name);
+    if (!bytes) return nf;
+    return new Response(bytes, { status: 200, headers: { 'Content-Type': name.endsWith('.png') ? 'image/png' : 'image/jpeg', 'Cache-Control': 'public, max-age=86400', 'Access-Control-Allow-Origin': '*' } });
+  }
   if (what === 'order' || what === 'bill' || what === 'item') {
     const pub: any = await import('./handlers/inboxpub.js');
     const tok = String(q0.get(what === 'item' ? 'c' : 'o') || '');

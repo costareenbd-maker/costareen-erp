@@ -318,7 +318,18 @@ export async function metaProfile(ctx, ch, id) {
   const r = await call(ctx, GRAPH + '/' + encodeURIComponent(id) + '?fields=' + fields + '&access_token=' + encodeURIComponent(token), { method: 'GET' });
   if (!r.ok) return {};
   const j = r.json;
-  return { name: str(j.name || [j.first_name, j.last_name].filter(Boolean).join(' ') || j.username), avatar: str(j.profile_pic) };
+  return { name: str(j.name || [j.first_name, j.last_name].filter(Boolean).join(' ') || j.username), avatar: await avatarData(ctx, str(j.profile_pic)) };
+}
+/** Facebook's photo links refuse to show on other sites and expire: keep the photo in our own storage ("file:<name>"). */
+export async function avatarData(ctx, url) {
+  if (!url) return '';
+  try {
+    const f = await fetchBytes(ctx, url);
+    if (!/^image\//.test(f.mime) || !f.bytes.length || f.bytes.length > 2000000 || !ctx.deps || !ctx.deps.storage) return '';
+    const name = 'av-' + crypto.randomUUID().replace(/-/g, '').slice(0, 20) + (/png/.test(f.mime) ? '.png' : '.jpg');
+    await ctx.deps.storage.save(ctx.biz, 'inbox', name, f.bytes, f.mime);
+    return 'file:' + name;
+  } catch (_) { return ''; }
 }
 
 // ------------------------------------------------------------------ templates: messages after Meta's 24 hours

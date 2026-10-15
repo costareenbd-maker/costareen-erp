@@ -506,4 +506,28 @@ check('analytics shows who took the orders (the AI, the product page) with their
   check('app webhook: the signature check is shared', good === true && bad === false, [good, bad]);
 }
 
+// ---- 26. old chats from Facebook: real dates, no AI, no double, read and filed
+{
+  const pch = (await sql`select id, external_id from inbox_channels where business_id = ${FIX.B} and kind = 'messenger' and status <> 'removed' order by created_at limit 1`)[0];
+  const PG = pch.external_id, old1 = '2026-09-01T10:00:00+0000', old2 = '2026-09-01T10:05:00+0000';
+  web.on(/\/conversations\?/, () => ({ status: 200, body: { data: [{ participants: { data: [{ id: PG, name: 'Page' }, { id: 'PSID-OLD-1', name: 'Karim Old' }] },
+    messages: { data: [{ id: 'm-old-2', message: 'Yes, 1200 taka', from: { id: PG }, created_time: old2 }, { id: 'm-old-1', message: 'Price of PLA?', from: { id: 'PSID-OLD-1' }, created_time: old1 }] } }] } }));
+  r = await owner('erpInbox', [{}]);
+  check('old chats: a new page is waiting for its old chats', r.ok && r.result.oldPending.includes(pch.id), r.result && r.result.oldPending);
+  const before = graph.length;
+  r = await sales('erpInboxPullOld', [{ channel: pch.id }]);
+  check('old chats: sales cannot bring them in', !r.ok, r.ok);
+  r = await mgr('erpInboxPullOld', [{ channel: pch.id }]);
+  check('old chats: one chat, two messages', r.ok && r.result.chats === 1 && r.result.messages === 2, r.error || r.result);
+  const ms = await sql`select m.direction, m.author, m.created_at, c.pile, c.unread, k.name from inbox_messages m join inbox_conversations c on c.id = m.conversation_id
+                       join inbox_contacts k on k.id = c.contact_id where m.external_id in ('m-old-1', 'm-old-2') order by m.created_at`;
+  check('old chats: real dates, customer in and page out, name kept, filed Done and read', ms.length === 2 && ms[0].direction === 'in' && ms[1].author === 'team' &&
+    new Date(ms[0].created_at).toISOString().startsWith('2026-09-01T10:00') && ms[0].pile === 'done' && ms[0].unread === 0 && ms[0].name === 'Karim Old', ms);
+  check('old chats: nothing sent to the customer', graph.slice(before).every((g) => g.method === 'GET' || !g.method || !/messages/.test(g.url)), graph.slice(before).map((g) => g.url.slice(0, 80)));
+  r = await mgr('erpInboxPullOld', [{ channel: pch.id }]);
+  check('old chats: pressing again adds nothing', r.ok && r.result.messages === 0, r.result);
+  r = await owner('erpInbox', [{}]);
+  check('old chats: a one-time job - the page is no longer waiting for it', r.ok && !r.result.oldPending.includes(pch.id), r.result && r.result.oldPending);
+}
+
 await done();

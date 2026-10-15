@@ -10,7 +10,7 @@ const hello = (fn) => fn('erpHello', []);
 // 1. the list the owner sees
 let r = await owner('erpUsers', []);
 const rina = r.ok && r.result.users.find((u) => u.id === SALES);
-check('users list carries the abilities and each person\'s', r.ok && r.result.abilities.length === 13 && rina && rina.powers.list.dash.on === false && rina.powers.discount === 100, r.ok ? [r.result.abilities.length, rina && rina.powers] : r);
+check('users list carries the abilities and each person\'s', r.ok && r.result.abilities.length === 14 && rina && rina.powers.list.dash.on === false && rina.powers.discount === 100, r.ok ? [r.result.abilities.length, rina && rina.powers] : r);
 
 // 2. before: sales cannot open a manager screen
 r = await sales('erpStockHistory', []);
@@ -116,5 +116,17 @@ check('act on: invoice money still scrubbed of profit', r.ok && !JSON.stringify(
 r = await set(MGR, { act: false });
 r = await mgr('erpExpenses', [{}]);
 check('act off again: expenses closed', !r.ok, r.ok);
+
+// 8. the Inbox per person: on for everyone by default, the owner switches it off for one
+r = await sales('erpInbox', [{}]);
+check('inbox: sales reads chats by default', r.ok || !/does not have access/.test(r.error), r.error);
+r = await set(SALES, { inbox: false });
+r = await sales('erpInbox', [{}]);
+check('inbox: switched off for one person, closed', !r.ok && /does not have access/.test(r.error), r.ok || r.error);
+r = await sales('erpInboxSend', [{ id: '00000000-0000-0000-0000-000000000000', text: 'x' }]);
+check('inbox: and cannot reply', !r.ok && /does not have access/.test(r.error), r.ok || r.error);
+r = await set(SALES, { inbox: null });
+r = await sales('erpInbox', [{}]);
+check('inbox: back to the role, open again', r.ok || !/does not have access/.test(r.error), r.error);
 
 await done();
