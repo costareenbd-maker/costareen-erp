@@ -36447,6 +36447,51 @@ document.addEventListener('change', function (e) { var t = e.target; if (t && t.
   setInterval(skin, 800);
 })();
 </script>
+<!-- fd-48 (owner 15 Oct 2026: "I don't want this kind of text beside every name, rather a help option"): the grey hints
+     inside form labels ("off the whole invoice", "(optional)", "(empty = today)" ... 47 of them) become a small ? after the
+     name; tapping it shows the hint. Labels stay on one line, so boxes side by side line up again. -->
+<style>
+label.f .fhelp { display:inline-flex; align-items:center; justify-content:center; width:16px; height:16px; margin-left:5px; padding:0; border-radius:50%;
+  border:1px solid var(--fd-border-strong, #ccd); background:var(--fd-surface-2, #f1f2f7); color:var(--fd-text-3, #6b7190); font:600 10.5px/1 var(--fd-font, inherit);
+  cursor:pointer; vertical-align:1px; flex:0 0 auto; }
+label.f .fhelp:hover, label.f .fhelp[aria-expanded="true"] { border-color:var(--fd-accent, #5b4fe9); color:var(--fd-accent-text, #4c41d6); }
+.fhelp-pop { position:absolute; z-index:9999; max-width:260px; padding:8px 10px; border-radius:8px; background:var(--fd-text, #14172b); color:var(--fd-card, #fff);
+  font:500 12.5px/1.4 var(--fd-font, inherit); box-shadow:var(--fd-shadow-popover, 0 8px 24px rgba(0,0,0,.2)); pointer-events:none; }
+</style>
+<script>
+(function () {
+  function clean(t) { t = String(t || '').trim(); if (/^\(.*\)$/.test(t)) t = t.slice(1, -1).trim(); return t.replace(/^[—–-]\s*/, ''); }
+  function scan(root) {
+    var list = (root || document).querySelectorAll('label.f > span.sku:not([data-fh])');
+    for (var i = 0; i < list.length; i++) {
+      var sp = list[i], hint = clean(sp.textContent);
+      sp.setAttribute('data-fh', '1');
+      if (!hint) continue;
+      var b = document.createElement('button');
+      b.type = 'button'; b.className = 'fhelp'; b.textContent = '?'; b.setAttribute('aria-label', hint); b.setAttribute('data-hint', hint); b.setAttribute('aria-expanded', 'false');
+      sp.replaceWith(b);
+    }
+  }
+  var pop = null, owner = null;
+  function close() { if (pop) { pop.remove(); pop = null; } if (owner) owner.setAttribute('aria-expanded', 'false'); owner = null; }
+  document.addEventListener('click', function (e) {
+    var b = e.target.closest && e.target.closest('label.f .fhelp');
+    if (!b) { close(); return; }
+    e.preventDefault(); e.stopPropagation();          // the label must not jump to its box
+    if (owner === b) { close(); return; }
+    close();
+    pop = document.createElement('div'); pop.className = 'fhelp-pop'; pop.textContent = b.getAttribute('data-hint'); document.body.appendChild(pop);
+    var r = b.getBoundingClientRect(), w = pop.offsetWidth;
+    pop.style.left = Math.max(8, Math.min(window.innerWidth - w - 8, r.left + window.scrollX - 10)) + 'px';
+    pop.style.top = (r.bottom + window.scrollY + 6) + 'px';
+    owner = b; b.setAttribute('aria-expanded', 'true');
+  }, true);
+  window.addEventListener('scroll', close, true);
+  var t = null;
+  new MutationObserver(function () { clearTimeout(t); t = setTimeout(function () { scan(document); }, 30); }).observe(document.body, { childList: true, subtree: true });
+  scan(document);
+})();
+</script>
 <!-- fd-37: the page is styled: show it -->
 <script>(function () { var x = document.getElementById('bootHide'); if (x) x.remove(); })();</script>
 </body>
