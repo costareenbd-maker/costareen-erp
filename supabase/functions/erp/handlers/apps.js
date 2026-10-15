@@ -40,11 +40,14 @@ export const APPS = [
 ];
 // Menu screens an owner may take out of his own menu (Settings > Business > Menu). Core screens are not here.
 export const MENU = [
-  { key: 'weborders', name: 'Web orders' }, { key: 'quotes', name: 'Quotations' }, { key: 'repairs', name: 'Repairs' },
-  { key: 'printjobs', name: 'Print jobs' }, { key: 'resell', name: 'Resell' }, { key: 'campaigns', name: 'Campaigns' },
-  { key: 'suppliers', name: 'Suppliers' }, { key: 'costs', name: 'Product cost' }, { key: 'market', name: 'Market' },
-  { key: 'joint', name: 'Joint stock' }, { key: 'profit', name: 'Profitability' }, { key: 'expenses', name: 'Expenses' },
-  { key: 'capital', name: 'Capital' }, { key: 'tools', name: 'Maintenance' }, { key: 'inbox', name: 'Inbox' },
+  // in the menu's own order and groups (owner 15 Oct 2026: the list must be exactly what the menu shows; Profitability and
+  // Maintenance now sit inside the Dashboard and Settings - their access is a person's ability under Settings > Users)
+  { key: 'inbox', name: 'Inbox', group: 'Sell' }, { key: 'weborders', name: 'Web orders', group: 'Sell' }, { key: 'quotes', name: 'Quotations', group: 'Sell' },
+  { key: 'preorders', name: 'Pre-orders', group: 'Sell' }, { key: 'repairs', name: 'Repairs', group: 'Sell' }, { key: 'printjobs', name: 'Print jobs', group: 'Sell' },
+  { key: 'resell', name: 'Resell', group: 'Sell' }, { key: 'campaigns', name: 'Campaigns', group: 'Sell' },
+  { key: 'shipments', name: 'Shipments', group: 'Goods' }, { key: 'suppliers', name: 'Suppliers', group: 'Goods' }, { key: 'costs', name: 'Product cost', group: 'Goods' },
+  { key: 'market', name: 'Market', group: 'Goods' }, { key: 'joint', name: 'Joint stock', group: 'Goods' },
+  { key: 'expenses', name: 'Expenses', group: 'Money' }, { key: 'commission', name: 'Commission', group: 'Money' }, { key: 'capital', name: 'Capital', group: 'Money' },
 ];
 const MENU_KEY = Object.fromEntries(MENU.map((m) => [m.key, m]));
 const BY_KEY = Object.fromEntries(APPS.map((a) => [a.key, a]));
@@ -135,7 +138,7 @@ export async function erpApps(ctx) {
     })),
     // Settings > Business > Menu: which menu screens this company shows
     // forced: the provider took this screen out of every company's menu (this company's own choice is kept for when it comes back)
-    menu: MENU.map((m) => ({ key: m.key, name: m.name, mode: modes[m.key] || 'all', hidden: modes[m.key] === 'owner', off: !!off[m.key], forced: !!forced[m.key] })),
+    menu: MENU.map((m) => ({ key: m.key, name: m.name, group: m.group || '', mode: modes[m.key] || 'all', hidden: modes[m.key] === 'owner', off: !!off[m.key], forced: !!forced[m.key] })),
   };
 }
 

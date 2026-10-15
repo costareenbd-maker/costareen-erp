@@ -15,7 +15,7 @@ const menu = (r, k) => r.result.menu.find((m) => m.key === k);
 let r = await sales('erpApps', []);
 check('sales staff read the catalogue: 10 public features on, the Only-me one off, no switches for them', r.ok && r.result.apps.length === 13 && r.result.apps.filter((a) => !a.labs).length === 10 && r.result.apps.every((a) => (a.labs ? !a.on : a.on) && !a.hidden) && !r.result.owner && !r.result.admin, r);
 check('the public ones carry a link; every tile names its screen (Platform ones only for the admin)', r.ok && r.result.apps.filter((a) => a.url).length === 9 && r.result.apps.filter((a) => a.view).length === 11 && r.result.apps.every((a) => typeof a.where === 'string'), r.result.apps.map((a) => a.key + ':' + a.view + ':' + a.url));
-check('the menu list: 15 screens, all for everyone (the Inbox off until the company has an Inbox plan)', r.ok && r.result.menu.length === 15 && r.result.menu.every((m) => m.mode === 'all' && (m.key === 'inbox' ? m.off : !m.off)), r.result.menu);
+check('the menu list: 16 screens in the menu order, all for everyone (the Inbox off until the company has an Inbox plan)', r.ok && r.result.menu.length === 16 && r.result.menu[0].group === 'Sell' && !r.result.menu.some((m) => m.key === 'profit' || m.key === 'tools') && r.result.menu.every((m) => m.mode === 'all' && (m.key === 'inbox' ? m.off : !m.off)), r.result.menu);
 
 // 2. the owner sets who sees a screen; staff cannot; the other business is untouched
 r = await mgr('erpAppSet', [{ key: 'repairs', mode: 'owner', scope: 'mine' }]);
@@ -41,12 +41,12 @@ for (const k of ['repairs', 'campaigns', 'resell']) r = await owner('erpAppSet',
 check('...and everything back for everyone', r.ok && r.result.menu.every((m) => m.mode === 'all'), r);
 
 // 2b. an old 'apps_hidden' list (before the modes) still reads as only-owners
-await sql`update business_config set value = '["tools"]' where business_id = ${FIX.B} and key = 'apps_hidden'`;
+await sql`update business_config set value = '["quotes"]' where business_id = ${FIX.B} and key = 'apps_hidden'`;
 await sql`delete from business_config where business_id = ${FIX.B} and key = 'apps_menu'`;
 r = await owner('erpApps', []);
-check('the old hidden list reads as only owners', r.ok && menu(r, 'tools').mode === 'owner', menu(r, 'tools'));
-r = await owner('erpAppSet', [{ key: 'tools', mode: 'all', scope: 'mine' }]);
-check('...and is retired once a mode is set', r.ok && menu(r, 'tools').mode === 'all' && (await sql`select value from business_config where business_id = ${FIX.B} and key = 'apps_hidden'`)[0].value === '[]', r.result.menu);
+check('the old hidden list reads as only owners', r.ok && menu(r, 'quotes').mode === 'owner', menu(r, 'quotes'));
+r = await owner('erpAppSet', [{ key: 'quotes', mode: 'all', scope: 'mine' }]);
+check('...and is retired once a mode is set', r.ok && menu(r, 'quotes').mode === 'all' && (await sql`select value from business_config where business_id = ${FIX.B} and key = 'apps_hidden'`)[0].value === '[]', r.result.menu);
 
 // 3. the provider switches an app off for everyone
 r = await owner('erpAppSet', [{ key: 'ideas', on: false, scope: 'all' }]);
@@ -130,4 +130,13 @@ check('Everyone: the staff see the Inbox', r.ok && !ap.hidden.includes('inbox') 
 r = await owner('erpAppSet', [{ key: 'inbox', mode: 'off' }]);
 ap = (await hello(owner)).apps || {};
 check('Off: gone for everyone, the owner too', r.ok && ap.gone.includes('inbox'), ap);
+// 15 Oct 2026: Commission, Pre-orders and Shipments are switchable like the rest
+r = await owner('erpAppSet', [{ key: 'commission', mode: 'owner' }]);
+ap = (await hello(sales)).apps || {};
+check('Commission set to Only owners: the staff do not get it', r.ok && ap.hidden.includes('commission'), ap);
+await owner('erpAppSet', [{ key: 'commission', mode: 'all' }]);
+ap = (await hello(sales)).apps || {};
+check('...and back to Everyone', !ap.hidden.includes('commission') && !ap.gone.includes('commission'), ap);
+r = await owner('erpAppSet', [{ key: 'profit', mode: 'off' }]);
+check('Profitability is not a menu switch any more (it is a Dashboard tab, kept by abilities)', !r.ok, r);
 await done();

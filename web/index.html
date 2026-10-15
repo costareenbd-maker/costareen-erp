@@ -21849,7 +21849,9 @@ function menuCardHtml() {
   var h = '<section><div class="card"><h2>Menu</h2><div class="sub" data-c5x="1" style="display:block">Who sees each screen in this business. <b>Everyone</b>: you and your staff. <b>Only owners</b>: you use it, staff do not see it. <b>Off</b>: nobody here, until you switch it back. The main screens always stay; nothing is deleted. (What a person may DO on a screen is set under Users.)' +
           (admin ? ' <b>All companies</b> (only you see this, as the provider): switched off, the screen leaves every company’s menu, yours too, and their owners cannot bring it back.' : '') + '</div>' +
           '<div class="ap-mrows' + (admin ? ' adm' : '') + '">';
+  var lastGrp = '';
   APPS.menu.forEach(function (m0) {
+    if (m0.group && m0.group !== lastGrp) { lastGrp = m0.group; h += '<div class="ap-mgrp">' + esc(m0.group) + '</div>'; }   // the menu's own groups
     var w = AP_WANT[m0.key], m = m0;
     if (w) { m = Object.assign({}, m0); if (w.mode) m.mode = w.mode; if (w.on !== undefined) m.forced = !w.on; }
     h += '<div class="ap-mrow' + (m.forced ? ' forced' : '') + '"><span class="nm">' + esc(m.name) + (m.forced ? '<small>Off for every company</small>' : '') + '</span>' +
@@ -36400,6 +36402,8 @@ document.addEventListener('change', function (e) { var t = e.target; if (t && t.
 }
 /* type: one label size (10.5 mono caps), one body size (14), two weights (400 / 600); 26 for the title only */
 #view.ib-skin { font-size:14px; }
+.ap-mrows .ap-mgrp { grid-column:1/-1; margin:14px 0 2px; font-size:11px; font-weight:600; letter-spacing:.1em; text-transform:uppercase; color:var(--fd-text-3, var(--muted)); }
+.ap-mrows .ap-mgrp:first-child { margin-top:2px; }
 #view.ib-skin .ib-tabs button, #view.ib-skin .ib-piles button, #view.ib-skin .ib-tag, #view.ib-skin .ib-c h3, #view.ib-skin .ib-box h4, #view.ib-skin .ib-form label, #view.ib-skin .ib-kpi span, #view.ib-skin .fdd-t th, #view.ib-skin .ib-ev, #view.ib-skin .loading { font-size:10.5px; font-weight:500; }
 #view.ib-skin .btn { font-size:13px; font-weight:600; }
 #view.ib-skin .btn.small { font-size:12.5px; }
