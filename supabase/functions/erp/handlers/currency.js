@@ -10,7 +10,7 @@
 
 import { formatDate, num, round2 } from '../lib/time.js';
 import { getConfig, setConfig } from '../lib/ext.js';
-import { roleAtLeast, powerOn, callAllowed } from '../allow.js';
+import { roleAtLeast, powerOn, callAllowed, actRole } from '../allow.js';
 
 const str = (v) => String(v == null ? '' : v).trim();
 const isCode = (c) => /^[A-Z]{3,5}$/.test(c);
@@ -57,7 +57,7 @@ export async function erpCurrencies(ctx) {
   list.forEach((c) => { c.history = by[c.code] || []; });
   const out = { currencies: list, canEdit: callAllowed(ctx.s, 'erpCurrencySave'), names: NAMES };
   // the receive screen offers these to say what paid for a shipment (ids and names only, to those who may see money)
-  if (roleAtLeast(ctx.s.role, 'shareholder')) {
+  if (roleAtLeast(actRole(ctx.s), 'shareholder')) {
     try {
       out.accounts = (await ctx.tx.savepoint(() => ctx.tx`select id, name from money_accounts where business_id = ${ctx.biz} and not archived and kind <> 'courier' order by sort_order, created_at`))
         .map((a) => ({ id: a.id, name: str(a.name) }));

@@ -5,7 +5,7 @@
 //
 // Deliberate changes are listed in docs/fixes/settings.md.
 
-import { ERP_ROLES, ERP_DISCOUNT_CAP, normRole, roleAtLeast } from '../allow.js';
+import { ERP_ROLES, ERP_DISCOUNT_CAP, normRole, roleAtLeast, actRole } from '../allow.js';
 import { lock, who, stamp } from './money.js';
 import { LIST_KINDS } from './catalog.js';
 import { formatDate, dhakaDayStart } from '../lib/time.js';
@@ -96,7 +96,7 @@ export async function erpSettingsFull(ctx) {
   const lists = {};
   for (const k of LOOKUP_KINDS) lists[k] = await lookupRead(ctx, k);
   // a manager gets the drop-down lists only; the business's own values stay with the owner and shareholders
-  if (!roleAtLeast(ctx.s.role, 'shareholder')) return { lists, config: [] };
+  if (!roleAtLeast(actRole(ctx.s), 'shareholder')) return { lists, config: [] };
   const config = (await configRows(ctx)).map((c, i) => {
     const secret = !!ERP_SECRET_CONFIG[c.key];
     return { key: c.key, value: secret ? '' : c.value, secret, row: i + 2 };

@@ -1102,6 +1102,8 @@ function wireDash() {
 /** Is this screen open to the person signed in? (the nav already knows) */
 // Abilities per person (058): the server sends ME.powers; an older server does not, then the role decides.
 var POWER_MIN = { dash: 3, costs: 2, lists: 2, profit: 3, expenses: 3, stock: 2, suppliers: 2, weborders: 2, campaigns: 2, products: 2, returns: 2, dues: 2 };
+// 15 Oct 2026: the 'act' switch - every action the owner can do, but no figures and no say over people.
+function pageActs() { return !!(ME && (ME.role === 'owner' || (ME.powers && ME.powers.act))); }
 function pageCan(id) {
   if (!ME) return false;
   if (ME.role === 'owner') return true;
@@ -2606,7 +2608,7 @@ function brandLoad(bizId) {
  * does this; for everyone else the invoice simply uses the logo as it is.
  */
 function brandTrimForPrint(id, full) {
-  if (!ME || !(ME.role === 'owner' || ME.role === 'shareholder')) return;
+  if (!ME || !(ME.role === 'owner' || ME.role === 'shareholder' || pageActs())) return;
   function make(src) {
     imgTrim(src, 700, function (out) {
       if (!out) return;
@@ -2617,7 +2619,7 @@ function brandTrimForPrint(id, full) {
   srv('erpBrandLogo', [{ have: '' }], function (r) { if (r && r.id === id && r.data) make(r.data); }, function () {});
 }
 function brandCardHtml() {
-  var can = ME && (ME.role === 'owner' || ME.role === 'shareholder');
+  var can = ME && (ME.role === 'owner' || ME.role === 'shareholder' || pageActs());
   return '<section><div class="card"><h2>Business logo</h2><div class="sub">One logo for <strong>this business</strong>. It shows in the menu, ' +
     'on invoices, quotations and letterheads. Another business keeps its own.</div>' +
     '<div class="row" style="gap:14px;margin-top:12px;align-items:center;flex-wrap:wrap">' +
@@ -4718,7 +4720,7 @@ function parcelsChanged() {
  */
 function openCancel(id, customer, paid) {
   var cur = OPT ? OPT.currency : 'BDT';
-  var canRefund = ME && (ME.role === 'owner' || ME.role === 'shareholder');
+  var canRefund = ME && (ME.role === 'owner' || ME.role === 'shareholder' || pageActs());
   var old = document.getElementById('cancelbox');
   if (old && old.parentNode) old.parentNode.removeChild(old);
   var w = document.createElement('div');
@@ -5726,7 +5728,7 @@ function poMattersHtml() {
       }).join('') + '</tbody></table></div></div></div>';
   }
   B.forEach(function (b) {
-    var owner = ME && (ME.role === 'owner' || ME.role === 'shareholder');
+    var owner = ME && (ME.role === 'owner' || ME.role === 'shareholder' || pageActs());
     h += '<div class="note" style="margin-top:12px"><div class="ico">৳</div><div><strong>' + esc(b.supplier) + '</strong> — ' +
       (b.net > 0 ? 'owes you <strong>RMB ' + fmt(b.net) + '</strong>' : b.net < 0 ? 'you owe <strong>RMB ' + fmt(-b.net) + '</strong>' : 'you are even') +
       (b.owesYou && b.youOwe ? ' <span class="sku">(they owe ' + fmt(b.owesYou) + ', you owe ' + fmt(b.youOwe) + ')</span>' : '') +
@@ -10378,7 +10380,7 @@ function applyRole() {
     var v = btns[i].getAttribute('data-view');
     var min = need[v] || 0;
     var VP = { dash: 'dash', costs: 'costs', profit: 'profit', expenses: 'expenses', stock: 'stock', suppliers: 'suppliers', weborders: 'weborders', campaigns: 'campaigns' };
-    var ok = VP[v] ? pageCan(VP[v]) : v === 'settings' ? (rank >= 3 || pageCan('lists')) : rank >= min;
+    var ok = VP[v] ? pageCan(VP[v]) : v === 'settings' ? (rank >= 3 || pageCan('lists') || pageActs()) : (rank >= min || (pageActs() && !/^(dash|profit|capital|cash)$/.test(v)));
     btns[i].style.display = ok ? '' : 'none';
   }
   var grps = document.querySelectorAll('#nav .navgrp');
@@ -11177,7 +11179,7 @@ function expReceiptBtns(r, gone) {
     (gone ? '' : '<button class="btn small" type="button" data-exrca="' + esc(r.id) + '">' + (r.receipt ? 'Replace' : 'Attach receipt') + '</button> ');
 }
 function expCatsHtml() {
-  if (!ME || ME.role !== 'owner' || !EXP) return '';
+  if (!ME || !pageActs() || !EXP) return '';
   var names = { fixed: 'Fixed', recurring: 'Recurring', oneoff: 'One-off' }, c = EXP.categories || {};
   var h = '<section><div class="card"><div class="row" style="justify-content:space-between;align-items:center"><h2 style="margin:0">Categories</h2>' +
     '<button class="btn small" type="button" id="exc_toggle">' + (EXP_CAT_OPEN ? 'Done' : 'Change the lists') + '</button></div>' +
@@ -11573,9 +11575,9 @@ var SET_TAB = 'business';
 var SET_TABS = [['business', 'Business'], ['lists', 'Lists'], ['users', 'Users'], ['alerts', 'Alerts'], ['connections', 'Connections'], ['security', 'Security']];
 function setMark(t) { return '<!--tab:' + t + '-->'; }
 function setTabsMine() {
-  var owner = ME && ME.role === 'owner', mgr = ME && ME.role === 'manager';
+  var owner = ME && ME.role === 'owner', acts = !owner && pageActs(), mgr = ME && ME.role === 'manager' && !acts;
   // a manager keeps the drop-down lists only; the business itself stays with the owner and shareholders
-  return SET_TABS.filter(function (t) { return owner || (mgr || (ME && ME.role === 'sales') ? (t[0] === 'lists' && pageCan('lists')) : (t[0] !== 'security' && t[0] !== 'connections' && t[0] !== 'users' && (t[0] !== 'alerts' || (ME && ME.role === 'shareholder')))); });
+  return SET_TABS.filter(function (t) { return owner || (mgr || (ME && ME.role === 'sales' && !acts) ? (t[0] === 'lists' && pageCan('lists')) : (t[0] !== 'security' && t[0] !== 'connections' && t[0] !== 'users' && (t[0] !== 'alerts' || (ME && ME.role === 'shareholder')))); });
 }
 function settingsTabsHtml() {
   var mine = setTabsMine();
@@ -13452,7 +13454,7 @@ function supplierPageHtml() {
       return '<tr><td' + st + ' style="white-space:nowrap">' + esc(l.when || '—') + '</td><td class="nm"' + st + '>' + esc(l.what) +
         ((l.ref || l.fx || l.note || l.by) ? '<br><span class="sku" style="text-decoration:none">' + [l.ref, l.fx, l.note, l.by].filter(function (x) { return x; }).map(esc).join(' · ') + (l.voided ? '<br>' + esc(l.voided) : '') + '</span>' : '') + '</td>' +
         '<td class="num"' + st + '>' + (l.amount > 0 ? fmt(l.amount) : '') + '</td><td class="num"' + st + '>' + (l.amount < 0 ? '<span style="color:var(--good)">' + fmt(-l.amount) + '</span>' : '') + '</td>' +
-        '<td class="num"><strong>' + fmt(l.after) + '</strong></td><td class="num">' + (ME && ME.role === 'owner' && !l.voided && l.id ? '<button class="btn small" type="button" data-supvoid="' + esc(l.kind) + '" data-id="' + esc(l.id) + '">Strike out</button>' : '') + '</td></tr>'; }).join('') + '</tbody></table></div>';
+        '<td class="num"><strong>' + fmt(l.after) + '</strong></td><td class="num">' + (pageActs() && !l.voided && l.id ? '<button class="btn small" type="button" data-supvoid="' + esc(l.kind) + '" data-id="' + esc(l.id) + '">Strike out</button>' : '') + '</td></tr>'; }).join('') + '</tbody></table></div>';
   h += '</div></section>';
   if (d.products.length) h += '<section><div class="card"><h2>Products from ' + esc(d.name) + '</h2><div class="catchips" style="margin-top:8px">' + d.products.slice(0, 80).map(function (p) {
     return '<span style="padding-right:10px"><button class="linkbtn" type="button" style="font-weight:500" data-openprod="' + esc(p.sku) + '">' + esc(p.name) + '</button></span>'; }).join('') +
@@ -14698,7 +14700,7 @@ function serForget(sku) { if (sku) delete SER[sku]; else SER = {}; }
 function serCardHtml() {
   var sku = PRODP.sku, p = PRODP.data, d = SER[sku], mgr = pageCan('stock');
   if (!d) { serLoad(sku); return '<section><div class="card"><h2>Serial numbers and warranty</h2><div class="loading">Reading&hellip;</div></div></section>'; }
-  var sh = ME && (ME.role === 'owner' || ME.role === 'shareholder');
+  var sh = ME && (ME.role === 'owner' || ME.role === 'shareholder' || pageActs());
   var h = '<section><div class="card" data-sercard="' + esc(sku) + '"><h2>Serial numbers and warranty</h2>' +
     '<div class="sub">For printers and other items where each unit has its own number. A sale then names the unit that went out, and the warranty it carries. ' +
     'Changing the warranty here changes it for sales from now on \u2014 units already sold keep what they were sold with.</div>';
@@ -24399,7 +24401,7 @@ viewShipment = function () {
   if (ASK.ref !== d.reference) { ASK.ref = d.reference; ASK.data = null; }
   if (!ASK.data && !ASK.busy) { ASK.busy = true; srv('erpAskingPrices', [{ reference: d.reference }], function (r) { ASK.busy = false; ASK.data = r; if (VIEW === 'shipments' && SHP.ref === r.reference) repaint(); }, function () { ASK.busy = false; ASK.data = { lines: [] }; }); }
   var x = ASK.data; if (!x || !x.lines.length) return h;
-  var owner = ME && String(ME.role) === 'owner';
+  var owner = pageActs();
   return h + '<div class="card" style="margin-top:16px"><div class="chead"><h2>Suggested selling prices</h2>' + (owner ? '<button class="btn small" type="button" data-askmk="1">Markups…</button>' : '') + '</div>' +
     '<div class="sub">Landed cost × (1 + markup), rounded up to 10. Usual markup ' + fmt(x.markup) + '%' + (Object.keys(x.brands || {}).length ? '; by brand: ' + Object.keys(x.brands).map(function (b) { return esc(b) + ' ' + fmt(x.brands[b]) + '%'; }).join(', ') : '') + '. Tick the ones to use; you can change a price first.</div>' +
     '<div class="scroll"><table><thead><tr><th></th><th>Product</th><th class="num">Landed</th><th class="num">Markup</th><th class="num">Price now</th><th class="num">Suggested</th></tr></thead><tbody>' +
@@ -24539,7 +24541,7 @@ document.addEventListener('click', function (e) {
       (CAT || []).slice(0, 600).map(function (p) { return '<option value="' + esc(p.sku) + '">' + esc(p.name) + '</option>'; }).join('') + '</datalist></div></div><div class="fdw-note">Not in the list yet? Add it on Products first.</div>',
       function (back, close) { srv('erpPreorderLink', [{ id: x.no, line: i + 1, sku: fdwVal(back, 'pl_sku') }], function (r) { close(); done('Product given.')(r); }, fail); }); return; }
   var c = e.target.closest('[data-precancel]');
-  if (c) { var owner = ME && String(ME.role) === 'owner';
+  if (c) { var owner = pageActs();
     fdwDialog('Cancel ' + c.getAttribute('data-precancel'),
       '<div class="fields"><div><label class="f" for="pc_r">Why</label><input class="i" id="pc_r"></div>' +
       '<div><label class="f" for="pc_mode">The deposit</label><select class="i" id="pc_mode"><option value="refund">Pay it back</option>' + (owner ? '<option value="forfeit">Keep it (income of this month)</option>' : '') + '</select></div>' +

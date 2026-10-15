@@ -14,7 +14,7 @@ import { erpCatalog } from './catalog.js';
 import { forget } from '../lib/tabs.js';
 import { formatDate, num, round2, dhakaDayStart, todayStr, DAY_MS } from '../lib/time.js';
 import { phone11, formatBdPhone, custKey, normalizePhone } from '../lib/phone.js';
-import { ERP_DISCOUNT_CAP } from '../allow.js';
+import { ERP_DISCOUNT_CAP, actRole } from '../allow.js';
 import {
   erpCustomerAccount, invoiceDiscounts, addPayment, syncInvoiceStatus, applyCredit,
   lock, stamp, who,
@@ -163,9 +163,9 @@ export async function createInvoice(ctx, payload, opts = {}) {
       const free = Math.max(0, num(rec.stock) - h.held);
       if (seen[k] <= free) continue;
       const why = String((payload.overrideHold && payload.overrideHold.reason) || '').trim();
-      if (ctx.s.role === 'owner' && why) { holdNote += ' [sold held stock of ' + h.nos.join(', ') + ': ' + why.slice(0, 120) + ']'; continue; }
+      if (actRole(ctx.s) === 'owner' && why) { holdNote += ' [sold held stock of ' + h.nos.join(', ') + ': ' + why.slice(0, 120) + ']'; continue; }
       throw new Error('HELD: ' + rec.name + ' - ' + h.held + ' held for pre-order ' + h.nos.map((n, x) => n + ' (' + h.who[x] + ')').join(', ') +
-        '; only ' + free + ' free. ' + (ctx.s.role === 'owner' ? 'Sell it anyway only with a reason.' : 'Only the owner can sell held units.'));
+        '; only ' + free + ' free. ' + (actRole(ctx.s) === 'owner' ? 'Sell it anyway only with a reason.' : 'Only the owner can sell held units.'));
     }
   }
 

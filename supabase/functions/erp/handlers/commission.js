@@ -6,7 +6,7 @@
 //   erpCommissionPay  paying a seller: an expense 'Commission paid to ...' (not counted a second time)
 
 import { str } from '../lib/tabs.js';
-import { powerOn } from '../allow.js';
+import { powerOn, actRole } from '../allow.js';
 import { num, round2, formatDate } from '../lib/time.js';
 
 const R = (v) => Math.round(num(v));
@@ -86,7 +86,7 @@ export async function commissionDue(ctx, month) {
 }
 
 export async function erpCommission(ctx, payload) {
-  const owner = ctx.s.role === 'owner';
+  const owner = actRole(ctx.s) === 'owner';
   const now = formatDate(ctx.now, 'yyyy-MM');
   const month = isMonth(payload && payload.month) ? payload.month : now;
   const c = await commissionFor(ctx, [month]);
@@ -113,7 +113,7 @@ export async function erpCommission(ctx, payload) {
 }
 
 export async function erpCommissionRuleSave(ctx, payload) {
-  if (ctx.s.role !== 'owner') throw new Error('Only the owner sets commission.');
+  if (actRole(ctx.s) !== 'owner') throw new Error('Only the owner sets commission.');
   payload = payload || {};
   const scope = str(payload.scope) || 'all', basis = str(payload.basis) || 'sales';
   if (!LEVEL.hasOwnProperty(scope)) throw new Error('On everything, a category, a brand or one product?');
@@ -140,7 +140,7 @@ export async function erpCommissionRuleSave(ctx, payload) {
 }
 
 export async function erpCommissionRuleVoid(ctx, payload) {
-  if (ctx.s.role !== 'owner') throw new Error('Only the owner sets commission.');
+  if (actRole(ctx.s) !== 'owner') throw new Error('Only the owner sets commission.');
   const r = await ctx.tx`update commission_rules set voided_at = now() where business_id = ${ctx.biz} and id = ${str(payload && payload.id)} and voided_at is null returning id`;
   if (!r.length) throw new Error('That rule is not there.');
   Object.keys(ctx.memo).forEach((k) => { if (k.indexOf('commission:') === 0 || k.indexOf('pnl:') === 0) delete ctx.memo[k]; });
@@ -149,7 +149,7 @@ export async function erpCommissionRuleVoid(ctx, payload) {
 
 /** Pay a seller: an expense row 'Commission paid to NAME for yyyy-MM' (the cost was counted when earned). */
 export async function erpCommissionPay(ctx, payload) {
-  if (ctx.s.role !== 'owner') throw new Error('Only the owner pays commission.');
+  if (actRole(ctx.s) !== 'owner') throw new Error('Only the owner pays commission.');
   payload = payload || {};
   const month = isMonth(payload.month) ? payload.month : formatDate(ctx.now, 'yyyy-MM');
   const amount = round2(num(payload.amount));
@@ -179,7 +179,7 @@ export async function erpSellers(ctx) {
  *  earned under the rules. The owner sees everyone; anyone else only their own sales. No cost or profit is returned. */
 export async function erpCommissionSales(ctx, payload) {
   payload = payload || {};
-  const owner = ctx.s.role === 'owner', me = String(ctx.s.userId);
+  const owner = actRole(ctx.s) === 'owner', me = String(ctx.s.userId);
   const month = isMonth(payload.month) ? payload.month : formatDate(ctx.now, 'yyyy-MM');
   const rs = await rules(ctx, true);
   const rows = await ctx.tx`

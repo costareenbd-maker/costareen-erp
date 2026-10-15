@@ -183,6 +183,9 @@ export const ERP_POWERS = [
     calls: ['erpReturnPreview', 'erpReturnGoods', 'erpFixInvoice', 'erpCancelInvoice'] },
   { id: 'dues', label: 'Dues and payments', help: 'Customer dues, take payments and advances', min: 'manager',
     calls: ['erpDues', 'erpRecordPayment', 'erpSettleDue', 'erpTakeAdvance', 'erpPayReasons'] },
+  // 15 Oct 2026: the owner's manager does every job the owner does, without seeing how the business is doing.
+  { id: 'act', label: 'Every action, like the owner', help: 'Void invoices, refunds, pay suppliers, expenses, commission, held stock - all the owner can do. Still no dashboard, profit, revenue, cash balances or capital; never users or security.', min: 'owner',
+    calls: [] },
 ];
 export const POWER_OF_CALL = {};
 ERP_POWERS.forEach((p) => p.calls.forEach((c) => {
@@ -198,7 +201,34 @@ export function powerOn(s, id) {
   if (!p) return false;
   const o = s.powers && s.powers[id];
   if (o === true || o === false) return o;
+  if (id !== 'act' && !FIGURE_POWERS.includes(id) && actsAsOwner(s)) return true;
   return roleAtLeast(s.role, p.min);
+}
+
+// ---- 'act': every action like the owner, but no figures and no say over people or keys -----
+// The abilities that show how the business is doing stay with the role (or their own switch).
+export const FIGURE_POWERS = ['dash', 'profit'];
+// Calls an acting person still may not make: the business's figures, and who may do what.
+export const NOT_ACT = new RegExp('^erp(' + [
+  'DashboardData', 'FdDash', 'Fd22Analytics', 'Analytics', 'Pnl', 'PnlMonth', 'Money', 'Cash[A-Za-z]*', 'Capital[A-Za-z]*',
+  'Holding[A-Za-z]*', 'LotFund[A-Za-z]*', 'InvestorLink[A-Za-z]*', 'Partner[A-Za-z]*', 'Pool[A-Za-z]*',
+  'Joint(Settings|Agree|Card|StatementPdf)', 'FreezeSaleCosts',
+  'User[A-Za-z]*', 'Security', 'People', 'AddPerson', 'RevokePerson', 'ResetCode', 'Devices', '(Approve|Allow|Deny|Revoke)Device',
+  'AccessWarning', 'BusinessLinks', 'Admin', 'AccessKey[A-Za-z]*', 'Recovery', 'EmergencyLink', 'OwnerChange[A-Za-z]*',
+  'BusinessDelete', 'Restore[A-Za-z]*', 'Backup[A-Za-z]*', 'AiKey[A-Za-z]*', 'ProviderKey', 'CreateBusiness', 'DeployBusiness',
+  'CheckBusinessSheet', 'PrepareTemplate', 'ForgetBusiness', 'Platform[A-Za-z]*', 'AppSet', 'Connections', 'Google[A-Za-z]*',
+  'Sheet[A-Za-z]*', 'ShopKey', 'Meta[A-Za-z]*', 'Courier(SetKeys|Test)', 'WooConnectStart', 'Website(Set|Test|Sync)',
+  'Evo(Setup|Qr|Logout|StopHook)', 'Inbox(ChannelSave|ChannelAct|GoLive|Templates)', 'AiWork',
+].join('|') + ')$');
+
+/** Does this person have the owner's hand for actions (the 'act' switch)? Never an owner's figures. */
+export function actsAsOwner(s) {
+  return !!(s && normRole(s.role) !== 'owner' && s.powers && s.powers.act === true);
+}
+
+/** The role to judge an ACTION by: 'owner' for someone with the 'act' switch, else their own. */
+export function actRole(s) {
+  return actsAsOwner(s) ? 'owner' : (s && s.role);
 }
 
 /** May this session make this call? The ability decides where there is one, else the role. */
@@ -206,7 +236,9 @@ export function callAllowed(s, name) {
   const need = ERP_ALLOW[name];
   if (!need) return false;
   const p = POWER_OF_CALL[name];
-  return p ? powerOn(s, p) : roleAtLeast(s.role, need);
+  if (p) return powerOn(s, p);
+  if (actsAsOwner(s) && !NOT_ACT.test(name)) return true;
+  return roleAtLeast(s.role, need);
 }
 
 /** Every ability, on or off, for the page. */

@@ -10,7 +10,7 @@ import { str } from '../lib/tabs.js';
 import { num, round2, formatDate } from '../lib/time.js';
 import { getConfig, setConfig } from '../lib/ext.js';
 import { erpCashBook } from './cash.js';
-import { powerOn } from '../allow.js';
+import { powerOn, actRole } from '../allow.js';
 
 const NOTES = [1000, 500, 200, 100, 50, 20, 10, 5, 2, 1];
 const R = (v) => Math.round(num(v));
@@ -86,7 +86,7 @@ export async function erpAskingPrices(ctx, payload) {
 }
 
 export async function erpAskingSave(ctx, payload) {
-  if (ctx.s.role !== 'owner') throw new Error('Only the owner sets the markups.');
+  if (actRole(ctx.s) !== 'owner') throw new Error('Only the owner sets the markups.');
   payload = payload || {};
   const def = num(payload.def);
   if (!(def > 0 && def <= 500)) throw new Error('The usual markup is a percentage above 0 (up to 500).');

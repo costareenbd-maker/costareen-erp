@@ -10,7 +10,7 @@ const hello = (fn) => fn('erpHello', []);
 // 1. the list the owner sees
 let r = await owner('erpUsers', []);
 const rina = r.ok && r.result.users.find((u) => u.id === SALES);
-check('users list carries the abilities and each person\'s', r.ok && r.result.abilities.length === 12 && rina && rina.powers.list.dash.on === false && rina.powers.discount === 100, r.ok ? [r.result.abilities.length, rina && rina.powers] : r);
+check('users list carries the abilities and each person\'s', r.ok && r.result.abilities.length === 13 && rina && rina.powers.list.dash.on === false && rina.powers.discount === 100, r.ok ? [r.result.abilities.length, rina && rina.powers] : r);
 
 // 2. before: sales cannot open a manager screen
 r = await sales('erpStockHistory', []);
@@ -85,4 +85,36 @@ check('discount above 100 refused', !r.ok, r.ok);
 r = await set(SALES, { discount: null });
 const h2 = await hello(sales);
 check('discount back to the role\'s default: no limit', h2.ok && h2.result.discountCap === 100, h2.result);
+// 7. 'act': the manager does every action the owner does, but never sees the figures or touches people
+r = await mgr('erpExpenses', [{}]);
+check('act off: manager has no expenses', !r.ok, r.ok);
+r = await mgr('erpPoSettle', [{ supplier: 'Nobody Ltd', note: 'x' }]);
+check('act off: manager cannot settle a supplier', !r.ok, r.ok);
+r = await set(MGR, { act: true });
+check('owner switches every action on for the manager', r.ok && r.result.users.find((u) => u.id === MGR).powers.list.act.on === true, r.error);
+const ha = await hello(mgr);
+check('hello: act on, dashboard and profit still off', ha.ok && ha.result.powers.act === true && ha.result.powers.dash === false && ha.result.powers.profit === false && ha.result.powers.expenses === true, ha.result);
+for (const [name, args] of [['erpExpenses', [{}]], ['erpSupplierPage', [{ name: 'Nobody Ltd' }]], ['erpCommission', [{}]], ['erpSettingsFull', []]]) {
+  r = await mgr(name, args);
+  check('act on: ' + name + ' opens', r.ok || !/does not have access/.test(r.error), r.error);
+}
+r = await mgr('erpSettingsFull', []);
+check('act on: business settings come with the lists', r.ok && r.result.config.length > 0, r.ok ? r.result.config.length : r.error);
+r = await mgr('erpPoSettle', [{ supplier: 'Nobody Ltd', note: 'x' }]);
+check('act on: the settle check inside lets the manager through', !r.ok ? !/Only the owner or a shareholder/.test(r.error) && !/does not have access/.test(r.error) : true, r.error);
+r = await mgr('erpSerialWarranty', [{ serial: 'NOPE-1', sku: PLA, months: 3, reason: 'x' }]);
+check('act on: warranty change not refused for the role', r.ok || !/Only a shareholder/.test(r.error), r.error);
+for (const name of ['erpDashboardData', 'erpFdDash', 'erpPnl', 'erpPnlMonth', 'erpMoney', 'erpCashBook', 'erpCapital', 'erpAnalytics',
+  'erpUsers', 'erpUserPowers', 'erpSecurity', 'erpAccessKeys', 'erpAppSet', 'erpRestore', 'erpOwnerChange']) {
+  r = await mgr(name, name === 'erpPnlMonth' ? [{ month: '2026-10' }] : [{}]);
+  check('act on: ' + name + ' still closed', !r.ok && /does not have access/.test(r.error), r.ok || r.error);
+}
+r = await mgr('erpUserPowers', [{ userId: MGR, powers: { dash: true } }]);
+check('act on: cannot give himself the dashboard', !r.ok, r.ok);
+r = await mgr('erpRecentInvoices', [{}]);
+check('act on: invoice money still scrubbed of profit', r.ok && !JSON.stringify(r.result).match(/"(profit|margin|cogs)":\s*[1-9]/), r.ok ? '' : r.error);
+r = await set(MGR, { act: false });
+r = await mgr('erpExpenses', [{}]);
+check('act off again: expenses closed', !r.ok, r.ok);
+
 await done();

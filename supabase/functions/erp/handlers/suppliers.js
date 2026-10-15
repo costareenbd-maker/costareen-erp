@@ -16,7 +16,7 @@
 // too, before anyone has typed its details.
 
 import { formatDate, num, round2, dhakaDayStart } from '../lib/time.js';
-import { roleAtLeast } from '../allow.js';
+import { roleAtLeast, actRole } from '../allow.js';
 import { assertOpen } from '../lib/period.js';
 
 const str = (v) => String(v == null ? '' : v).trim();
@@ -74,7 +74,7 @@ export async function erpSuppliers(ctx) {
              products: prod[k] || 0, billed: Math.round(s.billed), paid: Math.round(s.paid), owed: Math.round(owed), lastBill: day(s.last) };
   }).sort((a, b) => (a.archived - b.archived) || (b.owed - a.owed) || a.name.localeCompare(b.name));
   return { suppliers: list, owedTotal: list.reduce((t, s) => t + Math.max(0, s.owed), 0), aheadTotal: list.reduce((t, s) => t + Math.max(0, -s.owed), 0),
-           canPay: roleAtLeast(ctx.s.role, 'shareholder'), money: 'BDT' };
+           canPay: roleAtLeast(actRole(ctx.s), 'shareholder'), money: 'BDT' };
 }
 
 export async function erpSupplierPage(ctx, payload) {
@@ -99,7 +99,7 @@ export async function erpSupplierPage(ctx, payload) {
   lines.sort((a, b) => a.ts - b.ts);
   let run = 0;
   for (const l of lines) { if (!l.voided) run = round2(run + l.amount); l.after = Math.round(run); delete l.ts; }
-  const accounts = roleAtLeast(ctx.s.role, 'shareholder')
+  const accounts = roleAtLeast(actRole(ctx.s), 'shareholder')
     ? (await ctx.tx`select id, name from money_accounts where business_id = ${ctx.biz} and not archived and kind <> 'courier' order by sort_order, created_at`).map((a) => ({ id: a.id, name: str(a.name) })) : [];
   const products = await ctx.tx`select sku, name from products where business_id = ${ctx.biz} and lower(btrim(supplier)) = ${key(e.name)} order by name limit 300`;
   const open = await ctx.tx`select po_no, sum(qty - received) as left, min(ordered_at) as at from po_lines
@@ -108,7 +108,7 @@ export async function erpSupplierPage(ctx, payload) {
            openingOwed: num(r.opening_owed), archived: !!r.archived, owed: Math.round(run), lines: lines.reverse(), accounts,
            products: products.map((p) => ({ sku: str(p.sku), name: str(p.name) })),
            onOrder: open.map((o) => ({ po: str(o.po_no), left: num(o.left), ordered: day(o.at) })),
-           canPay: roleAtLeast(ctx.s.role, 'shareholder'), today: formatDate(ctx.now, 'yyyy-MM-dd'), money: 'BDT' };
+           canPay: roleAtLeast(actRole(ctx.s), 'shareholder'), today: formatDate(ctx.now, 'yyyy-MM-dd'), money: 'BDT' };
 }
 function fxText(amount, cur, rate) {
   return (str(cur) || '') + ' ' + num(amount).toLocaleString('en-US') + (num(rate) ? ' @ ' + num(rate) : '');
@@ -142,7 +142,7 @@ export async function erpSupplierSave(ctx, payload) {
   const fields = { phone: str(payload.phone).slice(0, 40) || null, country: str(payload.country).slice(0, 40) || null,
                    currency: str(payload.currency).toUpperCase().slice(0, 6) || null, note: str(payload.note).slice(0, 300) || null,
                    opening: round2(num(payload.openingOwed)), archived: !!payload.archived };
-  if (fields.opening && !roleAtLeast(ctx.s.role, 'shareholder')) throw new Error('Only a shareholder or the owner sets what was owed at the start.');
+  if (fields.opening && !roleAtLeast(actRole(ctx.s), 'shareholder')) throw new Error('Only a shareholder or the owner sets what was owed at the start.');
   const rec = (await ctx.tx`select id from suppliers where business_id = ${ctx.biz} and lower(btrim(name)) = ${key(final)}`)[0];
   if (rec) {
     await ctx.tx`update suppliers set phone = ${fields.phone}, country = ${fields.country}, currency = ${fields.currency}, note = ${fields.note},

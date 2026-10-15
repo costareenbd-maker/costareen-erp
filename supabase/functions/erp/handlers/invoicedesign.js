@@ -11,7 +11,7 @@
 // invoiceDoc(d, p, s, opt, img, now, design) -> { html, footer } is what makeInvoicePdf (sales.js) draws.
 
 import { formatDate, num } from '../lib/time.js';
-import { roleAtLeast } from '../allow.js';
+import { roleAtLeast, actRole } from '../allow.js';
 import { saveFile, renderPdf } from '../lib/ext.js';
 import { docLang, docBangla } from '../lib/doclang.js';
 
@@ -389,7 +389,7 @@ export async function erpInvoiceDesign(ctx) {
   return { design: await invoiceDesign(ctx), templates: TEMPLATES, fonts: Object.keys(FONTS), quoteColours: { accent: s.accent, dark: s.dark },
     profile: { name: p.name, address: p.address, phone: p.phone, email: p.email, website: p.website, footer: p.footer, signer: p.signer, designation: p.designation,
       hasLogo: !!(p.logoId || p.logoTrimId), hasQr: !!p.qrId, hasSignature: !!p.signatureId, banks: p.banks || [] },
-    canEdit: roleAtLeast(ctx.s.role, 'manager'), canCompany: roleAtLeast(ctx.s.role, 'shareholder') };
+    canEdit: roleAtLeast(ctx.s.role, 'manager'), canCompany: roleAtLeast(actRole(ctx.s), 'shareholder') };
 }
 export async function erpInvoiceDesignSave(ctx, payload) {
   needManager(ctx);

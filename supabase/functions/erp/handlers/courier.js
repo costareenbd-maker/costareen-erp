@@ -10,7 +10,7 @@ import { salesLog, paymentsTab, forget, asDate, str, SL, PAY } from '../lib/tabs
 import { formatDate, num, round2 } from '../lib/time.js';
 import { custKey } from '../lib/phone.js';
 import { getSecret, setSecret, getConfig, setConfig, httpFetch } from '../lib/ext.js';
-import { roleAtLeast, powerOn, callAllowed } from '../allow.js';
+import { roleAtLeast, powerOn, callAllowed, actRole } from '../allow.js';
 import { paidByOrder, addPayment, syncInvoiceStatus, outstanding, lock, stamp, who } from './money.js';
 import { cashRules } from './cash.js';
 
@@ -814,7 +814,7 @@ export async function erpSfConfirmMatches(ctx, payload) {
 
 /** erpSfReconDecide (ERP:8650): the owner's word on a large shortfall. */
 export async function erpSfReconDecide(ctx, payload) {
-  if (!roleAtLeast(ctx.s.role, 'shareholder')) throw new Error('Only the owner or a shareholder can decide this.');
+  if (!roleAtLeast(actRole(ctx.s), 'shareholder')) throw new Error('Only the owner or a shareholder can decide this.');
   const cid = String((payload && payload.consignment) || ''), what = String((payload && payload.decision) || '');
   if (what !== 'writeoff' && what !== 'keep') throw new Error('Write it off, or keep it as due?');
   await lock(ctx, 'courier');

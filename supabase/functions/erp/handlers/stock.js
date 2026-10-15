@@ -12,7 +12,7 @@ import { erpCatalog, erpProduct } from './catalog.js';
 import { forget, str } from '../lib/tabs.js';
 import { formatDate, num, round2, DAY_MS } from '../lib/time.js';
 import { getConfig, setConfig } from '../lib/ext.js';
-import { roleAtLeast, powerOn, callAllowed } from '../allow.js';
+import { roleAtLeast, powerOn, callAllowed, actRole } from '../allow.js';
 import { lock, who } from './money.js';
 import { billForShipment } from './suppliers.js';
 import { ratesMap, landedCost, saveRate } from './currency.js';
@@ -1193,7 +1193,7 @@ export async function erpPoDiffDecide(ctx, payload) {
 
 /** erpPoSettle (ERP:8172) */
 export async function erpPoSettle(ctx, payload) {
-  if (!roleAtLeast(ctx.s.role, 'shareholder')) throw new Error('Only the owner or a shareholder can settle a supplier.');
+  if (!roleAtLeast(actRole(ctx.s), 'shareholder')) throw new Error('Only the owner or a shareholder can settle a supplier.');
   let sup = str(payload && payload.supplier).toLowerCase();
   // fix: the balance for diffs with no supplier is shown under this label
   if (sup === '(no supplier named)') sup = '';

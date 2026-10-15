@@ -2068,3 +2068,25 @@ The owner said "Now". Live moved from 8bcf1a7 (the old worktree) to main (3fb468
   - Cause: the new cards (Customers, Sales, ERP Navigator) added up the sheet's per-row dues. An old sheet order is one ORD- row per product line, each carrying the whole order total, so 191 rows from May–June 2026 were counted again.
   - Fix: they now use the dues list's own figures (`duesMap`), the same method as the old sheet ERP's dues.
   - The data was never wrong.
+
+## 15 Oct 2026 - "Every action, like the owner" (manager power switch)
+
+The owner asked that his manager can do every action he can - invoices, product entry, dues - but never see the
+dashboard, profitability or revenue. New ability `act` (Settings > Users > the person > "Every action, like the owner"),
+off by default, set per person.
+
+- Server (`allow.js`): `actsAsOwner(s)` / `actRole(s)`. With `act` on, every call is allowed as for the owner EXCEPT
+  `NOT_ACT`: the figures (dashboard, P&L, analytics, money, cash book and cash moves, capital, holding, lot funding,
+  investors, partnership/pool, joint settlement) and the say over people and keys (users, people/devices, security,
+  access keys, owner change, recovery, restore/backup, AI keys, connections, Google/sheet, Meta, Evolution set-up,
+  courier keys, website keys, menu switches, platform). Abilities other than `dash` and `profit` count as on.
+- The role stays what it is, so the profit scrub and every figure screen still treat the person as a manager.
+- Inner owner/shareholder checks that are actions now use `actRole`: refunds on cancel/return, selling held stock,
+  supplier settle/pay/opening owed, courier payout decide, warranty change, commission rules and pay, pre-order
+  deposit kept, quotation and invoice company settings, business settings in Settings, asking-price markups.
+- Page: `pageActs()`; menu shows Expenses, Suppliers, Tools, Settings (no Users/Security/Connections), but never
+  Dashboard, Profitability, Capital or Cash; refund, strike-out and settle buttons show.
+- Tests: powers_test section 7 (13 abilities; figures and people calls still refused with act on).
+
+Not done: the cash book stays closed even with `act` (it shows money balances); a manager with `act` paying a
+supplier or commission picks the account from the list the server gives without balances.

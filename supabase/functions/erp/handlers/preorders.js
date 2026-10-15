@@ -12,7 +12,7 @@ import { str } from '../lib/tabs.js';
 import { num, round2, formatDate } from '../lib/time.js';
 import { custKey } from '../lib/phone.js';
 import { addPayment, lock, creditOf } from './money.js';
-import { roleAtLeast } from '../allow.js';
+import { roleAtLeast, actRole } from '../allow.js';
 
 const R = (v) => Math.round(num(v));
 const stamp = () => formatDate(new Date(), 'yyMMddHHmmss') + String(Math.floor(Math.random() * 900) + 100);
@@ -185,7 +185,7 @@ export async function erpPreorderCancel(ctx, payload) {
   const reason = str(payload.reason);
   if (!reason) throw new Error('Say why it is cancelled.');
   const mode = str(payload.mode) === 'forfeit' ? 'forfeit' : 'refund';
-  if (mode === 'forfeit' && ctx.s.role !== 'owner') throw new Error('Only the owner can keep a deposit.');
+  if (mode === 'forfeit' && actRole(ctx.s) !== 'owner') throw new Error('Only the owner can keep a deposit.');
   if (mode === 'refund' && !roleAtLeast(ctx.s.role, 'manager')) throw new Error('Your account cannot pay money back.');
   await lock(ctx, 'payments');
   const paid = await paidOn(ctx, h.no);

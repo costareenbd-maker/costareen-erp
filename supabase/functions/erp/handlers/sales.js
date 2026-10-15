@@ -23,7 +23,7 @@ import { docLang, docBangla } from '../lib/doclang.js';
 import { salesLog, returnsTab, courierLog, forget, asDate, str, SL } from '../lib/tabs.js';
 import { formatDate, num, round2, dhakaDayStart } from '../lib/time.js';
 import { phone11, custKey, normalizePhone } from '../lib/phone.js';
-import { roleAtLeast, powerOn, callAllowed } from '../allow.js';
+import { roleAtLeast, powerOn, callAllowed, actRole } from '../allow.js';
 import { ERP_DELIVERY, isCourier } from './catalog.js';
 import { deliveryOptions } from '../lib/delivery.js';
 import {
@@ -360,7 +360,7 @@ export async function erpReturnPreview(ctx, payload) {
   return { invoiceNo, customer: inv.head.customer, phone: inv.head.phone,
            lines, grand: money.grand, paid: money.paid, owed: money.owed,
            returnedValue: Math.round(back.value),
-           canRefund: roleAtLeast(role, 'shareholder'),
+           canRefund: roleAtLeast(actRole(ctx.s), 'shareholder'),
            hasAccount: custKey(inv.head.phone, inv.head.customer) !== 'n:' };
 }
 
@@ -422,7 +422,7 @@ async function returnGoods(ctx, payload, opts = {}) {
       throw new Error('The customer has already paid ' + Math.round(excess) +
                       ' for these goods. Choose: refund it, or keep it as advance.');
     }
-    if (money === 'refund' && !roleAtLeast(role, 'shareholder')) {
+    if (money === 'refund' && !roleAtLeast(actRole(ctx.s), 'shareholder')) {
       throw new Error('Only the owner or a shareholder can hand money back. ' +
                       'Keep it as advance, or ask them.');
     }
@@ -612,7 +612,7 @@ export async function erpCancelInvoice(ctx, payload) {
       throw new Error('The customer paid ' + Math.round(paid) + ' for this sale. Choose: refund it, ' +
                       'or keep it as advance.');
     }
-    if (money === 'refund' && !roleAtLeast(role, 'shareholder')) {
+    if (money === 'refund' && !roleAtLeast(actRole(ctx.s), 'shareholder')) {
       throw new Error('Only the owner or a shareholder can hand money back. Keep it as advance, or ask them.');
     }
     if (money === 'advance' && (!ckey || ckey === 'n:')) {

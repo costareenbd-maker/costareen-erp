@@ -11,7 +11,7 @@
 // or what was typed for that line. A return brings the unit back (returnSerials).
 
 import { formatDate, num, dhakaDayStart } from '../lib/time.js';
-import { roleAtLeast, powerOn, callAllowed } from '../allow.js';
+import { roleAtLeast, powerOn, callAllowed, actRole } from '../allow.js';
 import { who } from './money.js';
 import { passportSold, passportReturned, passportWarranty } from './passport.js';
 
@@ -120,7 +120,7 @@ export async function erpSerialLookup(ctx, payload) {
 /** A sold unit's warranty, changed by hand: a special deal, a correction. */
 export async function erpSerialWarranty(ctx, payload) {
   payload = payload || {};
-  if (!roleAtLeast(ctx.s.role, 'shareholder')) throw new Error('Only a shareholder or the owner changes a warranty already given.');
+  if (!roleAtLeast(actRole(ctx.s), 'shareholder')) throw new Error('Only a shareholder or the owner changes a warranty already given.');
   const serial = clean(payload.serial), sku = str(payload.sku);
   const r = (await ctx.tx`select s.* from serials s where s.business_id = ${ctx.biz} and upper(s.serial) = ${serial}
                            and (${sku} = '' or lower(btrim(s.sku)) = ${sku.toLowerCase()}) and s.status = 'sold' limit 1`)[0];
@@ -184,7 +184,7 @@ export async function erpWarrantyRules(ctx) {
   const { pubBase } = await import('./passport.js');
   return { rules: rows.map(ruleRow), categories: lk.filter((x) => x.kind === 'categories').map((x) => str(x.value)), brands: lk.filter((x) => x.kind === 'brands').map((x) => str(x.value)),
            products: c.n, serialised: c.s, showSeller: !(cfg[0] && str(cfg[0].value) === '0'), checkUrl: pubBase(ctx.deps).check,
-           canEdit: roleAtLeast(ctx.s.role, 'manager'), isOwner: ctx.s.role === 'owner' };
+           canEdit: roleAtLeast(ctx.s.role, 'manager'), isOwner: actRole(ctx.s) === 'owner' };
 }
 export async function erpWarrantyRuleSave(ctx, payload) {
   needManager(ctx, 'set warranty rules');

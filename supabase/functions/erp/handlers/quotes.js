@@ -11,7 +11,7 @@
 // they are files in the 'assets' folder, and the ids the page gets are the
 // storage ids ('assets/<kind>_<ms>.<ext>').
 
-import { roleAtLeast } from '../allow.js';
+import { roleAtLeast, actRole } from '../allow.js';
 import { lock, who } from './money.js';
 import { getConfig, saveFile, readFile, renderPdf } from '../lib/ext.js';
 import { todayStr, num } from '../lib/time.js';
@@ -59,7 +59,7 @@ function addDays(date, n) {
 }
 function uuid() { return globalThis.crypto.randomUUID(); }
 function needRole(ctx, need) {                       // erpQRole_ (the door already checked)
-  if (!roleAtLeast((ctx.s && ctx.s.role) || 'owner', need)) throw new Error('Your account cannot do that.');
+  if (!roleAtLeast((ctx.s && actRole(ctx.s)) || 'owner', need)) throw new Error('Your account cannot do that.');
 }
 const HEX = /^#[0-9a-fA-F]{6}$/;
 const FONTS = /^(Arial|Georgia|Times New Roman|Verdana|Trebuchet MS|Tahoma)$/;
@@ -183,7 +183,7 @@ async function erpQuoteBoot(ctx) {
   }
   return { profile: await quoteProfile(ctx), settings: await quoteLook(ctx), letterhead: await letterhead(ctx),
            snippets: s.snippets || [], savedItems: items, today: todayStr(ctx.now),
-           canSettings: roleAtLeast(role, 'shareholder'), canSnippets: roleAtLeast(role, 'manager') };
+           canSettings: roleAtLeast(actRole(ctx.s), 'shareholder'), canSnippets: roleAtLeast(role, 'manager') };
 }
 
 // ------------------------------------------------------------- list / get
