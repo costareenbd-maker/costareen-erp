@@ -41,4 +41,21 @@ check('sales staff: nothing on suppliers', r.ok && r.result.cards.length === 0, 
 r = await mgr('erpFdHead', [{ view: 'capital' }]);
 check('a manager: nothing on capital', r.ok && r.result.cards.length === 0, r);
 
+// 15 Oct 2026 (live bug): an old sheet order is one ORD- row per product line, each carrying the order's whole total.
+// The dues list counts it once; the "Owed by customers" / "Dues receivable" cards must count it the same way.
+const duesBefore = (await owner('erpDues', [])).result.total, cardBefore = (await head(owner, 'customers')).dues.v;
+const t0 = 1780000000000;
+for (let i = 0; i < 3; i++) {
+  const iv = (await sql`insert into invoices (business_id, invoice_no, customer_name, customer_phone, subtotal, grand_total, payment_status, created_at)
+            values (${B}, ${'ORD-' + (t0 + i * 1000)}, 'Old Sheet Buyer', '01711000999', 6000, 6000, 'Pending', now() - interval '120 days') returning id`)[0];
+  await sql`insert into invoice_lines (business_id, invoice_id, sku, name, qty, unit_price, line_total, line_no) values (${B}, ${iv.id}, ${'OLD-' + i}, ${'Old line ' + i}, 1, 2000, 2000, 1)`;
+}
+await sql`delete from erp_dash_cache where business_id = ${B}`.catch(() => {});
+const duesAfter = (await owner('erpDues', [])).result.total;
+h = await head(owner, 'customers');
+check('a 3-line old sheet order owing 6000 adds 6000 to the dues list', duesAfter - duesBefore === 6000, [duesBefore, duesAfter]);
+check('...and 6000 (not 18000) to the "Owed by customers" card - the card equals the dues list', h.dues.v - cardBefore === 6000 && h.dues.v === Math.round(duesAfter), [cardBefore, h.dues.v, duesAfter]);
+const hs = await head(owner, 'sales');
+check('the Sales screen\'s "Dues receivable" card equals the dues list too', hs.dues.v === Math.round(duesAfter), [hs.dues.v, duesAfter]);
+
 await done();

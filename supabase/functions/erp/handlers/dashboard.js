@@ -268,6 +268,18 @@ export async function monthGross(ctx, month) {
 
 // ----------------------------------------------------------------- courier
 
+/**
+ * What each invoice still owes, counted exactly as the dues list (erpDues): the lines of one old sheet order
+ * (ORD-<time>, one row per product line, each carrying the order's whole total) are ONE order. Use this for any
+ * total or count of dues; owedMap below (the sheet's erpOwedMap_) is per row and only right for one-invoice
+ * look-ups (courier matching). 15 Oct 2026: owedMap summed made the Customers card show 66.17L instead of 4.37L.
+ */
+export async function duesMap(ctx) {
+  const d = await erpDues(ctx), out = {};
+  for (const i of (d && d.invoices) || []) out[i.id] = i.due;
+  return out;
+}
+
 /** erpOwedMap_ (ERP.js:8841): what every invoice still owes. */
 export async function owedMap(ctx) {
   const g = {}, s = {}, st = {};

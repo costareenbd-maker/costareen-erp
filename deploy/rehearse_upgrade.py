@@ -164,6 +164,10 @@ for (t,) in cur.fetchall():
     cur.execute(S.SQL('select count(*) from public.{}').format(S.Identifier(t)))
     n = cur.fetchone()[0]
     if n: print('  new table', t, n, 'rows')
+if os.environ.get('AFTER_JS'):
+    outp = os.path.join(tmp, 'after.json')
+    r = subprocess.run(['node', os.environ['AFTER_JS'], NEW_FN, srv.get_uri(), OWNER, outp], cwd=NODE_CWD, env=dict(os.environ, ERP_NODE_CWD=NODE_CWD), capture_output=True, text=True, timeout=600)
+    print('AFTER_JS:', (r.stderr or '')[-800:]); print(open(outp, encoding='utf-8').read() if os.path.exists(outp) else 'no output')
 print('copy kept at', srv.get_uri())
 if os.environ.get('KEEP'):
     input('copy running - press Enter to stop')

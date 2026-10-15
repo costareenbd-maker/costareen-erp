@@ -17,7 +17,7 @@
 import { str } from '../lib/tabs.js';
 import { formatDate, num } from '../lib/time.js';
 import { powerOn, roleAtLeast, ERP_POWERS } from '../allow.js';
-import { products, pnlFor, owedMap, expByCat } from './dashboard.js';
+import { products, pnlFor, duesMap as owedMap, expByCat } from './dashboard.js';   // dues counted as the dues list counts them
 import { lotStock, erpShipments } from './lots.js';
 import { holdingConfig } from './holding.js';
 import { actionWords } from './security.js';

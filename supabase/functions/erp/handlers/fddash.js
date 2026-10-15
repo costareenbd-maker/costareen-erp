@@ -12,7 +12,7 @@ import { salesLog, paymentsTab, asDate, str, SL, PAY } from '../lib/tabs.js';
 import { formatDate, num } from '../lib/time.js';
 import { powerOn, roleAtLeast } from '../allow.js';
 import { discLeft } from './money.js';
-import { products, pnlFor, soldCost, owedMap } from './dashboard.js';
+import { products, pnlFor, soldCost, duesMap as owedMap } from './dashboard.js';   // dues counted as the dues list counts them
 import { lotStock } from './lots.js';
 
 const MON3 = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
