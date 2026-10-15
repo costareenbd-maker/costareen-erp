@@ -22,7 +22,7 @@ import { custKey } from '../lib/phone.js';
 import { roleAtLeast } from '../allow.js';
 import { gemini, geminiTools, textOf, jsonOf, b64 } from '../lib/gemini.js';
 import { sendOut, mediaBytes, readHook, metaSignatureOk, metaProfile, chSecret, CAN, KIND_NAME,
-         commentReply, commentPrivate, commentModerate, fetchBytes } from './inboxch.js';
+         commentReply, commentPrivate, commentModerate, fetchBytes, metaPicUrl, metaMsgFileUrl } from './inboxch.js';
 import { products } from './dashboard.js';
 import { feat, needFeat, budget, KIND_FEATURE } from '../lib/inboxplan.js';
 import { orderLink, billLink, itemLink } from './inboxpub.js';
@@ -191,7 +191,9 @@ export async function ingest(ctx, ch, ev) {
   let mediaName = null, kind = 'text';
   if (ev.media) {
     kind = ev.media.kind === 'audio' ? 'audio' : ev.media.kind === 'image' ? 'image' : ev.media.kind === 'video' ? 'video' : 'file';
-    try {
+    if ((ch.kind === 'messenger' || ch.kind === 'instagram') && ev.id) mediaName = 'fbmsg:' + ev.id;          // mirror mode: stays on Meta
+    else if (ch.kind === 'wa_cloud' && ev.media.id) mediaName = 'wamedia:' + ev.media.id;                   // WhatsApp keeps it 30 days
+    else try {
       const f = await mediaBytes(ctx, ch, ev.media);
       mediaName = conv.id + '-' + Date.now().toString(36) + '.' + extOf(f.mime || ev.media.mime, kind);
       await saveFile(ctx, 'inbox', mediaName, f.bytes, f.mime || ev.media.mime || 'application/octet-stream');
@@ -325,7 +327,7 @@ async function photoMatch(ctx, conv, m, cat) {
     const near = searchCat(cat, words).slice(0, 10);
     const withPic = near.filter((x) => /^data:image\/(jpeg|png|webp);base64,/.test(x.thumb)).slice(0, 8);
     out = { strong: '', how: '', near: near.map((x) => x.sku) };
-    const f = withPic.length && m.media ? await readFile(ctx, 'inbox', m.media) : null;
+    const f = withPic.length && m.media ? await mediaOf(ctx, m) : null;
     if (f) {
       const parts = [{ text: 'A customer sent this photo:' }, { inline_data: { mime_type: /\.png$/.test(m.media) ? 'image/png' : 'image/jpeg', data: b64(f) } },
         { text: 'These are products of the shop:' }];
@@ -351,7 +353,7 @@ async function photoMatch(ctx, conv, m, cat) {
 /** What the AI sees of a photo: a one-line description, a printed product code, and the shop's closest products. */
 async function lookAtPhoto(ctx, conv, m) {
   if (m.seen_as) return m.seen_as;
-  const f = m.media ? await readFile(ctx, 'inbox', m.media) : null;
+  const f = m.media ? await mediaOf(ctx, m) : null;
   if (!f) return '';
   const { parts } = await gemini(ctx, { contents: [{ role: 'user', parts: [
     { inline_data: { mime_type: /\.png$/.test(m.media) ? 'image/png' : /\.webp$/.test(m.media) ? 'image/webp' : 'image/jpeg', data: b64(f) } },
@@ -364,7 +366,7 @@ async function lookAtPhoto(ctx, conv, m) {
 }
 async function listenToVoice(ctx, conv, m) {
   if (m.transcript) return m.transcript;
-  const f = m.media ? await readFile(ctx, 'inbox', m.media) : null;
+  const f = m.media ? await mediaOf(ctx, m) : null;
   if (!f) return '';
   const mime = /\.mp3$/.test(m.media) ? 'audio/mp3' : /\.m4a$/.test(m.media) ? 'audio/mp4' : /\.wav$/.test(m.media) ? 'audio/wav' : /\.webm$/.test(m.media) ? 'audio/webm' : 'audio/ogg';
   const { parts } = await gemini(ctx, { contents: [{ role: 'user', parts: [{ inline_data: { mime_type: mime, data: b64(f) } },
@@ -997,10 +999,11 @@ export async function erpInbox(ctx, payload) {
     platforms[k] = platforms[k] || { connected: true, unread: 0, chats: 0 };
     platforms[k].unread += r.unread; platforms[k].chats += r.chats;
   }
+  const avs = await Promise.all(rows.map((r) => avatarOut(ctx, r.avatar, r.contact_id, r.channel_id)));
   return {
     platforms,
     counts: { ...counts, tasks },
-    list: rows.map((r) => ({ id: r.id, name: str(r.name) || 'Customer', phone: str(r.phone), avatar: avatarOut(ctx, r.avatar, r.contact_id), channel: r.kind, channelName: r.ch_name, mode: r.mode,
+    list: rows.map((r, i) => ({ id: r.id, name: str(r.name) || 'Customer', phone: str(r.phone), avatar: avs[i], channel: r.kind, channelName: r.ch_name, mode: r.mode,
       reason: r.handover_reason ? REASONS[r.handover_reason] : '', claimed: str(r.claimed_name), waiting: r.mode === 'human' && r.handover_at ? ago(r.handover_at, ctx.now) : '',
       last: str(r.last_text), ago: ago(r.last_at, ctx.now), unread: r.unread, pile: r.pile, interest: r.interest, test: r.is_test,
       window: CAN[r.kind] && CAN[r.kind].window24 && r.last_in_at ? Math.max(0, Math.round((H24 - (ctx.now - new Date(r.last_in_at))) / 3600e3)) : null })),
@@ -1011,15 +1014,81 @@ export async function erpInbox(ctx, payload) {
 }
 
 /** One conversation: the timeline (latest 80), the customer's ERP record, its leads and chat orders. */
-/** The photo as the page shows it: our stored copy through ?inbox=avatar, never Facebook's own link. */
-function avatarOut(ctx, a, contactId) {
+// ------------------------------------------------------------------ mirror mode (owner 15 Oct 2026)
+// Pictures, videos, voice notes and profile photos stay on Meta: a message keeps only Meta's id ("fbmsg:<mid>",
+// "wamedia:<id>") and a contact "meta" when Meta has a photo. The page gets a signed link to this server
+// (?inbox=media / ?inbox=avatar); each time it is opened the server asks Meta for a fresh copy and passes it on,
+// keeping nothing. Older files (website chat, linked-device WhatsApp) stay in storage as before.
+async function mirrorSig(hookKey, what) {
+  const k = await crypto.subtle.importKey('raw', new TextEncoder().encode(str(hookKey)), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
+  const s = new Uint8Array(await crypto.subtle.sign('HMAC', k, new TextEncoder().encode('mirror:' + what)));
+  return Array.from(s.slice(0, 12)).map((b) => b.toString(16).padStart(2, '0')).join('');
+}
+async function hookKeyOf(ctx, chId) {
+  const m = ctx.memo || (ctx.memo = {}); m.hookKeys = m.hookKeys || {};
+  if (!(chId in m.hookKeys)) m.hookKeys[chId] = str(((await ctx.tx`select hook_key from inbox_channels where id = ${chId}`)[0] || {}).hook_key);
+  return m.hookKeys[chId];
+}
+async function mirrorLink(ctx, kind, id, chId) {
+  const back = str(ctx.deps && ctx.deps.meta && ctx.deps.meta.redirect), hk = await hookKeyOf(ctx, chId);
+  if (!back || !hk) return '';
+  return back.replace('meta=back', 'inbox=' + kind) + '&id=' + encodeURIComponent(id) + '&k=' + await mirrorSig(hk, kind + ':' + id);
+}
+/** The photo as the page shows it: a signed mirror link, never Facebook's own (it refuses other sites and expires). */
+async function avatarOut(ctx, a, contactId, chId) {
   a = str(a);
   if (/^data:/.test(a)) return a;
-  if (!/^file:/.test(a) || !contactId) return '';
-  const back = str(ctx.deps && ctx.deps.meta && ctx.deps.meta.redirect);
-  if (!back) return '';
-  return back.replace('meta=back', 'inbox=avatar') + '&id=' + encodeURIComponent(contactId);
+  if (a !== 'meta' || !contactId || !chId) return '';
+  return mirrorLink(ctx, 'avatar', contactId, chId);
 }
+function mirrored(media) { return /^(fbmsg|wamedia):/.test(str(media)); }
+/** A message's file, wherever it is: on Meta (fetched fresh), an old Facebook link, or our storage. */
+async function mediaOf(ctx, m) {
+  const media = str(m.media);
+  if (mirrored(media)) {
+    const v = (await ctx.tx`select channel_id from inbox_conversations where id = ${m.conversation_id}`)[0];
+    const ch = v && await chOf(ctx, v.channel_id);
+    if (!ch) return null;
+    try {
+      if (media.startsWith('fbmsg:')) { const u = await metaMsgFileUrl(ctx, ch, media.slice(6)); return u ? (await fetchBytes(ctx, u)).bytes : null; }
+      return (await mediaBytes(ctx, ch, { id: media.slice(8) })).bytes;
+    } catch (_) { return null; }
+  }
+  if (/^https?:/.test(media)) { try { return (await fetchBytes(ctx, media)).bytes; } catch (_) { return null; } }
+  return readFile(ctx, 'inbox', media);
+}
+/** ?inbox=media / ?inbox=avatar (index.ts): check the signature, fetch from Meta, hand back the bytes. Nothing is kept. */
+export async function mirrorServe(deps, kind, id, k) {
+  let row;
+  if (kind === 'media') {
+    if (!/^[0-9]{1,18}$/.test(str(id))) return null;
+    row = (await deps.sql`select m.id, m.business_id, m.media, m.conversation_id, c.id as ch_id, c.hook_key from inbox_messages m
+                          join inbox_conversations v on v.id = m.conversation_id join inbox_channels c on c.id = v.channel_id where m.id = ${id}`)[0];
+  } else {
+    if (!isId(id)) return null;
+    row = (await deps.sql`select k.id, k.business_id, k.avatar, k.external_id, c.id as ch_id, c.hook_key from inbox_contacts k
+                          join inbox_channels c on c.id = k.channel_id where k.id = ${id}`)[0];
+  }
+  if (!row || !row.hook_key || str(k) !== await mirrorSig(row.hook_key, kind + ':' + id)) return null;
+  const ctx = { sql: deps.sql, tx: deps.sql, biz: row.business_id, deps, memo: {}, now: new Date() };
+  const ch = await chOf(ctx, row.ch_id);
+  if (!ch) return null;
+  try {
+    if (kind === 'avatar') {
+      const hit = MIRROR_PICS.get(row.id);
+      let url = hit && hit.until > Date.now() ? hit.url : '';
+      if (!url) { url = await metaPicUrl(ctx, ch, row.external_id); MIRROR_PICS.set(row.id, { url, until: Date.now() + 3600e3 }); if (MIRROR_PICS.size > 5000) MIRROR_PICS.clear(); }
+      if (!url) return null;
+      const f = await fetchBytes(ctx, url);
+      return { bytes: f.bytes, mime: f.mime || 'image/jpeg' };
+    }
+    const media = str(row.media);
+    if (media.startsWith('fbmsg:')) { const u = await metaMsgFileUrl(ctx, ch, media.slice(6)); if (!u) return null; const f = await fetchBytes(ctx, u); return { bytes: f.bytes, mime: f.mime }; }
+    if (media.startsWith('wamedia:')) return mediaBytes(ctx, ch, { id: media.slice(8) });
+    return null;
+  } catch (_) { return null; }
+}
+const MIRROR_PICS = new Map();   // contact id -> a fresh photo link from Meta, for an hour
 const AVATAR_TRIED = new Map();   // contact id -> when its photo was last fetched again
 export async function erpInboxOpen(ctx, payload) {
   need(ctx);
@@ -1029,26 +1098,13 @@ export async function erpInboxOpen(ctx, payload) {
   const before = num(payload && payload.before);
   const rows = (await ctx.tx`select * from inbox_messages where conversation_id = ${v.id} and (${before} = 0 or id < ${before}) order by id desc limit 80`).reverse();
   const msgs = [];
-  let copies = 0;
   for (const m of rows) {
     const one = { id: Number(m.id), dir: m.direction, author: m.author, who: str(m.user_name), kind: m.kind, text: str(m.text), transcript: str(m.transcript), seen: str(m.seen_as).replace(/\{[^}]*\}/, ''),
                   status: m.status, error: str(m.error), at: formatDate(new Date(m.created_at), 'd MMM, h:mm a') };
     if (m.payload && m.payload.cards) one.cards = m.payload.cards.map((x) => ({ code: x.code, title: x.title, subtitle: x.subtitle, image: x.image }));
     if (m.payload && m.payload.buttons) one.buttons = m.payload.buttons.map((x) => x.title);
     if (m.media && (m.kind === 'image' || m.kind === 'audio' || m.kind === 'video' || m.kind === 'file')) {
-      // a Facebook link (old chats brought in) is copied into our storage once: those links refuse other sites and expire
-      if (/^https?:/.test(m.media) && copies < 6 && ctx.deps && ctx.deps.storage) {
-        copies++;
-        try {
-          const f = await fetchBytes(ctx, m.media);
-          if (f.bytes.length && f.bytes.length < 15000000) {
-            const nm = v.id + '-' + Number(m.id).toString(36) + '.' + extOf(f.mime, m.kind);
-            await ctx.deps.storage.save(ctx.biz, 'inbox', nm, f.bytes, f.mime || 'application/octet-stream');
-            await ctx.tx`update inbox_messages set media = ${nm} where id = ${m.id}`; m.media = nm;
-          }
-        } catch (_) { /* the link has run out: shown as before */ }
-      }
-      try { one.url = /^https?:/.test(m.media) ? '' : await fileUrl(ctx, 'inbox', m.media); } catch (_) { /* none */ }
+      try { one.url = mirrored(m.media) ? await mirrorLink(ctx, 'media', String(m.id), v.channel_id) : /^https?:/.test(m.media) ? '' : await fileUrl(ctx, 'inbox', m.media); } catch (_) { /* none */ }
     }
     msgs.push(one);
   }
@@ -1064,7 +1120,7 @@ export async function erpInboxOpen(ctx, payload) {
   }
   const orders = await ctx.tx`select no, status, items, delivery_charge, invoice_no, created_at from chat_orders where business_id = ${ctx.biz} and (conversation_id = ${v.id} or (${ph || ''} <> '' and phone = ${ph || ''})) order by created_at desc limit 6`;
   const leads = await ctx.tx`select id, stage, want, follow_up_on from inbox_leads where business_id = ${ctx.biz} and conversation_id = ${v.id} order by created_at desc limit 3`;
-  if (ch && (ch.kind === 'messenger' || ch.kind === 'instagram') && !/^(data|file):/.test(str(c.avatar)) && Date.now() - (AVATAR_TRIED.get(c.id) || 0) > 3600e3) {
+  if (ch && (ch.kind === 'messenger' || ch.kind === 'instagram') && !/^(data|meta)$|^data:/.test(str(c.avatar)) && Date.now() - (AVATAR_TRIED.get(c.id) || 0) > 3600e3) {
     AVATAR_TRIED.set(c.id, Date.now()); if (AVATAR_TRIED.size > 5000) AVATAR_TRIED.clear();
     try { const pr = await metaProfile(ctx, ch, c.external_id); if (pr.avatar) { await ctx.tx`update inbox_contacts set avatar = ${pr.avatar} where id = ${c.id}`; c.avatar = pr.avatar; } } catch (_) { /* fine */ }
   }
@@ -1073,7 +1129,7 @@ export async function erpInboxOpen(ctx, payload) {
     reason: v.handover_reason ? REASONS[v.handover_reason] : '', note: str(v.handover_note), pile: v.pile, interest: v.interest, test: v.is_test,
     channel: { id: ch.id, kind: ch.kind, name: ch.name, can: CAN[ch.kind] }, window: inWindow(ch, v, ctx.now),
     windowLeft: CAN[ch.kind].window24 && v.last_in_at ? Math.max(0, Math.round((H24 - (ctx.now - new Date(v.last_in_at))) / 60e3)) : null,
-    contact: { id: c.id, name: str(c.name), phone: str(c.phone), avatar: avatarOut(ctx, c.avatar, c.id), gender: c.gender, tags: c.tags || [], note: str(c.note), customerKey: str(c.customer_key) },
+    contact: { id: c.id, name: str(c.name), phone: str(c.phone), avatar: await avatarOut(ctx, c.avatar, c.id, c.channel_id), gender: c.gender, tags: c.tags || [], note: str(c.note), customerKey: str(c.customer_key) },
     msgs, more: rows.length === 80 ? Number(rows[0].id) : 0,
     record: { invoices, due, orders: orders.map((o) => ({ no: o.no, status: o.status, items: (o.items || []).map((x) => x.name + ' × ' + x.qty).join(', '), invoice: o.invoice_no,
       total: (o.items || []).reduce((t, x) => t + num(x.qty) * num(x.price), 0) + num(o.delivery_charge) })), leads: leads.map((l) => ({ id: l.id, stage: l.stage, want: str(l.want) })) },
@@ -1244,7 +1300,7 @@ export async function erpInboxPullOld(ctx, payload) {
         const at = new Date(m.created_time || Date.now());
         const mine = str(m.from && m.from.id) === pageId || (m.from && str(m.from.id) !== str(who.id));
         const att = ((m.attachments && m.attachments.data) || [])[0];
-        const media = att ? str((att.image_data && att.image_data.url) || (att.video_data && att.video_data.url) || att.file_url) : '';
+        const media = att && m.id ? 'fbmsg:' + str(m.id) : '';   // mirror mode: the file stays on Meta
         const kind = att ? (att.image_data ? 'image' : att.video_data ? 'video' : /audio/.test(str(att.mime_type)) ? 'audio' : 'file') : 'text';
         const text = str(m.message);
         if (!text && !media) continue;

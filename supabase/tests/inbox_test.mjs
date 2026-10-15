@@ -6,7 +6,7 @@
 import { createHmac } from 'node:crypto';
 import { pathToFileURL } from 'node:url';
 import path from 'node:path';
-import { sql, FIX, owner, mgr, sales, check, done, deps, web, fnDir } from './harness.mjs';
+import { sql, FIX, owner, mgr, sales, check, done, deps, web, fnDir, files } from './harness.mjs';
 
 const ib = await import(pathToFileURL(path.join(fnDir, 'handlers', 'inbox.js')));
 const jobs = await import(pathToFileURL(path.join(fnDir, 'jobs.js')));
@@ -528,6 +528,28 @@ check('analytics shows who took the orders (the AI, the product page) with their
   check('old chats: pressing again adds nothing', r.ok && r.result.messages === 0, r.result);
   r = await owner('erpInbox', [{}]);
   check('old chats: a one-time job - the page is no longer waiting for it', r.ok && !r.result.oldPending.includes(pch.id), r.result && r.result.oldPending);
+}
+
+// ---- 27. mirror mode: pictures and photos stay on Meta; the server fetches a fresh copy when shown, keeps nothing
+{
+  deps.meta = { ...(deps.meta || {}), redirect: (deps.meta && deps.meta.redirect) || 'https://fn.test/erp?meta=back' };
+  const mrow = await chRow(M.id);
+  const raw = JSON.stringify({ object: 'page', entry: [{ id: 'PAGE1', messaging: [{ sender: { id: 'PSID-PIC' }, recipient: { id: 'PAGE1' }, timestamp: Date.now(),
+    message: { mid: 'mid.pic1', attachments: [{ type: 'image', payload: { url: 'https://scontent.test/old-link.jpg' } }] } }] }] });
+  const stored = (await files.list(FIX.B, 'inbox')).length;
+  await asB((ctx) => ib.hookPost(ctx, mrow, raw, { 'x-hub-signature-256': sig(raw) }));
+  const msg = (await sql`select id, media, conversation_id from inbox_messages where external_id = 'mid.pic1'`)[0];
+  check('mirror: a picture is kept as Meta\'s id only, nothing saved', msg && msg.media === 'fbmsg:mid.pic1' && (await files.list(FIX.B, 'inbox')).length === stored, msg);
+  web.on(/\/mid\.pic1\?fields=attachments/, () => ({ status: 200, body: { attachments: { data: [{ image_data: { url: 'https://scontent.test/fresh1.jpg' } }] } } }));
+  web.on(/scontent\.test\/fresh1\.jpg/, () => ({ status: 200, body: 'JPEGDATA', headers: { 'content-type': 'image/jpeg' } }));
+  r = await owner('erpInboxOpen', [{ id: msg.conversation_id }]);
+  const one = r.ok && r.result.msgs.find((x) => x.id === Number(msg.id));
+  check('mirror: the page gets a signed link to this server, not Facebook\'s', one && /inbox=media&id=\d+&k=[0-9a-f]{24}$/.test(one.url), one);
+  const k = one ? one.url.split('&k=')[1] : '';
+  const f = await ib.mirrorServe(deps, 'media', String(msg.id), k);
+  check('mirror: the server fetches a fresh copy from Meta and passes it on', f && new TextDecoder().decode(f.bytes) === 'JPEGDATA' && f.mime === 'image/jpeg', f && f.mime);
+  check('mirror: a wrong signature gets nothing', (await ib.mirrorServe(deps, 'media', String(msg.id), '0'.repeat(24))) === null);
+  check('mirror: still nothing saved after showing it', (await files.list(FIX.B, 'inbox')).length === stored);
 }
 
 await done();

@@ -318,18 +318,23 @@ export async function metaProfile(ctx, ch, id) {
   const r = await call(ctx, GRAPH + '/' + encodeURIComponent(id) + '?fields=' + fields + '&access_token=' + encodeURIComponent(token), { method: 'GET' });
   if (!r.ok) return {};
   const j = r.json;
-  return { name: str(j.name || [j.first_name, j.last_name].filter(Boolean).join(' ') || j.username), avatar: await avatarData(ctx, str(j.profile_pic)) };
+  return { name: str(j.name || [j.first_name, j.last_name].filter(Boolean).join(' ') || j.username), avatar: j.profile_pic ? 'meta' : '' };
 }
-/** Facebook's photo links refuse to show on other sites and expire: keep the photo in our own storage ("file:<name>"). */
-export async function avatarData(ctx, url) {
-  if (!url) return '';
-  try {
-    const f = await fetchBytes(ctx, url);
-    if (!/^image\//.test(f.mime) || !f.bytes.length || f.bytes.length > 2000000 || !ctx.deps || !ctx.deps.storage) return '';
-    const name = 'av-' + crypto.randomUUID().replace(/-/g, '').slice(0, 20) + (/png/.test(f.mime) ? '.png' : '.jpg');
-    await ctx.deps.storage.save(ctx.biz, 'inbox', name, f.bytes, f.mime);
-    return 'file:' + name;
-  } catch (_) { return ''; }
+/** Mirror mode: a fresh link to the person's photo from Meta (the links expire; nothing is kept). */
+export async function metaPicUrl(ctx, ch, id) {
+  const token = await chSecret(ctx, ch, 'TOKEN');
+  if (!token) return '';
+  const fields = ch.kind === 'instagram' ? 'profile_pic' : 'profile_pic';
+  const r = await call(ctx, GRAPH + '/' + encodeURIComponent(id) + '?fields=' + fields + '&access_token=' + encodeURIComponent(token), { method: 'GET' });
+  return r.ok && r.json ? str(r.json.profile_pic) : '';
+}
+/** Mirror mode: a fresh link to a Messenger / Instagram message's picture, video or file. */
+export async function metaMsgFileUrl(ctx, ch, mid) {
+  const token = await chSecret(ctx, ch, 'TOKEN');
+  if (!token) return '';
+  const r = await call(ctx, GRAPH + '/' + encodeURIComponent(mid) + '?fields=attachments&access_token=' + encodeURIComponent(token), { method: 'GET' });
+  const a = r.ok && r.json && r.json.attachments && r.json.attachments.data && r.json.attachments.data[0];
+  return a ? str((a.image_data && a.image_data.url) || (a.video_data && a.video_data.url) || a.file_url) : '';
 }
 
 // ------------------------------------------------------------------ templates: messages after Meta's 24 hours

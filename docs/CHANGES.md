@@ -2090,3 +2090,15 @@ off by default, set per person.
 
 Not done: the cash book stays closed even with `act` (it shows money balances); a manager with `act` paying a
 supplier or commission picks the account from the list the server gives without balances.
+
+## 15 Oct 2026 - Inbox mirror mode (owner: "mirror Meta, do not hold the content")
+
+- Messenger / Instagram pictures, videos, voice notes: a message keeps only Meta's id (`fbmsg:<mid>`); WhatsApp Cloud
+  keeps `wamedia:<id>` (Meta keeps those 30 days). Customer photos: the contact keeps `meta`.
+- The page gets signed links (`?inbox=media|avatar&id=..&k=<HMAC of the channel's hook key>`); `mirrorServe` asks Meta
+  for a fresh copy each time and passes it on (browser cache 1 day). Nothing is written to storage.
+- The AI's look at a photo / voice note reads through the same mirror (`mediaOf`).
+- Live: 190 messages switched to mirror ids, 5 stored files deleted, Inbox storage folder now empty.
+- Kept as before: website chat uploads and linked-device WhatsApp (Evolution) files - there is no Meta to mirror.
+- Also today: old chats one-time import (erpInboxPullOld), 3 s refresh + refresh on tab focus, 'inbox' ability per person.
+- Not possible without Meta App Review: photos of customers who have no role on the Meta app.
