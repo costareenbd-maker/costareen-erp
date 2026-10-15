@@ -2044,3 +2044,23 @@ The owner asked for every remaining AiPraktor feature, built so that each one ca
   - The Inbox tabs are now: Inbox, Notifications, Orders, Bookings, Follow-ups, Comments, Agent Desk, Knowledge, Chat settings, Analytics, AI cost, Team.
   - Leads and Broadcasts are off by default: the code is kept, nothing is shown, and the AI saves no leads.
   - Connecting accounts (Connect with Facebook, connecting a channel by hand) and Plan and features moved to Settings → Connections.
+
+## Go-live of the merged ERP (15 Oct 2026, LIVE)
+
+The owner said "Now". Live moved from 8bcf1a7 (the old worktree) to main (3fb468d): the FilaDash merge (107–118) and the Inbox (120–124).
+
+**Safety steps, in order:**
+1. Two read-only snapshots of every live table (`deploy/live_snapshot.py`, private/snapshots).
+2. A rehearsal on a copy of live (`deploy/rehearse_upgrade.py`): 17 migrations in 0.3 s, check-sums unchanged.
+3. The old code on live data vs the new code on the upgraded copy (`deploy/compare_reports.mjs`): ~4,900 numbers on 14 main screens, 0 differences.
+4. Tag `live-before-golive-20261015` for rollback.
+
+**After deploy:** the totals are unchanged, the main reads work, and the page shows the new design.
+
+**Inbox on live:** staff don't see it, because the company has no Inbox plan yet. Facebook and WhatsApp are not connected on live yet.
+
+**Security, same day (the partner can read the dev database):**
+- Removed every real key from dev, and withdrew the Facebook app's access for the owner's login (the tokens are dead).
+- Removed the Meta app secret from the dev server, and unhooked the Evolution test instance.
+- Changed the Evolution server's main key (the business number stays linked; the new key is in the owner's Desktop note).
+- The Meta app secret still needs the owner's Reset.
