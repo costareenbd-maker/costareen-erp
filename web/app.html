@@ -5700,6 +5700,11 @@ function poNewHtml() {
     '<div><label class="f" for="pn_rate">Rate you paid <span class="sku">TK per RMB</span></label><input class="i" id="pn_rate" inputmode="decimal" value="' + esc(PONEW.rate) + '" placeholder="e.g. 17.2"></div>' +
     '<div><label class="f" for="pn_ship">Coming by</label><select class="i" id="pn_ship"><option' + (PONEW.ship === 'Sea' ? ' selected' : '') + '>Sea</option><option' + (PONEW.ship === 'Air' ? ' selected' : '') + '>Air</option></select></div>' +
     '<div style="grid-column:span 2"><label class="f" for="pn_note">Note</label><input class="i" id="pn_note" value="' + esc(PONEW.note) + '" placeholder="Supplier, paid on …, agent …"></div></div>' +
+    (PO && PO.accounts && PO.accounts.length ? '<div class="fields" style="margin-top:8px">' +
+      '<div><label class="f" for="pn_paid">Paid to the supplier (TK)</label><input class="i" id="pn_paid" inputmode="decimal" value="' + esc(PONEW.paid || '') + '" placeholder="0 = not paid yet"></div>' +
+      '<div><label class="f" for="pn_pacc">Paid from</label><select class="i" id="pn_pacc">' + PO.accounts.map(function (a) { return '<option value="' + esc(a.id) + '"' + (PONEW.paidAcc === a.id ? ' selected' : '') + '>' + esc(a.name) + '</option>'; }).join('') + '</select></div>' +
+      '<div><label class="f" for="pn_pdate">Paid on</label><input class="i" id="pn_pdate" type="date" value="' + esc(PONEW.paidOn || '') + '"></div>' +
+      '<div><label class="f" for="pn_pi">PI number</label><input class="i" id="pn_pi" value="' + esc(PONEW.pi || '') + '" maxlength="60"></div></div>' : '') +
     '<div class="row" style="margin-top:12px;gap:10px;align-items:center;justify-content:flex-end;flex-wrap:wrap">' +
     '<span class="sub" id="pn_sum" style="margin:0;flex:1 1 auto">' + poSumText(t) + '</span>' +
     '<button class="btn" type="button" id="pn_cancel">Cancel</button>' +
@@ -5766,6 +5771,13 @@ function poListHtml() {
       '<span class="pill">' + esc(o.shipBy) + '</span><span class="sku">ordered ' + esc(o.when) +
         (o.days !== null ? ' · ' + fmt(o.days) + ' days ago' : '') + (o.rmb ? ' · RMB ' + fmt(Math.round(o.rmb)) + (o.rate ? ' @ ' + esc(o.rate) : '') : '') + '</span></div>' +
       (o.note ? '<div class="sub">' + esc(o.note) + '</div>' : '') +
+      (PO && PO.accounts && PO.accounts.length ? '<div class="row" style="gap:8px;align-items:center;margin-top:4px;flex-wrap:wrap"><span class="pill' + (o.paid > 0 ? ' ok' : '') + '">' +
+        (o.paid > 0 ? 'Paid ' + fmt(o.paid) + ' TK' : 'Not paid yet') + '</span>' +
+        (PO_PAY === o.id ? '<input class="i" id="pp_amt" inputmode="decimal" placeholder="TK" style="width:110px">' +
+          '<select class="i" id="pp_acc" style="width:150px">' + PO.accounts.map(function (a) { return '<option value="' + esc(a.id) + '">' + esc(a.name) + '</option>'; }).join('') + '</select>' +
+          '<input class="i" id="pp_date" type="date" style="width:150px"><input class="i" id="pp_pi" placeholder="PI" style="width:110px">' +
+          '<button class="btn small primary" type="button" data-popaygo="' + esc(o.id) + '">Record</button><button class="btn small" type="button" data-popay="">Cancel</button>'
+          : '<button class="btn small" type="button" data-popay="' + esc(o.id) + '">Record a payment</button>') + '</div>' : '') +
       ((o.boxes || []).length ? '<div class="sub">Boxes so far: ' + o.boxes.map(function (b) {
         return esc(b.on) + (b.no ? ' · ' + esc(b.no) : '') + ' · ' + fmt(b.units) + ' pc' + (b.shipping ? ' · shipping ' + fmt(b.shipping) : ''); }).join(' | ') + '</div>' : '') +
       '<div class="scroll" style="margin-top:6px"><table><thead><tr><th>Product</th><th class="num">Ordered</th><th class="num">Still to come</th>' +
@@ -5944,6 +5956,9 @@ function wirePo() {
   var psh = el('pn_ship'); if (psh) psh.addEventListener('change', function () { PONEW.ship = psh.value; POSHIP = psh.value; });
   var pnt = el('pn_note'); if (pnt) pnt.addEventListener('input', function () { PONEW.note = pnt.value; });
   var psu = el('pn_sup'); if (psu) psu.addEventListener('input', function () { PONEW.supplier = psu.value; });
+  [['pn_paid', 'paid'], ['pn_pacc', 'paidAcc'], ['pn_pdate', 'paidOn'], ['pn_pi', 'pi']].forEach(function (x) {
+    var f = el(x[0]); if (f) f.addEventListener(f.tagName === 'SELECT' || f.type === 'date' ? 'change' : 'input', function () { PONEW[x[1]] = f.value; });
+  });
   var sv2 = el('pn_save');
   if (sv2) sv2.addEventListener('click', async function () {
     var lines = PONEW.lines.filter(function (l) { return num(l.qty) > 0; });
@@ -5955,7 +5970,10 @@ function wirePo() {
     if (!(await uiConfirm('Save this order?\n\n' + lines.length + ' product(s), ' + fmt(t.units) + ' pieces, RMB ' + fmt(t.rmb) +
         (unpriced ? '\n\n' + unpriced + ' line(s) have no RMB price: their cost will come from the price book instead.' : '')))) return;
     PO_BUSY = 'new'; repaint();
+    if (num(PONEW.paid) > 0 && !String(PONEW.supplier || '').trim()) { toast('Paid to whom? Type the supplier.', true); return; }
+    var pAcc = PONEW.paidAcc || (PO && PO.accounts && PO.accounts[0] ? PO.accounts[0].id : '');
     srv('erpPoCreate', [{ shipBy: PONEW.ship, rate: num(PONEW.rate), note: PONEW.note, supplier: PONEW.supplier,
+        paid: num(PONEW.paid) > 0 ? { amount: num(PONEW.paid), account: pAcc, date: PONEW.paidOn || '', pi: PONEW.pi || '' } : null, pi: PONEW.pi || '',
         lines: lines.map(function (l) { return l.isNew ? { isNew: true, product: l.product, qty: l.qty, rmbUnit: num(l.rmb) }
                                                       : { sku: l.sku, qty: l.qty, rmbUnit: num(l.rmb) }; }) }], function (r) {
       PO_BUSY = ''; PONEW = null;
@@ -36618,6 +36636,21 @@ document.addEventListener('click', function (e) {
   if (!window.confirm('Open the books today?\n\nToday\u2019s net worth becomes the start the ERP checks against from now on.')) return;
   srv('erpBalanceOpen', [{}], function (r) { BS.data = r; toast('The books are opened. From now on the ERP checks they balance.'); repaint(); },
       function (er) { toast(esc((er && er.message) || er), true); });
+});
+</script>
+<!-- fd-51 (owner 17 Oct 2026): an order (shipment) is paid when it is created; pay more before the goods come -->
+<script>
+var PO_PAY = '';
+document.addEventListener('click', function (e) {
+  var t = e.target.closest && e.target.closest('[data-popay],[data-popaygo]');
+  if (!t) return;
+  if (t.hasAttribute('data-popay')) { PO_PAY = t.getAttribute('data-popay'); repaint(); return; }
+  var po = t.getAttribute('data-popaygo'), amt = num((el('pp_amt') || {}).value);
+  if (!(amt > 0)) { toast('How much was paid?', true); return; }
+  srv('erpPoPay', [{ po: po, amount: amt, account: (el('pp_acc') || {}).value || '', date: (el('pp_date') || {}).value || '', pi: (el('pp_pi') || {}).value || '' }], function (r) {
+    PO_PAY = ''; toast('Payment recorded for ' + esc(po) + ' \u00b7 paid ' + fmt(r.paid) + ' TK in all'); PO = null;
+    srv('erpPoList', [], function (x) { PO = x; repaint(); }, function () { PO = { orders: [] }; repaint(); });
+  }, function (er) { toast(esc((er && er.message) || er), true); });
 });
 </script>
 <!-- fd-37: the page is styled: show it -->

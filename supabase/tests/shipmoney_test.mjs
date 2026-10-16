@@ -57,4 +57,28 @@ const cfg = await sql`select value from business_config where business_id = ${FI
 check('the start day is kept for the business', cfg.length === 1 && String(cfg[0].value) === today, cfg);
 const other = await sql`select count(*)::int n from supplier_bills where business_id = ${FIX.B2}`;
 check('another business has none of this', other[0].n === 0);
+// ---- 6. an order (shipment) created on the day it is PAID, with the PI; the goods come later
+const SUP2 = 'PI Supplier';
+await owner('erpSupplierSave', [{ name: SUP2, country: 'China' }]);
+r = await mgr('erpPoCreate', [{ supplier: SUP2, shipBy: 'Sea', rate: 17, lines: [{ sku: PLA, qty: 10, rmbUnit: 50 }], paid: { amount: 8500, account: BANK, date: today, pi: 'PI-2026-77' } }]);
+check('a manager cannot record the money (owner or shareholder only)', !r.ok && /Only the owner or a shareholder/.test(r.error), r.error);
+const bank0 = await bal(BANK);
+r = await owner('erpPoCreate', [{ supplier: SUP2, shipBy: 'Sea', rate: 17, lines: [{ sku: PLA, qty: 10, rmbUnit: 50 }], paid: { amount: 8500, account: BANK, date: today, pi: 'PI-2026-77' } }]);
+const PO = r.result && r.result.poId;
+check('the order is created with its payment: the bank goes down, the supplier is paid ahead', r.ok && r.result.paid === 8500 && (await bal(BANK)) === bank0 - 8500 &&
+  (await owner('erpSupplierPage', [{ name: SUP2 }])).result.owed === -8500, r.error || r.result);
+let pl = (await owner('erpPoList', [])).result;
+let o = pl.orders.find((x) => x.id === PO);
+check('the order shows what was paid, and the PI in its note', o && o.paid === 8500 && /PI PI-2026-77/.test(o.note) && pl.accounts.length === 2, o);
+check('a manager sees the order but not the money', (await mgr('erpPoList', [])).result.orders.find((x) => x.id === PO).paid === 0);
+r = await owner('erpPoPay', [{ po: PO, amount: 500, account: CASH, date: today }]);
+check('paying more before the goods come', r.ok && r.result.paid === 9000, r.error || r.result);
+r = await owner('erpPoPay', [{ po: 'PO-NOPE', amount: 5, account: CASH }]);
+check('an unknown order is refused', !r.ok, r.ok);
+// the goods arrive: billed at 10 x 50 x 17 = 8,500; 9,000 was paid -> 500 still paid ahead, no money moved on arrival
+const cash0 = await bal(CASH), bank1 = await bal(BANK);
+r = await mgr('erpPoArrive', [{ poId: PO, lines: [{ sku: PLA, qty: 10 }], shipment: { date: today } }]);
+check('arrival uses what was paid: 500 still ahead, no money moved', r.ok && (await owner('erpSupplierPage', [{ name: SUP2 }])).result.owed === -500 &&
+  (await bal(CASH)) === cash0 && (await bal(BANK)) === bank1, r.error || (await owner('erpSupplierPage', [{ name: SUP2 }])).result.owed);
+
 await done();

@@ -891,8 +891,11 @@ export async function erpPoList(ctx) {
   const orders = (await poOpen(ctx)).orders;
   const stages = {};
   for (const r of await ctx.tx`select * from po_stages where business_id = ${ctx.biz}`) stages[str(r.po_no)] = r;
-  orders.forEach((o) => { o.boxes = boxes[o.id] || []; o.stage = stageOut(stages[o.id], o); });
-  return { orders, differences: m.open, balances: m.balances };
+  const paid = roleAtLeast(actRole(ctx.s), 'shareholder') ? await poPaidMap(ctx) : {};
+  orders.forEach((o) => { o.boxes = boxes[o.id] || []; o.stage = stageOut(stages[o.id], o); o.paid = paid[o.id] || 0; });
+  const accounts = roleAtLeast(actRole(ctx.s), 'shareholder')
+    ? (await ctx.tx`select id, name from money_accounts where business_id = ${ctx.biz} and not archived and kind <> 'courier' order by sort_order, created_at`).map((a) => ({ id: a.id, name: str(a.name) })) : [];
+  return { orders, differences: m.open, balances: m.balances, accounts, canPay: accounts.length > 0 || roleAtLeast(actRole(ctx.s), 'shareholder') };
 }
 
 // ------------------------------------------------------------------ stages (108)
@@ -966,6 +969,40 @@ async function insertDiff(ctx, d) {
 }
 
 /** erpPoCreate (ERP:7930) */
+
+// ---- money paid for an order before its goods come: the supplier's advance, marked with the order (and the PI)
+async function poPayWrite(ctx, { po, supplier, amount, accountId, at, pi, fx }) {
+  await ctx.tx`insert into supplier_payments (business_id, supplier, at, amount, account_id, fx_amount, fx_currency, note, by)
+               values (${ctx.biz}, ${supplier}, ${at}, ${amount}, ${accountId || null}, ${fx > 0 ? fx : null}, ${fx > 0 ? 'RMB' : null},
+                       ${'advance for ' + po + (pi ? ' (PI ' + pi + ')' : '')}, ${who(ctx)})`;
+}
+/** What has been paid for each open order (from the payments marked "advance for PO-..."). */
+export async function poPaidMap(ctx) {
+  const out = {};
+  for (const r of await ctx.tx`select substring(note from 'advance for (PO-[0-9A-Za-z-]+)') po, coalesce(sum(amount), 0) a from supplier_payments
+                               where business_id = ${ctx.biz} and coalesce(voided, '') = '' and note like 'advance for PO-%' group by 1`) if (r.po) out[r.po] = Math.round(num(r.a));
+  return out;
+}
+/** Pay for an order later (still before its goods come): {po, amount, account, date, pi}. */
+export async function erpPoPay(ctx, payload) {
+  payload = payload || {};
+  const po = str(payload.po);
+  const row = (await ctx.tx`select supplier from po_lines where business_id = ${ctx.biz} and po_no = ${po} limit 1`)[0];
+  if (!row) throw new Error('That order is not here.');
+  if (!str(row.supplier)) throw new Error('This order has no supplier - edit it first.');
+  const amount = round2(num(payload.amount));
+  if (!(amount > 0)) throw new Error('How much was paid? Type an amount above 0.');
+  const accs = await ctx.tx`select id, archived from money_accounts where business_id = ${ctx.biz} and kind <> 'courier'`;
+  const acc = accs.find((x) => x.id === str(payload.account));
+  if (accs.length && (!acc || acc.archived)) throw new Error('Choose the account the money was paid from.');
+  const day = str(payload.date) || formatDate(ctx.now, 'yyyy-MM-dd');
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(day) || day > formatDate(ctx.now, 'yyyy-MM-dd')) throw new Error('On which day was it paid? (not in the future)');
+  const at = new Date(dhakaDayStart(day).getTime() + 12 * 3600e3);
+  await assertOpen(ctx, at, 'a payment cannot be dated there');
+  await poPayWrite(ctx, { po, supplier: str(row.supplier), amount, accountId: acc ? acc.id : null, at, pi: str(payload.pi).slice(0, 60), fx: num(payload.fx) });
+  return { ok: true, po, paid: (await poPaidMap(ctx))[po] || 0 };
+}
+
 export async function erpPoCreate(ctx, payload) {
   payload = payload || {};
   if (!powerOn(ctx.s, 'suppliers')) throw new Error('Your account cannot place orders.');
@@ -1019,18 +1056,36 @@ export async function erpPoCreate(ctx, payload) {
     l.sku = res.sku;
     created.push(res.sku);
   }
+  // owner 17 Oct 2026: a shipment is created on the day it is PAID (with the supplier's PI) - the goods come later
+  const paid = payload.paid || {};
+  const paidAmt = round2(num(paid.amount)), pi = str(paid.pi || payload.pi).slice(0, 60);
+  let paidAt = null;
+  if (paidAmt > 0) {
+    if (!str(payload.supplier)) throw new Error('Paid to whom? Choose the supplier of this order.');
+    if (!roleAtLeast(actRole(ctx.s), 'shareholder')) throw new Error('Only the owner or a shareholder records money paid to a supplier.');
+    const accs = await ctx.tx`select id, archived from money_accounts where business_id = ${ctx.biz} and kind <> 'courier'`;
+    const acc = accs.find((x) => x.id === str(paid.account));
+    if (accs.length && (!acc || acc.archived)) throw new Error('Choose the account the money was paid from.');
+    const day = str(paid.date) || formatDate(ctx.now, 'yyyy-MM-dd');
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(day) || day > formatDate(ctx.now, 'yyyy-MM-dd')) throw new Error('On which day was it paid? (not in the future)');
+    paidAt = new Date(dhakaDayStart(day).getTime() + 12 * 3600e3);
+    await assertOpen(ctx, paidAt, 'a payment cannot be dated there');
+    paid.accountId = acc ? acc.id : null;
+  }
   const now = new Date();
+  const orderedAt = paidAt || now;
   const id = await freePoNo(ctx, 'PO-' + formatDate(now, 'yyMMdd-HHmm'));
-  const by = who(ctx), note = str(payload.note), supplier = str(payload.supplier);
+  const by = who(ctx), note = [str(payload.note), pi ? 'PI ' + pi : ''].filter(Boolean).join(' · '), supplier = str(payload.supplier);
   for (const l of lines) {
     await ctx.tx`
       insert into po_lines (business_id, po_no, ordered_at, sku, product, qty, received, ship_by, note,
                             status, ordered_by, closed_at, rmb_unit, rmb_rate, supplier)
-      values (${ctx.biz}, ${id}, ${now}, ${l.sku}, ${l.name}, ${l.qty}, 0, ${shipBy}, ${note},
+      values (${ctx.biz}, ${id}, ${orderedAt}, ${l.sku}, ${l.name}, ${l.qty}, 0, ${shipBy}, ${note},
               'open', ${by}, null, ${l.rmb || null}, ${rate || null}, ${supplier})`;
   }
   await stageSet(ctx, id, { stage: payload.planned ? 'planned' : 'ordered', shipBy });
-  return { ok: true, poId: id, lines: lines.length, created, stage: payload.planned ? 'planned' : 'ordered',
+  if (paidAmt > 0) await poPayWrite(ctx, { po: id, supplier, amount: paidAmt, accountId: paid.accountId, at: paidAt, pi, fx: num(paid.fx) });
+  return { ok: true, poId: id, lines: lines.length, created, stage: payload.planned ? 'planned' : 'ordered', paid: paidAmt,
            units: lines.reduce((t, l) => t + l.qty, 0),
            rmb: round2(lines.reduce((t, l) => t + l.qty * l.rmb, 0)) };
 }
@@ -1251,5 +1306,5 @@ export const HANDLERS = {
   erpSaveProduct, erpSetProductStatus, erpDiscontinued,
   erpReceiveShipment, erpReceiveStock, erpAdjustStock, erpStockHistory,
   erpReorderPlan, erpApplyReorderLevels,
-  erpPoList, erpPoCreate, erpPoArrive, erpPoLineClose, erpPoClose, erpPoDiffDecide, erpPoSettle,
+  erpPoList, erpPoCreate, erpPoPay, erpPoArrive, erpPoLineClose, erpPoClose, erpPoDiffDecide, erpPoSettle,
 };
