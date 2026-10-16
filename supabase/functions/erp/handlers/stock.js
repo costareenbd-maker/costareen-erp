@@ -10,7 +10,8 @@
 
 import { erpCatalog, erpProduct } from './catalog.js';
 import { forget, str } from '../lib/tabs.js';
-import { formatDate, num, round2, DAY_MS } from '../lib/time.js';
+import { formatDate, num, round2, DAY_MS, dhakaDayStart } from '../lib/time.js';
+import { assertOpen } from '../lib/period.js';
 import { getConfig, setConfig } from '../lib/ext.js';
 import { roleAtLeast, powerOn, callAllowed, actRole } from '../allow.js';
 import { lock, who } from './money.js';
@@ -517,7 +518,7 @@ export async function receiveShipment(ctx, payload) {
 
   // plan A5: what was paid besides the goods, each line with the account that paid it
   const accOk = {};
-  if ((freight > 0 && str(payload.shippingAccount)) || extras.some((c) => c.account) || str(payload.paidFrom)) {
+  if ((freight > 0 && str(payload.shippingAccount)) || extras.some((c) => c.account) || str(payload.paidFrom) || str(payload.advanceFrom)) {
     try { (await ctx.tx.savepoint(() => ctx.tx`select id from money_accounts where business_id = ${ctx.biz} and not archived`)).forEach((a) => { accOk[a.id] = true; }); }
     catch (_) { /* someone who cannot see the accounts cannot name one */ }
   }
@@ -543,17 +544,47 @@ export async function receiveShipment(ctx, payload) {
       note: lines.length + ' product(s), ' + lines.reduce((n, l) => n + num(l.qty), 0) + ' unit(s)' });
   }
 
-  // paid there and then (a local purchase for cash): the bill is settled from the account named
-  let paidNow = 0;
-  if (billId && accOk[str(payload.paidFrom)]) {
+  // how the goods were paid (owner 17 Oct 2026: "mostly paid in advance; sometimes after receiving"):
+  //   now      paid there and then from an account (a local purchase for cash)
+  //   advance  paid to the supplier before the goods came: the money already left the business and sat as
+  //            "paid to suppliers, goods not received" (the supplier's advance); this bill uses it up. An advance
+  //            nobody wrote down yet is written now, dated the day it was paid, from the account it left.
+  //   later    owed to the supplier until it is paid
+  let paidNow = 0, advanceUsed = 0, advanceWritten = 0;
+  const payment = ['now', 'advance', 'later'].includes(str(payload.payment)) ? str(payload.payment) : (accOk[str(payload.paidFrom)] ? 'now' : 'later');
+  if (payment === 'advance' && !billId && goods > 0) throw new Error('Paid in advance to whom? Choose the supplier of this shipment.');
+  if (billId && payment === 'now' && accOk[str(payload.paidFrom)]) {
     await ctx.tx`insert into supplier_payments (business_id, supplier, at, amount, account_id, fx_amount, fx_currency, note, by)
                  values (${ctx.biz}, ${str(payload.supplier)}, ${now}, ${round2(goods)}, ${str(payload.paidFrom)}, ${mode === 'rmb' ? totalRmb : null},
                          ${mode === 'rmb' ? fxCur : null}, ${'paid on receiving ' + reference}, ${who(ctx)})`;
     paidNow = round2(goods);
+  } else if (billId && payment === 'advance') {
+    const sk = str(payload.supplier).toLowerCase();
+    const op = num(((await ctx.tx`select opening_owed from suppliers where business_id = ${ctx.biz} and lower(btrim(name)) = ${sk}`)[0] || {}).opening_owed);
+    const billed = num((await ctx.tx`select coalesce(sum(amount), 0) s from supplier_bills where business_id = ${ctx.biz} and lower(btrim(supplier)) = ${sk}
+                                      and coalesce(voided, '') = '' and id <> ${billId}`)[0].s);
+    const paid = num((await ctx.tx`select coalesce(sum(amount), 0) s from supplier_payments where business_id = ${ctx.biz} and lower(btrim(supplier)) = ${sk}
+                                    and coalesce(voided, '') = ''`)[0].s);
+    const ahead = round2(paid - billed - op);               // what was paid ahead before this shipment
+    const short = round2(goods - Math.max(0, ahead));
+    if (short > 0.5) {
+      const from = str(payload.advanceFrom), on = str(payload.advanceDate);
+      if (!accOk[from]) {
+        throw new Error('Only ' + Math.round(Math.max(0, ahead)) + ' TK was paid ahead to ' + str(payload.supplier) + ', the goods are ' + Math.round(goods) +
+          ' TK. Say which account the advance was paid from and on which day, or choose "Not paid yet".');
+      }
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(on) || on > formatDate(ctx.now, 'yyyy-MM-dd')) throw new Error('On which day was the advance paid? (a date like 2026-10-05, not in the future)');
+      const at = new Date(dhakaDayStart(on).getTime() + 12 * 3600e3);
+      await assertOpen(ctx, at, 'an advance cannot be dated there');
+      await ctx.tx`insert into supplier_payments (business_id, supplier, at, amount, account_id, fx_amount, fx_currency, note, by)
+                   values (${ctx.biz}, ${str(payload.supplier)}, ${at}, ${short}, ${from}, ${null}, ${null}, ${'advance for ' + reference}, ${who(ctx)})`;
+      advanceWritten = short;
+    }
+    advanceUsed = round2(goods);
   }
 
   return {
-    ok: true, numbered, reference, billed: !!billId, paidNow, costs: costRows.length, currency: mode === 'rmb' ? fxCur : '', received: updated.length || lines.length,
+    ok: true, numbered, reference, billed: !!billId, paidNow, advanceUsed, advanceWritten, payment, costs: costRows.length, currency: mode === 'rmb' ? fxCur : '', received: updated.length || lines.length,
     units: lines.reduce((n, l) => n + num(l.qty), 0),
     shipping, createdProducts: created, lines: updated, totalCost: round2(totalBdt),
     freight, chargeKg, freightPerKg: perKg, divisor,

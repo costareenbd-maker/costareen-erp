@@ -18,6 +18,7 @@
 import { formatDate, num, round2, dhakaDayStart } from '../lib/time.js';
 import { roleAtLeast, actRole } from '../allow.js';
 import { assertOpen } from '../lib/period.js';
+import { getConfig, setConfig } from '../lib/ext.js';
 
 const str = (v) => String(v == null ? '' : v).trim();
 const key = (v) => str(v).toLowerCase();
@@ -53,6 +54,37 @@ async function accountOf(ctx, name) {
   return { bills, pays };
 }
 
+
+// ---- what was bought from a supplier, counted from a set day on (owner 17 Oct 2026: "you don't need to care about
+// the past, but from now on"). The day is kept per business; the first time anyone looks it is set to that day.
+export async function totalsFrom(ctx) {
+  const m = ctx.memo || (ctx.memo = {});
+  if (m.supTotalsFrom) return m.supTotalsFrom;
+  let d = str(await getConfig(ctx, 'supplier_totals_from', ''));
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(d)) { d = formatDate(ctx.now, 'yyyy-MM-dd'); try { await ctx.tx.savepoint(() => setConfig(ctx, 'supplier_totals_from', d)); } catch (_) { /* read-only caller */ } }
+  return (m.supTotalsFrom = d);
+}
+async function purchasesSince(ctx, name, since) {
+  const k = key(name), from = dhakaDayStart(since);
+  const bills = await ctx.tx`select id, at, reference, amount, source from supplier_bills where business_id = ${ctx.biz} and lower(btrim(supplier)) = ${k}
+                             and coalesce(voided, '') = '' and at >= ${from} order by at`;
+  const refs = bills.map((b) => str(b.reference)).filter(Boolean);
+  const units = {}, extras = {};
+  if (refs.length) {
+    for (const r of await ctx.tx`select reference, coalesce(sum(qty), 0) q from stock_movements where business_id = ${ctx.biz} and kind = 'RECEIVE'
+                                 and reference = any(${refs}) group by reference`) units[str(r.reference)] = num(r.q);
+    for (const r of await ctx.tx`select reference, coalesce(sum(amount), 0) a from shipment_costs where business_id = ${ctx.biz}
+                                 and reference = any(${refs}) group by reference`) extras[str(r.reference)] = num(r.a);
+  }
+  const paid = num((await ctx.tx`select coalesce(sum(amount), 0) s from supplier_payments where business_id = ${ctx.biz} and lower(btrim(supplier)) = ${k}
+                                  and coalesce(voided, '') = '' and at >= ${from}`)[0].s);
+  const rows = bills.map((b) => ({ when: day(b.at), ref: str(b.reference), units: units[str(b.reference)] || 0, goods: Math.round(num(b.amount)),
+                                   extras: Math.round(extras[str(b.reference)] || 0), landed: Math.round(num(b.amount) + (extras[str(b.reference)] || 0)) }));
+  const t = rows.reduce((a, r) => ({ shipments: a.shipments + 1, units: a.units + r.units, goods: a.goods + r.goods, extras: a.extras + r.extras, landed: a.landed + r.landed }),
+                        { shipments: 0, units: 0, goods: 0, extras: 0, landed: 0 });
+  return { since, sinceText: day(from), ...t, paid: Math.round(paid), rows: rows.reverse() };
+}
+
 export async function erpSuppliers(ctx) {
   const by = await known(ctx);
   const sums = {};
@@ -73,7 +105,11 @@ export async function erpSuppliers(ctx) {
     return { name: e.name, phone: str(r.phone), country: str(r.country), currency: str(r.currency), archived: !!r.archived, hasRecord: !!e.rec,
              products: prod[k] || 0, billed: Math.round(s.billed), paid: Math.round(s.paid), owed: Math.round(owed), lastBill: day(s.last) };
   }).sort((a, b) => (a.archived - b.archived) || (b.owed - a.owed) || a.name.localeCompare(b.name));
-  return { suppliers: list, owedTotal: list.reduce((t, s) => t + Math.max(0, s.owed), 0), aheadTotal: list.reduce((t, s) => t + Math.max(0, -s.owed), 0),
+  const since = await totalsFrom(ctx), sinceAt = dhakaDayStart(since), bought = {};
+  for (const r of await ctx.tx`select lower(btrim(supplier)) k, coalesce(sum(amount), 0) a from supplier_bills where business_id = ${ctx.biz}
+                               and coalesce(voided, '') = '' and at >= ${sinceAt} group by 1`) bought[r.k] = Math.round(num(r.a));
+  list.forEach((x) => { x.boughtSince = bought[key(x.name)] || 0; });
+  return { since, sinceText: day(sinceAt), suppliers: list, owedTotal: list.reduce((t, s) => t + Math.max(0, s.owed), 0), aheadTotal: list.reduce((t, s) => t + Math.max(0, -s.owed), 0),
            canPay: roleAtLeast(actRole(ctx.s), 'shareholder'), money: 'BDT' };
 }
 
@@ -108,6 +144,7 @@ export async function erpSupplierPage(ctx, payload) {
            openingOwed: num(r.opening_owed), archived: !!r.archived, owed: Math.round(run), lines: lines.reverse(), accounts,
            products: products.map((p) => ({ sku: str(p.sku), name: str(p.name) })),
            onOrder: open.map((o) => ({ po: str(o.po_no), left: num(o.left), ordered: day(o.at) })),
+           purchases: await purchasesSince(ctx, e.name, await totalsFrom(ctx)),
            canPay: roleAtLeast(actRole(ctx.s), 'shareholder'), today: formatDate(ctx.now, 'yyyy-MM-dd'), money: 'BDT' };
 }
 function fxText(amount, cur, rate) {

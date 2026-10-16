@@ -8446,7 +8446,7 @@ function srv(name, args, ok, bad) {
 
 var SRV_ACTIVE = 0, SRV_WRITING = false, SRV_TIMED = {};
 // the same list the server uses to know a call changes nothing (ERP_READS)
-var SRV_READS = /^(erpMetaConnect|erpInboxFeatureMap|erpBookings|erpInbox|erpInboxOpen|erpInboxChannels|erpChatOrders|erpInboxStats|erpAiWork|erpCommissionSales|erpFdCards|erpLineMargins|erpFd19Profit|erpFdInventory|erpFd22Analytics|erpNavigator|erpSellers|erpFollowups|erpCustomerInsight|erpPreorders|erpCashUps|erpAskingPrices|erpSystemCheck|erpAnalytics|erpCommission|erpHolding|erpLotFunding|erpShipments|erpShipment|erpLots|erpFdHead|erpFdDash|erpReceiveMatch|erpAiReader|erpProductSuggest|erpCatalogue|erpPushList|erpCreators|erpCreatorPortalLink|erpSponsorLink|erpCreatorRequests|erpCreatorEvents|erpCreatorProgramme|erpCreatorPreview|erpCreatorCatalog|erpCreatorSources|erpCreatorClaims|erpApps|erpAppQr|erpFeedback|erpRestockOffers|erpRestockList|erpWarrantyRules|erpWarrantyCard|erpMyLink|erpPlatformRegister|erpPlatformDoctor|erpPlatformCommunity|erpMarketWaiting|erpBoard|erpPlatformDesign|erpResell|erpResellerProgramme|erpLoyalty|erpCustomerPoints|erpRefillDue|erpDeliveryHistory|erpDeliveryHistoryMany|erpPrintKit|erpPrintJobs|erpPrintJob|erpPrintCost|erpSpools|erpPrintRequests|erpJoint|erpJointCatalog|erpJointCard|erpInvoiceDesign|erpInvoicePreview|erpMarket|erpMarketMine|erpMarketRequests|erpMarketHints|erpMarketNames|erpWanted|erpBrand|erpComplianceLog|erpProviderKey|erpNews|erpAccessKeys|erpAccessWarning|erpAdmin|erpAiKeys|erpAlertRules|erpAlerts|erpArena|erpBackupStatus|erpBg|erpBnWords|erpBookedParcels|erpBrandLogo|erpBundle|erpBusinessLinks|erpBusinesses|erpBusinessesDeleted|erpCampaignAudience|erpCampaignGet|erpCampaignList|erpCapital|erpCashBook|erpCatalog|erpConnStatus|erpConnections|erpCostBook|erpCourier|erpCourierKeyStatus|erpCurrencies|erpCustomerAccount|erpCustomerCredit|erpCustomerList|erpCustomerPage|erpCustomerStatement|erpCustomers|erpDashboardData|erpDaySales|erpDeliveryOptions|erpDevices|erpDiscontinued|erpDues|erpEvoQr|erpEvoStatus|erpExpenseExport|erpExpenseReceiptUrl|erpExpenses|erpFamilies|erpFighters|erpFormOptions|erpGame|erpGetTheme|erpGoogle|erpHello|erpInstalls|erpInvoice|erpInvoicePdf|erpJob|erpJobs|erpListView|erpLookupCustomer|erpLookupUsage|erpMe|erpMoney|erpNoteFileUrl|erpNotes|erpOwnerChange|erpOwnerChanges|erpParcelLabels|erpParcelPreview|erpPartnerStock|erpPartnership|erpPayReasons|erpPeople|erpPlatform|erpPlatformErrors|erpPnl|erpPnlMonth|erpPoList|erpPoolCatalog|erpProduct|erpProductListShare|erpProductPage|erpProductPhotoUrl|erpProductThumbs|erpProfile|erpQuoteAsset|erpQuoteBoot|erpQuoteGet|erpQuoteList|erpRecentInvoices|erpRecovery|erpReorderPlan|erpRestorePreview|erpReturnPreview|erpRisks|erpSales|erpSearch|erpSecurity|erpSelfTest|erpSerialLookup|erpSerialsFor|erpSessions|erpSetTheme|erpSettingsFull|erpSettingsLists|erpSfPayoutLines|erpSfPayouts|erpShareFile|erpSharedStock|erpSheet|erpStatementPdf|erpStockHistory|erpSupplierPage|erpSuppliers|erpToday|erpUsers|erpWaProductPdf|erpWebMatches|erpWebOrderInvoices|erpWebOrders|erpWebsiteTest)$/;
+var SRV_READS = /^(erpBalanceSheet|erpMetaConnect|erpInboxFeatureMap|erpBookings|erpInbox|erpInboxOpen|erpInboxChannels|erpChatOrders|erpInboxStats|erpAiWork|erpCommissionSales|erpFdCards|erpLineMargins|erpFd19Profit|erpFdInventory|erpFd22Analytics|erpNavigator|erpSellers|erpFollowups|erpCustomerInsight|erpPreorders|erpCashUps|erpAskingPrices|erpSystemCheck|erpAnalytics|erpCommission|erpHolding|erpLotFunding|erpShipments|erpShipment|erpLots|erpFdHead|erpFdDash|erpReceiveMatch|erpAiReader|erpProductSuggest|erpCatalogue|erpPushList|erpCreators|erpCreatorPortalLink|erpSponsorLink|erpCreatorRequests|erpCreatorEvents|erpCreatorProgramme|erpCreatorPreview|erpCreatorCatalog|erpCreatorSources|erpCreatorClaims|erpApps|erpAppQr|erpFeedback|erpRestockOffers|erpRestockList|erpWarrantyRules|erpWarrantyCard|erpMyLink|erpPlatformRegister|erpPlatformDoctor|erpPlatformCommunity|erpMarketWaiting|erpBoard|erpPlatformDesign|erpResell|erpResellerProgramme|erpLoyalty|erpCustomerPoints|erpRefillDue|erpDeliveryHistory|erpDeliveryHistoryMany|erpPrintKit|erpPrintJobs|erpPrintJob|erpPrintCost|erpSpools|erpPrintRequests|erpJoint|erpJointCatalog|erpJointCard|erpInvoiceDesign|erpInvoicePreview|erpMarket|erpMarketMine|erpMarketRequests|erpMarketHints|erpMarketNames|erpWanted|erpBrand|erpComplianceLog|erpProviderKey|erpNews|erpAccessKeys|erpAccessWarning|erpAdmin|erpAiKeys|erpAlertRules|erpAlerts|erpArena|erpBackupStatus|erpBg|erpBnWords|erpBookedParcels|erpBrandLogo|erpBundle|erpBusinessLinks|erpBusinesses|erpBusinessesDeleted|erpCampaignAudience|erpCampaignGet|erpCampaignList|erpCapital|erpCashBook|erpCatalog|erpConnStatus|erpConnections|erpCostBook|erpCourier|erpCourierKeyStatus|erpCurrencies|erpCustomerAccount|erpCustomerCredit|erpCustomerList|erpCustomerPage|erpCustomerStatement|erpCustomers|erpDashboardData|erpDaySales|erpDeliveryOptions|erpDevices|erpDiscontinued|erpDues|erpEvoQr|erpEvoStatus|erpExpenseExport|erpExpenseReceiptUrl|erpExpenses|erpFamilies|erpFighters|erpFormOptions|erpGame|erpGetTheme|erpGoogle|erpHello|erpInstalls|erpInvoice|erpInvoicePdf|erpJob|erpJobs|erpListView|erpLookupCustomer|erpLookupUsage|erpMe|erpMoney|erpNoteFileUrl|erpNotes|erpOwnerChange|erpOwnerChanges|erpParcelLabels|erpParcelPreview|erpPartnerStock|erpPartnership|erpPayReasons|erpPeople|erpPlatform|erpPlatformErrors|erpPnl|erpPnlMonth|erpPoList|erpPoolCatalog|erpProduct|erpProductListShare|erpProductPage|erpProductPhotoUrl|erpProductThumbs|erpProfile|erpQuoteAsset|erpQuoteBoot|erpQuoteGet|erpQuoteList|erpRecentInvoices|erpRecovery|erpReorderPlan|erpRestorePreview|erpReturnPreview|erpRisks|erpSales|erpSearch|erpSecurity|erpSelfTest|erpSerialLookup|erpSerialsFor|erpSessions|erpSetTheme|erpSettingsFull|erpSettingsLists|erpSfPayoutLines|erpSfPayouts|erpShareFile|erpSharedStock|erpSheet|erpStatementPdf|erpStockHistory|erpSupplierPage|erpSuppliers|erpToday|erpUsers|erpWaProductPdf|erpWebMatches|erpWebOrderInvoices|erpWebOrders|erpWebsiteTest)$/;
 function srvPump() {
   if (!SRV_Q.length) return;
   var isRead = SRV_READS.test(SRV_Q[0].name);
@@ -13427,6 +13427,16 @@ function supplierPageHtml() {
       '<div style="flex:2 1 200px"><label class="f" for="sp_note">How it was sent <span class="sku">(optional)</span></label><input class="i" id="sp_note" maxlength="300" placeholder="bank TT, through agent, in person…"></div>' +
       '<button class="btn primary" type="button" id="sp_go"' + (SUP_BUSY ? ' disabled' : '') + '>Record the payment</button><button class="btn" type="button" data-supform="">Cancel</button></div></div>';
   }
+  if (d.purchases) {
+    var pu = d.purchases;
+    h += '<div class="card" style="margin-top:12px"><h2>Bought from them since ' + esc(pu.sinceText) + '</h2>' +
+      '<div class="grid g-kpi">' + kpiT('Shipments', '', fmt(pu.shipments), '') + kpiT('Units', '', fmt(pu.units), '') +
+      kpiT('Goods', cur, fmt(pu.goods), '') + kpiT('Freight and other costs', cur, fmt(pu.extras), '') +
+      kpiT('Total cost', cur, fmt(pu.landed), '') + kpiT('Paid to them', cur, fmt(pu.paid), '') + '</div>' +
+      (pu.rows.length ? '<div class="tablewrap" style="margin-top:8px"><table class="tbl"><thead><tr><th>Date</th><th>Shipment</th><th class="num">Units</th><th class="num">Goods</th><th class="num">Other costs</th><th class="num">Total cost</th></tr></thead><tbody>' +
+        pu.rows.map(function (r) { return '<tr><td>' + esc(r.when) + '</td><td class="nm">' + esc(r.ref) + '</td><td class="num">' + fmt(r.units) + '</td><td class="num">' + fmt(r.goods) + '</td><td class="num">' + fmt(r.extras) + '</td><td class="num"><strong>' + fmt(r.landed) + '</strong></td></tr>'; }).join('') +
+        '</tbody></table></div>' : '<div class="sub" style="margin-top:8px">No shipment from them since then.</div>') + '</div>';
+  }
   if (SUP_FORM === 'bill' && d.canPay) {
     h += '<div class="cash_form"><strong>Add a bill</strong> <span class="sku">— something owed that did not come through Receive stock</span><div class="row" style="gap:8px;align-items:flex-end;flex-wrap:wrap;margin-top:8px">' +
       '<div style="flex:1 1 130px"><label class="f" for="sb_amt">Amount in ' + esc(cur) + '</label><input class="i" id="sb_amt" inputmode="decimal" placeholder="0"></div>' +
@@ -13549,8 +13559,16 @@ recvCostHtml = function () {
       '<input class="i" id="rv_bdt" inputmode="decimal" value="' + esc(RECV.totalBdt) + '" placeholder="e.g. 62000"></div></div>';
   }
   if (m !== 'none' && FX && FX.accounts && FX.accounts.length) {
-    h += '<div class="fields"><div><label class="f" for="rv_paid">Goods paid from</label><select class="i" id="rv_paid">' +
-      fxAccOpts(RECV.paidFrom || '', 'Not paid yet \u2014 owed to the supplier') + '</select></div></div>';
+    // owner 17 Oct 2026: mostly paid to the supplier in advance; sometimes paid now, sometimes after receiving
+    var pm = RECV.payment || 'advance', pv = pm === 'now' ? 'now:' + (RECV.paidFrom || '') : pm;
+    h += '<div class="fields"><div><label class="f" for="rv_pay">How the goods were paid</label><select class="i" id="rv_pay">' +
+      '<option value="advance"' + (pv === 'advance' ? ' selected' : '') + '>Already paid to the supplier in advance</option>' +
+      FX.accounts.map(function (a) { return '<option value="now:' + esc(a.id) + '"' + (pv === 'now:' + a.id ? ' selected' : '') + '>Paid now from ' + esc(a.name) + '</option>'; }).join('') +
+      '<option value="later"' + (pv === 'later' ? ' selected' : '') + '>Not paid yet \u2014 pay after receiving</option></select></div>' +
+      (pm === 'advance' ? '<div><label class="f" for="rv_advfrom">The advance was paid from</label><select class="i" id="rv_advfrom">' +
+        fxAccOpts(RECV.advanceFrom || '', 'Already recorded on the supplier\u2019s page') + '</select></div>' +
+        (RECV.advanceFrom ? '<div><label class="f" for="rv_advdate">Paid on</label><input class="i" id="rv_advdate" type="date" value="' + esc(RECV.advanceDate || '') + '"></div>' : '') : '') +
+      '</div>';
   }
   return h + '</div>';
 };
@@ -13610,7 +13628,8 @@ function recvPayload() {
   return { supplier: RECV.supplier, reference: RECV.reference, from: RECV.from || 'shipment', notes: RECV.notes, mode: mode,
     currency: RECV.currency || 'RMB', totalFx: num(RECV.totalRmb), rate: num(RECV.rate),
     totalBdt: num(RECV.totalBdt), saveRate: !!RECV.saveRate,
-    paidFrom: mode === 'none' ? '' : (RECV.paidFrom || ''),
+    paidFrom: mode === 'none' || (RECV.payment || 'advance') !== 'now' ? '' : (RECV.paidFrom || ''),
+    payment: mode === 'none' ? 'later' : (RECV.payment || 'advance'), advanceFrom: RECV.advanceFrom || '', advanceDate: RECV.advanceDate || '',
     shippingBdt: recvShipBdt(), shipNote: recvShipNote(), shippingAccount: RECV.shippingAccount || '',
     costs: (RECV.costs || []).filter(function (c) { return String(c.label || '').trim() || num(c.amount) > 0; })
       .map(function (c) { return { label: String(c.label || '').trim(), amount: num(c.amount), account: c.account || '' }; }),
@@ -13638,7 +13657,10 @@ wireStockExtra = function () {
   if (cur) cur.addEventListener('change', function () {
     RECV.currency = cur.value; RECV.rate = fxRate(cur.value) > 0 ? String(fxRate(cur.value)) : ''; repaint();
   });
-  var pf = el('rv_paid'); if (pf) pf.addEventListener('change', function () { RECV.paidFrom = pf.value; });
+  var pf = el('rv_pay'); if (pf) pf.addEventListener('change', function () {
+    var v = pf.value; if (v.indexOf('now:') === 0) { RECV.payment = 'now'; RECV.paidFrom = v.slice(4); } else { RECV.payment = v; RECV.paidFrom = ''; } repaint(); });
+  var af = el('rv_advfrom'); if (af) af.addEventListener('change', function () { RECV.advanceFrom = af.value; repaint(); });
+  var ad = el('rv_advdate'); if (ad) ad.addEventListener('change', function () { RECV.advanceDate = ad.value; });
   var sa = el('rv_shipacc'); if (sa) sa.addEventListener('change', function () { RECV.shippingAccount = sa.value; });
   var add = el('rv_addcost');
   if (add) add.addEventListener('click', function () { (RECV.costs = RECV.costs || []).push({ label: '', amount: '', account: '' }); repaint(); });
@@ -27284,6 +27306,7 @@ viewCash = function () {
   var nWait = (c.loose || []).length + (c.unassigned || []).length;
   var tabs = [['ledger', 'Ledger', 'wallet'], ['accounts', 'Accounts', 'bank'], ['match', 'Unmatched', 'search', nWait ? String(nWait) : ''], ['cashup', 'Cash-up', 'taka']];
   if (held.length) tabs.push(['held', 'Courier & agent', 'truck']);
+  if (ME && (ME.role === 'owner' || ME.role === 'shareholder')) tabs.push(['balance', 'Balance sheet', 'chart']);
   f21TabInit('cash', 'ledger', tabs.map(function (t) { return t[0]; }));
   if (CASH_FORM) FD21.tab.cash = 'accounts';
   var out = f21Tabs('cash', tabs);
@@ -27331,6 +27354,7 @@ viewCash = function () {
     hc += '<div class="fd21-row-wrap" style="margin-top:-6px">' + held.map(function (a) { return '<button type="button" class="btn small" data-cacc="' + esc(a.id) + '">Open ' + esc(a.name) + ' statement</button>'; }).join('') + '</div>';
     out += f21Pane('held', 'cash', hc);
   }
+  if (ME && (ME.role === 'owner' || ME.role === 'shareholder')) out += f21Pane('balance', 'cash', bsHtml(cur));
   return out;
 };
 // any change to the money makes the ledger stale
@@ -36537,6 +36561,64 @@ function ibFreshNow() {
 }
 document.addEventListener('visibilitychange', ibFreshNow);
 window.addEventListener('focus', ibFreshNow);
+</script>
+<!-- fd-50 (owner 17 Oct 2026): the balance sheet - what the business owns, what it owes, net worth, and whether it
+     still adds up since the books were opened. Money > Balance sheet (owner and shareholders). -->
+<style>
+.bs-cols { display:grid; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr)); gap:14px; }
+.bs-row { display:flex; justify-content:space-between; gap:12px; padding:7px 0; border-bottom:1px solid var(--line, rgba(127,127,127,.18)); }
+.bs-row .w { min-width:0; } .bs-row .w small { display:block; opacity:.7; font-size:12px; }
+.bs-row .a { font-variant-numeric:tabular-nums; white-space:nowrap; font-weight:600; }
+.bs-tot { display:flex; justify-content:space-between; padding:9px 0 0; font-weight:700; }
+.bs-diff { border-radius:12px; padding:12px 14px; margin-top:14px; }
+.bs-diff.ok { background:rgba(46,160,90,.12); } .bs-diff.bad { background:rgba(220,60,60,.12); }
+</style>
+<script>
+var BS = { data: null, busy: false, err: '' };
+function bsLoad(force) {
+  if (BS.busy || (BS.data && !force)) return;
+  BS.busy = true;
+  srv('erpBalanceSheet', [], function (r) { BS.busy = false; BS.data = r; BS.err = ''; if (VIEW === 'cash') repaint(); },
+      function (e) { BS.busy = false; BS.err = (e && e.message) || String(e); if (VIEW === 'cash') repaint(); });
+}
+function bsHtml(cur) {
+  if (!BS.data) { bsLoad(); return '<div class="fd21-card">' + (BS.err ? '<div class="note err"><div>' + esc(BS.err) + '</div></div>' : '<div class="loading">Adding everything up…</div>') + '</div>'; }
+  var d = BS.data, c = cur || 'BDT';
+  var row = function (r) { return '<div class="bs-row"><div class="w">' + esc(r.what) + (r.sub ? '<small>' + esc(r.sub) + '</small>' : '') + '</div><div class="a">' + f21M(r.amount, c) + '</div></div>'; };
+  var h = '<div class="fd21-card"><div class="chead"><h2>Balance sheet · ' + esc(d.today) + '</h2>' +
+    '<button class="btn small" type="button" data-bsre="1">Add up again</button></div><div class="bs-cols">' +
+    '<div><h3>What the business owns</h3>' + d.owns.map(row).join('') + '<div class="bs-tot"><span>Total owned</span><span>' + f21M(d.ownsTotal, c) + '</span></div></div>' +
+    '<div><h3>What it owes</h3>' + d.owes.map(row).join('') + '<div class="bs-tot"><span>Total owed</span><span>' + f21M(d.owesTotal, c) + '</span></div>' +
+    '<div class="bs-tot" style="font-size:18px;margin-top:10px"><span>Net worth (owners\u2019 capital + profit kept)</span><span>' + f21M(d.net, c) + '</span></div></div></div>';
+  if (!d.opened) {
+    h += '<div class="bs-diff bad"><strong>The books are not opened yet.</strong> Opening them writes down today\u2019s net worth (' + f21M(d.net, c) +
+      ') as the start. From then on the ERP checks every day that today\u2019s net worth = that start + the profit since + money the owners put in \u2212 money they took out, and shows any difference with what caused it.' +
+      (d.canOpen ? '<div style="margin-top:10px"><button class="btn primary" type="button" data-bsopen="1">Open the books today</button></div>' : '') + '</div>';
+  } else {
+    var e = d.explain, ok = Math.abs(d.difference) < 1;
+    h += '<div class="bs-cols" style="margin-top:14px"><div><h3>Why the net worth is what it is</h3>' +
+      row({ what: 'Net worth when the books were opened', sub: d.opening.date + (d.opening.by ? ' by ' + d.opening.by : ''), amount: e.opening }) +
+      row({ what: 'Profit since then', sub: 'from Profitability', amount: e.profit }) +
+      row({ what: 'Money owners and investors put in', sub: 'Capital book', amount: e.invest }) +
+      row({ what: 'Money they took out', sub: 'Capital book', amount: -e.withdraw }) +
+      row({ what: 'Profit paid out to shareholders', sub: 'Capital book', amount: -e.profitPaid }) +
+      '<div class="bs-tot"><span>Net worth should be</span><span>' + f21M(e.should, c) + '</span></div></div><div>' +
+      '<div class="bs-diff ' + (ok ? 'ok' : 'bad') + '" style="margin-top:0"><strong>' + (ok ? '\u2713 The books balance.' : 'Difference: ' + f21M(d.difference, c)) + '</strong>' +
+      (ok ? '' : '<div class="sub" style="margin-top:6px">Net worth today is ' + f21M(d.net, c) + ', it should be ' + f21M(e.should, c) + '. Usually one of these:</div>') + '</div>' +
+      (d.why && d.why.length ? d.why.map(function (w) { return '<div class="bs-row"><div class="w">' + esc(w.what) + '<small>' + fmt(w.n) + ' item(s)</small></div><div class="a">' + (w.amount ? f21M(w.amount, c) : '') + '</div></div>'; }).join('') : '') +
+      (d.canOpen ? '<div class="sub" style="margin-top:10px">Opened by mistake or wrong figures at the start? <button class="linkbtn" type="button" data-bsopen="1">Open the books again today</button></div>' : '') +
+      '</div></div>';
+  }
+  return h + '</div>';
+}
+document.addEventListener('click', function (e) {
+  var t = e.target.closest && e.target.closest('[data-bsre],[data-bsopen]');
+  if (!t) return;
+  if (t.hasAttribute('data-bsre')) { BS.data = null; bsLoad(true); repaint(); return; }
+  if (!window.confirm('Open the books today?\n\nToday\u2019s net worth becomes the start the ERP checks against from now on.')) return;
+  srv('erpBalanceOpen', [{}], function (r) { BS.data = r; toast('The books are opened. From now on the ERP checks they balance.'); repaint(); },
+      function (er) { toast(esc((er && er.message) || er), true); });
+});
 </script>
 <!-- fd-37: the page is styled: show it -->
 <script>(function () { var x = document.getElementById('bootHide'); if (x) x.remove(); })();</script>

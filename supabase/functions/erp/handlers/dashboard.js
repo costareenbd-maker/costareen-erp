@@ -1228,3 +1228,32 @@ export const HANDLERS = {
   erpSaveCostSettings,
   erpSaveCostRows,
 };
+
+/** Stock on the shelf at cost, for the balance sheet: units in a lot with a landed cost at that cost; units with no
+ *  cost of their own (the opening stock) at the cost FROZEN when the books were opened, so a new shipment changing a
+ *  product's average cost does not re-price what was already on the shelf. frozen: { sku(lower): unit cost }. */
+export async function stockAtCost(ctx, frozen) {
+  const { list } = await products(ctx);
+  const fz = frozen || {};
+  const lots = {};
+  for (const r of await ctx.tx`select lower(p.sku) k, sum(l.qty_left) units,
+                                      sum(l.qty_left * l.unit_cost) filter (where l.unit_cost is not null) known,
+                                      coalesce(sum(l.qty_left) filter (where l.unit_cost is null), 0) unknown
+                               from stock_lots l join products p on p.id = l.product_id
+                               where l.business_id = ${ctx.biz} and l.qty_left > 0 group by 1`) lots[r.k] = r;
+  let cost = 0, units = 0, uncosted = 0;
+  const costs = {};
+  for (const p of list) {
+    if (!(p.stock > 0)) continue;
+    const k = p.sku.toLowerCase(), r = lots[k], unit = Object.prototype.hasOwnProperty.call(fz, k) ? num(fz[k]) : (p.cost > 0 ? p.cost : 0);
+    costs[k] = unit;
+    units += p.stock;
+    // units with no cost of their own: the lots that have none, plus any stock the lots do not cover
+    const known = r ? num(r.known) : 0, inLots = r ? num(r.units) : 0;
+    const noCost = (r ? num(r.unknown) : 0) + Math.max(0, p.stock - inLots);
+    const v = known + noCost * unit;
+    if (noCost > 0 && !(unit > 0)) uncosted++;
+    cost += v;
+  }
+  return { cost: Math.round(cost), units, uncosted, costs };
+}
