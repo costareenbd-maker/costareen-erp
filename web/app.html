@@ -8464,7 +8464,7 @@ function srv(name, args, ok, bad) {
 
 var SRV_ACTIVE = 0, SRV_WRITING = false, SRV_TIMED = {};
 // the same list the server uses to know a call changes nothing (ERP_READS)
-var SRV_READS = /^(erpBalanceSheet|erpMetaConnect|erpInboxFeatureMap|erpBookings|erpInbox|erpInboxOpen|erpInboxChannels|erpChatOrders|erpInboxStats|erpAiWork|erpCommissionSales|erpFdCards|erpLineMargins|erpFd19Profit|erpFdInventory|erpFd22Analytics|erpNavigator|erpSellers|erpFollowups|erpCustomerInsight|erpPreorders|erpCashUps|erpAskingPrices|erpSystemCheck|erpAnalytics|erpCommission|erpHolding|erpLotFunding|erpShipments|erpShipment|erpLots|erpFdHead|erpFdDash|erpReceiveMatch|erpAiReader|erpProductSuggest|erpCatalogue|erpPushList|erpCreators|erpCreatorPortalLink|erpSponsorLink|erpCreatorRequests|erpCreatorEvents|erpCreatorProgramme|erpCreatorPreview|erpCreatorCatalog|erpCreatorSources|erpCreatorClaims|erpApps|erpAppQr|erpFeedback|erpRestockOffers|erpRestockList|erpWarrantyRules|erpWarrantyCard|erpMyLink|erpPlatformRegister|erpPlatformDoctor|erpPlatformCommunity|erpMarketWaiting|erpBoard|erpPlatformDesign|erpResell|erpResellerProgramme|erpLoyalty|erpCustomerPoints|erpRefillDue|erpDeliveryHistory|erpDeliveryHistoryMany|erpPrintKit|erpPrintJobs|erpPrintJob|erpPrintCost|erpSpools|erpPrintRequests|erpJoint|erpJointCatalog|erpJointCard|erpInvoiceDesign|erpInvoicePreview|erpMarket|erpMarketMine|erpMarketRequests|erpMarketHints|erpMarketNames|erpWanted|erpBrand|erpComplianceLog|erpProviderKey|erpNews|erpAccessKeys|erpAccessWarning|erpAdmin|erpAiKeys|erpAlertRules|erpAlerts|erpArena|erpBackupStatus|erpBg|erpBnWords|erpBookedParcels|erpBrandLogo|erpBundle|erpBusinessLinks|erpBusinesses|erpBusinessesDeleted|erpCampaignAudience|erpCampaignGet|erpCampaignList|erpCapital|erpCashBook|erpCatalog|erpConnStatus|erpConnections|erpCostBook|erpCourier|erpCourierKeyStatus|erpCurrencies|erpCustomerAccount|erpCustomerCredit|erpCustomerList|erpCustomerPage|erpCustomerStatement|erpCustomers|erpDashboardData|erpDaySales|erpDeliveryOptions|erpDevices|erpDiscontinued|erpDues|erpEvoQr|erpEvoStatus|erpExpenseExport|erpExpenseReceiptUrl|erpExpenses|erpFamilies|erpFighters|erpFormOptions|erpGame|erpGetTheme|erpGoogle|erpHello|erpInstalls|erpInvoice|erpInvoicePdf|erpJob|erpJobs|erpListView|erpLookupCustomer|erpLookupUsage|erpMe|erpMoney|erpNoteFileUrl|erpNotes|erpOwnerChange|erpOwnerChanges|erpParcelLabels|erpParcelPreview|erpPartnerStock|erpPartnership|erpPayReasons|erpPeople|erpPlatform|erpPlatformErrors|erpPnl|erpPnlMonth|erpPoList|erpPoolCatalog|erpProduct|erpProductListShare|erpProductPage|erpProductPhotoUrl|erpProductThumbs|erpProfile|erpQuoteAsset|erpQuoteBoot|erpQuoteGet|erpQuoteList|erpRecentInvoices|erpRecovery|erpReorderPlan|erpRestorePreview|erpReturnPreview|erpRisks|erpSales|erpSearch|erpSecurity|erpSelfTest|erpSerialLookup|erpSerialsFor|erpSessions|erpSetTheme|erpSettingsFull|erpSettingsLists|erpSfPayoutLines|erpSfPayouts|erpShareFile|erpSharedStock|erpSheet|erpStatementPdf|erpStockHistory|erpSupplierPage|erpSuppliers|erpToday|erpUsers|erpWaProductPdf|erpWebMatches|erpWebOrderInvoices|erpWebOrders|erpWebsiteTest)$/;
+var SRV_READS = /^(erpBalanceSheet|erpProductFields|erpProductAi|erpMetaConnect|erpInboxFeatureMap|erpBookings|erpInbox|erpInboxOpen|erpInboxChannels|erpChatOrders|erpInboxStats|erpAiWork|erpCommissionSales|erpFdCards|erpLineMargins|erpFd19Profit|erpFdInventory|erpFd22Analytics|erpNavigator|erpSellers|erpFollowups|erpCustomerInsight|erpPreorders|erpCashUps|erpAskingPrices|erpSystemCheck|erpAnalytics|erpCommission|erpHolding|erpLotFunding|erpShipments|erpShipment|erpLots|erpFdHead|erpFdDash|erpReceiveMatch|erpAiReader|erpProductSuggest|erpCatalogue|erpPushList|erpCreators|erpCreatorPortalLink|erpSponsorLink|erpCreatorRequests|erpCreatorEvents|erpCreatorProgramme|erpCreatorPreview|erpCreatorCatalog|erpCreatorSources|erpCreatorClaims|erpApps|erpAppQr|erpFeedback|erpRestockOffers|erpRestockList|erpWarrantyRules|erpWarrantyCard|erpMyLink|erpPlatformRegister|erpPlatformDoctor|erpPlatformCommunity|erpMarketWaiting|erpBoard|erpPlatformDesign|erpResell|erpResellerProgramme|erpLoyalty|erpCustomerPoints|erpRefillDue|erpDeliveryHistory|erpDeliveryHistoryMany|erpPrintKit|erpPrintJobs|erpPrintJob|erpPrintCost|erpSpools|erpPrintRequests|erpJoint|erpJointCatalog|erpJointCard|erpInvoiceDesign|erpInvoicePreview|erpMarket|erpMarketMine|erpMarketRequests|erpMarketHints|erpMarketNames|erpWanted|erpBrand|erpComplianceLog|erpProviderKey|erpNews|erpAccessKeys|erpAccessWarning|erpAdmin|erpAiKeys|erpAlertRules|erpAlerts|erpArena|erpBackupStatus|erpBg|erpBnWords|erpBookedParcels|erpBrandLogo|erpBundle|erpBusinessLinks|erpBusinesses|erpBusinessesDeleted|erpCampaignAudience|erpCampaignGet|erpCampaignList|erpCapital|erpCashBook|erpCatalog|erpConnStatus|erpConnections|erpCostBook|erpCourier|erpCourierKeyStatus|erpCurrencies|erpCustomerAccount|erpCustomerCredit|erpCustomerList|erpCustomerPage|erpCustomerStatement|erpCustomers|erpDashboardData|erpDaySales|erpDeliveryOptions|erpDevices|erpDiscontinued|erpDues|erpEvoQr|erpEvoStatus|erpExpenseExport|erpExpenseReceiptUrl|erpExpenses|erpFamilies|erpFighters|erpFormOptions|erpGame|erpGetTheme|erpGoogle|erpHello|erpInstalls|erpInvoice|erpInvoicePdf|erpJob|erpJobs|erpListView|erpLookupCustomer|erpLookupUsage|erpMe|erpMoney|erpNoteFileUrl|erpNotes|erpOwnerChange|erpOwnerChanges|erpParcelLabels|erpParcelPreview|erpPartnerStock|erpPartnership|erpPayReasons|erpPeople|erpPlatform|erpPlatformErrors|erpPnl|erpPnlMonth|erpPoList|erpPoolCatalog|erpProduct|erpProductListShare|erpProductPage|erpProductPhotoUrl|erpProductThumbs|erpProfile|erpQuoteAsset|erpQuoteBoot|erpQuoteGet|erpQuoteList|erpRecentInvoices|erpRecovery|erpReorderPlan|erpRestorePreview|erpReturnPreview|erpRisks|erpSales|erpSearch|erpSecurity|erpSelfTest|erpSerialLookup|erpSerialsFor|erpSessions|erpSetTheme|erpSettingsFull|erpSettingsLists|erpSfPayoutLines|erpSfPayouts|erpShareFile|erpSharedStock|erpSheet|erpStatementPdf|erpStockHistory|erpSupplierPage|erpSuppliers|erpToday|erpUsers|erpWaProductPdf|erpWebMatches|erpWebOrderInvoices|erpWebOrders|erpWebsiteTest)$/;
 function srvPump() {
   if (!SRV_Q.length) return;
   var isRead = SRV_READS.test(SRV_Q[0].name);
@@ -35872,6 +35872,13 @@ body[data-fdview="settings"] #o_cp .crumbs, body[data-fdview="tools"] #o_cp .cru
         '<label>Reminder hours before<select class="i" data-pf="remind_hours">' + [0, 1, 2, 3, 6, 12].map(function (n) { return '<option value="' + n + '"' + (Number(p.remind_hours) === n ? ' selected' : '') + '>' + (n ? n + ' hours' : 'None') + '</option>'; }).join('') + '</select></label>' +
         '<label style="flex-direction:row;align-items:center;gap:8px"><input type="checkbox" data-pf="remind_day"' + (p.remind_day ? ' checked' : '') + '> Remind the day before</label>' +
         '<label style="flex-direction:row;align-items:center;gap:8px"><input type="checkbox" data-pf="auto_confirm"' + (p.auto_confirm ? ' checked' : '') + '> Confirm bookings automatically</label></div>' +
+        // owner 17 Oct 2026: the AI's limits
+        '<h3 style="margin-top:16px">Limits</h3><div class="sub">What the AI may and may not do. It never sees or says your cost; a discount is checked against your cost every time.</div><div class="ib-grid2">' +
+        '<label>Discounts<select class="i" data-pf="disc_mode"><option value="fixed"' + (p.disc_mode !== 'limit' ? ' selected' : '') + '>Never — the price is fixed</option><option value="limit"' + (p.disc_mode === 'limit' ? ' selected' : '') + '>A little, inside the limits below</option></select></label>' +
+        '<label>Most off the price (%)<input class="i" data-pf="disc_max_pct" inputmode="decimal" value="' + esc(p.disc_max_pct) + '"></label>' +
+        '<label>Never below cost + (%)<input class="i" data-pf="disc_min_margin" inputmode="decimal" value="' + esc(p.disc_min_margin) + '"></label>' +
+        '<label style="grid-column:1/-1">Topics it must not answer (one per line)<textarea class="i" data-pf="no_topics" rows="3" placeholder="e.g. medical advice&#10;prices of other shops">' + esc(p.no_topics || '') + '</textarea></label>' +
+        '<label style="grid-column:1/-1">Things it must never promise (one per line)<textarea class="i" data-pf="no_promise" rows="3" placeholder="e.g. an exact delivery time&#10;a result from using the product">' + esc(p.no_promise || '') + '</textarea></label></div>' +
         '<div class="ib-actions"><button class="btn primary small" type="button" data-ibpfsave="1">Save details</button>' + (d.hasPrevDetails ? '<button class="btn small" type="button" data-ibundo="details">Undo the last published details</button>' : '') + '</div></div>';
       var helper = '<div class="ib-c"><h3>Teach the AI in your own words</h3><div class="sub">e.g. “Make the delivery charge 80 taka” or “We are closed on Fridays”. The helper shows what is set now and makes a draft; test it on the phone, then publish.</div>' +
         '<div style="display:flex;gap:6px"><input class="i" id="dkHelp" placeholder="Tell the helper…" style="flex:1"><button class="btn small primary" type="button" data-ibhelper="1">Draft it</button></div>' + (IB.helperSay ? '<div class="ib-ai-out">' + esc(IB.helperSay) + '</div>' : '') + '</div>';
@@ -36651,6 +36658,62 @@ document.addEventListener('click', function (e) {
     PO_PAY = ''; toast('Payment recorded for ' + esc(po) + ' \u00b7 paid ' + fmt(r.paid) + ' TK in all'); PO = null;
     srv('erpPoList', [], function (x) { PO = x; repaint(); }, function () { PO = { orders: [] }; repaint(); });
   }, function (er) { toast(esc((er && er.message) || er), true); });
+});
+</script>
+<!-- fd-52 (owner 17 Oct 2026): what the Inbox AI may say about a product - a description and the details customers ask
+     about (the list is the business's own, from a ready-made one per kind of business). Product page > For the AI chat. -->
+<script>
+var PAI = { sku: '', data: null, busy: false, fields: null };
+function paiLoad(sku) {
+  if (PAI.busy) return; PAI.busy = true;
+  srv('erpProductAi', [{ sku: sku }], function (r) { PAI.busy = false; PAI.sku = sku; PAI.data = r; if (VIEW === 'products') repaint(); },
+      function () { PAI.busy = false; PAI.sku = sku; PAI.data = { error: true }; });
+  if (!PAI.fields && ME && ME.role === 'owner') srv('erpProductFields', [], function (r) { PAI.fields = r; if (VIEW === 'products') repaint(); }, function () {});
+}
+function paiHtml() {
+  var sku = PRODP.sku;
+  if (PAI.sku !== sku || !PAI.data) { paiLoad(sku); return '<section><div class="card"><h2>For the AI chat</h2><div class="loading">Reading…</div></div></section>'; }
+  var d = PAI.data; if (d.error) return '';
+  var canEdit = typeof pageCan === 'function' ? pageCan('products') : true;
+  var h = '<section><div class="card"><h2>For the AI chat</h2><div class="sub">What the AI may tell customers about this product. It answers product questions only from here; anything not written goes to your team.' +
+    (d.updatedAt ? ' Last changed ' + esc(d.updatedAt) + (d.updatedBy ? ' by ' + esc(d.updatedBy) : '') + '.' : '') + '</div>' +
+    '<label class="f" for="pai_desc" style="margin-top:10px">Description</label><textarea class="i" id="pai_desc" rows="4" maxlength="3000"' + (canEdit ? '' : ' disabled') + '>' + esc(d.description || '') + '</textarea>' +
+    '<div class="fields" style="margin-top:8px">' + d.fields.map(function (f) {
+      return '<div><label class="f">' + esc(f.label) + '</label><input class="i" data-paif="' + esc(f.key) + '" maxlength="400" value="' + esc((d.facts || {})[f.key] || '') + '"' + (canEdit ? '' : ' disabled') + '></div>'; }).join('') + '</div>' +
+    (canEdit ? '<div class="row" style="margin-top:10px;gap:8px;flex-wrap:wrap"><button class="btn primary" type="button" data-paisave="1">Save for the AI</button></div>' : '');
+  if (PAI.fields && PAI.fields.canEdit) {
+    h += '<div class="sub" style="margin-top:12px">The details asked for every product: <select class="i" id="pai_kind" style="width:auto;display:inline-block">' +
+      PAI.fields.presets.map(function (x) { return '<option value="' + esc(x.kind) + '"' + (PAI.fields.kind === x.kind ? ' selected' : '') + '>' + esc(x.label) + '</option>'; }).join('') +
+      (PAI.fields.kind === 'custom' ? '<option value="custom" selected>My own list</option>' : '') + '</select> <button class="btn small" type="button" data-paikind="1">Use this list</button>' +
+      ' <button class="btn small" type="button" data-paiown="1">Write my own list…</button></div>';
+  }
+  return h + '</div></section>';
+}
+var productPageHtmlPai = productPageHtml;
+productPageHtml = function () {
+  var h = productPageHtmlPai.apply(this, arguments);
+  if (!PRODP.sku || !PRODP.data) return h;
+  return h + paiHtml();
+};
+try { window.productPageHtml = productPageHtml; } catch (e) {}
+document.addEventListener('click', function (e) {
+  var t = e.target.closest && e.target.closest('[data-paisave],[data-paikind],[data-paiown]');
+  if (!t) return;
+  if (t.hasAttribute('data-paisave')) {
+    var facts = {}; [].forEach.call(document.querySelectorAll('[data-paif]'), function (x) { facts[x.getAttribute('data-paif')] = x.value; });
+    srv('erpProductAiSave', [{ sku: PRODP.sku, description: (el('pai_desc') || {}).value || '', facts: facts }], function (r) { PAI.data = r; toast('Saved — the AI uses it from the next message.'); repaint(); },
+        function (er) { toast(esc((er && er.message) || er), true); });
+    return;
+  }
+  var save = function (payload) {
+    srv('erpProductFieldsSave', [payload], function (r) { PAI.fields = r; PAI.data = null; PAI.sku = ''; toast('The product details list is changed.'); repaint(); },
+        function (er) { toast(esc((er && er.message) || er), true); });
+  };
+  if (t.hasAttribute('data-paikind')) { save({ kind: (el('pai_kind') || {}).value || 'general' }); return; }
+  var cur = (PAI.fields && PAI.fields.fields || []).map(function (f) { return f.label; }).join(', ');
+  var txt = window.prompt('Your own list of details (separated by commas):', cur);
+  if (txt === null) return;
+  save({ kind: 'custom', fields: txt.split(',').map(function (x) { return x.trim(); }).filter(Boolean) });
 });
 </script>
 <!-- fd-37: the page is styled: show it -->

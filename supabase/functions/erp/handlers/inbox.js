@@ -26,6 +26,7 @@ import { sendOut, mediaBytes, readHook, metaSignatureOk, metaProfile, chSecret, 
 import { products } from './dashboard.js';
 import { feat, needFeat, budget, KIND_FEATURE } from '../lib/inboxplan.js';
 import { orderLink, billLink, itemLink } from './inboxpub.js';
+import { productAiMap, productFields } from './productai.js';
 
 const str = (v) => String(v == null ? '' : v).trim();
 const isId = (v) => /^[0-9a-f-]{36}$/i.test(str(v));
@@ -42,6 +43,8 @@ export const PROFILE_DEFAULTS = {
   review_link: '', review_on: false, rating_on: true, updates: { preparing: true, courier: true, out: true, failed: true, cancelled: true },
   followups: true, follow_hot: true, follow_warm: true, broadcasts: true, saved_ai: true,
   biz_type: 'shop', services: '', booking_questions: '', place: '', advance_rule: '', cancel_rule: '', auto_confirm: false, remind_day: true, remind_hours: 3,
+  // owner 17 Oct 2026: the AI's limits - a discount only inside these, never below cost + margin; topics it leaves alone
+  disc_mode: 'fixed', disc_max_pct: 5, disc_min_margin: 15, no_topics: '', no_promise: '',
 };
 export async function profile(ctx, draft) {
   let p = {};
@@ -244,6 +247,10 @@ const TOOLS = [
     parameters: { type: 'OBJECT', properties: { q: { type: 'STRING' }, category: { type: 'STRING' } }, required: ['q'] } },
   { name: 'show_products', description: 'Show products to the customer as cards (photo, name, price, code, buttons) - up to 10, by their codes from find_products. Put a short line before them in intro.',
     parameters: { type: 'OBJECT', properties: { codes: { type: 'ARRAY', items: { type: 'STRING' } }, intro: { type: 'STRING' } }, required: ['codes'] } },
+  { name: 'product_details', description: 'Everything written about one product (description, details like material / shade / size / ingredients, its other colours or sizes and which are available). Use it for any question about a product; answer only from it.',
+    parameters: { type: 'OBJECT', properties: { code: { type: 'STRING' } }, required: ['code'] } },
+  { name: 'price_offer', description: 'Only when the customer asks for a lower price: check a price you want to offer for a product. It says whether it is allowed and the lowest you may go. Start close to the full price; never say a price is the lowest; never offer below what it allows.',
+    parameters: { type: 'OBJECT', properties: { code: { type: 'STRING' }, price: { type: 'NUMBER', description: 'price per unit you want to offer' } }, required: ['code', 'price'] } },
   { name: 'send_photo', description: 'Send the photo of one product (when the customer asks to see it).', parameters: { type: 'OBJECT', properties: { code: { type: 'STRING' } }, required: ['code'] } },
   { name: 'ask_choice', description: 'Ask the customer to choose, with tappable options (2-10 short options).',
     parameters: { type: 'OBJECT', properties: { question: { type: 'STRING' }, options: { type: 'ARRAY', items: { type: 'STRING' } } }, required: ['question', 'options'] } },
@@ -291,7 +298,13 @@ function systemPrompt(p, rules, ch, contact, extra) {
     'Delivery: inside Dhaka ৳' + num(p.delivery_in) + ' (' + p.days_in + '), outside Dhaka ৳' + num(p.delivery_out) + ' (' + p.days_out + '). Savar, Keraniganj and Tongi count as outside Dhaka.' + (p.delivery_rule ? ' ' + p.delivery_rule : ''),
     'Payment: ' + (p.payment || 'Cash on delivery.'),
     p.returns ? 'Return and exchange rule: ' + p.returns : 'No return rule is written: pass return questions to the team (ask_team).',
-    p.discount_answer ? 'When asked for a discount, say: ' + p.discount_answer : 'When asked for a discount, say politely that the price is fixed.',
+    p.disc_mode === 'limit'
+      ? 'DISCOUNTS: the price may come down a little, only through price_offer and never below what it allows. Do not offer a discount first; when asked, come down in small steps, and never say a price is the lowest or mention cost or margin.' + (p.discount_answer ? ' When nothing more is allowed, say: ' + p.discount_answer : '')
+      : (p.discount_answer ? 'When asked for a discount, say: ' + p.discount_answer : 'When asked for a discount, say politely that the price is fixed.'),
+    'PRODUCT QUESTIONS: for any question about a product (material, size, shade, ingredients, use, compatibility), call product_details and answer only from it. A detail not written there: say you will check (ask_team) - never guess.',
+    'NOT AVAILABLE: when a product is not available or we do not sell it, say so plainly and offer the similar ones that are available (from find_products "similar" or product_details "similar_available"), shown with show_products.',
+    p.no_topics ? 'NEVER ANSWER ABOUT (say politely it is not something you can help with here; if they insist, handover): ' + str(p.no_topics).split(/\n+/).map((x) => x.trim()).filter(Boolean).join('; ') : '',
+    p.no_promise ? 'NEVER PROMISE: ' + str(p.no_promise).split(/\n+/).map((x) => x.trim()).filter(Boolean).join('; ') : '',
     p.extra_offer ? 'Extra offer to mention once before the order: ' + p.extra_offer : '',
     p.biz_type !== 'shop' ? 'SERVICES (bookings): ' + (p.services || 'not written') + (p.place ? '\nWhere: ' + p.place : '') +
       '\nYou work like a receptionist: answer about the services, fees, place and hours only from what is written; then ask these questions ONE AT A TIME: ' +
@@ -381,9 +394,13 @@ async function catalogue(ctx) {
   const { list } = await products(ctx);
   const extra = {};
   for (const r of await ctx.tx`select sku, photo, thumb, image_link, family, notes from products where business_id = ${ctx.biz}`) extra[str(r.sku).toLowerCase()] = r;
+  const ai = await productAiMap(ctx), fl = (await productFields(ctx)).fields, label = {};
+  fl.forEach((f) => { label[f.key] = f.label; });
   ctx.memo.inboxCat = list.filter((p) => !/discontinued|inactive|archived/i.test(p.status)).map((p) => {
-    const e = extra[p.sku.toLowerCase()] || {};
-    return { ...p, photo: str(e.photo), thumb: str(e.thumb), link: str(e.image_link), family: str(e.family), notes: str(e.notes) };
+    const e = extra[p.sku.toLowerCase()] || {}, a = ai[p.sku.toLowerCase()] || {}, details = {};
+    for (const [k, v] of Object.entries(a.facts || {})) if (str(v)) details[label[k] || k] = str(v);
+    return { ...p, photo: str(e.photo), thumb: str(e.thumb), link: str(e.image_link), family: str(e.family), notes: str(e.notes),
+             desc: str(a.description), details };
   });
   return ctx.memo.inboxCat;
 }
@@ -392,12 +409,37 @@ function searchCat(cat, q, category) {
   const out = [];
   for (const p of cat) {
     if (category && str(p.cat).toLowerCase() !== str(category).toLowerCase()) continue;
-    const hay = (p.sku + ' ' + p.name + ' ' + p.brand + ' ' + p.cat + ' ' + p.type + ' ' + p.family).toLowerCase();
+    const hay = (p.sku + ' ' + p.name + ' ' + p.brand + ' ' + p.cat + ' ' + p.type + ' ' + p.family + ' ' + Object.values(p.details || {}).join(' ')).toLowerCase();
     let s = 0; for (const w of words) if (hay.includes(w)) s += w.length > 3 ? 2 : 1;
     if (str(q).toLowerCase() === p.sku.toLowerCase()) s += 50;
     if (s || !words.length) out.push({ p, s: s + (p.stock > 0 ? 0.5 : 0) });
   }
   return out.sort((a, b) => b.s - a.s).slice(0, 15).map((x) => x.p);
+}
+/** In-stock products most like x (same family, then type, category, brand; nearest price) - for "we don't have that". */
+function similarTo(cat, x, n) {
+  if (!x) return [];
+  const out = [];
+  for (const p of cat) {
+    if (p.sku === x.sku || !(p.stock > 0) || !(p.sell > 0)) continue;
+    let s = 0;
+    if (x.family && p.family && p.family === x.family) s += 6;
+    if (x.type && p.type === x.type) s += 3;
+    if (x.cat && p.cat === x.cat) s += 2;
+    if (x.brand && p.brand === x.brand) s += 1;
+    if (!s) continue;
+    if (x.sell > 0) s -= Math.min(2, Math.abs(p.sell - x.sell) / x.sell);
+    out.push({ p, s });
+  }
+  return out.sort((a, b) => b.s - a.s).slice(0, n || 5).map((y) => ({ code: y.p.sku, name: y.p.name, price: y.p.sell, available: true }));
+}
+/** The lowest price the AI may agree for one unit (null = no discount allowed for it). */
+function lowestFor(p, x) {
+  if (p.disc_mode !== 'limit' || !(x.sell > 0) || !(x.cost > 0)) return null;
+  const byPct = x.sell * (1 - Math.max(0, Math.min(50, num(p.disc_max_pct))) / 100);
+  const byMargin = x.cost * (1 + Math.max(0, num(p.disc_min_margin)) / 100);
+  const low = Math.ceil(Math.max(byPct, byMargin));
+  return low < x.sell ? low : null;
 }
 async function imageUrl(ctx, p) {
   if (p.photo) { try { return await fileUrl(ctx, 'products', p.photo); } catch (_) { /* fall through */ } }
@@ -528,7 +570,31 @@ export async function agentReply(ctx, conv, opts) {
     }
     if (name === 'find_products') {
       const found = searchCat(cat, a.q, a.category);
-      return { products: found.map((x) => ({ code: x.sku, name: x.name, price: x.sell || null, available: x.stock > 0, category: x.cat, brand: x.brand })), note: found.length ? '' : 'nothing found' };
+      const out = { products: found.map((x) => ({ code: x.sku, name: x.name, price: x.sell || null, available: x.stock > 0, category: x.cat, brand: x.brand })), note: found.length ? '' : 'nothing found' };
+      // nothing in stock among the best matches: offer what is most like them (owner 17 Oct 2026)
+      if (found.length && !found.slice(0, 3).some((x) => x.stock > 0)) { out.similar = similarTo(cat, found[0], 5); out.note = 'the closest matches are not available now - offer the similar ones that are'; }
+      return out;
+    }
+    if (name === 'product_details') {
+      const x = cat.find((y) => y.sku.toLowerCase() === str(a.code).toLowerCase());
+      if (!x) return { error: 'no such product' };
+      const variants = x.family ? cat.filter((y) => y.family === x.family && y.sku !== x.sku).slice(0, 20)
+        .map((y) => ({ code: y.sku, name: y.name, price: y.sell || null, available: y.stock > 0 })) : [];
+      return { code: x.sku, name: x.name, price: x.sell || null, available: x.stock > 0, category: x.cat, brand: x.brand, type: x.type,
+               description: x.desc || 'not written', details: x.details || {}, other_options: variants,
+               similar_available: x.stock > 0 ? [] : similarTo(cat, x, 5),
+               note: x.desc || Object.keys(x.details || {}).length ? '' : 'nothing more is written about it: for a detail not given here, use ask_team' };
+    }
+    if (name === 'price_offer') {
+      const x = cat.find((y) => y.sku.toLowerCase() === str(a.code).toLowerCase());
+      if (!x || !(x.sell > 0)) return { error: 'no priced product with that code' };
+      const low = lowestFor(p, x), want = Math.round(num(a.price));
+      if (low === null) return { allowed: false, price: x.sell, note: 'no discount on this one: give the discount answer' };
+      if (want >= x.sell) return { allowed: true, price: x.sell };
+      if (want < low) return { allowed: false, lowest_you_may_offer: low, note: 'you may come down to this at most, in small steps; never call it the lowest' };
+      conv.agreed = { ...(conv.agreed || {}), [x.sku]: want };
+      if (!test) await ctx.tx`update inbox_conversations set agreed = coalesce(agreed, '{}'::jsonb) || ${ctx.tx.json({ [x.sku]: want })} where id = ${conv.id}`;
+      return { allowed: true, price: want, note: 'agreed for this chat: place_order will use it' };
     }
     if (name === 'show_products') {
       const codes = (a.codes || []).map(str).slice(0, 10);
@@ -582,11 +648,13 @@ export async function agentReply(ctx, conv, opts) {
         if (!x) return { error: 'no product with code ' + it.code };
         if (!(x.sell > 0)) { return { error: x.name + ' has no price in the system - hand the chat to the team (handover)' }; }
         if (!(x.stock > 0)) return { error: x.name + ' is not available now - tell the customer' };
-        items.push({ sku: x.sku, name: x.name, qty: Math.max(1, Math.round(num(it.qty) || 1)), price: x.sell });
+        const ag = num((conv.agreed || {})[x.sku]), low = lowestFor(p, x);
+        const price = ag > 0 && low !== null && ag >= low && ag < x.sell ? ag : x.sell;
+        items.push({ sku: x.sku, name: x.name, qty: Math.max(1, Math.round(num(it.qty) || 1)), price, ...(price < x.sell ? { list_price: x.sell } : {}) });
       }
       if (!items.length) return { error: 'no items' };
       const d = deliveryFor(p, a.address), charge = d.charge !== undefined ? d.charge : num(p.delivery_out);
-      if (test) { effects.order = { no: 'CO-TEST', total: items.reduce((t, x) => t + x.qty * x.price, 0) + charge }; return { placed: true, no: 'CO-TEST', delivery: charge, days: d.days }; }
+      if (test) { effects.order = { no: 'CO-TEST', total: items.reduce((t, x) => t + x.qty * x.price, 0) + charge }; return { placed: true, no: 'CO-TEST', delivery: charge, days: d.days, total: effects.order.total }; }
       const said = a.delivery_said !== undefined && num(a.delivery_said) !== charge ? num(a.delivery_said) : null;
       const no = await nextOrderNo(ctx);
       const o = (await ctx.tx`insert into chat_orders (business_id, no, conversation_id, name, phone, address, items, delivery_charge, delivery_said, note, taken_by)

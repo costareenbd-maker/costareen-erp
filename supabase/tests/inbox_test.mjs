@@ -552,4 +552,50 @@ check('analytics shows who took the orders (the AI, the product page) with their
   check('mirror: still nothing saved after showing it', (await files.list(FIX.B, 'inbox')).length === stored);
 }
 
+// ---- 28. product details, limits, similar products (owner 17 Oct 2026)
+{
+  r = await owner('erpProductFieldsSave', [{ kind: '3d' }]);
+  check('a ready-made detail list for 3D printing', r.ok && r.result.kind === '3d' && r.result.fields.some((f) => f.label === 'Material'), r.error || r.result);
+  r = await sales('erpProductFieldsSave', [{ kind: 'cosmetics' }]);
+  check('only the owner chooses the list', !r.ok, r.ok);
+  r = await mgr('erpProductAiSave', [{ sku: PLA, description: 'Sunlu PLA, 1 kg spool, easy to print.', facts: { material: 'PLA', print_temperature: '190-220 C', nonsense: 'x' } }]);
+  check('a manager writes what the AI says about a product; unknown details are dropped', r.ok && r.result.facts.material === 'PLA' && !('nonsense' in r.result.facts), r.error || r.result);
+  r = await sales('erpProductAiSave', [{ sku: PLA, description: 'x' }]);
+  check('sales cannot change it', !r.ok, r.ok);
+  const cost = Number((await owner('erpProduct', [PLA])).result.cost_price) || 0;
+  const sell = Number((await owner('erpProduct', [PLA])).result.sell_price) || 0;
+  await owner('erpInboxProfile', [{ save: { disc_mode: 'limit', disc_max_pct: 10, disc_min_margin: 20, no_topics: 'medical advice\nother shops prices', no_promise: 'an exact delivery hour' } }]);
+  const low = Math.ceil(Math.max(sell * 0.9, cost * 1.2));
+  const mch2 = await chRow(M.id);
+  let sys2 = '', det = null, off1 = null, off2 = null, ord = null;
+  script = [
+    (body) => { sys2 = body.systemInstruction.parts[0].text; return [{ functionCall: { name: 'product_details', args: { code: PLA } } }]; },
+    (body) => { det = body.contents[body.contents.length - 1].parts[0].functionResponse.response; return [{ functionCall: { name: 'price_offer', args: { code: PLA, price: 1 } } }]; },
+    (body) => { off1 = body.contents[body.contents.length - 1].parts[0].functionResponse.response; return [{ functionCall: { name: 'price_offer', args: { code: PLA, price: off1.lowest_you_may_offer } } }]; },
+    (body) => { off2 = body.contents[body.contents.length - 1].parts[0].functionResponse.response; return [{ functionCall: { name: 'place_order', args: { name: 'Rafi', phone: '01712345678', address: 'House 7, Road 12, Mirpur 10, Dhaka', items: [{ code: PLA, qty: 1 }] } } }]; },
+    (body) => { ord = body.contents[body.contents.length - 1].parts[0].functionResponse.response; return [{ text: 'Done.' }]; },
+  ];
+  await asB((ctx) => ib.agentReply(ctx, { id: null, channel_id: M.id }, { test: true, channel: mch2, contact: { name: 'Test', external_id: 'test' }, history: [{ direction: 'in', kind: 'text', text: 'PLA er dam komano jabe?' }] }));
+  check('the limits are in the AI\u2019s instructions', /DISCOUNTS: the price may come down a little/.test(sys2) && /NEVER ANSWER ABOUT[^\n]*medical advice; other shops prices/.test(sys2) && /NEVER PROMISE: an exact delivery hour/.test(sys2) && /NOT AVAILABLE/.test(sys2), sys2.slice(-900));
+  check('product_details gives the description and the details by their names', det && /1 kg spool/.test(det.description) && det.details.Material === 'PLA' && det.details['Print temperature'] === '190-220 C', det);
+  check('too low a price is refused with the lowest it may go (never below cost + margin, never more than 10% off)', cost > 0 && off1 && off1.allowed === false && off1.lowest_you_may_offer === low, [cost, sell, low, off1]);
+  check('a price inside the limits is agreed', off2 && off2.allowed === true && off2.price === low, off2);
+  check('the order uses the agreed price', ord && ord.placed && ord.total === low + ord.delivery, ord);
+  // fixed price: no discount at all
+  await owner('erpInboxProfile', [{ save: { disc_mode: 'fixed' } }]);
+  let off3 = null;
+  script = [[{ functionCall: { name: 'price_offer', args: { code: PLA, price: sell - 1 } } }], (body) => { off3 = body.contents[body.contents.length - 1].parts[0].functionResponse.response; return [{ text: 'ok' }]; }];
+  await asB((ctx) => ib.agentReply(ctx, { id: null, channel_id: M.id }, { test: true, channel: mch2, contact: { name: 'Test', external_id: 'test' }, history: [{ direction: 'in', kind: 'text', text: 'discount?' }] }));
+  check('fixed price: no discount', off3 && off3.allowed === false && off3.price === sell, off3);
+  // similar: a product not in stock gets in-stock ones like it
+  const p0 = (await sql`select p.sku, p.category from products p left join product_stock s on s.product_id = p.id where p.business_id = ${FIX.B} and coalesce(s.stock, 0) <= 0
+                        and exists (select 1 from products q join product_stock t on t.product_id = q.id where q.business_id = ${FIX.B} and q.category = p.category and t.stock > 0 and q.sell_price > 0 and q.id <> p.id) limit 1`)[0];
+  let det2 = null;
+  if (p0) {
+    script = [[{ functionCall: { name: 'product_details', args: { code: p0.sku } } }], (body) => { det2 = body.contents[body.contents.length - 1].parts[0].functionResponse.response; return [{ text: 'ok' }]; }];
+    await asB((ctx) => ib.agentReply(ctx, { id: null, channel_id: M.id }, { test: true, channel: mch2, contact: { name: 'Test', external_id: 'test' }, history: [{ direction: 'in', kind: 'text', text: 'ache?' }] }));
+  }
+  check('an unavailable product comes with similar ones that are available', !p0 || (det2 && det2.available === false && det2.similar_available.length > 0 && det2.similar_available.every((x) => x.available)), [p0, det2]);
+}
+
 await done();

@@ -149,6 +149,8 @@ export async function erpInboxProfile(ctx, payload) {
     if (!['bn', 'en', 'both'].includes(next.lang)) next.lang = 'both';
     if (!['sir', 'bhai'].includes(next.style)) next.style = 'sir';
     if (!['shop', 'services', 'both'].includes(next.biz_type)) next.biz_type = 'shop';
+    if (!['fixed', 'limit'].includes(next.disc_mode)) next.disc_mode = 'fixed';
+    next.disc_max_pct = Math.min(50, next.disc_max_pct); next.disc_min_margin = Math.min(500, next.disc_min_margin);
     await setConfig(ctx, 'inbox_profile', JSON.stringify(next));
   }
   return { profile: await profile(ctx, false), draft: await profile(ctx, true), hasDraft: !!(await getConfig(ctx, 'inbox_profile_draft', '')) };
