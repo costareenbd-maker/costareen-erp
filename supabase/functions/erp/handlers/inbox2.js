@@ -250,7 +250,7 @@ async function deskHelper(ctx, text) {
 }
 
 // ------------------------------------------------------------------ knowledge base
-async function kbAdd(ctx, title, kind, body) {
+export async function kbAdd(ctx, title, kind, body) {
   const d = (await ctx.tx`insert into kb_docs (business_id, title, kind, body, created_by) values (${ctx.biz}, ${title}, ${kind}, ${body}, ${ctx.s.name}) returning id`)[0];
   const parts = [];
   if (kind === 'qa') parts.push(body);

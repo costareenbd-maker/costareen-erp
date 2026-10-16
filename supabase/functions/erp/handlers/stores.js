@@ -25,6 +25,7 @@ const SHOPIFY_SETS_PER_RUN = 60;   // Shopify allows ~2 calls a second; the rest
 
 export async function storeKind(ctx) { return str(await getConfig(ctx, 'website_kind', '')) || 'plugin'; }
 
+export async function storeConn(ctx) { return conn(ctx); }
 async function conn(ctx) {
   const kind = await storeKind(ctx);
   const url = str(await getConfig(ctx, 'store_url', '')).replace(/\/+$/, '');

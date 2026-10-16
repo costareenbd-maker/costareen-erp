@@ -8464,7 +8464,7 @@ function srv(name, args, ok, bad) {
 
 var SRV_ACTIVE = 0, SRV_WRITING = false, SRV_TIMED = {};
 // the same list the server uses to know a call changes nothing (ERP_READS)
-var SRV_READS = /^(erpBalanceSheet|erpProductFields|erpProductAi|erpMetaConnect|erpInboxFeatureMap|erpBookings|erpInbox|erpInboxOpen|erpInboxChannels|erpChatOrders|erpInboxStats|erpAiWork|erpCommissionSales|erpFdCards|erpLineMargins|erpFd19Profit|erpFdInventory|erpFd22Analytics|erpNavigator|erpSellers|erpFollowups|erpCustomerInsight|erpPreorders|erpCashUps|erpAskingPrices|erpSystemCheck|erpAnalytics|erpCommission|erpHolding|erpLotFunding|erpShipments|erpShipment|erpLots|erpFdHead|erpFdDash|erpReceiveMatch|erpAiReader|erpProductSuggest|erpCatalogue|erpPushList|erpCreators|erpCreatorPortalLink|erpSponsorLink|erpCreatorRequests|erpCreatorEvents|erpCreatorProgramme|erpCreatorPreview|erpCreatorCatalog|erpCreatorSources|erpCreatorClaims|erpApps|erpAppQr|erpFeedback|erpRestockOffers|erpRestockList|erpWarrantyRules|erpWarrantyCard|erpMyLink|erpPlatformRegister|erpPlatformDoctor|erpPlatformCommunity|erpMarketWaiting|erpBoard|erpPlatformDesign|erpResell|erpResellerProgramme|erpLoyalty|erpCustomerPoints|erpRefillDue|erpDeliveryHistory|erpDeliveryHistoryMany|erpPrintKit|erpPrintJobs|erpPrintJob|erpPrintCost|erpSpools|erpPrintRequests|erpJoint|erpJointCatalog|erpJointCard|erpInvoiceDesign|erpInvoicePreview|erpMarket|erpMarketMine|erpMarketRequests|erpMarketHints|erpMarketNames|erpWanted|erpBrand|erpComplianceLog|erpProviderKey|erpNews|erpAccessKeys|erpAccessWarning|erpAdmin|erpAiKeys|erpAlertRules|erpAlerts|erpArena|erpBackupStatus|erpBg|erpBnWords|erpBookedParcels|erpBrandLogo|erpBundle|erpBusinessLinks|erpBusinesses|erpBusinessesDeleted|erpCampaignAudience|erpCampaignGet|erpCampaignList|erpCapital|erpCashBook|erpCatalog|erpConnStatus|erpConnections|erpCostBook|erpCourier|erpCourierKeyStatus|erpCurrencies|erpCustomerAccount|erpCustomerCredit|erpCustomerList|erpCustomerPage|erpCustomerStatement|erpCustomers|erpDashboardData|erpDaySales|erpDeliveryOptions|erpDevices|erpDiscontinued|erpDues|erpEvoQr|erpEvoStatus|erpExpenseExport|erpExpenseReceiptUrl|erpExpenses|erpFamilies|erpFighters|erpFormOptions|erpGame|erpGetTheme|erpGoogle|erpHello|erpInstalls|erpInvoice|erpInvoicePdf|erpJob|erpJobs|erpListView|erpLookupCustomer|erpLookupUsage|erpMe|erpMoney|erpNoteFileUrl|erpNotes|erpOwnerChange|erpOwnerChanges|erpParcelLabels|erpParcelPreview|erpPartnerStock|erpPartnership|erpPayReasons|erpPeople|erpPlatform|erpPlatformErrors|erpPnl|erpPnlMonth|erpPoList|erpPoolCatalog|erpProduct|erpProductListShare|erpProductPage|erpProductPhotoUrl|erpProductThumbs|erpProfile|erpQuoteAsset|erpQuoteBoot|erpQuoteGet|erpQuoteList|erpRecentInvoices|erpRecovery|erpReorderPlan|erpRestorePreview|erpReturnPreview|erpRisks|erpSales|erpSearch|erpSecurity|erpSelfTest|erpSerialLookup|erpSerialsFor|erpSessions|erpSetTheme|erpSettingsFull|erpSettingsLists|erpSfPayoutLines|erpSfPayouts|erpShareFile|erpSharedStock|erpSheet|erpStatementPdf|erpStockHistory|erpSupplierPage|erpSuppliers|erpToday|erpUsers|erpWaProductPdf|erpWebMatches|erpWebOrderInvoices|erpWebOrders|erpWebsiteTest)$/;
+var SRV_READS = /^(erpSitePages|erpBalanceSheet|erpProductFields|erpProductAi|erpMetaConnect|erpInboxFeatureMap|erpBookings|erpInbox|erpInboxOpen|erpInboxChannels|erpChatOrders|erpInboxStats|erpAiWork|erpCommissionSales|erpFdCards|erpLineMargins|erpFd19Profit|erpFdInventory|erpFd22Analytics|erpNavigator|erpSellers|erpFollowups|erpCustomerInsight|erpPreorders|erpCashUps|erpAskingPrices|erpSystemCheck|erpAnalytics|erpCommission|erpHolding|erpLotFunding|erpShipments|erpShipment|erpLots|erpFdHead|erpFdDash|erpReceiveMatch|erpAiReader|erpProductSuggest|erpCatalogue|erpPushList|erpCreators|erpCreatorPortalLink|erpSponsorLink|erpCreatorRequests|erpCreatorEvents|erpCreatorProgramme|erpCreatorPreview|erpCreatorCatalog|erpCreatorSources|erpCreatorClaims|erpApps|erpAppQr|erpFeedback|erpRestockOffers|erpRestockList|erpWarrantyRules|erpWarrantyCard|erpMyLink|erpPlatformRegister|erpPlatformDoctor|erpPlatformCommunity|erpMarketWaiting|erpBoard|erpPlatformDesign|erpResell|erpResellerProgramme|erpLoyalty|erpCustomerPoints|erpRefillDue|erpDeliveryHistory|erpDeliveryHistoryMany|erpPrintKit|erpPrintJobs|erpPrintJob|erpPrintCost|erpSpools|erpPrintRequests|erpJoint|erpJointCatalog|erpJointCard|erpInvoiceDesign|erpInvoicePreview|erpMarket|erpMarketMine|erpMarketRequests|erpMarketHints|erpMarketNames|erpWanted|erpBrand|erpComplianceLog|erpProviderKey|erpNews|erpAccessKeys|erpAccessWarning|erpAdmin|erpAiKeys|erpAlertRules|erpAlerts|erpArena|erpBackupStatus|erpBg|erpBnWords|erpBookedParcels|erpBrandLogo|erpBundle|erpBusinessLinks|erpBusinesses|erpBusinessesDeleted|erpCampaignAudience|erpCampaignGet|erpCampaignList|erpCapital|erpCashBook|erpCatalog|erpConnStatus|erpConnections|erpCostBook|erpCourier|erpCourierKeyStatus|erpCurrencies|erpCustomerAccount|erpCustomerCredit|erpCustomerList|erpCustomerPage|erpCustomerStatement|erpCustomers|erpDashboardData|erpDaySales|erpDeliveryOptions|erpDevices|erpDiscontinued|erpDues|erpEvoQr|erpEvoStatus|erpExpenseExport|erpExpenseReceiptUrl|erpExpenses|erpFamilies|erpFighters|erpFormOptions|erpGame|erpGetTheme|erpGoogle|erpHello|erpInstalls|erpInvoice|erpInvoicePdf|erpJob|erpJobs|erpListView|erpLookupCustomer|erpLookupUsage|erpMe|erpMoney|erpNoteFileUrl|erpNotes|erpOwnerChange|erpOwnerChanges|erpParcelLabels|erpParcelPreview|erpPartnerStock|erpPartnership|erpPayReasons|erpPeople|erpPlatform|erpPlatformErrors|erpPnl|erpPnlMonth|erpPoList|erpPoolCatalog|erpProduct|erpProductListShare|erpProductPage|erpProductPhotoUrl|erpProductThumbs|erpProfile|erpQuoteAsset|erpQuoteBoot|erpQuoteGet|erpQuoteList|erpRecentInvoices|erpRecovery|erpReorderPlan|erpRestorePreview|erpReturnPreview|erpRisks|erpSales|erpSearch|erpSecurity|erpSelfTest|erpSerialLookup|erpSerialsFor|erpSessions|erpSetTheme|erpSettingsFull|erpSettingsLists|erpSfPayoutLines|erpSfPayouts|erpShareFile|erpSharedStock|erpSheet|erpStatementPdf|erpStockHistory|erpSupplierPage|erpSuppliers|erpToday|erpUsers|erpWaProductPdf|erpWebMatches|erpWebOrderInvoices|erpWebOrders|erpWebsiteTest)$/;
 function srvPump() {
   if (!SRV_Q.length) return;
   var isRead = SRV_READS.test(SRV_Q[0].name);
@@ -35491,6 +35491,7 @@ body[data-fdview="settings"] #o_cp .crumbs, body[data-fdview="tools"] #o_cp .cru
              chans: null, stats: null, cost: null, bc: null, cm: null, fu: null, saved: null, offers: null, test: [], busy: {}, ai: '', counts: {},
              bk: null, bkst: 'requested', plat: '', F: null, feats: null, plans: null, team: null, meta: null, oq: '', lq: '', older: null, bcgap: 24, duty: (function () { try { return localStorage.getItem('ibDuty') === '1'; } catch (e) { return false; } })() };
   window.IB = IB;
+  window.ibPaint = function () { paint(true); };
   var ICON = '<path d="M4 4h16v12H8l-4 4z"/><path d="M8 9h8M8 12h5"/>';
   // who sees the Inbox: Settings > Business > Menu says Everyone / Only owners / Off; a company without an Inbox plan does not have it (the provider still sees it to try it)
   function ibMode() { var a = (ME && ME.apps) || {}; return (a.gone || []).indexOf('inbox') >= 0 ? 'off' : (a.hidden || []).indexOf('inbox') >= 0 ? 'owner' : (a.off || []).indexOf('inbox') >= 0 ? 'trial' : 'all'; }
@@ -35909,7 +35910,7 @@ body[data-fdview="settings"] #o_cp .crumbs, body[data-fdview="tools"] #o_cp .cru
 
   // ---------------------------------------------------------------- Knowledge
   function kbHtml() {
-    return errOr(IB.kb, function (d) {
+    return (window.siteHtml ? window.siteHtml() : '') + errOr(IB.kb, function (d) {
       return '<div class="ib-grid2"><div class="ib-c"><h3>Add to the knowledge base</h3><div class="sub">Your own documents — policies, guides, details. The AI searches them by the question, on every channel. Paste text, add a question and its answer, or load a .txt / .md / .csv file.</div>' +
         '<div class="ib-form"><label>Title<input class="i" id="kbTitle"></label><label>File<input class="i" type="file" id="kbFile" accept=".txt,.md,.csv,text/plain"></label></div>' +
         '<textarea class="i" id="kbBody" rows="6" style="width:100%;margin-top:8px" placeholder="Paste the text…"></textarea><div class="ib-actions"><button class="btn small primary" type="button" data-ibkbadd="text">Add the text</button></div>' +
@@ -36714,6 +36715,87 @@ document.addEventListener('click', function (e) {
   var txt = window.prompt('Your own list of details (separated by commas):', cur);
   if (txt === null) return;
   save({ kind: 'custom', fields: txt.split(',').map(function (x) { return x.trim(); }).filter(Boolean) });
+});
+</script>
+<!-- fd-53 (owner 17 Oct 2026): read the business's own website for the Inbox AI - policies and pages become knowledge-base
+     drafts, product pages (or the WooCommerce / Shopify product texts) become product descriptions. Nothing reaches the AI
+     until the owner adds it. Inbox > Knowledge, at the top. -->
+<script>
+var SITE = { d: null, busy: false, reading: false, show: 'draft' };
+function siteLoad() {
+  if (SITE.busy) return; SITE.busy = true;
+  srv('erpSitePages', [], function (r) { SITE.busy = false; SITE.d = r; if (window.ibPaint) ibPaint(); }, function (er) { SITE.busy = false; SITE.d = { error: (er && er.message) || String(er) }; });
+}
+window.siteHtml = function () {
+  if (!ME || (ME.role !== 'owner' && ME.role !== 'manager')) return '';
+  if (!SITE.d) { siteLoad(); return '<div class="ib-c" style="margin-bottom:12px"><h3>Read my website</h3><div class="loading">Reading…</div></div>'; }
+  var d = SITE.d; if (d.error) return '';
+  var own = !!d.canAdd, pages = d.pages || [];
+  var n = { draft: 0, added: 0, skipped: 0 }; pages.forEach(function (x) { n[x.status]++; });
+  var KIND = { policy: 'Policy', page: 'Page', product: 'Product' };
+  var list = pages.filter(function (x) { return x.status === SITE.show; });
+  var h = '<div class="ib-c" style="margin-bottom:12px"><h3>Read my website</h3><div class="sub">The ERP reads your own website — privacy, return and delivery policies, about, FAQ and product pages — and keeps each one as a draft. ' +
+    'Add a policy or page and the AI can quote it; add a product page and it becomes that product\'s description for the AI. Nothing is used until you add it.</div>' +
+    (own ? '<div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap"><input class="i" id="siteUrl" style="flex:1;min-width:200px" placeholder="https://www.yourshop.com" value="' + esc(d.site || '') + '">' +
+      '<button class="btn small primary" type="button" data-siteread="1"' + (SITE.reading ? ' disabled' : '') + '>' + (SITE.reading ? 'Reading the website… (up to a minute)' : (pages.length ? 'Read it again' : 'Read my website')) + '</button></div>' : '') +
+    (d.lastRead ? '<div class="sub" style="margin-top:6px">Read ' + d.lastRead.read + ' page(s)' + (d.lastRead.products ? ' and ' + d.lastRead.products + ' product text(s) from the shop' : '') + ': ' + d.lastRead.new + ' new, ' + d.lastRead.changed + ' changed, ' + d.lastRead.same + ' unchanged' + (d.lastRead.failed ? ', ' + d.lastRead.failed + ' did not open' : '') + (d.more ? '. ' + d.more + ' more page(s) not read yet — press Read it again to go on.' : '.') + '</div>' : '');
+  if (pages.length) {
+    h += '<div style="display:flex;gap:6px;margin-top:10px;flex-wrap:wrap">' + ['draft', 'added', 'skipped'].map(function (k) {
+      return '<button class="btn small' + (SITE.show === k ? ' primary' : '') + '" type="button" data-siteshow="' + k + '">' + { draft: 'To check', added: 'Added', skipped: 'Skipped' }[k] + ' · ' + n[k] + '</button>'; }).join('') +
+      (own && SITE.show === 'draft' && n.draft ? '<button class="btn small" type="button" data-siteall="1">Add all matched</button>' : '') + '</div>';
+    h += list.length ? list.map(function (x) {
+      var prod = x.kind === 'product';
+      return '<div style="padding:8px 0;border-bottom:1px solid var(--fd-border)"><div style="display:flex;gap:8px;justify-content:space-between;align-items:flex-start;flex-wrap:wrap">' +
+        '<span style="min-width:0;flex:1"><b>' + esc(x.title || x.url) + '</b> <span class="ib-tag ' + (x.kind === 'policy' ? 'hot' : prod ? 'ai' : 'test') + '">' + KIND[x.kind] + '</span>' +
+        (prod ? ' <span class="sku">' + (x.sku ? '→ ' + esc(x.product || x.sku) + ' (' + esc(x.sku) + ')' : 'not matched to a product') + '</span>' : '') +
+        '<br><a class="sku" href="' + esc(x.url) + '" target="_blank" rel="noopener" style="word-break:break-all">' + esc(x.url) + '</a>' + (x.source !== 'web' ? ' <span class="sku">· from the shop</span>' : '') +
+        (x.by ? ' <span class="sku">· ' + esc(x.by) + '</span>' : '') + '</span>' +
+        (own ? '<span style="display:flex;gap:6px;flex-wrap:wrap">' + (x.status === 'draft'
+          ? (prod && !x.sku ? '<button class="btn small" type="button" data-sitesku="' + x.id + '">Choose the product…</button>' : '<button class="btn small primary" type="button" data-siteact="add" data-id="' + x.id + '">Add</button>') +
+            '<button class="btn small" type="button" data-siteact="skip" data-id="' + x.id + '">Skip</button>'
+          : '<button class="btn small" type="button" data-siteact="draft" data-id="' + x.id + '">Put back</button>') + '</span>' : '') + '</div>' +
+        '<details style="margin-top:4px"><summary class="sub" style="cursor:pointer">What it says (' + x.size + ' characters)</summary><div class="ib-ai-out" style="white-space:pre-wrap">' + esc(x.preview) + (x.size > 400 ? '…' : '') + '</div></details></div>';
+    }).join('') : '<div class="sub" style="margin-top:8px">Nothing here.</div>';
+  }
+  return h + '</div>';
+};
+document.addEventListener('click', function (e) {
+  var t = e.target.closest && e.target.closest('[data-siteread],[data-siteshow],[data-siteact],[data-siteall],[data-sitesku]');
+  if (!t) return;
+  var fail = function (er) { SITE.reading = false; toast(esc((er && er.message) || er), true); if (window.ibPaint) ibPaint(); };
+  var done = function (r, msg) { SITE.d = r; SITE.reading = false; if (msg) toast(msg); if (window.ibPaint) ibPaint(); };
+  if (t.hasAttribute('data-siteshow')) { SITE.show = t.getAttribute('data-siteshow'); if (window.ibPaint) ibPaint(); return; }
+  if (t.hasAttribute('data-siteread')) {
+    SITE.reading = true; if (window.ibPaint) ibPaint();
+    srv('erpSiteRead', [{ url: (el('siteUrl') || {}).value || '' }], function (r) { SITE.show = 'draft'; done(r, 'Website read — check the drafts below.'); }, fail);
+    return;
+  }
+  var act = function (payload, ok) {
+    srv('erpSitePageAct', [payload], function (r) {
+      done(r, payload.action === 'add' ? (r.added + ' added' + (r.kept ? '; ' + r.kept + ' product(s) already had a description, kept' : '') + '. The AI uses it from the next message.') : ok);
+      if (payload.action === 'add' && window.IB) { IB.kb = null; }
+    }, fail);
+  };
+  if (t.hasAttribute('data-siteall')) {
+    var ids = (SITE.d.pages || []).filter(function (x) { return x.status === 'draft' && (x.kind !== 'product' || x.sku); }).map(function (x) { return x.id; });
+    if (!ids.length) { toast('Nothing matched to add.', true); return; }
+    if (!window.confirm('Add ' + ids.length + ' page(s) for the AI? Products that already have a description keep it.')) return;
+    act({ ids: ids, action: 'add' });
+    return;
+  }
+  var id = t.getAttribute('data-id') || t.getAttribute('data-sitesku');
+  if (t.hasAttribute('data-sitesku')) {
+    var code = window.prompt('The product code (SKU) this page is about:', '');
+    if (!code) return;
+    act({ ids: [id], action: 'add', sku: code.trim() });
+    return;
+  }
+  var a = t.getAttribute('data-siteact'), row = (SITE.d.pages || []).filter(function (x) { return x.id === id; })[0] || {};
+  if (a === 'add' && row.kind === 'product') {
+    act({ ids: [id], action: 'add', overwrite: window.confirm('If "' + (row.product || row.sku) + '" already has a description for the AI, replace it with this one?\n\nOK = replace, Cancel = keep the old one') });
+    return;
+  }
+  act({ ids: [id], action: a }, a === 'skip' ? 'Skipped.' : 'Put back to check.');
 });
 </script>
 <!-- fd-37: the page is styled: show it -->

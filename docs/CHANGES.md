@@ -2102,3 +2102,28 @@ supplier or commission picks the account from the list the server gives without 
 - Kept as before: website chat uploads and linked-device WhatsApp (Evolution) files - there is no Meta to mirror.
 - Also today: old chats one-time import (erpInboxPullOld), 3 s refresh + refresh on tab focus, 'inbox' ability per person.
 - Not possible without Meta App Review: photos of customers who have no role on the Meta app.
+
+## 17 Oct 2026 - The Inbox AI reads the business's own website (owner: "read the privacy policy, product descriptions")
+
+- Inbox > Knowledge, top card "Read my website": address + button. `erpSiteRead` reads the sitemap (wp-sitemap /
+  sitemap_index / sitemap.xml) and the front page's links on the same site; skips cart, account, category / brand /
+  tag archives, wishlist and other query-string copies, files. Up to 20 pages (policies first: privacy, refund, return,
+  delivery, terms, warranty, FAQ, about, contact, payment) and 60 product pages per press, 6 at a time, ~70 s budget;
+  product pages not read before go first, so pressing again reads further ("N more not read yet").
+- A WooCommerce / Shopify connection gives the products' own texts by code instead of their pages.
+- Every page is a DRAFT in `site_pages` (126). Owner: Add / Skip / Put back, "Add all matched". A policy or page goes
+  into the knowledge base as "Website: <title>" (re-adding archives the old copy); a product page becomes the product's
+  description for the AI (an existing description is kept unless the owner says replace). Unmatched product pages ask
+  for the product code. A changed page comes back as a draft on the next read. Managers see the list, cannot add.
+- Matching a page to a product: a product code on the page, else the name's words (the product's brand must be in the
+  title; "price", "Bangladesh" etc. do not count). The owner checks every match.
+- Word matching is tolerant of the catalogue's spelling ("Bambulab" = "Bambu Lab", "Refil", one-letter typos, gray =
+  grey) but every word of our product name must be on the page, each page word used once.
+- LIVE 17 Oct: costareen.com read (WooCommerce connected, so all 230 product texts in one press): 6 policies, 14 pages,
+  139 products matched, 91 not (Polymaker, AlgoLaser, printers not in the ERP under those names). All drafts - the
+  owner adds them. Doubtful match seen: "SUNLU PLA+ Cherry Red" -> "Sunlu Pla+ Red".
+- Tests: siteread_test (roles, skips, policy first, dedupe, KB add + re-add, product description keep / overwrite,
+  unmatched product, Woo products, brand mismatch, another business).
+
+Not done: pages behind a login or built only by JavaScript are not read; nothing is re-read automatically (press the
+button again); blog posts with prices are offered as pages - the owner decides whether the AI should quote them.

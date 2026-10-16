@@ -1101,7 +1101,9 @@ function wireDash() {
 
 /** Is this screen open to the person signed in? (the nav already knows) */
 // Abilities per person (058): the server sends ME.powers; an older server does not, then the role decides.
-var POWER_MIN = { dash: 3, costs: 2, lists: 2, profit: 3, expenses: 3, stock: 2, suppliers: 2, weborders: 2, campaigns: 2, products: 2, returns: 2, dues: 2 };
+var POWER_MIN = { inbox: 1, dash: 3, costs: 2, lists: 2, profit: 3, expenses: 3, stock: 2, suppliers: 2, weborders: 2, campaigns: 2, products: 2, returns: 2, dues: 2 };
+// 15 Oct 2026: the 'act' switch - every action the owner can do, but no figures and no say over people.
+function pageActs() { return !!(ME && (ME.role === 'owner' || (ME.powers && ME.powers.act))); }
 function pageCan(id) {
   if (!ME) return false;
   if (ME.role === 'owner') return true;
@@ -2606,7 +2608,7 @@ function brandLoad(bizId) {
  * does this; for everyone else the invoice simply uses the logo as it is.
  */
 function brandTrimForPrint(id, full) {
-  if (!ME || !(ME.role === 'owner' || ME.role === 'shareholder')) return;
+  if (!ME || !(ME.role === 'owner' || ME.role === 'shareholder' || pageActs())) return;
   function make(src) {
     imgTrim(src, 700, function (out) {
       if (!out) return;
@@ -2617,7 +2619,7 @@ function brandTrimForPrint(id, full) {
   srv('erpBrandLogo', [{ have: '' }], function (r) { if (r && r.id === id && r.data) make(r.data); }, function () {});
 }
 function brandCardHtml() {
-  var can = ME && (ME.role === 'owner' || ME.role === 'shareholder');
+  var can = ME && (ME.role === 'owner' || ME.role === 'shareholder' || pageActs());
   return '<section><div class="card"><h2>Business logo</h2><div class="sub">One logo for <strong>this business</strong>. It shows in the menu, ' +
     'on invoices, quotations and letterheads. Another business keeps its own.</div>' +
     '<div class="row" style="gap:14px;margin-top:12px;align-items:center;flex-wrap:wrap">' +
@@ -4718,7 +4720,7 @@ function parcelsChanged() {
  */
 function openCancel(id, customer, paid) {
   var cur = OPT ? OPT.currency : 'BDT';
-  var canRefund = ME && (ME.role === 'owner' || ME.role === 'shareholder');
+  var canRefund = ME && (ME.role === 'owner' || ME.role === 'shareholder' || pageActs());
   var old = document.getElementById('cancelbox');
   if (old && old.parentNode) old.parentNode.removeChild(old);
   var w = document.createElement('div');
@@ -5698,6 +5700,11 @@ function poNewHtml() {
     '<div><label class="f" for="pn_rate">Rate you paid <span class="sku">TK per RMB</span></label><input class="i" id="pn_rate" inputmode="decimal" value="' + esc(PONEW.rate) + '" placeholder="e.g. 17.2"></div>' +
     '<div><label class="f" for="pn_ship">Coming by</label><select class="i" id="pn_ship"><option' + (PONEW.ship === 'Sea' ? ' selected' : '') + '>Sea</option><option' + (PONEW.ship === 'Air' ? ' selected' : '') + '>Air</option></select></div>' +
     '<div style="grid-column:span 2"><label class="f" for="pn_note">Note</label><input class="i" id="pn_note" value="' + esc(PONEW.note) + '" placeholder="Supplier, paid on …, agent …"></div></div>' +
+    (PO && PO.accounts && PO.accounts.length ? '<div class="fields" style="margin-top:8px">' +
+      '<div><label class="f" for="pn_paid">Paid to the supplier (TK)</label><input class="i" id="pn_paid" inputmode="decimal" value="' + esc(PONEW.paid || '') + '" placeholder="0 = not paid yet"></div>' +
+      '<div><label class="f" for="pn_pacc">Paid from</label><select class="i" id="pn_pacc">' + PO.accounts.map(function (a) { return '<option value="' + esc(a.id) + '"' + (PONEW.paidAcc === a.id ? ' selected' : '') + '>' + esc(a.name) + '</option>'; }).join('') + '</select></div>' +
+      '<div><label class="f" for="pn_pdate">Paid on</label><input class="i" id="pn_pdate" type="date" value="' + esc(PONEW.paidOn || '') + '"></div>' +
+      '<div><label class="f" for="pn_pi">PI number</label><input class="i" id="pn_pi" value="' + esc(PONEW.pi || '') + '" maxlength="60"></div></div>' : '') +
     '<div class="row" style="margin-top:12px;gap:10px;align-items:center;justify-content:flex-end;flex-wrap:wrap">' +
     '<span class="sub" id="pn_sum" style="margin:0;flex:1 1 auto">' + poSumText(t) + '</span>' +
     '<button class="btn" type="button" id="pn_cancel">Cancel</button>' +
@@ -5726,7 +5733,7 @@ function poMattersHtml() {
       }).join('') + '</tbody></table></div></div></div>';
   }
   B.forEach(function (b) {
-    var owner = ME && (ME.role === 'owner' || ME.role === 'shareholder');
+    var owner = ME && (ME.role === 'owner' || ME.role === 'shareholder' || pageActs());
     h += '<div class="note" style="margin-top:12px"><div class="ico">৳</div><div><strong>' + esc(b.supplier) + '</strong> — ' +
       (b.net > 0 ? 'owes you <strong>RMB ' + fmt(b.net) + '</strong>' : b.net < 0 ? 'you owe <strong>RMB ' + fmt(-b.net) + '</strong>' : 'you are even') +
       (b.owesYou && b.youOwe ? ' <span class="sku">(they owe ' + fmt(b.owesYou) + ', you owe ' + fmt(b.youOwe) + ')</span>' : '') +
@@ -5764,6 +5771,13 @@ function poListHtml() {
       '<span class="pill">' + esc(o.shipBy) + '</span><span class="sku">ordered ' + esc(o.when) +
         (o.days !== null ? ' · ' + fmt(o.days) + ' days ago' : '') + (o.rmb ? ' · RMB ' + fmt(Math.round(o.rmb)) + (o.rate ? ' @ ' + esc(o.rate) : '') : '') + '</span></div>' +
       (o.note ? '<div class="sub">' + esc(o.note) + '</div>' : '') +
+      (PO && PO.accounts && PO.accounts.length ? '<div class="row" style="gap:8px;align-items:center;margin-top:4px;flex-wrap:wrap"><span class="pill' + (o.paid > 0 ? ' ok' : '') + '">' +
+        (o.paid > 0 ? 'Paid ' + fmt(o.paid) + ' TK' : 'Not paid yet') + '</span>' +
+        (PO_PAY === o.id ? '<input class="i" id="pp_amt" inputmode="decimal" placeholder="TK" style="width:110px">' +
+          '<select class="i" id="pp_acc" style="width:150px">' + PO.accounts.map(function (a) { return '<option value="' + esc(a.id) + '">' + esc(a.name) + '</option>'; }).join('') + '</select>' +
+          '<input class="i" id="pp_date" type="date" style="width:150px"><input class="i" id="pp_pi" placeholder="PI" style="width:110px">' +
+          '<button class="btn small primary" type="button" data-popaygo="' + esc(o.id) + '">Record</button><button class="btn small" type="button" data-popay="">Cancel</button>'
+          : '<button class="btn small" type="button" data-popay="' + esc(o.id) + '">Record a payment</button>') + '</div>' : '') +
       ((o.boxes || []).length ? '<div class="sub">Boxes so far: ' + o.boxes.map(function (b) {
         return esc(b.on) + (b.no ? ' · ' + esc(b.no) : '') + ' · ' + fmt(b.units) + ' pc' + (b.shipping ? ' · shipping ' + fmt(b.shipping) : ''); }).join(' | ') + '</div>' : '') +
       '<div class="scroll" style="margin-top:6px"><table><thead><tr><th>Product</th><th class="num">Ordered</th><th class="num">Still to come</th>' +
@@ -5942,6 +5956,9 @@ function wirePo() {
   var psh = el('pn_ship'); if (psh) psh.addEventListener('change', function () { PONEW.ship = psh.value; POSHIP = psh.value; });
   var pnt = el('pn_note'); if (pnt) pnt.addEventListener('input', function () { PONEW.note = pnt.value; });
   var psu = el('pn_sup'); if (psu) psu.addEventListener('input', function () { PONEW.supplier = psu.value; });
+  [['pn_paid', 'paid'], ['pn_pacc', 'paidAcc'], ['pn_pdate', 'paidOn'], ['pn_pi', 'pi']].forEach(function (x) {
+    var f = el(x[0]); if (f) f.addEventListener(f.tagName === 'SELECT' || f.type === 'date' ? 'change' : 'input', function () { PONEW[x[1]] = f.value; });
+  });
   var sv2 = el('pn_save');
   if (sv2) sv2.addEventListener('click', async function () {
     var lines = PONEW.lines.filter(function (l) { return num(l.qty) > 0; });
@@ -5953,7 +5970,10 @@ function wirePo() {
     if (!(await uiConfirm('Save this order?\n\n' + lines.length + ' product(s), ' + fmt(t.units) + ' pieces, RMB ' + fmt(t.rmb) +
         (unpriced ? '\n\n' + unpriced + ' line(s) have no RMB price: their cost will come from the price book instead.' : '')))) return;
     PO_BUSY = 'new'; repaint();
+    if (num(PONEW.paid) > 0 && !String(PONEW.supplier || '').trim()) { toast('Paid to whom? Type the supplier.', true); return; }
+    var pAcc = PONEW.paidAcc || (PO && PO.accounts && PO.accounts[0] ? PO.accounts[0].id : '');
     srv('erpPoCreate', [{ shipBy: PONEW.ship, rate: num(PONEW.rate), note: PONEW.note, supplier: PONEW.supplier,
+        paid: num(PONEW.paid) > 0 ? { amount: num(PONEW.paid), account: pAcc, date: PONEW.paidOn || '', pi: PONEW.pi || '' } : null, pi: PONEW.pi || '',
         lines: lines.map(function (l) { return l.isNew ? { isNew: true, product: l.product, qty: l.qty, rmbUnit: num(l.rmb) }
                                                       : { sku: l.sku, qty: l.qty, rmbUnit: num(l.rmb) }; }) }], function (r) {
       PO_BUSY = ''; PONEW = null;
@@ -8444,7 +8464,7 @@ function srv(name, args, ok, bad) {
 
 var SRV_ACTIVE = 0, SRV_WRITING = false, SRV_TIMED = {};
 // the same list the server uses to know a call changes nothing (ERP_READS)
-var SRV_READS = /^(erpMetaConnect|erpInboxFeatureMap|erpBookings|erpInbox|erpInboxOpen|erpInboxChannels|erpChatOrders|erpInboxStats|erpAiWork|erpCommissionSales|erpFdCards|erpLineMargins|erpFd19Profit|erpFdInventory|erpFd22Analytics|erpNavigator|erpSellers|erpFollowups|erpCustomerInsight|erpPreorders|erpCashUps|erpAskingPrices|erpSystemCheck|erpAnalytics|erpCommission|erpHolding|erpLotFunding|erpShipments|erpShipment|erpLots|erpFdHead|erpFdDash|erpReceiveMatch|erpAiReader|erpProductSuggest|erpCatalogue|erpPushList|erpCreators|erpCreatorPortalLink|erpSponsorLink|erpCreatorRequests|erpCreatorEvents|erpCreatorProgramme|erpCreatorPreview|erpCreatorCatalog|erpCreatorSources|erpCreatorClaims|erpApps|erpAppQr|erpFeedback|erpRestockOffers|erpRestockList|erpWarrantyRules|erpWarrantyCard|erpMyLink|erpPlatformRegister|erpPlatformDoctor|erpPlatformCommunity|erpMarketWaiting|erpBoard|erpPlatformDesign|erpResell|erpResellerProgramme|erpLoyalty|erpCustomerPoints|erpRefillDue|erpDeliveryHistory|erpDeliveryHistoryMany|erpPrintKit|erpPrintJobs|erpPrintJob|erpPrintCost|erpSpools|erpPrintRequests|erpJoint|erpJointCatalog|erpJointCard|erpInvoiceDesign|erpInvoicePreview|erpMarket|erpMarketMine|erpMarketRequests|erpMarketHints|erpMarketNames|erpWanted|erpBrand|erpComplianceLog|erpProviderKey|erpNews|erpAccessKeys|erpAccessWarning|erpAdmin|erpAiKeys|erpAlertRules|erpAlerts|erpArena|erpBackupStatus|erpBg|erpBnWords|erpBookedParcels|erpBrandLogo|erpBundle|erpBusinessLinks|erpBusinesses|erpBusinessesDeleted|erpCampaignAudience|erpCampaignGet|erpCampaignList|erpCapital|erpCashBook|erpCatalog|erpConnStatus|erpConnections|erpCostBook|erpCourier|erpCourierKeyStatus|erpCurrencies|erpCustomerAccount|erpCustomerCredit|erpCustomerList|erpCustomerPage|erpCustomerStatement|erpCustomers|erpDashboardData|erpDaySales|erpDeliveryOptions|erpDevices|erpDiscontinued|erpDues|erpEvoQr|erpEvoStatus|erpExpenseExport|erpExpenseReceiptUrl|erpExpenses|erpFamilies|erpFighters|erpFormOptions|erpGame|erpGetTheme|erpGoogle|erpHello|erpInstalls|erpInvoice|erpInvoicePdf|erpJob|erpJobs|erpListView|erpLookupCustomer|erpLookupUsage|erpMe|erpMoney|erpNoteFileUrl|erpNotes|erpOwnerChange|erpOwnerChanges|erpParcelLabels|erpParcelPreview|erpPartnerStock|erpPartnership|erpPayReasons|erpPeople|erpPlatform|erpPlatformErrors|erpPnl|erpPnlMonth|erpPoList|erpPoolCatalog|erpProduct|erpProductListShare|erpProductPage|erpProductPhotoUrl|erpProductThumbs|erpProfile|erpQuoteAsset|erpQuoteBoot|erpQuoteGet|erpQuoteList|erpRecentInvoices|erpRecovery|erpReorderPlan|erpRestorePreview|erpReturnPreview|erpRisks|erpSales|erpSearch|erpSecurity|erpSelfTest|erpSerialLookup|erpSerialsFor|erpSessions|erpSetTheme|erpSettingsFull|erpSettingsLists|erpSfPayoutLines|erpSfPayouts|erpShareFile|erpSharedStock|erpSheet|erpStatementPdf|erpStockHistory|erpSupplierPage|erpSuppliers|erpToday|erpUsers|erpWaProductPdf|erpWebMatches|erpWebOrderInvoices|erpWebOrders|erpWebsiteTest)$/;
+var SRV_READS = /^(erpSitePages|erpBalanceSheet|erpProductFields|erpProductAi|erpMetaConnect|erpInboxFeatureMap|erpBookings|erpInbox|erpInboxOpen|erpInboxChannels|erpChatOrders|erpInboxStats|erpAiWork|erpCommissionSales|erpFdCards|erpLineMargins|erpFd19Profit|erpFdInventory|erpFd22Analytics|erpNavigator|erpSellers|erpFollowups|erpCustomerInsight|erpPreorders|erpCashUps|erpAskingPrices|erpSystemCheck|erpAnalytics|erpCommission|erpHolding|erpLotFunding|erpShipments|erpShipment|erpLots|erpFdHead|erpFdDash|erpReceiveMatch|erpAiReader|erpProductSuggest|erpCatalogue|erpPushList|erpCreators|erpCreatorPortalLink|erpSponsorLink|erpCreatorRequests|erpCreatorEvents|erpCreatorProgramme|erpCreatorPreview|erpCreatorCatalog|erpCreatorSources|erpCreatorClaims|erpApps|erpAppQr|erpFeedback|erpRestockOffers|erpRestockList|erpWarrantyRules|erpWarrantyCard|erpMyLink|erpPlatformRegister|erpPlatformDoctor|erpPlatformCommunity|erpMarketWaiting|erpBoard|erpPlatformDesign|erpResell|erpResellerProgramme|erpLoyalty|erpCustomerPoints|erpRefillDue|erpDeliveryHistory|erpDeliveryHistoryMany|erpPrintKit|erpPrintJobs|erpPrintJob|erpPrintCost|erpSpools|erpPrintRequests|erpJoint|erpJointCatalog|erpJointCard|erpInvoiceDesign|erpInvoicePreview|erpMarket|erpMarketMine|erpMarketRequests|erpMarketHints|erpMarketNames|erpWanted|erpBrand|erpComplianceLog|erpProviderKey|erpNews|erpAccessKeys|erpAccessWarning|erpAdmin|erpAiKeys|erpAlertRules|erpAlerts|erpArena|erpBackupStatus|erpBg|erpBnWords|erpBookedParcels|erpBrandLogo|erpBundle|erpBusinessLinks|erpBusinesses|erpBusinessesDeleted|erpCampaignAudience|erpCampaignGet|erpCampaignList|erpCapital|erpCashBook|erpCatalog|erpConnStatus|erpConnections|erpCostBook|erpCourier|erpCourierKeyStatus|erpCurrencies|erpCustomerAccount|erpCustomerCredit|erpCustomerList|erpCustomerPage|erpCustomerStatement|erpCustomers|erpDashboardData|erpDaySales|erpDeliveryOptions|erpDevices|erpDiscontinued|erpDues|erpEvoQr|erpEvoStatus|erpExpenseExport|erpExpenseReceiptUrl|erpExpenses|erpFamilies|erpFighters|erpFormOptions|erpGame|erpGetTheme|erpGoogle|erpHello|erpInstalls|erpInvoice|erpInvoicePdf|erpJob|erpJobs|erpListView|erpLookupCustomer|erpLookupUsage|erpMe|erpMoney|erpNoteFileUrl|erpNotes|erpOwnerChange|erpOwnerChanges|erpParcelLabels|erpParcelPreview|erpPartnerStock|erpPartnership|erpPayReasons|erpPeople|erpPlatform|erpPlatformErrors|erpPnl|erpPnlMonth|erpPoList|erpPoolCatalog|erpProduct|erpProductListShare|erpProductPage|erpProductPhotoUrl|erpProductThumbs|erpProfile|erpQuoteAsset|erpQuoteBoot|erpQuoteGet|erpQuoteList|erpRecentInvoices|erpRecovery|erpReorderPlan|erpRestorePreview|erpReturnPreview|erpRisks|erpSales|erpSearch|erpSecurity|erpSelfTest|erpSerialLookup|erpSerialsFor|erpSessions|erpSetTheme|erpSettingsFull|erpSettingsLists|erpSfPayoutLines|erpSfPayouts|erpShareFile|erpSharedStock|erpSheet|erpStatementPdf|erpStockHistory|erpSupplierPage|erpSuppliers|erpToday|erpUsers|erpWaProductPdf|erpWebMatches|erpWebOrderInvoices|erpWebOrders|erpWebsiteTest)$/;
 function srvPump() {
   if (!SRV_Q.length) return;
   var isRead = SRV_READS.test(SRV_Q[0].name);
@@ -10378,7 +10398,7 @@ function applyRole() {
     var v = btns[i].getAttribute('data-view');
     var min = need[v] || 0;
     var VP = { dash: 'dash', costs: 'costs', profit: 'profit', expenses: 'expenses', stock: 'stock', suppliers: 'suppliers', weborders: 'weborders', campaigns: 'campaigns' };
-    var ok = VP[v] ? pageCan(VP[v]) : v === 'settings' ? (rank >= 3 || pageCan('lists')) : rank >= min;
+    var ok = VP[v] ? pageCan(VP[v]) : v === 'settings' ? (rank >= 3 || pageCan('lists') || pageActs()) : (rank >= min || (pageActs() && !/^(dash|profit|capital|cash)$/.test(v)));
     btns[i].style.display = ok ? '' : 'none';
   }
   var grps = document.querySelectorAll('#nav .navgrp');
@@ -11177,7 +11197,7 @@ function expReceiptBtns(r, gone) {
     (gone ? '' : '<button class="btn small" type="button" data-exrca="' + esc(r.id) + '">' + (r.receipt ? 'Replace' : 'Attach receipt') + '</button> ');
 }
 function expCatsHtml() {
-  if (!ME || ME.role !== 'owner' || !EXP) return '';
+  if (!ME || !pageActs() || !EXP) return '';
   var names = { fixed: 'Fixed', recurring: 'Recurring', oneoff: 'One-off' }, c = EXP.categories || {};
   var h = '<section><div class="card"><div class="row" style="justify-content:space-between;align-items:center"><h2 style="margin:0">Categories</h2>' +
     '<button class="btn small" type="button" id="exc_toggle">' + (EXP_CAT_OPEN ? 'Done' : 'Change the lists') + '</button></div>' +
@@ -11573,9 +11593,9 @@ var SET_TAB = 'business';
 var SET_TABS = [['business', 'Business'], ['lists', 'Lists'], ['users', 'Users'], ['alerts', 'Alerts'], ['connections', 'Connections'], ['security', 'Security']];
 function setMark(t) { return '<!--tab:' + t + '-->'; }
 function setTabsMine() {
-  var owner = ME && ME.role === 'owner', mgr = ME && ME.role === 'manager';
+  var owner = ME && ME.role === 'owner', acts = !owner && pageActs(), mgr = ME && ME.role === 'manager' && !acts;
   // a manager keeps the drop-down lists only; the business itself stays with the owner and shareholders
-  return SET_TABS.filter(function (t) { return owner || (mgr || (ME && ME.role === 'sales') ? (t[0] === 'lists' && pageCan('lists')) : (t[0] !== 'security' && t[0] !== 'connections' && t[0] !== 'users' && (t[0] !== 'alerts' || (ME && ME.role === 'shareholder')))); });
+  return SET_TABS.filter(function (t) { return owner || (mgr || (ME && ME.role === 'sales' && !acts) ? (t[0] === 'lists' && pageCan('lists')) : (t[0] !== 'security' && t[0] !== 'connections' && t[0] !== 'users' && (t[0] !== 'alerts' || (ME && ME.role === 'shareholder')))); });
 }
 function settingsTabsHtml() {
   var mine = setTabsMine();
@@ -13425,6 +13445,16 @@ function supplierPageHtml() {
       '<div style="flex:2 1 200px"><label class="f" for="sp_note">How it was sent <span class="sku">(optional)</span></label><input class="i" id="sp_note" maxlength="300" placeholder="bank TT, through agent, in person…"></div>' +
       '<button class="btn primary" type="button" id="sp_go"' + (SUP_BUSY ? ' disabled' : '') + '>Record the payment</button><button class="btn" type="button" data-supform="">Cancel</button></div></div>';
   }
+  if (d.purchases) {
+    var pu = d.purchases;
+    h += '<div class="card" style="margin-top:12px"><h2>Bought from them since ' + esc(pu.sinceText) + '</h2>' +
+      '<div class="grid g-kpi">' + kpiT('Shipments', '', fmt(pu.shipments), '') + kpiT('Units', '', fmt(pu.units), '') +
+      kpiT('Goods', cur, fmt(pu.goods), '') + kpiT('Freight and other costs', cur, fmt(pu.extras), '') +
+      kpiT('Total cost', cur, fmt(pu.landed), '') + kpiT('Paid to them', cur, fmt(pu.paid), '') + '</div>' +
+      (pu.rows.length ? '<div class="tablewrap" style="margin-top:8px"><table class="tbl"><thead><tr><th>Date</th><th>Shipment</th><th class="num">Units</th><th class="num">Goods</th><th class="num">Other costs</th><th class="num">Total cost</th></tr></thead><tbody>' +
+        pu.rows.map(function (r) { return '<tr><td>' + esc(r.when) + '</td><td class="nm">' + esc(r.ref) + '</td><td class="num">' + fmt(r.units) + '</td><td class="num">' + fmt(r.goods) + '</td><td class="num">' + fmt(r.extras) + '</td><td class="num"><strong>' + fmt(r.landed) + '</strong></td></tr>'; }).join('') +
+        '</tbody></table></div>' : '<div class="sub" style="margin-top:8px">No shipment from them since then.</div>') + '</div>';
+  }
   if (SUP_FORM === 'bill' && d.canPay) {
     h += '<div class="cash_form"><strong>Add a bill</strong> <span class="sku">— something owed that did not come through Receive stock</span><div class="row" style="gap:8px;align-items:flex-end;flex-wrap:wrap;margin-top:8px">' +
       '<div style="flex:1 1 130px"><label class="f" for="sb_amt">Amount in ' + esc(cur) + '</label><input class="i" id="sb_amt" inputmode="decimal" placeholder="0"></div>' +
@@ -13452,7 +13482,7 @@ function supplierPageHtml() {
       return '<tr><td' + st + ' style="white-space:nowrap">' + esc(l.when || '—') + '</td><td class="nm"' + st + '>' + esc(l.what) +
         ((l.ref || l.fx || l.note || l.by) ? '<br><span class="sku" style="text-decoration:none">' + [l.ref, l.fx, l.note, l.by].filter(function (x) { return x; }).map(esc).join(' · ') + (l.voided ? '<br>' + esc(l.voided) : '') + '</span>' : '') + '</td>' +
         '<td class="num"' + st + '>' + (l.amount > 0 ? fmt(l.amount) : '') + '</td><td class="num"' + st + '>' + (l.amount < 0 ? '<span style="color:var(--good)">' + fmt(-l.amount) + '</span>' : '') + '</td>' +
-        '<td class="num"><strong>' + fmt(l.after) + '</strong></td><td class="num">' + (ME && ME.role === 'owner' && !l.voided && l.id ? '<button class="btn small" type="button" data-supvoid="' + esc(l.kind) + '" data-id="' + esc(l.id) + '">Strike out</button>' : '') + '</td></tr>'; }).join('') + '</tbody></table></div>';
+        '<td class="num"><strong>' + fmt(l.after) + '</strong></td><td class="num">' + (pageActs() && !l.voided && l.id ? '<button class="btn small" type="button" data-supvoid="' + esc(l.kind) + '" data-id="' + esc(l.id) + '">Strike out</button>' : '') + '</td></tr>'; }).join('') + '</tbody></table></div>';
   h += '</div></section>';
   if (d.products.length) h += '<section><div class="card"><h2>Products from ' + esc(d.name) + '</h2><div class="catchips" style="margin-top:8px">' + d.products.slice(0, 80).map(function (p) {
     return '<span style="padding-right:10px"><button class="linkbtn" type="button" style="font-weight:500" data-openprod="' + esc(p.sku) + '">' + esc(p.name) + '</button></span>'; }).join('') +
@@ -13547,8 +13577,16 @@ recvCostHtml = function () {
       '<input class="i" id="rv_bdt" inputmode="decimal" value="' + esc(RECV.totalBdt) + '" placeholder="e.g. 62000"></div></div>';
   }
   if (m !== 'none' && FX && FX.accounts && FX.accounts.length) {
-    h += '<div class="fields"><div><label class="f" for="rv_paid">Goods paid from</label><select class="i" id="rv_paid">' +
-      fxAccOpts(RECV.paidFrom || '', 'Not paid yet \u2014 owed to the supplier') + '</select></div></div>';
+    // owner 17 Oct 2026: mostly paid to the supplier in advance; sometimes paid now, sometimes after receiving
+    var pm = RECV.payment || 'advance', pv = pm === 'now' ? 'now:' + (RECV.paidFrom || '') : pm;
+    h += '<div class="fields"><div><label class="f" for="rv_pay">How the goods were paid</label><select class="i" id="rv_pay">' +
+      '<option value="advance"' + (pv === 'advance' ? ' selected' : '') + '>Already paid to the supplier in advance</option>' +
+      FX.accounts.map(function (a) { return '<option value="now:' + esc(a.id) + '"' + (pv === 'now:' + a.id ? ' selected' : '') + '>Paid now from ' + esc(a.name) + '</option>'; }).join('') +
+      '<option value="later"' + (pv === 'later' ? ' selected' : '') + '>Not paid yet \u2014 pay after receiving</option></select></div>' +
+      (pm === 'advance' ? '<div><label class="f" for="rv_advfrom">The advance was paid from</label><select class="i" id="rv_advfrom">' +
+        fxAccOpts(RECV.advanceFrom || '', 'Already recorded on the supplier\u2019s page') + '</select></div>' +
+        (RECV.advanceFrom ? '<div><label class="f" for="rv_advdate">Paid on</label><input class="i" id="rv_advdate" type="date" value="' + esc(RECV.advanceDate || '') + '"></div>' : '') : '') +
+      '</div>';
   }
   return h + '</div>';
 };
@@ -13608,7 +13646,8 @@ function recvPayload() {
   return { supplier: RECV.supplier, reference: RECV.reference, from: RECV.from || 'shipment', notes: RECV.notes, mode: mode,
     currency: RECV.currency || 'RMB', totalFx: num(RECV.totalRmb), rate: num(RECV.rate),
     totalBdt: num(RECV.totalBdt), saveRate: !!RECV.saveRate,
-    paidFrom: mode === 'none' ? '' : (RECV.paidFrom || ''),
+    paidFrom: mode === 'none' || (RECV.payment || 'advance') !== 'now' ? '' : (RECV.paidFrom || ''),
+    payment: mode === 'none' ? 'later' : (RECV.payment || 'advance'), advanceFrom: RECV.advanceFrom || '', advanceDate: RECV.advanceDate || '',
     shippingBdt: recvShipBdt(), shipNote: recvShipNote(), shippingAccount: RECV.shippingAccount || '',
     costs: (RECV.costs || []).filter(function (c) { return String(c.label || '').trim() || num(c.amount) > 0; })
       .map(function (c) { return { label: String(c.label || '').trim(), amount: num(c.amount), account: c.account || '' }; }),
@@ -13636,7 +13675,10 @@ wireStockExtra = function () {
   if (cur) cur.addEventListener('change', function () {
     RECV.currency = cur.value; RECV.rate = fxRate(cur.value) > 0 ? String(fxRate(cur.value)) : ''; repaint();
   });
-  var pf = el('rv_paid'); if (pf) pf.addEventListener('change', function () { RECV.paidFrom = pf.value; });
+  var pf = el('rv_pay'); if (pf) pf.addEventListener('change', function () {
+    var v = pf.value; if (v.indexOf('now:') === 0) { RECV.payment = 'now'; RECV.paidFrom = v.slice(4); } else { RECV.payment = v; RECV.paidFrom = ''; } repaint(); });
+  var af = el('rv_advfrom'); if (af) af.addEventListener('change', function () { RECV.advanceFrom = af.value; repaint(); });
+  var ad = el('rv_advdate'); if (ad) ad.addEventListener('change', function () { RECV.advanceDate = ad.value; });
   var sa = el('rv_shipacc'); if (sa) sa.addEventListener('change', function () { RECV.shippingAccount = sa.value; });
   var add = el('rv_addcost');
   if (add) add.addEventListener('click', function () { (RECV.costs = RECV.costs || []).push({ label: '', amount: '', account: '' }); repaint(); });
@@ -14698,7 +14740,7 @@ function serForget(sku) { if (sku) delete SER[sku]; else SER = {}; }
 function serCardHtml() {
   var sku = PRODP.sku, p = PRODP.data, d = SER[sku], mgr = pageCan('stock');
   if (!d) { serLoad(sku); return '<section><div class="card"><h2>Serial numbers and warranty</h2><div class="loading">Reading&hellip;</div></div></section>'; }
-  var sh = ME && (ME.role === 'owner' || ME.role === 'shareholder');
+  var sh = ME && (ME.role === 'owner' || ME.role === 'shareholder' || pageActs());
   var h = '<section><div class="card" data-sercard="' + esc(sku) + '"><h2>Serial numbers and warranty</h2>' +
     '<div class="sub">For printers and other items where each unit has its own number. A sale then names the unit that went out, and the warranty it carries. ' +
     'Changing the warranty here changes it for sales from now on \u2014 units already sold keep what they were sold with.</div>';
@@ -16522,7 +16564,7 @@ document.addEventListener('click', function (ev) {
   if (q) { ev.stopPropagation(); uiAlert(q.closest('[data-conntile]').querySelector('b').textContent + '\n\n' + q.getAttribute('data-conntip')); return; }
   // a tile opens its own card further down
   var tile = t.closest('[data-conntile]');
-  if (tile && tile.getAttribute('data-conntile') === 'meta' && window.IB) { IB.tab = 'chans'; IB.chans = null; go('inbox'); return; }
+  if (tile && tile.getAttribute('data-conntile') === 'meta') { var fbsec = [].slice.call(document.querySelectorAll('h2,h3,strong,b')).filter(function (x) { return /Facebook . one login|Social accounts and chat channels/.test(x.textContent); })[0]; if (fbsec) { fbsec.scrollIntoView({ behavior: 'smooth', block: 'center' }); return; } if (window.IB) { IB.tab = 'chans'; IB.chans = null; go('inbox'); } return; }
   if (tile) {
     var want = { website: 'Website', courier: 'courier', whatsapp: 'WhatsApp', email: 'mail', google: 'Google Drive', ai: 'AI' }[tile.getAttribute('data-conntile')] || '';
     // the card whose title starts with the tile's name (not "Any website - open door"), else one that mentions it
@@ -24399,7 +24441,7 @@ viewShipment = function () {
   if (ASK.ref !== d.reference) { ASK.ref = d.reference; ASK.data = null; }
   if (!ASK.data && !ASK.busy) { ASK.busy = true; srv('erpAskingPrices', [{ reference: d.reference }], function (r) { ASK.busy = false; ASK.data = r; if (VIEW === 'shipments' && SHP.ref === r.reference) repaint(); }, function () { ASK.busy = false; ASK.data = { lines: [] }; }); }
   var x = ASK.data; if (!x || !x.lines.length) return h;
-  var owner = ME && String(ME.role) === 'owner';
+  var owner = pageActs();
   return h + '<div class="card" style="margin-top:16px"><div class="chead"><h2>Suggested selling prices</h2>' + (owner ? '<button class="btn small" type="button" data-askmk="1">Markups…</button>' : '') + '</div>' +
     '<div class="sub">Landed cost × (1 + markup), rounded up to 10. Usual markup ' + fmt(x.markup) + '%' + (Object.keys(x.brands || {}).length ? '; by brand: ' + Object.keys(x.brands).map(function (b) { return esc(b) + ' ' + fmt(x.brands[b]) + '%'; }).join(', ') : '') + '. Tick the ones to use; you can change a price first.</div>' +
     '<div class="scroll"><table><thead><tr><th></th><th>Product</th><th class="num">Landed</th><th class="num">Markup</th><th class="num">Price now</th><th class="num">Suggested</th></tr></thead><tbody>' +
@@ -24539,7 +24581,7 @@ document.addEventListener('click', function (e) {
       (CAT || []).slice(0, 600).map(function (p) { return '<option value="' + esc(p.sku) + '">' + esc(p.name) + '</option>'; }).join('') + '</datalist></div></div><div class="fdw-note">Not in the list yet? Add it on Products first.</div>',
       function (back, close) { srv('erpPreorderLink', [{ id: x.no, line: i + 1, sku: fdwVal(back, 'pl_sku') }], function (r) { close(); done('Product given.')(r); }, fail); }); return; }
   var c = e.target.closest('[data-precancel]');
-  if (c) { var owner = ME && String(ME.role) === 'owner';
+  if (c) { var owner = pageActs();
     fdwDialog('Cancel ' + c.getAttribute('data-precancel'),
       '<div class="fields"><div><label class="f" for="pc_r">Why</label><input class="i" id="pc_r"></div>' +
       '<div><label class="f" for="pc_mode">The deposit</label><select class="i" id="pc_mode"><option value="refund">Pay it back</option>' + (owner ? '<option value="forfeit">Keep it (income of this month)</option>' : '') + '</select></div>' +
@@ -27282,6 +27324,7 @@ viewCash = function () {
   var nWait = (c.loose || []).length + (c.unassigned || []).length;
   var tabs = [['ledger', 'Ledger', 'wallet'], ['accounts', 'Accounts', 'bank'], ['match', 'Unmatched', 'search', nWait ? String(nWait) : ''], ['cashup', 'Cash-up', 'taka']];
   if (held.length) tabs.push(['held', 'Courier & agent', 'truck']);
+  if (ME && (ME.role === 'owner' || ME.role === 'shareholder')) tabs.push(['balance', 'Balance sheet', 'chart']);
   f21TabInit('cash', 'ledger', tabs.map(function (t) { return t[0]; }));
   if (CASH_FORM) FD21.tab.cash = 'accounts';
   var out = f21Tabs('cash', tabs);
@@ -27329,6 +27372,7 @@ viewCash = function () {
     hc += '<div class="fd21-row-wrap" style="margin-top:-6px">' + held.map(function (a) { return '<button type="button" class="btn small" data-cacc="' + esc(a.id) + '">Open ' + esc(a.name) + ' statement</button>'; }).join('') + '</div>';
     out += f21Pane('held', 'cash', hc);
   }
+  if (ME && (ME.role === 'owner' || ME.role === 'shareholder')) out += f21Pane('balance', 'cash', bsHtml(cur));
   return out;
 };
 // any change to the money makes the ledger stale
@@ -35447,10 +35491,11 @@ body[data-fdview="settings"] #o_cp .crumbs, body[data-fdview="tools"] #o_cp .cru
              chans: null, stats: null, cost: null, bc: null, cm: null, fu: null, saved: null, offers: null, test: [], busy: {}, ai: '', counts: {},
              bk: null, bkst: 'requested', plat: '', F: null, feats: null, plans: null, team: null, meta: null, oq: '', lq: '', older: null, bcgap: 24, duty: (function () { try { return localStorage.getItem('ibDuty') === '1'; } catch (e) { return false; } })() };
   window.IB = IB;
+  window.ibPaint = function () { paint(true); };
   var ICON = '<path d="M4 4h16v12H8l-4 4z"/><path d="M8 9h8M8 12h5"/>';
   // who sees the Inbox: Settings > Business > Menu says Everyone / Only owners / Off; a company without an Inbox plan does not have it (the provider still sees it to try it)
   function ibMode() { var a = (ME && ME.apps) || {}; return (a.gone || []).indexOf('inbox') >= 0 ? 'off' : (a.hidden || []).indexOf('inbox') >= 0 ? 'owner' : (a.off || []).indexOf('inbox') >= 0 ? 'trial' : 'all'; }
-  function ibOn() { if (!ME) return false; var m = ibMode(); if (m === 'off') return false; if (m === 'owner') return ME.role === 'owner'; if (m === 'trial') return !!ME.platform; return true; }
+  function ibOn() { if (!ME) return false; if (!pageCan('inbox')) return false; var m = ibMode(); if (m === 'off') return false; if (m === 'owner') return ME.role === 'owner'; if (m === 'trial') return !!ME.platform; return true; }
   window.ibOn = ibOn;
   // the menus this code draws: the Inbox (chats + the AI sales assistant), Leads, Advertisement
   var IBV = { inbox: 'Inbox' };   // Leads and Advertisement come later as their own menus (the owner, 15 Oct)
@@ -35496,8 +35541,8 @@ body[data-fdview="settings"] #o_cp .crumbs, body[data-fdview="tools"] #o_cp .cru
   function loadF() { srv('erpInboxFeatureMap', [{}], function (r) { IB.F = r; if (isIbView()) paint(true); }, function () {}); }
   setInterval(function () { if (ibOn() && !document.hidden) loadF(); }, 300000);
   function loadConv(id) { IB.convId = id; srv('erpInboxOpen', [{ id: id }], function (r) { IB.conv = r; if (isIbView()) paint(true); }, fail); }
-  // live: the list every 8 s and the open chat every 5 s while the Inbox is open; the menu badge every 30 s
-  setInterval(function () { if (isIbView() && IB.tab === 'inbox' && !document.hidden) { loadList(); if (IB.convId) srv('erpInboxOpen', [{ id: IB.convId }], function (r) { var had = IB.conv && IB.conv.msgs.length; IB.conv = r; if (!had || had !== r.msgs.length) paint(true); }, function () {}); } }, 5000);
+  // live: the list and the open chat every 3 s while the Inbox is open; the menu badge every 30 s
+  setInterval(function () { if (isIbView() && IB.tab === 'inbox' && !document.hidden) { loadList(); if (IB.convId) srv('erpInboxOpen', [{ id: IB.convId }], function (r) { var had = IB.conv && IB.conv.msgs.length; IB.conv = r; if (!had || had !== r.msgs.length) paint(true); }, function () {}); } }, 3000);
   setInterval(function () { if (ibOn() && !document.hidden && !(isIbView() && IB.tab === 'inbox')) srv('erpInbox', [{ pile: 'open' }], function (r) { var before = IB.counts.waiting || 0; IB.counts = r.counts || {}; syncNav();
     if ((IB.counts.waiting || 0) > before) ding();
     if ((IB.counts.waiting || 0) > before && 'Notification' in window && Notification.permission === 'granted') { try { new Notification('A customer is waiting', { body: 'A chat was handed to the team.' }); } catch (e) {} } }, function () {}); }, 30000);
@@ -35596,7 +35641,7 @@ body[data-fdview="settings"] #o_cp .crumbs, body[data-fdview="tools"] #o_cp .cru
     var piles = [['open', 'Open'], ['waiting', 'Waiting'], ['later', 'Later'], ['done', 'Done']];
     var list = '<div class="ib-pane ib-listpane"><div class="ib-list-h"><div class="ib-piles">' + piles.map(function (p) {
       var n = IB.counts[p[0]]; return '<button type="button" data-ibpile="' + p[0] + '" class="' + (IB.pile === p[0] ? 'on' : '') + '">' + p[1] + (n ? ' · ' + n : '') + '</button>'; }).join('') + '</div>' +
-      '<input class="i" id="ibQ" placeholder="Search name, phone, message" value="' + esc(IB.q) + '"></div><div class="ib-list">' +
+      '<input class="i" id="ibQ" placeholder="Search name, phone, message" value="' + esc(IB.q) + '">' + (ME && /^(manager|shareholder|owner)$/.test(ME.role) && L && L.oldPending && L.oldPending.length ? '<button class="btn small" type="button" data-ibold="1" style="margin-top:6px;width:100%">' + (IB.oldBusy ? 'Bringing in old chats… ' + esc(IB.oldNote || '') : '⤓ Bring in old Facebook chats (once)') + '</button>' : '') + '</div><div class="ib-list">' +
       (!L ? '<div class="loading">Loading…</div>' : L.error ? '<div class="note err"><div>' + esc(L.error) + '</div></div>' : !L.list.length ? '<div class="ib-empty">' + (IB.pile === 'waiting' ? 'Nobody is waiting for a person. ✓' : 'No chats here yet.') + '</div>' :
         L.list.map(function (x) {
           return '<div class="ib-row' + (x.id === IB.convId ? ' on' : '') + '" data-ibopen="' + esc(x.id) + '"><div class="ib-av">' + (x.avatar ? '<img src="' + esc(x.avatar) + '" alt="">' : ini(x.name)) + '<i class="ch ib-ch-' + esc(x.channel) + '" title="' + esc(CHN[x.channel] || x.channel) + '"></i></div>' +
@@ -35828,6 +35873,13 @@ body[data-fdview="settings"] #o_cp .crumbs, body[data-fdview="tools"] #o_cp .cru
         '<label>Reminder hours before<select class="i" data-pf="remind_hours">' + [0, 1, 2, 3, 6, 12].map(function (n) { return '<option value="' + n + '"' + (Number(p.remind_hours) === n ? ' selected' : '') + '>' + (n ? n + ' hours' : 'None') + '</option>'; }).join('') + '</select></label>' +
         '<label style="flex-direction:row;align-items:center;gap:8px"><input type="checkbox" data-pf="remind_day"' + (p.remind_day ? ' checked' : '') + '> Remind the day before</label>' +
         '<label style="flex-direction:row;align-items:center;gap:8px"><input type="checkbox" data-pf="auto_confirm"' + (p.auto_confirm ? ' checked' : '') + '> Confirm bookings automatically</label></div>' +
+        // owner 17 Oct 2026: the AI's limits
+        '<h3 style="margin-top:16px">Limits</h3><div class="sub">What the AI may and may not do. It never sees or says your cost; a discount is checked against your cost every time.</div><div class="ib-grid2">' +
+        '<label>Discounts<select class="i" data-pf="disc_mode"><option value="fixed"' + (p.disc_mode !== 'limit' ? ' selected' : '') + '>Never — the price is fixed</option><option value="limit"' + (p.disc_mode === 'limit' ? ' selected' : '') + '>A little, inside the limits below</option></select></label>' +
+        '<label>Most off the price (%)<input class="i" data-pf="disc_max_pct" inputmode="decimal" value="' + esc(p.disc_max_pct) + '"></label>' +
+        '<label>Never below cost + (%)<input class="i" data-pf="disc_min_margin" inputmode="decimal" value="' + esc(p.disc_min_margin) + '"></label>' +
+        '<label style="grid-column:1/-1">Topics it must not answer (one per line)<textarea class="i" data-pf="no_topics" rows="3" placeholder="e.g. medical advice&#10;prices of other shops">' + esc(p.no_topics || '') + '</textarea></label>' +
+        '<label style="grid-column:1/-1">Things it must never promise (one per line)<textarea class="i" data-pf="no_promise" rows="3" placeholder="e.g. an exact delivery time&#10;a result from using the product">' + esc(p.no_promise || '') + '</textarea></label></div>' +
         '<div class="ib-actions"><button class="btn primary small" type="button" data-ibpfsave="1">Save details</button>' + (d.hasPrevDetails ? '<button class="btn small" type="button" data-ibundo="details">Undo the last published details</button>' : '') + '</div></div>';
       var helper = '<div class="ib-c"><h3>Teach the AI in your own words</h3><div class="sub">e.g. “Make the delivery charge 80 taka” or “We are closed on Fridays”. The helper shows what is set now and makes a draft; test it on the phone, then publish.</div>' +
         '<div style="display:flex;gap:6px"><input class="i" id="dkHelp" placeholder="Tell the helper…" style="flex:1"><button class="btn small primary" type="button" data-ibhelper="1">Draft it</button></div>' + (IB.helperSay ? '<div class="ib-ai-out">' + esc(IB.helperSay) + '</div>' : '') + '</div>';
@@ -35858,7 +35910,7 @@ body[data-fdview="settings"] #o_cp .crumbs, body[data-fdview="tools"] #o_cp .cru
 
   // ---------------------------------------------------------------- Knowledge
   function kbHtml() {
-    return errOr(IB.kb, function (d) {
+    return (window.siteHtml ? window.siteHtml() : '') + errOr(IB.kb, function (d) {
       return '<div class="ib-grid2"><div class="ib-c"><h3>Add to the knowledge base</h3><div class="sub">Your own documents — policies, guides, details. The AI searches them by the question, on every channel. Paste text, add a question and its answer, or load a .txt / .md / .csv file.</div>' +
         '<div class="ib-form"><label>Title<input class="i" id="kbTitle"></label><label>File<input class="i" type="file" id="kbFile" accept=".txt,.md,.csv,text/plain"></label></div>' +
         '<textarea class="i" id="kbBody" rows="6" style="width:100%;margin-top:8px" placeholder="Paste the text…"></textarea><div class="ib-actions"><button class="btn small primary" type="button" data-ibkbadd="text">Add the text</button></div>' +
@@ -36495,6 +36547,256 @@ label.f .fhelp:hover, label.f .fhelp[aria-expanded="true"] { border-color:var(--
   new MutationObserver(function () { clearTimeout(t); t = setTimeout(function () { scan(document); }, 30); }).observe(document.body, { childList: true, subtree: true });
   scan(document);
 })();
+</script>
+<!-- fd-49: bring in the page's old Facebook chats (erpInboxPullOld) -->
+<script>
+document.addEventListener('click', function (e) {
+  var b = e.target.closest && e.target.closest('[data-ibold]');
+  if (!b || !window.IB || IB.oldBusy) return;
+  IB.oldBusy = true; IB.oldNote = ''; repaint();
+  function fail(err) { IB.oldBusy = false; repaint(); toast(esc((err && err.message) || err), true); }
+  srv('erpInboxChannels', [{}], function (r) {
+    var pend = (IB.list && IB.list.oldPending) || [];
+    var chs = ((r && r.channels) || []).filter(function (c) { return (c.kind === 'messenger' || c.kind === 'instagram') && c.status !== 'removed' && pend.indexOf(c.id) >= 0; });
+    if (!chs.length) { fail('No Facebook page is connected yet (Settings > Connections).'); return; }
+    var tot = { chats: 0, messages: 0 }, i = 0;
+    (function next() {
+      if (i >= chs.length) {
+        IB.oldBusy = false; IB.list = null; repaint();
+        toast(tot.messages ? 'Brought in ' + tot.messages + ' old messages from ' + tot.chats + ' chats. Older ones are filed under Done.' : 'Nothing new - the old chats are already here.');
+        return;
+      }
+      var c = chs[i++], rounds = 0;
+      (function more(after) {
+        srv('erpInboxPullOld', [{ channel: c.id, chats: 10, after: after || '' }], function (x) {
+          tot.chats += x.chats || 0; tot.messages += x.messages || 0; rounds++;
+          IB.oldNote = tot.chats + ' chats so far…'; repaint();
+          if (x.more && x.after && rounds < 40) more(x.after); else next();
+        }, fail);
+      })('');
+    })();
+  }, fail);
+});
+</script>
+<script>
+// back to the tab (after writing on Facebook, say): the chats at once, not at the next tick
+function ibFreshNow() {
+  if (document.hidden || !window.IB || VIEW !== 'inbox' || IB.tab !== 'inbox') return;
+  IB.list = null; repaint();
+  if (IB.convId) srv('erpInboxOpen', [{ id: IB.convId }], function (r) { IB.conv = r; if (VIEW === 'inbox') repaint(); }, function () {});
+}
+document.addEventListener('visibilitychange', ibFreshNow);
+window.addEventListener('focus', ibFreshNow);
+</script>
+<!-- fd-50 (owner 17 Oct 2026): the balance sheet - what the business owns, what it owes, net worth, and whether it
+     still adds up since the books were opened. Money > Balance sheet (owner and shareholders). -->
+<style>
+.bs-cols { display:grid; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr)); gap:14px; }
+.bs-row { display:flex; justify-content:space-between; gap:12px; padding:7px 0; border-bottom:1px solid var(--line, rgba(127,127,127,.18)); }
+.bs-row .w { min-width:0; } .bs-row .w small { display:block; opacity:.7; font-size:12px; }
+.bs-row .a { font-variant-numeric:tabular-nums; white-space:nowrap; font-weight:600; }
+.bs-tot { display:flex; justify-content:space-between; padding:9px 0 0; font-weight:700; }
+.bs-diff { border-radius:12px; padding:12px 14px; margin-top:14px; }
+.bs-diff.ok { background:rgba(46,160,90,.12); } .bs-diff.bad { background:rgba(220,60,60,.12); }
+</style>
+<script>
+var BS = { data: null, busy: false, err: '' };
+function bsLoad(force) {
+  if (BS.busy || (BS.data && !force)) return;
+  BS.busy = true;
+  srv('erpBalanceSheet', [], function (r) { BS.busy = false; BS.data = r; BS.err = ''; if (VIEW === 'cash') repaint(); },
+      function (e) { BS.busy = false; BS.err = (e && e.message) || String(e); if (VIEW === 'cash') repaint(); });
+}
+function bsHtml(cur) {
+  if (!BS.data) { bsLoad(); return '<div class="fd21-card">' + (BS.err ? '<div class="note err"><div>' + esc(BS.err) + '</div></div>' : '<div class="loading">Adding everything up…</div>') + '</div>'; }
+  var d = BS.data, c = cur || 'BDT';
+  var row = function (r) { return '<div class="bs-row"><div class="w">' + esc(r.what) + (r.sub ? '<small>' + esc(r.sub) + '</small>' : '') + '</div><div class="a">' + f21M(r.amount, c) + '</div></div>'; };
+  var h = '<div class="fd21-card"><div class="chead"><h2>Balance sheet · ' + esc(d.today) + '</h2>' +
+    '<button class="btn small" type="button" data-bsre="1">Add up again</button></div><div class="bs-cols">' +
+    '<div><h3>What the business owns</h3>' + d.owns.map(row).join('') + '<div class="bs-tot"><span>Total owned</span><span>' + f21M(d.ownsTotal, c) + '</span></div></div>' +
+    '<div><h3>What it owes</h3>' + d.owes.map(row).join('') + '<div class="bs-tot"><span>Total owed</span><span>' + f21M(d.owesTotal, c) + '</span></div>' +
+    '<div class="bs-tot" style="font-size:18px;margin-top:10px"><span>Net worth (owners\u2019 capital + profit kept)</span><span>' + f21M(d.net, c) + '</span></div></div></div>';
+  if (!d.opened) {
+    h += '<div class="bs-diff bad"><strong>The books are not opened yet.</strong> Opening them writes down today\u2019s net worth (' + f21M(d.net, c) +
+      ') as the start. From then on the ERP checks every day that today\u2019s net worth = that start + the profit since + money the owners put in \u2212 money they took out, and shows any difference with what caused it.' +
+      (d.canOpen ? '<div style="margin-top:10px"><button class="btn primary" type="button" data-bsopen="1">Open the books today</button></div>' : '') + '</div>';
+  } else {
+    var e = d.explain, ok = Math.abs(d.difference) < 1;
+    h += '<div class="bs-cols" style="margin-top:14px"><div><h3>Why the net worth is what it is</h3>' +
+      row({ what: 'Net worth when the books were opened', sub: d.opening.date + (d.opening.by ? ' by ' + d.opening.by : ''), amount: e.opening }) +
+      row({ what: 'Profit since then', sub: 'from Profitability', amount: e.profit }) +
+      row({ what: 'Money owners and investors put in', sub: 'Capital book', amount: e.invest }) +
+      row({ what: 'Money they took out', sub: 'Capital book', amount: -e.withdraw }) +
+      row({ what: 'Profit paid out to shareholders', sub: 'Capital book', amount: -e.profitPaid }) +
+      '<div class="bs-tot"><span>Net worth should be</span><span>' + f21M(e.should, c) + '</span></div></div><div>' +
+      '<div class="bs-diff ' + (ok ? 'ok' : 'bad') + '" style="margin-top:0"><strong>' + (ok ? '\u2713 The books balance.' : 'Difference: ' + f21M(d.difference, c)) + '</strong>' +
+      (ok ? '' : '<div class="sub" style="margin-top:6px">Net worth today is ' + f21M(d.net, c) + ', it should be ' + f21M(e.should, c) + '. Usually one of these:</div>') + '</div>' +
+      (d.why && d.why.length ? d.why.map(function (w) { return '<div class="bs-row"><div class="w">' + esc(w.what) + '<small>' + fmt(w.n) + ' item(s)</small></div><div class="a">' + (w.amount ? f21M(w.amount, c) : '') + '</div></div>'; }).join('') : '') +
+      (d.canOpen ? '<div class="sub" style="margin-top:10px">Opened by mistake or wrong figures at the start? <button class="linkbtn" type="button" data-bsopen="1">Open the books again today</button></div>' : '') +
+      '</div></div>';
+  }
+  return h + '</div>';
+}
+document.addEventListener('click', function (e) {
+  var t = e.target.closest && e.target.closest('[data-bsre],[data-bsopen]');
+  if (!t) return;
+  if (t.hasAttribute('data-bsre')) { BS.data = null; bsLoad(true); repaint(); return; }
+  if (!window.confirm('Open the books today?\n\nToday\u2019s net worth becomes the start the ERP checks against from now on.')) return;
+  srv('erpBalanceOpen', [{}], function (r) { BS.data = r; toast('The books are opened. From now on the ERP checks they balance.'); repaint(); },
+      function (er) { toast(esc((er && er.message) || er), true); });
+});
+</script>
+<!-- fd-51 (owner 17 Oct 2026): an order (shipment) is paid when it is created; pay more before the goods come -->
+<script>
+var PO_PAY = '';
+document.addEventListener('click', function (e) {
+  var t = e.target.closest && e.target.closest('[data-popay],[data-popaygo]');
+  if (!t) return;
+  if (t.hasAttribute('data-popay')) { PO_PAY = t.getAttribute('data-popay'); repaint(); return; }
+  var po = t.getAttribute('data-popaygo'), amt = num((el('pp_amt') || {}).value);
+  if (!(amt > 0)) { toast('How much was paid?', true); return; }
+  srv('erpPoPay', [{ po: po, amount: amt, account: (el('pp_acc') || {}).value || '', date: (el('pp_date') || {}).value || '', pi: (el('pp_pi') || {}).value || '' }], function (r) {
+    PO_PAY = ''; toast('Payment recorded for ' + esc(po) + ' \u00b7 paid ' + fmt(r.paid) + ' TK in all'); PO = null;
+    srv('erpPoList', [], function (x) { PO = x; repaint(); }, function () { PO = { orders: [] }; repaint(); });
+  }, function (er) { toast(esc((er && er.message) || er), true); });
+});
+</script>
+<!-- fd-52 (owner 17 Oct 2026): what the Inbox AI may say about a product - a description and the details customers ask
+     about (the list is the business's own, from a ready-made one per kind of business). Product page > For the AI chat. -->
+<script>
+var PAI = { sku: '', data: null, busy: false, fields: null };
+function paiLoad(sku) {
+  if (PAI.busy) return; PAI.busy = true;
+  srv('erpProductAi', [{ sku: sku }], function (r) { PAI.busy = false; PAI.sku = sku; PAI.data = r; if (VIEW === 'products') repaint(); },
+      function () { PAI.busy = false; PAI.sku = sku; PAI.data = { error: true }; });
+  if (!PAI.fields && ME && ME.role === 'owner') srv('erpProductFields', [], function (r) { PAI.fields = r; if (VIEW === 'products') repaint(); }, function () {});
+}
+function paiHtml() {
+  var sku = PRODP.sku;
+  if (PAI.sku !== sku || !PAI.data) { paiLoad(sku); return '<section><div class="card"><h2>For the AI chat</h2><div class="loading">Reading…</div></div></section>'; }
+  var d = PAI.data; if (d.error) return '';
+  var canEdit = typeof pageCan === 'function' ? pageCan('products') : true;
+  var h = '<section><div class="card"><h2>For the AI chat</h2><div class="sub">What the AI may tell customers about this product. It answers product questions only from here; anything not written goes to your team.' +
+    (d.updatedAt ? ' Last changed ' + esc(d.updatedAt) + (d.updatedBy ? ' by ' + esc(d.updatedBy) : '') + '.' : '') + '</div>' +
+    '<label class="f" for="pai_desc" style="margin-top:10px">Description</label><textarea class="i" id="pai_desc" rows="4" maxlength="3000"' + (canEdit ? '' : ' disabled') + '>' + esc(d.description || '') + '</textarea>' +
+    '<div class="fields" style="margin-top:8px">' + d.fields.map(function (f) {
+      return '<div><label class="f">' + esc(f.label) + '</label><input class="i" data-paif="' + esc(f.key) + '" maxlength="400" value="' + esc((d.facts || {})[f.key] || '') + '"' + (canEdit ? '' : ' disabled') + '></div>'; }).join('') + '</div>' +
+    (canEdit ? '<div class="row" style="margin-top:10px;gap:8px;flex-wrap:wrap"><button class="btn primary" type="button" data-paisave="1">Save for the AI</button></div>' : '');
+  if (PAI.fields && PAI.fields.canEdit) {
+    h += '<div class="sub" style="margin-top:12px">The details asked for every product: <select class="i" id="pai_kind" style="width:auto;display:inline-block">' +
+      PAI.fields.presets.map(function (x) { return '<option value="' + esc(x.kind) + '"' + (PAI.fields.kind === x.kind ? ' selected' : '') + '>' + esc(x.label) + '</option>'; }).join('') +
+      (PAI.fields.kind === 'custom' ? '<option value="custom" selected>My own list</option>' : '') + '</select> <button class="btn small" type="button" data-paikind="1">Use this list</button>' +
+      ' <button class="btn small" type="button" data-paiown="1">Write my own list…</button></div>';
+  }
+  return h + '</div></section>';
+}
+var productPageHtmlPai = productPageHtml;
+productPageHtml = function () {
+  var h = productPageHtmlPai.apply(this, arguments);
+  if (!PRODP.sku || !PRODP.data) return h;
+  return h + paiHtml();
+};
+try { window.productPageHtml = productPageHtml; } catch (e) {}
+document.addEventListener('click', function (e) {
+  var t = e.target.closest && e.target.closest('[data-paisave],[data-paikind],[data-paiown]');
+  if (!t) return;
+  if (t.hasAttribute('data-paisave')) {
+    var facts = {}; [].forEach.call(document.querySelectorAll('[data-paif]'), function (x) { facts[x.getAttribute('data-paif')] = x.value; });
+    srv('erpProductAiSave', [{ sku: PRODP.sku, description: (el('pai_desc') || {}).value || '', facts: facts }], function (r) { PAI.data = r; toast('Saved — the AI uses it from the next message.'); repaint(); },
+        function (er) { toast(esc((er && er.message) || er), true); });
+    return;
+  }
+  var save = function (payload) {
+    srv('erpProductFieldsSave', [payload], function (r) { PAI.fields = r; PAI.data = null; PAI.sku = ''; toast('The product details list is changed.'); repaint(); },
+        function (er) { toast(esc((er && er.message) || er), true); });
+  };
+  if (t.hasAttribute('data-paikind')) { save({ kind: (el('pai_kind') || {}).value || 'general' }); return; }
+  var cur = (PAI.fields && PAI.fields.fields || []).map(function (f) { return f.label; }).join(', ');
+  var txt = window.prompt('Your own list of details (separated by commas):', cur);
+  if (txt === null) return;
+  save({ kind: 'custom', fields: txt.split(',').map(function (x) { return x.trim(); }).filter(Boolean) });
+});
+</script>
+<!-- fd-53 (owner 17 Oct 2026): read the business's own website for the Inbox AI - policies and pages become knowledge-base
+     drafts, product pages (or the WooCommerce / Shopify product texts) become product descriptions. Nothing reaches the AI
+     until the owner adds it. Inbox > Knowledge, at the top. -->
+<script>
+var SITE = { d: null, busy: false, reading: false, show: 'draft' };
+function siteLoad() {
+  if (SITE.busy) return; SITE.busy = true;
+  srv('erpSitePages', [], function (r) { SITE.busy = false; SITE.d = r; if (window.ibPaint) ibPaint(); }, function (er) { SITE.busy = false; SITE.d = { error: (er && er.message) || String(er) }; });
+}
+window.siteHtml = function () {
+  if (!ME || (ME.role !== 'owner' && ME.role !== 'manager')) return '';
+  if (!SITE.d) { siteLoad(); return '<div class="ib-c" style="margin-bottom:12px"><h3>Read my website</h3><div class="loading">Reading…</div></div>'; }
+  var d = SITE.d; if (d.error) return '';
+  var own = !!d.canAdd, pages = d.pages || [];
+  var n = { draft: 0, added: 0, skipped: 0 }; pages.forEach(function (x) { n[x.status]++; });
+  var KIND = { policy: 'Policy', page: 'Page', product: 'Product' };
+  var list = pages.filter(function (x) { return x.status === SITE.show; });
+  var h = '<div class="ib-c" style="margin-bottom:12px"><h3>Read my website</h3><div class="sub">The ERP reads your own website — privacy, return and delivery policies, about, FAQ and product pages — and keeps each one as a draft. ' +
+    'Add a policy or page and the AI can quote it; add a product page and it becomes that product\'s description for the AI. Nothing is used until you add it.</div>' +
+    (own ? '<div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap"><input class="i" id="siteUrl" style="flex:1;min-width:200px" placeholder="https://www.yourshop.com" value="' + esc(d.site || '') + '">' +
+      '<button class="btn small primary" type="button" data-siteread="1"' + (SITE.reading ? ' disabled' : '') + '>' + (SITE.reading ? 'Reading the website… (up to a minute)' : (pages.length ? 'Read it again' : 'Read my website')) + '</button></div>' : '') +
+    (d.lastRead ? '<div class="sub" style="margin-top:6px">Read ' + d.lastRead.read + ' page(s)' + (d.lastRead.products ? ' and ' + d.lastRead.products + ' product text(s) from the shop' : '') + ': ' + d.lastRead.new + ' new, ' + d.lastRead.changed + ' changed, ' + d.lastRead.same + ' unchanged' + (d.lastRead.failed ? ', ' + d.lastRead.failed + ' did not open' : '') + (d.more ? '. ' + d.more + ' more page(s) not read yet — press Read it again to go on.' : '.') + '</div>' : '');
+  if (pages.length) {
+    h += '<div style="display:flex;gap:6px;margin-top:10px;flex-wrap:wrap">' + ['draft', 'added', 'skipped'].map(function (k) {
+      return '<button class="btn small' + (SITE.show === k ? ' primary' : '') + '" type="button" data-siteshow="' + k + '">' + { draft: 'To check', added: 'Added', skipped: 'Skipped' }[k] + ' · ' + n[k] + '</button>'; }).join('') +
+      (own && SITE.show === 'draft' && n.draft ? '<button class="btn small" type="button" data-siteall="1">Add all matched</button>' : '') + '</div>';
+    h += list.length ? list.map(function (x) {
+      var prod = x.kind === 'product';
+      return '<div style="padding:8px 0;border-bottom:1px solid var(--fd-border)"><div style="display:flex;gap:8px;justify-content:space-between;align-items:flex-start;flex-wrap:wrap">' +
+        '<span style="min-width:0;flex:1"><b>' + esc(x.title || x.url) + '</b> <span class="ib-tag ' + (x.kind === 'policy' ? 'hot' : prod ? 'ai' : 'test') + '">' + KIND[x.kind] + '</span>' +
+        (prod ? ' <span class="sku">' + (x.sku ? '→ ' + esc(x.product || x.sku) + ' (' + esc(x.sku) + ')' : 'not matched to a product') + '</span>' : '') +
+        '<br><a class="sku" href="' + esc(x.url) + '" target="_blank" rel="noopener" style="word-break:break-all">' + esc(x.url) + '</a>' + (x.source !== 'web' ? ' <span class="sku">· from the shop</span>' : '') +
+        (x.by ? ' <span class="sku">· ' + esc(x.by) + '</span>' : '') + '</span>' +
+        (own ? '<span style="display:flex;gap:6px;flex-wrap:wrap">' + (x.status === 'draft'
+          ? (prod && !x.sku ? '<button class="btn small" type="button" data-sitesku="' + x.id + '">Choose the product…</button>' : '<button class="btn small primary" type="button" data-siteact="add" data-id="' + x.id + '">Add</button>') +
+            '<button class="btn small" type="button" data-siteact="skip" data-id="' + x.id + '">Skip</button>'
+          : '<button class="btn small" type="button" data-siteact="draft" data-id="' + x.id + '">Put back</button>') + '</span>' : '') + '</div>' +
+        '<details style="margin-top:4px"><summary class="sub" style="cursor:pointer">What it says (' + x.size + ' characters)</summary><div class="ib-ai-out" style="white-space:pre-wrap">' + esc(x.preview) + (x.size > 400 ? '…' : '') + '</div></details></div>';
+    }).join('') : '<div class="sub" style="margin-top:8px">Nothing here.</div>';
+  }
+  return h + '</div>';
+};
+document.addEventListener('click', function (e) {
+  var t = e.target.closest && e.target.closest('[data-siteread],[data-siteshow],[data-siteact],[data-siteall],[data-sitesku]');
+  if (!t) return;
+  var fail = function (er) { SITE.reading = false; toast(esc((er && er.message) || er), true); if (window.ibPaint) ibPaint(); };
+  var done = function (r, msg) { SITE.d = r; SITE.reading = false; if (msg) toast(msg); if (window.ibPaint) ibPaint(); };
+  if (t.hasAttribute('data-siteshow')) { SITE.show = t.getAttribute('data-siteshow'); if (window.ibPaint) ibPaint(); return; }
+  if (t.hasAttribute('data-siteread')) {
+    SITE.reading = true; if (window.ibPaint) ibPaint();
+    srv('erpSiteRead', [{ url: (el('siteUrl') || {}).value || '' }], function (r) { SITE.show = 'draft'; done(r, 'Website read — check the drafts below.'); }, fail);
+    return;
+  }
+  var act = function (payload, ok) {
+    srv('erpSitePageAct', [payload], function (r) {
+      done(r, payload.action === 'add' ? (r.added + ' added' + (r.kept ? '; ' + r.kept + ' product(s) already had a description, kept' : '') + '. The AI uses it from the next message.') : ok);
+      if (payload.action === 'add' && window.IB) { IB.kb = null; }
+    }, fail);
+  };
+  if (t.hasAttribute('data-siteall')) {
+    var ids = (SITE.d.pages || []).filter(function (x) { return x.status === 'draft' && (x.kind !== 'product' || x.sku); }).map(function (x) { return x.id; });
+    if (!ids.length) { toast('Nothing matched to add.', true); return; }
+    if (!window.confirm('Add ' + ids.length + ' page(s) for the AI? Products that already have a description keep it.')) return;
+    act({ ids: ids, action: 'add' });
+    return;
+  }
+  var id = t.getAttribute('data-id') || t.getAttribute('data-sitesku');
+  if (t.hasAttribute('data-sitesku')) {
+    var code = window.prompt('The product code (SKU) this page is about:', '');
+    if (!code) return;
+    act({ ids: [id], action: 'add', sku: code.trim() });
+    return;
+  }
+  var a = t.getAttribute('data-siteact'), row = (SITE.d.pages || []).filter(function (x) { return x.id === id; })[0] || {};
+  if (a === 'add' && row.kind === 'product') {
+    act({ ids: [id], action: 'add', overwrite: window.confirm('If "' + (row.product || row.sku) + '" already has a description for the AI, replace it with this one?\n\nOK = replace, Cancel = keep the old one') });
+    return;
+  }
+  act({ ids: [id], action: a }, a === 'skip' ? 'Skipped.' : 'Put back to check.');
+});
 </script>
 <!-- fd-37: the page is styled: show it -->
 <script>(function () { var x = document.getElementById('bootHide'); if (x) x.remove(); })();</script>
