@@ -2157,3 +2157,5 @@ Not done: nothing on the website changed (it was already booking correctly). Ord
 - Owner: the invoice is fully due. Counter-entries C261017170605-u / -ur put the 4,000 back on the customer's advance
   balance (nothing deleted); invoice paid 0, due 6,400, Pending; its 40 points set to 0; logged in invoice_fixes.
   Keyring Dhaka now: owes 6,400, advance 4,000 (it will be used by their next invoice unless Dipu's entry was wrong).
+- Undone the same day (owner: "the advance was real"): entries C261017170605-a2 / -a2r apply the 4,000 again;
+  INV-1976 paid 4,000, due 2,400, Partial, 40 points; Keyring Dhaka owes 2,400, advance 0. Logged in invoice_fixes.
