@@ -77,6 +77,57 @@ wooOrders[0].status = 'cancelled';
 await runJob(deps, 'websync');
 check('a cancellation in WooCommerce shows in Web orders', (await sql`select status from web_orders where business_id = ${B} and order_no = '501'`)[0].status === 'cancelled');
 
+// ---- owner 18 Oct 2026: the website's prices follow the ERP's
+const sellOf = async (sku, v) => sql`update products set sell_price = ${v} where business_id = ${B} and sku = ${sku}`;
+await sellOf(PLA, 1450); await sellOf(A1, 20000);
+wooProducts[0].regular_price = '1400'; wooProducts[0].sale_price = '1350';   // shown as 1,400 crossed out, pays 1,350
+const before = batches.length;
+r = await mgr('erpWebPrices', [{}]);
+check('prices: a manager cannot', !r.ok, r.ok);
+r = await owner('erpWebPrices', [{}]);
+const ch = r.result || {};
+check('prices: the preview lists website -> ERP, sends nothing', r.ok && batches.length === before &&
+  ch.changes.some((x) => x.sku === PLA && x.from === 1350 && x.to === 1450) && !ch.sync, r.error || ch);
+check('prices: a change of more than half waits (printer 52,000 -> 20,000)', ch.held.some((x) => x.sku === 'WOO-A1' && x.to === 20000) && !ch.changes.some((x) => x.sku === 'WOO-A1'), ch.held);
+check('prices: 1,450 is not below the crossed-out 1,400 - regular price set, sale ended', ch.changes.find((x) => x.sku === PLA).how === 'regular' && ch.changes.find((x) => x.sku === PLA).clearSale, ch.changes);
+check('prices: items not ours are left alone', !ch.changes.concat(ch.held).some((x) => x.sku === 'NOT-OURS' || x.sku === 'SPOOL-RED'), ch);
+r = await owner('erpWebPrices', [{ mode: 'apply' }]);
+let up = batches.slice(before).filter((b) => b[0] === 'simple').flatMap((b) => b[1].update);
+check('prices: sent - regular 1,450, sale ended, the big change not sent', r.ok && r.result.applied === 1 &&
+  up.some((x) => x.id === 11 && x.regular_price === '1450' && x.sale_price === '') && !up.some((x) => x.id === 12), [r.error, up]);
+const b2 = batches.length;
+r = await owner('erpWebPrices', [{ mode: 'apply', withHeld: true }]);
+up = batches.slice(b2).flatMap((b) => b[1].update);
+check('prices: the owner sends the big change by hand', r.ok && up.some((x) => x.id === 12 && x.regular_price === '20000'), up);
+// below the crossed-out price: only the sale price changes, the crossed-out 1,400 stays
+await sellOf(PLA, 1250);
+const b25 = batches.length;
+r = await owner('erpWebPrices', [{ mode: 'apply' }]);
+up = batches.slice(b25).flatMap((b) => b[1].update);
+check('prices: under the crossed-out price - sale price 1,250 set, crossed-out kept', up.some((x) => x.id === 11 && x.sale_price === '1250' && !('regular_price' in x)), up);
+// the same price the customer pays already: nothing
+await sellOf(PLA, 1350);
+r = await owner('erpWebPrices', [{}]);
+check('prices: what the customer pays already equals the ERP - nothing', !r.result.changes.some((x) => x.sku === PLA), r.result.changes);
+// ERP price 0: never sent
+await sellOf(PLA, 0);
+r = await owner('erpWebPrices', [{}]);
+check('prices: no ERP price -> left alone', !r.result.changes.some((x) => x.sku === PLA) && r.result.noPrice >= 1, r.result);
+// the switch: every stock sync sends prices too
+await sellOf(PLA, 1500);
+r = await owner('erpWebPriceSync', [{ on: true }]);
+check('prices: switched on', r.ok && (await cfg('website_price_sync')) === '1');
+const b3 = batches.length;
+await runJob(deps, 'websync');
+up = batches.slice(b3).flatMap((b) => b[1].update);
+check('prices: the timer sends the new ERP price', up.some((x) => x.id === 11 && x.regular_price === '1500'), up);   // 1,500 > crossed-out 1,400
+await owner('erpWebPriceSync', [{ on: false }]);
+const b4 = batches.length;
+await sellOf(PLA, 1600);
+await runJob(deps, 'websync');
+check('prices: switched off - the timer leaves prices alone', !batches.slice(b4).flatMap((b) => b[1].update).some((x) => 'regular_price' in x));
+delete wooProducts[0].regular_price; delete wooProducts[0].sale_price;
+
 // bad keys are said plainly
 web.on(/shop\.example\.com\/wp-json\/wc\/v3\/products\?per_page=1$/, () => ({ status: 401, body: { code: 'woocommerce_rest_cannot_view' } }));
 r = await owner('erpWebsiteTest', []);

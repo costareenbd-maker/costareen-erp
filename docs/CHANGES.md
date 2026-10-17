@@ -2159,3 +2159,20 @@ Not done: nothing on the website changed (it was already booking correctly). Ord
   Keyring Dhaka now: owes 6,400, advance 4,000 (it will be used by their next invoice unless Dipu's entry was wrong).
 - Undone the same day (owner: "the advance was real"): entries C261017170605-a2 / -a2r apply the 4,000 again;
   INV-1976 paid 4,000, due 2,400, Partial, 40 points; Keyring Dhaka owes 2,400, advance 0. Logged in invoice_fixes.
+
+## 18 Oct 2026 - The website's prices follow the ERP (owner)
+
+- Web orders > "Website prices" (owner): "Compare with the ERP" lists every matched website product whose price the
+  customer PAYS differs from the ERP selling price; "Change these N website price(s)" sends them; a switch "Keep the
+  website's prices the same as the ERP" sends them on every stock sync (websync timer, storePush).
+- WooCommerce: most products show a crossed-out regular price with a sale price (1,800 -> 1,650). Then the SALE price
+  is set and the crossed-out kept; if the crossed-out would not be higher, the regular price is set and the sale ended.
+  No sale: regular price. Shopify: the variant price.
+- Never sent: an ERP price of 0, website items not matched to an ERP product. A change of more than half waits for
+  the owner ("Send these too").
+- Live preview 18 Oct (nothing sent): 137 matched, 111 same, 26 differ - all website HIGHER than the ERP (SUNLU PLA+
+  1,650 vs 1,550, PETG 1,599 vs 1,500, Bambu PLA Basic 1,999 vs 1,700 ...); 93 website items not in the ERP.
+- Tests: w2_test (+13). r1_test "came back 5 days" fails late in the evening (Dhaka day count vs UTC) - not from this
+  change, passed earlier the same day.
+
+Not done: nothing sent to the live website yet - the owner presses the button or switches it on.

@@ -36805,6 +36805,74 @@ document.addEventListener('click', function (e) {
   act({ ids: [id], action: a }, a === 'skip' ? 'Skipped.' : 'Put back to check.');
 });
 </script>
+<!-- fd-54 (owner 18 Oct 2026): the website's prices follow the ERP's. Web orders > Website prices: see what would
+     change (website price -> ERP price), send it, and switch "keep them the same" on for every stock sync. Owner only. -->
+<script>
+var WP = { d: null, busy: false, open: false };
+function wpLoad(mode, withHeld) {
+  if (WP.busy) return; WP.busy = mode || 'dry'; if (VIEW === 'weborders') repaint();
+  srv('erpWebPrices', [{ mode: mode || 'dry', withHeld: !!withHeld }], function (r) {
+    WP.busy = false; WP.d = r;
+    if (mode === 'apply') toast(fmt(r.applied) + ' website price(s) changed.' + (r.held.length ? ' ' + r.held.length + ' big change(s) still wait for you.' : ''));
+    if (VIEW === 'weborders') repaint();
+  }, function (e) { WP.busy = false; WP.d = { error: (e && e.message) || String(e) }; if (VIEW === 'weborders') repaint(); });
+}
+function wpRows(list, note) {
+  return '<div class="scroll" style="max-height:340px"><table><thead><tr><th>Website product</th><th class="num">Customer pays now</th><th class="num">ERP price</th><th></th></tr></thead><tbody>' +
+    list.map(function (x) {
+      return '<tr><td>' + esc(x.name) + '<br><span class="sku">' + esc(x.sku || '') + (x.ours && x.ours !== x.sku ? ' \u2192 ' + esc(x.ours) : '') + '</span></td>' +
+        '<td class="num">' + fmt(x.from) + '</td><td class="num"><strong>' + fmt(x.to) + '</strong></td>' +
+        '<td style="font-size:12px">' + (x.to > x.from ? '<span class="pill out">\u2191 ' + fmt(x.to - x.from) + '</span>' : '<span class="pill ok">\u2193 ' + fmt(x.from - x.to) + '</span>') +
+        (x.how === 'sale' ? '<br><span class="sku">crossed-out ' + fmt(x.regular) + ' stays</span>' : x.clearSale ? '<br><span class="sku">crossed-out price removed (not higher)</span>' : '') + (note || '') + '</td></tr>';
+    }).join('') + '</tbody></table></div>';
+}
+function wpHtml() {
+  if (!ME || ME.role !== 'owner') return '';
+  var h = '<section><div class="card"><h2 class="wo_h">Website prices<span class="wo_acts"><button class="btn" type="button" id="wp_open">' + (WP.open ? 'Hide' : 'Compare with the ERP') + '</button></span></h2>' +
+    '<div class="sub">What customers pay on the website follows the selling prices you set in the ERP. Where the website shows a crossed-out price, it stays and the sale price changes. A change of more than half waits for you, so a typo never reaches customers.</div>';
+  if (!WP.open) return h + '</div></section>';
+  if (!WP.d) { if (!WP.busy) wpLoad('dry'); return h + '<div class="loading">Reading the website\u2019s prices\u2026</div></div></section>'; }
+  var d = WP.d;
+  if (d.error) return h + '<div class="note err"><div class="ico">\u2715</div><div>' + esc(d.error) + '</div></div></div></section>';
+  h += '<div class="row" style="gap:8px;flex-wrap:wrap;align-items:center;margin:10px 0">' +
+    '<label class="chk"><input type="checkbox" id="wp_sync"' + (d.sync ? ' checked' : '') + '> Keep the website\u2019s prices the same as the ERP (every few minutes, with the stock)</label></div>' +
+    '<div class="sub">' + fmt(d.matched) + ' website product(s) matched: ' + fmt(d.same) + ' already the same, ' + fmt(d.changes.length) + ' to change' +
+    (d.held.length ? ', ' + fmt(d.held.length) + ' big change(s) waiting' : '') + (d.noPrice ? ', ' + fmt(d.noPrice) + ' with no ERP price (left alone)' : '') +
+    (d.missing ? ', ' + fmt(d.missing) + ' not matched to an ERP product (left alone)' : '') + '.' +
+    (d.last && d.last.at ? ' Last sent ' + esc(new Date(d.last.at).toLocaleString()) + '.' : '') + '</div>';
+  if (d.changes.length) {
+    h += '<h3 style="margin:12px 0 6px;font-size:14px">To change</h3>' + wpRows(d.changes) +
+      '<div class="row" style="margin-top:8px"><button class="btn primary" type="button" id="wp_send"' + (WP.busy ? ' disabled' : '') + '>' + (WP.busy === 'apply' ? 'Sending\u2026' : 'Change these ' + fmt(d.changes.length) + ' website price(s)') + '</button></div>';
+  }
+  if (d.held.length) {
+    h += '<h3 style="margin:14px 0 6px;font-size:14px">Big changes \u2014 check first</h3><div class="sub">More than half up or down. If the ERP price is right, send them.</div>' + wpRows(d.held) +
+      '<div class="row" style="margin-top:8px"><button class="btn" type="button" id="wp_held"' + (WP.busy ? ' disabled' : '') + '>Send these too</button></div>';
+  }
+  if (!d.changes.length && !d.held.length) h += '<div class="note"><div class="ico">\u2713</div><div>The website\u2019s prices are the same as the ERP\u2019s.</div></div>';
+  return h + '</div></section>';
+}
+var viewWebOrdersWP = viewWebOrders;
+viewWebOrders = function () { var h = viewWebOrdersWP(); return WEB ? h + wpHtml() : h; };
+document.addEventListener('click', async function (e) {
+  var t = e.target.closest && e.target.closest('#wp_open,#wp_send,#wp_held');
+  if (!t) return;
+  if (t.id === 'wp_open') { WP.open = !WP.open; if (WP.open) WP.d = null; repaint(); return; }
+  if (t.id === 'wp_send') {
+    if (!(await uiConfirm('Change ' + WP.d.changes.length + ' price(s) on the website now?\n\nCustomers see the new prices straight away.'))) return;
+    wpLoad('apply'); return;
+  }
+  if (t.id === 'wp_held') {
+    if (!(await uiConfirm('Send ' + (WP.d.changes.length + WP.d.held.length) + ' price(s), the big changes included?'))) return;
+    wpLoad('apply', true);
+  }
+});
+document.addEventListener('change', function (e) {
+  if (!e.target || e.target.id !== 'wp_sync') return;
+  var on = e.target.checked;
+  srv('erpWebPriceSync', [{ on: on }], function () { if (WP.d) WP.d.sync = on; toast(on ? 'The website\u2019s prices now follow the ERP.' : 'The website\u2019s prices are no longer changed by the ERP.'); },
+      function (er) { e.target.checked = !on; toast(esc((er && er.message) || er), true); });
+});
+</script>
 <!-- fd-37: the page is styled: show it -->
 <script>(function () { var x = document.getElementById('bootHide'); if (x) x.remove(); })();</script>
 </body>

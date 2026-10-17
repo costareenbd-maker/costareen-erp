@@ -13,7 +13,8 @@
 // storeTest(ctx)        one harmless read
 // Items are matched with lib/match.js (link > same SKU > barcode); unmatched items are never touched.
 
-import { getSecret, getConfig, httpFetch } from '../lib/ext.js';
+import { getSecret, getConfig, setConfig, httpFetch } from '../lib/ext.js';
+import { lock } from './money.js';
 import { matcher, extKey } from '../lib/match.js';
 import { addWebLines, stockItems } from './weborders.js';
 
@@ -124,6 +125,92 @@ export async function storePull(ctx) {
   return { ok: true, fetched: lines.length, orders, added };
 }
 
+// ------------------------------------------------------------- prices out
+//
+// Owner 18 Oct 2026: prices are set by hand in the ERP and move up and down there; the website follows.
+//   storePrices(ctx, mode)   'dry' = the list of changes, 'apply' = send them. What the customer PAYS on the website
+//                            becomes the ERP's selling price. The website shows most products as a crossed-out
+//                            regular price with a sale price (1,800 -> 1,650): there the sale price is set and the
+//                            crossed-out price kept; when the crossed-out price would not be higher, the regular price
+//                            is set and the sale ended. Without a sale the regular price is set. An ERP price of 0 is
+//                            never sent; a change of more than half (up or down) is held until the owner sends it by
+//                            hand (payload.withHeld) - a typo must not reach customers.
+//   erpWebPrices({mode, withHeld})   owner: the same, from the page
+//   erpWebPriceSync({on})            owner: keep the website's prices the same as the ERP's on every stock sync
+
+const PRICE_JUMP = 0.5;
+export async function storePrices(ctx, mode, opts) {
+  opts = opts || {};
+  const c = await conn(ctx);
+  const apply = mode === 'apply';
+  const items = await shopItems(ctx, c);
+  const m = await matcher(ctx);
+  const erp = {};
+  for (const r of await ctx.tx`select sku, name, sell_price from products where business_id = ${ctx.biz}`) erp[str(r.sku).toLowerCase()] = { sku: str(r.sku), name: str(r.name), price: num(r.sell_price) };
+  const change = [], held = [];
+  let matched = 0, missing = 0, noPrice = 0, same = 0;
+  for (const it of items) {
+    const hit = m.find(it.sku, it.name, it.barcode);
+    if (!hit) { missing++; continue; }
+    matched++;
+    const e = erp[str(hit.product.sku).toLowerCase()];
+    const want = e ? Math.round(e.price * 100) / 100 : 0;
+    if (!(want > 0)) { noPrice++; continue; }
+    const was = it.price > 0 ? it.price : it.regular;                 // what the customer pays now
+    if (Math.abs(was - want) < 0.5) { same++; continue; }
+    const onSale = c.kind === 'woo' && it.sale > 0;
+    const how = onSale && it.regular > want + 0.5 ? 'sale' : 'regular';
+    const row = { ref: it.ref, parent: it.parent, variant: it.variant, sku: it.sku, name: it.name, ours: e.sku, from: was, to: want,
+                  regular: it.regular, how, clearSale: onSale && how === 'regular' };
+    if (was > 0 && Math.abs(want - was) / was > PRICE_JUMP && !opts.withHeld) { held.push(row); continue; }
+    change.push(row);
+  }
+  let done = 0, more = 0;
+  if (apply && change.length) {
+    if (c.kind === 'woo') {
+      const groups = {};
+      for (const x of change) (groups[x.parent] = groups[x.parent] || []).push(x.how === 'sale' ? { id: x.ref, sale_price: String(x.to) }
+                                                                                       : { id: x.ref, regular_price: String(x.to), ...(x.clearSale ? { sale_price: '' } : {}) });
+      for (const [parent, list] of Object.entries(groups)) {
+        for (let i = 0; i < list.length; i += 100) {
+          await call(ctx, c, 'POST', parent === '0' ? 'products/batch' : 'products/' + parent + '/variations/batch', { update: list.slice(i, i + 100) });
+          done += list.slice(i, i + 100).length;
+        }
+      }
+    } else {
+      for (const x of change.slice(0, SHOPIFY_SETS_PER_RUN)) {
+        await call(ctx, c, 'PUT', 'variants/' + x.variant + '.json', { variant: { id: x.variant, price: String(x.to) } });
+        done++;
+      }
+      more = Math.max(0, change.length - SHOPIFY_SETS_PER_RUN);
+    }
+    await setConfig(ctx, 'website_prices_last', JSON.stringify({ at: new Date().toISOString(), sent: done }));
+  }
+  const view = (x) => ({ sku: x.sku, name: x.name, ours: x.ours, from: x.from, to: x.to, regular: x.regular, how: x.how, clearSale: x.clearSale });
+  return { ok: true, matched, same, missing, noPrice, applied: apply ? done : 0, more,
+           changes: change.map(view), held: held.map(view) };
+}
+
+export async function erpWebPrices(ctx, payload) {
+  payload = payload || {};
+  if (ctx.s.role !== 'owner') throw new Error('Only the owner changes the website\u2019s prices.');
+  const kind = await storeKind(ctx);
+  if (kind !== 'woo' && kind !== 'shopify') throw new Error('Prices go out through a WooCommerce or Shopify connection (Settings \u2192 Connections \u2192 Website).');
+  const apply = payload.mode === 'apply';
+  if (apply) await lock(ctx, 'website');
+  const r = await storePrices(ctx, apply ? 'apply' : 'dry', { withHeld: !!payload.withHeld });
+  let last = null;
+  try { last = JSON.parse(str(await getConfig(ctx, 'website_prices_last', '')) || 'null'); } catch (_) { last = null; }
+  return { ...r, sync: str(await getConfig(ctx, 'website_price_sync', '')) === '1', last };
+}
+
+export async function erpWebPriceSync(ctx, payload) {
+  if (ctx.s.role !== 'owner') throw new Error('Only the owner changes the website\u2019s prices.');
+  const on = !!(payload && payload.on);
+  await setConfig(ctx, 'website_price_sync', on ? '1' : '0');
+  return { ok: true, sync: on };
+}
+
 // ------------------------------------------------------------- stock out
 
 /** Every item the shop sells: {ref, parent, sku, name, qty, tracked, price, barcode}. */
@@ -139,24 +226,27 @@ async function shopItems(ctx, c) {
             const v = await call(ctx, c, 'GET', 'products/' + x.id + '/variations?per_page=100&page=' + q);
             const vs = Array.isArray(v.json) ? v.json : [];
             for (const y of vs) out.push({ ref: y.id, parent: x.id, sku: str(y.sku), name: str(x.name) + ' - ' + (y.attributes || []).map((a) => str(a.option)).join(' '),
-                                           qty: y.stock_quantity == null ? null : num(y.stock_quantity), tracked: !!y.manage_stock, price: num(y.price), barcode: '' });
+                                           qty: y.stock_quantity == null ? null : num(y.stock_quantity), tracked: !!y.manage_stock, price: num(y.price), barcode: '',
+                                           regular: num(y.regular_price), sale: num(y.sale_price) });
             if (vs.length < 100) break;
           }
         } else if (x.type === 'simple' || !x.type) {
-          out.push({ ref: x.id, parent: 0, sku: str(x.sku), name: str(x.name), qty: x.stock_quantity == null ? null : num(x.stock_quantity), tracked: !!x.manage_stock, price: num(x.price), barcode: '' });
+          out.push({ ref: x.id, parent: 0, sku: str(x.sku), name: str(x.name), qty: x.stock_quantity == null ? null : num(x.stock_quantity), tracked: !!x.manage_stock, price: num(x.price), barcode: '',
+                     regular: num(x.regular_price), sale: num(x.sale_price) });
         }
       }
       if (got.length < 100) break;
     }
   } else {
-    let next = 'products.json?limit=250&fields=id,title,variants';
+    let next = 'products.json?limit=250&fields=id,title,variants';   // variants carry price and id
     for (let p = 0; next && p < 20; p++) {
       const r = await call(ctx, c, 'GET', next);
       for (const x of (r.json && r.json.products) || []) {
         for (const v of x.variants || []) {
           const vt = str(v.title);
           out.push({ ref: v.inventory_item_id, parent: x.id, sku: str(v.sku), name: str(x.title) + (vt && vt !== 'Default Title' ? ' - ' + vt : ''),
-                     qty: num(v.inventory_quantity), tracked: v.inventory_management === 'shopify', price: num(v.price), barcode: str(v.barcode) });
+                     qty: num(v.inventory_quantity), tracked: v.inventory_management === 'shopify', price: num(v.price), barcode: str(v.barcode),
+                     regular: num(v.price), sale: 0, variant: v.id });
         }
       }
       next = nextLink(r);
@@ -168,6 +258,11 @@ async function shopItems(ctx, c) {
 export async function storePush(ctx, mode) {
   const c = await conn(ctx);
   const apply = mode === 'apply';
+  // owner 18 Oct 2026: the website's prices follow the ERP's too, when switched on (held big jumps wait for the owner)
+  let prices = null;
+  if (apply && str(await getConfig(ctx, 'website_price_sync', '')) === '1') {
+    try { prices = await ctx.tx.savepoint(() => storePrices(ctx, 'apply')); } catch (e) { prices = { error: String(e && e.message || e) }; }
+  }
   const items = await shopItems(ctx, c);
   // the shop's list is kept, so its items can be matched before the first order
   for (const it of items) {
@@ -220,6 +315,8 @@ export async function storePush(ctx, mode) {
     }
   }
   return { ok: true, sent: matched, changed_count: apply ? done : change.length, unchanged: matched - change.length - untracked,
-           missing_count: missing, untracked, more,
+           missing_count: missing, untracked, more, prices: prices ? { applied: prices.applied, held: (prices.held || []).length, error: prices.error } : undefined,
            changes: change.slice(0, 20).map((x) => ({ sku: x.sku, name: x.name, from: x.qty, to: x.want })) };
 }
+
+export const HANDLERS = { erpWebPrices, erpWebPriceSync };
