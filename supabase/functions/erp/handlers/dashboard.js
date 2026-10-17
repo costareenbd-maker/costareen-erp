@@ -815,6 +815,9 @@ async function pnlForRaw(ctx, months) {
     return c;
   }, {});
 
+  // owner 18 Oct 2026: this company's share of the joint stock's profit (the pool's own rule) is part of its profit
+  const shareM = await soft(ctx, async () => (await import('./joint.js')).jointShareByMonth(ctx, months), {});
+
   // 111: the part of a late shipment bill for units already sold is cost of goods of the month it was entered in
   const lateM = await soft(ctx, async () => {
     const c = {};
@@ -839,7 +842,8 @@ async function pnlForRaw(ctx, months) {
     const cx = chkM[m] || { extra: 0, short: 0 };
     const svc = await serviceFor(ctx, m);                       // plan D2: repairs made, parts used
     const forfeited = Math.round(forfM[m] || 0);
-    const profit = gross + x.delivery + cx.extra - cx.short - cour - exp.total + svc.income - svc.parts + forfeited;
+    const jointShare = Math.round(shareM[m] || 0);
+    const profit = gross + x.delivery + cx.extra - cx.short - cour - exp.total + svc.income - svc.parts + forfeited + jointShare;
     out.push({ month: m, sales: Math.round(x.sales), returns: Math.round(x.returns), netSales: Math.round(net),
                cost: Math.round(x.cost), gross: Math.round(gross),
                grossMargin: net > 0 ? Math.round(gross / net * 1000) / 10 : 0,
@@ -848,7 +852,7 @@ async function pnlForRaw(ctx, months) {
                delivery: Math.round(x.delivery), courier: cour,
                courierExtra: Math.round(cx.extra), courierShort: Math.round(cx.short),
                uncosted: Math.round(x.uncosted), current: m === now,
-               serviceIncome: svc.income, serviceParts: svc.parts, serviceJobs: svc.jobs, joint: Math.round(jointM[m] || 0), forfeited });
+               serviceIncome: svc.income, serviceParts: svc.parts, serviceJobs: svc.jobs, joint: Math.round(jointM[m] || 0), jointShare, forfeited });
   }
   return out;
 }

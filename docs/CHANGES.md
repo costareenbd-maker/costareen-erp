@@ -2200,3 +2200,33 @@ Not done: nothing sent to the live website yet - the owner presses the button or
 - Tests: invoicedesign_test (+6); ivdlayout/sales tests follow the new seal markup.
 
 Not done: PDFs already saved keep the old layout until drawn again (a corrected copy or a new invoice).
+
+## 18 Oct 2026 - Joint stock between the two shops: staff, ask & send, transport cost, dashboard, profit share (tag joint-move-1)
+
+Owner: Polymaker filament and Bambu Lab printers are joint with PrototypeBD; goods sit in both shops; when the partner
+needs more he asks and Costareen sends (no money in; moving is sometimes paid, sometimes free when collected); the
+partner must not see Costareen's own costs; the dashboard shows the movement; the joint profit goes to the main business.
+Decisions (asked 18 Oct): transport = joint expense; ALL staff of both companies may receive, ask and send;
+printers sold on paper = real invoices on their original dates.
+
+- Every staff member opens Joint stock > Stock (menu no longer manager-only). Staff never get the money part or the
+  joint cost (unchanged). Products, prices, counts, money book, month end stay owners'.
+- Receive a shipment: all staff; staff record only their own company as the payer (owners either). The same shipment
+  twice (same product, count, cost, payer, day) is refused with who entered it and when, unless "receive again".
+- Ask for stock (127 pool_requests): product, how many, from which partner (default: the one holding most), note.
+  The holder sees it: Send (or Can't send, with a reason); the asker: Got it, or Cancel. Every step names the person.
+- Send stock (for a request or on its own): from your own shelf (staff) to the partner's; "They collected it (free)"
+  or "Delivered" with the transport cost and who paid it -> a pool_ledger EXPENSE "Transport" credited to the payer
+  (shared by the profit rule at month end). Refused above what the shelf holds. Last 50 moves listed with how.
+- Dashboard (owner) Joint stock card: this month received, sent between shops, sold by each company, units on each
+  shelf now, requests waiting / on the way.
+- Profit: each month's net profit now includes this company's share of the joint profit (the pool's own report:
+  month profit x this company's ratio at the start of the month) - field jointShare in the P&L (jointShareByMonth).
+- Paper sales of printers: no new code - add the products, receive the shipments with their real dates, then enter
+  each sale on New invoice with the joint printer and the sale's date (the pool copy takes the same date). Closed
+  months refuse, as for any sale.
+- Tests: joint6_test (26). joint1/4/5 follow the new rules (staff see the page; staff move only their own shelf).
+
+Not done: the Profitability screen shows jointShare only inside Net profit (no line of its own yet); the balance
+sheet does not yet list "our part of the joint stock", so after it is opened the joint profit share will show as a
+difference until that line is added.

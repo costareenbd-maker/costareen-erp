@@ -19909,7 +19909,7 @@ var applyRoleJT = applyRole;
 applyRole = function () {
   applyRoleJT.apply(this, arguments);
   var b = document.querySelector('#nav button[data-view="joint"]');
-  if (b) b.style.display = jtOn() && jtRank() >= 2 ? '' : 'none';
+  if (b) b.style.display = jtOn() && jtRank() >= 1 ? '' : 'none';   // owner 18 Oct 2026: all staff of both companies
 };
 function jtLoad(keep) {
   if (!jtOn()) return;
@@ -19936,7 +19936,16 @@ function jtSave(fn, payload, msg, after) {
     if (msg) toast(msg, false, 7000);
     if (after) after(r);
     if (VIEW === 'joint') repaint();
-  }, function (e) { JT.busy = false; toast(p4Err(e), true, 14000); if (VIEW === 'joint') repaint(); });
+  }, function (e) {
+    JT.busy = false;
+    var m = String((e && e.message) || e);
+    if (fn === 'erpJointReceive' && /^ALREADY: /.test(m)) {   // both companies enter shipments: the same one may already be in
+      uiConfirm(m.replace(/^ALREADY: /, '') + '\n\nOK = receive it again (a second shipment). Cancel = leave it.').then(function (yes) {
+        if (yes && JT.form) { JT.form.again = true; payload.again = true; jtSave(fn, payload, msg, after); } else if (VIEW === 'joint') repaint(); });
+      return;
+    }
+    toast(p4Err(e), true, 14000); if (VIEW === 'joint') repaint();
+  });
 }
 var goJT = go;
 go = function (view) {
@@ -20020,7 +20029,7 @@ function jtSetupHtml(first) {
       '<button class="btn" type="button" data-jt="join" style="margin-top:10px"' + dis + '>Join</button></div>' +
     '</div></section>';
 }
-function jtMe(d, pool) { var m = (pool.partners || []).filter(function (x) { return x.name === d.company; })[0]; return (d.book && d.book.me) || (m && m.id) || ''; }
+function jtMe(d, pool) { var m = (pool.partners || []).filter(function (x) { return x.name === d.company; })[0]; return d.me || (d.book && d.book.me) || (m && m.id) || ''; }
 
 function jtOverviewHtml(d, pool) {
   var b = d.book, r = (b && b.report) || {}, tm = r.this_month || {}, td = r.to_date || {}, cur = d.currency, ps = r.partners || [], me = jtMe(d, pool);
@@ -20046,18 +20055,17 @@ function jtOverviewHtml(d, pool) {
 
 function jtStockHtml(d, pool) {
   var ed = d.money, cur = d.currency, f = JT.form, h = '';
-  if (ed) {
-    h += '<section><div class="row" style="gap:8px;flex-wrap:wrap">' +
-      '<button class="btn primary" type="button" data-jt="f-receive">+ Receive stock</button>' +
-      '<button class="btn" type="button" data-jt="f-new">+ New joint product</button>' +
-      '<button class="btn" type="button" data-jt="f-adjust">Correct a count</button>' +
-      '<button class="btn" type="button" data-jt="f-move">Move between shelves</button></div>';
-    if (f && f.kind === 'move') h += jtMoveForm(d, pool, f);
-    if (f && f.kind === 'product') h += jtProductForm(d, pool, f);
-    if (f && f.kind === 'receive') h += jtReceiveForm(d, pool, f);
-    if (f && f.kind === 'adjust') h += jtAdjustForm(d, pool, f);
-    h += '</section>';
-  }
+  h += '<section><div class="row" style="gap:8px;flex-wrap:wrap">' +
+    '<button class="btn primary" type="button" data-jt="f-receive">+ Receive a shipment</button>' +
+    '<button class="btn" type="button" data-jt="f-ask">Ask for stock</button>' +
+    '<button class="btn" type="button" data-jt="f-move">Send stock</button>' +
+    (ed ? '<button class="btn" type="button" data-jt="f-new">+ New joint product</button><button class="btn" type="button" data-jt="f-adjust">Correct a count</button>' : '') + '</div>';
+  if (f && f.kind === 'move') h += jtMoveForm(d, pool, f);
+  if (f && f.kind === 'ask') h += jtAskForm(d, pool, f);
+  if (f && f.kind === 'product' && ed) h += jtProductForm(d, pool, f);
+  if (f && f.kind === 'receive') h += jtReceiveForm(d, pool, f);
+  if (f && f.kind === 'adjust' && ed) h += jtAdjustForm(d, pool, f);
+  h += '</section>' + jtRequestsHtml(d, pool);
   var st = d.stock || [];
   h += '<section><div class="card"><h2>' + esc(pool.name) + ' — what is on the shelf</h2><div class="sub">' +
     (ed ? 'Both owners see this list, with cost. Staff see the name, the price, the floor price and the count — never the cost. Any price can be typed on the invoice, down to the floor.' : 'Sell these from New invoice like any product: they carry a <span class="jt-tag">Joint</span> tag there. Type a lower price on the invoice if the deal needs it, never below the floor.') + '</div>';
@@ -20102,7 +20110,7 @@ function jtReceiveForm(d, pool, f) {
     '<div class="jt-form"><div class="wide"><label class="f" for="jr_sku">Product</label>' + jtSkuSel(d, 'jr_sku', f.sku) + '</div>' +
     '<div><label class="f" for="jr_qty">How many</label><input class="i" id="jr_qty" inputmode="numeric" value="' + esc(f.qty) + '"></div>' +
     '<div><label class="f" for="jr_cost">Cost of one</label><input class="i" id="jr_cost" inputmode="decimal" value="' + esc(f.unitCost) + '"></div>' +
-    '<div><label class="f" for="jr_by">Who paid</label><select class="i" id="jr_by">' + pool.partners.map(function (p) { return '<option value="' + esc(p.id) + '"' + (p.id === (f.paidBy || jtMe(d, pool)) ? ' selected' : '') + '>' + esc(p.name) + '</option>'; }).join('') + '</select></div>' +
+    '<div><label class="f" for="jr_by">Who paid</label><select class="i" id="jr_by">' + pool.partners.filter(function (p) { return d.money || p.id === jtMe(d, pool); }).map(function (p) { return '<option value="' + esc(p.id) + '"' + (p.id === (f.paidBy || jtMe(d, pool)) ? ' selected' : '') + '>' + esc(p.name) + '</option>'; }).join('') + '</select></div>' +
     '<div><label class="f" for="jr_at">Received at <span class="sku">(whose shelf)</span></label><select class="i" id="jr_at">' + pool.partners.map(function (p) { return '<option value="' + esc(p.id) + '"' + (p.id === (f.receivedAt || f.paidBy || jtMe(d, pool)) ? ' selected' : '') + '>' + esc(p.name) + '</option>'; }).join('') + '</select></div>' +
     '<div><label class="f" for="jr_date">Date <span class="sku">(empty = today)</span></label><input class="i" id="jr_date" type="date" max="' + esc(d.today) + '" value="' + esc(f.date) + '"></div>' +
     '<div><label class="f" for="jr_sup">Bought from <span class="sku">(optional)</span></label><input class="i" id="jr_sup" maxlength="80" value="' + esc(f.supplier) + '"></div>' +
@@ -20115,13 +20123,20 @@ function jtMoveForm(d, pool, f) {
   var sel = function (id, val, skip) { return '<select class="i" id="' + id + '">' + pool.partners.filter(function (p) { return p.id !== skip; }).map(function (p) { return '<option value="' + esc(p.id) + '"' + (p.id === val ? ' selected' : '') + '>' + esc(p.name) + '</option>'; }).join('') + '</select>'; };
   var from = f.from || pool.partners.filter(function (p) { return p.id !== jtMe(d, pool); }).map(function (p) { return p.id; })[0] || '';
   var to = f.to || jtMe(d, pool);
-  return '<div class="card" style="margin-top:12px"><h2>Move between shelves</h2><div class="sub">Goods handed from one partner\u2019s shop to the other\u2019s. No sale, no money \u2014 only where they are. Both of you see it.</div>' +
-    '<div class="jt-form"><div class="wide"><label class="f" for="jm_sku">Product</label>' + jtSkuSel(d, 'jm_sku', f.sku) + '</div>' +
-    '<div><label class="f" for="jm_from">From</label>' + sel('jm_from', from, '') + '</div>' +
-    '<div><label class="f" for="jm_to">To</label>' + sel('jm_to', to, '') + '</div>' +
-    '<div><label class="f" for="jm_qty">How many</label><input class="i" id="jm_qty" inputmode="numeric" value="' + esc(f.qty) + '"></div>' +
+  if (!d.money) { from = jtMe(d, pool); if (!f.to || f.to === from) to = pool.partners.filter(function (p) { return p.id !== from; }).map(function (p) { return p.id; })[0] || ''; }
+  var req = f.request ? (d.requests || []).filter(function (r) { return r.id === f.request; })[0] : null;
+  var mine = pool.partners.filter(function (p) { return d.money || p.id === jtMe(d, pool); });
+  return '<div class="card" style="margin-top:12px"><h2>' + (req ? 'Send what ' + esc(req.askedBy) + ' asked for' : 'Send stock to your partner') + '</h2><div class="sub">The goods move from one shelf to the other at once. No sale. ' +
+    'Collected by them = free. Delivered = what the transport cost is a joint expense (shared by the profit rule; whoever paid gets it back at month end).</div>' +
+    '<div class="jt-form"><div class="wide"><label class="f" for="jm_sku">Product</label>' + (req ? '<input class="i" disabled value="' + esc(req.name) + '">' : jtSkuSel(d, 'jm_sku', f.sku)) + '</div>' +
+    '<div><label class="f" for="jm_from">From</label>' + (d.money ? sel('jm_from', from, '') : '<input class="i" disabled value="' + esc(jtName(pool, from)) + '">') + '</div>' +
+    '<div><label class="f" for="jm_to">To</label>' + (req ? '<input class="i" disabled value="' + esc(req.askedBy) + '">' : sel('jm_to', to, d.money ? '' : from)) + '</div>' +
+    '<div><label class="f" for="jm_qty">How many</label><input class="i" id="jm_qty" inputmode="numeric" value="' + esc(f.qty || (req ? req.qty : '')) + '"></div>' +
+    '<div><label class="f" for="jm_how">How</label><select class="i" id="jm_how"><option value="collected"' + (f.how !== 'delivered' ? ' selected' : '') + '>They collected it (free)</option><option value="delivered"' + (f.how === 'delivered' ? ' selected' : '') + '>Delivered (transport cost)</option></select></div>' +
+    (f.how === 'delivered' ? '<div><label class="f" for="jm_cost">Transport cost</label><input class="i" id="jm_cost" inputmode="decimal" value="' + esc(f.cost) + '"></div>' +
+      '<div><label class="f" for="jm_paid">Who paid the transport</label><select class="i" id="jm_paid">' + mine.map(function (p) { return '<option value="' + esc(p.id) + '"' + (p.id === (f.paidBy || jtMe(d, pool)) ? ' selected' : '') + '>' + esc(p.name) + '</option>'; }).join('') + '</select></div>' : '') +
     '<div class="wide"><label class="f" for="jm_note">Note <span class="sku">(optional: who carried it, when)</span></label><input class="i" id="jm_note" maxlength="200" value="' + esc(f.note) + '"></div>' +
-    '</div><div class="row" style="margin-top:12px;gap:8px"><button class="btn primary" type="button" data-jt="save-move"' + dis + '>' + (JT.busy ? 'Saving\u2026' : 'Move it') + '</button><button class="btn" type="button" data-jt="f-close">Cancel</button></div></div>';
+    '</div><div class="row" style="margin-top:12px;gap:8px"><button class="btn primary" type="button" data-jt="save-move"' + dis + '>' + (JT.busy ? 'Saving\u2026' : 'Send it') + '</button><button class="btn" type="button" data-jt="f-close">Cancel</button></div></div>';
 }
 function jtAdjustForm(d, pool, f) {
   var dis = JT.busy ? ' disabled' : '';
@@ -20213,15 +20228,17 @@ function jtKeepForm() {
   if (f.kind === 'product') { ['name', 'sku', 'category:cat', 'brand', 'color', 'unit', 'retail', 'floor', 'cost', 'status'].forEach(function (k) { var a = k.split(':'), n = el('jf_' + (a[1] || a[0])); if (n) f[a[0]] = n.value; }); }
   if (f.kind === 'receive') { f.sku = jtVal('jr_sku') || f.sku; f.qty = jtVal('jr_qty'); f.unitCost = jtVal('jr_cost'); f.paidBy = jtVal('jr_by'); f.receivedAt = jtVal('jr_at'); f.date = jtVal('jr_date'); f.supplier = jtVal('jr_sup'); f.note = jtVal('jr_note'); }
   if (f.kind === 'adjust') { f.sku = jtVal('ja_sku') || f.sku; f.direction = jtVal('ja_dir'); f.qty = jtVal('ja_qty'); f.reason = jtVal('ja_why'); f.at = jtVal('ja_at'); }
-  if (f.kind === 'move') { f.sku = jtVal('jm_sku') || f.sku; f.from = jtVal('jm_from'); f.to = jtVal('jm_to'); f.qty = jtVal('jm_qty'); f.note = jtVal('jm_note'); }
+  if (f.kind === 'move') { f.sku = jtVal('jm_sku') || f.sku; f.from = jtVal('jm_from') || f.from; f.to = jtVal('jm_to') || f.to; f.qty = jtVal('jm_qty'); f.note = jtVal('jm_note'); f.how = jtVal('jm_how') || f.how; f.cost = jtVal('jm_cost'); f.paidBy = jtVal('jm_paid'); }
+  if (f.kind === 'ask') { f.sku = jtVal('jk_sku') || f.sku; f.qty = jtVal('jk_qty'); f.from = jtVal('jk_from'); f.note = jtVal('jk_note'); }
 }
 function jtKeepNew() { var n = JT.newp, m = { jn_biz: 'business', jn_owner: 'ownerName', jn_email: 'email', jn_name: 'name', jn_disp: 'displayName', jn_tier: 'tier', jn_code: 'code', jn_jdisp: 'joinName', jn_jtier: 'joinTier' }; for (var k in m) { var x = el(k); if (x) n[m[k]] = x.value; } }
 function jtKeepEntry() { var e = JT.entry; if (!el('je_kind')) return; e.kind = jtVal('je_kind'); e.partner = jtVal('je_who'); e.to = jtVal('je_to'); e.amount = jtVal('je_amt'); e.date = jtVal('je_date'); e.category = jtVal('je_cat'); e.note = jtVal('je_note'); }
-document.addEventListener('input', function (ev) { if (VIEW !== 'joint' || !ev.target || !ev.target.id) return; if (/^jf_|^jr_|^ja_|^jm_/.test(ev.target.id)) jtKeepForm(); else if (/^jn_/.test(ev.target.id)) jtKeepNew(); else if (/^je_/.test(ev.target.id)) jtKeepEntry(); });
+document.addEventListener('input', function (ev) { if (VIEW !== 'joint' || !ev.target || !ev.target.id) return; if (/^jf_|^jr_|^ja_|^jm_|^jk_/.test(ev.target.id)) jtKeepForm(); else if (/^jn_/.test(ev.target.id)) jtKeepNew(); else if (/^je_/.test(ev.target.id)) jtKeepEntry(); });
 document.addEventListener('change', function (ev) {
   if (VIEW !== 'joint' || !ev.target) return;
   var t = ev.target;
   if (t.id === 'jt_pool') { JT.pool = t.value; JT.month = ''; JT.form = null; JT.data = null; repaint(); jtLoad(); return; }
+  if (t.id === 'jm_how') { jtKeepForm(); repaint(); return; }   // delivered: the transport cost fields
   if (t.id === 'je_kind' || t.id === 'je_who') { jtKeepEntry(); repaint(); return; }
   if (/^jn_/.test(t.id || '')) jtKeepNew();
   if (/^jf_|^jr_|^ja_/.test(t.id || '')) jtKeepForm();
@@ -20273,7 +20290,13 @@ document.addEventListener('click', async function (ev) {
   if (a === 'f-edit') { var s = (d.stock || []).filter(function (x) { return x.sku === b.getAttribute('data-sku'); })[0]; if (!s) return;
     JT.form = { kind: 'product', isNew: false, name: s.name, sku: s.sku, category: s.category, brand: s.brand, color: s.color, unit: s.unit, retail: s.retail, wholesale: s.wholesale || '', floor: s.floor || '', cost: '', status: s.status }; repaint(); window.scrollTo(0, 0); return; }
   if (a === 'f-receive') { JT.form = { kind: 'receive', sku: b.getAttribute('data-sku') || '', qty: '', unitCost: '', paidBy: '', receivedAt: '', date: '', supplier: '', note: '' }; repaint(); window.scrollTo(0, 0); return; }
-  if (a === 'f-move') { JT.form = { kind: 'move', sku: b.getAttribute('data-sku') || '', qty: '', from: '', to: '', note: '' }; repaint(); window.scrollTo(0, 0); return; }
+  if (a === 'f-move') { JT.form = { kind: 'move', sku: b.getAttribute('data-sku') || '', qty: '', from: '', to: '', note: '', how: 'collected', cost: '', paidBy: '', request: b.getAttribute('data-req') || '' }; repaint(); window.scrollTo(0, 0); return; }
+  if (a === 'f-ask') { JT.form = { kind: 'ask', sku: b.getAttribute('data-sku') || '', qty: '', from: '', note: '' }; repaint(); window.scrollTo(0, 0); return; }
+  if (a === 'save-ask' && JT.form) { jtKeepForm(); var fa = JT.form; jtSave('erpJointAsk', { pool: JT.pool, sku: fa.sku, qty: fa.qty, from: fa.from, note: fa.note }, 'Asked. They see it on their Joint stock page.', function () { JT.form = null; }); return; }
+  if (a === 'req-got') { jtSave('erpJointGot', { pool: JT.pool, request: b.getAttribute('data-req') }, 'Marked as received.'); return; }
+  if (a === 'req-cancel') { if (!(await uiConfirm('Cancel this request?'))) return; jtSave('erpJointAskAct', { pool: JT.pool, request: b.getAttribute('data-req'), action: 'cancel' }, 'Cancelled.'); return; }
+  if (a === 'req-decline') { var why = await uiPrompt('Why can it not be sent? They see your answer.', ''); if (why === null) return;
+    jtSave('erpJointAskAct', { pool: JT.pool, request: b.getAttribute('data-req'), action: 'decline', note: why }, 'Declined.'); return; }
   if (a === 'f-adjust') { JT.form = { kind: 'adjust', sku: '', direction: 'out', qty: '', reason: '' }; repaint(); return; }
   var f = JT.form;
   if (a === 'save-product' && f) {
@@ -20284,7 +20307,7 @@ document.addEventListener('click', async function (ev) {
   }
   if (a === 'save-receive' && f) {
     jtKeepForm();
-    jtSave('erpJointReceive', { pool: JT.pool, sku: f.sku, qty: f.qty, unitCost: f.unitCost, paidBy: f.paidBy, receivedAt: f.receivedAt, date: f.date, supplier: f.supplier, note: f.note }, 'Received into the joint stock.', function () { JT.form = null; JCAT = null; });
+    jtSave('erpJointReceive', { pool: JT.pool, sku: f.sku, qty: f.qty, unitCost: f.unitCost, paidBy: f.paidBy, receivedAt: f.receivedAt, date: f.date, supplier: f.supplier, note: f.note, again: !!f.again }, 'Received into the joint stock.', function () { JT.form = null; JCAT = null; });
     return;
   }
   if (a === 'save-adjust' && f) {
@@ -20295,7 +20318,10 @@ document.addEventListener('click', async function (ev) {
   }
   if (a === 'save-move' && f) {
     jtKeepForm();
-    jtSave('erpJointMove', { pool: JT.pool, sku: f.sku, qty: f.qty, from: f.from, to: f.to, note: f.note }, 'Moved.', function () { JT.form = null; JCAT = null; });
+    var req = f.request ? (d.requests || []).filter(function (r) { return r.id === f.request; })[0] : null;
+    if (f.how === 'delivered' && !(Number(f.cost) > 0) && !(await uiConfirm('Delivered with no transport cost?'))) return;
+    jtSave('erpJointSend', { pool: JT.pool, request: f.request || '', sku: req ? req.sku : f.sku, qty: f.qty, from: d.money ? f.from : jtMe(d, pool), to: f.to, note: f.note, how: f.how || 'collected', cost: f.cost || 0, paidBy: f.paidBy },
+      'Sent.', function () { JT.form = null; JCAT = null; });
     return;
   }
   if (a === 'save-entry') {
@@ -20505,12 +20531,15 @@ viewDash = function () {
   if (!JCARD.pools || !JCARD.pools.length) return h;
   var cur = JCARD.currency || 'BDT';
   var card = '<section><div class="card"><div class="row" style="justify-content:space-between;align-items:center"><h2 style="margin:0">Joint stock</h2><button class="btn small" type="button" data-jtopen="1">Open</button></div>' +
-    '<div class="sub">Not part of the figures above — goods owned together with a partner company, in their own book.</div><div class="list">' +
+    '<div class="sub">Goods owned together with a partner company, in their own book. Your share of their profit is in your profit above.</div><div class="list">' +
     JCARD.pools.map(function (p) {
       var t = (p.transfers || []).filter(function (x) { return x.mine; })[0];
       return '<div><span><button class="linkbtn" type="button" data-jtopen="' + esc(p.id) + '" style="font-weight:600">' + esc(p.name) + '</button><span class="sku">profit this month ' + esc(cur) + ' ' + fmt(p.profit) +
         ' · your share ' + (Math.round(p.share * 1000) / 10) + '% = ' + fmt(p.myProfit) + ' · stock at cost ' + fmt(p.stock) + '</span></span>' +
-        '<b style="color:var(' + (t ? (t.mine === 'pay' ? '--critical' : '--good') : '--muted') + ')">' + (t ? (t.mine === 'pay' ? 'you pay ' + fmt(t.amount) : 'you get ' + fmt(t.amount)) : 'even') + '</b></div>'; }).join('') + '</div></div></section>';
+        '<b style="color:var(' + (t ? (t.mine === 'pay' ? '--critical' : '--good') : '--muted') + ')">' + (t ? (t.mine === 'pay' ? 'you pay ' + fmt(t.amount) : 'you get ' + fmt(t.amount)) : 'even') + '</b></div>' +
+        (p.shelves ? '<div><span class="sku">This month: received ' + fmt((p.month || {}).received) + ', sent between shops ' + fmt((p.month || {}).moved) + ', sold ' +
+          p.shelves.map(function (x) { return esc(x.name) + ' ' + fmt(x.sold); }).join(' · ') + '<br>On the shelves now: ' + p.shelves.map(function (x) { return esc(x.name) + ' ' + fmt(x.units); }).join(' · ') +
+          ((p.requests || {}).asked ? ' · <b>' + fmt(p.requests.asked) + ' request(s) waiting</b>' : '') + ((p.requests || {}).sent ? ' · ' + fmt(p.requests.sent) + ' on the way' : '') + '</span></div>' : ''); }).join('') + '</div></div></section>';
   return h + card;
 };
 document.addEventListener('click', function (ev) {
@@ -36873,6 +36902,43 @@ document.addEventListener('change', function (e) {
   srv('erpWebPriceSync', [{ on: on }], function () { if (WP.d) WP.d.sync = on; toast(on ? 'The website\u2019s prices now follow the ERP.' : 'The website\u2019s prices are no longer changed by the ERP.'); },
       function (er) { e.target.checked = !on; toast(esc((er && er.message) || er), true); });
 });
+</script>
+<!-- fd-55 (owner 18 Oct 2026): joint stock between the two shops - ask for goods, send them (collected free / delivered
+     with a transport cost that is a joint expense), confirm; every staff member of both companies. Joint stock > Stock. -->
+<script>
+function jtName(pool, id) { var p = (pool.partners || []).filter(function (x) { return x.id === id; })[0]; return p ? p.name : ''; }
+function jtAskForm(d, pool, f) {
+  var dis = JT.busy ? ' disabled' : '', me = jtMe(d, pool);
+  if (!(d.stock || []).length) return '<div class="card" style="margin-top:12px"><div class="empty">No joint product yet.</div></div>';
+  var others = pool.partners.filter(function (p) { return p.id !== me; });
+  return '<div class="card" style="margin-top:12px"><h2>Ask your partner for stock</h2><div class="sub">They see it on their Joint stock page and send it; you confirm when it arrives.</div>' +
+    '<div class="jt-form"><div class="wide"><label class="f" for="jk_sku">Product</label>' + jtSkuSel(d, 'jk_sku', f.sku) + '</div>' +
+    '<div><label class="f" for="jk_qty">How many</label><input class="i" id="jk_qty" inputmode="numeric" value="' + esc(f.qty) + '"></div>' +
+    '<div><label class="f" for="jk_from">From</label><select class="i" id="jk_from">' + others.map(function (p) { return '<option value="' + esc(p.id) + '"' + (p.id === f.from ? ' selected' : '') + '>' + esc(p.name) + '</option>'; }).join('') + '</select></div>' +
+    '<div class="wide"><label class="f" for="jk_note">Note <span class="sku">(optional: for which order, by when)</span></label><input class="i" id="jk_note" maxlength="300" value="' + esc(f.note) + '"></div>' +
+    '</div><div class="row" style="margin-top:12px;gap:8px"><button class="btn primary" type="button" data-jt="save-ask"' + dis + '>' + (JT.busy ? 'Saving\u2026' : 'Ask') + '</button><button class="btn" type="button" data-jt="f-close">Cancel</button></div></div>';
+}
+function jtRequestsHtml(d, pool) {
+  var rq = d.requests || [], mv = d.moves || [];
+  var open = rq.filter(function (r) { return r.status === 'asked' || r.status === 'sent'; }), done = rq.filter(function (r) { return !(r.status === 'asked' || r.status === 'sent'); });
+  var h = '<section><div class="card"><h2>Asked and sent' + (open.length ? ' <span class="pill low">' + fmt(open.length) + ' open</span>' : '') + '</h2>';
+  if (!rq.length && !mv.length) return h + '<div class="empty">Nothing asked or sent yet. Use “Ask for stock” or “Send stock”.</div></div></section>';
+  var row = function (r) {
+    var acts = (r.canSend ? '<button class="btn small primary" type="button" data-jt="f-move" data-req="' + esc(r.id) + '">Send</button> ' : '') +
+      (r.canDecline ? '<button class="btn small" type="button" data-jt="req-decline" data-req="' + esc(r.id) + '">Can\u2019t send</button> ' : '') +
+      (r.canGot ? '<button class="btn small primary" type="button" data-jt="req-got" data-req="' + esc(r.id) + '">Got it</button> ' : '') +
+      (r.canCancel ? '<button class="btn small" type="button" data-jt="req-cancel" data-req="' + esc(r.id) + '">Cancel</button>' : '');
+    return '<tr><td>' + esc(r.when) + '</td><td class="nm">' + esc(r.name) + '<br><span class="sku">' + fmt(r.qty) + ' asked by ' + esc(r.askedName || r.askedBy) + (r.holder ? ' from ' + esc(r.holder) : '') + (r.note ? ' \u00b7 ' + esc(r.note) : '') + '</span></td>' +
+      '<td><span class="pill' + (r.status === 'asked' ? ' low' : r.status === 'received' ? ' ok' : r.status === 'sent' ? '' : ' out') + '">' + esc(r.statusLabel) + '</span>' +
+      (r.sentAt ? '<br><span class="sku">' + fmt(r.sentQty) + ' ' + (r.how === 'delivered' ? 'delivered' : 'collected') + ' ' + esc(r.sentAt) + (r.cost ? ', transport ' + fmt(r.cost) + ' by ' + esc(r.costPaidBy) : '') + '</span>' : '') +
+      (r.answer ? '<br><span class="sku">' + esc(r.answer) + '</span>' : '') + (r.receivedName ? '<br><span class="sku">received by ' + esc(r.receivedName) + '</span>' : '') + '</td>' +
+      '<td class="num" style="white-space:nowrap">' + acts + '</td></tr>';
+  };
+  if (rq.length) h += '<div class="scroll"><table><thead><tr><th>When</th><th>What</th><th>State</th><th></th></tr></thead><tbody>' + open.concat(done.slice(0, 10)).map(row).join('') + '</tbody></table></div>';
+  if (mv.length) h += '<details style="margin-top:10px"><summary class="sub" style="cursor:pointer">Sent between the shops \u00b7 last ' + fmt(Math.min(mv.length, 50)) + '</summary><div class="scroll"><table><thead><tr><th>When</th><th>What</th><th>From \u2192 to</th><th>How</th></tr></thead><tbody>' +
+    mv.map(function (m) { return '<tr><td>' + esc(m.when) + '</td><td>' + fmt(m.qty) + ' \u00d7 ' + esc(m.name) + '</td><td>' + esc(m.from) + ' \u2192 ' + esc(m.to) + '</td><td style="white-space:normal;font-size:12px">' + esc(m.note) + '</td></tr>'; }).join('') + '</tbody></table></div></details>';
+  return h + '</div></section>';
+}
 </script>
 <!-- fd-37: the page is styled: show it -->
 <script>(function () { var x = document.getElementById('bootHide'); if (x) x.remove(); })();</script>

@@ -14,6 +14,11 @@
 //   erpJointAdjust({pool,..})    a correction of the pool's stock, valued at cost
 //   erpJointBook({pool,..})      a line in the pool's money book / strike one out
 //   erpJointSettings({pool,..})  price tier of a partner, a new invite code, the slow-payer days
+//   erpJointAsk / erpJointSend / erpJointGot / erpJointAskAct   (owner 18 Oct 2026) one partner asks the other for
+//                                goods; the holder sends them (collected = free, delivered = a transport cost that is a
+//                                joint expense credited to whoever paid); the asker confirms. Every staff member of
+//                                both companies may do these, and receive shipments; staff only from their own
+//                                company's shelf and with their own company as the payer.
 //
 // The switch: the feature is off for every business until the provider turns it
 // on for that company (joint_flags / erp_tenants.joint, Platform screen). Off = none of this answers.
@@ -140,6 +145,14 @@ export async function poolOf(ctx, poolId) {
 export function inPool(ctx, pool) {
   return { ...ctx, biz: pool.id, memo: {}, s: { ...ctx.s, businessName: pool.name } };
 }
+/** An owner of one of the partner companies (may act for either side of the pool). */
+const poolOwner = (ctx, pool) => ctx.s.role === 'owner' && !!pool.member;
+/** Staff act for their own company only: its shelf, its money. */
+async function ownSide(ctx, pool, partner, what) {
+  if (poolOwner(ctx, pool)) return;
+  const me = await sellerId(ctx);
+  if (partner !== me) throw new Error(what + ' - only for your own company (' + str(ctx.s.businessName) + '). Ask an owner for the other side.');
+}
 /** The money side of a pool is for its member owners only. */
 function needOwner(ctx, pool) {
   if (ctx.s.role !== 'owner' || !pool.member) throw new Error('Only the owners of the two companies do this.');
@@ -243,6 +256,9 @@ export async function erpJoint(ctx, payload) {
   out.slowDays = Math.round(num(await withPool(ctx, pool, (p) => getConfig(p, 'joint_slow_days', String(SLOW_DAYS))))) || SLOW_DAYS;
   if (money) out.book = await withPool(ctx, pool, (p) => erpPartnership(p, { month: payload.month }));
   out.sales = await jointSales(ctx, pool, out.slowDays);
+  out.me = await sellerId(ctx);
+  out.requests = await requestsOf(ctx, pool, out.me);
+  out.moves = await movesOf(ctx, pool);
   out.remote = isRemote(ctx);
   if (money && !out.remote) out.pending = await pendingOf(ctx, pool);
   return out;
@@ -290,7 +306,22 @@ export async function erpJointCard(ctx) {
     const b = await withPool(ctx, pool, (p) => erpPartnership(p, {}));
     const r = b.report || {}, me = (r.partners || []).find((x) => x.business_id === b.me) || {};
     const names = {}; (b.partners || []).forEach((x) => { names[x.id] = x.name; });
+    const month = formatDate(ctx.now, 'yyyy-MM') + '-01';
+    const mv = (await poolRead(ctx, (t) => t`
+      select coalesce(sum(qty) filter (where kind = 'RECEIVE' and direction = 'IN'), 0) as received,
+             coalesce(sum(qty) filter (where kind = 'MOVE' and direction = 'IN'), 0) as moved
+      from stock_movements where business_id = ${pool.id} and public.dhaka_date(created_at) >= ${month}::date`))[0] || {};
+    mv.sold = {};
+    for (const x of await poolRead(ctx, (t) => t`select held_by, sum(qty) as n from stock_movements
+                                                where business_id = ${pool.id} and kind = 'SALE' and direction = 'OUT' and held_by is not null
+                                                  and public.dhaka_date(created_at) >= ${month}::date group by held_by`)) mv.sold[x.held_by] = num(x.n);
+    const held = await poolRead(ctx, (t) => t`select held_by, coalesce(sum(case when direction = 'IN' then qty else -qty end), 0) as n
+                                              from stock_movements where business_id = ${pool.id} and held_by is not null group by held_by`);
+    const open = (await poolRead(ctx, (t) => t`select count(*) filter (where status = 'asked')::int as asked, count(*) filter (where status = 'sent')::int as sent
+                                               from pool_requests where pool_id = ${pool.id}`))[0] || {};
+    const shelves = pool.partners.map((x) => ({ name: x.name, units: num((held.find((h) => h.held_by === x.id) || {}).n), sold: num((mv.sold || {})[x.id]) }));
     out.push({ id: pool.id, name: pool.name, profit: num((r.this_month || {}).profit), share: num(me.ratio), myProfit: round2(num((r.this_month || {}).profit) * num(me.ratio)),
+               month: { received: num(mv.received), moved: num(mv.moved) }, shelves, requests: { asked: num(open.asked), sent: num(open.sent) },
                stock: num((r.to_date || {}).stock_at_cost), balance: num(me.balance),
                transfers: (r.transfers || []).map((t) => ({ from: names[t.from] || '?', to: names[t.to] || '?', amount: num(t.amount), mine: t.from === b.me ? 'pay' : t.to === b.me ? 'get' : '' })) });
   }
@@ -442,13 +473,13 @@ const txnNo = (at) => 'TXN-' + formatDate(at, 'yyyyMMdd') + '-' + (Math.floor(Ma
 export async function erpJointReceive(ctx, payload) {
   payload = payload || {};
   await needOn(ctx);
-  const pool = await poolOf(ctx, payload.pool);
-  needOwner(ctx, pool);
+  const pool = await poolOf(ctx, payload.pool);   // owner 18 Oct 2026: every staff member of both companies may receive
   const qty = num(payload.qty), unit = round2(num(payload.unitCost));
   if (!(qty > 0) || qty !== Math.round(qty)) throw new Error('How many came in? A whole number above 0.');
   if (!(unit > 0)) throw new Error('What did one cost? The settlement needs the buying price.');
   const payer = str(payload.paidBy) || await sellerId(ctx);
   if (!pool.partners.some((p) => p.id === payer)) throw new Error('Who paid? Choose one of the partners.');
+  await ownSide(ctx, pool, payer, 'Who paid is the month-end money');
   const at_ = str(payload.receivedAt) || payer;   // whose shelf it went on; the payer's unless said otherwise
   if (!pool.partners.some((p) => p.id === at_)) throw new Error('Received at? Choose one of the partners.');
   const today = formatDate(ctx.now, 'yyyy-MM-dd'), date = isDate(payload.date) ? payload.date : today;
@@ -457,6 +488,14 @@ export async function erpJointReceive(ctx, payload) {
   const got = await withPool(ctx, pool, async (pctx) => {
   await lock(pctx, 'stock');
   const p = await poolProduct(pctx, pool, payload.sku);
+  // both companies enter shipments: the same one twice (same product, count, cost, payer and day) is refused unless meant
+  if (!payload.again) {
+    const twin = (await pctx.tx`select operator, to_char(created_at at time zone 'Asia/Dhaka', 'DD Mon HH12:MI AM') as at from stock_movements
+                                where business_id = ${pool.id} and product_id = ${p.id} and kind = 'RECEIVE' and direction = 'IN' and qty = ${qty}
+                                  and unit_price = ${unit} and paid_by = ${payer}
+                                  and (created_at at time zone 'Asia/Dhaka')::date = ${date}::date limit 1`)[0];
+    if (twin) throw new Error('ALREADY: ' + qty + ' x ' + str(p.name) + ' at ' + unit + ' was already received that day by ' + str(twin.operator) + ' (' + str(twin.at) + '). Receive it again only if this is a second shipment.');
+  }
   const at = date === today ? new Date() : new Date(date + 'T06:00:00Z');   // noon in Dhaka
   await pctx.tx`
     insert into stock_movements (business_id, product_id, kind, direction, qty, unit_price, total, reference, supplier, note,
@@ -476,10 +515,11 @@ export async function erpJointReceive(ctx, payload) {
 /** Goods handed from one partner's shelf to the other's: no sale, no money, only where they are. */
 export async function erpJointMove(ctx, payload) {
   payload = payload || {};
+  if (payload.how || num(payload.cost) > 0) return erpJointSend(ctx, payload);   // with how it went and what it cost
   await needOn(ctx);
   const pool = await poolOf(ctx, payload.pool);
-  needOwner(ctx, pool);
   const qty = num(payload.qty), from = str(payload.from), to = str(payload.to), note = str(payload.note).slice(0, 200);
+  await ownSide(ctx, pool, from, 'Goods are sent from your own shelf');
   if (!(qty > 0) || qty !== Math.round(qty)) throw new Error('How many? A whole number above 0.');
   if (!pool.partners.some((p) => p.id === from) || !pool.partners.some((p) => p.id === to) || from === to) throw new Error('From which partner to which? Two different ones.');
   const today = formatDate(ctx.now, 'yyyy-MM-dd');
@@ -524,6 +564,139 @@ export async function erpJointAdjust(ctx, payload) {
   return str(p.sku);
   });
   return { ...(await erpJoint(ctx, { pool: pool.id })), adjusted: { sku, qty, direction: dir } };
+}
+
+// ---------------------------------------------------------------- asking for goods and sending them (owner 18 Oct 2026)
+const REQ_WORDS = { asked: 'Asked', sent: 'Sent', received: 'Received', declined: 'Declined', cancelled: 'Cancelled' };
+async function requestsOf(ctx, pool, me) {
+  const names = {}; pool.partners.forEach((p) => { names[p.id] = p.name; });
+  const rows = await poolRead(ctx, (t) => t`select * from pool_requests where pool_id = ${pool.id} order by (status in ('asked', 'sent')) desc, created_at desc limit 100`);
+  return rows.map((r) => ({
+    id: r.id, sku: str(r.sku), name: str(r.product_name), qty: num(r.qty), note: str(r.note), status: r.status, statusLabel: REQ_WORDS[r.status] || r.status,
+    askedBy: names[r.asked_by] || 'Partner', askedName: str(r.asked_name), holder: names[r.holder] || '', when: formatDate(new Date(r.created_at), 'd MMM, h:mm a'),
+    sentQty: num(r.sent_qty), sentName: str(r.sent_name), sentAt: r.sent_at ? formatDate(new Date(r.sent_at), 'd MMM, h:mm a') : '', how: str(r.how),
+    cost: num(r.cost), costPaidBy: names[r.cost_paid_by] || '', answer: str(r.answer), receivedName: str(r.received_name),
+    canSend: r.status === 'asked' && r.holder === me, canDecline: r.status === 'asked' && r.holder === me,
+    canCancel: r.status === 'asked' && r.asked_by === me, canGot: r.status === 'sent' && r.asked_by === me, mine: r.asked_by === me,
+  }));
+}
+/** The last moves between shelves (who sent what to whom, how, what it cost). */
+async function movesOf(ctx, pool) {
+  const names = {}; pool.partners.forEach((p) => { names[p.id] = p.name; });
+  const rows = await poolRead(ctx, (t) => t`
+    select o.product_name, o.qty, o.held_by as src, i.held_by as dst, o.note, o.operator, o.created_at
+    from stock_movements o join stock_movements i on i.business_id = o.business_id and i.txn_no = o.txn_no || '-in' and i.kind = 'MOVE' and i.direction = 'IN'
+    where o.business_id = ${pool.id} and o.kind = 'MOVE' and o.direction = 'OUT' order by o.created_at desc limit 50`);
+  return rows.map((r) => ({ name: str(r.product_name), qty: num(r.qty), from: names[r.src] || '?', to: names[r.dst] || '?', note: str(r.note), by: str(r.operator),
+                            when: formatDate(new Date(r.created_at), 'd MMM yyyy') }));
+}
+export async function erpJointAsk(ctx, payload) {
+  payload = payload || {};
+  await needOn(ctx);
+  const pool = await poolOf(ctx, payload.pool);
+  const me = await sellerId(ctx), qty = num(payload.qty);
+  if (!(qty > 0) || qty !== Math.round(qty)) throw new Error('How many do you need? A whole number above 0.');
+  const asker = poolOwner(ctx, pool) && str(payload.for) ? str(payload.for) : me;
+  if (!pool.partners.some((p) => p.id === asker)) throw new Error('For which partner?');
+  await withPool(ctx, pool, async (pctx) => {
+    const p = await poolProduct(pctx, pool, payload.sku);
+    let holder = str(payload.from);
+    if (!holder) {   // the partner holding most of it
+      let best = -Infinity;
+      for (const x of pool.partners) if (x.id !== asker) { const n = await heldBy(pctx, pool, p.id, x.id); if (n > best) { best = n; holder = x.id; } }
+    }
+    if (!pool.partners.some((x) => x.id === holder) || holder === asker) throw new Error('Ask which partner? Not your own company.');
+    await pctx.tx`insert into pool_requests (pool_id, sku, product_name, qty, asked_by, asked_name, holder, note)
+                  values (${pool.id}, ${str(p.sku)}, ${str(p.name)}, ${qty}, ${asker}, ${who(ctx) + ' (' + str(ctx.s.businessName) + ')'}, ${holder}, ${str(payload.note).slice(0, 300) || null})`;
+  });
+  return erpJoint(ctx, { pool: pool.id });
+}
+/** Send goods to the other partner - for a request, or on its own. Stock moves shelf to shelf at once; a delivery's
+ *  cost is written in the joint book as an expense of the one who paid it (shared by the profit rule at month end). */
+export async function erpJointSend(ctx, payload) {
+  payload = payload || {};
+  await needOn(ctx);
+  const pool = await poolOf(ctx, payload.pool);
+  const me = await sellerId(ctx);
+  const names = {}; pool.partners.forEach((p) => { names[p.id] = p.name; });
+  let req = null;
+  if (str(payload.request)) {
+    req = (await poolRead(ctx, (t) => t`select * from pool_requests where pool_id = ${pool.id} and id = ${str(payload.request)}`))[0];
+    if (!req) throw new Error('That request is not here.');
+    if (req.status !== 'asked') throw new Error('That request is already ' + (REQ_WORDS[req.status] || req.status).toLowerCase() + '.');
+  }
+  const sku = req ? req.sku : str(payload.sku);
+  const to = req ? req.asked_by : str(payload.to);
+  const from = str(payload.from) || (req && req.holder) || me;
+  const qty = num(payload.qty) || (req ? num(req.qty) : 0);
+  const how = str(payload.how) === 'delivered' ? 'delivered' : 'collected';
+  const cost = how === 'delivered' ? round2(num(payload.cost)) : 0;
+  const paidBy = str(payload.paidBy) || me;
+  if (!(qty > 0) || qty !== Math.round(qty)) throw new Error('How many are sent? A whole number above 0.');
+  if (!pool.partners.some((p) => p.id === from) || !pool.partners.some((p) => p.id === to) || from === to) throw new Error('From which partner to which? Two different ones.');
+  await ownSide(ctx, pool, from, 'Goods are sent from your own shelf');
+  if (cost < 0) throw new Error('The transport cost cannot be negative.');
+  if (cost > 0) {
+    if (!pool.partners.some((p) => p.id === paidBy)) throw new Error('Who paid the transport?');
+    await ownSide(ctx, pool, paidBy, 'Who paid the transport');
+  }
+  const today = formatDate(ctx.now, 'yyyy-MM-dd');
+  await poolOpenOn(ctx, pool, today, 'its stock cannot be moved');
+  const got = await withPool(ctx, pool, async (pctx) => {
+    await lock(pctx, 'stock');
+    const p = await poolProduct(pctx, pool, sku);
+    const have = await heldBy(pctx, pool, p.id, from);
+    if (qty > have) throw new Error(names[from] + ' holds only ' + have + ' of ' + str(p.name) + '. Send fewer, or count first.');
+    const note = (how === 'delivered' ? 'Delivered' : 'Collected') + ' - sent by ' + who(ctx) + ' (' + str(ctx.s.businessName) + ')' +
+                 (cost > 0 ? ', transport ' + cost + ' paid by ' + names[paidBy] : '') + (str(payload.note) ? ' - ' + str(payload.note).slice(0, 150) : '');
+    await moveRows(pctx, pool, p.id, str(p.name), from, to, qty, num(p.cost_price), new Date(), note);
+    if (cost > 0) {
+      await pctx.tx`insert into pool_ledger (pool_id, kind, partner_business_id, amount, entry_date, category, note)
+                    values (${pool.id}, 'EXPENSE'::pool_entry_kind, ${paidBy}, ${cost}, ${today}::date, 'Transport',
+                            ${('Moving ' + qty + ' x ' + str(p.name) + ' from ' + names[from] + ' to ' + names[to]).slice(0, 300)})`;
+    }
+    if (req) {
+      await pctx.tx`update pool_requests set status = 'sent', sent_qty = ${qty}, sent_name = ${who(ctx) + ' (' + str(ctx.s.businessName) + ')'}, sent_at = now(),
+                      how = ${how}, cost = ${cost}, cost_paid_by = ${cost > 0 ? paidBy : null}, answer = ${str(payload.note).slice(0, 300) || null}
+                    where id = ${req.id}`;
+    }
+    forget(pctx, 'TXN_LOG');
+    return { sku: str(p.sku), name: str(p.name), qty, from: names[from], to: names[to], how, cost };
+  });
+  return { ...(await erpJoint(ctx, { pool: pool.id })), moved: got };
+}
+/** The asker says the goods arrived. */
+export async function erpJointGot(ctx, payload) {
+  payload = payload || {};
+  await needOn(ctx);
+  const pool = await poolOf(ctx, payload.pool);
+  const me = await sellerId(ctx);
+  await withPool(ctx, pool, async (pctx) => {
+    const r = (await pctx.tx`select * from pool_requests where pool_id = ${pool.id} and id = ${str(payload.request)}`)[0];
+    if (!r) throw new Error('That request is not here.');
+    if (r.status !== 'sent') throw new Error('That request is not on its way.');
+    if (r.asked_by !== me && !poolOwner(ctx, pool)) throw new Error('The company that asked confirms it.');
+    await pctx.tx`update pool_requests set status = 'received', received_name = ${who(ctx) + ' (' + str(ctx.s.businessName) + ')'}, received_at = now() where id = ${r.id}`;
+  });
+  return erpJoint(ctx, { pool: pool.id });
+}
+/** Decline (the holder) or cancel (the asker) a request not sent yet. */
+export async function erpJointAskAct(ctx, payload) {
+  payload = payload || {};
+  await needOn(ctx);
+  const pool = await poolOf(ctx, payload.pool);
+  const me = await sellerId(ctx), action = str(payload.action);
+  if (!['decline', 'cancel'].includes(action)) throw new Error('Decline or cancel?');
+  await withPool(ctx, pool, async (pctx) => {
+    const r = (await pctx.tx`select * from pool_requests where pool_id = ${pool.id} and id = ${str(payload.request)}`)[0];
+    if (!r) throw new Error('That request is not here.');
+    if (r.status !== 'asked') throw new Error('It is already ' + (REQ_WORDS[r.status] || r.status).toLowerCase() + '.');
+    const side = action === 'decline' ? r.holder : r.asked_by;
+    if (side !== me && !poolOwner(ctx, pool)) throw new Error(action === 'decline' ? 'The company asked declines it.' : 'The company that asked cancels it.');
+    if (action === 'decline' && !str(payload.note)) throw new Error('Say why, so they know.');
+    await pctx.tx`update pool_requests set status = ${action === 'decline' ? 'declined' : 'cancelled'}, answer = ${str(payload.note).slice(0, 300) || null} where id = ${r.id}`;
+  });
+  return erpJoint(ctx, { pool: pool.id });
 }
 
 /** Creators (handlers/creatorportal.js): sponsorship rolls leave a pool, or come back when the brand replaces them.
@@ -948,5 +1121,25 @@ export async function erpPlatformJointCopy(ctx, payload) {
   return { ok: true, id, joint: on };
 }
 
-export const HANDLERS = { erpJointMove, erpJoint, erpJointCatalog, erpJointStart, erpJointProduct, erpJointReceive, erpJointAdjust, erpJointBook, erpJointSettings,
+/** {month 'yyyy-MM': this company's share of that month's joint profit} - by the pool's own rule (capital at the start
+ *  of the month). Owner 18 Oct 2026: the joint stock's profit goes to the main business. Read on the server for anyone
+ *  who sees the profit report; the pool's cost and details stay in the pool. */
+export async function jointShareByMonth(ctx, months) {
+  const out = {};
+  if (!(await jointOn(ctx))) return out;
+  const me = await sellerId(ctx);
+  const want = new Set(months || []);
+  for (const pool of await myPools(ctx)) {
+    // one report per pool carries every month: its profit and each partner's ratio at the start of it
+    const r = (await poolRead(ctx, (t) => t`select pool_settlement(${pool.id}, null) as r`))[0];
+    for (const x of ((r && r.r) || {}).months || []) {
+      if (want.size && !want.has(x.month)) continue;
+      const share = round2(num(x.profit) * num((x.ratios || {})[me]));
+      if (share) out[x.month] = round2((out[x.month] || 0) + share);
+    }
+  }
+  return out;
+}
+
+export const HANDLERS = { erpJointAsk, erpJointSend, erpJointGot, erpJointAskAct, erpJointMove, erpJoint, erpJointCatalog, erpJointStart, erpJointProduct, erpJointReceive, erpJointAdjust, erpJointBook, erpJointSettings,
                           erpJointAgree, erpJointCard, erpJointStatementPdf, erpPlatformJointCopy };

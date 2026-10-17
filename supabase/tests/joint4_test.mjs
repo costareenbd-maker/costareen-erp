@@ -94,7 +94,7 @@ r = await friend('erpJoint', [{}]);
 check('his page: the pool, both partners, the book (he is an owner of it)', r.ok && r.result.pools.length === 1 && r.result.pools[0].partners.length === 2 &&
   r.result.money === true && r.result.remote === true && r.result.book.me === SH.id, r.result);
 r = await fsales('erpJoint', [{}]);
-check('his sales staff have no page', !r.ok, r);
+check('his sales staff see the page (18 Oct) but never the money or the cost', r.ok && !r.result.money && !r.result.book && (r.result.stock || []).every((x) => !('cost' in x)), r.ok ? r.result.money : r);
 
 // ---- stock and capital, from both sides ---------------------------------------------------------------------
 await owner('erpJointProduct', [{ pool: POOL, isNew: true, sku: 'PM-PLA-BLK', name: 'Polymaker PLA Black', retail: 2000, floor: 1700, cost: 1400 }]);

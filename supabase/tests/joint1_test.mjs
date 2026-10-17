@@ -59,7 +59,7 @@ check('owner page: the pool, both partners, the book', r.ok && r.result.pools.le
 r = await mgr('erpJoint', [{}]);
 check('manager page: stock only, no book', r.ok && r.result.money === false && r.result.book === undefined, r.result);
 r = await sales('erpJoint', [{}]);
-check('sales staff have no page', !r.ok, r);
+check('sales staff see the page (18 Oct) but never the money or the cost', r.ok && !r.result.money && !r.result.book && (r.result.stock || []).every((x) => !('cost' in x)), r.ok ? r.result.money : r);
 
 // ---- products
 r = await mgr('erpJointProduct', [{ pool: POOL, isNew: true, name: 'X', retail: 10 }]);

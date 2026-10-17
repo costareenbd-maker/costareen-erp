@@ -44,8 +44,8 @@ const mv = await sql`select kind, direction, qty, held_by, note from stock_movem
 check('two MOVE rows, OUT from one shelf and IN to the other, same note', mv.length === 2 && mv[0].direction === 'OUT' && mv[0].held_by === A && mv[1].direction === 'IN' && mv[1].held_by === B3 && /van/.test(mv[0].note), mv);
 r = await other('erpJointMove', [{ pool: POOL, sku: 'JV-PLA', from: B3, to: A, qty: 451 }]);
 check('moving more than the shelf holds is refused with the count', !r.ok && /holds only 450/.test(r.error), r);
-r = await sales('erpJointMove', [{ pool: POOL, sku: 'JV-PLA', from: A, to: B3, qty: 1 }]);
-check('staff cannot move joint stock', !r.ok, r);
+r = await sales('erpJointMove', [{ pool: POOL, sku: 'JV-PLA', from: B3, to: A, qty: 1 }]);
+check('staff cannot move the partner’s shelf (18 Oct: only their own company’s)', !r.ok && /only for your own company/.test(r.error), r);
 
 // 4. he sells 400 (holds 450); Costareen sells 200
 r = await other('erpCreateInvoice', [{ customer: { name: 'Buyer B', phone: '01712345679' }, items: [{ sku: JS, qty: 400 }], payMode: 'full', paymentMethod: 'Cash' }]);
