@@ -2148,3 +2148,12 @@ button again); blog posts with prices are offered as pages - the owner decides w
 - Tests: expenses_web_test (+6: dearer website line, parcel tied once, list shows consignment).
 
 Not done: nothing on the website changed (it was already booking correctly). Order 8714's 739 difference not touched.
+
+## 17 Oct 2026 - Live data: INV-20261017-1976 made fully due (owner)
+
+- Checked: not a system error. Dipu recorded a 23,200 bank transfer from Keyring Dhaka on 16 Oct as 11,200 (INV-1918)
+  + 8,000 (INV-1938) + 4,000 advance. Saving INV-1976 on 17 Oct (Mehedi) used that advance automatically, as designed
+  (createInvoice -> applyCredit).
+- Owner: the invoice is fully due. Counter-entries C261017170605-u / -ur put the 4,000 back on the customer's advance
+  balance (nothing deleted); invoice paid 0, due 6,400, Pending; its 40 points set to 0; logged in invoice_fixes.
+  Keyring Dhaka now: owes 6,400, advance 4,000 (it will be used by their next invoice unless Dipu's entry was wrong).
