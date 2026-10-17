@@ -2127,3 +2127,24 @@ supplier or commission picks the account from the list the server gives without 
 
 Not done: pages behind a login or built only by JavaScript are not read; nothing is re-read automatically (press the
 button again); blog posts with prices are offered as pages - the owner decides whether the AI should quote them.
+
+## 17 Oct 2026 - Web orders: website price kept, the website's parcel shown and tied to the invoice
+
+- Bug: order 8929 was 4,914 on the website but its invoice 4,814. The website sold SUNLU PLA+ Grey at 1,650, the ERP
+  price is 1,550; entering only handled a website line CHEAPER than ours (as a discount), a dearer one fell back to our
+  price. Now a dearer website line goes on the invoice at the website's price per piece (createInvoice `agreed`).
+- Live fix: INV-20261017-1980 Grey line 1,550 -> 1,650 (invoice line + stock movement), subtotal 4,750, total and due
+  4,914; logged in invoice_fixes; PDF redrawn on next open (pdf_designed=false). Snapshot taken first.
+- Checked every entered web order against its invoice: only 8714 (13 Sep, 8,589 vs 7,850, sheet era) differs - left
+  for the owner.
+- The website's plugin books Steadfast itself. The ERP did not know: the invoice said "no parcel", so a second booking
+  from the ERP was possible. `linkWebParcels` (on every website check, the timer, and right after entering an order)
+  writes the website's consignment into courier_log against the order's invoice ("[website] booked by the website").
+  Live: 309657100 tied to INV-20261017-1980.
+- Web orders: the consignment number and courier status under each order number ("No parcel yet" otherwise), who
+  booked it, the invoice number under "Entered". Each open parcel is asked from the business's own Steadfast account
+  (keys in Settings > Courier); a parcel not found there says "Not in your Steadfast account". 309657100 IS on the
+  account, status in_review.
+- Tests: expenses_web_test (+6: dearer website line, parcel tied once, list shows consignment).
+
+Not done: nothing on the website changed (it was already booking correctly). Order 8714's 739 difference not touched.

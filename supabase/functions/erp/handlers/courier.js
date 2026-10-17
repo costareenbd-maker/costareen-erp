@@ -88,6 +88,16 @@ export async function sfCall(ctx, method, path, body) {
   return json;
 }
 
+/** One parcel asked from this business's Steadfast account: {status, mine}; null without keys. mine = false when
+ *  Steadfast says the parcel is not on this account (it was booked with other keys). */
+export async function sfStatus(ctx, cid) {
+  const k = await sfKeys(ctx);
+  if (!k.key || !k.secret) return null;
+  const r = await sfCall(ctx, 'GET', '/status_by_cid/' + encodeURIComponent(cid), null);
+  const st = String((r && r.delivery_status) || '').toLowerCase();
+  return { status: st, mine: !!st };
+}
+
 /** czFetch_ (Code:3852): the website's sync bridge. */
 async function czFetch(ctx, path) {
   const key = await getSecret(ctx, 'CZ_SYNC_KEY');

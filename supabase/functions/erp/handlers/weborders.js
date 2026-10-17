@@ -81,13 +81,19 @@ export async function pullWebOrders(ctx) {
   await lock(ctx, 'website');
   // a WooCommerce or Shopify shop without the plugin (handlers/stores.js)
   const kind = str(await getConfig(ctx, 'website_kind', '')) || 'plugin';
-  if (kind !== 'plugin') return (await import('./stores.js')).storePull(ctx);
+  if (kind !== 'plugin') {
+    const r = await (await import('./stores.js')).storePull(ctx);
+    try { if (r) r.parcels = await ctx.tx.savepoint(() => linkWebParcels(ctx)); } catch (_) { /* next time */ }
+    return r;
+  }
   const since = new Date(Date.now() - LOOKBACK_DAYS * DAY_MS);
   const iso = since.toISOString().slice(0, 19);
   const res = await czFetch(ctx, 'GET', '/orders?limit=100&since=' + encodeURIComponent(iso));
   const items = (res && res.items) || [];
   const added = await addWebLines(ctx, items);
-  return { ok: true, fetched: items.length, added };
+  let parcels = 0;
+  try { parcels = await ctx.tx.savepoint(() => linkWebParcels(ctx)); } catch (_) { /* next time */ }
+  return { ok: true, fetched: items.length, added, parcels };
 }
 
 /**
@@ -257,10 +263,33 @@ async function webOrders(ctx) {
 
 /** erpWebOrders (ERP.js:1507): website orders grouped per order number, newest first. */
 export async function erpWebOrders(ctx) {
-  return (await webOrders(ctx)).map((o) => {
+  const list = await webOrders(ctx);
+  const site = await siteParcels(ctx, 30);
+  const { mine } = await looseInvoices(ctx);
+  let booked = {}, sfStatus = null;
+  try { const c = await import('./courier.js'); booked = await c.sfBooked(ctx); sfStatus = c.sfStatus; } catch (_) { /* no courier module */ }
+  const words = { delivered: 'Delivered', partial_delivered: 'Part delivered', in_review: 'With the courier', pending: 'Waiting pickup',
+                  hold: 'On hold', cancelled: 'Cancelled', returned: 'Came back', unknown: 'Courier says unknown' };
+  const out = list.map((o) => {
     const { orderId, ...rest } = o;
-    return { ...rest, lines: o.lines.map(({ lineId, ...l }) => l) };
+    const inv = mine[o.no] || '', b = inv && booked[inv], s = site[o.no];
+    const cid = (b && b.consignment) || (s && s.consignment) || '';
+    return { ...rest, lines: o.lines.map(({ lineId, ...l }) => l), invoiceNo: inv, consignment: cid,
+             bookedBy: b && b.consignment ? 'erp' : s ? 'website' : '', courier: (s && s.consignment === cid && s.courier) || '' };
   });
+  // the newest parcels not delivered yet: asked from this business's own Steadfast account - a parcel booked on another
+  // account (the website's plugin with other keys) is not found there, and the owner cannot see it in his panel
+  if (sfStatus) {
+    const ask = out.filter((o) => o.consignment && o.courier !== 'delivered').slice(0, 12);
+    await Promise.all(ask.map(async (o) => {
+      const r = await sfStatus(ctx, o.consignment).catch(() => null);
+      if (!r) return;
+      o.inAccount = r.mine;
+      if (r.status) o.courier = r.status;
+    }));
+  }
+  for (const o of out) o.courierLabel = o.courier ? (words[o.courier] || o.courier) : '';
+  return out;
 }
 
 /** erpWebPayment_ (ERP.js:5759): what the website's payment words mean here. */
@@ -295,7 +324,7 @@ export async function erpEnterWebOrder(ctx, orderNo) {
   const by = {};
   for (const p of await erpCatalog(ctx)) by[p.sku.toLowerCase()] = p;
   const m = await matcher(ctx);
-  const items = [], unknown = [];
+  const items = [], unknown = [], agreed = [];
   for (const ln of order.lines) {
     const hit = m.find(ln.sku, ln.product);
     const rec = hit ? by[str(hit.product.sku).toLowerCase()] : null;
@@ -303,6 +332,9 @@ export async function erpEnterWebOrder(ctx, orderNo) {
     const listTotal = rec.sell * ln.qty;
     const disc = Math.max(0, Math.round(listTotal - ln.lineTotal));
     items.push({ sku: rec.sku, qty: ln.qty, discount: disc });
+    // owner 17 Oct 2026: order 8929 sold Grey at 1,650 on the website, 1,550 here - the invoice came out 100 short.
+    // A dearer website line goes on the invoice at the website's own price per piece.
+    agreed.push(ln.qty > 0 && ln.lineTotal > listTotal + 0.5 ? Math.round((ln.lineTotal / ln.qty) * 100) / 100 : 0);
   }
   if (unknown.length) {
     throw new Error('Not matched to a product yet: ' + unknown.join(', ') +
@@ -323,9 +355,11 @@ export async function erpEnterWebOrder(ctx, orderNo) {
     payMode: /^cod$/i.test(pay.method) ? 'cod' : pay.status === 'Paid' ? 'full' : 'none',
     paymentMethod: /^cod$/i.test(pay.method) ? '' : pay.method,
     note: 'WEB-' + no,
-  }, { webEntry: true, webOrderNo: no });
+  }, { webEntry: true, webOrderNo: no, agreed });
 
   await markEntered(ctx, order.lines.map((l) => l.lineId), res.invoiceId);
+  // the website may have booked the parcel already: tie it to the new invoice so nobody books it twice
+  try { await ctx.tx.savepoint(() => linkWebParcels(ctx, { [no]: res.invoiceNo })); } catch (_) { /* the website did not answer: the next check does it */ }
 
   // the PDF, when the sales group's builder exists (as the original, a
   // failed PDF does not undo the sale)
@@ -500,6 +534,58 @@ export async function erpLinkWebOrder(ctx, payload) {
 }
 
 // ------------------------------------------------------------ the courier
+
+/** What the website booked with the courier itself (its Steadfast plugin): order no -> {consignment, courier}. */
+async function siteParcels(ctx, days) {
+  if (ctx.memo.siteParcels) return ctx.memo.siteParcels;
+  const out = {};
+  if (await getSecret(ctx, 'CZ_SYNC_KEY')) {
+    try {
+      const res = await czFetch(ctx, 'GET', '/cod?days=' + (days || 30) + '&limit=200', null);
+      for (const o of (res && res.orders) || []) {
+        if (o.consignment) out[String(o.order_no)] = { consignment: String(o.consignment), courier: String(o.courier || '').toLowerCase() };
+      }
+    } catch (_) { /* the website did not answer: nothing known this time */ }
+  }
+  ctx.memo.siteParcels = out;
+  return out;
+}
+
+/**
+ * Parcels the website booked go into the ERP's courier log against the order's invoice (owner 17 Oct 2026: the
+ * invoice said "no parcel" while the website had booked one - a second booking from the ERP would send it twice).
+ * `fresh` = {orderNo: invoiceNo} for invoices made in this call. Returns how many were tied.
+ */
+export async function linkWebParcels(ctx, fresh) {
+  const site = await siteParcels(ctx, 30);
+  if (!Object.keys(site).length) return 0;
+  const { mine } = await looseInvoices(ctx);
+  Object.assign(mine, fresh || {});
+  const { sfBooked } = await import('./courier.js');
+  const { outstanding } = await import('./money.js');
+  const booked = await sfBooked(ctx), used = {};
+  for (const k of Object.keys(booked)) if (booked[k].consignment) used[booked[k].consignment] = k;
+  let n = 0;
+  for (const no of Object.keys(site)) {
+    const inv = mine[no], cid = site[no].consignment;
+    if (!inv || used[cid] || (booked[inv] && booked[inv].consignment)) continue;
+    const o = await outstanding(ctx, inv);
+    if (!o) continue;
+    if (booked[inv]) {
+      await ctx.tx`update courier_log set consignment_id = ${cid} where id = ${booked[inv].row} and business_id = ${ctx.biz}`;
+    } else {
+      await ctx.tx`
+        insert into courier_log (business_id, booked_at, invoice_no, consignment_id, customer, phone, address,
+                                 cod_amount, invoice_total, booked_by, note)
+        values (${ctx.biz}, ${new Date()}, ${inv}, ${cid}, ${o.customer}, ${o.phone}, ${o.address},
+                ${o.owed}, ${o.grand}, ${'Website'}, ${'[website] booked by the website for order ' + no})`;
+    }
+    used[cid] = inv;
+    n++;
+  }
+  if (n) forget(ctx, 'COURIER_LOG', 'COURIER_LOG_SEQ');
+  return n;
+}
 
 /** ERP_COURIER_WORDS (ERP.js:5799) */
 const ERP_COURIER_WORDS = {

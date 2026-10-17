@@ -432,6 +432,28 @@ check('sales refused courier', !r.ok && r.error === 'Your account does not have 
 r = await mgr('erpBundle', [['weborders']]);
 check('bundle weborders part', r.ok && r.result.weborders && r.result.weborders.length === 4, r.result && r.result.errors);
 
+// ---- owner 17 Oct 2026: a website line dearer than our price; the website's own Steadfast booking tied to the invoice
+await sql`insert into business_secrets (business_id, key, value) values (${B}, 'CZ_SYNC_KEY', 'sekrit') on conflict do nothing`;
+feed = feed.concat([{ number: 2004, created: today + ' 14:18:00', status: 'processing', sku: PLA, product: 'Sunlu PLA Black', qty: 1, line_total: 1500,
+  customer: 'Imran', phone: '01766444771', address: 'Narinda', payment: 'Cash on delivery', total: 1620 }]);
+web.on(/\/cod\?/, () => ({ body: { orders: [{ order_no: '2004', date: today, customer: 'Imran', phone: '01766444771', method: 'Cash on delivery', total: 1620, cod_amount: 1620, consignment: '309657100', courier: 'in_review' }] } }));
+await asOwner((ctx) => W.pullWebOrders(ctx));
+r = await mgr('erpEnterWebOrder', ['2004']);
+check('order 2004 entered', r.ok, r.error);
+row = (await sql`select * from invoices where invoice_no = ${r.result && r.result.invoiceNo}`)[0] || {};
+const l2004 = (await sql`select unit_price, line_total from invoice_lines where invoice_id = ${row.id || null}`)[0] || {};
+check('dearer website line: invoice at the website price (1500 + 120 delivery = 1620, not 100 short)',
+  Number(row.grand_total) === 1620 && Number(l2004.unit_price) === 1500 && Number(row.delivery_charge) === 120, [row.grand_total, l2004, row.delivery_charge]);
+const cl = await sql`select consignment_id, cod_amount, note from courier_log where business_id = ${B} and invoice_no = ${row.invoice_no || ''}`;
+check('the website parcel is tied to the invoice (no second booking possible)', cl.length === 1 && cl[0].consignment_id === '309657100' && Number(cl[0].cod_amount) === 1620 && /website/.test(cl[0].note), cl);
+await asOwner((ctx) => W.pullWebOrders(ctx));
+check('pulling again does not tie it twice', (await sql`select count(*)::int n from courier_log where business_id = ${B} and consignment_id = '309657100'`)[0].n === 1);
+r = await mgr('erpWebOrders', []);
+const o4 = (r.result || []).find((o) => o.no === '2004') || {};
+check('web orders show the consignment beside the order', o4.consignment === '309657100' && o4.invoiceNo === row.invoice_no && o4.courierLabel === 'With the courier', o4);
+const o3 = (r.result || []).find((o) => o.no === '1003') || {};
+check('an order with no parcel says so (empty)', o3.consignment === '', o3);
+
 // another business sees none of it
 const other = await sql`select count(*)::int as n from web_orders where business_id = ${FIX.B2}`;
 check('nothing leaked to B2', other[0].n === 0);
