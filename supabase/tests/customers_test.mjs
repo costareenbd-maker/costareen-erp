@@ -101,6 +101,8 @@ check('reminder written: key, name, phone, rounded due, who', r.ok && r.result.o
 r = await mgr('erpDues', []);
 check('dues show the reminder as today', r.ok && r.result.byKey['1712345678'].reminded &&
   r.result.byKey['1712345678'].reminded.days === 0 && r.result.byKey['1712345678'].reminded.by === 'Rina', r.result.byKey);
+check('each dues entry carries its own name and phone (the page lists only 100 customers)', Object.values(r.result.byKey).every((b) => b.name) &&
+  r.result.byKey['1712345678'].phone && /1712345678$/.test(r.result.byKey['1712345678'].phone.replace(/\D/g, '')), r.result.byKey);
 
 // ---------------------------------------------------------------- statement
 // an old invoice 400 days ago, 200 recorded on the sheet but never in the ledger

@@ -7690,8 +7690,9 @@ function custMoneyBoxes() {
   for (var k in DUES.byKey) {
     if (!DUES.byKey.hasOwnProperty(k)) continue;
     var b = DUES.byKey[k], c = known[k] || null;
-    var who = { key: k, name: c ? c.name : (k.indexOf('n:') === 0 ? k.slice(2) : ''),
-                phone: c ? c.phone : (k.indexOf('n:') === 0 ? '' : '0' + k),
+    // the dues carry their own name and phone (CUST may hold only the first page of customers)
+    var who = { key: k, name: (c && c.name) || b.name || (k.indexOf('n:') === 0 ? k.slice(2) : ''),
+                phone: (c && c.phone) || b.phone || (k.indexOf('n:') === 0 ? '' : '0' + k),
                 due: b.due || 0, credit: b.credit || 0, invoices: b.invoices || 0, oldest: b.oldest || 0,
                 reminded: b.reminded || null };
     if (who.due > 0) owe.push(who);

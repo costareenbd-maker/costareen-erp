@@ -219,13 +219,24 @@ export async function erpDues(ctx) {
   for (const c of cust) {
     const bk = custKey(c.phone, c.customer);
     if (!bk || bk === 'n:') continue;
+    // owner 18 Oct 2026: each entry carries its own name and phone - the page's customer list holds only the first
+    // 100 customers, so newer customers who owe showed as "-"
     byKey[bk] = { due: Math.round(c.due), credit: 0, reminded: reminded[bk] || null,
-                  invoices: c.invoices, oldest: c.oldest };
+                  invoices: c.invoices, oldest: c.oldest, name: c.customer, phone: c.phone };
   }
+  let names = null;
   for (const ck of Object.keys(credit)) {
     if (!(credit[ck] > 0.5)) continue;
-    if (byKey[ck]) byKey[ck].credit = Math.round(credit[ck]);
-    else byKey[ck] = { due: 0, credit: Math.round(credit[ck]), invoices: 0, oldest: 0 };
+    if (byKey[ck]) { byKey[ck].credit = Math.round(credit[ck]); continue; }
+    if (!names) {
+      names = {};
+      for (const r of await ctx.tx`select name, phone from customers where business_id = ${ctx.biz}`) {
+        const k = custKey(str(r.phone), str(r.name));
+        if (k && !names[k]) names[k] = { name: str(r.name), phone: str(r.phone) };
+      }
+    }
+    const n = names[ck] || {};
+    byKey[ck] = { due: 0, credit: Math.round(credit[ck]), invoices: 0, oldest: 0, name: n.name || (ck.indexOf('n:') === 0 ? ck.slice(2) : ''), phone: n.phone || '' };
   }
 
   return { customers: cust, invoices: out, byKey, total: Math.round(total),

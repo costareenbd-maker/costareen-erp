@@ -2176,3 +2176,11 @@ Not done: nothing on the website changed (it was already booking correctly). Ord
   change, passed earlier the same day.
 
 Not done: nothing sent to the live website yet - the owner presses the button or switches it on.
+
+## 18 Oct 2026 - Customers who owe: names never "-" again
+
+- Cause: the list took each name from the page's customer list (CUST), which holds only the first page (100) of
+  customers; every newer customer who owed (rows 133, 244, 316: Imranul Haque, Ahmad Hafeez, Salafi) showed "-". It
+  came back whenever a new customer owed money.
+- Fix: erpDues byKey entries carry name and phone (credit-only entries looked up in customers); the page uses them
+  when CUST does not have the customer. Test: customers_test.
