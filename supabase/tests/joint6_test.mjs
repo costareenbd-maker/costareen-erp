@@ -100,6 +100,14 @@ r = await owner('erpPnl', []);
 const pm = ((r.result && (r.result.months || r.result)) || []).find ? (r.result.months || r.result).find((m) => m.month === month) : null;
 check('Costareen’s profit for the month includes its share of the joint profit (profit x its ratio)',
   pm && Math.abs(pm.jointShare - Math.round(num(book.this_month.profit) * ratio)) <= 1 && pm.jointShare !== 0, [pm && pm.jointShare, book.this_month.profit, ratio]);
+// the balance sheet: our part of the joint stock = profit share + what we paid in - the joint goods we sold
+const me6 = book.partners.find((p) => p.business_id === A);
+const part = Math.round(num(me6.profit_share) + num(me6.purchases) + num(me6.expenses_paid) + num(me6.transfers_out) - num(me6.transfers_in) - num(me6.invoiced));
+r = await owner('erpBalanceSheet', []);
+const jl = r.ok ? r.result.owns.concat(r.result.owes).find((x) => x.key === 'joint') : null;
+check('balance sheet: a joint line with our part (owns when above 0)', jl && Math.round(r.result.owns.some((x) => x.key === 'joint') ? jl.amount : -jl.amount) === part && /Printers JV/.test(jl.what), [jl, part]);
+r = await owner('erpFdDash', [{}]);
+check('dashboard net-profit breakdown shows the joint share', !r.ok || !r.result.calc || !r.result.calc.net || r.result.calc.net.some((x) => /joint stock profit/.test(x[0])), r.ok && r.result.calc && r.result.calc.net);
 check('another business sees none of it', (await sql`select count(*)::int n from pool_requests where pool_id <> ${POOL}`)[0].n === 0);
 function num(v) { const n = Number(v); return isFinite(n) ? n : 0; }
 await done();

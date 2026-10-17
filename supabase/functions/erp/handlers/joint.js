@@ -1141,5 +1141,27 @@ export async function jointShareByMonth(ctx, months) {
   return out;
 }
 
+/**
+ * This company's part of each joint stock, for its balance sheet (owner 18 Oct 2026). The money and the customer dues
+ * of its own joint sales are already in its own cash and dues, so they are taken off here; what it paid into the pool
+ * (stock bought, shared costs, cash handed over) and its share of the pool's profit are added:
+ *   part = profit share + purchases paid + expenses paid + cash handed over - cash received - joint goods it sold.
+ * Above 0: something it owns. Below 0: it owes the joint stock. Capital written in the pool is not cash that left
+ * this company, so it is not counted.
+ */
+export async function jointPosition(ctx) {
+  const out = [];
+  if (!(await jointOn(ctx))) return out;
+  const me = await sellerId(ctx);
+  for (const pool of await myPools(ctx)) {
+    const r = (await poolRead(ctx, (t) => t`select pool_settlement(${pool.id}, null) as r`))[0];
+    const p = ((((r && r.r) || {}).partners) || []).find((x) => x.business_id === me);
+    if (!p) continue;
+    const part = round2(num(p.profit_share) + num(p.purchases) + num(p.expenses_paid) + num(p.transfers_out) - num(p.transfers_in) - num(p.invoiced));
+    out.push({ pool: pool.name, amount: part, profitShare: num(p.profit_share), sold: num(p.invoiced), paidIn: round2(num(p.purchases) + num(p.expenses_paid)) });
+  }
+  return out;
+}
+
 export const HANDLERS = { erpJointAsk, erpJointSend, erpJointGot, erpJointAskAct, erpJointMove, erpJoint, erpJointCatalog, erpJointStart, erpJointProduct, erpJointReceive, erpJointAdjust, erpJointBook, erpJointSettings,
                           erpJointAgree, erpJointCard, erpJointStatementPdf, erpPlatformJointCopy };

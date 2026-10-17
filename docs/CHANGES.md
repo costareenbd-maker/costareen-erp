@@ -2230,3 +2230,16 @@ printers sold on paper = real invoices on their original dates.
 Not done: the Profitability screen shows jointShare only inside Net profit (no line of its own yet); the balance
 sheet does not yet list "our part of the joint stock", so after it is opened the joint profit share will show as a
 difference until that line is added.
+
+## 18 Oct 2026 - Joint share on Profitability and the balance sheet (tag joint-share-1)
+
+- Profitability: line "Share of joint stock profit" above Net profit (when any month has one), in the CSV export, and
+  in the dashboard's net-profit breakdown ("+ Share of joint stock profit"). The joint-sales note explains it.
+- Balance sheet: "Our part of the joint stock (<pool>)" (or, below 0, "Owed to the joint stock") =
+  profit share + stock and shared costs this company paid for the pool + cash handed over - cash received - the joint
+  goods it sold (their money and dues are already in its own cash and customer dues). Capital written in the pool is
+  not cash that left the company, so it is not counted. jointPosition in joint.js. Checked by hand: a credit sale, its
+  payment, a purchase and capital keep owns - owes = equity.
+- Needs the owner's habit: money this company pays for joint stock or a joint expense must also leave its own cash
+  book (as money out, not as an expense of its own), or the balance sheet shows that amount as a difference.
+- Live: protoreen line shows 0 (pool still empty). Tests: joint6 (+2).

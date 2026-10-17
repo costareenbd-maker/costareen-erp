@@ -7255,6 +7255,7 @@ function pnlHtml() {
     h += row(esc(c), function (m) { return m.byCat[c] || 0; }, { minus: true, indent: true });
   });
   h += row('Total operating expenses', 'expenses', { minus: true }) +
+    (M.some(function (m) { return m.jointShare; }) ? row('Share of joint stock profit', 'jointShare', { indent: true }) : '') +   // owner 18 Oct 2026
     row('Net profit', 'net', { strong: true, color: true }) +
     row('Net margin', 'netMargin', { pct: true, indent: true }) +
     '</tbody></table></div>' +
@@ -11164,6 +11165,7 @@ function pnlCsv() {
   add('Courier: delivery + COD fee', function (m) { return -m.courier; });
   PNL.categories.forEach(function (c) { add(c, function (m) { return -(m.byCat[c] || 0); }); });
   add('Total operating expenses', function (m) { return -m.expenses; });
+  add('Share of joint stock profit', function (m) { return m.jointShare || 0; });
   add('Net profit', function (m) { return m.net; });
   add('Net margin %', function (m) { return m.netMargin; });
   downloadText('Profit and loss ' + M[0].month + ' to ' + M[M.length - 1].month + '.csv', rows.map(function (r) { return r.map(q).join(','); }).join('\r\n'));
@@ -20558,7 +20560,7 @@ viewProfit = function () {
   var N = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
   return h + '<section><div class="note"><div class="ico">i</div><div><strong>Joint stock in these sales:</strong> ' + PNL.months.filter(function (m) { return m.joint; }).map(function (m) {
     return N[Number(m.month.slice(5, 7)) - 1] + ' ' + fmt(m.joint); }).join(' · ') +
-    '.<br>It is counted in Sales and, for the same amount, in Cost of goods sold: you hold that money for the joint book, so it adds no profit here. Its profit is under Joint stock.</div></div></section>';
+    '.<br>It is counted in Sales and, for the same amount, in Cost of goods sold: you hold that money for the joint book, so it adds no profit there. Your part of the joint stock’s profit (by your share of its capital) is the line “Share of joint stock profit”, inside Net profit.</div></div></section>';
 };
 
 // ---- the old Capital > Partnership tab: only where joint stock is on, and only for what is not on the Joint stock page

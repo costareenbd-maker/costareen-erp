@@ -45,6 +45,13 @@ async function figures(ctx, frozen) {
     { key: 'suppliers', what: 'Owed to suppliers (goods received, not paid)', sub: '', amount: Math.round(num(sup.owedTotal)) },
     { key: 'advances', what: 'Customers paid ahead (their advances)', sub: '', amount: Math.round(credit) },
   ];
+  // owner 18 Oct 2026: this company's part of each joint stock (a minus = owed to the joint stock)
+  const joint = await soft(ctx, async () => (await import('./joint.js')).jointPosition(ctx), []);
+  for (const j of joint) {
+    const sub = 'paid in ' + Math.round(j.paidIn) + ' + profit share ' + Math.round(j.profitShare) + ' - joint goods we sold ' + Math.round(j.sold);
+    if (j.amount >= 0) owns.push({ key: 'joint', what: 'Our part of the joint stock (' + j.pool + ')', sub, amount: Math.round(j.amount) });
+    else owes.push({ key: 'joint', what: 'Owed to the joint stock (' + j.pool + ') - money from its goods we sold', sub, amount: Math.round(-j.amount) });
+  }
   return { owns, owes, cb, stock };
 }
 const total = (rows) => rows.reduce((t, r) => t + num(r.amount), 0);
