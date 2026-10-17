@@ -64,7 +64,7 @@ function clean(x) {
     title: t(x.title, 40).trim() || 'INVOICE', thanks: t(x.thanks, 300), terms: t(x.terms, 2000),
     qrId: t(x.qrId, 200), qrLabel: (t(x.qrLabel, 60).trim() === 'Scan to pay' ? '' : t(x.qrLabel, 60)) || 'Bangla QR',
     bigTop: x.bigTop === true, logoSize: ['s', 'm', 'l'].includes(x.logoSize) ? x.logoSize : 'm', logoSide: x.logoSide === 'right' ? 'right' : 'left',
-    show: { banks: sh.banks !== false, qr: sh.qr !== false, signature: !!sh.signature, phone: sh.phone !== false, delivery: sh.delivery !== false, myqr: sh.myqr !== false },
+    show: { banks: sh.banks !== false, qr: sh.qr !== false, signature: !!sh.signature, phone: sh.phone !== false, delivery: sh.delivery !== false, myqr: sh.myqr !== false, prevdue: sh.prevdue !== false },
   };
   return d;
 }
@@ -87,7 +87,7 @@ function parts(d, p, s, opt, img, now, D) {
   const dark = HEX.test(String(D.dark)) ? D.dark : HEX.test(String(s.dark)) ? s.dark : '#303030';
   const cur = String(s.currency || 'BDT');
   const n = (v) => String(Math.round(num(v))).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-  const paidUp = !(d.due > 0.5);
+  const paidUp = !(d.due > 0.5) && !(num(d.prevDue) > 0.5);
   const banks = D.show.banks ? (p.banks || []).filter((b) => String(b.bank || b.number || '').trim()).slice(0, 3) : [];
   const qr = D.show.qr ? img.qr : '';
   const when = d.head.when ? formatDate(d.head.when, 'd MMMM yyyy') : '';
@@ -125,7 +125,10 @@ function sumRows(P, d) {
   return P.sums.map((x) => '<tr><td>' + x[0] + '</td><td class="r">' + x[1] + '</td></tr>').join('') +
     '<tr class="tot"><td>Total</td><td class="r">' + esc(P.cur) + ' ' + P.n(d.grand) + '</td></tr>' +
     '<tr><td>Paid</td><td class="r">' + P.n(d.paid) + '</td></tr>' +
-    (P.paidUp ? '<tr class="ok"><td>Due</td><td class="r">Nothing due</td></tr>' : '<tr class="due"><td>Due</td><td class="r">' + esc(P.cur) + ' ' + P.n(d.due) + '</td></tr>');
+    (num(d.prevDue) > 0.5
+      ? '<tr><td>This invoice due</td><td class="r">' + P.n(d.due) + '</td></tr><tr><td>Previous due' + (d.prevCount ? ' (' + d.prevCount + ')' : '') + (d.prevAt ? '<br><span style="font-weight:400;font-size:7.5pt">as of ' + esc(d.prevAt) + '</span>' : '') + '</td><td class="r">' + P.n(d.prevDue) + '</td></tr>' +
+        '<tr class="due"><td>Total due now</td><td class="r">' + esc(P.cur) + ' ' + P.n(num(d.due) + num(d.prevDue)) + '</td></tr>'
+      : P.paidUp ? '<tr class="ok"><td>Due</td><td class="r">Nothing due</td></tr>' : '<tr class="due"><td>Due</td><td class="r">' + esc(P.cur) + ' ' + P.n(d.due) + '</td></tr>');
 }
 // the words under the payment QR: "Bangla QR" gets its usual explanation under it
 function qrWords(D, small) {
@@ -185,9 +188,9 @@ function stampHtml(P, d) {
   return '<div class="pstamp" style="color:' + col + ';border-color:' + col + '">' + txt + '</div>';
 }
 function bigBottom(P, d) {
-  const owed = num(d.due) > 0.5;
-  return '<div class="bigb" style="background:' + (owed ? '#fdf2f2' : P.a5) + ';border-left:2.2mm solid ' + (owed ? '#c0262d' : P.accent) + '"><span>' + (owed ? 'Amount due' : 'Total') + '</span>' +
-    '<i class="sealat">' + sealSvg(!owed) + '</i><b style="color:' + (owed ? '#b91c1c' : P.dark) + '">' + esc(P.cur) + ' ' + P.n(owed ? d.due : d.grand) + '</b></div>';
+  const all = num(d.due) + num(d.prevDue), owed = all > 0.5;
+  return '<div class="bigb" style="background:' + (owed ? '#fdf2f2' : P.a5) + ';border-left:2.2mm solid ' + (owed ? '#c0262d' : P.accent) + '"><span>' + (owed ? (num(d.prevDue) > 0.5 ? 'Total due now' : 'Amount due') : 'Total') + '</span>' +
+    '<em class="amt"><i class="sealat">' + sealSvg(!owed) + '</i><b style="color:' + (owed ? '#b91c1c' : P.dark) + '">' + esc(P.cur) + ' ' + P.n(owed ? all : d.grand) + '</b></em></div>';
 }
 function finish(id, out, P, d, D) {
   let html = out.html;
@@ -208,6 +211,10 @@ function finish(id, out, P, d, D) {
     // a real stamp: tilted, a little see-through and printed over (multiply), so every figure under it still reads
     '.sealat{position:absolute;right:14mm;top:50%;width:37mm;height:37mm;margin:-18.5mm 0 0 0;transform:rotate(-14deg);opacity:.8;mix-blend-mode:multiply;pointer-events:none;z-index:2}.sealat svg{width:100%;height:100%;display:block}' +
     '.sumwrap{position:relative;flex:0 0 auto;align-self:flex-start}.sumwrap .sealat.sealsum{right:6mm;top:62%}' +
+    // owner 18 Oct 2026: the seal's right edge ends on the currency word, so the figures print clear
+    '.bigb .amt{position:relative;font-style:normal;display:inline-block}.bigb .amt .sealat{right:calc(100% - 12mm)}' +
+    // the payment area wraps: bank details on their own line, the QR codes side by side under them (never under the totals)
+    '.pay{flex-wrap:wrap;row-gap:3mm;min-width:0}.pay>div:not(.qr){flex:1 1 100%}' +
     'tr.blank td{height:6.5mm;padding-top:0 !important;padding-bottom:0 !important}' +
     // the page is A4 even with one item: the money part sits at its foot
     'body{min-height:' + (PAGE_H[id] - 4) + 'mm;display:flex;flex-direction:column}.wrap{flex:1 0 auto;display:flex;flex-direction:column}.tail{margin-top:auto;padding-top:4mm}' +
@@ -370,6 +377,7 @@ async function pageFor(ctx, D, invoiceNo) {
   let no = str(invoiceNo);
   if (!no) { const r = await ctx.tx`select invoice_no from invoices where business_id = ${ctx.biz} and invoice_no not like 'RTN-%' order by created_at desc limit 1`; no = r[0] ? r[0].invoice_no : ''; }
   const d = (no && await S.invoiceDocData(ctx, no)) || SAMPLE();
+  if (no && d.invoiceNo === no && S.addPrevDue) await S.addPrevDue(ctx, d, no);
   const p = await S.qProfile(ctx), s = await S.qSettings(ctx);
   if (!str(p.name)) p.name = (ctx.s && ctx.s.businessName) || '';
   const img = await imagesFor(ctx, p, D);

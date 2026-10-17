@@ -56,7 +56,7 @@ check('designed page: business, invoice no, Bill To, Deliver To, method, deliver
   h.includes('Costareen Ltd') && h.includes(A) && h.includes('Rahim') && h.includes('Mirpur') &&
   h.includes('<b>Payment</b><span>Cash</span>') && h.includes('Steadfast courier'), h.slice(0, 200));
 check('designed page: "Amount due BDT 1,660" bar at the bottom with the PAYMENT DUE seal, due row red',
-  /Amount due<\/span><i class="sealat">[\s\S]*?>PAYMENT DUE<[\s\S]*?BDT 1,660<\/b>/.test(h) && h.includes('<tr class="due"><td>Due</td><td>BDT 1,660</td></tr>'));
+  /Amount due<\/span><em class="amt"><i class="sealat">[\s\S]*?>PAYMENT DUE<[\s\S]*?BDT 1,660<\/b>/.test(h) && h.includes('<tr class="due"><td>Due</td><td>BDT 1,660</td></tr>'));
 check('designed page: discount split from the note tag (invoice discount only)',
   h.includes('<tr><td>Invoice discount</td><td>− 100</td></tr>') && !h.includes('Item discounts') &&
   h.includes('<tr><td>Subtotal</td><td>2,700</td></tr>') && h.includes('<tr><td>Delivery</td><td>60</td></tr>') &&
@@ -343,7 +343,7 @@ const made = await sql.begin(async (tx) => {
 });
 h = lastPdf().html;
 check('makeInvoicePdf returns {id,url,name}', made && made.name === 'Invoice_' + P + '.pdf' && made.id && /^https:/.test(made.url), made);
-check('paid in full: Total bar with the PAID seal, per-line discount column, Nothing due', /Total<\/span><i class="sealat">[\s\S]*?>PAID</.test(h) && h.includes('>Discount</th>') &&
+check('paid in full: Total bar with the PAID seal, per-line discount column, Nothing due', /Total<\/span><em class="amt"><i class="sealat">[\s\S]*?>PAID</.test(h) && h.includes('>Discount</th>') &&
   h.includes('<td class="r">−100</td><td class="r">2,600</td>') && h.includes('<tr class="ok"><td>Due</td><td>Nothing due</td></tr>') &&
   h.includes('<tr><td>Discount</td><td>− 100</td></tr>') && !h.includes('Deliver To'), h.slice(h.indexOf('<table class="items"'), h.indexOf('<table class="items"') + 600));
 

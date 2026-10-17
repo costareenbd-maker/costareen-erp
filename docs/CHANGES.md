@@ -2184,3 +2184,19 @@ Not done: nothing sent to the live website yet - the owner presses the button or
   came back whenever a new customer owed money.
 - Fix: erpDues byKey entries carry name and phone (credit-only entries looked up in customers); the page uses them
   when CUST does not have the customer. Test: customers_test.
+
+## 18 Oct 2026 - Invoice: QR not hidden, seal off the figures, previous due and total due now
+
+- The payment area (bank details + payment QR + customer QR) was wider than its room and the customer QR slid under
+  the totals box. It now wraps: bank details on their own line, the QR codes side by side below (all A4 designs).
+- The PAYMENT DUE / PAID seal is pinned to the amount and its right edge ends on the currency word ("BDT"), so the
+  figures print clear at any length (staff could not read the amount on paper).
+- New rows when the customer owes on other invoices: "This invoice due", "Previous due (N) as of <date time>",
+  "Total due now"; the big bar at the bottom shows the total due now. Previous due is read from the payment ledger
+  exactly as Customers > who owe (erpDues) - never from an invoice's stored due (stale for sheet-era invoices) - and
+  only for customers with a phone number. "as of" because a saved PDF does not change when they pay later.
+  Settings > Invoice design > "Previous due and total due now" switches it off.
+- Live check: Tanvir Mahtab INV-20261016-1966 -> previous due (5) 22,235, total due now 23,710 = the dues list.
+- Tests: invoicedesign_test (+6); ivdlayout/sales tests follow the new seal markup.
+
+Not done: PDFs already saved keep the old layout until drawn again (a corrected copy or a new invoice).

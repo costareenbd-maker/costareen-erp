@@ -15,10 +15,10 @@ const count = (h, re) => (h.match(re) || []).length;
 for (const t of ['wave', 'modern', 'minimal', 'classic', 'bold']) {
   let h = await page(t, inv(1, 100, 0));
   check(t + ': 1 item gives 5 rows (4 empty)', count(h, /<tr class="blank">/g) === 4, count(h, /<tr class="blank">/g));
-  check(t + ': paid -> PAID seal on the Total bar at the bottom, nothing on top', /class="bigb"[\s\S]*?Total<\/span><i class="sealat"><svg class="seal"[\s\S]*?>PAID<[\s\S]*?BDT 100</.test(h) && !/class="pstamp"/.test(h), t);
+  check(t + ': paid -> PAID seal on the Total bar at the bottom, nothing on top', /class="bigb"[\s\S]*?Total<\/span><em class="amt"><i class="sealat"><svg class="seal"[\s\S]*?>PAID<[\s\S]*?BDT 100</.test(h) && !/class="pstamp"/.test(h), t);
   check(t + ': the page is filled to A4', /body\{min-height:\d+mm;display:flex/.test(h), t);
   h = await page(t, inv(7, 0, 700));
-  check(t + ': 7 items, no empty rows; PAYMENT DUE seal on the Amount due bar', count(h, /<tr class="blank">/g) === 0 && />PAYMENT DUE</.test(h) && /Amount due<\/span><i class="sealat">[\s\S]*?BDT 700</.test(h), t);
+  check(t + ': 7 items, no empty rows; PAYMENT DUE seal on the Amount due bar', count(h, /<tr class="blank">/g) === 0 && />PAYMENT DUE</.test(h) && /Amount due<\/span><em class="amt"><i class="sealat">[\s\S]*?BDT 700</.test(h), t);
   h = await page(t, inv(2, 50, 150));
   check(t + ': part paid -> PAYMENT DUE seal', />PAYMENT DUE</.test(h) && !/>PAID</.test(h), t);
 }

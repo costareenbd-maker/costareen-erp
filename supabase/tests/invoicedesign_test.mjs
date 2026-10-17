@@ -61,4 +61,19 @@ r = await sales('erpInvoicePreview', [{ design: { template: 'classic' } }]);
 check('no number given: the latest invoice is shown', r.ok && r.result.invoiceNo && !r.result.sample, r.ok ? r.result.invoiceNo : r);
 r = await mgr('erpInvoiceDesignSave', [{ design: { template: 'nope', accent: 'red', font: 'comic' } }]);
 check('unknown values fall back safely', r.ok && r.result.design.template === 'wave' && r.result.design.accent === '' && r.result.design.font === 'sans', r);
+// 9. owner 18 Oct 2026: the customer's other unpaid invoices and the total due now; the seal sits on the currency word
+await mgr('erpInvoiceDesignSave', [{ design: { template: 'wave' } }]);
+r = await mgr('erpCreateInvoice', [{ customer: { name: 'Rahim', phone: '01811111111' }, items: [{ sku: PLA, qty: 1 }], payMode: 'none' }]);
+h = lastHtml();
+check('Rahim owes on an earlier invoice: previous due and total due now on the new one', r.ok && /Previous due \(1\)/.test(h) && /Total due now/.test(h), (h.match(/<table class="sum">[\s\S]*?<\/table>/) || [''])[0].slice(0, 600));
+check('...the big amount is the total due now', /TOTAL DUE NOW|Total due now<\/span>/i.test(h));
+check('the seal is pinned to the amount (on the currency word, not the figures)', /<em class="amt"><i class="sealat">/.test(h) && /\.bigb \.amt \.sealat\{right:calc\(100% - 12mm\)\}/.test(h));
+check('the payment area wraps (QR codes never under the totals)', /\.pay>div:not\(\.qr\)\{flex:1 1 100%\}/.test(h));
+r = await mgr('erpCreateInvoice', [{ customer: { name: 'Karim', phone: '01712345678' }, items: [{ sku: PLA, qty: 1 }], payMode: 'full' }]);
+h = lastHtml();
+check('Karim paid everything: no previous due row', r.ok && !/Previous due/.test(h) && !/Total due now/.test(h));
+await mgr('erpInvoiceDesignSave', [{ design: { template: 'wave', show: { prevdue: false } } }]);
+r = await mgr('erpCreateInvoice', [{ customer: { name: 'Rahim', phone: '01811111111' }, items: [{ sku: PLA, qty: 1 }], payMode: 'none' }]);
+check('switched off in the design: no previous due', r.ok && !/Previous due/.test(lastHtml()));
+
 await done();

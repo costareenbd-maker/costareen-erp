@@ -971,7 +971,8 @@ export function invoiceArtParts(d, p, s, opt, img, now = new Date()) {
   const onAccent = isDark(accent) ? '#ffffff' : dark;
   const biz = String(p.name || '').trim();
   const when = d.head.when ? formatDate(d.head.when, 'd MMMM yyyy') : '';
-  const paidUp = !(d.due > 0.5);
+  const paidUp = !(d.due > 0.5) && !(d.prevDue > 0.5);
+  const owedAll = num(d.due) + num(d.prevDue);
   const banks = (p.banks || []).filter((b) => String(b.bank || b.number || '').trim()).slice(0, 3);
 
   const css =
@@ -1006,7 +1007,7 @@ export function invoiceArtParts(d, p, s, opt, img, now = new Date()) {
     '.sum tr.tot td:first-child{background:' + dark + '}.sum tr.tot td:last-child{font-weight:700;font-size:10.5pt;background:' + a4 + '}' +
     '.sum tr.due td:first-child{background:#b3261e}.sum tr.due td:last-child{color:#b3261e;font-weight:700;font-size:10.5pt;background:#fdeceb}' +
     '.sum tr.ok td:first-child{background:#1e7d46}.sum tr.ok td:last-child{color:#1e7d46;font-weight:700;background:#e8f5ec}' +
-    '.pay{flex:1;min-width:0;font-size:9.5pt;display:flex;gap:6mm;align-items:flex-start}' +
+    '.pay{flex:1;min-width:0;font-size:9.5pt;display:flex;flex-wrap:wrap;gap:3mm 6mm;align-items:flex-start}.pay>div:not(.qr){flex:1 1 100%}' +
     '.bank{display:grid;grid-template-columns:21mm auto;row-gap:.5mm;margin-bottom:2.5mm}.bank .bn{grid-column:1/-1;font-weight:700;font-size:10pt}' +
     '.qr{text-align:center;font-size:8pt;flex:0 0 auto}.qr img{display:block;width:25mm;height:25mm;border:0.3mm solid #c9cdd4;padding:1mm;background:#fff;margin:0 auto 1mm}' +
     '.note{margin-top:3mm;font-size:9pt;color:#5d6672}' +
@@ -1023,7 +1024,7 @@ export function invoiceArtParts(d, p, s, opt, img, now = new Date()) {
     (img.logo ? '<img class="logo" src="' + img.logo + '">' : '') +
     '<div class="ttl" style="left:' + (img.logo ? '50mm' : '16mm') + '">INVOICE</div>' +
     '<div class="brand" style="left:' + (img.logo ? '50.5mm' : '16mm') + '">' + h(biz) + '</div>' +
-    '<div class="owed"><b>' + h(cur) + ' ' + n(paidUp ? d.grand : d.due) + '</b><span>' + (paidUp ? 'Paid in full' : 'Total due') + '</span></div></div>' +
+    '<div class="owed"><b>' + h(cur) + ' ' + n(paidUp ? d.grand : owedAll) + '</b><span>' + (paidUp ? 'Paid in full' : 'Total due') + '</span></div></div>' +
 
     '<div class="wrap"><div class="two"><div class="kv">' +
       '<b>Invoice no.</b><span>' + h(d.invoiceNo) + '</span>' +
@@ -1068,7 +1069,10 @@ export function invoiceArtParts(d, p, s, opt, img, now = new Date()) {
     (d.delivery > 0.5 ? '<tr><td>Delivery</td><td>' + n(d.delivery) + '</td></tr>' : '') +
     '<tr class="tot"><td>Total</td><td>' + h(cur) + ' ' + n(d.grand) + '</td></tr>' +
     '<tr><td>Paid</td><td>' + n(d.paid) + '</td></tr>' +
-    (paidUp ? '<tr class="ok"><td>Due</td><td>Nothing due</td></tr>' : '<tr class="due"><td>Due</td><td>' + h(cur) + ' ' + n(d.due) + '</td></tr>') +
+    (d.prevDue > 0.5
+      ? '<tr><td>This invoice due</td><td>' + n(d.due) + '</td></tr><tr><td>Previous due' + (d.prevCount ? ' (' + d.prevCount + ')' : '') + (d.prevAt ? '<br><span style="font-weight:400;font-size:7.5pt">as of ' + h(d.prevAt) + '</span>' : '') + '</td><td>' + n(d.prevDue) + '</td></tr>' +
+        '<tr class="due"><td>Total due now</td><td>' + h(cur) + ' ' + n(d.due + d.prevDue) + '</td></tr>'
+      : paidUp ? '<tr class="ok"><td>Due</td><td>Nothing due</td></tr>' : '<tr class="due"><td>Due</td><td>' + h(cur) + ' ' + n(d.due) + '</td></tr>') +
     '</table></div>' +
     '<div class="note">' + h(p.footer || 'Thank you for your order.') + '</div></div></div>';
 
@@ -1094,6 +1098,29 @@ export function invoiceArtParts(d, p, s, opt, img, now = new Date()) {
 }
 
 /**
+ * Owner 18 Oct 2026: the invoice also shows what the customer owes on their OTHER invoices and the total due now.
+ * Read from the payment ledger exactly as Customers > who owe (erpDues) - never from an invoice's own stored "due",
+ * which is stale for sheet-era invoices - so a payment already recorded can never be asked for again. Only for a
+ * customer with a phone number (two walk-ins with the same name are not one person). Settings > Invoice design can
+ * switch it off (show.prevdue).
+ */
+export async function addPrevDue(ctx, d, invoiceNo) {
+  d.prevDue = 0; d.prevCount = 0; d.prevAt = formatDate(new Date(), 'd MMM, h:mm a');   // a saved PDF says when it was true
+  try {
+    const { invoiceDesign } = await import('./invoicedesign.js');
+    if ((await invoiceDesign(ctx)).show.prevdue === false) return;
+    const phone = String((d.head && d.head.phone) || '').trim();
+    const key = phone ? custKey(phone, '') : '';
+    if (!key || key === 'n:') return;
+    const { erpDues } = await import('./money.js');
+    for (const x of (await erpDues(ctx)).invoices || []) {
+      if (x.id === invoiceNo || !String(x.phone || '').trim() || custKey(x.phone, '') !== key) continue;
+      d.prevDue = round2(d.prevDue + num(x.due)); d.prevCount++;
+    }
+  } catch (_) { d.prevDue = 0; d.prevCount = 0; }   // never block the invoice for this
+}
+
+/**
  * erpInvoiceDocPdf_ (ERP:11480): draw the designed invoice and save it beside
  * the others. Returns { id, url, name } or null when there is no such invoice.
  * opts.corrected -> Invoice_<no>_corrected_yyMMdd-HHmm.pdf with the red stamp.
@@ -1105,6 +1132,7 @@ export async function makeInvoicePdf(ctx, invoiceNo, opts = {}) {
   const name = 'Invoice_' + invoiceNo + (opts.corrected ? '_corrected_' + formatDate(now, 'yyMMdd-HHmm') : '') + '.pdf';
   const d = await invoiceDocData(ctx, invoiceNo);
   if (!d) return null;
+  await addPrevDue(ctx, d, invoiceNo);
   const p = await qProfile(ctx), s = await qSettings(ctx);
   if (!String(p.name || '').trim()) p.name = (ctx.s && ctx.s.businessName) || '';
   // the chosen invoice design (Settings > Invoice design); its own payment QR when it has one
