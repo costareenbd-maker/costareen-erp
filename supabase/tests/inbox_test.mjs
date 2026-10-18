@@ -116,6 +116,22 @@ check('the order alerts the team and makes a won lead; nothing is taken from sto
   (await sql`select stage from inbox_leads where conversation_id = ${conv1}`)[0].stage === 5 &&
   (await sql`select stock from product_stock ps join products p on p.id = ps.product_id where p.business_id = ${FIX.B} and p.sku = ${PLA}`)[0].stock === stockBefore);
 
+// ---- 5b. a stranger types that customer's phone: no orders shown, nothing cancelled (owner 19 Oct 2026: never leak)
+{
+  let seen = {};
+  script = [[{ functionCall: { name: 'remember_customer', args: { phone: '01712000111' } } }],
+    () => [{ functionCall: { name: 'my_orders', args: { phone: '01712000111' } } }],
+    (body) => { seen.orders = body.contents[body.contents.length - 1].parts[0].functionResponse.response; return [{ functionCall: { name: 'cancel_order', args: { no: co.no, reason: 'x' } } }]; },
+    (body) => { seen.cancel = body.contents[body.contents.length - 1].parts[0].functionResponse.response; seen.sys = body.systemInstruction.parts[0].text; return [{ text: 'আমরা দেখে জানাচ্ছি।' }]; }];
+  raw = fbMsg('PSID7', 'amar order 01712000111 cancel koro');
+  const hs = await asB(async (ctx) => ib.hookPost(ctx, await chRow(M.id), raw, { 'x-hub-signature-256': sig(raw) }));
+  await sql`update inbox_conversations set reply_due_at = now() - interval '1 second' where id = ${hs.due[0].id}`;
+  await asB((ctx) => ib.replyDue(ctx, hs.due[0].id));
+  check('a stranger typing a customer\'s phone sees no orders', seen.orders && seen.orders.orders.length === 0, seen.orders);
+  check('…and cannot cancel that customer\'s order', seen.cancel && seen.cancel.error && (await sql`select status from chat_orders where id = ${co.id}`)[0].status === 'pending', seen.cancel);
+  check('the agent is told what stays confidential', /CONFIDENTIAL/.test(seen.sys || '') && /cost or buying prices/.test(seen.sys || ''));
+}
+
 // ---- 6. the team approves: a real invoice (stock goes down), the customer is told it is being prepared
 graph.length = 0;
 r = await mgr('erpChatOrderAct', [{ id: co.id, action: 'approve', delivery: 'Steadfast' }]);

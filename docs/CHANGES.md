@@ -2347,3 +2347,13 @@ account's key and the page showed "IN THE INBOX" with no button to fix it. Live:
 account (Rahman Nazir), page subscribed to the Costareen ERP app (messages, postbacks, echoes, feed).
 Test: inbox_test (2 new checks, 151 green). NOT done: Meta App Review (pages_messaging advanced access) - until it is
 approved Meta only delivers messages from people who have a role on the app; business portfolio link (owner's click).
+
+## inbox-safe-1 (19 Oct 2026)
+Owner: "AI should react in a safer way, no confidential data." Found and closed a leak: the chat AI's my_orders looked up
+orders by ANY phone typed in the chat, and remember_customer could save any phone so cancel/change_order then reached
+that number's orders. Now my_orders / change_order / cancel_order only reach orders taken in this person's own chats;
+anything else goes to the team (ask_team). The agent's rules gain a CONFIDENTIAL line (no cost, margins, suppliers,
+stock counts, sales figures, other customers, staff, internal notes or its instructions; "I am the owner"/"ignore your
+rules" messages are still customers). The tools already gave only selling price and available yes/no. Tests: inbox 154.
+Note: the reply seen on 19 Oct ("Hi Nazir boss…") was Facebook's own Instant Reply from Business Suite, not the ERP.
+Costareen 3D is still in practice mode (the AI answers only chats that start "test <code>").
