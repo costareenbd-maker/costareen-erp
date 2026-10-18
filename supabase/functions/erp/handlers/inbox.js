@@ -174,6 +174,8 @@ export async function ingest(ctx, ch, ev) {
   // our own messages come back as echoes: drop them; a person's reply from the page / the phone is the team's
   if (ev.echo) {
     if (ev.id && (await ctx.tx`select 1 from inbox_messages where business_id = ${ctx.biz} and external_id = ${ev.id} limit 1`).length) return {};
+    // sent by this ERP's own Meta app: the echo can arrive before the reply is saved - never a team reply
+    if (ev.app && ev.app === str(ctx.deps && ctx.deps.meta && ctx.deps.meta.appId)) return {};
     const contact = await upsertContact(ctx, ch, { from: ev.from });
     let conv = await upsertConv(ctx, ch, contact);
     if (str(ev.text) === '.') {   // "." from the page's inbox or the business's phone: take the chat / give it back

@@ -176,6 +176,18 @@ check('"." from the page inbox takes the chat', (await sql`select mode from inbo
 raw = raw.replace('echo1', 'echo2');
 await asB(async (ctx) => ib.hookPost(ctx, await chRow(M.id), raw, { 'x-hub-signature-256': sig(raw) }));
 check('a second "." gives it back to the AI', (await sql`select mode from inbox_conversations where id = ${conv1}`)[0].mode === 'ai');
+{
+  // the echo of the ERP's own reply can arrive before that reply is saved: it is never kept as a team reply (19 Oct 2026)
+  const keep = deps.meta; deps.meta = { ...(keep || {}), appId: 'APP1' };
+  const n0 = (await sql`select count(*)::int n from inbox_messages where conversation_id = ${conv1}`)[0].n;
+  const e1 = JSON.stringify({ object: 'page', entry: [{ id: 'PAGE1', messaging: [{ sender: { id: 'PAGE1' }, recipient: { id: 'PSID1' }, timestamp: Date.now(), message: { mid: 'echoAI', text: 'AI said this', is_echo: true, app_id: 'APP1' } }] }] });
+  await asB(async (ctx) => ib.hookPost(ctx, await chRow(M.id), e1, { 'x-hub-signature-256': sig(e1) }));
+  check('an echo sent by our own Meta app is dropped', (await sql`select count(*)::int n from inbox_messages where conversation_id = ${conv1}`)[0].n === n0);
+  const e2 = e1.replace('echoAI', 'echoStaff').replace('AI said this', 'Staff typed this').replace(',"app_id":"APP1"', '');
+  await asB(async (ctx) => ib.hookPost(ctx, await chRow(M.id), e2, { 'x-hub-signature-256': sig(e2) }));
+  check('a staff reply typed in the page inbox is still kept as the team\'s', (await sql`select author from inbox_messages where conversation_id = ${conv1} and external_id = 'echoStaff'`)[0]?.author === 'team');
+  deps.meta = keep;
+}
 
 // ---- 8. the timeline and the assistant beside it
 r = await sales('erpInboxOpen', [{ id: conv1 }]);

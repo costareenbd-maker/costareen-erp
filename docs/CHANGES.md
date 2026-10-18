@@ -2357,3 +2357,10 @@ stock counts, sales figures, other customers, staff, internal notes or its instr
 rules" messages are still customers). The tools already gave only selling price and available yes/no. Tests: inbox 154.
 Note: the reply seen on 19 Oct ("Hi Nazir boss…") was Facebook's own Instant Reply from Business Suite, not the ERP.
 Costareen 3D is still in practice mode (the AI answers only chats that start "test <code>").
+
+## inbox-echo-1 (19 Oct 2026)
+First live AI test on Costareen 3D (practice chat "test 16716", "PLA black ache?"): the AI answered in Bangla with black PLA
+product cards and a follow-up line, ~20 s after the message. Bug seen: Meta's echo of the AI's own message arrived before the
+reply's transaction was saved, so it was stored again as a "team" reply (message 8412 duplicates 8409 - left as is).
+Echoes sent by this ERP's own Meta app (message.app_id = META_APP_ID) are now dropped; a staff reply typed in the page inbox
+is still kept as the team's. Tests: inbox 156.

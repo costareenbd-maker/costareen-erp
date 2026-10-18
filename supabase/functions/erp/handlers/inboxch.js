@@ -204,7 +204,7 @@ export function readHook(kind, body) {
         if (m.read || m.delivery || m.reaction) continue;
         if (!m.message) continue;
         const msg = m.message, att = (msg.attachments || [])[0];
-        const ev = { type: 'message', from, id: str(msg.mid), text: str(msg.text), echo, at: m.timestamp, payload: str(msg.quick_reply && msg.quick_reply.payload) };
+        const ev = { type: 'message', from, id: str(msg.mid), text: str(msg.text), echo, app: str(msg.app_id), at: m.timestamp, payload: str(msg.quick_reply && msg.quick_reply.payload) };
         if (att && att.payload && att.payload.url) ev.media = { kind: att.type === 'audio' ? 'audio' : att.type === 'image' ? 'image' : att.type === 'video' ? 'video' : 'file', url: att.payload.url };
         out.push(ev);
       }
