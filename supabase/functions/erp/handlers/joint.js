@@ -427,7 +427,8 @@ export async function erpJointProduct(ctx, payload) {
   payload = payload || {};
   await needOn(ctx);
   const pool = await poolOf(ctx, payload.pool);
-  needOwner(ctx, pool);
+  // owner 18 Oct 2026: staff of both companies add new joint products; changing one (price, floor, still sold) stays the owners'
+  if (!payload.isNew) needOwner(ctx, pool);
   const retail = num(payload.retail), wholesale = num(payload.wholesale), floor = num(payload.floor), cost = num(payload.cost);
   if (!str(payload.name)) throw new Error('What is the product called?');
   if (!(retail > 0)) throw new Error('Type the retail selling price.');

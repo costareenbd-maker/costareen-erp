@@ -20061,10 +20061,10 @@ function jtStockHtml(d, pool) {
     '<button class="btn primary" type="button" data-jt="f-receive">+ Receive a shipment</button>' +
     '<button class="btn" type="button" data-jt="f-ask">Ask for stock</button>' +
     '<button class="btn" type="button" data-jt="f-move">Send stock</button>' +
-    (ed ? '<button class="btn" type="button" data-jt="f-new">+ New joint product</button><button class="btn" type="button" data-jt="f-adjust">Correct a count</button>' : '') + '</div>';
+    '<button class="btn" type="button" data-jt="f-new">+ New joint product</button>' + (ed ? '<button class="btn" type="button" data-jt="f-adjust">Correct a count</button>' : '') + '</div>';
   if (f && f.kind === 'move') h += jtMoveForm(d, pool, f);
   if (f && f.kind === 'ask') h += jtAskForm(d, pool, f);
-  if (f && f.kind === 'product' && ed) h += jtProductForm(d, pool, f);
+  if (f && f.kind === 'product' && (ed || f.isNew)) h += jtProductForm(d, pool, f);
   if (f && f.kind === 'receive') h += jtReceiveForm(d, pool, f);
   if (f && f.kind === 'adjust' && ed) h += jtAdjustForm(d, pool, f);
   h += '</section>' + jtRequestsHtml(d, pool);

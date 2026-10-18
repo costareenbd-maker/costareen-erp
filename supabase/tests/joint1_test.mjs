@@ -62,8 +62,8 @@ r = await sales('erpJoint', [{}]);
 check('sales staff see the page (18 Oct) but never the money or the cost', r.ok && !r.result.money && !r.result.book && (r.result.stock || []).every((x) => !('cost' in x)), r.ok ? r.result.money : r);
 
 // ---- products
-r = await mgr('erpJointProduct', [{ pool: POOL, isNew: true, name: 'X', retail: 10 }]);
-check('manager cannot add a joint product', !r.ok, r);
+r = await mgr('erpJointProduct', [{ pool: POOL, isNew: false, sku: 'PM-PLA-BLK', name: 'X', retail: 10 }]);
+check('a manager cannot change a joint product (18 Oct: staff may add new ones)', !r.ok && /owners/.test(r.error), r);
 r = await owner('erpJointProduct', [{ pool: POOL, isNew: true, sku: 'PM-PLA-BLK', name: 'Polymaker PLA Black', category: 'Filament', brand: 'Polymaker', retail: 2000, wholesale: 1800, floor: 1900, cost: 1400 }]);
 check('floor above the lowest price refused', !r.ok && /floor price/.test(r.error), r);
 r = await owner('erpJointProduct', [{ pool: POOL, isNew: true, sku: 'PM-PLA-BLK', name: 'Polymaker PLA Black', category: 'Filament', brand: 'Polymaker', retail: 2000, wholesale: 1800, floor: 1700, cost: 1400 }]);

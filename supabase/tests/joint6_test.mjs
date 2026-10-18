@@ -23,9 +23,17 @@ await proto('erpJointStart', [{ action: 'join', code: r.result.created.code, dis
 await owner('erpJointProduct', [{ pool: POOL, isNew: true, sku: 'BBL-A1', name: 'Bambu Lab A1', category: 'Printer', brand: 'Bambu Lab', retail: 50000, floor: 45000, cost: 40000 }]);
 const held = (res) => res.result.stock.find((s) => s.sku === 'BBL-A1').held;
 
+// 0. staff add a new joint product themselves (the owner is busy); changing it stays the owners'
+r = await sales('erpJointProduct', [{ pool: POOL, isNew: true, sku: 'PM-PLA-W', name: 'Polymaker PLA White', category: 'Filament', brand: 'Polymaker', retail: 2000, floor: 1800, cost: 1400 }]);
+check('sales staff add a new joint product', r.ok && r.result.created && r.result.stock.some((x) => x.sku === 'PM-PLA-W'), r.error);
+r = await sales('erpJointProduct', [{ pool: POOL, isNew: false, sku: 'PM-PLA-W', name: 'Polymaker PLA White', retail: 100, floor: 0 }]);
+check('...but cannot change its price afterwards', !r.ok && /owners/.test(r.error), r.error);
+r = await proto('erpJoint', [{ pool: POOL }]);
+check('PrototypeBD sees the new product at once', r.ok && r.result.stock.some((x) => x.sku === 'PM-PLA-W'), r.error);
+
 // 1. staff see the page and receive a shipment, as their own company
 r = await sales('erpJoint', [{ pool: POOL }]);
-check('sales staff open Joint stock (no money part, no cost)', r.ok && !r.result.money && r.result.stock.length === 1 && !('cost' in r.result.stock[0]) && r.result.me === A, r.error || r.result.money);
+check('sales staff open Joint stock (no money part, no cost)', r.ok && !r.result.money && r.result.stock.length === 2 && r.result.stock.every((x) => !('cost' in x)) && r.result.me === A, r.error || r.result.money);
 r = await sales('erpJointReceive', [{ pool: POOL, sku: 'BBL-A1', qty: 10, unitCost: 40000, paidBy: B3 }]);
 check('staff cannot say the partner paid', !r.ok && /only for your own company/.test(r.error), r.error);
 r = await sales('erpJointReceive', [{ pool: POOL, sku: 'BBL-A1', qty: 10, unitCost: 40000 }]);

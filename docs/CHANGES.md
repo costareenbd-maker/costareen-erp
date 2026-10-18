@@ -2243,3 +2243,9 @@ difference until that line is added.
 - Needs the owner's habit: money this company pays for joint stock or a joint expense must also leave its own cash
   book (as money out, not as an expense of its own), or the balance sheet shows that amount as a difference.
 - Live: protoreen line shows 0 (pool still empty). Tests: joint6 (+2).
+
+## 18 Oct 2026 - Staff add new joint products (owner: "I'm too busy")
+
+- "+ New joint product" for every staff member of both companies (name, code, category, brand, price, floor, cost).
+  Changing an existing one (price, floor, still sold) and count corrections stay the owners'. erpJointProduct: isNew
+  open to 'sales', else needOwner. Tests: joint6 (+3), joint1 follows the rule.
