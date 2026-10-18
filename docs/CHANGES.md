@@ -2285,3 +2285,17 @@ Page only (fd-56; the joint calls are the joint stock's own, so every rule above
 - Tests: joint6 (+8: catalogue without cost, landed cost 90,000 + 2,000 over the lines, new joint product, shelf,
   own stock untouched, supplier bill, staff rule, no order). Checked on dev: same page, joint search, real receive
   (then counted back and the test bill struck out), the New product form, own Receive and Products unchanged.
+
+## 18 Oct 2026 - Joint sale page; the joint New product form no longer follows you around
+
+- Bug: after "+ New joint product" the form showed on every page until a refresh (PRODUCT_FORM kept its joint flag).
+  Now it shows only on Joint stock > Stock and is closed on any tab switch, pool switch or leaving the page (checked
+  before every repaint, so a link or the browser's back button also closes it); the joint Receive page likewise.
+- + New joint sale (Joint stock > Stock and > Sales): the ERP's own New invoice in joint mode - a "Joint sale" banner
+  with Back, product search offers the joint products only (jcatWith with JINV on), an own product is refused with a
+  message. The company's own unfinished invoice (cart and customer form) is kept aside and comes back on leaving; a
+  joint sale left unsaved is dropped.
+- Customer data: unchanged rule, checked - the invoice, customer and money are the seller's; the joint stock's copy
+  names only "<company> · <invoice no>", and the partner's Sales list shows no invoice number of the other side.
+- Checked on dev: form on Stock only / gone on tab switch / gone on leaving by link; joint sale search = 4 joint
+  products only; own product refused; Back restores the own cart; own New invoice searches own products again.

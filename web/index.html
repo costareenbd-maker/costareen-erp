@@ -20379,8 +20379,8 @@ function jcatIs(sku) { return /~J[0-9a-f]{4}$/i.test(String(sku || '')); }
 function jcatOf(sku) { var a = JCAT || []; for (var i = 0; i < a.length; i++) if (a[i].sku === sku) return a[i]; return null; }
 /** Run one of the invoice screen's own functions with the joint products added to the catalogue. */
 function jcatWith(fn, self, args) {
-  if (!jtOn() || !JCAT || !JCAT.length || !Array.isArray(CAT)) return fn.apply(self, args);
-  var keep = CAT; CAT = keep.concat(JCAT);
+  if (!jtOn() || !JCAT || !Array.isArray(CAT) || (!JCAT.length && !(typeof JINV !== 'undefined' && JINV.on))) return fn.apply(self, args);
+  var keep = CAT; CAT = (typeof JINV !== 'undefined' && JINV.on) ? JCAT.slice() : keep.concat(JCAT);   // a joint sale offers the joint products only
   try { return fn.apply(self, args); } finally { CAT = keep; }
 }
 ['paintResults', 'cartTotals', 'saveInvoice'].forEach(function (name) {
@@ -37035,7 +37035,7 @@ viewJoint = function () {
   if (JRV.on && pool && JRV.pool === pool.id) return jrvPageHtml(d, pool);
   if (JRV.on && (!pool || JRV.pool !== pool.id)) jrvClose();
   var h = viewJointJRV.apply(this, arguments);
-  if (PRODUCT_FORM && PRODUCT_FORM.__pool && pool && !PRODUCT_FORM.returnTo) {   // + New joint product = the ERP's form, on top of the stock list
+  if (PRODUCT_FORM && PRODUCT_FORM.__pool && pool && !PRODUCT_FORM.returnTo && JT.tab === 'stock') {   // + New joint product = the ERP's form, on top of the stock list
     var at = h.indexOf('<section><div class="row" style="gap:8px;flex-wrap:wrap">');
     var form = '<section>' + productFormHtml() + '</section>';
     h = at >= 0 ? h.slice(0, at) + form + h.slice(at) : form + h;
@@ -37045,6 +37045,9 @@ viewJoint = function () {
 // wiring: the ERP pages wire themselves only on their own screens, so they are wired here too
 var repaintJRV = repaint;
 repaint = function () {
+  // owner 18 Oct 2026: the joint New product form stayed on every page until a refresh - it belongs to Joint stock > Stock only
+  if (PRODUCT_FORM && PRODUCT_FORM.__pool && (VIEW !== 'joint' || JT.tab !== 'stock')) PRODUCT_FORM = null;
+  if (JRV.on && (VIEW !== 'joint' || JT.tab !== 'stock')) jrvClose();
   repaintJRV.apply(this, arguments);
   if (VIEW !== 'joint') { if (JRV.on && VIEW !== 'joint') jrvClose(); return; }
   try { if (JRV.on) wireStock(); if (PRODUCT_FORM && PRODUCT_FORM.__pool) wireProductForm(); } catch (e) { console.error(e); }
@@ -37067,6 +37070,52 @@ document.addEventListener('click', function (e) {
 document.addEventListener('change', function (e) { var t = e.target; if (t && t.id === 'jrv_at') { JRV.at = t.value; } });
 var goJRV = go;
 go = function (view) { if (view !== 'joint') jrvClose(); if (view !== 'joint' && PRODUCT_FORM && PRODUCT_FORM.__pool) PRODUCT_FORM = null; return goJRV.apply(this, arguments); };
+</script>
+<!-- fd-57 (owner 18 Oct 2026: "make the joint invoice page; I don't share my customers with the other side"): + New joint
+     sale in Joint stock opens the ERP's own New invoice with the joint products only. The invoice, its customer and its
+     money are this company's; the joint stock's copy names only "<company> · <invoice no>" (joint.js mirrorJointSale). -->
+<script>
+var JINV = { on: false, cart: null, form: null };
+function jinvOpen() {
+  if (!JINV.on) { JINV.cart = CART; JINV.form = FORM; CART = [];
+    FORM = { payMode: 'full', paidNow: 0, phone: '', name: '', address: '', source: '', touched: false, method: '', status: '', delivery: 0, advance: 0, date: '' }; }
+  JINV.on = true; JCAT = null; jcatLoad(true); go('invoice'); window.scrollTo(0, 0);
+}
+function jinvClose() {
+  if (!JINV.on) return;
+  JINV.on = false; CART = JINV.cart || []; if (JINV.form) FORM = JINV.form; JINV.cart = null; JINV.form = null;
+}
+var viewInvoiceJINV = viewInvoice;
+viewInvoice = function () {
+  var h = viewInvoiceJINV.apply(this, arguments);
+  if (!JINV.on) return h;
+  return '<section><div class="card" style="border-left:4px solid #c8553d"><div class="row" style="justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">' +
+    '<h2 style="margin:0">Joint sale <span class="jt-tag">Joint</span></h2><button class="btn" type="button" id="jinv_back">\u2190 Back to the joint stock</button></div>' +
+    '<div class="sub">The same New invoice. Only joint products are offered. The invoice and the customer are yours: your partner sees only “your company \u00b7 invoice number”, never the customer.</div></div></section>' + h;
+};
+var addToCartJINV = addToCart;
+addToCart = function (sku) {
+  if (JINV.on && !jcatIs(sku)) { toast('This is a joint sale: only joint products. Go back to New invoice for your own stock.', true, 8000); return; }
+  return addToCartJINV.apply(this, arguments);
+};
+try { window.addToCart = addToCart; window.viewInvoice = viewInvoice; } catch (e) {}
+document.addEventListener('click', function (e) {
+  var b = e.target.closest && e.target.closest('#jinv_back,[data-jinv]'); if (!b) return;
+  if (b.id === 'jinv_back') { jinvClose(); JT.tab = 'stock'; go('joint'); return; }
+  jinvOpen();
+});
+var goJINV = go;
+go = function (view) { if (view !== 'invoice') jinvClose(); return goJINV.apply(this, arguments); };
+// the button, on Joint stock > Stock and > Sales
+var viewJointJINV = viewJoint;
+viewJoint = function () {
+  var h = viewJointJINV.apply(this, arguments);
+  if (!JT.data || !JT.data.pool || JRV.on) return h;
+  var btn = '<button class="btn primary" type="button" data-jinv="1">+ New joint sale</button>';
+  if (JT.tab === 'stock') return h.replace('<button class="btn primary" type="button" data-jt="f-receive">+ Receive a shipment</button>', btn + '<button class="btn" type="button" data-jt="f-receive">+ Receive a shipment</button>');
+  if (JT.tab === 'sales') { var i = h.indexOf('<section><div class="card"><h2>'); return i >= 0 ? h.slice(0, i) + '<section><div class="row" style="gap:8px">' + btn + '</div></section>' + h.slice(i) : h; }
+  return h;
+};
 </script>
 <!-- fd-37: the page is styled: show it -->
 <script>(function () { var x = document.getElementById('bootHide'); if (x) x.remove(); })();</script>
