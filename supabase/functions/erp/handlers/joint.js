@@ -444,10 +444,11 @@ export async function erpJointProduct(ctx, payload) {
   } else if (str(payload.sku) && JOINT_MARK.test(str(payload.sku))) throw new Error('That product code cannot be used.');
   const saved = await erpSaveProduct(pctx, {
     isNew, sku: str(payload.sku), product_name: str(payload.name), category: str(payload.category), brand: str(payload.brand),
-    type: cur ? cur.type : str(payload.type), color: str(payload.color), unit: str(payload.unit) || 'Piece', supplier: cur ? cur.supplier : '',
+    type: cur ? cur.type : str(payload.type), color: str(payload.color), unit: str(payload.unit) || 'Piece', supplier: cur ? cur.supplier : str(payload.supplier),
     cost_price: isNew ? cost : (cost > 0 ? cost : num(cur.cost_price)), sell_price: retail, wholesale_price: wholesale,
-    reorder_level: cur ? num(cur.reorder_level) : 0, lead_time_days: cur ? num(cur.lead_time_days) : 0,
-    location_bin: cur ? cur.location_bin : '', status: str(payload.status) === 'Discontinued' ? 'Discontinued' : 'Active',
+    reorder_level: payload.reorder !== undefined ? num(payload.reorder) : cur ? num(cur.reorder_level) : 0,
+    lead_time_days: payload.lead !== undefined ? num(payload.lead) : cur ? num(cur.lead_time_days) : 0,
+    location_bin: payload.bin !== undefined ? str(payload.bin) : cur ? cur.location_bin : '', status: str(payload.status) === 'Discontinued' ? 'Discontinued' : 'Active',
   });
   await pctx.tx`update products set floor_price = ${floor}, wholesale_price = ${wholesale}, updated_at = now()
                where business_id = ${pool.id} and lower(btrim(sku)) = ${String(saved.sku).toLowerCase()}`;
@@ -1164,5 +1165,64 @@ export async function jointPosition(ctx) {
   return out;
 }
 
-export const HANDLERS = { erpJointAsk, erpJointSend, erpJointGot, erpJointAskAct, erpJointMove, erpJoint, erpJointCatalog, erpJointStart, erpJointProduct, erpJointReceive, erpJointAdjust, erpJointBook, erpJointSettings,
+/**
+ * Owner 18 Oct 2026: joint stock is received on the SAME Receive page as the company's own stock (same supplier, cost,
+ * shipping and costs, same sums). stock.js receiveShipment asks this for the pool side: the pool's products, a new
+ * joint product, what is on its shelf, and writing the receipts (paid by this company, on the shelf chosen) with the
+ * pool's average cost. The money side (supplier bill, payment, freight) stays in this company's own books.
+ */
+export async function poolReceiveTarget(ctx, poolId, receivedAt) {
+  await needOn(ctx);
+  const pool = await poolOf(ctx, poolId);
+  const me = await sellerId(ctx);
+  const at_ = str(receivedAt) || me;
+  if (!pool.partners.some((p) => p.id === at_)) throw new Error('Received at which shop? Choose one of the partners.');
+  await poolOpenOn(ctx, pool, formatDate(ctx.now, 'yyyy-MM-dd'), 'stock cannot be received there');
+  return {
+    pool,
+    rows: () => withPool(ctx, pool, (pctx) => pctx.tx`select id, sku, name, category, brand, type, cost_price, weight_g, length_mm, width_mm, height_mm
+                                                    from products where business_id = ${pool.id}`),
+    onHand: async () => {
+      const out = {};
+      for (const r of await withPool(ctx, pool, (pctx) => pctx.tx`select p.sku, coalesce(ps.stock, 0) as stock from products p left join product_stock ps on ps.product_id = p.id where p.business_id = ${pool.id}`)) out[str(r.sku).toLowerCase()] = num(r.stock);
+      return out;
+    },
+    create: async (d) => {
+      const r = await erpJointProduct(ctx, { pool: pool.id, isNew: true, sku: str(d.sku), name: str(d.product_name), category: str(d.category), brand: str(d.brand),
+                                            type: str(d.type), color: str(d.color), unit: str(d.unit) || 'Piece', retail: num(d.sell_price), wholesale: num(d.wholesale_price),
+                                            floor: num(d.floor_price), cost: num(d.cost_price) });
+      const id = await withPool(ctx, pool, async (pctx) => ((await pctx.tx`select id from products where business_id = ${pool.id} and sku = ${r.saved}`)[0] || {}).id);
+      return { success: true, sku: r.saved, id };
+    },
+    receive: (rows, meta) => withPool(ctx, pool, async (pctx) => {
+      await lock(pctx, 'stock');
+      const at = meta.at || new Date(), out = [];
+      for (const r of rows) {
+        const p = (await pctx.tx`select p.id, p.name, p.cost_price, coalesce(ps.stock, 0) as stock from products p left join product_stock ps on ps.product_id = p.id
+                                 where p.id = ${r.id} and p.business_id = ${pool.id}`)[0];
+        if (!p) throw new Error('That product is not in ' + pool.name + '.');
+        await pctx.tx`
+          insert into stock_movements (business_id, product_id, kind, direction, qty, unit_price, total, reference, supplier, note,
+                                       created_by, created_at, txn_no, operator, product_name, paid_by, held_by)
+          values (${pool.id}, ${p.id}, 'RECEIVE', 'IN', ${r.qty}, ${r.unit}, ${round2(r.qty * r.unit)}, ${str(meta.reference).slice(0, 120) || 'Joint stock received'},
+                  ${str(meta.supplier).slice(0, 80)}, ${str(meta.note).slice(0, 300)}, ${pctx.s.userId}, ${at}, ${txnNo(at)}, ${who(ctx)}, ${str(p.name)}, ${me}, ${at_})`;
+        const had = Math.max(0, num(p.stock)), old = num(p.cost_price);
+        const avg = r.unit > 0 ? (had > 0 && old > 0 ? round2((had * old + r.qty * r.unit) / (had + r.qty)) : r.unit) : old;
+        if (avg !== old) await pctx.tx`update products set cost_price = ${avg}, updated_at = now() where id = ${p.id}`;
+        out.push({ sku: r.sku, product: str(p.name), qty: r.qty, unitCost: r.unit, wasCost: old, nowCost: avg, hadStock: had });
+      }
+      forget(pctx, 'TXN_LOG');
+      return out;
+    }),
+  };
+}
+/** The pool's products in the shape of the company's own catalogue, for the Receive page's product search. Never cost. */
+export async function erpJointRecvCatalog(ctx, payload) {
+  await needOn(ctx);
+  const pool = await poolOf(ctx, payload && payload.pool);
+  return (await shelf(ctx, pool, false)).filter((p) => p.status !== 'Discontinued').map((p) => ({
+    sku: p.sku, name: p.name, cat: p.category, category: p.category, brand: p.brand, color: p.color, unit: p.unit, sell: p.price, stock: p.stock, status: 'Active', joint: true }));
+}
+
+export const HANDLERS = { erpJointRecvCatalog, erpJointAsk, erpJointSend, erpJointGot, erpJointAskAct, erpJointMove, erpJoint, erpJointCatalog, erpJointStart, erpJointProduct, erpJointReceive, erpJointAdjust, erpJointBook, erpJointSettings,
                           erpJointAgree, erpJointCard, erpJointStatementPdf, erpPlatformJointCopy };

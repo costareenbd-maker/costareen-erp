@@ -116,6 +116,27 @@ const jl = r.ok ? r.result.owns.concat(r.result.owes).find((x) => x.key === 'joi
 check('balance sheet: a joint line with our part (owns when above 0)', jl && Math.round(r.result.owns.some((x) => x.key === 'joint') ? jl.amount : -jl.amount) === part && /Printers JV/.test(jl.what), [jl, part]);
 r = await owner('erpFdDash', [{}]);
 check('dashboard net-profit breakdown shows the joint share', !r.ok || !r.result.calc || !r.result.calc.net || r.result.calc.net.some((x) => /joint stock profit/.test(x[0])), r.ok && r.result.calc && r.result.calc.net);
+// 5. the ERP's own Receive page into the joint stock: same costing, goods to the pool, money in our books
+await owner('erpSupplierSave', [{ name: 'Bambu Dhaka Agent' }]).catch(() => null);
+const ownBefore = (await sql`select count(*)::int n from stock_movements where business_id = ${A}`)[0].n;
+const cat6 = (await mgr('erpJointRecvCatalog', [{ pool: POOL }])).result || [];
+check('the Receive page gets the joint products (no cost)', cat6.some((x) => x.sku === 'BBL-A1') && cat6.every((x) => !('cost' in x)), cat6);
+r = await mgr('erpReceiveShipment', [{ pool: POOL, receivedAt: B3, supplier: 'Bambu Dhaka Agent', reference: 'JV-SHIP-1', from: 'local', mode: 'bdt', totalBdt: 90000,
+  payment: 'later', shippingBdt: 2000, lines: [{ sku: 'BBL-A1', qty: 2 }, { isNew: true, qty: 1, product: { product_name: 'Bambu Lab P1S', category: 'Printer', brand: 'Bambu Lab', sell_price: 80000, cost_price: 0 } }] }]);
+check('received through the Receive page into the joint stock', r.ok && r.result.joint === 'Printers JV' && r.result.units === 3, r.error || r.result);
+const pj = (await owner('erpJoint', [{ pool: POOL }])).result;
+const a1 = pj.stock.find((x) => x.sku === 'BBL-A1'), p1s = pj.stock.find((x) => /P1S/.test(x.name));
+check('the new product was made in the joint stock and the units are on PrototypeBD’s shelf', p1s && p1s.stock === 1 && p1s.held[B3] === 1 && a1.held[B3] >= 2, [a1 && a1.held, p1s]);
+const rc = await sql`select qty, unit_price, paid_by, held_by, reference, supplier from stock_movements where business_id = ${POOL} and reference = 'JV-SHIP-1' order by unit_price`;
+check('landed cost spread as on the own page (90,000 + 2,000 shipping over the goods), paid by Costareen', rc.length === 2 && Math.round(rc.reduce((t, x) => t + Number(x.qty) * Number(x.unit_price), 0)) === 92000 && rc.every((x) => x.paid_by === A && x.held_by === B3 && x.supplier === 'Bambu Dhaka Agent'), rc);
+check('Costareen’s own stock untouched', (await sql`select count(*)::int n from stock_movements where business_id = ${A}`)[0].n === ownBefore);
+const bill = await sql`select amount from supplier_bills where business_id = ${A} and reference = 'JV-SHIP-1'`;
+check('the supplier bill is Costareen’s (owed to the supplier)', bill.length === 1 && Number(bill[0].amount) === 90000, bill);
+r = await sales('erpReceiveShipment', [{ pool: POOL, supplier: 'x', mode: 'bdt', totalBdt: 1, lines: [{ sku: 'BBL-A1', qty: 1 }] }]);
+check('the Receive page keeps its own rule: sales staff without Stock and receiving cannot use it', !r.ok, r.ok);
+r = await mgr('erpReceiveShipment', [{ pool: POOL, poId: 'PO-1', mode: 'bdt', totalBdt: 1, lines: [{ sku: 'BBL-A1', qty: 1 }] }]);
+check('a supplier order is not received into the joint stock', !r.ok && /supplier order/.test(r.error), r.error);
+
 check('another business sees none of it', (await sql`select count(*)::int n from pool_requests where pool_id <> ${POOL}`)[0].n === 0);
 function num(v) { const n = Number(v); return isFinite(n) ? n : 0; }
 await done();

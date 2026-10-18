@@ -2267,3 +2267,21 @@ Page only (fd-56; the joint calls are the joint stock's own, so every rule above
   shows the own one and the Joint-tagged one.
 - Checked on dev: product list card, Receive into joint (+1 then corrected back), new joint product with opening
   stock (made, then counted out and marked not sold), product page button.
+
+## 18 Oct 2026 - Joint stock uses the ERP's own pages (owner: "match every page inside the joint stock to the ERP")
+
+- The normal-screen version (Add product "whose stock", Receive switch, Products card, product-page button) is taken
+  out again: own screens are exactly as before.
+- Inside Joint stock > Stock: "+ New joint product" is the ERP's New product form (same fields, + Lowest price, a
+  note that it goes into the joint stock); "+ Receive a shipment" is the ERP's Receive page (supplier, where from,
+  reference, price book / foreign money / taka, shipping, other costs and how they are split, lines, + new product,
+  how the goods were paid) with "Goes on the shelf of". Its product search lists the joint products only
+  (recvCat, erpJointRecvCatalog). The own shipment draft is kept aside while it is open.
+- Server: stock.js receiveShipment with `pool` costs it exactly as for own stock, then writes the goods into the pool
+  (joint.js poolReceiveTarget: paid by this company, on the chosen shelf, pool average cost; a new product is made as
+  a joint product). The supplier bill, payment and shipment costs stay in the company's own books. Refused: a
+  supplier order, serial numbers. The Receive page keeps its own rule (managers / "Stock and receiving"); staff
+  without it keep the short joint receive form.
+- Tests: joint6 (+8: catalogue without cost, landed cost 90,000 + 2,000 over the lines, new joint product, shelf,
+  own stock untouched, supplier bill, staff rule, no order). Checked on dev: same page, joint search, real receive
+  (then counted back and the test bill struck out), the New product form, own Receive and Products unchanged.

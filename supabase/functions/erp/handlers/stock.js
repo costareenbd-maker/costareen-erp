@@ -358,9 +358,15 @@ export async function receiveShipment(ctx, payload) {
 
   await lock(ctx, 'stock');
 
+  // owner 18 Oct 2026: the same page receives into a joint stock - same sums; the goods go to the pool (joint.js),
+  // the money (supplier bill, payment, shipment costs) stays in this company's books
+  const PJ = str(payload.pool) ? await (await import('./joint.js')).poolReceiveTarget(ctx, payload.pool, payload.receivedAt) : null;
+  if (PJ && payload.poId) throw new Error('A supplier order is received into your own stock; receive joint stock without the order.');
+  if (PJ && lines.some((l) => Array.isArray(l.serials) && l.serials.some((x) => str(x)))) throw new Error('Serial numbers are kept for your own stock only; receive these without them.');
+
   // ---- 1. resolve every line to a real product
   const existing = {};
-  for (const p of await pmRows(ctx)) {
+  for (const p of PJ ? await PJ.rows() : await pmRows(ctx)) {
     const s = str(p.sku);
     if (s) existing[s.toLowerCase()] = { id: p.id, sku: s, name: String(p.name || ''), cat: str(p.category),
                                          brand: str(p.brand), type: str(p.type), cost: num(p.cost_price),
@@ -386,7 +392,7 @@ export async function receiveShipment(ctx, payload) {
     // fix: the line's qty is what arrives - the draft's "opening stock" must
     // not be booked a second time as an OPENING movement
     d.opening_stock = 0;
-    const res = await addProduct(ctx, d);
+    const res = PJ ? await PJ.create(d) : await addProduct(ctx, d);
     if (!res || !res.success) {
       throw new Error('Could not create "' + (d.product_name || '?') + '": ' +
                       ((res && res.error) || 'unknown error') +
@@ -394,7 +400,7 @@ export async function receiveShipment(ctx, payload) {
     }
     l.sku = res.sku;
     created.push(res.sku);
-    await saveSize(ctx, res.id, d);
+    if (!PJ) await saveSize(ctx, res.id, d);
     existing[String(res.sku).toLowerCase()] = {
       id: res.id, sku: res.sku, name: d.product_name, cat: str(d.category), brand: str(d.brand),
       type: str(d.type), cost: num(d.cost_price), fresh: true,
@@ -424,8 +430,8 @@ export async function receiveShipment(ctx, payload) {
     freightNote = chargeKg + ' kg \u00d7 ' + perKg + ' TK/kg';
   }
   const shipping = round2(freight + extras.reduce((t, c) => t + c.amount, 0));
-  const book = await bookCostMap(ctx);
-  const onHand = await onHandMap(ctx);
+  const book = PJ ? {} : await bookCostMap(ctx);       // a joint stock has no price book: its own cost
+  const onHand = PJ ? await PJ.onHand() : await onHandMap(ctx);
   const weights = [];
   let sumW = 0, sumQty = 0;
   for (const l of lines) {
@@ -474,7 +480,12 @@ export async function receiveShipment(ctx, payload) {
   if (payload.poId) stampNote = (stampNote ? stampNote + ' | ' : '') + 'order ' + String(payload.poId);
 
   const now = new Date();
-  for (let r = 0; r < lines.length; r++) {
+  let jointDone = null;
+  if (PJ) {
+    jointDone = await PJ.receive(lines.map((l, r) => ({ id: existing[str(l.sku).toLowerCase()].id, sku: str(l.sku), qty: num(l.qty), unit: costs[r] })),
+                                 { reference, supplier: payload.supplier, note: stampNote, at: now });
+  }
+  for (let r = 0; r < lines.length && !PJ; r++) {
     const info = existing[str(lines[r].sku).toLowerCase()];
     const q = num(lines[r].qty);
     await addMovement(ctx, { productId: info.id, kind: 'RECEIVE', direction: 'IN', qty: q, unit: costs[r],
@@ -492,9 +503,9 @@ export async function receiveShipment(ctx, payload) {
     numbered += await registerSerials(ctx, l.sku, list, reference);
   }
 
-  // ---- 4. the weighted average
-  const updated = [];
-  for (let y = 0; y < lines.length; y++) {
+  // ---- 4. the weighted average (a joint stock's was set as it was received)
+  const updated = jointDone ? jointDone.slice() : [];
+  for (let y = 0; y < lines.length && !PJ; y++) {
     if (!(costs[y] > 0)) continue;
     const sku2 = str(lines[y].sku);
     const info = existing[sku2.toLowerCase()];
@@ -584,7 +595,7 @@ export async function receiveShipment(ctx, payload) {
   }
 
   return {
-    ok: true, numbered, reference, billed: !!billId, paidNow, advanceUsed, advanceWritten, payment, costs: costRows.length, currency: mode === 'rmb' ? fxCur : '', received: updated.length || lines.length,
+    ok: true, numbered, reference, billed: !!billId, joint: PJ ? PJ.pool.name : '', paidNow, advanceUsed, advanceWritten, payment, costs: costRows.length, currency: mode === 'rmb' ? fxCur : '', received: updated.length || lines.length,
     units: lines.reduce((n, l) => n + num(l.qty), 0),
     shipping, createdProducts: created, lines: updated, totalCost: round2(totalBdt),
     freight, chargeKg, freightPerKg: perKg, divisor,

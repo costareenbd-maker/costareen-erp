@@ -5859,7 +5859,7 @@ function recvKgGuess() {
   var kg = 0, ok = true;
   RECV.lines.forEach(function (l) {
     var p = null;
-    (CAT || []).forEach(function (x) { if (x.sku === l.sku) p = x; });
+    recvCat().forEach(function (x) { if (x.sku === l.sku) p = x; });
     if (p && /filament/i.test(String(p.cat || ''))) kg += num(l.qty) * 1.3; else ok = false;
   });
   return ok ? Math.round(kg * 10) / 10 : '';
@@ -6245,12 +6245,14 @@ function wireStock() {
   });
 }
 
+/** The products the Receive page offers: the company's own, or (receiving into a joint stock) the joint ones. */
+function recvCat() { return (typeof JRV !== 'undefined' && JRV.on) ? (JRV.cat || []) : (CAT || []); }
 function paintRecvResults(q) {
   var box = el('rv_results');
   if (!box) return;
   q = String(q || '').trim().toLowerCase();
   if (!q) { box.innerHTML = '<div class="empty">Start typing to find a product.</div>'; return; }
-  var rows = CAT.filter(function (p) {
+  var rows = recvCat().filter(function (p) {
     if (String(p.status||'').toLowerCase() === 'discontinued') return false;
     return (p.name+' '+p.sku+' '+p.brand+' '+p.color).toLowerCase().indexOf(q) !== -1;
   }).slice(0, 40);
@@ -6274,7 +6276,7 @@ function wireRecvPicks(box, q) {
   for (var i = 0; i < picks.length; i++) (function (n) {
     n.addEventListener('click', function () {
       var sku = n.getAttribute('data-rvpick'), p = null;
-      for (var k = 0; k < CAT.length; k++) if (CAT[k].sku === sku) { p = CAT[k]; break; }
+      var RC = recvCat(); for (var k = 0; k < RC.length; k++) if (RC[k].sku === sku) { p = RC[k]; break; }
       if (!p) return;
       for (var j = 0; j < RECV.lines.length; j++) {
         if (RECV.lines[j].sku === sku) { RECV.lines[j].qty += 1; repaint(); return; }
@@ -8473,7 +8475,7 @@ function srv(name, args, ok, bad) {
 
 var SRV_ACTIVE = 0, SRV_WRITING = false, SRV_TIMED = {};
 // the same list the server uses to know a call changes nothing (ERP_READS)
-var SRV_READS = /^(erpSitePages|erpBalanceSheet|erpProductFields|erpProductAi|erpMetaConnect|erpInboxFeatureMap|erpBookings|erpInbox|erpInboxOpen|erpInboxChannels|erpChatOrders|erpInboxStats|erpAiWork|erpCommissionSales|erpFdCards|erpLineMargins|erpFd19Profit|erpFdInventory|erpFd22Analytics|erpNavigator|erpSellers|erpFollowups|erpCustomerInsight|erpPreorders|erpCashUps|erpAskingPrices|erpSystemCheck|erpAnalytics|erpCommission|erpHolding|erpLotFunding|erpShipments|erpShipment|erpLots|erpFdHead|erpFdDash|erpReceiveMatch|erpAiReader|erpProductSuggest|erpCatalogue|erpPushList|erpCreators|erpCreatorPortalLink|erpSponsorLink|erpCreatorRequests|erpCreatorEvents|erpCreatorProgramme|erpCreatorPreview|erpCreatorCatalog|erpCreatorSources|erpCreatorClaims|erpApps|erpAppQr|erpFeedback|erpRestockOffers|erpRestockList|erpWarrantyRules|erpWarrantyCard|erpMyLink|erpPlatformRegister|erpPlatformDoctor|erpPlatformCommunity|erpMarketWaiting|erpBoard|erpPlatformDesign|erpResell|erpResellerProgramme|erpLoyalty|erpCustomerPoints|erpRefillDue|erpDeliveryHistory|erpDeliveryHistoryMany|erpPrintKit|erpPrintJobs|erpPrintJob|erpPrintCost|erpSpools|erpPrintRequests|erpJoint|erpJointCatalog|erpJointCard|erpInvoiceDesign|erpInvoicePreview|erpMarket|erpMarketMine|erpMarketRequests|erpMarketHints|erpMarketNames|erpWanted|erpBrand|erpComplianceLog|erpProviderKey|erpNews|erpAccessKeys|erpAccessWarning|erpAdmin|erpAiKeys|erpAlertRules|erpAlerts|erpArena|erpBackupStatus|erpBg|erpBnWords|erpBookedParcels|erpBrandLogo|erpBundle|erpBusinessLinks|erpBusinesses|erpBusinessesDeleted|erpCampaignAudience|erpCampaignGet|erpCampaignList|erpCapital|erpCashBook|erpCatalog|erpConnStatus|erpConnections|erpCostBook|erpCourier|erpCourierKeyStatus|erpCurrencies|erpCustomerAccount|erpCustomerCredit|erpCustomerList|erpCustomerPage|erpCustomerStatement|erpCustomers|erpDashboardData|erpDaySales|erpDeliveryOptions|erpDevices|erpDiscontinued|erpDues|erpEvoQr|erpEvoStatus|erpExpenseExport|erpExpenseReceiptUrl|erpExpenses|erpFamilies|erpFighters|erpFormOptions|erpGame|erpGetTheme|erpGoogle|erpHello|erpInstalls|erpInvoice|erpInvoicePdf|erpJob|erpJobs|erpListView|erpLookupCustomer|erpLookupUsage|erpMe|erpMoney|erpNoteFileUrl|erpNotes|erpOwnerChange|erpOwnerChanges|erpParcelLabels|erpParcelPreview|erpPartnerStock|erpPartnership|erpPayReasons|erpPeople|erpPlatform|erpPlatformErrors|erpPnl|erpPnlMonth|erpPoList|erpPoolCatalog|erpProduct|erpProductListShare|erpProductPage|erpProductPhotoUrl|erpProductThumbs|erpProfile|erpQuoteAsset|erpQuoteBoot|erpQuoteGet|erpQuoteList|erpRecentInvoices|erpRecovery|erpReorderPlan|erpRestorePreview|erpReturnPreview|erpRisks|erpSales|erpSearch|erpSecurity|erpSelfTest|erpSerialLookup|erpSerialsFor|erpSessions|erpSetTheme|erpSettingsFull|erpSettingsLists|erpSfPayoutLines|erpSfPayouts|erpShareFile|erpSharedStock|erpSheet|erpStatementPdf|erpStockHistory|erpSupplierPage|erpSuppliers|erpToday|erpUsers|erpWaProductPdf|erpWebMatches|erpWebOrderInvoices|erpWebOrders|erpWebsiteTest)$/;
+var SRV_READS = /^(erpJointRecvCatalog|erpSitePages|erpBalanceSheet|erpProductFields|erpProductAi|erpMetaConnect|erpInboxFeatureMap|erpBookings|erpInbox|erpInboxOpen|erpInboxChannels|erpChatOrders|erpInboxStats|erpAiWork|erpCommissionSales|erpFdCards|erpLineMargins|erpFd19Profit|erpFdInventory|erpFd22Analytics|erpNavigator|erpSellers|erpFollowups|erpCustomerInsight|erpPreorders|erpCashUps|erpAskingPrices|erpSystemCheck|erpAnalytics|erpCommission|erpHolding|erpLotFunding|erpShipments|erpShipment|erpLots|erpFdHead|erpFdDash|erpReceiveMatch|erpAiReader|erpProductSuggest|erpCatalogue|erpPushList|erpCreators|erpCreatorPortalLink|erpSponsorLink|erpCreatorRequests|erpCreatorEvents|erpCreatorProgramme|erpCreatorPreview|erpCreatorCatalog|erpCreatorSources|erpCreatorClaims|erpApps|erpAppQr|erpFeedback|erpRestockOffers|erpRestockList|erpWarrantyRules|erpWarrantyCard|erpMyLink|erpPlatformRegister|erpPlatformDoctor|erpPlatformCommunity|erpMarketWaiting|erpBoard|erpPlatformDesign|erpResell|erpResellerProgramme|erpLoyalty|erpCustomerPoints|erpRefillDue|erpDeliveryHistory|erpDeliveryHistoryMany|erpPrintKit|erpPrintJobs|erpPrintJob|erpPrintCost|erpSpools|erpPrintRequests|erpJoint|erpJointCatalog|erpJointCard|erpInvoiceDesign|erpInvoicePreview|erpMarket|erpMarketMine|erpMarketRequests|erpMarketHints|erpMarketNames|erpWanted|erpBrand|erpComplianceLog|erpProviderKey|erpNews|erpAccessKeys|erpAccessWarning|erpAdmin|erpAiKeys|erpAlertRules|erpAlerts|erpArena|erpBackupStatus|erpBg|erpBnWords|erpBookedParcels|erpBrandLogo|erpBundle|erpBusinessLinks|erpBusinesses|erpBusinessesDeleted|erpCampaignAudience|erpCampaignGet|erpCampaignList|erpCapital|erpCashBook|erpCatalog|erpConnStatus|erpConnections|erpCostBook|erpCourier|erpCourierKeyStatus|erpCurrencies|erpCustomerAccount|erpCustomerCredit|erpCustomerList|erpCustomerPage|erpCustomerStatement|erpCustomers|erpDashboardData|erpDaySales|erpDeliveryOptions|erpDevices|erpDiscontinued|erpDues|erpEvoQr|erpEvoStatus|erpExpenseExport|erpExpenseReceiptUrl|erpExpenses|erpFamilies|erpFighters|erpFormOptions|erpGame|erpGetTheme|erpGoogle|erpHello|erpInstalls|erpInvoice|erpInvoicePdf|erpJob|erpJobs|erpListView|erpLookupCustomer|erpLookupUsage|erpMe|erpMoney|erpNoteFileUrl|erpNotes|erpOwnerChange|erpOwnerChanges|erpParcelLabels|erpParcelPreview|erpPartnerStock|erpPartnership|erpPayReasons|erpPeople|erpPlatform|erpPlatformErrors|erpPnl|erpPnlMonth|erpPoList|erpPoolCatalog|erpProduct|erpProductListShare|erpProductPage|erpProductPhotoUrl|erpProductThumbs|erpProfile|erpQuoteAsset|erpQuoteBoot|erpQuoteGet|erpQuoteList|erpRecentInvoices|erpRecovery|erpReorderPlan|erpRestorePreview|erpReturnPreview|erpRisks|erpSales|erpSearch|erpSecurity|erpSelfTest|erpSerialLookup|erpSerialsFor|erpSessions|erpSetTheme|erpSettingsFull|erpSettingsLists|erpSfPayoutLines|erpSfPayouts|erpShareFile|erpSharedStock|erpSheet|erpStatementPdf|erpStockHistory|erpSupplierPage|erpSuppliers|erpToday|erpUsers|erpWaProductPdf|erpWebMatches|erpWebOrderInvoices|erpWebOrders|erpWebsiteTest)$/;
 function srvPump() {
   if (!SRV_Q.length) return;
   var isRead = SRV_READS.test(SRV_Q[0].name);
@@ -36942,169 +36944,129 @@ function jtRequestsHtml(d, pool) {
   return h + '</div></section>';
 }
 </script>
-<!-- fd-56 (owner 18 Oct 2026: "make it from the same product list - we may have the same product in our own stock and in
-     the joint stock"): the joint stock from the normal screens. + Add product asks whose stock; Stock > Receive has the
-     same switch; Products lists the joint stock under the own list; an own product's page can add it to the joint
-     stock too. All of it goes through the joint stock's own calls (erpJointProduct / erpJointReceive). -->
-<style>
-.jx-sw{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin:0 0 12px}.jx-sw .lbl{font-size:13px;color:var(--muted);margin-right:4px}
-.jx-sw button{border:1px solid var(--line,#d0d5dd);background:var(--surface,#fff);border-radius:999px;padding:6px 12px;font-size:13px;cursor:pointer;color:inherit}
-.jx-sw button.on{background:#c8553d;border-color:#c8553d;color:#fff}
-</style>
+<!-- fd-56 (owner 18 Oct 2026: "match every page inside the joint stock to the ERP outside, so my employees never get
+     confused"): inside Joint stock, + New joint product is the ERP's own New product form and + Receive a shipment is the
+     ERP's own Receive page (same supplier, cost, shipping, costs, lines, payment). The server costs it the same way
+     (stock.js receiveShipment with pool), puts the goods in the joint stock and keeps the money in the company's books.
+     Staff without Stock and receiving keep the short joint receive form. -->
 <script>
-var JX = { data: null, busy: false, into: '', form: { sku: '', qty: '', cost: '', at: '', date: '', supplier: '', note: '' } };
-function jxPools() { return (JX.data && JX.data.pools) || []; }
-function jxLoad() {
-  if (!jtOn() || JX.busy) return; JX.busy = true;
-  srv('erpJoint', [{}], function (r) { JX.busy = false; JX.data = r && r.on ? r : { pools: [] }; if (VIEW === 'products' || VIEW === 'stock') repaint(); },
-      function () { JX.busy = false; JX.data = { pools: [] }; });
+var JRV = { on: false, pool: '', cat: null, at: '', own: null, busy: false };
+function jrvCan() { return !!(ME && (ME.role === 'owner' || ME.role === 'shareholder' || ME.role === 'manager' || (typeof pageCan === 'function' && pageCan('stock')))); }
+function jrvLoadCat() {
+  if (JRV.busy || !JRV.pool) return; JRV.busy = true;
+  srv('erpJointRecvCatalog', [{ pool: JRV.pool }], function (r) { JRV.busy = false; JRV.cat = r || []; if (VIEW === 'joint') repaint(); }, function () { JRV.busy = false; JRV.cat = []; });
 }
-function jxReady() { if (!jtOn()) return false; if (!JX.data) { jxLoad(); return false; } return jxPools().length > 0; }
-function jxPoolName(id) { var p = jxPools().filter(function (x) { return x.id === id; })[0]; return p ? p.name + ' (with ' + p.partners.filter(function (x) { return x.id !== JX.data.me; }).map(function (x) { return x.name; }).join(', ') + ')' : ''; }
-
-// ---- 1. + Add product: whose stock
-var productFormHtmlJX = productFormHtml;
-productFormHtml = function () {
-  var h = productFormHtmlJX.apply(this, arguments);
-  var f = PRODUCT_FORM;
-  if (!f || !f.isNew || f.returnTo || !jxReady()) return h;
-  var sel = '<div style="grid-column:1/-1"><label class="f" for="pf_jpool">Whose stock</label><select class="i" id="pf_jpool"><option value="">' + esc((JX.data && JX.data.company) || 'Our') + '\u2019s own stock</option>' +
-    jxPools().map(function (p) { return '<option value="' + esc(p.id) + '"' + (f.__pool === p.id ? ' selected' : '') + '>Joint stock: ' + esc(jxPoolName(p.id)) + '</option>'; }).join('') + '</select></div>' +
-    (f.__pool ? '<div><label class="f" for="pf_jfloor">Lowest price <span class="sku">(nobody sells below)</span></label><input class="i" id="pf_jfloor" type="number" min="0" step="1" value="' + esc(f.__floor || '') + '"></div>' : '');
-  h = h.replace('<div class="fields">', '<div class="fields">' + sel);
-  if (f.__pool) h = h.replace(/(<button class="btn primary" type="button" id="pf_save"[^>]*>)(Create product)/, '$1Create joint product') +
-    '';
-  return h;
-};
-document.addEventListener('input', function (e) {
-  var t = e.target; if (!t || !PRODUCT_FORM) return;
-  if (t.id === 'pf_jfloor') PRODUCT_FORM.__floor = Number(t.value) || 0;
-});
-document.addEventListener('change', function (e) {
-  var t = e.target; if (!t || !PRODUCT_FORM || t.id !== 'pf_jpool') return;
-  PRODUCT_FORM.__pool = t.value; repaint();
-});
-// the joint product is saved through the joint stock (and its opening stock received there)
-var srvJX = srv;
+function jrvOpen(pool) {
+  if (!JRV.on) { JRV.own = RECV; RECV = { supplier: '', reference: '', notes: '', lines: [] }; }   // the own shipment draft is kept aside
+  JRV.on = true; JRV.pool = pool; JRV.cat = null; JRV.at = ''; PRODUCT_FORM = null; JT.form = null;
+  if (!LISTS) loadLists(); jrvLoadCat(); repaint(); window.scrollTo(0, 0);
+}
+function jrvClose() { if (JRV.on) { RECV = JRV.own || { supplier: '', reference: '', notes: '', lines: [] }; } JRV.on = false; JRV.pool = ''; JRV.cat = null; JRV.own = null; PRODUCT_FORM = null; }
+// the Receive page's payload, receiving into the joint stock
+var recvPayloadJRV = recvPayload;
+recvPayload = function () { var p = recvPayloadJRV.apply(this, arguments); if (JRV.on) { p.pool = JRV.pool; p.receivedAt = JRV.at || (JT.data && JT.data.me) || ''; p.poId = ''; } return p; };
+// a new product made from the Receive page (or + New joint product) is a joint product
+var quickStartJRV = quickStart;
+quickStart = function (target, seed) { quickStartJRV.apply(this, arguments); if (JRV.on && PRODUCT_FORM) PRODUCT_FORM.__pool = JRV.pool; };
+var srvJRV = srv;
 srv = function (name, args, ok, bad) {
   var P = name === 'erpSaveProduct' && args && args[0];
-  if (!P || !P.__pool) return srvJX.apply(this, arguments);
-  if (Number(P.opening_stock) > 0 && !(Number(P.cost_price) > 0)) { if (bad) bad(new Error('Type the cost of one: the opening stock is received into the joint stock at that cost.')); return; }
-  srvJX('erpJointProduct', [{ pool: P.__pool, isNew: true, sku: P.sku, name: P.product_name, category: P.category, brand: P.brand, color: P.color, unit: P.unit,
-                              retail: P.sell_price, wholesale: P.wholesale_price || 0, floor: P.__floor || 0, cost: P.cost_price }], function (r) {
-    var sku = r.saved, q = Number(P.opening_stock) || 0;
-    var fin = function () { JX.data = null; try { JCAT = null; } catch (x) {} if (ok) ok({ created: true, sku: sku }); toast('It is in the joint stock: both shops see it.', false, 7000); };
-    if (q > 0) srvJX('erpJointReceive', [{ pool: P.__pool, sku: sku, qty: q, unitCost: P.cost_price, again: true }], fin, bad); else fin();
-  }, bad);
-};
-
-// ---- 2. Stock > Receive: into our own stock or the joint stock
-function jxReceiveHtml() {
-  var pool = jxPools().filter(function (p) { return p.id === JX.into; })[0]; if (!pool) return '';
-  var d = JX.data, st = (d.pool === pool.id ? d.stock : []) || [], f = JX.form, busy = JX.busy ? ' disabled' : '';
-  if (d.pool !== pool.id) { JX.data = null; jxLoadPool(pool.id); return '<div class="loading">Reading the joint stock\u2026</div>'; }
-  if (!st.length) return '<section><div class="card"><div class="empty">No product in this joint stock yet. Add one with <b>+ Add product</b> and choose “Joint stock”.</div></div></section>';
-  return '<section><div class="card"><h2>Receive into the joint stock</h2><div class="sub">For ' + esc(jxPoolName(pool.id)) + '. It is entered as paid by ' + esc((JX.data && JX.data.company) || 'us') +
-    '. The other shop\u2019s entries are never overwritten; the same shipment twice is caught.</div>' +
-    '<div class="fields"><div style="grid-column:span 2"><label class="f" for="jx_sku">Product</label><select class="i" id="jx_sku">' + st.filter(function (x) { return x.status !== 'Discontinued'; }).map(function (x) {
-        return '<option value="' + esc(x.sku) + '"' + (x.sku === f.sku ? ' selected' : '') + '>' + esc(x.name) + ' (' + fmt(x.stock) + ' in the joint stock)</option>'; }).join('') + '</select></div>' +
-    '<div><label class="f" for="jx_qty">How many</label><input class="i" id="jx_qty" type="number" min="1" step="1" value="' + esc(f.qty) + '"></div>' +
-    '<div><label class="f" for="jx_cost">Cost of one</label><input class="i" id="jx_cost" type="number" min="0" step="1" value="' + esc(f.cost) + '"></div>' +
-    '<div><label class="f" for="jx_at">Which shop has it</label><select class="i" id="jx_at">' + pool.partners.map(function (x) { return '<option value="' + esc(x.id) + '"' + ((f.at || d.me) === x.id ? ' selected' : '') + '>' + esc(x.name) + '</option>'; }).join('') + '</select></div>' +
-    '<div><label class="f" for="jx_date">Date</label><input class="i" id="jx_date" type="date" max="' + esc(d.today) + '" value="' + esc(f.date || d.today) + '"></div>' +
-    '<div><label class="f" for="jx_sup">Bought from</label><input class="i" id="jx_sup" maxlength="80" value="' + esc(f.supplier) + '"></div>' +
-    '<div style="grid-column:1/-1"><label class="f" for="jx_note">Note</label><input class="i" id="jx_note" maxlength="300" value="' + esc(f.note) + '"></div></div>' +
-    '<div class="row" style="justify-content:flex-end;margin-top:12px"><button class="btn primary" type="button" id="jx_save"' + busy + '>' + (JX.busy ? 'Saving\u2026' : 'Receive into the joint stock') + '</button></div></div></section>';
-}
-function jxLoadPool(id) {
-  if (JX.busy) return; JX.busy = true;
-  srv('erpJoint', [{ pool: id }], function (r) { JX.busy = false; JX.data = r; if (VIEW === 'stock' || VIEW === 'products') repaint(); }, function () { JX.busy = false; JX.data = { pools: [] }; });
-}
-function jxSwitch() {
-  return '<div class="jx-sw"><span class="lbl">Receive into</span><button type="button" data-jxinto=""' + (JX.into ? '' : ' class="on"') + '>' + esc((JX.data && JX.data.company) || 'Our') + '\u2019s own stock</button>' +
-    jxPools().map(function (p) { return '<button type="button" data-jxinto="' + esc(p.id) + '"' + (JX.into === p.id ? ' class="on"' : '') + '>Joint stock: ' + esc(p.name) + '</button>'; }).join('') + '</div>';
-}
-var viewStockJX = viewStock;
-viewStock = function () {
-  var h = viewStockJX.apply(this, arguments);
-  if (typeof STOCK_TAB === 'undefined' || STOCK_TAB !== 'receive' || !jxReady()) return h;
-  var t = h.indexOf('</div>'); t = t < 0 ? 0 : t + 6;   // after the tabs row
-  if (!JX.into) return h.slice(0, t) + jxSwitch() + h.slice(t);
-  return h.slice(0, t) + jxSwitch() + jxReceiveHtml();
-};
-document.addEventListener('click', function (e) {
-  var b = e.target.closest && e.target.closest('[data-jxinto],#jx_save,[data-jxrecv],[data-jxcopy]');
-  if (!b) return;
-  if (b.hasAttribute('data-jxinto')) { JX.into = b.getAttribute('data-jxinto'); repaint(); return; }
-  if (b.hasAttribute('data-jxrecv')) { STOCK_TAB = 'receive'; JX.into = b.getAttribute('data-jxpool'); JX.form.sku = b.getAttribute('data-jxrecv'); go('stock'); return; }
-  if (b.hasAttribute('data-jxcopy')) {
-    var c = (CAT || []).filter(function (x) { return x.sku === b.getAttribute('data-jxcopy'); })[0] || {};
-    PRODUCT_FORM = Object.assign(blankProduct(), { isNew: true, sku: c.sku || '', product_name: c.name || '', category: c.cat || c.category || '', brand: c.brand || '', type: c.type || '',
-      color: c.color || '', unit: c.unit || 'Piece', sell_price: Number(c.sell) || 0, cost_price: 0, opening_stock: 0, __pool: b.getAttribute('data-jxpool') });
-    if (typeof PRODP !== 'undefined') { PRODP.sku = ''; PRODP.data = null; }
-    go('products'); window.scrollTo(0, 0);
-    toast('Same product, joint stock: type the joint cost and the lowest price, then Create joint product.', false, 9000);
+  if (P && P.__pool) {   // the same form, saved into the joint stock
+    if (Number(P.opening_stock) > 0 && !(Number(P.cost_price) > 0)) { if (bad) bad(new Error('Type the cost price: the opening stock goes into the joint stock at that cost.')); return; }
+    srvJRV('erpJointProduct', [{ pool: P.__pool, isNew: true, sku: P.sku, name: P.product_name, category: P.category, brand: P.brand, type: P.type, color: P.color, unit: P.unit,
+                                 supplier: P.supplier, reorder: P.reorder_level, lead: P.lead_time_days, bin: P.location_bin,
+                                 retail: P.sell_price, wholesale: P.wholesale_price || 0, floor: P.__floor || 0, cost: P.cost_price }], function (r) {
+      var sku = r.saved, q = Number(P.opening_stock) || 0;
+      var fin = function () { JRV.cat = null; try { JCAT = null; } catch (x) {} jtLoad(); if (ok) ok({ created: true, sku: sku }); };
+      if (q > 0) srvJRV('erpJointReceive', [{ pool: P.__pool, sku: sku, qty: q, unitCost: P.cost_price, again: true }], fin, bad); else fin();
+    }, bad);
     return;
   }
-  if (b.id === 'jx_save') {
-    var f = JX.form; ['sku', 'qty', 'cost', 'at', 'date', 'supplier', 'note'].forEach(function (k) { var n = el('jx_' + ({ supplier: 'sup' }[k] || k)); if (n) f[k] = n.value; });
-    var send = function (again) {
-      JX.busy = true; repaint();
-      srvJX('erpJointReceive', [{ pool: JX.into, sku: f.sku, qty: f.qty, unitCost: f.cost, receivedAt: f.at, date: f.date === (JX.data && JX.data.today) ? '' : f.date, supplier: f.supplier, note: f.note, again: !!again }],
-        function (r) { JX.busy = false; JX.data = r; f.qty = ''; f.note = ''; try { JCAT = null; } catch (x) {} toast('Received into the joint stock.'); repaint(); },
-        function (er) {
-          JX.busy = false; var m = String((er && er.message) || er);
-          if (/^ALREADY: /.test(m)) { uiConfirm(m.replace(/^ALREADY: /, '') + '\n\nOK = receive it again (a second shipment).').then(function (y) { if (y) send(true); else repaint(); }); return; }
-          toast(esc(m), true, 12000); repaint();
-        });
-    };
-    send(false);
+  if (name === 'erpReceiveShipment' && args && args[0] && args[0].pool) {
+    return srvJRV(name, args, function (r) { JRV.cat = null; try { JCAT = null; } catch (x) {} jtLoad(); if (ok) ok(r); jrvLoadCat(); }, bad);
   }
-});
-document.addEventListener('input', function (e) { var t = e.target; if (!t || !/^jx_/.test(t.id || '')) return; var k = { jx_sup: 'supplier' }[t.id] || t.id.slice(3); JX.form[k] = t.value; });
+  return srvJRV.apply(this, arguments);
+};
+// a product just made on the Receive page goes onto the joint shipment
+var attachNewProductJRV = attachNewProduct;
+attachNewProduct = function (target, sku) {
+  if (!(JRV.on && target === 'receive')) return attachNewProductJRV.apply(this, arguments);
+  srvJRV('erpJointRecvCatalog', [{ pool: JRV.pool }], function (cat) {
+    JRV.cat = cat || []; var p = JRV.cat.filter(function (x) { return x.sku === sku; })[0];
+    RECV.lines.push({ sku: sku, name: p ? p.name : sku, qty: RECV_NEWQTY || 1, stock: p ? p.stock : 0 });
+    if (RECV_NEWQTY) toast('Joint product created and added to this shipment (' + RECV_NEWQTY + '). Press <strong>Receive</strong> to put them in the joint stock.', false, 9000);
+    RECV_NEWQTY = 0; repaint();
+  }, function () { repaint(); });
+};
+// the ERP's New product form, for the joint stock: the lowest price is the one thing it adds
+var productFormHtmlJRV = productFormHtml;
+productFormHtml = function () {
+  var h = productFormHtmlJRV.apply(this, arguments), f = PRODUCT_FORM;
+  if (!f || !f.__pool) return h;
+  var pool = ((JT.data && JT.data.pools) || []).filter(function (x) { return x.id === f.__pool; })[0];
+  h = h.replace(/<h2>New product<\/h2>/, '<h2>New product <span class="jt-tag">Joint</span></h2>')
+       .replace('<div class="fields">', '<div class="note" style="margin:8px 0"><div class="ico">i</div><div>It goes into the joint stock' + (pool ? ' <b>' + esc(pool.name) + '</b>' : '') +
+         ': both shops see it. The cost price is the joint cost; the opening stock (if any) is received into the joint stock.</div></div><div class="fields">');
+  return h.replace(/(<label class="f" for="pf_whole">)/, '<div><label class="f" for="pf_jfloor">Lowest price <span class="sku">(nobody sells below)</span></label><input class="i" id="pf_jfloor" type="number" min="0" step="1" value="' + esc(f.__floor || '') + '"></div><div>$1')
+          .replace(/(<div><div><label class="f" for="pf_jfloor">)/, '<div><label class="f" for="pf_jfloor">');
+};
+document.addEventListener('input', function (e) { var t = e.target; if (t && t.id === 'pf_jfloor' && PRODUCT_FORM) PRODUCT_FORM.__floor = Number(t.value) || 0; });
 
-// ---- 3. Products: the joint stock under our own list
-var viewProductsJX = viewProducts;
-viewProducts = function () {
-  var h = viewProductsJX.apply(this, arguments);
-  if ((typeof PRODP !== 'undefined' && PRODP.sku) || PRODUCT_FORM || !jxReady()) return h;
-  var d = JX.data, st = d.stock || [], pool = jxPools().filter(function (p) { return p.id === d.pool; })[0];
-  if (!pool) return h;
-  var card = '<section><div class="card" style="border-left:4px solid #c8553d"><div class="row" style="justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px"><h2 style="margin:0">Joint stock: ' + esc(jxPoolName(pool.id)) + '</h2>' +
-    '<span class="row" style="gap:8px"><button class="btn small" type="button" id="jx_newp" data-jxpool="' + esc(pool.id) + '">+ Joint product</button><button class="btn small" type="button" data-jtopen="' + esc(pool.id) + '">Open joint stock</button></span></div>' +
-    '<div class="sub">Owned together; sold from New invoice with a <span class="jt-tag">Joint</span> tag. The same product can be in your own list above too.</div>';
-  card += !st.length ? '<div class="empty">No joint product yet.</div>' : '<div class="scroll"><table><thead><tr><th>Product</th><th class="num">In stock</th>' + pool.partners.map(function (x) { return '<th class="num">At ' + esc(x.name) + '</th>'; }).join('') +
-    '<th class="num">Price</th><th class="num">Lowest</th><th></th></tr></thead><tbody>' + st.map(function (x) {
-      return '<tr><td class="nm">' + esc(x.name) + ' <span class="jt-tag">Joint</span><br><span class="sku">' + esc([x.sku, x.brand, x.category].filter(Boolean).join(' \u00b7 ')) + '</span></td><td class="num"><strong>' + fmt(x.stock) + '</strong></td>' +
-        pool.partners.map(function (pp) { return '<td class="num">' + fmt((x.held || {})[pp.id] || 0) + '</td>'; }).join('') + '<td class="num">' + fmt(x.price) + '</td><td class="num">' + (x.floor ? fmt(x.floor) : '\u2014') + '</td>' +
-        '<td class="num"><button class="btn small" type="button" data-jxrecv="' + esc(x.sku) + '" data-jxpool="' + esc(pool.id) + '">Receive</button></td></tr>'; }).join('') + '</tbody></table></div>';
-  card += '</div></section>';
-  // managers and owners have the Mine / Joint pool / Partner's tabs: this card is the Joint pool tab (it replaces the old
-  // counts-only list); sales staff have no tabs and see it under the products
-  var tabs = typeof SHARED !== 'undefined' && SHARED && SHARED.shared;
-  if (!tabs) return h + card;
-  if (PROD_SCOPE !== 'pool') return h;
-  return sharedChips() + card;
+// inside Joint stock: the two ERP pages
+function jrvPageHtml(d, pool) {
+  if (!JRV.cat) { jrvLoadCat(); return '<div class="loading">Reading the joint stock\u2026</div>'; }
+  if (!CAT) { return '<div class="loading">Loading\u2026</div>'; }
+  var keep = STOCK_TAB; STOCK_TAB = 'receive';
+  var h = viewStock(); STOCK_TAB = keep;
+  var i = h.indexOf('<ol class="fd20-stp" aria-label="Receiving steps"');
+  i = i >= 0 ? h.lastIndexOf('<div', i) : h.indexOf('<section><div class="card"><h2>Receive stock</h2>');
+  if (i < 0) i = 0;
+  var me = d.me, at = JRV.at || me;
+  var head = '<section><div class="card" style="border-left:4px solid #c8553d"><div class="row" style="justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">' +
+    '<h2 style="margin:0">Receive into the joint stock <span class="jt-tag">Joint</span></h2><button class="btn" type="button" id="jrv_back">\u2190 Back to the joint stock</button></div>' +
+    '<div class="sub">The same Receive page as your own stock. The goods go into <b>' + esc(pool.name) + '</b>; the supplier bill and the payment are yours, as always.</div>' +
+    '<div class="fields" style="margin-top:8px"><div><label class="f" for="jrv_at">Goes on the shelf of</label><select class="i" id="jrv_at">' +
+    pool.partners.map(function (x) { return '<option value="' + esc(x.id) + '"' + (x.id === at ? ' selected' : '') + '>' + esc(x.name) + '</option>'; }).join('') + '</select></div></div></div></section>';
+  return head + h.slice(i);
+}
+var viewJointJRV = viewJoint;
+viewJoint = function () {
+  var d = JT.data, pool = d && d.pools ? d.pools.filter(function (p) { return p.id === d.pool; })[0] : null;
+  if (JRV.on && pool && JRV.pool === pool.id) return jrvPageHtml(d, pool);
+  if (JRV.on && (!pool || JRV.pool !== pool.id)) jrvClose();
+  var h = viewJointJRV.apply(this, arguments);
+  if (PRODUCT_FORM && PRODUCT_FORM.__pool && pool && !PRODUCT_FORM.returnTo) {   // + New joint product = the ERP's form, on top of the stock list
+    var at = h.indexOf('<section><div class="row" style="gap:8px;flex-wrap:wrap">');
+    var form = '<section>' + productFormHtml() + '</section>';
+    h = at >= 0 ? h.slice(0, at) + form + h.slice(at) : form + h;
+  }
+  return h;
+};
+// wiring: the ERP pages wire themselves only on their own screens, so they are wired here too
+var repaintJRV = repaint;
+repaint = function () {
+  repaintJRV.apply(this, arguments);
+  if (VIEW !== 'joint') { if (JRV.on && VIEW !== 'joint') jrvClose(); return; }
+  try { if (JRV.on) wireStock(); if (PRODUCT_FORM && PRODUCT_FORM.__pool) wireProductForm(); } catch (e) { console.error(e); }
 };
 document.addEventListener('click', function (e) {
-  var b = e.target.closest && e.target.closest('#jx_newp'); if (!b) return;
-  PRODUCT_FORM = Object.assign(blankProduct(), { isNew: true, __pool: b.getAttribute('data-jxpool') }); repaint(); window.scrollTo(0, 0);
-});
-
-// ---- 4. An own product's page: put the same product in the joint stock too
-var productPageHtmlJX = productPageHtml;
-productPageHtml = function () {
-  var h = productPageHtmlJX.apply(this, arguments);
-  if (!PRODP.sku || !PRODP.data || !jxReady()) return h;
-  var have = (JX.data.stock || []).some(function (x) { return String(x.sku).toLowerCase() === String(PRODP.sku).toLowerCase(); });
-  return h + '<section><div class="card"><h2>Joint stock</h2><div class="sub">' + (have ? 'This product is in the joint stock too (same code). Receive joint units from Stock \u2192 Receive \u2192 Joint stock.'
-      : 'Have some of this owned together with your partner? Add the same product to the joint stock; your own stock of it stays as it is.') + '</div>' +
-    (have ? '' : '<div class="row" style="margin-top:8px;gap:8px">' + jxPools().map(function (p) { return '<button class="btn" type="button" data-jxcopy="' + esc(PRODP.sku) + '" data-jxpool="' + esc(p.id) + '">Also add to joint stock: ' + esc(p.name) + '</button>'; }).join('') + '</div>') +
-    '</div></section>';
-};
-try { window.productPageHtml = productPageHtml; } catch (e) {}
-var goJX = go;
-go = function (view) { var r = goJX.apply(this, arguments); if ((view === 'products' || view === 'stock') && jtOn()) { JX.data = null; } return r; };
+  var b = e.target.closest && e.target.closest('#jrv_back,[data-jt="f-new"],[data-jt="f-receive"]');
+  if (!b || VIEW !== 'joint') return;
+  if (b.id === 'jrv_back') { jrvClose(); repaint(); return; }
+  var d = JT.data; if (!d || !d.pool) return;
+  if (b.getAttribute('data-jt') === 'f-new') {   // the ERP's New product form
+    e.stopImmediatePropagation(); jrvClose(); JT.form = null;
+    if (!LISTS) loadLists();
+    PRODUCT_FORM = Object.assign(blankProduct(), { isNew: true, __pool: d.pool }); repaint(); window.scrollTo(0, 0);
+    return;
+  }
+  if (b.getAttribute('data-jt') === 'f-receive' && jrvCan()) {   // the ERP's Receive page (staff without Stock and receiving keep the short form)
+    e.stopImmediatePropagation(); jrvOpen(d.pool);
+  }
+}, true);
+document.addEventListener('change', function (e) { var t = e.target; if (t && t.id === 'jrv_at') { JRV.at = t.value; } });
+var goJRV = go;
+go = function (view) { if (view !== 'joint') jrvClose(); if (view !== 'joint' && PRODUCT_FORM && PRODUCT_FORM.__pool) PRODUCT_FORM = null; return goJRV.apply(this, arguments); };
 </script>
 <!-- fd-37: the page is styled: show it -->
 <script>(function () { var x = document.getElementById('bootHide'); if (x) x.remove(); })();</script>
