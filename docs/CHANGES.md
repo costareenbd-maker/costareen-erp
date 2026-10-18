@@ -2249,3 +2249,21 @@ difference until that line is added.
 - "+ New joint product" for every staff member of both companies (name, code, category, brand, price, floor, cost).
   Changing an existing one (price, floor, still sold) and count corrections stay the owners'. erpJointProduct: isNew
   open to 'sales', else needOwner. Tests: joint6 (+3), joint1 follows the rule.
+
+## 18 Oct 2026 - Joint stock from the normal screens (owner: "from the same product list; same product can be in both")
+
+Page only (fd-56; the joint calls are the joint stock's own, so every rule above still applies):
+- + Add product: "Whose stock - our own / Joint stock: <pool> (with <partner>)". Joint adds "Lowest price"; Create
+  joint product saves through erpJointProduct and, with an opening stock, erpJointReceive (needs the cost of one).
+  Not offered when the form was opened from Receive / New invoice (those attach an own product).
+- Stock > Receive: "Receive into: our own stock | Joint stock: <pool>". Joint shows a short joint receive form
+  (product, how many, cost of one, which shop has it, date, bought from, note), paid by this company; the same
+  shipment twice asks first.
+- Products: the "Joint pool" tab (managers / owners) is now the joint stock with each shop's count, price, lowest
+  price, Receive per row and + Joint product (the old counts-only list and its "choose the pool in the business menu"
+  advice are gone). Sales staff (no tabs) see the same card under the products.
+- An own product's page: "Also add to joint stock: <pool>" opens New product prefilled with the same name, code,
+  category, brand, price (cost left empty: the joint cost is typed). The same code in both is fine: New invoice
+  shows the own one and the Joint-tagged one.
+- Checked on dev: product list card, Receive into joint (+1 then corrected back), new joint product with opening
+  stock (made, then counted out and marked not sold), product page button.
