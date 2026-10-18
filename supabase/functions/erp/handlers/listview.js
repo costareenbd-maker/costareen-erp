@@ -33,10 +33,14 @@ const MODELS = {
     async load(ctx) {
       const r = await erpSales(ctx, { all: true });
       // what each invoice holds, so it can be found by product
-      const goods = {};
+      const goods = {}, jl = {};
       for (const l of await salesLog(ctx)) {
         const id = str(l[SL.order_id]);
-        if (id) goods[id] = (goods[id] || '') + ' ' + str(l[SL.sku]) + ' ' + str(l[SL.product_name]);
+        if (!id) continue;
+        goods[id] = (goods[id] || '') + ' ' + str(l[SL.sku]) + ' ' + str(l[SL.product_name]);
+        // owner 18 Oct 2026: joint sales marked in the list (a joint line's code ends in ~J....)
+        const k = jl[id] || (jl[id] = { j: 0, o: 0 });
+        if (/~J[0-9a-f]{4}$/i.test(str(l[SL.sku]))) k.j++; else k.o++;
       }
       return r.rows.map((x) => ({
         key: x.id, open: { invoice: x.id },
@@ -47,6 +51,7 @@ const MODELS = {
         parcel: x.consignment || x.handled ? 'Sent' : x.canSend ? 'To send' : '',
         returned: x.returned, canSend: x.canSend, sent: !!(x.handled || x.fromSite || x.consignment),
         goods: goods[x.id] || '',
+        stock: !jl[x.id] || !jl[x.id].j ? 'Own' : jl[x.id].o ? 'Own + joint' : 'Joint',
         act: { phone: x.phone, name: x.customer || '', due: x.due, canReturn: !x.cancelled && !x.allBack },
       }));
     },
@@ -60,6 +65,8 @@ const MODELS = {
       { name: 'paid', label: 'Paid', set: 'pay', test: (r) => r.status === 'Paid' },
       { name: 'tosend', label: 'To send', set: 'ship', test: (r) => r.canSend },
       { name: 'sent', label: 'Sent by courier', set: 'ship', test: (r) => r.sent },
+      { name: 'joint', label: 'Joint sales', set: 'stock', test: (r) => r.stock !== 'Own' },
+      { name: 'ownonly', label: 'Own stock only', set: 'stock', test: (r) => r.stock === 'Own' },
       { name: 'returned', label: 'With returns', set: 'ret', test: (r) => r.returned > 0 },
       { name: 'cancelled', label: 'Cancelled', set: 'ret', test: (r) => r.status === 'Cancelled' },
       { name: 'today', label: 'Today', set: 'date', test: (r, c) => r.day === c.today },
@@ -75,6 +82,7 @@ const MODELS = {
       { field: 'status', label: 'Payment', of: (r) => [r.status, r.status] },
       { field: 'delivery', label: 'Delivery', of: (r) => [r.delivery, r.delivery] },
       { field: 'method', label: 'Paid by', of: (r) => [r.method, r.method] },
+      { field: 'stock', label: 'Own / joint stock', of: (r) => [r.stock, r.stock] },
     ],
     columns: [
       { key: 'id', label: 'Number', main: true, phone: true },
@@ -85,6 +93,7 @@ const MODELS = {
       { key: 'due', label: 'Due', type: 'money', sum: true },
       { key: 'delivery', label: 'Delivery', sub: 'parcel' },
       { key: 'status', label: 'Status', type: 'badge' },
+      { key: 'stock', label: 'Stock', type: 'badge' },
     ],
     order: { field: 'ts', dir: 'desc' },
   },

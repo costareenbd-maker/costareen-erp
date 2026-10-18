@@ -2299,3 +2299,8 @@ Page only (fd-56; the joint calls are the joint stock's own, so every rule above
   names only "<company> · <invoice no>", and the partner's Sales list shows no invoice number of the other side.
 - Checked on dev: form on Stock only / gone on tab switch / gone on leaving by link; joint sale search = 4 joint
   products only; own product refused; Back restores the own cart; own New invoice searches own products again.
+
+## 18 Oct 2026 - Invoices list marks joint sales
+
+- Invoices list (erpListView 'invoices'): column "Stock" (Own / Joint / Own + joint, from the joint mark on the line
+  codes), filters "Joint sales" and "Own stock only", group "Own / joint stock". Tests: joint6 (+2), listview green.

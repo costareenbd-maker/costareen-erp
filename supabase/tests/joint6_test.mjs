@@ -137,6 +137,13 @@ check('the Receive page keeps its own rule: sales staff without Stock and receiv
 r = await mgr('erpReceiveShipment', [{ pool: POOL, poId: 'PO-1', mode: 'bdt', totalBdt: 1, lines: [{ sku: 'BBL-A1', qty: 1 }] }]);
 check('a supplier order is not received into the joint stock', !r.ok && /supplier order/.test(r.error), r.error);
 
+// the Invoices list marks joint sales and can show only them
+r = await mgr('erpListView', [{ model: 'invoices', filters: ['joint'], limit: 50 }]);
+const jrows = (r.result && r.result.rows) || [];
+check('Invoices list: the "Joint sales" filter shows the joint invoice, tagged Joint', r.ok && jrows.length >= 1 && jrows.every((x) => x.stock === 'Joint' || x.stock === 'Own + joint'), r.error || jrows.map((x) => [x.id, x.stock]));
+r = await mgr('erpListView', [{ model: 'invoices', filters: ['ownonly'], limit: 200 }]);
+check('...and "Own stock only" leaves them out', r.ok && (r.result.rows || []).every((x) => x.stock === 'Own'), r.error);
+
 check('another business sees none of it', (await sql`select count(*)::int n from pool_requests where pool_id <> ${POOL}`)[0].n === 0);
 function num(v) { const n = Number(v); return isFinite(n) ? n : 0; }
 await done();
