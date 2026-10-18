@@ -1,0 +1,962 @@
+[
+ {
+  "template": "Demo #D Shop",
+  "example": "Demo 3D Shop"
+ },
+ {
+  "template": "Shop, courier and website sales in one list · MON '# compared with MON '#",
+  "example": "Shop, courier and website sales in one list · Oct '26 compared with Sep '26"
+ },
+ {
+  "template": "cash on delivery, not collected yet (# late)",
+  "example": "cash on delivery, not collected yet (22 late)"
+ },
+ {
+  "template": "delivered, Steadfast has not paid (#+ days)",
+  "example": "delivered, Steadfast has not paid (10+ days)"
+ },
+ {
+  "template": "Total · # invoices",
+  "example": "Total · 134 invoices"
+ },
+ {
+  "template": "Demo Buyer · # MON # · Walk-in",
+  "example": "Demo Buyer · 13 Oct 2026 · Walk-in"
+ },
+ {
+  "template": "MD Walid Ahmad Mafuj · # MON # · Steadfast courier",
+  "example": "MD Walid Ahmad Mafuj · 12 Oct 2026 · Steadfast courier"
+ },
+ {
+  "template": "Farhana Begum · # MON # · Steadfast courier",
+  "example": "Farhana Begum · 12 Oct 2026 · Steadfast courier"
+ },
+ {
+  "template": "Farhana Rahman · # MON # · Steadfast courier",
+  "example": "Farhana Rahman · 12 Oct 2026 · Steadfast courier"
+ },
+ {
+  "template": "Rafi Rahman · # MON # · Walk-in",
+  "example": "Rafi Rahman · 10 Oct 2026 · Walk-in"
+ },
+ {
+  "template": "Lamia Akter · # MON # · Walk-in",
+  "example": "Lamia Akter · 9 Oct 2026 · Walk-in"
+ },
+ {
+  "template": "Rafi Das · # MON # · Walk-in",
+  "example": "Rafi Das · 9 Oct 2026 · Walk-in"
+ },
+ {
+  "template": "Arif Akter · # MON # · Walk-in",
+  "example": "Arif Akter · 8 Oct 2026 · Walk-in"
+ },
+ {
+  "template": "Sumaiya Sultana · # MON # · Walk-in",
+  "example": "Sumaiya Sultana · 8 Oct 2026 · Walk-in"
+ },
+ {
+  "template": "Farhana Begum · # MON # · Walk-in",
+  "example": "Farhana Begum · 6 Oct 2026 · Walk-in"
+ },
+ {
+  "template": "Hasan Hossain · # MON # · Walk-in",
+  "example": "Hasan Hossain · 6 Oct 2026 · Walk-in"
+ },
+ {
+  "template": "Hasan Ahmed · # MON # · Walk-in",
+  "example": "Hasan Ahmed · 6 Oct 2026 · Walk-in"
+ },
+ {
+  "template": "Sadia Ahmed · # MON # · Walk-in",
+  "example": "Sadia Ahmed · 5 Oct 2026 · Walk-in"
+ },
+ {
+  "template": "Sumaiya Chowdhury · # MON # · Walk-in",
+  "example": "Sumaiya Chowdhury · 4 Oct 2026 · Walk-in"
+ },
+ {
+  "template": "Jannat Khan · # MON # · Walk-in",
+  "example": "Jannat Khan · 3 Oct 2026 · Walk-in"
+ },
+ {
+  "template": "Farhana Rahman · # MON # · Walk-in",
+  "example": "Farhana Rahman · 25 Sep 2026 · Walk-in"
+ },
+ {
+  "template": "Jannat Hossain · # MON # · Walk-in",
+  "example": "Jannat Hossain · 24 Sep 2026 · Walk-in"
+ },
+ {
+  "template": "Mahin Rahman · # MON # · Walk-in",
+  "example": "Mahin Rahman · 22 Sep 2026 · Walk-in"
+ },
+ {
+  "template": "Tasnim Akter · # MON # · Walk-in",
+  "example": "Tasnim Akter · 21 Sep 2026 · Walk-in"
+ },
+ {
+  "template": "Sadia Das · # MON # · Steadfast courier",
+  "example": "Sadia Das · 20 Sep 2026 · Steadfast courier"
+ },
+ {
+  "template": "Demo Print Farm · # MON # · Walk-in",
+  "example": "Demo Print Farm · 18 Sep 2026 · Walk-in"
+ },
+ {
+  "template": "Lamia Mia · # MON # · Steadfast courier",
+  "example": "Lamia Mia · 17 Sep 2026 · Steadfast courier"
+ },
+ {
+  "template": "Rafi Mia · # MON # · Steadfast courier",
+  "example": "Rafi Mia · 17 Sep 2026 · Steadfast courier"
+ },
+ {
+  "template": "Ruma Mia · # MON # · Walk-in",
+  "example": "Ruma Mia · 15 Sep 2026 · Walk-in"
+ },
+ {
+  "template": "Sumaiya Sultana · # MON # · Steadfast courier",
+  "example": "Sumaiya Sultana · 14 Sep 2026 · Steadfast courier"
+ },
+ {
+  "template": "Lamia Mia · # MON # · Walk-in",
+  "example": "Lamia Mia · 31 Aug 2026 · Walk-in"
+ },
+ {
+  "template": "Rafi Das · # MON # · Steadfast courier",
+  "example": "Rafi Das · 31 Aug 2026 · Steadfast courier"
+ },
+ {
+  "template": "Sakib Chowdhury · # MON # · Steadfast courier",
+  "example": "Sakib Chowdhury · 29 Aug 2026 · Steadfast courier"
+ },
+ {
+  "template": "Demo Robotics Club · # MON # · Walk-in",
+  "example": "Demo Robotics Club · 29 Aug 2026 · Walk-in"
+ },
+ {
+  "template": "Imran Akter · # MON # · Walk-in",
+  "example": "Imran Akter · 28 Aug 2026 · Walk-in"
+ },
+ {
+  "template": "Sadia Ahmed · # MON # · Steadfast courier",
+  "example": "Sadia Ahmed · 28 Aug 2026 · Steadfast courier"
+ },
+ {
+  "template": "Arif Islam · # MON # · Walk-in",
+  "example": "Arif Islam · 27 Aug 2026 · Walk-in"
+ },
+ {
+  "template": "Sumaiya Islam · # MON # · Walk-in",
+  "example": "Sumaiya Islam · 25 Aug 2026 · Walk-in"
+ },
+ {
+  "template": "Nusrat Akter · # MON # · Walk-in",
+  "example": "Nusrat Akter · 24 Aug 2026 · Walk-in"
+ },
+ {
+  "template": "Farhana Das · # MON # · Walk-in",
+  "example": "Farhana Das · 23 Aug 2026 · Walk-in"
+ },
+ {
+  "template": "Hasan Ahmed · # MON # · Steadfast courier",
+  "example": "Hasan Ahmed · 18 Aug 2026 · Steadfast courier"
+ },
+ {
+  "template": "Farhana Das · # MON # · Steadfast courier",
+  "example": "Farhana Das · 15 Aug 2026 · Steadfast courier"
+ },
+ {
+  "template": "Tanvir Hossain · # MON # · Walk-in",
+  "example": "Tanvir Hossain · 13 Aug 2026 · Walk-in"
+ },
+ {
+  "template": "Sadia Das · # MON # · Walk-in",
+  "example": "Sadia Das · 10 Aug 2026 · Walk-in"
+ },
+ {
+  "template": "Ruma Islam · # MON # · Walk-in",
+  "example": "Ruma Islam · 9 Aug 2026 · Walk-in"
+ },
+ {
+  "template": "Jannat Khan · # MON # · Steadfast courier",
+  "example": "Jannat Khan · 8 Aug 2026 · Steadfast courier"
+ },
+ {
+  "template": "Nayeem Das · # MON # · Walk-in",
+  "example": "Nayeem Das · 4 Aug 2026 · Walk-in"
+ },
+ {
+  "template": "Ruma Chowdhury · # MON # · Walk-in",
+  "example": "Ruma Chowdhury · 4 Aug 2026 · Walk-in"
+ },
+ {
+  "template": "Showing #–# of # invoices",
+  "example": "Showing 1–80 of 134 invoices"
+ },
+ {
+  "template": "up # vs last month (#)",
+  "example": "up 36% vs last month (85,350)"
+ },
+ {
+  "template": "Orders from the website, ready to enter as invoices · MON '# compared with MON '#",
+  "example": "Orders from the website, ready to enter as invoices · Oct '26 compared with Sep '26"
+ },
+ {
+  "template": "Price offers that turn into invoices · MON '# compared with MON '#",
+  "example": "Price offers that turn into invoices · Oct '26 compared with Sep '26"
+ },
+ {
+  "template": "Machines in for repair, parts and charges · MON '# compared with MON '#",
+  "example": "Machines in for repair, parts and charges · Oct '26 compared with Sep '26"
+ },
+ {
+  "template": "Print jobs with their true cost · MON '# compared with MON '#",
+  "example": "Print jobs with their true cost · Oct '26 compared with Sep '26"
+ },
+ {
+  "template": "Open: # · delivered # · failed #",
+  "example": "Open: 0 · delivered 0 · failed 0"
+ },
+ {
+  "template": "Queued (#)",
+  "example": "Queued (0)"
+ },
+ {
+  "template": "Printing (#)",
+  "example": "Printing (0)"
+ },
+ {
+  "template": "Finishing (#)",
+  "example": "Finishing (0)"
+ },
+ {
+  "template": "Ready (#)",
+  "example": "Ready (0)"
+ },
+ {
+  "template": "One customer per phone number · MON '# compared with MON '#",
+  "example": "One customer per phone number · Oct '26 compared with Sep '26"
+ },
+ {
+  "template": "Over # days: # on # sale(s)",
+  "example": "Over 90 days: ৳66,550 on 12 sale(s)"
+ },
+ {
+  "template": "Total · # customers",
+  "example": "Total · 43 customers"
+ },
+ {
+  "template": "WhatsApp campaigns, leads, adverts and creators · MON '# compared with MON '#",
+  "example": "WhatsApp campaigns, leads, adverts and creators · Oct '26 compared with Sep '26"
+ },
+ {
+  "template": "Dead stock (#+ days idle)",
+  "example": "Dead stock (120+ days idle)"
+ },
+ {
+  "template": "MakerPro TPU Black #g",
+  "example": "MakerPro TPU Black 500g"
+ },
+ {
+  "template": "MakerPro TPU White #g",
+  "example": "MakerPro TPU White 500g"
+ },
+ {
+  "template": "Nova Hardened Nozzle #",
+  "example": "Nova Hardened Nozzle 0.4"
+ },
+ {
+  "template": "Nova PETG Black #kg",
+  "example": "Nova PETG Black 1kg"
+ },
+ {
+  "template": "Nova PETG Blue #kg",
+  "example": "Nova PETG Blue 1kg"
+ },
+ {
+  "template": "Nova PETG Green #kg",
+  "example": "Nova PETG Green 1kg"
+ },
+ {
+  "template": "Nova PETG Grey #kg",
+  "example": "Nova PETG Grey 1kg"
+ },
+ {
+  "template": "Nova PETG Orange #kg",
+  "example": "Nova PETG Orange 1kg"
+ },
+ {
+  "template": "Nova PETG White #kg",
+  "example": "Nova PETG White 1kg"
+ },
+ {
+  "template": "Nova PETG Yellow #kg",
+  "example": "Nova PETG Yellow 1kg"
+ },
+ {
+  "template": "Nova PLA Black #kg",
+  "example": "Nova PLA Black 1kg"
+ },
+ {
+  "template": "Nova PLA Blue #kg",
+  "example": "Nova PLA Blue 1kg"
+ },
+ {
+  "template": "Nova PLA Green #kg",
+  "example": "Nova PLA Green 1kg"
+ },
+ {
+  "template": "Nova PLA Grey #kg",
+  "example": "Nova PLA Grey 1kg"
+ },
+ {
+  "template": "Nova PLA Orange #kg",
+  "example": "Nova PLA Orange 1kg"
+ },
+ {
+  "template": "Nova PLA White #kg",
+  "example": "Nova PLA White 1kg"
+ },
+ {
+  "template": "Nova PLA Yellow #kg",
+  "example": "Nova PLA Yellow 1kg"
+ },
+ {
+  "template": "Nova PLA+ Black #kg",
+  "example": "Nova PLA+ Black 1kg"
+ },
+ {
+  "template": "Nova PLA+ Blue #kg",
+  "example": "Nova PLA+ Blue 1kg"
+ },
+ {
+  "template": "Nova PLA+ Green #kg",
+  "example": "Nova PLA+ Green 1kg"
+ },
+ {
+  "template": "Nova PLA+ Grey #kg",
+  "example": "Nova PLA+ Grey 1kg"
+ },
+ {
+  "template": "Nova PLA+ Orange #kg",
+  "example": "Nova PLA+ Orange 1kg"
+ },
+ {
+  "template": "Nova PLA+ White #kg",
+  "example": "Nova PLA+ White 1kg"
+ },
+ {
+  "template": "Nova PLA+ Yellow #kg",
+  "example": "Nova PLA+ Yellow 1kg"
+ },
+ {
+  "template": "Nova X# #D Printer",
+  "example": "Nova X1 3D Printer"
+ },
+ {
+  "template": "Nova X# Combo (with AMS)",
+  "example": "Nova X1 Combo (with AMS)"
+ },
+ {
+  "template": "Polaris PETG Black #kg",
+  "example": "Polaris PETG Black 1kg"
+ },
+ {
+  "template": "Polaris PETG Blue #kg",
+  "example": "Polaris PETG Blue 1kg"
+ },
+ {
+  "template": "Polaris PETG Green #kg",
+  "example": "Polaris PETG Green 1kg"
+ },
+ {
+  "template": "Polaris PETG Grey #kg",
+  "example": "Polaris PETG Grey 1kg"
+ },
+ {
+  "template": "Polaris PETG White #kg",
+  "example": "Polaris PETG White 1kg"
+ },
+ {
+  "template": "Polaris PLA Black #kg",
+  "example": "Polaris PLA Black 1kg"
+ },
+ {
+  "template": "Polaris PLA Blue #kg",
+  "example": "Polaris PLA Blue 1kg"
+ },
+ {
+  "template": "Polaris PLA Green #kg",
+  "example": "Polaris PLA Green 1kg"
+ },
+ {
+  "template": "Polaris PLA Grey #kg",
+  "example": "Polaris PLA Grey 1kg"
+ },
+ {
+  "template": "Polaris PLA White #kg",
+  "example": "Polaris PLA White 1kg"
+ },
+ {
+  "template": "Polaris PLA+ Black #kg",
+  "example": "Polaris PLA+ Black 1kg"
+ },
+ {
+  "template": "Polaris PLA+ Blue #kg",
+  "example": "Polaris PLA+ Blue 1kg"
+ },
+ {
+  "template": "Polaris PLA+ Green #kg",
+  "example": "Polaris PLA+ Green 1kg"
+ },
+ {
+  "template": "Polaris PLA+ Grey #kg",
+  "example": "Polaris PLA+ Grey 1kg"
+ },
+ {
+  "template": "Polaris PLA+ White #kg",
+  "example": "Polaris PLA+ White 1kg"
+ },
+ {
+  "template": "Received · poly maker meow · SHP-DEMO-#",
+  "example": "Received · poly maker meow · SHP-DEMO-001"
+ },
+ {
+  "template": "Received · MakerPro TPU Black #g · SHP-DEMO-#",
+  "example": "Received · MakerPro TPU Black 500g · SHP-DEMO-001"
+ },
+ {
+  "template": "Received · MakerPro TPU White #g · SHP-DEMO-#",
+  "example": "Received · MakerPro TPU White 500g · SHP-DEMO-001"
+ },
+ {
+  "template": "Received · Nova PLA+ Grey #kg · DEMO-SHIP-#",
+  "example": "Received · Nova PLA+ Grey 1kg · DEMO-SHIP-1"
+ },
+ {
+  "template": "Received · Polaris PLA+ Green #kg · DEMO-SHIP-#",
+  "example": "Received · Polaris PLA+ Green 1kg · DEMO-SHIP-1"
+ },
+ {
+  "template": "Received · Nova PLA Orange #kg · DEMO-SHIP-#",
+  "example": "Received · Nova PLA Orange 1kg · DEMO-SHIP-1"
+ },
+ {
+  "template": "As of # MON # #:# PM · stock value is landed cost only (FIFO lots; stock from before lots began at the cost book); holding cost is shown beside lots, never inside them.",
+  "example": "As of 18 Oct 2026, 9:42 PM · stock value is landed cost only (FIFO lots; stock from before lots began at the cost book); holding cost is shown beside lots, never inside them."
+ },
+ {
+  "template": "Receive goods, count, adjust, what to order · MON '# compared with MON '#",
+  "example": "Receive goods, count, adjust, what to order · Oct '26 compared with Sep '26"
+ },
+ {
+  "template": "What each product cost to land in the shop · MON '# compared with MON '#",
+  "example": "What each product cost to land in the shop · Oct '26 compared with Sep '26"
+ },
+ {
+  "template": "Follows the default of # TK",
+  "example": "Follows the default of 0 TK"
+ },
+ {
+  "template": "goods cost #",
+  "example": "goods cost ৳0"
+ },
+ {
+  "template": "your share #",
+  "example": "your share 60%"
+ },
+ {
+  "template": "Elegoo Standard Resin Grey #kg",
+  "example": "Elegoo Standard Resin Grey 1kg"
+ },
+ {
+  "template": "eSun PETG Clear #kg",
+  "example": "eSun PETG Clear 1kg"
+ },
+ {
+  "template": "Polymaker PLA White #kg",
+  "example": "Polymaker PLA White 1kg"
+ },
+ {
+  "template": "Polymaker PLA Black #kg",
+  "example": "Polymaker PLA Black 1kg"
+ },
+ {
+  "template": "Profit and loss, month by month · MON '# compared with MON '#",
+  "example": "Profit and loss, month by month · Oct '26 compared with Sep '26"
+ },
+ {
+  "template": "On the shelf, nothing sold in # days. This is your money, and it is standing still.",
+  "example": "On the shelf, nothing sold in 90 days. This is your money, and it is standing still."
+ },
+ {
+  "template": "All stock at cost: BDT # · as of # MON # #:# PM",
+  "example": "All stock at cost: BDT 466,254 · as of 18 Oct 26, 9:42 PM"
+ },
+ {
+  "template": "last month: #",
+  "example": "last month: 17,768"
+ },
+ {
+  "template": "October #",
+  "example": "October 2026"
+ },
+ {
+  "template": "Total expenses · October #",
+  "example": "Total expenses · October 2026"
+ },
+ {
+  "template": "fixed # · recurring # · one-off #",
+  "example": "fixed 0 · recurring 0 · one-off 17,635"
+ },
+ {
+  "template": "biggest category in October #",
+  "example": "biggest category in October 2026"
+ },
+ {
+  "template": "Net profit · October #",
+  "example": "Net profit · October 2026"
+ },
+ {
+  "template": "gross # + # delivery and courier less expenses paid · # with what is still to pay",
+  "example": "gross 41,227 + 75 delivery and courier less expenses paid · 5,055 with what is still to pay"
+ },
+ {
+  "template": "All expenses · October #",
+  "example": "All expenses · October 2026"
+ },
+ {
+  "template": "Total of # rows",
+  "example": "Total of 5 rows"
+ },
+ {
+  "template": "Rent · One-off · # MON, #:# AM",
+  "example": "Rent · One-off · 13 Oct, 1:01 AM"
+ },
+ {
+  "template": "Office · One-off · # MON, #:# PM",
+  "example": "Office · One-off · 17 Sep, 11:38 PM"
+ },
+ {
+  "template": "Page # of #",
+  "example": "Page 1 of 1"
+ },
+ {
+  "template": "By category: Rent # · Commission # · Office # · Marketing # · Investor returns # · Miscellaneous #",
+  "example": "By category: Rent 15,000 · Commission 3,030 · Office 1,390 · Marketing 702 · Investor returns 582 · Miscellaneous 543"
+ },
+ {
+  "template": "BDT # paid ·",
+  "example": "BDT 0 paid ·"
+ },
+ {
+  "template": "BDT # still to pay",
+  "example": "BDT 15,000 still to pay"
+ },
+ {
+  "template": "— not counted in the profit until you press Paid. With it, October # would stand at BDT #",
+  "example": "— not counted in the profit until you press Paid. With it, October 2026 would stand at BDT 5,055."
+ },
+ {
+  "template": "October # amount",
+  "example": "October 2026 amount"
+ },
+ {
+  "template": "October # · one-off · the date and time are recorded by themselves",
+  "example": "October 2026 · one-off · the date and time are recorded by themselves"
+ },
+ {
+  "template": "shareholders # · investors #",
+  "example": "shareholders 500,000 · investors 20,000"
+ },
+ {
+  "template": "earned # · paid #",
+  "example": "earned 315,978 · paid 0"
+ },
+ {
+  "template": "returns due # · paid # · this month so far #",
+  "example": "returns due 0 · paid 0 · this month so far 582"
+ },
+ {
+  "template": "Demo Owner #",
+  "example": "Demo Owner 100%"
+ },
+ {
+  "template": "Shareholder · since MON #",
+  "example": "Shareholder · since May 2026"
+ },
+ {
+  "template": "Share #",
+  "example": "Share 100%"
+ },
+ {
+  "template": "Investor · since MON #",
+  "example": "Investor · since Oct 2026"
+ },
+ {
+  "template": "+ # building this month so far",
+  "example": "+ ৳582 building this month so far"
+ },
+ {
+  "template": "All shareholders: # · invested # · profit earned # · paid out # · left in the business # Investors: money in against a fixed return (a cost of the month it falls due in), no share of the business.",
+  "example": "All shareholders: 100% · invested 500,000 · profit earned 315,978 · paid out 0 · left in the business 315,978. Investors: money in against a fixed return (a cost of the month it falls due in), no share of the business."
+ },
+ {
+  "template": "Net of # rows",
+  "example": "Net of 2 rows"
+ },
+ {
+  "template": "Money put in · # MON #",
+  "example": "Money put in · 13 Oct 2026"
+ },
+ {
+  "template": "Every taka in and out, the accounts, matching and the cash-up · MON '# compared with MON '#",
+  "example": "Every taka in and out, the accounts, matching and the cash-up · Oct '26 compared with Sep '26"
+ },
+ {
+  "template": "Receipt · bKash · # MON #",
+  "example": "Receipt · bKash · 13 Oct 2026"
+ },
+ {
+  "template": "INV-#-# · Cash · # MON #",
+  "example": "INV-20261013-1134 · Cash · 13 Oct 2026"
+ },
+ {
+  "template": "INV-#-# · bKash · # MON #",
+  "example": "INV-20261012-1127 · bKash · 12 Oct 2026"
+ },
+ {
+  "template": "INV-#-# · Nagad · # MON #",
+  "example": "INV-20261012-1130 · Nagad · 12 Oct 2026"
+ },
+ {
+  "template": "INV-#-# · Bank Transfer · # MON #",
+  "example": "INV-20261012-1129 · Bank Transfer · 9 Oct 2026"
+ },
+ {
+  "template": "Opening balance · Cash · # MON #",
+  "example": "Opening balance · Cash · 15 May 2026"
+ },
+ {
+  "template": "Opening balance · bKash · # MON #",
+  "example": "Opening balance · bKash · 15 May 2026"
+ },
+ {
+  "template": "Opening balance · Demo Bank · # MON #",
+  "example": "Opening balance · Demo Bank · 15 May 2026"
+ },
+ {
+  "template": "Balance sheet · #-#-#",
+  "example": "Balance sheet · 2026-10-18"
+ },
+ {
+  "template": "paid in # + profit share -# - joint goods we sold #",
+  "example": "paid in 45600 + profit share -1560 - joint goods we sold 0"
+ },
+ {
+  "template": "Opening them writes down today’s net worth (#) as the start. From then on the ERP checks every day that today’s net worth = that start + the profit since + money the owners put in − money they took out, and shows any difference with what caused it.",
+  "example": "Opening them writes down today’s net worth (৳847,544) as the start. From then on the ERP checks every day that today’s net worth = that start + the profit since + money the owners put in − money they took out, and shows any difference with what caused it."
+ },
+ {
+  "template": "Suppliers, purchase orders and what you owe them · MON '# compared with MON '#",
+  "example": "Suppliers, purchase orders and what you owe them · Oct '26 compared with Sep '26"
+ },
+ {
+  "template": "Values the system keeps for itself (#) — for support only",
+  "example": "Values the system keeps for itself (7) — for support only"
+ },
+ {
+  "template": "sends the photo to Google’s Gemini with this key. One key for every company; # reads per company per day. Get a free key at aistudio.google.com → Get API key. The key is sealed on this server and never shown back.",
+  "example": "sends the photo to Google’s Gemini with this key. One key for every company; 40 reads per company per day. Get a free key at aistudio.google.com → Get API key. The key is sealed on this server and never shown back."
+ },
+ {
+  "template": "Open · #",
+  "example": "Open · 1"
+ },
+ {
+  "template": "ধন্যবাদ! আপনার অর্ডার CO-#-# পাওয়া গেছে — মোট # অর্ডারের অবস্থা: https://costareen-erp-dev.pages.dev/order.html?o=#b#e#f#aedd",
+  "example": "ধন্যবাদ! আপনার অর্ডার CO-261014-1163 পাওয়া গেছে — মোট ৳2,770 অর্ডারের অবস্থা: https://costareen-erp-dev.pages.dev/order.html?o=7b61e3f8aedd"
+ },
+ {
+  "template": "Gross profit #",
+  "example": "Gross profit ৳29,240"
+ },
+ {
+  "template": "Total of # months",
+  "example": "Total of 13 months"
+ },
+ {
+  "template": "Figures as of # MON # #:# PM · the whole business · Profitability’s formulas",
+  "example": "Figures as of 18 Oct 2026, 9:43 PM · the whole business · Profitability’s formulas"
+ },
+ {
+  "template": "Every part of the ERP on one map, its figures and how they connect, step by step · This month (MON '#) compared with MON '#",
+  "example": "Every part of the ERP on one map, its figures and how they connect, step by step · This month (Oct '26) compared with Sep '26"
+ },
+ {
+  "template": "This month (MON '#)",
+  "example": "This month (Oct '26)"
+ },
+ {
+  "template": "Net profit · This month (MON '#)",
+  "example": "Net profit · This month (Oct '26)"
+ },
+ {
+  "template": "BDT # still due",
+  "example": "BDT 219,050 still due"
+ },
+ {
+  "template": "Orders create demand: # invoice lines. Each invoice line takes units from the oldest stock lot first (FIFO), in the range.",
+  "example": "Orders create demand: 26 invoice lines. Each invoice line takes units from the oldest stock lot first (FIFO), in the range."
+ },
+ {
+  "template": "Stock sold to customers: # units sold. Units that left the shelf on invoices in the range.",
+  "example": "Stock sold to customers: 50 units sold. Units that left the shelf on invoices in the range."
+ },
+ {
+  "template": "Demand sets reorders: # products to reorder. What customers buy runs stock down to its reorder level; those products show in What to order.",
+  "example": "Demand sets reorders: 22 products to reorder. What customers buy runs stock down to its reorder level; those products show in What to order."
+ },
+ {
+  "template": "Shipment updates inventory: # lots received. Receiving a shipment makes one stock lot per line at landed cost.",
+  "example": "Shipment updates inventory: 3 lots received. Receiving a shipment makes one stock lot per line at landed cost."
+ },
+ {
+  "template": "Landed cost feeds ROI: # shipments received. Shipment ROI and margins use the landed cost written on each lot.",
+  "example": "Landed cost feeds ROI: 1 shipments received. Shipment ROI and margins use the landed cost written on each lot."
+ },
+ {
+  "template": "Roles decide who sees figures: # abilities off for you. A figure your role may not see is never sent to the page: it shows a lock.",
+  "example": "Roles decide who sees figures: 0 abilities off for you. A figure your role may not see is never sent to the page: it shows a lock."
+ },
+ {
+  "template": "Controls keep the system safe: # changes logged. Every change is written to the activity log with who and when.",
+  "example": "Controls keep the system safe: 400 changes logged. Every change is written to the activity log with who and when."
+ },
+ {
+  "template": "Audit ready, traceable: # checks failing. The system check proves invoices, payments, stock and shares agree; nothing is deleted, only struck out.",
+  "example": "Audit ready, traceable: 0 checks failing. The system check proves invoices, payments, stock and shares agree; nothing is deleted, only struck out."
+ },
+ {
+  "template": "Costs linked to shipments: # shipment cost rows. Freight, duty and late bills on a shipment lower its profit, which investors who funded it share in.",
+  "example": "Costs linked to shipments: 2 shipment cost rows. Freight, duty and late bills on a shipment lower its profit, which investors who funded it share in."
+ },
+ {
+  "template": "Funding mapped to sales: # funding rows. Who funded what share of each shipment; its units sold on invoices earn their share.",
+  "example": "Funding mapped to sales: 1 funding rows. Who funded what share of each shipment; its units sold on invoices earn their share."
+ },
+ {
+  "template": "✓ #/# checks pass",
+  "example": "✓ 11/13 checks pass"
+ },
+ {
+  "template": "Due within # d…",
+  "example": "Due within 7 d…"
+ },
+ {
+  "template": "None in # days",
+  "example": "None in 30 days"
+ },
+ {
+  "template": "Walk-in # · S…",
+  "example": "Walk-in 15 · S…"
+ },
+ {
+  "template": "Latest INV-#…",
+  "example": "Latest INV-20…"
+ },
+ {
+  "template": "· # shipment cost rows",
+  "example": "· 2 shipment cost rows"
+ },
+ {
+  "template": "· # funding rows",
+  "example": "· 1 funding rows"
+ },
+ {
+  "template": "Step #",
+  "example": "Step 1"
+ },
+ {
+  "template": "Since MON '#: capital → stock → sales → profit → investors’ and owners’ share",
+  "example": "Since Jun '26: capital → stock → sales → profit → investors’ and owners’ share"
+ },
+ {
+  "template": "Investor capital → Stock bought (landed): BDT #",
+  "example": "Investor capital → Stock bought (landed): BDT 20,000"
+ },
+ {
+  "template": "Owner & recycled cash → Stock bought (landed): BDT #",
+  "example": "Owner & recycled cash → Stock bought (landed): BDT 1,068,097"
+ },
+ {
+  "template": "Stock bought (landed) → Sold at cost: BDT #",
+  "example": "Stock bought (landed) → Sold at cost: BDT 621,843"
+ },
+ {
+  "template": "Stock bought (landed) → In stock now: BDT #",
+  "example": "Stock bought (landed) → In stock now: BDT 466,254"
+ },
+ {
+  "template": "Sold at cost → Sales revenue: BDT #",
+  "example": "Sold at cost → Sales revenue: BDT 621,843"
+ },
+ {
+  "template": "Margin added → Sales revenue: BDT #",
+  "example": "Margin added → Sales revenue: BDT 375,707"
+ },
+ {
+  "template": "Sales revenue → Gross profit: BDT #",
+  "example": "Sales revenue → Gross profit: BDT 375,707"
+ },
+ {
+  "template": "Gross profit → Expenses & fees (less delivery charged): BDT #",
+  "example": "Gross profit → Expenses & fees (less delivery charged): BDT 59,147"
+ },
+ {
+  "template": "Gross profit → Investor returns: BDT #",
+  "example": "Gross profit → Investor returns: BDT 582"
+ },
+ {
+  "template": "Gross profit → Net profit: BDT #",
+  "example": "Gross profit → Net profit: BDT 315,978"
+ },
+ {
+  "template": "Net profit → Owners’ share (net profit): BDT #",
+  "example": "Net profit → Owners’ share (net profit): BDT 315,978"
+ },
+ {
+  "template": "A simple view since MON '# (the first month with sales, at most # months). Click a block to open its screen. Owner & recycled cash includes the money that sold stock brings back.",
+  "example": "A simple view since Jun '26 (the first month with sales, at most 36 months). Click a block to open its screen. Owner & recycled cash includes the money that sold stock brings back."
+ },
+ {
+  "template": "MakerPro Filament Dry Box, MakerPro TPU Red #g, Nova Hardened Nozzle #",
+  "example": "MakerPro Filament Dry Box, MakerPro TPU Red 500g, Nova Hardened Nozzle 0.6"
+ },
+ {
+  "template": "BDT # customer dues",
+  "example": "BDT 219,050 customer dues"
+ },
+ {
+  "template": "worth #",
+  "example": "worth 185,000"
+ },
+ {
+  "template": "holding cost # taken off",
+  "example": "holding cost ৳399 taken off"
+ },
+ {
+  "template": "Holding cost is on: Rent is shared over the stock on the shelf each month by kg × days; net profit is not বদলানো হয়েছে. # product(s) have no weight and count as # kg.",
+  "example": "Holding cost is on: Rent is shared over the stock on the shelf each month by kg × days; net profit is not বদলানো হয়েছে. 1 product(s) have no weight and count as 1 kg."
+ },
+ {
+  "template": "Dragon Filament Co. · AWB-DEMO-#",
+  "example": "Dragon Filament Co. · AWB-DEMO-1"
+ },
+ {
+  "template": "Expected #-#-#",
+  "example": "Expected 2026-10-25"
+ },
+ {
+  "template": "Received # MON #",
+  "example": "Received 13 Oct 2026"
+ },
+ {
+  "template": "Sold #",
+  "example": "Sold 9%"
+ },
+ {
+  "template": "After holding #",
+  "example": "After holding ৳2,908"
+ },
+ {
+  "template": "Sellers · #-#",
+  "example": "Sellers · 2026-10"
+ },
+ {
+  "template": "Total of # row",
+  "example": "Total of 1 row"
+ },
+ {
+  "template": "sales # · paid # · left #",
+  "example": "sales ৳116,000 · paid ৳0 · left ৳3,030"
+ },
+ {
+  "template": "Everyone · #",
+  "example": "Everyone · 2%"
+ },
+ {
+  "template": "Everything · of sales · since # MON #",
+  "example": "Everything · of sales · since 13 Oct 2026"
+ },
+ {
+  "template": "Category: Printers · of gross profit · since # MON #",
+  "example": "Category: Printers · of gross profit · since 13 Oct 2026"
+ },
+ {
+  "template": "Sales by seller · #-#",
+  "example": "Sales by seller · 2026-10"
+ },
+ {
+  "template": "INV-#-# · Owner",
+  "example": "INV-20261013-1134 · Owner"
+ },
+ {
+  "template": "Demo Buyer · # unit(s)",
+  "example": "Demo Buyer · 4 unit(s)"
+ },
+ {
+  "template": "MD Walid Ahmad Mafuj · # unit(s)",
+  "example": "MD Walid Ahmad Mafuj · 1 unit(s)"
+ },
+ {
+  "template": "Farhana Begum · # unit(s)",
+  "example": "Farhana Begum · 3 unit(s)"
+ },
+ {
+  "template": "Farhana Rahman · # unit(s)",
+  "example": "Farhana Rahman · 2 unit(s)"
+ },
+ {
+  "template": "Rafi Rahman · # unit(s)",
+  "example": "Rafi Rahman · 3 unit(s)"
+ },
+ {
+  "template": "Lamia Akter · # unit(s)",
+  "example": "Lamia Akter · 3 unit(s)"
+ },
+ {
+  "template": "Rafi Das · # unit(s)",
+  "example": "Rafi Das · 3 unit(s)"
+ },
+ {
+  "template": "Arif Akter · # unit(s)",
+  "example": "Arif Akter · 3 unit(s)"
+ },
+ {
+  "template": "Sumaiya Sultana · # unit(s)",
+  "example": "Sumaiya Sultana · 3 unit(s)"
+ },
+ {
+  "template": "Hasan Hossain · # unit(s)",
+  "example": "Hasan Hossain · 1 unit(s)"
+ },
+ {
+  "template": "Hasan Ahmed · # unit(s)",
+  "example": "Hasan Ahmed · 5 unit(s)"
+ },
+ {
+  "template": "Sadia Ahmed · # unit(s)",
+  "example": "Sadia Ahmed · 3 unit(s)"
+ },
+ {
+  "template": "Sumaiya Chowdhury · # unit(s)",
+  "example": "Sumaiya Chowdhury · 1 unit(s)"
+ },
+ {
+  "template": "Jannat Khan · # unit(s)",
+  "example": "Jannat Khan · 4 unit(s)"
+ }
+]

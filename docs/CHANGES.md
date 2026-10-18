@@ -2312,3 +2312,21 @@ Page only (fd-56; the joint calls are the joint stock's own, so every rule above
   white and the dark theme (#e8590c orange, #1c7ed6 blue, #2f9e44 green, #ae3ec9 purple, #d6336c pink, #0c8599 teal);
   each joint stock's is fixed by its id and two joint stocks of one company never share one. Live protoreen = orange.
   Done in the page after drawing (MutationObserver), so every screen version gets it. Checked on dev, light and dark.
+
+## 19 Oct 2026 - Professional Bangla (owner: "translate it professionally, from real references")
+
+- Research (docs/bangla/GLOSSARY.md, REVIEW.md, with sources): Mozilla bn-BD and Joomla style guides, Android bn
+  strings, NBR Mushak terms, TallyKhata, school accounting terms, Steadfast; ERPNext/Frappe bn found machine-made and
+  used only as what-not-to-do. House words: ইনভয়েস, বাকি, দেনা, পরিশোধিত, অগ্রিম, ফেরত, ছাড়, শিপমেন্ট, কেনা দাম, আনার খরচসহ
+  দাম, খরচ, লাভ/মোট লাভ/নিট লাভ, সাপ্লায়ার, গ্রাহক, পদ, অপেক্ষায়, তাগাদা, সেভ করুন; আপনি; ৳ before figures.
+- 124 phrases + 21 patterns corrected (অঙ্ক for money, one word for two things, cost written as খরচ, stiff words,
+  "Costareen" where the English says ERP, a dropped instruction); the "families?y" pattern fixed; the loose
+  "X changed..." pattern tightened.
+- Coverage: every screen of the test ERP was read in Bangla and the untranslated labels collected (586 labels, 240
+  sentence shapes); 558 + 44 labels and 119 + 15 patterns added (receive page, ERP map, assistant panel, Earlier/Later,
+  row counts, month headers). Left in English on purpose: brand and product names, codes, feature names (Printer
+  Passport, Print Doctor, Design desk).
+- Numbers inside translated sentences are written in Bangla digits; figures in tables, cards and inputs stay 0-9.
+- English message fixed to match the web ERP: "Website sync key not set: add it in Settings → Connections → Website."
+- The dictionary now holds 1,889 phrases and 467 patterns. Not done: sentences split around bold words (a few help
+  lines) keep their English order; "A pays X to B" on the joint month end; data typed by people stays as typed.

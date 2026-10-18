@@ -101,7 +101,7 @@ export async function sfStatus(ctx, cid) {
 /** czFetch_ (Code:3852): the website's sync bridge. */
 async function czFetch(ctx, path) {
   const key = await getSecret(ctx, 'CZ_SYNC_KEY');
-  if (!key) throw new Error('Website sync key not set. Run "Setup Website Sync" from the menu first.');
+  if (!key) throw new Error('Website sync key not set: add it in Settings → Connections → Website.');
   const dflt = ctx.deps && ctx.deps.install && ctx.deps.install.id ? '' : WEBSITE_API;   // a company copy has no default website
   const base = String(await getConfig(ctx, 'website_api', dflt)).trim() || dflt;
   if (!base) throw new Error('No website is connected yet (Settings \u2192 Connections \u2192 Website).');

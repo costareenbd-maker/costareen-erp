@@ -1,0 +1,3631 @@
+[
+ {
+  "en": "Features customers reach from outside",
+  "where": [
+   "apps",
+   "chat"
+  ]
+ },
+ {
+  "en": "The special features customers reach from outside. Tap one to see what it does, share its page, and set it up.",
+  "where": [
+   "apps",
+   "chat"
+  ]
+ },
+ {
+  "en": "Find stock",
+  "where": [
+   "apps",
+   "chat",
+   "market"
+  ]
+ },
+ {
+  "en": "Printer Passport",
+  "where": [
+   "apps",
+   "chat"
+  ]
+ },
+ {
+  "en": "Print Doctor",
+  "where": [
+   "apps",
+   "chat"
+  ]
+ },
+ {
+  "en": "Design desk",
+  "where": [
+   "apps",
+   "chat"
+  ]
+ },
+ {
+  "en": "Feedback",
+  "where": [
+   "apps",
+   "chat"
+  ]
+ },
+ {
+  "en": "Ideas and updates",
+  "where": [
+   "apps",
+   "chat"
+  ]
+ },
+ {
+  "en": "New things. Yours alone until you switch one on for everyone.",
+  "where": [
+   "apps",
+   "chat"
+  ]
+ },
+ {
+  "en": "What to push next",
+  "where": [
+   "apps",
+   "chat"
+  ]
+ },
+ {
+  "en": "Inbox",
+  "where": [
+   "apps",
+   "chat",
+   "settings"
+  ]
+ },
+ {
+  "en": "Creators",
+  "where": [
+   "apps",
+   "chat",
+   "campaigns"
+  ]
+ },
+ {
+  "en": "Make a sale: customer, products, payment",
+  "where": [
+   "invoice"
+  ]
+ },
+ {
+  "en": "Revenue this month",
+  "where": [
+   "sales"
+  ]
+ },
+ {
+  "en": "= same",
+  "where": [
+   "sales",
+   "analytics"
+  ]
+ },
+ {
+  "en": "Orders this month",
+  "where": [
+   "sales"
+  ]
+ },
+ {
+  "en": "Dues receivable",
+  "where": [
+   "sales",
+   "cash"
+  ]
+ },
+ {
+  "en": "Units sold this month",
+  "where": [
+   "sales"
+  ]
+ },
+ {
+  "en": "All invoices",
+  "where": [
+   "sales",
+   "weborders",
+   "quotes"
+  ]
+ },
+ {
+  "en": "Pre-orders",
+  "where": [
+   "sales",
+   "weborders",
+   "quotes"
+  ]
+ },
+ {
+  "en": "Invoice design",
+  "where": [
+   "sales",
+   "weborders",
+   "quotes"
+  ]
+ },
+ {
+  "en": "Columns",
+  "where": [
+   "sales",
+   "customers",
+   "products"
+  ]
+ },
+ {
+  "en": "Compact",
+  "where": [
+   "sales",
+   "customers",
+   "products"
+  ]
+ },
+ {
+  "en": "Export",
+  "where": [
+   "sales",
+   "customers",
+   "products"
+  ]
+ },
+ {
+  "en": "WhatsApp",
+  "where": [
+   "sales",
+   "customers",
+   "inbox"
+  ]
+ },
+ {
+  "en": "Steadfast-এর অপেক্ষায়",
+  "where": [
+   "sales"
+  ]
+ },
+ {
+  "en": "These orders go by courier and have not been entered with Steadfast yet. Oldest first. Once sent, an order leaves this box and stays in the list below.",
+  "where": [
+   "sales"
+  ]
+ },
+ {
+  "en": "Shop, courier and website sales in one list · totals are for the filtered rows",
+  "where": [
+   "sales"
+  ]
+ },
+ {
+  "en": "Sort by",
+  "where": [
+   "sales",
+   "customers",
+   "products"
+  ]
+ },
+ {
+  "en": "Filter",
+  "where": [
+   "sales",
+   "customers"
+  ]
+ },
+ {
+  "en": "Views",
+  "where": [
+   "sales",
+   "customers"
+  ]
+ },
+ {
+  "en": "Own",
+  "where": [
+   "sales"
+  ]
+ },
+ {
+  "en": "Steadfast courier",
+  "where": [
+   "sales"
+  ]
+ },
+ {
+  "en": "· Gross profit = goods after discount − the cost fixed on each line the day it was sold; a sale with returns or no cost shows —",
+  "where": [
+   "sales"
+  ]
+ },
+ {
+  "en": "Steadfast-এর টাকা",
+  "where": [
+   "sales"
+  ]
+ },
+ {
+  "en": "Every payout Steadfast made, parcel by parcel, and what they are still holding. Checked against your invoices by itself every night — the dashboard tells you only when you are needed.",
+  "where": [
+   "sales"
+  ]
+ },
+ {
+  "en": "How this screen works · সাহায্য / Help",
+  "where": [
+   "sales",
+   "customers"
+  ]
+ },
+ {
+  "en": "How it is worked out",
+  "where": [
+   "sales",
+   "weborders",
+   "quotes"
+  ]
+ },
+ {
+  "en": "the same as last month",
+  "where": [
+   "sales"
+  ]
+ },
+ {
+  "en": "Choose columns",
+  "where": [
+   "sales",
+   "customers",
+   "products"
+  ]
+ },
+ {
+  "en": "Compact rows",
+  "where": [
+   "sales",
+   "customers",
+   "products"
+  ]
+ },
+ {
+  "en": "Download the rows as shown (CSV)",
+  "where": [
+   "sales",
+   "customers",
+   "products"
+  ]
+ },
+ {
+  "en": "Connect it",
+  "where": [
+   "sales",
+   "weborders"
+  ]
+ },
+ {
+  "en": "Search invoice, customer, phone, product…",
+  "where": [
+   "sales"
+  ]
+ },
+ {
+  "en": "Reverse the order",
+  "where": [
+   "sales",
+   "customers",
+   "products"
+  ]
+ },
+ {
+  "en": "Filters, group by and saved searches",
+  "where": [
+   "sales",
+   "customers"
+  ]
+ },
+ {
+  "en": "Views: ready-made and saved",
+  "where": [
+   "sales",
+   "customers"
+  ]
+ },
+ {
+  "en": "Download every matching row (CSV)",
+  "where": [
+   "sales",
+   "customers"
+  ]
+ },
+ {
+  "en": "Receive due",
+  "where": [
+   "sales",
+   "customers"
+  ]
+ },
+ {
+  "en": "Profit of the costed rows on this page",
+  "where": [
+   "sales"
+  ]
+ },
+ {
+  "en": "Website prices",
+  "where": [
+   "weborders"
+  ]
+ },
+ {
+  "en": "Compare with the ERP",
+  "where": [
+   "weborders"
+  ]
+ },
+ {
+  "en": "What customers pay on the website follows the selling prices you set in the ERP. Where the website shows a crossed-out price, it stays and the sale price changes. A change of more than half waits for you, so a typo never reaches customers.",
+  "where": [
+   "weborders"
+  ]
+ },
+ {
+  "en": "What this screen is",
+  "where": [
+   "weborders",
+   "quotes",
+   "mindmap"
+  ]
+ },
+ {
+  "en": "this month",
+  "where": [
+   "quotes",
+   "campaigns"
+  ]
+ },
+ {
+  "en": "Drafts",
+  "where": [
+   "quotes"
+  ]
+ },
+ {
+  "en": "Machines in for repair",
+  "where": [
+   "repairs"
+  ]
+ },
+ {
+  "en": "Print jobs",
+  "where": [
+   "printjobs",
+   "settings"
+  ]
+ },
+ {
+  "en": "Ready to hand over",
+  "where": [
+   "printjobs",
+   "preorders"
+  ]
+ },
+ {
+  "en": "Jobs",
+  "where": [
+   "printjobs"
+  ]
+ },
+ {
+  "en": "Jobs board",
+  "where": [
+   "printjobs"
+  ]
+ },
+ {
+  "en": "Printers",
+  "where": [
+   "printjobs",
+   "products",
+   "costs"
+  ]
+ },
+ {
+  "en": "Spools",
+  "where": [
+   "printjobs"
+  ]
+ },
+ {
+  "en": "Requests",
+  "where": [
+   "printjobs",
+   "market"
+  ]
+ },
+ {
+  "en": "Rates",
+  "where": [
+   "printjobs"
+  ]
+ },
+ {
+  "en": "For a business that prints for customers: every job on a board, the true cost of each (filament by the gram from the opened spool, machine hours, labour, packaging), a calculator for the price, and your own quote link for customers.",
+  "where": [
+   "printjobs"
+  ]
+ },
+ {
+  "en": "Resell",
+  "where": [
+   "resell",
+   "settings"
+  ]
+ },
+ {
+  "en": "Sell other suppliers’ stock without holding it",
+  "where": [
+   "resell"
+  ]
+ },
+ {
+  "en": "Resell — sell without stock",
+  "where": [
+   "resell"
+  ]
+ },
+ {
+  "en": "Sell a supplier’s products to your own customers at your own price. The supplier packs with a slip in your name and sends the parcel; its courier collects cash on delivery. Your margin is paid to you by the supplier at month end. The platform holds no money.",
+  "where": [
+   "resell"
+  ]
+ },
+ {
+  "en": "My commission",
+  "where": [
+   "resell"
+  ]
+ },
+ {
+  "en": "No supplier sells through resellers yet. Suppliers switch it on under Market > What I share.",
+  "where": [
+   "resell"
+  ]
+ },
+ {
+  "en": "New customer",
+  "where": [
+   "customers"
+  ]
+ },
+ {
+  "en": "in the customer list",
+  "where": [
+   "customers"
+  ]
+ },
+ {
+  "en": "Repeat buyers",
+  "where": [
+   "customers",
+   "mindmap"
+  ]
+ },
+ {
+  "en": "Refill reminders",
+  "where": [
+   "customers"
+  ]
+ },
+ {
+  "en": "Points rules",
+  "where": [
+   "customers"
+  ]
+ },
+ {
+  "en": "Dues by age",
+  "where": [
+   "customers"
+  ]
+ },
+ {
+  "en": "Over 90 days",
+  "where": [
+   "customers"
+  ]
+ },
+ {
+  "en": "Nobody to call back. Add one from here or from a customer’s page.",
+  "where": [
+   "customers"
+  ]
+ },
+ {
+  "en": "Paid in advance",
+  "where": [
+   "customers"
+  ]
+ },
+ {
+  "en": "In advance",
+  "where": [
+   "customers"
+  ]
+ },
+ {
+  "en": "Open account",
+  "where": [
+   "customers"
+  ]
+ },
+ {
+  "en": "Phone is the identity; names are attributes · totals are for the filtered rows",
+  "where": [
+   "customers"
+  ]
+ },
+ {
+  "en": "Search name, phone, address, product…",
+  "where": [
+   "customers"
+  ]
+ },
+ {
+  "en": "Advertisement",
+  "where": [
+   "campaigns"
+  ]
+ },
+ {
+  "en": "WhatsApp: সেট করা হয়নি",
+  "where": [
+   "campaigns"
+  ]
+ },
+ {
+  "en": "WhatsApp সংযোগ",
+  "where": [
+   "campaigns"
+  ]
+ },
+ {
+  "en": "Set up WhatsApp",
+  "where": [
+   "campaigns"
+  ]
+ },
+ {
+  "en": "Stock by lot: brand, type, colour and where it came from",
+  "where": [
+   "products"
+  ]
+ },
+ {
+  "en": "Count",
+  "where": [
+   "products",
+   "cash",
+   "mindmap"
+  ]
+ },
+ {
+  "en": "Adjust stock",
+  "where": [
+   "products"
+  ]
+ },
+ {
+  "en": "Lots",
+  "where": [
+   "products"
+  ]
+ },
+ {
+  "en": "Grouped",
+  "where": [
+   "products"
+  ]
+ },
+ {
+  "en": "Units on hand",
+  "where": [
+   "products",
+   "stock",
+   "mindmap"
+  ]
+ },
+ {
+  "en": "Stock value at cost",
+  "where": [
+   "products",
+   "stock"
+  ]
+ },
+ {
+  "en": "landed cost, FIFO lots",
+  "where": [
+   "products"
+  ]
+ },
+ {
+  "en": "Items low or out",
+  "where": [
+   "products"
+  ]
+ },
+ {
+  "en": "Colour families…",
+  "where": [
+   "products"
+  ]
+ },
+ {
+  "en": "Mine",
+  "where": [
+   "products"
+  ]
+ },
+ {
+  "en": "Joint pool",
+  "where": [
+   "products"
+  ]
+ },
+ {
+  "en": "Partner’s",
+  "where": [
+   "products"
+  ]
+ },
+ {
+  "en": "All, side by side",
+  "where": [
+   "products"
+  ]
+ },
+ {
+  "en": "Warranty rules",
+  "where": [
+   "products"
+  ]
+ },
+ {
+  "en": "Item",
+  "where": [
+   "products"
+  ]
+ },
+ {
+  "en": "Value at cost",
+  "where": [
+   "products"
+  ]
+ },
+ {
+  "en": "Days of cover",
+  "where": [
+   "products"
+  ]
+ },
+ {
+  "en": "no sales",
+  "where": [
+   "products"
+  ]
+ },
+ {
+  "en": "Out",
+  "where": [
+   "products"
+  ]
+ },
+ {
+  "en": "Filaments",
+  "where": [
+   "products",
+   "costs",
+   "profit"
+  ]
+ },
+ {
+  "en": "Parts",
+  "where": [
+   "products",
+   "costs",
+   "profit"
+  ]
+ },
+ {
+  "en": "Low",
+  "where": [
+   "products"
+  ]
+ },
+ {
+  "en": "Low stock & days of cover",
+  "where": [
+   "products"
+  ]
+ },
+ {
+  "en": "Cover = on hand ÷ what sells a day; under lead time + 14 days is red",
+  "where": [
+   "products"
+  ]
+ },
+ {
+  "en": "Reorder plan",
+  "where": [
+   "products"
+  ]
+ },
+ {
+  "en": "Nothing is running low",
+  "where": [
+   "products"
+  ]
+ },
+ {
+  "en": "Every selling item has more than its lead time + 14 days of cover.",
+  "where": [
+   "products"
+  ]
+ },
+ {
+  "en": "Receipts, returns and adjustments",
+  "where": [
+   "products"
+  ]
+ },
+ {
+  "en": "Stock moves other than sales (sales are on the invoices)",
+  "where": [
+   "products"
+  ]
+ },
+ {
+  "en": "Adjust",
+  "where": [
+   "products"
+  ]
+ },
+ {
+  "en": "Show calculation",
+  "where": [
+   "products",
+   "analytics",
+   "mindmap"
+  ]
+ },
+ {
+  "en": "Black",
+  "where": [
+   "products"
+  ]
+ },
+ {
+  "en": "Red",
+  "where": [
+   "products"
+  ]
+ },
+ {
+  "en": "White",
+  "where": [
+   "products"
+  ]
+ },
+ {
+  "en": "Blue",
+  "where": [
+   "products"
+  ]
+ },
+ {
+  "en": "Green",
+  "where": [
+   "products"
+  ]
+ },
+ {
+  "en": "Grey",
+  "where": [
+   "products"
+  ]
+ },
+ {
+  "en": "Orange",
+  "where": [
+   "products"
+  ]
+ },
+ {
+  "en": "Yellow",
+  "where": [
+   "products"
+  ]
+ },
+ {
+  "en": "Out of stock",
+  "where": [
+   "stock"
+  ]
+ },
+ {
+  "en": "At or below reorder",
+  "where": [
+   "stock"
+  ]
+ },
+ {
+  "en": "Handling is added to every unit priced from the book. Rows under the minimum margin are flagged below.",
+  "where": [
+   "costs"
+  ]
+ },
+ {
+  "en": "The money you buy in, and what one unit costs you in taka — your real rate, broker included. A new rate changes what the price book lands at from now on; stock already bought keeps the cost it came in at. Every rate is kept by date.",
+  "where": [
+   "costs"
+  ]
+ },
+ {
+  "en": "RMB",
+  "where": [
+   "costs"
+  ]
+ },
+ {
+  "en": "USD",
+  "where": [
+   "costs"
+  ]
+ },
+ {
+  "en": "One row per brand and type — colours share a price, so they are not listed separately. Type the price and pick the money it was quoted in. Leave handling blank to use the default above. Nothing is saved until you press Save changes.",
+  "where": [
+   "costs"
+  ]
+ },
+ {
+  "en": "SKUs",
+  "where": [
+   "costs"
+  ]
+ },
+ {
+  "en": "PLA",
+  "where": [
+   "costs"
+  ]
+ },
+ {
+  "en": "TK",
+  "where": [
+   "costs"
+  ]
+ },
+ {
+  "en": "PLA+",
+  "where": [
+   "costs"
+  ]
+ },
+ {
+  "en": "TPU",
+  "where": [
+   "costs"
+  ]
+ },
+ {
+  "en": "Printer",
+  "where": [
+   "costs"
+  ]
+ },
+ {
+  "en": "Nozzle",
+  "where": [
+   "costs"
+  ]
+ },
+ {
+  "en": "e.g. ASA, PLA+, TPU, nozzle",
+  "where": [
+   "costs"
+  ]
+ },
+ {
+  "en": "Set for this row only - the default does not apply here",
+  "where": [
+   "costs"
+  ]
+ },
+ {
+  "en": "Market",
+  "where": [
+   "market",
+   "settings"
+  ]
+ },
+ {
+  "en": "Stock shared with other shops",
+  "where": [
+   "market"
+  ]
+ },
+ {
+  "en": "You see the platform’s own stock.",
+  "where": [
+   "market"
+  ]
+ },
+ {
+  "en": "Share your stock",
+  "where": [
+   "market"
+  ]
+ },
+ {
+  "en": "Wanted board",
+  "where": [
+   "market"
+  ]
+ },
+ {
+  "en": "What I share",
+  "where": [
+   "market"
+  ]
+ },
+ {
+  "en": "Nothing on the market yet.",
+  "where": [
+   "market"
+  ]
+ },
+ {
+  "en": "Product, brand or category",
+  "where": [
+   "market"
+  ]
+ },
+ {
+  "en": "Goods owned together with a partner company",
+  "where": [
+   "joint"
+  ]
+ },
+ {
+  "en": "Month end",
+  "where": [
+   "joint"
+  ]
+ },
+ {
+  "en": "sold on credit, not paid yet",
+  "where": [
+   "joint"
+  ]
+ },
+ {
+  "en": "pays",
+  "where": [
+   "joint"
+  ]
+ },
+ {
+  "en": "to",
+  "where": [
+   "joint"
+  ]
+ },
+ {
+  "en": "Profit is shared by the capital each had in at the start of the month.",
+  "where": [
+   "joint"
+  ]
+ },
+ {
+  "en": "You",
+  "where": [
+   "joint"
+  ]
+ },
+ {
+  "en": "capital in",
+  "where": [
+   "joint"
+  ]
+ },
+ {
+  "en": "Net profit this month",
+  "where": [
+   "profit"
+  ]
+ },
+ {
+  "en": "Profit & loss",
+  "where": [
+   "profit"
+  ]
+ },
+ {
+  "en": "ডাউনলোড (Excel / CSV)",
+  "where": [
+   "profit"
+  ]
+ },
+ {
+  "en": "BDT",
+  "where": [
+   "profit"
+  ]
+ },
+ {
+  "en": "কুরিয়ার: ডেলিভারি + COD ফি",
+  "where": [
+   "profit"
+  ]
+ },
+ {
+  "en": "Commission",
+  "where": [
+   "profit",
+   "settings",
+   "mindmap"
+  ]
+ },
+ {
+  "en": "Investor returns",
+  "where": [
+   "profit",
+   "mindmap"
+  ]
+ },
+ {
+  "en": "Office",
+  "where": [
+   "profit",
+   "expenses"
+  ]
+ },
+ {
+  "en": "Rent",
+  "where": [
+   "profit",
+   "expenses"
+  ]
+ },
+ {
+  "en": "Transport",
+  "where": [
+   "profit"
+  ]
+ },
+ {
+  "en": "Share of joint stock profit",
+  "where": [
+   "profit"
+  ]
+ },
+ {
+  "en": "কুরিয়ার খরচ হলো Steadfast তার পেমেন্ট থেকে যা কেটে রেখেছে; যে মাসে পেমেন্ট দিয়েছে সেই মাসে ধরা হয়।",
+  "where": [
+   "profit"
+  ]
+ },
+ {
+  "en": "Window",
+  "where": [
+   "profit"
+  ]
+ },
+ {
+  "en": "Search this list",
+  "where": [
+   "profit",
+   "settings",
+   "analytics"
+  ]
+ },
+ {
+  "en": "Rent, bills and every other cost",
+  "where": [
+   "expenses"
+  ]
+ },
+ {
+  "en": "Excel হিসেবে ডাউনলোড",
+  "where": [
+   "expenses"
+  ]
+ },
+ {
+  "en": "Add expense",
+  "where": [
+   "expenses"
+  ]
+ },
+ {
+  "en": "All expenses",
+  "where": [
+   "expenses"
+  ]
+ },
+ {
+  "en": "Expected monthly",
+  "where": [
+   "expenses"
+  ]
+ },
+ {
+  "en": "Expected monthly not done",
+  "where": [
+   "expenses"
+  ]
+ },
+ {
+  "en": "fixed costs not marked paid",
+  "where": [
+   "expenses"
+  ]
+ },
+ {
+  "en": "Newest first · every entry stays listed; a wrong one is struck out with its reason",
+  "where": [
+   "expenses"
+  ]
+ },
+ {
+  "en": "Struck out",
+  "where": [
+   "expenses",
+   "capital"
+  ]
+ },
+ {
+  "en": "Recorded",
+  "where": [
+   "expenses"
+  ]
+ },
+ {
+  "en": "Kind",
+  "where": [
+   "expenses",
+   "platform"
+  ]
+ },
+ {
+  "en": "Posted",
+  "where": [
+   "expenses",
+   "capital"
+  ]
+ },
+ {
+  "en": "Attach receipt",
+  "where": [
+   "expenses"
+  ]
+ },
+ {
+  "en": "Strike out",
+  "where": [
+   "expenses",
+   "capital"
+  ]
+ },
+ {
+  "en": "Nothing matches",
+  "where": [
+   "expenses",
+   "capital",
+   "cash"
+  ]
+ },
+ {
+  "en": "Clear the search or pick another view.",
+  "where": [
+   "expenses",
+   "capital",
+   "cash"
+  ]
+ },
+ {
+  "en": "Totals by category",
+  "where": [
+   "expenses"
+  ]
+ },
+ {
+  "en": "Same item, same amount. Set once; it waits here every month. When you have actually paid one, press",
+  "where": [
+   "expenses"
+  ]
+ },
+ {
+  "en": "— only then does it count as an expense and go in the book, with that day’s date. Use Change amount when it really rises; the months already gone keep the old figure.",
+  "where": [
+   "expenses"
+  ]
+ },
+ {
+  "en": "Shop rent",
+  "where": [
+   "expenses"
+  ]
+ },
+ {
+  "en": "Same item every month, different amount — the electricity bill. The line is here every month by itself; type only that month's amount in its box.",
+  "where": [
+   "expenses"
+  ]
+ },
+ {
+  "en": "Packaging",
+  "where": [
+   "expenses"
+  ]
+ },
+ {
+  "en": "Equipment",
+  "where": [
+   "expenses"
+  ]
+ },
+ {
+  "en": "Paid from",
+  "where": [
+   "expenses"
+  ]
+ },
+ {
+  "en": "Cash",
+  "where": [
+   "expenses",
+   "capital",
+   "cash"
+  ]
+ },
+ {
+  "en": "bKash",
+  "where": [
+   "expenses",
+   "capital",
+   "cash"
+  ]
+ },
+ {
+  "en": "Fixed and recurring costs (rent, salaries, the electricity bill) wait under Expected monthly: press Paid or type that month’s amount there.",
+  "where": [
+   "expenses"
+  ]
+ },
+ {
+  "en": "Search expense, category…",
+  "where": [
+   "expenses"
+  ]
+ },
+ {
+  "en": "Download the filtered rows (CSV)",
+  "where": [
+   "expenses",
+   "capital",
+   "cash"
+  ]
+ },
+ {
+  "en": "Owners’ and investors’ money in the business",
+  "where": [
+   "capital"
+  ]
+ },
+ {
+  "en": "Add shareholder",
+  "where": [
+   "capital"
+  ]
+ },
+ {
+  "en": "Add investor",
+  "where": [
+   "capital"
+  ]
+ },
+ {
+  "en": "Write in the book",
+  "where": [
+   "capital"
+  ]
+ },
+ {
+  "en": "Partner’s own stock",
+  "where": [
+   "capital"
+  ]
+ },
+ {
+  "en": "Month close",
+  "where": [
+   "capital",
+   "mindmap"
+  ]
+ },
+ {
+  "en": "Portal links",
+  "where": [
+   "capital"
+  ]
+ },
+ {
+  "en": "Shares written down",
+  "where": [
+   "capital"
+  ]
+ },
+ {
+  "en": "the shares add up to 100%",
+  "where": [
+   "capital"
+  ]
+ },
+ {
+  "en": "Who owns the business",
+  "where": [
+   "capital"
+  ]
+ },
+ {
+  "en": "The share is what was agreed, typed in — not worked out from the money. Each month’s net profit belongs to the shareholders in that proportion, paid out or not.",
+  "where": [
+   "capital"
+  ]
+ },
+ {
+  "en": "Owed > 0",
+  "where": [
+   "capital"
+  ]
+ },
+ {
+  "en": "Left / ended",
+  "where": [
+   "capital"
+  ]
+ },
+ {
+  "en": "Invested",
+  "where": [
+   "capital"
+  ]
+ },
+ {
+  "en": "Profit earned",
+  "where": [
+   "capital"
+  ]
+ },
+ {
+  "en": "Paid out",
+  "where": [
+   "capital"
+  ]
+ },
+ {
+  "en": "Left in the business",
+  "where": [
+   "capital"
+  ]
+ },
+ {
+  "en": "Change",
+  "where": [
+   "capital"
+  ]
+ },
+ {
+  "en": "Has left",
+  "where": [
+   "capital"
+  ]
+ },
+ {
+  "en": "Due so far",
+  "where": [
+   "capital"
+  ]
+ },
+ {
+  "en": "Still owed",
+  "where": [
+   "capital"
+  ]
+ },
+ {
+  "en": "Ended",
+  "where": [
+   "capital"
+  ]
+ },
+ {
+  "en": "Every taka that comes in from, or goes out to, a shareholder or investor.",
+  "where": [
+   "capital"
+  ]
+ },
+ {
+  "en": "Note",
+  "where": [
+   "capital"
+  ]
+ },
+ {
+  "en": "Write it down",
+  "where": [
+   "capital"
+  ]
+ },
+ {
+  "en": "The capital book",
+  "where": [
+   "capital"
+  ]
+ },
+ {
+  "en": "Every taka in from, or out to, a shareholder or investor · newest first · a wrong line is struck out, never deleted",
+  "where": [
+   "capital"
+  ]
+ },
+ {
+  "en": "Money put in",
+  "where": [
+   "capital"
+  ]
+ },
+ {
+  "en": "Payouts",
+  "where": [
+   "capital"
+  ]
+ },
+ {
+  "en": "Taken back",
+  "where": [
+   "capital"
+  ]
+ },
+ {
+  "en": "Totals by kind",
+  "where": [
+   "capital"
+  ]
+ },
+ {
+  "en": "Net profit as the Expenses screen shows it. Closing a month keeps its profit and the shares as they stand, and locks the books: nothing can be dated into it or struck out of it, in that month or any before it.",
+  "where": [
+   "capital"
+  ]
+ },
+ {
+  "en": "Month",
+  "where": [
+   "capital",
+   "analytics"
+  ]
+ },
+ {
+  "en": "This month, so far",
+  "where": [
+   "capital"
+  ]
+ },
+ {
+  "en": "Open — still follows the books",
+  "where": [
+   "capital"
+  ]
+ },
+ {
+  "en": "Investor pages",
+  "where": [
+   "capital",
+   "mindmap"
+  ]
+ },
+ {
+  "en": "Each investor can see their own statement on a private page: a link plus an 8-digit code you give them separately. A new link stops the old one.",
+  "where": [
+   "capital"
+  ]
+ },
+ {
+  "en": "Investor",
+  "where": [
+   "capital",
+   "mindmap"
+  ]
+ },
+ {
+  "en": "Make page link",
+  "where": [
+   "capital"
+  ]
+ },
+ {
+  "en": "Name, the agreed share and what they put in",
+  "where": [
+   "capital"
+  ]
+ },
+ {
+  "en": "Money in against a return; no share of the business",
+  "where": [
+   "capital"
+  ]
+ },
+ {
+  "en": "Share of profit on shipments they fund",
+  "where": [
+   "capital"
+  ]
+ },
+ {
+  "en": "More money later, from anyone: write it in the book below as “Money put in”. To correct an amount, strike the line out there and write it again.",
+  "where": [
+   "capital"
+  ]
+ },
+ {
+  "en": "Search name, phone…",
+  "where": [
+   "capital"
+  ]
+ },
+ {
+  "en": "Search name, note…",
+  "where": [
+   "capital"
+  ]
+ },
+ {
+  "en": "Move money",
+  "where": [
+   "cash"
+  ]
+ },
+ {
+  "en": "Record payment",
+  "where": [
+   "cash"
+  ]
+ },
+ {
+  "en": "Payments in no account",
+  "where": [
+   "cash"
+  ]
+ },
+ {
+  "en": "Ledger",
+  "where": [
+   "cash"
+  ]
+ },
+ {
+  "en": "Accounts",
+  "where": [
+   "cash"
+  ]
+ },
+ {
+  "en": "Unmatched",
+  "where": [
+   "cash"
+  ]
+ },
+ {
+  "en": "Cash-up",
+  "where": [
+   "cash"
+  ]
+ },
+ {
+  "en": "Balance sheet",
+  "where": [
+   "cash"
+  ]
+ },
+ {
+  "en": "Payment ledger",
+  "where": [
+   "cash"
+  ]
+ },
+ {
+  "en": "Every taka that moved, in every account · newest first · nothing is edited or deleted",
+  "where": [
+   "cash"
+  ]
+ },
+ {
+  "en": "This week",
+  "where": [
+   "cash"
+  ]
+ },
+ {
+  "en": "This month",
+  "where": [
+   "cash",
+   "dash",
+   "home"
+  ]
+ },
+ {
+  "en": "Money in",
+  "where": [
+   "cash"
+  ]
+ },
+ {
+  "en": "Money out",
+  "where": [
+   "cash"
+  ]
+ },
+ {
+  "en": "Transfers",
+  "where": [
+   "cash"
+  ]
+ },
+ {
+  "en": "Account · method",
+  "where": [
+   "cash"
+  ]
+ },
+ {
+  "en": "Counterparty",
+  "where": [
+   "cash"
+  ]
+ },
+ {
+  "en": "Recorded by",
+  "where": [
+   "cash"
+  ]
+ },
+ {
+  "en": "Check",
+  "where": [
+   "cash"
+  ]
+ },
+ {
+  "en": "Receipt",
+  "where": [
+   "cash"
+  ]
+ },
+ {
+  "en": "in no account",
+  "where": [
+   "cash"
+  ]
+ },
+ {
+  "en": "Nagad",
+  "where": [
+   "cash"
+  ]
+ },
+ {
+  "en": "Bank Transfer",
+  "where": [
+   "cash"
+  ]
+ },
+ {
+  "en": "Opening balance",
+  "where": [
+   "cash"
+  ]
+ },
+ {
+  "en": "Opening",
+  "where": [
+   "cash"
+  ]
+ },
+ {
+  "en": "Totals by account",
+  "where": [
+   "cash"
+  ]
+ },
+ {
+  "en": "Matched = the payment sits in a money account (it was placed by its payment method or by hand). Unmatched = received, but nobody said which account it went to; it is in no balance until it is placed. A transfer shows on both accounts.",
+  "where": [
+   "cash"
+  ]
+ },
+ {
+  "en": "In hand and at the bank",
+  "where": [
+   "cash"
+  ]
+ },
+ {
+  "en": "Correct a balance",
+  "where": [
+   "cash"
+  ]
+ },
+ {
+  "en": "+ Add / change accounts",
+  "where": [
+   "cash"
+  ]
+ },
+ {
+  "en": "Click an account to see its statement.",
+  "where": [
+   "cash"
+  ]
+ },
+ {
+  "en": "Waiting for an account",
+  "where": [
+   "cash"
+  ]
+ },
+ {
+  "en": "This money is in no balance until someone says where it went.",
+  "where": [
+   "cash"
+  ]
+ },
+ {
+  "en": "It went to",
+  "where": [
+   "cash"
+  ]
+ },
+ {
+  "en": "Choose the account…",
+  "where": [
+   "cash"
+  ]
+ },
+ {
+  "en": "End-of-day cash-up",
+  "where": [
+   "cash"
+  ]
+ },
+ {
+  "en": "Count what an account really holds; a difference is booked on the account with its reason, so the book equals the count",
+  "where": [
+   "cash"
+  ]
+ },
+ {
+  "en": "Book",
+  "where": [
+   "cash"
+  ]
+ },
+ {
+  "en": "Counted",
+  "where": [
+   "cash"
+  ]
+ },
+ {
+  "en": "Difference",
+  "where": [
+   "cash"
+  ]
+ },
+ {
+  "en": "Not counted yet",
+  "where": [
+   "cash"
+  ]
+ },
+ {
+  "en": "Cash-up history",
+  "where": [
+   "cash"
+  ]
+ },
+ {
+  "en": "Count an account",
+  "where": [
+   "cash"
+  ]
+ },
+ {
+  "en": "At the end of the day, count what the drawer (or any account) really holds. If it differs from the book, say why: the difference is booked on the account so the book equals the count.",
+  "where": [
+   "cash"
+  ]
+ },
+ {
+  "en": "No counts yet.",
+  "where": [
+   "cash"
+  ]
+ },
+ {
+  "en": "Add up again",
+  "where": [
+   "cash"
+  ]
+ },
+ {
+  "en": "What the business owns",
+  "where": [
+   "cash"
+  ]
+ },
+ {
+  "en": "Customers owe",
+  "where": [
+   "cash"
+  ]
+ },
+ {
+  "en": "Total owned",
+  "where": [
+   "cash"
+  ]
+ },
+ {
+  "en": "What it owes",
+  "where": [
+   "cash"
+  ]
+ },
+ {
+  "en": "Total owed",
+  "where": [
+   "cash"
+  ]
+ },
+ {
+  "en": "Net worth (owners’ capital + profit kept)",
+  "where": [
+   "cash"
+  ]
+ },
+ {
+  "en": "The books are not opened yet.",
+  "where": [
+   "cash"
+  ]
+ },
+ {
+  "en": "Open the books today",
+  "where": [
+   "cash"
+  ]
+ },
+ {
+  "en": "Search payment, invoice, account, who…",
+  "where": [
+   "cash"
+  ]
+ },
+ {
+  "en": "The account really holds something else: bring the book to it, with a reason",
+  "where": [
+   "cash"
+  ]
+ },
+ {
+  "en": "Add a bank account, wallet or payment gateway; rename or retire one; choose where each payment method lands",
+  "where": [
+   "cash"
+  ]
+ },
+ {
+  "en": "On the way",
+  "where": [
+   "suppliers"
+  ]
+ },
+ {
+  "en": "A shipment received with the supplier named on it is added to what you owe them, at the goods’ value — freight is not theirs. Paying them is done on their page.",
+  "where": [
+   "suppliers"
+  ]
+ },
+ {
+  "en": "System check",
+  "where": [
+   "settings",
+   "tools",
+   "platform"
+  ]
+ },
+ {
+  "en": "How the ERP works for this business. Every change is written to the activity log with who made it.",
+  "where": [
+   "settings"
+  ]
+ },
+ {
+  "en": "Backup & restore",
+  "where": [
+   "settings"
+  ]
+ },
+ {
+  "en": "Logo, the menu bar, the defaults the forms read, documents",
+  "where": [
+   "settings"
+  ]
+ },
+ {
+  "en": ". It shows in the menu, on invoices, quotations and letterheads. Another business keeps its own.",
+  "where": [
+   "settings"
+  ]
+ },
+ {
+  "en": "PNG, JPEG or WebP, up to 1 MB. Empty border around the logo is cut off for you.",
+  "where": [
+   "settings"
+  ]
+ },
+ {
+  "en": "Who sees each screen in this business.",
+  "where": [
+   "settings"
+  ]
+ },
+ {
+  "en": ": you and your staff.",
+  "where": [
+   "settings"
+  ]
+ },
+ {
+  "en": "Only owners",
+  "where": [
+   "settings"
+  ]
+ },
+ {
+  "en": ": you use it, staff do not see it.",
+  "where": [
+   "settings"
+  ]
+ },
+ {
+  "en": "Off",
+  "where": [
+   "settings",
+   "tools"
+  ]
+ },
+ {
+  "en": ": nobody here, until you switch it back. The main screens always stay; nothing is deleted. (What a person may DO on a screen is set under Users.)",
+  "where": [
+   "settings"
+  ]
+ },
+ {
+  "en": "All companies",
+  "where": [
+   "settings"
+  ]
+ },
+ {
+  "en": "(only you see this, as the provider): switched off, the screen leaves every company’s menu, yours too, and their owners cannot bring it back.",
+  "where": [
+   "settings"
+  ]
+ },
+ {
+  "en": "Shipments",
+  "where": [
+   "settings",
+   "mindmap",
+   "shipments"
+  ]
+ },
+ {
+  "en": "Values the rest of the system reads. Credentials are not shown or editable here.",
+  "where": [
+   "settings"
+  ]
+ },
+ {
+  "en": "Shown on invoices, quotations, statements and messages to customers.",
+  "where": [
+   "settings"
+  ]
+ },
+ {
+  "en": "The code shown with every amount (for example BDT). Changing it does not convert old figures.",
+  "where": [
+   "settings"
+  ]
+ },
+ {
+  "en": "When a new product’s stock falls to this number it shows under low stock. Each product can have its own level.",
+  "where": [
+   "settings"
+  ]
+ },
+ {
+  "en": "How many days a supplier usually takes to deliver. Used to suggest when to reorder. Each product can have its own.",
+  "where": [
+   "settings"
+  ]
+ },
+ {
+  "en": "The number the next invoice gets. Set it once at go-live to the last sheet number + 1. Never set it lower.",
+  "where": [
+   "settings"
+  ]
+ },
+ {
+  "en": "Courier figures, delivery and money rules saved by their own screens. Change them there, not here.",
+  "where": [
+   "settings"
+  ]
+ },
+ {
+  "en": "How this screen works",
+  "where": [
+   "settings",
+   "tools",
+   "analytics"
+  ]
+ },
+ {
+  "en": "Allowed for every company - press to switch off everywhere",
+  "where": [
+   "settings"
+  ]
+ },
+ {
+  "en": "Checks, imports and repairs. Each job says what it does before it runs.",
+  "where": [
+   "tools"
+  ]
+ },
+ {
+  "en": "Safe",
+  "where": [
+   "tools"
+  ]
+ },
+ {
+  "en": "Changes data",
+  "where": [
+   "tools"
+  ]
+ },
+ {
+  "en": "Sends today’s stock levels to the website now.",
+  "where": [
+   "tools"
+  ]
+ },
+ {
+  "en": "Reports how many levels disagree with what the sales rate says. Changes nothing.",
+  "where": [
+   "tools"
+  ]
+ },
+ {
+  "en": "Replaces the typed-in levels with ones worked out from each product’s own sales rate and lead time.",
+  "where": [
+   "tools"
+  ]
+ },
+ {
+  "en": "Print Run and Brawl under a new invoice (and while the internet is down), and the stick fight on every page. Each person can switch the stick fight to calm or off here or with the ⚔ button at the bottom right; Esc twice hides it at once. Nothing here takes a key from your work.",
+  "where": [
+   "tools"
+  ]
+ },
+ {
+  "en": "Companies, health and the provider’s tools",
+  "where": [
+   "platform"
+  ]
+ },
+ {
+  "en": "Every business on this system. You have no role inside a business unless its owner adds you; whatever you do here is written to that business’s own activity log, where its owner can read it.",
+  "where": [
+   "platform"
+  ]
+ },
+ {
+  "en": "Install link",
+  "where": [
+   "platform"
+  ]
+ },
+ {
+  "en": "One link that never changes. Anyone can set up their own ERP from it. Print the QR code, put the button on your website, or send the link.",
+  "where": [
+   "platform"
+  ]
+ },
+ {
+  "en": "Download PNG",
+  "where": [
+   "platform"
+  ]
+ },
+ {
+  "en": "Download SVG",
+  "where": [
+   "platform"
+  ]
+ },
+ {
+  "en": "The link",
+  "where": [
+   "platform"
+  ]
+ },
+ {
+  "en": "Button for your website",
+  "where": [
+   "platform"
+  ]
+ },
+ {
+  "en": "Copy the button code",
+  "where": [
+   "platform"
+  ]
+ },
+ {
+  "en": "The name, sponsor line, colour and logo every install page and every company’s ERP shows. Add a sponsor’s name or logo only with their written permission.",
+  "where": [
+   "platform"
+  ]
+ },
+ {
+  "en": "Sponsor line (optional)",
+  "where": [
+   "platform"
+  ]
+ },
+ {
+  "en": "Colour",
+  "where": [
+   "platform"
+  ]
+ },
+ {
+  "en": "Logo (PNG, JPG, WebP or SVG, under 250 KB)",
+  "where": [
+   "platform"
+  ]
+ },
+ {
+  "en": "Save brand",
+  "where": [
+   "platform"
+  ]
+ },
+ {
+  "en": "Announcements",
+  "where": [
+   "platform"
+  ]
+ },
+ {
+  "en": "A message every company sees at the top of its ERP until it ends (they can close it on their screen).",
+  "where": [
+   "platform"
+  ]
+ },
+ {
+  "en": "Message",
+  "where": [
+   "platform"
+  ]
+ },
+ {
+  "en": "News",
+  "where": [
+   "platform"
+  ]
+ },
+ {
+  "en": "Important",
+  "where": [
+   "platform"
+  ]
+ },
+ {
+  "en": "Shown for",
+  "where": [
+   "platform"
+  ]
+ },
+ {
+  "en": "until I end it",
+  "where": [
+   "platform"
+  ]
+ },
+ {
+  "en": "Post to every company",
+  "where": [
+   "platform"
+  ]
+ },
+ {
+  "en": "Compliance check",
+  "where": [
+   "platform"
+  ]
+ },
+ {
+  "en": "Read-only view of a company’s stock, invoices, payments or money movements, for checks against illegal use.",
+  "where": [
+   "platform"
+  ]
+ },
+ {
+  "en": "Every view is written into that company’s own activity log with your reason",
+  "where": [
+   "platform"
+  ]
+ },
+ {
+  "en": "No company on your server yet.",
+  "where": [
+   "platform"
+  ]
+ },
+ {
+  "en": "Moved to Apps",
+  "where": [
+   "platform"
+  ]
+ },
+ {
+  "en": "Ideas and updates, the Print Doctor, the Design desk, the Passport register and Feedback are now each on their own screen under",
+  "where": [
+   "platform"
+  ]
+ },
+ {
+  "en": ", with their public page, share code and switch.",
+  "where": [
+   "platform"
+  ]
+ },
+ {
+  "en": "AI reader (photos of supplier documents)",
+  "where": [
+   "platform"
+  ]
+ },
+ {
+  "en": "When a company photographs a packing list or price list, the page reads it on the device first;",
+  "where": [
+   "platform"
+  ]
+ },
+ {
+  "en": "Read it better",
+  "where": [
+   "platform"
+  ]
+ },
+ {
+  "en": "Catalogue",
+  "where": [
+   "platform"
+  ]
+ },
+ {
+  "en": "Open ▸",
+  "where": [
+   "platform"
+  ]
+ },
+ {
+  "en": "e.g. Sponsored by ...",
+  "where": [
+   "platform"
+  ]
+ },
+ {
+  "en": "e.g. New: the open market is here. Open Market in the menu.",
+  "where": [
+   "platform"
+  ]
+ },
+ {
+  "en": "Business and product group",
+  "where": [
+   "dash",
+   "home"
+  ]
+ },
+ {
+  "en": "🔕 Off duty",
+  "where": [
+   "inbox"
+  ]
+ },
+ {
+  "en": "Notifications",
+  "where": [
+   "inbox"
+  ]
+ },
+ {
+  "en": "Bookings",
+  "where": [
+   "inbox"
+  ]
+ },
+ {
+  "en": "Comments",
+  "where": [
+   "inbox"
+  ]
+ },
+ {
+  "en": "Agent Desk",
+  "where": [
+   "inbox"
+  ]
+ },
+ {
+  "en": "Knowledge",
+  "where": [
+   "inbox"
+  ]
+ },
+ {
+  "en": "Chat settings",
+  "where": [
+   "inbox"
+  ]
+ },
+ {
+  "en": "Analytics",
+  "where": [
+   "inbox",
+   "analytics"
+  ]
+ },
+ {
+  "en": "AI cost",
+  "where": [
+   "inbox"
+  ]
+ },
+ {
+  "en": "Team",
+  "where": [
+   "inbox"
+  ]
+ },
+ {
+  "en": "Facebook",
+  "where": [
+   "inbox"
+  ]
+ },
+ {
+  "en": "Instagram",
+  "where": [
+   "inbox"
+  ]
+ },
+ {
+  "en": "LinkedIn",
+  "where": [
+   "inbox"
+  ]
+ },
+ {
+  "en": "TikTok",
+  "where": [
+   "inbox"
+  ]
+ },
+ {
+  "en": "Threads",
+  "where": [
+   "inbox"
+  ]
+ },
+ {
+  "en": "Later",
+  "where": [
+   "inbox"
+  ]
+ },
+ {
+  "en": "HOT",
+  "where": [
+   "inbox"
+  ]
+ },
+ {
+  "en": "Choose a chat on the left.",
+  "where": [
+   "inbox"
+  ]
+ },
+ {
+  "en": "On duty: a sound when a customer waits for a person",
+  "where": [
+   "inbox"
+  ]
+ },
+ {
+  "en": "All chats",
+  "where": [
+   "inbox"
+  ]
+ },
+ {
+  "en": "Website chat",
+  "where": [
+   "inbox"
+  ]
+ },
+ {
+  "en": "Search name, phone, message",
+  "where": [
+   "inbox"
+  ]
+ },
+ {
+  "en": "Range cards follow the pills (whole months, so net profit is the P&L’s); the monthly view shows the last 12 months and this month to date.",
+  "where": [
+   "analytics"
+  ]
+ },
+ {
+  "en": "Growth",
+  "where": [
+   "analytics"
+  ]
+ },
+ {
+  "en": "Monthly P&L",
+  "where": [
+   "analytics"
+  ]
+ },
+ {
+  "en": "Shipment ROI",
+  "where": [
+   "analytics",
+   "mindmap"
+  ]
+ },
+ {
+  "en": "Colours & items",
+  "where": [
+   "analytics"
+  ]
+ },
+ {
+  "en": "Reorder",
+  "where": [
+   "analytics"
+  ]
+ },
+ {
+  "en": "Cost unknown",
+  "where": [
+   "analytics"
+  ]
+ },
+ {
+  "en": "New customers",
+  "where": [
+   "analytics"
+  ]
+ },
+ {
+  "en": "Returning customers",
+  "where": [
+   "analytics"
+  ]
+ },
+ {
+  "en": "Average order value",
+  "where": [
+   "analytics"
+  ]
+ },
+ {
+  "en": "Units sold",
+  "where": [
+   "analytics"
+  ]
+ },
+ {
+  "en": "Revenue by month",
+  "where": [
+   "analytics"
+  ]
+ },
+ {
+  "en": "Oct",
+  "where": [
+   "analytics"
+  ]
+ },
+ {
+  "en": "Nov",
+  "where": [
+   "analytics"
+  ]
+ },
+ {
+  "en": "Dec",
+  "where": [
+   "analytics"
+  ]
+ },
+ {
+  "en": "Jan",
+  "where": [
+   "analytics"
+  ]
+ },
+ {
+  "en": "Feb",
+  "where": [
+   "analytics"
+  ]
+ },
+ {
+  "en": "Mar",
+  "where": [
+   "analytics"
+  ]
+ },
+ {
+  "en": "Apr",
+  "where": [
+   "analytics"
+  ]
+ },
+ {
+  "en": "May",
+  "where": [
+   "analytics"
+  ]
+ },
+ {
+  "en": "Jun",
+  "where": [
+   "analytics"
+  ]
+ },
+ {
+  "en": "Jul",
+  "where": [
+   "analytics"
+  ]
+ },
+ {
+  "en": "Aug",
+  "where": [
+   "analytics"
+  ]
+ },
+ {
+  "en": "Sep",
+  "where": [
+   "analytics"
+  ]
+ },
+ {
+  "en": "Gross profit (dashed)",
+  "where": [
+   "analytics"
+  ]
+ },
+ {
+  "en": "Month by month",
+  "where": [
+   "analytics"
+  ]
+ },
+ {
+  "en": "MoM",
+  "where": [
+   "analytics"
+  ]
+ },
+ {
+  "en": "YoY",
+  "where": [
+   "analytics"
+  ]
+ },
+ {
+  "en": "Buying customers",
+  "where": [
+   "analytics"
+  ]
+ },
+ {
+  "en": "Open · to date",
+  "where": [
+   "analytics"
+  ]
+ },
+ {
+  "en": "no year before",
+  "where": [
+   "analytics"
+  ]
+ },
+ {
+  "en": "Open · provisional",
+  "where": [
+   "analytics"
+  ]
+ },
+ {
+  "en": "no month before",
+  "where": [
+   "analytics"
+  ]
+ },
+ {
+  "en": "ERP Navigator",
+  "where": [
+   "mindmap"
+  ]
+ },
+ {
+  "en": "Custom",
+  "where": [
+   "mindmap"
+  ]
+ },
+ {
+  "en": "Shipment",
+  "where": [
+   "mindmap"
+  ]
+ },
+ {
+  "en": "Order source",
+  "where": [
+   "mindmap"
+  ]
+ },
+ {
+  "en": "new",
+  "where": [
+   "mindmap"
+  ]
+ },
+ {
+  "en": "Expand all",
+  "where": [
+   "mindmap"
+  ]
+ },
+ {
+  "en": "Collapse all",
+  "where": [
+   "mindmap"
+  ]
+ },
+ {
+  "en": "Connections only",
+  "where": [
+   "mindmap"
+  ]
+ },
+ {
+  "en": "ERP Core",
+  "where": [
+   "mindmap"
+  ]
+ },
+ {
+  "en": "Connected business logic",
+  "where": [
+   "mindmap"
+  ]
+ },
+ {
+  "en": "Catalog",
+  "where": [
+   "mindmap"
+  ]
+ },
+ {
+  "en": "Stock value",
+  "where": [
+   "mindmap"
+  ]
+ },
+ {
+  "en": "Customers &",
+  "where": [
+   "mindmap"
+  ]
+ },
+ {
+  "en": "Came from",
+  "where": [
+   "mindmap"
+  ]
+ },
+ {
+  "en": "Received",
+  "where": [
+   "mindmap",
+   "shipments"
+  ]
+ },
+ {
+  "en": "Forecasting",
+  "where": [
+   "mindmap"
+  ]
+ },
+ {
+  "en": "Top colours",
+  "where": [
+   "mindmap"
+  ]
+ },
+ {
+  "en": "Roles",
+  "where": [
+   "mindmap"
+  ]
+ },
+ {
+  "en": "Expenses &",
+  "where": [
+   "mindmap"
+  ]
+ },
+ {
+  "en": "Holding cost",
+  "where": [
+   "mindmap"
+  ]
+ },
+ {
+  "en": "Payments",
+  "where": [
+   "mindmap"
+  ]
+ },
+ {
+  "en": "Funding",
+  "where": [
+   "mindmap"
+  ]
+ },
+ {
+  "en": "Capital in",
+  "where": [
+   "mindmap"
+  ]
+ },
+ {
+  "en": "Drag to pan · wheel to zoom · click a node for details",
+  "where": [
+   "mindmap"
+  ]
+ },
+ {
+  "en": "to look at",
+  "where": [
+   "mindmap"
+  ]
+ },
+ {
+  "en": "failing",
+  "where": [
+   "mindmap"
+  ]
+ },
+ {
+  "en": "hidden for your role",
+  "where": [
+   "mindmap"
+  ]
+ },
+ {
+  "en": "Module Details",
+  "where": [
+   "mindmap"
+  ]
+ },
+ {
+  "en": "All checks pass",
+  "where": [
+   "mindmap"
+  ]
+ },
+ {
+  "en": "Data",
+  "where": [
+   "mindmap"
+  ]
+ },
+ {
+  "en": "Rules",
+  "where": [
+   "mindmap",
+   "commission"
+  ]
+ },
+ {
+  "en": "Access",
+  "where": [
+   "mindmap"
+  ]
+ },
+ {
+  "en": "Audit",
+  "where": [
+   "mindmap",
+   "syscheck"
+  ]
+ },
+ {
+  "en": "Connected to",
+  "where": [
+   "mindmap"
+  ]
+ },
+ {
+  "en": "Open module",
+  "where": [
+   "mindmap"
+  ]
+ },
+ {
+  "en": "Guide",
+  "where": [
+   "mindmap"
+  ]
+ },
+ {
+  "en": "Business Workflow",
+  "where": [
+   "mindmap"
+  ]
+ },
+ {
+  "en": "Step by step and traceable: click a step to see it on the map",
+  "where": [
+   "mindmap"
+  ]
+ },
+ {
+  "en": "Show details",
+  "where": [
+   "mindmap"
+  ]
+ },
+ {
+  "en": "Play",
+  "where": [
+   "mindmap"
+  ]
+ },
+ {
+  "en": "Capital / investor entry",
+  "where": [
+   "mindmap"
+  ]
+ },
+ {
+  "en": "Owners’ and investors’ money in",
+  "where": [
+   "mindmap"
+  ]
+ },
+ {
+  "en": "Supplier order / shipment",
+  "where": [
+   "mindmap"
+  ]
+ },
+ {
+  "en": "Order from a supplier, follow it on the way",
+  "where": [
+   "mindmap"
+  ]
+ },
+ {
+  "en": "Goods in at landed cost, by brand, type, colour",
+  "where": [
+   "mindmap"
+  ]
+ },
+ {
+  "en": "Sale / where it came from",
+  "where": [
+   "mindmap"
+  ]
+ },
+ {
+  "en": "Shop, phone, Facebook or the website",
+  "where": [
+   "mindmap"
+  ]
+ },
+ {
+  "en": "Invoice & payment",
+  "where": [
+   "mindmap"
+  ]
+ },
+ {
+  "en": "Payments into accounts, dues followed up",
+  "where": [
+   "mindmap"
+  ]
+ },
+ {
+  "en": "Expenses & commission",
+  "where": [
+   "mindmap"
+  ]
+ },
+ {
+  "en": "The month’s costs, sellers’ commission",
+  "where": [
+   "mindmap"
+  ]
+ },
+ {
+  "en": "Profit, ROI & returns",
+  "where": [
+   "mindmap"
+  ]
+ },
+ {
+  "en": "Net profit, shipment ROI, investors’ returns",
+  "where": [
+   "mindmap"
+  ]
+ },
+ {
+  "en": "Audit / backup / review",
+  "where": [
+   "mindmap"
+  ]
+ },
+ {
+  "en": "The books checked against themselves",
+  "where": [
+   "mindmap"
+  ]
+ },
+ {
+  "en": "Module health",
+  "where": [
+   "mindmap"
+  ]
+ },
+ {
+  "en": "Counts, open issues, last activity and the owner’s next step per module",
+  "where": [
+   "mindmap"
+  ]
+ },
+ {
+  "en": "Collapse",
+  "where": [
+   "mindmap"
+  ]
+ },
+ {
+  "en": "Module",
+  "where": [
+   "mindmap"
+  ]
+ },
+ {
+  "en": "Open issues",
+  "where": [
+   "mindmap"
+  ]
+ },
+ {
+  "en": "Owner’s next step",
+  "where": [
+   "mindmap"
+  ]
+ },
+ {
+  "en": "Look",
+  "where": [
+   "mindmap"
+  ]
+ },
+ {
+  "en": "Pass",
+  "where": [
+   "mindmap"
+  ]
+ },
+ {
+  "en": "Money flow",
+  "where": [
+   "mindmap"
+  ]
+ },
+ {
+  "en": "Investor capital",
+  "where": [
+   "mindmap"
+  ]
+ },
+ {
+  "en": "Owner & recycled cash",
+  "where": [
+   "mindmap"
+  ]
+ },
+ {
+  "en": "In stock now",
+  "where": [
+   "mindmap"
+  ]
+ },
+ {
+  "en": "What needs action",
+  "where": [
+   "mindmap"
+  ]
+ },
+ {
+  "en": "Failing checks, low stock, dues, returns owed, follow-ups",
+  "where": [
+   "mindmap"
+  ]
+ },
+ {
+  "en": "Every payment is in a money account",
+  "where": [
+   "mindmap"
+  ]
+ },
+ {
+  "en": "Future",
+  "where": [
+   "mindmap"
+  ]
+ },
+ {
+  "en": "What this map is ready for next",
+  "where": [
+   "mindmap"
+  ]
+ },
+ {
+  "en": "Shelves and bins in 3D, coloured by stock: the 3D view of this map already shows how it would feel. It needs a shelf place on each stock lot first.",
+  "where": [
+   "mindmap"
+  ]
+ },
+ {
+  "en": "More business units",
+  "where": [
+   "mindmap"
+  ]
+ },
+ {
+  "en": "Each company already runs its own ERP on the platform. A new line of goods (laser, CNC, parts) can be a product group of its own with its own dashboard.",
+  "where": [
+   "mindmap"
+  ]
+ },
+ {
+  "en": "What to order by sales speed and the supplier’s lead time, from the same lots and invoices this map counts.",
+  "where": [
+   "mindmap"
+  ]
+ },
+ {
+  "en": "Search module, invoice, customer, shipment or SKU…",
+  "where": [
+   "mindmap"
+  ]
+ },
+ {
+  "en": "Zoom out",
+  "where": [
+   "mindmap"
+  ]
+ },
+ {
+  "en": "Zoom in",
+  "where": [
+   "mindmap"
+  ]
+ },
+ {
+  "en": "Fit to view",
+  "where": [
+   "mindmap"
+  ]
+ },
+ {
+  "en": "Hide details panel",
+  "where": [
+   "mindmap"
+  ]
+ },
+ {
+  "en": "Orders for what is not on the shelf yet, with the customer’s deposit",
+  "where": [
+   "preorders"
+  ]
+ },
+ {
+  "en": "Open pre-orders",
+  "where": [
+   "preorders"
+  ]
+ },
+ {
+  "en": "Deposits held",
+  "where": [
+   "preorders"
+  ]
+ },
+ {
+  "en": "the customers’ money until handed over",
+  "where": [
+   "preorders"
+  ]
+ },
+ {
+  "en": "Take a pre-order",
+  "where": [
+   "preorders"
+  ]
+ },
+ {
+  "en": "Agreed price and a deposit, for goods not in stock yet.",
+  "where": [
+   "preorders"
+  ]
+ },
+ {
+  "en": "+ New pre-order",
+  "where": [
+   "preorders"
+  ]
+ },
+ {
+  "en": "The oldest pre-orders get the stock first. A deposit is the customer’s money until the goods are handed over; then it pays the invoice.",
+  "where": [
+   "preorders"
+  ]
+ },
+ {
+  "en": "Pre-order",
+  "where": [
+   "preorders"
+  ]
+ },
+ {
+  "en": "Agreed",
+  "where": [
+   "preorders"
+  ]
+ },
+ {
+  "en": "To pay",
+  "where": [
+   "preorders"
+  ]
+ },
+ {
+  "en": "Bambu Lab H2D",
+  "where": [
+   "preorders"
+  ]
+ },
+ {
+  "en": "(no product yet)",
+  "where": [
+   "preorders"
+  ]
+ },
+ {
+  "en": "Waiting for stock",
+  "where": [
+   "preorders"
+  ]
+ },
+ {
+  "en": "+ Deposit",
+  "where": [
+   "preorders"
+  ]
+ },
+ {
+  "en": "Give product",
+  "where": [
+   "preorders"
+  ]
+ },
+ {
+  "en": "Every shipment with its landed cost, what is left, what sold and the profit it made (FIFO)",
+  "where": [
+   "shipments"
+  ]
+ },
+ {
+  "en": "New order",
+  "where": [
+   "shipments"
+  ]
+ },
+ {
+  "en": "Product sizes",
+  "where": [
+   "shipments"
+  ]
+ },
+ {
+  "en": "Holding cost…",
+  "where": [
+   "shipments"
+  ]
+ },
+ {
+  "en": "Capital on the water",
+  "where": [
+   "shipments"
+  ]
+ },
+ {
+  "en": "Units on the way",
+  "where": [
+   "shipments"
+  ]
+ },
+ {
+  "en": "Sell-through of received",
+  "where": [
+   "shipments"
+  ]
+ },
+ {
+  "en": "Landed cost of goods",
+  "where": [
+   "shipments"
+  ]
+ },
+ {
+  "en": "Still on the shelf",
+  "where": [
+   "shipments"
+  ]
+ },
+ {
+  "en": "what is left, at each lot’s cost",
+  "where": [
+   "shipments"
+  ]
+ },
+ {
+  "en": "Profit after holding",
+  "where": [
+   "shipments"
+  ]
+ },
+ {
+  "en": "Lifecycle board",
+  "where": [
+   "shipments"
+  ]
+ },
+ {
+  "en": "Planned → Ordered → In transit → Received → Sold out",
+  "where": [
+   "shipments"
+  ]
+ },
+ {
+  "en": "Board",
+  "where": [
+   "shipments"
+  ]
+ },
+ {
+  "en": "Table",
+  "where": [
+   "shipments"
+  ]
+ },
+ {
+  "en": "Planned",
+  "where": [
+   "shipments"
+  ]
+ },
+ {
+  "en": "Orders written but not placed yet.",
+  "where": [
+   "shipments"
+  ]
+ },
+ {
+  "en": "Ordered",
+  "where": [
+   "shipments"
+  ]
+ },
+ {
+  "en": "Nothing here.",
+  "where": [
+   "shipments"
+  ]
+ },
+ {
+  "en": "In transit",
+  "where": [
+   "shipments"
+  ]
+ },
+ {
+  "en": "Edit shipment",
+  "where": [
+   "shipments"
+  ]
+ },
+ {
+  "en": "Selling",
+  "where": [
+   "shipments"
+  ]
+ },
+ {
+  "en": "Stock before lots began",
+  "where": [
+   "shipments"
+  ]
+ },
+ {
+  "en": "What was on the shelf",
+  "where": [
+   "shipments"
+  ]
+ },
+ {
+  "en": "Cost book",
+  "where": [
+   "shipments"
+  ]
+ },
+ {
+  "en": "Sold out",
+  "where": [
+   "shipments"
+  ]
+ },
+ {
+  "en": "A received shipment moves here when its last unit is sold.",
+  "where": [
+   "shipments"
+  ]
+ },
+ {
+  "en": "Orders come from Stock entry › Supplier orders; a shipment is received there (or as a local buy) and its lots sell oldest first. Switch to Table for every figure line by line.",
+  "where": [
+   "shipments"
+  ]
+ },
+ {
+  "en": "Search ref, supplier, tracking…",
+  "where": [
+   "shipments"
+  ]
+ },
+ {
+  "en": "Export CSV of the shown shipments",
+  "where": [
+   "shipments"
+  ]
+ },
+ {
+  "en": "What each seller earns on what they sell, and the rules for it",
+  "where": [
+   "commission"
+  ]
+ },
+ {
+  "en": "Rule",
+  "where": [
+   "commission"
+  ]
+ },
+ {
+  "en": "Sellers & payouts",
+  "where": [
+   "commission"
+  ]
+ },
+ {
+  "en": "Sales by seller",
+  "where": [
+   "commission"
+  ]
+ },
+ {
+  "en": "Earned this month",
+  "where": [
+   "commission"
+  ]
+ },
+ {
+  "en": "Left to pay",
+  "where": [
+   "commission"
+  ]
+ },
+ {
+  "en": "the most specific one wins",
+  "where": [
+   "commission"
+  ]
+ },
+ {
+  "en": "Commission is a cost of the month it is earned in (Expenses, Commission); paying it later is not counted again. A return takes it back from whoever sold it.",
+  "where": [
+   "commission"
+  ]
+ },
+ {
+  "en": "Payable",
+  "where": [
+   "commission"
+  ]
+ },
+ {
+  "en": "Seller",
+  "where": [
+   "commission"
+  ]
+ },
+ {
+  "en": "Earned",
+  "where": [
+   "commission"
+  ]
+ },
+ {
+  "en": "Left",
+  "where": [
+   "commission"
+  ]
+ },
+ {
+  "en": "On each sold line the most specific rule wins: one product, then a brand, then a category, then everything; a person’s own rule before everyone’s.",
+  "where": [
+   "commission"
+  ]
+ },
+ {
+  "en": "+ Rule",
+  "where": [
+   "commission"
+  ]
+ },
+ {
+  "en": "Of",
+  "where": [
+   "commission"
+  ]
+ },
+ {
+  "en": "sales",
+  "where": [
+   "commission"
+  ]
+ },
+ {
+  "en": "Category:",
+  "where": [
+   "commission"
+  ]
+ },
+ {
+  "en": "gross profit",
+  "where": [
+   "commission"
+  ]
+ },
+ {
+  "en": "Every sale of the month with the person who made it - the seller is always whoever was signed in.",
+  "where": [
+   "commission"
+  ]
+ },
+ {
+  "en": "Sale",
+  "where": [
+   "commission"
+  ]
+ },
+ {
+  "en": "Sellers never see cost or profit here; the screen is for the people allowed to pay commission.",
+  "where": [
+   "commission"
+  ]
+ },
+ {
+  "en": "Search seller…",
+  "where": [
+   "commission"
+  ]
+ },
+ {
+  "en": "Search sale, seller or customer…",
+  "where": [
+   "commission"
+  ]
+ },
+ {
+  "en": "The books checked against themselves, every time this screen opens. A repair is always a normal document - nothing is edited behind your back.",
+  "where": [
+   "syscheck"
+  ]
+ },
+ {
+  "en": "Backup",
+  "where": [
+   "syscheck"
+  ]
+ },
+ {
+  "en": "Run all now",
+  "where": [
+   "syscheck"
+  ]
+ },
+ {
+  "en": "Checking the books…",
+  "where": [
+   "syscheck"
+  ]
+ },
+ {
+  "en": "গাইড বা শব্দ খুঁজুন (যেমন: প্রি-অর্ডার, cash-up)",
+  "where": [
+   "guide"
+  ]
+ }
+]

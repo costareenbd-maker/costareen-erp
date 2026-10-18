@@ -1,0 +1,22 @@
+{
+ "^\\+(\\d+) more$": "আরও $1টি",
+ "^CONFLICT:\\ this\\ quotation\\ was\\ changed\\ by\\ someone\\ else\\ \\((.+?)\\)\\ after\\ you\\ opened\\ it\\.\\ Your\\ copy\\ is\\ kept\\ here\\ \\-\\ reopen\\ it\\ to\\ see\\ theirs\\.$": "সেভ হয়নি: আপনি খোলার পর অন্য কেউ ($1) এই কোটেশন বদলেছে। আপনার কপি এখানে আছে — তাদেরটা দেখতে আবার খুলুন।",
+ "^Invoice\\ number\\ (.+?)\\ is\\ already\\ used\\ and\\ a\\ free\\ one\\ could\\ not\\ be\\ found\\.\\ Check\\ next_invoice_num\\ in\\ SETTINGS\\.$": "ইনভয়েস নম্বর $1 আগেই ব্যবহৃত, খালি নম্বর পাওয়া যায়নি। সেটিংসে next_invoice_num দেখুন।",
+ "^Cash\\ on\\ delivery\\ needs\\ a\\ courier\\ or\\ a\\ rider\\ \\-\\ \"(.+?)\"\\ is\\ a\\ pickup\\.\\ Choose\\ Paid\\ now,\\ Part\\ paid\\ or\\ Due\\.$": "ক্যাশ অন ডেলিভারির জন্য কুরিয়ার বা রাইডার দরকার — \"$1\"-এ গ্রাহক নিজে নিয়ে যান। এখনই পরিশোধ, আংশিক পরিশোধ বা বাকি বাছুন।",
+ "^The\\ amount\\ changed\\ while\\ you\\ were\\ looking:\\ this\\ parcel\\ would\\ collect\\ (.+?),\\ not\\ (.+?)\\.\\ Open\\ it\\ again\\.$": "দেখার মধ্যেই টাকার অঙ্ক বদলে গেছে: এই পার্সেল $1 আদায় করবে, $2 নয়। আবার খুলুন।",
+ "^Copied\\.\\ (.+?)\\ of\\ (.+?)\\ people\\ are\\ still\\ on\\ your\\ lists\\.\\ Choose\\ the\\ attachment\\ again\\ in\\ step\\ 2\\.$": "কপি হয়েছে। $2 জনের মধ্যে $1 জন এখনও তালিকায় আছেন। ধাপ ২-এ ফাইলটি আবার বেছে নিন।",
+ "^(.+?)\\ is\\ already\\ a\\ user\\ here\\.\\ Change\\ their\\ role\\ in\\ the\\ list\\ instead\\.$": "$1 আগেই এখানে ব্যবহারকারী। বরং তালিকায় তার পদ বদলান।",
+ "^It\\ applies\\ from\\ (.+?)\\ onward\\.\\ Earlier\\ months\\ keep\\ the\\ old\\ figure\\.$": "এটি $1 থেকে চালু। আগের মাসগুলোতে পুরোনো হিসাবই থাকবে।",
+ "^(.+?)\\ is\\ not\\ a\\ cash\\-on\\-delivery\\ sale\\.\\ Use\\ Receive\\ /\\ adjust\\ due\\.$": "$1 ক্যাশ অন ডেলিভারি বিক্রি নয়। বাকি আদায় / ঠিক করুন ব্যবহার করুন।",
+ "^Enter\\ the\\ rate\\ you\\ paid\\ for\\ this\\ shipment\\ \\(TK\\ per\\ (.+?)\\)\\.$": "এই শিপমেন্টে যে রেটে দিয়েছেন লিখুন (প্রতি $1-এ টাকা)।",
+ "^Enter\\ the\\ shipment\\ total\\ in\\ (.+?),\\ or\\ switch\\ to\\ local\\.$": "$1-এ শিপমেন্টের মোট লিখুন, বা স্থানীয়তে যান।",
+ "^A\\ negative\\ value\\ does\\ not\\ make\\ sense\\ for\\ (.+?)\\.$": "$1 ০-এর কম হতে পারে না।",
+ "^Done\\.\\ The\\ business\\ is\\ back\\ as\\ it\\ was\\ on\\ (.+?)\\.$": "হয়ে গেছে। ব্যবসা $1 তারিখের অবস্থায় ফিরে গেছে।",
+ "^Tick\\ order\\ \\#(.+?)\\ off\\ with\\ no\\ invoice\\?$": "ইনভয়েস ছাড়াই অর্ডার #$1 সম্পন্ন চিহ্নিত করবেন?",
+ "^New\\ monthly\\ amount\\ for\\ \"(.+?)\"\\.$": "\"$1\"-এর নতুন মাসিক টাকার অঙ্ক।",
+ "^Invoice\\ (.+?)\\ is\\ not\\ set\\ aside\\.$": "ইনভয়েস $1 সরিয়ে রাখা হয়নি।",
+ "^Type\\ the\\ amount\\ for\\ (.+?)\\.$": "$1-এর টাকার অঙ্ক লিখুন।",
+ "^How\\ much\\ did\\ (.+?)\\ pay\\?$": "$1 কত দিয়েছেন?",
+ "^Settled\\ with\\ (.+?)\\.$": "$1-এর সাথে হিসাব মিটেছে।",
+ "^Switched\\ to\\ (.+?)\\.$": "এখন $1-এ আছেন।"
+}

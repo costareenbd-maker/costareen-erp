@@ -273,7 +273,7 @@ let stockBody = null;
 web.on(/\/stock$/, (url, opts) => { stockBody = JSON.parse(opts.body); return { body: { changed: [{ sku: PLA, from: 9, to: 3, status_to: 'instock' }], changed_count: 1, unchanged: 2, missing_count: 0 } }; });
 
 let p = await asOwner((ctx) => W.pullWebOrders(ctx)).catch((x) => ({ err: x.message }));
-check('pull without the sync key', p.err === 'Website sync key not set. Run "Setup Website Sync" from the menu first.', p);
+check('pull without the sync key', p.err === 'Website sync key not set: add it in Settings → Connections → Website.', p);
 await sql`insert into business_secrets (business_id, key, value) values (${B}, 'CZ_SYNC_KEY', 'sekrit')`;
 web.calls.length = 0;
 p = await asOwner((ctx) => W.pullWebOrders(ctx));

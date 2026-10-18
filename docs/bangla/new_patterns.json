@@ -1,0 +1,478 @@
+[
+ [
+  "^Shop, courier and website sales in one list · (\\w{3} '\\d{2}) compared with (\\w{3} '\\d{2})$",
+  "দোকান, কুরিয়ার ও ওয়েবসাইটের বিক্রি এক তালিকায় · $1, $2-এর তুলনায়"
+ ],
+ [
+  "^Orders from the website, ready to enter as invoices · (\\w{3} '\\d{2}) compared with (\\w{3} '\\d{2})$",
+  "ওয়েবসাইটের অর্ডার, ইনভয়েস হিসেবে এন্ট্রির জন্য তৈরি · $1, $2-এর তুলনায়"
+ ],
+ [
+  "^Price offers that turn into invoices · (\\w{3} '\\d{2}) compared with (\\w{3} '\\d{2})$",
+  "দামের প্রস্তাব, যা ইনভয়েস হয় · $1, $2-এর তুলনায়"
+ ],
+ [
+  "^Machines in for repair, parts and charges · (\\w{3} '\\d{2}) compared with (\\w{3} '\\d{2})$",
+  "মেরামতে আসা মেশিন, যন্ত্রাংশ ও চার্জ · $1, $2-এর তুলনায়"
+ ],
+ [
+  "^Print jobs with their true cost · (\\w{3} '\\d{2}) compared with (\\w{3} '\\d{2})$",
+  "আসল খরচসহ প্রিন্ট জব · $1, $2-এর তুলনায়"
+ ],
+ [
+  "^One customer per phone number · (\\w{3} '\\d{2}) compared with (\\w{3} '\\d{2})$",
+  "প্রতি ফোন নম্বরে একজন গ্রাহক · $1, $2-এর তুলনায়"
+ ],
+ [
+  "^WhatsApp campaigns, leads, adverts and creators · (\\w{3} '\\d{2}) compared with (\\w{3} '\\d{2})$",
+  "WhatsApp ক্যাম্পেইন, লিড, বিজ্ঞাপন ও ক্রিয়েটর · $1, $2-এর তুলনায়"
+ ],
+ [
+  "^Receive goods, count, adjust, what to order · (\\w{3} '\\d{2}) compared with (\\w{3} '\\d{2})$",
+  "মাল গ্রহণ, গণনা, সমন্বয়, কী অর্ডার করবেন · $1, $2-এর তুলনায়"
+ ],
+ [
+  "^What each product cost to land in the shop · (\\w{3} '\\d{2}) compared with (\\w{3} '\\d{2})$",
+  "প্রতিটি পণ্য দোকানে আনতে কত পড়েছে · $1, $2-এর তুলনায়"
+ ],
+ [
+  "^Profit and loss, month by month · (\\w{3} '\\d{2}) compared with (\\w{3} '\\d{2})$",
+  "লাভ-ক্ষতি, মাস ধরে · $1, $2-এর তুলনায়"
+ ],
+ [
+  "^Every taka in and out, the accounts, matching and the cash\\-up · (\\w{3} '\\d{2}) compared with (\\w{3} '\\d{2})$",
+  "আসা-যাওয়া প্রতিটি টাকা, অ্যাকাউন্ট, মেলানো ও দিনশেষের গোনা · $1, $2-এর তুলনায়"
+ ],
+ [
+  "^Suppliers, purchase orders and what you owe them · (\\w{3} '\\d{2}) compared with (\\w{3} '\\d{2})$",
+  "সাপ্লায়ার, সাপ্লায়ার অর্ডার ও তাদের কাছে আপনার দেনা · $1, $2-এর তুলনায়"
+ ],
+ [
+  "^Every part of the ERP on one map, its figures and how they connect, step by step · This month \\((\\w{3} '\\d{2})\\) compared with (\\w{3} '\\d{2})$",
+  "ERP-এর প্রতিটি অংশ এক ম্যাপে, এর হিসাব ও কীভাবে যুক্ত, ধাপে ধাপে · এই মাস ($1), $2-এর তুলনায়"
+ ],
+ [
+  "^cash on delivery, not collected yet \\(([\\d,]+) late\\)$",
+  "ক্যাশ অন ডেলিভারি, এখনও আদায় হয়নি ($1টি দেরিতে)"
+ ],
+ [
+  "^delivered, Steadfast has not paid \\(([\\d,]+)\\+ days\\)$",
+  "ডেলিভারি হয়েছে, Steadfast টাকা দেয়নি ($1+ দিন)"
+ ],
+ [
+  "^Total · ([\\d,]+) invoices$",
+  "মোট · $1টি ইনভয়েস"
+ ],
+ [
+  "^Showing ([\\d,]+)–([\\d,]+) of ([\\d,]+) invoices$",
+  "$3টি ইনভয়েসের মধ্যে $1–$2 দেখানো হচ্ছে"
+ ],
+ [
+  "^up (.+?) vs last month \\((.+?)\\)$",
+  "গত মাসের চেয়ে $1 বেশি ($2)"
+ ],
+ [
+  "^down (.+?) vs last month \\((.+?)\\)$",
+  "গত মাসের চেয়ে $1 কম ($2)"
+ ],
+ [
+  "^Open: ([\\d,]+) · delivered ([\\d,]+) · failed ([\\d,]+)$",
+  "খোলা: $1 · ডেলিভারি $2 · ব্যর্থ $3"
+ ],
+ [
+  "^Queued \\(([\\d,]+)\\)$",
+  "সারিতে ($1)"
+ ],
+ [
+  "^Printing \\(([\\d,]+)\\)$",
+  "প্রিন্ট হচ্ছে ($1)"
+ ],
+ [
+  "^Finishing \\(([\\d,]+)\\)$",
+  "ফিনিশিং ($1)"
+ ],
+ [
+  "^Ready \\(([\\d,]+)\\)$",
+  "তৈরি ($1)"
+ ],
+ [
+  "^Over ([\\d,]+) days: (.+?) on ([\\d,]+) sale\\(s\\)$",
+  "$1 দিনের বেশি: $3টি বিক্রিতে $2"
+ ],
+ [
+  "^Total · ([\\d,]+) customers$",
+  "মোট · $1 জন গ্রাহক"
+ ],
+ [
+  "^Dead stock \\(([\\d,]+)\\+ days idle\\)$",
+  "অচল স্টক ($1+ দিন বিক্রি নেই)"
+ ],
+ [
+  "^Received · (.+?) · (.+?)$",
+  "গ্রহণ · $1 · $2"
+ ],
+ [
+  "^As of (.+?) · stock value is landed cost only \\(FIFO lots; stock from before lots began at the cost book\\); holding cost is shown beside lots, never inside them\\.$",
+  "$1 অনুযায়ী · স্টকের মূল্য শুধু আনার খরচসহ দাম (FIFO লট; লট চালুর আগের স্টক দামের খাতার দামে); রেখে দেওয়ার খরচ লটের পাশে দেখানো হয়, কখনও ভেতরে নয়।"
+ ],
+ [
+  "^Follows the default of (.+?) TK$",
+  "ডিফল্ট $1 টাকা অনুসরণ করে"
+ ],
+ [
+  "^goods cost (.+?)$",
+  "পণ্যের কেনা দাম $1"
+ ],
+ [
+  "^your share (.+?)$",
+  "আপনার ভাগ $1"
+ ],
+ [
+  "^On the shelf, nothing sold in ([\\d,]+) days\\. This is your money, and it is standing still\\.$",
+  "তাকে আছে, $1 দিনে কিছু বিক্রি হয়নি। এটি আপনার টাকা, যা আটকে আছে।"
+ ],
+ [
+  "^All stock at cost: BDT (.+?) · as of (.+?)$",
+  "কেনা দামে সব স্টক: ৳$1 · $2 অনুযায়ী"
+ ],
+ [
+  "^last month: (.+?)$",
+  "গত মাস: $1"
+ ],
+ [
+  "^Total expenses · ((?:January|February|March|April|May|June|July|August|September|October|November|December) \\d{4})$",
+  "মোট খরচ · $1"
+ ],
+ [
+  "^fixed (.+?) · recurring (.+?) · one-off (.+?)$",
+  "স্থায়ী $1 · নিয়মিত $2 · একবারের $3"
+ ],
+ [
+  "^biggest category in ((?:January|February|March|April|May|June|July|August|September|October|November|December) \\d{4})$",
+  "$1-এ সবচেয়ে বড় ক্যাটাগরি"
+ ],
+ [
+  "^Net profit · This month \\((\\w{3} '\\d{2})\\)$",
+  "নিট লাভ · এই মাস ($1)"
+ ],
+ [
+  "^Net profit · ((?:January|February|March|April|May|June|July|August|September|October|November|December) \\d{4})$",
+  "নিট লাভ · $1"
+ ],
+ [
+  "^gross (.+?) \\+ (.+?) delivery and courier less expenses paid · (.+?) with what is still to pay$",
+  "মোট লাভ $1 + ডেলিভারি ও কুরিয়ার $2, পরিশোধ করা খরচ বাদে · বাকি খরচসহ $3"
+ ],
+ [
+  "^All expenses · ((?:January|February|March|April|May|June|July|August|September|October|November|December) \\d{4})$",
+  "সব খরচ · $1"
+ ],
+ [
+  "^Total of ([\\d,]+) rows?$",
+  "মোট $1টি সারি"
+ ],
+ [
+  "^(.+?) · One-off · (.+?)$",
+  "$1 · একবারের · $2"
+ ],
+ [
+  "^Page ([\\d,]+) of ([\\d,]+)$",
+  "পেজ $1 / $2"
+ ],
+ [
+  "^By category: (.+)$",
+  "ক্যাটাগরি অনুযায়ী: $1"
+ ],
+ [
+  "^BDT (.+?) paid ·$",
+  "৳$1 পরিশোধিত ·"
+ ],
+ [
+  "^BDT (.+?) still to pay$",
+  "৳$1 এখনও দিতে বাকি"
+ ],
+ [
+  "^— not counted in the profit until you press Paid\\. With it, (.+?) would stand at BDT (.+?)\\.$",
+  "— পরিশোধিত না চাপা পর্যন্ত লাভে গোনা হয় না। এটি ধরলে $1 দাঁড়াত ৳$2-এ।"
+ ],
+ [
+  "^((?:January|February|March|April|May|June|July|August|September|October|November|December) \\d{4}) amount$",
+  "$1-এর টাকা"
+ ],
+ [
+  "^((?:January|February|March|April|May|June|July|August|September|October|November|December) \\d{4}) · one-off · the date and time are recorded by themselves$",
+  "$1 · একবারের · তারিখ-সময় নিজে থেকেই লেখা হয়"
+ ],
+ [
+  "^shareholders (.+?) · investors (.+?)$",
+  "শেয়ারহোল্ডার $1 · বিনিয়োগকারী $2"
+ ],
+ [
+  "^earned (.+?) · paid (.+?)$",
+  "অর্জিত $1 · দেওয়া $2"
+ ],
+ [
+  "^returns due (.+?) · paid (.+?) · this month so far (.+?)$",
+  "পাওনা রিটার্ন $1 · দেওয়া $2 · এ মাসে এখন পর্যন্ত $3"
+ ],
+ [
+  "^Shareholder · since (.+?)$",
+  "শেয়ারহোল্ডার · $1 থেকে"
+ ],
+ [
+  "^Share (\\d[\\d.]*%)$",
+  "শেয়ার $1"
+ ],
+ [
+  "^Investor · since (.+?)$",
+  "বিনিয়োগকারী · $1 থেকে"
+ ],
+ [
+  "^\\+ (.+?) building this month so far$",
+  "+ $1 এ মাসে এখন পর্যন্ত জমছে"
+ ],
+ [
+  "^All shareholders: (.+?) · invested (.+?) · profit earned (.+?) · paid out (.+?) · left in the business (.+?)\\. Investors: money in against a fixed return \\(a cost of the month it falls due in\\), no share of the business\\.$",
+  "সব শেয়ারহোল্ডার: $1 · বিনিয়োগ $2 · অর্জিত লাভ $3 · দেওয়া হয়েছে $4 · ব্যবসায় রয়ে গেছে $5। বিনিয়োগকারী: নির্দিষ্ট রিটার্নের বিনিময়ে টাকা (যে মাসে পাওনা হয় সেই মাসের খরচ), ব্যবসার কোনো শেয়ার নয়।"
+ ],
+ [
+  "^Net of ([\\d,]+) rows?$",
+  "$1টি সারির নিট"
+ ],
+ [
+  "^Money put in · (.+?)$",
+  "দেওয়া টাকা · $1"
+ ],
+ [
+  "^Receipt · (.+?) · (.+?)$",
+  "রসিদ · $1 · $2"
+ ],
+ [
+  "^Opening balance · (.+?) · (.+?)$",
+  "শুরুর ব্যালেন্স · $1 · $2"
+ ],
+ [
+  "^Balance sheet · (\\d{4}-\\d{2}-\\d{2})$",
+  "ব্যালেন্স শিট · $1"
+ ],
+ [
+  "^paid in (.+?) \\+ profit share (.+?) - joint goods we sold (.+?)$",
+  "দেওয়া $1 + লাভের ভাগ $2 - আমাদের বিক্রি করা যৌথ মাল $3"
+ ],
+ [
+  "^Opening them writes down today’s net worth \\((.+?)\\) as the start\\. From then on the ERP checks every day that today’s net worth = that start \\+ the profit since \\+ money the owners put in − money they took out, and shows any difference with what caused it\\.$",
+  "খাতা খুললে আজকের নিট মূল্য ($1) শুরু হিসেবে লেখা হয়। এরপর থেকে ERP প্রতিদিন দেখে আজকের নিট মূল্য = সেই শুরু + তারপরের লাভ + মালিকদের দেওয়া টাকা − তাদের তুলে নেওয়া টাকা কিনা, আর কোনো পার্থক্য থাকলে তার কারণসহ দেখায়।"
+ ],
+ [
+  "^Values the system keeps for itself \\(([\\d,]+)\\) — for support only$",
+  "সিস্টেম নিজের জন্য যে মান রাখে ($1) — শুধু সাপোর্টের জন্য"
+ ],
+ [
+  "^sends the photo to Google’s Gemini with this key\\. One key for every company; ([\\d,]+) reads per company per day\\. Get a free key at aistudio\\.google\\.com → Get API key\\. The key is sealed on this server and never shown back\\.$",
+  "এই কী দিয়ে ছবিটি Google-এর Gemini-তে পাঠায়। সব কোম্পানির জন্য একটি কী; প্রতি কোম্পানি দিনে $1 বার পড়া যায়। aistudio.google.com → Get API key থেকে বিনামূল্যে কী নিন। কী এই সার্ভারে সিল করা থাকে, আর কখনও দেখানো হয় না।"
+ ],
+ [
+  "^Open · ([\\d,]+)$",
+  "খোলা · $1"
+ ],
+ [
+  "^Gross profit (৳[\\d,]+)$",
+  "মোট লাভ $1"
+ ],
+ [
+  "^Total of ([\\d,]+) months?$",
+  "মোট $1 মাস"
+ ],
+ [
+  "^Figures as of (.+?) · the whole business · Profitability’s formulas$",
+  "$1 অনুযায়ী হিসাব · পুরো ব্যবসা · লাভ-ক্ষতির সূত্রে"
+ ],
+ [
+  "^This month \\((\\w{3} '\\d{2})\\)$",
+  "এই মাস ($1)"
+ ],
+ [
+  "^BDT (.+?) still due$",
+  "৳$1 এখনও বাকি"
+ ],
+ [
+  "^Orders create demand: ([\\d,]+) invoice lines\\. Each invoice line takes units from the oldest stock lot first \\(FIFO\\), in the range\\.$",
+  "অর্ডার থেকে চাহিদা: $1টি ইনভয়েস লাইন। প্রতিটি ইনভয়েস লাইন সময়সীমার মধ্যে সবচেয়ে পুরোনো স্টক লট থেকে আগে ইউনিট নেয় (FIFO)।"
+ ],
+ [
+  "^Stock sold to customers: ([\\d,]+) units sold\\. Units that left the shelf on invoices in the range\\.$",
+  "গ্রাহকের কাছে বিক্রি হওয়া স্টক: $1 ইউনিট বিক্রি। সময়সীমার মধ্যে ইনভয়েসে তাক থেকে যাওয়া ইউনিট।"
+ ],
+ [
+  "^Demand sets reorders: ([\\d,]+) products to reorder\\. What customers buy runs stock down to its reorder level; those products show in What to order\\.$",
+  "চাহিদা থেকে রিঅর্ডার: $1টি পণ্য রিঅর্ডার করতে হবে। গ্রাহকের কেনায় স্টক রিঅর্ডার সীমায় নামে; সেই পণ্যগুলো কী অর্ডার করবেন অংশে দেখায়।"
+ ],
+ [
+  "^Shipment updates inventory: ([\\d,]+) lots received\\. Receiving a shipment makes one stock lot per line at landed cost\\.$",
+  "শিপমেন্ট থেকে স্টক: $1টি লট গ্রহণ হয়েছে। শিপমেন্ট গ্রহণ করলে প্রতিটি লাইনে আনার খরচসহ দামে একটি স্টক লট তৈরি হয়।"
+ ],
+ [
+  "^Landed cost feeds ROI: ([\\d,]+) shipments? received\\. Shipment ROI and margins use the landed cost written on each lot\\.$",
+  "আনার খরচসহ দাম থেকে ROI: $1টি শিপমেন্ট গ্রহণ হয়েছে। শিপমেন্টের ROI ও মার্জিন প্রতিটি লটে লেখা আনার খরচসহ দাম ব্যবহার করে।"
+ ],
+ [
+  "^Roles decide who sees figures: ([\\d,]+) abilities off for you\\. A figure your role may not see is never sent to the page: it shows a lock\\.$",
+  "পদ ঠিক করে কে কোন হিসাব দেখবে: আপনার জন্য $1টি সুবিধা বন্ধ। আপনার পদে যে হিসাব দেখা যায় না, তা কখনও পেজে পাঠানো হয় না: সেখানে তালা দেখায়।"
+ ],
+ [
+  "^Controls keep the system safe: ([\\d,]+) changes logged\\. Every change is written to the activity log with who and when\\.$",
+  "নিয়ন্ত্রণে সিস্টেম নিরাপদ: $1টি পরিবর্তন লেখা হয়েছে। প্রতিটি পরিবর্তন কে ও কখন করেছে, তা কার্যকলাপের তালিকায় লেখা থাকে।"
+ ],
+ [
+  "^Audit ready, traceable: ([\\d,]+) checks failing\\. The system check proves invoices, payments, stock and shares agree; nothing is deleted, only struck out\\.$",
+  "অডিটের জন্য তৈরি, খুঁজে দেখা যায়: $1টি চেক ব্যর্থ। সিস্টেম চেক দেখায় ইনভয়েস, পেমেন্ট, স্টক ও শেয়ার মেলে; কিছু মোছা হয় না, শুধু কেটে দেওয়া হয়।"
+ ],
+ [
+  "^Costs linked to shipments: ([\\d,]+) shipment cost rows\\. Freight, duty and late bills on a shipment lower its profit, which investors who funded it share in\\.$",
+  "শিপমেন্টের সাথে যুক্ত খরচ: শিপমেন্ট খরচের $1টি সারি। শিপমেন্টের ভাড়া, শুল্ক ও পরে আসা বিল তার লাভ কমায়, যার ভাগ পান যে বিনিয়োগকারীরা টাকা দিয়েছেন।"
+ ],
+ [
+  "^Funding mapped to sales: ([\\d,]+) funding rows\\. Who funded what share of each shipment; its units sold on invoices earn their share\\.$",
+  "টাকার উৎস বিক্রির সাথে মেলানো: টাকার উৎসের $1টি সারি। প্রতিটি শিপমেন্টের কত ভাগ কে দিয়েছেন; ইনভয়েসে এর বিক্রি হওয়া ইউনিট তাদের ভাগ এনে দেয়।"
+ ],
+ [
+  "^✓ ([\\d,]+)/([\\d,]+) checks pass$",
+  "✓ $2টির মধ্যে $1টি চেক পাস"
+ ],
+ [
+  "^None in ([\\d,]+) days$",
+  "$1 দিনে নেই"
+ ],
+ [
+  "^· ([\\d,]+) shipment cost rows$",
+  "· শিপমেন্ট খরচের $1টি সারি"
+ ],
+ [
+  "^· ([\\d,]+) funding rows$",
+  "· টাকার উৎসের $1টি সারি"
+ ],
+ [
+  "^Step ([\\d,]+)$",
+  "ধাপ $1"
+ ],
+ [
+  "^Since (\\w{3} '\\d{2}): capital → stock → sales → profit → investors’ and owners’ share$",
+  "$1 থেকে: মূলধন → স্টক → বিক্রি → লাভ → বিনিয়োগকারী ও মালিকদের ভাগ"
+ ],
+ [
+  "^Investor capital → Stock bought \\(landed\\): BDT (.+?)$",
+  "বিনিয়োগকারীর মূলধন → কেনা স্টক (আনার খরচসহ): ৳$1"
+ ],
+ [
+  "^Owner \\& recycled cash → Stock bought \\(landed\\): BDT (.+?)$",
+  "মালিক ও ঘুরে আসা টাকা → কেনা স্টক (আনার খরচসহ): ৳$1"
+ ],
+ [
+  "^Stock bought \\(landed\\) → Sold at cost: BDT (.+?)$",
+  "কেনা স্টক (আনার খরচসহ) → কেনা দামে বিক্রি: ৳$1"
+ ],
+ [
+  "^Stock bought \\(landed\\) → In stock now: BDT (.+?)$",
+  "কেনা স্টক (আনার খরচসহ) → এখন স্টকে: ৳$1"
+ ],
+ [
+  "^Sold at cost → Sales revenue: BDT (.+?)$",
+  "কেনা দামে বিক্রি → বিক্রির আয়: ৳$1"
+ ],
+ [
+  "^Margin added → Sales revenue: BDT (.+?)$",
+  "যোগ হওয়া মার্জিন → বিক্রির আয়: ৳$1"
+ ],
+ [
+  "^Sales revenue → Gross profit: BDT (.+?)$",
+  "বিক্রির আয় → মোট লাভ: ৳$1"
+ ],
+ [
+  "^Gross profit → Expenses \\& fees \\(less delivery charged\\): BDT (.+?)$",
+  "মোট লাভ → খরচ ও ফি (নেওয়া ডেলিভারি চার্জ বাদে): ৳$1"
+ ],
+ [
+  "^Gross profit → Investor returns: BDT (.+?)$",
+  "মোট লাভ → বিনিয়োগকারীর রিটার্ন: ৳$1"
+ ],
+ [
+  "^Gross profit → Net profit: BDT (.+?)$",
+  "মোট লাভ → নিট লাভ: ৳$1"
+ ],
+ [
+  "^Net profit → Owners’ share \\(net profit\\): BDT (.+?)$",
+  "নিট লাভ → মালিকদের ভাগ (নিট লাভ): ৳$1"
+ ],
+ [
+  "^A simple view since (\\w{3} '\\d{2}) \\(the first month with sales, at most ([\\d,]+) months\\)\\. Click a block to open its screen\\. Owner & recycled cash includes the money that sold stock brings back\\.$",
+  "$1 থেকে সহজ ভিউ (বিক্রির প্রথম মাস, সর্বোচ্চ $2 মাস)। কোনো ব্লকে ক্লিক করলে তার স্ক্রিন খুলবে। মালিক ও ঘুরে আসা টাকায় বিক্রি হওয়া স্টক থেকে ফিরে আসা টাকাও ধরা আছে।"
+ ],
+ [
+  "^BDT (.+?) customer dues$",
+  "৳$1 গ্রাহকের বাকি"
+ ],
+ [
+  "^worth (.+?)$",
+  "মূল্য $1"
+ ],
+ [
+  "^holding cost (.+?) taken off$",
+  "রেখে দেওয়ার খরচ $1 বাদ"
+ ],
+ [
+  "^Holding cost is on: Rent is shared over the stock on the shelf each month by kg × days; net profit is not (?:changed|বদলানো হয়েছে)\\. ([\\d,]+) product\\(s\\) have no weight and count as ([\\d,]+) kg\\.$",
+  "রেখে দেওয়ার খরচ চালু: প্রতি মাসে ভাড়া তাকের স্টকের ওপর কেজি × দিন হিসেবে ভাগ হয়; নিট লাভ বদলায় না। $1টি পণ্যের ওজন নেই, $2 কেজি ধরা হয়।"
+ ],
+ [
+  "^Expected (\\d{4}-\\d{2}-\\d{2})$",
+  "সম্ভাব্য $1"
+ ],
+ [
+  "^Received (\\d{1,2} \\w{3} \\d{4})$",
+  "গ্রহণ $1"
+ ],
+ [
+  "^Sold (\\d+%)$",
+  "বিক্রি $1"
+ ],
+ [
+  "^After holding (.+?)$",
+  "রেখে দেওয়ার খরচের পর $1"
+ ],
+ [
+  "^Sellers · (\\d{4}-\\d{2})$",
+  "বিক্রেতা · $1"
+ ],
+ [
+  "^sales (.+?) · paid (.+?) · left (.+?)$",
+  "বিক্রি $1 · দেওয়া $2 · বাকি $3"
+ ],
+ [
+  "^Everyone · (\\d[\\d.]*%)$",
+  "সবাই · $1"
+ ],
+ [
+  "^Everything · of sales · since (.+?)$",
+  "সবকিছু · বিক্রির ওপর · $1 থেকে"
+ ],
+ [
+  "^Everything · of gross profit · since (.+?)$",
+  "সবকিছু · মোট লাভের ওপর · $1 থেকে"
+ ],
+ [
+  "^Category: (.+?) · of gross profit · since (.+?)$",
+  "ক্যাটাগরি: $1 · মোট লাভের ওপর · $2 থেকে"
+ ],
+ [
+  "^Category: (.+?) · of sales · since (.+?)$",
+  "ক্যাটাগরি: $1 · বিক্রির ওপর · $2 থেকে"
+ ],
+ [
+  "^Sales by seller · (\\d{4}-\\d{2})$",
+  "বিক্রেতা অনুযায়ী বিক্রি · $1"
+ ],
+ [
+  "^(.+?) · ([\\d,]+) unit\\(s\\)$",
+  "$1 · $2 ইউনিট"
+ ]
+]
