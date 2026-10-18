@@ -2304,3 +2304,11 @@ Page only (fd-56; the joint calls are the joint stock's own, so every rule above
 
 - Invoices list (erpListView 'invoices'): column "Stock" (Own / Joint / Own + joint, from the joint mark on the line
   codes), filters "Joint sales" and "Own stock only", group "Own / joint stock". Tests: joint6 (+2), listview green.
+
+## 19 Oct 2026 - Joint products in their joint stock's colour
+
+- fd-58: joint product names show in their joint stock's colour (semi-bold) on New invoice (search results and
+  lines), invoice pages and the Joint stock lists; the Joint tag takes the same colour. Six colours that read on the
+  white and the dark theme (#e8590c orange, #1c7ed6 blue, #2f9e44 green, #ae3ec9 purple, #d6336c pink, #0c8599 teal);
+  each joint stock's is fixed by its id and two joint stocks of one company never share one. Live protoreen = orange.
+  Done in the page after drawing (MutationObserver), so every screen version gets it. Checked on dev, light and dark.

@@ -37117,6 +37117,84 @@ viewJoint = function () {
   return h;
 };
 </script>
+<!-- fd-58 (owner 19 Oct 2026): joint products in their joint stock's own colour (the Joint tag stays). One colour per joint
+     stock, from a set that reads on the white and on the dark theme; a second joint stock gets a different one. -->
+<style>
+.jt-c { font-weight: 600 !important; }
+</style>
+<script>
+var JT_COLORS = ['#e8590c', '#1c7ed6', '#2f9e44', '#ae3ec9', '#d6336c', '#0c8599'];
+/** The colour of a joint stock: fixed by its id, and two joint stocks of this company never share one. */
+function jtColorOf(poolId) {
+  var id = String(poolId || '').toLowerCase().replace(/-/g, ''); if (!id) return JT_COLORS[0];
+  var ids = [];
+  (((typeof JT !== 'undefined' && JT.data && JT.data.pools) || []).map(function (p) { return p.id; }))
+    .concat(((typeof JCAT !== 'undefined' && JCAT) || []).map(function (p) { return p.pool; }))
+    .forEach(function (x) { x = String(x || '').toLowerCase().replace(/-/g, ''); if (x && ids.indexOf(x) < 0) ids.push(x); });
+  if (ids.indexOf(id) < 0) ids.push(id);
+  ids.sort();
+  var used = {}, out = {};
+  ids.forEach(function (x) {
+    var h = 0; for (var i = 0; i < x.length; i++) h = (h * 31 + x.charCodeAt(i)) >>> 0;
+    var k = h % JT_COLORS.length, n = 0;
+    while (used[k] && n < JT_COLORS.length) { k = (k + 1) % JT_COLORS.length; n++; }
+    used[k] = 1; out[x] = JT_COLORS[k];
+  });
+  return out[id];
+}
+/** The joint stock a marked code belongs to: its ~Jxxxx is the first four of the pool's id. */
+function jtColorOfMark(mark) {
+  var m = /~J([0-9a-f]{4})/i.exec(String(mark || '')); if (!m) return '';
+  var pools = ((typeof JT !== 'undefined' && JT.data && JT.data.pools) || []).map(function (p) { return p.id; })
+    .concat(((typeof JCAT !== 'undefined' && JCAT) || []).map(function (p) { return p.pool; }));
+  for (var i = 0; i < pools.length; i++) if (String(pools[i] || '').replace(/-/g, '').slice(0, 4).toLowerCase() === m[1].toLowerCase()) return jtColorOf(pools[i]);
+  return JT_COLORS[0];
+}
+function jtPaint(root) {
+  if (!root || !jtOn()) return;
+  // anything that carries a joint code (search results, cart lines, invoice lines): the name in the joint stock's colour
+  [].forEach.call(root.querySelectorAll('[data-pick*="~J"],[data-sku*="~J"],[data-l*="~J"]'), function (n) {
+    var c = jtColorOfMark(n.getAttribute('data-pick') || n.getAttribute('data-sku') || n.getAttribute('data-l'));
+    var nm = n.querySelector('.nm') || n; nm.style.color = c; nm.classList.add('jt-c');
+  });
+  // where the code was shown as text, jcatDress put a Joint tag: colour the tag and the name next to it
+  [].forEach.call(root.querySelectorAll('.jt-tag:not([data-jtc])'), function (t) {
+    var row = t.closest('.r, tr, li, .line, .cl, [class*="cart"]') || t.parentNode;
+    var mark = t.getAttribute('data-mark') || '';
+    var firstJoint = (typeof CART !== 'undefined' ? CART : []).filter(function (l) { return /~J[0-9a-f]{4}$/i.test(String(l.sku || '')); })[0];
+    var c = mark ? jtColorOfMark(mark) : (VIEW === 'joint' && JT.data ? jtColorOf(JT.data.pool) : (row && row.getAttribute && (row.getAttribute('data-pick') || '')) ? jtColorOfMark(row.getAttribute('data-pick'))
+          : firstJoint ? jtColorOfMark(firstJoint.sku) : JT_COLORS[0]);
+    t.setAttribute('data-jtc', '1'); t.style.background = c; t.style.color = '#fff'; t.style.borderColor = c;
+    if (!row || VIEW === 'joint' && !row.matches('tr')) return;
+    var nm = row.matches && row.matches('td.nm') ? row : row.querySelector('.nm, td.nm, b, strong');
+    if (nm) { nm.style.color = c; nm.classList.add('jt-c'); [].forEach.call(nm.querySelectorAll('.sku'), function (x) { x.style.color = 'var(--muted)'; x.style.fontWeight = '400'; }); }
+  });
+  // the Joint stock page: every product there is joint
+  if (VIEW === 'joint' && JT.data && JT.data.pool) {
+    var c = jtColorOf(JT.data.pool);
+    [].forEach.call(root.querySelectorAll('table td.nm'), function (td) { td.style.color = c; td.classList.add('jt-c'); });
+    var pill = root.querySelector('.jt-pool'); if (pill) pill.style.color = c;
+  }
+}
+// jcatDress keeps the mark on the tag it makes, so the tag knows its joint stock
+var jcatDressJC = jcatDress;
+jcatDress = function (root) {
+  if (root && jtOn()) {
+    var w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, null), nd, marks = [];
+    while ((nd = w.nextNode())) { var m = nd.nodeValue.match(/~J[0-9a-f]{4}/ig); if (m) marks.push({ p: nd.parentNode, m: m }); }
+    jcatDressJC.apply(this, arguments);
+    marks.forEach(function (x) { if (!x.p) return; var tags = x.p.querySelectorAll('.jt-tag:not([data-mark])'); [].forEach.call(tags, function (t, i) { t.setAttribute('data-mark', x.m[Math.min(i, x.m.length - 1)]); }); });
+    return;
+  }
+  return jcatDressJC.apply(this, arguments);
+};
+(function () {
+  var busy = false;
+  function run() { if (busy) return; busy = true; try { jtPaint(el('view')); } finally { busy = false; } }
+  var v = document.getElementById('view');
+  if (v && window.MutationObserver) new MutationObserver(function () { if (jtOn()) setTimeout(run, 0); }).observe(v, { childList: true, subtree: true });
+})();
+</script>
 <!-- fd-37: the page is styled: show it -->
 <script>(function () { var x = document.getElementById('bootHide'); if (x) x.remove(); })();</script>
 </body>
