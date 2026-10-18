@@ -37207,6 +37207,60 @@ jcatDress = function (root) {
   if (v && window.MutationObserver) new MutationObserver(function () { if (jtOn()) setTimeout(run, 0); }).observe(v, { childList: true, subtree: true });
 })();
 </script>
+<!-- fd-59 (owner 19 Oct 2026): Bangla for sentences with a bold word in the middle. The sentence is read whole, with each
+     bold / linked word as a slot {n}; the Bangla puts the slot where Bangla wants it and the word stays bold. "{n|text}"
+     also gives that word its Bangla form for this sentence. Runs before the word-by-word translation of the same nodes. -->
+<script>
+var I18N_RICH = {"Unit price comes from the product list. Type the price you are selling at in the {1} box and the {2} is worked out for you (the price goes back to normal). A discount on the whole invoice goes in the box below.": "দাম আসে পণ্যের তালিকা থেকে। যে দামে বিক্রি করছেন তা {1|দাম} ঘরে লিখুন, {2|প্রতি পিসে ছাড়} নিজে থেকেই হিসাব হবে (দাম আবার আগের মতো হয়ে যায়)। পুরো ইনভয়েসের ছাড় নিচের ঘরে দিন।", "For goods that were not on an order — a local purchase, a sample. Goods from a supplier order are checked in under the {1} tab.": "যে পণ্য কোনো অর্ডারে ছিল না — স্থানীয়ভাবে কেনা বা নমুনা — সেগুলোর জন্য। সাপ্লায়ার অর্ডারের পণ্য {1|সাপ্লায়ার অর্ডার} ট্যাবে গ্রহণ করা হয়।", "{1} Nothing can be costed until the RMB rate under Currencies is filled in.": "{1|আগে আপনার রেট বসান।} কারেন্সি অংশে RMB রেট না বসানো পর্যন্ত কোনো দাম হিসাব হবে না।", "You see the platform’s own stock. {1} to see every supplier’s too. Suppliers are shown by city only until they give you a price.": "আপনি প্ল্যাটফর্মের নিজের স্টক দেখছেন। সব সাপ্লায়ারের স্টকও দেখতে {1|আপনার স্টক শেয়ার করুন}। দাম না দেওয়া পর্যন্ত সাপ্লায়ারদের শুধু শহর দেখানো হয়।", "Same item, same amount. Set once; it waits here every month. When you have actually paid one, press {1} — only then does it count as an expense and go in the book, with that day’s date. Use Change amount when it really rises; the months already gone keep the old figure.": "একই খরচ, একই টাকা। একবার বসান; প্রতি মাসে এখানে অপেক্ষা করবে। সত্যিই পরিশোধ করলে {1|পরিশোধিত} চাপুন — তখনই এটি খরচ হিসেবে খাতায় ওঠে, সেই দিনের তারিখে। খরচ সত্যিই বাড়লে “টাকা বদলান” ব্যবহার করুন; আগের মাসগুলোতে পুরোনো টাকাই থাকে।", "One logo for {1}. It shows in the menu, on invoices, quotations and letterheads. Another business keeps its own.": "{1|এই ব্যবসার} জন্য একটি লোগো। এটি মেনু, ইনভয়েস, কোটেশন ও লেটারহেডে দেখায়। অন্য ব্যবসা নিজের লোগো রাখে।", "Who sees each screen in this business. {1}: you and your staff. {2}: you use it, staff do not see it. {3}: nobody here, until you switch it back. The main screens always stay; nothing is deleted. (What a person may DO on a screen is set under Users.) {4} (only you see this, as the provider): switched off, the screen leaves every company’s menu, yours too, and their owners cannot bring it back.": "এই ব্যবসায় কোন স্ক্রিন কে দেখবে। {1|সবাই}: আপনি ও আপনার স্টাফ। {2|শুধু মালিকেরা}: আপনি ব্যবহার করেন, স্টাফ দেখে না। {3|বন্ধ}: এখানে কেউ না, যতক্ষণ না আবার চালু করেন। মূল স্ক্রিনগুলো সবসময় থাকে; কিছুই মোছা হয় না। (স্ক্রিনে কেউ কী করতে পারবে, তা ব্যবহারকারী অংশে ঠিক হয়।) {4|সব কোম্পানি} (প্রোভাইডার হিসেবে শুধু আপনি দেখেন): বন্ধ করলে স্ক্রিনটি সব কোম্পানির মেনু থেকে সরে যায়, আপনারটা থেকেও, আর তাদের মালিকেরা তা ফেরাতে পারেন না।", "Reorder level for new products {1}{2}": "নতুন পণ্যের রিঅর্ডার লেভেল {1|— কোনো নতুন পণ্যের স্টক এই সংখ্যায় নামলে তা কম স্টকের তালিকায় দেখায়। প্রতিটি পণ্যের নিজের লেভেলও থাকতে পারে।}{2}", "{1} Every business on this system. You have no role inside a business unless its owner adds you; whatever you do here is written to that business’s own activity log, where its owner can read it.": "{1|প্ল্যাটফর্ম অ্যাডমিন।} এই সিস্টেমের প্রতিটি ব্যবসা। কোনো ব্যবসার মালিক আপনাকে যোগ না করলে তার ভেতরে আপনার কোনো পদ নেই; এখানে আপনি যা করেন তা সেই ব্যবসার নিজের কার্যকলাপের তালিকায় লেখা হয়, যেখানে তার মালিক পড়তে পারেন।", "Read-only view of a company’s stock, invoices, payments or money movements, for checks against illegal use. {1}, as their terms say. Nothing can be changed from here.": "অবৈধ ব্যবহার যাচাইয়ের জন্য কোনো কোম্পানির স্টক, ইনভয়েস, পেমেন্ট বা টাকার লেনদেন শুধু দেখা যায়। তাদের শর্ত অনুযায়ী {1|প্রতিটি দেখা আপনার কারণসহ সেই কোম্পানির নিজের কার্যকলাপের তালিকায় লেখা হয়}। এখান থেকে কিছু বদলানো যায় না।", "Ideas and updates, the Print Doctor, the Design desk, the Passport register and Feedback are now each on their own screen under {1}, with their public page, share code and switch.": "আইডিয়া ও আপডেট, Print Doctor, Design desk, Passport রেজিস্টার ও মতামত এখন প্রত্যেকটি {1|অ্যাপস}-এর ভেতরে নিজের স্ক্রিনে আছে, নিজের পাবলিক পেজ, শেয়ার কোড ও সুইচসহ।", "When a company photographs a packing list or price list, the page reads it on the device first; {1} sends the photo to Google’s Gemini with this key. One key for every company; 40 reads per company per day. Get a free key at aistudio.google.com → Get API key. The key is sealed on this server and never shown back.": "কোনো কোম্পানি প্যাকিং লিস্ট বা দামের তালিকার ছবি তুললে পেজ আগে ডিভাইসেই পড়ে; {1|আরও ভালো করে পড়ুন} চাপলে ছবিটি এই কী দিয়ে Google Gemini-তে যায়। সব কোম্পানির জন্য একটি কী; প্রতি কোম্পানি দিনে ৪০ বার। aistudio.google.com → Get API key থেকে বিনা মূল্যে কী নিন। কী এই সার্ভারে সিল করা থাকে, আর কখনও দেখানো হয় না।"};
+var I18N_RICH_PAT = [["^(.+?) paid · \\{1\\} — not counted in the profit until you press Paid\\. With it, (.+?) would stand at (.+?)\\.$", "$1 পরিশোধিত · {1} — “পরিশোধিত” না চাপা পর্যন্ত লাভে ধরা হয় না। এটি ধরলে $2-এ লাভ দাঁড়াবে $3।"], ["^Expenses & Accounting → Investors & Funding: \\{1\\} · ([\\d,]+) shipment cost rows$", "খরচ ও হিসাব → বিনিয়োগকারী ও ফান্ডিং: {1} · $1টি শিপমেন্ট খরচের সারি"], ["^Investors & Funding → Orders, Invoice & Sales: \\{1\\} · ([\\d,]+) funding rows$", "বিনিয়োগকারী ও ফান্ডিং → অর্ডার, ইনভয়েস ও বিক্রি: {1} · $1টি ফান্ডিং সারি"]];
+var I18N_RICH_INL = /^(B|STRONG|I|EM|A|CODE|SPAN|BUTTON)$/;
+function trRichKey(el) {
+  var key = '', n = 0, inl = [];
+  for (var i = 0; i < el.childNodes.length; i++) {
+    var c = el.childNodes[i];
+    if (c.nodeType === 3) key += c.nodeValue;
+    else if (c.nodeType === 1 && I18N_RICH_INL.test(c.nodeName) && !c.children.length) { inl.push(c); key += '{' + (++n) + '}'; }
+    else if (c.nodeType === 1 && c.nodeName === 'BR') key += ' ';
+    else return null;
+  }
+  if (!inl.length) return null;
+  return { key: key.replace(/\s+/g, ' ').trim(), inl: inl };
+}
+function trBnDigits(v) { return String(v).replace(/\d/g, function (d) { return '\u09e6\u09e7\u09e8\u09e9\u09ea\u09eb\u09ec\u09ed\u09ee\u09ef'.charAt(+d); }); }
+function trRich(el) {
+  if (!el || el.nodeType !== 1 || trSkip(el) || el.__trRich) return false;
+  var k = trRichKey(el); if (!k || !/[A-Za-z]{2}/.test(k.key)) return false;
+  var tpl = I18N_RICH[k.key];
+  if (tpl === undefined) {
+    for (var i = 0; i < I18N_RICH_PAT.length; i++) {
+      var m = k.key.match(I18N_RICH_PAT[i][0]); if (!m) continue;
+      tpl = I18N_RICH_PAT[i][1].replace(/\$(\d)/g, function (_, g) { var v = m[+g] || ''; return /^[\d,.]+$/.test(v) ? trBnDigits(v) : v; });
+      break;
+    }
+  }
+  if (tpl === undefined) return false;
+  var frag = document.createDocumentFragment(), re = /\{(\d+)(?:\|([^}]*))?\}/g, last = 0, mm;
+  while ((mm = re.exec(tpl))) {
+    if (mm.index > last) frag.appendChild(document.createTextNode(tpl.slice(last, mm.index)));
+    var node = k.inl[+mm[1] - 1];
+    if (node) { if (mm[2] !== undefined) node.textContent = mm[2]; frag.appendChild(node); }
+    last = re.lastIndex;
+  }
+  if (last < tpl.length) frag.appendChild(document.createTextNode(tpl.slice(last)));
+  while (el.firstChild) el.removeChild(el.firstChild);
+  el.appendChild(frag); el.__trRich = true;
+  return true;
+}
+var trNodeRich = trNode;
+trNode = function (n) {
+  if (typeof LANG !== 'undefined' && LANG === 'bn' && n && n.nodeType === 1 && !trSkip(n)) {
+    try { trRich(n); if (n.querySelectorAll) [].forEach.call(n.querySelectorAll('*'), trRich); } catch (e) { /* the word-by-word pass still runs */ }
+  } else if (n && n.nodeType === 3 && n.parentNode && typeof LANG !== 'undefined' && LANG === 'bn') {
+    try { trRich(n.parentNode); } catch (e) {}
+  }
+  return trNodeRich.apply(this, arguments);
+};
+</script>
 <!-- fd-37: the page is styled: show it -->
 <script>(function () { var x = document.getElementById('bootHide'); if (x) x.remove(); })();</script>
 </body>

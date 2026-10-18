@@ -2330,3 +2330,12 @@ Page only (fd-56; the joint calls are the joint stock's own, so every rule above
 - English message fixed to match the web ERP: "Website sync key not set: add it in Settings → Connections → Website."
 - The dictionary now holds 1,889 phrases and 467 patterns. Not done: sentences split around bold words (a few help
   lines) keep their English order; "A pays X to B" on the joint month end; data typed by people stays as typed.
+
+## 19 Oct 2026 - Bangla for help lines with a bold word in the middle
+
+- fd-59: such a sentence is translated whole - each bold / linked word is a slot {n} the Bangla places where Bangla
+  wants it (still bold); {n|text} gives the slot its Bangla form for that sentence; numbers in pattern sentences in
+  Bangla digits. Runs before the word-by-word pass (trNode wrapper). 12 sentences + 3 patterns (invoice price help,
+  receive page, costs, market, fixed expenses and the "still to pay" line, logo, menu visibility, reorder level,
+  platform admin, company view, apps note, AI reader key, ERP map rows). The pieces that were translated one by one
+  are no longer used for those. English unchanged (checked). Data rows (product · code, customer paid by X) untouched.
