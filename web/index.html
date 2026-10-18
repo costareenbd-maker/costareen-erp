@@ -24377,7 +24377,9 @@ function viewSysCheck() {
     fdhCard({ key: 'p', title: 'Checks passed', icon: 'trend', v: d.counts.pass, hero: true, note: 'as of ' + d.at }, 'BDT') +
     fdhCard({ key: 'w', title: 'To look at', icon: 'warn', v: d.counts.warn, tone: d.counts.warn ? 'warn' : '' }, 'BDT') +
     fdhCard({ key: 'f', title: 'Failed', icon: 'x', v: d.counts.fail, tone: d.counts.fail ? 'bad' : '' }, 'BDT') +
-    '<div class="fdd-c fdd-k" style="justify-content:center;align-items:flex-start"><button class="btn primary" type="button" data-fxrecheck="1">Check again</button></div></div>';
+    '<div class="fdd-c fdd-k" style="justify-content:space-between;align-items:stretch;gap:10px"><div><div style="font-weight:700;font-size:15px">Check the books</div>' +
+    '<div class="sku" style="margin-top:4px;white-space:normal">Runs every check again on today’s figures.</div></div>' +
+    '<button class="btn primary" type="button" data-fxrecheck="1" style="white-space:nowrap;width:100%;justify-content:center">Check again</button></div></div>';
   h += '<div class="card"><div class="scroll"><table><thead><tr><th></th><th>Check</th><th>Area</th><th>What was found</th></tr></thead><tbody>' +
     d.checks.slice().sort(function (a, b) { var o = { fail: 0, warn: 1, pass: 2 }; return o[a.status] - o[b.status]; }).map(function (c) {
       return '<tr' + (c.go && c.status !== 'pass' && navOn(c.go) ? ' data-fdhgo="' + esc(c.go) + '" style="cursor:pointer"' : '') + '><td><span class="fdk-st ' + c.status + '">' + (c.status === 'pass' ? '✓ Pass' : c.status === 'warn' ? '! Look' : '✕ Fail') + '</span></td>' +
@@ -24551,7 +24553,9 @@ function viewPreorders() {
     fdhCard({ key: 'o', title: 'Open pre-orders', icon: 'list', v: t.open, hero: true, note: 'worth ' + fmt(t.value) }, d.currency) +
     fdhCard({ key: 'r', title: 'Ready to hand over', icon: 'trend', v: t.ready, tone: t.ready ? 'good' : '' }, d.currency) +
     fdhCard({ key: 'h', title: 'Deposits held', icon: 'wallet', v: t.held, money: true, note: 'the customers’ money until handed over' }, d.currency) +
-    '<div class="fdd-c fdd-k" style="justify-content:center;align-items:flex-start"><button class="btn primary" type="button" data-prenew="1">+ New pre-order</button></div></div>';
+    '<div class="fdd-c fdd-k" style="justify-content:space-between;align-items:stretch;gap:10px"><div><div style="font-weight:700;font-size:15px">Take a pre-order</div>' +
+    '<div class="sku" style="margin-top:4px;white-space:normal">Agreed price and a deposit, for goods not in stock yet.</div></div>' +
+    '<button class="btn primary" type="button" data-prenew="1" style="white-space:nowrap;width:100%;justify-content:center">+ New pre-order</button></div></div>';
   h += '<div class="card"><div class="chead"><h2>Pre-orders</h2></div><div class="sub">The oldest pre-orders get the stock first. A deposit is the customer’s money until the goods are handed over; then it pays the invoice.</div>';
   if (!d.preorders.length) h += '<div class="empty">No pre-orders yet.</div>';
   else h += '<div class="scroll"><table><thead><tr><th>Pre-order</th><th>Customer</th><th>What</th><th class="num">Agreed</th><th class="num">Paid</th><th class="num">To pay</th><th>State</th><th></th></tr></thead><tbody>' +
