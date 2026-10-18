@@ -483,6 +483,15 @@ const wch9 = (await sql`select * from inbox_channels where business_id = ${FIX.B
 check('Use for WhatsApp: the official number with its WABA id', r.ok && wch9 && wch9.kind === 'wa_cloud' && wch9.settings.waba_id === 'WABA9', wch9);
 r = await owner('erpMetaUse', [{ ig: 'IG9' }]);
 check('Use for Instagram', r.ok && (await sql`select count(*)::int n from inbox_channels where business_id = ${FIX.B} and external_id = 'IG9' and kind = 'instagram'`)[0].n === 1, r);
+{
+  // logging in again as ANOTHER Facebook account: the page's new key goes into the channel already made, subscribed again
+  const was = graph.length;
+  web.on(/graph\.facebook\.com\/v21\.0\/me\/accounts/, () => ({ status: 200, body: { data: [{ id: 'PAGE9', name: 'Demo Page', access_token: 'NEWPAGEKEY', instagram_business_account: { id: 'IG9', username: 'demo.shop' } }] } }));
+  r = await owner('erpMetaRefresh', [{}]);
+  const tok = (await sql`select value from business_secrets where business_id = ${FIX.B} and key = ${'INBOX_' + mch9.id + '_TOKEN'}`)[0];
+  check('a new login re-keys the Messenger channel and subscribes the page again', r.ok && graph.slice(was).some((g) => /PAGE9\/subscribed_apps\?access_token=NEWPAGEKEY/.test(g.url)), graph.slice(was).map((g) => g.url));
+  check('…and the channel keeps one channel, with the new key stored', (await sql`select count(*)::int n from inbox_channels where business_id = ${FIX.B} and external_id = 'PAGE9'`)[0].n === 1 && tok && tok.value === 'NEWPAGEKEY', tok && 'stored');
+}
 r = await owner('erpMetaDisconnect', [{}]);
 check('Disconnect forgets the login; the channels stay', r.ok && !r.result.connected && (await sql`select count(*)::int n from inbox_channels where business_id = ${FIX.B} and external_id in ('PAGE9', 'PH9', 'IG9')`)[0].n === 3, r.result);
 

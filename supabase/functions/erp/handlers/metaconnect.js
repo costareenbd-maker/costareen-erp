@@ -120,7 +120,25 @@ async function discover(ctx, token) {
     assets.adAccounts = (ad.data || []).map((a) => ({ id: str(a.id), name: str(a.name), currency: str(a.currency), active: Number(a.account_status) === 1 }));
   } catch (_) { /* no ads on this login */ }
   await setConfig(ctx, 'meta_assets', JSON.stringify(assets));
+  await rekey(ctx, assets);
   return assets;
+}
+
+/** A new login (another Facebook account, a renewed key) gives new page keys: the Inbox channels already made for
+ *  those pages take the new key and are subscribed again - otherwise they keep an old account's key and go quiet. */
+async function rekey(ctx, assets) {
+  const chans = await ctx.tx`select * from inbox_channels where business_id = ${ctx.biz} and kind in ('messenger', 'instagram') and status <> 'removed'`;
+  const out = [];
+  for (const ch of chans) {
+    const pg = (assets.pages || []).find((p) => (ch.kind === 'messenger' ? p.id : p.ig && p.ig.id) === ch.external_id);
+    if (!pg) continue;
+    const key = await getSecret(ctx, 'META_PAGE_' + pg.id);
+    if (!key) continue;
+    await chSecretSet(ctx, ch, 'TOKEN', key);
+    const sub = ch.kind === 'messenger' ? await metaSubscribe(ctx, ch) : { ok: true };
+    out.push({ channel: ch.id, name: ch.name, ok: sub.ok, error: sub.error || '' });
+  }
+  return out;
 }
 
 export async function erpMetaRefresh(ctx) {

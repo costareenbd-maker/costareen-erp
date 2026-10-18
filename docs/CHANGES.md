@@ -2339,3 +2339,11 @@ Page only (fd-56; the joint calls are the joint stock's own, so every rule above
   receive page, costs, market, fixed expenses and the "still to pay" line, logo, menu visibility, reorder level,
   platform admin, company view, apps note, AI reader key, ERP map rows). The pieces that were translated one by one
   are no longer used for those. English unchanged (checked). Data rows (product · code, customer paid by X) untouched.
+
+## meta-rekey-1 (19 Oct 2026)
+Logging in to Facebook again (Settings → Connections) as ANOTHER account, or pressing Refresh, now gives the Inbox
+channels already made for those pages the new page key and subscribes the page again. Before, a channel kept the old
+account's key and the page showed "IN THE INBOX" with no button to fix it. Live: Costareen 3D re-keyed to the new
+account (Rahman Nazir), page subscribed to the Costareen ERP app (messages, postbacks, echoes, feed).
+Test: inbox_test (2 new checks, 151 green). NOT done: Meta App Review (pages_messaging advanced access) - until it is
+approved Meta only delivers messages from people who have a role on the app; business portfolio link (owner's click).
