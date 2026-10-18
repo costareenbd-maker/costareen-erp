@@ -20033,6 +20033,14 @@ function jtSetupHtml(first) {
       '<button class="btn" type="button" data-jt="join" style="margin-top:10px"' + dis + '>Join</button></div>' +
     '</div></section>';
 }
+/** "A pays X to B" in the reader's language: Bangla puts the words in its own order (A, B-কে X দেবে). */
+function jtPays(from, amount, to, italic) {
+  if (typeof LANG !== 'undefined' && LANG === 'bn') {
+    var bnAmt = String(amount).replace(/(<[^>]*>)|(\d)/g, function (m, tag, d) { return tag || '০১২৩৪৫৬৭৮৯'.charAt(+d); });
+    return from + ', ' + to + '-কে ' + bnAmt + ' দেবে';
+  }
+  return from + (italic ? ' <i>pays</i> ' : ' pays ') + amount + (italic ? ' <i>to</i> ' : ' to ') + to;
+}
 function jtMe(d, pool) { var m = (pool.partners || []).filter(function (x) { return x.name === d.company; })[0]; return d.me || (d.book && d.book.me) || (m && m.id) || ''; }
 
 function jtOverviewHtml(d, pool) {
@@ -20049,7 +20057,7 @@ function jtOverviewHtml(d, pool) {
   h += '<section><div class="card"><h2>Who owes whom, as of now</h2>';
   var tr = r.transfers || [];
   if (!tr.length) h += '<div class="paybox"><span class="pill ok">✓</span> Nobody owes anything — the cash is where it should be.</div>';
-  else tr.forEach(function (t) { h += '<div class="paybox"><span><strong>' + esc(names[t.from] || '?') + '</strong> pays <b>' + esc(cur) + ' ' + fmt(t.amount) + '</b> to <strong>' + esc(names[t.to] || '?') + '</strong></span></div>'; });
+  else tr.forEach(function (t) { h += '<div class="paybox"><span>' + jtPays('<strong>' + esc(names[t.from] || '?') + '</strong>', '<b>' + esc(cur) + ' ' + fmt(t.amount) + '</b>', '<strong>' + esc(names[t.to] || '?') + '</strong>') + '</span></div>'; });
   h += '<div class="sub" style="margin-top:8px">The full sums are under <button class="linkbtn" type="button" data-jttab="month">Month end</button>.</div></div></section>';
   var low = (d.stock || []).filter(function (s) { return s.status !== 'Discontinued' && s.stock <= 0; });
   if (!(d.stock || []).length) h += '<section><div class="note"><div class="ico">i</div><div><strong>Nothing in the joint stock yet.</strong> Open <button class="linkbtn" type="button" data-jttab="stock">Stock</button>, add the products you own together and receive what you bought. Then write what each of you put in under <button class="linkbtn" type="button" data-jttab="money">Money</button>.</div></div></section>';
@@ -34327,7 +34335,7 @@ function fdJtOverview(d, pool) {
   // who pays whom: the one line that matters
   var tr = r.transfers || [];
   h += '<div class="jt-settle"><span class="ic">' + jtI('swap', 26) + '</span><span class="t"><span>Who pays whom, as of now</span>' +
-    (tr.length ? tr.map(function (t) { return '<b>' + esc(names[t.from] || '?') + ' <i>pays</i> ' + fdTk(t.amount, cur) + ' <i>to</i> ' + esc(names[t.to] || '?') + '</b>'; }).join('')
+    (tr.length ? tr.map(function (t) { return '<b>' + jtPays(esc(names[t.from] || '?'), fdTk(t.amount, cur), esc(names[t.to] || '?'), true) + '</b>'; }).join('')
                : '<b>Nobody owes anything</b><span>The cash is where it should be.</span>') + '</span>' +
     '<button type="button" class="go" data-jttab="month">Month end →</button></div>';
   // partners and their capital
