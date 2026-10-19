@@ -1200,7 +1200,7 @@ export async function erpInboxOpen(ctx, payload) {
   return {
     id: v.id, mode: v.mode, until: v.human_until ? formatDate(new Date(v.human_until), 'h:mm a') : (v.mode === 'human' ? 'for good' : ''), claimed: str(v.claimed_name),
     reason: v.handover_reason ? REASONS[v.handover_reason] : '', note: str(v.handover_note), pile: v.pile, interest: v.interest, test: v.is_test,
-    channel: { id: ch.id, kind: ch.kind, name: ch.name, can: CAN[ch.kind] }, window: inWindow(ch, v, ctx.now),
+    channel: { id: ch.id, kind: ch.kind, name: ch.name, can: CAN[ch.kind], status: ch.status, aiOn: !!ch.ai_on }, window: inWindow(ch, v, ctx.now),
     windowLeft: CAN[ch.kind].window24 && v.last_in_at ? Math.max(0, Math.round((H24 - (ctx.now - new Date(v.last_in_at))) / 60e3)) : null,
     contact: { id: c.id, name: str(c.name), phone: str(c.phone), avatar: await avatarOut(ctx, c.avatar, c.id, c.channel_id), gender: c.gender, tags: c.tags || [], note: str(c.note), customerKey: str(c.customer_key) },
     msgs, more: rows.length === 80 ? Number(rows[0].id) : 0,

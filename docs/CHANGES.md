@@ -2372,3 +2372,9 @@ would also have lowered 19 SUNLU prices the owner did not ask about (SUNLU PLA+ 
 1,900 -> 1,800, Glow 2,700 -> 2,300 - the ERP is lower than the website there; left for the owner). Pushed only the 55:
 48 regular 1,700 -> 1,600, 7 on sale (crossed-out 1,999 kept) -> 1,600. Checked on costareen.com. Test: w2 38.
 Also added docs/meta/APP-REVIEW.md (App Review text + screencast script).
+
+## inbox-practice-label-1 (19 Oct 2026)
+Owner asked why the AI did not answer a real chat (a Chinese supplier's message). Cause: Costareen 3D is in practice mode,
+where the AI answers only chats that start with "test <code>" - by design. The chat header said "AI is handling this chat",
+which was misleading. The conversation now carries the channel's status and AI switch; the header shows
+"PRACTICE · AI NOT ANSWERING · REPLY YOURSELF" (or "AI IS OFF · REPLY YOURSELF") with Bangla. Tests: inbox 156.
