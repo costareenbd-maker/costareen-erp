@@ -2434,8 +2434,9 @@ Owner: "pick the best ones, compare, copy their logic and code, then polish". Re
   image quota (429) - billing must be switched on for the Google AI key before this works.
 - **Template reels** (product spin / price reveal / 3 reasons / real clip): the AI writes the script with one of ten
   hook archetypes (rotated per product, kept with the video), the owner edits it, the render server draws the slides,
-  speaks the voice-over with Microsoft's neural voices through edge-tts (free; bn-BD-Nabanita / Pradeep, en-US), burns
-  karaoke-style captions from the word timings (libass, Noto Sans Bengali), Ken Burns + crossfades, optional music
+  speaks the voice-over with Microsoft's neural voices through edge-tts (free; bn-BD-Nabanita / Pradeep, en-US), draws
+  karaoke-style captions from the word timings (one transparent picture per spoken word, drawn by the browser - libass
+  mis-shaped Bengali vowel signs - laid over the video for that word's time), Ken Burns + crossfades, optional music
   (the owner's own MP3, under the voice, fades out), encoded to Meta's Reels spec, uploaded straight into the file
   store with a signed address; the minute timer marks it ready. Free.
 - **Fetch the pictures from the website**: 137 of 141 products had no picture in the ERP; one button copies the

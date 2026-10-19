@@ -137,15 +137,17 @@ function slideHtml(kind, W, H, lang, shop, x, s) {
   const head = '<div class="shop"><i></i>' + esc(shop) + '</div>';
   const base = '<html><head>' + CSS(W, H) + '</head><body>' + head;
   if (kind === 'photo') {
-    const ph = { top: 160, h: Math.round(H * 0.55) };
-    return base + (x.photo ? '<div class="photo" style="top:' + ph.top + 'px;height:' + ph.h + 'px"><img src="' + x.photo + '" alt=""></div>' : '') +
-      (s.head ? '<div class="name" style="top:' + (ph.top + ph.h + 40) + 'px;font-size:62px">' + esc(s.head) + '</div>' : '') + (s.sub ? '<div class="sub" style="top:' + (ph.top + ph.h + 130) + 'px">' + esc(s.sub) + '</div>' : '') + '</body></html>';
+    // the title on top, the photo under it, the bottom third left free for the captions
+    const tall = H > W, top = s.head ? (tall ? 300 : 230) : 140, ph = { top, h: Math.round(H * (tall ? 0.42 : 0.5)) };
+    return base + (s.head ? '<div class="name" style="top:' + (tall ? 130 : 110) + 'px;font-size:' + (tall ? 64 : 54) + 'px;text-align:center">' + esc(s.head) + '</div>' : '') +
+      (x.photo ? '<div class="photo" style="top:' + ph.top + 'px;height:' + ph.h + 'px"><img src="' + x.photo + '" alt=""></div>' : '') +
+      (s.sub ? '<div class="sub" style="top:' + (ph.top + ph.h + 30) + 'px;text-align:center">' + esc(s.sub) + '</div>' : '') + '</body></html>';
   }
-  if (kind === 'text') return base + '<div class="big">' + esc(s.head || '') + (s.sub ? '<small>' + esc(s.sub) + '</small>' : '') + '</div></body></html>';
-  if (kind === 'price') return base + '<div class="big"><small style="margin:0 0 24px">' + esc(s.head || x.name) + '</small><span style="font-size:150px;color:#f0a030">' + tk(s.price || x.sell) + '</span>' + (s.sub ? '<small>' + esc(s.sub) + '</small>' : '') + '</div></body></html>';
-  if (kind === 'list') return base + '<div class="name" style="top:150px;font-size:60px">' + esc(s.head || '') + '</div><div class="list" style="top:300px">' + (s.items || []).slice(0, 4).map((it, i) => '<div><b>' + (i + 1) + '</b><span>' + esc(it) + '</span></div>').join('') + '</div></body></html>';
-  if (kind === 'cta') return base + (x.photo ? '<div class="photo" style="top:160px;height:' + Math.round(H * 0.42) + 'px"><img src="' + x.photo + '" alt=""></div>' : '') +
-    '<div class="big" style="top:' + Math.round(H * 0.70) + 'px;font-size:60px">' + esc(s.head || x.name) + '<small style="color:#f0a030;font-size:72px;font-weight:900">' + tk(x.sell) + '</small></div><div class="cta">' + esc(s.sub || L(lang, 'Inbox to order', 'অর্ডার করতে ইনবক্স করুন')) + '</div></body></html>';
+  if (kind === 'text') return base + '<div class="big" style="top:42%">' + esc(s.head || '') + (s.sub ? '<small>' + esc(s.sub) + '</small>' : '') + '</div></body></html>';
+  if (kind === 'price') return base + '<div class="big" style="top:42%"><small style="margin:0 0 24px">' + esc(s.head || x.name) + '</small><span style="font-size:150px;color:#f0a030">' + tk(s.price || x.sell) + '</span>' + (s.sub ? '<small>' + esc(s.sub) + '</small>' : '') + '</div></body></html>';
+  if (kind === 'list') return base + '<div class="name" style="top:140px;font-size:60px">' + esc(s.head || '') + '</div><div class="list" style="top:280px">' + (s.items || []).slice(0, 4).map((it, i) => '<div><b>' + (i + 1) + '</b><span>' + esc(it) + '</span></div>').join('') + '</div></body></html>';
+  if (kind === 'cta') return base + (x.photo ? '<div class="photo" style="top:140px;height:' + Math.round(H * 0.36) + 'px"><img src="' + x.photo + '" alt=""></div>' : '') +
+    '<div class="big" style="top:' + Math.round(H * 0.56) + 'px;font-size:56px">' + esc(s.head || x.name) + '<small style="color:#f0a030;font-size:72px;font-weight:900">' + tk(x.sell) + '</small></div><div class="cta" style="bottom:' + Math.round(H * 0.30) + 'px">' + esc(s.sub || L(lang, 'Inbox to order', 'অর্ডার করতে ইনবক্স করুন')) + '</div></body></html>';
   return base + '</body></html>';
 }
 

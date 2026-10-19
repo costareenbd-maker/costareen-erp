@@ -105,10 +105,9 @@ async function speak(dir, text, voice, rate) {
   if (!info.audio) throw new Error('the voice came back empty');
   return { file: mp3, words, seconds: info.duration || (words.length ? words[words.length - 1].end : 0) };
 }
-const assTime = (t) => { const h = Math.floor(t / 3600), m = Math.floor(t % 3600 / 60), s = (t % 60).toFixed(2).padStart(5, '0'); return h + ':' + String(m).padStart(2, '0') + ':' + s; };
-const assEsc = (t) => String(t).replace(/[{}]/g, '').replace(/\\/g, '/');
-/** Captions the way the short-video tools do them: 3-5 words at a time, big, outlined, the spoken word lit up (karaoke tags). */
-function captionsAss(words, W, H, offset, style) {
+/** Captions the way the short-video tools do them - 3-5 words a cue, big, outlined, the spoken word lit - but drawn by
+ *  the browser (perfect Bengali shaping) as transparent PNGs, one per spoken word, laid over the video for that word's time. */
+function captionGroups(words) {
   const groups = []; let cur = [];
   for (const w of words) {
     if (!w.text) continue;
@@ -117,18 +116,35 @@ function captionsAss(words, W, H, offset, style) {
     if (cur.length >= 4 || chars >= 22 || /[.!?।]$/.test(w.text)) { groups.push(cur); cur = []; }
   }
   if (cur.length) groups.push(cur);
-  const fs_ = Math.round(W * (style && style.size ? style.size : 0.062)), marginV = Math.round(H * (style && style.bottom ? style.bottom : 0.20));
-  const lines = ['[Script Info]', 'ScriptType: v4.00+', 'PlayResX: ' + W, 'PlayResY: ' + H, 'WrapStyle: 2', '', '[V4+ Styles]',
-    'Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding',
-    'Style: Cap,Noto Sans Bengali,' + fs_ + ',&H00FFFFFF,&H0030A0F0,&H00141414,&H80000000,-1,0,0,0,100,100,0,0,1,' + Math.max(3, Math.round(fs_ * 0.09)) + ',1,2,60,60,' + marginV + ',1',
-    '', '[Events]', 'Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text'];
+  return groups;
+}
+const htmlEsc = (t) => String(t).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+async function captionPngs(dir, words, W, H, offset, style) {
+  const groups = captionGroups(words);
+  const fs_ = Math.round(W * (style && style.size ? style.size : 0.062)), capH = Math.round(H * 0.22);
+  const out = [];   // {file, start, end}
+  let n = 0;
   for (const g of groups) {
-    const start = g[0].start + offset, end = Math.max(g[g.length - 1].end + offset, start + 0.4);
-    // \k = hundredths of a second each word stays "next"; the lit colour is SecondaryColour until the word is spoken
-    const txt = g.map((w, i) => { const d = Math.max(1, Math.round((w.end - w.start) * 100)); const gap = i ? Math.max(0, Math.round((w.start - g[i - 1].end) * 100)) : 0; return (gap ? '{\\k' + gap + '}' : '') + '{\\k' + d + '}' + assEsc(w.text); }).join(' ');
-    lines.push('Dialogue: 0,' + assTime(start) + ',' + assTime(end) + ',Cap,,0,0,0,,' + txt);
+    for (let k = 0; k < g.length; k++) {
+      if (n >= 90) break;   // a very long voice: the last words share one picture
+      const w = g[k];
+      const start = w.start + offset, end = (k === g.length - 1 ? Math.max(w.end, g[k].end) : g[k + 1].start) + offset;
+      const html = '<html><head><style>*{box-sizing:border-box}html,body{margin:0;width:' + W + 'px;height:' + capH + 'px;background:transparent;overflow:hidden}' +
+        'body{display:flex;align-items:center;justify-content:center;font-family:"Noto Sans Bengali",Inter,sans-serif;font-weight:800;font-size:' + fs_ + 'px;line-height:1.3;text-align:center;padding:0 40px}' +
+        'p{margin:0;color:#fff;text-shadow:0 0 6px #000,0 0 6px #000,0 3px 0 #000,0 -3px 0 #000,3px 0 0 #000,-3px 0 0 #000,2px 2px 0 #000,-2px -2px 0 #000,2px -2px 0 #000,-2px 2px 0 #000}' +
+        'b{color:#f0a030;font-weight:800}</style></head><body><p>' + g.map((x, m) => (m === k ? '<b>' + htmlEsc(x.text) + '</b>' : htmlEsc(x.text))).join(' ') + '</p></body></html>';
+      const f = path.join(dir, 'cap' + n + '.png');
+      fs.writeFileSync(f, await withPage(async (page) => {
+        await page.setContent(html, { waitUntil: 'load', timeout: 20000 });
+        await page.evaluate(() => document.fonts && document.fonts.ready).catch(() => {});
+        return page.screenshot({ type: 'png', omitBackground: true, clip: { x: 0, y: 0, width: W, height: capH } });
+      }, { width: W, height: capH }));
+      out.push({ file: f, start, end: Math.max(end, start + 0.2) });
+      n++;
+    }
+    if (n >= 90) break;
   }
-  return lines.join('\n');
+  return { pngs: out, capH };
 }
 /**
  * job: { width, height, slides:[{html, seconds, motion:'in'|'out'|'left'|'right'|'none'}], clip?:{url, seconds, mute?},
@@ -167,7 +183,7 @@ async function buildVideo(id, job) {
         const extra = v.seconds + off + 0.8 - total0, stills = parts.filter((p) => p.kind === 'image');
         for (const p of stills) p.seconds += extra / Math.max(1, stills.length);
       }
-      if (job.voice.captions !== false && v.words.length) { captions = path.join(dir, 'cap.ass'); fs.writeFileSync(captions, captionsAss(v.words, W, H, off, job.voice.style)); }
+      if (job.voice.captions !== false && v.words.length) captions = await captionPngs(dir, v.words, W, H, off, job.voice.style);
     } catch (e) { voiceWarn = 'voice: ' + String((e && e.message) || e).slice(0, 160); voice = null; }
   }
   let music = null;
@@ -197,13 +213,21 @@ async function buildVideo(id, job) {
     total += parts[i].seconds - TR; last = out;
   }
   if (parts.length === 1) fc.push('[v0]copy[vout]');
-  // the captions burned in (libass, the Bengali fonts on this server), BT.709 tagged so colours do not shift
-  let vlast = 'vout';
-  if (captions) { fc.push("[vout]subtitles=filename='" + captions.replace(/'/g, "\\'") + "':fontsdir='" + FONTS + "'[vcap]"); vlast = 'vcap'; }
+  // the captions laid over, one picture per spoken word for its time; BT.709 tagged so colours do not shift
+  let vlast = 'vout', capInputs = 0;
+  if (captions && captions.pngs.length) {
+    const y = H - captions.capH - Math.round(H * 0.10);
+    captions.pngs.forEach((c, k) => {
+      args.push('-i', c.file); const idx = parts.length + capInputs; capInputs++;
+      const out = 'vc' + k;
+      fc.push('[' + vlast + '][' + idx + ':v]overlay=0:' + y + ":enable='between(t," + c.start.toFixed(2) + ',' + c.end.toFixed(2) + ")'[" + out + ']');
+      vlast = out;
+    });
+  }
   fc.push('[' + vlast + ']scale=out_color_matrix=bt709:out_range=tv,setparams=color_primaries=bt709:color_trc=bt709:colorspace=bt709,format=yuv420p[vfinal]');
   // audio: the voice (and music under it at low volume), else the clip's own sound (plus music), else music alone, else silence
   const amix = [];
-  let ai = parts.length;
+  let ai = parts.length + capInputs;
   if (voice) { args.push('-i', voice); fc.push('[' + ai + ':a]aformat=sample_rates=48000:channel_layouts=stereo,apad[avoice]'); amix.push('[avoice]'); ai++; }
   else if (parts[0].kind === 'video' && parts[0].hasAudio) { fc.push('[0:a]aformat=sample_rates=48000:channel_layouts=stereo,apad[aclip]'); amix.push('[aclip]'); }
   if (music) { const vol = Math.max(0.05, Math.min(1, Number(job.music.volume) || (amix.length ? 0.18 : 0.6))); args.push('-stream_loop', '-1', '-i', music); fc.push('[' + ai + ':a]aformat=sample_rates=48000:channel_layouts=stereo,volume=' + vol + ',afade=t=out:st=' + Math.max(0, total - 3).toFixed(2) + ':d=3[amusic]'); amix.push('[amusic]'); ai++; }
@@ -220,7 +244,7 @@ async function buildVideo(id, job) {
   if (!(job.upload && STORE_RE.test(String(job.upload.url || '')))) throw new Error('nowhere to upload');
   const r = await fetch(job.upload.url, { method: 'PUT', headers: { 'Content-Type': String(job.upload.contentType || 'video/mp4'), 'x-upsert': 'true' }, body: bytes });
   if (!r.ok) throw new Error('upload ' + r.status + ' ' + (await r.text()).slice(0, 120));
-  return { bytes: bytes.length, seconds: Number(total.toFixed(1)), voice: !!voice, captions: !!captions, music: !!music, warn: voiceWarn };
+  return { bytes: bytes.length, seconds: Number(total.toFixed(1)), voice: !!voice, captions: !!(captions && captions.pngs.length), music: !!music, warn: voiceWarn };
 }
 function startJob(id, job) {
   jobs.set(id, { state: 'queued', at: Date.now() });
