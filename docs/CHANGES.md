@@ -2502,3 +2502,25 @@ four, TikTok still processing finished by the timer, the figures, disconnect); s
 inbox 163, push 22 green. Live: Settings → Connections shows the nine networks; none connected yet; Telegram ready.
 NOT done: LinkedIn Company Page posting and videos (needs LinkedIn's Community Management API); X videos; Pinterest
 video pins; the provider's apps on Threads, TikTok, LinkedIn, X and Pinterest are not registered yet (SOCIAL-APPS.md).
+
+## ads-1 (20 Oct 2026) - advertising automation S4: paid campaigns
+Campaigns > Advertisement gets **Paid ads** (handlers/ads.js, migration 132 ad_campaigns), on Meta's Marketing API
+with the one Facebook login:
+- **Settings** (owner): the ad account from the login, a daily cap and a monthly cap, the website pixel, auto-pause
+  rules (cost per result above X, click rate under Y). The account's spend and status are read from Meta.
+- **Boost a post**: a published Facebook post + what it should do (messages / website traffic / reach / sales) +
+  audience (Bangladesh, age range, interests from Meta's interest search, our customers, people like our customers) +
+  daily budget + days. The ERP builds campaign → ad set → creative on the post → ad, all PAUSED, and shows Meta's own
+  preview and the total. **Only the owner's Start runs it** (a manager may build and pause). A budget above the daily
+  cap or a run that would pass the monthly cap is refused before anything is built.
+- **Customer audience**: the ERP's customer phone numbers go to Meta hashed (SHA-256 of the E.164 number, never the
+  number), as a Custom Audience, plus a lookalike in Bangladesh (Meta needs 100+ numbers).
+- **Every hour** (the minute job, hourly per campaign): spend and results from Meta (messages started, link clicks,
+  reach, purchases, cost each, click rate); each day's spend written to **Expenses under Advertising** once; a campaign
+  past its end date is marked finished; the auto-pause rules and the monthly cap pause what is running, with the
+  reason shown on the campaign.
+- Pause / Resume / Stop (stop also archives it on Meta; the row stays here).
+Tests: ads_test 30; social 37, socialnet 39, socials3 23, inbox 163 green. Live: the login reaches no ad account yet
+(the old 2019 ones are restricted and not on this account) - the screen says what to make in Business Suite.
+NOT done: Instagram-only posts cannot be boosted (needs an Instagram-side creative); no A/B of two posts; sales ads
+need the pixel id typed in (no pixel picker); Advantage+ shopping campaigns.

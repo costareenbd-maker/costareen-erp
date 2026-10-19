@@ -128,6 +128,11 @@ export async function runJob(deps, job) {
     let sids = [];
     try { sids = (await sql`select business_id from social_posts where (state in ('scheduled', 'publishing')) or (state = 'published' and published_at > now() - interval '30 days' and (stats_at is null or stats_at < now() - interval '1 hour')) union select business_id from social_assets where status = 'rendering' union select business_id from social_inspo where status = 'studying' union select business_id from social_posts where state = 'published' and published_at > now() - interval '60 days' group by business_id`).map((r) => r.business_id); } catch (_) { sids = []; }
     if (social && sids.length) for (const row of await owners(sql, sids)) { try { out['social:' + row.name] = await asBusiness(deps, row, 'social:tick', (ctx) => social(ctx)); } catch (e) { out['social:' + row.name] = String((e && e.message) || e); } }
+    // paid ads (handlers/ads.js): every hour, results and spend from Meta, the caps and the auto-pause rules
+    const adsTick = await maybe('./handlers/ads.js', 'adsTick');
+    let aids = [];
+    try { aids = (await sql`select distinct business_id from ad_campaigns where status in ('running', 'paused', 'ready') and campaign_id is not null and (stats_at is null or stats_at < now() - interval '1 hour')`).map((r) => r.business_id); } catch (_) { aids = []; }
+    if (adsTick && aids.length) for (const row of await owners(sql, aids)) { try { out['ads:' + row.name] = await asBusiness(deps, row, 'ads:tick', (ctx) => adsTick(ctx)); } catch (e) { out['ads:' + row.name] = String((e && e.message) || e); } }
   } else if (job === 'drive') {
     // copies of new files into each connected owner's Google Drive
     const tick = await maybe('./handlers/google.js', 'driveTick');
