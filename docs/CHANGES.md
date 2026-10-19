@@ -2390,3 +2390,12 @@ only when the chat grew, or on Refresh; 20 are written per call, the page keeps 
 channel scope. Server erpInboxDigest (manager; read in the log), Bangla labels. Tests: inbox 163. Live: today's 3 chats
 summarised (the Chinese supplier shows as "no reply yet").
 NOT done: no nightly e-mail/WhatsApp of the review (ask if wanted); summaries are English only.
+
+## capital-buttons-1 (19 Oct 2026)
+Owner: "in the capital system I cannot edit the total investment of a shareholder or investor" (more money in, money
+taken back). The book already took these ("Write in the book": Money put in / money given back), but the only way to it
+was a hint line. Now every shareholder and investor row has **+ Money in** and **Money back** buttons; they choose the
+person and the kind in "Write in the book" and put the cursor in Amount. The investor edit form shows the same two
+buttons instead of the hint. Also fixed the phone message that told the owner a number "must be 11 digits starting with
+01" when it had 11 digits and started with 010 (not a Bangladeshi mobile): now "11 digits starting 013-019, like
+01712345678 - "..." starts with 010". Tests: capital 49, customers 61, sales 109, erp_server green.

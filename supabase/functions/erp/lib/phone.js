@@ -25,8 +25,7 @@ export function phone11(p) {
   const f = formatBdPhone(raw);
   if (!/^01[3-9]\d{8}$/.test(f)) {
     const n = raw.replace(/\D/g, '').length;
-    throw new Error('The phone number must be 11 digits starting with 01 - "' + raw +
-      '" has ' + n + '. Correct it, or leave it empty.');
+    throw new Error('A Bangladeshi mobile number is 11 digits starting 013-019, like 01712345678 - "' + raw + '" ' + (n === 11 ? 'starts with ' + raw.replace(/\D/g, '').slice(0, 3) : 'has ' + n) + '. Correct it, or leave it empty.');
   }
   return f;
 }

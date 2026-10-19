@@ -177,7 +177,7 @@ check('credit used up', r.ok && r.result.credit === 0, r);
 r = await mgr('erpCreateInvoice', [{ customer: { name: 'X', phone: '' }, items: [{ sku: PLA, qty: 100 }], payMode: 'none' }]);
 check('not enough stock', !r.ok && /^Not enough stock for Sunlu PLA Black: \d+ in stock, 100 requested\.$/.test(r.error), r);
 r = await mgr('erpCreateInvoice', [{ customer: { name: 'X', phone: '0171' }, items: [{ sku: PLA, qty: 1 }], payMode: 'none' }]);
-check('bad phone refused', !r.ok && r.error === 'The phone number must be 11 digits starting with 01 - "0171" has 4. Correct it, or leave it empty.', r);
+check('bad phone refused', !r.ok && r.error === 'A Bangladeshi mobile number is 11 digits starting 013-019, like 01712345678 - "0171" has 4. Correct it, or leave it empty.', r);
 r = await mgr('erpCreateInvoice', [{ customer: { name: 'X' }, items: [{ sku: PLA, qty: 1 }], payMode: 'none', date: '2999-01-01' }]);
 check('future date refused', !r.ok && r.error === 'An invoice cannot be dated in the future.', r);
 const before = await stockOf(PLA);

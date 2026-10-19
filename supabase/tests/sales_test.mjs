@@ -233,7 +233,7 @@ check('empty name refused', !r.ok && r.error === 'A sale needs a customer name.'
 r = await mgr('erpFixInvoice', [{ invoiceNo: A, delivery: 'Bicycle' }]);
 check('unknown delivery refused', !r.ok && r.error === '"Bicycle" is not one of the delivery methods.', r);
 r = await mgr('erpFixInvoice', [{ invoiceNo: A, phone: '0181' }]);
-check('bad phone refused', !r.ok && r.error === 'The phone number must be 11 digits starting with 01 - "0181" has 4. Correct it, or leave it empty.', r);
+check('bad phone refused', !r.ok && r.error === 'A Bangladeshi mobile number is 11 digits starting 013-019, like 01712345678 - "0181" has 4. Correct it, or leave it empty.', r);
 const nPdf = pdfs.length;
 r = await mgr('erpFixInvoice', [{ invoiceNo: A, name: 'Rahim Uddin', phone: '1811111112', address: 'Mirpur', delivery: 'Pathao Instant' }]);
 check('fixed: customer, phone, delivery; corrected PDF', r.ok && r.result.changed === 3 && r.result.fields.join() === 'customer,phone,delivery' &&

@@ -58,7 +58,7 @@ check('sorted by spent, highest first', r.result.every((c, i, a) => i === 0 || a
 // ---------------------------------------------------------------- save
 r = await sales('erpSaveCustomer', [{ row: 0, name: 'Nasrin', phone: '0155' }]);
 check('bad phone refused (phone checked first, as original)', !r.ok &&
-  r.error === 'The phone number must be 11 digits starting with 01 - "0155" has 4. Correct it, or leave it empty.', r);
+  r.error === 'A Bangladeshi mobile number is 11 digits starting 013-019, like 01712345678 - "0155" has 4. Correct it, or leave it empty.', r);
 r = await sales('erpSaveCustomer', [{ row: 0, name: '  ', phone: '01555555555' }]);
 check('name required', !r.ok && r.error === 'Customer name is required.', r);
 r = await sales('erpSaveCustomer', [{ row: 0, name: 'Nasrin', phone: '1555555555', email: 'n@x.com', address: 'Uttara',
