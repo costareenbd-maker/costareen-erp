@@ -10,6 +10,7 @@
 
 import { googleCallback } from './handlers/google.js';
 import { metaCallback } from './handlers/metaconnect.js';
+import { socialNetCallback } from './handlers/socialnet.js';
 import { wooKeysCallback } from './handlers/wooauth.js';
 import { shopDoor } from './handlers/shop.js';
 import { installRoute } from './handlers/installer.js';
@@ -339,9 +340,13 @@ async function svgPng(svg: string): Promise<Uint8Array> {
   return r.render().asPng();
 }
 // the provider's Meta app: one for every company; each company logs in with its own Facebook (handlers/metaconnect.js)
+// the other networks' apps (handlers/socialnet.js): Threads, TikTok, LinkedIn, X, Pinterest; YouTube uses the Google client
+const SOCIAL = { threadsAppId: Deno.env.get('THREADS_APP_ID') ?? '', threadsAppSecret: Deno.env.get('THREADS_APP_SECRET') ?? '', tiktokClientKey: Deno.env.get('TIKTOK_CLIENT_KEY') ?? '', tiktokClientSecret: Deno.env.get('TIKTOK_CLIENT_SECRET') ?? '',
+  googleClientId: Deno.env.get('GOOGLE_CLIENT_ID') ?? '', googleClientSecret: Deno.env.get('GOOGLE_CLIENT_SECRET') ?? '', linkedinClientId: Deno.env.get('LINKEDIN_CLIENT_ID') ?? '', linkedinClientSecret: Deno.env.get('LINKEDIN_CLIENT_SECRET') ?? '',
+  xClientId: Deno.env.get('X_CLIENT_ID') ?? '', xClientSecret: Deno.env.get('X_CLIENT_SECRET') ?? '', pinterestAppId: Deno.env.get('PINTEREST_APP_ID') ?? '', pinterestAppSecret: Deno.env.get('PINTEREST_APP_SECRET') ?? '' };
 const META = { appId: Deno.env.get('META_APP_ID') ?? '', appSecret: Deno.env.get('META_APP_SECRET') ?? '', configId: Deno.env.get('META_CONFIG_ID') ?? '', redirect: SUPABASE_URL + '/functions/v1/erp?meta=back' };
 const own = projectParts({ url: SUPABASE_URL, anon: ANON, service: SERVICE, appUrl: Deno.env.get('ERP_APP_URL') ?? 'https://erp.costareen.com/' });
-const deps: any = { install: INSTALL, installEnv: INSTALL_ENV, google: GOOGLE, smtpNote: SMTP_NOTE, linkOnly: false, sql, sqlAux, control: ctlSql, fetch: globalThis.fetch.bind(globalThis), renderPdf, render: { url: RENDER_URL, key: RENDER_KEY }, geminiKey: GEMINI_KEY, svgPng, meta: META,
+const deps: any = { install: INSTALL, installEnv: INSTALL_ENV, google: GOOGLE, social: { ...SOCIAL, redirect: FN_URL + '?social=back' }, smtpNote: SMTP_NOTE, linkOnly: false, sql, sqlAux, control: ctlSql, fetch: globalThis.fetch.bind(globalThis), renderPdf, render: { url: RENDER_URL, key: RENDER_KEY }, geminiKey: GEMINI_KEY, svgPng, meta: META,
                ...own, hookBase: FN_URL };
 
 // A company on the bridge: its own database, sign-in, files and e-mails; the provider's logic and PDF service.
@@ -357,7 +362,7 @@ async function buildTenant(t: any) {
     providerFingerprint: fpHex.slice(0, 16).toUpperCase().match(/.{4}/g)!.join('-'),
     install: { id: t.id, key: '', controlUrl: '', version: Deno.env.get('ERP_RELEASE') ?? '', bridged: true, domain: String(t.domain || '') },
     installEnv: INSTALL_ENV,
-    google: { ...GOOGLE, redirect: FN_URL + '?google=back&t=' + t.id, appUrl },
+    google: { ...GOOGLE, redirect: FN_URL + '?google=back&t=' + t.id, appUrl }, social: { ...SOCIAL, redirect: FN_URL + '?social=back&t=' + t.id },
     // control: the provider's own tables (the market list, joint pools)
     smtpNote: '', linkOnly: false, sql: tsql, sqlAux: tAux, control: ctlSql, fetch: globalThis.fetch.bind(globalThis), renderPdf, render: { url: RENDER_URL, key: RENDER_KEY }, geminiKey: GEMINI_KEY, svgPng, meta: { ...META, redirect: FN_URL + '?meta=back&t=' + t.id },
     ...parts, hookBase: FN_URL + '?t=' + t.id,
@@ -432,6 +437,19 @@ async function serveWith(deps: any, req: Request, q0: URLSearchParams, headers: 
         return asBusiness(deps, rows[0], 'meta:back', fn);
       });
     } catch (e) { console.error('meta callback', e); to += '&why=' + encodeURIComponent(String((e && (e as Error).message) || e).slice(0, 140)); }
+    return new Response(null, { status: 302, headers: { Location: to } });
+  }
+  // the other networks send the owner back here after Connect (handlers/socialnet.js)
+  if (req.method === 'GET' && new URL(req.url).searchParams.get('social') === 'back') {
+    const q = Object.fromEntries(new URL(req.url).searchParams.entries());
+    let to = String(deps.google.appUrl).replace(/\/+$/, '') + '/#/settings?social=failed';
+    try {
+      to = await socialNetCallback(deps, q, async (biz: string, fn: (ctx: any) => Promise<any>) => {
+        const rows = await owners(deps.sql, [biz]);
+        if (!rows.length) throw new Error('unknown business');
+        return asBusiness(deps, rows[0], 'social:back', fn);
+      });
+    } catch (e) { console.error('social callback', e); to += '&why=' + encodeURIComponent(String((e && (e as Error).message) || e).slice(0, 140)); }
     return new Response(null, { status: 302, headers: { Location: to } });
   }
   // WooCommerce sends the shop's keys here after the owner presses Approve on their own site (handlers/wooauth.js)

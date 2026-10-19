@@ -12,16 +12,18 @@
 // Staff draft; the owner approves and publishes (a manager may publish an approved post). Marketplace and WhatsApp
 // have no API: their captions are for copying. A published post is never deleted, only its figures change.
 
-import { getSecret, getConfig, saveFile, fileUrl } from '../lib/ext.js';
+import { getSecret, getConfig, saveFile, fileUrl, readFile } from '../lib/ext.js';
 import { formatDate, num } from '../lib/time.js';
 import { roleAtLeast } from '../allow.js';
 import { gemini, jsonOf } from '../lib/gemini.js';
 import { products } from './dashboard.js';
 import { assetsTick } from './socialmake.js';
+import { PLATFORMS, API_KEYS, publishTo, statsFor, configured } from './socialnet.js';
+import { renderJpeg } from '../lib/render.js';
 
 const str = (v) => String(v == null ? '' : v).trim();
 const GRAPH = 'https://graph.facebook.com/v21.0';
-const PLATFORMS = ['facebook', 'instagram', 'marketplace', 'whatsapp'];
+const CAPTION_KEYS = Object.keys(PLATFORMS).filter((k) => PLATFORMS[k].max > 0);   // stories carry no caption
 const H = 3600e3;
 const META_ERRORS = { 2207003: 'Facebook could not download the media in time: try again.', 2207020: 'The media took too long and expired: start again.', 2207010: 'The caption is too long for Instagram.', 2207082: 'Instagram asked for a retry.',
   2207026: 'Instagram does not accept this video (format, length or size).', 2207050: 'This Instagram account is restricted from publishing right now.', 2207018: 'A collaborator handle was refused.', 36003: 'The picture\'s shape is outside what Instagram allows (4:5 to 1.91:1).', 9007: 'The media is still processing: it will be published by the timer.' };
@@ -75,21 +77,39 @@ export async function erpSocialPosts(ctx) {
   need(ctx);
   const rows = await ctx.tx`select * from social_posts where business_id = ${ctx.biz} and state <> 'removed' and created_at > now() - interval '90 days' order by created_at desc limit 200`;
   const r = await reach(ctx);
-  return { ...r, posts: rows.map(view), canPublish: ctx.s.role === 'owner' || ctx.s.role === 'manager' };
+  const net = [];
+  for (const k of Object.keys(PLATFORMS)) {
+    const pl = PLATFORMS[k];
+    let connected = false, handle = '';
+    if (pl.via === 'meta') connected = r.connected && (k.startsWith('instagram') ? !!(r.pages.find((pg) => pg.id === r.defaultPage) || r.pages[0] || {}).ig : r.pages.length > 0);
+    else if (pl.via === 'oauth' || pl.via === 'token') { let pr = null; try { pr = JSON.parse(str(await getConfig(ctx, 'social_' + k, '')) || 'null'); } catch (_) { pr = null; } connected = !!(pr && pr.id); handle = str(pr && (pr.handle || pr.name)); }
+    else connected = true;   // copy-only: always usable
+    net.push({ key: k, name: pl.name, via: pl.via, media: pl.media, max: pl.max, configured: configured(ctx.deps, k), connected, handle });
+  }
+  return { ...r, net, posts: rows.map(view), canPublish: ctx.s.role === 'owner' || ctx.s.role === 'manager' };
 }
 
 function cleanMedia(list) {
   return (Array.isArray(list) ? list : []).slice(0, 10).map((m) => ({ kind: m.kind === 'video' ? 'video' : 'image', file: str(m.file).slice(0, 300), name: str(m.name).slice(0, 120), ...(num(m.width) > 0 && num(m.height) > 0 ? { width: num(m.width), height: num(m.height) } : {}) })).filter((m) => m.file);
 }
-function cleanCaptions(c) { const out = {}; for (const k of PLATFORMS) out[k] = str(c && c[k]).slice(0, 5000); return out; }
+function cleanCaptions(c) { const out = {}; for (const k of CAPTION_KEYS) out[k] = str(c && c[k]).slice(0, Math.max(PLATFORMS[k].max, 280) + 200); return out; }
 
 export async function erpSocialSave(ctx, payload) {
   need(ctx);
   const p = payload || {};
   const id = str(p.id);
   const media = cleanMedia(p.media), captions = cleanCaptions(p.captions);
-  const targets = { facebook: !!(p.targets && p.targets.facebook), instagram: !!(p.targets && p.targets.instagram), facebookStory: !!(p.targets && p.targets.facebookStory), instagramStory: !!(p.targets && p.targets.instagramStory) };
+  const targets = {};
+  for (const k of Object.keys(PLATFORMS)) if (PLATFORMS[k].via !== 'copy') targets[k] = !!(p.targets && p.targets[k]);
   if ((targets.instagram || targets.facebookStory || targets.instagramStory) && !media.length) throw new Error('Instagram and stories need a picture or a video.');
+  const hasVideo = media.some((m) => m.kind === 'video');
+  for (const k of Object.keys(targets)) {
+    if (!targets[k] || PLATFORMS[k].via === 'meta') continue;
+    const pl = PLATFORMS[k];
+    if (hasVideo && !pl.media.video) throw new Error(pl.name + ' takes no video: untick it, or make a picture post for it.');
+    if (!hasVideo && media.length && !pl.media.image) throw new Error(pl.name + ' takes a video only: untick it for a picture post.');
+    if (!media.length && !pl.media.text) throw new Error(pl.name + ' needs a picture or a video.');
+  }
   if (media.filter((m) => m.kind === 'video').length > 1) throw new Error('One video per post.');
   if (media.some((m) => m.kind === 'video') && media.length > 1) throw new Error('A video goes alone: no pictures with it.');
   const r = await reach(ctx);
@@ -156,8 +176,8 @@ export async function erpSocialCaptions(ctx, payload) {
   let extra = ''; try { const sm = await import('./socialmake.js'); extra = await sm.writerContext(ctx); } catch (_) { extra = ''; }
   const lang = str(p.lang) === 'bn' ? 'Write in Bangla (Bengali script); product names, brands and numbers as given.' : str(p.lang) === 'mix' ? 'Write in Banglish (Bangla words in Latin letters), product names as given.' : 'Write in simple English.';
   const sys = 'You write social-media captions for a small 3D-printing supplies shop in Bangladesh. Use only the facts given: never invent prices, discounts, specs, deadlines or stock. The price goes in every caption. ' + lang +
-    ' Return JSON only: {"facebook": "...", "instagram": "...", "marketplace": "...", "whatsapp": "..."}.' +
-    ' facebook: 3-6 short lines, the price, how to order (inbox / website), 2-3 emoji at most, no hashtags. instagram: 2-4 lines, the price, a question or hook first, then 8-12 hashtags on the last line (3D printing, filament, Bangladesh, the brand). marketplace: a listing - a plain title line, then condition, price, what is included, delivery, no emoji or hashtags. whatsapp: 2-3 lines for a status or broadcast, the price and "reply to order".';
+    ' Return JSON only, one caption per key: {' + CAPTION_KEYS.map((k) => '"' + k + '": "..."').join(', ') + '}.\n' +
+    CAPTION_KEYS.map((k) => k + ' (' + PLATFORMS[k].name + ', at most ' + PLATFORMS[k].max + ' characters): ' + PLATFORMS[k].guide + '.').join('\n');
   const { parts } = await gemini(ctx, { systemInstruction: { parts: [{ text: sys + (extra ? '\n' + extra : '') }] }, contents: [{ role: 'user', parts: [{ text: 'Facts:\n' + facts.join('\n') }] }], generationConfig: { temperature: 0.7, responseMimeType: 'application/json' } }, 'social', null);
   const j = jsonOf(parts) || {};
   return { captions: cleanCaptions(j), title };
@@ -239,7 +259,7 @@ async function publishFacebookStory(ctx, post, token, prev) {
   return { id: str(j.post_id || ph.id), link: 'https://www.facebook.com/stories/' + str(j.post_id || ph.id) };
 }
 async function publishInstagramStory(ctx, post, token, ig, prev) {
-  const media = post.media || [];
+  const media = await mediaForNet(ctx, 'instagram', post.media || []);
   if (!media.length) throw new Error('A story needs a picture or a video.');
   let creation = str(prev && prev.creation);
   if (!creation) {
@@ -259,7 +279,7 @@ async function publishInstagramStory(ctx, post, token, ig, prev) {
 
 /** Instagram: a container first (image, carousel or reel), then publish once Instagram has it ready. */
 async function publishInstagram(ctx, post, token, ig, prev) {
-  const media = post.media || [], caption = str(post.captions && post.captions.instagram);
+  const media = await mediaForNet(ctx, 'instagram', post.media || []), caption = str(post.captions && post.captions.instagram);
   let creation = str(prev && prev.creation);
   if (!creation) {
     if (!media.length) throw new Error('Instagram needs a picture or a video.');
@@ -291,28 +311,52 @@ async function publishInstagram(ctx, post, token, ig, prev) {
   return { id, link, creation };
 }
 
+/** Instagram and some others take JPEG only: a PNG (our cards, AI photos) is turned into a JPEG once and kept beside it. */
+async function asJpeg(ctx, m) {
+  const f = str(m.file);
+  if (!/\.png$/i.test(f) || /^https?:/.test(f)) return m;
+  const i = f.indexOf('/'), folder = f.slice(0, i), name = f.slice(i + 1), jname = name.replace(/\.png$/i, '.jpg');
+  const have = await readFile(ctx, folder, jname);
+  if (!have) {
+    const png = await readFile(ctx, folder, name); if (!png) return m;
+    const jpg = await renderJpeg(ctx.deps, png);
+    await saveFile(ctx, folder, jname, jpg, 'image/jpeg');
+  }
+  return { ...m, file: folder + '/' + jname };
+}
+async function mediaForNet(ctx, k, media) {
+  const pl = PLATFORMS[k];
+  const list = pl && pl.media && !pl.media.video ? media.filter((m) => m.kind !== 'video') : media;
+  const out = []; for (const m of list) out.push(m.kind === 'image' ? await asJpeg(ctx, m) : m);
+  return out;
+}
+
 /** Publish one post to its targets. Each target's answer is kept; the post is 'published' once every target is done. */
 export async function publishPost(ctx, post) {
   const results = { ...(post.results || {}) };
   if (!results.startedAt) results.startedAt = ctx.now.toISOString();
   const r = await reach(ctx);
   const page = r.pages.find((p) => p.id === str(post.page_id)) || r.pages[0];
-  if (!page) throw new Error('No Facebook Page on this login: connect Facebook under Settings → Connections.');
-  const token = await getSecret(ctx, 'META_PAGE_' + page.id);
-  if (!token) throw new Error('No key for the page ' + page.name + ': press Refresh or Log in again under Settings → Connections.');
   const t = post.targets || {};
   let pending = false, failed = false;
-  if (t.facebook && !(results.facebook && results.facebook.id)) {
+  // the Meta login is needed only for the Meta targets; the other networks carry their own keys
+  const META_T = ['facebook', 'instagram', 'facebookStory', 'instagramStory'].filter((k) => t[k] && !(results[k] && results[k].id));
+  let token = '';
+  if (META_T.length) {
+    token = page ? await getSecret(ctx, 'META_PAGE_' + page.id) : '';
+    if (!token) { const why = !page ? 'No Facebook Page on this login: connect Facebook under Settings → Connections.' : 'No key for the page ' + page.name + ': press Refresh or Log in again under Settings → Connections.'; for (const k of META_T) results[k] = { ...(results[k] || {}), error: why }; failed = true; }
+  }
+  if (token && t.facebook && !(results.facebook && results.facebook.id)) {
     try { const out = await publishFacebook(ctx, post, token, results.facebook); results.facebook = out; if (out.pending) pending = true; } catch (e) { results.facebook = { ...(results.facebook || {}), error: metaMsg(e && e.message) }; failed = true; }
   }
-  if (t.facebookStory && !(results.facebookStory && results.facebookStory.id)) {
+  if (token && t.facebookStory && !(results.facebookStory && results.facebookStory.id)) {
     try { const out = await publishFacebookStory(ctx, post, token, results.facebookStory); results.facebookStory = out; if (out.pending) pending = true; } catch (e) { results.facebookStory = { ...(results.facebookStory || {}), error: metaMsg(e && e.message) }; failed = true; }
   }
-  if (t.instagramStory && !(results.instagramStory && results.instagramStory.id)) {
+  if (token && t.instagramStory && !(results.instagramStory && results.instagramStory.id)) {
     if (!page.ig) { results.instagramStory = { error: 'No Instagram account is linked to the page ' + page.name + '.' }; failed = true; }
     else { try { const out = await publishInstagramStory(ctx, post, token, page.ig.id, results.instagramStory); results.instagramStory = out; if (out.pending) pending = true; } catch (e) { results.instagramStory = { ...(results.instagramStory || {}), error: metaMsg(e && e.message) }; failed = true; } }
   }
-  if (t.instagram && !(results.instagram && results.instagram.id)) {
+  if (token && t.instagram && !(results.instagram && results.instagram.id)) {
     if (!page.ig) { results.instagram = { error: 'No Instagram account is linked to the page ' + page.name + '. Link one in Instagram settings, then press Refresh under Settings → Connections.' }; failed = true; }
     else {
       try {
@@ -321,8 +365,15 @@ export async function publishPost(ctx, post) {
       } catch (e) { results.instagram = { ...(results.instagram || {}), error: metaMsg(e && e.message) }; failed = true; }
     }
   }
+  for (const k of API_KEYS) {
+    if (!t[k] || (results[k] && results[k].id)) continue;
+    try {
+      const out = await publishTo(ctx, k, post, await mediaForNet(ctx, k, post.media || []), str((post.captions || {})[k]) || str((post.captions || {}).facebook), results[k]);
+      results[k] = out; if (out.pending) pending = true;
+    } catch (e) { results[k] = { ...(results[k] || {}), error: str(e && e.message) }; failed = true; }
+  }
   const state = pending ? 'publishing' : failed ? 'failed' : 'published';
-  const err = failed ? ['facebook', 'instagram', 'facebookStory', 'instagramStory'].map((k) => results[k] && results[k].error).filter(Boolean).join(' · ') : null;
+  const err = failed ? Object.keys(results).map((k) => results[k] && results[k].error).filter(Boolean).join(' · ') : null;
   const row = (await ctx.tx`update social_posts set results = ${ctx.tx.json(results)}, state = ${state}, error = ${err}, published_at = ${state === 'published' ? ctx.now : post.published_at || null}, updated_at = now()
                              where id = ${post.id} returning *`)[0];
   return view(row);
@@ -343,7 +394,7 @@ export async function erpSocialAct(ctx, payload) {
     if (!(owner || (manager && post.approved_by))) throw new Error(owner ? '' : 'The owner approves a post before it goes out.');
     if (!['draft', 'approved', 'failed', 'scheduled'].includes(post.state)) throw new Error('This post is already ' + post.state + '.');
     const t = post.targets || {};
-    if (!t.facebook && !t.instagram && !t.facebookStory && !t.instagramStory) throw new Error('Tick Facebook, Instagram or a story.');
+    if (!Object.keys(t).some((k) => t[k])) throw new Error('Tick at least one place to post to.');
     if (str(post.sku) && !p.force) {
       const st = (await ctx.tx`select coalesce(ps.stock, 0) stock from products pr left join product_stock ps on ps.product_id = pr.id where pr.business_id = ${ctx.biz} and lower(pr.sku) = ${str(post.sku).toLowerCase()}`)[0];
       if (st && !(num(st.stock) > 0)) throw new Error('The rule says never a product that is out of stock: ' + post.sku + ' has none. Receive stock first, or remove the product from the post.');
@@ -371,9 +422,8 @@ async function readStats(ctx, post) {
   const r = await reach(ctx);
   const page = r.pages.find((p) => p.id === str(post.page_id)) || r.pages[0];
   const token = page ? await getSecret(ctx, 'META_PAGE_' + page.id) : '';
-  if (!token) return;
   const stats = { ...(post.stats || {}) };
-  const fb = post.results && post.results.facebook, ig = post.results && post.results.instagram;
+  const fb = token && post.results && post.results.facebook, ig = token && post.results && post.results.instagram;
   const sumIns = (ins) => { const out = {}; for (const d of ins.data || []) { const v = ((d.values || [])[0] || {}).value; out[d.name] = v && typeof v === 'object' ? Object.values(v).reduce((a, b) => a + num(b), 0) : num(v); } return out; };
   if (fb && fb.id) {
     try {
@@ -394,6 +444,11 @@ async function readStats(ctx, post) {
       stats.instagram = { ...(stats.instagram || {}), likes: num(j.like_count), comments: num(j.comments_count) };
       try { const v = sumIns(await graph(ctx, 'GET', '/' + ig.id + '/insights?metric=views,reach,saved,likes,comments,shares', token)); for (const k of ['views', 'reach', 'saved', 'shares']) if (v[k] !== undefined) stats.instagram[k] = num(v[k]); } catch (_) { /* needs instagram_manage_insights */ }
     } catch (e) { stats.instagram = { ...(stats.instagram || {}), error: str(e.message) }; }
+  }
+  for (const k of API_KEYS) {
+    const r0 = post.results && post.results[k];
+    if (!r0 || !r0.id) continue;
+    try { const v = await statsFor(ctx, k, r0); if (v) stats[k] = { ...(stats[k] || {}), ...v }; } catch (e) { stats[k] = { ...(stats[k] || {}), error: str(e.message) }; }
   }
   stats.at = formatDate(ctx.now, 'd MMM h:mm a');
   await ctx.tx`update social_posts set stats = ${ctx.tx.json(stats)}, stats_at = ${ctx.now} where id = ${post.id}`;

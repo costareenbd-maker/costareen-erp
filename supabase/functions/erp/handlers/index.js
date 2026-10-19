@@ -56,6 +56,7 @@ import { HANDLERS as push } from './push.js';
 import { HANDLERS as creators } from './creators.js';
 import { HANDLERS as social } from './social.js';
 import { HANDLERS as socialmake } from './socialmake.js';
+import { HANDLERS as socialnet } from './socialnet.js';
 import { HANDLERS as creatorportal } from './creatorportal.js';
 import { HANDLERS as platform } from './platform.js';
 import { HANDLERS as risk } from './risk.js';
@@ -130,7 +131,7 @@ const core = {
 
 export const HANDLERS = {};
 for (const [group, table] of Object.entries({ balance, productai, siteread, stores, core, sales, courier, customers, stock, dashboard,
-                                              expenses, weborders, quotes, settings, campaigns, capital, pages, goods, partners, security, alerts, access, listview, cash, suppliers, currency, notes, serials, repairs, excel, users, compliance, market, invoicedesign, passport, publicreg, doctor, printkit, community, loyalty, printboard, restock, designdesk, resellers, apps, receivefile, catalogue, assistant, push, socialmake, social, creators, creatorportal, platform, risk, connections, google, sheet, restore, shop, cod, installer, bizdelete, owners, arena, wooauth, joint, fddash, lots, holding, commission, investorportal, insight, cashup, preorders, custextra, navigator, fd22, fd20, fd19, fdcards, margins, inbox, inbox2, metaconnect })) {
+                                              expenses, weborders, quotes, settings, campaigns, capital, pages, goods, partners, security, alerts, access, listview, cash, suppliers, currency, notes, serials, repairs, excel, users, compliance, market, invoicedesign, passport, publicreg, doctor, printkit, community, loyalty, printboard, restock, designdesk, resellers, apps, receivefile, catalogue, assistant, push, socialnet, socialmake, social, creators, creatorportal, platform, risk, connections, google, sheet, restore, shop, cod, installer, bizdelete, owners, arena, wooauth, joint, fddash, lots, holding, commission, investorportal, insight, cashup, preorders, custextra, navigator, fd22, fd20, fd19, fdcards, margins, inbox, inbox2, metaconnect })) {
   for (const [name, fn] of Object.entries(table)) {
     if (HANDLERS[name]) throw new Error('Handler ' + name + ' is defined twice (' + group + ').');
     HANDLERS[name] = fn;

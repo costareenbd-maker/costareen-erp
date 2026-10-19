@@ -2477,3 +2477,28 @@ Render server: /render/inspo (study), b-roll in /render/video (Pexels or our cli
 Tests: socials3 23, socialmake 29, social 37, inbox 163 green.
 NOT done: watching whole pages automatically (needs a paid scraper and bends Meta's terms); posting times are a hint
 to the writer, not an automatic scheduler yet; the learning loop needs published posts with figures (none yet).
+
+## social-net-1 (20 Oct 2026) - every network, plug and play
+Owner: "the build should be ready to plug and play when I connect it". Review of S1-S3 against every network the ERP
+can reach, then handlers/socialnet.js: one registry (what each network takes, caption rules, how it connects) and one
+provider per network, written now so that only the keys are missing:
+- **Threads** (Meta's Threads API: container → publish, insights), **TikTok** (Content Posting API: init → one-chunk
+  upload → status; private until TikTok audits the app), **YouTube Shorts** (resumable upload, the first caption line
+  is the title, statistics), **LinkedIn** (picture posts from the person's profile, Posts API), **X** (OAuth 2.0 PKCE,
+  media upload + tweet, public metrics), **Pinterest** (pins to the account's first board, analytics), **Telegram
+  channel** (a bot token + the channel, no app needed - works today), plus WhatsApp status and Marketplace as copy.
+- Settings → Connections lists them all with their state: copy the caption / not set up by the provider yet / connect /
+  connected (handle, key expiry); Connect opens the network's login page, the way back is ?social=back&p=<network>;
+  Telegram takes a token. Tokens renew themselves (refresh tokens) and are sealed, never read back.
+- The Posts form: a target box per network, lit when connected and when the media fits (video-only, picture-only,
+  text); captions written for every network at once by the AI with each one's rules and length ("More ▾" shows the
+  tabs of networks not connected yet, so a post made today can go there later); links and figures per network.
+- Fixed on the way: Instagram, Pinterest and LinkedIn take JPEG only - our cards and AI photos are PNG; a PNG is now
+  turned into a JPEG once on the render server (/render/jpeg) and kept beside it. Publishing no longer needs the Meta
+  login when no Meta target is ticked.
+- docs/meta/SOCIAL-APPS.md: what the provider registers for each network, the keys, the scopes, the way-back address.
+Tests: socialnet 39 (login pages, the way back for each, Telegram by token, a picture post to five networks, a reel to
+four, TikTok still processing finished by the timer, the figures, disconnect); social 37, socialmake 29, socials3 23,
+inbox 163, push 22 green. Live: Settings → Connections shows the nine networks; none connected yet; Telegram ready.
+NOT done: LinkedIn Company Page posting and videos (needs LinkedIn's Community Management API); X videos; Pinterest
+video pins; the provider's apps on Threads, TikTok, LinkedIn, X and Pinterest are not registered yet (SOCIAL-APPS.md).

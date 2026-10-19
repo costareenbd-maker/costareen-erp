@@ -398,6 +398,19 @@ const server = http.createServer(async (req, res) => {
       res.writeHead(200, { 'Content-Type': 'image/png', 'Content-Length': img.length, 'Cache-Control': 'no-store' });
       return res.end(img);
     }
+    if (req.method === 'POST' && p === '/render/jpeg') {
+      const j = JSON.parse(await body(req, 16 * 1024 * 1024));
+      const src = Buffer.from(String(j.data || ''), 'base64');
+      if (src.length < 100) return send(res, 400, { error: 'no picture' });
+      const dir = path.join(JOBS, 'j' + crypto.randomUUID().replace(/-/g, '')); fs.mkdirSync(dir, { recursive: true });
+      try {
+        fs.writeFileSync(path.join(dir, 'in.png'), src);
+        await run(FFMPEG, ['-y', '-v', 'error', '-i', path.join(dir, 'in.png'), '-vf', 'format=rgb24', '-q:v', '2', path.join(dir, 'out.jpg')]);
+        const out = fs.readFileSync(path.join(dir, 'out.jpg'));
+        res.writeHead(200, { 'Content-Type': 'image/jpeg', 'Content-Length': out.length, 'Cache-Control': 'no-store' });
+        return res.end(out);
+      } finally { fs.rmSync(dir, { recursive: true, force: true }); }
+    }
     if (req.method === 'POST' && p === '/render/inspo') {
       if (queue.length >= 6) return send(res, 503, { error: 'busy' });
       const j = JSON.parse(await body(req));

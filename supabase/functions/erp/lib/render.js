@@ -19,6 +19,15 @@ export async function renderPng(deps, html, width, height) {
   return bytes;
 }
 
+/** A PNG (bytes) as a JPEG (bytes), for the networks that take JPEG only. */
+export async function renderJpeg(deps, png) {
+  const c = conf(deps);
+  let b = ''; const CH = 0x8000; for (let i = 0; i < png.length; i += CH) b += String.fromCharCode.apply(null, png.subarray(i, i + CH));
+  const r = await c.fetch(c.url + '/jpeg', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Render-Key': c.key }, body: JSON.stringify({ data: btoa(b) }) });
+  if (!r.ok) throw new Error('The picture could not be converted (' + r.status + ').');
+  return new Uint8Array(await r.arrayBuffer());
+}
+
 /** Start a video job: {width, height, slides:[{html, seconds, motion}], clip?, voice?, upload:{url, contentType}}. Returns the job id. */
 export async function startVideo(deps, job) {
   const c = conf(deps);

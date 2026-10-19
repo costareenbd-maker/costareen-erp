@@ -66,7 +66,8 @@ check('staff cannot publish', !r.ok && /owner approves/.test(r.error), r);
 r = await mgr('erpSocialAct', [{ id: D1, action: 'publish' }]);
 check('a manager cannot publish an unapproved draft', !r.ok, r);
 r = await owner('erpSocialAct', [{ id: D1, action: 'publish' }]);
-check('without the Meta login, publishing says so', !r.ok && /connect Facebook/i.test(r.error), r);
+check('without the Meta login, publishing says so', r.ok && r.result.post.state === 'failed' && /connect Facebook/i.test(r.result.post.results.facebook.error), r.result && r.result.post.results);
+await sql`update social_posts set state = 'draft', results = '{}' where id = ${D1}`;
 r = await sales('erpSocialSave', [{ captions: { instagram: 'x' }, targets: { instagram: true } }]);
 check('Instagram needs media', !r.ok && /picture or a video/.test(r.error), r);
 
@@ -183,7 +184,7 @@ check('another business has no posts', (await sql`select count(*)::int n from so
 r = await sales('erpSocialSave', [{ captions: { whatsapp: 'wa only' } }]);
 const D2 = r.result.post.id;
 r = await owner('erpSocialAct', [{ id: D2, action: 'publish' }]);
-check('no target ticked: refused', !r.ok && /Tick Facebook, Instagram or a story/.test(r.error), r);
+check('no target ticked: refused', !r.ok && /at least one place/.test(r.error), r);
 r = await owner('erpSocialAct', [{ id: D2, action: 'approve' }]);
 r = await owner('erpSocialAct', [{ id: D2, action: 'unapprove' }]);
 check('approval taken back', r.ok && r.result.post.state === 'draft' && !r.result.post.approvedBy, r);
