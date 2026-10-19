@@ -2421,3 +2421,36 @@ inbox 163, push 22 still green. Live: login reaches 3D Owala and Costareen 3D, n
 NOT done: no Facebook Reels API (a video posts as a page video, not a reel); no stories; posting needs the Meta app's
 pages_manage_posts - works now for the owner's own pages (he is an app admin), customers' pages need App Review;
 reach/saved figures need pages_read_engagement / instagram_manage_insights (same review). Plan: docs/ADS-AUTOMATION-PLAN.md.
+
+## content-factory-1 (20 Oct 2026) - advertising automation S2, built against the best open-source tools
+Owner: "pick the best ones, compare, copy their logic and code, then polish". Review in docs/ADS-REVIEW.md
+(MoneyPrinterTurbo, ShortGPT, Postiz, Mixpost, Meta's Reels/Instagram docs, product-photo pipelines, hook libraries).
+**Content card** on Campaigns > Advertisement (handlers/socialmake.js, migration 130 social_assets):
+- **Picture cards** (clean / offer / only-N-left / new / bundle; square, portrait, story; Bangla or English) drawn by
+  the render server from the product's own photo, name, price and the real stock count ("only N left" is refused when
+  stock is 0). Free.
+- **AI photos**: the product placed in a scene (desk, studio, workshop, hands, dark) by Gemini's image model, ~৳5,
+  into the AI cost book. The models are read from the key (erpSocialAiModels). NOTE: the current free key has no
+  image quota (429) - billing must be switched on for the Google AI key before this works.
+- **Template reels** (product spin / price reveal / 3 reasons / real clip): the AI writes the script with one of ten
+  hook archetypes (rotated per product, kept with the video), the owner edits it, the render server draws the slides,
+  speaks the voice-over with Microsoft's neural voices through edge-tts (free; bn-BD-Nabanita / Pradeep, en-US), burns
+  karaoke-style captions from the word timings (libass, Noto Sans Bengali), Ken Burns + crossfades, optional music
+  (the owner's own MP3, under the voice, fades out), encoded to Meta's Reels spec, uploaded straight into the file
+  store with a signed address; the minute timer marks it ready. Free.
+- **Fetch the pictures from the website**: 137 of 141 products had no picture in the ERP; one button copies the
+  WooCommerce product pictures into image_link (done live).
+- **Ask staff for a clip**: a Notifications task.
+- **Use in a post**: a made piece goes into the Posts form; a 9:16 video goes out as a **Reel**.
+**Publishing (S1) upgraded from Postiz and Meta's docs**: Facebook Reels (video_reels start → upload by link → poll →
+finish), Facebook and Instagram **stories**, share_to_feed on Instagram reels, Meta's error codes in plain words,
+8-minute processing timeout, the real insight metrics (reach, clicks, reel plays and views; Instagram views, reach,
+saved).
+**Render server** (deploy/czrender/server.js, tts.py; /opt/czrender on 62.171.167.199): /render/png, /render/video,
+/render/job, /render/voices; ffmpeg 6.1 + libass + edge-tts installed; nginx 50 MB / 120 s on /render/.
+**Cron**: erp-inbox (every minute) was in cron.sql but had never been installed on live - installed now; it also
+publishes due posts, finishes reels and reads figures.
+Tests: socialmake 29, social 37, inbox 163, push 22. Live: cards drawn (with the website photo), script in Bangla,
+reel rendered with voice + captions and uploaded.
+NOT done: AI photos until the Google key has billing; stock b-roll (Pexels) and the inspiration box are S3;
+Facebook Reels/stories publishing needs pages_manage_posts in the App Review for pages the owner does not admin.

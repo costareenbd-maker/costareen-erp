@@ -20,7 +20,8 @@ web.on(/generativelanguage\.googleapis\.com/, (url, opts) => {
   return { status: 200, body: { candidates: [{ content: { parts } }], usageMetadata: { promptTokenCount: 100, candidatesTokenCount: 50 } } };
 });
 const graph = [];
-let igStatus = 'FINISHED';
+let igStatus = 'FINISHED', fbVideoState = 'ready';
+web.on(/rupload\.facebook\.com\/video-upload/, (url, opts) => { graph.push({ p: 'rupload', method: opts.method, body: null, q: '', headers: opts.headers }); return { status: 200, body: { success: true } }; });
 web.on(/graph\.facebook\.com\/v21\.0\//, (url, opts) => {
   const u = new URL(url), p = u.pathname.replace(/^\/v21\.0/, ''), body = opts.body ? JSON.parse(opts.body) : null, method = opts.method || 'GET';
   graph.push({ p, method, body, q: u.search });
@@ -33,6 +34,13 @@ web.on(/graph\.facebook\.com\/v21\.0\//, (url, opts) => {
   if (p === '/PAGE9/photos' || p === '/PAGE8/photos') return { status: 200, body: { id: 'PH' + graph.length, post_id: 'PAGE9_POST' + graph.length } };
   if (p === '/PAGE9/feed') return { status: 200, body: { id: 'PAGE9_FEED' + graph.length } };
   if (p === '/PAGE9/videos') return { status: 200, body: { id: 'VID' + graph.length } };
+  if (p === '/PAGE9/video_reels' && body && body.upload_phase === 'start') return { status: 200, body: { video_id: 'REEL1', upload_url: 'https://rupload.facebook.com/video-upload/v21.0/REEL1' } };
+  if (p === '/PAGE9/video_reels' && body && body.upload_phase === 'finish') return { status: 200, body: { success: true } };
+  if (p === '/PAGE9/video_stories' && body && body.upload_phase === 'start') return { status: 200, body: { video_id: 'STV1', upload_url: 'https://rupload.facebook.com/video-upload/v21.0/STV1' } };
+  if (p === '/PAGE9/video_stories' && body && body.upload_phase === 'finish') return { status: 200, body: { success: true, post_id: 'STPOST1' } };
+  if (p === '/PAGE9/photo_stories') return { status: 200, body: { success: true, post_id: 'STPH' + graph.length } };
+  if (/^\/(REEL1|STV1)$/.test(p)) return { status: 200, body: { status: { video_status: fbVideoState } } };
+  if (/^\/REEL1\/video_insights$/.test(p)) return { status: 200, body: { data: [{ name: 'fb_reels_total_plays', values: [{ value: 540 }] }, { name: 'total_video_views', values: [{ value: 410 }] }] } };
   if (p === '/IG9/media') return { status: 200, body: { id: 'CREATION' + graph.length } };
   if (/^\/CREATION\d+$/.test(p)) return { status: 200, body: { status_code: igStatus } };
   if (p === '/IG9/media_publish') return { status: 200, body: { id: 'IGMEDIA' + graph.length } };
@@ -113,6 +121,33 @@ r = await owner('erpSocialSave', [{ captions: { instagram: 'no ig' }, media: [{ 
 r = await owner('erpSocialAct', [{ id: r.result.post.id, action: 'publish' }]);
 check('a page with no Instagram linked: failed, with the reason', r.ok && r.result.post.state === 'failed' && /No Instagram account is linked/.test(r.result.post.error), r);
 
+// ---- 5b. a Reel on the Page (a 9:16 video): video_reels start -> upload by link -> ready -> finish; stories on both
+graph.length = 0; fbVideoState = 'ready';
+r = await owner('erpSocialSave', [{ captions: { facebook: 'reel caption' }, media: [{ kind: 'video', file: 'social/reel-spin-x.mp4', width: 1080, height: 1920 }], targets: { facebook: true } }]);
+r = await owner('erpSocialAct', [{ id: r.result.post.id, action: 'publish' }]);
+const up = graph.find((g) => g.p === 'rupload'), fin = graph.find((g) => g.p === '/PAGE9/video_reels' && g.body.upload_phase === 'finish');
+check('a tall video goes out as a Reel: start, the file by its link with the OAuth header, finish PUBLISHED with the caption', r.ok && r.result.post.state === 'published' && up && /OAuth PAGETOKEN9/.test(up.headers.Authorization) && up.headers.file_url && fin && fin.body.video_id === 'REEL1' && fin.body.video_state === 'PUBLISHED' && fin.body.description === 'reel caption' && /facebook\.com\/reel\/REEL1/.test(r.result.post.results.facebook.link), [r.result.post.results, graph.map((g) => g.p)]);
+const REELPOST = r.result.post.id;
+graph.length = 0; fbVideoState = 'processing';
+r = await owner('erpSocialSave', [{ captions: { facebook: 'slow reel' }, media: [{ kind: 'video', file: 'social/reel-spin-y.mp4', width: 1080, height: 1920 }], targets: { facebook: true } }]);
+const SLOW = r.result.post.id;
+r = await owner('erpSocialAct', [{ id: SLOW, action: 'publish' }]);
+check('a reel still processing waits as "publishing" with its video id', r.ok && r.result.post.state === 'publishing' && r.result.post.results.facebook.videoId === 'REEL1' && !graph.some((g) => g.p === '/PAGE9/video_reels' && g.body.upload_phase === 'finish'), r.result.post);
+fbVideoState = 'ready'; graph.length = 0;
+await sql`update social_posts set updated_at = now() - interval '2 minutes' where id = ${SLOW}`;
+t = await asB((ctx) => so.socialTick(ctx));
+check('…and the timer finishes it without uploading again', t.finished === 1 && !graph.some((g) => g.p === 'rupload') && graph.some((g) => g.p === '/PAGE9/video_reels' && g.body.upload_phase === 'finish'), [t, graph.map((g) => g.p)]);
+graph.length = 0;
+r = await owner('erpSocialSave', [{ captions: { facebook: 'x' }, media: [{ kind: 'image', file: 'https://cdn.test/s.jpg' }], targets: { facebookStory: true, instagramStory: true } }]);
+r = await owner('erpSocialAct', [{ id: r.result.post.id, action: 'publish' }]);
+check('a picture story on the Page (unpublished photo -> photo_stories) and on Instagram (STORIES container -> publish)', r.ok && r.result.post.state === 'published' && graph.some((g) => g.p === '/PAGE9/photos' && g.body.published === false) && graph.some((g) => g.p === '/PAGE9/photo_stories') && graph.some((g) => g.p === '/IG9/media' && g.body.media_type === 'STORIES') && /facebook\.com\/stories\//.test(r.result.post.results.facebookStory.link) && r.result.post.results.instagramStory.id, [r.result.post.results, graph.map((g) => g.p)]);
+graph.length = 0;
+r = await owner('erpSocialSave', [{ captions: {}, media: [{ kind: 'video', file: 'social/clip.mp4' }], targets: { facebookStory: true } }]);
+r = await owner('erpSocialAct', [{ id: r.result.post.id, action: 'publish' }]);
+check('a video story on the Page: video_stories start -> upload -> finish', r.ok && r.result.post.state === 'published' && graph.some((g) => g.p === '/PAGE9/video_stories' && g.body.upload_phase === 'finish' && g.body.video_id === 'STV1') && /stories\/STPOST1/.test(r.result.post.results.facebookStory.link), [r.result.post.results, graph.map((g) => g.p)]);
+r = await owner('erpSocialSave', [{ captions: { facebook: 'no media story' }, targets: { facebookStory: true } }]);
+check('a story needs media', !r.ok && /need a picture or a video/.test(r.error), r);
+
 // ---- 6. scheduling: the timer publishes what is due; cancel puts it back
 r = await owner('erpSocialSave', [{ captions: { facebook: 'later' }, targets: { facebook: true } }]);
 const S1 = r.result.post.id;
@@ -135,6 +170,8 @@ t = await asB((ctx) => so.socialTick(ctx));
 r = await owner('erpSocialPosts', [{}]);
 const p1 = r.result.posts.find((x) => x.id === D1), p2 = r.result.posts.find((x) => x.id === REEL);
 check('figures read for published posts', t.stats >= 2 && p1.stats.facebook.reactions === 31 && p1.stats.facebook.comments === 6 && p1.stats.facebook.shares === 4 && p1.stats.facebook.reach === 1200 && p1.stats.at, p1.stats);
+const pr = r.result.posts.find((x) => x.id === REELPOST);
+check('a reel\'s figures come from video insights: plays and views', pr.stats.facebook.plays === 540 && pr.stats.facebook.views === 410, pr.stats);
 check('Instagram figures', p2.stats.instagram.likes === 12 && p2.stats.instagram.reach === 340 && p2.stats.instagram.saved === 5, p2.stats);
 t = await asB((ctx) => so.socialTick(ctx));
 check('read again only after an hour', t.stats === 0, t);
@@ -144,7 +181,7 @@ check('another business has no posts', (await sql`select count(*)::int n from so
 r = await sales('erpSocialSave', [{ captions: { whatsapp: 'wa only' } }]);
 const D2 = r.result.post.id;
 r = await owner('erpSocialAct', [{ id: D2, action: 'publish' }]);
-check('no target ticked: refused', !r.ok && /Tick Facebook or Instagram/.test(r.error), r);
+check('no target ticked: refused', !r.ok && /Tick Facebook, Instagram or a story/.test(r.error), r);
 r = await owner('erpSocialAct', [{ id: D2, action: 'approve' }]);
 r = await owner('erpSocialAct', [{ id: D2, action: 'unapprove' }]);
 check('approval taken back', r.ok && r.result.post.state === 'draft' && !r.result.post.approvedBy, r);

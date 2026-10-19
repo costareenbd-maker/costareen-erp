@@ -27,6 +27,8 @@ const SHOPIFY_SETS_PER_RUN = 60;   // Shopify allows ~2 calls a second; the rest
 export async function storeKind(ctx) { return str(await getConfig(ctx, 'website_kind', '')) || 'plugin'; }
 
 export async function storeConn(ctx) { return conn(ctx); }
+export async function storeItems(ctx, c) { return shopItems(ctx, c); }
+export async function storeMatcher(ctx) { return matcher(ctx); }
 async function conn(ctx) {
   const kind = await storeKind(ctx);
   const url = str(await getConfig(ctx, 'store_url', '')).replace(/\/+$/, '');
@@ -229,12 +231,12 @@ async function shopItems(ctx, c) {
             const vs = Array.isArray(v.json) ? v.json : [];
             for (const y of vs) out.push({ ref: y.id, parent: x.id, sku: str(y.sku), name: str(x.name) + ' - ' + (y.attributes || []).map((a) => str(a.option)).join(' '),
                                            qty: y.stock_quantity == null ? null : num(y.stock_quantity), tracked: !!y.manage_stock, price: num(y.price), barcode: '',
-                                           regular: num(y.regular_price), sale: num(y.sale_price) });
+                                           regular: num(y.regular_price), sale: num(y.sale_price), image: str((y.image && y.image.src) || ((x.images || [])[0] || {}).src) });
             if (vs.length < 100) break;
           }
         } else if (x.type === 'simple' || !x.type) {
           out.push({ ref: x.id, parent: 0, sku: str(x.sku), name: str(x.name), qty: x.stock_quantity == null ? null : num(x.stock_quantity), tracked: !!x.manage_stock, price: num(x.price), barcode: '',
-                     regular: num(x.regular_price), sale: num(x.sale_price) });
+                     regular: num(x.regular_price), sale: num(x.sale_price), image: str(((x.images || [])[0] || {}).src) });
         }
       }
       if (got.length < 100) break;

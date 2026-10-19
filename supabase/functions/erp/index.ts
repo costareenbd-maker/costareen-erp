@@ -341,7 +341,7 @@ async function svgPng(svg: string): Promise<Uint8Array> {
 // the provider's Meta app: one for every company; each company logs in with its own Facebook (handlers/metaconnect.js)
 const META = { appId: Deno.env.get('META_APP_ID') ?? '', appSecret: Deno.env.get('META_APP_SECRET') ?? '', configId: Deno.env.get('META_CONFIG_ID') ?? '', redirect: SUPABASE_URL + '/functions/v1/erp?meta=back' };
 const own = projectParts({ url: SUPABASE_URL, anon: ANON, service: SERVICE, appUrl: Deno.env.get('ERP_APP_URL') ?? 'https://erp.costareen.com/' });
-const deps: any = { install: INSTALL, installEnv: INSTALL_ENV, google: GOOGLE, smtpNote: SMTP_NOTE, linkOnly: false, sql, sqlAux, control: ctlSql, fetch: globalThis.fetch.bind(globalThis), renderPdf, geminiKey: GEMINI_KEY, svgPng, meta: META,
+const deps: any = { install: INSTALL, installEnv: INSTALL_ENV, google: GOOGLE, smtpNote: SMTP_NOTE, linkOnly: false, sql, sqlAux, control: ctlSql, fetch: globalThis.fetch.bind(globalThis), renderPdf, render: { url: RENDER_URL, key: RENDER_KEY }, geminiKey: GEMINI_KEY, svgPng, meta: META,
                ...own, hookBase: FN_URL };
 
 // A company on the bridge: its own database, sign-in, files and e-mails; the provider's logic and PDF service.
@@ -359,7 +359,7 @@ async function buildTenant(t: any) {
     installEnv: INSTALL_ENV,
     google: { ...GOOGLE, redirect: FN_URL + '?google=back&t=' + t.id, appUrl },
     // control: the provider's own tables (the market list, joint pools)
-    smtpNote: '', linkOnly: false, sql: tsql, sqlAux: tAux, control: ctlSql, fetch: globalThis.fetch.bind(globalThis), renderPdf, geminiKey: GEMINI_KEY, svgPng, meta: { ...META, redirect: FN_URL + '?meta=back&t=' + t.id },
+    smtpNote: '', linkOnly: false, sql: tsql, sqlAux: tAux, control: ctlSql, fetch: globalThis.fetch.bind(globalThis), renderPdf, render: { url: RENDER_URL, key: RENDER_KEY }, geminiKey: GEMINI_KEY, svgPng, meta: { ...META, redirect: FN_URL + '?meta=back&t=' + t.id },
     ...parts, hookBase: FN_URL + '?t=' + t.id,
     close() { try { tsql.end({ timeout: 2 }); tAux.end({ timeout: 2 }); } catch (_) { /* gone */ } },
   };
