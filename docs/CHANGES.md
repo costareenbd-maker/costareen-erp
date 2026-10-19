@@ -2399,3 +2399,9 @@ person and the kind in "Write in the book" and put the cursor in Amount. The inv
 buttons instead of the hint. Also fixed the phone message that told the owner a number "must be 11 digits starting with
 01" when it had 11 digits and started with 010 (not a Bangladeshi mobile): now "11 digits starting 013-019, like
 01712345678 - "..." starts with 010". Tests: capital 49, customers 61, sales 109, erp_server green.
+
+## capital-pct-1 (19 Oct 2026)
+Owner: "the share cannot exceed 100, right now it's 101". The shares are 40 + 37.5 + 22.5 = 100 and the server refuses
+more than 100; the page rounded every percentage to a whole number (38%, 23%) so the rows read as 101. New fmtPct keeps
+up to two decimals; used for shares, "shares written down" and "% free" on the Capital screen, the funding cards and
+the investor view. Page only.

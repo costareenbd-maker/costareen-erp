@@ -727,6 +727,8 @@ var LISTS_ERR = null;    // why the dropdown lists could not load
 // helpers
 // =====================================================================
 function fmt(n) { return (Math.round(n || 0)).toLocaleString('en-US'); }
+/* a percentage keeps its halves: 37.5% is not 38% (owner 19 Oct 2026: 40 + 38 + 23 looked like 101) */
+function fmtPct(n) { var v = Math.round((Number(n) || 0) * 100) / 100; return v.toLocaleString('en-US', { maximumFractionDigits: 2 }); }
 function compact(n) {
   n = Math.round(n || 0); var a = Math.abs(n);
   if (a >= 1e7) return (n/1e7).toFixed(2).replace(/\.00$/,'') + 'Cr';
@@ -6882,21 +6884,21 @@ function viewCapital() {
     '<div class="sharebar">' + sh.filter(live).map(function (x, i) {
       return '<div style="width:' + x.pct + '%;background:var(--series-1);opacity:' + [1, .72, .5, .86, .6][i % 5] + '" title="' + esc(x.name + ' ' + x.pct + '%') + '"></div>'; }).join('') + '</div>' +
     (t.pctFree > 0.005
-      ? '<div class="note err" style="margin:6px 0 10px"><div class="ico">!</div><div><strong>' + fmt(t.pctFree) + '% of the business has no owner written down.</strong> ' +
+      ? '<div class="note err" style="margin:6px 0 10px"><div class="ico">!</div><div><strong>' + fmtPct(t.pctFree) + '% of the business has no owner written down.</strong> ' +
         'All of the profit belongs to the owners, kept in the business or paid out \u2014 so the shares must add up to 100%. ' +
-        'Give the remaining ' + fmt(t.pctFree) + '% to someone (the owner, usually). A month cannot be closed until they do.</div></div>'
+        'Give the remaining ' + fmtPct(t.pctFree) + '% to someone (the owner, usually). A month cannot be closed until they do.</div></div>'
       : '<div class="sub" style="margin:6px 0 10px">The shares add up to <strong>100%</strong>. Profit not paid out stays in the business and still belongs to the shareholders, each by their share.</div>');
   if (!sh.length) h += '<div class="empty">No shareholder written down yet.</div>';
   else h += '<div class="scroll"><table><thead><tr><th>Shareholder</th><th class="num">Share</th><th class="num">Amount invested</th><th class="num">Profit earned</th><th class="num">Paid out</th><th class="num">Left in the business</th>' + (ed ? '<th></th>' : '') + '</tr></thead><tbody>' +
     sh.map(function (x) {
       return '<tr' + (live(x) ? '' : ' style="opacity:.55"') + '><td class="nm">' + esc(x.name) + (x.private ? ' <span class="pill">private</span>' : '') + (live(x) ? '' : ' <span class="pill">left ' + esc(capMonth(x.ended)) + '</span>') +
         '<br><span class="sku">since ' + esc(capMonth(x.since)) + (x.phone ? ' · ' + esc(x.phone) : '') + '</span></td>' +
-        '<td class="num"><strong>' + fmt(x.pct) + '%</strong></td><td class="num">' + fmt(x.capital) + '</td><td class="num">' + fmt(x.earned) + '</td><td class="num">' + fmt(x.profitPaid) + '</td>' +
+        '<td class="num"><strong>' + fmtPct(x.pct) + '%</strong></td><td class="num">' + fmt(x.capital) + '</td><td class="num">' + fmt(x.earned) + '</td><td class="num">' + fmt(x.profitPaid) + '</td>' +
         '<td class="num"><strong>' + fmt(x.profitLeft) + '</strong></td>' +
         (ed ? '<td class="num" style="white-space:nowrap"><button class="btn small primary" type="button" data-capbook="' + esc(x.id) + '" data-type="invest" title="They put more money in">+ Money in</button> <button class="btn small" type="button" data-capbook="' + esc(x.id) + '" data-type="withdraw" title="Part or all of their money given back">Money back</button> <button class="btn small" type="button" data-capedit="' + esc(x.id) + '">Change</button> ' +
           '<button class="btn small" type="button" data-capend="' + esc(x.id) + '" data-undo="' + (live(x) ? '' : '1') + '" data-n="' + esc(x.name) + '">' + (live(x) ? 'Has left' : 'Bring back') + '</button></td>' : '') + '</tr>';
     }).join('') +
-    '<tr style="font-weight:700"><td>All shareholders</td><td class="num">' + fmt(t.pctGiven) + '%</td><td class="num">' + fmt(t.ownersCapital) + '</td><td class="num">' + fmt(t.earned) + '</td><td class="num">' + fmt(t.profitPaid) + '</td><td class="num">' + fmt(t.earned - t.profitPaid) + '</td>' + (ed ? '<td></td>' : '') + '</tr>' +
+    '<tr style="font-weight:700"><td>All shareholders</td><td class="num">' + fmtPct(t.pctGiven) + '%</td><td class="num">' + fmt(t.ownersCapital) + '</td><td class="num">' + fmt(t.earned) + '</td><td class="num">' + fmt(t.profitPaid) + '</td><td class="num">' + fmt(t.earned - t.profitPaid) + '</td>' + (ed ? '<td></td>' : '') + '</tr>' +
     '</tbody></table></div>';
   if (ed) h += '<div class="row" style="margin-top:12px;align-items:flex-end;gap:8px;flex-wrap:wrap">' +
     '<div style="flex:2 1 170px"><label class="f" for="cs_name">' + (CAP_SH.id ? 'Change shareholder' : 'New shareholder') + '</label><input class="i" id="cs_name" maxlength="80" value="' + esc(CAP_SH.name) + '" placeholder="Name"></div>' +
@@ -23605,7 +23607,7 @@ function fdhIsSub() {
   return !!(c && c.querySelector('button'));
 }
 function fdhCard(c, cur) {
-  var num = c.money ? '<small>' + esc(cur) + '</small>' + fmt(c.v) : c.pct ? fmt(c.v) + '<small style="margin-left:2px">%</small>' : fmt(c.v);
+  var num = c.money ? '<small>' + esc(cur) + '</small>' + fmt(c.v) : c.pct ? fmtPct(c.v) + '<small style="margin-left:2px">%</small>' : fmt(c.v);
   var trend = '';
   if (c.prev !== undefined && c.prev !== null) {
     var p = Number(c.prev) || 0, n = Number(c.v) || 0;
@@ -27541,15 +27543,15 @@ viewCapital = function () {
     fdhCard({ key: 'all', title: 'Total investment', icon: 'wallet', v: t.allCapital, money: true, hero: true, note: 'shareholders ' + fmt(t.ownersCapital) + ' · investors ' + fmt(t.outsideCapital) }, cur) +
     fdhCard({ key: 'left', title: 'Profit not yet paid out', icon: 'trend', v: t.earned - t.profitPaid, money: true, tone: t.earned - t.profitPaid < 0 ? 'bad' : '', note: 'earned ' + fmt(t.earned) + ' · paid ' + fmt(t.profitPaid) }, cur) +
     fdhCard({ key: 'owed', title: 'Owed to investors', icon: 'bell', v: Math.max(0, t.returnDue - t.returnPaid), money: true, tone: t.returnDue - t.returnPaid > 0 ? 'warn' : '', note: 'returns due ' + fmt(t.returnDue) + ' · paid ' + fmt(t.returnPaid) + (t.returnBuilding > 0 ? ' · this month so far ' + fmt(t.returnBuilding) : '') }, cur) +
-    fdhCard({ key: 'pct', title: 'Shares written down', icon: 'percent', v: t.pctGiven, pct: true, tone: t.pctFree > 0.005 ? 'warn' : '', note: t.pctFree > 0.005 ? fmt(t.pctFree) + '% has no owner yet' : 'the shares add up to 100%' }, cur) + '</div>';
+    fdhCard({ key: 'pct', title: 'Shares written down', icon: 'percent', v: t.pctGiven, pct: true, tone: t.pctFree > 0.005 ? 'warn' : '', note: t.pctFree > 0.005 ? fmtPct(t.pctFree) + '% has no owner yet' : 'the shares add up to 100%' }, cur) + '</div>';
 
   // ---- profile cards
   var COL = ['var(--fd-chart-1,#5B4FE9)', 'var(--fd-chart-2,#8B5CF6)', 'var(--fd-chart-3,#2F7CF6)', 'var(--fd-chart-4,#06B6D4)', 'var(--fd-chart-5,#1DBF73)', 'var(--fd-chart-6,#F59E0B)'];
   var shLive = sh.filter(live);
   var bar = shLive.length ? '<div class="fd21-card"><div class="fd21-ch"><span class="fd21-ib t-violet">' + f21i('pct', 22) + '</span><div class="t"><div class="fd21-ct">Who owns the business</div><div class="fd21-cs">The share is what was agreed, typed in — not worked out from the money. Each month’s net profit belongs to the shareholders in that proportion, paid out or not.</div></div></div>' +
     '<div class="fd21-sbar">' + shLive.map(function (x, i) { return '<div style="width:' + x.pct + '%;background:' + COL[i % COL.length] + '" title="' + esc(x.name + ' ' + x.pct + '%') + '"></div>'; }).join('') + '</div>' +
-    '<div class="fd21-shl">' + shLive.map(function (x, i) { return '<span><i style="background:' + COL[i % COL.length] + '"></i>' + esc(x.name) + ' ' + fmt(x.pct) + '%</span>'; }).join('') + (t.pctFree > 0.005 ? '<span><i style="background:var(--fd-surface-3)"></i>no owner ' + fmt(t.pctFree) + '%</span>' : '') + '</div>' +
-    (t.pctFree > 0.005 ? '<div class="note err" style="margin:12px 0 0"><div class="ico">!</div><div><strong>' + fmt(t.pctFree) + '% of the business has no owner written down.</strong> All of the profit belongs to the owners, kept in the business or paid out — so the shares must add up to 100%. Give the remaining ' + fmt(t.pctFree) + '% to someone (the owner, usually). A month cannot be closed until they do.</div></div>' : '') + '</div>' : '';
+    '<div class="fd21-shl">' + shLive.map(function (x, i) { return '<span><i style="background:' + COL[i % COL.length] + '"></i>' + esc(x.name) + ' ' + fmtPct(x.pct) + '%</span>'; }).join('') + (t.pctFree > 0.005 ? '<span><i style="background:var(--fd-surface-3)"></i>no owner ' + fmtPct(t.pctFree) + '%</span>' : '') + '</div>' +
+    (t.pctFree > 0.005 ? '<div class="note err" style="margin:12px 0 0"><div class="ico">!</div><div><strong>' + fmtPct(t.pctFree) + '% of the business has no owner written down.</strong> All of the profit belongs to the owners, kept in the business or paid out — so the shares must add up to 100%. Give the remaining ' + fmtPct(t.pctFree) + '% to someone (the owner, usually). A month cannot be closed until they do.</div></div>' : '') + '</div>' : '';
   var pc = function (x) {
     var on = live(x), isI = x.kind === 'investor';
     var tiles = isI ? [[f21K(x.capital, cur), 'Invested'], [f21K(x.returnDue, cur), 'Due so far'], [f21K(x.returnPaid, cur), 'Paid'], [f21K(x.returnOwed, cur), 'Still owed', x.returnOwed > 0]]
@@ -27557,7 +27559,7 @@ viewCapital = function () {
     return '<div class="fd21-pc' + (on ? '' : ' ended') + '" data-f21pc="' + esc(x.kind) + '" data-f21pcn="' + esc((x.name + ' ' + (x.phone || '')).toLowerCase()) + '" data-f21owed="' + (isI && x.returnOwed > 0 ? 1 : 0) + '" data-f21live="' + (on ? 1 : 0) + '">' +
       '<div class="hd"><span class="fd21-ib sm' + (isI ? '' : ' t-violet') + '">' + f21i(isI ? 'brief' : 'user', 19) + '</span><div class="tt"><div class="nm">' + esc(x.name) + '</div><div class="sb">' + (isI ? 'Investor' : 'Shareholder') + ' · since ' + esc(capMonth(x.since)) + (x.phone ? ' · ' + esc(x.phone) : '') + '</div></div>' +
       (on ? f21B('Active', 'positive') : f21B((isI ? 'Ended ' : 'Left ') + capMonth(x.ended), 'neutral')) + '</div>' +
-      '<div class="fd21-row-wrap">' + (isI ? f21B(capTerms(x, cur), 'violet') : f21B('Share ' + fmt(x.pct) + '%', 'violet')) + (x.private ? f21B('Private · owner only', 'neutral') : '') + '</div>' +
+      '<div class="fd21-row-wrap">' + (isI ? f21B(capTerms(x, cur), 'violet') : f21B('Share ' + fmtPct(x.pct) + '%', 'violet')) + (x.private ? f21B('Private · owner only', 'neutral') : '') + '</div>' +
       '<div class="fd21-tiles">' + tiles.map(function (tt) { return '<div class="fd21-tile' + (tt[2] ? ' bad' : '') + '"><b>' + tt[0] + '</b><span>' + tt[1] + '</span></div>'; }).join('') + '</div>' +
       (isI && x.returnBuilding > 0 ? '<div class="bld">+ ' + f21M(x.returnBuilding, cur) + ' building this month so far</div>' : '') +
       (ed ? '<div class="ft"><button class="btn small" type="button" data-capedit="' + esc(x.id) + '">Change</button><button class="btn small" type="button" data-capend="' + esc(x.id) + '" data-undo="' + (on ? '' : '1') + '" data-n="' + esc(x.name) + '">' + (on ? (isI ? 'Ended' : 'Has left') : 'Bring back') + '</button>' +
@@ -27567,7 +27569,7 @@ viewCapital = function () {
   var people = '<div class="fd21-card" style="padding:14px 16px"><div class="fd21-tb" style="padding:0"><label class="fd21-search">' + f21i('search', 18) + '<input type="search" data-f21pcq="1" placeholder="Search name, phone…" aria-label="Search people"></label><div class="fd21-chips">' +
     [['all', 'All'], ['shareholder', 'Shareholders'], ['investor', 'Investors'], ['owed', 'Owed > 0'], ['ended', 'Left / ended']].map(function (v, i) { return '<button type="button" class="fd21-pill sm" data-f21pcf="' + v[0] + '" aria-pressed="' + ((FD21.pcf || 'all') === v[0]) + '">' + v[1] + '</button>'; }).join('') + '</div></div></div>' +
     (all.length ? '<div class="fd21-pcs">' + all.map(pc).join('') + '</div>' : '<div class="fd21-card">' + f21Empty('brief', 'Nobody written down yet', 'Add the shareholders (who own the business) and the investors (money in against a return).', ed ? '<div class="fd21-row-wrap"><button type="button" class="btn" data-f21ivopen="capital:sh">Add shareholder</button><button type="button" class="btn primary" data-f21ivopen="capital:in">Add investor</button></div>' : '') + '</div>') +
-    (sh.length ? '<p class="fd21-small">All shareholders: ' + fmt(t.pctGiven) + '% · invested ' + fmt(t.ownersCapital) + ' · profit earned ' + fmt(t.earned) + ' · paid out ' + fmt(t.profitPaid) + ' · left in the business ' + fmt(t.earned - t.profitPaid) + '. Investors: money in against a fixed return (a cost of the month it falls due in), no share of the business.</p>' : '') +
+    (sh.length ? '<p class="fd21-small">All shareholders: ' + fmtPct(t.pctGiven) + '% · invested ' + fmt(t.ownersCapital) + ' · profit earned ' + fmt(t.earned) + ' · paid out ' + fmt(t.profitPaid) + ' · left in the business ' + fmt(t.earned - t.profitPaid) + '. Investors: money in against a fixed return (a cost of the month it falls due in), no share of the business.</p>' : '') +
     (c.hidden ? '<div class="fd21-note">' + f21i('lock', 18) + '<span>' + fmt(c.hidden) + ' person(s) are not listed here — only the owner sees them. The totals above include them.</span></div>' : '');
 
   // ---- the book (his payouts / allocations ledger)
@@ -30452,7 +30454,7 @@ function fd19Tools(v) {
 function fd19Kpi(c, cur, v, i) {
   // his rule: the hero is never spent on an empty or zero figure
   if (c.hero && !Number(c.v)) c = Object.assign({}, c, { hero: false });
-  var val = c.money ? fdTk(c.v, cur) : c.pct ? fmt(c.v) + '%' : fmt(c.v);
+  var val = c.money ? fdTk(c.v, cur) : c.pct ? fmtPct(c.v) + '%' : fmt(c.v);
   var trend = '';
   if (c.prev !== undefined && c.prev !== null) {
     var p = Number(c.prev) || 0, n = Number(c.v) || 0;
@@ -33434,7 +33436,7 @@ function fdxCard(id) {
   if (!c) body = '<div class="fdd-num" style="opacity:.4">…</div><div class="fdd-lbl">' + esc(info[0]) + '</div>';
   else if (c.locked) body = '<div class="fdd-num" style="font-size:18px;opacity:.6">🔒 Hidden for your role</div><div class="fdd-lbl">' + esc(info[0]) + '</div>';
   else if (c.error) body = '<div class="fdd-num" style="font-size:16px;opacity:.6">Could not work it out</div><div class="fdd-lbl">' + esc(info[0]) + '</div><div class="fdd-kn">' + esc(c.error) + '</div>';
-  else body = '<div class="fdd-num' + (Number(c.v) < 0 ? ' neg' : '') + '">' + (c.money ? fdTk(c.v, 'BDT') : c.pct ? fmt(c.v) + '<small style="margin-left:2px">%</small>' : fmt(c.v)) + '</div>' +
+  else body = '<div class="fdd-num' + (Number(c.v) < 0 ? ' neg' : '') + '">' + (c.money ? fdTk(c.v, 'BDT') : c.pct ? fmtPct(c.v) + '<small style="margin-left:2px">%</small>' : fmt(c.v)) + '</div>' +
     '<div class="fdd-lbl">' + esc(info[0]) + '</div>' + (c.note ? '<div class="fdd-kn">' + esc(c.note) + '</div>' : '');
   var go = c && c.go && navOn(c.go) ? ' data-go="' + esc(c.go) + '"' + (c.f ? ' data-f="' + esc(c.f) + '"' : '') : '';
   return '<div class="fdd-c fdd-k"' + go + '><div class="fdd-ktop"><span class="fdd-badge' + (c && c.tone ? ' t-' + c.tone : '') + '">' + fddIc(info[2]) + '</span></div>' + body + '</div>';
