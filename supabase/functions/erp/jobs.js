@@ -123,6 +123,11 @@ export async function runJob(deps, job) {
     let ids = [];
     try { ids = (await sql`select distinct business_id from inbox_channels where status in ('live', 'practice')`).map((r) => r.business_id); } catch (_) { ids = []; }
     if (tick && ids.length) for (const row of await owners(sql, ids)) out[row.name] = await asBusiness(deps, row, 'inbox:tick', (ctx) => tick(ctx));
+    // social posts (handlers/social.js): publish what is due, finish Instagram uploads, read the figures
+    const social = await maybe('./handlers/social.js', 'socialTick');
+    let sids = [];
+    try { sids = (await sql`select distinct business_id from social_posts where (state in ('scheduled', 'publishing')) or (state = 'published' and published_at > now() - interval '30 days' and (stats_at is null or stats_at < now() - interval '1 hour'))`).map((r) => r.business_id); } catch (_) { sids = []; }
+    if (social && sids.length) for (const row of await owners(sql, sids)) { try { out['social:' + row.name] = await asBusiness(deps, row, 'social:tick', (ctx) => social(ctx)); } catch (e) { out['social:' + row.name] = String((e && e.message) || e); } }
   } else if (job === 'drive') {
     // copies of new files into each connected owner's Google Drive
     const tick = await maybe('./handlers/google.js', 'driveTick');

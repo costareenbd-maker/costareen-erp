@@ -2405,3 +2405,19 @@ Owner: "the share cannot exceed 100, right now it's 101". The shares are 40 + 37
 more than 100; the page rounded every percentage to a whole number (38%, 23%) so the rows read as 101. New fmtPct keeps
 up to two decimals; used for shares, "shares written down" and "% free" on the Capital screen, the funding cards and
 the investor view. Page only.
+
+## social-posts-1 (20 Oct 2026) - advertising automation S1
+Owner: "publish in each platform in a single click with a caption for each platform". Campaigns > Advertisement gets a
+**Posts** card (and a **Make a post** button on the AI draft box): product (with "Use the product photo"), pictures /
+one video uploaded (kept in 'social'), a caption per platform (Facebook, Instagram, Marketplace, WhatsApp) with
+**Write all four with AI** (Gemini, product facts only, Bangla / Banglish / English), targets Facebook and Instagram
+(Instagram greyed until an account is linked to the page), **Save draft / Save and approve / Publish now / Schedule**.
+Marketplace and WhatsApp have no API: Copy buttons. Staff draft; the owner approves; a manager may publish an approved
+post. Server handlers/social.js: Facebook photo / multi-photo / video / text posts on the page token, Instagram
+container → status → media_publish (reels finish on the minute timer), schedule queue and figures (reactions, comments,
+shares, reach; Instagram likes, comments, reach, saved) read hourly for 3 days then daily for 30 (jobs.js, inside the
+minute 'inbox' job). Migration 129 social_posts. A published post is never removed from the ERP. Tests: social_test 30;
+inbox 163, push 22 still green. Live: login reaches 3D Owala and Costareen 3D, neither with an Instagram linked.
+NOT done: no Facebook Reels API (a video posts as a page video, not a reel); no stories; posting needs the Meta app's
+pages_manage_posts - works now for the owner's own pages (he is an app admin), customers' pages need App Review;
+reach/saved figures need pages_read_engagement / instagram_manage_insights (same review). Plan: docs/ADS-AUTOMATION-PLAN.md.
