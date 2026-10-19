@@ -147,6 +147,7 @@ export async function storePrices(ctx, mode, opts) {
   const m = await matcher(ctx);
   const erp = {};
   for (const r of await ctx.tx`select sku, name, sell_price from products where business_id = ${ctx.biz}`) erp[str(r.sku).toLowerCase()] = { sku: str(r.sku), name: str(r.name), price: num(r.sell_price) };
+  const only = Array.isArray(opts.only) && opts.only.length ? new Set(opts.only.map((x) => str(x).toLowerCase())) : null;
   const change = [], held = [];
   let matched = 0, missing = 0, noPrice = 0, same = 0;
   for (const it of items) {
@@ -154,6 +155,7 @@ export async function storePrices(ctx, mode, opts) {
     if (!hit) { missing++; continue; }
     matched++;
     const e = erp[str(hit.product.sku).toLowerCase()];
+    if (only && !only.has(str(hit.product.sku).toLowerCase())) continue;   // "only these products" - the rest stay as they are
     const want = e ? Math.round(e.price * 100) / 100 : 0;
     if (!(want > 0)) { noPrice++; continue; }
     const was = it.price > 0 ? it.price : it.regular;                 // what the customer pays now
@@ -198,7 +200,7 @@ export async function erpWebPrices(ctx, payload) {
   if (kind !== 'woo' && kind !== 'shopify') throw new Error('Prices go out through a WooCommerce or Shopify connection (Settings \u2192 Connections \u2192 Website).');
   const apply = payload.mode === 'apply';
   if (apply) await lock(ctx, 'website');
-  const r = await storePrices(ctx, apply ? 'apply' : 'dry', { withHeld: !!payload.withHeld });
+  const r = await storePrices(ctx, apply ? 'apply' : 'dry', { withHeld: !!payload.withHeld, only: payload.only });
   let last = null;
   try { last = JSON.parse(str(await getConfig(ctx, 'website_prices_last', '')) || 'null'); } catch (_) { last = null; }
   return { ...r, sync: str(await getConfig(ctx, 'website_price_sync', '')) === '1', last };

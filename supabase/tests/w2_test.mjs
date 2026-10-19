@@ -113,6 +113,15 @@ check('prices: what the customer pays already equals the ERP - nothing', !r.resu
 await sellOf(PLA, 0);
 r = await owner('erpWebPrices', [{}]);
 check('prices: no ERP price -> left alone', !r.result.changes.some((x) => x.sku === PLA) && r.result.noPrice >= 1, r.result);
+// only some products (owner 19 Oct 2026: push the new Bambu prices, leave the rest)
+await sellOf(PLA, 1500); await sellOf(A1, 25000);
+r = await owner('erpWebPrices', [{ only: [PLA] }]);
+check('prices: "only these" lists just those products', r.ok && r.result.changes.some((x) => x.sku === PLA) && !r.result.changes.concat(r.result.held).some((x) => x.sku === 'WOO-A1'), r.result);
+const bOnly = batches.length;
+r = await owner('erpWebPrices', [{ mode: 'apply', only: [PLA] }]);
+up = batches.slice(bOnly).flatMap((b) => b[1].update);
+check('prices: "only these" sends just those', r.ok && up.some((x) => x.id === 11) && !up.some((x) => x.id === 12), up);
+await sellOf(A1, 20000);
 // the switch: every stock sync sends prices too
 await sellOf(PLA, 1500);
 r = await owner('erpWebPriceSync', [{ on: true }]);

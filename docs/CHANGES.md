@@ -2364,3 +2364,11 @@ product cards and a follow-up line, ~20 s after the message. Bug seen: Meta's ec
 reply's transaction was saved, so it was stored again as a "team" reply (message 8412 duplicates 8409 - left as is).
 Echoes sent by this ERP's own Meta app (message.app_id = META_APP_ID) are now dropped; a staff reply typed in the page inbox
 is still kept as the team's. Tests: inbox 156.
+
+## webprices-only-1 (19 Oct 2026)
+Owner: Bambu Lab PLA Basic and PLA Matte are now 1,600 TK a roll. ERP: 55 products 1,700 -> 1,600 through erpAskingApply
+(owner, activity log). Website: erpWebPrices takes `only: [sku...]` so a push can be limited to some products; a full push
+would also have lowered 19 SUNLU prices the owner did not ask about (SUNLU PLA+ 1,650 -> 1,550, PETG 1,599 -> 1,500, Silk
+1,900 -> 1,800, Glow 2,700 -> 2,300 - the ERP is lower than the website there; left for the owner). Pushed only the 55:
+48 regular 1,700 -> 1,600, 7 on sale (crossed-out 1,999 kept) -> 1,600. Checked on costareen.com. Test: w2 38.
+Also added docs/meta/APP-REVIEW.md (App Review text + screencast script).
