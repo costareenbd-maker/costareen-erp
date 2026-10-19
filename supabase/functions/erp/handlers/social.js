@@ -19,6 +19,7 @@ import { gemini, jsonOf } from '../lib/gemini.js';
 import { products } from './dashboard.js';
 import { assetsTick } from './socialmake.js';
 import { PLATFORMS, API_KEYS, publishTo, statsFor, configured } from './socialnet.js';
+import { bridgedPlatforms } from './bridges.js';
 import { renderJpeg } from '../lib/render.js';
 
 const str = (v) => String(v == null ? '' : v).trim();
@@ -77,12 +78,12 @@ export async function erpSocialPosts(ctx) {
   need(ctx);
   const rows = await ctx.tx`select * from social_posts where business_id = ${ctx.biz} and state <> 'removed' and created_at > now() - interval '90 days' order by created_at desc limit 200`;
   const r = await reach(ctx);
-  const net = [];
+  const net = [], br = await bridgedPlatforms(ctx);
   for (const k of Object.keys(PLATFORMS)) {
     const pl = PLATFORMS[k];
     let connected = false, handle = '';
     if (pl.via === 'meta') connected = r.connected && (k.startsWith('instagram') ? !!(r.pages.find((pg) => pg.id === r.defaultPage) || r.pages[0] || {}).ig : r.pages.length > 0);
-    else if (pl.via === 'oauth' || pl.via === 'token') { let pr = null; try { pr = JSON.parse(str(await getConfig(ctx, 'social_' + k, '')) || 'null'); } catch (_) { pr = null; } connected = !!(pr && pr.id); handle = str(pr && (pr.handle || pr.name)); }
+    else if (pl.via === 'oauth' || pl.via === 'token') { let pr = null; try { pr = JSON.parse(str(await getConfig(ctx, 'social_' + k, '')) || 'null'); } catch (_) { pr = null; } connected = !!(pr && pr.id); handle = str(pr && (pr.handle || pr.name)); if (!connected && br[k]) { connected = true; handle = str(br[k].handle); } }
     else connected = true;   // copy-only: always usable
     net.push({ key: k, name: pl.name, via: pl.via, media: pl.media, max: pl.max, configured: configured(ctx.deps, k), connected, handle });
   }

@@ -2524,3 +2524,12 @@ Tests: ads_test 30; social 37, socialnet 39, socials3 23, inbox 163 green. Live:
 (the old 2019 ones are restricted and not on this account) - the screen says what to make in Business Suite.
 NOT done: Instagram-only posts cannot be boosted (needs an Instagram-side creative); no A/B of two posts; sales ads
 need the pixel id typed in (no pixel picker); Advantage+ shopping campaigns.
+
+## Posting bridges (20 Oct 2026, tag social-bridge-1)
+Networks that need an app review (TikTok, YouTube, LinkedIn, X, Pinterest, Threads) can post through a third-party
+posting service with an approved app and a free tier: Zernio, Publora, Upload-Post (`handlers/bridges.js`,
+`docs/meta/SOCIAL-APPS.md`). Provider's keys in env (`BRIDGE_*_KEY`) serve every company with a profile each;
+a company can paste its own key. Settings → Connections → Posting bridges: add, + network (connect link),
+Refresh, Remove. Posts form shows the network as connected with no mention of the service; publishing routes
+to the bridge when there is no key of our own; pending posts finished by the minute timer. 23 tests.
+NOT done: Buffer (thin GraphQL docs), Pinterest board choice, stats for bridged posts, no provider keys set yet.

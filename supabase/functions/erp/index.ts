@@ -344,9 +344,11 @@ async function svgPng(svg: string): Promise<Uint8Array> {
 const SOCIAL = { threadsAppId: Deno.env.get('THREADS_APP_ID') ?? '', threadsAppSecret: Deno.env.get('THREADS_APP_SECRET') ?? '', tiktokClientKey: Deno.env.get('TIKTOK_CLIENT_KEY') ?? '', tiktokClientSecret: Deno.env.get('TIKTOK_CLIENT_SECRET') ?? '',
   googleClientId: Deno.env.get('GOOGLE_CLIENT_ID') ?? '', googleClientSecret: Deno.env.get('GOOGLE_CLIENT_SECRET') ?? '', linkedinClientId: Deno.env.get('LINKEDIN_CLIENT_ID') ?? '', linkedinClientSecret: Deno.env.get('LINKEDIN_CLIENT_SECRET') ?? '',
   xClientId: Deno.env.get('X_CLIENT_ID') ?? '', xClientSecret: Deno.env.get('X_CLIENT_SECRET') ?? '', pinterestAppId: Deno.env.get('PINTEREST_APP_ID') ?? '', pinterestAppSecret: Deno.env.get('PINTEREST_APP_SECRET') ?? '' };
+// posting bridges (handlers/bridges.js): the provider's keys on third-party posting services, one key for every company
+const BRIDGES = { zernio: Deno.env.get('BRIDGE_ZERNIO_KEY') ?? '', publora: Deno.env.get('BRIDGE_PUBLORA_KEY') ?? '', uploadpost: Deno.env.get('BRIDGE_UPLOADPOST_KEY') ?? '' };
 const META = { appId: Deno.env.get('META_APP_ID') ?? '', appSecret: Deno.env.get('META_APP_SECRET') ?? '', configId: Deno.env.get('META_CONFIG_ID') ?? '', redirect: SUPABASE_URL + '/functions/v1/erp?meta=back' };
 const own = projectParts({ url: SUPABASE_URL, anon: ANON, service: SERVICE, appUrl: Deno.env.get('ERP_APP_URL') ?? 'https://erp.costareen.com/' });
-const deps: any = { install: INSTALL, installEnv: INSTALL_ENV, google: GOOGLE, social: { ...SOCIAL, redirect: FN_URL + '?social=back' }, smtpNote: SMTP_NOTE, linkOnly: false, sql, sqlAux, control: ctlSql, fetch: globalThis.fetch.bind(globalThis), renderPdf, render: { url: RENDER_URL, key: RENDER_KEY }, geminiKey: GEMINI_KEY, svgPng, meta: META,
+const deps: any = { install: INSTALL, installEnv: INSTALL_ENV, google: GOOGLE, social: { ...SOCIAL, redirect: FN_URL + '?social=back' }, bridges: BRIDGES, smtpNote: SMTP_NOTE, linkOnly: false, sql, sqlAux, control: ctlSql, fetch: globalThis.fetch.bind(globalThis), renderPdf, render: { url: RENDER_URL, key: RENDER_KEY }, geminiKey: GEMINI_KEY, svgPng, meta: META,
                ...own, hookBase: FN_URL };
 
 // A company on the bridge: its own database, sign-in, files and e-mails; the provider's logic and PDF service.
@@ -362,7 +364,7 @@ async function buildTenant(t: any) {
     providerFingerprint: fpHex.slice(0, 16).toUpperCase().match(/.{4}/g)!.join('-'),
     install: { id: t.id, key: '', controlUrl: '', version: Deno.env.get('ERP_RELEASE') ?? '', bridged: true, domain: String(t.domain || '') },
     installEnv: INSTALL_ENV,
-    google: { ...GOOGLE, redirect: FN_URL + '?google=back&t=' + t.id, appUrl }, social: { ...SOCIAL, redirect: FN_URL + '?social=back&t=' + t.id },
+    google: { ...GOOGLE, redirect: FN_URL + '?google=back&t=' + t.id, appUrl }, social: { ...SOCIAL, redirect: FN_URL + '?social=back&t=' + t.id }, bridges: BRIDGES,
     // control: the provider's own tables (the market list, joint pools)
     smtpNote: '', linkOnly: false, sql: tsql, sqlAux: tAux, control: ctlSql, fetch: globalThis.fetch.bind(globalThis), renderPdf, render: { url: RENDER_URL, key: RENDER_KEY }, geminiKey: GEMINI_KEY, svgPng, meta: { ...META, redirect: FN_URL + '?meta=back&t=' + t.id },
     ...parts, hookBase: FN_URL + '?t=' + t.id,

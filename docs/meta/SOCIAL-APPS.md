@@ -31,3 +31,25 @@ cd deploy && source secrets.env && python deploy.py secrets THREADS_APP_ID=... T
 
 Until a network's keys are set, Settings → Connections shows "not set up by the provider yet" for it and the Posts
 form keeps its box greyed out; the captions for it are still written, so a post made today can be sent there later.
+
+## Posting bridges (20 Oct 2026, tag social-bridge-1)
+
+Instead of registering a developer app on each network and waiting for its review, a network can post through a
+**bridge**: a third-party posting service whose own app is already approved. `handlers/bridges.js`. Staff never see
+the service: the Posts form shows TikTok / YouTube / LinkedIn / X / Pinterest / Threads as simply "connected".
+
+| Service | Free tier | Connect how | Key env (provider's) |
+|---|---|---|---|
+| Zernio (zernio.com) | 2 accounts, unlimited posts | link from its API, per company profile | `BRIDGE_ZERNIO_KEY` |
+| Publora (publora.com) | 3 accounts, 15 posts/month, no X | on its own site, then Refresh | `BRIDGE_PUBLORA_KEY` |
+| Upload-Post (upload-post.com) | 2 profiles, 10 uploads/month, no TikTok | branded connect page (48 h link), per company profile | `BRIDGE_UPLOADPOST_KEY` |
+
+- Provider's key in the environment = one bridge for every company (each company gets its own profile on
+  Zernio / Upload-Post). A company can also paste its own key under Settings → Connections → Posting bridges.
+- Routing (`socialnet.publishTo`): our own key for the network first; otherwise the first bridge that holds an
+  active account for it. Zernio and Publora answer "pending"; the minute timer (`socialTick`) asks again until
+  published and keeps the network's link. Upload-Post answers at once.
+- Stats for bridged posts are not read (they live on the service's dashboard).
+- **Terms:** combine different services; never two free accounts of one service (its terms forbid it).
+- Buffer: new API is GraphQL and its docs are thin; not added yet. Ayrshare has no free plan.
+- Not done: Pinterest needs a board id (Upload-Post refuses without it); X on the free tiers is only via Zernio.

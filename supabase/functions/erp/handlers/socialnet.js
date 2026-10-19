@@ -19,6 +19,7 @@
 
 import { getSecret, setSecret, getConfig, setConfig, readFile, fileUrl } from '../lib/ext.js';
 import { formatDate, num } from '../lib/time.js';
+import { bridgeFor, bridgePublish, bridgeStatus, bridgedPlatforms } from './bridges.js';
 
 const str = (v) => String(v == null ? '' : v).trim();
 const form = (o) => Object.entries(o).map(([k, v]) => encodeURIComponent(k) + '=' + encodeURIComponent(v)).join('&');
@@ -58,12 +59,14 @@ async function jfetch(f, url, opts) {
 const said = (name, r) => name + ' said ' + r.status + ': ' + str((r.json && (r.json.error_description || (r.json.error && (r.json.error.message || r.json.error)) || r.json.message || r.json.error_message || (r.json.data && r.json.data.error && r.json.data.error.message))) || r.text).slice(0, 200);
 
 export async function erpSocialNet(ctx) {
-  const out = [];
+  const out = [], br = await bridgedPlatforms(ctx);
   for (const key of Object.keys(PLATFORMS)) {
     const p = PLATFORMS[key];
     if (p.via === 'meta') continue;
     const prof_ = p.via === 'copy' ? null : await prof(ctx, key);
-    out.push({ key, name: p.name, via: p.via, media: p.media, max: p.max, configured: configured(ctx.deps, key), connected: !!(prof_ && prof_.id), profile: prof_ ? { name: str(prof_.name), handle: str(prof_.handle), since: str(prof_.since), expires: str(prof_.expires), note: str(prof_.note) } : null });
+    const native = !!(prof_ && prof_.id), bridged = !native && !!br[key];
+    out.push({ key, name: p.name, via: p.via, media: p.media, max: p.max, configured: configured(ctx.deps, key), connected: native || bridged, bridged,
+               profile: native ? { name: str(prof_.name), handle: str(prof_.handle), since: str(prof_.since), expires: str(prof_.expires), note: str(prof_.note) } : bridged ? { handle: str(br[key].handle), note: ctx.s.role === 'owner' ? 'through ' + br[key].service : '' } : null });
   }
   return { platforms: out };
 }
@@ -234,7 +237,17 @@ function firstLine(caption) { const lines = str(caption).split('\n'); return { t
 export async function publishTo(ctx, key, post, media, caption, prev) {
   const p = PLATFORMS[key]; if (!p) throw new Error('Unknown network ' + key);
   if (p.via === 'copy' || p.via === 'meta') throw new Error(p.name + ' is not published from here.');
-  const f = ctx.deps.fetch || fetch, pr = await prof(ctx, key) || {}, tk = await token(ctx, key);
+  // no key of our own for this network: a bridge that holds it posts instead (the same answer shape)
+  const own = await prof(ctx, key);
+  if (!(own && own.id)) {
+    const hit = await bridgeFor(ctx, key);
+    if (hit) {
+      const withUrls = []; for (const m of media || []) withUrls.push({ ...m, url: await mediaUrl(ctx, m) });
+      if (prev && prev.bridgeId) return bridgeStatus(ctx, hit, prev);
+      return bridgePublish(ctx, hit, key, post, withUrls, str(caption).slice(0, p.max || 5000), prev);
+    }
+  }
+  const f = ctx.deps.fetch || fetch, pr = own || {}, tk = await token(ctx, key);
   const video = (media || []).find((m) => m.kind === 'video'), images = (media || []).filter((m) => m.kind === 'image');
   if (video && !p.media.video) throw new Error(p.name + ' takes no video from here: use a picture.');
   if (!video && images.length && !p.media.image) throw new Error(p.name + ' takes a video only.');
@@ -357,7 +370,7 @@ export async function publishTo(ctx, key, post, media, caption, prev) {
 /** The figures of one published post, where the network gives them. */
 export async function statsFor(ctx, key, result) {
   const f = ctx.deps.fetch || fetch, id = str(result && result.id);
-  if (!id) return null;
+  if (!id || (result && result.bridge)) return null;   // a bridge's figures are on its own dashboard
   if (key === 'threads') { const tk = await token(ctx, key); const r = await jfetch(f, 'https://graph.threads.net/v1.0/' + id + '/insights?metric=views,likes,replies,reposts,quotes&access_token=' + encodeURIComponent(tk)); const o = {}; for (const d of (r.json && r.json.data) || []) o[d.name] = num(((d.values || [])[0] || {}).value); return r.ok ? { views: o.views, likes: o.likes, comments: o.replies, shares: num(o.reposts) + num(o.quotes) } : null; }
   if (key === 'youtube') { const tk = await token(ctx, key); const r = await jfetch(f, 'https://www.googleapis.com/youtube/v3/videos?part=statistics&id=' + encodeURIComponent(id), { headers: { Authorization: 'Bearer ' + tk } }); const s = ((r.json && r.json.items) || [])[0]; return s && s.statistics ? { views: num(s.statistics.viewCount), likes: num(s.statistics.likeCount), comments: num(s.statistics.commentCount) } : null; }
   if (key === 'x') { const tk = await token(ctx, key); const r = await jfetch(f, 'https://api.x.com/2/tweets/' + id + '?tweet.fields=public_metrics', { headers: { Authorization: 'Bearer ' + tk } }); const m = r.json && r.json.data && r.json.data.public_metrics; return m ? { views: num(m.impression_count), likes: num(m.like_count), comments: num(m.reply_count), shares: num(m.retweet_count) + num(m.quote_count), saved: num(m.bookmark_count) } : null; }
