@@ -244,11 +244,18 @@ export async function erpSocialScript(ctx, payload) {
   if (str(p.sku)) { try { const r0 = (await ctx.tx`select coalesce(meta #>> '{script,hookType}', '') as h from social_assets where business_id = ${ctx.biz} and kind = 'video' and sku = ${str(p.sku)} order by created_at desc limit 1`)[0]; lastHook = str(r0 && r0.h); } catch (_) { /* fine */ } }
   const hooks = HOOKS.filter((h) => h[0] !== lastHook);
   const hookLine = 'Choose ONE hook type from this list and name it in hookType: ' + hooks.map((h) => h[0] + ' = ' + h[1]).join('; ') + '.';
-  const langLine = lang === 'bn' ? 'All text and the voice in Bangla (Bengali script), product names as given.' : lang === 'mix' ? 'Text in Banglish (Bangla in Latin letters), product names as given; the voice in natural spoken Bangla (Bengali script).' : 'All in simple English.';
+  const langLine = lang === 'bn' ? 'All text and the voice in Bangla written in BENGALI SCRIPT (never Bangla in Latin letters); only brand and product names stay in Latin letters.' : lang === 'mix' ? 'Text in Banglish (Bangla in Latin letters), product names as given; the voice in natural spoken Bangla (Bengali script).' : 'All in simple English.';
   const sys = 'You write 12-20 second vertical product reels for a small 3D-printing supplies shop in Bangladesh. Only the facts given; never invent prices, specs, discounts or deadlines. Each text line fits on a phone screen: at most 7 words. The hook is the first 2 seconds and decides everything: ' + hookLine + ' Never start with the product name or "welcome". The voice-over is 35-55 words, spoken naturally like a friend, says the price once, ends with how to order (inbox / website). ' + langLine + ' Return JSON only: ' + shape;
   await allowance(ctx, 1);
-  const { parts } = await gemini(ctx, { systemInstruction: { parts: [{ text: sys }] }, contents: [{ role: 'user', parts: [{ text: 'Template: ' + t + '\nFacts:\n' + facts.filter(Boolean).join('\n') }] }], generationConfig: { temperature: 0.8, responseMimeType: 'application/json' } }, 'reel-script', null);
-  const j = jsonOf(parts) || {};
+  let j = {};
+  for (let attempt = 0; attempt < 2; attempt++) {
+    const { parts } = await gemini(ctx, { systemInstruction: { parts: [{ text: sys + (attempt ? ' The previous answer used Latin letters for Bangla: write the Bangla in Bengali script this time.' : '') }] }, contents: [{ role: 'user', parts: [{ text: 'Template: ' + t + '\nFacts:\n' + facts.filter(Boolean).join('\n') }] }], generationConfig: { temperature: 0.8, responseMimeType: 'application/json' } }, 'reel-script', null);
+    j = jsonOf(parts) || {};
+    // Bangla asked: the voice-over must mostly be Bengali letters, else one more try
+    if (lang !== 'bn') break;
+    const v = str(j.voice), bengali = (v.match(/[\u0980-\u09FF]/g) || []).length, latin = (v.match(/[A-Za-z]/g) || []).length;
+    if (bengali >= latin) break;
+  }
   const script = { hookType: HOOKS.some((h) => h[0] === str(j.hookType)) ? str(j.hookType) : '', hook: str(j.hook).slice(0, 80), cta: str(j.cta).slice(0, 80), voice: str(j.voice).slice(0, 600), lines: (Array.isArray(j.lines) ? j.lines : Array.isArray(j.reasons) ? j.reasons : []).map((s) => str(s).slice(0, 80)).filter(Boolean).slice(0, 4), tease: str(j.tease).slice(0, 80), after: str(j.after).slice(0, 80), caption: str(j.caption).slice(0, 120) };
   return { script, template: t, lang, product: x ? { sku: x.sku, name: x.name, sell: x.sell } : null };
 }
