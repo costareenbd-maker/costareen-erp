@@ -28,6 +28,15 @@ export async function startVideo(deps, job) {
   return str(j.id);
 }
 
+/** Study a video for the inspiration box: {url | clipUrl, uploads:{frames:[], audio}}. Returns the job id. */
+export async function startStudy(deps, job) {
+  const c = conf(deps);
+  const r = await c.fetch(c.url + '/inspo', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Render-Key': c.key }, body: JSON.stringify(job) });
+  let j = {}; try { j = JSON.parse(await r.text()); } catch (_) { j = {}; }
+  if (!r.ok || !j.id) throw new Error('The study could not be started: ' + str(j.error || r.status));
+  return str(j.id);
+}
+
 /** Where a job stands: {state: queued|working|done|failed, error, bytes, seconds}. */
 export async function videoJob(deps, id) {
   const c = conf(deps);
@@ -35,5 +44,5 @@ export async function videoJob(deps, id) {
   let j = {}; try { j = JSON.parse(await r.text()); } catch (_) { j = {}; }
   if (r.status === 404) return { state: 'lost', error: 'The render server no longer has this job.' };
   if (!r.ok) throw new Error('The render server did not answer (' + r.status + ').');
-  return { state: str(j.state), error: str(j.error), bytes: Number(j.bytes || 0), seconds: Number(j.seconds || 0), voice: !!j.voice, captions: !!j.captions, music: !!j.music, warn: str(j.warn) };
+  return { state: str(j.state), error: str(j.error), bytes: Number(j.bytes || 0), seconds: Number(j.seconds || 0), voice: !!j.voice, captions: !!j.captions, music: !!j.music, broll: j.broll || null, warn: str(j.warn), meta: j.meta || null };
 }

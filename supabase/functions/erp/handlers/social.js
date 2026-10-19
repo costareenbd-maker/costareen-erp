@@ -153,11 +153,12 @@ export async function erpSocialCaptions(ctx, payload) {
   }
   if (str(p.text)) facts.push('Owner\'s own text to build on:\n' + str(p.text).slice(0, 1500));
   if (str(p.notes)) facts.push('Owner notes: ' + str(p.notes).slice(0, 500));
+  let extra = ''; try { const sm = await import('./socialmake.js'); extra = await sm.writerContext(ctx); } catch (_) { extra = ''; }
   const lang = str(p.lang) === 'bn' ? 'Write in Bangla (Bengali script); product names, brands and numbers as given.' : str(p.lang) === 'mix' ? 'Write in Banglish (Bangla words in Latin letters), product names as given.' : 'Write in simple English.';
   const sys = 'You write social-media captions for a small 3D-printing supplies shop in Bangladesh. Use only the facts given: never invent prices, discounts, specs, deadlines or stock. The price goes in every caption. ' + lang +
     ' Return JSON only: {"facebook": "...", "instagram": "...", "marketplace": "...", "whatsapp": "..."}.' +
     ' facebook: 3-6 short lines, the price, how to order (inbox / website), 2-3 emoji at most, no hashtags. instagram: 2-4 lines, the price, a question or hook first, then 8-12 hashtags on the last line (3D printing, filament, Bangladesh, the brand). marketplace: a listing - a plain title line, then condition, price, what is included, delivery, no emoji or hashtags. whatsapp: 2-3 lines for a status or broadcast, the price and "reply to order".';
-  const { parts } = await gemini(ctx, { systemInstruction: { parts: [{ text: sys }] }, contents: [{ role: 'user', parts: [{ text: 'Facts:\n' + facts.join('\n') }] }], generationConfig: { temperature: 0.7, responseMimeType: 'application/json' } }, 'social', null);
+  const { parts } = await gemini(ctx, { systemInstruction: { parts: [{ text: sys + (extra ? '\n' + extra : '') }] }, contents: [{ role: 'user', parts: [{ text: 'Facts:\n' + facts.join('\n') }] }], generationConfig: { temperature: 0.7, responseMimeType: 'application/json' } }, 'social', null);
   const j = jsonOf(parts) || {};
   return { captions: cleanCaptions(j), title };
 }
@@ -343,6 +344,15 @@ export async function erpSocialAct(ctx, payload) {
     if (!['draft', 'approved', 'failed', 'scheduled'].includes(post.state)) throw new Error('This post is already ' + post.state + '.');
     const t = post.targets || {};
     if (!t.facebook && !t.instagram && !t.facebookStory && !t.instagramStory) throw new Error('Tick Facebook, Instagram or a story.');
+    if (str(post.sku) && !p.force) {
+      const st = (await ctx.tx`select coalesce(ps.stock, 0) stock from products pr left join product_stock ps on ps.product_id = pr.id where pr.business_id = ${ctx.biz} and lower(pr.sku) = ${str(post.sku).toLowerCase()}`)[0];
+      if (st && !(num(st.stock) > 0)) throw new Error('The rule says never a product that is out of stock: ' + post.sku + ' has none. Receive stock first, or remove the product from the post.');
+    }
+    const maxDay = num(await getConfig(ctx, 'social_max_day', '2')) || 2;
+    if (action === 'publish' && !p.force) {
+      const today = (await ctx.tx`select count(*)::int n from social_posts where business_id = ${ctx.biz} and state = 'published' and published_at > ${new Date(ctx.now.getTime() - 24 * 3600e3)}`)[0].n;
+      if (today >= maxDay) throw new Error('The rule says at most ' + maxDay + ' posts a day; ' + today + ' went out in the last 24 hours. Schedule it for later, or change the rule under Content → Rules.');
+    }
     if (action === 'schedule') {
       const at = new Date(str(p.at));
       if (isNaN(at.getTime())) throw new Error('When should it go out?');

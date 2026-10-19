@@ -14,11 +14,11 @@
 // Costs: a photo card and a template reel cost nothing (our own server). An AI photo ~৳5, a voice-over ~৳1, a script
 // ~free; each is written to ai_work. The day's AI allowance (300 a day per business) counts them too.
 
-import { getConfig, setConfig, saveFile, fileUrl, readFile } from '../lib/ext.js';
+import { getConfig, setConfig, getSecret, setSecret, saveFile, fileUrl, readFile } from '../lib/ext.js';
 import { formatDate, num } from '../lib/time.js';
 import { roleAtLeast } from '../allow.js';
 import { gemini, jsonOf } from '../lib/gemini.js';
-import { renderPng, startVideo, videoJob } from '../lib/render.js';
+import { renderPng, startVideo, videoJob, startStudy } from '../lib/render.js';
 import { aiKey } from './receivefile.js';
 import { products } from './dashboard.js';
 import { task } from './inbox.js';
@@ -90,6 +90,141 @@ async function fileData(ctx, file) {
   const i = f.indexOf('/'); if (i < 0) return '';
   const bytes = await readFile(ctx, f.slice(0, i), f.slice(i + 1)); if (!bytes) return '';
   return 'data:' + (/\.png$/i.test(f) ? 'image/png' : 'image/jpeg') + ';base64,' + b64(bytes);
+}
+
+// ------------------------------------------------------------------ the owner's rules, what worked, the style cards (S3)
+const BUILT_IN_RULES = ['The price is in every post.', 'One product per post.', 'Never a fake "only N left" or a made-up deadline: stock counts and dates come from the ERP.',
+  'Bangla first; product and brand names stay as written.', 'Never a product that is out of stock.', 'Claims only from the product\'s own details; no competitor names.'];
+export async function erpSocialRules(ctx, payload) {
+  need(ctx);
+  const p = payload || {};
+  if (p.save !== undefined) {
+    if (!roleAtLeast(ctx.s.role, 'manager')) throw new Error('Only a manager or the owner writes the rules.');
+    const lines = String(p.save).split(/\n+/).map((x) => x.trim()).filter(Boolean).slice(0, 40).map((x) => x.slice(0, 200));
+    await setConfig(ctx, 'social_rules', JSON.stringify(lines));
+    const w = String(p.windows || '').split(/[,\s]+/).filter((x) => /^\d{1,2}:\d{2}$/.test(x)).slice(0, 6);
+    await setConfig(ctx, 'social_windows', JSON.stringify(w));
+    await setConfig(ctx, 'social_max_day', String(Math.max(0, Math.min(10, num(p.maxDay)))));
+  }
+  let rules = []; try { rules = JSON.parse(str(await getConfig(ctx, 'social_rules', '[]')) || '[]'); } catch (_) { rules = []; }
+  let windows = []; try { windows = JSON.parse(str(await getConfig(ctx, 'social_windows', '[]')) || '[]'); } catch (_) { windows = []; }
+  return { builtIn: BUILT_IN_RULES, rules, windows, maxDay: num(await getConfig(ctx, 'social_max_day', '2')) || 2, pexels: !!(await getSecret(ctx, 'PEXELS_KEY')) };
+}
+async function rulesText(ctx) {
+  let rules = []; try { rules = JSON.parse(str(await getConfig(ctx, 'social_rules', '[]')) || '[]'); } catch (_) { rules = []; }
+  return 'THE SHOP\'S RULES (always):\n- ' + BUILT_IN_RULES.concat(rules).join('\n- ');
+}
+/** What has worked for this shop, from the figures the posts reported (the learning loop): fed to the writers as a hint. */
+async function learnText(ctx) {
+  let L = null; try { L = JSON.parse(str(await getConfig(ctx, 'social_learn', '')) || 'null'); } catch (_) { L = null; }
+  if (!L || !L.posts) return '';
+  const bits = [];
+  if ((L.hooks || []).length) bits.push('hook types that scored best: ' + L.hooks.slice(0, 3).map((h) => h.key + ' (' + h.score + ')').join(', '));
+  if ((L.templates || []).length) bits.push('formats that scored best: ' + L.templates.slice(0, 3).map((h) => h.key).join(', '));
+  if ((L.hours || []).length) bits.push('best posting hours (Dhaka): ' + L.hours.slice(0, 3).map((h) => h.key + ':00').join(', '));
+  if ((L.products || []).length) bits.push('products people reacted to: ' + L.products.slice(0, 3).map((h) => h.key).join(', '));
+  return bits.length ? 'WHAT HAS WORKED FOR US (from ' + L.posts + ' posts): ' + bits.join('; ') + '.' : '';
+}
+export async function writerContext(ctx) { return [await rulesText(ctx), await learnText(ctx)].filter(Boolean).join('\n'); }
+/** The owner's Pexels key for stock b-roll (free at pexels.com/api). Stored sealed; never shown back. */
+export async function erpSocialPexels(ctx, payload) {
+  if (ctx.s.role !== 'owner') throw new Error('Only the owner sets the stock-footage key.');
+  const k = str(payload && payload.key);
+  if (k === '') { await setSecret(ctx, 'PEXELS_KEY', ''); return { ok: true, pexels: false }; }
+  const res = await (ctx.deps.fetch || fetch)('https://api.pexels.com/videos/search?query=printer&per_page=1', { headers: { Authorization: k } });
+  if (!res.ok) throw new Error('Pexels refused that key (' + res.status + ').');
+  await setSecret(ctx, 'PEXELS_KEY', k);
+  return { ok: true, pexels: true };
+}
+
+// ------------------------------------------------------------------ the inspiration box
+const INSPO_FRAMES = 6;
+function inspoView(r) {
+  return { id: r.id, url: str(r.url), file: str(r.file), note: str(r.note), status: r.status, error: str(r.error), meta: r.meta || {}, style: r.style || {}, createdBy: str(r.created_by), created: formatDate(new Date(r.created_at), 'd MMM') };
+}
+export async function erpSocialInspo(ctx, payload) {
+  need(ctx);
+  const p = payload || {};
+  if (str(p.action) === 'remove') { await ctx.tx`update social_inspo set status = 'removed', updated_at = now() where business_id = ${ctx.biz} and id = ${str(p.id)}`; }
+  else if (str(p.url) || str(p.file) || str(p.text)) {
+    if (!(ctx.deps.storage && ctx.deps.storage.signUpload)) throw new Error('File uploads are not available on this server.');
+    const url = /^https?:\/\/\S+$/.test(str(p.url)) ? str(p.url).slice(0, 500) : '';
+    const file = str(p.file).replace(/^social\//, '');
+    if (str(p.text) && !url && !file) {
+      // only words: the AI studies the description itself
+      const r = (await ctx.tx`insert into social_inspo (business_id, note, status, meta, created_by) values (${ctx.biz}, ${str(p.text).slice(0, 2000)}, 'studying', ${ctx.tx.json({ text: true })}, ${ctx.s.name}) returning *`)[0];
+      await studyInspo(ctx, r);
+      return erpSocialInspo(ctx, {});
+    }
+    if (!(ctx.deps.render && ctx.deps.render.url)) throw new Error('The render server is not set up on this system.');
+    const id = globalThis.crypto.randomUUID();
+    const frames = [];
+    for (let i = 0; i < INSPO_FRAMES; i++) frames.push(await ctx.deps.storage.signUpload(ctx.biz, 'social', 'inspo-' + id + '-f' + i + '.jpg'));
+    const audio = await ctx.deps.storage.signUpload(ctx.biz, 'social', 'inspo-' + id + '-a.mp3');
+    const job = { uploads: { frames: frames.map((f) => f.url), audio: audio.url } };
+    if (file) job.clipUrl = await fileUrl(ctx, 'social', file); else job.url = url;
+    const jobId = await startStudy(ctx.deps, job);
+    await ctx.tx`insert into social_inspo (id, business_id, url, file, note, status, job, meta, created_by) values (${id}, ${ctx.biz}, ${url || null}, ${file ? 'social/' + file : null}, ${str(p.note).slice(0, 500) || null}, 'studying', ${jobId},
+      ${ctx.tx.json({ frames: frames.map((f, i) => 'inspo-' + id + '-f' + i + '.jpg'), audio: 'inspo-' + id + '-a.mp3' })}, ${ctx.s.name})`;
+  }
+  const rows = await ctx.tx`select * from social_inspo where business_id = ${ctx.biz} and status <> 'removed' order by created_at desc limit 60`;
+  return { inspo: rows.map(inspoView), studying: rows.filter((r) => r.status === 'studying').length };
+}
+/** The AI studies the frames and the sound (or the words) into a style card. */
+async function studyInspo(ctx, r) {
+  const meta = r.meta || {};
+  const parts = [];
+  if (!meta.text) {
+    for (const f of meta.frames || []) { const b = await readFile(ctx, 'social', f); if (b && b.length > 200) parts.push({ inline_data: { mime_type: 'image/jpeg', data: b64(b) } }); }
+    if (meta.audio && meta.hasAudio !== false) { const a = await readFile(ctx, 'social', meta.audio); if (a && a.length > 500 && a.length < 3 * 1024 * 1024) parts.push({ inline_data: { mime_type: 'audio/mpeg', data: b64(a) } }); }
+  }
+  const facts = ['Title: ' + str(meta.title), 'By: ' + str(meta.by), meta.views ? 'Views: ' + meta.views + ', likes: ' + (meta.likes || 0) + ', comments: ' + (meta.comments || 0) : '', meta.seconds ? 'Length: ' + meta.seconds + ' s' : '', str(meta.description) ? 'Caption: ' + str(meta.description).slice(0, 600) : '', str(r.note) ? 'The owner says: ' + str(r.note) : ''].filter(Boolean);
+  parts.push({ text: (meta.text ? 'A short video described in words:\n' : 'Frames of a short video in order, and its sound.\n') + facts.join('\n') +
+    '\n\nWrite a style card a small shop can copy for its own product reels. JSON only: {"hook": "the first 2 seconds, in one line", "hookType": "question|negative|number|curiosity|pov|result|price|comparison|cliffhanger|objection|other", "structure": ["beat 1", "beat 2", "..."], "shots": ["shot 1", "..."], "pace": "fast|medium|slow, cuts every N s", "captions": "how the on-screen text looks", "sound": "voice-over / music / none, mood", "whyItWorks": "one or two sentences", "copyThis": ["3-5 concrete things to copy"], "avoid": ["what not to copy"]}. Short lines.' });
+  try {
+    const { parts: out } = await gemini(ctx, { contents: [{ role: 'user', parts }], generationConfig: { temperature: 0.4, responseMimeType: 'application/json' } }, 'inspo', null);
+    const j = jsonOf(out) || {};
+    const style = { hook: str(j.hook).slice(0, 200), hookType: str(j.hookType).slice(0, 20), structure: (Array.isArray(j.structure) ? j.structure : []).map((x) => str(x).slice(0, 120)).slice(0, 8), shots: (Array.isArray(j.shots) ? j.shots : []).map((x) => str(x).slice(0, 120)).slice(0, 8),
+      pace: str(j.pace).slice(0, 80), captions: str(j.captions).slice(0, 200), sound: str(j.sound).slice(0, 120), whyItWorks: str(j.whyItWorks).slice(0, 300), copyThis: (Array.isArray(j.copyThis) ? j.copyThis : []).map((x) => str(x).slice(0, 160)).slice(0, 6), avoid: (Array.isArray(j.avoid) ? j.avoid : []).map((x) => str(x).slice(0, 160)).slice(0, 4) };
+    await ctx.tx`update social_inspo set style = ${ctx.tx.json(style)}, status = 'ready', error = null, updated_at = now() where id = ${r.id}`;
+    return true;
+  } catch (e) {
+    await ctx.tx`update social_inspo set status = 'failed', error = ${str(e && e.message).slice(0, 300)}, updated_at = now() where id = ${r.id}`;
+    return false;
+  }
+}
+async function styleText(ctx, id) {
+  if (!str(id)) return '';
+  const r = (await ctx.tx`select style, meta from social_inspo where business_id = ${ctx.biz} and id = ${str(id)} and status = 'ready'`)[0];
+  if (!r || !r.style || !r.style.hook) return '';
+  const st = r.style;
+  return 'MAKE IT IN THIS STYLE (a reel the owner likes): hook: ' + st.hook + ' (type ' + st.hookType + '); structure: ' + (st.structure || []).join(' → ') + '; pace: ' + st.pace + '; captions: ' + st.captions + '; copy: ' + (st.copyThis || []).join('; ') + (st.avoid && st.avoid.length ? '; avoid: ' + st.avoid.join('; ') : '') + '.';
+}
+
+// ------------------------------------------------------------------ the learning loop
+/** Score every published post from its figures, then what worked by hook, format, hour and product. Nightly. */
+export async function learnTick(ctx) {
+  const posts = await ctx.tx`select p.*, a.template as a_template, a.meta as a_meta from social_posts p
+    left join social_assets a on a.file = (p.media->0->>'file') and a.business_id = p.business_id
+    where p.business_id = ${ctx.biz} and p.state = 'published' and p.published_at > now() - interval '60 days'`;
+  if (!posts.length) { await setConfig(ctx, 'social_learn', JSON.stringify({ posts: 0, at: ctx.now.toISOString() })); return { posts: 0 }; }
+  const scoreOf = (st) => { const f = (st && st.facebook) || {}, g = (st && st.instagram) || {};
+    return num(f.reach || f.views || f.plays) + num(g.reach || g.views) + 5 * (num(f.reactions) + num(g.likes)) + 10 * (num(f.comments) + num(g.comments)) + 20 * (num(f.shares) + num(g.shares) + num(g.saved)) + 3 * num(f.clicks); };
+  const rows = posts.map((p) => { const s = scoreOf(p.stats); const hour = Number(formatDate(new Date(p.published_at), 'H')); const hook = str(p.a_meta && p.a_meta.script && p.a_meta.script.hookType) || (p.a_meta ? 'none' : 'picture');
+    return { id: p.id, title: str(p.title), score: s, hour, hook, template: str(p.a_template) || (p.media && p.media.length ? (p.media[0].kind === 'video' ? 'video' : 'picture') : 'text'), sku: str(p.sku), at: formatDate(new Date(p.published_at), 'd MMM') }; });
+  const sorted = rows.slice().sort((a, b) => b.score - a.score);
+  const median = sorted[Math.floor(sorted.length / 2)].score || 1;
+  const by = (key) => { const m = {}; for (const r of rows) { const k = r[key] || '-'; if (k === '-' || k === 'none') continue; (m[k] = m[k] || { key: k, n: 0, sum: 0 }); m[k].n++; m[k].sum += r.score; } return Object.values(m).filter((x) => x.n >= 1).map((x) => ({ key: x.key, n: x.n, score: Math.round(x.sum / x.n) })).sort((a, b) => b.score - a.score).slice(0, 6); };
+  const L = { posts: rows.length, median: Math.round(median), at: ctx.now.toISOString(), top: sorted.slice(0, 5).map((r) => ({ id: r.id, title: r.title, score: Math.round(r.score), at: r.at, hook: r.hook, template: r.template })),
+              hooks: by('hook'), templates: by('template'), hours: by('hour'), products: by('sku') };
+  await setConfig(ctx, 'social_learn', JSON.stringify(L));
+  for (const r of rows) await ctx.tx`update social_posts set stats = stats || ${ctx.tx.json({ score: Math.round(r.score), vsMedian: median ? Math.round(r.score / median * 100) : 0 })} where id = ${r.id}`;
+  return { posts: rows.length };
+}
+export async function erpSocialLearn(ctx) {
+  need(ctx);
+  let L = null; try { L = JSON.parse(str(await getConfig(ctx, 'social_learn', '')) || 'null'); } catch (_) { L = null; }
+  return { learn: L };
 }
 
 // ------------------------------------------------------------------ the look of every card and slide
@@ -244,8 +379,9 @@ export async function erpSocialScript(ctx, payload) {
   if (str(p.sku)) { try { const r0 = (await ctx.tx`select coalesce(meta #>> '{script,hookType}', '') as h from social_assets where business_id = ${ctx.biz} and kind = 'video' and sku = ${str(p.sku)} order by created_at desc limit 1`)[0]; lastHook = str(r0 && r0.h); } catch (_) { /* fine */ } }
   const hooks = HOOKS.filter((h) => h[0] !== lastHook);
   const hookLine = 'Choose ONE hook type from this list and name it in hookType: ' + hooks.map((h) => h[0] + ' = ' + h[1]).join('; ') + '.';
+  const extra = [await rulesText(ctx), await learnText(ctx), await styleText(ctx, p.style)].filter(Boolean).join('\n');
   const langLine = lang === 'bn' ? 'All text and the voice in Bangla written in BENGALI SCRIPT (never Bangla in Latin letters); only brand and product names stay in Latin letters.' : lang === 'mix' ? 'Text in Banglish (Bangla in Latin letters), product names as given; the voice in natural spoken Bangla (Bengali script).' : 'All in simple English.';
-  const sys = 'You write 12-20 second vertical product reels for a small 3D-printing supplies shop in Bangladesh. Only the facts given; never invent prices, specs, discounts or deadlines. Each text line fits on a phone screen: at most 7 words. The hook is the first 2 seconds and decides everything: ' + hookLine + ' Never start with the product name or "welcome". The voice-over is 35-55 words, spoken naturally like a friend, says the price once, ends with how to order (inbox / website). ' + langLine + ' Return JSON only: ' + shape;
+  const sys = 'You write 12-20 second vertical product reels for a small 3D-printing supplies shop in Bangladesh. Only the facts given; never invent prices, specs, discounts or deadlines. Each text line fits on a phone screen: at most 7 words. The hook is the first 2 seconds and decides everything: ' + hookLine + ' Never start with the product name or "welcome". The voice-over is 35-55 words, spoken naturally like a friend, says the price once, ends with how to order (inbox / website). ' + langLine + '\n' + extra + '\nAlso give "broll": 2-4 English words for a stock clip that fits the hook (e.g. "3d printer printing closeup"), or "" if none. Return JSON only: ' + shape.replace('{', '{"broll": "", ');
   await allowance(ctx, 1);
   let j = {};
   for (let attempt = 0; attempt < 2; attempt++) {
@@ -256,7 +392,7 @@ export async function erpSocialScript(ctx, payload) {
     const v = str(j.voice), bengali = (v.match(/[\u0980-\u09FF]/g) || []).length, latin = (v.match(/[A-Za-z]/g) || []).length;
     if (bengali >= latin) break;
   }
-  const script = { hookType: HOOKS.some((h) => h[0] === str(j.hookType)) ? str(j.hookType) : '', hook: str(j.hook).slice(0, 80), cta: str(j.cta).slice(0, 80), voice: str(j.voice).slice(0, 600), lines: (Array.isArray(j.lines) ? j.lines : Array.isArray(j.reasons) ? j.reasons : []).map((s) => str(s).slice(0, 80)).filter(Boolean).slice(0, 4), tease: str(j.tease).slice(0, 80), after: str(j.after).slice(0, 80), caption: str(j.caption).slice(0, 120) };
+  const script = { broll: str(j.broll).slice(0, 60), hookType: HOOKS.some((h) => h[0] === str(j.hookType)) ? str(j.hookType) : '', hook: str(j.hook).slice(0, 80), cta: str(j.cta).slice(0, 80), voice: str(j.voice).slice(0, 600), lines: (Array.isArray(j.lines) ? j.lines : Array.isArray(j.reasons) ? j.reasons : []).map((s) => str(s).slice(0, 80)).filter(Boolean).slice(0, 4), tease: str(j.tease).slice(0, 80), after: str(j.after).slice(0, 80), caption: str(j.caption).slice(0, 120) };
   return { script, template: t, lang, product: x ? { sku: x.sku, name: x.name, sell: x.sell } : null };
 }
 
@@ -268,7 +404,7 @@ export async function erpSocialVideo(ctx, payload) {
   const [W, H] = FORMATS[str(p.format)] || FORMATS.story;
   const lang = str(p.lang) === 'bn' ? 'bn' : str(p.lang) === 'mix' ? 'mix' : 'en';
   const s = p.script || {};
-  const script = { hookType: str(s.hookType).slice(0, 20), hook: str(s.hook).slice(0, 80), cta: str(s.cta).slice(0, 80), voice: str(s.voice).slice(0, 600), lines: (Array.isArray(s.lines) ? s.lines : []).map((x) => str(x).slice(0, 80)).filter(Boolean).slice(0, 4), tease: str(s.tease).slice(0, 80), after: str(s.after).slice(0, 80), caption: str(s.caption).slice(0, 120) };
+  const script = { broll: str(s.broll).slice(0, 60), style: str(p.style).slice(0, 40), hookType: str(s.hookType).slice(0, 20), hook: str(s.hook).slice(0, 80), cta: str(s.cta).slice(0, 80), voice: str(s.voice).slice(0, 600), lines: (Array.isArray(s.lines) ? s.lines : []).map((x) => str(x).slice(0, 80)).filter(Boolean).slice(0, 4), tease: str(s.tease).slice(0, 80), after: str(s.after).slice(0, 80), caption: str(s.caption).slice(0, 120) };
   const x = str(p.sku) ? await productWithPhoto(ctx, p.sku) : { sku: '', name: str(p.title) || 'Post', sell: 0, stock: 0, photo: '' };
   const shop = await shopName(ctx);
   // the pictures: chosen ones first (uploaded, cards, AI photos), else the product's own
@@ -299,6 +435,13 @@ export async function erpSocialVideo(ctx, payload) {
     slides.push({ html: slideHtml('cta', W, H, lang, shop, img(0), { head: script.caption || x.name, sub: script.cta }), seconds: 3.5, motion: 'none' });
   }
   const job = { width: W, height: H, slides };
+  // a stock clip under the hook (Pexels, the owner's key), or a clip of ours by link
+  const pex = await getSecret(ctx, 'PEXELS_KEY');
+  if (p.broll !== false && t !== 'showcase' && (str(p.brollFile) || (pex && str(script.broll)))) {
+    const hookHtml = '<html><head>' + CSS(W, H) + '<style>body{background:transparent}</style></head><body><div class="big" style="top:30%;font-size:' + (H > W ? 76 : 60) + 'px">' + esc(script.hook || x.name) + '</div></body></html>';
+    job.broll = str(p.brollFile) ? { url: await fileUrl(ctx, 'social', str(p.brollFile).replace(/^social\//, '')), seconds: 3, html: hookHtml } : { key: pex, query: script.broll, seconds: 3, html: hookHtml };
+    if (slides.length && t !== 'reveal') slides[0].seconds = Math.max(1.5, slides[0].seconds - 1);
+  }
   if (t === 'showcase') {
     const f = str(p.clip).replace(/^social\//, '');
     const url = await fileUrl(ctx, 'social', f);
@@ -322,7 +465,7 @@ export async function erpSocialVideo(ctx, payload) {
   job.upload = { url: up.url, contentType: 'video/mp4' };
   const id = await startVideo(ctx.deps, job);
   const r = (await ctx.tx`insert into social_assets (business_id, kind, template, sku, title, file, status, job, meta, cost_bdt, created_by)
-                          values (${ctx.biz}, 'video', ${t}, ${x.sku || null}, ${(x.name + ' · ' + t).slice(0, 120)}, ${'social/' + name}, 'rendering', ${id}, ${ctx.tx.json({ width: W, height: H, lang, script, voice: voiceOn, voiceName: job.voice ? job.voice.voice : '', captions: voiceOn && p.captions !== false, music: !!job.music, slides: slides.length })}, 0, ${ctx.s.name}) returning *`)[0];
+                          values (${ctx.biz}, 'video', ${t}, ${x.sku || null}, ${(x.name + ' · ' + t).slice(0, 120)}, ${'social/' + name}, 'rendering', ${id}, ${ctx.tx.json({ width: W, height: H, lang, script, voice: voiceOn, voiceName: job.voice ? job.voice.voice : '', captions: voiceOn && p.captions !== false, music: !!job.music, broll: !!job.broll, style: str(p.style), slides: slides.length })}, 0, ${ctx.s.name}) returning *`)[0];
   return { asset: view(r) };
 }
 
@@ -383,13 +526,30 @@ export async function erpSocialClipRequest(ctx, payload) {
 
 /** The minute timer: a video whose job finished on the render server becomes ready (its file was uploaded by the server). */
 export async function assetsTick(ctx) {
-  const out = { ready: 0, failed: 0 };
+  const out = { ready: 0, failed: 0, studied: 0 };
+  // the inspiration box: a study job that finished -> the AI writes the style card
+  for (const r of await ctx.tx`select * from social_inspo where business_id = ${ctx.biz} and status = 'studying' and job is not null order by created_at limit 5`) {
+    let j; try { j = await videoJob(ctx.deps, r.job); } catch (_) { continue; }
+    if (j.state === 'done') {
+      const { audio: gotAudio, ...fromServer } = j.meta || {};   // the server says whether there was sound; the file name stays ours
+      const meta = { ...(r.meta || {}), ...fromServer, hasAudio: !!(gotAudio || fromServer.hasAudio) };
+      const row = (await ctx.tx`update social_inspo set meta = ${ctx.tx.json(meta)}, updated_at = now() where id = ${r.id} returning *`)[0];
+      if (await studyInspo(ctx, row)) out.studied++;
+    } else if (j.state === 'failed' || j.state === 'lost' || new Date(r.created_at).getTime() < ctx.now.getTime() - 20 * 60e3) {
+      await ctx.tx`update social_inspo set status = 'failed', error = ${j.error || 'The video took too long to fetch.'}, updated_at = now() where id = ${r.id}`;
+    }
+  }
+  // the learning loop: once a day, after the figures were read
+  try {
+    const last = str(await getConfig(ctx, 'social_learn_at', ''));
+    if (!last || new Date(last).getTime() < ctx.now.getTime() - 24 * 3600e3) { await learnTick(ctx); await setConfig(ctx, 'social_learn_at', ctx.now.toISOString()); }
+  } catch (_) { /* next time */ }
   const rows = await ctx.tx`select * from social_assets where business_id = ${ctx.biz} and status = 'rendering' order by created_at limit 10`;
   for (const a of rows) {
     let j;
     try { j = await videoJob(ctx.deps, a.job); } catch (_) { continue; }
     if (j.state === 'done') {
-      await ctx.tx`update social_assets set status = 'ready', meta = meta || ${ctx.tx.json({ seconds: j.seconds, bytes: j.bytes, voice: !!j.voice, captions: !!j.captions, music: !!j.music, warn: j.warn || '' })}, updated_at = now() where id = ${a.id}`; out.ready++;
+      await ctx.tx`update social_assets set status = 'ready', meta = meta || ${ctx.tx.json({ seconds: j.seconds, bytes: j.bytes, voice: !!j.voice, captions: !!j.captions, music: !!j.music, brollUsed: !!(j.broll && !j.broll.error), warn: j.warn || '' })}, updated_at = now() where id = ${a.id}`; out.ready++;
     } else if (j.state === 'failed' || j.state === 'lost' || (new Date(a.created_at).getTime() < ctx.now.getTime() - 30 * 60e3)) {
       await ctx.tx`update social_assets set status = 'failed', error = ${j.error || 'The video took too long.'}, updated_at = now() where id = ${a.id}`; out.failed++;
     }
@@ -397,4 +557,4 @@ export async function assetsTick(ctx) {
   return out;
 }
 
-export const HANDLERS = { erpSocialAssets, erpSocialCard, erpSocialAiPhoto, erpSocialScript, erpSocialVideo, erpSocialAssetAct, erpSocialClipRequest, erpSocialWebPhotos, erpSocialAiModels };
+export const HANDLERS = { erpSocialAssets, erpSocialCard, erpSocialAiPhoto, erpSocialScript, erpSocialVideo, erpSocialAssetAct, erpSocialClipRequest, erpSocialWebPhotos, erpSocialAiModels, erpSocialRules, erpSocialPexels, erpSocialInspo, erpSocialLearn };

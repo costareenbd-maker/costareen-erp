@@ -126,7 +126,7 @@ export async function runJob(deps, job) {
     // social posts (handlers/social.js): publish what is due, finish Instagram uploads, read the figures
     const social = await maybe('./handlers/social.js', 'socialTick');
     let sids = [];
-    try { sids = (await sql`select business_id from social_posts where (state in ('scheduled', 'publishing')) or (state = 'published' and published_at > now() - interval '30 days' and (stats_at is null or stats_at < now() - interval '1 hour')) union select business_id from social_assets where status = 'rendering'`).map((r) => r.business_id); } catch (_) { sids = []; }
+    try { sids = (await sql`select business_id from social_posts where (state in ('scheduled', 'publishing')) or (state = 'published' and published_at > now() - interval '30 days' and (stats_at is null or stats_at < now() - interval '1 hour')) union select business_id from social_assets where status = 'rendering' union select business_id from social_inspo where status = 'studying' union select business_id from social_posts where state = 'published' and published_at > now() - interval '60 days' group by business_id`).map((r) => r.business_id); } catch (_) { sids = []; }
     if (social && sids.length) for (const row of await owners(sql, sids)) { try { out['social:' + row.name] = await asBusiness(deps, row, 'social:tick', (ctx) => social(ctx)); } catch (e) { out['social:' + row.name] = String((e && e.message) || e); } }
   } else if (job === 'drive') {
     // copies of new files into each connected owner's Google Drive

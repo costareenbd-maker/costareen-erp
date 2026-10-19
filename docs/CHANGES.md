@@ -2455,3 +2455,25 @@ Tests: socialmake 29, social 37, inbox 163, push 22. Live: cards drawn (with the
 reel rendered with voice + captions and uploaded.
 NOT done: AI photos until the Google key has billing; stock b-roll (Pexels) and the inspiration box are S3;
 Facebook Reels/stories publishing needs pages_manage_posts in the App Review for pages the owner does not admin.
+
+## social-s3-1 (20 Oct 2026) - advertising automation S3: inspiration, rules, the learning loop, stock b-roll
+On Campaigns > Advertisement (handlers/socialmake.js, migration 131 social_inspo):
+- **Inspiration**: paste a reel/post link, upload a saved video, or describe one in words. The render server fetches
+  the link (yt-dlp, best effort - YouTube and Instagram refuse datacenter servers, the message then says "upload the
+  file") or takes the uploaded file, cuts six frames and the sound, uploads them to the file store; the minute timer
+  hands them to Gemini, which writes a **style card** (hook + type, structure, shots, pace, captions, sound, why it
+  works, copy this, avoid). **Make a reel in this style** opens the reel form with the card chosen; the writer follows it.
+- **Rules**: six built-in rules always on (price in every post, one product, no fake scarcity, Bangla first, never out
+  of stock, claims only from the product's details) plus the owner's own lines, posting times and a daily cap. Every
+  caption and script writer gets them. Enforced at publish time: a product with no stock is refused; more than the
+  daily cap is refused (schedule for later instead).
+- **What worked** (the learning loop): nightly, every published post of the last 60 days is scored (reach/plays +
+  5×reactions + 10×comments + 20×shares/saves + 3×clicks), the score and its % of the median kept on the post, and
+  the best hook types, formats, hours and products summarised; the writers are told what has worked.
+- **Stock b-roll**: the owner's Pexels key (free) is checked and sealed; with it, a reel opens on a 3-second stock
+  clip (the writer suggests the search words) with the hook laid over it; off per reel.
+- **Hook rotation**: the hook type used last for a product is left out of the writer's choice.
+Render server: /render/inspo (study), b-roll in /render/video (Pexels or our clip, hook overlay), stop timeout 10 s.
+Tests: socials3 23, socialmake 29, social 37, inbox 163 green.
+NOT done: watching whole pages automatically (needs a paid scraper and bends Meta's terms); posting times are a hint
+to the writer, not an automatic scheduler yet; the learning loop needs published posts with figures (none yet).

@@ -22,6 +22,7 @@ const JOBS = path.join(DATA, 'jobs');
 const MAX = 6 * 1024 * 1024, MAX_VIDEO = 48 * 1024 * 1024;
 const FFMPEG = process.env.FFMPEG || 'ffmpeg', FFPROBE = process.env.FFPROBE || 'ffprobe';
 const PYTHON = process.env.CZRENDER_PY || path.join(__dirname, 'venv', 'bin', 'python3'), TTS = path.join(__dirname, 'tts.py');
+const YTDLP = process.env.CZRENDER_YTDLP || path.join(__dirname, 'venv', 'bin', 'yt-dlp');
 const FONTS = process.env.CZRENDER_FONTS || '/usr/share/fonts';
 const STORE_RE = /^https:\/\/[a-z0-9-]+\.supabase\.co\/storage\/v1\//;
 
@@ -105,6 +106,39 @@ async function speak(dir, text, voice, rate) {
   if (!info.audio) throw new Error('the voice came back empty');
   return { file: mp3, words, seconds: info.duration || (words.length ? words[words.length - 1].end : 0) };
 }
+/** A transparent picture of a page at W x H (text laid over a clip). */
+async function overlayPng(html, W, H) {
+  return withPage(async (page) => {
+    await page.setContent(html, { waitUntil: 'load', timeout: 20000 });
+    await page.evaluate(() => document.fonts && document.fonts.ready).catch(() => {});
+    return page.screenshot({ type: 'png', omitBackground: true, clip: { x: 0, y: 0, width: W, height: H } });
+  }, { width: W, height: H });
+}
+async function putTo(url, bytes, contentType) {
+  if (!STORE_RE.test(String(url || ''))) throw new Error('nowhere to upload');
+  const r = await fetch(url, { method: 'PUT', headers: { 'Content-Type': contentType, 'x-upsert': 'true' }, body: bytes });
+  if (!r.ok) throw new Error('upload ' + r.status + ' ' + (await r.text()).slice(0, 120));
+}
+/** Stock b-roll from Pexels (the ERP passes the owner's key): one portrait clip of at least `seconds`, the smallest file that still covers the frame. */
+async function pexelsClip(dir, key, query, W, H, seconds) {
+  const r = await fetch('https://api.pexels.com/videos/search?' + new URLSearchParams({ query, per_page: '15', orientation: H > W ? 'portrait' : W > H ? 'landscape' : 'square', size: 'medium' }), { headers: { Authorization: key } });
+  if (!r.ok) throw new Error('Pexels ' + r.status);
+  const j = await r.json();
+  let best = null;
+  for (const v of j.videos || []) {
+    if ((v.duration || 0) < seconds) continue;
+    for (const f of v.video_files || []) {
+      if (!/mp4/i.test(f.file_type || '') || !(f.width >= W * 0.6 && f.height >= H * 0.6)) continue;
+      const area = f.width * f.height;
+      if (!best || area < best.area) best = { url: f.link, area, id: v.id, user: v.user && v.user.name };
+    }
+  }
+  if (!best) throw new Error('no Pexels clip fits ' + query);
+  const f = path.join(dir, 'broll.mp4');
+  fs.writeFileSync(f, await fetchBytes(best.url, 60 * 1024 * 1024));
+  return { file: f, id: best.id, user: best.user };
+}
+
 /** Captions the way the short-video tools do them - 3-5 words a cue, big, outlined, the spoken word lit - but drawn by
  *  the browser (perfect Bengali shaping) as transparent PNGs, one per spoken word, laid over the video for that word's time. */
 function captionGroups(words) {
@@ -163,6 +197,21 @@ async function buildVideo(id, job) {
     const secs = Math.max(2, Math.min(60, Number(job.clip.seconds) || Math.min(15, info.duration || 15)));
     parts.push({ file: src, kind: 'video', seconds: Math.min(secs, info.duration || secs), hasAudio: info.audio && !job.clip.mute });
   }
+  let brollInfo = null;
+  if (job.broll && (job.broll.key && job.broll.query || STORE_RE.test(String(job.broll.url || '')))) {
+    try {
+      const secs = Math.max(2, Math.min(6, Number(job.broll.seconds) || 3));
+      let file;
+      if (job.broll.url) { file = path.join(dir, 'broll.src'); fs.writeFileSync(file, await fetchBytes(job.broll.url, 60 * 1024 * 1024)); }
+      else { const px = await pexelsClip(dir, job.broll.key, String(job.broll.query), W, H, secs); file = px.file; brollInfo = { pexels: px.id, by: px.user }; }
+      const info = await probe(file);
+      if (info.video) {
+        const part = { file, kind: 'video', seconds: Math.min(secs, info.duration || secs), hasAudio: false };
+        if (typeof job.broll.html === 'string' && job.broll.html) { part.overlay = path.join(dir, 'broll-over.png'); fs.writeFileSync(part.overlay, await overlayPng(job.broll.html, W, H)); }
+        parts.unshift(part);
+      }
+    } catch (e) { brollInfo = { error: String((e && e.message) || e).slice(0, 160) }; }
+  }
   const slides = Array.isArray(job.slides) ? job.slides.slice(0, 20) : [];
   for (let i = 0; i < slides.length; i++) {
     const s = slides[i]; if (!s || typeof s.html !== 'string') continue;
@@ -204,21 +253,25 @@ async function buildVideo(id, job) {
       fc.push('[' + i + ':v]scale=' + (W * 2) + ':' + (H * 2) + ':force_original_aspect_ratio=increase,crop=' + (W * 2) + ':' + (H * 2) + ',zoompan=z=' + z + ':x=' + x + ":y='(ih-ih/zoom)/2':d=" + N + ':s=' + W + 'x' + H + ':fps=' + FPS + ',setsar=1,format=yuv420p[v' + i + ']');
     }
   });
+  // the hook over a b-roll clip
+  const extraIn = [];
+  parts.forEach((p, i) => { if (p.overlay) { args.push('-i', p.overlay); const idx = parts.length + extraIn.length; extraIn.push(p.overlay); fc.push('[v' + i + '][' + idx + ':v]overlay=0:0[vo' + i + ']'); } });
+  const vname = (i) => (parts[i].overlay ? 'vo' + i : 'v' + i);
   // crossfades between the parts
   const TR = 0.5;
-  let last = 'v0', total = parts[0].seconds;
+  let last = vname(0), total = parts[0].seconds;
   for (let i = 1; i < parts.length; i++) {
     const out = i === parts.length - 1 ? 'vout' : 'x' + i;
-    fc.push('[' + last + '][v' + i + ']xfade=transition=fade:duration=' + TR + ':offset=' + (total - TR).toFixed(2) + '[' + out + ']');
+    fc.push('[' + last + '][' + vname(i) + ']xfade=transition=fade:duration=' + TR + ':offset=' + (total - TR).toFixed(2) + '[' + out + ']');
     total += parts[i].seconds - TR; last = out;
   }
-  if (parts.length === 1) fc.push('[v0]copy[vout]');
+  if (parts.length === 1) fc.push('[' + vname(0) + ']copy[vout]');
   // the captions laid over, one picture per spoken word for its time; BT.709 tagged so colours do not shift
   let vlast = 'vout', capInputs = 0;
   if (captions && captions.pngs.length) {
     const y = H - captions.capH - Math.round(H * 0.10);
     captions.pngs.forEach((c, k) => {
-      args.push('-i', c.file); const idx = parts.length + capInputs; capInputs++;
+      args.push('-i', c.file); const idx = parts.length + extraIn.length + capInputs; capInputs++;
       const out = 'vc' + k;
       fc.push('[' + vlast + '][' + idx + ':v]overlay=0:' + y + ":enable='between(t," + c.start.toFixed(2) + ',' + c.end.toFixed(2) + ")'[" + out + ']');
       vlast = out;
@@ -227,7 +280,7 @@ async function buildVideo(id, job) {
   fc.push('[' + vlast + ']scale=out_color_matrix=bt709:out_range=tv,setparams=color_primaries=bt709:color_trc=bt709:colorspace=bt709,format=yuv420p[vfinal]');
   // audio: the voice (and music under it at low volume), else the clip's own sound (plus music), else music alone, else silence
   const amix = [];
-  let ai = parts.length + capInputs;
+  let ai = parts.length + extraIn.length + capInputs;
   if (voice) { args.push('-i', voice); fc.push('[' + ai + ':a]aformat=sample_rates=48000:channel_layouts=stereo,apad[avoice]'); amix.push('[avoice]'); ai++; }
   else if (parts[0].kind === 'video' && parts[0].hasAudio) { fc.push('[0:a]aformat=sample_rates=48000:channel_layouts=stereo,apad[aclip]'); amix.push('[aclip]'); }
   if (music) { const vol = Math.max(0.05, Math.min(1, Number(job.music.volume) || (amix.length ? 0.18 : 0.6))); args.push('-stream_loop', '-1', '-i', music); fc.push('[' + ai + ':a]aformat=sample_rates=48000:channel_layouts=stereo,volume=' + vol + ',afade=t=out:st=' + Math.max(0, total - 3).toFixed(2) + ':d=3[amusic]'); amix.push('[amusic]'); ai++; }
@@ -244,7 +297,37 @@ async function buildVideo(id, job) {
   if (!(job.upload && STORE_RE.test(String(job.upload.url || '')))) throw new Error('nowhere to upload');
   const r = await fetch(job.upload.url, { method: 'PUT', headers: { 'Content-Type': String(job.upload.contentType || 'video/mp4'), 'x-upsert': 'true' }, body: bytes });
   if (!r.ok) throw new Error('upload ' + r.status + ' ' + (await r.text()).slice(0, 120));
-  return { bytes: bytes.length, seconds: Number(total.toFixed(1)), voice: !!voice, captions: !!(captions && captions.pngs.length), music: !!music, warn: voiceWarn };
+  return { bytes: bytes.length, seconds: Number(total.toFixed(1)), voice: !!voice, captions: !!(captions && captions.pngs.length), music: !!music, broll: brollInfo, warn: voiceWarn + (brollInfo && brollInfo.error ? ' b-roll: ' + brollInfo.error : '') };
+}
+/** job: { url?, clipUrl?, uploads: { frames: [url x6], audio: url } } -> meta about the video; frames and audio go to the given addresses. */
+async function studyVideo(id, job) {
+  const dir = path.join(JOBS, id); fs.mkdirSync(dir, { recursive: true });
+  let src = path.join(dir, 'src.mp4'), meta = {};
+  if (STORE_RE.test(String(job.clipUrl || ''))) fs.writeFileSync(src, await fetchBytes(job.clipUrl, 150 * 1024 * 1024));
+  else if (/^https?:\/\//.test(String(job.url || ''))) {
+    const out = await run(YTDLP, ['--no-warnings', '--no-playlist', '-f', 'b[height<=720][ext=mp4]/b[ext=mp4]/b', '--max-filesize', '80M', '--match-filter', 'duration<=300', '-o', path.join(dir, 'src.%(ext)s'), '--print-json', '--no-simulate', String(job.url)], { timeout: 180000 })
+      .catch((e) => { const m = String(e.message || e); throw new Error(/Sign in|login|cookies/i.test(m) ? 'This site will not give the video to a server: save the video on your phone and upload the file instead.' : 'Could not fetch the link: ' + m.slice(-160)); });
+    try { const j = JSON.parse(out.trim().split('\n').pop()); meta = { title: String(j.title || '').slice(0, 200), by: String(j.uploader || j.channel || '').slice(0, 100), views: Number(j.view_count || 0), likes: Number(j.like_count || 0), comments: Number(j.comment_count || 0), description: String(j.description || '').slice(0, 800), site: String(j.extractor_key || '') }; src = path.join(dir, 'src.' + (j.ext || 'mp4')); } catch (_) { /* no meta */ }
+    if (!fs.existsSync(src)) { const f = fs.readdirSync(dir).find((n) => n.startsWith('src.')); if (f) src = path.join(dir, f); }
+  } else throw new Error('a link or a file is needed');
+  const info = await probe(src);
+  if (!info.video) throw new Error('that is not a video');
+  const dur = info.duration || 30;
+  meta.seconds = Number(dur.toFixed(1)); meta.width = info.width; meta.height = info.height;
+  const n = (job.uploads && job.uploads.frames || []).length;
+  for (let i = 0; i < n; i++) {
+    const t = Math.min(dur - 0.2, Math.max(0, (dur * (i + 0.5)) / n));
+    const f = path.join(dir, 'f' + i + '.jpg');
+    await run(FFMPEG, ['-y', '-v', 'error', '-ss', t.toFixed(2), '-i', src, '-frames:v', '1', '-vf', 'scale=480:-2', '-q:v', '5', f]);
+    await putTo(job.uploads.frames[i], fs.readFileSync(f), 'image/jpeg');
+  }
+  if (job.uploads && job.uploads.audio && info.audio) {
+    const a = path.join(dir, 'a.mp3');
+    await run(FFMPEG, ['-y', '-v', 'error', '-i', src, '-t', '120', '-vn', '-ac', '1', '-ar', '22050', '-b:a', '48k', a]);
+    await putTo(job.uploads.audio, fs.readFileSync(a), 'audio/mpeg');
+    meta.hasAudio = true;
+  }
+  return { meta, frames: n };
 }
 function startJob(id, job) {
   jobs.set(id, { state: 'queued', at: Date.now() });
@@ -255,7 +338,7 @@ async function pump() {
   videoBusy = true;
   const { id, job } = queue.shift();
   const j = jobs.get(id); j.state = 'working';
-  try { const r = await buildVideo(id, job); Object.assign(j, { state: 'done', ...r }); }
+  try { const r = job.study ? await studyVideo(id, job) : await buildVideo(id, job); Object.assign(j, { state: 'done', ...r }); }
   catch (e) { j.state = 'failed'; j.error = String((e && e.message) || e).slice(0, 300); console.error(new Date().toISOString(), 'video', id, j.error); }
   finally { fs.rmSync(path.join(JOBS, id), { recursive: true, force: true }); videoBusy = false; pump(); }
 }
@@ -315,6 +398,14 @@ const server = http.createServer(async (req, res) => {
       res.writeHead(200, { 'Content-Type': 'image/png', 'Content-Length': img.length, 'Cache-Control': 'no-store' });
       return res.end(img);
     }
+    if (req.method === 'POST' && p === '/render/inspo') {
+      if (queue.length >= 6) return send(res, 503, { error: 'busy' });
+      const j = JSON.parse(await body(req));
+      if (!(j.url || j.clipUrl)) return send(res, 400, { error: 'a link or a file' });
+      const id = crypto.randomUUID().replace(/-/g, '');
+      startJob(id, { ...j, study: true });
+      return send(res, 200, { id, state: 'queued' });
+    }
     if (req.method === 'POST' && p === '/render/video') {
       if (queue.length >= 6) return send(res, 503, { error: 'busy' });
       const j = JSON.parse(await body(req, MAX_VIDEO));
@@ -327,7 +418,7 @@ const server = http.createServer(async (req, res) => {
     const m = /^\/render\/job\/([0-9a-f]{32})$/.exec(p);
     if (req.method === 'GET' && m) {
       const j = jobs.get(m[1]);
-      return j ? send(res, 200, { id: m[1], state: j.state, error: j.error || '', bytes: j.bytes || 0, seconds: j.seconds || 0, voice: !!j.voice, captions: !!j.captions, music: !!j.music, warn: j.warn || '' }) : send(res, 404, { error: 'no such job' });
+      return j ? send(res, 200, { id: m[1], state: j.state, error: j.error || '', bytes: j.bytes || 0, seconds: j.seconds || 0, voice: !!j.voice, captions: !!j.captions, music: !!j.music, broll: j.broll || null, warn: j.warn || '', meta: j.meta || null, frames: j.frames || 0 }) : send(res, 404, { error: 'no such job' });
     }
     return send(res, 404, { error: 'not found' });
   } catch (e) {

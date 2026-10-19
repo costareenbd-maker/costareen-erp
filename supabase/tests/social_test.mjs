@@ -53,6 +53,8 @@ web.on(/graph\.facebook\.com\/v21\.0\//, (url, opts) => {
   return { status: 404, body: { error: { message: 'no route ' + p } } };
 });
 
+await mgr('erpSocialRules', [{ save: '', maxDay: 10 }]);   // this suite publishes more than the default two a day
+
 // ---- 1. before the Meta login: drafts can be written, nothing can go out
 let r = await sales('erpSocialPosts', [{}]);
 check('the list opens for staff; not connected yet', r.ok && !r.result.connected && r.result.posts.length === 0 && !r.result.canPublish, r);
