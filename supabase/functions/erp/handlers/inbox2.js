@@ -14,7 +14,7 @@ import { feat, needFeat, budget, planOf, ownerSwitches, ownOn, DEFAULT_OFF, FEAT
 import { templatesCreate, templatesCheck, sendTemplate, templateName, TEMPLATE_KEYS } from './inboxch.js';
 import { writeMsg } from './inbox.js';
 import { KINDS, KIND_NAME, CAN, chSecret, chSecretSet, evoQr, evoState, evoSetHook, metaSubscribe, commentModerate, commentReply } from './inboxch.js';
-import { profile, PROFILE_DEFAULTS, agentReply, deliver, orderEvent, task, leadUpsert, kbSearch, REASONS, inWindow } from './inbox.js';
+import { scopeOf, profile, PROFILE_DEFAULTS, agentReply, deliver, orderEvent, task, leadUpsert, kbSearch, REASONS, inWindow } from './inbox.js';
 
 const str = (v) => String(v == null ? '' : v).trim();
 const H24 = 24 * 3600e3;
@@ -689,6 +689,74 @@ export async function erpSavedReplies(ctx, payload) {
 }
 
 // ------------------------------------------------------------------ analytics and the AI work log
+/** Day review (owner 19 Oct 2026): one short summary per customer per day, so the owner reads what happened without
+ *  opening the chats. Summaries are kept (inbox_digests) and rewritten only when the chat grew since. */
+export async function erpInboxDigest(ctx, payload) {
+  need(ctx, 'manager');
+  const p = payload || {};
+  const day = /^\d{4}-\d{2}-\d{2}$/.test(str(p.day)) ? str(p.day) : todayStr(ctx.now);
+  const from = new Date(day + 'T00:00:00+06:00'), to = new Date(from.getTime() + H24);   // Dhaka has no summer time
+  const sc = await scopeOf(ctx), CH = sc.channels || ['-'];
+  if (p.again) await ctx.tx`delete from inbox_digests where business_id = ${ctx.biz} and day = ${day}`;   // Refresh: read the chats again
+  const rows = await ctx.tx`
+    select v.id, v.contact_id, v.is_test, v.mode, v.handover_reason, v.handover_at, v.ordered, ch.kind, ch.name as channel, c.name, c.phone,
+           count(m.id)::int msgs, count(*) filter (where m.direction = 'in')::int inn, count(*) filter (where m.author = 'ai')::int ai, count(*) filter (where m.author = 'team')::int team,
+           max(m.created_at) last_at, (array_agg(m.direction order by m.id desc))[1] last_dir,
+           d.summary, d.msgs as done_msgs
+    from inbox_messages m join inbox_conversations v on v.id = m.conversation_id join inbox_channels ch on ch.id = v.channel_id left join inbox_contacts c on c.id = v.contact_id
+    left join inbox_digests d on d.conversation_id = v.id and d.day = ${day}
+    where m.business_id = ${ctx.biz} and m.created_at >= ${from} and m.created_at < ${to} and m.direction in ('in', 'out')
+      and (${!sc.channels} or v.channel_id::text = any(${CH}))
+    group by v.id, ch.kind, ch.name, c.name, c.phone, d.summary, d.msgs order by max(m.created_at) desc`;
+  const orders = await ctx.tx`select conversation_id, no, status, items, delivery_charge, taken_by from chat_orders where business_id = ${ctx.biz} and created_at >= ${from} and created_at < ${to}`;
+  const byConv = {};
+  for (const o of orders) (byConv[o.conversation_id] = byConv[o.conversation_id] || []).push(o);
+  const val = (o) => (o.items || []).reduce((t, x) => t + num(x.qty) * num(x.price), 0) + num(o.delivery_charge);
+  const pr = await profile(ctx, false);
+  const out = [], totals = { chats: rows.length, orders: 0, amount: 0, handed: 0, waiting: 0, aiAlone: 0, unanswered: 0 };
+  let made = 0, left = 0;
+  const MAX = p.make === false ? 0 : 20;   // summaries written per call: the page asks again for the rest
+  for (const r of rows) {
+    const os = byConv[r.id] || [];
+    const amount = os.filter((o) => o.status !== 'cancelled').reduce((t, o) => t + val(o), 0);
+    const handed = !!(r.handover_at && new Date(r.handover_at) >= from && new Date(r.handover_at) < to);
+    const outcome = os.length ? 'order' : handed ? 'handover' : r.last_dir === 'in' && r.mode === 'human' ? 'waiting' : r.last_dir === 'in' ? 'unanswered' : r.team > 0 ? 'team' : 'ai';
+    if (os.length) { totals.orders += os.length; totals.amount += amount; }
+    if (handed) totals.handed++;
+    if (outcome === 'waiting') totals.waiting++;
+    if (outcome === 'unanswered') totals.unanswered++;
+    if (outcome === 'ai') totals.aiAlone++;
+    let summary = str(r.summary);
+    const fresh = r.done_msgs === r.msgs && summary;
+    if (!fresh) {
+      if (made >= MAX) { left++; summary = ''; }
+      else {
+        made++;
+        const hist = await ctx.tx`select direction, author, text, transcript, seen_as, created_at from inbox_messages where conversation_id = ${r.id} and created_at >= ${from} and created_at < ${to} order by id limit 80`;
+        const lines = hist.map((m) => formatDate(new Date(m.created_at), 'h:mm a') + ' ' + (m.direction === 'in' ? 'Customer' : m.author === 'team' ? 'Team' : m.author === 'ai' ? 'Shop (AI)' : 'Note') + ': ' +
+          str(m.text || '') + (m.transcript ? ' [voice: ' + m.transcript + ']' : '') + (m.seen_as ? ' [photo]' : '')).join('\n');
+        const facts = os.map((o) => 'Order ' + o.no + ' (' + o.status + ', ' + (o.taken_by === 'ai' ? 'taken by the AI' : 'taken by ' + o.taken_by) + ') total BDT ' + Math.round(val(o)) + ': ' + (o.items || []).map((x) => x.name + ' x ' + num(x.qty)).join(', ')).join('\n') +
+          (handed ? '\nHanded to the team: ' + (REASONS[r.handover_reason] || r.handover_reason || '') : '');
+        try {
+          const { parts } = await gemini(ctx, { systemInstruction: { parts: [{ text: 'You write the owner\'s evening review for "' + pr.name + '". Use only the conversation and facts given. Never invent prices or promises.' }] },
+            contents: [{ role: 'user', parts: [{ text: 'Customer: ' + (r.name || 'unknown') + (r.phone ? ' ' + r.phone : '') + '\nFacts:\n' + (facts || 'none') + '\n\nConversation today:\n' + lines +
+              '\n\nIn at most two short sentences, plain English, no greeting: what the customer wanted, what was done (by the AI or by the team), the result, and what is still open if anything. Numbers as figures.' }] }],
+            generationConfig: { temperature: 0.2 } }, 'digest', r.id);
+          summary = str(textOf(parts)).replace(/\s+/g, ' ').trim().slice(0, 600);
+        } catch (e) { summary = ''; left++; made--; }
+        if (summary) await ctx.tx`insert into inbox_digests (business_id, conversation_id, day, summary, msgs) values (${ctx.biz}, ${r.id}, ${day}, ${summary}, ${r.msgs})
+                                   on conflict (conversation_id, day) do update set summary = excluded.summary, msgs = excluded.msgs, made_at = now()`;
+      }
+    }
+    out.push({ conv: r.id, name: str(r.name) || 'Customer', phone: str(r.phone), channel: KIND_NAME[r.kind] || r.kind, channelName: r.channel, test: !!r.is_test,
+               outcome, orders: os.map((o) => ({ no: o.no, status: o.status, total: Math.round(val(o)) })), amount: Math.round(amount), reason: handed ? (REASONS[r.handover_reason] || r.handover_reason) : '',
+               msgs: r.msgs, inn: r.inn, ai: r.ai, team: r.team, last: formatDate(new Date(r.last_at), 'h:mm a'), summary, pending: !summary });
+  }
+  totals.amount = Math.round(totals.amount);
+  const prev = formatDate(new Date(from.getTime() - H24), 'yyyy-MM-dd'), next = formatDate(to, 'yyyy-MM-dd');
+  return { day, label: formatDate(from, 'EEEE d MMM yyyy'), prev, next: to <= ctx.now ? next : null, totals, rows: out, left };
+}
+
 export async function erpInboxStats(ctx, payload) {
   await needFeat(ctx, 'analytics');
   need(ctx, 'manager');
@@ -906,4 +974,4 @@ export async function erpInboxTemplates(ctx, payload) {
 }
 
 export const HANDLERS = { erpInboxTemplates, erpInboxGroups, erpPlatformInboxPlan, erpInboxFeatures, erpInboxFeatureMap, erpInboxExport, erpBookings, erpBookingAct, erpInboxChannels, erpInboxChannelSave, erpInboxChannelAct, erpInboxGoLive, erpInboxProfile, erpAgentDesk, erpInboxKb, erpShopOffers,
-  erpChatOrders, erpChatOrderAct, erpInboxLeads, erpInboxBroadcasts, erpInboxFollowups, erpInboxComments, erpSavedReplies, erpInboxStats, erpAiWork };
+  erpChatOrders, erpChatOrderAct, erpInboxLeads, erpInboxBroadcasts, erpInboxFollowups, erpInboxComments, erpSavedReplies, erpInboxStats, erpInboxDigest, erpAiWork };

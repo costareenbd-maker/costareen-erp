@@ -2378,3 +2378,15 @@ Owner asked why the AI did not answer a real chat (a Chinese supplier's message)
 where the AI answers only chats that start with "test <code>" - by design. The chat header said "AI is handling this chat",
 which was misleading. The conversation now carries the channel's status and AI switch; the header shows
 "PRACTICE · AI NOT ANSWERING · REPLY YOURSELF" (or "AI IS OFF · REPLY YOURSELF") with Bangla. Tests: inbox 156.
+
+## inbox-day-review-1 (19 Oct 2026)
+Owner: "a page inside the Inbox where I can see the summary for every customer that day, so I don't need to open the full
+conversation". New Inbox tab **Day review** (owners and managers): for the chosen day (‹ › Today), the day's figures
+(customers wrote, orders + amount, AI handled alone, needed a person, waiting for the team, no reply yet) and one line per
+customer: name, outcome tag (ORDER ৳x / NEEDED A PERSON / WAITING / NO REPLY YET / TEAM ANSWERED / AI HANDLED IT), the
+order numbers, channel, message counts, and a two-sentence AI summary (what they wanted, what was done, result, what is
+open). "Open chat" jumps to the conversation. Summaries are kept in inbox_digests (128) per chat per day and rewritten
+only when the chat grew, or on Refresh; 20 are written per call, the page keeps asking until done. Honours the team's
+channel scope. Server erpInboxDigest (manager; read in the log), Bangla labels. Tests: inbox 163. Live: today's 3 chats
+summarised (the Chinese supplier shows as "no reply yet").
+NOT done: no nightly e-mail/WhatsApp of the review (ask if wanted); summaries are English only.

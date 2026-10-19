@@ -523,6 +523,30 @@ check('Use for Instagram', r.ok && (await sql`select count(*)::int n from inbox_
 r = await owner('erpMetaDisconnect', [{}]);
 check('Disconnect forgets the login; the channels stay', r.ok && !r.result.connected && (await sql`select count(*)::int n from inbox_channels where business_id = ${FIX.B} and external_id in ('PAGE9', 'PH9', 'IG9')`)[0].n === 3, r.result);
 
+// ---- 23b. Day review (owner 19 Oct 2026): one summary per customer per day, kept, rewritten only when the chat grew
+{
+  script = [[{ text: 'Rafi ordered 2 rolls of black PLA; the AI took order ' + co.no + ' for home delivery.' }]];
+  r = await sales('erpInboxDigest', [{}]);
+  check('day review: sales staff cannot', !r.ok, r);
+  r = await owner('erpInboxDigest', [{}]);
+  const row = r.ok && r.result.rows.find((x) => x.conv === conv1);
+  const orow = r.ok && r.result.rows.find((x) => x.orders.some((o) => o.no === co.no));
+  check('day review: today lists the order chat with its order and amount, and a summary written by the AI', orow && orow.outcome === 'order' && orow.amount > 0 && row && row.summary && r.result.rows.some((x) => /black PLA/.test(x.summary)), r.ok ? r.result.rows : r);
+  check('day review: the totals count the order', r.ok && r.result.totals.orders >= 1 && r.result.totals.amount >= row.amount && r.result.totals.chats >= 1, r.result && r.result.totals);
+  script = [];   // nothing more scripted: a second call must not ask the AI again
+  const calls = (await sql`select count(*)::int n from ai_work where business_id = ${FIX.B} and purpose = 'digest'`)[0].n;
+  r = await owner('erpInboxDigest', [{}]);
+  const row2 = r.result.rows.find((x) => x.conv === conv1);
+  check('day review: the summary is kept, not written again', row2 && row2.summary === row.summary && (await sql`select count(*)::int n from ai_work where business_id = ${FIX.B} and purpose = 'digest'`)[0].n === calls);
+  script = [[{ text: 'Rewritten.' }]];
+  r = await owner('erpInboxDigest', [{ again: true }]);
+  check('day review: Refresh writes them again', r.ok && r.result.rows.some((x) => x.summary === 'Rewritten.') && (await sql`select count(*)::int n from ai_work where business_id = ${FIX.B} and purpose = 'digest'`)[0].n > calls, r.result && r.result.rows.map((x) => x.summary));
+  r = await owner('erpInboxDigest', [{ day: '2020-01-01' }]);
+  check('day review: an empty day', r.ok && r.result.rows.length === 0 && r.result.totals.chats === 0 && r.result.next === '2020-01-02', r);
+  r = await mgr('erpInboxDigest', [{ day: 'bad' }]);
+  check('day review: a manager may; a bad day means today', r.ok && r.result.day === new Date(Date.now() + 6 * 3600e3).toISOString().slice(0, 10), r);
+}
+
 // ---- 24. the order report: who took the orders
 r = await owner('erpInboxStats', [{ days: 7 }]);
 check('analytics shows who took the orders (the AI, the product page) with their value', r.ok && r.result.orders.byTaker.some((x) => x.who === 'The AI' && x.value > 0) && r.result.orders.byTaker.some((x) => x.who === 'Product page'), r.result && r.result.orders);
