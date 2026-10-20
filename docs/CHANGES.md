@@ -2700,3 +2700,11 @@ Owner: 49 lines instead of 55, wrong totals, price not in the cost box, "Polymak
   reader before smart-read-3; that PC likely had the old page open - a refresh loads the new one.
 Not done: no click-through of the real PDF in the preview pane (pdf.js does not draw while it is hidden); checked with the
 same libraries in Node and with the resulting lines on the page and live.
+## Receive stock as a step-by-step form (rvw-1, 21 Oct 2026, Walid)
+
+Stock entry › Receive now shows one step at a time: Supplier & reference → Goods cost → Shipping & costs → Lines → Review & receive into lots, with Back / Next at the bottom (Enter also goes on in the first three steps). The numbers in the FilaDash step bar switch steps.
+- The fields stand one under another in a narrow column centred in the card. The chip groups (goods cost, shipping, split by) are drop-downs.
+- The last step shows a summary (supplier, where from, reference, goods cost, shipping, other costs, each with Edit), the lines and the Receive button.
+- Built as a block at the end of `web/app.html` that only shows parts of the screen built as before; a drop-down clicks the old chip, so receiving, costing and saving are unchanged. After a receive, or when a draft is brought back, it starts again at step 1 (or at Lines when the draft has lines).
+
+**Not done:** not deployed (dev or live), no server change so no test suite run, the Classic look was not checked on screen, and a real receive was not pressed in the new form.

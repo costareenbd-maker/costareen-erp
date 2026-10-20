@@ -38257,6 +38257,191 @@ document.addEventListener('click', function (ev) {
   });
 })();
 </script>
+<!-- rvw-1 (21 Oct 2026, asked by Walid): Stock entry › Receive as a real step-by-step form. Only the current step's
+     fields show (Supplier & reference → Goods cost → Shipping & costs → Lines → Review & receive), with Back / Next
+     at the bottom; the numbers in the step bar switch steps. The chip groups (goods cost, shipping, split by) become
+     drop-downs in the same row as their fields. The last step shows a recap with Edit links, the lines and the
+     Receive button. Nothing is computed or saved differently: the old screen is built as before and only shown one
+     part at a time; a drop-down clicks the old chip, so every existing handler still does the work. -->
+<style>
+.rvw-off { display:none !important; }
+.rvw > div[style*="margin-top:12px"] { margin-top:6px !important; }
+/* one field under the other, in a narrow column (owner, 21 Oct: vertical, not side by side) */
+/* …and the column centred in the card (owner, 21 Oct) */
+.rvw .fields { gap:12px; grid-template-columns:minmax(0, 1fr); }
+.rvw > h2, .rvw > .sub, .rvw > [data-rvwst="0"], .rvw > [data-rvwst="1"], .rvw > [data-rvwst="2"],
+.rvw > .rvw-recap, .rvw > .rvw-nav.narrow { max-width:520px; margin-left:auto !important; margin-right:auto !important; }
+.rvw .chk { padding:2px 0; }
+.rvw .fields + .fields { margin-top:8px; }
+.rvw-nav { display:flex; align-items:center; gap:8px; margin-top:16px; padding-top:12px; border-top:1px solid var(--line, #e8eaf1); }
+.rvw-of { color:var(--muted); font-size:13px; }
+.rvw-of b { color:inherit; font-weight:600; }
+.rvw-recap { max-width:520px; margin:2px 0 14px; border:1px solid var(--line, #e8eaf1); border-radius:12px; }
+.rvw-recap > div { display:grid; grid-template-columns:130px minmax(0, 1fr) auto; gap:10px; align-items:baseline; padding:8px 12px; }
+.rvw-recap > div + div { border-top:1px solid var(--line, #e8eaf1); }
+.rvw-recap .k { display:contents; color:var(--muted); font-size:12.5px; }
+.rvw-recap .k span { color:var(--muted); }
+.rvw-recap .v { font-weight:600; overflow-wrap:anywhere; grid-column:2; grid-row:1; }
+.rvw-recap .k button { grid-column:3; grid-row:1; }
+.rvw-recap button { border:0; background:none; padding:0; color:var(--accent, #5b4ff0); font:inherit; font-size:12px; cursor:pointer; }
+.rvw-back { margin-right:auto; }
+@media (max-width:640px) {
+  .rvw-nav { flex-wrap:wrap; } .rvw-of { flex:1 1 100%; }
+  .rvw-nav > span[style] { display:none; } .rvw-nav .btn { flex:1 1 0; justify-content:center; }
+}
+</style>
+<script>
+var RVW = { step: 0, recv: null, moved: false };
+var RVW_STEPS = ['Supplier & reference', 'Goods cost', 'Shipping & costs', 'Lines', 'Review & receive into lots'];
+function rvwGo(n) {
+  n = Math.max(0, Math.min(4, n));
+  if (n === 4 && !RECV.lines.length) n = 3;
+  RVW.step = n; RVW.moved = true; repaint();
+}
+/** A chip group becomes a drop-down in the row of its fields; changing it clicks the old chip. */
+function rvwChipsToSelect(chips, attr) {
+  var btns = chips.querySelectorAll('button[' + attr + ']');
+  if (!btns.length) return;
+  var lab = chips.previousElementSibling;
+  if (!(lab && lab.matches('label.f'))) lab = null;
+  var text = '';
+  if (lab) [].forEach.call(lab.childNodes, function (x) { if (x.nodeType === 3) text += x.textContent; });
+  var id = 'rvw_' + attr.replace('data-', '');
+  var opts = [].map.call(btns, function (b) {
+    return '<option value="' + esc(b.getAttribute(attr)) + '"' + (b.classList.contains('on') ? ' selected' : '') + '>' + esc(b.textContent) + '</option>';
+  }).join('');
+  var cell = document.createElement('div');
+  cell.innerHTML = '<label class="f" for="' + id + '">' + esc(text.trim()) + '</label><select class="i" id="' + id + '" data-rvwsel="' + attr + '">' + opts + '</select>';
+  var next = chips.nextElementSibling;
+  if (next && next.classList.contains('fields')) next.insertBefore(cell, next.firstChild);
+  else {
+    var f = document.createElement('div'); f.className = 'fields'; f.appendChild(cell);
+    chips.parentNode.insertBefore(f, chips.nextSibling);
+  }
+  chips.classList.add('rvw-off');
+  if (lab) lab.classList.add('rvw-off');
+}
+function rvwRecap() {
+  var s = RECV.ship || {}, from = el('rv_from'), m = RECV.mode || 'none';
+  var goods = m === 'none' ? 'Price book'
+    : m === 'bdt' ? fmt(num(RECV.totalBdt)) + ' TK'
+    : fmt(num(RECV.totalRmb)) + ' ' + esc(RECV.currency || 'RMB') + (num(RECV.rate) ? ' @ ' + esc(String(RECV.rate)) + ' = ' + fmt(recvTotalBdt()) + ' TK' : '');
+  var ship = !s.mode || s.mode === 'none' ? 'None'
+    : s.mode === 'total' ? fmt(num(s.total)) + ' TK'
+    : esc(s.mode) + ' · ' + (num(s.kg) > 0 ? fmt(num(s.kg)) + ' kg = ' + fmt(recvShipBdt()) + ' TK' : 'by product weight') + ' @ ' + esc(String(s.rate || SHIP_RATE[s.mode])) + '/kg';
+  var costs = (RECV.costs || []).filter(function (c) { return num(c.amount) > 0; });
+  var extra = typeof recvExtraBdt === 'function' ? recvExtraBdt() : 0;
+  var box = function (k, v, step) {
+    return '<div><div class="k"><span>' + k + '</span><button type="button" data-rvwgo="' + step + '">Edit</button></div><div class="v">' + v + '</div></div>';
+  };
+  return '<div class="rvw-recap">' +
+    box('Supplier', esc(RECV.supplier || '—'), 0) +
+    box('Where from', esc(from && from.selectedIndex >= 0 ? from.options[from.selectedIndex].text : '—'), 0) +
+    box('Reference', esc(RECV.reference || '—'), 0) +
+    box('Goods cost', goods, 1) +
+    box('Shipping', ship, 2) +
+    box('Other costs', costs.length ? fmt(extra) + ' TK · ' + costs.length + ' item' + (costs.length === 1 ? '' : 's') : 'None', 2) + '</div>';
+}
+function rvwApply() {
+  if (VIEW !== 'stock' || STOCK_TAB !== 'receive') return;
+  var sup = el('rv_sup'), card = sup && sup.closest('.card');
+  if (!card || card.classList.contains('rvw')) return;
+  if (RVW.recv !== RECV) { RVW.recv = RECV; RVW.step = RECV.lines.length ? 3 : 0; }
+  if (RVW.step === 4 && !RECV.lines.length) RVW.step = 3;
+  var step = RVW.step, stage = -1, table = null, saveRow = null;
+  card.classList.add('rvw');
+  [].slice.call(card.children).forEach(function (n) {
+    if (n.contains(sup)) stage = 0;
+    else if (n.querySelector('[data-rvmode]')) stage = 1;
+    else if (n.querySelector('[data-rvship]')) stage = 2;
+    else if (n.querySelector('#rv_search')) stage = 3;
+    else if (n.querySelector('#rv_save') || n.id === 'rv_costsum') stage = 4;
+    if (stage < 0) return;                       // the heading and its help text stay
+    var show = stage === step;
+    if (n.classList.contains('scroll') && n.querySelector('table')) { table = n; show = step >= 3; }
+    if (n.querySelector('#rv_save')) saveRow = n;
+    n.setAttribute('data-rvwst', stage);
+    if (!show) n.classList.add('rvw-off');
+  });
+  [['data-rvmode'], ['data-rvship'], ['data-rvbasis']].forEach(function (a) {
+    [].forEach.call(card.querySelectorAll('.chips'), function (c) { if (c.querySelector('[' + a[0] + ']')) rvwChipsToSelect(c, a[0]); });
+  });
+  // goods cost and shipping: every field of the step in one row (it wraps on a narrow screen)
+  [1, 2].forEach(function (st) {
+    var fs = card.querySelectorAll('[data-rvwst="' + st + '"] .fields, .fields[data-rvwst="' + st + '"]');
+    for (var i = 1; i < fs.length; i++) {
+      while (fs[i].firstChild) fs[0].appendChild(fs[i].firstChild);
+      fs[i].parentNode.removeChild(fs[i]);
+    }
+  });
+  if (step === 4) {
+    var r = document.createElement('div'); r.innerHTML = rvwRecap();
+    card.insertBefore(r.firstChild, table || saveRow);
+    if (saveRow) {
+      var bk = document.createElement('button'); bk.type = 'button'; bk.className = 'btn rvw-back'; bk.setAttribute('data-rvwgo', '3'); bk.textContent = '← Back';
+      saveRow.insertBefore(bk, saveRow.firstChild);
+    }
+  }
+  var nav = document.createElement('div'); nav.className = 'rvw-nav' + (step < 3 ? ' narrow' : '');
+  var of = '<span class="rvw-of">Step <b>' + (step + 1) + '</b> of 5 · ' + esc(RVW_STEPS[step]) + '</span>';
+  if (step === 4) nav.innerHTML = of;
+  else {
+    var noLines = step === 3 && !RECV.lines.length;
+    nav.innerHTML = of + '<span style="flex:1 1 auto"></span>' +
+      (step ? '<button type="button" class="btn" data-rvwgo="' + (step - 1) + '">← Back</button>' : '') +
+      '<button type="button" class="btn primary" data-rvwgo="' + (step + 1) + '"' + (noLines ? ' disabled title="Add at least one product first"' : '') + '>' +
+      (noLines ? 'Add a product to go on' : 'Next: ' + esc(RVW_STEPS[step + 1]) + ' →') + '</button>';
+  }
+  card.appendChild(nav);
+  // the FilaDash step bar above follows this step and switches steps
+  [].forEach.call(document.querySelectorAll('#view .fd20-stp [data-fd20step]'), function (b, i) {
+    var li = b.parentNode, done = i < step;
+    li.className = i === step ? 'cur' : done ? 'done' : '';
+    if (i === step) b.setAttribute('aria-current', 'step'); else b.removeAttribute('aria-current');
+    var numEl = b.querySelector('.num');
+    if (numEl) numEl.innerHTML = done && typeof fd20Ic === 'function' ? fd20Ic('check', 14) : String(i + 1);
+  });
+  if (RVW.moved) {
+    RVW.moved = false;
+    card.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    var first = null;
+    [].some.call(card.querySelectorAll('input.i, select.i'), function (x) {
+      if (!x.offsetParent || (x.type === 'search' && step !== 3)) return false;
+      first = x; return true;
+    });
+    if (first) try { first.focus({ preventScroll: true }); } catch (e) {}
+  }
+}
+var repaintRvw = repaint;
+repaint = function () {
+  var r = repaintRvw.apply(this, arguments);
+  try { rvwApply(); } catch (e) { if (window.console) console.error('rvw', e); }
+  return r;
+};
+document.addEventListener('click', function (e) {
+  var g = e.target.closest && e.target.closest('[data-rvwgo]');
+  if (g && !g.disabled) { e.preventDefault(); rvwGo(Number(g.getAttribute('data-rvwgo'))); return; }
+  var b = e.target.closest && e.target.closest('[data-fd20step]');
+  if (b && VIEW === 'stock' && STOCK_TAB === 'receive') {
+    e.stopImmediatePropagation();
+    rvwGo(['sup', 'cost', 'ship', 'lines', 'save'].indexOf(b.getAttribute('data-fd20step')));
+  }
+}, true);
+document.addEventListener('change', function (e) {
+  var s = e.target.closest && e.target.closest('[data-rvwsel]');
+  if (!s) return;
+  var attr = s.getAttribute('data-rvwsel');
+  var btn = el('view').querySelector('button[' + attr + '="' + String(s.value).replace(/"/g, '') + '"]');
+  if (btn) btn.click();
+});
+// Enter in the first three steps goes on to the next one
+document.addEventListener('keydown', function (e) {
+  if (e.key !== 'Enter' || VIEW !== 'stock' || STOCK_TAB !== 'receive' || RVW.step > 2) return;
+  var t = e.target;
+  if (!t || !t.closest || !t.closest('.rvw') || !/^(INPUT|SELECT)$/.test(t.tagName) || t.type === 'search') return;
+  e.preventDefault(); rvwGo(RVW.step + 1);
+});
+</script>
 <!-- fd-37: the page is styled: show it -->
 <script>(function () { var x = document.getElementById('bootHide'); if (x) x.remove(); })();</script>
 </body>
