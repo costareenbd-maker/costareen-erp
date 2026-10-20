@@ -2750,3 +2750,7 @@ Everything that is filled in stays on the left (Customer, Add products, Invoice 
 Every field that must be filled shows a red `*` after its label, on every screen. Labels already ending in " *" get the star in red; the required fields that had no mark get one: invoice Phone and Name, quotation Project title, stock adjustment Product and Reason, customer Name, business name; so does any input with the `required` attribute (and it is marked `aria-required`). A block at the end of `web/app.html` (`REQ_IDS` lists the unmarked ones); only labels change, nothing about what is checked.
 
 **Not done:** a field that becomes required later must be added to `REQ_IDS` (or given ` *` in its label).
+
+## Edit a product from its Receive line (rvedit-1, 21 Oct 2026, Walid)
+
+Each Receive line has an **Edit** button beside Remove. It opens that product's full product form on the Receive page (on the Lines step); **Save changes** updates the product and the line's name, and leaves the line and its quantity as they are (no second line). Shown only for saved products of the company's own list - not on the joint Receive page, not on file lines still waiting for a choice. A block at the end of `web/app.html` wraps `viewStock` and `saveProduct`.

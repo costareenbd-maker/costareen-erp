@@ -38583,6 +38583,63 @@ function reqMark(root) {
   new MutationObserver(function () { clearTimeout(t); t = setTimeout(function () { reqMark(document); }, 40); }).observe(document.body, { childList: true, subtree: true });
 })();
 </script>
+<!-- rvedit-1 (21 Oct 2026, asked by Walid): an Edit button beside Remove on each Receive line. It opens that product's
+     full product form on the Receive page (the same form the Products screen uses); Save updates the product and the
+     line's name, and leaves the line and its quantity as they are (no second line). Only for lines that are a saved
+     product of the company's own list: not on the joint Receive page, not on file lines still waiting for a choice. -->
+<script>
+var viewStockRvEdit = viewStock;
+viewStock = function () {
+  var h = viewStockRvEdit.apply(this, arguments);
+  if (STOCK_TAB !== 'receive' || (typeof rfPool === 'function' && rfPool())) return h;
+  return h.replace(/<button class="btn small danger" type="button" data-rvdel="(\d+)">Remove<\/button>/g, function (m, i) {
+    var l = RECV.lines[Number(i)];
+    if (!l || !l.sku || l.isNew || l.state === 'amber' || l.state === 'red') return m;
+    return '<span class="row" style="gap:6px;justify-content:flex-end;flex-wrap:nowrap">' +
+      '<button class="btn small" type="button" data-rvedit="' + i + '" title="Change this product’s details">Edit</button>' + m + '</span>';
+  });
+};
+document.addEventListener('click', function (e) {
+  var b = e.target.closest && e.target.closest('[data-rvedit]');
+  if (!b) return;
+  var l = RECV.lines[Number(b.getAttribute('data-rvedit'))];
+  if (!l || !l.sku) return;
+  if (PRODUCT_FORM && !confirm('Close the product form that is open and edit ' + l.name + '?')) return;
+  if (!LISTS) loadLists();
+  b.disabled = true;
+  srv('erpProduct', [l.sku], function (p) {
+    if (!p) { toast('That product is no longer on the list.', true); repaint(); return; }
+    p.isNew = false; p.returnTo = 'receive'; p.__rvEdit = l.sku;
+    PRODUCT_FORM = p;
+    if (typeof RVW !== 'undefined' && RVW.step > 3) RVW.step = 3;   // the form lives on the Lines step
+    repaint();
+    var f = document.querySelector('#view .card[style*="--series-1"]');
+    if (f) f.scrollIntoView({ block: 'start', behavior: 'smooth' });
+  }, function (er) { toast('Could not open that product: ' + esc((er && er.message) || er), true); repaint(); });
+});
+var saveProductRvEdit = saveProduct;
+saveProduct = function () {
+  if (!PRODUCT_FORM || !PRODUCT_FORM.__rvEdit) return saveProductRvEdit.apply(this, arguments);
+  if (BUSY) { toast('Wait — the last save is still running.', true); return; }
+  if (!String(PRODUCT_FORM.product_name || '').trim()) { toast('Product name is required.', true); return; }
+  var was = PRODUCT_FORM.__rvEdit, form = Object.assign({}, PRODUCT_FORM);
+  delete form.returnTo; delete form.__rvEdit;
+  BUSY = 'product'; repaint();
+  srv('erpSaveProduct', [form], function (res) {
+    BUSY = ''; PRODUCT_FORM = null;
+    toast('Saved <strong>' + esc(res.sku || was) + '</strong>');
+    srv('erpCatalog', [], function (cat) {
+      CAT = cat;
+      var p = null; (CAT || []).forEach(function (x) { if (x.sku === (res.sku || was)) p = x; });
+      RECV.lines.forEach(function (x) { if (x.sku === was) { x.sku = res.sku || was; if (p) { x.name = p.name; x.stock = p.stock; } } });
+      repaint();
+    }, function () { repaint(); });
+  }, function (er) {
+    BUSY = ''; repaint();
+    toast('Could not save: ' + esc((er && er.message) || er), true, 12000);
+  });
+};
+</script>
 <!-- fd-37: the page is styled: show it -->
 <script>(function () { var x = document.getElementById('bootHide'); if (x) x.remove(); })();</script>
 </body>
