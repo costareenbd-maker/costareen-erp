@@ -38552,6 +38552,37 @@ repaint = function () {
   return r;
 };
 </script>
+<!-- req-1 (21 Oct 2026, asked by Walid): every field that must be filled carries a red star after its label. A label
+     already ending in " *" gets its star in red; the required fields that had no mark (invoice phone and name, project
+     title, stock adjustment product and reason, customer name, business name) get one; so does any input with the
+     required attribute. The input is also marked aria-required. Only labels are touched, never what is checked. -->
+<style>
+label.f .req { color:var(--critical, #e5484d); font-weight:700; margin-left:3px; }
+</style>
+<script>
+var REQ_IDS = { cphone: 1, cname: 1, qz_title: 1, aj_sku: 1, aj_reason: 1, cf_name: 1, pb_name: 1, nb2_name: 1 };
+function reqMark(root) {
+  [].forEach.call((root || document).querySelectorAll('label.f'), function (lab) {
+    if (lab.querySelector('.req')) return;
+    var id = lab.getAttribute('for'), inp = id ? document.getElementById(id) : null, star = false, txt = null;
+    [].some.call(lab.childNodes, function (n) { if (n.nodeType === 3 && n.textContent.trim()) { txt = n; return true; } return false; });
+    if (txt && /\s*\*\s*$/.test(txt.textContent)) { txt.textContent = txt.textContent.replace(/\s*\*\s*$/, ''); star = true; }
+    if ((id && REQ_IDS[id]) || (inp && inp.required)) star = true;
+    if (!star || !txt) return;
+    var tail = /\s$/.test(txt.textContent);
+    txt.textContent = txt.textContent.replace(/\s+$/, '');
+    var s = document.createElement('span'); s.className = 'req'; s.setAttribute('aria-hidden', 'true'); s.textContent = '*';
+    txt.parentNode.insertBefore(s, txt.nextSibling);
+    if (tail) txt.parentNode.insertBefore(document.createTextNode(' '), s.nextSibling);
+    if (inp) inp.setAttribute('aria-required', 'true');
+  });
+}
+(function () {
+  var t = null;
+  reqMark(document);
+  new MutationObserver(function () { clearTimeout(t); t = setTimeout(function () { reqMark(document); }, 40); }).observe(document.body, { childList: true, subtree: true });
+})();
+</script>
 <!-- fd-37: the page is styled: show it -->
 <script>(function () { var x = document.getElementById('bootHide'); if (x) x.remove(); })();</script>
 </body>
