@@ -201,6 +201,19 @@ invoices, payments, returns or the pool settlement - a joint line on an invoice 
 Things live but waiting for his hand: colour families (16 suggested, not grouped), printers
 not yet marked serialised, "Check deliveries now" not yet pressed against real Steadfast.
 
+## 7b. Two developers (21 Oct 2026)
+
+Two developers work on this repo, each with their own Claude. To see each other's work:
+- **Start of a session:** `git pull` (GitHub `origin/main`). **End of every stage:** commit, `git push origin main`
+  and push the stage's tag. Never leave work unpushed for days (on 21 Oct 62 commits had piled up unseen).
+- **Shared running copy:** the dev ERP https://costareen-erp-dev.pages.dev (demo data). After a stage:
+  `ERP_TARGET=dev python deploy.py db; ... function; ... web`. Live (`deploy.py` without ERP_TARGET) is the owner's.
+- **Local copy:** `local\start.cmd` - every feature is on (local/features.mjs: joint stock + a demo joint stock;
+  "Only me" features show for the local owner, the platform admin). Demo data only.
+- **Nothing private on GitHub or dev:** no real customers, phones, supplier prices/order numbers, the owner's
+  personal accounts, keys. Real documents used to test a reader stay in the scratchpad; tests get made-up figures.
+  The owner's private notes go in `private/` (not on GitHub).
+
 ## 8. Quality bar
 
 Every stage ships with tests (the suites are green at the last tag — keep them green), is
