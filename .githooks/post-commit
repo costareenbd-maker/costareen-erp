@@ -1,0 +1,7 @@
+#!/bin/sh
+# devsync-2 (owner 21 Oct 2026: "his changes must reach me by themselves"): every commit goes to GitHub at once,
+# so the other developer's PC and the dev ERP pick it up within 2 minutes. Never for local-only branches.
+branch=$(git rev-parse --abbrev-ref HEAD 2>/dev/null)
+case "$branch" in HEAD|backup-*|private*|local-*) exit 0;; esac
+git push -q origin "$branch" >/dev/null 2>&1 || echo "(autosync: push of $branch failed - it is tried again within 2 minutes)"
+exit 0

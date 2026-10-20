@@ -23,3 +23,7 @@ local/alltests.log
 deploy/devsync-state.json
 deploy/devsync.log
 deploy/devsync.lock
+tools/autosync.log
+tools/autosync-run.vbs
+web/index.html
+web/index-local.html

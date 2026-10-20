@@ -1,0 +1,13 @@
+#!/bin/sh
+# devsync-2: nothing secret leaves this PC - keys, the private/ folder and secrets files are refused
+z=0000000000000000000000000000000000000000
+while read lref lsha rref rsha; do
+  [ "$lsha" = "$z" ] && continue
+  if [ "$rsha" = "$z" ]; then range="$lsha --not --remotes=origin"; else range="$rsha..$lsha"; fi
+  files=$(git log --name-only --format= $range 2>/dev/null | sort -u)
+  if echo "$files" | grep -qE '^(private/|deploy/secrets\.env|.*\.env\.local$|local/data/|local/seed/)'; then
+    echo "pre-push: refused - private files in the push:"; echo "$files" | grep -E '^(private/|deploy/secrets\.env|.*\.env\.local$|local/data/|local/seed/)'; exit 1; fi
+  if git log -p $range 2>/dev/null | grep -E '^\+' | grep -qE 'AIza[0-9A-Za-z_-]{30,}|sk-[A-Za-z0-9]{24,}|EAA[A-Za-z0-9]{40,}|sb[ps]_[A-Za-z0-9]{30,}|eyJhbGciOi[A-Za-z0-9_-]{60,}'; then
+    echo "pre-push: refused - a key-like secret is in the push (remove it, or push by hand after checking)"; exit 1; fi
+done
+exit 0

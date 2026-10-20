@@ -66,6 +66,26 @@ def main():
         git('fetch', '-q', '--prune', 'origin')
         st = json.load(open(STATE, encoding='utf-8')) if os.path.exists(STATE) else {}
         env = secrets()
+        # devsync-2 (owner: "every change from his side automatically"): a pushed branch is merged into main by itself when
+        # it merges cleanly (wip/... and try-... branches stay preview-only); a clash is left for a person, never forced
+        git('checkout', '-q', '-f', 'main'); git('reset', '-q', '--hard', 'origin/main')
+        merged = []
+        for ref in git('for-each-ref', '--format=%(refname:short)', 'refs/remotes/origin').splitlines():
+            b = ref.split('/', 1)[-1]
+            if not ref.startswith('origin/') or b in ('HEAD', 'main') or re.match(r'^(wip/|try-|backup-|private)', b): continue
+            if git('rev-list', '--count', 'HEAD..' + ref) == '0': continue
+            r = subprocess.run(['git', '-C', COPY, 'merge', '-q', '--no-edit', '-m', 'Auto-merge %s into main (devsync)' % b, ref], capture_output=True, text=True)
+            if r.returncode:
+                subprocess.run(['git', '-C', COPY, 'merge', '--abort'], capture_output=True)
+                if st.get('clash', {}).get(b) != git('rev-parse', ref):
+                    log('CLASH: branch %s does not merge cleanly into main - preview only; a person merges it' % b)
+                st.setdefault('clash', {})[b] = git('rev-parse', ref)
+            else:
+                merged.append(b); st.get('clash', {}).pop(b, None)
+        if merged:
+            r = subprocess.run(['git', '-C', COPY, 'push', '-q', 'origin', 'main'], capture_output=True, text=True)
+            log(('merged into main: ' + ', '.join(merged)) if r.returncode == 0 else ('push of merged main refused: ' + (r.stderr or '')[:300]))
+            git('fetch', '-q', 'origin')
         main_sha = git('rev-parse', 'origin/main')
         if main_sha != st.get('main'):
             old = st.get('main')

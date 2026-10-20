@@ -2725,3 +2725,15 @@ the dev ERP (the form works; the joint Receive page keeps its old layout; "From 
   checks every minute and turns red "New version from <name> - click to reload".
 Not done: runs only while this PC is on (a GitHub Action would need the Supabase/Cloudflare keys on GitHub, which can
 also reach the live ERP - not done on purpose); no tests run before a dev update (dev is demo data).
+
+## Changes travel by themselves (21 Oct 2026, tag devsync-2)
+Owner (in a call with Walid): "he says it's done but I can't see it unless we push or pull - make it pull automatically".
+GitHub had nothing new from him since 00:44: his work was on his PC only. Now, once per PC, `tools\autosync-install.cmd`:
+- .githooks/post-commit pushes every commit at once (not backup-*/private*/local-* branches); .githooks/pre-push refuses
+  private/, secrets files, local data and key-like strings;
+- task "Costareen git autosync" every 2 minutes (tools/autosync.py): pushes anything not yet on GitHub and merges
+  GitHub's main into the folder when there are no unsaved changes; a clash is aborted and logged, never forced.
+- deploy/devsync.py (owner's PC) merges every pushed branch into main when it merges cleanly (wip/... and try-...
+  stay preview-only), pushes main, and the dev ERP follows.
+- web/index.html is no longer tracked (a build output; it made every folder look "changed" after a build).
+Not done: work he has not committed cannot travel - his Claude commits at the end of each stage (CLAUDE.md 7b).
