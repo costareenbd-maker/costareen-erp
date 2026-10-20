@@ -244,6 +244,8 @@ export async function erpSaveProduct(ctx, data) {
     });
     if (!res || !res.success) throw new Error((res && res.error) || 'Could not add the product.');
     await saveSize(ctx, res.id, data);
+    // smart-read-1: the supplier's own code (from a file read on Receive) - the next file matches it directly
+    if (str(data.supplier_sku)) await ctx.tx`update products set supplier_sku = ${str(data.supplier_sku).slice(0, 60)} where id = ${res.id}`;
     if (num(data.wholesale_price) > 0) {
       await ctx.tx`update products set wholesale_price = ${num(data.wholesale_price)}
                    where business_id = ${ctx.biz} and lower(btrim(sku)) = ${String(res.sku).toLowerCase()}`;
@@ -273,6 +275,7 @@ export async function erpSaveProduct(ctx, data) {
       updated_at = now()
     where id = ${cur.row}`;
   await saveSize(ctx, cur.row, data);
+  if (data.supplier_sku !== undefined) await ctx.tx`update products set supplier_sku = ${str(data.supplier_sku).slice(0, 60) || null} where id = ${cur.row}`;
   delete ctx.memo.catalog;
   return { ok: true, sku: cur.sku, created: false };
 }

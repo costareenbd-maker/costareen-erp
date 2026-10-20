@@ -48,7 +48,7 @@ export function brandOf(text) { const t = str(text); for (const [b, re] of BRAND
 export function typeOf(text) { const t = str(text); for (const [ty, re] of TYPES) if (re.test(t)) return ty; return ''; }
 export function colourOf(text, brand, type) {
   // the colour is what is left of the words once brand, type and packaging words are gone
-  let t = norm(text).replace(NOISE, ' ').replace(/\d+(\.\d+)?\s*(kg|g|mm)/g, ' ').replace(/[\d.]+/g, ' ');
+  let t = norm(text).replace(NOISE, ' ').replace(/\b\d+(\.\d+)?\s*(kg|g|mm)\b/g, ' ').replace(/\b[\d.]+\b/g, ' ');
   for (const [, re] of BRANDS) t = t.replace(re, ' ');
   for (const [, re] of TYPES) t = t.replace(re, ' ');
   t = t.replace(/\b(pla|petg|abs|asa|tpu|pc|cf|gf|basic|matte|plus|silk|wood|marble|refill|spool|less|with|filament|diskless|diameter|mm|kg|g)\b/g, ' ')
@@ -61,13 +61,50 @@ export function colourOf(text, brand, type) {
 function words(s) { return norm(s).split(' ').filter((w) => w && w.length > 1); }
 export const isRefill = (t) => /diskless|refill|spool-?less|without\s*spool|\b2\.0\b|re-?fill/i.test(str(t));
 
+// ---- smart-read-1 (21 Oct 2026): what a line of a supplier's document is, and the product words in it.
+// A scanned PDF or a photo is read by OCR, which leaves table words (PCS, USD, NA), sizes (1.75mm / 1.00kg, often
+// broken as "1. 75mm", "1, 00kg"), crumbs of other cells ("dee", "y", "ad") and the document's other text: addresses,
+// dates, bank details. Only lines that are about a product become lines; their words are cleaned before the name and
+// the colour are worked out.
+const META_RE = /\b(house|road|block|sector|lane|avenue|street|mirpur|uttara|gulshan|dhaka|bangladesh|district|city|province|subdistrict|zip|post\s*code|address|invoic\w*|order\s*(no|date|#|number)|date|customer|buyer|seller|consignee|shipper|bank|swift|bic|account|beneficiary|intermediary|tel|phone|mobile|fax|e-?mail|contact|incoterms?|payment|pre-?payment|shipping|remark|liabilit\w*|breach|confiden\w*|contract|signature|stamp|grand\s*total|subtotal|total|amount\s*in\s*words|page|penalty|inspection|interest|co\.?,?\s*ltd|limited|street)\b/i;
+const JUNK_TOK = /^(usd|us\$|rmb|cny|bdt|eur|tk|pcs?|pieces?|sets?|rolls?|spools?|ctns?|cartons?|box(es)?|na|n\/a|nos?|ea|each|unit|units|qty|kgs?|mm|cm|g|gm|m|nw|gw|fob|fca|cif|exw)$/i;
+const COLOUR_WORDS = 'black white grey gray red blue green yellow orange purple pink brown beige cream tan gold silver bronze copper ivory navy teal cyan magenta violet indigo lime olive mint peach coral maroon burgundy wine khaki charcoal transparent clear natural silk matte marble wood galaxy rainbow pastel neon glow dark light sky ash army cold steel jade aqua lotus sapphire seafoam raspberry periwinkle terracotta peanut fossil cotton earth moss candy ice drab limestone neptune starlight translucent muted electric fluorescent candy jungle ocean sunset champagne rose'.split(' ');
+/** The words worth keeping from what a document said about a product. */
+export function cleanText(t, vocab) {
+  const V = vocab || new Set();
+  let x = str(t).replace(/[™®©]/g, ' ')
+    .replace(/(\d)\s*[.,]\s+(\d)/g, '$1.$2')                         // OCR's "1. 75mm", "1, 00kg"
+    .replace(/\/?\s*\d+([.,]\d+)?\s*(mm|kg|g|cm|m|ml|l)\b\.?/gi, ' ')  // sizes and weights
+    .replace(/[·•|]/g, ' ').replace(/[\/\\]+/g, ' ').replace(/\s[-–]\s/g, ' ').replace(/[()]/g, ' ');
+  const keep = [];
+  for (const tok of x.split(/\s+/)) {
+    const w = tok.replace(/^[^\p{L}\p{N}+]+|[^\p{L}\p{N}+]+$/gu, '');
+    if (!w || JUNK_TOK.test(w) || isNumCell(w)) continue;
+    if (/^\d/.test(w) && !/[a-z]{2}/i.test(w)) continue;                // a number with a stray letter
+    const lw = w.toLowerCase();
+    if (V.has(lw) || COLOUR_WORDS.includes(lw) || brandOf(w) || typeOf(w)) { keep.push(w); continue; }
+    if (w.length <= 2) continue;                                       // crumbs: "y", "ad", "fF"
+    if (w.length === 3 && w === lw) continue;                           // lower-case 3-letter crumbs: "dee", "ely"
+    keep.push(w);
+  }
+  return keep.join(' ').replace(/\s+/g, ' ').trim();
+}
+/** Is this line about a product? A supplier code, a brand, a filament type or a colour - and not an address, a date, a bank line. */
+export function looksLikeProduct(code, text, vocab) {
+  const t = str(text), hasWords = !!(brandOf(t) || typeOf(t) || /filament|resin|nozzle|hotend|printer|plate|bed|spool/i.test(t));
+  const colour = words(t).some((w) => COLOUR_WORDS.includes(w));
+  const known = vocab ? words(t).filter((w) => w.length > 2 && vocab.has(w)).length : 0;
+  if (META_RE.test(t) && !hasWords) return false;
+  return !!(code || hasWords || colour || known >= 2);
+}
+
 /** Every product, with the words a file could use for it. */
 async function catalogue(ctx, pool) {
   // joint-recv-file (20 Oct 2026): receiving into a joint stock matches the file to that pool's products (never their cost)
   const rows = pool
     ? (await (await import('./joint.js')).erpJointRecvCatalog(ctx, { pool })).map((p) => ({ id: 'joint:' + p.sku, sku: p.sku, name: p.name, brand: p.brand,
                                                                                             type: '', color: p.color, category: p.category, cost_price: 0, stock: p.stock }))
-    : await ctx.tx`select p.id, p.sku, p.name, p.brand, p.type, p.color, p.category, p.cost_price, coalesce(s.stock, 0) as stock
+    : await ctx.tx`select p.id, p.sku, p.name, p.brand, p.type, p.color, p.category, p.cost_price, p.supplier_sku, coalesce(s.stock, 0) as stock
                    from products p left join product_stock s on s.product_id = p.id
                    where p.business_id = ${ctx.biz} and coalesce(p.status, 'Active') <> 'Discontinued'`;
   return rows.map((p) => {
@@ -75,7 +112,7 @@ async function catalogue(ctx, pool) {
     const brand = brandOf(text) || norm(p.brand);
     const type = typeOf(text);
     const colour = colourOf(str(p.color) || str(p.name), brand, type);
-    return { id: p.id, sku: str(p.sku), name: str(p.name), brand, type, colour, cw: new Set(words(colour)), refill: isRefill(text), stock: num(p.stock), cost: num(p.cost_price) };
+    return { id: p.id, sku: str(p.sku), supplierSku: str(p.supplier_sku), name: str(p.name), brand, type, colour, cw: new Set(words(colour)), refill: isRefill(text), stock: num(p.stock), cost: num(p.cost_price) };
   });
 }
 
@@ -136,7 +173,7 @@ function gridRecords(grid) {
   }
   return out;
 }
-function textRecords(lines) {
+export function textRecords(lines) {
   // a PDF: a record starts at a supplier code; its name may wrap over the following lines; the quantity sits on
   // a numbers line (sometimes on the code's own line). A price is read only when the document talks money.
   const money = /\b(usd|rmb|cny|bdt|eur|price|amount|value|unit\s*cost)\b|[$¥€৳]/i.test(lines.join(' '));
@@ -147,7 +184,7 @@ function textRecords(lines) {
   const takeNums = (ns) => { if (!ns.length) return; if (!cur.qty) cur.qty = ns.find((n) => Number.isInteger(n) && n > 0 && n < 100000) || 0; if (money && !cur.price) cur.price = ns.find((n) => !Number.isInteger(n) && n > 0) || 0; };
   for (let i = 0; i < lines.length; i++) {
     // table rules and OCR noise ([ | ] { } ~ _ =) are not words
-    const l = str(lines[i]).replace(/[|\[\]{}~_=]+/g, ' ').replace(/\s+/g, ' ').trim(); if (!l) continue;
+    const l = str(lines[i]).replace(/[|\[\]{}~_=]+/g, ' ').replace(/(\d)\s*([.,])\s+(\d{2,3})\b/g, '$1$2$3').replace(/\s+/g, ' ').trim(); if (!l) continue;   // smart-read-1: OCR's "30. 000"
     if (/\b(sku|qty|quantity|product\s*name|hs\s*code|packing\s*list|proforma|total|page\s*:)\b/i.test(l) && !isCode(l.split(/\s+/)[0] || '')) { if (/\b(total|page\s*:)\b/i.test(l)) flush(); continue; }
     const toks = l.split(/\s+/);
     const codeAt = toks.findIndex(isCode);
@@ -175,12 +212,33 @@ function textRecords(lines) {
   flush();
   return out;
 }
+/** smart-read-1: the records of a document, cleaned and judged (see cleanText / looksLikeProduct). */
+export function tidyRecords(recs, vocab) {
+  const out = [];
+  for (const r of recs) {
+    const raw = str(r.text), text = cleanText(raw, vocab);
+    if (!looksLikeProduct(r.code, text, vocab) || (!text && !r.code)) continue;
+    // a year or a post code taken for a quantity (an "Order Date 07.05.2026" line, a "Dhaka 1216" line)
+    if (!r.code && (r.qty >= 1900 && r.qty <= 2100 || r.qty > 5000)) continue;
+    const cm = /\b(usd|rmb|cny|bdt|eur)\b|[$¥€৳]/i.exec(raw), cur = cm ? ({ $: 'USD', '¥': 'RMB', '€': 'EUR', '৳': 'BDT' }[cm[0]] || cm[0].toUpperCase()) : '';
+    out.push({ ...r, raw, text, currency: r.currency || cur });
+  }
+  // a document with supplier codes: a line without one is the document's other text
+  const coded = out.filter((r) => r.code).length;
+  return coded >= 3 ? out.filter((r) => r.code || brandOf(r.text) || typeOf(r.text)) : out;
+}
 
 /** Every record against the catalogue: the lines of the review card. */
-async function matchRecords(ctx, records, opts) {
+async function matchRecords(ctx, records0, opts) {
+  let records = records0;
   const supplier = str(opts.supplier), fileBrand = brandOf(supplier) || brandOf(str(opts.fileName));
   const cat = await catalogue(ctx, opts.pool);
   const bySku = Object.fromEntries(cat.map((c) => [c.sku.toLowerCase(), c]));
+  const bySupplier = {}; for (const c of cat) if (c.supplierSku) bySupplier[c.supplierSku.toLowerCase()] = c;
+  // the words our products use: what a document's words are checked against
+  const vocab = new Set(); for (const c of cat) for (const w of words([c.name, c.colour, c.brand, c.type].join(' '))) if (w.length > 1) vocab.add(w);
+  // file-order-1: the lines stay in the document's order (pos 1, 2, 3 ...), one per line of the document
+  records = tidyRecords(records, vocab).map((r, i) => ({ ...r, pos: i + 1 }));
   const aliases = {};
   if (!opts.pool) for (const a of await ctx.tx`select alias, product_id from product_aliases where business_id = ${ctx.biz}`) aliases[str(a.alias)] = a.product_id;
   const byId = Object.fromEntries(cat.map((c) => [c.id, c]));
@@ -192,6 +250,7 @@ async function matchRecords(ctx, records, opts) {
     const al = aliases[norm(r.code)] || aliases[norm(r.text)];
     if (al && byId[al]) { best = byId[al]; how = 'remembered'; conf = 1; }
     if (!best && r.code && bySku[r.code.toLowerCase()]) { best = bySku[r.code.toLowerCase()]; how = 'sku'; conf = 1; }
+    if (!best && r.code && bySupplier[r.code.toLowerCase()]) { best = bySupplier[r.code.toLowerCase()]; how = 'supplier code'; conf = 1; }
     if (!best) {
       const scored = cat.map((c) => ({ c, s: score(row, c) })).filter((x) => x.s > 0).sort((a, b) => b.s - a.s);
       cands = scored.slice(0, 4).map((x) => ({ sku: x.c.sku, name: x.c.name, score: Math.round(x.s * 100) / 100 }));
@@ -201,10 +260,11 @@ async function matchRecords(ctx, records, opts) {
     const typeName = row.type ? cap(row.type).replace('Pla', 'PLA').replace('Petg', 'PETG').replace('Abs', 'ABS').replace('Asa', 'ASA').replace('Tpu', 'TPU').replace('Pc', 'PC').replace('Cf', 'CF').replace('Gf', 'GF') : '';
     const brandName = row.brand ? cap(row.brand) : '';
     const suggested = [brandName, typeName, cap(row.colour)].filter(Boolean).join(' ');
-    return { row: r.row, code: r.code, text: r.text, qty: r.qty, price: r.price, currency: r.currency || currency,
+    return { row: r.row, pos: r.pos, code: r.code, text: r.text, raw: r.raw || r.text, qty: r.qty, price: r.price, currency: r.currency || currency,
              sku: best ? best.sku : '', name: best ? best.name : '', stock: best ? best.stock : 0,
              how, confidence: best ? (how === 'words' ? Math.min(0.99, Math.round(conf * 100) / 100) : 1) : 0,
-             candidates: cands, isNew: !best, newProduct: best ? null : { product_name: suggested || r.text, brand: brandName, color: cap(row.colour), unit: 'Roll' } };
+             candidates: cands, isNew: !best, newProduct: best ? null : { product_name: suggested || r.text, brand: brandName, color: cap(row.colour), unit: 'Roll',
+               type: typeName, supplier_sku: str(r.code) } };
   });
   const matched = lines.filter((l) => l.sku).length;
   return { supplier, brand: fileBrand, currency, lines, matched, unmatched: lines.length - matched,
@@ -229,7 +289,8 @@ const GEMINI_TIMEOUT_MS = 40000;   // the edge function itself dies at 150 s
 const AI_PROMPT = 'This is a photo or scan of a supplier document for a 3D-printing shop in Bangladesh: a packing list, proforma invoice, price list or order sheet. ' +
   'Extract every product line as JSON only - an array of objects {"code": supplier item code or "", "name": the product words (brand, material/type, colour, size) as written, ' +
   '"qty": the quantity as a number, "price": the unit price as a number or 0, "currency": "USD"/"RMB"/"BDT"/"" }. Skip headings, totals and addresses. ' +
-  'If a column is in Chinese, keep the English words only. Answer with the JSON array and nothing else.';
+  'If a column is in Chinese, keep the English words only. Keep the lines in the same order as the document, top to bottom, page by page; ' +
+  'one object per line even when a product repeats. Answer with the JSON array and nothing else.';
 
 // ---- the provider's key: set from the Platform screen (sealed in erp_provider_secrets), else the server's environment
 const ctl = (deps, sql) => (deps && deps.control) || sql;
@@ -381,12 +442,15 @@ export async function erpProductSuggest(ctx, payload) {
   const S = sib.map((x) => x.r);
   const out = {
     product_name: [brand ? cap(brand) : '', prettyType(type), cap(colour)].filter(Boolean).join(' ') || str(p.name),
-    brand: S.length && mode(S.map((r) => r.brand)) ? mode(S.map((r) => r.brand)) : (brand ? cap(brand) : ''),
-    type: mode(S.map((r) => r.type)) || '',
+    // smart-read-1: what the file said wins; other products only fill what it did not say (before: with no product of
+    // that brand yet, the most common brand of the whole shop - a Polymaker roll became "Bambulab")
+    brand: basis !== 'every product' && mode(S.map((r) => r.brand)) ? mode(S.map((r) => r.brand)) : (brand ? cap(brand) : ''),
+    type: type ? (S.map((r) => str(r.type)).find((t) => typeOf(t) === type) || prettyType(type)) : (basis === 'every product' ? '' : mode(S.map((r) => r.type)) || ''),
     category: mode(S.map((r) => r.category)) || '',
     color: cap(colour),
     unit: mode(S.map((r) => r.unit)) || 'Piece',
-    supplier: mode(S.map((r) => r.supplier)) || str(p.supplier),
+    supplier: str(p.supplier) || (basis === 'every product' ? '' : mode(S.map((r) => r.supplier)) || ''),
+    supplier_sku: str(p.code).slice(0, 60),
     sell_price: basis === 'every product' ? 0 : num(mode(S.map((r) => (num(r.sell_price) > 0 ? num(r.sell_price) : '')))),
     cost_price: /^(bdt|tk|taka)$/i.test(str(p.currency)) ? num(p.price) : 0,
     reorder_level: basis === 'every product' ? 5 : num(mode(S.map((r) => num(r.reorder_level)))) || 5,

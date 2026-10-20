@@ -36,7 +36,7 @@ export const ERP_ALLOW = {
   erpAdjustStock: 'manager', erpStockHistory: 'manager',
   erpSaveProduct: 'manager', erpSetProductStatus: 'manager',
   erpWebOrders: 'manager', erpEnterWebOrder: 'manager',
-  erpMarkWebOrderEntered: 'manager', erpWebOrderInvoices: 'manager', erpSettingsLists: 'manager',
+  erpMarkWebOrderEntered: 'manager', erpWebOrderInvoices: 'manager', erpSettingsLists: 'manager', erpListAddValue: 'manager',
 
   // the money
   erpCostBook: 'manager', erpSaveCostRows: 'manager',

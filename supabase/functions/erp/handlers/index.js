@@ -115,7 +115,7 @@ const core = {
   erpSetBusiness: shell.erpSetBusiness,
 
   erpCatalog: catalog.erpCatalog,
-  erpSettingsLists: catalog.erpSettingsLists,
+  erpSettingsLists: catalog.erpSettingsLists, erpListAddValue: catalog.erpListAddValue,
   erpFormOptions: catalog.erpFormOptions,
   erpDeliveryOptions: catalog.erpDeliveryOptions,
   erpDeliveryOptionsSave: catalog.erpDeliveryOptionsSave,

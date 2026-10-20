@@ -146,6 +146,22 @@ export async function erpSettingsLists(ctx) {
   return out;
 }
 
+/**
+ * pf-plus-1 (owner 21 Oct 2026): one new value added to a list straight from the product form's "+" (no trip to
+ * Settings > Lists, which lost the half-filled form). Duplicates ignored (any case). -> the lists, as erpSettingsLists.
+ */
+export async function erpListAddValue(ctx, payload) {
+  const kind = String((payload && payload.kind) || ''), value = String((payload && payload.value) || '').replace(/\s+/g, ' ').trim().slice(0, 80);
+  if (!LIST_KINDS.includes(kind)) throw new Error('Which list?');
+  if (!value) throw new Error('Type the new name.');
+  const have = await ctx.tx`select 1 from lookups where business_id = ${ctx.biz} and kind = ${kind} and lower(btrim(value)) = ${value.toLowerCase()} limit 1`;
+  if (!have.length) {
+    const n = (await ctx.tx`select coalesce(max(sort_order), 0)::int as n from lookups where business_id = ${ctx.biz} and kind = ${kind}`)[0].n;
+    await ctx.tx`insert into lookups (business_id, kind, value, sort_order) values (${ctx.biz}, ${kind}, ${value}, ${n + 1})`;
+  }
+  return { ...(await erpSettingsLists(ctx)), added: value };
+}
+
 /** Dropdown choices for the invoice form. */
 export async function erpFormOptions(ctx) {
   const rows = await ctx.tx`

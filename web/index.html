@@ -13676,9 +13676,17 @@ function recvPayload() {
     costs: (RECV.costs || []).filter(function (c) { return String(c.label || '').trim() || num(c.amount) > 0; })
       .map(function (c) { return { label: String(c.label || '').trim(), amount: num(c.amount), account: c.account || '' }; }),
     poId: RECV.poId || '',
-    lines: RECV.lines.map(function (l) {
-      return l.isNew ? { isNew: true, product: l.product, qty: l.qty } : { sku: l.sku, qty: l.qty, serials: l.serials || [] };
-    }) };
+    // file-order-1: the screen keeps every file row in its place; one product on several rows is received as one line
+    lines: (function () {
+      var out = [], at = {};
+      RECV.lines.forEach(function (l) {
+        if (l.isNew) { out.push({ isNew: true, product: l.product, qty: l.qty }); return; }
+        var k = String(l.sku || '').toLowerCase();
+        if (k && at[k] !== undefined) { var o = out[at[k]]; o.qty = num(o.qty) + num(l.qty); o.serials = o.serials.concat(l.serials || []); return; }
+        at[k] = out.length; out.push({ sku: l.sku, qty: l.qty, serials: (l.serials || []).slice() });
+      });
+      return out;
+    })() };
 }
 var wireStockExtraA5 = wireStockExtra;
 wireStockExtra = function () {
@@ -22127,9 +22135,10 @@ function rfIntoTable(r) {
     if (!(num(l.qty) > 0)) return;
     var src = { text: l.text, code: l.code, price: l.price, currency: l.currency, confidence: l.confidence, how: l.how, candidates: l.candidates || [], newProduct: l.newProduct };
     var p = l.sku ? recvCat().filter(function (x) { return x.sku === l.sku; })[0] : null;
-    if (l.sku && (l.how === 'sku' || l.how === 'remembered' || l.confidence >= 0.9)) {
-      var hit = null; for (var j = 0; j < RECV.lines.length; j++) if (RECV.lines[j].sku === l.sku) hit = RECV.lines[j];
-      if (hit) { hit.qty = num(hit.qty) + num(l.qty); if (!hit.src) hit.src = src; } else RECV.lines.push({ sku: l.sku, name: p ? p.name : l.name, qty: num(l.qty), stock: p ? p.stock : num(l.stock), src: src });
+    if (l.sku && (l.how === 'sku' || l.how === 'remembered' || l.how === 'supplier code' || l.confidence >= 0.9)) {
+      // file-order-1 (owner 21 Oct 2026: "follow the list's order, do not shuffle"): every line of the file keeps its own
+      // row in the file's order - never folded into an earlier row; rows of one product are added up only when received
+      RECV.lines.push({ sku: l.sku, name: p ? p.name : l.name, qty: num(l.qty), stock: p ? p.stock : num(l.stock), src: src });
       if (l.how !== 'sku') pairs.push({ alias: l.code || l.text, sku: l.sku });
     } else if (l.sku) {
       RECV.lines.push({ sku: l.sku, name: p ? p.name : l.name, qty: num(l.qty), stock: p ? p.stock : num(l.stock), src: src, state: 'amber' });
@@ -37223,12 +37232,28 @@ function jrvLoadCat() {
   if (JRV.busy || !JRV.pool) return; JRV.busy = true;
   srv('erpJointRecvCatalog', [{ pool: JRV.pool }], function (r) { JRV.busy = false; JRV.cat = r || []; if (VIEW === 'joint') repaint(); }, function () { JRV.busy = false; JRV.cat = []; });
 }
+// keep-draft-1 (owner 21 Oct 2026: "half done, I go to Settings to add a colour, come back - everything is gone"):
+// leaving Joint stock parks the joint shipment and its New product form; coming back brings them back where they were.
+var JRV_PARK = null;   // { pool, recv, at, form }
 function jrvOpen(pool) {
   if (!JRV.on) { JRV.own = RECV; RECV = { supplier: '', reference: '', notes: '', lines: [] }; }   // the own shipment draft is kept aside
-  JRV.on = true; JRV.pool = pool; JRV.cat = null; JRV.at = ''; PRODUCT_FORM = null; JT.form = null;
+  JRV.on = true; JRV.pool = pool; JRV.cat = null; JRV.at = ''; if (PRODUCT_FORM && PRODUCT_FORM.__pool) PRODUCT_FORM = null; JT.form = null;
+  if (JRV_PARK && JRV_PARK.pool === pool) {
+    RECV = JRV_PARK.recv; JRV.at = JRV_PARK.at || ''; if (JRV_PARK.form) PRODUCT_FORM = JRV_PARK.form; JRV_PARK = null;
+    setTimeout(function () { toast('Brought back the shipment you were entering — carry on where you left it.', false, 6000); }, 0);
+  }
   if (!LISTS) loadLists(); jrvLoadCat(); repaint(); window.scrollTo(0, 0);
 }
-function jrvClose() { if (JRV.on) { RECV = JRV.own || { supplier: '', reference: '', notes: '', lines: [] }; } JRV.on = false; JRV.pool = ''; JRV.cat = null; JRV.own = null; PRODUCT_FORM = null; }
+function jrvClose(discard) {
+  if (JRV.on) {
+    // something typed is parked, not thrown away (the Clear button on the page empties it on purpose)
+    var has = (RECV.lines && RECV.lines.length) || RECV.supplier || RECV.reference || RECV.notes || (PRODUCT_FORM && PRODUCT_FORM.__pool);
+    JRV_PARK = !discard && has ? { pool: JRV.pool, recv: RECV, at: JRV.at, form: PRODUCT_FORM && PRODUCT_FORM.__pool ? PRODUCT_FORM : null } : null;
+    RECV = JRV.own || { supplier: '', reference: '', notes: '', lines: [] };
+  }
+  JRV.on = false; JRV.pool = ''; JRV.cat = null; JRV.own = null;
+  if (PRODUCT_FORM && PRODUCT_FORM.__pool) PRODUCT_FORM = null;   // only a joint form leaves with the joint page; the own Stock entry's form stays
+}
 // the Receive page's payload, receiving into the joint stock
 var recvPayloadJRV = recvPayload;
 recvPayload = function () { var p = recvPayloadJRV.apply(this, arguments); if (JRV.on) { p.pool = JRV.pool; p.receivedAt = JRV.at || (JT.data && JT.data.me) || ''; p.poId = ''; } return p; };
@@ -37313,8 +37338,13 @@ viewJoint = function () {
 var repaintJRV = repaint;
 repaint = function () {
   // owner 18 Oct 2026: the joint New product form stayed on every page until a refresh - it belongs to Joint stock > Stock only
-  if (PRODUCT_FORM && PRODUCT_FORM.__pool && (VIEW !== 'joint' || JT.tab !== 'stock')) PRODUCT_FORM = null;
+  if (PRODUCT_FORM && PRODUCT_FORM.__pool && !JRV.on && (VIEW !== 'joint' || JT.tab !== 'stock')) { JPF_PARK = PRODUCT_FORM; PRODUCT_FORM = null; }   // keep-draft-1: parked
   if (JRV.on && (VIEW !== 'joint' || JT.tab !== 'stock')) jrvClose();
+  // keep-draft-1: back on Joint stock > Stock - the parked shipment (or New joint product form) comes back by itself
+  if (VIEW === 'joint' && JT.tab === 'stock' && JT.data && JT.data.pool && !JRV.on) {
+    if (JRV_PARK && !JRV_PARK.hold && JRV_PARK.pool === JT.data.pool && typeof jrvCan === 'function' && jrvCan()) { jrvOpen(JRV_PARK.pool); return; }
+    if (JPF_PARK && JPF_PARK.__pool === JT.data.pool && !PRODUCT_FORM) { PRODUCT_FORM = JPF_PARK; JPF_PARK = null; }
+  }
   repaintJRV.apply(this, arguments);
   if (VIEW !== 'joint') { if (JRV.on && VIEW !== 'joint') jrvClose(); return; }
   try { if (JRV.on) wireStock(); if (PRODUCT_FORM && PRODUCT_FORM.__pool) wireProductForm(); } catch (e) { console.error(e); }
@@ -37322,10 +37352,10 @@ repaint = function () {
 document.addEventListener('click', function (e) {
   var b = e.target.closest && e.target.closest('#jrv_back,[data-jt="f-new"],[data-jt="f-receive"]');
   if (!b || VIEW !== 'joint') return;
-  if (b.id === 'jrv_back') { jrvClose(); repaint(); return; }
+  if (b.id === 'jrv_back') { jrvClose(); if (JRV_PARK) JRV_PARK.hold = true; repaint(); return; }   // parked; "+ Receive a shipment" brings it back
   var d = JT.data; if (!d || !d.pool) return;
   if (b.getAttribute('data-jt') === 'f-new') {   // the ERP's New product form
-    e.stopImmediatePropagation(); jrvClose(); JT.form = null;
+    e.stopImmediatePropagation(); jrvClose(); if (JRV_PARK) JRV_PARK.hold = true; JT.form = null;
     if (!LISTS) loadLists();
     PRODUCT_FORM = Object.assign(blankProduct(), { isNew: true, __pool: d.pool }); repaint(); window.scrollTo(0, 0);
     return;
@@ -37336,7 +37366,8 @@ document.addEventListener('click', function (e) {
 }, true);
 document.addEventListener('change', function (e) { var t = e.target; if (t && t.id === 'jrv_at') { JRV.at = t.value; } });
 var goJRV = go;
-go = function (view) { if (view !== 'joint') jrvClose(); if (view !== 'joint' && PRODUCT_FORM && PRODUCT_FORM.__pool) PRODUCT_FORM = null; return goJRV.apply(this, arguments); };
+go = function (view) { if (view !== 'joint') jrvClose(); if (view !== 'joint' && PRODUCT_FORM && PRODUCT_FORM.__pool) { JPF_PARK = PRODUCT_FORM; PRODUCT_FORM = null; } return goJRV.apply(this, arguments); };
+var JPF_PARK = null;   // keep-draft-1: a New joint product form parked while away
 </script>
 <!-- fd-57 (owner 18 Oct 2026: "make the joint invoice page; I don't share my customers with the other side"): + New joint
      sale in Joint stock opens the ERP's own New invoice with the joint products only. The invoice, its customer and its
@@ -38045,6 +38076,61 @@ document.addEventListener('click', function (ev) {
     if (a === 'stop' && !confirm('Stop it for good?')) return;
     PA.busy = true; repaint(); srv('erpAdsAct', [{ id: cid, action: a }], function (r) { PA.busy = false; PA.data.campaigns = PA.data.campaigns.map(function (x) { return x.id === r.campaign.id ? r.campaign : x; }); if (PA.made && PA.made.campaign.id === r.campaign.id) PA.made.campaign = r.campaign; toast(a === 'start' || a === 'resume' ? 'Running.' : a === 'pause' ? 'Paused.' : 'Stopped.'); repaint(); }, fail); return; }
 });
+</script>
+<!-- keep-draft-1 + pf-plus-1 (owner 21 Oct 2026): a half-filled product form waits on its own page while you are away
+     (Settings, another screen) and is back when you return; a "+" beside Category, Brand, Type, Colour, Unit and Supplier
+     adds a new one to the list right there - no trip to Settings > Lists. -->
+<style>
+.pf-plus { display: flex; gap: 6px; align-items: stretch; }
+.pf-plus select { flex: 1; min-width: 0; }
+.pf-plus .pf-plus-b { flex: 0 0 auto; min-width: 40px; padding: 0 10px; font-size: 18px; font-weight: 700; line-height: 1; }
+</style>
+<script>
+(function () {
+  // where each kind of product form lives: it is parked when you leave that page and comes back when you return
+  var HOME = { receive: 'stock', po: 'stock', pox: 'stock', invoice: 'invoice' };
+  var PARK = {};
+  function homeOf(f) { return (f && f.returnTo && HOME[f.returnTo]) || (f && f.__home) || 'products'; }
+  var goKD = go;
+  go = function (view) {
+    if (PRODUCT_FORM && !PRODUCT_FORM.__pool) {
+      var h = homeOf(PRODUCT_FORM);
+      if (!PRODUCT_FORM.returnTo && !PRODUCT_FORM.__home) PRODUCT_FORM.__home = VIEW || 'products';
+      if (view !== h) { PARK[h] = PRODUCT_FORM; PRODUCT_FORM = null; }
+    }
+    var r = goKD.apply(this, arguments);
+    if (!PRODUCT_FORM && PARK[view]) {
+      PRODUCT_FORM = PARK[view]; delete PARK[view];
+      setTimeout(function () { try { repaint(); toast('Your product form is back where you left it.', false, 5000); } catch (e) {} }, 0);
+    }
+    return r;
+  };
+
+  // the "+": a new list value from the form itself
+  var PLUS = { pf_cat: ['categories', 'category', 'category'], pf_brand: ['brands', 'brand', 'brand'], pf_type: ['types', 'type', 'type'],
+               pf_color: ['colors', 'color', 'colour'], pf_unit: ['units', 'unit', 'unit'], pf_sup: ['suppliers', 'supplier', 'supplier'] };
+  var pfHtmlPlus = productFormHtml;
+  productFormHtml = function () {
+    var h = pfHtmlPlus.apply(this, arguments);
+    if (!h || !(ME && /^(manager|shareholder|owner)$/.test(ME.role))) return h;
+    return h.replace(/(<select class="i" id="(pf_cat|pf_brand|pf_type|pf_color|pf_unit|pf_sup)"[^>]*>[\s\S]*?<\/select>)/g, function (m, sel, id) {
+      return '<span class="pf-plus">' + sel + '<button type="button" class="btn small pf-plus-b" data-pfplus="' + id + '" title="Add a new ' + PLUS[id][2] + ' to the list" aria-label="Add a new ' + PLUS[id][2] + '">+</button></span>';
+    });
+  };
+  document.addEventListener('click', async function (e) {
+    var b = e.target && e.target.closest && e.target.closest('[data-pfplus]'); if (!b || !PRODUCT_FORM) return;
+    e.preventDefault();
+    var p = PLUS[b.getAttribute('data-pfplus')]; if (!p) return;
+    // what is typed so far stays (the form is drawn again after the list changes)
+    ['pf_sku', 'pf_name', 'pf_bin'].forEach(function (id) { var n = el(id); if (n) PRODUCT_FORM[{ pf_sku: 'sku', pf_name: 'product_name', pf_bin: 'location_bin' }[id]] = n.value; });
+    var v = await uiPrompt('New ' + p[2] + ' (it is added to Settings › Lists too)', '');
+    if (v === null || !String(v).trim()) return;
+    b.disabled = true;
+    srv('erpListAddValue', [{ kind: p[0], value: String(v).trim() }], function (r) {
+      LISTS = r; PRODUCT_FORM[p[1]] = r.added; repaint(); toast('Added “' + esc(r.added) + '” and chose it.');
+    }, function (er) { b.disabled = false; toast(esc((er && er.message) || er), true); });
+  });
+})();
 </script>
 <!-- fd-37: the page is styled: show it -->
 <script>(function () { var x = document.getElementById('bootHide'); if (x) x.remove(); })();</script>

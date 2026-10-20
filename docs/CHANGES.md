@@ -2632,3 +2632,29 @@ after a high score; CapiFlow / PixelFly hold Purchase until confirmed / delivere
    the card; "Send a test event" with a test event code. Runs in the Inbox minute timer (businesses with landing pages
    included). Tests: shield2 (29). NOT done: the chat (Messenger) orders send Lead/Purchase as system events without a
    browser id - fine for the pixel, weaker matching; Meta has no standard refund event, so returns are a custom event.
+
+## 21 Oct 2026 - Receive: work kept when you leave, "+" on the lists, smarter file reading (tags keep-draft-1, pf-plus-1, smart-read-1)
+Owner's report with a scanned Polymaker sales contract (3 pages, 55 lines) and screenshots.
+1. keep-draft-1: going to another screen threw away a half-filled product form (a joint-page hook nulled PRODUCT_FORM on
+   every page change) and the whole joint shipment. Now a product form is parked per page (receive/order -> Stock entry,
+   invoice -> New invoice, else its own page) and comes back on return; the joint shipment and its New product form are
+   parked when leaving Joint stock and reopen by themselves on Joint stock > Stock ("Back" parks without reopening;
+   "+ Receive a shipment" brings it back). The own shipment and the joint one never mix.
+2. pf-plus-1: a "+" beside Category, Brand, Type, Colour, Unit and Supplier in the product form (managers / owners) adds a
+   new value to Settings > Lists and chooses it, keeping what was typed (erpListAddValue, duplicates in any case ignored).
+3. smart-read-1 (receivefile.js): the scan is read by OCR, which gave table words (PCS, USD, NA), sizes ("1. 75mm",
+   "1, 00kg"), crumbs ("dee", "y", "ad") and the document's other text. Now: OCR's split numbers rejoined ("30. 000");
+   each record's words cleaned (cleanText: units, currency, sizes, crumbs out; known words and colours kept); a line is
+   kept only if it is about a product (looksLikeProduct: a supplier code, a brand, a filament type, a colour or two of
+   our product words - never an address, date, bank or total line); a year / post code is never a quantity; in a document
+   with supplier codes, lines without one are dropped. The currency comes from the line. New products get the file's
+   brand, type, colour and supplier code (products.supplier_sku); the next file matches that code at once ("supplier
+   code"). The suggestion no longer falls back to the shop's most common brand (a Polymaker roll became "Bambulab").
+   Tests: smartread (14) built from the contract's OCR lines; receivefile (51) still green. Checked on dev: form kept
+   across Settings, "+" adds and chooses a colour, joint shipment parked and back.
+NOT done: the photo/scan OCR itself (tesseract in the browser) is unchanged - a blurry scan can still misread letters;
+the AI reader (photo -> Gemini) reads tables better when the AI key is set.
+4. file-order-1 (owner: "follow the list / invoice / picture order, do not shuffle"): every line read from a file keeps
+   its own row in the document's order (pos 1..n from the server); a line that matches a product already on the
+   shipment is no longer folded into that earlier row. Rows of one product are added up only in what is sent on Receive
+   (recvPayload), so stock and cost are the same. The AI reader is told to keep the document's order, one object per line.
