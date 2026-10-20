@@ -260,8 +260,19 @@ def step_release():
     body = json.dumps(files)
     if '$rel$' in body:
         sys.exit('the release text contains $rel$ - change the quoting')
-    sql("insert into public.erp_releases (version, files) values ('%s', $rel$%s$rel$::jsonb) "
-        "on conflict (version) do update set files = excluded.files, made_at = now()" % (version.replace("'", ""), body))
+    # release-parts (21 Oct 2026): one request became too large (413) - the files go up in parts of ~1.5 MB; the row is
+    # written with no files first and dated last, so the timer never picks up a half-sent release
+    v = version.replace("'", "")
+    sql("insert into public.erp_releases (version, files, made_at) values ('%s', '{}'::jsonb, '2000-01-01') "
+        "on conflict (version) do update set files = '{}'::jsonb, made_at = '2000-01-01'" % v)
+    part, size = {}, 0
+    for k in sorted(files):
+        part[k] = files[k]; size += len(files[k])
+        if size > 1500000:
+            sql("update public.erp_releases set files = files || $rel$%s$rel$::jsonb where version = '%s'" % (json.dumps(part), v)); part, size = {}, 0
+    if part:
+        sql("update public.erp_releases set files = files || $rel$%s$rel$::jsonb where version = '%s'" % (json.dumps(part), v))
+    sql("update public.erp_releases set made_at = now() where version = '%s'" % v)
     print('release', version, 'published:', len(files), 'files,', len(body) // 1024, 'KB')
 
 
