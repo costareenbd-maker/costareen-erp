@@ -15,6 +15,7 @@ export const FEATURES = [
   ['ch_wa_cloud', 'Channels', 'WhatsApp (official)', 'Meta\'s WhatsApp Cloud API'],
   ['ch_wa_linked', 'Channels', 'WhatsApp (linked device)', 'Evolution or WaSenderAPI - like WhatsApp Web; the number can be banned'],
   ['ch_webchat', 'Channels', 'Website chat', 'A chat bubble on your own website'],
+  ['ch_email', 'Channels', 'Email', 'A mailbox (Gmail, Zoho, your domain): e-mails come in as chats, answers go out as e-mails'],
   ['comments', 'Channels', 'Post comments', 'Replies under your Facebook and Instagram posts, hide and delete'],
   ['voice_call', 'Channels', 'Voice call on the website', 'Visitors talk to the AI on your website chat'],
   ['photos', 'The AI', 'Reads photos', 'Understands a photo a customer sends'],
@@ -40,7 +41,7 @@ export const FEATURES = [
 export const FEATURE_KEYS = FEATURES.map((f) => f[0]);
 export const FEATURE_NAME = Object.fromEntries(FEATURES.map((f) => [f[0], f[2]]));
 /** The channel kind -> its feature. */
-export const KIND_FEATURE = { messenger: 'ch_messenger', instagram: 'ch_instagram', wa_cloud: 'ch_wa_cloud', wa_evo: 'ch_wa_linked', wa_sender: 'ch_wa_linked', webchat: 'ch_webchat' };
+export const KIND_FEATURE = { messenger: 'ch_messenger', instagram: 'ch_instagram', wa_cloud: 'ch_wa_cloud', wa_evo: 'ch_wa_linked', wa_sender: 'ch_wa_linked', webchat: 'ch_webchat', email: 'ch_email' };
 
 /** The plan row (cached on the call). */
 export async function planOf(ctx) {

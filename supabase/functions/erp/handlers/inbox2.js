@@ -32,7 +32,7 @@ function chatUrl(ctx, ch) {
   const base = str(ctx.deps && ctx.deps.hookBase);
   return base ? base + (base.includes('?') ? '&' : '?') + 'chat=' + ch.id : '';
 }
-const NEEDS = { messenger: ['TOKEN', 'APP_SECRET'], instagram: ['TOKEN', 'APP_SECRET'], wa_cloud: ['TOKEN', 'APP_SECRET'], wa_evo: ['URL', 'KEY'], wa_sender: ['KEY', 'HOOK_SECRET'], webchat: [] };
+const NEEDS = { messenger: ['TOKEN', 'APP_SECRET'], instagram: ['TOKEN', 'APP_SECRET'], wa_cloud: ['TOKEN', 'APP_SECRET'], wa_evo: ['URL', 'KEY'], wa_sender: ['KEY', 'HOOK_SECRET'], webchat: [], email: ['PASSWORD'] };
 
 export async function erpInboxChannels(ctx) {
   need(ctx, 'manager');
@@ -45,7 +45,9 @@ export async function erpInboxChannels(ctx) {
     out.push({ id: ch.id, kind: ch.kind, kindName: KIND_NAME[ch.kind], name: ch.name, externalId: str(ch.external_id), status: ch.status, aiOn: ch.ai_on,
       aiOffUntil: ch.ai_off_until && new Date(ch.ai_off_until) > ctx.now ? formatDate(new Date(ch.ai_off_until), 'd MMM, h:mm a') : '', commentsAi: ch.comments_ai,
       settings: ch.settings || {}, keys, hookUrl: ctx.s.role === 'owner' ? hookUrl(ctx, ch) : '', verify, chatUrl: ch.kind === 'webchat' ? chatUrl(ctx, ch) : '',
-      official: !/wa_evo|wa_sender/.test(ch.kind), can: CAN[ch.kind] });
+      official: !/wa_evo|wa_sender/.test(ch.kind), can: CAN[ch.kind],
+      mail: ch.kind === 'email' ? { checked: ch.settings && ch.settings.mail_checked ? formatDate(new Date(ch.settings.mail_checked), 'd MMM, h:mm a') : '', error: str(ch.settings && ch.settings.mail_error),
+                                    skipped: Number(ch.settings && ch.settings.mail_skipped) || 0 } : null });
   }
   const k = await aiKey(ctx);
   return { channels: out, kinds: KINDS.map((x) => ({ kind: x, name: KIND_NAME[x], official: !/wa_evo|wa_sender/.test(x) })), aiKey: !!k.key, profile: await profile(ctx, false) };
@@ -59,7 +61,8 @@ export async function erpInboxChannelSave(ctx, payload) {
     if (!KINDS.includes(p.kind)) throw new Error('Choose what to connect.');
     await needFeat(ctx, KIND_FEATURE[p.kind]);
     if (/wa_evo|wa_sender/.test(p.kind) && !p.acceptRisk) throw new Error('Read and accept the notice first: a linked-device WhatsApp is not Meta\'s official system and the number can be banned.');
-    const ext = str(p.externalId) || (p.kind === 'webchat' ? 'site-' + Date.now().toString(36) : '');
+    const ext = p.kind === 'email' ? str(p.externalId).toLowerCase() : str(p.externalId) || (p.kind === 'webchat' ? 'site-' + Date.now().toString(36) : '');
+    if (p.kind === 'email' && !/^[^\s@<>]+@[^\s@<>]+\.[^\s@<>]+$/.test(ext)) throw new Error('Type the e-mail address of the mailbox.');
     if (!ext) throw new Error(p.kind === 'wa_evo' ? 'Type the Evolution instance name.' : p.kind === 'wa_cloud' ? 'Type the WhatsApp phone number id (from Meta).' : p.kind === 'wa_sender' ? 'Type the WhatsApp number.' : 'Type the page / account id.');
     const settings = { wait_s: p.kind === 'webchat' ? 3 : 15, revert_min: 60, test_code: String(Math.floor(10000 + Math.random() * 90000)) };
     ch = (await ctx.tx`insert into inbox_channels (business_id, kind, name, external_id, status, settings, created_by)
@@ -69,6 +72,7 @@ export async function erpInboxChannelSave(ctx, payload) {
     if (p.name !== undefined || p.externalId !== undefined) await ctx.tx`update inbox_channels set name = coalesce(${str(p.name) || null}, name), external_id = coalesce(${str(p.externalId) || null}, external_id) where id = ${ch.id}`;
   }
   for (const k of ['TOKEN', 'APP_SECRET', 'URL', 'KEY', 'HOOK_SECRET']) if (p.secrets && str(p.secrets[k])) await chSecretSet(ctx, ch, k, str(p.secrets[k]).replace(/\/+$/, k === 'URL' ? '' : '$&'));
+  if (p.secrets && str(p.secrets.PASSWORD)) await chSecretSet(ctx, ch, 'PASSWORD', str(p.secrets.PASSWORD).replace(/\s+/g, ch.kind === 'email' && /gmail|google/i.test(str((p.settings || {}).smtp_host || (ch.settings || {}).smtp_host)) ? '' : '$&'));
   if (p.settings && typeof p.settings === 'object') {
     const s = { ...(ch.settings || {}) };
     if (p.settings.wait_s !== undefined) s.wait_s = Math.max(0, Math.min(15, Math.round(num(p.settings.wait_s))));
@@ -78,6 +82,13 @@ export async function erpInboxChannelSave(ctx, payload) {
     if (p.settings.daily_cap !== undefined) s.daily_cap = Math.max(1, Math.min(500, Math.round(num(p.settings.daily_cap))));
     if (p.settings.site !== undefined) s.site = str(p.settings.site).slice(0, 200);
     if (p.settings.waba_id !== undefined) s.waba_id = str(p.settings.waba_id).replace(/[^0-9]/g, '').slice(0, 30);
+    if (ch.kind === 'email') {   // 134: the mailbox's servers (a preset fills them on the page)
+      for (const k of ['imap_host', 'smtp_host']) if (p.settings[k] !== undefined) s[k] = str(p.settings[k]).toLowerCase().replace(/[^a-z0-9.-]/g, '').slice(0, 120);
+      if (p.settings.imap_port !== undefined) s.imap_port = Math.round(num(p.settings.imap_port)) || 993;
+      if (p.settings.smtp_port !== undefined) s.smtp_port = Math.round(num(p.settings.smtp_port)) || 465;
+      if (p.settings.user !== undefined) s.user = str(p.settings.user).slice(0, 200);
+      if (p.settings.from_name !== undefined) s.from_name = str(p.settings.from_name).replace(/[\r\n"<>]/g, '').slice(0, 80);
+    }
     await ctx.tx`update inbox_channels set settings = ${ctx.tx.json(s)} where id = ${ch.id}`;
   }
   ch = await chOf(ctx, ch.id);
@@ -85,6 +96,7 @@ export async function erpInboxChannelSave(ctx, payload) {
   const done = {};
   if ((ch.kind === 'messenger') && await chSecret(ctx, ch, 'TOKEN')) done.subscribe = await metaSubscribe(ctx, ch);
   if (ch.kind === 'wa_evo' && await chSecret(ctx, ch, 'URL') && hookUrl(ctx, ch)) done.hook = await evoSetHook(ctx, ch, hookUrl(ctx, ch));
+  if (ch.kind === 'email' && (p.secrets && str(p.secrets.PASSWORD) || p.settings)) done.mail = await (await import('./inboxmail.js')).mailConnect(ctx, ch);
   return { ...(await erpInboxChannels(ctx)), done };
 }
 /** AI on / off for a channel (for a time, or until switched on), comments on / off, removed. */
@@ -103,10 +115,15 @@ export async function erpInboxChannelAct(ctx, payload) {
   } else if (p.action === 'comments') await ctx.tx`update inbox_channels set comments_ai = ${!!p.on} where id = ${ch.id}`;
   else if (p.action === 'remove') {
     await ctx.tx`update inbox_channels set status = 'removed' where id = ${ch.id}`;
-    for (const k of ['TOKEN', 'APP_SECRET', 'URL', 'KEY', 'HOOK_SECRET', 'VERIFY']) await chSecretSet(ctx, ch, k, '');
+    for (const k of ['TOKEN', 'APP_SECRET', 'URL', 'KEY', 'HOOK_SECRET', 'VERIFY', 'PASSWORD']) await chSecretSet(ctx, ch, k, '');
   } else if (p.action === 'practice') await ctx.tx`update inbox_channels set status = 'practice' where id = ${ch.id}`;
   else if (p.action === 'qr') { if (ch.kind !== 'wa_evo') throw new Error('Only for an Evolution WhatsApp.'); return { qr: await evoQr(ctx, ch), state: await evoState(ctx, ch) }; }
   else if (p.action === 'state') return { state: ch.kind === 'wa_evo' ? await evoState(ctx, ch) : { state: ch.status } };
+  else if (p.action === 'mailcheck') {   // 134: try the mailbox now (reading and sending)
+    if (ch.kind !== 'email') throw new Error('Only for an e-mail channel.');
+    const r = await (await import('./inboxmail.js')).mailConnect(ctx, ch);
+    return { ...(await erpInboxChannels(ctx)), done: { mail: r } };
+  }
   else throw new Error('Unknown action.');
   return erpInboxChannels(ctx);
 }
@@ -335,7 +352,7 @@ export async function erpChatOrderAct(ctx, payload) {
     if (o.status === 'approved') throw new Error('Already approved: ' + o.invoice_no);
     if (o.status === 'cancelled') throw new Error('A cancelled order cannot be approved.');
     const conv = o.conversation_id ? (await ctx.tx`select v.*, ch.kind from inbox_conversations v join inbox_channels ch on ch.id = v.channel_id where v.id = ${o.conversation_id}`)[0] : null;
-    const channel = conv ? ({ messenger: 'Facebook', instagram: 'Instagram', wa_cloud: 'WhatsApp', wa_evo: 'WhatsApp', wa_sender: 'WhatsApp', webchat: 'Website' }[conv.kind] || 'Other') : 'Other';
+    const channel = conv ? ({ messenger: 'Facebook', instagram: 'Instagram', wa_cloud: 'WhatsApp', wa_evo: 'WhatsApp', wa_sender: 'WhatsApp', webchat: 'Website', email: 'Email' }[conv.kind] || 'Other') : 'Other';
     const H = (await import('./index.js')).HANDLERS;
     const res = await H.erpCreateInvoice(ctx, {
       customer: { name: o.name, phone: o.phone, address: o.address, source: str(p.delivery) || 'Steadfast courier' },

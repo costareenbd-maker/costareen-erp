@@ -205,7 +205,7 @@ export async function ingest(ctx, ch, ev) {
     } catch (_) { mediaName = ev.media.url || null; }
   }
   const text = str(ev.text);
-  await writeMsg(ctx, conv, { direction: 'in', author: 'customer', kind, text, media: mediaName, externalId: ev.id, payload: ev.payload ? { payload: ev.payload } : null });
+  await writeMsg(ctx, conv, { direction: 'in', author: 'customer', kind, text, media: mediaName, externalId: ev.id, payload: ev.payload ? { payload: ev.payload } : ev.email ? { email: ev.email } : null });
   // practice mode: only "test <code>" chats are answered before Go live
   const code = str(chSetting(ch, 'test_code', ''));
   if (ch.status !== 'live' && code && new RegExp('^test\\s+' + code + '$', 'i').test(text)) {
@@ -861,7 +861,14 @@ export async function kbSearch(ctx, q) {
 
 // ------------------------------------------------------------------ the timer (every minute)
 export async function inboxTick(ctx) {
-  const out = { replies: 0, reverted: 0, followups: 0, updates: 0, comments: 0 };
+  const out = { replies: 0, reverted: 0, followups: 0, updates: 0, comments: 0, mails: 0 };
+  // 134: new e-mail in the connected mailboxes becomes chat messages (their answers are due like any other)
+  for (const ch of await ctx.tx`select * from inbox_channels where business_id = ${ctx.biz} and kind = 'email' and status in ('practice', 'live')`) {
+    try {
+      const r = await (await import('./inboxmail.js')).mailPoll(ctx, ch);
+      for (const ev of r.evs) { await ingest(ctx, ch, ev); out.mails++; }
+    } catch (_) { /* written on the channel as its last error */ }
+  }
   // the plan's AI budget used up: one open alert for the team (messages are still kept; people answer)
   try {
     const b = await budget(ctx);
@@ -1044,7 +1051,7 @@ export async function erpInbox(ctx, payload) {
   const pile = ['open', 'later', 'done', 'waiting', 'all'].includes(p.pile) ? p.pile : 'open';
   const q = str(p.q).toLowerCase();
   // the platform switch: one platform's chats (WhatsApp = all three WhatsApp routes)
-  const PLAT = { fb: ['messenger'], ig: ['instagram'], wa: ['wa_cloud', 'wa_evo', 'wa_sender'], web: ['webchat'] };
+  const PLAT = { fb: ['messenger'], ig: ['instagram'], wa: ['wa_cloud', 'wa_evo', 'wa_sender'], web: ['webchat'], mail: ['email'] };
   const kinds = PLAT[str(p.platform)] || null;
   const sc = await scopeOf(ctx), CH = sc.channels || ['-'], HR = sc.hears || ['-'];
   const rows = await ctx.tx`select v.*, c.name, c.phone, c.avatar, c.external_id, ch.kind, ch.name as ch_name from inbox_conversations v

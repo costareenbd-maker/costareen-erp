@@ -2572,3 +2572,24 @@ The Bangla screen swaps any text that matches a known English phrase, so a custo
 into Bangla. Chat messages (customer and team), cards, quick-reply buttons, voice transcripts, team notes, the chat
 list's names and last messages, the chat head's name, and Comments (comment + our reply) now carry data-noi18n.
 Screen labels around them still translate. Tag inbox-raw-1. Checked on dev: plain "Price" -> দাম, a chat "Price" stays.
+
+## 20 Oct 2026 - Email in the Inbox (owner: "I also want to connect the email"; tag inbox-email-1)
+A new channel kind `email` (134). A mailbox - Gmail / Google Workspace (app password), Zoho, Yahoo or a domain
+mailbox (cPanel) - is read every minute by the Inbox timer over IMAP (port 993, read-only EXAMINE: the mail stays
+unread in the mailbox) and answered over SMTP with SSL (port 465; Supabase blocks 25 and 587). No outside service:
+lib/mail.js speaks IMAP/SMTP itself over Deno.connectTls (deps.tcp) and reads MIME (multipart, base64,
+quoted-printable, encoded-word headers, charsets, HTML-only mail, RFC 2231 file names).
+- Each new e-mail becomes a message in its sender's chat (Reply-To first): subject on top for a new thread, quoted
+  history and "On ... wrote:" cut off, a picture kept (and read by the AI), other files named (📎 bill.pdf).
+  Newsletters (List-Unsubscribe / List-Id / Precedence), automatic answers, bounces and no-reply senders are left out
+  and counted on the channel. Only mail arriving after connecting comes in (UIDVALIDITY/UIDNEXT kept in settings).
+- A reply from the Inbox (team or AI) goes out as an e-mail in the thread: "Re: <subject>", In-Reply-To/References,
+  the shop's name as sender, UTF-8 (Bangla fine). Buttons become a numbered list, cards a list with links.
+- Settings → Connections → "Connect an e-mail": provider presets, address, app password, sender name (Other: IMAP
+  and SMTP servers). Saving tests reading and sending apart and says which side failed. The channel card has
+  "Check the mailbox", the last read time, the last error and how many mails were left out. Inbox rail: Email button.
+- Practice mode as other channels: an e-mail with the subject "test <code>" is a test chat. Feature `ch_email`.
+- Checked on dev from Supabase's servers against Gmail with a wrong password: both IMAP 993 and SMTP 465 reached
+  Gmail ("Invalid credentials" / 535) - a real app password will connect. Tests: inboxmail (21) with a scripted
+  IMAP + SMTP server. NOT done: replies typed in Gmail itself are not copied into the chat (Sent folder not read);
+  Outlook.com / Microsoft 365 (they need OAuth, no app passwords); attachments other than pictures are named only.

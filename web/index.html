@@ -35448,7 +35448,7 @@ body[data-fdview="settings"] #o_cp .crumbs, body[data-fdview="tools"] #o_cp .cru
 .ib-av { width:38px; height:38px; flex:0 0 38px; border-radius:50%; background:var(--fd-surface-2); display:flex; align-items:center; justify-content:center; font-weight:800; color:var(--fd-text-2); overflow:hidden; position:relative; }
 .ib-av img { width:100%; height:100%; object-fit:cover; }
 .ib-av .ch { position:absolute; right:-2px; bottom:-2px; width:16px; height:16px; border-radius:50%; border:2px solid var(--fd-card); }
-.ib-ch-messenger { background:#0866FF; } .ib-ch-instagram { background:#E1306C; } .ib-ch-wa_cloud, .ib-ch-wa_evo, .ib-ch-wa_sender { background:#25D366; } .ib-ch-webchat { background:#8B5CF6; }
+.ib-ch-messenger { background:#0866FF; } .ib-ch-instagram { background:#E1306C; } .ib-ch-wa_cloud, .ib-ch-wa_evo, .ib-ch-wa_sender { background:#25D366; } .ib-ch-webchat { background:#8B5CF6; } .ib-ch-email { background:#EA4335; }
 .ib-row .t { flex:1 1 auto; min-width:0; } .ib-row .t b { display:flex; gap:6px; align-items:center; font-size:14px; }
 .ib-row .t b .ago { margin-left:auto; font-size:11.5px; font-weight:600; color:var(--fd-text-3); }
 .ib-row .t span { display:block; font-size:12.5px; color:var(--fd-text-3); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
@@ -35588,7 +35588,7 @@ body[data-fdview="settings"] #o_cp .crumbs, body[data-fdview="tools"] #o_cp .cru
   var fail = function (e) { toast(esc((e && e.message) || e), true, 9000); };
   var tk = function (n) { return '৳' + fmt(Math.round(Number(n) || 0)); };
   function ini(n) { n = String(n || '?').trim(); return esc(n.charAt(0).toUpperCase()); }
-  var CHN = { messenger: 'Messenger', instagram: 'Instagram', wa_cloud: 'WhatsApp', wa_evo: 'WhatsApp (linked)', wa_sender: 'WhatsApp (WaSender)', webchat: 'Website' };
+  var CHN = { messenger: 'Messenger', instagram: 'Instagram', wa_cloud: 'WhatsApp', wa_evo: 'WhatsApp (linked)', wa_sender: 'WhatsApp (WaSender)', webchat: 'Website', email: 'Email' };
 
   // ---------------------------------------------------------------- loading
   function load(name, args, key, after) {
@@ -35688,6 +35688,7 @@ body[data-fdview="settings"] #o_cp .crumbs, body[data-fdview="tools"] #o_cp .cru
     { k: 'ig', name: 'Instagram', bg: 'linear-gradient(45deg,#F58529,#DD2A7B 50%,#8134AF)', ic: '<rect x="4.5" y="4.5" width="15" height="15" rx="4.5" fill="none" stroke="#fff" stroke-width="2"/><circle cx="12" cy="12" r="3.6" fill="none" stroke="#fff" stroke-width="2"/><circle cx="16.6" cy="7.4" r="1.1" fill="#fff"/>' },
     { k: 'wa', name: 'WhatsApp', bg: '#25D366', ic: '<path d="M12 3.6a8.4 8.4 0 0 0-7.2 12.7L3.7 20.4l4.2-1.1A8.4 8.4 0 1 0 12 3.6z" fill="none" stroke="#fff" stroke-width="1.8"/><path d="M9.2 8.2c.2-.4.4-.4.6-.4h.5c.2 0 .4.1.5.4l.7 1.7c.1.2 0 .4-.1.6l-.5.6c.6 1.1 1.5 2 2.6 2.6l.6-.5c.2-.2.4-.2.6-.1l1.7.7c.3.1.4.3.4.5v.5c0 .2 0 .4-.4.6-.5.3-1.2.5-1.9.3-2.6-.8-4.6-2.8-5.4-5.4-.2-.7 0-1.4.3-1.9z" fill="#fff"/>' },
     { k: 'web', name: 'Website chat', bg: '#5B5BD6', ic: '<circle cx="12" cy="12" r="8" fill="none" stroke="#fff" stroke-width="2"/><path d="M4 12h16M12 4c2.5 2.6 2.5 13.4 0 16M12 4c-2.5 2.6-2.5 13.4 0 16" fill="none" stroke="#fff" stroke-width="1.6"/>' },
+    { k: 'mail', name: 'Email', bg: '#EA4335', ic: '<rect x="3.5" y="6" width="17" height="12" rx="2" fill="none" stroke="#fff" stroke-width="2"/><path d="M4 7l8 6 8-6" fill="none" stroke="#fff" stroke-width="2" stroke-linejoin="round"/>' },
     { k: 'li', name: 'LinkedIn', bg: '#0A66C2', ic: '<rect x="5" y="9.5" width="3" height="9" fill="#fff"/><circle cx="6.5" cy="6.3" r="1.7" fill="#fff"/><path d="M10.5 9.5h2.9v1.3c.5-.9 1.6-1.5 3-1.5 2.4 0 3.1 1.5 3.1 3.9v5.3h-3v-4.7c0-1.1-.3-1.8-1.3-1.8s-1.7.7-1.7 1.9v4.6h-3z" fill="#fff"/>', soon: 'LinkedIn lets only its approved partners read and send page messages, so page chats cannot come in yet. Comments on your company page posts can, after LinkedIn approves a Community Management app.' },
     { k: 'x', name: 'X (Twitter)', bg: '#000', ic: '<path d="M5 4.5h3.6l10.4 15h-3.6zM18.6 4.5 5.4 19.5" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"/>', soon: 'X sends direct messages and mentions to other apps only on a paid X API plan. With that plan this can be built like Messenger.' },
     { k: 'tt', name: 'TikTok', bg: '#000', ic: '<path d="M14 4v10.2a3.2 3.2 0 1 1-3.2-3.2" fill="none" stroke="#25F4EE" stroke-width="2.2" stroke-linecap="round"/><path d="M14 4c.4 2.4 2 4 4.5 4.2" fill="none" stroke="#FE2C55" stroke-width="2.2" stroke-linecap="round"/>', soon: 'TikTok opens its business messages only to approved partners. Comments on your videos can come in through TikTok\'s business API after TikTok approves the app.' },
@@ -35704,7 +35705,8 @@ body[data-fdview="settings"] #o_cp .crumbs, body[data-fdview="tools"] #o_cp .cru
     var meta = { fb: 'Connect your Facebook page on the Channels tab. Real customers\' messages need Meta\'s approval of your Meta app (App Review); until then only people on the app can test.',
       ig: 'Connect your Instagram business account (linked to your Facebook page) on the Channels tab. Same Meta app and approval as Facebook.',
       wa: 'Three ways, all on the Channels tab: official WhatsApp (Meta\'s Cloud API, needs the Meta app), or a linked device like WhatsApp Web through Evolution (a small server) or WaSenderAPI (paid) — scan a QR code and chats arrive in minutes; a linked number can be banned by WhatsApp.',
-      web: 'Make a website chat on the Channels tab and paste one line into your website.' }[x.k];
+      web: 'Make a website chat on the Channels tab and paste one line into your website.',
+      mail: 'Connect a mailbox on the Channels tab: Gmail, Zoho, Yahoo or your own domain\'s mail. New e-mails come in here as chats; your answer (or the AI\'s) goes back as an e-mail reply. Gmail needs an app password.' }[x.k];
     fdwDialog(x.name, '<div class="dlg-b" style="white-space:normal">' + (x.soon ? '<p style="margin:0 0 8px"><b>Not connected — and not built yet.</b></p><p style="margin:0">' + esc(x.soon) + '</p><p class="sub" style="margin-top:8px">Its chats will show under this button when it is connected.</p>' : '<p style="margin:0">' + esc(meta) + '</p>') + '</div>',
       x.soon ? function (back, close) { close(); } : function (back, close) { close(); IB.tab = 'chans'; IB.chans = null; paint(); });
     var all = document.querySelectorAll('.dlg-back'), dl = all[all.length - 1];
@@ -36007,7 +36009,8 @@ body[data-fdview="settings"] #o_cp .crumbs, body[data-fdview="tools"] #o_cp .cru
     wa_cloud: 'WhatsApp Cloud API — Meta\'s official WhatsApp. Needs the phone number id, a permanent access token and the app secret; webhooks field "messages". Replies within 24 h of the customer\'s message are free; messages you start later are paid templates.',
     wa_evo: 'Your own number as a linked device (like WhatsApp Web) through an Evolution API server you run. NOT Meta\'s official system: WhatsApp does not allow automated messages this way and the number can be banned for a time or for good. The AI only answers people who wrote first; no broadcasts or reminders here.',
     wa_sender: 'Your own number as a linked device through WaSenderAPI (a paid service, wasenderapi.com). NOT official — the same ban risk. Needs its API key; set the webhook below in WaSenderAPI with a webhook secret.',
-    webchat: 'A chat bubble on your own website: the visitor gives a name and a mobile number, then chats with the same agent (photos and voice notes too). Paste the code below into your site (https).'
+    webchat: 'A chat bubble on your own website: the visitor gives a name and a mobile number, then chats with the same agent (photos and voice notes too). Paste the code below into your site (https).',
+    email: 'A mailbox read every minute: each new e-mail comes in as a chat with its sender, and an answer from here (yours or the AI\'s) goes back as an e-mail reply in the same thread. The mail stays unread in the mailbox. Newsletters, automatic answers and bounces are left out. Only mail that arrives after connecting comes in.'
   };
   // messages after Meta's 24 hours: the templates Meta approved (Messenger, official WhatsApp)
   var TPL_NAMES = { order_courier: 'Handed to the courier', order_out: 'Out for delivery', order_problem: 'Delivery problem', review: 'Review request', booking_confirmed: 'Booking confirmed', booking_reminder: 'Booking reminder' };
@@ -36049,20 +36052,51 @@ body[data-fdview="settings"] #o_cp .crumbs, body[data-fdview="tools"] #o_cp .cru
     return '<div class="ib-c"><h3>Ad accounts on your Facebook login</h3>' + ((m.adAccounts || []).length ? m.adAccounts.map(function (a) { return '<div class="line" style="display:flex;justify-content:space-between;padding:8px 0;border-top:1px solid var(--fd-border)"><span><b>' + esc(a.name) + '</b> <span class="sku">' + esc(a.id) + ' · ' + esc(a.currency) + '</span></span><span class="ib-tag ' + (a.active ? 'ai' : 'test') + '">' + (a.active ? 'ACTIVE' : 'INACTIVE') + '</span></div>'; }).join('') : '<div class="sub">No ad account on this login.</div>') +
       '<div class="sub" style="margin-top:8px">Posting to Facebook, Instagram, TikTok, YouTube and LinkedIn, video making, market research and ad results come here next (Part 2).</div></div>';
   }
+  // ---- the e-mail channel (134, owner 20 Oct 2026)
+  var MAIL_PRESETS = { gmail: ['Gmail / Google Workspace', 'imap.gmail.com', 'smtp.gmail.com'], zoho: ['Zoho Mail', 'imap.zoho.com', 'smtp.zoho.com'], yahoo: ['Yahoo Mail', 'imap.mail.yahoo.com', 'smtp.mail.yahoo.com'], other: ['Other (my website\'s mail / cPanel)', '', ''] };
+  function mailBox(c) {
+    var st = c.settings || {}, m = c.mail || {};
+    return '<div class="ib-form" style="margin-top:10px"><label>Name the customer sees<input class="i" data-chset="from_name" value="' + esc(st.from_name || '') + '" placeholder="e.g. Costareen"></label>' +
+      '<label>Login (if not the address)<input class="i" data-chset="user" value="' + esc(st.user || '') + '" placeholder="' + esc(c.externalId) + '"></label>' +
+      '<label>IMAP server (reading)<input class="i" data-chset="imap_host" value="' + esc(st.imap_host || '') + '"></label><label>Port<input class="i" data-chset="imap_port" value="' + esc(st.imap_port || 993) + '"></label>' +
+      '<label>SMTP server (sending, SSL)<input class="i" data-chset="smtp_host" value="' + esc(st.smtp_host || '') + '"></label><label>Port<input class="i" data-chset="smtp_port" value="' + esc(st.smtp_port || 465) + '"></label></div>' +
+      (m.error ? '<div class="note err" style="margin-top:8px"><div class="ico">!</div><div>' + esc(m.error) + '</div></div>'
+        : m.checked ? '<div class="sub" style="margin-top:6px">✓ Mailbox read ' + esc(m.checked) + (m.skipped ? ' · ' + m.skipped + ' newsletter(s) / automatic mail(s) left out' : '') + '</div>' : '');
+  }
+  function mailConnectHtml() {
+    var pv = IB.mailPv || 'gmail', P = MAIL_PRESETS[pv];
+    return '<div class="ib-c" style="margin-top:14px"><h3>Connect an e-mail</h3><div class="sub">New e-mails come into the Inbox as chats; answers go back as e-mail replies. The mail stays unread in your mailbox.</div>' +
+      '<div class="ib-form" style="margin-top:8px"><label>Mail provider<select class="i" id="mlPv">' + Object.keys(MAIL_PRESETS).map(function (k) { return '<option value="' + k + '"' + (k === pv ? ' selected' : '') + '>' + esc(MAIL_PRESETS[k][0]) + '</option>'; }).join('') + '</select></label>' +
+      '<label>E-mail address<input class="i" id="mlAddr" type="email" autocomplete="off" placeholder="info@yourshop.com"></label>' +
+      '<label>App password<input class="i" id="mlPass" type="password" autocomplete="new-password"></label>' +
+      '<label>Name the customer sees<input class="i" id="mlName" placeholder="e.g. Costareen"></label>' +
+      (pv === 'other' ? '<label>IMAP server (reading, port 993)<input class="i" id="mlImap" placeholder="mail.yourshop.com"></label><label>SMTP server (sending, SSL port 465)<input class="i" id="mlSmtp" placeholder="mail.yourshop.com"></label>' : '') + '</div>' +
+      '<div class="sub" style="margin-top:6px">' + (pv === 'gmail' ? 'Gmail: turn on 2-Step Verification, then Google Account → Security → <b>App passwords</b> → make one named "ERP" and paste its 16 letters here. Your normal Gmail password does not work.'
+        : pv === 'zoho' ? 'Zoho: Settings → Security → App passwords → generate one. If IMAP is off: Settings → Mail accounts → IMAP access → on.'
+        : pv === 'yahoo' ? 'Yahoo: Account security → Generate app password.'
+        : 'Your hosting\'s mailbox (cPanel → Email accounts → Connect devices shows the servers). Use the mailbox password. Sending must be SSL on port 465.') + '</div>' +
+      '<div class="ib-actions"><button class="btn primary small" type="button" data-mailadd="1">Connect the mailbox</button></div></div>';
+  }
+  document.addEventListener('change', function (e) {
+    if (!e.target || e.target.id !== 'mlPv') return;
+    var keep = { a: (el('mlAddr') || {}).value || '', n: (el('mlName') || {}).value || '' };
+    IB.mailPv = e.target.value; paint();
+    if (el('mlAddr')) el('mlAddr').value = keep.a; if (el('mlName')) el('mlName').value = keep.n;
+  });
   function chansHtml(withConnect) {
     return errOr(IB.chans, function (d) {
       var h = (!d.aiKey ? '<div class="note err"><div class="ico">!</div><div>No AI key is set — the AI cannot answer until one is set (Platform → AI reader).</div></div>' : '');
       if (d.channels.length && ME && ME.role === 'owner') h += '<div class="ib-actions" style="margin:0 0 12px"><button class="btn small" type="button" data-chall="pauseall">⏸ Pause the AI everywhere</button><button class="btn small" type="button" data-chall="resumeall">▶ Resume the AI everywhere</button></div>';
       h += '<div class="ib-grid2">' + d.channels.map(function (c) {
-        var keyFields = { messenger: ['TOKEN', 'APP_SECRET'], instagram: ['TOKEN', 'APP_SECRET'], wa_cloud: ['TOKEN', 'APP_SECRET'], wa_evo: ['URL', 'KEY'], wa_sender: ['KEY', 'HOOK_SECRET'], webchat: [] }[c.kind];
-        var KL = { TOKEN: 'Access token', APP_SECRET: 'App secret', URL: 'Server address (https://…)', KEY: 'API key', HOOK_SECRET: 'Webhook secret' };
+        var keyFields = { messenger: ['TOKEN', 'APP_SECRET'], instagram: ['TOKEN', 'APP_SECRET'], wa_cloud: ['TOKEN', 'APP_SECRET'], wa_evo: ['URL', 'KEY'], wa_sender: ['KEY', 'HOOK_SECRET'], webchat: [], email: ['PASSWORD'] }[c.kind];
+        var KL = { TOKEN: 'Access token', APP_SECRET: 'App secret', URL: 'Server address (https://…)', KEY: 'API key', HOOK_SECRET: 'Webhook secret', PASSWORD: 'App password' };
         var st = c.status === 'live' ? '<span class="ib-tag ai">LIVE</span>' : '<span class="ib-tag hot">PRACTICE</span>';
         var embed = c.kind === 'webchat' ? '<div class="sub" style="margin-top:8px">Paste into your website:</div><div class="ib-code">&lt;script src="' + esc(location.origin) + '/chat-widget.js" data-chat="' + esc(c.chatUrl) + '" async&gt;&lt;/script&gt;</div>' : '';
         return '<div class="ib-c"><div style="display:flex;gap:8px;align-items:center"><h3 style="flex:1">' + esc(c.name) + '</h3>' + st + '</div><div class="sub">' + esc(c.kindName) + (c.externalId ? ' · ' + esc(c.externalId) : '') + '</div>' +
           (!c.official ? '<div class="ib-risk">⚠️ Not Meta\'s official system — the number can be banned. Only people who wrote first are answered.</div>' : '') +
           '<div class="sub">' + esc(KIND_HELP[c.kind]) + '</div>' +
           (c.hookUrl && c.kind !== 'webchat' ? '<div class="sub">Webhook address:</div><div class="ib-code">' + esc(c.hookUrl) + '</div>' + (c.verify ? '<div class="sub" style="margin-top:6px">Verify word:</div><div class="ib-code">' + esc(c.verify) + '</div>' : '') : '') + embed +
-          tplBox(c) +
+          tplBox(c) + (c.kind === 'email' ? mailBox(c) : '') +
           (keyFields.length ? '<div class="ib-form" style="margin-top:10px">' + keyFields.map(function (k) { return '<label>' + KL[k] + (c.keys[k] ? ' <span class="ib-tag ai">saved</span>' : '') + '<input class="i" type="password" autocomplete="off" data-chkey="' + k + '" placeholder="' + (c.keys[k] ? 'saved — type to replace' : '') + '"></label>'; }).join('') + '</div>' : '') +
           '<div class="ib-form" style="margin-top:10px"><label>Wait before answering (s)<input class="i" data-chset="wait_s" value="' + esc(c.settings.wait_s) + '"></label><label>Back to the AI after (min)<input class="i" data-chset="revert_min" value="' + esc(c.settings.revert_min) + '"></label>' +
           (c.kind === 'webchat' ? '<label>Colour<input class="i" type="color" data-chset="colour" value="' + esc(c.settings.colour || '#F5A623') + '"></label><label>Logo (https link)<input class="i" data-chset="logo" value="' + esc(c.settings.logo || '') + '"></label><label>AI answers per visitor a day<input class="i" data-chset="daily_cap" value="' + esc(c.settings.daily_cap || 40) + '"></label>' : '') + '</div>' +
@@ -36072,12 +36106,14 @@ body[data-fdview="settings"] #o_cp .crumbs, body[data-fdview="tools"] #o_cp .cru
           '<select class="i" data-chai="' + c.id + '" style="width:auto"><option value="">AI: ' + (c.aiOn && !c.aiOffUntil ? 'on' : c.aiOffUntil ? 'off until ' + esc(c.aiOffUntil) : 'off') + '</option><option value="on">Turn the AI on</option><option value="60">Off for 1 hour</option><option value="240">Off for 4 hours</option><option value="1440">Off for a day</option><option value="off">Off until I turn it on</option></select>' +
           (/messenger|instagram/.test(c.kind) ? '<button class="btn small" type="button" data-chcm="' + c.id + '" data-on="' + (c.commentsAi ? '0' : '1') + '">Comments AI: ' + (c.commentsAi ? 'on' : 'off') + '</button>' : '') +
           (c.kind === 'wa_evo' ? '<button class="btn small" type="button" data-chqr="' + c.id + '">Link the phone (QR)</button>' : '') +
+          (c.kind === 'email' ? '<button class="btn small" type="button" data-chmail="' + c.id + '">Check the mailbox</button>' : '') +
           '<button class="btn small" type="button" data-chremove="' + c.id + '">Remove</button></div>' + (IB.qr && IB.qr.id === c.id ? '<div style="margin-top:10px"><img src="' + esc(IB.qr.qr) + '" alt="QR" style="width:220px;background:#fff;padding:8px;border-radius:10px"><div class="sub">' + esc(IB.qr.state) + ' — scan with WhatsApp → Linked devices.</div></div>' : '') + '</div>';
       }).join('') + '</div>';
-      if (withConnect) h += '<div class="ib-c" style="margin-top:14px"><h3>Connect a channel by hand</h3><div class="ib-form"><label>What<select class="i" id="chKind">' + d.kinds.filter(function (k) { return fon({ messenger: 'ch_messenger', instagram: 'ch_instagram', wa_cloud: 'ch_wa_cloud', wa_evo: 'ch_wa_linked', wa_sender: 'ch_wa_linked', webchat: 'ch_webchat' }[k.kind]); }).map(function (k) { return '<option value="' + k.kind + '">' + esc(k.name) + (k.official ? '' : ' — not official') + '</option>'; }).join('') + '</select></label>' +
+      if (withConnect) h += '<div class="ib-c" style="margin-top:14px"><h3>Connect a channel by hand</h3><div class="ib-form"><label>What<select class="i" id="chKind">' + d.kinds.filter(function (k) { return fon({ messenger: 'ch_messenger', instagram: 'ch_instagram', wa_cloud: 'ch_wa_cloud', wa_evo: 'ch_wa_linked', wa_sender: 'ch_wa_linked', webchat: 'ch_webchat' }[k.kind] || '-'); }).map(function (k) { return '<option value="' + k.kind + '">' + esc(k.name) + (k.official ? '' : ' — not official') + '</option>'; }).join('') + '</select></label>' +
         '<label>Name<input class="i" id="chName" placeholder="e.g. Costareen page"></label><label>Page id / account id / phone number id / instance / number<input class="i" id="chExt"></label></div>' +
         '<label style="display:flex;gap:8px;align-items:flex-start;margin-top:8px;font-size:13px"><input type="checkbox" id="chRisk"> I understand a linked-device WhatsApp (Evolution / WaSenderAPI) is not Meta\'s official system, WhatsApp does not allow automated messages this way, and the number can be banned for a time or for good.</label>' +
         '<div class="ib-actions"><button class="btn primary small" type="button" data-chadd="1">Connect</button></div></div>';
+      if (withConnect && ME && ME.role === 'owner' && fon('ch_email')) h += mailConnectHtml();   // 134: after the hand card (Settings keeps from it on)
       return h;
     });
   }
@@ -36269,7 +36305,7 @@ body[data-fdview="settings"] #o_cp .crumbs, body[data-fdview="tools"] #o_cp .cru
     if (!e.target.closest) return;
     if (e.target.closest('[data-ibtoconn]')) { e.preventDefault(); go('settings'); return; }
     if (!isIbView() && !(VIEW === 'settings' && e.target.closest('.ib-conn'))) return;
-    var t = e.target.closest('[data-ibtab],[data-net],[data-brg],[data-ibday],[data-ibdaymore],[data-ibdayagain],[data-ibpile],[data-ibopen],[data-ibclose],[data-ibmode],[data-ibsend],[data-ibnote],[data-ibside],[data-ibai],[data-ibusedraft],[data-ibcsave],[data-ibinvoice],[data-ibgoconv],[data-ibtaskdone],[data-ibnotify],[data-ibost],[data-iboa],[data-ibinv],[data-iblead],[data-ibleadnew],[data-ibfusave],[data-ibbcsave],[data-ibbcsend],[data-ibcm],[data-ibpfsave],[data-ibundo],[data-ibhelper],[data-ibpublish],[data-ibdiscardall],[data-ibrule],[data-ibruleadd],[data-ibtest],[data-ibtestclear],[data-iboffer],[data-ibofferadd],[data-ibsavedadd],[data-ibsavedx],[data-ibkbadd],[data-ibkbtest],[data-ibkbx],[data-chsave],[data-chlive],[data-chpractice],[data-chcm],[data-chqr],[data-chremove],[data-chadd],[data-ibdays],[data-ibcost],[data-ibbkst],[data-ibbka],[data-ibduty],[data-ibexp],[data-ibolder],[data-chall],[data-ibdict],[data-ibnotebox],[data-ibplat],[data-ibplan],[data-ibgrp],[data-ibacc],[data-tpl],[data-meta],[data-metause]');
+    var t = e.target.closest('[data-chmail],[data-mailadd],[data-ibtab],[data-net],[data-brg],[data-ibday],[data-ibdaymore],[data-ibdayagain],[data-ibpile],[data-ibopen],[data-ibclose],[data-ibmode],[data-ibsend],[data-ibnote],[data-ibside],[data-ibai],[data-ibusedraft],[data-ibcsave],[data-ibinvoice],[data-ibgoconv],[data-ibtaskdone],[data-ibnotify],[data-ibost],[data-iboa],[data-ibinv],[data-iblead],[data-ibleadnew],[data-ibfusave],[data-ibbcsave],[data-ibbcsend],[data-ibcm],[data-ibpfsave],[data-ibundo],[data-ibhelper],[data-ibpublish],[data-ibdiscardall],[data-ibrule],[data-ibruleadd],[data-ibtest],[data-ibtestclear],[data-iboffer],[data-ibofferadd],[data-ibsavedadd],[data-ibsavedx],[data-ibkbadd],[data-ibkbtest],[data-ibkbx],[data-chsave],[data-chlive],[data-chpractice],[data-chcm],[data-chqr],[data-chremove],[data-chadd],[data-ibdays],[data-ibcost],[data-ibbkst],[data-ibbka],[data-ibduty],[data-ibexp],[data-ibolder],[data-chall],[data-ibdict],[data-ibnotebox],[data-ibplat],[data-ibplan],[data-ibgrp],[data-ibacc],[data-tpl],[data-meta],[data-metause]');
     if (!t) return;
     var d = t.dataset;
     if (d.ibtab) { IB.tab = d.ibtab; if (['tasks', 'orders', 'leads', 'stats', 'cost', 'cm', 'bc', 'fu', 'day'].indexOf(d.ibtab) >= 0) IB[d.ibtab] = null; paint(); return; }
@@ -36432,6 +36468,18 @@ body[data-fdview="settings"] #o_cp .crumbs, body[data-fdview="tools"] #o_cp .cru
     if (d.chlive) { t.disabled = true; t.textContent = 'Testing…'; srv('erpInboxGoLive', [{ id: d.chlive }], function (r) { IB.chans = r; paint(); toast('Live — the AI answered: ' + esc(r.answers.map(function (a) { return a.a; }).join(' / ').slice(0, 200))); }, function (er) { paint(); fail(er); }); return; }
     if (d.chpractice) { srv('erpInboxChannelAct', [{ id: d.chpractice, action: 'practice' }], function (r) { IB.chans = r; paint(); }, fail); return; }
     if (d.chcm) { srv('erpInboxChannelAct', [{ id: d.chcm, action: 'comments', on: d.on === '1' }], function (r) { IB.chans = r; paint(); }, fail); return; }
+    if (d.chmail) { t.disabled = true; t.textContent = 'Checking…'; srv('erpInboxChannelAct', [{ id: d.chmail, action: 'mailcheck' }], function (r) { IB.chans = r; paint(); var m = r.done && r.done.mail; toast(m && m.ok ? 'The mailbox works: reading and sending.' : esc((m && m.error) || 'Not reached.'), !(m && m.ok), 12000); }, function (er) { paint(); fail(er); }); return; }
+    if (d.mailadd) {
+      var P = MAIL_PRESETS[val('mlPv') || 'gmail'], addr = val('mlAddr'), pass = val('mlPass');
+      if (!addr || !pass) { toast('Type the e-mail address and its app password.', true); return; }
+      t.disabled = true; t.textContent = 'Connecting… (testing the mailbox)';
+      srv('erpInboxChannelSave', [{ kind: 'email', name: addr, externalId: addr, secrets: { PASSWORD: pass },
+        settings: { imap_host: P[1] || val('mlImap'), smtp_host: P[2] || val('mlSmtp'), imap_port: 993, smtp_port: 465, from_name: val('mlName') } }], function (r) {
+        IB.chans = r; paint(); var m = r.done && r.done.mail;
+        toast(m && m.ok ? 'Connected — new e-mails come in from now on (practice mode: send it "test ' + esc(((r.channels || []).filter(function (c) { return c.kind === 'email'; }).pop() || { settings: {} }).settings.test_code || '') + '" to try the AI).' : 'Saved, but the mailbox did not answer: ' + esc((m && m.error) || '') , !(m && m.ok), 15000);
+      }, function (er) { t.disabled = false; t.textContent = 'Connect the mailbox'; fail(er); });
+      return;
+    }
     if (d.chqr) { srv('erpInboxChannelAct', [{ id: d.chqr, action: 'qr' }], function (r) { IB.qr = { id: d.chqr, qr: r.qr, state: (r.state && r.state.state) || '' }; paint(); }, fail); return; }
     if (d.chremove) { uiConfirm('Remove this channel? Its keys are deleted; the chats already saved stay.').then(function (ok) { if (ok) srv('erpInboxChannelAct', [{ id: d.chremove, action: 'remove' }], function (r) { IB.chans = r; paint(); }, fail); }); return; }
     if (d.chadd !== undefined && t.hasAttribute('data-chadd')) { srv('erpInboxChannelSave', [{ kind: val('chKind'), name: val('chName'), externalId: val('chExt'), acceptRisk: el('chRisk') && el('chRisk').checked }], function (r) { IB.chans = r; paint(); toast('Connected — in practice mode.'); }, fail); return; }

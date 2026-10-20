@@ -5,6 +5,7 @@
 //   wa_evo                 WhatsApp as a linked device through the business's own Evolution API server - NOT official
 //   wa_sender              WhatsApp as a linked device through WaSenderAPI (paid service) - NOT official
 //   webchat                the chat bubble on the business's own website (messages wait here; the widget asks for them)
+//   email                  a mailbox read every minute (IMAP) and answered by e-mail (SMTP) - handlers/inboxmail.js, lib/mail.js
 //
 // Keys are business secrets named INBOX_<channel id>_<NAME>; they never leave the server. Everything goes through
 // ctx.deps.fetch so the tests can stand in for every outside service.
@@ -13,9 +14,9 @@ import { getSecret, setSecret } from '../lib/ext.js';
 
 const str = (v) => String(v == null ? '' : v).trim();
 const GRAPH = 'https://graph.facebook.com/v21.0';
-export const KINDS = ['messenger', 'instagram', 'wa_cloud', 'wa_evo', 'wa_sender', 'webchat'];
+export const KINDS = ['messenger', 'instagram', 'wa_cloud', 'wa_evo', 'wa_sender', 'webchat', 'email'];
 export const KIND_NAME = { messenger: 'Facebook Messenger', instagram: 'Instagram', wa_cloud: 'WhatsApp (official API)', wa_evo: 'WhatsApp (linked device, own server)',
-                           wa_sender: 'WhatsApp (linked device, WaSenderAPI)', webchat: 'Website chat' };
+                           wa_sender: 'WhatsApp (linked device, WaSenderAPI)', webchat: 'Website chat', email: 'Email' };
 // what each channel can draw (AiPraktor's limits: no cards on WhatsApp or the website chat; no 24-hour rule there)
 export const CAN = {
   messenger: { cards: true, buttons: true, seen: true, typing: true, window24: true, followups: true, broadcast: true },
@@ -24,6 +25,7 @@ export const CAN = {
   wa_evo: { cards: false, buttons: false, seen: true, typing: true, window24: false, followups: false, broadcast: false },
   wa_sender: { cards: false, buttons: false, seen: false, typing: false, window24: false, followups: false, broadcast: false },
   webchat: { cards: false, buttons: true, seen: true, typing: true, window24: false, followups: false, broadcast: false },
+  email: { cards: false, buttons: false, seen: false, typing: false, window24: false, followups: false, broadcast: false },
 };
 
 export async function chSecret(ctx, ch, name) { return str(await getSecret(ctx, 'INBOX_' + ch.id + '_' + name)); }
@@ -65,6 +67,7 @@ function numbered(text, buttons) {   // WhatsApp without buttons: the choice as 
  * -> { ok, externalId, error }
  */
 export async function sendOut(ctx, ch, contact, msg) {
+  if (ch.kind === 'email') return (await import('./inboxmail.js')).mailSendOut(ctx, ch, contact, msg);   // 134: a reply in the e-mail thread
   const to = contact.external_id;
   if (ch.kind === 'webchat') return { ok: true, externalId: '' };   // the widget picks it up from the table
   if (ch.kind === 'messenger' || ch.kind === 'instagram') {
