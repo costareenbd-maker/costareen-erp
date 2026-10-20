@@ -2068,3 +2068,12 @@ The owner said "Now". Live moved from 8bcf1a7 (the old worktree) to main (3fb468
   - Cause: the new cards (Customers, Sales, ERP Navigator) added up the sheet's per-row dues. An old sheet order is one ORD- row per product line, each carrying the whole order total, so 191 rows from May–June 2026 were counted again.
   - Fix: they now use the dues list's own figures (`duesMap`), the same method as the old sheet ERP's dues.
   - The data was never wrong.
+
+## Receive stock as a step-by-step form (rvw-1, 21 Oct 2026, Walid)
+
+Stock entry › Receive now shows one step at a time: Supplier & reference → Goods cost → Shipping & costs → Lines → Review & receive into lots, with Back / Next at the bottom (Enter also goes on in the first three steps). The numbers in the FilaDash step bar switch steps.
+- The fields stand one under another in a narrow column centred in the card. The chip groups (goods cost, shipping, split by) are drop-downs.
+- The last step shows a summary (supplier, where from, reference, goods cost, shipping, other costs, each with Edit), the lines and the Receive button.
+- Built as a block at the end of `web/app.html` that only shows parts of the screen built as before; a drop-down clicks the old chip, so receiving, costing and saving are unchanged. After a receive, or when a draft is brought back, it starts again at step 1 (or at Lines when the draft has lines).
+
+**Not done:** not deployed (dev or live), no server change so no test suite run, the Classic look was not checked on screen, and a real receive was not pressed in the new form.
