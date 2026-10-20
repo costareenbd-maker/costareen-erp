@@ -78,6 +78,21 @@ check('the page heading is not glued to the product before it; no "1.75mn" or "j
   L2.every((l) => !/polymers|contrac|ltd|1\.75|mn\b/i.test(l.text)) && L2.every((l) => !/jPanchroma/.test(l.text)), L2.map((l) => l.text));
 check('an amount where the unit price was (84.00 for 20) is turned back into 4.20', (L2.find((l) => l.code === 'CA04076') || {}).price === 4.20, L2.find((l) => l.code === 'CA04076'));
 
+// smart-read-3: the top of the document, read where it is clear
+const head = ['Co polymaker JF Polymers (Suzhou) Co. , Ltd. Su', 'Customer: Invoicing Address: Shipping Address:', 'Costareen Costareen Costareen',
+  'ORDER# 2000012345', 'Order Date : 07. 05. 2026', '10 CA19029 Panchroma™ PLA 350. 000 PCS 4. 20] USD 1, 470. 00 NA', 'Black/1. 75mm/1. 00kg',
+  'Incoterm FCA', 'Address: No. 7-1 Xinggang East Road, Bixi Street, Changshu City, Suzhou Province', 'Seller JF Polymers (Suzhou) Co. , Ltd.'];
+r = await mgr('erpReceiveMatch', [{ rows: head, kind: 'text', reader: 'ocr' }]);
+const dc = r.ok ? r.result.doc : {};
+check('the document\'s top: supplier, order number, date, imported (from Suzhou, FCA), currency', r.ok && /^JF Polymers \(Suzhou\) Co\., Ltd/.test(dc.supplier) &&
+  dc.reference === '2000012345' && /order/i.test(dc.refLabel) && dc.date === '07.05.2026' && dc.imported === true && dc.origin === 'Suzhou' && dc.currency === 'USD', dc);
+r = await mgr('erpReceiveMatch', [{ rows: [['Item', 'Qty', 'Price'], ['Sunlu PLA+ Black', 10, 1500]], kind: 'grid' }]);
+check('nothing clear in the file: the boxes stay empty (no guess)', r.ok && r.result.doc.supplier === '' && r.result.doc.reference === '' && r.result.doc.date === '' && r.result.doc.imported === null, r.result && r.result.doc);
+r = await mgr('erpProductSuggest', [{ name: 'Panchroma PLA Matte Wood Brown', brand: 'Polymaker', colour: 'Wood Brown', code: 'cao4077', price: 4.20, currency: 'USD', rate: 122 }]);
+check('the supplier\'s code is the new SKU (OCR\'s "cao4077" put right), cost = 4.20 USD x 122', r.ok && r.result.product.sku === 'CA04077' && r.result.product.cost_price === 512, r.result && r.result.product);
+r = await mgr('erpProductSuggest', [{ name: 'Panchroma PLA Matte Wood Brown', brand: 'Polymaker', colour: 'Wood Brown', code: 'CA04077', price: 4.20, currency: 'USD' }]);
+check('no rate yet: the cost is left empty, not guessed', r.ok && r.result.product.cost_price === 0, r.result && r.result.product);
+
 // pf-plus-1: a new colour from the product form's "+" (no trip to Settings > Lists)
 r = await mgr('erpListAddValue', [{ kind: 'colors', value: '  Cotton   White ' }]);
 check('the "+" adds "Cotton White" to the colours and says what it added', r.ok && r.result.added === 'Cotton White' && r.result.colors.includes('Cotton White'), r.result && r.result.colors);

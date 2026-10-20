@@ -81,6 +81,7 @@ export function cleanText(t, vocab) {
     const w = tok.replace(/^[^\p{L}\p{N}+]+|[^\p{L}\p{N}+]+$/gu, '').replace(/^[jJlI]([A-Z][a-z]{3,})$/, '$1');   // OCR's table rule glued on: "jPanchroma"
     if (!w || JUNK_TOK.test(w) || isNumCell(w)) continue;
     if (/^\d/.test(w) && !/[a-z]{2}/i.test(w)) continue;                // a number with a stray letter
+    if (/\d[.,][a-z]|[a-z][.,]?\d+$/i.test(w) && !/^(pa\d+|pla\+?\d|pet\w*|\d+a)$/i.test(w) && !/^\d+[a-z]$/i.test(w)) continue;   // OCR's mix of an amount and letters: "172.fig4"
     const lw = w.toLowerCase();
     if (V.has(lw) || COLOUR_WORDS.includes(lw) || brandOf(w) || typeOf(w)) { keep.push(w); continue; }
     if (w.length <= 2) continue;                                       // crumbs: "y", "ad", "fF"
@@ -215,6 +216,8 @@ export function textRecords(lines) {
     // smart-read-2: the heading every page repeats ("JF Polymers (Suzhou) Co., Ltd.", "Sales Contract") is not part of
     // the product above it (it was glued onto the last product of each page)
     if (/\b(co\s*\.?\s*,?\s*ltd|limited|polymers|sales\s*contra\w*|proforma|packing\s*list|invoice)\b/i.test(l) && !typeOf(l)) continue;
+    // smart-read-3: an address, terms or bank line after the last product is not part of it
+    if (META_RE.test(l) && !typeOf(l) && !brandOf(l)) { flush(); continue; }
     const ws = toks.filter((t) => !isNumCell(t)), ns = toks.filter((t) => isNumCell(t)).map(numCell);
     if (cur) {
       cur.text = (cur.text + ' ' + ws.join(' ')).trim();
@@ -252,6 +255,38 @@ export function tidyRecords(recs, vocab) {
   }
   const coded = out.filter((r) => r.code).length;
   return coded >= 3 ? out.filter((r) => r.code) : out;   // smart-read-2: even a heading with the brand in it ("polymaker Sales Contract")
+}
+
+/**
+ * smart-read-3 (owner 21 Oct 2026): the top of the document - who sent it, its number, its date, imported or local -
+ * read only where it is written clearly; anything unclear stays empty. -> { supplier, reference, refLabel, date,
+ * imported, origin, docTotal }
+ */
+export function docHeader(lines, ownName) {
+  const L = lines.map((l) => str(Array.isArray(l) ? l.join(' ') : l).replace(/\s+([,.])/g, '$1').replace(/\s+/g, ' ').trim()).filter(Boolean);
+  const all = L.join('\n'), own = str(ownName).toLowerCase();
+  const out = { supplier: '', reference: '', refLabel: '', date: '', imported: null, origin: '', docTotal: 0 };
+  // the seller: a labelled line first (Seller / Shipper / Exporter / Supplier / From), else the first company name
+  const COMPANY = /([A-Z][A-Za-z0-9&.'\- ]{1,50}(?:\([A-Za-z ]{2,30}\))?\s*(?:Co\.?,?\s*Ltd\.?|Company Limited|Limited|Ltd\.?|Inc\.?|LLC|GmbH|Trading|Industrial|Technology))/;
+  for (const l of L) {
+    const m = /^(seller|shipper|exporter|supplier|vendor|from|beneficiary\s*name)\b\s*[:.]?\s*(.+)$/i.exec(l);
+    if (m) { const c = COMPANY.exec(m[2]); const v = str((c ? c[1] : m[2])).replace(/[^\w)&.]+$/, ''); if (v && !(own && v.toLowerCase().includes(own)) && /[a-z]{3}/i.test(v)) { out.supplier = v; break; } }
+  }
+  if (!out.supplier) for (const l of L.slice(0, 15)) { const c = COMPANY.exec(l); if (c && !(own && c[1].toLowerCase().includes(own))) { out.supplier = str(c[1]); break; } }
+  out.supplier = out.supplier.replace(/^(co\s+)?polymaker\s+/i, '').replace(/\s*,\s*/g, ', ').replace(/\s+\)/g, ')').slice(0, 80);
+  // the document's own number
+  const REF = /\b(order\s*(?:#|no\.?|number)|po\s*(?:#|no\.?)|purchase\s*order\s*(?:#|no\.?)?|invoice\s*(?:#|no\.?|number)|pi\s*(?:#|no\.?)|proforma\s*(?:invoice\s*)?(?:#|no\.?)|contract\s*(?:#|no\.?)|shipment\s*(?:#|no\.?)|packing\s*list\s*(?:#|no\.?)|ref(?:erence)?\.?\s*(?:#|no\.?)?)\s*[:.]?\s*([A-Z0-9][A-Z0-9\-\/]{3,24})/i;
+  for (const l of L) { const m = REF.exec(l); if (m && /\d/.test(m[2])) { out.reference = m[2]; out.refLabel = m[1].replace(/\s+/g, ' ').replace(/no\.?$/i, 'no.').trim(); break; } }
+  const D = /\b(?:order\s*date|invoice\s*date|date|dated)\s*[:.]?\s*(\d{1,2}\s?[.\/-]\s?\d{1,2}\s?[.\/-]\s?\d{2,4}|\d{4}-\d{2}-\d{2}|[A-Za-z]{3,9}\.?\s+\d{1,2},?\s+\d{4}|\d{1,2}\s+[A-Za-z]{3,9}\.?\s+\d{4})/i;
+  for (const l of L) { const m = D.exec(l); if (m) { out.date = m[1].replace(/\s+/g, ''); break; } }
+  // imported or local: a foreign seller / foreign place / trade terms -> imported; taka and Bangladesh only -> local
+  const foreign = /\b(china|suzhou|shenzhen|guangzhou|shanghai|ningbo|hong\s*kong|zhejiang|jiangsu|guangdong|usa|united states|germany|india|vietnam|malaysia|singapore|thailand|turkey)\b/i.exec(all);
+  const terms = /\b(incoterms?|fob|fca|cif|exw|cfr|ddp|swift)\b/i.test(all);
+  if (foreign || terms) { out.imported = true; out.origin = foreign ? foreign[1].replace(/\b\w/g, (c) => c.toUpperCase()) : ''; }
+  else if (/\b(bdt|taka|tk\.?)\b|৳/i.test(all)) out.imported = false;
+  // a written total, when it reads cleanly
+  for (const l of L) if (/\b(grand\s*)?total\b/i.test(l)) { const ns = (l.match(/\d[\d,]*\.\d{2}\b/g) || []).map((x) => num(x.replace(/,/g, ''))).filter((n) => n > 0); if (ns.length) out.docTotal = Math.max(...ns); }
+  return out;
 }
 
 /** Every record against the catalogue: the lines of the review card. */
@@ -304,7 +339,9 @@ export async function erpReceiveMatch(ctx, payload) {
   if (!rows.length) throw new Error('The file has nothing to read.');
   const records = kind === 'text' ? textRecords(rows.map((r) => (Array.isArray(r) ? r.join(' ') : r))) : gridRecords(rows);
   if (!records.length) throw new Error('No product lines found in the file. A line needs a product name and a quantity.');
-  return { kind, reader: p.reader === 'ocr' ? 'ocr' : 'file', ...(await matchRecords(ctx, records, { supplier: p.supplier, fileName: p.fileName, pool: str(p.pool) })) };
+  const doc = docHeader(rows, ctx.s && ctx.s.businessName);
+  const res = await matchRecords(ctx, records, { supplier: p.supplier || doc.supplier, fileName: p.fileName, pool: str(p.pool) });
+  return { kind, reader: p.reader === 'ocr' ? 'ocr' : 'file', ...res, doc: { ...doc, currency: res.currency } };
 }
 
 // ---------------------------------------------------------------- the provider's AI reader (a photo, a scanned PDF)
@@ -472,13 +509,16 @@ export async function erpProductSuggest(ctx, payload) {
     // that brand yet, the most common brand of the whole shop - a Polymaker roll became "Bambulab")
     brand: basis !== 'every product' && mode(S.map((r) => r.brand)) ? mode(S.map((r) => r.brand)) : (brand ? cap(brand) : ''),
     type: type ? (S.map((r) => str(r.type)).find((t) => typeOf(t) === type) || prettyType(type)) : (basis === 'every product' ? '' : mode(S.map((r) => r.type)) || ''),
-    category: mode(S.map((r) => r.category)) || '',
+    // smart-read-3: only what is clear - a filament's category from the shop's other filaments; nothing when unsure
+    category: (type ? mode(typed.filter((x) => x.t).map((x) => x.r.category)) : '') || (basis === 'every product' ? '' : mode(S.map((r) => r.category))) || '',
     color: cap(colour),
     unit: mode(S.map((r) => r.unit)) || 'Piece',
     supplier: str(p.supplier) || (basis === 'every product' ? '' : mode(S.map((r) => r.supplier)) || ''),
     supplier_sku: str(p.code).slice(0, 60),
     sell_price: basis === 'every product' ? 0 : num(mode(S.map((r) => (num(r.sell_price) > 0 ? num(r.sell_price) : '')))),
-    cost_price: /^(bdt|tk|taka)$/i.test(str(p.currency)) ? num(p.price) : 0,
+    // the file's unit price as the cost: in taka as it is; in a foreign currency at the shipment's rate when one is typed
+    // (before shipping and other costs - Receive adds those); no rate yet -> left empty, never guessed
+    cost_price: /^(bdt|tk|taka)$/i.test(str(p.currency)) ? num(p.price) : (num(p.price) > 0 && num(p.rate) > 0 ? Math.round(num(p.price) * num(p.rate)) : 0),
     reorder_level: basis === 'every product' ? 5 : num(mode(S.map((r) => num(r.reorder_level)))) || 5,
     lead_time_days: basis === 'every product' ? 60 : num(mode(S.map((r) => num(r.lead_time_days)))) || 60,
   };
@@ -490,6 +530,9 @@ export async function erpProductSuggest(ctx, payload) {
   let sku = base + String(n + 1).padStart(3, '0'); let guard = 0;
   while (used.has(sku) && guard++ < 50) sku = base + String(n + 1 + guard).padStart(3, '0');
   out.sku = sku;
+  // smart-read-3 (owner: "the SKU in the PDF has priority"): the supplier's own code is the product's SKU when it is free
+  const code = p.code ? normCode(p.code) : '';
+  if (code && /\d/.test(code) && code.length >= 4 && !used.has(code.toLowerCase())) out.sku = code;
   return { product: out, siblings: S.length, basis, examples: S.slice(0, 3).map((r) => str(r.name)) };
 }
 

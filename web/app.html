@@ -22089,7 +22089,17 @@ function rfCardHtml() {
     (RF.image ? '<button class="btn small primary" type="button" id="rf_ai">Read it better with the provider\u2019s AI reader</button>' : '') +
     '<button class="btn small" type="button" id="rf_close">Close</button></div></div></section>';
   if (RF.busy) return h + '<div class="loading">' + esc(RF.busy) + '</div></div></section>';
-  var r = RF.res || {};
+  var r = RF.res || {}, dc = r.doc || {};
+  // smart-read-3: what the document is, at a glance (empty where the file did not say it clearly)
+  var cell = function (k, v) { return '<div style="min-width:120px"><div class="sku">' + k + '</div><b>' + (v ? esc(v) : '<span class="sku">not clear in the file</span>') + '</b></div>'; };
+  var lineVal = (r.lines || []).reduce(function (a, l) { return a + num(l.qty) * num(l.price); }, 0);
+  if (RF.res) h += '<div class="row" style="gap:18px;flex-wrap:wrap;margin:6px 0 10px">' + cell('Supplier', dc.supplier) + cell('Brand', r.brand ? r.brand.replace(/\b\w/g, function (c) { return c.toUpperCase(); }) : ((r.lines || [])[0] && (r.lines[0].newProduct || {}).brand) || '') +
+       cell(dc.refLabel ? dc.refLabel.replace(/\b\w/, function (c) { return c.toUpperCase(); }) : 'Document no.', dc.reference) + cell('Date', dc.date) +
+       cell('Imported or local', dc.imported === true ? 'Imported' + (dc.origin ? ' (' + dc.origin + ')' : '') : dc.imported === false ? 'Bought locally' : '') + cell('Currency', dc.currency || r.currency) +
+       cell('Lines', fmt((r.lines || []).length)) + cell('Quantity', fmt(r.totalQty || 0)) +
+       cell('Value of the lines', lineVal ? fmt(Math.round(lineVal * 100) / 100) + ' ' + (dc.currency || r.currency || '') : '') + '</div>' +
+       (dc.docTotal && lineVal && Math.abs(dc.docTotal - lineVal) > Math.max(1, dc.docTotal * 0.005) ? '<div class="note" style="margin-bottom:8px"><div class="ico">!</div><div>The file’s total says ' + fmt(dc.docTotal) + ' but the lines add up to ' + fmt(Math.round(lineVal * 100) / 100) + ' — a price that could not be read is left empty; check the rows marked “no price in the file”.</div></div>' : '') +
+       ((r.lines || []).some(function (l) { return !(num(l.price) > 0); }) && lineVal ? '<div class="sub" style="display:block;margin-bottom:6px">' + (r.lines || []).filter(function (l) { return !(num(l.price) > 0); }).length + ' line(s) have no readable price — left empty on purpose.</div>' : '');
   h += '<div class="sub" data-c5x="1" style="display:block">' + fmt(RF.added || 0) + ' line(s) went into the receive list below' + (r.matched != null ? ': ' + fmt(r.matched) + ' matched, ' + fmt(r.unmatched) + ' to decide' : '') + '. ' +
        (r.reader === 'ocr' ? 'Read on this device' + (RF.ocrConf ? ' (' + Math.round(RF.ocrConf) + '% sure)' : '') + '; nothing was sent anywhere. ' + (RF.ocrConf && RF.ocrConf < 75 ? 'The photo was hard to read \u2014 ' : 'If the lines look wrong, ') + '<button class="btn small" type="button" id="rf_ai" style="vertical-align:middle">Read it better with the provider\u2019s AI reader</button>'
         : r.reader === 'gemini' ? 'Read by the provider\u2019s AI reader' + (r.readsLeft != null ? ' \u00b7 ' + r.readsLeft + ' reads left today' : '') + '.' : '') + '</div>' +
@@ -22101,13 +22111,23 @@ var RV_ONLY_OPEN = false, RF_FIX_ROW = null;
 function rvOpenCount() { var n = 0; RECV.lines.forEach(function (l) { if (l.state === 'amber' || l.state === 'red') n++; }); return n; }
 function rvOpenBar() {
   var n = rvOpenCount(); if (!n && !RV_ONLY_OPEN) return '';
+  var reds = RECV.lines.filter(function (x) { return x.state === 'red'; }).length;
   return '<div class="ap-row" style="margin-top:12px"><span class="rf-conf ' + (n ? 'mid' : 'hi') + '">' + (n ? fmt(n) + ' row(s) need a choice' : 'Every row is settled') + '</span>' +
+         (reds && !BUSY ? '<button class="btn small primary" type="button" id="rv_setupall" title="Each new product is made from what the file says: name, brand, type, colour, the supplier’s code as its SKU, the quantity on its row">Set up all ' + reds + ' new product(s)</button>' : '') +
          '<label class="mk-sw" style="font-size:12.5px"><input type="checkbox" id="rv_onlyopen"' + (RV_ONLY_OPEN ? ' checked' : '') + '> Show only those</label></div>';
 }
 function rvSrcLine(l) {
   var sct = l.src; if (!sct) return '';
-  return '<br><span class="rf-src">from file: ' + esc(sct.text || sct.code) + (sct.price ? ' \u00b7 ' + fmt(sct.price) + ' ' + esc(sct.currency || '') : '') +
-         (sct.how === 'remembered' ? ' \u00b7 remembered' : sct.how === 'sku' ? ' \u00b7 our SKU' : sct.confidence ? ' \u00b7 ' + Math.round(sct.confidence * 100) + '% match' : '') + '</span>';
+  // smart-read-3: one look tells where the row came from - its line in the file, the supplier's code, the price, the amount
+  var pr = num(sct.price), cur = esc(sct.currency || ''), q = num(l.qty);
+  var money = pr > 0 ? ' \u00b7 ' + (Math.round(pr * 100) / 100) + ' ' + cur + ' each' + (q ? ' = ' + fmt(Math.round(pr * q * 100) / 100) + ' ' + cur : '') : ' \u00b7 <i>no price in the file</i>';
+  return '<br><span class="rf-src">' + (sct.pos ? '#' + sct.pos + ' in the file' : 'from the file') + (sct.code ? ' \u00b7 code <b>' + esc(sct.code) + '</b>' : '') + ' \u00b7 ' + esc(sct.text || '') + money +
+         (sct.how === 'remembered' ? ' \u00b7 remembered' : sct.how === 'sku' ? ' \u00b7 our SKU' : sct.how === 'supplier code' ? ' \u00b7 by the supplier code' : sct.confidence ? ' \u00b7 ' + Math.round(sct.confidence * 100) + '% match' : '') + '</span>';
+}
+/** smart-read-3: the shipment's exchange rate for a cost in a foreign currency (typed, or the saved rate); 0 = none yet. */
+function rfRate() {
+  if (!(RECV.mode === 'fx' || RECV.mode === 'rmb')) return 0;
+  return num(RECV.rate) || (typeof fxRate === 'function' ? num(fxRate(RECV.currency || 'USD')) : 0);
 }
 function rvNameCell(l, i) {
   var sct = l.src;
@@ -22136,7 +22156,7 @@ function rfIntoTable(r) {
   if (RF.file) RECV.lines = RECV.lines.filter(function (x) { return !(x.src && x.src.file === RF.file); });
   (r.lines || []).forEach(function (l) {
     if (!(num(l.qty) > 0)) return;
-    var src = { file: RF.file, text: l.text, code: l.code, price: l.price, currency: l.currency, confidence: l.confidence, how: l.how, candidates: l.candidates || [], newProduct: l.newProduct };
+    var src = { file: RF.file, pos: l.pos, qty: num(l.qty), text: l.text, code: l.code, price: l.price, currency: l.currency || r.currency || '', confidence: l.confidence, how: l.how, candidates: l.candidates || [], newProduct: l.newProduct };
     var p = l.sku ? recvCat().filter(function (x) { return x.sku === l.sku; })[0] : null;
     if (l.sku && (l.how === 'sku' || l.how === 'remembered' || l.how === 'supplier code' || l.confidence >= 0.9)) {
       // file-order-1 (owner 21 Oct 2026: "follow the list's order, do not shuffle"): every line of the file keeps its own
@@ -22150,6 +22170,12 @@ function rfIntoTable(r) {
     }
     added++; money += num(l.qty) * num(l.price); if (l.currency) cur = l.currency;
   });
+  // smart-read-3: the top of the document fills the top of the page (only empty boxes; every box stays editable)
+  var dc = r.doc || {}; RECV.docInfo = dc;
+  if (dc.supplier && !RECV.supplier) RECV.supplier = dc.supplier;
+  if (dc.reference && !RECV.reference) RECV.reference = (dc.refLabel ? dc.refLabel.replace(/\b\w/, function (c) { return c.toUpperCase(); }) + ' ' : '') + dc.reference;
+  if (dc.imported === true) RECV.from = 'shipment'; else if (dc.imported === false && (!RECV.from || RECV.from === 'shipment') && !RECV.lines.some(function (x) { return !x.src; })) RECV.from = 'local';
+  if (dc.date && String(RECV.notes || '').indexOf(dc.date) < 0) RECV.notes = (RECV.notes ? RECV.notes + ' · ' : '') + 'Document date ' + dc.date;
   if (r.supplier && !RECV.supplier) RECV.supplier = r.supplier;
   if (money > 0 && !num(RECV.totalRmb)) { RECV.mode = 'fx'; RECV.currency = (cur || r.currency || 'RMB').toUpperCase().replace('CNY', 'RMB'); RECV.totalRmb = String(Math.round(money * 100) / 100); if (!RECV.rate && typeof fxRate === 'function' && fxRate(RECV.currency) > 0) RECV.rate = String(fxRate(RECV.currency)); }
   if (!RECV.reference && RF.file) RECV.reference = RF.file.replace(/\.(pdf|xlsx|csv|jpe?g|png|webp)$/i, '');
@@ -22306,8 +22332,10 @@ document.addEventListener('click', function (ev) {
     var ri = Number(t.getAttribute('data-rvsetup')), rl = RECV.lines[ri]; if (!rl) return;
     t.disabled = true; t.textContent = 'Preparing\u2026';
     var np = (rl.src && rl.src.newProduct) || {};
-    srv('erpProductSuggest', [{ name: rl.src ? rl.src.text : rl.name, brand: np.brand || '', colour: np.color || '', price: rl.src ? rl.src.price : 0, currency: rl.src ? rl.src.currency : '', supplier: RECV.supplier || '' }], function (r) {
-      PRODUCT_FORM = Object.assign(blankProduct(), r.product, { isNew: true, returnTo: 'receive', opening_stock: 0 });
+    srv('erpProductSuggest', [{ name: rl.src ? rl.src.text : rl.name, brand: np.brand || '', colour: np.color || '', price: rl.src ? rl.src.price : 0, currency: rl.src ? rl.src.currency : '',
+                                supplier: RECV.supplier || '', code: rl.src ? rl.src.code : '', rate: rfRate() }], function (r) {
+      // smart-read-3: the file's quantity stays in the form (it was set to 0 there; the owner thought it was lost)
+      PRODUCT_FORM = Object.assign(blankProduct(), r.product, { isNew: true, returnTo: 'receive', opening_stock: num(rl.qty) || 1 });
       RF_FIX_ROW = ri; RECV_NEWQTY = num(rl.qty) || 1; RF_SUGGEST = r;
       if (!LISTS) loadLists();
       repaint(); var f = el('pf_name') || el('pf_sku'); if (f) f.scrollIntoView({ block: 'center' });
@@ -22327,11 +22355,11 @@ quickCardHtml = function (target) {
 var attachNewProductRF = attachNewProduct;
 attachNewProduct = function (target, sku) {
   if (target !== 'receive' || RF_FIX_ROW === null) return attachNewProductRF.apply(this, arguments);
-  var ri = RF_FIX_ROW; RF_FIX_ROW = null; RF_SUGGEST = null; RECV_NEWQTY = 0;
+  var ri = RF_FIX_ROW, fq = num(RECV_NEWQTY); RF_FIX_ROW = null; RF_SUGGEST = null; RECV_NEWQTY = 0;
   srv('erpCatalog', [], function (cat) {
     CAT = cat; var p = null; for (var i = 0; i < CAT.length; i++) if (CAT[i].sku === sku) { p = CAT[i]; break; }
     var row = RECV.lines[ri];
-    if (row) { row.sku = sku; row.name = p ? p.name : sku; row.stock = p ? p.stock : 0; delete row.state; if (row.src) rfLearn([{ pairs: [{ alias: row.src.code || row.src.text, sku: sku }], supplier: RECV.supplier || '' }], function () {}, function () {}); }
+    if (row) { row.sku = sku; row.name = p ? p.name : sku; row.stock = p ? p.stock : 0; if (fq > 0) row.qty = fq; delete row.state; if (row.src) rfLearn([{ pairs: [{ alias: row.src.code || row.src.text, sku: sku }], supplier: RECV.supplier || '' }], function () {}, function () {}); }
     else RECV.lines.push({ sku: sku, name: p ? p.name : sku, qty: 1, stock: p ? p.stock : 0 });
     toast('Product created and placed on its line. ' + (rvOpenCount() ? rvOpenCount() + ' row(s) still need a choice.' : 'Press Receive when ready.'), false, 8000);
     D = null; loadDashboardOnly(); updateCounts(); repaint();
@@ -38120,11 +38148,43 @@ document.addEventListener('click', function (ev) {
     var h = pfHtmlPlus.apply(this, arguments);
     // a new product's value from a file or a suggestion was never on the list: say what really happens to it
     if (h && PRODUCT_FORM && PRODUCT_FORM.isNew) h = h.split(' (not on the list any more)</option>').join(' (new — added to the list when you save)</option>');
+    // smart-read-3: from Receive the quantity is the shipment's, not an opening stock
+    if (h && PRODUCT_FORM && PRODUCT_FORM.returnTo === 'receive') h = h.replace('>Opening stock</label>', '>Quantity in this shipment</label>');
     if (!h || !(ME && /^(manager|shareholder|owner)$/.test(ME.role))) return h;
     return h.replace(/(<select class="i" id="(pf_cat|pf_brand|pf_type|pf_color|pf_unit|pf_sup)"[^>]*>[\s\S]*?<\/select>)/g, function (m, sel, id) {
       return '<span class="pf-plus">' + sel + '<button type="button" class="btn small pf-plus-b" data-pfplus="' + id + '" title="Add a new ' + PLUS[id][2] + ' to the list" aria-label="Add a new ' + PLUS[id][2] + '">+</button></span>';
     });
   };
+  // smart-read-3 (owner 21 Oct 2026: 55 new products, one form each was too much): every red row of a file made into a
+  // product in one go - the file's name, brand, type, colour, the supplier's code as SKU, the row's quantity kept;
+  // what the file did not say clearly stays empty (sale price, ...) to fill in later
+  function call(name, args) { return new Promise(function (ok, bad) { srv(name, args, ok, bad); }); }
+  document.addEventListener('click', async function (e) {
+    var b = e.target && e.target.closest && e.target.closest('#rv_setupall'); if (!b) return;
+    var idx = []; RECV.lines.forEach(function (x, i) { if (x.state === 'red') idx.push(i); });
+    if (!idx.length || BUSY) return;
+    if (!(await uiConfirm('Make ' + idx.length + ' new product(s) from the file?\n\nEach gets the name, brand, type and colour the file gives, the supplier’s code as its SKU and the quantity on its row. ' +
+      'Anything the file does not say clearly (like the selling price) is left empty for you to fill in.'))) return;
+    BUSY = 'setupall'; var made = 0, bad = [], pool = (typeof rfPool === 'function' && rfPool()) ? JRV.pool : '';
+    for (var k = 0; k < idx.length; k++) {
+      var rl = RECV.lines[idx[k]]; if (!rl || rl.state !== 'red') continue;
+      var np = (rl.src && rl.src.newProduct) || {};
+      try { toast('Making product ' + (k + 1) + ' of ' + idx.length + '…', false, 2500); } catch (er) {}
+      try {
+        var sg = await call('erpProductSuggest', [{ name: rl.src ? rl.src.text : rl.name, brand: np.brand || '', colour: np.color || '', price: rl.src ? rl.src.price : 0,
+                                                     currency: rl.src ? rl.src.currency : '', supplier: RECV.supplier || '', code: rl.src ? rl.src.code : '', rate: rfRate() }]);
+        var d = Object.assign({}, sg.product, { isNew: true, opening_stock: 0, status: 'Active' });
+        if (pool) d.__pool = pool;
+        var res = await call('erpSaveProduct', [d]);
+        rl.sku = res.sku || d.sku; rl.name = d.product_name; rl.stock = 0; delete rl.state; made++;
+      } catch (er) { bad.push((rl.name || '?') + ': ' + ((er && er.message) || er)); }
+    }
+    BUSY = '';
+    try { CAT = await call('erpCatalog', []); } catch (er) {}
+    if (pool && typeof jrvLoadCat === 'function') { JRV.cat = null; jrvLoadCat(); }
+    repaint();
+    toast(made + ' product(s) made and placed on their rows' + (bad.length ? '; ' + bad.length + ' could not be made:<br>' + bad.slice(0, 5).map(esc).join('<br>') : '. Check the rows, then press Receive.'), !!bad.length, 12000);
+  });
   document.addEventListener('click', async function (e) {
     var b = e.target && e.target.closest && e.target.closest('[data-pfplus]'); if (!b || !PRODUCT_FORM) return;
     e.preventDefault();
