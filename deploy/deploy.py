@@ -120,6 +120,30 @@ def step_secrets(pairs):
     print('secrets', code, '' if code < 300 else out)
 
 
+def dev_version(out):
+    """devsync-1 (owner 21 Oct 2026: "his changes should be on this link, trackable in real time"): version.json on the
+    dev page - the commits on it (who, when, what), the branches not merged yet with their preview links, when it was put up."""
+    import json as _j, datetime as _dt, re as _re
+    def g(*a):
+        try: return subprocess.check_output(['git', '-C', ROOT] + list(a), text=True, encoding='utf-8', errors='replace').strip()
+        except Exception: return ''
+    fmt = '%H%x1f%an%x1f%aI%x1f%s'
+    commits = [dict(zip(['sha', 'author', 'at', 'msg'], l.split(''))) for l in g('log', '-40', '--format=' + fmt).splitlines() if l]
+    branches = []
+    for ref in g('for-each-ref', '--format=%(refname:short)', 'refs/remotes/origin').splitlines():
+        b = ref.split('/', 1)[-1]
+        if b in ('HEAD', 'main', 'origin') or not ref.startswith('origin/'): continue
+        ahead = g('rev-list', '--count', 'HEAD..' + ref)
+        if not ahead or ahead == '0': continue
+        last = g('log', '-1', '--format=' + fmt, ref).split('')
+        slug = _re.sub(r'[^a-z0-9-]', '-', b.lower())[:28].strip('-')
+        branches.append({'name': b, 'ahead': int(ahead), 'author': last[1] if len(last) > 1 else '', 'at': last[2] if len(last) > 2 else '',
+                         'msg': last[3] if len(last) > 3 else '', 'preview': 'https://%s.%s.pages.dev' % (slug, PAGES_PROJECT)})
+    v = {'sha': g('rev-parse', 'HEAD'), 'branch': os.environ.get('DEV_PAGES_BRANCH', 'main'), 'deployedAt': _dt.datetime.now(_dt.timezone.utc).isoformat(),
+         'by': os.environ.get('DEVSYNC_BY', 'by hand'), 'commits': commits, 'branches': branches}
+    open(os.path.join(out, 'version.json'), 'w', encoding='utf-8').write(_j.dumps(v, ensure_ascii=False))
+
+
 def step_web():
     need('CLOUDFLARE_API_TOKEN'); need('CLOUDFLARE_ACCOUNT_ID')
     env = None
@@ -139,6 +163,8 @@ def step_web():
     shutil.copytree(os.path.join(ROOT, 'web', 'vendor'), os.path.join(out, 'vendor'))   # the barcode reader (loaded only when scanning)
     shutil.copytree(os.path.join(ROOT, 'web', 'games'), os.path.join(out, 'games'))   # games load on demand (no photos in them)
     shutil.copytree(os.path.join(ROOT, 'web', 'fonts'), os.path.join(out, 'fonts'))   # the FilaDash look's fonts (Inter + Noto Sans Bengali, OFL)
+    if DEV:
+        dev_version(out)   # devsync-1: what is on the dev ERP - the page's "What's on dev" badge reads it
     # Stage 1e: only the published copy is minified (the source stays readable); a failed minify stops the deploy
     games = [os.path.join(out, 'games', f) for f in os.listdir(os.path.join(out, 'games')) if f.endswith('.js')]
     subprocess.check_call(['node', os.path.join(ROOT, 'deploy', 'minify.mjs'), os.path.join(out, 'index.html')] + games)
@@ -152,7 +178,7 @@ def step_web():
                 code, out2 = api(base, 'POST', {'name': proj, 'production_branch': 'main'}, os.environ['CLOUDFLARE_API_TOKEN'])
                 print('made the neutral Pages project', proj, code, '' if code < 300 else out2)
         cmd = ['npx', '-y', 'wrangler@3', 'pages', 'deploy', out, '--project-name=' + proj,
-               '--branch=main', '--commit-dirty=true']
+               '--branch=' + (os.environ.get('DEV_PAGES_BRANCH', 'main') if DEV else 'main'), '--commit-dirty=true']   # devsync-1: a branch -> its own preview link
         print(' '.join(cmd))
         subprocess.check_call(cmd, shell=(os.name == 'nt'))
     if DEV:

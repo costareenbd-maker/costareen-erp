@@ -2708,3 +2708,20 @@ Stock entry › Receive now shows one step at a time: Supplier & reference → G
 - Built as a block at the end of `web/app.html` that only shows parts of the screen built as before; a drop-down clicks the old chip, so receiving, costing and saving are unchanged. After a receive, or when a draft is brought back, it starts again at step 1 (or at Lines when the draft has lines).
 
 **Not done:** not deployed (dev or live), no server change so no test suite run, the Classic look was not checked on screen, and a real receive was not pressed in the new form.
+
+## Dev ERP follows GitHub by itself (21 Oct 2026, tag devsync-1)
+Owner: "the second developer made changes on GitHub that should be on the dev link but I cannot see them - make it
+real-time trackable". His work (Walid, "Receive stock as a step-by-step form") was on the branch receive-step-form, not
+on main; merged into main (both sides had added blocks at the end of app.html and CHANGES.md - both kept), checked on
+the dev ERP (the form works; the joint Receive page keeps its old layout; "From a file or photo" sits in step 4 Lines).
+- deploy/devsync.py, run every 2 minutes by the Windows task "Costareen dev sync" (deploy/devsync-install.cmd, hidden
+  via devsync-run.vbs) on the owner's PC: fetches GitHub into its own copy (G:/costareen-erp-devsync); main moved ->
+  the dev ERP is updated (db if a migration changed, function if server code changed, the page always); a branch not
+  merged yet -> its page goes up at https://<branch>.costareen-erp-dev.pages.dev (main's deploy script is used for it).
+  Dev only; the keys stay on this PC; nothing added to GitHub that could reach the live ERP.
+- deploy.py (dev web): writes version.json (the last 40 commits: who, when, what; the unmerged branches with preview
+  links; when and how it was put up) and takes DEV_PAGES_BRANCH for preview links.
+- The page, on the dev host only: a "Dev" badge bottom-left - last change, who, when; click = the list + waiting branches;
+  checks every minute and turns red "New version from <name> - click to reload".
+Not done: runs only while this PC is on (a GitHub Action would need the Supabase/Cloudflare keys on GitHub, which can
+also reach the live ERP - not done on purpose); no tests run before a dev update (dev is demo data).
