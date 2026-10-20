@@ -22131,9 +22131,12 @@ function rfPool() { return (typeof JRV !== 'undefined' && JRV.on && VIEW === 'jo
 function rfLearn(args, ok, bad) { if (rfPool()) return; srv('erpReceiveLearn', args, ok, bad); }
 function rfIntoTable(r) {
   var added = 0, money = 0, cur = '', pairs = [];
+  // smart-read-2: reading the same file again replaces its earlier lines (they were added a second time, after the
+  // first ones - the shipment looked out of order and doubled)
+  if (RF.file) RECV.lines = RECV.lines.filter(function (x) { return !(x.src && x.src.file === RF.file); });
   (r.lines || []).forEach(function (l) {
     if (!(num(l.qty) > 0)) return;
-    var src = { text: l.text, code: l.code, price: l.price, currency: l.currency, confidence: l.confidence, how: l.how, candidates: l.candidates || [], newProduct: l.newProduct };
+    var src = { file: RF.file, text: l.text, code: l.code, price: l.price, currency: l.currency, confidence: l.confidence, how: l.how, candidates: l.candidates || [], newProduct: l.newProduct };
     var p = l.sku ? recvCat().filter(function (x) { return x.sku === l.sku; })[0] : null;
     if (l.sku && (l.how === 'sku' || l.how === 'remembered' || l.how === 'supplier code' || l.confidence >= 0.9)) {
       // file-order-1 (owner 21 Oct 2026: "follow the list's order, do not shuffle"): every line of the file keeps its own
@@ -22231,7 +22234,9 @@ function rfPicture(src) {
 }
 async function rfOcrCanvas(canvas) {
   var w = await rfOcrWorker();
-  try { await w.setParameters({ tessedit_pageseg_mode: '6', preserve_interword_spaces: '1' }); } catch (e) {}
+  // smart-read-2 (21 Oct 2026): mode 4 (a column of lines of different sizes), not 6 (one even block) - with 6 the
+  // first line of every two-line table row was lost on a Polymaker contract (19 of 55 products gone)
+  try { await w.setParameters({ tessedit_pageseg_mode: '4', preserve_interword_spaces: '1' }); } catch (e) {}
   var res = await w.recognize(canvas);
   var lines = [], confs = [];
   (res.data.lines || []).forEach(function (l) { var t = (l.text || '').replace(/\s+/g, ' ').trim(); if (t) { lines.push(t); confs.push(l.confidence || 0); } });
@@ -22254,7 +22259,8 @@ async function rfReadFile(file) {
     // a scanned PDF: no text inside - draw the first pages and read them as photos
     RF.busy = 'A scanned PDF: drawing the pages\u2026'; repaint();
     var lib = await rfPdfLib(), doc = await lib.getDocument({ data: buf, disableWorker: true, isEvalSupported: false }).promise, all = [];
-    for (var p = 1; p <= Math.min(doc.numPages, 4); p++) {
+    for (var p = 1; p <= Math.min(doc.numPages, 12); p++) {   // smart-read-2: up to 12 scanned pages (was 4)
+      RF.busy = 'Reading page ' + p + ' of ' + Math.min(doc.numPages, 12) + '…'; repaint();
       var page = await doc.getPage(p), vp = page.getViewport({ scale: 2 }), cv = document.createElement('canvas'); cv.width = vp.width; cv.height = vp.height;
       await page.render({ canvasContext: cv.getContext('2d'), viewport: vp }).promise;
       if (p === 1) RF.image = cv.toDataURL('image/jpeg', 0.8);
@@ -38112,6 +38118,8 @@ document.addEventListener('click', function (ev) {
   var pfHtmlPlus = productFormHtml;
   productFormHtml = function () {
     var h = pfHtmlPlus.apply(this, arguments);
+    // a new product's value from a file or a suggestion was never on the list: say what really happens to it
+    if (h && PRODUCT_FORM && PRODUCT_FORM.isNew) h = h.split(' (not on the list any more)</option>').join(' (new — added to the list when you save)</option>');
     if (!h || !(ME && /^(manager|shareholder|owner)$/.test(ME.role))) return h;
     return h.replace(/(<select class="i" id="(pf_cat|pf_brand|pf_type|pf_color|pf_unit|pf_sup)"[^>]*>[\s\S]*?<\/select>)/g, function (m, sel, id) {
       return '<span class="pf-plus">' + sel + '<button type="button" class="btn small pf-plus-b" data-pfplus="' + id + '" title="Add a new ' + PLUS[id][2] + ' to the list" aria-label="Add a new ' + PLUS[id][2] + '">+</button></span>';

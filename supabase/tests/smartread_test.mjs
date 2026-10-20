@@ -55,6 +55,29 @@ r = await mgr('erpReceiveMatch', [{ rows: ocr, kind: 'text', reader: 'ocr', supp
 const cw = r.ok && r.result.lines.find((l) => l.code === 'CA04069');
 check('the next file: CA04069 matches it by the supplier code at once', cw && cw.sku === 'pmpmcw001' && cw.how === 'supplier code', cw);
 
+// smart-read-2: what the page's OCR (mode 4) really gave for that contract - codes misread, the heading of every page
+// between rows, "1.75mn", a rule glued to a word, an amount where the unit price was
+const ocr2 = [
+  'Co polymaker JF Polymers (Suzhou) Co. , Ltd. Su', '� Sales Contraci. �%', 'Order Date : 07. 05. 2026',
+  '10 CA19029 Panchroma™ PLA 350. 000 PCS 4. 20] USD 1, 470. 00 NA', 'Black/1. 75mm/1. 00kg',
+  '20 CA19030 Panchroma™ PLA 500. 000 PCS 4.20] USD 2, 100. 00 NA', 'White/1. 75mm/1, 00kg',
+  '190 CA04060 Panchroma™ PLA Marble 10. 000 PCS 4. 96] USD 49. 60 NA', 'Limestone/1. 75mm/1. 00kg',
+  'Co polymaker JF Polymers (Suzhou) Co. , Ltd. Ap', 'J Sales Contraci�, �4',
+  '200] CA04069 JPanchroma� PLA Matte Cotton] 30.000 | Pcs 4.20] USD 172.fig4 (=', 'White/1, 75mm/1. 00kg yp! ak',
+  '230 | ca04076 |Panchroma� PLA Matte Pastel] 20.000 | Pcs USD 84.00 NA', 'Peanut/1. 75nm/1. 00kg',
+  '350 | CAQ4071 | Panchroma� PLA Matte Army | 10.000 | Pcs 4.20] USD 42. 00 NA', 'Dark Green/1. 75nm/1. 00kg',
+  '420 | caoios6 | Panchroma� PLA Gradient | 10.000 | Pcs 5.73] USD 57. 30 NA', 'Matte Pastel', 'Rainbow/1. 75mn/1. 00kg',
+  '540 | PC1002025 Panchroma� PLA Matte 10. 000 PCS 4. 20] USD 42. 00 NA', '[Raspberry Blue/1. 75mm/1. 00kg|',
+  '1,560.00[ [TT 962.00 sf', 'Remark', 'Beneficiary Account No. : 00000000000000000000', 'Tel: 0512-00000000',
+];
+r = await mgr('erpReceiveMatch', [{ rows: ocr2, kind: 'text', reader: 'ocr', supplier: 'JF Polymers' }]);
+const L2 = r.ok ? r.result.lines : [];
+check('mode-4 OCR: every product, in order, codes put right (CAQ4071 -> CA04071, caoios6 -> CA04086 is out of reach but kept as a code)',
+  r.ok && L2.map((l) => l.code).slice(0, 6).join(',') === 'CA19029,CA19030,CA04060,CA04069,CA04076,CA04071' && L2.length === 8, L2.map((l) => [l.pos, l.code, l.qty]));
+check('the page heading is not glued to the product before it; no "1.75mn" or "jPanchroma" left in a name',
+  L2.every((l) => !/polymers|contrac|ltd|1\.75|mn\b/i.test(l.text)) && L2.every((l) => !/jPanchroma/.test(l.text)), L2.map((l) => l.text));
+check('an amount where the unit price was (84.00 for 20) is turned back into 4.20', (L2.find((l) => l.code === 'CA04076') || {}).price === 4.20, L2.find((l) => l.code === 'CA04076'));
+
 // pf-plus-1: a new colour from the product form's "+" (no trip to Settings > Lists)
 r = await mgr('erpListAddValue', [{ kind: 'colors', value: '  Cotton   White ' }]);
 check('the "+" adds "Cotton White" to the colours and says what it added', r.ok && r.result.added === 'Cotton White' && r.result.colors.includes('Cotton White'), r.result && r.result.colors);

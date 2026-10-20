@@ -74,11 +74,11 @@ export function cleanText(t, vocab) {
   const V = vocab || new Set();
   let x = str(t).replace(/[™®©]/g, ' ')
     .replace(/(\d)\s*[.,]\s+(\d)/g, '$1.$2')                         // OCR's "1. 75mm", "1, 00kg"
-    .replace(/\/?\s*\d+([.,]\d+)?\s*(mm|kg|g|cm|m|ml|l)\b\.?/gi, ' ')  // sizes and weights
+    .replace(/\/?\s*\d+([.,]\d+)?\s*(mm|mn|nm|kg|kq|g|cm|m|ml|l)\b\.?/gi, ' ')  // sizes and weights (OCR: "1.75mn", "75nm")
     .replace(/[·•|]/g, ' ').replace(/[\/\\]+/g, ' ').replace(/\s[-–]\s/g, ' ').replace(/[()]/g, ' ');
   const keep = [];
   for (const tok of x.split(/\s+/)) {
-    const w = tok.replace(/^[^\p{L}\p{N}+]+|[^\p{L}\p{N}+]+$/gu, '');
+    const w = tok.replace(/^[^\p{L}\p{N}+]+|[^\p{L}\p{N}+]+$/gu, '').replace(/^[jJlI]([A-Z][a-z]{3,})$/, '$1');   // OCR's table rule glued on: "jPanchroma"
     if (!w || JUNK_TOK.test(w) || isNumCell(w)) continue;
     if (/^\d/.test(w) && !/[a-z]{2}/i.test(w)) continue;                // a number with a stray letter
     const lw = w.toLowerCase();
@@ -88,6 +88,21 @@ export function cleanText(t, vocab) {
     keep.push(w);
   }
   return keep.join(' ').replace(/\s+/g, ' ').trim();
+}
+/**
+ * A supplier code as OCR read it, put right: "cao4086" -> "CA04086", "CAQ4071" -> "CA04071", "Pc1002031" -> "PC1002031".
+ * Two letters, then a mostly-digit part in which the letters OCR confuses with digits (O Q D -> 0, I L -> 1, S -> 5, B -> 8,
+ * Z -> 2, G -> 6) are turned back; anything else is only upper-cased.
+ */
+export function normCode(t) {
+  const s = str(t).replace(/[^A-Za-z0-9-]/g, '');
+  const fix = (pre, tail) => {
+    const d = (tail.match(/\d/g) || []).length;
+    if (d * 2 < tail.length) return null;
+    return (pre + tail.replace(/[oOqQdD]/g, '0').replace(/[iIlL]/g, '1').replace(/[sS]/g, '5').replace(/[bB]/g, '8').replace(/[zZ]/g, '2').replace(/[gG]/g, '6')).toUpperCase();
+  };
+  const m2 = /^([A-Za-z]{2})([0-9A-Za-z]{3,12})$/.exec(s);
+  return (m2 && fix(m2[1], m2[2])) || s.toUpperCase();
 }
 /** Is this line about a product? A supplier code, a brand, a filament type or a colour - and not an address, a date, a bank line. */
 export function looksLikeProduct(code, text, vocab) {
@@ -193,10 +208,13 @@ export function textRecords(lines) {
     if (codeAt >= 0 && codeAt <= 3) {
       flush();
       const rest = toks.slice(codeAt + 1);
-      cur = { row: i + 1, code: toks[codeAt], text: rest.filter((t) => !isNumCell(t)).join(' '), qty: 0, price: 0, currency: '' };
+      cur = { row: i + 1, code: normCode(toks[codeAt]), text: rest.filter((t) => !isNumCell(t)).join(' '), qty: 0, price: 0, currency: '' };
       takeNums(rest.filter((t) => isNumCell(t)).map(numCell));
       continue;
     }
+    // smart-read-2: the heading every page repeats ("JF Polymers (Suzhou) Co., Ltd.", "Sales Contract") is not part of
+    // the product above it (it was glued onto the last product of each page)
+    if (/\b(co\s*\.?\s*,?\s*ltd|limited|polymers|sales\s*contra\w*|proforma|packing\s*list|invoice)\b/i.test(l) && !typeOf(l)) continue;
     const ws = toks.filter((t) => !isNumCell(t)), ns = toks.filter((t) => isNumCell(t)).map(numCell);
     if (cur) {
       cur.text = (cur.text + ' ' + ws.join(' ')).trim();
@@ -224,8 +242,16 @@ export function tidyRecords(recs, vocab) {
     out.push({ ...r, raw, text, currency: r.currency || cur });
   }
   // a document with supplier codes: a line without one is the document's other text
+  // smart-read-2: a unit price OCR lost leaves the line's amount in its place (84.00 for 20 x 4.20): an amount is a
+  // price far above the document's usual one that is that usual price times the quantity - it is divided back
+  const ps = out.map((r) => num(r.price)).filter((p) => p > 0).sort((a, b) => a - b);
+  const med = ps.length ? ps[Math.floor(ps.length / 2)] : 0;
+  if (med > 0) for (const r of out) {
+    const p = num(r.price), q = num(r.qty);
+    if (p > med * 2.5 && q > 1) { const u = p / q; if (u > med * 0.4 && u < med * 2.5) r.price = Math.round(u * 100) / 100; }
+  }
   const coded = out.filter((r) => r.code).length;
-  return coded >= 3 ? out.filter((r) => r.code || brandOf(r.text) || typeOf(r.text)) : out;
+  return coded >= 3 ? out.filter((r) => r.code) : out;   // smart-read-2: even a heading with the brand in it ("polymaker Sales Contract")
 }
 
 /** Every record against the catalogue: the lines of the review card. */

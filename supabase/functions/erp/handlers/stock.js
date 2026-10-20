@@ -225,6 +225,23 @@ async function refuseDiscontinue(ctx, sku, name) {
 // ----------------------------------------------------------------- products
 
 /** erpSaveProduct (ERP:1225) */
+/**
+ * pf-plus-1 (owner 21 Oct 2026, "Fossil Grey (not on the list any more)"): a new product's category, brand, type, colour,
+ * unit and supplier that are not on Settings > Lists yet are added to them (any case counts as already there), so the
+ * next product offers them too.
+ */
+async function addToLists(ctx, data) {
+  const pairs = [['categories', data.category], ['brands', data.brand], ['types', data.type], ['colors', data.color], ['units', data.unit], ['suppliers', data.supplier]];
+  for (const [kind, v0] of pairs) {
+    const v = str(v0).replace(/\s+/g, ' ').slice(0, 80);
+    if (!v) continue;
+    const have = await ctx.tx`select 1 from lookups where business_id = ${ctx.biz} and kind = ${kind} and lower(btrim(value)) = ${v.toLowerCase()} limit 1`;
+    if (have.length) continue;
+    const n = (await ctx.tx`select coalesce(max(sort_order), 0)::int as n from lookups where business_id = ${ctx.biz} and kind = ${kind}`)[0].n;
+    await ctx.tx`insert into lookups (business_id, kind, value, sort_order) values (${ctx.biz}, ${kind}, ${v}, ${n + 1})`;
+  }
+}
+
 export async function erpSaveProduct(ctx, data) {
   if (!data) throw new Error('Nothing to save.');
   const name = str(data.product_name);
@@ -244,6 +261,7 @@ export async function erpSaveProduct(ctx, data) {
     });
     if (!res || !res.success) throw new Error((res && res.error) || 'Could not add the product.');
     await saveSize(ctx, res.id, data);
+    await addToLists(ctx, data);   // pf-plus-1: a colour / brand / type read from a file joins Settings > Lists
     // smart-read-1: the supplier's own code (from a file read on Receive) - the next file matches it directly
     if (str(data.supplier_sku)) await ctx.tx`update products set supplier_sku = ${str(data.supplier_sku).slice(0, 60)} where id = ${res.id}`;
     if (num(data.wholesale_price) > 0) {
