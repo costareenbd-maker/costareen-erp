@@ -122,6 +122,7 @@ export async function runJob(deps, job) {
     const tick = await maybe('./handlers/inbox.js', 'inboxTick');
     let ids = [];
     try { ids = (await sql`select distinct business_id from inbox_channels where status in ('live', 'practice')`).map((r) => r.business_id); } catch (_) { ids = []; }
+    try { for (const r of await sql`select distinct business_id from landing_pages`) if (!ids.includes(r.business_id)) ids.push(r.business_id); } catch (_) { /* before 135 */ }
     if (tick && ids.length) for (const row of await owners(sql, ids)) out[row.name] = await asBusiness(deps, row, 'inbox:tick', (ctx) => tick(ctx));
     // social posts (handlers/social.js): publish what is due, finish Instagram uploads, read the figures
     const social = await maybe('./handlers/social.js', 'socialTick');

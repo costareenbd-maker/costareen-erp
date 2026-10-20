@@ -18,7 +18,9 @@ import { feat, needFeat } from '../lib/inboxplan.js';
 import { profile, catalogue, imageUrl, deliveryFor, nextOrderNo, orderEvent, task, phoneOk } from './inbox.js';
 import { orderLink } from './inboxpub.js';
 import { roleAtLeast } from '../allow.js';
-import { erpDeliveryHistory } from './loyalty.js';
+import { getConfig, setConfig } from '../lib/ext.js';
+import { custKey } from '../lib/phone.js';
+import { paymentsTab, PAY } from '../lib/tabs.js';
 
 const str = (v) => String(v == null ? '' : v).trim();
 const NF = { status: 404, body: { ok: false, error: 'This page is not available.' } };
@@ -43,16 +45,18 @@ export async function orderRisk(ctx, o) {
                               and ((kind = 'phone' and value = ${phone}) or (kind = 'ip' and ${ip} <> '' and value = ${ip}))`;
   if (blocks.length) return { level: 'blocked', score: 100, reasons: blocks.map((b) => (b.kind === 'phone' ? 'This number is on the block list' : 'This internet address is on the block list') + (b.reason ? ': ' + b.reason : '')), blocked: true };
   if (!phoneOk(o.phone)) { score += 40; reasons.push('Not a Bangladeshi mobile number'); }
-  // the buyer's own parcels with this shop
-  try {
-    const h = await erpDeliveryHistory(ctx, { phone, name: o.name });
-    if (h.risk === 'risky') { score += 45; reasons.push('Returned ' + h.returned + ' of ' + (h.delivered + h.returned) + ' parcels before'); }
-    else if (h.risk === 'watch') { score += 20; reasons.push(h.returned + ' parcel returned before'); }
-    else if (h.risk === 'good') { score -= 15; reasons.push(h.delivered + ' parcel(s) delivered before, none returned'); }
-  } catch (_) { /* no history */ }
-  // cancelled chat orders of the same number
-  const cx = (await ctx.tx`select count(*)::int as n from chat_orders where business_id = ${ctx.biz} and phone = ${phone} and status = 'cancelled'`)[0].n;
-  if (cx >= 2) { score += 25; reasons.push(cx + ' earlier orders cancelled'); } else if (cx === 1) { score += 10; reasons.push('1 earlier order cancelled'); }
+  // the buyer's own parcels and cancelled orders with this shop - fairly (136): the shop's own faults never count,
+  // old ones count less and fade out, and good deliveries since then count for the buyer. One bad day is not a ban.
+  const h = await fairHistory(ctx, phone, o.id);
+  const returns = [];
+  if (h.returnedW >= 2 && h.rate >= 0.4) { score += 50; reasons.push('Returned ' + h.returned + ' of ' + h.parcels + ' parcels before'); }
+  else if (h.returnedW >= 1) { score += 20; reasons.push(h.returned + ' parcel returned before'); }
+  else if (h.returnedW > 0) { score += 8; reasons.push(h.returned + ' parcel returned a long time ago'); }
+  else if (h.delivered) { score -= 15; reasons.push(h.delivered + ' parcel(s) delivered before, none returned'); }
+  if (h.returned && h.deliveredSince >= 2) { score -= 20; reasons.push(h.deliveredSince + ' delivered since the last return'); }
+  if (h.cancelledW >= 2) { score += 15; reasons.push(h.cancelled + ' earlier orders cancelled'); } else if (h.cancelled) { score += 5; reasons.push(h.cancelled + ' earlier order cancelled'); }
+  if (h.excused) reasons.push(h.excused + ' return(s) / cancellation(s) were our own fault - not counted');
+  for (const r of h.returnList) returns.push(r);
   // the same number with another order still open (a double order, or a game)
   const open = (await ctx.tx`select count(*)::int as n from chat_orders where business_id = ${ctx.biz} and phone = ${phone} and status in ('pending', 'hold')
                              and created_at > now() - interval '3 days' and id <> coalesce(${o.id || null}::uuid, '00000000-0000-0000-0000-000000000000'::uuid)`)[0].n;
@@ -69,7 +73,69 @@ export async function orderRisk(ctx, o) {
   const qty = (o.items || []).reduce((t, x) => t + num(x.qty), 0);
   if (qty >= 6) { score += 10; reasons.push(qty + ' pieces on cash on delivery'); }
   score = Math.max(0, Math.min(99, score));
-  return { level: score >= 50 ? 'risky' : score >= 20 ? 'watch' : 'ok', score, reasons, blocked: false };
+  return { level: score >= 50 ? 'risky' : score >= 20 ? 'watch' : 'ok', score, reasons, blocked: false, returns };
+}
+
+/** How long ago, in months. Within 6 months a return counts whole, 6-12 months half, older not at all. */
+const weightOf = (when, now) => { const m = (now.getTime() - new Date(when).getTime()) / (30.4 * 864e5); return m <= 6 ? 1 : m <= 12 ? 0.5 : 0; };
+/** What the shop says was its own doing when it cancelled (these never count against the customer). */
+const OUR_SIDE = /our (fault|side|mistake)|we (were|are|sent)|wrong (item|product|colou?r|size)|out of stock|no stock|stock out|late|delay|price (changed|wrong)|damaged by|courier lost|lost by/i;
+/**
+ * The buyer's own record with this shop (136): parcels delivered and returned (from the invoices and the courier),
+ * cancelled chat orders - minus what the shop marked as its own fault (delivery_excuses) or cancelled for its own
+ * reasons - with old events weighted down. -> { parcels, delivered, returned, returnedW, rate, deliveredSince,
+ * cancelled, cancelledW, excused, returnList: [{ ref, at }] }
+ */
+export async function fairHistory(ctx, phone, skipOrderId) {
+  const key = custKey(phone, '');
+  const out = { parcels: 0, delivered: 0, returned: 0, returnedW: 0, rate: 0, deliveredSince: 0, cancelled: 0, cancelledW: 0, excused: 0, returnList: [] };
+  if (!key || key === 'n:') return out;
+  const excused = new Set((await ctx.tx`select ref from delivery_excuses where business_id = ${ctx.biz}`).map((r) => str(r.ref)));
+  const rows = await ctx.tx`select invoice_no, delivery_status, customer_phone, customer_name, created_at from invoices
+                            where business_id = ${ctx.biz} and voided_at is null and invoice_no not like 'RTN-%' order by created_at`;
+  const booked = new Set((await ctx.tx`select invoice_no from courier_log where business_id = ${ctx.biz}`).map((r) => str(r.invoice_no)));
+  const codPaid = new Set();
+  try { for (const p of await paymentsTab(ctx)) if (/steadfast|courier/i.test(String(p[PAY.method] || ''))) codPaid.add(str(p[PAY.order_id])); } catch (_) { /* none */ }
+  let returnedRaw = 0, deliveredW = 0;
+  for (const r of rows) {
+    if (custKey(r.customer_phone, r.customer_name) !== key) continue;
+    const no = str(r.invoice_no), st = str(r.delivery_status).toLowerCase();
+    if (!booked.has(no) && !codPaid.has(no) && !/deliver|return|cancel|refus/.test(st)) continue;
+    const ret = /return|cancel|refus/.test(st), w = weightOf(r.created_at, ctx.now);
+    if (ret && excused.has(no)) { out.excused++; continue; }
+    out.parcels++;
+    if (ret) { out.returned++; returnedRaw++; out.returnedW += w; out.deliveredSince = 0; out.returnList.push({ ref: no, at: formatDate(new Date(r.created_at), 'd MMM yyyy') }); }
+    else if (/deliver/.test(st) || codPaid.has(no)) { out.delivered++; deliveredW += w || 0.25; if (returnedRaw) out.deliveredSince++; }
+  }
+  out.rate = out.returnedW / Math.max(0.0001, out.returnedW + deliveredW);
+  for (const c of await ctx.tx`select no, cancel_reason, created_at from chat_orders where business_id = ${ctx.biz} and phone = ${phoneOk(phone) || phone} and status = 'cancelled'
+                               and id <> coalesce(${skipOrderId || null}::uuid, '00000000-0000-0000-0000-000000000000'::uuid)`) {
+    if (excused.has(str(c.no)) || OUR_SIDE.test(str(c.cancel_reason))) { out.excused++; continue; }
+    out.cancelled++; out.cancelledW += weightOf(c.created_at, ctx.now);
+  }
+  out.returnList = out.returnList.slice(-5);
+  return out;
+}
+
+// ------------------------------------------------------------------ what happens to a RISKY order (136)
+// 'warn'    it comes in like any other, marked RISKY (the default)
+// 'advance' it waits (on hold) until the delivery charge (or a set amount) is paid by bKash / Nagad; the page says how
+// 'confirm' it waits (on hold) until the team has called and confirmed
+// Only a number on the block list is refused online - never a customer for one bad delivery.
+export async function shieldSettings(ctx) {
+  let s = {}; try { s = JSON.parse(str(await getConfig(ctx, 'order_shield', '')) || '{}') || {}; } catch (_) { s = {}; }
+  return { risky: ['warn', 'advance', 'confirm'].includes(s.risky) ? s.risky : 'warn', advanceHow: str(s.advanceHow), advanceAmount: Math.max(0, num(s.advanceAmount)) };
+}
+/** A RISKY order is held as the settings say. -> { status, hold, advance? } */
+export async function riskyHold(ctx, risk, charge) {
+  if (!risk || risk.level !== 'risky') return null;
+  const S = await shieldSettings(ctx);
+  if (S.risky === 'advance') {
+    const amount = S.advanceAmount || num(charge);
+    return { hold: 'Advance asked: ৳' + Math.round(amount) + (S.advanceHow ? ' (' + S.advanceHow + ')' : '') + ' - the shield said RISKY', advance: { amount: Math.round(amount), how: S.advanceHow } };
+  }
+  if (S.risky === 'confirm') return { hold: 'Call to confirm - the shield said RISKY' };
+  return null;
 }
 
 // ------------------------------------------------------------------ the pages (signed in)
@@ -171,7 +237,10 @@ export async function erpOrderShield(ctx) {
   const blocks = await ctx.tx`select id, kind, value, reason, created_by, created_at from order_blocks where business_id = ${ctx.biz} order by created_at desc`;
   const flagged = await ctx.tx`select id, no, name, phone, status, risk, created_at from chat_orders where business_id = ${ctx.biz} and risk is not null
                                and (risk->>'level') in ('risky', 'blocked', 'watch') and created_at > now() - interval '60 days' order by created_at desc limit 100`;
-  return { blocks: blocks.map((b) => ({ id: b.id, kind: b.kind, value: b.value, reason: str(b.reason), by: str(b.created_by), at: formatDate(new Date(b.created_at), 'd MMM yyyy') })),
+  const ex = await ctx.tx`select ref, reason, created_by, created_at from delivery_excuses where business_id = ${ctx.biz} order by created_at desc limit 50`;
+  return { settings: await shieldSettings(ctx),
+           excuses: ex.map((e) => ({ ref: e.ref, reason: str(e.reason), by: str(e.created_by), at: formatDate(new Date(e.created_at), 'd MMM yyyy') })),
+           blocks: blocks.map((b) => ({ id: b.id, kind: b.kind, value: b.value, reason: str(b.reason), by: str(b.created_by), at: formatDate(new Date(b.created_at), 'd MMM yyyy') })),
            flagged: flagged.map((o) => ({ id: o.id, no: o.no, name: o.name, phone: o.phone, status: o.status, level: o.risk.level, score: o.risk.score, reasons: o.risk.reasons || [],
                                           at: formatDate(new Date(o.created_at), 'd MMM, h:mm a') })) };
 }
@@ -185,6 +254,25 @@ export async function erpOrderShieldSet(ctx, payload) {
     await ctx.tx`insert into order_blocks (business_id, kind, value, reason, created_by) values (${ctx.biz}, ${kind}, ${value}, ${str(p.block.reason).slice(0, 200) || null}, ${ctx.s.name})
                  on conflict (business_id, kind, value) do update set reason = excluded.reason`;
   } else if (isId(p.unblock)) await ctx.tx`delete from order_blocks where business_id = ${ctx.biz} and id = ${p.unblock}`;
+  else if (p.settings) {
+    if (ctx.s.role !== 'owner') throw new Error('Only the owner decides what happens to risky orders.');
+    const S = { risky: ['warn', 'advance', 'confirm'].includes(p.settings.risky) ? p.settings.risky : 'warn', advanceHow: str(p.settings.advanceHow).slice(0, 160),
+                advanceAmount: Math.max(0, Math.round(num(p.settings.advanceAmount))) };
+    if (S.risky === 'advance' && !S.advanceHow) throw new Error('Say how to pay the advance (e.g. bKash 01XXXXXXXXX, send money).');
+    await setConfig(ctx, 'order_shield', JSON.stringify(S));
+  } else if (p.excuse) {
+    // a return or a cancellation that was the shop's own fault: never counted against the customer again
+    const ref = str(p.excuse.ref).slice(0, 60);
+    if (!ref) throw new Error('Which invoice or order?');
+    const known = (await ctx.tx`select 1 from invoices where business_id = ${ctx.biz} and invoice_no = ${ref} union all select 1 from chat_orders where business_id = ${ctx.biz} and no = ${ref} limit 1`).length;
+    if (!known) throw new Error('No invoice or order ' + ref + '.');
+    if (p.excuse.remove) await ctx.tx`delete from delivery_excuses where business_id = ${ctx.biz} and ref = ${ref}`;
+    else await ctx.tx`insert into delivery_excuses (business_id, ref, reason, created_by) values (${ctx.biz}, ${ref}, ${str(p.excuse.reason).slice(0, 200) || null}, ${ctx.s.name})
+                      on conflict (business_id, ref) do update set reason = excluded.reason`;
+    // the open orders of that customer are read again
+    await ctx.tx`update chat_orders set risk = null where business_id = ${ctx.biz} and status in ('pending', 'hold') and risk is not null`;
+    await shieldOpenOrders(ctx);
+  }
   else if (isId(p.recheck)) {
     const o = (await ctx.tx`select * from chat_orders where business_id = ${ctx.biz} and id = ${p.recheck}`)[0];
     if (!o) throw new Error('No such order.');
@@ -195,7 +283,13 @@ export async function erpOrderShieldSet(ctx, payload) {
 /** The Orders tab: every open order gets the shield's reading once (chat, product page, landing page). */
 export async function shieldOpenOrders(ctx) {
   for (const o of await ctx.tx`select * from chat_orders where business_id = ${ctx.biz} and risk is null and status in ('pending', 'hold') limit 50`) {
-    await ctx.tx`update chat_orders set risk = ${ctx.tx.json(await orderRisk(ctx, o))} where id = ${o.id}`;
+    const risk = await orderRisk(ctx, o);
+    await ctx.tx`update chat_orders set risk = ${ctx.tx.json(risk)} where id = ${o.id}`;
+    const held = o.status === 'pending' ? await riskyHold(ctx, risk, num(o.delivery_charge)) : null;
+    if (held) {
+      await ctx.tx`update chat_orders set status = 'hold', hold_reason = ${held.hold} where id = ${o.id}`;
+      await orderEvent(ctx, o.id, held.hold, 'Shield');
+    }
   }
 }
 
@@ -215,7 +309,8 @@ export async function landingPage(ctx, token) {
   const price = pg.offer_price !== null && num(pg.offer_price) > 0 ? num(pg.offer_price) : num(x.sell);
   const images = [];
   const main = await imageUrl(ctx, x); if (main) images.push(main);
-  return { status: 200, body: { ok: true, lang: shop.lang, colour: str(pg.colour),
+  const pixel = await (await import('./pixel.js')).pixelPublic(ctx);
+  return { status: 200, body: { ok: true, lang: shop.lang, colour: str(pg.colour), pixel,
     shop: { name: shop.name, phone: shop.phone },
     product: { name: x.name, brand: str(x.brand), headline: str(pg.headline) || x.name, points: pg.points || [], about: str(x.desc || x.notes || ''), images,
                price, was: price < num(x.sell) ? num(x.sell) : null, available: x.stock > 0 },
@@ -245,13 +340,17 @@ async function placeOrder(ctx, pg, b, takenBy, by) {
   const risk = await orderRisk(ctx, { phone: ph, ip: str(b.ip), name: b.name, address: b.address, items });
   if (risk.blocked) return { ok: false, error: 'blocked', risk };
   const no = await nextOrderNo(ctx);
-  const o = (await ctx.tx`insert into chat_orders (business_id, no, conversation_id, name, phone, address, items, delivery_charge, note, taken_by, risk, landing_id, ip)
+  const held = takenBy === 'landing page' ? await riskyHold(ctx, risk, charge) : null;   // a call that finished it is already confirmed
+  const meta = b.meta && typeof b.meta === 'object' ? { fbp: str(b.meta.fbp).slice(0, 120), fbc: str(b.meta.fbc).slice(0, 200), ua: str(b.meta.ua).slice(0, 300), url: str(b.meta.url).slice(0, 300), sent: {} } : { sent: {} };
+  const o = (await ctx.tx`insert into chat_orders (business_id, no, conversation_id, name, phone, address, items, delivery_charge, note, taken_by, risk, landing_id, ip, status, hold_reason, meta)
              values (${ctx.biz}, ${no}, null, ${str(b.name).slice(0, 80)}, ${ph}, ${str(b.address).slice(0, 300)}, ${ctx.tx.json(items)}, ${charge}, ${str(b.note).slice(0, 300) || null},
-                     ${takenBy}, ${ctx.tx.json(risk)}, ${pg.id || null}, ${str(b.ip) || null}) returning *`)[0];
+                     ${takenBy}, ${ctx.tx.json(risk)}, ${pg.id || null}, ${str(b.ip) || null}, ${held ? 'hold' : 'pending'}, ${held ? held.hold : null}, ${ctx.tx.json(meta)}) returning *`)[0];
   await orderEvent(ctx, o.id, 'Placed on the landing page' + (takenBy !== 'landing page' ? ' (finished by phone)' : '') + (risk.level !== 'ok' ? ' - shield: ' + risk.level + ' (' + risk.reasons.join('; ') + ')' : ''), by || 'Customer');
   await task(ctx, null, 'order', null, 'New order ' + no + ' from the landing page: ' + str(b.name) + ' (' + ph + '): ' + x.name + ' × ' + qty +
     (risk.level === 'risky' ? ' ⚠ the shield says RISKY: ' + risk.reasons.join('; ') : risk.level === 'watch' ? ' · check: ' + risk.reasons.join('; ') : ''));
-  return { ok: true, no, total: qty * price + charge, risk, page: (await feat(ctx, 'order_page')) ? orderLink(ctx, o) : '' };
+  if (held) await orderEvent(ctx, o.id, held.hold, 'Shield');
+  return { ok: true, no, total: qty * price + charge, risk, advance: held && held.advance ? { ...held.advance, ref: no } : null, confirm: !!(held && !held.advance),
+           page: (await feat(ctx, 'order_page')) ? orderLink(ctx, o) : '' };
 }
 export async function landingAct(ctx, token, b, ip) {
   if (!(await feat(ctx, 'landing'))) return NF;
@@ -281,7 +380,8 @@ export async function landingAct(ctx, token, b, ip) {
   if (visitor) await ctx.tx`update landing_drafts set status = 'ordered', order_no = ${r.no}, updated_at = now() where page_id = ${pg.id} and visitor = ${visitor}`;
   // the same number typed on another device: that draft is done too
   await ctx.tx`update landing_drafts set status = 'ordered', order_no = ${r.no}, updated_at = now() where page_id = ${pg.id} and phone = ${phoneOk(b.phone)} and status = 'open'`;
-  return { status: 200, body: { ok: true, no: r.no, total: r.total, page: r.page } };
+  // the page never learns the shield's reading; it hears only what to do next (pay an advance, wait for a call)
+  return { status: 200, body: { ok: true, no: r.no, total: r.total, page: r.page, advance: r.advance, confirm: r.confirm, pixel: r.risk && /risky|blocked/.test(r.risk.level) ? false : true } };
 }
 
 export const HANDLERS = { erpLandingPages, erpLandingSave, erpLandingDrafts, erpLandingDraftAct, erpOrderShield, erpOrderShieldSet };

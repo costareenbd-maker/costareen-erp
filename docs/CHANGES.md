@@ -2610,3 +2610,25 @@ Comparison in docs/BIZMATION-COMPARE.md. Built inside the Inbox (owner-only app)
 - index.ts: the Inbox's public gate now lets `land` through (the tests call the handlers directly, so this was caught on
   dev). Tests landing (27). Checked on dev with a real order. NOT done: courier-wide ratio, confirmation calls,
   manufacturing / bundles, size x colour variants (see the comparison).
+
+## 20 Oct 2026 - Fair shield, risky orders asked not refused, clean Meta pixel (owner: "build all three"; tag shield-fair-1)
+136. Owner's worry: refusing someone for one cancellation is unfair; returns caused by us must not count; fake orders
+must not reach the Meta pixel (they teach ads the wrong audience). Research: Bizmation flags for review and blocks only
+after a high score; CapiFlow / PixelFly hold Purchase until confirmed / delivered.
+1. Fair history (landing.js fairHistory, replaces the delivery-history call in orderRisk): the shop's own faults never
+   count (delivery_excuses: "our fault" button on each listed return on an order card, undo on the shield card; a chat
+   order cancelled for our reasons - out of stock, wrong item, late, price - is not counted); returns within 6 months
+   count whole, 6-12 months half, older are forgotten; 2+ deliveries since the last return take 20 points off; one
+   cancellation = 5 points (never RISKY alone). Two recent returns of two = RISKY (50).
+2. RISKY orders (Settings on the shield card, owner): take and mark (default) / ask an advance first (order on hold
+   "Advance asked: ৳X (bKash ...)"; the landing page shows how to pay with the order number as reference) / hold until
+   called. Applies to landing orders at once and to chat / product-page orders when Orders reads them. Only the block
+   list refuses online. The public page never sees the shield's reading.
+3. Meta pixel (pixel.js, Landing pages tab card): the landing page loads the shop's pixel (PageView, ViewContent,
+   InitiateCheckout) and fires only Lead at the order (event id lead-<no>), never Purchase; the server (Conversions API,
+   own token sealed or the Facebook login's) sends the same Lead (not for RISKY / blocked / cancelled), Purchase when
+   delivered (default) or approved, never for cancelled / returned, and "OrderReturned" when a counted order comes back.
+   Hashed phone (8801...), first name, country, fbp / fbc / user agent / ip from the order. Counts and the last error on
+   the card; "Send a test event" with a test event code. Runs in the Inbox minute timer (businesses with landing pages
+   included). Tests: shield2 (29). NOT done: the chat (Messenger) orders send Lead/Purchase as system events without a
+   browser id - fine for the pixel, weaker matching; Meta has no standard refund event, so returns are a custom event.

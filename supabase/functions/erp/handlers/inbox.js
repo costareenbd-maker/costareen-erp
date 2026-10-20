@@ -904,6 +904,8 @@ export async function inboxTick(ctx) {
   // delivery updates for orders taken in a chat (from the invoice's delivery status), and the review request
   try { out.updates = await (await import('./inbox2.js')).orderUpdates(ctx); } catch (_) { /* fine */ }
   try { out.bookings = await (await import('./inbox2.js')).bookingReminders(ctx); } catch (_) { /* fine */ }
+  // 136: the Meta pixel hears Lead / Purchase / returns from the server - only for real orders
+  try { out.pixel = await (await import('./pixel.js')).pixelTick(ctx); } catch (_) { /* before 136 */ }
   return out;
 }
 async function followUp(ctx, ch, v) {

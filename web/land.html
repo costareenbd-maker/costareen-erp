@@ -61,7 +61,20 @@ button.go:disabled{opacity:.55;cursor:default}
   var API = (q.get('api') || 'https://oqzcuuytytqadqjlwdsh.supabase.co/functions/v1/erp').replace(/\/+$/, '');
   var P = q.get('p') || '';
   var URL0 = API + (API.indexOf('?') >= 0 ? '&' : '?') + 'inbox=land&p=' + encodeURIComponent(P);
-  var L = null, D = null, qty = 1, done = false, VIS = '', draftT = null, lastDraft = '';
+  var L = null, D = null, qty = 1, done = false, VIS = '', draftT = null, lastDraft = '', startedFb = false;
+  function cookie(n) { var m = document.cookie.match(new RegExp('(?:^|; )' + n + '=([^;]*)')); return m ? decodeURIComponent(m[1]) : ''; }
+  function metaIds() {
+    var fbc = cookie('_fbc'), cl = q.get('fbclid');
+    if (!fbc && cl) fbc = 'fb.1.' + Date.now() + '.' + cl;
+    return { fbp: cookie('_fbp'), fbc: fbc, ua: navigator.userAgent, url: location.href.split('#')[0] };
+  }
+  /** The shop's pixel (only when it set one): PageView and ViewContent here; the server sends Purchase later. */
+  function pixel(id) {
+    if (!id || window.fbq) return;
+    !function (f, b, e, v, n, t, s2) { if (f.fbq) return; n = f.fbq = function () { n.callMethod ? n.callMethod.apply(n, arguments) : n.queue.push(arguments); }; if (!f._fbq) f._fbq = n; n.push = n; n.loaded = !0; n.version = '2.0'; n.queue = []; t = b.createElement(e); t.async = !0; t.src = v; s2 = b.getElementsByTagName(e)[0]; s2.parentNode.insertBefore(t, s2); }(window, document, 'script', 'https://connect.facebook.net/en_US/fbevents.js');
+    window.fbq('init', id); window.fbq('track', 'PageView');
+    try { window.fbq('track', 'ViewContent', { content_name: D.product.name, value: Math.round(D.product.price), currency: 'BDT', content_type: 'product' }); } catch (e) {}
+  }
   try { L = localStorage.getItem('landLang'); VIS = localStorage.getItem('landVisitor') || ''; } catch (e) {}
   if (!VIS) { VIS = 'v' + Math.random().toString(36).slice(2) + Date.now().toString(36); try { localStorage.setItem('landVisitor', VIS); } catch (e) {} }
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
@@ -70,12 +83,12 @@ button.go:disabled{opacity:.55;cursor:default}
     bn: { lang: 'English', order: 'অর্ডার করুন', formH: 'অর্ডার করতে নিচের তথ্য দিন', name: 'আপনার নাম', phone: 'মোবাইল নম্বর (১১ সংখ্যা)', addr: 'সম্পূর্ণ ঠিকানা (বাসা, রোড, এলাকা, থানা, জেলা)', area: 'ডেলিভারি কোথায়',
       inside: 'ঢাকার ভেতরে', outside: 'ঢাকার বাইরে', qty: 'পরিমাণ', price: 'দাম', del: 'ডেলিভারি চার্জ', total: 'মোট (ক্যাশ অন ডেলিভারি)', place: 'অর্ডার কনফার্ম করুন', save: 'সাশ্রয়',
       cod: 'ক্যাশ অন ডেলিভারি', fast: 'দ্রুত ডেলিভারি', orig: 'অরিজিনাল পণ্য', about: 'বিস্তারিত', pay: 'পেমেন্ট', ret: 'রিটার্ন ও এক্সচেঞ্জ', days: 'দিন',
-      thanks: 'ধন্যবাদ! আপনার অর্ডার নেওয়া হয়েছে', soon: 'আমরা শীঘ্রই কল করে কনফার্ম করব।', see: 'অর্ডারের অবস্থা দেখুন', none: 'এই পেজটি এখন পাওয়া যাচ্ছে না।', out: 'এখন স্টকে নেই',
+      thanks: 'ধন্যবাদ! আপনার অর্ডার নেওয়া হয়েছে', soon: 'আমরা শীঘ্রই কল করে কনফার্ম করব।', adv: 'অর্ডার পাঠানোর আগে ডেলিভারি চার্জ অগ্রিম দিন', advRef: 'রেফারেন্সে লিখুন', advAfter: 'টাকা পেলেই আমরা পাঠিয়ে দেব।', callFirst: 'পাঠানোর আগে আমরা আপনাকে কল করে কনফার্ম করব।', see: 'অর্ডারের অবস্থা দেখুন', none: 'এই পেজটি এখন পাওয়া যাচ্ছে না।', out: 'এখন স্টকে নেই',
       e: { name: 'আপনার নাম লিখুন।', phone: '১১ সংখ্যার মোবাইল নম্বর লিখুন (০১ দিয়ে শুরু)।', address: 'সম্পূর্ণ ঠিকানা লিখুন।', stock: 'দুঃখিত, পণ্যটি এখন স্টকে নেই।', blocked: 'এই নম্বর থেকে অনলাইনে অর্ডার নেওয়া যাচ্ছে না — দয়া করে আমাদের কল করুন।', busy: 'একটু পরে আবার চেষ্টা করুন।', net: 'ইন্টারনেট সমস্যা — আবার চেষ্টা করুন।' } },
     en: { lang: 'বাংলা', order: 'Order now', formH: 'Fill in to order', name: 'Your name', phone: 'Mobile number (11 digits)', addr: 'Full address (house, road, area, district)', area: 'Delivery to',
       inside: 'Inside Dhaka', outside: 'Outside Dhaka', qty: 'Quantity', price: 'Price', del: 'Delivery charge', total: 'Total (cash on delivery)', place: 'Confirm the order', save: 'Save',
       cod: 'Cash on delivery', fast: 'Fast delivery', orig: 'Original product', about: 'Details', pay: 'Payment', ret: 'Returns and exchange', days: 'days',
-      thanks: 'Thank you! Your order is placed', soon: 'We will call you soon to confirm.', see: 'See your order', none: 'This page is not available now.', out: 'Out of stock now',
+      thanks: 'Thank you! Your order is placed', soon: 'We will call you soon to confirm.', adv: 'Please pay the delivery charge in advance', advRef: 'Write as reference', advAfter: 'We send it as soon as it arrives.', callFirst: 'We will call you to confirm before we send it.', see: 'See your order', none: 'This page is not available now.', out: 'Out of stock now',
       e: { name: 'Write your name.', phone: 'Write an 11-digit mobile number starting 01.', address: 'Write the full address.', stock: 'Sorry, this is out of stock now.', blocked: 'Orders from this number are not taken online - please call us.', busy: 'Please try again in a little while.', net: 'Network problem - try again.' } }
   };
   function t() { return T[L || (D && D.lang) || 'bn']; }
@@ -123,7 +136,7 @@ button.go:disabled{opacity:.55;cursor:default}
     document.getElementById('qm').onclick = function () { if (qty > 1) { qty--; document.getElementById('qn').textContent = qty; re(); draft(); } };
     document.getElementById('qp').onclick = function () { if (qty < 20) { qty++; document.getElementById('qn').textContent = qty; re(); draft(); } };
     f.onchange = function () { re(); draft(); };
-    f.oninput = function () { draft(); };
+    f.oninput = function () { draft(); if (!startedFb && window.fbq) { startedFb = true; try { window.fbq('track', 'InitiateCheckout', { value: Math.round(D.product.price), currency: 'BDT' }); } catch (e3) {} } };
     f.onsubmit = function (e) {
       e.preventDefault();
       var k = keep(), btn = f.querySelector('button[type=submit]'), err = document.getElementById('err'), tt2 = t();
@@ -131,12 +144,15 @@ button.go:disabled{opacity:.55;cursor:default}
       if (!/^(\+?88)?01[3-9]\d{8}$/.test(String(k.phone).replace(/[\s-]/g, '').replace(/[০-৯]/g, function (c) { return '০১২৩৪৫৬৭৮৯'.indexOf(c); }))) { err.textContent = tt2.e.phone; return; }
       if (String(k.address).trim().length < 6) { err.textContent = tt2.e.address; return; }
       btn.disabled = true; err.textContent = '';
-      post({ a: 'buy', visitor: VIS, qty: qty, name: k.name, phone: k.phone, address: k.address, area: k.area }).then(function (r) {
+      post({ a: 'buy', visitor: VIS, qty: qty, name: k.name, phone: k.phone, address: k.address, area: k.area, meta: metaIds() }).then(function (r) {
         if (!r || !r.ok) { btn.disabled = false; err.textContent = (r && tt2.e[r.error]) || (r && r.error) || tt2.e.net; return; }
-        done = '<div class="done"><div class="big">✅</div><h2>' + tt2.thanks + '</h2><p><b>' + esc(r.no) + '</b> · ' + tk(r.total) + '</p><p class="name">' + tt2.soon + '</p>' +
+        var next = r.advance ? '<div class="card" style="text-align:left"><b>' + tt2.adv + ': ' + tk(r.advance.amount) + '</b><p>' + esc(r.advance.how) + '\n' + tt2.advRef + ': ' + esc(r.advance.ref) + '\n' + tt2.advAfter + '</p></div>'
+          : '<p class="name">' + (r.confirm ? tt2.callFirst : tt2.soon) + '</p>';
+        done = '<div class="done"><div class="big">✅</div><h2>' + tt2.thanks + '</h2><p><b>' + esc(r.no) + '</b> · ' + tk(r.total) + '</p>' + next +
           (r.page ? '<p><a href="' + esc(r.page) + '">' + tt2.see + ' →</a></p>' : '') + '</div>';
         paint();
-        try { if (window.fbq) window.fbq('track', 'Purchase', { value: r.total, currency: 'BDT' }); } catch (e2) {}
+        // 136: never Purchase here - Purchase comes from the server when the order is approved / delivered
+        try { if (window.fbq && r.pixel !== false) window.fbq('track', 'Lead', { value: Math.round(r.total), currency: 'BDT' }, { eventID: 'lead-' + r.no }); } catch (e2) {}
       }).catch(function () { btn.disabled = false; err.textContent = tt2.e.net; });
     };
   }
@@ -155,7 +171,7 @@ button.go:disabled{opacity:.55;cursor:default}
   document.getElementById('jump').onclick = function () { var f = document.getElementById('f'); if (f) { f.scrollIntoView({ behavior: 'smooth' }); var n = f.querySelector('input[name=name]'); if (n) setTimeout(function () { n.focus(); }, 400); } };
   fetch(URL0).then(function (r) { return r.json(); }).then(function (r) {
     if (!r || !r.ok) { document.getElementById('m').innerHTML = '<p class="msg">' + T[L || 'bn'].none + '</p>'; return; }
-    D = r; document.title = r.product.headline + ' — ' + r.shop.name; paint();
+    D = r; document.title = r.product.headline + ' — ' + r.shop.name; paint(); pixel(r.pixel);
     post({ a: 'view', visitor: VIS }).catch(function () {});
   }).catch(function () { document.getElementById('m').innerHTML = '<p class="msg">' + T[L || 'bn'].none + '</p>'; });
 })();
