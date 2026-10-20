@@ -235,13 +235,18 @@ export async function erpPoolClose(ctx, payload) {
     await ctx.tx`delete from pool_month_agreed where pool_id = ${ctx.biz} and month = ${first}::date and partner_business_id = ${me}`;
     return erpPartnership(ctx, { month });
   }
+  // joint-fix-3: months are agreed in order, and an agreement is to these exact sums (133: a fingerprint of them)
+  const fo = (await ctx.tx`select pool_first_open_month(${ctx.biz}) as m`)[0].m;
+  if (fo && formatDate(new Date(fo), 'yyyy-MM') < month) throw new Error('Agree ' + formatDate(new Date(fo), 'MMMM yyyy') + ' first: months are closed in order.');
+  const figures = str((await ctx.tx`select pool_settlement(${ctx.biz}, ${first}::date) ->> 'figures' as f`)[0].f);
   // every partner says yes to the same sums; the last yes closes the month
-  await ctx.tx`insert into pool_month_agreed (pool_id, month, partner_business_id, agreed_by, agreed_name)
-               values (${ctx.biz}, ${first}::date, ${me}, ${ctx.s.userId}, ${(ctx.s && ctx.s.name) || 'owner'})
-               on conflict (pool_id, month, partner_business_id) do nothing`;
+  await ctx.tx`insert into pool_month_agreed (pool_id, month, partner_business_id, agreed_by, agreed_name, figures)
+               values (${ctx.biz}, ${first}::date, ${me}, ${ctx.s.userId}, ${(ctx.s && ctx.s.name) || 'owner'}, ${figures})
+               on conflict (pool_id, month, partner_business_id) do update
+                 set agreed_by = excluded.agreed_by, agreed_name = excluded.agreed_name, figures = excluded.figures, agreed_at = now()`;
   const left = await ctx.tx`select 1 from pool_partners pp where pp.pool_id = ${ctx.biz}
                              and not exists (select 1 from pool_month_agreed a where a.pool_id = pp.pool_id and a.month = ${first}::date
-                                             and a.partner_business_id = pp.partner_business_id)`;
+                                             and a.partner_business_id = pp.partner_business_id and a.figures = ${figures})`;
   if (!left.length) await ctx.tx`select close_pool_month(${ctx.biz}, ${first}::date)`;
   return erpPartnership(ctx, { month });
 }

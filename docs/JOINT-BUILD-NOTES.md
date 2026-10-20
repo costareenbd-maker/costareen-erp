@@ -67,3 +67,15 @@ database (the shared space, like the market). Costareen (provider DB) keeps the 
 - Card 1 on the Joint stock page = "make an install link" (erpInstallInvite, platform admin). The old "make their company
   here" server action stays but has no button.
 - Test: joint4_test (45) runs a second database in the same test server as the partner's.
+
+## Fixes (2026-10-20, tags joint-fix-1..5, suite joint7)
+- A pool is never the active business (core.js activeBusiness skips is_pool). Everything pool-side goes through the Joint
+  stock calls (withPool). The old in-pool screens and "sell from the pool" are closed.
+- Seller's return line for a joint line: qty = -qty even when damaged (the loss is booked once, in the pool).
+- erpJointAdjust direction 'mistake' -> undoReceipts: RECEIVE/OUT rows "Undo of <txn_no>", negative total, original payer.
+- syncJoint: a seller bill closed with Adjusted (write-off) pays the pool its whole joint part.
+- 133: pool_settlement = pool_settlement_core + lent_to_brands + figures/agreed/agreed_stale/first_open;
+  close_pool_month and erpPoolClose: months in order; agreements carry `figures`.
+- erpJointBook: own company's lines only. myPools.member: any owner of the partner company.
+- Remote: shelf moves tagged "[pool invoice no]" and dropped with the copy; reconcile checks joint lines; pool return
+  number RTN-...-J<4 hex of seller id>.

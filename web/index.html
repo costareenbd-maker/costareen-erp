@@ -11312,7 +11312,7 @@ function partnerOwnHtml() {
   if (!p.pools.length) h += '<div class="empty">' + esc(p.name) + ' is not in a joint pool yet.</div>';
   else h += '<div class="list">' + p.pools.map(function (x) {
     return '<div><span>' + esc(x.name) + '<span class="sku">' + esc((x.partners || []).join(' + ')) + ' · you sell at the ' + esc(x.tier) + ' price</span></span>' +
-      '<button class="btn small primary" type="button" data-poolopen="' + esc(x.id) + '">Open the pool</button></div>'; }).join('') + '</div>';
+      '<button class="btn small primary" type="button" data-poolopen="' + esc(x.id) + '">Open in Joint stock</button></div>'; }).join('') + '</div>';
   if (ed) {
     h += '<div class="grid g-half" style="margin-top:14px"><div><strong>Start a joint pool</strong>' +
       '<div class="fields" style="margin-top:8px"><div style="grid-column:span 2"><label class="f" for="pn_name">Name of the pool</label><input class="i" id="pn_name" maxlength="80" placeholder="e.g. ProtoReen joint stock" value="' + esc(PART_NEW.name) + '"></div>' +
@@ -11536,11 +11536,11 @@ function wirePhase4() {
   if (jn) jn.addEventListener('click', function () {
     partSave('erpPoolJoin', [{ code: PART_NEW.code, displayName: PART_NEW.joinName, tier: PART_NEW.joinTier }], '', function (r) {
       PART_NEW.code = ''; PART_NEW.joinName = '';
-      toast('Joined <strong>' + esc(r.name) + '</strong>. It is now in the menu at the top.', false, 10000);
+      toast('Joined <strong>' + esc(r.name) + '</strong>. Open it from Joint stock in the menu.', false, 10000);
       loadBusinesses(); PART = null; loadPartner();
     });
   });
-  p4Each('button[data-poolopen]', function () { PART = null; CAPD = null; PART_MONTH = ''; var id = this.getAttribute('data-poolopen'), bs = el('bizSel'); if (bs) bs.value = id; switchBusiness(id); });
+  p4Each('button[data-poolopen]', function () { PART = null; CAPD = null; PART_MONTH = ''; JT.pool = this.getAttribute('data-poolopen'); JT.data = null; go('joint'); });   // joint-fix-1: a joint stock opens in Joint stock, never as a business
   p4Each('button[data-pstock]', function () {
     var id = this.getAttribute('data-pstock'), name = this.getAttribute('data-n');
     srv('erpPartnerStock', [{ partner: id }], function (r) { PART_STOCK = { partner: id, name: name, products: r.products }; if (VIEW === 'capital') repaint(); },
@@ -13902,6 +13902,7 @@ wireProducts = function () {
 <script>
 var INV_FROM = '', POOLCAT = {}, POOLCAT_BUSY = '';
 function invPools() {
+  return [];   // joint-fix-1 (20 Oct 2026): selling "from the pool" is closed; joint goods are on the normal search
   return ((SHARED && SHARED.columns) || []).filter(function (c) { return c.kind === 'pool' && !c.note && c.key.indexOf('pool:') === 0; })
     .map(function (c) { return { id: c.key.slice(5), name: c.name }; });
 }
@@ -20165,9 +20166,9 @@ function jtMoveForm(d, pool, f) {
 function jtAdjustForm(d, pool, f) {
   var dis = JT.busy ? ' disabled' : '';
   if (!(d.stock || []).length) return '<div class="card" style="margin-top:12px"><div class="empty">Add a joint product first.</div></div>';
-  return '<div class="card" style="margin-top:12px"><h2>Correct a count</h2><div class="sub">Counted and found different: damaged, lost, or found. The difference is valued at cost and is the joint stock’s loss or gain — shared by both. Your partner sees who did it and why.</div>' +
+  return '<div class="card" style="margin-top:12px"><h2>Correct a count</h2><div class="sub">Counted and found different: damaged, lost, or found. The difference is valued at cost and is the joint stock’s loss or gain — shared by both. Received by mistake (typed twice, wrong product) undoes the newest receipts on that shelf instead: no loss, and the payer is no longer counted as having paid. Your partner sees who did it and why.</div>' +
     '<div class="jt-form"><div class="wide"><label class="f" for="ja_sku">Product</label>' + jtSkuSel(d, 'ja_sku', f.sku) + '</div>' +
-    '<div><label class="f" for="ja_dir">What</label><select class="i" id="ja_dir"><option value="out"' + (f.direction !== 'in' ? ' selected' : '') + '>Fewer than the list says</option><option value="in"' + (f.direction === 'in' ? ' selected' : '') + '>More than the list says</option></select></div>' +
+    '<div><label class="f" for="ja_dir">What</label><select class="i" id="ja_dir"><option value="out"' + (f.direction !== 'in' && f.direction !== 'mistake' ? ' selected' : '') + '>Fewer than the list says (loss)</option><option value="in"' + (f.direction === 'in' ? ' selected' : '') + '>More than the list says (gain)</option><option value="mistake"' + (f.direction === 'mistake' ? ' selected' : '') + '>Received by mistake (undo a receipt)</option></select></div>' +
     '<div><label class="f" for="ja_qty">By how many</label><input class="i" id="ja_qty" inputmode="numeric" value="' + esc(f.qty) + '"></div>' +
     '<div><label class="f" for="ja_at">Whose shelf was counted</label><select class="i" id="ja_at">' + pool.partners.map(function (p) { return '<option value="' + esc(p.id) + '"' + (p.id === (f.at || jtMe(d, pool)) ? ' selected' : '') + '>' + esc(p.name) + '</option>'; }).join('') + '</select></div>' +
     '<div class="wide"><label class="f" for="ja_why">Why</label><input class="i" id="ja_why" maxlength="200" placeholder="e.g. 2 rolls water damaged" value="' + esc(f.reason) + '"></div>' +
@@ -20225,7 +20226,7 @@ function jtMonthHtml(d, pool) {
     h += '<div class="paybox"><span><strong>' + esc(nameOf[t.from] || '?') + '</strong> hands <b>' + esc(cur) + ' ' + fmt(t.amount) + '</b> to <strong>' + esc(nameOf[t.to] || '?') + '</strong> and everyone is even.</span>' +
       (!closed ? '<button class="btn small primary" type="button" data-jt="handed" data-from="' + esc(t.from) + '" data-to="' + esc(t.to) + '" data-amt="' + esc(t.amount) + '">It has been handed over</button>' : '') + '</div>'; });
   if (ps.length > 1 && ps.some(function (x) { return x.top_up_to_equal > 0.5; })) h += '<div class="sub" style="margin-top:8px">To bring the shares level: ' + ps.filter(function (x) { return x.top_up_to_equal > 0.5; }).map(function (x) { return esc(x.name) + ' puts in ' + fmt(x.top_up_to_equal) + ' more'; }).join(' · ') + '.</div>';
-  h += '<div class="sub" style="margin-top:10px">Stock at cost ' + fmt(td.stock_at_cost || 0) + ' · customers still owe ' + fmt(td.receivables || 0) + ' · both belong to the partners in their shares.</div>';
+  h += '<div class="sub" style="margin-top:10px">Stock at cost ' + fmt(td.stock_at_cost || 0) + ((td.lent_to_brands || 0) > 0.5 ? ' · sponsorship rolls still with brands ' + fmt(td.lent_to_brands) : '') + ' · customers still owe ' + fmt(td.receivables || 0) + ' · ' + ((td.lent_to_brands || 0) > 0.5 ? 'all' : 'both') + ' belong to the partners in their shares.</div>';
   if (p.closedMonths && p.closedMonths.length) h += '<div class="sub" style="margin-top:6px">Closed months: ' + p.closedMonths.map(function (m) { return esc(capMonth(m)); }).join(' · ') + '</div>';
   return h + '</div></section>';
 }
@@ -20518,11 +20519,16 @@ jtMonthHtml = function (d, pool) {
     (r.partners || []).filter(function (q) { return q.overdue > 0.5; }).map(function (q) { return esc(q.name) + ' ' + fmt(q.overdue); }).join(', ') + ').</div>';
   if ((r.below_floor || []).length) x += '<div class="sub" style="color:var(--critical)">Sold under the floor price by an owner this month: ' + r.below_floor.map(function (f) { return esc(nameOf[f.seller] || '?') + ' — ' + fmt(f.amount) + ' under, invoice ' + esc(f.invoice); }).join(' · ') + '</div>';
   var agreed = r.agreed || [], mine = agreed.indexOf(p.me) >= 0, who = agreed.map(function (id) { return nameOf[id] || '?'; });
+  // joint-fix-3: a yes given to other sums no longer counts; months close in order
+  var stale = (r.agreed_stale || []).map(function (id) { return nameOf[id] || '?'; });
+  if (!closed && stale.length) x += '<div class="sub" style="color:var(--warning)">The sums changed after ' + esc(stale.join(' and ')) + ' agreed (a sale, a return or a book line in this month). That yes no longer counts: agree again to these sums.</div>';
+  var blocked = !closed && !p.isCurrent && r.first_open && r.first_open < (r.month || '');
+  if (blocked) x += '<div class="sub" style="color:var(--warning)">' + esc(r.first_open) + ' is not closed yet. Months are closed in order: agree that month first (← Earlier).</div>';
   if (closed) x += '<div class="paybox"><span class="pill ok">✓ closed</span> Both sides agreed these sums' + (who.length ? ' (' + esc(who.join(' and ')) + ')' : '') + '. They can no longer change.</div>';
   else if (p.isCurrent) x += '<div class="sub">This month is still running. When it has ended, each owner presses “I agree” here; the second yes closes the month and fixes its sums.</div>';
   else x += '<div class="paybox"><span>' + (who.length ? 'Agreed so far: <strong>' + esc(who.join(', ')) + '</strong>. ' : 'Nobody has agreed yet. ') + (mine ? 'Waiting for your partner.' : 'Check the sums above, then say yes.') + '</span>' +
     (mine ? '<button class="btn small" type="button" data-jt="unagree"' + (JT.busy ? ' disabled' : '') + '>Take my yes back</button>'
-          : '<button class="btn small primary" type="button" data-jt="agree"' + (JT.busy ? ' disabled' : '') + '>I agree with these sums</button>') + '</div>';
+          : '<button class="btn small primary" type="button" data-jt="agree"' + (JT.busy || blocked ? ' disabled' : '') + '>I agree with these sums</button>') + '</div>';
   x += '<div class="row" style="margin-top:12px;gap:8px"><button class="btn" type="button" data-jt="pdf">Statement as a PDF</button></div></div></section>';
   return h + x;
 };
@@ -22111,12 +22117,16 @@ function rvNameCell(l, i) {
   return '<td class="nm">' + esc(l.name) + (l.isNew ? '<br><span class="pill low">new product \u2014 not saved yet</span>' : '<br><span class="sku">' + esc(l.sku) + '</span>') + rvSrcLine(l) + '</td>';
 }
 /** The matched lines into the receive table. */
+/** joint-recv-file (20 Oct 2026): on the joint Receive page the file is matched to the joint products, and the
+ *  supplier's names are not remembered against them (the name memory is for the company's own products). */
+function rfPool() { return (typeof JRV !== 'undefined' && JRV.on && VIEW === 'joint') ? JRV.pool : ''; }
+function rfLearn(args, ok, bad) { if (rfPool()) return; srv('erpReceiveLearn', args, ok, bad); }
 function rfIntoTable(r) {
   var added = 0, money = 0, cur = '', pairs = [];
   (r.lines || []).forEach(function (l) {
     if (!(num(l.qty) > 0)) return;
     var src = { text: l.text, code: l.code, price: l.price, currency: l.currency, confidence: l.confidence, how: l.how, candidates: l.candidates || [], newProduct: l.newProduct };
-    var p = l.sku ? (CAT || []).filter(function (x) { return x.sku === l.sku; })[0] : null;
+    var p = l.sku ? recvCat().filter(function (x) { return x.sku === l.sku; })[0] : null;
     if (l.sku && (l.how === 'sku' || l.how === 'remembered' || l.confidence >= 0.9)) {
       var hit = null; for (var j = 0; j < RECV.lines.length; j++) if (RECV.lines[j].sku === l.sku) hit = RECV.lines[j];
       if (hit) { hit.qty = num(hit.qty) + num(l.qty); if (!hit.src) hit.src = src; } else RECV.lines.push({ sku: l.sku, name: p ? p.name : l.name, qty: num(l.qty), stock: p ? p.stock : num(l.stock), src: src });
@@ -22131,7 +22141,7 @@ function rfIntoTable(r) {
   if (r.supplier && !RECV.supplier) RECV.supplier = r.supplier;
   if (money > 0 && !num(RECV.totalRmb)) { RECV.mode = 'fx'; RECV.currency = (cur || r.currency || 'RMB').toUpperCase().replace('CNY', 'RMB'); RECV.totalRmb = String(Math.round(money * 100) / 100); if (!RECV.rate && typeof fxRate === 'function' && fxRate(RECV.currency) > 0) RECV.rate = String(fxRate(RECV.currency)); }
   if (!RECV.reference && RF.file) RECV.reference = RF.file.replace(/\.(pdf|xlsx|csv|jpe?g|png|webp)$/i, '');
-  if (pairs.length) srv('erpReceiveLearn', [{ pairs: pairs, supplier: RECV.supplier || r.supplier || '' }], function () {}, function () {});
+  if (pairs.length) rfLearn([{ pairs: pairs, supplier: RECV.supplier || r.supplier || '' }], function () {}, function () {});
   RF.added = added; RV_ONLY_OPEN = rvOpenCount() > 0 && added > 8;
   repaint();
   var n = rvOpenCount();
@@ -22252,20 +22262,20 @@ function rfStart(file) {
   RF = { busy: 'Reading ' + file.name + '\u2026', err: '', file: file.name, res: null, lines: null, image: '', hint: '', ocrConf: 0 }; repaint();
   rfReadFile(file).then(function (read) {
     RF.busy = 'Matching the lines to your products\u2026'; repaint();
-    srv('erpReceiveMatch', [{ rows: read.rows, kind: read.kind, reader: read.reader || 'file', supplier: RECV.supplier || '', fileName: file.name }], function (r) {
+    srv('erpReceiveMatch', [{ pool: rfPool(), rows: read.rows, kind: read.kind, reader: read.reader || 'file', supplier: RECV.supplier || '', fileName: file.name }], function (r) {
       RF.busy = ''; RF.res = r; rfIntoTable(r);
     }, function (e) { RF.busy = ''; RF.err = (e && e.message) || String(e); repaint(); });
   }, function (e) { RF.busy = ''; RF.err = (e && e.message) || String(e); repaint(); });
 }
 // ---- wiring
 document.addEventListener('click', function (ev) {
-  if (VIEW !== 'stock') return;
+  if (VIEW !== 'stock' && !rfPool()) return;   // joint-recv-file: the joint Receive page too
   var t = ev.target && ev.target.closest ? ev.target.closest('#rv_fileBtn,#rf_close,#rf_ai,[data-rvkeep],[data-rvsetup]') : null; if (!t) return;
   if (t.id === 'rv_fileBtn') { var inp = el('rv_file'); if (inp) { inp.value = ''; inp.click(); } return; }
   if (t.id === 'rf_ai') {
     if (!RF.image) { toast('No photo to send.', true); return; }
     var keep = RF; RF.busy = 'The provider\u2019s AI reader is reading the photo\u2026'; repaint();
-    srv('erpReceiveRead', [{ image: RF.image, hint: RF.hint, supplier: RECV.supplier || '', fileName: RF.file }], function (r) {
+    srv('erpReceiveRead', [{ pool: rfPool(), image: RF.image, hint: RF.hint, supplier: RECV.supplier || '', fileName: RF.file }], function (r) {
       // the device's rows from this photo make way for the AI reader's
       RECV.lines = RECV.lines.filter(function (l) { return !(l.src && l.src.fromFile === RF.file); });
       RECV.lines = RECV.lines.filter(function (l) { return !l.src || l.src.file !== RF.file; });
@@ -22276,7 +22286,7 @@ document.addEventListener('click', function (ev) {
   if (t.id === 'rf_close') { RF = { busy: '', err: '', file: '', res: null, lines: null, image: '', hint: '', ocrConf: 0 }; repaint(); return; }
   if (t.hasAttribute('data-rfskip')) { RF.lines[Number(t.getAttribute('data-rfskip'))].skip = true; repaint(); return; }
   if (t.hasAttribute('data-rfun')) { RF.lines[Number(t.getAttribute('data-rfun'))].skip = false; repaint(); return; }
-  if (t.hasAttribute('data-rvkeep')) { var kl = RECV.lines[Number(t.getAttribute('data-rvkeep'))]; if (kl) { delete kl.state; if (kl.src) srv('erpReceiveLearn', [{ pairs: [{ alias: kl.src.code || kl.src.text, sku: kl.sku }], supplier: RECV.supplier || '' }], function () {}, function () {}); } repaint(); return; }
+  if (t.hasAttribute('data-rvkeep')) { var kl = RECV.lines[Number(t.getAttribute('data-rvkeep'))]; if (kl) { delete kl.state; if (kl.src) rfLearn([{ pairs: [{ alias: kl.src.code || kl.src.text, sku: kl.sku }], supplier: RECV.supplier || '' }], function () {}, function () {}); } repaint(); return; }
   if (t.hasAttribute('data-rvsetup')) {
     var ri = Number(t.getAttribute('data-rvsetup')), rl = RECV.lines[ri]; if (!rl) return;
     t.disabled = true; t.textContent = 'Preparing\u2026';
@@ -22306,14 +22316,14 @@ attachNewProduct = function (target, sku) {
   srv('erpCatalog', [], function (cat) {
     CAT = cat; var p = null; for (var i = 0; i < CAT.length; i++) if (CAT[i].sku === sku) { p = CAT[i]; break; }
     var row = RECV.lines[ri];
-    if (row) { row.sku = sku; row.name = p ? p.name : sku; row.stock = p ? p.stock : 0; delete row.state; if (row.src) srv('erpReceiveLearn', [{ pairs: [{ alias: row.src.code || row.src.text, sku: sku }], supplier: RECV.supplier || '' }], function () {}, function () {}); }
+    if (row) { row.sku = sku; row.name = p ? p.name : sku; row.stock = p ? p.stock : 0; delete row.state; if (row.src) rfLearn([{ pairs: [{ alias: row.src.code || row.src.text, sku: sku }], supplier: RECV.supplier || '' }], function () {}, function () {}); }
     else RECV.lines.push({ sku: sku, name: p ? p.name : sku, qty: 1, stock: p ? p.stock : 0 });
     toast('Product created and placed on its line. ' + (rvOpenCount() ? rvOpenCount() + ' row(s) still need a choice.' : 'Press Receive when ready.'), false, 8000);
     D = null; loadDashboardOnly(); updateCounts(); repaint();
   }, function (e) { toast(esc((e && e.message) || e), true, 9000); });
 };
 document.addEventListener('change', function (ev) {
-  if (VIEW !== 'stock') return;
+  if (VIEW !== 'stock' && !rfPool()) return;   // joint-recv-file: the joint Receive page too
   var t = ev.target; if (!t || !t.getAttribute) return;
   if (t.id === 'rv_file') { if (t.files && t.files[0]) rfStart(t.files[0]); return; }
   if (t.id === 'rv_onlyopen') { RV_ONLY_OPEN = !!t.checked; repaint(); return; }
@@ -22321,16 +22331,16 @@ document.addEventListener('change', function (ev) {
     var pi = Number(t.getAttribute('data-rvpick')), pl = RECV.lines[pi], v = t.value; if (!pl) return;
     if (v === '__search') {
       var q = prompt('Search a product (name or SKU)', pl.src ? pl.src.text : pl.name); if (q === null) { repaint(); return; }
-      var qq = String(q).toLowerCase(), hits = (CAT || []).filter(function (p) { return (p.name + ' ' + p.sku + ' ' + (p.brand || '')).toLowerCase().indexOf(qq) >= 0; }).slice(0, 8);
+      var qq = String(q).toLowerCase(), hits = recvCat().filter(function (p) { return (p.name + ' ' + p.sku + ' ' + (p.brand || '')).toLowerCase().indexOf(qq) >= 0; }).slice(0, 8);
       if (!hits.length) { toast('No product like "' + esc(q) + '".', true); repaint(); return; }
       var pick = hits.length === 1 ? hits[0] : hits[Number(prompt(hits.map(function (p, k) { return (k + 1) + '. ' + p.name + ' (' + p.sku + ')'; }).join('\n') + '\n\nWhich number?', '1')) - 1];
       if (!pick) { repaint(); return; }
       v = pick.sku;
     }
     if (!v) { repaint(); return; }
-    var cp = (CAT || []).filter(function (x) { return x.sku === v; })[0];
+    var cp = recvCat().filter(function (x) { return x.sku === v; })[0];
     pl.sku = v; pl.name = cp ? cp.name : v; pl.stock = cp ? cp.stock : 0; delete pl.state;
-    if (pl.src) srv('erpReceiveLearn', [{ pairs: [{ alias: pl.src.code || pl.src.text, sku: v }], supplier: RECV.supplier || '' }], function () {}, function () {});
+    if (pl.src) rfLearn([{ pairs: [{ alias: pl.src.code || pl.src.text, sku: v }], supplier: RECV.supplier || '' }], function () {}, function () {});
     repaint();
   }
 });

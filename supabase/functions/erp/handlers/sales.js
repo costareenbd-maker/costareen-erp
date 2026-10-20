@@ -485,7 +485,9 @@ async function returnGoods(ctx, payload, opts = {}) {
                                  discount, line_total, line_no, unit_cost)
       values (${ctx.biz}, ${rtnId}, ${pid}, ${t.sku},
               ${t.product + (t.good ? ' (returned)' : ' (returned damaged)')},
-              ${t.good ? -t.qty : 0}, ${R2(t.unit)}, 0, ${-t.worth}, ${s + 1}, ${costThen})`;
+              ${t.good || /~J[0-9a-f]{4}$/i.test(String(t.sku)) ? -t.qty : 0}, ${R2(t.unit)}, 0, ${-t.worth}, ${s + 1}, ${costThen})`;
+    // joint-fix-2: a joint line comes off the seller's books whole even when damaged (qty back = its cost back); the
+    // damage is the pool's loss, written on the pool's own return note - not a second loss in the seller's profit
     if (!t.good) continue;
     if (pid) {
       await ctx.tx`

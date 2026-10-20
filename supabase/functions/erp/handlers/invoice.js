@@ -395,15 +395,13 @@ export async function erpCreateInvoice(ctx, payload) {
   // plan B3: "sell from" a joint pool without switching business. The sale is
   // the pool's in every way - its stock, prices, invoice number and books -
   // made by this person as the member of the pool they are.
+  // joint-fix-1 (20 Oct 2026): the old "sell from the pool" route is closed. It put the customer in the pool, where
+  // the partner sees them, and skipped the seller's books. Joint goods go on the seller's own invoice.
   const from = String((payload && payload.from) || '').trim();
-  let sctx = ctx, soldFrom = '';
-  if (from && from !== ctx.biz) {
-    const p = await poolCtx(ctx, from);
-    sctx = p.ctx; soldFrom = p.name;
-  }
-  const res = await createInvoice(sctx, payload);
+  if (from && from !== ctx.biz) throw new Error('Joint goods are sold on your own invoice: add them from the product search (they carry the Joint tag).');
+  if ((await ctx.tx`select is_pool from businesses where id = ${ctx.biz}`)[0]?.is_pool) throw new Error('A joint stock does not sell by itself: sell its goods on your own company\'s invoice.');
+  const res = await createInvoice(ctx, payload);
   delete res.invoiceId;
-  if (soldFrom) { res.soldFrom = soldFrom; res.soldFromId = from; }
   return res;
 }
 
@@ -417,7 +415,6 @@ export async function poolCtx(ctx, poolId) {
 }
 
 /** The pool's products and prices, for the "sell from" switch on the invoice screen. */
-export async function erpPoolCatalog(ctx, payload) {
-  const p = await poolCtx(ctx, payload && payload.pool);
-  return { pool: p.ctx.biz, name: p.name, products: await erpCatalog(p.ctx) };
+export async function erpPoolCatalog() {
+  throw new Error('Joint goods are in the normal product search now (Joint tag).');
 }

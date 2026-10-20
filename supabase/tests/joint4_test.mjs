@@ -182,9 +182,9 @@ out = await J.jointReconcile(deps);
 check('a sale left pending whose invoice is NOT there is taken out, stock back', out.dropped === 1 && await poolStock() === before + 1 &&
   !(await sql`select 1 from joint_sales where pool_invoice_no = ${L2.pool_invoice_no}`).length, out);
 await tsql`delete from payments where business_id = ${TB} and invoice_no = ${FINV} and method = 'Returned'`;   // keep his books as they were for the next check
-await sql`delete from invoices where invoice_no like 'RTN-%-J' and business_id = ${POOL}`;
+await sql`delete from invoices where invoice_no like 'RTN-%-J%' and business_id = ${POOL}`;
 out = await J.jointReconcile(deps);
-check('a return the pool never heard of is written by the night check', out.returns >= 1 && (await sql`select count(*)::int as n from invoices where invoice_no like 'RTN-%-J'`)[0].n === 1, out);
+check('a return the pool never heard of is written by the night check', out.returns >= 1 && (await sql`select count(*)::int as n from invoices where invoice_no like 'RTN-%-J%'`)[0].n === 1, out);
 
 // ---- the switch stays on while he is in a pool --------------------------------------------------------------
 r = await owner('erpPlatformJointCopy', [{ id: TID, on: false }]);

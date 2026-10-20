@@ -36,7 +36,7 @@ export async function erpLineMargins(ctx, payload) {
       const revenue = x.qty * (num(J.price) - x.disc) - (sum > 0 ? invDisc * x.gross / sum : 0), cost = x.qty * num(J.cost);
       if (!(num(J.cost) > 0) || !(revenue > 0)) { out.push({ sku: x.sku, low: false, unknown: !(num(J.cost) > 0), joint: true }); continue; }
       const margin = Math.round((revenue - cost) / revenue * 1000) / 10, line = { sku: x.sku, low: margin < UNDER, unknown: false, joint: true };
-      if (canCost) line.margin = margin;
+      if (canCost && ctx.s.role === 'owner') line.margin = margin;   // joint-fix-4: with the price it gives the pool's cost away
       out.push(line); continue;
     }
     if (!x.p) { out.push({ sku: x.sku, low: false, unknown: true }); continue; }

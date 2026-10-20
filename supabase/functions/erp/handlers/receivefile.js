@@ -62,10 +62,14 @@ function words(s) { return norm(s).split(' ').filter((w) => w && w.length > 1); 
 export const isRefill = (t) => /diskless|refill|spool-?less|without\s*spool|\b2\.0\b|re-?fill/i.test(str(t));
 
 /** Every product, with the words a file could use for it. */
-async function catalogue(ctx) {
-  const rows = await ctx.tx`select p.id, p.sku, p.name, p.brand, p.type, p.color, p.category, p.cost_price, coalesce(s.stock, 0) as stock
-                            from products p left join product_stock s on s.product_id = p.id
-                            where p.business_id = ${ctx.biz} and coalesce(p.status, 'Active') <> 'Discontinued'`;
+async function catalogue(ctx, pool) {
+  // joint-recv-file (20 Oct 2026): receiving into a joint stock matches the file to that pool's products (never their cost)
+  const rows = pool
+    ? (await (await import('./joint.js')).erpJointRecvCatalog(ctx, { pool })).map((p) => ({ id: 'joint:' + p.sku, sku: p.sku, name: p.name, brand: p.brand,
+                                                                                            type: '', color: p.color, category: p.category, cost_price: 0, stock: p.stock }))
+    : await ctx.tx`select p.id, p.sku, p.name, p.brand, p.type, p.color, p.category, p.cost_price, coalesce(s.stock, 0) as stock
+                   from products p left join product_stock s on s.product_id = p.id
+                   where p.business_id = ${ctx.biz} and coalesce(p.status, 'Active') <> 'Discontinued'`;
   return rows.map((p) => {
     const text = [p.brand, p.name, p.type, p.color].map(str).join(' ');
     const brand = brandOf(text) || norm(p.brand);
@@ -175,10 +179,10 @@ function textRecords(lines) {
 /** Every record against the catalogue: the lines of the review card. */
 async function matchRecords(ctx, records, opts) {
   const supplier = str(opts.supplier), fileBrand = brandOf(supplier) || brandOf(str(opts.fileName));
-  const cat = await catalogue(ctx);
+  const cat = await catalogue(ctx, opts.pool);
   const bySku = Object.fromEntries(cat.map((c) => [c.sku.toLowerCase(), c]));
   const aliases = {};
-  for (const a of await ctx.tx`select alias, product_id from product_aliases where business_id = ${ctx.biz}`) aliases[str(a.alias)] = a.product_id;
+  if (!opts.pool) for (const a of await ctx.tx`select alias, product_id from product_aliases where business_id = ${ctx.biz}`) aliases[str(a.alias)] = a.product_id;
   const byId = Object.fromEntries(cat.map((c) => [c.id, c]));
   const currency = (records.find((r) => r.currency) || {}).currency || '';
   const lines = records.map((r) => {
@@ -214,7 +218,7 @@ export async function erpReceiveMatch(ctx, payload) {
   if (!rows.length) throw new Error('The file has nothing to read.');
   const records = kind === 'text' ? textRecords(rows.map((r) => (Array.isArray(r) ? r.join(' ') : r))) : gridRecords(rows);
   if (!records.length) throw new Error('No product lines found in the file. A line needs a product name and a quantity.');
-  return { kind, reader: p.reader === 'ocr' ? 'ocr' : 'file', ...(await matchRecords(ctx, records, { supplier: p.supplier, fileName: p.fileName })) };
+  return { kind, reader: p.reader === 'ocr' ? 'ocr' : 'file', ...(await matchRecords(ctx, records, { supplier: p.supplier, fileName: p.fileName, pool: str(p.pool) })) };
 }
 
 // ---------------------------------------------------------------- the provider's AI reader (a photo, a scanned PDF)
@@ -335,7 +339,7 @@ export async function erpReceiveRead(ctx, payload) {
   const records = arr.slice(0, 500).map((r, i) => ({ row: i + 1, code: str(r && r.code).slice(0, 40), text: str(r && r.name).slice(0, 200), qty: num(r && r.qty), price: num(r && r.price), currency: str(r && r.currency).toUpperCase().slice(0, 4) }))
                      .filter((r) => (r.text || r.code) && r.qty > 0);
   if (!records.length) throw new Error('The AI reader found no lines with a quantity.');
-  return { kind: 'photo', reader: 'gemini', readsLeft: AI_DAILY - used - 1, ...(await matchRecords(ctx, records, { supplier: p.supplier, fileName: p.fileName })) };
+  return { kind: 'photo', reader: 'gemini', readsLeft: AI_DAILY - used - 1, ...(await matchRecords(ctx, records, { supplier: p.supplier, fileName: p.fileName, pool: str(p.pool) })) };
 }
 
 /** The owner confirmed: this code / wording is that product. Next time it matches at once. */

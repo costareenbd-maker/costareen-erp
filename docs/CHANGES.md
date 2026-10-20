@@ -2533,3 +2533,36 @@ a company can paste its own key. Settings → Connections → Posting bridges: a
 Refresh, Remove. Posts form shows the network as connected with no mention of the service; publishing routes
 to the bridge when there is no key of our own; pending posts finished by the minute timer. 23 tests.
 NOT done: Buffer (thin GraphQL docs), Pinterest board choice, stats for bridged posts, no provider keys set yet.
+
+## 20 Oct 2026 - Joint stock fixes (tags joint-fix-1..5; owner: "fix all of them in that order")
+Audit of the joint stock (code review + live and dev data) found these; all fixed, suite joint7 (38) proves each:
+1. **The pool was a business of its own.** It was in the business menu (and Capital > Partnership "Open the pool"); inside
+   it New invoice sold pool stock directly: no seller invoice, customer kept in the pool, shelf not counted down,
+   delivery charge as pool income. Now: pools are never the active business (core.js activeBusiness, erpSetBusiness
+   refuses, erpBusinesses leaves them out), "Open in Joint stock" goes to the Joint stock page, the old "sell from the
+   pool" route (erpCreateInvoice from:, erpPoolCatalog) is closed, and erpCreateInvoice refuses inside a pool.
+   phase4_test's in-pool part moved onto the Joint stock calls (same checks, 89 green).
+2. **Money.** (a) A damaged return of a joint line was a loss twice (seller's own profit + its share of the pool's);
+   the seller's return line now takes the joint line off whole. (b) Undoing a wrong receipt was only possible as a
+   count correction = a loss for both + the payer still credited; Correct a count has "Received by mistake (undo a
+   receipt)": the newest receipts on that shelf are reversed at their own cost and payer (RECEIVE OUT, negative
+   total), average cost restored. (c) A bill closed with a write-off left the pool's copy part-paid and, after 45
+   days, a debt of the seller; now the pool gets its whole part when the seller's bill is closed (the write-off is
+   already in the seller's own profit). (d) Sponsorship rolls lent to brands (zero value by design) kept Stock at
+   cost too high: 133 shows them apart as lent_to_brands; who-pays-whom unchanged.
+3. **Agree.** pool_month_agreed.figures = fingerprint of the month's sums (133 pool_settlement wraps
+   pool_settlement_core: figures, agreed = yeses to these sums, agreed_stale); a change after a yes asks for a new
+   yes. Months close in order (pool_first_open_month; erpPoolClose and close_pool_month refuse a later month).
+   Each owner writes / strikes only their own company's book lines (a hand-over: giver or receiver).
+4. **Cost and owners.** Staff no longer get the pool's average cost from a receive (erpJointReceive, Receive page into
+   a pool); joint-line margin % only for owners. Every owner login of a partner company is the pool's owner (live:
+   only one of the two Costareen owner logins was).
+5. **Partner on its own database.** A dropped pool copy also removes its shelf moves (tagged "[pool invoice no]");
+   the night check keeps a pending copy only if the seller's invoice of that number has this pool's joint lines;
+   pool return notes are RTN-...-J<seller mark> (two partners' returns in the same second no longer collide); the
+   night check's "already written" lookup is scoped to the pool.
+NOT done: Bangla for the new form texts; live pool is empty so nothing to correct there.
+6. **"From a file or photo" did nothing on the joint Receive page** (owner's screenshot, 20 Oct): its click/change
+   handlers only ran on the Stock screen. Now they run on the joint Receive page too, the file is matched to the joint
+   products (erpReceiveMatch / erpReceiveRead with `pool`, never cost), and supplier names are not remembered against
+   joint products. Tag joint-recv-file-1; joint7 +2; checked on dev with a CSV (2 of 2 lines matched).

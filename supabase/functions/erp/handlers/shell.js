@@ -24,7 +24,8 @@ export async function erpSetTheme(ctx, t) {
  * them in" meant for the sheet ERP; RLS returns only those.
  */
 export async function erpBusinesses(ctx) {
-  const list = ctx.s.memberships.map((m) => ({ id: m.business_id, name: m.name, pool: !!m.is_pool }));
+  // joint stocks are not in the menu (joint-fix-1): they open from Joint stock
+  const list = ctx.s.memberships.filter((m) => !m.is_pool || ctx.s.memberships.every((x) => x.is_pool)).map((m) => ({ id: m.business_id, name: m.name, pool: !!m.is_pool }));
   const canAdd = roleAtLeast(ctx.s.role, 'owner');
   let look;
   try { look = await ctx.tx.savepoint(() => ctx.tx`select look, lang, fd from erp_prefs where user_id = ${ctx.s.userId}`); }
@@ -296,6 +297,7 @@ export async function erpSetLang(ctx, lang) {
 export async function erpSetBusiness(ctx, id) {
   const hit = ctx.s.memberships.find((m) => m.business_id === String(id));
   if (!hit) throw new Error('That business is not in the list.');
+  if (hit.is_pool) throw new Error('A joint stock is not opened as a business: use Joint stock in the menu.');
   await ctx.tx`insert into erp_prefs (user_id, active_business) values (${ctx.s.userId}, ${hit.business_id})
                on conflict (user_id) do update set active_business = excluded.active_business`;
   return { ok: true, id: hit.business_id, name: hit.name };

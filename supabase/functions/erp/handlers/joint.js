@@ -131,7 +131,8 @@ export async function myPools(ctx) {
     id: r.id, name: str(r.name), tier: str(r.tier) === 'wholesale' ? 'wholesale' : 'retail',
     partners: (r.partners || []).map((p) => ({ id: p.id, name: str(p.name), tier: str(p.tier) })),
     // a company on its own database has no login in the provider's: its owner counts as the pool's owner for it
-    member: remote || mine.some((m) => m.business_id === r.id && m.is_pool),
+    // joint-fix-4: every owner of a partner company is the pool's owner for it (not only the login that joined it)
+    member: remote || ctx.s.role === 'owner' || mine.some((m) => m.business_id === r.id && m.is_pool),
   }));
   return ctx.memo.myPools;
 }
@@ -511,6 +512,7 @@ export async function erpJointReceive(ctx, payload) {
   forget(pctx, 'TXN_LOG');
   return { sku: str(p.sku), qty, unit, cost: avg };
   });
+  if (ctx.s.role !== 'owner') delete got.cost;   // joint-fix-4: the new average cost is the owners' to see
   return { ...(await erpJoint(ctx, { pool: pool.id })), received: got };
 }
 
@@ -545,9 +547,10 @@ export async function erpJointAdjust(ctx, payload) {
   await needOn(ctx);
   const pool = await poolOf(ctx, payload.pool);
   needOwner(ctx, pool);
+  const mistake = str(payload.direction).toUpperCase() === 'MISTAKE';
   const qty = num(payload.qty), dir = str(payload.direction).toUpperCase() === 'IN' ? 'IN' : 'OUT', reason = str(payload.reason).slice(0, 200);
   if (!(qty > 0) || qty !== Math.round(qty)) throw new Error('How many? A whole number above 0.');
-  if (!reason) throw new Error('Say why the count is being corrected. Your partner sees it.');
+  if (!reason) throw new Error(mistake ? 'Say what went wrong with the receipt. Your partner sees it.' : 'Say why the count is being corrected. Your partner sees it.');
   const where = str(payload.at) || await sellerId(ctx);   // whose shelf was counted
   if (!pool.partners.some((p) => p.id === where)) throw new Error('Whose shelf? Choose one of the partners.');
   const today = formatDate(ctx.now, 'yyyy-MM-dd');
@@ -556,6 +559,7 @@ export async function erpJointAdjust(ctx, payload) {
   await lock(pctx, 'stock'); await lock(pctx, 'sale');
   const p = await poolProduct(pctx, pool, payload.sku);
   if (dir === 'OUT' && qty > num(p.stock)) throw new Error('Only ' + num(p.stock) + ' of ' + str(p.name) + ' are in the pool.');
+  if (mistake) { await undoReceipts(ctx, pctx, pool, p, where, qty, reason); forget(pctx, 'TXN_LOG'); return str(p.sku); }
   const cost = num(p.cost_price), at = new Date();
   await pctx.tx`
     insert into stock_movements (business_id, product_id, kind, direction, qty, unit_price, total, reference, supplier, note,
@@ -566,6 +570,46 @@ export async function erpJointAdjust(ctx, payload) {
   return str(p.sku);
   });
   return { ...(await erpJoint(ctx, { pool: pool.id })), adjusted: { sku, qty, direction: dir } };
+}
+
+/**
+ * joint-fix-2 (20 Oct 2026): goods received by mistake (typed twice, wrong product, a test). The newest receipts on that
+ * shelf are reversed at their own cost and payer: the payer's purchases and the stock value go down, profit is untouched.
+ * (Before, the only way was a count correction, which booked a loss for both partners and left the payer credited.)
+ */
+async function undoReceipts(ctx, pctx, pool, p, where, qty, reason) {
+  const names = {}; pool.partners.forEach((x) => { names[x.id] = x.name; });
+  const have = await heldBy(pctx, pool, p.id, where);
+  if (qty > have) throw new Error((names[where] || 'That shelf') + ' holds only ' + have + ' of ' + str(p.name) + '.');
+  const rows = await pctx.tx`
+    select r.txn_no, r.qty, r.unit_price, r.paid_by,
+           coalesce((select sum(u.qty) from stock_movements u where u.business_id = r.business_id and u.kind = 'RECEIVE'
+                       and u.direction = 'OUT' and u.reference = 'Undo of ' || r.txn_no), 0) as undone
+    from stock_movements r
+    where r.business_id = ${pool.id} and r.product_id = ${p.id} and r.kind = 'RECEIVE' and r.direction = 'IN' and r.held_by = ${where}
+    order by r.created_at desc, r.seq desc`;
+  const open = rows.map((r) => ({ ...r, left: num(r.qty) - num(r.undone) })).filter((r) => r.left > 0);
+  const can = open.reduce((a, r) => a + r.left, 0);
+  if (qty > can) throw new Error('Only ' + can + ' of ' + str(p.name) + ' were received on ' + (names[where] || 'that') + '\'s shelf and not undone yet.');
+  let left = qty, value = 0, k = 0;
+  const at = new Date();
+  for (const r of open) {
+    if (left <= 0) break;
+    const n = Math.min(left, r.left), unit = num(r.unit_price);
+    await pctx.tx`
+      insert into stock_movements (business_id, product_id, kind, direction, qty, unit_price, total, reference, supplier, note,
+                                   created_by, created_at, txn_no, operator, product_name, paid_by, held_by)
+      values (${pool.id}, ${p.id}, 'RECEIVE', 'OUT', ${n}, ${unit}, ${-round2(n * unit)}, ${'Undo of ' + str(r.txn_no)}, '',
+              ${reason + ' - received by mistake, undone by ' + who(ctx) + ' (' + str(ctx.s.businessName) + ')'},
+              ${pctx.s.userId}, ${at}, ${txnNo(at) + '-u' + (++k)}, ${who(ctx)}, ${str(p.name)}, ${r.paid_by}, ${where})`;
+    value += n * unit; left -= n;
+  }
+  // the average cost of what stays
+  const stock = num(p.stock), rest = stock - qty;
+  if (rest > 0 && num(p.cost_price) > 0) {
+    const avg = round2((stock * num(p.cost_price) - value) / rest);
+    if (avg > 0) await pctx.tx`update products set cost_price = ${avg}, updated_at = now() where id = ${p.id}`;
+  }
 }
 
 // ---------------------------------------------------------------- asking for goods and sending them (owner 18 Oct 2026)
@@ -702,7 +746,8 @@ export async function erpJointAskAct(ctx, payload) {
 }
 
 /** Creators (handlers/creatorportal.js): sponsorship rolls leave a pool, or come back when the brand replaces them.
- *  Zero value - no gain, no loss, nothing in the settlement; only the quantity on this company's shelf moves. */
+ *  Zero value - no gain, no loss, nothing in the settlement; only the quantity on this company's shelf moves.
+ *  joint-fix-2: the month end shows them apart as "lent to brands" (pool_settlement, 133), so Stock at cost is real. */
 export async function poolSponsorMove(ctx, { pool: poolId, sku, qty, dir, note }) {
   await needOn(ctx);
   const pool = await poolOf(ctx, poolId);
@@ -744,9 +789,19 @@ export async function erpJointBook(ctx, payload) {
   await needOn(ctx);
   const pool = await poolOf(ctx, payload.pool);
   needOwner(ctx, pool);
+  // joint-fix-3: an owner writes their own company's lines only (a cash hand-over: the giver or the receiver), and
+  // strikes out only those; the other company's lines are theirs to write
+  const me = await sellerId(ctx);
+  const mine = (partner, to) => partner === me || (to && to === me);
+  if (!str(payload.strike) && !mine(str(payload.partner), str(payload.kind) === 'transfer' ? str(payload.to) : '')) {
+    throw new Error('Write only your own company\'s lines (' + str(ctx.s.businessName) + '). The other company writes theirs, so both books agree.');
+  }
   await withPool(ctx, pool, async (pctx) => {
-    if (str(payload.strike)) await erpPoolEntryRemove(pctx, { id: payload.strike, reason: payload.reason, month: payload.month });
-    else await erpPoolEntryAdd(pctx, payload);
+    if (str(payload.strike)) {
+      const l = (await pctx.tx`select partner_business_id, to_business_id from pool_ledger where pool_id = ${pool.id} and id = ${str(payload.strike)}`)[0];
+      if (l && !mine(l.partner_business_id, l.to_business_id)) throw new Error('That line is the other company\'s: ask them to strike it out.');
+      await erpPoolEntryRemove(pctx, { id: payload.strike, reason: payload.reason, month: payload.month });
+    } else await erpPoolEntryAdd(pctx, payload);
   });
   return erpJoint(ctx, { pool: pool.id, month: payload.month });
 }
@@ -851,7 +906,7 @@ export async function mirrorJointSale(ctx, joint, sale, createInvoice) {
         const pr = (await pctx.tx`select id, name from products where business_id = ${pool.id} and lower(btrim(sku)) = ${str(l.code).toLowerCase()}`)[0];
         if (!pr) continue;
         // the sale row is already written as OUT from the seller's shelf; top the shelf up from before the sale
-        const mv = await ensureHeld(pctx, pool, pr.id, str(pr.name), me, 0, 'Moved on sale ' + sale.invoiceNo);
+        const mv = await ensureHeld(pctx, pool, pr.id, str(pr.name), me, 0, 'Moved on sale ' + sale.invoiceNo + ' [' + r.invoiceNo + ']');
         if (mv && mv.length) (sale.moved = sale.moved || []).push({ pool: pool.name, product: str(pr.name), moved: mv });
       }
       await pctx.tx`
@@ -877,6 +932,8 @@ export async function dropMirror(control, poolId, poolInvoiceNo) {
     const inv = (await t`select id from invoices where business_id = ${poolId} and invoice_no = ${poolInvoiceNo}`)[0];
     if (inv) {
       await t`delete from stock_movements where business_id = ${poolId} and invoice_id = ${inv.id}`;
+      // joint-fix-5: the shelf moves made for that sale too (they carry no invoice id, only its number in the note)
+      await t`delete from stock_movements where business_id = ${poolId} and kind = 'MOVE' and note like ${'Moved on sale % [' + poolInvoiceNo + ']'}`;
       await t`delete from payments where business_id = ${poolId} and invoice_no = ${poolInvoiceNo}`;
       await t`delete from invoices where id = ${inv.id}`;
     }
@@ -938,13 +995,17 @@ async function syncJointNow(ctx, invoiceNo) {
   const inv = (await ctx.tx`select grand_total from invoices where business_id = ${ctx.biz} and invoice_no = ${str(invoiceNo)}`)[0];
   if (!inv) return;
   const pays = await ctx.tx`select amount, method from payments where business_id = ${ctx.biz} and invoice_no = ${str(invoiceNo)}`;
-  let money = 0, returned = 0;
+  let money = 0, returned = 0, adjusted = 0;
   for (const p of pays) {
     const m = str(p.method).toLowerCase();
     if (m === 'returned') returned += num(p.amount);
-    else if (m !== 'adjusted') money += num(p.amount);
+    else if (m === 'adjusted') adjusted += num(p.amount);
+    else money += num(p.amount);
   }
   const billed = round2(num(inv.grand_total) - returned), me = await sellerId(ctx);
+  // joint-fix-2: a bill closed with a write-off (courier short, a discount after the sale) is closed for the pool too.
+  // The write-off is already in the seller's own profit, so the pool gets its whole part, not a share of the money.
+  const closed = billed > 0 && money + adjusted >= billed - 0.5;
   for (const link of links) {
     await withPool(ctx, { id: link.pool_id, name: str(link.name) }, async (pctx) => {
       const mp = await pctx.tx`select amount, method from payments where business_id = ${link.pool_id} and invoice_no = ${link.pool_invoice_no}`;
@@ -952,7 +1013,7 @@ async function syncJointNow(ctx, invoiceNo) {
       for (const p of mp) { if (str(p.method).toLowerCase() === 'returned') back += num(p.amount); else had += num(p.amount); }
       const joint = Math.max(0, round2(num(link.joint_total) - back));
       let want = billed > 0 && joint > 0 ? round2(Math.max(0, money) * joint / billed) : 0;
-      if (money >= billed - 0.5) want = joint;
+      if (money >= billed - 0.5 || closed) want = joint;
       want = Math.max(0, Math.min(joint, want));
       const delta = round2(want - had);
       if (Math.abs(delta) >= 0.01) {
@@ -961,7 +1022,7 @@ async function syncJointNow(ctx, invoiceNo) {
           insert into payments (business_id, payment_no, invoice_no, customer, paid_at, amount, method, note, recorded_by, received_by)
           values (${link.pool_id}, ${'J' + formatDate(at, 'yyMMddHHmmss') + '-' + Math.floor(Math.random() * 9000 + 1000)}, ${link.pool_invoice_no},
                   ${str(ctx.s.businessName) + ' \u00b7 ' + str(invoiceNo)}, ${at}, ${delta}, 'Joint',
-                  ${(delta > 0 ? 'share of money received on ' : 'share of money given back on ') + str(invoiceNo)}, ${who(ctx)}, ${me})`;
+                  ${(delta > 0 ? (closed && money < billed - 0.5 ? 'part of the closed bill (the seller covers the write-off) on ' : 'share of money received on ') : 'share of money given back on ') + str(invoiceNo)}, ${who(ctx)}, ${me})`;
         forget(pctx, 'PAYMENTS');
       }
       const got = round2(had + delta + back), due = Math.max(0, round2(num(link.joint_total) - got));
@@ -984,6 +1045,8 @@ export async function mirrorJointReturn(ctx, invoiceNo, take, rid, reason, at) {
   if (isRemote(ctx) && ctx.afterCommit) return later(ctx, 'rtn:' + rid, (c) => mirrorJointReturnNow(c, invoiceNo, mine, rid, reason, at));
   return mirrorJointReturnNow(ctx, invoiceNo, mine, rid, reason, at);
 }
+/** The pool's return note number for a seller's return (joint-fix-5: with the seller's mark; before: rid + '-J'). */
+const poolReturnNo = (rid, seller) => rid + '-J' + String(seller || '').replace(/-/g, '').slice(0, 4).toLowerCase();
 async function mirrorJointReturnNow(ctx, invoiceNo, mine, rid, reason, at) {
   const links = await jointOf(ctx, invoiceNo), me = await sellerId(ctx);
   const day = formatDate(at, 'yyyy-MM-dd');
@@ -999,7 +1062,7 @@ async function mirrorJointReturnNow(ctx, invoiceNo, mine, rid, reason, at) {
       const head = (await tx`select customer_name, sold_by from invoices where business_id = ${pool.id} and invoice_no = ${link.pool_invoice_no}`)[0];
       if (!head) return;
       // one return note per return of the seller's - written twice (a retry) it is still one
-      const prid = rid + '-J';
+      const prid = poolReturnNo(rid, me);   // joint-fix-5: the seller's mark too - two partners' RTN-<second> can be the same
       if ((await tx`select 1 from invoices where business_id = ${pool.id} and invoice_no = ${prid} limit 1`).length) return;
       const rtn = (await tx`
         insert into invoices (business_id, invoice_no, customer_name, customer_phone, customer_address, source, subtotal, discount, delivery_charge,
@@ -1066,14 +1129,19 @@ export async function jointReconcile(deps) {
   const sql = deps.sql, out = { checked: 0, kept: 0, dropped: 0, synced: 0, returns: 0, errors: [] };
   if (!deps.tenantDeps) return out;
   const pend = await sql`
-    select js.pool_id, js.pool_invoice_no, js.seller_invoice_no, b.remote_tenant, b.remote_business
+    select js.pool_id, js.pool_invoice_no, js.seller_invoice_no, js.joint_total, b.remote_tenant, b.remote_business
     from joint_sales js join businesses b on b.id = js.seller_business_id
     where js.status = 'pending' and js.created_at < now() - interval '3 minutes' and b.remote_tenant is not null`;
   for (const p of pend) {
     out.checked++;
     try {
       const td = await deps.tenantDeps(p.remote_tenant);
-      const there = await td.sql`select 1 from invoices where business_id = ${p.remote_business} and invoice_no = ${p.seller_invoice_no} limit 1`;
+      // joint-fix-5: the number alone is not enough - a failed save does not use it up, so the next (own-goods) sale
+      // can carry it. Kept only if that invoice has this pool's joint lines.
+      const mark = '~J' + String(p.pool_id).replace(/-/g, '').slice(0, 4);
+      const there = await td.sql`select 1 from invoices i join invoice_lines l on l.invoice_id = i.id
+                                 where i.business_id = ${p.remote_business} and i.invoice_no = ${p.seller_invoice_no}
+                                   and lower(l.sku) like ${'%' + mark.toLowerCase()} limit 1`;
       if (there.length) { await sql`update joint_sales set status = 'ok' where pool_id = ${p.pool_id} and pool_invoice_no = ${p.pool_invoice_no}`; out.kept++; }
       else { await dropMirror(sql, p.pool_id, p.pool_invoice_no); out.dropped++; }
     } catch (e) { out.errors.push(String((e && e.message) || e).slice(0, 200)); }
@@ -1085,7 +1153,7 @@ export async function jointReconcile(deps) {
   for (const b of sellers) {
     let td;
     try { td = await deps.tenantDeps(b.remote_tenant); } catch (e) { out.errors.push(str(b.name) + ': ' + String((e && e.message) || e).slice(0, 160)); continue; }
-    const links = await sql`select seller_invoice_no from joint_sales where seller_business_id = ${b.id} and status = 'ok' and created_at > now() - interval '90 days'`;
+    const links = await sql`select seller_invoice_no, pool_id from joint_sales where seller_business_id = ${b.id} and status = 'ok' and created_at > now() - interval '90 days'`;
     for (const l of links) {
       try {
         await td.sql.begin(async (tx) => {
@@ -1095,7 +1163,8 @@ export async function jointReconcile(deps) {
           const byRid = {};
           for (const r of back) (byRid[r.return_no] = byRid[r.return_no] || []).push(r);
           for (const rid of Object.keys(byRid)) {
-            const rows = byRid[rid], have = await controlTx(c, (t) => t`select 1 from invoices where invoice_no = ${rid + '-J'} limit 1`);
+            const rows = byRid[rid], have = await controlTx(c, (t) => t`select 1 from invoices where business_id = ${l.pool_id}
+                                                                          and invoice_no in (${rid + '-J'}, ${poolReturnNo(rid, b.id)}) limit 1`);
             if (have.length) continue;
             await mirrorJointReturnNow(c, l.seller_invoice_no, rows.map((r) => ({ sku: str(r.sku), product: str(r.product), qty: num(r.qty), worth: num(r.value),
               unit: num(r.qty) > 0 ? num(r.value) / num(r.qty) : 0, good: str(r.condition) === 'good' })), rid, str(rows[0].reason) || 'return', new Date(rows[0].returned_at));
@@ -1209,7 +1278,8 @@ export async function poolReceiveTarget(ctx, poolId, receivedAt) {
         const had = Math.max(0, num(p.stock)), old = num(p.cost_price);
         const avg = r.unit > 0 ? (had > 0 && old > 0 ? round2((had * old + r.qty * r.unit) / (had + r.qty)) : r.unit) : old;
         if (avg !== old) await pctx.tx`update products set cost_price = ${avg}, updated_at = now() where id = ${p.id}`;
-        out.push({ sku: r.sku, product: str(p.name), qty: r.qty, unitCost: r.unit, wasCost: old, nowCost: avg, hadStock: had });
+        // joint-fix-4: the pool's cost (before and after) is for the owners; staff see what they typed
+        out.push({ sku: r.sku, product: str(p.name), qty: r.qty, unitCost: r.unit, ...(ctx.s.role === 'owner' ? { wasCost: old, nowCost: avg, hadStock: had } : {}) });
       }
       forget(pctx, 'TXN_LOG');
       return out;

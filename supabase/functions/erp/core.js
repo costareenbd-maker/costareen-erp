@@ -164,7 +164,11 @@ async function activeBusiness(sql, userId) {
   mem.splice(0, mem.length, ...open);
   const pref = await sql`select active_business from erp_prefs where user_id = ${userId}`;
   const want = pref[0] && pref[0].active_business;
-  const hit = mem.find((m) => m.business_id === want) || mem[0];
+  // joint-fix-1 (20 Oct 2026): a joint stock is never opened as a business of its own. Its book is kept from
+  // Joint stock in the partner's own company; inside it, a sale or an expense would skip the joint flow.
+  const own = mem.filter((m) => !m.is_pool);
+  const from = own.length ? own : mem;
+  const hit = from.find((m) => m.business_id === want) || from[0];
   const role = normRole(hit.role);
   if (!ERP_ROLES[role]) throw new Refused('NO_ROLE');
   const powers = (hit.powers && typeof hit.powers === 'object') ? hit.powers : {};
