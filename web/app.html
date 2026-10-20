@@ -11059,7 +11059,7 @@ function stockCountHtml() {
 }
 
 function wireStockExtra() {
-  if (VIEW !== 'stock') return;
+  if (VIEW !== 'stock' && !(typeof JRV !== 'undefined' && JRV.on)) return;   // joint-read-1: the joint Receive page is this page too
   var v = el('view'), tabs = v.querySelectorAll('button[data-stab]');
   for (var i = 0; i < tabs.length; i++) tabs[i].addEventListener('click', function () { STOCK_TAB = this.getAttribute('data-stab'); repaint(); });
   var place = el('po_place'); if (place) place.addEventListener('click', function () { STOCK_TAB = 'orders'; setTimeout(repaint, 0); });
@@ -13691,7 +13691,7 @@ function recvPayload() {
 var wireStockExtraA5 = wireStockExtra;
 wireStockExtra = function () {
   wireStockExtraA5();
-  if (VIEW !== 'stock') return;
+  if (VIEW !== 'stock' && !(typeof JRV !== 'undefined' && JRV.on)) return;   // joint-read-1: the joint Receive page is this page too
   var v = el('view');
   function sum() { var s = el('rv_costsum'); if (s) s.innerHTML = recvCostSummary(); }
   var modes = v.querySelectorAll('button[data-rvmode]');

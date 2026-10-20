@@ -93,6 +93,15 @@ check('the supplier\'s code is the new SKU (OCR\'s "cao4077" put right), cost = 
 r = await mgr('erpProductSuggest', [{ name: 'Panchroma PLA Matte Wood Brown', brand: 'Polymaker', colour: 'Wood Brown', code: 'CA04077', price: 4.20, currency: 'USD' }]);
 check('no rate yet: the cost is left empty, not guessed', r.ok && r.result.product.cost_price === 0, r.result && r.result.product);
 
+// joint-read-1: a sheet with Quantity AND Amount columns - the amount is money, not the count; the Currency column is read
+r = await mgr('erpReceiveMatch', [{ rows: [['JF Polymers (Suzhou) Co. Ltd.'], ['NO', 'SKU', 'Product Name', 'Quantity', 'Unit', 'Unit Price', 'Currency', 'Amount'],
+  [10, 'CA19029', 'Polymaker Panchroma PLA Black 1.75mm 1kg', 350, 'PCS', 4.20, 'USD', 1470], [20, 'CA19030', 'Polymaker Panchroma PLA White 1.75mm 1kg', 500, 'PCS', 4.20, 'USD', 2100]], kind: 'grid' }]);
+const G = r.ok ? r.result.lines : [];
+check('Quantity and Amount both in the sheet: 350 and 500 rolls (not 1,470 / 2,100), at 4.20 USD', r.ok && G.length === 2 && G[0].qty === 350 && G[1].qty === 500 &&
+  G[0].price === 4.20 && G[0].currency === 'USD' && !/pcs|usd/i.test(G[0].text), G.map((l) => [l.code, l.qty, l.price, l.currency, l.text]));
+r = await mgr('erpReceiveMatch', [{ rows: [['Item', 'Amount', 'Price'], ['Sunlu PLA+ Black', 12, 1500]], kind: 'grid' }]);
+check('...a sheet whose only count column is "Amount" still reads it as the count', r.ok && r.result.lines[0].qty === 12, r.result && r.result.lines);
+
 // pf-plus-1: a new colour from the product form's "+" (no trip to Settings > Lists)
 r = await mgr('erpListAddValue', [{ kind: 'colors', value: '  Cotton   White ' }]);
 check('the "+" adds "Cotton White" to the colours and says what it added', r.ok && r.result.added === 'Cotton White' && r.result.colors.includes('Cotton White'), r.result && r.result.colors);

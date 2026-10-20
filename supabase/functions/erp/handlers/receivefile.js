@@ -40,7 +40,8 @@ const COLOUR_SYN = { gray: 'grey', 'light gray': 'light grey', 'dark gray': 'dar
 const NOISE = /\b(1\.75\s*mm|2\.85\s*mm|1\.?0?0?\s*kg|1kg|500\s*g|250\s*g|spool[\s-]*less|with\s*spool|refill|filament|roll|pcs|kg|mm|g|panchroma|polylite|polyterra|polymax|hyper|tough|pro|ultra|95a|98a|diskless)\b/gi;
 const HEAD_WORDS = { code: /^(sku|code|item\s*(no|code)|part|art\.?\s*no|model)$/i, name: /^(product|name|product\s*name|description|desc|item|goods|type|category|sub-?category|variant|color|colour|颜色|品名|规格)$/i,
                      qty: /^(qty|quantity|order|order\s*list|pcs|units|amount|数量)$/i, price: /^(unit\s*price|price|unit\s*value|unit\s*cost|cost|单价|value\s*\(?(usd|rmb|cny)\)?|unit value \(usd\))$/i,
-                     weight: /^(weight|n\.?w|g\.?w|packet|diameter|hs\s*code|minpack|seqnum|seq|#|no\.?|sl)$/i };
+                     weight: /^(weight|n\.?w|g\.?w|packet|diameter|hs\s*code|minpack|seqnum|seq|#|no\.?|sl|customer\s*po)$/i,
+                     cur: /^(currency|cur\.?|curr\.?)$/i, total: /^(total|line\s*total|total\s*amount|subtotal)$/i };
 const CODE_RE = /^(?=.*\d)[a-z0-9][a-z0-9-]{3,14}$/i;
 const CUR_RE = /\b(usd|rmb|cny|bdt|tk|taka|eur)\b|[$¥€৳]/i;
 
@@ -159,6 +160,9 @@ function gridRecords(grid) {
     const hit = rows[i].map((c) => { const t = str(c); for (const k of Object.keys(HEAD_WORDS)) if (HEAD_WORDS[k].test(t)) return k; return ''; });
     if (hit.filter(Boolean).length >= 2 && hit.includes('qty') || hit.filter(Boolean).length >= 3) { head = i; cols = hit; break; }
   }
+  // joint-read-1 (a sheet with both "Quantity" and "Amount"): "Amount" is then the line's money, not the count - it used to
+  // overwrite the quantity (350 rolls came in as 1,470)
+  if (cols) cols = cols.map((k, c) => (k === 'qty' && /^amount$/i.test(str(rows[head][c])) && cols.some((k2, c2) => k2 === 'qty' && c2 !== c) ? 'total' : k));
   const out = [];
   for (let i = head + 1; i < rows.length; i++) {
     const r = rows[i]; if (!r.some((c) => str(c))) continue;
@@ -171,7 +175,8 @@ function gridRecords(grid) {
         else if (k === 'qty') qty = numCell(v);
         else if (k === 'price') { price = numCell(v); const m = CUR_RE.exec(str(rows[head][c])); if (m) currency = m[0]; }
         else if (k === 'name') text.push(v);
-        else if (k === 'weight') { /* not a word of the product */ }
+        else if (k === 'weight' || k === 'total') { /* not a word of the product */ }
+        else if (k === 'cur') { const m = CUR_RE.exec(v); if (m) currency = m[0]; }
         else if (!isNumCell(v)) text.push(v);
       }
       // a sheet without a qty heading: the first whole number after the words

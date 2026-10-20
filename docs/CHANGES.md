@@ -2672,3 +2672,13 @@ summary, file order, top fields filled), but four things were broken or missing 
 - a new colour/brand/type from a file joins the company's own Settings > Lists (manager and up).
 Tests: jointread_test (10); joint1-7, phase4, stock, smartread, receivefile green. Not done: no browser click-through on a
 local pool (checked by tests and a read-only live call on the protoreen pool).
+
+## Joint Receive page checked in the browser (21 Oct 2026, tag joint-read-2)
+Clicked through on the local copy (demo data, a test joint stock): file -> top fields filled -> "Set up product" (joint form,
+quantity 350 kept, row filled in place) -> "Set up all" -> rate + "Not paid yet" -> Receive: 860 units in the joint stock at
+512.40 each, codes kept, "Fossil Grey" in the own Lists; reading the file again matched all three by code. Two bugs found and fixed:
+- a spreadsheet with both "Quantity" and "Amount" columns took the Amount as the count (350 rolls -> 1,470); "Amount" is the
+  line money when a Quantity column exists; the Currency column is read (own and joint pages, receivefile.js gridRecords).
+- the joint Receive page never wired the cost/payment controls (wireStockExtra returned unless VIEW was 'stock'): the
+  payment choice snapped back to "Already paid in advance", so an unpaid import could not be received there.
+Tests: smartread 24, receivefile 51, jointread 10.
