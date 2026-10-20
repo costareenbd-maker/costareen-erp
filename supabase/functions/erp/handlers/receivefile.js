@@ -45,6 +45,22 @@ const HEAD_WORDS = { code: /^(sku|code|item\s*(no|code)|part|art\.?\s*no|model)$
 const CODE_RE = /^(?=.*\d)[a-z0-9][a-z0-9-]{3,14}$/i;
 const CUR_RE = /\b(usd|rmb|cny|bdt|tk|taka|eur)\b|[$¥€৳]/i;
 
+/** smart-read-4: a product name as the file writes it - cleaned words; all-lower words (and long all-upper ones) in
+ *  title case; material names in capitals (PLA, PETG ...). '' when nothing is left. */
+export function fileName(text, colour) {
+  const UP = /^(pla\+?|petg|pet|abs|asa|tpu|pc|pa\d*|cf|gf|hips|pva|pp|pe|uv|led|rgb|usb|hf|hs|ht)$/i;
+  const toks = str(text).split(/\s+/).filter(Boolean);
+  // only a name with a series / model word of its own ("Panchroma", "PolyTerra", "Hyper") - a plain "Filament / PLA Basic /
+  // Cobalt Blue" line is better named from brand, type and colour (the caller's fallback)
+  const GENERIC = /^(filament|filaments|refill|spool|spools|spool-?less|diskless|cardboard|roll|rolls|basic|matte|silk|marble|gradient|translucent|new|standard|series|color|colour|plus|pro)$/i;
+  const cw = new Set(words(colour));
+  const series = toks.some((w) => /^[A-Za-z][A-Za-z-]{3,}$/.test(w) && !GENERIC.test(w) && !COLOUR_WORDS.includes(w.toLowerCase()) && !cw.has(norm(w)) && !typeOf(w) &&
+    !BRANDS.some(([b]) => norm(w) === b || norm(w).replace(/[^a-z]/g, '') === b.replace(/[^a-z]/g, '')));
+  if (!series) return '';
+  // the brand has its own box: "polymaker Panchroma PLA Black" -> "Panchroma PLA Black"
+  return toks.filter((w) => !BRANDS.some(([b]) => norm(w).replace(/[^a-z]/g, '') === b.replace(/[^a-z]/g, ''))).map((w) => (UP.test(w) ? w.toUpperCase()
+    : (w === w.toLowerCase() || (/^[A-Z]{4,}$/.test(w))) ? w.charAt(0).toUpperCase() + w.slice(1).toLowerCase() : w)).join(' ').slice(0, 120);
+}
 export function brandOf(text) { const t = str(text); for (const [b, re] of BRANDS) if (re.test(t)) return b; return ''; }
 export function typeOf(text) { const t = str(text); for (const [ty, re] of TYPES) if (re.test(t)) return ty; return ''; }
 export function colourOf(text, brand, type) {
@@ -85,10 +101,21 @@ export function cleanText(t, vocab) {
     if (/\d[.,][a-z]|[a-z][.,]?\d+$/i.test(w) && !/^(pa\d+|pla\+?\d|pet\w*|\d+a)$/i.test(w) && !/^\d+[a-z]$/i.test(w)) continue;   // OCR's mix of an amount and letters: "172.fig4"
     const lw = w.toLowerCase();
     if (V.has(lw) || COLOUR_WORDS.includes(lw) || brandOf(w) || typeOf(w)) { keep.push(w); continue; }
+    // smart-read-4: one letter misread in a colour ("Ref" for Red, "Whlte") -> the colour, when only one colour is that close
+    if (/^[A-Za-z]{3,}$/.test(w)) {
+      const near = COLOUR_WORDS.filter((c) => c.length === lw.length && [...c].filter((ch, i) => ch !== lw[i]).length === 1);
+      if (near.length === 1) { keep.push(w[0] === w[0].toUpperCase() ? near[0][0].toUpperCase() + near[0].slice(1) : near[0]); continue; }
+    }
     if (w.length <= 2) continue;                                       // crumbs: "y", "ad", "fF"
     if (w.length === 3 && w === lw) continue;                           // lower-case 3-letter crumbs: "dee", "ely"
     keep.push(w);
   }
+  // smart-read-4: crumbs after the colour (a stamp's edge: "Fossil Grey SEP", "Army Purple SSS ENS", "pera") - short
+  // all-capital or all-small words nobody's product uses, at the end of a name that already has its colour
+  const known = (t) => { const l = t.toLowerCase(); return V.has(l) || COLOUR_WORDS.includes(l) || brandOf(t) || typeOf(t); };
+  const crumb = (t) => !known(t) && ((/^[A-Z]{2,4}$/.test(t)) || (/^[a-z]{2,5}$/.test(t)));
+  while (keep.length > 2 && (crumb(keep[keep.length - 1]) || (/^[A-Z][a-z]{2}$/.test(keep[keep.length - 1]) && !known(keep[keep.length - 1]))) && keep.slice(0, -1).some((t) => COLOUR_WORDS.includes(t.toLowerCase()))) keep.pop();
+  for (let i = keep.length - 2; i > 0; i--) if (/^[a-z]{2,5}$/.test(keep[i]) && crumb(keep[i]) && /^[A-Z]/.test(keep[i - 1]) && /^[A-Z]/.test(keep[i + 1])) keep.splice(i, 1);
   return keep.join(' ').replace(/\s+/g, ' ').trim();
 }
 /**
@@ -166,7 +193,7 @@ function gridRecords(grid) {
   const out = [];
   for (let i = head + 1; i < rows.length; i++) {
     const r = rows[i]; if (!r.some((c) => str(c))) continue;
-    let code = '', qty = 0, price = 0, currency = '', text = [];
+    let code = '', qty = 0, price = 0, amount = 0, currency = '', text = [];
     if (cols) {
       for (let c = 0; c < r.length; c++) {
         const v = str(r[c]), k = cols[c] || '';
@@ -175,7 +202,8 @@ function gridRecords(grid) {
         else if (k === 'qty') qty = numCell(v);
         else if (k === 'price') { price = numCell(v); const m = CUR_RE.exec(str(rows[head][c])); if (m) currency = m[0]; }
         else if (k === 'name') text.push(v);
-        else if (k === 'weight' || k === 'total') { /* not a word of the product */ }
+        else if (k === 'total') amount = numCell(v);
+        else if (k === 'weight') { /* not a word of the product */ }
         else if (k === 'cur') { const m = CUR_RE.exec(v); if (m) currency = m[0]; }
         else if (!isNumCell(v)) text.push(v);
       }
@@ -190,7 +218,7 @@ function gridRecords(grid) {
     if (!text.length && !code) continue;
     if (!qty) continue;
     if (/^(total|合计|subtotal|sum)/i.test(text.join(' '))) continue;
-    out.push({ row: i + 1, code, text: text.join(' / '), qty, price, currency: currency.toUpperCase() });
+    out.push({ row: i + 1, code, text: text.join(' / '), qty, price, amount, currency: currency.toUpperCase() });
   }
   return out;
 }
@@ -202,10 +230,19 @@ export function textRecords(lines) {
   let cur = null;
   const flush = () => { if (cur && (cur.text || cur.code) && cur.qty > 0) out.push(cur); cur = null; };
   const isCode = (t) => CODE_RE.test(t) && /\d/.test(t) && !/^\d+$/.test(t) && !/^\d+(\.\d+)?(kg|g|mm)$/i.test(t) && !/^\d{2,4}-\d{3,}$/.test(t);
-  const takeNums = (ns) => { if (!ns.length) return; if (!cur.qty) cur.qty = ns.find((n) => Number.isInteger(n) && n > 0 && n < 100000) || 0; if (money && !cur.price) cur.price = ns.find((n) => !Number.isInteger(n) && n > 0) || 0; };
+  const takeNums = (ns) => {
+    if (!ns.length) return;
+    if (!cur.qty) cur.qty = ns.find((n) => Number.isInteger(n) && n > 0 && n < 100000) || 0;
+    if (money && !cur.price) cur.price = ns.find((n) => !Number.isInteger(n) && n > 0) || 0;
+    // smart-read-4: the line's amount (the last money figure after the price) - a lost unit price is amount / quantity
+    if (money && !cur.amount) {
+      const rest = cur.price ? ns.slice(ns.indexOf(cur.price) + 1) : ns.filter((n) => n !== cur.qty);
+      const a = rest.filter((n) => n > 0 && n !== cur.qty); if (a.length) cur.amount = a[a.length - 1];
+    }
+  };
   for (let i = 0; i < lines.length; i++) {
     // table rules and OCR noise ([ | ] { } ~ _ =) are not words
-    const l = str(lines[i]).replace(/[|\[\]{}~_=]+/g, ' ').replace(/(\d)\s*([.,])\s+(\d{2,3})\b/g, '$1$2$3').replace(/\s+/g, ' ').trim(); if (!l) continue;   // smart-read-1: OCR's "30. 000"
+    const l = str(lines[i]).replace(/[|\[\]{}~_=]+/g, ' ').replace(/(\d)\s*([.,])\s+(\d{2,3})\b/g, '$1$2$3').replace(/(\d)\s*([.,])\s+(\d{2,3})\b/g, '$1$2$3').replace(/\s+/g, ' ').trim(); if (!l) continue;   // twice: "2, 008. 75"   // smart-read-1: OCR's "30. 000"
     if (/\b(sku|qty|quantity|product\s*name|hs\s*code|packing\s*list|proforma|total|page\s*:)\b/i.test(l) && !isCode(l.split(/\s+/)[0] || '')) { if (/\b(total|page\s*:)\b/i.test(l)) flush(); continue; }
     const toks = l.split(/\s+/);
     const codeAt = toks.findIndex(isCode);
@@ -256,7 +293,13 @@ export function tidyRecords(recs, vocab) {
   const med = ps.length ? ps[Math.floor(ps.length / 2)] : 0;
   if (med > 0) for (const r of out) {
     const p = num(r.price), q = num(r.qty);
-    if (p > med * 2.5 && q > 1) { const u = p / q; if (u > med * 0.4 && u < med * 2.5) r.price = Math.round(u * 100) / 100; }
+    if (p > med * 2.5 && q > 1) { const u = p / q; if (u > med * 0.4 && u < med * 2.5) { r.price = Math.round(u * 100) / 100; r.priceFrom = 'amount'; } }
+  }
+  // smart-read-4 (owner 21 Oct 2026: "the price is written, it was left 0"): a line with no unit price but its amount and
+  // quantity -> amount / quantity, when that is a plain price (close to the document's usual one, or there is no usual one)
+  for (const r of out) {
+    const q = num(r.qty), a = num(r.amount);
+    if (!num(r.price) && q > 0 && a > 0) { const u = Math.round((a / q) * 100) / 100; if (!med || (u > med * 0.4 && u < med * 2.5)) { r.price = u; r.priceFrom = 'amount'; } }
   }
   const coded = out.filter((r) => r.code).length;
   return coded >= 3 ? out.filter((r) => r.code) : out;   // smart-read-2: even a heading with the brand in it ("polymaker Sales Contract")
@@ -268,9 +311,11 @@ export function tidyRecords(recs, vocab) {
  * imported, origin, docTotal }
  */
 export function docHeader(lines, ownName) {
-  const L = lines.map((l) => str(Array.isArray(l) ? l.join(' ') : l).replace(/\s+([,.])/g, '$1').replace(/\s+/g, ' ').trim()).filter(Boolean);
+  const L = lines.map((l) => str(Array.isArray(l) ? l.join(' ') : l).replace(/\s+([,.])/g, '$1').replace(/(\d)([,.])\s+(\d)/g, '$1$2$3').replace(/\s+/g, ' ').trim()).filter(Boolean);
   const all = L.join('\n'), own = str(ownName).toLowerCase();
-  const out = { supplier: '', reference: '', refLabel: '', date: '', imported: null, origin: '', docTotal: 0 };
+  const out = { supplier: '', reference: '', refLabel: '', date: '', imported: null, origin: '', docTotal: 0, docQty: 0, brand: '' };
+  // smart-read-4: the brand printed at the top (a logo's word: "polymaker") - used only for lines that name no brand
+  for (const l of L.slice(0, 6)) { const b = brandOf(l); if (b) { out.brand = b; break; } }
   // the seller: a labelled line first (Seller / Shipper / Exporter / Supplier / From), else the first company name
   const COMPANY = /([A-Z][A-Za-z0-9&.'\- ]{1,50}(?:\([A-Za-z ]{2,30}\))?\s*(?:Co\.?,?\s*Ltd\.?|Company Limited|Limited|Ltd\.?|Inc\.?|LLC|GmbH|Trading|Industrial|Technology))/;
   for (const l of L) {
@@ -278,7 +323,7 @@ export function docHeader(lines, ownName) {
     if (m) { const c = COMPANY.exec(m[2]); const v = str((c ? c[1] : m[2])).replace(/[^\w)&.]+$/, ''); if (v && !(own && v.toLowerCase().includes(own)) && /[a-z]{3}/i.test(v)) { out.supplier = v; break; } }
   }
   if (!out.supplier) for (const l of L.slice(0, 15)) { const c = COMPANY.exec(l); if (c && !(own && c[1].toLowerCase().includes(own))) { out.supplier = str(c[1]); break; } }
-  out.supplier = out.supplier.replace(/^(co\s+)?polymaker\s+/i, '').replace(/\s*,\s*/g, ', ').replace(/\s+\)/g, ')').slice(0, 80);
+  out.supplier = out.supplier.replace(/^(co\s+)?polymaker\s+/i, '').replace(/\s*,\s*/g, ', ').replace(/\s+\)/g, ')').replace(/(\w)\(/g, '$1 (').slice(0, 80);
   // the document's own number
   const REF = /\b(order\s*(?:#|no\.?|number)|po\s*(?:#|no\.?)|purchase\s*order\s*(?:#|no\.?)?|invoice\s*(?:#|no\.?|number)|pi\s*(?:#|no\.?)|proforma\s*(?:invoice\s*)?(?:#|no\.?)|contract\s*(?:#|no\.?)|shipment\s*(?:#|no\.?)|packing\s*list\s*(?:#|no\.?)|ref(?:erence)?\.?\s*(?:#|no\.?)?)\s*[:.]?\s*([A-Z0-9][A-Z0-9\-\/]{3,24})/i;
   for (const l of L) { const m = REF.exec(l); if (m && /\d/.test(m[2])) { out.reference = m[2]; out.refLabel = m[1].replace(/\s+/g, ' ').replace(/no\.?$/i, 'no.').trim(); break; } }
@@ -290,14 +335,19 @@ export function docHeader(lines, ownName) {
   if (foreign || terms) { out.imported = true; out.origin = foreign ? foreign[1].replace(/\b\w/g, (c) => c.toUpperCase()) : ''; }
   else if (/\b(bdt|taka|tk\.?)\b|৳/i.test(all)) out.imported = false;
   // a written total, when it reads cleanly
-  for (const l of L) if (/\b(grand\s*)?total\b/i.test(l)) { const ns = (l.match(/\d[\d,]*\.\d{2}\b/g) || []).map((x) => num(x.replace(/,/g, ''))).filter((n) => n > 0); if (ns.length) out.docTotal = Math.max(...ns); }
+  // smart-read-4: the total line's quantity too ("Total 1,560.000 | 6,552.00 $") - what the lines read are checked against
+  for (const l of L) if (/\b(grand\s*)?total\b/i.test(l) && !/\bwords\b/i.test(l)) {
+    const ns = (l.match(/\d[\d,]*\.\d{2}\b/g) || []).map((x) => num(x.replace(/,/g, ''))).filter((n) => n > 0); if (ns.length) out.docTotal = Math.max(...ns);
+    const qs = (l.match(/\d[\d,]*\.0{3}\b|(?<![\d.,])\d{1,3}(?:,\d{3})+(?![\d.,])|(?<![\d.,])\d{1,6}(?![\d.,])/g) || []).map((x) => num(x.replace(/,/g, ''))).filter((n) => n > 0 && n !== out.docTotal);
+    if (qs.length) out.docQty = qs[0];
+  }
   return out;
 }
 
 /** Every record against the catalogue: the lines of the review card. */
 async function matchRecords(ctx, records0, opts) {
   let records = records0;
-  const supplier = str(opts.supplier), fileBrand = brandOf(supplier) || brandOf(str(opts.fileName));
+  const supplier = str(opts.supplier), fileBrand = brandOf(supplier) || brandOf(str(opts.fileName)), docBrand = str(opts.docBrand);
   const cat = await catalogue(ctx, opts.pool);
   const bySku = Object.fromEntries(cat.map((c) => [c.sku.toLowerCase(), c]));
   const bySupplier = {}; for (const c of cat) if (c.supplierSku) bySupplier[c.supplierSku.toLowerCase()] = c;
@@ -311,7 +361,7 @@ async function matchRecords(ctx, records0, opts) {
   const currency = (records.find((r) => r.currency) || {}).currency || '';
   const lines = records.map((r) => {
     const full = [r.code, r.text].filter(Boolean).join(' ');
-    const row = { brand: fileBrand || brandOf(full), type: typeOf(full), colour: colourOf(r.text, fileBrand, ''), refill: isRefill(full) };
+    const row = { brand: fileBrand || brandOf(full) || docBrand, type: typeOf(full), colour: colourOf(r.text, fileBrand || docBrand, ''), refill: isRefill(full) };
     let best = null, how = '', conf = 0, cands = [];
     const al = aliases[norm(r.code)] || aliases[norm(r.text)];
     if (al && byId[al]) { best = byId[al]; how = 'remembered'; conf = 1; }
@@ -325,11 +375,13 @@ async function matchRecords(ctx, records0, opts) {
     const cap = (t) => t.replace(/\b\w/g, (m) => m.toUpperCase());
     const typeName = row.type ? cap(row.type).replace('Pla', 'PLA').replace('Petg', 'PETG').replace('Abs', 'ABS').replace('Asa', 'ASA').replace('Tpu', 'TPU').replace('Pc', 'PC').replace('Cf', 'CF').replace('Gf', 'GF') : '';
     const brandName = row.brand ? cap(row.brand) : '';
-    const suggested = [brandName, typeName, cap(row.colour)].filter(Boolean).join(' ');
+    // smart-read-4 (owner 21 Oct 2026: "Panchroma is written - the product is Panchroma PLA Black, the brand stays Polymaker"):
+    // a new product is named as the file names it (its series word kept); brand / type / colour still come apart
+    const suggested = fileName(r.text, row.colour) || [brandName, typeName, cap(row.colour)].filter(Boolean).join(' ');
     return { row: r.row, pos: r.pos, code: r.code, text: r.text, raw: r.raw || r.text, qty: r.qty, price: r.price, currency: r.currency || currency,
              sku: best ? best.sku : '', name: best ? best.name : '', stock: best ? best.stock : 0,
              how, confidence: best ? (how === 'words' ? Math.min(0.99, Math.round(conf * 100) / 100) : 1) : 0,
-             candidates: cands, isNew: !best, newProduct: best ? null : { product_name: suggested || r.text, brand: brandName, color: cap(row.colour), unit: 'Roll',
+             priceFrom: r.priceFrom || '', candidates: cands, isNew: !best, newProduct: best ? null : { product_name: suggested || r.text, brand: brandName, color: cap(row.colour), unit: 'Roll',
                type: typeName, supplier_sku: str(r.code) } };
   });
   const matched = lines.filter((l) => l.sku).length;
@@ -345,7 +397,7 @@ export async function erpReceiveMatch(ctx, payload) {
   const records = kind === 'text' ? textRecords(rows.map((r) => (Array.isArray(r) ? r.join(' ') : r))) : gridRecords(rows);
   if (!records.length) throw new Error('No product lines found in the file. A line needs a product name and a quantity.');
   const doc = docHeader(rows, ctx.s && ctx.s.businessName);
-  const res = await matchRecords(ctx, records, { supplier: p.supplier || doc.supplier, fileName: p.fileName, pool: str(p.pool) });
+  const res = await matchRecords(ctx, records, { supplier: p.supplier || doc.supplier, fileName: p.fileName, pool: str(p.pool), docBrand: doc.brand });
   return { kind, reader: p.reader === 'ocr' ? 'ocr' : 'file', ...res, doc: { ...doc, currency: res.currency } };
 }
 
@@ -513,7 +565,8 @@ export async function erpProductSuggest(ctx, payload) {
   if (!sib.length) { sib = typed; basis = 'every product'; }
   const S = sib.map((x) => x.r);
   const out = {
-    product_name: [brand ? cap(brand) : '', prettyType(type), cap(colour)].filter(Boolean).join(' ') || str(p.name),
+    // smart-read-4: the file's own name ("Panchroma PLA Black") when it has one; built from brand / type / colour otherwise
+    product_name: (str(p.name) && (type || colour) ? fileName(cleanText(p.name), colour) : '') || [brand ? cap(brand) : '', prettyType(type), cap(colour)].filter(Boolean).join(' ') || str(p.name),
     // smart-read-1: what the file said wins; other products only fill what it did not say (before: with no product of
     // that brand yet, the most common brand of the whole shop - a Polymaker roll became "Bambulab")
     brand: basis !== 'every product' && mode(S.map((r) => r.brand)) ? mode(S.map((r) => r.brand)) : (brand ? cap(brand) : ''),

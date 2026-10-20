@@ -22097,7 +22097,12 @@ function rfCardHtml() {
        cell(dc.refLabel ? dc.refLabel.replace(/\b\w/, function (c) { return c.toUpperCase(); }) : 'Document no.', dc.reference) + cell('Date', dc.date) +
        cell('Imported or local', dc.imported === true ? 'Imported' + (dc.origin ? ' (' + dc.origin + ')' : '') : dc.imported === false ? 'Bought locally' : '') + cell('Currency', dc.currency || r.currency) +
        cell('Lines', fmt((r.lines || []).length)) + cell('Quantity', fmt(r.totalQty || 0)) +
-       cell('Value of the lines', lineVal ? fmt(Math.round(lineVal * 100) / 100) + ' ' + (dc.currency || r.currency || '') : '') + '</div>' +
+       cell('Value of the lines', lineVal ? fmt(Math.round(lineVal * 100) / 100) + ' ' + (dc.currency || r.currency || '') : '') +
+       // smart-read-4 (owner: "1,560 in the shipment, the bill total is written on the PDF"): the file's own totals beside what was read
+       (dc.docQty ? cell('Quantity the file says', fmt(dc.docQty) + (num(r.totalQty) === num(dc.docQty) ? ' \u2713' : '')) : '') +
+       (dc.docTotal ? cell('Bill total the file says', fmt(dc.docTotal) + ' ' + (dc.currency || r.currency || '')) : '') + '</div>' +
+       (dc.docQty && num(r.totalQty) !== num(dc.docQty) ? '<div class="note err" style="margin-bottom:8px"><div class="ico">!</div><div>The file says <b>' + fmt(dc.docQty) + '</b> pieces but <b>' + fmt(r.totalQty || 0) + '</b> were read from ' + fmt((r.lines || []).length) +
+         ' line(s) \u2014 ' + (num(r.totalQty) < num(dc.docQty) ? 'some lines could not be read. Add the missing ones by hand, or press \u201cRead it better\u201d below.' : 'a quantity was misread; check the rows.') + '</div></div>' : '') +
        (dc.docTotal && lineVal && Math.abs(dc.docTotal - lineVal) > Math.max(1, dc.docTotal * 0.005) ? '<div class="note" style="margin-bottom:8px"><div class="ico">!</div><div>The file’s total says ' + fmt(dc.docTotal) + ' but the lines add up to ' + fmt(Math.round(lineVal * 100) / 100) + ' — a price that could not be read is left empty; check the rows marked “no price in the file”.</div></div>' : '') +
        ((r.lines || []).some(function (l) { return !(num(l.price) > 0); }) && lineVal ? '<div class="sub" style="display:block;margin-bottom:6px">' + (r.lines || []).filter(function (l) { return !(num(l.price) > 0); }).length + ' line(s) have no readable price — left empty on purpose.</div>' : '');
   h += '<div class="sub" data-c5x="1" style="display:block">' + fmt(RF.added || 0) + ' line(s) went into the receive list below' + (r.matched != null ? ': ' + fmt(r.matched) + ' matched, ' + fmt(r.unmatched) + ' to decide' : '') + '. ' +
@@ -22120,11 +22125,21 @@ function rvSrcLine(l) {
   var sct = l.src; if (!sct) return '';
   // smart-read-3: one look tells where the row came from - its line in the file, the supplier's code, the price, the amount
   var pr = num(sct.price), cur = esc(sct.currency || ''), q = num(l.qty);
-  var money = pr > 0 ? ' \u00b7 ' + (Math.round(pr * 100) / 100) + ' ' + cur + ' each' + (q ? ' = ' + fmt(Math.round(pr * q * 100) / 100) + ' ' + cur : '') : ' \u00b7 <i>no price in the file</i>';
+  var money = pr > 0 ? ' \u00b7 ' + (Math.round(pr * 100) / 100) + ' ' + cur + ' each' + (sct.priceFrom === 'amount' ? ' (worked out from the line amount)' : '') + (q ? ' = ' + fmt(Math.round(pr * q * 100) / 100) + ' ' + cur : '') : ' \u00b7 <i>no price in the file</i>';
   return '<br><span class="rf-src">' + (sct.pos ? '#' + sct.pos + ' in the file' : 'from the file') + (sct.code ? ' \u00b7 code <b>' + esc(sct.code) + '</b>' : '') + ' \u00b7 ' + esc(sct.text || '') + money +
          (sct.how === 'remembered' ? ' \u00b7 remembered' : sct.how === 'sku' ? ' \u00b7 our SKU' : sct.how === 'supplier code' ? ' \u00b7 by the supplier code' : sct.confidence ? ' \u00b7 ' + Math.round(sct.confidence * 100) + '% match' : '') + '</span>';
 }
 /** smart-read-3: the shipment's exchange rate for a cost in a foreign currency (typed, or the saved rate); 0 = none yet. */
+/** smart-read-4 (owner: "the USD price is written - the cost box stayed 0"): before products are made from a file priced in a
+ *  foreign currency, the shipment's rate is asked once (it turns each price into the cost price); Cancel = leave costs empty. */
+async function rfAskRate() {
+  var cur = String(RECV.currency || (RF.res && RF.res.currency) || '').toUpperCase();
+  if (!cur || /^(BDT|TK|TAKA)$/.test(cur) || rfRate() > 0) return rfRate();
+  if (!RECV.lines.some(function (l) { return l.src && num(l.src.price) > 0; })) return 0;
+  var v = await uiPrompt('Rate for this shipment: how many TK for 1 ' + cur + '? It turns the file\u2019s prices into the cost prices (shipping and other costs are added when you receive).', '');
+  if (v === null || !(num(v) > 0)) return 0;
+  RECV.mode = 'fx'; RECV.currency = cur; RECV.rate = String(num(v)); return num(v);
+}
 function rfRate() {
   if (!(RECV.mode === 'fx' || RECV.mode === 'rmb')) return 0;
   return num(RECV.rate) || (typeof fxRate === 'function' ? num(fxRate(RECV.currency || 'USD')) : 0);
@@ -22156,7 +22171,7 @@ function rfIntoTable(r) {
   if (RF.file) RECV.lines = RECV.lines.filter(function (x) { return !(x.src && x.src.file === RF.file); });
   (r.lines || []).forEach(function (l) {
     if (!(num(l.qty) > 0)) return;
-    var src = { file: RF.file, pos: l.pos, qty: num(l.qty), text: l.text, code: l.code, price: l.price, currency: l.currency || r.currency || '', confidence: l.confidence, how: l.how, candidates: l.candidates || [], newProduct: l.newProduct };
+    var src = { file: RF.file, pos: l.pos, qty: num(l.qty), text: l.text, code: l.code, price: l.price, priceFrom: l.priceFrom || '', currency: l.currency || r.currency || '', confidence: l.confidence, how: l.how, candidates: l.candidates || [], newProduct: l.newProduct };
     var p = l.sku ? recvCat().filter(function (x) { return x.sku === l.sku; })[0] : null;
     if (l.sku && (l.how === 'sku' || l.how === 'remembered' || l.how === 'supplier code' || l.confidence >= 0.9)) {
       // file-order-1 (owner 21 Oct 2026: "follow the list's order, do not shuffle"): every line of the file keeps its own
@@ -22177,7 +22192,7 @@ function rfIntoTable(r) {
   if (dc.imported === true) RECV.from = 'shipment'; else if (dc.imported === false && (!RECV.from || RECV.from === 'shipment') && !RECV.lines.some(function (x) { return !x.src; })) RECV.from = 'local';
   if (dc.date && String(RECV.notes || '').indexOf(dc.date) < 0) RECV.notes = (RECV.notes ? RECV.notes + ' · ' : '') + 'Document date ' + dc.date;
   if (r.supplier && !RECV.supplier) RECV.supplier = r.supplier;
-  if (money > 0 && !num(RECV.totalRmb)) { RECV.mode = 'fx'; RECV.currency = (cur || r.currency || 'RMB').toUpperCase().replace('CNY', 'RMB'); RECV.totalRmb = String(Math.round(money * 100) / 100); if (!RECV.rate && typeof fxRate === 'function' && fxRate(RECV.currency) > 0) RECV.rate = String(fxRate(RECV.currency)); }
+  if (money > 0 && !num(RECV.totalRmb)) { RECV.mode = 'fx'; RECV.currency = (cur || r.currency || 'RMB').toUpperCase().replace('CNY', 'RMB'); RECV.totalRmb = String(dc.docTotal > 0 && Math.abs(dc.docTotal - money) <= Math.max(2, money * 0.05) ? dc.docTotal : Math.round(money * 100) / 100); /* smart-read-4: the bill as written */ if (!RECV.rate && typeof fxRate === 'function' && fxRate(RECV.currency) > 0) RECV.rate = String(fxRate(RECV.currency)); }
   if (!RECV.reference && RF.file) RECV.reference = RF.file.replace(/\.(pdf|xlsx|csv|jpe?g|png|webp)$/i, '');
   if (pairs.length) rfLearn([{ pairs: pairs, supplier: RECV.supplier || r.supplier || '' }], function () {}, function () {});
   RF.added = added; RV_ONLY_OPEN = rvOpenCount() > 0 && added > 8;
@@ -22258,11 +22273,33 @@ function rfPicture(src) {
     img.src = src;
   });
 }
-async function rfOcrCanvas(canvas) {
+/** ocr-2: grey and contrast-stretched in place (the photo reader's clean-up, for drawn PDF pages). */
+function rfGrey(cv) {
+  try {
+    var g = cv.getContext('2d'), d = g.getImageData(0, 0, cv.width, cv.height), px = d.data, lo = 255, hi = 0, i;
+    // a red company stamp over the rows is washed out (its ink hid "White" and a whole colour on the Polymaker contract)
+    for (i = 0; i < px.length; i += 4) { var red = px[i] > 120 && px[i] - px[i + 1] > 50 && px[i] - px[i + 2] > 50; var y = red ? 255 : (px[i] * 299 + px[i + 1] * 587 + px[i + 2] * 114) / 1000; px[i] = y; if (y < lo) lo = y; if (y > hi) hi = y; }
+    var span = Math.max(1, hi - lo);
+    for (i = 0; i < px.length; i += 4) { var v = Math.round((px[i] - lo) * 255 / span); px[i] = px[i + 1] = px[i + 2] = v; }
+    g.putImageData(d, 0, 0);
+  } catch (e) {}
+}
+/** ocr-2: a table's ruling lines erased (long straight dark runs across or down the page), so the reader sees only words. */
+function rfRules(cv) {
+  try {
+    var g = cv.getContext('2d'), W = cv.width, H = cv.height, d = g.getImageData(0, 0, W, H), px = d.data, mark = new Uint8Array(W * H), x, y, k, run;
+    var minH = Math.round(W * 0.06), minV = Math.round(H * 0.03);
+    for (y = 0; y < H; y++) { run = 0; for (x = 0; x <= W; x++) { if (x < W && px[(y * W + x) * 4] < 140) run++; else { if (run >= minH) for (k = x - run; k < x; k++) mark[y * W + k] = 1; run = 0; } } }
+    for (x = 0; x < W; x++) { run = 0; for (y = 0; y <= H; y++) { if (y < H && px[(y * W + x) * 4] < 140) run++; else { if (run >= minV) for (k = y - run; k < y; k++) mark[k * W + x] = 1; run = 0; } } }
+    for (k = 0; k < W * H; k++) if (mark[k]) { px[k * 4] = px[k * 4 + 1] = px[k * 4 + 2] = 255; }
+    g.putImageData(d, 0, 0);
+  } catch (e) {}
+}
+async function rfOcrCanvas(canvas, psm) {
   var w = await rfOcrWorker();
   // smart-read-2 (21 Oct 2026): mode 4 (a column of lines of different sizes), not 6 (one even block) - with 6 the
   // first line of every two-line table row was lost on a Polymaker contract (19 of 55 products gone)
-  try { await w.setParameters({ tessedit_pageseg_mode: '4', preserve_interword_spaces: '1' }); } catch (e) {}
+  try { await w.setParameters({ tessedit_pageseg_mode: psm || '4', preserve_interword_spaces: '1' }); } catch (e) {}
   var res = await w.recognize(canvas);
   var lines = [], confs = [];
   (res.data.lines || []).forEach(function (l) { var t = (l.text || '').replace(/\s+/g, ' ').trim(); if (t) { lines.push(t); confs.push(l.confidence || 0); } });
@@ -22280,17 +22317,25 @@ async function rfReadFile(file) {
     return { kind: 'text', reader: 'ocr', rows: lines };
   }
   if (/\.pdf$/i.test(name) || file.type === 'application/pdf') {
-    var buf = await file.arrayBuffer(), text = await rfPdfLines(buf);
+    // ocr-2 (21 Oct 2026): pdf.js takes the bytes it is given (the buffer is detached after) - each read gets its own copy;
+    // reusing it broke the scanned-PDF read ("Cannot perform Construct on a detached ArrayBuffer")
+    var buf = await file.arrayBuffer(), text = await rfPdfLines(buf.slice(0));
     if (text.join('').replace(/\s+/g, '').length > 40) return { kind: 'text', rows: text };
     // a scanned PDF: no text inside - draw the first pages and read them as photos
     RF.busy = 'A scanned PDF: drawing the pages\u2026'; repaint();
-    var lib = await rfPdfLib(), doc = await lib.getDocument({ data: buf, disableWorker: true, isEvalSupported: false }).promise, all = [];
+    var lib = await rfPdfLib(), doc = await lib.getDocument({ data: buf.slice(0), disableWorker: true, isEvalSupported: false }).promise, all = [];
     for (var p = 1; p <= Math.min(doc.numPages, 12); p++) {   // smart-read-2: up to 12 scanned pages (was 4)
       RF.busy = 'Reading page ' + p + ' of ' + Math.min(doc.numPages, 12) + '…'; repaint();
-      var page = await doc.getPage(p), vp = page.getViewport({ scale: 2 }), cv = document.createElement('canvas'); cv.width = vp.width; cv.height = vp.height;
-      await page.render({ canvasContext: cv.getContext('2d'), viewport: vp }).promise;
+      // ocr-2 (owner 21 Oct 2026: 49 of 55 lines on the Polymaker contract): drawn ~1800 px wide (an A4 page at 3x, was 2x)
+      // on white, grey, the table's ruling lines erased, read as one block (mode 6). With the lines left in, the first line
+      // of most rows was lost (46 of 55 at 2x; 24 at 3x); with them erased 2.8x-3.3x all give 55 lines, 1,560 pcs, the file's total
+      var page = await doc.getPage(p), vp0 = page.getViewport({ scale: 1 }), sc = Math.min(4, Math.max(2, 1800 / vp0.width)), vp = page.getViewport({ scale: sc }),
+          cv = document.createElement('canvas'); cv.width = Math.round(vp.width); cv.height = Math.round(vp.height);
+      var g0 = cv.getContext('2d'); g0.fillStyle = '#fff'; g0.fillRect(0, 0, cv.width, cv.height);
+      await page.render({ canvasContext: g0, viewport: vp }).promise;
       if (p === 1) RF.image = cv.toDataURL('image/jpeg', 0.8);
-      all = all.concat(await rfOcrCanvas(cv));
+      rfGrey(cv); rfRules(cv);
+      all = all.concat(await rfOcrCanvas(cv, '6'));
     }
     RF.hint = all.join('\n');
     return { kind: 'text', reader: 'ocr', rows: all };
@@ -22330,6 +22375,7 @@ document.addEventListener('click', function (ev) {
   if (t.hasAttribute('data-rvkeep')) { var kl = RECV.lines[Number(t.getAttribute('data-rvkeep'))]; if (kl) { delete kl.state; if (kl.src) rfLearn([{ pairs: [{ alias: kl.src.code || kl.src.text, sku: kl.sku }], supplier: RECV.supplier || '' }], function () {}, function () {}); } repaint(); return; }
   if (t.hasAttribute('data-rvsetup')) {
     var ri = Number(t.getAttribute('data-rvsetup')), rl = RECV.lines[ri]; if (!rl) return;
+    if (!t.__rated) { rfAskRate().then(function () { t.__rated = true; t.click(); }); return; }
     t.disabled = true; t.textContent = 'Preparing\u2026';
     var np = (rl.src && rl.src.newProduct) || {};
     srv('erpProductSuggest', [{ name: rl.src ? rl.src.text : rl.name, brand: np.brand || '', colour: np.color || '', price: rl.src ? rl.src.price : 0, currency: rl.src ? rl.src.currency : '',
@@ -38175,6 +38221,7 @@ document.addEventListener('click', function (ev) {
     if (!idx.length || BUSY) return;
     if (!(await uiConfirm('Make ' + idx.length + ' new product(s) from the file?\n\nEach gets the name, brand, type and colour the file gives, the supplier’s code as its SKU and the quantity on its row. ' +
       'Anything the file does not say clearly (like the selling price) is left empty for you to fill in.'))) return;
+    await rfAskRate();
     BUSY = 'setupall'; var made = 0, bad = [], pool = (typeof rfPool === 'function' && rfPool()) ? JRV.pool : '';
     for (var k = 0; k < idx.length; k++) {
       var rl = RECV.lines[idx[k]]; if (!rl || rl.state !== 'red') continue;

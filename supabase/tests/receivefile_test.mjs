@@ -31,7 +31,7 @@ const pi = [[null, 'Proforma Invoice'], [null, 'SeqNum', 'SKU', 'Product Name', 
   [null, 1, 'CA19029', 'polymaker/Panchroma™ PLA/Spool-less/1kg/1.75mm/Black ', 350, 5.5, 1925], [null, 2, 'CA19030', 'polymaker/Panchroma™ PLA/Spool-less/1kg/1.75mm/White', 500, 5.5, 2750]];
 r = await mgr('erpReceiveMatch', [{ rows: pi, supplier: 'JF Polymers' }]);
 check('codes, quantities and USD prices read; both lines new (no Polymaker in stock)', r.ok && r.result.lines.length === 2 && r.result.lines[0].code === 'CA19029' && r.result.lines[0].qty === 350 && r.result.lines[0].price === 5.5 && r.result.currency === 'USD' && r.result.unmatched === 2 && r.result.totalPrice === 4675, r.ok ? r.result : r);
-check('the new product is named Polymaker PLA Black, not the whole supplier string', /^Polymaker PLA Black$/.test(r.result.lines[0].newProduct.product_name), r.result.lines[0].newProduct);
+check('the new product is named as the file names it (smart-read-4: "Panchroma PLA Spool-less Black", brand apart), not the whole supplier string', /^Panchroma PLA Spool-less Black$/.test(r.result.lines[0].newProduct.product_name), r.result.lines[0].newProduct);
 
 // 3. the owner adds Polymaker black and teaches the code; the next file matches at once
 r = await add('Polymaker Panchroma PLA Black', 'Polymaker', 'Black', 'pmpb001'); check('polymaker product', r.ok, r);
@@ -48,7 +48,7 @@ const pdf = ['Packing List', 'SKU PRODUCT QTY MINPACK N.W(kg) G.W(kg) HS CODE',
   '2000042985 NA CA19031 Panchroma ™ PLA', 'Grey/1.75mm/1.00k', 'g', '50.000 50.000 50.000 62.000 39169090', '00', 'Total1,170.00', 'Page: 3/3'];
 r = await mgr('erpReceiveMatch', [{ rows: pdf, kind: 'text', supplier: 'JF Polymers' }]);
 check('two records out of the wrapped text, with codes and quantities', r.ok && r.result.lines.length === 2 && r.result.lines[0].code === 'CA19029' && r.result.lines[0].qty === 300 && r.result.lines[1].code === 'CA19031' && r.result.lines[1].qty === 50, r.ok ? r.result.lines : r);
-check('the remembered code matches; the other is new "Polymaker PLA Grey"', r.result.lines[0].sku === 'pmpb001' && r.result.lines[1].isNew && /Polymaker PLA Grey/.test(r.result.lines[1].newProduct.product_name), r.result.lines);
+check('the remembered code matches; the other is new "Panchroma PLA Grey"', r.result.lines[0].sku === 'pmpb001' && r.result.lines[1].isNew && /Panchroma PLA Grey/.test(r.result.lines[1].newProduct.product_name), r.result.lines);
 
 // 5. the photo-table (typed out): Type / Colour / Chinese / packet / qty / price, supplier Sunlu
 const photo = [['Type', 'Color', '颜色', 'packet', 'Order List', 'Unit Price', 'Total Price'],

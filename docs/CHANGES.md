@@ -2682,3 +2682,21 @@ quantity 350 kept, row filled in place) -> "Set up all" -> rate + "Not paid yet"
 - the joint Receive page never wired the cost/payment controls (wireStockExtra returned unless VIEW was 'stock'): the
   payment choice snapped back to "Already paid in advance", so an unpaid import could not be received there.
 Tests: smartread 24, receivefile 51, jointread 10.
+
+## smart-read-4: the Polymaker contract read right on the page (21 Oct 2026, tag smart-read-4)
+Owner: 49 lines instead of 55, wrong totals, price not in the cost box, "Polymaker PLA Black" instead of "Panchroma PLA Black".
+- Found: the PDF is printed text with no text layer, so the page reads it as a picture. (1) The page reused a buffer pdf.js
+  had already taken ("detached ArrayBuffer") - each read now gets its own copy. (2) The table's ruling lines made the OCR
+  lose the first line of most rows (pdf.js drawing at 2x: 46 of 55; at 3x: 24). Pages are now drawn ~1800 px wide on white,
+  grey, red stamp ink washed out, ruling lines erased, read in mode 6: 55 lines, 1,560 pcs, the file's total to the cent,
+  steady from 2.8x to 3.3x. Reproduced with pdf.js + tesseract 5.1.1 in Node (the hidden preview pane cannot draw pdf.js).
+- Reader: the file's total line is read (docQty, docTotal; OCR's "6, 552.00" joined) and shown beside what was read, with a
+  red note when pieces are missing; the supplier bill total box takes the file's total; a lost unit price = amount / qty
+  (shown "worked out from the line amount"); one-letter colour slips put right ("Ref" -> Red); stamp crumbs dropped.
+- Names: a line with a series word of its own ("Panchroma") is named as the file names it, brand word removed:
+  "Panchroma PLA Black", brand Polymaker. Plain lines still get brand + type + colour.
+- Cost: before Set up product / Set up all, a foreign-currency file asks the shipment rate once; cost = price x rate.
+- The owner's screenshot (name "...Cotton Usd Dee White Mm Kg Ad", brand Bambulab, supplier Bambulab Official) matches the
+  reader before smart-read-3; that PC likely had the old page open - a refresh loads the new one.
+Not done: no click-through of the real PDF in the preview pane (pdf.js does not draw while it is hidden); checked with the
+same libraries in Node and with the resulting lines on the page and live.

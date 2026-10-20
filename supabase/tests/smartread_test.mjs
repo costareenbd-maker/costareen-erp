@@ -34,8 +34,8 @@ check('quantities right, including OCR\'s "30. 000"', by('CA19029').qty === 350 
 check('prices in USD', by('CA19029').price === 4.20 && by('CA03039').price === 5.35 && by('CA19029').currency === 'USD', [by('CA19029'), by('CA03039')]);
 const names = L.map((l) => l.newProduct && l.newProduct.product_name);
 check('clean names: no USD, PCS, NA, mm, kg or OCR crumbs', names.every((n) => n && !/\b(usd|pcs|na|mm|kg|dee|ad|ely|ff)\b/i.test(n) && !/\d/.test(n)), names);
-check('Black -> "Polymaker PLA Black"; Matte Cotton White -> "Polymaker PLA Matte Cotton White"', by('CA19029').newProduct.product_name === 'Polymaker PLA Black' &&
-  by('CA04069').newProduct.product_name === 'Polymaker PLA Matte Cotton White', [by('CA19029').newProduct, by('CA04069').newProduct]);
+check('smart-read-4: named as the file names them - "Panchroma PLA Black", "Panchroma PLA Matte Cotton White" (brand Polymaker)', by('CA19029').newProduct.product_name === 'Panchroma PLA Black' && by('CA19029').newProduct.brand === 'Polymaker' &&
+  by('CA04069').newProduct.product_name === 'Panchroma PLA Matte Cotton White', [by('CA19029').newProduct, by('CA04069').newProduct]);
 check('colours are colours: "Steel Grey", "Fossil Grey", "Muted Terracotta", "Gold", a wrapped "Pastel Rainbow"', by('CA19037').newProduct.color === 'Steel Grey' &&
   by('CA04070').newProduct.color === 'Fossil Grey' && /Terracotta/.test(by('PC1002031').newProduct.color) && by('CA03039').newProduct.color === 'Gold' && /Rainbow/.test(by('CA04086').newProduct.color),
   L.map((l) => [l.code, l.newProduct.color]));
@@ -101,6 +101,24 @@ check('Quantity and Amount both in the sheet: 350 and 500 rolls (not 1,470 / 2,1
   G[0].price === 4.20 && G[0].currency === 'USD' && !/pcs|usd/i.test(G[0].text), G.map((l) => [l.code, l.qty, l.price, l.currency, l.text]));
 r = await mgr('erpReceiveMatch', [{ rows: [['Item', 'Amount', 'Price'], ['Sunlu PLA+ Black', 12, 1500]], kind: 'grid' }]);
 check('...a sheet whose only count column is "Amount" still reads it as the count', r.ok && r.result.lines[0].qty === 12, r.result && r.result.lines);
+
+// smart-read-4 (owner 21 Oct 2026): the file's totals, a price worked out from the amount, the file's own product name,
+// stamp crumbs and one-letter colour slips
+const s4 = ['(% poly mo ker JF Polymers (Suzhou) Co. , Ltd. Uz', 'ORDER# 2000012345', 'Order Date : 07. 05. 2026',
+  '10 CA19029 Panchroma™ PLA 350. 000 PCS 4. 20] USD 1, 470. 00 NA', 'Black/1. 75mm/1. 00kg',
+  '40 CA19032 Panchroma™ PLA 20. 000 PCS 4. 20] USD 84. 00 NA', 'Ref/1. 75mm/1. 00kg',
+  '210 CAO4070 Panchroma™ PLA Matte Fossil 10.000 PCS 4.20 USD 42.00 NA', 'Grey/1.75mm/1.00kg SEP',
+  '470 PC1002001 Panchroma™ PLA Matte Sky 10.000 PCS USD 42.00 NA', 'Blue/1.75mm/1.00kg She',
+  'Total] 390. 000 | 1, 638.00 $ |'];
+r = await mgr('erpReceiveMatch', [{ rows: s4, kind: 'text', reader: 'ocr' }]);
+const S4 = r.ok ? r.result.lines : [], D4 = r.ok ? r.result.doc : {};
+check('smart-read-4: the file\'s own totals are read (390 pcs, 1,638.00)', r.ok && D4.docQty === 390 && D4.docTotal === 1638.00, D4);
+check('...the lines add up to them', S4.length === 4 && S4.reduce((a, l) => a + l.qty, 0) === 390, S4.map((l) => [l.code, l.qty]));
+check('a line whose unit price was lost gets amount / quantity (42.00 / 10 = 4.20), marked so', S4[3] && S4[3].price === 4.20 && S4[3].priceFrom === 'amount', S4[3]);
+check('a new product is named as the file names it: "Panchroma PLA Black" (brand stays Polymaker)', S4[0] && S4[0].newProduct && S4[0].newProduct.product_name === 'Panchroma PLA Black' && S4[0].newProduct.brand === 'Polymaker', S4[0] && S4[0].newProduct);
+check('"Ref" read for Red is put right; stamp crumbs (SEP, She) are dropped', S4[1] && S4[1].text === 'Panchroma PLA Red' && S4[2].text === 'Panchroma PLA Matte Fossil Grey' && S4[3].text === 'Panchroma PLA Matte Sky Blue', S4.map((l) => l.text));
+r = await mgr('erpProductSuggest', [{ name: 'Panchroma PLA Matte Cotton White', brand: 'Polymaker', colour: 'Matte Cotton White', code: 'CA04069', price: 4.20, currency: 'USD', rate: 122 }]);
+check('the suggestion keeps the file\'s name too, brand Polymaker, cost 4.20 x 122', r.ok && r.result.product.product_name === 'Panchroma PLA Matte Cotton White' && r.result.product.brand === 'Polymaker' && r.result.product.cost_price === 512, r.result && r.result.product);
 
 // pf-plus-1: a new colour from the product form's "+" (no trip to Settings > Lists)
 r = await mgr('erpListAddValue', [{ kind: 'colors', value: '  Cotton   White ' }]);
