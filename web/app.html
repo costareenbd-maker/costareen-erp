@@ -38502,6 +38502,56 @@ document.addEventListener('keydown', function (e) {
   check(); setInterval(check, 60000);
 })();
 </script>
+<!-- inv3-1 (21 Oct 2026, asked by Walid): New invoice - everything that is filled in on the left (customer, add
+     products, the lines with discount / delivery / payment), the summary on the right (the totals, what still blocks
+     saving, Clear and Save) in its own card that stays in view. The screen is built as before; only the totals block,
+     the problems note and the save row are moved into the summary card, and the lines keep their .inv2-r box, so every
+     handler and look-up that reads them still finds them. Phone width: one column, summary last. -->
+<style>
+.inv2.inv3 > .inv3-sum { display:none; }
+.inv3-sum .card { padding-top:18px; }
+.inv3-sum .totals { margin:4px 0 0; }
+.inv3-sum .row { justify-content:flex-end; }
+.inv3-sum .note { margin:12px 0 0 !important; }
+.inv3-sum .inv-save-hint { flex:1 1 100%; text-align:right; }
+.inv3 .inv3-lx { flex:1 1 100% !important; }
+@media (min-width:1180px) {
+  .inv2.inv3 { display:grid; grid-template-columns:minmax(0, 7fr) minmax(300px, 4fr); gap:0 16px; align-items:start; }
+  .inv2.inv3 > .inv2-l { grid-column:1; grid-row:1; position:static; }
+  .inv2.inv3 > .inv2-r { grid-column:1; grid-row:2; }
+  .inv2.inv3 > .inv3-sum { display:block; grid-column:2; grid-row:1 / span 2; position:sticky; top:70px; }
+}
+@media (max-width:1179px) { .inv2.inv3 > .inv3-sum { display:block; } }
+</style>
+<script>
+function inv3Apply() {
+  if (VIEW !== 'invoice') return;
+  var box = document.querySelector('#view .inv2');
+  if (!box || box.classList.contains('inv3')) return;
+  var tot = box.querySelector('.inv2-r .totals'), save = el('saveInv');
+  if (!tot || !save) return;
+  var saveRow = save.closest('.row'), chargeRow = tot.parentNode.parentNode, card = save.closest('.card');
+  var sum = document.createElement('div');
+  sum.className = 'inv3-sum';
+  sum.innerHTML = '<section><div class="card"><h2>Summary</h2></div></section>';
+  var sc = sum.querySelector('.card');
+  sc.appendChild(tot);
+  // what still blocks saving goes next to the Save button
+  [].slice.call(card.querySelectorAll(':scope > .note.err')).forEach(function (n) { sc.appendChild(n); });
+  if (saveRow) sc.appendChild(saveRow);
+  // the charges and payment now take the whole width of the lines card
+  if (chargeRow && chargeRow.firstElementChild) chargeRow.firstElementChild.classList.add('inv3-lx');
+  [].forEach.call(chargeRow ? chargeRow.children : [], function (c) { if (!c.children.length) c.remove(); });
+  box.appendChild(sum);
+  box.classList.add('inv3');
+}
+var repaintInv3 = repaint;
+repaint = function () {
+  var r = repaintInv3.apply(this, arguments);
+  try { inv3Apply(); } catch (e) { if (window.console) console.error('inv3', e); }
+  return r;
+};
+</script>
 <!-- fd-37: the page is styled: show it -->
 <script>(function () { var x = document.getElementById('bootHide'); if (x) x.remove(); })();</script>
 </body>

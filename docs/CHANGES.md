@@ -2737,3 +2737,10 @@ GitHub had nothing new from him since 00:44: his work was on his PC only. Now, o
   stay preview-only), pushes main, and the dev ERP follows.
 - web/index.html is no longer tracked (a build output; it made every folder look "changed" after a build).
 Not done: work he has not committed cannot travel - his Claude commits at the end of each stage (CLAUDE.md 7b).
+
+## New invoice: form on the left, summary on the right (inv3-1, 21 Oct 2026, Walid)
+
+Everything that is filled in stays on the left (Customer, Add products, Invoice lines with discount, delivery and payment); a **Summary** card on the right holds the totals, what still blocks saving, and Clear / Save, and stays in view while scrolling. Under 1180 px it is one column with the summary last.
+- Built as a block at the end of `web/app.html`: the screen is built as before, and only the totals, the problems note and the save row are moved into the summary card. The lines keep their `.inv2-r` box, so the low-margin marks and the price-reason box still find them.
+
+**Not done:** the Classic look was not checked on screen, and no invoice was saved in the new layout (the save code is not touched).
