@@ -119,7 +119,7 @@ async function catalogue(ctx, pool) {
   // joint-recv-file (20 Oct 2026): receiving into a joint stock matches the file to that pool's products (never their cost)
   const rows = pool
     ? (await (await import('./joint.js')).erpJointRecvCatalog(ctx, { pool })).map((p) => ({ id: 'joint:' + p.sku, sku: p.sku, name: p.name, brand: p.brand,
-                                                                                            type: '', color: p.color, category: p.category, cost_price: 0, stock: p.stock }))
+                                                                                            type: p.type || '', supplier_sku: p.supplierSku || '', color: p.color, category: p.category, cost_price: 0, stock: p.stock }))
     : await ctx.tx`select p.id, p.sku, p.name, p.brand, p.type, p.color, p.category, p.cost_price, p.supplier_sku, coalesce(s.stock, 0) as stock
                    from products p left join product_stock s on s.product_id = p.id
                    where p.business_id = ${ctx.biz} and coalesce(p.status, 'Active') <> 'Discontinued'`;
@@ -496,8 +496,12 @@ export async function erpProductSuggest(ctx, payload) {
   const brand = norm(p.brand) || brandOf(text);
   const type = typeOf(text);
   const colour = str(p.colour) || colourOf(str(p.name), brand, type);
-  const rows = await ctx.tx`select sku, name, brand, type, category, color, unit, supplier, sell_price, cost_price, reorder_level, lead_time_days
+  const own = await ctx.tx`select sku, name, brand, type, category, color, unit, supplier, sell_price, cost_price, reorder_level, lead_time_days
                             from products where business_id = ${ctx.biz} and coalesce(status, 'Active') <> 'Discontinued'`;
+  // smart-read-3 joint: on the joint Receive page the SKU must be free in the joint stock, and its products are the siblings
+  // (the company's own products still help with the category, unit and reorder habits)
+  const pooled = str(p.pool) ? await (await import('./joint.js')).erpJointSuggestRows(ctx, str(p.pool)) : null;
+  const rows = pooled ? pooled.concat(own) : own;   // a SKU also free among the company's own, so an invoice never shows two of one code
   const typed = rows.map((r) => ({ r, b: brandOf([r.brand, r.name].join(' ')) || norm(r.brand), t: typeOf([r.name, r.type].join(' ')) }));
   let sib = typed.filter((x) => brand && x.b === brand && type && x.t === type), basis = 'brand and type';
   if (!sib.length) { sib = typed.filter((x) => brand && x.b === brand); basis = 'brand'; }

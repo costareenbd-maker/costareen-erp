@@ -2658,3 +2658,17 @@ the AI reader (photo -> Gemini) reads tables better when the AI key is set.
    its own row in the document's order (pos 1..n from the server); a line that matches a product already on the
    shipment is no longer folded into that earlier row. Rows of one product are added up only in what is sent on Receive
    (recvPayload), so stock and cost are the same. The AI reader is told to keep the document's order, one object per line.
+
+## smart-read-3 on the joint Receive page (21 Oct 2026, tag joint-read-1)
+Owner: "do the same for the joint stock receive page". The joint Receive page already drew the own Receive page (file card,
+summary, file order, top fields filled), but four things were broken or missing there:
+- "Set up product" on a file row made the product in the company's OWN stock (the form lost its joint mark) and the joint
+  attach added a second row at the bottom; now the form is a joint product and it fills its own row with the file's quantity.
+- erpJointProduct refused a new product without a selling price, so "Set up all" failed every row; a NEW joint product may
+  now be made without one (changing an existing one still needs it; the floor check stays).
+- the supplier's code is saved on joint products (supplierSku -> supplier_sku) and the joint catalogue carries it, so the
+  next file matches by it; erpProductSuggest takes `pool` (SKU free in the joint stock and the own one; joint products
+  are the siblings).
+- a new colour/brand/type from a file joins the company's own Settings > Lists (manager and up).
+Tests: jointread_test (10); joint1-7, phase4, stock, smartread, receivefile green. Not done: no browser click-through on a
+local pool (checked by tests and a read-only live call on the protoreen pool).

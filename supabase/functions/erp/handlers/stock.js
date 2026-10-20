@@ -230,7 +230,7 @@ async function refuseDiscontinue(ctx, sku, name) {
  * unit and supplier that are not on Settings > Lists yet are added to them (any case counts as already there), so the
  * next product offers them too.
  */
-async function addToLists(ctx, data) {
+export async function addToLists(ctx, data) {
   const pairs = [['categories', data.category], ['brands', data.brand], ['types', data.type], ['colors', data.color], ['units', data.unit], ['suppliers', data.supplier]];
   for (const [kind, v0] of pairs) {
     const v = str(v0).replace(/\s+/g, ' ').slice(0, 80);

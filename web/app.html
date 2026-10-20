@@ -22333,9 +22333,10 @@ document.addEventListener('click', function (ev) {
     t.disabled = true; t.textContent = 'Preparing\u2026';
     var np = (rl.src && rl.src.newProduct) || {};
     srv('erpProductSuggest', [{ name: rl.src ? rl.src.text : rl.name, brand: np.brand || '', colour: np.color || '', price: rl.src ? rl.src.price : 0, currency: rl.src ? rl.src.currency : '',
-                                supplier: RECV.supplier || '', code: rl.src ? rl.src.code : '', rate: rfRate() }], function (r) {
+                                supplier: RECV.supplier || '', code: rl.src ? rl.src.code : '', rate: rfRate(), pool: rfPool() }], function (r) {
       // smart-read-3: the file's quantity stays in the form (it was set to 0 there; the owner thought it was lost)
       PRODUCT_FORM = Object.assign(blankProduct(), r.product, { isNew: true, returnTo: 'receive', opening_stock: num(rl.qty) || 1 });
+      if (rfPool()) PRODUCT_FORM.__pool = rfPool();   // joint Receive page: the product is made in the joint stock
       RF_FIX_ROW = ri; RECV_NEWQTY = num(rl.qty) || 1; RF_SUGGEST = r;
       if (!LISTS) loadLists();
       repaint(); var f = el('pf_name') || el('pf_sku'); if (f) f.scrollIntoView({ block: 'center' });
@@ -37301,7 +37302,7 @@ srv = function (name, args, ok, bad) {
     if (Number(P.opening_stock) > 0 && !(Number(P.cost_price) > 0)) { if (bad) bad(new Error('Type the cost price: the opening stock goes into the joint stock at that cost.')); return; }
     srvJRV('erpJointProduct', [{ pool: P.__pool, isNew: true, sku: P.sku, name: P.product_name, category: P.category, brand: P.brand, type: P.type, color: P.color, unit: P.unit,
                                  supplier: P.supplier, reorder: P.reorder_level, lead: P.lead_time_days, bin: P.location_bin,
-                                 retail: P.sell_price, wholesale: P.wholesale_price || 0, floor: P.__floor || 0, cost: P.cost_price }], function (r) {
+                                 retail: P.sell_price, wholesale: P.wholesale_price || 0, floor: P.__floor || 0, cost: P.cost_price, supplierSku: P.supplier_sku || '' }], function (r) {
       var sku = r.saved, q = Number(P.opening_stock) || 0;
       var fin = function () { JRV.cat = null; try { JCAT = null; } catch (x) {} jtLoad(); if (ok) ok({ created: true, sku: sku }); };
       if (q > 0) srvJRV('erpJointReceive', [{ pool: P.__pool, sku: sku, qty: q, unitCost: P.cost_price, again: true }], fin, bad); else fin();
@@ -37317,8 +37318,17 @@ srv = function (name, args, ok, bad) {
 var attachNewProductJRV = attachNewProduct;
 attachNewProduct = function (target, sku) {
   if (!(JRV.on && target === 'receive')) return attachNewProductJRV.apply(this, arguments);
+  var fixRow = typeof RF_FIX_ROW !== 'undefined' ? RF_FIX_ROW : null;
   srvJRV('erpJointRecvCatalog', [{ pool: JRV.pool }], function (cat) {
     JRV.cat = cat || []; var p = JRV.cat.filter(function (x) { return x.sku === sku; })[0];
+    // smart-read-3 joint: "Set up product" on a file's row fills that row (it used to add a second row at the bottom)
+    var row = fixRow !== null ? RECV.lines[fixRow] : null;
+    if (row) {
+      RF_FIX_ROW = null; RF_SUGGEST = null;
+      row.sku = sku; row.name = p ? p.name : sku; row.stock = p ? p.stock : 0; if (RECV_NEWQTY > 0) row.qty = RECV_NEWQTY; delete row.state; RECV_NEWQTY = 0;
+      toast('Joint product created and placed on its line. ' + (rvOpenCount() ? rvOpenCount() + ' row(s) still need a choice.' : 'Press Receive when ready.'), false, 8000);
+      repaint(); return;
+    }
     RECV.lines.push({ sku: sku, name: p ? p.name : sku, qty: RECV_NEWQTY || 1, stock: p ? p.stock : 0 });
     if (RECV_NEWQTY) toast('Joint product created and added to this shipment (' + RECV_NEWQTY + '). Press <strong>Receive</strong> to put them in the joint stock.', false, 9000);
     RECV_NEWQTY = 0; repaint();
@@ -38172,7 +38182,7 @@ document.addEventListener('click', function (ev) {
       try { toast('Making product ' + (k + 1) + ' of ' + idx.length + '…', false, 2500); } catch (er) {}
       try {
         var sg = await call('erpProductSuggest', [{ name: rl.src ? rl.src.text : rl.name, brand: np.brand || '', colour: np.color || '', price: rl.src ? rl.src.price : 0,
-                                                     currency: rl.src ? rl.src.currency : '', supplier: RECV.supplier || '', code: rl.src ? rl.src.code : '', rate: rfRate() }]);
+                                                     currency: rl.src ? rl.src.currency : '', supplier: RECV.supplier || '', code: rl.src ? rl.src.code : '', rate: rfRate(), pool: pool }]);
         var d = Object.assign({}, sg.product, { isNew: true, opening_stock: 0, status: 'Active' });
         if (pool) d.__pool = pool;
         var res = await call('erpSaveProduct', [d]);

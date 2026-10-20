@@ -31,7 +31,8 @@ import { getConfig, setConfig, saveFile, deleteFile, renderPdf } from '../lib/ex
 import { asSystem } from '../lib/system.js';
 import { lock, who } from './money.js';
 import { forget } from '../lib/tabs.js';
-import { erpSaveProduct } from './stock.js';
+import { erpSaveProduct, addToLists } from './stock.js';
+import { roleAtLeast } from '../allow.js';
 import { erpPartnership, erpPoolCreate, erpPoolJoin, erpPoolEntryAdd, erpPoolEntryRemove, erpPoolTier, erpPoolInvite, erpPoolClose } from './partners.js';
 import { erpPartnerCompany } from './security.js';
 import { platformAdmin } from './platform.js';
@@ -162,7 +163,7 @@ function needOwner(ctx, pool) {
 /** What is on a pool's shelf, priced for this company. Cost only when asked for (member owners). */
 async function shelf(ctx, pool, withCost) {
   const rows = await poolRead(ctx, (t) => t`
-    select p.sku, p.name, p.category, p.brand, p.color, p.unit, p.sell_price, p.wholesale_price, p.floor_price, p.cost_price,
+    select p.sku, p.name, p.category, p.brand, p.type, p.supplier_sku, p.color, p.unit, p.sell_price, p.wholesale_price, p.floor_price, p.cost_price,
            coalesce(p.status, 'Active') as status, coalesce(ps.stock, 0) as stock
     from products p left join product_stock ps on ps.product_id = p.id
     where p.business_id = ${pool.id}
@@ -176,7 +177,7 @@ async function shelf(ctx, pool, withCost) {
   for (const h of heldRows) (held[str(h.sku)] = held[str(h.sku)] || {})[str(h.held_by)] = num(h.n);
   return rows.map((p) => {
     const retail = num(p.sell_price), wholesale = num(p.wholesale_price);
-    const o = { sku: str(p.sku), name: str(p.name), category: str(p.category), brand: str(p.brand), color: str(p.color), unit: str(p.unit),
+    const o = { sku: str(p.sku), name: str(p.name), category: str(p.category), brand: str(p.brand), type: str(p.type), supplierSku: str(p.supplier_sku), color: str(p.color), unit: str(p.unit),
                 stock: num(p.stock), retail, wholesale, floor: num(p.floor_price), status: str(p.status) || 'Active',
                 price: pool.tier === 'wholesale' && wholesale > 0 ? wholesale : retail, held: held[str(p.sku)] || {} };
     if (withCost) o.cost = num(p.cost_price);
@@ -432,10 +433,12 @@ export async function erpJointProduct(ctx, payload) {
   if (!payload.isNew) needOwner(ctx, pool);
   const retail = num(payload.retail), wholesale = num(payload.wholesale), floor = num(payload.floor), cost = num(payload.cost);
   if (!str(payload.name)) throw new Error('What is the product called?');
-  if (!(retail > 0)) throw new Error('Type the retail selling price.');
-  if (floor < 0 || cost < 0 || wholesale < 0) throw new Error('Prices cannot be negative.');
-  const lowest = wholesale > 0 ? Math.min(retail, wholesale) : retail;
-  if (floor > lowest + 0.004) throw new Error('The floor price (' + floor + ') is above the lowest selling price (' + lowest + '). Nobody could sell it.');
+  // smart-read-3 joint (owner 21 Oct 2026: "leave it blank when the file does not say it"): a NEW joint product made from a
+  // supplier's file may come without a selling price yet; changing an existing one still needs it
+  if (!(retail > 0) && !payload.isNew) throw new Error('Type the retail selling price.');
+  if (retail < 0 || floor < 0 || cost < 0 || wholesale < 0) throw new Error('Prices cannot be negative.');
+  const lowest = [retail, wholesale].filter((x) => x > 0).reduce((a, b) => Math.min(a, b), Infinity);
+  if (lowest < Infinity && floor > lowest + 0.004) throw new Error('The floor price (' + floor + ') is above the lowest selling price (' + lowest + '). Nobody could sell it.');
   const isNew = !!payload.isNew;
   const res = await withPool(ctx, pool, async (pctx) => {
   let cur = null;
@@ -450,12 +453,22 @@ export async function erpJointProduct(ctx, payload) {
     reorder_level: payload.reorder !== undefined ? num(payload.reorder) : cur ? num(cur.reorder_level) : 0,
     lead_time_days: payload.lead !== undefined ? num(payload.lead) : cur ? num(cur.lead_time_days) : 0,
     location_bin: payload.bin !== undefined ? str(payload.bin) : cur ? cur.location_bin : '', status: str(payload.status) === 'Discontinued' ? 'Discontinued' : 'Active',
+    ...(payload.supplierSku !== undefined ? { supplier_sku: str(payload.supplierSku) } : {}),   // the supplier's code: the next file matches it at once
   });
   await pctx.tx`update products set floor_price = ${floor}, wholesale_price = ${wholesale}, updated_at = now()
                where business_id = ${pool.id} and lower(btrim(sku)) = ${String(saved.sku).toLowerCase()}`;
   return saved;
   });
+  // a new colour / brand / type read from a file joins this company's own Settings > Lists too (the form's lists are its own)
+  if (isNew && roleAtLeast(ctx.s.role, 'manager')) await addToLists(ctx, { category: payload.category, brand: payload.brand, type: payload.type, color: payload.color, unit: payload.unit, supplier: payload.supplier });
   return { ...(await erpJoint(ctx, { pool: pool.id })), saved: res.sku, created: !!res.created };
+}
+/** smart-read-3 joint: the pool's products for a new-product suggestion (names, brands, types; never the cost). */
+export async function erpJointSuggestRows(ctx, poolId) {
+  await needOn(ctx);
+  const pool = await poolOf(ctx, poolId);
+  return (await shelf(ctx, pool, false)).map((p) => ({ sku: p.sku, name: p.name, brand: p.brand, type: p.type, category: p.category, color: p.color, unit: p.unit,
+                                                      supplier: '', sell_price: p.retail, cost_price: 0, reorder_level: 0, lead_time_days: 0 }));
 }
 
 async function poolProduct(pctx, pool, sku) {
@@ -1291,7 +1304,7 @@ export async function erpJointRecvCatalog(ctx, payload) {
   await needOn(ctx);
   const pool = await poolOf(ctx, payload && payload.pool);
   return (await shelf(ctx, pool, false)).filter((p) => p.status !== 'Discontinued').map((p) => ({
-    sku: p.sku, name: p.name, cat: p.category, category: p.category, brand: p.brand, color: p.color, unit: p.unit, sell: p.price, stock: p.stock, status: 'Active', joint: true }));
+    sku: p.sku, name: p.name, cat: p.category, category: p.category, brand: p.brand, type: p.type, supplierSku: p.supplierSku, color: p.color, unit: p.unit, sell: p.price, stock: p.stock, status: 'Active', joint: true }));
 }
 
 export const HANDLERS = { erpJointRecvCatalog, erpJointAsk, erpJointSend, erpJointGot, erpJointAskAct, erpJointMove, erpJoint, erpJointCatalog, erpJointStart, erpJointProduct, erpJointReceive, erpJointAdjust, erpJointBook, erpJointSettings,
