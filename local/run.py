@@ -118,6 +118,11 @@ first = migrate()
 fx = fixture(first)
 conn.close()
 
+# every feature on (joint stock + a demo joint stock), on every start - see features.mjs; demo data only
+if not os.environ.get('ERP_SEED_DIR'):
+    subprocess.call(['node', os.path.join(HERE, 'features.mjs')], cwd=NODE,
+                    env=dict(os.environ, DB_URL=uri, FIX=json.dumps({'U': {'owner': fx['owner'], 'other': fx['other']}, 'B': fx['biz'], 'B2': fx['b2']}), ERP_NODE_CWD=NODE))
+
 # the page, built for this computer; demo data only, so it opens with no sign-in (the owner key is stamped in;
 # on the very first start the key is made by the API below, so the link is needed once)
 link_key = open(KEYFILE).read().strip() if os.path.exists(KEYFILE) else ''

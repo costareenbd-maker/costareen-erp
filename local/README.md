@@ -52,3 +52,10 @@ The owner alone may load a real export on his own machine with `set ERP_SEED_DIR
 
 Unchanged: `cd deploy && source secrets.env && python deploy.py db|function|web`. The same files are deployed;
 only `ERP_API` differs between the local build and the live build.
+
+## Every feature on (21 Oct 2026)
+
+Each start runs `local/features.mjs`: the joint stock is switched on for both demo companies ("Demo 3D Shop" and
+"Elsewhere") and a demo joint stock "Filament JV (demo)" with two made-up products is made once. The "Only me"
+features need nothing - the local owner is the platform admin, who always sees them. An existing `local/data` gets
+this on the next start; no `--fresh` needed. Still demo data only.
