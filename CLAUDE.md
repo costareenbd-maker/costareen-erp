@@ -210,7 +210,7 @@ Two developers work on this repo, each with their own Claude. To see each other'
   `ERP_TARGET=dev python deploy.py db; ... function; ... web`. Live (`deploy.py` without ERP_TARGET) is the owner's.
 - **Local copy:** `local\start.cmd` - every feature is on (local/features.mjs: joint stock + a demo joint stock;
   "Only me" features show for the local owner, the platform admin). Demo data only.
-- **Automatic (devsync-2):** after `toolsutosync-install.cmd` (once per PC) every commit is pushed by itself
+- **Automatic (devsync-2):** after `tools\autosync-install.cmd` (once per PC) every commit is pushed by itself
   (.githooks/post-commit; .githooks/pre-push refuses keys and private/), and every 2 minutes the other developer's
   main is merged into this folder when it has no unsaved changes (tools/autosync.py, log tools/autosync.log). On the
   owner's PC deploy/devsync.py also merges clean branches into main (not wip/... or try-...) and updates the dev ERP.

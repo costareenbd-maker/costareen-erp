@@ -22,6 +22,7 @@
 // encrypted database connection (lib/bridge.js, erp_tenants). Copies made before keep working until
 // erpInstallBridge moves them (it also removes the server code and timers from their project).
 
+import { roleAtLeast } from '../allow.js';
 import { connectProject, saveTenant } from '../lib/bridge.js';
 import { makeCompany } from '../lib/control.js';
 import { platformAdmin } from './platform.js';
@@ -703,4 +704,51 @@ export async function erpInstallPwLink(ctx, payload) {
   return { ok: true, email, link: await td.recoveryLink(email) };
 }
 
-export const HANDLERS = { erpInstallPwLink, erpInstalls, erpInstallInvite, erpInstallSet, erpInstallRetry, erpInstallUpdate, erpInstallToken, erpInstallDomain, erpInstallBridge, erpBrand, erpBrandSet, erpInstallHealth, erpNews, erpNewsAdd, erpNewsEnd };
+// ---- self-service updates (owner 21 Oct 2026: "he can't see the Platform tab - every company should push its own")
+// A company owner, inside their own ERP, sees their copy's version, pastes their own Supabase access token and runs the
+// update - the same steps the platform's timer and Update button run, for THEIR company only (the copy is the one this
+// request came through; nothing in the payload can point at another company).
+async function myCopy(ctx) {
+  if (!roleAtLeast(ctx.s.role, 'owner')) throw new Error('Only the owner updates the ERP.');
+  const inst = ctx.deps && ctx.deps.install;
+  const ctl = ctx.deps && ctx.deps.control;
+  if (!inst || !inst.bridged || !inst.id || !ctl) return null;   // the provider's own ERP: updated by the provider
+  const row = (await ctl`select id, company, ref, version, upd_to, upd_step, upd_n, upd_error, updated_to_at, mgmt_kind, (mgmt_token is not null) as has_token
+                        from erp_installs where id = ${inst.id}::uuid`)[0];
+  if (!row) return null;
+  // the provider's tables for the update steps (the copy's own database is reached through its token)
+  const pctx = { ...ctx, sql: ctl, deps: { ...ctx.deps, sql: ctl, sqlAux: ctl } };
+  return { row, pctx };
+}
+export async function erpMyUpdates(ctx) {
+  const m = await myCopy(ctx);
+  if (!m) return { copy: false };
+  const rel = (await m.pctx.sql`select version, made_at from erp_releases order by made_at desc limit 1`)[0];
+  const r = m.row;
+  return { copy: true, company: str(r.company), version: str(r.version), latest: rel ? str(rel.version) : '', releasedAt: rel ? rel.made_at : null,
+           upToDate: !!rel && r.version === rel.version, running: !!r.upd_step, step: str(r.upd_step), done: Number(r.upd_n) || 0, error: str(r.upd_error),
+           tokenProblem: /token|401|403/i.test(str(r.upd_error)), hasToken: !!r.has_token, kind: str(r.mgmt_kind) || 'pat', updatedAt: r.updated_to_at };
+}
+export async function erpMyUpdateToken(ctx, payload) {
+  const m = await myCopy(ctx);
+  if (!m) throw new Error('This ERP is updated by the provider.');
+  const token = str(payload && payload.token).trim();
+  if (!/^sbp_[A-Za-z0-9]{20,}$/.test(token)) throw new Error('That does not look like a Supabase access token (it starts with sbp_).');
+  if (!m.row.ref) throw new Error('This copy has no Supabase project on record - ask the provider.');
+  await mgmt(m.pctx.deps, token, 'GET', '/projects/' + m.row.ref);   // the token must reach this company's own project
+  await m.pctx.sql`update erp_installs set mgmt_token = ${token}, mgmt_kind = 'pat', upd_error = null, updated_at = now() where id = ${m.row.id}`;
+  return { ok: true };
+}
+export async function erpMyUpdateRun(ctx) {
+  const m = await myCopy(ctx);
+  if (!m) throw new Error('This ERP is updated by the provider.');
+  const t0 = Date.now();
+  let last = null;
+  for (let i = 0; i < 40 && Date.now() - t0 < 90000; i++) {   // a few steps per press; the page presses again until done
+    last = await updateStep(m.pctx, m.row.id);
+    if (last.done || last.error) break;
+  }
+  return { ...(last || {}), more: !!(last && !last.done && !last.error) };
+}
+
+export const HANDLERS = { erpMyUpdates, erpMyUpdateToken, erpMyUpdateRun, erpInstallPwLink, erpInstalls, erpInstallInvite, erpInstallSet, erpInstallRetry, erpInstallUpdate, erpInstallToken, erpInstallDomain, erpInstallBridge, erpBrand, erpBrandSet, erpInstallHealth, erpNews, erpNewsAdd, erpNewsEnd };

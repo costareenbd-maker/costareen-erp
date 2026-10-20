@@ -8487,7 +8487,7 @@ function srv(name, args, ok, bad) {
 
 var SRV_ACTIVE = 0, SRV_WRITING = false, SRV_TIMED = {};
 // the same list the server uses to know a call changes nothing (ERP_READS)
-var SRV_READS = /^(erpSocialBridges|erpAds|erpAdsInterests|erpSocialNet|erpSocialLearn|erpSocialAssets|erpSocialPosts|erpSocialPhotos|erpInboxDigest|erpJointRecvCatalog|erpSitePages|erpBalanceSheet|erpProductFields|erpProductAi|erpMetaConnect|erpInboxFeatureMap|erpBookings|erpInbox|erpInboxOpen|erpInboxChannels|erpChatOrders|erpInboxStats|erpAiWork|erpCommissionSales|erpFdCards|erpLineMargins|erpFd19Profit|erpFdInventory|erpFd22Analytics|erpNavigator|erpSellers|erpFollowups|erpCustomerInsight|erpPreorders|erpCashUps|erpAskingPrices|erpSystemCheck|erpAnalytics|erpCommission|erpHolding|erpLotFunding|erpShipments|erpShipment|erpLots|erpFdHead|erpFdDash|erpReceiveMatch|erpAiReader|erpProductSuggest|erpCatalogue|erpPushList|erpCreators|erpCreatorPortalLink|erpSponsorLink|erpCreatorRequests|erpCreatorEvents|erpCreatorProgramme|erpCreatorPreview|erpCreatorCatalog|erpCreatorSources|erpCreatorClaims|erpApps|erpAppQr|erpFeedback|erpRestockOffers|erpRestockList|erpWarrantyRules|erpWarrantyCard|erpMyLink|erpPlatformRegister|erpPlatformDoctor|erpPlatformCommunity|erpMarketWaiting|erpBoard|erpPlatformDesign|erpResell|erpResellerProgramme|erpLoyalty|erpCustomerPoints|erpRefillDue|erpDeliveryHistory|erpDeliveryHistoryMany|erpPrintKit|erpPrintJobs|erpPrintJob|erpPrintCost|erpSpools|erpPrintRequests|erpJoint|erpJointCatalog|erpJointCard|erpInvoiceDesign|erpInvoicePreview|erpMarket|erpMarketMine|erpMarketRequests|erpMarketHints|erpMarketNames|erpWanted|erpBrand|erpComplianceLog|erpProviderKey|erpNews|erpAccessKeys|erpAccessWarning|erpAdmin|erpAiKeys|erpAlertRules|erpAlerts|erpArena|erpBackupStatus|erpBg|erpBnWords|erpBookedParcels|erpBrandLogo|erpBundle|erpBusinessLinks|erpBusinesses|erpBusinessesDeleted|erpCampaignAudience|erpCampaignGet|erpCampaignList|erpCapital|erpCashBook|erpCatalog|erpConnStatus|erpConnections|erpCostBook|erpCourier|erpCourierKeyStatus|erpCurrencies|erpCustomerAccount|erpCustomerCredit|erpCustomerList|erpCustomerPage|erpCustomerStatement|erpCustomers|erpDashboardData|erpDaySales|erpDeliveryOptions|erpDevices|erpDiscontinued|erpDues|erpEvoQr|erpEvoStatus|erpExpenseExport|erpExpenseReceiptUrl|erpExpenses|erpFamilies|erpFighters|erpFormOptions|erpGame|erpGetTheme|erpGoogle|erpHello|erpInstalls|erpInvoice|erpInvoicePdf|erpJob|erpJobs|erpListView|erpLookupCustomer|erpLookupUsage|erpMe|erpMoney|erpNoteFileUrl|erpNotes|erpOwnerChange|erpOwnerChanges|erpParcelLabels|erpParcelPreview|erpPartnerStock|erpPartnership|erpPayReasons|erpPeople|erpPlatform|erpPlatformErrors|erpPnl|erpPnlMonth|erpPoList|erpPoolCatalog|erpProduct|erpProductListShare|erpProductPage|erpProductPhotoUrl|erpProductThumbs|erpProfile|erpQuoteAsset|erpQuoteBoot|erpQuoteGet|erpQuoteList|erpRecentInvoices|erpRecovery|erpReorderPlan|erpRestorePreview|erpReturnPreview|erpRisks|erpSales|erpSearch|erpSecurity|erpSelfTest|erpSerialLookup|erpSerialsFor|erpSessions|erpSetTheme|erpSettingsFull|erpSettingsLists|erpSfPayoutLines|erpSfPayouts|erpShareFile|erpSharedStock|erpSheet|erpStatementPdf|erpStockHistory|erpSupplierPage|erpSuppliers|erpToday|erpUsers|erpWaProductPdf|erpWebMatches|erpWebOrderInvoices|erpWebOrders|erpWebsiteTest)$/;
+var SRV_READS = /^(erpMyUpdates|erpSocialBridges|erpAds|erpAdsInterests|erpSocialNet|erpSocialLearn|erpSocialAssets|erpSocialPosts|erpSocialPhotos|erpInboxDigest|erpJointRecvCatalog|erpSitePages|erpBalanceSheet|erpProductFields|erpProductAi|erpMetaConnect|erpInboxFeatureMap|erpBookings|erpInbox|erpInboxOpen|erpInboxChannels|erpChatOrders|erpInboxStats|erpAiWork|erpCommissionSales|erpFdCards|erpLineMargins|erpFd19Profit|erpFdInventory|erpFd22Analytics|erpNavigator|erpSellers|erpFollowups|erpCustomerInsight|erpPreorders|erpCashUps|erpAskingPrices|erpSystemCheck|erpAnalytics|erpCommission|erpHolding|erpLotFunding|erpShipments|erpShipment|erpLots|erpFdHead|erpFdDash|erpReceiveMatch|erpAiReader|erpProductSuggest|erpCatalogue|erpPushList|erpCreators|erpCreatorPortalLink|erpSponsorLink|erpCreatorRequests|erpCreatorEvents|erpCreatorProgramme|erpCreatorPreview|erpCreatorCatalog|erpCreatorSources|erpCreatorClaims|erpApps|erpAppQr|erpFeedback|erpRestockOffers|erpRestockList|erpWarrantyRules|erpWarrantyCard|erpMyLink|erpPlatformRegister|erpPlatformDoctor|erpPlatformCommunity|erpMarketWaiting|erpBoard|erpPlatformDesign|erpResell|erpResellerProgramme|erpLoyalty|erpCustomerPoints|erpRefillDue|erpDeliveryHistory|erpDeliveryHistoryMany|erpPrintKit|erpPrintJobs|erpPrintJob|erpPrintCost|erpSpools|erpPrintRequests|erpJoint|erpJointCatalog|erpJointCard|erpInvoiceDesign|erpInvoicePreview|erpMarket|erpMarketMine|erpMarketRequests|erpMarketHints|erpMarketNames|erpWanted|erpBrand|erpComplianceLog|erpProviderKey|erpNews|erpAccessKeys|erpAccessWarning|erpAdmin|erpAiKeys|erpAlertRules|erpAlerts|erpArena|erpBackupStatus|erpBg|erpBnWords|erpBookedParcels|erpBrandLogo|erpBundle|erpBusinessLinks|erpBusinesses|erpBusinessesDeleted|erpCampaignAudience|erpCampaignGet|erpCampaignList|erpCapital|erpCashBook|erpCatalog|erpConnStatus|erpConnections|erpCostBook|erpCourier|erpCourierKeyStatus|erpCurrencies|erpCustomerAccount|erpCustomerCredit|erpCustomerList|erpCustomerPage|erpCustomerStatement|erpCustomers|erpDashboardData|erpDaySales|erpDeliveryOptions|erpDevices|erpDiscontinued|erpDues|erpEvoQr|erpEvoStatus|erpExpenseExport|erpExpenseReceiptUrl|erpExpenses|erpFamilies|erpFighters|erpFormOptions|erpGame|erpGetTheme|erpGoogle|erpHello|erpInstalls|erpInvoice|erpInvoicePdf|erpJob|erpJobs|erpListView|erpLookupCustomer|erpLookupUsage|erpMe|erpMoney|erpNoteFileUrl|erpNotes|erpOwnerChange|erpOwnerChanges|erpParcelLabels|erpParcelPreview|erpPartnerStock|erpPartnership|erpPayReasons|erpPeople|erpPlatform|erpPlatformErrors|erpPnl|erpPnlMonth|erpPoList|erpPoolCatalog|erpProduct|erpProductListShare|erpProductPage|erpProductPhotoUrl|erpProductThumbs|erpProfile|erpQuoteAsset|erpQuoteBoot|erpQuoteGet|erpQuoteList|erpRecentInvoices|erpRecovery|erpReorderPlan|erpRestorePreview|erpReturnPreview|erpRisks|erpSales|erpSearch|erpSecurity|erpSelfTest|erpSerialLookup|erpSerialsFor|erpSessions|erpSetTheme|erpSettingsFull|erpSettingsLists|erpSfPayoutLines|erpSfPayouts|erpShareFile|erpSharedStock|erpSheet|erpStatementPdf|erpStockHistory|erpSupplierPage|erpSuppliers|erpToday|erpUsers|erpWaProductPdf|erpWebMatches|erpWebOrderInvoices|erpWebOrders|erpWebsiteTest)$/;
 function srvPump() {
   if (!SRV_Q.length) return;
   var isRead = SRV_READS.test(SRV_Q[0].name);
@@ -38441,6 +38441,72 @@ document.addEventListener('keydown', function (e) {
   if (!t || !t.closest || !t.closest('.rvw') || !/^(INPUT|SELECT)$/.test(t.tagName) || t.type === 'search') return;
   e.preventDefault(); rvwGo(RVW.step + 1);
 });
+</script>
+<!-- myupd-1 (owner 21 Oct 2026: "he can't see the Platform tab - every company should push its own update"): a company's
+     owner, in their own ERP, sees Settings > ERP updates: their version against the newest, why an update stopped, a box
+     for their own Supabase access token and "Update now". The provider's own ERP shows nothing (it is updated by deploy). -->
+<script>
+var MYUPD = null, MYUPD_BUSY = false, MYUPD_TOLD = false;
+function myUpdLoad(then) {
+  if (!ME || ME.role !== 'owner') return;
+  srv('erpMyUpdates', [], function (r) { MYUPD = r; if (then) then(); if (VIEW === 'settings') repaint(); }, function () { MYUPD = { copy: false }; });
+}
+function myUpdCardHtml() {
+  var u = MYUPD; if (!u || !u.copy) return '';
+  var h = '<section><div class="card" id="myupd"><h2>ERP updates</h2>' +
+    '<div class="sub" style="display:block">This ERP: <b>' + esc(u.version || 'unknown') + '</b> \u00b7 newest: <b>' + esc(u.latest || '\u2014') + '</b> \u00b7 ' +
+    (u.upToDate && !u.running ? '<span class="pill ok">up to date</span>' : '<span class="pill low">update waiting</span>') + '</div>';
+  if (u.error) h += '<div class="note err" style="margin-top:10px"><div class="ico">!</div><div>The last update stopped: ' + esc(u.error) + '</div></div>';
+  if (u.tokenProblem || !u.hasToken) {
+    h += '<div class="note" style="margin-top:10px"><div class="ico">1</div><div>Updates reach your database with <b>your own Supabase access token</b>. ' +
+      'Make one at <a href="https://supabase.com/dashboard/account/tokens" target="_blank" rel="noopener"><b>supabase.com \u2192 Account \u2192 Access Tokens</b></a> ' +
+      '(choose <b>Expires: Never</b>, so updates do not stop again), paste it below and press <b>Save token</b>. It is used only to update this ERP\u2019s database.</div></div>' +
+      '<div class="row" style="margin-top:10px;gap:8px;flex-wrap:wrap;align-items:flex-end"><div style="flex:1 1 280px"><label class="f" for="myupd_tok">Supabase access token</label>' +
+      '<input class="i" id="myupd_tok" type="password" autocomplete="off" placeholder="sbp_\u2026"></div>' +
+      '<button class="btn" type="button" id="myupd_save"' + (MYUPD_BUSY ? ' disabled' : '') + '>Save token</button></div>';
+  }
+  h += '<div class="ap-row" style="margin-top:12px"><button class="btn primary" type="button" id="myupd_run"' + (MYUPD_BUSY || (u.upToDate && !u.running) ? ' disabled' : '') + '>' +
+       (MYUPD_BUSY ? 'Updating\u2026 ' + (u.done ? '(step ' + u.done + ')' : '') : 'Update now') + '</button>' +
+       '<span class="sub">Your data stays; only the ERP\u2019s own tables and functions are brought up to the newest version.</span></div>';
+  return h + '</div></section>';
+}
+var viewSettingsMU = viewSettings;
+viewSettings = function () {
+  var h = viewSettingsMU.apply(this, arguments);
+  if (!MYUPD && ME && ME.role === 'owner') myUpdLoad();
+  var c = myUpdCardHtml(); if (!c) return h;
+  var at = h.indexOf('<section'); return at >= 0 ? h.slice(0, at) + c + h.slice(at) : c + h;
+};
+document.addEventListener('click', function (e) {
+  var b = e.target.closest && e.target.closest('#myupd_save,#myupd_run'); if (!b || MYUPD_BUSY) return;
+  if (b.id === 'myupd_save') {
+    var t = (el('myupd_tok') || {}).value || '';
+    if (!t.trim()) { toast('Paste the token first.', true); return; }
+    MYUPD_BUSY = true; repaint();
+    srv('erpMyUpdateToken', [{ token: t.trim() }], function () { MYUPD_BUSY = false; toast('Token saved. Press Update now.'); myUpdLoad(); },
+      function (er) { MYUPD_BUSY = false; repaint(); toast(esc((er && er.message) || er), true, 9000); });
+    return;
+  }
+  MYUPD_BUSY = true; repaint();
+  (function step() {
+    srv('erpMyUpdateRun', [], function (r) {
+      if (MYUPD) { MYUPD.done = r.n || MYUPD.done; MYUPD.error = r.error || ''; }
+      if (r.more) { repaint(); return step(); }
+      MYUPD_BUSY = false;
+      myUpdLoad(function () { if (r.error) toast('The update stopped: ' + esc(r.error), true, 12000); else toast('Your ERP is up to date. Reload the page to use the new version.', false, 12000); });
+    }, function (er) { MYUPD_BUSY = false; repaint(); toast(esc((er && er.message) || er), true, 12000); });
+  })();
+});
+// once a session: an owner whose ERP waits for an update hears it (a stopped update shows as broken screens otherwise)
+setTimeout(function tell() {
+  if (MYUPD_TOLD) return;
+  if (!ME) { setTimeout(tell, 3000); return; }
+  if (ME.role !== 'owner') return;
+  MYUPD_TOLD = true;
+  myUpdLoad(function () {
+    if (MYUPD && MYUPD.copy && (!MYUPD.upToDate || MYUPD.error)) toast('Your ERP has an update waiting' + (MYUPD.error ? ' (the last one stopped)' : '') + '. Open <b>Settings \u2192 ERP updates</b>.', !!MYUPD.error, 15000);
+  });
+}, 4000);
 </script>
 <!-- devsync-1 (owner 21 Oct 2026: "his changes should be on this link, real-time trackable"): on the DEV ERP only (it is
      the one site with a version.json - deploy.py writes it there), a badge shows what is on it: the last change, who made

@@ -2754,3 +2754,15 @@ Every field that must be filled shows a red `*` after its label, on every screen
 ## Edit a product from its Receive line (rvedit-1, 21 Oct 2026, Walid)
 
 Each Receive line has an **Edit** button beside Remove. It opens that product's full product form on the Receive page (on the Lines step); **Save changes** updates the product and the line's name, and leaves the line and its quantity as they are (no second line). Shown only for saved products of the company's own list - not on the joint Receive page, not on file lines still waiting for a choice. A block at the end of `web/app.html` wraps `viewStock` and `saveProduct`.
+
+## Each company updates its own ERP (21 Oct 2026, tag myupd-1)
+Owner: Walid's company copy (PrototypeBD) showed "column fd does not exist" on New invoice. Its database was still on
+the 6 Oct release: no release had been published since (`deploy.py release` was too large for one request - 413 - and
+now goes in parts), and both company copies' Supabase tokens were refused (401, "Invalid access token" - expired or
+revoked on Supabase's side; the ERP still held them). The Platform tab is the provider's only, so:
+- Settings > **ERP updates** (company owners only, only on a company copy): their version against the newest, why the
+  last update stopped, a box for their own Supabase access token (checked against their own project before it is
+  kept), and **Update now** (the same steps as the platform's timer, a few per press, pressed again until done).
+  A waiting update is also told once per session as a toast. handlers/installer.js erpMyUpdates / erpMyUpdateToken /
+  erpMyUpdateRun - the copy is the one the request came through (deps.install), nothing in the payload picks it.
+- Tests: myupd_test (10). Not done: not clicked through on a real company copy (it needs the owner's own session).
