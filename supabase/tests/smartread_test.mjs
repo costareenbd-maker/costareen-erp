@@ -28,7 +28,7 @@ const ocr = [
 let r = await mgr('erpReceiveMatch', [{ rows: ocr, kind: 'text', reader: 'ocr', supplier: 'JF Polymers', fileName: 'Updated SC_261020_001649.pdf' }]);
 const L = r.ok ? r.result.lines : [];
 check('only the 8 product lines come out - no address, date, total or bank line', r.ok && L.length === 8 && L.every((l) => /^(CA|PC)\d/.test(l.code)), r.ok ? L.map((l) => [l.code, l.qty, l.text]) : r);
-check('the lines keep the document's order (no shuffling)', L.map((l) => l.code).join(',') === 'CA19029,CA19030,CA19037,CA04069,CA04070,PC1002031,CA03039,CA04086' && L.every((l, i) => l.pos === i + 1), L.map((l) => [l.pos, l.code]));
+check('the lines keep the order of the document (no shuffling)', L.map((l) => l.code).join(',') === 'CA19029,CA19030,CA19037,CA04069,CA04070,PC1002031,CA03039,CA04086' && L.every((l, i) => l.pos === i + 1), L.map((l) => [l.pos, l.code]));
 const by = (c) => L.find((l) => l.code === c) || {};
 check('quantities right, including OCR\'s "30. 000"', by('CA19029').qty === 350 && by('CA19030').qty === 500 && by('CA04069').qty === 30 && by('PC1002031').qty === 20, L.map((l) => [l.code, l.qty]));
 check('prices in USD', by('CA19029').price === 4.20 && by('CA03039').price === 5.35 && by('CA19029').currency === 'USD', [by('CA19029'), by('CA03039')]);
