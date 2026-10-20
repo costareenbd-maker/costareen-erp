@@ -322,6 +322,8 @@ export async function erpChatOrders(ctx, payload) {
   const st = ['pending', 'hold', 'approved', 'cancelled', 'all', 'today'].includes(p.status) ? p.status : 'pending';
   const q = str(p.q).toLowerCase();
   const today = formatDate(ctx.now, 'yyyy-MM-dd');
+  // 135: the fake-order shield reads every open order once (chat, product page, landing page)
+  try { await (await import('./landing.js')).shieldOpenOrders(ctx); } catch (_) { /* before 135 */ }
   const rows = await ctx.tx`select o.*, (select count(*)::int from chat_orders x where x.business_id = o.business_id and x.phone = o.phone and x.status in ('pending', 'hold') and x.id <> o.id) as dup
     from chat_orders o where o.business_id = ${ctx.biz}
       and (${st} = 'all' or (${st} = 'today' and o.status = 'hold' and o.follow_up_on <= ${today}) or o.status = ${st})
@@ -336,7 +338,7 @@ export async function erpChatOrders(ctx, payload) {
     const ev = await ctx.tx`select what, by_name, at from chat_order_events where order_id = ${o.id} order by id`;
     out.push({ id: o.id, no: o.no, name: o.name, phone: o.phone, address: o.address, items: o.items, delivery: num(o.delivery_charge), deliverySaid: o.delivery_said, note: str(o.note),
       status: o.status, hold: str(o.hold_reason), followUp: o.follow_up_on ? formatDate(new Date(o.follow_up_on), 'yyyy-MM-dd') : '', cancel: str(o.cancel_reason), invoice: str(o.invoice_no),
-      takenBy: o.taken_by, change: str(o.change_request), rating: o.rating, dup: o.dup > 0, conv: o.conversation_id,
+      takenBy: o.taken_by, change: str(o.change_request), rating: o.rating, dup: o.dup > 0, conv: o.conversation_id, risk: o.risk || null, landing: !!o.landing_id,
       total: (o.items || []).reduce((t, x) => t + num(x.qty) * num(x.price), 0) + num(o.delivery_charge), at: formatDate(new Date(o.created_at), 'd MMM, h:mm a'),
       delivery_status: inv ? str(inv.delivery_status) : '', paid: inv ? str(inv.payment_status) : '', history: ev.map((e) => ({ what: e.what, by: str(e.by_name), at: formatDate(new Date(e.at), 'd MMM h:mm a') })) });
   }

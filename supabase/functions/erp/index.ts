@@ -403,7 +403,7 @@ Deno.serve(async (req) => {
   const q0 = new URL(req.url).searchParams;
   const tid = tenantOf(req, q0);
   // public routes, a company on the bridge, and every company copy (calls carry their own sign-in, never a cookie) answer any page
-  const headers = { ...cors(req.headers.get('origin'), !!(tid || q0.get('install') || q0.get('control') || q0.get('signin') || q0.get('pub') || q0.get('chat') || /^(order|bill|item|avatar|media)$/.test(q0.get('inbox') || '') || (INSTALL && INSTALL.id))), 'Content-Type': 'application/json' };
+  const headers = { ...cors(req.headers.get('origin'), !!(tid || q0.get('install') || q0.get('control') || q0.get('signin') || q0.get('pub') || q0.get('chat') || /^(order|bill|item|avatar|media|land)$/.test(q0.get('inbox') || '') || (INSTALL && INSTALL.id))), 'Content-Type': 'application/json' };
   if (req.method === 'OPTIONS') return new Response('ok', { headers });
   if (tid && !(q0.get('install') || q0.get('control'))) {
     if (!tenantDeps) return new Response(JSON.stringify({ ok: false, error: 'This server does not run company ERPs.' }), { status: 200, headers });
@@ -497,7 +497,7 @@ async function serveWith(deps: any, req: Request, q0: URLSearchParams, headers: 
   }
   // the Inbox (handlers/inbox.js): channel webhooks ?inbox=hook&ch=<id>&k=<key> (GET = Meta's check, POST = events),
   // and the website chat ?chat=<channel id>&a=info|start|send|poll (public; the visitor carries a signed id)
-  if (q0.get('inbox') === 'hook' || q0.get('meta') === 'hook' || q0.get('chat') || /^(order|bill|item|avatar|media)$/.test(q0.get('inbox') || '')) {
+  if (q0.get('inbox') === 'hook' || q0.get('meta') === 'hook' || q0.get('chat') || /^(order|bill|item|avatar|media|land)$/.test(q0.get('inbox') || '')) {
     try { return await inboxRoute(deps, req, q0, headers); }
     catch (e) { console.error('inbox', e); return new Response('{"ok":false}', { status: 200, headers }); }
   }
@@ -607,6 +607,22 @@ async function inboxRoute(deps: any, req: Request, q0: URLSearchParams, headers:
     const f: any = await ib.mirrorServe(deps, what, String(q0.get('id') || ''), String(q0.get('k') || ''));
     if (!f || !f.bytes) return new Response('', { status: 404, headers: { 'Cache-Control': 'private, max-age=600' } });
     return new Response(f.bytes, { status: 200, headers: { 'Content-Type': String(f.mime || 'application/octet-stream'), 'Cache-Control': 'private, max-age=86400', 'Access-Control-Allow-Origin': '*' } });
+  }
+  // 135: an order landing page (handlers/landing.js; web/land.html)
+  if (what === 'land') {
+    const lp: any = await import('./handlers/landing.js');
+    const tok = String(q0.get('p') || '');
+    const nf = new Response('{"ok":false,"error":"This page is not available."}', { status: 404, headers });
+    if (!/^[0-9a-f]{32}$/.test(tok)) return nf;
+    const row = (await deps.sql`select business_id from landing_pages where token = ${tok}`)[0];
+    if (!row) return nf;
+    let r: any;
+    if (req.method === 'POST') {
+      let b: any = {}; try { b = await req.json(); } catch (_) { b = {}; }
+      const ip = (req.headers.get('cf-connecting-ip') || (req.headers.get('x-forwarded-for') || '').split(',')[0] || '').trim();
+      r = await asOwner(row.business_id, 'inbox:land', (ctx) => lp.landingAct(ctx, tok, b, ip));
+    } else r = await asOwner(row.business_id, 'inbox:land', (ctx) => lp.landingPage(ctx, tok));
+    return new Response(JSON.stringify((r && r.body) || { ok: false }), { status: (r && r.status) || 200, headers });
   }
   if (what === 'order' || what === 'bill' || what === 'item') {
     const pub: any = await import('./handlers/inboxpub.js');

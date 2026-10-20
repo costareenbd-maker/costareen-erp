@@ -35624,10 +35624,10 @@ body[data-fdview="settings"] #o_cp .crumbs, body[data-fdview="tools"] #o_cp .cru
 
   // ---------------------------------------------------------------- the frame
   var MENU_TABS = {
-    inbox: [['inbox', 'Inbox'], ['day', 'Day review'], ['tasks', 'Notifications'], ['orders', 'Orders'], ['bk', 'Bookings'], ['fu', 'Follow-ups'], ['cm', 'Comments'], ['desk', 'Agent Desk'], ['kb', 'Knowledge'], ['chans', 'Chat settings'], ['stats', 'Analytics'], ['cost', 'AI cost'], ['team', 'Team']],
+    inbox: [['inbox', 'Inbox'], ['day', 'Day review'], ['tasks', 'Notifications'], ['orders', 'Orders'], ['land', 'Landing pages'], ['bk', 'Bookings'], ['fu', 'Follow-ups'], ['cm', 'Comments'], ['desk', 'Agent Desk'], ['kb', 'Knowledge'], ['chans', 'Chat settings'], ['stats', 'Analytics'], ['cost', 'AI cost'], ['team', 'Team']],
   };
   var TABS = MENU_TABS.inbox;
-  var TAB_FEAT = { team: 'groups', orders: 'orders', bk: 'bookings', leads: 'leads', fu: 'followups', bc: 'broadcasts', cm: 'comments', kb: 'knowledge', stats: 'analytics' };
+  var TAB_FEAT = { team: 'groups', orders: 'orders', land: 'landing', bk: 'bookings', leads: 'leads', fu: 'followups', bc: 'broadcasts', cm: 'comments', kb: 'knowledge', stats: 'analytics' };
   function budgetNote() {
     var b = IB.F && IB.F.budget; if (!b || !b.budget || !(b.warn || b.stopped)) return '';
     return '<div class="note' + (b.stopped ? ' err' : '') + '" style="margin-bottom:10px"><div class="ico">!</div><div>' + (b.stopped ? '<b>The AI has stopped:</b> this month\'s AI budget (' + tk(b.budget) + ') is used up. Messages still arrive here; your team answers.' :
@@ -35664,6 +35664,7 @@ body[data-fdview="settings"] #o_cp .crumbs, body[data-fdview="tools"] #o_cp .cru
     if (t === 'inbox') return frame(inboxHtml());
     if (t === 'tasks') { if (!IB.tasks) load('erpInboxTasks', {}, 'tasks'); return frame(tasksHtml()); }
     if (t === 'orders') { if (!IB.orders) load('erpChatOrders', { status: IB.ostatus, q: IB.oq }, 'orders'); return frame(ordersHtml()); }
+    if (t === 'land') { if (!IB.land) load('erpLandingPages', {}, 'land'); if (!IB.drafts) load('erpLandingDrafts', { status: IB.dst || 'open' }, 'drafts'); if (ME && /^(manager|shareholder|owner)$/.test(ME.role) && !IB.shield) load('erpOrderShield', {}, 'shield'); return frame(landHtml()); }
     if (t === 'bk') { if (!IB.bk) load('erpBookings', { status: IB.bkst }, 'bk'); return frame(bkHtml()); }
     if (t === 'leads') { if (!IB.leads) load('erpInboxLeads', {}, 'leads'); return frame(leadsHtml()); }
     if (t === 'fu') { if (!IB.fu) load('erpInboxFollowups', {}, 'fu'); return frame(fuHtml()); }
@@ -35815,15 +35816,74 @@ body[data-fdview="settings"] #o_cp .crumbs, body[data-fdview="tools"] #o_cp .cru
           : o.status === 'approved' ? '<button class="btn small" type="button" data-ibinv="' + esc(o.invoice) + '">Open ' + esc(o.invoice) + '</button>' : '';
         return '<div class="ib-c"><div style="display:flex;justify-content:space-between;gap:8px"><h3>' + esc(o.no) + '</h3><span class="ib-tag ' + (o.status === 'pending' ? 'hot' : o.status === 'approved' ? 'ai' : 'test') + '">' + esc(o.status.toUpperCase()) + '</span></div>' +
           '<div class="sub">' + esc(o.at) + ' · taken by ' + esc(o.takenBy === 'ai' ? 'the AI' : o.takenBy) + (o.dup ? ' · <b style="color:var(--fd-negative)">another open order on this phone</b>' : '') + '</div>' +
+          shieldLine(o) +
           '<div style="font-size:14px"><b>' + esc(o.name) + '</b> · ' + esc(o.phone) + '<br><span class="sku">' + esc(o.address) + '</span></div><div style="margin:8px 0;font-size:13.5px">' + items + '</div>' +
           '<div class="line" style="display:flex;justify-content:space-between"><span>Delivery ' + tk(o.delivery) + (o.deliverySaid !== null && o.deliverySaid !== undefined ? ' <span class="sku">(the AI said ' + tk(o.deliverySaid) + ')</span>' : '') + '</span><b>' + tk(o.total) + '</b></div>' +
           (o.hold ? '<div class="sku">On hold: ' + esc(o.hold) + (o.followUp ? ' · follow up ' + esc(o.followUp) : '') + '</div>' : '') + (o.cancel ? '<div class="sku">Cancelled: ' + esc(o.cancel) + '</div>' : '') +
           (o.change ? '<div class="ib-note" style="margin-top:6px">' + esc(o.change) + '</div>' : '') + (o.delivery_status ? '<div class="sku">Delivery: ' + esc(o.delivery_status) + ' · ' + esc(o.paid) + '</div>' : '') +
           (o.rating ? '<div class="sku">Rated ' + '⭐'.repeat(o.rating) + '</div>' : '') +
-          '<div class="ib-actions">' + act + (o.conv ? '<button class="btn small" type="button" data-ibgoconv="' + esc(o.conv) + '">Chat</button>' : '') + '<button class="btn small" type="button" data-iboa="note" data-id="' + o.id + '">Note</button></div>' +
+          '<div class="ib-actions">' + act + (o.conv ? '<button class="btn small" type="button" data-ibgoconv="' + esc(o.conv) + '">Chat</button>' : '') + '<button class="btn small" type="button" data-iboa="note" data-id="' + o.id + '">Note</button>' +
+          (o.status === 'pending' && o.risk && o.risk.level !== 'ok' && ME && /^(manager|shareholder|owner)$/.test(ME.role) ? '<button class="btn small" type="button" data-lpblock="' + esc(o.phone) + '">Block this number</button>' : '') + '</div>' +
           '<details style="margin-top:8px"><summary class="sku">History</summary>' + o.history.map(function (e) { return '<div class="sku">' + esc(e.at) + ' · ' + esc(e.by) + ' · ' + esc(e.what) + '</div>'; }).join('') + '</details></div>';
       }).join('') + '</div>';
     });
+  }
+
+  // ---------------------------------------------------------------- Landing pages, unfinished orders, the shield (135)
+  var SH_TAG = { ok: ['OK', 'ai'], watch: ['CHECK', 'hot'], risky: ['RISKY', 'human'], blocked: ['BLOCKED', 'human'] };
+  function shieldLine(o) {
+    var r = o.risk; if (!r || !r.level) return '';
+    var tg = SH_TAG[r.level] || SH_TAG.ok;
+    if (r.level === 'ok' && !(r.reasons || []).length) return '<div class="sub">🛡 Shield: <span class="ib-tag ai">OK</span></div>';
+    return '<div class="sub" style="margin:4px 0">🛡 Shield: <span class="ib-tag ' + tg[1] + '">' + tg[0] + (r.score ? ' ' + r.score : '') + '</span> ' + esc((r.reasons || []).join(' · ')) + '</div>';
+  }
+  function landHtml() {
+    var h = '';
+    h += errOr(IB.land, function (d) {
+      var x = '<div class="ib-c" style="margin-bottom:14px"><h3>Make an order page for an ad</h3><div class="sub">One click: choose a product. The page gets its photo, price, selling points, delivery charges and a cash-on-delivery order form. Paste its link in your Facebook ad. Orders land in Orders; a number typed but not sent lands in Unfinished below.</div>' +
+        '<div class="ib-form" style="margin-top:8px"><label style="flex:2">Product<input class="i" id="lpSku" list="lpList" placeholder="Search a product"></label><datalist id="lpList">' +
+        d.products.map(function (p) { return '<option value="' + esc(p.sku) + '">' + esc(p.name) + ' — ' + tk(p.price) + (p.stock > 0 ? '' : ' (out of stock)') + '</option>'; }).join('') + '</datalist>' +
+        '<label>Offer price (optional)<input class="i" id="lpOffer" inputmode="numeric" placeholder="e.g. 1450"></label></div>' +
+        '<div class="ib-actions"><button class="btn primary small" type="button" data-lpmake="1">Make the page</button></div></div>';
+      if (!d.pages.length) return x + '<div class="ib-c"><div class="ib-empty">No landing pages yet.</div></div>';
+      return x + '<div class="ib-grid2">' + d.pages.map(function (pg) {
+        var ed = IB.lpEdit === pg.id;
+        var top = '<div style="display:flex;gap:10px;align-items:flex-start">' + (pg.image ? '<img src="' + esc(pg.image) + '" alt="" style="width:64px;height:64px;object-fit:cover;border-radius:10px">' : '') +
+          '<div style="flex:1;min-width:0"><h3 style="margin:0" data-noi18n="1">' + esc(pg.headline || pg.name) + '</h3><div class="sub" data-noi18n="1">' + esc(pg.name) + '</div>' +
+          '<div style="font-size:14px">' + (pg.offer ? '<b>' + tk(pg.offer) + '</b> <s class="sku">' + tk(pg.price) + '</s>' : '<b>' + tk(pg.price) + '</b>') + ' · ' + (pg.stock > 0 ? pg.stock + ' in stock' : '<b style="color:var(--fd-negative)">out of stock</b>') + '</div></div>' +
+          '<span class="ib-tag ' + (pg.active ? 'ai' : 'test') + '">' + (pg.active ? 'LIVE' : 'OFF') + '</span></div>';
+        var stats = '<div class="ib-kpis" style="margin-top:10px"><div class="ib-kpi"><b>' + pg.views + '</b><span>VIEWS</span></div><div class="ib-kpi"><b>' + pg.orders + '</b><span>ORDERS</span></div><div class="ib-kpi"><b>' + pg.unfinished + '</b><span>UNFINISHED</span></div><div class="ib-kpi"><b>' + pg.conversion + '%</b><span>VIEW → ORDER</span></div></div>';
+        var link = '<div class="ib-code" style="margin-top:8px;word-break:break-all">' + esc(pg.link) + '</div><div class="ib-actions"><button class="btn small" type="button" data-lpcopy="' + esc(pg.link) + '">Copy link</button><a class="btn small" href="' + esc(pg.link) + '" target="_blank" rel="noopener">Open</a>' +
+          '<button class="btn small" type="button" data-lpedit="' + pg.id + '">' + (ed ? 'Close' : 'Edit') + '</button><button class="btn small" type="button" data-lpact="' + pg.id + '" data-on="' + (pg.active ? '0' : '1') + '">' + (pg.active ? 'Switch off' : 'Switch on') + '</button></div>';
+        var form = ed ? '<div class="ib-form" style="margin-top:10px"><label style="flex-basis:100%">Headline<input class="i" id="lpH_' + pg.id + '" value="' + esc(pg.headline) + '"></label>' +
+          '<label style="flex-basis:100%">Selling points (one per line)<textarea class="i" id="lpP_' + pg.id + '" rows="5">' + esc((pg.points || []).join('\n')) + '</textarea></label>' +
+          '<label>Offer price (empty = normal price)<input class="i" id="lpO_' + pg.id + '" inputmode="numeric" value="' + (pg.offer || '') + '"></label><label>Colour<input class="i" type="color" id="lpC_' + pg.id + '" value="' + esc(pg.colour || '#e8590c') + '"></label></div>' +
+          '<div class="ib-actions"><button class="btn primary small" type="button" data-lpsave="' + pg.id + '">Save</button></div>' : '';
+        return '<div class="ib-c">' + top + stats + link + form + '</div>';
+      }).join('') + '</div>';
+    });
+    // unfinished orders: a number typed on the form, never sent - call them
+    h += '<div class="ib-c" style="margin-top:14px"><h3>Unfinished orders — call them back</h3><div class="sub">A visitor typed a real mobile number on an order form but did not press Confirm. Most are finished by one call.</div>' + errOr(IB.drafts, function (d) {
+      var st = [['open', 'To call'], ['called', 'Called'], ['ordered', 'Ordered'], ['dismissed', 'Dismissed'], ['all', 'All']];
+      var x = '<div class="ib-piles" style="margin:8px 0">' + st.map(function (s2) { var n = d.counts[s2[0]]; return '<button type="button" data-lpdst="' + s2[0] + '" class="' + ((IB.dst || 'open') === s2[0] ? 'on' : '') + '">' + s2[1] + (n ? ' · ' + n : '') + '</button>'; }).join('') + '</div>';
+      if (!d.drafts.length) return x + '<div class="ib-empty">Nobody here.</div>';
+      return x + d.drafts.map(function (r) {
+        var wa = String(r.phone).replace(/^0/, '880');
+        return '<div class="line" style="padding:10px 0;border-top:1px solid var(--fd-border)"><div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap"><span><b data-noi18n="1">' + esc(r.name || 'No name yet') + '</b> · <a href="tel:' + esc(r.phone) + '">' + esc(r.phone) + '</a> · <a href="https://wa.me/' + esc(wa) + '" target="_blank" rel="noopener">WhatsApp</a></span><span class="sku">' + esc(r.at) + '</span></div>' +
+          '<div class="sub" data-noi18n="1">' + esc(r.product) + ' × ' + r.qty + (r.area ? ' · ' + esc(r.area === 'outside' ? 'outside Dhaka' : 'inside Dhaka') : '') + (r.address ? ' · ' + esc(r.address) : ' · no address yet') + '</div>' +
+          (r.note ? '<div class="sku">Note: ' + esc(r.note) + '</div>' : '') + (r.order ? '<div class="sku">Order ' + esc(r.order) + '</div>' : '') +
+          (r.status === 'open' || r.status === 'called' ? '<div class="ib-actions"><button class="btn small primary" type="button" data-lpdo="order" data-id="' + r.id + '">Make the order</button>' + (r.status === 'open' ? '<button class="btn small" type="button" data-lpdo="called" data-id="' + r.id + '">Called</button>' : '') +
+            '<button class="btn small" type="button" data-lpdo="dismiss" data-id="' + r.id + '">Dismiss</button></div>' : r.status === 'dismissed' ? '<div class="ib-actions"><button class="btn small" type="button" data-lpdo="reopen" data-id="' + r.id + '">Back to the list</button></div>' : '') + '</div>';
+      }).join('');
+    }) + '</div>';
+    // the shield
+    if (ME && /^(manager|shareholder|owner)$/.test(ME.role)) h += '<div class="ib-c" style="margin-top:14px"><h3>🛡 Fake-order shield</h3><div class="sub">Every order from a chat, a product page or a landing page is checked: the block list, the buyer\'s own parcels with you (returned before?), cancelled orders, a second open order on the same number, many numbers from one internet address, a name or address that cannot be real, a big cash-on-delivery quantity. A blocked number cannot order online.</div>' + errOr(IB.shield, function (d) {
+      var x = '<div class="ib-form" style="margin-top:8px"><label>Block a mobile number<input class="i" id="shPhone" inputmode="tel" placeholder="01XXXXXXXXX"></label><label style="flex:2">Why<input class="i" id="shWhy" placeholder="e.g. refused 3 parcels"></label></div><div class="ib-actions"><button class="btn small" type="button" data-shadd="1">Block</button></div>';
+      x += d.blocks.length ? '<div style="margin-top:8px">' + d.blocks.map(function (b) { return '<div class="line" style="display:flex;justify-content:space-between;gap:8px;padding:6px 0;border-top:1px solid var(--fd-border)"><span>' + (b.kind === 'ip' ? 'Internet address ' : '') + '<b>' + esc(b.value) + '</b> <span class="sku">' + esc(b.reason) + ' · ' + esc(b.by) + ' · ' + esc(b.at) + '</span></span><button class="btn small" type="button" data-shdel="' + b.id + '">Unblock</button></div>'; }).join('') + '</div>' : '<div class="sub">No blocked numbers.</div>';
+      if (d.flagged.length) x += '<details style="margin-top:10px"><summary class="sub" style="cursor:pointer"><b>Orders the shield flagged (60 days): ' + d.flagged.length + '</b></summary>' + d.flagged.map(function (o) { var tg = SH_TAG[o.level] || SH_TAG.ok; return '<div class="line" style="padding:6px 0;border-top:1px solid var(--fd-border);font-size:13.5px"><span class="ib-tag ' + tg[1] + '">' + tg[0] + ' ' + o.score + '</span> <b>' + esc(o.no) + '</b> · <span data-noi18n="1">' + esc(o.name) + '</span> · ' + esc(o.phone) + ' · ' + esc(o.status) + ' <span class="sku">' + esc(o.at) + '<br>' + esc(o.reasons.join(' · ')) + '</span></div>'; }).join('') + '</details>';
+      return x;
+    }) + '</div>';
+    return h;
   }
 
   // ---------------------------------------------------------------- Bookings (service businesses)
@@ -36305,7 +36365,7 @@ body[data-fdview="settings"] #o_cp .crumbs, body[data-fdview="tools"] #o_cp .cru
     if (!e.target.closest) return;
     if (e.target.closest('[data-ibtoconn]')) { e.preventDefault(); go('settings'); return; }
     if (!isIbView() && !(VIEW === 'settings' && e.target.closest('.ib-conn'))) return;
-    var t = e.target.closest('[data-chmail],[data-mailadd],[data-ibtab],[data-net],[data-brg],[data-ibday],[data-ibdaymore],[data-ibdayagain],[data-ibpile],[data-ibopen],[data-ibclose],[data-ibmode],[data-ibsend],[data-ibnote],[data-ibside],[data-ibai],[data-ibusedraft],[data-ibcsave],[data-ibinvoice],[data-ibgoconv],[data-ibtaskdone],[data-ibnotify],[data-ibost],[data-iboa],[data-ibinv],[data-iblead],[data-ibleadnew],[data-ibfusave],[data-ibbcsave],[data-ibbcsend],[data-ibcm],[data-ibpfsave],[data-ibundo],[data-ibhelper],[data-ibpublish],[data-ibdiscardall],[data-ibrule],[data-ibruleadd],[data-ibtest],[data-ibtestclear],[data-iboffer],[data-ibofferadd],[data-ibsavedadd],[data-ibsavedx],[data-ibkbadd],[data-ibkbtest],[data-ibkbx],[data-chsave],[data-chlive],[data-chpractice],[data-chcm],[data-chqr],[data-chremove],[data-chadd],[data-ibdays],[data-ibcost],[data-ibbkst],[data-ibbka],[data-ibduty],[data-ibexp],[data-ibolder],[data-chall],[data-ibdict],[data-ibnotebox],[data-ibplat],[data-ibplan],[data-ibgrp],[data-ibacc],[data-tpl],[data-meta],[data-metause]');
+    var t = e.target.closest('[data-lpmake],[data-lpcopy],[data-lpedit],[data-lpact],[data-lpsave],[data-lpdst],[data-lpdo],[data-shadd],[data-shdel],[data-lpblock],[data-chmail],[data-mailadd],[data-ibtab],[data-net],[data-brg],[data-ibday],[data-ibdaymore],[data-ibdayagain],[data-ibpile],[data-ibopen],[data-ibclose],[data-ibmode],[data-ibsend],[data-ibnote],[data-ibside],[data-ibai],[data-ibusedraft],[data-ibcsave],[data-ibinvoice],[data-ibgoconv],[data-ibtaskdone],[data-ibnotify],[data-ibost],[data-iboa],[data-ibinv],[data-iblead],[data-ibleadnew],[data-ibfusave],[data-ibbcsave],[data-ibbcsend],[data-ibcm],[data-ibpfsave],[data-ibundo],[data-ibhelper],[data-ibpublish],[data-ibdiscardall],[data-ibrule],[data-ibruleadd],[data-ibtest],[data-ibtestclear],[data-iboffer],[data-ibofferadd],[data-ibsavedadd],[data-ibsavedx],[data-ibkbadd],[data-ibkbtest],[data-ibkbx],[data-chsave],[data-chlive],[data-chpractice],[data-chcm],[data-chqr],[data-chremove],[data-chadd],[data-ibdays],[data-ibcost],[data-ibbkst],[data-ibbka],[data-ibduty],[data-ibexp],[data-ibolder],[data-chall],[data-ibdict],[data-ibnotebox],[data-ibplat],[data-ibplan],[data-ibgrp],[data-ibacc],[data-tpl],[data-meta],[data-metause]');
     if (!t) return;
     var d = t.dataset;
     if (d.ibtab) { IB.tab = d.ibtab; if (['tasks', 'orders', 'leads', 'stats', 'cost', 'cm', 'bc', 'fu', 'day'].indexOf(d.ibtab) >= 0) IB[d.ibtab] = null; paint(); return; }
@@ -36468,6 +36528,29 @@ body[data-fdview="settings"] #o_cp .crumbs, body[data-fdview="tools"] #o_cp .cru
     if (d.chlive) { t.disabled = true; t.textContent = 'Testing…'; srv('erpInboxGoLive', [{ id: d.chlive }], function (r) { IB.chans = r; paint(); toast('Live — the AI answered: ' + esc(r.answers.map(function (a) { return a.a; }).join(' / ').slice(0, 200))); }, function (er) { paint(); fail(er); }); return; }
     if (d.chpractice) { srv('erpInboxChannelAct', [{ id: d.chpractice, action: 'practice' }], function (r) { IB.chans = r; paint(); }, fail); return; }
     if (d.chcm) { srv('erpInboxChannelAct', [{ id: d.chcm, action: 'comments', on: d.on === '1' }], function (r) { IB.chans = r; paint(); }, fail); return; }
+    if (d.lpmake) {
+      var sku = val('lpSku'); if (!sku) { toast('Choose a product.', true); return; }
+      t.disabled = true; srv('erpLandingSave', [{ sku: sku, offerPrice: val('lpOffer') || undefined }], function (r) { IB.land = r; IB.lpEdit = r.saved.id; paint(); toast('The page is ready — copy its link into your ad.'); }, function (er) { t.disabled = false; fail(er); }); return;
+    }
+    if (d.lpcopy) { try { navigator.clipboard.writeText(d.lpcopy); toast('Link copied.'); } catch (e2) { uiPrompt('Copy the link', d.lpcopy); } return; }
+    if (d.lpedit) { IB.lpEdit = IB.lpEdit === d.lpedit ? '' : d.lpedit; paint(); return; }
+    if (d.lpact) { srv('erpLandingSave', [{ id: d.lpact, active: d.on === '1' }], function (r) { IB.land = r; paint(); }, fail); return; }
+    if (d.lpsave) {
+      var id = d.lpsave, pts = (val('lpP_' + id) || '').split('\n').map(function (x) { return x.trim(); }).filter(Boolean);
+      srv('erpLandingSave', [{ id: id, headline: val('lpH_' + id), points: pts, offerPrice: val('lpO_' + id) || 0, colour: val('lpC_' + id) }], function (r) { IB.land = r; IB.lpEdit = ''; paint(); toast('Saved.'); }, fail); return;
+    }
+    if (d.lpdst) { IB.dst = d.lpdst; IB.drafts = null; paint(); return; }
+    if (d.lpdo) {
+      if (d.lpdo === 'order') {
+        uiPrompt('Full delivery address (as the customer said on the call)', '').then(function (ad) { if (ad === null) return; srv('erpLandingDraftAct', [{ id: d.id, action: 'order', address: ad, status: IB.dst || 'open' }], function (r) { IB.drafts = r; IB.orders = null; IB.land = null; paint(); toast('Order made — it is in Orders, waiting for approval.'); }, fail); });
+        return;
+      }
+      if (d.lpdo === 'called' || d.lpdo === 'dismiss') { uiPrompt(d.lpdo === 'called' ? 'What did they say? (optional)' : 'Why? (optional)', '').then(function (nt) { if (nt === null) return; srv('erpLandingDraftAct', [{ id: d.id, action: d.lpdo, note: nt, status: IB.dst || 'open' }], function (r) { IB.drafts = r; paint(); }, fail); }); return; }
+      srv('erpLandingDraftAct', [{ id: d.id, action: d.lpdo, status: IB.dst || 'open' }], function (r) { IB.drafts = r; paint(); }, fail); return;
+    }
+    if (d.shadd) { srv('erpOrderShieldSet', [{ block: { kind: 'phone', value: val('shPhone'), reason: val('shWhy') } }], function (r) { IB.shield = r; paint(); toast('Blocked.'); }, fail); return; }
+    if (d.shdel) { srv('erpOrderShieldSet', [{ unblock: d.shdel }], function (r) { IB.shield = r; paint(); }, fail); return; }
+    if (d.lpblock) { uiPrompt('Block ' + d.lpblock + '? Why (your team sees it)', 'fake order').then(function (why) { if (why === null) return; srv('erpOrderShieldSet', [{ block: { kind: 'phone', value: d.lpblock, reason: why } }], function (r) { IB.shield = r; IB.orders = null; paint(); toast('Blocked — this number cannot order online any more.'); }, fail); }); return; }
     if (d.chmail) { t.disabled = true; t.textContent = 'Checking…'; srv('erpInboxChannelAct', [{ id: d.chmail, action: 'mailcheck' }], function (r) { IB.chans = r; paint(); var m = r.done && r.done.mail; toast(m && m.ok ? 'The mailbox works: reading and sending.' : esc((m && m.error) || 'Not reached.'), !(m && m.ok), 12000); }, function (er) { paint(); fail(er); }); return; }
     if (d.mailadd) {
       var P = MAIL_PRESETS[val('mlPv') || 'gmail'], addr = val('mlAddr'), pass = val('mlPass');

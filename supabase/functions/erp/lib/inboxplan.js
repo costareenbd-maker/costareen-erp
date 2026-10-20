@@ -27,6 +27,7 @@ export const FEATURES = [
   ['order_page', 'Sales', 'Order page and Track button', 'Each order gets its own page with its status and the courier\'s tracking'],
   ['bill_picture', 'Sales', 'Bill as a picture', 'After an order the customer gets the bill as an image'],
   ['product_page', 'Sales', 'Product pages with Buy', 'Each product has a page with a Buy button, opened from the chat'],
+  ['landing', 'Sales', 'Landing pages and unfinished orders', 'A product page for your ads with a cash-on-delivery order form; visitors who typed their number but did not order are kept to call back'],
   ['bookings', 'Sales', 'Bookings', 'For service businesses: booking requests, advance, reminders'],
   ['leads', 'Later (own menu)', 'Leads', 'Interested customers kept with a follow-up date - its own menu later; off until then'],
   ['followups', 'Sales', 'Follow-ups', 'A reminder to a customer who went quiet (inside 24 hours)'],

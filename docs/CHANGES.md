@@ -2593,3 +2593,20 @@ quoted-printable, encoded-word headers, charsets, HTML-only mail, RFC 2231 file 
   Gmail ("Invalid credentials" / 535) - a real app password will connect. Tests: inboxmail (21) with a scripted
   IMAP + SMTP server. NOT done: replies typed in Gmail itself are not copied into the chat (Sent folder not read);
   Outlook.com / Microsoft 365 (they need OAuth, no app passwords); attachments other than pictures are named only.
+
+## 20 Oct 2026 - Landing pages, unfinished orders, fake-order shield (owner: compare with Bizmation, improve; tag landing-shield-1)
+Comparison in docs/BIZMATION-COMPARE.md. Built inside the Inbox (owner-only app), feature `landing` (135):
+- Inbox → Landing pages: one-click order page per product (erpLandingSave: headline + selling points from the product in
+  the shop's language, optional offer price below the normal price, below cost owner only), public web/land.html
+  (?inbox=land&p=<token>): photo, offer with saving, points, trust badges, delivery, returns, COD order form with live
+  total, sticky Order + call button; views / orders / unfinished / view→order %. Orders = chat_orders (taken_by
+  'landing page', landing_id, ip), approved into invoices as before.
+- Unfinished orders: a real number typed on the form is kept (landing_drafts, per browser) until ordered; list with
+  Call / WhatsApp / Called (note) / Make the order / Dismiss.
+- Fake-order shield (orderRisk): block list (order_blocks: phone / ip), own returned parcels, cancelled orders, another
+  open order on the number, several numbers from one ip a day, unreal name / address, big COD quantity -> OK / CHECK /
+  RISKY / BLOCKED with reasons, stored on chat_orders.risk; every open chat order gets it when Orders is opened; blocked
+  numbers cannot order online; "Block this number" on a flagged order. Public page rate-limited.
+- index.ts: the Inbox's public gate now lets `land` through (the tests call the handlers directly, so this was caught on
+  dev). Tests landing (27). Checked on dev with a real order. NOT done: courier-wide ratio, confirmation calls,
+  manufacturing / bundles, size x colour variants (see the comparison).
