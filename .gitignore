@@ -19,3 +19,4 @@ local/run.log
 
 # owner-only: real business documents (supplier files, real figures) - never on GitHub
 private/
+local/alltests.log
