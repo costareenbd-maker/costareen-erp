@@ -2566,3 +2566,9 @@ NOT done: Bangla for the new form texts; live pool is empty so nothing to correc
    handlers only ran on the Stock screen. Now they run on the joint Receive page too, the file is matched to the joint
    products (erpReceiveMatch / erpReceiveRead with `pool`, never cost), and supplier names are not remembered against
    joint products. Tag joint-recv-file-1; joint7 +2; checked on dev with a CSV (2 of 2 lines matched).
+
+## 20 Oct 2026 - Inbox words are never translated (owner: Bangla must not change customers' or our messages)
+The Bangla screen swaps any text that matches a known English phrase, so a customer's "Price" or "Delivery" turned
+into Bangla. Chat messages (customer and team), cards, quick-reply buttons, voice transcripts, team notes, the chat
+list's names and last messages, the chat head's name, and Comments (comment + our reply) now carry data-noi18n.
+Screen labels around them still translate. Tag inbox-raw-1. Checked on dev: plain "Price" -> দাম, a chat "Price" stays.

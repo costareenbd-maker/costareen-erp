@@ -35721,8 +35721,8 @@ body[data-fdview="settings"] #o_cp .crumbs, body[data-fdview="tools"] #o_cp .cru
       (!L ? '<div class="loading">Loading…</div>' : L.error ? '<div class="note err"><div>' + esc(L.error) + '</div></div>' : !L.list.length ? '<div class="ib-empty">' + (IB.pile === 'waiting' ? 'Nobody is waiting for a person. ✓' : 'No chats here yet.') + '</div>' :
         L.list.map(function (x) {
           return '<div class="ib-row' + (x.id === IB.convId ? ' on' : '') + '" data-ibopen="' + esc(x.id) + '"><div class="ib-av">' + (x.avatar ? '<img src="' + esc(x.avatar) + '" alt="">' : ini(x.name)) + '<i class="ch ib-ch-' + esc(x.channel) + '" title="' + esc(CHN[x.channel] || x.channel) + '"></i></div>' +
-            '<div class="t"><b>' + esc(x.name) + (x.mode === 'human' ? ' <span class="ib-tag human">' + (x.waiting && !x.claimed ? '⏱ ' + esc(x.waiting) : 'HUMAN') + '</span>' : '') + (x.test ? ' <span class="ib-tag test">TEST</span>' : '') +
-            (x.interest === 'hot' ? ' <span class="ib-tag hot">HOT</span>' : '') + '<span class="ago">' + esc(x.ago) + '</span></b><span>' + (x.reason ? '<b style="display:inline;color:var(--fd-negative)">' + esc(x.reason) + ' · </b>' : '') + esc(x.last) + '</span></div>' +
+            '<div class="t"><b><span data-noi18n="1">' + esc(x.name) + '</span>' + (x.mode === 'human' ? ' <span class="ib-tag human">' + (x.waiting && !x.claimed ? '⏱ ' + esc(x.waiting) : 'HUMAN') + '</span>' : '') + (x.test ? ' <span class="ib-tag test">TEST</span>' : '') +
+            (x.interest === 'hot' ? ' <span class="ib-tag hot">HOT</span>' : '') + '<span class="ago">' + esc(x.ago) + '</span></b><span>' + (x.reason ? '<b style="display:inline;color:var(--fd-negative)">' + esc(x.reason) + ' · </b>' : '') + '<span data-noi18n="1">' + esc(x.last) + '</span></span></div>' +
             (x.unread ? '<span class="ib-unread">' + x.unread + '</span>' : '') + '</div>';
         }).join('')) + '</div></div>';
     var conv = '<div class="ib-pane ib-convpane">' + (c ? convHtml(c) : '<div class="ib-empty">Choose a chat on the left.<br><br>' + (L && L.list && !L.list.length && IB.pile === 'open' ? 'No chats yet — connect a channel on the <b>Channels</b> tab.' : '') + '</div>') + '</div>';
@@ -35731,15 +35731,16 @@ body[data-fdview="settings"] #o_cp .crumbs, body[data-fdview="tools"] #o_cp .cru
   }
   function bubble(m) {
     if (m.dir === 'note' && m.author === 'system') return '<div class="ib-ev">' + esc(m.text) + ' · ' + esc(m.at) + '</div>';
-    if (m.dir === 'note') return '<div class="ib-note">📝 ' + esc(m.who) + ': ' + esc(m.text) + ' <span class="sku">' + esc(m.at) + '</span></div>';
+    if (m.dir === 'note') return '<div class="ib-note">📝 ' + esc(m.who) + ': <span data-noi18n="1">' + esc(m.text) + '</span> <span class="sku">' + esc(m.at) + '</span></div>';
     var cls = 'ib-b ' + (m.dir === 'in' ? 'in' : 'out') + (m.author === 'team' ? ' team' : '') + (m.status === 'failed' ? ' failed' : '');
     var body = '';
     if (m.kind === 'image' && m.url) body += '<img src="' + esc(m.url) + '" alt="photo" loading="lazy">';
     if (m.kind === 'audio' && m.url) body += '<audio controls preload="none" src="' + esc(m.url) + '"></audio>';
-    if (m.cards) body += '<div class="ib-cards">' + m.cards.map(function (x) { return '<div class="ib-card">' + (x.image ? '<img src="' + esc(x.image) + '" alt="">' : '') + '<div><b>' + esc(x.title) + '</b>' + esc(x.subtitle) + '</div></div>'; }).join('') + '</div>';
-    if (m.text) body += esc(m.text);
-    if (m.buttons) body += '<div class="ib-btns">' + m.buttons.map(function (b) { return '<span>' + esc(b) + '</span>'; }).join('') + '</div>';
-    if (m.transcript) body += '<span class="tr">🎤 ' + esc(m.transcript) + '</span>';
+    if (m.cards) body += '<div class="ib-cards">' + m.cards.map(function (x) { return '<div class="ib-card">' + (x.image ? '<img src="' + esc(x.image) + '" alt="">' : '') + '<div data-noi18n="1"><b>' + esc(x.title) + '</b>' + esc(x.subtitle) + '</div></div>'; }).join('') + '</div>';
+    // inbox-raw-1 (20 Oct 2026): the customer's and the team's words are never translated by the Bangla screen
+    if (m.text) body += '<span data-noi18n="1">' + esc(m.text) + '</span>';
+    if (m.buttons) body += '<div class="ib-btns" data-noi18n="1">' + m.buttons.map(function (b) { return '<span>' + esc(b) + '</span>'; }).join('') + '</div>';
+    if (m.transcript) body += '<span class="tr">🎤 <span data-noi18n="1">' + esc(m.transcript) + '</span></span>';
     if (m.seen) body += '<span class="tr">📷 What the AI saw: ' + esc(m.seen) + '</span>';
     var who = m.dir === 'in' ? '' : m.author === 'ai' ? 'AI' : m.author === 'team' ? (m.who || 'Team') : 'Update';
     return '<div class="' + cls + '">' + body + '<span class="meta">' + (who ? esc(who) + ' · ' : '') + esc(m.at) + (m.status === 'failed' ? ' · ✕ not delivered: ' + esc(m.error) : '') + '</span></div>';
@@ -35747,7 +35748,7 @@ body[data-fdview="settings"] #o_cp .crumbs, body[data-fdview="tools"] #o_cp .cru
   function convHtml(c) {
     var human = c.mode === 'human';
     var head = '<div class="ib-conv-h"><button class="btn small ib-back" type="button" data-ibclose="1">‹</button><div class="ib-av">' + (c.contact.avatar ? '<img src="' + esc(c.contact.avatar) + '" alt="">' : ini(c.contact.name)) + '</div>' +
-      '<div class="who"><b>' + esc(c.contact.name || 'Customer') + '</b><span>' + esc(c.channel.name) + ' · ' + esc(CHN[c.channel.kind] || c.channel.kind) + (c.contact.phone ? ' · ' + esc(c.contact.phone) : '') + '</span></div>' +
+      '<div class="who"><b data-noi18n="1">' + esc(c.contact.name || 'Customer') + '</b><span>' + esc(c.channel.name) + ' · ' + esc(CHN[c.channel.kind] || c.channel.kind) + (c.contact.phone ? ' · ' + esc(c.contact.phone) : '') + '</span></div>' +
       (human ? '<span class="ib-tag human">HUMAN' + (c.claimed ? ' · ' + esc(c.claimed) : '') + (c.until ? ' · until ' + esc(c.until) : '') + '</span>' : (c.channel.status && c.channel.status !== 'live' && !c.test ? '<span class="ib-tag test" title="This channel is in practice: the AI answers only chats that start with the test code. Reply to this customer yourself, or press Go live on the Channels tab.">PRACTICE · AI NOT ANSWERING · REPLY YOURSELF</span>'
         : c.channel.aiOn === false ? '<span class="ib-tag test" title="The AI is switched off on this channel.">AI IS OFF · REPLY YOURSELF</span>'
         : '<span class="ib-tag ai">AI is handling this chat</span>')) +
@@ -35920,8 +35921,8 @@ body[data-fdview="settings"] #o_cp .crumbs, body[data-fdview="tools"] #o_cp .cru
       if (!d.comments.length) return '<div class="ib-c"><div class="ib-empty">No comments yet. Comments on your Facebook and Instagram posts arrive here once a page is live.</div></div>';
       return '<div class="ib-c"><div class="sub">The AI replies by name (with the product\'s photo when it is about one), sends a private message, deletes certain junk and hides doubtful comments for you to decide.</div><div class="fdd-scroll"><table class="fdd-t"><thead><tr><th>From</th><th>Comment</th><th>Reply / action</th><th></th></tr></thead><tbody>' +
         d.comments.map(function (c) {
-          return '<tr><td><b>' + esc(c.from || '—') + '</b><div class="sku">' + esc(CHN[c.channel] || c.channel) + ' · ' + esc(c.at) + '</div></td><td style="white-space:normal;max-width:300px">' + esc(c.text) + '</td>' +
-            '<td style="white-space:normal;max-width:300px">' + (c.reply ? esc(c.reply) + '<div class="sku">' + esc(c.by) + '</div>' : c.action ? '<b>' + esc(c.action) + '</b> <span class="sku">' + esc(c.by) + '</span>' : '<span class="sku">waiting</span>') + '</td>' +
+          return '<tr><td><b data-noi18n="1">' + esc(c.from || '—') + '</b><div class="sku">' + esc(CHN[c.channel] || c.channel) + ' · ' + esc(c.at) + '</div></td><td style="white-space:normal;max-width:300px" data-noi18n="1">' + esc(c.text) + '</td>' +
+            '<td style="white-space:normal;max-width:300px">' + (c.reply ? '<span data-noi18n="1">' + esc(c.reply) + '</span><div class="sku">' + esc(c.by) + '</div>' : c.action ? '<b>' + esc(c.action) + '</b> <span class="sku">' + esc(c.by) + '</span>' : '<span class="sku">waiting</span>') + '</td>' +
             '<td style="white-space:nowrap"><button class="btn small" type="button" data-ibcm="reply" data-id="' + esc(c.id) + '">Reply</button> <button class="btn small" type="button" data-ibcm="' + (c.action === 'hidden' ? 'unhide' : 'hide') + '" data-id="' + esc(c.id) + '">' + (c.action === 'hidden' ? 'Unhide' : 'Hide') + '</button> ' +
             '<button class="btn small" type="button" data-ibcm="delete" data-id="' + esc(c.id) + '">Delete</button>' + (c.channel === 'messenger' ? ' <button class="btn small" type="button" data-ibcm="block" data-id="' + esc(c.id) + '">Block</button>' : '') + '</td></tr>'; }).join('') + '</tbody></table></div></div>';
     });
