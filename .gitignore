@@ -15,7 +15,7 @@ local/node/node_modules/
 local/data/
 local/seed/
 local/.owner-key
-local/run.log
+local/run*.log
 
 # owner-only: real business documents (supplier files, real figures) - never on GitHub
 private/
