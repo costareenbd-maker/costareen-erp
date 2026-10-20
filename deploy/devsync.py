@@ -59,6 +59,10 @@ def main():
         if not os.path.isdir(os.path.join(COPY, '.git')):
             log('making the sync copy ' + COPY)
             subprocess.check_call(['git', 'clone', '-q', REPO, COPY])
+        # the minifier's tools (deploy/.tools, not on GitHub) are shared with the working folder
+        tools = os.path.join(COPY, 'deploy', '.tools')
+        if not os.path.exists(tools):
+            subprocess.call(['cmd', '/c', 'mklink', '/J', tools.replace('/', '\\'), os.path.join(HERE, '.tools').replace('/', '\\')], stdout=subprocess.DEVNULL)
         git('fetch', '-q', '--prune', 'origin')
         st = json.load(open(STATE, encoding='utf-8')) if os.path.exists(STATE) else {}
         env = secrets()
