@@ -30,11 +30,21 @@ const AREAS = ['website', 'erp', 'money', 'stock', 'channels', 'engine', 'other'
 const WEB_EVERY_MS = 5 * 60000, SYS_EVERY_MS = 60 * 60000, SLOW_MS = 8000, MAX_TARGETS = 30;
 const JOB_WORDS = { 'nightly:steadfast': 'The nightly Steadfast check', 'nightly:backup': 'The nightly backup', 'campaigns:tick': 'A WhatsApp campaign',
   'websync:pull': 'Reading website orders', 'websync:push': 'Sending stock to the website', 'whatsapp:hook': 'A WhatsApp reply' };
-export const WATCH_DAILY = { key: 'watchdog-daily', agent: 'watchdog', title: 'Watchdog: daily check-up', every: 'daily', at_time: '09:00',
-  ask: 'Do the daily check-up of the business. 1) Read the open issues (watch_issues) and find the cause and the exact fix of each. ' +
-    '2) Open the website\'s main pages yourself (the home page, a product page, the cart, the checkout) and look for anything broken: errors, missing prices or photos, ' +
-    'a checkout that does not load, wrong stock shown. 3) Look at the ERP: system_check, stock_low, dues, money_accounts - anything wrong or risky. ' +
-    '4) Report every new real problem with report_issue (one per problem, with proof and the fix). End with a short report: what is wrong, how bad, what to do first. If all is well, say so in one line.' };
+// watch-2 (owner 22 Oct 2026): "I don't want to see problems - fix them every night and tell me next morning what you
+// fixed; what needs my decision waits for my approval". The night shift fixes what is safe by itself and turns the rest
+// into fixes the owner approves with one button.
+export const WATCH_DAILY = { key: 'watchdog-daily', agent: 'watchdog', title: 'Watchdog: night check and fixes', every: 'daily', at_time: '03:00',
+  ask: 'Night shift: find and FIX the business\'s problems, so the owner wakes up to a fixed business.\n' +
+    '1) Read the open issues (watch_issues, each with its key). Open the website\'s main pages yourself (home, a product page, cart, checkout) and look at the ERP (system_check, stock_low, dues, money_accounts) for anything else broken or wrong; record new real problems with report_issue.\n' +
+    '2) For EACH problem find the cause with the ERP functions and the web. Then:\n' +
+    '   - if it fixed itself or is not real: close_issue with the reason;\n' +
+    '   - if a safe retry fixes it (a backup, a delivery check, a website test): fix_now;\n' +
+    '   - anything that changes data, money, stock, prices or settings: propose_fix with the exact steps (ERP functions and their arguments, each with a plain summary) - the owner approves it with one button in the morning; ' +
+    'if it needs something outside the ERP (the hosting, a supplier, a person), propose_fix as a task with what to do;\n' +
+    '   - never guess: if you cannot find the cause, say so in the fix\'s why.\n' +
+    '3) End with the morning note for the owner, plain and short: what you fixed, what waits for his OK, and if all is well, say so in one line.' };
+// what the night shift may do with no approval: retries that change no money, stock or records
+export const SAFE_AUTO = ['erpBackupRun', 'erpWebsiteTest', 'erpCheckDeliveries', 'erpConnStatus', 'erpSystemCheck'];
 
 async function gate(ctx) {
   if (!roleAtLeast(ctx.s.role, 'owner')) throw new Error('Only the owner sees the Watchdog.');
@@ -218,9 +228,14 @@ export async function erpWatch(ctx) {
     lastAt: when(t.last_at), status: t.last_status, ms: t.last_ms, ok: t.last_ok, error: str(t.last_error), sslDays: t.ssl_days }));
   const daily = (await ctx.tx`select s.*, j.status job_status, j.id job_id from engine_schedules s left join engine_jobs j on j.id = s.last_job
                               where s.business_id = ${ctx.biz} and s.key = ${WATCH_DAILY.key}`)[0];
+  const { actionOut } = await import('./brief.js');
+  const waiting = (await ctx.tx`select * from engine_actions where business_id = ${ctx.biz} and kind = 'watch' and status in ('proposed', 'changing', 'running') order by created_at desc limit 30`).map(actionOut);
+  const fixed = (await ctx.tx`select * from engine_actions where business_id = ${ctx.biz} and kind = 'watch' and status in ('done', 'failed', 'rejected') and decided_at > now() - interval '7 days' order by decided_at desc limit 40`).map(actionOut);
+  const night = (await ctx.tx`select id, status, result, finished_at from engine_jobs where business_id = ${ctx.biz} and agent = 'watchdog' and status in ('done', 'failed') order by finished_at desc nulls last limit 1`)[0];
   const lastCheck = Number(await getConfig(ctx, 'watch_last_check', '0')) || 0;
   const run = (await ctx.tx`select seen_at from engine_runners where business_id = ${ctx.biz} order by seen_at desc limit 1`)[0];
-  return { issues, counts, targets, lastCheck: lastCheck ? when(new Date(lastCheck)) : '', minutesAgo: lastCheck ? Math.round((ctx.now.getTime() - lastCheck) / 60000) : null,
+  return { waiting, fixed, lastNight: night ? { id: night.id, status: night.status, when: when(night.finished_at), note: str(night.result).slice(0, 1500) } : null,
+    issues, counts, targets, lastCheck: lastCheck ? when(new Date(lastCheck)) : '', minutesAgo: lastCheck ? Math.round((ctx.now.getTime() - lastCheck) / 60000) : null,
     engineAlive: !!run && ctx.now.getTime() - new Date(run.seen_at).getTime() < 120000,
     daily: daily ? { id: daily.id, enabled: daily.enabled, at: daily.at_time, next: when(daily.next_at), lastRun: when(daily.last_run), lastJob: daily.job_id, lastStatus: daily.job_status || '' } : null };
 }
@@ -277,14 +292,49 @@ export async function erpWatchRunNow(ctx) {
 // ------------------------------------------------------------------------------------------ the agents' tools
 export const ISSUE_TOOLS = [
   { name: 'watch_issues', description: 'The Watchdog\'s issues: open problems found on the website, the ERP, money, stock and channels, with proof, when first and last seen; and the watched pages with their last check.', parameters: { type: 'OBJECT', properties: { all: { type: 'BOOLEAN', description: 'also the ones resolved in the last 7 days' } } } },
+  { name: 'close_issue', description: 'Close an issue that fixed itself or is not a real problem (give its key and why). The checks reopen it if it comes back.', parameters: { type: 'OBJECT', properties: { issueKey: { type: 'STRING' }, why: { type: 'STRING' } }, required: ['issueKey', 'why'] } },
+  { name: 'fix_now', description: 'A safe retry the night shift may run with no approval: ' + SAFE_AUTO.join(', ') + '. Give the issue key it fixes and why.', parameters: { type: 'OBJECT', properties: { name: { type: 'STRING' }, args: { type: 'OBJECT' }, issueKey: { type: 'STRING' }, why: { type: 'STRING' } }, required: ['name', 'why'] } },
+  { name: 'propose_fix', description: 'A fix that waits for the owner\'s one button. type "erp" with payload {steps: [{name, args, summary}]} (ERP functions run in order, all or nothing; never deleting, users, keys or connections), or type "task" with payload {ask} for work outside the ERP, or any brief move type. Give the issue key, a plain title, why (cause found, with figures) and figures [{label, value, source}].',
+    parameters: { type: 'OBJECT', properties: { issueKey: { type: 'STRING' }, type: { type: 'STRING' }, title: { type: 'STRING' }, why: { type: 'STRING' }, figures: { type: 'ARRAY', items: { type: 'OBJECT' } }, payload: { type: 'OBJECT' } }, required: ['type', 'title', 'why', 'payload'] } },
   { name: 'report_issue', description: 'Record a real problem you found (one per problem). severity: urgent (money lost or customers blocked now) | high | medium | low. area: website | erp | money | stock | channels | engine | other. Give the proof (what you saw, where) and the exact fix.',
     parameters: { type: 'OBJECT', properties: { title: { type: 'STRING' }, severity: { type: 'STRING' }, area: { type: 'STRING' }, detail: { type: 'STRING' }, proof: { type: 'STRING' }, fix: { type: 'STRING' } }, required: ['title', 'severity', 'detail'] } },
 ];
 export async function issueTool(ctx, name, a, job) {
   if (name === 'watch_issues') {
     const w = await erpWatch(ctx);
-    return { counts: w.counts, lastCheck: w.lastCheck, issues: w.issues.filter((i) => a.all || i.status === 'open').slice(0, 60).map((i) => ({ title: i.title, severity: i.severity, area: i.area, status: i.status, detail: i.detail, proof: i.proof, fix: i.fix, first: i.first, last: i.last, timesSeen: i.count })),
+    return { counts: w.counts, lastCheck: w.lastCheck, issues: w.issues.filter((i) => a.all || i.status === 'open').slice(0, 60).map((i) => ({ key: i.key, title: i.title, severity: i.severity, area: i.area, status: i.status, detail: i.detail, proof: i.proof, fix: i.fix, first: i.first, last: i.last, timesSeen: i.count })),
       pages: w.targets.map((t) => ({ page: t.label || t.url, url: t.url, mustContain: t.must, lastStatus: t.status, ms: t.ms, ok: t.ok, error: t.error, certificateDaysLeft: t.sslDays })) };
+  }
+  if (name === 'close_issue') {
+    if (job.agent !== 'watchdog' && job.agent !== 'command') return { error: 'Only the Watchdog closes issues.' };
+    const i = (await ctx.tx`update engine_issues set status = 'resolved', resolved_at = now() where business_id = ${ctx.biz} and key = ${str(a.issueKey)} and status <> 'resolved' returning title`)[0];
+    if (!i) return { error: 'No open issue with that key.' };
+    await logFix(ctx, job, { title: 'Closed: ' + i.title, result: str(a.why).slice(0, 600), issueKey: a.issueKey, type: 'note', status: 'done' });
+    return { closed: true };
+  }
+  if (name === 'fix_now') {
+    if (job.agent !== 'watchdog') return { error: 'Only the Watchdog runs fixes.' };
+    const fn = str(a.name);
+    if (!SAFE_AUTO.includes(fn)) return { error: 'Not a safe retry - use propose_fix so the owner approves it.' };
+    let ok = true, text = '';
+    try { const H = (await import('./index.js')).HANDLERS; await ctx.tx.savepoint(() => H[fn](ctx, a.args || {})); text = 'Done.'; } catch (e) { ok = false; text = str(e && e.message).slice(0, 300); }
+    if (ok && str(a.issueKey)) await ctx.tx`update engine_issues set status = 'resolved', resolved_at = now() where business_id = ${ctx.biz} and key = ${str(a.issueKey)} and status = 'open'`;
+    await logFix(ctx, job, { title: str(a.why).slice(0, 160) || fn, result: (ok ? 'Fixed by itself: ' : 'Tried, did not work: ') + fn + (text && text !== 'Done.' ? ' - ' + text : ''), issueKey: a.issueKey, type: 'erp', status: ok ? 'done' : 'failed', payload: { steps: [{ name: fn, args: a.args || {}, summary: str(a.why) }] } });
+    return { ok, text };
+  }
+  if (name === 'propose_fix') {
+    if (job.agent !== 'watchdog' && job.agent !== 'command') return { error: 'Only the Watchdog proposes fixes.' };
+    const { ACTION_TYPES, adCapOf } = await import('./actions.js');
+    const type = str(a.type), t = ACTION_TYPES[type];
+    if (!t) return { error: 'Unknown fix type. Use erp (steps), task, or a brief move type.' };
+    const err = t.check(a.payload || {}, { cap: await adCapOf(ctx) }); if (err) return { error: err };
+    if (str(a.title).length < 4 || str(a.why).length < 10) return { error: 'Give the fix a plain title and the why (the cause you found).' };
+    const key = str(a.issueKey) || null;
+    if (key) await ctx.tx`update engine_actions set status = 'replaced' where business_id = ${ctx.biz} and kind = 'watch' and status = 'proposed' and issue_key = ${key}`;
+    const figures = (Array.isArray(a.figures) ? a.figures : []).slice(0, 8).map((f) => ({ label: str(f.label).slice(0, 80), value: str(f.value).slice(0, 80), source: str(f.source).slice(0, 120) })).filter((f) => f.label && f.value);
+    await ctx.tx`insert into engine_actions (business_id, kind, issue_key, job_id, no, type, title, why, figures, payload, status)
+                 values (${ctx.biz}, 'watch', ${key}, ${job.id}, 1, ${type}, ${str(a.title).slice(0, 160)}, ${str(a.why).slice(0, 1500)}, ${ctx.tx.json(figures)}, ${ctx.tx.json(a.payload || {})}, 'proposed')`;
+    return { proposed: true, note: 'It waits for the owner\'s one button on the Watchdog screen.' };
   }
   if (name === 'report_issue') {
     const title = str(a.title).slice(0, 160);
@@ -298,10 +348,22 @@ export async function issueTool(ctx, name, a, job) {
   return null;
 }
 
-/** The bell and the owner's WhatsApp (handlers/alerts.js): urgent and high issues; a quiet Engine with work waiting. */
+/** A fix done (or closed) by the night shift, for the owner's "fixed by itself" list. */
+async function logFix(ctx, job, f) {
+  await ctx.tx`insert into engine_actions (business_id, kind, issue_key, job_id, no, type, title, why, payload, status, auto, result, decided_by, decided_at, executed_at)
+               values (${ctx.biz}, 'watch', ${str(f.issueKey) || null}, ${job.id}, 1, ${f.type}, ${str(f.title).slice(0, 160)}, '', ${ctx.tx.json(f.payload || {})}, ${f.status}, true, ${str(f.result).slice(0, 1500)},
+                       'Watchdog (by itself)', now(), ${f.status === 'done' ? ctx.now : null})`;
+}
+
+/** The bell and the owner's WhatsApp (handlers/alerts.js): only what is URGENT (the rest is fixed or waits as a fix),
+ *  the fixes waiting for his OK, the morning note of what was fixed overnight, and a quiet Engine with work waiting. */
 export async function watchAlerts(ctx) {
-  const out = [];
-  const rows = await ctx.tx`select id, title, detail, severity, first_seen from engine_issues where business_id = ${ctx.biz} and status = 'open' and severity in ('urgent', 'high') order by first_seen desc limit 15`;
+  const out = [], day = formatDate(ctx.now, 'yyyy-MM-dd');
+  const wait = (await ctx.tx`select count(*)::int n from engine_actions where business_id = ${ctx.biz} and kind = 'watch' and status = 'proposed'`)[0].n;
+  if (wait) out.push({ key: 'watchfix:' + day + ':' + wait, level: 'warn', title: wait + ' fix' + (wait === 1 ? '' : 'es') + ' wait for your OK', detail: 'The Watchdog found the cause and prepared the fix - one button each.', go: 'watch' });
+  const fixed = (await ctx.tx`select count(*)::int n from engine_actions where business_id = ${ctx.biz} and kind = 'watch' and auto and status = 'done' and decided_at > now() - interval '18 hours'`)[0].n;
+  if (fixed) out.push({ key: 'watchdone:' + day, level: 'warn', title: 'The Watchdog fixed ' + fixed + ' problem' + (fixed === 1 ? '' : 's') + ' overnight', detail: 'Nothing for you to do - see what was fixed.', go: 'watch' });
+  const rows = await ctx.tx`select id, title, detail, severity, first_seen from engine_issues where business_id = ${ctx.biz} and status = 'open' and severity = 'urgent' order by first_seen desc limit 10`;
   for (const i of rows) out.push({ key: 'watch:' + i.id + ':' + new Date(i.first_seen).getTime(), level: 'bad', title: (i.severity === 'urgent' ? 'URGENT: ' : '') + i.title, detail: str(i.detail).slice(0, 160), go: 'watch' });
   const q = (await ctx.tx`select count(*)::int n, min(created_at) oldest from engine_jobs where business_id = ${ctx.biz} and status = 'queued'`)[0];
   const run = (await ctx.tx`select max(seen_at) seen from engine_runners where business_id = ${ctx.biz}`)[0];
@@ -311,4 +373,12 @@ export async function watchAlerts(ctx) {
   return out;
 }
 
-export const HANDLERS = { erpWatch, erpWatchTargetSave, erpWatchIssueAct, erpWatchRunNow, erpWatchReport };
+/** The owner's one button on a fix (Approve runs it; Change sends his words back to the Watchdog; No is remembered). */
+export async function erpWatchFixDecide(ctx, payload) {
+  await gate(ctx);
+  const { decideAction } = await import('./brief.js');
+  await decideAction(ctx, payload);
+  return erpWatch(ctx);
+}
+
+export const HANDLERS = { erpWatch, erpWatchTargetSave, erpWatchIssueAct, erpWatchRunNow, erpWatchReport, erpWatchFixDecide };

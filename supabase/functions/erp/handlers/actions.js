@@ -8,18 +8,30 @@
 //   followup    follow-up calls for customers on a day
 //   whatsapp    a WhatsApp message to known customers / leads (only numbers the ERP already has), spread out
 //   task        work for the Engine (research, writing, a plan) - its answer comes back in the Command Center
+//   erp         watch-2: a fix made of the ERP's own functions (e.g. correct a cost, re-run a sync), run in order as the
+//               owner, all or nothing; never deletes, users, keys, connections, platform or the AI's own settings
 // Each type: name, what (for the Engine), payload (its shape), check(payload, {cap}) -> error text or '', run.
 
 import { num, formatDate } from '../lib/time.js';
 import { getConfig } from '../lib/ext.js';
+import { callAllowed } from '../allow.js';
 
 const str = (v) => String(v == null ? '' : v).trim();
 const R = (v) => Math.round(num(v));
 const money = (n) => '৳' + R(n).toLocaleString('en-US');
 async function H(name, ctx, payload) { const h = (await import('./index.js')).HANDLERS[name]; return h(ctx, payload); }
+export async function adCapOf(ctx) { const v = num(await getConfig(ctx, 'brief_ad_cap', '')); return v > 0 ? v : 3000; }
 async function maxCut(ctx) { const v = num(await getConfig(ctx, 'brief_max_cut', '')); return v > 0 ? v : 10; }   // percent
 
+// functions a fix may never call, even with the owner's Yes (deleting, people and access, keys and connections, the
+// platform, restoring backups, the AI's own switches)
+const NEVER = /^erp(\w*(Delete|Remove|Erase|Void|Reset|Restore|Wipe|Logout|Disconnect)\w*|Platform\w*|User\w*|Session\w*|SignOut\w*|Owner\w*|Recovery|Emergency\w*|AiBrainKey|ProviderKey|AiKey\w*|Install\w*|MyUpdate\w*|Google\w*|Meta\w*|Business\w*|Access\w*|Engine\w*|Skill\w*|Brain\w*|Brief\w*|Watch\w*|Pixel\w*|ShopKey|WebsiteSet|Courier\w*Key\w*|Import|Assistant|Sheet\w*)$/;
+export const fixAllowed = (name) => /^erp[A-Z][A-Za-z0-9]{2,60}$/.test(str(name)) && !NEVER.test(str(name));
+
 export const ACTION_TYPES = {
+  erp: { name: 'Fix in the ERP', auto: true, what: 'a fix made of the ERP\'s own functions, run in order (all or nothing) - e.g. correct a cost, re-run a sync, close a wrong order',
+    payload: '{steps: [{name: "erpFunctionName", args: {...}, summary: "what this step does, in plain words"}] (1-10)}',
+    check: (p) => (!Array.isArray(p.steps) || !p.steps.length || p.steps.length > 10 ? 'A fix needs 1 to 10 steps.' : p.steps.some((x) => !fixAllowed(x && x.name) || !str(x && x.summary)) ? 'Each step needs an allowed ERP function and a plain summary (no deleting, users, keys or connections).' : '') },
   ad: { name: 'Facebook ad', auto: true, what: 'publish a Facebook post with this text and run a paid ad from it',
     payload: '{text, sku?, objective: messages|traffic|reach|sales, dailyBudget (taka), days, targeting?: {ageMin, ageMax, countries:[ISO2]}}',
     check: (p, o) => { if (str(p.text).length < 20) return 'The ad text is missing.'; if (!(num(p.dailyBudget) >= 50)) return 'Daily budget at least 50 taka.';
@@ -100,6 +112,17 @@ export async function runAction(ctx, a, o) {
     if (!rec.length) return { ok: false, text: 'None of those numbers is a customer or lead in the ERP, so nothing was sent.' };
     await H('erpEvoCampaignStart', ctx, { text: str(p.text), recipients: rec, name: (str(p.name) || str(a.title)).slice(0, 120), spread: true });
     return { ok: true, text: 'WhatsApp message going to ' + rec.length + ' people, spread over the day' + (rec.length < want.length ? ' (' + (want.length - rec.length) + ' unknown numbers left out)' : '') + '.' };
+  }
+  if (a.type === 'erp') {
+    const HS = (await import('./index.js')).HANDLERS, done = [];
+    for (const st of p.steps.slice(0, 10)) {
+      const name = str(st.name);
+      if (!fixAllowed(name) || !HS[name]) return { ok: false, text: 'Step "' + str(st.summary) + '": ' + name + ' is not a function a fix may use.' };
+      if (!callAllowed(ctx.s, name)) return { ok: false, text: 'Step "' + str(st.summary) + '" is not allowed for your role.' };
+      await HS[name](ctx, st.args === undefined ? {} : st.args);   // an error stops the fix and undoes the steps before it
+      done.push(str(st.summary));
+    }
+    return { ok: true, text: 'Fixed: ' + done.join('; ') + '.' };
   }
   if (a.type === 'task') {
     const agent = ['command', 'leads', 'ads', 'content', 'seo', 'watchdog', 'inbox'].includes(str(p.agent)) ? str(p.agent) : 'command';

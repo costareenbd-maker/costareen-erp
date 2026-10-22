@@ -203,7 +203,7 @@ const toolsFor = (agent, source) => ENGINE_TOOLS.concat(ISSUE_TOOLS.filter((t) =
   // brain-1: every agent sees the business in numbers and keeps lasting facts; only the drafting job writes the Brain draft
   .concat(BRAIN_TOOLS.filter((t) => t.name !== 'brain_save_draft' || source === 'brain'))
   // brief-1: the Owner briefing agent files the daily brief and reads what the approved moves brought
-  .concat(agent === 'briefing' ? BRIEF_TOOLS : [])
+  .concat(agent === 'briefing' ? BRIEF_TOOLS : agent === 'watchdog' ? BRIEF_TOOLS.filter((t) => t.name === 'brief_replace_action') : [])
   // leads-2: the Leads agent (and the Command Center) find and add leads themselves
   .concat(agent === 'leads' || agent === 'command' ? LEAD_TOOLS : []);
 

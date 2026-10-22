@@ -137,8 +137,8 @@ export async function briefTool(ctx, name, a, job) {
     if (!ACTION_TYPES[x.type] || !x.title || !x.why || !x.figures.length) return { error: 'The new move needs a known type, a title, the why and its figures.' };
     const e = ACTION_TYPES[x.type].check(x.payload, { cap: await adCap(ctx) }); if (e) return { error: e };
     await ctx.tx`update engine_actions set status = 'replaced' where id = ${old.id}`;
-    await ctx.tx`insert into engine_actions (business_id, brief_id, job_id, no, big_bet, type, title, why, figures, impact_bdt, cost_bdt, risk, confidence, payload, metric)
-                 values (${ctx.biz}, ${old.brief_id}, ${job.id}, ${old.no}, ${old.big_bet}, ${x.type}, ${x.title}, ${x.why}, ${ctx.tx.json(x.figures)}, ${x.impact}, ${x.cost}, ${x.risk}, ${x.confidence},
+    await ctx.tx`insert into engine_actions (business_id, kind, issue_key, brief_id, job_id, no, big_bet, type, title, why, figures, impact_bdt, cost_bdt, risk, confidence, payload, metric)
+                 values (${ctx.biz}, ${old.kind}, ${old.issue_key}, ${old.brief_id}, ${job.id}, ${old.no}, ${old.big_bet}, ${x.type}, ${x.title}, ${x.why}, ${ctx.tx.json(x.figures)}, ${x.impact}, ${x.cost}, ${x.risk}, ${x.confidence},
                          ${ctx.tx.json(x.payload)}, ${ctx.tx.json(x.metric)})`;
     return { replaced: true };
   }
@@ -179,8 +179,8 @@ export async function measure(ctx) {
 }
 
 // ------------------------------------------------------------------------------------------------- the screen
-function actionOut(a) {
-  return { id: a.id, no: a.no, bigBet: a.big_bet, type: a.type, typeName: (ACTION_TYPES[a.type] || {}).name || a.type, title: a.title, why: a.why, figures: a.figures || [], impact: R(a.impact_bdt), cost: R(a.cost_bdt),
+export function actionOut(a) {
+  return { id: a.id, no: a.no, bigBet: a.big_bet, kind: a.kind, issueKey: str(a.issue_key), autoDone: !!a.auto, job: a.job_id, type: a.type, typeName: (ACTION_TYPES[a.type] || {}).name || a.type, title: a.title, why: a.why, figures: a.figures || [], impact: R(a.impact_bdt), cost: R(a.cost_bdt),
     risk: a.risk, confidence: Math.round(num(a.confidence) * 100), payload: a.payload || {}, status: a.status, decidedBy: str(a.decided_by), decided: when(a.decided_at), note: str(a.note), result: str(a.result),
     outcome: a.outcome || null, auto: !!(ACTION_TYPES[a.type] || {}).auto };
 }
@@ -209,6 +209,11 @@ export async function erpBrief(ctx, payload) {
 
 export async function erpBriefDecide(ctx, payload) {
   await gate(ctx);
+  const a = await decideAction(ctx, payload);
+  return erpBrief(ctx, a.brief_id ? { id: a.brief_id } : {});
+}
+/** One button on a move or a fix: approve (runs it), change (the owner's words back to the Engine), reject (remembered). */
+export async function decideAction(ctx, payload) {
   const p = payload || {};
   if (!UUID.test(str(p.id))) throw new Error('Which move?');
   const a = (await ctx.tx`select * from engine_actions where business_id = ${ctx.biz} and id = ${str(p.id)} for update`)[0];
@@ -221,7 +226,7 @@ export async function erpBriefDecide(ctx, payload) {
   } else if (act === 'change') {
     if (note.length < 3) throw new Error('Write what to change.');
     const job = (await ctx.tx`insert into engine_jobs (business_id, agent, title, ask, source, created_by)
-      values (${ctx.biz}, 'briefing', ${'Change a move [' + a.id + ']'}, ${'The owner wants this move changed: "' + note + '".\nThe move: ' + JSON.stringify({ type: a.type, title: a.title, why: a.why, figures: a.figures, impactBdt: num(a.impact_bdt), costBdt: num(a.cost_bdt), payload: a.payload, metric: a.metric }) +
+      values (${ctx.biz}, ${a.kind === 'watch' ? 'watchdog' : 'briefing'}, ${'Change a move [' + a.id + ']'}, ${'The owner wants this move changed: "' + note + '".\nThe move: ' + JSON.stringify({ type: a.type, title: a.title, why: a.why, figures: a.figures, impactBdt: num(a.impact_bdt), costBdt: num(a.cost_bdt), payload: a.payload, metric: a.metric }) +
         '\nMake the new version with the ERP functions you need, then call brief_replace_action once.'}, 'brief', ${str(ctx.s.name)}) returning id`)[0].id;
     await ctx.tx`update engine_actions set status = 'changing', job_id = ${job}, decided_by = ${str(ctx.s.name)}, decided_at = now(), note = ${note} where id = ${a.id}`;
   } else if (act === 'approve') {
@@ -230,8 +235,10 @@ export async function erpBriefDecide(ctx, payload) {
     try { r = await ctx.tx.savepoint(() => runAction(ctx, a, { cap: adCap })); }
     catch (e) { r = { ok: false, text: str((e && e.message) || e) }; }
     await ctx.tx`update engine_actions set status = ${r.ok ? 'done' : 'failed'}, result = ${str(r.text).slice(0, 1500)}, executed_at = ${r.ok ? ctx.now : null} where id = ${a.id}`;
+    // a Watchdog fix that ran closes its issue (the checks reopen it if the problem is still there)
+    if (r.ok && a.issue_key) await ctx.tx`update engine_issues set status = 'resolved', resolved_at = now() where business_id = ${ctx.biz} and key = ${a.issue_key} and status = 'open'`;
   } else throw new Error('Approve, change or no?');
-  return erpBrief(ctx, { id: a.brief_id });
+  return a;
 }
 
 export async function erpBriefRunNow(ctx) {

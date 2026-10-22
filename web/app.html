@@ -38450,18 +38450,18 @@ document.addEventListener('keydown', function (e) {
 <style>
 .ld-acts{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0 4px}
 .ld-chips{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}
-.ld-chip{border:1px solid var(--line,#dde);background:var(--card,#fff);color:inherit;border-radius:999px;padding:4px 10px;font:inherit;font-size:12.5px;cursor:pointer}
-.ld-chip[aria-pressed="true"]{background:var(--accent,#5b4ff0);border-color:var(--accent,#5b4ff0);color:#fff}
+.ld-chip{border:1px solid var(--fd-border,var(--ring,#e6e8ef));background:var(--fd-card,var(--surface,#fff));color:inherit;border-radius:999px;padding:4px 10px;font:inherit;font-size:12.5px;cursor:pointer}
+.ld-chip[aria-pressed="true"]{background:var(--fd-accent,var(--series-1,#5b4ff0));border-color:var(--fd-accent,var(--series-1,#5b4ff0));color:#fff}
 .ld-chip b{font-weight:600;margin-left:4px;opacity:.8}
 .ld-row td{vertical-align:top}
-.ld-reach a{display:inline-block;margin:0 8px 2px 0;font-size:12.5px;color:var(--accent,#5b4ff0);text-decoration:none;white-space:nowrap}
-.ld-src{font-size:12px;color:var(--muted,#667)}
+.ld-reach a{display:inline-block;margin:0 8px 2px 0;font-size:12.5px;color:var(--fd-accent,var(--series-1,#5b4ff0));text-decoration:none;white-space:nowrap}
+.ld-src{font-size:12px;color:var(--fd-text-3,var(--muted,#667))}
 .ld-due{color:var(--critical,#d33);font-weight:600}
-.ld-open{background:var(--soft,rgba(91,79,240,.04))}
-.ld-hist{font-size:12.5px;color:var(--muted,#667);margin:6px 0;max-height:180px;overflow:auto}
+.ld-open{background:var(--fd-surface-2,var(--plane,#f4f6f9))}
+.ld-hist{font-size:12.5px;color:var(--fd-text-3,var(--muted,#667));margin:6px 0;max-height:180px;overflow:auto}
 .ld-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px}
-.ld-how{border:1px solid var(--line,#e6e8ef);border-radius:12px;padding:10px 12px}
-.ld-how h4{margin:0 0 6px;font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted,#667)}
+.ld-how{border:1px solid var(--fd-border,var(--ring,#e6e8ef));border-radius:12px;padding:10px 12px}
+.ld-how h4{margin:0 0 6px;font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:var(--fd-text-3,var(--muted,#667))}
 .ld-how div{font-size:13px;padding:3px 0}
 .ld-found td{font-size:13px}
 @media (max-width:760px){.ld-table .hide-sm{display:none}}
@@ -38789,9 +38789,9 @@ document.addEventListener('keydown', function (e) {
      30 days of AI use. Keys are set by the platform admin. Server: handlers/aibrain.js, lib/ai.js. -->
 <style>
 .aib-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:10px;margin-top:10px}
-.aib-p{border:1px solid var(--line,#e3e5ee);border-radius:12px;padding:12px}
+.aib-p{border:1px solid var(--fd-border,var(--ring,#e6e8ef));border-radius:12px;padding:12px}
 .aib-p h4{margin:0 0 4px;font-size:15px}
-.aib-pw{font-size:12px;color:var(--muted,#667);margin:4px 0 8px}
+.aib-pw{font-size:12px;color:var(--fd-text-3,var(--muted,#667));margin:4px 0 8px}
 .aib-t td{vertical-align:middle}
 .aib-t select,.aib-t input{min-width:150px}
 </style>
@@ -38959,17 +38959,17 @@ setTimeout(function tell() {
      checks again; a newer version shows "New version - reload". The live ERP has no version.json, so nothing shows there. -->
 <style>
 #dvs{position:fixed;left:12px;bottom:12px;z-index:9000;font:12.5px/1.35 Inter,system-ui,sans-serif}
-#dvs .pill{display:flex;gap:6px;align-items:center;max-width:min(420px,calc(100vw - 90px));padding:6px 10px;border-radius:999px;border:1px solid var(--line,#dde);background:var(--card,#fff);color:inherit;box-shadow:0 4px 14px rgba(0,0,0,.12);cursor:pointer}
+#dvs .pill{display:flex;gap:6px;align-items:center;max-width:min(420px,calc(100vw - 90px));padding:6px 10px;border-radius:999px;border:1px solid var(--fd-border,var(--ring,#e6e8ef));background:var(--fd-card,var(--surface,#fff));color:inherit;box-shadow:0 4px 14px rgba(0,0,0,.12);cursor:pointer}
 #dvs .pill span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 #dvs .dot{width:8px;height:8px;border-radius:50%;background:#22a06b;flex:none}
 #dvs.new .dot{background:#e5484d;animation:dvsp 1s infinite alternate}
 @keyframes dvsp{to{opacity:.3}}
-#dvs .pan{position:absolute;left:0;bottom:40px;width:min(460px,calc(100vw - 24px));max-height:70vh;overflow:auto;padding:12px 14px;border-radius:14px;border:1px solid var(--line,#dde);background:var(--card,#fff);box-shadow:0 10px 30px rgba(0,0,0,.18)}
-#dvs .pan h4{margin:10px 0 6px;font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted,#667)}
-#dvs .pan .c{padding:6px 0;border-top:1px solid var(--line,#eef)}
+#dvs .pan{position:absolute;left:0;bottom:40px;width:min(460px,calc(100vw - 24px));max-height:70vh;overflow:auto;padding:12px 14px;border-radius:14px;border:1px solid var(--fd-border,var(--ring,#e6e8ef));background:var(--fd-card,var(--surface,#fff));box-shadow:0 10px 30px rgba(0,0,0,.18)}
+#dvs .pan h4{margin:10px 0 6px;font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:var(--fd-text-3,var(--muted,#667))}
+#dvs .pan .c{padding:6px 0;border-top:1px solid var(--fd-border,var(--ring,#e6e8ef))}
 #dvs .pan .m{font-weight:600;overflow-wrap:anywhere}
-#dvs .pan .w{color:var(--muted,#667);font-size:11.5px}
-#dvs .pan a{color:var(--accent,#5b4ff0)}
+#dvs .pan .w{color:var(--fd-text-3,var(--muted,#667));font-size:11.5px}
+#dvs .pan a{color:var(--fd-accent,var(--series-1,#5b4ff0))}
 @media (max-width:760px){#dvs{bottom:74px}}
 </style>
 <script>
@@ -39162,34 +39162,34 @@ saveProduct = function () {
 <style>
 .en-top{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between}
 .en-dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:6px;background:var(--critical,#d33);vertical-align:middle}
-.en-dot.on{background:var(--ok,#1a9e5b)}
+.en-dot.on{background:var(--good,#1a9e5b)}
 .en-ask textarea{width:100%;min-height:90px;resize:vertical}
 .en-ideas{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}
-.en-idea{border:1px dashed var(--line,#ccd);background:transparent;color:inherit;border-radius:999px;padding:4px 10px;font:inherit;font-size:12.5px;cursor:pointer}
+.en-idea{border:1px dashed var(--fd-border,var(--ring,#e6e8ef));background:transparent;color:inherit;border-radius:999px;padding:4px 10px;font:inherit;font-size:12.5px;cursor:pointer}
 .en-chips{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}
-.en-chip{border:1px solid var(--line,#dde);background:var(--card,#fff);color:inherit;border-radius:999px;padding:4px 10px;font:inherit;font-size:12.5px;cursor:pointer}
-.en-chip[aria-pressed="true"]{background:var(--accent,#5b4ff0);border-color:var(--accent,#5b4ff0);color:#fff}
+.en-chip{border:1px solid var(--fd-border,var(--ring,#e6e8ef));background:var(--fd-card,var(--surface,#fff));color:inherit;border-radius:999px;padding:4px 10px;font:inherit;font-size:12.5px;cursor:pointer}
+.en-chip[aria-pressed="true"]{background:var(--fd-accent,var(--series-1,#5b4ff0));border-color:var(--fd-accent,var(--series-1,#5b4ff0));color:#fff}
 .en-chip b{font-weight:600;margin-left:4px;opacity:.8}
-.en-job{border:1px solid var(--line,#e6e8ef);border-radius:12px;padding:10px 12px;margin:8px 0;background:var(--card,#fff)}
-.en-job.open{border-color:var(--accent,#5b4ff0)}
+.en-job{border:1px solid var(--fd-border,var(--ring,#e6e8ef));border-radius:12px;padding:10px 12px;margin:8px 0;background:var(--fd-card,var(--surface,#fff))}
+.en-job.open{border-color:var(--fd-accent,var(--series-1,#5b4ff0))}
 .en-job .hd{display:flex;gap:8px;align-items:flex-start;justify-content:space-between;cursor:pointer}
 .en-job .t{font-weight:600}
-.en-meta{font-size:12px;color:var(--muted,#667);margin-top:2px}
-.en-sk{display:inline-block;font-size:11.5px;border-radius:6px;padding:1px 6px;margin:2px 4px 0 0;background:var(--soft,rgba(91,79,240,.08));color:var(--accent,#5b4ff0)}
+.en-meta{font-size:12px;color:var(--fd-text-3,var(--muted,#667));margin-top:2px}
+.en-sk{display:inline-block;font-size:11.5px;border-radius:6px;padding:1px 6px;margin:2px 4px 0 0;background:var(--fd-surface-2,var(--plane,#f4f6f9));color:var(--fd-accent,var(--series-1,#5b4ff0))}
 .en-ans{margin-top:10px;line-height:1.55;font-size:14px;overflow-wrap:anywhere}
 .en-ans h3,.en-ans h4{margin:12px 0 4px;font-size:14.5px}
 .en-ans ul{margin:4px 0 4px 18px;padding:0}
-.en-steps{font-size:12.5px;color:var(--muted,#667);max-height:200px;overflow:auto;border-left:2px solid var(--line,#e6e8ef);padding-left:8px;margin-top:8px}
-.en-prop{border:1px solid var(--line,#e6e8ef);border-radius:10px;padding:8px 10px;margin:8px 0;display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+.en-steps{font-size:12.5px;color:var(--fd-text-3,var(--muted,#667));max-height:200px;overflow:auto;border-left:2px solid var(--fd-border,var(--ring,#e6e8ef));padding-left:8px;margin-top:8px}
+.en-prop{border:1px solid var(--fd-border,var(--ring,#e6e8ef));border-radius:10px;padding:8px 10px;margin:8px 0;display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap}
 .en-sum{display:flex;flex-wrap:wrap;gap:10px;margin:6px 0}
-.en-sum div{border:1px solid var(--line,#e6e8ef);border-radius:10px;padding:6px 12px;font-size:13px}
+.en-sum div{border:1px solid var(--fd-border,var(--ring,#e6e8ef));border-radius:10px;padding:6px 12px;font-size:13px}
 .en-sum b{font-size:18px;display:block}
 .en-skill td{vertical-align:top}
-.en-ag{display:inline-block;border:1px solid var(--line,#dde);border-radius:999px;padding:2px 8px;margin:2px 4px 2px 0;font-size:12px;cursor:pointer;background:transparent;color:inherit;font-family:inherit}
-.en-ag[aria-pressed="true"]{background:var(--accent,#5b4ff0);border-color:var(--accent,#5b4ff0);color:#fff}
+.en-ag{display:inline-block;border:1px solid var(--fd-border,var(--ring,#e6e8ef));border-radius:999px;padding:2px 8px;margin:2px 4px 2px 0;font-size:12px;cursor:pointer;background:transparent;color:inherit;font-family:inherit}
+.en-ag[aria-pressed="true"]{background:var(--fd-accent,var(--series-1,#5b4ff0));border-color:var(--fd-accent,var(--series-1,#5b4ff0));color:#fff}
 .en-use{font-size:12.5px;line-height:1.5}
-.en-pv{border:1px solid var(--line,#e6e8ef);border-radius:12px;padding:10px 12px;margin:8px 0}
-@media (max-width:760px){.en-hide-sm{display:none}.en-sktbl thead{display:none}.en-sktbl tr,.en-sktbl td{display:block;width:auto!important;text-align:left!important}.en-sktbl tr{border-bottom:1px solid var(--line,#e6e8ef);padding:8px 0}.en-sktbl td{border:0!important;padding:4px 0!important}}
+.en-pv{border:1px solid var(--fd-border,var(--ring,#e6e8ef));border-radius:12px;padding:10px 12px;margin:8px 0}
+@media (max-width:760px){.en-hide-sm{display:none}.en-sktbl thead{display:none}.en-sktbl tr,.en-sktbl td{display:block;width:auto!important;text-align:left!important}.en-sktbl tr{border-bottom:1px solid var(--fd-border,var(--ring,#e6e8ef));padding:8px 0}.en-sktbl td{border:0!important;padding:4px 0!important}}
 </style>
 <script>
 (function () {
@@ -39240,6 +39240,7 @@ saveProduct = function () {
     if (list) out.push('</ul>');
     return out.join('');
   }
+  window.enMd = md;
   var STATUS = { queued: ['Waiting', 'low'], running: ['Working…', 'low'], done: ['Done', 'ok'], failed: ['Failed', 'out'], cancelled: ['Stopped', 'out'] };
   function pill(st) { var s = STATUS[st] || [st, '']; return '<span class="pill ' + s[1] + '">' + esc(s[0]) + '</span>'; }
 
@@ -39390,7 +39391,7 @@ saveProduct = function () {
     if (!d) { skLoad(); return '<div class="loading">Loading the skills…</div>'; }
     var on = d.installed.filter(function (s) { return s.enabled; }).length, c = d.counts || {};
     var h = '<section><div class="card"><div class="en-sum"><div><b>' + fmt(d.installed.length) + '</b>installed</div><div><b>' + fmt(on) + '</b>switched on</div>' +
-      '<div><b style="color:var(--ok,#1a9e5b)">' + fmt(c.useful || 0) + '</b>useful</div><div><b style="color:var(--critical,#d33)">' + fmt(c.weak || 0) + '</b>weak</div><div><b>' + fmt(c.unused || 0) + '</b>not used</div></div>' +
+      '<div><b style="color:var(--good,#1a9e5b)">' + fmt(c.useful || 0) + '</b>useful</div><div><b style="color:var(--critical,#d33)">' + fmt(c.weak || 0) + '</b>weak</div><div><b>' + fmt(c.unused || 0) + '</b>not used</div></div>' +
       '<label class="f" for="sk_url">Install from GitHub: paste a link</label><div class="ap-row"><input class="i" id="sk_url" style="flex:1 1 320px" placeholder="https://github.com/owner/project (a whole project, a folder, or a SKILL.md file)" value="' + esc(SK.url) + '">' +
       '<button class="btn primary" type="button" data-sk="read"' + (SK.pvBusy ? ' disabled' : '') + '>' + (SK.pvBusy ? 'Reading…' : 'Read it') + '</button></div>' +
       '<div class="ap-row" style="margin-top:8px"><button class="btn" type="button" data-sk="lib">Built-in library (' + (d.library || []).length + ')</button><button class="btn" type="button" data-sk="trend">Trending on GitHub</button><button class="btn" type="button" data-sk="updates">Check for updates</button>' +
@@ -39495,15 +39496,15 @@ saveProduct = function () {
 <style>
 .wd-state{display:flex;gap:14px;align-items:center;flex-wrap:wrap}
 .wd-big{font-size:20px;font-weight:700}
-.wd-big.ok{color:var(--ok,#1a9e5b)}.wd-big.bad{color:var(--critical,#d33)}
-.wd-iss{border:1px solid var(--line,#e6e8ef);border-left:4px solid var(--line,#ccd);border-radius:10px;padding:10px 12px;margin:8px 0;background:var(--card,#fff)}
+.wd-big.ok{color:var(--good,#1a9e5b)}.wd-big.bad{color:var(--critical,#d33)}
+.wd-iss{border:1px solid var(--fd-border,var(--ring,#e6e8ef));border-left:4px solid var(--fd-border,var(--ring,#e6e8ef));border-radius:10px;padding:10px 12px;margin:8px 0;background:var(--fd-card,var(--surface,#fff))}
 .wd-iss.urgent{border-left-color:var(--critical,#d33)}.wd-iss.high{border-left-color:#e8590c}.wd-iss.medium{border-left-color:#f0b400}
 .wd-iss.done{opacity:.65}
 .wd-iss .t{font-weight:600}
 .wd-fix{margin-top:6px;font-size:13px}
-.wd-proof{font-size:12px;color:var(--muted,#667);overflow-wrap:anywhere}
+.wd-proof{font-size:12px;color:var(--fd-text-3,var(--muted,#667));overflow-wrap:anywhere}
 .wd-sev{display:inline-block;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;border-radius:6px;padding:1px 6px;margin-right:6px}
-.wd-sev.urgent{background:var(--critical,#d33);color:#fff}.wd-sev.high{background:#e8590c;color:#fff}.wd-sev.medium{background:#f0b400;color:#222}.wd-sev.low{background:var(--soft,#eef);color:inherit}
+.wd-sev.urgent{background:var(--critical,#d33);color:#fff}.wd-sev.high{background:#e8590c;color:#fff}.wd-sev.medium{background:#f0b400;color:#222}.wd-sev.low{background:var(--fd-surface-2,var(--plane,#f4f6f9));color:inherit}
 .wd-pages td{vertical-align:top;font-size:13px}
 .wd-url{overflow-wrap:anywhere}
 .tj-row td{vertical-align:top;font-size:13px}
@@ -39521,7 +39522,7 @@ saveProduct = function () {
   function syncNav() {
     var b = document.querySelector('#nav button[data-view="watch"]'); if (!b) return;
     b.style.display = on() ? '' : 'none';
-    var n = WD.data ? (WD.data.counts.urgent || 0) + (WD.data.counts.high || 0) : 0;
+    var n = WD.data ? (WD.data.waiting || []).filter(function (a) { return a.status === 'proposed'; }).length + (WD.data.counts.urgent || 0) : 0;
     var c = b.querySelector('.count'); if (!c) { c = document.createElement('span'); c.className = 'count'; b.appendChild(c); } c.textContent = n ? String(n) : ''; c.style.display = n ? '' : 'none';
   }
   if (typeof applyRole === 'function') { var ar = applyRole; applyRole = function () { var r = ar.apply(this, arguments); try { syncNav(); if (on() && !WD.data) load(); } catch (e) {} return r; }; }
@@ -39533,53 +39534,54 @@ saveProduct = function () {
   window.wdLoad = load;
   function act(name, args, msg) { srv(name, args, function (r) { if (r && r.issues) WD.data = r; syncNav(); if (msg) toast(msg); paint(); }, function (e) { toast(esc((e && e.message) || e), true, 9000); paint(); }); }
   var AREA = { website: 'Website', erp: 'ERP', money: 'Money', stock: 'Stock', channels: 'Channels', engine: 'Engine', other: 'Other' };
+  // watch-2 (owner 22 Oct 2026): "I don't want to see problems - fix them every night, tell me next morning what you fixed;
+  // what needs my decision waits for my approval, or I write the change". No "Mark fixed": the screen shows what waits for
+  // his OK (one button), what was fixed (by itself or by his OK), and - folded away - the checks and the pages.
   function issueHtml(i) {
-    var done = i.status !== 'open';
-    return '<div class="wd-iss ' + esc(i.severity) + (done ? ' done' : '') + '"><div class="row" style="justify-content:space-between;gap:8px;align-items:flex-start;flex-wrap:wrap"><div style="flex:1 1 300px">' +
-      '<span class="wd-sev ' + esc(i.severity) + '">' + esc(i.severity) + '</span><span class="en-sk">' + esc(AREA[i.area] || i.area) + '</span>' + (i.source === 'ai' ? '<span class="en-sk">found by the Watchdog agent</span>' : '') +
-      '<div class="t" style="margin-top:4px" data-noi18n="1">' + esc(i.title) + '</div>' + (i.detail ? '<div style="font-size:13px" data-noi18n="1">' + esc(i.detail) + '</div>' : '') +
-      (i.fix ? '<div class="wd-fix"><b>Fix:</b> <span data-noi18n="1">' + esc(i.fix) + '</span></div>' : '') +
-      (i.proof ? '<div class="wd-proof" data-noi18n="1">' + esc(i.proof) + '</div>' : '') +
-      '<div class="en-meta">First seen ' + esc(i.first) + (i.count > 1 ? ' · seen ' + i.count + ' times, last ' + esc(i.last) : '') +
-        (i.status === 'resolved' ? ' · fixed ' + esc(i.resolved) : i.status === 'ignored' ? ' · ignored until ' + esc(i.ignoredUntil) : '') + '</div></div>' +
-      '<div class="ap-row">' + (i.status === 'open' ? '<button class="btn small primary" type="button" data-wdact="resolve" data-id="' + i.id + '">Mark fixed</button><button class="btn small" type="button" data-wdact="ignore" data-id="' + i.id + '">Ignore 7 days</button>'
-        : '<button class="btn small" type="button" data-wdact="reopen" data-id="' + i.id + '">Reopen</button>') + '</div></div></div>';
+    return '<div class="wd-iss ' + esc(i.severity) + (i.status !== 'open' ? ' done' : '') + '"><span class="wd-sev ' + esc(i.severity) + '">' + esc(i.severity) + '</span><span class="en-sk">' + esc(AREA[i.area] || i.area) + '</span>' +
+      '<div class="t" style="margin-top:4px" data-noi18n="1">' + esc(i.title) + '</div>' + (i.detail ? '<div style="font-size:13px" data-noi18n="1">' + esc(i.detail.slice(0, 300)) + '</div>' : '') +
+      '<div class="en-meta">First seen ' + esc(i.first) + (i.count > 1 ? ' · seen ' + i.count + ' times' : '') + '</div></div>';
   }
-  function pagesHtml(d) {
-    return '<div class="card"><h2>Pages checked every 5 minutes</h2><div style="overflow:auto"><table class="tbl wd-pages"><thead><tr><th>Page</th><th class="hide-sm">Must contain</th><th>Last check</th><th></th></tr></thead><tbody>' +
-      (d.targets.length ? d.targets.map(function (t) {
-        var res = !t.lastAt ? '<span class="en-meta">not checked yet</span>' : (t.ok ? '<span class="pill ok">fine</span> ' : '<span class="pill out">problem</span> ') + '<span class="en-meta">' +
-          (t.status ? 'HTTP ' + t.status : esc(t.error || 'no answer')) + (t.ms ? ' · ' + (Math.round(t.ms / 100) / 10) + ' s' : '') + (t.sslDays !== null && t.sslDays !== undefined ? ' · certificate ' + t.sslDays + ' days' : '') + '<br>' + esc(t.lastAt) + '</span>';
-        return '<tr><td><b>' + esc(t.label || '') + '</b><div class="wd-url"><a href="' + esc(t.url) + '" target="_blank" rel="noopener">' + esc(t.url) + '</a></div></td><td class="hide-sm">' + esc(t.must || '-') + '</td><td>' + res + '</td>' +
-          '<td style="white-space:nowrap;text-align:right"><label><input type="checkbox" data-wdon="' + t.id + '"' + (t.enabled ? ' checked' : '') + '> On</label><br><button class="btn small" type="button" data-wdrm="' + t.id + '" style="margin-top:4px">Remove</button></td></tr>';
-      }).join('') : '<tr><td colspan="4" class="en-meta">No pages yet.</td></tr>') + '</tbody></table></div>' +
-      '<div class="row" style="gap:8px;flex-wrap:wrap;align-items:flex-end;margin-top:10px"><div style="flex:2 1 260px"><label class="f" for="wd_url">Page address</label><input class="i" id="wd_url" placeholder="https://yourshop.com/checkout"></div>' +
-      '<div style="flex:1 1 160px"><label class="f" for="wd_must">Must contain</label><input class="i" id="wd_must" placeholder="Place order"></div>' +
-      '<div style="flex:1 1 140px"><label class="f" for="wd_label">Name</label><input class="i" id="wd_label" placeholder="Checkout"></div>' +
-      '<button class="btn primary" type="button" data-wd="add">Add the page</button></div>' +
-      '<div class="sub" style="display:block;margin-top:6px">Add your most important pages: the home page, a best-selling product, the cart and the checkout. "Must contain" catches a page that opens but is broken (e.g. no "Add to cart").</div></div>';
+  function stepsHtml(a) {
+    var p = a.payload || {};
+    if (a.type === 'erp') return '<ol style="margin:4px 0 0 18px;padding:0">' + (p.steps || []).map(function (s) { return '<li data-noi18n="1">' + esc(s.summary || s.name) + '</li>'; }).join('') + '</ol>';
+    if (a.type === 'task') return '<div data-noi18n="1">' + esc(p.ask || '') + '</div>';
+    return '<div data-noi18n="1">' + esc(JSON.stringify(p).slice(0, 300)) + '</div>';
+  }
+  function fixHtml(a) {
+    var h = '<div class="bf-move"><span class="en-sk">' + esc(a.typeName) + '</span>' + (a.status === 'changing' ? ' <span class="pill low">being changed…</span>' : '') +
+      '<div class="t" data-noi18n="1">' + esc(a.title) + '</div><div style="font-size:13.5px;white-space:pre-wrap" data-noi18n="1">' + esc(a.why) + '</div>' +
+      (a.figures && a.figures.length ? '<div class="bf-figs">' + a.figures.map(function (f) { return esc(f.label) + ': <b>' + esc(f.value) + '</b> <i>(' + esc(f.source) + ')</i>'; }).join(' · ') + '</div>' : '') +
+      '<div class="bf-pay"><b>The fix:</b>' + stepsHtml(a) + '</div>';
+    if (a.status !== 'proposed') return h + '</div>';
+    if (WD.change === a.id) h += '<div class="row" style="gap:8px;flex-wrap:wrap;align-items:flex-end"><div style="flex:1 1 260px"><label class="f" for="wd_note">What should change?</label><input class="i" id="wd_note" data-noi18n="1"></div><button class="btn primary" type="button" data-wdfch="' + a.id + '">Send to the Watchdog</button><button class="btn" type="button" data-wdfx="1">Cancel</button></div>';
+    else if (WD.no === a.id) h += '<div class="row" style="gap:8px;flex-wrap:wrap;align-items:flex-end"><div style="flex:1 1 260px"><label class="f" for="wd_why">Why not? (it learns from this)</label><input class="i" id="wd_why" data-noi18n="1"></div><button class="btn" type="button" data-wdfno2="' + a.id + '">No</button><button class="btn" type="button" data-wdfx="1">Cancel</button></div>';
+    else h += '<div class="bf-btns"><button class="btn ok" type="button" data-wdfok="' + a.id + '">Approve - fix it</button><button class="btn" type="button" data-wdfchange="' + a.id + '">Change</button><button class="btn" type="button" data-wdfno="' + a.id + '">No</button></div>';
+    return h + '</div>';
   }
   function view() {
     if (!on()) return '<div class="note"><div class="ico">i</div><div>The Engine is not switched on for this business.</div></div>';
     var d = WD.data;
     if (!d) { load(); return '<div class="loading">Loading the Watchdog…</div>'; }
-    var c = d.counts, dl = d.daily;
-    var h = '<section><div class="card"><div class="wd-state"><div class="wd-big ' + (c.open ? 'bad' : 'ok') + '">' + (c.open ? c.open + ' problem' + (c.open === 1 ? '' : 's') : 'All good') + '</div>' +
-      (c.open ? '<div class="en-meta">' + [['urgent', 'urgent'], ['high', 'high'], ['medium', 'medium'], ['low', 'low']].filter(function (x) { return c[x[0]]; }).map(function (x) { return c[x[0]] + ' ' + x[1]; }).join(' · ') + '</div>' : '') +
-      '<div class="en-meta" style="margin-left:auto">' + (d.lastCheck ? 'Last check ' + esc(d.lastCheck) + (d.minutesAgo !== null ? ' (' + d.minutesAgo + ' min ago)' : '') : 'Not checked yet') +
+    var c = d.counts, dl = d.daily, wait = (d.waiting || []).filter(function (a) { return a.status === 'proposed' || a.status === 'changing'; }), fx = d.fixed || [];
+    var byItself = fx.filter(function (a) { return a.autoDone && a.status === 'done'; }).length;
+    var big = wait.length ? '<div class="wd-big bad" style="color:var(--warning,#d97706)">' + wait.length + ' fix' + (wait.length === 1 ? '' : 'es') + ' wait for your OK</div>'
+      : c.urgent ? '<div class="wd-big bad">Something urgent - the Watchdog is on it</div>'
+      : '<div class="wd-big ok">All good' + (c.open ? ' - working on ' + c.open : '') + '</div>';
+    var h = '<section><div class="card"><div class="wd-state">' + big + '<div class="en-meta">' + (byItself ? byItself + ' fixed by itself this week · ' : '') + (d.lastCheck ? 'last check ' + esc(d.lastCheck) : '') +
       ' · <span class="en-dot' + (d.engineAlive ? ' on' : '') + '"></span>' + (d.engineAlive ? 'Engine on' : 'Engine not running') + '</div></div>' +
-      '<div class="ap-row" style="margin-top:10px"><button class="btn primary" type="button" data-wd="now">Check now</button>' +
-      (dl ? '<button class="btn" type="button" data-wd="daily">Run the AI check-up now</button>' +
-        '<label style="display:inline-flex;gap:6px;align-items:center"><input type="checkbox" data-wd="dailyon"' + (dl.enabled ? ' checked' : '') + '> Daily AI check-up at</label><input class="i" type="time" id="wd_at" value="' + esc(dl.at) + '" style="max-width:120px">' +
-        '<span class="en-meta">' + (dl.enabled && dl.next ? 'next ' + esc(dl.next) : '') + (dl.lastRun ? ' · last ' + esc(dl.lastRun) + (dl.lastStatus ? ' (' + esc(dl.lastStatus) + ')' : '') : '') + '</span>' : '') + '</div>' +
-      '<div class="sub" style="display:block;margin-top:6px">Every 5 minutes the Engine opens your pages and the ERP checks itself (timers, failing actions, backups, the books, WhatsApp). Urgent and high problems also come to the bell and your WhatsApp alert number. Once a day the Watchdog agent looks deeper and writes the fixes.</div></div></section>';
-    var list = d.issues.filter(function (i) { return WD.tab === 'open' ? i.status === 'open' : WD.tab === 'ignored' ? i.status === 'ignored' : i.status === 'resolved'; });
-    var n = function (s) { return d.issues.filter(function (i) { return i.status === s; }).length; };
-    h += '<section><div class="en-chips">' + [['open', 'Open', n('open')], ['ignored', 'Ignored', n('ignored')], ['resolved', 'Fixed (7 days)', n('resolved')]].map(function (x) {
-      return '<button class="en-chip" type="button" data-wdtab="' + x[0] + '" aria-pressed="' + (WD.tab === x[0]) + '">' + x[1] + '<b>' + x[2] + '</b></button>'; }).join('') + '</div>';
-    if (WD.err) h += '<div class="note err"><div class="ico">!</div><div>' + esc(WD.err) + '</div></div>';
-    h += list.length ? list.map(issueHtml).join('') : '<div class="note"><div class="ico">i</div><div>' + (WD.tab === 'open' ? 'No open problems. 👍' : 'Nothing here.') + '</div></div>';
-    h += '</section><section>' + pagesHtml(d) + '</section>';
+      (d.lastNight && d.lastNight.note ? '<div style="margin-top:10px"><b>Last night (' + esc(d.lastNight.when) + '):</b><div class="en-ans" style="margin-top:4px" data-noi18n="1">' + (window.enMd ? window.enMd(d.lastNight.note) : esc(d.lastNight.note)) + '</div></div>' : '') +
+      '<div class="ap-row" style="margin-top:10px"><button class="btn" type="button" data-wd="now">Check now</button>' +
+      (dl ? '<button class="btn" type="button" data-wd="daily">Run the night check now</button><label style="display:inline-flex;gap:6px;align-items:center"><input type="checkbox" data-wd="dailyon"' + (dl.enabled ? ' checked' : '') + '> Night check and fixes at</label><input class="i" type="time" id="wd_at" value="' + esc(dl.at) + '" style="max-width:120px">' : '') + '</div>' +
+      '<div class="sub" style="display:block;margin-top:6px">Every night the Watchdog checks everything, fixes what is safe by itself, and prepares the rest as fixes for your OK. In the morning you see what it fixed. Urgent things also come to your WhatsApp.</div></div></section>';
+    if (wait.length) h += '<section><h2 style="margin:6px 0">Waiting for your OK</h2>' + wait.map(fixHtml).join('') + '</section>';
+    h += '<section><div class="card"><h2>Fixed in the last 7 days</h2>' + (fx.length ? fx.map(function (a) {
+      var ok = a.status === 'done';
+      return '<div class="br-fact"><div><b>' + (ok ? '✓ ' : a.status === 'rejected' ? '✕ ' : '! ') + '</b><span data-noi18n="1">' + esc(a.title) + '</span><div class="en-meta" data-noi18n="1">' + esc(a.result || a.note || '') + '</div></div>' +
+        '<div class="en-meta" style="white-space:nowrap;text-align:right">' + (a.autoDone ? 'by itself' : a.status === 'rejected' ? 'you said no' : 'you approved') + '<br>' + esc(a.decided) + '</div></div>'; }).join('')
+      : '<div class="en-meta">Nothing yet - the first night check runs at ' + esc(dl ? dl.at : '03:00') + '.</div>') + '</div></section>';
+    h += '<section><details><summary class="en-meta" style="cursor:pointer">What the Watchdog is watching (' + c.open + ' open)</summary>' + (d.issues.filter(function (i) { return i.status === 'open'; }).map(issueHtml).join('') || '<div class="en-meta">Nothing open.</div>') + '</details>' +
+      '<details style="margin-top:8px"><summary class="en-meta" style="cursor:pointer">Pages it opens every 5 minutes (' + d.targets.length + ')</summary>' + pagesHtml(d) + '</details></section>';
     return h;
   }
   function paint() { if (VIEW !== 'watch') return; var v = el('view'); if (!v) return; v.innerHTML = view(); try { if (typeof bindTips === 'function') bindTips(v); } catch (e) {} }
@@ -39589,22 +39591,32 @@ saveProduct = function () {
 
   document.addEventListener('click', function (e) {
     if (VIEW !== 'watch') return;
-    var t = e.target.closest && e.target.closest('[data-wd],[data-wdact],[data-wdtab],[data-wdrm]'); if (!t) return;
+    var t = e.target.closest && e.target.closest('[data-wd],[data-wdact],[data-wdtab],[data-wdrm],[data-wdfok],[data-wdfchange],[data-wdfno],[data-wdfch],[data-wdfno2],[data-wdfx]'); if (!t) return;
+    var fx = function (id, act, note) { t.disabled = true; srv('erpWatchFixDecide', [{ id: id, act: act, note: note || '' }], function (r) { WD.data = r; WD.change = null; WD.no = null; syncNav();
+      var a = (r.fixed || []).concat(r.waiting || []).filter(function (x) { return x.id === id; })[0];
+      toast(act === 'approve' ? (a && a.status === 'done' ? 'Fixed: ' + esc(a.result) : 'Could not be fixed: ' + esc(a ? a.result : '')) : act === 'change' ? 'Sent back to the Watchdog.' : 'Noted.', act === 'approve' && a && a.status !== 'done', 9000); paint(); },
+      function (er) { t.disabled = false; toast(esc((er && er.message) || er), true, 9000); }); };
+    if (t.hasAttribute('data-wdfok')) { fx(t.getAttribute('data-wdfok'), 'approve'); return; }
+    if (t.hasAttribute('data-wdfchange')) { WD.change = t.getAttribute('data-wdfchange'); WD.no = null; paint(); return; }
+    if (t.hasAttribute('data-wdfno')) { WD.no = t.getAttribute('data-wdfno'); WD.change = null; paint(); return; }
+    if (t.hasAttribute('data-wdfx')) { WD.change = null; WD.no = null; paint(); return; }
+    if (t.hasAttribute('data-wdfch')) { fx(t.getAttribute('data-wdfch'), 'change', (el('wd_note') || {}).value); return; }
+    if (t.hasAttribute('data-wdfno2')) { fx(t.getAttribute('data-wdfno2'), 'reject', (el('wd_why') || {}).value); return; }
     if (t.hasAttribute('data-wdtab')) { WD.tab = t.getAttribute('data-wdtab'); paint(); return; }
     if (t.hasAttribute('data-wdact')) { var a = t.getAttribute('data-wdact'); t.disabled = true; act('erpWatchIssueAct', [{ id: t.getAttribute('data-id'), act: a, days: 7 }], a === 'resolve' ? 'Marked fixed. If it comes back, it opens again.' : a === 'ignore' ? 'Ignored for 7 days.' : 'Reopened.'); return; }
     if (t.hasAttribute('data-wdrm')) { if (!confirm('Stop checking this page?')) return; act('erpWatchTargetSave', [{ id: t.getAttribute('data-wdrm'), remove: true }], 'Removed.'); return; }
     var w = t.getAttribute('data-wd');
     if (w === 'now') { t.disabled = true; t.textContent = 'Checking…'; act('erpWatchRunNow', [], 'The ERP was checked; the pages are opened within a minute.'); setTimeout(load, 45000); return; }
     if (w === 'add') { var url = (el('wd_url') || {}).value || ''; act('erpWatchTargetSave', [{ url: url, must: (el('wd_must') || {}).value || '', label: (el('wd_label') || {}).value || '' }], 'Added - it is checked within a minute.'); return; }
-    if (w === 'daily') { t.disabled = true; srv('erpEngineScheduleRun', [{ id: WD.data.daily.id }], function (r) { toast('Sent to the Watchdog agent. The answer appears in the Command Center.'); try { EN.data = r; } catch (er) {} load(); }, function (er) { t.disabled = false; toast(esc((er && er.message) || er), true); }); return; }
+    if (w === 'daily') { t.disabled = true; srv('erpEngineScheduleRun', [{ id: WD.data.daily.id }], function (r) { toast('The Watchdog is checking and fixing now - the result appears here.'); try { EN.data = r; } catch (er) {} load(); }, function (er) { t.disabled = false; toast(esc((er && er.message) || er), true); }); return; }
   });
   document.addEventListener('change', function (e) {
     if (VIEW !== 'watch' || !e.target) return;
     var t = e.target;
     if (t.hasAttribute('data-wdon')) { var tg = WD.data.targets.filter(function (x) { return x.id === t.getAttribute('data-wdon'); })[0]; if (tg) act('erpWatchTargetSave', [{ id: tg.id, url: tg.url, must: tg.must, label: tg.label, enabled: t.checked }]); return; }
     if (t.getAttribute('data-wd') === 'dailyon' || t.id === 'wd_at') {
-      var at = (el('wd_at') || {}).value || '09:00', en = !!(document.querySelector('[data-wd="dailyon"]') || {}).checked;
-      srv('erpEngineScheduleSave', [{ id: WD.data.daily.id, enabled: en, at: at }], function () { toast(en ? 'Daily AI check-up at ' + at + '.' : 'Daily AI check-up switched off.'); load(); }, function (er) { toast(esc((er && er.message) || er), true); });
+      var at = (el('wd_at') || {}).value || '03:00', en = !!(document.querySelector('[data-wd="dailyon"]') || {}).checked;
+      srv('erpEngineScheduleSave', [{ id: WD.data.daily.id, enabled: en, at: at }], function () { toast(en ? 'Night check and fixes at ' + at + '.' : 'Night check switched off.'); load(); }, function (er) { toast(esc((er && er.message) || er), true); });
     }
   });
 
@@ -39663,12 +39675,12 @@ saveProduct = function () {
      Approve (versions kept; limits and never-do are the owner's only); the business's memory (facts, events, lessons)
      with Out of date; the Engine's On / Off for this business. Server: handlers/brain.js. -->
 <style>
-.br-blk{border:1px solid var(--line,#e6e8ef);border-radius:12px;padding:10px 12px;margin:8px 0;background:var(--card,#fff)}
+.br-blk{border:1px solid var(--fd-border,var(--ring,#e6e8ef));border-radius:12px;padding:10px 12px;margin:8px 0;background:var(--fd-card,var(--surface,#fff))}
 .br-blk h3{margin:0;font-size:14.5px}
-.br-q{font-size:13px;color:var(--muted,#667);margin:2px 0 6px}
+.br-q{font-size:13px;color:var(--fd-text-3,var(--muted,#667));margin:2px 0 6px}
 .br-blk textarea{width:100%;min-height:58px;resize:vertical}
-.br-draft{margin-top:6px;font-size:12.5px;background:var(--soft,rgba(91,79,240,.06));border-radius:8px;padding:6px 8px}
-.br-fact{display:flex;gap:8px;align-items:flex-start;justify-content:space-between;border-bottom:1px solid var(--line,#eef);padding:6px 0;font-size:13px}
+.br-draft{margin-top:6px;font-size:12.5px;background:var(--fd-surface-2,var(--plane,#f4f6f9));border-radius:8px;padding:6px 8px}
+.br-fact{display:flex;gap:8px;align-items:flex-start;justify-content:space-between;border-bottom:1px solid var(--fd-border,var(--ring,#e6e8ef));padding:6px 0;font-size:13px}
 </style>
 <script>
 (function () {
@@ -39747,22 +39759,22 @@ saveProduct = function () {
      Server: handlers/brief.js (+ actions.js). -->
 <style>
 .bf-tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;margin:8px 0}
-.bf-tile{border:1px solid var(--line,#e6e8ef);border-radius:12px;padding:8px 10px;background:var(--card,#fff)}
-.bf-tile .l{font-size:11.5px;color:var(--muted,#667);text-transform:uppercase;letter-spacing:.03em}
+.bf-tile{border:1px solid var(--fd-border,var(--ring,#e6e8ef));border-radius:12px;padding:8px 10px;background:var(--fd-card,var(--surface,#fff))}
+.bf-tile .l{font-size:11.5px;color:var(--fd-text-3,var(--muted,#667));text-transform:uppercase;letter-spacing:.03em}
 .bf-tile .v{font-size:18px;font-weight:700;margin-top:2px}
 .bf-tile .d{font-size:12px}
-.bf-up{color:var(--ok,#1a9e5b)}.bf-down{color:var(--critical,#d33)}
+.bf-up{color:var(--good,#1a9e5b)}.bf-down{color:var(--critical,#d33)}
 .bf-cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px}
 .bf-cols ul{margin:4px 0 0 16px;padding:0;font-size:13.5px}
-.bf-move{border:1px solid var(--line,#e6e8ef);border-radius:14px;padding:12px 14px;margin:10px 0;background:var(--card,#fff)}
-.bf-move.big{border:2px solid var(--accent,#5b4ff0)}
+.bf-move{border:1px solid var(--fd-border,var(--ring,#e6e8ef));border-radius:14px;padding:12px 14px;margin:10px 0;background:var(--fd-card,var(--surface,#fff))}
+.bf-move.big{border:2px solid var(--fd-accent,var(--series-1,#5b4ff0))}
 .bf-move .t{font-size:15.5px;font-weight:700;margin:4px 0}
 .bf-nums{display:flex;flex-wrap:wrap;gap:14px;margin:6px 0;font-size:13px}
 .bf-nums b{font-size:15px}
-.bf-figs{font-size:12.5px;color:var(--muted,#667);margin:4px 0}
-.bf-pay{font-size:13px;background:var(--soft,rgba(91,79,240,.06));border-radius:8px;padding:8px 10px;margin:6px 0;white-space:pre-wrap;overflow-wrap:anywhere}
+.bf-figs{font-size:12.5px;color:var(--fd-text-3,var(--muted,#667));margin:4px 0}
+.bf-pay{font-size:13px;background:var(--fd-surface-2,var(--plane,#f4f6f9));border-radius:8px;padding:8px 10px;margin:6px 0;white-space:pre-wrap;overflow-wrap:anywhere}
 .bf-btns{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
-.bf-btns .btn.ok{background:var(--ok,#1a9e5b);border-color:var(--ok,#1a9e5b);color:#fff}
+.bf-btns .btn.ok{background:var(--good,#1a9e5b);border-color:var(--good,#1a9e5b);color:#fff}
 </style>
 <script>
 (function () {
@@ -39886,15 +39898,15 @@ saveProduct = function () {
      opens to everything else. The old tools (paste, import, map, forms, filters) stay one click away ("More ways to add"). -->
 <style>
 .l2-find{display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;margin-top:8px}
-.l2-row{border-bottom:1px solid var(--line,#eef);padding:10px 2px}
+.l2-row{border-bottom:1px solid var(--fd-border,var(--ring,#e6e8ef));padding:10px 2px}
 .l2-top{display:flex;gap:10px;align-items:flex-start;justify-content:space-between;flex-wrap:wrap}
 .l2-name{font-weight:600;cursor:pointer}
-.l2-why{font-size:13px;color:var(--muted,#667);margin-top:2px}
+.l2-why{font-size:13px;color:var(--fd-text-3,var(--muted,#667));margin-top:2px}
 .l2-heat{display:inline-block;font-size:11px;font-weight:700;border-radius:6px;padding:1px 7px;margin-right:6px;text-transform:uppercase}
-.l2-heat.hot{background:var(--critical,#d33);color:#fff}.l2-heat.warm{background:#f0b400;color:#222}.l2-heat.cold{background:var(--soft,#eef);color:inherit}
+.l2-heat.hot{background:var(--critical,#d33);color:#fff}.l2-heat.warm{background:#f0b400;color:#222}.l2-heat.cold{background:var(--fd-surface-2,var(--plane,#f4f6f9));color:inherit}
 .l2-act{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
-.l2-act a{font-size:12.5px;border:1px solid var(--line,#dde);border-radius:999px;padding:3px 10px;text-decoration:none;color:inherit;white-space:nowrap}
-.l2-det{margin-top:8px;font-size:13px;background:var(--soft,rgba(91,79,240,.04));border-radius:10px;padding:8px 10px}
+.l2-act a{font-size:12.5px;border:1px solid var(--fd-border,var(--ring,#e6e8ef));border-radius:999px;padding:3px 10px;text-decoration:none;color:inherit;white-space:nowrap}
+.l2-det{margin-top:8px;font-size:13px;background:var(--fd-surface-2,var(--plane,#f4f6f9));border-radius:10px;padding:8px 10px}
 .l2-det div{margin:2px 0}
 </style>
 <script>
@@ -39979,6 +39991,68 @@ saveProduct = function () {
   // a way back from the full view
   document.addEventListener('click', function (e) { if (VIEW === 'leads' && LD.classic && e.target && e.target.closest && e.target.closest('[data-ldkind]')) { LD.classic = false; } }, true);
   window.ld2Back = function (v) { if (LD.classic && v && !v.querySelector('[data-l2="simple"]')) v.insertAdjacentHTML('afterbegin', '<div style="margin-bottom:8px"><a href="#" data-l2="simple">← Back to the two lists</a></div>'); };
+})();
+</script>
+<!-- ai-hub (owner 22 Oct 2026: "it is creating a lot of menu - I want to minimize the menu; put the new systems (leads,
+     command center, watchdog, skills, business brain) inside one application; the business brain should not be seen unless
+     I want to see it - hidden under a button"): ONE menu entry "AI". Inside, a tab strip: Daily brief · Command Center ·
+     Leads · Watchdog · Skills, and a small "Business Brain" button. The badge counts everything waiting for the owner's
+     button (brief moves, Watchdog fixes, Engine proposals). The screens themselves are unchanged. -->
+<style>
+#nav button[data-view="engine"],#nav button[data-view="watch"],#nav button[data-view="skills"],#nav button[data-view="brain"],#nav button[data-view="brief"],#nav button[data-view="leads"]{display:none!important}
+.ai-strip{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin:0 0 12px;padding-bottom:8px;border-bottom:1px solid var(--fd-border,var(--ring,#e6e8ef))}
+.ai-strip .ai-t{border:1px solid var(--fd-border,var(--ring,#dde));background:var(--fd-card,var(--surface,#fff));color:inherit;border-radius:999px;padding:6px 14px;font:inherit;font-size:13.5px;cursor:pointer}
+.ai-strip .ai-t[aria-selected="true"]{background:var(--fd-accent,var(--series-1,#5b4ff0));border-color:var(--fd-accent,var(--series-1,#5b4ff0));color:#fff}
+.ai-strip .ai-t b{margin-left:5px;font-size:11px;background:var(--critical,#d33);color:#fff;border-radius:999px;padding:0 6px}
+.ai-strip .ai-brain{margin-left:auto;border:0;background:transparent;color:var(--fd-text-3,var(--muted,#667));font:inherit;font-size:12.5px;cursor:pointer;text-decoration:underline}
+</style>
+<script>
+(function () {
+  var TABS = [['brief', 'Daily brief'], ['engine', 'Command Center'], ['leads', 'Leads'], ['watch', 'Watchdog'], ['skills', 'Skills']];
+  var IN = { brief: 1, engine: 1, leads: 1, watch: 1, skills: 1, brain: 1 };
+  var ICON = '<path d="M12 3l1.8 4.6L18 9l-4.2 1.4L12 15l-1.8-4.6L6 9l4.2-1.4z"/><path d="M18 15l.9 2.1L21 18l-2.1.9L18 21l-.9-2.1L15 18l2.1-.9z"/>';
+  var on = function () { return typeof enOn === 'function' && enOn(); };
+  if (typeof fdxNav === 'function') fdxNav('ai', 'AI', ICON, 'dash');
+  try { VIEW_NAMES.ai = 'AI'; FDH_SUB.ai = 'Your AI team: the daily brief, ask anything, leads, the Watchdog, skills'; } catch (e) {}
+  var last = function () { try { return localStorage.getItem('aiTab') || 'brief'; } catch (e) { return 'brief'; } };
+  function waiting() {
+    var n = { brief: 0, watch: 0, engine: 0 };
+    try { n.brief = BF.data ? BF.data.actions.filter(function (a) { return a.status === 'proposed'; }).length : 0; } catch (e) {}
+    try { n.watch = WD.data ? (WD.data.waiting || []).filter(function (a) { return a.status === 'proposed'; }).length : 0; } catch (e) {}
+    try { n.engine = EN.data ? (EN.data.jobs || []).reduce(function (s, j) { return s + (j.waiting || 0); }, 0) : 0; } catch (e) {}
+    return n;
+  }
+  function syncNav() {
+    var b = document.querySelector('#nav button[data-view="ai"]'); if (!b) return;
+    var leadsOnly = !on() && typeof ldOn === 'function' && ldOn();
+    b.style.display = on() || leadsOnly ? '' : 'none';
+    var w = waiting(), n = w.brief + w.watch + w.engine;
+    var c = b.querySelector('.count'); if (!c) { c = document.createElement('span'); c.className = 'count'; b.appendChild(c); } c.textContent = n ? String(n) : ''; c.style.display = n ? '' : 'none';
+    b.setAttribute('aria-selected', IN[VIEW] || VIEW === 'ai' ? 'true' : 'false');
+  }
+  setInterval(syncNav, 3000); setTimeout(syncNav, 1500);
+  function strip() {
+    var w = waiting(), tabs = on() ? TABS : TABS.filter(function (t) { return t[0] === 'leads'; });
+    return '<div class="ai-strip">' + tabs.map(function (t) { var n = w[t[0]] || 0; return '<button type="button" class="ai-t" data-aitab="' + t[0] + '" aria-selected="' + (VIEW === t[0]) + '">' + t[1] + (n ? '<b>' + n + '</b>' : '') + '</button>'; }).join('') +
+      (on() ? '<button type="button" class="ai-brain" data-aitab="brain">' + (VIEW === 'brain' ? '● ' : '') + 'Business Brain</button>' : '') + '</div>';
+  }
+  function put() {
+    if (!IN[VIEW]) return;
+    var v = el('view'); if (!v) return;
+    var s = v.querySelector(':scope > .ai-strip');
+    if (s) { if (s.getAttribute('data-for') === VIEW) return; s.remove(); }
+    v.insertAdjacentHTML('afterbegin', strip()); v.firstElementChild.setAttribute('data-for', VIEW);
+    try { localStorage.setItem('aiTab', VIEW === 'brain' ? last() : VIEW); } catch (e) {}
+    syncNav();
+  }
+  var view = el('view');
+  if (view && typeof MutationObserver === 'function') new MutationObserver(function () { put(); }).observe(view, { childList: true });
+  var rp = repaint;
+  repaint = function () { if (VIEW === 'ai') { go(on() ? last() : 'leads'); return; } var r = rp.apply(this, arguments); put(); return r; };
+  document.addEventListener('click', function (e) {
+    var t = e.target.closest && e.target.closest('[data-aitab]'); if (!t) return;
+    e.preventDefault(); go(t.getAttribute('data-aitab'));
+  });
 })();
 </script>
 </body>

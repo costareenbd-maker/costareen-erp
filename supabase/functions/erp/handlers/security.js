@@ -14,6 +14,7 @@ const str = (v) => String(v == null ? '' : v).trim();
 
 // what an action is called on the screen; anything not here is spelled out from its name
 const WORDS = {
+  erpWatchFixDecide: 'Answered a Watchdog fix (Approve runs it)',
   erpLeadResearch: 'Asked the Engine to find leads (or switched its daily search)',
   erpBriefDecide: 'Answered a move in the daily brief (Approve runs it)', erpBriefRunNow: 'Asked for the daily brief now', erpBriefSettings: 'Changed the daily brief time or the ad limit',
   erpBrainDraft: 'Asked the Engine to draft the Business Brain', erpBrainSave: 'Changed or approved the Business Brain', erpBrainFact: 'Added or removed a fact in the Business Brain',

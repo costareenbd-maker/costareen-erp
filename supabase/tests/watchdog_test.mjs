@@ -24,7 +24,7 @@ check('hourly -> the next full hour', nextRun({ every: 'hourly' }, new Date('202
 let r = await mgr('erpWatch', []);
 check('a manager does not see the Watchdog', !r.ok, r);
 r = await owner('erpWatch', []);
-check('the owner sees the Watchdog: nothing wrong yet, the daily check-up set for 09:00', r.ok && r.result.counts.open === 0 && r.result.daily && r.result.daily.enabled && r.result.daily.at === '09:00', r);
+check('the owner sees the Watchdog: nothing wrong yet, the night check set for 03:00', r.ok && r.result.counts.open === 0 && r.result.daily && r.result.daily.enabled && r.result.daily.at === '03:00', r);
 r = await owner('erpWatchTargetSave', [{ url: 'shop.test/checkout', label: 'Checkout', must: 'Place order' }]);
 const T = r.result && r.result.targets.find((t) => t.label === 'Checkout');
 check('the owner adds a page to watch (https added), with the text that must be on it', r.ok && T && T.url === 'https://shop.test/checkout' && T.must === 'Place order', r.result && r.result.targets);
@@ -90,7 +90,7 @@ const JW = r.result && r.result.created;
 check('the daily check-up can be run now', r.ok && JW, r);
 r = await eng('erpEngineClaim', { runner: 'vps1' });
 check('the Engine gets it as the Watchdog, with watch_issues and report_issue', r.ok && r.result.job.id === JW && r.result.agent.key === 'watchdog' &&
-  r.result.tools.some((t) => t.name === 'watch_issues') && r.result.tools.some((t) => t.name === 'report_issue') && /check-up/.test(r.result.job.ask), r.result && r.result.job);
+  r.result.tools.some((t) => t.name === 'watch_issues') && r.result.tools.some((t) => t.name === 'report_issue') && /Night shift/.test(r.result.job.ask), r.result && r.result.job);
 r = await eng('erpEngineTool', { id: JW, tool: 'watch_issues', args: {} });
 check('the Watchdog reads the open issues and the pages', r.ok && r.result.issues.some((i) => /Checkout/.test(i.title)) && r.result.pages.some((p) => p.url === 'https://shop.test/checkout'), r.result);
 r = await eng('erpEngineTool', { id: JW, tool: 'report_issue', args: { title: 'Product pages show no price', severity: 'high', area: 'website', detail: 'Three product pages show an empty price.', proof: 'https://shop.test/p/1', fix: 'Re-save the price field in WooCommerce.' } });
