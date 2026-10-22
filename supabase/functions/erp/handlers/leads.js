@@ -324,20 +324,28 @@ async function findOnMap(ctx, kind, what, place) {
   const tags = preset ? preset.tags : ['shop~"."', 'office~"."', 'craft~"."', 'industrial~"."'];
   const g = await geo(ctx, place || 'Dhaka');
   const bb = '(' + g.box.join(',') + ')';
-  const q = '[out:json][timeout:40][maxsize:268435456];(' + tags.map((t) => { const [k, v] = t.split('~'); return 'nwr["' + k + '"~' + v + ']' + bb + ';'; }).join('') + ');out tags center 1000;';
-  // the main Overpass server, then a mirror (either can be busy)
-  let j = null, last = '';
+  // each kind of place is asked on its own (one big question took over a minute), two at a time over two servers;
+  // whatever answered in time is used
+  const SERVERS = ['https://overpass-api.de/api/interpreter', 'https://overpass.kumi.systems/api/interpreter'];
   const t0 = Date.now();
-  for (const base of ['https://overpass-api.de/api/interpreter', 'https://overpass.kumi.systems/api/interpreter']) {
-    const left = 115000 - (Date.now() - t0);   // the whole call must end before the server's 150 s
-    if (left < 20000) break;
-    const ac = typeof AbortController === 'function' ? new AbortController() : null, timer = ac ? setTimeout(() => ac.abort(), Math.min(60000, left)) : null;
-    try {
-      const r = await ctx.deps.fetch(base, { method: 'POST', headers: { 'content-type': 'application/x-www-form-urlencoded', 'user-agent': 'erp-leads/1.0' }, body: 'data=' + encodeURIComponent(q), signal: ac ? ac.signal : undefined });
-      if (r.ok) { j = await r.json().catch(() => null); if (j) break; } else last = String(r.status);
-    } catch (e) { last = 'no answer in time'; } finally { if (timer) clearTimeout(timer); }
-  }
-  if (!j) throw new Error('The map service is busy (' + last + '). Try again in a minute.');
+  const ask = async (tag, n) => {
+    const [k, v] = tag.split('~');
+    const q = '[out:json][timeout:50];nwr["' + k + '"~' + v + ']' + bb + ';out tags center 600;';
+    for (let tries = 0; tries < 2; tries++) {
+      const left = 118000 - (Date.now() - t0); if (left < 15000) return null;
+      const ac = typeof AbortController === 'function' ? new AbortController() : null, timer = ac ? setTimeout(() => ac.abort(), Math.min(60000, left)) : null;
+      try {
+        const r = await ctx.deps.fetch(SERVERS[(n + tries) % 2], { method: 'POST', headers: { 'content-type': 'application/x-www-form-urlencoded', 'user-agent': 'erp-leads/1.0' }, body: 'data=' + encodeURIComponent(q), signal: ac ? ac.signal : undefined });
+        if (r.ok) { const j = await r.json().catch(() => null); if (j) return j.elements || []; }
+      } catch (_) { /* the other server next */ } finally { if (timer) clearTimeout(timer); }
+    }
+    return null;
+  };
+  const answers = [];
+  for (let i = 0; i < tags.length; i += 2) answers.push(...await Promise.all(tags.slice(i, i + 2).map((t, k) => ask(t, i + k))));
+  if (!answers.some((a) => a)) throw new Error('The map service is busy. Try again in a minute, or a smaller area (a town or a thana).');
+  const seen = new Set(), j = { elements: [] };
+  for (const a of answers) for (const e of a || []) { const id = e.type + '/' + e.id; if (!seen.has(id)) { seen.add(id); j.elements.push(e); } }
   const out = [];
   for (const e of j.elements || []) {
     const t = e.tags || {}; const nm = str(t.name || t['name:en']);
