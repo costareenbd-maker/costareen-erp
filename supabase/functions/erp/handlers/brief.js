@@ -55,7 +55,7 @@ async function ensureSchedule(ctx) {
   const { nextRun } = await import('./watchdog.js');
   await ctx.tx`insert into engine_schedules (business_id, agent, title, ask, every, at_time, key, enabled, next_at, created_by)
                values (${ctx.biz}, 'briefing', 'Daily brief', ${BRIEF_ASK}, 'daily', ${at}, ${BRIEF_KEY}, true, ${nextRun({ every: 'daily', at_time: at }, ctx.now)}, 'Brief')
-               on conflict do nothing`;
+               on conflict (business_id, key) where key is not null do update set ask = excluded.ask`;   // always the newest instructions
 }
 export async function adCap(ctx) { const v = num(await getConfig(ctx, 'brief_ad_cap', '')); return v > 0 ? v : 3000; }
 

@@ -59,6 +59,8 @@ const originOf = (u) => { try { const x = new URL(str(u)); return x.protocol + '
 
 /** The ERP page itself and the website's home page, the first time (the owner adds more: a product, the cart, the checkout). */
 async function ensureDefaults(ctx) {
+  // the built-in night shift always works from the newest instructions (the owner's time and switch are kept)
+  await ctx.tx`update engine_schedules set ask = ${WATCH_DAILY.ask}, title = ${WATCH_DAILY.title} where business_id = ${ctx.biz} and key = ${WATCH_DAILY.key} and ask <> ${WATCH_DAILY.ask}`;
   if (str(await getConfig(ctx, 'watch_init', ''))) return;
   const add = async (label, url, must) => { if (url) await ctx.tx`insert into engine_watch_targets (business_id, label, url, must) values (${ctx.biz}, ${label}, ${url}, ${must}) on conflict (business_id, url) do nothing`; };
   const app = originOf(ctx.deps && ctx.deps.google && ctx.deps.google.appUrl);
