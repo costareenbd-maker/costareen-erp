@@ -34,8 +34,10 @@ const JOB_WORDS = { 'nightly:steadfast': 'The nightly Steadfast check', 'nightly
 // fixed; what needs my decision waits for my approval". The night shift fixes what is safe by itself and turns the rest
 // into fixes the owner approves with one button.
 export const WATCH_DAILY = { key: 'watchdog-daily', agent: 'watchdog', title: 'Watchdog: night check and fixes', every: 'daily', at_time: '03:00',
-  ask: 'Night shift: find and FIX the business\'s problems, so the owner wakes up to a fixed business.\n' +
-    '1) Read the open issues (watch_issues, each with its key). Open the website\'s main pages yourself (home, a product page, cart, checkout) and look at the ERP (system_check, stock_low, dues, money_accounts) for anything else broken or wrong; record new real problems with report_issue.\n' +
+  ask: 'Night shift: make sure everything the business runs on WORKS and TALKS to each other, and fix what does not - so the owner wakes up to working systems.\n' +
+    'Your job is systems, not the books: the ERP itself, the website and its sync with the ERP (orders in, stock out), the courier link, WhatsApp, e-mail, the timers, the backups, the Engine. ' +
+    'Do NOT report or fix data, invoices, prices, costs, stock levels or money figures - that is not the Watchdog\'s job; and ignore anything dated before the business\'s records start (see the Business Brain).\n' +
+    '1) Read the open issues (watch_issues, each with its key). Open the website\'s main pages yourself (home, a product page, cart, checkout): do they load, does the shop work. Record new real system problems with report_issue.\n' +
     '2) For EACH problem find the cause with the ERP functions and the web. Then:\n' +
     '   - if it fixed itself or is not real: close_issue with the reason;\n' +
     '   - if a safe retry fixes it (a backup, a delivery check, a website test): fix_now;\n' +
@@ -135,22 +137,27 @@ async function erpChecks(ctx, seen) {
     const h = Math.round((ctx.now.getTime() - new Date(last.at).getTime()) / 3600e3);
     if (h > 36) await see({ key: 'backup', area: 'erp', severity: 'high', title: 'No backup for ' + h + ' hours', detail: 'The last copy was made ' + when(last.at) + '.', proof: '', fix: 'Settings → Backups → Make a backup now; if it fails, the reason shows there.' });
   });
-  // the books' own checks are heavier: once an hour
-  const lastSys = Number(await getConfig(ctx, 'watch_last_sys', '0')) || 0;
-  if (ctx.now.getTime() - lastSys >= SYS_EVERY_MS || ctx.watchForce) {
-    await part('syscheck:', async () => {
-      const r = await erpSystemCheck(ctx);
-      for (const c of (r.checks || []).filter((x) => x.status === 'fail')) {
-        await see({ key: 'syscheck:' + c.id, area: /stock/i.test(c.area) ? 'stock' : 'money', severity: 'high', title: 'The books disagree: ' + str(c.title),
-          detail: str(c.detail).slice(0, 600), proof: 'System check ' + c.id + (c.count ? ': ' + c.count + ' found' : ''), fix: 'Open System check (' + str(c.go || 'syscheck') + ') to see each one.' });
+  // watch-3 (owner 22 Oct 2026): the Watchdog checks that everything WORKS and TALKS to each other - not the books.
+  // The connections are tested once an hour (they call the outside services): the website's sync, the courier, WhatsApp.
+  const lastConn = Number(await getConfig(ctx, 'watch_last_conn', '0')) || 0;
+  if (ctx.now.getTime() - lastConn >= SYS_EVERY_MS || ctx.watchForce) {
+    await part('conn:', async () => {
+      const H = (await import('./index.js')).HANDLERS;
+      const c = await erpConnStatus(ctx);
+      if (c.whatsapp === 'warn') await see({ key: 'conn:whatsapp', area: 'channels', severity: 'high', title: 'WhatsApp is set up but not linked', detail: 'Alerts, campaigns and WhatsApp replies cannot go out.', proof: '', fix: 'Scan the WhatsApp QR again (Settings → Connections).' });
+      if (c.website === 'on') {
+        let w = null; try { w = await ctx.tx.savepoint(() => H.erpWebsiteTest(ctx)); } catch (e) { w = { ok: false, error: str(e && e.message) }; }
+        if (w && !w.ok) await see({ key: 'conn:website', area: 'website', severity: 'urgent', title: 'The ERP cannot reach the website', detail: str(w.error).slice(0, 400), proof: 'Website test ' + when(ctx.now), fix: 'Orders do not come in and stock does not go out until this works.' });
       }
-      await setConfig(ctx, 'watch_last_sys', String(ctx.now.getTime()));
+      if (c.courier === 'on') {
+        let k = null; try { k = await ctx.tx.savepoint(() => H.erpCourierTest(ctx)); } catch (e) { k = { ok: false, error: str(e && e.message) }; }
+        if (k && !k.ok) await see({ key: 'conn:courier', area: 'channels', severity: 'high', title: 'The ERP cannot reach the courier (Steadfast)', detail: str(k.error).slice(0, 400), proof: 'Courier test ' + when(ctx.now), fix: 'Parcels cannot be booked or checked until this works.' });
+      }
+      await setConfig(ctx, 'watch_last_conn', String(ctx.now.getTime()));
     });
   }
-  await part('conn:', async () => {
-    const c = await erpConnStatus(ctx);
-    if (c.whatsapp === 'warn') await see({ key: 'conn:whatsapp', area: 'channels', severity: 'high', title: 'WhatsApp is set up but not linked', detail: 'Alerts and campaigns on WhatsApp cannot go out.', proof: '', fix: 'Settings → Connections → WhatsApp: scan the QR again.' });
-  });
+  // watch-3: the books are not the Watchdog's job any more - its old book issues are closed
+  await part('books', async () => { await ctx.tx`update engine_issues set status = 'resolved', resolved_at = now() where business_id = ${ctx.biz} and key like 'syscheck:%' and status <> 'resolved'`; });
   await part('engine:', async () => {
     const n = (await ctx.tx`select count(*)::int n from engine_jobs where business_id = ${ctx.biz} and status = 'failed' and finished_at > now() - interval '24 hours'`)[0].n;
     if (n >= 3) await see({ key: 'engine:failing', area: 'engine', severity: 'medium', title: n + ' Engine jobs failed in the last day', detail: 'Open the Command Center, Failed, to see why.', proof: '', fix: '' });

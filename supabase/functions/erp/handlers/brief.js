@@ -29,7 +29,7 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const R = (v) => Math.round(num(v));
 const when = (t) => (t ? formatDate(new Date(t), 'd MMM, h:mm a') : '');
 export const BRIEF_KEY = 'daily-brief';
-export const BRIEF_ASK = 'Write today\'s business brief for the owner (it is evening; the day is nearly over).\n' +
+export const BRIEF_ASK = 'Write today\'s business brief for the owner (it is evening; the day is nearly over). Only records from the business\'s records start count (see the Business Brain); never cite older figures.\n' +
   'Work like a team of specialists, then one decider: look at SALES (business_snapshot, sales_day for today and yesterday, month_profit, business_summary), ' +
   'STOCK (stock_low, shipments), CASH and DUES (money_accounts, dues, supplier_dues), MARKETING and LEADS (what sells, what is rising, followups), ' +
   'the WATCHDOG (watch_issues) and the market outside (web search: competitors, prices, demand in this business\'s market). Use brief_results to see what the moves the owner approved before brought.\n' +

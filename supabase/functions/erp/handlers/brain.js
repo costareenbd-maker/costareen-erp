@@ -65,7 +65,7 @@ export async function erpBrain(ctx) {
     status: b.status, version: b.version, approvedAt: when(b.approved_at), approvedBy: str(b.approved_by), draftJob,
     blocks: BLOCKS.map((k) => { const v = bl[k.key] || {}; return { key: k.key, title: k.title, q: k.q, limit: k.limit, locked: !!k.locked,
       value: str(v.value), draft: str(v.draft), source: str(v.source), updated: when(v.updated) }; }),
-    facts, oldFacts: old, engineOn: str(await getConfig(ctx, 'engine_on', '')) === '1',
+    facts, oldFacts: old, dataStart: str(await getConfig(ctx, 'data_start', '')), engineOn: str(await getConfig(ctx, 'engine_on', '')) === '1',
   };
 }
 
@@ -109,6 +109,15 @@ export async function erpBrainSave(ctx, payload) {
   } else {
     await ctx.tx`update engine_brain set blocks = ${ctx.tx.json(bl)}, status = case when status = 'approved' then 'approved' else 'draft' end, updated_at = now() where business_id = ${ctx.biz}`;
   }
+  return erpBrain(ctx);
+}
+
+/** watch-3: the day this business's real records start (older data is an import the AI ignores). */
+export async function erpBrainStart(ctx, payload) {
+  await gate(ctx);
+  const d = str(payload && payload.date);
+  if (d && !/^\d{4}-\d{2}-\d{2}$/.test(d)) throw new Error('Pick a date.');
+  await (await import('../lib/ext.js')).setConfig(ctx, 'data_start', d);
   return erpBrain(ctx);
 }
 
@@ -157,6 +166,8 @@ export async function brainText(ctx) {
     lines.push('', '# What this business has learned (notes; the request and the profile above come first)');
     for (const f of facts) lines.push('- [' + f.kind + '] ' + str(f.text) + ' (' + when(f.valid_from) + ')');
   }
+  const start = str(await getConfig(ctx, 'data_start', ''));
+  if (/^\d{4}-\d{2}-\d{2}$/.test(start)) lines.push('', 'This business\'s real records start on ' + start + '. Anything dated before that is old imported data: ignore it - never report problems in it and never base figures or suggestions on it.');
   lines.push('', 'Work only for this business. Limits and never-do rules above are binding. Figures only from the ERP functions or cited sources.');
   return lines.join('\n');
 }
@@ -229,4 +240,4 @@ export async function rateFact(ctx, job, rating) {
   await addFact(ctx, { kind: 'event', text: 'The owner rated the answer to "' + str(job.title).slice(0, 120) + '" ' + (rating > 0 ? 'useful' : 'not useful') + ' (' + formatDate(ctx.now, 'd MMM yyyy') + ').', source: 'rating', ref: 'job:' + job.id, jobId: job.id, confidence: 1 });
 }
 
-export const HANDLERS = { erpBrain, erpBrainDraft, erpBrainSave, erpBrainFact };
+export const HANDLERS = { erpBrain, erpBrainDraft, erpBrainSave, erpBrainFact, erpBrainStart };
