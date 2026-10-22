@@ -120,10 +120,12 @@ async function erpChecks(ctx, seen) {
   const part = async (prefix, fn) => { try { await ctx.tx.savepoint(fn); groups.push(prefix); } catch (_) { /* a check that cannot run closes nothing */ } };
 
   await part('timer:', async () => {
+    // watch-5 (22 Oct 2026): a timer runs every 15 minutes and tries again by itself; one failure a day is the website's hosting
+    // hiccuping, not a breakdown - a problem only when it keeps failing: 3+ times within 6 hours.
     const rows = await ctx.sql`select action, count(*)::int n, max(at) last, (array_agg(message order by at desc))[1] msg from erp_errors
-                               where business_id = ${ctx.biz} and who = 'Timer' and at > now() - interval '26 hours' and action !~ '^pub:' group by action`;
-    for (const r of rows) await see({ key: 'timer:' + r.action, area: 'erp', severity: 'high', title: (JOB_WORDS[str(r.action)] || 'The timer ' + str(r.action)) + ' is failing',
-      detail: str(r.msg).slice(0, 400), proof: r.n + ' time' + (r.n === 1 ? '' : 's') + ' in the last day, last ' + when(r.last), fix: 'Open the screen it belongs to and check its connection (keys, address); the Watchdog\'s daily check-up looks deeper.' });
+                               where business_id = ${ctx.biz} and who = 'Timer' and at > now() - interval '6 hours' and action !~ '^pub:' group by action having count(*) >= 3`;
+    for (const r of rows) await see({ key: 'timer:' + r.action, area: 'erp', severity: 'high', title: (JOB_WORDS[str(r.action)] || 'The timer ' + str(r.action)) + ' keeps failing',
+      detail: str(r.msg).slice(0, 400), proof: r.n + ' failures in the last 6 hours, last ' + when(r.last), fix: 'Open the screen it belongs to and check its connection (keys, address); the Watchdog\'s daily check-up looks deeper.' });
   });
   await part('errors:', async () => {
     const rows = await ctx.sql`select action, count(*)::int n, (array_agg(message order by at desc))[1] msg from erp_errors

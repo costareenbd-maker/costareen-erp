@@ -63,9 +63,12 @@ check('the screen shows the page\'s last check', W.status === 200 && W.ms === 95
 // ---- the ERP's own checks
 await sql`insert into erp_errors (business_id, who, action, message) values (${B}, 'Timer', 'websync:pull', 'The website did not answer (502)')`;
 r = await eng('erpWatchReport', { biz: B, results: [] });
+check('one failure of a timer (it tries again in 15 minutes) is a hiccup, not a problem', !(await issue('timer:%')), '');
+await sql`insert into erp_errors (business_id, who, action, message) values (${B}, 'Timer', 'websync:pull', 'The website did not answer (502)'), (${B}, 'Timer', 'websync:pull', 'The website did not answer (502)')`;
+r = await eng('erpWatchReport', { biz: B, results: [] });
 I = await issue('timer:%');
-check('a failing timer becomes an issue', I && I.key === 'timer:websync:pull' && I.severity === 'high' && /Reading website orders is failing/.test(I.title), I);
-await sql`update erp_errors set at = now() - interval '30 hours' where business_id = ${B} and action = 'websync:pull'`;
+check('...failing 3 times in 6 hours: a problem', I && I.key === 'timer:websync:pull' && I.severity === 'high' && /Reading website orders keeps failing/.test(I.title), I);
+await sql`update erp_errors set at = now() - interval '7 hours' where business_id = ${B} and action = 'websync:pull'`;
 await eng('erpWatchReport', { biz: B, results: [] });
 check('...and closes when it works again', (await issue('timer:%')).status === 'resolved', '');
 check('a round with no pages leaves the page issues as they were', (await issue('web:%')).status === 'open', '');
