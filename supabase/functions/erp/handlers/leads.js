@@ -278,9 +278,9 @@ const MAP_PRESETS = {
     { key: 'hobby', name: 'Toy, hobby, gift, craft shops', tags: ['shop~"toys|hobby|craft|gift|art|model"'], words: /./ },
   ],
   supplier: [
-    { key: 'plastics', name: 'Plastic, chemicals and materials', tags: ['industrial~"."', 'craft~"plastic"', 'shop~"trade|wholesale"'], words: /plast|polymer|chemical|resin|material|factory|industr|wholesale|trad/i },
+    { key: 'plastics', name: 'Plastic, chemicals and materials', tags: ['industrial~"plastic|chemical|factory"', 'craft~"plastic"', 'shop~"trade|wholesale|chemist"', 'office~"company"'], words: /plast|polymer|chemical|resin|material|factory|industr|wholesale|trad/i },
     { key: 'electronics', name: 'Electronics wholesale and parts', tags: ['shop~"electronics|electrical|hardware|trade|wholesale"'], words: /./ },
-    { key: 'manufacturers', name: 'Factories and manufacturers', tags: ['industrial~"."', 'man_made~"works"', 'office~"company"'], words: /./ },
+    { key: 'manufacturers', name: 'Factories and manufacturers', tags: ['man_made~"works"', 'industrial~"factory|manufacturing|plastic|electronics"', 'office~"company"'], words: /./ },
   ],
 };
 // the main towns are built in (no lookup needed); anything else: Nominatim, then Photon (both free OpenStreetMap services;
@@ -324,14 +324,18 @@ async function findOnMap(ctx, kind, what, place) {
   const tags = preset ? preset.tags : ['shop~"."', 'office~"."', 'craft~"."', 'industrial~"."'];
   const g = await geo(ctx, place || 'Dhaka');
   const bb = '(' + g.box.join(',') + ')';
-  const q = '[out:json][timeout:45];(' + tags.map((t) => { const [k, v] = t.split('~'); return 'nwr["' + k + '"~' + v + ']' + bb + ';'; }).join('') + ');out tags center 1000;';
+  const q = '[out:json][timeout:40][maxsize:268435456];(' + tags.map((t) => { const [k, v] = t.split('~'); return 'nwr["' + k + '"~' + v + ']' + bb + ';'; }).join('') + ');out tags center 1000;';
   // the main Overpass server, then a mirror (either can be busy)
   let j = null, last = '';
+  const t0 = Date.now();
   for (const base of ['https://overpass-api.de/api/interpreter', 'https://overpass.kumi.systems/api/interpreter']) {
+    const left = 115000 - (Date.now() - t0);   // the whole call must end before the server's 150 s
+    if (left < 20000) break;
+    const ac = typeof AbortController === 'function' ? new AbortController() : null, timer = ac ? setTimeout(() => ac.abort(), Math.min(60000, left)) : null;
     try {
-      const r = await ctx.deps.fetch(base, { method: 'POST', headers: { 'content-type': 'application/x-www-form-urlencoded', 'user-agent': 'erp-leads/1.0' }, body: 'data=' + encodeURIComponent(q) });
+      const r = await ctx.deps.fetch(base, { method: 'POST', headers: { 'content-type': 'application/x-www-form-urlencoded', 'user-agent': 'erp-leads/1.0' }, body: 'data=' + encodeURIComponent(q), signal: ac ? ac.signal : undefined });
       if (r.ok) { j = await r.json().catch(() => null); if (j) break; } else last = String(r.status);
-    } catch (e) { last = 'no answer'; }
+    } catch (e) { last = 'no answer in time'; } finally { if (timer) clearTimeout(timer); }
   }
   if (!j) throw new Error('The map service is busy (' + last + '). Try again in a minute.');
   const out = [];
