@@ -41,6 +41,7 @@ export const WATCH_DAILY = { key: 'watchdog-daily', agent: 'watchdog', title: 'W
     '2) For EACH problem find the cause with the ERP functions and the web. Then:\n' +
     '   - if it fixed itself or is not real: close_issue with the reason;\n' +
     '   - if a safe retry fixes it (a backup, a delivery check, a website test): fix_now;\n' +
+    '   - the website down, very slow, erroring or showing old prices / stock: website_restart or website_clear_cache (if you have them), then open the page again to confirm;\n' +
     '   - anything that changes data, money, stock, prices or settings: propose_fix type "erp" with the exact steps (ERP functions and their arguments, each with a plain summary) - the owner approves it with ONE button in the morning. Always try to make it a real one-click fix: the owner does not want work handed to him;\n' +
     '   - only if it truly needs a person outside the ERP (the hosting panel, the courier merchant panel, a phone call): propose_fix type "manual" with exact numbered steps (links, what to click, what to type); type "task" only for work YOU can do next (research, writing, a plan);\n' +
     '   - never guess: if you cannot find the cause, say so in the fix\'s why.\n' +
@@ -272,10 +273,11 @@ export async function erpWatch(ctx) {
   const working = wj ? { status: wj.status, step: Array.isArray(wj.steps) && wj.steps.length ? str(wj.steps[wj.steps.length - 1].t).slice(0, 160) : '', since: when(wj.started_at) } : null;
   const night = (await ctx.tx`select id, status, result, finished_at from engine_jobs where business_id = ${ctx.biz} and agent = 'watchdog' and status in ('done', 'failed') order by finished_at desc nulls last limit 1`)[0];
   const lastCheck = Number(await getConfig(ctx, 'watch_last_check', '0')) || 0;
-  const run = (await ctx.tx`select seen_at from engine_runners where business_id = ${ctx.biz} order by seen_at desc limit 1`)[0];
+  const run = (await ctx.tx`select seen_at, info from engine_runners where business_id = ${ctx.biz} order by seen_at desc limit 1`)[0];
+  const siteRepair = !!(run && run.info && Array.isArray(run.info.sites) && run.info.sites.includes(ctx.biz));
   return { waiting, fixed, openIssues, working, lastNight: night ? { id: night.id, status: night.status, when: when(night.finished_at), note: str(night.result).slice(0, 1500) } : null,
     issues, counts, targets, lastCheck: lastCheck ? when(new Date(lastCheck)) : '', minutesAgo: lastCheck ? Math.round((ctx.now.getTime() - lastCheck) / 60000) : null,
-    engineAlive: !!run && ctx.now.getTime() - new Date(run.seen_at).getTime() < 120000,
+    engineAlive: !!run && ctx.now.getTime() - new Date(run.seen_at).getTime() < 120000, siteRepair,
     daily: daily ? { id: daily.id, enabled: daily.enabled, at: daily.at_time, next: when(daily.next_at), lastRun: when(daily.last_run), lastJob: daily.job_id, lastStatus: daily.job_status || '' } : null };
 }
 
@@ -413,6 +415,22 @@ export async function watchAlerts(ctx) {
   return out;
 }
 
+/** watch-6: the Engine repaired (or tried to repair) the business's website: restart / clear cache. */
+export async function erpWatchSiteAction(ctx, payload) {
+  engineOnly(ctx);
+  const p = payload || {};
+  const b = (await engineBusinesses(ctx)).find((x) => x.id === str(p.biz));
+  if (!b) throw new Error('That business is not one the Engine works for.');
+  asBusiness(ctx, b);
+  const act = str(p.action) === 'restart' ? 'restart' : 'clear_cache';
+  const key = UUID.test(str(p.targetId)) ? 'web:' + str(p.targetId) : null;
+  const title = (act === 'restart' ? 'Website restarted' : 'Website cache cleared') + (str(p.why) ? ': ' + str(p.why).slice(0, 120) : p.targetId ? ': the website was down for 10 minutes' : '');
+  await ctx.tx`insert into engine_actions (business_id, kind, issue_key, no, type, title, why, payload, status, auto, result, decided_by, decided_at, executed_at)
+               values (${ctx.biz}, 'watch', ${key}, 1, 'site', ${title.slice(0, 160)}, '', ${ctx.tx.json({ action: act })}, ${p.ok ? 'done' : 'failed'}, true, ${str(p.text).slice(0, 1000)},
+                       'Watchdog (by itself)', now(), ${p.ok ? ctx.now : null})`;
+  return { ok: true };
+}
+
 /** The owner's one button on a fix (Approve runs it; Change sends his words back to the Watchdog; No is remembered). */
 export async function erpWatchFixDecide(ctx, payload) {
   await gate(ctx);
@@ -421,4 +439,4 @@ export async function erpWatchFixDecide(ctx, payload) {
   return erpWatch(ctx);
 }
 
-export const HANDLERS = { erpWatch, erpWatchTargetSave, erpWatchIssueAct, erpWatchRunNow, erpWatchReport, erpWatchFixDecide };
+export const HANDLERS = { erpWatch, erpWatchTargetSave, erpWatchIssueAct, erpWatchRunNow, erpWatchReport, erpWatchFixDecide, erpWatchSiteAction };

@@ -9,6 +9,7 @@
 // Env (/etc/erp-engine.env): ERP_URL, ERP_ENGINE_KEY (an access link labelled "Engine ..."), MAX_PARALLEL, MODELS.
 import { spawn } from 'node:child_process';
 import tls from 'node:tls';
+import { siteAction, siteOf, sites } from './site.mjs';
 import { mkdirSync, writeFileSync, rmSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -20,7 +21,7 @@ const MAX_PAR = Number(process.env.MAX_PARALLEL || 2);
 const MODELS = String(process.env.MODELS || 'opus,sonnet').split(',').map((s) => s.trim()).filter(Boolean);
 const CLAUDE = process.env.CLAUDE_BIN || '/usr/bin/claude';
 const WORK = process.env.WORK_DIR || '/var/lib/erp-engine';
-const TICK_MS = 20000, JOB_MS = 20 * 60000, VERSION = 'brain-1b';
+const TICK_MS = 20000, JOB_MS = 20 * 60000, VERSION = 'watch-6';
 const RUNNER = process.env.RUNNER_NAME || 'office-vps';
 
 let running = 0, coolUntil = 0, lastBeat = 0;
@@ -72,7 +73,7 @@ function prepare(c) {
   writeFileSync(path.join(dir, 'tools.json'), JSON.stringify(c.tools || []));
   writeFileSync(path.join(dir, 'system.txt'), systemText(c));
   writeFileSync(path.join(dir, 'mcp.json'), JSON.stringify({ mcpServers: { erp: { command: process.execPath, args: [path.join(HERE, 'erp-mcp.mjs')],
-    env: { ERP_URL, ERP_ENGINE_KEY: KEY, JOB_ID: c.job.id, TOOLS_FILE: path.join(dir, 'tools.json'), RUNNER_NAME: RUNNER } } } }));
+    env: { ERP_URL, ERP_ENGINE_KEY: KEY, JOB_ID: c.job.id, TOOLS_FILE: path.join(dir, 'tools.json'), RUNNER_NAME: RUNNER, BIZ: String(c.business.id || ''), AGENT: String(c.agent.key || '') } } } }));
   return dir;
 }
 
@@ -172,11 +173,34 @@ async function openPage(t) {
     return { id: t.id, status: r.status, ms: Date.now() - t0, found: t.must ? body.toLowerCase().includes(String(t.must).toLowerCase()) : undefined };
   } catch (e) { return { id: t.id, status: 0, ms: Date.now() - t0, error: String((e && e.cause && e.cause.code) || (e && e.name === 'TimeoutError' ? 'no answer in 30 s' : e && e.message) || e).slice(0, 200) }; }
 }
+// watch-6: a website page down 2 rounds in a row (10 minutes) -> restart the site + clear its cache, then look again.
+// At most once per 30 minutes and 6 times a day per business; every repair is reported (fixed, or tried - still down).
+const badRounds = {}, repairs = {};
+const isDown = (r) => r.error || !(r.status > 0) || r.status >= 500;
+async function autoRepair(biz, targets, results) {
+  const site = siteOf(biz); if (!site) return;
+  const host = String(site.host || '').toLowerCase();
+  const down = results.filter((r) => { const t = targets.find((x) => x.id === r.id); try { return t && host && new URL(t.url).hostname.toLowerCase().endsWith(host) && isDown(r); } catch (_) { return false; } });
+  for (const r of results) badRounds[r.id] = isDown(r) ? (badRounds[r.id] || 0) + 1 : 0;
+  const due = down.filter((r) => badRounds[r.id] >= 2);
+  if (!due.length) return;
+  const R = repairs[biz] || (repairs[biz] = []), now = Date.now();
+  while (R.length && now - R[0] > 24 * 3600e3) R.shift();
+  if (R.length >= 6 || (R.length && now - R[R.length - 1] < 30 * 60000)) return;
+  R.push(now);
+  const a = await siteAction(biz, 'restart');
+  let back = 0;
+  for (const r of due) { const t = targets.find((x) => x.id === r.id); const again = await openPage(t); Object.assign(r, again); if (!isDown(again)) { back++; badRounds[r.id] = 0; } }
+  log('site repair', biz, a.ok ? 'restarted' : 'failed', back + '/' + due.length + ' back');
+  try { await erp('erpWatchSiteAction', { biz, action: 'restart', ok: a.ok && back === due.length, text: a.text + (a.ok ? (back === due.length ? ' The website answers again.' : ' The website is still down - it is the hosting itself.') : ''), targetId: due[0].id, auto: true }); } catch (e) { log('repair report failed', e.message); }
+}
+
 async function watch(w) {
   if (!w || !Array.isArray(w.targets) || watching.has(w.biz)) return;
   watching.add(w.biz);
   try {
     const results = await Promise.all(w.targets.map(openPage));
+    await autoRepair(w.biz, w.targets, results);
     const hosts = {};
     for (const t of w.targets) { try { const u = new URL(t.url); if (u.protocol === 'https:') hosts[u.hostname] = null; } catch (_) { /* skip */ } }
     for (const h of Object.keys(hosts)) hosts[h] = await certDays(h);
@@ -189,7 +213,7 @@ async function watch(w) {
 }
 
 async function tick() {
-  const info = { version: VERSION, running, models: MODELS, cooling: coolUntil > Date.now() ? Math.round((coolUntil - Date.now()) / 1000) : 0 };
+  const info = { version: VERSION, running, models: MODELS, cooling: coolUntil > Date.now() ? Math.round((coolUntil - Date.now()) / 1000) : 0, sites: Object.keys(sites()) };
   try {
     if (running >= MAX_PAR || coolUntil > Date.now()) {
       if (Date.now() - lastBeat > 60000) { lastBeat = Date.now(); const pk = await erp('erpEngineClaim', { runner: RUNNER, info, peek: true }); if (pk && pk.watches) pk.watches.forEach(watch); }

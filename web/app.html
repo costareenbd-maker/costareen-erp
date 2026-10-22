@@ -39594,7 +39594,9 @@ saveProduct = function () {
     var h = '<section><div class="card"><div class="wd-state">' + big + '<div class="en-meta">' + (byItself ? byItself + ' fixed by itself this week' : '') + (d.lastCheck ? (byItself ? ' · ' : '') + 'last check ' + esc(d.lastCheck) : '') + '</div></div>' +
       '<div class="sub" style="display:block;margin-top:6px">It checks that your website, the ERP, the courier and WhatsApp work and talk to each other - every 5 minutes, and a full check with fixes every night.</div>' +
       (d.lastNight && d.lastNight.note ? '<details style="margin-top:8px"><summary class="en-meta" style="cursor:pointer">Read the last night report (' + esc(d.lastNight.when) + ')</summary><div class="en-ans" style="margin-top:4px" data-noi18n="1">' + (window.enMd ? window.enMd(d.lastNight.note) : esc(d.lastNight.note)) + '</div></details>' : '') +
-      '<details style="margin-top:6px"><summary class="en-meta" style="cursor:pointer">Settings</summary><div class="ap-row" style="margin-top:8px"><button class="btn small" type="button" data-wd="now">Check now</button>' +
+      '<details style="margin-top:6px"><summary class="en-meta" style="cursor:pointer">Settings</summary>' +
+      (d.siteRepair ? '<div class="en-meta" style="margin-top:6px">Website repair is on: when the website is down for 10 minutes the Watchdog restarts it and clears its cache by itself (at most once every 30 minutes).</div>' : '') +
+      '<div class="ap-row" style="margin-top:8px"><button class="btn small" type="button" data-wd="now">Check now</button>' +
       (dl ? '<button class="btn small" type="button" data-wd="daily">Run the night check now</button><label style="display:inline-flex;gap:6px;align-items:center"><input type="checkbox" data-wd="dailyon"' + (dl.enabled ? ' checked' : '') + '> Night check at</label><input class="i" type="time" id="wd_at" value="' + esc(dl.at) + '" style="max-width:120px">' : '') + '</div></details></div></section>';
     if (oi.length) {
       var at = dl ? dl.at : '03:00';
