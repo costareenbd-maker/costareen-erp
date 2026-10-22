@@ -24,7 +24,7 @@ export const PROVIDERS = {
   openai: { name: 'ChatGPT (OpenAI)', secret: 'OPENAI_KEY', web: true, vision: true, pdf: true, audio: false },
   anthropic: { name: 'Claude (Anthropic)', secret: 'ANTHROPIC_KEY', web: true, vision: true, pdf: true, audio: false },
   gemini: { name: 'Gemini (Google)', secret: 'GEMINI_KEY', web: true, vision: true, pdf: true, audio: true },
-  custom: { name: 'Own server (OpenAI-compatible)', secret: 'CUSTOM_AI_KEY', web: false, vision: true, pdf: false, audio: false },
+  custom: { name: 'Own server (OpenAI-compatible)', secret: 'CUSTOM_AI_KEY', web: false, vision: false, pdf: false, audio: false },   // the VPS gateway (Claude / ChatGPT plans) takes text
 };
 export const TASKS = {
   default: 'Everything not set below',
@@ -115,7 +115,7 @@ async function plan(ctx, task, need) {
   // the owner relies on ChatGPT; then Claude, Gemini, his own server
   const order = ['openai', 'anthropic', 'gemini', 'custom'];
   const have = order.filter((p) => keys[p] && (p !== 'custom' || keys.customBase));
-  const able = (p) => (!need.audio || PROVIDERS[p].audio) && (!need.pdf || PROVIDERS[p].pdf) && (!need.web || PROVIDERS[p].web);
+  const able = (p) => (!need.audio || PROVIDERS[p].audio) && (!need.pdf || PROVIDERS[p].pdf) && (!need.web || PROVIDERS[p].web) && (!need.image || PROVIDERS[p].vision);
   const first = pick.provider && pick.provider !== 'auto' && have.includes(pick.provider) ? pick.provider : null;
   const list = [];
   if (first && able(first)) list.push({ provider: first, model: pick.model && pick.model !== 'auto' ? pick.model : 'auto' });
@@ -176,7 +176,7 @@ const TIMEOUT = { chat: 75000, assistant: 90000, read: 110000, write: 90000, lea
  */
 export async function ai(ctx, req) {
   const task = req.task || taskOf(req.purpose);
-  const need = { audio: hasPart(req.messages, 'audio'), pdf: hasPart(req.messages, 'file'), web: !!req.web };
+  const need = { audio: hasPart(req.messages, 'audio'), pdf: hasPart(req.messages, 'file'), web: !!req.web, image: hasPart(req.messages, 'image') };
   let P = req.provider ? { list: [{ provider: req.provider, model: req.model || 'auto' }], keys: await providerKeys(ctx), web: true } : await plan(ctx, task, need);
   // the cheap first try (customer chat by default): Gemini's free-tier models alone; the caller moves on to the strong one
   if (req.tier === 'cheap') P = { ...P, list: P.keys.gemini ? FREE_MODELS.map((m) => ({ provider: 'gemini', model: m, only: true, free: true })) : [] };
