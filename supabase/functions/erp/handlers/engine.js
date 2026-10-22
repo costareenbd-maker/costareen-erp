@@ -102,10 +102,14 @@ function shortJob(j) {
 export async function erpEngine(ctx, payload) {
   await gate(ctx);
   const p = payload || {}, st = ['queued', 'running', 'done', 'failed', 'cancelled'].includes(str(p.status)) ? str(p.status) : '';
-  const rows = st ? await ctx.tx`select * from engine_jobs where business_id = ${ctx.biz} and status = ${st} order by created_at desc limit 60`
-                  : await ctx.tx`select * from engine_jobs where business_id = ${ctx.biz} order by created_at desc limit 60`;
+  // clean-1: the Command Center lists the owner's own questions and timed jobs; the brief, the Watchdog, the lead search
+  // and the Business Brain show their work on their own screens (no duplicates)
+  const OWN = ctx.tx`(source = 'owner' and agent not in ('briefing', 'watchdog') and not (agent = 'leads' and title like 'Find %leads%'))
+                     or (source = 'schedule' and agent not in ('briefing', 'watchdog') and title <> 'Find new leads')`;
+  const rows = st ? await ctx.tx`select * from engine_jobs where business_id = ${ctx.biz} and (${OWN}) and status = ${st} order by created_at desc limit 60`
+                  : await ctx.tx`select * from engine_jobs where business_id = ${ctx.biz} and (${OWN}) order by created_at desc limit 60`;
   const counts = {};
-  for (const r of await ctx.tx`select status, count(*)::int n from engine_jobs where business_id = ${ctx.biz} group by status`) counts[r.status] = r.n;
+  for (const r of await ctx.tx`select status, count(*)::int n from engine_jobs where business_id = ${ctx.biz} and (${OWN}) group by status`) counts[r.status] = r.n;
   const run = (await ctx.tx`select runner, seen_at, info from engine_runners where business_id = ${ctx.biz} order by seen_at desc limit 1`)[0];
   const age = run ? (ctx.now.getTime() - new Date(run.seen_at).getTime()) / 1000 : null;
   const skills = (await ctx.tx`select count(*) filter (where enabled)::int n from engine_skills where business_id = ${ctx.biz}`)[0].n;
@@ -211,7 +215,7 @@ const toolsFor = (agent, source) => ENGINE_TOOLS.concat(ISSUE_TOOLS.filter((t) =
 const EVERY = ['hourly', 'daily', 'weekly'];
 async function schedules(ctx) {
   const rows = await ctx.tx`select s.*, j.status job_status from engine_schedules s left join engine_jobs j on j.id = s.last_job
-                            where s.business_id = ${ctx.biz} order by s.created_at`;
+                            where s.business_id = ${ctx.biz} and s.key is null order by s.created_at`;
   return rows.map((r) => ({ id: r.id, agent: r.agent, agentName: (AGENTS[r.agent] || AGENTS.command).name, title: r.title, ask: r.ask, every: r.every, at: r.at_time, weekday: r.weekday,
     enabled: r.enabled, next: r.enabled ? when(r.next_at) : '', lastRun: when(r.last_run), lastJob: r.last_job, lastStatus: r.job_status || '', builtIn: !!r.key }));
 }

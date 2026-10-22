@@ -62,7 +62,9 @@ const originOf = (u) => { try { const x = new URL(str(u)); return x.protocol + '
 /** The ERP page itself and the website's home page, the first time (the owner adds more: a product, the cart, the checkout). */
 async function ensureDefaults(ctx) {
   // the built-in night shift always works from the newest instructions (the owner's time and switch are kept)
-  await ctx.tx`update engine_schedules set ask = ${WATCH_DAILY.ask}, title = ${WATCH_DAILY.title} where business_id = ${ctx.biz} and key = ${WATCH_DAILY.key} and ask <> ${WATCH_DAILY.ask}`;
+  const { ownerLang, langLine } = await import('./brief.js');
+  const ask = WATCH_DAILY.ask + langLine(await ownerLang(ctx));
+  await ctx.tx`update engine_schedules set ask = ${ask}, title = ${WATCH_DAILY.title} where business_id = ${ctx.biz} and key = ${WATCH_DAILY.key} and ask <> ${ask}`;
   if (str(await getConfig(ctx, 'watch_init', ''))) return;
   const add = async (label, url, must) => { if (url) await ctx.tx`insert into engine_watch_targets (business_id, label, url, must) values (${ctx.biz}, ${label}, ${url}, ${must}) on conflict (business_id, url) do nothing`; };
   const app = originOf(ctx.deps && ctx.deps.google && ctx.deps.google.appUrl);
@@ -70,7 +72,7 @@ async function ensureDefaults(ctx) {
   const site = originOf(await getConfig(ctx, 'store_url', '')) || originOf(await getConfig(ctx, 'website_api', ''));
   if (site && site !== app) await add('Website home page', site, '');
   await ctx.tx`insert into engine_schedules (business_id, agent, title, ask, every, at_time, key, enabled, next_at, created_by)
-               values (${ctx.biz}, ${WATCH_DAILY.agent}, ${WATCH_DAILY.title}, ${WATCH_DAILY.ask}, ${WATCH_DAILY.every}, ${WATCH_DAILY.at_time}, ${WATCH_DAILY.key}, true,
+               values (${ctx.biz}, ${WATCH_DAILY.agent}, ${WATCH_DAILY.title}, ${ask}, ${WATCH_DAILY.every}, ${WATCH_DAILY.at_time}, ${WATCH_DAILY.key}, true,
                        ${nextRun({ every: 'daily', at_time: WATCH_DAILY.at_time }, ctx.now)}, 'Watchdog')
                on conflict do nothing`;
   await setConfig(ctx, 'watch_init', '1');

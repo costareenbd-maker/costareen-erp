@@ -52,11 +52,17 @@ async function gate(ctx) {
 }
 async function ensureSchedule(ctx) {
   const at = /^\d{2}:\d{2}$/.test(str(await getConfig(ctx, 'brief_at', ''))) ? str(await getConfig(ctx, 'brief_at', '')) : '20:00';
+  const ask = BRIEF_ASK + langLine(await ownerLang(ctx));
   const { nextRun } = await import('./watchdog.js');
   await ctx.tx`insert into engine_schedules (business_id, agent, title, ask, every, at_time, key, enabled, next_at, created_by)
-               values (${ctx.biz}, 'briefing', 'Daily brief', ${BRIEF_ASK}, 'daily', ${at}, ${BRIEF_KEY}, true, ${nextRun({ every: 'daily', at_time: at }, ctx.now)}, 'Brief')
+               values (${ctx.biz}, 'briefing', 'Daily brief', ${ask}, 'daily', ${at}, ${BRIEF_KEY}, true, ${nextRun({ every: 'daily', at_time: at }, ctx.now)}, 'Brief')
                on conflict (business_id, key) where key is not null do update set ask = excluded.ask`;   // always the newest instructions
 }
+/** clean-1 (owner 22 Oct 2026: "all the daily brief should come in Bengali"): the language of what the AI writes FOR THE
+ *  OWNER (the brief, the Watchdog's night report); texts for customers keep the customers' language. */
+export const LANGS = { bn: 'Bangla (বাংলা)', en: 'English' };
+export async function ownerLang(ctx) { const v = str(await getConfig(ctx, 'ai_lang', '')); return LANGS[v] ? v : 'en'; }
+export function langLine(l) { return l === 'bn' ? '\nWrite everything for the owner in Bangla (বাংলা script, plain words; product names and figures as they are). Texts meant for customers (ads, posts, messages) stay in the language the customers use.' : ''; }
 export async function adCap(ctx) { const v = num(await getConfig(ctx, 'brief_ad_cap', '')); return v > 0 ? v : 3000; }
 
 /** The day in the ERP's own figures (the AI never makes these up). */
@@ -201,7 +207,7 @@ export async function erpBrief(ctx, payload) {
                               from engine_actions where business_id = ${ctx.biz} and created_at > now() - interval '30 days'`)[0];
   return {
     brief: b ? { id: b.id, day: formatDate(new Date(b.day), 'EEEE d MMMM yyyy'), headline: b.headline, scoreboard: b.scoreboard || {}, changes: b.changes || [], risks: b.risks || [], opportunities: b.opportunities || [], results: b.results_note, made: when(b.created_at) } : null,
-    actions, briefs: list, adCap: await adCap(ctx),
+    actions, briefs: list, adCap: await adCap(ctx), lang: await ownerLang(ctx),
     schedule: sch ? { id: sch.id, at: sch.at_time, enabled: sch.enabled, next: when(sch.next_at), lastStatus: sch.job_status || '', lastJob: sch.job_id } : null,
     stats: { done: stats.done, no: stats.no, worked: stats.worked, gained: R(stats.gained) },
   };
@@ -245,7 +251,7 @@ export async function erpBriefRunNow(ctx) {
   await gate(ctx);
   const busy = (await ctx.tx`select 1 from engine_jobs where business_id = ${ctx.biz} and agent = 'briefing' and title = 'Daily brief' and status in ('queued', 'running')`)[0];
   if (busy) throw new Error('A brief is already being written.');
-  const id = (await ctx.tx`insert into engine_jobs (business_id, agent, title, ask, source, created_by) values (${ctx.biz}, 'briefing', 'Daily brief', ${BRIEF_ASK}, 'brief', ${str(ctx.s.name)}) returning id`)[0].id;
+  const id = (await ctx.tx`insert into engine_jobs (business_id, agent, title, ask, source, created_by) values (${ctx.biz}, 'briefing', 'Daily brief', ${BRIEF_ASK + langLine(await ownerLang(ctx))}, 'brief', ${str(ctx.s.name)}) returning id`)[0].id;
   const out = await erpBrief(ctx, {});
   out.created = id;
   return out;
@@ -254,6 +260,7 @@ export async function erpBriefRunNow(ctx) {
 export async function erpBriefSettings(ctx, payload) {
   await gate(ctx);
   const p = payload || {};
+  if (p.lang !== undefined) { if (!LANGS[str(p.lang)]) throw new Error('Bangla or English?'); await setConfig(ctx, 'ai_lang', str(p.lang)); await ensureSchedule(ctx); }
   if (p.adCap !== undefined) { const v = R(p.adCap); if (!(v >= 0 && v <= 1000000)) throw new Error('Type the most one ad may spend, in taka.'); await setConfig(ctx, 'brief_ad_cap', String(v)); }
   if (p.at !== undefined) {
     if (!/^([01]?\d|2[0-3]):[0-5]\d$/.test(str(p.at))) throw new Error('Type a time like 20:00.');

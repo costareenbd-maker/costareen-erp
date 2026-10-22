@@ -2990,3 +2990,18 @@ gets the ERP's, everything talks to each other."
 - Live: the 4 data issues and 4 data "fixes" from the first night shift were closed; what is left is the website's sync
   (the hosting answers 521).
 - Tests: watch3_test (7).
+
+## A clean AI section, the brief in Bangla, nothing duplicated (22 Oct 2026, tag clean-1)
+Owner: "Everything inside the AI looks messy - make it clean and easy, nobody should get confused; the daily brief in
+Bengali; today's revenue, profit, cash belong to the Dashboard; keep everything where it belongs, never duplicated."
+- The daily brief no longer shows numbers tiles (the Dashboard's job); it keeps the headline, what changed and why,
+  risks, opportunities, what earlier moves brought, and the moves. Its time, language and ad limit sit under Settings.
+- Language for what the AI writes to the owner (the brief, the Watchdog's night report): বাংলা or English (setting
+  ai_lang; Costareen: বাংলা). Texts for customers (ads, posts, messages) keep the customers' language.
+- One place for each thing: the AI's on / not running state only in the AI tab bar; the brief / night check / lead search
+  times only on their own screens; the Command Center lists only the owner's own questions and his own repeating
+  questions (the brief, the Watchdog, the lead search and the Brain draft show their work on their own screens); the
+  Engine's on/off switch and the records-start date are under Business Brain > Advanced.
+- Each AI screen: one line of what it is for, one main action, details folded (Watchdog's night report and settings,
+  repeating questions, brief settings).
+- Tests: clean_test (7).

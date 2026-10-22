@@ -39199,8 +39199,7 @@ saveProduct = function () {
   window.EN = EN; window.SK = SK;
   var ICON_E = '<path d="M12 2l2.4 4.9 5.4.8-3.9 3.8.9 5.4L12 14.3 7.2 16.9l.9-5.4L4.2 7.7l5.4-.8z"/><path d="M5 21h14"/>';
   var ICON_S = '<path d="M4 6h16M4 12h10M4 18h7"/><path d="M17 15l2 2 3-4"/>';
-  var IDEAS = ['Why did sales change this month compared with last month?', 'Which 5 products should I bring in next, and why?', 'Write 3 Facebook ads for the product with the best margin and enough stock',
-    'Find 10 PETG filament manufacturers in China with prices and minimum order', 'Check my website\'s SEO and give me the fixes', 'What should I post this week? Make a plan with captions'];
+  var IDEAS = ['Which 5 products should I bring in next, and why?', 'Check my website\'s SEO and give me the fixes', 'What should I post this week? Make a plan with captions'];
   function enOn() {
     if (!ME || ME.role !== 'owner') return false; var a = ME.apps || {};
     return !!ME.platform || (a.off || []).indexOf('engine') < 0;
@@ -39295,12 +39294,10 @@ saveProduct = function () {
     var d = EN.data;
     if (!d) { load(); return '<div class="loading">Loading the Command Center…</div>'; }
     var R = d.runner || {}, c = d.counts || {};
-    var h = '<section><div class="card"><div class="en-top"><div><span class="en-dot' + (R.alive ? ' on' : '') + '"></span><b>' + (R.alive ? 'The Engine is on' : 'The Engine is not running') + '</b>' +
-      '<span class="en-meta" style="margin-left:8px">' + (R.seen ? 'last seen ' + esc(R.seen) : 'never seen yet') + (R.info && R.info.running ? ' · working on ' + R.info.running : '') + (R.info && R.info.cooling ? ' · resting (plan limit) ' + Math.ceil(R.info.cooling / 60) + ' min' : '') + '</span></div>' +
-      '<div><a href="#" data-engo="skills">' + fmt(d.skillsOn || 0) + ' skills on</a></div></div>' +
-      '<div class="en-ask" style="margin-top:10px"><label class="f" for="en_ask">What should the Engine do?</label><textarea class="i" id="en_ask" data-noi18n="1" placeholder="Ask anything: research, numbers, ads, suppliers, content, SEO…">' + esc(EN.draft) + '</textarea>' +
+    var h = '<section><div class="card">' +
+      '<div class="en-ask"><label class="f" for="en_ask">Ask the AI anything about your business</label><textarea class="i" id="en_ask" data-noi18n="1" placeholder="Ask anything: research, numbers, ads, suppliers, content, SEO…">' + esc(EN.draft) + '</textarea>' +
       '<div class="en-ideas">' + IDEAS.map(function (x, i) { return '<button class="en-idea" type="button" data-enidea="' + i + '">' + esc(x) + '</button>'; }).join('') + '</div>' +
-      '<div class="ap-row"><label class="f" for="en_agent" style="margin:0">Agent</label><select class="i" id="en_agent" style="max-width:220px">' + d.agents.map(function (a) { return '<option value="' + a.key + '"' + (EN.agent === a.key ? ' selected' : '') + '>' + esc(a.name) + '</option>'; }).join('') + '</select>' +
+      '<div class="ap-row"><label class="f" for="en_agent" style="margin:0">Who answers</label><select class="i" id="en_agent" style="max-width:220px">' + d.agents.map(function (a) { return '<option value="' + a.key + '"' + (EN.agent === a.key ? ' selected' : '') + '>' + esc(a.name) + '</option>'; }).join('') + '</select>' +
       '<button class="btn primary" type="button" data-en="ask">Send to the Engine</button></div></div></div></section>';
     h += '<section><div class="en-chips">' + [['', 'All'], ['queued', 'Waiting'], ['running', 'Working'], ['done', 'Done'], ['failed', 'Failed']].map(function (x) {
       var n = x[0] ? (c[x[0]] || 0) : Object.keys(c).reduce(function (s, k) { return s + c[k]; }, 0);
@@ -39584,12 +39581,11 @@ saveProduct = function () {
     var big = wait.length ? '<div class="wd-big bad" style="color:var(--warning,#d97706)">' + wait.length + (wait.length === 1 ? ' fix waits' : ' fixes wait') + ' for your OK</div>'
       : c.open ? '<div class="wd-big bad">' + c.open + ' problem' + (c.open === 1 ? '' : 's') + ' found' + (c.urgent ? ' (' + c.urgent + ' urgent)' : '') + ' - the Watchdog is preparing the fixes</div>'
       : '<div class="wd-big ok">All good</div>';
-    var h = '<section><div class="card"><div class="wd-state">' + big + '<div class="en-meta">' + (byItself ? byItself + ' fixed by itself this week · ' : '') + (d.lastCheck ? 'last check ' + esc(d.lastCheck) : '') +
-      ' · <span class="en-dot' + (d.engineAlive ? ' on' : '') + '"></span>' + (d.engineAlive ? 'Engine on' : 'Engine not running') + '</div></div>' +
-      (d.lastNight && d.lastNight.note ? '<div style="margin-top:10px"><b>Last check-up (' + esc(d.lastNight.when) + '):</b><div class="en-ans" style="margin-top:4px" data-noi18n="1">' + (window.enMd ? window.enMd(d.lastNight.note) : esc(d.lastNight.note)) + '</div></div>' : '') +
-      '<div class="ap-row" style="margin-top:10px"><button class="btn" type="button" data-wd="now">Check now</button>' +
-      (dl ? '<button class="btn" type="button" data-wd="daily">Run the night check now</button><label style="display:inline-flex;gap:6px;align-items:center"><input type="checkbox" data-wd="dailyon"' + (dl.enabled ? ' checked' : '') + '> Night check and fixes at</label><input class="i" type="time" id="wd_at" value="' + esc(dl.at) + '" style="max-width:120px">' : '') + '</div>' +
-      '<div class="sub" style="display:block;margin-top:6px">Every night the Watchdog checks everything, fixes what is safe by itself, and prepares the rest as fixes for your OK. In the morning you see what it fixed. Urgent things also come to your WhatsApp.</div></div></section>';
+    var h = '<section><div class="card"><div class="wd-state">' + big + '<div class="en-meta">' + (byItself ? byItself + ' fixed by itself this week' : '') + (d.lastCheck ? (byItself ? ' · ' : '') + 'last check ' + esc(d.lastCheck) : '') + '</div></div>' +
+      '<div class="sub" style="display:block;margin-top:6px">It checks that your website, the ERP, the courier and WhatsApp work and talk to each other - every 5 minutes, and a full check with fixes every night.</div>' +
+      (d.lastNight && d.lastNight.note ? '<details style="margin-top:8px"><summary class="en-meta" style="cursor:pointer">Read the last night report (' + esc(d.lastNight.when) + ')</summary><div class="en-ans" style="margin-top:4px" data-noi18n="1">' + (window.enMd ? window.enMd(d.lastNight.note) : esc(d.lastNight.note)) + '</div></details>' : '') +
+      '<details style="margin-top:6px"><summary class="en-meta" style="cursor:pointer">Settings</summary><div class="ap-row" style="margin-top:8px"><button class="btn small" type="button" data-wd="now">Check now</button>' +
+      (dl ? '<button class="btn small" type="button" data-wd="daily">Run the night check now</button><label style="display:inline-flex;gap:6px;align-items:center"><input type="checkbox" data-wd="dailyon"' + (dl.enabled ? ' checked' : '') + '> Night check at</label><input class="i" type="time" id="wd_at" value="' + esc(dl.at) + '" style="max-width:120px">' : '') + '</div></details></div></section>';
     if (wait.length) h += '<section><h2 style="margin:6px 0">Waiting for your OK</h2>' + wait.map(fixHtml).join('') + '</section>';
     h += '<section><div class="card"><h2>Fixed in the last 7 days</h2>' + (fx.length ? fx.map(function (a) {
       var ok = a.status === 'done';
@@ -39643,9 +39639,8 @@ saveProduct = function () {
   window.enExtra = function (d) {
     if (TJ.form && el('tj_ask')) TJ.form = { id: TJ.form.id, agent: el('tj_agent').value, title: el('tj_title').value, every: el('tj_every').value, at: el('tj_at').value, weekday: Number(el('tj_day').value), ask: el('tj_ask').value };
     var S = d.schedules || [], f = TJ.form;
-    var h = '<section><div class="card"><div class="row" style="justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px"><h2 style="margin:0">Timed jobs</h2>' +
-      '<button class="btn small" type="button" data-tj="new">+ Add a timed job</button></div>' +
-      '<div class="sub" style="display:block">Work an agent does by itself on a schedule (Dhaka time). Each run is a job in the list below.</div>';
+    var h = '<section><details class="card"' + (f || S.length ? ' open' : '') + '><summary style="cursor:pointer"><b>Repeat a question on a schedule</b> <span class="en-meta">(' + S.length + ')</span></summary>' +
+      '<div class="ap-row" style="margin-top:8px"><button class="btn small" type="button" data-tj="new">+ Add one</button><span class="en-meta">e.g. every Friday: suggest 3 ads. The brief, the night check and the lead search have their own times on their own screens.</span></div>';
     if (f) h += '<div class="en-pv"><div class="ld-grid">' +
       '<div><label class="f" for="tj_agent">Agent</label><select class="i" id="tj_agent">' + d.agents.map(function (a) { return '<option value="' + a.key + '"' + (f.agent === a.key ? ' selected' : '') + '>' + esc(a.name) + '</option>'; }).join('') + '</select></div>' +
       '<div><label class="f" for="tj_title">Name</label><input class="i" id="tj_title" value="' + esc(f.title || '') + '" placeholder="Weekly ad ideas"></div>' +
@@ -39660,8 +39655,8 @@ saveProduct = function () {
         '<td style="white-space:nowrap;text-align:right"><label><input type="checkbox" data-tjon="' + s.id + '"' + (s.enabled ? ' checked' : '') + '> On</label> ' +
         '<button class="btn small" type="button" data-tjrun="' + s.id + '">Run now</button> <button class="btn small" type="button" data-tjedit="' + s.id + '">Change</button>' +
         (s.builtIn ? '' : ' <button class="btn small" type="button" data-tjrm="' + s.id + '">Remove</button>') + '</td></tr>'; }).join('') + '</tbody></table></div>'
-      : '<div class="en-meta">No timed jobs yet.</div>';
-    return h + '</div></section>';
+      : '';
+    return h + '</details></section>';
   };
   function tjSave(args, msg) { srv('erpEngineScheduleSave', [args], function (r) { try { EN.data = r; } catch (e) {} TJ.form = null; if (msg) toast(msg); if (typeof enPaint === 'function') enPaint(); }, function (e) { toast(esc((e && e.message) || e), true, 9000); }); }
   document.addEventListener('click', function (e) {
@@ -39721,7 +39716,7 @@ saveProduct = function () {
     var dj = d.draftJob, drafting = dj && (dj.status === 'queued' || dj.status === 'running');
     var h = '<section><div class="card"><div class="en-top"><div><b>' + esc(STATUS[d.status] || d.status) + '</b>' + (d.status === 'approved' ? ' <span class="pill ok">version ' + d.version + '</span> <span class="en-meta">' + esc(d.approvedAt) + (d.approvedBy ? ' by ' + esc(d.approvedBy) : '') + '</span>' : '') +
       (drafting ? ' <span class="pill low">the Engine is drafting…</span>' : dj && dj.status === 'failed' ? ' <span class="pill out">the draft failed: ' + esc(dj.error) + '</span>' : '') + '</div>' +
-      '<label class="en-meta" style="display:inline-flex;gap:6px;align-items:center"><input type="checkbox" data-br="engine"' + (d.engineOn ? ' checked' : '') + '> The Engine works for this business</label></div>' +
+      '</div>' +
       '<div class="sub" style="display:block;margin-top:6px">Every agent reads this before working for this business, and nothing of any other business. The Engine drafts each answer from your own sales, products and website; you correct it and press Approve. "Limits" and "Never do" are yours only - the AI can never change them.</div>' +
       '<div class="ap-row" style="margin-top:10px"><button class="btn' + (d.status === 'empty' ? ' primary' : '') + '" type="button" data-br="draft"' + (drafting ? ' disabled' : '') + '>' + (d.status === 'empty' ? 'Let the Engine draft it' : 'Redraft from the latest data') + '</button>' +
       (dj && dj.id ? '<a href="#" data-brjob="' + dj.id + '">See the drafting job</a>' : '') + '</div></div></section>';
@@ -39736,6 +39731,9 @@ saveProduct = function () {
       '<div class="sub" style="display:block">Lasting facts, events and lessons - kept by the Engine as it works, by your notes and by your 👍 / 👎. A fact that changes is marked out of date (kept, never deleted).</div>' +
       (d.facts.length ? d.facts.map(function (f) { return '<div class="br-fact"><div><span class="en-sk">' + esc(f.kind) + '</span><span data-noi18n="1">' + esc(f.text) + '</span><div class="en-meta">' + esc(f.source) + ' · ' + esc(f.since) + '</div></div><button class="btn small" type="button" data-brold="' + f.id + '">Out of date</button></div>'; }).join('')
         : '<div class="en-meta">Nothing yet.</div>') + (d.oldFacts ? '<div class="en-meta" style="margin-top:6px">' + d.oldFacts + ' out-of-date fact(s) kept in the history.</div>' : '') +
+      '<details style="margin-top:12px"><summary class="en-meta" style="cursor:pointer">Advanced</summary><div class="row" style="gap:14px;flex-wrap:wrap;align-items:center;margin-top:8px">' +
+      '<label style="display:inline-flex;gap:6px;align-items:center"><input type="checkbox" data-br="engine"' + (d.engineOn ? ' checked' : '') + '> The AI works for this business</label>' +
+      '<label for="br_start">Real records start on</label><input class="i" type="date" id="br_start" value="' + esc(d.dataStart || '') + '" style="max-width:170px"><span class="en-meta">older data is ignored by the AI</span></div></details>' +
       '<div class="row" style="gap:8px;flex-wrap:wrap;align-items:flex-end;margin-top:10px"><div><label class="f" for="br_kind">Kind</label><select class="i" id="br_kind"><option value="fact">Fact</option><option value="lesson">Lesson (what works)</option><option value="event">Event</option></select></div>' +
       '<div style="flex:1 1 260px"><label class="f" for="br_fact">Tell the Engine something lasting</label><input class="i" id="br_fact" data-noi18n="1" placeholder="e.g. Schools buy in January and July"></div><button class="btn" type="button" data-br="fact">Add</button></div></div></section>';
     return h;
@@ -39762,6 +39760,7 @@ saveProduct = function () {
     if (a === 'fact') { var tx = (el('br_fact') || {}).value || ''; srv('erpBrainFact', [{ add: { kind: (el('br_kind') || {}).value, text: tx } }], function (r) { done(r, 'Kept.'); }, fail); }
   });
   document.addEventListener('change', function (e) {
+    if (VIEW === 'brain' && e.target && e.target.id === 'br_start') { srv('erpBrainStart', [{ date: e.target.value }], function (r) { BR.data = r; toast('Saved.'); }, function (er) { toast(esc((er && er.message) || er), true); }); return; }
     if (VIEW !== 'brain' || !e.target || e.target.getAttribute('data-br') !== 'engine') return;
     var v = e.target.checked; keep();
     srv('erpEngineSwitch', [{ on: v }], function () { toast(v ? 'The Engine works for this business.' : 'The Engine stopped for this business - its jobs wait.'); load(); }, fail);
@@ -39863,14 +39862,15 @@ saveProduct = function () {
     var h = '<section><div class="card"><div class="en-top"><div>' + (b ? '<b>' + esc(b.day) + '</b> <span class="en-meta">written ' + esc(b.made) + '</span>' : '<b>No brief yet</b>') + '</div>' +
       '<div class="ap-row">' + (d.briefs.length > 1 ? '<select class="i" id="bf_pick" style="max-width:220px">' + d.briefs.map(function (x) { return '<option value="' + x.id + '"' + (b && b.id === x.id ? ' selected' : '') + '>' + esc(x.label) + (x.waiting ? ' (' + x.waiting + ' waiting)' : '') + '</option>'; }).join('') + '</select>' : '') +
       '<button class="btn" type="button" data-bf="now">Write it now</button></div></div>' +
-      (b ? '<div style="font-size:16px;font-weight:600;margin-top:8px" data-noi18n="1">' + esc(b.headline) + '</div>' + tiles(b.scoreboard || {}) : '<div class="sub" style="display:block;margin-top:6px">The Engine writes it every evening at ' + esc(sch.at || '20:00') + ' (next ' + esc(sch.next || '') + '). Or press "Write it now".</div>') +
+      (b ? '<div style="font-size:16px;font-weight:600;margin-top:8px" data-noi18n="1">' + esc(b.headline) + '</div>' : '<div class="sub" style="display:block;margin-top:6px">The AI writes it every evening at ' + esc(sch.at || '20:00') + '. Or press "Write it now".</div>') +
+      '<details style="margin-top:8px"><summary class="en-meta" style="cursor:pointer">Settings · last 30 days: ' + st.done + ' moves done, ' + st.worked + ' worked' + (st.gained ? ' (+' + tk(st.gained) + ' sales)' : '') + '</summary>' +
       '<div class="row" style="gap:10px;flex-wrap:wrap;align-items:center;margin-top:8px;font-size:13px"><label><input type="checkbox" data-bf="on"' + (sch.enabled ? ' checked' : '') + '> Every evening at</label><input class="i" type="time" id="bf_at" value="' + esc(sch.at || '20:00') + '" style="max-width:120px">' +
-      '<label for="bf_cap">Most one ad may spend ৳</label><input class="i" type="number" id="bf_cap" value="' + esc(d.adCap) + '" style="max-width:110px"><button class="btn small" type="button" data-bf="save">Save</button>' +
-      '<span class="en-meta">Last 30 days: ' + st.done + ' moves done, ' + st.worked + ' worked' + (st.gained ? ' (+' + tk(st.gained) + ' sales)' : '') + ', ' + st.no + ' said no</span></div></div></section>';
+      '<label for="bf_lang">Language</label><select class="i" id="bf_lang" style="max-width:140px"><option value="bn"' + (d.lang === 'bn' ? ' selected' : '') + '>বাংলা</option><option value="en"' + (d.lang !== 'bn' ? ' selected' : '') + '>English</option></select>' +
+      '<label for="bf_cap">Most one ad may spend ৳</label><input class="i" type="number" id="bf_cap" value="' + esc(d.adCap) + '" style="max-width:110px"><button class="btn small" type="button" data-bf="save">Save</button></div></details></div></section>';
     if (b) {
       var col = function (title, list) { return '<div class="card"><h2>' + title + '</h2>' + (list.length ? '<ul>' + list.map(function (x) { return '<li data-noi18n="1">' + esc(x.text) + '</li>'; }).join('') + '</ul>' : '<div class="en-meta">-</div>') + '</div>'; };
       h += '<section><div class="bf-cols">' + col('What changed and why', b.changes) + col('Risks', b.risks) + col('Opportunities', b.opportunities) + '</div>' +
-        (b.results ? '<div class="card" style="margin-top:10px"><h2>What your approved moves brought</h2><div style="font-size:13.5px;white-space:pre-wrap" data-noi18n="1">' + esc(b.results) + '</div></div>' : '') + '</section>';
+        (b.results ? '<div class="card" style="margin-top:10px"><h2>What your earlier moves brought</h2><div style="font-size:13.5px;white-space:pre-wrap" data-noi18n="1">' + esc(b.results) + '</div></div>' : '') + '</section>';
       h += '<section><h2 style="margin:6px 0">Moves</h2>' + (d.actions.length ? d.actions.map(moveHtml).join('') : '<div class="en-meta">No moves in this brief.</div>') + '</section>';
     }
     return h;
@@ -39899,7 +39899,7 @@ saveProduct = function () {
     if (t.hasAttribute('data-bfno2')) { decide(t.getAttribute('data-bfno2'), 'reject', (el('bf_why') || {}).value, t); return; }
     var a = t.getAttribute('data-bf');
     if (a === 'now') { t.disabled = true; srv('erpBriefRunNow', [], function (r) { BF.data = r; toast('The Engine is writing the brief - it takes a few minutes.'); paint(); }, function (er) { t.disabled = false; toast(esc((er && er.message) || er), true); }); return; }
-    if (a === 'save') { srv('erpBriefSettings', [{ at: (el('bf_at') || {}).value, adCap: Number((el('bf_cap') || {}).value), enabled: !!(document.querySelector('[data-bf="on"]') || {}).checked }], function (r) { BF.data = r; toast('Saved.'); paint(); }, function (er) { toast(esc((er && er.message) || er), true); }); }
+    if (a === 'save') { srv('erpBriefSettings', [{ at: (el('bf_at') || {}).value, lang: (el('bf_lang') || {}).value, adCap: Number((el('bf_cap') || {}).value), enabled: !!(document.querySelector('[data-bf="on"]') || {}).checked }], function (r) { BF.data = r; toast('Saved.'); paint(); }, function (er) { toast(esc((er && er.message) || er), true); }); }
   });
   document.addEventListener('change', function (e) {
     if (VIEW !== 'brief' || !e.target) return;
@@ -40047,10 +40047,15 @@ saveProduct = function () {
     b.setAttribute('aria-selected', IN[VIEW] || VIEW === 'ai' ? 'true' : 'false');
   }
   setInterval(syncNav, 3000); setTimeout(syncNav, 1500);
+  function engineState() {
+    var R = null; try { R = EN.data && EN.data.runner; } catch (e) { R = null; }
+    if (!R) { try { if (typeof enLoad === 'function' && !EN.data) enLoad(); } catch (e) {} return ''; }
+    return '<span class="en-dot' + (R.alive ? ' on' : '') + '"></span>' + (R.alive ? 'AI on' : 'AI not running');
+  }
   function strip() {
     var w = waiting(), tabs = on() ? TABS : TABS.filter(function (t) { return t[0] === 'leads'; });
     return '<div class="ai-strip">' + tabs.map(function (t) { var n = w[t[0]] || 0; return '<button type="button" class="ai-t" data-aitab="' + t[0] + '" aria-selected="' + (VIEW === t[0]) + '">' + t[1] + (n ? '<b>' + n + '</b>' : '') + '</button>'; }).join('') +
-      (on() ? '<button type="button" class="ai-brain" data-aitab="brain">' + (VIEW === 'brain' ? '● ' : '') + 'Business Brain</button>' : '') + '</div>';
+      (on() ? '<span class="ai-brain" style="text-decoration:none;cursor:default">' + engineState() + '</span><button type="button" class="ai-brain" style="margin-left:12px" data-aitab="brain">' + (VIEW === 'brain' ? '● ' : '') + 'Business Brain</button>' : '') + '</div>';
   }
   function put() {
     if (!IN[VIEW]) return;
