@@ -2956,3 +2956,24 @@ the best sources - I don't give it sources. The ERP must do the same: when I ask
 - Tests: leads2_test (12).
 Next from the lead research (G:\reports\Creative lead sources for Costareen.md): comment -> private reply -> WhatsApp
 funnel, one-click Save-to-ERP browser button, Banglish intent sorting of messages, consent / STOP flag.
+
+## The Watchdog fixes things itself; one AI menu; dark-mode colours (22 Oct 2026, tags watch-2, ai-hub)
+Owner: "How can I mark fixed without fixing? I don't want to see problems - fix them by checking every night and tell me
+next morning; what needs my decision waits for my approval, or I write the change. And too many menus: put leads,
+Command Center, Watchdog, skills, Business Brain inside one application; the Brain hidden under a button." Plus a
+screenshot: white cards in dark mode.
+- No more "Mark fixed". The Watchdog's built-in job is now a night shift at 03:00 (142_watch_fix.sql moves existing
+  09:00 ones): it reads every issue with its key, investigates, then close_issue (fixed itself / not real, with the
+  reason), fix_now (only safe retries: backup, website test, delivery check, connection status, books check), or
+  propose_fix - steps of the ERP's own functions run in order, all or nothing, after the owner's one button (actions.js
+  type `erp`; never deleting, users, sessions, keys, connections, the platform, restores or the AI's own settings), or a
+  task for work outside the ERP. An approved fix closes its issue; the checks reopen it if the problem is still there.
+  Change sends the owner's words back to the Watchdog; No is remembered.
+- Watchdog screen: "All good" / "N fixes wait for your OK", last night's note, Waiting for your OK (Approve - fix it /
+  Change / No), Fixed in the last 7 days (by itself / you approved / you said no); the open checks and the watched pages
+  are folded away. Bell and WhatsApp: only URGENT issues, "N fixes wait for your OK", "fixed N problems overnight".
+- One menu entry "AI" (after Dashboard) with tabs Daily brief, Command Center, Leads, Watchdog, Skills, and a small
+  "Business Brain" button; the badge counts everything waiting for the owner's button. The separate menu entries are
+  gone (Leads included).
+- Dark mode: the new screens used colour names the "fd" skin does not define (white cards); they now use the skin's own.
+- Tests: watchfix_test (17); watchdog_test updated.

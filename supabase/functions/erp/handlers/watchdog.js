@@ -360,7 +360,7 @@ async function logFix(ctx, job, f) {
 export async function watchAlerts(ctx) {
   const out = [], day = formatDate(ctx.now, 'yyyy-MM-dd');
   const wait = (await ctx.tx`select count(*)::int n from engine_actions where business_id = ${ctx.biz} and kind = 'watch' and status = 'proposed'`)[0].n;
-  if (wait) out.push({ key: 'watchfix:' + day + ':' + wait, level: 'warn', title: wait + ' fix' + (wait === 1 ? '' : 'es') + ' wait for your OK', detail: 'The Watchdog found the cause and prepared the fix - one button each.', go: 'watch' });
+  if (wait) out.push({ key: 'watchfix:' + day + ':' + wait, level: 'warn', title: wait + (wait === 1 ? ' fix waits' : ' fixes wait') + ' for your OK', detail: 'The Watchdog found the cause and prepared the fix - one button each.', go: 'watch' });
   const fixed = (await ctx.tx`select count(*)::int n from engine_actions where business_id = ${ctx.biz} and kind = 'watch' and auto and status = 'done' and decided_at > now() - interval '18 hours'`)[0].n;
   if (fixed) out.push({ key: 'watchdone:' + day, level: 'warn', title: 'The Watchdog fixed ' + fixed + ' problem' + (fixed === 1 ? '' : 's') + ' overnight', detail: 'Nothing for you to do - see what was fixed.', go: 'watch' });
   const rows = await ctx.tx`select id, title, detail, severity, first_seen from engine_issues where business_id = ${ctx.biz} and status = 'open' and severity = 'urgent' order by first_seen desc limit 10`;

@@ -39542,6 +39542,20 @@ saveProduct = function () {
       '<div class="t" style="margin-top:4px" data-noi18n="1">' + esc(i.title) + '</div>' + (i.detail ? '<div style="font-size:13px" data-noi18n="1">' + esc(i.detail.slice(0, 300)) + '</div>' : '') +
       '<div class="en-meta">First seen ' + esc(i.first) + (i.count > 1 ? ' · seen ' + i.count + ' times' : '') + '</div></div>';
   }
+  function pagesHtml(d) {
+    return '<div class="card"><h2>Pages checked every 5 minutes</h2><div style="overflow:auto"><table class="tbl wd-pages"><thead><tr><th>Page</th><th class="hide-sm">Must contain</th><th>Last check</th><th></th></tr></thead><tbody>' +
+      (d.targets.length ? d.targets.map(function (t) {
+        var res = !t.lastAt ? '<span class="en-meta">not checked yet</span>' : (t.ok ? '<span class="pill ok">fine</span> ' : '<span class="pill out">problem</span> ') + '<span class="en-meta">' +
+          (t.status ? 'HTTP ' + t.status : esc(t.error || 'no answer')) + (t.ms ? ' · ' + (Math.round(t.ms / 100) / 10) + ' s' : '') + (t.sslDays !== null && t.sslDays !== undefined ? ' · certificate ' + t.sslDays + ' days' : '') + '<br>' + esc(t.lastAt) + '</span>';
+        return '<tr><td><b>' + esc(t.label || '') + '</b><div class="wd-url"><a href="' + esc(t.url) + '" target="_blank" rel="noopener">' + esc(t.url) + '</a></div></td><td class="hide-sm">' + esc(t.must || '-') + '</td><td>' + res + '</td>' +
+          '<td style="white-space:nowrap;text-align:right"><label><input type="checkbox" data-wdon="' + t.id + '"' + (t.enabled ? ' checked' : '') + '> On</label><br><button class="btn small" type="button" data-wdrm="' + t.id + '" style="margin-top:4px">Remove</button></td></tr>';
+      }).join('') : '<tr><td colspan="4" class="en-meta">No pages yet.</td></tr>') + '</tbody></table></div>' +
+      '<div class="row" style="gap:8px;flex-wrap:wrap;align-items:flex-end;margin-top:10px"><div style="flex:2 1 260px"><label class="f" for="wd_url">Page address</label><input class="i" id="wd_url" placeholder="https://yourshop.com/checkout"></div>' +
+      '<div style="flex:1 1 160px"><label class="f" for="wd_must">Must contain</label><input class="i" id="wd_must" placeholder="Place order"></div>' +
+      '<div style="flex:1 1 140px"><label class="f" for="wd_label">Name</label><input class="i" id="wd_label" placeholder="Checkout"></div>' +
+      '<button class="btn primary" type="button" data-wd="add">Add the page</button></div>' +
+      '<div class="sub" style="display:block;margin-top:6px">Add your most important pages: the home page, a best-selling product, the cart and the checkout. "Must contain" catches a page that opens but is broken (e.g. no "Add to cart").</div></div>';
+  }
   function stepsHtml(a) {
     var p = a.payload || {};
     if (a.type === 'erp') return '<ol style="margin:4px 0 0 18px;padding:0">' + (p.steps || []).map(function (s) { return '<li data-noi18n="1">' + esc(s.summary || s.name) + '</li>'; }).join('') + '</ol>';
@@ -39565,7 +39579,7 @@ saveProduct = function () {
     if (!d) { load(); return '<div class="loading">Loading the Watchdog…</div>'; }
     var c = d.counts, dl = d.daily, wait = (d.waiting || []).filter(function (a) { return a.status === 'proposed' || a.status === 'changing'; }), fx = d.fixed || [];
     var byItself = fx.filter(function (a) { return a.autoDone && a.status === 'done'; }).length;
-    var big = wait.length ? '<div class="wd-big bad" style="color:var(--warning,#d97706)">' + wait.length + ' fix' + (wait.length === 1 ? '' : 'es') + ' wait for your OK</div>'
+    var big = wait.length ? '<div class="wd-big bad" style="color:var(--warning,#d97706)">' + wait.length + (wait.length === 1 ? ' fix waits' : ' fixes wait') + ' for your OK</div>'
       : c.urgent ? '<div class="wd-big bad">Something urgent - the Watchdog is on it</div>'
       : '<div class="wd-big ok">All good' + (c.open ? ' - working on ' + c.open : '') + '</div>';
     var h = '<section><div class="card"><div class="wd-state">' + big + '<div class="en-meta">' + (byItself ? byItself + ' fixed by itself this week · ' : '') + (d.lastCheck ? 'last check ' + esc(d.lastCheck) : '') +
