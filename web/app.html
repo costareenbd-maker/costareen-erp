@@ -39795,6 +39795,9 @@ saveProduct = function () {
 (function () {
   try { SRV_SLOW.erpBriefDecide = 120000; } catch (e) {}
   var BF = { data: null, busy: false, pick: '', change: null, no: null };
+  // clean-3: the brief screen speaks the brief's language (Bangla by default)
+  var L = function (en, bn) { return BF.data && BF.data.lang === 'en' ? en : bn; };
+  var TYPE_BN = { ad: 'ফেসবুক বিজ্ঞাপন', post: 'পোস্ট', reorder: 'সাপ্লায়ার অর্ডার (পরিকল্পনা)', price: 'দাম পরিবর্তন', followup: 'ফলো-আপ কল', whatsapp: 'হোয়াটসঅ্যাপ মেসেজ', task: 'AI-এর কাজ', erp: 'ERP-তে ঠিক করা', manual: 'আপনাকে করতে হবে' };
   window.BF = BF;
   var ICON = '<path d="M4 5h16v14H4z"/><path d="M8 9h8M8 13h5"/><path d="M15 15l2 2 3-4"/>';
   var on = function () { return typeof enOn === 'function' && enOn(); };
@@ -39826,31 +39829,31 @@ saveProduct = function () {
   }
   function payloadHtml(a) {
     var p = a.payload || {};
-    if (a.type === 'ad') return '<b>Ad text:</b>\n' + esc(p.text) + '\n<b>Budget:</b> ' + tk(p.dailyBudget) + ' a day × ' + (p.days || 7) + ' days = ' + tk((p.dailyBudget || 0) * (p.days || 7));
-    if (a.type === 'post') return '<b>Post:</b>\n' + esc(p.text) + (p.at ? '\n<b>When:</b> ' + esc(p.at) : '\n<b>When:</b> now');
-    if (a.type === 'reorder') return '<b>Order:</b> ' + (p.lines || []).map(function (l) { return esc(l.qty + ' × ' + l.sku); }).join(', ') + (p.supplier ? ' from ' + esc(p.supplier) : '') + ' (planned - nothing paid)';
-    if (a.type === 'price') return '<b>New price for ' + esc(p.sku) + ':</b> ' + tk(p.newPrice) + (p.reason ? ' - ' + esc(p.reason) : '');
-    if (a.type === 'followup') return '<b>Calls:</b>\n' + (p.items || []).map(function (i) { return esc((i.name || i.phone) + ' on ' + i.due + ': ' + i.note); }).join('\n');
-    if (a.type === 'whatsapp') return '<b>Message to ' + (p.recipients || []).length + ' people:</b>\n' + esc(p.text);
-    if (a.type === 'task') return '<b>The Engine will:</b> ' + esc(p.ask);
+    if (a.type === 'ad') return '<b>' + L('Ad text', 'বিজ্ঞাপনের লেখা') + ':</b>\n' + esc(p.text) + '\n<b>' + L('Budget', 'বাজেট') + ':</b> ' + tk(p.dailyBudget) + L(' a day × ', ' প্রতিদিন × ') + (p.days || 7) + L(' days = ', ' দিন = ') + tk((p.dailyBudget || 0) * (p.days || 7));
+    if (a.type === 'post') return '<b>' + L('Post', 'পোস্ট') + ':</b>\n' + esc(p.text) + '\n<b>' + L('When', 'কখন') + ':</b> ' + (p.at ? esc(p.at) : L('now', 'এখনই'));
+    if (a.type === 'reorder') return '<b>' + L('Order', 'অর্ডার') + ':</b> ' + (p.lines || []).map(function (l) { return esc(l.qty + ' × ' + l.sku); }).join(', ') + (p.supplier ? ' from ' + esc(p.supplier) : '') + L(' (planned - nothing paid)', ' (পরিকল্পনা - কোনো টাকা দেওয়া হয়নি)');
+    if (a.type === 'price') return '<b>' + L('New price for ', 'নতুন দাম: ') + esc(p.sku) + ':</b> ' + tk(p.newPrice) + (p.reason ? ' - ' + esc(p.reason) : '');
+    if (a.type === 'followup') return '<b>' + L('Calls', 'কল') + ':</b>\n' + (p.items || []).map(function (i) { return esc((i.name || i.phone) + ' on ' + i.due + ': ' + i.note); }).join('\n');
+    if (a.type === 'whatsapp') return '<b>' + L('Message to ' + (p.recipients || []).length + ' people', (p.recipients || []).length + ' জনকে মেসেজ') + ':</b>\n' + esc(p.text);
+    if (a.type === 'task') return '<b>' + L('The AI will', 'AI যা করবে') + ':</b> ' + esc(p.ask);
     return esc(JSON.stringify(p));
   }
-  var ST = { proposed: '', running: ['Doing it…', 'low'], done: ['Done', 'ok'], failed: ['Could not be done', 'out'], rejected: ['You said no', 'out'], changing: ['Being changed…', 'low'] };
+  var ST = { proposed: '', running: ['Doing it…', 'low', 'করা হচ্ছে…'], done: ['Done', 'ok', 'হয়ে গেছে'], failed: ['Could not be done', 'out', 'করা যায়নি'], rejected: ['You said no', 'out', 'আপনি না বলেছেন'], changing: ['Being changed…', 'low', 'বদলানো হচ্ছে…'] };
   function moveHtml(a) {
     var st = ST[a.status];
-    var h = '<div class="bf-move' + (a.bigBet ? ' big' : '') + '">' + (a.bigBet ? '<span class="pill ok">The big bet of the week</span> ' : '<span class="en-meta">#' + a.no + '</span> ') + '<span class="en-sk">' + esc(a.typeName) + '</span>' +
-      (st ? ' <span class="pill ' + st[1] + '">' + st[0] + '</span>' : '') +
+    var h = '<div class="bf-move' + (a.bigBet ? ' big' : '') + '">' + (a.bigBet ? '<span class="pill ok">' + L('The big bet of the week', 'এই সপ্তাহের বড় বাজি') + '</span> ' : '<span class="en-meta">#' + a.no + '</span> ') + '<span class="en-sk">' + esc(L(a.typeName, TYPE_BN[a.type] || a.typeName)) + '</span>' +
+      (st ? ' <span class="pill ' + st[1] + '">' + L(st[0], st[2]) + '</span>' : '') +
       '<div class="t" data-noi18n="1">' + esc(a.title) + '</div><div style="font-size:13.5px;white-space:pre-wrap" data-noi18n="1">' + esc(a.why) + '</div>' +
-      '<div class="bf-nums"><span>Expected gain <b class="bf-up">' + tk(a.impact) + '</b></span><span>Cost <b>' + tk(a.cost) + '</b></span><span>Risk <b>' + esc(a.risk) + '</b></span><span>Confidence <b>' + a.confidence + '%</b></span></div>' +
+      '<div class="bf-nums"><span>' + L('Expected gain', 'সম্ভাব্য লাভ') + ' <b class="bf-up">' + tk(a.impact) + '</b></span><span>' + L('Cost', 'খরচ') + ' <b>' + tk(a.cost) + '</b></span><span>' + L('Risk', 'ঝুঁকি') + ' <b>' + esc(L(a.risk, { low: 'কম', medium: 'মাঝারি', high: 'বেশি' }[a.risk] || a.risk)) + '</b></span><span>' + L('Confidence', 'নিশ্চয়তা') + ' <b>' + a.confidence + '%</b></span></div>' +
       (a.figures.length ? '<div class="bf-figs">' + a.figures.map(function (f) { return esc(f.label) + ': <b>' + esc(f.value) + '</b> <i>(' + esc(f.source) + ')</i>'; }).join(' · ') + '</div>' : '') +
       '<div class="bf-pay" data-noi18n="1">' + payloadHtml(a) + '</div>';
     if (a.status === 'proposed') {
-      if (BF.change === a.id) h += '<div class="row" style="gap:8px;flex-wrap:wrap;align-items:flex-end"><div style="flex:1 1 260px"><label class="f" for="bf_note">What should change?</label><input class="i" id="bf_note" data-noi18n="1" placeholder="e.g. smaller budget, target Chattogram, use Bangla"></div><button class="btn primary" type="button" data-bfch="' + a.id + '">Send to the Engine</button><button class="btn" type="button" data-bfx="1">Cancel</button></div>';
-      else if (BF.no === a.id) h += '<div class="row" style="gap:8px;flex-wrap:wrap;align-items:flex-end"><div style="flex:1 1 260px"><label class="f" for="bf_why">Why not? (it learns from this)</label><input class="i" id="bf_why" data-noi18n="1" placeholder="optional"></div><button class="btn" type="button" data-bfno2="' + a.id + '">No</button><button class="btn" type="button" data-bfx="1">Cancel</button></div>';
-      else h += '<div class="bf-btns"><button class="btn ok" type="button" data-bfok="' + a.id + '">Approve - do it</button><button class="btn" type="button" data-bfchange="' + a.id + '">Change</button><button class="btn" type="button" data-bfno="' + a.id + '">No</button></div>';
+      if (BF.change === a.id) h += '<div class="row" style="gap:8px;flex-wrap:wrap;align-items:flex-end"><div style="flex:1 1 260px"><label class="f" for="bf_note">' + L('What should change?', 'কী বদলাতে হবে?') + '</label><input class="i" id="bf_note" data-noi18n="1" placeholder="e.g. smaller budget, target Chattogram, use Bangla"></div><button class="btn primary" type="button" data-bfch="' + a.id + '">' + L('Send to the AI', 'AI-কে পাঠাও') + '</button><button class="btn" type="button" data-bfx="1">' + L('Cancel', 'বাতিল') + '</button></div>';
+      else if (BF.no === a.id) h += '<div class="row" style="gap:8px;flex-wrap:wrap;align-items:flex-end"><div style="flex:1 1 260px"><label class="f" for="bf_why">' + L('Why not? (it learns from this)', 'কেন না? (AI এটা থেকে শেখে)') + '</label><input class="i" id="bf_why" data-noi18n="1" placeholder="optional"></div><button class="btn" type="button" data-bfno2="' + a.id + '">' + L('No', 'না') + '</button><button class="btn" type="button" data-bfx="1">' + L('Cancel', 'বাতিল') + '</button></div>';
+      else h += '<div class="bf-btns"><button class="btn ok" type="button" data-bfok="' + a.id + '">' + L('Approve - do it', 'অনুমোদন - করে দাও') + '</button><button class="btn" type="button" data-bfchange="' + a.id + '">' + L('Change', 'বদলাও') + '</button><button class="btn" type="button" data-bfno="' + a.id + '">' + L('No', 'না') + '</button></div>';
     } else {
-      h += (a.result ? '<div class="en-meta" style="margin-top:6px" data-noi18n="1">' + esc(a.result) + '</div>' : '') + (a.note ? '<div class="en-meta">You said: <span data-noi18n="1">' + esc(a.note) + '</span></div>' : '') +
-        (a.outcome && a.outcome.verdict ? '<div style="margin-top:4px;font-size:13px"><b>Result:</b> ' + esc(a.outcome.metric || '') + ' ' + tk(a.outcome.baseline) + ' → ' + tk(a.outcome.observed) + ' in ' + a.outcome.days + ' days - <b>' + esc({ worked: 'it worked', no_effect: 'no difference', hurt: 'it hurt', unclear: 'unclear' }[a.outcome.verdict] || a.outcome.verdict) + '</b></div>' : '') +
+      h += (a.result ? '<div class="en-meta" style="margin-top:6px" data-noi18n="1">' + esc(a.result) + '</div>' : '') + (a.note ? '<div class="en-meta">' + L('You said', 'আপনি বলেছেন') + ': <span data-noi18n="1">' + esc(a.note) + '</span></div>' : '') +
+        (a.outcome && a.outcome.verdict ? '<div style="margin-top:4px;font-size:13px"><b>' + L('Result', 'ফলাফল') + ':</b> ' + esc(a.outcome.metric || '') + ' ' + tk(a.outcome.baseline) + ' → ' + tk(a.outcome.observed) + ' ' + L('in ' + a.outcome.days + ' days', a.outcome.days + ' দিনে') + ' - <b>' + esc(L({ worked: 'it worked', no_effect: 'no difference', hurt: 'it hurt', unclear: 'unclear' }[a.outcome.verdict], { worked: 'কাজে লেগেছে', no_effect: 'কোনো পার্থক্য নেই', hurt: 'ক্ষতি হয়েছে', unclear: 'বোঝা যায়নি' }[a.outcome.verdict]) || a.outcome.verdict) + '</b></div>' : '') +
         (a.decidedBy ? '<div class="en-meta">' + esc(a.decidedBy) + ' · ' + esc(a.decided) + '</div>' : '');
     }
     return h + '</div>';
@@ -39859,19 +39862,19 @@ saveProduct = function () {
     if (!on()) return '<div class="note"><div class="ico">i</div><div>The Engine is not switched on for this business.</div></div>';
     var d = BF.data; if (!d) { load(); return '<div class="loading">Loading the brief…</div>'; }
     var b = d.brief, sch = d.schedule || {}, st = d.stats || {};
-    var h = '<section><div class="card"><div class="en-top"><div>' + (b ? '<b>' + esc(b.day) + '</b> <span class="en-meta">written ' + esc(b.made) + '</span>' : '<b>No brief yet</b>') + '</div>' +
+    var h = '<section><div class="card"><div class="en-top"><div>' + (b ? '<b>' + esc(b.day) + '</b> <span class="en-meta">' + L('written ', 'লেখা হয়েছে ') + esc(b.made) + '</span>' : '<b>' + L('No brief yet', 'এখনো কোনো ব্রিফ নেই') + '</b>') + '</div>' +
       '<div class="ap-row">' + (d.briefs.length > 1 ? '<select class="i" id="bf_pick" style="max-width:220px">' + d.briefs.map(function (x) { return '<option value="' + x.id + '"' + (b && b.id === x.id ? ' selected' : '') + '>' + esc(x.label) + (x.waiting ? ' (' + x.waiting + ' waiting)' : '') + '</option>'; }).join('') + '</select>' : '') +
-      '<button class="btn" type="button" data-bf="now">Write it now</button></div></div>' +
-      (b ? '<div style="font-size:16px;font-weight:600;margin-top:8px" data-noi18n="1">' + esc(b.headline) + '</div>' : '<div class="sub" style="display:block;margin-top:6px">The AI writes it every evening at ' + esc(sch.at || '20:00') + '. Or press "Write it now".</div>') +
-      '<details style="margin-top:8px"><summary class="en-meta" style="cursor:pointer">Settings · last 30 days: ' + st.done + ' moves done, ' + st.worked + ' worked' + (st.gained ? ' (+' + tk(st.gained) + ' sales)' : '') + '</summary>' +
+      '<button class="btn" type="button" data-bf="now">' + L('Write it now', 'এখনই লেখো') + '</button></div></div>' +
+      (b ? '<div style="font-size:16px;font-weight:600;margin-top:8px" data-noi18n="1">' + esc(b.headline) + '</div>' : '<div class="sub" style="display:block;margin-top:6px">' + L('The AI writes it every evening at ' + esc(sch.at || '20:00') + '. Or press "Write it now".', 'প্রতি সন্ধ্যা ' + esc(sch.at || '20:00') + '-এ AI এটা লিখে দেয়। অথবা "এখনই লেখো" চাপুন।') + '</div>') +
+      '<details style="margin-top:8px"><summary class="en-meta" style="cursor:pointer">' + L('Settings · last 30 days: ' + st.done + ' moves done, ' + st.worked + ' worked' + (st.gained ? ' (+' + tk(st.gained) + ' sales)' : ''), 'সেটিংস · গত ৩০ দিন: ' + st.done + 'টি পদক্ষেপ করা, ' + st.worked + 'টি কাজে লেগেছে' + (st.gained ? ' (+' + tk(st.gained) + ' বিক্রি)' : '')) + '</summary>' +
       '<div class="row" style="gap:10px;flex-wrap:wrap;align-items:center;margin-top:8px;font-size:13px"><label><input type="checkbox" data-bf="on"' + (sch.enabled ? ' checked' : '') + '> Every evening at</label><input class="i" type="time" id="bf_at" value="' + esc(sch.at || '20:00') + '" style="max-width:120px">' +
       '<label for="bf_lang">Language</label><select class="i" id="bf_lang" style="max-width:140px"><option value="bn"' + (d.lang === 'bn' ? ' selected' : '') + '>বাংলা</option><option value="en"' + (d.lang !== 'bn' ? ' selected' : '') + '>English</option></select>' +
       '<label for="bf_cap">Most one ad may spend ৳</label><input class="i" type="number" id="bf_cap" value="' + esc(d.adCap) + '" style="max-width:110px"><button class="btn small" type="button" data-bf="save">Save</button></div></details></div></section>';
     if (b) {
       var col = function (title, list) { return '<div class="card"><h2>' + title + '</h2>' + (list.length ? '<ul>' + list.map(function (x) { return '<li data-noi18n="1">' + esc(x.text) + '</li>'; }).join('') + '</ul>' : '<div class="en-meta">-</div>') + '</div>'; };
-      h += '<section><div class="bf-cols">' + col('What changed and why', b.changes) + col('Risks', b.risks) + col('Opportunities', b.opportunities) + '</div>' +
-        (b.results ? '<div class="card" style="margin-top:10px"><h2>What your earlier moves brought</h2><div style="font-size:13.5px;white-space:pre-wrap" data-noi18n="1">' + esc(b.results) + '</div></div>' : '') + '</section>';
-      h += '<section><h2 style="margin:6px 0">Moves</h2>' + (d.actions.length ? d.actions.map(moveHtml).join('') : '<div class="en-meta">No moves in this brief.</div>') + '</section>';
+      h += '<section><div class="bf-cols">' + col(L('What changed and why', 'কী বদলেছে, কেন'), b.changes) + col(L('Risks', 'ঝুঁকি'), b.risks) + col(L('Opportunities', 'সুযোগ'), b.opportunities) + '</div>' +
+        (b.results ? '<div class="card" style="margin-top:10px"><h2>' + L('What your earlier moves brought', 'আগের পদক্ষেপগুলোর ফল') + '</h2><div style="font-size:13.5px;white-space:pre-wrap" data-noi18n="1">' + esc(b.results) + '</div></div>' : '') + '</section>';
+      h += '<section><h2 style="margin:6px 0">' + L('Moves', 'করণীয় পদক্ষেপ') + '</h2>' + (d.actions.length ? d.actions.map(moveHtml).join('') : '<div class="en-meta">' + L('No moves in this brief.', 'এই ব্রিফে কোনো পদক্ষেপ নেই।') + '</div>') + '</section>';
     }
     return h;
   }

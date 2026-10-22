@@ -13,7 +13,9 @@ await sql`insert into erp_access_keys (key_hash, user_id, label) values (${await
 const eng = (name, a) => call(name, [a], { token: { key: KEY, device: 'engine' } });
 
 let r = await owner('erpBrief', [{}]);
-check('the brief\'s language starts as English', r.ok && r.result.lang === 'en', r.result && r.result.lang);
+check('the brief\'s language is Bangla by default', r.ok && r.result.lang === 'bn', r.result && r.result.lang);
+r = await owner('erpBriefSettings', [{ lang: 'en' }]);
+check('...English can be chosen', r.ok && r.result.lang === 'en', '');
 r = await owner('erpBriefSettings', [{ lang: 'bn' }]);
 check('the owner picks বাংলা', r.ok && r.result.lang === 'bn', r.result && r.result.lang);
 r = await owner('erpBriefSettings', [{ lang: 'fr' }]);
