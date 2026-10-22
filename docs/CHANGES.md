@@ -2871,3 +2871,24 @@ Not done yet: the specialists' own schedules (Watchdog, briefing, Leads, Ads, Co
 when asked from the Command Center); automatic "give this skill to another agent" suggestions; running code inside skills;
 ChatGPT as the Engine's brain (waits for the plan); GitHub reads use the shared unauthenticated limit (60 an hour per
 server) unless a GITHUB_TOKEN provider secret is set.
+
+## Engine step 2: the Watchdog and timed jobs (22 Oct 2026, tag watch-1)
+- Menu > Watchdog (139_watchdog.sql; handlers/watchdog.js): "All good" or N problems by how bad (urgent / high /
+  medium / low), each with area, detail, proof and the fix; Mark fixed / Ignore 7 days / Reopen; Open / Ignored / Fixed.
+- Every 5 minutes the Engine opens the watched pages (the ERP and the website's home page to start; the owner adds a
+  product page, the cart, the checkout with the text that must be on it): down, error codes, missing text, slow (8 s+),
+  security certificate running out (under 14 days). The same report runs the ERP's own checks: timers failing, an
+  action failing 5+ times an hour for people, no backup for 36 h, the books' system check (hourly), WhatsApp set up but
+  not linked, Engine jobs failing. One issue per problem: counted when seen again, closed by itself when the check
+  passes, reopened as new if it comes back; an ignored one stays quiet until its time is up.
+- Urgent and high issues go to the bell and the WhatsApp alert number (alerts.js); so does an Engine that stopped with
+  jobs waiting (15 min).
+- The Watchdog agent's daily AI check-up (09:00, built-in timed job, switch / time on the Watchdog screen, or Run now):
+  reads the issues (watch_issues), opens the website's main pages, looks at the books, and records new problems with
+  proof and fix (report_issue). Every agent can read the issues; only the Watchdog and the Command Center record them.
+- Timed jobs for any agent (Command Center > Timed jobs): every hour / day / week at a Dhaka time; a due one becomes a job
+  when the Engine next asks for work (not twice while the last is still running); Run now, Change, on / off, Remove
+  (built-in ones only switch off).
+- Tests: watchdog_test (41).
+Not done: checks inside the courier and payment accounts (no API reads yet), social channels beyond the WhatsApp link
+(Meta token expiry), a phone push other than WhatsApp; the website's real checkout is only opened, never ordered.
