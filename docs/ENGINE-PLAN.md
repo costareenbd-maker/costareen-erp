@@ -39,9 +39,32 @@ stock or messages many people waits for your Yes in the ERP. Every job and its c
 | **Watchdog (issue finder)** | Website (down, slow, broken pages, checkout, hacked files), ERP (errors, wrong stock or money, failed timers), social channels (disconnected, ad rejected), couriers, payments | Every 5-15 minutes | Issues board + alert on your phone for urgent ones |
 | **Owner briefing** | Everything above | Every morning | One page: what changed and why, risks, today's 5 actions |
 
+## 5. Skills (owner, 22 Oct 2026)
+A **skill** is a ready-made know-how pack the Engine's agents can use: instructions, examples and sometimes small tools
+(the open "SKILL.md" format used by Claude and many GitHub projects; MCP tool servers too). Example: "write Facebook ads
+that convert", "SEO audit of a WooCommerce site", "read Chinese supplier invoices", "make a reel from product photos".
+
+**ERP > Skills screen**
+- **Installed**: each skill with on / off, which agents may use it, uninstall.
+- **Install**: from the built-in library, from a GitHub link, or from "Trending" (new and popular skills found on GitHub
+  and skill marketplaces each week, with stars and what they do).
+- **Before install** the Engine reads the skill and tells you in plain words what it does, which agent it helps, and any
+  risk (a skill with its own code runs in a closed box on the server).
+- **Usage**: times used (today / 30 days), by which agent and task, success rate, your thumbs up / down on the results it
+  helped, time and cost, last used.
+- **Useful or not**: the Engine marks each skill *useful* (used and the results get approved), *weak* (used but results
+  rejected), or *unused* (never picked) - and suggests removing the weak and unused ones or replacing them with a better
+  one from Trending.
+- **Proof it is used**: every job in the Command Center lists the skills it used, so you can see the skill working on
+  that exact task.
+
+How the Engine uses skills: for each job it looks at the task, picks the matching skills (only the switched-on ones the
+agent may use), loads them, does the work, and logs which skills it used and how the result went.
+
 ## 4. Order of building
 1. **Engine core**: job queue in the ERP, runner on the VPS, brains (Claude plan now, ChatGPT plan this week, Gemini),
-   tools (ERP functions, web search, browser), logs. Command Center screen in the ERP.
+   tools (ERP functions, web search, browser), **skills (install / usage / useful-or-not)**, logs. Command Center and
+   Skills screens in the ERP.
 2. **Watchdog**: website + ERP + channels issue finder (protects the business first).
 3. **Owner briefing** (morning page).
 4. **Leads agent**.
