@@ -25,7 +25,7 @@ const HELP = {
   users: 'Settings → Users: invite staff by e-mail, set the role (sales / manager / shareholder / owner) and what each may do; the Menu card (Settings → Business) sets who sees which screen.',
   apps: 'Apps: the special pages customers reach from outside (Find stock, Colour finder, Printer Passport, Print Doctor...). Each has its own screen with the public link and QR.',
 };
-const TOOLS = [
+export const TOOLS = [
   { name: 'find_products', description: 'Search the products of this business by name, code, brand or colour. Returns code, name, price, stock.', parameters: { type: 'OBJECT', properties: { q: { type: 'STRING' } }, required: ['q'] } },
   { name: 'customer', description: 'Look a customer up by phone number (11 digits) or name: address, orders, what they owe.', parameters: { type: 'OBJECT', properties: { phone: { type: 'STRING' }, name: { type: 'STRING' } } } },
   { name: 'sales_day', description: 'Total sales of one day: revenue, units, orders (and profit for those allowed). date as YYYY-MM-DD; "today" is allowed.', parameters: { type: 'OBJECT', properties: { date: { type: 'STRING' } }, required: ['date'] } },
@@ -67,7 +67,7 @@ async function call(ctx, name, payload) {
 }
 const money = (n) => '৳' + Math.round(num(n)).toLocaleString('en-US');
 
-async function runTool(ctx, name, a) {
+export async function runTool(ctx, name, a) {
   a = a || {};
   try {
     if (name === 'help') return { text: HELP[str(a.topic).toLowerCase()] || ('Topics: ' + Object.keys(HELP).join(', ')) };
@@ -163,7 +163,7 @@ async function runTool(ctx, name, a) {
 }
 
 /** The person said Yes: the write is made now, through the ordinary function, and the PDF link comes back. */
-async function confirmWrite(ctx, c) {
+export async function confirmWrite(ctx, c) {
   if (c && c.tool === 'followup') {
     const a = c.args || {};
     await call(ctx, 'erpFollowupSave', { phone: a.phone, name: a.name, due: a.due, note: a.note + ' (via chat)' });

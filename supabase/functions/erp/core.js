@@ -215,7 +215,9 @@ async function hello(sql, deps, token, authHeader, ip) {
 // the server's own connection, after the call has succeeded. Only a few safe
 // words of what was touched are kept - never a whole payload, which may hold
 // a key or a code.
-const QUIET = /^(erpSetTheme|erpSetLook|erpSetBusiness|erpHello|erpMe|erpEvo\w*|erpCampaignTick)$/;
+const QUIET = /^(erpSetTheme|erpSetLook|erpSetBusiness|erpHello|erpMe|erpEvo\w*|erpCampaignTick|erpEngineClaim|erpEngineStep|erpEngineTool|erpEngineDone)$/;
+// engine-1: the Engine's own bookkeeping and the skills never touch the books - the kept dashboard stays
+const NO_DASH = /^(erpEngine(Claim|Step|Tool|Done|Ask|Cancel|Retry|Rate)|erpSkill\w*)$/;
 const DETAIL_KEYS = ['invoiceNo', 'invoice', 'sku', 'month', 'kind', 'business'];
 function activityDetail(args) {
   const a = Array.isArray(args) ? args[0] : null;
@@ -329,7 +331,7 @@ export async function erpCall(deps, { name, args, token, authHeader, ip }) {
     for (const f of hooks.after) { try { await f(); } catch (a) { console.error('after-save step', name, a); await logError(sql, s, name + ' (after save)', a); } }
     if (result && result.__replay === true) return { ok: true, result: scrub(name, result.value, s), replayed: true };
     // the books may have changed: the kept dashboard is no longer to be trusted
-    if (!ERP_READS.test(name)) { await dashForget(sql, s.businessId); await logActivity(sql, s, name, args, token, ip, result); }
+    if (!ERP_READS.test(name)) { if (!NO_DASH.test(name)) await dashForget(sql, s.businessId); await logActivity(sql, s, name, args, token, ip, result); }
     else if (name === 'erpDashboardData') await dashKeep({ sql, biz: s.businessId, s, now: new Date() }, result);
     return { ok: true, result: scrub(name, result, s) };
   } catch (err) {
