@@ -30612,7 +30612,7 @@ function fd19SegHtml() {
   if (fd19Nav('sales')) it.push(['tab', 'list', 'All invoices', 'orders', VIEW === 'sales' && tab !== 'design']);
   if (fd19Nav('weborders')) it.push(['go', 'weborders', 'Web orders', 'globe', VIEW === 'weborders']);
   if (fd19Nav('quotes')) it.push(['go', 'quotes', 'Quotations', 'tag', VIEW === 'quotes']);
-  if (fd19Nav('preorders')) it.push(['go', 'preorders', 'Pre-orders', 'calendar', false]);
+  if (fd19Nav('preorders')) it.push(['go', 'preorders', 'Pre-orders', 'calendar', VIEW === 'preorders']);
   if (mgrTabs && fd19Nav('sales')) it.push(['tab', 'design', 'Invoice design', 'design', VIEW === 'sales' && tab === 'design']);
   if (it.length < 2) return '';
   return '<div class="fd19-seg" role="tablist" aria-label="Sales views">' + it.map(function (x) {
@@ -31208,7 +31208,7 @@ function fd19After() {
   if (sub) return;
   var head = el('fdHead');
   // his segmented pills on the sales screens (the Invoices / Invoice design tabs are in them)
-  if (VIEW === 'sales' || VIEW === 'weborders' || VIEW === 'quotes') {
+  if (VIEW === 'sales' || VIEW === 'weborders' || VIEW === 'quotes' || VIEW === 'preorders') {
     var old = view.querySelector('.fd19-seg'); if (old) old.parentNode.removeChild(old);
     var tabs = view.querySelector('.tabs [data-salestab]'); if (tabs) { tabs = tabs.closest('.tabs'); tabs.style.display = 'none'; }
     var seg = fd19SegHtml();
@@ -35727,7 +35727,7 @@ body[data-fdview="settings"] #o_cp .crumbs, body[data-fdview="tools"] #o_cp .cru
     var n = { inbox: (IB.counts.unread || 0), tasks: (IB.counts.tasks || 0), orders: (IB.orders && IB.orders.counts ? IB.orders.counts.pending : 0), bk: (IB.bk && IB.bk.counts ? IB.bk.counts.requested : 0) };
     return '<div class="fdd-head" style="margin-bottom:10px"><div><h1 class="fdd-title" style="display:flex;gap:10px;align-items:center">' + esc(IBV[VIEW] || 'Inbox') + (ibMode() === 'owner' ? ' <span class="ib-tag test" title="Settings → Business → Menu: only owners see the Inbox">ONLY OWNERS</span>' : ibMode() === 'trial' ? ' <span class="ib-tag test" title="Not in this company plan yet: only you, the provider, see it">ONLY YOU</span>' : '') + '</h1></div>' + (VIEW === 'inbox' ? '<button type="button" class="btn small' + (IB.duty ? ' primary' : '') + '" data-ibduty="1" title="On duty: a sound when a customer waits for a person">' + (IB.duty ? '🔔 On duty' : '🔕 Off duty') + '</button>' : '') + '</div>' +
       budgetNote() +
-      ((MENU_TABS[VIEW] || TABS).length < 2 ? '<div style="height:4px"></div>' : '<div class="ib-tabs" role="tablist">' + (MENU_TABS[VIEW] || TABS).filter(function (t) { return !(t[0] === 'cost' && ME && ME.role !== 'owner') && !(t[0] === 'day' && ME && ME.role !== 'owner' && ME.role !== 'manager') && !(t[0] === 'team' && ME && ME.role !== 'owner' && ME.role !== 'manager') && (!TAB_FEAT[t[0]] || fon(TAB_FEAT[t[0]])); }).map(function (t) {
+      ((MENU_TABS[VIEW] || TABS).length < 2 ? '<div style="height:4px"></div>' : '<div class="ib-tabs" role="tablist">' + (MENU_TABS[VIEW] || TABS).filter(function (t) { return t[0] !== 'leads' && !(t[0] === 'cost' && ME && ME.role !== 'owner') && !(t[0] === 'day' && ME && ME.role !== 'owner' && ME.role !== 'manager') && !(t[0] === 'team' && ME && ME.role !== 'owner' && ME.role !== 'manager') && (!TAB_FEAT[t[0]] || fon(TAB_FEAT[t[0]])); }).map(function (t) {
         return '<button type="button" data-ibtab="' + t[0] + '" class="' + (IB.tab === t[0] ? 'on' : '') + '">' + esc(t[1]) + (n[t[0]] ? '<span class="n">' + n[t[0]] + '</span>' : '') + '</button>'; }).join('') + '</div>') + inner;
   }
   function paint(keepScroll) {
@@ -38811,9 +38811,9 @@ document.addEventListener('keydown', function (e) {
   function cardHtml() {
     if (!ME || ME.role !== 'owner') return '';
     var d = AIB.data;
-    if (!d) { load(); return '<section><div class="card"><h2>AI brain</h2><div class="loading">' + (AIB.err ? esc(AIB.err) : 'Loading…') + '</div></div></section>'; }
+    if (!d) { load(); return '<section><div class="card"><h2>AI models</h2><div class="loading">' + (AIB.err ? esc(AIB.err) : 'Loading…') + '</div></div></section>'; }
     var R = d.routes || { default: { provider: 'auto', model: 'auto' }, tasks: {} };
-    var h = '<section><div class="card" id="aib"><h2>AI brain</h2>' +
+    var h = '<section><div class="card" id="aib"><h2>AI models</h2>' +
       '<div class="sub" style="display:block">Which AI does the ERP’s thinking: answering customers, reading supplier files, writing posts, finding leads, summaries and the assistant. ' +
       'Each one gets your data as tools, can search the web, read photos and PDFs, and answer in a fixed shape. If the chosen AI fails, the next one with a key answers, and Gemini\u2019s free models are the last safety net, so the work never stops. ' +
       '<b>Free first</b>: Gemini\u2019s free tier tries routine work (customer chat by default); a complex message, a complaint or refund, a technical problem, a failure or an unsure answer goes to the strong AI. Google may use free-tier conversations to improve its products.</div>' +
@@ -40074,6 +40074,50 @@ saveProduct = function () {
     var t = e.target.closest && e.target.closest('[data-aitab]'); if (!t) return;
     e.preventDefault(); go(t.getAttribute('data-aitab'));
   });
+})();
+</script>
+<!-- clean-2 (owner 22 Oct 2026: "clean the whole ERP - every option in the place it belongs, never duplicated, so a new
+     user is not confused"). Researched first (Odoo 18 / ERPNext: one home per thing; quotations, web orders and pre-orders
+     are views of Sales; product cost is part of Products; Apps and system tools sit with Settings). Here:
+     - the menu no longer repeats Web orders, Quotations and Pre-orders (they are the Sales tabs) or Product cost (a tab of
+       Products); the menu entry of the screen's home stays lit;
+     - Products and Product cost share one tab strip;
+     - Apps sits with Settings in the System group. Nothing is deleted: every screen keeps working from its new place. -->
+<style>
+#nav button[data-view="weborders"],#nav button[data-view="quotes"],#nav button[data-view="preorders"],#nav button[data-view="costs"]{display:none!important}
+</style>
+<script>
+(function () {
+  var HOME = { weborders: 'sales', quotes: 'sales', preorders: 'sales', costs: 'products' };
+  // Apps beside Settings (the System group)
+  function moveApps() {
+    var a = document.querySelector('#nav button[data-view="apps"]'), st = document.querySelector('#nav button[data-view="settings"]');
+    if (a && st && a.previousElementSibling !== st) st.parentNode.insertBefore(a, st.nextSibling);
+  }
+  setTimeout(moveApps, 1200); setTimeout(moveApps, 4000);
+  function lit() {
+    var home = HOME[VIEW]; if (!home) return;
+    var b = document.querySelector('#nav button[data-view="' + home + '"]'); if (b) b.setAttribute('aria-selected', 'true');
+  }
+  function strip() {
+    // Pre-orders is a Sales tab: it shows the same Sales tabs (the Sales screens draw them in fd19After)
+    if (VIEW === 'preorders' && typeof fd19SegHtml === 'function') {
+      var pv = el('view'); if (!pv || pv.querySelector(':scope > .fd19-seg')) return;
+      var seg = fd19SegHtml(); if (seg) pv.insertAdjacentHTML('afterbegin', seg.replace('class="fd19-seg"', 'class="fd19-seg" style="margin-bottom:10px"'));
+      return;
+    }
+    if (VIEW !== 'products' && VIEW !== 'costs') return;
+    var v = el('view'); if (!v || v.querySelector(':scope > .fd19-seg[data-goods]')) return;
+    if (typeof navOn === 'function' && !navOn('costs')) return;   // a person without the cost screen sees no tab for it
+    var it = [['products', 'Products'], ['costs', 'Product cost']];
+    var h = '<div class="fd19-seg" data-goods="1" role="tablist" aria-label="Products views" style="margin-bottom:10px">' + it.map(function (x) {
+      return '<button type="button" class="fd19-pill" role="tab" aria-pressed="' + (VIEW === x[0]) + '" aria-selected="' + (VIEW === x[0]) + '" data-fd19go="' + x[0] + '">' + esc(x[1]) + '</button>'; }).join('') + '</div>';
+    var head = v.querySelector(':scope > .fdd-head, :scope > #fdHead');
+    if (head && head.parentNode === v) head.insertAdjacentHTML('afterend', h); else v.insertAdjacentHTML('afterbegin', h);
+  }
+  var v = el('view');
+  if (v && typeof MutationObserver === 'function') new MutationObserver(function () { strip(); lit(); }).observe(v, { childList: true });
+  var rp = repaint; repaint = function () { var r = rp.apply(this, arguments); strip(); lit(); return r; };
 })();
 </script>
 </body>

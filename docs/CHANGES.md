@@ -3005,3 +3005,18 @@ Bengali; today's revenue, profit, cash belong to the Dashboard; keep everything 
 - Each AI screen: one line of what it is for, one main action, details folded (Watchdog's night report and settings,
   repeating questions, brief settings).
 - Tests: clean_test (7).
+
+## The whole ERP cleaned: one home for each thing (22 Oct 2026, tag clean-2)
+Owner: "clean the whole ERP". Researched first (Odoo 18 / ERPNext docs and UX guidance): one module owns each thing;
+quotations, web orders and pre-orders are views of Sales; product cost belongs to Products; Apps and the system tools sit
+with Settings; dashboards summarise and link, never repeat controls. Audit of all 25 screens, then:
+- Menu: 26 -> 21 entries. Web orders, Quotations and Pre-orders were both menu entries and Sales tabs - now only Sales
+  tabs (Pre-orders also shows the Sales tabs); Product cost is a tab inside Products; while on any of them the menu
+  entry of its home stays lit. Apps moved beside Settings (System group).
+- Inbox: its own Leads tab removed - leads have one home, AI > Leads.
+- Settings: the card "AI brain" (which AI model does which work) is now "AI models", so it is not mixed up with the
+  Business Brain.
+- Nothing deleted: every screen opens from its home.
+Left as they are, on purpose: "Receive / adjust due" on both Sales and Customers (the owner asked for it on the first
+screen of both); Excel on each list (each exports its own list); the corner chat (a quick question) next to the Command
+Center (deep work) - to be revisited if the two still confuse.
