@@ -86,3 +86,14 @@ agent may use), loads them, does the work, and logs which skills it used and how
 
 The office agents (Rohiz, Polok, Salman, Faujia, Nadia, Hana) stay stopped. Their good parts (instructions, contacts,
 knowledge) become these Engine agents, working through the ERP.
+
+## 6. The owner's rule for every suggestion (22 Oct 2026)
+"Everything should be based on the business, the actions strategic and massive for growth, done by AI automatically with
+approval, and the approval by a button."
+- Every suggestion comes from the business's own figures (sales, margin, stock, cash, customers, leads, market) - never
+  generic advice.
+- Big moves first: each card says what, why (the figures), the expected gain in taka, the cost and risk.
+- Each card carries the ready action. **Approve** = the Engine does it itself (ad, post, WhatsApp messages, supplier order,
+  price or offer change, lead messages, fixes) and reports back; **Change** and **No** are buttons too.
+- Nothing spends money or messages people without that one click. Every approved action's result is measured, and the
+  next suggestions learn from it.
