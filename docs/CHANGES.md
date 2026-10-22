@@ -2766,3 +2766,28 @@ revoked on Supabase's side; the ERP still held them). The Platform tab is the pr
   A waiting update is also told once per session as a toast. handlers/installer.js erpMyUpdates / erpMyUpdateToken /
   erpMyUpdateRun - the copy is the one the request came through (deps.install), nothing in the payload picks it.
 - Tests: myupd_test (10). Not done: not clicked through on a real company copy (it needs the owner's own session).
+
+## Leads menu (22 Oct 2026, tag leads-1)
+Owner: "a Leads menu - different kinds of leads from different sources: Google, LinkedIn, Facebook comments and all the
+possible sources, of both customers and suppliers". Built on the Inbox's own lead list (inbox_leads; 137 adds kind
+customer/supplier, company, website, link, city, country, tags, source_ref, customer_id / supplier_id, added_by).
+- Menu > Leads ("Only me" app until opened under Apps): tabs Customers / Suppliers; buttons on the first screen:
+  **+ Add a lead**, **Paste a lead** (LinkedIn / Facebook / Google Maps / Alibaba-1688 / website / visiting card text ->
+  name, company, job title, phone, e-mail, links, city, country; the AI when a key is set, rules otherwise),
+  **Find leads** (on the map: OpenStreetMap shops, offices, schools, factories by area and kind - free; on Google: the AI
+  with Google Search, needs the AI key), **Bring in** (Facebook / Instagram comments asking a price, warm/hot chats that
+  did not order, unfinished landing-page orders, print quote requests, buyers' wanted posts on the platform market),
+  **Import a list** (Excel / CSV: Name, Company, Phone, Email, Website, Link, City, Country, Note columns).
+- Stage chips (New, Contacted, Interested, Quoted, Won, Lost), source chips with counts, search; each row: call,
+  WhatsApp, e-mail, website / profile / chat links, stage, follow-up date (due ones counted on the menu); a row opens to
+  its history, notes, Change details and **Make a customer / Make a supplier** (lead marked Won and linked).
+- "Where leads come from" card lists every source and how it arrives. Never twice: source_ref, or the same phone /
+  e-mail / link of the same kind. A salesperson sees their own and unassigned leads; finding, bringing in, importing and
+  converting are for managers and up.
+- handlers/leads.js (erpLeads, erpLeadUpsert, erpLeadAct, erpLeadHarvest, erpLeadFind, erpLeadCapture, erpLeadImport);
+  campaigns already had an erpLeadSave (its phone list), hence erpLeadUpsert. Tests: leads_test (25); apps_test counts.
+- Checked: local copy click-through (paste, stage, follow-up, note, make a customer; phone width) and the dev ERP
+  (map search from the server: 912 electronics shops in Dhaka, 150 shown, 28 with a phone).
+Not done / limits: LinkedIn and Facebook give no search API to outsiders - their leads come by paste or export, not by
+search; Google search needs the AI key (not set yet) and was not tried; the map lists few phones in Bangladesh (~5-20%);
+no reminders outside the screen yet (the due count on the menu only).
