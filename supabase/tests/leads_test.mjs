@@ -69,6 +69,9 @@ check('the map finds named shops, the ones with a phone first', r.ok && F.list.l
 await mgr('erpLeadUpsert', [F.list[0]]);
 r = await mgr('erpLeadFind', [{ kind: 'customer', via: 'map', what: 'electronics', place: 'Dhaka' }]);
 check('...and marks the one already added', r.ok && r.result.list[0].have === true, r.result && r.result.list[0]);
+r = await mgr('erpLeadFind', [{ kind: 'customer', via: 'have', refs: ['osm:node/11', 'osm:node/12'] }]);
+check('the page searches the map itself; the server says which places are on the list and gives the kinds and towns', r.ok && r.result.have.length === 1 && r.result.have[0] === 'osm:node/11' &&
+  r.result.presets.some((x) => x.key === 'electronics' && x.tags.length) && Array.isArray(r.result.towns.dhaka), r.result && r.result.have);
 r = await mgr('erpLeadFind', [{ kind: 'customer', via: 'ai', what: 'architects', place: 'Dhaka' }]);
 check('Google through the AI says plainly when no AI key is set', !r.ok && /AI key/.test(r.error), r);
 

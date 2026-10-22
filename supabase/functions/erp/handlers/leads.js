@@ -382,6 +382,13 @@ export async function erpLeadFind(ctx, payload) {
   if (!roleAtLeast(ctx.s.role, 'manager')) throw new Error('Only a manager searches for leads.');
   const p = payload || {};
   const kind = p.kind === 'supplier' ? 'supplier' : 'customer';
+  // leads-1b: the map is searched by the page itself (the free map server throttles shared cloud servers; each browser
+  // has its own allowance) - the server only says which of the found places are on the list already
+  if (p.via === 'have') {
+    const refs = (Array.isArray(p.refs) ? p.refs : []).map(str).filter(Boolean).slice(0, 2000);
+    const have = (await ctx.tx`select source_ref from inbox_leads where business_id = ${ctx.biz} and source_ref = any(${refs})`).map((r) => r.source_ref);
+    return { have, presets: MAP_PRESETS[kind].map((x) => ({ key: x.key, name: x.name, tags: x.tags, words: x.words.source })), towns: TOWNS };
+  }
   const res = p.via === 'ai' ? await findWithAi(ctx, kind, p.what, p.place) : await findOnMap(ctx, kind, p.what, p.place);
   // what is already on the list
   const refs = res.list.map((x) => x.ref);
