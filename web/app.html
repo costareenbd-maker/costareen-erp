@@ -39319,6 +39319,7 @@ saveProduct = function () {
   repaint = function () { if (VIEW !== 'engine' && VIEW !== 'skills') return repaintEn.apply(this, arguments); paint(); };
 
   // ------------------------------------------------------------------------------------------------------- Skills
+  setInterval(function () { if (VIEW === 'skills' && !document.hidden && SK.data && SK.data.suggest && SK.data.suggest.job && /queued|running/.test(SK.data.suggest.job.status)) { SK.busy = false; skLoad(); } }, 15000);
   function skLoad() {
     if (SK.busy) return; SK.busy = true;
     srv('erpSkills', [], function (r) { SK.busy = false; SK.data = r; SK.err = ''; if (VIEW === 'skills') paint(); }, function (e) { SK.busy = false; SK.err = (e && e.message) || String(e); if (VIEW === 'skills') paint(); });
@@ -39382,16 +39383,35 @@ saveProduct = function () {
       (s.update ? '<button class="btn small" type="button" data-skupd="' + esc(s.slug) + '" style="margin-top:4px">Update</button><br>' : '') +
       '<button class="btn small" type="button" data-skrm="' + esc(s.slug) + '" style="margin-top:4px">Uninstall</button></td></tr>';
   }
+  // skills-2: suggested for THIS business by the AI (weekly, or Suggest now) - the first thing on the Skills screen
+  function suggestHtml(d) {
+    var S = d.suggest; if (!S) return '';
+    var busy = S.job && /queued|running/.test(S.job.status);
+    var names = {}; (d.agents || []).forEach(function (a) { names[a.key] = a.name; });
+    var h = '<section><div class="card"><div class="row" style="justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px"><h2 style="margin:0">Suggested for your business</h2>' +
+      '<button class="btn small" type="button" data-sk="suggest"' + (busy ? ' disabled' : '') + '>' + (busy ? '<span class="wd-spin"></span>The AI is looking…' : 'Suggest now') + '</button></div>' +
+      '<div class="sub" style="display:block">The AI looks every Monday at the skills that are new and growing on GitHub and picks the best ones for your business and your agents.' + (S.when ? ' Last looked ' + esc(S.when) + '.' : '') + '</div>';
+    if (!S.items.length) h += '<div class="en-meta" style="margin-top:8px">' + (busy ? 'Looking now - this takes a few minutes.' : S.when ? 'Nothing new to suggest - everything good is already installed.' : 'Press "Suggest now" for the first suggestions.') + '</div>';
+    h += S.items.map(function (i) {
+      return '<div class="en-pv"><div class="row" style="justify-content:space-between;gap:8px;flex-wrap:wrap;align-items:flex-start"><div style="flex:1 1 280px"><b data-noi18n="1">' + esc(i.name) + '</b>' +
+        (i.isNew ? ' <span class="pill low">NEW</span>' : '') + (i.stars ? ' <span class="en-meta">★ ' + fmt(i.stars) + '</span>' : '') + (i.category ? ' <span class="en-sk">' + esc(i.category) + '</span>' : '') +
+        '<div style="font-size:13.5px;margin-top:3px" data-noi18n="1">' + esc(i.why) + '</div>' +
+        (i.agents && i.agents.length ? '<div class="en-meta" style="margin-top:3px">For: ' + i.agents.map(function (k) { return esc(names[k] || k); }).join(', ') + '</div>' : '') +
+        '<div class="en-meta"><a href="' + esc(i.url) + '" target="_blank" rel="noopener">' + esc(i.repo || i.url) + '</a></div></div>' +
+        '<div class="ap-row"><button class="btn small primary" type="button" data-skread="' + esc(i.url) + '">Look inside</button><button class="btn small" type="button" data-sknope="' + esc(i.url) + '">Not useful</button></div></div></div>';
+    }).join('');
+    return h + '</div></section>';
+  }
   function skView() {
     if (!enOn()) return '<div class="note"><div class="ico">i</div><div>The Engine is not switched on for this business.</div></div>';
     var d = SK.data;
     if (!d) { skLoad(); return '<div class="loading">Loading the skills…</div>'; }
     var on = d.installed.filter(function (s) { return s.enabled; }).length, c = d.counts || {};
-    var h = '<section><div class="card"><div class="en-sum"><div><b>' + fmt(d.installed.length) + '</b>installed</div><div><b>' + fmt(on) + '</b>switched on</div>' +
+    var h = suggestHtml(d) + '<section><div class="card"><div class="en-sum"><div><b>' + fmt(d.installed.length) + '</b>installed</div><div><b>' + fmt(on) + '</b>switched on</div>' +
       '<div><b style="color:var(--good,#1a9e5b)">' + fmt(c.useful || 0) + '</b>useful</div><div><b style="color:var(--critical,#d33)">' + fmt(c.weak || 0) + '</b>weak</div><div><b>' + fmt(c.unused || 0) + '</b>not used</div></div>' +
       '<label class="f" for="sk_url">Install from GitHub: paste a link</label><div class="ap-row"><input class="i" id="sk_url" style="flex:1 1 320px" placeholder="https://github.com/owner/project (a whole project, a folder, or a SKILL.md file)" value="' + esc(SK.url) + '">' +
       '<button class="btn primary" type="button" data-sk="read"' + (SK.pvBusy ? ' disabled' : '') + '>' + (SK.pvBusy ? 'Reading…' : 'Read it') + '</button></div>' +
-      '<div class="ap-row" style="margin-top:8px"><button class="btn" type="button" data-sk="lib">Built-in library (' + (d.library || []).length + ')</button><button class="btn" type="button" data-sk="trend">Trending on GitHub</button><button class="btn" type="button" data-sk="updates">Check for updates</button>' +
+      '<div class="ap-row" style="margin-top:8px"><button class="btn" type="button" data-sk="lib">Built-in library (' + (d.library || []).length + ')</button><button class="btn" type="button" data-sk="trend">Browse all trending</button><button class="btn" type="button" data-sk="updates">Check for updates</button>' +
       '<a href="#" data-engo="engine" style="margin-left:auto">Command Center</a></div>' +
       (SK.pv ? pvHtml() : SK.panel === 'lib' ? libHtml() : SK.panel === 'trend' ? trendHtml() : '') + '</div></section>';
     if (SK.err) h += '<div class="note err"><div class="ico">!</div><div>' + esc(SK.err) + '</div></div>';
@@ -39404,7 +39424,8 @@ saveProduct = function () {
   // ---------------------------------------------------------------------------------------------------- clicks
   document.addEventListener('click', function (e) {
     if (VIEW !== 'engine' && VIEW !== 'skills') return;
-    var t = e.target.closest && e.target.closest('[data-en],[data-enopen],[data-enst],[data-enidea],[data-enyes],[data-enno],[data-enrate],[data-encancel],[data-enretry],[data-encopy],[data-enagain],[data-engo],[data-sk],[data-sklib],[data-skread],[data-skrm],[data-skupd],[data-skag],[data-skpvag]');
+    var t = e.target.closest && e.target.closest('[data-en],[data-enopen],[data-enst],[data-enidea],[data-enyes],[data-enno],[data-enrate],[data-encancel],[data-enretry],[data-encopy],[data-enagain],[data-engo],[data-sk],[data-sklib],[data-skread],[data-skrm],[data-skupd],[data-skag],[data-skpvag],[data-sknope]');
+    if (t && t.hasAttribute('data-sknope')) { skDo('erpSkillSuggestDismiss', [{ url: t.getAttribute('data-sknope') }], 'Hidden - the AI will not suggest it again.'); return; }
     if (!t) return;
     if (t.hasAttribute('data-engo')) { e.preventDefault(); go(t.getAttribute('data-engo')); return; }
     // ---- Command Center
@@ -39442,6 +39463,7 @@ saveProduct = function () {
       return;
     }
     if (a === 'pvclose') { SK.pv = null; paint(); return; }
+    if (a === 'suggest') { t.disabled = true; skDo('erpSkillSuggest', [], 'The AI is looking - suggestions appear here in a few minutes.'); return; }
     if (a === 'install') {
       var picks = SK.pv.skills.filter(function (s) { return SK.pick[s.path]; }).map(function (s) { return { path: s.path, agents: SK.pickAg[s.path] || s.agents, acceptRisk: !!SK.trust[s.path] }; });
       t.disabled = true; t.textContent = 'Installing…';

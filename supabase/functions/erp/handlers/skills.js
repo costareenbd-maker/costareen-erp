@@ -108,8 +108,10 @@ export async function erpSkills(ctx) {
   const have = new Set(rows.map((r) => r.slug));
   const counts = { useful: 0, weak: 0, unused: 0 };
   for (const s of installed) if (counts[s.mark] !== undefined) counts[s.mark]++;
+  let suggest = null;
+  try { await ctx.tx.savepoint(() => ensureSuggestSchedule(ctx)); suggest = await ctx.tx.savepoint(() => suggestState(ctx)); } catch (_) { suggest = null; }
   return {
-    installed, counts,
+    installed, counts, suggest,
     library: LIB.filter((l) => !have.has(l.slug)).map((l) => ({ slug: l.slug, name: l.name, description: l.description, agents: l.agents })),
     agents: Object.keys(AGENTS).map((k) => ({ key: k, name: AGENTS[k].name, job: AGENTS[k].job })),
   };
@@ -360,4 +362,81 @@ export async function erpSkillTrending(ctx, payload) {
   return out;
 }
 
-export const HANDLERS = { erpSkills, erpSkillLibraryInstall, erpSkillPreview, erpSkillInstall, erpSkillSet, erpSkillRemove, erpSkillCheckUpdates, erpSkillUpdate, erpSkillTrending };
+// ------------------------------------------------------------------------- skills-2: suggested for THIS business
+// Owner (23 Oct 2026): "a section where skills are suggested based on our needs and requirements and the agents we have -
+// the best skill for each, the ones growing on GitHub and newly out - what we should look at." The Engine (a timed job
+// every Monday, or Suggest now) reads the Business Brain, the agents, the installed skills and how they do, searches the
+// skill sources, and files up to 12 ranked suggestions: what, why for this business, which agent, how popular / new.
+export const SUGGEST_KEY = 'skills-suggest';
+// verified 23 Oct 2026 (research: stars, last activity; stale lists left out)
+export const SKILL_SOURCES = [
+  'skills.sh/trending and skills.sh/hot (what is rising this week)',
+  'skillsmp.com/timeline (new arrivals; categories and "by occupation")',
+  'GitHub: topic:agent-skills, topic:claude-skills, topic:claude-code-skills - sort by stars; and created in the last 14 days sorted by stars for the new and growing (the topics are noisy: whole apps also carry them)',
+  'GitHub: "SKILL.md" plus the business\'s needs as words (e.g. marketing, SEO, sales, leads, e-commerce, WooCommerce, inventory, support, video, finance, Bangla)',
+  'new commits in anthropics/skills (official), VoltAgent/awesome-agent-skills, alirezarezvani/claude-skills, sickn33/agentic-awesome-skills, hesreallyhim/awesome-claude-code, ComposioHQ/awesome-claude-skills',
+  'for business work: coreyhaines31/marketingskills (marketing, SEO, copywriting, growth)',
+];
+export function suggestAsk() {
+  return 'Suggest the best agent skills (SKILL.md format) for THIS business to install now.\n' +
+    '1) Read the Business Brain above (what it sells, customers, goals, voice) and call skills_installed: which skills each agent already has, how they are used (useful / weak / not used), and which agents have none.\n' +
+    '2) Find candidates where new and good skills appear: ' + SKILL_SOURCES.join('; ') + '. Open each candidate (its README / SKILL.md) before you suggest it.\n' +
+    '3) Pick up to 12, ranked by how much they would help THIS business: first the agents with no or weak skills, then the business\'s goals. Prefer skills that are popular (stars) or growing fast (new and gaining stars), maintained, and contain instructions - not code that must run. Skip anything already installed or close to it.\n' +
+    '4) Call skill_suggest_save ONCE with items: {name, url (the GitHub link to the skill folder, its SKILL.md, or the repository), repo, why (one or two sentences: what it does for this business), agents (agent keys it helps), stars, isNew (true when created in the last 60 days), category}.\n' +
+    'Finish with one line: the single skill to install first, and why.';
+}
+async function suggestState(ctx) {
+  let data = null; try { data = JSON.parse(await getConfig(ctx, 'skills_suggest', '') || 'null'); } catch (_) { data = null; }
+  let dismissed = []; try { dismissed = JSON.parse(await getConfig(ctx, 'skills_suggest_no', '') || '[]'); } catch (_) { dismissed = []; }
+  const have = (await ctx.tx`select repo, source_url from engine_skills where business_id = ${ctx.biz}`).map((r) => (str(r.source_url) + ' ' + str(r.repo)).toLowerCase());
+  const job = (await ctx.tx`select id, status, finished_at, created_at from engine_jobs where business_id = ${ctx.biz} and title = 'Suggest skills' order by created_at desc limit 1`)[0];
+  const items = ((data && data.items) || []).filter((i) => !dismissed.includes(i.url) && !have.some((h) => { const u = str(i.url).toLowerCase(); return u && (h.includes(u) || (i.repo && h.includes(str(i.repo).toLowerCase()) && /\/(tree|blob)\//.test(u) === false)); }));
+  return { items, when: data && data.at ? formatDate(new Date(data.at), 'd MMM, h:mm a') : '', job: job ? { id: job.id, status: job.status } : null };
+}
+async function ensureSuggestSchedule(ctx) {
+  if (ctx.s.role !== 'owner') return;
+  const { nextRun } = await import('./watchdog.js');
+  await ctx.tx`insert into engine_schedules (business_id, agent, title, ask, every, at_time, weekday, key, enabled, next_at, created_by)
+               values (${ctx.biz}, 'command', 'Suggest skills', ${suggestAsk()}, 'weekly', '10:00', 1, ${SUGGEST_KEY}, true, ${nextRun({ every: 'weekly', at_time: '10:00', weekday: 1 }, ctx.now)}, 'Skills')
+               on conflict (business_id, key) where key is not null do update set ask = excluded.ask`;
+}
+export async function erpSkillSuggest(ctx) {
+  await gate(ctx);
+  const busy = (await ctx.tx`select 1 from engine_jobs where business_id = ${ctx.biz} and title = 'Suggest skills' and status in ('queued', 'running')`)[0];
+  if (busy) throw new Error('The AI is already looking for skills.');
+  await ctx.tx`insert into engine_jobs (business_id, agent, title, ask, source, created_by) values (${ctx.biz}, 'command', 'Suggest skills', ${suggestAsk()}, 'skills', ${str(ctx.s.name)})`;
+  return erpSkills(ctx);
+}
+export async function erpSkillSuggestDismiss(ctx, payload) {
+  await gate(ctx);
+  const url = str(payload && payload.url).slice(0, 400);
+  let list = []; try { list = JSON.parse(await getConfig(ctx, 'skills_suggest_no', '') || '[]'); } catch (_) { list = []; }
+  if (url && !list.includes(url)) list.push(url);
+  await setConfig(ctx, 'skills_suggest_no', JSON.stringify(list.slice(-300)));
+  return erpSkills(ctx);
+}
+export const SKILL_TOOLS = [
+  { name: 'skills_installed', description: 'The skills this business has: name, what it does, its agents, on/off, and how it does (useful / weak / not used / new); and each agent with how many skills it has.', parameters: { type: 'OBJECT', properties: {} } },
+  { name: 'skill_suggest_save', description: 'Only for the "Suggest skills" job: save the ranked suggestions (up to 12). items: [{name, url, repo, why, agents, stars, isNew, category}].', parameters: { type: 'OBJECT', properties: { items: { type: 'ARRAY', items: { type: 'OBJECT' } } }, required: ['items'] } },
+];
+export async function skillTool(ctx, name, a, job) {
+  if (name === 'skills_installed') {
+    const d = await erpSkills(ctx);
+    const per = {}; for (const ag of d.agents) per[ag.key] = 0;
+    for (const s of d.installed) for (const k of s.agents || []) per[k] = (per[k] || 0) + 1;
+    return { installed: d.installed.map((s) => ({ name: s.name, what: s.summary || s.description, agents: s.agents, on: s.enabled, mark: s.mark, used30days: s.use.d30, source: s.url || 'library' })),
+      agents: d.agents.map((ag) => ({ key: ag.key, name: ag.name, job: ag.job, skills: per[ag.key] || 0 })) };
+  }
+  if (name === 'skill_suggest_save') {
+    if (job.title !== 'Suggest skills') return { error: 'Only the "Suggest skills" job saves suggestions.' };
+    const items = (Array.isArray(a.items) ? a.items : []).slice(0, 12).map((i) => ({ name: str(i.name).slice(0, 80), url: str(i.url).slice(0, 400), repo: str(i.repo).slice(0, 120), why: str(i.why).slice(0, 400),
+      agents: agentKeys(i.agents), stars: Math.max(0, Math.round(Number(i.stars) || 0)), isNew: !!i.isNew, category: str(i.category).slice(0, 40) }))
+      .filter((i) => i.name && /^https:\/\/github\.com\//i.test(i.url) && i.why);
+    if (!items.length) return { error: 'Each suggestion needs a name, a github.com link and why it helps.' };
+    await setConfig(ctx, 'skills_suggest', JSON.stringify({ at: ctx.now.getTime(), items }));
+    return { saved: items.length };
+  }
+  return null;
+}
+
+export const HANDLERS = { erpSkillSuggest, erpSkillSuggestDismiss, erpSkills, erpSkillLibraryInstall, erpSkillPreview, erpSkillInstall, erpSkillSet, erpSkillRemove, erpSkillCheckUpdates, erpSkillUpdate, erpSkillTrending };

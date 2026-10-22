@@ -3054,3 +3054,17 @@ Owner: "yes, let it clear cache and restart the site".
 - Live check: cache clear ran on costareen.com (page cache + WordPress cache cleared); the site answers. The restart
   itself was not fired as a test (it would cut visitors off for a few seconds) - it runs the first time the site is down.
 - Tests: watch6_test (7).
+
+## Skills suggested for this business (23 Oct 2026, tag skills-2)
+Owner: "a section where skills are suggested based on our needs, requirements and the agents we have - the best ones
+growing on GitHub and newly out - what we should look at."
+- Skills screen starts with "Suggested for your business": up to 12 skills ranked by how much they help THIS business -
+  why, for which agents, stars, NEW - with Look inside (read, review, install in one go) and Not useful (never again).
+  Installed ones drop out.
+- The AI (Command Center agent; job "Suggest skills") fills it every Monday at 10:00 (built-in timed job) or on Suggest now:
+  reads the Business Brain and skills_installed (which agents have no / weak skills), searches the verified sources
+  (research 23 Oct: skills.sh trending/hot, skillsmp.com timeline, GitHub topics agent-skills / claude-skills /
+  claude-code-skills new-and-growing, new commits in anthropics/skills and the active awesome lists, and
+  coreyhaines31/marketingskills for business work), opens each candidate, then skill_suggest_save (github.com links only).
+- The old "Trending on GitHub" list stays as "Browse all trending" (raw list); the suggestions are the curated view.
+- Tests: skills2_test (11).

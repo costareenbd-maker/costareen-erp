@@ -29,6 +29,7 @@ import { watchDue, ISSUE_TOOLS, issueTool, nextRun } from './watchdog.js';
 import { brainText, BRAIN_TOOLS, brainTool, rateFact } from './brain.js';
 import { BRIEF_TOOLS, briefTool } from './brief.js';
 import { LEAD_TOOLS, leadTool } from './leads.js';
+import { SKILL_TOOLS, skillTool } from './skills.js';
 
 const str = (v) => String(v == null ? '' : v).trim();
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -105,7 +106,7 @@ export async function erpEngine(ctx, payload) {
   // clean-1: the Command Center lists the owner's own questions and timed jobs; the brief, the Watchdog, the lead search
   // and the Business Brain show their work on their own screens (no duplicates)
   const OWN = ctx.tx`(source = 'owner' and agent not in ('briefing', 'watchdog') and not (agent = 'leads' and title like 'Find %leads%'))
-                     or (source = 'schedule' and agent not in ('briefing', 'watchdog') and title <> 'Find new leads')`;
+                     or (source = 'schedule' and agent not in ('briefing', 'watchdog') and title not in ('Find new leads', 'Suggest skills'))`;
   const rows = st ? await ctx.tx`select * from engine_jobs where business_id = ${ctx.biz} and (${OWN}) and status = ${st} order by created_at desc limit 60`
                   : await ctx.tx`select * from engine_jobs where business_id = ${ctx.biz} and (${OWN}) order by created_at desc limit 60`;
   const counts = {};
@@ -209,7 +210,9 @@ const toolsFor = (agent, source) => ENGINE_TOOLS.concat(ISSUE_TOOLS.filter((t) =
   // brief-1: the Owner briefing agent files the daily brief and reads what the approved moves brought
   .concat(agent === 'briefing' ? BRIEF_TOOLS : agent === 'watchdog' ? BRIEF_TOOLS.filter((t) => t.name === 'brief_replace_action') : [])
   // leads-2: the Leads agent (and the Command Center) find and add leads themselves
-  .concat(agent === 'leads' || agent === 'command' ? LEAD_TOOLS : []);
+  .concat(agent === 'leads' || agent === 'command' ? LEAD_TOOLS : [])
+  // skills-2: the Command Center reads the installed skills and files the weekly skill suggestions
+  .concat(agent === 'command' ? SKILL_TOOLS : []);
 
 // ----------------------------------------------------------------------------------------------------- timed jobs
 const EVERY = ['hourly', 'daily', 'weekly'];
@@ -321,6 +324,7 @@ export async function erpEngineTool(ctx, payload) {
   if (BRAIN_TOOLS.some((t) => t.name === tool)) return brainTool(ctx, tool, args, j);
   if (BRIEF_TOOLS.some((t) => t.name === tool)) return briefTool(ctx, tool, args, j);
   if (LEAD_TOOLS.some((t) => t.name === tool)) return leadTool(ctx, tool, args, j);
+  if (SKILL_TOOLS.some((t) => t.name === tool)) return skillTool(ctx, tool, args, j);
   const out = await runTool(ctx, tool, p.args && typeof p.args === 'object' ? p.args : {});
   if (out && out.proposal) {
     const list = Array.isArray(j.proposals) ? j.proposals : [];

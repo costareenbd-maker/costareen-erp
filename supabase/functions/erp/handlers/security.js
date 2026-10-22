@@ -14,6 +14,7 @@ const str = (v) => String(v == null ? '' : v).trim();
 
 // what an action is called on the screen; anything not here is spelled out from its name
 const WORDS = {
+  erpSkillSuggest: 'Asked the AI to suggest skills', erpSkillSuggestDismiss: 'Said a suggested skill is not useful',
   erpBrainStart: 'Set the day the business records start (older data ignored by the AI)',
   erpWatchFixDecide: 'Answered a Watchdog fix (Approve runs it)',
   erpLeadResearch: 'Asked the Engine to find leads (or switched its daily search)',
