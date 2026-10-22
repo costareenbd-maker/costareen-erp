@@ -39319,6 +39319,7 @@ saveProduct = function () {
   repaint = function () { if (VIEW !== 'engine' && VIEW !== 'skills') return repaintEn.apply(this, arguments); paint(); };
 
   // ------------------------------------------------------------------------------------------------------- Skills
+  document.addEventListener('toggle', function (e) { if (!e.target || !e.target.getAttribute) return; if (e.target.getAttribute('data-sksug')) SK.sugOpen = e.target.open; if (e.target.getAttribute('data-skadd')) SK.addOpen = e.target.open; }, true);
   setInterval(function () { if (VIEW === 'skills' && !document.hidden && SK.data && SK.data.suggest && SK.data.suggest.job && /queued|running/.test(SK.data.suggest.job.status)) { SK.busy = false; skLoad(); } }, 15000);
   function skLoad() {
     if (SK.busy) return; SK.busy = true;
@@ -39368,54 +39369,62 @@ saveProduct = function () {
       list('Most popular skill collections', T.popular || []) + list('New and rising (last 45 days)', T.rising || []) +
       '<div class="ap-row" style="margin-top:8px"><button class="btn" type="button" data-sk="trendfresh">Check again now</button><button class="btn" type="button" data-sk="close">Close</button></div></div>';
   }
+  // compact row (owner: the page got too long): the essentials in two lines; tapping opens agents, usage detail, uninstall
   function skRow(s) {
     var m = MARK[s.mark] || MARK.new, r = RISK[s.risk] || RISK.low, u = s.use || {};
-    return '<tr class="en-skill"><td><b data-noi18n="1">' + esc(s.name) + '</b> <span class="pill ' + m[1] + '">' + m[0] + '</span>' + (s.update ? ' <span class="pill low">update available</span>' : '') +
-      '<br><span class="en-meta" data-noi18n="1">' + esc(s.summary || s.description) + '</span>' +
-      '<br><span class="en-meta">' + (s.source === 'github' ? '<a href="' + esc(s.url) + '" target="_blank" rel="noopener">' + esc(s.repo) + '</a>' : 'Built-in library') + ' · installed ' + esc(s.installed) + ' · <span class="pill ' + r[1] + '">' + r[0] + '</span>' + (s.hasCode ? ' · has code (never run)' : '') + '</span>' +
-      (s.mark === 'weak' ? '<div class="en-meta" style="color:var(--critical,#d33)">The results it helped were rejected or failed. Remove it or find a better one in Trending.</div>' : s.mark === 'unused' ? '<div class="en-meta">Not picked by any job in 30 days. Give it to more agents, or remove it.</div>' : '') +
-      '<div style="margin-top:4px">' + agChips(s.agents || [], 'data-skag', s.slug) + '</div></td>' +
-      '<td class="en-use">Today <b>' + fmt(u.today || 0) + '</b> · 30 days <b>' + fmt(u.d30 || 0) + '</b> · all <b>' + fmt(u.total || 0) + '</b>' +
-      '<br>Success ' + (u.okRate === null || u.okRate === undefined ? '-' : u.okRate + '%') + ' · 👍 ' + (u.up || 0) + ' · 👎 ' + (u.down || 0) +
-      (u.last ? '<br><span class="en-meta">last used ' + esc(u.last) + '</span>' : '') +
-      ((u.byAgent || []).length ? '<br><span class="en-meta">by ' + u.byAgent.map(function (a) { return esc(a.name) + ' ' + a.n; }).join(', ') + '</span>' : '') + '</td>' +
-      '<td style="white-space:nowrap;text-align:right"><label style="cursor:pointer"><input type="checkbox" data-skon="' + esc(s.slug) + '"' + (s.enabled ? ' checked' : '') + '> On</label><br>' +
-      (s.update ? '<button class="btn small" type="button" data-skupd="' + esc(s.slug) + '" style="margin-top:4px">Update</button><br>' : '') +
-      '<button class="btn small" type="button" data-skrm="' + esc(s.slug) + '" style="margin-top:4px">Uninstall</button></td></tr>';
+    var names = {}; (SK.data.agents || []).forEach(function (a) { names[a.key] = a.name; });
+    var open = SK.openRow === s.slug;
+    var h = '<div class="br-fact" style="align-items:center"><div style="flex:1 1 240px;cursor:pointer" data-skopen="' + esc(s.slug) + '"><b data-noi18n="1">' + esc(s.name) + '</b> <span class="pill ' + m[1] + '">' + m[0] + '</span>' + (s.update ? ' <span class="pill low">update</span>' : '') +
+      '<div class="en-meta" data-noi18n="1" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:560px">' + esc(s.summary || s.description) + '</div>' +
+      '<div class="en-meta">' + ((s.agents || []).length ? 'For: ' + s.agents.map(function (k) { return esc(names[k] || k); }).join(', ') : 'Command Center only') + ' · used ' + fmt(u.d30 || 0) + '× in 30 days' + (u.okRate !== null && u.okRate !== undefined ? ' · ' + u.okRate + '% ok' : '') + '</div></div>' +
+      '<div class="ap-row" style="flex-wrap:nowrap"><label style="cursor:pointer;white-space:nowrap"><input type="checkbox" data-skon="' + esc(s.slug) + '"' + (s.enabled ? ' checked' : '') + '> On</label>' +
+      '<button class="btn small" type="button" data-skopen="' + esc(s.slug) + '">' + (open ? 'Close' : 'More') + '</button></div></div>';
+    if (open) h += '<div class="en-pv" style="margin:0 0 8px">' +
+      (s.mark === 'weak' ? '<div class="en-meta" style="color:var(--critical,#d33)">The results it helped were rejected or failed. Remove it or find a better one.</div>' : s.mark === 'unused' ? '<div class="en-meta">Not picked by any job in 30 days. Give it to more agents, or remove it.</div>' : '') +
+      '<div class="en-meta" data-noi18n="1">' + esc(s.summary || s.description) + '</div>' +
+      '<div style="margin-top:6px"><span class="en-meta">Agents: </span>' + agChips(s.agents || [], 'data-skag', s.slug) + '</div>' +
+      '<div class="en-use" style="margin-top:6px">Today <b>' + fmt(u.today || 0) + '</b> · 30 days <b>' + fmt(u.d30 || 0) + '</b> · all <b>' + fmt(u.total || 0) + '</b> · success ' + (u.okRate === null || u.okRate === undefined ? '-' : u.okRate + '%') + ' · 👍 ' + (u.up || 0) + ' · 👎 ' + (u.down || 0) +
+        (u.last ? ' · last used ' + esc(u.last) : '') + ((u.byAgent || []).length ? ' · by ' + u.byAgent.map(function (a) { return esc(a.name) + ' ' + a.n; }).join(', ') : '') + '</div>' +
+      '<div class="en-meta" style="margin-top:6px">' + (s.source === 'github' ? '<a href="' + esc(s.url) + '" target="_blank" rel="noopener">' + esc(s.repo) + '</a>' : 'Built-in library') + ' · installed ' + esc(s.installed) + ' · <span class="pill ' + r[1] + '">' + r[0] + '</span>' + (s.hasCode ? ' · has code (never run)' : '') + '</div>' +
+      '<div class="ap-row" style="margin-top:8px">' + (s.update ? '<button class="btn small" type="button" data-skupd="' + esc(s.slug) + '">Update</button>' : '') + '<button class="btn small" type="button" data-skrm="' + esc(s.slug) + '">Uninstall</button></div></div>';
+    return h;
   }
   // skills-2: suggested for THIS business by the AI (weekly, or Suggest now) - the first thing on the Skills screen
   function suggestHtml(d) {
     var S = d.suggest; if (!S) return '';
-    var busy = S.job && /queued|running/.test(S.job.status);
+    var busy = S.job && /queued|running/.test(S.job.status), n = S.items.length;
     var names = {}; (d.agents || []).forEach(function (a) { names[a.key] = a.name; });
-    var h = '<section><div class="card"><div class="row" style="justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px"><h2 style="margin:0">Suggested for your business</h2>' +
-      '<button class="btn small" type="button" data-sk="suggest"' + (busy ? ' disabled' : '') + '>' + (busy ? '<span class="wd-spin"></span>The AI is looking…' : 'Suggest now') + '</button></div>' +
-      '<div class="sub" style="display:block">The AI looks every Monday at the skills that are new and growing on GitHub and picks the best ones for your business and your agents.' + (S.when ? ' Last looked ' + esc(S.when) + '.' : '') + '</div>';
-    if (!S.items.length) h += '<div class="en-meta" style="margin-top:8px">' + (busy ? 'Looking now - this takes a few minutes.' : S.when ? 'Nothing new to suggest - everything good is already installed.' : 'Press "Suggest now" for the first suggestions.') + '</div>';
+    // folded by default (owner: "it makes the page longer - collapsible or a pop-up"): one line until opened
+    var h = '<section><details class="card" data-sksug="1"' + (SK.sugOpen ? ' open' : '') + '><summary style="cursor:pointer;display:flex;gap:8px;align-items:center;flex-wrap:wrap">' +
+      '<b>' + (busy ? '<span class="wd-spin"></span>The AI is looking for skills…' : n ? n + ' skill' + (n === 1 ? '' : 's') + ' suggested for your business' : 'Suggested skills') + '</b>' +
+      (S.when ? '<span class="en-meta">· ' + esc(S.when) + '</span>' : '') + '</summary>' +
+      '<div class="ap-row" style="margin:8px 0"><button class="btn small" type="button" data-sk="suggest"' + (busy ? ' disabled' : '') + '>' + (busy ? 'Looking…' : 'Suggest now') + '</button>' +
+      '<span class="en-meta">New and growing skills on GitHub, picked for your business and agents - every Monday.</span></div>';
+    if (!n) h += '<div class="en-meta">' + (busy ? 'Looking now - this takes a few minutes.' : S.when ? 'Nothing new - the good ones are installed.' : 'Press "Suggest now".') + '</div>';
     h += S.items.map(function (i) {
-      return '<div class="en-pv"><div class="row" style="justify-content:space-between;gap:8px;flex-wrap:wrap;align-items:flex-start"><div style="flex:1 1 280px"><b data-noi18n="1">' + esc(i.name) + '</b>' +
-        (i.isNew ? ' <span class="pill low">NEW</span>' : '') + (i.stars ? ' <span class="en-meta">★ ' + fmt(i.stars) + '</span>' : '') + (i.category ? ' <span class="en-sk">' + esc(i.category) + '</span>' : '') +
-        '<div style="font-size:13.5px;margin-top:3px" data-noi18n="1">' + esc(i.why) + '</div>' +
-        (i.agents && i.agents.length ? '<div class="en-meta" style="margin-top:3px">For: ' + i.agents.map(function (k) { return esc(names[k] || k); }).join(', ') + '</div>' : '') +
-        '<div class="en-meta"><a href="' + esc(i.url) + '" target="_blank" rel="noopener">' + esc(i.repo || i.url) + '</a></div></div>' +
-        '<div class="ap-row"><button class="btn small primary" type="button" data-skread="' + esc(i.url) + '">Look inside</button><button class="btn small" type="button" data-sknope="' + esc(i.url) + '">Not useful</button></div></div></div>';
+      return '<div class="br-fact"><div style="flex:1 1 260px"><b data-noi18n="1">' + esc(i.name) + '</b>' + (i.isNew ? ' <span class="pill low">NEW</span>' : '') +
+        (i.agents && i.agents.length ? ' <span class="en-meta">· ' + i.agents.map(function (k) { return esc(names[k] || k); }).join(', ') + '</span>' : '') +
+        (i.stars ? ' <span class="en-meta">· ★ ' + fmt(i.stars) + '</span>' : '') +
+        '<div class="en-meta" data-noi18n="1">' + esc(i.why) + '</div></div>' +
+        '<div class="ap-row" style="flex-wrap:nowrap"><button class="btn small primary" type="button" data-skread="' + esc(i.url) + '">Look inside</button><button class="btn small" type="button" data-sknope="' + esc(i.url) + '" title="Not useful - never suggest it again">✕</button></div></div>';
     }).join('');
-    return h + '</div></section>';
+    return h + '</details></section>';
   }
   function skView() {
     if (!enOn()) return '<div class="note"><div class="ico">i</div><div>The Engine is not switched on for this business.</div></div>';
     var d = SK.data;
     if (!d) { skLoad(); return '<div class="loading">Loading the skills…</div>'; }
     var on = d.installed.filter(function (s) { return s.enabled; }).length, c = d.counts || {};
-    var h = suggestHtml(d) + '<section><div class="card"><div class="en-sum"><div><b>' + fmt(d.installed.length) + '</b>installed</div><div><b>' + fmt(on) + '</b>switched on</div>' +
-      '<div><b style="color:var(--good,#1a9e5b)">' + fmt(c.useful || 0) + '</b>useful</div><div><b style="color:var(--critical,#d33)">' + fmt(c.weak || 0) + '</b>weak</div><div><b>' + fmt(c.unused || 0) + '</b>not used</div></div>' +
-      '<label class="f" for="sk_url">Install from GitHub: paste a link</label><div class="ap-row"><input class="i" id="sk_url" style="flex:1 1 320px" placeholder="https://github.com/owner/project (a whole project, a folder, or a SKILL.md file)" value="' + esc(SK.url) + '">' +
+    // compact (owner: the page got too long): the counts in one line, the ways to add a skill folded until needed
+    var addOpen = !!(SK.pv || SK.panel || SK.pvBusy || SK.addOpen);
+    var h = suggestHtml(d) + '<section><div class="card"><div class="en-meta" style="font-size:13px"><b>' + fmt(d.installed.length) + '</b> installed · <b>' + fmt(on) + '</b> on · <b style="color:var(--good,#1a9e5b)">' + fmt(c.useful || 0) + '</b> useful · <b style="color:var(--critical,#d33)">' + fmt(c.weak || 0) + '</b> weak · <b>' + fmt(c.unused || 0) + '</b> not used</div>' +
+      '<details data-skadd="1"' + (addOpen ? ' open' : '') + ' style="margin-top:8px"><summary style="cursor:pointer"><b>+ Add a skill</b> <span class="en-meta">(GitHub link, library, trending, updates)</span></summary>' +
+      '<label class="f" for="sk_url" style="margin-top:8px">Paste a GitHub link</label><div class="ap-row"><input class="i" id="sk_url" style="flex:1 1 320px" placeholder="https://github.com/owner/project (a whole project, a folder, or a SKILL.md file)" value="' + esc(SK.url) + '">' +
       '<button class="btn primary" type="button" data-sk="read"' + (SK.pvBusy ? ' disabled' : '') + '>' + (SK.pvBusy ? 'Reading…' : 'Read it') + '</button></div>' +
-      '<div class="ap-row" style="margin-top:8px"><button class="btn" type="button" data-sk="lib">Built-in library (' + (d.library || []).length + ')</button><button class="btn" type="button" data-sk="trend">Browse all trending</button><button class="btn" type="button" data-sk="updates">Check for updates</button>' +
-      '<a href="#" data-engo="engine" style="margin-left:auto">Command Center</a></div>' +
+      '<div class="ap-row" style="margin-top:8px"><button class="btn small" type="button" data-sk="lib">Built-in library (' + (d.library || []).length + ')</button><button class="btn small" type="button" data-sk="trend">Browse all trending</button><button class="btn small" type="button" data-sk="updates">Check for updates</button></div></details>' +
       (SK.pv ? pvHtml() : SK.panel === 'lib' ? libHtml() : SK.panel === 'trend' ? trendHtml() : '') + '</div></section>';
     if (SK.err) h += '<div class="note err"><div class="ico">!</div><div>' + esc(SK.err) + '</div></div>';
-    h += '<section>' + (d.installed.length ? '<div style="overflow:auto"><table class="tbl en-sktbl"><thead><tr><th>Skill and agents</th><th>Used</th><th></th></tr></thead><tbody>' + d.installed.map(skRow).join('') + '</tbody></table></div>' +
+    h += '<section>' + (d.installed.length ? '<div class="card" style="padding:4px 14px">' + d.installed.map(skRow).join('') + '</div>' +
       '<div class="sub" style="display:block;margin-top:6px">The Command Center can use every switched-on skill; the other agents use the skills given to them. Every job lists the skills it used, and your 👍 / 👎 on a job counts for those skills.</div>'
       : '<div class="note"><div class="ico">i</div><div>No skills yet. Start with the built-in library, or paste a GitHub link.</div></div>') + '</section>';
     return h;
@@ -39424,7 +39433,8 @@ saveProduct = function () {
   // ---------------------------------------------------------------------------------------------------- clicks
   document.addEventListener('click', function (e) {
     if (VIEW !== 'engine' && VIEW !== 'skills') return;
-    var t = e.target.closest && e.target.closest('[data-en],[data-enopen],[data-enst],[data-enidea],[data-enyes],[data-enno],[data-enrate],[data-encancel],[data-enretry],[data-encopy],[data-enagain],[data-engo],[data-sk],[data-sklib],[data-skread],[data-skrm],[data-skupd],[data-skag],[data-skpvag],[data-sknope]');
+    var t = e.target.closest && e.target.closest('[data-en],[data-enopen],[data-enst],[data-enidea],[data-enyes],[data-enno],[data-enrate],[data-encancel],[data-enretry],[data-encopy],[data-enagain],[data-engo],[data-sk],[data-sklib],[data-skread],[data-skrm],[data-skupd],[data-skag],[data-skpvag],[data-sknope],[data-skopen]');
+    if (t && t.hasAttribute('data-skopen')) { SK.openRow = SK.openRow === t.getAttribute('data-skopen') ? null : t.getAttribute('data-skopen'); paint(); return; }
     if (t && t.hasAttribute('data-sknope')) { skDo('erpSkillSuggestDismiss', [{ url: t.getAttribute('data-sknope') }], 'Hidden - the AI will not suggest it again.'); return; }
     if (!t) return;
     if (t.hasAttribute('data-engo')) { e.preventDefault(); go(t.getAttribute('data-engo')); return; }
