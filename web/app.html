@@ -38468,6 +38468,7 @@ document.addEventListener('keydown', function (e) {
 </style>
 <script>
 (function () {
+  try { SRV_SLOW.erpLeadFind = 130000; SRV_SLOW.erpLeadHarvest = 90000; SRV_SLOW.erpLeadCapture = 60000; } catch (e) {}   // the free map / the AI can take a while
   var LD = { kind: 'customer', data: null, busy: false, source: '', stage: 0, q: '', open: null, panel: '', form: null, paste: '', pasteUsed: '',
              find: { via: 'map', what: '', place: 'Dhaka', res: null, busy: false, pick: {} }, err: '' };
   window.LD = LD;

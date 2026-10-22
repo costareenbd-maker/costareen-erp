@@ -324,7 +324,7 @@ async function findOnMap(ctx, kind, what, place) {
   const tags = preset ? preset.tags : ['shop~"."', 'office~"."', 'craft~"."', 'industrial~"."'];
   const g = await geo(ctx, place || 'Dhaka');
   const bb = '(' + g.box.join(',') + ')';
-  const q = '[out:json][timeout:50];(' + tags.map((t) => { const [k, v] = t.split('~'); return 'nwr["' + k + '"~' + v + ']' + bb + ';'; }).join('') + ');out tags center 1500;';
+  const q = '[out:json][timeout:45];(' + tags.map((t) => { const [k, v] = t.split('~'); return 'nwr["' + k + '"~' + v + ']' + bb + ';'; }).join('') + ');out tags center 1000;';
   // the main Overpass server, then a mirror (either can be busy)
   let j = null, last = '';
   for (const base of ['https://overpass-api.de/api/interpreter', 'https://overpass.kumi.systems/api/interpreter']) {
