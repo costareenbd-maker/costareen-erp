@@ -26,6 +26,7 @@ import { platformAdmin } from './platform.js';
 import { appIsOff } from './apps.js';
 import { TOOLS, runTool, confirmWrite } from './assistant.js';
 import { watchDue, ISSUE_TOOLS, issueTool, nextRun } from './watchdog.js';
+import { brainText, BRAIN_TOOLS, brainTool, rateFact } from './brain.js';
 
 const str = (v) => String(v == null ? '' : v).trim();
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -171,6 +172,7 @@ export async function erpEngineRate(ctx, payload) {
   if (j.status !== 'done') throw new Error('Rate a job once it is done.');
   await ctx.tx`update engine_jobs set rating = ${rating} where id = ${j.id}`;
   await ctx.tx`update engine_skill_use set rating = ${rating} where business_id = ${ctx.biz} and job_id = ${j.id}`;
+  await rateFact(ctx, j, rating);
   return erpEngineJob(ctx, { id: j.id });
 }
 
@@ -195,7 +197,9 @@ export async function erpEngineDecide(ctx, payload) {
 /** The ERP functions the Engine may use: the chat assistant's (reads at once, propose_* need the owner's Yes). */
 export const ENGINE_TOOLS = TOOLS.filter((t) => t.name !== 'open_screen');
 /** watch-1: every agent reads the Watchdog's issues; the Watchdog (and the Command Center) may record new ones. */
-const toolsFor = (agent) => ENGINE_TOOLS.concat(ISSUE_TOOLS.filter((t) => t.name === 'watch_issues' || agent === 'watchdog' || agent === 'command'));
+const toolsFor = (agent, source) => ENGINE_TOOLS.concat(ISSUE_TOOLS.filter((t) => t.name === 'watch_issues' || agent === 'watchdog' || agent === 'command'))
+  // brain-1: every agent sees the business in numbers and keeps lasting facts; only the drafting job writes the Brain draft
+  .concat(BRAIN_TOOLS.filter((t) => t.name !== 'brain_save_draft' || source === 'brain'));
 
 // ----------------------------------------------------------------------------------------------------- timed jobs
 const EVERY = ['hourly', 'daily', 'weekly'];
@@ -292,7 +296,8 @@ export async function erpEngineClaim(ctx, payload) {
     agent: { key: j.agent, name: agent.name, instructions: agent.instructions },
     business: { id: ctx.biz, name: str(ctx.s.businessName), today: formatDate(ctx.now, 'yyyy-MM-dd') },
     skills: skills.map((s) => ({ slug: s.slug, name: s.name, description: s.description, files: s.files || {} })),
-    tools: toolsFor(j.agent), watches,
+    tools: toolsFor(j.agent, j.source), watches,
+    brain: await brainText(ctx),
   };
 }
 
@@ -300,8 +305,10 @@ export async function erpEngineClaim(ctx, payload) {
 export async function erpEngineTool(ctx, payload) {
   engineOnly(ctx);
   const p = payload || {}, j = await engineJob(ctx, p.id, true), tool = str(p.tool);
-  if (!toolsFor(j.agent).some((t) => t.name === tool)) return { error: 'No such function.' };
-  if (ISSUE_TOOLS.some((t) => t.name === tool)) return issueTool(ctx, tool, p.args && typeof p.args === 'object' ? p.args : {}, j);
+  if (!toolsFor(j.agent, j.source).some((t) => t.name === tool)) return { error: 'No such function.' };
+  const args = p.args && typeof p.args === 'object' ? p.args : {};
+  if (ISSUE_TOOLS.some((t) => t.name === tool)) return issueTool(ctx, tool, args, j);
+  if (BRAIN_TOOLS.some((t) => t.name === tool)) return brainTool(ctx, tool, args, j);
   const out = await runTool(ctx, tool, p.args && typeof p.args === 'object' ? p.args : {});
   if (out && out.proposal) {
     const list = Array.isArray(j.proposals) ? j.proposals : [];

@@ -8487,7 +8487,7 @@ function srv(name, args, ok, bad) {
 
 var SRV_ACTIVE = 0, SRV_WRITING = false, SRV_TIMED = {};
 // the same list the server uses to know a call changes nothing (ERP_READS)
-var SRV_READS = /^(erpWatch|erpEngine|erpEngineJob|erpSkills|erpAiBrain|erpAiBrainModels|erpLeadForms|erpLeads|erpLeadFind|erpLeadCapture|erpMyUpdates|erpSocialBridges|erpAds|erpAdsInterests|erpSocialNet|erpSocialLearn|erpSocialAssets|erpSocialPosts|erpSocialPhotos|erpInboxDigest|erpJointRecvCatalog|erpSitePages|erpBalanceSheet|erpProductFields|erpProductAi|erpMetaConnect|erpInboxFeatureMap|erpBookings|erpInbox|erpInboxOpen|erpInboxChannels|erpChatOrders|erpInboxStats|erpAiWork|erpCommissionSales|erpFdCards|erpLineMargins|erpFd19Profit|erpFdInventory|erpFd22Analytics|erpNavigator|erpSellers|erpFollowups|erpCustomerInsight|erpPreorders|erpCashUps|erpAskingPrices|erpSystemCheck|erpAnalytics|erpCommission|erpHolding|erpLotFunding|erpShipments|erpShipment|erpLots|erpFdHead|erpFdDash|erpReceiveMatch|erpAiReader|erpProductSuggest|erpCatalogue|erpPushList|erpCreators|erpCreatorPortalLink|erpSponsorLink|erpCreatorRequests|erpCreatorEvents|erpCreatorProgramme|erpCreatorPreview|erpCreatorCatalog|erpCreatorSources|erpCreatorClaims|erpApps|erpAppQr|erpFeedback|erpRestockOffers|erpRestockList|erpWarrantyRules|erpWarrantyCard|erpMyLink|erpPlatformRegister|erpPlatformDoctor|erpPlatformCommunity|erpMarketWaiting|erpBoard|erpPlatformDesign|erpResell|erpResellerProgramme|erpLoyalty|erpCustomerPoints|erpRefillDue|erpDeliveryHistory|erpDeliveryHistoryMany|erpPrintKit|erpPrintJobs|erpPrintJob|erpPrintCost|erpSpools|erpPrintRequests|erpJoint|erpJointCatalog|erpJointCard|erpInvoiceDesign|erpInvoicePreview|erpMarket|erpMarketMine|erpMarketRequests|erpMarketHints|erpMarketNames|erpWanted|erpBrand|erpComplianceLog|erpProviderKey|erpNews|erpAccessKeys|erpAccessWarning|erpAdmin|erpAiKeys|erpAlertRules|erpAlerts|erpArena|erpBackupStatus|erpBg|erpBnWords|erpBookedParcels|erpBrandLogo|erpBundle|erpBusinessLinks|erpBusinesses|erpBusinessesDeleted|erpCampaignAudience|erpCampaignGet|erpCampaignList|erpCapital|erpCashBook|erpCatalog|erpConnStatus|erpConnections|erpCostBook|erpCourier|erpCourierKeyStatus|erpCurrencies|erpCustomerAccount|erpCustomerCredit|erpCustomerList|erpCustomerPage|erpCustomerStatement|erpCustomers|erpDashboardData|erpDaySales|erpDeliveryOptions|erpDevices|erpDiscontinued|erpDues|erpEvoQr|erpEvoStatus|erpExpenseExport|erpExpenseReceiptUrl|erpExpenses|erpFamilies|erpFighters|erpFormOptions|erpGame|erpGetTheme|erpGoogle|erpHello|erpInstalls|erpInvoice|erpInvoicePdf|erpJob|erpJobs|erpListView|erpLookupCustomer|erpLookupUsage|erpMe|erpMoney|erpNoteFileUrl|erpNotes|erpOwnerChange|erpOwnerChanges|erpParcelLabels|erpParcelPreview|erpPartnerStock|erpPartnership|erpPayReasons|erpPeople|erpPlatform|erpPlatformErrors|erpPnl|erpPnlMonth|erpPoList|erpPoolCatalog|erpProduct|erpProductListShare|erpProductPage|erpProductPhotoUrl|erpProductThumbs|erpProfile|erpQuoteAsset|erpQuoteBoot|erpQuoteGet|erpQuoteList|erpRecentInvoices|erpRecovery|erpReorderPlan|erpRestorePreview|erpReturnPreview|erpRisks|erpSales|erpSearch|erpSecurity|erpSelfTest|erpSerialLookup|erpSerialsFor|erpSessions|erpSetTheme|erpSettingsFull|erpSettingsLists|erpSfPayoutLines|erpSfPayouts|erpShareFile|erpSharedStock|erpSheet|erpStatementPdf|erpStockHistory|erpSupplierPage|erpSuppliers|erpToday|erpUsers|erpWaProductPdf|erpWebMatches|erpWebOrderInvoices|erpWebOrders|erpWebsiteTest)$/;
+var SRV_READS = /^(erpBrain|erpWatch|erpEngine|erpEngineJob|erpSkills|erpAiBrain|erpAiBrainModels|erpLeadForms|erpLeads|erpLeadFind|erpLeadCapture|erpMyUpdates|erpSocialBridges|erpAds|erpAdsInterests|erpSocialNet|erpSocialLearn|erpSocialAssets|erpSocialPosts|erpSocialPhotos|erpInboxDigest|erpJointRecvCatalog|erpSitePages|erpBalanceSheet|erpProductFields|erpProductAi|erpMetaConnect|erpInboxFeatureMap|erpBookings|erpInbox|erpInboxOpen|erpInboxChannels|erpChatOrders|erpInboxStats|erpAiWork|erpCommissionSales|erpFdCards|erpLineMargins|erpFd19Profit|erpFdInventory|erpFd22Analytics|erpNavigator|erpSellers|erpFollowups|erpCustomerInsight|erpPreorders|erpCashUps|erpAskingPrices|erpSystemCheck|erpAnalytics|erpCommission|erpHolding|erpLotFunding|erpShipments|erpShipment|erpLots|erpFdHead|erpFdDash|erpReceiveMatch|erpAiReader|erpProductSuggest|erpCatalogue|erpPushList|erpCreators|erpCreatorPortalLink|erpSponsorLink|erpCreatorRequests|erpCreatorEvents|erpCreatorProgramme|erpCreatorPreview|erpCreatorCatalog|erpCreatorSources|erpCreatorClaims|erpApps|erpAppQr|erpFeedback|erpRestockOffers|erpRestockList|erpWarrantyRules|erpWarrantyCard|erpMyLink|erpPlatformRegister|erpPlatformDoctor|erpPlatformCommunity|erpMarketWaiting|erpBoard|erpPlatformDesign|erpResell|erpResellerProgramme|erpLoyalty|erpCustomerPoints|erpRefillDue|erpDeliveryHistory|erpDeliveryHistoryMany|erpPrintKit|erpPrintJobs|erpPrintJob|erpPrintCost|erpSpools|erpPrintRequests|erpJoint|erpJointCatalog|erpJointCard|erpInvoiceDesign|erpInvoicePreview|erpMarket|erpMarketMine|erpMarketRequests|erpMarketHints|erpMarketNames|erpWanted|erpBrand|erpComplianceLog|erpProviderKey|erpNews|erpAccessKeys|erpAccessWarning|erpAdmin|erpAiKeys|erpAlertRules|erpAlerts|erpArena|erpBackupStatus|erpBg|erpBnWords|erpBookedParcels|erpBrandLogo|erpBundle|erpBusinessLinks|erpBusinesses|erpBusinessesDeleted|erpCampaignAudience|erpCampaignGet|erpCampaignList|erpCapital|erpCashBook|erpCatalog|erpConnStatus|erpConnections|erpCostBook|erpCourier|erpCourierKeyStatus|erpCurrencies|erpCustomerAccount|erpCustomerCredit|erpCustomerList|erpCustomerPage|erpCustomerStatement|erpCustomers|erpDashboardData|erpDaySales|erpDeliveryOptions|erpDevices|erpDiscontinued|erpDues|erpEvoQr|erpEvoStatus|erpExpenseExport|erpExpenseReceiptUrl|erpExpenses|erpFamilies|erpFighters|erpFormOptions|erpGame|erpGetTheme|erpGoogle|erpHello|erpInstalls|erpInvoice|erpInvoicePdf|erpJob|erpJobs|erpListView|erpLookupCustomer|erpLookupUsage|erpMe|erpMoney|erpNoteFileUrl|erpNotes|erpOwnerChange|erpOwnerChanges|erpParcelLabels|erpParcelPreview|erpPartnerStock|erpPartnership|erpPayReasons|erpPeople|erpPlatform|erpPlatformErrors|erpPnl|erpPnlMonth|erpPoList|erpPoolCatalog|erpProduct|erpProductListShare|erpProductPage|erpProductPhotoUrl|erpProductThumbs|erpProfile|erpQuoteAsset|erpQuoteBoot|erpQuoteGet|erpQuoteList|erpRecentInvoices|erpRecovery|erpReorderPlan|erpRestorePreview|erpReturnPreview|erpRisks|erpSales|erpSearch|erpSecurity|erpSelfTest|erpSerialLookup|erpSerialsFor|erpSessions|erpSetTheme|erpSettingsFull|erpSettingsLists|erpSfPayoutLines|erpSfPayouts|erpShareFile|erpSharedStock|erpSheet|erpStatementPdf|erpStockHistory|erpSupplierPage|erpSuppliers|erpToday|erpUsers|erpWaProductPdf|erpWebMatches|erpWebOrderInvoices|erpWebOrders|erpWebsiteTest)$/;
 function srvPump() {
   if (!SRV_Q.length) return;
   var isRead = SRV_READS.test(SRV_Q[0].name);
@@ -39653,6 +39653,89 @@ saveProduct = function () {
   document.addEventListener('change', function (e) {
     if (VIEW !== 'engine' || !e.target || !e.target.hasAttribute('data-tjon')) return;
     tjSave({ id: e.target.getAttribute('data-tjon'), enabled: e.target.checked }, e.target.checked ? 'Switched on.' : 'Switched off.');
+  });
+})();
+</script>
+<!-- brain-1 (owner 22 Oct 2026: "other, different businesses and later public users - how will the AI keep them apart and
+     know each business?"): Menu > Business Brain - the ten questions about THIS business, each with the Engine's draft
+     answer ("Let the Engine draft it": from the ERP's own data, the website and competitors), the owner edits and presses
+     Approve (versions kept; limits and never-do are the owner's only); the business's memory (facts, events, lessons)
+     with Out of date; the Engine's On / Off for this business. Server: handlers/brain.js. -->
+<style>
+.br-blk{border:1px solid var(--line,#e6e8ef);border-radius:12px;padding:10px 12px;margin:8px 0;background:var(--card,#fff)}
+.br-blk h3{margin:0;font-size:14.5px}
+.br-q{font-size:13px;color:var(--muted,#667);margin:2px 0 6px}
+.br-blk textarea{width:100%;min-height:58px;resize:vertical}
+.br-draft{margin-top:6px;font-size:12.5px;background:var(--soft,rgba(91,79,240,.06));border-radius:8px;padding:6px 8px}
+.br-fact{display:flex;gap:8px;align-items:flex-start;justify-content:space-between;border-bottom:1px solid var(--line,#eef);padding:6px 0;font-size:13px}
+</style>
+<script>
+(function () {
+  var BR = { data: null, busy: false, edit: {} };
+  window.BR = BR;
+  var ICON = '<path d="M9 4a3 3 0 0 0-3 3 3 3 0 0 0-2 5 3 3 0 0 0 2 5 3 3 0 0 0 6 1V5a3 3 0 0 0-3-1z"/><path d="M15 4a3 3 0 0 1 3 3 3 3 0 0 1 2 5 3 3 0 0 1-2 5 3 3 0 0 1-6 1"/>';
+  var on = function () { return typeof enOn === 'function' && enOn(); };
+  if (typeof fdxNav === 'function') fdxNav('brain', 'Business Brain', ICON, 'skills');
+  try { VIEW_NAMES.brain = 'Business Brain'; FDH_SUB.brain = 'What the AI knows about THIS business - checked and approved by you; every agent reads it'; } catch (e) {}
+  function syncNav() { var b = document.querySelector('#nav button[data-view="brain"]'); if (b) b.style.display = on() ? '' : 'none'; }
+  if (typeof applyRole === 'function') { var ar = applyRole; applyRole = function () { var r = ar.apply(this, arguments); try { syncNav(); } catch (e) {} return r; }; }
+  setTimeout(syncNav, 1500);
+  function load() {
+    if (BR.busy) return; BR.busy = true;
+    srv('erpBrain', [], function (r) { BR.busy = false; BR.data = r; if (VIEW === 'brain') paint(); }, function (e) { BR.busy = false; toast(esc((e && e.message) || e), true); });
+  }
+  function keep() { document.querySelectorAll('[data-brv]').forEach(function (t) { BR.edit[t.getAttribute('data-brv')] = t.value; }); }
+  var STATUS = { empty: 'Not set yet', drafting: 'The Engine is drafting it…', draft: 'Draft - check each answer, then Approve', approved: 'Approved' };
+  function view() {
+    if (!on()) return '<div class="note"><div class="ico">i</div><div>The Engine is not switched on for this business.</div></div>';
+    var d = BR.data; if (!d) { load(); return '<div class="loading">Loading the Business Brain…</div>'; }
+    var dj = d.draftJob, drafting = dj && (dj.status === 'queued' || dj.status === 'running');
+    var h = '<section><div class="card"><div class="en-top"><div><b>' + esc(STATUS[d.status] || d.status) + '</b>' + (d.status === 'approved' ? ' <span class="pill ok">version ' + d.version + '</span> <span class="en-meta">' + esc(d.approvedAt) + (d.approvedBy ? ' by ' + esc(d.approvedBy) : '') + '</span>' : '') +
+      (drafting ? ' <span class="pill low">the Engine is drafting…</span>' : dj && dj.status === 'failed' ? ' <span class="pill out">the draft failed: ' + esc(dj.error) + '</span>' : '') + '</div>' +
+      '<label class="en-meta" style="display:inline-flex;gap:6px;align-items:center"><input type="checkbox" data-br="engine"' + (d.engineOn ? ' checked' : '') + '> The Engine works for this business</label></div>' +
+      '<div class="sub" style="display:block;margin-top:6px">Every agent reads this before working for this business, and nothing of any other business. The Engine drafts each answer from your own sales, products and website; you correct it and press Approve. "Limits" and "Never do" are yours only - the AI can never change them.</div>' +
+      '<div class="ap-row" style="margin-top:10px"><button class="btn' + (d.status === 'empty' ? ' primary' : '') + '" type="button" data-br="draft"' + (drafting ? ' disabled' : '') + '>' + (d.status === 'empty' ? 'Let the Engine draft it' : 'Redraft from the latest data') + '</button>' +
+      (dj && dj.id ? '<a href="#" data-brjob="' + dj.id + '">See the drafting job</a>' : '') + '</div></div></section>';
+    h += '<section>' + d.blocks.map(function (b) {
+      var cur = BR.edit[b.key] !== undefined ? BR.edit[b.key] : (b.value || b.draft || '');
+      return '<div class="br-blk"><h3>' + esc(b.title) + (b.locked ? ' 🔒' : '') + (b.value ? ' <span class="pill ok">confirmed</span>' : b.draft ? ' <span class="pill low">AI draft</span>' : '') + '</h3>' +
+        '<div class="br-q">' + esc(b.q) + '</div><textarea class="i" data-brv="' + b.key + '" maxlength="' + b.limit + '" data-noi18n="1">' + esc(cur) + '</textarea>' +
+        (b.value && b.draft && b.draft !== b.value ? '<div class="br-draft"><b>The Engine suggests:</b> <span data-noi18n="1">' + esc(b.draft) + '</span> <button class="btn small" type="button" data-bruse="' + b.key + '">Use this</button></div>' : '') + '</div>';
+    }).join('') +
+      '<div class="ap-row" style="margin-top:10px"><button class="btn primary" type="button" data-br="approve">Approve - this is my business</button><button class="btn" type="button" data-br="save">Save without approving</button></div></section>';
+    h += '<section><div class="card"><h2>What the Engine has learned about this business</h2>' +
+      '<div class="sub" style="display:block">Lasting facts, events and lessons - kept by the Engine as it works, by your notes and by your 👍 / 👎. A fact that changes is marked out of date (kept, never deleted).</div>' +
+      (d.facts.length ? d.facts.map(function (f) { return '<div class="br-fact"><div><span class="en-sk">' + esc(f.kind) + '</span><span data-noi18n="1">' + esc(f.text) + '</span><div class="en-meta">' + esc(f.source) + ' · ' + esc(f.since) + '</div></div><button class="btn small" type="button" data-brold="' + f.id + '">Out of date</button></div>'; }).join('')
+        : '<div class="en-meta">Nothing yet.</div>') + (d.oldFacts ? '<div class="en-meta" style="margin-top:6px">' + d.oldFacts + ' out-of-date fact(s) kept in the history.</div>' : '') +
+      '<div class="row" style="gap:8px;flex-wrap:wrap;align-items:flex-end;margin-top:10px"><div><label class="f" for="br_kind">Kind</label><select class="i" id="br_kind"><option value="fact">Fact</option><option value="lesson">Lesson (what works)</option><option value="event">Event</option></select></div>' +
+      '<div style="flex:1 1 260px"><label class="f" for="br_fact">Tell the Engine something lasting</label><input class="i" id="br_fact" data-noi18n="1" placeholder="e.g. Schools buy in January and July"></div><button class="btn" type="button" data-br="fact">Add</button></div></div></section>';
+    return h;
+  }
+  function paint() { if (VIEW !== 'brain') return; var v = el('view'); if (!v) return; v.innerHTML = view(); try { if (typeof bindTips === 'function') bindTips(v); } catch (e) {} }
+  var rp = repaint; repaint = function () { if (VIEW !== 'brain') return rp.apply(this, arguments); paint(); };
+  setInterval(function () { if (VIEW === 'brain' && BR.data && BR.data.draftJob && /queued|running/.test(BR.data.draftJob.status)) { keep(); load(); } }, 15000);
+  function done(r, msg) { BR.data = r; BR.edit = {}; if (msg) toast(msg); paint(); }
+  function fail(e) { toast(esc((e && e.message) || e), true, 9000); paint(); }
+  document.addEventListener('click', function (e) {
+    if (VIEW !== 'brain') return;
+    var t = e.target.closest && e.target.closest('[data-br],[data-bruse],[data-brold],[data-brjob]'); if (!t) return;
+    var a = t.getAttribute('data-br');
+    if (t.hasAttribute('data-brjob')) { e.preventDefault(); try { EN.open = t.getAttribute('data-brjob'); EN.job = null; } catch (er) {} go('engine'); return; }
+    if (t.hasAttribute('data-bruse')) { keep(); var b = BR.data.blocks.filter(function (x) { return x.key === t.getAttribute('data-bruse'); })[0]; BR.edit[b.key] = b.draft; paint(); return; }
+    if (t.hasAttribute('data-brold')) { srv('erpBrainFact', [{ invalidate: t.getAttribute('data-brold'), why: 'Marked out of date by the owner' }], function (r) { done(r, 'Marked out of date.'); }, fail); return; }
+    if (a === 'draft') { keep(); t.disabled = true; srv('erpBrainDraft', [], function (r) { BR.data = r; toast('The Engine is drafting it - this takes a few minutes. The answers appear here.'); paint(); }, fail); return; }
+    if (a === 'save' || a === 'approve') {
+      keep(); var blocks = {}; BR.data.blocks.forEach(function (b) { var v = BR.edit[b.key]; if (v !== undefined && (v !== b.value)) blocks[b.key] = v; });
+      if (a === 'approve') BR.data.blocks.forEach(function (b) { if (blocks[b.key] === undefined && !b.value && b.draft) blocks[b.key] = BR.edit[b.key] !== undefined ? BR.edit[b.key] : b.draft; });
+      t.disabled = true; srv('erpBrainSave', [{ blocks: blocks, approve: a === 'approve' }], function (r) { done(r, a === 'approve' ? 'Approved - every agent now works from this.' : 'Saved.'); }, function (er) { t.disabled = false; fail(er); });
+      return;
+    }
+    if (a === 'fact') { var tx = (el('br_fact') || {}).value || ''; srv('erpBrainFact', [{ add: { kind: (el('br_kind') || {}).value, text: tx } }], function (r) { done(r, 'Kept.'); }, fail); }
+  });
+  document.addEventListener('change', function (e) {
+    if (VIEW !== 'brain' || !e.target || e.target.getAttribute('data-br') !== 'engine') return;
+    var v = e.target.checked; keep();
+    srv('erpEngineSwitch', [{ on: v }], function () { toast(v ? 'The Engine works for this business.' : 'The Engine stopped for this business - its jobs wait.'); load(); }, fail);
   });
 })();
 </script>
