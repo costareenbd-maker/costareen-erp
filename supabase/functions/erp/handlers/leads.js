@@ -283,13 +283,40 @@ const MAP_PRESETS = {
     { key: 'manufacturers', name: 'Factories and manufacturers', tags: ['industrial~"."', 'man_made~"works"', 'office~"company"'], words: /./ },
   ],
 };
+// the main towns are built in (no lookup needed); anything else: Nominatim, then Photon (both free OpenStreetMap services;
+// either may refuse a cloud server now and then)
+const TOWNS = { dhaka: [23.70, 90.34, 23.90, 90.46], chattogram: [22.23, 91.75, 22.45, 91.88], chittagong: [22.23, 91.75, 22.45, 91.88], sylhet: [24.86, 91.83, 24.93, 91.92],
+  khulna: [22.77, 89.50, 22.88, 89.60], rajshahi: [24.34, 88.55, 24.40, 88.66], barishal: [22.67, 90.32, 22.73, 90.39], barisal: [22.67, 90.32, 22.73, 90.39], rangpur: [25.72, 89.22, 25.78, 89.30],
+  mymensingh: [24.72, 90.37, 24.78, 90.43], gazipur: [23.95, 90.36, 24.05, 90.45], narayanganj: [23.58, 90.47, 23.66, 90.53], cumilla: [23.43, 91.14, 23.49, 91.21], comilla: [23.43, 91.14, 23.49, 91.21],
+  "cox's bazar": [21.40, 91.96, 21.47, 92.02], coxsbazar: [21.40, 91.96, 21.47, 92.02], bogura: [24.82, 89.34, 24.88, 89.40], jessore: [23.14, 89.18, 23.20, 89.24], jashore: [23.14, 89.18, 23.20, 89.24],
+  savar: [23.82, 90.23, 23.89, 90.29], uttara: [23.85, 90.36, 23.89, 90.41], mirpur: [23.79, 90.34, 23.83, 90.38], gulshan: [23.77, 90.40, 23.80, 90.43], dhanmondi: [23.73, 90.36, 23.76, 90.39],
+  motijheel: [23.72, 90.41, 23.74, 90.43], tejgaon: [23.75, 90.38, 23.78, 90.41], shenzhen: [22.45, 113.75, 22.80, 114.35], guangzhou: [22.95, 113.15, 23.30, 113.50], ningbo: [29.75, 121.40, 30.00, 121.75],
+  shanghai: [30.95, 121.20, 31.45, 121.75], yiwu: [29.25, 120.00, 29.38, 120.15], kolkata: [22.45, 88.25, 22.65, 88.45] };
 async function geo(ctx, place) {
-  const r = await ctx.deps.fetch('https://nominatim.openstreetmap.org/search?format=json&limit=1&q=' + encodeURIComponent(place), { headers: { 'user-agent': 'erp-leads/1.0 (lead finder)' } });
-  const j = await r.json().catch(() => []);
-  if (!r.ok || !j.length) throw new Error('That place was not found on the map. Try a city name, like Dhaka or Chattogram.');
-  const b = j[0].boundingbox.map(Number);   // [south, north, west, east]
-  const lat = (b[0] + b[1]) / 2, lon = (b[2] + b[3]) / 2, h = Math.min(0.3, Math.max(0.05, (b[1] - b[0]) / 2)), w = Math.min(0.3, Math.max(0.05, (b[3] - b[2]) / 2));
-  return { name: str(j[0].display_name).split(',').slice(0, 2).join(','), box: [lat - h, lon - w, lat + h, lon + w].map((x) => Math.round(x * 1e4) / 1e4) };
+  const key = str(place).toLowerCase().replace(/,.*$/, '').trim();
+  if (TOWNS[key]) { const [s, w, n, e] = TOWNS[key]; return { name: str(place).replace(/,.*$/, ''), box: [s, w, n, e] }; }
+  const UA = { 'user-agent': 'erp-leads/1.0 (lead finder; contact via the ERP provider)', 'accept-language': 'en' };
+  try {
+    const r = await ctx.deps.fetch('https://nominatim.openstreetmap.org/search?format=json&limit=1&q=' + encodeURIComponent(place), { headers: UA });
+    const j = r.ok ? await r.json().catch(() => []) : [];
+    if (j.length) { const b = j[0].boundingbox.map(Number); return box(str(j[0].display_name), b[0], b[1], b[2], b[3]); }
+  } catch (_) { /* try the next */ }
+  try {
+    const r = await ctx.deps.fetch('https://photon.komoot.io/api/?limit=1&q=' + encodeURIComponent(place), { headers: UA });
+    const j = r.ok ? await r.json().catch(() => ({})) : {};
+    const f = (j.features || [])[0];
+    if (f) {
+      const p = f.properties || {}, ex = p.extent, c = (f.geometry || {}).coordinates || [];
+      const nm = [p.name, p.state, p.country].filter(Boolean).join(', ');
+      if (ex) return box(nm, Math.min(ex[1], ex[3]), Math.max(ex[1], ex[3]), Math.min(ex[0], ex[2]), Math.max(ex[0], ex[2]));
+      if (c.length) return box(nm, c[1] - 0.05, c[1] + 0.05, c[0] - 0.05, c[0] + 0.05);
+    }
+  } catch (_) { /* nothing found */ }
+  throw new Error('That place was not found on the map. Try a city name, like Dhaka or Chattogram.');
+}
+function box(name, south, north, west, east) {
+  const lat = (south + north) / 2, lon = (west + east) / 2, h = Math.min(0.3, Math.max(0.05, (north - south) / 2)), w = Math.min(0.3, Math.max(0.05, (east - west) / 2));
+  return { name: str(name).split(',').slice(0, 2).join(','), box: [lat - h, lon - w, lat + h, lon + w].map((x) => Math.round(x * 1e4) / 1e4) };
 }
 async function findOnMap(ctx, kind, what, place) {
   const preset = (MAP_PRESETS[kind] || []).find((x) => x.key === what);
@@ -298,9 +325,15 @@ async function findOnMap(ctx, kind, what, place) {
   const g = await geo(ctx, place || 'Dhaka');
   const bb = '(' + g.box.join(',') + ')';
   const q = '[out:json][timeout:50];(' + tags.map((t) => { const [k, v] = t.split('~'); return 'nwr["' + k + '"~' + v + ']' + bb + ';'; }).join('') + ');out tags center 1500;';
-  const r = await ctx.deps.fetch('https://overpass-api.de/api/interpreter', { method: 'POST', headers: { 'content-type': 'application/x-www-form-urlencoded', 'user-agent': 'erp-leads/1.0' }, body: 'data=' + encodeURIComponent(q) });
-  if (!r.ok) throw new Error('The map service is busy (' + r.status + '). Try again in a minute.');
-  const j = await r.json().catch(() => ({}));
+  // the main Overpass server, then a mirror (either can be busy)
+  let j = null, last = '';
+  for (const base of ['https://overpass-api.de/api/interpreter', 'https://overpass.kumi.systems/api/interpreter']) {
+    try {
+      const r = await ctx.deps.fetch(base, { method: 'POST', headers: { 'content-type': 'application/x-www-form-urlencoded', 'user-agent': 'erp-leads/1.0' }, body: 'data=' + encodeURIComponent(q) });
+      if (r.ok) { j = await r.json().catch(() => null); if (j) break; } else last = String(r.status);
+    } catch (e) { last = 'no answer'; }
+  }
+  if (!j) throw new Error('The map service is busy (' + last + '). Try again in a minute.');
   const out = [];
   for (const e of j.elements || []) {
     const t = e.tags || {}; const nm = str(t.name || t['name:en']);
