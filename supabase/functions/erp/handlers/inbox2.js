@@ -49,7 +49,7 @@ export async function erpInboxChannels(ctx) {
       mail: ch.kind === 'email' ? { checked: ch.settings && ch.settings.mail_checked ? formatDate(new Date(ch.settings.mail_checked), 'd MMM, h:mm a') : '', error: str(ch.settings && ch.settings.mail_error),
                                     skipped: Number(ch.settings && ch.settings.mail_skipped) || 0 } : null });
   }
-  const k = await aiKey(ctx);
+  const k = { key: await (await import('../lib/ai.js')).anyAi(ctx) };
   return { channels: out, kinds: KINDS.map((x) => ({ kind: x, name: KIND_NAME[x], official: !/wa_evo|wa_sender/.test(x) })), aiKey: !!k.key, profile: await profile(ctx, false) };
 }
 /** Add or change a channel. Secrets are written, never read back. */
@@ -136,7 +136,7 @@ export async function erpInboxGoLive(ctx, payload) {
   const missing = [];
   if (!pr.name) missing.push('the business name');
   if (!pr.sells) missing.push('what you sell');
-  if (!(await aiKey(ctx)).key) missing.push('an AI key');
+  if (!(await (await import('../lib/ai.js')).anyAi(ctx))) missing.push('an AI key');
   for (const k of NEEDS[ch.kind]) if (!(await chSecret(ctx, ch, k))) missing.push(k.toLowerCase().replace('_', ' '));
   if (missing.length) throw new Error('Before going live: ' + missing.join(', ') + '.');
   const qs = ['What do you sell?', 'What is the delivery charge?', 'Are you open today?'];

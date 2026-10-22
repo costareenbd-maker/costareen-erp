@@ -8487,7 +8487,7 @@ function srv(name, args, ok, bad) {
 
 var SRV_ACTIVE = 0, SRV_WRITING = false, SRV_TIMED = {};
 // the same list the server uses to know a call changes nothing (ERP_READS)
-var SRV_READS = /^(erpLeadForms|erpLeads|erpLeadFind|erpLeadCapture|erpMyUpdates|erpSocialBridges|erpAds|erpAdsInterests|erpSocialNet|erpSocialLearn|erpSocialAssets|erpSocialPosts|erpSocialPhotos|erpInboxDigest|erpJointRecvCatalog|erpSitePages|erpBalanceSheet|erpProductFields|erpProductAi|erpMetaConnect|erpInboxFeatureMap|erpBookings|erpInbox|erpInboxOpen|erpInboxChannels|erpChatOrders|erpInboxStats|erpAiWork|erpCommissionSales|erpFdCards|erpLineMargins|erpFd19Profit|erpFdInventory|erpFd22Analytics|erpNavigator|erpSellers|erpFollowups|erpCustomerInsight|erpPreorders|erpCashUps|erpAskingPrices|erpSystemCheck|erpAnalytics|erpCommission|erpHolding|erpLotFunding|erpShipments|erpShipment|erpLots|erpFdHead|erpFdDash|erpReceiveMatch|erpAiReader|erpProductSuggest|erpCatalogue|erpPushList|erpCreators|erpCreatorPortalLink|erpSponsorLink|erpCreatorRequests|erpCreatorEvents|erpCreatorProgramme|erpCreatorPreview|erpCreatorCatalog|erpCreatorSources|erpCreatorClaims|erpApps|erpAppQr|erpFeedback|erpRestockOffers|erpRestockList|erpWarrantyRules|erpWarrantyCard|erpMyLink|erpPlatformRegister|erpPlatformDoctor|erpPlatformCommunity|erpMarketWaiting|erpBoard|erpPlatformDesign|erpResell|erpResellerProgramme|erpLoyalty|erpCustomerPoints|erpRefillDue|erpDeliveryHistory|erpDeliveryHistoryMany|erpPrintKit|erpPrintJobs|erpPrintJob|erpPrintCost|erpSpools|erpPrintRequests|erpJoint|erpJointCatalog|erpJointCard|erpInvoiceDesign|erpInvoicePreview|erpMarket|erpMarketMine|erpMarketRequests|erpMarketHints|erpMarketNames|erpWanted|erpBrand|erpComplianceLog|erpProviderKey|erpNews|erpAccessKeys|erpAccessWarning|erpAdmin|erpAiKeys|erpAlertRules|erpAlerts|erpArena|erpBackupStatus|erpBg|erpBnWords|erpBookedParcels|erpBrandLogo|erpBundle|erpBusinessLinks|erpBusinesses|erpBusinessesDeleted|erpCampaignAudience|erpCampaignGet|erpCampaignList|erpCapital|erpCashBook|erpCatalog|erpConnStatus|erpConnections|erpCostBook|erpCourier|erpCourierKeyStatus|erpCurrencies|erpCustomerAccount|erpCustomerCredit|erpCustomerList|erpCustomerPage|erpCustomerStatement|erpCustomers|erpDashboardData|erpDaySales|erpDeliveryOptions|erpDevices|erpDiscontinued|erpDues|erpEvoQr|erpEvoStatus|erpExpenseExport|erpExpenseReceiptUrl|erpExpenses|erpFamilies|erpFighters|erpFormOptions|erpGame|erpGetTheme|erpGoogle|erpHello|erpInstalls|erpInvoice|erpInvoicePdf|erpJob|erpJobs|erpListView|erpLookupCustomer|erpLookupUsage|erpMe|erpMoney|erpNoteFileUrl|erpNotes|erpOwnerChange|erpOwnerChanges|erpParcelLabels|erpParcelPreview|erpPartnerStock|erpPartnership|erpPayReasons|erpPeople|erpPlatform|erpPlatformErrors|erpPnl|erpPnlMonth|erpPoList|erpPoolCatalog|erpProduct|erpProductListShare|erpProductPage|erpProductPhotoUrl|erpProductThumbs|erpProfile|erpQuoteAsset|erpQuoteBoot|erpQuoteGet|erpQuoteList|erpRecentInvoices|erpRecovery|erpReorderPlan|erpRestorePreview|erpReturnPreview|erpRisks|erpSales|erpSearch|erpSecurity|erpSelfTest|erpSerialLookup|erpSerialsFor|erpSessions|erpSetTheme|erpSettingsFull|erpSettingsLists|erpSfPayoutLines|erpSfPayouts|erpShareFile|erpSharedStock|erpSheet|erpStatementPdf|erpStockHistory|erpSupplierPage|erpSuppliers|erpToday|erpUsers|erpWaProductPdf|erpWebMatches|erpWebOrderInvoices|erpWebOrders|erpWebsiteTest)$/;
+var SRV_READS = /^(erpAiBrain|erpAiBrainModels|erpLeadForms|erpLeads|erpLeadFind|erpLeadCapture|erpMyUpdates|erpSocialBridges|erpAds|erpAdsInterests|erpSocialNet|erpSocialLearn|erpSocialAssets|erpSocialPosts|erpSocialPhotos|erpInboxDigest|erpJointRecvCatalog|erpSitePages|erpBalanceSheet|erpProductFields|erpProductAi|erpMetaConnect|erpInboxFeatureMap|erpBookings|erpInbox|erpInboxOpen|erpInboxChannels|erpChatOrders|erpInboxStats|erpAiWork|erpCommissionSales|erpFdCards|erpLineMargins|erpFd19Profit|erpFdInventory|erpFd22Analytics|erpNavigator|erpSellers|erpFollowups|erpCustomerInsight|erpPreorders|erpCashUps|erpAskingPrices|erpSystemCheck|erpAnalytics|erpCommission|erpHolding|erpLotFunding|erpShipments|erpShipment|erpLots|erpFdHead|erpFdDash|erpReceiveMatch|erpAiReader|erpProductSuggest|erpCatalogue|erpPushList|erpCreators|erpCreatorPortalLink|erpSponsorLink|erpCreatorRequests|erpCreatorEvents|erpCreatorProgramme|erpCreatorPreview|erpCreatorCatalog|erpCreatorSources|erpCreatorClaims|erpApps|erpAppQr|erpFeedback|erpRestockOffers|erpRestockList|erpWarrantyRules|erpWarrantyCard|erpMyLink|erpPlatformRegister|erpPlatformDoctor|erpPlatformCommunity|erpMarketWaiting|erpBoard|erpPlatformDesign|erpResell|erpResellerProgramme|erpLoyalty|erpCustomerPoints|erpRefillDue|erpDeliveryHistory|erpDeliveryHistoryMany|erpPrintKit|erpPrintJobs|erpPrintJob|erpPrintCost|erpSpools|erpPrintRequests|erpJoint|erpJointCatalog|erpJointCard|erpInvoiceDesign|erpInvoicePreview|erpMarket|erpMarketMine|erpMarketRequests|erpMarketHints|erpMarketNames|erpWanted|erpBrand|erpComplianceLog|erpProviderKey|erpNews|erpAccessKeys|erpAccessWarning|erpAdmin|erpAiKeys|erpAlertRules|erpAlerts|erpArena|erpBackupStatus|erpBg|erpBnWords|erpBookedParcels|erpBrandLogo|erpBundle|erpBusinessLinks|erpBusinesses|erpBusinessesDeleted|erpCampaignAudience|erpCampaignGet|erpCampaignList|erpCapital|erpCashBook|erpCatalog|erpConnStatus|erpConnections|erpCostBook|erpCourier|erpCourierKeyStatus|erpCurrencies|erpCustomerAccount|erpCustomerCredit|erpCustomerList|erpCustomerPage|erpCustomerStatement|erpCustomers|erpDashboardData|erpDaySales|erpDeliveryOptions|erpDevices|erpDiscontinued|erpDues|erpEvoQr|erpEvoStatus|erpExpenseExport|erpExpenseReceiptUrl|erpExpenses|erpFamilies|erpFighters|erpFormOptions|erpGame|erpGetTheme|erpGoogle|erpHello|erpInstalls|erpInvoice|erpInvoicePdf|erpJob|erpJobs|erpListView|erpLookupCustomer|erpLookupUsage|erpMe|erpMoney|erpNoteFileUrl|erpNotes|erpOwnerChange|erpOwnerChanges|erpParcelLabels|erpParcelPreview|erpPartnerStock|erpPartnership|erpPayReasons|erpPeople|erpPlatform|erpPlatformErrors|erpPnl|erpPnlMonth|erpPoList|erpPoolCatalog|erpProduct|erpProductListShare|erpProductPage|erpProductPhotoUrl|erpProductThumbs|erpProfile|erpQuoteAsset|erpQuoteBoot|erpQuoteGet|erpQuoteList|erpRecentInvoices|erpRecovery|erpReorderPlan|erpRestorePreview|erpReturnPreview|erpRisks|erpSales|erpSearch|erpSecurity|erpSelfTest|erpSerialLookup|erpSerialsFor|erpSessions|erpSetTheme|erpSettingsFull|erpSettingsLists|erpSfPayoutLines|erpSfPayouts|erpShareFile|erpSharedStock|erpSheet|erpStatementPdf|erpStockHistory|erpSupplierPage|erpSuppliers|erpToday|erpUsers|erpWaProductPdf|erpWebMatches|erpWebOrderInvoices|erpWebOrders|erpWebsiteTest)$/;
 function srvPump() {
   if (!SRV_Q.length) return;
   var isRead = SRV_READS.test(SRV_Q[0].name);
@@ -38780,6 +38780,110 @@ document.addEventListener('keydown', function (e) {
     }
   });
   document.addEventListener('keydown', function (e) { if (VIEW === 'leads' && e.key === 'Enter' && e.target && e.target.id === 'ld_q') { LD.q = e.target.value.trim(); load(); } });
+})();
+</script>
+<!-- ai-1 (owner 22 Oct 2026: "the best output from AI everywhere; I must be able to switch the LLM - ChatGPT, Claude ..."):
+     Settings > AI brain (owner): the AIs the ERP can use (ChatGPT, Claude, Gemini, an own OpenAI-compatible server such as
+     OpenClaw / OmniRoute on the VPS), which one does which work, a Test button, the models each key can use, and the last
+     30 days of AI use. Keys are set by the platform admin. Server: handlers/aibrain.js, lib/ai.js. -->
+<style>
+.aib-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:10px;margin-top:10px}
+.aib-p{border:1px solid var(--line,#e3e5ee);border-radius:12px;padding:12px}
+.aib-p h4{margin:0 0 4px;font-size:15px}
+.aib-pw{font-size:12px;color:var(--muted,#667);margin:4px 0 8px}
+.aib-t td{vertical-align:middle}
+.aib-t select,.aib-t input{min-width:150px}
+</style>
+<script>
+(function () {
+  var AIB = { data: null, busy: false, err: '', models: {}, test: {} };
+  window.AIB = AIB;
+  function load() {
+    if (AIB.busy || !ME || ME.role !== 'owner') return; AIB.busy = true;
+    srv('erpAiBrain', [], function (r) { AIB.busy = false; AIB.data = r; AIB.err = ''; if (VIEW === 'settings') repaint(); }, function (e) { AIB.busy = false; AIB.err = (e && e.message) || String(e); if (VIEW === 'settings') repaint(); });
+  }
+  var PNAME = { auto: 'Auto - the strongest AI with a key', default: 'Same as "Everything else"', openai: 'ChatGPT (OpenAI)', anthropic: 'Claude (Anthropic)', gemini: 'Gemini (Google)', custom: 'Own server (OpenClaw / OmniRoute ...)' };
+  function provSelect(task, cur, isDefault) {
+    var opts = isDefault ? ['auto', 'openai', 'anthropic', 'gemini', 'custom'] : ['default', 'auto', 'openai', 'anthropic', 'gemini', 'custom'];
+    return '<select class="i" data-aibp="' + task + '">' + opts.map(function (p) { return '<option value="' + p + '"' + (cur === p ? ' selected' : '') + '>' + esc(PNAME[p]) + '</option>'; }).join('') + '</select>';
+  }
+  function cardHtml() {
+    if (!ME || ME.role !== 'owner') return '';
+    var d = AIB.data;
+    if (!d) { load(); return '<section><div class="card"><h2>AI brain</h2><div class="loading">' + (AIB.err ? esc(AIB.err) : 'Loading…') + '</div></div></section>'; }
+    var R = d.routes || { default: { provider: 'auto', model: 'auto' }, tasks: {} };
+    var h = '<section><div class="card" id="aib"><h2>AI brain</h2>' +
+      '<div class="sub" style="display:block">Which AI does the ERP’s thinking: answering customers, reading supplier files, writing posts, finding leads, summaries and the assistant. ' +
+      'Each one gets your data as tools, can search the web, read photos and PDFs, and answer in a fixed shape. If the chosen AI fails, the next one with a key answers, and Gemini\u2019s free models are the last safety net, so the work never stops. ' +
+      '<b>Free first</b>: Gemini\u2019s free tier tries routine work (customer chat by default); a complex message, a complaint or refund, a technical problem, a failure or an unsure answer goes to the strong AI. Google may use free-tier conversations to improve its products.</div>' +
+      '<div class="note" style="margin-top:8px"><div class="ico">i</div><div>A ChatGPT or Claude <b>chat subscription is not an API key</b>. The ERP needs API keys (pay as you use): ' +
+      '<a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener">OpenAI</a>, <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener">Anthropic</a>, ' +
+      '<a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">Google</a>. To use your own VPS (OpenClaw or OmniRoute answering in the OpenAI style), set it as <b>Own server</b> with its address - keep one paid key as a backup.</div></div>';
+    // the providers
+    h += '<div class="aib-grid">' + d.providers.map(function (p) {
+      var t = AIB.test[p.key];
+      return '<div class="aib-p"><h4>' + esc(p.name) + ' ' + (p.set ? '<span class="pill ok">key ••••' + esc(p.last4) + '</span>' : '<span class="pill">no key</span>') + '</h4>' +
+        '<div class="aib-pw">' + [p.web ? 'web search' : '', p.vision ? 'photos' : '', p.pdf ? 'PDFs' : '', p.audio ? 'voice notes' : ''].filter(Boolean).join(' · ') + (p.base ? '<br>' + esc(p.base) : '') + '</div>' +
+        (d.canSetKeys ? (p.key === 'custom' ? '<input class="i" data-aibbase="custom" placeholder="https://your-vps/v1" value="' + esc(p.base || '') + '" style="margin-bottom:6px">' : '') +
+          '<div class="row" style="gap:6px"><input class="i" type="password" autocomplete="off" data-aibkey="' + p.key + '" placeholder="' + (p.set ? 'New key to replace it' : 'Paste the API key') + '" style="flex:1">' +
+          '<button class="btn small" type="button" data-aibsave="' + p.key + '">Save</button></div>' : '') +
+        (p.set ? '<div class="ap-row" style="margin-top:6px"><button class="btn small" type="button" data-aibtest="' + p.key + '">Test</button><button class="btn small" type="button" data-aibweb="' + p.key + '">Test web search</button>' +
+          '<button class="btn small" type="button" data-aibmodels="' + p.key + '">Models</button>' + (d.canSetKeys ? '<button class="btn small" type="button" data-aibdel="' + p.key + '">Remove</button>' : '') + '</div>' : '') +
+        (t ? '<div class="sub" style="display:block;margin-top:6px' + (t.err ? ';color:var(--critical,#d33)' : '') + '">' + esc(t.err || (t.model + ' · ' + (t.ms / 1000).toFixed(1) + ' s · ' + t.text)) + '</div>' : '') +
+        (AIB.models[p.key] ? '<div class="sub" style="display:block;margin-top:6px;max-height:110px;overflow:auto">Strongest first: ' + AIB.models[p.key].map(esc).join(', ') + '</div>' : '') + '</div>';
+    }).join('') + '</div>';
+    // who does what
+    var all = [];
+    d.providers.forEach(function (p) { (AIB.models[p.key] || []).forEach(function (m) { if (all.indexOf(m) < 0) all.push(m); }); });
+    h += '<h3 style="margin:16px 0 6px">Who does what</h3><datalist id="aib_models">' + all.map(function (m) { return '<option value="' + esc(m) + '">'; }).join('') + '</datalist>' +
+      '<div style="overflow:auto"><table class="tbl aib-t"><thead><tr><th>Work</th><th>AI</th><th>Model ("auto" = its strongest)</th><th title="Gemini\u2019s free tier answers first; a complex message, a complaint, a failure or an unsure answer goes to the AI on the left">Free first</th></tr></thead><tbody>' +
+      d.tasks.map(function (t) {
+        var cur = t.key === 'default' ? R.default : (R.tasks[t.key] || { provider: 'default', model: 'auto' });
+        return '<tr><td>' + esc(t.name) + '</td><td>' + provSelect(t.key, cur.provider, t.key === 'default') + '</td><td><input class="i" list="aib_models" data-aibm="' + t.key + '" value="' + esc(cur.model || 'auto') + '"></td>' +
+          '<td><label class="mk-sw"><input type="checkbox" data-aibc="' + t.key + '"' + ((R.cheap || ['chat']).indexOf(t.key) >= 0 ? ' checked' : '') + '> Gemini free</label></td></tr>';
+      }).join('') + '</tbody></table></div>' +
+      '<label class="mk-sw" style="margin-top:8px;display:inline-flex"><input type="checkbox" id="aib_web"' + (R.web !== false ? ' checked' : '') + '> Let the AI search the web where it helps (leads, prices, product facts)</label>' +
+      '<div class="ap-row" style="margin-top:10px"><button class="btn primary" type="button" id="aib_saveroutes">Save the choices</button></div>';
+    // use
+    if ((d.use || []).length) h += '<h3 style="margin:16px 0 6px">AI use, last 30 days</h3><div style="overflow:auto"><table class="tbl"><thead><tr><th>AI : model</th><th class="num">Calls</th><th class="num">Tokens in / out</th><th class="num">About (৳)</th></tr></thead><tbody>' +
+      d.use.map(function (u) { return '<tr><td>' + esc(u.model) + '</td><td class="num">' + fmt(u.n) + '</td><td class="num">' + fmt(u.tokensIn) + ' / ' + fmt(u.tokensOut) + '</td><td class="num">' + fmt(Math.round(u.bdt)) + '</td></tr>'; }).join('') + '</tbody></table></div>';
+    return h + '</div></section>';
+  }
+  window.aibCardHtml = cardHtml;
+  var viewSettingsAIB = viewSettings;
+  viewSettings = function () {
+    var h = viewSettingsAIB.apply(this, arguments);
+    var c = cardHtml(); if (!c) return h;
+    var at = h.indexOf('<section'); return at >= 0 ? h.slice(0, at) + c + h.slice(at) : c + h;
+  };
+  function done(r, msg) { AIB.data = r; if (msg) toast(msg); repaint(); }
+  function bad(e) { toast(esc((e && e.message) || e), true, 10000); repaint(); }
+  document.addEventListener('click', function (e) {
+    if (VIEW !== 'settings') return;
+    var t = e.target.closest && e.target.closest('[data-aibsave],[data-aibdel],[data-aibtest],[data-aibweb],[data-aibmodels],#aib_saveroutes'); if (!t) return;
+    var p = t.getAttribute('data-aibsave') || t.getAttribute('data-aibdel') || t.getAttribute('data-aibtest') || t.getAttribute('data-aibweb') || t.getAttribute('data-aibmodels');
+    if (t.hasAttribute('data-aibsave')) {
+      var k = (document.querySelector('[data-aibkey="' + p + '"]') || {}).value || '', b = document.querySelector('[data-aibbase="' + p + '"]');
+      if (!k.trim() && !b) { toast('Paste the key first.', true); return; }
+      srv('erpAiBrainKey', [{ provider: p, key: k.trim(), base: b ? b.value.trim() : undefined }], function (r) { done(r, 'Saved. Press Test to check it.'); }, bad); return;
+    }
+    if (t.hasAttribute('data-aibdel')) { uiConfirm('Remove this key? The ERP stops using this AI.').then(function (ok) { if (ok) srv('erpAiBrainKey', [{ provider: p, key: '', remove: true }], function (r) { done(r, 'Removed.'); }, bad); }); return; }
+    if (t.hasAttribute('data-aibtest') || t.hasAttribute('data-aibweb')) {
+      t.disabled = true; t.textContent = 'Asking…';
+      srv('erpAiBrainTest', [{ provider: p, web: t.hasAttribute('data-aibweb') }], function (r) { AIB.test[p] = r; repaint(); }, function (er) { AIB.test[p] = { err: (er && er.message) || String(er) }; repaint(); }); return;
+    }
+    if (t.hasAttribute('data-aibmodels')) { srv('erpAiBrainModels', [{ provider: p }], function (r) { AIB.models[p] = r.models; repaint(); }, bad); return; }
+    if (t.id === 'aib_saveroutes') {
+      var routes = { default: { provider: 'auto', model: 'auto' }, tasks: {}, web: !!(el('aib_web') || {}).checked, cheap: [] };
+      document.querySelectorAll('[data-aibc]').forEach(function (c) { if (c.checked) routes.cheap.push(c.getAttribute('data-aibc')); });
+      document.querySelectorAll('[data-aibp]').forEach(function (s) {
+        var task = s.getAttribute('data-aibp'), m = (document.querySelector('[data-aibm="' + task + '"]') || {}).value || 'auto';
+        if (task === 'default') routes.default = { provider: s.value, model: m.trim() || 'auto' }; else if (s.value !== 'default') routes.tasks[task] = { provider: s.value, model: m.trim() || 'auto' };
+      });
+      srv('erpAiBrainSet', [{ routes: routes }], function (r) { done(r, 'Saved - the ERP uses these from now on.'); }, bad);
+    }
+  });
+  try { SRV_SLOW.erpAiBrainTest = 120000; } catch (e) {}
 })();
 </script>
 <!-- myupd-1 (owner 21 Oct 2026: "he can't see the Platform tab - every company should push its own update"): a company's

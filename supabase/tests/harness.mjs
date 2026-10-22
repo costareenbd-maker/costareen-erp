@@ -73,6 +73,7 @@ async function renderPdf(html, opts) {
 export const deps = {
   mgmtRetryMs: 0,        // Supabase management API retries: no waiting in tests
   sfRetryMs: 0,          // Steadfast retries: no waiting in tests
+  aiListModels: false,   // ai-1: tests script the AI; the "which models can this key use" lookup would eat a scripted answer
   sql,
   sqlAux,
   control: connect(postgres, process.env.DB_URL, { max: 2 }),   // the provider's own tables (market list): same test database, own pool as live

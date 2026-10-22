@@ -9,7 +9,7 @@
 import { num, formatDate } from '../lib/time.js';
 import { getConfig, setConfig } from '../lib/ext.js';
 import { callAllowed } from '../allow.js';
-import { aiKey, GEMINI_MODELS } from './receivefile.js';
+import { aiTools, anyAi } from '../lib/ai.js';
 
 const str = (v) => String(v == null ? '' : v).trim();
 const DAILY = 300;   // chat turns per business per day on the provider's key
@@ -199,45 +199,22 @@ function systemText(ctx) {
 export async function erpAssistant(ctx, payload) {
   const p = payload || {};
   if (p.confirm) return confirmWrite(ctx, p.confirm);
-  const key = (await aiKey(ctx)).key;
-  if (!key) throw new Error('The assistant is not set up on this server (no AI key).');
+  if (!(await anyAi(ctx))) throw new Error('The assistant is not set up on this server (no AI key).');
   const k = 'ai_chat:' + today(ctx), used = num(await getConfig(ctx, k, '0'));
   if (used >= DAILY) throw new Error('Today’s allowance of ' + DAILY + ' chat turns is used up for this business.');
   await setConfig(ctx, k, String(used + 1));
-  const msgs = (Array.isArray(p.messages) ? p.messages : []).slice(-20).filter((m) => m && str(m.text)).map((m) => ({ role: m.role === 'assistant' ? 'model' : 'user', parts: [{ text: str(m.text).slice(0, 2000) }] }));
+  const msgs = (Array.isArray(p.messages) ? p.messages : []).slice(-30).filter((m) => m && str(m.text)).map((m) => ({ role: m.role === 'assistant' ? 'assistant' : 'user', content: [{ type: 'text', text: str(m.text).slice(0, 4000) }] }));
   if (!msgs.length || msgs[msgs.length - 1].role !== 'user') throw new Error('Say something first.');
-  const contents = msgs.slice();
-  const body = () => ({ systemInstruction: { parts: [{ text: systemText(ctx) }] }, contents, tools: [{ function_declarations: TOOLS }], generationConfig: { temperature: 0 } });
-  let proposal = null, text = '', navigate = '';
-  for (let turn = 0; turn < 6; turn++) {
-    let res = null, txt = '', last = '';
-    for (const model of GEMINI_MODELS) {
-      const ac = typeof AbortController === 'function' ? new AbortController() : null, timer = ac ? setTimeout(() => ac.abort(), 40000) : null;
-      try {
-        res = await ctx.deps.fetch('https://generativelanguage.googleapis.com/v1beta/models/' + model + ':generateContent?key=' + encodeURIComponent(key),
-                                   { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body()), signal: ac ? ac.signal : undefined });
-        txt = await res.text();
-      } catch (_) { last = 'timeout'; res = null; continue; } finally { if (timer) clearTimeout(timer); }
-      if (res.ok) break;
-      last = res.status + ' ' + txt.slice(0, 160);
-      if ([404, 429, 503].includes(res.status)) { res = null; continue; }
-      throw new Error('The assistant could not answer (' + res.status + ').');
-    }
-    if (!res) throw new Error(/429|503|timeout/.test(last) ? 'The assistant is busy right now. Try again in a moment.' : 'The assistant could not answer. ' + last);
-    let j; try { j = JSON.parse(txt); } catch (_) { throw new Error('The assistant gave no answer.'); }
-    const parts = ((((j.candidates || [])[0] || {}).content || {}).parts || []);
-    const calls = parts.filter((x) => x.functionCall);
-    if (!calls.length) { text = parts.map((x) => x.text || '').join('').trim(); break; }
-    contents.push({ role: 'model', parts });
-    const responses = [];
-    for (const c of calls) {
-      const r = await runTool(ctx, str(c.functionCall.name), c.functionCall.args || {});
-      if (r.proposal) proposal = r.proposal;
-      if (r.navigate) navigate = r.navigate;
-      responses.push({ functionResponse: { name: c.functionCall.name, response: r.proposal ? { prepared: true, summary: r.proposal.summary, warnings: r.proposal.warnings } : r } });
-    }
-    contents.push({ role: 'user', parts: responses });
-  }
+  // ai-1: any provider (Settings > AI brain), the ERP's functions as tools, and the web when a question needs it
+  let proposal = null, navigate = '';
+  const r = await aiTools(ctx, { system: systemText(ctx), messages: msgs, tools: TOOLS, purpose: 'assistant', task: 'assistant', temperature: 0, turns: 10,
+    run: async (name, args) => {
+      const out = await runTool(ctx, str(name), args || {});
+      if (out.proposal) proposal = out.proposal;
+      if (out.navigate) navigate = out.navigate;
+      return out.proposal ? { prepared: true, summary: out.proposal.summary, warnings: out.proposal.warnings } : out;
+    } });
+  let text = str(r.text);
   if (!text && proposal) text = 'Ready: ' + proposal.summary + '. Confirm?';
   if (!text) text = 'I could not work that out. Try asking in another way.';
   return { text, proposal, navigate, left: DAILY - used - 1 };

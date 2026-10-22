@@ -65,28 +65,17 @@ async function aiFields(deps, key, batch) {
   const prompt = 'These are product names from 3D-printing shops in Bangladesh (filament, printers, parts). For each, give the brand, the product line (e.g. "PLA Basic", "PLA Matte", "PLA+", "PETG", "ABS", "TPU"), the colour, the size (e.g. "1kg", "500g") and the variant ("refill" when it is a spool-less refill, else ""). ' +
     'Answer with JSON only: an array of {"i": index, "brand": "", "line": "", "colour": "", "size": "", "variant": ""}; leave a field "" when the name does not say. Names:\n' +
     batch.map((b, i) => i + '. ' + b).join('\n');
-  const body = { contents: [{ parts: [{ text: prompt }] }], generationConfig: { temperature: 0, response_mime_type: 'application/json' } };
-  for (const model of GEMINI_MODELS) {
-    let res, txt;
-    const ac = typeof AbortController === 'function' ? new AbortController() : null, timer = ac ? setTimeout(() => ac.abort(), 40000) : null;
-    try {
-      res = await deps.fetch('https://generativelanguage.googleapis.com/v1beta/models/' + model + ':generateContent?key=' + encodeURIComponent(key),
-                             { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body), signal: ac ? ac.signal : undefined });
-      txt = await res.text();
-    } catch (_) { continue; } finally { if (timer) clearTimeout(timer); }
-    if (!res.ok) { if ([404, 429, 503].includes(res.status)) continue; throw new Error('AI reader refused: ' + res.status); }
-    let out = '';
-    try { const j = JSON.parse(txt); out = str(((((j.candidates || [])[0] || {}).content || {}).parts || []).map((x) => x.text || '').join('')); } catch (_) { out = txt; }
-    let arr = null; try { arr = JSON.parse(out); } catch (_) { const a = out.indexOf('['), b = out.lastIndexOf(']'); if (a >= 0 && b > a) { try { arr = JSON.parse(out.slice(a, b + 1)); } catch (_2) { arr = null; } } }
-    const got = {};
-    for (const r of Array.isArray(arr) ? arr : []) {
-      const i = Math.round(num(r && r.i)); if (!(i >= 0 && i < batch.length)) continue;
-      const f = { brand: norm(r.brand), line: norm(r.line), colour: norm(r.colour), size: sizeOf(str(r.size)) || norm(r.size), variant: /refill/i.test(str(r.variant)) ? 'refill' : '' };
-      if (f.brand && f.colour) got[i] = f;
-    }
-    return got;
+  // ai-1: through lib/ai.js - the provider's default AI (no business here: a timer job on the provider's catalogue)
+  const A = await import('../lib/ai.js');
+  const r = await A.ai({ deps, sql: deps.sql, memo: {} }, { purpose: 'catalogue', task: 'analyze', json: true, temperature: 0, messages: [{ role: 'user', content: [{ type: 'text', text: prompt }] }] });
+  let arr = r.json; if (arr && !Array.isArray(arr) && typeof arr === 'object') arr = Object.values(arr).find(Array.isArray) || null;
+  const got = {};
+  for (const x of Array.isArray(arr) ? arr : []) {
+    const i = Math.round(num(x && x.i)); if (!(i >= 0 && i < batch.length)) continue;
+    const f = { brand: norm(x.brand), line: norm(x.line), colour: norm(x.colour), size: sizeOf(str(x.size)) || norm(x.size), variant: /refill/i.test(str(x.variant)) ? 'refill' : '' };
+    if (f.brand && f.colour) got[i] = f;
   }
-  return {};
+  return got;
 }
 
 /** The job. Every listed product without a link, or whose name changed since, is looked at. */
@@ -111,7 +100,7 @@ export async function catalogSync(deps, opts) {
     else out.left++;
   }
   if (unsure.length && useAi) {
-    const key = await providerAiKey(deps);
+    const key = await (await import('../lib/ai.js')).anyAi({ deps, sql: deps.sql, memo: {} });
     if (key) {
       for (let i = 0; i < unsure.length && i < 400; i += 40) {
         const batch = unsure.slice(i, i + 40);

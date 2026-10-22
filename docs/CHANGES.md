@@ -2807,3 +2807,26 @@ Customers tab, supplier -> Suppliers tab), follow-up today so it shows in the me
 updates the lead ("Filled the form again"). Spam: a hidden box robots fill, 5 forms an hour per address, 200 a day per
 shop. Tests: leads_test (+12). Checked on the dev ERP: a reseller form sent from the page arrived as a lead.
 Not done: no message to the team when a form arrives (it shows as a follow-up due today); no captcha.
+
+## AI-first, any AI switchable (22 Oct 2026, tag ai-1)
+Owner: "I rely on GPT; the business is the priority, not tokens. Make every menu AI-friendly for the best output; the AI
+should use skills and the web; I must be able to switch the LLM", then "Gemini free tier first on chat with customers;
+complex or failed -> the powerful model; if the main model fails, fall back to the free AI". Plan: docs/AI-FIRST-PLAN.md.
+- lib/ai.js: one door for every AI call - OpenAI (Responses API), Anthropic (Messages API), Gemini, and an own
+  OpenAI-compatible server (the owner's VPS: OpenClaw / OmniRoute); per kind of work (chat, assistant, read, write, leads,
+  analyze) the provider and model, "auto" = the strongest model the key can use (listed once a day); tools, web search
+  (OpenAI web_search, Claude web_search, Gemini Google Search), photos / PDFs / voice, JSON; a time budget inside the
+  server's 150 s; fallback across providers; Gemini's free models as the last safety net; every call in ai_work as
+  provider:model.
+- Free first: the kinds of work ticked (customer chat by default) are tried on Gemini's free-tier model; a complaint /
+  refund / technical / long or many-question message goes straight to the strong AI; the free model can hand over
+  (hand_to_senior tool, or [SENIOR]); a failure or empty answer escalates too.
+- Every old call moved onto it: the Gemini-shaped gemini() / geminiTools() (Inbox agent, photos, voice, comments,
+  follow-ups, day review, saved replies, captions, inspiration, reel scripts, leads) now route through it; the direct
+  calls too - Ask your ERP (10 tool rounds), supplier-photo reader (400 reads a day, was 40), advert writer, catalogue
+  naming. Only the AI product photo stays on Gemini (image output).
+- Settings > AI brain (owner): the four AIs with key status, Test / Test web search / Models, keys set by the platform
+  admin (sealed), "who does what" per kind of work, Free first switches, web search on/off, the last 30 days of use.
+- Tests: aibrain_test (24); receivefile / leads / social adjusted; harness turns the model list off (tests script the AI).
+Not done: OpenClaw / OmniRoute gateway on the VPS (owner sets it up, then "Own server"); the menu-by-menu upgrades
+(AI-2 .. AI-10 in docs/AI-FIRST-PLAN.md); no OpenAI / Anthropic key yet - until one is added, Gemini answers.

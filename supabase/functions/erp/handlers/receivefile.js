@@ -402,7 +402,7 @@ export async function erpReceiveMatch(ctx, payload) {
 }
 
 // ---------------------------------------------------------------- the provider's AI reader (a photo, a scanned PDF)
-const AI_DAILY = 40;        // photos per business per day through the provider's key
+const AI_DAILY = 400;       // ai-1: photos per business per day (the owner's rule: the business before the token bill)
 // the Flash models to try, in order: Google retires names and a model can be "in high demand" for a minute
 export const GEMINI_MODELS = ['gemini-flash-lite-latest', 'gemini-2.5-flash', 'gemini-2.5-flash-lite'];   // measured 8 Oct 2026: lite 4 s, 2.5-flash 20 s, flash-latest hung
 const GEMINI_TIMEOUT_MS = 40000;   // the edge function itself dies at 150 s
@@ -481,8 +481,7 @@ export async function erpAiReaderTest(ctx) {
 /** A photo (or a scan) read by the provider's AI, then matched like any file. The page sends the OCR text as a hint. */
 export async function erpReceiveRead(ctx, payload) {
   const p = payload || {};
-  const key = (await aiKey(ctx)).key;
-  if (!key) throw new Error('The AI reader is not set up on this server. The photo was read on your device only - correct the lines by hand, or ask the provider to switch the reader on.');
+  if (!(await (await import('../lib/ai.js')).anyAi(ctx))) throw new Error('The AI reader is not set up on this server. The photo was read on your device only - correct the lines by hand, or ask the provider to switch the reader on.');
   const m = /^data:(image\/(jpeg|png|webp));base64,([A-Za-z0-9+/=]+)$/.exec(str(p.image));
   if (!m) throw new Error('Send a JPEG, PNG or WebP photo.');
   if (m[3].length > 6_000_000) throw new Error('The photo is too big - the page should have shrunk it.');
@@ -494,28 +493,19 @@ export async function erpReceiveRead(ctx, payload) {
   const hint = str(p.hint).slice(0, 4000);
   const body = { contents: [{ parts: [{ text: AI_PROMPT + (hint ? '\n\nA rough machine reading of the same image, for reference (it may have errors):\n' + hint : '') }, { inline_data: { mime_type: m[1], data: m[3] } }] }],
                  generationConfig: { temperature: 0, response_mime_type: 'application/json' } };
-  let res = null, txt = '', last = '';
-  for (const model of GEMINI_MODELS) {
-    const ac = typeof AbortController === 'function' ? new AbortController() : null, timer = ac ? setTimeout(() => ac.abort(), GEMINI_TIMEOUT_MS) : null;
-    try {
-      res = await ctx.deps.fetch('https://generativelanguage.googleapis.com/v1beta/models/' + model + ':generateContent?key=' + encodeURIComponent(key),
-                                 { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body), signal: ac ? ac.signal : undefined });
-    } catch (e) { last = 'timeout ' + model; res = null; continue; }   // too slow or unreachable: the next model
-    finally { if (timer) clearTimeout(timer); }
-    txt = await res.text();
-    if (res.ok) break;
-    last = res.status + ' ' + txt.slice(0, 160);
-    if (res.status === 404 || res.status === 503 || res.status === 429) continue;   // retired, busy, or this model's minute is used: the next one
-    throw new Error('The AI reader refused (' + res.status + '). ' + txt.slice(0, 160));
-  }
-  if (!res || !res.ok) {
-    if (/^(429|503|timeout)/.test(last)) throw new Error('The AI reader is busy right now (Google: high demand or the free allowance for the minute is used). Wait a little and press again.');
-    throw new Error('The AI reader refused. ' + last);
-  }
+  // ai-1: the reader chosen under Settings > AI brain (ChatGPT, Claude or Gemini - the strongest model that sees images)
   let out = '';
-  try { const j = JSON.parse(txt); out = str(((((j.candidates || [])[0] || {}).content || {}).parts || []).map((x) => x.text || '').join('')); } catch (_) { out = txt; }
+  try {
+    const r = await (await import('../lib/ai.js')).ai(ctx, { purpose: 'receive', task: 'read', json: true, temperature: 0, maxTokens: 32000,
+      messages: [{ role: 'user', content: [{ type: 'text', text: body.contents[0].parts[0].text }, { type: 'image', mime: m[1], data: m[3] }] }] });
+    out = str(r.text);
+  } catch (e) {
+    if (/busy/i.test(String(e && e.message))) throw new Error('The AI reader is busy right now. Wait a little and press again.');
+    throw new Error('The AI reader refused. ' + String((e && e.message) || e).slice(0, 200));
+  }
   let arr = null;
   try { arr = JSON.parse(out); } catch (_) { const s0 = out.indexOf('['), s1 = out.lastIndexOf(']'); if (s0 >= 0 && s1 > s0) { try { arr = JSON.parse(out.slice(s0, s1 + 1)); } catch (_2) { arr = null; } } }
+  if (arr && !Array.isArray(arr) && typeof arr === 'object') arr = Object.values(arr).find(Array.isArray) || null;   // ai-1: a JSON-object mode wraps the list
   if (!Array.isArray(arr) || !arr.length) throw new Error('The AI reader found no product lines in the photo.');
   const records = arr.slice(0, 500).map((r, i) => ({ row: i + 1, code: str(r && r.code).slice(0, 40), text: str(r && r.name).slice(0, 200), qty: num(r && r.qty), price: num(r && r.price), currency: str(r && r.currency).toUpperCase().slice(0, 4) }))
                      .filter((r) => (r.text || r.code) && r.qty > 0);

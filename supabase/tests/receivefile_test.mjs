@@ -79,12 +79,12 @@ web.on(/generativelanguage\.googleapis\.com/, (url, opts) => {
     { code: '', name: 'TPU-95A Grey', qty: 5, price: 86, currency: 'RMB' }, { code: '', name: 'Total', qty: 0, price: 0, currency: '' }]) }] } }] } };
 });
 r = await mgr('erpReceiveRead', [{ image: PNG, hint: 'PLA+ Black 250 48', supplier: 'Sunlu Direct' }]);
-check('the AI reader\u2019s lines are matched like a file: PLA+ Black -> Sunlu pla+, PETG -> Sunlu petg, TPU new; the total line dropped', r.ok && r.result.reader === 'gemini' && r.result.lines.length === 3 && r.result.lines[0].sku === 'sp+b002' && r.result.lines[1].sku === 'spegb040' && r.result.lines[2].isNew && r.result.currency === 'RMB' && r.result.readsLeft === 39, r.ok ? r.result.lines.map((l) => l.text + ' -> ' + l.sku) : r);
+check('the AI reader\u2019s lines are matched like a file: PLA+ Black -> Sunlu pla+, PETG -> Sunlu petg, TPU new; the total line dropped', r.ok && r.result.reader === 'gemini' && r.result.lines.length === 3 && r.result.lines[0].sku === 'sp+b002' && r.result.lines[1].sku === 'spegb040' && r.result.lines[2].isNew && r.result.currency === 'RMB' && r.result.readsLeft === 399, r.ok ? r.result.lines.map((l) => l.text + ' -> ' + l.sku) : r);
 r = await mgr('erpReceiveRead', [{ image: 'data:text/plain;base64,QUJD' }]);
 check('not a photo: refused', !r.ok, r);
 r = await sales('erpReceiveRead', [{ image: PNG }]);
 check('sales staff cannot', !r.ok, r);
-await sql`update business_config set value = '40' where business_id = ${FIX.B} and key like 'ai_reads:%'`;
+await sql`update business_config set value = '400' where business_id = ${FIX.B} and key like 'ai_reads:%'`;
 r = await mgr('erpReceiveRead', [{ image: PNG }]);
 check('the day\u2019s allowance protects the provider\u2019s quota', !r.ok && /allowance/.test(r.error), r);
 web.on(/generativelanguage\.googleapis\.com/, () => ({ status: 429, body: { error: 'quota' } }));

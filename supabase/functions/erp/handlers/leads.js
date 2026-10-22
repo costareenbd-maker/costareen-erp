@@ -139,7 +139,7 @@ export async function erpLeads(ctx, payload) {
   }
   const counts = { customer: 0, supplier: 0 };
   for (const r of await ctx.tx`select coalesce(kind, 'customer') as k, count(*)::int as n from inbox_leads where business_id = ${ctx.biz} group by 1`) counts[r.k] = r.n;
-  let ai = false; try { ai = !!(await aiKey(ctx)).key; } catch (_) { ai = false; }
+  let ai = false; try { ai = await (await import('../lib/ai.js')).anyAi(ctx); } catch (_) { ai = false; }
   return { kind, leads: out, total: rows.length, bySource, byStage: STAGES.slice(1).map((n, i) => ({ stage: i + 1, name: n, n: byStage[i + 1] })), due, counts,
            sources: SOURCES.filter((s) => s.kind === 'both' || s.kind === kind), stages: STAGES.slice(1), ai, canFind: roleAtLeast(ctx.s.role, 'manager') };
 }
@@ -435,7 +435,7 @@ export async function erpLeadCapture(ctx, payload) {
   const rules = captureRules(text, p.kind);
   let ai = null, used = 'rules';
   try {
-    if ((await aiKey(ctx)).key) {
+    if (await (await import('../lib/ai.js')).anyAi(ctx)) {
       const r = await gemini(ctx, { contents: [{ role: 'user', parts: [{ text: 'From this pasted text (a LinkedIn / Facebook / Google Maps / supplier page, a website or a visiting card), pull out one lead. ' +
         'Only what is written - leave a field empty when it is not there. Answer with ONLY JSON {"name": "person", "title": "", "company": "", "phone": "", "email": "", "website": "", ' +
         '"city": "", "country": "", "what": "what they do or want, short", "kind": "customer or supplier (supplier = they make or sell goods we could buy)"}.\n\n' + text }] }],

@@ -94,7 +94,7 @@ export const HANDLERS = { erpPushList, erpPushRulesSave };
 
 // ---- Advertisement (Campaigns > Advertisement): a caption written by the AI for one product and one channel.
 // Owner-only like the rest of this file; the page writes the plain template itself, this is the "Improve with AI" step.
-import { aiKey, GEMINI_MODELS } from './receivefile.js';
+import { ai, anyAi } from '../lib/ai.js';
 const CHANNELS = {
   post: 'a Facebook page post (price in the caption, how to order by inbox or call, 3-6 lines, 2-4 hashtags at the end)',
   reel: 'a 15-30 second Facebook Reel / short video: a shot list of 4-6 scenes plus a 1-2 line caption',
@@ -107,8 +107,7 @@ const CHANNELS = {
 export async function erpAdDraft(ctx, payload) {
   if (ctx.s.role !== 'owner') throw new Error('Only an owner writes advertisements.');
   const p = payload || {}, channel = CHANNELS[str(p.channel)] ? str(p.channel) : 'post';
-  const key = (await aiKey(ctx)).key;
-  if (!key) throw new Error('The AI writer is not set up on this server (no AI key).');
+  if (!(await anyAi(ctx))) throw new Error('The AI writer is not set up on this server (no AI key).');
   const k = 'ai_chat:' + formatDate(ctx.now, 'yyyy-MM-dd'), used = num(await getConfig(ctx, k, '0'));
   if (used >= 300) throw new Error('Today’s AI allowance is used up for this business.');
   await setConfig(ctx, k, String(used + 1));
@@ -121,22 +120,9 @@ export async function erpAdDraft(ctx, payload) {
   const lang = str(p.lang) === 'bn' ? 'Write in Bangla (Bengali script), product names and numbers as given.' : str(p.lang) === 'mix' ? 'Write in Banglish (Bangla in Latin letters) as Dhaka shops do, product names as given.' : 'Write in simple English.';
   const sys = 'You write short social-media copy for a small 3D-printing supplies shop in Bangladesh. Only use the facts given; never invent specs, prices, discounts or deadlines (say "this week" if none). No emojis except at most two. ' + lang + ' Output only the copy, no preamble.';
   const user = 'Write ' + CHANNELS[channel] + '.\nFacts:\n' + facts.join('\n');
-  let last = '';
-  for (const model of GEMINI_MODELS) {
-    const ac = typeof AbortController === 'function' ? new AbortController() : null, timer = ac ? setTimeout(() => ac.abort(), 40000) : null;
-    let res = null, txt = '';
-    try {
-      res = await ctx.deps.fetch('https://generativelanguage.googleapis.com/v1beta/models/' + model + ':generateContent?key=' + encodeURIComponent(key),
-        { method: 'POST', headers: { 'content-type': 'application/json' }, signal: ac ? ac.signal : undefined,
-          body: JSON.stringify({ systemInstruction: { parts: [{ text: sys }] }, contents: [{ role: 'user', parts: [{ text: user }] }], generationConfig: { temperature: 0.7 } }) });
-      txt = await res.text();
-    } catch (_) { last = 'timeout'; continue; } finally { if (timer) clearTimeout(timer); }
-    if (!res.ok) { last = res.status + ' ' + txt.slice(0, 120); if ([404, 429, 503].includes(res.status)) continue; throw new Error('The AI writer could not answer (' + res.status + ').'); }
-    let j; try { j = JSON.parse(txt); } catch (_) { throw new Error('The AI writer gave no answer.'); }
-    const text = ((((j.candidates || [])[0] || {}).content || {}).parts || []).map((x) => x.text || '').join('').trim();
-    if (!text) throw new Error('The AI writer gave no answer.');
-    return { text, channel, model };
-  }
-  throw new Error(/429|503|timeout/.test(last) ? 'The AI writer is busy right now. Try again in a moment.' : 'The AI writer could not answer. ' + last);
+  // ai-1: the writer chosen under Settings > AI brain (ChatGPT, Claude, Gemini ...), the strongest model
+  const r = await ai(ctx, { purpose: 'ad-draft', system: sys, messages: [{ role: 'user', content: [{ type: 'text', text: user }] }], temperature: 0.7 });
+  if (!str(r.text)) throw new Error('The AI writer gave no answer.');
+  return { text: str(r.text), channel, model: r.provider + ':' + r.model };
 }
 HANDLERS.erpAdDraft = erpAdDraft;
