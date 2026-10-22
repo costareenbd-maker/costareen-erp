@@ -2795,3 +2795,15 @@ public map servers were overloaded / refusing at the end of the day (they worked
 Not done / limits: LinkedIn and Facebook give no search API to outsiders - their leads come by paste or export, not by
 search; Google search needs the AI key (not set yet) and was not tried; the map lists few phones in Bangladesh (~5-20%);
 no reminders outside the screen yet (the due count on the menu only).
+
+## Public reseller and supplier forms (22 Oct 2026, tag leadform-1)
+Owner: "build the public reseller and supplier form". Leads > **Public forms**: two pages anyone can open -
+**Become a reseller** (name, shop/page, phone, e-mail, city, where they sell, which products, how many a month) and
+**Supply to us** (name, company, phone, e-mail, country, city, website, what they make, brands, minimum order/terms).
+Each is opened / closed on its own; links to copy; own intro text; "Make new links" retires the old ones.
+web/join.html (Bangla / English, light / dark), served by the function at ?inbox=join&f=<token> (index.ts; handlers/
+leads.js leadFormPage / leadFormSend; erpLeadForms read, erpLeadFormsSet manager). A form becomes a lead (reseller ->
+Customers tab, supplier -> Suppliers tab), follow-up today so it shows in the menu count; the same phone / e-mail again
+updates the lead ("Filled the form again"). Spam: a hidden box robots fill, 5 forms an hour per address, 200 a day per
+shop. Tests: leads_test (+12). Checked on the dev ERP: a reseller form sent from the page arrived as a lead.
+Not done: no message to the team when a form arrives (it shows as a follow-up due today); no captcha.
