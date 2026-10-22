@@ -34,6 +34,7 @@ export const APPS = [
   // Only me (owner's rule, 8 Oct 2026): new features ship for the platform admin alone; a flag row enabled=true opens them to everyone
   { key: 'push', group: 'Only me', labs: true, name: 'What to push next', view: 'campaigns', what: 'On Campaigns: which products to advertise, which to clear out with an offer, which are rising, which would sell out.', where: 'Campaigns \u2192 What to push next' },
   { key: 'inbox', group: 'Only me', labs: true, name: 'Inbox', view: 'inbox', what: 'Every chat in one place - Messenger, Instagram, WhatsApp (official and linked-device), comments and your website chat - answered by an AI agent from your products, prices and stock; your team takes over when needed; chat orders become invoices.', where: 'Menu → Inbox' },
+  { key: 'leads', group: 'Only me', labs: true, name: 'Leads', view: 'leads', what: 'Customers and suppliers to win, from Facebook / Instagram comments, chats, landing pages, Google, the map, LinkedIn, supplier sites and lists - in one place, with follow-ups.', where: 'Menu → Leads' },
   { key: 'creators', group: 'Only me', labs: true, name: 'Creators', view: 'campaigns', what: 'On Campaigns: influencer sponsorships run for a brand - who got what filament, what they posted, the numbers, and the monthly report for the brand.', where: 'Campaigns → Creators' },
   { key: 'feedback', group: 'For customers', name: 'Feedback', view: 'app', what: 'Problems, complaints, ideas and praise from anyone who uses an ERP on this platform; the provider answers in one inbox.', where: 'Apps \u2192 Feedback' },
   { key: 'ideas', group: 'For customers', name: 'Ideas and updates', view: 'platform', path: 'ideas', what: 'Visitors post and vote on ideas for the ERP; you answer in public.', where: 'Platform \u2192 Ideas' },
@@ -42,7 +43,7 @@ export const APPS = [
 export const MENU = [
   // in the menu's own order and groups (owner 15 Oct 2026: the list must be exactly what the menu shows; Profitability and
   // Maintenance now sit inside the Dashboard and Settings - their access is a person's ability under Settings > Users)
-  { key: 'inbox', name: 'Inbox', group: 'Sell' }, { key: 'weborders', name: 'Web orders', group: 'Sell' }, { key: 'quotes', name: 'Quotations', group: 'Sell' },
+  { key: 'inbox', name: 'Inbox', group: 'Sell' }, { key: 'leads', name: 'Leads', group: 'Sell' }, { key: 'weborders', name: 'Web orders', group: 'Sell' }, { key: 'quotes', name: 'Quotations', group: 'Sell' },
   { key: 'preorders', name: 'Pre-orders', group: 'Sell' }, { key: 'repairs', name: 'Repairs', group: 'Sell' }, { key: 'printjobs', name: 'Print jobs', group: 'Sell' },
   { key: 'resell', name: 'Resell', group: 'Sell' }, { key: 'campaigns', name: 'Campaigns', group: 'Sell' },
   { key: 'shipments', name: 'Shipments', group: 'Goods' }, { key: 'suppliers', name: 'Suppliers', group: 'Goods' }, { key: 'costs', name: 'Product cost', group: 'Goods' },
@@ -69,6 +70,8 @@ async function offMap(deps, sql) {
     return off;
   } catch (_) { return off; }   // the table is not there yet
 }
+/** leads-1: is an app switched off by the provider (an "Only me" app until its flag row says enabled)? */
+export async function appIsOff(deps, sql, key) { return !!(await offMap(deps, sql))[key]; }
 /** The provider's menu switches: menu screens (MENU) switched off for EVERY company - rows 'menu:<key>' enabled=false. */
 async function menuOffAll(deps, sql) {
   const off = {};

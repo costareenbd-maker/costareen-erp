@@ -8487,7 +8487,7 @@ function srv(name, args, ok, bad) {
 
 var SRV_ACTIVE = 0, SRV_WRITING = false, SRV_TIMED = {};
 // the same list the server uses to know a call changes nothing (ERP_READS)
-var SRV_READS = /^(erpMyUpdates|erpSocialBridges|erpAds|erpAdsInterests|erpSocialNet|erpSocialLearn|erpSocialAssets|erpSocialPosts|erpSocialPhotos|erpInboxDigest|erpJointRecvCatalog|erpSitePages|erpBalanceSheet|erpProductFields|erpProductAi|erpMetaConnect|erpInboxFeatureMap|erpBookings|erpInbox|erpInboxOpen|erpInboxChannels|erpChatOrders|erpInboxStats|erpAiWork|erpCommissionSales|erpFdCards|erpLineMargins|erpFd19Profit|erpFdInventory|erpFd22Analytics|erpNavigator|erpSellers|erpFollowups|erpCustomerInsight|erpPreorders|erpCashUps|erpAskingPrices|erpSystemCheck|erpAnalytics|erpCommission|erpHolding|erpLotFunding|erpShipments|erpShipment|erpLots|erpFdHead|erpFdDash|erpReceiveMatch|erpAiReader|erpProductSuggest|erpCatalogue|erpPushList|erpCreators|erpCreatorPortalLink|erpSponsorLink|erpCreatorRequests|erpCreatorEvents|erpCreatorProgramme|erpCreatorPreview|erpCreatorCatalog|erpCreatorSources|erpCreatorClaims|erpApps|erpAppQr|erpFeedback|erpRestockOffers|erpRestockList|erpWarrantyRules|erpWarrantyCard|erpMyLink|erpPlatformRegister|erpPlatformDoctor|erpPlatformCommunity|erpMarketWaiting|erpBoard|erpPlatformDesign|erpResell|erpResellerProgramme|erpLoyalty|erpCustomerPoints|erpRefillDue|erpDeliveryHistory|erpDeliveryHistoryMany|erpPrintKit|erpPrintJobs|erpPrintJob|erpPrintCost|erpSpools|erpPrintRequests|erpJoint|erpJointCatalog|erpJointCard|erpInvoiceDesign|erpInvoicePreview|erpMarket|erpMarketMine|erpMarketRequests|erpMarketHints|erpMarketNames|erpWanted|erpBrand|erpComplianceLog|erpProviderKey|erpNews|erpAccessKeys|erpAccessWarning|erpAdmin|erpAiKeys|erpAlertRules|erpAlerts|erpArena|erpBackupStatus|erpBg|erpBnWords|erpBookedParcels|erpBrandLogo|erpBundle|erpBusinessLinks|erpBusinesses|erpBusinessesDeleted|erpCampaignAudience|erpCampaignGet|erpCampaignList|erpCapital|erpCashBook|erpCatalog|erpConnStatus|erpConnections|erpCostBook|erpCourier|erpCourierKeyStatus|erpCurrencies|erpCustomerAccount|erpCustomerCredit|erpCustomerList|erpCustomerPage|erpCustomerStatement|erpCustomers|erpDashboardData|erpDaySales|erpDeliveryOptions|erpDevices|erpDiscontinued|erpDues|erpEvoQr|erpEvoStatus|erpExpenseExport|erpExpenseReceiptUrl|erpExpenses|erpFamilies|erpFighters|erpFormOptions|erpGame|erpGetTheme|erpGoogle|erpHello|erpInstalls|erpInvoice|erpInvoicePdf|erpJob|erpJobs|erpListView|erpLookupCustomer|erpLookupUsage|erpMe|erpMoney|erpNoteFileUrl|erpNotes|erpOwnerChange|erpOwnerChanges|erpParcelLabels|erpParcelPreview|erpPartnerStock|erpPartnership|erpPayReasons|erpPeople|erpPlatform|erpPlatformErrors|erpPnl|erpPnlMonth|erpPoList|erpPoolCatalog|erpProduct|erpProductListShare|erpProductPage|erpProductPhotoUrl|erpProductThumbs|erpProfile|erpQuoteAsset|erpQuoteBoot|erpQuoteGet|erpQuoteList|erpRecentInvoices|erpRecovery|erpReorderPlan|erpRestorePreview|erpReturnPreview|erpRisks|erpSales|erpSearch|erpSecurity|erpSelfTest|erpSerialLookup|erpSerialsFor|erpSessions|erpSetTheme|erpSettingsFull|erpSettingsLists|erpSfPayoutLines|erpSfPayouts|erpShareFile|erpSharedStock|erpSheet|erpStatementPdf|erpStockHistory|erpSupplierPage|erpSuppliers|erpToday|erpUsers|erpWaProductPdf|erpWebMatches|erpWebOrderInvoices|erpWebOrders|erpWebsiteTest)$/;
+var SRV_READS = /^(erpLeads|erpLeadFind|erpLeadCapture|erpMyUpdates|erpSocialBridges|erpAds|erpAdsInterests|erpSocialNet|erpSocialLearn|erpSocialAssets|erpSocialPosts|erpSocialPhotos|erpInboxDigest|erpJointRecvCatalog|erpSitePages|erpBalanceSheet|erpProductFields|erpProductAi|erpMetaConnect|erpInboxFeatureMap|erpBookings|erpInbox|erpInboxOpen|erpInboxChannels|erpChatOrders|erpInboxStats|erpAiWork|erpCommissionSales|erpFdCards|erpLineMargins|erpFd19Profit|erpFdInventory|erpFd22Analytics|erpNavigator|erpSellers|erpFollowups|erpCustomerInsight|erpPreorders|erpCashUps|erpAskingPrices|erpSystemCheck|erpAnalytics|erpCommission|erpHolding|erpLotFunding|erpShipments|erpShipment|erpLots|erpFdHead|erpFdDash|erpReceiveMatch|erpAiReader|erpProductSuggest|erpCatalogue|erpPushList|erpCreators|erpCreatorPortalLink|erpSponsorLink|erpCreatorRequests|erpCreatorEvents|erpCreatorProgramme|erpCreatorPreview|erpCreatorCatalog|erpCreatorSources|erpCreatorClaims|erpApps|erpAppQr|erpFeedback|erpRestockOffers|erpRestockList|erpWarrantyRules|erpWarrantyCard|erpMyLink|erpPlatformRegister|erpPlatformDoctor|erpPlatformCommunity|erpMarketWaiting|erpBoard|erpPlatformDesign|erpResell|erpResellerProgramme|erpLoyalty|erpCustomerPoints|erpRefillDue|erpDeliveryHistory|erpDeliveryHistoryMany|erpPrintKit|erpPrintJobs|erpPrintJob|erpPrintCost|erpSpools|erpPrintRequests|erpJoint|erpJointCatalog|erpJointCard|erpInvoiceDesign|erpInvoicePreview|erpMarket|erpMarketMine|erpMarketRequests|erpMarketHints|erpMarketNames|erpWanted|erpBrand|erpComplianceLog|erpProviderKey|erpNews|erpAccessKeys|erpAccessWarning|erpAdmin|erpAiKeys|erpAlertRules|erpAlerts|erpArena|erpBackupStatus|erpBg|erpBnWords|erpBookedParcels|erpBrandLogo|erpBundle|erpBusinessLinks|erpBusinesses|erpBusinessesDeleted|erpCampaignAudience|erpCampaignGet|erpCampaignList|erpCapital|erpCashBook|erpCatalog|erpConnStatus|erpConnections|erpCostBook|erpCourier|erpCourierKeyStatus|erpCurrencies|erpCustomerAccount|erpCustomerCredit|erpCustomerList|erpCustomerPage|erpCustomerStatement|erpCustomers|erpDashboardData|erpDaySales|erpDeliveryOptions|erpDevices|erpDiscontinued|erpDues|erpEvoQr|erpEvoStatus|erpExpenseExport|erpExpenseReceiptUrl|erpExpenses|erpFamilies|erpFighters|erpFormOptions|erpGame|erpGetTheme|erpGoogle|erpHello|erpInstalls|erpInvoice|erpInvoicePdf|erpJob|erpJobs|erpListView|erpLookupCustomer|erpLookupUsage|erpMe|erpMoney|erpNoteFileUrl|erpNotes|erpOwnerChange|erpOwnerChanges|erpParcelLabels|erpParcelPreview|erpPartnerStock|erpPartnership|erpPayReasons|erpPeople|erpPlatform|erpPlatformErrors|erpPnl|erpPnlMonth|erpPoList|erpPoolCatalog|erpProduct|erpProductListShare|erpProductPage|erpProductPhotoUrl|erpProductThumbs|erpProfile|erpQuoteAsset|erpQuoteBoot|erpQuoteGet|erpQuoteList|erpRecentInvoices|erpRecovery|erpReorderPlan|erpRestorePreview|erpReturnPreview|erpRisks|erpSales|erpSearch|erpSecurity|erpSelfTest|erpSerialLookup|erpSerialsFor|erpSessions|erpSetTheme|erpSettingsFull|erpSettingsLists|erpSfPayoutLines|erpSfPayouts|erpShareFile|erpSharedStock|erpSheet|erpStatementPdf|erpStockHistory|erpSupplierPage|erpSuppliers|erpToday|erpUsers|erpWaProductPdf|erpWebMatches|erpWebOrderInvoices|erpWebOrders|erpWebsiteTest)$/;
 function srvPump() {
   if (!SRV_Q.length) return;
   var isRead = SRV_READS.test(SRV_Q[0].name);
@@ -38441,6 +38441,247 @@ document.addEventListener('keydown', function (e) {
   if (!t || !t.closest || !t.closest('.rvw') || !/^(INPUT|SELECT)$/.test(t.tagName) || t.type === 'search') return;
   e.preventDefault(); rvwGo(RVW.step + 1);
 });
+</script>
+<!-- leads-1 (owner 22 Oct 2026: "a Leads menu - leads of customers and suppliers from Google, LinkedIn, Facebook comments
+     and every possible source"): Menu > Leads. Two tabs (Customers / Suppliers), the four ways in as buttons on the first
+     screen (Add, Paste, Find, Bring in, Import), stage and source chips, one row per lead with call / WhatsApp / e-mail /
+     link, stage and follow-up; a row opens to its history, notes and "Make a customer / supplier". Server: handlers/leads.js.
+     "Only me" until the provider opens the app (Apps > Only me > Leads). -->
+<style>
+.ld-acts{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0 4px}
+.ld-chips{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}
+.ld-chip{border:1px solid var(--line,#dde);background:var(--card,#fff);color:inherit;border-radius:999px;padding:4px 10px;font:inherit;font-size:12.5px;cursor:pointer}
+.ld-chip[aria-pressed="true"]{background:var(--accent,#5b4ff0);border-color:var(--accent,#5b4ff0);color:#fff}
+.ld-chip b{font-weight:600;margin-left:4px;opacity:.8}
+.ld-row td{vertical-align:top}
+.ld-reach a{display:inline-block;margin:0 8px 2px 0;font-size:12.5px;color:var(--accent,#5b4ff0);text-decoration:none;white-space:nowrap}
+.ld-src{font-size:12px;color:var(--muted,#667)}
+.ld-due{color:var(--critical,#d33);font-weight:600}
+.ld-open{background:var(--soft,rgba(91,79,240,.04))}
+.ld-hist{font-size:12.5px;color:var(--muted,#667);margin:6px 0;max-height:180px;overflow:auto}
+.ld-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px}
+.ld-how{border:1px solid var(--line,#e6e8ef);border-radius:12px;padding:10px 12px}
+.ld-how h4{margin:0 0 6px;font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted,#667)}
+.ld-how div{font-size:13px;padding:3px 0}
+.ld-found td{font-size:13px}
+@media (max-width:760px){.ld-table .hide-sm{display:none}}
+</style>
+<script>
+(function () {
+  var LD = { kind: 'customer', data: null, busy: false, source: '', stage: 0, q: '', open: null, panel: '', form: null, paste: '', pasteUsed: '',
+             find: { via: 'map', what: '', place: 'Dhaka', res: null, busy: false, pick: {} }, err: '' };
+  window.LD = LD;
+  var PRESETS = { customer: [['printing', '3D printing, makers, labs'], ['electronics', 'Electronics and computer shops'], ['education', 'Schools, colleges, universities'], ['hobby', 'Toy, hobby, gift, craft shops']],
+                  supplier: [['plastics', 'Plastic, chemicals and materials'], ['electronics', 'Electronics wholesale and parts'], ['manufacturers', 'Factories and manufacturers']] };
+  var HOW = [['auto', 'Comes in by itself (press Bring in)'], ['find', 'Find leads'], ['paste', 'Paste a lead'], ['hand', 'Add a lead by hand'], ['import', 'Import a list']];
+  var ICON = '<circle cx="9" cy="8" r="3.2"/><path d="M3.5 19c.8-3.2 3-5 5.5-5s4.7 1.8 5.5 5"/><path d="M16 6h5M18.5 3.5v5"/>';
+  function ldOn() {
+    if (!ME) return false; var a = ME.apps || {};
+    if ((a.gone || []).indexOf('leads') >= 0) return false;
+    if ((a.hidden || []).indexOf('leads') >= 0 && ME.role !== 'owner') return false;
+    return !!ME.platform || (a.off || []).indexOf('leads') < 0;
+  }
+  window.ldOn = ldOn;
+  if (typeof fdxNav === 'function') fdxNav('leads', 'Leads', ICON, 'inbox');
+  try { VIEW_NAMES.leads = 'Leads'; } catch (e) {}
+  try { FDH_SUB.leads = 'Customers and suppliers to win, from every source, with follow-ups'; } catch (e) {}
+  function syncNav() { var b = document.querySelector('#nav button[data-view="leads"]'); if (b) { var on = ldOn(); b.style.display = on ? '' : 'none';
+    var n = LD.data ? LD.data.due : 0; var c = b.querySelector('.count'); if (!c) { c = document.createElement('span'); c.className = 'count'; b.appendChild(c); } c.textContent = n ? String(n) : ''; c.style.display = n ? '' : 'none'; } }
+  if (typeof applyRole === 'function') { var arLd = applyRole; applyRole = function () { var r = arLd.apply(this, arguments); try { syncNav(); } catch (e) {} return r; }; }
+  setTimeout(syncNav, 1500);
+
+  var isMgr = function () { return ME && (ME.role === 'owner' || ME.role === 'shareholder' || ME.role === 'manager'); };
+  function load() {
+    if (LD.busy) return; LD.busy = true;
+    srv('erpLeads', [{ kind: LD.kind, source: LD.source, stage: LD.stage, q: LD.q, open: LD.open }], function (r) { LD.busy = false; LD.data = r; LD.err = ''; syncNav(); if (VIEW === 'leads') paint(); },
+      function (e) { LD.busy = false; LD.err = (e && e.message) || String(e); if (VIEW === 'leads') paint(); });
+  }
+  window.ldLoad = load;
+  function wa(p) { var d = String(p || '').replace(/[^0-9]/g, ''); if (!d) return ''; if (/^01\d{9}$/.test(d)) d = '88' + d; return 'https://wa.me/' + d; }
+  function url(u) { u = String(u || ''); return /^https?:\/\//i.test(u) ? u : u ? 'https://' + u : ''; }
+  function reach(l) {
+    var h = '';
+    if (l.phone) h += '<a href="tel:' + esc(l.phone) + '">☎ ' + esc(l.phone) + '</a><a href="' + esc(wa(l.phone)) + '" target="_blank" rel="noopener">WhatsApp</a>';
+    if (l.email) h += '<a href="mailto:' + esc(l.email) + '">✉ ' + esc(l.email) + '</a>';
+    if (l.website) h += '<a href="' + esc(url(l.website)) + '" target="_blank" rel="noopener">Website</a>';
+    if (l.link) h += '<a href="' + esc(url(l.link)) + '" target="_blank" rel="noopener">' + (/linkedin/i.test(l.link) ? 'LinkedIn' : /facebook/i.test(l.link) ? 'Facebook' : /alibaba|1688|made-in-china/i.test(l.link) ? 'Supplier page' : /openstreetmap/i.test(l.link) ? 'Map' : 'Link') + '</a>';
+    if (l.conv) h += '<a href="#" data-ldchat="' + esc(l.conv) + '">Open the chat</a>';
+    return h || '<span class="sku">no contact yet</span>';
+  }
+  function formHtml() {
+    var f = LD.form || {}, srcs = (LD.data && LD.data.sources) || [];
+    var inp = function (k, label, ph, type) { return '<div><label class="f" for="ldf_' + k + '">' + label + '</label><input class="i" id="ldf_' + k + '" data-ldf="' + k + '" type="' + (type || 'text') + '" value="' + esc(f[k] || '') + '" placeholder="' + esc(ph || '') + '"></div>'; };
+    return '<div class="card" style="margin-top:10px"><h2>' + (f.id ? 'Change the lead' : 'New ' + (LD.kind === 'supplier' ? 'supplier' : 'customer') + ' lead') + (LD.pasteUsed ? ' <span class="pill ok">filled from what you pasted' + (LD.pasteUsed === 'ai' ? ' (AI)' : '') + '</span>' : '') + '</h2>' +
+      '<div class="ld-grid">' + inp('name', 'Person', 'Their name') + inp('company', 'Company / shop', '') + inp('phone', 'Phone / WhatsApp', '01…') + inp('email', 'E-mail', '', 'email') +
+      inp('website', 'Website', '') + inp('link', 'Profile or page link', 'LinkedIn, Facebook, Alibaba…') + inp('city', 'City', '') + inp('country', 'Country', '') +
+      inp('want', LD.kind === 'supplier' ? 'What they make or sell' : 'What they want', '') +
+      '<div><label class="f" for="ldf_source">Where it came from</label><select class="i" id="ldf_source" data-ldf="source">' + srcs.map(function (s) { return '<option value="' + s.key + '"' + ((f.source || 'team') === s.key ? ' selected' : '') + '>' + esc(s.name) + '</option>'; }).join('') + '</select></div>' +
+      (f.id ? '' : inp('followUp', 'Follow up on', '', 'date')) + '</div>' +
+      '<div style="margin-top:10px"><label class="f" for="ldf_note">Note</label><textarea class="i" id="ldf_note" data-ldf="note" rows="2">' + esc(f.note || '') + '</textarea></div>' +
+      '<div class="ap-row" style="margin-top:10px"><button class="btn primary" type="button" data-ld="save">' + (f.id ? 'Save' : 'Add the lead') + '</button><button class="btn" type="button" data-ld="close">Cancel</button></div></div>';
+  }
+  function pasteHtml() {
+    return '<div class="card" style="margin-top:10px"><h2>Paste a lead</h2><div class="sub" style="display:block">Copy everything from a LinkedIn profile, a Facebook page or post, a Google Maps listing, an Alibaba / 1688 supplier page, a website’s contact page or a visiting card, and paste it here. ' +
+      'The name, company, phone, e-mail, links and city are picked out' + (LD.data && LD.data.ai ? ' by the AI' : '') + '; you check them before saving.</div>' +
+      '<textarea class="i" id="ld_paste" rows="7" style="margin-top:8px" placeholder="Paste here…">' + esc(LD.paste || '') + '</textarea>' +
+      '<div class="ap-row" style="margin-top:10px"><button class="btn primary" type="button" data-ld="read">Read it</button><button class="btn" type="button" data-ld="close">Cancel</button></div></div>';
+  }
+  function findHtml() {
+    var F = LD.find, ps = PRESETS[LD.kind] || [];
+    var h = '<div class="card" style="margin-top:10px"><h2>Find ' + (LD.kind === 'supplier' ? 'suppliers' : 'customers') + '</h2>' +
+      '<div class="ld-chips"><button class="ld-chip" type="button" data-ldvia="map" aria-pressed="' + (F.via === 'map') + '">On the map (free)</button>' +
+      '<button class="ld-chip" type="button" data-ldvia="ai" aria-pressed="' + (F.via === 'ai') + '">On Google (AI)</button></div>' +
+      '<div class="sub" style="display:block">' + (F.via === 'map' ? 'Shops, offices, schools and factories listed on OpenStreetMap in an area. Free; many have no phone listed - open their map page or search their name.' :
+        'The AI searches Google and lists real businesses with what it found (it never makes up a phone). ' + (LD.data && LD.data.ai ? '' : '<b>Needs the AI key</b> (Settings → AI, or the provider’s key).')) + '</div>' +
+      '<div class="ld-grid" style="margin-top:8px">' +
+      (F.via === 'map' ? '<div><label class="f" for="ld_what">What kind</label><select class="i" id="ld_what">' + ps.map(function (p) { return '<option value="' + p[0] + '"' + (F.what === p[0] ? ' selected' : '') + '>' + esc(p[1]) + '</option>'; }).join('') + '<option value=""' + (!F.what ? '' : '') + '>Any shop or office</option></select></div>'
+        : '<div style="grid-column:span 2"><label class="f" for="ld_what">What to look for</label><input class="i" id="ld_what" value="' + esc(F.what || '') + '" placeholder="' + (LD.kind === 'supplier' ? 'e.g. PETG filament manufacturers' : 'e.g. architecture firms, robotics clubs') + '"></div>') +
+      '<div><label class="f" for="ld_place">Where</label><input class="i" id="ld_place" value="' + esc(F.place || '') + '" placeholder="Dhaka"></div></div>' +
+      '<div class="ap-row" style="margin-top:10px"><button class="btn primary" type="button" data-ld="search"' + (F.busy ? ' disabled' : '') + '>' + (F.busy ? 'Searching…' : 'Search') + '</button><button class="btn" type="button" data-ld="close">Close</button></div>';
+    if (F.res) {
+      var list = F.res.list || [], picked = list.filter(function (x) { return F.pick[x.ref]; }).length;
+      h += '<div class="sub" style="display:block;margin-top:10px">' + fmt(F.res.total || 0) + ' found in ' + esc(F.res.place || '') + (F.res.total > list.length ? ', the first ' + list.length + ' shown' : '') + '. Tick the ones to keep.</div>' +
+        (list.length ? '<div class="ap-row" style="margin:6px 0"><button class="btn small" type="button" data-ld="pickall">Tick all new</button><button class="btn small primary" type="button" data-ld="addpicked"' + (picked ? '' : ' disabled') + '>Add ' + picked + ' to the leads</button></div>' : '') +
+        '<div style="overflow:auto;max-height:420px"><table class="tbl ld-found"><tbody>' + list.map(function (x) {
+          return '<tr><td style="width:28px">' + (x.have ? '<span class="pill ok">on the list</span>' : '<input type="checkbox" data-ldpick="' + esc(x.ref) + '"' + (F.pick[x.ref] ? ' checked' : '') + '>') + '</td>' +
+            '<td><b>' + esc(x.company || x.name) + '</b>' + (x.name && x.company ? ' · ' + esc(x.name) : '') + '<br><span class="ld-src">' + esc([x.want, x.city, x.country].filter(Boolean).join(' · ')) + '</span></td><td class="ld-reach">' + reach(x) + '</td></tr>';
+        }).join('') + '</tbody></table></div>';
+    }
+    return h + '</div>';
+  }
+  function rowHtml(l) {
+    var open = LD.open === l.id, st = (LD.data.stages || []);
+    var h = '<tr class="ld-row' + (open ? ' ld-open' : '') + '"><td><a href="#" data-ldopen="' + l.id + '"><b>' + esc(l.company && l.name ? l.name + ' · ' + l.company : (l.company || l.name || 'No name')) + '</b></a>' +
+      (l.want ? '<br><span class="ld-src" data-noi18n="1">' + esc(l.want.length > 140 ? l.want.slice(0, 140) + '…' : l.want) + '</span>' : '') +
+      (l.city || l.country ? '<br><span class="ld-src">' + esc([l.city, l.country].filter(Boolean).join(', ')) + '</span>' : '') + '</td>' +
+      '<td class="ld-reach">' + reach(l) + '</td><td class="hide-sm"><span class="ld-src">' + esc(l.sourceName) + '<br>' + esc(l.added) + '</span></td>' +
+      '<td><select class="i" data-ldstage="' + l.id + '" style="min-width:120px">' + st.map(function (n, i) { return '<option value="' + (i + 1) + '"' + (l.stage === i + 1 ? ' selected' : '') + '>' + esc(n) + '</option>'; }).join('') + '</select></td>' +
+      '<td><input class="i" type="date" data-ldfu="' + l.id + '" value="' + esc(l.followUp) + '" style="min-width:140px">' + (l.due ? '<br><span class="ld-due">due</span>' : '') + '</td></tr>';
+    if (open) {
+      h += '<tr class="ld-open"><td colspan="5"><div class="ld-hist">' + (l.history || []).map(function (e) { return '<div>' + esc(e.at) + ' · <span data-noi18n="1">' + esc(e.what) + '</span>' + (e.by ? ' · ' + esc(e.by) : '') + '</div>'; }).join('') + '</div>' +
+        (l.note ? '<div class="sub" style="display:block;white-space:pre-wrap" data-noi18n="1">' + esc(l.note) + '</div>' : '') +
+        '<div class="row" style="gap:8px;flex-wrap:wrap;align-items:flex-end;margin-top:6px"><div style="flex:1 1 260px"><label class="f" for="ld_note">Add a note</label><input class="i" id="ld_note" placeholder="Called, sent the price list…"></div>' +
+        '<button class="btn small" type="button" data-ldnote="' + l.id + '">Add note</button><button class="btn small" type="button" data-ldedit="' + l.id + '">Change details</button>' +
+        (isMgr() ? (l.kind === 'supplier' ? (l.supplierId ? '<span class="pill ok">is a supplier</span>' : '<button class="btn small primary" type="button" data-ldconv="supplier" data-id="' + l.id + '">Make a supplier</button>')
+                                            : (l.customerId ? '<span class="pill ok">is a customer</span>' : '<button class="btn small primary" type="button" data-ldconv="customer" data-id="' + l.id + '">Make a customer</button>')) : '') +
+        '</div></td></tr>';
+    }
+    return h;
+  }
+  function view() {
+    if (!ldOn()) return '<div class="note"><div class="ico">i</div><div>Leads is not switched on for this business.</div></div>';
+    var d = LD.data;
+    if (!d) { load(); return '<div class="loading">Loading the leads…</div>'; }
+    var h = '<section><div class="row" style="justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px"><div class="tabs">' +
+      '<button type="button" data-ldkind="customer" aria-selected="' + (LD.kind === 'customer') + '">Customers <b>' + fmt(d.counts.customer || 0) + '</b></button>' +
+      '<button type="button" data-ldkind="supplier" aria-selected="' + (LD.kind === 'supplier') + '">Suppliers <b>' + fmt(d.counts.supplier || 0) + '</b></button></div>' +
+      (d.due ? '<button class="ld-chip" type="button" data-ld="due" style="border-color:var(--critical,#d33)">' + fmt(d.due) + ' to follow up today</button>' : '') + '</div>' +
+      '<div class="ld-acts"><button class="btn primary" type="button" data-ld="add">+ Add a lead</button><button class="btn" type="button" data-ld="paste">Paste a lead (LinkedIn, Facebook, Google, supplier page…)</button>' +
+      (d.canFind ? '<button class="btn" type="button" data-ld="find">Find leads (map / Google)</button>' + (LD.kind === 'customer' ? '<button class="btn" type="button" data-ld="harvest">Bring in from comments, chats and pages</button>' : '') +
+                   '<button class="btn" type="button" data-ld="import">Import a list (Excel / CSV)</button><input type="file" id="ld_file" accept=".xlsx,.csv" style="display:none">' : '') + '</div>' +
+      (LD.panel === 'add' ? formHtml() : LD.panel === 'paste' ? pasteHtml() : LD.panel === 'find' ? findHtml() : '') + '</section>';
+    // filters
+    h += '<section><div class="ld-chips"><button class="ld-chip" type="button" data-ldstg="0" aria-pressed="' + (!LD.stage) + '">All stages</button>' +
+      d.byStage.map(function (s) { return '<button class="ld-chip" type="button" data-ldstg="' + s.stage + '" aria-pressed="' + (LD.stage === s.stage) + '">' + esc(s.name) + '<b>' + s.n + '</b></button>'; }).join('') + '</div>' +
+      '<div class="ld-chips"><button class="ld-chip" type="button" data-ldsrc="" aria-pressed="' + (!LD.source) + '">All sources</button>' +
+      d.sources.filter(function (s) { return d.bySource[s.key]; }).map(function (s) { return '<button class="ld-chip" type="button" data-ldsrc="' + s.key + '" aria-pressed="' + (LD.source === s.key) + '">' + esc(s.name) + '<b>' + d.bySource[s.key] + '</b></button>'; }).join('') + '</div>' +
+      '<input class="i" id="ld_q" type="search" placeholder="Search a name, company, phone, city… (Enter)" value="' + esc(LD.q) + '" style="max-width:420px">';
+    if (LD.err) h += '<div class="note err" style="margin-top:8px"><div class="ico">!</div><div>' + esc(LD.err) + '</div></div>';
+    h += d.leads.length ? '<div style="overflow:auto;margin-top:10px"><table class="tbl ld-table"><thead><tr><th>Lead</th><th>Reach them</th><th class="hide-sm">Source</th><th>Stage</th><th>Follow up</th></tr></thead><tbody>' +
+      d.leads.map(rowHtml).join('') + '</tbody></table></div>' + (d.total > d.leads.length ? '<div class="sub" style="display:block">The first ' + d.leads.length + ' shown - narrow it with a stage, a source or a search.</div>' : '')
+      : '<div class="note" style="margin-top:10px"><div class="ico">i</div><div>No ' + (LD.kind === 'supplier' ? 'supplier' : 'customer') + ' leads' + (LD.source || LD.stage || LD.q ? ' here' : ' yet') + '. Use the buttons above to bring some in.</div></div>';
+    h += '</section>';
+    // every place a lead can come from
+    h += '<section><div class="card"><h2>Where ' + (LD.kind === 'supplier' ? 'supplier' : 'customer') + ' leads come from</h2><div class="ld-grid">' + HOW.map(function (w) {
+      var ss = d.sources.filter(function (s) { return s.how === w[0]; }); if (!ss.length) return '';
+      return '<div class="ld-how"><h4>' + esc(w[1]) + '</h4>' + ss.map(function (s) { return '<div><b>' + esc(s.name) + '</b>' + (d.bySource[s.key] ? ' <span class="pill ok">' + d.bySource[s.key] + '</span>' : '') + (s.note ? '<br><span class="ld-src">' + esc(s.note) + '</span>' : '') + '</div>'; }).join('') + '</div>';
+    }).join('') + '</div></div></section>';
+    return h;
+  }
+  function paint() { var v = el('view'); if (!v) return; v.innerHTML = view(); try { if (typeof bindTips === 'function') bindTips(v); } catch (e) {} }
+  window.ldPaint = paint;
+  var repaintLd = repaint;
+  repaint = function () { if (VIEW !== 'leads') return repaintLd.apply(this, arguments); paint(); };
+
+  function readForm() { document.querySelectorAll('[data-ldf]').forEach(function (n) { LD.form[n.getAttribute('data-ldf')] = n.value; }); }
+  function act(payload, msg) { srv('erpLeadAct', [payload], function () { if (msg) toast(msg); load(); }, function (e) { toast(esc((e && e.message) || e), true, 9000); load(); }); }
+  document.addEventListener('click', function (e) {
+    if (VIEW !== 'leads') return;
+    var t = e.target.closest && e.target.closest('[data-ld],[data-ldkind],[data-ldstg],[data-ldsrc],[data-ldopen],[data-ldnote],[data-ldedit],[data-ldconv],[data-ldvia],[data-ldchat]'); if (!t) return;
+    if (t.hasAttribute('data-ldkind')) { LD.kind = t.getAttribute('data-ldkind'); LD.source = ''; LD.stage = 0; LD.open = null; LD.panel = ''; LD.find.res = null; LD.data = null; paint(); return; }
+    if (t.hasAttribute('data-ldstg')) { LD.stage = Number(t.getAttribute('data-ldstg')); load(); return; }
+    if (t.hasAttribute('data-ldsrc')) { LD.source = t.getAttribute('data-ldsrc'); load(); return; }
+    if (t.hasAttribute('data-ldopen')) { e.preventDefault(); var id = t.getAttribute('data-ldopen'); LD.open = LD.open === id ? null : id; load(); return; }
+    if (t.hasAttribute('data-ldchat')) { e.preventDefault(); try { if (window.IB) { IB.conv = t.getAttribute('data-ldchat'); } } catch (x) {} go('inbox'); return; }
+    if (t.hasAttribute('data-ldvia')) { LD.find.via = t.getAttribute('data-ldvia'); LD.find.res = null; LD.find.what = ''; paint(); return; }
+    if (t.hasAttribute('data-ldnote')) { var n = el('ld_note'); if (!n || !n.value.trim()) { toast('Write the note first.', true); return; } act({ id: t.getAttribute('data-ldnote'), note: n.value.trim() }, 'Note added.'); return; }
+    if (t.hasAttribute('data-ldedit')) { var l = (LD.data.leads || []).filter(function (x) { return x.id === t.getAttribute('data-ldedit'); })[0]; if (!l) return; LD.form = Object.assign({}, l); LD.pasteUsed = ''; LD.panel = 'add'; paint(); window.scrollTo(0, 0); return; }
+    if (t.hasAttribute('data-ldconv')) {
+      var kind = t.getAttribute('data-ldconv');
+      uiConfirm('Make this lead a ' + kind + '? It is added to ' + (kind === 'supplier' ? 'Suppliers' : 'Customers') + ' and the lead is marked Won.').then(function (ok) { if (ok) act({ id: t.getAttribute('data-id'), convert: kind }, 'Done - it is on the ' + (kind === 'supplier' ? 'Suppliers' : 'Customers') + ' list now.'); });
+      return;
+    }
+    var k = t.getAttribute('data-ld');
+    if (k === 'close') { LD.panel = ''; LD.form = null; LD.pasteUsed = ''; paint(); return; }
+    if (k === 'add') { LD.form = { kind: LD.kind, source: 'team' }; LD.pasteUsed = ''; LD.panel = 'add'; paint(); return; }
+    if (k === 'paste') { LD.panel = 'paste'; paint(); var p = el('ld_paste'); if (p) p.focus(); return; }
+    if (k === 'find') { LD.panel = 'find'; if (!LD.find.what && LD.find.via === 'map') LD.find.what = (PRESETS[LD.kind][0] || [''])[0]; paint(); return; }
+    if (k === 'due') { LD.stage = 0; LD.source = ''; LD.q = ''; load(); return; }
+    if (k === 'import') { var f = el('ld_file'); if (f) { f.value = ''; f.click(); } return; }
+    if (k === 'save') {
+      readForm(); var body = Object.assign({}, LD.form, { kind: LD.form.kind || LD.kind });
+      srv('erpLeadUpsert', [body], function (r) { toast(esc(r.message || 'Saved.'), !r.added && !body.id); LD.panel = ''; LD.form = null; LD.pasteUsed = ''; load(); }, function (er) { toast(esc((er && er.message) || er), true, 9000); });
+      return;
+    }
+    if (k === 'read') {
+      var txt = (el('ld_paste') || {}).value || ''; LD.paste = txt; if (!txt.trim()) { toast('Paste something first.', true); return; }
+      t.disabled = true; t.textContent = 'Reading…';
+      srv('erpLeadCapture', [{ text: txt, kind: LD.kind }], function (r) { var l = r.lead; if (l.kind !== LD.kind) { LD.kind = l.kind; LD.data = null; load(); }
+        LD.form = Object.assign({ followUp: '' }, l); LD.pasteUsed = r.used; LD.paste = ''; LD.panel = 'add'; paint(); },
+        function (er) { t.disabled = false; t.textContent = 'Read it'; toast(esc((er && er.message) || er), true, 9000); });
+      return;
+    }
+    if (k === 'search') {
+      LD.find.what = (el('ld_what') || {}).value || ''; LD.find.place = (el('ld_place') || {}).value || ''; LD.find.busy = true; LD.find.pick = {}; paint();
+      srv('erpLeadFind', [{ kind: LD.kind, via: LD.find.via, what: LD.find.what, place: LD.find.place }], function (r) { LD.find.busy = false; LD.find.res = r; paint(); },
+        function (er) { LD.find.busy = false; paint(); toast(esc((er && er.message) || er), true, 12000); });
+      return;
+    }
+    if (k === 'pickall') { (LD.find.res.list || []).forEach(function (x) { if (!x.have) LD.find.pick[x.ref] = true; }); paint(); return; }
+    if (k === 'addpicked') {
+      var todo = (LD.find.res.list || []).filter(function (x) { return LD.find.pick[x.ref] && !x.have; }), done = 0, same = 0;
+      t.disabled = true;
+      (function next(i) {
+        if (i >= todo.length) { toast(done + ' lead(s) added' + (same ? ', ' + same + ' already on the list' : '') + '.'); LD.find.pick = {}; load(); paint(); return; }
+        srv('erpLeadUpsert', [todo[i]], function (r) { if (r.added) done++; else same++; todo[i].have = true; next(i + 1); }, function () { next(i + 1); });
+      })(0);
+      return;
+    }
+    if (k === 'harvest') {
+      t.disabled = true; t.textContent = 'Looking…';
+      srv('erpLeadHarvest', [], function (r) { var parts = Object.keys(r.bySource || {}).filter(function (s) { return r.bySource[s].added; }).map(function (s) { return r.bySource[s].added + ' from ' + r.bySource[s].name; });
+        toast(r.added ? 'Brought in ' + r.added + ' new lead(s): ' + parts.join(', ') + '.' : 'Nothing new - every comment, chat and page visitor worth a lead is already on the list.', false, 12000); load(); },
+        function (er) { toast(esc((er && er.message) || er), true, 9000); load(); });
+      return;
+    }
+  });
+  document.addEventListener('change', function (e) {
+    if (VIEW !== 'leads') return;
+    var t = e.target;
+    if (t.hasAttribute && t.hasAttribute('data-ldstage')) { act({ id: t.getAttribute('data-ldstage'), stage: Number(t.value) }, 'Stage changed.'); return; }
+    if (t.hasAttribute && t.hasAttribute('data-ldfu')) { act({ id: t.getAttribute('data-ldfu'), followUp: t.value }, t.value ? 'Follow-up set.' : 'Follow-up cleared.'); return; }
+    if (t.hasAttribute && t.hasAttribute('data-ldpick')) { LD.find.pick[t.getAttribute('data-ldpick')] = t.checked; paint(); return; }
+    if (t.id === 'ld_file' && t.files && t.files[0]) {
+      var file = t.files[0];
+      (/\.xlsx$/i.test(file.name) ? file.arrayBuffer().then(xlReadXlsx) : file.text().then(xlReadCsv)).then(function (rows) {
+        srv('erpLeadImport', [{ rows: rows, kind: LD.kind, source: /linkedin/i.test(file.name) ? 'linkedin' : 'import' }], function (r) {
+          toast(r.added + ' lead(s) added' + (r.same ? ', ' + r.same + ' already on the list' : '') + (r.skipped ? ', ' + r.skipped + ' row(s) skipped' : '') + '.', false, 10000); load(); },
+          function (er) { toast(esc((er && er.message) || er), true, 10000); });
+      }).catch(function (er) { toast('That file could not be read: ' + esc((er && er.message) || er), true, 9000); });
+    }
+  });
+  document.addEventListener('keydown', function (e) { if (VIEW === 'leads' && e.key === 'Enter' && e.target && e.target.id === 'ld_q') { LD.q = e.target.value.trim(); load(); } });
+})();
 </script>
 <!-- myupd-1 (owner 21 Oct 2026: "he can't see the Platform tab - every company should push its own update"): a company's
      owner, in their own ERP, sees Settings > ERP updates: their version against the newest, why an update stopped, a box
