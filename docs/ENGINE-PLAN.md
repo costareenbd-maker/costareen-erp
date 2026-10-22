@@ -58,6 +58,17 @@ that convert", "SEO audit of a WooCommerce site", "read Chinese supplier invoice
 - **Proof it is used**: every job in the Command Center lists the skills it used, so you can see the skill working on
   that exact task.
 
+**Install by pasting a GitHub link** (any kind: a whole project, one folder, one SKILL.md file, a release):
+1. The Engine downloads it into a closed box (never runs it yet).
+2. It finds every skill inside (a project can hold many; you get a list to tick).
+3. It reads each skill: its name, what it says it is for, its instructions and any code.
+4. It matches the skill to the agents by their jobs (example: "Facebook ad copy" -> Ads & Market and Content & Video;
+   "website speed check" -> Watchdog and SEO) and shows its choice with the reason.
+5. You see: what it does, suggested agents (tick / untick), risk level, then press Install. Nothing installs by itself.
+6. Later, if another agent's tasks keep needing that skill, the Engine suggests adding it to that agent too; if an agent
+   never uses it, it suggests removing it from that agent.
+Updates: the Engine checks the GitHub link weekly and shows "update available" with what changed; you approve.
+
 How the Engine uses skills: for each job it looks at the task, picks the matching skills (only the switched-on ones the
 agent may use), loads them, does the work, and logs which skills it used and how the result went.
 
