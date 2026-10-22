@@ -28,6 +28,7 @@ import { platformAdmin } from './platform.js';
 import { appIsOff } from './apps.js';
 import { gemini, textOf, jsonOf } from '../lib/gemini.js';
 import { aiKey } from './receivefile.js';
+import { getConfig, setConfig } from '../lib/ext.js';
 
 const str = (v) => String(v == null ? '' : v).trim();
 const STAGES = ['', 'New', 'Contacted', 'Interested', 'Quoted', 'Won', 'Lost'];
@@ -52,6 +53,8 @@ export const SOURCES = [
   { key: 'b2b', name: 'Alibaba / 1688 / Made-in-China', kind: 'supplier', how: 'paste', note: 'Paste a supplier’s page' },
   { key: 'website', name: 'A website', kind: 'both', how: 'paste', note: 'Paste the contact page' },
   { key: 'trade_fair', name: 'Trade fair / visiting card', kind: 'both', how: 'paste', note: 'Type or paste the card' },
+  { key: 'reseller_form', name: 'Reseller form', kind: 'customer', how: 'auto', note: 'Filled your public "Become a reseller" form' },
+  { key: 'supplier_form', name: 'Supplier form', kind: 'supplier', how: 'auto', note: 'Filled your public "Supply to us" form' },
   { key: 'referral', name: 'Referral', kind: 'both', how: 'hand', note: 'Someone told you about them' },
   { key: 'walk_in', name: 'Walk-in or phone call', kind: 'customer', how: 'hand', note: 'Came to the shop or called' },
   { key: 'import', name: 'Excel / CSV list', kind: 'both', how: 'import', note: 'A list from anywhere' },
@@ -471,4 +474,77 @@ export async function erpLeadImport(ctx, payload) {
   return { ok: true, added, same, skipped: bad };
 }
 
-export const HANDLERS = { erpLeads, erpLeadUpsert, erpLeadAct, erpLeadHarvest, erpLeadFind, erpLeadCapture, erpLeadImport };
+// ------------------------------------------------------------------ the public forms (leadform-1, 22 Oct 2026)
+// "Become a reseller" and "Supply to us": one private link per business (web/join.html?f=<token>&as=reseller|supplier),
+// switched on per form from Leads; what is sent becomes a lead (follow-up today, so it is counted on the menu at once).
+const FORM_KINDS = ['reseller', 'supplier'];
+const newToken = () => { const b = new Uint8Array(16); crypto.getRandomValues(b); return [...b].map((x) => x.toString(16).padStart(2, '0')).join(''); };
+function formLink(ctx, token, as) {
+  const base = String((ctx.deps && ctx.deps.google && ctx.deps.google.appUrl) || 'https://erp.costareen.com/').replace(/#.*$/, '').replace(/\/+$/, '');
+  const api = str(ctx.deps && ctx.deps.hookBase);
+  return base + '/join.html?f=' + token + '&as=' + as + (api ? '&api=' + encodeURIComponent(api) : '');
+}
+async function formState(ctx) {
+  const on = str(await getConfig(ctx, 'lead_form_on', '')).split(',').filter((k) => FORM_KINDS.includes(k));
+  return { token: str(await getConfig(ctx, 'lead_form_token', '')), on, intro: str(await getConfig(ctx, 'lead_form_intro', '')) };
+}
+export async function erpLeadForms(ctx) { return formsCore(ctx, {}); }
+export async function erpLeadFormsSet(ctx, payload) { return formsCore(ctx, { set: payload || {} }); }
+async function formsCore(ctx, p) {
+  await needOn(ctx);
+  let st = await formState(ctx);
+  if (p.set) {
+    if (!roleAtLeast(ctx.s.role, 'manager')) throw new Error('Only a manager changes the public forms.');
+    if (!st.token || p.set.newLink) await setConfig(ctx, 'lead_form_token', newToken());
+    if (p.set.on) await setConfig(ctx, 'lead_form_on', (Array.isArray(p.set.on) ? p.set.on : []).filter((k) => FORM_KINDS.includes(k)).join(','));
+    if (p.set.intro !== undefined) await setConfig(ctx, 'lead_form_intro', str(p.set.intro).slice(0, 600));
+    st = await formState(ctx);
+  }
+  const counts = {};
+  for (const r of await ctx.tx`select source, count(*)::int as n from inbox_leads where business_id = ${ctx.biz} and source in ('reseller_form', 'supplier_form') group by 1`) counts[r.source] = r.n;
+  return { on: st.on, intro: st.intro, links: st.token ? { reseller: formLink(ctx, st.token, 'reseller'), supplier: formLink(ctx, st.token, 'supplier') } : null,
+           counts: { reseller: counts.reseller_form || 0, supplier: counts.supplier_form || 0 }, canChange: roleAtLeast(ctx.s.role, 'manager') };
+}
+const FORM_HITS = new Map();
+function formTooMany(key, max, ms) { const now = Date.now(), r = (FORM_HITS.get(key) || []).filter((t) => now - t < ms); if (r.length >= max) return true; r.push(now); FORM_HITS.set(key, r); return false; }
+const NOFORM = { status: 404, body: { ok: false, error: 'This form is not open.' } };
+/** The public page: the shop's name and phone, the intro, which forms are open. */
+export async function leadFormPage(ctx, token) {
+  const st = await formState(ctx);
+  if (!st.token || st.token !== token || !st.on.length) return NOFORM;
+  const b = (await ctx.tx`select name, phone from businesses where id = ${ctx.biz}`)[0] || {};
+  return { status: 200, body: { ok: true, shop: { name: str(b.name), phone: str(b.phone) }, intro: st.intro, forms: st.on } };
+}
+/** A form sent from the public page -> a lead (the same phone / e-mail of the same kind is updated, not added twice). */
+export async function leadFormSend(ctx, token, b, ip) {
+  const st = await formState(ctx);
+  if (!st.token || st.token !== token) return NOFORM;
+  const as = FORM_KINDS.includes(str(b.as)) ? str(b.as) : '';
+  if (!as || !st.on.includes(as)) return NOFORM;
+  if (str(b.hp)) return { status: 200, body: { ok: true } };   // the hidden box only robots fill
+  if (formTooMany('f:' + ip, 5, 3600e3) || formTooMany('fb:' + ctx.biz, 200, 86400e3)) return { status: 429, body: { ok: false, error: 'busy' } };
+  const t = (k, n) => str(b[k]).replace(/\s+/g, ' ').slice(0, n || 200);
+  const phone = t('phone', 40), digits = phone.replace(/[^0-9]/g, '');
+  if (!t('name', 80)) return { status: 200, body: { ok: false, error: 'name' } };
+  if (digits.length < 8 || digits.length > 15) return { status: 200, body: { ok: false, error: 'phone' } };
+  if (as === 'supplier' && !t('company', 120)) return { status: 200, body: { ok: false, error: 'company' } };
+  if (!t('want', 400)) return { status: 200, body: { ok: false, error: 'want' } };
+  const email = t('email', 120).toLowerCase();
+  if (email && !/^[^@\s]+@[^@\s]+\.[a-z]{2,}$/i.test(email)) return { status: 200, body: { ok: false, error: 'email' } };
+  const details = as === 'reseller'
+    ? ['Sells at: ' + (t('where', 200) || '-'), t('qty', 80) ? 'Each month: ' + t('qty', 80) : '', t('msg', 600)]
+    : [t('moq', 200) ? 'Minimum order / terms: ' + t('moq', 200) : '', t('brands', 200) ? 'Brands: ' + t('brands', 200) : '', t('msg', 600)];
+  const by = as === 'supplier' ? 'Supplier form' : 'Reseller form';
+  const lead = { kind: as === 'supplier' ? 'supplier' : 'customer', source: as === 'supplier' ? 'supplier_form' : 'reseller_form', name: t('name', 80), company: t('company', 120),
+    phone, email, city: t('city', 80), country: t('country', 60) || (as === 'reseller' ? 'Bangladesh' : ''), website: t('web', 300), want: t('want', 400),
+    note: details.filter(Boolean).join(' | '), tags: [as], followUp: formatDate(ctx.now, 'yyyy-MM-dd') };
+  const r = await addLead(ctx, lead, by);
+  if (!r.added) {
+    const again = 'Form again ' + formatDate(ctx.now, 'd MMM') + ': ' + lead.want + (lead.note ? ' | ' + lead.note : '');
+    await ctx.tx`update inbox_leads set follow_up_on = ${lead.followUp}, note = case when coalesce(note, '') = '' then ${again} else note || ${'\n' + again} end, updated_at = now() where id = ${r.id}`;
+    await ctx.tx`insert into inbox_lead_events (business_id, lead_id, what, by_name) values (${ctx.biz}, ${r.id}, 'Filled the form again', ${by})`;
+  }
+  return { status: 200, body: { ok: true } };
+}
+
+export const HANDLERS = { erpLeadForms, erpLeadFormsSet, erpLeads, erpLeadUpsert, erpLeadAct, erpLeadHarvest, erpLeadFind, erpLeadCapture, erpLeadImport };

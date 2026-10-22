@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="bn">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="referrer" content="no-referrer">
+<title>Work with us</title>
+<link rel="icon" href="icons/favicon-32.png">
+<style>
+/* leadform-1 (owner 22 Oct 2026): the public "Become a reseller" and "Supply to us" forms. One private link per shop
+   (Leads > Public forms); what is sent lands in the shop's Leads (handlers/leads.js leadFormPage / leadFormSend). */
+@font-face{font-family:"Noto Sans Bengali";src:url(fonts/NotoSansBengali-Regular.ttf) format("truetype");font-weight:400;font-display:swap}
+@font-face{font-family:"Noto Sans Bengali";src:url(fonts/NotoSansBengali-Bold.ttf) format("truetype");font-weight:700;font-display:swap}
+:root{--bg:#f6f7fb;--card:#fff;--ink:#14172a;--mute:#5f6476;--line:#e3e5ee;--acc:#5b4ff0;--ok:#1d8a5c;--okbg:#e5f5ed;--bad:#c2332d;--badbg:#fdecea}
+@media (prefers-color-scheme:dark){:root{--bg:#0f1117;--card:#171a23;--ink:#eef0f6;--mute:#9aa0b2;--line:#2a2f3c;--acc:#8b82ff;--ok:#4cc38a;--okbg:#14291f;--bad:#f2706a;--badbg:#2c1717}}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans Bengali",sans-serif}
+body{padding:calc(14px + env(safe-area-inset-top,0px)) 16px calc(40px + env(safe-area-inset-bottom,0px))}
+main{max-width:560px;margin:0 auto}
+.top{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:14px}
+.top b{font-size:17px}
+.lang{border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:999px;padding:6px 12px;font:inherit;font-size:14px;cursor:pointer}
+h1{font-size:26px;line-height:1.3;margin:6px 0 6px}
+.lead{color:var(--mute);margin:0 0 14px;white-space:pre-wrap}
+.tabs{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px}
+.tabs button{border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:14px;padding:12px 10px;font:inherit;font-weight:700;cursor:pointer}
+.tabs button[aria-pressed="true"]{border-color:var(--acc);background:var(--acc);color:#fff}
+.why{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:12px 16px;margin-bottom:14px;list-style:none}
+.why li{padding:5px 0 5px 28px;position:relative}
+.why li:before{content:"✓";position:absolute;left:2px;top:5px;width:20px;height:20px;border-radius:50%;background:var(--okbg);color:var(--ok);font-weight:800;font-size:12px;display:flex;align-items:center;justify-content:center}
+form{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:16px}
+label{display:block;font-size:14px;color:var(--mute);margin-bottom:12px}
+label b{color:var(--ink);font-weight:600}
+input,textarea,select{width:100%;font:inherit;font-size:16px;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:11px 12px;margin-top:4px}
+textarea{min-height:76px;resize:vertical}
+input:focus,textarea:focus{outline:2px solid var(--acc);outline-offset:1px}
+.req:after{content:" *";color:var(--bad)}
+.hp{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden}
+button.send{width:100%;border:0;border-radius:14px;background:var(--acc);color:#fff;font:inherit;font-size:18px;font-weight:700;padding:14px;cursor:pointer;margin-top:6px}
+button.send:disabled{opacity:.6}
+.msg{border-radius:14px;padding:12px 14px;margin-top:12px;font-size:15px}
+.msg.bad{background:var(--badbg);color:var(--bad)}
+.done{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:26px 18px;text-align:center}
+.done .tick{width:60px;height:60px;border-radius:50%;background:var(--okbg);color:var(--ok);font-size:30px;font-weight:800;display:flex;align-items:center;justify-content:center;margin:0 auto 10px}
+.call{display:inline-block;margin-top:12px;color:var(--acc);font-weight:700;text-decoration:none}
+.foot{color:var(--mute);font-size:13px;text-align:center;margin-top:16px}
+.loading{color:var(--mute);text-align:center;padding:40px 0}
+</style>
+</head>
+<body>
+<main id="app"><div class="loading">…</div></main>
+<script>
+(function () {
+  var q = new URLSearchParams(location.search);
+  var F = q.get('f') || '', AS = q.get('as') === 'supplier' ? 'supplier' : 'reseller';
+  var API = (q.get('api') || 'https://oqzcuuytytqadqjlwdsh.supabase.co/functions/v1/erp').replace(/\/+$/, '');
+  var URL0 = API + (API.indexOf('?') >= 0 ? '&' : '?') + 'inbox=join&f=' + encodeURIComponent(F);
+  var LANG = (function () { try { return localStorage.getItem('join_lang') || ''; } catch (e) { return ''; } })() || (/^bn/i.test(navigator.language || '') ? 'bn' : 'bn');
+  var S = { data: null, sent: false, busy: false, err: '', vals: {} };
+  var T = {
+    en: { reseller: 'Become a reseller', supplier: 'Supply to us', title_r: 'Sell our products', title_s: 'Supply us', lead_r: 'Sell from your shop or online page. Tell us about yourself and we will call you with the reseller prices.',
+      lead_s: 'Do you make or sell goods we could buy? Tell us what you offer and we will get in touch.',
+      why_r: ['Reseller prices, below the shop price', 'Stock you can count on', 'Help with photos and product details'], why_s: ['We buy regularly', 'Clear orders, paid on time', 'A long-term partner'],
+      name: 'Your name', company_r: 'Shop or page name', company_s: 'Company name', phone: 'Phone / WhatsApp', email: 'E-mail', city: 'City / area', country: 'Country',
+      where: 'Where do you sell? (shop address, Facebook page, website)', want_r: 'Which products do you want to sell?', qty: 'About how many each month?', web: 'Website or Facebook page',
+      want_s: 'What do you make or supply?', brands: 'Brands you carry', moq: 'Minimum order, prices or terms', msg: 'Anything else', send: 'Send', sending: 'Sending…',
+      done: 'Thank you!', done_s: 'We got it. We will call you soon.', call: 'Or call us', bad: { name: 'Write your name.', phone: 'Write a phone number we can call.', company: 'Write the company name.',
+        want: 'Tell us what you want to sell / what you supply.', email: 'That e-mail does not look right.', busy: 'Too many forms from here - please try again later.', net: 'Could not send. Check the internet and try again.' },
+      closed: 'This form is not open right now.', lang: 'বাংলা' },
+    bn: { reseller: 'রিসেলার হোন', supplier: 'আমাদের সাপ্লাই দিন', title_r: 'আমাদের পণ্য বিক্রি করুন', title_s: 'আমাদের কাছে সাপ্লাই দিন', lead_r: 'আপনার দোকান বা অনলাইন পেজ থেকে বিক্রি করুন। আপনার সম্পর্কে লিখুন, আমরা রিসেলার দাম নিয়ে কল করব।',
+      lead_s: 'আপনি কি এমন পণ্য বানান বা বিক্রি করেন যা আমরা কিনতে পারি? কী দেন লিখুন, আমরা যোগাযোগ করব।',
+      why_r: ['দোকানের দামের চেয়ে কম রিসেলার দাম', 'নির্ভরযোগ্য স্টক', 'ছবি ও পণ্যের তথ্যে সাহায্য'], why_s: ['আমরা নিয়মিত কিনি', 'পরিষ্কার অর্ডার, সময়মতো পেমেন্ট', 'দীর্ঘমেয়াদি সম্পর্ক'],
+      name: 'আপনার নাম', company_r: 'দোকান বা পেজের নাম', company_s: 'কোম্পানির নাম', phone: 'ফোন / হোয়াটসঅ্যাপ', email: 'ই-মেইল', city: 'শহর / এলাকা', country: 'দেশ',
+      where: 'কোথায় বিক্রি করেন? (দোকানের ঠিকানা, ফেসবুক পেজ, ওয়েবসাইট)', want_r: 'কোন পণ্য বিক্রি করতে চান?', qty: 'মাসে আনুমানিক কতগুলো?', web: 'ওয়েবসাইট বা ফেসবুক পেজ',
+      want_s: 'কী বানান বা সাপ্লাই দেন?', brands: 'কোন কোন ব্র্যান্ড', moq: 'সর্বনিম্ন অর্ডার, দাম বা শর্ত', msg: 'আর কিছু', send: 'পাঠান', sending: 'পাঠানো হচ্ছে…',
+      done: 'ধন্যবাদ!', done_s: 'আমরা পেয়েছি। শিগগিরই কল করব।', call: 'অথবা কল করুন', bad: { name: 'আপনার নাম লিখুন।', phone: 'একটি ফোন নম্বর লিখুন।', company: 'কোম্পানির নাম লিখুন।',
+        want: 'কী বিক্রি করতে চান / কী সাপ্লাই দেন লিখুন।', email: 'ই-মেইলটি ঠিক মনে হচ্ছে না।', busy: 'এখান থেকে অনেকগুলো ফর্ম এসেছে - পরে আবার চেষ্টা করুন।', net: 'পাঠানো যায়নি। ইন্টারনেট দেখে আবার চেষ্টা করুন।' },
+      closed: 'এই ফর্মটি এখন খোলা নেই।', lang: 'English' } };
+  function t(k) { return (T[LANG] || T.en)[k]; }
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+  function field(k, label, req, type, area) {
+    var v = esc(S.vals[k] || '');
+    return '<label><span class="' + (req ? 'req' : '') + '"><b>' + esc(label) + '</b></span>' + (area ? '<textarea name="' + k + '">' + v + '</textarea>'
+      : '<input name="' + k + '" type="' + (type || 'text') + '" value="' + v + '"' + (type === 'tel' ? ' inputmode="tel" autocomplete="tel"' : type === 'email' ? ' autocomplete="email"' : k === 'name' ? ' autocomplete="name"' : '') + '>') + '</label>';
+  }
+  function draw() {
+    var d = S.data, app = document.getElementById('app');
+    if (!d) return;
+    if (!d.ok) { app.innerHTML = '<div class="done"><p>' + esc(t('closed')) + '</p></div>'; return; }
+    document.documentElement.lang = LANG;
+    var forms = d.forms || [], h = '<div class="top"><b>' + esc(d.shop.name) + '</b><button class="lang" type="button" id="lang">' + esc(t('lang')) + '</button></div>';
+    if (forms.indexOf(AS) < 0) AS = forms[0];
+    if (S.sent) {
+      app.innerHTML = h + '<div class="done"><div class="tick">✓</div><h1>' + esc(t('done')) + '</h1><p class="lead">' + esc(t('done_s')) + '</p>' +
+        (d.shop.phone ? '<a class="call" href="tel:' + esc(d.shop.phone) + '">' + esc(t('call')) + ': ' + esc(d.shop.phone) + '</a>' : '') + '</div>';
+      return;
+    }
+    if (forms.length > 1) h += '<div class="tabs"><button type="button" data-as="reseller" aria-pressed="' + (AS === 'reseller') + '">' + esc(t('reseller')) + '</button>' +
+      '<button type="button" data-as="supplier" aria-pressed="' + (AS === 'supplier') + '">' + esc(t('supplier')) + '</button></div>';
+    var r = AS === 'reseller';
+    h += '<h1>' + esc(t(r ? 'title_r' : 'title_s')) + '</h1><p class="lead">' + esc(d.intro || t(r ? 'lead_r' : 'lead_s')) + '</p>' +
+      '<ul class="why">' + t(r ? 'why_r' : 'why_s').map(function (x) { return '<li>' + esc(x) + '</li>'; }).join('') + '</ul>' +
+      '<form id="f" novalidate>' + field('name', t('name'), true) + field('company', t(r ? 'company_r' : 'company_s'), !r) + field('phone', t('phone'), true, 'tel') + field('email', t('email'), false, 'email') +
+      (r ? field('city', t('city'), false) + field('where', t('where'), false) + field('want', t('want_r'), true, '', true) + field('qty', t('qty'), false)
+         : field('country', t('country'), false) + field('city', t('city'), false) + field('web', t('web'), false, 'url') + field('want', t('want_s'), true, '', true) + field('brands', t('brands'), false) + field('moq', t('moq'), false)) +
+      field('msg', t('msg'), false, '', true) +
+      '<div class="hp" aria-hidden="true"><input name="hp" tabindex="-1" autocomplete="off"></div>' +
+      '<button class="send" type="submit"' + (S.busy ? ' disabled' : '') + '>' + esc(S.busy ? t('sending') : t('send')) + '</button>' +
+      (S.err ? '<div class="msg bad">' + esc((t('bad') || {})[S.err] || S.err) + '</div>' : '') + '</form>' +
+      '<div class="foot">' + esc(d.shop.name) + (d.shop.phone ? ' · <a class="call" style="margin:0" href="tel:' + esc(d.shop.phone) + '">' + esc(d.shop.phone) + '</a>' : '') + '</div>';
+    app.innerHTML = h;
+  }
+  function keep() { var f = document.getElementById('f'); if (!f) return; Array.prototype.forEach.call(f.elements, function (x) { if (x.name) S.vals[x.name] = x.value; }); }
+  document.addEventListener('click', function (e) {
+    var b = e.target.closest && e.target.closest('[data-as],#lang'); if (!b) return;
+    keep();
+    if (b.id === 'lang') { LANG = LANG === 'bn' ? 'en' : 'bn'; try { localStorage.setItem('join_lang', LANG); } catch (x) {} }
+    else { AS = b.getAttribute('data-as'); S.err = ''; try { var u = new URL(location.href); u.searchParams.set('as', AS); history.replaceState(null, '', u.toString()); } catch (x) {} }
+    draw();
+  });
+  document.addEventListener('submit', function (e) {
+    if (!e.target || e.target.id !== 'f') return;
+    e.preventDefault(); keep();
+    var v = S.vals;
+    S.err = !String(v.name || '').trim() ? 'name' : String(v.phone || '').replace(/[^0-9]/g, '').length < 8 ? 'phone' : AS === 'supplier' && !String(v.company || '').trim() ? 'company' : !String(v.want || '').trim() ? 'want' : '';
+    if (S.err) { draw(); return; }
+    S.busy = true; draw();
+    fetch(URL0, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(Object.assign({ as: AS }, v)) })
+      .then(function (r) { return r.json().then(function (j) { return { status: r.status, j: j }; }); })
+      .then(function (x) { S.busy = false; if (x.j && x.j.ok) { S.sent = true; S.vals = {}; } else S.err = (x.j && x.j.error) || 'net'; draw(); window.scrollTo(0, 0); })
+      .catch(function () { S.busy = false; S.err = 'net'; draw(); });
+  });
+  if (!/^[0-9a-f]{32}$/.test(F)) { S.data = { ok: false }; draw(); return; }
+  fetch(URL0).then(function (r) { return r.json(); }).then(function (d) { S.data = d; draw(); }).catch(function () { S.data = { ok: false }; draw(); });
+})();
+</script>
+</body>
+</html>

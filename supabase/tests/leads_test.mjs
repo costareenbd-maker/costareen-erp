@@ -96,6 +96,43 @@ r = await mgr('erpLeadAct', [{ id: S1, convert: 'supplier' }]);
 const su = (await sql`select id from suppliers where business_id = ${B} and name = 'Shenzhen Filament Co., Ltd.'`)[0];
 check('made a supplier from a supplier lead', r.ok && !!su, r);
 
+// ---- the public forms (leadform-1)
+const { pathToFileURL } = await import('node:url');
+const pathm = await import('node:path');
+const { deps, fnDir } = await import('./harness.mjs');
+const LDS = await import(pathToFileURL(pathm.join(fnDir, 'handlers', 'leads.js')));
+const jobs = await import(pathToFileURL(pathm.join(fnDir, 'jobs.js')));
+const asB = async (fn) => { const rows = await jobs.owners(sql, [B]); return jobs.asBusiness(deps, rows[0], 'test', fn); };
+r = await sales('erpLeadFormsSet', [{ on: ['reseller'] }]);
+check('forms: a salesperson does not open them', !r.ok, r);
+r = await mgr('erpLeadFormsSet', [{ on: ['reseller'], intro: 'Resellers wanted in every district' }]);
+const tok = r.ok && /f=([0-9a-f]{32})/.exec(r.result.links.reseller)[1];
+check('a manager opens the reseller form and gets its link', r.ok && r.result.on.join() === 'reseller' && /join\.html\?f=[0-9a-f]{32}&as=reseller/.test(r.result.links.reseller), r.result);
+let p = await asB((ctx) => LDS.leadFormPage(ctx, tok));
+check('the public page: shop name, the intro, only the open form', p.status === 200 && p.body.ok && p.body.intro === 'Resellers wanted in every district' && p.body.forms.join() === 'reseller', p.body);
+p = await asB((ctx) => LDS.leadFormPage(ctx, 'f'.repeat(32)));
+check('a wrong link: not open', p.status === 404, p);
+p = await asB((ctx) => LDS.leadFormSend(ctx, tok, { as: 'supplier', name: 'X', phone: '01700000000', company: 'Y', want: 'Z' }, '10.1.1.1'));
+check('the supplier form is closed, so it is refused', p.status === 404, p);
+p = await asB((ctx) => LDS.leadFormSend(ctx, tok, { as: 'reseller', name: 'Mitu', phone: '12', want: 'PLA' }, '10.1.1.1'));
+check('a phone that cannot be called is refused', p.body.ok === false && p.body.error === 'phone', p.body);
+p = await asB((ctx) => LDS.leadFormSend(ctx, tok, { as: 'reseller', name: 'Mitu Store', company: 'Mitu Gadgets', phone: '01922-334455', city: 'Sylhet', where: 'facebook.com/mitugadgets', want: 'PLA and PETG', qty: '30 rolls' }, '10.1.1.1'));
+const ml = (await sql`select kind, source, company, city, follow_up_on, note, tags from inbox_leads where business_id = ${B} and source = 'reseller_form'`)[0];
+check('a reseller form becomes a customer lead, follow up today, with where they sell and how many', p.body.ok && ml && ml.kind === 'customer' && ml.company === 'Mitu Gadgets' && ml.city === 'Sylhet' &&
+  ml.follow_up_on && /Sells at: facebook\.com\/mitugadgets/.test(ml.note) && /30 rolls/.test(ml.note) && ml.tags.includes('reseller'), ml);
+p = await asB((ctx) => LDS.leadFormSend(ctx, tok, { as: 'reseller', name: 'Mitu', phone: '+8801922334455', want: 'Also resin' }, '10.1.1.2'));
+const n2 = (await sql`select count(*)::int as n from inbox_leads where business_id = ${B} and source = 'reseller_form'`)[0].n;
+const ev = await sql`select what from inbox_lead_events e join inbox_leads l on l.id = e.lead_id where l.business_id = ${B} and l.source = 'reseller_form'`;
+check('the same phone again: the lead is updated, not added twice', p.body.ok && n2 === 1 && ev.some((x) => x.what === 'Filled the form again'), { n2, ev });
+p = await asB((ctx) => LDS.leadFormSend(ctx, tok, { as: 'reseller', name: 'Bot', phone: '01700000001', want: 'x', hp: 'filled' }, '10.1.1.3'));
+const bots = (await sql`select count(*)::int as n from inbox_leads where business_id = ${B} and name = 'Bot'`)[0].n;
+check('a robot filling the hidden box is thanked and dropped', p.body.ok && bots === 0, bots);
+for (let i = 0; i < 6; i++) p = await asB((ctx) => LDS.leadFormSend(ctx, tok, { as: 'reseller', name: 'Spam ' + i, phone: '0171000000' + i, want: 'x' }, '10.9.9.9'));
+check('at most 5 forms an hour from one place', p.status === 429, p);
+r = await mgr('erpLeadFormsSet', [{ newLink: true }]);
+p = await asB((ctx) => LDS.leadFormPage(ctx, tok));
+check('new links: the old one stops working', r.ok && !r.result.links.reseller.includes(tok) && p.status === 404, p);
+
 // ---- the other business sees none of it
 const other = (await sql`select count(*)::int as n from inbox_leads where business_id = ${FIX.B2}`)[0].n;
 check('the other business is untouched', other === 0, other);
