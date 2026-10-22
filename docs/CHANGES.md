@@ -2842,3 +2842,32 @@ Claude for hard ones; photos, voice, PDFs and web searches -> Gemini (the gatewa
 Live check: Test 5.3 s, Ask your ERP 7.6 s on custom:claude-opus.
 Limits: the Claude Pro plan has usage windows - when used up the ERP falls back to Gemini by itself; the ChatGPT side waits
 for the plan; security review of the gateway later (owner).
+
+## Engine step 1: Command Center and Skills (22 Oct 2026, tag engine-1)
+The ERP is the screen, the Engine does the work (docs/ENGINE-PLAN.md). New:
+- The job queue in the ERP (138_engine.sql; handlers/engine.js): the owner asks in Menu > Command Center (8 agents to
+  choose from; Command Center by default), the job waits, the Engine takes it, the screen shows what it did step by step,
+  the answer, the brain, the time and the skills it used. Writes (invoice, expense, follow-up, payment) come back as
+  proposals: nothing is written until the owner presses "Yes, do it" (then the ordinary function writes it, as him).
+  Thumbs up / down on each answer; Stop, Send again, Ask again, Copy.
+- The Engine (deploy/vps/erp-engine, service erp-engine on the office VPS): every 20 s asks for a job, runs Claude Code
+  on the owner's Claude plan (Opus, then Sonnet when busy; resting 10 min at the plan's limit) with the agent's
+  instructions, the web, the switched-on skills and the ERP's functions (erp-mcp.mjs: the chat assistant's reads + the
+  propose_ tools, through erpEngineTool). No shell, no file writing. It signs in with its own access link labelled
+  "Engine"; the claim / step / tool / done calls refuse anyone else, and do not fill the activity log or clear the
+  dashboard cache.
+- Skills (handlers/skills.js; Menu > Skills): a built-in library of 7 (Bangladesh ads, what to bring in next, SEO
+  listings, explaining the numbers, finding suppliers, reel scripts, customer replies); paste any GitHub link (a whole
+  project, a folder or one SKILL.md): every skill inside is read at a fixed commit, the AI says in plain words what each
+  does, which agents it helps and the risk (code files = at least medium and never run; instructions to run downloaded
+  code, send secrets or override instructions = high, installed only with "I trust it"); tick, keep or change the
+  agents, Install. Installed skills: on / off, agents, uninstall, update when GitHub has a newer commit; Trending on
+  GitHub (popular and new skill collections, kept 12 h). Per skill: used today / 30 days / ever, success rate, thumbs,
+  last used, by which agent; marked Useful / Weak / Not used / New. The Command Center may use every switched-on skill,
+  the other agents only the skills given to them.
+- "Only me" app `engine` (Apps > Only me); owner only.
+- Tests: engine_test (50).
+Not done yet: the specialists' own schedules (Watchdog, briefing, Leads, Ads, Content, SEO - steps 2-7; today they work
+when asked from the Command Center); automatic "give this skill to another agent" suggestions; running code inside skills;
+ChatGPT as the Engine's brain (waits for the plan); GitHub reads use the shared unauthenticated limit (60 an hour per
+server) unless a GITHUB_TOKEN provider secret is set.

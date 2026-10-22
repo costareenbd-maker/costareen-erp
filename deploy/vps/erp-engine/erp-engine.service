@@ -1,0 +1,16 @@
+[Unit]
+Description=Costareen ERP Engine (takes jobs from the ERP, works with the owner's Claude plan)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/opt/erp-engine
+EnvironmentFile=/etc/erp-engine.env
+ExecStart=/usr/bin/node /opt/erp-engine/runner.mjs
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target

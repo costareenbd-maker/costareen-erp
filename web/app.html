@@ -39152,5 +39152,333 @@ saveProduct = function () {
 </script>
 <!-- fd-37: the page is styled: show it -->
 <script>(function () { var x = document.getElementById('bootHide'); if (x) x.remove(); })();</script>
+<!-- engine-1 (owner 22 Oct 2026: "the ERP is a screen where I see the output and give inputs; the engine must be stronger";
+     "a skill section: install and uninstall, how many times each is used, useful or not, install new or viral skills from
+     GitHub"): Menu > Command Center (ask the Engine anything, see each job's steps, answer, skills used, Yes / No to its
+     proposals, thumbs) and Menu > Skills (installed with usage and useful / weak / unused, paste a GitHub link, library,
+     trending, updates). Server: handlers/engine.js, handlers/skills.js; the Engine: deploy/vps/erp-engine.
+     "Only me" until the provider opens the app (Apps > Only me > Engine). -->
+<style>
+.en-top{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between}
+.en-dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:6px;background:var(--critical,#d33);vertical-align:middle}
+.en-dot.on{background:var(--ok,#1a9e5b)}
+.en-ask textarea{width:100%;min-height:90px;resize:vertical}
+.en-ideas{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}
+.en-idea{border:1px dashed var(--line,#ccd);background:transparent;color:inherit;border-radius:999px;padding:4px 10px;font:inherit;font-size:12.5px;cursor:pointer}
+.en-chips{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}
+.en-chip{border:1px solid var(--line,#dde);background:var(--card,#fff);color:inherit;border-radius:999px;padding:4px 10px;font:inherit;font-size:12.5px;cursor:pointer}
+.en-chip[aria-pressed="true"]{background:var(--accent,#5b4ff0);border-color:var(--accent,#5b4ff0);color:#fff}
+.en-chip b{font-weight:600;margin-left:4px;opacity:.8}
+.en-job{border:1px solid var(--line,#e6e8ef);border-radius:12px;padding:10px 12px;margin:8px 0;background:var(--card,#fff)}
+.en-job.open{border-color:var(--accent,#5b4ff0)}
+.en-job .hd{display:flex;gap:8px;align-items:flex-start;justify-content:space-between;cursor:pointer}
+.en-job .t{font-weight:600}
+.en-meta{font-size:12px;color:var(--muted,#667);margin-top:2px}
+.en-sk{display:inline-block;font-size:11.5px;border-radius:6px;padding:1px 6px;margin:2px 4px 0 0;background:var(--soft,rgba(91,79,240,.08));color:var(--accent,#5b4ff0)}
+.en-ans{margin-top:10px;line-height:1.55;font-size:14px;overflow-wrap:anywhere}
+.en-ans h3,.en-ans h4{margin:12px 0 4px;font-size:14.5px}
+.en-ans ul{margin:4px 0 4px 18px;padding:0}
+.en-steps{font-size:12.5px;color:var(--muted,#667);max-height:200px;overflow:auto;border-left:2px solid var(--line,#e6e8ef);padding-left:8px;margin-top:8px}
+.en-prop{border:1px solid var(--line,#e6e8ef);border-radius:10px;padding:8px 10px;margin:8px 0;display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+.en-sum{display:flex;flex-wrap:wrap;gap:10px;margin:6px 0}
+.en-sum div{border:1px solid var(--line,#e6e8ef);border-radius:10px;padding:6px 12px;font-size:13px}
+.en-sum b{font-size:18px;display:block}
+.en-skill td{vertical-align:top}
+.en-ag{display:inline-block;border:1px solid var(--line,#dde);border-radius:999px;padding:2px 8px;margin:2px 4px 2px 0;font-size:12px;cursor:pointer;background:transparent;color:inherit;font-family:inherit}
+.en-ag[aria-pressed="true"]{background:var(--accent,#5b4ff0);border-color:var(--accent,#5b4ff0);color:#fff}
+.en-use{font-size:12.5px;line-height:1.5}
+.en-pv{border:1px solid var(--line,#e6e8ef);border-radius:12px;padding:10px 12px;margin:8px 0}
+@media (max-width:760px){.en-hide-sm{display:none}.en-sktbl thead{display:none}.en-sktbl tr,.en-sktbl td{display:block;width:auto!important;text-align:left!important}.en-sktbl tr{border-bottom:1px solid var(--line,#e6e8ef);padding:8px 0}.en-sktbl td{border:0!important;padding:4px 0!important}}
+</style>
+<script>
+(function () {
+  try { SRV_SLOW.erpSkillPreview = 120000; SRV_SLOW.erpSkillInstall = 120000; SRV_SLOW.erpSkillCheckUpdates = 90000; SRV_SLOW.erpSkillUpdate = 90000; SRV_SLOW.erpSkillTrending = 60000; } catch (e) {}
+  var EN = { data: null, busy: false, st: '', open: null, job: null, agent: 'command', draft: '', err: '' };
+  var SK = { data: null, busy: false, panel: '', url: '', pv: null, pvBusy: false, pick: {}, pickAg: {}, trust: {}, trend: null, err: '' };
+  window.EN = EN; window.SK = SK;
+  var ICON_E = '<path d="M12 2l2.4 4.9 5.4.8-3.9 3.8.9 5.4L12 14.3 7.2 16.9l.9-5.4L4.2 7.7l5.4-.8z"/><path d="M5 21h14"/>';
+  var ICON_S = '<path d="M4 6h16M4 12h10M4 18h7"/><path d="M17 15l2 2 3-4"/>';
+  var IDEAS = ['Why did sales change this month compared with last month?', 'Which 5 products should I bring in next, and why?', 'Write 3 Facebook ads for the product with the best margin and enough stock',
+    'Find 10 PETG filament manufacturers in China with prices and minimum order', 'Check my website\'s SEO and give me the fixes', 'What should I post this week? Make a plan with captions'];
+  function enOn() {
+    if (!ME || ME.role !== 'owner') return false; var a = ME.apps || {};
+    return !!ME.platform || (a.off || []).indexOf('engine') < 0;
+  }
+  window.enOn = enOn;
+  if (typeof fdxNav === 'function') { fdxNav('engine', 'Command Center', ICON_E, 'leads'); fdxNav('skills', 'Skills', ICON_S, 'engine'); }
+  try { VIEW_NAMES.engine = 'Command Center'; VIEW_NAMES.skills = 'Skills'; } catch (e) {}
+  try { FDH_SUB.engine = 'Ask the Engine anything; see what it did, the skills it used, and say Yes to what it prepared'; FDH_SUB.skills = 'Know-how packs the Engine\'s agents use: install, switch off, see which ones are used and useful'; } catch (e) {}
+  function syncNav() {
+    ['engine', 'skills'].forEach(function (v) { var b = document.querySelector('#nav button[data-view="' + v + '"]'); if (b) b.style.display = enOn() ? '' : 'none'; });
+    var b = document.querySelector('#nav button[data-view="engine"]'); if (!b) return;
+    var n = EN.data ? (EN.data.jobs || []).reduce(function (s, j) { return s + (j.waiting || 0); }, 0) : 0;
+    var c = b.querySelector('.count'); if (!c) { c = document.createElement('span'); c.className = 'count'; b.appendChild(c); } c.textContent = n ? String(n) : ''; c.style.display = n ? '' : 'none';
+  }
+  if (typeof applyRole === 'function') { var arEn = applyRole; applyRole = function () { var r = arEn.apply(this, arguments); try { syncNav(); } catch (e) {} return r; }; }
+  setTimeout(syncNav, 1500);
+
+  // a small, safe markdown: headings, bold, lists, links (the text is escaped first)
+  function md(t) {
+    var lines = esc(String(t || '')).split(/\r?\n/), out = [], list = false;
+    var inline = function (s) { return s.replace(/\*\*([^*]+)\*\*/g, '<b>$1</b>').replace(/\[([^\]]+)\]\((https?:\/\/[^)\s]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>')
+      .replace(/(^|[\s(])(https?:\/\/[^\s<)]+)/g, '$1<a href="$2" target="_blank" rel="noopener">$2</a>').replace(/`([^`]+)`/g, '<code>$1</code>'); };
+    lines.forEach(function (l) {
+      var m;
+      if ((m = l.match(/^\s*[-*•]\s+(.*)$/)) || (m = l.match(/^\s*\d+[.)]\s+(.*)$/))) { if (!list) { out.push('<ul>'); list = true; } out.push('<li>' + inline(m[1]) + '</li>'); return; }
+      if (list) { out.push('</ul>'); list = false; }
+      if ((m = l.match(/^#{1,2}\s+(.*)$/))) out.push('<h3>' + inline(m[1]) + '</h3>');
+      else if ((m = l.match(/^#{3,6}\s+(.*)$/))) out.push('<h4>' + inline(m[1]) + '</h4>');
+      else if (/^\s*$/.test(l)) out.push('<div style="height:6px"></div>');
+      else out.push('<div>' + inline(l) + '</div>');
+    });
+    if (list) out.push('</ul>');
+    return out.join('');
+  }
+  var STATUS = { queued: ['Waiting', 'low'], running: ['Working…', 'low'], done: ['Done', 'ok'], failed: ['Failed', 'out'], cancelled: ['Stopped', 'out'] };
+  function pill(st) { var s = STATUS[st] || [st, '']; return '<span class="pill ' + s[1] + '">' + esc(s[0]) + '</span>'; }
+
+  // ------------------------------------------------------------------------------------------------- Command Center
+  function load(then) {
+    if (EN.busy) return; EN.busy = true;
+    srv('erpEngine', [{ status: EN.st }], function (r) { EN.busy = false; EN.data = r; EN.err = ''; syncNav(); if (then) then(); if (VIEW === 'engine') paint(); },
+      function (e) { EN.busy = false; EN.err = (e && e.message) || String(e); if (VIEW === 'engine') paint(); });
+  }
+  function loadJob(id) {
+    srv('erpEngineJob', [{ id: id }], function (r) { if (EN.open === id) { EN.job = r; if (VIEW === 'engine') paint(); } }, function (e) { toast(esc((e && e.message) || e), true); });
+  }
+  window.enLoad = load;
+  var poll = null;
+  function keepFresh() {
+    var busy = EN.data && (EN.data.jobs || []).some(function (j) { return j.status === 'queued' || j.status === 'running'; });
+    if (busy && !poll) poll = setInterval(function () { if (VIEW !== 'engine') { clearInterval(poll); poll = null; return; } load(); if (EN.open) loadJob(EN.open); }, 8000);
+    if (!busy && poll) { clearInterval(poll); poll = null; }
+  }
+  function jobHtml(j) {
+    var open = EN.open === j.id, J = open ? EN.job : null;
+    var h = '<div class="en-job' + (open ? ' open' : '') + '"><div class="hd" data-enopen="' + j.id + '"><div><div class="t" data-noi18n="1">' + esc(j.title) + '</div>' +
+      '<div class="en-meta">' + esc(j.agentName) + ' · ' + esc(j.created) + (j.seconds ? ' · ' + j.seconds + ' s' : '') + (j.brain ? ' · ' + esc(j.brain) : '') + '</div>' +
+      (j.skills && j.skills.length ? '<div>' + j.skills.map(function (s) { return '<span class="en-sk">skill: ' + esc(s) + '</span>'; }).join('') + '</div>' : '') + '</div>' +
+      '<div style="text-align:right;white-space:nowrap">' + pill(j.status) + (j.waiting ? '<br><span class="pill low" style="margin-top:4px;display:inline-block">' + j.waiting + ' waiting for your Yes</span>' : '') +
+      (j.rating === 1 ? ' 👍' : j.rating === -1 ? ' 👎' : '') + '</div></div>';
+    if (open) {
+      if (!J || J.id !== j.id) return h + '<div class="loading">Loading…</div></div>';
+      h += '<div class="en-meta" style="margin-top:8px"><b>You asked:</b></div><div style="white-space:pre-wrap;font-size:13.5px" data-noi18n="1">' + esc(J.ask) + '</div>';
+      if (J.steps && J.steps.length) h += '<details' + (J.status === 'running' ? ' open' : '') + '><summary class="en-meta" style="cursor:pointer;margin-top:8px">What it did (' + J.steps.length + ')</summary><div class="en-steps">' +
+        J.steps.map(function (s) { return '<div data-noi18n="1">' + esc(s.t) + '</div>'; }).join('') + '</div></details>';
+      if (J.status === 'queued') h += '<div class="note" style="margin-top:8px"><div class="ico">i</div><div>Waiting for the Engine' + (EN.data && EN.data.runner && EN.data.runner.alive ? ' - it picks jobs up within about 20 seconds.' : ' - the Engine is not running right now, so nothing will happen until it is back.') + '</div></div>';
+      if (J.status === 'running') h += '<div class="loading" style="margin-top:8px">The Engine is working on it…</div>';
+      if (J.error && J.status !== 'done') h += '<div class="note err" style="margin-top:8px"><div class="ico">!</div><div data-noi18n="1">' + esc(J.error) + '</div></div>';
+      if (J.result) h += '<div class="en-ans" data-noi18n="1">' + md(J.result) + '</div>';
+      (J.proposals || []).forEach(function (p) {
+        h += '<div class="en-prop"><div><b>Prepared:</b> <span data-noi18n="1">' + esc(p.summary) + '</span>' + (p.warnings && p.warnings.length ? '<br><span class="pill out">' + esc(p.warnings.join(' · ')) + '</span>' : '') +
+          (p.state !== 'waiting' ? '<br><span class="en-meta">' + esc(p.outcome || '') + (p.by ? ' · ' + esc(p.by) : '') + '</span>' : '') + '</div>' +
+          (p.state === 'waiting' ? '<div class="ap-row"><button class="btn small primary" type="button" data-enyes="' + esc(p.id) + '">Yes, do it</button><button class="btn small" type="button" data-enno="' + esc(p.id) + '">No</button></div>'
+            : '<span class="pill ' + (p.state === 'done' ? 'ok' : 'out') + '">' + (p.state === 'done' ? 'Done' : 'No') + '</span>') + '</div>';
+      });
+      h += '<div class="ap-row" style="margin-top:10px">' +
+        (J.status === 'done' ? '<span class="en-meta">Was this useful?</span><button class="btn small' + (J.rating === 1 ? ' primary' : '') + '" type="button" data-enrate="1">👍 Yes</button><button class="btn small' + (J.rating === -1 ? ' primary' : '') + '" type="button" data-enrate="-1">👎 No</button>' +
+          '<button class="btn small" type="button" data-encopy="1">Copy the answer</button><button class="btn small" type="button" data-enagain="1">Ask again</button>' : '') +
+        (J.status === 'queued' || J.status === 'running' ? '<button class="btn small" type="button" data-encancel="1">Stop</button>' : '') +
+        (J.status === 'failed' || J.status === 'cancelled' ? '<button class="btn small primary" type="button" data-enretry="1">Send again</button>' : '') + '</div>';
+    }
+    return h + '</div>';
+  }
+  function view() {
+    if (!enOn()) return '<div class="note"><div class="ico">i</div><div>The Engine is not switched on for this business.</div></div>';
+    var d = EN.data;
+    if (!d) { load(); return '<div class="loading">Loading the Command Center…</div>'; }
+    var R = d.runner || {}, c = d.counts || {};
+    var h = '<section><div class="card"><div class="en-top"><div><span class="en-dot' + (R.alive ? ' on' : '') + '"></span><b>' + (R.alive ? 'The Engine is on' : 'The Engine is not running') + '</b>' +
+      '<span class="en-meta" style="margin-left:8px">' + (R.seen ? 'last seen ' + esc(R.seen) : 'never seen yet') + (R.info && R.info.running ? ' · working on ' + R.info.running : '') + (R.info && R.info.cooling ? ' · resting (plan limit) ' + Math.ceil(R.info.cooling / 60) + ' min' : '') + '</span></div>' +
+      '<div><a href="#" data-engo="skills">' + fmt(d.skillsOn || 0) + ' skills on</a></div></div>' +
+      '<div class="en-ask" style="margin-top:10px"><label class="f" for="en_ask">What should the Engine do?</label><textarea class="i" id="en_ask" data-noi18n="1" placeholder="Ask anything: research, numbers, ads, suppliers, content, SEO…">' + esc(EN.draft) + '</textarea>' +
+      '<div class="en-ideas">' + IDEAS.map(function (x, i) { return '<button class="en-idea" type="button" data-enidea="' + i + '">' + esc(x) + '</button>'; }).join('') + '</div>' +
+      '<div class="ap-row"><label class="f" for="en_agent" style="margin:0">Agent</label><select class="i" id="en_agent" style="max-width:220px">' + d.agents.map(function (a) { return '<option value="' + a.key + '"' + (EN.agent === a.key ? ' selected' : '') + '>' + esc(a.name) + '</option>'; }).join('') + '</select>' +
+      '<button class="btn primary" type="button" data-en="ask">Send to the Engine</button></div></div></div></section>';
+    h += '<section><div class="en-chips">' + [['', 'All'], ['queued', 'Waiting'], ['running', 'Working'], ['done', 'Done'], ['failed', 'Failed']].map(function (x) {
+      var n = x[0] ? (c[x[0]] || 0) : Object.keys(c).reduce(function (s, k) { return s + c[k]; }, 0);
+      return '<button class="en-chip" type="button" data-enst="' + x[0] + '" aria-pressed="' + (EN.st === x[0]) + '">' + x[1] + '<b>' + n + '</b></button>'; }).join('') + '</div>';
+    if (EN.err) h += '<div class="note err"><div class="ico">!</div><div>' + esc(EN.err) + '</div></div>';
+    h += d.jobs.length ? d.jobs.map(jobHtml).join('') : '<div class="note"><div class="ico">i</div><div>No jobs' + (EN.st ? ' here' : ' yet') + '. Write what you need above and press Send to the Engine.</div></div>';
+    h += '</section>';
+    return h;
+  }
+  function paint() {
+    var v = el('view'); if (!v) return;
+    var ta = document.getElementById('en_ask'); if (ta) EN.draft = ta.value;
+    v.innerHTML = VIEW === 'skills' ? skView() : view(); try { if (typeof bindTips === 'function') bindTips(v); } catch (e) {}
+    if (VIEW === 'engine') keepFresh();
+  }
+  window.enPaint = paint;
+  var repaintEn = repaint;
+  repaint = function () { if (VIEW !== 'engine' && VIEW !== 'skills') return repaintEn.apply(this, arguments); paint(); };
+
+  // ------------------------------------------------------------------------------------------------------- Skills
+  function skLoad() {
+    if (SK.busy) return; SK.busy = true;
+    srv('erpSkills', [], function (r) { SK.busy = false; SK.data = r; SK.err = ''; if (VIEW === 'skills') paint(); }, function (e) { SK.busy = false; SK.err = (e && e.message) || String(e); if (VIEW === 'skills') paint(); });
+  }
+  function skDo(name, args, msg, after) {
+    srv(name, args, function (r) { if (r && r.installed) SK.data = r; if (msg) toast(msg); if (after) after(r); if (VIEW === 'skills') paint(); }, function (e) { toast(esc((e && e.message) || e), true, 9000); if (VIEW === 'skills') paint(); });
+  }
+  var MARK = { useful: ['Useful', 'ok'], used: ['Used', 'ok'], weak: ['Weak', 'out'], unused: ['Not used', 'low'], new: ['New', ''] };
+  var RISK = { low: ['Low risk', 'ok'], medium: ['Medium risk', 'low'], high: ['High risk', 'out'] };
+  function agName(k) { var a = (SK.data && SK.data.agents || []).filter(function (x) { return x.key === k; })[0]; return a ? a.name : k; }
+  function agChips(sel, attr, slug) {
+    return (SK.data.agents || []).filter(function (a) { return a.key !== 'command'; }).map(function (a) {
+      return '<button class="en-ag" type="button" ' + attr + '="' + esc(slug) + '" data-ag="' + a.key + '" aria-pressed="' + (sel.indexOf(a.key) >= 0) + '">' + esc(a.name) + '</button>'; }).join('');
+  }
+  function pvHtml() {
+    var P = SK.pv; if (!P) return '';
+    var n = P.skills.filter(function (s) { return SK.pick[s.path]; }).length;
+    return '<div class="card" style="margin-top:10px"><h2>' + esc(P.repo) + ' <span class="en-meta">★ ' + fmt(P.stars) + ' · commit ' + esc(P.sha) + '</span></h2>' +
+      (P.description ? '<div class="sub" style="display:block" data-noi18n="1">' + esc(P.description) + '</div>' : '') +
+      '<div class="sub" style="display:block">' + P.skills.length + ' skill' + (P.skills.length === 1 ? '' : 's') + ' found' + (P.more ? ' (the first 40 shown)' : '') + '. ' + (P.reviewed ? 'The Engine read each one.' : 'Matched by their descriptions (the AI review was not available).') + ' Tick the ones to install and keep or change the agents.</div>' +
+      P.skills.map(function (s) {
+        var ag = SK.pickAg[s.path] || s.agents, r = RISK[s.risk] || RISK.low;
+        return '<div class="en-pv"><label style="display:flex;gap:8px;align-items:flex-start;cursor:pointer"><input type="checkbox" data-skpick="' + esc(s.path) + '"' + (SK.pick[s.path] ? ' checked' : '') + '>' +
+          '<span><b data-noi18n="1">' + esc(s.name) + '</b> <span class="pill ' + r[1] + '">' + r[0] + '</span>' + (s.installed ? ' <span class="pill ok">installed - will be replaced</span>' : '') +
+          '<br><span data-noi18n="1">' + esc(s.summary || s.description) + '</span><br><span class="en-meta">' + esc(s.riskNote) + (s.hasCode ? ' · has code files (never run)' : '') + ' · ' + s.files + ' file' + (s.files === 1 ? '' : 's') + '</span></span></label>' +
+          '<div style="margin-top:6px"><span class="en-meta">For: </span>' + agChips(ag, 'data-skpvag', s.path) + '<span class="en-meta"> (the Command Center can use every skill)</span>' + (s.why ? '<div class="en-meta" data-noi18n="1">' + esc(s.why) + '</div>' : '') + '</div>' +
+          (s.risk === 'high' ? '<label style="display:block;margin-top:6px"><input type="checkbox" data-sktrust="' + esc(s.path) + '"' + (SK.trust[s.path] ? ' checked' : '') + '> I trust it - install it anyway</label>' : '') + '</div>';
+      }).join('') +
+      '<div class="ap-row" style="margin-top:8px"><button class="btn primary" type="button" data-sk="install"' + (n ? '' : ' disabled') + '>Install ' + n + ' skill' + (n === 1 ? '' : 's') + '</button><button class="btn" type="button" data-sk="pvclose">Close</button></div></div>';
+  }
+  function libHtml() {
+    var L = SK.data.library || [];
+    return '<div class="card" style="margin-top:10px"><h2>Built-in library</h2>' + (L.length ? '<table class="tbl"><tbody>' + L.map(function (l) {
+      return '<tr><td><b>' + esc(l.name) + '</b><br><span class="en-meta">' + esc(l.description) + '</span><br>' + l.agents.map(function (a) { return '<span class="en-sk">' + esc(agName(a)) + '</span>'; }).join('') + '</td>' +
+        '<td style="width:110px;text-align:right"><button class="btn small primary" type="button" data-sklib="' + esc(l.slug) + '">Install</button></td></tr>'; }).join('') + '</tbody></table>'
+      : '<div class="sub" style="display:block">Every library skill is installed.</div>') + '<div class="ap-row" style="margin-top:8px"><button class="btn" type="button" data-sk="close">Close</button></div></div>';
+  }
+  function trendHtml() {
+    var T = SK.trend;
+    if (!T) return '<div class="card" style="margin-top:10px"><div class="loading">Looking on GitHub…</div></div>';
+    if (T.error) return '<div class="note err" style="margin-top:10px"><div class="ico">!</div><div>' + esc(T.error) + '</div></div>';
+    var list = function (title, l) { return '<h3 style="margin:10px 0 4px">' + title + '</h3>' + (l.length ? '<table class="tbl"><tbody>' + l.map(function (x) {
+      return '<tr><td><a href="' + esc(x.url) + '" target="_blank" rel="noopener"><b>' + esc(x.repo) + '</b></a> <span class="en-meta">★ ' + fmt(x.stars) + (x.pushed ? ' · updated ' + esc(x.pushed) : '') + '</span><br><span class="en-meta" data-noi18n="1">' + esc(x.description) + '</span></td>' +
+        '<td style="width:110px;text-align:right"><button class="btn small" type="button" data-skread="' + esc(x.url) + '">Look inside</button></td></tr>'; }).join('') + '</tbody></table>' : '<div class="sub" style="display:block">Nothing found.</div>'); };
+    return '<div class="card" style="margin-top:10px"><h2>Trending on GitHub</h2><div class="en-meta">Checked ' + esc(T.when) + '. "Look inside" reads the project; nothing is installed until you tick and press Install.</div>' +
+      list('Most popular skill collections', T.popular || []) + list('New and rising (last 45 days)', T.rising || []) +
+      '<div class="ap-row" style="margin-top:8px"><button class="btn" type="button" data-sk="trendfresh">Check again now</button><button class="btn" type="button" data-sk="close">Close</button></div></div>';
+  }
+  function skRow(s) {
+    var m = MARK[s.mark] || MARK.new, r = RISK[s.risk] || RISK.low, u = s.use || {};
+    return '<tr class="en-skill"><td><b data-noi18n="1">' + esc(s.name) + '</b> <span class="pill ' + m[1] + '">' + m[0] + '</span>' + (s.update ? ' <span class="pill low">update available</span>' : '') +
+      '<br><span class="en-meta" data-noi18n="1">' + esc(s.summary || s.description) + '</span>' +
+      '<br><span class="en-meta">' + (s.source === 'github' ? '<a href="' + esc(s.url) + '" target="_blank" rel="noopener">' + esc(s.repo) + '</a>' : 'Built-in library') + ' · installed ' + esc(s.installed) + ' · <span class="pill ' + r[1] + '">' + r[0] + '</span>' + (s.hasCode ? ' · has code (never run)' : '') + '</span>' +
+      (s.mark === 'weak' ? '<div class="en-meta" style="color:var(--critical,#d33)">The results it helped were rejected or failed. Remove it or find a better one in Trending.</div>' : s.mark === 'unused' ? '<div class="en-meta">Not picked by any job in 30 days. Give it to more agents, or remove it.</div>' : '') +
+      '<div style="margin-top:4px">' + agChips(s.agents || [], 'data-skag', s.slug) + '</div></td>' +
+      '<td class="en-use">Today <b>' + fmt(u.today || 0) + '</b> · 30 days <b>' + fmt(u.d30 || 0) + '</b> · all <b>' + fmt(u.total || 0) + '</b>' +
+      '<br>Success ' + (u.okRate === null || u.okRate === undefined ? '-' : u.okRate + '%') + ' · 👍 ' + (u.up || 0) + ' · 👎 ' + (u.down || 0) +
+      (u.last ? '<br><span class="en-meta">last used ' + esc(u.last) + '</span>' : '') +
+      ((u.byAgent || []).length ? '<br><span class="en-meta">by ' + u.byAgent.map(function (a) { return esc(a.name) + ' ' + a.n; }).join(', ') + '</span>' : '') + '</td>' +
+      '<td style="white-space:nowrap;text-align:right"><label style="cursor:pointer"><input type="checkbox" data-skon="' + esc(s.slug) + '"' + (s.enabled ? ' checked' : '') + '> On</label><br>' +
+      (s.update ? '<button class="btn small" type="button" data-skupd="' + esc(s.slug) + '" style="margin-top:4px">Update</button><br>' : '') +
+      '<button class="btn small" type="button" data-skrm="' + esc(s.slug) + '" style="margin-top:4px">Uninstall</button></td></tr>';
+  }
+  function skView() {
+    if (!enOn()) return '<div class="note"><div class="ico">i</div><div>The Engine is not switched on for this business.</div></div>';
+    var d = SK.data;
+    if (!d) { skLoad(); return '<div class="loading">Loading the skills…</div>'; }
+    var on = d.installed.filter(function (s) { return s.enabled; }).length, c = d.counts || {};
+    var h = '<section><div class="card"><div class="en-sum"><div><b>' + fmt(d.installed.length) + '</b>installed</div><div><b>' + fmt(on) + '</b>switched on</div>' +
+      '<div><b style="color:var(--ok,#1a9e5b)">' + fmt(c.useful || 0) + '</b>useful</div><div><b style="color:var(--critical,#d33)">' + fmt(c.weak || 0) + '</b>weak</div><div><b>' + fmt(c.unused || 0) + '</b>not used</div></div>' +
+      '<label class="f" for="sk_url">Install from GitHub: paste a link</label><div class="ap-row"><input class="i" id="sk_url" style="flex:1 1 320px" placeholder="https://github.com/owner/project (a whole project, a folder, or a SKILL.md file)" value="' + esc(SK.url) + '">' +
+      '<button class="btn primary" type="button" data-sk="read"' + (SK.pvBusy ? ' disabled' : '') + '>' + (SK.pvBusy ? 'Reading…' : 'Read it') + '</button></div>' +
+      '<div class="ap-row" style="margin-top:8px"><button class="btn" type="button" data-sk="lib">Built-in library (' + (d.library || []).length + ')</button><button class="btn" type="button" data-sk="trend">Trending on GitHub</button><button class="btn" type="button" data-sk="updates">Check for updates</button>' +
+      '<a href="#" data-engo="engine" style="margin-left:auto">Command Center</a></div>' +
+      (SK.pv ? pvHtml() : SK.panel === 'lib' ? libHtml() : SK.panel === 'trend' ? trendHtml() : '') + '</div></section>';
+    if (SK.err) h += '<div class="note err"><div class="ico">!</div><div>' + esc(SK.err) + '</div></div>';
+    h += '<section>' + (d.installed.length ? '<div style="overflow:auto"><table class="tbl en-sktbl"><thead><tr><th>Skill and agents</th><th>Used</th><th></th></tr></thead><tbody>' + d.installed.map(skRow).join('') + '</tbody></table></div>' +
+      '<div class="sub" style="display:block;margin-top:6px">The Command Center can use every switched-on skill; the other agents use the skills given to them. Every job lists the skills it used, and your 👍 / 👎 on a job counts for those skills.</div>'
+      : '<div class="note"><div class="ico">i</div><div>No skills yet. Start with the built-in library, or paste a GitHub link.</div></div>') + '</section>';
+    return h;
+  }
+
+  // ---------------------------------------------------------------------------------------------------- clicks
+  document.addEventListener('click', function (e) {
+    if (VIEW !== 'engine' && VIEW !== 'skills') return;
+    var t = e.target.closest && e.target.closest('[data-en],[data-enopen],[data-enst],[data-enidea],[data-enyes],[data-enno],[data-enrate],[data-encancel],[data-enretry],[data-encopy],[data-enagain],[data-engo],[data-sk],[data-sklib],[data-skread],[data-skrm],[data-skupd],[data-skag],[data-skpvag]');
+    if (!t) return;
+    if (t.hasAttribute('data-engo')) { e.preventDefault(); go(t.getAttribute('data-engo')); return; }
+    // ---- Command Center
+    if (t.hasAttribute('data-enidea')) { var ta = document.getElementById('en_ask'); if (ta) { ta.value = IDEAS[Number(t.getAttribute('data-enidea'))]; EN.draft = ta.value; ta.focus(); } return; }
+    if (t.getAttribute('data-en') === 'ask') {
+      var ask = (document.getElementById('en_ask') || {}).value || '', ag = (document.getElementById('en_agent') || {}).value || 'command';
+      EN.agent = ag; t.disabled = true;
+      srv('erpEngineAsk', [{ ask: ask, agent: ag }], function (r) { EN.data = r; EN.draft = ''; var ta2 = document.getElementById('en_ask'); if (ta2) ta2.value = ''; EN.open = r.created; EN.job = null; EN.st = ''; toast('Sent to the Engine.'); loadJob(r.created); paint(); },
+        function (er) { t.disabled = false; toast(esc((er && er.message) || er), true, 8000); });
+      return;
+    }
+    if (t.hasAttribute('data-enst')) { EN.st = t.getAttribute('data-enst'); load(); return; }
+    if (t.hasAttribute('data-enopen')) { var id = t.getAttribute('data-enopen'); if (EN.open === id) { EN.open = null; EN.job = null; paint(); return; } EN.open = id; EN.job = null; paint(); loadJob(id); return; }
+    var J = EN.job;
+    var after = function (r) { EN.job = r; load(); };
+    if (t.hasAttribute('data-enyes') || t.hasAttribute('data-enno')) {
+      var yes = t.hasAttribute('data-enyes'); t.disabled = true;
+      srv('erpEngineDecide', [{ id: J.id, proposal: t.getAttribute(yes ? 'data-enyes' : 'data-enno'), yes: yes }], function (r) { toast(yes ? 'Done.' : 'Not done.'); after(r); }, function (er) { t.disabled = false; toast(esc((er && er.message) || er), true, 9000); });
+      return;
+    }
+    if (t.hasAttribute('data-enrate')) { srv('erpEngineRate', [{ id: J.id, rating: Number(t.getAttribute('data-enrate')) }], function (r) { toast('Thanks - it counts for the skills it used.'); after(r); }, function (er) { toast(esc((er && er.message) || er), true); }); return; }
+    if (t.hasAttribute('data-encancel')) { srv('erpEngineCancel', [{ id: J.id }], function (r) { EN.data = r; loadJob(J.id); }, function (er) { toast(esc((er && er.message) || er), true); }); return; }
+    if (t.hasAttribute('data-enretry')) { srv('erpEngineRetry', [{ id: J.id }], function (r) { EN.data = r; loadJob(J.id); paint(); }, function (er) { toast(esc((er && er.message) || er), true); }); return; }
+    if (t.hasAttribute('data-encopy')) { try { navigator.clipboard.writeText(J.result || ''); toast('Copied.'); } catch (er) { toast('Could not copy.', true); } return; }
+    if (t.hasAttribute('data-enagain')) { EN.draft = J.ask; EN.agent = J.agent; EN.open = null; EN.job = null; paint(); window.scrollTo(0, 0); return; }
+    // ---- Skills
+    var a = t.getAttribute('data-sk');
+    if (a === 'read' || t.hasAttribute('data-skread')) {
+      var url = t.hasAttribute('data-skread') ? t.getAttribute('data-skread') : ((document.getElementById('sk_url') || {}).value || '').trim();
+      if (!url) { toast('Paste a GitHub link first.', true); return; }
+      SK.url = url; SK.pvBusy = true; SK.pv = null; SK.panel = ''; paint();
+      srv('erpSkillPreview', [{ url: url }], function (r) { SK.pvBusy = false; SK.pv = r; SK.pick = {}; SK.pickAg = {}; SK.trust = {};
+        r.skills.forEach(function (s) { if (r.skills.length <= 5 && s.risk !== 'high') SK.pick[s.path] = true; }); paint(); },
+        function (er) { SK.pvBusy = false; toast(esc((er && er.message) || er), true, 9000); paint(); });
+      return;
+    }
+    if (a === 'pvclose') { SK.pv = null; paint(); return; }
+    if (a === 'install') {
+      var picks = SK.pv.skills.filter(function (s) { return SK.pick[s.path]; }).map(function (s) { return { path: s.path, agents: SK.pickAg[s.path] || s.agents, acceptRisk: !!SK.trust[s.path] }; });
+      t.disabled = true; t.textContent = 'Installing…';
+      skDo('erpSkillInstall', [{ previewId: SK.pv.id, picks: picks }], 'Installed.', function () { SK.pv = null; SK.url = ''; });
+      return;
+    }
+    if (a === 'lib') { SK.pv = null; SK.panel = SK.panel === 'lib' ? '' : 'lib'; paint(); return; }
+    if (a === 'close') { SK.panel = ''; paint(); return; }
+    if (a === 'trend' || a === 'trendfresh') {
+      SK.pv = null; SK.panel = 'trend'; if (a === 'trendfresh' || !SK.trend || SK.trend.error) SK.trend = null; paint();
+      if (!SK.trend) srv('erpSkillTrending', [{ fresh: a === 'trendfresh' }], function (r) { SK.trend = r; paint(); }, function (er) { SK.trend = { error: (er && er.message) || String(er) }; paint(); });
+      return;
+    }
+    if (a === 'updates') { t.disabled = true; skDo('erpSkillCheckUpdates', [], null, function (r) { toast(r.checked.skills ? (r.checked.updates ? r.checked.updates + ' update' + (r.checked.updates === 1 ? '' : 's') + ' available.' : 'Every GitHub skill is up to date.') + (r.checked.failed ? ' ' + r.checked.failed + ' could not be checked.' : '') : 'No skills from GitHub to check.'); }); return; }
+    if (t.hasAttribute('data-sklib')) { t.disabled = true; skDo('erpSkillLibraryInstall', [{ slug: t.getAttribute('data-sklib') }], 'Installed.'); return; }
+    if (t.hasAttribute('data-skupd')) { t.disabled = true; skDo('erpSkillUpdate', [{ slug: t.getAttribute('data-skupd') }], 'Updated.'); return; }
+    if (t.hasAttribute('data-skrm')) { var slug = t.getAttribute('data-skrm'); if (!confirm('Uninstall ' + slug + '? Its usage history is kept.')) return; skDo('erpSkillRemove', [{ slug: slug }], 'Uninstalled.'); return; }
+    if (t.hasAttribute('data-skag')) {
+      var s = (SK.data.installed || []).filter(function (x) { return x.slug === t.getAttribute('data-skag'); })[0]; if (!s) return;
+      var k = t.getAttribute('data-ag'), list = (s.agents || []).slice(), i = list.indexOf(k); if (i >= 0) list.splice(i, 1); else list.push(k);
+      skDo('erpSkillSet', [{ slug: s.slug, agents: list }]);
+      return;
+    }
+    if (t.hasAttribute('data-skpvag')) {
+      var p = t.getAttribute('data-skpvag'), sk0 = SK.pv.skills.filter(function (x) { return x.path === p; })[0]; if (!sk0) return;
+      var l2 = (SK.pickAg[p] || sk0.agents).slice(), k2 = t.getAttribute('data-ag'), j2 = l2.indexOf(k2); if (j2 >= 0) l2.splice(j2, 1); else l2.push(k2);
+      SK.pickAg[p] = l2; paint();
+    }
+  });
+  document.addEventListener('change', function (e) {
+    if (VIEW === 'engine' && e.target && e.target.id === 'en_agent') { EN.agent = e.target.value; return; }
+    if (VIEW !== 'skills' || !e.target) return;
+    var t = e.target;
+    if (t.hasAttribute('data-skpick')) { SK.pick[t.getAttribute('data-skpick')] = t.checked; paint(); return; }
+    if (t.hasAttribute('data-sktrust')) { SK.trust[t.getAttribute('data-sktrust')] = t.checked; return; }
+    if (t.hasAttribute('data-skon')) { skDo('erpSkillSet', [{ slug: t.getAttribute('data-skon'), enabled: t.checked }], t.checked ? 'Switched on.' : 'Switched off.'); }
+  });
+  document.addEventListener('keydown', function (e) {
+    if (VIEW === 'skills' && e.key === 'Enter' && e.target && e.target.id === 'sk_url') { var b = document.querySelector('[data-sk="read"]'); if (b) b.click(); }
+    if (VIEW === 'engine' && e.key === 'Enter' && (e.ctrlKey || e.metaKey) && e.target && e.target.id === 'en_ask') { var b2 = document.querySelector('[data-en="ask"]'); if (b2) b2.click(); }
+  });
+})();
+</script>
 </body>
 </html>
