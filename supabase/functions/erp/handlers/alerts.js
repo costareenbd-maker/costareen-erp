@@ -15,6 +15,7 @@ import { erpDevices } from './settings.js';
 import { waNumber, evoCall, erpEvoStatus } from './campaigns.js';
 import { moneyAlerts } from './risk.js';
 import { roleAtLeast } from '../allow.js';
+import { watchAlerts } from './watchdog.js';
 
 const str = (v) => String(v == null ? '' : v).trim();
 const JOB_WORDS = { 'nightly:steadfast': 'The nightly Steadfast check', 'nightly:backup': 'The nightly backup',
@@ -28,6 +29,8 @@ export async function alertList(ctx) {
   await part(async () => { for (const a of await moneyAlerts(ctx, ctx.s.role)) out.push(a); });
   // the system's own health stays with shareholders and the owner
   if (!roleAtLeast(ctx.s.role, 'shareholder')) return out;
+  // watch-1: the Watchdog's urgent and high issues, and an Engine that stopped with work waiting
+  if (ctx.s.role === 'owner') await part(async () => { for (const a of await watchAlerts(ctx)) out.push(a); });
 
   await part(async () => {
     const d = await erpDevices(ctx);

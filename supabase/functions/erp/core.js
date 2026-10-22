@@ -215,9 +215,9 @@ async function hello(sql, deps, token, authHeader, ip) {
 // the server's own connection, after the call has succeeded. Only a few safe
 // words of what was touched are kept - never a whole payload, which may hold
 // a key or a code.
-const QUIET = /^(erpSetTheme|erpSetLook|erpSetBusiness|erpHello|erpMe|erpEvo\w*|erpCampaignTick|erpEngineClaim|erpEngineStep|erpEngineTool|erpEngineDone)$/;
+const QUIET = /^(erpSetTheme|erpSetLook|erpSetBusiness|erpHello|erpMe|erpEvo\w*|erpCampaignTick|erpEngineClaim|erpEngineStep|erpEngineTool|erpEngineDone|erpWatchReport)$/;
 // engine-1: the Engine's own bookkeeping and the skills never touch the books - the kept dashboard stays
-const NO_DASH = /^(erpEngine(Claim|Step|Tool|Done|Ask|Cancel|Retry|Rate)|erpSkill\w*)$/;
+const NO_DASH = /^(erpEngine(Claim|Step|Tool|Done|Ask|Cancel|Retry|Rate|ScheduleSave|ScheduleRun)|erpSkill\w*|erpWatch\w*)$/;
 const DETAIL_KEYS = ['invoiceNo', 'invoice', 'sku', 'month', 'kind', 'business'];
 function activityDetail(args) {
   const a = Array.isArray(args) ? args[0] : null;

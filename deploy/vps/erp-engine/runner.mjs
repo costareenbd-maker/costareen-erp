@@ -8,6 +8,7 @@
 // What it does is sent back as steps; the answer, the skills used, the brain and the time go to erpEngineDone.
 // Env (/etc/erp-engine.env): ERP_URL, ERP_ENGINE_KEY (an access link labelled "Engine ..."), MAX_PARALLEL, MODELS.
 import { spawn } from 'node:child_process';
+import tls from 'node:tls';
 import { mkdirSync, writeFileSync, rmSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -19,7 +20,7 @@ const MAX_PAR = Number(process.env.MAX_PARALLEL || 2);
 const MODELS = String(process.env.MODELS || 'opus,sonnet').split(',').map((s) => s.trim()).filter(Boolean);
 const CLAUDE = process.env.CLAUDE_BIN || '/usr/bin/claude';
 const WORK = process.env.WORK_DIR || '/var/lib/erp-engine';
-const TICK_MS = 20000, JOB_MS = 20 * 60000, VERSION = 'engine-1';
+const TICK_MS = 20000, JOB_MS = 20 * 60000, VERSION = 'watch-1';
 const RUNNER = process.env.RUNNER_NAME || 'office-vps';
 
 let running = 0, coolUntil = 0, lastBeat = 0;
@@ -148,15 +149,51 @@ async function work(c) {
   log('job', id, out && out.ok ? 'done' : 'failed: ' + (out && out.error), Math.round((Date.now() - t0) / 1000) + 's');
 }
 
+// ---- watch-1: the Watchdog's pages (the ERP says which and when, in the claim's answer)
+let watching = false;
+function certDays(host) {
+  return new Promise((ok) => {
+    const sock = tls.connect({ host, port: 443, servername: host, timeout: 15000 }, () => {
+      const c = sock.getPeerCertificate(); sock.end();
+      ok(c && c.valid_to ? Math.floor((new Date(c.valid_to).getTime() - Date.now()) / 86400e3) : null);
+    });
+    sock.on('error', () => ok(null)); sock.on('timeout', () => { sock.destroy(); ok(null); });
+  });
+}
+async function openPage(t) {
+  const t0 = Date.now();
+  try {
+    const r = await fetch(t.url, { redirect: 'follow', headers: { 'user-agent': 'Mozilla/5.0 (compatible; ERP-Watchdog/1.0)', accept: 'text/html,*/*' }, signal: AbortSignal.timeout(30000) });
+    const body = t.must ? (await r.text()).slice(0, 3e6) : (await r.arrayBuffer(), '');
+    return { id: t.id, status: r.status, ms: Date.now() - t0, found: t.must ? body.toLowerCase().includes(String(t.must).toLowerCase()) : undefined };
+  } catch (e) { return { id: t.id, status: 0, ms: Date.now() - t0, error: String((e && e.cause && e.cause.code) || (e && e.name === 'TimeoutError' ? 'no answer in 30 s' : e && e.message) || e).slice(0, 200) }; }
+}
+async function watch(w) {
+  if (watching || !w || !Array.isArray(w.targets)) return;
+  watching = true;
+  try {
+    const results = await Promise.all(w.targets.map(openPage));
+    const hosts = {};
+    for (const t of w.targets) { try { const u = new URL(t.url); if (u.protocol === 'https:') hosts[u.hostname] = null; } catch (_) { /* skip */ } }
+    for (const h of Object.keys(hosts)) hosts[h] = await certDays(h);
+    for (const r of results) { const t = w.targets.find((x) => x.id === r.id); try { const u = new URL(t.url); if (u.protocol === 'https:') r.sslDays = hosts[u.hostname]; } catch (_) { /* skip */ } }
+    const out = await erp('erpWatchReport', { results });
+    const bad = results.filter((r) => r.error || !(r.status < 400) || r.found === false);
+    log('watch', results.length + ' pages', bad.length ? bad.length + ' with a problem' : 'all fine', 'open issues ' + (out && out.open));
+  } catch (e) { log('watch failed:', e.message); }
+  watching = false;
+}
+
 async function tick() {
   const info = { version: VERSION, running, models: MODELS, cooling: coolUntil > Date.now() ? Math.round((coolUntil - Date.now()) / 1000) : 0 };
   try {
     if (running >= MAX_PAR || coolUntil > Date.now()) {
-      if (Date.now() - lastBeat > 60000) { lastBeat = Date.now(); await erp('erpEngineClaim', { runner: RUNNER, info, peek: true }); }
+      if (Date.now() - lastBeat > 60000) { lastBeat = Date.now(); const pk = await erp('erpEngineClaim', { runner: RUNNER, info, peek: true }); if (pk && pk.watch) watch(pk.watch); }
       return;
     }
     lastBeat = Date.now();
     const c = await erp('erpEngineClaim', { runner: RUNNER, info });
+    if (c && c.watch) watch(c.watch);
     if (c && c.job) { running++; work(c).finally(() => { running--; }); setTimeout(tick, 1000); }
   } catch (e) { log('claim failed:', e.message); }
 }

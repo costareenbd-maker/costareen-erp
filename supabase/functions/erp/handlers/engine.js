@@ -16,12 +16,15 @@
 //   erpEngineTool({id, tool, args})     one ERP function for a running job (reads; propose_* become proposals)
 //   erpEngineStep({id, lines})          what it is doing, for the screen
 //   erpEngineDone({id, ok, result, error, skills, brain, tokens, ms, retry})
+// Timed jobs (watch-1): erpEngineScheduleSave({id, agent, title, ask, every, at, weekday, enabled, remove}),
+//   erpEngineScheduleRun({id}); a schedule that is due becomes a job when the Engine next asks for work.
 
 import { roleAtLeast } from '../allow.js';
 import { formatDate } from '../lib/time.js';
 import { platformAdmin } from './platform.js';
 import { appIsOff } from './apps.js';
 import { TOOLS, runTool, confirmWrite } from './assistant.js';
+import { watchDue, ISSUE_TOOLS, issueTool, nextRun } from './watchdog.js';
 
 const str = (v) => String(v == null ? '' : v).trim();
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -79,7 +82,7 @@ export async function erpEngine(ctx, payload) {
   const skills = (await ctx.tx`select count(*) filter (where enabled)::int n from engine_skills where business_id = ${ctx.biz}`)[0].n;
   return {
     agents: Object.keys(AGENTS).map((k) => ({ key: k, name: AGENTS[k].name, job: AGENTS[k].job, live: !!AGENTS[k].live })),
-    jobs: rows.map(shortJob), counts, skillsOn: skills,
+    jobs: rows.map(shortJob), counts, skillsOn: skills, schedules: await schedules(ctx),
     runner: run ? { alive: age < 120, seen: when(run.seen_at), secondsAgo: Math.round(age), info: run.info || {} } : { alive: false, seen: '', info: {} },
   };
 }
@@ -158,6 +161,71 @@ export async function erpEngineDecide(ctx, payload) {
 
 /** The ERP functions the Engine may use: the chat assistant's (reads at once, propose_* need the owner's Yes). */
 export const ENGINE_TOOLS = TOOLS.filter((t) => t.name !== 'open_screen');
+/** watch-1: every agent reads the Watchdog's issues; the Watchdog (and the Command Center) may record new ones. */
+const toolsFor = (agent) => ENGINE_TOOLS.concat(ISSUE_TOOLS.filter((t) => t.name === 'watch_issues' || agent === 'watchdog' || agent === 'command'));
+
+// ----------------------------------------------------------------------------------------------------- timed jobs
+const EVERY = ['hourly', 'daily', 'weekly'];
+async function schedules(ctx) {
+  const rows = await ctx.tx`select s.*, j.status job_status from engine_schedules s left join engine_jobs j on j.id = s.last_job
+                            where s.business_id = ${ctx.biz} order by s.created_at`;
+  return rows.map((r) => ({ id: r.id, agent: r.agent, agentName: (AGENTS[r.agent] || AGENTS.command).name, title: r.title, ask: r.ask, every: r.every, at: r.at_time, weekday: r.weekday,
+    enabled: r.enabled, next: r.enabled ? when(r.next_at) : '', lastRun: when(r.last_run), lastJob: r.last_job, lastStatus: r.job_status || '', builtIn: !!r.key }));
+}
+/** Due schedules become jobs (once each: not while the last one is still waiting or running). */
+async function dueSchedules(ctx) {
+  const due = await ctx.tx`select s.*, j.status job_status from engine_schedules s left join engine_jobs j on j.id = s.last_job
+                           where s.business_id = ${ctx.biz} and s.enabled and s.next_at <= now() for update of s skip locked`;
+  for (const s of due) {
+    let job = s.last_job;
+    if (!['queued', 'running'].includes(s.job_status)) {
+      job = (await ctx.tx`insert into engine_jobs (business_id, agent, title, ask, source, created_by)
+                          values (${ctx.biz}, ${agentOf(s.agent)}, ${s.title}, ${s.ask}, 'schedule', ${'Timed: ' + s.title}) returning id`)[0].id;
+    }
+    await ctx.tx`update engine_schedules set next_at = ${nextRun(s, ctx.now)}, last_job = ${job}, last_run = now() where id = ${s.id}`;
+  }
+}
+export async function erpEngineScheduleSave(ctx, payload) {
+  await gate(ctx);
+  const p = payload || {}, id = str(p.id);
+  if (id && !UUID.test(id)) throw new Error('Which timed job?');
+  const old = id ? (await ctx.tx`select * from engine_schedules where business_id = ${ctx.biz} and id = ${id}`)[0] : null;
+  if (id && !old) throw new Error('That timed job is not there.');
+  if (old && p.remove) {
+    if (old.key) throw new Error('A built-in timed job is switched off, not removed.');
+    await ctx.tx`delete from engine_schedules where id = ${old.id}`;
+    return erpEngine(ctx, {});
+  }
+  const v = { agent: agentOf(p.agent !== undefined ? p.agent : old && old.agent), title: str(p.title !== undefined ? p.title : old && old.title).slice(0, 90),
+    ask: str(p.ask !== undefined ? p.ask : old && old.ask).slice(0, 8000), every: EVERY.includes(str(p.every)) ? str(p.every) : (old ? old.every : 'daily'),
+    at_time: /^([01]?\d|2[0-3]):[0-5]\d$/.test(str(p.at)) ? str(p.at).padStart(5, '0') : (old ? old.at_time : '09:00'),
+    weekday: p.weekday !== undefined ? Math.min(6, Math.max(0, Math.round(Number(p.weekday) || 0))) : (old ? old.weekday : 0),
+    enabled: p.enabled !== undefined ? !!p.enabled : (old ? old.enabled : true) };
+  if (v.ask.length < 3) throw new Error('Write what the agent should do each time.');
+  if (!v.title) v.title = v.ask.split('\n')[0].slice(0, 90);
+  const next = nextRun(v, ctx.now);
+  if (old) {
+    await ctx.tx`update engine_schedules set agent = ${v.agent}, title = ${v.title}, ask = ${v.ask}, every = ${v.every}, at_time = ${v.at_time}, weekday = ${v.weekday},
+                   enabled = ${v.enabled}, next_at = ${next} where id = ${old.id}`;
+  } else {
+    if ((await ctx.tx`select count(*)::int n from engine_schedules where business_id = ${ctx.biz}`)[0].n >= 40) throw new Error('Forty timed jobs is the limit.');
+    await ctx.tx`insert into engine_schedules (business_id, agent, title, ask, every, at_time, weekday, enabled, next_at, created_by)
+                 values (${ctx.biz}, ${v.agent}, ${v.title}, ${v.ask}, ${v.every}, ${v.at_time}, ${v.weekday}, ${v.enabled}, ${next}, ${str(ctx.s.name)})`;
+  }
+  return erpEngine(ctx, {});
+}
+export async function erpEngineScheduleRun(ctx, payload) {
+  await gate(ctx);
+  const id = str(payload && payload.id);
+  const s = UUID.test(id) ? (await ctx.tx`select * from engine_schedules where business_id = ${ctx.biz} and id = ${id}`)[0] : null;
+  if (!s) throw new Error('That timed job is not there.');
+  const job = (await ctx.tx`insert into engine_jobs (business_id, agent, title, ask, source, created_by)
+                            values (${ctx.biz}, ${agentOf(s.agent)}, ${s.title}, ${s.ask}, 'schedule', ${str(ctx.s.name)}) returning id`)[0].id;
+  await ctx.tx`update engine_schedules set last_job = ${job}, last_run = now() where id = ${s.id}`;
+  const out = await erpEngine(ctx, {});
+  out.created = job;
+  return out;
+}
 
 export async function erpEngineClaim(ctx, payload) {
   engineOnly(ctx);
@@ -170,9 +238,13 @@ export async function erpEngineClaim(ctx, payload) {
                  error = case when attempts >= ${MAX_ATTEMPTS} then 'The Engine stopped answering on this job three times.' else error end,
                  finished_at = case when attempts >= ${MAX_ATTEMPTS} then now() else null end
                where business_id = ${ctx.biz} and status = 'running' and started_at < now() - make_interval(mins => ${STALE_MIN})`;
-  if (p.peek) return { job: null };
+  // watch-1: timed jobs that are due join the queue; the pages to check when 5 minutes have passed
+  try { await ctx.tx.savepoint(() => dueSchedules(ctx)); } catch (_) { /* the queue still works */ }
+  let watch = null;
+  try { watch = await ctx.tx.savepoint(() => watchDue(ctx)); } catch (_) { watch = null; }
+  if (p.peek) return { job: null, watch };
   const j = (await ctx.tx`select * from engine_jobs where business_id = ${ctx.biz} and status = 'queued' order by created_at limit 1 for update skip locked`)[0];
-  if (!j) return { job: null };
+  if (!j) return { job: null, watch };
   await ctx.tx`update engine_jobs set status = 'running', attempts = attempts + 1, started_at = now(), brain = null where id = ${j.id}`;
   const agent = AGENTS[j.agent] || AGENTS.command;
   // the Command Center may use every switched-on skill; a specialist only the ones given to it
@@ -183,7 +255,7 @@ export async function erpEngineClaim(ctx, payload) {
     agent: { key: j.agent, name: agent.name, instructions: agent.instructions },
     business: { name: str(ctx.s.businessName), today: formatDate(ctx.now, 'yyyy-MM-dd') },
     skills: skills.map((s) => ({ slug: s.slug, name: s.name, description: s.description, files: s.files || {} })),
-    tools: ENGINE_TOOLS,
+    tools: toolsFor(j.agent), watch,
   };
 }
 
@@ -196,7 +268,8 @@ async function runningJob(ctx, id) {
 export async function erpEngineTool(ctx, payload) {
   engineOnly(ctx);
   const p = payload || {}, j = await runningJob(ctx, p.id), tool = str(p.tool);
-  if (!ENGINE_TOOLS.some((t) => t.name === tool)) return { error: 'No such function.' };
+  if (!toolsFor(j.agent).some((t) => t.name === tool)) return { error: 'No such function.' };
+  if (ISSUE_TOOLS.some((t) => t.name === tool)) return issueTool(ctx, tool, p.args && typeof p.args === 'object' ? p.args : {}, j);
   const out = await runTool(ctx, tool, p.args && typeof p.args === 'object' ? p.args : {});
   if (out && out.proposal) {
     const list = Array.isArray(j.proposals) ? j.proposals : [];
@@ -237,5 +310,5 @@ export async function erpEngineDone(ctx, payload) {
   return { ok: true };
 }
 
-export const HANDLERS = { erpEngine, erpEngineJob, erpEngineAsk, erpEngineCancel, erpEngineRetry, erpEngineRate, erpEngineDecide,
+export const HANDLERS = { erpEngine, erpEngineJob, erpEngineAsk, erpEngineCancel, erpEngineRetry, erpEngineRate, erpEngineDecide, erpEngineScheduleSave, erpEngineScheduleRun,
   erpEngineClaim, erpEngineTool, erpEngineStep, erpEngineDone };
