@@ -265,6 +265,7 @@ export async function erpWatchRunNow(ctx) {
   const groups = await erpChecks(ctx, seen);
   await closeUnseen(ctx, groups, seen);
   await setConfig(ctx, 'watch_now', '1');   // the pages: at the Engine's next round (within 20 seconds)
+  await setConfig(ctx, 'watch_last_check', String(ctx.now.getTime()));
   return erpWatch(ctx);
 }
 

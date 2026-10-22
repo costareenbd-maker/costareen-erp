@@ -39306,6 +39306,7 @@ saveProduct = function () {
     if (EN.err) h += '<div class="note err"><div class="ico">!</div><div>' + esc(EN.err) + '</div></div>';
     h += d.jobs.length ? d.jobs.map(jobHtml).join('') : '<div class="note"><div class="ico">i</div><div>No jobs' + (EN.st ? ' here' : ' yet') + '. Write what you need above and press Send to the Engine.</div></div>';
     h += '</section>';
+    if (typeof window.enExtra === 'function') h += window.enExtra(d);   // watch-1: timed jobs
     return h;
   }
   function paint() {
@@ -39482,6 +39483,176 @@ saveProduct = function () {
   document.addEventListener('keydown', function (e) {
     if (VIEW === 'skills' && e.key === 'Enter' && e.target && e.target.id === 'sk_url') { var b = document.querySelector('[data-sk="read"]'); if (b) b.click(); }
     if (VIEW === 'engine' && e.key === 'Enter' && (e.ctrlKey || e.metaKey) && e.target && e.target.id === 'en_ask') { var b2 = document.querySelector('[data-en="ask"]'); if (b2) b2.click(); }
+  });
+})();
+</script>
+<!-- watch-1 (owner 22 Oct 2026, Engine step 2: "an agent who looks for issues all over the business, including the
+     website and the ERP"): Menu > Watchdog - everything is fine / the problems by how bad, each with proof and the fix,
+     Mark fixed / Ignore / Reopen; the pages it opens every 5 minutes (add a product page, the cart, the checkout, with the
+     text that must be on it); Check now; the daily AI check-up. Also Command Center > Timed jobs (any agent on a
+     schedule). Server: handlers/watchdog.js, handlers/engine.js (schedules); the Engine: deploy/vps/erp-engine. -->
+<style>
+.wd-state{display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+.wd-big{font-size:20px;font-weight:700}
+.wd-big.ok{color:var(--ok,#1a9e5b)}.wd-big.bad{color:var(--critical,#d33)}
+.wd-iss{border:1px solid var(--line,#e6e8ef);border-left:4px solid var(--line,#ccd);border-radius:10px;padding:10px 12px;margin:8px 0;background:var(--card,#fff)}
+.wd-iss.urgent{border-left-color:var(--critical,#d33)}.wd-iss.high{border-left-color:#e8590c}.wd-iss.medium{border-left-color:#f0b400}
+.wd-iss.done{opacity:.65}
+.wd-iss .t{font-weight:600}
+.wd-fix{margin-top:6px;font-size:13px}
+.wd-proof{font-size:12px;color:var(--muted,#667);overflow-wrap:anywhere}
+.wd-sev{display:inline-block;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;border-radius:6px;padding:1px 6px;margin-right:6px}
+.wd-sev.urgent{background:var(--critical,#d33);color:#fff}.wd-sev.high{background:#e8590c;color:#fff}.wd-sev.medium{background:#f0b400;color:#222}.wd-sev.low{background:var(--soft,#eef);color:inherit}
+.wd-pages td{vertical-align:top;font-size:13px}
+.wd-url{overflow-wrap:anywhere}
+.tj-row td{vertical-align:top;font-size:13px}
+@media (max-width:760px){.wd-pages .hide-sm,.tj-tbl .hide-sm{display:none}}
+</style>
+<script>
+(function () {
+  try { SRV_SLOW.erpWatchRunNow = 90000; } catch (e) {}
+  var WD = { data: null, busy: false, tab: 'open', err: '' };
+  window.WD = WD;
+  var ICON = '<path d="M12 3l8 4v5c0 5-3.5 8-8 9-4.5-1-8-4-8-9V7z"/><path d="M12 8v5M12 16h.01"/>';
+  var on = function () { return typeof enOn === 'function' && enOn(); };
+  if (typeof fdxNav === 'function') fdxNav('watch', 'Watchdog', ICON, 'engine');
+  try { VIEW_NAMES.watch = 'Watchdog'; FDH_SUB.watch = 'Problems on the website, the ERP, money, stock and channels - found by themselves, with the fix'; } catch (e) {}
+  function syncNav() {
+    var b = document.querySelector('#nav button[data-view="watch"]'); if (!b) return;
+    b.style.display = on() ? '' : 'none';
+    var n = WD.data ? (WD.data.counts.urgent || 0) + (WD.data.counts.high || 0) : 0;
+    var c = b.querySelector('.count'); if (!c) { c = document.createElement('span'); c.className = 'count'; b.appendChild(c); } c.textContent = n ? String(n) : ''; c.style.display = n ? '' : 'none';
+  }
+  if (typeof applyRole === 'function') { var ar = applyRole; applyRole = function () { var r = ar.apply(this, arguments); try { syncNav(); if (on() && !WD.data) load(); } catch (e) {} return r; }; }
+  setTimeout(function () { syncNav(); if (on() && !WD.data) load(); }, 2500);
+  function load() {
+    if (WD.busy) return; WD.busy = true;
+    srv('erpWatch', [], function (r) { WD.busy = false; WD.data = r; WD.err = ''; syncNav(); if (VIEW === 'watch') paint(); }, function (e) { WD.busy = false; WD.err = (e && e.message) || String(e); if (VIEW === 'watch') paint(); });
+  }
+  window.wdLoad = load;
+  function act(name, args, msg) { srv(name, args, function (r) { if (r && r.issues) WD.data = r; syncNav(); if (msg) toast(msg); paint(); }, function (e) { toast(esc((e && e.message) || e), true, 9000); paint(); }); }
+  var AREA = { website: 'Website', erp: 'ERP', money: 'Money', stock: 'Stock', channels: 'Channels', engine: 'Engine', other: 'Other' };
+  function issueHtml(i) {
+    var done = i.status !== 'open';
+    return '<div class="wd-iss ' + esc(i.severity) + (done ? ' done' : '') + '"><div class="row" style="justify-content:space-between;gap:8px;align-items:flex-start;flex-wrap:wrap"><div style="flex:1 1 300px">' +
+      '<span class="wd-sev ' + esc(i.severity) + '">' + esc(i.severity) + '</span><span class="en-sk">' + esc(AREA[i.area] || i.area) + '</span>' + (i.source === 'ai' ? '<span class="en-sk">found by the Watchdog agent</span>' : '') +
+      '<div class="t" style="margin-top:4px" data-noi18n="1">' + esc(i.title) + '</div>' + (i.detail ? '<div style="font-size:13px" data-noi18n="1">' + esc(i.detail) + '</div>' : '') +
+      (i.fix ? '<div class="wd-fix"><b>Fix:</b> <span data-noi18n="1">' + esc(i.fix) + '</span></div>' : '') +
+      (i.proof ? '<div class="wd-proof" data-noi18n="1">' + esc(i.proof) + '</div>' : '') +
+      '<div class="en-meta">First seen ' + esc(i.first) + (i.count > 1 ? ' · seen ' + i.count + ' times, last ' + esc(i.last) : '') +
+        (i.status === 'resolved' ? ' · fixed ' + esc(i.resolved) : i.status === 'ignored' ? ' · ignored until ' + esc(i.ignoredUntil) : '') + '</div></div>' +
+      '<div class="ap-row">' + (i.status === 'open' ? '<button class="btn small primary" type="button" data-wdact="resolve" data-id="' + i.id + '">Mark fixed</button><button class="btn small" type="button" data-wdact="ignore" data-id="' + i.id + '">Ignore 7 days</button>'
+        : '<button class="btn small" type="button" data-wdact="reopen" data-id="' + i.id + '">Reopen</button>') + '</div></div></div>';
+  }
+  function pagesHtml(d) {
+    return '<div class="card"><h2>Pages checked every 5 minutes</h2><div style="overflow:auto"><table class="tbl wd-pages"><thead><tr><th>Page</th><th class="hide-sm">Must contain</th><th>Last check</th><th></th></tr></thead><tbody>' +
+      (d.targets.length ? d.targets.map(function (t) {
+        var res = !t.lastAt ? '<span class="en-meta">not checked yet</span>' : (t.ok ? '<span class="pill ok">fine</span> ' : '<span class="pill out">problem</span> ') + '<span class="en-meta">' +
+          (t.status ? 'HTTP ' + t.status : esc(t.error || 'no answer')) + (t.ms ? ' · ' + (Math.round(t.ms / 100) / 10) + ' s' : '') + (t.sslDays !== null && t.sslDays !== undefined ? ' · certificate ' + t.sslDays + ' days' : '') + '<br>' + esc(t.lastAt) + '</span>';
+        return '<tr><td><b>' + esc(t.label || '') + '</b><div class="wd-url"><a href="' + esc(t.url) + '" target="_blank" rel="noopener">' + esc(t.url) + '</a></div></td><td class="hide-sm">' + esc(t.must || '-') + '</td><td>' + res + '</td>' +
+          '<td style="white-space:nowrap;text-align:right"><label><input type="checkbox" data-wdon="' + t.id + '"' + (t.enabled ? ' checked' : '') + '> On</label><br><button class="btn small" type="button" data-wdrm="' + t.id + '" style="margin-top:4px">Remove</button></td></tr>';
+      }).join('') : '<tr><td colspan="4" class="en-meta">No pages yet.</td></tr>') + '</tbody></table></div>' +
+      '<div class="row" style="gap:8px;flex-wrap:wrap;align-items:flex-end;margin-top:10px"><div style="flex:2 1 260px"><label class="f" for="wd_url">Page address</label><input class="i" id="wd_url" placeholder="https://yourshop.com/checkout"></div>' +
+      '<div style="flex:1 1 160px"><label class="f" for="wd_must">Must contain</label><input class="i" id="wd_must" placeholder="Place order"></div>' +
+      '<div style="flex:1 1 140px"><label class="f" for="wd_label">Name</label><input class="i" id="wd_label" placeholder="Checkout"></div>' +
+      '<button class="btn primary" type="button" data-wd="add">Add the page</button></div>' +
+      '<div class="sub" style="display:block;margin-top:6px">Add your most important pages: the home page, a best-selling product, the cart and the checkout. "Must contain" catches a page that opens but is broken (e.g. no "Add to cart").</div></div>';
+  }
+  function view() {
+    if (!on()) return '<div class="note"><div class="ico">i</div><div>The Engine is not switched on for this business.</div></div>';
+    var d = WD.data;
+    if (!d) { load(); return '<div class="loading">Loading the Watchdog…</div>'; }
+    var c = d.counts, dl = d.daily;
+    var h = '<section><div class="card"><div class="wd-state"><div class="wd-big ' + (c.open ? 'bad' : 'ok') + '">' + (c.open ? c.open + ' problem' + (c.open === 1 ? '' : 's') : 'All good') + '</div>' +
+      (c.open ? '<div class="en-meta">' + [['urgent', 'urgent'], ['high', 'high'], ['medium', 'medium'], ['low', 'low']].filter(function (x) { return c[x[0]]; }).map(function (x) { return c[x[0]] + ' ' + x[1]; }).join(' · ') + '</div>' : '') +
+      '<div class="en-meta" style="margin-left:auto">' + (d.lastCheck ? 'Last check ' + esc(d.lastCheck) + (d.minutesAgo !== null ? ' (' + d.minutesAgo + ' min ago)' : '') : 'Not checked yet') +
+      ' · <span class="en-dot' + (d.engineAlive ? ' on' : '') + '"></span>' + (d.engineAlive ? 'Engine on' : 'Engine not running') + '</div></div>' +
+      '<div class="ap-row" style="margin-top:10px"><button class="btn primary" type="button" data-wd="now">Check now</button>' +
+      (dl ? '<button class="btn" type="button" data-wd="daily">Run the AI check-up now</button>' +
+        '<label style="display:inline-flex;gap:6px;align-items:center"><input type="checkbox" data-wd="dailyon"' + (dl.enabled ? ' checked' : '') + '> Daily AI check-up at</label><input class="i" type="time" id="wd_at" value="' + esc(dl.at) + '" style="max-width:120px">' +
+        '<span class="en-meta">' + (dl.enabled && dl.next ? 'next ' + esc(dl.next) : '') + (dl.lastRun ? ' · last ' + esc(dl.lastRun) + (dl.lastStatus ? ' (' + esc(dl.lastStatus) + ')' : '') : '') + '</span>' : '') + '</div>' +
+      '<div class="sub" style="display:block;margin-top:6px">Every 5 minutes the Engine opens your pages and the ERP checks itself (timers, failing actions, backups, the books, WhatsApp). Urgent and high problems also come to the bell and your WhatsApp alert number. Once a day the Watchdog agent looks deeper and writes the fixes.</div></div></section>';
+    var list = d.issues.filter(function (i) { return WD.tab === 'open' ? i.status === 'open' : WD.tab === 'ignored' ? i.status === 'ignored' : i.status === 'resolved'; });
+    var n = function (s) { return d.issues.filter(function (i) { return i.status === s; }).length; };
+    h += '<section><div class="en-chips">' + [['open', 'Open', n('open')], ['ignored', 'Ignored', n('ignored')], ['resolved', 'Fixed (7 days)', n('resolved')]].map(function (x) {
+      return '<button class="en-chip" type="button" data-wdtab="' + x[0] + '" aria-pressed="' + (WD.tab === x[0]) + '">' + x[1] + '<b>' + x[2] + '</b></button>'; }).join('') + '</div>';
+    if (WD.err) h += '<div class="note err"><div class="ico">!</div><div>' + esc(WD.err) + '</div></div>';
+    h += list.length ? list.map(issueHtml).join('') : '<div class="note"><div class="ico">i</div><div>' + (WD.tab === 'open' ? 'No open problems. 👍' : 'Nothing here.') + '</div></div>';
+    h += '</section><section>' + pagesHtml(d) + '</section>';
+    return h;
+  }
+  function paint() { if (VIEW !== 'watch') return; var v = el('view'); if (!v) return; v.innerHTML = view(); try { if (typeof bindTips === 'function') bindTips(v); } catch (e) {} }
+  var rp = repaint;
+  repaint = function () { if (VIEW !== 'watch') return rp.apply(this, arguments); paint(); };
+  setInterval(function () { if (VIEW === 'watch' && !document.hidden) load(); }, 60000);
+
+  document.addEventListener('click', function (e) {
+    if (VIEW !== 'watch') return;
+    var t = e.target.closest && e.target.closest('[data-wd],[data-wdact],[data-wdtab],[data-wdrm]'); if (!t) return;
+    if (t.hasAttribute('data-wdtab')) { WD.tab = t.getAttribute('data-wdtab'); paint(); return; }
+    if (t.hasAttribute('data-wdact')) { var a = t.getAttribute('data-wdact'); t.disabled = true; act('erpWatchIssueAct', [{ id: t.getAttribute('data-id'), act: a, days: 7 }], a === 'resolve' ? 'Marked fixed. If it comes back, it opens again.' : a === 'ignore' ? 'Ignored for 7 days.' : 'Reopened.'); return; }
+    if (t.hasAttribute('data-wdrm')) { if (!confirm('Stop checking this page?')) return; act('erpWatchTargetSave', [{ id: t.getAttribute('data-wdrm'), remove: true }], 'Removed.'); return; }
+    var w = t.getAttribute('data-wd');
+    if (w === 'now') { t.disabled = true; t.textContent = 'Checking…'; act('erpWatchRunNow', [], 'The ERP was checked; the pages are opened within a minute.'); setTimeout(load, 45000); return; }
+    if (w === 'add') { var url = (el('wd_url') || {}).value || ''; act('erpWatchTargetSave', [{ url: url, must: (el('wd_must') || {}).value || '', label: (el('wd_label') || {}).value || '' }], 'Added - it is checked within a minute.'); return; }
+    if (w === 'daily') { t.disabled = true; srv('erpEngineScheduleRun', [{ id: WD.data.daily.id }], function (r) { toast('Sent to the Watchdog agent. The answer appears in the Command Center.'); try { EN.data = r; } catch (er) {} load(); }, function (er) { t.disabled = false; toast(esc((er && er.message) || er), true); }); return; }
+  });
+  document.addEventListener('change', function (e) {
+    if (VIEW !== 'watch' || !e.target) return;
+    var t = e.target;
+    if (t.hasAttribute('data-wdon')) { var tg = WD.data.targets.filter(function (x) { return x.id === t.getAttribute('data-wdon'); })[0]; if (tg) act('erpWatchTargetSave', [{ id: tg.id, url: tg.url, must: tg.must, label: tg.label, enabled: t.checked }]); return; }
+    if (t.getAttribute('data-wd') === 'dailyon' || t.id === 'wd_at') {
+      var at = (el('wd_at') || {}).value || '09:00', en = !!(document.querySelector('[data-wd="dailyon"]') || {}).checked;
+      srv('erpEngineScheduleSave', [{ id: WD.data.daily.id, enabled: en, at: at }], function () { toast(en ? 'Daily AI check-up at ' + at + '.' : 'Daily AI check-up switched off.'); load(); }, function (er) { toast(esc((er && er.message) || er), true); });
+    }
+  });
+
+  // ---- Command Center > Timed jobs (any agent on a schedule)
+  var TJ = { form: null };
+  var DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+  function whenOf(s) { return s.every === 'hourly' ? 'Every hour' : s.every === 'weekly' ? 'Every ' + DAYS[s.weekday] + ' at ' + s.at : 'Every day at ' + s.at; }
+  window.enExtra = function (d) {
+    if (TJ.form && el('tj_ask')) TJ.form = { id: TJ.form.id, agent: el('tj_agent').value, title: el('tj_title').value, every: el('tj_every').value, at: el('tj_at').value, weekday: Number(el('tj_day').value), ask: el('tj_ask').value };
+    var S = d.schedules || [], f = TJ.form;
+    var h = '<section><div class="card"><div class="row" style="justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px"><h2 style="margin:0">Timed jobs</h2>' +
+      '<button class="btn small" type="button" data-tj="new">+ Add a timed job</button></div>' +
+      '<div class="sub" style="display:block">Work an agent does by itself on a schedule (Dhaka time). Each run is a job in the list below.</div>';
+    if (f) h += '<div class="en-pv"><div class="ld-grid">' +
+      '<div><label class="f" for="tj_agent">Agent</label><select class="i" id="tj_agent">' + d.agents.map(function (a) { return '<option value="' + a.key + '"' + (f.agent === a.key ? ' selected' : '') + '>' + esc(a.name) + '</option>'; }).join('') + '</select></div>' +
+      '<div><label class="f" for="tj_title">Name</label><input class="i" id="tj_title" value="' + esc(f.title || '') + '" placeholder="Weekly ad ideas"></div>' +
+      '<div><label class="f" for="tj_every">How often</label><select class="i" id="tj_every">' + [['daily', 'Every day'], ['weekly', 'Every week'], ['hourly', 'Every hour']].map(function (x) { return '<option value="' + x[0] + '"' + (f.every === x[0] ? ' selected' : '') + '>' + x[1] + '</option>'; }).join('') + '</select></div>' +
+      '<div><label class="f" for="tj_at">At</label><input class="i" type="time" id="tj_at" value="' + esc(f.at || '09:00') + '"></div>' +
+      '<div><label class="f" for="tj_day">Day (weekly)</label><select class="i" id="tj_day">' + DAYS.map(function (x, i) { return '<option value="' + i + '"' + (Number(f.weekday || 0) === i ? ' selected' : '') + '>' + x + '</option>'; }).join('') + '</select></div></div>' +
+      '<label class="f" for="tj_ask" style="margin-top:8px">What to do each time</label><textarea class="i" id="tj_ask" rows="3" data-noi18n="1" style="width:100%">' + esc(f.ask || '') + '</textarea>' +
+      '<div class="ap-row" style="margin-top:8px"><button class="btn primary" type="button" data-tj="save">Save</button><button class="btn" type="button" data-tj="cancel">Cancel</button></div></div>';
+    h += S.length ? '<div style="overflow:auto"><table class="tbl tj-tbl"><tbody>' + S.map(function (s) {
+      return '<tr class="tj-row"><td><b data-noi18n="1">' + esc(s.title) + '</b><br><span class="en-meta">' + esc(s.agentName) + ' · ' + whenOf(s) + (s.enabled && s.next ? ' · next ' + esc(s.next) : '') + '</span></td>' +
+        '<td class="hide-sm"><span class="en-meta">' + (s.lastRun ? 'last ' + esc(s.lastRun) + (s.lastStatus ? ' (' + esc(s.lastStatus) + ')' : '') : 'not run yet') + '</span></td>' +
+        '<td style="white-space:nowrap;text-align:right"><label><input type="checkbox" data-tjon="' + s.id + '"' + (s.enabled ? ' checked' : '') + '> On</label> ' +
+        '<button class="btn small" type="button" data-tjrun="' + s.id + '">Run now</button> <button class="btn small" type="button" data-tjedit="' + s.id + '">Change</button>' +
+        (s.builtIn ? '' : ' <button class="btn small" type="button" data-tjrm="' + s.id + '">Remove</button>') + '</td></tr>'; }).join('') + '</tbody></table></div>'
+      : '<div class="en-meta">No timed jobs yet.</div>';
+    return h + '</div></section>';
+  };
+  function tjSave(args, msg) { srv('erpEngineScheduleSave', [args], function (r) { try { EN.data = r; } catch (e) {} TJ.form = null; if (msg) toast(msg); if (typeof enPaint === 'function') enPaint(); }, function (e) { toast(esc((e && e.message) || e), true, 9000); }); }
+  document.addEventListener('click', function (e) {
+    if (VIEW !== 'engine') return;
+    var t = e.target.closest && e.target.closest('[data-tj],[data-tjrun],[data-tjedit],[data-tjrm]'); if (!t) return;
+    var S = (EN.data && EN.data.schedules) || [], find = function (id) { return S.filter(function (s) { return s.id === id; })[0]; };
+    var a = t.getAttribute('data-tj');
+    if (a === 'new') { TJ.form = { agent: 'command', every: 'daily', at: '09:00', weekday: 0 }; enPaint(); return; }
+    if (a === 'cancel') { TJ.form = null; enPaint(); return; }
+    if (a === 'save') {
+      var f = TJ.form; tjSave({ id: f.id, agent: el('tj_agent').value, title: el('tj_title').value, every: el('tj_every').value, at: el('tj_at').value, weekday: Number(el('tj_day').value), ask: el('tj_ask').value }, 'Saved.');
+      return;
+    }
+    if (t.hasAttribute('data-tjedit')) { var s = find(t.getAttribute('data-tjedit')); if (s) { TJ.form = { id: s.id, agent: s.agent, title: s.title, every: s.every, at: s.at, weekday: s.weekday, ask: s.ask }; enPaint(); } return; }
+    if (t.hasAttribute('data-tjrm')) { if (!confirm('Remove this timed job?')) return; tjSave({ id: t.getAttribute('data-tjrm'), remove: true }, 'Removed.'); return; }
+    if (t.hasAttribute('data-tjrun')) { t.disabled = true; srv('erpEngineScheduleRun', [{ id: t.getAttribute('data-tjrun') }], function (r) { EN.data = r; EN.open = r.created; EN.job = null; toast('Sent to the Engine.'); enPaint(); }, function (er) { t.disabled = false; toast(esc((er && er.message) || er), true); }); }
+  });
+  document.addEventListener('change', function (e) {
+    if (VIEW !== 'engine' || !e.target || !e.target.hasAttribute('data-tjon')) return;
+    tjSave({ id: e.target.getAttribute('data-tjon'), enabled: e.target.checked }, e.target.checked ? 'Switched on.' : 'Switched off.');
   });
 })();
 </script>
