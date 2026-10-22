@@ -3033,3 +3033,10 @@ motion." The "Fixed" list had ticks on things only tried (the website sync is st
   fixed at the night check (being looked at now while it runs).
 - The morning alert: "Watchdog: fixed N, M still open" (or "all good").
 - Tests: watchfix_test now 23.
+
+## False alarm: the website sync was not broken (22 Oct 2026, tag watch-5)
+The one problem the Watchdog could not fix ("Sending stock to the website is failing") was the website's hosting
+(Hostinger) hiccuping 1-2 times a day (Cloudflare 521 / connection reset) while the sync runs ~96 times a day and
+retries by itself 15 minutes later; a live test passed (WooCommerce answered, 0.8-1.0 s). The Watchdog flagged every
+single failure. Now a timed job is a problem only when it keeps failing (3+ times within 6 hours); single hiccups are left
+to the next run. Live after the change: 0 open problems.
