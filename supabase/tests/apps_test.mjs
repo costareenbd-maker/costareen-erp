@@ -13,8 +13,8 @@ const menu = (r, k) => r.result.menu.find((m) => m.key === k);
 
 // 1. the catalogue, as anyone
 let r = await sales('erpApps', []);
-check('sales staff read the catalogue: 10 public features on, the Only-me one off, no switches for them', r.ok && r.result.apps.length === 14 && r.result.apps.filter((a) => !a.labs).length === 10 && r.result.apps.every((a) => (a.labs ? !a.on : a.on) && !a.hidden) && !r.result.owner && !r.result.admin, r);
-check('the public ones carry a link; every tile names its screen (Platform ones only for the admin)', r.ok && r.result.apps.filter((a) => a.url).length === 9 && r.result.apps.filter((a) => a.view).length === 12 && r.result.apps.every((a) => typeof a.where === 'string'), r.result.apps.map((a) => a.key + ':' + a.view + ':' + a.url));
+check('sales staff read the catalogue: 10 public features on, the Only-me one off, no switches for them', r.ok && r.result.apps.length === 15 && r.result.apps.filter((a) => !a.labs).length === 10 && r.result.apps.every((a) => (a.labs ? !a.on : a.on) && !a.hidden) && !r.result.owner && !r.result.admin, r);
+check('the public ones carry a link; every tile names its screen (Platform ones only for the admin)', r.ok && r.result.apps.filter((a) => a.url).length === 9 && r.result.apps.filter((a) => a.view).length === 13 && r.result.apps.every((a) => typeof a.where === 'string'), r.result.apps.map((a) => a.key + ':' + a.view + ':' + a.url));
 check('the menu list: 17 screens in the menu order, all for everyone (the Inbox off until the company has an Inbox plan; Leads off until the provider opens it)', r.ok && r.result.menu.length === 17 && r.result.menu[0].group === 'Sell' && !r.result.menu.some((m) => m.key === 'profit' || m.key === 'tools') && r.result.menu.every((m) => m.mode === 'all' && (m.key === 'inbox' || m.key === 'leads' ? m.off : !m.off)), r.result.menu);
 
 // 2. the owner sets who sees a screen; staff cannot; the other business is untouched
@@ -34,7 +34,7 @@ r = await owner('erpAppSet', [{ key: 'repairs', mode: 'maybe', scope: 'mine' }])
 check('an unknown mode falls back to everyone', r.ok && menu(r, 'repairs').mode === 'all', r);
 r = await owner('erpAppSet', [{ key: 'repairs', mode: 'owner', scope: 'mine' }]);
 r = await call('erpHello', [], { authHeader: 'Bearer owner:' + FIX.U.owner });
-check('hello carries both lists: only-owners and off', r.ok && r.result.apps && r.result.apps.hidden.includes('repairs') && r.result.apps.hidden.includes('resell') && r.result.apps.gone.includes('campaigns') && r.result.apps.off.every((k) => k === 'push' || k === 'creators' || k === 'inbox' || k === 'leads'), r.result.apps);
+check('hello carries both lists: only-owners and off', r.ok && r.result.apps && r.result.apps.hidden.includes('repairs') && r.result.apps.hidden.includes('resell') && r.result.apps.gone.includes('campaigns') && r.result.apps.off.every((k) => k === 'push' || k === 'creators' || k === 'inbox' || k === 'leads' || k === 'engine'), r.result.apps);
 const other = (await sql`select value from business_config where business_id = ${FIX.B2} and key in ('apps_menu', 'apps_hidden')`);
 check('the other business is untouched', other.length === 0, other);
 for (const k of ['repairs', 'campaigns', 'resell']) r = await owner('erpAppSet', [{ key: k, mode: 'all', scope: 'mine' }]);
