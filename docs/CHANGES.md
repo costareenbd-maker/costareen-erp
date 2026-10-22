@@ -3040,3 +3040,17 @@ The one problem the Watchdog could not fix ("Sending stock to the website is fai
 retries by itself 15 minutes later; a live test passed (WooCommerce answered, 0.8-1.0 s). The Watchdog flagged every
 single failure. Now a timed job is a problem only when it keeps failing (3+ times within 6 hours); single hiccups are left
 to the next run. Live after the change: 0 open problems.
+
+## The Watchdog repairs the website itself: restart + cache clear (22 Oct 2026, tag watch-6)
+Owner: "yes, let it clear cache and restart the site".
+- deploy/vps/erp-engine/site.mjs: two safe repairs on the business's own hosting through the office VPS's SSH key -
+  clear_cache (LiteSpeed page cache + WordPress cache) and restart (stops the site's PHP workers `lsphp`, fresh ones start
+  on the next visit, then the cache is cleared). Each business's hosting is set by hand in /etc/erp-engine-sites.json on
+  the VPS (never in the ERP or git); Costareen: Hostinger, costareen.com.
+- By itself: a page of that website down 2 rounds in a row (10 minutes) -> restart + cache clear, look again; at most once
+  every 30 minutes and 6 times a day. Night shift: website_restart / website_clear_cache tools for the Watchdog.
+- Every repair is reported (erpWatchSiteAction) and shown honestly: Fixed (the page answers again), Could not be done (still
+  down - the hosting itself), with the reason. Watchdog > Settings says "Website repair is on".
+- Live check: cache clear ran on costareen.com (page cache + WordPress cache cleared); the site answers. The restart
+  itself was not fired as a test (it would cut visitors off for a few seconds) - it runs the first time the site is down.
+- Tests: watch6_test (7).
