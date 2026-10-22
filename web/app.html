@@ -38530,8 +38530,8 @@ document.addEventListener('keydown', function (e) {
   function findHtml() {
     var F = LD.find, ps = PRESETS[LD.kind] || [];
     var h = '<div class="card" style="margin-top:10px"><h2>Find ' + (LD.kind === 'supplier' ? 'suppliers' : 'customers') + '</h2>' +
-      '<div class="ld-chips"><button class="ld-chip" type="button" data-ldvia="map" aria-pressed="' + (F.via === 'map') + '">On the map (free)</button>' +
-      '<button class="ld-chip" type="button" data-ldvia="ai" aria-pressed="' + (F.via === 'ai') + '">On Google (AI)</button></div>' +
+      '<div class="ld-chips"><button class="ld-chip" type="button" data-ldvia="ai" aria-pressed="' + (F.via === 'ai') + '">On Google (AI)</button>' +
+      '<button class="ld-chip" type="button" data-ldvia="map" aria-pressed="' + (F.via === 'map') + '">On the map (free)</button></div>' +
       '<div class="sub" style="display:block">' + (F.via === 'map' ? 'Shops, offices, schools and factories listed on OpenStreetMap in an area. Free; many have no phone listed - open their map page or search their name.' :
         'The AI searches Google and lists real businesses with what it found (it never makes up a phone). ' + (LD.data && LD.data.ai ? '' : '<b>Needs the AI key</b> (Settings → AI, or the provider’s key).')) + '</div>' +
       '<div class="ld-grid" style="margin-top:8px">' +
@@ -38669,7 +38669,7 @@ document.addEventListener('keydown', function (e) {
     if (t.hasAttribute('data-ldsrc')) { LD.source = t.getAttribute('data-ldsrc'); load(); return; }
     if (t.hasAttribute('data-ldopen')) { e.preventDefault(); var id = t.getAttribute('data-ldopen'); LD.open = LD.open === id ? null : id; load(); return; }
     if (t.hasAttribute('data-ldchat')) { e.preventDefault(); try { if (window.IB) { IB.conv = t.getAttribute('data-ldchat'); } } catch (x) {} go('inbox'); return; }
-    if (t.hasAttribute('data-ldvia')) { LD.find.via = t.getAttribute('data-ldvia'); LD.find.res = null; LD.find.what = ''; paint(); return; }
+    if (t.hasAttribute('data-ldvia')) { LD.find.chosen = true; LD.find.via = t.getAttribute('data-ldvia'); LD.find.res = null; LD.find.what = ''; paint(); return; }
     if (t.hasAttribute('data-ldnote')) { var n = el('ld_note'); if (!n || !n.value.trim()) { toast('Write the note first.', true); return; } act({ id: t.getAttribute('data-ldnote'), note: n.value.trim() }, 'Note added.'); return; }
     if (t.hasAttribute('data-ldedit')) { var l = (LD.data.leads || []).filter(function (x) { return x.id === t.getAttribute('data-ldedit'); })[0]; if (!l) return; LD.form = Object.assign({}, l); LD.pasteUsed = ''; LD.panel = 'add'; paint(); window.scrollTo(0, 0); return; }
     if (t.hasAttribute('data-ldconv')) {
@@ -38681,7 +38681,7 @@ document.addEventListener('keydown', function (e) {
     if (k === 'close') { LD.panel = ''; LD.form = null; LD.pasteUsed = ''; paint(); return; }
     if (k === 'add') { LD.form = { kind: LD.kind, source: 'team' }; LD.pasteUsed = ''; LD.panel = 'add'; paint(); return; }
     if (k === 'paste') { LD.panel = 'paste'; paint(); var p = el('ld_paste'); if (p) p.focus(); return; }
-    if (k === 'find') { LD.panel = 'find'; if (!LD.find.what && LD.find.via === 'map') LD.find.what = (PRESETS[LD.kind][0] || [''])[0]; paint(); return; }
+    if (k === 'find') { if (!LD.find.res && !LD.find.chosen && LD.data && LD.data.ai) LD.find.via = 'ai'; LD.panel = 'find'; if (!LD.find.what && LD.find.via === 'map') LD.find.what = (PRESETS[LD.kind][0] || [''])[0]; paint(); return; }
     if (k === 'due') { LD.stage = 0; LD.source = ''; LD.q = ''; load(); return; }
     if (k === 'import') { var f = el('ld_file'); if (f) { f.value = ''; f.click(); } return; }
     if (k === 'save') {
@@ -38701,7 +38701,10 @@ document.addEventListener('keydown', function (e) {
       LD.find.what = (el('ld_what') || {}).value || ''; LD.find.place = (el('ld_place') || {}).value || ''; LD.find.busy = true; LD.find.pick = {}; paint();
       if (LD.find.via === 'map') {   // leads-1b: searched from this browser (the free map server throttles shared cloud servers)
         mapSearch(LD.kind, LD.find.what, LD.find.place).then(function (r) { LD.find.busy = false; LD.find.res = r; paint(); },
-          function (er) { LD.find.busy = false; paint(); toast(esc((er && er.message) || er), true, 12000); });
+          function () {   // this browser could not reach the map: the server tries (it has its own allowance)
+            srv('erpLeadFind', [{ kind: LD.kind, via: 'map', what: LD.find.what, place: LD.find.place }], function (r) { LD.find.busy = false; LD.find.res = r; paint(); },
+              function (er) { LD.find.busy = false; paint(); toast(esc((er && er.message) || er) + ' The free map is overloaded at times - try <b>On Google (AI)</b>.', true, 14000); });
+          });
         return;
       }
       srv('erpLeadFind', [{ kind: LD.kind, via: LD.find.via, what: LD.find.what, place: LD.find.place }], function (r) { LD.find.busy = false; LD.find.res = r; paint(); },

@@ -2788,6 +2788,10 @@ customer/supplier, company, website, link, city, country, tags, source_ref, cust
   campaigns already had an erpLeadSave (its phone list), hence erpLeadUpsert. Tests: leads_test (25); apps_test counts.
 - Checked: local copy click-through (paste, stage, follow-up, note, make a customer; phone width) and the dev ERP
   (map search from the server: 912 electronics shops in Dhaka, 150 shown, 28 with a phone).
+Follow-up the same day (leads-1b): the map search runs in the browser (connect-src allows the OpenStreetMap services),
+the server marks what is already on the list (erpLeadFind via 'have') and tries itself when the browser cannot; Google
+(AI) is the default finder when an AI key is set - live check: 11 filament / 3D suppliers in Bangladesh in 21 s. The
+public map servers were overloaded / refusing at the end of the day (they worked earlier: 912 Dhaka shops).
 Not done / limits: LinkedIn and Facebook give no search API to outsiders - their leads come by paste or export, not by
 search; Google search needs the AI key (not set yet) and was not tried; the map lists few phones in Bangladesh (~5-20%);
 no reminders outside the screen yet (the due count on the menu only).
