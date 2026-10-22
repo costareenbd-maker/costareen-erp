@@ -2918,3 +2918,41 @@ memory-tool commands (the business always comes from the job, never from the mod
   crosses over.
 Not done: the morning brief (step 3b, on this Brain); suggestions / outcomes / lessons tables come with it; meaning
 search over the memory (pgvector) only when a business has hundreds of notes.
+
+## Engine step 3b: the daily brief at 8 PM (22 Oct 2026, tag brief-1)
+Owner's rule (now for every agent): everything from the business's own figures, big strategic moves for growth, done by
+the AI after ONE button. Research: the earlier GitHub study's patterns are used - specialists then one ranker
+(ai-hedge-fund), "every figure from a tool" (deepeval / ragas faithfulness); no new dependency.
+- Menu > Daily brief (141_brief.sql; handlers/brief.js, actions.js): every evening at 20:00 (built-in timed job; time,
+  on / off and the ad limit on the screen; Write it now). The scoreboard is the ERP's own (today, yesterday, month vs last
+  month, net profit, cash in hand, owed to you, stock value, items at reorder, urgent Watchdog problems) - never the AI's.
+- The Owner briefing agent studies sales, stock, cash, dues, marketing, leads, the Watchdog and the market, reads what
+  earlier moves brought (brief_results), and files: headline, what changed and why, risks, opportunities, five moves
+  (Saturdays + the big bet of the week). brief_save refuses a move without a known type, the why or its figures, and an
+  ad over the owner's limit (default ৳3,000 in all).
+- One button per move. Approve = the AI does it through the ERP's own functions: Facebook ad (post published, ad made
+  paused, then started - total within the limit), post (now or at a time), PLANNED supplier order (nothing paid), price
+  change (all other product fields kept; at most 10% cut by the AI), follow-up calls, WhatsApp message (only numbers that
+  are customers or leads in the ERP; spread over the day), work for the Engine (research, lists, plans). Change = the
+  owner's words go back to the Engine, a new card comes. No = kept with the reason and remembered.
+- Done moves are measured after their window (sales of the product before vs after; verdict worked / no difference /
+  hurt) and become lessons in the Business Brain; the screen shows the last 30 days (done, worked, extra sales).
+- Tests: brief_test (34).
+Not done: ads need Facebook + an ad account connected (else the move fails with the reason, nothing half done);
+WhatsApp moves need WhatsApp linked; the measurement of dues moves says "unclear" for now (sales moves are measured).
+
+## Leads: two simple lists, the Engine finds the leads itself (22 Oct 2026, tag leads-2)
+Owner: "only two lists, customers and suppliers; I don't need the details there. When I ask Claude it finds leads from
+the best sources - I don't give it sources. The ERP must do the same: when I ask, and when I don't ask, by itself."
+- The Leads screen is now: Customers | Suppliers, one "Find new leads" box (what is optional), the daily-search switch,
+  and a clean list - who, WHY they fit, hot / warm / cold, Call / WhatsApp / E-mail / Website, stage. Tapping a name opens
+  everything else (contacts, where found, the first message with Copy, Make a customer / supplier). The old tools (add,
+  paste, import, map, public forms, filters) are one click away ("More ways to add"), with a way back.
+- The Leads agent (handlers/leads.js LEAD_TOOLS): it chooses the sources itself (public web, maps, directories,
+  marketplaces, B2B sites, tenders, public pages - never logging in or scraping private groups / profiles), checks who is
+  already there (leads_known), and adds each lead with why it fits THIS business (its Business Brain), heat, the page it
+  was found on and a first message (lead_add; never twice; 40 per search). The Command Center can add leads too.
+- By itself: a built-in timed job "Find new leads" every day at 11:00 (on when the Engine is on; switch on the screen).
+- Tests: leads2_test (12).
+Next from the lead research (G:\reports\Creative lead sources for Costareen.md): comment -> private reply -> WhatsApp
+funnel, one-click Save-to-ERP browser button, Banglish intent sorting of messages, consent / STOP flag.

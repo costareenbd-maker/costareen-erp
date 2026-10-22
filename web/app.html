@@ -38631,7 +38631,8 @@ document.addEventListener('keydown', function (e) {
     }).join('') + '</div></div></section>';
     return h;
   }
-  function paint() { var v = el('view'); if (!v) return; v.innerHTML = view(); try { if (typeof bindTips === 'function') bindTips(v); } catch (e) {} }
+  function paint() { if (!LD.classic && typeof window.ld2Paint === 'function') return window.ld2Paint();   // leads-2: the two simple lists first
+    var v = el('view'); if (!v) return; v.innerHTML = view(); try { if (typeof bindTips === 'function') bindTips(v); } catch (e) {} if (typeof window.ld2Back === 'function') window.ld2Back(v); }
   window.ldPaint = paint;
   var repaintLd = repaint;
   repaint = function () { if (VIEW !== 'leads') return repaintLd.apply(this, arguments); paint(); };
@@ -39876,6 +39877,108 @@ saveProduct = function () {
     if (VIEW !== 'brief' || !e.target) return;
     if (e.target.id === 'bf_pick') load(e.target.value);
   });
+})();
+</script>
+<!-- leads-2 (owner 22 Oct 2026: "in the leads page there should be only two lists, customer and supplier; I don't need
+     the details there - I open them when I need. I don't give it sources: the AI researches the best ones itself, when I
+     ask and when I don't ask"): the Leads screen is now two tabs, one "Find new leads" box (what is optional), the
+     Engine's daily search switch, and a clean list: who, why they fit, hot / warm / cold, reach buttons, stage. A row
+     opens to everything else. The old tools (paste, import, map, forms, filters) stay one click away ("More ways to add"). -->
+<style>
+.l2-find{display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;margin-top:8px}
+.l2-row{border-bottom:1px solid var(--line,#eef);padding:10px 2px}
+.l2-top{display:flex;gap:10px;align-items:flex-start;justify-content:space-between;flex-wrap:wrap}
+.l2-name{font-weight:600;cursor:pointer}
+.l2-why{font-size:13px;color:var(--muted,#667);margin-top:2px}
+.l2-heat{display:inline-block;font-size:11px;font-weight:700;border-radius:6px;padding:1px 7px;margin-right:6px;text-transform:uppercase}
+.l2-heat.hot{background:var(--critical,#d33);color:#fff}.l2-heat.warm{background:#f0b400;color:#222}.l2-heat.cold{background:var(--soft,#eef);color:inherit}
+.l2-act{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.l2-act a{font-size:12.5px;border:1px solid var(--line,#dde);border-radius:999px;padding:3px 10px;text-decoration:none;color:inherit;white-space:nowrap}
+.l2-det{margin-top:8px;font-size:13px;background:var(--soft,rgba(91,79,240,.04));border-radius:10px;padding:8px 10px}
+.l2-det div{margin:2px 0}
+</style>
+<script>
+(function () {
+  if (typeof LD === 'undefined') return;
+  try { SRV_SLOW.erpLeadResearch = 30000; } catch (e) {}
+  var L2 = { open: null };
+  LD.classic = false;
+  function wa(p) { var d = String(p || '').replace(/[^0-9]/g, ''); if (!d) return ''; if (/^01\d{9}$/.test(d)) d = '88' + d; return 'https://wa.me/' + d; }
+  function url(u) { u = String(u || ''); return /^https?:\/\//i.test(u) ? u : u ? 'https://' + u : ''; }
+  function reach(l) {
+    var h = '';
+    if (l.phone) h += '<a href="tel:' + esc(l.phone) + '">Call</a><a href="' + esc(wa(l.phone)) + '" target="_blank" rel="noopener">WhatsApp</a>';
+    if (l.email) h += '<a href="mailto:' + esc(l.email) + '">E-mail</a>';
+    if (l.website || l.link) h += '<a href="' + esc(url(l.website || l.link)) + '" target="_blank" rel="noopener">Website</a>';
+    if (l.conv) h += '<a href="#" data-ldchat="' + esc(l.conv) + '">Chat</a>';
+    return h;
+  }
+  function rowHtml(l, stages) {
+    var open = L2.open === l.id;
+    var who = l.company && l.name ? l.company + ' · ' + l.name : (l.company || l.name || l.phone || 'No name');
+    var h = '<div class="l2-row"><div class="l2-top"><div style="flex:1 1 280px">' + (l.heat ? '<span class="l2-heat ' + esc(l.heat) + '">' + esc(l.heat) + '</span>' : '') +
+      '<span class="l2-name" data-l2open="' + l.id + '" data-noi18n="1">' + esc(who) + '</span>' + (l.city ? ' <span class="en-meta">' + esc(l.city) + '</span>' : '') +
+      '<div class="l2-why" data-noi18n="1">' + esc(l.why || l.want || '') + '</div></div>' +
+      '<div class="l2-act">' + reach(l) + '<select class="i" data-ldstage="' + l.id + '" style="min-width:110px;padding:3px 6px">' + stages.map(function (n, i) { return '<option value="' + (i + 1) + '"' + (l.stage === i + 1 ? ' selected' : '') + '>' + esc(n) + '</option>'; }).join('') + '</select></div></div>';
+    if (open) {
+      var fm = /^First message \(draft\): ([\s\S]*)$/.exec(l.note || '');
+      h += '<div class="l2-det">' + [['Wants / makes', l.want], ['Phone', l.phone], ['E-mail', l.email], ['Website', l.website], ['Found on', l.link], ['Where', [l.city, l.country].filter(Boolean).join(', ')], ['Source', l.sourceName], ['Added', l.added + (l.addedBy ? ' by ' + l.addedBy : '')], ['Follow up', l.followUp]]
+        .filter(function (x) { return x[1]; }).map(function (x) { return '<div><b>' + x[0] + ':</b> <span data-noi18n="1">' + esc(x[1]) + '</span></div>'; }).join('') +
+        (fm ? '<div style="margin-top:6px"><b>First message:</b><div data-noi18n="1" style="white-space:pre-wrap">' + esc(fm[1]) + '</div><button class="btn small" type="button" data-l2copy="' + l.id + '">Copy</button></div>'
+          : l.note ? '<div style="white-space:pre-wrap" data-noi18n="1"><b>Note:</b> ' + esc(l.note) + '</div>' : '') +
+        '<div class="ap-row" style="margin-top:6px"><button class="btn small" type="button" data-l2edit="' + l.id + '">Change details / notes / history</button>' +
+        (l.kind === 'supplier' ? (l.supplierId ? '<span class="pill ok">is a supplier</span>' : '<button class="btn small primary" type="button" data-ldconv="supplier" data-id="' + l.id + '">Make a supplier</button>')
+          : (l.customerId ? '<span class="pill ok">is a customer</span>' : '<button class="btn small primary" type="button" data-ldconv="customer" data-id="' + l.id + '">Make a customer</button>')) + '</div></div>';
+    }
+    return h + '</div>';
+  }
+  function view2() {
+    if (typeof ldOn === 'function' && !ldOn()) return '<div class="note"><div class="ico">i</div><div>Leads is not switched on for this business.</div></div>';
+    var d = LD.data; if (!d) { if (typeof ldLoad === 'function') ldLoad(); return '<div class="loading">Loading the leads…</div>'; }
+    var R = d.research || {}, last = R.last, busy = last && /queued|running/.test(last.status), sup = LD.kind === 'supplier';
+    var h = '<section><div class="tabs"><button type="button" data-ldkind="customer" aria-selected="' + !sup + '">Customers <b>' + fmt(d.counts.customer || 0) + '</b></button>' +
+      '<button type="button" data-ldkind="supplier" aria-selected="' + sup + '">Suppliers <b>' + fmt(d.counts.supplier || 0) + '</b></button></div>';
+    if (d.canFind) {
+      h += '<div class="card" style="margin-top:10px"><div class="l2-find"><div style="flex:1 1 300px"><label class="f" for="l2_what">Find new ' + (sup ? 'suppliers' : 'customers') + '</label>' +
+        '<input class="i" id="l2_what" data-noi18n="1" placeholder="' + (sup ? 'Optional - e.g. PETG makers in China' : 'Optional - e.g. universities with robotics labs') + '"></div>' +
+        '<button class="btn primary" type="button" data-l2="find"' + (busy || !R.engine ? ' disabled' : '') + '>' + (busy ? 'The Engine is searching…' : 'Find leads') + '</button></div>' +
+        '<div class="en-meta" style="margin-top:6px">' + (R.engine ? 'The Engine chooses the best sources itself and says why each lead fits. ' : 'The Engine is not on for this business (Business Brain screen). ') +
+        (R.auto ? '<label style="display:inline-flex;gap:5px;align-items:center"><input type="checkbox" data-l2="auto"' + (R.auto.enabled ? ' checked' : '') + '> Find new leads by itself every day</label>' + (R.auto.enabled && R.auto.next ? ' (next ' + esc(R.auto.next) + ')' : '') : '') +
+        (last ? ' · last search ' + esc(last.when) + ' (' + esc(last.status) + ') <a href="#" data-l2job="' + last.id + '">see it</a>' : '') + '</div></div>';
+    }
+    h += '</section><section>';
+    h += d.leads.length ? '<div class="card" style="padding:4px 12px">' + d.leads.map(function (l) { return rowHtml(l, d.stages || []); }).join('') + '</div>'
+      : '<div class="note"><div class="ico">i</div><div>No ' + (sup ? 'supplier' : 'customer') + ' leads yet. Press Find leads - or wait for the daily search.</div></div>';
+    h += '<div style="margin-top:10px"><a href="#" data-l2="classic">More ways to add (paste, import a list, map, public forms) and filters</a></div></section>';
+    return h;
+  }
+  function paint2() { var v = el('view'); if (!v) return; v.innerHTML = view2(); try { if (typeof bindTips === 'function') bindTips(v); } catch (e) {} }
+  // the leads-1 block's own paint() hands over to this view unless the full view was asked for (one-line hook there)
+  window.ld2Paint = paint2;
+  var oldPaint = window.ldPaint;
+  setInterval(function () { var R = LD.data && LD.data.research; if (VIEW === 'leads' && !LD.classic && R && R.last && /queued|running/.test(R.last.status) && typeof ldLoad === 'function') ldLoad(); }, 20000);
+  document.addEventListener('click', function (e) {
+    if (VIEW !== 'leads') return;
+    var t = e.target.closest && e.target.closest('[data-l2],[data-l2open],[data-l2copy],[data-l2edit],[data-l2job]'); if (!t) return;
+    if (LD.classic && t.getAttribute('data-l2') !== 'simple') return;
+    e.preventDefault();
+    if (t.hasAttribute('data-l2open')) { var id = t.getAttribute('data-l2open'); L2.open = L2.open === id ? null : id; paint2(); return; }
+    if (t.hasAttribute('data-l2job')) { try { EN.open = t.getAttribute('data-l2job'); EN.job = null; } catch (er) {} go('engine'); return; }
+    if (t.hasAttribute('data-l2copy')) { var l = LD.data.leads.filter(function (x) { return x.id === t.getAttribute('data-l2copy'); })[0]; var m = /^First message \(draft\): ([\s\S]*)$/.exec((l && l.note) || ''); try { navigator.clipboard.writeText(m ? m[1] : ''); toast('Copied.'); } catch (er) {} return; }
+    if (t.hasAttribute('data-l2edit')) { LD.classic = true; LD.open = t.getAttribute('data-l2edit'); if (typeof ldLoad === 'function') ldLoad(); return; }
+    var a = t.getAttribute('data-l2');
+    if (a === 'classic') { LD.classic = true; if (oldPaint) oldPaint(); return; }
+    if (a === 'simple') { LD.classic = false; paint2(); return; }
+    if (a === 'find') { t.disabled = true; srv('erpLeadResearch', [{ kind: LD.kind, what: (el('l2_what') || {}).value || '' }], function (r) { LD.data = r; toast('The Engine is searching - new leads appear here in a few minutes.'); paint2(); }, function (er) { t.disabled = false; toast(esc((er && er.message) || er), true, 8000); }); }
+  });
+  document.addEventListener('change', function (e) {
+    if (VIEW !== 'leads' || LD.classic || !e.target || e.target.getAttribute('data-l2') !== 'auto') return;
+    var v = e.target.checked;
+    srv('erpLeadResearch', [{ kind: LD.kind, auto: v }], function (r) { LD.data = r; toast(v ? 'The Engine finds new leads by itself every day.' : 'The daily search is off.'); paint2(); }, function (er) { toast(esc((er && er.message) || er), true); });
+  });
+  // a way back from the full view
+  document.addEventListener('click', function (e) { if (VIEW === 'leads' && LD.classic && e.target && e.target.closest && e.target.closest('[data-ldkind]')) { LD.classic = false; } }, true);
+  window.ld2Back = function (v) { if (LD.classic && v && !v.querySelector('[data-l2="simple"]')) v.insertAdjacentHTML('afterbegin', '<div style="margin-bottom:8px"><a href="#" data-l2="simple">← Back to the two lists</a></div>'); };
 })();
 </script>
 </body>

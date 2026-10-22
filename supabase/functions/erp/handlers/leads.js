@@ -45,6 +45,7 @@ export const SOURCES = [
   { key: 'landing', name: 'Landing pages', kind: 'customer', how: 'auto', note: 'Started an order on a landing page and did not finish' },
   { key: 'quote', name: 'Print quote requests', kind: 'customer', how: 'auto', note: 'Asked your shop for a print price' },
   { key: 'market_wanted', name: 'Market: buyers looking', kind: 'customer', how: 'auto', note: 'A buyer’s "wanted" post on the platform market' },
+  { key: 'engine', name: 'Found by the Engine', kind: 'both', how: 'find', note: 'The Engine researched the best sources itself and explains why each one is a good lead' },
   { key: 'google', name: 'Google (AI search)', kind: 'both', how: 'find', note: 'Businesses found on Google by the AI; needs the AI key' },
   { key: 'maps', name: 'Map listings', kind: 'both', how: 'find', note: 'Shops, offices and factories on the map (OpenStreetMap), by area' },
   { key: 'linkedin', name: 'LinkedIn', kind: 'both', how: 'paste', note: 'Paste a profile or company page, or import an export' },
@@ -79,7 +80,7 @@ const key10 = (p) => { const d = normalizePhone(str(p)).replace(/[^0-9]/g, ''); 
 const cleanUrl = (u) => { const s = str(u); if (!s) return ''; return (/^https?:\/\//i.test(s) ? s : 'https://' + s).replace(/[)\].,;]+$/, '').slice(0, 400); };
 
 /** Add one lead unless it is already there. -> { id, added } */
-async function addLead(ctx, l, by) {
+export async function addLead(ctx, l, by) {
   const kind = l.kind === 'supplier' ? 'supplier' : 'customer';
   const name = str(l.name).slice(0, 120), company = str(l.company).slice(0, 160);
   if (!name && !company && !str(l.phone) && !str(l.email)) throw new Error('A lead needs a name, a company, a phone or an e-mail.');
@@ -108,6 +109,7 @@ function view(l, today, ev) {
   const src = sourceOf(l), f = l.follow_up_on ? formatDate(new Date(l.follow_up_on), 'yyyy-MM-dd') : '';
   return { id: l.id, kind: str(l.kind) || 'customer', name: str(l.name), company: str(l.company), phone: str(l.phone), email: str(l.email), website: str(l.website), link: str(l.link),
     city: str(l.city), country: str(l.country), want: str(l.want), stage: l.stage, stageName: STAGES[l.stage], value: l.value === null ? null : num(l.value), priority: str(l.priority),
+    why: str(l.intent), heat: l.priority === 'high' ? 'hot' : l.priority === 'low' ? 'cold' : l.priority === 'normal' ? 'warm' : '',
     source: src, sourceName: SRC[src] ? SRC[src].name : src, conv: l.conversation_id, assigned: str(l.assigned_name), followUp: f, due: !!(f && f <= today && l.stage < 5),
     note: str(l.note), tags: l.tags || [], customerId: l.customer_id, supplierId: l.supplier_id, addedBy: str(l.added_by),
     added: formatDate(new Date(l.created_at), 'd MMM yyyy'), updated: formatDate(new Date(l.updated_at), 'd MMM'),
@@ -140,8 +142,95 @@ export async function erpLeads(ctx, payload) {
   const counts = { customer: 0, supplier: 0 };
   for (const r of await ctx.tx`select coalesce(kind, 'customer') as k, count(*)::int as n from inbox_leads where business_id = ${ctx.biz} group by 1`) counts[r.k] = r.n;
   let ai = false; try { ai = await (await import('../lib/ai.js')).anyAi(ctx); } catch (_) { ai = false; }
-  return { kind, leads: out, total: rows.length, bySource, byStage: STAGES.slice(1).map((n, i) => ({ stage: i + 1, name: n, n: byStage[i + 1] })), due, counts,
+  let research = null;   // leads-2: the Engine's own lead research (asked or by itself)
+  try { research = await ctx.tx.savepoint(() => researchState(ctx)); } catch (_) { research = null; }
+  return { kind, leads: out, research, total: rows.length, bySource, byStage: STAGES.slice(1).map((n, i) => ({ stage: i + 1, name: n, n: byStage[i + 1] })), due, counts,
            sources: SOURCES.filter((s) => s.kind === 'both' || s.kind === kind), stages: STAGES.slice(1), ai, canFind: roleAtLeast(ctx.s.role, 'manager') };
+}
+
+// ------------------------------------------------------------------------------------- leads-2: the Engine finds them
+// Owner (22 Oct 2026): "only two lists, customers and suppliers. When I ask Claude it gives me leads from the best
+// sources - I don't give it sources. Make the ERP the same: when I ask, and when I don't ask it suggests by itself."
+// The Leads agent researches the sources itself (public web, maps, directories, marketplaces, tenders, company sites -
+// never logged-in scraping), checks what is already on the list, and adds each lead with WHY it fits this business,
+// how hot it is and a ready first message. A built-in timed job does it by itself (daily 11:00, switch on the screen).
+export const LEADS_KEY = 'leads-research';
+export function researchAsk(kind, what) {
+  const k = kind === 'supplier' ? 'supplier' : kind === 'customer' ? 'customer' : 'both';
+  return 'Find NEW ' + (k === 'both' ? 'customer and supplier' : k) + ' leads for this business' + (str(what) ? ': ' + str(what) : '') + '.\n' +
+    '- Read the Business Brain above: who buys, where, what it sells, its goals. Leads must fit it.\n' +
+    '- YOU choose the best sources for this business and market (search the web, company and school sites, maps listings, directories, marketplaces, B2B sites, tenders, ' +
+    'social pages that are public). Never log in anywhere, never scrape private groups or profiles, never use a person\'s private number that is not published for business.\n' +
+    '- Call leads_known first and skip anyone already on the list.\n' +
+    '- For each good lead call lead_add once: who they are, how to reach them (only contacts published by them), WHY they are a good lead for this business (one or two sentences with the facts you found), ' +
+    'heat (hot = likely to buy / supply soon, warm, cold), the page you found them on, and a short first message in the right language.\n' +
+    '- Quality over quantity: ' + (k === 'supplier' ? 'up to 10 suppliers' : k === 'customer' ? 'up to 15 customers' : 'up to 10 customers and 5 suppliers') + ', the best ones first. Business buyers (shops, schools, labs, companies) are worth more than single people.\n' +
+    'Finish with a short note: how many you added, from which kinds of sources, and the best one to contact first.';
+}
+async function researchState(ctx) {
+  const on = str(await (await import('../lib/ext.js')).getConfig(ctx, 'engine_on', '')) === '1';
+  // by itself from the start (the owner: "if I don't ask, it suggests by itself"); the switch on the screen stops it
+  if (on && ctx.s.role === 'owner') {
+    const { nextRun } = await import('./watchdog.js');
+    await ctx.tx`insert into engine_schedules (business_id, agent, title, ask, every, at_time, key, enabled, next_at, created_by)
+                 values (${ctx.biz}, 'leads', 'Find new leads', ${researchAsk('both', '')}, 'daily', '11:00', ${LEADS_KEY}, true, ${nextRun({ every: 'daily', at_time: '11:00' }, ctx.now)}, 'Leads')
+                 on conflict do nothing`;
+  }
+  const s = (await ctx.tx`select s.id, s.enabled, s.at_time, s.next_at, j.status job_status, j.id job_id, j.finished_at from engine_schedules s left join engine_jobs j on j.id = s.last_job
+                          where s.business_id = ${ctx.biz} and s.key = ${LEADS_KEY}`)[0];
+  const last = (await ctx.tx`select id, status, title, finished_at, created_at from engine_jobs where business_id = ${ctx.biz} and agent = 'leads' order by created_at desc limit 1`)[0];
+  return { engine: on, auto: s ? { id: s.id, enabled: s.enabled, at: s.at_time, next: s.next_at ? formatDate(new Date(s.next_at), 'd MMM, h:mm a') : '' } : null,
+    last: last ? { id: last.id, status: last.status, title: last.title, when: formatDate(new Date(last.finished_at || last.created_at), 'd MMM, h:mm a') } : null };
+}
+/** The owner asks the Engine for leads (what is optional - the Engine decides); also makes the daily search once. */
+export async function erpLeadResearch(ctx, payload) {
+  await needOn(ctx);
+  if (!roleAtLeast(ctx.s.role, 'manager')) throw new Error('A manager or the owner asks the Engine for leads.');
+  const p = payload || {};
+  const { nextRun } = await import('./watchdog.js');
+  if (p.auto !== undefined) {
+    await ctx.tx`insert into engine_schedules (business_id, agent, title, ask, every, at_time, key, enabled, next_at, created_by)
+                 values (${ctx.biz}, 'leads', 'Find new leads', ${researchAsk('both', '')}, 'daily', '11:00', ${LEADS_KEY}, ${!!p.auto}, ${nextRun({ every: 'daily', at_time: '11:00' }, ctx.now)}, ${str(ctx.s.name)})
+                 on conflict (business_id, key) where key is not null do update set enabled = excluded.enabled`;
+    return erpLeads(ctx, { kind: p.kind });
+  }
+  const busy = (await ctx.tx`select 1 from engine_jobs where business_id = ${ctx.biz} and agent = 'leads' and status in ('queued', 'running') limit 1`)[0];
+  if (busy) throw new Error('The Engine is already looking for leads.');
+  const what = str(p.what).slice(0, 300), kind = p.kind === 'supplier' ? 'supplier' : 'customer';
+  await ctx.tx`insert into engine_jobs (business_id, agent, title, ask, source, created_by)
+               values (${ctx.biz}, 'leads', ${'Find ' + kind + ' leads' + (what ? ': ' + what.slice(0, 60) : '')}, ${researchAsk(kind, what)}, 'owner', ${str(ctx.s.name)})`;
+  return erpLeads(ctx, { kind });
+}
+
+/** The Leads agent's tools (handlers/engine.js gives them to agent 'leads' and the Command Center). */
+export const LEAD_TOOLS = [
+  { name: 'leads_known', description: 'Who is already on the lead list (and customers / suppliers) - names, companies, phones, links - so you never add someone twice.', parameters: { type: 'OBJECT', properties: { kind: { type: 'STRING', description: 'customer | supplier' } } } },
+  { name: 'lead_add', description: 'Add ONE new lead you found. kind customer|supplier; name (person), company; phone / email / website / link only as published by them; city, country; want (what they buy or make); why (why they fit this business, with the facts found); heat hot|warm|cold; sourceUrl (the page you found them on); firstMessage (short, in the right language).',
+    parameters: { type: 'OBJECT', properties: { kind: { type: 'STRING' }, name: { type: 'STRING' }, company: { type: 'STRING' }, phone: { type: 'STRING' }, email: { type: 'STRING' }, website: { type: 'STRING' }, link: { type: 'STRING' },
+      city: { type: 'STRING' }, country: { type: 'STRING' }, want: { type: 'STRING' }, why: { type: 'STRING' }, heat: { type: 'STRING' }, sourceUrl: { type: 'STRING' }, firstMessage: { type: 'STRING' } }, required: ['kind', 'why'] } },
+];
+export async function leadTool(ctx, name, a, job) {
+  if (name === 'leads_known') {
+    const kind = str(a.kind) === 'supplier' ? 'supplier' : str(a.kind) === 'customer' ? 'customer' : null;
+    const rows = await ctx.tx`select kind, name, company, phone, email, website, link, city from inbox_leads where business_id = ${ctx.biz} and (${kind}::text is null or coalesce(kind, 'customer') = ${kind}) order by created_at desc limit 400`;
+    return { count: rows.length, leads: rows.map((r) => [r.kind, r.company || r.name, r.phone, r.email, r.website || r.link, r.city].map(str).filter(Boolean).join(' | ')) };
+  }
+  if (name === 'lead_add') {
+    const n = (await ctx.tx`select count(*)::int n from inbox_leads where business_id = ${ctx.biz} and source_ref like ${'job:' + job.id + ':%'}`)[0].n;
+    if (n >= 40) return { error: 'Forty leads from one search is the limit.' };
+    const why = str(a.why).slice(0, 600);
+    if (why.length < 15) return { error: 'Say why this lead fits the business.' };
+    const heat = { hot: 'high', warm: 'normal', cold: 'low' }[str(a.heat).toLowerCase()] || 'normal';
+    const src = str(a.sourceUrl) || str(a.link) || str(a.website);
+    try {
+      const r = await addLead(ctx, { kind: a.kind, name: a.name, company: a.company, phone: a.phone, email: a.email, website: a.website, link: a.link || a.sourceUrl, city: a.city, country: a.country,
+        want: a.want, source: 'engine', ref: 'job:' + job.id + ':' + (src || str(a.company) || str(a.name)).slice(0, 150), note: str(a.firstMessage) ? 'First message (draft): ' + str(a.firstMessage).slice(0, 1000) : '' }, 'Engine');
+      if (!r.added) return { added: false, note: 'Already on the list - skipped.' };
+      await ctx.tx`update inbox_leads set intent = ${why}, priority = ${heat} where id = ${r.id}`;
+      return { added: true };
+    } catch (e) { return { error: str(e && e.message) }; }
+  }
+  return null;
 }
 
 export async function erpLeadUpsert(ctx, payload) {
@@ -547,4 +636,4 @@ export async function leadFormSend(ctx, token, b, ip) {
   return { status: 200, body: { ok: true } };
 }
 
-export const HANDLERS = { erpLeadForms, erpLeadFormsSet, erpLeads, erpLeadUpsert, erpLeadAct, erpLeadHarvest, erpLeadFind, erpLeadCapture, erpLeadImport };
+export const HANDLERS = { erpLeadForms, erpLeadFormsSet, erpLeadResearch, erpLeads, erpLeadUpsert, erpLeadAct, erpLeadHarvest, erpLeadFind, erpLeadCapture, erpLeadImport };

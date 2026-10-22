@@ -28,6 +28,7 @@ import { TOOLS, runTool, confirmWrite } from './assistant.js';
 import { watchDue, ISSUE_TOOLS, issueTool, nextRun } from './watchdog.js';
 import { brainText, BRAIN_TOOLS, brainTool, rateFact } from './brain.js';
 import { BRIEF_TOOLS, briefTool } from './brief.js';
+import { LEAD_TOOLS, leadTool } from './leads.js';
 
 const str = (v) => String(v == null ? '' : v).trim();
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -41,7 +42,7 @@ export const AGENTS = {
   inbox: { name: 'Universal Inbox', job: 'Answering customers on Messenger, Instagram, WhatsApp, e-mail, website chat and comments; taking orders; handing hard ones to people.',
     instructions: 'You look after customer conversations. Be warm, short and correct about products, prices and stock (check the ERP). Never promise what the ERP does not show.' },
   leads: { name: 'Leads', job: 'Finding, scoring and researching customer and supplier leads; writing first messages and follow-ups.',
-    instructions: 'You find and win customers and suppliers. Research each lead, score it hot / warm / cold with the reason, and write a first message in the right language.' },
+    instructions: 'You find and win customers and suppliers for this business. You choose the best sources yourself (public web, maps, directories, marketplaces, B2B sites, tenders, public pages - never logged-in scraping). Research each lead, say why it fits, rate it hot / warm / cold, and write a first message in the right language.' },
   ads: { name: 'Ads & Market', job: 'Market trends, competitors, what to advertise, what to clear out, what new products to bring in, writing ads and reading ad results.',
     instructions: 'You decide what to advertise and what to bring in next, from the stock, margins and sales in the ERP and the market outside. Give products, reasons, audiences, budgets and ready ad text.' },
   content: { name: 'Content & Video', job: 'Weekly content plans, post captions, reel and video scripts, picture ideas, best posting times.',
@@ -202,7 +203,9 @@ const toolsFor = (agent, source) => ENGINE_TOOLS.concat(ISSUE_TOOLS.filter((t) =
   // brain-1: every agent sees the business in numbers and keeps lasting facts; only the drafting job writes the Brain draft
   .concat(BRAIN_TOOLS.filter((t) => t.name !== 'brain_save_draft' || source === 'brain'))
   // brief-1: the Owner briefing agent files the daily brief and reads what the approved moves brought
-  .concat(agent === 'briefing' ? BRIEF_TOOLS : []);
+  .concat(agent === 'briefing' ? BRIEF_TOOLS : [])
+  // leads-2: the Leads agent (and the Command Center) find and add leads themselves
+  .concat(agent === 'leads' || agent === 'command' ? LEAD_TOOLS : []);
 
 // ----------------------------------------------------------------------------------------------------- timed jobs
 const EVERY = ['hourly', 'daily', 'weekly'];
@@ -313,6 +316,7 @@ export async function erpEngineTool(ctx, payload) {
   if (ISSUE_TOOLS.some((t) => t.name === tool)) return issueTool(ctx, tool, args, j);
   if (BRAIN_TOOLS.some((t) => t.name === tool)) return brainTool(ctx, tool, args, j);
   if (BRIEF_TOOLS.some((t) => t.name === tool)) return briefTool(ctx, tool, args, j);
+  if (LEAD_TOOLS.some((t) => t.name === tool)) return leadTool(ctx, tool, args, j);
   const out = await runTool(ctx, tool, p.args && typeof p.args === 'object' ? p.args : {});
   if (out && out.proposal) {
     const list = Array.isArray(j.proposals) ? j.proposals : [];
