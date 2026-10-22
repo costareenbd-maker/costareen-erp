@@ -240,7 +240,8 @@ export async function decideAction(ctx, payload) {
     let r;
     try { r = await ctx.tx.savepoint(() => runAction(ctx, a, { cap: adCap })); }
     catch (e) { r = { ok: false, text: str((e && e.message) || e) }; }
-    await ctx.tx`update engine_actions set status = ${r.ok ? 'done' : 'failed'}, result = ${str(r.text).slice(0, 1500)}, executed_at = ${r.ok ? ctx.now : null} where id = ${a.id}`;
+    await ctx.tx`update engine_actions set status = ${r.ok ? 'done' : 'failed'}, result = ${str(r.text).slice(0, 1500)}, executed_at = ${r.ok ? ctx.now : null},
+                   outcome = ${r.jobId ? ctx.tx.json({ jobId: r.jobId }) : null} where id = ${a.id}`;
     // a Watchdog fix that ran closes its issue (the checks reopen it if the problem is still there)
     if (r.ok && a.issue_key) await ctx.tx`update engine_issues set status = 'resolved', resolved_at = now() where business_id = ${ctx.biz} and key = ${a.issue_key} and status = 'open'`;
   } else throw new Error('Approve, change or no?');

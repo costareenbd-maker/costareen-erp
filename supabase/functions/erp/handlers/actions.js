@@ -130,7 +130,7 @@ export async function runAction(ctx, a, o) {
   if (a.type === 'task') {
     const agent = ['command', 'leads', 'ads', 'content', 'seo', 'watchdog', 'inbox'].includes(str(p.agent)) ? str(p.agent) : 'command';
     const id = (await ctx.tx`insert into engine_jobs (business_id, agent, title, ask, source, created_by) values (${ctx.biz}, ${agent}, ${str(a.title).slice(0, 90)}, ${str(p.ask).slice(0, 8000)}, 'brief', ${str(ctx.s.name)}) returning id`)[0].id;
-    return { ok: true, text: 'Given to the Engine - the answer will be in the Command Center.', jobId: id };
+    return { ok: true, text: 'Given to the AI.', jobId: id };
   }
   return { ok: false, text: 'Nothing to do.' };
 }

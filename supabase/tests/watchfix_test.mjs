@@ -52,7 +52,9 @@ const W = r.result;
 check('the owner sees: 2 fixes waiting, 2 fixed by itself, and the night\'s note', W.waiting.filter((a) => a.status === 'proposed').length === 2 && W.fixed.filter((a) => a.autoDone).length === 2 && /Fixed 2 problems/.test(W.lastNight.note), { waiting: W.waiting.length, fixed: W.fixed.map((a) => a.title) });
 r = await owner('erpAlerts', []);
 const t2 = r.result.alerts.map((a) => a.title);
-check('the morning alert: what waits, what was fixed overnight', t2.some((t) => /2 fixes wait for your OK/.test(t)) && t2.some((t) => /fixed 2 problems overnight/.test(t)), t2);
+check('the morning alert: what waits, what was fixed overnight and what is still open', t2.some((t) => /2 fixes wait for your OK/.test(t)) && t2.some((t) => /Watchdog: fixed 2, \d+ still open/.test(t)), t2);
+check('honest states: the retry that closed its problem = fixed, the closed one = fixed itself', W.fixed.some((a) => a.state === 'fixed' && /books check/.test(a.title)) && W.fixed.some((a) => a.state === 'closed'), W.fixed.map((a) => a.title + ':' + a.state));
+check('each problem still open says its status (a fix waits for the OK / will be fixed at the night check)', W.openIssues.some((i) => i.key === 'backup' && i.status === 'waiting_ok') && W.openIssues.some((i) => i.key === 'web:site' && i.status === 'next_check'), W.openIssues);
 
 const good = W.waiting.find((a) => a.title.startsWith('Call the customer'));
 r = await owner('erpWatchFixDecide', [{ id: good.id, act: 'approve' }]);
@@ -77,6 +79,26 @@ r = await eng('erpEngineClaim', { runner: 'vps1' });
 check('...the Watchdog gets his words and brief_replace_action', r.ok && r.result.agent.key === 'watchdog' && /Bangla and call them/.test(r.result.job.ask) && r.result.tools.some((t) => t.name === 'brief_replace_action'), r.result.job);
 r = await eng('erpEngineTool', { id: r.result.job.id, tool: 'brief_replace_action', args: { action: { type: 'task', title: 'Call the host (script in Bangla)', why: 'Same cause.', figures: [{ label: 'Down since', value: '1 AM', source: 'watch_issues' }], payload: { ask: 'Write a Bangla call script for the hosting support.' } } } });
 check('...the new fix replaces it, still a Watchdog fix', r.ok && r.result.replaced && (await owner('erpWatch', [])).result.waiting.some((a) => a.title === 'Call the host (script in Bangla)' && a.kind === 'watch' && a.status === 'proposed'), r.result);
+// a retry that did not cure the problem is said as such; an approved Engine task is "working" until its job ends
+await sql`insert into engine_issues (business_id, key, area, severity, title) values (${B}, 'conn:courier', 'channels', 'high', 'The ERP cannot reach the courier')`;
+r = await owner('erpEngineScheduleRun', [{ id: W.daily.id }]);
+r = await eng('erpEngineClaim', { runner: 'vps1' });
+const J3 = r.result.job;
+await eng('erpEngineTool', { id: J3.id, tool: 'fix_now', args: { name: 'erpSystemCheck', args: {}, why: 'Retry the courier link', issueKey: 'conn:courier' } });
+await sql`update engine_issues set status = 'open', resolved_at = null where business_id = ${B} and key = 'conn:courier'`;   // the next check found it again
+await eng('erpEngineStep', { id: J3.id, lines: ['ERP: fix now erpSystemCheck'] });
+r = await owner('erpWatch', []);
+check('the screen shows the night shift working now, with what it is doing', r.ok && r.result.working && r.result.working.status === 'running' && /fix now/.test(r.result.working.step), r.result.working);
+check('a retry whose problem came back = "tried - still not working"', r.result.fixed.some((a) => a.title === 'Retry the courier link' && a.state === 'still') && r.result.openIssues.some((i) => i.key === 'conn:courier' && i.status === 'tried'), r.result.fixed.map((a) => a.title + ':' + a.state));
+await eng('erpEngineTool', { id: J3.id, tool: 'propose_fix', args: { type: 'task', title: 'Write the courier support message', why: 'The courier refuses the key since last night.', payload: { ask: 'Write the message to Steadfast support.' } } });
+await eng('erpEngineDone', { id: J3.id, ok: true, result: 'ok' });
+const tsk = (await owner('erpWatch', [])).result.waiting.find((a) => a.title === 'Write the courier support message');
+r = await owner('erpWatchFixDecide', [{ id: tsk.id, act: 'approve' }]);
+const tf = r.result.fixed.find((a) => a.id === tsk.id);
+check('an approved Engine task shows "working on it" until its answer is ready', tf && tf.state === 'working' && tf.jobId, tf);
+await sql`update engine_jobs set status = 'done', result = 'Dear Steadfast...' where id = ${tf.jobId}`;
+r = await owner('erpWatch', []);
+check('...then "done - see the answer"', r.result.fixed.find((a) => a.id === tsk.id).state === 'answered', '');
 check('the other business has no fixes', (await sql`select count(*)::int n from engine_actions where business_id = ${FIX.B2}`)[0].n === 0, '');
 
 await done();

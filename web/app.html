@@ -39503,6 +39503,12 @@ saveProduct = function () {
 .wd-sev{display:inline-block;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;border-radius:6px;padding:1px 6px;margin-right:6px}
 .wd-sev.urgent{background:var(--critical,#d33);color:#fff}.wd-sev.high{background:#e8590c;color:#fff}.wd-sev.medium{background:#f0b400;color:#222}.wd-sev.low{background:var(--fd-surface-2,var(--plane,#f4f6f9));color:inherit}
 .wd-pages td{vertical-align:top;font-size:13px}
+.wd-spin{display:inline-block;width:14px;height:14px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:wdspin .8s linear infinite;vertical-align:-2px;margin-right:6px}
+@keyframes wdspin{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){.wd-spin{animation-duration:2.4s}}
+.wd-st{font-weight:600;white-space:nowrap}.wd-st.ok{color:var(--good,#16a34a)}.wd-st.warn{color:var(--warning,#d97706)}.wd-st.bad{color:var(--critical,#d33)}.wd-st.run{color:var(--fd-accent,var(--series-1,#5b4ff0))}
+.wd-now{margin-top:8px;font-size:13px;color:var(--fd-text-3,var(--muted,#667))}
+@media (max-width:760px){.br-fact{flex-wrap:wrap}.br-fact > div:last-child{text-align:left!important}.wd-st{white-space:normal}}
 .wd-url{overflow-wrap:anywhere}
 .tj-row td{vertical-align:top;font-size:13px}
 @media (max-width:760px){.wd-pages .hide-sm,.tj-tbl .hide-sm{display:none}}
@@ -39578,19 +39584,32 @@ saveProduct = function () {
     if (!d) { load(); return '<div class="loading">Loading the Watchdog…</div>'; }
     var c = d.counts, dl = d.daily, wait = (d.waiting || []).filter(function (a) { return a.status === 'proposed' || a.status === 'changing'; }), fx = d.fixed || [];
     var byItself = fx.filter(function (a) { return a.autoDone && a.status === 'done'; }).length;
-    var big = wait.length ? '<div class="wd-big bad" style="color:var(--warning,#d97706)">' + wait.length + (wait.length === 1 ? ' fix waits' : ' fixes wait') + ' for your OK</div>'
-      : c.open ? '<div class="wd-big bad">' + c.open + ' problem' + (c.open === 1 ? '' : 's') + ' found' + (c.urgent ? ' (' + c.urgent + ' urgent)' : '') + ' - the Watchdog is preparing the fixes</div>'
+    // watch-4: what is happening NOW, in one line - working (moving), waiting for you, not fixed yet, or all good
+    var W = d.working, oi = d.openIssues || [];
+    var big = W ? '<div class="wd-big" style="color:var(--fd-accent,var(--series-1,#5b4ff0))"><span class="wd-spin"></span>Checking and fixing now…</div>'
+      : wait.length ? '<div class="wd-big bad" style="color:var(--warning,#d97706)">' + wait.length + (wait.length === 1 ? ' fix waits' : ' fixes wait') + ' for your OK</div>'
+      : oi.length ? '<div class="wd-big bad">' + oi.length + ' problem' + (oi.length === 1 ? '' : 's') + ' not fixed yet</div>'
       : '<div class="wd-big ok">All good</div>';
+    if (W) big += '<div class="wd-now" style="width:100%">' + (W.status === 'queued' ? 'Starting…' : 'Now: <span data-noi18n="1">' + esc(W.step || 'looking at the systems') + '</span>') + '</div>';
     var h = '<section><div class="card"><div class="wd-state">' + big + '<div class="en-meta">' + (byItself ? byItself + ' fixed by itself this week' : '') + (d.lastCheck ? (byItself ? ' · ' : '') + 'last check ' + esc(d.lastCheck) : '') + '</div></div>' +
       '<div class="sub" style="display:block;margin-top:6px">It checks that your website, the ERP, the courier and WhatsApp work and talk to each other - every 5 minutes, and a full check with fixes every night.</div>' +
       (d.lastNight && d.lastNight.note ? '<details style="margin-top:8px"><summary class="en-meta" style="cursor:pointer">Read the last night report (' + esc(d.lastNight.when) + ')</summary><div class="en-ans" style="margin-top:4px" data-noi18n="1">' + (window.enMd ? window.enMd(d.lastNight.note) : esc(d.lastNight.note)) + '</div></details>' : '') +
       '<details style="margin-top:6px"><summary class="en-meta" style="cursor:pointer">Settings</summary><div class="ap-row" style="margin-top:8px"><button class="btn small" type="button" data-wd="now">Check now</button>' +
       (dl ? '<button class="btn small" type="button" data-wd="daily">Run the night check now</button><label style="display:inline-flex;gap:6px;align-items:center"><input type="checkbox" data-wd="dailyon"' + (dl.enabled ? ' checked' : '') + '> Night check at</label><input class="i" type="time" id="wd_at" value="' + esc(dl.at) + '" style="max-width:120px">' : '') + '</div></details></div></section>';
+    if (oi.length) {
+      var at = dl ? dl.at : '03:00';
+      var ST = { waiting_ok: ['warn', 'Waits for your OK - see below'], needs_you: ['warn', 'Needs you - the steps are below'], tried: ['bad', 'Tried - still not working. Next try at ' + at], next_check: ['run', W ? 'Being looked at now' : 'Will be fixed at the night check (' + at + ')'] };
+      h += '<section><div class="card"><h2>Not fixed yet</h2>' + oi.map(function (i) { var t = ST[i.status] || ST.next_check;
+        return '<div class="br-fact"><div data-noi18n="1">' + esc(i.title) + '</div><div class="wd-st ' + t[0] + '">' + (t[0] === 'run' && W ? '<span class="wd-spin"></span>' : '') + esc(t[1]) + '</div></div>'; }).join('') + '</div></section>';
+    }
     if (wait.length) h += '<section><h2 style="margin:6px 0">Waiting for your OK</h2>' + wait.map(fixHtml).join('') + '</section>';
-    h += '<section><div class="card"><h2>Fixed in the last 7 days</h2>' + (fx.length ? fx.map(function (a) {
-      var ok = a.status === 'done';
-      return '<div class="br-fact"><div><b>' + (ok ? '✓ ' : a.status === 'rejected' ? '✕ ' : '! ') + '</b><span data-noi18n="1">' + esc(a.title) + '</span><div class="en-meta" data-noi18n="1">' + esc(a.result || a.note || '') + '</div></div>' +
-        '<div class="en-meta" style="white-space:nowrap;text-align:right">' + (a.autoDone ? 'by itself' : a.status === 'rejected' ? 'you said no' : 'you approved') + '<br>' + esc(a.decided) + '</div></div>'; }).join('')
+    var SS = { fixed: ['ok', '✓ Fixed'], closed: ['ok', '✓ Fixed itself'], you: ['ok', '✓ Done by you'], answered: ['ok', '✓ Done - see the answer'], working: ['run', 'Working on it…'],
+      still: ['warn', '! Tried - still not working'], failed: ['bad', '✕ Could not be done'], no: ['bad', '✕ You said no'] };
+    h += '<section><div class="card"><h2>What happened in the last 7 days</h2>' + (fx.length ? fx.map(function (a) {
+      var t = SS[a.state] || SS.fixed;
+      return '<div class="br-fact"><div style="flex:1"><span data-noi18n="1">' + esc(a.title) + '</span><div class="en-meta" data-noi18n="1">' + esc(a.result || a.note || '') + '</div>' +
+        (a.jobId && a.state === 'answered' ? (WD.ans && WD.ans.id === a.jobId ? '<div class="en-ans" data-noi18n="1" style="margin-top:6px">' + (window.enMd ? window.enMd(WD.ans.text) : esc(WD.ans.text)) + '</div>' : '<a href="#" data-wdans="' + a.jobId + '">Show the answer</a>') : '') + '</div>' +
+        '<div style="text-align:right"><div class="wd-st ' + t[0] + '">' + (a.state === 'working' ? '<span class="wd-spin"></span>' : '') + t[1] + '</div><div class="en-meta">' + (a.autoDone ? 'by itself' : a.state === 'no' ? '' : 'you approved') + ' · ' + esc(a.decided) + '</div></div></div>'; }).join('')
       : '<div class="en-meta">Nothing yet - the first night check runs at ' + esc(dl ? dl.at : '03:00') + '.</div>') + '</div></section>';
     h += '<section><details><summary class="en-meta" style="cursor:pointer">What the Watchdog is watching (' + c.open + ' open)</summary>' + (d.issues.filter(function (i) { return i.status === 'open'; }).map(issueHtml).join('') || '<div class="en-meta">Nothing open.</div>') + '</details>' +
       '<details style="margin-top:8px"><summary class="en-meta" style="cursor:pointer">Pages it opens every 5 minutes (' + d.targets.length + ')</summary>' + pagesHtml(d) + '</details></section>';
@@ -39600,10 +39619,13 @@ saveProduct = function () {
   var rp = repaint;
   repaint = function () { if (VIEW !== 'watch') return rp.apply(this, arguments); paint(); };
   setInterval(function () { if (VIEW === 'watch' && !document.hidden) load(); }, 60000);
+  // watch-4: while it works, the screen follows it (every 8 seconds)
+  setInterval(function () { if (VIEW === 'watch' && !document.hidden && WD.data && (WD.data.working || (WD.data.fixed || []).some(function (a) { return a.state === 'working'; }))) load(); }, 8000);
 
   document.addEventListener('click', function (e) {
     if (VIEW !== 'watch') return;
-    var t = e.target.closest && e.target.closest('[data-wd],[data-wdact],[data-wdtab],[data-wdrm],[data-wdfok],[data-wdfchange],[data-wdfno],[data-wdfch],[data-wdfno2],[data-wdfx]'); if (!t) return;
+    var t = e.target.closest && e.target.closest('[data-wd],[data-wdact],[data-wdtab],[data-wdrm],[data-wdfok],[data-wdfchange],[data-wdfno],[data-wdfch],[data-wdfno2],[data-wdfx],[data-wdans]'); if (!t) return;
+    if (t.hasAttribute('data-wdans')) { e.preventDefault(); var jid = t.getAttribute('data-wdans'); srv('erpEngineJob', [{ id: jid }], function (r) { WD.ans = { id: jid, text: r.result || r.error || '(no answer yet)' }; paint(); }, function (er) { toast(esc((er && er.message) || er), true); }); return; }
     var fx = function (id, act, note) { t.disabled = true; srv('erpWatchFixDecide', [{ id: id, act: act, note: note || '' }], function (r) { WD.data = r; WD.change = null; WD.no = null; syncNav();
       var a = (r.fixed || []).concat(r.waiting || []).filter(function (x) { return x.id === id; })[0];
       toast(act === 'approve' ? (a && a.status === 'done' ? 'Fixed: ' + esc(a.result) : 'Could not be fixed: ' + esc(a ? a.result : '')) : act === 'change' ? 'Sent back to the Watchdog.' : 'Noted.', act === 'approve' && a && a.status !== 'done', 9000); paint(); },

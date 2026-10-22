@@ -3020,3 +3020,16 @@ with Settings; dashboards summarise and link, never repeat controls. Audit of al
 Left as they are, on purpose: "Receive / adjust due" on both Sales and Customers (the owner asked for it on the first
 screen of both); Excel on each list (each exports its own list); the corner chat (a quick question) next to the Command
 Center (deep work) - to be revisited if the two still confuse.
+
+## The Watchdog says honestly what is fixed, what is not, and when it is working (22 Oct 2026, tag watch-4)
+Owner (screenshot): "It does not say if the problem is fixed or not, or that it is still working - I want to see it in
+motion." The "Fixed" list had ticks on things only tried (the website sync is still failing).
+- Every item has an honest state: Fixed (its problem stayed closed), Fixed itself, Done by you, Done - see the answer
+  (opens the AI's answer right there), Working on it… (moving), Tried - still not working, Could not be done, You said no.
+  An approved "work for the AI" item keeps its job and shows "working" until the answer is ready.
+- The top line says what is happening now: "Checking and fixing now…" with a moving spinner and the step it is on (the
+  screen follows it every 8 seconds), or "N fixes wait for your OK", "N problems not fixed yet", "All good".
+- "Not fixed yet": each open problem with its status - waits for your OK / needs you / tried, next try at 03:00 / will be
+  fixed at the night check (being looked at now while it runs).
+- The morning alert: "Watchdog: fixed N, M still open" (or "all good").
+- Tests: watchfix_test now 23.

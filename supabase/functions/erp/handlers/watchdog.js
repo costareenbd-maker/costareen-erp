@@ -241,11 +241,37 @@ export async function erpWatch(ctx) {
                               where s.business_id = ${ctx.biz} and s.key = ${WATCH_DAILY.key}`)[0];
   const { actionOut } = await import('./brief.js');
   const waiting = (await ctx.tx`select * from engine_actions where business_id = ${ctx.biz} and kind = 'watch' and status in ('proposed', 'changing', 'running') order by created_at desc limit 30`).map(actionOut);
-  const fixed = (await ctx.tx`select * from engine_actions where business_id = ${ctx.biz} and kind = 'watch' and status in ('done', 'failed', 'rejected') and decided_at > now() - interval '7 days' order by decided_at desc limit 40`).map(actionOut);
+  // watch-4 (owner 22 Oct 2026: "it does not say if the problem is fixed or not, or that it is still working"):
+  // a fix is FIXED only when its problem is closed afterwards; tried-but-still-open, working, done, failed are said as such
+  const issueState = {};
+  for (const r of await ctx.tx`select key, status from engine_issues where business_id = ${ctx.biz}`) issueState[r.key] = r.status;
+  const fixRows = await ctx.tx`select * from engine_actions where business_id = ${ctx.biz} and kind = 'watch' and status in ('done', 'failed', 'rejected') and decided_at > now() - interval '7 days' order by decided_at desc limit 40`;
+  const jobIds = fixRows.map((a) => a.outcome && a.outcome.jobId).filter(Boolean);
+  const jobs = {};
+  if (jobIds.length) for (const j of await ctx.tx`select id, status, result, error from engine_jobs where business_id = ${ctx.biz} and id = any(${jobIds})`) jobs[j.id] = j;
+  const fixed = fixRows.map((a) => {
+    const o = actionOut(a), j = a.outcome && a.outcome.jobId ? jobs[a.outcome.jobId] : null, is = a.issue_key ? issueState[a.issue_key] : null;
+    let state;
+    if (a.status === 'rejected') state = 'no';
+    else if (a.status === 'failed') state = 'failed';
+    else if (a.type === 'note') state = 'closed';
+    else if (a.type === 'manual') state = 'you';
+    else if (j) state = j.status === 'queued' || j.status === 'running' ? 'working' : j.status === 'done' ? 'answered' : 'failed';
+    else if (is === 'open') state = 'still';
+    else state = 'fixed';
+    return { ...o, state, jobId: j ? j.id : null };
+  });
+  const openIssues = (await ctx.tx`select key, title, severity from engine_issues where business_id = ${ctx.biz} and status = 'open' order by first_seen`).map((i) => {
+    const w = (waiting || []).find((x) => x.issueKey === i.key && x.status === 'proposed');
+    const tried = fixed.find((x) => x.issueKey === i.key && x.state === 'still');
+    return { key: i.key, title: i.title, severity: i.severity, status: w ? (w.type === 'manual' ? 'needs_you' : 'waiting_ok') : tried ? 'tried' : 'next_check' };
+  });
+  const wj = (await ctx.tx`select id, status, steps, started_at from engine_jobs where business_id = ${ctx.biz} and agent = 'watchdog' and status in ('queued', 'running') order by created_at desc limit 1`)[0];
+  const working = wj ? { status: wj.status, step: Array.isArray(wj.steps) && wj.steps.length ? str(wj.steps[wj.steps.length - 1].t).slice(0, 160) : '', since: when(wj.started_at) } : null;
   const night = (await ctx.tx`select id, status, result, finished_at from engine_jobs where business_id = ${ctx.biz} and agent = 'watchdog' and status in ('done', 'failed') order by finished_at desc nulls last limit 1`)[0];
   const lastCheck = Number(await getConfig(ctx, 'watch_last_check', '0')) || 0;
   const run = (await ctx.tx`select seen_at from engine_runners where business_id = ${ctx.biz} order by seen_at desc limit 1`)[0];
-  return { waiting, fixed, lastNight: night ? { id: night.id, status: night.status, when: when(night.finished_at), note: str(night.result).slice(0, 1500) } : null,
+  return { waiting, fixed, openIssues, working, lastNight: night ? { id: night.id, status: night.status, when: when(night.finished_at), note: str(night.result).slice(0, 1500) } : null,
     issues, counts, targets, lastCheck: lastCheck ? when(new Date(lastCheck)) : '', minutesAgo: lastCheck ? Math.round((ctx.now.getTime() - lastCheck) / 60000) : null,
     engineAlive: !!run && ctx.now.getTime() - new Date(run.seen_at).getTime() < 120000,
     daily: daily ? { id: daily.id, enabled: daily.enabled, at: daily.at_time, next: when(daily.next_at), lastRun: when(daily.last_run), lastJob: daily.job_id, lastStatus: daily.job_status || '' } : null };
@@ -373,7 +399,8 @@ export async function watchAlerts(ctx) {
   const wait = (await ctx.tx`select count(*)::int n from engine_actions where business_id = ${ctx.biz} and kind = 'watch' and status = 'proposed'`)[0].n;
   if (wait) out.push({ key: 'watchfix:' + day + ':' + wait, level: 'warn', title: wait + (wait === 1 ? ' fix waits' : ' fixes wait') + ' for your OK', detail: 'The Watchdog found the cause and prepared the fix - one button each.', go: 'watch' });
   const fixed = (await ctx.tx`select count(*)::int n from engine_actions where business_id = ${ctx.biz} and kind = 'watch' and auto and status = 'done' and decided_at > now() - interval '18 hours'`)[0].n;
-  if (fixed) out.push({ key: 'watchdone:' + day, level: 'warn', title: 'The Watchdog fixed ' + fixed + ' problem' + (fixed === 1 ? '' : 's') + ' overnight', detail: 'Nothing for you to do - see what was fixed.', go: 'watch' });
+  const still = (await ctx.tx`select count(*)::int n from engine_issues where business_id = ${ctx.biz} and status = 'open'`)[0].n;
+  if (fixed || still) out.push({ key: 'watchdone:' + day + ':' + fixed + ':' + still, level: 'warn', title: 'Watchdog: ' + (fixed ? 'fixed ' + fixed : 'nothing fixed') + (still ? ', ' + still + ' still open' : ', all good'), detail: still ? 'See what is still open and why.' : 'Nothing for you to do.', go: 'watch' });
   const rows = await ctx.tx`select id, title, detail, severity, first_seen from engine_issues where business_id = ${ctx.biz} and status = 'open' and severity = 'urgent' order by first_seen desc limit 10`;
   for (const i of rows) out.push({ key: 'watch:' + i.id + ':' + new Date(i.first_seen).getTime(), level: 'bad', title: (i.severity === 'urgent' ? 'URGENT: ' : '') + i.title, detail: str(i.detail).slice(0, 160), go: 'watch' });
   const q = (await ctx.tx`select count(*)::int n, min(created_at) oldest from engine_jobs where business_id = ${ctx.biz} and status = 'queued'`)[0];
