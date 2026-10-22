@@ -2977,3 +2977,16 @@ screenshot: white cards in dark mode.
   gone (Leads included).
 - Dark mode: the new screens used colour names the "fd" skin does not define (white cards); they now use the skin's own.
 - Tests: watchfix_test (17); watchdog_test updated.
+
+## The Watchdog checks systems only; the records start 1 October (22 Oct 2026, tag watch-3)
+Owner: "Everything before October is not considerable - I started this ERP in October. The Watchdog / server checker
+does not solve invoice prices; it only checks that everything works: the courier gets the website's signal, the website
+gets the ERP's, everything talks to each other."
+- Every business has a records-start date (Business Brain, erpBrainStart; Costareen 2026-10-01): every Engine job is
+  told that older data is an import to ignore - never reported, never used for figures or suggestions. The brief says so too.
+- The Watchdog's job is systems and connections: the books' system check left it (its old issues closed); once an hour
+  it tests the website sync (ERP -> website), the courier (Steadfast), WhatsApp; plus the pages every 5 minutes, failing
+  timers and actions, backups, the Engine. The night shift is told: systems, not the books.
+- Live: the 4 data issues and 4 data "fixes" from the first night shift were closed; what is left is the website's sync
+  (the hosting answers 521).
+- Tests: watch3_test (7).
