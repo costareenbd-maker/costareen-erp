@@ -39,8 +39,8 @@ export const WATCH_DAILY = { key: 'watchdog-daily', agent: 'watchdog', title: 'W
     '2) For EACH problem find the cause with the ERP functions and the web. Then:\n' +
     '   - if it fixed itself or is not real: close_issue with the reason;\n' +
     '   - if a safe retry fixes it (a backup, a delivery check, a website test): fix_now;\n' +
-    '   - anything that changes data, money, stock, prices or settings: propose_fix with the exact steps (ERP functions and their arguments, each with a plain summary) - the owner approves it with one button in the morning; ' +
-    'if it needs something outside the ERP (the hosting, a supplier, a person), propose_fix as a task with what to do;\n' +
+    '   - anything that changes data, money, stock, prices or settings: propose_fix type "erp" with the exact steps (ERP functions and their arguments, each with a plain summary) - the owner approves it with ONE button in the morning. Always try to make it a real one-click fix: the owner does not want work handed to him;\n' +
+    '   - only if it truly needs a person outside the ERP (the hosting panel, the courier merchant panel, a phone call): propose_fix type "manual" with exact numbered steps (links, what to click, what to type); type "task" only for work YOU can do next (research, writing, a plan);\n' +
     '   - never guess: if you cannot find the cause, say so in the fix\'s why.\n' +
     '3) End with the morning note for the owner, plain and short: what you fixed, what waits for his OK, and if all is well, say so in one line.' };
 // what the night shift may do with no approval: retries that change no money, stock or records

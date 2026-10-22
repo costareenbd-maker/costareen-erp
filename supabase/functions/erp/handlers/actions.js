@@ -46,6 +46,8 @@ export const ACTION_TYPES = {
     check: (p) => (!Array.isArray(p.items) || !p.items.length || p.items.some((i) => !(str(i.phone) || str(i.name)) || !/^\d{4}-\d{2}-\d{2}$/.test(str(i.due)) || !str(i.note)) ? 'Each follow-up needs a phone or name, a day and a note.' : '') },
   whatsapp: { name: 'WhatsApp message', auto: true, what: 'send one WhatsApp message to known customers or leads (spread out over the day)', payload: '{text, recipients: [{phone, name}] (up to 200, only numbers that are in the ERP), name}',
     check: (p) => (str(p.text).length < 10 ? 'The message is missing.' : !Array.isArray(p.recipients) || !p.recipients.length ? 'Who gets it?' : p.recipients.length > 200 ? 'At most 200 people in one move.' : '') },
+  manual: { name: 'Needs you', auto: false, what: 'something ONLY a person can do outside the ERP (log in to the hosting or the courier panel, call someone, sign something) - with exact numbered steps',
+    payload: '{todo: "1. ... 2. ... (exact steps, links, what to type)"}', check: (p) => (str(p.todo).length < 20 ? 'Write the exact steps.' : '') },
   task: { name: 'Work for the Engine', auto: true, what: 'a piece of work the Engine does next (research, writing, a plan, a list) - its answer comes back in the Command Center', payload: '{agent?: command|leads|ads|content|seo|watchdog, ask}',
     check: (p) => (str(p.ask).length < 10 ? 'Say what the Engine should do.' : '') },
 };
@@ -124,6 +126,7 @@ export async function runAction(ctx, a, o) {
     }
     return { ok: true, text: 'Fixed: ' + done.join('; ') + '.' };
   }
+  if (a.type === 'manual') return { ok: true, text: 'Done by you.' };
   if (a.type === 'task') {
     const agent = ['command', 'leads', 'ads', 'content', 'seo', 'watchdog', 'inbox'].includes(str(p.agent)) ? str(p.agent) : 'command';
     const id = (await ctx.tx`insert into engine_jobs (business_id, agent, title, ask, source, created_by) values (${ctx.biz}, ${agent}, ${str(a.title).slice(0, 90)}, ${str(p.ask).slice(0, 8000)}, 'brief', ${str(ctx.s.name)}) returning id`)[0].id;

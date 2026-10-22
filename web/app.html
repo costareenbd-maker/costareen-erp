@@ -39560,16 +39560,18 @@ saveProduct = function () {
     var p = a.payload || {};
     if (a.type === 'erp') return '<ol style="margin:4px 0 0 18px;padding:0">' + (p.steps || []).map(function (s) { return '<li data-noi18n="1">' + esc(s.summary || s.name) + '</li>'; }).join('') + '</ol>';
     if (a.type === 'task') return '<div data-noi18n="1">' + esc(p.ask || '') + '</div>';
+    if (a.type === 'manual') return '<div data-noi18n="1" style="white-space:pre-wrap">' + esc(p.todo || '') + '</div>';
     return '<div data-noi18n="1">' + esc(JSON.stringify(p).slice(0, 300)) + '</div>';
   }
   function fixHtml(a) {
     var h = '<div class="bf-move"><span class="en-sk">' + esc(a.typeName) + '</span>' + (a.status === 'changing' ? ' <span class="pill low">being changed…</span>' : '') +
       '<div class="t" data-noi18n="1">' + esc(a.title) + '</div><div style="font-size:13.5px;white-space:pre-wrap" data-noi18n="1">' + esc(a.why) + '</div>' +
       (a.figures && a.figures.length ? '<div class="bf-figs">' + a.figures.map(function (f) { return esc(f.label) + ': <b>' + esc(f.value) + '</b> <i>(' + esc(f.source) + ')</i>'; }).join(' · ') + '</div>' : '') +
-      '<div class="bf-pay"><b>The fix:</b>' + stepsHtml(a) + '</div>';
+      '<div class="bf-pay"><b>' + (a.type === 'manual' ? 'Only you can do this - the steps:' : 'The fix:') + '</b>' + stepsHtml(a) + '</div>';
     if (a.status !== 'proposed') return h + '</div>';
     if (WD.change === a.id) h += '<div class="row" style="gap:8px;flex-wrap:wrap;align-items:flex-end"><div style="flex:1 1 260px"><label class="f" for="wd_note">What should change?</label><input class="i" id="wd_note" data-noi18n="1"></div><button class="btn primary" type="button" data-wdfch="' + a.id + '">Send to the Watchdog</button><button class="btn" type="button" data-wdfx="1">Cancel</button></div>';
     else if (WD.no === a.id) h += '<div class="row" style="gap:8px;flex-wrap:wrap;align-items:flex-end"><div style="flex:1 1 260px"><label class="f" for="wd_why">Why not? (it learns from this)</label><input class="i" id="wd_why" data-noi18n="1"></div><button class="btn" type="button" data-wdfno2="' + a.id + '">No</button><button class="btn" type="button" data-wdfx="1">Cancel</button></div>';
+    else if (a.type === 'manual') h += '<div class="bf-btns"><button class="btn ok" type="button" data-wdfok="' + a.id + '">I did it</button><button class="btn" type="button" data-wdfno="' + a.id + '">Not now</button></div>';
     else h += '<div class="bf-btns"><button class="btn ok" type="button" data-wdfok="' + a.id + '">Approve - fix it</button><button class="btn" type="button" data-wdfchange="' + a.id + '">Change</button><button class="btn" type="button" data-wdfno="' + a.id + '">No</button></div>';
     return h + '</div>';
   }
