@@ -21,6 +21,7 @@ import { platformAdmin } from './platform.js';
 import { appIsOff } from './apps.js';
 import { erpSystemCheck } from './insight.js';
 import { erpConnStatus } from './connections.js';
+import { engineBusinesses, asBusiness, markOn } from './engine.js';
 
 const str = (v) => String(v == null ? '' : v).trim();
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -37,8 +38,8 @@ export const WATCH_DAILY = { key: 'watchdog-daily', agent: 'watchdog', title: 'W
 
 async function gate(ctx) {
   if (!roleAtLeast(ctx.s.role, 'owner')) throw new Error('Only the owner sees the Watchdog.');
-  if (await platformAdmin(ctx)) return;
-  if (await appIsOff(ctx.deps, ctx.sql, 'engine')) throw new Error('The Engine is not open on this ERP yet.');
+  if (!(await platformAdmin(ctx)) && await appIsOff(ctx.deps, ctx.sql, 'engine')) throw new Error('The Engine is not open on this ERP yet.');
+  await markOn(ctx);
 }
 function engineOnly(ctx) {
   if (!(ctx.s.viaKey && /^Engine\b/i.test(str(ctx.s.name)) && roleAtLeast(ctx.s.role, 'owner'))) throw new Error('Only the Engine calls this.');
@@ -168,6 +169,10 @@ function webIssues(t, r) {
 
 export async function erpWatchReport(ctx, payload) {
   engineOnly(ctx);
+  // brain-1: the report is for one business the Engine works for (the one named, never the screen's)
+  const b = (await engineBusinesses(ctx)).find((x) => x.id === str(payload && payload.biz));
+  if (!b) throw new Error('That business is not one the Engine works for.');
+  asBusiness(ctx, b);
   const results = (Array.isArray(payload && payload.results) ? payload.results : []).slice(0, MAX_TARGETS);
   const seen = new Set(), prefixes = [];
   const targets = await ctx.tx`select * from engine_watch_targets where business_id = ${ctx.biz}`;

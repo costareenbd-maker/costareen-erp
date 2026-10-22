@@ -20,7 +20,7 @@ import { getConfig, setConfig } from '../lib/ext.js';
 import { platformAdmin } from './platform.js';
 import { appIsOff } from './apps.js';
 import { ai, anyAi, parseJson } from '../lib/ai.js';
-import { AGENTS } from './engine.js';
+import { AGENTS, markOn } from './engine.js';
 
 const str = (v) => String(v == null ? '' : v).trim();
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -31,8 +31,8 @@ const DANGER = /curl[^\n]{0,120}\|\s*(ba|z)?sh|wget[^\n]{0,120}\|\s*(ba)?sh|rm\s
 
 async function gate(ctx) {
   if (!roleAtLeast(ctx.s.role, 'owner')) throw new Error('Only the owner installs skills.');
-  if (await platformAdmin(ctx)) return;
-  if (await appIsOff(ctx.deps, ctx.sql, 'engine')) throw new Error('The Engine is not open on this ERP yet.');
+  if (!(await platformAdmin(ctx)) && await appIsOff(ctx.deps, ctx.sql, 'engine')) throw new Error('The Engine is not open on this ERP yet.');
+  await markOn(ctx);
 }
 const agentKeys = (list) => [...new Set((Array.isArray(list) ? list : []).map(str).filter((k) => AGENTS[k] && k !== 'command'))];
 const slugOf = (s) => str(s).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 60) || 'skill';

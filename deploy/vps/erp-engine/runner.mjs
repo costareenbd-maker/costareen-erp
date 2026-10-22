@@ -20,7 +20,7 @@ const MAX_PAR = Number(process.env.MAX_PARALLEL || 2);
 const MODELS = String(process.env.MODELS || 'opus,sonnet').split(',').map((s) => s.trim()).filter(Boolean);
 const CLAUDE = process.env.CLAUDE_BIN || '/usr/bin/claude';
 const WORK = process.env.WORK_DIR || '/var/lib/erp-engine';
-const TICK_MS = 20000, JOB_MS = 20 * 60000, VERSION = 'watch-1';
+const TICK_MS = 20000, JOB_MS = 20 * 60000, VERSION = 'brain-1';
 const RUNNER = process.env.RUNNER_NAME || 'office-vps';
 
 let running = 0, coolUntil = 0, lastBeat = 0;
@@ -150,7 +150,7 @@ async function work(c) {
 }
 
 // ---- watch-1: the Watchdog's pages (the ERP says which and when, in the claim's answer)
-let watching = false;
+const watching = new Set();
 function certDays(host) {
   return new Promise((ok) => {
     const sock = tls.connect({ host, port: 443, servername: host, timeout: 15000 }, () => {
@@ -169,31 +169,31 @@ async function openPage(t) {
   } catch (e) { return { id: t.id, status: 0, ms: Date.now() - t0, error: String((e && e.cause && e.cause.code) || (e && e.name === 'TimeoutError' ? 'no answer in 30 s' : e && e.message) || e).slice(0, 200) }; }
 }
 async function watch(w) {
-  if (watching || !w || !Array.isArray(w.targets)) return;
-  watching = true;
+  if (!w || !Array.isArray(w.targets) || watching.has(w.biz)) return;
+  watching.add(w.biz);
   try {
     const results = await Promise.all(w.targets.map(openPage));
     const hosts = {};
     for (const t of w.targets) { try { const u = new URL(t.url); if (u.protocol === 'https:') hosts[u.hostname] = null; } catch (_) { /* skip */ } }
     for (const h of Object.keys(hosts)) hosts[h] = await certDays(h);
     for (const r of results) { const t = w.targets.find((x) => x.id === r.id); try { const u = new URL(t.url); if (u.protocol === 'https:') r.sslDays = hosts[u.hostname]; } catch (_) { /* skip */ } }
-    const out = await erp('erpWatchReport', { results });
+    const out = await erp('erpWatchReport', { biz: w.biz, results });
     const bad = results.filter((r) => r.error || !(r.status < 400) || r.found === false);
     log('watch', results.length + ' pages', bad.length ? bad.length + ' with a problem' : 'all fine', 'open issues ' + (out && out.open));
   } catch (e) { log('watch failed:', e.message); }
-  watching = false;
+  watching.delete(w.biz);
 }
 
 async function tick() {
   const info = { version: VERSION, running, models: MODELS, cooling: coolUntil > Date.now() ? Math.round((coolUntil - Date.now()) / 1000) : 0 };
   try {
     if (running >= MAX_PAR || coolUntil > Date.now()) {
-      if (Date.now() - lastBeat > 60000) { lastBeat = Date.now(); const pk = await erp('erpEngineClaim', { runner: RUNNER, info, peek: true }); if (pk && pk.watch) watch(pk.watch); }
+      if (Date.now() - lastBeat > 60000) { lastBeat = Date.now(); const pk = await erp('erpEngineClaim', { runner: RUNNER, info, peek: true }); if (pk && pk.watches) pk.watches.forEach(watch); }
       return;
     }
     lastBeat = Date.now();
     const c = await erp('erpEngineClaim', { runner: RUNNER, info });
-    if (c && c.watch) watch(c.watch);
+    if (c && c.watches) c.watches.forEach(watch);
     if (c && c.job) { running++; work(c).finally(() => { running--; }); setTimeout(tick, 1000); }
   } catch (e) { log('claim failed:', e.message); }
 }

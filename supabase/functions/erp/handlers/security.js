@@ -14,6 +14,7 @@ const str = (v) => String(v == null ? '' : v).trim();
 
 // what an action is called on the screen; anything not here is spelled out from its name
 const WORDS = {
+  erpEngineSwitch: 'Switched the Engine on or off for this business',
   erpEngineScheduleSave: 'Changed a timed job of the Engine', erpEngineScheduleRun: 'Ran a timed job of the Engine now', erpWatchTargetSave: 'Changed the pages the Watchdog checks', erpWatchIssueAct: 'Resolved, ignored or reopened a Watchdog issue', erpWatchRunNow: 'Ran the Watchdog checks now',
   erpEngineAsk: 'Gave the Engine a job', erpEngineCancel: 'Stopped an Engine job', erpEngineRetry: 'Sent an Engine job again', erpEngineRate: 'Rated an Engine job', erpEngineDecide: 'Answered an Engine proposal (Yes writes it)', erpSkillLibraryInstall: 'Installed a skill from the library', erpSkillPreview: 'Read a skill link from GitHub', erpSkillInstall: 'Installed skills from GitHub', erpSkillSet: 'Switched a skill on or off or changed its agents', erpSkillRemove: 'Uninstalled a skill', erpSkillCheckUpdates: 'Checked the skills for updates', erpSkillUpdate: 'Updated a skill from GitHub', erpSkillTrending: 'Looked at trending skills',
   'sign-in': 'Opened the app',

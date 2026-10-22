@@ -21,6 +21,7 @@
 
 import { roleAtLeast } from '../allow.js';
 import { formatDate } from '../lib/time.js';
+import { getConfig, setConfig } from '../lib/ext.js';
 import { platformAdmin } from './platform.js';
 import { appIsOff } from './apps.js';
 import { TOOLS, runTool, confirmWrite } from './assistant.js';
@@ -54,12 +55,37 @@ const agentOf = (k) => (AGENTS[str(k)] ? str(k) : 'command');
 
 async function gate(ctx) {
   if (!roleAtLeast(ctx.s.role, 'owner')) throw new Error('Only the owner gives the Engine work.');
-  if (await platformAdmin(ctx)) return;
-  if (await appIsOff(ctx.deps, ctx.sql, 'engine')) throw new Error('The Engine is not open on this ERP yet.');
+  if (!(await platformAdmin(ctx)) && await appIsOff(ctx.deps, ctx.sql, 'engine')) throw new Error('The Engine is not open on this ERP yet.');
+  await markOn(ctx);
 }
+/** brain-1: the Engine works for a business once its owner opens the Engine's screens (until switched off: 'engine_on' 0). */
+export async function markOn(ctx) { if (!str(await getConfig(ctx, 'engine_on', ''))) await setConfig(ctx, 'engine_on', '1'); }
 /** The Engine itself: an access link whose label starts with "Engine" (deploy/vps/erp-engine). */
 function engineOnly(ctx) {
   if (!(ctx.s.viaKey && /^Engine\b/i.test(str(ctx.s.name)) && roleAtLeast(ctx.s.role, 'owner'))) throw new Error('Only the Engine calls this.');
+}
+
+// brain-1 (owner 22 Oct 2026: "this ERP is not for one business - how will the AI keep them apart?"): one Engine serves
+// every business its owner owns where the Engine is on. It never follows the business open on the owner's screen:
+// each job carries its business, and every call about a job switches into that business alone (its rows, its name,
+// its skills, its Business Brain); the database's own rules (RLS) still apply on top.
+export async function engineBusinesses(ctx) {
+  return ctx.tx`select b.id, b.name from memberships m join businesses b on b.id = m.business_id
+                where m.user_id = ${ctx.s.userId} and m.role = 'owner' and coalesce(m.active, true) and b.suspended_at is null and not coalesce(b.is_pool, false)
+                  and exists (select 1 from business_config c where c.business_id = b.id and c.key = 'engine_on' and c.value = '1')
+                order by m.created_at`;
+}
+/** From here on this call works inside ONE business. */
+export function asBusiness(ctx, b) { ctx.biz = b.id; ctx.s = { ...ctx.s, businessId: b.id, businessName: str(b.name), role: 'owner' }; ctx.memo = {}; }
+async function engineJob(ctx, id, running) {
+  if (!UUID.test(str(id))) throw new Error('Which job?');
+  const list = await engineBusinesses(ctx);
+  const j = (await ctx.tx`select * from engine_jobs where id = ${str(id)} and business_id = any(${list.map((b) => b.id).concat([ctx.biz])})`)[0];
+  const b = j && list.find((x) => x.id === j.business_id);
+  if (!j || !b) throw new Error('That job is not there.');
+  asBusiness(ctx, b);
+  if (running && j.status !== 'running') throw new Error('That job is not running any more.');
+  return j;
 }
 
 const when = (t) => (t ? formatDate(new Date(t), 'd MMM, h:mm a') : '');
@@ -82,7 +108,7 @@ export async function erpEngine(ctx, payload) {
   const skills = (await ctx.tx`select count(*) filter (where enabled)::int n from engine_skills where business_id = ${ctx.biz}`)[0].n;
   return {
     agents: Object.keys(AGENTS).map((k) => ({ key: k, name: AGENTS[k].name, job: AGENTS[k].job, live: !!AGENTS[k].live })),
-    jobs: rows.map(shortJob), counts, skillsOn: skills, schedules: await schedules(ctx),
+    jobs: rows.map(shortJob), counts, skillsOn: skills, schedules: await schedules(ctx), on: str(await getConfig(ctx, 'engine_on', '')) === '1',
     runner: run ? { alive: age < 120, seen: when(run.seen_at), secondsAgo: Math.round(age), info: run.info || {} } : { alive: false, seen: '', info: {} },
   };
 }
@@ -113,6 +139,13 @@ export async function erpEngineAsk(ctx, payload) {
   const out = await erpEngine(ctx, {});
   out.created = id;
   return out;
+}
+
+/** The Engine works for this business, or not (its jobs and timed jobs wait; nothing is deleted). */
+export async function erpEngineSwitch(ctx, payload) {
+  await gate(ctx);
+  await setConfig(ctx, 'engine_on', payload && payload.on ? '1' : '0');
+  return erpEngine(ctx, {});
 }
 
 export async function erpEngineCancel(ctx, payload) {
@@ -231,20 +264,24 @@ export async function erpEngineClaim(ctx, payload) {
   engineOnly(ctx);
   const p = payload || {}, runner = str(p.runner).slice(0, 60) || 'engine';
   const info = p.info && typeof p.info === 'object' ? JSON.parse(JSON.stringify(p.info).slice(0, 2000)) : {};
-  await ctx.tx`insert into engine_runners (business_id, runner, seen_at, info) values (${ctx.biz}, ${runner}, now(), ${ctx.tx.json(info)})
-               on conflict (business_id, runner) do update set seen_at = now(), info = excluded.info`;
-  // a job whose runner went quiet goes back to the queue (or fails after three tries)
-  await ctx.tx`update engine_jobs set status = case when attempts >= ${MAX_ATTEMPTS} then 'failed' else 'queued' end,
-                 error = case when attempts >= ${MAX_ATTEMPTS} then 'The Engine stopped answering on this job three times.' else error end,
-                 finished_at = case when attempts >= ${MAX_ATTEMPTS} then now() else null end
-               where business_id = ${ctx.biz} and status = 'running' and started_at < now() - make_interval(mins => ${STALE_MIN})`;
-  // watch-1: timed jobs that are due join the queue; the pages to check when 5 minutes have passed
-  try { await ctx.tx.savepoint(() => dueSchedules(ctx)); } catch (_) { /* the queue still works */ }
-  let watch = null;
-  try { watch = await ctx.tx.savepoint(() => watchDue(ctx)); } catch (_) { watch = null; }
-  if (p.peek) return { job: null, watch };
-  const j = (await ctx.tx`select * from engine_jobs where business_id = ${ctx.biz} and status = 'queued' order by created_at limit 1 for update skip locked`)[0];
-  if (!j) return { job: null, watch };
+  const list = await engineBusinesses(ctx), watches = [];
+  for (const b of list) {
+    asBusiness(ctx, b);
+    await ctx.tx`insert into engine_runners (business_id, runner, seen_at, info) values (${ctx.biz}, ${runner}, now(), ${ctx.tx.json(info)})
+                 on conflict (business_id, runner) do update set seen_at = now(), info = excluded.info`;
+    // a job whose runner went quiet goes back to the queue (or fails after three tries)
+    await ctx.tx`update engine_jobs set status = case when attempts >= ${MAX_ATTEMPTS} then 'failed' else 'queued' end,
+                   error = case when attempts >= ${MAX_ATTEMPTS} then 'The Engine stopped answering on this job three times.' else error end,
+                   finished_at = case when attempts >= ${MAX_ATTEMPTS} then now() else null end
+                 where business_id = ${ctx.biz} and status = 'running' and started_at < now() - make_interval(mins => ${STALE_MIN})`;
+    // watch-1: timed jobs that are due join the queue; the pages to check when 5 minutes have passed
+    try { await ctx.tx.savepoint(() => dueSchedules(ctx)); } catch (_) { /* the queue still works */ }
+    try { const w = await ctx.tx.savepoint(() => watchDue(ctx)); if (w) watches.push({ biz: b.id, targets: w.targets }); } catch (_) { /* next round */ }
+  }
+  if (p.peek || !list.length) return { job: null, watches, businesses: list.length };
+  const j = (await ctx.tx`select * from engine_jobs where business_id = any(${list.map((b) => b.id)}) and status = 'queued' order by created_at limit 1 for update skip locked`)[0];
+  if (!j) return { job: null, watches, businesses: list.length };
+  asBusiness(ctx, list.find((b) => b.id === j.business_id));
   await ctx.tx`update engine_jobs set status = 'running', attempts = attempts + 1, started_at = now(), brain = null where id = ${j.id}`;
   const agent = AGENTS[j.agent] || AGENTS.command;
   // the Command Center may use every switched-on skill; a specialist only the ones given to it
@@ -253,21 +290,16 @@ export async function erpEngineClaim(ctx, payload) {
   return {
     job: { id: j.id, agent: j.agent, ask: j.ask, title: j.title, attempt: j.attempts + 1 },
     agent: { key: j.agent, name: agent.name, instructions: agent.instructions },
-    business: { name: str(ctx.s.businessName), today: formatDate(ctx.now, 'yyyy-MM-dd') },
+    business: { id: ctx.biz, name: str(ctx.s.businessName), today: formatDate(ctx.now, 'yyyy-MM-dd') },
     skills: skills.map((s) => ({ slug: s.slug, name: s.name, description: s.description, files: s.files || {} })),
-    tools: toolsFor(j.agent), watch,
+    tools: toolsFor(j.agent), watches,
   };
 }
 
-async function runningJob(ctx, id) {
-  const j = await jobRow(ctx, id);
-  if (j.status !== 'running') throw new Error('That job is not running any more.');
-  return j;
-}
 
 export async function erpEngineTool(ctx, payload) {
   engineOnly(ctx);
-  const p = payload || {}, j = await runningJob(ctx, p.id), tool = str(p.tool);
+  const p = payload || {}, j = await engineJob(ctx, p.id, true), tool = str(p.tool);
   if (!toolsFor(j.agent).some((t) => t.name === tool)) return { error: 'No such function.' };
   if (ISSUE_TOOLS.some((t) => t.name === tool)) return issueTool(ctx, tool, p.args && typeof p.args === 'object' ? p.args : {}, j);
   const out = await runTool(ctx, tool, p.args && typeof p.args === 'object' ? p.args : {});
@@ -284,7 +316,7 @@ export async function erpEngineTool(ctx, payload) {
 
 export async function erpEngineStep(ctx, payload) {
   engineOnly(ctx);
-  const p = payload || {}, j = await runningJob(ctx, p.id);
+  const p = payload || {}, j = await engineJob(ctx, p.id, true);
   const add = (Array.isArray(p.lines) ? p.lines : [p.line]).map((l) => str(l).slice(0, 240)).filter(Boolean).slice(0, 20);
   if (!add.length) return { ok: true };
   const steps = (Array.isArray(j.steps) ? j.steps : []).concat(add.map((t) => ({ t, at: ctx.now.toISOString() }))).slice(-80);
@@ -294,7 +326,7 @@ export async function erpEngineStep(ctx, payload) {
 
 export async function erpEngineDone(ctx, payload) {
   engineOnly(ctx);
-  const p = payload || {}, j = await jobRow(ctx, p.id);
+  const p = payload || {}, j = await engineJob(ctx, p.id);
   if (j.status !== 'running') return { ok: true, ignored: true };   // stopped by the owner meanwhile
   const used = [...new Set((Array.isArray(p.skills) ? p.skills : []).map(str).filter(Boolean))].slice(0, 30);
   const known = used.length ? (await ctx.tx`select slug from engine_skills where business_id = ${ctx.biz} and slug = any(${used})`).map((r) => r.slug) : [];
@@ -310,5 +342,5 @@ export async function erpEngineDone(ctx, payload) {
   return { ok: true };
 }
 
-export const HANDLERS = { erpEngine, erpEngineJob, erpEngineAsk, erpEngineCancel, erpEngineRetry, erpEngineRate, erpEngineDecide, erpEngineScheduleSave, erpEngineScheduleRun,
+export const HANDLERS = { erpEngine, erpEngineJob, erpEngineAsk, erpEngineCancel, erpEngineRetry, erpEngineRate, erpEngineDecide, erpEngineScheduleSave, erpEngineScheduleRun, erpEngineSwitch,
   erpEngineClaim, erpEngineTool, erpEngineStep, erpEngineDone };

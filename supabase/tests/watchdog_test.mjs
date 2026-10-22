@@ -35,25 +35,25 @@ check('only the Engine reports checks', !r.ok && /Only the Engine/.test(r.error)
 
 // ---- the Engine is handed the pages every 5 minutes
 r = await eng('erpEngineClaim', { runner: 'vps1' });
-check('the claim hands the Engine the pages to open', r.ok && r.result.watch && r.result.watch.targets.some((t) => t.id === T.id && t.must === 'Place order'), r.result && r.result.watch);
+check('the claim hands the Engine the pages to open, for this business', r.ok && r.result.watches.length === 1 && r.result.watches[0].biz === B && r.result.watches[0].targets.some((t) => t.id === T.id && t.must === 'Place order'), r.result && r.result.watches);
 r = await eng('erpEngineClaim', { runner: 'vps1' });
-check('...not again within 5 minutes', r.ok && r.result.watch === null, r.result && r.result.watch);
+check('...not again within 5 minutes', r.ok && r.result.watches.length === 0, r.result && r.result.watches);
 
 // ---- a page down -> urgent issue -> the bell; seen again -> counted; fixed -> closed by itself
-r = await eng('erpWatchReport', { results: [{ id: T.id, status: 0, ms: 30000, error: 'ECONNREFUSED' }] });
+r = await eng('erpWatchReport', { biz: B, results: [{ id: T.id, status: 0, ms: 30000, error: 'ECONNREFUSED' }] });
 let I = await issue('web:%');
 check('the page is down: an urgent website issue', r.ok && I && I.severity === 'urgent' && I.area === 'website' && I.status === 'open' && /down/.test(I.title), I);
 r = await owner('erpAlerts', []);
 check('...it is on the bell (and so goes to WhatsApp)', r.ok && r.result.alerts.some((a) => /^URGENT: Checkout is down/.test(a.title) && a.go === 'watch'), r.result && r.result.alerts.map((a) => a.title));
-await eng('erpWatchReport', { results: [{ id: T.id, status: 503, ms: 900 }] });
+await eng('erpWatchReport', { biz: B, results: [{ id: T.id, status: 503, ms: 900 }] });
 I = await issue('web:%');
 check('seen again: one issue, counted twice', I.seen_count === 2, I);
-r = await eng('erpWatchReport', { results: [{ id: T.id, status: 200, ms: 700, found: true, sslDays: 5 }] });
+r = await eng('erpWatchReport', { biz: B, results: [{ id: T.id, status: 200, ms: 700, found: true, sslDays: 5 }] });
 I = await issue('web:%');
 const S = await issue('ssl:%');
 check('the page works again: the issue closes by itself', I.status === 'resolved', I);
 check('...but the certificate runs out in 5 days: a high issue', S && S.severity === 'high' && /5 days/.test(S.title), S);
-r = await eng('erpWatchReport', { results: [{ id: T.id, status: 200, ms: 9500, found: false, sslDays: 80 }] });
+r = await eng('erpWatchReport', { biz: B, results: [{ id: T.id, status: 200, ms: 9500, found: false, sslDays: 80 }] });
 I = await issue('web:%');
 check('the text that must be there is missing: reopened as new (high), the certificate issue closed', I.status === 'open' && I.severity === 'high' && /missing "Place order"/.test(I.title) && I.seen_count === 1 && (await issue('ssl:%')).status === 'resolved', I);
 r = await owner('erpWatch', []);
@@ -62,18 +62,18 @@ check('the screen shows the page\'s last check', W.status === 200 && W.ms === 95
 
 // ---- the ERP's own checks
 await sql`insert into erp_errors (business_id, who, action, message) values (${B}, 'Timer', 'websync:pull', 'The website did not answer (502)')`;
-r = await eng('erpWatchReport', { results: [] });
+r = await eng('erpWatchReport', { biz: B, results: [] });
 I = await issue('timer:%');
 check('a failing timer becomes an issue', I && I.key === 'timer:websync:pull' && I.severity === 'high' && /Reading website orders is failing/.test(I.title), I);
 await sql`update erp_errors set at = now() - interval '30 hours' where business_id = ${B} and action = 'websync:pull'`;
-await eng('erpWatchReport', { results: [] });
+await eng('erpWatchReport', { biz: B, results: [] });
 check('...and closes when it works again', (await issue('timer:%')).status === 'resolved', '');
 check('a round with no pages leaves the page issues as they were', (await issue('web:%')).status === 'open', '');
 
 // ---- the owner: ignore for a time, reopen, resolve; remove a page
 const wid = (await issue('web:%')).id;
 r = await owner('erpWatchIssueAct', [{ id: wid, act: 'ignore', days: 3 }]);
-await eng('erpWatchReport', { results: [{ id: T.id, status: 404, ms: 300 }] });
+await eng('erpWatchReport', { biz: B, results: [{ id: T.id, status: 404, ms: 300 }] });
 I = await issue('web:%');
 check('an ignored issue stays quiet while it is seen again', I.status === 'ignored' && I.severity === 'high', I);
 r = await owner('erpAlerts', []);
@@ -96,7 +96,7 @@ check('the Watchdog reads the open issues and the pages', r.ok && r.result.issue
 r = await eng('erpEngineTool', { id: JW, tool: 'report_issue', args: { title: 'Product pages show no price', severity: 'high', area: 'website', detail: 'Three product pages show an empty price.', proof: 'https://shop.test/p/1', fix: 'Re-save the price field in WooCommerce.' } });
 I = await issue('ai:%');
 check('...and records a new problem it found (with proof and fix)', r.ok && r.result.recorded && I && I.source === 'ai' && I.job_id === JW && I.fix.startsWith('Re-save'), I);
-await eng('erpWatchReport', { results: [] });
+await eng('erpWatchReport', { biz: B, results: [] });
 check('the checks never close what the AI found', (await issue('ai:%')).status === 'open', '');
 await eng('erpEngineDone', { id: JW, ok: true, result: '1 new problem.' });
 
