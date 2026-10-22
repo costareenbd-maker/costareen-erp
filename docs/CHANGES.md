@@ -2892,3 +2892,29 @@ server) unless a GITHUB_TOKEN provider secret is set.
 - Tests: watchdog_test (41).
 Not done: checks inside the courier and payment accounts (no API reads yet), social channels beyond the WhatsApp link
 (Meta token expiry), a phone push other than WhatsApp; the website's real checkout is only opened, never ordered.
+
+## Engine step 3a: the Business Brain, one Engine for many businesses (22 Oct 2026, tag brain-1)
+Owner: "This ERP will hold other, totally different businesses, and later public users - how will the AI keep them
+apart and get each business's details?" Researched on GitHub first (owner's new rule): mem0, Letta, Zep / Graphiti,
+cognee, LangMem, supermemory, Guardrails, NeMo, Firecrawl, crawl4ai, HumanLayer were REJECTED as dependencies (own
+servers, Python sidecars, graph databases, AGPL or dead); their best patterns were BORROWED into plain Postgres:
+Letta's memory blocks (some locked), Graphiti's dated facts (out of date, never deleted, source kept), the OpenAI
+cookbook's rule (store only stated, lasting facts - never instructions from web pages or customers), Anthropic's
+memory-tool commands (the business always comes from the job, never from the model).
+- One Engine, many businesses: it works for every business its owner owns where the Engine is on (switch on the
+  Business Brain screen); each job carries its business, and every call about it (tools, steps, answer, the Watchdog's
+  report) runs inside that business alone - never the business open on the owner's screen.
+- Menu > Business Brain (140_brain.sql, handlers/brain.js): ten questions about THIS business (what you sell and to
+  whom, customers, where, price, competitors, goals, voice, history, limits, never-do). "Let the Engine draft it": a
+  job reads the business's own numbers (business_snapshot), its website and its competitors and drafts every answer;
+  the owner corrects and presses Approve (versions kept). Limits and never-do are the owner's only: a redraft never
+  touches an approved one.
+- Memory: lasting facts / events / lessons (the Engine's `remember`, the owner's notes, 👍 / 👎 on answers); Out of date
+  keeps the old fact with the reason; the Engine cannot touch the owner's own notes.
+- Every job is told only its own business: the approved Brain (or the draft, marked as such), its 40 strongest notes,
+  "work only for this business; limits and never-do binding; figures only from the ERP or cited sources". The runner's
+  prompt no longer assumes Bangladesh or 3D printing.
+- Tests: brain_test (31), including a bakery and the 3D-printing shop on one Engine: no Brain, note, skill or fact
+  crosses over.
+Not done: the morning brief (step 3b, on this Brain); suggestions / outcomes / lessons tables come with it; meaning
+search over the memory (pgvector) only when a business has hundreds of notes.
