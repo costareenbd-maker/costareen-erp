@@ -8487,7 +8487,7 @@ function srv(name, args, ok, bad) {
 
 var SRV_ACTIVE = 0, SRV_WRITING = false, SRV_TIMED = {};
 // the same list the server uses to know a call changes nothing (ERP_READS)
-var SRV_READS = /^(erpBrain|erpWatch|erpEngine|erpEngineJob|erpSkills|erpAiBrain|erpAiBrainModels|erpLeadForms|erpLeads|erpLeadFind|erpLeadCapture|erpMyUpdates|erpSocialBridges|erpAds|erpAdsInterests|erpSocialNet|erpSocialLearn|erpSocialAssets|erpSocialPosts|erpSocialPhotos|erpInboxDigest|erpJointRecvCatalog|erpSitePages|erpBalanceSheet|erpProductFields|erpProductAi|erpMetaConnect|erpInboxFeatureMap|erpBookings|erpInbox|erpInboxOpen|erpInboxChannels|erpChatOrders|erpInboxStats|erpAiWork|erpCommissionSales|erpFdCards|erpLineMargins|erpFd19Profit|erpFdInventory|erpFd22Analytics|erpNavigator|erpSellers|erpFollowups|erpCustomerInsight|erpPreorders|erpCashUps|erpAskingPrices|erpSystemCheck|erpAnalytics|erpCommission|erpHolding|erpLotFunding|erpShipments|erpShipment|erpLots|erpFdHead|erpFdDash|erpReceiveMatch|erpAiReader|erpProductSuggest|erpCatalogue|erpPushList|erpCreators|erpCreatorPortalLink|erpSponsorLink|erpCreatorRequests|erpCreatorEvents|erpCreatorProgramme|erpCreatorPreview|erpCreatorCatalog|erpCreatorSources|erpCreatorClaims|erpApps|erpAppQr|erpFeedback|erpRestockOffers|erpRestockList|erpWarrantyRules|erpWarrantyCard|erpMyLink|erpPlatformRegister|erpPlatformDoctor|erpPlatformCommunity|erpMarketWaiting|erpBoard|erpPlatformDesign|erpResell|erpResellerProgramme|erpLoyalty|erpCustomerPoints|erpRefillDue|erpDeliveryHistory|erpDeliveryHistoryMany|erpPrintKit|erpPrintJobs|erpPrintJob|erpPrintCost|erpSpools|erpPrintRequests|erpJoint|erpJointCatalog|erpJointCard|erpInvoiceDesign|erpInvoicePreview|erpMarket|erpMarketMine|erpMarketRequests|erpMarketHints|erpMarketNames|erpWanted|erpBrand|erpComplianceLog|erpProviderKey|erpNews|erpAccessKeys|erpAccessWarning|erpAdmin|erpAiKeys|erpAlertRules|erpAlerts|erpArena|erpBackupStatus|erpBg|erpBnWords|erpBookedParcels|erpBrandLogo|erpBundle|erpBusinessLinks|erpBusinesses|erpBusinessesDeleted|erpCampaignAudience|erpCampaignGet|erpCampaignList|erpCapital|erpCashBook|erpCatalog|erpConnStatus|erpConnections|erpCostBook|erpCourier|erpCourierKeyStatus|erpCurrencies|erpCustomerAccount|erpCustomerCredit|erpCustomerList|erpCustomerPage|erpCustomerStatement|erpCustomers|erpDashboardData|erpDaySales|erpDeliveryOptions|erpDevices|erpDiscontinued|erpDues|erpEvoQr|erpEvoStatus|erpExpenseExport|erpExpenseReceiptUrl|erpExpenses|erpFamilies|erpFighters|erpFormOptions|erpGame|erpGetTheme|erpGoogle|erpHello|erpInstalls|erpInvoice|erpInvoicePdf|erpJob|erpJobs|erpListView|erpLookupCustomer|erpLookupUsage|erpMe|erpMoney|erpNoteFileUrl|erpNotes|erpOwnerChange|erpOwnerChanges|erpParcelLabels|erpParcelPreview|erpPartnerStock|erpPartnership|erpPayReasons|erpPeople|erpPlatform|erpPlatformErrors|erpPnl|erpPnlMonth|erpPoList|erpPoolCatalog|erpProduct|erpProductListShare|erpProductPage|erpProductPhotoUrl|erpProductThumbs|erpProfile|erpQuoteAsset|erpQuoteBoot|erpQuoteGet|erpQuoteList|erpRecentInvoices|erpRecovery|erpReorderPlan|erpRestorePreview|erpReturnPreview|erpRisks|erpSales|erpSearch|erpSecurity|erpSelfTest|erpSerialLookup|erpSerialsFor|erpSessions|erpSetTheme|erpSettingsFull|erpSettingsLists|erpSfPayoutLines|erpSfPayouts|erpShareFile|erpSharedStock|erpSheet|erpStatementPdf|erpStockHistory|erpSupplierPage|erpSuppliers|erpToday|erpUsers|erpWaProductPdf|erpWebMatches|erpWebOrderInvoices|erpWebOrders|erpWebsiteTest)$/;
+var SRV_READS = /^(erpBrief|erpBrain|erpWatch|erpEngine|erpEngineJob|erpSkills|erpAiBrain|erpAiBrainModels|erpLeadForms|erpLeads|erpLeadFind|erpLeadCapture|erpMyUpdates|erpSocialBridges|erpAds|erpAdsInterests|erpSocialNet|erpSocialLearn|erpSocialAssets|erpSocialPosts|erpSocialPhotos|erpInboxDigest|erpJointRecvCatalog|erpSitePages|erpBalanceSheet|erpProductFields|erpProductAi|erpMetaConnect|erpInboxFeatureMap|erpBookings|erpInbox|erpInboxOpen|erpInboxChannels|erpChatOrders|erpInboxStats|erpAiWork|erpCommissionSales|erpFdCards|erpLineMargins|erpFd19Profit|erpFdInventory|erpFd22Analytics|erpNavigator|erpSellers|erpFollowups|erpCustomerInsight|erpPreorders|erpCashUps|erpAskingPrices|erpSystemCheck|erpAnalytics|erpCommission|erpHolding|erpLotFunding|erpShipments|erpShipment|erpLots|erpFdHead|erpFdDash|erpReceiveMatch|erpAiReader|erpProductSuggest|erpCatalogue|erpPushList|erpCreators|erpCreatorPortalLink|erpSponsorLink|erpCreatorRequests|erpCreatorEvents|erpCreatorProgramme|erpCreatorPreview|erpCreatorCatalog|erpCreatorSources|erpCreatorClaims|erpApps|erpAppQr|erpFeedback|erpRestockOffers|erpRestockList|erpWarrantyRules|erpWarrantyCard|erpMyLink|erpPlatformRegister|erpPlatformDoctor|erpPlatformCommunity|erpMarketWaiting|erpBoard|erpPlatformDesign|erpResell|erpResellerProgramme|erpLoyalty|erpCustomerPoints|erpRefillDue|erpDeliveryHistory|erpDeliveryHistoryMany|erpPrintKit|erpPrintJobs|erpPrintJob|erpPrintCost|erpSpools|erpPrintRequests|erpJoint|erpJointCatalog|erpJointCard|erpInvoiceDesign|erpInvoicePreview|erpMarket|erpMarketMine|erpMarketRequests|erpMarketHints|erpMarketNames|erpWanted|erpBrand|erpComplianceLog|erpProviderKey|erpNews|erpAccessKeys|erpAccessWarning|erpAdmin|erpAiKeys|erpAlertRules|erpAlerts|erpArena|erpBackupStatus|erpBg|erpBnWords|erpBookedParcels|erpBrandLogo|erpBundle|erpBusinessLinks|erpBusinesses|erpBusinessesDeleted|erpCampaignAudience|erpCampaignGet|erpCampaignList|erpCapital|erpCashBook|erpCatalog|erpConnStatus|erpConnections|erpCostBook|erpCourier|erpCourierKeyStatus|erpCurrencies|erpCustomerAccount|erpCustomerCredit|erpCustomerList|erpCustomerPage|erpCustomerStatement|erpCustomers|erpDashboardData|erpDaySales|erpDeliveryOptions|erpDevices|erpDiscontinued|erpDues|erpEvoQr|erpEvoStatus|erpExpenseExport|erpExpenseReceiptUrl|erpExpenses|erpFamilies|erpFighters|erpFormOptions|erpGame|erpGetTheme|erpGoogle|erpHello|erpInstalls|erpInvoice|erpInvoicePdf|erpJob|erpJobs|erpListView|erpLookupCustomer|erpLookupUsage|erpMe|erpMoney|erpNoteFileUrl|erpNotes|erpOwnerChange|erpOwnerChanges|erpParcelLabels|erpParcelPreview|erpPartnerStock|erpPartnership|erpPayReasons|erpPeople|erpPlatform|erpPlatformErrors|erpPnl|erpPnlMonth|erpPoList|erpPoolCatalog|erpProduct|erpProductListShare|erpProductPage|erpProductPhotoUrl|erpProductThumbs|erpProfile|erpQuoteAsset|erpQuoteBoot|erpQuoteGet|erpQuoteList|erpRecentInvoices|erpRecovery|erpReorderPlan|erpRestorePreview|erpReturnPreview|erpRisks|erpSales|erpSearch|erpSecurity|erpSelfTest|erpSerialLookup|erpSerialsFor|erpSessions|erpSetTheme|erpSettingsFull|erpSettingsLists|erpSfPayoutLines|erpSfPayouts|erpShareFile|erpSharedStock|erpSheet|erpStatementPdf|erpStockHistory|erpSupplierPage|erpSuppliers|erpToday|erpUsers|erpWaProductPdf|erpWebMatches|erpWebOrderInvoices|erpWebOrders|erpWebsiteTest)$/;
 function srvPump() {
   if (!SRV_Q.length) return;
   var isRead = SRV_READS.test(SRV_Q[0].name);
@@ -39736,6 +39736,145 @@ saveProduct = function () {
     if (VIEW !== 'brain' || !e.target || e.target.getAttribute('data-br') !== 'engine') return;
     var v = e.target.checked; keep();
     srv('erpEngineSwitch', [{ on: v }], function () { toast(v ? 'The Engine works for this business.' : 'The Engine stopped for this business - its jobs wait.'); load(); }, fail);
+  });
+})();
+</script>
+<!-- brief-1 (owner 22 Oct 2026: "everything based on the business, the actions strategic and massive for growth, done by
+     AI automatically with approval, and the approval by a button"; at 8 PM): Menu > Daily brief - the ERP's scoreboard,
+     what changed and why, risks, opportunities, what approved moves brought, and five big moves each with ONE button:
+     Approve (the AI does it), Change (say what), No. Past briefs, Write it now, the time and the ad limit.
+     Server: handlers/brief.js (+ actions.js). -->
+<style>
+.bf-tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;margin:8px 0}
+.bf-tile{border:1px solid var(--line,#e6e8ef);border-radius:12px;padding:8px 10px;background:var(--card,#fff)}
+.bf-tile .l{font-size:11.5px;color:var(--muted,#667);text-transform:uppercase;letter-spacing:.03em}
+.bf-tile .v{font-size:18px;font-weight:700;margin-top:2px}
+.bf-tile .d{font-size:12px}
+.bf-up{color:var(--ok,#1a9e5b)}.bf-down{color:var(--critical,#d33)}
+.bf-cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px}
+.bf-cols ul{margin:4px 0 0 16px;padding:0;font-size:13.5px}
+.bf-move{border:1px solid var(--line,#e6e8ef);border-radius:14px;padding:12px 14px;margin:10px 0;background:var(--card,#fff)}
+.bf-move.big{border:2px solid var(--accent,#5b4ff0)}
+.bf-move .t{font-size:15.5px;font-weight:700;margin:4px 0}
+.bf-nums{display:flex;flex-wrap:wrap;gap:14px;margin:6px 0;font-size:13px}
+.bf-nums b{font-size:15px}
+.bf-figs{font-size:12.5px;color:var(--muted,#667);margin:4px 0}
+.bf-pay{font-size:13px;background:var(--soft,rgba(91,79,240,.06));border-radius:8px;padding:8px 10px;margin:6px 0;white-space:pre-wrap;overflow-wrap:anywhere}
+.bf-btns{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+.bf-btns .btn.ok{background:var(--ok,#1a9e5b);border-color:var(--ok,#1a9e5b);color:#fff}
+</style>
+<script>
+(function () {
+  try { SRV_SLOW.erpBriefDecide = 120000; } catch (e) {}
+  var BF = { data: null, busy: false, pick: '', change: null, no: null };
+  window.BF = BF;
+  var ICON = '<path d="M4 5h16v14H4z"/><path d="M8 9h8M8 13h5"/><path d="M15 15l2 2 3-4"/>';
+  var on = function () { return typeof enOn === 'function' && enOn(); };
+  if (typeof fdxNav === 'function') fdxNav('brief', 'Daily brief', ICON, 'engine');
+  try { VIEW_NAMES.brief = 'Daily brief'; FDH_SUB.brief = 'Every evening: how the business did, and five big moves - one button each, the AI does them'; } catch (e) {}
+  function syncNav() {
+    var b = document.querySelector('#nav button[data-view="brief"]'); if (!b) return; b.style.display = on() ? '' : 'none';
+    var n = BF.data ? BF.data.actions.filter(function (a) { return a.status === 'proposed'; }).length : 0;
+    var c = b.querySelector('.count'); if (!c) { c = document.createElement('span'); c.className = 'count'; b.appendChild(c); } c.textContent = n ? String(n) : ''; c.style.display = n ? '' : 'none';
+  }
+  if (typeof applyRole === 'function') { var ar = applyRole; applyRole = function () { var r = ar.apply(this, arguments); try { syncNav(); if (on() && !BF.data) load(); } catch (e) {} return r; }; }
+  setTimeout(function () { syncNav(); if (on() && !BF.data) load(); }, 3000);
+  function load(id) {
+    if (BF.busy) return; BF.busy = true;
+    srv('erpBrief', [id ? { id: id } : {}], function (r) { BF.busy = false; BF.data = r; syncNav(); if (VIEW === 'brief') paint(); }, function (e) { BF.busy = false; toast(esc((e && e.message) || e), true); });
+  }
+  var tk = function (n) { return n === undefined || n === null ? '-' : '৳' + fmt(Math.round(n)); };
+  function delta(v, p) { if (!(p > 0) || v === undefined) return ''; var d = Math.round((v - p) / p * 100); return '<div class="d ' + (d >= 0 ? 'bf-up' : 'bf-down') + '">' + (d >= 0 ? '▲ ' : '▼ ') + Math.abs(d) + '% vs last month</div>'; }
+  function tiles(s) {
+    var t = [], m = s.month || {};
+    if (s.today) t.push(['Today', tk(s.today.revenue), s.today.orders + ' orders' + (s.yesterday ? ' · yesterday ' + tk(s.yesterday.revenue) : '')]);
+    if (m.revenue !== undefined) t.push([m.label || 'This month', tk(m.revenue), delta(m.revenue, m.revenuePrev), true]);
+    if (m.net !== undefined) t.push(['Net profit (month)', tk(m.net), delta(m.net, m.netPrev), true]);
+    if (s.cashInHand !== undefined) t.push(['Cash in hand', tk(s.cashInHand), '']);
+    if (m.dues !== undefined) t.push(['Owed to you', tk(m.dues), '']);
+    if (m.stockValue !== undefined) t.push(['Stock value', tk(m.stockValue), (s.lowStock ? s.lowStock + ' at reorder level' : '')]);
+    if (s.urgentIssues) t.push(['Urgent problems', String(s.urgentIssues), '<a href="#" data-bfgo="watch">Watchdog</a>', true]);
+    return '<div class="bf-tiles">' + t.map(function (x) { return '<div class="bf-tile"><div class="l">' + esc(x[0]) + '</div><div class="v">' + esc(x[1]) + '</div>' + (x[3] ? x[2] : '<div class="d en-meta">' + esc(x[2]) + '</div>') + '</div>'; }).join('') + '</div>';
+  }
+  function payloadHtml(a) {
+    var p = a.payload || {};
+    if (a.type === 'ad') return '<b>Ad text:</b>\n' + esc(p.text) + '\n<b>Budget:</b> ' + tk(p.dailyBudget) + ' a day × ' + (p.days || 7) + ' days = ' + tk((p.dailyBudget || 0) * (p.days || 7));
+    if (a.type === 'post') return '<b>Post:</b>\n' + esc(p.text) + (p.at ? '\n<b>When:</b> ' + esc(p.at) : '\n<b>When:</b> now');
+    if (a.type === 'reorder') return '<b>Order:</b> ' + (p.lines || []).map(function (l) { return esc(l.qty + ' × ' + l.sku); }).join(', ') + (p.supplier ? ' from ' + esc(p.supplier) : '') + ' (planned - nothing paid)';
+    if (a.type === 'price') return '<b>New price for ' + esc(p.sku) + ':</b> ' + tk(p.newPrice) + (p.reason ? ' - ' + esc(p.reason) : '');
+    if (a.type === 'followup') return '<b>Calls:</b>\n' + (p.items || []).map(function (i) { return esc((i.name || i.phone) + ' on ' + i.due + ': ' + i.note); }).join('\n');
+    if (a.type === 'whatsapp') return '<b>Message to ' + (p.recipients || []).length + ' people:</b>\n' + esc(p.text);
+    if (a.type === 'task') return '<b>The Engine will:</b> ' + esc(p.ask);
+    return esc(JSON.stringify(p));
+  }
+  var ST = { proposed: '', running: ['Doing it…', 'low'], done: ['Done', 'ok'], failed: ['Could not be done', 'out'], rejected: ['You said no', 'out'], changing: ['Being changed…', 'low'] };
+  function moveHtml(a) {
+    var st = ST[a.status];
+    var h = '<div class="bf-move' + (a.bigBet ? ' big' : '') + '">' + (a.bigBet ? '<span class="pill ok">The big bet of the week</span> ' : '<span class="en-meta">#' + a.no + '</span> ') + '<span class="en-sk">' + esc(a.typeName) + '</span>' +
+      (st ? ' <span class="pill ' + st[1] + '">' + st[0] + '</span>' : '') +
+      '<div class="t" data-noi18n="1">' + esc(a.title) + '</div><div style="font-size:13.5px;white-space:pre-wrap" data-noi18n="1">' + esc(a.why) + '</div>' +
+      '<div class="bf-nums"><span>Expected gain <b class="bf-up">' + tk(a.impact) + '</b></span><span>Cost <b>' + tk(a.cost) + '</b></span><span>Risk <b>' + esc(a.risk) + '</b></span><span>Confidence <b>' + a.confidence + '%</b></span></div>' +
+      (a.figures.length ? '<div class="bf-figs">' + a.figures.map(function (f) { return esc(f.label) + ': <b>' + esc(f.value) + '</b> <i>(' + esc(f.source) + ')</i>'; }).join(' · ') + '</div>' : '') +
+      '<div class="bf-pay" data-noi18n="1">' + payloadHtml(a) + '</div>';
+    if (a.status === 'proposed') {
+      if (BF.change === a.id) h += '<div class="row" style="gap:8px;flex-wrap:wrap;align-items:flex-end"><div style="flex:1 1 260px"><label class="f" for="bf_note">What should change?</label><input class="i" id="bf_note" data-noi18n="1" placeholder="e.g. smaller budget, target Chattogram, use Bangla"></div><button class="btn primary" type="button" data-bfch="' + a.id + '">Send to the Engine</button><button class="btn" type="button" data-bfx="1">Cancel</button></div>';
+      else if (BF.no === a.id) h += '<div class="row" style="gap:8px;flex-wrap:wrap;align-items:flex-end"><div style="flex:1 1 260px"><label class="f" for="bf_why">Why not? (it learns from this)</label><input class="i" id="bf_why" data-noi18n="1" placeholder="optional"></div><button class="btn" type="button" data-bfno2="' + a.id + '">No</button><button class="btn" type="button" data-bfx="1">Cancel</button></div>';
+      else h += '<div class="bf-btns"><button class="btn ok" type="button" data-bfok="' + a.id + '">Approve - do it</button><button class="btn" type="button" data-bfchange="' + a.id + '">Change</button><button class="btn" type="button" data-bfno="' + a.id + '">No</button></div>';
+    } else {
+      h += (a.result ? '<div class="en-meta" style="margin-top:6px" data-noi18n="1">' + esc(a.result) + '</div>' : '') + (a.note ? '<div class="en-meta">You said: <span data-noi18n="1">' + esc(a.note) + '</span></div>' : '') +
+        (a.outcome && a.outcome.verdict ? '<div style="margin-top:4px;font-size:13px"><b>Result:</b> ' + esc(a.outcome.metric || '') + ' ' + tk(a.outcome.baseline) + ' → ' + tk(a.outcome.observed) + ' in ' + a.outcome.days + ' days - <b>' + esc({ worked: 'it worked', no_effect: 'no difference', hurt: 'it hurt', unclear: 'unclear' }[a.outcome.verdict] || a.outcome.verdict) + '</b></div>' : '') +
+        (a.decidedBy ? '<div class="en-meta">' + esc(a.decidedBy) + ' · ' + esc(a.decided) + '</div>' : '');
+    }
+    return h + '</div>';
+  }
+  function view() {
+    if (!on()) return '<div class="note"><div class="ico">i</div><div>The Engine is not switched on for this business.</div></div>';
+    var d = BF.data; if (!d) { load(); return '<div class="loading">Loading the brief…</div>'; }
+    var b = d.brief, sch = d.schedule || {}, st = d.stats || {};
+    var h = '<section><div class="card"><div class="en-top"><div>' + (b ? '<b>' + esc(b.day) + '</b> <span class="en-meta">written ' + esc(b.made) + '</span>' : '<b>No brief yet</b>') + '</div>' +
+      '<div class="ap-row">' + (d.briefs.length > 1 ? '<select class="i" id="bf_pick" style="max-width:220px">' + d.briefs.map(function (x) { return '<option value="' + x.id + '"' + (b && b.id === x.id ? ' selected' : '') + '>' + esc(x.label) + (x.waiting ? ' (' + x.waiting + ' waiting)' : '') + '</option>'; }).join('') + '</select>' : '') +
+      '<button class="btn" type="button" data-bf="now">Write it now</button></div></div>' +
+      (b ? '<div style="font-size:16px;font-weight:600;margin-top:8px" data-noi18n="1">' + esc(b.headline) + '</div>' + tiles(b.scoreboard || {}) : '<div class="sub" style="display:block;margin-top:6px">The Engine writes it every evening at ' + esc(sch.at || '20:00') + ' (next ' + esc(sch.next || '') + '). Or press "Write it now".</div>') +
+      '<div class="row" style="gap:10px;flex-wrap:wrap;align-items:center;margin-top:8px;font-size:13px"><label><input type="checkbox" data-bf="on"' + (sch.enabled ? ' checked' : '') + '> Every evening at</label><input class="i" type="time" id="bf_at" value="' + esc(sch.at || '20:00') + '" style="max-width:120px">' +
+      '<label for="bf_cap">Most one ad may spend ৳</label><input class="i" type="number" id="bf_cap" value="' + esc(d.adCap) + '" style="max-width:110px"><button class="btn small" type="button" data-bf="save">Save</button>' +
+      '<span class="en-meta">Last 30 days: ' + st.done + ' moves done, ' + st.worked + ' worked' + (st.gained ? ' (+' + tk(st.gained) + ' sales)' : '') + ', ' + st.no + ' said no</span></div></div></section>';
+    if (b) {
+      var col = function (title, list) { return '<div class="card"><h2>' + title + '</h2>' + (list.length ? '<ul>' + list.map(function (x) { return '<li data-noi18n="1">' + esc(x.text) + '</li>'; }).join('') + '</ul>' : '<div class="en-meta">-</div>') + '</div>'; };
+      h += '<section><div class="bf-cols">' + col('What changed and why', b.changes) + col('Risks', b.risks) + col('Opportunities', b.opportunities) + '</div>' +
+        (b.results ? '<div class="card" style="margin-top:10px"><h2>What your approved moves brought</h2><div style="font-size:13.5px;white-space:pre-wrap" data-noi18n="1">' + esc(b.results) + '</div></div>' : '') + '</section>';
+      h += '<section><h2 style="margin:6px 0">Moves</h2>' + (d.actions.length ? d.actions.map(moveHtml).join('') : '<div class="en-meta">No moves in this brief.</div>') + '</section>';
+    }
+    return h;
+  }
+  function paint() { if (VIEW !== 'brief') return; var v = el('view'); if (!v) return; v.innerHTML = view(); try { if (typeof bindTips === 'function') bindTips(v); } catch (e) {} }
+  var rp = repaint; repaint = function () { if (VIEW !== 'brief') return rp.apply(this, arguments); paint(); };
+  setInterval(function () { if (VIEW === 'brief' && BF.data && BF.data.actions.some(function (a) { return a.status === 'changing' || a.status === 'running'; })) load(BF.data.brief && BF.data.brief.id); }, 15000);
+  function decide(id, act, note, btn) {
+    if (btn) { btn.disabled = true; btn.textContent = act === 'approve' ? 'Doing it…' : '…'; }
+    srv('erpBriefDecide', [{ id: id, act: act, note: note || '' }], function (r) {
+      BF.data = r; BF.change = null; BF.no = null; syncNav();
+      var a = r.actions.filter(function (x) { return x.id === id; })[0];
+      toast(act === 'approve' ? (a && a.status === 'done' ? 'Done: ' + esc(a.result) : 'Could not be done: ' + esc(a ? a.result : '')) : act === 'change' ? 'Sent back to the Engine - the new version appears here.' : 'Noted - it learns from this.', a && a.status === 'failed', 9000);
+      paint();
+    }, function (e) { toast(esc((e && e.message) || e), true, 9000); paint(); });
+  }
+  document.addEventListener('click', function (e) {
+    if (VIEW !== 'brief') return;
+    var t = e.target.closest && e.target.closest('[data-bf],[data-bfok],[data-bfchange],[data-bfno],[data-bfch],[data-bfno2],[data-bfx],[data-bfgo]'); if (!t) return;
+    if (t.hasAttribute('data-bfgo')) { e.preventDefault(); go(t.getAttribute('data-bfgo')); return; }
+    if (t.hasAttribute('data-bfok')) { decide(t.getAttribute('data-bfok'), 'approve', '', t); return; }
+    if (t.hasAttribute('data-bfchange')) { BF.change = t.getAttribute('data-bfchange'); BF.no = null; paint(); var n = el('bf_note'); if (n) n.focus(); return; }
+    if (t.hasAttribute('data-bfno')) { BF.no = t.getAttribute('data-bfno'); BF.change = null; paint(); return; }
+    if (t.hasAttribute('data-bfx')) { BF.change = null; BF.no = null; paint(); return; }
+    if (t.hasAttribute('data-bfch')) { decide(t.getAttribute('data-bfch'), 'change', (el('bf_note') || {}).value, t); return; }
+    if (t.hasAttribute('data-bfno2')) { decide(t.getAttribute('data-bfno2'), 'reject', (el('bf_why') || {}).value, t); return; }
+    var a = t.getAttribute('data-bf');
+    if (a === 'now') { t.disabled = true; srv('erpBriefRunNow', [], function (r) { BF.data = r; toast('The Engine is writing the brief - it takes a few minutes.'); paint(); }, function (er) { t.disabled = false; toast(esc((er && er.message) || er), true); }); return; }
+    if (a === 'save') { srv('erpBriefSettings', [{ at: (el('bf_at') || {}).value, adCap: Number((el('bf_cap') || {}).value), enabled: !!(document.querySelector('[data-bf="on"]') || {}).checked }], function (r) { BF.data = r; toast('Saved.'); paint(); }, function (er) { toast(esc((er && er.message) || er), true); }); }
+  });
+  document.addEventListener('change', function (e) {
+    if (VIEW !== 'brief' || !e.target) return;
+    if (e.target.id === 'bf_pick') load(e.target.value);
   });
 })();
 </script>

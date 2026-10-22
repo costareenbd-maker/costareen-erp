@@ -27,6 +27,7 @@ import { appIsOff } from './apps.js';
 import { TOOLS, runTool, confirmWrite } from './assistant.js';
 import { watchDue, ISSUE_TOOLS, issueTool, nextRun } from './watchdog.js';
 import { brainText, BRAIN_TOOLS, brainTool, rateFact } from './brain.js';
+import { BRIEF_TOOLS, briefTool } from './brief.js';
 
 const str = (v) => String(v == null ? '' : v).trim();
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -199,7 +200,9 @@ export const ENGINE_TOOLS = TOOLS.filter((t) => t.name !== 'open_screen');
 /** watch-1: every agent reads the Watchdog's issues; the Watchdog (and the Command Center) may record new ones. */
 const toolsFor = (agent, source) => ENGINE_TOOLS.concat(ISSUE_TOOLS.filter((t) => t.name === 'watch_issues' || agent === 'watchdog' || agent === 'command'))
   // brain-1: every agent sees the business in numbers and keeps lasting facts; only the drafting job writes the Brain draft
-  .concat(BRAIN_TOOLS.filter((t) => t.name !== 'brain_save_draft' || source === 'brain'));
+  .concat(BRAIN_TOOLS.filter((t) => t.name !== 'brain_save_draft' || source === 'brain'))
+  // brief-1: the Owner briefing agent files the daily brief and reads what the approved moves brought
+  .concat(agent === 'briefing' ? BRIEF_TOOLS : []);
 
 // ----------------------------------------------------------------------------------------------------- timed jobs
 const EVERY = ['hourly', 'daily', 'weekly'];
@@ -309,6 +312,7 @@ export async function erpEngineTool(ctx, payload) {
   const args = p.args && typeof p.args === 'object' ? p.args : {};
   if (ISSUE_TOOLS.some((t) => t.name === tool)) return issueTool(ctx, tool, args, j);
   if (BRAIN_TOOLS.some((t) => t.name === tool)) return brainTool(ctx, tool, args, j);
+  if (BRIEF_TOOLS.some((t) => t.name === tool)) return briefTool(ctx, tool, args, j);
   const out = await runTool(ctx, tool, p.args && typeof p.args === 'object' ? p.args : {});
   if (out && out.proposal) {
     const list = Array.isArray(j.proposals) ? j.proposals : [];
