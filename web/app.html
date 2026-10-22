@@ -39580,11 +39580,11 @@ saveProduct = function () {
     var c = d.counts, dl = d.daily, wait = (d.waiting || []).filter(function (a) { return a.status === 'proposed' || a.status === 'changing'; }), fx = d.fixed || [];
     var byItself = fx.filter(function (a) { return a.autoDone && a.status === 'done'; }).length;
     var big = wait.length ? '<div class="wd-big bad" style="color:var(--warning,#d97706)">' + wait.length + (wait.length === 1 ? ' fix waits' : ' fixes wait') + ' for your OK</div>'
-      : c.urgent ? '<div class="wd-big bad">Something urgent - the Watchdog is on it</div>'
-      : '<div class="wd-big ok">All good' + (c.open ? ' - working on ' + c.open : '') + '</div>';
+      : c.open ? '<div class="wd-big bad">' + c.open + ' problem' + (c.open === 1 ? '' : 's') + ' found' + (c.urgent ? ' (' + c.urgent + ' urgent)' : '') + ' - the Watchdog is preparing the fixes</div>'
+      : '<div class="wd-big ok">All good</div>';
     var h = '<section><div class="card"><div class="wd-state">' + big + '<div class="en-meta">' + (byItself ? byItself + ' fixed by itself this week · ' : '') + (d.lastCheck ? 'last check ' + esc(d.lastCheck) : '') +
       ' · <span class="en-dot' + (d.engineAlive ? ' on' : '') + '"></span>' + (d.engineAlive ? 'Engine on' : 'Engine not running') + '</div></div>' +
-      (d.lastNight && d.lastNight.note ? '<div style="margin-top:10px"><b>Last night (' + esc(d.lastNight.when) + '):</b><div class="en-ans" style="margin-top:4px" data-noi18n="1">' + (window.enMd ? window.enMd(d.lastNight.note) : esc(d.lastNight.note)) + '</div></div>' : '') +
+      (d.lastNight && d.lastNight.note ? '<div style="margin-top:10px"><b>Last check-up (' + esc(d.lastNight.when) + '):</b><div class="en-ans" style="margin-top:4px" data-noi18n="1">' + (window.enMd ? window.enMd(d.lastNight.note) : esc(d.lastNight.note)) + '</div></div>' : '') +
       '<div class="ap-row" style="margin-top:10px"><button class="btn" type="button" data-wd="now">Check now</button>' +
       (dl ? '<button class="btn" type="button" data-wd="daily">Run the night check now</button><label style="display:inline-flex;gap:6px;align-items:center"><input type="checkbox" data-wd="dailyon"' + (dl.enabled ? ' checked' : '') + '> Night check and fixes at</label><input class="i" type="time" id="wd_at" value="' + esc(dl.at) + '" style="max-width:120px">' : '') + '</div>' +
       '<div class="sub" style="display:block;margin-top:6px">Every night the Watchdog checks everything, fixes what is safe by itself, and prepares the rest as fixes for your OK. In the morning you see what it fixed. Urgent things also come to your WhatsApp.</div></div></section>';
