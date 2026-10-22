@@ -2830,3 +2830,15 @@ complex or failed -> the powerful model; if the main model fails, fall back to t
 - Tests: aibrain_test (24); receivefile / leads / social adjusted; harness turns the model list off (tests script the AI).
 Not done: OpenClaw / OmniRoute gateway on the VPS (owner sets it up, then "Own server"); the menu-by-menu upgrades
 (AI-2 .. AI-10 in docs/AI-FIRST-PLAN.md); no OpenAI / Anthropic key yet - until one is added, Gemini answers.
+
+## The owner's Claude plan powers the ERP (22 Oct 2026, tag ai-1c)
+All AI agents stopped and their jobs held on both servers (owner) - including two watchdog timers that restarted OpenClaw
+every 3 minutes. New on the office VPS: the ERP AI gateway (deploy/vps/erp-ai-gateway.mjs, service erp-ai-gateway,
+https://mcp.bendar.duckdns.org/ai/v1, its own key): the OpenAI-style door the ERP's "Own server" talks to. claude-opus /
+sonnet / haiku run Claude Code in print mode on the owner's Claude Pro plan (no tools of its own, no sessions); the ERP's
+functions are passed through as JSON tool calls; gpt-* goes to OpenClaw's powerless `erp` agent once the ChatGPT plan is
+active and the gateway is switched on. The ERP now: everything -> Claude Opus (plan); customer chat -> Gemini free first,
+Claude for hard ones; photos, voice, PDFs and web searches -> Gemini (the gateway takes text only); Gemini free as the net.
+Live check: Test 5.3 s, Ask your ERP 7.6 s on custom:claude-opus.
+Limits: the Claude Pro plan has usage windows - when used up the ERP falls back to Gemini by itself; the ChatGPT side waits
+for the plan; security review of the gateway later (owner).
