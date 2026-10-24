@@ -179,10 +179,14 @@ export async function runJob(deps, job) {
                                            and s.key in ('CZ_SYNC_KEY', 'WOO_KEY', 'SHOPIFY_TOKEN'))`).map((r) => r.business_id);
     if (keyed.length) {
       for (const row of await owners(sql, keyed)) {
-        out[row.name] = {
-          pull: pull ? await asBusiness(deps, row, 'websync:pull', (ctx) => pull(ctx)) : 'skipped',
-          push: push ? await asBusiness(deps, row, 'websync:push', (ctx) => push(ctx, 'apply')) : 'skipped',
-        };
+        // fix-4 H19: orders in and stock out in ONE transaction under the website lock - when the orders could not be
+        // read the stock is not sent (it would offer again units the website already sold)
+        const both = await asBusiness(deps, row, 'websync', async (ctx) => {
+          const a = pull ? await pull(ctx) : 'skipped';
+          if (a && typeof a === 'object' && a.ok === false) return { pull: a, push: 'skipped: the orders did not come in' };
+          return { pull: a, push: push ? await push(ctx, 'apply') : 'skipped' };
+        });
+        out[row.name] = both && both.pull !== undefined ? both : { pull: both, push: 'skipped: the orders did not come in' };
       }
     }
     // the open market: every business that shares its stock lists it again (stock bands, prices, new products)

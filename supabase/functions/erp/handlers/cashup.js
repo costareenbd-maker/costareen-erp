@@ -18,6 +18,8 @@ const whoIs = (ctx) => str(ctx.s && ctx.s.name) || 'User';
 
 export async function erpCashUp(ctx, payload) {
   payload = payload || {};
+  // fix-2 M8: one cash-up at a time - a second one made at the same moment reads the book after the first one's correction
+  await (await import('./money.js')).lock(ctx, 'cashup');
   const book = await erpCashBook(ctx, {});
   const acc = (book.accounts || []).find((a) => a.id === str(payload.account) && !a.archived);
   if (!acc) throw new Error('Choose the account you counted.');

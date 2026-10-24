@@ -595,7 +595,7 @@ async function undoReceipts(ctx, pctx, pool, p, where, qty, reason) {
   const have = await heldBy(pctx, pool, p.id, where);
   if (qty > have) throw new Error((names[where] || 'That shelf') + ' holds only ' + have + ' of ' + str(p.name) + '.');
   const rows = await pctx.tx`
-    select r.txn_no, r.qty, r.unit_price, r.paid_by,
+    select r.id, r.txn_no, r.qty, r.unit_price, r.paid_by, (select l.id from stock_lots l where l.movement_id = r.id order by l.seq limit 1) as lot_id,
            coalesce((select sum(u.qty) from stock_movements u where u.business_id = r.business_id and u.kind = 'RECEIVE'
                        and u.direction = 'OUT' and u.reference = 'Undo of ' || r.txn_no), 0) as undone
     from stock_movements r
@@ -611,10 +611,10 @@ async function undoReceipts(ctx, pctx, pool, p, where, qty, reason) {
     const n = Math.min(left, r.left), unit = num(r.unit_price);
     await pctx.tx`
       insert into stock_movements (business_id, product_id, kind, direction, qty, unit_price, total, reference, supplier, note,
-                                   created_by, created_at, txn_no, operator, product_name, paid_by, held_by)
+                                   created_by, created_at, txn_no, operator, product_name, paid_by, held_by, from_lot)
       values (${pool.id}, ${p.id}, 'RECEIVE', 'OUT', ${n}, ${unit}, ${-round2(n * unit)}, ${'Undo of ' + str(r.txn_no)}, '',
               ${reason + ' - received by mistake, undone by ' + who(ctx) + ' (' + str(ctx.s.businessName) + ')'},
-              ${pctx.s.userId}, ${at}, ${txnNo(at) + '-u' + (++k)}, ${who(ctx)}, ${str(p.name)}, ${r.paid_by}, ${where})`;
+              ${pctx.s.userId}, ${at}, ${txnNo(at) + '-u' + (++k)}, ${who(ctx)}, ${str(p.name)}, ${r.paid_by}, ${where}, ${r.lot_id})`;
     value += n * unit; left -= n;
   }
   // the average cost of what stays

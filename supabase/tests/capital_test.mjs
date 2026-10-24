@@ -36,7 +36,7 @@ check('shares cannot pass 100%', !r.ok && r.error === 'That would make 110% in a
 r = await owner('erpCapitalHolderSave', [{ kind: 'shareholder', name: 'Partner', pct: 30, private: true, since: prev }]);
 check('private shareholder added', r.ok && r.result.holders.length === 2 && r.result.totals.pctGiven === 90 && r.result.totals.pctFree === 10, r.result.totals);
 const PAR = r.result.holders.find((h) => h.name === 'Partner').id;
-r = await owner('erpCapitalHolderSave', [{ id: RAH, kind: 'shareholder', name: 'Rahman', pct: 65 }]);
+r = await owner('erpCapitalHolderSave', [{ id: RAH, kind: 'shareholder', name: 'Rahman', pct: 65, from: prev2 }]);   // fix-3: from his first month (it never ran at 60)
 check('change a share (others 30 + 65 = 95)', r.ok && r.result.holders.find((h) => h.id === RAH).pct === 65 && r.result.holders.find((h) => h.id === RAH).since === prev2, r.result.holders);
 r = await owner('erpCapitalHolderSave', [{ id: 'Hnope', kind: 'shareholder', name: 'Ghost', pct: 1 }]);
 check('unknown id refused', !r.ok && r.error === 'That person is no longer on the list.', r);
@@ -91,7 +91,7 @@ r = await owner('erpCapitalClose', [{ month: 'x' }]);
 check('which month?', !r.ok && r.error === 'Which month?', r);
 r = await owner('erpCapitalClose', [{ month: prev }]);
 check('a month cannot be closed while part of the profit has no owner', !r.ok && /add up to 95%, not 100%/.test(r.error), r);
-await owner('erpCapitalHolderSave', [{ id: RAH, kind: 'shareholder', name: 'Rahman', pct: 70 }]);
+await owner('erpCapitalHolderSave', [{ id: RAH, kind: 'shareholder', name: 'Rahman', pct: 70, from: prev }]);   // fix-3: from last month on
 r = await owner('erpCapitalClose', [{ month: prev }]);
 check('last month closed, same net kept', r.ok && r.result.months.find((m) => m.month === prev).closed && r.result.months.find((m) => m.month === prev).net === mPrev.net, r.result && r.result.months);
 r = await owner('erpCapitalClose', [{ month: prev }]);

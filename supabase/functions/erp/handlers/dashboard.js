@@ -249,7 +249,7 @@ export async function monthGross(ctx, month) {
     ln.cost = soldCost(r, bySku[ln.sku] && bySku[ln.sku].cost);
     lines.push(ln);
     const o = inv[oid] || (inv[oid] = { lines: 0, discount: 0, gross: 0 });
-    if (ln.total > 0) o.gross += ln.qty * num(r[SL.unit_price]);
+    if (ln.qty > 0 && ln.total >= 0) o.gross += ln.qty * num(r[SL.unit_price]);   // fix-2 H6
     o.lines += ln.total;
     o.discount = Math.max(o.discount, ln.discount);
   }
@@ -751,7 +751,8 @@ async function pnlForRaw(ctx, months) {
     const ln = { sku: str(r[SL.sku]).toLowerCase(), qty: num(r[SL.quantity]), total: num(r[SL.total]) };
     ln.cost = soldCost(r, bySku[ln.sku] && bySku[ln.sku].cost);
     o.lines.push(ln);
-    if (ln.total > 0) { o.sum += ln.total; o.gross += ln.qty * num(r[SL.unit_price]); }
+    if (ln.total > 0) o.sum += ln.total;
+    if (ln.qty > 0 && ln.total >= 0) o.gross += ln.qty * num(r[SL.unit_price]);   // fix-2 H6: a free line's discount is inside its own line
     o.discount = Math.max(o.discount, num(r[SL.discount]));
     o.grand = Math.max(o.grand, num(r[SL.grand_total]));
   }
@@ -825,6 +826,9 @@ async function pnlForRaw(ctx, months) {
     return c;
   }, {});
   for (const m of months) if (lateM[m]) want[m].cost += lateM[m];
+  // fix-2 H9: a cancelled sale's delivery charge was never earned - taken back in the month it was cancelled
+  const cxlM = await cancelledDelivery(ctx);
+  for (const m of months) if (cxlM[m]) want[m].delivery -= cxlM[m];
   // 115: a pre-order deposit the owner kept on cancelling is income of that month
   const forfM = await soft(ctx, async () => {
     const c = {};
@@ -855,6 +859,16 @@ async function pnlForRaw(ctx, months) {
                serviceIncome: svc.income, serviceParts: svc.parts, serviceJobs: svc.jobs, joint: Math.round(jointM[m] || 0), jointShare, forfeited });
   }
   return out;
+}
+
+/** fix-2 H9: delivery charges taken back by cancelling a sale, by the month of the cancel. */
+async function cancelledDelivery(ctx) {
+  return soft(ctx, async () => {
+    const c = {};
+    for (const r of await ctx.tx`select to_char(public.dhaka_date(paid_at), 'YYYY-MM') as m, sum(amount) as s from payments
+                                 where business_id = ${ctx.biz} and method = 'Adjusted' and note like 'delivery charge cancelled [cancel:%' group by 1`) c[String(r.m)] = num(r.s);
+    return c;
+  }, {});
 }
 
 /** One month of it (kept for the length of the call: several screens' parts ask for the same month). */
@@ -902,7 +916,8 @@ export async function erpPnlMonth(ctx, payload) {
     const ln = { sku: str(r[SL.sku]).toLowerCase(), qty: num(r[SL.quantity]), total: num(r[SL.total]) };
     ln.cost = soldCost(r, bySku[ln.sku] && bySku[ln.sku].cost);
     o.lines.push(ln);
-    if (ln.total > 0) { o.sum += ln.total; o.gross += ln.qty * num(r[SL.unit_price]); }
+    if (ln.total > 0) o.sum += ln.total;
+    if (ln.qty > 0 && ln.total >= 0) o.gross += ln.qty * num(r[SL.unit_price]);   // fix-2 H6: a free line's discount is inside its own line
     o.discount = Math.max(o.discount, num(r[SL.discount]));
     o.grand = Math.max(o.grand, num(r[SL.grand_total]));
   }
@@ -927,6 +942,7 @@ export async function erpPnlMonth(ctx, payload) {
   }
   rows.sort((a, b) => b.ts - a.ts);
   for (const r of rows) delete r.ts;
+  t.delivery -= (await cancelledDelivery(ctx))[month] || 0;   // fix-2 H9
   const exp = await soft(ctx, () => expByCat(ctx, month), { total: 0, byCat: {} });
   const expenses = Object.keys(exp.byCat).map((c) => ({ name: c, amount: exp.byCat[c] })).sort((a, b) => b.amount - a.amount);
   for (const k of Object.keys(t)) t[k] = Math.round(t[k]);
@@ -957,7 +973,7 @@ export async function erpMoney(ctx, payload) {
     if (!line.sku || (line.qty <= 0 && line.total >= 0)) continue;
     lines.push(line);
     const inv = byInvoice[oid] || (byInvoice[oid] = { lines: 0, discount: 0, gross: 0 });
-    if (line.total > 0) inv.gross += line.qty * num(r[SL.unit_price]);
+    if (line.qty > 0 && line.total >= 0) inv.gross += line.qty * num(r[SL.unit_price]);
     inv.lines += line.total;
     inv.discount = Math.max(inv.discount, line.discount);
   }

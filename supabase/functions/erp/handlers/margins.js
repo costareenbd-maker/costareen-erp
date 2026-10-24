@@ -12,6 +12,12 @@ import { powerOn } from '../allow.js';
 import { products } from './dashboard.js';
 
 const UNDER = 10;   // the warning line, in %
+function blurLine(ctx, sku) {
+  const k = String(ctx.biz) + '|' + String(sku).toLowerCase() + '|' + new Date(ctx.now || Date.now()).toISOString().slice(0, 10);
+  let h = 2166136261;
+  for (let i = 0; i < k.length; i++) { h ^= k.charCodeAt(i); h = Math.imul(h, 16777619) >>> 0; }
+  return UNDER - 5 + (h % 1001) / 100;
+}
 
 export async function erpLineMargins(ctx, payload) {
   payload = payload || {};
@@ -55,7 +61,9 @@ export async function erpLineMargins(ctx, payload) {
     if (left > 0) { const c = num(x.p.cost); if (!(c > 0)) known = false; cost += left * c; }
     if (!known || !(revenue > 0)) { out.push({ sku: x.sku, low: false, unknown: !known }); continue; }
     const margin = Math.round((revenue - cost) / revenue * 1000) / 10;
-    const line = { sku: x.sku, low: margin < UNDER, unknown: false };
+    // fix-4 M23: someone who may not see costs gets the warning on a line that moves by product and day (5-15 %), so
+    // trying price after price cannot find the cost
+    const line = { sku: x.sku, low: margin < (canCost ? UNDER : blurLine(ctx, x.sku)), unknown: false };
     if (canCost) line.margin = margin;
     out.push(line);
   }

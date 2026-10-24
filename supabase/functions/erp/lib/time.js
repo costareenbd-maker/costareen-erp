@@ -69,6 +69,17 @@ export function num(v) {
 
 export function round2(n) { return Math.round((Number(n) || 0) * 100) / 100; }
 
+/** fix-5 L3/L5/L11: an amount of money as typed - a number, at most 2 decimals (paisa), never silently rounded. */
+export function money2(v, what) {
+  const n = typeof v === 'number' ? v : Number(String(v == null ? '' : v).trim());
+  if (!isFinite(n)) throw new Error((what || 'The amount') + ' is not a number.');
+  if (Math.abs(n * 100 - Math.round(n * 100)) > 1e-6) throw new Error((what || 'The amount') + ' has more than 2 decimals: money goes down to the paisa (0.01).');
+  return Math.round(n * 100) / 100;
+}
+/** fix-5 L1: things counted in pieces are whole; a product sold by weight or length (unit kg, g, m, ft, litre...) may be in parts. */
+export const byMeasure = (unit) => /^(kg|kgs|kilo|kilogram|g|gm|gram|grams|m|meter|metre|meters|metres|cm|mm|ft|feet|foot|yard|yd|inch|in|l|litre|liter|ml)$/i.test(String(unit || '').trim());
+export const QTY_MAX = 100000;
+
 /**
  * A date as it may have been kept in a text column: an ISO / "yyyy-MM-dd HH:mm"
  * string, or a spreadsheet serial number ("46272.52" - days since 30 Dec 1899,

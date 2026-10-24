@@ -7,7 +7,7 @@
 // a wrong entry is struck out with a reason (column `voided`).
 
 import { asDate, str } from '../lib/tabs.js';
-import { formatDate, num } from '../lib/time.js';
+import { formatDate, num, money2 } from '../lib/time.js';
 import { getConfig, setConfig, saveFile, deleteFile, fileUrl } from '../lib/ext.js';
 import { who } from './money.js';
 import { monthGross, monthNet } from './dashboard.js';
@@ -225,8 +225,10 @@ export async function erpExpenses(ctx, payload) {
 /** erpExpenseAdd (ERP.js:6847): a one-off expense in the month being looked at. */
 export async function erpExpenseAdd(ctx, payload) {
   payload = payload || {};
-  const amount = num(payload.amount);
-  if (!(amount > 0)) throw new Error('How much was spent?');
+  // fix-5 L11: a number, at least one paisa (0.001 is not an expense)
+  if (payload.amount !== undefined && String(payload.amount).trim() !== '' && !isFinite(Number(payload.amount))) throw new Error('The amount spent is not a number.');
+  const amount = Math.round(num(payload.amount) * 100) / 100;
+  if (!(amount >= 0.01)) throw new Error('How much was spent?');
   const what = str(payload.description);
   if (!what) throw new Error('What was it for? A few words is enough.');
   const nowMonth = monthOf(ctx.now);
@@ -349,6 +351,8 @@ export async function erpExpenseItemSave(ctx, payload) {
   if (!name) throw new Error('What is this expense called?');
   if (kind === 'fixed' && !(amount > 0)) throw new Error('How much is it each month?');
 
+  // fix-2 H8: a closed month's costs stay as they were closed - a change starts in an open month
+  await assertOpen(ctx, from, 'a fixed or recurring cost cannot be set up or changed from there');
   const list = await expItems(ctx);
   const changing = str(payload.id);
 
@@ -395,6 +399,7 @@ export async function erpExpenseItemEnd(ctx, payload) {
   const id = str(payload && payload.id);
   const nowMonth = monthOf(ctx.now);
   const first = isMonth(payload && payload.fromMonth) ? payload.fromMonth : nowMonth;
+  await assertOpen(ctx, first, 'a cost cannot be stopped from there (what it paid there stays)');   // fix-2 H8
   for (const it of await expItems(ctx)) {
     if (it.id !== id) continue;
     await ctx.tx`update expense_items set to_month = ${monthShift(first, -1)} where id = ${it.row}`;

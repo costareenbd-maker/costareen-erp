@@ -244,9 +244,15 @@ export async function addToLists(ctx, data) {
 
 export async function erpSaveProduct(ctx, data) {
   if (!data) throw new Error('Nothing to save.');
-  const name = str(data.product_name);
-  if (!name) throw new Error('Product name is required.');
+  let name = str(data.product_name);
+  if (!name && (data.isNew || data.product_name !== undefined)) throw new Error('Product name is required.');
   if (num(data.sell_price) < 0 || num(data.cost_price) < 0 || num(data.wholesale_price) < 0) throw new Error('Prices cannot be negative.');
+  // fix-5 L11: a price is a number ("abc" is not 0), the opening stock is not below 0, a name is not a page of text
+  for (const [k, w] of [['sell_price', 'The selling price'], ['cost_price', 'The cost'], ['wholesale_price', 'The wholesale price'], ['opening_stock', 'The opening stock']]) {
+    if (data[k] !== undefined && data[k] !== null && String(data[k]).trim() !== '' && !isFinite(Number(data[k]))) throw new Error(w + ' is not a number.');
+  }
+  if (num(data.opening_stock) < 0) throw new Error('The opening stock cannot be below 0.');
+  if (str(data.product_name).length > 200) throw new Error('The product name is too long (200 characters at most).');
 
   await lock(ctx, 'stock');
   if (data.isNew) {
@@ -276,6 +282,15 @@ export async function erpSaveProduct(ctx, data) {
   if (String(data.status || '') === 'Discontinued' && cur.status !== 'Discontinued') {
     await refuseDiscontinue(ctx, cur.sku, name);
   }
+  // fix-4 M24: a field that is not sent keeps what it holds (a tool or an import may send only some)
+  const row = (await ctx.tx`select * from products where id = ${cur.row}`)[0];
+  const keep = (k, col) => (data[k] === undefined ? row[col] : data[k]);
+  if (!name) name = str(row.name);
+  data = { ...data, category: keep('category', 'category'), brand: keep('brand', 'brand'), type: keep('type', 'type'), color: keep('color', 'color'),
+           unit: keep('unit', 'unit'), supplier: keep('supplier', 'supplier'), sell_price: keep('sell_price', 'sell_price'),
+           reorder_level: keep('reorder_level', 'reorder_level'), lead_time_days: keep('lead_time_days', 'lead_time_days'),
+           location_bin: keep('location_bin', 'location_bin'), status: keep('status', 'status'),
+           cost_price: data.cost_price === undefined ? num(row.cost_price) : data.cost_price };
   // Fix (spec 02 §4.3): below shareholder the cost is scrubbed from the form,
   // so a missing / 0 cost from such an editor means "not shown", not "zero".
   let cost = num(data.cost_price);
@@ -327,6 +342,9 @@ export async function receiveShipment(ctx, payload) {
   payload = payload || {};
   const lines = (payload.lines || []).filter((l) => l && num(l.qty) > 0 && (str(l.sku) || l.isNew));
   if (!lines.length) throw new Error('Add at least one product with a quantity.');
+  // fix-1 M2: a price below zero makes the stock's cost and every later profit wrong
+  if (lines.some((l) => num(l.unitBdt) < 0 || num((l.product || {}).cost_price) < 0)) throw new Error('A price cannot be below zero.');
+  if (lines.some((l) => Math.round(num(l.qty)) !== num(l.qty) || num(l.qty) > 1000000)) throw new Error('Quantities are whole numbers (up to 1,000,000).');
 
   // a reference is only needed for a shipment; a local buy or a campaign exchange gets one made for it
   const FROM = { shipment: 'Shipment', local: 'Bought locally', campaign: 'Campaign exchange', other: 'Received' };
@@ -383,6 +401,12 @@ export async function receiveShipment(ctx, payload) {
   // the money (supplier bill, payment, shipment costs) stays in this company's books
   const PJ = str(payload.pool) ? await (await import('./joint.js')).poolReceiveTarget(ctx, payload.pool, payload.receivedAt) : null;
   if (PJ && payload.poId) throw new Error('A supplier order is received into your own stock; receive joint stock without the order.');
+  // fix-1 M1: the same shipment received again (a second click, or once more days later) is asked about first
+  if (!PJ && str(payload.reference) && !payload.again) {
+    const was = (await ctx.tx`select min(created_at) as at from stock_movements where business_id = ${ctx.biz} and kind::text = 'RECEIVE'
+                              and direction = 'IN' and btrim(reference) = ${str(payload.reference)}`)[0];
+    if (was && was.at) throw new Error('CONFIRM: Shipment "' + str(payload.reference) + '" was already received on ' + formatDate(new Date(was.at), 'd MMM yyyy, h:mm a') + '. Receive it AGAIN (more goods, another bill)?');
+  }
   if (PJ && lines.some((l) => Array.isArray(l.serials) && l.serials.some((x) => str(x)))) throw new Error('Serial numbers are kept for your own stock only; receive these without them.');
 
   // ---- 1. resolve every line to a real product
@@ -683,13 +707,96 @@ export async function adjustStock(ctx, payload) {
   if (!info) throw new Error('Product not found: ' + sku);
   const current = Number(info.stock) || 0;
   if (qty > current) throw new Error('Only ' + current + ' in stock for ' + info.name + '.');
+  if (Math.round(qty) !== qty) throw new Error('A whole number, please.');
+  // fix-1 M4: units held for open pre-orders are not written off without saying so
+  const { heldMap } = await import('./preorders.js');
+  const hold = (await heldMap(ctx))[str(info.sku).toLowerCase()];
+  if (hold && hold.held > 0 && qty > current - hold.held && !(payload && payload.overHold)) {
+    throw new Error('CONFIRM: ' + hold.held + ' of ' + info.name + ' are held for pre-order ' + hold.nos.join(', ') + '. Taking ' + qty + ' out leaves that pre-order short. Take them out anyway?');
+  }
+  // fix-1 M3: a numbered product says WHICH units leave, so the serial list stays true
+  const ser = (await ctx.tx`select serialised from products where id = ${info.id}`)[0];
+  let gone = [];
+  if (ser && ser.serialised) {
+    const inStock = (await ctx.tx`select serial from serials where business_id = ${ctx.biz} and product_id = ${info.id} and status = 'in_stock' order by received_at`).map((r) => str(r.serial));
+    if (inStock.length) {
+      const pick = (Array.isArray(payload && payload.serials) ? payload.serials : String((payload && payload.serials) || '').split(/[\s,;]+/)).map(str).filter(Boolean);
+      const known = new Set(inStock.map((x) => x.toLowerCase()));
+      if (pick.length !== qty || pick.some((x) => !known.has(x.toLowerCase())) || new Set(pick.map((x) => x.toLowerCase())).size !== pick.length) {
+        throw new Error('SERIALS: ' + qty + '|' + info.name + '|' + inStock.slice(0, 60).join(','));
+      }
+      gone = pick;
+    }
+  }
   const no = await addMovement(ctx, { productId: info.id, kind: 'ADJUST', direction: 'OUT', qty, unit: 0, total: 0,
-    reference: reason, supplier: '', note: notes, name: info.name });
+    reference: reason, supplier: '', note: notes + (gone.length ? (notes ? ' · ' : '') + 'serials ' + gone.join(', ') : ''), name: info.name });
+  for (const sn of gone) {
+    await ctx.tx`update serials set status = 'damaged', note = ${('written off: ' + reason).slice(0, 200)}
+                 where business_id = ${ctx.biz} and product_id = ${info.id} and lower(serial) = ${sn.toLowerCase()} and status = 'in_stock'`;
+  }
   forget(ctx, 'TXN_LOG');
-  return { ok: true, txnId: no, product: info.name, direction: 'OUT', qty };
+  return { ok: true, txnId: no, product: info.name, direction: 'OUT', qty, serials: gone };
 }
 
 export async function erpAdjustStock(ctx, payload) { return adjustStock(ctx, payload); }
+
+/**
+ * fix-1 H3 (the partner's odd-case report): goods received by mistake - typed twice, a wrong price, a test. The very
+ * units that receipt put on the shelf come off again (its own lot, its own cost), and the supplier's bill is lowered by
+ * what they were billed at. Units of it already sold cannot be undone (they are in a sale).
+ *   erpReceipts()                         the last 60 receipts with what can still be undone
+ *   erpUndoReceipt({txnNo, qty, reason})
+ */
+export async function erpReceipts(ctx) {
+  const rows = await ctx.tx`
+    select m.id, m.txn_no, m.created_at, m.reference, m.supplier, m.qty, m.unit_price, p.sku, coalesce(m.product_name, p.name) as name,
+           coalesce((select sum(l.qty_left) from stock_lots l where l.movement_id = m.id), 0) as on_shelf,
+           coalesce((select sum(u.qty) from stock_movements u where u.business_id = m.business_id and u.direction = 'OUT' and u.reference = 'Undo of ' || m.txn_no), 0) as undone
+    from stock_movements m join products p on p.id = m.product_id
+    where m.business_id = ${ctx.biz} and m.kind::text = 'RECEIVE' and m.direction = 'IN'
+    order by m.created_at desc, m.seq desc limit 60`;
+  return rows.map((r) => ({ txnNo: str(r.txn_no), at: formatDate(new Date(r.created_at), 'd MMM yyyy, h:mm a'), reference: str(r.reference), supplier: str(r.supplier),
+    sku: str(r.sku), name: str(r.name), qty: num(r.qty), unit: num(r.unit_price), undone: num(r.undone), canUndo: Math.max(0, Math.min(num(r.on_shelf), num(r.qty) - num(r.undone))) }));
+}
+
+export async function erpUndoReceipt(ctx, payload) {
+  const p = payload || {}, txnNo = str(p.txnNo), qty = num(p.qty), reason = str(p.reason).slice(0, 200);
+  if (!txnNo) throw new Error('Which receipt?');
+  if (!(qty > 0) || Math.round(qty) !== qty) throw new Error('How many? A whole number above 0.');
+  if (!reason) throw new Error('Say what went wrong with the receipt.');
+  await lock(ctx, 'stock'); await lock(ctx, 'sale');
+  const r = (await ctx.tx`select m.*, p.sku, p.name as pname from stock_movements m join products p on p.id = m.product_id
+                          where m.business_id = ${ctx.biz} and m.txn_no = ${txnNo} and m.kind::text = 'RECEIVE' and m.direction = 'IN'`)[0];
+  if (!r) throw new Error('No receipt ' + txnNo + '.');
+  await assertOpen(ctx, ctx.now, 'a receipt cannot be undone there');
+  const lot = (await ctx.tx`select id, qty_left from stock_lots where movement_id = ${r.id} order by seq limit 1`)[0];
+  const undone = num((await ctx.tx`select coalesce(sum(qty), 0) as s from stock_movements where business_id = ${ctx.biz} and direction = 'OUT' and reference = ${'Undo of ' + txnNo}`)[0].s);
+  const can = Math.max(0, Math.min(lot ? num(lot.qty_left) : 0, num(r.qty) - undone));
+  if (qty > can) throw new Error(can ? 'Only ' + can + ' of this receipt are still on the shelf to undo (the rest were sold or already undone).' : 'Nothing of this receipt is left to undo: its units were sold or already undone.');
+  const unit = num(r.unit_price), at = new Date();
+  await ctx.tx`
+    insert into stock_movements (business_id, product_id, kind, direction, qty, unit_price, total, reference, supplier, note,
+                                 created_by, created_at, txn_no, operator, product_name, from_lot)
+    values (${ctx.biz}, ${r.product_id}, 'RECEIVE', 'OUT', ${qty}, ${unit}, ${-round2(qty * unit)}, ${'Undo of ' + txnNo}, ${str(r.supplier)},
+            ${reason + ' - received by mistake, undone by ' + who(ctx)}, ${ctx.s.userId}, ${at}, ${txnId(at)}, ${who(ctx)}, ${str(r.pname)}, ${lot ? lot.id : null})`;
+  // the supplier's bill for that shipment is lowered by what these units were billed at (a credit line on the same bill)
+  let credited = 0;
+  const bill = str(r.supplier) ? (await ctx.tx`select id, supplier, amount from supplier_bills where business_id = ${ctx.biz} and btrim(reference) = ${str(r.reference)}
+                                                and coalesce(voided, '') = '' and amount > 0 order by created_at limit 1`)[0] : null;
+  if (bill) {
+    const goods = num((await ctx.tx`select coalesce(sum(qty * unit_price), 0) as s from stock_movements where business_id = ${ctx.biz} and kind::text = 'RECEIVE'
+                                    and direction = 'IN' and btrim(reference) = ${str(r.reference)}`)[0].s);
+    // the bill holds the goods' price only (freight is not the supplier's): share it by the receipt's value
+    credited = goods > 0 ? round2(num(bill.amount) * (qty * unit) / goods) : 0;
+    if (credited > 0) {
+      await ctx.tx`insert into supplier_bills (business_id, supplier, at, reference, amount, source, note, by)
+                   values (${ctx.biz}, ${bill.supplier}, ${at}, ${str(r.reference)}, ${-credited}, 'manual', ${'credit: ' + qty + ' x ' + str(r.pname) + ' received by mistake (' + reason + ')'}, ${who(ctx)})`;
+    }
+  }
+  forget(ctx, 'TXN_LOG');
+  delete ctx.memo.catalog;
+  return { ok: true, undone: qty, product: str(r.pname), billCredit: credited, receipts: await erpReceipts(ctx) };
+}
 
 /** erpStockHistory (ERP:1377): the last N ledger rows, newest first. */
 export async function erpStockHistory(ctx, limit) {
@@ -1336,7 +1443,7 @@ export async function erpPoSettle(ctx, payload) {
 export const HANDLERS = {
   erpPoStage, erpProductSizes,
   erpSaveProduct, erpSetProductStatus, erpDiscontinued,
-  erpReceiveShipment, erpReceiveStock, erpAdjustStock, erpStockHistory,
+  erpReceiveShipment, erpReceiveStock, erpAdjustStock, erpStockHistory, erpReceipts, erpUndoReceipt,
   erpReorderPlan, erpApplyReorderLevels,
   erpPoList, erpPoCreate, erpPoPay, erpPoArrive, erpPoLineClose, erpPoClose, erpPoDiffDecide, erpPoSettle,
 };

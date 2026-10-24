@@ -24,6 +24,7 @@ export const WO = {
   line_total: 7, customer: 8, phone: 9, address: 10, payment: 11, order_total: 12,
   entered_in_sheet: 13, manager_note: 14,
   order_id: 15, line_id: 16,
+  changed: 17, change_note: 18,   // fix-4: the order changed on the website after it was entered
 };
 
 /** WEB_ORDERS as rows, in the order they were pulled. */
@@ -35,7 +36,7 @@ export async function webOrdersTab(ctx) {
              coalesce(l.status, o.status, ''), l.sku, l.product_name, l.qty, l.line_total,
              o.customer_name, o.customer_phone, o.customer_address, o.payment, o.order_total,
              case when l.entered then 'Yes' else 'No' end, coalesce(o.manager_note, ''),
-             o.id, l.id
+             o.id, l.id, o.changed_after_entry, coalesce(o.change_note, '')
       from web_order_lines l join web_orders o on o.id = l.web_order_id
       where l.business_id = ${ctx.biz}
       order by l.seq`.values();
@@ -89,7 +90,8 @@ export async function pullWebOrders(ctx) {
   const since = new Date(Date.now() - LOOKBACK_DAYS * DAY_MS);
   const iso = since.toISOString().slice(0, 19);
   const res = await czFetch(ctx, 'GET', '/orders?limit=100&since=' + encodeURIComponent(iso));
-  const items = (res && res.items) || [];
+  // fix-4 M21 / fix-5 L10: a broken answer (items not a list) brings nothing; never a quantity below one
+  const items = (Array.isArray(res && res.items) ? res.items : []).filter((x) => x && typeof x === 'object' && num(x.qty) > 0);
   const added = await addWebLines(ctx, items);
   let parcels = 0;
   try { parcels = await ctx.tx.savepoint(() => linkWebParcels(ctx)); } catch (_) { /* next time */ }
@@ -103,10 +105,20 @@ export async function pullWebOrders(ctx) {
  * A known order whose status changed (e.g. cancelled) gets the new status.
  */
 export async function addWebLines(ctx, items) {
-  const seen = {};
-  for (const r of await webOrdersTab(ctx)) {
-    seen[str(r[WO.order_no]) + '|' + str(r[WO.sku])] = true;
+  // fix-4 H17: a line is the website's line (its own id when the website gives one; else the n-th line of that SKU in
+  // the order), never just "the order's SKU" - two lines of one SKU are two lines
+  const have = {};   // order no -> [{ id, sku, qty, total, entered, ext, claimed }]
+  for (const r of await ctx.tx`select l.id, l.sku, l.qty, l.line_total, l.entered, l.ext_line_id, o.order_no
+                               from web_order_lines l join web_orders o on o.id = l.web_order_id
+                               where l.business_id = ${ctx.biz} order by l.seq`) {
+    (have[str(r.order_no)] = have[str(r.order_no)] || []).push({ id: r.id, sku: str(r.sku), qty: num(r.qty), total: num(r.line_total), entered: !!r.entered, ext: str(r.ext_line_id), claimed: false });
   }
+  const note = async (no, text) => {
+    await ctx.tx`update web_orders set changed_after_entry = true,
+                   change_note = left(btrim(coalesce(change_note, '') || ' ' || ${text}), 500)
+                 where business_id = ${ctx.biz} and order_no = ${no}`;
+  };
+  const statusDone = {};
 
   let added = 0;
   const orderIds = {};
@@ -115,23 +127,43 @@ export async function addWebLines(ctx, items) {
     // '(no sku)', so it is looked for under that name too
     const sku = str(it.sku) || '(no sku)';
     const no = str(it.number);
-    const key = no + '|' + sku;
-    if (seen[key]) {
-      if (str(it.status)) {
-        await ctx.tx`update web_orders set status = ${str(it.status)}
-                     where business_id = ${ctx.biz} and order_no = ${no} and coalesce(status, '') <> ${str(it.status)}`;
+    if (!no || !(num(it.qty) > 0)) continue;   // fix-5 L10: a line without an order number, or without a quantity, is not an order
+    const ext = str(it.line_id || it.item_id || it.lineId);
+    const lines = have[no] = have[no] || [];
+    const known = (ext && lines.find((l) => !l.claimed && l.ext === ext)) ||
+                  lines.find((l) => !l.claimed && (!ext || !l.ext) && l.sku.toLowerCase() === sku.toLowerCase());
+    if (known) {
+      known.claimed = true;
+      if (str(it.status) && !statusDone[no]) {
+        statusDone[no] = true;
+        const ch = await ctx.tx`update web_orders set status = ${str(it.status)}
+                     where business_id = ${ctx.biz} and order_no = ${no} and coalesce(status, '') <> ${str(it.status)} returning entered`;
         await ctx.tx`update web_order_lines l set status = ${str(it.status)} from web_orders o
                      where o.id = l.web_order_id and o.business_id = ${ctx.biz} and o.order_no = ${no} and coalesce(l.status, '') <> ${str(it.status)}`;
+        // fix-4 M20: an order already entered that the website cancels or refunds is flagged - its invoice still stands
+        if (ch.length && ch[0].entered && /cancel|refund|fail|trash/i.test(str(it.status))) await note(no, 'The website marked it ' + str(it.status) + ' after it was entered: cancel or return its invoice.');
+        forget(ctx, 'WEB_ORDERS');
+      }
+      if (ext && !known.ext) await ctx.tx`update web_order_lines set ext_line_id = ${ext} where id = ${known.id}`;
+      // fix-4 M19: the quantity or price changed on the website
+      if (Math.abs(num(it.qty) - known.qty) > 0.001 || Math.abs(num(it.line_total) - known.total) > 0.5) {
+        if (!known.entered) {
+          await ctx.tx`update web_order_lines set qty = ${num(it.qty)}, line_total = ${num(it.line_total)} where id = ${known.id}`;
+          await ctx.tx`update web_orders set order_total = ${num(it.total)} where business_id = ${ctx.biz} and order_no = ${no} and not entered`;
+        } else {
+          await note(no, sku + ': ' + known.qty + ' -> ' + num(it.qty) + ' on the website after it was entered.');
+        }
+        known.qty = num(it.qty); known.total = num(it.line_total);
         forget(ctx, 'WEB_ORDERS');
       }
       continue;
     }
-    seen[key] = true;
 
     let oid = orderIds[no];
     if (!oid) {
       const created = it.created == null ? '' : String(it.created);
-      const at = asDate(created);
+      let at = asDate(created);
+      if (at && at.getTime() > Date.now() + DAY_MS) at = new Date();   // fix-5 L9: a date in the future (2099) is taken as now
       const ins = await ctx.tx`
         insert into web_orders (business_id, order_no, order_date, order_date_text, status,
                                 customer_name, customer_phone, customer_address, payment, order_total)
@@ -146,10 +178,14 @@ export async function addWebLines(ctx, items) {
       }
       orderIds[no] = oid;
     }
-    await ctx.tx`
-      insert into web_order_lines (business_id, web_order_id, sku, product_name, qty, line_total, status, entered)
+    const nl = await ctx.tx`
+      insert into web_order_lines (business_id, web_order_id, sku, product_name, qty, line_total, status, entered, ext_line_id)
       values (${ctx.biz}, ${oid}, ${it.sku ? String(it.sku) : '(no sku)'}, ${str(it.product)},
-              ${num(it.qty)}, ${num(it.line_total)}, ${str(it.status)}, false)`;
+              ${num(it.qty)}, ${num(it.line_total)}, ${str(it.status)}, false, ${ext || null})
+      returning id`;
+    lines.push({ id: nl[0].id, sku, qty: num(it.qty), total: num(it.line_total), entered: false, ext, claimed: true });
+    // fix-4 H21: a line added on the website after the order was entered waits to be entered on its own
+    if (lines.some((l) => l.entered)) await note(no, sku + ' x ' + num(it.qty) + ' added on the website after it was entered.');
     added++;
   }
   forget(ctx, 'WEB_ORDERS');
@@ -178,6 +214,9 @@ async function pendingWebQty(ctx) {
  */
 export async function stockItems(ctx) {
   const pending = await pendingWebQty(ctx);
+  // fix-4 H20: units held for a pre-order are that customer's - the website does not offer them
+  let pre = {};
+  try { pre = await ctx.tx.savepoint(async () => (await import('./preorders.js')).heldMap(ctx)); } catch (_) { pre = {}; }
   const m = await matcher(ctx);
   const alias = {};
   for (const l of m.links) if (str(l.ext_sku)) (alias[l.product_id] = alias[l.product_id] || []).push(str(l.ext_sku));
@@ -192,7 +231,7 @@ export async function stockItems(ctx) {
     if (!sku) continue;
     let avail = Number(r.stock);
     if (isNaN(avail)) avail = 0;
-    const held = pending[sku.toLowerCase()] || 0;
+    const held = (pending[sku.toLowerCase()] || 0) + num(pre[sku.toLowerCase()] && pre[sku.toLowerCase()].held);
     const qty = Math.max(0, Math.round(avail - held));
     items.push({ sku, qty, name: str(r.name), price: num(r.sell_price), active: str(r.status).toLowerCase() !== 'discontinued' });
     for (const a of alias[r.id] || []) if (a.toLowerCase() !== sku.toLowerCase()) items.push({ sku: a, qty, name: str(r.name), price: num(r.sell_price), active: str(r.status).toLowerCase() !== 'discontinued', ours: sku });
@@ -243,10 +282,13 @@ async function webOrders(ctx) {
         entered,
         lines: [],
         orderId: wo[i][WO.order_id],
+        changed: !!wo[i][WO.changed], changeNote: str(wo[i][WO.change_note]),
       };
       order.push(no);
     }
-    if (entered) agg[no].entered = true;
+    // fix-4 H21: an order is entered when every line is; a line added after it waits
+    if (!entered) agg[no].entered = false;
+    if (entered) agg[no].partEntered = true;
     agg[no].lines.push({
       sku: str(wo[i][WO.sku]),
       product: str(wo[i][WO.product]),
@@ -254,9 +296,14 @@ async function webOrders(ctx) {
       lineTotal: num(wo[i][WO.line_total]),
       row: i + 2,
       lineId: wo[i][WO.line_id],
+      entered,
     });
   }
   const out = order.map((k) => agg[k]);
+  for (const o of out) {
+    if (o.entered) o.partEntered = false;
+    o.cancelledAfterEntry = (o.entered || o.partEntered) && /cancel|refund|fail|trash/i.test(o.status);   // fix-4 M20
+  }
   out.sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0));
   return out;
 }
@@ -310,7 +357,8 @@ export function webPayment(raw) {
  * once that succeeded.
  */
 export async function erpEnterWebOrder(ctx, orderNo) {
-  const no = str(orderNo);
+  const ask = orderNo && typeof orderNo === 'object' ? orderNo : {};
+  const no = str(ask.orderNo !== undefined ? ask.orderNo : orderNo);
   if (!no) throw new Error('Which order?');
   // the sale lock first, then read: two presses (or the timer and a person) at once cannot both enter it
   await lock(ctx, 'sale');
@@ -319,6 +367,11 @@ export async function erpEnterWebOrder(ctx, orderNo) {
   for (const o of await webOrders(ctx)) if (o.no === no) { order = o; break; }
   if (!order) throw new Error('Order ' + no + ' not found.');
   if (order.entered) throw new Error('Order ' + no + ' is already entered.');
+  // fix-4 H18: an order the website cancelled, refunded or failed is not a sale
+  if (/cancel|refund|fail|trash/i.test(order.status)) throw new Error('Order ' + no + ' is ' + order.status + ' on the website, so it is not entered.');
+  // fix-4 H21: only the lines not entered yet (lines added on the website after the first entry go on their own invoice)
+  const later = !!order.partEntered;
+  order = { ...order, lines: order.lines.filter((l) => !l.entered) };
 
   // the website's own line totals decide the discount
   const by = {};
@@ -341,6 +394,18 @@ export async function erpEnterWebOrder(ctx, orderNo) {
       '. Match them under Web orders \u2192 Match website products (or add the product), then enter the order.');
   }
   if (!items.length) throw new Error('Order ' + no + ' has no usable lines.');
+  // fix-4 H20: units held for a pre-order are asked about first
+  if (!ask.again && !ask.overHold) {
+    const held = await (await import('./preorders.js')).heldMap(ctx);
+    const short = [];
+    for (const it of items) {
+      const h = held[str(it.sku).toLowerCase()], rec = by[str(it.sku).toLowerCase()];
+      if (!h || !(h.held > 0) || !rec) continue;
+      const free = Math.max(0, num(rec.stock) - h.held);
+      if (it.qty > free) short.push(rec.name + ' (' + h.held + ' held for ' + h.nos.join(', ') + ', ' + free + ' free)');
+    }
+    if (short.length) throw new Error('CONFIRM: This order takes units held for a pre-order: ' + short.join('; ') + '. Enter it anyway?');
+  }
 
   let itemsTotal = 0;
   for (const l of order.lines) itemsTotal += num(l.lineTotal);
@@ -350,11 +415,11 @@ export async function erpEnterWebOrder(ctx, orderNo) {
     customer: { name: order.customer, phone: order.phone, address: order.address, source: 'Website order' },
     items,
     // delivery, and the cash handling fee on a COD order
-    deliveryCharge: Math.max(0, Math.round((num(order.orderTotal) - itemsTotal) * 100) / 100),
+    deliveryCharge: later ? 0 : Math.max(0, Math.round((num(order.orderTotal) - itemsTotal) * 100) / 100),   // the first invoice carried it
     // COD -> cash on delivery; paid online -> paid now; anything else is still owed
     payMode: /^cod$/i.test(pay.method) ? 'cod' : pay.status === 'Paid' ? 'full' : 'none',
     paymentMethod: /^cod$/i.test(pay.method) ? '' : pay.method,
-    note: 'WEB-' + no,
+    note: 'WEB-' + no + (later ? ' (lines added on the website after it was entered)' : ''),
   }, { webEntry: true, webOrderNo: no, agreed });
 
   await markEntered(ctx, order.lines.map((l) => l.lineId), res.invoiceId);

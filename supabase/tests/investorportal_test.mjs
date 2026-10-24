@@ -46,6 +46,13 @@ for (let i = 0; i < 5; i++) await call('POST', 'pub=investor', { t, code: '00000
 p = await call('POST', 'pub=investor', { t, code }, '10.0.0.9');
 check('five wrong codes lock it, even for the right code', !p.ok && /15 minutes/.test(p.error), p);
 await sql`update investor_links set locked_until = null, failed = 0 where business_id = ${B}`;
+// fix-3 M17: nine wrong codes and the right one at the same moment - the lock still holds
+const many = await Promise.all(Array.from({ length: 10 }, (_, i) => call('POST', 'pub=investor', { t, code: i === 9 ? code : '0000000' + i }, '10.0.1.' + i)));
+const lk = (await sql`select failed, locked_until from investor_links where business_id = ${B} and revoked_at is null`)[0];
+check('(M17) ten tries at once count as ten: the link is locked after them', lk.locked_until && new Date(lk.locked_until) > new Date() && many.filter((x) => x.ok).length <= 1, [lk, many.filter((x) => x.ok).length]);
+p = await call('POST', 'pub=investor', { t, code }, '10.0.0.10');
+check('(M17) ...so the right code waits 15 minutes too', !p.ok && /15 minutes/.test(p.error), p);
+await sql`update investor_links set locked_until = null, failed = 0 where business_id = ${B}`;
 
 // ---- a new link replaces the old; switching it off
 r = await owner('erpInvestorLink', [{ holder: H }]);

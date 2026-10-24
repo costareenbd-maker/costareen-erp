@@ -3068,3 +3068,54 @@ growing on GitHub and newly out - what we should look at."
   coreyhaines31/marketingskills for business work), opens each candidate, then skill_suggest_save (github.com links only).
 - The old "Trending on GitHub" list stays as "Browse all trending" (raw list); the suggestions are the curated view.
 - Tests: skills2_test (11).
+
+## The partner's odd-case report: 57 problems fixed (24 Oct 2026, tags fix-1 .. fix-5)
+The partner tested odd cases and wrote G:\odd-case-report-bn.html (22 high, 24 medium, 11 low, 6 rule questions). All
+fixed in 5 batches, each with its own test suite (the report's codes are in each check's name).
+- fix-1 stock and returns (143_lot_fixes.sql; fix1_test 31): a return comes back at the cost it left at, in a lot of its own
+  when a late bill raised the lot since (H1); the return note takes back the cost of the very units put back (H2);
+  "Received by mistake? Undo a receipt" on Count & adjust takes that receipt's own lot off and lowers the supplier bill (H3,
+  erpReceipts / erpUndoReceipt); a return note cannot be voided (H4); voiding removes only the invoice's own movements
+  (H5); the same shipment received twice is asked (M1); no price below zero (M2); a numbered product taken out asks which
+  serials, a count cannot lower it (M3); writing off / counting away pre-order units is asked (M4); a hand adjustment that
+  says "Return: INV" is not a customer return (M6); a back-dated sale takes the lots on the shelf that day first, and a unit
+  from a later lot counts as leaving the day it arrived (M7 - not refused: late data entry is normal).
+- fix-2 profit and month lock (144_kept_records.sql; fix2_test 30): a free (100%) line no longer turns the invoice's
+  profit, delivery and return value upside down (H6, the "gross" in 6 places); stopping / changing a fixed cost from a
+  closed month refused (H8); a cancelled sale's delivery charge is taken back in the cancel month (H9); commission does
+  not take the invoice discount twice (H10); a commission rule struck out in a month with commission paid ends with that
+  month (H11); no delivery charge below zero, no invoice below zero (H22); one cash-up at a time (M8); "Increase the due"
+  only takes back money really received (M9); months close in order (M10); opening balances / moving lines in closed
+  months refused (M11); reopening asks when profit was paid out, and is kept in capital_reopens (M12); a voided invoice is
+  kept whole in voided_invoices (M13).
+- fix-3 investors and shareholders (145_capital_history.sql; fix3_test 35 + resellers / investorportal checks): a share or
+  an investor's rate counts from a month (capital_holders.history; default this month, never a closed one) (H7, H13);
+  a closed month keeps each investor's return (capital_closed.returns) and its shares on re-close (H12); a funding counts
+  only sales after it and cannot be struck out from a closed month (H14); no change of holder kind once money moved (H15);
+  reseller Pay twice at once pays once (H16); a delivered reseller order whose goods come back loses its commission (M14);
+  commission payments belong to the person, not the name (M15); profit / returns paid up to what was earned (M16); the
+  investor page counts every code try before checking it (M17); a funding's "funded" stays the money put in, its earned is
+  the Capital screen's figure (M18).
+- fix-4 website orders (146_web_order_lines.sql; fix4_test 17): lines known by the website's line id (H17); cancelled /
+  refunded / failed orders cannot be entered (H18); stock goes out only in the same run the orders came in (H19);
+  pre-order units are not offered on the website, entering them is asked (H20); lines added after entry go on their own
+  invoice, the order says so (H21); quantity changes followed before entry (M19); an entered order cancelled on the
+  website is flagged (M20); no quantity below one (M21); WooCommerce read newest change first, 10 pages (M22); staff get the
+  low-profit warning on a line that moves 5-15% by product and day - the cost cannot be found by trying prices (M23); a save
+  naming some fields keeps the rest (M24).
+- fix-5 small checks (fix5_test 26): whole pieces unless the product is sold by kg / m / litre (L1); plain words for a
+  database error (L2); payments to the paisa, never past the due (L3, L5); no transfer bigger than the account (L4); no
+  withdrawal before the money came in (L6); no investor page for a shareholder (L7); partner deal "Paid" takes what is left
+  (L8); the website door refuses parts, negative and huge lines, a date in 2099 becomes now (L9); a broken plugin answer
+  makes no order (L10); prices must be numbers, opening stock not below 0, names up to 200 letters, an expense at least
+  0.01 (L11; an unknown expense category is still allowed - the AI and the holding costs use their own).
+- The 6 questions - the report's proposed rules adopted (safest for money): Q1 a shipment investor's loss stops at the money
+  they put in, and a funding % needs that money free in their capital; Q2 an investor is ended only when their money is out
+  and their shipments sold; Q3 a reopened month that turns to a loss after profit was paid shows "paid more than earned"
+  and comes off later profit; Q4 commission taken back by a return comes off later months; Q5 a loss month is shared
+  without a floor (as before); Q6 a stock count asks first when units are sold but still packing (it names them).
+- Old tests changed only where the owner's new rules changed the answer: a share change now says its month (a6, capital),
+  funding needs money in (holding), payouts within earnings (a3, fix2), a struck-out rule ends with its month (commission).
+- NOT done: L8 has no test of its own (partner companies are heavy to set up; the change is 4 lines). The plugin's own
+  order list still asks for 100 orders a week (its API has no paging we know of). Closed months closed BEFORE this keep
+  their investor returns only from the next month close on (filled in then).

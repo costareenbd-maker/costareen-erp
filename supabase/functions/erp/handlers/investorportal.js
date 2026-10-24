@@ -28,6 +28,10 @@ async function holder(ctx, no) {
 }
 
 export async function erpInvestorLink(ctx, payload) {
+  {
+    const h = (await ctx.tx`select kind, name from capital_holders where business_id = ${ctx.biz} and holder_no = ${String((payload && payload.holder) || '')}`)[0];
+    if (h && String(h.kind) !== 'investor') throw new Error(String(h.name) + ' is a shareholder: the investor page shows an investor\u2019s money and returns, so it is not made for a shareholder.');   // fix-5 L7
+  }
   if (ctx.s.role !== 'owner') throw new Error('Only the owner makes an investor’s page.');
   const h = await holder(ctx, str(payload && payload.holder));
   if (!h) throw new Error('Choose someone from Capital.');
@@ -87,13 +91,19 @@ export async function route(deps, R0, method, params, body, ip) {
   if (!l || l.revoked_at) throw new Error('This link is not known or has been switched off. Ask for a new one.');
   if (method === 'GET') return { business: str(l.biz), name: str(l.name).split(' ')[0], needCode: true };
   if (l.locked_until && new Date(l.locked_until) > new Date()) throw new Error('Too many wrong codes. Try again in 15 minutes.');
+  // fix-3 M17: every try is counted BEFORE the code is checked, one at a time - many tries at once cannot slip past the lock
+  const tryNo = (await deps.sql`update investor_links set failed = case when locked_until <= now() then 1 else failed + 1 end, locked_until = case when locked_until <= now() then null else locked_until end where id = ${l.id} and (locked_until is null or locked_until <= now()) returning failed`)[0];
+  if (!tryNo || num(tryNo.failed) > 5) {
+    await deps.sql`update investor_links set locked_until = greatest(coalesce(locked_until, now()), now() + interval '15 minutes') where id = ${l.id} and failed > 5`;
+    throw new Error('Too many wrong codes. Try again in 15 minutes.');
+  }
   const code = str(body && body.code).replace(/\D/g, '');
   if (code.length !== 8 || (await sha256hex(l.holder_no + ':' + code)) !== l.code_hash) {
-    await deps.sql`update investor_links set failed = failed + 1,
-                   locked_until = case when failed + 1 >= 5 then now() + interval '15 minutes' else null end where id = ${l.id}`;
+    await deps.sql`update investor_links set locked_until = case when failed >= 5 then now() + interval '15 minutes' else locked_until end where id = ${l.id}`;
     throw new Error('That code is not right.');
   }
-  await deps.sql`update investor_links set failed = 0, locked_until = null, last_seen = now() where id = ${l.id}`;
+  await deps.sql`update investor_links set failed = 0, last_seen = now() where id = ${l.id} and locked_until is null`;
+  await deps.sql`update investor_links set last_seen = now() where id = ${l.id}`;
   const rows = await R0.owners(deps.sql, [l.business_id]);
   if (!rows.length) throw new Error('This page is not available right now.');
   const out = await R0.asBusiness(deps, { ...rows[0], who: 'Investor page' }, 'pub:investor', (ctx) => statement(ctx, l.holder_no));

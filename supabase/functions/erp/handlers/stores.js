@@ -81,7 +81,7 @@ function wooLines(o) {
     customer: str([s.first_name || b.first_name, s.last_name || b.last_name].filter(Boolean).join(' ')),
     phone: str(s.phone || b.phone), address: [s.address_1 || b.address_1, s.address_2 || b.address_2, s.city || b.city].map(str).filter(Boolean).join(', '),
     payment: str(o.payment_method_title || o.payment_method), total: num(o.total) };
-  return (o.line_items || []).map((l) => ({ ...head, sku: str(l.sku), product: str(l.name), qty: num(l.quantity), line_total: num(l.total) + num(l.total_tax) }));
+  return (o.line_items || []).map((l) => ({ ...head, line_id: str(l.id), sku: str(l.sku), product: str(l.name), qty: num(l.quantity), line_total: num(l.total) + num(l.total_tax) }));
 }
 
 function shopifyLines(o) {
@@ -96,7 +96,7 @@ function shopifyLines(o) {
     total: num(o.total_price) };
   return (o.line_items || []).map((l) => {
     const off = (l.discount_allocations || []).reduce((a, d) => a + num(d.amount), 0) || num(l.total_discount);
-    return { ...head, sku: str(l.sku), product: str(l.name || [l.title, l.variant_title].filter(Boolean).join(' - ')), qty: num(l.quantity), line_total: num(l.price) * num(l.quantity) - off };
+    return { ...head, line_id: str(l.id), sku: str(l.sku), product: str(l.name || [l.title, l.variant_title].filter(Boolean).join(' - ')), qty: num(l.quantity), line_total: num(l.price) * num(l.quantity) - off };
   });
 }
 
@@ -106,8 +106,8 @@ export async function storePull(ctx) {
   const lines = [];
   let orders = 0;
   if (c.kind === 'woo') {
-    for (let p = 1; p <= 5; p++) {
-      const r = await call(ctx, c, 'GET', 'orders?per_page=100&page=' + p + '&orderby=date&order=asc&modified_after=' + encodeURIComponent(since));
+    for (let p = 1; p <= 10; p++) {   // fix-4 M22: newest change first - a busy week can only push out the oldest
+      const r = await call(ctx, c, 'GET', 'orders?per_page=100&page=' + p + '&orderby=modified&order=desc&modified_after=' + encodeURIComponent(since));
       const got = Array.isArray(r.json) ? r.json : [];
       orders += got.length;
       for (const o of got) if (o.status !== 'checkout-draft') lines.push(...wooLines(o));

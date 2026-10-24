@@ -58,7 +58,7 @@ check('off: nothing shared out', off.holding === 0, off);
 
 // ---- an investor in a shipment earns on the profit after holding
 await owner('erpHoldingSave', [{ on: true, categories: ['Warehouse'] }]);
-await owner('erpCapitalHolderSave', [{ kind: 'investor', name: 'Holder Inv', returnKind: 'lot', returnValue: 100 }]);
+await owner('erpCapitalHolderSave', [{ kind: 'investor', name: 'Holder Inv', returnKind: 'lot', returnValue: 100, invested: 5000 }]);   // fix-3 Q1: a funding is money put in
 const H = (await sql`select holder_no from capital_holders where business_id = ${B} and name = 'Holder Inv'`)[0].holder_no;
 r = await owner('erpLotFund', [{ holder: H, reference: 'HC-SHIP-B', pct: 50 }]);
 check('half of B funded', r.ok, r);

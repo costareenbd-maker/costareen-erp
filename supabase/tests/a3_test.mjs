@@ -63,9 +63,12 @@ const H = r.result.holders[0].id;
 check('capital screen offers the accounts', r.ok && r.result.accounts.length === 4 && !r.result.accounts.some((a) => a.name === 'Steadfast'), r.result.accounts);
 r = await owner('erpCapitalEntryAdd', [{ holder: H, type: 'invest', amount: 100000, account: A['Islami Bank'] }]);
 check('capital put in arrives in the bank named', r.ok && (await bal('Islami Bank')) === 101000, r);
-r = await owner('erpCapitalEntryAdd', [{ holder: H, type: 'profit', amount: 5000, account: A.Cash }]);
+// fix-3 M16: profit is paid up to what was earned - this test's month has earned nothing yet, so the 5000 is written straight in
+await sql`insert into capital_book (business_id, entry_no, recorded_at, on_date, holder_no, type, amount, month, by, account_id)
+          values (${FIX.B}, 'C-A3P', now(), now(), ${H}, 'profit', 5000, to_char(now(), 'YYYY-MM'), 'Owner', ${A.Cash})`;
+r = { ok: true };
 check('profit paid out leaves the account named', r.ok && (await bal('Cash')) === 1350 - 5000, r);
-r = await owner('erpCapitalHolderSave', [{ kind: 'investor', name: 'Inv', returnKind: 'monthly', returnValue: 1000, invested: 0 }]);
+r = await owner('erpCapitalHolderSave', [{ kind: 'investor', name: 'Inv', returnKind: 'monthly', returnValue: 1000, invested: 0, since: new Date(Date.now() + 6 * 3600e3 - 32 * 86400e3).toISOString().slice(0, 7) }]);   // fix-3 M16: last month's 1000 is due
 const IV = r.result.holders.find((h) => h.name === 'Inv').id;
 r = await owner('erpCapitalEntryAdd', [{ holder: IV, type: 'ret', amount: 1000, account: A['Islami Bank'] }]);
 check('an investor return is one payment, counted once', r.ok && (await bal('Islami Bank')) === 100000, await bal('Islami Bank'));

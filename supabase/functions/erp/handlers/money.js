@@ -3,7 +3,7 @@
 // drifted when screens re-derived these on their own.
 
 import { salesLog, paymentsTab, forget, asDate, str, SL, PAY } from '../lib/tabs.js';
-import { formatDate, num, round2 } from '../lib/time.js';
+import { formatDate, num, round2, money2 } from '../lib/time.js';
 import { roleAtLeast, powerOn, callAllowed } from '../allow.js';
 import { custKey } from '../lib/phone.js';
 import { accountForMethod } from './cash.js';
@@ -316,8 +316,8 @@ export async function erpSettleDue(ctx, payload) {
   if (!roleAtLeast(ctx.s.role, rule.minRole)) {
     throw new Error(rule.label + ' is not something your account can do. Ask the owner.');
   }
-  const amount = num(payload.amount);
-  if (!(amount > 0)) throw new Error('How much?');
+  const amount = money2(payload.amount);   // fix-5 L3/L5: whole paisa, never 0.004
+  if (!(amount >= 0.01)) throw new Error('How much? (at least 0.01)');
   const note = str(payload.note);
   if (!rule.money && !note) {
     throw new Error(rule.label + ' needs a note saying why, so the books can be explained later.');
@@ -338,7 +338,7 @@ export async function erpSettleDue(ctx, payload) {
   let owed = 0;
   for (const t of targets) owed += t.due;
   owed = round2(owed);
-  if (amount > owed + 0.5) {
+  if (amount > owed + 0.005) {   // fix-5 L3: not even 0.40 more than is owed
     throw new Error('That is more than is owed. The balance is ' + owed.toFixed(0) + '.');
   }
 
@@ -367,6 +367,12 @@ async function undoPayment(ctx, payload, amount, note) {
   const rows = await salesLog(ctx);
   if (!rows.length) throw new Error('This sheet has no SALES_LOG.');
   const paid = await paidByOrder(ctx);
+  // fix-2 M9: only money really received can be taken back - goods returned or a charge written off are credits, not payments
+  const real = {};
+  for (const r of await paymentsTab(ctx)) {
+    const oid = str(r[PAY.order_id]);
+    if (oid && !/^(returned|adjusted)$/i.test(str(r[PAY.method]))) real[oid] = (real[oid] || 0) + num(r[PAY.amount]);
+  }
   const want = payload.orderId ? String(payload.orderId).trim() : '';
   const key = custKey(String(payload.phone || ''), String(payload.name || ''));
   const seen = {}, mine = [];
@@ -376,8 +382,8 @@ async function undoPayment(ctx, payload, amount, note) {
     seen[oid] = true;
     if (want) { if (oid !== want) continue; }
     else if (custKey(String(r[SL.customer_contact] || ''), String(r[SL.customer_name] || '')) !== key) continue;
-    const got = paid[oid] || 0;
-    if (got <= 0) continue;
+    const got = round2(Math.min(paid[oid] || 0, real[oid] || 0));
+    if (got <= 0.004) continue;
     mine.push({ id: oid, customer: str(r[SL.customer_name]), when: asDate(r[SL.timestamp]), paid: got });
   }
   if (!mine.length) {

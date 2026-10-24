@@ -50,7 +50,10 @@ export async function commissionFor(ctx, months) {
   const lines = await ctx.tx`
     select coalesce(o.seller_id, o.created_by, i.seller_id, i.created_by) as seller, to_char(public.dhaka_date(i.created_at), 'YYYY-MM') as m,
            l.qty, l.line_total, coalesce(l.unit_cost, 0) as unit_cost, coalesce(p.sku, l.sku) as sku, p.category, p.brand,
-           coalesce(i.invoice_discount, 0) as inv_disc,
+           -- fix-2 H10: a line's total already has its share of the invoice discount; only a discount left outside the lines
+           -- (invoices brought over from the sheet) is still to be spread
+           greatest(0, coalesce(i.discount, 0) - greatest(0, (select coalesce(sum(x.qty * x.unit_price), 0) from invoice_lines x where x.invoice_id = i.id and x.qty > 0 and x.line_total >= 0)
+                                                          - (select coalesce(sum(x.line_total), 0) from invoice_lines x where x.invoice_id = i.id and x.line_total > 0))) as inv_disc,
            (select sum(x.line_total) from invoice_lines x where x.invoice_id = i.id and x.line_total > 0) as inv_sum
     from invoice_lines l join invoices i on i.id = l.invoice_id
     left join products p on p.id = l.product_id
@@ -89,19 +92,37 @@ export async function erpCommission(ctx, payload) {
   const owner = actRole(ctx.s) === 'owner';
   const now = formatDate(ctx.now, 'yyyy-MM');
   const month = isMonth(payload && payload.month) ? payload.month : now;
-  const c = await commissionFor(ctx, [month]);
-  const paid = {};
-  for (const e of await ctx.tx`select description, amount from expenses where business_id = ${ctx.biz} and month = ${month}
+  // Q4 (owner's rule, fix-3): a seller's balance runs on from month to month - commission taken back by a return in a
+  // later month comes off what they earn next; what was left unpaid stays owed
+  const rs0 = await rules(ctx, true);
+  let first = month;
+  for (const r of rs0) if (str(r.from_m) < first) first = str(r.from_m);
+  const months = [];
+  for (let m = month, g = 0; m >= first && g < 36; g++) { months.unshift(m); const y = +m.slice(0, 4), mo = +m.slice(5, 7) - 1; m = mo < 1 ? (y - 1) + '-12' : y + '-' + String(mo).padStart(2, '0'); }
+  const c = await commissionFor(ctx, months);
+  // fix-3 M15: a payment belongs to the person (item_no 'cm:<id>'); old payments without it are matched by name
+  const byName = {};
+  for (const [id, x] of Object.entries(c.bySeller)) byName[x.name] = id;
+  const paid = {};   // id -> month -> amount
+  for (const e of await ctx.tx`select description, amount, month, item_no from expenses where business_id = ${ctx.biz} and month <= ${month}
                                and category = 'Commission' and description like 'Commission paid to %' and coalesce(btrim(voided), '') = ''`) {
-    const who = str(e.description).replace(/^Commission paid to /, '').replace(/ for \d{4}-\d{2}.*$/, '');
-    paid[who] = (paid[who] || 0) + num(e.amount);
+    const tag = /^cm:(.+)$/.exec(str(e.item_no));
+    const id = tag ? tag[1] : byName[str(e.description).replace(/^Commission paid to /, '').replace(/ for \d{4}-\d{2}.*$/, '')];
+    if (!id) continue;
+    const pm = paid[id] = paid[id] || {};
+    pm[str(e.month)] = (pm[str(e.month)] || 0) + num(e.amount);
   }
   const me = String(ctx.s.userId);
   const canProfit = owner || powerOn(ctx.s, 'costs');   // sellers never see cost or profit
   const sellers = Object.entries(c.bySeller).filter(([id]) => owner || id === me).map(([id, s]) => {
     const x = s.months[month] || { sales: 0, profit: 0, due: 0 };
-    return { id, name: s.name, sales: R(x.sales), profit: canProfit ? R(x.profit) : undefined, earned: R(x.due), paid: R(paid[s.name] || 0), left: R(x.due - (paid[s.name] || 0)) };
-  }).sort((a, b) => b.earned - a.earned);
+    const pm = paid[id] || {};
+    let carried = 0;
+    for (const m of months) if (m < month) carried += num((s.months[m] || {}).due) - num(pm[m]);
+    const paidNow = num(pm[month]);
+    return { id, name: s.name, sales: R(x.sales), profit: canProfit ? R(x.profit) : undefined, earned: R(x.due), paid: R(paidNow),
+             carried: R(carried), left: R(carried + x.due - paidNow) };
+  }).filter((x) => (c.bySeller[x.id].months[month] !== undefined) || x.paid || x.carried).sort((a, b) => b.earned - a.earned);
   const rs = (await rules(ctx)).map((r) => ({ id: r.id, seller: r.seller ? String(r.seller) : '', sellerName: r.seller ? str(r.seller_name) || 'Someone' : 'Everyone',
     scope: r.scope, match: str(r.match), basis: r.basis, pct: num(r.pct), note: str(r.note), since: formatDate(r.at, 'd MMM yyyy') }));
   let people = [];
@@ -141,7 +162,14 @@ export async function erpCommissionRuleSave(ctx, payload) {
 
 export async function erpCommissionRuleVoid(ctx, payload) {
   if (actRole(ctx.s) !== 'owner') throw new Error('Only the owner sets commission.');
-  const r = await ctx.tx`update commission_rules set voided_at = now() where business_id = ${ctx.biz} and id = ${str(payload && payload.id)} and voided_at is null returning id`;
+  // fix-2 H11: commission already paid this month stays a cost of this month - the rule then ends with the month
+  const nowM = formatDate(ctx.now, 'yyyy-MM');
+  const paidNow = (await ctx.tx`select 1 from expenses where business_id = ${ctx.biz} and month = ${nowM} and category = 'Commission'
+                                and description like 'Commission paid to %' and coalesce(btrim(voided), '') = '' limit 1`).length > 0;
+  const y = Number(nowM.slice(0, 4)), mo = Number(nowM.slice(5, 7));
+  const nextM = (mo === 12 ? y + 1 : y) + '-' + String(mo === 12 ? 1 : mo + 1).padStart(2, '0');
+  const endAt = paidNow ? nextM + '-01T00:00:00+06:00' : null;
+  const r = await ctx.tx`update commission_rules set voided_at = coalesce(${endAt}::timestamptz, now()) where business_id = ${ctx.biz} and id = ${str(payload && payload.id)} and voided_at is null returning id`;
   if (!r.length) throw new Error('That rule is not there.');
   Object.keys(ctx.memo).forEach((k) => { if (k.indexOf('commission:') === 0 || k.indexOf('pnl:') === 0) delete ctx.memo[k]; });
   return erpCommission(ctx, { month: payload && payload.month });
@@ -151,15 +179,19 @@ export async function erpCommissionRuleVoid(ctx, payload) {
 export async function erpCommissionPay(ctx, payload) {
   if (actRole(ctx.s) !== 'owner') throw new Error('Only the owner pays commission.');
   payload = payload || {};
+  await ctx.tx`select pg_advisory_xact_lock(hashtext(${'commpay:' + ctx.biz}))`;
   const month = isMonth(payload.month) ? payload.month : formatDate(ctx.now, 'yyyy-MM');
   const amount = round2(num(payload.amount));
   if (!(amount > 0)) throw new Error('How much is paid?');
   const c = await erpCommission(ctx, { month });
   const s = c.sellers.find((x) => x.id === str(payload.seller));
   if (!s) throw new Error('That person earned no commission in ' + month + '.');
-  if (amount > s.left + 0.5) throw new Error(s.name + ' has ' + s.left + ' left to be paid for ' + month + '.');
+  if (amount > s.left + 0.5) throw new Error(s.name + ' has ' + Math.max(0, s.left) + ' left to be paid' + (s.carried < -0.5 ? ' (' + Math.round(-s.carried) + ' taken back by returns comes off first)' : '') + ' for ' + month + '.');
   const { erpExpenseAdd } = await import('./expenses.js');
-  await erpExpenseAdd(ctx, { amount, description: 'Commission paid to ' + s.name + ' for ' + month, category: 'Commission', month, account: str(payload.account) });
+  const desc = 'Commission paid to ' + s.name + ' for ' + month;
+  await erpExpenseAdd(ctx, { amount, description: desc, category: 'Commission', month, account: str(payload.account) });
+  await ctx.tx`update expenses set item_no = ${'cm:' + s.id} where id = (select id from expenses where business_id = ${ctx.biz} and category = 'Commission'
+               and description = ${desc} and item_no is null and coalesce(btrim(voided), '') = '' order by recorded_at desc limit 1)`;   // fix-3 M15
   return erpCommission(ctx, { month });
 }
 
@@ -185,7 +217,10 @@ export async function erpCommissionSales(ctx, payload) {
   const rows = await ctx.tx`
     select coalesce(o.seller_id, o.created_by, i.seller_id, i.created_by) as seller, i.invoice_no, i.customer_name, i.created_at,
            l.qty, l.line_total, coalesce(l.unit_cost, 0) as unit_cost, coalesce(p.sku, l.sku) as sku, p.category, p.brand,
-           coalesce(i.invoice_discount, 0) as inv_disc,
+           -- fix-2 H10: a line's total already has its share of the invoice discount; only a discount left outside the lines
+           -- (invoices brought over from the sheet) is still to be spread
+           greatest(0, coalesce(i.discount, 0) - greatest(0, (select coalesce(sum(x.qty * x.unit_price), 0) from invoice_lines x where x.invoice_id = i.id and x.qty > 0 and x.line_total >= 0)
+                                                          - (select coalesce(sum(x.line_total), 0) from invoice_lines x where x.invoice_id = i.id and x.line_total > 0))) as inv_disc,
            (select sum(x.line_total) from invoice_lines x where x.invoice_id = i.id and x.line_total > 0) as inv_sum
     from invoice_lines l join invoices i on i.id = l.invoice_id
     left join products p on p.id = l.product_id

@@ -393,7 +393,11 @@ export async function erpPartnerDeal(ctx, payload) {
       await ctx.tx`select settle_partner_deal(${id})`;
       if (str(deal.invoice_no) && deal.from_business_id === ctx.biz) {
         try {
-          await ctx.tx.savepoint(() => erpRecordPayment(ctx, { orderId: str(deal.invoice_no), amount: num(deal.amount), method: str(payload.method) || 'Cash' }));
+          // fix-5 L8: part may already be paid on the invoice itself - "Paid" takes in what is left
+          const { outstanding } = await import('./money.js');
+          const o = await outstanding(ctx, str(deal.invoice_no));
+          const left = o ? Math.round(num(o.owed) * 100) / 100 : num(deal.amount);
+          if (left > 0.004) await ctx.tx.savepoint(() => erpRecordPayment(ctx, { orderId: str(deal.invoice_no), amount: left, method: str(payload.method) || 'Cash' }));
         } catch (e) {
           if (!/already settled/.test(String(e && e.message))) throw e;      // paid on the invoice itself beforehand: fine
         }

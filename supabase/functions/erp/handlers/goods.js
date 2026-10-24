@@ -158,6 +158,37 @@ export async function erpStockCount(ctx, payload) {
   const now = new Date(), stamp = formatDate(now, 'd MMM yyyy');
   const changed = [];
   let same = 0, up = 0, down = 0, opening = 0;
+  // fix-1: before anything is written - numbered products (M3) and pre-order holds (M4)
+  {
+    const { heldMap } = await import('./preorders.js');
+    const held = await heldMap(ctx), short = [], numbered = [];
+    const ser = {};
+    for (const r of await ctx.tx`select p.id, count(sr.id)::int as n from products p left join serials sr on sr.product_id = p.id and sr.status = 'in_stock'
+                                 where p.business_id = ${ctx.biz} and p.serialised group by p.id`) ser[r.id] = r.n;
+    for (const l of lines) {
+      const p = bySku[str(l.sku).toLowerCase()]; if (!p) continue;
+      const counted = Number(l.counted);
+      if (counted >= num(p.stock)) continue;
+      if (ser[p.id] > 0 && counted < ser[p.id]) numbered.push(str(p.name));
+      const h = held[str(p.sku).toLowerCase()];
+      if (h && h.held > 0 && counted < h.held) short.push(str(p.name) + ' (' + h.held + ' held for ' + h.nos.join(', ') + ')');
+    }
+    if (numbered.length) throw new Error(numbered.slice(0, 5).join(', ') + ' ' + (numbered.length === 1 ? 'has' : 'have') + ' numbered units: write the missing ones off under Count & adjust (Take out), choosing their serial numbers, then count again.');
+    if (short.length && !(payload && payload.overHold)) throw new Error('CONFIRM: This count leaves pre-orders short: ' + short.slice(0, 5).join('; ') + '. Save it anyway?');
+    // Q6 (owner's rule, fix-5, M5): units sold but not sent yet (an order still packing) are off the books already - counted
+    // on the shelf they would come back. The count asks first, naming them.
+    if (!(payload && (payload.again || payload.overHold))) {
+      const unsent = {};
+      for (const r of await ctx.tx`select lower(btrim(l.sku)) as k, sum(l.qty) as q from invoice_lines l join invoices i on i.id = l.invoice_id
+                                   where i.business_id = ${ctx.biz} and i.voided_at is null and i.cancelled_at is null and i.invoice_no not like 'RTN-%'
+                                     and coalesce(i.delivery_status, '') ~* '^(processing|packed|packing|pending|ready)'
+                                     and coalesce(i.source, '') !~* '(walk|pickup|pick-up|counter)' and i.created_at > now() - interval '30 days'
+                                     and l.qty > 0 group by 1`) unsent[String(r.k)] = num(r.q);
+      const named = [];
+      for (const l of lines) { const p = bySku[str(l.sku).toLowerCase()]; if (p && unsent[str(p.sku).toLowerCase()] > 0) named.push(str(p.name) + ' (' + unsent[str(p.sku).toLowerCase()] + ')'); }
+      if (named.length) throw new Error('CONFIRM: Sold but not sent yet (orders still packing): ' + named.slice(0, 6).join(', ') + '. They are off the books already: do not count them (or count after they leave). Save this count?');
+    }
+  }
   for (const l of lines) {
     const p = bySku[str(l.sku).toLowerCase()];
     if (!p) throw new Error('Product not found: ' + str(l.sku));

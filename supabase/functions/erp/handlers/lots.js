@@ -73,7 +73,7 @@ async function drawRows(ctx, refFilter) {
                       join invoices i on i.id = il.invoice_id
                       where i.business_id = ${ctx.biz} and i.invoice_no = btrim(substr(m.reference, 9)) and il.product_id = d.product_id and il.qty > 0
                       order by il.line_no limit 1)
-           end as price, m.kind::text as kind
+           end as price, m.kind::text as kind, d.at
     from lot_draws d join stock_lots l on l.id = d.lot_id join stock_movements m on m.id = d.movement_id
     where d.business_id = ${ctx.biz} ${refFilter ? ctx.tx`and l.reference = ${refFilter}` : ctx.tx``}`;
 }
@@ -191,7 +191,7 @@ export async function erpLots(ctx, payload) {
 
 async function fundingRows(ctx, ref) {
   return ctx.tx`
-    select f.id, f.holder_no, f.reference, f.pct, f.note, f.at, h.name, h.return_value, h.private
+    select f.id, f.holder_no, f.reference, f.pct, f.amount, f.note, f.at, h.name, h.return_value, h.private
     from lot_funding f left join capital_holders h on h.business_id = f.business_id and h.holder_no = f.holder_no
     where f.business_id = ${ctx.biz} and f.voided_at is null ${ref ? ctx.tx`and f.reference = ${ref}` : ctx.tx``}
     order by f.at`;
@@ -203,20 +203,26 @@ export async function erpLotFunding(ctx, payload) {
   const owner = ctx.s.role === 'owner';
   const rows = await fundingRows(ctx, ref);
   const out = [];
+  // fix-3 M18: what a funding earned is the very figure the Capital screen and the investor's page count (returns.js)
+  const { investorReturns } = await import('./returns.js');
+  const ret = await investorReturns(ctx);
   for (const f of rows) {
     if (f.private && !owner) continue;
     const ds = await drawRows(ctx, str(f.reference));
     let sold = 0, revenue = 0, cost = 0, unitsIn = 0, landed = 0;
-    for (const d of ds) if (d.kind === 'SALE' || d.kind === 'RETURN') { sold += num(d.qty); revenue += num(d.qty) * num(d.price); cost += num(d.qty) * num(d.unit_cost); }
+    const since = new Date(f.at).getTime();
+    for (const d of ds) if ((d.kind === 'SALE' || d.kind === 'RETURN') && !(d.at && new Date(d.at).getTime() < since)) { sold += num(d.qty); revenue += num(d.qty) * num(d.price); cost += num(d.qty) * num(d.unit_cost); }
     for (const l of await ctx.tx`select qty_in, unit_cost from stock_lots where business_id = ${ctx.biz} and reference = ${str(f.reference)} and source = 'receive'`) {
       unitsIn += num(l.qty_in); landed += num(l.qty_in) * num(l.unit_cost);
     }
     const p = num(f.pct) / 100;
     const held = sumM((await holdingFor(ctx, await lotMonths(ctx))).byRef[str(f.reference)]);
+    const late = num((await ctx.tx`select coalesce(sum(sold_part), 0) as s from late_costs where business_id = ${ctx.biz} and reference = ${str(f.reference)} and month >= to_char(public.dhaka_date(${f.at}::timestamptz), 'YYYY-MM')`)[0].s);
+    const earnedM = ret.byFunding[f.id] || {};
     out.push({ id: f.id, holder: str(f.holder_no), name: str(f.name) || str(f.holder_no), reference: str(f.reference), pct: num(f.pct), profitShare: num(f.return_value),
-               funded: R(landed * p), unitsFunded: Math.round(unitsIn * p * 100) / 100, soldUnits: Math.round(sold * p * 100) / 100,
-               recovered: R(cost * p), profit: R((revenue - cost) * p), holding: R(held * p),
-               earned: R((revenue - cost - held) * p * num(f.return_value) / 100),
+               funded: R(num(f.amount) > 0 ? num(f.amount) : landed * p), unitsFunded: Math.round(unitsIn * p * 100) / 100, soldUnits: Math.round(sold * p * 100) / 100,
+               recovered: R(cost * p), profit: R((revenue - cost - late) * p), holding: R(held * p),
+               earned: R(Object.values(earnedM).reduce((t, v) => t + num(v), 0)),
                since: formatDate(f.at, 'd MMM yyyy'), note: str(f.note) });
   }
   return { currency: 'BDT', funding: out };
@@ -238,8 +244,24 @@ export async function erpLotFund(ctx, payload) {
   await ctx.tx`select pg_advisory_xact_lock(hashtext(${'lotfund:' + ctx.biz}))`;
   const used = num((await ctx.tx`select coalesce(sum(pct), 0) as s from lot_funding where business_id = ${ctx.biz} and reference = ${ref} and voided_at is null`)[0].s);
   if (used + pct > 100.0001) throw new Error('That would fund ' + (used + pct) + '% of ' + ref + '. ' + used + '% is already funded, so at most ' + (100 - used) + '% is free.');
-  await ctx.tx`insert into lot_funding (business_id, holder_no, reference, pct, note, by)
-               values (${ctx.biz}, ${holder}, ${ref}, ${pct}, ${str(payload.note).slice(0, 200) || null}, ${str(ctx.s.name) || 'Owner'})`;
+  // Q1 (owner's rule, fix-3): a share of a shipment is money put in - what it cost when received x the share, out of the
+  // investor's money in the business that is not already in another shipment still on the shelf
+  const cost0 = num((await ctx.tx`select coalesce(sum(l.qty_in * coalesce(nullif(m.unit_price, 0), l.unit_cost, 0)), 0) as v from stock_lots l
+                                  left join stock_movements m on m.id = l.movement_id
+                                  where l.business_id = ${ctx.biz} and l.reference = ${ref} and l.source = 'receive'`)[0].v);
+  const amount = round2(cost0 * pct / 100);
+  const capital = num((await ctx.tx`select coalesce(sum(case when type = 'invest' then amount when type = 'withdraw' then -amount else 0 end), 0) as c
+                                    from capital_book where business_id = ${ctx.biz} and holder_no = ${holder} and coalesce(btrim(voided), '') = ''`)[0].c);
+  const tied = num((await ctx.tx`select coalesce(sum(f.amount * coalesce((select sum(l.qty_left) / nullif(sum(l.qty_in), 0) from stock_lots l
+                                   where l.business_id = f.business_id and l.reference = f.reference and l.source = 'receive'), 0)), 0) as t
+                                 from lot_funding f where f.business_id = ${ctx.biz} and f.holder_no = ${holder} and f.voided_at is null`)[0].t);
+  if (amount > capital - tied + 0.5) {
+    throw new Error(pct + '% of ' + ref + ' is ' + Math.round(amount) + ' of money. ' + str(h.name) + ' has ' + Math.round(capital) + ' in the business' +
+                    (tied > 0.5 ? ', ' + Math.round(tied) + ' of it in shipments still on the shelf' : '') + ', so ' + Math.max(0, Math.round(capital - tied)) +
+                    ' is free. Record more money put in first, or fund a smaller share.');
+  }
+  await ctx.tx`insert into lot_funding (business_id, holder_no, reference, pct, note, by, amount)
+               values (${ctx.biz}, ${holder}, ${ref}, ${pct}, ${str(payload.note).slice(0, 200) || null}, ${str(ctx.s.name) || 'Owner'}, ${amount})`;
   delete ctx.memo.invReturns;
   return erpLotFunding(ctx, { reference: ref });
 }
@@ -249,6 +271,8 @@ export async function erpLotFundVoid(ctx, payload) {
   if (ctx.s.role !== 'owner') throw new Error('Only the owner changes who funded a shipment.');
   const id = str(payload && payload.id), why = str(payload && payload.reason);
   if (!why) throw new Error('Say why it is struck out.');
+  const f0 = (await ctx.tx`select at from lot_funding where business_id = ${ctx.biz} and id = ${id} and voided_at is null`)[0];
+  if (f0) await assertOpen(ctx, new Date(f0.at), 'a funding from there cannot be struck out (its returns are in the closed books)');   // fix-3 H14
   const r = await ctx.tx`update lot_funding set voided_at = now(), voided_why = ${why.slice(0, 200)}
                          where business_id = ${ctx.biz} and id = ${id} and voided_at is null returning reference`;
   if (!r.length) throw new Error('That funding is not there.');

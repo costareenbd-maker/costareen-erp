@@ -96,7 +96,7 @@ r = await sales('erpSetProductStatus', [PLA, 'Active']);
 check('sales cannot change status', !r.ok && r.error === 'Your account does not have access to that.', r);
 
 // ============================================================ receive shipment
-const recv = (pl) => mgr('erpReceiveShipment', [{ supplier: 'Sunlu Direct', reference: 'INV-77', notes: '', mode: 'none',
+const recv = (pl) => mgr('erpReceiveShipment', [{ supplier: 'Sunlu Direct', reference: 'INV-77', notes: '', mode: 'none', again: true,   // fix-1 M1: the same bill reused on purpose here
   totalRmb: 0, rate: 0, totalBdt: 0, saveRate: true, shippingBdt: 0, shipNote: '', poId: '', ...pl }]);
 r = await recv({ lines: [] });
 check('no lines', !r.ok && r.error === 'Add at least one product with a quantity.', r);

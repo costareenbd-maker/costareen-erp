@@ -15,13 +15,23 @@ function nextMonth(m) {
   if (mo > 12) { mo = 1; y++; }
   return y + '-' + (mo < 10 ? '0' + mo : '' + mo);
 }
+/** fix-3 H7/H13: a holder's terms in one month - the latest change made from that month or before (history), else the columns. */
+export function termsAt(h, m) {
+  const base = { pct: num(h.share_pct ?? h.pct), kind: str(h.return_kind ?? h.returnKind), value: num(h.return_value ?? h.returnValue) };
+  const hist = Array.isArray(h.history) ? h.history.slice().sort((a, b) => (a.from < b.from ? -1 : a.from > b.from ? 1 : 0)) : [];
+  if (!hist.length) return base;
+  let t = hist[0];
+  for (const e of hist) if (e.from <= m) t = e;
+  return { pct: e2n(t.pct, base.pct), kind: base.kind, value: e2n(t.value, base.value) };
+}
+const e2n = (v, d) => (v === undefined || v === null || v === '' ? d : num(v));
 const daysIn = (m) => new Date(Date.UTC(Number(m.slice(0, 4)), Number(m.slice(5, 7)), 0)).getUTCDate();
 
 /** { byHolder: { H1: { '2026-09': 5000 } }, byMonth: { '2026-09': 6000 } } - the running month up to today. */
 export async function investorReturns(ctx) {
   if (ctx.memo.invReturns) return ctx.memo.invReturns;
-  const out = { byHolder: {}, byMonth: {} };
-  const hs = await ctx.tx`select holder_no, return_kind, return_value, since_month, ended_month from capital_holders
+  const out = { byHolder: {}, byMonth: {}, byFunding: {} };
+  const hs = await ctx.tx`select holder_no, return_kind, return_value, since_month, ended_month, history from capital_holders
                           where business_id = ${ctx.biz} and kind = 'investor'`;
   if (!hs.length) return (ctx.memo.invReturns = out);
   const moves = {};
@@ -33,14 +43,15 @@ export async function investorReturns(ctx) {
   }
   const nowMonth = monthStr(ctx.now), today = Number(formatDate(ctx.now, 'd'));
   for (const h of hs) {
-    const id = str(h.holder_no), kind = str(h.return_kind), val = num(h.return_value), since = str(h.since_month), ended = str(h.ended_month);
-    if (!since || !(val > 0) || (kind !== 'monthly' && kind !== 'percent')) continue;
+    const id = str(h.holder_no), kind = str(h.return_kind), since = str(h.since_month), ended = str(h.ended_month);
+    if (!since || (kind !== 'monthly' && kind !== 'percent')) continue;
     const ev = (moves[id] || []).sort((a, b) => (a.day < b.day ? -1 : a.day > b.day ? 1 : 0));
     const last = ended && ended < nowMonth ? ended : nowMonth;
     const mine = out.byHolder[id] = {};
     let at = 0, bal = 0;
     for (let m = since, guard = 0; m <= last && guard++ < 240; m = nextMonth(m)) {
       const D = daysIn(m), upto = m === nowMonth ? Math.min(today, D) : D;
+      const val = termsAt(h, m).value;   // fix-3: that month's terms
       let due = 0;
       if (kind === 'monthly') due = val * upto / D;
       else {
@@ -71,32 +82,47 @@ export async function investorReturns(ctx) {
                          order by il.line_no limit 1) end, 0) - d.unit_cost)) as profit
       from lot_funding f
       join stock_lots l on l.business_id = f.business_id and l.reference = f.reference and l.source = 'receive'
-      join lot_draws d on d.lot_id = l.id and d.unit_cost is not null
+      join lot_draws d on (d.lot_id = l.id or d.of_draw in (select o.id from lot_draws o where o.lot_id = l.id)) and d.unit_cost is not null   -- a return into a lot of its own (143) still counts
       join stock_movements mv on mv.id = d.movement_id and mv.kind::text in ('SALE', 'RETURN')
-      where f.business_id = ${ctx.biz} and f.voided_at is null
+      where f.business_id = ${ctx.biz} and f.voided_at is null and d.at >= f.at and (d.of_draw is null or (select o.at from lot_draws o where o.id = d.of_draw) >= f.at)   -- fix-3 H14: only what sold after the funding
       group by 1, 2`;
     // per funding and month: the shipment's sales profit less what holding its stock cost that month (F3)
-    const funds = await ctx.tx`select id, holder_no, reference, pct from lot_funding where business_id = ${ctx.biz} and voided_at is null`;
+    const funds = await ctx.tx`select id, holder_no, reference, pct, amount, to_char(public.dhaka_date(at), 'YYYY-MM') as from_m from lot_funding where business_id = ${ctx.biz} and voided_at is null`;
     const prof = {};
     for (const r of rows) (prof[r.fid] = prof[r.fid] || {})[str(r.m)] = num(r.profit);
     // a late bill's part for units already sold lowers that month's profit on the shipment (111)
     const late = {};
     for (const r of await ctx.tx`select reference, month, sum(sold_part) as s from late_costs where business_id = ${ctx.biz} group by 1, 2`) (late[str(r.reference)] = late[str(r.reference)] || {})[str(r.month)] = num(r.s);
-    for (const f of funds) { const lt = late[str(f.reference)] || {}; for (const m of Object.keys(lt)) { const p = prof[f.id] = prof[f.id] || {}; p[m] = num(p[m]) - lt[m]; } }
+    for (const f of funds) { const lt = late[str(f.reference)] || {}; for (const m of Object.keys(lt)) { if (m < str(f.from_m)) continue; const p = prof[f.id] = prof[f.id] || {}; p[m] = num(p[m]) - lt[m]; } }
     const hold = funds.length ? await holdingFor(ctx, await lotMonths(ctx)) : { byRef: {} };
     for (const f of funds) {
       const id = str(f.holder_no), t = terms[id];
       if (!t) continue;
       const p = prof[f.id] || {}, h = hold.byRef[str(f.reference)] || {};
-      for (const m of Array.from(new Set(Object.keys(p).concat(Object.keys(h))))) {
-        if ((t.ended && m > t.ended) || m > nowMonth) continue;
-        const due = Math.round((num(p[m]) - num(h[m])) * num(f.pct) / 100 * t.val / 100);
+      // Q1 (owner's rule, fix-3): an investor's loss on a shipment stops at the money they put into it
+      const cap = num(f.amount) > 0 ? num(f.amount) : Infinity;
+      let run = 0;
+      for (const m of Array.from(new Set(Object.keys(p).concat(Object.keys(h)))).sort()) {
+        if ((t.ended && m > t.ended) || m > nowMonth || m < str(f.from_m)) continue;
+        let due = Math.round((num(p[m]) - num(h[m])) * num(f.pct) / 100 * t.val / 100);
+        if (run + due < -cap) due = Math.round(-cap - run);
+        run += due;
         if (!due) continue;
+        const fm = out.byFunding[f.id] = out.byFunding[f.id] || {};
+        fm[m] = (fm[m] || 0) + due;
         const mine = out.byHolder[id] = out.byHolder[id] || {};
         mine[m] = (mine[m] || 0) + due;
         out.byMonth[m] = (out.byMonth[m] || 0) + due;
       }
     }
+  }
+  // fix-3 H7/H14: a closed month keeps what each investor earned in it when it was closed
+  for (const c of await ctx.tx`select month, returns from capital_closed where business_id = ${ctx.biz} and returns is not null`) {
+    const m = str(c.month), snap = c.returns || {};
+    let tot = 0;
+    for (const id of Object.keys(out.byHolder)) if (out.byHolder[id][m] !== undefined && snap[id] === undefined) delete out.byHolder[id][m];
+    for (const id of Object.keys(snap)) { (out.byHolder[id] = out.byHolder[id] || {})[m] = num(snap[id]); tot += num(snap[id]); }
+    out.byMonth[m] = tot;
   }
   return (ctx.memo.invReturns = out);
 }

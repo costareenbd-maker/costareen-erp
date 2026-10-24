@@ -114,8 +114,10 @@ r = await mgr('erpResellerPay', [{ linkId: LINK, month: MONTH }]);
 check('only the owner pays', !r.ok, r);
 r = await owner('erpResellerPay', [{ linkId: LINK, month: '2020-01' }]);
 check('nothing due for another month', !r.ok && /Nothing is due/.test(r.error), r);
-r = await owner('erpResellerPay', [{ linkId: LINK, month: MONTH, note: 'bKash 5 Oct' }]);
-check('paid 504', r.ok && r.result.paid === 504, r);
+// fix-3 H16: two Pay presses at the same moment pay once
+const [pa, pb] = await Promise.all([owner('erpResellerPay', [{ linkId: LINK, month: MONTH, note: 'bKash 5 Oct' }]), owner('erpResellerPay', [{ linkId: LINK, month: MONTH, note: 'bKash 5 Oct' }])]);
+r = pa.ok ? pa : pb;
+check('(H16) two Pay presses at once: one pays 504, the other is refused', r.ok && r.result.paid === 504 && (pa.ok !== pb.ok), [pa.ok, pb.ok, pa.error || pb.error]);
 const exp = await sql`select * from expenses where business_id = ${B} and category = 'Reseller commission'`;
 check('an expense "Reseller commission" of 504 naming the reseller and the month', exp.length === 1 && Number(exp[0].amount) === 504 && /Elsewhere/.test(exp[0].description) && exp[0].description.includes(MONTH), exp);
 r = await owner('erpResellerPay', [{ linkId: LINK, month: MONTH }]);
@@ -127,6 +129,12 @@ const ST = r.result.statements[0];
 check('the reseller sees paid with the note', ST.status === 'paid' && ST.paid === 504 && /bKash/.test(ST.paidNote), ST);
 r = await other('erpResellReceived', [{ statementId: ST.id, note: 'in my bKash' }]);
 check('received', r.ok && r.result.received === 504 && (await other('erpResell', [])).result.statements[0].status === 'received', r);
+
+// fix-3 M14: the delivered order's goods come back later - its commission stops counting (the paid 504 is then owed back)
+await sql`insert into returns (business_id, return_no, invoice_no, sku, product, qty, condition, value, money) values (${B}, 'RTN-RS1', ${INV}, 'FIL-SUN-PLA-BLA-001', 'PLA', 2, 'good', 2800, 'refund')`;
+r = await owner('erpResellerProgramme', []);
+const st14 = r.result.statements.find((x) => x.month === MONTH);
+check('(M14) the order says returned and the month carries no commission for it: 504 paid is owed back', r.result.orders.find((o) => o.id === O1).status === 'returned' && st14 && st14.margin === 0 && st14.due === -504, [r.result.orders.find((o) => o.id === O1).status, st14]);
 
 // 9. the timer keeps the catalogue fresh; pausing a reseller stops orders; the programme off hides the supplier
 await sql`update products set sell_price = 1000 where business_id = ${B} and sku = 'FIL-SUN-PLA-BLA-001'`;

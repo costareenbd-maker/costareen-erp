@@ -47,7 +47,8 @@ export async function erpFd19Profit(ctx, payload) {
     const sku = str(r[SL.sku]).toLowerCase(), p = bySku[sku];
     const ln = { sku, qty: num(r[SL.quantity]), total: num(r[SL.total]), unitCost: soldCost(r, p && p.cost) };
     o.lines.push(ln);
-    if (ln.total > 0) { o.sum += ln.total; o.gross += ln.qty * num(r[SL.unit_price]); }
+    if (ln.total > 0) o.sum += ln.total;
+    if (ln.qty > 0 && ln.total >= 0) o.gross += ln.qty * num(r[SL.unit_price]);   // fix-2 H6: a free line's discount is inside its own line
     o.discount = Math.max(o.discount, num(r[SL.discount]));
   }
 

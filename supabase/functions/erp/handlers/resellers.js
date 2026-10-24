@@ -75,7 +75,8 @@ async function catalogRefresh(ctx, src, c) {
 /** Order states follow the supplier's own invoices: parcel booked, delivered and paid, returned, voided. */
 async function syncOrders(ctx, src) {
   const ctl = ctx.deps.control;
-  const open = await ctl`select id, invoice_no, status from erp_reseller_orders where sup_source = ${src} and sup_business = ${ctx.biz} and status in ('accepted', 'booked') and invoice_no is not null`;
+  // fix-3 M14: a delivered order is watched too - when its goods come back, its commission stops counting
+  const open = await ctl`select id, invoice_no, status from erp_reseller_orders where sup_source = ${src} and sup_business = ${ctx.biz} and status in ('accepted', 'booked', 'delivered') and invoice_no is not null`;
   let changed = 0;
   for (const o of open) {
     const inv = (await ctx.tx`select delivery_status, payment_status, voided_at from invoices where business_id = ${ctx.biz} and invoice_no = ${o.invoice_no}`)[0];
@@ -83,6 +84,15 @@ async function syncOrders(ctx, src) {
     const cl = (await ctx.tx`select consignment_id from courier_log where business_id = ${ctx.biz} and invoice_no = ${o.invoice_no} order by booked_at desc limit 1`)[0];
     const ds = str(inv.delivery_status).toLowerCase(), paid = /^paid$/i.test(str(inv.payment_status));
     let next = o.status;
+    if (o.status === 'delivered') {
+      const back = (await ctx.tx`select coalesce(sum(r.qty), 0) as b, (select coalesce(sum(l.qty), 0) from invoice_lines l join invoices i on i.id = l.invoice_id
+                                 where i.business_id = ${ctx.biz} and i.invoice_no = ${o.invoice_no} and l.qty > 0) as s
+                                 from returns r where r.business_id = ${ctx.biz} and r.invoice_no = ${o.invoice_no}`)[0];
+      if (!(num(back.s) > 0 && num(back.b) >= num(back.s))) continue;
+      await ctl`update erp_reseller_orders set status = 'returned', updated_at = now() where id = ${o.id}`;
+      changed++;
+      continue;
+    }
     if (inv.voided_at) next = 'cancelled';
     else if (/return|cancel/.test(ds)) next = 'returned';
     else if (/deliver/.test(ds) && paid) next = 'delivered';
@@ -114,7 +124,8 @@ async function statements(ctx, src, side) {
   const paid = await ctl`select s.* from erp_reseller_settlements s join erp_reseller_links l on l.id = s.link_id where ${col}`;
   const out = {};
   for (const s of sums) out[s.link_id + '|' + s.month] = { linkId: s.link_id, month: s.month, orders: num(s.orders), margin: round2(num(s.margin)), paid: 0, status: 'open' };
-  for (const p of paid) { const k = p.link_id + '|' + p.month; out[k] = { ...(out[k] || { linkId: p.link_id, month: p.month, orders: num(p.orders), margin: num(p.margin) }), id: p.id, paid: num(p.paid), paidAt: when(p.paid_at), paidNote: str(p.paid_note), receivedAt: when(p.received_at), status: str(p.status) }; }
+  for (const p of paid) { const k = p.link_id + '|' + p.month; out[k] = { ...(out[k] || { linkId: p.link_id, month: p.month, orders: 0, margin: 0 }),   // fix-3 M14: what still stands, not what stood when paid
+    id: p.id, paid: num(p.paid), paidAt: when(p.paid_at), paidNote: str(p.paid_note), receivedAt: when(p.received_at), status: str(p.status) }; }
   return Object.values(out).map((s) => { const l = byLink[s.linkId] || {}; return { ...s, due: round2(s.margin - s.paid), reseller: str(l.res_name), supplier: str(l.sup_name) || str(l.sup_pname) }; }).sort((a, b) => (b.month > a.month ? 1 : b.month < a.month ? -1 : 0) || (a.reseller > b.reseller ? 1 : -1));
 }
 export async function erpResellerProgramme(ctx) {
@@ -207,6 +218,10 @@ export async function erpResellerPay(ctx, payload) {
   const s = (await statements(ctx, src, 'sup')).find((x) => x.linkId === l.id && x.month === month);
   if (!s || !(s.due > 0)) throw new Error('Nothing is due to ' + str(l.res_name) + ' for ' + month + '.');
   const amount = round2(s.due);
+  // fix-3 H16: two Pay presses at once: the second waits, reads again and finds nothing due
+  await ctx.tx`select pg_advisory_xact_lock(hashtext(${'resellerpay:' + l.id + ':' + month}))`;
+  const again = (await statements(ctx, src, 'sup')).find((x) => x.linkId === l.id && x.month === month);
+  if (!again || Math.abs(round2(again.due) - amount) > 0.005) throw new Error('This was just paid on another screen. Open the statement again.');
   const { erpExpenseAdd } = await import('./expenses.js');
   await erpExpenseAdd(ctx, { amount, description: 'Reseller commission - ' + str(l.res_name) + ' - ' + month + (str(p.note) ? ' (' + str(p.note).slice(0, 120) + ')' : ''), category: 'Reseller commission', account: p.account });
   await ctl`insert into erp_reseller_settlements (link_id, month, orders, margin, paid, paid_at, paid_note, paid_by, status) values (${l.id}, ${month}, ${s.orders}, ${s.margin}, ${amount}, now(), ${str(p.note).slice(0, 300) || null}, ${str(ctx.s.name)}, 'paid')

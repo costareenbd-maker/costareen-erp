@@ -17,10 +17,10 @@
 // mapped it to. Changing the map changes where NEW money goes; rows already
 // written keep their account, and one row can be moved by hand (logged).
 
-import { formatDate, num, round2, dhakaDayStart, looseDate } from '../lib/time.js';
+import { formatDate, num, round2, dhakaDayStart, looseDate, money2 } from '../lib/time.js';
 import { getConfig, setConfig } from '../lib/ext.js';
 import { roleAtLeast } from '../allow.js';
-import { assertOpen } from '../lib/period.js';
+import { assertOpen, lockedThrough } from '../lib/period.js';
 
 const str = (v) => String(v == null ? '' : v).trim();
 const KINDS = { cash: 'Cash', bank: 'Bank', wallet: 'Mobile wallet', courier: 'Courier (holds collected cash)', agent: 'Agent advance (money held by a shipping agent)' };
@@ -242,9 +242,15 @@ export async function erpCashAccountSave(ctx, payload) {
   if (kind === 'courier' && all.some((a) => a.kind === 'courier' && !a.archived && a.id !== payload.id) && !payload.archived) {
     throw new Error('There is already a courier account. One is enough: it stands for cash the courier has collected and not paid over yet.');
   }
+  // fix-2 M11: an opening balance dated in (or before) a closed month would change balances already closed
+  const lockM = await lockedThrough(ctx);
+  const inClosed = (o, d) => !!lockM && Math.abs(num(o)) >= 0.005 && (!d || String(d).slice(0, 7) <= lockM);
+  const closedSay = 'The books are closed up to ' + lockM + ': an opening balance there would change balances already closed. Date it in an open month (or correct the balance with "Correct a balance").';
   if (isId(payload.id)) {
     const cur = all.find((a) => a.id === payload.id);
     if (!cur) throw new Error('That account was not found.');
+    const was = (await ctx.tx`select opening, to_char(opening_date, 'YYYY-MM-DD') as od from money_accounts where id = ${cur.id}`)[0] || {};
+    if ((round2(num(was.opening)) !== opening || (was.od || null) !== od) && (inClosed(was.opening, was.od) || inClosed(opening, od))) throw new Error(closedSay);
     if (payload.archived && !cur.archived) {
       const b = (await erpCashBook(ctx, {})).accounts.find((a) => a.id === cur.id);
       if (b && Math.abs(b.balance) > 0.5) throw new Error(cur.name + ' still holds ' + b.balance + '. Transfer it out before retiring the account.');
@@ -252,6 +258,7 @@ export async function erpCashAccountSave(ctx, payload) {
     await ctx.tx`update money_accounts set name = ${name}, kind = ${kind}, opening = ${opening}, opening_date = ${od}::date,
                  archived = ${!!payload.archived}, note = ${str(payload.note).slice(0, 200) || null} where id = ${cur.id} and business_id = ${ctx.biz}`;
   } else {
+    if (inClosed(opening, od)) throw new Error(closedSay);
     await ctx.tx`insert into money_accounts (business_id, name, kind, opening, opening_date, sort_order, note)
                  values (${ctx.biz}, ${name}, ${kind}, ${opening}, ${od}::date, ${all.length + 1}, ${str(payload.note).slice(0, 200) || null})`;
   }
@@ -277,7 +284,7 @@ export async function erpCashMapSave(ctx, payload) {
 }
 
 async function liveAccount(ctx, id, label) {
-  const a = (await ctx.tx`select id, name, archived from money_accounts where id = ${isId(id) ? id : null} and business_id = ${ctx.biz}`)[0];
+  const a = (await ctx.tx`select id, name, kind, archived from money_accounts where id = ${isId(id) ? id : null} and business_id = ${ctx.biz}`)[0];
   if (!a) throw new Error('Choose the account' + (label ? ' ' + label : '') + '.');
   if (a.archived) throw new Error(a.name + ' is retired. Choose an account that is in use.');
   return a;
@@ -295,10 +302,15 @@ export async function erpCashTransfer(ctx, payload) {
   payload = payload || {};
   const from = await liveAccount(ctx, payload.from, 'the money leaves'), to = await liveAccount(ctx, payload.to, 'it goes to');
   if (from.id === to.id) throw new Error('Choose two different accounts.');
-  const amount = round2(num(payload.amount));
+  const amount = money2(payload.amount);
   if (!(amount > 0)) throw new Error('How much? Type an amount above 0.');
   const at = moveDate(ctx, payload.date), note = str(payload.note).slice(0, 200);
   await assertOpen(ctx, at, 'a transfer cannot be dated there');
+  // fix-5 L4: no more than the account holds (a courier account may run ahead of its payout)
+  if (from.kind !== 'courier') {
+    const bal = num(((await erpCashBook(ctx, {})).accounts || []).find((a) => a.id === from.id)?.balance);
+    if (amount > bal + 0.005) throw new Error(from.name + ' holds ' + Math.round(bal) + '. More than that cannot be moved out (correct its balance first if the book is wrong).');
+  }
   const pair = (await ctx.tx`select gen_random_uuid() as id`)[0].id;
   await ctx.tx`insert into money_moves (business_id, account_id, at, amount, kind, pair_id, note, by) values
     (${ctx.biz}, ${from.id}, ${at}, ${-amount}, 'transfer', ${pair}, ${'to ' + to.name + (note ? ' · ' + note : '')}, ${whoIs(ctx)}),
@@ -343,14 +355,15 @@ export async function erpCashReassign(ctx, payload) {
   payload = payload || {};
   const to = await liveAccount(ctx, payload.account), id = isId(payload.id) ? payload.id : null, src = str(payload.src);
   let n = [];
-  if (src === 'payment') n = await ctx.tx`update payments set account_id = ${to.id} where id = ${id} and business_id = ${ctx.biz} returning id`;
-  else if (src === 'expense') n = await ctx.tx`update expenses set account_id = ${to.id} where id = ${id} and business_id = ${ctx.biz} returning id`;
-  else if (src === 'capital') n = await ctx.tx`update capital_book set account_id = ${to.id} where id = ${id} and business_id = ${ctx.biz} returning id`;
-  else if (src === 'payout') n = await ctx.tx`update courier_payouts set account_id = ${to.id} where id = ${id} and business_id = ${ctx.biz} returning id`;
-  else if (src === 'shipcost') n = await ctx.tx`update shipment_costs set account_id = ${to.id} where id = ${id} and business_id = ${ctx.biz} returning id`;
-  else if (src === 'supplier') n = await ctx.tx`update supplier_payments set account_id = ${to.id} where id = ${id} and business_id = ${ctx.biz} returning id`;
+  if (src === 'payment') n = await ctx.tx`update payments set account_id = ${to.id} where id = ${id} and business_id = ${ctx.biz} returning id, paid_at as at`;
+  else if (src === 'expense') n = await ctx.tx`update expenses set account_id = ${to.id} where id = ${id} and business_id = ${ctx.biz} returning id, recorded_at as at`;
+  else if (src === 'capital') n = await ctx.tx`update capital_book set account_id = ${to.id} where id = ${id} and business_id = ${ctx.biz} returning id, on_date as at`;
+  else if (src === 'payout') n = await ctx.tx`update courier_payouts set account_id = ${to.id} where id = ${id} and business_id = ${ctx.biz} returning id, synced_at as at`;
+  else if (src === 'shipcost') n = await ctx.tx`update shipment_costs set account_id = ${to.id} where id = ${id} and business_id = ${ctx.biz} returning id, at`;
+  else if (src === 'supplier') n = await ctx.tx`update supplier_payments set account_id = ${to.id} where id = ${id} and business_id = ${ctx.biz} returning id, at`;
   else throw new Error('That line cannot be moved.');
   if (!n.length) throw new Error('That line was not found.');
+  if (n[0].at) await assertOpen(ctx, new Date(n[0].at), 'its lines cannot be moved to another account');   // fix-2 M11 (the move is undone)
   return erpCashBook(ctx, { account: payload.show || to.id });
 }
 

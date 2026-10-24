@@ -73,7 +73,9 @@ check('paying does not add a second cost', p.expenses === before, [p.expenses, b
 // ---- removing a rule
 const rid = (await owner('erpCommission', [{ month }])).result.rules.find((x) => x.scope === 'all').id;
 r = await owner('erpCommissionRuleVoid', [{ id: rid, month }]);
-check('everyone\'s rule removed: sales staff earn nothing now', r.ok && !r.result.sellers.some((s) => s.id === FIX.U.sales && s.earned > 0), r.result.sellers);
+// fix-3 H11: commission was already paid this month, so the struck-out rule still counts to the end of this month
+check('everyone\'s rule removed: it ends with this month (commission was paid this month), so this month stays as it was', r.ok && r.result.sellers.some((s) => s.id === FIX.U.sales && s.earned === 100), r.result.sellers);
+check('...and it is gone from the rules list', !r.result.rules.some((x) => x.id === rid), r.result.rules);
 
 // ---- who sold what, sale by sale
 r = await owner('erpCommissionSales', [{ month }]);

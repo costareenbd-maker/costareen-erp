@@ -12,7 +12,7 @@ import { lotLineCost } from './lots.js';
 import { codAllowed } from '../lib/delivery.js';
 import { erpCatalog } from './catalog.js';
 import { forget } from '../lib/tabs.js';
-import { formatDate, num, round2, dhakaDayStart, todayStr, DAY_MS } from '../lib/time.js';
+import { formatDate, num, round2, dhakaDayStart, todayStr, DAY_MS, byMeasure, QTY_MAX } from '../lib/time.js';
 import { phone11, formatBdPhone, custKey, normalizePhone } from '../lib/phone.js';
 import { ERP_DISCOUNT_CAP, actRole } from '../allow.js';
 import {
@@ -147,6 +147,9 @@ export async function createInvoice(ctx, payload, opts = {}) {
   for (const it of items) {
     const sk = String(it.sku).trim(), rec = bySku[sk.toLowerCase()];
     if (!rec) throw new Error('Unknown product: ' + sk);
+    // fix-5 L1: pieces are whole (a product sold by weight or length may be in parts); no absurd quantities
+    if (!byMeasure(rec.unit) && num(it.qty) !== Math.round(num(it.qty))) throw new Error(rec.name + ' is sold in whole pieces: ' + num(it.qty) + ' cannot be sold.');
+    if (num(it.qty) > QTY_MAX) throw new Error(rec.name + ': ' + num(it.qty) + ' is more than one sale can hold.');
     seen[sk.toLowerCase()] = (seen[sk.toLowerCase()] || 0) + num(it.qty);
     if (seen[sk.toLowerCase()] > rec.stock) {
       throw new Error('Not enough stock for ' + rec.name + ': ' + rec.stock + ' in stock, ' +
@@ -248,7 +251,10 @@ export async function createInvoice(ctx, payload, opts = {}) {
   const sub = lines.reduce((a, l) => a + l.qty * l.unit, 0);
   const discount = lines.reduce((a, l) => a + l.disc, 0);
   const delivery = num(payload.deliveryCharge);
+  // fix-2 H22: a delivery charge below zero would be a discount past the discount limit, and could make the invoice negative
+  if (!(delivery >= 0)) throw new Error('The delivery charge cannot be below zero. A price cut is a discount.');
   const grand = round2(sub - discount + delivery);
+  if (grand < 0) throw new Error('The invoice total cannot be below zero.');
 
   // How it is paid (owner's rule, tidy-1): paid now / cash on delivery / part paid / due.
   // What was paid decides the status - never the button.

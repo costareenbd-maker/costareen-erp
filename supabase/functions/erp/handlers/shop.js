@@ -128,8 +128,11 @@ function orderLines(o) {
   return items.map((it, i) => {
     const qty = num(it.qty ?? it.quantity);
     if (!(qty > 0)) throw new Error('items[' + i + '].qty must be more than 0.');
+    // fix-5 L9: whole pieces, a believable size, no negative money
+    if (qty !== Math.round(qty) || qty > 10000) throw new Error('items[' + i + '].qty must be a whole number from 1 to 10000.');
+    if (num(it.line_total ?? it.price) < 0) throw new Error('items[' + i + ']: a price cannot be below 0.');
     if (!str(it.sku) && !str(it.name)) throw new Error('items[' + i + ']: a sku or a name is needed.');
-    return { number: no, created: str(o.created || o.date) || new Date().toISOString().slice(0, 19), status: str(o.status) || 'processing',
+    return { number: no, line_id: str(it.line_id || it.id || ''), created: str(o.created || o.date) || new Date().toISOString().slice(0, 19), status: str(o.status) || 'processing',
              customer: str(o.customer || o.name), phone: str(o.phone), address: str(o.address), payment: str(o.payment),
              total, sku: str(it.sku) || (str(it.barcode) || ''), product: str(it.name || it.product), qty,
              line_total: it.line_total !== undefined ? num(it.line_total) : num(it.price) * qty };

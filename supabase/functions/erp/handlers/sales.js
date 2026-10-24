@@ -112,7 +112,7 @@ async function invoiceLines(ctx, invoiceNo) {
     lines[key].qty += num(r[SL.quantity]);
     lines[key].total += num(r[SL.total]);
     sum += num(r[SL.total]);
-    if (num(r[SL.total]) > 0) gross += num(r[SL.quantity]) * num(r[SL.unit_price]);
+    if (num(r[SL.quantity]) > 0 && num(r[SL.total]) >= 0) gross += num(r[SL.quantity]) * num(r[SL.unit_price]);   // fix-2 H6
     disc = Math.max(disc, num(r[SL.discount]));
   }
   if (!head) return null;
@@ -392,11 +392,13 @@ async function returnGoods(ctx, payload, opts = {}) {
   const take = [];
   let value = 0;
   for (const a of asked) {
-    const qty = Math.round(num(a && a.qty));
+    const qty = num(a && a.qty);
     if (!(qty > 0)) continue;
     const key = String(a.sku || '').trim().toLowerCase();
     const L = bySku[key];
     if (!L) throw new Error(a.sku + ' is not on invoice ' + invoiceNo + '.');
+    // fix-5 L1: what comes back is counted as it was sold - 1.6 pieces is not quietly made 2
+    if (qty !== Math.round(qty) && L.qty === Math.round(L.qty)) throw new Error(L.product + ': ' + qty + ' is not a whole number of pieces.');
     const left = L.qty - (back.bySku[key] || 0);
     if (qty > left) {
       throw new Error('Only ' + left + ' of ' + L.product + ' can still come back on ' +
@@ -490,13 +492,19 @@ async function returnGoods(ctx, payload, opts = {}) {
     // damage is the pool's loss, written on the pool's own return note - not a second loss in the seller's profit
     if (!t.good) continue;
     if (pid) {
-      await ctx.tx`
+      const mv = await ctx.tx`
         insert into stock_movements (business_id, product_id, kind, direction, qty, unit_price, total,
                                      reference, supplier, note, invoice_id, created_by, created_at,
                                      txn_no, operator, product_name)
         values (${ctx.biz}, ${pid}, 'RETURN', 'IN', ${t.qty}, 0, 0, ${'Return: ' + invoiceNo},
                 ${inv.head.customer}, ${rid + ' - ' + reason}, ${rtnId}, ${ctx.s.userId}, ${now},
-                ${txnId(now)}, ${by}, ${t.product})`;
+                ${txnId(now)}, ${by}, ${t.product})
+        returning id`;
+      // fix-1 H2: the cost taken back is the cost of the very units put back on the shelf (the lot draws this return
+      // reversed), not the sale's average - so the stock value and the profit agree
+      const d = (await ctx.tx`select coalesce(sum(-qty * unit_cost), 0) as c, coalesce(sum(-qty), 0) as n, bool_and(unit_cost is not null) as k
+                              from lot_draws where movement_id = ${mv[0].id}`)[0];
+      if (num(d.n) === t.qty && d.k) await ctx.tx`update invoice_lines set unit_cost = ${R2(num(d.c) / t.qty)} where invoice_id = ${rtnId} and line_no = ${s + 1}`;
     }
     restocked += t.qty;
   }
@@ -762,8 +770,12 @@ export async function erpFixInvoice(ctx, payload) {
 
 /** erpVoidInvoice (ERP:1624): remove the invoice and its stock movements. Owner only. */
 export async function erpVoidInvoice(ctx, invoiceNo) {
+  const reason = invoiceNo && typeof invoiceNo === 'object' ? String(invoiceNo.reason || '').trim().slice(0, 300) : '';
+  if (invoiceNo && typeof invoiceNo === 'object') invoiceNo = invoiceNo.invoiceNo;
   const no = String(invoiceNo || '').trim();
   if (!no) throw new Error('Type the invoice number to void.');
+  // fix-1 H4: a return note is never voided - its goods are back on the shelf and its money is written
+  if (/^RTN-/i.test(no)) throw new Error(no + ' is a return note: a return cannot be voided (its goods are back on the shelf and its money is recorded). If it was a mistake, sell the goods again on a new invoice.');
   await lock(ctx, 'sale');
   const lines = await ctx.tx`
     select l.qty, l.line_total from invoice_lines l join invoices i on i.id = l.invoice_id
@@ -771,8 +783,11 @@ export async function erpVoidInvoice(ctx, invoiceNo) {
   const inv = await ctx.tx`select id from invoices where business_id = ${ctx.biz} and invoice_no = ${no}`;
   const sold = (await salesLog(ctx)).find((r) => str(r[SL.order_id]) === no);
   if (sold && asDate(sold[SL.timestamp])) await assertOpen(ctx, asDate(sold[SL.timestamp]), 'its sales cannot be removed. Cancel the invoice instead: that takes the goods back today');
+  // fix-1 H5: only this invoice's own movements (an adjustment that merely mentions its number stays)
+  const invIds = inv.map((r) => r.id).concat(['00000000-0000-0000-0000-000000000000']);
   const txn = await ctx.tx`select id from stock_movements where business_id = ${ctx.biz}
-                           and (btrim(reference) = ${'Invoice: ' + no} or btrim(reference) = ${no})`;
+                           and (invoice_id = any(${invIds}::uuid[])
+                                or (invoice_id is null and kind::text = 'SALE' and (btrim(reference) = ${'Invoice: ' + no} or btrim(reference) = ${no})))`;
   if (!lines.length && !txn.length) throw new Error('Nothing found for invoice ' + no + '.');
   // removing an invoice that money, a return, numbered units or a parcel hang on would leave them pointing at
   // nothing (the cash book would still count the money): such an invoice is cancelled, not removed
@@ -790,6 +805,16 @@ export async function erpVoidInvoice(ctx, invoiceNo) {
   if (head && head.customer_id) await ctx.tx`update customers set total_orders = greatest(0, coalesce(total_orders, 0) - 1),
                                               total_spent = greatest(0, coalesce(total_spent, 0) - ${num(head.grand_total)}), updated_at = now()
                                             where id = ${head.customer_id}`;
+  // fix-2 M13: a full copy is kept before the invoice leaves the books (who, when, every line and stock movement)
+  if (inv.length || txn.length) {
+    const ids = inv.map((r) => r.id);
+    const headRow = ids.length ? (await ctx.tx`select to_jsonb(i) as j from invoices i where id = any(${ids})`).map((r) => r.j) : [];
+    const lineRows = ids.length ? (await ctx.tx`select to_jsonb(l) as j from invoice_lines l where invoice_id = any(${ids}) order by line_no`).map((r) => r.j) : [];
+    const mvRows = txn.length ? (await ctx.tx`select to_jsonb(m) as j from stock_movements m where id = any(${txn.map((r) => r.id)})`).map((r) => r.j) : [];
+    await ctx.tx`insert into voided_invoices (business_id, invoice_no, voided_by, reason, invoice, lines, movements)
+                 values (${ctx.biz}, ${no}, ${who(ctx)}, ${reason || null}, ${ctx.tx.json(headRow.length === 1 ? headRow[0] : headRow)},
+                         ${ctx.tx.json(lineRows)}, ${ctx.tx.json(mvRows)})`;
+  }
   if (inv.length) await ctx.tx`delete from invoices where id = any(${inv.map((r) => r.id)})`;
   if (txn.length) await ctx.tx`delete from stock_movements where id = any(${txn.map((r) => r.id)})`;
   forget(ctx, 'SALES_LOG', 'TXN_LOG');

@@ -45,11 +45,11 @@ const capPrev = r.result.months.find((m) => m.month === prev).net;
 check('Capital shares out that same net', capPrev === (await owner('erpPnl', [{ months: 3 }])).result.months.find((x) => x.month === prev).net, capPrev);
 
 // ---------------------------------------------------------------- no profit without an owner
-await owner('erpCapitalHolderSave', [{ id: inv(r, 'Rahman').id, kind: 'shareholder', name: 'Rahman', pct: 80 }]);
+await owner('erpCapitalHolderSave', [{ id: inv(r, 'Rahman').id, kind: 'shareholder', name: 'Rahman', pct: 80, from: prev2 }]);   // fix-3: a share counts from the month given
 r = await owner('erpCapitalClose', [{ month: prev2 }]);
 check('80% given out: the month cannot be closed', !r.ok && /add up to 80%, not 100%/.test(r.error), r);
 r = await owner('erpCapital', []);
-await owner('erpCapitalHolderSave', [{ id: inv(r, 'Rahman').id, kind: 'shareholder', name: 'Rahman', pct: 100 }]);
+await owner('erpCapitalHolderSave', [{ id: inv(r, 'Rahman').id, kind: 'shareholder', name: 'Rahman', pct: 100, from: prev2 }]);
 
 // ---------------------------------------------------------------- a closed month is closed for everything
 r = await owner('erpCapitalClose', [{ month: prev }]);

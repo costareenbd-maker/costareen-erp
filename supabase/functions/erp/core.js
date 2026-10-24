@@ -336,6 +336,13 @@ export async function erpCall(deps, { name, args, token, authHeader, ip }) {
     return { ok: true, result: scrub(name, result, s) };
   } catch (err) {
     await logError(sql, s, name, err);
-    return { ok: false, error: String((err && err.message) || err) };
+    return { ok: false, error: plainError(String((err && err.message) || err)) };
   }
+}
+
+/** fix-5 L2: a raw database message is put in plain words (the full message stays in the error log). */
+function plainError(m) {
+  if (/numeric field overflow|out of range for type|value too long for type/i.test(m)) return 'A number or a text is far too big. Check what was typed.';
+  if (/invalid input syntax for type (uuid|integer|numeric|bigint|date|timestamp)/i.test(m)) return 'Something typed is not in the right form (a number, a date or an id). Check it and try again.';
+  return m;
 }

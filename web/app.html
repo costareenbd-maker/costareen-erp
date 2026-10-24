@@ -6200,7 +6200,7 @@ function wireStock() {
     if (BUSY) { toast('Wait \u2014 the last save is still running.', true); return; }
     if (!RECV.lines.length) { toast('Add the products that came in first.', true); return; }
     BUSY = 'receive'; repaint();
-    srv('erpReceiveShipment', [recvPayload()],
+    srvAsk('erpReceiveShipment', [recvPayload()],
         function (res) {
         BUSY = '';
         toast('Received '+fmt(res.units || 0)+' unit(s) across '+fmt(res.received)+' product(s)'+
@@ -6233,7 +6233,7 @@ function wireStock() {
     if (!ADJ.sku) { toast('Choose a product.', true); return; }
     if (!String(ADJ.reason).trim()) { toast('A reason is required.', true); return; }
     BUSY = 'adjust'; repaint();
-    srv('erpAdjustStock', [ADJ],
+    srvAsk('erpAdjustStock', [ADJ],
         function (res) {
         BUSY = '';
         toast('Recorded '+esc(res.direction)+' '+fmt(res.qty)+' · '+esc(res.product)+'.');
@@ -6894,7 +6894,7 @@ function viewCapital() {
       return '<tr' + (live(x) ? '' : ' style="opacity:.55"') + '><td class="nm">' + esc(x.name) + (x.private ? ' <span class="pill">private</span>' : '') + (live(x) ? '' : ' <span class="pill">left ' + esc(capMonth(x.ended)) + '</span>') +
         '<br><span class="sku">since ' + esc(capMonth(x.since)) + (x.phone ? ' · ' + esc(x.phone) : '') + '</span></td>' +
         '<td class="num"><strong>' + fmtPct(x.pct) + '%</strong></td><td class="num">' + fmt(x.capital) + '</td><td class="num">' + fmt(x.earned) + '</td><td class="num">' + fmt(x.profitPaid) + '</td>' +
-        '<td class="num"><strong>' + fmt(x.profitLeft) + '</strong></td>' +
+        '<td class="num"><strong>' + fmt(x.profitLeft) + '</strong>' + (x.overpaid ? '<br><span class="sku" style="color:var(--critical)">paid more than earned - comes off later profit</span>' : '') + '</td>' +
         (ed ? '<td class="num" style="white-space:nowrap"><button class="btn small primary" type="button" data-capbook="' + esc(x.id) + '" data-type="invest" title="They put more money in">+ Money in</button> <button class="btn small" type="button" data-capbook="' + esc(x.id) + '" data-type="withdraw" title="Part or all of their money given back">Money back</button> <button class="btn small" type="button" data-capedit="' + esc(x.id) + '">Change</button> ' +
           '<button class="btn small" type="button" data-capend="' + esc(x.id) + '" data-undo="' + (live(x) ? '' : '1') + '" data-n="' + esc(x.name) + '">' + (live(x) ? 'Has left' : 'Bring back') + '</button></td>' : '') + '</tr>';
     }).join('') +
@@ -7091,7 +7091,7 @@ function wireCapital() {
     if (why === null) return;
     if (!why.trim()) { toast('Say why.', true); return; }
     CAP_BUSY = true;
-    srv('erpCapitalReopen', [{ month: m, reason: why.trim() }], function (r) { EXP = null; D = null; done(capMonth(m) + ' is open again.')(r); }, bad);
+    srvAsk('erpCapitalReopen', [{ month: m, reason: why.trim() }], function (r) { EXP = null; D = null; done(capMonth(m) + ' is open again.')(r); }, bad);
   });
 }
 
@@ -8029,11 +8029,14 @@ function viewWebOrders() {
            '<td class="num">'+fmt(o.orderTotal)+'</td>'+
            '<td style="font-size:12.5px">'+esc(o.payment||'—')+'</td>'+
            '<td>'+(o.entered ? '<span class="pill ok">✓ Entered</span>'+(o.invoiceNo ? '<br><span class="sku">'+esc(o.invoiceNo)+'</span>' : '')
-                             : '<span class="pill out">✕ Not entered</span>')+'</td>'+
+                             : o.partEntered ? '<span class="pill out">Lines added after entry</span>' : '<span class="pill out">✕ Not entered</span>')+
+             // fix-4: what changed on the website after the order was entered (H21, M19, M20)
+             (o.changed && o.changeNote ? '<br><span class="sku" style="color:var(--critical)" data-noi18n>'+esc(o.changeNote)+'</span>' : '')+
+             (o.cancelledAfterEntry ? '<br><span class="sku" style="color:var(--critical)">Cancelled on the website - cancel or return its invoice</span>' : '')+'</td>'+
            '<td class="num" style="white-space:nowrap">'+(o.entered ? ''
               : '<button class="btn small" type="button" data-wo="'+esc(o.no)+'"'+
                 (BUSY==='wo'+o.no?' disabled':'')+'>'+
-                (BUSY==='wo'+o.no?'Working…':'Enter as invoice')+'</button>'+
+                (BUSY==='wo'+o.no?'Working…':o.partEntered?'Enter the added lines':'Enter as invoice')+'</button>'+
                 ' <button class="btn small" type="button" data-womark="'+esc(o.no)+'">Already entered</button>')+
             '</td></tr>';
     });
@@ -8132,7 +8135,7 @@ function wireWebOrders() {
       if (!(await uiConfirm('Enter website order #'+no+' as an invoice?\n\n'+
                           'Stock will be deducted and a PDF created.'))) return;
       BUSY = 'wo'+no; repaint();
-      srv('erpEnterWebOrder', [no],
+      srvAsk('erpEnterWebOrder', [{ orderNo: no }],
           function (res) {
           BUSY = '';
           toast('Order #'+esc(res.orderNo)+' entered as <strong>'+esc(res.invoiceNo)+
@@ -8487,7 +8490,7 @@ function srv(name, args, ok, bad) {
 
 var SRV_ACTIVE = 0, SRV_WRITING = false, SRV_TIMED = {};
 // the same list the server uses to know a call changes nothing (ERP_READS)
-var SRV_READS = /^(erpBrief|erpBrain|erpWatch|erpEngine|erpEngineJob|erpSkills|erpAiBrain|erpAiBrainModels|erpLeadForms|erpLeads|erpLeadFind|erpLeadCapture|erpMyUpdates|erpSocialBridges|erpAds|erpAdsInterests|erpSocialNet|erpSocialLearn|erpSocialAssets|erpSocialPosts|erpSocialPhotos|erpInboxDigest|erpJointRecvCatalog|erpSitePages|erpBalanceSheet|erpProductFields|erpProductAi|erpMetaConnect|erpInboxFeatureMap|erpBookings|erpInbox|erpInboxOpen|erpInboxChannels|erpChatOrders|erpInboxStats|erpAiWork|erpCommissionSales|erpFdCards|erpLineMargins|erpFd19Profit|erpFdInventory|erpFd22Analytics|erpNavigator|erpSellers|erpFollowups|erpCustomerInsight|erpPreorders|erpCashUps|erpAskingPrices|erpSystemCheck|erpAnalytics|erpCommission|erpHolding|erpLotFunding|erpShipments|erpShipment|erpLots|erpFdHead|erpFdDash|erpReceiveMatch|erpAiReader|erpProductSuggest|erpCatalogue|erpPushList|erpCreators|erpCreatorPortalLink|erpSponsorLink|erpCreatorRequests|erpCreatorEvents|erpCreatorProgramme|erpCreatorPreview|erpCreatorCatalog|erpCreatorSources|erpCreatorClaims|erpApps|erpAppQr|erpFeedback|erpRestockOffers|erpRestockList|erpWarrantyRules|erpWarrantyCard|erpMyLink|erpPlatformRegister|erpPlatformDoctor|erpPlatformCommunity|erpMarketWaiting|erpBoard|erpPlatformDesign|erpResell|erpResellerProgramme|erpLoyalty|erpCustomerPoints|erpRefillDue|erpDeliveryHistory|erpDeliveryHistoryMany|erpPrintKit|erpPrintJobs|erpPrintJob|erpPrintCost|erpSpools|erpPrintRequests|erpJoint|erpJointCatalog|erpJointCard|erpInvoiceDesign|erpInvoicePreview|erpMarket|erpMarketMine|erpMarketRequests|erpMarketHints|erpMarketNames|erpWanted|erpBrand|erpComplianceLog|erpProviderKey|erpNews|erpAccessKeys|erpAccessWarning|erpAdmin|erpAiKeys|erpAlertRules|erpAlerts|erpArena|erpBackupStatus|erpBg|erpBnWords|erpBookedParcels|erpBrandLogo|erpBundle|erpBusinessLinks|erpBusinesses|erpBusinessesDeleted|erpCampaignAudience|erpCampaignGet|erpCampaignList|erpCapital|erpCashBook|erpCatalog|erpConnStatus|erpConnections|erpCostBook|erpCourier|erpCourierKeyStatus|erpCurrencies|erpCustomerAccount|erpCustomerCredit|erpCustomerList|erpCustomerPage|erpCustomerStatement|erpCustomers|erpDashboardData|erpDaySales|erpDeliveryOptions|erpDevices|erpDiscontinued|erpDues|erpEvoQr|erpEvoStatus|erpExpenseExport|erpExpenseReceiptUrl|erpExpenses|erpFamilies|erpFighters|erpFormOptions|erpGame|erpGetTheme|erpGoogle|erpHello|erpInstalls|erpInvoice|erpInvoicePdf|erpJob|erpJobs|erpListView|erpLookupCustomer|erpLookupUsage|erpMe|erpMoney|erpNoteFileUrl|erpNotes|erpOwnerChange|erpOwnerChanges|erpParcelLabels|erpParcelPreview|erpPartnerStock|erpPartnership|erpPayReasons|erpPeople|erpPlatform|erpPlatformErrors|erpPnl|erpPnlMonth|erpPoList|erpPoolCatalog|erpProduct|erpProductListShare|erpProductPage|erpProductPhotoUrl|erpProductThumbs|erpProfile|erpQuoteAsset|erpQuoteBoot|erpQuoteGet|erpQuoteList|erpRecentInvoices|erpRecovery|erpReorderPlan|erpRestorePreview|erpReturnPreview|erpRisks|erpSales|erpSearch|erpSecurity|erpSelfTest|erpSerialLookup|erpSerialsFor|erpSessions|erpSetTheme|erpSettingsFull|erpSettingsLists|erpSfPayoutLines|erpSfPayouts|erpShareFile|erpSharedStock|erpSheet|erpStatementPdf|erpStockHistory|erpSupplierPage|erpSuppliers|erpToday|erpUsers|erpWaProductPdf|erpWebMatches|erpWebOrderInvoices|erpWebOrders|erpWebsiteTest)$/;
+var SRV_READS = /^(erpReceipts|erpBrief|erpBrain|erpWatch|erpEngine|erpEngineJob|erpSkills|erpAiBrain|erpAiBrainModels|erpLeadForms|erpLeads|erpLeadFind|erpLeadCapture|erpMyUpdates|erpSocialBridges|erpAds|erpAdsInterests|erpSocialNet|erpSocialLearn|erpSocialAssets|erpSocialPosts|erpSocialPhotos|erpInboxDigest|erpJointRecvCatalog|erpSitePages|erpBalanceSheet|erpProductFields|erpProductAi|erpMetaConnect|erpInboxFeatureMap|erpBookings|erpInbox|erpInboxOpen|erpInboxChannels|erpChatOrders|erpInboxStats|erpAiWork|erpCommissionSales|erpFdCards|erpLineMargins|erpFd19Profit|erpFdInventory|erpFd22Analytics|erpNavigator|erpSellers|erpFollowups|erpCustomerInsight|erpPreorders|erpCashUps|erpAskingPrices|erpSystemCheck|erpAnalytics|erpCommission|erpHolding|erpLotFunding|erpShipments|erpShipment|erpLots|erpFdHead|erpFdDash|erpReceiveMatch|erpAiReader|erpProductSuggest|erpCatalogue|erpPushList|erpCreators|erpCreatorPortalLink|erpSponsorLink|erpCreatorRequests|erpCreatorEvents|erpCreatorProgramme|erpCreatorPreview|erpCreatorCatalog|erpCreatorSources|erpCreatorClaims|erpApps|erpAppQr|erpFeedback|erpRestockOffers|erpRestockList|erpWarrantyRules|erpWarrantyCard|erpMyLink|erpPlatformRegister|erpPlatformDoctor|erpPlatformCommunity|erpMarketWaiting|erpBoard|erpPlatformDesign|erpResell|erpResellerProgramme|erpLoyalty|erpCustomerPoints|erpRefillDue|erpDeliveryHistory|erpDeliveryHistoryMany|erpPrintKit|erpPrintJobs|erpPrintJob|erpPrintCost|erpSpools|erpPrintRequests|erpJoint|erpJointCatalog|erpJointCard|erpInvoiceDesign|erpInvoicePreview|erpMarket|erpMarketMine|erpMarketRequests|erpMarketHints|erpMarketNames|erpWanted|erpBrand|erpComplianceLog|erpProviderKey|erpNews|erpAccessKeys|erpAccessWarning|erpAdmin|erpAiKeys|erpAlertRules|erpAlerts|erpArena|erpBackupStatus|erpBg|erpBnWords|erpBookedParcels|erpBrandLogo|erpBundle|erpBusinessLinks|erpBusinesses|erpBusinessesDeleted|erpCampaignAudience|erpCampaignGet|erpCampaignList|erpCapital|erpCashBook|erpCatalog|erpConnStatus|erpConnections|erpCostBook|erpCourier|erpCourierKeyStatus|erpCurrencies|erpCustomerAccount|erpCustomerCredit|erpCustomerList|erpCustomerPage|erpCustomerStatement|erpCustomers|erpDashboardData|erpDaySales|erpDeliveryOptions|erpDevices|erpDiscontinued|erpDues|erpEvoQr|erpEvoStatus|erpExpenseExport|erpExpenseReceiptUrl|erpExpenses|erpFamilies|erpFighters|erpFormOptions|erpGame|erpGetTheme|erpGoogle|erpHello|erpInstalls|erpInvoice|erpInvoicePdf|erpJob|erpJobs|erpListView|erpLookupCustomer|erpLookupUsage|erpMe|erpMoney|erpNoteFileUrl|erpNotes|erpOwnerChange|erpOwnerChanges|erpParcelLabels|erpParcelPreview|erpPartnerStock|erpPartnership|erpPayReasons|erpPeople|erpPlatform|erpPlatformErrors|erpPnl|erpPnlMonth|erpPoList|erpPoolCatalog|erpProduct|erpProductListShare|erpProductPage|erpProductPhotoUrl|erpProductThumbs|erpProfile|erpQuoteAsset|erpQuoteBoot|erpQuoteGet|erpQuoteList|erpRecentInvoices|erpRecovery|erpReorderPlan|erpRestorePreview|erpReturnPreview|erpRisks|erpSales|erpSearch|erpSecurity|erpSelfTest|erpSerialLookup|erpSerialsFor|erpSessions|erpSetTheme|erpSettingsFull|erpSettingsLists|erpSfPayoutLines|erpSfPayouts|erpShareFile|erpSharedStock|erpSheet|erpStatementPdf|erpStockHistory|erpSupplierPage|erpSuppliers|erpToday|erpUsers|erpWaProductPdf|erpWebMatches|erpWebOrderInvoices|erpWebOrders|erpWebsiteTest)$/;
 function srvPump() {
   if (!SRV_Q.length) return;
   var isRead = SRV_READS.test(SRV_Q[0].name);
@@ -11100,7 +11103,7 @@ function wireStockExtra() {
     var t = countTyped();
     if (!(await uiConfirm('Save this stock count?\n\n' + t.n + ' product(s) counted. ' + (t.diff ? t.diff + ' differ from the books and will be corrected to what you counted.' : 'All of them agree with the books, so nothing changes.')))) return;
     COUNT.busy = true; repaint();
-    srv('erpStockCount', [{ lines: lines, note: COUNT.note }], function (r) {
+    srvAsk('erpStockCount', [{ lines: lines, note: COUNT.note }], function (r) {
       COUNT = { q: '', cat: '', vals: {}, note: '', busy: false, only: false };
       toast('<strong>Count saved.</strong> ' + fmt(r.checked) + ' checked · ' + fmt(r.same) + ' agreed · ' + fmt(r.changed) + ' corrected' +
         (r.opening ? ' · ' + fmt(r.opening) + ' entered as opening stock' : '') + (r.up ? ' · +' + fmt(r.up) + ' in' : '') + (r.down ? ' · −' + fmt(r.down) + ' missing' : ''), false, 12000);
@@ -27655,7 +27658,7 @@ viewCapital = function () {
   var pc = function (x) {
     var on = live(x), isI = x.kind === 'investor';
     var tiles = isI ? [[f21K(x.capital, cur), 'Invested'], [f21K(x.returnDue, cur), 'Due so far'], [f21K(x.returnPaid, cur), 'Paid'], [f21K(x.returnOwed, cur), 'Still owed', x.returnOwed > 0]]
-                    : [[f21K(x.capital, cur), 'Invested'], [f21K(x.earned, cur), 'Profit earned'], [f21K(x.profitPaid, cur), 'Paid out'], [f21K(x.profitLeft, cur), 'Left in the business']];
+                    : [[f21K(x.capital, cur), 'Invested'], [f21K(x.earned, cur), 'Profit earned'], [f21K(x.profitPaid, cur), 'Paid out'], [f21K(x.profitLeft, cur), x.overpaid ? 'Paid more than earned (comes off later profit)' : 'Left in the business']];
     return '<div class="fd21-pc' + (on ? '' : ' ended') + '" data-f21pc="' + esc(x.kind) + '" data-f21pcn="' + esc((x.name + ' ' + (x.phone || '')).toLowerCase()) + '" data-f21owed="' + (isI && x.returnOwed > 0 ? 1 : 0) + '" data-f21live="' + (on ? 1 : 0) + '">' +
       '<div class="hd"><span class="fd21-ib sm' + (isI ? '' : ' t-violet') + '">' + f21i(isI ? 'brief' : 'user', 19) + '</span><div class="tt"><div class="nm">' + esc(x.name) + '</div><div class="sb">' + (isI ? 'Investor' : 'Shareholder') + ' · since ' + esc(capMonth(x.since)) + (x.phone ? ' · ' + esc(x.phone) : '') + '</div></div>' +
       (on ? f21B('Active', 'positive') : f21B((isI ? 'Ended ' : 'Left ') + capMonth(x.ended), 'neutral')) + '</div>' +
@@ -27760,7 +27763,7 @@ viewCommission = function () {
     return { s: s, v: s.earned,
       c: ['<span class="fd21-p">' + esc(s.name) + '</span><span class="fd21-s">' + esc(d.month) + '</span>', f21M(s.sales, cur), f21M(s.profit, cur), '<span class="fd21-strong">' + f21M(s.earned, cur) + '</span>', f21M(s.paid, cur),
           '<span class="' + (s.left > 0 ? 'fd21-neg fd21-strong' : '') + '">' + f21M(s.left, cur) + '</span>', st, act],
-      m: { t: esc(s.name), s: 'sales ' + f21M(s.sales, cur) + ' · paid ' + f21M(s.paid, cur) + ' · left ' + f21M(s.left, cur), v: f21M(s.earned, cur), b: st, a: act },
+      m: { t: esc(s.name), s: 'sales ' + f21M(s.sales, cur) + ' · paid ' + f21M(s.paid, cur) + (s.carried ? ' · from earlier months ' + f21M(s.carried, cur) : '') + ' · left ' + f21M(s.left, cur), v: f21M(s.earned, cur), b: st, a: act },
       x: s.name, csv: [s.name, s.sales, s.profit, s.earned, s.paid, s.left] };
   });
   var sellers = f21Table({ id: 'fd21-cms', icon: 'pct', title: 'Sellers · ' + d.month, sub: 'Commission is a cost of the month it is earned in (Expenses, Commission); paying it later is not counted again. A return takes it back from whoever sold it.', rows: srows, cur: cur,
@@ -40177,6 +40180,67 @@ saveProduct = function () {
   var v = el('view');
   if (v && typeof MutationObserver === 'function') new MutationObserver(function () { strip(); lit(); }).observe(v, { childList: true });
   var rp = repaint; repaint = function () { var r = rp.apply(this, arguments); strip(); lit(); return r; };
+})();
+</script>
+<!-- fix-1 (24 Oct 2026, the partner's odd-case report, batch 1): (1) a save the server wants confirmed ("CONFIRM: ...":
+     the same shipment again, a pre-order left short) is asked and sent again; a numbered product taken out asks WHICH
+     serial numbers ("SERIALS: ..."); (2) Stock entry > Count & adjust: "Received by mistake? Undo a receipt" - the very
+     units of that receipt come off (its own lot and cost) and the supplier's bill is lowered. -->
+<script>
+(function () {
+  // (1) ask, then send again with the answer
+  window.srvAsk = function (name, args, ok, bad) {
+    srv(name, args, ok, async function (e) {
+      var m = String((e && e.message) || e || '');
+      if (/^CONFIRM: /.test(m)) {
+        if (await uiConfirm(m.slice(9))) { args[0] = Object.assign({}, args[0] || {}, { again: true, overHold: true }); return window.srvAsk(name, args, ok, bad); }
+        return bad({ message: 'Not saved.' });
+      }
+      if (/^SERIALS: /.test(m)) {
+        var p = m.slice(9).split('|'), q = p[0], nm = p[1], list = p[2] || '';
+        var ans = await uiPrompt('Which ' + q + ' serial number' + (q === '1' ? '' : 's') + ' of ' + nm + ' are leaving? Separate them with commas.\n\nIn stock: ' + list.split(',').join(', '), '');
+        if (ans && String(ans).trim()) { args[0] = Object.assign({}, args[0] || {}, { serials: String(ans).trim() }); return window.srvAsk(name, args, ok, bad); }
+        return bad({ message: 'Not saved: the serial numbers are needed.' });
+      }
+      bad(e);
+    });
+  };
+
+  // (2) undo a receipt
+  var UR = { open: false, list: null, busy: false };
+  function urHtml() {
+    var h = '<section><details class="card" data-ur="1"' + (UR.open ? ' open' : '') + '><summary style="cursor:pointer"><b>Received by mistake? Undo a receipt</b></summary>' +
+      '<div class="sub" style="display:block;margin:6px 0">The very units of that receipt come off the shelf at their own cost, and the supplier’s bill for that shipment is lowered. Units of it already sold cannot be undone.</div>';
+    if (UR.open && !UR.list) { srv('erpReceipts', [], function (r) { UR.list = r; if (VIEW === 'stock') repaint(); }, function (e) { UR.list = []; toast(esc((e && e.message) || e), true); }); h += '<div class="loading">Loading…</div>'; }
+    else if (UR.list) {
+      var rows = UR.list.filter(function (r) { return r.canUndo > 0; });
+      h += rows.length ? '<div style="overflow:auto"><table class="tbl"><thead><tr><th>Received</th><th>Product</th><th>Can undo</th><th></th></tr></thead><tbody>' + rows.map(function (r) {
+        return '<tr><td>' + esc(r.at) + '<br><span class="sku">' + esc(r.reference) + (r.supplier ? ' · ' + esc(r.supplier) : '') + '</span></td><td>' + esc(r.name) + '<br><span class="sku">' + esc(r.sku) + '</span></td>' +
+          '<td>' + fmt(r.canUndo) + ' of ' + fmt(r.qty) + '</td><td style="white-space:nowrap"><input class="i" type="number" min="1" max="' + r.canUndo + '" step="1" value="' + r.canUndo + '" data-urq="' + esc(r.txnNo) + '" style="width:80px"> ' +
+          '<button class="btn small" type="button" data-urdo="' + esc(r.txnNo) + '"' + (UR.busy ? ' disabled' : '') + '>Undo</button></td></tr>'; }).join('') + '</tbody></table></div>'
+        : '<div class="sub" style="display:block">No recent receipt can be undone (their units are sold or already undone).</div>';
+    }
+    return h + '</details></section>';
+  }
+  if (typeof viewStock === 'function') {
+    var vsOld = viewStock;
+    viewStock = function () { var h = vsOld.apply(this, arguments); if (typeof STOCK_TAB !== 'undefined' && STOCK_TAB === 'count' && (typeof pageCan !== 'function' || pageCan('stock'))) h += urHtml(); return h; };
+  }
+  document.addEventListener('toggle', function (e) { if (e.target && e.target.getAttribute && e.target.getAttribute('data-ur')) { UR.open = e.target.open; if (UR.open && !UR.list) repaint(); } }, true);
+  document.addEventListener('click', async function (e) {
+    if (VIEW !== 'stock') return;
+    var t = e.target.closest && e.target.closest('[data-urdo]'); if (!t) return;
+    var no = t.getAttribute('data-urdo'), qi = document.querySelector('[data-urq="' + no + '"]'), q = Math.round(Number(qi && qi.value));
+    if (!(q > 0)) { toast('How many?', true); return; }
+    var why = await uiPrompt('Undo ' + q + ' of this receipt. What went wrong? (typed twice, wrong price, a test...)', '');
+    if (!why || !String(why).trim()) return;
+    UR.busy = true; repaint();
+    srv('erpUndoReceipt', [{ txnNo: no, qty: q, reason: String(why).trim() }], function (r) {
+      UR.busy = false; UR.list = r.receipts;
+      toast('Undone: ' + fmt(r.undone) + ' × ' + esc(r.product) + (r.billCredit ? ' · supplier bill lowered by ' + fmt(r.billCredit) : '') + '.', false, 9000);
+      if (typeof CAT !== 'undefined') { CAT = null; HIST = null; D = null; if (typeof loadAll === 'function') loadAll(); } else repaint();
+    }, function (er) { UR.busy = false; repaint(); toast(esc((er && er.message) || er), true, 10000); });
+  });
 })();
 </script>
 </body>
