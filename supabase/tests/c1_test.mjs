@@ -2,7 +2,7 @@
 import { sql, FIX, owner, mgr, makeShareholder, shareholder, check, done, web } from './harness.mjs';
 await makeShareholder();
 
-let r = await shareholder('erpConnections', []);
+let r = await mgr('erpConnections', []);
 check('connections are the owner\'s', !r.ok, r);
 r = await owner('erpConnections', []);
 check('every connection with its state', r.ok && ['website', 'courier', 'whatsapp', 'email', 'google', 'ai'].every((k) => r.result[k] && r.result[k].state) &&

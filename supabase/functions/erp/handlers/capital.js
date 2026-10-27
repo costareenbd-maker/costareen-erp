@@ -149,7 +149,7 @@ export async function erpCapital(ctx) {
     const s = sums[h.id];
     if (h.kind === 'shareholder') { totals.ownersCapital += s.capital; totals.earned += s.earned; totals.profitPaid += s.profitPaid; }
     else { totals.outsideCapital += s.capital; totals.returnDue += s.returnDue; totals.returnPaid += s.returnPaid; totals.returnBuilding += s.building || 0; }
-    if (h.private && !owner) { hidden++; return; }                 // counted above, not listed
+    if (h.private && ctx.s.role !== 'owner') { hidden++; return; }   // counted above, not listed - a private person stays the owner's secret even from shareholders
     list.push({ id: h.id, kind: h.kind, name: h.name, phone: h.phone, pct: h.pct, returnKind: h.returnKind,
                 returnValue: h.returnValue, since: h.since, ended: h.ended, private: h.private, note: h.note,
                 capital: Math.round(s.capital), earned: Math.round(s.earned), profitPaid: Math.round(s.profitPaid),
@@ -162,7 +162,7 @@ export async function erpCapital(ctx) {
   totals.allCapital = totals.ownersCapital + totals.outsideCapital;
   for (const k of Object.keys(totals)) if (k.indexOf('pct') !== 0) totals[k] = Math.round(totals[k]);
   const privateIds = {};
-  hs.forEach((h) => { if (h.private && !owner) privateIds[h.id] = true; });
+  hs.forEach((h) => { if (h.private && ctx.s.role !== 'owner') privateIds[h.id] = true; });
   const entries = bk.filter((b) => !privateIds[b.holder]).sort((a, b) => b.ts - a.ts).slice(0, 300).map((b) => ({
     id: b.id, when: b.when, holder: b.holder, name: names[b.holder] || '—', type: b.type,
     label: ERP_CAP_TYPES[b.type] || b.type, amount: b.amount, method: b.method, note: b.note, by: b.by, voided: b.voided,

@@ -66,7 +66,7 @@ begin
     raise exception 'Only an owner changes an owner, or makes one.';
   end if;
   if p_user = auth.uid() and (not p_active or p_role <> v_cur.role) then
-    raise exception 'You cannot switch yourself off or change your own role. Ask another owner.';
+    raise exception 'You cannot switch yourself off or demote yourself. Ask another owner.';
   end if;
   select count(*) into v_owners from public.memberships where business_id = p_business and role = 'owner' and active and user_id <> p_user;
   if v_cur.role = 'owner' and v_cur.active and (not p_active or p_role <> 'owner') and v_owners = 0 then

@@ -117,7 +117,7 @@ await owner('erpCapitalHolderSave', [{ id: PAR, kind: 'shareholder', name: 'Part
 await owner('erpCapitalEntryAdd', [{ holder: PAR, type: 'invest', amount: 7000 }]);
 const full = (await owner('erpCapital', [])).result;
 r = await shareholder('erpCapital', []);
-check('shareholder: private person hidden, told one is not listed', r.ok && r.result.canEdit === false && r.result.hidden === 1 &&
+check('shareholder: private person hidden, told one is not listed (and he edits, 27 Oct 2026)', r.ok && r.result.canEdit === true && r.result.hidden === 1 &&
   !r.result.holders.find((h) => h.id === PAR) && !r.result.entries.find((e) => e.holder === PAR), r.result && r.result.holders.map((h) => h.name));
 check('...but the totals still include them', r.result.totals.ownersCapital === full.totals.ownersCapital && full.totals.ownersCapital === 107000, [r.result.totals, full.totals]);
 const other = await sql`select count(*)::int n from capital_holders where business_id = ${FIX.B2}`;
