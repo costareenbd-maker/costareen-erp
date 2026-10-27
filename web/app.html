@@ -5401,7 +5401,7 @@ function recvCostHtml() {
       '</div>';
   } else if (m === 'bdt') {
     h += '<div class="fields">' +
-      '<div><label class="f" for="rv_bdt">Total paid for this shipment (TK)</label>' +
+      '<div><label class="f" for="rv_bdt">The goods only (TK) - the supplier\u2019s bill, without shipping</label>' +
       '<input class="i" id="rv_bdt" inputmode="decimal" value="' + esc(RECV.totalBdt) +
       '" placeholder="e.g. 62000"></div></div>';
   }
@@ -5874,7 +5874,7 @@ function recvShipHtml() {
     return '<button type="button" class="chip ckcat' + (s.mode === v ? ' on' : '') + '" data-rvship="' + v + '">' + label + '</button>';
   }
   var h = '<div style="margin-top:12px"><label class="f">Shipping paid on arrival</label><div class="chips">' +
-    chip('none', 'None') + chip('Sea', 'Sea') + chip('Air', 'Air') + chip('total', 'Type the total') + '</div>';
+    chip('none', 'None') + chip('Sea', 'Sea') + chip('Air', 'Air') + chip('total', 'Type the shipping amount') + '</div>';
   if (s.mode === 'Sea' || s.mode === 'Air') {
     var guess = recvKgGuess();
     h += '<div class="fields"><div><label class="f" for="rv_kg">Weight (kg)</label><input class="i" id="rv_kg" inputmode="decimal" value="' +
@@ -5883,7 +5883,7 @@ function recvShipHtml() {
       esc(s.rate) + '" placeholder="' + SHIP_RATE[s.mode] + '"></div>' +
       '<div><label class="f">Shipping</label><div style="padding:9px 0"><strong id="rv_shipsum">' + fmt(recvShipBdt()) + '</strong></div></div></div>';
   } else if (s.mode === 'total') {
-    h += '<div class="fields"><div><label class="f" for="rv_shiptot">Shipping paid (TK)</label><input class="i" id="rv_shiptot" inputmode="decimal" value="' +
+    h += '<div class="fields"><div><label class="f" for="rv_shiptot">Shipping only (TK) - not the goods</label><input class="i" id="rv_shiptot" inputmode="decimal" value="' +
       esc(s.total) + '" placeholder="0"></div></div>';
   }
   return h + '</div>';
@@ -24006,7 +24006,9 @@ function viewShipment() {
         '<td class="num">' + fmt(l.revenue) + '</td><td class="num"' + (l.profit < 0 ? ' style="color:var(--critical)"' : '') + '>' + fmt(l.profit) + '</td>' + (d.holdingOn ? '<td class="num">' + fmt(l.holding) + '</td><td class="num"><b>' + fmt(l.net) + '</b></td>' : '') + '</tr>'; }).join('') +
     '</tbody></table></div></div>';
   if (d.extra.length || d.bill) h += '<div class="card" style="margin-top:16px"><div class="chead"><h2>Costs of bringing it in</h2></div><div class="shp-kv">' +
-    d.extra.map(function (x) { return '<div>' + esc(x.label) + '<b>' + esc(d.currency) + ' ' + fmt(x.amount) + '</b></div>'; }).join('') +
+    d.extra.map(function (x) { return '<div' + (x.voided ? ' style="opacity:.55;text-decoration:line-through" title="' + esc(x.voided) + '"' : '') + '>' + esc(x.label) +
+      (!x.voided && x.id && navOn('costs') ? ' <button class="btn small" type="button" data-scvoid="' + esc(x.id) + '" data-sclabel="' + esc(x.label) + '" data-scamt="' + esc(x.amount) + '">Strike out</button>' : '') +
+      '<b>' + esc(d.currency) + ' ' + fmt(x.amount) + '</b></div>'; }).join('') +
     (d.bill ? '<div>Supplier bill (' + esc(d.bill.supplier) + ')<b>' + esc(d.currency) + ' ' + fmt(d.bill.amount) + '</b>' + (d.bill.fx ? '<span class="sku">' + esc(d.bill.fx) + '</span>' : '') + '</div>' : '') + '</div></div>';
   return h;
 }
@@ -24401,6 +24403,18 @@ viewShipment = function () {
   return h + note;
 };
 document.addEventListener('click', function (e) {
+  var sv = e.target.closest && e.target.closest('[data-scvoid]');
+  if (sv) {   // cost-fix-1: a shipment cost typed wrong (the goods total again as the shipping) is struck out; every unit's cost follows
+    fdwDialog('Strike out "' + esc(sv.getAttribute('data-sclabel')) + '" (' + fmt(num(sv.getAttribute('data-scamt'))) + ' TK) on ' + esc(SHP.ref),
+      '<div class="sub">Its share comes off the cost of every unit of this shipment - the ones on the shelf and the ones already sold (their invoices\u2019 profit changes). The row stays, struck out with your reason.</div>' +
+      '<div class="fields"><div><label class="f" for="sc_r">Why</label><input class="i" id="sc_r" placeholder="e.g. the goods total was typed again as shipping"></div></div>',
+      function (back, close) {
+        srv('erpShipmentCostVoid', [{ reference: SHP.ref, id: sv.getAttribute('data-scvoid'), reason: fdwVal(back, 'sc_r') }],
+          function (r) { close(); toast('Struck out: ' + fmt(r.amount) + ' TK off ' + fmt(r.lots) + ' lot(s)' + (r.invoices.length ? ' and ' + r.invoices.length + ' invoice(s): ' + esc(r.invoices.join(', ')) : '') + '.', false, 10000); SHP.one = null; SHP.list = null; CAT = null; repaint(); },
+          function (er) { toast(esc(er && er.message ? er.message : er), true); });
+      });
+    return;
+  }
   if (!e.target.closest || !e.target.closest('[data-lcadd]')) return;
   var opts = (typeof fxAccOpts === 'function') ? fxAccOpts('', 'Paid from…') : '';
   fdwDialog('A bill for ' + SHP.ref + ' after the goods',

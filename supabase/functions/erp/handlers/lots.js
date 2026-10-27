@@ -165,8 +165,8 @@ export async function erpShipment(ctx, payload) {
              unitsIn: num(l.qty_in), unitsLeft: num(l.qty_left), sold: x.sold, other: x.other, revenue: R(x.revenue), cost: R(x.cost), profit: R(x.revenue - x.cost),
              holding, net: R(x.revenue - x.cost) - holding };
   });
-  const extra = opening ? [] : (await ctx.tx`select label, amount, at from shipment_costs where business_id = ${ctx.biz} and reference = ${ref} order by at`)
-    .map((c) => ({ label: str(c.label), amount: R(c.amount) }));
+  const extra = opening ? [] : (await ctx.tx`select id, label, amount, at, voided from shipment_costs where business_id = ${ctx.biz} and reference = ${ref} order by at`)
+    .map((c) => ({ id: c.id, label: str(c.label), amount: R(c.amount), voided: str(c.voided) }));
   const bill = opening ? null : (await ctx.tx`select supplier, amount, fx_amount, fx_currency, fx_rate from supplier_bills
                                                where business_id = ${ctx.biz} and reference = ${ref} limit 1`)[0] || null;
   return { reference: ref, opening, supplier: str(lots[0].supplier), date: formatDate(lots[0].received_at, 'd MMM yyyy, h:mm a'), currency: 'BDT', lines, extra,
@@ -285,6 +285,60 @@ export async function erpLotFundVoid(ctx, payload) {
  * freight does); shared over the shipment's lots by value, weight or units; per lot the units already gone take
  * their part as cost of sales of this month, the units still on the shelf get the rest added to their cost.
  */
+/** cost-fix-1 (27 Oct 2026, owner: "how can a 1,600 TK product cost 6,000?" - the goods total had been typed as the
+ *  shipping too): strike a shipment cost out. Its share comes off every lot of the shipment in proportion to the
+ *  lot's value (exact when the costs were shared by value, which is the usual way), off the draws already made from
+ *  those lots and off the cost fixed on the sale lines they fed - the sale was costed from a slip of the finger,
+ *  not from a real cost. Nothing is deleted: the cost row stays, struck out with the reason. */
+export async function erpShipmentCostVoid(ctx, payload) {
+  payload = payload || {};
+  if (!powerOn(ctx.s, 'costs')) throw new Error('Your account cannot change what goods cost.');
+  const ref = str(payload.reference), id = str(payload.id), reason = str(payload.reason).slice(0, 200);
+  if (!ref || !id) throw new Error('Which cost of which shipment?');
+  if (!reason) throw new Error('Say why it is struck out.');
+  await ctx.tx`select pg_advisory_xact_lock(hashtext(${'stock:' + ctx.biz}))`;
+  const c = (await ctx.tx`select * from shipment_costs where business_id = ${ctx.biz} and reference = ${ref} and id::text = ${id} for update`)[0];
+  if (!c) throw new Error('No such cost on "' + ref + '".');
+  if (str(c.voided)) throw new Error('That cost is already struck out.');
+  const amount = num(c.amount);
+  const lots = await ctx.tx`select id, qty_in, qty_left, coalesce(unit_cost, 0) as unit_cost from stock_lots
+                            where business_id = ${ctx.biz} and reference = ${ref} and source = 'receive' and qty_in > 0 for update`;
+  if (!lots.length) throw new Error('No shipment called "' + ref + '".');
+  const value = lots.reduce((t, l) => t + num(l.unit_cost) * num(l.qty_in), 0);
+  if (!(value > 0)) throw new Error('The lots of this shipment carry no cost to take it off.');
+  const keep = Math.max(0, 1 - amount / value);   // every unit of the shipment keeps this much of its cost
+  const who = str(ctx.s.name) || 'Someone';
+  const changed = [];
+  let offShelf = 0, offSold = 0;
+  for (const l of lots) {
+    const before = num(l.unit_cost), after = round2(before * keep);
+    await ctx.tx`update stock_lots set unit_cost = ${after} where id = ${l.id}`;
+    offShelf += (before - after) * num(l.qty_left);
+    const draws = await ctx.tx`select d.id, d.qty, d.reversed, coalesce(d.unit_cost, 0) as unit_cost, d.movement_id, d.product_id, m.invoice_id
+                               from lot_draws d join stock_movements m on m.id = d.movement_id where d.lot_id = ${l.id}`;
+    for (const d of draws) {
+      const dBefore = num(d.unit_cost), dAfter = round2(dBefore * keep);
+      const nd = await ctx.tx`update lot_draws set unit_cost = ${dAfter} where id = ${d.id}`;
+      if (!nd.count) throw new Error('The draw could not be re-costed.');
+      offSold += (dBefore - dAfter) * Math.max(0, num(d.qty) - num(d.reversed));
+      if (d.invoice_id) {
+        // the sale line's fixed cost = the average of what its draws now say
+        const avg = (await ctx.tx`select sum(d2.qty * coalesce(d2.unit_cost, 0)) / nullif(sum(d2.qty), 0) as c from lot_draws d2 where d2.movement_id = ${d.movement_id}`)[0];
+        if (avg && avg.c !== null) {
+          const n = await ctx.tx`update invoice_lines set unit_cost = ${round2(num(avg.c))} where invoice_id = ${d.invoice_id}
+                                 and (product_id = ${d.product_id} or lower(btrim(sku)) = (select lower(btrim(sku)) from products where id = ${d.product_id}))`;
+          if (!n.count) throw new Error('The sale line could not be re-costed (invoice ' + d.invoice_id + ').');
+          changed.push(d.invoice_id);
+        }
+      }
+    }
+  }
+  await ctx.tx`update shipment_costs set voided = ${'struck out ' + formatDate(ctx.now, 'd MMM yy') + ' by ' + who + ': ' + reason} where id = ${c.id}`;
+  const invoices = (await ctx.tx`select invoice_no from invoices where id = any(${[...new Set(changed)]})`).map((r) => str(r.invoice_no));
+  return { ok: true, reference: ref, label: str(c.label), amount: R(amount), offShelf: R(offShelf), offSold: R(offSold), lots: lots.length, invoices,
+           keptShare: Math.round(keep * 1000) / 10 };
+}
+
 export async function erpShipmentLateCost(ctx, payload) {
   payload = payload || {};
   if (!powerOn(ctx.s, 'costs')) throw new Error('Your account cannot change what goods cost.');
@@ -335,4 +389,4 @@ export async function erpShipmentLateCost(ctx, payload) {
   return { ok: true, reference: ref, amount, soldPart: sold, shelfPart: shelf, split };
 }
 
-export const HANDLERS = { erpShipments, erpShipment, erpLots, erpLotFunding, erpLotFund, erpLotFundVoid, erpShipmentLateCost };
+export const HANDLERS = { erpShipments, erpShipment, erpLots, erpLotFunding, erpLotFund, erpLotFundVoid, erpShipmentLateCost, erpShipmentCostVoid };

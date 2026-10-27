@@ -3206,3 +3206,20 @@ Owner, the second time: "my shareholder cannot see the ERP button; give him acce
   pool's own database functions (start/invite/close a joint month) and the customer-erasure function still say
   "owner" - not changed in this stage.
 - Tests: shareholder_test.mjs (32 checks), settings_test adjusted; users/keys/connection suites green.
+
+## A shipment cost typed wrong: strike it out, and a guard (27 Oct 2026, tag cost-fix-1)
+
+Owner: "a 1,600 TK product - how can it cost 6,000?" Mehedi's local shipment of 27 Oct (74,380 TK, 50 units) had the
+goods total typed again under "Shipping paid on arrival > Type the total", so every unit carried the goods twice
+(3,034 instead of ~1,500) and two invoices showed losses.
+- `erpShipmentCostVoid` (Shipments > a shipment > Costs of bringing it in > **Strike out**, with a reason): the cost
+  row stays, struck out; its share comes off every lot of the shipment in proportion to value, off the draws already
+  made from those lots and off the cost fixed on the sale lines they fed (a slip of the finger is not a real cost).
+  Migration 151 lets lot draws be re-costed (they had no update policy, the correction silently missed them).
+- Guard in `receiveShipment`: shipping and other costs at half the goods or more are asked about first ("CONFIRM:
+  ... typed again?"); labels say "The goods only (TK) - the supplier's bill, without shipping", "Type the shipping
+  amount", "Shipping only (TK) - not the goods".
+- Done on live: the 74,380 "Freight" on "industrial 2 shipment" struck out; 11 lots re-costed (Bambulab 1,523.79,
+  Sunlu 754.02), INV-20261027-2019 and -2020 re-costed. Test costfix_test.mjs (13 checks).
+- NOT done: a cost shared by weight or units at receive comes off by value here (close, not exact); the opening lots
+  cannot be touched this way.

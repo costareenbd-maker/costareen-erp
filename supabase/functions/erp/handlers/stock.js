@@ -478,6 +478,11 @@ export async function receiveShipment(ctx, payload) {
     freightNote = chargeKg + ' kg \u00d7 ' + perKg + ' TK/kg';
   }
   const shipping = round2(freight + extras.reduce((t, c) => t + c.amount, 0));
+  // cost-fix-1: the goods total typed again as the shipping doubled every unit's cost (27 Oct 2026); ask first
+  if (!payload.again && totalBdt > 0 && shipping >= totalBdt * 0.5) {
+    throw new Error('CONFIRM: Shipping and other costs come to ' + Math.round(shipping) + ' TK, against goods of ' + Math.round(totalBdt) +
+      ' TK. Is that right? (The goods total must not be typed again under shipping.) Receive anyway?');
+  }
   if (str(payload.poId) && !(totalBdt > 0)) {   // onway-1: the order written when it was bought carries the goods' prices
     const pl = await ctx.tx`select sku, rmb_unit, rmb_rate from po_lines where business_id = ${ctx.biz} and btrim(po_no) = ${str(payload.poId)}`;
     const px = {};
