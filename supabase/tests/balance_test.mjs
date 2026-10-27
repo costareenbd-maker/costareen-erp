@@ -34,7 +34,7 @@ await owner('erpReceiveShipment', [{ reference: 'BS-2', supplier: SUP, mode: 'bd
 b = await bs();
 check('pay later: owed to suppliers 3,000, still balances', b.owes.find((x) => x.key === 'suppliers').amount === 3000 && Math.abs(b.difference) < 1, b);
 // 4. a freight cost nobody said who paid: stock up, no money down -> a difference, and the reason is listed
-await owner('erpReceiveShipment', [{ reference: 'BS-3', supplier: SUP, mode: 'bdt', totalBdt: 500, payment: 'now', paidFrom: CASH, shippingBdt: 400, lines: [{ sku: PLA, qty: 1 }] }]);
+await owner('erpReceiveShipment', [{ reference: 'BS-3', supplier: SUP, mode: 'bdt', totalBdt: 500, payment: 'now', paidFrom: CASH, shippingBdt: 400, again: true, lines: [{ sku: PLA, qty: 1 }] }]);
 b = await bs();
 check('a freight with no account shows as a difference of 400 with its reason', Math.round(b.difference) === 400 && b.why.some((w) => /shipment costs with no account/.test(w.what) && w.amount === 400), b.difference + ' ' + JSON.stringify(b.why));
 
