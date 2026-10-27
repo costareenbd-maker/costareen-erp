@@ -3183,3 +3183,10 @@ supplier's words), **Our match** (the drop-down, as before), **Differs** (the wo
 not), and two answers: **Yes — the same product** (the old Keep this: the file's name is remembered for that product)
 and **No — a new product** (the Set up product form, filled from the file row, in the joint stock when on that page).
 Own Stock entry gets the same, it is one page. Bangla added. No server change.
+
+## Bigger Bangla on the AI screens (27 Oct 2026, tag ai-bn-1)
+
+Owner: "the Bangla text in AI is very small - make it bigger." In Bangla mode the AI screens (Daily brief, Command
+Center, Leads, Watchdog, Skills, Business Brain) read a size up: body 17px, notes and labels 15-16px, chips 15px,
+headings 21/18px (`#view.ai-view` set by a repaint wrapper; CSS under `html[lang=bn]`). English and every other screen
+are unchanged. No server change.

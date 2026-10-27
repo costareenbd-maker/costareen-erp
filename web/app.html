@@ -40443,5 +40443,33 @@ saveProduct = function () {
 })();
 </script>
 
+<!-- ai-bn-1 (owner 27 Oct 2026: "the Bangla text in AI is very small - make it bigger"): in Bangla the AI screens
+     (Daily brief, Command Center, Leads, Watchdog, Skills, Business Brain) read a size up - Bengali letters sit
+     shorter than Latin ones at the same pixel size, and these screens use 12-13px notes everywhere. -->
+<style>
+html[lang=bn] #view.ai-view { font-size:17px; line-height:1.65; }
+html[lang=bn] #view.ai-view .card, html[lang=bn] #view.ai-view .fd20-card, html[lang=bn] #view.ai-view p, html[lang=bn] #view.ai-view li, html[lang=bn] #view.ai-view td { font-size:17px; }
+html[lang=bn] #view.ai-view .sub, html[lang=bn] #view.ai-view .sku, html[lang=bn] #view.ai-view .en-meta, html[lang=bn] #view.ai-view .en-steps, html[lang=bn] #view.ai-view .en-use,
+html[lang=bn] #view.ai-view .wd-fix, html[lang=bn] #view.ai-view .wd-proof, html[lang=bn] #view.ai-view .wd-now, html[lang=bn] #view.ai-view .br-q, html[lang=bn] #view.ai-view .br-draft,
+html[lang=bn] #view.ai-view .bf-nums, html[lang=bn] #view.ai-view .bf-figs, html[lang=bn] #view.ai-view .bf-pay, html[lang=bn] #view.ai-view .ai-brain, html[lang=bn] #view.ai-view .note,
+html[lang=bn] #view.ai-view .empty, html[lang=bn] #view.ai-view .loading, html[lang=bn] #view.ai-view label, html[lang=bn] #view.ai-view summary, html[lang=bn] #view.ai-view option { font-size:16px; }
+html[lang=bn] #view.ai-view .en-sk, html[lang=bn] #view.ai-view .en-ag, html[lang=bn] #view.ai-view .en-chip, html[lang=bn] #view.ai-view .en-idea, html[lang=bn] #view.ai-view .pill, html[lang=bn] #view.ai-view .ai-t { font-size:15px; }
+html[lang=bn] #view.ai-view .wd-sev { font-size:13px; }
+html[lang=bn] #view.ai-view h2 { font-size:21px; } html[lang=bn] #view.ai-view h3 { font-size:18px; }
+html[lang=bn] #view.ai-view .btn, html[lang=bn] #view.ai-view button, html[lang=bn] #view.ai-view input.i, html[lang=bn] #view.ai-view select.i, html[lang=bn] #view.ai-view textarea.i { font-size:16px; }
+html[lang=bn] #view.ai-view .btn.small, html[lang=bn] #view.ai-view button.small { font-size:15px; }
+</style>
+<script>
+(function () {
+  var AI = { ai: 1, brief: 1, engine: 1, leads: 1, watch: 1, skills: 1, brain: 1 };
+  var repaintAiBn = repaint;
+  repaint = function () {
+    var r = repaintAiBn.apply(this, arguments);
+    try { var v = document.getElementById('view'); if (v) v.classList.toggle('ai-view', !!AI[VIEW]); } catch (e) {}
+    return r;
+  };
+})();
+</script>
+
 </body>
 </html>
