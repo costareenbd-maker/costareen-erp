@@ -30,7 +30,7 @@ const CODE_EXT = /\.(py|js|mjs|cjs|ts|sh|ps1|rb|go|bat|cmd|exe|bin|so|dll)$/i;
 const DANGER = /curl[^\n]{0,120}\|\s*(ba|z)?sh|wget[^\n]{0,120}\|\s*(ba)?sh|rm\s+-rf\s+[\/~]|ignore (all |any )?(the )?(previous|prior|above) instructions|exfiltrat|(send|upload|post)[^\n]{0,60}(password|api[ _-]?key|secret|token|private key)|base64\s+-d[^\n]{0,40}\|\s*(ba)?sh|chmod\s+\+x[^\n]{0,80}&&/i;
 
 async function gate(ctx) {
-  if (!roleAtLeast(ctx.s.role, 'shareholder')) throw new Error('Only the owner or a shareholder installs skills. If you need this, ask the owner to open it for you (Settings > Users).');
+  if (!roleAtLeast(ctx.s.role, 'shareholder')) throw new Error('Only the owner or a shareholder or a shareholder installs skills. If you need this, ask the owner to open it for you (Settings > Users).');
   if (!(await platformAdmin(ctx)) && await appIsOff(ctx.deps, ctx.sql, 'engine', ctx)) throw new Error('The Engine is not open on this ERP yet.');
   await markOn(ctx);
 }
@@ -394,7 +394,7 @@ async function suggestState(ctx) {
   return { items, when: data && data.at ? formatDate(new Date(data.at), 'd MMM, h:mm a') : '', job: job ? { id: job.id, status: job.status } : null };
 }
 async function ensureSuggestSchedule(ctx) {
-  if (ctx.s.role !== 'owner') return;
+  if (!roleAtLeast(ctx.s.role, 'shareholder')) return;
   const { nextRun } = await import('./watchdog.js');
   await ctx.tx`insert into engine_schedules (business_id, agent, title, ask, every, at_time, weekday, key, enabled, next_at, created_by)
                values (${ctx.biz}, 'command', 'Suggest skills', ${suggestAsk()}, 'weekly', '10:00', 1, ${SUGGEST_KEY}, true, ${nextRun({ every: 'weekly', at_time: '10:00', weekday: 1 }, ctx.now)}, 'Skills')

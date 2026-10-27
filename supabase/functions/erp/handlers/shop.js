@@ -104,7 +104,7 @@ export async function shopStatus(ctx) {
 }
 
 export async function erpShopKey(ctx, payload) {
-  if (ctx.s.role !== 'owner') throw new Error('Only the owner manages connections.');
+  if (!roleAtLeast(ctx.s.role, 'shareholder')) throw new Error('Only the owner or a shareholder manages connections.');
   payload = payload || {};
   if (payload.remove) { await setSecret(ctx, 'SHOP_KEY_HASH', ''); return { ...(await shopStatus(ctx)), key: '' }; }
   if (!payload.make) return shopStatus(ctx);

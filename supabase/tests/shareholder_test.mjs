@@ -16,12 +16,23 @@ for (const name of ['erpBrief', 'erpEngine', 'erpWatch', 'erpSkills', 'erpBrain'
   r = await shareholder(name, [{}]);
   check('(fix-7) shareholder opens ' + name, r.ok || !/does not have permission|Only the owner/.test(r.error || ''), r.error);
 }
-for (const name of ['erpUsers', 'erpSecurity', 'erpAccessKeys', 'erpConnections', 'erpAiKeys', 'erpBackupStatus', 'erpRecovery']) {
+// 27 Oct 2026, the owner's second word: users, keys and connections too - the shareholder is the owner's equal
+for (const name of ['erpUsers', 'erpSecurity', 'erpAccessKeys', 'erpConnections', 'erpAiKeys', 'erpBackupStatus']) {
   r = await shareholder(name, [{}]);
-  check('(fix-7) shareholder still cannot open ' + name, !r.ok && /does not have permission|Only the owner/.test(r.error || ''), r.ok ? 'opened!' : r.error);
+  check('(all-1) shareholder opens ' + name, r.ok || !/does not have permission|Only the owner/.test(r.error || ''), r.error);
+}
+for (const name of ['erpRecovery', 'erpRestorePreview', 'erpOwnerChanges', 'erpBusinessDelete']) {
+  r = await shareholder(name, [{}]);
+  check('(all-1) the owner alone keeps: ' + name, !r.ok && /does not have permission|Only the owner|Only its owner/.test(r.error || ''), r.ok ? 'opened!' : r.error);
 }
 r = await shareholder('erpUserPowers', [{ userId: FIX.U.mgr, powers: { act: true } }]);
-check('(fix-7) a shareholder cannot change who may do what', !r.ok, r.ok ? 'opened!' : r.error);
+check('(all-1) a shareholder switches abilities for the staff', r.ok, r.error);
+r = await shareholder('erpUserSet', [{ userId: FIX.U.sales, role: 'manager' }]);
+check('(all-1) a shareholder changes a staff role', r.ok, r.error);
+r = await shareholder('erpUserSet', [{ userId: FIX.U.sales, role: 'owner' }]);
+check('(all-1) ...but cannot make an owner', !r.ok && /Only an owner/.test(r.error || ''), r.ok ? 'opened!' : r.error);
+r = await shareholder('erpUserSet', [{ userId: FIX.U.owner, role: 'manager' }]);
+check('(all-1) ...nor touch an owner', !r.ok && /Only an owner/.test(r.error || ''), r.ok ? 'opened!' : r.error);
 r = await mgr('erpBrief', [{}]);
 check('(fix-7) a manager is told plainly whom to ask', !r.ok && /ask the owner/.test(r.error), r.error);
 

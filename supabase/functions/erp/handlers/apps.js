@@ -178,7 +178,7 @@ export async function erpAppSet(ctx, payload) {
     await ctl(ctx.deps, ctx.sql)`insert into erp_app_flags (key, enabled, updated_at, updated_by) values (${flag}, ${on}, now(), ${ctx.s.userId})
                                   on conflict (key) do update set enabled = excluded.enabled, updated_at = now(), updated_by = excluded.updated_by`;
   } else {
-    if (!ctx.s.role || ctx.s.role !== 'owner') throw new Error('Only an owner changes this company’s menu.');
+    if (!ctx.s.role || !roleAtLeast(ctx.s.role, 'shareholder')) throw new Error('Only the owner or a shareholder changes this company’s menu.');
     if ((await menuOffAll(ctx.deps, ctx.sql))[key]) throw new Error('The provider has switched this screen off for every company.');
     if (key === 'inbox' && !(await hasInboxPlan(ctx.sql, ctx.biz))) {
       if (!(await platformAdmin(ctx))) throw new Error('The Inbox is not in the plan of this company yet - ask the provider.');

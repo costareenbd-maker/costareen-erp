@@ -15,6 +15,7 @@ import { getSecret, setSecret, getConfig, setConfig } from '../lib/ext.js';
 import { formatDate } from '../lib/time.js';
 import { needFeat } from '../lib/inboxplan.js';
 import { chSecretSet, metaSubscribe } from './inboxch.js';
+import { roleAtLeast } from '../allow.js';
 
 const str = (v) => String(v == null ? '' : v).trim();
 const GRAPH = 'https://graph.facebook.com/v21.0';
@@ -24,7 +25,7 @@ export const META_SCOPES = ['pages_show_list', 'pages_manage_metadata', 'pages_m
   'business_management', 'whatsapp_business_management', 'whatsapp_business_messaging', 'ads_read', 'ads_management', 'catalog_management'];
 
 function cfg(deps) { const m = (deps && deps.meta) || {}; return { id: str(m.appId), secret: str(m.appSecret), config: str(m.configId), redirect: str(m.redirect), app: str((deps && deps.google && deps.google.appUrl) || 'https://erp.costareen.com/').replace(/#.*$/, '').replace(/\/+$/, '') }; }
-function needOwner(ctx) { if (ctx.s.role !== 'owner') throw new Error('Only the owner connects Facebook.'); }
+function needOwner(ctx) { if (!roleAtLeast(ctx.s.role, 'shareholder')) throw new Error('Only the owner or a shareholder connects Facebook.'); }
 async function gget(deps, path, token) {
   const f = deps.fetch || fetch;
   const url = (/^https:/.test(path) ? path : GRAPH + path) + (token ? (path.includes('?') ? '&' : '?') + 'access_token=' + encodeURIComponent(token) : '');

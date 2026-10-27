@@ -180,7 +180,7 @@ export async function erpCashBook(ctx, payload) {
 
 // ------------------------------------------------------------ writing
 
-function needOwner(ctx) { if (!roleAtLeast(ctx.s.role, 'shareholder')) throw new Error('Only the owner or a shareholder can change the money accounts.'); }
+function needOwner(ctx) { if (!roleAtLeast(ctx.s.role, 'shareholder')) throw new Error('Only the owner or a shareholder or a shareholder can change the money accounts.'); }
 
 /**
  * First time: the usual accounts and where each payment method lands. Rows

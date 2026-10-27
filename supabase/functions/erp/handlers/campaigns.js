@@ -16,6 +16,7 @@ import { phone11, custKey } from '../lib/phone.js';
 import { getSecret, setSecret, getConfig, httpFetch, saveFile, fileUrl, readFile, findFiles, renderPdf } from '../lib/ext.js';
 import { erpCatalog } from './catalog.js';
 import { erpDues, who } from './money.js';
+import { roleAtLeast } from '../allow.js';
 
 // ---------------------------------------------------------------- constants
 export const ERP_LEAD_DAILY = 30;            // leads messaged in one day, at most
@@ -637,7 +638,7 @@ export async function erpEvoStatus(ctx) {
 
 /** erpEvoSetup (ERP:10078). */
 export async function erpEvoSetup(ctx, payload) {
-  if (ctx.s.role !== 'owner') throw new Error('Only the owner can connect Evolution API.');
+  if (!roleAtLeast(ctx.s.role, 'shareholder')) throw new Error('Only the owner or a shareholder can connect Evolution API.');
   payload = payload || {};
   delete ctx.memo.evoKeys;
   if (payload.clear) {
@@ -656,7 +657,7 @@ export async function erpEvoSetup(ctx, payload) {
 
 /** erpEvoQr (ERP:10134). */
 export async function erpEvoQr(ctx) {
-  if (ctx.s.role !== 'owner') throw new Error('Only the owner can link a WhatsApp number.');
+  if (!roleAtLeast(ctx.s.role, 'shareholder')) throw new Error('Only the owner or a shareholder can link a WhatsApp number.');
   const st = await erpEvoStatus(ctx);
   if (st.connected) return { connected: true };
   const r = await evoCall(ctx, 'GET', '/instance/connect', null);
@@ -668,7 +669,7 @@ export async function erpEvoQr(ctx) {
 
 /** erpEvoLogout (ERP:10148). */
 export async function erpEvoLogout(ctx) {
-  if (ctx.s.role !== 'owner') throw new Error('Only the owner can do that.');
+  if (!roleAtLeast(ctx.s.role, 'shareholder')) throw new Error('Only the owner or a shareholder can do that.');
   await evoCall(ctx, 'DELETE', '/instance/logout', null);
   return erpEvoStatus(ctx);
 }
@@ -929,7 +930,7 @@ function hookBase(ctx) {
 
 /** erpEvoStopHook (ERP:10558). */
 export async function erpEvoStopHook(ctx, payload) {
-  if (ctx.s.role !== 'owner') throw new Error('Only the owner can change this.');
+  if (!roleAtLeast(ctx.s.role, 'shareholder')) throw new Error('Only the owner or a shareholder can change this.');
   const base = hookBase(ctx);
   if (!base) throw new Error('The web address for STOP replies is not known.');
   const on = !(payload && payload.off);

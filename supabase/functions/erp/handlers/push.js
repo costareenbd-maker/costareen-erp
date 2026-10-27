@@ -20,7 +20,7 @@ async function rules(ctx) {
   return out;
 }
 export async function erpPushRulesSave(ctx, payload) {
-  if (!roleAtLeast(ctx.s.role, 'shareholder')) throw new Error('Only the owner or a shareholder changes the rules.');
+  if (!roleAtLeast(ctx.s.role, 'shareholder')) throw new Error('Only the owner or a shareholder or a shareholder changes the rules.');
   const p = payload || {}, out = {};
   for (const k of Object.keys(DEFAULTS)) { const v = num(p[k]); if (!(v >= 0)) throw new Error('Each rule is a number.'); out[k] = v || DEFAULTS[k]; }
   await setConfig(ctx, 'push_rules', JSON.stringify(out));
@@ -106,7 +106,7 @@ const CHANNELS = {
   website: 'a website banner: headline (max 8 words), sub-line (max 15 words), button text',
 };
 export async function erpAdDraft(ctx, payload) {
-  if (!roleAtLeast(ctx.s.role, 'shareholder')) throw new Error('Only the owner or a shareholder writes advertisements.');
+  if (!roleAtLeast(ctx.s.role, 'shareholder')) throw new Error('Only the owner or a shareholder or a shareholder writes advertisements.');
   const p = payload || {}, channel = CHANNELS[str(p.channel)] ? str(p.channel) : 'post';
   if (!(await anyAi(ctx))) throw new Error('The AI writer is not set up on this server (no AI key).');
   const k = 'ai_chat:' + formatDate(ctx.now, 'yyyy-MM-dd'), used = num(await getConfig(ctx, k, '0'));

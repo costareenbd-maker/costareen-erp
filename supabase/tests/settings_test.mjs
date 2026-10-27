@@ -154,8 +154,8 @@ r = await sales('erpAddPerson', [{ name: 'Z', role: 'sales' }]);
 check('sales refused', !r.ok && /does not have permission/.test(r.error), r);
 
 // ---------------------------------------------------------------- AI keys
-r = await shareholder('erpAiKeys', []);
-check('AI keys are owner-only', !r.ok, r);
+r = await mgr('erpAiKeys', []);
+check('AI keys are not for a manager (a shareholder equals the owner, 27 Oct 2026)', !r.ok, r);
 r = await owner('erpAiKeyCreate', [{ name: 'Polok', role: 'manager' }]);
 const fresh = r.ok && r.result.fresh;
 check('key made: czai_ + 48 hex, shown once', fresh && /^czai_[0-9a-f]{48}$/.test(fresh.key) && fresh.name === 'Polok', r);
@@ -223,8 +223,8 @@ const catRow = r.ok && r.result.find((x) => x.part === 'catalog');
 check('self-test: catalog ok with its rows', catRow && catRow.error === '' && catRow.size === 3, catRow);
 
 // ---------------------------------------------------------------- backups
-r = await shareholder('erpBackupStatus', []);
-check('backups are owner-only', !r.ok, r);
+r = await mgr('erpBackupStatus', []);
+check('backups are not for a manager (a shareholder equals the owner, 27 Oct 2026)', !r.ok, r);
 r = await owner('erpBackupStatus', []);
 check('status before any copy', r.ok && r.result.count === 0 && r.result.lastAt === '' && r.result.lastAgeHours === null &&
   r.result.keep === 14 && r.result.timer === false && Array.isArray(r.result.files), r);

@@ -103,7 +103,7 @@ export async function erpSocialBridges(ctx) {
   return { bridges: b.map((x) => ({ id: x.id, service: x.service, name: SERVICES[x.service].name, provider: !!x.provider, free: SERVICES[x.service].free, site: SERVICES[x.service].site, platforms: SERVICES[x.service].platforms, accounts: x.accounts || [], at: x.at })), services: Object.keys(SERVICES).map((k) => ({ key: k, name: SERVICES[k].name, free: SERVICES[k].free, site: SERVICES[k].site })) };
 }
 export async function erpSocialBridgeAdd(ctx, payload) {
-  if (ctx.s.role !== 'owner') throw new Error('Only the owner adds a bridge.');
+  if (!roleAtLeast(ctx.s.role, 'shareholder')) throw new Error('Only the owner or a shareholder adds a bridge.');
   const p = payload || {}, service = str(p.service), key = str(p.key);
   if (!SERVICES[service]) throw new Error('Which service?');
   if (key.length < 10) throw new Error('Paste the API key from the service\'s dashboard.');
@@ -131,7 +131,7 @@ export async function erpSocialBridgeRefresh(ctx, payload) {
 }
 /** Where the owner connects one network to this bridge (the service's own login page for that network). */
 export async function erpSocialBridgeConnect(ctx, payload) {
-  if (ctx.s.role !== 'owner') throw new Error('Only the owner connects an account.');
+  if (!roleAtLeast(ctx.s.role, 'shareholder')) throw new Error('Only the owner or a shareholder connects an account.');
   const b = await list(ctx), x = b.find((y) => y.id === str(payload && payload.id));
   const platform = str(payload && payload.platform);
   if (!x) throw new Error('No such bridge.');
@@ -153,7 +153,7 @@ export async function erpSocialBridgeConnect(ctx, payload) {
   return { url: s.site, note: 'Publora connects accounts on its own site: log in there, connect ' + platform + ', then press Refresh here.' };
 }
 export async function erpSocialBridgeRemove(ctx, payload) {
-  if (ctx.s.role !== 'owner') throw new Error('Only the owner removes a bridge.');
+  if (!roleAtLeast(ctx.s.role, 'shareholder')) throw new Error('Only the owner or a shareholder removes a bridge.');
   const id = str(payload && payload.id);
   const b = await list(ctx), x = b.find((y) => y.id === id);
   if (!x) throw new Error('No such bridge.');

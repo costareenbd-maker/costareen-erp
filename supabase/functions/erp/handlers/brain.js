@@ -39,7 +39,7 @@ const KIND = ['fact', 'event', 'lesson'];
 const when = (t) => (t ? formatDate(new Date(t), 'd MMM yyyy') : '');
 
 async function gate(ctx) {
-  if (!roleAtLeast(ctx.s.role, 'shareholder')) throw new Error('Only the owner or a shareholder sets the Business Brain. If you need this, ask the owner to open it for you (Settings > Users).');
+  if (!roleAtLeast(ctx.s.role, 'shareholder')) throw new Error('Only the owner or a shareholder or a shareholder sets the Business Brain. If you need this, ask the owner to open it for you (Settings > Users).');
   if (!(await platformAdmin(ctx)) && await appIsOff(ctx.deps, ctx.sql, 'engine', ctx)) throw new Error('The Engine is not open on this ERP yet.');
   await (await import('./engine.js')).markOn(ctx);
 }

@@ -157,7 +157,7 @@ async function ownSide(ctx, pool, partner, what) {
 }
 /** The money side of a pool is for its member owners only. */
 function needOwner(ctx, pool) {
-  if (ctx.s.role !== 'owner' || !pool.member) throw new Error('Only the owners of the two companies do this.');
+  if (!roleAtLeast(ctx.s.role, 'shareholder') || !pool.member) throw new Error('Only the owners of the two companies do this.');
 }
 
 /** What is on a pool's shelf, priced for this company. Cost only when asked for (member owners). */
@@ -301,7 +301,7 @@ export async function erpJointAgree(ctx, payload) {
 
 /** For the dashboard card: each pool in one line (member owners only). */
 export async function erpJointCard(ctx) {
-  if (ctx.s.role !== 'owner' || !(await jointOn(ctx))) return { on: false, pools: [] };
+  if (!roleAtLeast(ctx.s.role, 'shareholder') || !(await jointOn(ctx))) return { on: false, pools: [] };
   const out = [];
   for (const pool of await myPools(ctx)) {
     if (!pool.member) continue;
@@ -525,7 +525,7 @@ export async function erpJointReceive(ctx, payload) {
   forget(pctx, 'TXN_LOG');
   return { sku: str(p.sku), qty, unit, cost: avg };
   });
-  if (ctx.s.role !== 'owner') delete got.cost;   // joint-fix-4: the new average cost is the owners' to see
+  if (!roleAtLeast(ctx.s.role, 'shareholder')) delete got.cost;   // joint-fix-4: the new average cost is the owners' to see
   return { ...(await erpJoint(ctx, { pool: pool.id })), received: got };
 }
 
@@ -788,7 +788,7 @@ export async function poolsWithSku(ctx, sku) {
   if (!(await jointOn(ctx))) return [];
   const out = [];
   for (const pool of await myPools(ctx)) {
-    if (!pool.member || ctx.s.role !== 'owner') continue;
+    if (!pool.member || !roleAtLeast(ctx.s.role, 'shareholder')) continue;
     try {
       const r = await withPool(ctx, pool, async (pctx) => (await pctx.tx`select coalesce(ps.stock, 0) as stock from products p left join product_stock ps on ps.product_id = p.id where p.business_id = ${pool.id} and lower(btrim(p.sku)) = ${str(sku).toLowerCase()} limit 1`)[0]);
       if (r) out.push({ id: pool.id, name: pool.name, stock: num(r.stock) });
@@ -882,7 +882,7 @@ export function floorCheck(ctx, lines) {
     if (!(l.floor > 0) || !(l.qty > 0)) continue;
     const net = (l.qty * l.unit - l.disc) / l.qty;
     if (net >= l.floor - 0.005) continue;
-    if (ctx.s.role !== 'owner') {
+    if (!roleAtLeast(ctx.s.role, 'shareholder')) {
       throw new Error(l.name + ': ' + (Math.round(net * 100) / 100) + ' each is below the floor price of ' + l.floor +
         ' agreed for joint stock. Only the owner can go below it.');
     }

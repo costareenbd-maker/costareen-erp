@@ -145,7 +145,7 @@ export async function erpPixel(ctx) {
   return { ...S, token: tok.from, last: { at: last.at ? formatDate(new Date(last.at), 'd MMM, h:mm a') : '', sent: num(last.sent), error: str(last.error) }, counts: c };
 }
 export async function erpPixelSet(ctx, payload) {
-  if (ctx.s.role !== 'owner') throw new Error('Only the owner sets the pixel.');
+  if (!roleAtLeast(ctx.s.role, 'shareholder')) throw new Error('Only the owner or a shareholder sets the pixel.');
   const p = payload || {}, old = await settings(ctx);
   const pixel = p.pixel !== undefined ? str(p.pixel).replace(/[^0-9]/g, '') : old.pixel;
   if (p.pixel !== undefined && pixel && !/^\d{10,20}$/.test(pixel)) throw new Error('The pixel id is the long number in Events Manager (15-16 digits).');
@@ -156,7 +156,7 @@ export async function erpPixelSet(ctx, payload) {
   return erpPixel(ctx);
 }
 export async function erpPixelTest(ctx) {
-  if (ctx.s.role !== 'owner') throw new Error('Only the owner sends a test.');
+  if (!roleAtLeast(ctx.s.role, 'shareholder')) throw new Error('Only the owner or a shareholder sends a test.');
   const S = await settings(ctx), tok = await tokenOf(ctx);
   if (!S.pixel) throw new Error('Type the pixel id first.');
   if (!tok.token) throw new Error('Paste the Conversions API access token (or connect Facebook).');

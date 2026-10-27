@@ -20,6 +20,7 @@
 import { getSecret, setSecret, getConfig, setConfig, readFile, fileUrl } from '../lib/ext.js';
 import { formatDate, num } from '../lib/time.js';
 import { bridgeFor, bridgePublish, bridgeStatus, bridgedPlatforms } from './bridges.js';
+import { roleAtLeast } from '../allow.js';
 
 const str = (v) => String(v == null ? '' : v).trim();
 const form = (o) => Object.entries(o).map(([k, v]) => encodeURIComponent(k) + '=' + encodeURIComponent(v)).join('&');
@@ -73,7 +74,7 @@ export async function erpSocialNet(ctx) {
 
 // ------------------------------------------------------------------ connecting
 export async function erpSocialNetStart(ctx, payload) {
-  if (ctx.s.role !== 'owner') throw new Error('Only the owner connects an account.');
+  if (!roleAtLeast(ctx.s.role, 'shareholder')) throw new Error('Only the owner or a shareholder connects an account.');
   const key = str(payload && payload.key), p = PLATFORMS[key];
   if (!p || p.via !== 'oauth') throw new Error('That network has no login page here.');
   const c = cfg(ctx.deps, key);
@@ -170,7 +171,7 @@ export async function socialNetCallback(deps, query, withBusiness) {
 
 /** Telegram: no login page - a bot token (from @BotFather) and the channel the bot is an admin of. The token is checked and sealed. */
 export async function erpSocialNetToken(ctx, payload) {
-  if (ctx.s.role !== 'owner') throw new Error('Only the owner connects an account.');
+  if (!roleAtLeast(ctx.s.role, 'shareholder')) throw new Error('Only the owner or a shareholder connects an account.');
   const p = payload || {}, key = str(p.key);
   if (key !== 'telegram') throw new Error('Only Telegram is connected with a token.');
   const token = str(p.token), chat = str(p.chat);
@@ -187,7 +188,7 @@ export async function erpSocialNetToken(ctx, payload) {
 }
 
 export async function erpSocialNetOff(ctx, payload) {
-  if (ctx.s.role !== 'owner') throw new Error('Only the owner disconnects an account.');
+  if (!roleAtLeast(ctx.s.role, 'shareholder')) throw new Error('Only the owner or a shareholder disconnects an account.');
   const key = str(payload && payload.key);
   if (!PLATFORMS[key]) throw new Error('Which network?');
   await setSecret(ctx, 'SOCIAL_' + key.toUpperCase() + '_TOKEN', ''); await setSecret(ctx, 'SOCIAL_' + key.toUpperCase() + '_REFRESH', '');

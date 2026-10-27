@@ -206,7 +206,7 @@ async function reconDone(ctx) {
 
 /** erpCourierSetKeys (ERP:5951) */
 export async function erpCourierSetKeys(ctx, payload) {
-  if (ctx.s.role !== 'owner') throw new Error('Only the owner can change the courier keys.');
+  if (!roleAtLeast(ctx.s.role, 'shareholder')) throw new Error('Only the owner or a shareholder can change the courier keys.');
   payload = payload || {};
   const key = str(payload.apiKey), secret = str(payload.apiSecret);
   if (payload.clear) {

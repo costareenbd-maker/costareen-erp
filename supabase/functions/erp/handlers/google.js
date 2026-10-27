@@ -15,6 +15,7 @@
 
 import { formatDate } from '../lib/time.js';
 import { getSecret, setSecret, getConfig, setConfig } from '../lib/ext.js';
+import { roleAtLeast } from '../allow.js';
 
 const str = (v) => String(v == null ? '' : v).trim();
 const SCOPE = 'https://www.googleapis.com/auth/drive.file openid email';
@@ -24,7 +25,7 @@ function cfg(deps) {
   const g = (deps && deps.google) || {};
   return { id: str(g.clientId), secret: str(g.clientSecret), redirect: str(g.redirect), app: str(g.appUrl) || 'https://erp.costareen.com/' };
 }
-function needOwner(ctx) { if (ctx.s.role !== 'owner') throw new Error('Only the owner connects Google.'); }
+function needOwner(ctx) { if (!roleAtLeast(ctx.s.role, 'shareholder')) throw new Error('Only the owner or a shareholder connects Google.'); }
 export async function gfetch(deps, url, opts) {
   const f = (deps && deps.fetch) || globalThis.fetch;
   const r = await f(url, opts);

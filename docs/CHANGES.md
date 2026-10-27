@@ -3190,3 +3190,19 @@ Owner: "the Bangla text in AI is very small - make it bigger." In Bangla mode th
 Center, Leads, Watchdog, Skills, Business Brain) read a size up: body 17px, notes and labels 15-16px, chips 15px,
 headings 21/18px (`#view.ai-view` set by a repaint wrapper; CSS under `html[lang=bn]`). English and every other screen
 are unchanged. No server change.
+
+## A shareholder is the owner's equal (27 Oct 2026, tag all-1)
+
+Owner, the second time: "my shareholder cannot see the ERP button; give him access to everything." Two things:
+- The AI menu stayed hidden for a shareholder because the page rebuilt `ME.apps.off` from the Apps list using the
+  provider's switch alone (`a.on`); it now also honours `openHere` (open to this business's shareholders). The server
+  side (hello, erpApps, appIsOff) was already right.
+- Everything else opened too: allow.js has 70 more calls at 'shareholder' (users, abilities, security, access keys, AI
+  keys, every connection - Google, Meta, WhatsApp, courier, website, social; backups; joint settings), the handler
+  gates and 82 page gates follow (`pageTop()` = owner or shareholder), migration 150 opens the row security
+  (memberships, site/google connections, AI keys, activity log, investor links, erasures, pool invites) and rewrites
+  `erp_set_member`. A shareholder may not make or touch an owner (users.js + the function refuse), delete the business,
+  change the owner, use the owner's recovery, or go back to a backup; the provider's calls stay the provider's. The
+  pool's own database functions (start/invite/close a joint month) and the customer-erasure function still say
+  "owner" - not changed in this stage.
+- Tests: shareholder_test.mjs (32 checks), settings_test adjusted; users/keys/connection suites green.

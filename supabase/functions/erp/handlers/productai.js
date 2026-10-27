@@ -47,7 +47,7 @@ export async function erpProductFields(ctx) {
 }
 
 export async function erpProductFieldsSave(ctx, payload) {
-  if (!roleAtLeast(ctx.s.role, 'shareholder')) throw new Error('Only the owner or a shareholder chooses the product details.');
+  if (!roleAtLeast(ctx.s.role, 'shareholder')) throw new Error('Only the owner or a shareholder or a shareholder chooses the product details.');
   payload = payload || {};
   const kind = FIELD_PRESETS[str(payload.kind)] ? str(payload.kind) : 'custom';
   let fields = Array.isArray(payload.fields) ? payload.fields.map((f) => str(f && (f.label || f))).filter(Boolean) : [];

@@ -128,7 +128,7 @@ async function learnText(ctx) {
 export async function writerContext(ctx) { return [await rulesText(ctx), await learnText(ctx)].filter(Boolean).join('\n'); }
 /** The owner's Pexels key for stock b-roll (free at pexels.com/api). Stored sealed; never shown back. */
 export async function erpSocialPexels(ctx, payload) {
-  if (ctx.s.role !== 'owner') throw new Error('Only the owner sets the stock-footage key.');
+  if (!roleAtLeast(ctx.s.role, 'shareholder')) throw new Error('Only the owner or a shareholder sets the stock-footage key.');
   const k = str(payload && payload.key);
   if (k === '') { await setSecret(ctx, 'PEXELS_KEY', ''); return { ok: true, pexels: false }; }
   const res = await (ctx.deps.fetch || fetch)('https://api.pexels.com/videos/search?query=printer&per_page=1', { headers: { Authorization: k } });
@@ -506,7 +506,7 @@ export async function erpSocialWebPhotos(ctx) {
 
 /** Owner: which image models this key can use (to fix IMAGE_MODELS when Google renames them). */
 export async function erpSocialAiModels(ctx) {
-  if (ctx.s.role !== 'owner') throw new Error('Owner only.');
+  if (!roleAtLeast(ctx.s.role, 'shareholder')) throw new Error('Owner only.');
   const key = (await aiKey(ctx)).key; if (!key) throw new Error('No AI key.');
   const res = await (ctx.deps.fetch || fetch)('https://generativelanguage.googleapis.com/v1beta/models?pageSize=200&key=' + encodeURIComponent(key));
   const j = JSON.parse(await res.text());

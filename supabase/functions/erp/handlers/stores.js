@@ -198,7 +198,7 @@ export async function storePrices(ctx, mode, opts) {
 
 export async function erpWebPrices(ctx, payload) {
   payload = payload || {};
-  if (!roleAtLeast(ctx.s.role, 'shareholder')) throw new Error('Only the owner or a shareholder changes the website\u2019s prices.');
+  if (!roleAtLeast(ctx.s.role, 'shareholder')) throw new Error('Only the owner or a shareholder or a shareholder changes the website\u2019s prices.');
   const kind = await storeKind(ctx);
   if (kind !== 'woo' && kind !== 'shopify') throw new Error('Prices go out through a WooCommerce or Shopify connection (Settings \u2192 Connections \u2192 Website).');
   const apply = payload.mode === 'apply';
@@ -210,7 +210,7 @@ export async function erpWebPrices(ctx, payload) {
 }
 
 export async function erpWebPriceSync(ctx, payload) {
-  if (!roleAtLeast(ctx.s.role, 'shareholder')) throw new Error('Only the owner or a shareholder changes the website\u2019s prices.');
+  if (!roleAtLeast(ctx.s.role, 'shareholder')) throw new Error('Only the owner or a shareholder or a shareholder changes the website\u2019s prices.');
   const on = !!(payload && payload.on);
   await setConfig(ctx, 'website_price_sync', on ? '1' : '0');
   return { ok: true, sync: on };

@@ -12,6 +12,7 @@ import { num, formatDate } from '../lib/time.js';
 import { limit } from './passport.js';
 import { investorReturns } from './returns.js';
 import { erpLotFunding } from './lots.js';
+import { roleAtLeast } from '../allow.js';
 
 const enc = new TextEncoder();
 async function sha256hex(s) { const b = await crypto.subtle.digest('SHA-256', enc.encode(s)); return [...new Uint8Array(b)].map((x) => x.toString(16).padStart(2, '0')).join(''); }
@@ -32,7 +33,7 @@ export async function erpInvestorLink(ctx, payload) {
     const h = (await ctx.tx`select kind, name from capital_holders where business_id = ${ctx.biz} and holder_no = ${String((payload && payload.holder) || '')}`)[0];
     if (h && String(h.kind) !== 'investor') throw new Error(String(h.name) + ' is a shareholder: the investor page shows an investor\u2019s money and returns, so it is not made for a shareholder.');   // fix-5 L7
   }
-  if (ctx.s.role !== 'owner') throw new Error('Only the owner makes an investor’s page.');
+  if (!roleAtLeast(ctx.s.role, 'shareholder')) throw new Error('Only the owner or a shareholder makes an investor’s page.');
   const h = await holder(ctx, str(payload && payload.holder));
   if (!h) throw new Error('Choose someone from Capital.');
   const token = secret(18), code = code8();
@@ -47,7 +48,7 @@ export async function erpInvestorLink(ctx, payload) {
 }
 
 export async function erpInvestorLinkOff(ctx, payload) {
-  if (ctx.s.role !== 'owner') throw new Error('Only the owner changes an investor’s page.');
+  if (!roleAtLeast(ctx.s.role, 'shareholder')) throw new Error('Only the owner or a shareholder changes an investor’s page.');
   const r = await ctx.tx`update investor_links set revoked_at = now() where business_id = ${ctx.biz} and holder_no = ${str(payload && payload.holder)} and revoked_at is null returning id`;
   return { ok: true, off: r.length };
 }

@@ -14,7 +14,7 @@ import { roleAtLeast } from '../allow.js';
 
 const str = (v) => String(v == null ? '' : v).trim();
 const money = (n) => '৳' + Math.round(num(n)).toLocaleString('en-US');
-function needOwner(ctx) { if (!roleAtLeast(ctx.s.role, 'shareholder')) throw new Error('Only the owner or a shareholder runs the creator programme.'); }
+function needOwner(ctx) { if (!roleAtLeast(ctx.s.role, 'shareholder')) throw new Error('Only the owner or a shareholder or a shareholder runs the creator programme.'); }
 function monthOf(ctx, m) {
   const s = str(m);
   if (/^\d{4}-\d{2}$/.test(s)) return s;

@@ -115,7 +115,7 @@ async function keep(ctx, row) {
 
 export async function erpSiteRead(ctx, payload) {
   await needFeat(ctx, 'knowledge');
-  if (!roleAtLeast(ctx.s.role, 'shareholder')) throw new Error('Only the owner or a shareholder reads the website for the AI.');
+  if (!roleAtLeast(ctx.s.role, 'shareholder')) throw new Error('Only the owner or a shareholder or a shareholder reads the website for the AI.');
   let start = str(payload && payload.url) || str(await getConfig(ctx, 'site_url', ''));
   if (start && !/^https?:\/\//i.test(start)) start = 'https://' + start;
   const home = canon(start);
@@ -232,7 +232,7 @@ export async function erpSitePages(ctx) {
 
 export async function erpSitePageAct(ctx, payload) {
   payload = payload || {};
-  if (!roleAtLeast(ctx.s.role, 'shareholder')) throw new Error('Only the owner or a shareholder decides what the AI learns.');
+  if (!roleAtLeast(ctx.s.role, 'shareholder')) throw new Error('Only the owner or a shareholder or a shareholder decides what the AI learns.');
   const ids = (Array.isArray(payload.ids) ? payload.ids : [payload.id]).map(str).filter((x) => /^[0-9a-f-]{36}$/i.test(x)).slice(0, 300);
   const action = str(payload.action);
   if (!['add', 'skip', 'draft'].includes(action)) throw new Error('Add, skip or put back?');

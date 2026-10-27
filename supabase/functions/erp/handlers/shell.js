@@ -26,7 +26,7 @@ export async function erpSetTheme(ctx, t) {
 export async function erpBusinesses(ctx) {
   // joint stocks are not in the menu (joint-fix-1): they open from Joint stock
   const list = ctx.s.memberships.filter((m) => !m.is_pool || ctx.s.memberships.every((x) => x.is_pool)).map((m) => ({ id: m.business_id, name: m.name, pool: !!m.is_pool }));
-  const canAdd = roleAtLeast(ctx.s.role, 'owner');
+  const canAdd = roleAtLeast(ctx.s.role, 'shareholder');
   let look;
   try { look = await ctx.tx.savepoint(() => ctx.tx`select look, lang, fd from erp_prefs where user_id = ${ctx.s.userId}`); }
   catch (_) { look = await ctx.tx`select look, lang from erp_prefs where user_id = ${ctx.s.userId}`; }   // before 118
@@ -114,7 +114,7 @@ export async function erpBnWords(ctx, payload) {
 export async function erpDocLang(ctx, lang) {
   const { getConfig, setConfig } = await import('../lib/ext.js');
   if (lang === undefined || lang === null || lang === '') return { lang: (String(await getConfig(ctx, 'doc_lang', 'en')) || 'en') === 'bn' ? 'bn' : 'en' };
-  if (!roleAtLeast(ctx.s.role, 'shareholder')) throw new Error('Only the owner or a shareholder can do that.');
+  if (!roleAtLeast(ctx.s.role, 'shareholder')) throw new Error('Only the owner or a shareholder or a shareholder can do that.');
   const v = String(lang).trim().toLowerCase();
   if (v !== 'en' && v !== 'bn') throw new Error('That language is not offered.');
   await setConfig(ctx, 'doc_lang', v);
@@ -193,7 +193,7 @@ export async function erpGame(ctx) {
 /** Owner: {who: owner|all|none}. */
 export async function erpGameSet(ctx, payload) {
   const { setConfig } = await import('../lib/ext.js');
-  if (!roleAtLeast(ctx.s.role, 'shareholder')) throw new Error('Only the owner or a shareholder decides who sees the game.');
+  if (!roleAtLeast(ctx.s.role, 'shareholder')) throw new Error('Only the owner or a shareholder or a shareholder decides who sees the game.');
   const who = String(payload && payload.who || '');
   if (!GAME_WHO.includes(who)) throw new Error('Everyone, only the owner, or nobody?');
   await setConfig(ctx, 'game_who', who);
@@ -244,7 +244,7 @@ export async function erpFighters(ctx) {
 /** Owner: the whole list, checked piece by piece (who made each one is kept by id). */
 export async function erpFightersSet(ctx, payload) {
   const { setConfig } = await import('../lib/ext.js');
-  if (!roleAtLeast(ctx.s.role, 'shareholder')) throw new Error('Only the owner or a shareholder changes the fighters.');
+  if (!roleAtLeast(ctx.s.role, 'shareholder')) throw new Error('Only the owner or a shareholder or a shareholder changes the fighters.');
   const src = payload && payload.fighters;
   if (!Array.isArray(src) || src.length > FIGHT_MAX) throw new Error('Up to ' + FIGHT_MAX + ' fighters.');
   const old = await fightersRaw(ctx), byId = new Map(old.map((f) => [f.id, f]));
@@ -261,7 +261,7 @@ export async function erpFightersSet(ctx, payload) {
 export async function erpFighterMine(ctx, payload) {
   const { setConfig } = await import('../lib/ext.js');
   const p = payload || {}, other = !!p.other;
-  if (other && !roleAtLeast(ctx.s.role, 'shareholder')) throw new Error('Only the owner or a shareholder adds a fighter for someone else. Make your own with your own photo.');
+  if (other && !roleAtLeast(ctx.s.role, 'shareholder')) throw new Error('Only the owner or a shareholder or a shareholder adds a fighter for someone else. Make your own with your own photo.');
   if (!p.stats) throw new Error('The fighter needs abilities.');
   const c = cleanFighter(p, 0);
   const list = await fightersRaw(ctx);

@@ -14,11 +14,12 @@ import { getSecret, setSecret, getConfig, setConfig, httpFetch } from '../lib/ex
 import { erpCourierTest } from './courier.js';
 import { erpEvoStatus } from './campaigns.js';
 import { storeTest } from './stores.js';
+import { roleAtLeast } from '../allow.js';
 
 const str = (v) => String(v == null ? '' : v).trim();
 export const WEBSITE_DEFAULT = 'https://costareen.com/wp-json/cz/v1';
 
-function needOwner(ctx) { if (ctx.s.role !== 'owner') throw new Error('Only the owner manages connections.'); }
+function needOwner(ctx) { if (!roleAtLeast(ctx.s.role, 'shareholder')) throw new Error('Only the owner or a shareholder manages connections.'); }
 
 const KINDS = { plugin: 'WordPress sync plugin', woo: 'WooCommerce', shopify: 'Shopify' };
 

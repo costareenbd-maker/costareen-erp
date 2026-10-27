@@ -63,7 +63,7 @@ export async function scopeOf(ctx) {
   const m = ctx.memo || (ctx.memo = {});
   if (m.inboxScope) return m.inboxScope;
   const sc = { channels: null, hears: null };
-  if (ctx.s.role !== 'owner' && ctx.s.userId && await feat(ctx, 'groups')) {
+  if (!roleAtLeast(ctx.s.role, 'shareholder') && ctx.s.userId && await feat(ctx, 'groups')) {
     try {
       const a = (await ctx.tx`select channels from inbox_access where business_id = ${ctx.biz} and user_id = ${ctx.s.userId}`)[0];
       if (a) sc.channels = (a.channels || []).map(String);

@@ -255,7 +255,7 @@ export async function erpOrderShieldSet(ctx, payload) {
                  on conflict (business_id, kind, value) do update set reason = excluded.reason`;
   } else if (isId(p.unblock)) await ctx.tx`delete from order_blocks where business_id = ${ctx.biz} and id = ${p.unblock}`;
   else if (p.settings) {
-    if (!roleAtLeast(ctx.s.role, 'shareholder')) throw new Error('Only the owner or a shareholder decides what happens to risky orders.');
+    if (!roleAtLeast(ctx.s.role, 'shareholder')) throw new Error('Only the owner or a shareholder or a shareholder decides what happens to risky orders.');
     const S = { risky: ['warn', 'advance', 'confirm'].includes(p.settings.risky) ? p.settings.risky : 'warn', advanceHow: str(p.settings.advanceHow).slice(0, 160),
                 advanceAmount: Math.max(0, Math.round(num(p.settings.advanceAmount))) };
     if (S.risky === 'advance' && !S.advanceHow) throw new Error('Say how to pay the advance (e.g. bKash 01XXXXXXXXX, send money).');

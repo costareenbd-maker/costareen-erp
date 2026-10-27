@@ -1106,9 +1106,11 @@ function wireDash() {
 var POWER_MIN = { inbox: 1, dash: 3, costs: 2, lists: 2, profit: 3, expenses: 3, stock: 2, suppliers: 2, weborders: 2, campaigns: 2, products: 2, returns: 2, dues: 2 };
 // 15 Oct 2026: the 'act' switch - every action the owner can do, but no figures and no say over people.
 function pageActs() { return !!(ME && (ME.role === 'owner' || (ME.powers && ME.powers.act))); }
+/** 27 Oct 2026: a shareholder is the owner's equal on every screen (the owner's own account and deleting the business apart). */
+function pageTop() { return !!(ME && (ME.role === 'owner' || ME.role === 'shareholder')); }
 function pageCan(id) {
   if (!ME) return false;
-  if (ME.role === 'owner') return true;
+  if (pageTop()) return true;
   if (ME.powers && id in ME.powers) return !!ME.powers[id];
   var rank = { sales: 1, manager: 2, shareholder: 3, owner: 4 }[ME.role] || 0;
   return rank >= (POWER_MIN[id] || 4);
@@ -2610,7 +2612,7 @@ function brandLoad(bizId) {
  * does this; for everyone else the invoice simply uses the logo as it is.
  */
 function brandTrimForPrint(id, full) {
-  if (!ME || !(ME.role === 'owner' || ME.role === 'shareholder' || pageActs())) return;
+  if (!ME || !(pageTop() || pageActs())) return;
   function make(src) {
     imgTrim(src, 700, function (out) {
       if (!out) return;
@@ -2621,7 +2623,7 @@ function brandTrimForPrint(id, full) {
   srv('erpBrandLogo', [{ have: '' }], function (r) { if (r && r.id === id && r.data) make(r.data); }, function () {});
 }
 function brandCardHtml() {
-  var can = ME && (ME.role === 'owner' || ME.role === 'shareholder' || pageActs());
+  var can = ME && (pageTop() || pageActs());
   return '<section><div class="card"><h2>Business logo</h2><div class="sub">One logo for <strong>this business</strong>. It shows in the menu, ' +
     'on invoices, quotations and letterheads. Another business keeps its own.</div>' +
     '<div class="row" style="gap:14px;margin-top:12px;align-items:center;flex-wrap:wrap">' +
@@ -3938,7 +3940,7 @@ function cpTabsHtml() {
 
 /** The WhatsApp connection, opened from the chip. */
 function cpConnHtml() {
-  var s = EVO.status, owner = ME && ME.role === 'owner';
+  var s = EVO.status, owner = pageTop();
   var h = '<section><div class="card"><div class="row" style="align-items:center;gap:10px">' +
     '<h2 style="margin:0;flex:1">WhatsApp connection</h2>';
   if (!s) return h + '<span class="sku">checking…</span></div></div></section>';
@@ -4582,7 +4584,7 @@ var EVO_WARN = 'If your Evolution server is connected by scanning a QR code (Wha
   'WhatsApp can restrict or ban that number, especially for offers sent to many people. Use a second number, not the one you chat with customers on.';
 
 function evoSettingsHtml() {
-  if (!ME || ME.role !== 'owner') return '';
+  if (!pageTop()) return '';
   var s = EVO.status || {};
   return '<section><div class="card"><h2>WhatsApp (Evolution API server)</h2>' +
     '<div class="sub">Your own Evolution API server, for sending campaigns from a number logged in there. Kept for <strong>this business</strong> only; ' +
@@ -4620,7 +4622,7 @@ function evoLinkStart() {
   })(0);
 }
 function wireEvoSettings() {
-  if (!EVO.status && ME && ME.role === 'owner') {
+  if (!EVO.status && pageTop()) {
     EVO.status = {};
     srv('erpEvoStatus', [], function (s) { EVO.status = s; if (VIEW === 'settings') repaint(); }, function () {});
   }
@@ -4722,7 +4724,7 @@ function parcelsChanged() {
  */
 function openCancel(id, customer, paid) {
   var cur = OPT ? OPT.currency : 'BDT';
-  var canRefund = ME && (ME.role === 'owner' || ME.role === 'shareholder' || pageActs());
+  var canRefund = ME && (pageTop() || pageActs());
   var old = document.getElementById('cancelbox');
   if (old && old.parentNode) old.parentNode.removeChild(old);
   var w = document.createElement('div');
@@ -5735,7 +5737,7 @@ function poMattersHtml() {
       }).join('') + '</tbody></table></div></div></div>';
   }
   B.forEach(function (b) {
-    var owner = ME && (ME.role === 'owner' || ME.role === 'shareholder' || pageActs());
+    var owner = ME && (pageTop() || pageActs());
     h += '<div class="note" style="margin-top:12px"><div class="ico">৳</div><div><strong>' + esc(b.supplier) + '</strong> — ' +
       (b.net > 0 ? 'owes you <strong>RMB ' + fmt(b.net) + '</strong>' : b.net < 0 ? 'you owe <strong>RMB ' + fmt(-b.net) + '</strong>' : 'you are even') +
       (b.owesYou && b.youOwe ? ' <span class="sku">(they owe ' + fmt(b.owesYou) + ', you owe ' + fmt(b.youOwe) + ')</span>' : '') +
@@ -9334,7 +9336,7 @@ function viewSettings() {
   var h = setMark('business') + brandCardHtml();
 
   // Courier keys belong to THIS business and are never shown back.
-  if (ME && ME.role === 'owner') {
+  if (pageTop()) {
     var ks = SFKEYS || {};
     h += setMark('security') + securityHtml() + backupCardHtml();
     h += setMark('connections') + aiCardHtml();
@@ -10663,7 +10665,7 @@ function pagesAfterWrite() {
   if (VIEW === 'products' && PRODP.sku) loadProductPage(true);
 }
 
-function pageIsManager() { return !!(ME && (ME.role === 'manager' || ME.role === 'shareholder' || ME.role === 'owner')); }
+function pageIsManager() { return !!(ME && (ME.role === 'manager' || ME.role === 'shareholder' || pageTop())); }
 function moneyRow(label, value, cls) { return '<dt>' + label + '</dt><dd' + (cls ? ' class="' + cls + '"' : '') + '>' + value + '</dd>'; }
 
 function invoicePageHtml() {
@@ -11620,7 +11622,7 @@ var SET_TAB = 'business';
 var SET_TABS = [['business', 'Business'], ['lists', 'Lists'], ['users', 'Users'], ['alerts', 'Alerts'], ['connections', 'Connections'], ['security', 'Security']];
 function setMark(t) { return '<!--tab:' + t + '-->'; }
 function setTabsMine() {
-  var owner = ME && ME.role === 'owner', acts = !owner && pageActs(), mgr = ME && ME.role === 'manager' && !acts;
+  var owner = pageTop(), acts = !owner && pageActs(), mgr = ME && ME.role === 'manager' && !acts;
   // a manager keeps the drop-down lists only; the business itself stays with the owner and shareholders
   return SET_TABS.filter(function (t) { return owner || (mgr || (ME && ME.role === 'sales' && !acts) ? (t[0] === 'lists' && pageCan('lists')) : (t[0] !== 'security' && t[0] !== 'connections' && t[0] !== 'users' && (t[0] !== 'alerts' || (ME && ME.role === 'shareholder')))); });
 }
@@ -11642,7 +11644,7 @@ function settingsPick(h) {
 var PCO = { business: '', ownerName: '', email: '', busy: false };
 var PCO_LINK = null;     // { business, ownerName, url } - shown once, right after the company is made
 function partnerCompanyHtml() {
-  if (!ME || ME.role !== 'owner') return '';
+  if (!pageTop()) return '';
   return '<section><div class="card"><h2>A company for a partner</h2>' +
     (PCO_LINK ? '<div class="note" style="margin-bottom:12px"><div class="ico">\u2713</div><div><strong>\u201c' + esc(PCO_LINK.business) + '\u201d is ready.</strong> ' +
       'This is ' + esc(PCO_LINK.ownerName) + '\u2019s private link. Send it to them and to nobody else \u2014 whoever opens it is the owner of their company. <strong>It is shown only now.</strong>' +
@@ -11747,7 +11749,7 @@ function mfaCardHtml() {
     '<button class="btn primary" type="button" id="mfa_on"' + (MFA.busy ? ' disabled' : '') + '>' + (MFA.busy ? 'Preparing…' : 'Switch it on') + '</button></div></div></section>';
 }
 function securityHtml() {
-  if (!ME || ME.role !== 'owner') return '';
+  if (!pageTop()) return '';
   var h = accessCardHtml();
   h += '<section><div class="card"><h2>Activity</h2><div class="sub">Who opened the app and who changed what, newest first. Kept for 90 days. Looking at a screen is not recorded — only sign-ins and changes.</div>';
   if (SEC_ERR) return h + '<div class="note err"><div class="ico">✕</div><div>' + esc(SEC_ERR) + '</div></div></div></section>';
@@ -11936,7 +11938,7 @@ function custPagerHtml() {
 
 // ------------------------------------------------------------ alerts
 var ALERTS = null, ALERT_OPEN = false;
-function canSeeAlerts() { return !!(ME && (ME.role === 'owner' || ME.role === 'shareholder' || ME.role === 'manager')); }
+function canSeeAlerts() { return !!(ME && (pageTop() || ME.role === 'manager')); }
 function loadAlerts() {
   var b = el('alertBtn');
   if (!canSeeAlerts()) { if (b) b.style.display = 'none'; return; }
@@ -11955,7 +11957,7 @@ function alertPanelHtml() {
     return '<div class="al-item ' + esc(a.level) + '"><span class="dot"></span><div style="flex:1"><div class="t">' + esc(a.title) + '</div>' +
       (a.detail ? '<div class="d">' + esc(a.detail) + '</div>' : '') +
       (a.go ? '<button class="linkbtn" type="button" data-algo="' + esc(a.go) + '" style="font-size:12.5px;margin-top:4px">' + alertGoWord(a.go) + '</button>' : '') + '</div></div>'; }).join('');
-  if (ME && ME.role === 'owner') {
+  if (pageTop()) {
     h += '<div style="margin-top:10px"><button class="btn small" type="button" data-algo="alerts">Choose which alerts…</button></div>';
     h += '<div style="border-top:1px solid var(--ring);margin-top:10px;padding-top:10px"><label class="f" for="al_phone">Also send these to WhatsApp <span class="sku">up to 3 numbers, commas between</span></label>' +
       '<div class="row" style="gap:6px"><input class="i" id="al_phone" inputmode="tel" placeholder="01XXXXXXXXX — empty = off" value="' + esc(ALERTS.phone || '') + '" style="flex:1 1 150px">' +
@@ -12127,7 +12129,7 @@ function accessCardHtml() {
 }
 function wireAccess() {
   if (VIEW !== 'settings' || SET_TAB !== 'security') return;
-  if (!AKEYS && ME && ME.role === 'owner') loadAccessKeys();
+  if (!AKEYS && pageTop()) loadAccessKeys();
   var lb = el('ak_label'); if (lb) lb.addEventListener('input', function () { AKEY_LABEL = lb.value; });
   var nw = el('ak_new');
   if (nw) nw.addEventListener('click', function () {
@@ -13850,7 +13852,7 @@ document.addEventListener('click', function (ev) {
 var SHARED = null, SHARED_BUSY = false, PROD_SCOPE = 'mine', SHARED_Q = '', SHARED_ONLY = false;
 function sharedLoad(force) {
   if (SHARED_BUSY || (SHARED && !force)) return;
-  if (!ME || !(ME.role === 'owner' || ME.role === 'shareholder' || ME.role === 'manager')) { SHARED = { columns: [], rows: [], shared: false }; return; }
+  if (!ME || !(pageTop() || ME.role === 'manager')) { SHARED = { columns: [], rows: [], shared: false }; return; }
   SHARED_BUSY = true;
   srv('erpSharedStock', [], function (r) { SHARED_BUSY = false; SHARED = r; if (VIEW === 'products') repaint(); },
       function () { SHARED_BUSY = false; SHARED = { columns: [], rows: [], shared: false }; });
@@ -14462,7 +14464,7 @@ var viewProductsD3 = viewProducts;
 viewProducts = function () {
   var h = viewProductsD3();
   if ((typeof PRODP !== 'undefined' && PRODP && PRODP.sku) || PROD_SCOPE !== 'mine') return h;
-  if (!ME || !(ME.role === 'owner' || ME.role === 'shareholder' || ME.role === 'manager')) return h;
+  if (!ME || !(pageTop() || ME.role === 'manager')) return h;
   if (FAM.open) return famToolHtml() + h;
   return '<div class="row" style="justify-content:flex-end;margin-bottom:8px"><button class="btn small" type="button" id="fam_open">Colour families\u2026</button></div>' + h;
 };
@@ -14779,7 +14781,7 @@ function serForget(sku) { if (sku) delete SER[sku]; else SER = {}; }
 function serCardHtml() {
   var sku = PRODP.sku, p = PRODP.data, d = SER[sku], mgr = pageCan('stock');
   if (!d) { serLoad(sku); return '<section><div class="card"><h2>Serial numbers and warranty</h2><div class="loading">Reading&hellip;</div></div></section>'; }
-  var sh = ME && (ME.role === 'owner' || ME.role === 'shareholder' || pageActs());
+  var sh = ME && (pageTop() || pageActs());
   var h = '<section><div class="card" data-sercard="' + esc(sku) + '"><h2>Serial numbers and warranty</h2>' +
     '<div class="sub">For printers and other items where each unit has its own number. A sale then names the unit that went out, and the warranty it carries. ' +
     'Changing the warranty here changes it for sales from now on \u2014 units already sold keep what they were sold with.</div>';
@@ -15347,7 +15349,7 @@ wireGate = function () {
 var USR = { data: null, err: '', busy: false, inv: { name: '', email: '', role: 'sales' }, open: '', sess: {} };
 function usrLoad() { srv('erpUsers', [], function (r) { USR.data = r; USR.err = ''; if (VIEW === 'settings') repaint(); }, function (e) { USR.err = (e && e.message) || String(e); if (VIEW === 'settings') repaint(); }); }
 function usrHtml() {
-  if (!ME || ME.role !== 'owner') return '';
+  if (!pageTop()) return '';
   var d = USR.data;
   var h = '<section><div class="card usr"><h2>Users</h2><div class="sub">Everyone who signs in to ' + esc(gateName()) + ': their own e-mail and password, and a role that decides what they see and do. ' +
     'Invite someone and they get an e-mail to choose their password. Switch a person off and nothing opens for them any more; their history keeps their name.</div>';
@@ -15591,7 +15593,7 @@ parcelsChanged = function () { RISK = null; if (parcelsChangedR1) parcelsChanged
 // ---- Settings → Alerts
 var ARULES = null, ARULES_BUSY = false;
 function aRulesHtml() {
-  if (!ME || !(ME.role === 'owner' || ME.role === 'shareholder')) return '';
+  if (!ME || !(pageTop())) return '';
   if (!ARULES) { srv('erpAlertRules', [], function (r) { ARULES = r; if (VIEW === 'settings') repaint(); }, function (e) { toast(esc(e && e.message ? e.message : e), true); }); return '<div class="loading">Reading the alerts&hellip;</div>'; }
   var ed = ARULES.canEdit, dis = ed ? '' : ' disabled';
   var whoOpts = function (sel) { return [['owner', 'Owner only'], ['shareholder', 'Shareholders + owner'], ['manager', 'Managers too']].map(function (o) { return '<option value="' + o[0] + '"' + (o[0] === sel ? ' selected' : '') + '>' + o[1] + '</option>'; }).join(''); };
@@ -15647,7 +15649,7 @@ function connNext(k, st) {
 }
 function connLoad() { srv('erpConnections', [], function (r) { CONN = r; if (VIEW === 'settings') repaint(); }, function (e) { toast(esc(e && e.message ? e.message : e), true); }); }
 function connHtml() {
-  if (!ME || ME.role !== 'owner') return '';
+  if (!pageTop()) return '';
   if (!CONN) { connLoad(); return '<div class="loading">Reading the connections&hellip;</div>'; }
   var c = CONN, items = [['website', 'Website'], ['courier', 'Courier (Steadfast)'], ['whatsapp', 'WhatsApp'], ['email', 'E-mail sending'], ['google', 'Google Drive'], ['meta', 'Facebook (Meta)'], ['ai', 'AI access']];
   var h = '<section><div class="card"><h2>Connections</h2><div class="sub">Every outside service this business uses. Green works; amber needs a step; grey is not connected.</div><div class="conn">' +
@@ -15720,7 +15722,7 @@ document.addEventListener('click', async function (ev) {
 var GDRV = null;
 function gdrvLoad() { srv('erpGoogle', [], function (r) { GDRV = r; if (VIEW === 'settings') repaint(); }, function () { GDRV = { configured: false }; }); }
 function gdrvHtml() {
-  if (!ME || ME.role !== 'owner') return '';
+  if (!pageTop()) return '';
   if (!GDRV) { gdrvLoad(); return ''; }
   var g = GDRV;
   var h = '<section><div class="card"><h2>Google Drive</h2><div class="sub">Every invoice, return, quotation PDF, expense receipt, Excel export and the nightly backup is also copied into your own Google Drive, ' +
@@ -15767,7 +15769,7 @@ function qzKeepPdf(q) {
 <script>
 var GSHEET = null, GSHEET_BUSY = false;
 function gsheetHtml() {
-  if (!ME || ME.role !== 'owner') return '';
+  if (!pageTop()) return '';
   if (!GSHEET) { srv('erpSheet', [], function (r) { GSHEET = r; if (VIEW === 'settings') repaint(); }, function () { GSHEET = { google: false }; }); return ''; }
   var g = GSHEET;
   var h = '<section><div class="card"><h2>Live backup sheet</h2><div class="sub">A Google Sheet in your Drive with every list of the business \u2014 invoices, lines, payments, stock, customers, products, expenses, money, suppliers, capital, serials, repairs \u2014 one tab each. ' +
@@ -15851,7 +15853,7 @@ viewWebOrders = function () {
 };
 
 function doorHtml() {
-  if (!ME || ME.role !== 'owner') return '';
+  if (!pageTop()) return '';
   if (!SHOPKEY) { SHOPKEY = { loading: true }; srv('erpShopKey', [{}], function (r) { SHOPKEY = r; if (VIEW === 'settings') repaint(); }, function () { SHOPKEY = { hasKey: false, door: '' }; }); return ''; }
   if (SHOPKEY.loading) return '';
   var k = SHOPKEY, door = k.door || '';
@@ -16712,7 +16714,7 @@ courierPanel = function () {
 };
 /** The set-up card from Settings, in a window over the page. */
 function cpopHtml(kind) {
-  if (!ME || ME.role !== 'owner') return '<div class="sub" data-c5x="1" style="display:block">Only the owner connects ' + esc(CPOP_NAME[kind]) + '. Ask the owner (Settings \u2192 Connections).</div>';
+  if (!pageTop()) return '<div class="sub" data-c5x="1" style="display:block">Only the owner connects ' + esc(CPOP_NAME[kind]) + '. Ask the owner (Settings \u2192 Connections).</div>';
   var keep = SET_TAB; SET_TAB = 'connections';
   var html = ''; try { html = viewSettings(); } catch (e) { html = ''; }
   SET_TAB = keep;
@@ -17681,7 +17683,7 @@ window.addEventListener('online', function () {
 // Settings -> Business: who sees it; bring it back on this device
 function gameSetHtml() {
   if (!ME || !GAMEP || GAMEP.loading) return '';
-  var own = ME.role === 'owner' || ME.role === 'shareholder', hid = gameHidden();
+  var own = pageTop(), hid = gameHidden();
   if (!own && !GAMEP.on) return '';
   var h = '<section><div class="card"><h2>Games and stick fight</h2><div class="sub">Print Run and Brawl under a new invoice (and while the internet is down), and the stick fight on every page. Each person can switch the stick fight to calm or off here or with the ⚔ button at the bottom right; Esc twice hides it at once. Nothing here takes a key from your work.</div>';
   if (own) h += '<div class="row" style="gap:8px;margin-top:10px;flex-wrap:wrap"><span class="sku">Who sees it</span>' + [['owner', 'Only me'], ['all', 'Everyone'], ['none', 'Nobody']].map(function (o) {
@@ -17804,7 +17806,7 @@ document.addEventListener('click', function (ev) {
 <script>
 var DOCLANG = null;
 function docLangHtml() {
-  if (!ME || !(ME.role === 'owner' || ME.role === 'shareholder')) return '';
+  if (!ME || !(pageTop())) return '';
   if (!DOCLANG) { DOCLANG = { loading: true }; srv('erpDocLang', [''], function (r) { DOCLANG = r; if (VIEW === 'settings') repaint(); }, function () { DOCLANG = { lang: 'en' }; }); return ''; }
   if (DOCLANG.loading) return '';
   var on = DOCLANG.lang;
@@ -19058,7 +19060,7 @@ document.addEventListener('click', function (ev) {
 // ---- inside a company's ERP: Settings > Security shows the provider's connection, the database logins, and every provider check
 var PKEY = null;
 function providerKeyHtml() {
-  if (!ERP_BACKEND || !ME || ME.role !== 'owner') return '';
+  if (!ERP_BACKEND || !pageTop()) return '';
   if (!PKEY) { PKEY = { loading: true }; srv('erpProviderKey', [], function (r) { PKEY = r; if (VIEW === 'settings') repaint(); }, function (e) { PKEY = { error: (e && e.message) || String(e) }; if (VIEW === 'settings') repaint(); }); return ''; }
   if (PKEY.loading || !PKEY.bridged) return '';
   var B = window.ERP_BRAND || {};
@@ -19105,7 +19107,7 @@ function loadMarketMine() {
 }
 function mkAgo(m) { return m < 1 ? 'just now' : m < 60 ? m + ' min ago' : m < 1440 ? Math.round(m / 60) + ' h ago' : Math.round(m / 1440) + ' d ago'; }
 function viewMarket() {
-  var owner = ME && (ME.role === 'owner' || ME.role === 'shareholder');
+  var owner = ME && (pageTop());
   if (!owner && MK.tab === 'mine') MK.tab = 'find';
   var r = MK.res;
   var h = '<section><div class="card"><h2>Market</h2>' +
@@ -19771,7 +19773,7 @@ function fmMine() { return (FIGHTERS || []).filter(function (f) { return f.mine;
 
 function fmPaint() {
   var el = document.getElementById('fmk'); if (!el || !FM) return;
-  var owner = ME && ME.role === 'owner', mine = fmMine(), mv = FM_MOVES.filter(function (m) { return m[0] === FM.move; })[0];
+  var owner = pageTop(), mine = fmMine(), mv = FM_MOVES.filter(function (m) { return m[0] === FM.move; })[0];
   var stat = function (k, t) { return '<span>' + gw(t) + '</span><span class="fmbar"><i style="width:' + (FM.stats[k] * 11.1) + '%"></i></span><b>' + FM.stats[k] + '</b>'; };
   var list = (FIGHTERS || []).map(function (f) {
     var can = owner || f.mine;
@@ -20433,7 +20435,7 @@ function jcatWith(fn, self, args) {
   var probs = window.cartProblems;
   window.cartProblems = function () {
     var p = jcatWith(probs, this, arguments);
-    if (!ME || ME.role === 'owner' || ME.role === 'shareholder') return p;
+    if (!ME || pageTop()) return p;
     CART.forEach(function (l) {
       if (!l.joint || !(l.floor > 0)) return;
       var net = l.price - num(l.discEach);
@@ -20566,11 +20568,11 @@ document.addEventListener('click', async function (ev) {
 
 // ---- the dashboard card (owners): one line per joint stock
 var JCARD = null;
-function jcardLoad() { if (!jtOn() || !ME || !(ME.role === 'owner' || ME.role === 'shareholder')) return; srv('erpJointCard', [], function (r) { JCARD = r; if (VIEW === 'dash') repaint(); }, function () { JCARD = { on: false, pools: [] }; }); }
+function jcardLoad() { if (!jtOn() || !ME || !(pageTop())) return; srv('erpJointCard', [], function (r) { JCARD = r; if (VIEW === 'dash') repaint(); }, function () { JCARD = { on: false, pools: [] }; }); }
 var viewDashJT = viewDash;
 viewDash = function () {
   var h = viewDashJT.apply(this, arguments);
-  if (!jtOn() || !ME || !(ME.role === 'owner' || ME.role === 'shareholder')) return h;
+  if (!jtOn() || !ME || !(pageTop())) return h;
   if (!JCARD) { jcardLoad(); return h; }
   if (!JCARD.pools || !JCARD.pools.length) return h;
   var cur = JCARD.currency || 'BDT';
@@ -21646,7 +21648,7 @@ function viewResell() {
     h += '<div class="sub" data-c5x="1" style="display:block">Each delivered and paid order earns its margin. The supplier pays the month\u2019s total; press Received when the money is in your hands. Your commission is not yet a line in your profit report - note it there by hand.</div>' +
       (d.statements.length ? '<div class="scroll"><table><thead><tr><th>Month</th><th>Supplier</th><th class="num">Orders</th><th class="num">Commission</th><th class="num">Paid</th><th>State</th><th></th></tr></thead><tbody>' + d.statements.map(function (st) {
         return '<tr><td class="nm">' + esc(st.month) + '</td><td>' + esc(st.supplier) + '</td><td class="num">' + fmt(st.orders) + '</td><td class="num">' + fmt(st.margin) + '</td><td class="num">' + fmt(st.paid) + (st.paidAt ? '<br><span class="sku">' + esc(st.paidAt) + (st.paidNote ? ' \u00b7 ' + esc(st.paidNote) : '') + '</span>' : '') + '</td><td>' + (st.status === 'received' ? '<span class="pill ok">received</span>' : st.status === 'paid' ? '<span class="pill">paid - confirm</span>' : '<span class="pill">open</span>') + '</td>' +
-          '<td>' + (st.status === 'paid' && ME && (ME.role === 'owner' || ME.role === 'shareholder') ? '<button class="btn small primary" type="button" data-rzrecv="' + esc(st.id) + '">Received</button>' : '') + '</td></tr>'; }).join('') + '</tbody></table></div>' : '<div class="empty">Nothing earned yet.</div>');
+          '<td>' + (st.status === 'paid' && ME && (pageTop()) ? '<button class="btn small primary" type="button" data-rzrecv="' + esc(st.id) + '">Received</button>' : '') + '</td></tr>'; }).join('') + '</tbody></table></div>' : '<div class="empty">Nothing earned yet.</div>');
   }
   return h + '</div></section>';
 }
@@ -21691,7 +21693,7 @@ function rzsCard() {
       '<td>' + rzPill(o.status) + (o.invoiceNo ? '<br><a href="#" data-rzinv="' + esc(o.invoiceNo) + '">' + esc(o.invoiceNo) + '</a>' : '') + (o.consignment ? '<br><span class="sku">parcel ' + esc(o.consignment) + '</span>' : '') + '</td>' +
       '<td style="white-space:nowrap">' + (o.status === 'placed' ? '<button class="btn small primary" type="button" data-rzs="accept" data-id="' + esc(o.id) + '">Accept &amp; invoice</button> <button class="btn small" type="button" data-rzs="decline" data-id="' + esc(o.id) + '">Decline</button>' : o.status === 'accepted' ? '<button class="btn small" type="button" data-rzs="slip" data-id="' + esc(o.id) + '">Packing slip</button> <button class="btn small primary" type="button" data-rzs="book" data-id="' + esc(o.id) + '">Book parcel</button>' : o.status === 'booked' || o.status === 'delivered' ? '<button class="btn small" type="button" data-rzs="slip" data-id="' + esc(o.id) + '">Packing slip</button>' : '') + '</td></tr>'; }).join('') + '</tbody></table></div>' : '<div class="empty">No reseller orders yet.</div>');
   h += '<h3 style="margin:12px 0 4px">Commission statements</h3>' + (d.statements.length ? '<div class="scroll"><table><thead><tr><th>Month</th><th>Reseller</th><th class="num">Orders</th><th class="num">Commission</th><th class="num">Paid</th><th class="num">Due</th><th></th></tr></thead><tbody>' + d.statements.map(function (st) {
-    return '<tr><td class="nm">' + esc(st.month) + '</td><td>' + esc(st.reseller) + '</td><td class="num">' + fmt(st.orders) + '</td><td class="num">' + fmt(st.margin) + '</td><td class="num">' + fmt(st.paid) + (st.paidAt ? '<br><span class="sku">' + esc(st.paidAt) + '</span>' : '') + '</td><td class="num">' + fmt(st.due) + '</td><td>' + (st.due > 0 && ME && ME.role === 'owner' ? '<button class="btn small primary" type="button" data-rzs="pay" data-id="' + esc(st.linkId) + '" data-month="' + esc(st.month) + '" data-amt="' + st.due + '">Pay \u09f3' + fmt(st.due) + '</button>' : st.status === 'received' ? '<span class="pill ok">received</span>' : st.status === 'paid' ? '<span class="pill">paid</span>' : '') + '</td></tr>'; }).join('') + '</tbody></table></div>' : '<div class="empty">Nothing to settle yet - delivered and paid orders appear here by month.</div>');
+    return '<tr><td class="nm">' + esc(st.month) + '</td><td>' + esc(st.reseller) + '</td><td class="num">' + fmt(st.orders) + '</td><td class="num">' + fmt(st.margin) + '</td><td class="num">' + fmt(st.paid) + (st.paidAt ? '<br><span class="sku">' + esc(st.paidAt) + '</span>' : '') + '</td><td class="num">' + fmt(st.due) + '</td><td>' + (st.due > 0 && pageTop() ? '<button class="btn small primary" type="button" data-rzs="pay" data-id="' + esc(st.linkId) + '" data-month="' + esc(st.month) + '" data-amt="' + st.due + '">Pay \u09f3' + fmt(st.due) + '</button>' : st.status === 'received' ? '<span class="pill ok">received</span>' : st.status === 'paid' ? '<span class="pill">paid</span>' : '') + '</td></tr>'; }).join('') + '</tbody></table></div>' : '<div class="empty">Nothing to settle yet - delivered and paid orders appear here by month.</div>');
   return h + '</div>';
 }
 var mkMineHtmlR9 = mkMineHtml;
@@ -21794,7 +21796,7 @@ function apSyncMe(r) {
   if (!ME) return;
   var hid = {}, gone = {};
   (r.menu || []).forEach(function (m) { if (m.mode === 'owner') hid[m.key] = 1; if (m.mode === 'off') gone[m.key] = 1; });
-  ME.apps = { off: r.apps.filter(function (a) { return !a.on; }).map(function (a) { return a.key; }).concat((r.menu || []).filter(function (m) { return m.forced; }).map(function (m) { return m.key; })), hidden: Object.keys(hid), gone: Object.keys(gone) };
+  ME.apps = { off: r.apps.filter(function (a) { return !(a.on || a.openHere); }).map(function (a) { return a.key; }).concat((r.menu || []).filter(function (m) { return m.forced; }).map(function (m) { return m.key; })), hidden: Object.keys(hid), gone: Object.keys(gone) };
 }
 function apOf(key) { return APPS ? APPS.apps.filter(function (a) { return a.key === key; })[0] : null; }
 function apIcon(key) { var l = AP_LOOK[key] || { c: '#5f6b7a', i: '<circle cx="12" cy="12" r="9"/>' }; return '<svg viewBox="0 0 24 24">' + l.i + '</svg>'; }
@@ -21809,7 +21811,7 @@ applyRole = function () {
     var v = btns[i].getAttribute('data-view');
     btns[i].removeAttribute('data-apphidden');
     if (APPS_CORE[v] || btns[i].style.display === 'none') continue;   // core, or the role / the joint flag already hid it
-    var off = st.off.indexOf(v) >= 0 || st.gone.indexOf(v) >= 0, hid = !!(ME && ME.role !== 'owner') && st.hidden.indexOf(v) >= 0;
+    var off = st.off.indexOf(v) >= 0 || st.gone.indexOf(v) >= 0, hid = !!(ME && !pageTop()) && st.hidden.indexOf(v) >= 0;
     if (off || hid) btns[i].style.display = 'none';
     if (!off && hid) btns[i].setAttribute('data-apphidden', '1');
   }
@@ -21964,7 +21966,7 @@ function apModeSeg(key, mode) {
   }).join('') + '</span>';
 }
 function menuCardHtml() {
-  if (!ME || ME.role !== 'owner') return '';
+  if (!pageTop()) return '';
   if (!APPS) { apLoad(); return '<section><div class="card"><h2>Menu</h2><div class="loading">Loading…</div></div></section>'; }
   // one card (owner 14 Oct 2026): who sees each screen here, and - for the provider only - a switch that takes the
   // screen out of EVERY company's menu (their owners cannot switch it back)
@@ -27495,7 +27497,7 @@ viewCash = function () {
   var nWait = (c.loose || []).length + (c.unassigned || []).length;
   var tabs = [['ledger', 'Ledger', 'wallet'], ['accounts', 'Accounts', 'bank'], ['match', 'Unmatched', 'search', nWait ? String(nWait) : ''], ['cashup', 'Cash-up', 'taka']];
   if (held.length) tabs.push(['held', 'Courier & agent', 'truck']);
-  if (ME && (ME.role === 'owner' || ME.role === 'shareholder')) tabs.push(['balance', 'Balance sheet', 'chart']);
+  if (ME && (pageTop())) tabs.push(['balance', 'Balance sheet', 'chart']);
   f21TabInit('cash', 'ledger', tabs.map(function (t) { return t[0]; }));
   if (CASH_FORM) FD21.tab.cash = 'accounts';
   var out = f21Tabs('cash', tabs);
@@ -27543,7 +27545,7 @@ viewCash = function () {
     hc += '<div class="fd21-row-wrap" style="margin-top:-6px">' + held.map(function (a) { return '<button type="button" class="btn small" data-cacc="' + esc(a.id) + '">Open ' + esc(a.name) + ' statement</button>'; }).join('') + '</div>';
     out += f21Pane('held', 'cash', hc);
   }
-  if (ME && (ME.role === 'owner' || ME.role === 'shareholder')) out += f21Pane('balance', 'cash', bsHtml(cur));
+  if (ME && (pageTop())) out += f21Pane('balance', 'cash', bsHtml(cur));
   return out;
 };
 // any change to the money makes the ledger stale
@@ -28647,7 +28649,7 @@ viewSysCheck = function () {
     it.push(['warn', 'Sales with unknown cost', fmt(H.uncostedThisMonth), 'this month · profit overstated until fixed', H.uncostedThisMonth ? 'warn' : 'good', 'an:unknown']);
     if (H.lastActivity) it.push(['pulse', 'Last change', H.lastActivity.at, 'by ' + H.lastActivity.who, '', '']);
     h += fd22Card({ title: 'Health', icon: 'bolt', sub: 'Live signals the checks depend on', body: '<div class="fd22-health">' + it.map(function (x) {
-      var go = x[5] === 'fd22bk' ? (ME && ME.role === 'owner' && navOn('settings') ? 'data-fd22bkgo="1"' : '') : x[5] === 'an:unknown' ? (navOn('analytics') ? 'data-fd22antab="unknown"' : '') : x[5] && navOn(x[5]) ? 'data-fd22go="' + x[5] + '"' : '';
+      var go = x[5] === 'fd22bk' ? (pageTop() && navOn('settings') ? 'data-fd22bkgo="1"' : '') : x[5] === 'an:unknown' ? (navOn('analytics') ? 'data-fd22antab="unknown"' : '') : x[5] && navOn(x[5]) ? 'data-fd22go="' + x[5] + '"' : '';
       return '<' + (go ? 'button type="button" ' + go : 'div') + ' class="fd22-hi">' + fd22Badge(x[0], x[4] === 'warn' ? 'warn' : x[4] === 'good' ? 'good' : '', 'xs') + '<span class="tx"><small>' + esc(x[1]) + '</small><b>' + esc(x[2]) + '</b><em>' + esc(x[3]) + '</em></span></' + (go ? 'button' : 'div') + '>'; }).join('') + '</div>' });
   }
   h += '<div class="fd22-filter"><label class="fd22-search">' + fd22Ic('search', 18) + '<input type="search" id="fd22_chq" placeholder="Search checks, codes, records…" aria-label="Search checks" value="' + esc(FD22.chkQ) + '"></label>' +
@@ -28737,7 +28739,7 @@ function fd22SettingsLayout(v) {
     sel += '<option value="' + esc(k) + '"' + (on ? ' selected' : '') + '>' + esc(lbl) + '</option>';
   });
   sel += '</select>';
-  if (ME && ME.role === 'owner' && btns.some(function (b) { return b.getAttribute('data-settab') === 'security'; })) {
+  if (pageTop() && btns.some(function (b) { return b.getAttribute('data-settab') === 'security'; })) {
     var sep = document.createElement('div'); sep.className = 'fd22-stsep'; nav.appendChild(sep);
     var bk = document.createElement('button'); bk.type = 'button'; bk.className = 'fd22-sti'; bk.setAttribute('data-fd22bkgo', '1');
     bk.innerHTML = fd22Ic('archive', 18) + '<span>Backup &amp; restore</span>' + '<svg class="go" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + FD22I.arrowR + '</svg>';
@@ -28788,7 +28790,7 @@ function fd22AuditHtml() {
 }
 var securityHtmlFd22 = securityHtml;
 securityHtml = function () {
-  if (!fd22On() || !ME || ME.role !== 'owner') return securityHtmlFd22.apply(this, arguments);
+  if (!fd22On() || !pageTop()) return securityHtmlFd22.apply(this, arguments);
   return (typeof providerKeyHtml === 'function' ? providerKeyHtml() : '') + accessCardHtml() + fd22AuditHtml();
 };
 
@@ -28882,12 +28884,12 @@ viewGuide = function () {
 function fd22Head(v) {
   if (v === 'analytics') return fd22HeadHtml({ title: 'Analytics', help: 'analytics', sub: esc(FD22_NOTE[FD22.tab] || FD22_NOTE.growth) });
   if (v === 'syscheck') return fd22HeadHtml({ title: 'System check', help: 'syscheck', sub: 'The books checked against themselves, every time this screen opens. A repair is always a normal document - nothing is edited behind your back.',
-    actions: (ME && ME.role === 'owner' && navOn('settings') ? fd22Btn('Audit', 'data-fd22audit="1"', 'clip') + fd22Btn('Backup', 'data-fd22bkgo="1"', 'archive') : '') + fd22Btn('Run all now', 'data-fxrecheck="1"', 'refresh', true) });
+    actions: (pageTop() && navOn('settings') ? fd22Btn('Audit', 'data-fd22audit="1"', 'clip') + fd22Btn('Backup', 'data-fd22bkgo="1"', 'archive') : '') + fd22Btn('Run all now', 'data-fxrecheck="1"', 'refresh', true) });
   if (v === 'guide') { var bn = fd22Lang() === 'bn';
     return fd22HeadHtml({ title: bn ? 'সাহায্য' : 'Help', info: 'guide', sub: bn ? 'প্রতিটা কাজের ধাপে ধাপে গাইড, শব্দকোষ আর যা কখনো হয় না' : 'Step-by-step guides for every job, a glossary, and what never happens',
       actions: '<div class="fd22-pills" data-noi18n="1">' + [['en', 'English'], ['bn', 'বাংলা']].map(function (x) { return '<button type="button" class="fd22-pill lg" data-hglang="' + x[0] + '" aria-pressed="' + ((bn ? 'bn' : 'en') === x[0]) + '">' + x[1] + '</button>'; }).join('') + '</div>' }); }
   if (v === 'settings') return fd22HeadHtml({ title: 'Settings', info: 'settings', sub: 'How the ERP works for this business. Every change is written to the activity log with who made it.',
-    actions: ME && ME.role === 'owner' ? fd22Btn('Backup &amp; restore', 'data-fd22bkgo="1"', 'archive') : '' });
+    actions: pageTop() ? fd22Btn('Backup &amp; restore', 'data-fd22bkgo="1"', 'archive') : '' });
   if (v === 'tools') return fd22HeadHtml({ title: 'Maintenance', info: 'tools', sub: 'Checks, imports and repairs. Each job says what it does before it runs.',
     actions: navOn('syscheck') ? fd22Btn('System check', 'data-fd22go="syscheck"', 'shield') : '' });
   return '';
@@ -35666,7 +35668,7 @@ body[data-fdview="settings"] #o_cp .crumbs, body[data-fdview="tools"] #o_cp .cru
   var ICON = '<path d="M4 4h16v12H8l-4 4z"/><path d="M8 9h8M8 12h5"/>';
   // who sees the Inbox: Settings > Business > Menu says Everyone / Only owners / Off; a company without an Inbox plan does not have it (the provider still sees it to try it)
   function ibMode() { var a = (ME && ME.apps) || {}; return (a.gone || []).indexOf('inbox') >= 0 ? 'off' : (a.hidden || []).indexOf('inbox') >= 0 ? 'owner' : (a.off || []).indexOf('inbox') >= 0 ? 'trial' : 'all'; }
-  function ibOn() { if (!ME) return false; if (!pageCan('inbox')) return false; var m = ibMode(); if (m === 'off') return false; if (m === 'owner') return ME.role === 'owner'; if (m === 'trial') return !!ME.platform; return true; }
+  function ibOn() { if (!ME) return false; if (!pageCan('inbox')) return false; var m = ibMode(); if (m === 'off') return false; if (m === 'owner') return pageTop(); if (m === 'trial') return !!ME.platform; return true; }
   window.ibOn = ibOn;
   // the menus this code draws: the Inbox (chats + the AI sales assistant), Leads, Advertisement
   var IBV = { inbox: 'Inbox' };   // Leads and Advertisement come later as their own menus (the owner, 15 Oct)
@@ -35733,7 +35735,7 @@ body[data-fdview="settings"] #o_cp .crumbs, body[data-fdview="tools"] #o_cp .cru
     var n = { inbox: (IB.counts.unread || 0), tasks: (IB.counts.tasks || 0), orders: (IB.orders && IB.orders.counts ? IB.orders.counts.pending : 0), bk: (IB.bk && IB.bk.counts ? IB.bk.counts.requested : 0) };
     return '<div class="fdd-head" style="margin-bottom:10px"><div><h1 class="fdd-title" style="display:flex;gap:10px;align-items:center">' + esc(IBV[VIEW] || 'Inbox') + (ibMode() === 'owner' ? ' <span class="ib-tag test" title="Settings → Business → Menu: only owners see the Inbox">ONLY OWNERS</span>' : ibMode() === 'trial' ? ' <span class="ib-tag test" title="Not in this company plan yet: only you, the provider, see it">ONLY YOU</span>' : '') + '</h1></div>' + (VIEW === 'inbox' ? '<button type="button" class="btn small' + (IB.duty ? ' primary' : '') + '" data-ibduty="1" title="On duty: a sound when a customer waits for a person">' + (IB.duty ? '🔔 On duty' : '🔕 Off duty') + '</button>' : '') + '</div>' +
       budgetNote() +
-      ((MENU_TABS[VIEW] || TABS).length < 2 ? '<div style="height:4px"></div>' : '<div class="ib-tabs" role="tablist">' + (MENU_TABS[VIEW] || TABS).filter(function (t) { return t[0] !== 'leads' && !(t[0] === 'cost' && ME && ME.role !== 'owner') && !(t[0] === 'day' && ME && ME.role !== 'owner' && ME.role !== 'manager') && !(t[0] === 'team' && ME && ME.role !== 'owner' && ME.role !== 'manager') && (!TAB_FEAT[t[0]] || fon(TAB_FEAT[t[0]])); }).map(function (t) {
+      ((MENU_TABS[VIEW] || TABS).length < 2 ? '<div style="height:4px"></div>' : '<div class="ib-tabs" role="tablist">' + (MENU_TABS[VIEW] || TABS).filter(function (t) { return t[0] !== 'leads' && !(t[0] === 'cost' && ME && !pageTop()) && !(t[0] === 'day' && ME && !pageTop() && ME.role !== 'manager') && !(t[0] === 'team' && ME && !pageTop() && ME.role !== 'manager') && (!TAB_FEAT[t[0]] || fon(TAB_FEAT[t[0]])); }).map(function (t) {
         return '<button type="button" data-ibtab="' + t[0] + '" class="' + (IB.tab === t[0] ? 'on' : '') + '">' + esc(t[1]) + (n[t[0]] ? '<span class="n">' + n[t[0]] + '</span>' : '') + '</button>'; }).join('') + '</div>') + inner;
   }
   function paint(keepScroll) {
@@ -35769,9 +35771,9 @@ body[data-fdview="settings"] #o_cp .crumbs, body[data-fdview="tools"] #o_cp .cru
     if (t === 'desk') { if (!IB.desk) load('erpAgentDesk', {}, 'desk'); if (!IB.offers) load('erpShopOffers', {}, 'offers'); if (!IB.saved) load('erpSavedReplies', {}, 'saved'); return frame(deskHtml()); }
     if (t === 'kb') { if (!IB.kb) load('erpInboxKb', {}, 'kb'); return frame(kbHtml()); }
     if (t === 'chans') { if (!IB.chans) load('erpInboxChannels', {}, 'chans'); return frame('<div class="sub" style="margin:0 0 10px">How the AI answers on each channel. Connect a new page, Instagram, WhatsApp number or website chat in <a href="#/settings" data-ibtoconn="1">Settings → Connections</a>.</div>' + chansHtml(false)); }
-    if (t === 'adacc') { if (ME && ME.role === 'owner' && !IB.meta) load('erpMetaConnect', {}, 'meta'); return frame(adAccHtml()); }
+    if (t === 'adacc') { if (pageTop() && !IB.meta) load('erpMetaConnect', {}, 'meta'); return frame(adAccHtml()); }
     if (t === 'stats') { if (!IB.stats) load('erpInboxStats', { days: 7 }, 'stats'); return frame(statsHtml()); }
-    if (t === 'day') { if (ME && ME.role !== 'owner' && ME.role !== 'manager') { IB.tab = 'inbox'; return frame(inboxHtml()); } if (!IB.day) load('erpInboxDigest', { day: IB.dayAt || undefined }, 'day'); return frame(dayHtml()); }
+    if (t === 'day') { if (ME && !pageTop() && ME.role !== 'manager') { IB.tab = 'inbox'; return frame(inboxHtml()); } if (!IB.day) load('erpInboxDigest', { day: IB.dayAt || undefined }, 'day'); return frame(dayHtml()); }
     if (t === 'cost') { if (!IB.cost) load('erpAiWork', {}, 'cost'); return frame(costHtml()); }
     return frame('');
   }
@@ -35902,7 +35904,7 @@ body[data-fdview="settings"] #o_cp .crumbs, body[data-fdview="tools"] #o_cp .cru
     return errOr(IB.orders, function (d) {
       var st = [['pending', 'Pending'], ['hold', 'On hold'], ['today', 'To follow up today'], ['approved', 'Approved'], ['cancelled', 'Cancelled'], ['all', 'All']];
       var h = '<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px"><div class="ib-piles" style="flex:1">' + st.map(function (s) { var n = d.counts[s[0]]; return '<button type="button" data-ibost="' + s[0] + '" class="' + (IB.ostatus === s[0] ? 'on' : '') + '">' + s[1] + (n ? ' · ' + n : '') + '</button>'; }).join('') + '</div>' +
-        '<input class="i" id="ibOq" placeholder="Search order, name, phone" value="' + esc(IB.oq) + '" style="width:220px;max-width:100%">' + (ME && ME.role === 'owner' && fon('exports') ? '<button class="btn small" type="button" data-ibexp="orders">⤓ CSV</button>' : '') + '</div>';
+        '<input class="i" id="ibOq" placeholder="Search order, name, phone" value="' + esc(IB.oq) + '" style="width:220px;max-width:100%">' + (pageTop() && fon('exports') ? '<button class="btn small" type="button" data-ibexp="orders">⤓ CSV</button>' : '') + '</div>';
       if (!d.orders.length) return h + '<div class="ib-c"><div class="ib-empty">No orders here.</div></div>';
       return h + '<div class="ib-grid2">' + d.orders.map(function (o) {
         var items = (o.items || []).map(function (x) { return esc(x.name) + ' × ' + x.qty + ' <span class="sku">' + tk(x.price) + '</span>'; }).join('<br>');
@@ -35975,7 +35977,7 @@ body[data-fdview="settings"] #o_cp .crumbs, body[data-fdview="tools"] #o_cp .cru
     }) + '</div>';
     // the shield
     if (ME && /^(manager|shareholder|owner)$/.test(ME.role)) h += '<div class="ib-c" style="margin-top:14px"><h3>🛡 Fake-order shield</h3><div class="sub">Every order from a chat, a product page or a landing page is checked: the block list, the buyer\'s own parcels with you (returned before?), cancelled orders, a second open order on the same number, many numbers from one internet address, a name or address that cannot be real, a big cash-on-delivery quantity. A blocked number cannot order online.</div>' + errOr(IB.shield, function (d) {
-      var S = d.settings || { risky: 'warn' }, own = ME && ME.role === 'owner';
+      var S = d.settings || { risky: 'warn' }, own = pageTop();
       var x = '<div style="margin-top:10px"><b>When an order looks RISKY</b><div class="sub" style="margin:2px 0 6px">Nobody is refused for one bad delivery: only a number you block is stopped online. Our own faults never count; old returns fade after 6 months and are forgotten after a year; good deliveries since then count for the customer.</div>' +
         [['warn', 'Take it, just mark it RISKY'], ['advance', 'Ask an advance first (the order waits on hold)'], ['confirm', 'Hold it until we call and confirm']].map(function (o) {
           return '<label style="display:block;font-size:14px;margin:3px 0"><input type="radio" name="shRisky" value="' + o[0] + '"' + (S.risky === o[0] ? ' checked' : '') + (own ? '' : ' disabled') + '> ' + o[1] + '</label>'; }).join('') +
@@ -35989,7 +35991,7 @@ body[data-fdview="settings"] #o_cp .crumbs, body[data-fdview="tools"] #o_cp .cru
       return x;
     }) + '</div>';
     if (ME && /^(manager|shareholder|owner)$/.test(ME.role)) h += '<div class="ib-c" style="margin-top:14px"><h3>📈 Meta pixel — only real orders</h3><div class="sub">A fake or cancelled order sent to Meta as a Purchase teaches your ads to find more people like it. Here the page sends only Lead when someone orders; Purchase goes from our server when the order is delivered (or approved), never for a cancelled, returned or RISKY order; a return after a Purchase sends "OrderReturned" so you can leave returners out of audiences.</div>' + errOr(IB.pixel, function (d) {
-      var own = ME && ME.role === 'owner', dis = own ? '' : ' disabled';
+      var own = pageTop(), dis = own ? '' : ' disabled';
       var c = d.counts || {};
       var x = '<div class="ib-form" style="margin-top:8px"><label>Pixel id<input class="i" id="pxId" inputmode="numeric" value="' + esc(d.pixel || '') + '" placeholder="from Events Manager"' + dis + '></label>' +
         '<label>Conversions API token ' + (d.token === 'own' ? '<span class="ib-tag ai">saved</span>' : d.token === 'login' ? '<span class="ib-tag test">using the Facebook login</span>' : '') + '<input class="i" id="pxTok" type="password" autocomplete="off" placeholder="' + (d.token === 'own' ? 'saved — type to replace' : 'Events Manager → Settings → Generate access token') + '"' + dis + '></label>' +
@@ -36046,7 +36048,7 @@ body[data-fdview="settings"] #o_cp .crumbs, body[data-fdview="tools"] #o_cp .cru
     return errOr(IB.leads, function (d) {
       var lq = IB.lq.toLowerCase(), all = d.leads.filter(function (l) { return !lq || [l.name, l.phone, l.want, l.note].join(' ').toLowerCase().indexOf(lq) >= 0; });
       var today = all.filter(function (l) { return l.due; }), chase = d.chase || [];
-      var h = '<div class="ib-grid2" style="margin-bottom:14px"><div class="ib-c"><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><h3 style="flex:1">Today · ' + today.length + '</h3><input class="i" id="ibLq" placeholder="Search leads" value="' + esc(IB.lq) + '" style="width:160px"><button class="btn small" type="button" data-ibleadnew="1">+ Lead</button>' + (ME && ME.role === 'owner' && fon('exports') ? '<button class="btn small" type="button" data-ibexp="leads">⤓ CSV</button>' : '') + '</div>' +
+      var h = '<div class="ib-grid2" style="margin-bottom:14px"><div class="ib-c"><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><h3 style="flex:1">Today · ' + today.length + '</h3><input class="i" id="ibLq" placeholder="Search leads" value="' + esc(IB.lq) + '" style="width:160px"><button class="btn small" type="button" data-ibleadnew="1">+ Lead</button>' + (pageTop() && fon('exports') ? '<button class="btn small" type="button" data-ibexp="leads">⤓ CSV</button>' : '') + '</div>' +
         (today.length ? today.map(function (l) { return '<div class="ib-lead due" data-iblead="' + esc(l.id) + '"><b>' + esc(l.name || l.phone || 'Lead') + '</b><span>' + esc(l.want) + ' · follow up ' + esc(l.followUp) + '</span></div>'; }).join('') : '<div class="sku">Nobody to call today.</div>') + '</div>' +
         '<div class="ib-c"><h3>To chase · ' + chase.length + '</h3><div class="sub">Interested or quoted, and no order since.</div>' +
         (chase.length ? chase.slice(0, 12).map(function (l) { return '<div class="ib-lead" data-iblead="' + esc(l.id) + '"><b>' + esc(l.name || l.phone || 'Lead') + '</b><span>' + esc(l.want || '—') + ' · ' + esc(l.at) + '</span></div>'; }).join('') : '<div class="sku">Nobody to chase. ✓</div>') + '</div></div>';
@@ -36194,7 +36196,7 @@ body[data-fdview="settings"] #o_cp .crumbs, body[data-fdview="tools"] #o_cp .cru
   // messages after Meta's 24 hours: the templates Meta approved (Messenger, official WhatsApp)
   var TPL_NAMES = { order_courier: 'Handed to the courier', order_out: 'Out for delivery', order_problem: 'Delivery problem', review: 'Review request', booking_confirmed: 'Booking confirmed', booking_reminder: 'Booking reminder' };
   function tplBox(c) {
-    if (!(c.kind === 'messenger' || c.kind === 'wa_cloud') || !fon('templates') || !(ME && ME.role === 'owner')) return '';
+    if (!(c.kind === 'messenger' || c.kind === 'wa_cloud') || !fon('templates') || !(pageTop())) return '';
     var st = (c.settings && c.settings.templates) || {}, lang = (c.settings && c.settings.templates_lang) || 'bn';
     var rows = Object.keys(TPL_NAMES).map(function (k) { var v = st['erp_' + k + '_' + lang] || ''; return '<div class="line" style="display:flex;justify-content:space-between;font-size:13px;padding:3px 0"><span>' + esc(TPL_NAMES[k]) + '</span><span class="ib-tag ' + (v === 'APPROVED' ? 'ai' : v ? 'hot' : 'test') + '">' + esc(v || 'NOT ASKED') + '</span></div>'; }).join('');
     return '<details style="margin-top:10px"' + (Object.keys(st).length ? '' : '') + '><summary class="sub" style="cursor:pointer"><b>Messages after 24 hours</b> — Meta-approved templates for courier updates and booking reminders (never offers)</summary>' +
@@ -36204,7 +36206,7 @@ body[data-fdview="settings"] #o_cp .crumbs, body[data-fdview="tools"] #o_cp .cru
   }
   // Connect with Facebook: one login - pages, Instagram, WhatsApp numbers (and ad accounts for later)
   function metaHtml() {
-    if (!(ME && ME.role === 'owner')) return '';
+    if (!(pageTop())) return '';
     var m = IB.meta; if (!m) return '<div class="ib-c" style="margin-bottom:14px"><div class="loading">Reading the Facebook connection…</div></div>'; if (m.error && !m.pages) return '';
     var head = '<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><span style="width:38px;height:38px;border-radius:11px;background:#0866FF;display:flex;align-items:center;justify-content:center"><svg viewBox="0 0 24 24" width="22" height="22"><path d="M13.5 21v-7.2h2.4l.4-2.8h-2.8V9.2c0-.8.3-1.4 1.4-1.4h1.5V5.3c-.3 0-1.2-.1-2.2-.1-2.2 0-3.6 1.3-3.6 3.7V11H8.2v2.8h2.4V21z" fill="#fff"/></svg></span>' +
       '<div style="flex:1;min-width:180px"><h3 style="margin:0">Facebook — one login for everything</h3><div class="sub" style="margin:2px 0 0">' +
@@ -36225,7 +36227,7 @@ body[data-fdview="settings"] #o_cp .crumbs, body[data-fdview="tools"] #o_cp .cru
     return '<div class="ib-c" style="margin-bottom:14px">' + head + '<div style="margin-top:10px">' + (rows || '<div class="sub">This login reaches no page or WhatsApp number. Log in again and tick your page.</div>') + '</div>' + ads + perms + '</div>';
   }
   function adAccHtml() {
-    if (!(ME && ME.role === 'owner')) return '<div class="ib-c"><div class="sub">The owner connects the ad accounts.</div></div>';
+    if (!(pageTop())) return '<div class="ib-c"><div class="sub">The owner connects the ad accounts.</div></div>';
     var m = IB.meta; if (!m) return '<div class="loading">Loading…</div>';
     if (!m.connected) return '<div class="ib-c"><h3>Ad accounts</h3><div class="sub">Your Facebook ad accounts come in with the one Facebook login in <a href="#/settings" data-ibtoconn="1">Settings → Connections</a>. Posting, videos and ad results will be built here next (Part 2).</div></div>';
     return '<div class="ib-c"><h3>Ad accounts on your Facebook login</h3>' + ((m.adAccounts || []).length ? m.adAccounts.map(function (a) { return '<div class="line" style="display:flex;justify-content:space-between;padding:8px 0;border-top:1px solid var(--fd-border)"><span><b>' + esc(a.name) + '</b> <span class="sku">' + esc(a.id) + ' · ' + esc(a.currency) + '</span></span><span class="ib-tag ' + (a.active ? 'ai' : 'test') + '">' + (a.active ? 'ACTIVE' : 'INACTIVE') + '</span></div>'; }).join('') : '<div class="sub">No ad account on this login.</div>') +
@@ -36265,7 +36267,7 @@ body[data-fdview="settings"] #o_cp .crumbs, body[data-fdview="tools"] #o_cp .cru
   function chansHtml(withConnect) {
     return errOr(IB.chans, function (d) {
       var h = (!d.aiKey ? '<div class="note err"><div class="ico">!</div><div>No AI key is set — the AI cannot answer until one is set (Platform → AI reader).</div></div>' : '');
-      if (d.channels.length && ME && ME.role === 'owner') h += '<div class="ib-actions" style="margin:0 0 12px"><button class="btn small" type="button" data-chall="pauseall">⏸ Pause the AI everywhere</button><button class="btn small" type="button" data-chall="resumeall">▶ Resume the AI everywhere</button></div>';
+      if (d.channels.length && pageTop()) h += '<div class="ib-actions" style="margin:0 0 12px"><button class="btn small" type="button" data-chall="pauseall">⏸ Pause the AI everywhere</button><button class="btn small" type="button" data-chall="resumeall">▶ Resume the AI everywhere</button></div>';
       h += '<div class="ib-grid2">' + d.channels.map(function (c) {
         var keyFields = { messenger: ['TOKEN', 'APP_SECRET'], instagram: ['TOKEN', 'APP_SECRET'], wa_cloud: ['TOKEN', 'APP_SECRET'], wa_evo: ['URL', 'KEY'], wa_sender: ['KEY', 'HOOK_SECRET'], webchat: [], email: ['PASSWORD'] }[c.kind];
         var KL = { TOKEN: 'Access token', APP_SECRET: 'App secret', URL: 'Server address (https://…)', KEY: 'API key', HOOK_SECRET: 'Webhook secret', PASSWORD: 'App password' };
@@ -36292,7 +36294,7 @@ body[data-fdview="settings"] #o_cp .crumbs, body[data-fdview="tools"] #o_cp .cru
         '<label>Name<input class="i" id="chName" placeholder="e.g. Costareen page"></label><label>Page id / account id / phone number id / instance / number<input class="i" id="chExt"></label></div>' +
         '<label style="display:flex;gap:8px;align-items:flex-start;margin-top:8px;font-size:13px"><input type="checkbox" id="chRisk"> I understand a linked-device WhatsApp (Evolution / WaSenderAPI) is not Meta\'s official system, WhatsApp does not allow automated messages this way, and the number can be banned for a time or for good.</label>' +
         '<div class="ib-actions"><button class="btn primary small" type="button" data-chadd="1">Connect</button></div></div>';
-      if (withConnect && ME && ME.role === 'owner' && fon('ch_email')) h += mailConnectHtml();   // 134: after the hand card (Settings keeps from it on)
+      if (withConnect && pageTop() && fon('ch_email')) h += mailConnectHtml();   // 134: after the hand card (Settings keeps from it on)
       return h;
     });
   }
@@ -36344,7 +36346,7 @@ body[data-fdview="settings"] #o_cp .crumbs, body[data-fdview="tools"] #o_cp .cru
   }
   function teamHtml() {
     return errOr(IB.team, function (d) {
-      var own = ME && ME.role === 'owner', HN = {}; d.hears.forEach(function (h) { HN[h.key] = h.name; });
+      var own = pageTop(), HN = {}; d.hears.forEach(function (h) { HN[h.key] = h.name; });
       var UN = {}; d.users.forEach(function (u) { UN[u.id] = u.name; });
       var h = '<div class="ib-c" style="margin-bottom:14px"><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><h3 style="flex:1">Groups</h3>' + (own ? '<button class="btn small primary" type="button" data-ibgrp="">+ Group</button>' : '') + '</div>' +
         '<div class="sub">A group hears only what you tick — complaints to the support people, new orders to the order desk. A teammate in no group hears everything. You (the owner) always see everything.</div>' +
@@ -36385,7 +36387,7 @@ body[data-fdview="settings"] #o_cp .crumbs, body[data-fdview="tools"] #o_cp .cru
   }
   function featHtml() {
     return errOr(IB.feats, function (d) {
-      var own = ME && ME.role === 'owner', b = d.budget, groups = [];
+      var own = pageTop(), b = d.budget, groups = [];
       d.features.forEach(function (f) { if (groups.indexOf(f.group) < 0) groups.push(f.group); });
       var h = '<div class="ib-grid2" style="margin-bottom:14px"><div class="ib-c"><h3>Your plan' + (d.plan ? ': ' + esc(d.plan) : '') + '</h3><div class="sub">Switch on what your business needs. A feature that is not in your plan is locked.' + (own ? '' : ' Only the owner changes these.') + '</div>' +
         '<div class="ib-kpis" style="grid-template-columns:repeat(3,minmax(0,1fr))"><div class="ib-kpi"><b>' + d.features.filter(function (f) { return f.on; }).length + '</b><span>ON</span></div><div class="ib-kpi"><b>' + d.features.filter(function (f) { return f.inPlan; }).length + '</b><span>IN YOUR PLAN</span></div><div class="ib-kpi"><b>' + d.features.length + '</b><span>ALL</span></div></div></div>' +
@@ -36455,7 +36457,7 @@ body[data-fdview="settings"] #o_cp .crumbs, body[data-fdview="tools"] #o_cp .cru
     return '<div class="ib-c" style="margin-bottom:14px"><h3 style="margin:0">Other networks — posts go out from Campaigns → Advertisement</h3><div class="sub" style="margin:2px 0 8px">Each one is ready: connect it and the Posts form lights it up. A network "not set up by the provider yet" needs its app registered once by the system provider.</div>' + rows + '</div>';
   }
   window.ibConnHtml = function () {
-    if (!ibOn() || !(ME && ME.role === 'owner')) return '';
+    if (!ibOn() || !(pageTop())) return '';
     if (!IB.meta) load('erpMetaConnect', {}, 'meta');
     if (!IB.chans) load('erpInboxChannels', {}, 'chans');
     return '<section class="ib-conn"><div class="card"><h2>Social accounts and chat channels</h2><div class="sub">One place for the accounts the Inbox, Leads and Advertisement use.</div>' + metaHtml() + netHtml() +
@@ -37073,7 +37075,7 @@ function paiLoad(sku) {
   if (PAI.busy) return; PAI.busy = true;
   srv('erpProductAi', [{ sku: sku }], function (r) { PAI.busy = false; PAI.sku = sku; PAI.data = r; if (VIEW === 'products') repaint(); },
       function () { PAI.busy = false; PAI.sku = sku; PAI.data = { error: true }; });
-  if (!PAI.fields && ME && ME.role === 'owner') srv('erpProductFields', [], function (r) { PAI.fields = r; if (VIEW === 'products') repaint(); }, function () {});
+  if (!PAI.fields && pageTop()) srv('erpProductFields', [], function (r) { PAI.fields = r; if (VIEW === 'products') repaint(); }, function () {});
 }
 function paiHtml() {
   var sku = PRODP.sku;
@@ -37131,7 +37133,7 @@ function siteLoad() {
   srv('erpSitePages', [], function (r) { SITE.busy = false; SITE.d = r; if (window.ibPaint) ibPaint(); }, function (er) { SITE.busy = false; SITE.d = { error: (er && er.message) || String(er) }; });
 }
 window.siteHtml = function () {
-  if (!ME || (ME.role !== 'owner' && ME.role !== 'manager')) return '';
+  if (!ME || (!pageTop() && ME.role !== 'manager')) return '';
   if (!SITE.d) { siteLoad(); return '<div class="ib-c" style="margin-bottom:12px"><h3>Read my website</h3><div class="loading">Reading…</div></div>'; }
   var d = SITE.d; if (d.error) return '';
   var own = !!d.canAdd, pages = d.pages || [];
@@ -37224,7 +37226,7 @@ function wpRows(list, note) {
     }).join('') + '</tbody></table></div>';
 }
 function wpHtml() {
-  if (!ME || ME.role !== 'owner') return '';
+  if (!pageTop()) return '';
   var h = '<section><div class="card"><h2 class="wo_h">Website prices<span class="wo_acts"><button class="btn" type="button" id="wp_open">' + (WP.open ? 'Hide' : 'Compare with the ERP') + '</button></span></h2>' +
     '<div class="sub">What customers pay on the website follows the selling prices you set in the ERP. Where the website shows a crossed-out price, it stays and the sale price changes. A change of more than half waits for you, so a typo never reaches customers.</div>';
   if (!WP.open) return h + '</div></section>';
@@ -37314,7 +37316,7 @@ function jtRequestsHtml(d, pool) {
      Staff without Stock and receiving keep the short joint receive form. -->
 <script>
 var JRV = { on: false, pool: '', cat: null, at: '', own: null, busy: false };
-function jrvCan() { return !!(ME && (ME.role === 'owner' || ME.role === 'shareholder' || ME.role === 'manager' || (typeof pageCan === 'function' && pageCan('stock')))); }
+function jrvCan() { return !!(ME && (pageTop() || ME.role === 'manager' || (typeof pageCan === 'function' && pageCan('stock')))); }
 function jrvLoadCat() {
   if (JRV.busy || !JRV.pool) return; JRV.busy = true;
   srv('erpJointRecvCatalog', [{ pool: JRV.pool }], function (r) { JRV.busy = false; JRV.cat = r || []; if (VIEW === 'joint') repaint(); }, function () { JRV.busy = false; JRV.cat = []; });
@@ -37729,7 +37731,7 @@ function spFormHtml() {
       return '<label class="chk" title="' + esc(why) + '"><input type="checkbox" id="sp_t_' + n.key + '"' + (f.targets[n.key] && n.connected && fits ? ' checked' : '') + (n.connected && fits ? '' : ' disabled') + '> ' + esc(n.name.replace(' (Twitter)', '')) + (n.connected ? (n.handle ? ' <span class="sku">' + esc(n.handle) + '</span>' : '') : ' <span class="sku">' + esc(why) + '</span>') + (n.connected && !fits ? ' <span class="sku">' + esc(why) + '</span>' : '') + '</label>'; }).join('') + '</div>' +
     '<div class="row" style="gap:8px;flex-wrap:wrap;align-items:flex-end;margin-top:10px">' +
     '<button class="btn" type="button" data-sp="save"' + (SP.busy ? ' disabled' : '') + '>Save draft</button>' +
-    (ME && ME.role === 'owner' ? '<button class="btn" type="button" data-sp="approve"' + (SP.busy ? ' disabled' : '') + '>Save and approve</button>' : '') +
+    (pageTop() ? '<button class="btn" type="button" data-sp="approve"' + (SP.busy ? ' disabled' : '') + '>Save and approve</button>' : '') +
     (d.canPublish ? '<button class="btn primary" type="button" data-sp="publish"' + (SP.busy ? ' disabled' : '') + '>' + (SP.busy ? 'Working…' : 'Publish now') + '</button>' +
       '<div style="flex:0 1 220px"><label class="f" for="sp_at">Or at</label><input class="i" id="sp_at" type="datetime-local" value="' + esc(f.at) + '"></div><button class="btn" type="button" data-sp="schedule"' + (SP.busy ? ' disabled' : '') + '>Schedule</button>' : '<span class="sub">The owner approves and publishes.</span>') +
     '</div></div>';
@@ -37743,7 +37745,7 @@ function spPostHtml(p) {
   if (s.facebook) stats += '<span class="sp-stat">Facebook ' + (s.facebook.plays ? '<b>' + fmt(s.facebook.plays) + '</b> plays · ' : '') + (s.facebook.views ? '<b>' + fmt(s.facebook.views) + '</b> views · ' : '') + (s.facebook.reach ? '<b>' + fmt(s.facebook.reach) + '</b> reached · ' : '') + '<b>' + fmt(s.facebook.reactions) + '</b> reactions' + (s.facebook.comments !== undefined ? ' · <b>' + fmt(s.facebook.comments) + '</b> comments · <b>' + fmt(s.facebook.shares) + '</b> shares' : '') + (s.facebook.clicks ? ' · <b>' + fmt(s.facebook.clicks) + '</b> clicks' : '') + '</span>';
   if (s.instagram) stats += '<span class="sp-stat">Instagram ' + (s.instagram.reach ? '<b>' + fmt(s.instagram.reach) + '</b> reached · ' : '') + '<b>' + fmt(s.instagram.likes) + '</b> likes · <b>' + fmt(s.instagram.comments) + '</b> comments' + (s.instagram.saved ? ' · <b>' + fmt(s.instagram.saved) + '</b> saved' : '') + '</span>';
   ['threads', 'tiktok', 'youtube', 'x', 'pinterest'].forEach(function (k) { var v = s[k]; if (!v || v.error) return; stats += '<span class="sp-stat">' + LN[k] + ' ' + ['views', 'likes', 'comments', 'shares', 'saved', 'clicks'].filter(function (m) { return v[m]; }).map(function (m) { return '<b>' + fmt(v[m]) + '</b> ' + m; }).join(' · ') + '</span>'; });
-  var own = ME && ME.role === 'owner', can = SP.data.canPublish, b = '';
+  var own = pageTop(), can = SP.data.canPublish, b = '';
   if (p.state === 'draft' || p.state === 'approved' || p.state === 'failed') b += '<button class="btn small" type="button" data-sp="edit" data-id="' + esc(p.id) + '">Change</button>';
   if ((p.state === 'draft' || p.state === 'failed') && own) b += '<button class="btn small" type="button" data-sp="act" data-a="approve" data-id="' + esc(p.id) + '">Approve</button>';
   if (p.state === 'approved' && own) b += '<button class="btn small" type="button" data-sp="act" data-a="unapprove" data-id="' + esc(p.id) + '">Take approval back</button>';
@@ -37901,12 +37903,12 @@ function cfItemHtml(a) {
 function cfHtml() {
   var h = '<section><div class="card"><div class="row" style="justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px"><h2 style="margin:0">Content</h2><div class="row" style="gap:6px;flex-wrap:wrap">' +
     '<button class="btn small primary" type="button" data-cf="new" data-k="card">+ Picture card</button><button class="btn small primary" type="button" data-cf="new" data-k="ai">+ AI photo</button><button class="btn small primary" type="button" data-cf="new" data-k="video">+ Video</button>' +
-    (ME && (ME.role === 'owner' || ME.role === 'manager') ? '<button class="btn small" type="button" data-cf="clip">Ask staff for a clip</button>' : '') + '</div></div>' +
+    (ME && (pageTop() || ME.role === 'manager') ? '<button class="btn small" type="button" data-cf="clip">Ask staff for a clip</button>' : '') + '</div></div>' +
     '<div class="sub" data-c5x="1" style="display:block">Pictures and videos made from your own products: a card with the price, the product in a scene, a 15-second reel with a voice-over. Cards and reels cost nothing; an AI photo about ৳5. Each goes into a post with one click.</div>';
   if (CF.err) return h + '<div class="note err"><div class="ico">!</div><div>' + esc(CF.err) + '</div></div></div></section>';
   if (!CF.data) { cfLoad(); return h + '<div class="loading">Reading…</div></div></section>'; }
   if (!CF.data.render) h += '<div class="note"><div class="ico">!</div><div>The render server is not set up on this system: cards and videos cannot be drawn yet (AI photos still can).</div></div>';
-  if (CF.data.products && CF.data.withPicture < CF.data.products / 2) h += '<div class="note"><div class="ico">!</div><div>' + fmt(CF.data.withPicture) + ' of ' + fmt(CF.data.products) + ' products have a picture here, so cards and reels come out bare. ' + ((CF.data.website === 'woo' || CF.data.website === 'shopify') && ME && (ME.role === 'owner' || ME.role === 'manager') ? '<button class="btn small primary" type="button" data-cf="webphotos"' + (CF.busy ? ' disabled' : '') + '>' + (CF.busy ? 'Fetching…' : 'Fetch the pictures from the website') + '</button> ' : '') + 'Or add a photo on each product.</div></div>';
+  if (CF.data.products && CF.data.withPicture < CF.data.products / 2) h += '<div class="note"><div class="ico">!</div><div>' + fmt(CF.data.withPicture) + ' of ' + fmt(CF.data.products) + ' products have a picture here, so cards and reels come out bare. ' + ((CF.data.website === 'woo' || CF.data.website === 'shopify') && ME && (pageTop() || ME.role === 'manager') ? '<button class="btn small primary" type="button" data-cf="webphotos"' + (CF.busy ? ' disabled' : '') + '>' + (CF.busy ? 'Fetching…' : 'Fetch the pictures from the website') + '</button> ' : '') + 'Or add a photo on each product.</div></div>';
   if (CF.make) h += cfMakeHtml();
   var items = CF.data.assets || [];
   h += items.length ? '<div class="cf-grid">' + items.map(cfItemHtml).join('') + '</div>' : '<div class="sku" style="margin-top:8px">Nothing made yet.</div>';
@@ -38011,8 +38013,8 @@ function rulesHtml() {
   h += '<div style="margin-top:8px"><b>Always on</b><ul style="margin:4px 0 0 18px;padding:0;font-size:13px">' + r.builtIn.map(function (x) { return '<li>' + esc(x) + '</li>'; }).join('') + '</ul></div>' +
     '<div style="margin-top:8px"><label class="f" for="in_rules">Your own rules, one per line</label><textarea class="i" id="in_rules" style="width:100%;min-height:90px;box-sizing:border-box;font:inherit;font-size:13px" placeholder="e.g. Always mention free delivery inside Dhaka over 3,000 Tk&#10;Never use the word cheap&#10;End every reel with the website">' + esc(r.rules.join('\n')) + '</textarea></div>' +
     '<div class="row" style="gap:8px;flex-wrap:wrap;align-items:flex-end;margin-top:8px"><div style="flex:1 1 200px"><label class="f" for="in_windows">Posting times (Dhaka, e.g. 12:30, 20:30)</label><input class="i" id="in_windows" value="' + esc((r.windows || []).join(', ')) + '"></div><div style="flex:0 1 160px"><label class="f" for="in_maxday">At most, posts a day</label><input class="i" id="in_maxday" inputmode="numeric" value="' + esc(r.maxDay) + '"></div>' +
-    (ME && (ME.role === 'owner' || ME.role === 'manager') ? '<button class="btn primary" type="button" data-in="rulessave"' + (IN.busy ? ' disabled' : '') + '>Save the rules</button>' : '') + '</div>' +
-    (ME && ME.role === 'owner' ? '<div class="row" style="gap:8px;flex-wrap:wrap;align-items:flex-end;margin-top:12px"><div style="flex:1 1 260px"><label class="f" for="in_pexels">Stock footage key (Pexels, free at pexels.com/api) ' + (r.pexels ? '<span class="sku">· set</span>' : '') + '</label><input class="i" id="in_pexels" type="password" placeholder="' + (r.pexels ? 'leave empty to keep' : 'paste the key') + '"></div><button class="btn" type="button" data-in="pexels">' + (r.pexels ? 'Change the key' : 'Save the key') + '</button>' + (r.pexels ? '<button class="btn" type="button" data-in="pexelsoff">Remove</button>' : '') + '</div><div class="sub" style="display:block">With a key, a reel opens on a 3-second stock clip under the hook, like the viral ones do.</div>' : '');
+    (ME && (pageTop() || ME.role === 'manager') ? '<button class="btn primary" type="button" data-in="rulessave"' + (IN.busy ? ' disabled' : '') + '>Save the rules</button>' : '') + '</div>' +
+    (pageTop() ? '<div class="row" style="gap:8px;flex-wrap:wrap;align-items:flex-end;margin-top:12px"><div style="flex:1 1 260px"><label class="f" for="in_pexels">Stock footage key (Pexels, free at pexels.com/api) ' + (r.pexels ? '<span class="sku">· set</span>' : '') + '</label><input class="i" id="in_pexels" type="password" placeholder="' + (r.pexels ? 'leave empty to keep' : 'paste the key') + '"></div><button class="btn" type="button" data-in="pexels">' + (r.pexels ? 'Change the key' : 'Save the key') + '</button>' + (r.pexels ? '<button class="btn" type="button" data-in="pexelsoff">Remove</button>' : '') + '</div><div class="sub" style="display:block">With a key, a reel opens on a 3-second stock clip under the hook, like the viral ones do.</div>' : '');
   return h + '</div></section>';
 }
 function learnHtml() {
@@ -38095,7 +38097,7 @@ function paPlanForm() {
     '<div style="margin-top:8px"><label class="f">Interests (optional)</label><div>' + (p.interests || []).map(function (it) { return '<span class="pa-chip">' + esc(it.name) + '<button type="button" data-pa="unint" data-id="' + esc(it.id) + '">×</button></span>'; }).join('') + '</div>' +
     '<div class="row" style="gap:6px;flex-wrap:wrap;align-items:center"><input class="i" id="pa_q" style="flex:1 1 220px" placeholder="e.g. 3D printing, Arduino, engineering students" value="' + esc(PA.q) + '"><button class="btn small" type="button" data-pa="search">Search</button>' + PA.found.map(function (it) { return '<button class="btn small" type="button" data-pa="addint" data-id="' + esc(it.id) + '" data-name="' + esc(it.name) + '">+ ' + esc(it.name) + (it.size ? ' <span class="sku">' + fmt(it.size) + '</span>' : '') + '</button>'; }).join('') + '</div></div>' +
     '<div class="row" style="gap:14px;flex-wrap:wrap;margin-top:8px">' + (a && a.id ? '<label class="chk"><input type="checkbox" id="pa_cust"' + (p.customers ? ' checked' : '') + '> Our customers (' + fmt(a.n) + ' numbers)</label>' : '') + (a && a.lookalike ? '<label class="chk"><input type="checkbox" id="pa_look"' + (p.lookalike ? ' checked' : '') + '> People like our customers</label>' : '') +
-    (ME && ME.role === 'owner' ? '<button class="btn small" type="button" data-pa="audience"' + (PA.busy ? ' disabled' : '') + '>' + (a && a.id ? 'Update the customer audience' : 'Make a customer audience from the ERP') + '</button>' : '') + '</div>' +
+    (pageTop() ? '<button class="btn small" type="button" data-pa="audience"' + (PA.busy ? ' disabled' : '') + '>' + (a && a.id ? 'Update the customer audience' : 'Make a customer audience from the ERP') + '</button>' : '') + '</div>' +
     '<div class="row" style="gap:8px;align-items:center;margin-top:10px"><button class="btn primary" type="button" data-pa="plan"' + (PA.busy || !posts.length ? ' disabled' : '') + '>' + (PA.busy ? 'Building…' : 'Build it (nothing runs yet)') + '</button><span class="sub">Meta shows a preview and the total; then the owner presses Start.</span></div>';
   if (PA.made) {
     var c = PA.made.campaign;
@@ -38105,7 +38107,7 @@ function paPlanForm() {
 }
 function paCampHtml(c) {
   var r = c.results || {}, st = { ready: ['Built, not started', ''], running: ['Running', 'ok'], paused: ['Paused', 'warn'], done: ['Finished', ''], stopped: ['Stopped', ''], failed: ['Failed', 'bad'] }[c.status] || [c.status, ''];
-  var own = ME && ME.role === 'owner', b = '';
+  var own = pageTop(), b = '';
   if ((c.status === 'ready' || c.status === 'paused') && own) b += '<button class="btn small primary" type="button" data-pa="act" data-a="' + (c.status === 'ready' ? 'start' : 'resume') + '" data-id="' + esc(c.id) + '">' + (c.status === 'ready' ? 'Start' : 'Resume') + '</button>';
   if (c.status === 'running') b += '<button class="btn small" type="button" data-pa="act" data-a="pause" data-id="' + esc(c.id) + '">Pause</button>';
   if (['ready', 'running', 'paused'].indexOf(c.status) >= 0 && own) b += '<button class="btn small" type="button" data-pa="act" data-a="stop" data-id="' + esc(c.id) + '">Stop</button>';
@@ -38123,7 +38125,7 @@ function paSettingsHtml() {
     '<div style="flex:0 1 130px"><label class="f">Daily cap</label><input class="i" id="pa_dcap" inputmode="numeric" value="' + esc(s.dailyCap) + '"></div><div style="flex:0 1 130px"><label class="f">Monthly cap</label><input class="i" id="pa_mcap" inputmode="numeric" value="' + esc(s.monthlyCap) + '"></div>' +
     '<div style="flex:1 1 160px"><label class="f">Website pixel id (for sales ads)</label><input class="i" id="pa_pixel" value="' + esc(s.pixel) + '"></div></div>' +
     '<div class="row" style="gap:8px;flex-wrap:wrap;align-items:flex-end;margin-top:6px"><div style="flex:0 1 200px"><label class="f">Pause when cost per result passes</label><input class="i" id="pa_maxcpr" inputmode="numeric" value="' + esc(s.maxCostPerResult || '') + '" placeholder="e.g. 30"></div><div style="flex:0 1 200px"><label class="f">Pause when click rate under (%)</label><input class="i" id="pa_minctr" inputmode="decimal" value="' + esc(s.minCtr || '') + '" placeholder="e.g. 0.8"></div>' +
-    (ME && ME.role === 'owner' ? '<button class="btn primary" type="button" data-pa="save"' + (PA.busy ? ' disabled' : '') + '>Save</button>' : '') + '</div>' +
+    (pageTop() ? '<button class="btn primary" type="button" data-pa="save"' + (PA.busy ? ' disabled' : '') + '>Save</button>' : '') + '</div>' +
     (d.balance ? '<div class="sub" style="display:block;margin-top:6px">' + (d.balance.error ? 'Meta: ' + esc(d.balance.error) : 'Account ' + esc(d.balance.name) + ' · spent all time ' + fmt(d.balance.spent) + ' ' + esc(d.balance.currency) + (d.balance.balance ? ' · owed ' + fmt(d.balance.balance) : '') + (d.balance.status !== 1 ? ' · <b>account status ' + d.balance.status + ' (1 = active)</b>' : '')) + '</div>' : '') + '</div>';
 }
 function paHtml() {
@@ -38485,7 +38487,7 @@ document.addEventListener('keydown', function (e) {
   function ldOn() {
     if (!ME) return false; var a = ME.apps || {};
     if ((a.gone || []).indexOf('leads') >= 0) return false;
-    if ((a.hidden || []).indexOf('leads') >= 0 && ME.role !== 'owner') return false;
+    if ((a.hidden || []).indexOf('leads') >= 0 && !pageTop()) return false;
     return !!ME.platform || (a.off || []).indexOf('leads') < 0;
   }
   window.ldOn = ldOn;
@@ -38497,7 +38499,7 @@ document.addEventListener('keydown', function (e) {
   if (typeof applyRole === 'function') { var arLd = applyRole; applyRole = function () { var r = arLd.apply(this, arguments); try { syncNav(); } catch (e) {} return r; }; }
   setTimeout(syncNav, 1500);
 
-  var isMgr = function () { return ME && (ME.role === 'owner' || ME.role === 'shareholder' || ME.role === 'manager'); };
+  var isMgr = function () { return ME && (pageTop() || ME.role === 'manager'); };
   function load() {
     if (LD.busy) return; LD.busy = true;
     srv('erpLeads', [{ kind: LD.kind, source: LD.source, stage: LD.stage, q: LD.q, open: LD.open }], function (r) { LD.busy = false; LD.data = r; LD.err = ''; syncNav(); if (VIEW === 'leads') paint(); },
@@ -38806,7 +38808,7 @@ document.addEventListener('keydown', function (e) {
   var AIB = { data: null, busy: false, err: '', models: {}, test: {} };
   window.AIB = AIB;
   function load() {
-    if (AIB.busy || !ME || ME.role !== 'owner') return; AIB.busy = true;
+    if (AIB.busy || !pageTop()) return; AIB.busy = true;
     srv('erpAiBrain', [], function (r) { AIB.busy = false; AIB.data = r; AIB.err = ''; if (VIEW === 'settings') repaint(); }, function (e) { AIB.busy = false; AIB.err = (e && e.message) || String(e); if (VIEW === 'settings') repaint(); });
   }
   var PNAME = { auto: 'Auto - the strongest AI with a key', default: 'Same as "Everything else"', openai: 'ChatGPT (OpenAI)', anthropic: 'Claude (Anthropic)', gemini: 'Gemini (Google)', custom: 'Own server (OpenClaw / OmniRoute ...)' };
@@ -38815,7 +38817,7 @@ document.addEventListener('keydown', function (e) {
     return '<select class="i" data-aibp="' + task + '">' + opts.map(function (p) { return '<option value="' + p + '"' + (cur === p ? ' selected' : '') + '>' + esc(PNAME[p]) + '</option>'; }).join('') + '</select>';
   }
   function cardHtml() {
-    if (!ME || ME.role !== 'owner') return '';
+    if (!pageTop()) return '';
     var d = AIB.data;
     if (!d) { load(); return '<section><div class="card"><h2>AI models</h2><div class="loading">' + (AIB.err ? esc(AIB.err) : 'Loading…') + '</div></div></section>'; }
     var R = d.routes || { default: { provider: 'auto', model: 'auto' }, tasks: {} };
@@ -38899,7 +38901,7 @@ document.addEventListener('keydown', function (e) {
 <script>
 var MYUPD = null, MYUPD_BUSY = false, MYUPD_TOLD = false;
 function myUpdLoad(then) {
-  if (!ME || ME.role !== 'owner') return;
+  if (!pageTop()) return;
   srv('erpMyUpdates', [], function (r) { MYUPD = r; if (then) then(); if (VIEW === 'settings') repaint(); }, function () { MYUPD = { copy: false }; });
 }
 function myUpdCardHtml() {
@@ -38924,7 +38926,7 @@ function myUpdCardHtml() {
 var viewSettingsMU = viewSettings;
 viewSettings = function () {
   var h = viewSettingsMU.apply(this, arguments);
-  if (!MYUPD && ME && ME.role === 'owner') myUpdLoad();
+  if (!MYUPD && pageTop()) myUpdLoad();
   var c = myUpdCardHtml(); if (!c) return h;
   var at = h.indexOf('<section'); return at >= 0 ? h.slice(0, at) + c + h.slice(at) : c + h;
 };
@@ -38952,7 +38954,7 @@ document.addEventListener('click', function (e) {
 setTimeout(function tell() {
   if (MYUPD_TOLD) return;
   if (!ME) { setTimeout(tell, 3000); return; }
-  if (ME.role !== 'owner') return;
+  if (!pageTop()) return;
   MYUPD_TOLD = true;
   myUpdLoad(function () {
     if (MYUPD && MYUPD.copy && (!MYUPD.upToDate || MYUPD.error)) toast('Your ERP has an update waiting' + (MYUPD.error ? ' (the last one stopped)' : '') + '. Open <b>Settings \u2192 ERP updates</b>.', !!MYUPD.error, 15000);
@@ -39207,7 +39209,7 @@ saveProduct = function () {
   var ICON_S = '<path d="M4 6h16M4 12h10M4 18h7"/><path d="M17 15l2 2 3-4"/>';
   var IDEAS = ['Which 5 products should I bring in next, and why?', 'Check my website\'s SEO and give me the fixes', 'What should I post this week? Make a plan with captions'];
   function enOn() {
-    if (!ME || !(ME.role === 'owner' || ME.role === 'shareholder')) return false; var a = ME.apps || {};
+    if (!ME || !(pageTop())) return false; var a = ME.apps || {};
     return !!ME.platform || (a.off || []).indexOf('engine') < 0;
   }
   window.enOn = enOn;

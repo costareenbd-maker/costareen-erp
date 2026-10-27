@@ -22,7 +22,7 @@ const when = (d) => (d ? formatDate(new Date(d), 'd MMM yyyy, h:mm a') : '');
 const isId = (v) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(String(v || ''));
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
-function needOwner(ctx) { if (ctx.s.role !== 'owner') throw new Error('Only the owner manages users.'); }
+function needOwner(ctx) { if (!roleAtLeast(ctx.s.role, 'shareholder')) throw new Error('Only the owner or a shareholder manages users.'); }
 
 async function member(ctx, userId) {
   if (!isId(userId)) throw new Error('Which user?');
@@ -105,6 +105,7 @@ export async function erpUserInvite(ctx, payload) {
   if (!name) throw new Error('Whose login is it? Type the name.');
   if (!EMAIL.test(email)) throw new Error('Type a real e-mail address - the invitation goes there.');
   if (!ERP_ROLES[role]) throw new Error('Choose a role.');
+  if (role === 'owner' && ctx.s.role !== 'owner') throw new Error('Only an owner makes another owner.');   // a shareholder manages everyone but the owners
   if (!ctx.deps || !ctx.deps.createOwner) throw new Error('Creating a login is not available here.');
   const have = await ctx.sql`select id from auth.users where lower(email) = ${email} limit 1`;
   let userId = have[0] ? have[0].id : '';
@@ -129,6 +130,7 @@ export async function erpUserSet(ctx, payload) {
   const m = await member(ctx, payload.userId);
   const role = payload.role === undefined ? normRole(m.role) : normRole(payload.role);
   if (!ERP_ROLES[role]) throw new Error('Choose a role.');
+  if (ctx.s.role !== 'owner' && (role === 'owner' || normRole(m.role) === 'owner')) throw new Error('Only an owner changes an owner, or makes one.');
   const active = payload.active === undefined ? !!m.active : !!payload.active;
   // taking access from another owner: both owners must agree, each from their own e-mail (owners.js)
   if (normRole(m.role) === 'owner' && m.active && m.user_id !== ctx.s.userId && (role !== 'owner' || !active)) {

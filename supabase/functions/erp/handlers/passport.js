@@ -397,7 +397,7 @@ export async function erpPassportSync(ctx) {
   return { published: n };
 }
 export async function erpPassportShowSeller(ctx, payload) {
-  if (!roleAtLeast(ctx.s.role, 'shareholder')) throw new Error('Only the owner or a shareholder changes this. If you need this, ask the owner to open it for you (Settings > Users).');
+  if (!roleAtLeast(ctx.s.role, 'shareholder')) throw new Error('Only the owner or a shareholder or a shareholder changes this. If you need this, ask the owner to open it for you (Settings > Users).');
   const on = !(payload && payload.on === false);
   await ctx.tx`insert into business_config (business_id, key, value) values (${ctx.biz}, 'passport_show_seller', ${on ? '1' : '0'})
                on conflict (business_id, key) do update set value = excluded.value, updated_at = now()`;

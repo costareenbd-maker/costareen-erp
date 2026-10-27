@@ -14,6 +14,7 @@
 import { formatDate, num } from '../lib/time.js';
 import { getSecret, getConfig, setConfig } from '../lib/ext.js';
 import { accessToken, folderId, gfetch } from './google.js';
+import { roleAtLeast } from '../allow.js';
 
 const str = (v) => String(v == null ? '' : v).trim();
 const SKIP = new Set(['business_secrets', 'erp_access_keys', 'erp_ai_keys', 'erp_dash_cache', 'erp_alert_sent', 'drive_queue', 'erp_errors', 'erp_speed',
@@ -23,7 +24,7 @@ const FIRST = ['invoices', 'invoice_lines', 'payments', 'returns', 'customers', 
 const MAX_TABS_PER_RUN = 10;
 const SHEETS = 'https://sheets.googleapis.com/v4/spreadsheets/';
 
-function needOwner(ctx) { if (ctx.s.role !== 'owner') throw new Error('Only the owner manages the backup sheet.'); }
+function needOwner(ctx) { if (!roleAtLeast(ctx.s.role, 'shareholder')) throw new Error('Only the owner or a shareholder manages the backup sheet.'); }
 
 async function tables(ctx) {
   const rows = await ctx.sql`select c.table_name as t from information_schema.columns c

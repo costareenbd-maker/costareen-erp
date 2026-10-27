@@ -176,7 +176,7 @@ export async function erpCapital(ctx) {
 
 /** Add a person, or change what is written about one. All shares together may never pass 100%. */
 export async function erpCapitalHolderSave(ctx, payload) {
-  if (!roleAtLeast(ctx.s.role, 'shareholder')) throw new Error('Only the owner or a shareholder can change who holds what.');
+  if (!roleAtLeast(ctx.s.role, 'shareholder')) throw new Error('Only the owner or a shareholder or a shareholder can change who holds what.');
   await notInPool(ctx, 'who put in what is');
   payload = payload || {};
   const kind = String(payload.kind) === 'investor' ? 'investor' : 'shareholder';
@@ -269,7 +269,7 @@ export async function erpCapitalHolderSave(ctx, payload) {
 
 /** A person leaves: their share is free again from this month, and their history stays. */
 export async function erpCapitalHolderEnd(ctx, payload) {
-  if (!roleAtLeast(ctx.s.role, 'shareholder')) throw new Error('Only the owner or a shareholder can change who holds what.');
+  if (!roleAtLeast(ctx.s.role, 'shareholder')) throw new Error('Only the owner or a shareholder or a shareholder can change who holds what.');
   const id = String((payload && payload.id) || '');
   const hit = (await holders(ctx)).find((h) => h.id === id);
   if (!hit) throw new Error('That person is no longer on the list.');
@@ -296,7 +296,7 @@ export async function erpCapitalHolderEnd(ctx, payload) {
 
 /** A line in the book: money put in, capital taken back, profit handed over, or an investor's return paid. */
 export async function erpCapitalEntryAdd(ctx, payload) {
-  if (!roleAtLeast(ctx.s.role, 'shareholder')) throw new Error('Only the owner or a shareholder can write in the capital book.');
+  if (!roleAtLeast(ctx.s.role, 'shareholder')) throw new Error('Only the owner or a shareholder or a shareholder can write in the capital book.');
   await notInPool(ctx, 'capital is');
   payload = payload || {};
   const type = String(payload.type || '');
@@ -349,7 +349,7 @@ export async function erpCapitalEntryAdd(ctx, payload) {
 
 /** Strike a line out, saying why. If it was an investor's return, its expense is struck out with it. */
 export async function erpCapitalEntryVoid(ctx, payload) {
-  if (!roleAtLeast(ctx.s.role, 'shareholder')) throw new Error('Only the owner or a shareholder can strike a line out.');
+  if (!roleAtLeast(ctx.s.role, 'shareholder')) throw new Error('Only the owner or a shareholder or a shareholder can strike a line out.');
   const id = String((payload && payload.id) || ''), why = String((payload && payload.reason) || '').trim();
   if (!why) throw new Error('Say why it is being struck out, so the book can be read later.');
   const hit = (await book(ctx)).find((b) => b.id === id);
@@ -366,7 +366,7 @@ export async function erpCapitalEntryVoid(ctx, payload) {
 
 /** Close a month that is over: its profit and the shares as they stand are kept as they are. */
 export async function erpCapitalClose(ctx, payload) {
-  if (!roleAtLeast(ctx.s.role, 'shareholder')) throw new Error('Only the owner or a shareholder can close a month.');
+  if (!roleAtLeast(ctx.s.role, 'shareholder')) throw new Error('Only the owner or a shareholder or a shareholder can close a month.');
   if (await isPool(ctx)) throw new Error('This is a joint pool: its months are closed under Partnership, where the settlement is.');
   const month = String((payload && payload.month) || '');
   if (!isMonth(month)) throw new Error('Which month?');
@@ -400,7 +400,7 @@ export async function erpCapitalClose(ctx, payload) {
 
 /** Open the latest closed month again, saying why. Its profit follows the books again until it is closed anew. */
 export async function erpCapitalReopen(ctx, payload) {
-  if (!roleAtLeast(ctx.s.role, 'shareholder')) throw new Error('Only the owner or a shareholder can reopen a month.');
+  if (!roleAtLeast(ctx.s.role, 'shareholder')) throw new Error('Only the owner or a shareholder or a shareholder can reopen a month.');
   const month = String((payload && payload.month) || ''), why = String((payload && payload.reason) || '').trim();
   if (!isMonth(month)) throw new Error('Which month?');
   if (!why) throw new Error('Say why the month is being reopened, so the books can be read later.');

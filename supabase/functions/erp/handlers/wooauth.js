@@ -8,6 +8,7 @@
 
 import { getConfig, setConfig, setSecret } from '../lib/ext.js';
 import { erpWebsiteSet } from './connections.js';
+import { roleAtLeast } from '../allow.js';
 
 const str = (v) => String(v == null ? '' : v).trim();
 
@@ -17,7 +18,7 @@ function base(deps) {
 }
 
 export async function erpWooConnectStart(ctx, payload) {
-  if (ctx.s.role !== 'owner') throw new Error('Only the owner manages connections.');
+  if (!roleAtLeast(ctx.s.role, 'shareholder')) throw new Error('Only the owner or a shareholder manages connections.');
   const typed = str(payload && payload.url);
   if (!typed) throw new Error('Type the shop address first, e.g. https://yourshop.com');
   await erpWebsiteSet(ctx, { kind: 'woo', url: typed });              // checks and keeps the address, kind = WooCommerce

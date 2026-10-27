@@ -10,6 +10,7 @@ import { str } from '../lib/tabs.js';
 import { num, formatDate } from '../lib/time.js';
 import { custKey } from '../lib/phone.js';
 import { creditOf } from './money.js';
+import { roleAtLeast } from '../allow.js';
 
 const R = (v) => Math.round(num(v));
 const who = (ctx) => str(ctx.s && ctx.s.name) || 'User';
@@ -88,7 +89,7 @@ export async function erpCustomerInsight(ctx, payload) {
 // ------------------------------------------------------------------ removing a customer's personal data
 
 export async function erpCustomerErase(ctx, payload) {
-  if (ctx.s.role !== 'owner') throw new Error('Only the owner removes a customer’s personal data.');
+  if (!roleAtLeast(ctx.s.role, 'shareholder')) throw new Error('Only the owner or a shareholder removes a customer’s personal data.');
   payload = payload || {};
   const reason = str(payload.reason).slice(0, 200);
   if (!reason) throw new Error('Say why (for example: the customer asked on 13 Oct by phone).');
