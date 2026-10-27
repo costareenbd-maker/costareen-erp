@@ -17,7 +17,7 @@ const num = (v) => { const n = Number(v); return isFinite(n) ? n : 0; };
 
 export async function erpCodCollected(ctx, payload) {
   payload = payload || {};
-  if (!roleAtLeast(ctx.s.role, 'sales')) throw new Error('Not allowed.');
+  if (!roleAtLeast(ctx.s.role, 'sales')) throw new Error('Your account does not have permission for this. If you need this, ask the owner to open it for you (Settings > Users).');
   const no = str(payload.invoiceNo);
   if (!no) throw new Error('Which invoice?');
   await lock(ctx, 'sale');

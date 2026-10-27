@@ -1194,7 +1194,7 @@ export async function jointReconcile(deps) {
 
 /** Platform > Company copies: joint stock on or off for a company running on its own database. */
 export async function erpPlatformJointCopy(ctx, payload) {
-  if (!(await platformAdmin(ctx))) throw new Error('Your account does not have access to that.');
+  if (!(await platformAdmin(ctx))) throw new Error('Your account does not have permission for this. If you need this, ask the owner to open it for you (Settings > Users).');
   const id = str(payload && payload.id), on = !!(payload && payload.on);
   if (!isId(id)) throw new Error('Which company copy?');
   if (!(await ctx.sql`select 1 from erp_tenants where id = ${id}`).length) throw new Error('That company is not on the provider’s server yet.');

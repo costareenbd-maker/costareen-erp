@@ -11,7 +11,7 @@ import { str } from '../lib/tabs.js';
 import { formatDate, num, round2 } from '../lib/time.js';
 import { products } from './dashboard.js';
 import { holdingFor, lotMonths } from './holding.js';
-import { powerOn } from '../allow.js';
+import { powerOn, roleAtLeast } from '../allow.js';
 import { assertOpen } from '../lib/period.js';
 
 /** The sold part of late costs: { reference: amount } (cost of sales of the month they were entered in). */
@@ -230,7 +230,7 @@ export async function erpLotFunding(ctx, payload) {
 
 /** The owner says who funded what share of a shipment. All shares of one shipment together stay within 100%. */
 export async function erpLotFund(ctx, payload) {
-  if (ctx.s.role !== 'owner') throw new Error('Only the owner says who funded a shipment.');
+  if (!roleAtLeast(ctx.s.role, 'shareholder')) throw new Error('Only the owner or a shareholder says who funded a shipment.');
   payload = payload || {};
   const ref = str(payload.reference), holder = str(payload.holder), pct = Math.round(num(payload.pct) * 1000) / 1000;
   if (!ref) throw new Error('Which shipment?');
@@ -268,7 +268,7 @@ export async function erpLotFund(ctx, payload) {
 
 /** A funding written by mistake is struck out with a reason (its returns stop counting). */
 export async function erpLotFundVoid(ctx, payload) {
-  if (ctx.s.role !== 'owner') throw new Error('Only the owner changes who funded a shipment.');
+  if (!roleAtLeast(ctx.s.role, 'shareholder')) throw new Error('Only the owner or a shareholder changes who funded a shipment.');
   const id = str(payload && payload.id), why = str(payload && payload.reason);
   if (!why) throw new Error('Say why it is struck out.');
   const f0 = (await ctx.tx`select at from lot_funding where business_id = ${ctx.biz} and id = ${id} and voided_at is null`)[0];

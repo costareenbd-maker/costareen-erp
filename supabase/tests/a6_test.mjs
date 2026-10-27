@@ -79,8 +79,8 @@ r = await owner('erpSupplierBill', [{ name: sup, amount: 100 }]);
 check('...dated today it is fine', r.ok, r);
 
 // ---------------------------------------------------------------- reopening
-r = await shareholder('erpCapitalReopen', [{ month: prev, reason: 'x' }]);
-check('only the owner reopens', !r.ok, r);
+r = await mgr('erpCapitalReopen', [{ month: prev, reason: 'x' }]);
+check('a manager cannot reopen', !r.ok, r);
 r = await owner('erpCapitalReopen', [{ month: prev }]);
 check('reopening needs a reason', !r.ok && /Say why/.test(r.error), r);
 r = await owner('erpCapitalReopen', [{ month: prev2, reason: 'x' }]);

@@ -6,7 +6,7 @@
 //   erpCommissionPay  paying a seller: an expense 'Commission paid to ...' (not counted a second time)
 
 import { str } from '../lib/tabs.js';
-import { powerOn, actRole } from '../allow.js';
+import { powerOn, actRole, roleAtLeast } from '../allow.js';
 import { num, round2, formatDate } from '../lib/time.js';
 
 const R = (v) => Math.round(num(v));
@@ -89,7 +89,7 @@ export async function commissionDue(ctx, month) {
 }
 
 export async function erpCommission(ctx, payload) {
-  const owner = actRole(ctx.s) === 'owner';
+  const owner = roleAtLeast(actRole(ctx.s), 'shareholder');
   const now = formatDate(ctx.now, 'yyyy-MM');
   const month = isMonth(payload && payload.month) ? payload.month : now;
   // Q4 (owner's rule, fix-3): a seller's balance runs on from month to month - commission taken back by a return in a
@@ -134,7 +134,7 @@ export async function erpCommission(ctx, payload) {
 }
 
 export async function erpCommissionRuleSave(ctx, payload) {
-  if (actRole(ctx.s) !== 'owner') throw new Error('Only the owner sets commission.');
+  if (!roleAtLeast(actRole(ctx.s), 'shareholder')) throw new Error('Only the owner or a shareholder sets commission.');
   payload = payload || {};
   const scope = str(payload.scope) || 'all', basis = str(payload.basis) || 'sales';
   if (!LEVEL.hasOwnProperty(scope)) throw new Error('On everything, a category, a brand or one product?');
@@ -161,7 +161,7 @@ export async function erpCommissionRuleSave(ctx, payload) {
 }
 
 export async function erpCommissionRuleVoid(ctx, payload) {
-  if (actRole(ctx.s) !== 'owner') throw new Error('Only the owner sets commission.');
+  if (!roleAtLeast(actRole(ctx.s), 'shareholder')) throw new Error('Only the owner or a shareholder sets commission.');
   // fix-2 H11: commission already paid this month stays a cost of this month - the rule then ends with the month
   const nowM = formatDate(ctx.now, 'yyyy-MM');
   const paidNow = (await ctx.tx`select 1 from expenses where business_id = ${ctx.biz} and month = ${nowM} and category = 'Commission'
@@ -177,7 +177,7 @@ export async function erpCommissionRuleVoid(ctx, payload) {
 
 /** Pay a seller: an expense row 'Commission paid to NAME for yyyy-MM' (the cost was counted when earned). */
 export async function erpCommissionPay(ctx, payload) {
-  if (actRole(ctx.s) !== 'owner') throw new Error('Only the owner pays commission.');
+  if (!roleAtLeast(actRole(ctx.s), 'shareholder')) throw new Error('Only the owner or a shareholder pays commission.');
   payload = payload || {};
   await ctx.tx`select pg_advisory_xact_lock(hashtext(${'commpay:' + ctx.biz}))`;
   const month = isMonth(payload.month) ? payload.month : formatDate(ctx.now, 'yyyy-MM');
@@ -211,7 +211,7 @@ export async function erpSellers(ctx) {
  *  earned under the rules. The owner sees everyone; anyone else only their own sales. No cost or profit is returned. */
 export async function erpCommissionSales(ctx, payload) {
   payload = payload || {};
-  const owner = actRole(ctx.s) === 'owner', me = String(ctx.s.userId);
+  const owner = roleAtLeast(actRole(ctx.s), 'shareholder'), me = String(ctx.s.userId);
   const month = isMonth(payload.month) ? payload.month : formatDate(ctx.now, 'yyyy-MM');
   const rs = await rules(ctx, true);
   const rows = await ctx.tx`

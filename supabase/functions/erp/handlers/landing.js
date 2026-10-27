@@ -25,7 +25,7 @@ import { paymentsTab, PAY } from '../lib/tabs.js';
 const str = (v) => String(v == null ? '' : v).trim();
 const NF = { status: 404, body: { ok: false, error: 'This page is not available.' } };
 const isId = (s) => /^[0-9a-f-]{36}$/i.test(str(s));
-function need(ctx, role) { if (!roleAtLeast(ctx.s.role, role || 'sales')) throw new Error('Not open to your role.'); }
+function need(ctx, role) { if (!roleAtLeast(ctx.s.role, role || 'sales')) throw new Error('Your account does not have permission for this. If you need this, ask the owner to open it for you (Settings > Users).'); }
 function pageBase(ctx) { return String((ctx.deps && ctx.deps.google && ctx.deps.google.appUrl) || 'https://erp.costareen.com/').replace(/#.*$/, '').replace(/\/+$/, ''); }
 export function landingLink(ctx, pg) {
   const api = str(ctx.deps && ctx.deps.hookBase);
@@ -181,7 +181,7 @@ export async function erpLandingSave(ctx, payload) {
   const points = Array.isArray(p.points) ? p.points.map((s) => str(s).slice(0, 160)).filter(Boolean).slice(0, 8) : null;
   const offer = p.offerPrice === undefined ? undefined : (num(p.offerPrice) > 0 ? Math.round(num(p.offerPrice)) : null);
   if (offer && offer >= x.sell) throw new Error('The offer price must be below the normal price (' + x.sell + ').');
-  if (offer && x.cost > 0 && offer < x.cost && ctx.s.role !== 'owner') throw new Error('That offer is below cost - only the owner can set it.');
+  if (offer && x.cost > 0 && offer < x.cost && !roleAtLeast(ctx.s.role, 'shareholder')) throw new Error('That offer is below cost - only the owner can set it.');
   const colour = /^#[0-9a-f]{6}$/i.test(str(p.colour)) ? str(p.colour) : undefined;
   if (!pg) {
     pg = (await ctx.tx`insert into landing_pages (business_id, sku, headline, points, offer_price, colour, created_by)
@@ -255,7 +255,7 @@ export async function erpOrderShieldSet(ctx, payload) {
                  on conflict (business_id, kind, value) do update set reason = excluded.reason`;
   } else if (isId(p.unblock)) await ctx.tx`delete from order_blocks where business_id = ${ctx.biz} and id = ${p.unblock}`;
   else if (p.settings) {
-    if (ctx.s.role !== 'owner') throw new Error('Only the owner decides what happens to risky orders.');
+    if (!roleAtLeast(ctx.s.role, 'shareholder')) throw new Error('Only the owner or a shareholder decides what happens to risky orders.');
     const S = { risky: ['warn', 'advance', 'confirm'].includes(p.settings.risky) ? p.settings.risky : 'warn', advanceHow: str(p.settings.advanceHow).slice(0, 160),
                 advanceAmount: Math.max(0, Math.round(num(p.settings.advanceAmount))) };
     if (S.risky === 'advance' && !S.advanceHow) throw new Error('Say how to pay the advance (e.g. bKash 01XXXXXXXXX, send money).');

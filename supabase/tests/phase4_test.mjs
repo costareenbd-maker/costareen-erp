@@ -42,8 +42,8 @@ r = await owner('erpDashboardData', []);
 check('dashboard: top products carry the sku', r.ok && r.result.topProducts.some((t) => t.sku === PLA), r.result ? r.result.topProducts : r);
 
 // ---------------------------------------------------------------- expenses
-r = await shareholder('erpExpenseCategory', [{ kind: 'oneoff', add: 'Gifts' }]);
-check('only the owner changes the category lists', !r.ok, r);
+r = await mgr('erpExpenseCategory', [{ kind: 'oneoff', add: 'Gifts' }]);
+check('a manager cannot change the category lists', !r.ok, r);
 r = await owner('erpExpenseCategory', [{ kind: 'nope', add: 'Gifts' }]);
 check('category: which list', !r.ok && r.error === 'Which list?', r);
 r = await owner('erpExpenseCategory', [{ kind: 'oneoff', add: 'Gifts' }]);

@@ -382,7 +382,7 @@ export async function erpMyLink(ctx, payload) {
   return { url: l.url, text, whatsapp: wa ? 'https://wa.me/' + (wa.startsWith('0') ? '88' + wa : wa) + '?text=' + encodeURIComponent(text) : '' };
 }
 export async function erpPassportSync(ctx) {
-  if (!roleAtLeast(ctx.s.role, 'manager')) throw new Error('Only a manager or the owner publishes to the register.');
+  if (!roleAtLeast(ctx.s.role, 'manager')) throw new Error('Only a manager or the owner publishes to the register. If you need this, ask the owner to open it for you (Settings > Users).');
   if (!sourceOf(ctx.deps)) throw new Error('The register works only for ERPs run by the provider.');
   const rows = await ctx.tx`select s.serial, s.sku, s.sold_at, s.invoice_no, s.customer_key, s.warranty_months, s.warranty_until, p.name, p.brand, p.category
                             from serials s join products p on p.id = s.product_id where s.business_id = ${ctx.biz} and s.status = 'sold' order by s.sold_at`;
@@ -397,7 +397,7 @@ export async function erpPassportSync(ctx) {
   return { published: n };
 }
 export async function erpPassportShowSeller(ctx, payload) {
-  if (!roleAtLeast(ctx.s.role, 'owner')) throw new Error('Only the owner changes this.');
+  if (!roleAtLeast(ctx.s.role, 'shareholder')) throw new Error('Only the owner or a shareholder changes this. If you need this, ask the owner to open it for you (Settings > Users).');
   const on = !(payload && payload.on === false);
   await ctx.tx`insert into business_config (business_id, key, value) values (${ctx.biz}, 'passport_show_seller', ${on ? '1' : '0'})
                on conflict (business_id, key) do update set value = excluded.value, updated_at = now()`;

@@ -82,7 +82,7 @@ export function makeBundle(handlers) {
       try {
         if (!fn) throw new Error('Not built yet: ' + fnName);
         // the settings and the cost book are held to their own call's role
-        if ((name === 'settings' || name === 'costs') && !callAllowed(ctx.s, fnName)) throw new Error('Not open to your role.');
+        if ((name === 'settings' || name === 'costs') && !callAllowed(ctx.s, fnName)) throw new Error('Your account does not have permission for this. If you need this, ask the owner to open it for you (Settings > Users).');
         out[name] = await ctx.tx.savepoint(() => (name === 'dash'
           ? dashReady(ctx, handlers, !!(opt && opt.fresh))
           : fn(ctx, ...args)));

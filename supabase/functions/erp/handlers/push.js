@@ -20,7 +20,7 @@ async function rules(ctx) {
   return out;
 }
 export async function erpPushRulesSave(ctx, payload) {
-  if (ctx.s.role !== 'owner') throw new Error('Only an owner changes the rules.');
+  if (!roleAtLeast(ctx.s.role, 'shareholder')) throw new Error('Only the owner or a shareholder changes the rules.');
   const p = payload || {}, out = {};
   for (const k of Object.keys(DEFAULTS)) { const v = num(p[k]); if (!(v >= 0)) throw new Error('Each rule is a number.'); out[k] = v || DEFAULTS[k]; }
   await setConfig(ctx, 'push_rules', JSON.stringify(out));
@@ -95,6 +95,7 @@ export const HANDLERS = { erpPushList, erpPushRulesSave };
 // ---- Advertisement (Campaigns > Advertisement): a caption written by the AI for one product and one channel.
 // Owner-only like the rest of this file; the page writes the plain template itself, this is the "Improve with AI" step.
 import { ai, anyAi } from '../lib/ai.js';
+import { roleAtLeast } from '../allow.js';
 const CHANNELS = {
   post: 'a Facebook page post (price in the caption, how to order by inbox or call, 3-6 lines, 2-4 hashtags at the end)',
   reel: 'a 15-30 second Facebook Reel / short video: a shot list of 4-6 scenes plus a 1-2 line caption',
@@ -105,7 +106,7 @@ const CHANNELS = {
   website: 'a website banner: headline (max 8 words), sub-line (max 15 words), button text',
 };
 export async function erpAdDraft(ctx, payload) {
-  if (ctx.s.role !== 'owner') throw new Error('Only an owner writes advertisements.');
+  if (!roleAtLeast(ctx.s.role, 'shareholder')) throw new Error('Only the owner or a shareholder writes advertisements.');
   const p = payload || {}, channel = CHANNELS[str(p.channel)] ? str(p.channel) : 'post';
   if (!(await anyAi(ctx))) throw new Error('The AI writer is not set up on this server (no AI key).');
   const k = 'ai_chat:' + formatDate(ctx.now, 'yyyy-MM-dd'), used = num(await getConfig(ctx, k, '0'));

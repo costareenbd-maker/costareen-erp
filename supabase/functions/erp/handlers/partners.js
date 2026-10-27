@@ -19,6 +19,7 @@ import { setConfig } from '../lib/ext.js';
 import { SEED_LISTS } from './settings.js';
 import { createInvoice } from './invoice.js';
 import { erpRecordPayment } from './customers.js';
+import { roleAtLeast } from '../allow.js';
 
 const str = (v) => String(v == null ? '' : v).trim();
 const isMonth = (m) => /^\d{4}-(0[1-9]|1[0-2])$/.test(String(m || ''));
@@ -51,7 +52,7 @@ async function needPool(ctx) {
 export async function erpPartnership(ctx, payload) {
   payload = payload || {};
   const b = await thisBusiness(ctx);
-  const owner = ctx.s.role === 'owner';
+  const owner = roleAtLeast(ctx.s.role, 'shareholder');   // 27 Oct 2026: a shareholder edits as the owner
   const nowMonth = formatDate(ctx.now, 'yyyy-MM');
 
   if (b.is_pool) {

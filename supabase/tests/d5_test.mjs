@@ -30,7 +30,7 @@ r = await mgr('erpNoteVoid', [{ id: nid, reason: 'again' }]);
 check('once only', !r.ok && /already struck out/.test(r.error), r);
 
 r = await sales('erpNoteAdd', [{ kind: 'supplier', ref: 'Sunlu', body: 'x' }]);
-check('supplier notes are a manager matter', !r.ok && /does not have access/.test(r.error), r);
+check('supplier notes are a manager matter', !r.ok && /does not have permission/.test(r.error), r);
 r = await mgr('erpNoteAdd', [{ kind: 'supplier', ref: 'Sunlu', body: 'Pays in RMB, 30% advance' }]);
 check('a note on a supplier', r.ok && r.result.notes.length === 1, r);
 r = await sales('erpNotes', [{ kind: 'supplier', ref: 'Sunlu' }]);

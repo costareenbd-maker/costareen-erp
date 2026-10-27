@@ -45,8 +45,8 @@ export const BRIEF_ASK = 'Write today\'s business brief for the owner (it is eve
   'Finish with a two-line note.';
 
 async function gate(ctx) {
-  if (!roleAtLeast(ctx.s.role, 'owner')) throw new Error('Only the owner sees the brief.');
-  if (!(await platformAdmin(ctx)) && await appIsOff(ctx.deps, ctx.sql, 'engine')) throw new Error('The Engine is not open on this ERP yet.');
+  if (!roleAtLeast(ctx.s.role, 'shareholder')) throw new Error('Only the owner or a shareholder sees the brief. If you need this, ask the owner to open it for you (Settings > Users).');
+  if (!(await platformAdmin(ctx)) && await appIsOff(ctx.deps, ctx.sql, 'engine', ctx)) throw new Error('The Engine is not open on this ERP yet.');
   await (await import('./engine.js')).markOn(ctx);
   await ensureSchedule(ctx);
 }

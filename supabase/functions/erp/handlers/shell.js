@@ -98,7 +98,7 @@ export async function erpBnWords(ctx, payload) {
   let words = {};
   try { words = JSON.parse(await getConfig(ctx, 'bn_words', '') || '{}') || {}; } catch (_) { words = {}; }
   if (payload && payload.set && typeof payload.set === 'object') {
-    if (!roleAtLeast(ctx.s.role, 'manager')) throw new Error('Only a manager or the owner can change the Bangla words.');
+    if (!roleAtLeast(ctx.s.role, 'manager')) throw new Error('Only a manager or the owner can change the Bangla words. If you need this, ask the owner to open it for you (Settings > Users).');
     for (const [en, bn] of Object.entries(payload.set)) {
       const k = String(en).replace(/\s+/g, ' ').trim(), v = String(bn == null ? '' : bn).trim();
       if (!k || k.length > 400 || v.length > 600) throw new Error('That word or sentence is too long.');
@@ -114,7 +114,7 @@ export async function erpBnWords(ctx, payload) {
 export async function erpDocLang(ctx, lang) {
   const { getConfig, setConfig } = await import('../lib/ext.js');
   if (lang === undefined || lang === null || lang === '') return { lang: (String(await getConfig(ctx, 'doc_lang', 'en')) || 'en') === 'bn' ? 'bn' : 'en' };
-  if (ctx.s.role !== 'owner') throw new Error('Only the owner can do that.');
+  if (!roleAtLeast(ctx.s.role, 'shareholder')) throw new Error('Only the owner or a shareholder can do that.');
   const v = String(lang).trim().toLowerCase();
   if (v !== 'en' && v !== 'bn') throw new Error('That language is not offered.');
   await setConfig(ctx, 'doc_lang', v);
@@ -159,7 +159,7 @@ export async function erpBg(ctx, payload) {
 export async function erpBgSave(ctx, payload) {
   const { setConfig } = await import('../lib/ext.js');
   const { roleAtLeast } = await import('../allow.js');
-  if (!roleAtLeast(ctx.s.role, 'manager')) throw new Error('Only a manager or the owner changes the background photo.');
+  if (!roleAtLeast(ctx.s.role, 'manager')) throw new Error('Only a manager or the owner changes the background photo. If you need this, ask the owner to open it for you (Settings > Users).');
   payload = payload || {};
   if (payload.photo !== undefined) {
     const ph = String(payload.photo || '');
@@ -193,7 +193,7 @@ export async function erpGame(ctx) {
 /** Owner: {who: owner|all|none}. */
 export async function erpGameSet(ctx, payload) {
   const { setConfig } = await import('../lib/ext.js');
-  if (ctx.s.role !== 'owner') throw new Error('Only the owner decides who sees the game.');
+  if (!roleAtLeast(ctx.s.role, 'shareholder')) throw new Error('Only the owner or a shareholder decides who sees the game.');
   const who = String(payload && payload.who || '');
   if (!GAME_WHO.includes(who)) throw new Error('Everyone, only the owner, or nobody?');
   await setConfig(ctx, 'game_who', who);
@@ -244,7 +244,7 @@ export async function erpFighters(ctx) {
 /** Owner: the whole list, checked piece by piece (who made each one is kept by id). */
 export async function erpFightersSet(ctx, payload) {
   const { setConfig } = await import('../lib/ext.js');
-  if (ctx.s.role !== 'owner') throw new Error('Only the owner changes the fighters.');
+  if (!roleAtLeast(ctx.s.role, 'shareholder')) throw new Error('Only the owner or a shareholder changes the fighters.');
   const src = payload && payload.fighters;
   if (!Array.isArray(src) || src.length > FIGHT_MAX) throw new Error('Up to ' + FIGHT_MAX + ' fighters.');
   const old = await fightersRaw(ctx), byId = new Map(old.map((f) => [f.id, f]));
@@ -261,7 +261,7 @@ export async function erpFightersSet(ctx, payload) {
 export async function erpFighterMine(ctx, payload) {
   const { setConfig } = await import('../lib/ext.js');
   const p = payload || {}, other = !!p.other;
-  if (other && ctx.s.role !== 'owner') throw new Error('Only the owner adds a fighter for someone else. Make your own with your own photo.');
+  if (other && !roleAtLeast(ctx.s.role, 'shareholder')) throw new Error('Only the owner or a shareholder adds a fighter for someone else. Make your own with your own photo.');
   if (!p.stats) throw new Error('The fighter needs abilities.');
   const c = cleanFighter(p, 0);
   const list = await fightersRaw(ctx);
@@ -279,7 +279,7 @@ export async function erpFighterRemove(ctx, payload) {
   const id = String(payload && payload.id || '');
   const list = await fightersRaw(ctx), f = list.find((x) => x.id === id);
   if (!f) throw new Error('That fighter is not in the game any more.');
-  if (ctx.s.role !== 'owner' && f.by !== ctx.s.userId) throw new Error('Only the owner removes someone else\u2019s fighter.');
+  if (!roleAtLeast(ctx.s.role, 'shareholder') && f.by !== ctx.s.userId) throw new Error('Only the owner removes someone else\u2019s fighter.');
   const out = list.filter((x) => x.id !== id);
   await setConfig(ctx, 'fighters', JSON.stringify(out));
   return fightersOut(ctx, out);

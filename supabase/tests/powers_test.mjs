@@ -43,7 +43,7 @@ for (const [label, name, args] of tries) {
 r = await sales('erpExpenseAdd', [{ amount: 500, description: 'tea', category: 'Miscellaneous' }]);
 check('sales with "expenses" on: adds an expense', r.ok, r.error);
 r = await sales('erpPoCreate', [{ supplier: 'Sunlu', lines: [{ sku: PLA, qty: 5, price: 900 }] }]);
-check('sales with "suppliers" on: places an order (no role check left inside)', r.ok || !/cannot place orders|does not have access/.test(r.error), r.error);
+check('sales with "suppliers" on: places an order (no role check left inside)', r.ok || !/cannot place orders|does not have pecess/.test(r.error), r.error);
 r = await sales('erpDashboardData', []);
 check('...and the dashboard has its money figures', r.ok && !r.result.hideProfit, r.ok && Object.keys(r.result).slice(0, 12));
 r = await sales('erpProductPage', [{ sku: PLA }]);
@@ -96,18 +96,18 @@ const ha = await hello(mgr);
 check('hello: act on, dashboard and profit still off', ha.ok && ha.result.powers.act === true && ha.result.powers.dash === false && ha.result.powers.profit === false && ha.result.powers.expenses === true, ha.result);
 for (const [name, args] of [['erpExpenses', [{}]], ['erpSupplierPage', [{ name: 'Nobody Ltd' }]], ['erpCommission', [{}]], ['erpSettingsFull', []]]) {
   r = await mgr(name, args);
-  check('act on: ' + name + ' opens', r.ok || !/does not have access/.test(r.error), r.error);
+  check('act on: ' + name + ' opens', r.ok || !/does not have permission/.test(r.error), r.error);
 }
 r = await mgr('erpSettingsFull', []);
 check('act on: business settings come with the lists', r.ok && r.result.config.length > 0, r.ok ? r.result.config.length : r.error);
 r = await mgr('erpPoSettle', [{ supplier: 'Nobody Ltd', note: 'x' }]);
-check('act on: the settle check inside lets the manager through', !r.ok ? !/Only the owner or a shareholder/.test(r.error) && !/does not have access/.test(r.error) : true, r.error);
+check('act on: the settle check inside lets the manager through', !r.ok ? !/Only the owner or a shareholder/.test(r.error) && !/does not have permission/.test(r.error) : true, r.error);
 r = await mgr('erpSerialWarranty', [{ serial: 'NOPE-1', sku: PLA, months: 3, reason: 'x' }]);
 check('act on: warranty change not refused for the role', r.ok || !/Only a shareholder/.test(r.error), r.error);
 for (const name of ['erpDashboardData', 'erpFdDash', 'erpPnl', 'erpPnlMonth', 'erpMoney', 'erpCashBook', 'erpCapital', 'erpAnalytics',
   'erpUsers', 'erpUserPowers', 'erpSecurity', 'erpAccessKeys', 'erpAppSet', 'erpRestore', 'erpOwnerChange']) {
   r = await mgr(name, name === 'erpPnlMonth' ? [{ month: '2026-10' }] : [{}]);
-  check('act on: ' + name + ' still closed', !r.ok && /does not have access/.test(r.error), r.ok || r.error);
+  check('act on: ' + name + ' still closed', !r.ok && /does not have permission/.test(r.error), r.ok || r.error);
 }
 r = await mgr('erpUserPowers', [{ userId: MGR, powers: { dash: true } }]);
 check('act on: cannot give himself the dashboard', !r.ok, r.ok);
@@ -119,14 +119,14 @@ check('act off again: expenses closed', !r.ok, r.ok);
 
 // 8. the Inbox per person: on for everyone by default, the owner switches it off for one
 r = await sales('erpInbox', [{}]);
-check('inbox: sales reads chats by default', r.ok || !/does not have access/.test(r.error), r.error);
+check('inbox: sales reads chats by default', r.ok || !/does not have permission/.test(r.error), r.error);
 r = await set(SALES, { inbox: false });
 r = await sales('erpInbox', [{}]);
-check('inbox: switched off for one person, closed', !r.ok && /does not have access/.test(r.error), r.ok || r.error);
+check('inbox: switched off for one person, closed', !r.ok && /does not have permission/.test(r.error), r.ok || r.error);
 r = await sales('erpInboxSend', [{ id: '00000000-0000-0000-0000-000000000000', text: 'x' }]);
-check('inbox: and cannot reply', !r.ok && /does not have access/.test(r.error), r.ok || r.error);
+check('inbox: and cannot reply', !r.ok && /does not have permission/.test(r.error), r.ok || r.error);
 r = await set(SALES, { inbox: null });
 r = await sales('erpInbox', [{}]);
-check('inbox: back to the role, open again', r.ok || !/does not have access/.test(r.error), r.error);
+check('inbox: back to the role, open again', r.ok || !/does not have permission/.test(r.error), r.error);
 
 await done();

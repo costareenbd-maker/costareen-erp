@@ -35,7 +35,7 @@ let r;
 
 // ============================================================ products
 r = await sales('erpSaveProduct', [{ isNew: true, product_name: 'X' }]);
-check('sales cannot save a product', !r.ok && r.error === 'Your account does not have access to that.', r);
+check('sales cannot save a product', !r.ok && /does not have permission/.test(r.error), r);
 r = await mgr('erpSaveProduct', [{ isNew: true, product_name: '  ' }]);
 check('name required', !r.ok && r.error === 'Product name is required.', r);
 r = await mgr('erpSaveProduct', [{ isNew: true, product_name: 'X', sell_price: -1 }]);
@@ -93,7 +93,7 @@ check('reactivate', r.ok && (await prod('FIL-SUN-PLA+-WHI-002')).status === 'Act
 r = await mgr('erpSetProductStatus', ['X-OTHER', 'Active']);
 check("another business's product is not found", !r.ok && r.error === 'Product not found: X-OTHER', r);
 r = await sales('erpSetProductStatus', [PLA, 'Active']);
-check('sales cannot change status', !r.ok && r.error === 'Your account does not have access to that.', r);
+check('sales cannot change status', !r.ok && /does not have permission/.test(r.error), r);
 
 // ============================================================ receive shipment
 const recv = (pl) => mgr('erpReceiveShipment', [{ supplier: 'Sunlu Direct', reference: 'INV-77', notes: '', mode: 'none', again: true,   // fix-1 M1: the same bill reused on purpose here
@@ -113,7 +113,7 @@ check('negative shipping', !r.ok && r.error === 'Shipping cannot be negative.', 
 r = await recv({ lines: [{ sku: 'X-OTHER', qty: 1 }] });
 check("another business's SKU is not found", !r.ok && r.error === 'Product not found: X-OTHER', r);
 r = await sales('erpReceiveShipment', [{ reference: 'x', lines: [{ sku: PLA, qty: 1 }] }]);
-check('sales cannot receive', !r.ok && r.error === 'Your account does not have access to that.', r);
+check('sales cannot receive', !r.ok && /does not have permission/.test(r.error), r);
 
 // price book: Filaments|Sunlu|PLA = 40 x 17 + 0 = 680; average (7x900 + 3x680)/10 = 834
 r = await recv({ lines: [{ sku: PLA, qty: 3 }] });
@@ -231,7 +231,7 @@ check('PO: new needs a name', !r.ok && r.error === 'A new product needs a name.'
 r = await po({ lines: [{ isNew: true, qty: 1, product: { product_name: 'x', sku: PETG } }] });
 check('PO: new SKU clash', !r.ok && r.error === 'SKU already exists: ' + PETG, r);
 r = await sales('erpPoCreate', [{ lines: [{ sku: PLA, qty: 1 }] }]);
-check('PO: sales refused', !r.ok && r.error === 'Your account does not have access to that.', r);
+check('PO: sales refused', !r.ok && /does not have permission/.test(r.error), r);
 
 r = await po({ lines: [{ sku: PETG, qty: 20, rmbUnit: 50 }, { sku: PLA, qty: 10, rmbUnit: 40 },
   { isNew: true, qty: 5, rmbUnit: 60, product: { product_name: 'Sunlu Silk Gold', category: 'Filaments', brand: 'Sunlu', type: 'Silk', color: 'Gold' } }] });
@@ -344,7 +344,7 @@ check('unnamed supplier balance', r.result.balances.some((b) => b.supplier === '
 
 // settle
 r = await mgr('erpPoSettle', [{ supplier: 'Sunlu Direct', note: 'refunded' }]);
-check('settle: manager refused', !r.ok && r.error === 'Your account does not have access to that.', r);
+check('settle: manager refused', !r.ok && /does not have permission/.test(r.error), r);
 r = await shareholder('erpPoSettle', [{ supplier: 'Sunlu Direct', note: '' }]);
 check('settle: how', !r.ok && r.error === 'Say how it was settled.', r);
 r = await shareholder('erpPoSettle', [{ supplier: 'sunlu direct', note: 'refunded' }]);
@@ -370,7 +370,7 @@ check('no shipment no: reference "PO-id / d MMM yyyy"', mv.reference === po3 + '
 
 // ============================================================ reorder levels
 r = await mgr('erpApplyReorderLevels', [false]);
-check('reorder levels: manager refused', !r.ok && r.error === 'Your account does not have access to that.', r);
+check('reorder levels: manager refused', !r.ok && /does not have permission/.test(r.error), r);
 const cat = (await shareholder('erpCatalog', [])).result;
 const raw = await sql`select sku, reorder_level from products where business_id = ${B}`;
 const expect = raw.filter((x) => { const c = cat.find((p) => p.sku === x.sku); return c && c.suggested !== x.reorder_level; }).length;

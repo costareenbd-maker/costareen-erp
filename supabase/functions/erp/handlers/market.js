@@ -251,7 +251,7 @@ const ACTIVE = ['asked', 'quoted', 'accepted', 'invoiced'];
 const SAY = { asked: 'Waiting for a price', quoted: 'Price given', accepted: 'Accepted - waiting for the invoice', invoiced: 'Invoiced',
   received: 'Received', declined: 'Declined', cancelled: 'Cancelled' };
 const phoneOk = (p) => str(p).replace(/[^0-9+]/g, '').length >= 6;
-function need(ctx, role, what) { if (!roleAtLeast(ctx.s.role, role)) throw new Error('Only a ' + role + ' or the owner can ' + what + '.'); }
+function need(ctx, role, what) { if (!roleAtLeast(ctx.s.role, role)) throw new Error('Only a ' + role + ' or the owner can ' + what + '. ' + 'If you need this, ask the owner to open it for you (Settings > Users).'); }
 async function phoneSave(ctx, phone) {
   await ctx.tx`insert into business_config (business_id, key, value) values (${ctx.biz}, 'market_phone', ${str(phone).slice(0, 30)})
                on conflict (business_id, key) do update set value = excluded.value, updated_at = now()`;

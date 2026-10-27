@@ -389,7 +389,7 @@ async function pageFor(ctx, D, invoiceNo) {
   if ((await docLang(ctx)) === 'bn') { parts2.html = docBangla(parts2.html); parts2.footer = docBangla(parts2.footer); }
   return { ...parts2, invoiceNo: d.invoiceNo, sample: d.invoiceNo === 'INV-SAMPLE-001' };
 }
-function needManager(ctx) { if (!roleAtLeast(ctx.s.role, 'manager')) throw new Error('Only a manager or the owner changes the invoice design.'); }
+function needManager(ctx) { if (!roleAtLeast(ctx.s.role, 'manager')) throw new Error('Only a manager or the owner changes the invoice design. If you need this, ask the owner to open it for you (Settings > Users).'); }
 
 export async function erpInvoiceDesign(ctx) {
   const S = await import('./sales.js');

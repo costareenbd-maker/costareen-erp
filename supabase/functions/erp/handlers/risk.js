@@ -55,7 +55,7 @@ export async function erpAlertRules(ctx) {
 }
 
 export async function erpAlertRulesSave(ctx, payload) {
-  if (ctx.s.role !== 'owner') throw new Error('Only the owner sets the alerts.');
+  if (!roleAtLeast(ctx.s.role, 'shareholder')) throw new Error('Only the owner or a shareholder sets the alerts.');
   const cur = await rulesOf(ctx), out = {};
   const given = (payload && payload.rules) || {};
   for (const k of Object.keys(RULES)) {

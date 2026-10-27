@@ -709,7 +709,7 @@ export async function erpInstallPwLink(ctx, payload) {
 // update - the same steps the platform's timer and Update button run, for THEIR company only (the copy is the one this
 // request came through; nothing in the payload can point at another company).
 async function myCopy(ctx) {
-  if (!roleAtLeast(ctx.s.role, 'owner')) throw new Error('Only the owner updates the ERP.');
+  if (!roleAtLeast(ctx.s.role, 'owner')) throw new Error('Only the owner updates the ERP. If you need this, ask the owner to open it for you (Settings > Users).');
   const inst = ctx.deps && ctx.deps.install;
   const ctl = ctx.deps && ctx.deps.control;
   if (!inst || !inst.bridged || !inst.id || !ctl) return null;   // the provider's own ERP: updated by the provider

@@ -83,7 +83,7 @@ check('preview refuses a return id', !r.ok && r.error === 'That is a return, not
 r = await mgr('erpReturnPreview', [{ invoiceNo: 'INV-NOPE' }]);
 check('preview: unknown invoice', !r.ok && r.error === 'No invoice called INV-NOPE.', r);
 r = await sales('erpReturnPreview', [{ invoiceNo: A }]);
-check('sales role cannot take returns', !r.ok && r.error === 'Your account does not have access to that.', r);
+check('sales role cannot take returns', !r.ok && /does not have permission/.test(r.error), r);
 r = await mgr('erpReturnPreview', [{ invoiceNo: A }]);
 check('preview: unit = what was really paid (2600/2), grand/paid/owed, manager cannot refund',
   r.ok && r.result.lines.length === 1 && r.result.lines[0].unit === 1300 && r.result.lines[0].sold === 2 &&
@@ -225,7 +225,7 @@ check('cancel unknown invoice', !r.ok && r.error === 'No invoice called INV-NOPE
 
 // ------------------------------------------------------------ fix details
 r = await sales('erpFixInvoice', [{ invoiceNo: A, name: 'X' }]);
-check('sales cannot fix', !r.ok && r.error === 'Your account does not have access to that.', r);
+check('sales cannot fix', !r.ok && /does not have permission/.test(r.error), r);
 r = await mgr('erpFixInvoice', [{ invoiceNo: A, name: 'Rahim', phone: '01811111111', address: 'Mirpur', delivery: 'Steadfast courier' }]);
 check('nothing different', r.ok && r.result.changed === 0, r);
 r = await mgr('erpFixInvoice', [{ invoiceNo: A, name: '  ' }]);
@@ -352,7 +352,7 @@ r = await owner('erpCreateInvoice', [{ customer: { name: 'Oops' }, items: [{ sku
 const V = r.result.invoiceNo;
 before = await stockOf(PLA);
 r = await mgr('erpVoidInvoice', [V]);
-check('manager cannot void', !r.ok && r.error === 'Your account does not have access to that.', r);
+check('manager cannot void', !r.ok && /does not have permission/.test(r.error), r);
 r = await owner('erpVoidInvoice', ['']);
 check('void needs a number', !r.ok && r.error === 'Type the invoice number to void.', r);
 r = await owner('erpVoidInvoice', ['INV-NOPE']);

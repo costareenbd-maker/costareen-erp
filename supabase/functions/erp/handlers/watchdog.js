@@ -50,8 +50,8 @@ export const WATCH_DAILY = { key: 'watchdog-daily', agent: 'watchdog', title: 'W
 export const SAFE_AUTO = ['erpBackupRun', 'erpWebsiteTest', 'erpCheckDeliveries', 'erpConnStatus', 'erpSystemCheck'];
 
 async function gate(ctx) {
-  if (!roleAtLeast(ctx.s.role, 'owner')) throw new Error('Only the owner sees the Watchdog.');
-  if (!(await platformAdmin(ctx)) && await appIsOff(ctx.deps, ctx.sql, 'engine')) throw new Error('The Engine is not open on this ERP yet.');
+  if (!roleAtLeast(ctx.s.role, 'shareholder')) throw new Error('Only the owner or a shareholder sees the Watchdog. If you need this, ask the owner to open it for you (Settings > Users).');
+  if (!(await platformAdmin(ctx)) && await appIsOff(ctx.deps, ctx.sql, 'engine', ctx)) throw new Error('The Engine is not open on this ERP yet.');
   await markOn(ctx);
 }
 function engineOnly(ctx) {

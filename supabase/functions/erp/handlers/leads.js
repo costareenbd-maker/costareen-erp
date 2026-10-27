@@ -74,7 +74,7 @@ function sourceOf(l) {
 
 async function needOn(ctx) {
   if (await platformAdmin(ctx)) return;
-  if (await appIsOff(ctx.deps, ctx.sql, 'leads')) throw new Error('Leads is not open on this ERP yet.');
+  if (await appIsOff(ctx.deps, ctx.sql, 'leads', ctx)) throw new Error('Leads is not open on this ERP yet.');
 }
 const key10 = (p) => { const d = normalizePhone(str(p)).replace(/[^0-9]/g, ''); return d.length >= 8 ? d.slice(-10) : ''; };
 const cleanUrl = (u) => { const s = str(u); if (!s) return ''; return (/^https?:\/\//i.test(s) ? s : 'https://' + s).replace(/[)\].,;]+$/, '').slice(0, 400); };
@@ -185,7 +185,7 @@ async function researchState(ctx) {
 /** The owner asks the Engine for leads (what is optional - the Engine decides); also makes the daily search once. */
 export async function erpLeadResearch(ctx, payload) {
   await needOn(ctx);
-  if (!roleAtLeast(ctx.s.role, 'manager')) throw new Error('A manager or the owner asks the Engine for leads.');
+  if (!roleAtLeast(ctx.s.role, 'manager')) throw new Error('A manager or the owner asks the Engine for leads. If you need this, ask the owner to open it for you (Settings > Users).');
   const p = payload || {};
   const { nextRun } = await import('./watchdog.js');
   if (p.auto !== undefined) {
@@ -275,12 +275,12 @@ export async function erpLeadAct(ctx, payload) {
     await ev(d ? 'Follow up on ' + d : 'Follow-up cleared');
   }
   if (p.assign !== undefined) {
-    if (!roleAtLeast(ctx.s.role, 'manager')) throw new Error('Only a manager gives leads to people.');
+    if (!roleAtLeast(ctx.s.role, 'manager')) throw new Error('Only a manager gives leads to people. If you need this, ask the owner to open it for you (Settings > Users).');
     await ctx.tx`update inbox_leads set assigned_to = ${str(p.assign) || null}, assigned_name = ${str(p.assignName) || null}, updated_at = now() where id = ${l.id}`;
     await ev(str(p.assignName) ? 'Given to ' + str(p.assignName) : 'Not given to anyone');
   }
   if (p.convert) {
-    if (!roleAtLeast(ctx.s.role, 'manager')) throw new Error('Only a manager makes a customer or a supplier from a lead.');
+    if (!roleAtLeast(ctx.s.role, 'manager')) throw new Error('Only a manager makes a customer or a supplier from a lead. If you need this, ask the owner to open it for you (Settings > Users).');
     if (p.convert === 'customer') {
       if (l.customer_id) throw new Error('Already a customer.');
       const { erpSaveCustomer } = await import('./customers.js');
@@ -308,7 +308,7 @@ export async function erpLeadAct(ctx, payload) {
 const ASKING = /\b(price|prices|dam|daam|koto|kot|rate|cost|how\s*much|available|availability|stock|ase|ache|order|inbox|details|detail|pm|dm|interested|need|chai|lagbe|lagbo|wholesale)\b|দাম|কত|আছে|লাগবে|অর্ডার|ইনবক্স|ডিটেইলস|প্রাইস|চাই/i;
 export async function erpLeadHarvest(ctx) {
   await needOn(ctx);
-  if (!roleAtLeast(ctx.s.role, 'manager')) throw new Error('Only a manager brings in leads.');
+  if (!roleAtLeast(ctx.s.role, 'manager')) throw new Error('Only a manager brings in leads. If you need this, ask the owner to open it for you (Settings > Users).');
   const got = {};
   const tally = (src, r) => { got[src] = got[src] || { added: 0, seen: 0 }; got[src].seen++; if (r.added) got[src].added++; };
   const since = new Date(ctx.now.getTime() - 60 * 86400e3);
@@ -471,7 +471,7 @@ async function findWithAi(ctx, kind, what, place) {
 }
 export async function erpLeadFind(ctx, payload) {
   await needOn(ctx);
-  if (!roleAtLeast(ctx.s.role, 'manager')) throw new Error('Only a manager searches for leads.');
+  if (!roleAtLeast(ctx.s.role, 'manager')) throw new Error('Only a manager searches for leads. If you need this, ask the owner to open it for you (Settings > Users).');
   const p = payload || {};
   const kind = p.kind === 'supplier' ? 'supplier' : 'customer';
   // leads-1b: the map is searched by the page itself (the free map server throttles shared cloud servers; each browser
@@ -546,7 +546,7 @@ const COLS = { name: /^(name|full ?name|contact|contact ?name|person|first ?name
   want: /^(want|interest|need|product|products|what|category|title|position|job ?title|headline)$/i, note: /^(note|notes|comment|comments|remarks?)$/i };
 export async function erpLeadImport(ctx, payload) {
   await needOn(ctx);
-  if (!roleAtLeast(ctx.s.role, 'manager')) throw new Error('Only a manager imports leads.');
+  if (!roleAtLeast(ctx.s.role, 'manager')) throw new Error('Only a manager imports leads. If you need this, ask the owner to open it for you (Settings > Users).');
   const p = payload || {};
   const rows = (Array.isArray(p.rows) ? p.rows : []).slice(0, 2001).map((r) => (Array.isArray(r) ? r : [r]).map(str));
   if (rows.length < 2) throw new Error('The sheet needs a heading row and at least one lead.');
@@ -583,7 +583,7 @@ async function formsCore(ctx, p) {
   await needOn(ctx);
   let st = await formState(ctx);
   if (p.set) {
-    if (!roleAtLeast(ctx.s.role, 'manager')) throw new Error('Only a manager changes the public forms.');
+    if (!roleAtLeast(ctx.s.role, 'manager')) throw new Error('Only a manager changes the public forms. If you need this, ask the owner to open it for you (Settings > Users).');
     if (!st.token || p.set.newLink) await setConfig(ctx, 'lead_form_token', newToken());
     if (p.set.on) await setConfig(ctx, 'lead_form_on', (Array.isArray(p.set.on) ? p.set.on : []).filter((k) => FORM_KINDS.includes(k)).join(','));
     if (p.set.intro !== undefined) await setConfig(ctx, 'lead_form_intro', str(p.set.intro).slice(0, 600));

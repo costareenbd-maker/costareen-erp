@@ -35,7 +35,7 @@ export async function platformAdmin(ctx) {
   return isPlatformAdmin(ctx.sql, ctx.s.userId);
 }
 async function need(ctx) {
-  if (!(await platformAdmin(ctx))) throw new Error('Your account does not have access to that.');
+  if (!(await platformAdmin(ctx))) throw new Error('Your account does not have permission for this. If you need this, ask the owner to open it for you (Settings > Users).');
 }
 async function business(ctx, id) {
   if (!isId(id)) throw new Error('Which business?');

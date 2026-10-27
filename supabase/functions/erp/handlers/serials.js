@@ -120,7 +120,7 @@ export async function erpSerialLookup(ctx, payload) {
 /** A sold unit's warranty, changed by hand: a special deal, a correction. */
 export async function erpSerialWarranty(ctx, payload) {
   payload = payload || {};
-  if (!roleAtLeast(actRole(ctx.s), 'shareholder')) throw new Error('Only a shareholder or the owner changes a warranty already given.');
+  if (!roleAtLeast(actRole(ctx.s), 'shareholder')) throw new Error('Only a shareholder or the owner changes a warranty already given. If you need this, ask the owner to open it for you (Settings > Users).');
   const serial = clean(payload.serial), sku = str(payload.sku);
   const r = (await ctx.tx`select s.* from serials s where s.business_id = ${ctx.biz} and upper(s.serial) = ${serial}
                            and (${sku} = '' or lower(btrim(s.sku)) = ${sku.toLowerCase()}) and s.status = 'sold' limit 1`)[0];
@@ -175,7 +175,7 @@ async function applyRule(ctx, r) {
   delete ctx.memo.catalog;
   return got.length;
 }
-function needManager(ctx, what) { if (!roleAtLeast(ctx.s.role, 'manager')) throw new Error('Only a manager or the owner can ' + what + '.'); }
+function needManager(ctx, what) { if (!roleAtLeast(ctx.s.role, 'manager')) throw new Error('Only a manager or the owner can ' + what + '. ' + 'If you need this, ask the owner to open it for you (Settings > Users).'); }
 export async function erpWarrantyRules(ctx) {
   const rows = await ctx.tx`select * from warranty_rules where business_id = ${ctx.biz} order by category, brand`;
   const lk = await ctx.tx`select kind, value from lookups where business_id = ${ctx.biz} and kind in ('categories', 'brands') order by value`;

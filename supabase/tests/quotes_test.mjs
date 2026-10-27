@@ -25,7 +25,7 @@ check('boot: shareholder canSettings', r.result.canSettings === true && r.result
 
 // ---- profile ----
 r = await mgr('erpQuoteProfileSave', [{ profile: { name: 'X' } }]);
-check('manager refused profile save', err(r) === 'Your account does not have access to that.', r);
+check('manager refused profile save', /does not have permission/.test(err(r)), r);
 r = await shareholder('erpQuoteProfileSave', [{ profile: { name: '  ' } }]);
 check('profile: name required', err(r) === 'The business name is required.', r);
 r = await shareholder('erpQuoteProfileSave', [{ profile: { name: 'x'.repeat(301) } }]);
@@ -48,7 +48,7 @@ r = await shareholder('erpQuoteSettingsSave', [{ settings: { prefix: 'CZ', valid
 check('settings saved: version 1, kept fields, bad colour -> default', r.ok && r.result.version === 1 && r.result.prefix === 'CZ' &&
   r.result.validDays === 10 && r.result.accent === '#dda51c' && r.result.currency === 'BDT' && r.result.mixedTerms === 'Mixed T', r);
 r = await sales('erpQuoteSettingsSave', [{ settings: {}, expectedVersion: 1 }]);
-check('sales refused settings', err(r) === 'Your account does not have access to that.', r);
+check('sales refused settings', /does not have permission/.test(err(r)), r);
 
 // ---- letterhead ----
 r = await shareholder('erpLetterheadSave', [{ letterhead: { style: 'Band', logoSide: 'right', font: 'Comic' }, expectedVersion: 0 }]);
@@ -58,7 +58,7 @@ check('letterhead conflict', err(r) === 'CONFLICT: the letterhead was changed by
 
 // ---- snippets ----
 r = await sales('erpQuoteSnippetsSave', [{ snippets: [] }]);
-check('sales refused snippets', err(r) === 'Your account does not have access to that.', r);
+check('sales refused snippets', /does not have permission/.test(err(r)), r);
 r = await mgr('erpQuoteSnippetsSave', [{ snippets: [{ title: ' ', text: 'x' }] }]);
 check('snippet needs a title', err(r) === 'Every condition needs a title.', r);
 r = await mgr('erpQuoteSnippetsSave', [{ snippets: [{ title: ' Warranty ', text: '1 year' }, { id: 's2', title: 'Delivery', text: '3 days' }] }]);
@@ -178,7 +178,7 @@ check('nothing written to another business', other[0].n === 0);
 // ---- images ----
 const png = Buffer.from('fake-png-bytes').toString('base64');
 r = await mgr('erpQuoteAssetUpload', [{ kind: 'logo', mime: 'image/png', data: png }]);
-check('manager refused upload', err(r) === 'Your account does not have access to that.', r);
+check('manager refused upload', /does not have permission/.test(err(r)), r);
 r = await shareholder('erpQuoteAssetUpload', [{ kind: 'logo', mime: 'image/gif', data: png }]);
 check('mime refused', err(r) === 'Use a PNG, JPEG or WebP image.', r);
 r = await shareholder('erpQuoteAssetUpload', [{ kind: 'logo', mime: 'image/png', data: Buffer.alloc(1024 * 1024 + 1).toString('base64') }]);
@@ -225,7 +225,7 @@ check('brand logo: browser has it -> data null', r.ok && r.result.id === logoId 
 }
 
 r = await mgr('erpBrandLogoClear', []);
-check('manager refused logo clear', err(r) === 'Your account does not have access to that.', r);
+check('manager refused logo clear', /does not have permission/.test(err(r)), r);
 r = await shareholder('erpBrandLogoClear', []);
 check('logo cleared', r.ok && r.result.ok === true && r.result.profile.logoId === '' && r.result.profile.logoTrimId === '' && r.result.profile.qrId === qrId, r);
 r = await sales('erpBrandLogo', [{ have: logoId }]);

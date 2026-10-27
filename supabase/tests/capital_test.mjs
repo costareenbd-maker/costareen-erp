@@ -11,9 +11,9 @@ const prev = shift(thisMonth, -1), prev2 = shift(thisMonth, -2);
 
 // ---- roles ----
 let r = await mgr('erpCapital', []);
-check('manager cannot open Capital', !r.ok && r.error === 'Your account does not have access to that.', r);
-r = await shareholder('erpCapitalHolderSave', [{ kind: 'shareholder', name: 'X', pct: 10 }]);
-check('shareholder cannot change holders', !r.ok && r.error === 'Your account does not have access to that.', r);
+check('manager cannot open Capital', !r.ok && /does not have permission/.test(r.error), r);
+r = await mgr('erpCapitalHolderSave', [{ kind: 'shareholder', name: 'X', pct: 10 }]);
+check('a manager cannot change holders (27 Oct 2026: a shareholder can, like the owner)', !r.ok && /does not have permission/.test(r.error), r);
 r = await owner('erpCapital', []);
 check('empty book', r.ok && r.result.canEdit === true && r.result.holders.length === 0 && r.result.totals.pctFree === 100 &&
   r.result.months.length === 1 && r.result.months[0].current && r.result.thisMonth === thisMonth && r.result.currency === 'BDT', r);

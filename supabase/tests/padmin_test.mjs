@@ -10,7 +10,7 @@ let r = await owner('erpHello', []);
 check('own server: hello says platform', r.ok && r.result.platform === true, r);
 for (const n of NAMES) {
   r = await owner(n, []);
-  check('own server: ' + n + ' opens', r.ok || !/platform admin|does not have access/i.test(r.error || ''), r);
+  check('own server: ' + n + ' opens', r.ok || !/platform admin|does not have permission/i.test(r.error || ''), r);
 }
 
 // 2. the same row on a company running on the provider's server counts for nothing
@@ -20,7 +20,7 @@ r = await owner('erpHello', []);
 check('bridged: hello does not say platform', r.ok && r.result.ok && r.result.platform === false, r);
 for (const n of NAMES) {
   r = await owner(n, []);
-  check('bridged: ' + n + ' refused', !r.ok && /platform admin|does not have access/i.test(r.error || ''), r);
+  check('bridged: ' + n + ' refused', !r.ok && /platform admin|does not have permission/i.test(r.error || ''), r);
 }
 r = await owner('erpNewsAdd', [{ text: 'hello everyone', days: 3 }]);
 check('bridged: cannot post an announcement', !r.ok, r);

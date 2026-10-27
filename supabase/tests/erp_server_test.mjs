@@ -43,7 +43,7 @@ check('5 wrong codes lock the device', r.result.reason === 'LOCKED', r);
 r = await sales('erpNoSuchThing', []);
 check('unknown action', !r.ok && /^Unknown action: erpNoSuchThing/.test(r.error), r);
 r = await sales('erpSettingsLists', []);
-check('sales refused a manager action', !r.ok && r.error === 'Your account does not have access to that.', r);
+check('sales refused a manager action', !r.ok && /does not have permission/.test(r.error), r);
 r = await erpCall(deps, { name: 'erpToday', token: { code: '999999', device: 'x2' } });
 check('bad code refused', !r.ok && r.error === 'That code is not recognised.', r);
 const errs = await sql`select count(*)::int as n from erp_errors`;
@@ -161,7 +161,7 @@ check('reduce needs a note (alias discount)', !r.ok && /needs a note/.test(r.err
 r = await owner('erpSettleDue', [{ phone: '01811111111', name: 'Rahim', amount: 110, reason: 'increase', note: 'bounced' }]);
 check('increase takes back the newest payment', r.ok && r.result.balance === 1240, r.result);
 r = await sales('erpSettleDue', [{ phone: '01811111111', amount: 1 }]);
-check('sales cannot take payments', !r.ok && r.error === 'Your account does not have access to that.', r);
+check('sales cannot take payments', !r.ok && /does not have permission/.test(r.error), r);
 r = await mgr('erpPayReasons', []);
 check('manager reasons: payment only', r.ok && r.result.length === 1 && r.result[0].id === 'payment', r.result);
 

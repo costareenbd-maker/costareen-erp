@@ -179,7 +179,7 @@ export async function erpSupplierSave(ctx, payload) {
   const fields = { phone: str(payload.phone).slice(0, 40) || null, country: str(payload.country).slice(0, 40) || null,
                    currency: str(payload.currency).toUpperCase().slice(0, 6) || null, note: str(payload.note).slice(0, 300) || null,
                    opening: round2(num(payload.openingOwed)), archived: !!payload.archived };
-  if (fields.opening && !roleAtLeast(actRole(ctx.s), 'shareholder')) throw new Error('Only a shareholder or the owner sets what was owed at the start.');
+  if (fields.opening && !roleAtLeast(actRole(ctx.s), 'shareholder')) throw new Error('Only a shareholder or the owner sets what was owed at the start. If you need this, ask the owner to open it for you (Settings > Users).');
   const rec = (await ctx.tx`select id from suppliers where business_id = ${ctx.biz} and lower(btrim(name)) = ${key(final)}`)[0];
   if (rec) {
     await ctx.tx`update suppliers set phone = ${fields.phone}, country = ${fields.country}, currency = ${fields.currency}, note = ${fields.note},

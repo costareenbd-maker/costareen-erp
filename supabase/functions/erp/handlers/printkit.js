@@ -37,7 +37,7 @@ export async function settings(ctx) {
     pack: num(await g('pack', DEF.pack)), quoteOn: (await g('quote_on', '0')) === '1', quoteText: str(await g('quote_text', '')) };
 }
 export async function erpPrintSettingsSave(ctx, payload) {
-  if (!roleAtLeast(ctx.s.role, 'manager')) throw new Error('Only a manager or the owner changes the print rates.');
+  if (!roleAtLeast(ctx.s.role, 'manager')) throw new Error('Only a manager or the owner changes the print rates. If you need this, ask the owner to open it for you (Settings > Users).');
   const p = payload || {};
   const n = (v, lo, hi, what) => { const x = num(v); if (!(x >= lo && x <= hi)) throw new Error(what + ' should be between ' + lo + ' and ' + hi + '.'); return x; };
   if (p.kwh !== undefined) await setConfig(ctx, 'print_kwh', String(n(p.kwh, 0, 100, 'Electricity per kWh')));
@@ -58,7 +58,7 @@ function printerRow(r) {
 }
 async function printers(ctx) { return (await ctx.tx`select * from printers where business_id = ${ctx.biz} order by (status = 'active') desc, name`).map(printerRow); }
 export async function erpPrinterSave(ctx, payload) {
-  if (!roleAtLeast(ctx.s.role, 'manager')) throw new Error('Only a manager or the owner adds or changes printers.');
+  if (!roleAtLeast(ctx.s.role, 'manager')) throw new Error('Only a manager or the owner adds or changes printers. If you need this, ask the owner to open it for you (Settings > Users).');
   const p = payload || {};
   const name = str(p.name).slice(0, 60); if (name.length < 2) throw new Error('Give the printer a name (e.g. "A1 left").');
   const life = Math.round(num(p.lifeHours)) || 5000, powerW = Math.round(num(p.powerW)) || 150, cost = round2(num(p.cost)), maint = round2(num(p.maintenanceHr));

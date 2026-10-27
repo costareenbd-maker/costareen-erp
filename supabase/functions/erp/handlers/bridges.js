@@ -30,7 +30,7 @@ export const SERVICES = {
   publora: { name: 'Publora', base: 'https://api.publora.com', free: '3 accounts free, 15 posts a month (no X)', site: 'https://app.publora.com', platforms: ['tiktok', 'youtube', 'linkedin', 'threads', 'instagram', 'facebook', 'telegram', 'pinterest'], names: { x: 'twitter' } },
   uploadpost: { name: 'Upload-Post', base: 'https://api.upload-post.com', free: '2 profiles free, 10 uploads a month (no TikTok on the free plan)', site: 'https://app.upload-post.com', platforms: ['tiktok', 'youtube', 'linkedin', 'x', 'pinterest', 'threads', 'instagram', 'facebook', 'telegram'], names: {} },
 };
-const need = (ctx, role) => { if (!roleAtLeast(ctx.s.role, role || 'sales')) throw new Error('Not open to your role.'); };
+const need = (ctx, role) => { if (!roleAtLeast(ctx.s.role, role || 'sales')) throw new Error('Your account does not have permission for this. If you need this, ask the owner to open it for you (Settings > Users).'); };
 const ours = (service, name) => { const n = str(name).toLowerCase(); const map = SERVICES[service].names; for (const k of Object.keys(map)) if (map[k] === n) return k; return n === 'twitter' ? 'x' : n; };
 const theirs = (service, key) => SERVICES[service].names[key] || key;
 

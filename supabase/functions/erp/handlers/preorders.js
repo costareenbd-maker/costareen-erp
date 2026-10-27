@@ -185,8 +185,8 @@ export async function erpPreorderCancel(ctx, payload) {
   const reason = str(payload.reason);
   if (!reason) throw new Error('Say why it is cancelled.');
   const mode = str(payload.mode) === 'forfeit' ? 'forfeit' : 'refund';
-  if (mode === 'forfeit' && actRole(ctx.s) !== 'owner') throw new Error('Only the owner can keep a deposit.');
-  if (mode === 'refund' && !roleAtLeast(ctx.s.role, 'manager')) throw new Error('Your account cannot pay money back.');
+  if (mode === 'forfeit' && !roleAtLeast(actRole(ctx.s), 'shareholder')) throw new Error('Only the owner or a shareholder can keep a deposit.');
+  if (mode === 'refund' && !roleAtLeast(ctx.s.role, 'manager')) throw new Error('Your account does not have permission to pay money back. If you need this, ask the owner to open it for you (Settings > Users).');
   await lock(ctx, 'payments');
   const paid = await paidOn(ctx, h.no);
   const credit = await creditOf(ctx, h.customer_key);

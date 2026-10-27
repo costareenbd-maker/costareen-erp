@@ -99,7 +99,7 @@ export async function erpExport(ctx, payload) {
     return fileOut(ctx, biz + ' stock movements ' + stamp + '.xlsx', [{ name: 'Stock', rows: out, frozenRows: 1, style: bold }]);
   }
   if (what === 'costbook') {
-    if (!powerOn(ctx.s, 'costs')) throw new Error('Your account does not have access to that.');
+    if (!powerOn(ctx.s, 'costs')) throw new Error('Your account does not have permission for this. If you need this, ask the owner to open it for you (Settings > Users).');
     const book = await erpCostBook(ctx);
     const out = [['Category', 'Brand', 'Type', 'Buy price', 'Currency', 'Handling', 'Landed cost', 'Products', 'Typical sell', 'Margin %', 'Note']];
     for (const r of book.rows) out.push([r.category, r.brand, r.type, r.amount == null ? '' : num(r.amount), r.cur, r.handling === '' || r.handling == null ? '' : num(r.handling),

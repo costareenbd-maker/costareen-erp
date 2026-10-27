@@ -374,7 +374,7 @@ async function productIdOf(ctx, sku) {
 async function returnGoods(ctx, payload, opts = {}) {
   payload = payload || {};
   const role = ctx.s.role;
-  if (!roleAtLeast(role, 'manager')) throw new Error('Your account cannot take returns.');
+  if (!roleAtLeast(role, 'manager')) throw new Error('Your account does not have permission to take returns. If you need this, ask the owner to open it for you (Settings > Users).');
   const invoiceNo = String(payload.invoiceNo || '').trim();
   if (!invoiceNo) throw new Error('Which invoice?');
   const reason = String(payload.reason || '').trim();
@@ -587,7 +587,7 @@ async function returnNotePdf(ctx, rid, invoiceNo, head, take, value, offDue, exc
 export async function erpCancelInvoice(ctx, payload) {
   payload = payload || {};
   const role = ctx.s.role;
-  if (!roleAtLeast(role, 'manager')) throw new Error('Your account cannot cancel a sale.');
+  if (!roleAtLeast(role, 'manager')) throw new Error('Your account does not have permission to cancel a sale. If you need this, ask the owner to open it for you (Settings > Users).');
   const invoiceNo = String(payload.invoiceNo || '').trim();
   if (!invoiceNo) throw new Error('Which invoice?');
   const reason = String(payload.reason || '').trim();

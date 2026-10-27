@@ -19,12 +19,13 @@ import { qrDataUrl } from '../lib/qr.js';
 import { limit, pubBase } from './passport.js';
 import { sourceOf } from './market.js';
 import { erpCatalog } from './catalog.js';
+import { roleAtLeast } from '../allow.js';
 
 const str = (v) => String(v == null ? '' : v).trim();
 const enc = new TextEncoder();
 const day = (d) => (d ? formatDate(new Date(d), 'yyyy-MM-dd') : '');
 const when = (d) => (d ? new Date(d).toISOString() : '');
-function needOwner(ctx) { if (ctx.s.role !== 'owner') throw new Error('Only an owner runs the creator programme.'); }
+function needOwner(ctx) { if (!roleAtLeast(ctx.s.role, 'shareholder')) throw new Error('Only the owner or a shareholder runs the creator programme.'); }
 async function sha256hex(s) { const b = await crypto.subtle.digest('SHA-256', enc.encode(s)); return [...new Uint8Array(b)].map((x) => x.toString(16).padStart(2, '0')).join(''); }
 async function tokenFor(deps, kind, source, biz, ref) {
   const secret = str(deps && (deps.bridgeKey || deps.pubSecret)) || 'local-test-secret';

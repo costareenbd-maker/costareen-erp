@@ -59,7 +59,7 @@ function addDays(date, n) {
 }
 function uuid() { return globalThis.crypto.randomUUID(); }
 function needRole(ctx, need) {                       // erpQRole_ (the door already checked)
-  if (!roleAtLeast((ctx.s && actRole(ctx.s)) || 'owner', need)) throw new Error('Your account cannot do that.');
+  if (!roleAtLeast((ctx.s && actRole(ctx.s)) || 'owner', need)) throw new Error('Your account does not have permission to do that. If you need this, ask the owner to open it for you (Settings > Users).');
 }
 const HEX = /^#[0-9a-fA-F]{6}$/;
 const FONTS = /^(Arial|Georgia|Times New Roman|Verdana|Trebuchet MS|Tahoma)$/;

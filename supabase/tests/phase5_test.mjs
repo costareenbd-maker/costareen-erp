@@ -7,7 +7,7 @@ const PLA = 'FIL-SUN-PLA-BLA-001';
 
 // ---------------------------------------------------------------- activity
 let r = await mgr('erpSecurity', [{}]);
-check('only the owner opens Security', !r.ok && r.error === 'Your account does not have access to that.', r);
+check('only the owner opens Security', !r.ok && /does not have permission/.test(r.error), r);
 await erpCall(deps, { name: 'erpHello', args: [], token: { code: '111111', device: 'dev-mgr', label: 'Mozilla/5.0 (Linux; Android 14) Chrome/120' }, ip: '10.0.0.7' });
 await erpCall(deps, { name: 'erpHello', args: [], token: { code: '111111', device: 'dev-mgr' }, ip: '10.0.0.7' });
 r = await mgr('erpCreateInvoice', [{ customer: { name: 'Karim', phone: '01712345678' }, items: [{ sku: PLA, qty: 1 }], payMode: 'full' }]);

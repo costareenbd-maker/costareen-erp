@@ -6,7 +6,7 @@ const { erpCall } = await import(pathToFileURL(path.join(fnDir, 'core.js')));
 const as = (uid) => (name, args) => erpCall(deps, { name, args, authHeader: 'Bearer owner:' + uid });
 
 let r = await owner('erpPlatform', []);
-check('an owner who is not a platform admin is refused', !r.ok && /does not have access/.test(r.error), r);
+check('an owner who is not a platform admin is refused', !r.ok && /does not have permission/.test(r.error), r);
 r = await owner('erpHello', []);
 check('...and is not told he is one', r.ok && r.result.ok && r.result.platform === false, r);
 await sql`insert into platform_admins (user_id, note) values (${FIX.U.owner}, 'test')`;

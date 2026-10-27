@@ -811,7 +811,7 @@ export async function erpSfPayoutLines(ctx, payload) {
 
 /** erpSfConfirmMatches (ERP:8875): a person confirms phone matches. */
 export async function erpSfConfirmMatches(ctx, payload) {
-  if (!callAllowed(ctx.s, 'erpSfConfirmMatches')) throw new Error('Your account cannot record payments.');
+  if (!callAllowed(ctx.s, 'erpSfConfirmMatches')) throw new Error('Your account does not have permission to record payments. If you need this, ask the owner to open it for you (Settings > Users).');
   const want = {};
   ((payload && payload.consignments) || []).forEach((c) => { want[String(c)] = true; });
   const items = (await lineRows(ctx)).filter((l) => want[String(l[1])] && String(l[9]) === 'phone')
@@ -824,7 +824,7 @@ export async function erpSfConfirmMatches(ctx, payload) {
 
 /** erpSfReconDecide (ERP:8650): the owner's word on a large shortfall. */
 export async function erpSfReconDecide(ctx, payload) {
-  if (!roleAtLeast(actRole(ctx.s), 'shareholder')) throw new Error('Only the owner or a shareholder can decide this.');
+  if (!roleAtLeast(actRole(ctx.s), 'shareholder')) throw new Error('Only the owner or a shareholder can decide this. If you need this, ask the owner to open it for you (Settings > Users).');
   const cid = String((payload && payload.consignment) || ''), what = String((payload && payload.decision) || '');
   if (what !== 'writeoff' && what !== 'keep') throw new Error('Write it off, or keep it as due?');
   await lock(ctx, 'courier');
@@ -1028,7 +1028,7 @@ async function deliveredNote(ctx, r) {
 
 /** erpCheckDeliveries: ask now, from the Sales screen, instead of waiting for the hour. */
 export async function erpCheckDeliveries(ctx) {
-  if (!callAllowed(ctx.s, 'erpCheckDeliveries')) throw new Error('Your account cannot record payments.');
+  if (!callAllowed(ctx.s, 'erpCheckDeliveries')) throw new Error('Your account does not have permission to record payments. If you need this, ask the owner to open it for you (Settings > Users).');
   await lock(ctx, 'courier-delivered');
   const r = await deliveredCollect(ctx);
   await deliveredNote(ctx, r);

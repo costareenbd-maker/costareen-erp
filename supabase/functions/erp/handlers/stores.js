@@ -17,6 +17,7 @@ import { getSecret, getConfig, setConfig, httpFetch } from '../lib/ext.js';
 import { lock } from './money.js';
 import { matcher, extKey } from '../lib/match.js';
 import { addWebLines, stockItems } from './weborders.js';
+import { roleAtLeast } from '../allow.js';
 
 const str = (v) => String(v == null ? '' : v).trim();
 const num = (v) => { const n = Number(v); return isFinite(n) ? n : 0; };
@@ -197,7 +198,7 @@ export async function storePrices(ctx, mode, opts) {
 
 export async function erpWebPrices(ctx, payload) {
   payload = payload || {};
-  if (ctx.s.role !== 'owner') throw new Error('Only the owner changes the website\u2019s prices.');
+  if (!roleAtLeast(ctx.s.role, 'shareholder')) throw new Error('Only the owner or a shareholder changes the website\u2019s prices.');
   const kind = await storeKind(ctx);
   if (kind !== 'woo' && kind !== 'shopify') throw new Error('Prices go out through a WooCommerce or Shopify connection (Settings \u2192 Connections \u2192 Website).');
   const apply = payload.mode === 'apply';
@@ -209,7 +210,7 @@ export async function erpWebPrices(ctx, payload) {
 }
 
 export async function erpWebPriceSync(ctx, payload) {
-  if (ctx.s.role !== 'owner') throw new Error('Only the owner changes the website\u2019s prices.');
+  if (!roleAtLeast(ctx.s.role, 'shareholder')) throw new Error('Only the owner or a shareholder changes the website\u2019s prices.');
   const on = !!(payload && payload.on);
   await setConfig(ctx, 'website_price_sync', on ? '1' : '0');
   return { ok: true, sync: on };

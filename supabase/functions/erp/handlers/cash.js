@@ -130,7 +130,7 @@ async function ledger(ctx, accs) {
 export async function erpCashBook(ctx, payload) {
   payload = payload || {};
   const accs = await accounts(ctx);
-  const owner = ctx.s.role === 'owner';
+  const owner = roleAtLeast(ctx.s.role, 'shareholder');   // 27 Oct 2026: a shareholder edits as the owner
   const rules = await cashRules(ctx);
   const methods = (await ctx.tx`select value from lookups where business_id = ${ctx.biz} and kind = 'payment_methods' order by sort_order, value`)
     .map((r) => str(r.value)).filter(Boolean);
@@ -180,7 +180,7 @@ export async function erpCashBook(ctx, payload) {
 
 // ------------------------------------------------------------ writing
 
-function needOwner(ctx) { if (ctx.s.role !== 'owner') throw new Error('Only the owner can change the money accounts.'); }
+function needOwner(ctx) { if (!roleAtLeast(ctx.s.role, 'shareholder')) throw new Error('Only the owner or a shareholder can change the money accounts.'); }
 
 /**
  * First time: the usual accounts and where each payment method lands. Rows

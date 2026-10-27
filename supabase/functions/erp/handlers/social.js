@@ -30,7 +30,7 @@ const META_ERRORS = { 2207003: 'Facebook could not download the media in time: t
   2207026: 'Instagram does not accept this video (format, length or size).', 2207050: 'This Instagram account is restricted from publishing right now.', 2207018: 'A collaborator handle was refused.', 36003: 'The picture\'s shape is outside what Instagram allows (4:5 to 1.91:1).', 9007: 'The media is still processing: it will be published by the timer.' };
 function metaMsg(e) { const m = /\(#(\d+)/.exec(String(e)) || /subcode (\d+)/.exec(String(e)); const k = m ? Number(m[1]) : 0; return META_ERRORS[k] ? META_ERRORS[k] + ' (' + str(e) + ')' : str(e); }
 
-function need(ctx, role) { if (!roleAtLeast(ctx.s.role, role || 'sales')) throw new Error('Not open to your role.'); }
+function need(ctx, role) { if (!roleAtLeast(ctx.s.role, role || 'sales')) throw new Error('Your account does not have permission for this. If you need this, ask the owner to open it for you (Settings > Users).'); }
 function b64decode(s) { const bin = atob(String(s || '').replace(/^data:[^,]*,/, '')); const out = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i); return out; }
 
 /** What the Meta login reaches: the pages (each with its Instagram) and the page the Inbox uses, as the default. */

@@ -58,8 +58,8 @@ export const AGENTS = {
 const agentOf = (k) => (AGENTS[str(k)] ? str(k) : 'command');
 
 async function gate(ctx) {
-  if (!roleAtLeast(ctx.s.role, 'owner')) throw new Error('Only the owner gives the Engine work.');
-  if (!(await platformAdmin(ctx)) && await appIsOff(ctx.deps, ctx.sql, 'engine')) throw new Error('The Engine is not open on this ERP yet.');
+  if (!roleAtLeast(ctx.s.role, 'shareholder')) throw new Error('Only the owner or a shareholder gives the Engine work. If you need this, ask the owner to open it for you (Settings > Users).');
+  if (!(await platformAdmin(ctx)) && await appIsOff(ctx.deps, ctx.sql, 'engine', ctx)) throw new Error('The Engine is not open on this ERP yet.');
   await markOn(ctx);
 }
 /** brain-1: the Engine works for a business once its owner opens the Engine's screens (until switched off: 'engine_on' 0). */

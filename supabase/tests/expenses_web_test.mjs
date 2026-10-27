@@ -68,7 +68,7 @@ check('no month -> current month, isCurrent', r.ok && r.result.month === formatD
 r = await shareholder('erpExpenses', [{ month: '2999-01' }]);
 check('future month flagged', r.ok && r.result.isFuture && r.result.label === 'January 2999', r);
 r = await mgr('erpExpenses', [{ month: '2025-03' }]);
-check('manager refused expenses', !r.ok && r.error === 'Your account does not have access to that.', r);
+check('manager refused expenses', !r.ok && /does not have permission/.test(r.error), r);
 
 // ---- one-off
 r = await shareholder('erpExpenseAdd', [{ month: '2025-03', category: 'Equipment', description: ' Printer repair ', amount: '500.456' }]);
@@ -190,8 +190,8 @@ r = await shareholder('erpExpenseItemEnd', [{ id: 'nope' }]);
 check('stop unknown', !r.ok && r.error === 'That item was not found.', r);
 
 // ---- strike out (owner only)
-r = await shareholder('erpExpenseVoid', [{ id: tapeId, reason: 'x' }]);
-check('shareholder cannot strike out', !r.ok && r.error === 'Your account does not have access to that.', r);
+r = await mgr('erpExpenseVoid', [{ id: tapeId, reason: 'x' }]);
+check('a manager cannot strike out', !r.ok && /does not have permission/.test(r.error), r);
 r = await owner('erpExpenseVoid', [{ id: tapeId, reason: '' }]);
 check('strike out needs a reason', !r.ok && r.error === 'Say why it is being struck out, so the books can be read later.', r);
 r = await owner('erpExpenseVoid', [{ id: '', reason: 'x' }]);
@@ -252,7 +252,7 @@ check('Entries: bold frozen header, oldest first, one-off, struck text, & escape
   /<c r="B2" t="inlineStr"><is><t xml:space="preserve">one-off<\/t>/.test(s2) && /<c r="E2"><v>500.46<\/v>/.test(s2) &&
   /typed twice/.test(s2) && /Marketing &amp; advertising/.test(s2), s2.slice(0, 1500));
 r = await mgr('erpExpenseExport', [{ month: '2025-03' }]);
-check('manager cannot export', !r.ok && r.error === 'Your account does not have access to that.', r);
+check('manager cannot export', !r.ok && /does not have permission/.test(r.error), r);
 
 // =========================================================== WEBSITE ORDERS
 const today = formatDate(new Date(), 'yyyy-MM-dd');
@@ -295,7 +295,7 @@ check('order 1001 fields', o1 && o1.date === '2026-09-28 15:40' && o1.customer =
   o1.orderTotal === 54620 && o1.payment === 'Cash on delivery' && o1.entered === false && o1.status === 'processing' &&
   o1.lines.length === 2 && o1.lines[0].lineTotal === 2500 && o1.lines[1].sku === A1 && !('lineId' in o1.lines[0]) && !('orderId' in o1), o1);
 r = await sales('erpWebOrders', []);
-check('sales refused web orders', !r.ok && r.error === 'Your account does not have access to that.', r);
+check('sales refused web orders', !r.ok && /does not have permission/.test(r.error), r);
 
 p = await asOwner((ctx) => W.pushStockToWebsite(ctx, 'dry'));
 const qty = {};
@@ -427,7 +427,7 @@ await sql`delete from business_secrets where business_id = ${B} and key = 'CZ_SY
 r = await mgr('erpCourier', [{}]);
 check('no key: not connected, no error', r.ok && r.result.notConnected && r.result.orders.length === 0, r);
 r = await sales('erpCourier', [{}]);
-check('sales refused courier', !r.ok && r.error === 'Your account does not have access to that.', r);
+check('sales refused courier', !r.ok && /does not have permission/.test(r.error), r);
 
 r = await mgr('erpBundle', [['weborders']]);
 check('bundle weborders part', r.ok && r.result.weborders && r.result.weborders.length === 4, r.result && r.result.errors);

@@ -237,7 +237,7 @@ export async function erpListView(ctx, payload) {
   payload = payload || {};
   const m = MODELS[str(payload.model)];
   if (!m) throw new Error('Unknown list.');
-  if (!roleAtLeast(ctx.s.role, m.need)) throw new Error('Your account does not have access to that.');
+  if (!roleAtLeast(ctx.s.role, m.need)) throw new Error('Your account does not have permission for this. If you need this, ask the owner to open it for you (Settings > Users).');
   const spec = specOf(ctx, m);
 
   // the dates the date filters compare with (Dhaka calendar)

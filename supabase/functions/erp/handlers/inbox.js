@@ -1043,7 +1043,7 @@ export async function webchat(ctx, chId, a, b, ip) {
 }
 
 // ================================================================== the Inbox screen (the team)
-function need(ctx, role) { if (!roleAtLeast(ctx.s.role, role || 'sales')) throw new Error('The Inbox is not open to your role.'); }
+function need(ctx, role) { if (!roleAtLeast(ctx.s.role, role || 'sales')) throw new Error('Your account does not have permission for the Inbox. If you need this, ask the owner to open it for you (Settings > Users).'); }
 function ago(d, now) { const s = Math.max(0, Math.round((now - new Date(d)) / 1000)); return s < 60 ? s + 's' : s < 3600 ? Math.floor(s / 60) + 'm' : s < 86400 ? Math.floor(s / 3600) + 'h' : Math.floor(s / 86400) + 'd'; }
 
 /** erpInbox({pile, q, channel, mine}) - the list: whoever has waited longest at the top of Waiting. */
@@ -1348,7 +1348,7 @@ export async function erpInboxTasks(ctx, payload) {
 // customer's in the last 24 hours.
 export async function erpInboxPullOld(ctx, payload) {
   const p = payload || {};
-  if (!roleAtLeast(ctx.s.role, 'manager')) throw new Error('A manager or the owner brings in old chats.');
+  if (!roleAtLeast(ctx.s.role, 'manager')) throw new Error('A manager or the owner brings in old chats. If you need this, ask the owner to open it for you (Settings > Users).');
   const ch = isId(p.channel) ? await chOf(ctx, p.channel) : null;
   if (!ch || ch.status === 'removed') throw new Error('Which channel?');
   if (ch.kind !== 'messenger' && ch.kind !== 'instagram') throw new Error('Old chats can be brought in for a Facebook page or Instagram for now.');

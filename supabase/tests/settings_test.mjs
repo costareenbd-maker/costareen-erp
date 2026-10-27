@@ -107,7 +107,7 @@ check('let in', r.ok && r.result.devices.approved.find((d) => d.id === 'dev-k') 
 r = await call('erpToday', [], { token: K });
 check('they can work now', r.ok, r);
 r = await call('erpSettingsLists', [], { token: K });
-check('…as sales only', !r.ok && r.error === 'Your account does not have access to that.', r);
+check('…as sales only', !r.ok && /does not have permission/.test(r.error), r);
 r = await shareholder('erpRevokeDevice', ['dev-k']);
 r = await call('erpToday', [], { token: K });
 check('device removed -> refused', !r.ok && r.error === 'This device is no longer allowed. Speak to the owner.', r);
@@ -151,7 +151,7 @@ check('owner may add an owner with a chosen code', r.ok && r.result.code === '65
 r = await shareholder('erpRevokePerson', [r.result.id]);
 check('only the owner can remove an owner', !r.ok && r.error === 'Only the owner can remove an owner.', r);
 r = await sales('erpAddPerson', [{ name: 'Z', role: 'sales' }]);
-check('sales refused', !r.ok && r.error === 'Your account does not have access to that.', r);
+check('sales refused', !r.ok && /does not have permission/.test(r.error), r);
 
 // ---------------------------------------------------------------- AI keys
 r = await shareholder('erpAiKeys', []);
@@ -182,7 +182,7 @@ await owner('erpAiKeyCreate', [{ name: 'Keeper', role: 'sales' }]);
 
 // ---------------------------------------------------------------- tools
 r = await mgr('erpTool', ['refreshStock']);
-check('tools need shareholder', !r.ok && r.error === 'Your account does not have access to that.', r);
+check('tools need shareholder', !r.ok && /does not have permission/.test(r.error), r);
 r = await shareholder('erpTool', ['refreshStock']);
 check('refreshStock: honest sentence', r.ok && /^Stock is always up to date now/.test(r.result), r);
 for (const a of ['refreshDashboard', 'sortProducts', 'fixInvoiceLayout', 'insertQr']) {
@@ -295,7 +295,7 @@ r = await owner('erpForgetBusiness', [NB]);
 check('forget: sentence, nothing removed', !r.ok && /Nothing was changed/.test(r.error) &&
   (await sql`select count(*)::int n from memberships where business_id = ${NB}`)[0].n === 1, r);
 r = await shareholder('erpDeployBusiness', [NB]);
-check('deploy owner-only', !r.ok && r.error === 'Your account does not have access to that.', r);
+check('deploy owner-only', !r.ok && /does not have permission/.test(r.error), r);
 
 // ---------------------------------------------------------------- bundle part
 r = await shareholder('erpBundle', [['settings']]);

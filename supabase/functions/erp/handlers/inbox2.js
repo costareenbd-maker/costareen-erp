@@ -19,7 +19,7 @@ import { scopeOf, profile, PROFILE_DEFAULTS, agentReply, deliver, orderEvent, ta
 const str = (v) => String(v == null ? '' : v).trim();
 const H24 = 24 * 3600e3;
 function owner(ctx) { if (ctx.s.role !== 'owner') throw new Error('Only the owner changes this.'); }
-function need(ctx, role) { if (!roleAtLeast(ctx.s.role, role || 'sales')) throw new Error('Not open to your role.'); }
+function need(ctx, role) { if (!roleAtLeast(ctx.s.role, role || 'sales')) throw new Error('Your account does not have permission for this. If you need this, ask the owner to open it for you (Settings > Users).'); }
 async function chOf(ctx, id) { return (await ctx.tx`select * from inbox_channels where business_id = ${ctx.biz} and id = ${id}`)[0] || null; }
 
 // ------------------------------------------------------------------ channels
@@ -900,7 +900,7 @@ export async function erpInboxFeatureMap(ctx) {
  * save: {businessId, name, features: {key: false}, aiBudget (taka a month, '' = no limit)}.
  */
 export async function erpPlatformInboxPlan(ctx, payload) {
-  if (!(await platformAdmin(ctx))) throw new Error('Your account does not have access to that.');
+  if (!(await platformAdmin(ctx))) throw new Error('Your account does not have permission for this. If you need this, ask the owner to open it for you (Settings > Users).');
   const p = payload || {};
   if (p.save) {
     const sv = p.save, id = str(sv.businessId);

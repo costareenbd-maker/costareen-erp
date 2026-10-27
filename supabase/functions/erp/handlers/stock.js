@@ -400,7 +400,10 @@ export async function receiveShipment(ctx, payload) {
   // owner 18 Oct 2026: the same page receives into a joint stock - same sums; the goods go to the pool (joint.js),
   // the money (supplier bill, payment, shipment costs) stays in this company's books
   const PJ = str(payload.pool) ? await (await import('./joint.js')).poolReceiveTarget(ctx, payload.pool, payload.receivedAt) : null;
-  if (PJ && payload.poId) throw new Error('A supplier order is received into your own stock; receive joint stock without the order.');
+  if (PJ && payload.poId) {   // onway-1: an order written for this joint stock is received into it; any other order is the own stock's
+    const st = (await ctx.tx`select pool from po_stages where business_id = ${ctx.biz} and po_no = ${str(payload.poId)}`)[0];
+    if (!st || str(st.pool) !== str(PJ.pool.id)) throw new Error('A supplier order is received into your own stock; receive joint stock without the order.');
+  }
   // fix-1 M1: the same shipment received again (a second click, or once more days later) is asked about first
   if (!PJ && str(payload.reference) && !payload.again) {
     const was = (await ctx.tx`select min(created_at) as at from stock_movements where business_id = ${ctx.biz} and kind::text = 'RECEIVE'
@@ -475,6 +478,12 @@ export async function receiveShipment(ctx, payload) {
     freightNote = chargeKg + ' kg \u00d7 ' + perKg + ' TK/kg';
   }
   const shipping = round2(freight + extras.reduce((t, c) => t + c.amount, 0));
+  if (str(payload.poId) && !(totalBdt > 0)) {   // onway-1: the order written when it was bought carries the goods' prices
+    const pl = await ctx.tx`select sku, rmb_unit, rmb_rate from po_lines where business_id = ${ctx.biz} and btrim(po_no) = ${str(payload.poId)}`;
+    const px = {};
+    for (const r of pl) if (num(r.rmb_unit) > 0 && num(r.rmb_rate) > 0) px[str(r.sku).toLowerCase()] = round2(num(r.rmb_unit) * num(r.rmb_rate));
+    for (const l of lines) if (!(num(l.unitBdt) > 0) && px[str(l.sku).toLowerCase()]) l.unitBdt = px[str(l.sku).toLowerCase()];
+  }
   const book = PJ ? {} : await bookCostMap(ctx);       // a joint stock has no price book: its own cost
   const onHand = PJ ? await PJ.onHand() : await onHandMap(ctx);
   const weights = [];
@@ -1051,14 +1060,19 @@ function stageOut(r, o) {
   return { key, label: STAGES[key] || 'Ordered', shipmentNo: str(r && r.shipment_no), agent: str(r && r.agent), shipBy: str(r && r.ship_by) || (o && o.shipBy) || '',
            kg: num(r && r.weight_kg), freightPerKg: num(r && r.freight_per_kg), divisor: num(r && r.divisor) || 6000,
            eta: r && r.eta ? formatDate(new Date(r.eta), 'yyyy-MM-dd') : '', note: str(r && r.note),
+           pool: str(r && r.pool), currency: str(r && r.currency), goodsFx: num(r && r.goods_fx), goodsBdt: num(r && r.goods_bdt),
            freightEstimate: r && num(r.weight_kg) > 0 && num(r.freight_per_kg) > 0 ? round2(num(r.weight_kg) * num(r.freight_per_kg)) : 0 };
 }
 async function stageSet(ctx, poId, f) {
   await ctx.tx`
-    insert into po_stages (business_id, po_no, stage, shipment_no, agent, ship_by, weight_kg, freight_per_kg, divisor, eta, note, updated_by, updated_at)
+    insert into po_stages (business_id, po_no, stage, shipment_no, agent, ship_by, weight_kg, freight_per_kg, divisor, eta, note, updated_by, updated_at,
+                           pool, currency, goods_fx, goods_bdt)
     values (${ctx.biz}, ${poId}, ${f.stage}, ${f.shipmentNo || null}, ${f.agent || null}, ${f.shipBy || null}, ${f.kg || null}, ${f.freightPerKg || null},
-            ${f.divisor || null}, ${f.eta || null}, ${f.note || null}, ${who(ctx)}, now())
+            ${f.divisor || null}, ${f.eta || null}, ${f.note || null}, ${who(ctx)}, now(),
+            ${f.pool || null}, ${f.currency || null}, ${f.goodsFx || null}, ${f.goodsBdt || null})
     on conflict (business_id, po_no) do update set stage = excluded.stage,
+      pool = coalesce(excluded.pool, po_stages.pool), currency = coalesce(excluded.currency, po_stages.currency),
+      goods_fx = coalesce(excluded.goods_fx, po_stages.goods_fx), goods_bdt = coalesce(excluded.goods_bdt, po_stages.goods_bdt),
       shipment_no = coalesce(excluded.shipment_no, po_stages.shipment_no), agent = coalesce(excluded.agent, po_stages.agent),
       ship_by = coalesce(excluded.ship_by, po_stages.ship_by), weight_kg = coalesce(excluded.weight_kg, po_stages.weight_kg),
       freight_per_kg = coalesce(excluded.freight_per_kg, po_stages.freight_per_kg), divisor = coalesce(excluded.divisor, po_stages.divisor),
@@ -1154,11 +1168,15 @@ export async function erpPoCreate(ctx, payload) {
   if (!powerOn(ctx.s, 'suppliers')) throw new Error('Your account cannot place orders.');
   const shipBy = String(payload.shipBy || 'Sea');
   if (shipBy !== 'Sea' && shipBy !== 'Air') throw new Error('By sea or by air?');
-  const rate = num(payload.rate);
+  let rate = num(payload.rate);
   if (rate < 0 || rate > 1000) throw new Error('That rate looks wrong (' + rate + ' TK per RMB).');
 
+  // onway-1: a shipment for a joint stock is written against the pool's products (the pool must be ours, and open)
+  const pool = str(payload.pool);
+  const PJ = pool ? await (await import('./joint.js')).poolReceiveTarget(ctx, pool, payload.receivedAt) : null;
   const cat = {};
-  (await erpCatalog(ctx)).forEach((p) => { cat[String(p.sku).toLowerCase()] = p; });
+  if (PJ) (await PJ.rows()).forEach((p) => { cat[String(p.sku).toLowerCase()] = { sku: str(p.sku), name: str(p.name), category: str(p.category), brand: str(p.brand), type: str(p.type), cost_price: num(p.cost_price) }; });
+  else (await erpCatalog(ctx)).forEach((p) => { cat[String(p.sku).toLowerCase()] = p; });
   const lines = [], seen = {};
   let priced = false;
   for (const l of (payload.lines || [])) {
@@ -1167,6 +1185,7 @@ export async function erpPoCreate(ctx, payload) {
     const rmb = Math.round(num(l.rmbUnit) * 10000) / 10000;
     if (rmb < 0) throw new Error('A price cannot be negative.');
     if (rmb > 0) priced = true;
+    if (l.isNew && PJ) throw new Error('Make the joint product first (+ New joint product), then write the shipment.');
     if (l.isNew) {
       const d = l.product || {};
       const nm = str(d.product_name);
@@ -1185,6 +1204,40 @@ export async function erpPoCreate(ctx, payload) {
   }
   if (!lines.length) throw new Error('Choose at least one product with a quantity.');
   if (priced && !(rate > 0)) throw new Error('Enter the rate you paid (TK per RMB), so the prices can be turned into cost.');
+
+  // onway-1 (owner 27 Oct 2026): written down on the Receive page as "still coming" - the goods and the supplier
+  // invoice total are known now; shipping, weight and the other costs only when it arrives. The invoice total is
+  // spread over the lines by the price book's cost (then the product's own cost), else equally per unit.
+  const mode = str(payload.mode).toLowerCase();
+  let goodsFx = 0, goodsBdt = 0, currency = '';
+  if (!priced && (mode === 'fx' || mode === 'rmb' || mode === 'bdt')) {
+    if (mode === 'bdt') {
+      goodsBdt = round2(num(payload.totalBdt));
+      if (!(goodsBdt > 0)) throw new Error('Enter what the goods cost in taka, or use the price book.');
+      rate = 1; currency = 'BDT';
+    } else {
+      currency = str(payload.currency).toUpperCase() || 'RMB';
+      goodsFx = round2(num(payload.totalFx !== undefined ? payload.totalFx : payload.totalRmb));
+      if (!(goodsFx > 0)) throw new Error('Enter the supplier invoice total in ' + currency + ', or use the price book.');
+      if (!(rate > 0)) throw new Error('Enter the rate for this shipment (TK per ' + currency + ').');
+      goodsBdt = round2(goodsFx * rate);
+    }
+    const book = PJ ? {} : await bookCostMap(ctx);   // a joint stock has no price book: its own cost
+    let sumW = 0;
+    const w = lines.map((l) => {
+      const p = l.isNew ? null : cat[str(l.sku).toLowerCase()];
+      const c = p ? (bookCost(book, str(p.category || p.cat), str(p.brand), str(p.type)) || num(p.cost_price)) : num((l.product || {}).cost_price);
+      const x = (c > 0 ? c : 0) * l.qty; sumW += x; return x;
+    });
+    const units = lines.reduce((t, l) => t + l.qty, 0), totalIn = mode === 'bdt' ? goodsBdt : goodsFx;
+    lines.forEach((l, i) => { const share = sumW > 0 ? totalIn * w[i] / sumW : totalIn * l.qty / units; l.rmb = Math.round(share / l.qty * 10000) / 10000; });
+  }
+  const pay = str(payload.payment);
+  // "advance" with no account = already on the supplier's page (the bill uses it on arrival); nothing is written now
+  if (!payload.paid && goodsBdt > 0 && ((pay === 'now' && str(payload.paidFrom)) || (pay === 'advance' && str(payload.advanceFrom)))) {
+    payload.paid = { amount: goodsBdt, account: pay === 'now' ? payload.paidFrom : payload.advanceFrom,
+                     date: pay === 'advance' ? str(payload.advanceDate) : '', pi: payload.pi, fx: goodsFx };
+  }
 
   await lock(ctx, 'stock');
   const created = [];
@@ -1208,7 +1261,7 @@ export async function erpPoCreate(ctx, payload) {
   let paidAt = null;
   if (paidAmt > 0) {
     if (!str(payload.supplier)) throw new Error('Paid to whom? Choose the supplier of this order.');
-    if (!roleAtLeast(actRole(ctx.s), 'shareholder')) throw new Error('Only the owner or a shareholder records money paid to a supplier.');
+    if (!roleAtLeast(actRole(ctx.s), 'shareholder')) throw new Error('Only the owner or a shareholder records money paid to a supplier. If you need this, ask the owner to open it for you (Settings > Users).');
     const accs = await ctx.tx`select id, archived from money_accounts where business_id = ${ctx.biz} and kind <> 'courier'`;
     const acc = accs.find((x) => x.id === str(paid.account));
     if (accs.length && (!acc || acc.archived)) throw new Error('Choose the account the money was paid from.');
@@ -1229,7 +1282,8 @@ export async function erpPoCreate(ctx, payload) {
       values (${ctx.biz}, ${id}, ${orderedAt}, ${l.sku}, ${l.name}, ${l.qty}, 0, ${shipBy}, ${note},
               'open', ${by}, null, ${l.rmb || null}, ${rate || null}, ${supplier})`;
   }
-  await stageSet(ctx, id, { stage: payload.planned ? 'planned' : 'ordered', shipBy });
+  await stageSet(ctx, id, { stage: payload.planned ? 'planned' : 'ordered', shipBy, pool: pool || null, currency: currency || null,
+                            goodsFx: goodsFx || null, goodsBdt: goodsBdt || null });
   if (paidAmt > 0) await poPayWrite(ctx, { po: id, supplier, amount: paidAmt, accountId: paid.accountId, at: paidAt, pi, fx: num(paid.fx) });
   return { ok: true, poId: id, lines: lines.length, created, stage: payload.planned ? 'planned' : 'ordered', paid: paidAmt,
            units: lines.reduce((t, l) => t + l.qty, 0),
@@ -1425,7 +1479,7 @@ export async function erpPoDiffDecide(ctx, payload) {
 
 /** erpPoSettle (ERP:8172) */
 export async function erpPoSettle(ctx, payload) {
-  if (!roleAtLeast(actRole(ctx.s), 'shareholder')) throw new Error('Only the owner or a shareholder can settle a supplier.');
+  if (!roleAtLeast(actRole(ctx.s), 'shareholder')) throw new Error('Only the owner or a shareholder can settle a supplier. If you need this, ask the owner to open it for you (Settings > Users).');
   let sup = str(payload && payload.supplier).toLowerCase();
   // fix: the balance for diffs with no supplier is shown under this label
   if (sup === '(no supplier named)') sup = '';

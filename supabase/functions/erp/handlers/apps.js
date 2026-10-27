@@ -12,7 +12,8 @@
 // nobody can switch them off. Platform is not an app either (platform admin only, as before).
 
 import { getConfig, setConfig } from '../lib/ext.js';
-import { platformAdmin } from './platform.js';
+import { platformAdmin, isPlatformAdmin } from './platform.js';
+import { roleAtLeast } from '../allow.js';
 import { qrDataUrl } from '../lib/qr.js';
 
 const str = (v) => String(v == null ? '' : v).trim();
@@ -71,8 +72,23 @@ async function offMap(deps, sql) {
     return off;
   } catch (_) { return off; }   // the table is not there yet
 }
+/** 27 Oct 2026: the "Only me" apps are open to the shareholders of the platform admin's OWN business (the owner's rule:
+ *  his shareholders see what he sees), not to other companies until the flag row says so. */
+export const LABS_KEYS = APPS.filter((a) => a.labs).map((a) => a.key);
+export async function labsOpen(deps, sql, biz, s) {
+  if (!s || !roleAtLeast(s.role, 'shareholder') || (deps && deps.install && deps.install.bridged)) return false;
+  try {
+    const owners = await sql`select user_id from memberships where business_id = ${biz} and role = 'owner'`;
+    for (const o of owners) if (await isPlatformAdmin(sql, o.user_id)) return true;
+  } catch (_) { /* no answer = closed */ }
+  return false;
+}
 /** leads-1: is an app switched off by the provider (an "Only me" app until its flag row says enabled)? */
-export async function appIsOff(deps, sql, key) { return !!(await offMap(deps, sql))[key]; }
+export async function appIsOff(deps, sql, key, ctx) {
+  const off = await offMap(deps, sql);
+  if (off[key] && ctx && LABS_KEYS.includes(key) && await labsOpen(deps, sql, ctx.biz, ctx.s)) return false;
+  return !!off[key];
+}
 /** The provider's menu switches: menu screens (MENU) switched off for EVERY company - rows 'menu:<key>' enabled=false. */
 async function menuOffAll(deps, sql) {
   const off = {};
@@ -97,8 +113,9 @@ async function menuModes(ctx) { return parseModes(await getConfig(ctx, 'apps_men
 /** What erpHello sends: the apps the provider switched off; this company's screens only owners see; the ones nobody here sees. */
 /** The Inbox is sold by plan (122_inbox_plans.sql): a company with a plan row has it even while it is a trial app. */
 async function hasInboxPlan(sql, biz) { try { return !!biz && (await sql`select 1 from inbox_plans where business_id = ${biz}`).length > 0; } catch (_) { return false; } }
-export async function appsState(deps, sql, biz, getCfg) {
+export async function appsState(deps, sql, biz, getCfg, s) {
   const offM = await offMap(deps, sql);
+  if (s && await labsOpen(deps, sql, biz, s)) for (const k of LABS_KEYS) delete offM[k];
   if (offM.inbox && await hasInboxPlan(sql, biz)) delete offM.inbox;
   const off = Object.keys(offM).concat(Object.keys(await menuOffAll(deps, sql)));   // a screen the provider took out is gone everywhere
   let modes = {};
@@ -128,6 +145,7 @@ export async function erpApps(ctx) {
   const modes = await menuModes(ctx);
   const admin = await platformAdmin(ctx);
   const owner = ctx.s.role === 'owner';
+  const here = await labsOpen(ctx.deps, ctx.sql, ctx.biz, ctx.s);
   return {
     admin, owner,
     apps: APPS.map((a) => ({
@@ -136,6 +154,7 @@ export async function erpApps(ctx) {
       url: a.path ? pageUrl(ctx.deps, a.path) : '',
       on: !(off[a.key] || (a.sameAs && off[a.sameAs])),
       labs: !!a.labs,
+      openHere: !!(a.labs && here),   // open to this business's shareholders whatever the provider's switch
       mode: HIDEABLE(a.key) ? (modes[a.key] || 'all') : '',
       hidden: modes[a.key] === 'owner',
       sameAs: a.sameAs || '',

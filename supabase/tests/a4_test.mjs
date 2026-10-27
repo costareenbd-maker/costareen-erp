@@ -54,8 +54,8 @@ check('the list shows who is owed and who is paid ahead', row.owed === -3000 && 
 r = await shareholder('erpSupplierBill', [{ name: SUP, amount: 8000, reference: 'INV-7781', note: 'spare nozzles, sent by post' }]);
 check('a bill typed by hand', r.ok && r.result.owed === 5000 && r.result.lines[0].what === 'Bill', r.result && r.result.lines[0]);
 const bill = r.result.lines[0], pay = r.result.lines.find((l) => l.kind === 'payment' && l.amount === -9000);
-r = await shareholder('erpSupplierVoid', [{ kind: 'bill', id: bill.id, reason: 'x' }]);
-check('only the owner strikes out', !r.ok, r);
+r = await mgr('erpSupplierVoid', [{ kind: 'bill', id: bill.id, reason: 'x' }]);
+check('a manager cannot strike out', !r.ok, r);
 r = await owner('erpSupplierVoid', [{ kind: 'bill', id: bill.id, reason: '' }]);
 check('striking out needs a reason', !r.ok, r);
 r = await owner('erpSupplierVoid', [{ kind: 'bill', id: bill.id, reason: 'entered twice' }]);

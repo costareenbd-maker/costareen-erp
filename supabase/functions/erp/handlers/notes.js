@@ -23,7 +23,7 @@ function target(ctx, payload) {
   const kind = str(payload && payload.kind), ref = str(payload && payload.ref).slice(0, 200);
   if (!KINDS[kind]) throw new Error('Notes are kept on a product, a customer, a supplier or an invoice.');
   if (!ref) throw new Error('Which one?');
-  if (!roleAtLeast(ctx.s.role, KINDS[kind])) throw new Error('Your account does not have access to that.');
+  if (!roleAtLeast(ctx.s.role, KINDS[kind])) throw new Error('Your account does not have permission for this. If you need this, ask the owner to open it for you (Settings > Users).');
   return { kind, ref };
 }
 
@@ -78,7 +78,7 @@ export async function erpNoteFileUrl(ctx, payload) {
   const id = str(payload && payload.id);
   const r = isId(id) ? (await ctx.tx`select kind, file from record_notes where id = ${id} and business_id = ${ctx.biz}`)[0] : null;
   if (!r || !str(r.file)) throw new Error('No file is kept with that note.');
-  if (!roleAtLeast(ctx.s.role, KINDS[str(r.kind)] || 'owner')) throw new Error('Your account does not have access to that.');
+  if (!roleAtLeast(ctx.s.role, KINDS[str(r.kind)] || 'owner')) throw new Error('Your account does not have permission for this. If you need this, ask the owner to open it for you (Settings > Users).');
   return { url: await fileUrl(ctx, 'notes', str(r.file)) };
 }
 

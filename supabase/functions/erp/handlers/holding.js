@@ -12,6 +12,7 @@
 import { str } from '../lib/tabs.js';
 import { num, formatDate } from '../lib/time.js';
 import { getConfig, setConfig } from '../lib/ext.js';
+import { roleAtLeast } from '../allow.js';
 
 const DAY = 86400000;
 const R = (v) => Math.round(num(v));
@@ -131,7 +132,7 @@ export async function erpHolding(ctx) {
 }
 
 export async function erpHoldingSave(ctx, payload) {
-  if (ctx.s.role !== 'owner') throw new Error('Only the owner changes how holding cost is worked out.');
+  if (!roleAtLeast(ctx.s.role, 'shareholder')) throw new Error('Only the owner or a shareholder changes how holding cost is worked out.');
   payload = payload || {};
   const cats = (Array.isArray(payload.categories) ? payload.categories : []).map((c) => str(c).slice(0, 60)).filter(Boolean);
   const on = payload.on !== false;

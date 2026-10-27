@@ -41,7 +41,7 @@ check('a product of another business cannot be opened', !r.ok, r);
 
 // ---- stock count ----
 r = await sales('erpStockCount', [{ lines: [{ sku: PLA, counted: 1 }] }]);
-check('sales cannot count stock', !r.ok && r.error === 'Your account does not have access to that.', r);
+check('sales cannot count stock', !r.ok && /does not have permission/.test(r.error), r);
 r = await mgr('erpStockCount', [{ lines: [] }]);
 check('count: nothing typed', !r.ok && r.error === 'Type what you counted for at least one product.', r);
 r = await mgr('erpStockCount', [{ lines: [{ sku: PLA, counted: -1 }] }]);

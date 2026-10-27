@@ -41,7 +41,7 @@ export async function erpLoyalty(ctx) {
   return { settings: S, members: num(t.members), pointsOut: num(t.points), consented: num(c.n), canManage: roleAtLeast(ctx.s.role, 'manager') };
 }
 export async function erpLoyaltySave(ctx, payload) {
-  if (!roleAtLeast(ctx.s.role, 'manager')) throw new Error('Only a manager or the owner changes the points rules.');
+  if (!roleAtLeast(ctx.s.role, 'manager')) throw new Error('Only a manager or the owner changes the points rules. If you need this, ask the owner to open it for you (Settings > Users).');
   const p = payload || {};
   const n = (v, lo, hi, what) => { const x = num(v); if (!(x >= lo && x <= hi)) throw new Error(what + ' should be between ' + lo + ' and ' + hi + '.'); return x; };
   // check the whole picture before writing anything
@@ -119,7 +119,7 @@ export async function erpCustomerPoints(ctx, payload) {
   return { key, ...pts, ledger, consent: await consentOf(ctx, key), refill: refill ? refillView(refill) : null, delivery: await deliveryFor(ctx, key), canManage: roleAtLeast(ctx.s.role, 'manager') };
 }
 export async function erpPointsAdjust(ctx, payload) {
-  if (!roleAtLeast(ctx.s.role, 'manager')) throw new Error('Only a manager or the owner gives or redeems points.');
+  if (!roleAtLeast(ctx.s.role, 'manager')) throw new Error('Only a manager or the owner gives or redeems points. If you need this, ask the owner to open it for you (Settings > Users).');
   const p = payload || {};
   const key = custKey(p.phone, p.name);
   if (!key || key === 'n:') throw new Error('Which customer?');
@@ -241,7 +241,7 @@ export async function erpDeliveryHistoryMany(ctx, payload) {
 }
 /** Once, when points are switched on: every past invoice gets the points it would have earned (idempotent). */
 export async function erpLoyaltyBackfill(ctx) {
-  if (!roleAtLeast(ctx.s.role, 'manager')) throw new Error('Only a manager or the owner counts past invoices.');
+  if (!roleAtLeast(ctx.s.role, 'manager')) throw new Error('Only a manager or the owner counts past invoices. If you need this, ask the owner to open it for you (Settings > Users).');
   const S = await settings(ctx);
   if (!S.on) throw new Error('Switch points on first.');
   const rows = await ctx.tx`select invoice_no from invoices where business_id = ${ctx.biz} and voided_at is null and invoice_no not like 'RTN-%' order by created_at desc limit 20000`;

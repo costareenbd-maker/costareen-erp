@@ -19,7 +19,7 @@ const str = (v) => String(v == null ? '' : v).trim();
 const ctl = (ctx) => (ctx.deps && ctx.deps.control) || ctx.sql;
 const KEY_RE = { openai: /^sk-[A-Za-z0-9_-]{20,300}$/, anthropic: /^sk-ant-[A-Za-z0-9_-]{20,300}$/, gemini: /^[A-Za-z0-9_-]{20,120}$/, custom: /^\S{1,300}$/ };
 
-function owner(ctx) { if (!roleAtLeast(ctx.s.role, 'owner')) throw new Error('Only the owner chooses the AI.'); }
+function owner(ctx) { if (!roleAtLeast(ctx.s.role, 'shareholder')) throw new Error('Only the owner or a shareholder chooses the AI. If you need this, ask the owner to open it for you (Settings > Users).'); }
 
 export async function erpAiBrain(ctx) {
   owner(ctx);
@@ -56,6 +56,7 @@ export async function erpAiBrainSet(ctx, payload) {
 }
 
 export async function erpAiBrainKey(ctx, payload) {
+  if (!roleAtLeast(ctx.s.role, 'owner')) throw new Error('Only the owner keeps the AI key. If you need this, ask the owner.');   // keys stay the owner's
   if (!(await platformAdmin(ctx))) throw new Error('Only the platform admin sets the AI keys.');
   const p = payload || {}, provider = str(p.provider);
   if (!PROVIDERS[provider]) throw new Error('Which AI?');

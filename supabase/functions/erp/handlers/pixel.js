@@ -134,7 +134,7 @@ export async function pixelTick(ctx) {
 }
 
 export async function erpPixel(ctx) {
-  if (!roleAtLeast(ctx.s.role, 'manager')) throw new Error('Not open to your role.');
+  if (!roleAtLeast(ctx.s.role, 'manager')) throw new Error('Your account does not have permission for this. If you need this, ask the owner to open it for you (Settings > Users).');
   const S = await settings(ctx), tok = await tokenOf(ctx);
   let last = {}; try { last = JSON.parse(str(await getConfig(ctx, 'pixel_last', '')) || '{}') || {}; } catch (_) { last = {}; }
   const c = (await ctx.tx`select count(*) filter (where coalesce(meta->'sent'->>'lead', '') <> '')::int as lead,

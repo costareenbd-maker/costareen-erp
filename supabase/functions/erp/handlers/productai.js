@@ -8,6 +8,7 @@
 //   erpProductAiSave({sku, description, facts})
 
 import { getConfig, setConfig } from '../lib/ext.js';
+import { roleAtLeast } from '../allow.js';
 
 const str = (v) => String(v == null ? '' : v).trim();
 const keyOf = (label) => str(label).toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '').slice(0, 40);
@@ -46,7 +47,7 @@ export async function erpProductFields(ctx) {
 }
 
 export async function erpProductFieldsSave(ctx, payload) {
-  if (ctx.s.role !== 'owner') throw new Error('Only the owner chooses the product details.');
+  if (!roleAtLeast(ctx.s.role, 'shareholder')) throw new Error('Only the owner or a shareholder chooses the product details.');
   payload = payload || {};
   const kind = FIELD_PRESETS[str(payload.kind)] ? str(payload.kind) : 'custom';
   let fields = Array.isArray(payload.fields) ? payload.fields.map((f) => str(f && (f.label || f))).filter(Boolean) : [];

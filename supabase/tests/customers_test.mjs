@@ -178,7 +178,7 @@ check('PDF needs someone', !r.ok && r.error === 'Whose statement?', r);
 
 // ---------------------------------------------------------------- legacy payment
 r = await sales('erpRecordPayment', [{ orderId: invK, amount: 10 }]);
-check('sales cannot record payments', !r.ok && r.error === 'Your account does not have access to that.', r);
+check('sales cannot record payments', !r.ok && /does not have permission/.test(r.error), r);
 r = await mgr('erpRecordPayment', [{ amount: 10 }]);
 check('which invoice?', !r.ok && r.error === 'Which invoice?', r);
 r = await mgr('erpRecordPayment', [{ orderId: invK, amount: 0 }]);
@@ -214,7 +214,7 @@ const dupIds = await sql`select id, customer_no from customers where customer_no
 await sql`insert into invoices (business_id, invoice_no, customer_name, customer_id) values (${B}, 'INV-RAFI', 'Rafi', ${dupIds[0].id})`;
 
 r = await mgr('erpMergeCustomers', [false]);
-check('merge is shareholder-only', !r.ok && r.error === 'Your account does not have access to that.', r);
+check('merge is shareholder-only', !r.ok && /does not have permission/.test(r.error), r);
 r = await shareholder('erpMergeCustomers', [false]);
 check('preview: 1 group, 2 extra rows, nothing changed', r.ok && r.result.applied === false && r.result.groups === 1 &&
   r.result.removed === 2 && r.result.preview.length === 1 && r.result.preview[0].phone === '1700000001' &&

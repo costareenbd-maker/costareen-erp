@@ -25,8 +25,8 @@ const OBJ = { messages: { objective: 'OUTCOME_ENGAGEMENT', goal: 'CONVERSATIONS'
               sales: { objective: 'OUTCOME_SALES', goal: 'OFFSITE_CONVERSIONS', result: 'purchase', label: 'purchases' } };
 const H = 3600e3;
 
-function need(ctx, role) { if (!roleAtLeast(ctx.s.role, role || 'manager')) throw new Error('Not open to your role.'); }
-function needOwner(ctx) { if (ctx.s.role !== 'owner') throw new Error('Only the owner spends money on ads.'); }
+function need(ctx, role) { if (!roleAtLeast(ctx.s.role, role || 'manager')) throw new Error('Your account does not have permission for this. If you need this, ask the owner to open it for you (Settings > Users).'); }
+function needOwner(ctx) { if (!roleAtLeast(ctx.s.role, 'shareholder')) throw new Error('Only the owner or a shareholder spends money on ads.'); }
 async function settings(ctx) {
   let s = {}; try { s = JSON.parse(str(await getConfig(ctx, 'ads_settings', '')) || '{}') || {}; } catch (_) { s = {}; }
   return { account: str(s.account), dailyCap: num(s.dailyCap) || 500, monthlyCap: num(s.monthlyCap) || 10000, pixel: str(s.pixel), maxCostPerResult: num(s.maxCostPerResult) || 0, minCtr: num(s.minCtr) || 0, audience: s.audience || null };

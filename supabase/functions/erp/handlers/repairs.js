@@ -158,7 +158,7 @@ export async function erpJobSave(ctx, payload) {
   if (str(r.status) === 'returned' && status !== 'returned' && !roleAtLeast(ctx.s.role, 'manager')) throw new Error('A returned job is reopened by a manager.');
   let parts = Array.isArray(r.parts) ? r.parts : [];
   if (status === 'cancelled') {
-    if (!roleAtLeast(ctx.s.role, 'manager')) throw new Error('Only a manager cancels a job.');
+    if (!roleAtLeast(ctx.s.role, 'manager')) throw new Error('Only a manager cancels a job. If you need this, ask the owner to open it for you (Settings > Users).');
     parts = await setParts(ctx, r, []);                 // every part back on the shelf
   } else if (payload.parts !== undefined) {
     parts = await setParts(ctx, r, payload.parts);
@@ -177,7 +177,7 @@ export async function erpJobSave(ctx, payload) {
 export async function erpJobPay(ctx, payload) {
   payload = payload || {};
   NOW = () => ctx.now;
-  if (!roleAtLeast(ctx.s.role, 'manager')) throw new Error('Your account cannot record payments.');
+  if (!roleAtLeast(ctx.s.role, 'manager')) throw new Error('Your account does not have permission to record payments. If you need this, ask the owner to open it for you (Settings > Users).');
   const r = await jobRow(ctx, payload.jobNo);
   const amount = round2(num(payload.amount));
   if (!(amount > 0)) throw new Error('How much was received?');

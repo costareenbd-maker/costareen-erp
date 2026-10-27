@@ -470,7 +470,7 @@ export const SEED_LISTS = {
  */
 export async function erpCreateBusiness(ctx, payload) {
   payload = payload || {};
-  if (!roleAtLeast(ctx.s.role, 'owner')) throw new Error('Only the owner can add a business.');
+  if (!roleAtLeast(ctx.s.role, 'owner')) throw new Error('Only the owner can add a business. If you need this, ask the owner to open it for you (Settings > Users).');
   const name = String(payload.name || '').trim();
   if (!name) throw new Error('Business name is required.');
   for (const m of ctx.s.memberships) {

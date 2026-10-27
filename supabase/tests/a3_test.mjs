@@ -10,8 +10,8 @@ let r = await mgr('erpCashBook', [{}]);
 check('money is for shareholders and the owner', !r.ok, r);
 r = await book(shareholder);
 check('nothing set up yet', r.ok && r.result.setup === true && r.result.accounts.length === 0, r.result);
-r = await shareholder('erpCashSetup', [{}]);
-check('only the owner sets the accounts up', !r.ok, r);
+r = await mgr('erpCashSetup', [{}]);
+check('a manager cannot set the accounts up (a shareholder can, 27 Oct 2026)', !r.ok, r);
 r = await owner('erpCashSetup', [{ accounts: [{ name: 'Cash', kind: 'cash' }, { name: 'Islami Bank', kind: 'bank' }, { name: 'BRAC Bank', kind: 'bank' },
                                               { name: 'bKash', kind: 'wallet' }, { name: 'Steadfast', kind: 'courier' }] }]);
 check('five accounts, all at zero', r.ok && r.result.accounts.length === 5 && r.result.accounts.every((a) => a.balance === 0) && !r.result.setup, r.result && r.result.accounts);
@@ -81,8 +81,8 @@ check('transfer needs two accounts', !r.ok && r.error === 'Choose two different 
 r = await shareholder('erpCashTransfer', [{ from: A['Islami Bank'], to: A.Cash, amount: 20000, note: 'for the drawer' }]);
 check('bank to drawer: one goes down, the other up, the total stays', r.ok && (await bal('Islami Bank')) === 80000 && (await bal('Cash')) === 16350, r.result && r.result.accounts);
 const total = (await book()).result.total;
-r = await shareholder('erpCashAdjust', [{ account: A.Cash, counted: 16000, note: 'short' }]);
-check('only the owner corrects a balance', !r.ok, r);
+r = await mgr('erpCashAdjust', [{ account: A.Cash, counted: 16000, note: 'short' }]);
+check('a manager cannot correct a balance', !r.ok, r);
 r = await owner('erpCashAdjust', [{ account: A.Cash, counted: 16000, note: '' }]);
 check('a correction needs a reason', !r.ok && /why the book was wrong/.test(r.error), r);
 r = await owner('erpCashAdjust', [{ account: A.Cash, counted: 16000, note: 'drawer counted, 350 short' }]);

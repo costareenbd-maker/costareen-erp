@@ -45,11 +45,11 @@ const atDhaka = (h, m = 0, ymd = today) => new Date(T.dhakaDayStart(ymd).getTime
 
 // ---- roles -------------------------------------------------------------------
 let r = await sales('erpCampaignAudience', []);
-check('sales cannot open campaigns', !ok(r) && r.error === 'Your account does not have access to that.', r);
+check('sales cannot open campaigns', !ok(r) && /does not have permission/.test(r.error), r);
 r = await mgr('erpEvoSetup', [{ url: EVO }]);
-check('manager cannot set up the WhatsApp server', !ok(r) && r.error === 'Your account does not have access to that.', r);
+check('manager cannot set up the WhatsApp server', !ok(r) && /does not have permission/.test(r.error), r);
 r = await mgr('erpEvoStopHook', [{}]);
-check('manager cannot switch STOP replies', !ok(r) && r.error === 'Your account does not have access to that.', r);
+check('manager cannot switch STOP replies', !ok(r) && /does not have permission/.test(r.error), r);
 
 // ---- Evolution set-up and status ---------------------------------------------
 r = await mgr('erpEvoStatus', []);

@@ -7,7 +7,7 @@
 // privileged connection, and never with data from another business.
 
 import { controlState } from './lib/control.js';
-import { ERP_ALLOW, ERP_READS, ERP_ROLES, ERP_DISCOUNT_CAP, normRole, roleAtLeast, callAllowed, powersMap, discountCapOf } from './allow.js';
+import { ERP_ALLOW, ERP_READS, ERP_ROLES, ERP_DISCOUNT_CAP, normRole, roleAtLeast, callAllowed, powersMap, discountCapOf, noPermission } from './allow.js';
 import { dashForget, dashKeep } from './handlers/bundle.js';
 import { scrub } from './scrub.js';
 import { HANDLERS } from './handlers/index.js';
@@ -200,7 +200,7 @@ async function hello(sql, deps, token, authHeader, ip) {
     } catch (_) { joint = false; }
     let apps = { off: [], hidden: [] };   // the Apps page: what the provider switched off, what this company hides
     try {
-      apps = await appsState(deps, sql, s.businessId, async (k) => { const r = await sql`select value from business_config where business_id = ${s.businessId} and key = ${k}`; return r[0] ? r[0].value : ''; });
+      apps = await appsState(deps, sql, s.businessId, async (k) => { const r = await sql`select value from business_config where business_id = ${s.businessId} and key = ${k}`; return r[0] ? r[0].value : ''; }, s);
     } catch (_) { apps = { off: [], hidden: [] }; }
     return { ok: true, role: s.role, roleLabel: s.roleLabel, name: s.name,
              implicit: !!s.implicit, link: !!s.viaKey, discountCap: s.discountCap, powers: powersMap(s), platform, joint, apps };
@@ -291,7 +291,7 @@ export async function erpCall(deps, { name, args, token, authHeader, ip }) {
       if (e instanceof Refused) throw new Error(SAYS[e.message] || 'Sign in to the ERP first.');
       throw e;
     }
-    if (!callAllowed(s, name)) throw new Error('Your account does not have access to that.');
+    if (!callAllowed(s, name)) throw new Error(noPermission('do that'));
 
     const claims = JSON.stringify({ sub: s.userId, role: 'authenticated' });
     // work that must happen only once this call's own transaction is saved (afterCommit), or undone

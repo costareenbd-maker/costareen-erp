@@ -3133,3 +3133,53 @@ answer "already paid in advance", and the server then asked for the account the 
   asked, as before.
 - Test `fix6_test.mjs` (6 checks). Deployed live and dev. Nothing was written by the failed attempts; the shipment still
   has to be received once more by Mehedi.
+
+## Role problems of the same kind, and plain refusals (27 Oct 2026, tag fix-7)
+
+The owner's rule (15 Oct, restated 27 Oct): his manager does every job he does; only the figures (balances, profit,
+dashboard, capital) are not shown to him - nothing is to be blocked by stealth. The "every action, like the owner" switch
+(058) did that in allow.js, but the database's row security still hid the money rows from anyone below shareholder, so
+with the switch on a manager got empty account lists everywhere: the receive screen (fix-6), the supplier page's "pay
+from", expenses "paid from", purchase-order payments, lot funding, cash-ups.
+- Migration 147: `my_business_ids_act(level)` = the role's businesses plus those where the person has the 'act'
+  switch; the read policies of money_accounts, money_moves, lot_funding, cash_ups and the insert policies of
+  money_moves and cash_ups use it. Balances, cash book, dashboard, profit, capital stay closed in allow.js (NOT_ACT),
+  which the test proves after the switch is on.
+- Every refusal now says what and whom to ask: the gate in core.js and ~50 role checks inside handlers end with
+  "If you need this, ask the owner to open it for you (Settings > Users)." The old "Your account does not have access
+  to that." / "Not open to your role." / "Your account cannot ..." sentences are gone (Bangla added for the two
+  generic ones). Tests that pinned the old sentence now match "does not have permission".
+- Test fix6_test.mjs grew to 17 checks (acting manager: account names on receive, supplier pay from an account,
+  "paid now" and a back-dated advance go through; money, cash book, dashboard still refused).
+- NOT changed: the owner-only gates for people, keys, security, AI keys, the Engine and the platform; a plain manager
+  without the switch still cannot name an account (goods are owed, as fix-6 says).
+
+## "Still coming" on the Receive page, and the joint Receive page steps the same way (27 Oct 2026, tag onway-1)
+
+Owner: "I only know what a shipment cost and what it really weighs when I receive it. When I buy, I enter the invoice
+and the products, not the shipping. If I already have the receipt, ask it then." And: the own Stock entry and the joint
+stock's Receive looked different and confused staff.
+- The Receive page (own stock and the joint stock, the same page) first asks **Where is this shipment?** "It is here"
+  = the page as it was. "Still coming" = the goods, the supplier's invoice total (foreign money or taka, or the price
+  book) and how it was paid are written down now; the Shipping & costs step is skipped; "Save — on the way" writes a
+  supplier order (`erpPoCreate` with mode/currency/totalFx/rate/totalBdt/payment/pool; the total is spread over the
+  lines by the price book's cost, else equally; "paid now"/"in advance" writes the supplier payment with the order).
+- **On the way** card: on Supplier orders (own) and on the joint stock's Stock tab (that pool's orders only), each with
+  **It arrived — receive it**: the lines come onto the Receive page against the order (quantities editable, "Not from
+  an order" still there); shipping, weight and the other costs are asked there; the lines are costed from the order's
+  prices when no new total is typed (`receiveShipment` reads po_lines), the supplier is billed the goods.
+- A joint stock's order is received into its pool (`po_stages.pool`, migration 149); any other order stays the own
+  stock's, as before. The joint Receive page now uses the same step-by-step pager as Stock entry (it showed every step
+  at once).
+- Test onway_test.mjs (17 checks). NOT changed: the old "New order" form on Supplier orders (per-line RMB prices) and
+  the old arrival boxes stay for those who use them; a new product cannot be made inside a joint "still coming" (make
+  the joint product first).
+
+## A file's near-miss rows: plain choices (27 Oct 2026, tag match-2)
+
+Owner: on the joint Receive page a scanned file has many products a word or two away from an existing one (Blue, Aqua
+Blue, Water Blue); the amber row's "Keep this" was not a defined choice. An amber row now shows **File says** (the
+supplier's words), **Our match** (the drop-down, as before), **Differs** (the words each side has that the other does
+not), and two answers: **Yes — the same product** (the old Keep this: the file's name is remembered for that product)
+and **No — a new product** (the Set up product form, filled from the file row, in the joint stock when on that page).
+Own Stock entry gets the same, it is one page. Bangla added. No server change.

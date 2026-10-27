@@ -55,7 +55,7 @@ const SCENES = {
   dark: 'on a dark matte surface with a single warm rim light, premium look, black background',
 };
 
-function need(ctx, role) { if (!roleAtLeast(ctx.s.role, role || 'sales')) throw new Error('Not open to your role.'); }
+function need(ctx, role) { if (!roleAtLeast(ctx.s.role, role || 'sales')) throw new Error('Your account does not have permission for this. If you need this, ask the owner to open it for you (Settings > Users).'); }
 function b64(bytes) { let s = ''; const CH = 0x8000; for (let i = 0; i < bytes.length; i += CH) s += String.fromCharCode.apply(null, bytes.subarray(i, i + CH)); return btoa(s); }
 function b64decode(s) { const bin = atob(String(s || '').replace(/^data:[^,]*,/, '')); const out = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i); return out; }
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -99,7 +99,7 @@ export async function erpSocialRules(ctx, payload) {
   need(ctx);
   const p = payload || {};
   if (p.save !== undefined) {
-    if (!roleAtLeast(ctx.s.role, 'manager')) throw new Error('Only a manager or the owner writes the rules.');
+    if (!roleAtLeast(ctx.s.role, 'manager')) throw new Error('Only a manager or the owner writes the rules. If you need this, ask the owner to open it for you (Settings > Users).');
     const lines = String(p.save).split(/\n+/).map((x) => x.trim()).filter(Boolean).slice(0, 40).map((x) => x.slice(0, 200));
     await setConfig(ctx, 'social_rules', JSON.stringify(lines));
     const w = String(p.windows || '').split(/[,\s]+/).filter((x) => /^\d{1,2}:\d{2}$/.test(x)).slice(0, 6);

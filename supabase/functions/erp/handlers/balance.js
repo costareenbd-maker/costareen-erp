@@ -22,6 +22,7 @@ import { erpSuppliers } from './suppliers.js';
 import { erpDues, creditMap } from './money.js';
 import { stockAtCost, pnlFor, expenseUnpaid } from './dashboard.js';
 import { investorReturns } from './returns.js';
+import { roleAtLeast } from '../allow.js';
 
 const str = (v) => String(v == null ? '' : v).trim();
 const soft = async (ctx, fn, dflt) => { try { return await ctx.tx.savepoint(fn); } catch (_) { return dflt; } };
@@ -106,7 +107,7 @@ export async function erpBalanceSheet(ctx) {
 
 /** Owner: open the books today - write down today's net worth as the start. */
 export async function erpBalanceOpen(ctx, payload) {
-  if (ctx.s.role !== 'owner') throw new Error('Only the owner opens the books.');
+  if (!roleAtLeast(ctx.s.role, 'shareholder')) throw new Error('Only the owner or a shareholder opens the books.');
   // sales still costed at "whatever the product costs now" get that cost fixed first (plan A1, the same as Maintenance >
   // Fix sale costs): it changes no figure today, it stops a later shipment from re-pricing past sales and so the profit
   try { const { erpFreezeSaleCosts } = await import('./goods.js'); await ctx.tx.savepoint(() => erpFreezeSaleCosts(ctx)); } catch (_) { /* best effort */ }

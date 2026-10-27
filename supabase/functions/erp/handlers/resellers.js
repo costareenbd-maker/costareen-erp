@@ -35,7 +35,7 @@ const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&':
 const STATUS = { placed: 'Waiting for the supplier', accepted: 'Invoiced, packing', booked: 'Parcel booked', delivered: 'Delivered and paid', returned: 'Returned', cancelled: 'Cancelled', declined: 'Declined by the supplier' };
 
 function me(ctx) { const src = sourceOf(ctx.deps); if (!src) throw new Error('Resellers work only for ERPs run by the provider.'); return { src, biz: ctx.biz }; }
-function need(ctx, role, what) { if (!roleAtLeast(ctx.s.role, role)) throw new Error('Only ' + (role === 'owner' ? 'the owner' : 'a manager or the owner') + ' can ' + what + '.'); }
+function need(ctx, role, what) { if (!roleAtLeast(ctx.s.role, role)) throw new Error('Only ' + (role === 'owner' ? 'the owner' : 'a manager or the owner') + ' can ' + what + '. ' + 'If you need this, ask the owner to open it for you (Settings > Users).'); }
 async function profile(ctx) {
   let p = {};
   try { const S = await import('./sales.js'); p = await S.qProfile(ctx); } catch (_) { p = {}; }

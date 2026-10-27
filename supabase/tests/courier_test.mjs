@@ -74,7 +74,7 @@ r = await owner('erpCourierTest', []);
 check('test without keys -> ok:false with the reason', r.ok && r.result.ok === false && /no courier keys yet/.test(r.result.error), r);
 
 r = await mgr('erpCourierSetKeys', [{ apiKey: 'K1', apiSecret: 'S1' }]);
-check('manager cannot set keys', !r.ok && r.error === 'Your account does not have access to that.', r);
+check('manager cannot set keys', !r.ok && /does not have permission/.test(r.error), r);
 r = await owner('erpCourierSetKeys', [{ apiKey: 'K1', apiSecret: '' }]);
 check('both keys needed', !r.ok && r.error === 'Both the API key and the secret key are needed.', r);
 r = await owner('erpCourierSetKeys', [{ apiKey: ' K1 ', apiSecret: 'S1' }]);
@@ -96,7 +96,7 @@ r = await owner('erpCourierTest', []);
 check('test: answer without balance', r.ok && r.result.ok === false && r.result.error === 'Steadfast answered, but not with the account balance.', r);
 balanceMode = 'ok';
 r = await mgr('erpCourierTest', []);
-check('manager cannot test keys', !r.ok && r.error === 'Your account does not have access to that.', r);
+check('manager cannot test keys', !r.ok && /does not have permission/.test(r.error), r);
 
 // ---- preview + booking --------------------------------------------------------------------
 r = await mgr('erpParcelPreview', [{ invoiceNo: '' }]);
@@ -111,7 +111,7 @@ r = await mgr('erpParcelPreview', [{ invoiceNo: 'INV-B' }]);
 check('preview: part paid -> collect the rest', r.ok && r.result.collect === 1500 && r.result.received === 500 && r.result.total === 2000, r);
 
 r = await sales('erpBookParcel', [{ invoiceNo: 'INV-A', expect: 1500 }]);
-check('sales cannot book', !r.ok && r.error === 'Your account does not have access to that.', r);
+check('sales cannot book', !r.ok && /does not have permission/.test(r.error), r);
 r = await mgr('erpBookParcel', [{ invoiceNo: 'INV-A', expect: 1000 }]);
 check('book: amount drift refused', !r.ok && r.error === 'The amount changed while you were looking: this parcel would collect 1500, not 1000. Open it again.', r);
 r = await mgr('erpBookParcel', [{ invoiceNo: 'INV-A', expect: 1500, phone: '0171' }]);
@@ -226,7 +226,7 @@ web.on(/costareen\.com\/wp-json\/cz\/v1\/cod\?days=120/, (url, opts) =>
   ({ status: opts.headers['x-cz-key'] === 'czk' ? 200 : 403, body: { orders: [{ order_no: '555', consignment: '4001' }] } }));
 
 r = await sales('erpSfPayouts', [{}]);
-check('sales cannot see courier money', !r.ok && r.error === 'Your account does not have access to that.', r);
+check('sales cannot see courier money', !r.ok && /does not have permission/.test(r.error), r);
 web.calls.length = 0;
 r = await mgr('erpSfPayouts', [{}]);
 const S = r.result || {};
@@ -306,7 +306,7 @@ check('confirm again: checked once only', r.ok && r.result.recorded === 0 && r.r
 
 // ---- the owner decides the large shortfalls -------------------------------------------------
 r = await mgr('erpSfReconDecide', [{ consignment: '1003', decision: 'writeoff' }]);
-check('manager refused (shareholder+)', !r.ok && r.error === 'Your account does not have access to that.', r);
+check('manager refused (shareholder+)', !r.ok && /does not have permission/.test(r.error), r);
 r = await owner('erpSfReconDecide', [{ consignment: '1003', decision: 'maybe' }]);
 check('decision must be writeoff or keep', !r.ok && r.error === 'Write it off, or keep it as due?', r);
 r = await owner('erpSfReconDecide', [{ consignment: '1003', decision: 'writeoff' }]);

@@ -71,7 +71,7 @@ await sql`insert into web_order_lines (business_id, web_order_id, line_total) va
 
 // ---- product cost ---------------------------------------------------------------
 let r = await sales('erpCostBook', []);
-check('sales cannot open the price book', !r.ok && r.error === 'Your account does not have access to that.', r);
+check('sales cannot open the price book', !r.ok && /does not have permission/.test(r.error), r);
 r = await owner('erpCostBook', []);
 const book0 = r.result;
 check('book: sync adds one row per category+brand+type of ACTIVE products', r.ok && book0.added === 5 && book0.rows.length === 5, r);
@@ -127,7 +127,7 @@ check('blank handling = follow the default', r.ok && rowOf(r.result, 'Filaments'
 
 // ---- dashboard ----------------------------------------------------------------
 r = await mgr('erpDashboardData', []);
-check('manager cannot call erpDashboardData directly', !r.ok && r.error === 'Your account does not have access to that.', r);
+check('manager cannot call erpDashboardData directly', !r.ok && /does not have permission/.test(r.error), r);
 
 r = await owner('erpDashboardData', []);
 const D = r.result;

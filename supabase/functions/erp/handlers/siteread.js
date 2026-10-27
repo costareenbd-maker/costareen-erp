@@ -14,6 +14,7 @@ import { getConfig, setConfig, httpFetch } from '../lib/ext.js';
 import { kbAdd } from './inbox2.js';
 import { needFeat } from '../lib/inboxplan.js';
 import { storeConn } from './stores.js';
+import { roleAtLeast } from '../allow.js';
 
 const str = (v) => String(v == null ? '' : v).trim();
 const MAX_PAGES = 20, MAX_PRODUCTS = 60, AT_ONCE = 6, MAX_TEXT = 20000, BUDGET_MS = 70000;
@@ -114,7 +115,7 @@ async function keep(ctx, row) {
 
 export async function erpSiteRead(ctx, payload) {
   await needFeat(ctx, 'knowledge');
-  if (ctx.s.role !== 'owner') throw new Error('Only the owner reads the website for the AI.');
+  if (!roleAtLeast(ctx.s.role, 'shareholder')) throw new Error('Only the owner or a shareholder reads the website for the AI.');
   let start = str(payload && payload.url) || str(await getConfig(ctx, 'site_url', ''));
   if (start && !/^https?:\/\//i.test(start)) start = 'https://' + start;
   const home = canon(start);
@@ -231,7 +232,7 @@ export async function erpSitePages(ctx) {
 
 export async function erpSitePageAct(ctx, payload) {
   payload = payload || {};
-  if (ctx.s.role !== 'owner') throw new Error('Only the owner decides what the AI learns.');
+  if (!roleAtLeast(ctx.s.role, 'shareholder')) throw new Error('Only the owner or a shareholder decides what the AI learns.');
   const ids = (Array.isArray(payload.ids) ? payload.ids : [payload.id]).map(str).filter((x) => /^[0-9a-f-]{36}$/i.test(x)).slice(0, 300);
   const action = str(payload.action);
   if (!['add', 'skip', 'draft'].includes(action)) throw new Error('Add, skip or put back?');
