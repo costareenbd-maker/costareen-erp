@@ -3119,3 +3119,17 @@ fixed in 5 batches, each with its own test suite (the report's codes are in each
 - NOT done: L8 has no test of its own (partner companies are heavy to set up; the change is 4 lines). The plugin's own
   order list still asks for 100 orders a week (its API has no paging we know of). Closed months closed BEFORE this keep
   their investor returns only from the next month close on (filled in then).
+
+## A manager could not receive a priced shipment (27 Oct 2026, tag fix-6)
+
+Mehedi (manager) tried eight times on 26-27 Oct to receive a local purchase (Local Dealer, 74,380 TK) and was refused
+every time with "Only 0 TK was paid ahead to Local Dealer ...". Cause: the "How the goods were paid" choice is only shown
+to people who may see the money accounts (shareholder and up); a manager never saw it, yet the page still sent its default
+answer "already paid in advance", and the server then asked for the account the advance came from - which he cannot name.
+- Page: when there are no accounts to choose from, the receive is sent as "not paid yet" and a line says the owner records
+  the payment on the supplier's page.
+- Server (`receiveShipment`): anyone below shareholder receives the goods as owed to the supplier whatever the page sent
+  ("now" or "advance" cannot be recorded by them); the result carries `paymentNote`. The owner and shareholders are still
+  asked, as before.
+- Test `fix6_test.mjs` (6 checks). Deployed live and dev. Nothing was written by the failed attempts; the shipment still
+  has to be received once more by Mehedi.

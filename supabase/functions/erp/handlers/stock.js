@@ -606,8 +606,15 @@ export async function receiveShipment(ctx, payload) {
   //            "paid to suppliers, goods not received" (the supplier's advance); this bill uses it up. An advance
   //            nobody wrote down yet is written now, dated the day it was paid, from the account it left.
   //   later    owed to the supplier until it is paid
-  let paidNow = 0, advanceUsed = 0, advanceWritten = 0;
-  const payment = ['now', 'advance', 'later'].includes(str(payload.payment)) ? str(payload.payment) : (accOk[str(payload.paidFrom)] ? 'now' : 'later');
+  let paidNow = 0, advanceUsed = 0, advanceWritten = 0, paymentNote = '';
+  let payment = ['now', 'advance', 'later'].includes(str(payload.payment)) ? str(payload.payment) : (accOk[str(payload.paidFrom)] ? 'now' : 'later');
+  // fix-6 (27 Oct 2026): a manager cannot see the money accounts, so the page never showed him the "how was it paid"
+  // choice yet still sent its default ("paid in advance"), and every receive of a priced shipment was refused.
+  // Someone who may not record money receives the goods as owed to the supplier; the owner records the payment.
+  if (payment !== 'later' && !roleAtLeast(actRole(ctx.s), 'shareholder')) {
+    payment = 'later';
+    paymentNote = 'The goods are written as owed to the supplier; the owner records what was paid on the supplier\'s page.';
+  }
   if (payment === 'advance' && !billId && goods > 0) throw new Error('Paid in advance to whom? Choose the supplier of this shipment.');
   if (billId && payment === 'now' && accOk[str(payload.paidFrom)]) {
     await ctx.tx`insert into supplier_payments (business_id, supplier, at, amount, account_id, fx_amount, fx_currency, note, by)
@@ -640,7 +647,7 @@ export async function receiveShipment(ctx, payload) {
   }
 
   return {
-    ok: true, numbered, reference, billed: !!billId, joint: PJ ? PJ.pool.name : '', paidNow, advanceUsed, advanceWritten, payment, costs: costRows.length, currency: mode === 'rmb' ? fxCur : '', received: updated.length || lines.length,
+    ok: true, numbered, reference, billed: !!billId, joint: PJ ? PJ.pool.name : '', paidNow, advanceUsed, advanceWritten, payment, paymentNote, costs: costRows.length, currency: mode === 'rmb' ? fxCur : '', received: updated.length || lines.length,
     units: lines.reduce((n, l) => n + num(l.qty), 0),
     shipping, createdProducts: created, lines: updated, totalCost: round2(totalBdt),
     freight, chargeKg, freightPerKg: perKg, divisor,

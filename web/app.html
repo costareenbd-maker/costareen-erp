@@ -13614,6 +13614,8 @@ recvCostHtml = function () {
         fxAccOpts(RECV.advanceFrom || '', 'Already recorded on the supplier\u2019s page') + '</select></div>' +
         (RECV.advanceFrom ? '<div><label class="f" for="rv_advdate">Paid on</label><input class="i" id="rv_advdate" type="date" value="' + esc(RECV.advanceDate || '') + '"></div>' : '') : '') +
       '</div>';
+  } else if (m !== 'none') {
+    h += '<div class="sub">The goods are written as owed to the supplier. The owner records what was paid on the supplier\u2019s page.</div>';
   }
   return h + '</div>';
 };
@@ -13674,7 +13676,8 @@ function recvPayload() {
     currency: RECV.currency || 'RMB', totalFx: num(RECV.totalRmb), rate: num(RECV.rate),
     totalBdt: num(RECV.totalBdt), saveRate: !!RECV.saveRate,
     paidFrom: mode === 'none' || (RECV.payment || 'advance') !== 'now' ? '' : (RECV.paidFrom || ''),
-    payment: mode === 'none' ? 'later' : (RECV.payment || 'advance'), advanceFrom: RECV.advanceFrom || '', advanceDate: RECV.advanceDate || '',
+    // fix-6: no accounts to choose from (a manager) -> the goods are owed, never "paid in advance" by default
+    payment: mode === 'none' || !(FX && FX.accounts && FX.accounts.length) ? 'later' : (RECV.payment || 'advance'), advanceFrom: RECV.advanceFrom || '', advanceDate: RECV.advanceDate || '',
     shippingBdt: recvShipBdt(), shipNote: recvShipNote(), shippingAccount: RECV.shippingAccount || '',
     costs: (RECV.costs || []).filter(function (c) { return String(c.label || '').trim() || num(c.amount) > 0; })
       .map(function (c) { return { label: String(c.label || '').trim(), amount: num(c.amount), account: c.account || '' }; }),
