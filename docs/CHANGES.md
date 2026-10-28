@@ -3256,3 +3256,17 @@ Switch: Theme dialog › Look: Current / Clean (localStorage `erpLook`); default
 localhost, Current on erp.costareen.com. Nothing of the FilaDash skin removed — "Current" is the exact old look.
 Deployed to DEV only (`ERP_TARGET=dev deploy.py web`); live untouched until the owner says so. NOT done: per-screen
 polish of odd corners (old Classic-era forms), the printed documents (unchanged on purpose), removing the old look.
+
+## The Clean look, v2: the top bar and the real colours (28 Oct 2026, tag clean-2) — on dev only
+
+Owner: "only a little changed; change more, especially the icons on top and their position, the new ERP's way."
+- Why v1 looked almost the same: the theme engine writes its colours inline on <html>, which beat the Clean palette (the
+  canvas, the accent, the charts stayed the old ones). The Clean palette is now `!important` custom properties and every
+  Clean rule starts `html[data-look="clean"][data-skin="fd"]:root` (beats the skin's own `!important` rules).
+- Top bar (block look-clean-2), as in the reference: on the left the greeting ("Welcome, <name> 👋 / Here's what's
+  happening in <business> · <date>"; other screens: the business and the date); on the right one white pill with Search,
+  a new light/dark (moon / sun) button and the bell; "+" is a dark "+ New" pill; the avatar dark; the fold button quiet.
+  The buttons are moved into a wrapper that is `display:contents` in the Current look, so that look is unchanged.
+- The last purple: the hero tile pastel, "i" dots grey, selected pills and chips lime, primary buttons dark (lime in
+  dark), the chat button dark; a soft warm / violet glow on the canvas.
+Checked: Dashboard, Sales, Products, Customers in light; Dashboard in dark; Current look identical to before.
