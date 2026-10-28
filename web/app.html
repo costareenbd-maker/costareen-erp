@@ -8492,7 +8492,7 @@ function srv(name, args, ok, bad) {
 
 var SRV_ACTIVE = 0, SRV_WRITING = false, SRV_TIMED = {};
 // the same list the server uses to know a call changes nothing (ERP_READS)
-var SRV_READS = /^(erpReceipts|erpBrief|erpBrain|erpWatch|erpEngine|erpEngineJob|erpSkills|erpAiBrain|erpAiBrainModels|erpLeadForms|erpLeads|erpLeadFind|erpLeadCapture|erpMyUpdates|erpSocialBridges|erpAds|erpAdsInterests|erpSocialNet|erpSocialLearn|erpSocialAssets|erpSocialPosts|erpSocialPhotos|erpInboxDigest|erpJointRecvCatalog|erpSitePages|erpBalanceSheet|erpProductFields|erpProductAi|erpMetaConnect|erpInboxFeatureMap|erpBookings|erpInbox|erpInboxOpen|erpInboxChannels|erpChatOrders|erpInboxStats|erpAiWork|erpCommissionSales|erpFdCards|erpLineMargins|erpFd19Profit|erpFdInventory|erpFd22Analytics|erpNavigator|erpSellers|erpFollowups|erpCustomerInsight|erpPreorders|erpCashUps|erpAskingPrices|erpSystemCheck|erpAnalytics|erpCommission|erpHolding|erpLotFunding|erpShipments|erpShipment|erpLots|erpFdHead|erpFdDash|erpReceiveMatch|erpAiReader|erpProductSuggest|erpCatalogue|erpPushList|erpCreators|erpCreatorPortalLink|erpSponsorLink|erpCreatorRequests|erpCreatorEvents|erpCreatorProgramme|erpCreatorPreview|erpCreatorCatalog|erpCreatorSources|erpCreatorClaims|erpApps|erpAppQr|erpFeedback|erpRestockOffers|erpRestockList|erpWarrantyRules|erpWarrantyCard|erpMyLink|erpPlatformRegister|erpPlatformDoctor|erpPlatformCommunity|erpMarketWaiting|erpBoard|erpPlatformDesign|erpResell|erpResellerProgramme|erpLoyalty|erpCustomerPoints|erpRefillDue|erpDeliveryHistory|erpDeliveryHistoryMany|erpPrintKit|erpPrintJobs|erpPrintJob|erpPrintCost|erpSpools|erpPrintRequests|erpJoint|erpJointCatalog|erpJointCard|erpInvoiceDesign|erpInvoicePreview|erpMarket|erpMarketMine|erpMarketRequests|erpMarketHints|erpMarketNames|erpWanted|erpBrand|erpComplianceLog|erpProviderKey|erpNews|erpAccessKeys|erpAccessWarning|erpAdmin|erpAiKeys|erpAlertRules|erpAlerts|erpArena|erpBackupStatus|erpBg|erpBnWords|erpBookedParcels|erpBrandLogo|erpBundle|erpBusinessLinks|erpBusinesses|erpBusinessesDeleted|erpCampaignAudience|erpCampaignGet|erpCampaignList|erpCapital|erpCashBook|erpCatalog|erpConnStatus|erpConnections|erpCostBook|erpCourier|erpCourierKeyStatus|erpCurrencies|erpCustomerAccount|erpCustomerCredit|erpCustomerList|erpCustomerPage|erpCustomerStatement|erpCustomers|erpDashboardData|erpDaySales|erpDeliveryOptions|erpDevices|erpDiscontinued|erpDues|erpEvoQr|erpEvoStatus|erpExpenseExport|erpExpenseReceiptUrl|erpExpenses|erpFamilies|erpFighters|erpFormOptions|erpGame|erpGetTheme|erpGoogle|erpHello|erpInstalls|erpInvoice|erpInvoicePdf|erpJob|erpJobs|erpListView|erpLookupCustomer|erpLookupUsage|erpMe|erpMoney|erpNoteFileUrl|erpNotes|erpOwnerChange|erpOwnerChanges|erpParcelLabels|erpParcelPreview|erpPartnerStock|erpPartnership|erpPayReasons|erpPeople|erpPlatform|erpPlatformErrors|erpPnl|erpPnlMonth|erpPoList|erpPoolCatalog|erpProduct|erpProductListShare|erpProductPage|erpProductPhotoUrl|erpProductThumbs|erpProfile|erpQuoteAsset|erpQuoteBoot|erpQuoteGet|erpQuoteList|erpRecentInvoices|erpRecovery|erpReorderPlan|erpRestorePreview|erpReturnPreview|erpRisks|erpSales|erpSearch|erpSecurity|erpSelfTest|erpSerialLookup|erpSerialsFor|erpSessions|erpSetTheme|erpSettingsFull|erpSettingsLists|erpSfPayoutLines|erpSfPayouts|erpShareFile|erpSharedStock|erpSheet|erpStatementPdf|erpStockHistory|erpSupplierPage|erpSuppliers|erpToday|erpUsers|erpWaProductPdf|erpWebMatches|erpWebOrderInvoices|erpWebOrders|erpWebsiteTest)$/;
+var SRV_READS = /^(erpSeo|erpReceipts|erpBrief|erpBrain|erpWatch|erpEngine|erpEngineJob|erpSkills|erpAiBrain|erpAiBrainModels|erpLeadForms|erpLeads|erpLeadFind|erpLeadCapture|erpMyUpdates|erpSocialBridges|erpAds|erpAdsInterests|erpSocialNet|erpSocialLearn|erpSocialAssets|erpSocialPosts|erpSocialPhotos|erpInboxDigest|erpJointRecvCatalog|erpSitePages|erpBalanceSheet|erpProductFields|erpProductAi|erpMetaConnect|erpInboxFeatureMap|erpBookings|erpInbox|erpInboxOpen|erpInboxChannels|erpChatOrders|erpInboxStats|erpAiWork|erpCommissionSales|erpFdCards|erpLineMargins|erpFd19Profit|erpFdInventory|erpFd22Analytics|erpNavigator|erpSellers|erpFollowups|erpCustomerInsight|erpPreorders|erpCashUps|erpAskingPrices|erpSystemCheck|erpAnalytics|erpCommission|erpHolding|erpLotFunding|erpShipments|erpShipment|erpLots|erpFdHead|erpFdDash|erpReceiveMatch|erpAiReader|erpProductSuggest|erpCatalogue|erpPushList|erpCreators|erpCreatorPortalLink|erpSponsorLink|erpCreatorRequests|erpCreatorEvents|erpCreatorProgramme|erpCreatorPreview|erpCreatorCatalog|erpCreatorSources|erpCreatorClaims|erpApps|erpAppQr|erpFeedback|erpRestockOffers|erpRestockList|erpWarrantyRules|erpWarrantyCard|erpMyLink|erpPlatformRegister|erpPlatformDoctor|erpPlatformCommunity|erpMarketWaiting|erpBoard|erpPlatformDesign|erpResell|erpResellerProgramme|erpLoyalty|erpCustomerPoints|erpRefillDue|erpDeliveryHistory|erpDeliveryHistoryMany|erpPrintKit|erpPrintJobs|erpPrintJob|erpPrintCost|erpSpools|erpPrintRequests|erpJoint|erpJointCatalog|erpJointCard|erpInvoiceDesign|erpInvoicePreview|erpMarket|erpMarketMine|erpMarketRequests|erpMarketHints|erpMarketNames|erpWanted|erpBrand|erpComplianceLog|erpProviderKey|erpNews|erpAccessKeys|erpAccessWarning|erpAdmin|erpAiKeys|erpAlertRules|erpAlerts|erpArena|erpBackupStatus|erpBg|erpBnWords|erpBookedParcels|erpBrandLogo|erpBundle|erpBusinessLinks|erpBusinesses|erpBusinessesDeleted|erpCampaignAudience|erpCampaignGet|erpCampaignList|erpCapital|erpCashBook|erpCatalog|erpConnStatus|erpConnections|erpCostBook|erpCourier|erpCourierKeyStatus|erpCurrencies|erpCustomerAccount|erpCustomerCredit|erpCustomerList|erpCustomerPage|erpCustomerStatement|erpCustomers|erpDashboardData|erpDaySales|erpDeliveryOptions|erpDevices|erpDiscontinued|erpDues|erpEvoQr|erpEvoStatus|erpExpenseExport|erpExpenseReceiptUrl|erpExpenses|erpFamilies|erpFighters|erpFormOptions|erpGame|erpGetTheme|erpGoogle|erpHello|erpInstalls|erpInvoice|erpInvoicePdf|erpJob|erpJobs|erpListView|erpLookupCustomer|erpLookupUsage|erpMe|erpMoney|erpNoteFileUrl|erpNotes|erpOwnerChange|erpOwnerChanges|erpParcelLabels|erpParcelPreview|erpPartnerStock|erpPartnership|erpPayReasons|erpPeople|erpPlatform|erpPlatformErrors|erpPnl|erpPnlMonth|erpPoList|erpPoolCatalog|erpProduct|erpProductListShare|erpProductPage|erpProductPhotoUrl|erpProductThumbs|erpProfile|erpQuoteAsset|erpQuoteBoot|erpQuoteGet|erpQuoteList|erpRecentInvoices|erpRecovery|erpReorderPlan|erpRestorePreview|erpReturnPreview|erpRisks|erpSales|erpSearch|erpSecurity|erpSelfTest|erpSerialLookup|erpSerialsFor|erpSessions|erpSetTheme|erpSettingsFull|erpSettingsLists|erpSfPayoutLines|erpSfPayouts|erpShareFile|erpSharedStock|erpSheet|erpStatementPdf|erpStockHistory|erpSupplierPage|erpSuppliers|erpToday|erpUsers|erpWaProductPdf|erpWebMatches|erpWebOrderInvoices|erpWebOrders|erpWebsiteTest)$/;
 function srvPump() {
   if (!SRV_Q.length) return;
   var isRead = SRV_READS.test(SRV_Q[0].name);
@@ -40105,8 +40105,8 @@ saveProduct = function () {
 </style>
 <script>
 (function () {
-  var TABS = [['brief', 'Daily brief'], ['engine', 'Command Center'], ['leads', 'Leads'], ['watch', 'Watchdog'], ['skills', 'Skills']];
-  var IN = { brief: 1, engine: 1, leads: 1, watch: 1, skills: 1, brain: 1 };
+  var TABS = [['brief', 'Daily brief'], ['engine', 'Command Center'], ['leads', 'Leads'], ['watch', 'Watchdog'], ['skills', 'Skills'], ['seo', 'SEO']];   // seo-1: the SEO tab shows only when the seo app is on
+  var IN = { brief: 1, engine: 1, leads: 1, watch: 1, skills: 1, brain: 1, seo: 1 };
   var ICON = '<path d="M12 3l1.8 4.6L18 9l-4.2 1.4L12 15l-1.8-4.6L6 9l4.2-1.4z"/><path d="M18 15l.9 2.1L21 18l-2.1.9L18 21l-.9-2.1L15 18l2.1-.9z"/>';
   var on = function () { return typeof enOn === 'function' && enOn(); };
   if (typeof fdxNav === 'function') fdxNav('ai', 'AI', ICON, 'dash');
@@ -40134,7 +40134,7 @@ saveProduct = function () {
     return '<span class="en-dot' + (R.alive ? ' on' : '') + '"></span>' + (R.alive ? 'AI on' : 'AI not running');
   }
   function strip() {
-    var w = waiting(), tabs = on() ? TABS : TABS.filter(function (t) { return t[0] === 'leads'; });
+    var w = waiting(), tabs = (on() ? TABS : TABS.filter(function (t) { return t[0] === 'leads'; })).filter(function (t) { return t[0] !== 'seo' || (typeof seoOn === 'function' && seoOn()); });
     return '<div class="ai-strip">' + tabs.map(function (t) { var n = w[t[0]] || 0; return '<button type="button" class="ai-t" data-aitab="' + t[0] + '" aria-selected="' + (VIEW === t[0]) + '">' + t[1] + (n ? '<b>' + n + '</b>' : '') + '</button>'; }).join('') +
       (on() ? '<span class="ai-brain" style="text-decoration:none;cursor:default">' + engineState() + '</span><button type="button" class="ai-brain" style="margin-left:12px" data-aitab="brain">' + (VIEW === 'brain' ? '● ' : '') + 'Business Brain</button>' : '') + '</div>';
   }
@@ -40487,5 +40487,112 @@ html[lang=bn] #view.ai-view .btn.small, html[lang=bn] #view.ai-view button.small
 })();
 </script>
 
+<!-- seo-1 (Bendar B6, 28 Oct 2026): AI > SEO - every website of the business checked every night the way Google sees it
+     (title, description, headings, broken links, sitemap, speed through PageSpeed Insights): a green / amber / red light
+     per site, the score, the problems with proof, "Check now", and "AI fixes" (the AI writes the fix list in the owner's
+     language). "Only me" app `seo`. Server: handlers/seo.js, migration 152, nightly in jobs.js. Google Search Console
+     (clicks, rankings) is not connected yet - said on the screen. -->
+<style>
+#nav button[data-view="seo"]{display:none!important}
+.se-site{border:1px solid var(--fd-border,var(--ring,#e6e8ef));border-radius:12px;padding:12px 14px;margin:10px 0;background:var(--fd-card,var(--surface,#fff))}
+.se-head{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.se-dot{width:14px;height:14px;border-radius:50%;flex:none;background:#999}
+.se-dot.g{background:var(--good,#16a34a)}.se-dot.y{background:var(--warning,#d97706)}.se-dot.r{background:var(--critical,#d33)}
+.se-score{font-size:26px;font-weight:700;line-height:1}
+.se-score small{font-size:12px;font-weight:500;color:var(--fd-text-3,var(--muted,#667))}
+.se-url{font-weight:600;overflow-wrap:anywhere}
+.se-meta{font-size:12.5px;color:var(--fd-text-3,var(--muted,#667))}
+.se-kpis{display:flex;gap:14px;flex-wrap:wrap;margin:8px 0 4px;font-size:13px}
+.se-kpis b{font-weight:600}
+.se-iss{display:flex;gap:8px;align-items:flex-start;padding:7px 0;border-top:1px solid var(--fd-border,var(--ring,#eef))}
+.se-iss .t{font-weight:600}.se-iss .d{font-size:12.5px;color:var(--fd-text-3,var(--muted,#667));overflow-wrap:anywhere}
+.se-fix{border-left:3px solid var(--fd-accent,var(--series-1,#5b4ff0));padding:6px 10px;margin:8px 0;background:var(--fd-surface-2,var(--plane,#f6f7fb));border-radius:0 8px 8px 0}
+.se-fix .t{font-weight:600}.se-fix .w{font-size:12.5px;color:var(--fd-text-3,var(--muted,#667))}
+.se-fix .h{font-size:13px;margin-top:3px;white-space:pre-wrap}
+.se-hist{display:flex;gap:2px;align-items:flex-end;height:28px;margin-top:6px}
+.se-hist i{display:block;width:6px;border-radius:2px 2px 0 0;background:var(--fd-border,#cfd3e0)}
+.se-hist i.g{background:var(--good,#16a34a)}.se-hist i.y{background:var(--warning,#d97706)}.se-hist i.r{background:var(--critical,#d33)}
+.se-lights{display:flex;gap:16px;font-size:14px;align-items:center;flex-wrap:wrap}
+.se-lights span{display:inline-flex;gap:6px;align-items:center}
+@media (max-width:760px){.se-score{font-size:22px}}
+</style>
+<script>
+(function () {
+  try { SRV_SLOW.erpSeoRun = 150000; SRV_SLOW.erpSeoAdvise = 95000; } catch (e) {}
+  var SE = { data: null, busy: '', err: '', open: {} };
+  window.SE = SE;
+  var ICON = '<circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3M8 11h6M11 8v6"/>';
+  function seoOn() { if (!ME || !pageTop()) return false; var a = ME.apps || {}; return !!ME.platform || (a.off || []).indexOf('seo') < 0; }
+  window.seoOn = seoOn;
+  if (typeof fdxNav === 'function') fdxNav('seo', 'SEO', ICON, 'watch');
+  try { VIEW_NAMES.seo = 'SEO'; FDH_SUB.seo = 'Your websites the way Google sees them - checked every night, with the fixes'; } catch (e) {}
+  function load(sites) {
+    if (SE.busy === 'load') return; SE.busy = 'load';
+    srv('erpSeo', [sites ? { sites: sites } : {}], function (r) { SE.busy = ''; SE.data = r; SE.err = ''; paint(); }, function (e) { SE.busy = ''; SE.err = (e && e.message) || String(e); paint(); });
+  }
+  window.seLoad = load;
+  function act(name, args, label) {
+    SE.busy = label; paint();
+    srv(name, [args], function (r) { SE.busy = ''; SE.data = r; paint(); }, function (e) { SE.busy = ''; toast(esc((e && e.message) || e), true, 9000); paint(); });
+  }
+  var SEV = { urgent: 'urgent', high: 'high', medium: 'medium', low: 'low' };
+  function issueHtml(i) {
+    return '<div class="se-iss"><span class="wd-sev ' + esc(SEV[i.sev] || 'low') + '">' + esc(i.sev) + '</span><div><div class="t">' + esc(i.title) + '</div>' + (i.detail ? '<div class="d" data-noi18n="1">' + esc(i.detail) + '</div>' : '') + '</div></div>';
+  }
+  function fixHtml(f, n) {
+    return '<div class="se-fix" data-noi18n="1"><div class="t">' + n + '. ' + esc(f.title) + (f.effort ? ' <span class="se-meta">· ' + esc(f.effort) + '</span>' : '') + '</div>' + (f.why ? '<div class="w">' + esc(f.why) + '</div>' : '') +
+      (f.how ? '<div class="h">' + esc(f.how) + '</div>' : '') + (f.where ? '<div class="se-meta">' + esc(f.where) + '</div>' : '') + '</div>';
+  }
+  function when(v) { try { var d = new Date(v); return isNaN(d) ? '' : d.toLocaleString([], { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }); } catch (e) { return ''; } }
+  function siteHtml(s) {
+    var L = s.latest, o = SE.open[s.site], k = encodeURIComponent(s.site);
+    var h = '<div class="se-site"><div class="se-head"><span class="se-dot ' + (L ? esc(L.light) : '') + '"></span>' +
+      '<div style="flex:1;min-width:200px"><div class="se-url" data-noi18n="1"><a href="' + esc(s.site) + '" target="_blank" rel="noopener">' + esc(s.site) + '</a></div>' +
+      '<div class="se-meta">' + (L ? 'Last check ' + esc(when(L.at)) + (L.ok ? '' : ' · <b style="color:var(--critical,#d33)">does not answer</b>') : 'Not checked yet') + '</div></div>' +
+      (L ? '<div class="se-score">' + L.score + '<small>/100</small></div>' : '') +
+      '<div class="ap-row" style="gap:6px"><button class="btn small" type="button" data-se="run" data-site="' + k + '"' + (SE.busy ? ' disabled' : '') + '>' + (SE.busy === 'run:' + s.site ? '<span class="wd-spin"></span>Checking…' : 'Check now') + '</button>' +
+      (L ? '<button class="btn small" type="button" data-se="advise" data-site="' + k + '"' + (SE.busy ? ' disabled' : '') + '>' + (SE.busy === 'advise:' + s.site ? '<span class="wd-spin"></span>Writing…' : (L.advice ? 'AI fixes again' : 'AI fixes')) + '</button>' : '') + '</div></div>';
+    if (!L) return h + '</div>';
+    h += '<div class="se-kpis">' + (L.perf !== null && L.perf !== undefined ? '<span>Mobile speed <b>' + L.perf + '</b>/100</span>' : '<span class="se-meta">PageSpeed: no answer</span>') + (L.seo !== null && L.seo !== undefined ? '<span>Lighthouse SEO <b>' + L.seo + '</b>/100</span>' : '') +
+      (L.lcp ? '<span>LCP <b>' + L.lcp + ' s</b></span>' : '') + (L.ms ? '<span>Home page <b>' + (Math.round(L.ms / 100) / 10) + ' s</b></span>' : '') + '<span>Issues <b>' + L.issues.length + '</b></span>' +
+      (L.facts && typeof L.facts.links === 'number' ? '<span>Links checked <b>' + L.facts.links + '</b>' + (L.facts.broken && L.facts.broken.length ? ' · broken <b style="color:var(--critical,#d33)">' + L.facts.broken.length + '</b>' : '') + '</span>' : '') + '</div>';
+    if (s.history && s.history.length > 1) h += '<div class="se-hist" title="Score, last 30 days">' + s.history.map(function (p) { var l = p.score >= 80 ? 'g' : p.score >= 50 ? 'y' : 'r'; return '<i class="' + l + '" style="height:' + Math.max(2, Math.round(p.score * 0.28)) + 'px" title="' + esc(when(p.at)) + ' · ' + p.score + '"></i>'; }).join('') + '</div>';
+    if (L.advice) {
+      h += '<h3 style="margin:12px 0 4px">What to fix, in order</h3>' + (L.advice.summary ? '<div class="se-meta" data-noi18n="1" style="margin-bottom:6px">' + esc(L.advice.summary) + '</div>' : '') +
+        (L.advice.fixes || []).map(fixHtml).join('') + '<div class="se-meta">Written ' + esc(when(L.advisedAt)) + (L.advice.model ? ' · ' + esc(L.advice.model) : '') + '</div>';
+    }
+    h += '<details' + (o || !L.advice ? ' open' : '') + ' style="margin-top:8px"><summary class="en-meta" style="cursor:pointer">' + (L.issues.length ? L.issues.length + ' problem' + (L.issues.length > 1 ? 's' : '') + ' found' : 'No problems found') + '</summary>' + L.issues.map(issueHtml).join('') +
+      '<details style="margin-top:8px"><summary class="en-meta" style="cursor:pointer">What the page says</summary><div class="se-meta" data-noi18n="1" style="margin-top:4px">' +
+      'Title: ' + esc(L.facts.title || '—') + '<br>Description: ' + esc(L.facts.description || '—') + '<br>H1: ' + (L.facts.h1 || 0) + ' · words: ' + (L.facts.words || 0) + ' · images: ' + (L.facts.images || 0) + ' (' + (L.facts.noAlt || 0) + ' without alt)' +
+      '<br>Canonical: ' + esc(L.facts.canonical || '—') + ' · lang: ' + esc(L.facts.lang || '—') + ' · robots.txt: ' + (L.facts.robotsTxt ? 'yes' : 'no') + ' · sitemap: ' + (L.facts.sitemap ? 'yes' : 'no') + '</div></details></details></div>';
+    return h;
+  }
+  function view() {
+    if (!seoOn()) return '<div class="note"><div class="ico">i</div><div>SEO is not switched on for this business.</div></div>';
+    var d = SE.data;
+    if (!d) { if (SE.err) return '<div class="note"><div class="ico">!</div><div>' + esc(SE.err) + '</div></div>'; load(); return '<div class="loading">Loading the SEO checks…</div>'; }
+    var l = d.lights || {}, n = d.sites.length;
+    var h = '<section><div class="card"><div class="se-lights"><span><i class="se-dot g"></i>' + (l.g || 0) + ' good</span><span><i class="se-dot y"></i>' + (l.y || 0) + ' needs work</span><span><i class="se-dot r"></i>' + (l.r || 0) + ' bad</span>' + (l.none ? '<span class="se-meta">' + l.none + ' not checked yet</span>' : '') +
+      '<span style="margin-left:auto"><button class="btn small" type="button" data-se="runall"' + (SE.busy || !n ? ' disabled' : '') + '>' + (SE.busy === 'runall' ? '<span class="wd-spin"></span>Checking…' : 'Check all now') + '</button></span></div>' +
+      '<div class="sub" style="display:block;margin-top:6px">Every night each site is read the way Google reads it: title, description, headings, broken links, sitemap, mobile speed (PageSpeed Insights). The AI writes what to fix. Google Search Console (clicks and rankings) is not connected yet.</div></div></section>';
+    h += '<section>' + (n ? d.sites.map(siteHtml).join('') : '<div class="card"><div class="en-meta">No website yet - add one below.</div></div>') + '</section>';
+    h += '<section><details' + (n ? '' : ' open') + '><summary class="en-meta" style="cursor:pointer">Sites checked every night (' + (d.saved || []).length + ')</summary><div class="card" style="margin-top:8px">' +
+      '<label class="f" for="se_sites">One address per line (at most 8)</label><textarea class="i" id="se_sites" rows="4" data-noi18n="1" placeholder="https://costareen.com">' + esc((d.saved || []).join('\n')) + '</textarea>' +
+      '<div class="ap-row" style="margin-top:8px"><button class="btn small" type="button" data-se="save">Save the list</button></div></div></details></section>';
+    return h;
+  }
+  function paint() { if (VIEW !== 'seo') return; var v = el('view'); if (!v) return; v.innerHTML = view(); try { if (typeof bindTips === 'function') bindTips(v); } catch (e) {} }
+  var rp = repaint;
+  repaint = function () { if (VIEW !== 'seo') return rp.apply(this, arguments); paint(); };
+  document.addEventListener('click', function (e) {
+    var t = e.target.closest && e.target.closest('[data-se]'); if (!t || VIEW !== 'seo') return;
+    var what = t.getAttribute('data-se'), site = t.getAttribute('data-site') ? decodeURIComponent(t.getAttribute('data-site')) : '';
+    if (what === 'run') act('erpSeoRun', { site: site }, 'run:' + site);
+    else if (what === 'runall') act('erpSeoRun', {}, 'runall');
+    else if (what === 'advise') { SE.open[site] = false; act('erpSeoAdvise', { site: site }, 'advise:' + site); }
+    else if (what === 'save') { var ta = el('se_sites'); act('erpSeoSitesSave', { sites: (ta ? ta.value : '').split('\n').map(function (s) { return s.trim(); }).filter(Boolean) }, 'save'); }
+  });
+})();
+</script>
 </body>
 </html>

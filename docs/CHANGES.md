@@ -3223,3 +3223,21 @@ goods total typed again under "Shipping paid on arrival > Type the total", so ev
   Sunlu 754.02), INV-20261027-2019 and -2020 re-costed. Test costfix_test.mjs (13 checks).
 - NOT done: a cost shared by weight or units at receive comes off by value here (close, not exact); the opening lots
   cannot be touched this way.
+
+## SEO checks for every website (28 Oct 2026, tag seo-1; Bendar B6)
+
+Owner's Bendar command centre needs an SEO screen; the blueprint said "build it as an ERP handler, Costareen gets it
+too". Researched first: Lighthouse through Google's **PageSpeed Insights API** (free; a key may be set later as the
+platform secret `PSI_KEY`) adopted; **linkinator**'s bounded crawl borrowed as a pattern (the home page's own links,
+HEAD then GET, 5 at a time, 25 at most); seonaut / seo-analyzer / Screaming Frog rejected (separate servers or desktop
+tools; an edge function cannot host them). Google Search Console (clicks, rankings) needs its own consent - not here
+yet, said on the screen.
+- `handlers/seo.js`: `erpSeo` (latest check per site + 30 days of scores), `erpSeoRun` (check now, at most 8 sites),
+  `erpSeoSitesSave` (the nightly list; defaults to the website address), `erpSeoAdvise` (the AI reads the facts and
+  issues and writes the fixes in the owner's language, kept on the check). Checks: answers / https / title / meta
+  description / H1 / noindex / viewport / canonical / og:image / lang / alt text / thin text / broken links /
+  sitemap.xml / robots.txt / load time / PageSpeed mobile performance, SEO score, LCP, CLS. Score 0-100 → green ≥80,
+  amber ≥50, red. Migration 152 (`seo_checks`). Nightly in jobs.js once the owner opened the screen (`seo_on`).
+- Page: **AI › SEO** tab (app `seo`, "Only me"): a light per site, score, speed, the problems with proof, "Check now",
+  "AI fixes", the site list. Test seo_test.mjs (21 checks).
+- NOT done: Search Console; checks of inner pages (only the home page and its links); rank tracking.
