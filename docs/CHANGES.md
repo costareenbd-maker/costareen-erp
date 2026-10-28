@@ -3270,3 +3270,35 @@ Owner: "only a little changed; change more, especially the icons on top and thei
 - The last purple: the hero tile pastel, "i" dots grey, selected pills and chips lime, primary buttons dark (lime in
   dark), the chat button dark; a soft warm / violet glow on the canvas.
 Checked: Dashboard, Sales, Products, Customers in light; Dashboard in dark; Current look identical to before.
+
+## One scan fills every Receive step + the colour guard (28 Oct 2026, tag scan-all-1)
+
+Owner: "staff fill the first three Receive steps by hand; the photo/PDF reader only fills the products at the last step.
+One scan should fill all four." And: "four blue shades read about 85% alike - how do we stop the wrong one?"
+- Receive › step 1 has a "📷 Scan the supplier's invoice" box. A photo goes straight to the AI reader, which now reads
+  the header and the lines in ONE call (`handlers/receivefile.js` AI_PROMPT_FULL: supplier, reference + its label, date,
+  currency, goods total, origin country, sea/air/courier/road/local, weight, freight; "never guess"). A PDF / Excel / CSV
+  goes through the old reader and fills the same boxes. The answer fills only EMPTY boxes on every step - supplier (put
+  to the name already in Suppliers: `knownSupplier`, legal suffixes dropped, word match), reference, invoice date and
+  origin into the notes, shipment vs local, goods money (BDT or foreign + today's rate), shipping (sea/air + kg, or the
+  freight amount; foreign freight goes to the notes) - and the lines. Each filled box is yellow until a person changes
+  it; nothing is saved until Receive. Works on the joint Receive page too. No AI key on a server: the device reader runs.
+- Colour guard (colour-guard-1, in the matcher): a line is taken by itself (green, ≥ 90%) only when its colour words
+  are exactly the product's (Navy Blue = Navy Blue). Any other wording ("Sky Blue" when the shop has Blue / Navy /
+  Light / Ice) is capped at 89% and shows a choice with every shade of that brand + type laid out (up to 8). So a near
+  shade is never received into the wrong colour silently.
+- Also: a price heading with the currency in it ("Unit Price USD", "单价 (RMB)") is read as the price column + currency.
+- Tests: `tests/scanall_test.mjs` (13 checks). NOT done: reading handwritten invoices; the AI still costs one call per
+  scan (counted in the existing 400/day limit).
+
+## Bangla audit from the beauty-store research (28 Oct 2026, tag bn-audit-1)
+
+Owner: use the Bangla research done for the beauty store to audit and change the ERP's Bangla.
+- `docs/research/bangla-audit.md` (rules + every decision) and `bangla-audit.json` (425 key → new Bangla). Applied to
+  I18N_BN and the fd-42 word block: 425 of 425. Rules taken from the research: the words BD shop staff actually say
+  (কাস্টমার, সাপ্লায়ার, প্রোডাক্ট, ইনভয়েস, স্টক, ডেলিভারি, পার্টনার, ইনভেস্টর) over bookish Bangla (গ্রাহক, সরবরাহকারী,
+  পণ্য, চালান, বিনিয়োগকারী, অংশীদার); short verb-first buttons; one word per idea everywhere. The same three term moves
+  inside I18N_PAT sentences (20 places). People's own words stay untouched (data-noi18n).
+- For the owner to check: kept অনুমোদন (approve); chose বদলান / মেরামত / অগ্রিম / ঐচ্ছিক / সমুদ্রপথ / বিমানপথ.
+  NOT done: some English strings still have no Bangla at all ("New this month", "Owed by customers" and similar);
+  I18N_PAT still holds some older words outside the three big moves.

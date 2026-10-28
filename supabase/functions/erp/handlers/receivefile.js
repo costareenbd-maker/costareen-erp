@@ -39,7 +39,7 @@ const TYPES = [
 const COLOUR_SYN = { gray: 'grey', 'light gray': 'light grey', 'dark gray': 'dark grey', 'ash gray': 'ash grey', 'blue gray': 'blue grey', megenta: 'magenta', 'bone white': 'bone white' };
 const NOISE = /\b(1\.75\s*mm|2\.85\s*mm|1\.?0?0?\s*kg|1kg|500\s*g|250\s*g|spool[\s-]*less|with\s*spool|refill|filament|roll|pcs|kg|mm|g|panchroma|polylite|polyterra|polymax|hyper|tough|pro|ultra|95a|98a|diskless)\b/gi;
 const HEAD_WORDS = { code: /^(sku|code|item\s*(no|code)|part|art\.?\s*no|model)$/i, name: /^(product|name|product\s*name|description|desc|item|goods|type|category|sub-?category|variant|color|colour|颜色|品名|规格)$/i,
-                     qty: /^(qty|quantity|order|order\s*list|pcs|units|amount|数量)$/i, price: /^(unit\s*price|price|unit\s*value|unit\s*cost|cost|单价|value\s*\(?(usd|rmb|cny)\)?|unit value \(usd\))$/i,
+                     qty: /^(qty|quantity|order|order\s*list|pcs|units|amount|数量)$/i, price: /^(unit\s*price|price|unit\s*value|unit\s*cost|cost|单价|value)(\s*[([]?\s*(usd|rmb|cny|bdt|eur|tk|\$|¥|৳)\s*[)\]]?)?$/i,   // scan-all-1: "Unit Price USD", "Price (RMB)"
                      weight: /^(weight|n\.?w|g\.?w|packet|diameter|hs\s*code|minpack|seqnum|seq|#|no\.?|sl|customer\s*po)$/i,
                      cur: /^(currency|cur\.?|curr\.?)$/i, total: /^(total|line\s*total|total\s*amount|subtotal)$/i };
 const CODE_RE = /^(?=.*\d)[a-z0-9][a-z0-9-]{3,14}$/i;
@@ -369,8 +369,20 @@ async function matchRecords(ctx, records0, opts) {
     if (!best && r.code && bySupplier[r.code.toLowerCase()]) { best = bySupplier[r.code.toLowerCase()]; how = 'supplier code'; conf = 1; }
     if (!best) {
       const scored = cat.map((c) => ({ c, s: score(row, c) })).filter((x) => x.s > 0).sort((a, b) => b.s - a.s);
-      cands = scored.slice(0, 4).map((x) => ({ sku: x.c.sku, name: x.c.name, score: Math.round(x.s * 100) / 100 }));
-      if (scored.length && scored[0].s >= 0.55 && (scored.length < 2 || scored[0].s - scored[1].s >= 0.08)) { best = scored[0].c; how = 'words'; conf = scored[0].s; }
+      // colour-guard-1 (owner 28 Oct 2026: "four blues that look almost the same - the AI said 85 %, it was a different
+      // one"): a word match is taken by itself (green) only when the colour words are exactly the product's. Any other
+      // colour wording - a shade missing, added or different - is a choice the person makes, with every shade of that
+      // brand and type that shares a colour word laid out side by side.
+      const rowCw = new Set(words(row.colour));
+      const sameColour = (c) => rowCw.size > 0 && rowCw.size === c.cw.size && [...rowCw].every((w) => c.cw.has(w));
+      const top = scored[0] && scored[0].c;
+      const shades = top ? scored.filter((x) => x.c !== top && x.c.brand === top.brand && x.c.type === top.type && [...x.c.cw].some((w) => rowCw.has(w))) : [];
+      cands = scored.slice(0, 4).concat(shades.filter((x) => scored.indexOf(x) >= 4)).slice(0, 8)
+        .map((x) => ({ sku: x.c.sku, name: x.c.name, colour: x.c.colour, stock: x.c.stock, score: Math.round(x.s * 100) / 100, same: sameColour(x.c) }));
+      if (scored.length && scored[0].s >= 0.55 && (scored.length < 2 || scored[0].s - scored[1].s >= 0.08)) {
+        best = scored[0].c; how = 'words'; conf = scored[0].s;
+        if (!sameColour(best)) conf = Math.min(conf, 0.89);   // below 0.9: the page asks instead of taking it
+      }
     }
     const cap = (t) => t.replace(/\b\w/g, (m) => m.toUpperCase());
     const typeName = row.type ? cap(row.type).replace('Pla', 'PLA').replace('Petg', 'PETG').replace('Abs', 'ABS').replace('Asa', 'ASA').replace('Tpu', 'TPU').replace('Pc', 'PC').replace('Cf', 'CF').replace('Gf', 'GF') : '';
@@ -397,6 +409,7 @@ export async function erpReceiveMatch(ctx, payload) {
   const records = kind === 'text' ? textRecords(rows.map((r) => (Array.isArray(r) ? r.join(' ') : r))) : gridRecords(rows);
   if (!records.length) throw new Error('No product lines found in the file. A line needs a product name and a quantity.');
   const doc = docHeader(rows, ctx.s && ctx.s.businessName);
+  if (doc.supplier) { const k = await knownSupplier(ctx, doc.supplier); doc.supplier = k.name; doc.supplierKnown = k.known; }   // scan-all-1
   const res = await matchRecords(ctx, records, { supplier: p.supplier || doc.supplier, fileName: p.fileName, pool: str(p.pool), docBrand: doc.brand });
   return { kind, reader: p.reader === 'ocr' ? 'ocr' : 'file', ...res, doc: { ...doc, currency: res.currency } };
 }
@@ -411,6 +424,34 @@ const AI_PROMPT = 'This is a photo or scan of a supplier document for a 3D-print
   '"qty": the quantity as a number, "price": the unit price as a number or 0, "currency": "USD"/"RMB"/"BDT"/"" }. Skip headings, totals and addresses. ' +
   'If a column is in Chinese, keep the English words only. Keep the lines in the same order as the document, top to bottom, page by page; ' +
   'one object per line even when a product repeats. Answer with the JSON array and nothing else.';
+// scan-all-1 (owner 28 Oct 2026: "one scan should fill all four steps, as before"): the whole document in one read - the
+// header (who, which number, when, what money, how it travels) and the lines. Only what is written; never guessed.
+const AI_PROMPT_FULL = 'This is a photo or scan of a supplier document for a 3D-printing shop in Bangladesh: an invoice, proforma invoice, packing list, ' +
+  'price list or order sheet. Answer with JSON only, one object: {"header": {"supplier": the seller / shipper company name or "", ' +
+  '"reference": the document number (invoice / PI / order / contract no.) or "", "ref_label": its label as printed (e.g. "Invoice No.") or "", ' +
+  '"date": the document date as YYYY-MM-DD or "", "currency": "USD"/"RMB"/"BDT"/"EUR"/"", "goods_total": the total value of the goods (not shipping) as a number or 0, ' +
+  '"origin_country": the seller\'s country or "", "transport": "sea"/"air"/"courier"/"road"/"local"/"" as written, "weight_kg": the gross weight in kg as a number or 0, ' +
+  '"shipping_cost": the freight / shipping charge as a number or 0, "shipping_currency": its currency or ""}, ' +
+  '"lines": [ {"code": supplier item code or "", "name": the product words (brand, material/type, colour, size) as written, ' +
+  '"qty": the quantity as a number, "price": the unit price as a number or 0, "currency": "USD"/"RMB"/"BDT"/""} ] }. ' +
+  'Use "" or 0 for anything not printed on the document - never guess. Lines: skip headings, totals and addresses; keep the document order; ' +
+  'one object per line even when a product repeats; if a column is in Chinese keep the English words only.';
+
+/** scan-all-1: the supplier the document names, put to the name already used in this business when it is clearly the same. */
+async function knownSupplier(ctx, name) {
+  const n = str(name); if (!n) return { name: '', known: false };
+  const key2 = (s) => norm(s).replace(/\b(co|ltd|limited|company|inc|llc|trading|technology|industrial|international)\b/g, ' ').replace(/\s+/g, ' ').trim();
+  const want = key2(n), ws = new Set(words(want));
+  let best = null, bestS = 0;
+  for (const r of await ctx.tx`select name from suppliers where business_id = ${ctx.biz}`) {
+    const k = key2(r.name); if (!k) continue;
+    if (k === want || (want.length >= 4 && (k.includes(want) || want.includes(k)))) return { name: str(r.name), known: true };
+    const kw = new Set(words(k)); let both = 0; for (const w of ws) if (kw.has(w)) both++;
+    const s = both / ((ws.size + kw.size - both) || 1);
+    if (s > bestS) { bestS = s; best = r.name; }
+  }
+  return bestS >= 0.6 ? { name: str(best), known: true } : { name: n.slice(0, 80), known: false };
+}
 
 // ---- the provider's key: set from the Platform screen (sealed in erp_provider_secrets), else the server's environment
 const ctl = (deps, sql) => (deps && deps.control) || sql;
@@ -491,7 +532,8 @@ export async function erpReceiveRead(ctx, payload) {
   if (used >= AI_DAILY) throw new Error('Today\u2019s allowance of ' + AI_DAILY + ' AI reads is used up. Try tomorrow, or correct the lines by hand.');
   await setConfig(ctx, k, String(used + 1));
   const hint = str(p.hint).slice(0, 4000);
-  const body = { contents: [{ parts: [{ text: AI_PROMPT + (hint ? '\n\nA rough machine reading of the same image, for reference (it may have errors):\n' + hint : '') }, { inline_data: { mime_type: m[1], data: m[3] } }] }],
+  const full = p.header !== false;   // scan-all-1: the header too (the old "lines only" read stays for callers that ask for it)
+  const body = { contents: [{ parts: [{ text: (full ? AI_PROMPT_FULL : AI_PROMPT) + (hint ? '\n\nA rough machine reading of the same image, for reference (it may have errors):\n' + hint : '') }, { inline_data: { mime_type: m[1], data: m[3] } }] }],
                  generationConfig: { temperature: 0, response_mime_type: 'application/json' } };
   // ai-1: the reader chosen under Settings > AI brain (ChatGPT, Claude or Gemini - the strongest model that sees images)
   let out = '';
@@ -503,14 +545,37 @@ export async function erpReceiveRead(ctx, payload) {
     if (/busy/i.test(String(e && e.message))) throw new Error('The AI reader is busy right now. Wait a little and press again.');
     throw new Error('The AI reader refused. ' + String((e && e.message) || e).slice(0, 200));
   }
-  let arr = null;
-  try { arr = JSON.parse(out); } catch (_) { const s0 = out.indexOf('['), s1 = out.lastIndexOf(']'); if (s0 >= 0 && s1 > s0) { try { arr = JSON.parse(out.slice(s0, s1 + 1)); } catch (_2) { arr = null; } } }
-  if (arr && !Array.isArray(arr) && typeof arr === 'object') arr = Object.values(arr).find(Array.isArray) || null;   // ai-1: a JSON-object mode wraps the list
+  let arr = null, head = null;
+  try { arr = JSON.parse(out); } catch (_) {
+    const o0 = out.indexOf('{'), o1 = out.lastIndexOf('}');
+    if (full && o0 >= 0 && o1 > o0) { try { arr = JSON.parse(out.slice(o0, o1 + 1)); } catch (_2) { arr = null; } }
+    if (!arr) { const s0 = out.indexOf('['), s1 = out.lastIndexOf(']'); if (s0 >= 0 && s1 > s0) { try { arr = JSON.parse(out.slice(s0, s1 + 1)); } catch (_2) { arr = null; } } }
+  }
+  if (arr && !Array.isArray(arr) && typeof arr === 'object') {
+    if (arr.header && typeof arr.header === 'object') head = arr.header;
+    arr = Array.isArray(arr.lines) ? arr.lines : (Object.values(arr).find(Array.isArray) || null);   // ai-1: a JSON-object mode wraps the list
+  }
   if (!Array.isArray(arr) || !arr.length) throw new Error('The AI reader found no product lines in the photo.');
   const records = arr.slice(0, 500).map((r, i) => ({ row: i + 1, code: str(r && r.code).slice(0, 40), text: str(r && r.name).slice(0, 200), qty: num(r && r.qty), price: num(r && r.price), currency: str(r && r.currency).toUpperCase().slice(0, 4) }))
                      .filter((r) => (r.text || r.code) && r.qty > 0);
   if (!records.length) throw new Error('The AI reader found no lines with a quantity.');
-  return { kind: 'photo', reader: 'gemini', readsLeft: AI_DAILY - used - 1, ...(await matchRecords(ctx, records, { supplier: p.supplier, fileName: p.fileName, pool: str(p.pool) })) };
+  // scan-all-1: the header - the AI's reading first, the device's OCR text (docHeader) for anything it left empty
+  const ocr = hint ? docHeader(hint.split('\n'), ctx.s && ctx.s.businessName) : {};
+  const h = head || {};
+  const sup = await knownSupplier(ctx, str(p.supplier) || str(h.supplier) || str(ocr.supplier));
+  const cur = str(h.currency).toUpperCase().replace('CNY', 'RMB').slice(0, 4);
+  const origin = str(h.origin_country).slice(0, 40);
+  const transport = /^(sea|air|courier|road|local)$/i.test(str(h.transport)) ? str(h.transport).toLowerCase() : '';
+  const isoDate = /^\d{4}-\d{2}-\d{2}$/.test(str(h.date)) ? str(h.date) : '';
+  const res = await matchRecords(ctx, records, { supplier: sup.name, fileName: p.fileName, pool: str(p.pool), docBrand: str(ocr.brand) });
+  const doc = {
+    supplier: sup.name, supplierKnown: sup.known, reference: str(h.reference).slice(0, 40) || str(ocr.reference), refLabel: str(h.ref_label).slice(0, 30) || str(ocr.refLabel),
+    date: isoDate || str(ocr.date), origin: origin || str(ocr.origin),
+    imported: origin ? !/bangladesh/i.test(origin) : (transport === 'local' ? false : (ocr.imported ?? null)),
+    docTotal: num(h.goods_total) || num(ocr.docTotal), currency: cur || res.currency, transport,
+    weightKg: num(h.weight_kg), shippingCost: num(h.shipping_cost), shippingCurrency: str(h.shipping_currency).toUpperCase().slice(0, 4), ai: !!head,
+  };
+  return { kind: 'photo', reader: 'gemini', readsLeft: AI_DAILY - used - 1, ...res, supplier: sup.name, doc };
 }
 
 /** The owner confirmed: this code / wording is that product. Next time it matches at once. */

@@ -155,3 +155,4 @@ supabase/tests/watchdog_test.mjs
 supabase/tests/watchfix_test.mjs
 supabase/tests/wooauth_test.mjs
 supabase/tests/seo_test.mjs
+supabase/tests/scanall_test.mjs
