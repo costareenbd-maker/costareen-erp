@@ -3241,3 +3241,18 @@ yet, said on the screen.
 - Page: **AI › SEO** tab (app `seo`, "Only me"): a light per site, score, speed, the problems with proof, "Check now",
   "AI fixes", the site list. Test seo_test.mjs (21 checks).
 - NOT done: Search Console; checks of inner pages (only the home page and its links); rank tracking.
+
+## The Clean look (28 Oct 2026, tag clean-1) — on dev only, not live
+
+Owner (Pinterest reference "ERP/POS System - Yeakub Rahaman", the Starline dashboard): "keep every function, change the UI
+to this clean style all over the ERP; keep the old UI stored; show me before it goes live; delete the old one only after we
+finalise." Built as a LOOK over the FilaDash skin (`html[data-look="clean"]`, block clean-1 at the end of app.html): pale
+grey canvas; the sidebar as white rounded pills with a lime active pill (no accent bar); white 20px cards without borders;
+KPI tiles in pastel (peach / lavender / mint / lemon / sky) with a white icon square and a plain green trend; the hero
+tile dark; dark primary buttons, grey secondary, soft red danger, 12px corners everywhere; filled rounded inputs with a
+dark focus ring; flat tables (muted head, hairline rows, hover); chips / tabs / segments as pills, lime when on; soft
+chart colours (orange / violet / teal / lime / coral). A dark variant (near-black canvas, lime primary buttons).
+Switch: Theme dialog › Look: Current / Clean (localStorage `erpLook`); default Clean on costareen-erp-dev.pages.dev and
+localhost, Current on erp.costareen.com. Nothing of the FilaDash skin removed — "Current" is the exact old look.
+Deployed to DEV only (`ERP_TARGET=dev deploy.py web`); live untouched until the owner says so. NOT done: per-screen
+polish of odd corners (old Classic-era forms), the printed documents (unchanged on purpose), removing the old look.

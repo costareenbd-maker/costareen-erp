@@ -556,6 +556,7 @@ svg { display:block; width:100%; overflow:visible; }
   document.documentElement.setAttribute('data-theme', t === 'light' ? 'light' : 'dark');
   // fd-1: the FilaDash look from the first paint (the block at the end of the page adds the switch)
   document.documentElement.setAttribute('data-skin', 'fd');   // FilaDash is the only look (fd-24)
+  try { var lk = localStorage.getItem('erpLook') || (/pages\.dev$|^localhost/.test(location.hostname) ? 'clean' : 'fd'); if (lk === 'clean') document.documentElement.setAttribute('data-look', 'clean'); } catch (e) {}   // clean-1: the owner's new look (dev/local by default)
   // fd-36: this device's theme as it was last painted, before anything else draws (no flash of the default colours)
   try {
     var tc = localStorage.getItem('fd_theme_css_' + (t === 'light' ? 'light' : 'dark'));
@@ -40593,6 +40594,188 @@ html[lang=bn] #view.ai-view .btn.small, html[lang=bn] #view.ai-view button.small
     else if (what === 'runall') act('erpSeoRun', {}, 'runall');
     else if (what === 'advise') { SE.open[site] = false; act('erpSeoAdvise', { site: site }, 'advise:' + site); }
     else if (what === 'save') { var ta = el('se_sites'), pk = el('se_psi'), a = { sites: (ta ? ta.value : '').split('\n').map(function (s) { return s.trim(); }).filter(Boolean) }; if (pk && pk.value.trim()) a.psiKey = pk.value.trim(); act('erpSeoSitesSave', a, 'save'); }
+  });
+})();
+</script>
+<!-- clean-1 (owner 28 Oct 2026, Pinterest reference "ERP/POS System - Yeakub Rahaman" / Starline dashboard): "keep every
+     function as it is; only the UI like this - clean, the way its buttons appear all over the ERP; keep the old UI stored,
+     show me before it goes live". A LOOK laid over the FilaDash skin (html[data-look="clean"]): pale grey canvas, the
+     sidebar as rounded pills with a lime active pill, white 20px cards without borders, pastel KPI tiles with an icon
+     square and a plain green trend, dark primary buttons, filled rounded inputs, flat tables, soft chart colours; a dark
+     variant. Switch: Theme dialog > Look (Current / Clean), kept per device (localStorage erpLook); default = Clean on the
+     dev page and the local copy, Current on live until he says so. Nothing of the FilaDash skin is removed. -->
+<style>
+:root[data-look="clean"] {
+  --fd-bg:#EDEEF1; --fd-sidebar:#EDEEF1; --fd-card:#FFFFFF; --fd-surface-2:#F3F4F6; --fd-surface-3:#E7E8EC;
+  --fd-border:#E6E7EB; --fd-border-strong:#D7D9DF;
+  --fd-text:#17181C; --fd-text-2:#4A4D57; --fd-text-3:#7A7E8A; --fd-text-faint:#9A9EA8; --fd-text-on-accent:#FFFFFF;
+  --fd-accent:#6D5BFF; --fd-accent-hover:#5A48F0; --fd-accent-text:#5748E6; --fd-accent-soft:#EFEBFF; --fd-accent-soft-2:#E4DEFF;
+  --fd-accent-border:rgba(109,91,255,.35); --fd-accent-glow:0 8px 20px rgba(109,91,255,.22);
+  --fd-accent-gradient:linear-gradient(135deg, #17181C 0%, #2B2D35 100%);
+  --fd-hero-shadow:0 14px 34px rgba(23,24,28,.25);
+  --fd-positive:#22C55E; --fd-positive-text:#15803D; --fd-positive-soft:#E6F8EC;
+  --fd-negative:#EF4444; --fd-negative-text:#DC2626; --fd-negative-soft:#FDE8E8;
+  --fd-warning:#F59E0B; --fd-warning-text:#9A5B00; --fd-warning-soft:#FFF3DC;
+  --fd-info-soft:#E6F1FF; --fd-info-text:#1D5FD1;
+  --fd-shadow-card:0 1px 2px rgba(23,24,28,.03); --fd-shadow-card-hover:0 6px 24px rgba(23,24,28,.08); --fd-shadow-popover:0 14px 40px rgba(23,24,28,.14);
+  --fd-focus-ring:0 0 0 3px rgba(23,24,28,.18);
+  --fd-lime:#E4FF5A; --fd-lime-text:#17181C;
+  --fd-nav-active-bg:var(--fd-lime);
+  --fd-chart-1:#F5A623; --fd-chart-2:#8B5CF6; --fd-chart-3:#22C9C9; --fd-chart-4:#D8F23C; --fd-chart-5:#FF8A80;
+  --cl-peach:#FFF1E3; --cl-lavender:#EFEAFF; --cl-mint:#E3F8F6; --cl-lemon:#F8FADB; --cl-sky:#E8F1FF;
+  --plane:var(--fd-bg); --surface:var(--fd-card); --ring:var(--fd-border); --field:var(--fd-surface-2); --series-1:var(--fd-chart-2); --series-1-soft:var(--fd-accent-soft);
+}
+:root[data-look="clean"][data-theme="dark"] {
+  --fd-bg:#121316; --fd-sidebar:#121316; --fd-card:#1B1D22; --fd-surface-2:#23262C; --fd-surface-3:#2C3038;
+  --fd-border:#2A2D34; --fd-border-strong:#3A3E48;
+  --fd-text:#F2F3F5; --fd-text-2:#B8BCC6; --fd-text-3:#8A8F9B; --fd-text-faint:#6B7079; --fd-text-on-accent:#17181C;
+  --fd-accent:#A594FF; --fd-accent-hover:#B8ABFF; --fd-accent-text:#B3A5FF; --fd-accent-soft:rgba(165,148,255,.14); --fd-accent-soft-2:rgba(165,148,255,.22);
+  --fd-accent-border:rgba(165,148,255,.45); --fd-accent-glow:0 0 18px rgba(165,148,255,.25);
+  --fd-accent-gradient:linear-gradient(135deg, #E4FF5A 0%, #B8F03C 100%);
+  --fd-hero-shadow:0 12px 36px rgba(0,0,0,.45);
+  --fd-positive:#22C55E; --fd-positive-text:#4ADE80; --fd-positive-soft:rgba(34,197,94,.14);
+  --fd-negative:#F87171; --fd-negative-text:#FCA5A5; --fd-negative-soft:rgba(248,113,113,.14);
+  --fd-warning:#FBBF24; --fd-warning-text:#FCD34D; --fd-warning-soft:rgba(251,191,36,.14);
+  --fd-info-soft:rgba(96,165,250,.14); --fd-info-text:#93C5FD;
+  --fd-shadow-card:0 1px 2px rgba(0,0,0,.25); --fd-shadow-card-hover:0 8px 28px rgba(0,0,0,.4); --fd-shadow-popover:0 16px 48px rgba(0,0,0,.6);
+  --fd-focus-ring:0 0 0 3px rgba(228,255,90,.3);
+  --fd-nav-active-bg:var(--fd-lime);
+  --cl-peach:#2E241B; --cl-lavender:#262238; --cl-mint:#1B2E2C; --cl-lemon:#2B2D1B; --cl-sky:#1C2634;
+}
+/* ---- canvas, sidebar pills, brand */
+:root[data-look="clean"] body { background:var(--fd-bg); }
+:root[data-look="clean"] #side { background:var(--fd-sidebar); border-right:0; padding:18px 0 16px; }
+:root[data-look="clean"] .brand { padding:0 16px 0 18px; margin-bottom:18px; }
+:root[data-look="clean"] .brand .logo { width:38px; height:38px; flex:0 0 38px; border-radius:12px; }
+:root[data-look="clean"] .brand h1 { font-size:16px; font-weight:700; }
+:root[data-look="clean"] .navgrp, :root[data-look="clean"] nav#nav .navgrp { padding:14px 14px 6px 22px; font-size:11px; letter-spacing:.06em; }
+:root[data-look="clean"] nav#nav { gap:6px; padding:0 12px; }
+:root[data-look="clean"] nav#nav button, :root[data-look="clean"][data-theme="dark"] nav#nav button { margin:0; width:100%; min-height:46px; padding:0 12px 0 14px; border-radius:14px; background:var(--fd-card); color:var(--fd-text-2); font-weight:600; border:0; box-shadow:none; }
+:root[data-look="clean"] nav#nav button:hover { background:var(--fd-surface-2); color:var(--fd-text); }
+:root[data-look="clean"] nav#nav button[aria-selected="true"], :root[data-look="clean"][data-theme="dark"] nav#nav button[aria-selected="true"] { background:var(--fd-lime); color:var(--fd-lime-text); font-weight:700; }
+:root[data-look="clean"] nav#nav button[aria-selected="true"]::after, :root[data-look="clean"][data-theme="dark"] nav#nav button[aria-selected="true"]::after { display:none; }
+:root[data-look="clean"] nav#nav .ic { width:20px; height:20px; flex:0 0 20px; }
+:root[data-look="clean"] nav#nav .ic svg { width:19px; height:19px; stroke-width:1.9; }
+:root[data-look="clean"] nav#nav .count { background:var(--fd-text); color:var(--fd-card); }
+:root[data-look="clean"] nav#nav button[aria-selected="true"] .count { background:var(--fd-lime-text); color:var(--fd-lime); }
+:root[data-look="clean"] #sideFold { background:var(--fd-card); color:var(--fd-text-2); }
+/* ---- topbar: a floating pill of tools, the business switcher as a pill */
+:root[data-look="clean"] .topbar { background:transparent; border:0; box-shadow:none; }
+:root[data-look="clean"] .topbar .gsearch input { background:var(--fd-card); border:0; border-radius:999px; height:40px; padding-left:40px; box-shadow:var(--fd-shadow-card); }
+:root[data-look="clean"] .topbar .gsearch input:focus { box-shadow:var(--fd-focus-ring); }
+:root[data-look="clean"] .topbar button.act, :root[data-look="clean"] button.act { width:40px; height:40px; border-radius:999px; background:var(--fd-card); border:0; color:var(--fd-text-2); box-shadow:var(--fd-shadow-card); }
+:root[data-look="clean"] .topbar button.act:hover, :root[data-look="clean"] button.act:hover { background:var(--fd-surface-2); color:var(--fd-text); }
+:root[data-look="clean"] .topbar .bizsel { background:var(--fd-card); border:0; border-radius:999px; height:40px; padding:0 14px; box-shadow:var(--fd-shadow-card); font-weight:600; }
+:root[data-look="clean"] #o_user { border-radius:999px; }
+:root[data-look="clean"] #o_cp { background:transparent; border:0; }
+:root[data-look="clean"] #o_cp .crumbs button { border-radius:999px; }
+/* ---- page head */
+:root[data-look="clean"] #fdHead .fdh h1, :root[data-look="clean"] .hero h1 { font-weight:700; letter-spacing:-.025em; }
+:root[data-look="clean"] #fdHead .fdh .sub, :root[data-look="clean"] .hero .sub { color:var(--fd-text-3); }
+/* ---- cards: white, round, no border */
+:root[data-look="clean"] .card, :root[data-look="clean"] .fdd-c, :root[data-look="clean"] section > .card, :root[data-look="clean"] .note, :root[data-look="clean"] .results, :root[data-look="clean"] .dlg .box, :root[data-look="clean"] .dlgbox {
+  background:var(--fd-card); border:0; border-radius:20px; box-shadow:var(--fd-shadow-card); }
+:root[data-look="clean"] .card:hover, :root[data-look="clean"] .fdd-c:hover { box-shadow:var(--fd-shadow-card); }
+:root[data-look="clean"] .card { padding:22px 24px; }
+:root[data-look="clean"] .card h2, :root[data-look="clean"] .fdd-title, :root[data-look="clean"] .sect h3 { font-weight:700; letter-spacing:-.01em; }
+:root[data-look="clean"] .card .sub, :root[data-look="clean"] .sub { color:var(--fd-text-3); }
+:root[data-look="clean"] .dlg-back { background:rgba(23,24,28,.45); backdrop-filter:blur(4px); }
+:root[data-look="clean"][data-theme="dark"] .dlg-back { background:rgba(0,0,0,.6); }
+/* ---- KPI tiles: pastel, icon square, plain green trend */
+:root[data-look="clean"] .fdd-grid > .fdd-k:nth-child(5n+1), :root[data-look="clean"] .g-kpi > .kpi:nth-child(5n+1), :root[data-look="clean"] #fdHead .fd19-k:nth-child(5n+1) { background:var(--cl-peach); }
+:root[data-look="clean"] .fdd-grid > .fdd-k:nth-child(5n+2), :root[data-look="clean"] .g-kpi > .kpi:nth-child(5n+2), :root[data-look="clean"] #fdHead .fd19-k:nth-child(5n+2) { background:var(--cl-lavender); }
+:root[data-look="clean"] .fdd-grid > .fdd-k:nth-child(5n+3), :root[data-look="clean"] .g-kpi > .kpi:nth-child(5n+3), :root[data-look="clean"] #fdHead .fd19-k:nth-child(5n+3) { background:var(--cl-mint); }
+:root[data-look="clean"] .fdd-grid > .fdd-k:nth-child(5n+4), :root[data-look="clean"] .g-kpi > .kpi:nth-child(5n+4), :root[data-look="clean"] #fdHead .fd19-k:nth-child(5n+4) { background:var(--cl-lemon); }
+:root[data-look="clean"] .fdd-grid > .fdd-k:nth-child(5n+5), :root[data-look="clean"] .g-kpi > .kpi:nth-child(5n+5), :root[data-look="clean"] #fdHead .fd19-k:nth-child(5n+5) { background:var(--cl-sky); }
+:root[data-look="clean"] .fdd-k, :root[data-look="clean"] .kpi { border:0; box-shadow:none; border-radius:20px; }
+:root[data-look="clean"] .fdd-k .fdd-badge { width:48px; height:48px; border-radius:14px; background:var(--fd-card); color:var(--fd-text); box-shadow:0 1px 2px rgba(23,24,28,.06); }
+:root[data-look="clean"][data-theme="dark"] .fdd-k .fdd-badge { background:rgba(255,255,255,.08); color:var(--fd-text); }
+:root[data-look="clean"] .fdd-num, :root[data-look="clean"] .kpi .val { font-weight:700; letter-spacing:-.025em; }
+:root[data-look="clean"] .fdd-trend { background:transparent !important; padding:0; height:auto; color:var(--fd-positive-text); font-weight:700; }
+:root[data-look="clean"] .fdd-trend.dn, :root[data-look="clean"] .fdd-dn { color:var(--fd-negative-text); }
+:root[data-look="clean"] .kpi .delta .up { color:var(--fd-positive-text); } :root[data-look="clean"] .kpi .delta .down { color:var(--fd-negative-text); }
+:root[data-look="clean"] .kpi.tone-accent, :root[data-look="clean"] .g-kpi > .kpi.tone-accent:first-child { background:var(--cl-lavender); color:var(--fd-text); box-shadow:none; }
+:root[data-look="clean"] .g-kpi > .kpi.tone-accent:first-child::after { display:none; }
+:root[data-look="clean"] .g-kpi > .kpi.tone-accent:first-child .lbl, :root[data-look="clean"] .g-kpi > .kpi.tone-accent:first-child .val, :root[data-look="clean"] .g-kpi > .kpi.tone-accent:first-child .delta { color:inherit; }
+:root[data-look="clean"] .fdd-c.fdhero, :root[data-look="clean"] .fdd-grid > .fdd-k.fdhero { background:var(--fd-accent-gradient) !important; color:#fff; box-shadow:var(--fd-hero-shadow); }
+:root[data-look="clean"] .fdd-c.fdhero .fdd-num, :root[data-look="clean"] .fdd-c.fdhero .fdd-lbl, :root[data-look="clean"] .fdd-c.fdhero .fdd-kn { color:inherit; }
+:root[data-look="clean"] .fdd-c.fdhero .fdd-badge { background:rgba(255,255,255,.14); color:#fff; }
+:root[data-look="clean"][data-theme="dark"] .fdd-c.fdhero .fdd-badge { background:rgba(0,0,0,.12); color:#17181C; }
+:root[data-look="clean"][data-theme="dark"] .fdd-c.fdhero { color:#17181C; }
+:root[data-look="clean"] .fdd-c.fdhero .fdd-trend { color:var(--fd-lime); } :root[data-look="clean"][data-theme="dark"] .fdd-c.fdhero .fdd-trend { color:#17181C; }
+:root[data-look="clean"] .fdd-c.fdhero .fdd-i { background:var(--fd-lime); color:#17181C; }
+/* ---- buttons: dark primary, grey secondary, soft danger, all rounded */
+:root[data-look="clean"] .btn, :root[data-look="clean"][data-theme="dark"] .btn { border:0; border-radius:12px; min-height:38px; padding:0 16px; background:var(--fd-surface-2); color:var(--fd-text); font-weight:600; box-shadow:none; }
+:root[data-look="clean"] .btn:hover { background:var(--fd-surface-3); }
+:root[data-look="clean"] .btn.small { min-height:32px; padding:0 12px; border-radius:10px; font-size:13px; }
+:root[data-look="clean"] .btn.primary, :root[data-look="clean"][data-theme="dark"] .btn.primary { background:var(--fd-text); color:var(--fd-card); box-shadow:none; }
+:root[data-look="clean"] .btn.primary:hover { background:#2B2D35; } :root[data-look="clean"][data-theme="dark"] .btn.primary { background:var(--fd-lime); color:#17181C; } :root[data-look="clean"][data-theme="dark"] .btn.primary:hover { background:#EFFF8A; }
+:root[data-look="clean"] .btn.danger { background:var(--fd-negative-soft); color:var(--fd-negative-text); } :root[data-look="clean"] .btn.danger.solid { background:var(--fd-negative); color:#fff; }
+:root[data-look="clean"] .btn:disabled { opacity:.45; }
+:root[data-look="clean"] .btn:focus-visible, :root[data-look="clean"] input.i:focus, :root[data-look="clean"] select.i:focus, :root[data-look="clean"] textarea.i:focus { box-shadow:var(--fd-focus-ring); outline:0; }
+/* ---- chips, tabs, segments, pills */
+:root[data-look="clean"] .chip, :root[data-look="clean"][data-theme="dark"] .chip { border:0; border-radius:999px; background:var(--fd-surface-2); color:var(--fd-text-2); font-weight:600; }
+:root[data-look="clean"] .chip:hover { background:var(--fd-surface-3); }
+:root[data-look="clean"] .chip.on, :root[data-look="clean"]:not([data-theme="dark"]) .chip.on, :root[data-look="clean"][data-theme="dark"] .chip.on, :root[data-look="clean"] .chip.ckcat.on { background:var(--fd-lime); color:var(--fd-lime-text); }
+:root[data-look="clean"] .tabs { gap:6px; border:0; }
+:root[data-look="clean"] .tabs button, :root[data-look="clean"][data-theme="dark"] .tabs button { border:0; border-radius:999px; padding:0 14px; min-height:36px; background:var(--fd-card); color:var(--fd-text-2); font-weight:600; }
+:root[data-look="clean"] .tabs button:hover { background:var(--fd-surface-2); }
+:root[data-look="clean"] .tabs button[aria-selected="true"], :root[data-look="clean"]:not([data-theme="dark"]) .tabs button[aria-selected="true"], :root[data-look="clean"][data-theme="dark"] .tabs button[aria-selected="true"] { background:var(--fd-lime); color:var(--fd-lime-text); box-shadow:none; }
+:root[data-look="clean"] .ai-strip .ai-t { border:0; background:var(--fd-card); border-radius:999px; }
+:root[data-look="clean"] .ai-strip .ai-t[aria-selected="true"] { background:var(--fd-lime); border-color:var(--fd-lime); color:var(--fd-lime-text); }
+:root[data-look="clean"] .seg .btn.on, :root[data-look="clean"] .u6 .seg button.on { background:var(--fd-lime) !important; color:var(--fd-lime-text) !important; }
+:root[data-look="clean"] .pill, :root[data-look="clean"][data-theme="dark"] .pill { border:0; border-radius:999px; font-weight:600; }
+:root[data-look="clean"] .fdd-pill, :root[data-look="clean"] .fdd-badge { border-radius:999px; }
+:root[data-look="clean"] .pick.on { border-color:var(--fd-text); }
+/* ---- inputs: filled, rounded, no border */
+:root[data-look="clean"] input.i, :root[data-look="clean"] select.i, :root[data-look="clean"] textarea.i, :root[data-look="clean"][data-theme="dark"] input.i, :root[data-look="clean"][data-theme="dark"] select.i, :root[data-look="clean"][data-theme="dark"] textarea.i {
+  background:var(--fd-surface-2); border:1px solid transparent; border-radius:12px; min-height:40px; padding:8px 12px; color:var(--fd-text); }
+:root[data-look="clean"] input.i:focus, :root[data-look="clean"] select.i:focus, :root[data-look="clean"] textarea.i:focus { border-color:var(--fd-text); background:var(--fd-card); }
+:root[data-look="clean"] input.i::placeholder, :root[data-look="clean"] textarea.i::placeholder { color:var(--fd-text-faint); }
+:root[data-look="clean"] label.f { color:var(--fd-text-2); font-weight:600; font-size:12.5px; }
+/* ---- tables: flat rows, muted head, round corners inside the card */
+:root[data-look="clean"] #view table { border:0; border-radius:16px; overflow:hidden; }
+:root[data-look="clean"] #view table thead th { background:transparent; color:var(--fd-text-3); font-weight:600; font-size:12.5px; letter-spacing:0; text-transform:none; border-bottom:1px solid var(--fd-border); padding:12px 14px; }
+:root[data-look="clean"] #view table tbody td { border-bottom:1px solid var(--fd-border); padding:12px 14px; }
+:root[data-look="clean"] #view table tbody tr:last-child td { border-bottom:0; }
+:root[data-look="clean"] #view table tbody tr:hover > td { background:var(--fd-surface-2); }
+:root[data-look="clean"] #view tr.grp td { background:var(--fd-surface-2); font-weight:700; }
+:root[data-look="clean"] #view table tfoot td { background:var(--fd-surface-2); font-weight:700; border:0; }
+:root[data-look="clean"] .rank .tr { border-radius:999px; }
+/* ---- alerts, toast, tip, scrollbar */
+:root[data-look="clean"] .alert { border:0; border-radius:16px; }
+:root[data-look="clean"] #toast, :root[data-look="clean"] #tip { border-radius:14px; }
+:root[data-look="clean"] ::-webkit-scrollbar-thumb { background:var(--fd-border-strong); }
+/* ---- the Theme dialog's Look row */
+.fdt-look { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+.fdt-look .fdt-note { font-size:12.5px; color:var(--fd-text-3); }
+</style>
+<script>
+(function () {
+  var KEY = 'erpLook';
+  function cur() { return document.documentElement.getAttribute('data-look') === 'clean' ? 'clean' : 'fd'; }
+  function set(v) {
+    v = v === 'clean' ? 'clean' : 'fd';
+    try { localStorage.setItem(KEY, v); } catch (e) {}
+    if (v === 'clean') document.documentElement.setAttribute('data-look', 'clean'); else document.documentElement.removeAttribute('data-look');
+    try { repaint(); } catch (e) {}
+  }
+  window.erpLookSet = set;
+  try { I18N_BN['Look'] = 'চেহারা'; I18N_BN['Current'] = 'আগেরটা'; I18N_BN['Clean'] = 'ক্লিন'; I18N_BN['Clean = the new look (pills, pastel tiles, flat tables); Current = the look before 28 Oct. Kept on this device.'] = 'ক্লিন = নতুন চেহারা (পিল মেনু, হালকা রঙের টাইল, সাদামাটা টেবিল); আগেরটা = ২৮ অক্টোবরের আগের চেহারা। এই ডিভাইসে মনে থাকে।'; } catch (e) {}
+  if (typeof fdtBody === 'function') {
+    var old = fdtBody;
+    fdtBody = function () {
+      var h = old.apply(this, arguments), c = cur();
+      var row = '<div class="fdt-sec"><h3>Look</h3><div class="fdt-look"><span class="fdt-seg">' +
+        '<button type="button" data-fdtlook="fd" class="' + (c === 'fd' ? 'on' : '') + '">Current</button><button type="button" data-fdtlook="clean" class="' + (c === 'clean' ? 'on' : '') + '">Clean</button></span>' +
+        '<span class="fdt-note">Clean = the new look (pills, pastel tiles, flat tables); Current = the look before 28 Oct. Kept on this device.</span></div></div>';
+      return h.replace('<div class="fdt-sec"><h3>Theme</h3>', row + '<div class="fdt-sec"><h3>Theme</h3>');
+    };
+  }
+  document.addEventListener('click', function (e) {
+    var b = e.target.closest && e.target.closest('[data-fdtlook]'); if (!b) return;
+    set(b.getAttribute('data-fdtlook'));
+    var box = el('fdt_box'); if (box && typeof fdtBody === 'function') { var y = box.scrollTop; box.innerHTML = fdtBody(); box.scrollTop = y; }
   });
 })();
 </script>
