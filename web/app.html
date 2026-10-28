@@ -40553,7 +40553,7 @@ html[lang=bn] #view.ai-view .btn.small, html[lang=bn] #view.ai-view button.small
       '<div class="ap-row" style="gap:6px"><button class="btn small" type="button" data-se="run" data-site="' + k + '"' + (SE.busy ? ' disabled' : '') + '>' + (SE.busy === 'run:' + s.site ? '<span class="wd-spin"></span>Checking…' : 'Check now') + '</button>' +
       (L ? '<button class="btn small" type="button" data-se="advise" data-site="' + k + '"' + (SE.busy ? ' disabled' : '') + '>' + (SE.busy === 'advise:' + s.site ? '<span class="wd-spin"></span>Writing…' : (L.advice ? 'AI fixes again' : 'AI fixes')) + '</button>' : '') + '</div></div>';
     if (!L) return h + '</div>';
-    h += '<div class="se-kpis">' + (L.perf !== null && L.perf !== undefined ? '<span>Mobile speed <b>' + L.perf + '</b>/100</span>' : '<span class="se-meta">PageSpeed: no answer</span>') + (L.seo !== null && L.seo !== undefined ? '<span>Lighthouse SEO <b>' + L.seo + '</b>/100</span>' : '') +
+    h += '<div class="se-kpis">' + (L.perf !== null && L.perf !== undefined ? '<span>Mobile speed <b>' + L.perf + '</b>/100</span>' : '<span class="se-meta">' + (L.facts && L.facts.psiError === 'key' ? 'PageSpeed: needs a Google API key (free) - paste it under Sites' : L.facts && L.facts.psiError === 'quota' ? 'PageSpeed: today\'s quota is used up' : 'PageSpeed: no answer') + '</span>') + (L.seo !== null && L.seo !== undefined ? '<span>Lighthouse SEO <b>' + L.seo + '</b>/100</span>' : '') +
       (L.lcp ? '<span>LCP <b>' + L.lcp + ' s</b></span>' : '') + (L.ms ? '<span>Home page <b>' + (Math.round(L.ms / 100) / 10) + ' s</b></span>' : '') + '<span>Issues <b>' + L.issues.length + '</b></span>' +
       (L.facts && typeof L.facts.links === 'number' ? '<span>Links checked <b>' + L.facts.links + '</b>' + (L.facts.broken && L.facts.broken.length ? ' · broken <b style="color:var(--critical,#d33)">' + L.facts.broken.length + '</b>' : '') + '</span>' : '') + '</div>';
     if (s.history && s.history.length > 1) h += '<div class="se-hist" title="Score, last 30 days">' + s.history.map(function (p) { var l = p.score >= 80 ? 'g' : p.score >= 50 ? 'y' : 'r'; return '<i class="' + l + '" style="height:' + Math.max(2, Math.round(p.score * 0.28)) + 'px" title="' + esc(when(p.at)) + ' · ' + p.score + '"></i>'; }).join('') + '</div>';
@@ -40578,7 +40578,9 @@ html[lang=bn] #view.ai-view .btn.small, html[lang=bn] #view.ai-view button.small
     h += '<section>' + (n ? d.sites.map(siteHtml).join('') : '<div class="card"><div class="en-meta">No website yet - add one below.</div></div>') + '</section>';
     h += '<section><details' + (n ? '' : ' open') + '><summary class="en-meta" style="cursor:pointer">Sites checked every night (' + (d.saved || []).length + ')</summary><div class="card" style="margin-top:8px">' +
       '<label class="f" for="se_sites">One address per line (at most 8)</label><textarea class="i" id="se_sites" rows="4" data-noi18n="1" placeholder="https://costareen.com">' + esc((d.saved || []).join('\n')) + '</textarea>' +
-      '<div class="ap-row" style="margin-top:8px"><button class="btn small" type="button" data-se="save">Save the list</button></div></div></details></section>';
+      '<label class="f" for="se_psi" style="margin-top:10px">Google PageSpeed API key' + (d.psiKey ? ' (set)' : '') + '</label><input class="i" id="se_psi" type="password" data-noi18n="1" placeholder="' + (d.psiKey ? 'leave empty to keep the key' : 'AIza…') + '" autocomplete="off">' +
+      '<div class="en-meta">Free: console.cloud.google.com → APIs → enable "PageSpeed Insights API" → Credentials → API key. Without it the mobile speed stays empty.</div>' +
+      '<div class="ap-row" style="margin-top:8px"><button class="btn small" type="button" data-se="save">Save</button></div></div></details></section>';
     return h;
   }
   function paint() { if (VIEW !== 'seo') return; var v = el('view'); if (!v) return; v.innerHTML = view(); try { if (typeof bindTips === 'function') bindTips(v); } catch (e) {} }
@@ -40590,7 +40592,7 @@ html[lang=bn] #view.ai-view .btn.small, html[lang=bn] #view.ai-view button.small
     if (what === 'run') act('erpSeoRun', { site: site }, 'run:' + site);
     else if (what === 'runall') act('erpSeoRun', {}, 'runall');
     else if (what === 'advise') { SE.open[site] = false; act('erpSeoAdvise', { site: site }, 'advise:' + site); }
-    else if (what === 'save') { var ta = el('se_sites'); act('erpSeoSitesSave', { sites: (ta ? ta.value : '').split('\n').map(function (s) { return s.trim(); }).filter(Boolean) }, 'save'); }
+    else if (what === 'save') { var ta = el('se_sites'), pk = el('se_psi'), a = { sites: (ta ? ta.value : '').split('\n').map(function (s) { return s.trim(); }).filter(Boolean) }; if (pk && pk.value.trim()) a.psiKey = pk.value.trim(); act('erpSeoSitesSave', a, 'save'); }
   });
 })();
 </script>

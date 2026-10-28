@@ -45,8 +45,10 @@ r = await owner('erpSeoRun', [{}]);
 check('nothing to check without a website', !r.ok && /No website/.test(r.error), r);
 
 // ---- the sites and a run
-r = await owner('erpSeoSitesSave', [{ sites: ['shop.test', 'https://shop.test/', 'junk'] }]);
-check('the site list is saved, cleaned and without doubles', r.ok && r.result.saved.length === 1 && r.result.saved[0] === 'https://shop.test', r);
+r = await owner('erpSeoSitesSave', [{ sites: ['shop.test'], psiKey: 'short' }]);
+check('a bad PageSpeed key is refused', !r.ok && /Google API key/.test(r.error), r);
+r = await owner('erpSeoSitesSave', [{ sites: ['shop.test', 'https://shop.test/', 'junk'], psiKey: 'psi-test-key-000000000000000000' }]);
+check('the site list is saved, cleaned and without doubles; the PageSpeed key kept', r.ok && r.result.saved.length === 1 && r.result.saved[0] === 'https://shop.test' && r.result.psiKey === true, r);
 r = await owner('erpSeoRun', [{}]);
 const S = r.ok && r.result.sites[0], L = S && S.latest;
 check('the check ran: the home page read, the links followed, PageSpeed asked', r.ok && r.result.ran.length === 1 && L && L.ok && L.status === 200 && L.perf === 42 && L.seo === 90 && L.lcp === 4.2 && L.cls === 0.05, r.ok ? L : r);

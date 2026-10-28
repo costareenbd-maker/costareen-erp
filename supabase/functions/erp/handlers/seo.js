@@ -120,12 +120,14 @@ async function linkCheck(ctx, links) {
   await Promise.all([worker(), worker(), worker(), worker(), worker()]);
   return broken;
 }
+/** PageSpeed Insights needs a (free) Google API key since the keyless quota went to 0 a day: Settings on the SEO screen. */
+export async function psiKey(ctx) { return str(await getConfig(ctx, 'seo_psi_key', '')); }
 async function pagespeed(ctx, site) {
-  let key = '';
-  try { key = str(await (ctx.deps.platformSecret ? ctx.deps.platformSecret('PSI_KEY') : '')); } catch (_) { key = ''; }
-  const url = 'https://www.googleapis.com/pagespeedonline/v5/runPagespeed?url=' + encodeURIComponent(site) + '&strategy=mobile&category=performance&category=seo' + (key ? '&key=' + encodeURIComponent(key) : '');
+  const key = await psiKey(ctx);
+  if (!key) return { error: 'key' };
+  const url = 'https://www.googleapis.com/pagespeedonline/v5/runPagespeed?url=' + encodeURIComponent(site) + '&strategy=mobile&category=performance&category=seo&key=' + encodeURIComponent(key);
   const r = await fetchText(ctx, url, 60000);
-  if (r.status !== 200) return null;
+  if (r.status !== 200) return { error: r.status === 429 ? 'quota' : r.status === 400 || r.status === 403 ? 'key' : 'http ' + (r.status || 'none') };
   try {
     const j = JSON.parse(r.text); const L = j.lighthouseResult || {}; const c = L.categories || {}; const a = L.audits || {};
     const n = (x) => (x && typeof x.score === 'number' ? Math.round(x.score * 100) : null);
@@ -183,6 +185,7 @@ export async function checkSite(ctx, site) {
     ]);
     f.robotsTxt = rb.status === 200; f.sitemap = sm.status === 200 || (await fetchText(ctx, new URL('/sitemap_index.xml', site).toString(), LINK_MS, 'HEAD')).status === 200; f.broken = broken; psi = ps;
   }
+  if (psi && psi.error) { f.psiError = psi.error; psi = null; }
   const { issues, score } = judge(f, psi, page);
   const facts = { ...f, links: f.links.length, finalUrl: page.url, error: page.error || null, psi };
   const row = (await ctx.tx`insert into seo_checks (business_id, site, ok, status, ms, score, light, perf, seo, lcp, cls, issues, facts)
@@ -207,7 +210,7 @@ async function screen(ctx, sites) {
   }
   const lights = { g: 0, y: 0, r: 0, none: 0 };
   for (const s of out) lights[s.latest ? s.latest.light : 'none']++;
-  return { sites: out, saved, lights, searchConsole: false, lang: str(await getConfig(ctx, 'ai_lang', '')) || 'bn' };
+  return { sites: out, saved, lights, searchConsole: false, psiKey: !!(await psiKey(ctx)), lang: str(await getConfig(ctx, 'ai_lang', '')) || 'bn' };
 }
 
 export async function erpSeo(ctx, payload) {
@@ -229,6 +232,11 @@ export async function erpSeoSitesSave(ctx, payload) {
   const list = siteList(payload) || [];
   if (list.length > MAX_SITES) throw new Error('At most ' + MAX_SITES + ' sites.');
   await setConfig(ctx, 'seo_sites', JSON.stringify(list));
+  if (payload && payload.psiKey !== undefined) {
+    const k = str(payload.psiKey);
+    if (k && !/^[A-Za-z0-9_\-]{20,80}$/.test(k)) throw new Error('That does not look like a Google API key.');
+    await setConfig(ctx, 'seo_psi_key', k);
+  }
   return screen(ctx, null);
 }
 export async function erpSeoAdvise(ctx, payload) {
