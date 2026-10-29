@@ -3321,3 +3321,13 @@ erp.costareen.com too (localStorage `erpLook` still wins per device), and Theme 
 so anyone can go back to the old look in one tap. Web only. Checked live on desktop and phone width (no sideways scroll).
 NOT done (same as on dev): per-screen polish of odd older forms; the printed documents keep their look; the old look is
 kept, not deleted, until the owner says so.
+
+## Readable text in the Clean look (29 Oct 2026, tag clean-contrast-1)
+
+Owner (screenshot of Joint stock in dark mode): "the writing can't be seen - fix problems like this." In the Clean
+look's dark mode the accent fill is lime, and places built for the old purple painted white text on it. A contrast
+scan of every screen's first view, light and dark, through the app's own theme switch, found: the joint "Who pays whom"
+banner (white on lime), the bell count (white on light red), the customer due / advance pills, the selected Engine chip,
+amber "warn" figures and faint zero figures. All fixed (block clean-contrast-1); the other lime-filled spots (logo,
+avatar, the first accent KPI, the dashboard hero) get dark text in dark mode as a guard. Rescan: clean. Web only, dev
+and live. NOT done: sub-tabs and dialogs beyond each screen's first view were not scanned one by one.
