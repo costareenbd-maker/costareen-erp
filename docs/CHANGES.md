@@ -3331,3 +3331,20 @@ banner (white on lime), the bell count (white on light red), the customer due / 
 amber "warn" figures and faint zero figures. All fixed (block clean-contrast-1); the other lime-filled spots (logo,
 avatar, the first accent KPI, the dashboard hero) get dark text in dark mode as a guard. Rescan: clean. Web only, dev
 and live. NOT done: sub-tabs and dialogs beyond each screen's first view were not scanned one by one.
+
+## The business switch in the Clean look + Oliareen on the company login (29 Oct 2026, tag clean-biz-1)
+
+Owner: "I can't switch to my other business." Two causes:
+- The Clean look showed no business name anywhere on a folded side menu; the switch was a click on the small logo.
+  Now the top bar's business button (fd-39, phone only before) shows on every width in the Clean look: logo, name,
+  arrow, the same business menu. On a phone it had shrunk to a bare arrow; the phone top bar was tightened (the
+  greeting and the light/dark button hide there - light/dark stays in the account menu) so the name fits, no sideways
+  scroll at 375 px.
+- Data: "Oliareen" (created 29 Oct 17:42) had only the owner's personal login as its owner; the company login
+  (costareen.bd, the one the owner uses and the deploy key holds) was not a member, so its list had only Costareen.
+  Added that login as an owner of Oliareen (memberships insert, the same row erp_add_member writes). Both logins now
+  list Costareen + Oliareen.
+- Also: the Skills screen exported its state as `window.SK`, overwriting the stick fight's `SK`; `skTick` threw
+  "SK.running is not a function" every 0.4 s on desktop. Exported as `window.ENSK` now.
+Web: dev + live. NOT done: an "Add a business" that adds every login of the owner automatically (today the new
+business belongs only to the login that made it).
