@@ -39219,7 +39219,7 @@ saveProduct = function () {
   try { SRV_SLOW.erpSkillPreview = 120000; SRV_SLOW.erpSkillInstall = 120000; SRV_SLOW.erpSkillCheckUpdates = 90000; SRV_SLOW.erpSkillUpdate = 90000; SRV_SLOW.erpSkillTrending = 60000; } catch (e) {}
   var EN = { data: null, busy: false, st: '', open: null, job: null, agent: 'command', draft: '', err: '' };
   var SK = { data: null, busy: false, panel: '', url: '', pv: null, pvBusy: false, pick: {}, pickAg: {}, trust: {}, trend: null, err: '' };
-  window.EN = EN; window.SK = SK;
+  window.EN = EN; window.ENSK = SK;   // not window.SK: that is the stick fight (var SK at the top level)
   var ICON_E = '<path d="M12 2l2.4 4.9 5.4.8-3.9 3.8.9 5.4L12 14.3 7.2 16.9l.9-5.4L4.2 7.7l5.4-.8z"/><path d="M5 21h14"/>';
   var ICON_S = '<path d="M4 6h16M4 12h10M4 18h7"/><path d="M17 15l2 2 3-4"/>';
   var IDEAS = ['Which 5 products should I bring in next, and why?', 'Check my website\'s SEO and give me the fixes', 'What should I post this week? Make a plan with captions'];
@@ -41023,6 +41023,27 @@ html[data-look="clean"][data-skin="fd"]:root .bal.owed { background:#DC2626 !imp
 html[data-look="clean"][data-skin="fd"]:root .bal.adv { background:#15803D !important; color:#fff !important; }
 html[data-look="clean"][data-skin="fd"]:root:not([data-theme="dark"]) .warn b, html[data-look="clean"][data-skin="fd"]:root:not([data-theme="dark"]) b.warn { color:#B45309 !important; }
 html[data-look="clean"][data-skin="fd"]:root:not([data-theme="dark"]) .fd19-faint { color:#6B7280 !important; }
+</style>
+<!-- clean-biz-1 (owner 29 Oct 2026: "I can't switch to my other business"): in the Clean look the business was chosen only
+     by clicking the small logo on the folded side menu - nothing said so. The top bar's business button (fd-39, phone only
+     till now) shows on every width in the Clean look: logo, business name, arrow; it opens the same business menu. On a
+     phone it no longer shrinks to a bare arrow. Also: the Skills screen exported its state as window.SK and so broke the
+     stick fight's SK (an error every 0.4 s on desktop); it is window.ENSK now. -->
+<style>
+@media (min-width:761px) {
+  html[data-look="clean"][data-skin="fd"]:root .topbar > #fd39biz { display:flex !important; order:1; align-items:center; gap:8px; min-width:0; max-width:260px; height:42px;
+    padding:0 12px 0 5px; margin-left:12px; border:0; border-radius:999px; background:var(--fd-card); color:var(--fd-text);
+    box-shadow:0 1px 2px rgba(16,24,40,.06); font:inherit; cursor:pointer; flex:0 1 auto; }
+  html[data-look="clean"][data-skin="fd"]:root .topbar > #fd39biz:hover { background:var(--fd-surface-2); }
+  html[data-look="clean"][data-skin="fd"]:root .topbar > #fd39biz .lg { width:30px; height:30px; flex:0 0 30px; display:grid; place-items:center; border-radius:999px; overflow:hidden; }
+  html[data-look="clean"][data-skin="fd"]:root .topbar > #fd39biz .lg svg, html[data-look="clean"][data-skin="fd"]:root .topbar > #fd39biz .lg img { width:30px; height:30px; display:block; object-fit:cover; }
+  html[data-look="clean"][data-skin="fd"]:root .topbar > #fd39biz .nm { font-size:14px; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; min-width:0; }
+  html[data-look="clean"][data-skin="fd"]:root .topbar > #fd39biz svg.cv, html[data-look="clean"][data-skin="fd"]:root .topbar > #fd39biz .cv { width:16px; height:16px; flex:0 0 16px; color:var(--fd-text-3); }
+}
+@media (max-width:760px) {
+  html[data-look="clean"][data-skin="fd"]:root .topbar > #fd39biz { order:1; flex:1 1 auto; min-width:90px; max-width:46vw; }
+  html[data-look="clean"][data-skin="fd"]:root .topbar > #fd39biz .nm { display:block; }
+}
 </style>
 </body>
 </html>
