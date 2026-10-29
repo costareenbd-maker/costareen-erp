@@ -40762,7 +40762,8 @@ html[data-look="clean"][data-skin="fd"]:root ::-webkit-scrollbar-thumb { backgro
   }
   window.erpLookSet = set;
   try { I18N_BN['Look'] = 'চেহারা'; I18N_BN['Current'] = 'আগেরটা'; I18N_BN['Clean'] = 'ক্লিন'; I18N_BN['Clean = the new look (pills, pastel tiles, flat tables); Current = the look before 28 Oct. Kept on this device.'] = 'ক্লিন = নতুন চেহারা (পিল মেনু, হালকা রঙের টাইল, সাদামাটা টেবিল); আগেরটা = ২৮ অক্টোবরের আগের চেহারা। এই ডিভাইসে মনে থাকে।'; } catch (e) {}
-  if (typeof fdtBody === 'function') {
+  // the Look switch shows on dev / local only until the owner approves the Clean look for live (29 Oct 2026)
+  if (typeof fdtBody === 'function' && /pages\.dev$|^localhost/.test(location.hostname)) {
     var old = fdtBody;
     fdtBody = function () {
       var h = old.apply(this, arguments), c = cur();
