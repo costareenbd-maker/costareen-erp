@@ -40192,6 +40192,7 @@ saveProduct = function () {
     var a = document.querySelector('#nav button[data-view="apps"]'), st = document.querySelector('#nav button[data-view="settings"]');
     if (a && st && a.previousElementSibling !== st) st.parentNode.insertBefore(a, st.nextSibling);
   }
+  try { moveApps(); } catch (e) {}   // fl-1: at once (Apps jumped down the menu after 1.2 s)
   setTimeout(moveApps, 1200); setTimeout(moveApps, 4000);
   function lit() {
     var home = HOME[VIEW]; if (!home) return;
