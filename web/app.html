@@ -41005,5 +41005,23 @@ html[data-look="clean"][data-skin="fd"]:root[data-theme="dark"] #aw_fab { backgr
   });
 })();
 </script>
+<!-- clean-contrast-1 (owner 29 Oct 2026: "the writing can't be seen - fix problems like this"): in the Clean look's dark
+     mode the accent fill is lime, so every place that painted white text on it is switched to dark text; the bell badge,
+     the customer due / advance pills, the selected Engine chip and the amber "warn" figures get darker fills / text.
+     Found with a contrast scan of every screen in light and dark. -->
+<style>
+html[data-look="clean"][data-skin="fd"]:root[data-theme="dark"] .jt-settle, html[data-look="clean"][data-skin="fd"]:root[data-theme="dark"] .jt-settle .t span, html[data-look="clean"][data-skin="fd"]:root[data-theme="dark"] .jt-settle .t b, html[data-look="clean"][data-skin="fd"]:root[data-theme="dark"] .jt-settle .t i { color:#17181C !important; }
+html[data-look="clean"][data-skin="fd"]:root[data-theme="dark"] .jt-settle .ic { background:rgba(23,24,28,.10) !important; color:#17181C !important; }
+html[data-look="clean"][data-skin="fd"]:root[data-theme="dark"] .jt-settle .go { color:#17181C !important; border-color:rgba(23,24,28,.35) !important; background:rgba(23,24,28,.08) !important; }
+html[data-look="clean"][data-skin="fd"]:root[data-theme="dark"] .jt-settle .go:hover { background:rgba(23,24,28,.16) !important; }
+html[data-look="clean"][data-skin="fd"]:root[data-theme="dark"] .brand .logo, html[data-look="clean"][data-skin="fd"]:root[data-theme="dark"] #o_user, html[data-look="clean"][data-skin="fd"]:root[data-theme="dark"] .u6 .u6av, html[data-look="clean"][data-skin="fd"]:root[data-theme="dark"] .aw-head .av,
+html[data-look="clean"][data-skin="fd"]:root[data-theme="dark"] .g-kpi > .kpi.tone-accent:first-child, html[data-look="clean"][data-skin="fd"]:root[data-theme="dark"] .g-kpi > .kpi.tone-accent:first-child .val, html[data-look="clean"][data-skin="fd"]:root[data-theme="dark"] .g-kpi > .kpi.tone-accent:first-child .val .cur, html[data-look="clean"][data-skin="fd"]:root[data-theme="dark"] .g-kpi > .kpi.tone-accent:first-child .lbl,
+html[data-look="clean"][data-skin="fd"]:root[data-theme="dark"] .fdd-c.fdhero, html[data-look="clean"][data-skin="fd"]:root[data-theme="dark"] .fdd-grid > .fdd-k.fdhero { color:#17181C !important; }
+html[data-look="clean"][data-skin="fd"]:root[data-theme="dark"] .act .count, html[data-look="clean"][data-skin="fd"]:root[data-theme="dark"] button.act .count { background:#DC2626 !important; color:#fff !important; }
+html[data-look="clean"][data-skin="fd"]:root[data-theme="dark"] .en-chip.on, html[data-look="clean"][data-skin="fd"]:root[data-theme="dark"] .en-chip[aria-pressed="true"], html[data-look="clean"][data-skin="fd"]:root[data-theme="dark"] .en-chip.is-on { color:#17181C !important; }
+html[data-look="clean"][data-skin="fd"]:root .bal.owed { background:#DC2626 !important; color:#fff !important; }
+html[data-look="clean"][data-skin="fd"]:root .bal.adv { background:#15803D !important; color:#fff !important; }
+html[data-look="clean"][data-skin="fd"]:root:not([data-theme="dark"]) .warn b, html[data-look="clean"][data-skin="fd"]:root:not([data-theme="dark"]) b.warn { color:#B45309 !important; }
+</style>
 </body>
 </html>
