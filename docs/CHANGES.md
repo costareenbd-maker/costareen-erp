@@ -3313,3 +3313,11 @@ look stays OFF on live: default Current on erp.costareen.com, and the Theme › 
 until the owner approves it. The serial-number camera at step 4 (Lines) stays where it is - it scans box serials, not
 products. Deployed: function + web (no migration). NOT done: a barcode scan that picks a product by its barcode at
 step 1 (products carry few barcodes today; the invoice scan covers the ask).
+
+## The Clean look goes live (29 Oct 2026, tag clean-live-1)
+
+Owner: "the UI we built / changed - make it live." The Clean look (clean-1 + look-clean-2) is now the default on
+erp.costareen.com too (localStorage `erpLook` still wins per device), and Theme › Look (Current / Clean) shows everywhere,
+so anyone can go back to the old look in one tap. Web only. Checked live on desktop and phone width (no sideways scroll).
+NOT done (same as on dev): per-screen polish of odd older forms; the printed documents keep their look; the old look is
+kept, not deleted, until the owner says so.
