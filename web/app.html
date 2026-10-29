@@ -556,6 +556,16 @@ svg { display:block; width:100%; overflow:visible; }
   document.documentElement.setAttribute('data-theme', t === 'light' ? 'light' : 'dark');
   // fd-1: the FilaDash look from the first paint (the block at the end of the page adds the switch)
   document.documentElement.setAttribute('data-skin', 'fd');   // FilaDash is the only look (fd-24)
+  // fl-1: the side menu as this device last saw it - screens set to Off / not for this role stay hidden from the first
+  // paint (they used to show for ~2 s on every reload); the real check replaces this the moment it runs
+  try {
+    var nh = JSON.parse(localStorage.getItem('fd_nav_hide') || 'null');
+    if (nh && nh.v && nh.v.length) { var st = document.createElement('style'); st.id = 'fdNavCache';
+      st.textContent = nh.v.map(function (v) { return '#nav button[data-view="' + String(v).replace(/[^a-z0-9_-]/gi, '') + '"]'; }).join(',') + '{display:none}' +
+        (nh.g || []).map(function (i) { return '#nav .navgrp:nth-of-type(' + (+i + 1) + ')'; }).join(',') + (nh.g && nh.g.length ? '{display:none}' : '');
+      document.head.appendChild(st); }
+    var sh0 = JSON.parse(localStorage.getItem('fd_shell') || 'null'); if (sh0 && sh0.biz) document.title = sh0.biz + ' ERP';
+  } catch (e) {}
   try { var lk = localStorage.getItem('erpLook') || 'clean'; if (lk === 'clean') document.documentElement.setAttribute('data-look', 'clean'); } catch (e) {}   // clean-1: the owner's new look (dev/local by default)
   // fd-36: this device's theme as it was last painted, before anything else draws (no flash of the default colours)
   try {
@@ -40874,7 +40884,7 @@ html[data-look="clean"][data-skin="fd"]:root[data-theme="dark"] #aw_fab { backgr
   function paint() {
     if (!build()) return;
     var g = el('clGreet'), t = el('clTheme');
-    var who = ME && ME.name ? String(ME.name).split(' ')[0] : '';
+    var who = ME && ME.name ? String(ME.name).split(' ')[0] : (typeof FD_SHELL !== 'undefined' && FD_SHELL.user ? String(FD_SHELL.user).split(' ')[0] : '');
     var bizEl = document.querySelector('.brand h1'), biz = bizEl ? bizEl.textContent.trim() : '';
     var d = new Date(), day = d.toLocaleDateString(bn() ? 'bn-BD' : 'en-GB', { weekday: 'long', day: 'numeric', month: 'long' });
     var home = typeof VIEW === 'undefined' || VIEW === 'dash';
@@ -40888,6 +40898,7 @@ html[data-look="clean"][data-skin="fd"]:root[data-theme="dark"] #aw_fab { backgr
   window.clTopPaint = paint;
   var rp = repaint;
   repaint = function () { var r = rp.apply(this, arguments); try { paint(); } catch (e) {} return r; };
+  try { paint(); } catch (e) {}   // fl-1: at once, not after 0.8 s (the top bar jumped)
   setTimeout(paint, 800); setTimeout(paint, 2500);
   new MutationObserver(function () { try { paint(); } catch (e) {} }).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme', 'lang'] });
 })();
@@ -41055,5 +41066,27 @@ html[data-look="clean"][data-skin="fd"]:root:not([data-theme="dark"]) .fd19-fain
   html[data-look="clean"][data-skin="fd"]:root .topbar { padding:12px 12px 8px 12px !important; gap:6px !important; }
 }
 </style>
+<!-- fl-1 (owner 29 Oct 2026: "on reload things I hid show once, then hide - I want a proper, professional build"):
+     the side menu, the top bar and the tab title are painted from this device's last copy before the server answers.
+     After every real menu check (applyRole with ME known) the hidden screens are written to localStorage fd_nav_hide
+     and the head's cached style is removed, so a changed setting wins at once. -->
+<script>
+(function () {
+  var prev = applyRole;
+  applyRole = function () {
+    var r = prev.apply(this, arguments);
+    try {
+      if (ME) {
+        var v = [], g = [];
+        [].forEach.call(document.querySelectorAll('#nav button[data-view]'), function (b) { if (b.style.display === 'none') v.push(b.getAttribute('data-view')); });
+        [].forEach.call(document.querySelectorAll('#nav .navgrp'), function (x, i) { if (x.style.display === 'none') g.push(i); });
+        localStorage.setItem('fd_nav_hide', JSON.stringify({ v: v, g: g }));
+        var c = document.getElementById('fdNavCache'); if (c && ME.apps) c.remove();
+      }
+    } catch (e) {}
+    return r;
+  };
+})();
+</script>
 </body>
 </html>
