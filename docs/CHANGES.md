@@ -3357,3 +3357,17 @@ from the business before, so the menu after a switch was the previous business's
 `erpHello` again and re-applies the menu. Checked on dev both ways: the menu after a switch equals a fresh load
 (Demo: Repairs / Print jobs / Resell off, joint on; pbd: its own defaults). Note: a new business (Oliareen) starts
 with every screen on; its menu is set in that business's own Apps › Menu. Web: dev + live.
+
+## No flashes on reload (29 Oct 2026, tag fl-1)
+
+Owner: "on reload things I hid show once, then hide; I want a proper build that looks professional" (no clean-up of
+old code, just the bugs). Filmed a reload on dev and fixed what moved:
+- Side menu: screens set Off / not for the role showed for ~2 s. The page's head now hides the screens this device
+  last saw hidden (localStorage `fd_nav_hide`, written after every real menu check); the cached rule is dropped the
+  moment the real check runs, so a changed setting wins at once.
+- "Apps" jumped from the top of the menu to the System group after 1.2 s: it is moved at once now.
+- Clean top bar: the greeting, tools pill and business button were built after 0.8 s (the business button jumped
+  across); painted at once now, with the name from the device's last copy until the server answers.
+- Tab title: the business name from the first paint (was "ERP").
+Checked: dashboard and Stock entry reloads on desktop, dashboard on a phone (no sideways scroll). Web: dev + live.
+NOT done: the leftover purple on some Clean-look tabs and step numbers (Stock entry) - a colour polish, not a flash.
