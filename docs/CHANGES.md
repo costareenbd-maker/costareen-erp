@@ -3348,3 +3348,12 @@ Owner: "I can't switch to my other business." Two causes:
   "SK.running is not a function" every 0.4 s on desktop. Exported as `window.ENSK` now.
 Web: dev + live. NOT done: an "Add a business" that adds every login of the owner automatically (today the new
 business belongs only to the login that made it).
+
+## A business switch reloads that business's menu (29 Oct 2026, tag biz-switch-menu-1)
+
+Owner: "the screens I hid (Resell, Print jobs, Repairs) came back." The server still had them Off for Costareen.
+The page loaded the new business's data on a switch but kept `ME` (role, `ME.apps` = screens Off / Only owners)
+from the business before, so the menu after a switch was the previous business's. Now `switchBusiness` asks
+`erpHello` again and re-applies the menu. Checked on dev both ways: the menu after a switch equals a fresh load
+(Demo: Repairs / Print jobs / Resell off, joint on; pbd: its own defaults). Note: a new business (Oliareen) starts
+with every screen on; its menu is set in that business's own Apps › Menu. Web: dev + live.
