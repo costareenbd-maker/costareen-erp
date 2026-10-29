@@ -10502,6 +10502,10 @@ function switchBusiness(id) {
     var nm = el('bizName'); if (nm) nm.textContent = res.name;
     brandLetter(res.name); brandLoad(id);
     loadAll();
+    // the menu (screens set to Off / Only owners), the apps and the role belong to the business: ask again
+    // (29 Oct 2026: after a switch the previous business's menu stayed - hidden screens came back)
+    APPS = null;
+    srv('erpHello', [], function (me) { if (me && me.ok) { ME = me; try { applyRole(); } catch (e) {} try { if (typeof tabbarSync === 'function') tabbarSync(); } catch (e) {} repaint(); } }, function () {});
   }, function (e) {
     toast(esc(e && e.message ? e.message : e), true, 12000);
     loadBusinesses();
