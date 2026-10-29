@@ -3302,3 +3302,14 @@ Owner: use the Bangla research done for the beauty store to audit and change the
 - For the owner to check: kept অনুমোদন (approve); chose বদলান / মেরামত / অগ্রিম / ঐচ্ছিক / সমুদ্রপথ / বিমানপথ.
   NOT done: some English strings still have no Bangla at all ("New this month", "Owed by customers" and similar);
   I18N_PAT still holds some older words outside the three big moves.
+
+## Invoice scan on live (29 Oct 2026, tag live-scan-1)
+
+Owner: "on Stock entry and Joint stock entry the camera shows at step 4; it should come first, so the product details
+are filled from the scan - I can't see it live." That is scan-all-1 (28 Oct), which was on dev only. Now live: Receive
+step 1 (and the joint Receive page) opens with "📷 Scan the supplier's invoice"; one photo / PDF fills every step,
+products included. Shipped with it (all already on main): look-clean-1/2 code and bn-audit-1 Bangla words. The Clean
+look stays OFF on live: default Current on erp.costareen.com, and the Theme › Look switch now shows only on dev / local
+until the owner approves it. The serial-number camera at step 4 (Lines) stays where it is - it scans box serials, not
+products. Deployed: function + web (no migration). NOT done: a barcode scan that picks a product by its barcode at
+step 1 (products carry few barcodes today; the invoice scan covers the ask).
