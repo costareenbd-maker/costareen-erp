@@ -10488,6 +10488,8 @@ function applyBusinesses(b) {
 function switchBusiness(id) {
   srv('erpSetBusiness', [id], function (res) {
     toast('Switched to <strong>' + esc(res.name) + '</strong>.');
+    if (BIZ) BIZ.active = id;   // the business menus tick the one in use (29 Oct 2026: the tick stayed on the old one)
+    var bsel = el('bizSel'); if (bsel) bsel.value = id;
     // everything on screen belongs to the previous business
     D = CAT = CUST = ORDERS = LISTS = HIST = WEB = SETTINGS = null;
     OPT = null; CART = []; RECV = { supplier:'', reference:'', notes:'', lines:[] };
