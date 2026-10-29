@@ -556,7 +556,7 @@ svg { display:block; width:100%; overflow:visible; }
   document.documentElement.setAttribute('data-theme', t === 'light' ? 'light' : 'dark');
   // fd-1: the FilaDash look from the first paint (the block at the end of the page adds the switch)
   document.documentElement.setAttribute('data-skin', 'fd');   // FilaDash is the only look (fd-24)
-  try { var lk = localStorage.getItem('erpLook') || (/pages\.dev$|^localhost/.test(location.hostname) ? 'clean' : 'fd'); if (lk === 'clean') document.documentElement.setAttribute('data-look', 'clean'); } catch (e) {}   // clean-1: the owner's new look (dev/local by default)
+  try { var lk = localStorage.getItem('erpLook') || 'clean'; if (lk === 'clean') document.documentElement.setAttribute('data-look', 'clean'); } catch (e) {}   // clean-1: the owner's new look (dev/local by default)
   // fd-36: this device's theme as it was last painted, before anything else draws (no flash of the default colours)
   try {
     var tc = localStorage.getItem('fd_theme_css_' + (t === 'light' ? 'light' : 'dark'));
@@ -40762,8 +40762,8 @@ html[data-look="clean"][data-skin="fd"]:root ::-webkit-scrollbar-thumb { backgro
   }
   window.erpLookSet = set;
   try { I18N_BN['Look'] = 'চেহারা'; I18N_BN['Current'] = 'আগেরটা'; I18N_BN['Clean'] = 'ক্লিন'; I18N_BN['Clean = the new look (pills, pastel tiles, flat tables); Current = the look before 28 Oct. Kept on this device.'] = 'ক্লিন = নতুন চেহারা (পিল মেনু, হালকা রঙের টাইল, সাদামাটা টেবিল); আগেরটা = ২৮ অক্টোবরের আগের চেহারা। এই ডিভাইসে মনে থাকে।'; } catch (e) {}
-  // the Look switch shows on dev / local only until the owner approves the Clean look for live (29 Oct 2026)
-  if (typeof fdtBody === 'function' && /pages\.dev$|^localhost/.test(location.hostname)) {
+  // owner approved the Clean look for live on 29 Oct 2026: default everywhere, the switch keeps the old look one tap away
+  if (typeof fdtBody === 'function') {
     var old = fdtBody;
     fdtBody = function () {
       var h = old.apply(this, arguments), c = cur();
