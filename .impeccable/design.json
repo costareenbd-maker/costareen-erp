@@ -1,0 +1,98 @@
+{
+ "schemaVersion": 2,
+ "generatedAt": "2026-10-30T00:00:00+00:00",
+ "title": "Design System: Costareen ERP",
+ "extensions": {
+  "colorMeta": {
+   "counter-lime": {"role": "primary", "displayName": "Counter Lime", "tonalRamp": ["#3A4210", "#5C6A12", "#8DA20F", "#B8D20C", "#D8F23C", "#E4FF5A", "#EFFF8A", "#F8FFC9"]},
+   "ink": {"role": "primary", "displayName": "Counter Ink", "tonalRamp": ["#0B0C0E", "#17181C", "#2B2D35", "#4A4D57", "#7A7E8A", "#9A9EA8", "#D7D9DF", "#F2F3F5"]},
+   "accent-violet": {"role": "secondary", "displayName": "Quiet Violet", "tonalRamp": ["#2A1F80", "#3F30B8", "#5748E6", "#6D5BFF", "#A594FF", "#C9BEFF", "#E4DEFF", "#EFEBFF"]},
+   "canvas": {"role": "neutral", "displayName": "Canvas Grey"},
+   "card": {"role": "neutral", "displayName": "Card White"},
+   "surface-2": {"role": "neutral", "displayName": "Shelf Grey"},
+   "surface-3": {"role": "neutral", "displayName": "Deep Shelf"},
+   "tile-peach": {"role": "tertiary", "displayName": "Peach Tile"},
+   "tile-lavender": {"role": "tertiary", "displayName": "Lavender Tile"},
+   "tile-mint": {"role": "tertiary", "displayName": "Mint Tile"},
+   "tile-lemon": {"role": "tertiary", "displayName": "Lemon Tile"},
+   "tile-sky": {"role": "tertiary", "displayName": "Sky Tile"}
+  },
+  "typographyMeta": {
+   "page-title": {"displayName": "Page title", "purpose": "Screen names."},
+   "greeting": {"displayName": "Greeting", "purpose": "Clean top bar welcome line."},
+   "card-title": {"displayName": "Card title", "purpose": "Every card heading."},
+   "figure": {"displayName": "Figure", "purpose": "KPI values and money totals, tabular figures."},
+   "body": {"displayName": "Body", "purpose": "Default text."},
+   "label": {"displayName": "Label", "purpose": "Form labels, table heads, notes."}
+  },
+  "shadows": [
+   {"name": "card", "value": "0 1px 2px rgba(23,24,28,.03)", "purpose": "Cards at rest - nearly flat; tone does the separation."},
+   {"name": "card-hover", "value": "0 6px 24px rgba(23,24,28,.08)", "purpose": "Hover lift where a card is a link."},
+   {"name": "popover", "value": "0 14px 40px rgba(23,24,28,.14)", "purpose": "Menus and popovers."},
+   {"name": "hero", "value": "0 14px 34px rgba(23,24,28,.25)", "purpose": "The dashboard hero tile only."},
+   {"name": "focus-ring", "value": "0 0 0 3px rgba(23,24,28,.18)", "purpose": "Keyboard focus, light mode (dark: rgba(228,255,90,.3))."}
+  ],
+  "motion": [],
+  "breakpoints": [
+   {"name": "phone", "value": "760px"},
+   {"name": "rail", "value": "761px-1279px"},
+   {"name": "desktop", "value": "1280px"}
+  ]
+ },
+ "components": [
+  {"name": "Primary Button", "kind": "button", "refersTo": "button-primary", "description": "The one main action in an area.",
+   "html": "<button class=\"ds-btn-primary\">Save invoice</button>",
+   "css": ".ds-btn-primary{background:#17181C;color:#fff;border:0;border-radius:12px;min-height:38px;padding:0 16px;font:600 14.5px Inter,system-ui,sans-serif;cursor:pointer}.ds-btn-primary:hover{background:#2B2D35}.ds-btn-primary:focus-visible{outline:0;box-shadow:0 0 0 3px rgba(23,24,28,.18)}"},
+  {"name": "Secondary Button", "kind": "button", "refersTo": "button-secondary", "description": "Every other action.",
+   "html": "<button class=\"ds-btn\">Print</button>",
+   "css": ".ds-btn{background:#F3F4F6;color:#17181C;border:0;border-radius:12px;min-height:38px;padding:0 16px;font:600 14.5px Inter,system-ui,sans-serif;cursor:pointer}.ds-btn:hover{background:#E7E8EC}.ds-btn:focus-visible{outline:0;box-shadow:0 0 0 3px rgba(23,24,28,.18)}"},
+  {"name": "Input", "kind": "input", "refersTo": "input", "description": "Filled field with a label above.",
+   "html": "<label class=\"ds-f\">Customer phone<input class=\"ds-i\" placeholder=\"01XXXXXXXXX\"></label>",
+   "css": ".ds-f{display:grid;gap:6px;font:600 12.5px Inter,system-ui,sans-serif;color:#4A4D57}.ds-i{background:#F3F4F6;border:1px solid transparent;border-radius:12px;min-height:40px;padding:8px 12px;font:400 14.5px Inter,system-ui,sans-serif;color:#17181C}.ds-i::placeholder{color:#9A9EA8}.ds-i:focus{outline:0;border-color:#17181C;background:#fff;box-shadow:0 0 0 3px rgba(23,24,28,.18)}"},
+  {"name": "Side menu pill", "kind": "nav", "refersTo": "nav-item", "description": "Menu entries; the current one is lime.",
+   "html": "<nav class=\"ds-nav\"><button class=\"ds-nav-i on\">Dashboard</button><button class=\"ds-nav-i\">Sales</button></nav>",
+   "css": ".ds-nav{display:grid;gap:6px;padding:12px;background:#EDEEF1}.ds-nav-i{min-height:46px;border:0;border-radius:14px;background:#fff;color:#4A4D57;font:600 14.5px Inter,system-ui,sans-serif;text-align:left;padding:0 14px;cursor:pointer}.ds-nav-i:hover{background:#F3F4F6;color:#17181C}.ds-nav-i.on{background:#E4FF5A;color:#17181C;font-weight:700}"},
+  {"name": "Chip / tab", "kind": "chip", "refersTo": "chip", "description": "Filters and tabs; selected is lime.",
+   "html": "<span class=\"ds-chip on\">This month</span> <span class=\"ds-chip\">3 months</span>",
+   "css": ".ds-chip{display:inline-flex;align-items:center;height:34px;padding:0 14px;border-radius:999px;background:#F3F4F6;color:#4A4D57;font:600 13.5px Inter,system-ui,sans-serif;cursor:pointer}.ds-chip:hover{background:#E7E8EC}.ds-chip.on{background:#E4FF5A;color:#17181C}"},
+  {"name": "Card", "kind": "card", "refersTo": "card", "description": "White, borderless, 20px round on grey.",
+   "html": "<div class=\"ds-card\"><h2>Today</h2><p>3 invoices · ৳12,400</p></div>",
+   "css": ".ds-card{background:#fff;border-radius:20px;padding:22px 24px;box-shadow:0 1px 2px rgba(23,24,28,.03);font:400 14.5px Inter,system-ui,sans-serif;color:#17181C}.ds-card h2{margin:0 0 4px;font-size:18px;font-weight:700;letter-spacing:-.01em}.ds-card p{margin:0;color:#7A7E8A}"},
+  {"name": "KPI tile", "kind": "custom", "description": "Pastel figure tile with an icon square.",
+   "html": "<div class=\"ds-kpi\"><span class=\"ds-kpi-ic\">৳</span><b>৳3,100</b><span>Revenue today</span><em>▲ 85%</em></div>",
+   "css": ".ds-kpi{display:grid;gap:6px;background:#FFF1E3;border-radius:20px;padding:20px;font:400 14.5px Inter,system-ui,sans-serif;color:#17181C;max-width:220px}.ds-kpi-ic{width:48px;height:48px;border-radius:14px;background:#fff;display:grid;place-items:center;font-weight:700}.ds-kpi b{font-size:28px;font-weight:700;letter-spacing:-.025em;font-variant-numeric:tabular-nums}.ds-kpi em{font-style:normal;color:#15803D;font-weight:700}"}
+ ],
+ "narrative": {
+  "northStar": "The Tidy Counter",
+  "overview": "The ERP is a shop counter kept in order: everything the staff need is within reach, nothing shouts, and the one thing that must be seen is lit in lime. A pale grey canvas holds white, borderless, generously rounded cards; the side menu is a column of soft pills; figures sit large and calm in pastel tiles. The feel is soft and sure: round corners, big touch targets, a dark primary button that says \"this is the action\". It is built for a phone in one hand at the counter as much as for a long desk session, in Bangla first.",
+  "keyCharacteristics": [
+   "Pale grey canvas, white borderless cards, 20px corners.",
+   "Lime marks \"you are here / this is on\" and nothing else.",
+   "Dark primary button in light mode; lime primary button in dark mode.",
+   "Pastel KPI tiles that cycle peach, lavender, mint, lemon, sky.",
+   "Flat tables with a muted head and hairline rows.",
+   "Pills everywhere a choice is made (tabs, chips, segments, the business switch)."
+  ],
+  "rules": [
+   {"name": "The One Lime Rule", "body": "Lime means \"selected\" or \"on\". It is never decoration, never a background for a whole section, and its text is always Ink.", "section": "colors"},
+   {"name": "The Dark-Text-on-Light-Fill Rule", "body": "Any fill lighter than mid-grey (lime, pastel, soft status) carries Ink text. In dark mode the accent fill is lime, so white text on it is a bug (fixed 29 Oct 2026, clean-contrast-1).", "section": "colors"},
+   {"name": "The Bangla Size Rule", "body": "Bangla text never goes below the body size for anything a person must read; Bangla glyphs need the room. Shrink by trimming words, not by shrinking type.", "section": "typography"},
+   {"name": "The Tone-Not-Shadow Rule", "body": "Depth comes from canvas grey against card white. A card never gets a border and never gets a heavy shadow at rest.", "section": "elevation"}
+  ],
+  "dos": [
+   "Do use Lime only for the selected / on state, always with Ink (#17181C) text.",
+   "Do keep cards white, borderless, 20px round, on the grey canvas.",
+   "Do put a new ability on the first screen as a visible button with a verb-first label.",
+   "Do keep Bangla at body size or larger and check every screen at 375px with no sideways scroll.",
+   "Do check light and dark: any light fill carries Ink text."
+  ],
+  "donts": [
+   "Don't put white text on lime, pastel or soft status fills.",
+   "Don't add borders or heavy shadows to cards at rest.",
+   "Don't use violet for a new selected state; the selected state is lime.",
+   "Don't put grey hint text beside form labels; use a \"?\" help button.",
+   "Don't hard-code Costareen's name, logo or colours into a screen; the business's own branding leads.",
+   "Don't let anything appear and then vanish on reload."
+  ]
+ }
+}
