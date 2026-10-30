@@ -3371,3 +3371,25 @@ old code, just the bugs). Filmed a reload on dev and fixed what moved:
 - Tab title: the business name from the first paint (was "ERP").
 Checked: dashboard and Stock entry reloads on desktop, dashboard on a phone (no sideways scroll). Web: dev + live.
 NOT done: the leftover purple on some Clean-look tabs and step numbers (Stock entry) - a colour polish, not a flash.
+
+## Impeccable polish over the whole ERP (30 Oct 2026, tag polish-1)
+
+Owner: "do all of it - every page, every function - decide yourself and finish." Impeccable installed; PRODUCT.md
+(users, purpose, principles from the owner's answers) and DESIGN.md + .impeccable/design.json ("The Tidy Counter", the
+Clean look recorded) written first. Then a measured pass over all 41 screens - light and dark, 1366px and 375px -
+checking purple leftovers, contrast, text size, Bangla size, touch targets, corners, card borders and sideways scroll,
+plus eyes on the main screens. One layer (block polish-1 at the end of app.html):
+- The shared accent was still violet, so selected tabs / pills / segments, primary buttons (System check, Map), "+ New",
+  step numbers, Settings switches and the phone tab bar showed purple. Accent = Ink (light) / Lime (dark); every
+  selected state is Lime with Ink text (tabs, range pills, chips, segments, Engine chips, Inbox tabs, Settings nav).
+- Light secondary text failed contrast (3.5:1): ink-3 / faint darkened; menu group labels; soft red labels and the
+  alert count badge darker red; dark greys lifted.
+- Dark-mode pastel hero tiles had near-invisible dark text (a side effect of clean-contrast-1): theme text again.
+- No text under 12px (Inbox tabs and channel labels, balance pills, stock badges, Settings labels); small Bangla 13px.
+- Phone tap areas 40px+ for "?" and "i" buttons, checkboxes, switches and small chips (the visual size unchanged).
+- Browser surfaces: selection Lime/Ink, caret, checkbox / radio / range accent.
+- Inbox's square search box and button rounded like the rest.
+Rescan after: no purple fills, no page scrolls sideways at 375px, 127 finding types down to a handful of badge/legend
+items. Web only (dev + live). NOT done: sub-tabs and dialogs deeper than each screen's first view were not scanned one by
+one; old hard-coded colours in the FilaDash base layer (overridden by the Clean look) were left in place; the printed
+documents are untouched by design.

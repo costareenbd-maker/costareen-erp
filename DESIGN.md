@@ -158,8 +158,8 @@ A quiet near-neutral grey system with one loud signal colour (lime) and soft pas
 - **Counter Ink** (ink): text, and the light-mode primary button fill. The strongest mark on a light screen.
 
 ### Secondary
-- **Quiet Violet** (accent-violet / accent-violet-text): inherited FilaDash accent, now limited to links, small icons and
-  the inside of a few older widgets. Not for new selected states (those are lime).
+- **Quiet Violet** (accent-violet-text): links only. Since polish-1 (30 Oct 2026) the shared FilaDash accent is Ink in
+  light mode and Lime in dark mode, so no widget fills a selected state or a button with violet any more.
 
 ### Tertiary
 - **Pastel Tiles** (tile-peach, tile-lavender, tile-mint, tile-lemon, tile-sky): KPI tile backgrounds, cycled in that
@@ -177,6 +177,8 @@ A quiet near-neutral grey system with one loud signal colour (lime) and soft pas
 ### Named Rules
 **The One Lime Rule.** Lime means "selected" or "on". It is never decoration, never a background for a whole section,
 and its text is always Ink.
+**The Accent Is Ink Rule.** The shared accent (`--fd-accent`) is Ink (light) / Lime (dark); a new widget that needs a
+filled "main" state uses it, and a selected state uses Lime directly.
 **The Dark-Text-on-Light-Fill Rule.** Any fill lighter than mid-grey (lime, pastel, soft status) carries Ink text. In
 dark mode the accent fill is lime, so white text on it is a bug (fixed 29 Oct 2026, clean-contrast-1).
 
@@ -274,6 +276,9 @@ pill. No square corners on interactive things.
 - **Do** put a new ability on the first screen as a visible button with a verb-first label.
 - **Do** keep Bangla at body size or larger and check every screen at 375px with no sideways scroll.
 - **Do** check light and dark: any light fill carries Ink text.
+
+- **Do** give every phone tap target 40px (small "?" / "i" buttons keep their look and grow their tap area).
+- **Do** theme browser surfaces: selection is Lime with Ink text, checkboxes and radios take the accent.
 
 ### Don't:
 - **Don't** put white text on lime, pastel or soft status fills.
