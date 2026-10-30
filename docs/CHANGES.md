@@ -3393,3 +3393,19 @@ Rescan after: no purple fills, no page scrolls sideways at 375px, 127 finding ty
 items. Web only (dev + live). NOT done: sub-tabs and dialogs deeper than each screen's first view were not scanned one by
 one; old hard-coded colours in the FilaDash base layer (overridden by the Clean look) were left in place; the printed
 documents are untouched by design.
+
+## Polish, part 2: every sub-tab and every "+ New" form (30 Oct 2026, tag polish-2)
+
+Owner: "sob koro" (do the rest - polish-1 had covered each screen's first view only). A crawler opened every sub-tab of
+every screen (95-98 tabs) in light and dark on a 1366px screen and on a 375px phone, and 37 "+ New / Add / Edit" forms
+(nothing saved, sent or deleted; dev demo data). Fixed (block polish-2):
+- Inbox keeps its AiPraktor-style skin (mono caps, square corners - the owner's chosen reference); its 10-10.5px tags,
+  form labels, figures and headings raised to a readable floor, Bangla there at 13px.
+- Status text in green / red (--good / --critical: "receives 6,440", "worked", "not connected") darkened in light; the
+  joint table's names readable in dark; the capital tile's currency word, invoice-design captions, product filter facets,
+  joint tags, the Shipments weight note and the quotation preview's empty line no longer fade.
+- Phone: the small "x" remove buttons on chips and filters get a 40px tap area.
+Final passes: no page scrolls sideways in any sub-tab on a phone; dark mode down to 0 contrast problems in the measured
+set; checkboxes stay 24px (meets the 24px minimum). Left as designed: the printed quotation / invoice (doc-*) - its text
+is dark on white, faintest grey 4.8:1. Seen once only under the crawler's machine-speed tab switching: a "Display error"
+toast on Capital / Joint month end; not reproducible at human speed (two tries, 0.9-3 s per click) - left as a note.
