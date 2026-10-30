@@ -41196,5 +41196,29 @@ html[data-look="clean"][data-skin="fd"]:root .due span { color:var(--fd-negative
 html[data-look="clean"][data-skin="fd"]:root #view .fd22-stnav button.fd22-sti[aria-selected="true"] { background:var(--fd-lime) !important; background-image:none !important; color:#17181C !important; box-shadow:none !important; }
 html[data-look="clean"][data-skin="fd"]:root #view .fd22-stnav button.fd22-sti[aria-selected="true"] svg { color:#17181C !important; }
 </style>
+<!-- polish-2 (owner 30 Oct 2026: "sob koro" - the sub-tabs and dialogs polish-1 had not reached). Measured: 95 sub-tabs
+     across all screens and 37 "+ New / Add / Edit" forms, light + dark, desktop + phone. Fixed here:
+     - Inbox keeps its own AiPraktor-style skin (mono caps, square corners - the owner's chosen reference), but its 10-10.5px
+       tags, labels, figures and headings are raised to a readable floor; Bangla in Inbox at 13px;
+     - status greens / reds used as text (--good / --critical: "receives 6,440", "worked", "not connected") darkened in light;
+     - the capital tile's currency word and the invoice-design captions no longer fade out;
+     - small captions elsewhere (product filter facets, joint tags, the quotation preview's empty line) to 12px / readable.
+     The printed quotation / invoice layout (doc-*) is left as designed. -->
+<style>
+html[data-look="clean"][data-skin="fd"]:root:not([data-theme="dark"]) { --good:#15803D !important; --critical:#B91C1C !important; }
+html[data-look="clean"][data-skin="fd"]:root #view.ib-skin .ib-tag { font-size:11px !important; }
+html[data-look="clean"][data-skin="fd"]:root #view.ib-skin .ib-tag.hot { color:var(--fd-negative-text) !important; }
+html[data-look="clean"][data-skin="fd"]:root #view.ib-skin .ib-form label, html[data-look="clean"][data-skin="fd"]:root #view.ib-skin .ib-kpi span,
+html[data-look="clean"][data-skin="fd"]:root #view.ib-skin .ib-piles button, html[data-look="clean"][data-skin="fd"]:root #view.ib-skin .loading { font-size:12px !important; }
+html[data-look="clean"][data-skin="fd"]:root #view.ib-skin .ib-c h3, html[data-look="clean"][data-skin="fd"]:root #view.ib-skin h3 { font-size:12.5px !important; }
+html[lang="bn"][data-look="clean"][data-skin="fd"] #view.ib-skin label, html[lang="bn"][data-look="clean"][data-skin="fd"] #view.ib-skin .ib-kpi span,
+html[lang="bn"][data-look="clean"][data-skin="fd"] #view.ib-skin h3 { font-size:13px !important; }
+html[data-look="clean"][data-skin="fd"]:root .g-kpi > .kpi.tone-accent:first-child .val .cur { color:var(--fd-text-3) !important; }
+html[data-look="clean"][data-skin="fd"]:root .ivd-tpl span { font-size:12px !important; opacity:1 !important; color:var(--fd-text-3) !important; }
+html[data-look="clean"][data-skin="fd"]:root .o_facet b { font-size:12px !important; }
+html[data-look="clean"][data-skin="fd"]:root .jt-tag { font-size:11.5px !important; }
+html[data-look="clean"][data-skin="fd"]:root .doc-empty { color:#5F6370 !important; }
+html[data-look="clean"][data-skin="fd"]:root .linkbtn { color:var(--fd-accent-text); }
+</style>
 </body>
 </html>
