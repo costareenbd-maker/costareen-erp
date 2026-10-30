@@ -41089,5 +41089,103 @@ html[data-look="clean"][data-skin="fd"]:root:not([data-theme="dark"]) .fd19-fain
   };
 })();
 </script>
+<!-- polish-1 (owner 30 Oct 2026: "do all of it - every page, every function - decide yourself and finish"; Impeccable
+     polish against DESIGN.md "The Tidy Counter"). Found by a measured pass over all 41 screens, light + dark, 1366px +
+     375px, then fixed here in one layer over the Clean look:
+     - the shared accent was still violet, so selected tabs / pills / segments, primary buttons on several screens, the
+       "+ New" button, step numbers and switches showed purple: accent = ink (light) / lime (dark); every selected state
+       is lime with ink text (The One Lime Rule);
+     - secondary grey text failed contrast in light (3.5:1): ink-3 and faint darkened; menu group labels readable;
+     - dark-mode pastel hero tiles had dark text (side effect of clean-contrast-1): back to the theme's text colour;
+     - text under 12px (Inbox tabs, balance pills, stock badges, labels) raised; small Bangla raised to 13px;
+     - phone touch targets: "?" and "i" buttons, checkboxes, switches and small chips get a 40px+ tap area;
+     - browser surfaces themed: text selection, caret, checkbox / radio / range colour;
+     - Inbox's square search box and button rounded like the rest. -->
+<style>
+/* ---- accent: ink in light, lime in dark (the selected state is lime, below) */
+html[data-look="clean"][data-skin="fd"]:root {
+  --fd-accent:#17181C !important; --fd-accent-hover:#2B2D35 !important; --fd-text-on-accent:#FFFFFF !important;
+  --fd-accent-border:rgba(23,24,28,.35) !important; --fd-accent-glow:none !important; --fd-glow-badge:none !important;
+  --fd-text-3:#5F6370 !important; --fd-text-faint:#7E828D !important;
+}
+html[data-look="clean"][data-skin="fd"]:root[data-theme="dark"] {
+  --fd-accent:#E4FF5A !important; --fd-accent-hover:#EFFF8A !important; --fd-text-on-accent:#17181C !important;
+  --fd-accent-border:rgba(228,255,90,.45) !important; --fd-accent-glow:none !important; --fd-glow-badge:none !important;
+}
+html[data-look="clean"][data-skin="fd"]:root header.topbar .fdplus { background:var(--fd-text) !important; color:var(--fd-card) !important; border-color:transparent !important; box-shadow:none !important; }
+html[data-look="clean"][data-skin="fd"]:root[data-theme="dark"] header.topbar .fdplus { background:var(--fd-lime) !important; color:#17181C !important; }
+
+/* ---- every selected state: lime with ink text */
+html[data-look="clean"][data-skin="fd"]:root .tabs button[aria-selected="true"],
+html[data-look="clean"][data-skin="fd"]:root .fd22-pill[aria-pressed="true"],
+html[data-look="clean"][data-skin="fd"]:root .fd19-pill[aria-pressed="true"],
+html[data-look="clean"][data-skin="fd"]:root .fdd-pill[aria-pressed="true"],
+html[data-look="clean"][data-skin="fd"]:root .en-chip[aria-pressed="true"],
+html[data-look="clean"][data-skin="fd"]:root .nvg-seg button[aria-pressed="true"],
+html[data-look="clean"][data-skin="fd"]:root .seg button.on, html[data-look="clean"][data-skin="fd"]:root .seg .on,
+html[data-look="clean"][data-skin="fd"]:root #view .chip.on, html[data-look="clean"][data-skin="fd"]:root .ib-tabs button.on,
+html[data-look="clean"][data-skin="fd"]:root .fd21-pill.on, html[data-look="clean"][data-skin="fd"]:root .fd21-pill[aria-pressed="true"] {
+  background:var(--fd-lime) !important; background-image:none !important; color:#17181C !important; border-color:transparent !important; box-shadow:none !important; }
+html[data-look="clean"][data-skin="fd"]:root .tabs button[aria-selected="true"] .tb-c,
+html[data-look="clean"][data-skin="fd"]:root .en-chip[aria-pressed="true"] b { background:#17181C !important; color:var(--fd-lime) !important; }
+html[data-look="clean"][data-skin="fd"]:root #tabbar button[aria-current="page"] { color:var(--fd-text) !important; font-weight:700; }
+html[data-look="clean"][data-skin="fd"]:root #tabbar button[aria-current="page"] svg { color:var(--fd-text); }
+html[data-look="clean"][data-skin="fd"]:root .ap-sw.is-on i { background:var(--fd-text) !important; }
+html[data-look="clean"][data-skin="fd"]:root[data-theme="dark"] .ap-sw.is-on i { background:var(--fd-lime) !important; }
+html[data-look="clean"][data-skin="fd"]:root[data-theme="dark"] .ap-sw.is-on i::after { background:#17181C !important; }
+
+/* ---- dark: pastel hero tiles keep the theme's text (clean-contrast-1 forced ink on them) */
+html[data-look="clean"][data-skin="fd"]:root[data-theme="dark"] .fdd-c.fdhero, html[data-look="clean"][data-skin="fd"]:root[data-theme="dark"] .fdd-grid > .fdd-k.fdhero,
+html[data-look="clean"][data-skin="fd"]:root[data-theme="dark"] .fdd-c.fdhero .fdd-num, html[data-look="clean"][data-skin="fd"]:root[data-theme="dark"] .fdd-c.fdhero .fdd-lbl,
+html[data-look="clean"][data-skin="fd"]:root[data-theme="dark"] .fdd-c.fdhero .fdd-kn,
+html[data-look="clean"][data-skin="fd"]:root[data-theme="dark"] .g-kpi > .kpi.tone-accent:first-child, html[data-look="clean"][data-skin="fd"]:root[data-theme="dark"] .g-kpi > .kpi.tone-accent:first-child .val,
+html[data-look="clean"][data-skin="fd"]:root[data-theme="dark"] .g-kpi > .kpi.tone-accent:first-child .val .cur, html[data-look="clean"][data-skin="fd"]:root[data-theme="dark"] .g-kpi > .kpi.tone-accent:first-child .lbl,
+html[data-look="clean"][data-skin="fd"]:root[data-theme="dark"] .g-kpi > .kpi.tone-accent:first-child .delta { color:var(--fd-text) !important; }
+html[data-look="clean"][data-skin="fd"]:root[data-theme="dark"] .fdd-c.fdhero .fdd-badge { background:rgba(255,255,255,.08) !important; color:var(--fd-text) !important; }
+html[data-look="clean"][data-skin="fd"]:root[data-theme="dark"] .fdd-c.fdhero .fdd-trend { color:var(--fd-positive-text) !important; }
+html[data-look="clean"][data-skin="fd"]:root .fdd-c.fdhero .fdd-i { background:var(--fd-card) !important; color:var(--fd-text) !important; }
+
+/* ---- readable secondary text */
+html[data-look="clean"][data-skin="fd"]:root nav#nav .navgrp { color:var(--fd-text-3) !important; }
+html[data-look="clean"][data-skin="fd"]:root .fd22-faint, html[data-look="clean"][data-skin="fd"]:root .fd19-faint { color:var(--fd-text-3) !important; }
+html[data-look="clean"][data-skin="fd"]:root .wd-big.ok { color:var(--fd-positive-text) !important; } html[data-look="clean"][data-skin="fd"]:root .wd-big.bad { color:var(--fd-negative-text) !important; }
+html[data-look="clean"][data-skin="fd"]:root .rf-conf.hi { color:var(--fd-positive-text) !important; } html[data-look="clean"][data-skin="fd"]:root .rf-conf.no { color:var(--fd-negative-text) !important; }
+
+/* ---- no text under 12px; Bangla at 13px+ */
+html[data-look="clean"][data-skin="fd"]:root .ib-tabs button, html[data-look="clean"][data-skin="fd"]:root .ib-piles button { font-size:12.5px !important; }
+html[data-look="clean"][data-skin="fd"]:root .ib-rail em, html[data-look="clean"][data-skin="fd"]:root .ib-rail button em { font-size:12px !important; }
+html[data-look="clean"][data-skin="fd"]:root .bal, html[data-look="clean"][data-skin="fd"]:root .jt-st, html[data-look="clean"][data-skin="fd"]:root .rf-conf,
+html[data-look="clean"][data-skin="fd"]:root .ap-sw span, html[data-look="clean"][data-skin="fd"]:root .ap-mgrp, html[data-look="clean"][data-skin="fd"]:root .brand .tag,
+html[data-look="clean"][data-skin="fd"]:root .fdsc .tag { font-size:12px !important; }
+html[lang="bn"][data-look="clean"][data-skin="fd"] .fdcl-t .n, html[lang="bn"][data-look="clean"][data-skin="fd"] .en-meta,
+html[lang="bn"][data-look="clean"][data-skin="fd"] .ib-msg span, html[lang="bn"][data-look="clean"][data-skin="fd"] #view .sub,
+html[lang="bn"][data-look="clean"][data-skin="fd"] label.f { font-size:13px !important; }
+
+/* ---- the same corners everywhere (Inbox kept its own square ones) */
+html[data-look="clean"][data-skin="fd"]:root #ibQ, html[data-look="clean"][data-skin="fd"]:root .ib-list-h input.i { border-radius:12px !important; }
+html[data-look="clean"][data-skin="fd"]:root .fdd-head .btn.small, html[data-look="clean"][data-skin="fd"]:root #view .btn.small { border-radius:10px !important; }
+
+/* ---- browser surfaces in the palette */
+html[data-look="clean"][data-skin="fd"]:root ::selection { background:var(--fd-lime); color:#17181C; }
+html[data-look="clean"][data-skin="fd"]:root input, html[data-look="clean"][data-skin="fd"]:root textarea { caret-color:var(--fd-text); }
+html[data-look="clean"][data-skin="fd"]:root input[type="checkbox"], html[data-look="clean"][data-skin="fd"]:root input[type="radio"],
+html[data-look="clean"][data-skin="fd"]:root input[type="range"], html[data-look="clean"][data-skin="fd"]:root progress { accent-color:var(--fd-text); }
+html[data-look="clean"][data-skin="fd"]:root[data-theme="dark"] input[type="checkbox"], html[data-look="clean"][data-skin="fd"]:root[data-theme="dark"] input[type="radio"],
+html[data-look="clean"][data-skin="fd"]:root[data-theme="dark"] input[type="range"], html[data-look="clean"][data-skin="fd"]:root[data-theme="dark"] progress { accent-color:var(--fd-lime); }
+
+/* ---- phone: every tap target 40px+ (the small "?" / "i" buttons keep their look, the tap area grows) */
+@media (max-width:760px) {
+  html[data-look="clean"][data-skin="fd"]:root .t2q, html[data-look="clean"][data-skin="fd"]:root .fhelp { position:relative; }
+  html[data-look="clean"][data-skin="fd"]:root .t2q::after, html[data-look="clean"][data-skin="fd"]:root .fhelp::after,
+  html[data-look="clean"][data-skin="fd"]:root .fdd-i::after, html[data-look="clean"][data-skin="fd"]:root .fdd-ti::after,
+  html[data-look="clean"][data-skin="fd"]:root .nvg-i::after { content:""; position:absolute; inset:-11px; }
+  html[data-look="clean"][data-skin="fd"]:root .fdd-ti, html[data-look="clean"][data-skin="fd"]:root .nvg-i { position:relative; }
+  html[data-look="clean"][data-skin="fd"]:root #view input[type="checkbox"], html[data-look="clean"][data-skin="fd"]:root #view input[type="radio"] { width:22px; height:22px; min-width:22px; }
+  html[data-look="clean"][data-skin="fd"]:root .ap-sw { min-height:40px; }
+  html[data-look="clean"][data-skin="fd"]:root .en-chip, html[data-look="clean"][data-skin="fd"]:root .ib-piles button,
+  html[data-look="clean"][data-skin="fd"]:root .fdc-ms button, html[data-look="clean"][data-skin="fd"]:root .nvg-seg button,
+  html[data-look="clean"][data-skin="fd"]:root .l2-act a, html[data-look="clean"][data-skin="fd"]:root .ai-strip .ai-brain { min-height:38px; }
+}
+</style>
 </body>
 </html>
