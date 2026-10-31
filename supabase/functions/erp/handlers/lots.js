@@ -411,7 +411,7 @@ export async function erpShipmentLateCost(ctx, payload) {
 export const HANDLERS = { erpShipments, erpShipment, erpLots, erpLotFunding, erpLotFund, erpLotFundVoid, erpShipmentLateCost, erpShipmentCostVoid, erpShipmentReprice, erpShipmentRepriceCheck };
 
 /**
- * price-each-2 (owner 1 Nov 2026, joint shipment 2000043072: the invoice had each colour's dollar price but two colours took
+ * price-each-2 (owner 1 Nov 2026, a joint shipment: the invoice had each colour's dollar price but two colours took
  * the whole goods total and 53 got only their freight, 205-314 TK). A shipment already received, priced again from its
  * invoice: the goods total is shared by each line's price x quantity, the freight and costs (what this company paid,
  * shipment_costs) by weight / units / value, and every place that cost lives follows - the lots, the receive movements,

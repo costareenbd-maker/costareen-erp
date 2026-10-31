@@ -3412,10 +3412,9 @@ toast on Capital / Joint month end; not reproducible at human speed (two tries, 
 
 ## price-each-1 / price-each-2 — each line's invoice price; correct a received shipment; joint Shipments (1 Nov 2026)
 Owner: "on the joint receive I changed taka to dollars and typed the rate - the taka total was not shown; the costs show
-205, 283 TK although the invoice has every product's dollar price; make joint stock like the normal stock". Cause (live,
-joint shipment ORDER# 2000043072, USD 9,162 @ 128.5 + 344,760 TK freight, 55 lines / 1,560 rolls): the goods total is
-shared by each line's value; only Black and White had a cost then, so they took all the goods (1,303 / 1,767 TK) and 53
-colours got only freight (205-314 TK).
+205, 283 TK although the invoice has every product's dollar price; make joint stock like the normal stock". Cause (a live
+joint shipment, 55 lines): the goods total is shared by each line's value; only two products had a cost then, so they
+took all the goods and 53 colours got only their freight.
 - price-each-1 (receive, own + joint): a "Price each" column (filled from the invoice file's price) that shares the goods
   total; Goods cost step shows "USD x rate = TK" live; Review shows each line's landed cost from the server's own engine
   (erpReceivePreview, writes nothing); priced + unpriced lines mixed are refused (once one line carries the invoice's
@@ -3428,11 +3427,7 @@ colours got only freight (205-314 TK).
   "Prices wrong? > Correct the prices" (typed or read from the invoice file with the Receive reader, live new cost per
   line, Save). Joint stock > Stock > "Shipments": the pool's shipments (erpShipments/erpShipment with `pool`; freight
   and bill from this company), without this company's supplier orders; funding / strike out / late bill hidden there.
-- Live: ORDER# 2000043072 corrected from the sales contract (amount / qty per line): standard colours 958.50 TK
-  (737.50 goods + 221 freight, all 1 kg spools so units = weight), Silk 1,159.69 / 1,293.72, Starlight 1,696.05,
-  Gradient 1,226.64, Marble/Aqua/Sapphire 1,092.62. The 2 rolls on pool invoice INV-20261031-1001 re-costed
-  (1,303.61 / 1,767.61 -> 958.50 / 958.51); that sale is a 100% discount on Costareen INV-20261031-2044 (revenue 0 is
-  real, not a bug).
+- Live: the joint shipment was corrected from its sales contract (figures in private/HANDOVER.md, not here).
 NOT done: a late bill, striking out a cost and investor funding on a JOINT shipment (own stock only, hidden on the joint
 page); the pool's lots screen / To order. Tests: priceeach (9), reprice (28), joint6 updated. creators_test fails 2
 checks on 1 Nov with or without this change (month boundary in the test).

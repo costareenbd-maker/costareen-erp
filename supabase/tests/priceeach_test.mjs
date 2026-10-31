@@ -1,4 +1,4 @@
-// price-each-1 (owner 1 Nov 2026, joint shipment 2000043072: two colours took the whole $9,162, 53 others only their
+// price-each-1 (owner 1 Nov 2026, a joint shipment: two colours took the whole goods total, 53 others only their
 // freight): each line's own price (from the invoice) shares the goods total out; a mix of priced and unpriced lines is
 // refused; the Review step's preview works the costs out with the same engine and writes nothing.
 import { sql, FIX, mgr, check, done } from './harness.mjs';

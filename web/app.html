@@ -41232,7 +41232,7 @@ html[data-look="clean"][data-skin="fd"]:root .t2line span { color:var(--fd-text-
 <!-- price-each-1 (owner 1 Nov 2026, joint stock: "I changed taka to dollars and typed the rate - at the end it should
      show how much taka each costs; the product costs show 205, 283 although the invoice has each product's dollar
      price"). Receive page, own and joint stock alike:
-     - Goods cost step: the taka total shows live under the rate (USD 9,162 x 128.5 = 11,77,317 TK);
+     - Goods cost step: the taka total shows live under the rate (e.g. USD 100 x 120 = 12,000 TK);
      - Lines step: every line has a "Price each" box in the shipment's money (USD / TK), filled from the invoice file's
        price; it is what shares the goods total out (the server refuses priced and unpriced lines mixed - they used to
        get none of the goods);
@@ -41362,8 +41362,8 @@ html[data-look="clean"][data-skin="fd"]:root .t2line span { color:var(--fd-text-
   };
 })();
 </script>
-<!-- price-each-2 (owner 1 Nov 2026: "make joint stock like the normal stock and add the missing functions"; joint shipment
-     2000043072 came in with 53 colours at 205-314 TK). On the page:
+<!-- price-each-2 (owner 1 Nov 2026: "make joint stock like the normal stock and add the missing functions"; a joint
+     shipment came in with 53 colours costed at freight only). On the page:
      - Shipments works for a joint stock too: Joint stock > Stock > "Shipments" lists the pool's shipments (landed cost,
        left, sold, profit) and opens one line by line, with the freight and the bill this company paid;
      - a shipment page (own or joint) has "Correct the prices": every line's price as on the supplier invoice (typed, or

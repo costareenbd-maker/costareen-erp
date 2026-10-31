@@ -521,7 +521,7 @@ export async function receiveShipment(ctx, payload) {
     sumQty += q;
   }
   // price-each-1: a goods total shared by value where some lines have a value and others none gave those none of the goods
-  // (31 Oct 2026, joint shipment 2000043072: two colours took the whole $9,162, 53 others only their freight) - refused
+  // (31 Oct 2026, a joint shipment: two colours took the whole goods total, 53 others only their freight) - refused
   // ...and once one line carries the invoice's price, every line must: an invoice price beside an old cost is not one scale
   const explicit = lines.filter((l) => num(l.priceBdt) > 0).length;
   if (totalBdt > 0 && explicit > 0 && explicit < lines.length) {
