@@ -85,8 +85,10 @@ async function claudeChat(body, res) {
   free();
   let text = String(j.result || '').trim(), toolCalls = null;
   const t = text.replace(/^```(?:json)?\s*/i, '').replace(/```\s*$/, '').trim();
-  if (body.tools && body.tools.length && /^\{[\s\S]*"tool_call"[\s\S]*\}$/.test(t)) {
-    try { const c = JSON.parse(t).tool_call; if (c && c.name) { toolCalls = [{ id: 'call_' + randomUUID().slice(0, 12), type: 'function', function: { name: c.name, arguments: JSON.stringify(c.arguments || {}) } }]; text = ''; } } catch (_) { /* a normal answer */ }
+  // the call may come alone or after a sentence ("let me check... {"tool_call": ...}"): the JSON from its last opening on
+  const at = body.tools && body.tools.length ? t.lastIndexOf('{"tool_call"') : -1;
+  if (at >= 0) {
+    try { const c = JSON.parse(t.slice(at)).tool_call; if (c && c.name) { toolCalls = [{ id: 'call_' + randomUUID().slice(0, 12), type: 'function', function: { name: c.name, arguments: JSON.stringify(c.arguments || {}) } }]; text = ''; } } catch (_) { /* a normal answer */ }
   }
   const u = j.usage || {};
   send(res, 200, { id: 'chatcmpl-' + randomUUID(), object: 'chat.completion', created: Math.floor(Date.now() / 1000), model: body.model,
