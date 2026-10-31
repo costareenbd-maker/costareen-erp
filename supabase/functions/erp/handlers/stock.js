@@ -522,6 +522,13 @@ export async function receiveShipment(ctx, payload) {
   }
   // price-each-1: a goods total shared by value where some lines have a value and others none gave those none of the goods
   // (31 Oct 2026, joint shipment 2000043072: two colours took the whole $9,162, 53 others only their freight) - refused
+  // ...and once one line carries the invoice's price, every line must: an invoice price beside an old cost is not one scale
+  const explicit = lines.filter((l) => num(l.priceBdt) > 0).length;
+  if (totalBdt > 0 && explicit > 0 && explicit < lines.length) {
+    const none = lines.filter((l) => !(num(l.priceBdt) > 0)).map((l) => (existing[str(l.sku).toLowerCase()] || {}).name || str(l.sku));
+    throw new Error('No price for ' + none.slice(0, 4).join(', ') + (none.length > 4 ? ' and ' + (none.length - 4) + ' more' : '') +
+      ': the other lines carry the invoice’s price, so these need theirs too (Lines step), as on the supplier invoice.');
+  }
   if (totalBdt > 0 && sumW > 0) {
     const none = lines.map((l, x) => weights[x] > 0 ? null : (existing[str(l.sku).toLowerCase()] || {}).name || str(l.sku)).filter(Boolean);
     if (none.length) throw new Error('No price for ' + none.slice(0, 4).join(', ') + (none.length > 4 ? ' and ' + (none.length - 4) + ' more' : '') +

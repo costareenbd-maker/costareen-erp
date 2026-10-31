@@ -89,7 +89,14 @@ function sums(lot, draws) {
 }
 
 /** Shipments with their lots and figures; once per read-only call (ctx.memo.__ro). */
-export async function erpShipments(ctx) {
+export async function erpShipments(ctx, payload) {
+  if (str(payload && payload.pool)) {
+    const r = await poolShipments(ctx, payload.pool, (pctx) => erpShipmentsRaw(pctx));
+    const costs = {};
+    for (const c of await ctx.tx`select reference, sum(amount) as amount from shipment_costs where business_id = ${ctx.biz} and voided is null group by reference`) costs[str(c.reference)] = num(c.amount);
+    r.shipments.forEach((x) => { x.extraCosts = R(costs[x.reference] || 0); });
+    return { ...r, pool: str(payload.pool) };
+  }
   if (ctx.memo && ctx.memo.__ro && ctx.memo.__ship) return ctx.memo.__ship;
   const r = await erpShipmentsRaw(ctx);
   if (ctx.memo && ctx.memo.__ro) ctx.memo.__ship = r;
@@ -144,6 +151,15 @@ async function erpShipmentsRaw(ctx) {
 }
 
 export async function erpShipment(ctx, payload) {
+  if (str(payload && payload.pool)) {
+    const ref = str(payload.reference);
+    const r = await poolShipments(ctx, payload.pool, (pctx) => erpShipment(pctx, { reference: ref }));
+    r.extra = (await ctx.tx`select id, label, amount, at, voided from shipment_costs where business_id = ${ctx.biz} and reference = ${ref} order by at`)
+      .map((c) => ({ id: c.id, label: str(c.label), amount: R(c.amount), voided: str(c.voided) }));
+    const bill = (await ctx.tx`select supplier, amount, fx_amount, fx_currency, fx_rate from supplier_bills where business_id = ${ctx.biz} and reference = ${ref} limit 1`)[0];
+    r.bill = bill ? { supplier: str(bill.supplier), amount: R(bill.amount), fx: num(bill.fx_amount) ? num(bill.fx_amount) + ' ' + str(bill.fx_currency) + ' @ ' + num(bill.fx_rate) : '' } : null;
+    return { ...r, pool: str(payload.pool) };
+  }
   const ref = str(payload && payload.reference);
   if (!ref) throw new Error('Which shipment?');
   const opening = ref === 'Stock before lots began';
@@ -389,4 +405,142 @@ export async function erpShipmentLateCost(ctx, payload) {
   return { ok: true, reference: ref, amount, soldPart: sold, shelfPart: shelf, split };
 }
 
-export const HANDLERS = { erpShipments, erpShipment, erpLots, erpLotFunding, erpLotFund, erpLotFundVoid, erpShipmentLateCost, erpShipmentCostVoid };
+export const HANDLERS = { erpShipments, erpShipment, erpLots, erpLotFunding, erpLotFund, erpLotFundVoid, erpShipmentLateCost, erpShipmentCostVoid, erpShipmentReprice, erpShipmentRepriceCheck };
+
+/**
+ * price-each-2 (owner 1 Nov 2026, joint shipment 2000043072: the invoice had each colour's dollar price but two colours took
+ * the whole goods total and 53 got only their freight, 205-314 TK). A shipment already received, priced again from its
+ * invoice: the goods total is shared by each line's price x quantity, the freight and costs (what this company paid,
+ * shipment_costs) by weight / units / value, and every place that cost lives follows - the lots, the receive movements,
+ * what each sale already drew, the sale lines' fixed cost (and so profit) and the products' average cost.
+ * Own stock and joint stock (payload.pool) alike; the supplier bill stays what it was (it is what is owed).
+ * Refused: a month closed (the shipment's or a sale's), a line without a price, a cost added after the goods (strike it
+ * out, correct, add it again). The prices' total must match the goods' (else CONFIRM: use the prices' total).
+ */
+async function repriceRun(ctx, payload, preview) {
+  payload = payload || {};
+  if (!powerOn(ctx.s, 'costs')) throw new Error('Your account cannot change what goods cost.');
+  const ref = str(payload.reference);
+  if (!ref) throw new Error('Which shipment?');
+  const pool = str(payload.pool);
+  if (!preview) await ctx.tx`select pg_advisory_xact_lock(hashtext(${'stock:' + ctx.biz}))`;
+  // this company's side: what it paid besides the goods, and the supplier's bill for the goods
+  const costRows = await ctx.tx`select id, amount, voided from shipment_costs where business_id = ${ctx.biz} and reference = ${ref}`;
+  const lateIds = new Set((await ctx.tx`select cost_id from late_costs where business_id = ${ctx.biz} and reference = ${ref}`).map((r) => String(r.cost_id)));
+  const bill = (await ctx.tx`select amount, fx_amount, fx_currency, fx_rate from supplier_bills
+                             where business_id = ${ctx.biz} and reference = ${ref} and voided is null order by at limit 1`)[0] || null;
+  const work = async (c, openOn) => {
+    if (!preview && pool) await c.tx`select pg_advisory_xact_lock(hashtext(${'stock:' + c.biz}))`;
+    const lots = preview
+      ? await c.tx`select l.id, l.movement_id, l.product_id, l.qty_in, l.qty_left, l.unit_cost, l.received_at, p.sku, p.name, p.cost_price,
+                         greatest(coalesce(p.weight_g, 0), case when p.length_mm > 0 and p.width_mm > 0 and p.height_mm > 0 then p.length_mm * p.width_mm * p.height_mm / 6000 else 0 end) as g
+                  from stock_lots l join products p on p.id = l.product_id
+                  where l.business_id = ${c.biz} and l.reference = ${ref} and l.source = 'receive' and l.qty_in > 0 order by l.seq`
+      : await c.tx`select l.id, l.movement_id, l.product_id, l.qty_in, l.qty_left, l.unit_cost, l.received_at, p.sku, p.name, p.cost_price,
+                         greatest(coalesce(p.weight_g, 0), case when p.length_mm > 0 and p.width_mm > 0 and p.height_mm > 0 then p.length_mm * p.width_mm * p.height_mm / 6000 else 0 end) as g
+                  from stock_lots l join products p on p.id = l.product_id
+                  where l.business_id = ${c.biz} and l.reference = ${ref} and l.source = 'receive' and l.qty_in > 0 order by l.seq for update of l`;
+    if (!lots.length) throw new Error('No shipment called "' + ref + '"' + (pool ? ' in this joint stock.' : '.'));
+    const first = lots.reduce((a, l) => (l.received_at < a ? l.received_at : a), lots[0].received_at);
+    await openOn(first, 'the cost of its goods cannot be corrected');
+    const live = costRows.filter((r) => !str(r.voided));
+    if (live.some((r) => lateIds.has(String(r.id)))) {
+      throw new Error('A cost was added to "' + ref + '" after the goods came. Strike it out first (Shipments), correct the prices, then add it again.');
+    }
+    const shipping = round2(live.reduce((t, r) => t + num(r.amount), 0));
+    const landedNow = round2(lots.reduce((t, l) => t + num(l.qty_in) * num(l.unit_cost), 0));
+    // the prices: in the bill's money unless another is named; one price per product code
+    const cur = (str(payload.currency) || (bill && str(bill.fx_currency)) || 'BDT').toUpperCase();
+    const fx = !/^(BDT|TK|TAKA)$/.test(cur);
+    const rate = fx ? (num(payload.rate) || (bill && str(bill.fx_currency).toUpperCase() === cur ? num(bill.fx_rate) : 0)) : 1;
+    if (fx && !(rate > 0)) throw new Error('Type the rate: how many taka one ' + cur + ' was.');
+    const price = {};
+    for (const x of Array.isArray(payload.prices) ? payload.prices : []) {
+      const k = str(x && x.sku).toLowerCase(), v = num(x && x.price);
+      if (v < 0) throw new Error('A price cannot be below zero.');
+      if (k && v > 0) price[k] = v;
+    }
+    const miss = [...new Set(lots.filter((l) => !(price[str(l.sku).toLowerCase()] > 0)).map((l) => str(l.name) || str(l.sku)))];
+    if (miss.length) throw new Error('No price for ' + miss.slice(0, 4).join(', ') + (miss.length > 4 ? ' and ' + (miss.length - 4) + ' more' : '') + '. Type every line’s price, as on the supplier invoice.');
+    const w = lots.map((l) => price[str(l.sku).toLowerCase()] * rate * num(l.qty_in));
+    const priced = round2(w.reduce((t, v) => t + v, 0));
+    // the goods total: the supplier bill's, else what the goods carry now (the shipment's total less what was paid besides)
+    let goods = bill ? round2(num(bill.amount)) : round2(landedNow - shipping);
+    if (!(goods > 0)) goods = priced;
+    const gap = Math.abs(priced - goods);
+    let mismatch = null;
+    if (gap > Math.max(1, goods * 0.01)) {
+      mismatch = { goods: R(goods), priced: R(priced) };
+      if (!payload.usePrices && !preview) {
+        throw new Error('CONFIRM: The prices come to ' + Math.round(priced) + ' TK' + (fx ? ' (' + cur + ' × ' + rate + ')' : '') + ', but the shipment’s goods were ' + Math.round(goods) +
+                        ' TK. Use the prices’ total? (The supplier bill stays ' + Math.round(goods) + ' TK.)');
+      }
+      if (payload.usePrices) goods = priced;
+    }
+    const basis = ['weight', 'units', 'value'].includes(str(payload.basis)) ? str(payload.basis) : (lots.every((l) => num(l.g) > 0) ? 'weight' : 'units');
+    if (basis === 'weight') { const nw = lots.filter((l) => !(num(l.g) > 0)); if (nw.length) throw new Error('Give the weight of ' + nw.map((l) => str(l.name)).slice(0, 3).join(', ') + ' to share the freight by weight.'); }
+    const m = lots.map((l, x) => basis === 'weight' ? num(l.g) * num(l.qty_in) : basis === 'units' ? num(l.qty_in) : w[x]);
+    const sumW = w.reduce((t, v) => t + v, 0), sumM = m.reduce((t, v) => t + v, 0);
+    const lines = lots.map((l, x) => {
+      const q = num(l.qty_in), g = goods * w[x] / sumW / q, s = sumM > 0 ? shipping * m[x] / sumM / q : 0;
+      return { lot: l, sku: str(l.sku), name: str(l.name), qty: q, left: num(l.qty_left), price: price[str(l.sku).toLowerCase()], goods: round2(g), shipping: round2(s),
+               was: num(l.unit_cost), now: round2(g + s) };
+    });
+    const out = { reference: ref, currency: cur, rate: fx ? rate : 0, basis, goods: R(goods), shipping: R(shipping), landedWas: R(landedNow), mismatch, usePrices: !!payload.usePrices,
+                  landedNow: R(lines.reduce((t, l) => t + l.now * l.qty, 0)),
+                  lines: lines.map((l) => ({ sku: l.sku, name: l.name, qty: l.qty, left: l.left, price: l.price, goods: l.goods, shipping: l.shipping, was: l.was, now: l.now })) };
+    // what was already sold from these lots, and its months
+    const draws = await c.tx`select d.id, d.lot_id, d.qty, d.reversed, d.unit_cost, d.movement_id, d.product_id, m.invoice_id, m.created_at
+                             from lot_draws d join stock_movements m on m.id = d.movement_id where d.lot_id = any(${lots.map((l) => l.id)})`;
+    const byLot = {};
+    for (const l of lines) byLot[l.lot.id] = l;
+    out.soldChange = R(draws.reduce((t, d) => t + (byLot[d.lot_id].now - num(d.unit_cost)) * Math.max(0, num(d.qty) - num(d.reversed)) * (num(d.qty) > 0 ? 1 : 0), 0));
+    out.shelfChange = R(lines.reduce((t, l) => t + (l.now - l.was) * l.left, 0));
+    for (const d of draws) if (d.invoice_id && num(d.qty) > 0) await openOn(d.created_at, 'a sale made from this shipment cannot be re-costed');
+    if (preview) return { preview: true, ...out };
+
+    const who = str(ctx.s.name) || 'Someone';
+    const stamp = ' | prices corrected ' + formatDate(ctx.now, 'd MMM yy') + ' by ' + who;
+    for (const l of lines) {
+      await c.tx`update stock_lots set unit_cost = ${l.now} where id = ${l.lot.id}`;
+      if (l.lot.movement_id) {
+        await c.tx`update stock_movements set unit_price = ${l.now}, total = ${round2(l.now * l.qty)},
+                   note = left(coalesce(note, '') || ${stamp}, 600) where id = ${l.lot.movement_id}`;
+      }
+    }
+    const touched = new Set();
+    for (const d of draws) {
+      await c.tx`update lot_draws set unit_cost = ${byLot[d.lot_id].now} where id = ${d.id}`;
+      if (d.invoice_id && num(d.qty) > 0) touched.add(d.movement_id + '|' + d.invoice_id + '|' + d.product_id);
+    }
+    const invoices = new Set();
+    for (const k of touched) {
+      const [mid, inv, pid] = k.split('|');
+      const avg = (await c.tx`select sum(qty * coalesce(unit_cost, 0)) / nullif(sum(qty), 0) as c from lot_draws where movement_id = ${mid} and qty > 0`)[0];
+      if (!avg || avg.c === null) continue;
+      const n = await c.tx`update invoice_lines set unit_cost = ${round2(num(avg.c))} where invoice_id = ${inv}
+                           and (product_id = ${pid} or lower(btrim(sku)) = (select lower(btrim(sku)) from products where id = ${pid}))`;
+      if (!n.count) throw new Error('The sale line could not be re-costed (invoice ' + inv + ').');
+      invoices.add(inv);
+    }
+    // the products' average cost: what is left on the shelf, at what it now cost
+    for (const pid of [...new Set(lines.map((l) => l.lot.product_id))]) {
+      const a = (await c.tx`select sum(qty_left * unit_cost) / nullif(sum(qty_left), 0) as c from stock_lots
+                            where product_id = ${pid} and qty_left > 0 and unit_cost is not null`)[0];
+      const mine = lines.filter((l) => l.lot.product_id === pid);
+      const v = a && a.c !== null ? round2(num(a.c)) : (Math.abs(num(mine[0].lot.cost_price) - mine[0].was) < 1 ? mine[mine.length - 1].now : null);
+      if (v !== null) await c.tx`update products set cost_price = ${v}, updated_at = now() where id = ${pid}`;
+    }
+    out.invoices = invoices.size ? (await c.tx`select invoice_no from invoices where id = any(${[...invoices]})`).map((r) => str(r.invoice_no)) : [];
+    return { ok: true, ...out };
+  };
+  if (pool) return (await import('./joint.js')).poolWork(ctx, pool, (pctx, _p, openOn) => work(pctx, openOn));
+  return work(ctx, (d, what) => assertOpen(ctx, d, what));
+}
+export async function erpShipmentReprice(ctx, payload) { return repriceRun(ctx, payload, false); }
+export async function erpShipmentRepriceCheck(ctx, payload) { return repriceRun(ctx, payload, true); }
+
+/** price-each-2: a joint stock's shipments (the lots live in the pool; what was paid besides the goods, and the bill, here). */
+async function poolShipments(ctx, poolId, fn) {
+  return (await import('./joint.js')).poolWork(ctx, poolId, (pctx) => fn(pctx));
+}

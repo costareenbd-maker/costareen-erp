@@ -8503,7 +8503,7 @@ function srv(name, args, ok, bad) {
 
 var SRV_ACTIVE = 0, SRV_WRITING = false, SRV_TIMED = {};
 // the same list the server uses to know a call changes nothing (ERP_READS)
-var SRV_READS = /^(erpReceivePreview|erpSeo|erpReceipts|erpBrief|erpBrain|erpWatch|erpEngine|erpEngineJob|erpSkills|erpAiBrain|erpAiBrainModels|erpLeadForms|erpLeads|erpLeadFind|erpLeadCapture|erpMyUpdates|erpSocialBridges|erpAds|erpAdsInterests|erpSocialNet|erpSocialLearn|erpSocialAssets|erpSocialPosts|erpSocialPhotos|erpInboxDigest|erpJointRecvCatalog|erpSitePages|erpBalanceSheet|erpProductFields|erpProductAi|erpMetaConnect|erpInboxFeatureMap|erpBookings|erpInbox|erpInboxOpen|erpInboxChannels|erpChatOrders|erpInboxStats|erpAiWork|erpCommissionSales|erpFdCards|erpLineMargins|erpFd19Profit|erpFdInventory|erpFd22Analytics|erpNavigator|erpSellers|erpFollowups|erpCustomerInsight|erpPreorders|erpCashUps|erpAskingPrices|erpSystemCheck|erpAnalytics|erpCommission|erpHolding|erpLotFunding|erpShipments|erpShipment|erpLots|erpFdHead|erpFdDash|erpReceiveMatch|erpAiReader|erpProductSuggest|erpCatalogue|erpPushList|erpCreators|erpCreatorPortalLink|erpSponsorLink|erpCreatorRequests|erpCreatorEvents|erpCreatorProgramme|erpCreatorPreview|erpCreatorCatalog|erpCreatorSources|erpCreatorClaims|erpApps|erpAppQr|erpFeedback|erpRestockOffers|erpRestockList|erpWarrantyRules|erpWarrantyCard|erpMyLink|erpPlatformRegister|erpPlatformDoctor|erpPlatformCommunity|erpMarketWaiting|erpBoard|erpPlatformDesign|erpResell|erpResellerProgramme|erpLoyalty|erpCustomerPoints|erpRefillDue|erpDeliveryHistory|erpDeliveryHistoryMany|erpPrintKit|erpPrintJobs|erpPrintJob|erpPrintCost|erpSpools|erpPrintRequests|erpJoint|erpJointCatalog|erpJointCard|erpInvoiceDesign|erpInvoicePreview|erpMarket|erpMarketMine|erpMarketRequests|erpMarketHints|erpMarketNames|erpWanted|erpBrand|erpComplianceLog|erpProviderKey|erpNews|erpAccessKeys|erpAccessWarning|erpAdmin|erpAiKeys|erpAlertRules|erpAlerts|erpArena|erpBackupStatus|erpBg|erpBnWords|erpBookedParcels|erpBrandLogo|erpBundle|erpBusinessLinks|erpBusinesses|erpBusinessesDeleted|erpCampaignAudience|erpCampaignGet|erpCampaignList|erpCapital|erpCashBook|erpCatalog|erpConnStatus|erpConnections|erpCostBook|erpCourier|erpCourierKeyStatus|erpCurrencies|erpCustomerAccount|erpCustomerCredit|erpCustomerList|erpCustomerPage|erpCustomerStatement|erpCustomers|erpDashboardData|erpDaySales|erpDeliveryOptions|erpDevices|erpDiscontinued|erpDues|erpEvoQr|erpEvoStatus|erpExpenseExport|erpExpenseReceiptUrl|erpExpenses|erpFamilies|erpFighters|erpFormOptions|erpGame|erpGetTheme|erpGoogle|erpHello|erpInstalls|erpInvoice|erpInvoicePdf|erpJob|erpJobs|erpListView|erpLookupCustomer|erpLookupUsage|erpMe|erpMoney|erpNoteFileUrl|erpNotes|erpOwnerChange|erpOwnerChanges|erpParcelLabels|erpParcelPreview|erpPartnerStock|erpPartnership|erpPayReasons|erpPeople|erpPlatform|erpPlatformErrors|erpPnl|erpPnlMonth|erpPoList|erpPoolCatalog|erpProduct|erpProductListShare|erpProductPage|erpProductPhotoUrl|erpProductThumbs|erpProfile|erpQuoteAsset|erpQuoteBoot|erpQuoteGet|erpQuoteList|erpRecentInvoices|erpRecovery|erpReorderPlan|erpRestorePreview|erpReturnPreview|erpRisks|erpSales|erpSearch|erpSecurity|erpSelfTest|erpSerialLookup|erpSerialsFor|erpSessions|erpSetTheme|erpSettingsFull|erpSettingsLists|erpSfPayoutLines|erpSfPayouts|erpShareFile|erpSharedStock|erpSheet|erpStatementPdf|erpStockHistory|erpSupplierPage|erpSuppliers|erpToday|erpUsers|erpWaProductPdf|erpWebMatches|erpWebOrderInvoices|erpWebOrders|erpWebsiteTest)$/;
+var SRV_READS = /^(erpShipmentRepriceCheck|erpReceivePreview|erpSeo|erpReceipts|erpBrief|erpBrain|erpWatch|erpEngine|erpEngineJob|erpSkills|erpAiBrain|erpAiBrainModels|erpLeadForms|erpLeads|erpLeadFind|erpLeadCapture|erpMyUpdates|erpSocialBridges|erpAds|erpAdsInterests|erpSocialNet|erpSocialLearn|erpSocialAssets|erpSocialPosts|erpSocialPhotos|erpInboxDigest|erpJointRecvCatalog|erpSitePages|erpBalanceSheet|erpProductFields|erpProductAi|erpMetaConnect|erpInboxFeatureMap|erpBookings|erpInbox|erpInboxOpen|erpInboxChannels|erpChatOrders|erpInboxStats|erpAiWork|erpCommissionSales|erpFdCards|erpLineMargins|erpFd19Profit|erpFdInventory|erpFd22Analytics|erpNavigator|erpSellers|erpFollowups|erpCustomerInsight|erpPreorders|erpCashUps|erpAskingPrices|erpSystemCheck|erpAnalytics|erpCommission|erpHolding|erpLotFunding|erpShipments|erpShipment|erpLots|erpFdHead|erpFdDash|erpReceiveMatch|erpAiReader|erpProductSuggest|erpCatalogue|erpPushList|erpCreators|erpCreatorPortalLink|erpSponsorLink|erpCreatorRequests|erpCreatorEvents|erpCreatorProgramme|erpCreatorPreview|erpCreatorCatalog|erpCreatorSources|erpCreatorClaims|erpApps|erpAppQr|erpFeedback|erpRestockOffers|erpRestockList|erpWarrantyRules|erpWarrantyCard|erpMyLink|erpPlatformRegister|erpPlatformDoctor|erpPlatformCommunity|erpMarketWaiting|erpBoard|erpPlatformDesign|erpResell|erpResellerProgramme|erpLoyalty|erpCustomerPoints|erpRefillDue|erpDeliveryHistory|erpDeliveryHistoryMany|erpPrintKit|erpPrintJobs|erpPrintJob|erpPrintCost|erpSpools|erpPrintRequests|erpJoint|erpJointCatalog|erpJointCard|erpInvoiceDesign|erpInvoicePreview|erpMarket|erpMarketMine|erpMarketRequests|erpMarketHints|erpMarketNames|erpWanted|erpBrand|erpComplianceLog|erpProviderKey|erpNews|erpAccessKeys|erpAccessWarning|erpAdmin|erpAiKeys|erpAlertRules|erpAlerts|erpArena|erpBackupStatus|erpBg|erpBnWords|erpBookedParcels|erpBrandLogo|erpBundle|erpBusinessLinks|erpBusinesses|erpBusinessesDeleted|erpCampaignAudience|erpCampaignGet|erpCampaignList|erpCapital|erpCashBook|erpCatalog|erpConnStatus|erpConnections|erpCostBook|erpCourier|erpCourierKeyStatus|erpCurrencies|erpCustomerAccount|erpCustomerCredit|erpCustomerList|erpCustomerPage|erpCustomerStatement|erpCustomers|erpDashboardData|erpDaySales|erpDeliveryOptions|erpDevices|erpDiscontinued|erpDues|erpEvoQr|erpEvoStatus|erpExpenseExport|erpExpenseReceiptUrl|erpExpenses|erpFamilies|erpFighters|erpFormOptions|erpGame|erpGetTheme|erpGoogle|erpHello|erpInstalls|erpInvoice|erpInvoicePdf|erpJob|erpJobs|erpListView|erpLookupCustomer|erpLookupUsage|erpMe|erpMoney|erpNoteFileUrl|erpNotes|erpOwnerChange|erpOwnerChanges|erpParcelLabels|erpParcelPreview|erpPartnerStock|erpPartnership|erpPayReasons|erpPeople|erpPlatform|erpPlatformErrors|erpPnl|erpPnlMonth|erpPoList|erpPoolCatalog|erpProduct|erpProductListShare|erpProductPage|erpProductPhotoUrl|erpProductThumbs|erpProfile|erpQuoteAsset|erpQuoteBoot|erpQuoteGet|erpQuoteList|erpRecentInvoices|erpRecovery|erpReorderPlan|erpRestorePreview|erpReturnPreview|erpRisks|erpSales|erpSearch|erpSecurity|erpSelfTest|erpSerialLookup|erpSerialsFor|erpSessions|erpSetTheme|erpSettingsFull|erpSettingsLists|erpSfPayoutLines|erpSfPayouts|erpShareFile|erpSharedStock|erpSheet|erpStatementPdf|erpStockHistory|erpSupplierPage|erpSuppliers|erpToday|erpUsers|erpWaProductPdf|erpWebMatches|erpWebOrderInvoices|erpWebOrders|erpWebsiteTest)$/;
 function srvPump() {
   if (!SRV_Q.length) return;
   var isRead = SRV_READS.test(SRV_Q[0].name);
@@ -41362,5 +41362,218 @@ html[data-look="clean"][data-skin="fd"]:root .t2line span { color:var(--fd-text-
   };
 })();
 </script>
+<!-- price-each-2 (owner 1 Nov 2026: "make joint stock like the normal stock and add the missing functions"; joint shipment
+     2000043072 came in with 53 colours at 205-314 TK). On the page:
+     - Shipments works for a joint stock too: Joint stock > Stock > "Shipments" lists the pool's shipments (landed cost,
+       left, sold, profit) and opens one line by line, with the freight and the bill this company paid;
+     - a shipment page (own or joint) has "Correct the prices": every line's price as on the supplier invoice (typed, or
+       read from the invoice file with the same reader as Receive), the rate, how the freight is shared; the new cost of
+       each line is worked out by the server before anything is saved (erpShipmentRepriceCheck), then "Save the new
+       costs" re-costs the lots, the sales already made from them and the products' cost (erpShipmentReprice). -->
+<style>
+.sfx-top { display:flex; flex-wrap:wrap; gap:12px; align-items:flex-end; margin:10px 0 12px; }
+.sfx-top > div { min-width:120px; }
+.sfx-price { width:110px; text-align:right; }
+.sfx-up { color:var(--fd-negative-text, #b91c1c); } .sfx-down { color:var(--fd-positive-text, #15803d); }
+.sfx-sum { margin-top:10px; font-weight:600; }
+.sfx-act { display:flex; gap:8px; flex-wrap:wrap; margin-top:12px; }
+.shp-pool { display:flex; flex-wrap:wrap; gap:10px; align-items:center; justify-content:space-between; }
+</style>
+<script>
+(function () {
+  SHP.pool = ''; SHP.poolName = '';
+  var SFX = { ref: '', open: false, prices: {}, cur: '', rate: '', basis: '', usePrices: false, res: null, err: '', busy: false, key: '', t: 0, read: '' };
+  window.SFX = SFX;
+
+  // ---- the shipments of a joint stock
+  shpLoad = function () {
+    if (SHP.busy) return; SHP.busy = true;
+    var pool = SHP.pool ? { pool: SHP.pool } : {};
+    var again = function () { if (VIEW === 'shipments') repaint(); };
+    if (SHP.ref) srv('erpShipment', [Object.assign({ reference: SHP.ref }, pool)], function (r) { SHP.busy = false; SHP.one = r; SHP.oneErr = ''; again(); },
+      function (e) { SHP.busy = false; SHP.oneErr = e && e.message ? e.message : String(e); again(); });
+    else srv('erpShipments', [pool], function (r) { SHP.busy = false; SHP.list = r; SHP.err = ''; again(); },
+      function (e) { SHP.busy = false; SHP.err = e && e.message ? e.message : String(e); again(); });
+  };
+  function openPool(id, name) { SHP.pool = id || ''; SHP.poolName = name || ''; SHP.ref = ''; SHP.list = null; SHP.one = null; SHP.err = ''; SHP.oneErr = ''; SFX.open = false; }
+  window.shpOpenPool = openPool;
+  // the menu's Shipments is always this company's own
+  document.addEventListener('click', function (e) {
+    if (e.target.closest && e.target.closest('#nav button[data-view="shipments"]') && SHP.pool) openPool('', '');
+  }, true);
+  var viewShipmentsSFX = viewShipments;
+  viewShipments = function () {
+    var h = viewShipmentsSFX.apply(this, arguments);
+    if (!SHP.pool || SHP.ref) return h;
+    h = h.replace('<button class="btn primary small" type="button" data-go="stock">+ Receive a shipment</button>', '');
+    return '<div class="card shp-pool" style="margin-bottom:14px"><div><div class="fdd-eyebrow">Joint stock</div><h2 style="margin:2px 0 0">' + esc(SHP.poolName || 'Joint stock') + ' — shipments</h2>' +
+      '<div class="sub">What came into the joint stock, at what it cost (the freight and the bill are this company’s).</div></div>' +
+      '<div class="row" style="gap:8px"><button class="btn small" type="button" data-shpjoint="back">← Joint stock</button><button class="btn small" type="button" data-shpjoint="own">Own shipments</button></div></div>' + h;
+  };
+
+  // ---- Correct the prices
+  function shipCur(d) {
+    var m = d && d.bill && d.bill.fx ? String(d.bill.fx).match(/^([\d.]+)\s+(\S+)\s+@\s+([\d.]+)/) : null;
+    return m ? { cur: m[2].toUpperCase(), rate: m[3], fxTotal: num(m[1]) } : { cur: 'TK', rate: '', fxTotal: 0 };
+  }
+  function startFix(d) {
+    var c = shipCur(d);
+    SFX.ref = d.reference; SFX.open = true; SFX.prices = {}; SFX.cur = c.cur; SFX.rate = c.rate; SFX.basis = ''; SFX.usePrices = false;
+    SFX.res = null; SFX.err = ''; SFX.key = ''; SFX.read = '';
+  }
+  function payload() {
+    var d = SHP.one, seen = {}, prices = [];
+    (d.lines || []).forEach(function (l) { var k = String(l.sku).toLowerCase(); if (seen[k]) return; seen[k] = 1; prices.push({ sku: l.sku, price: num(SFX.prices[k]) }); });
+    var p = { reference: SFX.ref, prices: prices, currency: SFX.cur === 'TK' ? 'BDT' : SFX.cur, rate: num(SFX.rate), basis: SFX.basis, usePrices: !!SFX.usePrices };
+    if (SHP.pool) p.pool = SHP.pool;
+    return p;
+  }
+  function missing() { var d = SHP.one; return (d.lines || []).filter(function (l) { return !(num(SFX.prices[String(l.sku).toLowerCase()]) > 0); }).length; }
+  function check() {
+    if (!SFX.open || !SHP.one) return;
+    if (missing()) { SFX.res = null; SFX.err = ''; paintRes(); return; }
+    var p = payload(), key = JSON.stringify(p);
+    if (key === SFX.key && (SFX.res || SFX.err)) { paintRes(); return; }
+    SFX.key = key; SFX.busy = true; paintRes();
+    srv('erpShipmentRepriceCheck', [p], function (r) { if (SFX.key !== key) return; SFX.busy = false; SFX.res = r; SFX.err = ''; paintRes(); },
+      function (e) { if (SFX.key !== key) return; SFX.busy = false; SFX.res = null; SFX.err = (e && e.message) || String(e); paintRes(); });
+  }
+  function later() { clearTimeout(SFX.t); SFX.t = setTimeout(check, 450); }
+  function money(v) { return fmt(Math.round(num(v))); }
+  function resHtml() {
+    var n = missing();
+    if (n) return '<div class="sub">Type every line’s price to see its new cost (' + fmt(n) + ' still empty).</div>';
+    if (SFX.err) return '<div class="note err"><div class="ico">!</div><div>' + esc(SFX.err) + '</div></div>';
+    var r = SFX.res; if (!r) return '<div class="sub">' + (SFX.busy ? 'Working out the new costs…' : '') + '</div>';
+    var mm = r.mismatch ? '<div class="note" style="margin-top:10px"><div class="ico">!</div><div><strong>The prices come to ' + money(r.mismatch.priced) + ' TK, the shipment’s goods to ' + money(r.mismatch.goods) + ' TK.</strong> ' +
+      'Check the prices and the rate. If the prices are right, ' +
+      '<label style="display:inline-flex;gap:6px;align-items:center"><input type="checkbox" id="sfx_use"' + (SFX.usePrices ? ' checked' : '') + '> use the prices’ total</label> (the supplier bill stays as it is).</div></div>' : '';
+    return mm + '<div class="sfx-sum">Goods ' + money(r.goods) + ' TK' + (r.rate ? ' (' + esc(r.currency) + ' at ' + r.rate + ')' : '') + ' + freight and costs ' + money(r.shipping) + ' TK (by ' + esc(r.basis) + ') = ' +
+      money(r.landedNow) + ' TK. Was ' + money(r.landedWas) + ' TK.</div>' +
+      '<div class="sub">Sales already made from this shipment: their cost changes by ' + (r.soldChange > 0 ? '+' : '') + money(r.soldChange) + ' TK (their profit by the opposite). Stock on the shelf: ' +
+      (r.shelfChange > 0 ? '+' : '') + money(r.shelfChange) + ' TK.</div>';
+  }
+  function paintRes() {
+    var b = el('sfx_res'); if (b) b.innerHTML = resHtml();
+    var r = SFX.res, d = SHP.one;
+    (d && d.lines || []).forEach(function (l, i) {
+      var c = el('sfx_now_' + i), g = el('sfx_gs_' + i); if (!c) return;
+      var x = r && !missing() && r.lines[i] && r.lines[i].sku === l.sku ? r.lines[i] : null;
+      c.innerHTML = x ? '<b class="' + (x.now > x.was + 0.5 ? 'sfx-up' : x.now < x.was - 0.5 ? 'sfx-down' : '') + '">' + fmt(x.now) + '</b>' : '—';
+      if (g) g.textContent = x ? fmt(x.goods) + ' + ' + fmt(x.shipping) : '';
+    });
+    var s = el('sfx_save'); if (s) s.disabled = !(r && !missing() && !SFX.busy && (!r.mismatch || SFX.usePrices));
+  }
+  function editorHtml(d) {
+    var cur = SFX.cur || 'TK', seen = {};
+    var rows = d.lines.map(function (l, i) {
+      var k = String(l.sku).toLowerCase(), first = !seen[k]; seen[k] = 1;
+      return '<tr><td>' + esc(l.name) + '<div class="sku">' + esc(l.sku) + '</div></td><td class="num">' + fmt(l.unitsIn) + '</td>' +
+        '<td class="num">' + (first ? '<input class="i sfx-price" type="number" min="0" step="any" inputmode="decimal" data-sfxp="' + esc(k) + '" value="' + esc(String(SFX.prices[k] || '')) + '" placeholder="' + esc(cur) + '" aria-label="Price each ' + esc(l.name) + '">' : '<span class="sku">same code</span>') + '</td>' +
+        '<td class="num">' + (l.unitCost === null ? '—' : fmt(l.unitCost)) + '</td><td class="num" id="sfx_now_' + i + '">—</td><td class="num sku" id="sfx_gs_' + i + '"></td></tr>';
+    }).join('');
+    var bs = function (v, t) { return '<option value="' + v + '"' + (SFX.basis === v ? ' selected' : '') + '>' + t + '</option>'; };
+    return '<div class="card" id="sfx_card" style="margin-top:16px"><div class="chead"><h2>Correct the prices</h2><button class="btn small" type="button" data-sfx="close">Close</button></div>' +
+      '<div class="sub">Type each line’s price as on the supplier invoice, or read them from the invoice file. The goods total is shared by price × quantity, the freight by weight (or units / value). Nothing changes until you press Save.</div>' +
+      '<div class="sfx-top"><div><label class="f" for="sfx_cur">Prices in</label><input class="i" id="sfx_cur" value="' + esc(cur) + '" style="width:90px"></div>' +
+      (cur !== 'TK' ? '<div><label class="f" for="sfx_rate">Rate (TK per ' + esc(cur) + ')</label><input class="i" id="sfx_rate" type="number" step="any" inputmode="decimal" value="' + esc(String(SFX.rate || '')) + '" style="width:120px"></div>' : '') +
+      '<div><label class="f" for="sfx_basis">Share freight by</label><select class="i" id="sfx_basis">' + bs('', 'Weight (if all have one)') + bs('weight', 'Weight') + bs('units', 'Units') + bs('value', 'Value') + '</select></div>' +
+      '<div><label class="btn small" style="cursor:pointer">Read the invoice file<input type="file" id="sfx_file" accept=".pdf,.xlsx,.csv,image/*" hidden></label></div></div>' +
+      (SFX.read ? '<div class="sub" id="sfx_read">' + esc(SFX.read) + '</div>' : '') +
+      '<div class="scroll"><table><thead><tr><th>Product</th><th class="num">Qty</th><th class="num">Price each (' + esc(cur) + ')</th><th class="num">Cost now</th><th class="num">New cost</th><th class="num">Goods + freight</th></tr></thead><tbody>' + rows + '</tbody></table></div>' +
+      '<div id="sfx_res">' + resHtml() + '</div>' +
+      '<div class="sfx-act"><button class="btn primary" type="button" id="sfx_save" disabled>Save the new costs</button><button class="btn" type="button" data-sfx="close">Cancel</button></div></div>';
+  }
+  var viewShipmentSFX = viewShipment;
+  viewShipment = function () {
+    var h = viewShipmentSFX.apply(this, arguments), d = SHP.one;
+    if (!d || d.reference !== SHP.ref || d.opening || !navOn('costs')) return h;
+    if (SHP.pool) h = h.replace(/<div class="card" style="margin-top:16px"><div class="chead"><h2>A bill that came after the goods<\/h2>[\s\S]*$/, '');   // a late bill is the own stock's (for now)
+    if (SFX.open && SFX.ref === d.reference) { setTimeout(paintRes, 0); return h + editorHtml(d); }
+    return h + '<div class="card" style="margin-top:16px"><div class="chead"><h2>Prices wrong?</h2><button class="btn small" type="button" data-sfx="open">Correct the prices</button></div>' +
+      '<div class="sub">Every line’s cost comes from its price on the supplier invoice. If they were missing or wrong when it was received, correct them here: the stock on the shelf, the sales already made and the profit follow.</div></div>';
+  };
+
+  // the invoice file: the same reader as Receive; each matched line's price in the shipment's money
+  function readFile(file) {
+    var keep = typeof RF !== 'undefined' ? RF : null;
+    SFX.read = 'Reading ' + file.name + '…'; repaint();
+    var done = function (msg) { if (keep !== null) RF = keep; SFX.read = msg; repaint(); later(); };
+    rfReadFile(file).then(function (read) {
+      srv('erpReceiveMatch', [{ pool: SHP.pool || '', rows: read.rows, kind: read.kind, reader: read.reader || 'file', supplier: (SHP.one && SHP.one.supplier) || '', fileName: file.name }], function (r) {
+        var want = {}; (SHP.one.lines || []).forEach(function (l) { want[String(l.sku).toLowerCase()] = 1; });
+        var by = {}, cur = '', got = 0, skipped = 0;
+        (r.lines || []).forEach(function (x) {
+          var k = String(x.sku || '').toLowerCase();
+          if (!k || !want[k] || !(num(x.price) > 0)) { skipped++; return; }
+          var o = by[k] || (by[k] = { q: 0, v: 0, n: 0 }), q = num(x.qty) || 1;
+          o.q += q; o.v += num(x.price) * q; o.n++;
+          if (x.currency) cur = String(x.currency).toUpperCase();
+        });
+        Object.keys(by).forEach(function (k) { SFX.prices[k] = Math.round(by[k].v / by[k].q * 10000) / 10000; got++; });
+        if (cur && !/^(BDT|TK|TAKA)$/.test(cur) && cur !== SFX.cur) { SFX.cur = cur; }
+        var left = missing();
+        done('From ' + file.name + ': ' + fmt(got) + ' price(s) filled' + (skipped ? ', ' + fmt(skipped) + ' line(s) of the file not matched to this shipment' : '') +
+          (left ? '. ' + fmt(left) + ' line(s) still need a price.' : '. Check them, then Save.'));
+      }, function (e) { done('Could not read it: ' + ((e && e.message) || e)); });
+    }, function (e) { done('Could not read it: ' + ((e && e.message) || e)); });
+  }
+
+  function save() {
+    var p = payload();
+    var go2 = function (pp) {
+      srv('erpShipmentReprice', [pp], function (r) {
+        SFX.open = false; SHP.one = null; SHP.list = null;
+        toast('Prices corrected: ' + fmt(r.lines.length) + ' line(s)' + (r.invoices && r.invoices.length ? ', ' + r.invoices.length + ' sale(s) re-costed: ' + esc(r.invoices.join(', ')) : '') + '.', false, 10000);
+        repaint();
+      }, function (e) {
+        var m = (e && e.message) || String(e);
+        if (/^CONFIRM: /.test(m)) { uiConfirm(m.replace(/^CONFIRM: /, '')).then(function (ok) { if (ok) { SFX.usePrices = true; go2(Object.assign({}, pp, { usePrices: true })); } }); return; }
+        toast(esc(m), true);
+      });
+    };
+    uiConfirm('Save the new cost of every line of ' + SFX.ref + '? The stock, the sales made from it and their profit change with it.').then(function (ok) { if (ok) go2(p); });
+  }
+
+  document.addEventListener('click', function (e) {
+    if (!e.target.closest) return;
+    var j = e.target.closest('[data-shpjoint]');
+    if (j) { var a = j.getAttribute('data-shpjoint'); if (a === 'back') { openPool('', ''); go('joint'); } else { openPool('', ''); repaint(); } return; }
+    var b = e.target.closest('[data-jshp]');
+    if (b) { var pl = ((JT.data && JT.data.pools) || []).filter(function (x) { return x.id === JT.data.pool; })[0]; openPool(JT.data.pool, pl ? pl.name : ''); go('shipments'); window.scrollTo(0, 0); return; }
+    var f = e.target.closest('[data-sfx]');
+    if (f && VIEW === 'shipments') {
+      if (f.getAttribute('data-sfx') === 'open') { startFix(SHP.one); repaint(); setTimeout(function () { var c = el('sfx_card'); if (c) c.scrollIntoView({ block: 'start', behavior: 'smooth' }); }, 30); }
+      else { SFX.open = false; repaint(); }
+      return;
+    }
+    if (e.target.closest('#sfx_save') && !e.target.closest('#sfx_save').disabled) save();
+  });
+  document.addEventListener('input', function (e) {
+    var t = e.target; if (!t || VIEW !== 'shipments' || !SFX.open) return;
+    var k = t.getAttribute && t.getAttribute('data-sfxp');
+    if (k !== null && k !== undefined && k !== '') { SFX.prices[k] = t.value; later(); return; }
+    if (t.id === 'sfx_rate') { SFX.rate = t.value; later(); }
+  });
+  document.addEventListener('change', function (e) {
+    var t = e.target; if (!t || VIEW !== 'shipments' || !SFX.open) return;
+    if (t.id === 'sfx_cur') { SFX.cur = String(t.value || 'TK').trim().toUpperCase() || 'TK'; if (/^(BDT|TAKA)$/.test(SFX.cur)) SFX.cur = 'TK'; repaint(); later(); }
+    else if (t.id === 'sfx_basis') { SFX.basis = t.value; later(); }
+    else if (t.id === 'sfx_use') { SFX.usePrices = !!t.checked; SFX.key = ''; later(); }
+    else if (t.id === 'sfx_file' && t.files && t.files[0]) readFile(t.files[0]);
+  });
+  // leaving the shipment closes the editor
+  document.addEventListener('click', function (e) { if (e.target.closest && (e.target.closest('[data-shpback]') || e.target.closest('tr[data-shp]'))) SFX.open = false; }, true);
+
+  // Joint stock > Stock: the pool's Shipments
+  var viewJointSFX = viewJoint;
+  viewJoint = function () {
+    var h = viewJointSFX.apply(this, arguments);
+    if (!JT.data || !JT.data.pool || JRV.on || JT.tab !== 'stock' || !navOn('costs')) return h;
+    return h.replace(/(<button class="btn(?: primary)?" type="button" data-jt="f-receive">\+ Receive a shipment<\/button>)/, '$1<button class="btn" type="button" data-jshp="1">Shipments</button>');
+  };
+})();
+</script>
+
 </body>
 </html>

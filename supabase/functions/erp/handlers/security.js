@@ -36,6 +36,7 @@ const WORDS = {
   erpInvestorLink: 'Made an investor page link', erpInvestorLinkOff: 'Switched an investor page off',
   erpShipmentLateCost: 'Added a cost after the goods',
   erpShipmentCostVoid: 'Struck a shipment cost out',
+  erpShipmentReprice: 'Corrected the prices of a shipment',
   erpHoldingSave: 'Changed how holding cost is shared',
   erpLotFund: 'Recorded who funded a shipment', erpLotFundVoid: 'Struck out a shipment funding',
   erpPoStage: 'Moved an order along', erpProductSizes: 'Set product sizes',

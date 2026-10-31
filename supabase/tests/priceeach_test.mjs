@@ -26,6 +26,8 @@ check('a line with no price beside priced ones is refused, by name', !r.ok && /N
 r = await mgr('erpReceivePreview', [{ ...base, reference: 'PE-2', lines: [{ sku: 'PE-A', qty: 1, priceFx: 30 }, { sku: 'PE-B', qty: 1 }] }]);
 check('...the preview says so too', !r.ok && /No price for/.test(r.error), r.error);
 
+r = await mgr('erpReceivePreview', [{ ...base, reference: 'PE-2b', lines: [{ sku: 'PE-A', qty: 1, priceFx: 30 }, { sku: 'PE-C', qty: 1 }] }]);
+check('an invoice price beside a line with only an old cost is refused too', !r.ok && /No price for Price Each C/.test(r.error), r.ok ? r.result.lines : r.error);
 // 3. an old cost still counts as a value (C has 500) - no price typed, still accepted, shared by value
 r = await mgr('erpReceivePreview', [{ ...base, reference: 'PE-3', lines: [{ sku: 'PE-C', qty: 2 }] }]);
 check('a line with an old cost and no typed price is shared by that cost', r.ok && Math.abs(r.result.lines[0].unitCost - 5000) < 0.05, r.ok ? r.result.lines : r.error);

@@ -479,6 +479,12 @@ async function poolProduct(pctx, pool, sku) {
   if (!p) throw new Error('That product is not in this pool.');
   return p;
 }
+/** price-each-2: shipment work (lots.js) done inside a pool this company is in: fn(pctx, pool, openOn(date, what)). */
+export async function poolWork(ctx, poolId, fn) {
+  await needOn(ctx);
+  const pool = await poolOf(ctx, poolId);
+  return withPool(ctx, pool, (pctx) => fn(pctx, pool, (date, what) => poolOpenOn(ctx, pool, formatDate(new Date(date), 'yyyy-MM-dd'), what)));
+}
 async function poolOpenOn(ctx, pool, date, what) {
   const r = (await poolRead(ctx, (t) => t`select to_char(public.pool_locked_until(${pool.id}), 'YYYY-MM-DD') as d`))[0];
   if (r && r.d && date < r.d) throw new Error('That month of ' + pool.name + ' is closed and agreed, so ' + what + '. Date it after ' + r.d + '.');

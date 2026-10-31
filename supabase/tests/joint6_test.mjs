@@ -122,7 +122,7 @@ const ownBefore = (await sql`select count(*)::int n from stock_movements where b
 const cat6 = (await mgr('erpJointRecvCatalog', [{ pool: POOL }])).result || [];
 check('the Receive page gets the joint products (no cost)', cat6.some((x) => x.sku === 'BBL-A1') && cat6.every((x) => !('cost' in x)), cat6);
 r = await mgr('erpReceiveShipment', [{ pool: POOL, receivedAt: B3, supplier: 'Bambu Dhaka Agent', reference: 'JV-SHIP-1', from: 'local', mode: 'bdt', totalBdt: 90000,
-  payment: 'later', shippingBdt: 2000, lines: [{ sku: 'BBL-A1', qty: 2 }, { isNew: true, qty: 1, product: { product_name: 'Bambu Lab P1S', category: 'Printer', brand: 'Bambu Lab', sell_price: 80000, cost_price: 0 }, unitBdt: 45000 }] }]);   // price-each-1: every line has a price
+  payment: 'later', shippingBdt: 2000, lines: [{ sku: 'BBL-A1', qty: 2, unitBdt: 22500 }, { isNew: true, qty: 1, product: { product_name: 'Bambu Lab P1S', category: 'Printer', brand: 'Bambu Lab', sell_price: 80000, cost_price: 0 }, unitBdt: 45000 }] }]);   // price-each-1: every line has a price
 check('received through the Receive page into the joint stock', r.ok && r.result.joint === 'Printers JV' && r.result.units === 3, r.error || r.result);
 const pj = (await owner('erpJoint', [{ pool: POOL }])).result;
 const a1 = pj.stock.find((x) => x.sku === 'BBL-A1'), p1s = pj.stock.find((x) => /P1S/.test(x.name));
