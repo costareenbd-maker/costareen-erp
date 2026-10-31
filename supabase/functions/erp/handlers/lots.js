@@ -68,10 +68,13 @@ async function drawRows(ctx, refFilter) {
   return ctx.tx`
     select l.id as lot, l.reference, d.qty, coalesce(d.unit_cost, 0) as unit_cost, d.unit_cost is null as nocost,
            case when m.kind::text = 'SALE' then (select il.line_total / nullif(il.qty, 0) from invoice_lines il
-                      where il.invoice_id = m.invoice_id and il.product_id = d.product_id and il.qty > 0 order by il.line_no limit 1)
+                      where il.invoice_id = m.invoice_id and il.qty > 0
+                        and (il.product_id = d.product_id or (il.product_id is null and lower(btrim(il.sku)) = (select lower(btrim(p.sku)) from products p where p.id = d.product_id)))
+                      order by il.line_no limit 1)
                 when m.kind::text = 'RETURN' then (select il.line_total / nullif(il.qty, 0) from invoice_lines il
                       join invoices i on i.id = il.invoice_id
-                      where i.business_id = ${ctx.biz} and i.invoice_no = btrim(substr(m.reference, 9)) and il.product_id = d.product_id and il.qty > 0
+                      where i.business_id = ${ctx.biz} and i.invoice_no = btrim(substr(m.reference, 9)) and il.qty > 0
+                        and (il.product_id = d.product_id or (il.product_id is null and lower(btrim(il.sku)) = (select lower(btrim(p.sku)) from products p where p.id = d.product_id)))
                       order by il.line_no limit 1)
            end as price, m.kind::text as kind, d.at
     from lot_draws d join stock_lots l on l.id = d.lot_id join stock_movements m on m.id = d.movement_id

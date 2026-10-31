@@ -85,6 +85,7 @@ check('joint set-up: one White sold (the pool copy draws at 1,500)', r.ok, r.err
 r = await mgr('erpShipments', [{ pool: POOL }]);
 const js = r.ok && r.result.shipments.find((s) => s.reference === 'JR-1');
 check('joint Shipments list: the pool\'s shipment with the freight paid here', js && js.unitsIn === 10 && js.extraCosts === 1000 && js.landed === 11000, r.ok ? r.result.shipments : r.error);
+check('joint Shipments list: the White sold counts with what it sold for', js && js.sold === 1 && js.revenue > 0, js);
 r = await mgr('erpShipment', [{ pool: POOL, reference: 'JR-1' }]);
 check('joint shipment page: its lines and the bill', r.ok && r.result.lines.length === 2 && r.result.bill && r.result.bill.amount === 10000, r.ok ? r.result : r.error);
 r = await mgr('erpShipmentReprice', [{ pool: POOL, reference: 'JR-1', prices: [{ sku: 'JR-W', price: 10 }, { sku: 'JR-K', price: 10 }], basis: 'units' }]);
