@@ -41376,6 +41376,7 @@ html[data-look="clean"][data-skin="fd"]:root .t2line span { color:var(--fd-text-
 .sfx-price { width:110px; text-align:right; }
 .sfx-up { color:var(--fd-negative-text, #b91c1c); } .sfx-down { color:var(--fd-positive-text, #15803d); }
 .sfx-sum { margin-top:10px; font-weight:600; }
+.sfx-note { margin-top:4px; font-size:13px; color:var(--fd-text-3, var(--muted)); }
 .sfx-act { display:flex; gap:8px; flex-wrap:wrap; margin-top:12px; }
 .shp-pool { display:flex; flex-wrap:wrap; gap:10px; align-items:center; justify-content:space-between; }
 </style>
@@ -41403,8 +41404,12 @@ html[data-look="clean"][data-skin="fd"]:root .t2line span { color:var(--fd-text-
   }, true);
   var viewShipmentsSFX = viewShipments;
   viewShipments = function () {
-    var h = viewShipmentsSFX.apply(this, arguments);
-    if (!SHP.pool || SHP.ref) return h;
+    if (!SHP.pool) return viewShipmentsSFX.apply(this, arguments);
+    // a joint stock has no supplier orders of this company's: the board shows its received shipments only
+    var has = typeof FDW !== 'undefined', po = has ? FDW.po : null, h;
+    if (has) FDW.po = { orders: [] };
+    try { h = viewShipmentsSFX.apply(this, arguments); } finally { if (has) FDW.po = po; }
+    if (SHP.ref) return h;
     h = h.replace('<button class="btn primary small" type="button" data-go="stock">+ Receive a shipment</button>', '');
     return '<div class="card shp-pool" style="margin-bottom:14px"><div><div class="fdd-eyebrow">Joint stock</div><h2 style="margin:2px 0 0">' + esc(SHP.poolName || 'Joint stock') + ' — shipments</h2>' +
       '<div class="sub">What came into the joint stock, at what it cost (the freight and the bill are this company’s).</div></div>' +
@@ -41450,7 +41455,7 @@ html[data-look="clean"][data-skin="fd"]:root .t2line span { color:var(--fd-text-
       '<label style="display:inline-flex;gap:6px;align-items:center"><input type="checkbox" id="sfx_use"' + (SFX.usePrices ? ' checked' : '') + '> use the prices’ total</label> (the supplier bill stays as it is).</div></div>' : '';
     return mm + '<div class="sfx-sum">Goods ' + money(r.goods) + ' TK' + (r.rate ? ' (' + esc(r.currency) + ' at ' + r.rate + ')' : '') + ' + freight and costs ' + money(r.shipping) + ' TK (by ' + esc(r.basis) + ') = ' +
       money(r.landedNow) + ' TK. Was ' + money(r.landedWas) + ' TK.</div>' +
-      '<div class="sub">Sales already made from this shipment: their cost changes by ' + (r.soldChange > 0 ? '+' : '') + money(r.soldChange) + ' TK (their profit by the opposite). Stock on the shelf: ' +
+      '<div class="sfx-note">Sales already made from this shipment: their cost changes by ' + (r.soldChange > 0 ? '+' : '') + money(r.soldChange) + ' TK (their profit by the opposite). Stock on the shelf: ' +
       (r.shelfChange > 0 ? '+' : '') + money(r.shelfChange) + ' TK.</div>';
   }
   function paintRes() {
@@ -41486,9 +41491,16 @@ html[data-look="clean"][data-skin="fd"]:root .t2line span { color:var(--fd-text-
   }
   var viewShipmentSFX = viewShipment;
   viewShipment = function () {
-    var h = viewShipmentSFX.apply(this, arguments), d = SHP.one;
+    var h, d = SHP.one;
+    if (SHP.pool) {
+      // a joint shipment: investor funding, striking out a cost and a late bill work on this company's own lots only (for now)
+      var navOnSFX = navOn;
+      navOn = function (k) { return k === 'capital' ? false : navOnSFX.apply(this, arguments); };
+      try { h = viewShipmentSFX.apply(this, arguments); } finally { navOn = navOnSFX; }
+      h = h.replace(/<div class="card" style="margin-top:16px"><div class="chead"><h2>A bill that came after the goods<\/h2>[\s\S]*$/, '')
+           .replace(/<button[^>]*data-scvoid[\s\S]*?<\/button>/g, '').replace(/<button[^>]*data-lcadd[\s\S]*?<\/button>/g, '');
+    } else h = viewShipmentSFX.apply(this, arguments);
     if (!d || d.reference !== SHP.ref || d.opening || !navOn('costs')) return h;
-    if (SHP.pool) h = h.replace(/<div class="card" style="margin-top:16px"><div class="chead"><h2>A bill that came after the goods<\/h2>[\s\S]*$/, '');   // a late bill is the own stock's (for now)
     if (SFX.open && SFX.ref === d.reference) { setTimeout(paintRes, 0); return h + editorHtml(d); }
     return h + '<div class="card" style="margin-top:16px"><div class="chead"><h2>Prices wrong?</h2><button class="btn small" type="button" data-sfx="open">Correct the prices</button></div>' +
       '<div class="sub">Every line’s cost comes from its price on the supplier invoice. If they were missing or wrong when it was received, correct them here: the stock on the shelf, the sales already made and the profit follow.</div></div>';
