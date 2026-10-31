@@ -8503,7 +8503,7 @@ function srv(name, args, ok, bad) {
 
 var SRV_ACTIVE = 0, SRV_WRITING = false, SRV_TIMED = {};
 // the same list the server uses to know a call changes nothing (ERP_READS)
-var SRV_READS = /^(erpSeo|erpReceipts|erpBrief|erpBrain|erpWatch|erpEngine|erpEngineJob|erpSkills|erpAiBrain|erpAiBrainModels|erpLeadForms|erpLeads|erpLeadFind|erpLeadCapture|erpMyUpdates|erpSocialBridges|erpAds|erpAdsInterests|erpSocialNet|erpSocialLearn|erpSocialAssets|erpSocialPosts|erpSocialPhotos|erpInboxDigest|erpJointRecvCatalog|erpSitePages|erpBalanceSheet|erpProductFields|erpProductAi|erpMetaConnect|erpInboxFeatureMap|erpBookings|erpInbox|erpInboxOpen|erpInboxChannels|erpChatOrders|erpInboxStats|erpAiWork|erpCommissionSales|erpFdCards|erpLineMargins|erpFd19Profit|erpFdInventory|erpFd22Analytics|erpNavigator|erpSellers|erpFollowups|erpCustomerInsight|erpPreorders|erpCashUps|erpAskingPrices|erpSystemCheck|erpAnalytics|erpCommission|erpHolding|erpLotFunding|erpShipments|erpShipment|erpLots|erpFdHead|erpFdDash|erpReceiveMatch|erpAiReader|erpProductSuggest|erpCatalogue|erpPushList|erpCreators|erpCreatorPortalLink|erpSponsorLink|erpCreatorRequests|erpCreatorEvents|erpCreatorProgramme|erpCreatorPreview|erpCreatorCatalog|erpCreatorSources|erpCreatorClaims|erpApps|erpAppQr|erpFeedback|erpRestockOffers|erpRestockList|erpWarrantyRules|erpWarrantyCard|erpMyLink|erpPlatformRegister|erpPlatformDoctor|erpPlatformCommunity|erpMarketWaiting|erpBoard|erpPlatformDesign|erpResell|erpResellerProgramme|erpLoyalty|erpCustomerPoints|erpRefillDue|erpDeliveryHistory|erpDeliveryHistoryMany|erpPrintKit|erpPrintJobs|erpPrintJob|erpPrintCost|erpSpools|erpPrintRequests|erpJoint|erpJointCatalog|erpJointCard|erpInvoiceDesign|erpInvoicePreview|erpMarket|erpMarketMine|erpMarketRequests|erpMarketHints|erpMarketNames|erpWanted|erpBrand|erpComplianceLog|erpProviderKey|erpNews|erpAccessKeys|erpAccessWarning|erpAdmin|erpAiKeys|erpAlertRules|erpAlerts|erpArena|erpBackupStatus|erpBg|erpBnWords|erpBookedParcels|erpBrandLogo|erpBundle|erpBusinessLinks|erpBusinesses|erpBusinessesDeleted|erpCampaignAudience|erpCampaignGet|erpCampaignList|erpCapital|erpCashBook|erpCatalog|erpConnStatus|erpConnections|erpCostBook|erpCourier|erpCourierKeyStatus|erpCurrencies|erpCustomerAccount|erpCustomerCredit|erpCustomerList|erpCustomerPage|erpCustomerStatement|erpCustomers|erpDashboardData|erpDaySales|erpDeliveryOptions|erpDevices|erpDiscontinued|erpDues|erpEvoQr|erpEvoStatus|erpExpenseExport|erpExpenseReceiptUrl|erpExpenses|erpFamilies|erpFighters|erpFormOptions|erpGame|erpGetTheme|erpGoogle|erpHello|erpInstalls|erpInvoice|erpInvoicePdf|erpJob|erpJobs|erpListView|erpLookupCustomer|erpLookupUsage|erpMe|erpMoney|erpNoteFileUrl|erpNotes|erpOwnerChange|erpOwnerChanges|erpParcelLabels|erpParcelPreview|erpPartnerStock|erpPartnership|erpPayReasons|erpPeople|erpPlatform|erpPlatformErrors|erpPnl|erpPnlMonth|erpPoList|erpPoolCatalog|erpProduct|erpProductListShare|erpProductPage|erpProductPhotoUrl|erpProductThumbs|erpProfile|erpQuoteAsset|erpQuoteBoot|erpQuoteGet|erpQuoteList|erpRecentInvoices|erpRecovery|erpReorderPlan|erpRestorePreview|erpReturnPreview|erpRisks|erpSales|erpSearch|erpSecurity|erpSelfTest|erpSerialLookup|erpSerialsFor|erpSessions|erpSetTheme|erpSettingsFull|erpSettingsLists|erpSfPayoutLines|erpSfPayouts|erpShareFile|erpSharedStock|erpSheet|erpStatementPdf|erpStockHistory|erpSupplierPage|erpSuppliers|erpToday|erpUsers|erpWaProductPdf|erpWebMatches|erpWebOrderInvoices|erpWebOrders|erpWebsiteTest)$/;
+var SRV_READS = /^(erpReceivePreview|erpSeo|erpReceipts|erpBrief|erpBrain|erpWatch|erpEngine|erpEngineJob|erpSkills|erpAiBrain|erpAiBrainModels|erpLeadForms|erpLeads|erpLeadFind|erpLeadCapture|erpMyUpdates|erpSocialBridges|erpAds|erpAdsInterests|erpSocialNet|erpSocialLearn|erpSocialAssets|erpSocialPosts|erpSocialPhotos|erpInboxDigest|erpJointRecvCatalog|erpSitePages|erpBalanceSheet|erpProductFields|erpProductAi|erpMetaConnect|erpInboxFeatureMap|erpBookings|erpInbox|erpInboxOpen|erpInboxChannels|erpChatOrders|erpInboxStats|erpAiWork|erpCommissionSales|erpFdCards|erpLineMargins|erpFd19Profit|erpFdInventory|erpFd22Analytics|erpNavigator|erpSellers|erpFollowups|erpCustomerInsight|erpPreorders|erpCashUps|erpAskingPrices|erpSystemCheck|erpAnalytics|erpCommission|erpHolding|erpLotFunding|erpShipments|erpShipment|erpLots|erpFdHead|erpFdDash|erpReceiveMatch|erpAiReader|erpProductSuggest|erpCatalogue|erpPushList|erpCreators|erpCreatorPortalLink|erpSponsorLink|erpCreatorRequests|erpCreatorEvents|erpCreatorProgramme|erpCreatorPreview|erpCreatorCatalog|erpCreatorSources|erpCreatorClaims|erpApps|erpAppQr|erpFeedback|erpRestockOffers|erpRestockList|erpWarrantyRules|erpWarrantyCard|erpMyLink|erpPlatformRegister|erpPlatformDoctor|erpPlatformCommunity|erpMarketWaiting|erpBoard|erpPlatformDesign|erpResell|erpResellerProgramme|erpLoyalty|erpCustomerPoints|erpRefillDue|erpDeliveryHistory|erpDeliveryHistoryMany|erpPrintKit|erpPrintJobs|erpPrintJob|erpPrintCost|erpSpools|erpPrintRequests|erpJoint|erpJointCatalog|erpJointCard|erpInvoiceDesign|erpInvoicePreview|erpMarket|erpMarketMine|erpMarketRequests|erpMarketHints|erpMarketNames|erpWanted|erpBrand|erpComplianceLog|erpProviderKey|erpNews|erpAccessKeys|erpAccessWarning|erpAdmin|erpAiKeys|erpAlertRules|erpAlerts|erpArena|erpBackupStatus|erpBg|erpBnWords|erpBookedParcels|erpBrandLogo|erpBundle|erpBusinessLinks|erpBusinesses|erpBusinessesDeleted|erpCampaignAudience|erpCampaignGet|erpCampaignList|erpCapital|erpCashBook|erpCatalog|erpConnStatus|erpConnections|erpCostBook|erpCourier|erpCourierKeyStatus|erpCurrencies|erpCustomerAccount|erpCustomerCredit|erpCustomerList|erpCustomerPage|erpCustomerStatement|erpCustomers|erpDashboardData|erpDaySales|erpDeliveryOptions|erpDevices|erpDiscontinued|erpDues|erpEvoQr|erpEvoStatus|erpExpenseExport|erpExpenseReceiptUrl|erpExpenses|erpFamilies|erpFighters|erpFormOptions|erpGame|erpGetTheme|erpGoogle|erpHello|erpInstalls|erpInvoice|erpInvoicePdf|erpJob|erpJobs|erpListView|erpLookupCustomer|erpLookupUsage|erpMe|erpMoney|erpNoteFileUrl|erpNotes|erpOwnerChange|erpOwnerChanges|erpParcelLabels|erpParcelPreview|erpPartnerStock|erpPartnership|erpPayReasons|erpPeople|erpPlatform|erpPlatformErrors|erpPnl|erpPnlMonth|erpPoList|erpPoolCatalog|erpProduct|erpProductListShare|erpProductPage|erpProductPhotoUrl|erpProductThumbs|erpProfile|erpQuoteAsset|erpQuoteBoot|erpQuoteGet|erpQuoteList|erpRecentInvoices|erpRecovery|erpReorderPlan|erpRestorePreview|erpReturnPreview|erpRisks|erpSales|erpSearch|erpSecurity|erpSelfTest|erpSerialLookup|erpSerialsFor|erpSessions|erpSetTheme|erpSettingsFull|erpSettingsLists|erpSfPayoutLines|erpSfPayouts|erpShareFile|erpSharedStock|erpSheet|erpStatementPdf|erpStockHistory|erpSupplierPage|erpSuppliers|erpToday|erpUsers|erpWaProductPdf|erpWebMatches|erpWebOrderInvoices|erpWebOrders|erpWebsiteTest)$/;
 function srvPump() {
   if (!SRV_Q.length) return;
   var isRead = SRV_READS.test(SRV_Q[0].name);
@@ -41229,5 +41229,138 @@ html[data-look="clean"][data-skin="fd"]:root .t2line span { color:var(--fd-text-
   html[data-look="clean"][data-skin="fd"]:root .chip button::after, html[data-look="clean"][data-skin="fd"]:root .o_facet button::after { content:""; position:absolute; inset:-9px; }
 }
 </style>
+<!-- price-each-1 (owner 1 Nov 2026, joint stock: "I changed taka to dollars and typed the rate - at the end it should
+     show how much taka each costs; the product costs show 205, 283 although the invoice has each product's dollar
+     price"). Receive page, own and joint stock alike:
+     - Goods cost step: the taka total shows live under the rate (USD 9,162 x 128.5 = 11,77,317 TK);
+     - Lines step: every line has a "Price each" box in the shipment's money (USD / TK), filled from the invoice file's
+       price; it is what shares the goods total out (the server refuses priced and unpriced lines mixed - they used to
+       get none of the goods);
+     - Review step: each line's landed cost (goods + shipping) worked out by the server's own engine (erpReceivePreview,
+       nothing written), so a wrong split is seen before Receive is pressed;
+     - Joint Receive page: "Use the price book" reads "Each line's own price" (a joint stock has no price book). -->
+<style>
+.pe-price { width:110px; text-align:right; }
+.pe-prev { margin-top:14px; }
+.pe-prev table td.num, .pe-prev table th.num { white-space:nowrap; }
+.pe-prev .pe-total td { font-weight:700; }
+.pe-prev .pe-bad { color:var(--fd-negative-text, #b91c1c); font-weight:700; }
+.pe-eq { margin-top:6px; font-weight:600; }
+</style>
+<script>
+(function () {
+  var PE = { key: '', res: null, err: '', busy: false, t: 0 };
+  function cur() { return (RECV.mode === 'fx' || RECV.mode === 'rmb') ? String(RECV.currency || 'RMB').toUpperCase() : 'TK'; }
+  // a line's price: what was typed, else the file's price when it is in the shipment's money
+  function linePrice(l) {
+    if (l.price !== undefined && l.price !== null && String(l.price).trim() !== '') return num(l.price);
+    var s = l.src; if (!s || !(num(s.price) > 0)) return 0;
+    var sc = String(s.currency || '').toUpperCase(), c = cur();
+    if (c === 'TK') return (!sc || /^(BDT|TK|TAKA)$/.test(sc)) ? num(s.price) : 0;
+    return (!sc || sc === c) ? num(s.price) : 0;
+  }
+  window.peLinePrice = linePrice;
+
+  // ---- the payload carries each line's price (rows of one product are averaged by quantity, as they are added up)
+  var payloadPE = recvPayload;
+  recvPayload = function () {
+    var p = payloadPE.apply(this, arguments), fx = (RECV.mode === 'fx' || RECV.mode === 'rmb');
+    var by = {}, news = [];
+    RECV.lines.forEach(function (l) {
+      var pr = linePrice(l), q = num(l.qty);
+      if (l.isNew) { news.push(pr); return; }
+      var k = String(l.sku || '').toLowerCase(); if (!k) return;
+      var o = by[k] || (by[k] = { q: 0, v: 0, priced: true });
+      o.q += q; o.v += pr * q; if (!(pr > 0)) o.priced = false;
+    });
+    var ni = 0;
+    (p.lines || []).forEach(function (L) {
+      var pr = 0;
+      if (L.isNew) pr = news[ni++] || 0;
+      else { var o = by[String(L.sku || '').toLowerCase()]; pr = o && o.priced && o.q > 0 ? Math.round(o.v / o.q * 10000) / 10000 : 0; }
+      if (pr > 0) { if (fx) L.priceFx = pr; else L.unitBdt = pr; }
+    });
+    return p;
+  };
+
+  // ---- Lines step: a "Price each" column
+  var viewStockPE = viewStock;
+  viewStock = function () {
+    var h = viewStockPE.apply(this, arguments);
+    if (STOCK_TAB !== 'receive' || !RECV.lines.length) return h;
+    var c = cur(), lab = RECV.mode === 'none' || !RECV.mode ? 'Cost each (TK)' : 'Price each (' + c + ')';
+    h = h.replace('<th class="num">Receiving</th>', '<th class="num">' + esc(lab) + '</th><th class="num">Receiving</th>');
+    return h.replace(/<td class="num"><input class="i qty" type="number" min="1" step="1" data-rvqty="(\d+)"/g, function (m, i) {
+      var l = RECV.lines[Number(i)]; if (!l) return m;
+      var v = (l.price !== undefined && l.price !== null && String(l.price).trim() !== '') ? l.price : (linePrice(l) || '');
+      return '<td class="num"><input class="i pe-price" type="number" min="0" step="any" inputmode="decimal" data-rvprice="' + i + '" value="' + esc(String(v)) +
+        '" placeholder="' + (c === 'TK' ? '0' : c) + '" aria-label="Price each ' + esc(l.name || l.sku || '') + '"></td>' + m;
+    });
+  };
+  document.addEventListener('input', function (ev) {
+    var t = ev.target; if (!t || !t.getAttribute) return;
+    var i = t.getAttribute('data-rvprice');
+    if (i !== null && i !== undefined && i !== '') { var l = RECV.lines[Number(i)]; if (l) { l.price = t.value; peRefresh(); } return; }
+    if (t.matches && t.matches('[data-rvqty], #rv_rmb, #rv_rate, #rv_bdt, #rv_ship, [data-rvcost]')) { setTimeout(function () { peEq(); peRefresh(); }, 0); }
+  });
+  document.addEventListener('change', function (ev) {
+    var t = ev.target; if (t && t.matches && t.matches('#rv_cur, #rvw_rvmode, #rvw_rvship, #rvw_rvbasis')) setTimeout(function () { peEq(); peRefresh(); }, 0);
+  });
+
+  // ---- Goods cost step: the taka total, live
+  function eqText() {
+    if (!(RECV.mode === 'fx' || RECV.mode === 'rmb')) return '';
+    var t = num(RECV.totalRmb), r = num(RECV.rate), c = String(RECV.currency || 'RMB');
+    if (!(t > 0)) return '';
+    return r > 0 ? fmt(t) + ' ' + esc(c) + ' × ' + r + ' = <b>' + fmt(Math.round(t * r)) + ' TK</b> for the goods' : 'Type the rate to see it in taka.';
+  }
+  function peEq() { var e = el('rv_fxeq'); if (e) e.innerHTML = eqText(); }
+  var costHtmlPE = recvCostHtml;
+  recvCostHtml = function () {
+    var h = costHtmlPE.apply(this, arguments);
+    if (!(RECV.mode === 'fx' || RECV.mode === 'rmb')) return h;
+    var at = h.indexOf('<div class="sub">Another currency?');
+    var line = '<div class="sub pe-eq" id="rv_fxeq" aria-live="polite">' + eqText() + '</div>';
+    return at >= 0 ? h.slice(0, at) + line + h.slice(at) : h.replace(/<\/div>$/, line + '</div>');
+  };
+
+  // ---- Review: each line's landed cost, from the server's engine
+  function previewHtml() {
+    if (PE.err) return '<div class="note err pe-prev"><div class="ico">!</div><div><strong>Check the prices before receiving.</strong><br>' + esc(PE.err) + '</div></div>';
+    var r = PE.res; if (!r) return '<div class="sub pe-prev">' + (PE.busy ? 'Working out what each line costs…' : '') + '</div>';
+    var rows = r.lines.map(function (l) {
+      return '<tr><td class="nm">' + esc(l.name || l.sku) + (l.sku ? '<br><span class="sku">' + esc(l.sku) + '</span>' : '') + '</td><td class="num">' + fmt(l.qty) + '</td>' +
+        '<td class="num">' + (l.priceBdt > 0 ? fmt(l.priceBdt) : '—') + '</td><td class="num">' + fmt(l.goods) + '</td><td class="num">' + fmt(l.shipping) + '</td>' +
+        '<td class="num' + (l.noCost ? ' pe-bad' : '') + '"><b>' + fmt(l.unitCost) + '</b></td><td class="num">' + fmt(l.total) + '</td></tr>';
+    }).join('');
+    return '<div class="pe-prev"><h3 style="margin:0 0 6px">What each line will cost</h3><div class="scroll"><table><thead><tr><th>Product</th><th class="num">Qty</th>' +
+      '<th class="num">Price each (TK)</th><th class="num">Goods each</th><th class="num">Shipping each</th><th class="num">Cost each</th><th class="num">Line total</th></tr></thead><tbody>' + rows +
+      '<tr class="pe-total"><td>Total</td><td class="num">' + fmt(r.lines.reduce(function (t, l) { return t + l.qty; }, 0)) + '</td><td></td>' +
+      '<td class="num">' + fmt(r.goodsBdt) + '</td><td class="num">' + fmt(r.shippingBdt) + '</td><td></td><td class="num">' + fmt(r.totalBdt) + '</td></tr></tbody></table></div>' +
+      '<div class="sub" style="margin-top:6px">Goods ' + fmt(r.goodsBdt) + ' TK + shipping and costs ' + fmt(r.shippingBdt) + ' TK' + (r.freightNote ? ' (' + esc(r.freightNote) + ')' : '') +
+      ' = <b>' + fmt(r.totalBdt) + ' TK</b>. ' + (r.priced ? 'Shared by each line’s price.' : 'Shared by the price book / the products’ cost.') + '</div></div>';
+  }
+  function peFetch() {
+    if (!RECV.lines.length || (typeof rvOpenCount === 'function' && rvOpenCount())) { PE.res = null; PE.err = ''; peBox(); return; }
+    var pay = recvPayload(), key = JSON.stringify(pay);
+    if (key === PE.key && (PE.res || PE.err)) { peBox(); return; }
+    PE.key = key; PE.busy = true; peBox();
+    srv('erpReceivePreview', [pay], function (r) { if (PE.key !== key) return; PE.busy = false; PE.res = r; PE.err = ''; peBox(); },
+      function (e) { if (PE.key !== key) return; PE.busy = false; PE.res = null; PE.err = (e && e.message) || String(e); peBox(); });
+  }
+  function peRefresh() { clearTimeout(PE.t); PE.t = setTimeout(peFetch, 450); }
+  function peBox() { var b = el('rv_costsum'); if (b) b.innerHTML = previewHtml(); }
+  window.peRefresh = peRefresh;
+  recvCostSummary = function () { peRefresh(); return previewHtml(); };
+
+  // ---- the joint Receive page: no price book there
+  var viewJointPE = viewJoint;
+  viewJoint = function () {
+    var h = viewJointPE.apply(this, arguments);
+    if (typeof JRV === 'undefined' || !JRV.on) return h;
+    return h.replace(/>Use the price book</g, '>Each line’s own price<');
+  };
+})();
+</script>
 </body>
 </html>

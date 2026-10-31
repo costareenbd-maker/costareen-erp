@@ -395,7 +395,18 @@ export async function receiveShipment(ctx, payload) {
     totalBdt = 0;
   }
 
-  await lock(ctx, 'stock');
+  // price-each-1 (owner 1 Nov 2026: "the invoice says each product's dollar price - the cost should take it"): a line may
+  // carry its own price - priceFx in the shipment's currency (imported) or unitBdt in taka. It is what shares the goods
+  // total out (by value); with no shipment total it is the unit cost itself. Before, only the price book / old cost
+  // shared it, so lines with neither got NO part of the goods (joint stock has no price book).
+  for (const l of lines) {
+    const fx = num(l.priceFx), tk = num(l.unitBdt);
+    if (fx < 0 || tk < 0) throw new Error('A price cannot be below zero.');
+    l.priceBdt = mode === 'rmb' && fx > 0 && rate > 0 ? round2(fx * rate) : tk > 0 ? tk : 0;
+  }
+  const preview = !!payload.preview;   // price-each-1: work the costs out, write nothing (the Review step shows them)
+
+  if (!preview) await lock(ctx, 'stock');
 
   // owner 18 Oct 2026: the same page receives into a joint stock - same sums; the goods go to the pool (joint.js),
   // the money (supplier bill, payment, shipment costs) stays in this company's books
@@ -405,7 +416,7 @@ export async function receiveShipment(ctx, payload) {
     if (!st || str(st.pool) !== str(PJ.pool.id)) throw new Error('A supplier order is received into your own stock; receive joint stock without the order.');
   }
   // fix-1 M1: the same shipment received again (a second click, or once more days later) is asked about first
-  if (!PJ && str(payload.reference) && !payload.again) {
+  if (!PJ && !preview && str(payload.reference) && !payload.again) {
     const was = (await ctx.tx`select min(created_at) as at from stock_movements where business_id = ${ctx.biz} and kind::text = 'RECEIVE'
                               and direction = 'IN' and btrim(reference) = ${str(payload.reference)}`)[0];
     if (was && was.at) throw new Error('CONFIRM: Shipment "' + str(payload.reference) + '" was already received on ' + formatDate(new Date(was.at), 'd MMM yyyy, h:mm a') + '. Receive it AGAIN (more goods, another bill)?');
@@ -433,7 +444,14 @@ export async function receiveShipment(ctx, payload) {
 
   const created = [];
   for (const l of lines) {
-    if (!l.isNew) continue;
+    if (!l.isNew || !preview) continue;
+    const np = l.product || {};
+    l.sku = str(np.sku) || ('new:' + str(np.product_name));
+    existing[l.sku.toLowerCase()] = { id: null, sku: l.sku, name: str(np.product_name), cat: str(np.category), brand: str(np.brand), type: str(np.type), cost: num(np.cost_price),
+      weightG: num(np.weight_g), lengthMm: num(np.length_mm), widthMm: num(np.width_mm), heightMm: num(np.height_mm), fresh: true };
+  }
+  for (const l of lines) {
+    if (!l.isNew || preview) continue;
     const d = { ...(l.product || {}) };
     d.status = d.status || 'Active';
     d.lead_time_days = num(d.lead_time_days) > 0 ? num(d.lead_time_days) : 60;
@@ -479,7 +497,7 @@ export async function receiveShipment(ctx, payload) {
   }
   const shipping = round2(freight + extras.reduce((t, c) => t + c.amount, 0));
   // cost-fix-1: the goods total typed again as the shipping doubled every unit's cost (27 Oct 2026); ask first
-  if (!payload.again && totalBdt > 0 && shipping >= totalBdt * 0.5) {
+  if (!preview && !payload.again && totalBdt > 0 && shipping >= totalBdt * 0.5) {
     throw new Error('CONFIRM: Shipping and other costs come to ' + Math.round(shipping) + ' TK, against goods of ' + Math.round(totalBdt) +
       ' TK. Is that right? (The goods total must not be typed again under shipping.) Receive anyway?');
   }
@@ -487,7 +505,7 @@ export async function receiveShipment(ctx, payload) {
     const pl = await ctx.tx`select sku, rmb_unit, rmb_rate from po_lines where business_id = ${ctx.biz} and btrim(po_no) = ${str(payload.poId)}`;
     const px = {};
     for (const r of pl) if (num(r.rmb_unit) > 0 && num(r.rmb_rate) > 0) px[str(r.sku).toLowerCase()] = round2(num(r.rmb_unit) * num(r.rmb_rate));
-    for (const l of lines) if (!(num(l.unitBdt) > 0) && px[str(l.sku).toLowerCase()]) l.unitBdt = px[str(l.sku).toLowerCase()];
+    for (const l of lines) if (!(num(l.priceBdt) > 0) && !(num(l.unitBdt) > 0) && px[str(l.sku).toLowerCase()]) { l.unitBdt = px[str(l.sku).toLowerCase()]; l.priceBdt = l.unitBdt; }
   }
   const book = PJ ? {} : await bookCostMap(ctx);       // a joint stock has no price book: its own cost
   const onHand = PJ ? await PJ.onHand() : await onHandMap(ctx);
@@ -495,12 +513,19 @@ export async function receiveShipment(ctx, payload) {
   let sumW = 0, sumQty = 0;
   for (const l of lines) {
     const info = existing[str(l.sku).toLowerCase()] || {};
-    const basis = num(l.unitBdt) || bookCost(book, info.cat, info.brand, info.type) || info.cost ||
+    const basis = num(l.priceBdt) || bookCost(book, info.cat, info.brand, info.type) || info.cost ||
                   num((l.product || {}).cost_price) || 0;
     const q = num(l.qty);
     weights.push(basis * q);
     sumW += basis * q;
     sumQty += q;
+  }
+  // price-each-1: a goods total shared by value where some lines have a value and others none gave those none of the goods
+  // (31 Oct 2026, joint shipment 2000043072: two colours took the whole $9,162, 53 others only their freight) - refused
+  if (totalBdt > 0 && sumW > 0) {
+    const none = lines.map((l, x) => weights[x] > 0 ? null : (existing[str(l.sku).toLowerCase()] || {}).name || str(l.sku)).filter(Boolean);
+    if (none.length) throw new Error('No price for ' + none.slice(0, 4).join(', ') + (none.length > 4 ? ' and ' + (none.length - 4) + ' more' : '') +
+      ': the goods total is shared by each line’s price, so they would get no part of it. Type the price of every line (Lines step), as on the supplier invoice.');
   }
   // every cost line shared out by its own basis (108); value falls back to units where nothing has a value
   const costLines = (freight > 0 ? [{ label: 'Freight', amount: freight, basis: freightBasis }] : []).concat(extras);
@@ -522,9 +547,19 @@ export async function receiveShipment(ctx, payload) {
       unit = share / q;
     } else {
       const inf = existing[str(lines[x].sku).toLowerCase()] || {};
-      unit = num(lines[x].unitBdt) || bookCost(book, inf.cat, inf.brand, inf.type) || inf.cost || 0;
+      unit = num(lines[x].priceBdt) || bookCost(book, inf.cat, inf.brand, inf.type) || inf.cost || 0;
     }
     costs.push(round2(unit + (unit > 0 || shipShare > 0 ? shipShare : 0)));
+  }
+
+  if (preview) {
+    const out = lines.map((l, x) => {
+      const inf = existing[str(l.sku).toLowerCase()] || {}, q = num(l.qty), sh = shipping > 0 ? shares[x] / q : 0;
+      return { sku: l.isNew ? '' : str(l.sku), name: inf.name || str(l.sku), qty: q, priceBdt: num(l.priceBdt), goods: round2(costs[x] - sh),
+               shipping: round2(sh), unitCost: costs[x], total: round2(costs[x] * q), noCost: !(costs[x] > 0) };
+    });
+    return { preview: true, goodsBdt: round2(totalBdt), shippingBdt: shipping, freightNote, totalBdt: round2(out.reduce((t, l) => t + l.total, 0)), lines: out,
+             priced: lines.filter((l) => num(l.priceBdt) > 0).length };
   }
 
   // ---- 3. the movements
@@ -673,7 +708,9 @@ export async function receiveShipment(ctx, payload) {
   };
 }
 
-export async function erpReceiveShipment(ctx, payload) { return receiveShipment(ctx, payload); }
+export async function erpReceiveShipment(ctx, payload) { return receiveShipment(ctx, { ...(payload || {}), preview: false }); }
+/** price-each-1: what each line will cost, worked out by the same engine; nothing is written. */
+export async function erpReceivePreview(ctx, payload) { return receiveShipment(ctx, { ...(payload || {}), preview: true }); }
 
 /** erpReceiveStock (ERP:1299): legacy per-line receive at zero cost (not used by the page). */
 export async function erpReceiveStock(ctx, payload) {
@@ -1509,7 +1546,7 @@ export async function erpPoSettle(ctx, payload) {
 export const HANDLERS = {
   erpPoStage, erpProductSizes,
   erpSaveProduct, erpSetProductStatus, erpDiscontinued,
-  erpReceiveShipment, erpReceiveStock, erpAdjustStock, erpStockHistory, erpReceipts, erpUndoReceipt,
+  erpReceiveShipment, erpReceivePreview, erpReceiveStock, erpAdjustStock, erpStockHistory, erpReceipts, erpUndoReceipt,
   erpReorderPlan, erpApplyReorderLevels,
   erpPoList, erpPoCreate, erpPoPay, erpPoArrive, erpPoLineClose, erpPoClose, erpPoDiffDecide, erpPoSettle,
 };
