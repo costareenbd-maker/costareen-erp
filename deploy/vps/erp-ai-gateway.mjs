@@ -16,7 +16,10 @@ const PORT = Number(process.env.PORT || 18800);
 const SECRET = process.env.ERP_AI_SECRET || '';
 const MAX_PAR = Number(process.env.MAX_PARALLEL || 3);
 const CLAUDE = process.env.CLAUDE_BIN || '/usr/bin/claude';
-const MODELS = ['claude-opus', 'claude-sonnet', 'claude-haiku', 'gpt-5.5', 'gpt-5.4'];
+// 1 Nov 2026: the ChatGPT plan (abidur.rahoman2000, Plus) serves the gpt-5.6 tiers only; gpt-5.5 / 5.4 are refused for ChatGPT
+// accounts, so the old names are read as gpt-5.6-sol
+const MODELS = ['gpt-5.6-sol', 'gpt-5.6-terra', 'gpt-5.6-luna', 'claude-opus', 'claude-sonnet', 'claude-haiku'];
+const GPT_ALIAS = { 'gpt-5.5': 'gpt-5.6-sol', 'gpt-5.4': 'gpt-5.6-sol', 'gpt-5.5-pro': 'gpt-5.6-sol', 'gpt-5.4-mini': 'gpt-5.6-luna', 'gpt': 'gpt-5.6-sol' };
 const CLAUDE_MODEL = { 'claude-opus': 'opus', 'claude-sonnet': 'sonnet', 'claude-haiku': 'haiku' };
 
 let running = 0; const waiting = [];
@@ -91,16 +94,26 @@ async function claudeChat(body, res) {
     usage: { prompt_tokens: (u.input_tokens || 0) + (u.cache_read_input_tokens || 0) + (u.cache_creation_input_tokens || 0), completion_tokens: u.output_tokens || 0 } });
 }
 
+// ChatGPT through OpenClaw; when the plan's usage window is spent (429), OpenClaw is down or the model is refused, the
+// same question goes to Claude (text) so the ERP and the sites keep working - photos are not Claude's here: that error
+// goes back and the caller moves on to its next AI (Gemini)
 async function openclawChat(body, res) {
   let token = '';
   try { token = JSON.parse(readFileSync('/home/admin/.openclaw/openclaw.json', 'utf8')).gateway.auth.token; } catch (_) { token = ''; }
+  const model = GPT_ALIAS[body.model] || body.model;
   const fwd = { ...body, model: 'openclaw/erp', stream: false };
+  let why = '';
   try {
-    const r = await fetch('http://127.0.0.1:18789/v1/chat/completions', { method: 'POST', headers: { 'content-type': 'application/json', authorization: 'Bearer ' + token, 'x-openclaw-model': 'openai/' + body.model },
-      body: JSON.stringify(fwd), signal: AbortSignal.timeout(140000) });
+    const r = await fetch('http://127.0.0.1:18789/v1/chat/completions', { method: 'POST', headers: { 'content-type': 'application/json', authorization: 'Bearer ' + token, 'x-openclaw-model': 'openai/' + model },
+      body: JSON.stringify(fwd), signal: AbortSignal.timeout(170000) });
     const txt = await r.text();
-    res.writeHead(r.status, { 'content-type': 'application/json' }); res.end(txt);
-  } catch (e) { err(res, 503, 'The ChatGPT engine (OpenClaw) is not running.'); }
+    if (r.ok) { res.writeHead(200, { 'content-type': 'application/json', 'x-erp-ai-engine': 'chatgpt:' + model }); return res.end(txt); }
+    why = r.status + ' ' + txt.slice(0, 200);
+  } catch (e) { why = 'openclaw down: ' + String(e && e.message || e).slice(0, 120); }
+  console.log('gpt fallback to claude: ' + why);
+  if (hasImage(body.messages || [])) return err(res, 503, 'ChatGPT is not available right now (' + why.slice(0, 120) + ').');
+  res.setHeader('x-erp-ai-engine', 'claude:fallback');
+  return claudeChat({ ...body, model: 'claude-opus' }, res);
 }
 
 http.createServer((req, res) => {
