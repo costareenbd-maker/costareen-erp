@@ -41,6 +41,7 @@ export const TOOLS = [
   // 14 Oct 2026: the corner chat can see and do most of the ERP (writes still only after the person's Yes)
   { name: 'open_screen', description: 'Open a screen of the ERP for the person. screen: ' + 'dash, invoice, sales, customers, products, stock, shipments, suppliers, costs, cash, expenses, capital, commission, profit, analytics, preorders, quotes, weborders, repairs, settings, syscheck, mindmap, guide', parameters: { type: 'OBJECT', properties: { screen: { type: 'STRING' } }, required: ['screen'] } },
   { name: 'business_summary', description: 'The dashboard figures for this month or the last 3 / 6 / 12 months: revenue, gross and net profit, orders, stock value, dues, cash received, investor capital.', parameters: { type: 'OBJECT', properties: { months: { type: 'NUMBER' } } } },
+  { name: 'top_products', description: 'Best-selling products between two dates (YYYY-MM-DD, Dhaka; default the last 30 days): units sold, sales in taka and invoices per product, most first. by = units (default) or sales.', parameters: { type: 'OBJECT', properties: { from: { type: 'STRING' }, to: { type: 'STRING' }, limit: { type: 'NUMBER' }, by: { type: 'STRING' } } } },
   { name: 'stock_low', description: 'Products out of stock or at / below their reorder level.', parameters: { type: 'OBJECT', properties: {} } },
   { name: 'expenses_month', description: 'Expenses of a month (YYYY-MM): total and the entries.', parameters: { type: 'OBJECT', properties: { month: { type: 'STRING' } } } },
   { name: 'money_accounts', description: 'Money accounts (cash, bank, bKash, courier...) and their balances; money in hand.', parameters: { type: 'OBJECT', properties: {} } },
@@ -118,6 +119,17 @@ export async function runTool(ctx, name, a) {
       const v = (x) => (x ? x.v : undefined);
       return { range: d.rangeLabel, comparedWith: d.prevLabel, revenue: v(k.revenue), grossProfit: v(k.gross), netProfit: v(k.net), orders: v(k.orders), unitsSold: v(k.units),
                stockValue: v(k.stockValue), duesReceivable: v(k.dues), cashReceived: v(k.cashIn), expenses: v(k.expenses), investorCapital: v(k.capital) };
+    }
+    if (name === 'top_products') {
+      // owner 1 Nov 2026: "which products sell the most?" had no function - units and sales per product over dates
+      const ymd = (v, d) => (/^\d{4}-\d{2}-\d{2}$/.test(str(v)) ? str(v) : d);
+      const to = ymd(a.to, formatDate(ctx.now, 'yyyy-MM-dd')), from = ymd(a.from, formatDate(new Date(ctx.now.getTime() - 30 * 86400e3), 'yyyy-MM-dd'));
+      const n = Math.min(50, Math.max(1, Math.round(num(a.limit) || 10)));
+      const rows = await ctx.tx`select coalesce(il.sku, '') as sku, max(il.name) as name, sum(il.qty)::float as units, sum(il.line_total)::float as sales, count(distinct il.invoice_id)::int as invoices
+        from invoice_lines il join invoices i on i.id = il.invoice_id
+        where i.business_id = ${ctx.biz} and i.voided_at is null and (i.created_at at time zone 'Asia/Dhaka')::date between ${from}::date and ${to}::date
+        group by 1 order by ${str(a.by) === 'sales' ? ctx.tx`sales` : ctx.tx`units`} desc limit ${n}`;
+      return { from, to, by: str(a.by) === 'sales' ? 'sales' : 'units', products: rows.map((r) => ({ code: r.sku, name: r.name, units: r.units, sales: Math.round(r.sales), invoices: r.invoices })) };
     }
     if (name === 'stock_low') {
       const cat = await call(ctx, 'erpCatalog', []);

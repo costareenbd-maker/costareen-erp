@@ -68,6 +68,11 @@ check('business summary from the dashboard figures', r.ok && /Revenue \d+, net -
 script = [[{ functionCall: { name: 'stock_low', args: {} } }], answerWith((x) => 'Low: ' + x.count)];
 r = await mgr('erpAssistant', [{ messages: [{ role: 'user', text: 'what is low?' }] }]);
 check('low stock list', r.ok && /^Low: \d+/.test(r.result.text), r.ok ? r.result.text : r);
+// 1 Nov 2026: "which products sold the most?" - the invoice made above (2 x PLA Black) is today's best seller
+const today = new Date(Date.now() + 6 * 3600e3).toISOString().slice(0, 10);
+script = [[{ functionCall: { name: 'top_products', args: { from: today, to: today, limit: 3 } } }], answerWith((x) => 'Top: ' + x.products.map((p) => p.name + ' ' + p.units + ' ' + p.sales).join('; ') + ' | ' + x.from + '..' + x.to)];
+r = await sales('erpAssistant', [{ messages: [{ role: 'user', text: 'best sellers today?' }] }]);
+check('top products: units and sales per product over the dates', r.ok && /Top: Sunlu PLA Black 2 2700/.test(r.result.text) && r.result.text.endsWith(today + '..' + today), r.ok ? r.result.text : r);
 script = [[{ functionCall: { name: 'propose_followup', args: { phone: '01712345678', name: 'Karim', due: '2026-12-01', note: 'ask about the printer' } } }], answerWith((x) => 'Ready: ' + x.summary)];
 r = await sales('erpAssistant', [{ messages: [{ role: 'user', text: 'remind me to call Karim on 1 Dec' }] }]);
 const fu0 = (await sql`select count(*)::int as n from customer_followups where business_id = ${FIX.B}`)[0].n;
