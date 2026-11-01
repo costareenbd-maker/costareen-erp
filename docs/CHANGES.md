@@ -3454,5 +3454,5 @@ product, then ads by instruction; install the popular marketing / SEO skills fro
 NOT done: posting the daily picture by itself (owner approves under Content); web search for the ChatGPT route (web work
 still goes to Gemini). Tests: socialmake (+21), skills2 (+6).
 
-2026-11-01 — polish-1
+2026-11-01 — site-polish-1
 - Carried from the Oliareen/Costareen site polish: Bangla small headings (menus, table heads, eyebrows) lose the English letter-spacing that split joined letters; h1-h3 break into even lines.
