@@ -322,6 +322,11 @@ export async function pubRoute(deps, req, R) {
       if (!r) return { status: 405, body: { ok: false } };
       return { status: 200, body: { ok: true, ...r } };
     }
+    // Easy mode (handlers/pricelist.js): the website's live price list, behind the website sync key
+    if (what === 'pricelist') {
+      const r = await (await import('./pricelist.js')).route(deps, R || {}, u.searchParams, req.headers, ip);
+      return { status: 200, body: { ok: true, ...r } };
+    }
     // Stage N4 (handlers/printkit.js): a print shop's own quote link
     if (what === 'printquote' || what === 'printreq') {
       const r = await (await import('./printkit.js')).route(deps, R || {}, what, req.method, u.searchParams, body, ip);

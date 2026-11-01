@@ -284,7 +284,7 @@ export async function erpPrintRequestJob(ctx, payload) {
 
 // ---------------------------------------------------------------- public: the quote link
 const reqToken = (deps, id) => tokenFor(deps, 'public', NIL, 'printreq|' + id);
-async function tenantOf(deps, R, b) {
+export async function tenantOf(deps, R, b) {
   const m = /^([A-Za-z0-9_-]+):([0-9a-f-]{36})$/i.exec(str(b));
   if (!m) throw new Error('This quote link is not complete.');
   let d = deps;
@@ -294,7 +294,7 @@ async function tenantOf(deps, R, b) {
   return { d, row: rows[0], biz: m[2] };
 }
 /** fn(ctx) as the business's owner; an error inside comes back as a thrown error. */
-async function runAs(d, R, row, label, fn) {
+export async function runAs(d, R, row, label, fn) {
   const out = await R.asBusiness(d, row, label, fn);
   if (out && out.error) throw new Error(out.error);
   return out;
