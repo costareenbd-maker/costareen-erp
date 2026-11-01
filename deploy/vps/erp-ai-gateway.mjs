@@ -108,8 +108,11 @@ function answer(res, body, reply, usage, headers) {
 // in the system message, earlier calls and results as plain turns (photos stay where they are)
 function asText(body) {
   const msgs = body.messages || [];
+  const rf = body.response_format || {}, schema = rf.type === 'json_schema' && rf.json_schema && rf.json_schema.schema;
+  // a strict JSON schema (the Skin Advisor's) is dropped by OpenClaw too: it goes in as words, every key required
   const sys = msgs.filter((m) => m.role === 'system').map((m) => textOf(m.content)).join('\n\n') + toolSystem(body.tools) +
-    (body.response_format && body.response_format.type === 'json_object' ? '\n\nAnswer with valid JSON only.' : '');
+    (schema ? '\n\nAnswer with ONE JSON object only (no words before or after it) that matches this JSON Schema exactly - every key present, null only where the schema allows it:\n' + JSON.stringify(schema)
+      : rf.type === 'json_object' ? '\n\nAnswer with valid JSON only.' : '');
   const out = sys ? [{ role: 'system', content: sys }] : [];
   for (const m of msgs) {
     if (m.role === 'system') continue;
