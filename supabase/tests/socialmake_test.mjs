@@ -127,4 +127,68 @@ r = await mgr('erpSocialClipRequest', [{ sku: PLA, note: 'show the spool label' 
 check('the clip request: a Notifications task for staff', r.ok && /10-second/.test(r.result.text) && (await sql`select count(*)::int n from inbox_tasks where business_id = ${FIX.B} and reason = 'clip'`)[0].n === 1, r);
 check('the other business has nothing', (await sql`select count(*)::int n from social_assets where business_id = ${FIX.B2}`)[0].n === 0);
 
+// ---- 6. ad-photo-1: pictures by ChatGPT through the own-server gateway (a job), and the ad photo of the day
+const gw = []; let gwState = 'working', gwChat = null;
+web.on(/gw\.test\/v1/, (url, opts) => {
+  const body = opts.body ? JSON.parse(opts.body) : null;
+  gw.push({ url, method: opts.method, auth: opts.headers && (opts.headers.authorization || opts.headers.Authorization), body });
+  if (/\/images\/jobs$/.test(url)) return { status: 200, body: { id: 'f'.repeat(32), state: 'queued' } };
+  if (/\/images\/jobs\//.test(url)) return { status: 200, body: { state: gwState, error: gwState === 'failed' ? 'Codex usage limit reached' : '', bytes: 98765, width: 1024, height: 1024, revisedPrompt: 'a quiet photo' } };
+  if (/chat\/completions$/.test(url)) return { status: 200, body: { choices: [{ message: { role: 'assistant', content: JSON.stringify(gwChat || { scene: 'minimal', direction: 'morning light from the left', caption: 'কালো PLA, ৳১৬০০।\nইনবক্স করুন।', hook: 'কালো PLA', why: 'simple' }) } }], usage: { prompt_tokens: 10, completion_tokens: 10 } } };
+  return { status: 404, body: {} };
+});
+await sql`insert into erp_provider_secrets (key, value_enc) values ('CUSTOM_AI_KEY', 'v0.gwsecret'), ('CUSTOM_AI_BASE', 'v0.https://gw.test/v1')
+          on conflict (key) do update set value_enc = excluded.value_enc`;
+r = await sales('erpSocialAiPhoto', [{ sku: PLA, scene: 'studio', notes: 'a little dust on the table' }]);
+const gp = r.ok && r.result.asset, gstart = gw.find((x) => /\/images\/jobs$/.test(x.url));
+check('with the own server set, the AI photo is a ChatGPT job: rendering, no taka cost', gp && gp.status === 'rendering' && gp.job === 'img:' + 'f'.repeat(32) && gp.cost === 0 && gp.meta.engine === 'chatgpt', r);
+check('…the product\'s photo, the human-looking minimal words, the wishes and the upload address go to the gateway with its key',
+  gstart && gstart.auth === 'Bearer gwsecret' && /^data:image\/jpeg;base64,/.test(gstart.body.image) && /real photo taken by a person/.test(gstart.body.prompt) && /Minimal/.test(gstart.body.prompt) && /dust on the table/.test(gstart.body.prompt) && /files\.test\/upload/.test(gstart.body.upload.url), gstart && gstart.body.prompt);
+r = await sales('erpSocialAiPhoto', [{ notes: 'an empty maker desk at dawn, a coffee cup' }]);
+check('words alone (no product) make a picture too', r.ok && r.result.asset.status === 'rendering' && !gw[gw.length - 1].body.image, r);
+r = await asB((ctx) => sm.assetsTick(ctx));
+check('the timer leaves a working picture alone', r && (await sql`select count(*)::int n from social_assets where business_id = ${FIX.B} and status = 'rendering' and job like 'img:%'`)[0].n === 2, r);
+gwState = 'done';
+r = await asB((ctx) => sm.assetsTick(ctx));
+const gdone = (await sql`select status, meta from social_assets where id = ${gp.id}`)[0];
+check('…and finishes it: ready, the size and the picture model\'s own words kept', r.ready === 2 && gdone.status === 'ready' && gdone.meta.revisedPrompt === 'a quiet photo' && gdone.meta.width === 1024, gdone);
+gwState = 'failed';
+r = await sales('erpSocialAiPhoto', [{ sku: PLA, scene: 'minimal' }]);
+await asB((ctx) => sm.assetsTick(ctx));
+const gfail = (await sql`select status, error from social_assets where id = ${r.result.asset.id}`)[0];
+check('a used-up ChatGPT limit is said in plain words', gfail.status === 'failed' && /limit for now is used up/.test(gfail.error), gfail);
+r = await sales('erpSocialAiPhoto', [{ sku: PLA, engine: 'gemini' }]);
+check('Gemini can still be asked for by name (ready at once)', r.ok && r.result.asset.status === 'ready', r);
+
+// the ad photo of the day (the writing work routed to ChatGPT's strong model, the rest to the small one)
+r = await owner('erpAiBrainSet', [{ routes: { default: { provider: 'custom', model: 'gpt-5.6-luna' }, tasks: { write: { provider: 'custom', model: 'gpt-5.6-sol' } }, cheap: [] } }]);
+check('set-up: writing on gpt-5.6-sol', r.ok, r.error);
+r = await sales('erpAdDaily', [{}]);
+check('the daily ad photo: off by default, ChatGPT available, the PLA with a photo waiting', r.ok && r.result.on === false && r.result.chatgpt && r.result.left === 1 && r.result.done === 0, r);
+r = await sales('erpAdDaily', [{ on: true }]);
+check('staff cannot switch it on', !r.ok, r);
+r = await owner('erpAdDaily', [{ on: true, hour: 25 }]);
+check('an hour past 23 is refused', !r.ok && /0 to 23/.test(r.error), r);
+r = await owner('erpAdDaily', [{ on: true, hour: 10 }]);
+check('the owner switches it on at 10:00', r.ok && r.result.on && r.result.hour === 10, r);
+const early = new Date('2026-11-02T02:00:00Z'), late = new Date('2026-11-02T05:00:00Z');   // 08:00 and 11:00 in Dhaka
+r = await asB((ctx) => { ctx.now = early; return sm.adDailyTick(ctx); });
+check('before the hour it waits', r === 'waiting', r);
+const gwBefore = gw.length;
+r = await asB((ctx) => { ctx.now = late; return sm.adDailyTick(ctx); });
+const dailyRow = (await sql`select meta, template, sku from social_assets where business_id = ${FIX.B} and meta->>'daily' = 'true'`)[0];
+const dailyChat = gw.slice(gwBefore).find((x) => /chat\/completions$/.test(x.url)), dailyImg = gw.slice(gwBefore).find((x) => /\/images\/jobs$/.test(x.url));
+check('after the hour: the best seller gets its picture job with the written post', r === 'made ' + PLA && dailyRow && dailyRow.sku === PLA && dailyRow.template === 'ai:minimal' && /ইনবক্স/.test(dailyRow.meta.caption), [r, dailyRow]);
+check('…the post written by the writing model with the human voice rules, the picture told the direction', dailyChat && /never AI-looking/.test(JSON.stringify(dailyChat.body)) && dailyImg && /morning light from the left/.test(dailyImg.body.prompt), dailyChat && dailyChat.body);
+r = await asB((ctx) => { ctx.now = new Date('2026-11-02T09:00:00Z'); return sm.adDailyTick(ctx); });
+check('once a day only', r === 'waiting', r);
+r = await asB((ctx) => { ctx.now = new Date('2026-11-03T05:00:00Z'); return sm.adDailyTick(ctx); });
+check('the next day, nothing left: every product is done', r === 'all done', r);
+r = await owner('erpAdDaily', [{}]);
+check('the screen says so', r.ok && r.result.allDone && r.result.done === 1 && r.result.left === 0, r);
+r = await owner('erpAdDaily', [{ restart: true, now: true }]);
+check('start again + make one now: a picture at once', r.ok && r.result.made && r.result.made.status === 'rendering' && !r.result.allDone, r);
+check('the other business has no daily setting', (await sql`select count(*)::int n from business_config where business_id = ${FIX.B2} and key = 'ad_daily'`)[0].n === 0);
+await sql`delete from erp_provider_secrets where key in ('CUSTOM_AI_KEY', 'CUSTOM_AI_BASE')`;
+
 await done();

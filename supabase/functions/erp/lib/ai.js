@@ -40,8 +40,51 @@ const PURPOSE_TASK = { reply: 'chat', test: 'chat', followup: 'chat', comment: '
   summary: 'analyze', lead: 'analyze', digest: 'analyze', desk: 'analyze', catalogue: 'analyze',
   photo: 'read', 'photo-match': 'read', voice: 'read', receive: 'read',
   social: 'write', inspo: 'write', 'reel-script': 'write', 'ad-draft': 'write',
-  'leads-find': 'leads', 'leads-capture': 'leads', assistant: 'assistant' };
+  'leads-find': 'leads', 'leads-capture': 'leads', assistant: 'assistant',
+  'ad-daily': 'write', seo: 'analyze', 'skill-review': 'analyze' };
 export const taskOf = (purpose) => PURPOSE_TASK[str(purpose)] || (TASKS[str(purpose)] ? str(purpose) : 'default');
+
+// skills-chat-1 (owner 1 Nov 2026: "skills for ads, SEO and the rest that run with ChatGPT"): the switched-on skills of the
+// matching Engine agent (handlers/skills.js) go into the instructions of the ERP's own AI work too - whichever model the
+// task is routed to - and each use is counted on the Skills screen.
+const PURPOSE_AGENT = { 'ad-draft': 'ads', 'ad-daily': 'ads', social: 'content', inspo: 'content', 'reel-script': 'content', seo: 'seo',
+  lead: 'leads', 'leads-find': 'leads', 'leads-capture': 'leads', assistant: 'command' };
+const SKILL_BUDGET = 20000, SKILL_EACH = 7000;
+// the skills that fit a piece of work best go first (by words in the skill's slug); the rest of the agent's follow by use
+const PURPOSE_PREFER = { 'ad-daily': ['image', 'ad-creative', 'copywriting'], 'ad-draft': ['ads', 'ad-creative', 'copywriting', 'offers', 'psychology'],
+  social: ['social', 'copywriting', 'copy-editing'], inspo: ['social', 'video'], 'reel-script': ['video', 'social', 'copywriting'],
+  seo: ['seo-ecommerce', 'seo-audit', 'seo-local', 'ai-seo', 'schema'], 'leads-find': ['prospecting', 'customer-research'], 'leads-capture': ['prospecting'], lead: ['prospecting', 'cold-email'] };
+export async function skillsFor(ctx, purpose) {
+  const agent = PURPOSE_AGENT[str(purpose)];
+  if (!agent || !ctx.tx || !ctx.biz) return '';
+  ctx.memo = ctx.memo || {};
+  const mk = '__skills_' + str(purpose);
+  if (ctx.memo[mk] !== undefined) return ctx.memo[mk];
+  let text = '';
+  try {
+    const rows = await ctx.tx.savepoint((t) => t`select s.slug, s.name, s.description, s.files,
+        (select count(*) from engine_skill_use u where u.business_id = s.business_id and u.skill_slug = s.slug and u.at > now() - interval '60 days')::int as uses
+      from engine_skills s where s.business_id = ${ctx.biz} and s.enabled and ${agent} = any(s.agents) order by uses desc, s.installed_at limit 30`);
+    const pref = PURPOSE_PREFER[str(purpose)] || [];
+    const rank = (slug) => { const i = pref.findIndex((w) => str(slug).toLowerCase().includes(w)); return i < 0 ? pref.length : i; };
+    rows.sort((a, b) => rank(a.slug) - rank(b.slug));
+    const used = [];
+    for (const r of rows) {
+      const files = r.files || {};
+      const main = Object.keys(files).find((f) => /(^|\/)SKILL\.md$/i.test(f)) || Object.keys(files).find((f) => /\.md$/i.test(f));
+      const body = str(main ? files[main] : '').replace(/^﻿?---\s*\n[\s\S]*?\n---\s*\n?/, '').slice(0, SKILL_EACH);
+      if (!body || text.length + body.length > SKILL_BUDGET) continue;
+      text += '\n\n## Skill: ' + str(r.name) + (str(r.description) ? ' - ' + str(r.description).slice(0, 200) : '') + '\n' + body;
+      used.push(r.slug);
+    }
+    if (used.length) {
+      text = '\n\n# Skills of this business (follow them where they fit this work; the instructions above come first)' + text;
+      await ctx.tx.savepoint((t) => t`insert into engine_skill_use (business_id, skill_slug, agent, ok) select ${ctx.biz}, x, ${agent}, true from unnest(${used}::text[]) x`);
+    }
+  } catch (_) { text = ''; }
+  ctx.memo[mk] = text;
+  return text;
+}
 
 // the strongest models first; a model the key cannot use is skipped (404) and the next one tried
 const BEST = {
@@ -175,6 +218,7 @@ const TIMEOUT = { chat: 75000, assistant: 90000, read: 110000, write: 90000, lea
  *  -> { text, json, calls: [{id, name, args}], provider, model, raw }
  */
 export async function ai(ctx, req) {
+  if (!req.skillsIn) { const sk = await skillsFor(ctx, req.purpose); req = { ...req, skillsIn: true, ...(sk ? { system: str(req.system) + sk } : {}) }; }
   const task = req.task || taskOf(req.purpose);
   const need = { audio: hasPart(req.messages, 'audio'), pdf: hasPart(req.messages, 'file'), web: !!req.web, image: hasPart(req.messages, 'image') };
   let P = req.provider ? { list: [{ provider: req.provider, model: req.model || 'auto' }], keys: await providerKeys(ctx), web: true } : await plan(ctx, task, need);

@@ -7,10 +7,11 @@
 // The ERP's own tools (function calling) are passed through: Claude is told the functions and answers either with a
 // JSON tool call or with the final answer (ChatGPT the same way: OpenClaw drops passed functions). Photos go to ChatGPT;
 // Claude here does not take them (400) and the caller moves on to Gemini.
+// Pictures: POST /v1/images/jobs + GET /v1/images/jobs/<id> (gpt-image-2 on the ChatGPT plan, see below).
 // Secret: ERP_AI_SECRET in /etc/erp-ai-gateway.env (the ERP's Settings > AI brain > Own server key).
 import http from 'node:http';
 import { spawn } from 'node:child_process';
-import { readFileSync, writeFileSync, unlinkSync } from 'node:fs';
+import { readFileSync, writeFileSync, unlinkSync, mkdirSync, chmodSync } from 'node:fs';
 import { randomUUID } from 'node:crypto';
 
 const PORT = Number(process.env.PORT || 18800);
@@ -150,16 +151,98 @@ async function openclawChat(body, res) {
   return claudeChat({ ...body, model: 'claude-opus' }, res);
 }
 
+// ---------------------------------------------------------------- pictures (owner 1 Nov 2026: ad photos on the ChatGPT plan)
+// OpenClaw's `infer image generate|edit` with gpt-image-2 on the ChatGPT login. A picture takes 40-90 s, longer than the
+// ERP should wait, so it is a job: POST /v1/images/jobs {prompt, image?: data URL (the product's photo), size, quality,
+// upload: {url, contentType}} -> {id}; the picture is PUT to the ERP's file store (a signed Supabase upload address only);
+// GET /v1/images/jobs/<id> -> {state: queued|working|done|failed, error, bytes, revisedPrompt}. One picture at a time.
+const OPENCLAW = process.env.OPENCLAW_BIN || '/home/admin/.npm-global/bin/openclaw';
+const IMG_DIR = '/tmp/erp-img';
+const STORE_RE = /^https:\/\/[a-z0-9-]+\.supabase\.co\/storage\/v1\//;
+const imgJobs = new Map(); const imgQueue = []; let imgBusy = false;
+const SIZES = ['1024x1024', '1024x1536', '1536x1024'];
+
+function runOpenclaw(args, ms) {
+  return new Promise((ok, bad) => {
+    const p = spawn('runuser', ['-u', 'admin', '--', OPENCLAW, ...args], { cwd: '/home/admin', env: { ...process.env, HOME: '/home/admin', USER: 'admin', PATH: '/home/admin/.npm-global/bin:/usr/local/bin:/usr/bin:/bin' } });
+    let out = '', e = '';
+    const t = setTimeout(() => p.kill('SIGKILL'), ms);
+    p.stdout.on('data', (d) => { out += d; });
+    p.stderr.on('data', (d) => { e += d; });
+    p.on('close', (code) => {
+      clearTimeout(t);
+      const at = out.indexOf('{');
+      let j = null; try { j = at >= 0 ? JSON.parse(out.slice(at)) : null; } catch (_) { j = null; }
+      if (code !== 0 || !j) return bad(new Error(((e || out).replace(/\s+/g, ' ').match(/(error|failed|limit|denied)[^.]{0,200}/i) || [(e || out).slice(-200)])[0].trim()));
+      ok(j);
+    });
+  });
+}
+async function imgWork(job) {
+  job.state = 'working'; job.started = Date.now();
+  const out = IMG_DIR + '/' + job.id + '.' + job.ext;
+  const args = ['infer', 'image', job.input ? 'edit' : 'generate', '--agent', 'main', '--model', 'openai/gpt-image-2', '--json', '--output', out,
+    '--size', job.size, '--quality', job.quality, '--output-format', job.ext === 'jpg' ? 'jpeg' : 'png', '--prompt', job.prompt];
+  if (job.input) args.push('--file', job.input);
+  try {
+    const j = await runOpenclaw(args, 240000);
+    const o = (j.outputs || [])[0] || {};
+    const bytes = readFileSync(o.path || out);
+    const r = await fetch(job.upload.url, { method: 'PUT', headers: { 'Content-Type': job.upload.contentType, 'x-upsert': 'true' }, body: bytes });
+    if (!r.ok) throw new Error('upload ' + r.status + ' ' + (await r.text()).slice(0, 120));
+    Object.assign(job, { state: 'done', bytes: bytes.length, width: o.width || 0, height: o.height || 0, revisedPrompt: String(o.revisedPrompt || '').slice(0, 1500), model: j.model || 'gpt-image-2' });
+  } catch (e) {
+    Object.assign(job, { state: 'failed', error: String(e && e.message || e).slice(0, 300) });
+    console.log('image job failed: ' + job.error);
+  } finally {
+    for (const f of [out, job.input]) if (f) { try { unlinkSync(f); } catch (_) { /* gone */ } }
+    job.input = ''; job.ms = Date.now() - job.started;
+  }
+}
+async function imgPump() {
+  if (imgBusy) return;
+  imgBusy = true;
+  try { while (imgQueue.length) await imgWork(imgQueue.shift()); } finally { imgBusy = false; }
+  const old = Date.now() - 2 * 3600e3;
+  for (const [id, j] of imgJobs) if (j.created < old) imgJobs.delete(id);
+}
+function imgStart(body, res) {
+  const prompt = String(body.prompt || '').trim().slice(0, 4000);
+  if (!prompt) return err(res, 400, 'prompt?', 'invalid_request_error');
+  const up = body.upload || {};
+  if (!STORE_RE.test(String(up.url || ''))) return err(res, 400, 'nowhere to upload', 'invalid_request_error');
+  if (imgQueue.length >= 6) return err(res, 429, 'Too many pictures waiting; try again in a few minutes.');
+  const id = randomUUID().replace(/-/g, '');
+  mkdirSync(IMG_DIR, { recursive: true, mode: 0o1777 }); chmodSync(IMG_DIR, 0o1777);
+  let input = '';
+  const m = /^data:image\/(png|jpe?g|webp);base64,(.+)$/s.exec(String(body.image || ''));
+  if (m) { input = IMG_DIR + '/' + id + '-in.' + (m[1] === 'jpeg' ? 'jpg' : m[1]); writeFileSync(input, Buffer.from(m[2], 'base64'), { mode: 0o644 }); }
+  const job = { id, state: 'queued', created: Date.now(), prompt, input, size: SIZES.includes(body.size) ? body.size : '1024x1024',
+    quality: ['low', 'medium', 'high'].includes(body.quality) ? body.quality : 'medium', ext: /png/.test(up.contentType || '') ? 'png' : 'jpg',
+    upload: { url: up.url, contentType: /png/.test(up.contentType || '') ? 'image/png' : 'image/jpeg' } };
+  imgJobs.set(id, job); imgQueue.push(job); imgPump();
+  return send(res, 200, { id, state: 'queued', waiting: imgQueue.length });
+}
+function imgStatus(id, res) {
+  const j = imgJobs.get(id);
+  if (!j) return err(res, 404, 'no such job');
+  const { input, upload, prompt, ...pub } = j;
+  return send(res, 200, pub);
+}
+
 http.createServer((req, res) => {
   const auth = String(req.headers.authorization || '');
   if (!SECRET || auth !== 'Bearer ' + SECRET) return err(res, 401, 'unauthorized', 'authentication_error');
   const path = req.url.replace(/^\/ai/, '').split('?')[0];
   if (req.method === 'GET' && path === '/v1/models') return send(res, 200, { object: 'list', data: MODELS.map((id) => ({ id, object: 'model', owned_by: 'erp-gateway' })) });
-  if (req.method !== 'POST' || path !== '/v1/chat/completions') return err(res, 404, 'not found');
+  const im = /^\/v1\/images\/jobs\/([0-9a-f]{32})$/.exec(path);
+  if (req.method === 'GET' && im) return imgStatus(im[1], res);
+  if (req.method !== 'POST' || (path !== '/v1/chat/completions' && path !== '/v1/images/jobs')) return err(res, 404, 'not found');
   let raw = '';
   req.on('data', (d) => { raw += d; if (raw.length > 20e6) req.destroy(); });
   req.on('end', () => {
     let body; try { body = JSON.parse(raw); } catch (_) { return err(res, 400, 'bad json', 'invalid_request_error'); }
+    if (path === '/v1/images/jobs') { try { return imgStart(body, res); } catch (e) { return err(res, 500, String(e && e.message || e)); } }
     const m = String(body.model || 'claude-opus');
     (CLAUDE_MODEL[m] ? claudeChat(body, res) : /^gpt|^o\d/.test(m) ? openclawChat(body, res) : claudeChat({ ...body, model: 'claude-opus' }, res))
       .catch((e) => err(res, 500, String(e && e.message || e)));

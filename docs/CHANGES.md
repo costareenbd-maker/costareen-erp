@@ -3431,3 +3431,25 @@ took all the goods and 53 colours got only their freight.
 NOT done: a late bill, striking out a cost and investor funding on a JOINT shipment (own stock only, hidden on the joint
 page); the pool's lots screen / To order. Tests: priceeach (9), reprice (28), joint6 updated. creators_test fails 2
 checks on 1 Nov with or without this change (month boundary in the test).
+
+## ad-photo-1 + skills-chat-1 (1 Nov 2026) - ChatGPT per kind of work, ad photos by ChatGPT, skills in the ERP's own AI
+
+Owner: "set the model per job in the ERP, cost-effective; ads need pictures that look human, minimal, one a day product by
+product, then ads by instruction; install the popular marketing / SEO skills from GitHub that run with ChatGPT".
+- Gateway (deploy/vps/erp-ai-gateway.mjs): POST /v1/images/jobs + GET /v1/images/jobs/<id> - gpt-image-2 on the owner's
+  ChatGPT plan through `openclaw infer image generate|edit` (40-90 s, one at a time); the picture is PUT straight to the
+  ERP's file store (signed Supabase upload address only). Chat: functions reach ChatGPT as text (OpenClaw drops tools).
+- erpSocialAiPhoto: with the own server set, a ChatGPT job (asset `rendering`, job `img:<id>`, no taka cost) from the
+  product's own photo + the HUMAN words (real phone photo, natural light, minimal, no text); words alone (no product) make
+  a picture too; `engine: 'gemini'` or a failed start -> Gemini as before. assetsTick finishes `img:` jobs; a used-up
+  ChatGPT limit is said plainly. New scene `minimal`.
+- Ad photo of the day (erpAdDaily, config `ad_daily`): Content > "Ad photo of the day" - switch on, hour, Make one now,
+  Start again. Each day at the hour (Dhaka) the next product (in stock, with a photo, best sellers of 90 days first) gets
+  a picture plan + post text from the writing model (purpose ad-daily -> task write) and the ChatGPT picture; the text
+  shows under the picture with Copy. Nothing is posted. When every product is done it says so (then ads by instruction).
+- lib/ai.js skillsFor: the switched-on skills of the matching Engine agent (ads / content / seo / leads / command) go into
+  the system words of the ERP's own AI work (ad-draft, ad-daily, social, reel-script, seo, leads, assistant) - whichever
+  model the task runs on - best-fitting first (PURPOSE_PREFER), 20k characters at most; each use counted
+  (engine_skill_use, job_id null). Purposes seo / skill-review -> analyze, ad-daily -> write.
+NOT done: posting the daily picture by itself (owner approves under Content); web search for the ChatGPT route (web work
+still goes to Gemini). Tests: socialmake (+21), skills2 (+6).

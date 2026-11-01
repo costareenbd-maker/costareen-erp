@@ -1,7 +1,7 @@
 // skills-2 (owner 23 Oct 2026): "a section where skills are suggested based on our needs, requirements and agents - the
 // best ones growing on GitHub and newly out". A weekly timed job (or Suggest now) has the AI file ranked suggestions;
 // the owner sees them with why, for which agent, popular / new; "Not useful" hides one; installed ones drop out.
-import { sql, FIX, owner, call, check, done, fnDir } from './harness.mjs';
+import { sql, FIX, owner, call, check, done, fnDir, deps } from './harness.mjs';
 import { pathToFileURL } from 'node:url';
 import path from 'node:path';
 
@@ -42,5 +42,22 @@ r = await owner('erpSkills', []);
 check('one already installed drops out of the suggestions', r.ok && r.result.suggest.items.length === 0, r.result.suggest.items);
 r = await owner('erpEngine', [{}]);
 check('the suggestion job stays out of the Command Center (it shows in Skills)', !r.result.jobs.some((j) => j.title === 'Suggest skills'), r.result.jobs.map((j) => j.title));
+
+// skills-chat-1 (owner 1 Nov 2026): the switched-on skills go into the ERP's own AI work too (ChatGPT, Claude, Gemini alike)
+const jobsM = await import(pathToFileURL(path.join(fnDir, 'jobs.js'))), aiM = await import(pathToFileURL(path.join(fnDir, 'lib', 'ai.js')));
+const asB = async (fn) => { const rows = await jobsM.owners(sql, [B]); return jobsM.asBusiness(deps, rows[0], 'test', fn); };
+r = await owner('erpSkillLibraryInstall', [{ slug: 'bd-ad-writer' }]);
+check('set-up: the ad writer skill installed (ads + content)', r.ok, r.error);
+const useBefore = (await sql`select count(*)::int n from engine_skill_use where business_id = ${B} and skill_slug = 'bd-ad-writer'`)[0].n;
+let sk = await asB((ctx) => aiM.skillsFor(ctx, 'ad-draft'));
+check('ad work carries the ads skills, front matter dropped', /# Skills of this business/.test(sk) && /## Skill: bd-ad-writer/.test(sk) && /Ads that sell in Bangladesh/.test(sk) && !/^---/m.test(sk.split('## Skill')[1]), sk.slice(0, 300));
+check('...and the use is counted for the Skills screen', (await sql`select count(*)::int n from engine_skill_use where business_id = ${B} and skill_slug = 'bd-ad-writer' and agent = 'ads' and job_id is null`)[0].n === useBefore + 1);
+sk = await asB((ctx) => aiM.skillsFor(ctx, 'seo'));
+check('work of another kind (SEO) gets none of them', sk === '', sk);
+sk = await asB((ctx) => aiM.skillsFor(ctx, 'reply'));
+check('customer replies get no skills', sk === '', sk);
+r = await owner('erpSkillSet', [{ slug: 'bd-ad-writer', enabled: false }]);
+sk = await asB((ctx) => aiM.skillsFor(ctx, 'ad-draft'));
+check('a switched-off skill is left out', r.ok && sk === '', [r.error, sk.slice(0, 80)]);
 
 await done();

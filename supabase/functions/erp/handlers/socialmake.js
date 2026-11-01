@@ -3,7 +3,9 @@
 //
 //   erpSocialAssets()                    the pictures and videos made (90 days), ready / rendering / failed
 //   erpSocialCard({template, sku, skus, format, offer, headline, lang})   a photo card: PNG drawn by the render server
-//   erpSocialAiPhoto({sku, file, scene, lang})   the product placed in a scene by Gemini's image model
+//   erpSocialAiPhoto({sku, file, scene, notes})  the product placed in a scene: ChatGPT (gpt-image-2 on the owner's plan, through
+//                                        the own-server gateway, a job like a video) first, else Gemini's image model
+//   erpAdDaily({on, hour, lang, now, restart})   the ad photo of the day: one product a day, best sellers first
 //   erpSocialScript({template, sku, lang, notes})   the AI writes the reel's slides and voice-over (to edit before cutting)
 //   erpSocialVideo({template, sku, script, media, clip, voice, lang, format})   a template reel: slides drawn, voice spoken,
 //                                        cut by ffmpeg on the render server, uploaded straight into the file store
@@ -23,6 +25,7 @@ import { aiKey } from './receivefile.js';
 import { products } from './dashboard.js';
 import { task } from './inbox.js';
 import { storeConn, storeItems, storeMatcher, storeKind } from './stores.js';
+import { providerKeys, ai, parseJson } from '../lib/ai.js';
 
 const str = (v) => String(v == null ? '' : v).trim();
 // cheapest first; erpSocialAiModels lists what the key can use when Google renames them
@@ -53,7 +56,12 @@ const SCENES = {
   workshop: 'on a wooden workbench in a small 3D-printing workshop, printed parts around, warm light',
   hands: 'held in a person\'s hands at chest height, blurred home background, natural light',
   dark: 'on a dark matte surface with a single warm rim light, premium look, black background',
+  minimal: 'alone on a plain soft-coloured surface with a lot of calm empty space around it and one gentle natural shadow',
 };
+// ad-photo-1 (owner 1 Nov 2026): ad pictures must look human, not AI-made, and minimal. The words every picture gets.
+const HUMAN = 'Make it look like a real photo taken by a person with a good phone for a small shop\'s social media ad: natural daylight, true-to-life colours, ' +
+  'real textures and small natural imperfections, believable shadows; not glossy CGI, not a perfect studio render, no fake bokeh. Minimal: one product, ' +
+  'calm uncluttered composition with plenty of empty space, no extra props unless asked. No text, no logos, no watermarks, no frames.';
 
 function need(ctx, role) { if (!roleAtLeast(ctx.s.role, role || 'sales')) throw new Error('Your account does not have permission for this. If you need this, ask the owner to open it for you (Settings > Users).'); }
 function b64(bytes) { let s = ''; const CH = 0x8000; for (let i = 0; i < bytes.length; i += CH) s += String.fromCharCode.apply(null, bytes.subarray(i, i + CH)); return btoa(s); }
@@ -327,16 +335,56 @@ export async function erpSocialCard(ctx, payload) {
 }
 
 // ------------------------------------------------------------------ AI photos
+/** The owner's own server (the office VPS gateway) makes pictures on the ChatGPT plan: {base, key} or null. */
+async function gptImager(ctx) {
+  const k = await providerKeys(ctx);
+  return k.custom && k.customBase ? { base: str(k.customBase).replace(/\/+$/, ''), key: k.custom } : null;
+}
+/** Start a picture on the gateway; it uploads the file itself. Returns the asset (rendering). */
+async function gptPhotoJob(ctx, g, { src, prompt, scene, sku, title, meta, size }) {
+  if (!(ctx.deps.storage && ctx.deps.storage.signUpload)) throw new Error('File uploads are not available on this server.');
+  const fname = 'ai-' + scene + '-' + stamp(ctx) + '.jpg';
+  const up = await ctx.deps.storage.signUpload(ctx.biz, 'social', fname);
+  const res = await (ctx.deps.fetch || fetch)(g.base + '/images/jobs', { method: 'POST', headers: { 'content-type': 'application/json', authorization: 'Bearer ' + g.key },
+    body: JSON.stringify({ prompt, image: src || undefined, size: size || '1024x1024', quality: 'medium', upload: { url: up.url, contentType: 'image/jpeg' } }) });
+  let j = {}; try { j = JSON.parse(await res.text()); } catch (_) { j = {}; }
+  if (!res.ok || !j.id) throw new Error('ChatGPT could not start the picture (' + res.status + ' ' + str(j.error && j.error.message).slice(0, 120) + ').');
+  await logWork(ctx, 'ai-photo', 'custom:gpt-image-2', 0, 0, 0);
+  const r = (await ctx.tx`insert into social_assets (business_id, kind, template, sku, title, file, status, job, meta, cost_bdt, created_by)
+                          values (${ctx.biz}, 'image', ${'ai:' + scene}, ${str(sku) || null}, ${str(title).slice(0, 120)}, ${'social/' + fname}, 'rendering', ${'img:' + j.id},
+                                  ${ctx.tx.json({ scene, model: 'gpt-image-2', engine: 'chatgpt', width: 1024, height: 1024, ...(meta || {}) })}, 0, ${ctx.s.name}) returning *`)[0];
+  return view(r);
+}
+/** Where a ChatGPT picture stands on the gateway. */
+async function gptPhotoState(ctx, g, id) {
+  const res = await (ctx.deps.fetch || fetch)(g.base + '/images/jobs/' + encodeURIComponent(id), { method: 'GET', headers: { authorization: 'Bearer ' + g.key } });
+  let j = {}; try { j = JSON.parse(await res.text()); } catch (_) { j = {}; }
+  if (res.status === 404) return { state: 'lost', error: 'The picture server no longer has this job (restarted).' };
+  if (!res.ok) throw new Error('The picture server did not answer (' + res.status + ').');
+  return { state: str(j.state), error: str(j.error), bytes: num(j.bytes), width: num(j.width), height: num(j.height), revisedPrompt: str(j.revisedPrompt) };
+}
+const photoPrompt = (scene, notes, withRef) => (withRef
+  ? 'Use the attached photo of the product exactly: keep its shape, colours, label and any printed text as they are; do not redraw or invent the label. Place it '
+  : 'A photo of ') + SCENES[scene] + '. ' + HUMAN + (str(notes) ? ' ' + str(notes).slice(0, 800) : '');
+
 export async function erpSocialAiPhoto(ctx, payload) {
   need(ctx);
   const p = payload || {}, scene = SCENES[str(p.scene)] ? str(p.scene) : 'desk';
-  const key = (await aiKey(ctx)).key;
-  if (!key) throw new Error('The AI is not set up on this server (no AI key).');
   let src = '', name = '', sku = '';
   if (str(p.sku)) { const x = await productWithPhoto(ctx, p.sku); if (!x.photo) throw new Error(x.name + ' has no photo yet: add one on the product first.'); src = x.photo; name = x.name; sku = x.sku; }
   else if (str(p.file)) { src = await fileData(ctx, p.file); name = str(p.name) || 'picture'; }
-  if (!src) throw new Error('Choose a product with a photo, or a picture.');
-  await allowance(ctx, 1);
+  // ad-photo-1: with the owner's instructions alone (no product, no picture) ChatGPT draws the whole picture
+  if (!src && !str(p.notes)) throw new Error('Choose a product with a photo, or a picture, or write what the picture should show.');
+  const g = p.engine === 'gemini' ? null : await gptImager(ctx);
+  if (g) {
+    await allowance(ctx, 1);
+    try { return { asset: await gptPhotoJob(ctx, g, { src, prompt: photoPrompt(scene, p.notes, !!src), scene, sku, title: (name || 'Picture') + ' · ' + scene, meta: p.meta }) }; }
+    catch (e) { if (!src) throw e; /* Gemini below */ }
+  }
+  if (!src) throw new Error('A picture from words alone needs ChatGPT (the own server under Settings > AI models).');
+  const key = (await aiKey(ctx)).key;
+  if (!key) throw new Error('The AI is not set up on this server (no AI key).');
+  if (!g) await allowance(ctx, 1);
   const mime = (/^data:([^;]+)/.exec(src) || [])[1] || 'image/jpeg', data = src.replace(/^data:[^,]*,/, '');
   const prompt = 'Place this exact product ' + SCENES[scene] + '. Keep the product exactly as photographed: same shape, colours, label and text on it; do not add any text, logos or watermarks; photorealistic, sharp, square framing, the product fills about half of the frame.' + (str(p.notes) ? ' ' + str(p.notes).slice(0, 300) : '');
   let last = '';
@@ -524,6 +572,90 @@ export async function erpSocialClipRequest(ctx, payload) {
   return { ok: true, text };
 }
 
+// ------------------------------------------------------------------ the ad photo of the day (ad-photo-1, owner 1 Nov 2026)
+// "Every day one picture, product by product; when every product has one we make ads by instruction." Each day at the
+// chosen hour (Dhaka) the next product - best sellers first, in stock, with a photo, not done yet - gets a minimal,
+// human-looking ad photo made by ChatGPT from its own photo, with the post text written by the strong writing model
+// (and the business's ads skills). Nothing is posted: the picture and its text wait under Content.
+const DAILY_DEFAULT = { on: false, hour: 10, lang: 'bn' };
+async function dailyState(ctx) {
+  let s = {}; try { s = JSON.parse(await getConfig(ctx, 'ad_daily', '') || '{}'); } catch (_) { s = {}; }
+  return { ...DAILY_DEFAULT, ...s, done: Array.isArray(s.done) ? s.done : [] };
+}
+async function dailyCandidates(ctx, done) {
+  const { list } = await products(ctx);
+  const have = new Set((await ctx.tx`select sku from products where business_id = ${ctx.biz} and (coalesce(photo, '') <> '' or coalesce(image_link, '') <> '')`).map((r) => str(r.sku).toLowerCase()));
+  const sold = new Map((await ctx.tx`select lower(il.sku) as sku, sum(il.qty)::float as q from invoice_lines il join invoices i on i.id = il.invoice_id
+                                      where i.business_id = ${ctx.biz} and i.voided_at is null and i.created_at > now() - interval '90 days' group by 1`).map((r) => [r.sku, num(r.q)]));
+  const gone = new Set(done.map((x) => str(x).toLowerCase()));
+  return list.filter((p) => num(p.stock) > 0 && !/inactive|discontinued|archived/i.test(str(p.status)) && have.has(p.sku.toLowerCase()) && !gone.has(p.sku.toLowerCase()))
+    .sort((a, b) => (sold.get(b.sku.toLowerCase()) || 0) - (sold.get(a.sku.toLowerCase()) || 0) || num(b.stock) - num(a.stock));
+}
+/** One ad photo now: the next product, its text, its picture job. Returns {sku, asset} or {allDone}. */
+async function adDailyMake(ctx, s) {
+  const g = await gptImager(ctx);
+  if (!g) throw new Error('The daily ad photo needs ChatGPT: the own server under Settings > AI models.');
+  const next = (await dailyCandidates(ctx, s.done))[0];
+  if (!next) return { allDone: true };
+  const x = await productWithPhoto(ctx, next.sku);
+  if (!x.photo) { s.done.push(next.sku); return { skipped: next.sku }; }
+  const shop = await shopName(ctx);
+  let plan = {};
+  try {
+    const r = await ai(ctx, { purpose: 'ad-daily', json: true, temperature: 0.8, maxTokens: 900,
+      system: 'You are the ad maker of ' + shop + ', a shop in Bangladesh. You plan ONE minimal, human-looking ad photo for a product and write its post. ' +
+        'The picture must look like a real person photographed it - never AI-looking, never busy. The post sounds like a real shop owner talking to a customer: plain, warm, specific, ' +
+        'no hype words, no "unleash/elevate/game-changer", at most one emoji, the price in taka, one clear action (inbox / WhatsApp / order).',
+      messages: [{ role: 'user', content: [{ type: 'text', text: 'Product: ' + x.name + (x.brand ? ' (' + x.brand + ')' : '') + (x.cat ? ', ' + x.cat : '') + '. Price: ৳' + Math.round(x.sell) + '. In stock: ' + Math.round(x.stock) + '.\n' +
+        'Scenes to choose from: ' + Object.keys(SCENES).map((k) => k + ' = ' + SCENES[k]).join('; ') + '.\n' +
+        'Answer JSON: {"scene": one of the scene keys (prefer minimal or studio unless the product needs context), "direction": one sentence (max 30 words) for the photographer - light, angle, one small real-life detail, ' +
+        '"caption": the post in ' + (s.lang === 'en' ? 'English' : 'Bangla (simple everyday words; product names may stay in English)') + ', 2-4 short lines, "hook": the first line alone, "why": why this picture should work, one line}' }] }] });
+    plan = r.json || parseJson(r.text) || {};
+  } catch (_) { plan = {}; }
+  const scene = SCENES[str(plan.scene)] ? str(plan.scene) : 'minimal';
+  const meta = { daily: true, caption: str(plan.caption).slice(0, 1200), hook: str(plan.hook).slice(0, 200), why: str(plan.why).slice(0, 300), direction: str(plan.direction).slice(0, 300) };
+  const asset = await gptPhotoJob(ctx, g, { src: x.photo, prompt: photoPrompt(scene, meta.direction, true), scene, sku: x.sku, title: x.name + ' · ad of the day', meta });
+  s.done.push(x.sku);
+  return { sku: x.sku, asset };
+}
+/** The minute timer (through assetsTick): once a day at the chosen hour. */
+export async function adDailyTick(ctx) {
+  const s = await dailyState(ctx);
+  if (!s.on || s.allDone) return 'off';
+  const today = formatDate(ctx.now, 'yyyy-MM-dd'), hour = Number(formatDate(ctx.now, 'H'));
+  if (s.last === today || hour < num(s.hour)) return 'waiting';
+  s.last = today;                                  // one try a day, even when it fails (the reason is kept)
+  await setConfig(ctx, 'ad_daily', JSON.stringify(s));
+  let r;
+  try { r = await adDailyMake(ctx, s); if (r.skipped) r = await adDailyMake(ctx, s); } catch (e) { s.error = str(e && e.message).slice(0, 200); await setConfig(ctx, 'ad_daily', JSON.stringify(s)); return 'failed: ' + s.error; }
+  if (r.allDone) s.allDone = today;
+  s.error = '';
+  await setConfig(ctx, 'ad_daily', JSON.stringify(s));
+  return r.allDone ? 'all done' : 'made ' + r.sku;
+}
+/** The screen: {on, hour, lang} to change (owner / shareholder), {now: true} to make today's at once. */
+export async function erpAdDaily(ctx, payload) {
+  need(ctx);
+  const p = payload || {}, s = await dailyState(ctx);
+  const change = p.on !== undefined || p.hour !== undefined || p.lang !== undefined || p.now || p.restart;
+  if (change && !roleAtLeast(ctx.s.role, 'shareholder')) throw new Error('Only the owner or a shareholder sets the daily ad photo.');
+  if (p.on !== undefined) s.on = !!p.on;
+  if (p.hour !== undefined) { const h = Math.round(num(p.hour)); if (h < 0 || h > 23) throw new Error('The hour is 0 to 23.'); s.hour = h; }
+  if (p.lang !== undefined) s.lang = str(p.lang) === 'en' ? 'en' : 'bn';
+  if (p.restart) { s.done = []; s.allDone = ''; }
+  let made = null;
+  if (p.now) {
+    await allowance(ctx, 1);
+    made = await adDailyMake(ctx, s);
+    if (made.skipped) made = await adDailyMake(ctx, s);
+    if (made.allDone) s.allDone = formatDate(ctx.now, 'yyyy-MM-dd');
+    s.last = formatDate(ctx.now, 'yyyy-MM-dd'); s.error = '';
+  }
+  if (change) await setConfig(ctx, 'ad_daily', JSON.stringify(s));
+  const left = (await dailyCandidates(ctx, s.done)).length;
+  return { on: s.on, hour: s.hour, lang: s.lang, done: s.done.length, left, allDone: !!s.allDone, last: s.last || '', error: s.error || '', chatgpt: !!(await gptImager(ctx)), made: made && made.asset ? made.asset : null };
+}
+
 /** The minute timer: a video whose job finished on the render server becomes ready (its file was uploaded by the server). */
 export async function assetsTick(ctx) {
   const out = { ready: 0, failed: 0, studied: 0 };
@@ -544,9 +676,22 @@ export async function assetsTick(ctx) {
     const last = str(await getConfig(ctx, 'social_learn_at', ''));
     if (!last || new Date(last).getTime() < ctx.now.getTime() - 24 * 3600e3) { await learnTick(ctx); await setConfig(ctx, 'social_learn_at', ctx.now.toISOString()); }
   } catch (_) { /* next time */ }
+  try { out.daily = await adDailyTick(ctx); } catch (e) { out.daily = 'failed: ' + str(e && e.message).slice(0, 120); }
   const rows = await ctx.tx`select * from social_assets where business_id = ${ctx.biz} and status = 'rendering' order by created_at limit 10`;
+  let g;
   for (const a of rows) {
     let j;
+    // a ChatGPT picture (the gateway uploaded the file itself)
+    if (str(a.job).startsWith('img:')) {
+      try { g = g === undefined ? await gptImager(ctx) : g; if (!g) continue; j = await gptPhotoState(ctx, g, str(a.job).slice(4)); } catch (_) { continue; }
+      if (j.state === 'done') {
+        await ctx.tx`update social_assets set status = 'ready', meta = meta || ${ctx.tx.json({ bytes: j.bytes, ...(j.width ? { width: j.width, height: j.height } : {}), revisedPrompt: j.revisedPrompt.slice(0, 1500) })}, updated_at = now() where id = ${a.id}`; out.ready++;
+      } else if (j.state === 'failed' || j.state === 'lost' || (new Date(a.created_at).getTime() < ctx.now.getTime() - 30 * 60e3)) {
+        const why = /limit|usage|quota|429/i.test(j.error) ? 'ChatGPT\'s picture limit for now is used up - try again later.' : (j.error || 'The picture took too long.');
+        await ctx.tx`update social_assets set status = 'failed', error = ${why.slice(0, 300)}, updated_at = now() where id = ${a.id}`; out.failed++;
+      }
+      continue;
+    }
     try { j = await videoJob(ctx.deps, a.job); } catch (_) { continue; }
     if (j.state === 'done') {
       await ctx.tx`update social_assets set status = 'ready', meta = meta || ${ctx.tx.json({ seconds: j.seconds, bytes: j.bytes, voice: !!j.voice, captions: !!j.captions, music: !!j.music, brollUsed: !!(j.broll && !j.broll.error), warn: j.warn || '' })}, updated_at = now() where id = ${a.id}`; out.ready++;
@@ -557,4 +702,4 @@ export async function assetsTick(ctx) {
   return out;
 }
 
-export const HANDLERS = { erpSocialAssets, erpSocialCard, erpSocialAiPhoto, erpSocialScript, erpSocialVideo, erpSocialAssetAct, erpSocialClipRequest, erpSocialWebPhotos, erpSocialAiModels, erpSocialRules, erpSocialPexels, erpSocialInspo, erpSocialLearn };
+export const HANDLERS = { erpAdDaily, erpSocialAssets, erpSocialCard, erpSocialAiPhoto, erpSocialScript, erpSocialVideo, erpSocialAssetAct, erpSocialClipRequest, erpSocialWebPhotos, erpSocialAiModels, erpSocialRules, erpSocialPexels, erpSocialInspo, erpSocialLearn };
