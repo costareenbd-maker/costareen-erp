@@ -5,7 +5,8 @@
 //   gpt-*                                       -> OpenClaw's powerless `erp` agent on the owner's ChatGPT plan
 //                                                 (when the OpenClaw gateway runs; else 503 and the ERP falls back)
 // The ERP's own tools (function calling) are passed through: Claude is told the functions and answers either with a
-// JSON tool call or with the final answer. Photos are not taken (400): the ERP sends those to Gemini instead.
+// JSON tool call or with the final answer (ChatGPT the same way: OpenClaw drops passed functions). Photos go to ChatGPT;
+// Claude here does not take them (400) and the caller moves on to Gemini.
 // Secret: ERP_AI_SECRET in /etc/erp-ai-gateway.env (the ERP's Settings > AI brain > Own server key).
 import http from 'node:http';
 import { spawn } from 'node:child_process';
@@ -55,7 +56,7 @@ function runClaude(model, system, prompt, ms) {
 function toolSystem(tools) {
   if (!tools || !tools.length) return '';
   const list = tools.map((t) => { const f = t.function || t; return '- ' + f.name + ': ' + (f.description || '') + '\n  parameters: ' + JSON.stringify(f.parameters || {}); }).join('\n');
-  return '\n\n# Functions of the business system\nYou may call ONE of these functions to get data or act. To call one, reply with ONLY this JSON and nothing else:\n' +
+  return '\n\n# Functions of the business system\nThese are the tools the instructions above speak of. You may call ONE of these functions to get data or act. To call one, reply with ONLY this JSON and nothing else:\n' +
     '{"tool_call": {"name": "<function name>", "arguments": { ... }}}\nWhen you have what you need, reply with the final answer as normal text (never wrapped in tool_call JSON).\n' + list;
 }
 function transcript(msgs) {
@@ -83,17 +84,44 @@ async function claudeChat(body, res) {
   try { j = await runClaude(CLAUDE_MODEL[body.model] || 'opus', sys, transcript(msgs), 140000); }
   catch (e) { free(); return err(res, /rate|limit|usage/i.test(e.message) ? 429 : 502, e.message); }
   free();
-  let text = String(j.result || '').trim(), toolCalls = null;
+  const u = j.usage || {};
+  answer(res, body, j.result, { prompt_tokens: (u.input_tokens || 0) + (u.cache_read_input_tokens || 0) + (u.cache_creation_input_tokens || 0), completion_tokens: u.output_tokens || 0 });
+}
+
+// a text reply -> an OpenAI answer; with functions offered, a {"tool_call": ...} in it becomes a real tool call
+function answer(res, body, reply, usage, headers) {
+  let text = String(reply || '').trim(), toolCalls = null;
   const t = text.replace(/^```(?:json)?\s*/i, '').replace(/```\s*$/, '').trim();
   // the call may come alone or after a sentence ("let me check... {"tool_call": ...}"): the JSON from its last opening on
   const at = body.tools && body.tools.length ? t.lastIndexOf('{"tool_call"') : -1;
   if (at >= 0) {
     try { const c = JSON.parse(t.slice(at)).tool_call; if (c && c.name) { toolCalls = [{ id: 'call_' + randomUUID().slice(0, 12), type: 'function', function: { name: c.name, arguments: JSON.stringify(c.arguments || {}) } }]; text = ''; } } catch (_) { /* a normal answer */ }
   }
-  const u = j.usage || {};
-  send(res, 200, { id: 'chatcmpl-' + randomUUID(), object: 'chat.completion', created: Math.floor(Date.now() / 1000), model: body.model,
+  res.writeHead(200, { 'content-type': 'application/json', ...(headers || {}) });
+  res.end(JSON.stringify({ id: 'chatcmpl-' + randomUUID(), object: 'chat.completion', created: Math.floor(Date.now() / 1000), model: body.model,
     choices: [{ index: 0, message: { role: 'assistant', content: toolCalls ? null : text, ...(toolCalls ? { tool_calls: toolCalls } : {}) }, finish_reason: toolCalls ? 'tool_calls' : 'stop' }],
-    usage: { prompt_tokens: (u.input_tokens || 0) + (u.cache_read_input_tokens || 0) + (u.cache_creation_input_tokens || 0), completion_tokens: u.output_tokens || 0 } });
+    usage }));
+}
+
+// OpenClaw's HTTP door drops the caller's functions, so they go in as text the same way as for Claude: the function list
+// in the system message, earlier calls and results as plain turns (photos stay where they are)
+function asText(body) {
+  const msgs = body.messages || [];
+  const sys = msgs.filter((m) => m.role === 'system').map((m) => textOf(m.content)).join('\n\n') + toolSystem(body.tools) +
+    (body.response_format && body.response_format.type === 'json_object' ? '\n\nAnswer with valid JSON only.' : '');
+  const out = sys ? [{ role: 'system', content: sys }] : [];
+  for (const m of msgs) {
+    if (m.role === 'system') continue;
+    if (m.role === 'tool') { out.push({ role: 'user', content: 'FUNCTION RESULT (' + (m.name || m.tool_call_id || '') + '):\n' + textOf(m.content) }); continue; }
+    if (m.role === 'assistant') {
+      const calls = (m.tool_calls || []).map((c) => 'I called function ' + c.function.name + ' with ' + (c.function.arguments || '{}'));
+      out.push({ role: 'assistant', content: [textOf(m.content)].concat(calls).filter(Boolean).join('\n') || '(no text)' });
+      continue;
+    }
+    out.push({ role: 'user', content: m.content });
+  }
+  const { tools, tool_choice, response_format, parallel_tool_calls, ...rest } = body;
+  return { ...rest, messages: out };
 }
 
 // ChatGPT through OpenClaw; when the plan's usage window is spent (429), OpenClaw is down or the model is refused, the
@@ -103,14 +131,18 @@ async function openclawChat(body, res) {
   let token = '';
   try { token = JSON.parse(readFileSync('/home/admin/.openclaw/openclaw.json', 'utf8')).gateway.auth.token; } catch (_) { token = ''; }
   const model = GPT_ALIAS[body.model] || body.model;
-  const fwd = { ...body, model: 'openclaw/erp', stream: false };
+  const fwd = { ...asText(body), model: 'openclaw/erp', stream: false };
   let why = '';
   try {
     const r = await fetch('http://127.0.0.1:18789/v1/chat/completions', { method: 'POST', headers: { 'content-type': 'application/json', authorization: 'Bearer ' + token, 'x-openclaw-model': 'openai/' + model },
       body: JSON.stringify(fwd), signal: AbortSignal.timeout(170000) });
     const txt = await r.text();
-    if (r.ok) { res.writeHead(200, { 'content-type': 'application/json', 'x-erp-ai-engine': 'chatgpt:' + model }); return res.end(txt); }
-    why = r.status + ' ' + txt.slice(0, 200);
+    if (r.ok) {
+      let j = null; try { j = JSON.parse(txt); } catch (_) { j = null; }
+      const c = j && j.choices && j.choices[0] && j.choices[0].message;
+      if (c) return answer(res, body, c.content, j.usage || {}, { 'x-erp-ai-engine': 'chatgpt:' + model });
+      why = 'odd answer: ' + txt.slice(0, 160);
+    } else why = r.status + ' ' + txt.slice(0, 200);
   } catch (e) { why = 'openclaw down: ' + String(e && e.message || e).slice(0, 120); }
   console.log('gpt fallback to claude: ' + why);
   if (hasImage(body.messages || [])) return err(res, 503, 'ChatGPT is not available right now (' + why.slice(0, 120) + ').');
