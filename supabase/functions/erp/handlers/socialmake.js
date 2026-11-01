@@ -606,7 +606,7 @@ async function adDailyMake(ctx, s) {
       system: 'You are the ad maker of ' + shop + ', a shop in Bangladesh. You plan ONE minimal, human-looking ad photo for a product and write its post. ' +
         'The picture must look like a real person photographed it - never AI-looking, never busy. The post sounds like a real shop owner talking to a customer: plain, warm, specific, ' +
         'no hype words, no "unleash/elevate/game-changer", at most one emoji, the price in taka, one clear action (inbox / WhatsApp / order).',
-      messages: [{ role: 'user', content: [{ type: 'text', text: 'Product: ' + x.name + (x.brand ? ' (' + x.brand + ')' : '') + (x.cat ? ', ' + x.cat : '') + '. Price: ৳' + Math.round(x.sell) + '. In stock: ' + Math.round(x.stock) + '.\n' +
+      messages: [{ role: 'user', content: [{ type: 'text', text: 'Product: ' + x.name + (x.brand ? ' (' + x.brand + ')' : '') + (x.cat ? ', ' + x.cat : '') + '. Price: ৳' + Math.round(x.sell) + '. (In stock - never state how many.)\n' +
         'Scenes to choose from: ' + Object.keys(SCENES).map((k) => k + ' = ' + SCENES[k]).join('; ') + '.\n' +
         'Answer JSON: {"scene": one of the scene keys (prefer minimal or studio unless the product needs context), "direction": one sentence (max 30 words) for the photographer - light, angle, one small real-life detail, ' +
         '"caption": the post in ' + (s.lang === 'en' ? 'English' : 'Bangla (simple everyday words; product names may stay in English)') + ', 2-4 short lines, "hook": the first line alone, "why": why this picture should work, one line}' }] }] });

@@ -164,9 +164,10 @@ const SIZES = ['1024x1024', '1024x1536', '1536x1024'];
 
 function runOpenclaw(args, ms) {
   return new Promise((ok, bad) => {
-    const p = spawn('runuser', ['-u', 'admin', '--', OPENCLAW, ...args], { cwd: '/home/admin', env: { ...process.env, HOME: '/home/admin', USER: 'admin', PATH: '/home/admin/.npm-global/bin:/usr/local/bin:/usr/bin:/bin' } });
+    const p = spawn('/usr/sbin/runuser', ['-u', 'admin', '--', OPENCLAW, ...args], { cwd: '/home/admin', env: { ...process.env, HOME: '/home/admin', USER: 'admin', PATH: '/home/admin/.npm-global/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin' } });
     let out = '', e = '';
     const t = setTimeout(() => p.kill('SIGKILL'), ms);
+    p.on('error', (x) => { clearTimeout(t); bad(new Error('could not start openclaw: ' + x.message)); });
     p.stdout.on('data', (d) => { out += d; });
     p.stderr.on('data', (d) => { e += d; });
     p.on('close', (code) => {
