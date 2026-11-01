@@ -41161,6 +41161,15 @@ html[lang="bn"][data-look="clean"][data-skin="fd"] .fdcl-t .n, html[lang="bn"][d
 html[lang="bn"][data-look="clean"][data-skin="fd"] .ib-msg span, html[lang="bn"][data-look="clean"][data-skin="fd"] #view .sub,
 html[lang="bn"][data-look="clean"][data-skin="fd"] label.f { font-size:13px !important; }
 
+/* polish-1 (1 Nov 2026, carried from the Oliareen/Costareen site polish): Bangla small headings lose the English
+   letter-spacing (it splits joined Bangla letters; uppercase does nothing to Bangla), and headings break into even
+   lines instead of leaving one word alone on the last line. */
+html[lang="bn"] :is(.navgrp, .sect h3, th, tr.grp td, .fdd-eyebrow, .fdt-menu .t, .fdd-more-h, .nvg-menu .nvg-mh, .fdt-sec h3, .fdg-sec,
+  .inv-chk h3, .fdsc .tag, .fdws-sec, .ib-box h4, .ib-col h4, .cash_card .k, .ap-mgrp, .ap-h3, .pkcol h3, .in-card .tag, .ld-how h4,
+  #dvs .pan h4, .bf-tile .l, #view.ib-skin .ib-tag, #view.ib-skin .ib-tabs button, #view.ib-skin .ib-c h3, #view.ib-skin .ib-kpi span,
+  #view.ib-skin .ib-form label, #view.ib-skin .ib-box h4, #view.ib-skin .fdd-t th) { letter-spacing:0 !important; }
+:where(h1, h2, h3) { text-wrap:balance; }
+
 /* ---- the same corners everywhere (Inbox kept its own square ones) */
 html[data-look="clean"][data-skin="fd"]:root #ibQ, html[data-look="clean"][data-skin="fd"]:root .ib-list-h input.i { border-radius:12px !important; }
 html[data-look="clean"][data-skin="fd"]:root .fdd-head .btn.small, html[data-look="clean"][data-skin="fd"]:root #view .btn.small { border-radius:10px !important; }

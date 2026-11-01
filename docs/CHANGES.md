@@ -3453,3 +3453,6 @@ product, then ads by instruction; install the popular marketing / SEO skills fro
   (engine_skill_use, job_id null). Purposes seo / skill-review -> analyze, ad-daily -> write.
 NOT done: posting the daily picture by itself (owner approves under Content); web search for the ChatGPT route (web work
 still goes to Gemini). Tests: socialmake (+21), skills2 (+6).
+
+2026-11-01 — polish-1
+- Carried from the Oliareen/Costareen site polish: Bangla small headings (menus, table heads, eyebrows) lose the English letter-spacing that split joined letters; h1-h3 break into even lines.
