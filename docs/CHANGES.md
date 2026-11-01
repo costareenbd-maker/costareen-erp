@@ -3456,3 +3456,12 @@ still goes to Gemini). Tests: socialmake (+21), skills2 (+6).
 
 2026-11-01 — site-polish-1
 - Carried from the Oliareen/Costareen site polish: Bangla small headings (menus, table heads, eyebrows) lose the English letter-spacing that split joined letters; h1-h3 break into even lines.
+
+## easy-pricelist-1 (2 Nov 2026) - Easy mode price list for costareen.com
+`handlers/pricelist.js`: `GET ?pub=pricelist&b=<source>:<business>` with header `x-cz-key` = the website sync key
+(CZ_SYNC_KEY). Own stock (shelf minus website orders not yet entered, `stockItems`) and the joint pools priced for this
+company (`erpJointCatalog`); only rows in stock with a price; never cost or counts. The website's /easy page reads it
+(cached, refreshed in the background - the call takes ~13 s on live). Tests `pricelist_test.mjs` (8). Deployed live
+2 Nov on the owner's "ERP যুক্ত করে দাও" (this also shipped main's earlier commits; live DB was already at 152).
+Not done: photos for joint rows (the website photo is used when the SKU matches), the joint rows carry no type.
+Note: `joint3_test` has 4 failures that also happen without this change (month boundary, 1 Nov).
