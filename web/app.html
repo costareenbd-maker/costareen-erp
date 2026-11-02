@@ -8503,7 +8503,7 @@ function srv(name, args, ok, bad) {
 
 var SRV_ACTIVE = 0, SRV_WRITING = false, SRV_TIMED = {};
 // the same list the server uses to know a call changes nothing (ERP_READS)
-var SRV_READS = /^(erpBrandDesk|erpBrandDeskIdeas|erpBrandDeskBoard|erpShipmentRepriceCheck|erpReceivePreview|erpSeo|erpReceipts|erpBrief|erpBrain|erpWatch|erpEngine|erpEngineJob|erpSkills|erpAiBrain|erpAiBrainModels|erpLeadForms|erpLeads|erpLeadFind|erpLeadCapture|erpMyUpdates|erpSocialBridges|erpAds|erpAdsInterests|erpSocialNet|erpSocialLearn|erpSocialAssets|erpSocialPosts|erpSocialPhotos|erpInboxDigest|erpJointRecvCatalog|erpSitePages|erpBalanceSheet|erpProductFields|erpProductAi|erpMetaConnect|erpInboxFeatureMap|erpBookings|erpInbox|erpInboxOpen|erpInboxChannels|erpChatOrders|erpInboxStats|erpAiWork|erpCommissionSales|erpFdCards|erpLineMargins|erpFd19Profit|erpFdInventory|erpFd22Analytics|erpNavigator|erpSellers|erpFollowups|erpCustomerInsight|erpPreorders|erpCashUps|erpAskingPrices|erpSystemCheck|erpAnalytics|erpCommission|erpHolding|erpLotFunding|erpShipments|erpShipment|erpLots|erpFdHead|erpFdDash|erpReceiveMatch|erpAiReader|erpProductSuggest|erpCatalogue|erpPushList|erpCreators|erpCreatorPortalLink|erpSponsorLink|erpCreatorRequests|erpCreatorEvents|erpCreatorProgramme|erpCreatorPreview|erpCreatorCatalog|erpCreatorSources|erpCreatorClaims|erpApps|erpAppQr|erpFeedback|erpRestockOffers|erpRestockList|erpWarrantyRules|erpWarrantyCard|erpMyLink|erpPlatformRegister|erpPlatformDoctor|erpPlatformCommunity|erpMarketWaiting|erpBoard|erpPlatformDesign|erpResell|erpResellerProgramme|erpLoyalty|erpCustomerPoints|erpRefillDue|erpDeliveryHistory|erpDeliveryHistoryMany|erpPrintKit|erpPrintJobs|erpPrintJob|erpPrintCost|erpSpools|erpPrintRequests|erpJoint|erpJointCatalog|erpJointCard|erpInvoiceDesign|erpInvoicePreview|erpMarket|erpMarketMine|erpMarketRequests|erpMarketHints|erpMarketNames|erpWanted|erpBrand|erpComplianceLog|erpProviderKey|erpNews|erpAccessKeys|erpAccessWarning|erpAdmin|erpAiKeys|erpAlertRules|erpAlerts|erpArena|erpBackupStatus|erpBg|erpBnWords|erpBookedParcels|erpBrandLogo|erpBundle|erpBusinessLinks|erpBusinesses|erpBusinessesDeleted|erpCampaignAudience|erpCampaignGet|erpCampaignList|erpCapital|erpCashBook|erpCatalog|erpConnStatus|erpConnections|erpCostBook|erpCourier|erpCourierKeyStatus|erpCurrencies|erpCustomerAccount|erpCustomerCredit|erpCustomerList|erpCustomerPage|erpCustomerStatement|erpCustomers|erpDashboardData|erpDaySales|erpDeliveryOptions|erpDevices|erpDiscontinued|erpDues|erpEvoQr|erpEvoStatus|erpExpenseExport|erpExpenseReceiptUrl|erpExpenses|erpFamilies|erpFighters|erpFormOptions|erpGame|erpGetTheme|erpGoogle|erpHello|erpInstalls|erpInvoice|erpInvoicePdf|erpJob|erpJobs|erpListView|erpLookupCustomer|erpLookupUsage|erpMe|erpMoney|erpNoteFileUrl|erpNotes|erpOwnerChange|erpOwnerChanges|erpParcelLabels|erpParcelPreview|erpPartnerStock|erpPartnership|erpPayReasons|erpPeople|erpPlatform|erpPlatformErrors|erpPnl|erpPnlMonth|erpPoList|erpPoolCatalog|erpProduct|erpProductListShare|erpProductPage|erpProductPhotoUrl|erpProductThumbs|erpProfile|erpQuoteAsset|erpQuoteBoot|erpQuoteGet|erpQuoteList|erpRecentInvoices|erpRecovery|erpReorderPlan|erpRestorePreview|erpReturnPreview|erpRisks|erpSales|erpSearch|erpSecurity|erpSelfTest|erpSerialLookup|erpSerialsFor|erpSessions|erpSetTheme|erpSettingsFull|erpSettingsLists|erpSfPayoutLines|erpSfPayouts|erpShareFile|erpSharedStock|erpSheet|erpStatementPdf|erpStockHistory|erpSupplierPage|erpSuppliers|erpToday|erpUsers|erpWaProductPdf|erpWebMatches|erpWebOrderInvoices|erpWebOrders|erpWebsiteTest)$/;
+var SRV_READS = /^(erpBrandDesk|erpBrandDeskPeople|erpBrandDeskIdeas|erpBrandDeskBoard|erpShipmentRepriceCheck|erpReceivePreview|erpSeo|erpReceipts|erpBrief|erpBrain|erpWatch|erpEngine|erpEngineJob|erpSkills|erpAiBrain|erpAiBrainModels|erpLeadForms|erpLeads|erpLeadFind|erpLeadCapture|erpMyUpdates|erpSocialBridges|erpAds|erpAdsInterests|erpSocialNet|erpSocialLearn|erpSocialAssets|erpSocialPosts|erpSocialPhotos|erpInboxDigest|erpJointRecvCatalog|erpSitePages|erpBalanceSheet|erpProductFields|erpProductAi|erpMetaConnect|erpInboxFeatureMap|erpBookings|erpInbox|erpInboxOpen|erpInboxChannels|erpChatOrders|erpInboxStats|erpAiWork|erpCommissionSales|erpFdCards|erpLineMargins|erpFd19Profit|erpFdInventory|erpFd22Analytics|erpNavigator|erpSellers|erpFollowups|erpCustomerInsight|erpPreorders|erpCashUps|erpAskingPrices|erpSystemCheck|erpAnalytics|erpCommission|erpHolding|erpLotFunding|erpShipments|erpShipment|erpLots|erpFdHead|erpFdDash|erpReceiveMatch|erpAiReader|erpProductSuggest|erpCatalogue|erpPushList|erpCreators|erpCreatorPortalLink|erpSponsorLink|erpCreatorRequests|erpCreatorEvents|erpCreatorProgramme|erpCreatorPreview|erpCreatorCatalog|erpCreatorSources|erpCreatorClaims|erpApps|erpAppQr|erpFeedback|erpRestockOffers|erpRestockList|erpWarrantyRules|erpWarrantyCard|erpMyLink|erpPlatformRegister|erpPlatformDoctor|erpPlatformCommunity|erpMarketWaiting|erpBoard|erpPlatformDesign|erpResell|erpResellerProgramme|erpLoyalty|erpCustomerPoints|erpRefillDue|erpDeliveryHistory|erpDeliveryHistoryMany|erpPrintKit|erpPrintJobs|erpPrintJob|erpPrintCost|erpSpools|erpPrintRequests|erpJoint|erpJointCatalog|erpJointCard|erpInvoiceDesign|erpInvoicePreview|erpMarket|erpMarketMine|erpMarketRequests|erpMarketHints|erpMarketNames|erpWanted|erpBrand|erpComplianceLog|erpProviderKey|erpNews|erpAccessKeys|erpAccessWarning|erpAdmin|erpAiKeys|erpAlertRules|erpAlerts|erpArena|erpBackupStatus|erpBg|erpBnWords|erpBookedParcels|erpBrandLogo|erpBundle|erpBusinessLinks|erpBusinesses|erpBusinessesDeleted|erpCampaignAudience|erpCampaignGet|erpCampaignList|erpCapital|erpCashBook|erpCatalog|erpConnStatus|erpConnections|erpCostBook|erpCourier|erpCourierKeyStatus|erpCurrencies|erpCustomerAccount|erpCustomerCredit|erpCustomerList|erpCustomerPage|erpCustomerStatement|erpCustomers|erpDashboardData|erpDaySales|erpDeliveryOptions|erpDevices|erpDiscontinued|erpDues|erpEvoQr|erpEvoStatus|erpExpenseExport|erpExpenseReceiptUrl|erpExpenses|erpFamilies|erpFighters|erpFormOptions|erpGame|erpGetTheme|erpGoogle|erpHello|erpInstalls|erpInvoice|erpInvoicePdf|erpJob|erpJobs|erpListView|erpLookupCustomer|erpLookupUsage|erpMe|erpMoney|erpNoteFileUrl|erpNotes|erpOwnerChange|erpOwnerChanges|erpParcelLabels|erpParcelPreview|erpPartnerStock|erpPartnership|erpPayReasons|erpPeople|erpPlatform|erpPlatformErrors|erpPnl|erpPnlMonth|erpPoList|erpPoolCatalog|erpProduct|erpProductListShare|erpProductPage|erpProductPhotoUrl|erpProductThumbs|erpProfile|erpQuoteAsset|erpQuoteBoot|erpQuoteGet|erpQuoteList|erpRecentInvoices|erpRecovery|erpReorderPlan|erpRestorePreview|erpReturnPreview|erpRisks|erpSales|erpSearch|erpSecurity|erpSelfTest|erpSerialLookup|erpSerialsFor|erpSessions|erpSetTheme|erpSettingsFull|erpSettingsLists|erpSfPayoutLines|erpSfPayouts|erpShareFile|erpSharedStock|erpSheet|erpStatementPdf|erpStockHistory|erpSupplierPage|erpSuppliers|erpToday|erpUsers|erpWaProductPdf|erpWebMatches|erpWebOrderInvoices|erpWebOrders|erpWebsiteTest)$/;
 function srvPump() {
   if (!SRV_Q.length) return;
   var isRead = SRV_READS.test(SRV_Q[0].name);
@@ -40652,7 +40652,7 @@ html[data-bizkind="brand"] #tabbar button[data-tab="invoice"],html[data-bizkind=
 <script>
 (function () {
   try { SRV_SLOW.erpBrandDesk = 40000; SRV_SLOW.erpBrandDeskPost = 40000; } catch (e) {}
-  var BD = { data: null, busy: '', err: '', pick: {}, tab: 'today', board: null, tags: {}, ideas: null };
+  var BD = { data: null, busy: '', err: '', pick: {}, tab: 'today', board: null, tags: {}, ideas: null, people: null, pf: '' };
   var ICON = '<path d="M12 3l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.4 6.8 19.1l1-5.8L3.5 9.2l5.9-.9z"/>';
   function on() { if (!ME || ME.role !== 'owner') return false; var a = ME.apps || {}; return !!ME.platform || (a.off || []).indexOf('branddesk') < 0; }
   if (typeof fdxNav === 'function') fdxNav('branddesk', 'Brand desk', ICON, 'dash');
@@ -40712,6 +40712,30 @@ html[data-bizkind="brand"] #tabbar button[data-tab="invoice"],html[data-bizkind=
         return '<div class="bd-item"><div class="c" data-noi18n="1">' + esc(i.content) + '<div class="bd-meta">' + esc(when(i.at)) + '</div></div><button class="btn small" type="button" data-bd="toboard" data-id="' + esc(i.id) + '"' + (BD.busy ? ' disabled' : '') + '>To the board \u2192</button></div>';
       }).join('') : '<div class="bd-meta">No idea saved yet.</div>') + '</div></section>';
   }
+  function loadPeople() {
+    if (BD.busy === 'people') return; BD.busy = 'people';
+    srv('erpBrandDeskPeople', [], function (r) { BD.busy = ''; BD.people = r; paint(); }, function (e) { BD.busy = ''; BD.people = { error: (e && e.message) || String(e) }; paint(); });
+  }
+  function peopleHtml() {
+    var d = BD.people;
+    if (!d) { loadPeople(); return '<div class="loading">Reading your people…</div>'; }
+    if (d.error) return '<div class="note"><div class="ico">!</div><div>' + esc(d.error) + '</div></div>';
+    var list = (d.people || []).filter(function (x) { return !BD.pf || x.audience === BD.pf; }), biz = d.businesses || [];
+    var opts = biz.map(function (x) { return '<option value="' + esc(x.id) + '">' + esc(x.name) + '</option>'; }).join('');
+    var h = '<section><div class="card"><h3 style="margin:0 0 6px">Someone reached out</h3>' +
+      '<div class="bd-lines"><input class="i" id="bd_pname" data-noi18n="1" placeholder="Name"><input class="i" id="bd_pmail" data-noi18n="1" placeholder="E-mail"><input class="i" id="bd_pphone" data-noi18n="1" placeholder="Phone"><input class="i" id="bd_pjob" data-noi18n="1" placeholder="Company / what they do"></div>' +
+      '<div class="bd-meta" style="margin-top:8px">Who are they</div><div class="bd-chips">' + (d.audiences || []).map(function (v) { return chip('pa', v); }).join('') + '</div>' +
+      '<div class="bd-meta">About</div><div class="bd-chips">' + ['bendar', 'costareen', 'oliareen', '3d owala', 'k-beauty'].map(function (v) { return chip('pb', v); }).join('') + '</div>' +
+      '<input class="i" id="bd_psrc" data-noi18n="1" placeholder="Which post brought them (optional)">' +
+      '<div class="ap-row" style="margin-top:8px"><button class="btn small" type="button" data-bd="person"' + (BD.busy ? ' disabled' : '') + '>' + (BD.busy === 'person' ? '<span class="wd-spin"></span>' : '') + 'Save</button></div></div></section>';
+    h += '<section><div class="bd-chips">' + ['', 'customer', 'supplier', 'brand'].map(function (v) { return '<button type="button" class="bd-chip' + (BD.pf === v ? ' on' : '') + '" data-bd="pf" data-id="' + v + '">' + (v || 'Everyone') + '</button>'; }).join('') + '</div>' +
+      '<div class="card">' + (list.length ? list.map(function (x) {
+        return '<div class="bd-item"><div class="c"><b data-noi18n="1">' + esc(x.name) + '</b>' + (x.audience ? ' <span class="bd-tag">' + esc(x.audience) + '</span>' : '') + (x.about ? ' <span class="bd-tag">' + esc(x.about) + '</span>' : '') +
+          '<div class="bd-meta" data-noi18n="1">' + esc([x.job, x.email, x.phone].filter(Boolean).join(' · ')) + '</div>' + (x.source ? '<div class="bd-meta" data-noi18n="1">Came from: ' + esc(x.source) + '</div>' : '') + '</div>' +
+          (biz.length ? '<div class="ap-row" style="gap:6px;flex-wrap:wrap"><select class="i" id="bd_to_' + esc(x.id) + '" style="width:auto">' + opts + '</select><button class="btn small" type="button" data-bd="tolead" data-id="' + esc(x.id) + '">To Leads</button></div>' : '') + '</div>';
+      }).join('') : '<div class="bd-meta">Nobody here yet.</div>') + '</div></section>';
+    return h;
+  }
   function boardHtml() {
     var b = BD.board;
     if (!b) { loadBoard(); return '<div class="loading">Reading the board on your PC…</div>'; }
@@ -40744,9 +40768,10 @@ html[data-bizkind="brand"] #tabbar button[data-tab="invoice"],html[data-bizkind=
       '<button class="btn small" type="button" data-bd="reload"' + (BD.busy ? ' disabled' : '') + '>' + (BD.busy === 'load' ? '<span class="wd-spin"></span>' : '') + 'Refresh</button></div>' +
       (d.error ? '<div class="note" style="margin-top:8px"><div class="ico">!</div><div>' + esc(d.error) + '</div></div>' : '') + '</div></section>';
     if (!d.keySet) return h + setupHtml(d);
-    if (d.online) h += '<div class="bd-tabs"><button type="button" class="bd-chip' + (BD.tab === 'today' ? ' on' : '') + '" data-bd="tab" data-id="today">Today</button><button type="button" class="bd-chip' + (BD.tab === 'ideas' ? ' on' : '') + '" data-bd="tab" data-id="ideas">Ideas</button><button type="button" class="bd-chip' + (BD.tab === 'board' ? ' on' : '') + '" data-bd="tab" data-id="board">Board</button></div>';
+    if (d.online) h += '<div class="bd-tabs"><button type="button" class="bd-chip' + (BD.tab === 'today' ? ' on' : '') + '" data-bd="tab" data-id="today">Today</button><button type="button" class="bd-chip' + (BD.tab === 'ideas' ? ' on' : '') + '" data-bd="tab" data-id="ideas">Ideas</button><button type="button" class="bd-chip' + (BD.tab === 'board' ? ' on' : '') + '" data-bd="tab" data-id="board">Board</button><button type="button" class="bd-chip' + (BD.tab === 'people' ? ' on' : '') + '" data-bd="tab" data-id="people">People</button></div>';
     if (d.online && BD.tab === 'board') return h + boardHtml();
     if (d.online && BD.tab === 'ideas') return h + ideasHtml();
+    if (d.online && BD.tab === 'people') return h + peopleHtml();
     if (d.online && d.today) {
       h += '<section><div class="card"><h3 style="margin:0 0 4px">Write a post</h3>';
       if (!nets.length) h += '<div class="bd-meta">No network is connected yet. Connect your accounts in Postiz on the PC first.</div>';
@@ -40776,7 +40801,20 @@ html[data-bizkind="brand"] #tabbar button[data-tab="invoice"],html[data-bizkind=
   document.addEventListener('click', function (e) {
     var t = e.target.closest && e.target.closest('[data-bd]'); if (!t || VIEW !== 'branddesk') return;
     var what = t.getAttribute('data-bd'), id = t.getAttribute('data-id');
-    if (what === 'reload') { BD.data = null; BD.board = null; BD.ideas = null; load(); paint(); }
+    if (what === 'reload') { BD.data = null; BD.board = null; BD.ideas = null; BD.people = null; load(); paint(); }
+    else if (what === 'pf') { BD.pf = id || ''; paint(); }
+    else if (what === 'person') {
+      var pick1 = function (g) { var k4 = Object.keys(BD.tags).filter(function (k) { return BD.tags[k] && k.indexOf(g + ':') === 0; })[0]; return k4 ? k4.slice(g.length + 1) : ''; };
+      var val = function (i) { var x = el(i); return x ? x.value : ''; };
+      BD.busy = 'person'; paint();
+      srv('erpBrandDeskPerson', [{ name: val('bd_pname'), email: val('bd_pmail'), phone: val('bd_pphone'), job: val('bd_pjob'), audience: pick1('pa'), about: pick1('pb'), source: val('bd_psrc') }],
+        function (r) { BD.busy = ''; BD.people = r; BD.tags = {}; toast('Saved.'); paint(); }, function (e2) { BD.busy = ''; toast(esc((e2 && e2.message) || e2), true, 9000); paint(); });
+    }
+    else if (what === 'tolead') {
+      var sel = el('bd_to_' + id); BD.busy = 'tolead'; paint();
+      srv('erpBrandDeskToLeads', [{ id: id, business: sel ? sel.value : '' }], function (r) { BD.busy = ''; toast(r.added ? 'Added to that business\'s Leads.' : 'Already on that business\'s Leads.'); paint(); },
+        function (e3) { BD.busy = ''; toast(esc((e3 && e3.message) || e3), true, 9000); paint(); });
+    }
     else if (what === 'idea') { var it = el('bd_idea'); ideaAct('erpBrandDeskIdea', { content: it ? it.value : '' }, 'idea', function () { toast('Saved.'); }); }
     else if (what === 'toboard') ideaAct('erpBrandDeskIdeaToBoard', { id: id }, 'toboard', function () { BD.board = null; toast('On the board, in Idea.'); });
     else if (what === 'tab') { BD.tab = id; paint(); }

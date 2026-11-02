@@ -3526,3 +3526,13 @@ Ideas tab: the idea bank lives in Memos on the PC (user rahman, personal access 
 (first line = title), the list newest first, "To the board" makes it a card in Idea and archives the idea (never
 deletes). erpBrandDeskIdeas / Idea / IdeaToBoard through the bridge. branddesk_test 31.
 NOT done: voice notes / WhatsApp into ideas; Inbox, People, Videos; Postiz networks; named tunnel; live.
+
+## brand-4 (3 Nov 2026) - Brand desk: People, and the hand-off to a business's Leads
+People tab: people met through the content live in Twenty on the PC (workspace "Rahman Abidur", API key in the bridge;
+Twenty's sample rows moved to its trash; custom person fields audience = customer|supplier|brand, aboutBusiness,
+sourcePost). Save someone who reached out (name, e-mail, phone, company, who they are, which business, which post brought
+them); filter by customer / supplier / brand; "To Leads" hands the person to one of the owner's businesses (brand desks
+and joint pools left out): a lead in that business's Leads (supplier for suppliers and brands, customer for customers),
+note says it came from the brand desk and which post, never twice (source_ref branddesk:<id>). erpBrandDeskPeople /
+Person / ToLeads. branddesk_test 40.
+NOT done: AI reading comments/DMs to fill People by itself (needs the Inbox); Videos (Immich); Postiz networks; live.

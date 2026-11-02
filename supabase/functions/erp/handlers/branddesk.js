@@ -12,6 +12,9 @@
 //   erpBrandDeskMove({id, column})       a card to another step;  erpBrandDeskDone({id}) a card finished (closed)
 //   erpBrandDeskIdeas()                  brand-3: the idea bank (Memos on the PC), newest first
 //   erpBrandDeskIdea({content})          a new idea;  erpBrandDeskIdeaToBoard({id}) the idea becomes a card in Idea
+//   erpBrandDeskPeople()                 brand-4: people met through the content (Twenty on the PC)
+//   erpBrandDeskPerson({name, email?, phone?, job?, audience?, about?, source?})   a new person
+//   erpBrandDeskToLeads({id, business})  that person becomes a lead of one of the owner's businesses (its Leads menu)
 //   erpBrandDeskHello({biz, url})        the PC: "I am on, here is my address" (owner's machine key, any active business)
 //
 // Researched first (owner rule "open source first"): Postiz does the posting, the pacer keeps one line per network so
@@ -19,6 +22,7 @@
 import { roleAtLeast } from '../allow.js';
 import { getConfig, setConfig, getSecret, setSecret } from '../lib/ext.js';
 import { platformAdmin } from './platform.js';
+import { addLead } from './leads.js';
 import { appIsOff } from './apps.js';
 
 const str = (v) => String(v == null ? '' : v).trim();
@@ -123,6 +127,40 @@ export async function erpBrandDeskIdeaToBoard(ctx, payload) {
   return bridge(ctx, '/ideas/board', { id: ideaId(payload && payload.id) });
 }
 
+export async function erpBrandDeskPeople(ctx) {
+  await gate(ctx);
+  return { ...(await bridge(ctx, '/people')), audiences: AUDIENCES, businesses: await leadTargets(ctx) };
+}
+export async function erpBrandDeskPerson(ctx, payload) {
+  await gate(ctx);
+  const p = payload || {}, name = str(p.name);
+  if (!name) throw new Error('Write the name.');
+  if (p.email && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(str(p.email))) throw new Error('That e-mail does not look right.');
+  const body = { name: name.slice(0, 200), email: str(p.email).slice(0, 200), phone: str(p.phone).slice(0, 40), job: str(p.job).slice(0, 200),
+    audience: AUDIENCES.includes(str(p.audience)) ? str(p.audience) : '', about: str(p.about).toLowerCase().slice(0, 40), source: str(p.source).slice(0, 500) };
+  return { ...(await bridge(ctx, '/people', body)), audiences: AUDIENCES, businesses: await leadTargets(ctx) };
+}
+// the owner's businesses a person can be handed to: every one he owns except brand desks and joint pools
+async function leadTargets(ctx) {
+  const rows = await ctx.tx`select b.id, b.name from businesses b where b.id in (select public.my_business_ids('owner'))
+                            and coalesce(b.is_pool, false) = false
+                            and not exists (select 1 from business_config c where c.business_id = b.id and c.key = 'business_kind' and c.value = 'brand')
+                            order by b.name`;
+  return rows.map((r) => ({ id: String(r.id), name: r.name }));
+}
+export async function erpBrandDeskToLeads(ctx, payload) {
+  await gate(ctx);
+  const p = payload || {}, target = str(p.business);
+  if (!(await leadTargets(ctx)).some((b) => b.id === target)) throw new Error('Pick one of your businesses.');
+  const list = (await bridge(ctx, '/people')).people || [], who = list.find((x) => x.id === str(p.id));
+  if (!who) throw new Error('That person is not on the list any more.');
+  const r = await addLead({ ...ctx, biz: target, memo: {} }, {
+    kind: who.audience === 'customer' ? 'customer' : 'supplier', name: who.name, email: who.email, phone: who.phone,
+    want: who.job, ref: 'branddesk:' + who.id, note: 'From the brand desk' + (who.source ? ' - came from: ' + who.source : '') + (who.audience === 'brand' ? ' (a brand)' : ''),
+  });
+  return { added: r.added, business: target };
+}
+
 export async function erpBrandDeskSetup(ctx, payload) {
   await gate(ctx);
   const k = str(payload && payload.key);
@@ -146,4 +184,4 @@ export async function erpBrandDeskHello(ctx, payload) {
   return { ok: true };
 }
 
-export const HANDLERS = { erpBrandDesk, erpBrandDeskIdeas, erpBrandDeskIdea, erpBrandDeskIdeaToBoard, erpBrandDeskBoard, erpBrandDeskCard, erpBrandDeskMove, erpBrandDeskDone, erpBrandDeskPost, erpBrandDeskDecide, erpBrandDeskSetup, erpBrandDeskHello };
+export const HANDLERS = { erpBrandDesk, erpBrandDeskPeople, erpBrandDeskPerson, erpBrandDeskToLeads, erpBrandDeskIdeas, erpBrandDeskIdea, erpBrandDeskIdeaToBoard, erpBrandDeskBoard, erpBrandDeskCard, erpBrandDeskMove, erpBrandDeskDone, erpBrandDeskPost, erpBrandDeskDecide, erpBrandDeskSetup, erpBrandDeskHello };

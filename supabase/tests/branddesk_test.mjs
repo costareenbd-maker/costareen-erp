@@ -13,6 +13,7 @@ web.on(/^https:\/\/desk-test\.trycloudflare\.com\//, (url, opts) => {
   if (url.endsWith('/today')) return { body: { pacer: { lines: { linkedin: { waiting: 1 } } }, posts: { posts: [] }, networks: [{ id: 'n1', platform: 'linkedin', name: 'Rahman' }] } };
   if (url.endsWith('/post')) return { body: { queued: ['a', 'b'] } };
   if (url.endsWith('/decide')) return { body: { ok: true } };
+  if (url.endsWith('/people')) return { body: { people: [{ id: 'p1', name: 'Kim Supplier', email: 'kim@example.com', phone: '', job: 'Export manager', audience: 'supplier', about: 'k-beauty', source: 'LinkedIn post' }] } };
   if (url.endsWith('/ideas') || url.endsWith('/ideas/board')) return { body: { ideas: [{ id: 'abcd1234', content: 'Why I started', at: '2026-11-03T00:00:00Z', tags: [] }] } };
   if (/\/board(\/(card|move|done))?$/.test(url)) return { body: { columns: [{ id: 1, title: 'Idea', cards: [{ id: 7, title: 'Why I started', tags: ['story'] }] }, { id: 2, title: 'Script', cards: [] }] } };
   return { status: 404, body: {} };
@@ -85,6 +86,29 @@ r = await owner('erpBrandDeskIdeaToBoard', [{ id: '../../x' }]);
 check('a strange idea id is refused', !r.ok, r);
 r = await owner('erpBrandDeskIdeaToBoard', [{ id: 'abcd1234' }]);
 check('an idea becomes a card', r.ok && seen.filter((x) => x.url.endsWith('/ideas/board')).pop().body.id === 'abcd1234', r);
+
+// 4d. people (brand-4) - B is the brand desk now, so the owner gets a shop to hand people to
+r = await owner('erpCreateBusiness', [{ name: 'Brand Test Shop' }]);
+check('the owner has a shop beside the brand desk', r.ok, r);
+await owner('erpSetBusiness', [B]);
+r = await owner('erpBrandDeskPeople', []);
+check('the people come from the PC with the businesses to hand them to', r.ok && r.result.people[0].id === 'p1' && r.result.businesses.length >= 1, r);
+const targets = r.ok ? r.result.businesses : [];
+r = await owner('erpBrandDeskPerson', [{ name: '' }]);
+check('a person without a name is refused', !r.ok, r);
+r = await owner('erpBrandDeskPerson', [{ name: 'Lee', email: 'not-mail' }]);
+check('a broken e-mail is refused', !r.ok, r);
+r = await owner('erpBrandDeskPerson', [{ name: 'Lee Brand', audience: 'brand', source: 'YouTube video' }]);
+check('a person goes to the PC', r.ok && seen.filter((x) => x.url.endsWith('/people') && x.body).pop().body.audience === 'brand', r);
+r = await owner('erpBrandDeskToLeads', [{ id: 'p1', business: '00000000-0000-0000-0000-000000000000' }]);
+check('a business that is not his is refused', !r.ok, r);
+const tgt = targets.find((b) => b.name === 'Brand Test Shop');
+check('the brand desk itself is not a place for leads', !targets.some((b) => b.id === B), targets);
+r = await owner('erpBrandDeskToLeads', [{ id: 'p1', business: tgt.id }]);
+const lead = await sql`select kind, name, email, note from inbox_leads where business_id = ${tgt.id} and source_ref = 'branddesk:p1'`;
+check('the person becomes a supplier lead of that business', r.ok && r.result.added && lead.length === 1 && lead[0].kind === 'supplier' && /LinkedIn post/.test(lead[0].note), lead);
+r = await owner('erpBrandDeskToLeads', [{ id: 'p1', business: tgt.id }]);
+check('handing the same person twice adds nothing', r.ok && r.result.added === false, r);
 
 // 5. the PC goes quiet: closed after 3 minutes
 await sql`update business_config set value = ${JSON.stringify({ url: URL, seen: new Date(Date.now() - 4 * 60e3).toISOString() })} where business_id = ${B} and key = 'brand_bridge'`;
