@@ -8503,7 +8503,7 @@ function srv(name, args, ok, bad) {
 
 var SRV_ACTIVE = 0, SRV_WRITING = false, SRV_TIMED = {};
 // the same list the server uses to know a call changes nothing (ERP_READS)
-var SRV_READS = /^(erpShipmentRepriceCheck|erpReceivePreview|erpSeo|erpReceipts|erpBrief|erpBrain|erpWatch|erpEngine|erpEngineJob|erpSkills|erpAiBrain|erpAiBrainModels|erpLeadForms|erpLeads|erpLeadFind|erpLeadCapture|erpMyUpdates|erpSocialBridges|erpAds|erpAdsInterests|erpSocialNet|erpSocialLearn|erpSocialAssets|erpSocialPosts|erpSocialPhotos|erpInboxDigest|erpJointRecvCatalog|erpSitePages|erpBalanceSheet|erpProductFields|erpProductAi|erpMetaConnect|erpInboxFeatureMap|erpBookings|erpInbox|erpInboxOpen|erpInboxChannels|erpChatOrders|erpInboxStats|erpAiWork|erpCommissionSales|erpFdCards|erpLineMargins|erpFd19Profit|erpFdInventory|erpFd22Analytics|erpNavigator|erpSellers|erpFollowups|erpCustomerInsight|erpPreorders|erpCashUps|erpAskingPrices|erpSystemCheck|erpAnalytics|erpCommission|erpHolding|erpLotFunding|erpShipments|erpShipment|erpLots|erpFdHead|erpFdDash|erpReceiveMatch|erpAiReader|erpProductSuggest|erpCatalogue|erpPushList|erpCreators|erpCreatorPortalLink|erpSponsorLink|erpCreatorRequests|erpCreatorEvents|erpCreatorProgramme|erpCreatorPreview|erpCreatorCatalog|erpCreatorSources|erpCreatorClaims|erpApps|erpAppQr|erpFeedback|erpRestockOffers|erpRestockList|erpWarrantyRules|erpWarrantyCard|erpMyLink|erpPlatformRegister|erpPlatformDoctor|erpPlatformCommunity|erpMarketWaiting|erpBoard|erpPlatformDesign|erpResell|erpResellerProgramme|erpLoyalty|erpCustomerPoints|erpRefillDue|erpDeliveryHistory|erpDeliveryHistoryMany|erpPrintKit|erpPrintJobs|erpPrintJob|erpPrintCost|erpSpools|erpPrintRequests|erpJoint|erpJointCatalog|erpJointCard|erpInvoiceDesign|erpInvoicePreview|erpMarket|erpMarketMine|erpMarketRequests|erpMarketHints|erpMarketNames|erpWanted|erpBrand|erpComplianceLog|erpProviderKey|erpNews|erpAccessKeys|erpAccessWarning|erpAdmin|erpAiKeys|erpAlertRules|erpAlerts|erpArena|erpBackupStatus|erpBg|erpBnWords|erpBookedParcels|erpBrandLogo|erpBundle|erpBusinessLinks|erpBusinesses|erpBusinessesDeleted|erpCampaignAudience|erpCampaignGet|erpCampaignList|erpCapital|erpCashBook|erpCatalog|erpConnStatus|erpConnections|erpCostBook|erpCourier|erpCourierKeyStatus|erpCurrencies|erpCustomerAccount|erpCustomerCredit|erpCustomerList|erpCustomerPage|erpCustomerStatement|erpCustomers|erpDashboardData|erpDaySales|erpDeliveryOptions|erpDevices|erpDiscontinued|erpDues|erpEvoQr|erpEvoStatus|erpExpenseExport|erpExpenseReceiptUrl|erpExpenses|erpFamilies|erpFighters|erpFormOptions|erpGame|erpGetTheme|erpGoogle|erpHello|erpInstalls|erpInvoice|erpInvoicePdf|erpJob|erpJobs|erpListView|erpLookupCustomer|erpLookupUsage|erpMe|erpMoney|erpNoteFileUrl|erpNotes|erpOwnerChange|erpOwnerChanges|erpParcelLabels|erpParcelPreview|erpPartnerStock|erpPartnership|erpPayReasons|erpPeople|erpPlatform|erpPlatformErrors|erpPnl|erpPnlMonth|erpPoList|erpPoolCatalog|erpProduct|erpProductListShare|erpProductPage|erpProductPhotoUrl|erpProductThumbs|erpProfile|erpQuoteAsset|erpQuoteBoot|erpQuoteGet|erpQuoteList|erpRecentInvoices|erpRecovery|erpReorderPlan|erpRestorePreview|erpReturnPreview|erpRisks|erpSales|erpSearch|erpSecurity|erpSelfTest|erpSerialLookup|erpSerialsFor|erpSessions|erpSetTheme|erpSettingsFull|erpSettingsLists|erpSfPayoutLines|erpSfPayouts|erpShareFile|erpSharedStock|erpSheet|erpStatementPdf|erpStockHistory|erpSupplierPage|erpSuppliers|erpToday|erpUsers|erpWaProductPdf|erpWebMatches|erpWebOrderInvoices|erpWebOrders|erpWebsiteTest)$/;
+var SRV_READS = /^(erpBrandDesk|erpShipmentRepriceCheck|erpReceivePreview|erpSeo|erpReceipts|erpBrief|erpBrain|erpWatch|erpEngine|erpEngineJob|erpSkills|erpAiBrain|erpAiBrainModels|erpLeadForms|erpLeads|erpLeadFind|erpLeadCapture|erpMyUpdates|erpSocialBridges|erpAds|erpAdsInterests|erpSocialNet|erpSocialLearn|erpSocialAssets|erpSocialPosts|erpSocialPhotos|erpInboxDigest|erpJointRecvCatalog|erpSitePages|erpBalanceSheet|erpProductFields|erpProductAi|erpMetaConnect|erpInboxFeatureMap|erpBookings|erpInbox|erpInboxOpen|erpInboxChannels|erpChatOrders|erpInboxStats|erpAiWork|erpCommissionSales|erpFdCards|erpLineMargins|erpFd19Profit|erpFdInventory|erpFd22Analytics|erpNavigator|erpSellers|erpFollowups|erpCustomerInsight|erpPreorders|erpCashUps|erpAskingPrices|erpSystemCheck|erpAnalytics|erpCommission|erpHolding|erpLotFunding|erpShipments|erpShipment|erpLots|erpFdHead|erpFdDash|erpReceiveMatch|erpAiReader|erpProductSuggest|erpCatalogue|erpPushList|erpCreators|erpCreatorPortalLink|erpSponsorLink|erpCreatorRequests|erpCreatorEvents|erpCreatorProgramme|erpCreatorPreview|erpCreatorCatalog|erpCreatorSources|erpCreatorClaims|erpApps|erpAppQr|erpFeedback|erpRestockOffers|erpRestockList|erpWarrantyRules|erpWarrantyCard|erpMyLink|erpPlatformRegister|erpPlatformDoctor|erpPlatformCommunity|erpMarketWaiting|erpBoard|erpPlatformDesign|erpResell|erpResellerProgramme|erpLoyalty|erpCustomerPoints|erpRefillDue|erpDeliveryHistory|erpDeliveryHistoryMany|erpPrintKit|erpPrintJobs|erpPrintJob|erpPrintCost|erpSpools|erpPrintRequests|erpJoint|erpJointCatalog|erpJointCard|erpInvoiceDesign|erpInvoicePreview|erpMarket|erpMarketMine|erpMarketRequests|erpMarketHints|erpMarketNames|erpWanted|erpBrand|erpComplianceLog|erpProviderKey|erpNews|erpAccessKeys|erpAccessWarning|erpAdmin|erpAiKeys|erpAlertRules|erpAlerts|erpArena|erpBackupStatus|erpBg|erpBnWords|erpBookedParcels|erpBrandLogo|erpBundle|erpBusinessLinks|erpBusinesses|erpBusinessesDeleted|erpCampaignAudience|erpCampaignGet|erpCampaignList|erpCapital|erpCashBook|erpCatalog|erpConnStatus|erpConnections|erpCostBook|erpCourier|erpCourierKeyStatus|erpCurrencies|erpCustomerAccount|erpCustomerCredit|erpCustomerList|erpCustomerPage|erpCustomerStatement|erpCustomers|erpDashboardData|erpDaySales|erpDeliveryOptions|erpDevices|erpDiscontinued|erpDues|erpEvoQr|erpEvoStatus|erpExpenseExport|erpExpenseReceiptUrl|erpExpenses|erpFamilies|erpFighters|erpFormOptions|erpGame|erpGetTheme|erpGoogle|erpHello|erpInstalls|erpInvoice|erpInvoicePdf|erpJob|erpJobs|erpListView|erpLookupCustomer|erpLookupUsage|erpMe|erpMoney|erpNoteFileUrl|erpNotes|erpOwnerChange|erpOwnerChanges|erpParcelLabels|erpParcelPreview|erpPartnerStock|erpPartnership|erpPayReasons|erpPeople|erpPlatform|erpPlatformErrors|erpPnl|erpPnlMonth|erpPoList|erpPoolCatalog|erpProduct|erpProductListShare|erpProductPage|erpProductPhotoUrl|erpProductThumbs|erpProfile|erpQuoteAsset|erpQuoteBoot|erpQuoteGet|erpQuoteList|erpRecentInvoices|erpRecovery|erpReorderPlan|erpRestorePreview|erpReturnPreview|erpRisks|erpSales|erpSearch|erpSecurity|erpSelfTest|erpSerialLookup|erpSerialsFor|erpSessions|erpSetTheme|erpSettingsFull|erpSettingsLists|erpSfPayoutLines|erpSfPayouts|erpShareFile|erpSharedStock|erpSheet|erpStatementPdf|erpStockHistory|erpSupplierPage|erpSuppliers|erpToday|erpUsers|erpWaProductPdf|erpWebMatches|erpWebOrderInvoices|erpWebOrders|erpWebsiteTest)$/;
 function srvPump() {
   if (!SRV_Q.length) return;
   var isRead = SRV_READS.test(SRV_Q[0].name);
@@ -40612,6 +40612,106 @@ html[lang=bn] #view.ai-view .btn.small, html[lang=bn] #view.ai-view button.small
     else if (what === 'advise') { SE.open[site] = false; act('erpSeoAdvise', { site: site }, 'advise:' + site); }
     else if (what === 'save') { var ta = el('se_sites'), pk = el('se_psi'), a = { sites: (ta ? ta.value : '').split('\n').map(function (s) { return s.trim(); }).filter(Boolean) }; if (pk && pk.value.trim()) a.psiKey = pk.value.trim(); act('erpSeoSitesSave', a, 'save'); }
   });
+})();
+</script>
+<!-- brand-1 (owner 3 Nov 2026): Brand desk - the owner's personal brand as a business of its own in the switch. The
+     tools run on his PC (Postiz, pacer; more stage by stage) behind one bridge reached through Cloudflare Tunnel; this
+     screen is the only face. Open while the PC is on (it checks in every minute). Missed posts wait in one line per
+     network and go out one by one. "Only me" app `branddesk`. Server: handlers/branddesk.js. -->
+<style>
+#nav button[data-view="branddesk"]{display:none}
+.bd-state{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.bd-dot{width:12px;height:12px;border-radius:50%;flex:none;background:var(--critical,#d33)}
+.bd-dot.on{background:var(--good,#16a34a)}
+.bd-big{font-size:17px;font-weight:700}
+.bd-meta{font-size:12.5px;color:var(--fd-text-3,var(--muted,#667))}
+.bd-chips{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0}
+.bd-chip{border:1px solid var(--fd-border,var(--ring,#dfe3ea));border-radius:999px;padding:6px 12px;font-size:13px;background:var(--fd-card,#fff);cursor:pointer}
+.bd-chip.on{border-color:var(--fd-accent,var(--series-1,#5b4ff0));background:var(--fd-surface-2,#f1f0ff);font-weight:600}
+.bd-lines{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+.bd-line{border:1px solid var(--fd-border,var(--ring,#e6e8ef));border-radius:12px;padding:10px 12px;background:var(--fd-card,#fff)}
+.bd-line b{display:block;text-transform:capitalize}
+.bd-item{display:flex;gap:10px;align-items:flex-start;padding:9px 0;border-top:1px solid var(--fd-border,var(--ring,#eef))}
+.bd-item .c{flex:1;min-width:0;overflow-wrap:anywhere;white-space:pre-wrap}
+.bd-tag{font-size:11.5px;border-radius:6px;padding:2px 7px;background:var(--fd-surface-2,#f1f2f6);text-transform:capitalize;flex:none}
+.bd-tag.ask,.bd-tag.failed{background:#fde8e8;color:#9b1c1c}
+</style>
+<script>
+(function () {
+  try { SRV_SLOW.erpBrandDesk = 40000; SRV_SLOW.erpBrandDeskPost = 40000; } catch (e) {}
+  var BD = { data: null, busy: '', err: '', pick: {} };
+  var ICON = '<path d="M12 3l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.4 6.8 19.1l1-5.8L3.5 9.2l5.9-.9z"/>';
+  function on() { if (!ME || ME.role !== 'owner') return false; var a = ME.apps || {}; return !!ME.platform || (a.off || []).indexOf('branddesk') < 0; }
+  if (typeof fdxNav === 'function') fdxNav('branddesk', 'Brand desk', ICON, 'dash');
+  try { VIEW_NAMES.branddesk = 'Brand desk'; FDH_SUB.branddesk = 'Your personal brand: posts to every network from the tools on your PC'; } catch (e) {}
+  function navSync() { var b = document.querySelector('#nav button[data-view="branddesk"]'); if (b) b.style.display = on() ? 'flex' : 'none'; }
+  function load() {
+    if (BD.busy === 'load') return; BD.busy = 'load';
+    srv('erpBrandDesk', [], function (r) { BD.busy = ''; BD.data = r; BD.err = ''; paint(); }, function (e) { BD.busy = ''; BD.err = (e && e.message) || String(e); paint(); });
+  }
+  function act(name, args, label, after) {
+    BD.busy = label; paint();
+    srv(name, [args], function (r) { BD.busy = ''; BD.data = r.desk || r; if (after) after(r); paint(); }, function (e) { BD.busy = ''; toast(esc((e && e.message) || e), true, 9000); paint(); });
+  }
+  function when(v) { try { var d = new Date(v); return isNaN(d) ? '' : d.toLocaleString([], { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }); } catch (e) { return ''; } }
+  function setupHtml(d) {
+    return '<section><div class="card"><h3 style="margin:0 0 6px">Set up</h3>' +
+      '<div class="bd-meta">Paste the bridge key from your PC (G:\\bendar-brand\\bridge\\.env, the line BRIDGE_KEY). It is sealed and never shown again.</div>' +
+      '<label class="f" for="bd_key" style="margin-top:8px">Bridge key' + (d.keySet ? ' (set)' : '') + '</label><input class="i" id="bd_key" type="password" data-noi18n="1" autocomplete="off" placeholder="' + (d.keySet ? 'leave empty to keep it' : '') + '">' +
+      '<div class="ap-row" style="margin-top:8px"><button class="btn small" type="button" data-bd="setup">Save</button></div></div></section>';
+  }
+  function view() {
+    if (!on()) return '<div class="note"><div class="ico">i</div><div>The brand desk is for the owner only.</div></div>';
+    var d = BD.data;
+    if (!d) { if (BD.err) return '<div class="note"><div class="ico">!</div><div>' + esc(BD.err) + '</div></div>'; load(); return '<div class="loading">Asking your PC…</div>'; }
+    var t = d.today || {}, nets = t.networks || [], items = t.items || [], lines = (t.pacer && t.pacer.lines) || {};
+    var h = '<section><div class="card"><div class="bd-state"><span class="bd-dot' + (d.online ? ' on' : '') + '"></span><div style="flex:1;min-width:200px">' +
+      '<div class="bd-big">' + (d.online ? 'Your PC is on - the office is open' : 'Your PC is off - the office is closed') + '</div>' +
+      '<div class="bd-meta">' + (d.seen ? 'Last check-in ' + esc(when(d.seen)) : 'The PC has not checked in yet') + (d.online ? '' : ' · Posts wait and go out one by one when it is on again') + '</div></div>' +
+      '<button class="btn small" type="button" data-bd="reload"' + (BD.busy ? ' disabled' : '') + '>' + (BD.busy === 'load' ? '<span class="wd-spin"></span>' : '') + 'Refresh</button></div>' +
+      (d.error ? '<div class="note" style="margin-top:8px"><div class="ico">!</div><div>' + esc(d.error) + '</div></div>' : '') + '</div></section>';
+    if (!d.keySet) return h + setupHtml(d);
+    if (d.online && d.today) {
+      h += '<section><div class="card"><h3 style="margin:0 0 4px">Write a post</h3>';
+      if (!nets.length) h += '<div class="bd-meta">No network is connected yet. Connect your accounts in Postiz on the PC first.</div>';
+      else {
+        h += '<div class="bd-chips">' + nets.map(function (n) { return '<button type="button" class="bd-chip' + (BD.pick[n.id] ? ' on' : '') + '" data-bd="pick" data-id="' + esc(n.id) + '" data-noi18n="1">' + esc((n.platform || '') + ' · ' + (n.name || '')) + '</button>'; }).join('') + '</div>' +
+          '<textarea class="i" id="bd_text" rows="5" data-noi18n="1" placeholder="What do you want to say?"></textarea>' +
+          '<div class="ap-row" style="margin-top:8px;gap:12px;align-items:center;flex-wrap:wrap"><label class="bd-meta" style="display:flex;gap:6px;align-items:center"><input type="checkbox" id="bd_urgent"> Urgent - goes before the waiting posts</label>' +
+          '<label class="bd-meta" style="display:flex;gap:6px;align-items:center">Time <input class="i" type="datetime-local" id="bd_at" style="width:auto"></label>' +
+          '<button class="btn small" type="button" data-bd="post"' + (BD.busy ? ' disabled' : '') + '>' + (BD.busy === 'post' ? '<span class="wd-spin"></span>Queuing…' : 'Queue the post') + '</button></div>';
+      }
+      h += '</div></section>';
+      var lk = Object.keys(lines);
+      h += '<section><h3 style="margin:0 0 8px">Lines</h3>' + (lk.length ? '<div class="bd-lines">' + lk.map(function (k) { var l = lines[k]; return '<div class="bd-line"><b data-noi18n="1">' + esc(k) + '</b><span class="bd-meta">' +
+        ['waiting', 'sent', 'ask', 'failed'].filter(function (s) { return l[s]; }).map(function (s) { return l[s] + ' ' + s; }).join(' · ') + '</span></div>'; }).join('') + '</div>' : '<div class="bd-meta">Nothing in the lines yet.</div>') +
+        '<div class="bd-meta" style="margin-top:6px">One post per network every ' + esc(String((t.pacer && t.pacer.gap_minutes) || 20)) + ' minutes; a post more than ' + esc(String((t.pacer && t.pacer.stale_hours) || 36)) + ' hours late waits for you.</div></section>';
+      if (items.length) h += '<section><div class="card"><h3 style="margin:0 0 4px">Waiting and late</h3>' + items.map(function (i) {
+        var ask = i.state === 'ask' || i.state === 'failed';
+        return '<div class="bd-item"><span class="bd-tag ' + esc(i.state) + '">' + esc(i.state === 'ask' ? 'too late - you decide' : i.state) + '</span><div class="c" data-noi18n="1">' + esc(i.content) + '<div class="bd-meta">' + esc(i.platform) + ' · ' + esc(when(i.at)) + (i.urgent ? ' · urgent' : '') + '</div></div>' +
+          (ask ? '<div class="ap-row" style="gap:6px"><button class="btn small" type="button" data-bd="send" data-id="' + esc(i.id) + '">Send now</button><button class="btn small ghost" type="button" data-bd="drop" data-id="' + esc(i.id) + '">Drop</button></div>' : '') + '</div>';
+      }).join('') + '</div></section>';
+    }
+    return h + '<section><details><summary class="en-meta" style="cursor:pointer">Set up</summary>' + setupHtml(d) + '</details></section>';
+  }
+  function paint() { navSync(); if (VIEW !== 'branddesk') return; var v = el('view'); if (!v) return; v.innerHTML = view(); }
+  var rp = repaint;
+  repaint = function () { navSync(); if (VIEW !== 'branddesk') return rp.apply(this, arguments); paint(); };
+  document.addEventListener('click', function (e) {
+    var t = e.target.closest && e.target.closest('[data-bd]'); if (!t || VIEW !== 'branddesk') return;
+    var what = t.getAttribute('data-bd'), id = t.getAttribute('data-id');
+    if (what === 'reload') { BD.data = null; load(); paint(); }
+    else if (what === 'pick') { BD.pick[id] = !BD.pick[id]; t.classList.toggle('on', !!BD.pick[id]); }
+    else if (what === 'setup') { var k = el('bd_key'); if (!k || !k.value.trim()) return toast('Paste the key first.', true); act('erpBrandDeskSetup', { key: k.value.trim() }, 'setup'); }
+    else if (what === 'send' || what === 'drop') act('erpBrandDeskDecide', { id: id, action: what }, what);
+    else if (what === 'post') {
+      var nets = ((BD.data && BD.data.today && BD.data.today.networks) || []).filter(function (n) { return BD.pick[n.id]; }).map(function (n) { return { id: n.id, platform: n.platform }; });
+      var tx = el('bd_text'), at = el('bd_at'), ur = el('bd_urgent');
+      act('erpBrandDeskPost', { networks: nets, content: tx ? tx.value : '', at: at && at.value ? new Date(at.value).toISOString() : null, urgent: !!(ur && ur.checked) }, 'post',
+        function (r) { BD.pick = {}; toast('Queued for ' + r.queued + ' network(s).'); });
+    }
+  });
+  navSync();
 })();
 </script>
 <!-- clean-1 (owner 28 Oct 2026, Pinterest reference "ERP/POS System - Yeakub Rahaman" / Starline dashboard): "keep every

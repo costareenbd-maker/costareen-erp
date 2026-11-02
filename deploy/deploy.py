@@ -100,6 +100,10 @@ def step_function():
     need('SUPABASE_ACCESS_TOKEN')
     cmd = ['npx', '-y', 'supabase@latest', 'functions', 'deploy', 'erp', '--project-ref', REF,
            '--no-verify-jwt', '--use-api']
+    # newer supabase CLIs refuse to deploy from an agent without --yes; the dev project is ours to deploy (owner rule:
+    # "build, test, deploy straight to the dev ERP"), the live one stays the owner's call
+    if DEV:
+        cmd.append('--yes')
     print(' '.join(cmd))
     # the upload sometimes fails once for no reason of ours: try again before giving up
     for attempt in (1, 2, 3):

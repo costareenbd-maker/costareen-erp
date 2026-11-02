@@ -3490,3 +3490,18 @@ Owner: a creator could pick only one filament per request; a video often needs t
 - Tests: `creatormulti_test.mjs` 21 passed; creatorportal 97, creatorclaims 22 still pass.
 - NOT done: the owner's Creator requests screen still lists each line on its own row (same title shows they belong
   together). `creators_test.mjs` has 6 failures that exist before this change too (month rolled to November).
+
+## brand-1 (3 Nov 2026) - Brand desk: the owner's personal brand as a business, the work done on his PC
+Owner: personal branding as its own business in the switch, open-source tools behind it, the ERP stays the only face.
+The tools (Postiz, a pacer, Twenty, Chatwoot, Immich, n8n ... see G:/bendar-brand, not on GitHub) run on his PC behind
+one keyed "bridge" reached through Cloudflare Tunnel. handlers/branddesk.js: erpBrandDesk (online when the PC checked in
+within 3 minutes; then today's lines and networks from the PC), erpBrandDeskPost (one post to several networks, into the
+PC's pacer: one line per network, 20-minute gap, urgent first, 36 h late waits for the owner), erpBrandDeskDecide,
+erpBrandDeskSetup (bridge key, sealed), erpBrandDeskHello (the PC checks in every minute with the owner's machine key,
+naming a business he owns and proving the bridge key). "Only me" app `branddesk`, owner only. Page block "brand-1":
+Brand desk screen (state, write a post with network chips / urgent / time, lines, waiting and late with Send now /
+Drop, set up). deploy.py passes --yes to the supabase CLI for dev function deploys only. Test branddesk_test (18).
+Dev: business "Rahman Abidur" made on the dev ERP, the PC checks in there (test tunnel *.trycloudflare.com).
+NOT done: the shop menus (Invoice, Sales, Customers) still show in that business; no `private` flag yet (cross-business
+features skip it only because it has no products); no networks connected in Postiz yet; Board / Ideas / Inbox /
+People / Videos screens; named tunnel on rmabidur.com; live ERP (owner's call).
