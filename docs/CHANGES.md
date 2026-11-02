@@ -3518,3 +3518,5 @@ People / Videos screens; named tunnel on rmabidur.com; live ERP (owner's call).
 - Tests: branddesk_test 26, apps_test counts the new app (51). ads_test 4 and creators_test 6 failures are older
   (date / month rollover) - they fail the same on the commit before this work.
 NOT done: Ideas (Memos), Inbox (Chatwoot), People (Twenty), Videos (Immich) screens; Postiz networks; named tunnel; live.
+brand-2 full run (3 Nov): 165 suites; the only failures are ads_test 4, creators_test 6, joint3_test 4 - all date /
+month-rollover checks that fail the same on 0b52877 (before the brand work). Worth a separate fix.
