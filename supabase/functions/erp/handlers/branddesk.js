@@ -10,6 +10,8 @@
 //   erpBrandDeskBoard()                  brand-2: the content board (Kanboard on the PC): Idea -> ... -> Repurposed
 //   erpBrandDeskCard({title, description?, tags?, column?})   a new card
 //   erpBrandDeskMove({id, column})       a card to another step;  erpBrandDeskDone({id}) a card finished (closed)
+//   erpBrandDeskIdeas()                  brand-3: the idea bank (Memos on the PC), newest first
+//   erpBrandDeskIdea({content})          a new idea;  erpBrandDeskIdeaToBoard({id}) the idea becomes a card in Idea
 //   erpBrandDeskHello({biz, url})        the PC: "I am on, here is my address" (owner's machine key, any active business)
 //
 // Researched first (owner rule "open source first"): Postiz does the posting, the pacer keeps one line per network so
@@ -104,6 +106,23 @@ export async function erpBrandDeskDone(ctx, payload) {
   return { board: await bridge(ctx, '/board/done', { id: num(payload && payload.id) }), pillars: PILLARS, audiences: AUDIENCES };
 }
 
+const ideaId = (v) => { const s = str(v); if (!/^[A-Za-z0-9_-]{4,64}$/.test(s)) throw new Error('Pick an idea.'); return s; };
+export async function erpBrandDeskIdeas(ctx) {
+  await gate(ctx);
+  return bridge(ctx, '/ideas');
+}
+export async function erpBrandDeskIdea(ctx, payload) {
+  await gate(ctx);
+  const c = str(payload && payload.content);
+  if (!c) throw new Error('Write the idea first.');
+  if (c.length > 8000) throw new Error('The idea is too long.');
+  return bridge(ctx, '/ideas', { content: c });
+}
+export async function erpBrandDeskIdeaToBoard(ctx, payload) {
+  await gate(ctx);
+  return bridge(ctx, '/ideas/board', { id: ideaId(payload && payload.id) });
+}
+
 export async function erpBrandDeskSetup(ctx, payload) {
   await gate(ctx);
   const k = str(payload && payload.key);
@@ -127,4 +146,4 @@ export async function erpBrandDeskHello(ctx, payload) {
   return { ok: true };
 }
 
-export const HANDLERS = { erpBrandDesk, erpBrandDeskBoard, erpBrandDeskCard, erpBrandDeskMove, erpBrandDeskDone, erpBrandDeskPost, erpBrandDeskDecide, erpBrandDeskSetup, erpBrandDeskHello };
+export const HANDLERS = { erpBrandDesk, erpBrandDeskIdeas, erpBrandDeskIdea, erpBrandDeskIdeaToBoard, erpBrandDeskBoard, erpBrandDeskCard, erpBrandDeskMove, erpBrandDeskDone, erpBrandDeskPost, erpBrandDeskDecide, erpBrandDeskSetup, erpBrandDeskHello };

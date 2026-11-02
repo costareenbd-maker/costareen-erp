@@ -13,6 +13,7 @@ web.on(/^https:\/\/desk-test\.trycloudflare\.com\//, (url, opts) => {
   if (url.endsWith('/today')) return { body: { pacer: { lines: { linkedin: { waiting: 1 } } }, posts: { posts: [] }, networks: [{ id: 'n1', platform: 'linkedin', name: 'Rahman' }] } };
   if (url.endsWith('/post')) return { body: { queued: ['a', 'b'] } };
   if (url.endsWith('/decide')) return { body: { ok: true } };
+  if (url.endsWith('/ideas') || url.endsWith('/ideas/board')) return { body: { ideas: [{ id: 'abcd1234', content: 'Why I started', at: '2026-11-03T00:00:00Z', tags: [] }] } };
   if (/\/board(\/(card|move|done))?$/.test(url)) return { body: { columns: [{ id: 1, title: 'Idea', cards: [{ id: 7, title: 'Why I started', tags: ['story'] }] }, { id: 2, title: 'Script', cards: [] }] } };
   return { status: 404, body: {} };
 });
@@ -72,6 +73,18 @@ r = await owner('erpBrandDeskMove', [{ id: 7, column: 2 }]);
 check('a card moves', r.ok && seen.filter((x) => x.url.endsWith('/board/move')).pop().body.column === 2, r);
 r = await mgr('erpBrandDeskBoard', []);
 check('a manager does not see the board', !r.ok, r);
+
+// 4c. the idea bank (brand-3)
+r = await owner('erpBrandDeskIdeas', []);
+check('the ideas come from the PC', r.ok && r.result.ideas[0].id === 'abcd1234', r);
+r = await owner('erpBrandDeskIdea', [{ content: ' ' }]);
+check('an empty idea is refused', !r.ok, r);
+r = await owner('erpBrandDeskIdea', [{ content: 'Show the warehouse' }]);
+check('an idea goes to the PC', r.ok && seen.filter((x) => x.url.endsWith('/ideas') && x.body).pop().body.content === 'Show the warehouse', r);
+r = await owner('erpBrandDeskIdeaToBoard', [{ id: '../../x' }]);
+check('a strange idea id is refused', !r.ok, r);
+r = await owner('erpBrandDeskIdeaToBoard', [{ id: 'abcd1234' }]);
+check('an idea becomes a card', r.ok && seen.filter((x) => x.url.endsWith('/ideas/board')).pop().body.id === 'abcd1234', r);
 
 // 5. the PC goes quiet: closed after 3 minutes
 await sql`update business_config set value = ${JSON.stringify({ url: URL, seen: new Date(Date.now() - 4 * 60e3).toISOString() })} where business_id = ${B} and key = 'brand_bridge'`;

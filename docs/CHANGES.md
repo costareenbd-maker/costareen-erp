@@ -3520,3 +3520,9 @@ People / Videos screens; named tunnel on rmabidur.com; live ERP (owner's call).
 NOT done: Ideas (Memos), Inbox (Chatwoot), People (Twenty), Videos (Immich) screens; Postiz networks; named tunnel; live.
 brand-2 full run (3 Nov): 165 suites; the only failures are ads_test 4, creators_test 6, joint3_test 4 - all date /
 month-rollover checks that fail the same on 0b52877 (before the brand work). Worth a separate fix.
+
+## brand-3 (3 Nov 2026) - Brand desk: Ideas
+Ideas tab: the idea bank lives in Memos on the PC (user rahman, personal access token in the bridge). Catch an idea
+(first line = title), the list newest first, "To the board" makes it a card in Idea and archives the idea (never
+deletes). erpBrandDeskIdeas / Idea / IdeaToBoard through the bridge. branddesk_test 31.
+NOT done: voice notes / WhatsApp into ideas; Inbox, People, Videos; Postiz networks; named tunnel; live.
