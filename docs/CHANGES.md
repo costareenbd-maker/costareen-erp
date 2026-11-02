@@ -3536,3 +3536,12 @@ and joint pools left out): a lead in that business's Leads (supplier for supplie
 note says it came from the brand desk and which post, never twice (source_ref branddesk:<id>). erpBrandDeskPeople /
 Person / ToLeads. branddesk_test 40.
 NOT done: AI reading comments/DMs to fill People by itself (needs the Inbox); Videos (Immich); Postiz networks; live.
+
+## brand-5 (3 Nov 2026) - Brand desk: Videos
+Videos tab: the footage library is Immich on the PC (admin rahman@brand.test, API key in the bridge, library on G:,
+CUDA machine learning on the owner's RTX 3070 Ti). Newest videos with a small preview (sent inline by the bridge as a
+data URL, so the page never talks to the PC), "Find by meaning" (Immich smart search: "cardboard boxes warehouse" put
+the warehouse clip first in the check), "Make a card" puts the clip on the board in Idea. The owner's five hero clips
+from G:/video-hero were put into Immich as the first footage. erpBrandDeskVideos. branddesk_test 42.
+NOT done: phone auto-upload (Immich app needs the permanent tunnel), transcripts / Bangla search inside speech,
+OpenShorts clips from a video, Postiz networks, Inbox, live.

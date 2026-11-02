@@ -15,6 +15,8 @@
 //   erpBrandDeskPeople()                 brand-4: people met through the content (Twenty on the PC)
 //   erpBrandDeskPerson({name, email?, phone?, job?, audience?, about?, source?})   a new person
 //   erpBrandDeskToLeads({id, business})  that person becomes a lead of one of the owner's businesses (its Leads menu)
+//   erpBrandDeskVideos({q?})             brand-5: the footage library (Immich on the PC): newest, or found by meaning
+//                                        ("me talking in the shop"), with a small preview each
 //   erpBrandDeskHello({biz, url})        the PC: "I am on, here is my address" (owner's machine key, any active business)
 //
 // Researched first (owner rule "open source first"): Postiz does the posting, the pacer keeps one line per network so
@@ -161,6 +163,12 @@ export async function erpBrandDeskToLeads(ctx, payload) {
   return { added: r.added, business: target };
 }
 
+export async function erpBrandDeskVideos(ctx, payload) {
+  await gate(ctx);
+  const q = str(payload && payload.q).slice(0, 200);
+  return bridge(ctx, '/videos' + (q ? '?q=' + encodeURIComponent(q) : ''));
+}
+
 export async function erpBrandDeskSetup(ctx, payload) {
   await gate(ctx);
   const k = str(payload && payload.key);
@@ -184,4 +192,4 @@ export async function erpBrandDeskHello(ctx, payload) {
   return { ok: true };
 }
 
-export const HANDLERS = { erpBrandDesk, erpBrandDeskPeople, erpBrandDeskPerson, erpBrandDeskToLeads, erpBrandDeskIdeas, erpBrandDeskIdea, erpBrandDeskIdeaToBoard, erpBrandDeskBoard, erpBrandDeskCard, erpBrandDeskMove, erpBrandDeskDone, erpBrandDeskPost, erpBrandDeskDecide, erpBrandDeskSetup, erpBrandDeskHello };
+export const HANDLERS = { erpBrandDesk, erpBrandDeskVideos, erpBrandDeskPeople, erpBrandDeskPerson, erpBrandDeskToLeads, erpBrandDeskIdeas, erpBrandDeskIdea, erpBrandDeskIdeaToBoard, erpBrandDeskBoard, erpBrandDeskCard, erpBrandDeskMove, erpBrandDeskDone, erpBrandDeskPost, erpBrandDeskDecide, erpBrandDeskSetup, erpBrandDeskHello };

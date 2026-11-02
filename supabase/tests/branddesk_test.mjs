@@ -13,6 +13,7 @@ web.on(/^https:\/\/desk-test\.trycloudflare\.com\//, (url, opts) => {
   if (url.endsWith('/today')) return { body: { pacer: { lines: { linkedin: { waiting: 1 } } }, posts: { posts: [] }, networks: [{ id: 'n1', platform: 'linkedin', name: 'Rahman' }] } };
   if (url.endsWith('/post')) return { body: { queued: ['a', 'b'] } };
   if (url.endsWith('/decide')) return { body: { ok: true } };
+  if (/\/videos(\?q=.*)?$/.test(url)) return { body: { videos: [{ id: 'v1', name: 'clip01.mp4', duration: 2800, thumb: 'data:image/webp;base64,AAAA' }], q: decodeURIComponent((url.split('q=')[1] || '')) } };
   if (url.endsWith('/people')) return { body: { people: [{ id: 'p1', name: 'Kim Supplier', email: 'kim@example.com', phone: '', job: 'Export manager', audience: 'supplier', about: 'k-beauty', source: 'LinkedIn post' }] } };
   if (url.endsWith('/ideas') || url.endsWith('/ideas/board')) return { body: { ideas: [{ id: 'abcd1234', content: 'Why I started', at: '2026-11-03T00:00:00Z', tags: [] }] } };
   if (/\/board(\/(card|move|done))?$/.test(url)) return { body: { columns: [{ id: 1, title: 'Idea', cards: [{ id: 7, title: 'Why I started', tags: ['story'] }] }, { id: 2, title: 'Script', cards: [] }] } };
@@ -109,6 +110,12 @@ const lead = await sql`select kind, name, email, note from inbox_leads where bus
 check('the person becomes a supplier lead of that business', r.ok && r.result.added && lead.length === 1 && lead[0].kind === 'supplier' && /LinkedIn post/.test(lead[0].note), lead);
 r = await owner('erpBrandDeskToLeads', [{ id: 'p1', business: tgt.id }]);
 check('handing the same person twice adds nothing', r.ok && r.result.added === false, r);
+
+// 4e. videos (brand-5)
+r = await owner('erpBrandDeskVideos', [{}]);
+check('the newest videos come from the PC', r.ok && r.result.videos[0].id === 'v1' && r.result.q === '', r);
+r = await owner('erpBrandDeskVideos', [{ q: 'me talking & shop' }]);
+check('a search goes to the PC, safely encoded', r.ok && r.result.q === 'me talking & shop' && seen.some((x) => /q=me%20talking%20%26%20shop$/.test(x.url)), seen.map((x) => x.url).slice(-2));
 
 // 5. the PC goes quiet: closed after 3 minutes
 await sql`update business_config set value = ${JSON.stringify({ url: URL, seen: new Date(Date.now() - 4 * 60e3).toISOString() })} where business_id = ${B} and key = 'brand_bridge'`;
