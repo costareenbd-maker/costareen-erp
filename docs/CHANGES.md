@@ -3545,3 +3545,14 @@ the warehouse clip first in the check), "Make a card" puts the clip on the board
 from G:/video-hero were put into Immich as the first footage. erpBrandDeskVideos. branddesk_test 42.
 NOT done: phone auto-upload (Immich app needs the permanent tunnel), transcripts / Bangla search inside speech,
 OpenShorts clips from a video, Postiz networks, Inbox, live.
+
+## brand-6 (3 Nov 2026) - Brand desk: shorts from a video
+Videos tab: "Make shorts" on a video. The PC's bridge takes Immich's light playback copy (never the camera original - a
+91 s camera file was 20 GB; 1.5 GB cap), hands it to OpenShorts (MIT, on the PC) which picks moments with a LOCAL AI
+(Ollama llama3.1:8b on the RTX 3070 Ti - no key, nothing leaves the PC), cuts 9:16 clips with captions; the clips go back
+into Immich and show in Videos. The state shows on the video (reading / making / ready / could not, with OpenShorts'
+own reason) and refreshes every 20 s. erpBrandDeskShorts / MakeShorts. branddesk_test 45.
+Checked end to end on the PC up to clip picking. NOT yet seen: a finished short - the only long footage on the PC is
+silent camera footage (12-20 GB each) and a silent video needs Gemini (OpenShorts says so: "a text-only LLM server
+cannot see the footage"). A talking video should work with the local AI; silent ones need a GEMINI_API_KEY in
+G:/bendar-brand/openshorts/src/.env. Transcripts (speech search) not built.
