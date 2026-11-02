@@ -3478,7 +3478,7 @@ Note: `joint3_test` has 4 failures that also happen without this change (month b
 - Tests: pricelist_test (+7), fix4_test (+2). NOT done: the Web orders screen does not show the offer as a tag
   (it is on the invoice note); web orders are still entered by pressing Enter, as before.
 
-## multi-1 — several filaments in one creator request (2 Nov 2026)
+## creator-multi-1 — several filaments in one creator request (2 Nov 2026)
 Owner: a creator could pick only one filament per request; a video often needs two or more different ones.
 - Creator page (`web/creator.html`): "+ Add another filament" adds lines (up to 5), each with its own rolls and a ✕;
   the project shows its lines together under one title, one project link, one "Paste the video link".
