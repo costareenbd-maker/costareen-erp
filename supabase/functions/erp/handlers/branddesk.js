@@ -6,7 +6,10 @@
 //   erpBrandDesk()                       online or not, the last check-in, and (when online) today's lines and posts
 //   erpBrandDeskPost({networks, content, at?, urgent?})   one post to several networks, through the PC's pacer
 //   erpBrandDeskDecide({id, action})     a post that was too late: send | drop
-//   erpBrandDeskSetup({key})             owner: the bridge's key (sealed, never shown again)
+//   erpBrandDeskSetup({key})             owner: the bridge's key (sealed, never shown again); marks the business kind 'brand'
+//   erpBrandDeskBoard()                  brand-2: the content board (Kanboard on the PC): Idea -> ... -> Repurposed
+//   erpBrandDeskCard({title, description?, tags?, column?})   a new card
+//   erpBrandDeskMove({id, column})       a card to another step;  erpBrandDeskDone({id}) a card finished (closed)
 //   erpBrandDeskHello({biz, url})        the PC: "I am on, here is my address" (owner's machine key, any active business)
 //
 // Researched first (owner rule "open source first"): Postiz does the posting, the pacer keeps one line per network so
@@ -74,11 +77,39 @@ export async function erpBrandDeskDecide(ctx, payload) {
   return erpBrandDesk(ctx);
 }
 
+export const PILLARS = ['story', 'lesson', 'behind the scenes', 'market', 'announcement'];
+export const AUDIENCES = ['customer', 'supplier', 'brand'];
+const num = (v) => { const n = parseInt(v, 10); if (!(n > 0)) throw new Error('Pick a card.'); return n; };
+
+export async function erpBrandDeskBoard(ctx) {
+  await gate(ctx);
+  return { board: await bridge(ctx, '/board'), pillars: PILLARS, audiences: AUDIENCES };
+}
+export async function erpBrandDeskCard(ctx, payload) {
+  await gate(ctx);
+  const p = payload || {}, title = str(p.title);
+  if (!title) throw new Error('Give the card a title.');
+  if (title.length > 200) throw new Error('The title is too long (200 letters at most).');
+  const tags = (Array.isArray(p.tags) ? p.tags : []).map((t) => str(t).toLowerCase().slice(0, 40)).filter(Boolean).slice(0, 8);
+  const body = { title, description: str(p.description).slice(0, 5000), tags };
+  if (p.column) body.column = num(p.column);
+  return { board: await bridge(ctx, '/board/card', body), pillars: PILLARS, audiences: AUDIENCES };
+}
+export async function erpBrandDeskMove(ctx, payload) {
+  await gate(ctx);
+  return { board: await bridge(ctx, '/board/move', { id: num(payload && payload.id), column: num(payload && payload.column) }), pillars: PILLARS, audiences: AUDIENCES };
+}
+export async function erpBrandDeskDone(ctx, payload) {
+  await gate(ctx);
+  return { board: await bridge(ctx, '/board/done', { id: num(payload && payload.id) }), pillars: PILLARS, audiences: AUDIENCES };
+}
+
 export async function erpBrandDeskSetup(ctx, payload) {
   await gate(ctx);
   const k = str(payload && payload.key);
   if (k.length < 20) throw new Error('That is not a bridge key (it is a long line of letters and numbers).');
   await setSecret(ctx, 'BRAND_BRIDGE_KEY', k);
+  await setConfig(ctx, 'business_kind', 'brand');   // brand-2: this business now shows the brand menu only
   return erpBrandDesk(ctx);
 }
 
@@ -96,4 +127,4 @@ export async function erpBrandDeskHello(ctx, payload) {
   return { ok: true };
 }
 
-export const HANDLERS = { erpBrandDesk, erpBrandDeskPost, erpBrandDeskDecide, erpBrandDeskSetup, erpBrandDeskHello };
+export const HANDLERS = { erpBrandDesk, erpBrandDeskBoard, erpBrandDeskCard, erpBrandDeskMove, erpBrandDeskDone, erpBrandDeskPost, erpBrandDeskDecide, erpBrandDeskSetup, erpBrandDeskHello };

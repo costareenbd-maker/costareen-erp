@@ -26,6 +26,12 @@ export async function erpSetTheme(ctx, t) {
 export async function erpBusinesses(ctx) {
   // joint stocks are not in the menu (joint-fix-1): they open from Joint stock
   const list = ctx.s.memberships.filter((m) => !m.is_pool || ctx.s.memberships.every((x) => x.is_pool)).map((m) => ({ id: m.business_id, name: m.name, pool: !!m.is_pool }));
+  // brand-2: a business may be of another kind (the owner's personal brand desk) - the page shows its own menu for it
+  try {
+    const kinds = await ctx.tx.savepoint(() => ctx.tx`select business_id, value from business_config where key = 'business_kind' and business_id = any(${list.map((b) => b.id)})`);
+    const k = Object.fromEntries(kinds.map((r) => [String(r.business_id), String(r.value || '')]));
+    for (const b of list) if (k[String(b.id)]) b.kind = k[String(b.id)];
+  } catch (_) { /* a kind is optional */ }
   const canAdd = roleAtLeast(ctx.s.role, 'shareholder');
   let look;
   try { look = await ctx.tx.savepoint(() => ctx.tx`select look, lang, fd from erp_prefs where user_id = ${ctx.s.userId}`); }

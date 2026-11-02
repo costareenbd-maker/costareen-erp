@@ -3505,3 +3505,16 @@ Dev: business "Rahman Abidur" made on the dev ERP, the PC checks in there (test 
 NOT done: the shop menus (Invoice, Sales, Customers) still show in that business; no `private` flag yet (cross-business
 features skip it only because it has no products); no networks connected in Postiz yet; Board / Ideas / Inbox /
 People / Videos screens; named tunnel on rmabidur.com; live ERP (owner's call).
+
+## brand-2 (3 Nov 2026) - Brand desk: its own menu, and the content board
+- The brand business is a kind of its own (business_config business_kind = 'brand', set by erpBrandDeskSetup;
+  erpBusinesses returns `kind`). In it the page shows only Brand desk (+ Apps / More): shop menus, menu group headings,
+  Invoice / Sales / Customers tabs and the quick add are hidden, and it opens on the Brand desk. Once a business is
+  the brand desk, the Brand desk menu shows only there.
+- Board tab: the content pipeline Idea -> Script -> Shoot -> Edit -> Ready -> Scheduled -> Posted -> Repurposed lives in
+  Kanboard on the PC (project "Content"); erpBrandDeskBoard / Card / Move / Done through the bridge. New idea with kind
+  of post (story, lesson, behind the scenes, market, announcement), for whom (customer, supplier, brand) and about which
+  business as tags; each card has a button to its next step.
+- Tests: branddesk_test 26, apps_test counts the new app (51). ads_test 4 and creators_test 6 failures are older
+  (date / month rollover) - they fail the same on the commit before this work.
+NOT done: Ideas (Memos), Inbox (Chatwoot), People (Twenty), Videos (Immich) screens; Postiz networks; named tunnel; live.
