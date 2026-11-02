@@ -34,4 +34,16 @@ if (zero) check('an empty shelf row is left out', !items.some((x) => x.code.toLo
 const other = (await sql`select sku from products where business_id = ${FIX.B2} limit 1`)[0];
 if (other) check('another business\'s products never show', !items.some((x) => x.code === other.sku), other);
 
+// offer-1: a row with no type gets one from its name, so the type chips still work (owner 2 Nov: Polymaker)
+const { typeFromName } = await import(pathToFileURL(path.join(fnDir, 'handlers', 'pricelist.js')));
+check('type from name: colour at the end goes', typeFromName('Panchroma PLA Matte Sky Blue', 'Polymaker', 'Sky Blue') === 'Panchroma PLA Matte');
+check('type from name: brand in front and spacing do not matter', typeFromName('Polymaker  Panchroma PLA Fossil Grey', 'polymaker', 'Fossil  Grey') === 'Panchroma PLA');
+check('type from name: colour not at the end, the last word goes', typeFromName('Panchroma PLA Marble White', 'Polymaker', 'Marble') === 'Panchroma PLA Marble');
+check('type from name: no colour, no guess', typeFromName('Nozzle 0.4', 'Bambu Lab', '') === '');
+check('type from name: one word, no guess', typeFromName('Spool', '', 'Black') === '');
+
+const { offerNames } = await import(pathToFileURL(path.join(fnDir, 'handlers', 'weborders.js')));
+check('offer names on the invoice note', offerNames([{ offer: '11.11 Offer' }, { offer: '' }, { offer: '11.11 Offer' }, { offer: 'Nozzle week' }]) === ' \u00b7 11.11 Offer, Nozzle week');
+check('no offer, nothing added', offerNames([{ offer: '' }, {}]) === '');
+
 done();

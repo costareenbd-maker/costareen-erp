@@ -234,7 +234,7 @@ export async function erpJointCatalog(ctx) {
   for (const pool of pools) {
     for (const p of await shelf(ctx, pool, false)) {
       if (p.status === 'Discontinued') continue;
-      products.push({ pool: pool.id, poolName: pool.name, sku: jointSku(p.sku, pool.id), code: p.sku, name: p.name, cat: p.category, brand: p.brand,
+      products.push({ pool: pool.id, poolName: pool.name, sku: jointSku(p.sku, pool.id), code: p.sku, name: p.name, cat: p.category, brand: p.brand, type: p.type,
                       color: p.color, unit: p.unit, sell: p.price, floor: p.floor, stock: p.stock, available: p.stock,
                       state: p.stock <= 0 ? 'out' : 'ok', status: 'Active', joint: true });
     }

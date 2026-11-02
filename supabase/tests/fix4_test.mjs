@@ -110,6 +110,15 @@ r = await owner('erpSaveProduct', [{ sku: 'W4-A1', product_name: 'Web A1 printer
 const pr = (await sql`select name, sell_price, category, brand from products where business_id = ${B} and sku = 'W4-A1'`)[0];
 check('(M24) only the name is sent: price 52,000, category and brand stay', r.ok && pr.name === 'Web A1 printer' && Number(pr.sell_price) === 52000 && pr.category === 'Printers' && pr.brand === 'T', [r.error, pr]);
 
+// ---- offer-1: a website price list offer: the line's lower total is the discount, the invoice note names the offer
+web.on(/\/orders\?/, () => ({ body: { items: feed } }));
+feed.push({ ...head('2099', 'processing', 1295), line_id: '91', sku: 'W4-PLA', product: 'Web PLA', qty: 1, line_total: 1215, offer: '11.11 Offer' });
+await pull();
+check('(offer-1) the line keeps its offer', (await order('2099')).lines[0].offer === '11.11 Offer', (await order('2099')).lines);
+r = await mgr('erpEnterWebOrder', [{ orderNo: '2099' }]);
+const inv9 = (await sql`select note, item_discount, grand_total from invoices where business_id = ${B} and invoice_no = ${r.result && r.result.invoiceNo}`)[0];
+check('(offer-1) invoice: 135 off at 1,215, note "WEB-2099 · 11.11 Offer"', r.ok && Number(inv9.item_discount) === 135 && Number(inv9.grand_total) === 1295 && inv9.note === 'WEB-2099 · 11.11 Offer', [r.error, inv9]);
+
 const other = await sql`select count(*)::int as n from web_orders where business_id = ${FIX.B2}`;
 check('the other business is untouched', other[0].n === 0, other);
 await done();

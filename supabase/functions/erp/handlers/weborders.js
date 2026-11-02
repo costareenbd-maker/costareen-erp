@@ -25,6 +25,7 @@ export const WO = {
   entered_in_sheet: 13, manager_note: 14,
   order_id: 15, line_id: 16,
   changed: 17, change_note: 18,   // fix-4: the order changed on the website after it was entered
+  offer: 19,                      // offer-1: the website's price list offer on this line
 };
 
 /** WEB_ORDERS as rows, in the order they were pulled. */
@@ -36,7 +37,7 @@ export async function webOrdersTab(ctx) {
              coalesce(l.status, o.status, ''), l.sku, l.product_name, l.qty, l.line_total,
              o.customer_name, o.customer_phone, o.customer_address, o.payment, o.order_total,
              case when l.entered then 'Yes' else 'No' end, coalesce(o.manager_note, ''),
-             o.id, l.id, o.changed_after_entry, coalesce(o.change_note, '')
+             o.id, l.id, o.changed_after_entry, coalesce(o.change_note, ''), coalesce(l.offer, '')
       from web_order_lines l join web_orders o on o.id = l.web_order_id
       where l.business_id = ${ctx.biz}
       order by l.seq`.values();
@@ -179,9 +180,9 @@ export async function addWebLines(ctx, items) {
       orderIds[no] = oid;
     }
     const nl = await ctx.tx`
-      insert into web_order_lines (business_id, web_order_id, sku, product_name, qty, line_total, status, entered, ext_line_id)
+      insert into web_order_lines (business_id, web_order_id, sku, product_name, qty, line_total, status, entered, ext_line_id, offer)
       values (${ctx.biz}, ${oid}, ${it.sku ? String(it.sku) : '(no sku)'}, ${str(it.product)},
-              ${num(it.qty)}, ${num(it.line_total)}, ${str(it.status)}, false, ${ext || null})
+              ${num(it.qty)}, ${num(it.line_total)}, ${str(it.status)}, false, ${ext || null}, ${str(it.offer).slice(0, 60) || null})
       returning id`;
     lines.push({ id: nl[0].id, sku, qty: num(it.qty), total: num(it.line_total), entered: false, ext, claimed: true });
     // fix-4 H21: a line added on the website after the order was entered waits to be entered on its own
@@ -294,6 +295,7 @@ async function webOrders(ctx) {
       product: str(wo[i][WO.product]),
       qty: num(wo[i][WO.qty]),
       lineTotal: num(wo[i][WO.line_total]),
+      offer: str(wo[i][WO.offer]),
       row: i + 2,
       lineId: wo[i][WO.line_id],
       entered,
@@ -349,6 +351,12 @@ export function webPayment(raw) {
   if (/bank/.test(t)) return { method: 'Bank Transfer', status: 'Pending' };
   if (/cash/.test(t)) return { method: 'Cash', status: 'Paid' };
   return { method: String(raw || '').trim() || 'Cash', status: 'Pending' };
+}
+
+/** offer-1: " · 11.11 Offer" for the distinct offers on the lines being entered, or ''. */
+export function offerNames(lines) {
+  const names = [...new Set((lines || []).map((l) => str(l.offer).trim()).filter(Boolean))];
+  return names.length ? ' \u00b7 ' + names.join(', ') : '';
 }
 
 /**
@@ -419,7 +427,8 @@ export async function erpEnterWebOrder(ctx, orderNo) {
     // COD -> cash on delivery; paid online -> paid now; anything else is still owed
     payMode: /^cod$/i.test(pay.method) ? 'cod' : pay.status === 'Paid' ? 'full' : 'none',
     paymentMethod: /^cod$/i.test(pay.method) ? '' : pay.method,
-    note: 'WEB-' + no + (later ? ' (lines added on the website after it was entered)' : ''),
+    // offer-1: the offer behind a line's discount is named on the invoice ("WEB-9001 · 11.11 Offer")
+    note: 'WEB-' + no + offerNames(order.lines) + (later ? ' (lines added on the website after it was entered)' : ''),
   }, { webEntry: true, webOrderNo: no, agreed });
 
   await markEntered(ctx, order.lines.map((l) => l.lineId), res.invoiceId);

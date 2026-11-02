@@ -3465,3 +3465,15 @@ company (`erpJointCatalog`); only rows in stock with a price; never cost or coun
 2 Nov on the owner's "ERP যুক্ত করে দাও" (this also shipped main's earlier commits; live DB was already at 152).
 Not done: photos for joint rows (the website photo is used when the SKU matches), the joint rows carry no type.
 Note: `joint3_test` has 4 failures that also happen without this change (month boundary, 1 Nov).
+
+## offer-1 — website price list offers reach the invoice; type for rows without one (2 Nov 2026)
+
+- **Offers:** the website (costareen.com admin › Price list offers) can lower price list prices for a category / brand /
+  type for a time ("11.11 Offer"). Its order feed now sends `offer` per line; `web_order_lines.offer` (migration 153)
+  keeps it, and entering the order puts the name on the invoice note: `WEB-9001 · 11.11 Offer`. The discount itself
+  needed no change: the line's lower website total against the ERP price is the line discount, as before.
+- **Type chips:** the price list sent joint rows with an empty type (hardcoded), so Polymaker had no type chips.
+  Joint rows now carry the pool product's type; a row with no type at all gets one from its name
+  (`typeFromName`: brand in front and colour at the end dropped, "Panchroma PLA Matte Sky Blue" → "Panchroma PLA Matte").
+- Tests: pricelist_test (+7), fix4_test (+2). NOT done: the Web orders screen does not show the offer as a tag
+  (it is on the invoice note); web orders are still entered by pressing Enter, as before.
