@@ -3477,3 +3477,16 @@ Note: `joint3_test` has 4 failures that also happen without this change (month b
   (`typeFromName`: brand in front and colour at the end dropped, "Panchroma PLA Matte Sky Blue" → "Panchroma PLA Matte").
 - Tests: pricelist_test (+7), fix4_test (+2). NOT done: the Web orders screen does not show the offer as a tag
   (it is on the invoice note); web orders are still entered by pressing Enter, as before.
+
+## multi-1 — several filaments in one creator request (2 Nov 2026)
+Owner: a creator could pick only one filament per request; a video often needs two or more different ones.
+- Creator page (`web/creator.html`): "+ Add another filament" adds lines (up to 5), each with its own rolls and a ✕;
+  the project shows its lines together under one title, one project link, one "Paste the video link".
+- Server (`handlers/creatorportal.js`, migration `154_creator_request_group.sql`): `items: [{sku, qty}]` (the old
+  single `sku` + `qty` still works). Each filament stays its own `erp_creator_requests` row, so the owner approves /
+  hands over / takes stock per line exactly as before (claims and the brand page unchanged); the rows share `group_id`
+  (= first row's id). Refused: the same filament twice, more than 5 lines, more than 3 x rolls-per-video in all.
+  Links are counted per project: one pasted link closes every handed-over line of it and the post names all filaments.
+- Tests: `creatormulti_test.mjs` 21 passed; creatorportal 97, creatorclaims 22 still pass.
+- NOT done: the owner's Creator requests screen still lists each line on its own row (same title shows they belong
+  together). `creators_test.mjs` has 6 failures that exist before this change too (month rolled to November).

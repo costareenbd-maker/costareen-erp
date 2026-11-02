@@ -73,6 +73,8 @@ footer{font-size:13px;color:var(--mute);text-align:center;margin-top:22px}
 .golink div:first-child{flex:1;min-width:200px}.golink b{display:block;font-size:13px}.golink span{display:block;font-size:12px;color:var(--mute)}
 .golink code{display:block;margin-top:4px;font-size:13px;color:var(--acc);overflow-wrap:anywhere}
 .gocount{text-align:center;font-size:12px;color:var(--mute)}.gocount b{font-size:20px;color:var(--ink)}
+.fline{display:grid;grid-template-columns:1fr 90px 40px;gap:0 10px;align-items:end}.fline .sm{margin-bottom:2px}
+.flines{list-style:none;margin:8px 0 0;padding:0}.flines li{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:6px 0;border-top:1px solid var(--line);font-size:14px}
 .allp{display:flex!important;align-items:center;gap:6px;margin:6px 0 0!important;font-size:13px;color:var(--mute);cursor:pointer}.allp input{width:auto}
 .pvbar{background:#1e4fa3;color:#fff;text-align:center;font-size:13px;padding:6px 10px}
 .pv main button,.pv main input,.pv main select,.pv main textarea,.pv .who button{pointer-events:none}
@@ -98,6 +100,7 @@ function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function
 function n(v) { return Number(v || 0).toLocaleString('en-US'); }
 function dt(iso) { if (!iso) return ''; var d = new Date(iso); return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) + ' ' + d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }); }
 function v(id) { var e = document.getElementById(id); return e ? e.value.trim() : ''; }
+function keepText(k) { var a = document.getElementById('f_title'); if (a) a.value = k.t; var c = document.getElementById('f_note'); if (c) c.value = k.n; }
 // ---- the session (Supabase Auth, kept on this device)
 function loadSess() { try { SESS = JSON.parse(localStorage.getItem('cr_session') || 'null'); } catch (e) { SESS = null; } }
 function saveSess(s) { SESS = s; try { if (s) localStorage.setItem('cr_session', JSON.stringify(s)); else localStorage.removeItem('cr_session'); } catch (e) {} }
@@ -163,11 +166,12 @@ function postHtml(p) {
   return '<div class="post"><div><a href="' + esc(p.url) + '" target="_blank" rel="noopener">' + esc(p.platform || '') + ' ' + esc(p.kind) + ' · ' + esc(p.url.replace(/^https?:\/\/(www\.)?/, '').slice(0, 42)) + '</a><br><span class="n">' + esc(p.date) + ' · ' + (p.verified ? '<span class="badge b-ok">verified by YouTube</span>' : '<span class="badge b-mute">reported</span>') + '</span></div>' +
     '<div class="n">' + n(p.views) + ' views · ' + n(p.likes) + ' likes · ' + n(p.comments) + ' comments' + (p.leads ? ' · ' + n(p.leads) + ' enquiries' : '') + (p.verified ? '' : ' <button class="sm" data-nums="' + p.id + '">Update</button>') + '</div></div>';
 }
-var SHOWALL = false;
-function pickOptions() {
+var SHOWALL = false, LINES = [];   // multi-1: the filament lines of the request being written
+function readLines() { LINES = LINES.map(function (l, i) { return { k: document.getElementById('f_sku_' + i) ? v('f_sku_' + i) : l.k, q: document.getElementById('f_qty_' + i) ? v('f_qty_' + i) : l.q }; }); }
+function pickOptions(sel) {
   var have = D.stock.filter(function (x) { return x.stock > 0; }), rest = D.stock.filter(function (x) { return x.stock <= 0; });
   if (!have.length && !SHOWALL) SHOWALL = true;   // nothing in stock: the range is all there is
-  var opt = function (x) { return '<option value="' + esc(x.key || x.sku) + '">' + esc(x.name) + (x.stock > 0 ? ' (' + n(x.stock) + ' in stock)' : '') + '</option>'; };
+  var opt = function (x) { return '<option value="' + esc(x.key || x.sku) + '"' + (sel && (x.key || x.sku) === sel ? ' selected' : '') + '>' + esc(x.name) + (x.stock > 0 ? ' (' + n(x.stock) + ' in stock)' : '') + '</option>'; };
   var h = have.length ? '<optgroup label="In stock">' + have.map(opt).join('') + '</optgroup>' : '';
   if (SHOWALL && rest.length) h += '<optgroup label="On request - not in stock now">' + rest.map(opt).join('') + '</optgroup>';
   return h || '<option value="">No products yet - ask the shop</option>';
@@ -182,17 +186,28 @@ function dashHtml() {
     h += '<div class="card"><h2>Next project</h2>';
     if (FORM === 'request') {
       h += '<label>What is the video about?</label><input id="f_title" maxlength="160" placeholder="e.g. Strength test: PLA vs PLA+">' +
-           '<div class="grid2"><div><label>Filament</label><select id="f_sku">' + pickOptions() + '</select>' + (D.stock.some(function (x) { return x.stock <= 0; }) ? '<label class="allp"><input type="checkbox" id="f_all"' + (SHOWALL ? ' checked' : '') + '> Show products we do not have in stock (on request)</label>' : '') + '</div><div><label>Rolls</label><input id="f_qty" inputmode="numeric" value="' + c.rolls_video + '"></div></div>' +
-           '<label>Anything else (optional)</label><textarea id="f_note" maxlength="500" placeholder="Colour preference, pickup day, a second product…"></textarea>' +
+           LINES.map(function (l, i) { return '<div class="fline"><div><label>' + (LINES.length > 1 ? 'Filament ' + (i + 1) : 'Filament') + '</label><select id="f_sku_' + i + '">' + pickOptions(l.k) + '</select></div><div><label>Rolls</label><input id="f_qty_' + i + '" inputmode="numeric" value="' + esc(String(l.q)) + '"></div>' + (LINES.length > 1 ? '<button class="sm" data-rmline="' + i + '" aria-label="Remove filament ' + (i + 1) + '">✕</button>' : '<span></span>') + '</div>'; }).join('') +
+           '<div class="row" style="margin-top:6px">' + (LINES.length < 5 ? '<button class="sm" id="f_addline">+ Add another filament</button>' : '') + (D.stock.some(function (x) { return x.stock <= 0; }) ? '<label class="allp"><input type="checkbox" id="f_all"' + (SHOWALL ? ' checked' : '') + '> Show products we do not have in stock (on request)</label>' : '') + '</div>' +
+           '<label>Anything else (optional)</label><textarea id="f_note" maxlength="500" placeholder="Colour preference, pickup day…"></textarea>' +
            '<div class="row"><button class="pri" id="f_send"' + (BUSY ? ' disabled' : '') + '>' + (BUSY ? 'Sending…' : 'Send the request') + '</button><button id="f_cancel">Cancel</button><span class="msg" id="f_msg"></span></div>';
     } else h += D.canRequest ? '<p class="msg" style="margin:0 0 10px">Pick the filament for your next video. The shop answers here; collect it when it says approved.</p><button class="pri" id="f_open">Request filament for the next video</button>' : '<p class="msg" style="margin:0">' + esc(D.why) + '</p>';
     h += '</div>';
   }
   h += '<div class="card"><h2>Your projects</h2>';
   if (!D.requests.length) h += '<p class="msg" style="margin:0">No project yet.' + (c.status === 'active' ? ' Request your first filament above.' : '') + '</p>';
-  D.requests.forEach(function (r) {
-    var posts = D.posts.filter(function (p) { return p.request_id === r.id; });
-    h += '<div class="proj"><div class="h"><div><b>' + esc(r.title || r.product) + '</b><div class="m">' + n(r.qty_ok != null ? r.qty_ok : r.qty) + ' × ' + esc(r.product) + ' · requested ' + esc(dt(r.requested_at)) + (r.given_at ? ' · received ' + esc(dt(r.given_at)) : r.decided_at ? ' · answered ' + esc(dt(r.decided_at)) : '') + '</div>' + (r.owner_note ? '<div class="m">Shop: ' + esc(r.owner_note) + '</div>' : '') + '</div><div>' + (r.onRequest && (r.status === 'requested' || r.status === 'approved') ? '<span class="badge b-mute" style="margin-right:6px">on request</span>' : '') + statusBadge(r.status) + '</div></div>';
+  var groups = [], byG = {};
+  D.requests.forEach(function (x) { var g = x.group || x.id; if (!byG[g]) { byG[g] = []; groups.push(g); } byG[g].push(x); });
+  groups.forEach(function (g) {
+    var fam = byG[g].slice().sort(function (a, b) { return a.id - b.id; });
+    var r = fam.filter(function (x) { return x.id === g; })[0] || fam[0];
+    var live = fam.filter(function (x) { return x.status !== 'declined'; }), ids = fam.map(function (x) { return x.id; });
+    var st = (fam.filter(function (x) { return x.status === 'given' || x.status === 'done'; })[0] || r).status;
+    var same = fam.every(function (x) { return x.status === fam[0].status; });
+    var posts = D.posts.filter(function (p) { return ids.indexOf(p.request_id) >= 0; });
+    var qtyOf = function (x) { return n(x.qty_ok != null ? x.qty_ok : x.qty) + ' × ' + esc(x.product); };
+    h += '<div class="proj"><div class="h"><div><b>' + esc(r.title || r.product) + '</b><div class="m">' + (fam.length === 1 ? qtyOf(r) + ' · ' : '') + 'requested ' + esc(dt(r.requested_at)) + (r.given_at ? ' · received ' + esc(dt(r.given_at)) : r.decided_at ? ' · answered ' + esc(dt(r.decided_at)) : '') + '</div>' + (r.owner_note ? '<div class="m">Shop: ' + esc(r.owner_note) + '</div>' : '') + '</div><div>' + (fam.length === 1 && r.onRequest && (r.status === 'requested' || r.status === 'approved') ? '<span class="badge b-mute" style="margin-right:6px">on request</span>' : '') + (same ? statusBadge(fam[0].status) : '') + '</div></div>';
+    if (fam.length > 1) h += '<ul class="flines">' + fam.map(function (x) { return '<li><span>' + qtyOf(x) + (x.onRequest && (x.status === 'requested' || x.status === 'approved') ? ' <span class="badge b-mute">on request</span>' : '') + (x.owner_note && x.id !== r.id ? '<br><span class="m">Shop: ' + esc(x.owner_note) + '</span>' : '') + '</span>' + (same ? '' : statusBadge(x.status)) + '</li>'; }).join('') + '</ul>';
+    r = { id: r.id, go: r.go, clicks: r.clicks, status: live.length ? st : 'declined' };
     if (r.go && r.status !== 'declined') h += '<div class="golink"><div><b>Your link for this video</b><span>Put it in the video description / post. Every click is counted.</span><code>' + esc(r.go) + '</code></div><div class="gocount"><b>' + n(r.clicks) + '</b>clicks</div><button class="sm" data-copy="' + esc(r.go) + '">Copy</button></div>';
     posts.forEach(function (p) { h += postHtml(p); });
     if (r.status === 'given' || r.status === 'done') {
@@ -238,7 +253,9 @@ document.addEventListener('click', function (ev) {
   if (t.id === 'to_signin') { FORM = 'signin'; if (MODE !== 'landing') MODE = 'signin'; render(); return; }
   if (t.id === 'to_forgot') { FORM = 'forgot'; render(); return; }
   if (t.id === 'to_join') { FORM = null; MODE = 'landing'; render(); return; }
-  if (t.id === 'f_open') { FORM = 'request'; render(); return; }
+  if (t.id === 'f_open') { FORM = 'request'; LINES = [{ k: '', q: D.creator.rolls_video }]; render(); return; }
+  if (t.id === 'f_addline' && LINES.length < 5) { readLines(); var kt = { t: v('f_title'), n: v('f_note') }; LINES.push({ k: '', q: 1 }); render(); keepText(kt); return; }
+  if (t.getAttribute('data-rmline')) { readLines(); var kr = { t: v('f_title'), n: v('f_note') }; LINES.splice(+t.getAttribute('data-rmline'), 1); render(); keepText(kr); return; }
   if (t.id === 'f_cancel') { FORM = null; render(); return; }
   if (t.id === 'pf_edit') { FORM = 'profile'; CH = null; render(); window.scrollTo(0, 0); return; }
   if (t.id === 'f_cancel' && FORM === 'profile') { CH = null; }
@@ -295,7 +312,9 @@ document.addEventListener('click', function (ev) {
     api(pb).then(function (r) { if (!r.ok) return fail(r); CH = null; done(r); }, fail); return;
   }
   if (t.id === 'f_send') {
-    var body = { action: 'request', sku: v('f_sku'), qty: Number(v('f_qty')), title: v('f_title'), note: v('f_note') };
+    readLines();
+    var items = LINES.map(function (l) { return { sku: l.k, qty: Number(l.q) }; });
+    var body = { action: 'request', items: items, sku: items[0].sku, qty: items[0].qty, title: v('f_title'), note: v('f_note') };
     BUSY = true; render();
     api(body).then(done, fail); return;
   }
@@ -318,9 +337,8 @@ document.addEventListener('change', function (ev) {
 });
 document.addEventListener('change', function (ev) {
   if (ev.target.id !== 'f_all') return;
-  var keep = { t: v('f_title'), q: v('f_qty'), n: v('f_note') };
-  SHOWALL = ev.target.checked; render();
-  var a = document.getElementById('f_title'); if (a) a.value = keep.t; var b = document.getElementById('f_qty'); if (b) b.value = keep.q; var c = document.getElementById('f_note'); if (c) c.value = keep.n;
+  readLines(); var keep = { t: v('f_title'), n: v('f_note') };
+  SHOWALL = ev.target.checked; render(); keepText(keep);
 });
 document.addEventListener('input', function (ev) {
   if (ev.target.id !== 'l_url') return;

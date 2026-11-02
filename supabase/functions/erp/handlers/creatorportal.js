@@ -188,12 +188,12 @@ export async function erpSponsorLink(ctx, payload) {
 }
 
 // ---------------------------------------------------------------- requests (owner side)
-const reqRow = (r) => ({ onRequest: !!r.on_request, id: Number(r.id), creator_id: Number(r.creator_id), status: r.status, title: str(r.title), sku: str(r.sku), product: str(r.product), qty: num(r.qty), qty_ok: r.qty_ok == null ? null : num(r.qty_ok),
+const reqRow = (r) => ({ onRequest: !!r.on_request, id: Number(r.id), group: Number(r.group_id || r.id), creator_id: Number(r.creator_id), status: r.status, title: str(r.title), sku: str(r.sku), product: str(r.product), qty: num(r.qty), qty_ok: r.qty_ok == null ? null : num(r.qty_ok),
                          value: num(r.value), note: str(r.note), owner_note: str(r.owner_note), requested_at: when(r.requested_at), decided_at: when(r.decided_at), given_at: when(r.given_at), links: num(r.links), code: str(r.link_code), clicks: num(r.clicks), link_to: str(r.link_to) });
 async function requests(ctx, creatorId) {
   const rows = creatorId
-    ? await ctx.tx`select r.*, (select count(*) from erp_creator_posts p where p.request_id = r.id) as links from erp_creator_requests r where r.business_id = ${ctx.biz} and r.creator_id = ${creatorId} order by r.id desc limit 100`
-    : await ctx.tx`select r.*, (select count(*) from erp_creator_posts p where p.request_id = r.id) as links from erp_creator_requests r where r.business_id = ${ctx.biz} order by r.id desc limit 300`;
+    ? await ctx.tx`select r.*, (select count(*) from erp_creator_posts p join erp_creator_requests g on g.id = p.request_id where g.business_id = r.business_id and coalesce(g.group_id, g.id) = coalesce(r.group_id, r.id)) as links from erp_creator_requests r where r.business_id = ${ctx.biz} and r.creator_id = ${creatorId} order by r.id desc limit 100`
+    : await ctx.tx`select r.*, (select count(*) from erp_creator_posts p join erp_creator_requests g on g.id = p.request_id where g.business_id = r.business_id and coalesce(g.group_id, g.id) = coalesce(r.group_id, r.id)) as links from erp_creator_requests r where r.business_id = ${ctx.biz} order by r.id desc limit 300`;
   return rows.map(reqRow);
 }
 /** The project link of each request (made when he asks; one per project). */
@@ -356,7 +356,7 @@ async function creatorData(ctx, c) {
   const month = formatDate(ctx.now, 'yyyy-MM');
   const mPosts = posts.filter((p) => p.date.startsWith(month));
   const videos = mPosts.filter((p) => p.kind === 'video').length, others = mPosts.length - videos;
-  const openNoLink = reqs.filter((r) => r.status === 'given' && r.links === 0).length;
+  const openNoLink = new Set(reqs.filter((r) => r.status === 'given' && r.links === 0).map((r) => r.group)).size;   // projects, not lines
   const pending = reqs.some((r) => r.status === 'requested' || r.status === 'approved');
   const needProfile = !!c.applied_at && !profileDone(c);   // self-joined creators fill their profile first; hand-added ones are the owner's job
   const canRequest = c.status === 'active' && !needProfile && openNoLink < num(c.open_limit) && !pending;
@@ -395,28 +395,50 @@ async function creatorAct(ctx, l, b, ip) {
   if (action === 'request') {
     const d = await creatorData(ctx, c);
     if (!d.canRequest) throw new Error(d.why);
-    const qty = Math.round(num(b.qty)); if (!(qty > 0)) throw new Error('How many rolls?');
-    if (qty > num(c.rolls_video) * 3) throw new Error('That is more than the programme allows at once (' + num(c.rolls_video) * 3 + '). Ask the shop directly for more.');
-    let sku = str(b.sku), product = '', onRequest = false;
-    const pick = d.stock.find((x) => (x.key || x.sku).toLowerCase() === sku.toLowerCase());
-    if (!pick) throw new Error('Pick a product from the list.');
-    sku = pick.sku; product = pick.name; onRequest = pick.stock <= 0;
+    // multi-1: several different filaments for one project (items), or the old single sku + qty
+    const asked = Array.isArray(b.items) && b.items.length ? b.items : [{ sku: b.sku, qty: b.qty }];
+    if (asked.length > 5) throw new Error('Up to 5 different filaments in one request.');
+    const lines = [], seen = new Set();
+    for (const it of asked) {
+      const qty = Math.round(num(it && it.qty)); if (!(qty > 0)) throw new Error('How many rolls of each filament?');
+      const key = str(it && it.sku);
+      const pick = d.stock.find((x) => (x.key || x.sku).toLowerCase() === key.toLowerCase());
+      if (!pick) throw new Error('Pick a product from the list.');
+      const k = (str(pick.sku) || str(pick.name)).toLowerCase();
+      if (seen.has(k)) throw new Error(str(pick.name) + ' is in the list twice. Put all its rolls on one line.');
+      seen.add(k);
+      lines.push({ sku: str(pick.sku), product: str(pick.name), qty, onRequest: pick.stock <= 0 });
+    }
+    const total = lines.reduce((a, l) => a + l.qty, 0), cap = num(c.rolls_video) * 3;
+    if (total > cap) throw new Error('That is more than the programme allows at once (' + cap + ' rolls in all). Ask the shop directly for more.');
     const title = str(b.title).slice(0, 160); if (!title) throw new Error('One line about the video, please.');
-    const r = (await ctx.tx`insert into erp_creator_requests ${ctx.tx({ business_id: ctx.biz, creator_id: c.id, title, sku: sku || null, product, qty, on_request: onRequest, note: str(b.note).slice(0, 500) || null })} returning id`)[0];
-    await makeGo(ctx, Number(r.id));
-    await ev(ctx, { creator_id: c.id, request_id: Number(r.id), who: 'creator', what: 'requested', detail: qty + ' x ' + product + ' - ' + title, ip });
+    const note = str(b.note).slice(0, 500) || null;
+    let group = 0;
+    for (const l of lines) {
+      const r = (await ctx.tx`insert into erp_creator_requests ${ctx.tx({ business_id: ctx.biz, creator_id: c.id, title, sku: l.sku || null, product: l.product, qty: l.qty, on_request: l.onRequest, note, group_id: group || null })} returning id`)[0];
+      if (!group) { group = Number(r.id); await ctx.tx`update erp_creator_requests set group_id = ${group} where id = ${group}`; await makeGo(ctx, group); }
+      await ev(ctx, { creator_id: c.id, request_id: Number(r.id), who: 'creator', what: 'requested', detail: l.qty + ' x ' + l.product + ' - ' + title, ip });
+    }
     return creatorData(ctx, c);
   }
   if (action === 'link') {
     const url = str(b.url).slice(0, 500); if (!/^https?:\/\/\S+$/.test(url)) throw new Error('Paste the full link, starting with https://');
     const rid = num(b.request_id);
     let req = null;
-    if (rid) { req = (await ctx.tx`select * from erp_creator_requests where business_id = ${ctx.biz} and creator_id = ${c.id} and id = ${rid}`)[0]; if (!req || req.status !== 'given' && req.status !== 'done') throw new Error('That project is not open for links.'); }
+    let fam = [];
+    if (rid) {
+      // multi-1: the link belongs to the whole project; it hangs on its first line that was handed over
+      const head = (await ctx.tx`select * from erp_creator_requests where business_id = ${ctx.biz} and creator_id = ${c.id} and id = ${rid}`)[0];
+      fam = head ? await ctx.tx`select * from erp_creator_requests where business_id = ${ctx.biz} and creator_id = ${c.id} and coalesce(group_id, id) = ${Number(head.group_id || head.id)} order by id` : [];
+      fam = fam.filter((x) => x.status === 'given' || x.status === 'done');
+      req = fam[0] || null;
+      if (!req) throw new Error('That project is not open for links.');
+    }
     const kind = ['video', 'post', 'reel'].includes(str(b.kind)) ? str(b.kind) : (ytId(url) ? 'video' : 'post');
     const platform = str(b.platform) || (ytId(url) ? 'YouTube' : /facebook\.com|fb\.watch/.test(url) ? 'Facebook' : /instagram\.com/.test(url) ? 'Instagram' : /tiktok\.com/.test(url) ? 'TikTok' : '');
     const nums = { views: Math.max(0, Math.round(num(b.views))), likes: Math.max(0, Math.round(num(b.likes))), comments: Math.max(0, Math.round(num(b.comments))), shares: Math.max(0, Math.round(num(b.shares))), leads: Math.max(0, Math.round(num(b.leads))) };
-    const p = (await ctx.tx`insert into erp_creator_posts ${ctx.tx({ business_id: ctx.biz, creator_id: c.id, request_id: req ? req.id : null, on_date: formatDate(ctx.now, 'yyyy-MM-dd'), platform, kind, url, product: req ? str(req.product) : str(b.product).slice(0, 160) || null, ...nums, by: 'creator', note: str(b.note).slice(0, 300) || null })} returning id`)[0];
-    if (req && req.status === 'given') await ctx.tx`update erp_creator_requests set status = 'done', updated_at = ${ctx.now} where id = ${req.id}`;
+    const p = (await ctx.tx`insert into erp_creator_posts ${ctx.tx({ business_id: ctx.biz, creator_id: c.id, request_id: req ? req.id : null, on_date: formatDate(ctx.now, 'yyyy-MM-dd'), platform, kind, url, product: req ? fam.map((x) => str(x.product)).join(', ').slice(0, 160) : str(b.product).slice(0, 160) || null, ...nums, by: 'creator', note: str(b.note).slice(0, 300) || null })} returning id`)[0];
+    if (req) await ctx.tx`update erp_creator_requests set status = 'done', updated_at = ${ctx.now} where business_id = ${ctx.biz} and creator_id = ${c.id} and coalesce(group_id, id) = ${Number(req.group_id || req.id)} and status = 'given'`;
     await ev(ctx, { creator_id: c.id, request_id: req ? req.id : null, post_id: Number(p.id), who: 'creator', what: 'linked', detail: platform + ' ' + kind + ' ' + url, ip });
     if (ytId(url)) { try { await ytRefresh(ctx, { all: false }); } catch (e) { await ev(ctx, { creator_id: c.id, post_id: Number(p.id), who: 'system', what: 'fetch-failed', detail: String(e.message || e) }); } }
     return creatorData(ctx, c);
@@ -437,7 +459,7 @@ async function sponsorPage(ctx, l) {
   const brand = str(l.ref);
   const creators = await ctx.tx`select * from erp_creators where business_id = ${ctx.biz} and lower(brand) = ${brand} order by name`;
   const ids = creators.map((c) => Number(c.id));
-  const reqs = ids.length ? withGo(ctx, (await ctx.tx`select r.*, (select count(*) from erp_creator_posts p where p.request_id = r.id) as links from erp_creator_requests r where r.business_id = ${ctx.biz} and r.creator_id = any(${ids}) order by r.id desc`).map(reqRow)) : [];
+  const reqs = ids.length ? withGo(ctx, (await ctx.tx`select r.*, (select count(*) from erp_creator_posts p join erp_creator_requests g on g.id = p.request_id where g.business_id = r.business_id and coalesce(g.group_id, g.id) = coalesce(r.group_id, r.id)) as links from erp_creator_requests r where r.business_id = ${ctx.biz} and r.creator_id = any(${ids}) order by r.id desc`).map(reqRow)) : [];
   const ships = ids.length ? await ctx.tx`select * from erp_creator_ships where business_id = ${ctx.biz} and creator_id = any(${ids}) order by on_date desc, id desc` : [];
   const posts = ids.length ? (await ctx.tx`select * from erp_creator_posts where business_id = ${ctx.biz} and creator_id = any(${ids}) order by on_date desc, id desc`).map((p) => ({ ...postRow(p), creator_id: Number(p.creator_id) })) : [];
   const projects = ids.length ? await ctx.tx`select * from erp_creator_projects where business_id = ${ctx.biz} and creator_id = any(${ids}) and status in ('sent', 'approved') order by id desc` : [];
