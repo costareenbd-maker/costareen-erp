@@ -17,6 +17,8 @@
 //   erpBrandDeskToLeads({id, business})  that person becomes a lead of one of the owner's businesses (its Leads menu)
 //   erpBrandDeskVideos({q?})             brand-5: the footage library (Immich on the PC): newest, or found by meaning
 //                                        ("me talking in the shop"), with a small preview each
+//   erpBrandDeskShorts()                 brand-6: the shorts being made / made (OpenShorts on the PC, local AI)
+//   erpBrandDeskMakeShorts({id})         one video -> 9:16 clips with captions; the clips land in the footage library
 //   erpBrandDeskHello({biz, url})        the PC: "I am on, here is my address" (owner's machine key, any active business)
 //
 // Researched first (owner rule "open source first"): Postiz does the posting, the pacer keeps one line per network so
@@ -169,6 +171,17 @@ export async function erpBrandDeskVideos(ctx, payload) {
   return bridge(ctx, '/videos' + (q ? '?q=' + encodeURIComponent(q) : ''));
 }
 
+export async function erpBrandDeskShorts(ctx) {
+  await gate(ctx);
+  return bridge(ctx, '/shorts');
+}
+export async function erpBrandDeskMakeShorts(ctx, payload) {
+  await gate(ctx);
+  const id = str(payload && payload.id);
+  if (!/^[0-9a-f-]{20,64}$/i.test(id)) throw new Error('Pick a video.');
+  return bridge(ctx, '/shorts', { id });
+}
+
 export async function erpBrandDeskSetup(ctx, payload) {
   await gate(ctx);
   const k = str(payload && payload.key);
@@ -192,4 +205,4 @@ export async function erpBrandDeskHello(ctx, payload) {
   return { ok: true };
 }
 
-export const HANDLERS = { erpBrandDesk, erpBrandDeskVideos, erpBrandDeskPeople, erpBrandDeskPerson, erpBrandDeskToLeads, erpBrandDeskIdeas, erpBrandDeskIdea, erpBrandDeskIdeaToBoard, erpBrandDeskBoard, erpBrandDeskCard, erpBrandDeskMove, erpBrandDeskDone, erpBrandDeskPost, erpBrandDeskDecide, erpBrandDeskSetup, erpBrandDeskHello };
+export const HANDLERS = { erpBrandDesk, erpBrandDeskShorts, erpBrandDeskMakeShorts, erpBrandDeskVideos, erpBrandDeskPeople, erpBrandDeskPerson, erpBrandDeskToLeads, erpBrandDeskIdeas, erpBrandDeskIdea, erpBrandDeskIdeaToBoard, erpBrandDeskBoard, erpBrandDeskCard, erpBrandDeskMove, erpBrandDeskDone, erpBrandDeskPost, erpBrandDeskDecide, erpBrandDeskSetup, erpBrandDeskHello };
