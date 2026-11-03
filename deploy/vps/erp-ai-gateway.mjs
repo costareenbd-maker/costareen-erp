@@ -9,6 +9,10 @@
 // Claude here does not take them (400) and the caller moves on to Gemini.
 // Pictures: POST /v1/images/jobs + GET /v1/images/jobs/<id> (gpt-image-2 on the ChatGPT plan, see below).
 // Secret: ERP_AI_SECRET in /etc/erp-ai-gateway.env (the ERP's Settings > AI brain > Own server key).
+//
+// OWNER RULE 4 Nov 2026: "Claude is for me only; everything automatic runs on my ChatGPT subscription". Unless
+// ALLOW_CLAUDE=1 is set, nothing here starts Claude: the claude-* names are answered by ChatGPT (opus -> sol, sonnet ->
+// terra, haiku -> luna) and a ChatGPT failure goes back as an error, so the ERP moves on to its next AI (Gemini).
 import http from 'node:http';
 import { spawn } from 'node:child_process';
 import { readFileSync, writeFileSync, unlinkSync, mkdirSync, chmodSync } from 'node:fs';
@@ -23,6 +27,8 @@ const CLAUDE = process.env.CLAUDE_BIN || '/usr/bin/claude';
 const MODELS = ['gpt-5.6-sol', 'gpt-5.6-terra', 'gpt-5.6-luna', 'claude-opus', 'claude-sonnet', 'claude-haiku'];
 const GPT_ALIAS = { 'gpt-5.5': 'gpt-5.6-sol', 'gpt-5.4': 'gpt-5.6-sol', 'gpt-5.5-pro': 'gpt-5.6-sol', 'gpt-5.4-mini': 'gpt-5.6-luna', 'gpt': 'gpt-5.6-sol' };
 const CLAUDE_MODEL = { 'claude-opus': 'opus', 'claude-sonnet': 'sonnet', 'claude-haiku': 'haiku' };
+const ALLOW_CLAUDE = process.env.ALLOW_CLAUDE === '1';
+const CLAUDE_AS_GPT = { 'claude-opus': 'gpt-5.6-sol', 'claude-sonnet': 'gpt-5.6-terra', 'claude-haiku': 'gpt-5.6-luna' };
 
 let running = 0; const waiting = [];
 const slot = () => new Promise((ok) => { if (running < MAX_PAR) { running++; ok(); } else waiting.push(ok); });
@@ -148,8 +154,8 @@ async function openclawChat(body, res) {
       why = 'odd answer: ' + txt.slice(0, 160);
     } else why = r.status + ' ' + txt.slice(0, 200);
   } catch (e) { why = 'openclaw down: ' + String(e && e.message || e).slice(0, 120); }
+  if (!ALLOW_CLAUDE || hasImage(body.messages || [])) { console.log('chatgpt failed (no claude fallback): ' + why); return err(res, 503, 'ChatGPT is not available right now (' + why.slice(0, 120) + ').'); }
   console.log('gpt fallback to claude: ' + why);
-  if (hasImage(body.messages || [])) return err(res, 503, 'ChatGPT is not available right now (' + why.slice(0, 120) + ').');
   res.setHeader('x-erp-ai-engine', 'claude:fallback');
   return claudeChat({ ...body, model: 'claude-opus' }, res);
 }
@@ -247,8 +253,10 @@ http.createServer((req, res) => {
   req.on('end', () => {
     let body; try { body = JSON.parse(raw); } catch (_) { return err(res, 400, 'bad json', 'invalid_request_error'); }
     if (path === '/v1/images/jobs') { try { return imgStart(body, res); } catch (e) { return err(res, 500, String(e && e.message || e)); } }
-    const m = String(body.model || 'claude-opus');
-    (CLAUDE_MODEL[m] ? claudeChat(body, res) : /^gpt|^o\d/.test(m) ? openclawChat(body, res) : claudeChat({ ...body, model: 'claude-opus' }, res))
+    const m = String(body.model || 'gpt-5.6-terra');
+    const run = !ALLOW_CLAUDE ? openclawChat({ ...body, model: CLAUDE_AS_GPT[m] || (/^gpt|^o\d/.test(m) ? m : 'gpt-5.6-terra') }, res)
+      : CLAUDE_MODEL[m] ? claudeChat(body, res) : /^gpt|^o\d/.test(m) ? openclawChat(body, res) : claudeChat({ ...body, model: 'claude-opus' }, res);
+    run
       .catch((e) => err(res, 500, String(e && e.message || e)));
   });
 }).listen(PORT, '127.0.0.1', () => console.log('erp-ai-gateway on 127.0.0.1:' + PORT));

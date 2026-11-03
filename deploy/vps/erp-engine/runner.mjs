@@ -7,9 +7,12 @@
 //   - no shell, no file writing: a skill's code is never run.
 // What it does is sent back as steps; the answer, the skills used, the brain and the time go to erpEngineDone.
 // Env (/etc/erp-engine.env): ERP_URL, ERP_ENGINE_KEY (an access link labelled "Engine ..."), MAX_PARALLEL, MODELS.
+// gpt-1 (owner 4 Nov 2026): "Claude is for me only". MODELS names starting with gpt- run on the owner's ChatGPT plan
+// through the AI gateway (gpt.mjs: AI_URL, AI_KEY); Claude names run Claude Code only when ALLOW_CLAUDE=1.
 import { spawn } from 'node:child_process';
 import tls from 'node:tls';
 import { siteAction, siteOf, sites } from './site.mjs';
+import { runGpt } from './gpt.mjs';
 import { mkdirSync, writeFileSync, rmSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -18,10 +21,12 @@ const HERE = path.dirname(fileURLToPath(import.meta.url));
 const ERP_URL = process.env.ERP_URL || 'https://oqzcuuytytqadqjlwdsh.supabase.co/functions/v1/erp';
 const KEY = process.env.ERP_ENGINE_KEY || '';
 const MAX_PAR = Number(process.env.MAX_PARALLEL || 2);
-const MODELS = String(process.env.MODELS || 'opus,sonnet').split(',').map((s) => s.trim()).filter(Boolean);
+const ALLOW_CLAUDE = process.env.ALLOW_CLAUDE === '1';
+const MODELS = String(process.env.MODELS || 'gpt-5.6-terra,gpt-5.6-luna').split(',').map((s) => s.trim()).filter(Boolean)
+  .filter((m) => ALLOW_CLAUDE || /^gpt/.test(m));
 const CLAUDE = process.env.CLAUDE_BIN || '/usr/bin/claude';
 const WORK = process.env.WORK_DIR || '/var/lib/erp-engine';
-const TICK_MS = 20000, JOB_MS = 20 * 60000, VERSION = 'watch-6';
+const TICK_MS = 20000, JOB_MS = 20 * 60000, VERSION = 'gpt-1';
 const RUNNER = process.env.RUNNER_NAME || 'office-vps';
 
 let running = 0, coolUntil = 0, lastBeat = 0;
@@ -138,9 +143,12 @@ async function work(c) {
   try {
     const dir = prepare(c), slugs = new Set((c.skills || []).map((s) => s.slug));
     for (const model of MODELS) {
-      brain = 'claude:' + model;
+      const gpt = /^gpt/.test(model);
+      brain = (gpt ? 'chatgpt:' : 'claude:') + model;
       await flush(brain);
-      out = await runClaude(dir, model, c.job.ask, slugs, onStep);
+      out = gpt ? await runGpt({ model, system: systemText(c), ask: c.job.ask, job: id, tools: c.tools || [], skills: c.skills || [], biz: String(c.business.id || ''), agent: String(c.agent.key || ''),
+        erpTool: (tool, args) => erp('erpEngineTool', { id, tool, args }), erpCall: erp, onStep })
+        : await runClaude(dir, model, c.job.ask, slugs, onStep);
       if (out.ok || !out.busy || stopped) break;
       onStep('The ' + model + ' brain is busy - trying the next one');
     }
@@ -227,6 +235,7 @@ async function tick() {
 }
 
 if (!KEY) { console.error('ERP_ENGINE_KEY is not set'); process.exit(1); }
+if (!MODELS.length) { console.error('No model to run on (MODELS has only Claude names and ALLOW_CLAUDE is not 1)'); process.exit(1); }
 mkdirSync(path.join(WORK, 'jobs'), { recursive: true });
 log('erp-engine', VERSION, 'models', MODELS.join(','), 'parallel', MAX_PAR);
 tick();
