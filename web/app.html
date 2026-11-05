@@ -36940,6 +36940,141 @@ document.addEventListener('change', function (e) { var t = e.target; if (t && t.
   setInterval(skin, 800);
 })();
 </script>
+<!-- inbox-look-1 (owner 6 Nov 2026: "the ERP inbox does not look nice"; ERP Inbox is the one inbox, Chatwoot is off): the
+     Inbox in the Clean look instead of fd-47's mono-caps hairline style - pills, lime = selected, white borderless panes,
+     sentence-case labels, pastel letter avatars per person (Meta gives no profile photo without App Review), roomier
+     Bangla in the bubbles. Only under html[data-look="clean"]; the "Current" look keeps fd-47 untouched. -->
+<style>
+html[data-look="clean"][data-skin="fd"]:root #view.ib-skin { font-size:14.5px; }
+html[data-look="clean"][data-skin="fd"]:root #view.ib-skin .ib-wrap { gap:16px; height:calc(100vh - 196px); min-height:540px; }
+html[data-look="clean"][data-skin="fd"]:root #view.ib-skin .ib-wrap.has-rail { grid-template-columns:76px 320px minmax(0,1fr) 320px; }
+html[data-look="clean"][data-skin="fd"]:root #view.ib-skin .ib-pane,
+html[data-look="clean"][data-skin="fd"]:root #view.ib-skin .ib-c { border:0; border-radius:20px; box-shadow:var(--fd-shadow-card); background:var(--fd-card); }
+html[data-look="clean"][data-skin="fd"]:root #view.ib-skin .ib-c { padding:22px 24px; }
+html[data-look="clean"][data-skin="fd"]:root #view.ib-skin .ib-c h3 { font-family:inherit; font-size:17px; font-weight:700; letter-spacing:-.01em; text-transform:none; color:var(--fd-text); }
+/* tabs and piles: pills; the open one is lime */
+html[data-look="clean"][data-skin="fd"]:root #view.ib-skin .ib-tabs { border-bottom:0; gap:4px; margin:0 0 16px; padding:2px 0; }
+html[data-look="clean"][data-skin="fd"]:root #view.ib-skin .ib-tabs button,
+html[data-look="clean"][data-skin="fd"]:root #view.ib-skin .ib-piles button { font-family:inherit; text-transform:none; letter-spacing:0; font-weight:600; border:0; border-radius:999px; background:transparent; color:var(--fd-text-2); margin:0; }
+html[data-look="clean"][data-skin="fd"]:root #view.ib-skin .ib-tabs button { font-size:13.5px; padding:9px 15px; }
+html[data-look="clean"][data-skin="fd"]:root #view.ib-skin .ib-piles button { font-size:13px; padding:6px 12px; background:var(--fd-surface-2); }
+html[data-look="clean"][data-skin="fd"]:root #view.ib-skin .ib-tabs button:hover,
+html[data-look="clean"][data-skin="fd"]:root #view.ib-skin .ib-piles button:hover { background:var(--fd-surface-3); color:var(--fd-text); }
+html[data-look="clean"][data-skin="fd"]:root #view.ib-skin .ib-tabs button.on,
+html[data-look="clean"][data-skin="fd"]:root #view.ib-skin .ib-piles button.on { background:var(--fd-lime); color:var(--fd-lime-text); border:0; }
+html[data-look="clean"][data-skin="fd"]:root #view.ib-skin .ib-tabs .n,
+html[data-look="clean"][data-skin="fd"]:root #view.ib-skin .ib-tabs button.on .n { background:var(--fd-text); color:var(--fd-card); font-family:inherit; }
+/* status tags: soft pills with ink-family text, sentence case */
+html[data-look="clean"][data-skin="fd"]:root #view.ib-skin .ib-tag { font-family:inherit; font-size:12px; font-weight:600; letter-spacing:0; text-transform:none; border:0; border-radius:999px; padding:3px 10px; background:var(--fd-surface-2); color:var(--fd-text-2); white-space:nowrap; }
+html[data-look="clean"][data-skin="fd"]:root #view.ib-skin .ib-tag.ai { background:var(--cl-mint); color:var(--fd-positive-text); }
+html[data-look="clean"][data-skin="fd"]:root #view.ib-skin .ib-tag.human { background:var(--cl-peach); color:var(--fd-warning-text); }
+html[data-look="clean"][data-skin="fd"]:root #view.ib-skin .ib-tag.hot { background:var(--fd-negative-soft); color:var(--fd-negative-text); }
+/* buttons and fields: the system's own */
+html[data-look="clean"][data-skin="fd"]:root #view.ib-skin .btn { border:0; border-radius:12px; background:var(--fd-surface-2); color:var(--fd-text); font-weight:600; }
+html[data-look="clean"][data-skin="fd"]:root #view.ib-skin .btn.small { border-radius:10px; min-height:32px; }
+html[data-look="clean"][data-skin="fd"]:root #view.ib-skin .btn:hover { background:var(--fd-surface-3); }
+html[data-look="clean"][data-skin="fd"]:root #view.ib-skin .btn.primary { background:var(--fd-text); color:var(--fd-card); }
+html[data-look="clean"][data-skin="fd"]:root[data-theme="dark"] #view.ib-skin .btn.primary { background:var(--fd-lime); color:var(--fd-lime-text); }
+html[data-look="clean"][data-skin="fd"]:root #view.ib-skin .i,
+html[data-look="clean"][data-skin="fd"]:root #view.ib-skin input.i,
+html[data-look="clean"][data-skin="fd"]:root #view.ib-skin select.i,
+html[data-look="clean"][data-skin="fd"]:root #view.ib-skin textarea.i { background:var(--fd-surface-2); border:1px solid transparent; border-radius:12px; }
+html[data-look="clean"][data-skin="fd"]:root #view.ib-skin .i:focus { background:var(--fd-card); border-color:var(--fd-text); box-shadow:var(--fd-focus-ring); }
+html[data-look="clean"][data-skin="fd"]:root #view.ib-skin .ib-form label { font-family:inherit; font-size:12.5px; font-weight:600; letter-spacing:0; text-transform:none; color:var(--fd-text-2); }
+/* the platform rail: full names, lime when chosen */
+html[data-look="clean"][data-skin="fd"]:root #view.ib-skin .ib-rail { border:0; border-radius:20px; background:var(--fd-card); box-shadow:var(--fd-shadow-card); padding:8px 6px; gap:4px; }
+html[data-look="clean"][data-skin="fd"]:root #view.ib-skin .ib-rail button { border-radius:14px; padding:8px 2px 6px; color:var(--fd-text-2); }
+html[data-look="clean"][data-skin="fd"]:root #view.ib-skin .ib-rail button:hover { background:var(--fd-surface-2); }
+html[data-look="clean"][data-skin="fd"]:root #view.ib-skin .ib-rail button.on { background:var(--fd-lime); color:var(--fd-lime-text); }
+html[data-look="clean"][data-skin="fd"]:root #view.ib-skin .ib-rail button.on i { box-shadow:none; }
+html[data-look="clean"][data-skin="fd"]:root #view.ib-skin .ib-rail button em { font-size:10.5px; font-weight:600; max-width:68px; white-space:nowrap; overflow:visible; text-overflow:clip; }
+html[data-look="clean"][data-skin="fd"]:root #view.ib-skin .ib-rail button.off { opacity:.55; }
+html[data-look="clean"][data-skin="fd"]:root #view.ib-skin .ib-rail .n,
+html[data-look="clean"][data-skin="fd"]:root #view.ib-skin .ib-unread { background:var(--fd-text); color:var(--fd-card); border-color:var(--fd-card); font-family:inherit; font-weight:700; }
+/* the chat list: soft rows, the open chat is lime */
+html[data-look="clean"][data-skin="fd"]:root #view.ib-skin .ib-list-h { border-bottom:0; padding:16px 16px 8px; }
+html[data-look="clean"][data-skin="fd"]:root #view.ib-skin .ib-row { border-bottom:0; border-radius:14px; margin:2px 8px; padding:12px; gap:12px; }
+html[data-look="clean"][data-skin="fd"]:root #view.ib-skin .ib-row:hover { background:var(--fd-surface-2); }
+html[data-look="clean"][data-skin="fd"]:root #view.ib-skin .ib-row.on { background:var(--fd-lime); color:var(--fd-lime-text); }
+html[data-look="clean"][data-skin="fd"]:root #view.ib-skin .ib-row.on::before { display:none; }
+html[data-look="clean"][data-skin="fd"]:root #view.ib-skin .ib-row.on .t,
+html[data-look="clean"][data-skin="fd"]:root #view.ib-skin .ib-row.on .t * { color:var(--fd-lime-text) !important; }
+html[data-look="clean"][data-skin="fd"]:root #view.ib-skin .ib-row.on .t > span,
+html[data-look="clean"][data-skin="fd"]:root #view.ib-skin .ib-row.on .ago { color:var(--fd-lime-text) !important; opacity:.75; }
+html[data-look="clean"][data-skin="fd"]:root #view.ib-skin .ib-row.on .ib-tag { background:rgba(23,24,28,.10); }
+html[data-look="clean"][data-skin="fd"]:root #view.ib-skin .ib-row .t b,
+html[data-look="clean"][data-skin="fd"]:root #view.ib-skin .ib-row .t b [data-noi18n] { font-size:14.5px; font-weight:700; color:inherit; }
+html[data-look="clean"][data-skin="fd"]:root #view.ib-skin .ib-row .t span { font-size:13px; color:var(--fd-text-2); }
+html[data-look="clean"][data-skin="fd"]:root #view.ib-skin .ib-row .ago { font-family:inherit; font-size:12px; letter-spacing:0; color:var(--fd-text-3); font-variant-numeric:tabular-nums; }
+/* letter avatars: one pastel per person, ink letter */
+html[data-look="clean"][data-skin="fd"]:root #view.ib-skin .ib-av { width:42px; height:42px; flex:0 0 42px; border:0; background:var(--cl-sky); color:var(--fd-text); font-weight:700; font-size:16px; }
+html[data-look="clean"][data-skin="fd"]:root #view.ib-skin .ib-av[data-tint="1"] { background:var(--cl-peach); }
+html[data-look="clean"][data-skin="fd"]:root #view.ib-skin .ib-av[data-tint="2"] { background:var(--cl-lavender); }
+html[data-look="clean"][data-skin="fd"]:root #view.ib-skin .ib-av[data-tint="3"] { background:var(--cl-mint); }
+html[data-look="clean"][data-skin="fd"]:root #view.ib-skin .ib-av[data-tint="4"] { background:var(--cl-lemon); }
+html[data-look="clean"][data-skin="fd"]:root #view.ib-skin .ib-av[data-tint="5"] { background:var(--cl-sky); }
+html[data-look="clean"][data-skin="fd"]:root #view.ib-skin .ib-av .ch { width:17px; height:17px; border:2.5px solid var(--fd-card); }
+html[data-look="clean"][data-skin="fd"]:root #view.ib-skin .ib-row.on .ib-av .ch { border-color:var(--fd-lime); }
+/* the conversation: canvas behind, white and pastel bubbles, Bangla at reading size */
+html[data-look="clean"][data-skin="fd"]:root #view.ib-skin .ib-conv-h { border-bottom:1px solid var(--fd-border); padding:14px 18px; gap:12px; }
+html[data-look="clean"][data-skin="fd"]:root #view.ib-skin .ib-conv-h .who b { font-size:16px; font-weight:700; }
+html[data-look="clean"][data-skin="fd"]:root #view.ib-skin .ib-conv-h .who span { font-size:12.5px; color:var(--fd-text-3); }
+html[data-look="clean"][data-skin="fd"]:root #view.ib-skin .ib-msgs { background:var(--fd-bg); padding:20px; gap:10px; }
+html[data-look="clean"][data-skin="fd"]:root #view.ib-skin .ib-b { border:0; border-radius:18px; font-size:15px; line-height:1.6; padding:10px 14px; max-width:min(560px, 78%); box-shadow:var(--fd-shadow-card); }
+html[data-look="clean"][data-skin="fd"]:root #view.ib-skin .ib-b.in { background:var(--fd-card); color:var(--fd-text); border-bottom-left-radius:6px; }
+html[data-look="clean"][data-skin="fd"]:root #view.ib-skin .ib-b.out { background:var(--cl-lavender); color:var(--fd-text); border-bottom-right-radius:6px; box-shadow:inset 0 0 0 1px var(--fd-accent-soft-2, transparent), var(--fd-shadow-card); }
+html[data-look="clean"][data-skin="fd"]:root #view.ib-skin .ib-b.out.team { background:var(--cl-mint); }
+html[data-look="clean"][data-skin="fd"]:root #view.ib-skin .ib-b .at,
+html[data-look="clean"][data-skin="fd"]:root #view.ib-skin .ib-b small { font-size:11.5px; color:var(--fd-text-3); }
+html[data-look="clean"][data-skin="fd"]:root #view.ib-skin .ib-ev { font-family:inherit; font-size:12px; letter-spacing:0; text-transform:none; color:var(--fd-text-3); }
+html[data-look="clean"][data-skin="fd"]:root #view.ib-skin .ib-reply { border-top:1px solid var(--fd-border); background:var(--fd-card); padding:14px 18px; }
+html[data-look="clean"][data-skin="fd"]:root #view.ib-skin .ib-reply textarea.i { font-size:15px; line-height:1.5; }
+html[data-look="clean"][data-skin="fd"]:root #view.ib-skin .ib-hint { color:var(--fd-text-3); font-size:12.5px; }
+/* the customer panel */
+html[data-look="clean"][data-skin="fd"]:root #view.ib-skin .ib-side { padding:12px; gap:12px; }
+html[data-look="clean"][data-skin="fd"]:root #view.ib-skin .ib-box { border:0; border-radius:16px; background:var(--fd-surface-2); padding:14px 16px; }
+html[data-look="clean"][data-skin="fd"]:root #view.ib-skin .ib-box h4 { font-family:inherit; font-size:13px; font-weight:700; letter-spacing:0; text-transform:none; color:var(--fd-text-2); }
+html[data-look="clean"][data-skin="fd"]:root #view.ib-skin .ib-ai-out { border:0; border-radius:12px; background:var(--fd-card); }
+/* the other tabs: figures in pastel tiles, plain table heads */
+html[data-look="clean"][data-skin="fd"]:root #view.ib-skin .ib-kpi { border:0; border-radius:20px; background:var(--cl-peach); }
+html[data-look="clean"][data-skin="fd"]:root #view.ib-skin .ib-kpi:nth-child(5n+2) { background:var(--cl-lavender); }
+html[data-look="clean"][data-skin="fd"]:root #view.ib-skin .ib-kpi:nth-child(5n+3) { background:var(--cl-mint); }
+html[data-look="clean"][data-skin="fd"]:root #view.ib-skin .ib-kpi:nth-child(5n+4) { background:var(--cl-lemon); }
+html[data-look="clean"][data-skin="fd"]:root #view.ib-skin .ib-kpi:nth-child(5n) { background:var(--cl-sky); }
+html[data-look="clean"][data-skin="fd"]:root #view.ib-skin .ib-kpi span { font-family:inherit; font-size:12.5px; font-weight:600; letter-spacing:0; text-transform:none; color:var(--fd-text-2); }
+html[data-look="clean"][data-skin="fd"]:root #view.ib-skin .fdd-t th { font-family:inherit; font-size:12.5px; letter-spacing:0; text-transform:none; color:var(--fd-text-3); }
+html[data-look="clean"][data-skin="fd"]:root #view.ib-skin .loading { font-family:inherit; font-size:13px; letter-spacing:0; text-transform:none; }
+html[data-look="clean"][data-skin="fd"]:root #view.ib-skin .note,
+html[data-look="clean"][data-skin="fd"]:root #view.ib-skin .ib-note { border:0; border-radius:14px; }
+@media (max-width:1500px) and (min-width:761px) {
+  html[data-look="clean"][data-skin="fd"]:root #view.ib-skin .ib-wrap.has-rail { grid-template-columns:76px 300px minmax(0,1fr); }
+  html[data-look="clean"][data-skin="fd"]:root #view.ib-skin .ib-wrap.side .ib-sidepane { border-radius:20px; }
+}
+@media (max-width:760px) {
+  html[data-look="clean"][data-skin="fd"]:root #view.ib-skin .ib-wrap.has-rail { grid-template-columns:1fr; gap:10px; }
+  html[data-look="clean"][data-skin="fd"]:root #view.ib-skin .ib-b { max-width:86%; }
+  html[data-look="clean"][data-skin="fd"]:root #view.ib-skin .ib-row { margin:2px 4px; }
+}
+</style>
+<script>
+/* inbox-look-1: each person keeps the same pastel avatar in the list and in the chat head (hash of the name) */
+(function () {
+  function nameOf(av) {
+    var box = av.closest('.ib-row, .ib-conv-h'), n = box && box.querySelector('.t b [data-noi18n], .who b');
+    return ((n && n.textContent) || av.textContent || '').trim().toLowerCase();
+  }
+  function tint() {
+    var v = document.getElementById('view'); if (!v || !v.classList.contains('ib-skin')) return;
+    v.querySelectorAll('.ib-av').forEach(function (av) {
+      var s = nameOf(av), h = 0; for (var i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0;
+      var t = String(h % 5 + 1); if (av.getAttribute('data-tint') !== t) av.setAttribute('data-tint', t);
+    });
+  }
+  var v = document.getElementById('view');
+  if (v && window.MutationObserver) new MutationObserver(function () { tint(); }).observe(v, { childList: true, subtree: true });
+  tint();
+})();
+</script>
 <!-- fd-48 (owner 15 Oct 2026: "I don't want this kind of text beside every name, rather a help option"): the grey hints
      inside form labels ("off the whole invoice", "(optional)", "(empty = today)" ... 47 of them) become a small ? after the
      name; tapping it shows the hint. Labels stay on one line, so boxes side by side line up again. -->
@@ -41960,7 +42095,6 @@ html[data-look="clean"][data-skin="fd"]:root .t2line span { color:var(--fd-text-
       ['Karakeep', 'saves', '#c8553d', 'Save good posts and links; AI adds the tags'],
       ['Miniflux', 'feeds', '#5f6b7a', 'Follow brands, suppliers and competitors in one feed']] },
     { t: 'People and messages', items: [
-      ['Chatwoot', 'inbox', '#1f93ff', 'Every message in one inbox: Page, Instagram, WhatsApp, e-mail, site chat'],
       ['Twenty', 'crm', '#141414', 'People you meet: brands, suppliers, customers'],
       ['Listmonk', 'list', '#0055d4', 'Your own e-mail list and newsletters']] },
     { t: 'Video', items: [

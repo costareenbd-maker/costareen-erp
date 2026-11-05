@@ -3574,3 +3574,16 @@ Page only: no migration, no handler, no test suite touched.
 NOT done: the brand desk's own board / ideas / people / videos / shorts tabs still exist next to the real tools
 (remove after the owner confirms the tools work); no live status dot per tool; local check could not run (local
 Postgres would not start: "./log" sharing violation), so it was checked on the dev ERP instead.
+
+## inbox-look-1 — the Inbox in the Clean look (6 Nov 2026)
+Owner: "the ERP inbox does not look nice"; decided the ERP Inbox stays the one inbox (one app, notifications from the
+ERP), so Chatwoot was switched off on the Mac (data kept). New block after fd-47, only under `html[data-look="clean"]`
+(the Current look keeps fd-47): pill tabs and piles with lime for the open one; white borderless 20px panes; status tags
+as soft pills in sentence case (AI = mint, team = peach, hot = red); a pastel letter avatar per person, the same colour
+in the list and the chat head (hash of the name) because Meta sends no profile photo without App Review (live: 493 of
+495 Messenger contacts have none); the open chat is a lime row; bubbles 18px round, customer white, AI lavender, team
+mint, Bangla at 15px / 1.6; full platform names on the rail; Send is the system's primary button (ink, lime in dark).
+Tools page: Chatwoot card removed. Page only: no migration, handler or test touched.
+Checked on the local ERP with made-up chats (removed after): desktop 1440, dark mode, phone 375 (no sideways scroll).
+NOT done: strings written in capitals in fd-46 ("HUMAN", "LIVE", "PRACTICE") stay capitals; WhatsApp channel and phone
+notifications not tested yet; live deploy waits for the owner.
