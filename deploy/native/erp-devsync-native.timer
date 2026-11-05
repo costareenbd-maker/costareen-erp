@@ -1,0 +1,8 @@
+[Unit]
+Description=Check original ERP GitHub workflow on Mac mini every two minutes
+[Timer]
+OnBootSec=5min
+OnUnitInactiveSec=2min
+RandomizedDelaySec=5
+[Install]
+WantedBy=timers.target

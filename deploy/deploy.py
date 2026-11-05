@@ -284,6 +284,13 @@ if __name__ == '__main__':
     if len(sys.argv) < 2:
         sys.exit(__doc__)
     s = sys.argv[1]
+    if not DEV:
+        sys.exit('Production moved to the Mac mini. Legacy Supabase Cloud deployment is disabled. '
+                 'See G:/mac-mini-ERP-HANDOFF.md before deploying production changes. '
+                 'Development also runs on the Mac mini; see deploy/native/README.md.')
+    if DEV:
+        sys.exit('Development moved to the Mac mini. Push your branch to GitHub; the native sync deploys it. '
+                 'For manual native deployment see deploy/native/README.md. Cloud development deployment is disabled.')
     if DEV and s not in ('db', 'function', 'secrets', 'web'):
         sys.exit('ERP_TARGET=dev allows only db, function, secrets and web.')
     print('target:', 'DEV project ' + REF if DEV else 'LIVE project ' + REF)

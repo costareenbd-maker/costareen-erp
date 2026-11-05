@@ -26,6 +26,17 @@ const YTDLP = process.env.CZRENDER_YTDLP || path.join(__dirname, 'venv', 'bin', 
 const FONTS = process.env.CZRENDER_FONTS || '/usr/share/fonts';
 const STORE_RE = /^https:\/\/[a-z0-9-]+\.supabase\.co\/storage\/v1\//;
 
+const STORE_ORIGIN = process.env.CZRENDER_STORAGE_ORIGIN || '';
+function isStoreUrl(value) {
+  const text = String(value || '');
+  if (STORE_RE.test(text)) return true;
+  try {
+    const allowed = new URL(STORE_ORIGIN), requested = new URL(text);
+    return allowed.protocol === 'https:' && requested.origin === allowed.origin &&
+      !requested.username && !requested.password && requested.pathname.startsWith('/storage/v1/');
+  } catch (_) { return false; }
+}
+
 const sha = s => crypto.createHash('sha256').update(String(s)).digest();
 let paired = null;
 try { paired = Buffer.from(JSON.parse(fs.readFileSync(PAIR, 'utf8')).hash, 'hex'); } catch (e) {}
@@ -115,7 +126,7 @@ async function overlayPng(html, W, H) {
   }, { width: W, height: H });
 }
 async function putTo(url, bytes, contentType) {
-  if (!STORE_RE.test(String(url || ''))) throw new Error('nowhere to upload');
+  if (!isStoreUrl(String(url || ''))) throw new Error('nowhere to upload');
   const r = await fetch(url, { method: 'PUT', headers: { 'Content-Type': contentType, 'x-upsert': 'true' }, body: bytes });
   if (!r.ok) throw new Error('upload ' + r.status + ' ' + (await r.text()).slice(0, 120));
 }
@@ -189,7 +200,7 @@ async function buildVideo(id, job) {
   const dir = path.join(JOBS, id); fs.mkdirSync(dir, { recursive: true });
   const W = Math.max(360, Math.min(2160, Number(job.width) || 1080)), H = Math.max(360, Math.min(3840, Number(job.height) || 1920)), FPS = 30;
   const parts = [];   // {file, kind:'image'|'video', seconds, motion, hasAudio}
-  if (job.clip && STORE_RE.test(String(job.clip.url || ''))) {
+  if (job.clip && isStoreUrl(String(job.clip.url || ''))) {
     const src = path.join(dir, 'clip.src');
     fs.writeFileSync(src, await fetchBytes(job.clip.url, 150 * 1024 * 1024));
     const info = await probe(src);
@@ -198,7 +209,7 @@ async function buildVideo(id, job) {
     parts.push({ file: src, kind: 'video', seconds: Math.min(secs, info.duration || secs), hasAudio: info.audio && !job.clip.mute });
   }
   let brollInfo = null;
-  if (job.broll && (job.broll.key && job.broll.query || STORE_RE.test(String(job.broll.url || '')))) {
+  if (job.broll && (job.broll.key && job.broll.query || isStoreUrl(String(job.broll.url || '')))) {
     try {
       const secs = Math.max(2, Math.min(6, Number(job.broll.seconds) || 3));
       let file;
@@ -236,7 +247,7 @@ async function buildVideo(id, job) {
     } catch (e) { voiceWarn = 'voice: ' + String((e && e.message) || e).slice(0, 160); voice = null; }
   }
   let music = null;
-  if (job.music && STORE_RE.test(String(job.music.url || ''))) {
+  if (job.music && isStoreUrl(String(job.music.url || ''))) {
     try { music = path.join(dir, 'music.bin'); fs.writeFileSync(music, await fetchBytes(job.music.url, 30 * 1024 * 1024)); if (!(await probe(music)).audio) music = null; } catch (e) { music = null; }
   }
 
@@ -294,7 +305,7 @@ async function buildVideo(id, job) {
             '-c:a', 'aac', '-b:a', '160k', '-ar', '48000', '-ac', '2', '-movflags', '+faststart', '-shortest', out);
   await run(FFMPEG, args, { timeout: 420000 });
   const bytes = fs.readFileSync(out);
-  if (!(job.upload && STORE_RE.test(String(job.upload.url || '')))) throw new Error('nowhere to upload');
+  if (!(job.upload && isStoreUrl(String(job.upload.url || '')))) throw new Error('nowhere to upload');
   const r = await fetch(job.upload.url, { method: 'PUT', headers: { 'Content-Type': String(job.upload.contentType || 'video/mp4'), 'x-upsert': 'true' }, body: bytes });
   if (!r.ok) throw new Error('upload ' + r.status + ' ' + (await r.text()).slice(0, 120));
   return { bytes: bytes.length, seconds: Number(total.toFixed(1)), voice: !!voice, captions: !!(captions && captions.pngs.length), music: !!music, broll: brollInfo, warn: voiceWarn + (brollInfo && brollInfo.error ? ' b-roll: ' + brollInfo.error : '') };
@@ -303,7 +314,7 @@ async function buildVideo(id, job) {
 async function studyVideo(id, job) {
   const dir = path.join(JOBS, id); fs.mkdirSync(dir, { recursive: true });
   let src = path.join(dir, 'src.mp4'), meta = {};
-  if (STORE_RE.test(String(job.clipUrl || ''))) fs.writeFileSync(src, await fetchBytes(job.clipUrl, 150 * 1024 * 1024));
+  if (isStoreUrl(String(job.clipUrl || ''))) fs.writeFileSync(src, await fetchBytes(job.clipUrl, 150 * 1024 * 1024));
   else if (/^https?:\/\//.test(String(job.url || ''))) {
     const out = await run(YTDLP, ['--no-warnings', '--no-playlist', '-f', 'b[height<=720][ext=mp4]/b[ext=mp4]/b', '--max-filesize', '80M', '--match-filter', 'duration<=300', '-o', path.join(dir, 'src.%(ext)s'), '--print-json', '--no-simulate', String(job.url)], { timeout: 180000 })
       .catch((e) => { const m = String(e.message || e); throw new Error(/Sign in|login|cookies/i.test(m) ? 'This site will not give the video to a server: save the video on your phone and upload the file instead.' : 'Could not fetch the link: ' + m.slice(-160)); });
@@ -422,7 +433,7 @@ const server = http.createServer(async (req, res) => {
     if (req.method === 'POST' && p === '/render/video') {
       if (queue.length >= 6) return send(res, 503, { error: 'busy' });
       const j = JSON.parse(await body(req, MAX_VIDEO));
-      if (!j.upload || !STORE_RE.test(String(j.upload.url || ''))) return send(res, 400, { error: 'no upload address' });
+      if (!j.upload || !isStoreUrl(String(j.upload.url || ''))) return send(res, 400, { error: 'no upload address' });
       const id = crypto.randomUUID().replace(/-/g, '');
       startJob(id, j);
       return send(res, 200, { id, state: 'queued', queued: queue.length });

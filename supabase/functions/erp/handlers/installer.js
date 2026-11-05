@@ -432,11 +432,11 @@ export async function erpBrandSet(ctx, payload) {
 }
 
 export async function installInfo(deps, id) {
-  const r = (await sqlOf(deps)`select i.company, i.api_url, i.anon_key, i.ref, i.status, t.id as tenant
+  const r = (await sqlOf(deps)`select i.company, i.api_url, i.anon_key, i.ref, i.status, t.id as tenant, t.url as tenant_url, t.anon_key as tenant_anon
                                  from erp_installs i left join erp_tenants t on t.id = i.id where i.id = ${str(id)}::uuid`)[0];
   // a switched-off copy still opens its sign-in page, which then says why
   if (!r || !['active', 'suspended'].includes(r.status)) throw new Error('That ERP is not ready, or not known.');
-  if (r.tenant) return { name: r.company, api: controlApi(deps), url: 'https://' + r.ref + '.supabase.co', anon: r.anon_key, tenant: str(id) };
+  if (r.tenant) return { name: r.company, api: controlApi(deps), url: r.tenant_url || 'https://' + r.ref + '.supabase.co', anon: r.tenant_anon || r.anon_key, tenant: str(id) };
   return { name: r.company, api: r.api_url, url: 'https://' + r.ref + '.supabase.co', anon: r.anon_key };
 }
 
@@ -552,8 +552,12 @@ async function updateStep(ctx, idText) {
   if (!row || !['active', 'suspended'].includes(row.status)) throw new Error('Only an installed copy can be updated.');
   const rel = await latestRelease(sql);
   const files = rel.files;
-  let tok;
-  try { tok = await tokenOf(ctx.deps, row); } catch (e) { return { id: row.id, done: false, step: row.upd_step || 'db', error: str(e && e.message) }; }
+  let tok, companyDeps = null;
+  try {
+    const bridged = (await sql`select 1 from erp_tenants where id = ${row.id}`).length > 0;
+    if (bridged && ctx.deps.tenantDeps) companyDeps = await ctx.deps.tenantDeps(row.id, { any: true });
+    else tok = await tokenOf(ctx.deps, row);
+  } catch (e) { return { id: row.id, done: false, step: row.upd_step || 'db', error: str(e && e.message) }; }
   const save = async (f) => {
     const r = { ...row, ...f };
     await sql`update erp_installs set upd_to = ${r.upd_to || null}, upd_step = ${r.upd_step || null}, upd_n = ${r.upd_n || 0}, upd_error = ${r.upd_error || null},
@@ -565,7 +569,7 @@ async function updateStep(ctx, idText) {
     row.upd_step = 'db'; row.upd_n = 0; row.upd_to = rel.version; row.upd_error = null;
   }
   if (row.upd_to !== rel.version) { row.upd_step = 'db'; row.upd_n = 0; row.upd_to = rel.version; }   // a newer release came out meanwhile
-  const runSql = (q) => mgmt(ctx.deps, tok, 'POST', '/projects/' + row.ref + '/database/query', { query: q });
+  const runSql = companyDeps ? (q) => companyDeps.sql.unsafe(q) : (q) => mgmt(ctx.deps, tok, 'POST', '/projects/' + row.ref + '/database/query', { query: q });
   try {
     if (row.upd_step === 'db') {
       const have = new Set(((await runSql('select name from public._erp_migrations')) || []).map((r) => r.name));

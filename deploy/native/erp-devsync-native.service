@@ -1,0 +1,13 @@
+[Unit]
+Description=Copied ERP development sync and native-only deployment
+After=network-online.target docker.service time-sync.target
+Wants=network-online.target
+RequiresMountsFor=/data
+[Service]
+Type=oneshot
+Environment=TZ=Asia/Seoul
+Environment=DEVSYNC_DIR=/opt/costareen-erp-devsync
+ExecStart=/usr/bin/python3 /opt/erp-dev-migration/devsync/native-devsync-runner.py
+TimeoutStartSec=30min
+Nice=10
+MemoryMax=2G

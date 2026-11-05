@@ -3556,3 +3556,9 @@ Checked end to end on the PC up to clip picking. NOT yet seen: a finished short 
 silent camera footage (12-20 GB each) and a silent video needs Gemini (OpenShorts says so: "a text-only LLM server
 cannot see the footage"). A talking video should work with the local AI; silent ones need a GEMINI_API_KEY in
 G:/bendar-brand/openshorts/src/.env. Transcripts (speech search) not built.
+
+
+## native-server migration (5 Nov 2026)
+Existing ERP production and linked-company data/Auth/Storage/runtime moved to the native Mac mini, preserving public page addresses, user password hashes and access keys. Installer discovery now returns the registered company backend URL/key; bridged upgrades use the existing company SQL connection. The copied renderer permits only the exact configured HTTPS self-hosted Storage origin in addition to its original Supabase hosts.
+Development was copied from the deployed function and database, then moved to its own native database/Auth/Storage/runtime. The existing GitHub development sync/build/Pages workflow now runs on the Mac. Legacy Cloud deploy commands refuse both targets; native operational adapters and instructions are in deploy/native/. Both rented VPS subscriptions are retained for manual fallback.
+Validation: original business data/password hashes compared, core read/self-test APIs and Auth/Storage checked, PDF and Storage roundtrips verified, native Linux build/deploy completed, legacy deploy guards tested, actual backup restores tested on retained hosts. Development service aliases are explicitly distinct from production after correcting a temporary DNS-alias collision during setup. Historical source files still blocked by provider quota are tracked for exact-checksum recovery; OAuth/account/physical-power dependencies remain in the private operational handoff. No financial test transactions, customer messages or paid upgrades were submitted.
