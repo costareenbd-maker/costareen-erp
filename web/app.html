@@ -40650,7 +40650,7 @@ html[lang=bn] #view.ai-view .btn.small, html[lang=bn] #view.ai-view button.small
 .bd-vid .m{padding:7px 9px;font-size:12.5px}
 .bd-vid .m b{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 /* brand-2: in the brand business only its own screens show - no shop menus, no quick add */
-html[data-bizkind="brand"] #nav button[data-view]:not([data-view="branddesk"]):not([data-view="settings"]):not([data-view="apps"]){display:none!important}
+html[data-bizkind="brand"] #nav button[data-view]:not([data-view="branddesk"]):not([data-view="settings"]):not([data-view="apps"]):not([data-view="opentools"]){display:none!important}
 html[data-bizkind="brand"] #nav .navgrp{display:none!important}
 html[data-bizkind="brand"] #tabbar button[data-tab="invoice"],html[data-bizkind="brand"] #tabbar button[data-tab="sales"],html[data-bizkind="brand"] #tabbar button[data-tab="customers"],html[data-bizkind="brand"] #fdplus{display:none!important}
 </style>
@@ -40662,7 +40662,7 @@ html[data-bizkind="brand"] #tabbar button[data-tab="invoice"],html[data-bizkind=
   function on() { if (!ME || ME.role !== 'owner') return false; var a = ME.apps || {}; return !!ME.platform || (a.off || []).indexOf('branddesk') < 0; }
   if (typeof fdxNav === 'function') fdxNav('branddesk', 'Brand desk', ICON, 'dash');
   try { VIEW_NAMES.branddesk = 'Brand desk'; FDH_SUB.branddesk = 'Your personal brand: posts to every network from the tools on your PC'; } catch (e) {}
-  var KEEP = { branddesk: 1, settings: 1, apps: 1 };
+  var KEEP = { branddesk: 1, settings: 1, apps: 1, opentools: 1 };
   function kind() { var b = (typeof BIZ !== 'undefined' && BIZ) || {}; var a = (b.businesses || []).filter(function (x) { return x.id === b.active; })[0]; return (a && a.kind) || ''; }
   function navSync() {
     // brand-2: once a business is the brand desk, the desk shows only there (before that, wherever the owner sets it up)
@@ -41934,6 +41934,77 @@ html[data-look="clean"][data-skin="fd"]:root .t2line span { color:var(--fd-text-
     var t = ev.target; if (!t || !t.hasAttribute || !t.hasAttribute('data-adday-hour')) return;
     set({ hour: Number(t.value) }, 'Time saved.');
   });
+})();
+</script>
+<!-- tools-1 (owner 6 Nov 2026): Tools - the open-source tools on the Mac mini, each opened in its own full interface
+     (the owner: "use the tools as they are, 100%, do not squeeze them into the ERP's look"). Owner only, like the brand
+     desk; hidden from everyone else. The ERP only links; it never re-skins a tool. Public hosts: /opt/brand/PORTS.md. -->
+<style>
+.ot-grp{margin:0 0 6px;font-size:13px;font-weight:600;color:var(--fd-muted,#667085);text-transform:uppercase;letter-spacing:.04em}
+.ot-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px;margin-bottom:18px}
+.ot-card{display:flex;gap:12px;align-items:flex-start;background:var(--fd-card,#fff);border-radius:14px;padding:12px 14px;box-shadow:0 1px 2px rgba(0,0,0,.06);text-decoration:none;color:inherit;border:1px solid var(--fd-border,#eaecf0)}
+.ot-card:hover{border-color:var(--fd-accent,#7c6bb1)}
+.ot-card .ic{flex:0 0 40px;height:40px;border-radius:11px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:16px}
+.ot-card .nm{font-weight:600;font-size:14.5px}
+.ot-card .ds{font-size:12.5px;color:var(--fd-muted,#667085);margin-top:2px;line-height:1.35}
+.ot-card .ur{font-size:11.5px;color:var(--fd-muted,#98a2b3);margin-top:4px;overflow-wrap:anywhere}
+@media (max-width:600px){.ot-grid{grid-template-columns:1fr}}
+</style>
+<script>
+(function () {
+  var GROUPS = [
+    { t: 'Posting and content', items: [
+      ['Postiz', 'social', '#e4572e', 'Post and schedule on Facebook, Instagram, YouTube, TikTok, LinkedIn and more'],
+      ['Kanboard', 'board', '#3a86c8', 'Board for every piece of content: idea, writing, video, ready'],
+      ['Memos', 'memos', '#2a9d8f', 'Catch ideas from the phone, by text or voice'],
+      ['Karakeep', 'saves', '#c8553d', 'Save good posts and links; AI adds the tags'],
+      ['Miniflux', 'feeds', '#5f6b7a', 'Follow brands, suppliers and competitors in one feed']] },
+    { t: 'People and messages', items: [
+      ['Chatwoot', 'inbox', '#1f93ff', 'Every message in one inbox: Page, Instagram, WhatsApp, e-mail, site chat'],
+      ['Twenty', 'crm', '#141414', 'People you meet: brands, suppliers, customers'],
+      ['Listmonk', 'list', '#0055d4', 'Your own e-mail list and newsletters']] },
+    { t: 'Video', items: [
+      ['Immich', 'media', '#4250af', 'Library of all footage; uploads from the phone, search by words'],
+      ['OpenShorts', 'shorts', '#e39a2d', 'Turn a long video into shorts and reels'],
+      ['OpenCut', 'cut', '#7c6bb1', 'Edit video in the browser'],
+      ['Scriberr', 'transcribe', '#2b7a78', 'Text from a video (English; Bangla goes to Gemini/GPT)']] },
+    { t: 'Links and visitors', items: [
+      ['Shlink', 'links', '#4696e5', 'A short link for every post, to see who came from where'],
+      ['Umami', 'stats', '#111827', 'How many people visit the websites']] },
+    { t: 'Glue and safety', items: [
+      ['n8n', 'flow', '#ea4b71', 'Joins the tools together (for example: card Ready -> draft in Postiz)'],
+      ['Authentik', 'sso', '#fd4b2d', 'One login for every tool; give or stop a manager\'s access'],
+      ['Vaultwarden', 'vault', '#175ddc', 'Passwords and secret notes, locked with your key']] }
+  ];
+  var ICON = '<rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/>';
+  function on() { if (!ME || ME.role !== 'owner') return false; var a = ME.apps || {}; return !!ME.platform || (a.off || []).indexOf('opentools') < 0; }
+  if (typeof fdxNav === 'function') fdxNav('opentools', 'Tools', ICON, 'dash');
+  try { VIEW_NAMES.opentools = 'Tools'; FDH_SUB.opentools = 'Your open-source tools on the Mac mini, each in its own full screen'; } catch (e) {}
+  try {
+    var BN = { 'Tools': 'টুলস', 'Your open-source tools on the Mac mini, each in its own full screen': 'Mac mini-তে আপনার ওপেন সোর্স টুল, প্রতিটা তার নিজের পুরো পাতায়',
+      'Posting and content': 'পোস্ট ও কনটেন্ট', 'People and messages': 'মানুষ ও মেসেজ', 'Video': 'ভিডিও', 'Links and visitors': 'লিংক ও ভিজিটর', 'Glue and safety': 'জোড়া ও নিরাপত্তা',
+      'Each tool opens in a new tab with everything it can do. The first time, the browser asks for the gate password; after that you sign in to the tool itself.': 'প্রতিটা টুল নতুন ট্যাবে তার সব ক্ষমতা নিয়ে খোলে। প্রথমবার ব্রাউজার দরজার পাসওয়ার্ড চাইবে, তারপর টুলের নিজের লগইন।',
+      'Tools are for the owner only.': 'টুলস শুধু মালিকের জন্য।' };
+    Object.keys(BN).forEach(function (k) { if (!I18N_BN[k]) I18N_BN[k] = BN[k]; });
+  } catch (e) {}
+  function navSync() { var b = document.querySelector('#nav button[data-view="opentools"]'); if (b) b.style.display = on() ? 'flex' : 'none'; }
+  function view() {
+    if (!on()) return '<div class="note"><div class="ico">i</div><div>Tools are for the owner only.</div></div>';
+    var h = '<section><div class="note" style="margin-bottom:14px"><div class="ico">i</div><div>Each tool opens in a new tab with everything it can do. The first time, the browser asks for the gate password; after that you sign in to the tool itself.</div></div>';
+    GROUPS.forEach(function (g) {
+      h += '<div class="ot-grp">' + esc(g.t) + '</div><div class="ot-grid">';
+      g.items.forEach(function (x) {
+        var url = 'https://' + x[1] + '.costareen.com/';
+        h += '<a class="ot-card" href="' + url + '" target="_blank" rel="noopener noreferrer" data-noi18n="1"><span class="ic" style="background:' + x[2] + '">' + esc(x[0].charAt(0)) + '</span>' +
+          '<span><span class="nm">' + esc(x[0]) + '</span><span class="ds" style="display:block">' + esc(x[3]) + '</span><span class="ur" style="display:block">' + esc(x[1]) + '.costareen.com</span></span></a>';
+      });
+      h += '</div>';
+    });
+    return h + '</section>';
+  }
+  var rp = repaint;
+  repaint = function () { navSync(); if (VIEW !== 'opentools') return rp.apply(this, arguments); var v = el('view'); if (v) v.innerHTML = view(); };
+  navSync();
 })();
 </script>
 </body>

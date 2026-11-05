@@ -3562,3 +3562,15 @@ G:/bendar-brand/openshorts/src/.env. Transcripts (speech search) not built.
 Existing ERP production and linked-company data/Auth/Storage/runtime moved to the native Mac mini, preserving public page addresses, user password hashes and access keys. Installer discovery now returns the registered company backend URL/key; bridged upgrades use the existing company SQL connection. The copied renderer permits only the exact configured HTTPS self-hosted Storage origin in addition to its original Supabase hosts.
 Development was copied from the deployed function and database, then moved to its own native database/Auth/Storage/runtime. The existing GitHub development sync/build/Pages workflow now runs on the Mac. Legacy Cloud deploy commands refuse both targets; native operational adapters and instructions are in deploy/native/. Both rented VPS subscriptions are retained for manual fallback.
 Validation: original business data/password hashes compared, core read/self-test APIs and Auth/Storage checked, PDF and Storage roundtrips verified, native Linux build/deploy completed, legacy deploy guards tested, actual backup restores tested on retained hosts. Development service aliases are explicitly distinct from production after correcting a temporary DNS-alias collision during setup. Historical source files still blocked by provider quota are tracked for exact-checksum recovery; OAuth/account/physical-power dependencies remain in the private operational handoff. No financial test transactions, customer messages or paid upgrades were submitted.
+
+## tools-1 — Tools page: the open-source tools on the Mac mini (6 Nov 2026)
+Owner: build every open-source tool at once on the Mac mini and use each one in its own full interface, not squeezed
+into the ERP's look. New owner-only menu item **Tools** (view `opentools`, under Dashboard; also shown in the brand
+business): 17 cards in five groups (posting and content, people and messages, video, links and visitors, glue and
+safety), each opening its tool on `https://<name>.costareen.com/` in a new tab. Visibility like the brand desk
+(owner role; platform admin always; `ME.apps.off` can hide it). Bangla words for the page added to I18N_BN.
+Two one-line hooks in brand-2 so the brand business keeps the Tools item (CSS :not list and KEEP).
+Page only: no migration, no handler, no test suite touched.
+NOT done: the brand desk's own board / ideas / people / videos / shorts tabs still exist next to the real tools
+(remove after the owner confirms the tools work); no live status dot per tool; local check could not run (local
+Postgres would not start: "./log" sharing violation), so it was checked on the dev ERP instead.
