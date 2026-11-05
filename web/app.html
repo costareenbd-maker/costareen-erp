@@ -8503,7 +8503,7 @@ function srv(name, args, ok, bad) {
 
 var SRV_ACTIVE = 0, SRV_WRITING = false, SRV_TIMED = {};
 // the same list the server uses to know a call changes nothing (ERP_READS)
-var SRV_READS = /^(erpPhoneAlerts|erpBrandDesk|erpBrandDeskShorts|erpBrandDeskVideos|erpBrandDeskPeople|erpBrandDeskIdeas|erpBrandDeskBoard|erpShipmentRepriceCheck|erpReceivePreview|erpSeo|erpReceipts|erpBrief|erpBrain|erpWatch|erpEngine|erpEngineJob|erpSkills|erpAiBrain|erpAiBrainModels|erpLeadForms|erpLeads|erpLeadFind|erpLeadCapture|erpMyUpdates|erpSocialBridges|erpAds|erpAdsInterests|erpSocialNet|erpSocialLearn|erpSocialAssets|erpSocialPosts|erpSocialPhotos|erpInboxDigest|erpJointRecvCatalog|erpSitePages|erpBalanceSheet|erpProductFields|erpProductAi|erpMetaConnect|erpInboxFeatureMap|erpBookings|erpInbox|erpInboxOpen|erpInboxChannels|erpChatOrders|erpInboxStats|erpAiWork|erpCommissionSales|erpFdCards|erpLineMargins|erpFd19Profit|erpFdInventory|erpFd22Analytics|erpNavigator|erpSellers|erpFollowups|erpCustomerInsight|erpPreorders|erpCashUps|erpAskingPrices|erpSystemCheck|erpAnalytics|erpCommission|erpHolding|erpLotFunding|erpShipments|erpShipment|erpLots|erpFdHead|erpFdDash|erpReceiveMatch|erpAiReader|erpProductSuggest|erpCatalogue|erpPushList|erpCreators|erpCreatorPortalLink|erpSponsorLink|erpCreatorRequests|erpCreatorEvents|erpCreatorProgramme|erpCreatorPreview|erpCreatorCatalog|erpCreatorSources|erpCreatorClaims|erpApps|erpAppQr|erpFeedback|erpRestockOffers|erpRestockList|erpWarrantyRules|erpWarrantyCard|erpMyLink|erpPlatformRegister|erpPlatformDoctor|erpPlatformCommunity|erpMarketWaiting|erpBoard|erpPlatformDesign|erpResell|erpResellerProgramme|erpLoyalty|erpCustomerPoints|erpRefillDue|erpDeliveryHistory|erpDeliveryHistoryMany|erpPrintKit|erpPrintJobs|erpPrintJob|erpPrintCost|erpSpools|erpPrintRequests|erpJoint|erpJointCatalog|erpJointCard|erpInvoiceDesign|erpInvoicePreview|erpMarket|erpMarketMine|erpMarketRequests|erpMarketHints|erpMarketNames|erpWanted|erpBrand|erpComplianceLog|erpProviderKey|erpNews|erpAccessKeys|erpAccessWarning|erpAdmin|erpAiKeys|erpAlertRules|erpAlerts|erpArena|erpBackupStatus|erpBg|erpBnWords|erpBookedParcels|erpBrandLogo|erpBundle|erpBusinessLinks|erpBusinesses|erpBusinessesDeleted|erpCampaignAudience|erpCampaignGet|erpCampaignList|erpCapital|erpCashBook|erpCatalog|erpConnStatus|erpConnections|erpCostBook|erpCourier|erpCourierKeyStatus|erpCurrencies|erpCustomerAccount|erpCustomerCredit|erpCustomerList|erpCustomerPage|erpCustomerStatement|erpCustomers|erpDashboardData|erpDaySales|erpDeliveryOptions|erpDevices|erpDiscontinued|erpDues|erpEvoQr|erpEvoStatus|erpExpenseExport|erpExpenseReceiptUrl|erpExpenses|erpFamilies|erpFighters|erpFormOptions|erpGame|erpGetTheme|erpGoogle|erpHello|erpInstalls|erpInvoice|erpInvoicePdf|erpJob|erpJobs|erpListView|erpLookupCustomer|erpLookupUsage|erpMe|erpMoney|erpNoteFileUrl|erpNotes|erpOwnerChange|erpOwnerChanges|erpParcelLabels|erpParcelPreview|erpPartnerStock|erpPartnership|erpPayReasons|erpPeople|erpPlatform|erpPlatformErrors|erpPnl|erpPnlMonth|erpPoList|erpPoolCatalog|erpProduct|erpProductListShare|erpProductPage|erpProductPhotoUrl|erpProductThumbs|erpProfile|erpQuoteAsset|erpQuoteBoot|erpQuoteGet|erpQuoteList|erpRecentInvoices|erpRecovery|erpReorderPlan|erpRestorePreview|erpReturnPreview|erpRisks|erpSales|erpSearch|erpSecurity|erpSelfTest|erpSerialLookup|erpSerialsFor|erpSessions|erpSetTheme|erpSettingsFull|erpSettingsLists|erpSfPayoutLines|erpSfPayouts|erpShareFile|erpSharedStock|erpSheet|erpStatementPdf|erpStockHistory|erpSupplierPage|erpSuppliers|erpToday|erpUsers|erpWaProductPdf|erpWebMatches|erpWebOrderInvoices|erpWebOrders|erpWebsiteTest)$/;
+var SRV_READS = /^(erpPhoneAlerts|erpWaNumbers|erpBrandDesk|erpBrandDeskShorts|erpBrandDeskVideos|erpBrandDeskPeople|erpBrandDeskIdeas|erpBrandDeskBoard|erpShipmentRepriceCheck|erpReceivePreview|erpSeo|erpReceipts|erpBrief|erpBrain|erpWatch|erpEngine|erpEngineJob|erpSkills|erpAiBrain|erpAiBrainModels|erpLeadForms|erpLeads|erpLeadFind|erpLeadCapture|erpMyUpdates|erpSocialBridges|erpAds|erpAdsInterests|erpSocialNet|erpSocialLearn|erpSocialAssets|erpSocialPosts|erpSocialPhotos|erpInboxDigest|erpJointRecvCatalog|erpSitePages|erpBalanceSheet|erpProductFields|erpProductAi|erpMetaConnect|erpInboxFeatureMap|erpBookings|erpInbox|erpInboxOpen|erpInboxChannels|erpChatOrders|erpInboxStats|erpAiWork|erpCommissionSales|erpFdCards|erpLineMargins|erpFd19Profit|erpFdInventory|erpFd22Analytics|erpNavigator|erpSellers|erpFollowups|erpCustomerInsight|erpPreorders|erpCashUps|erpAskingPrices|erpSystemCheck|erpAnalytics|erpCommission|erpHolding|erpLotFunding|erpShipments|erpShipment|erpLots|erpFdHead|erpFdDash|erpReceiveMatch|erpAiReader|erpProductSuggest|erpCatalogue|erpPushList|erpCreators|erpCreatorPortalLink|erpSponsorLink|erpCreatorRequests|erpCreatorEvents|erpCreatorProgramme|erpCreatorPreview|erpCreatorCatalog|erpCreatorSources|erpCreatorClaims|erpApps|erpAppQr|erpFeedback|erpRestockOffers|erpRestockList|erpWarrantyRules|erpWarrantyCard|erpMyLink|erpPlatformRegister|erpPlatformDoctor|erpPlatformCommunity|erpMarketWaiting|erpBoard|erpPlatformDesign|erpResell|erpResellerProgramme|erpLoyalty|erpCustomerPoints|erpRefillDue|erpDeliveryHistory|erpDeliveryHistoryMany|erpPrintKit|erpPrintJobs|erpPrintJob|erpPrintCost|erpSpools|erpPrintRequests|erpJoint|erpJointCatalog|erpJointCard|erpInvoiceDesign|erpInvoicePreview|erpMarket|erpMarketMine|erpMarketRequests|erpMarketHints|erpMarketNames|erpWanted|erpBrand|erpComplianceLog|erpProviderKey|erpNews|erpAccessKeys|erpAccessWarning|erpAdmin|erpAiKeys|erpAlertRules|erpAlerts|erpArena|erpBackupStatus|erpBg|erpBnWords|erpBookedParcels|erpBrandLogo|erpBundle|erpBusinessLinks|erpBusinesses|erpBusinessesDeleted|erpCampaignAudience|erpCampaignGet|erpCampaignList|erpCapital|erpCashBook|erpCatalog|erpConnStatus|erpConnections|erpCostBook|erpCourier|erpCourierKeyStatus|erpCurrencies|erpCustomerAccount|erpCustomerCredit|erpCustomerList|erpCustomerPage|erpCustomerStatement|erpCustomers|erpDashboardData|erpDaySales|erpDeliveryOptions|erpDevices|erpDiscontinued|erpDues|erpEvoQr|erpEvoStatus|erpExpenseExport|erpExpenseReceiptUrl|erpExpenses|erpFamilies|erpFighters|erpFormOptions|erpGame|erpGetTheme|erpGoogle|erpHello|erpInstalls|erpInvoice|erpInvoicePdf|erpJob|erpJobs|erpListView|erpLookupCustomer|erpLookupUsage|erpMe|erpMoney|erpNoteFileUrl|erpNotes|erpOwnerChange|erpOwnerChanges|erpParcelLabels|erpParcelPreview|erpPartnerStock|erpPartnership|erpPayReasons|erpPeople|erpPlatform|erpPlatformErrors|erpPnl|erpPnlMonth|erpPoList|erpPoolCatalog|erpProduct|erpProductListShare|erpProductPage|erpProductPhotoUrl|erpProductThumbs|erpProfile|erpQuoteAsset|erpQuoteBoot|erpQuoteGet|erpQuoteList|erpRecentInvoices|erpRecovery|erpReorderPlan|erpRestorePreview|erpReturnPreview|erpRisks|erpSales|erpSearch|erpSecurity|erpSelfTest|erpSerialLookup|erpSerialsFor|erpSessions|erpSetTheme|erpSettingsFull|erpSettingsLists|erpSfPayoutLines|erpSfPayouts|erpShareFile|erpSharedStock|erpSheet|erpStatementPdf|erpStockHistory|erpSupplierPage|erpSuppliers|erpToday|erpUsers|erpWaProductPdf|erpWebMatches|erpWebOrderInvoices|erpWebOrders|erpWebsiteTest)$/;
 function srvPump() {
   if (!SRV_Q.length) return;
   var isRead = SRV_READS.test(SRV_Q[0].name);
@@ -37073,6 +37073,106 @@ html[data-look="clean"][data-skin="fd"]:root #view.ib-skin .ib-note { border:0; 
   var v = document.getElementById('view');
   if (v && window.MutationObserver) new MutationObserver(function () { tint(); }).observe(v, { childList: true, subtree: true });
   tint();
+})();
+</script>
+<!-- multi-wa-1 (owner 6 Nov 2026): several WhatsApp numbers, each with one job (customer chat / sending only / collect
+     data). A card at the top of Inbox > Chat settings: every number, its job, linked or not; "+ Add a WhatsApp number"
+     at the bottom makes a new number on the business's own server and shows the QR code to scan
+     (handlers/wanumbers.js). -->
+<style>
+.wan-row { display:flex; gap:12px; align-items:center; flex-wrap:wrap; padding:12px 0; border-bottom:1px solid var(--fd-border, #e6e7eb); }
+.wan-row:last-of-type { border-bottom:0; }
+.wan-row .who { flex:1 1 220px; min-width:0; }
+.wan-row .who b { display:block; font-size:15px; }
+.wan-row .who span { font-size:13px; color:var(--fd-text-3, #7a7e8a); font-variant-numeric:tabular-nums; }
+.wan-pill { font-size:12px; font-weight:600; border-radius:999px; padding:3px 10px; white-space:nowrap; }
+.wan-pill.ok { background:var(--cl-mint, #e3f8f6); color:var(--fd-positive-text, #15803d); }
+.wan-pill.no { background:var(--cl-peach, #fff1e3); color:var(--fd-warning-text, #9a5b00); }
+.wan-add { margin-top:14px; padding-top:14px; border-top:1px solid var(--fd-border, #e6e7eb); }
+.wan-qr { display:flex; gap:16px; align-items:center; flex-wrap:wrap; margin-top:12px; }
+.wan-qr img { width:220px; height:220px; max-width:100%; border-radius:12px; background:#fff; padding:8px; }
+</style>
+<script>
+(function () {
+  var W = { d: null, busy: '', open: false, qr: '', qrId: '', waitTill: 0 };
+  try {
+    var BN = { 'WhatsApp numbers': 'WhatsApp নম্বর', '+ Add a WhatsApp number': '+ WhatsApp নম্বর যোগ করুন', 'Linked': 'যুক্ত', 'Phone not linked': 'ফোন যুক্ত হয়নি',
+      'Customer chat': 'কাস্টমারের সাথে কথা', 'Sending only': 'শুধু পাঠানো', 'Collect data': 'ডেটা জমানো', 'Make the number': 'নম্বর বানান', 'Remove': 'সরান',
+      'Link the phone (QR)': 'ফোন যুক্ত করুন (QR)', 'Name': 'নাম', 'What it is for': 'কী কাজে', 'Cancel': 'বাদ দিন' };
+    Object.keys(BN).forEach(function (k) { if (!I18N_BN[k]) I18N_BN[k] = BN[k]; });
+  } catch (e) {}
+  function isChans() { return typeof VIEW !== 'undefined' && VIEW === 'inbox' && window.IB && IB.tab === 'chans'; }
+  function load() { if (W.busy === 'load') return; W.busy = 'load'; srv('erpWaNumbers', [], function (r) { W.busy = ''; W.d = r; paint(); }, function (e) { W.busy = ''; W.d = { error: (e && e.message) || String(e) }; paint(); }); }
+  function act(name, args, after) {
+    W.busy = name; paint();
+    srv(name, [args], function (r) { W.busy = ''; W.d = r; if (after) after(r); paint(); }, function (e) { W.busy = ''; paint(); toast(esc((e && e.message) || e), true, 9000); });
+  }
+  function html() {
+    var d = W.d;
+    if (!d) { load(); return '<div class="ib-c wan-card"><h3>WhatsApp numbers</h3><div class="loading">Reading…</div></div>'; }
+    if (d.error) return '<div class="ib-c wan-card"><h3>WhatsApp numbers</h3><div class="note err"><div class="ico">!</div><div>' + esc(d.error) + '</div></div></div>';
+    var own = typeof pageTop === 'function' ? pageTop() : true;
+    var opts = function (cur) { return (d.purposes || []).map(function (p) { return '<option value="' + esc(p.key) + '"' + (p.key === cur ? ' selected' : '') + '>' + esc(p.name) + '</option>'; }).join(''); };
+    var h = '<div class="ib-c wan-card"><h3>WhatsApp numbers</h3><div class="sub" style="margin-bottom:6px">Each number has one job. Customer chat: the AI answers and the team gets alerts. Sending only and Collect data: messages are kept, nobody is answered.</div>';
+    (d.numbers || []).forEach(function (n) {
+      h += '<div class="wan-row"><div class="who"><b data-noi18n="1">' + esc(n.name) + '</b><span>' + (n.number ? esc(n.number) : 'Phone not linked') + ' · ' + esc(n.kind === 'wa_evo' ? 'linked device' : n.kind === 'wa_cloud' ? 'official API' : 'WaSender') + '</span></div>' +
+        '<span class="wan-pill ' + (n.linked ? 'ok' : 'no') + '">' + (n.linked ? 'Linked' : 'Phone not linked') + '</span>' +
+        (own ? '<select class="i" data-wanjob="' + esc(n.id) + '" style="width:auto"' + (W.busy ? ' disabled' : '') + '>' + opts(n.purpose) + '</select>' : '<span class="sub">' + esc(((d.purposes || []).filter(function (p) { return p.key === n.purpose; })[0] || {}).name || '') + '</span>') +
+        (own && !n.linked && n.kind === 'wa_evo' ? '<button class="btn small" type="button" data-chqr="' + esc(n.id) + '">Link the phone (QR)</button>' : '') +
+        (own ? '<button class="btn small" type="button" data-wandel="' + esc(n.id) + '"' + (W.busy ? ' disabled' : '') + '>Remove</button>' : '') + '</div>';
+    });
+    if (!(d.numbers || []).length) h += '<div class="sub" style="padding:10px 0">No WhatsApp number yet.</div>';
+    if (own) {
+      h += '<div class="wan-add">';
+      if (!d.serverReady) h += '<div class="note"><div class="ico">i</div><div>The WhatsApp server is not set up for this business yet, so a new number cannot be made here.</div></div>';
+      else if (!W.open) h += '<button class="btn" type="button" data-wanopen="1">+ Add a WhatsApp number</button>';
+      else {
+        h += '<div class="ib-form" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;align-items:end">' +
+          '<label>Name<input class="i" id="wanName" maxlength="40" placeholder="Bills, Support, Data…" data-noi18n="1"></label>' +
+          '<label>What it is for<select class="i" id="wanJob">' + opts('chat') + '</select></label></div>' +
+          '<label style="display:flex;gap:8px;align-items:flex-start;margin-top:10px;font-size:13px"><input type="checkbox" id="wanRisk" style="margin-top:3px"> <span>I understand: this is a linked device like WhatsApp Web, not Meta\'s official system, and WhatsApp can ban a number that sends automated messages.</span></label>' +
+          '<div class="row" style="gap:8px;margin-top:10px"><button class="btn primary" type="button" data-wanmake="1"' + (W.busy ? ' disabled' : '') + '>' + (W.busy === 'erpWaNumberAdd' ? '<span class="wd-spin"></span>' : '') + 'Make the number</button><button class="btn" type="button" data-wanclose="1">Cancel</button></div>';
+      }
+      if (W.qr) h += '<div class="wan-qr"><img src="' + esc(W.qr) + '" alt="QR code to link the phone"><div><b>Scan this with the phone</b><div class="sub">WhatsApp › Settings › Linked devices › Link a device. The number shows here as Linked a few seconds after.</div></div></div>';
+      h += '</div>';
+    }
+    return h + '</div>';
+  }
+  function paint() {
+    if (!isChans()) return;
+    var v = document.getElementById('view'); if (!v) return;
+    var card = v.querySelector('.wan-card'), nh = html();
+    if (card) { if (card.getAttribute('data-h') !== nh) { var tmp = document.createElement('div'); tmp.innerHTML = nh; var nc = tmp.firstChild; nc.setAttribute('data-h', nh); card.replaceWith(nc); } return; }
+    var first = v.querySelector('.ib-c'), tabs = v.querySelector('.ib-tabs');
+    var tmp2 = document.createElement('div'); tmp2.innerHTML = nh; var c2 = tmp2.firstChild; c2.setAttribute('data-h', nh);
+    if (first) first.parentNode.insertBefore(c2, first);
+    else if (tabs && tabs.parentNode) tabs.parentNode.appendChild(c2);
+  }
+  document.addEventListener('click', function (e) {
+    var t = e.target && e.target.closest && e.target.closest('[data-wanopen],[data-wanclose],[data-wanmake],[data-wandel]'); if (!t) return;
+    if (t.hasAttribute('data-wanopen')) { W.open = true; W.qr = ''; paint(); return; }
+    if (t.hasAttribute('data-wanclose')) { W.open = false; paint(); return; }
+    if (t.hasAttribute('data-wanmake')) {
+      var nm = (document.getElementById('wanName') || {}).value || '', job = (document.getElementById('wanJob') || {}).value || 'chat', ok = !!(document.getElementById('wanRisk') || {}).checked;
+      if (!nm.trim()) { toast('Give the number a name, e.g. "Bills" or "Support".', true); return; }
+      if (!ok) { toast('Tick the notice first.', true); return; }
+      act('erpWaNumberAdd', { name: nm, purpose: job, acceptRisk: true }, function (r) { W.open = false; W.qr = r.qr || ''; W.qrId = r.id; W.waitTill = Date.now() + 180000; });
+      return;
+    }
+    if (t.hasAttribute('data-wandel')) { var id = t.getAttribute('data-wandel'); if (t.getAttribute('data-sure') !== '1') { t.setAttribute('data-sure', '1'); t.textContent = 'Remove: tap again'; return; } act('erpWaNumberRemove', { id: id }); }
+  });
+  document.addEventListener('change', function (e) {
+    var s = e.target && e.target.closest && e.target.closest('[data-wanjob]'); if (!s) return;
+    act('erpWaNumberSet', { id: s.getAttribute('data-wanjob'), purpose: s.value });
+  });
+  // while a QR is shown: watch for the phone being linked
+  setInterval(function () {
+    if (!W.qr || !isChans() || document.hidden) return;
+    if (Date.now() > W.waitTill) { W.qr = ''; paint(); return; }
+    srv('erpWaNumbers', [], function (r) { W.d = r; var n = (r.numbers || []).filter(function (x) { return x.id === W.qrId; })[0]; if (n && n.linked) { W.qr = ''; toast('Linked: ' + (n.number || n.name)); } paint(); }, function () {});
+  }, 4000);
+  var v = document.getElementById('view');
+  if (v && window.MutationObserver) new MutationObserver(function () { if (isChans() && !document.querySelector('#view .wan-card')) paint(); }).observe(v, { childList: true, subtree: true });
 })();
 </script>
 <!-- alerts-1 (owner 6 Nov 2026): Phone alerts - a notification on this phone even when the ERP app is closed (Web Push:

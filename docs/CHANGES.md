@@ -3610,3 +3610,20 @@ Instagram asked for a photo. Now a WhatsApp (Evolution) contact's profile photo 
 <contact>.jpg, avatar = 'file:<name>', because WhatsApp's own address expires); new contacts get it at once, existing ones
 when their chat is opened (at most one try an hour). People who hide their photo keep the letter avatar.
 Tests: inbox_test.mjs +2 (photo asked by number and stored; the chat list shows it).
+
+## multi-wa-1, wa-avatar-2 — several WhatsApp numbers, one photo per person (6 Nov 2026)
+Owner: several company WhatsApp numbers - one only sends PDFs, one only collects data, one for talk and support - with
+"add more WhatsApp" at the bottom of the WhatsApp section; and when a person is the same on WhatsApp and Messenger /
+Instagram, show the same photo. `handlers/wanumbers.js`: erpWaNumbers (every number, its job, linked or not, the
+linked phone's number learnt from the server), erpWaNumberAdd (a new instance on the business's own Evolution server
+with the main key WA_SERVER_URL / WA_SERVER_KEY, the number's own token as its KEY, its webhook pointed at the ERP, the QR
+code back), erpWaNumberSet (name / job), erpWaNumberRemove (an ERP-made instance is logged out and deleted; one the ERP
+did not make, like the shops' OTP number, is only taken out of the Inbox). Jobs: chat (AI answers, alerts), send and
+collect (messages kept, nobody answered, no task, no alert - the gate is in inbox.js ingest). Page: a "WhatsApp numbers"
+card at the top of Inbox > Chat settings, "+ Add a WhatsApp number" at its bottom, the QR shown until the phone links.
+wa-avatar-2: a contact with no photo borrows the photo of a contact with the same phone (customer_key) on another
+channel - only a phone match counts, faces are never guessed.
+Tests: wanumbers_test.mjs (26). Dev deploy fix on the Mac: deploy.py's function smoke test now waits and retries after
+the edge restart (a reset connection rolled good deploys back).
+NOT done: choosing which number sends bills / PDFs from the invoice screen (today the job only decides answering and
+alerts); the live business needs WA_SERVER_URL / WA_SERVER_KEY set on the server before "+ Add" works there.

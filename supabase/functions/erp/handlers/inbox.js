@@ -18,6 +18,7 @@
 
 import { num, formatDate } from '../lib/time.js';
 import { pushTeam } from './phonealerts.js';
+import { purposeOf } from './wanumbers.js';
 import { getConfig, setConfig, saveFile, fileUrl, readFile } from '../lib/ext.js';
 import { custKey } from '../lib/phone.js';
 import { roleAtLeast } from '../allow.js';
@@ -136,6 +137,16 @@ export async function deliver(ctx, ch, conv, contact, msg, who) {
 }
 
 // ------------------------------------------------------------------ in: a message from a channel
+/** wa-avatar-2: one person, one photo - a contact with none borrows the photo of a contact with the same phone
+ *  (customer_key) on another channel. Only a phone match counts; faces are never guessed. */
+async function sameAvatar(ctx, contactId) {
+  const m = ctx.memo || (ctx.memo = {}); m.sameAv = m.sameAv || {};
+  if (m.sameAv[contactId] !== undefined) return m.sameAv[contactId];
+  const r = (await ctx.tx`select o.avatar from inbox_contacts k join inbox_contacts o on o.business_id = k.business_id and o.customer_key = k.customer_key and o.id <> k.id
+                          where k.id = ${contactId} and k.business_id = ${ctx.biz} and k.customer_key is not null and coalesce(o.avatar, '') <> ''
+                          order by (o.avatar like 'file:%') desc, o.created_at limit 1`)[0];
+  return (m.sameAv[contactId] = r ? str(r.avatar) : '');
+}
 /** wa-avatar-1: keep a WhatsApp customer's profile photo in our storage; the contact's avatar becomes 'file:<name>'. */
 async function waAvatar(ctx, ch, c) {
   if (ch.kind !== 'wa_evo' || !c || /^(file:|data:)/.test(str(c.avatar))) return c;
@@ -230,6 +241,8 @@ export async function ingest(ctx, ch, ev) {
     await ctx.tx`update chat_orders set rating = ${n} where business_id = ${ctx.biz} and conversation_id = ${conv.id} and rating is null and created_at > ${new Date(ctx.now.getTime() - 7 * H24)}`;
     await writeMsg(ctx, conv, { direction: 'note', author: 'system', kind: 'rating', text: 'Rated ' + '⭐'.repeat(n) });
   }
+  // multi-wa-1: a number kept for sending or collecting data keeps what comes in, answers nobody, alerts nobody
+  if (purposeOf(ch) !== 'chat') return { conversationId: conv.id };
   const answerable = (ch.status === 'live' || conv.is_test) && conv.mode === 'ai' && await aiAllowed(ctx, ch);
   if (!answerable) {
     // alerts-1: the team holds this chat - the customer's new message goes to the phones
@@ -1137,6 +1150,7 @@ async function mirrorLink(ctx, kind, id, chId) {
 /** The photo as the page shows it: a signed mirror link, never Facebook's own (it refuses other sites and expires). */
 async function avatarOut(ctx, a, contactId, chId) {
   a = str(a);
+  if (!a && contactId) a = await sameAvatar(ctx, contactId);   // wa-avatar-2: the same person's photo from another channel
   if (/^data:/.test(a)) return a;
   if (/^file:/.test(a)) { try { return await fileUrl(ctx, 'inbox', a.slice(5)); } catch (_) { return ''; } }
   if (a !== 'meta' || !contactId || !chId) return '';
