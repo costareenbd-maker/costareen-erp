@@ -8503,7 +8503,7 @@ function srv(name, args, ok, bad) {
 
 var SRV_ACTIVE = 0, SRV_WRITING = false, SRV_TIMED = {};
 // the same list the server uses to know a call changes nothing (ERP_READS)
-var SRV_READS = /^(erpBrandDesk|erpBrandDeskShorts|erpBrandDeskVideos|erpBrandDeskPeople|erpBrandDeskIdeas|erpBrandDeskBoard|erpShipmentRepriceCheck|erpReceivePreview|erpSeo|erpReceipts|erpBrief|erpBrain|erpWatch|erpEngine|erpEngineJob|erpSkills|erpAiBrain|erpAiBrainModels|erpLeadForms|erpLeads|erpLeadFind|erpLeadCapture|erpMyUpdates|erpSocialBridges|erpAds|erpAdsInterests|erpSocialNet|erpSocialLearn|erpSocialAssets|erpSocialPosts|erpSocialPhotos|erpInboxDigest|erpJointRecvCatalog|erpSitePages|erpBalanceSheet|erpProductFields|erpProductAi|erpMetaConnect|erpInboxFeatureMap|erpBookings|erpInbox|erpInboxOpen|erpInboxChannels|erpChatOrders|erpInboxStats|erpAiWork|erpCommissionSales|erpFdCards|erpLineMargins|erpFd19Profit|erpFdInventory|erpFd22Analytics|erpNavigator|erpSellers|erpFollowups|erpCustomerInsight|erpPreorders|erpCashUps|erpAskingPrices|erpSystemCheck|erpAnalytics|erpCommission|erpHolding|erpLotFunding|erpShipments|erpShipment|erpLots|erpFdHead|erpFdDash|erpReceiveMatch|erpAiReader|erpProductSuggest|erpCatalogue|erpPushList|erpCreators|erpCreatorPortalLink|erpSponsorLink|erpCreatorRequests|erpCreatorEvents|erpCreatorProgramme|erpCreatorPreview|erpCreatorCatalog|erpCreatorSources|erpCreatorClaims|erpApps|erpAppQr|erpFeedback|erpRestockOffers|erpRestockList|erpWarrantyRules|erpWarrantyCard|erpMyLink|erpPlatformRegister|erpPlatformDoctor|erpPlatformCommunity|erpMarketWaiting|erpBoard|erpPlatformDesign|erpResell|erpResellerProgramme|erpLoyalty|erpCustomerPoints|erpRefillDue|erpDeliveryHistory|erpDeliveryHistoryMany|erpPrintKit|erpPrintJobs|erpPrintJob|erpPrintCost|erpSpools|erpPrintRequests|erpJoint|erpJointCatalog|erpJointCard|erpInvoiceDesign|erpInvoicePreview|erpMarket|erpMarketMine|erpMarketRequests|erpMarketHints|erpMarketNames|erpWanted|erpBrand|erpComplianceLog|erpProviderKey|erpNews|erpAccessKeys|erpAccessWarning|erpAdmin|erpAiKeys|erpAlertRules|erpAlerts|erpArena|erpBackupStatus|erpBg|erpBnWords|erpBookedParcels|erpBrandLogo|erpBundle|erpBusinessLinks|erpBusinesses|erpBusinessesDeleted|erpCampaignAudience|erpCampaignGet|erpCampaignList|erpCapital|erpCashBook|erpCatalog|erpConnStatus|erpConnections|erpCostBook|erpCourier|erpCourierKeyStatus|erpCurrencies|erpCustomerAccount|erpCustomerCredit|erpCustomerList|erpCustomerPage|erpCustomerStatement|erpCustomers|erpDashboardData|erpDaySales|erpDeliveryOptions|erpDevices|erpDiscontinued|erpDues|erpEvoQr|erpEvoStatus|erpExpenseExport|erpExpenseReceiptUrl|erpExpenses|erpFamilies|erpFighters|erpFormOptions|erpGame|erpGetTheme|erpGoogle|erpHello|erpInstalls|erpInvoice|erpInvoicePdf|erpJob|erpJobs|erpListView|erpLookupCustomer|erpLookupUsage|erpMe|erpMoney|erpNoteFileUrl|erpNotes|erpOwnerChange|erpOwnerChanges|erpParcelLabels|erpParcelPreview|erpPartnerStock|erpPartnership|erpPayReasons|erpPeople|erpPlatform|erpPlatformErrors|erpPnl|erpPnlMonth|erpPoList|erpPoolCatalog|erpProduct|erpProductListShare|erpProductPage|erpProductPhotoUrl|erpProductThumbs|erpProfile|erpQuoteAsset|erpQuoteBoot|erpQuoteGet|erpQuoteList|erpRecentInvoices|erpRecovery|erpReorderPlan|erpRestorePreview|erpReturnPreview|erpRisks|erpSales|erpSearch|erpSecurity|erpSelfTest|erpSerialLookup|erpSerialsFor|erpSessions|erpSetTheme|erpSettingsFull|erpSettingsLists|erpSfPayoutLines|erpSfPayouts|erpShareFile|erpSharedStock|erpSheet|erpStatementPdf|erpStockHistory|erpSupplierPage|erpSuppliers|erpToday|erpUsers|erpWaProductPdf|erpWebMatches|erpWebOrderInvoices|erpWebOrders|erpWebsiteTest)$/;
+var SRV_READS = /^(erpPhoneAlerts|erpBrandDesk|erpBrandDeskShorts|erpBrandDeskVideos|erpBrandDeskPeople|erpBrandDeskIdeas|erpBrandDeskBoard|erpShipmentRepriceCheck|erpReceivePreview|erpSeo|erpReceipts|erpBrief|erpBrain|erpWatch|erpEngine|erpEngineJob|erpSkills|erpAiBrain|erpAiBrainModels|erpLeadForms|erpLeads|erpLeadFind|erpLeadCapture|erpMyUpdates|erpSocialBridges|erpAds|erpAdsInterests|erpSocialNet|erpSocialLearn|erpSocialAssets|erpSocialPosts|erpSocialPhotos|erpInboxDigest|erpJointRecvCatalog|erpSitePages|erpBalanceSheet|erpProductFields|erpProductAi|erpMetaConnect|erpInboxFeatureMap|erpBookings|erpInbox|erpInboxOpen|erpInboxChannels|erpChatOrders|erpInboxStats|erpAiWork|erpCommissionSales|erpFdCards|erpLineMargins|erpFd19Profit|erpFdInventory|erpFd22Analytics|erpNavigator|erpSellers|erpFollowups|erpCustomerInsight|erpPreorders|erpCashUps|erpAskingPrices|erpSystemCheck|erpAnalytics|erpCommission|erpHolding|erpLotFunding|erpShipments|erpShipment|erpLots|erpFdHead|erpFdDash|erpReceiveMatch|erpAiReader|erpProductSuggest|erpCatalogue|erpPushList|erpCreators|erpCreatorPortalLink|erpSponsorLink|erpCreatorRequests|erpCreatorEvents|erpCreatorProgramme|erpCreatorPreview|erpCreatorCatalog|erpCreatorSources|erpCreatorClaims|erpApps|erpAppQr|erpFeedback|erpRestockOffers|erpRestockList|erpWarrantyRules|erpWarrantyCard|erpMyLink|erpPlatformRegister|erpPlatformDoctor|erpPlatformCommunity|erpMarketWaiting|erpBoard|erpPlatformDesign|erpResell|erpResellerProgramme|erpLoyalty|erpCustomerPoints|erpRefillDue|erpDeliveryHistory|erpDeliveryHistoryMany|erpPrintKit|erpPrintJobs|erpPrintJob|erpPrintCost|erpSpools|erpPrintRequests|erpJoint|erpJointCatalog|erpJointCard|erpInvoiceDesign|erpInvoicePreview|erpMarket|erpMarketMine|erpMarketRequests|erpMarketHints|erpMarketNames|erpWanted|erpBrand|erpComplianceLog|erpProviderKey|erpNews|erpAccessKeys|erpAccessWarning|erpAdmin|erpAiKeys|erpAlertRules|erpAlerts|erpArena|erpBackupStatus|erpBg|erpBnWords|erpBookedParcels|erpBrandLogo|erpBundle|erpBusinessLinks|erpBusinesses|erpBusinessesDeleted|erpCampaignAudience|erpCampaignGet|erpCampaignList|erpCapital|erpCashBook|erpCatalog|erpConnStatus|erpConnections|erpCostBook|erpCourier|erpCourierKeyStatus|erpCurrencies|erpCustomerAccount|erpCustomerCredit|erpCustomerList|erpCustomerPage|erpCustomerStatement|erpCustomers|erpDashboardData|erpDaySales|erpDeliveryOptions|erpDevices|erpDiscontinued|erpDues|erpEvoQr|erpEvoStatus|erpExpenseExport|erpExpenseReceiptUrl|erpExpenses|erpFamilies|erpFighters|erpFormOptions|erpGame|erpGetTheme|erpGoogle|erpHello|erpInstalls|erpInvoice|erpInvoicePdf|erpJob|erpJobs|erpListView|erpLookupCustomer|erpLookupUsage|erpMe|erpMoney|erpNoteFileUrl|erpNotes|erpOwnerChange|erpOwnerChanges|erpParcelLabels|erpParcelPreview|erpPartnerStock|erpPartnership|erpPayReasons|erpPeople|erpPlatform|erpPlatformErrors|erpPnl|erpPnlMonth|erpPoList|erpPoolCatalog|erpProduct|erpProductListShare|erpProductPage|erpProductPhotoUrl|erpProductThumbs|erpProfile|erpQuoteAsset|erpQuoteBoot|erpQuoteGet|erpQuoteList|erpRecentInvoices|erpRecovery|erpReorderPlan|erpRestorePreview|erpReturnPreview|erpRisks|erpSales|erpSearch|erpSecurity|erpSelfTest|erpSerialLookup|erpSerialsFor|erpSessions|erpSetTheme|erpSettingsFull|erpSettingsLists|erpSfPayoutLines|erpSfPayouts|erpShareFile|erpSharedStock|erpSheet|erpStatementPdf|erpStockHistory|erpSupplierPage|erpSuppliers|erpToday|erpUsers|erpWaProductPdf|erpWebMatches|erpWebOrderInvoices|erpWebOrders|erpWebsiteTest)$/;
 function srvPump() {
   if (!SRV_Q.length) return;
   var isRead = SRV_READS.test(SRV_Q[0].name);
@@ -37073,6 +37073,75 @@ html[data-look="clean"][data-skin="fd"]:root #view.ib-skin .ib-note { border:0; 
   var v = document.getElementById('view');
   if (v && window.MutationObserver) new MutationObserver(function () { tint(); }).observe(v, { childList: true, subtree: true });
   tint();
+})();
+</script>
+<!-- alerts-1 (owner 6 Nov 2026): Phone alerts - a notification on this phone even when the ERP app is closed (Web Push:
+     sw.js shows it, handlers/phonealerts.js sends it when a chat needs a person). One button in the Inbox head, beside
+     On duty; Test sends one alert to this person's own devices. -->
+<style>
+.pa-wrap { display:inline-flex; gap:8px; align-items:center; flex-wrap:wrap; justify-content:flex-end; }
+.pa-btns { display:inline-flex; gap:6px; align-items:center; }
+.pa-btns .btn.on { background:var(--fd-lime, #E4FF5A); color:var(--fd-lime-text, #17181C); }
+</style>
+<script>
+(function () {
+  var PA = { busy: false, on: false, known: false };
+  try { I18N_BN['Phone alerts: on'] = 'ফোনে অ্যালার্ট: চালু'; I18N_BN['Phone alerts: off'] = 'ফোনে অ্যালার্ট: বন্ধ'; I18N_BN['Test alert'] = 'অ্যালার্ট পরীক্ষা';
+        I18N_BN['Phone alerts are on for this phone.'] = 'এই ফোনে অ্যালার্ট চালু হয়েছে।'; I18N_BN['Phone alerts are off for this phone.'] = 'এই ফোনে অ্যালার্ট বন্ধ হয়েছে।'; } catch (e) {}
+  function can() { return 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window; }
+  function key(b64) { var s = (b64 + '='.repeat((4 - b64.length % 4) % 4)).replace(/-/g, '+').replace(/_/g, '/'), r = atob(s), u = new Uint8Array(r.length); for (var i = 0; i < r.length; i++) u[i] = r.charCodeAt(i); return u; }
+  function reg() { return navigator.serviceWorker.getRegistration('/').then(function (r) { return r || navigator.serviceWorker.register('/sw.js'); }).then(function () { return navigator.serviceWorker.ready; }); }
+  function check() {
+    if (!can()) { PA.known = true; place(); return; }
+    reg().then(function (r) { return r.pushManager.getSubscription(); }).then(function (s) { PA.on = !!s && Notification.permission === 'granted'; PA.known = true; place(); }).catch(function () { PA.known = true; place(); });
+  }
+  function fail(e) { PA.busy = false; place(); toast(esc((e && e.message) || String(e)), true, 9000); }
+  function turnOn() {
+    if (!can()) { toast(/iphone|ipad/i.test(navigator.userAgent) ? 'On iPhone: Share › Add to Home Screen, open the ERP from there, then switch Phone alerts on.' : 'This browser cannot show alerts. Use Chrome on the phone.', true, 9000); return; }
+    PA.busy = true; place();
+    Notification.requestPermission().then(function (perm) {
+      if (perm !== 'granted') throw new Error('Alerts are blocked for this site. Allow notifications for the ERP in the browser settings, then try again.');
+      return new Promise(function (ok, no) { srv('erpPhoneAlerts', [], ok, no); });
+    }).then(function (info) {
+      return reg().then(function (r) { return r.pushManager.getSubscription().then(function (old) { return old ? old.unsubscribe() : null; }).then(function () {
+        return r.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: key(info.publicKey) }); }); });
+    }).then(function (sub) {
+      var label = (/android/i.test(navigator.userAgent) ? 'Android' : /iphone|ipad/i.test(navigator.userAgent) ? 'iPhone' : 'Computer') + ' · ' + (/edg\//i.test(navigator.userAgent) ? 'Edge' : /chrome/i.test(navigator.userAgent) ? 'Chrome' : /firefox/i.test(navigator.userAgent) ? 'Firefox' : 'Browser');
+      return new Promise(function (ok, no) { srv('erpPhoneAlertsOn', [{ sub: sub.toJSON(), label: label }], ok, no); });
+    }).then(function () { PA.busy = false; PA.on = true; place(); toast('Phone alerts are on for this phone.'); }).catch(fail);
+  }
+  function turnOff() {
+    PA.busy = true; place();
+    reg().then(function (r) { return r.pushManager.getSubscription(); }).then(function (s) {
+      var ep = s ? s.endpoint : '';
+      return (s ? s.unsubscribe() : Promise.resolve()).then(function () { return new Promise(function (ok, no) { srv('erpPhoneAlertsOff', [{ endpoint: ep }], ok, no); }); });
+    }).then(function () { PA.busy = false; PA.on = false; place(); toast('Phone alerts are off for this phone.'); }).catch(fail);
+  }
+  function test() {
+    PA.busy = true; place();
+    srv('erpPhoneAlertsTest', [], function (r) { PA.busy = false; place(); toast(r.sent ? 'Sent. It should show on this phone in a few seconds.' : 'Not delivered: switch Phone alerts off and on again.', !r.sent, 7000); }, fail);
+  }
+  function place() {
+    if (typeof VIEW === 'undefined' || VIEW !== 'inbox') return;
+    var head = document.querySelector('#view .fdd-head'); if (!head) return;
+    var box = head.querySelector('.pa-btns');
+    if (!box) {
+      box = document.createElement('span'); box.className = 'pa-btns';
+      var duty = head.querySelector('[data-ibduty]');
+      if (duty && duty.parentNode === head) { var wrap = document.createElement('span'); wrap.className = 'pa-wrap'; head.insertBefore(wrap, duty); wrap.appendChild(duty); wrap.appendChild(box); }
+      else if (duty) duty.insertAdjacentElement('afterend', box); else head.appendChild(box);
+    }
+    var h = '<button type="button" class="btn small' + (PA.on ? ' on' : '') + '" data-pa="' + (PA.on ? 'off' : 'on') + '"' + (PA.busy ? ' disabled' : '') + ' title="A notification on this phone when a customer needs a person, even when the ERP is closed">' + (PA.on ? 'Phone alerts: on' : 'Phone alerts: off') + '</button>' +
+            (PA.on ? '<button type="button" class="btn small" data-pa="test"' + (PA.busy ? ' disabled' : '') + '>Test alert</button>' : '');
+    if (box.getAttribute('data-h') !== h) { box.innerHTML = h; box.setAttribute('data-h', h); }
+  }
+  document.addEventListener('click', function (e) {
+    var b = e.target && e.target.closest && e.target.closest('[data-pa]'); if (!b) return;
+    var a = b.getAttribute('data-pa'); if (a === 'on') turnOn(); else if (a === 'off') turnOff(); else if (a === 'test') test();
+  });
+  var v = document.getElementById('view');
+  if (v && window.MutationObserver) new MutationObserver(function () { if (!document.querySelector('#view .fdd-head .pa-btns')) place(); }).observe(v, { childList: true, subtree: true });
+  check();
 })();
 </script>
 <!-- fd-48 (owner 15 Oct 2026: "I don't want this kind of text beside every name, rather a help option"): the grey hints

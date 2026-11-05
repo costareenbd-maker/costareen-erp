@@ -290,6 +290,18 @@ export async function evoSetHook(ctx, ch, url) {
     body: { webhook: { enabled: true, url, webhookByEvents: false, webhookBase64: true, events: ['MESSAGES_UPSERT'] } } });
   return { ok: r.ok, error: r.ok ? '' : why(r) };
 }
+/** wa-avatar-1: the customer's WhatsApp profile photo through Evolution (no Meta permission needed). null when hidden.
+ *  The address WhatsApp gives expires, so the caller keeps the bytes in our storage. */
+export async function evoAvatar(ctx, ch, number) {
+  const base = (await chSecret(ctx, ch, 'URL')).replace(/\/+$/, ''), key = await chSecret(ctx, ch, 'KEY');
+  if (!base || !key || !number) return null;
+  const r = await call(ctx, base + '/chat/fetchProfilePictureUrl/' + encodeURIComponent(ch.external_id), { headers: { apikey: key }, body: { number: waTo(number) } });
+  const url = str(r.json && (r.json.profilePictureUrl || r.json.profilePicUrl || r.json.url));
+  if (!r.ok || !/^https:\/\//.test(url)) return null;
+  const f = await fetchBytes(ctx, url);
+  if (!f || !f.bytes || !f.bytes.length || f.bytes.length > 600000) return null;
+  return { bytes: f.bytes, mime: /image\//.test(str(f.mime)) ? f.mime : 'image/jpeg' };
+}
 export async function evoState(ctx, ch) {
   const base = (await chSecret(ctx, ch, 'URL')).replace(/\/+$/, ''), key = await chSecret(ctx, ch, 'KEY');
   if (!base || !key) return { state: 'not set' };

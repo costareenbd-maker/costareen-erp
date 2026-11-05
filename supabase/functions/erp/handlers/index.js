@@ -62,6 +62,7 @@ import { HANDLERS as receivefile } from './receivefile.js';
 import { HANDLERS as catalogue } from './catalogue.js';
 import { HANDLERS as assistant } from './assistant.js';
 import { HANDLERS as push } from './push.js';
+import { HANDLERS as phonealerts } from './phonealerts.js';
 import { HANDLERS as creators } from './creators.js';
 import { HANDLERS as social } from './social.js';
 import { HANDLERS as socialmake } from './socialmake.js';
@@ -144,7 +145,7 @@ const core = {
 
 export const HANDLERS = {};
 for (const [group, table] of Object.entries({ balance, productai, siteread, stores, core, sales, courier, customers, leads, engine, skills, watchdog, brain, brief, aibrain, stock, dashboard,
-                                              expenses, weborders, quotes, settings, campaigns, capital, pages, goods, partners, security, alerts, access, listview, cash, suppliers, currency, notes, serials, repairs, excel, users, compliance, market, invoicedesign, passport, publicreg, doctor, printkit, community, loyalty, printboard, restock, designdesk, resellers, apps, receivefile, catalogue, assistant, push, bridges, ads, socialnet, socialmake, social, creators, creatorportal, platform, risk, connections, google, sheet, restore, shop, cod, installer, bizdelete, owners, arena, wooauth, joint, fddash, lots, holding, commission, investorportal, insight, cashup, preorders, custextra, navigator, fd22, fd20, fd19, fdcards, margins, inbox, inbox2, metaconnect, landing, pixel, seo, branddesk })) {
+                                              expenses, weborders, quotes, settings, campaigns, capital, pages, goods, partners, security, alerts, access, listview, cash, suppliers, currency, notes, serials, repairs, excel, users, compliance, market, invoicedesign, passport, publicreg, doctor, printkit, community, loyalty, printboard, restock, designdesk, resellers, apps, receivefile, catalogue, assistant, push, phonealerts, bridges, ads, socialnet, socialmake, social, creators, creatorportal, platform, risk, connections, google, sheet, restore, shop, cod, installer, bizdelete, owners, arena, wooauth, joint, fddash, lots, holding, commission, investorportal, insight, cashup, preorders, custextra, navigator, fd22, fd20, fd19, fdcards, margins, inbox, inbox2, metaconnect, landing, pixel, seo, branddesk })) {
   for (const [name, fn] of Object.entries(table)) {
     if (HANDLERS[name]) throw new Error('Handler ' + name + ' is defined twice (' + group + ').');
     HANDLERS[name] = fn;

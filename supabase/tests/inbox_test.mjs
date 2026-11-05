@@ -200,11 +200,17 @@ check('the assistant summarises (and sends nothing)', r.ok && /Rafi/.test(r.resu
 // ---- 9. WhatsApp through Evolution (linked device): a message in, the answer out through the server
 const ech = await chRow(E.id);
 await sql`update inbox_channels set status = 'live' where id = ${E.id}`;
+// wa-avatar-1: the customer's WhatsApp photo comes from Evolution and is kept in our storage
+web.on(/evo\.test\/chat\/fetchProfilePictureUrl/, (url, opts) => { evo.push({ url, body: JSON.parse(opts.body) }); return { status: 200, body: { profilePictureUrl: 'https://pps.test/sadia.jpg' } }; });
+web.on(/pps\.test/, () => ({ status: 200, body: 'JPEGBYTES', headers: { 'content-type': 'image/jpeg' } }));
 const evoBody = JSON.stringify({ event: 'messages.upsert', instance: 'shop1', data: { key: { remoteJid: '8801811222333@s.whatsapp.net', fromMe: false, id: 'WA1' }, pushName: 'Sadia', message: { conversation: 'printer ache?' } } });
 h = await asB(async (ctx) => ib.hookPost(ctx, await chRow(E.id), evoBody, {}));
 const conv2 = h.due[0] && h.due[0].id;
 const c2 = (await sql`select c.* from inbox_contacts c join inbox_conversations v on v.contact_id = c.id where v.id = ${conv2}`)[0];
 check('the WhatsApp number becomes the contact\'s phone (joined to the ERP by it)', c2 && c2.phone === '01811222333' && c2.name === 'Sadia' && c2.customer_key, c2);
+check('the WhatsApp photo is asked for by number and kept in our storage', /^file:avatar-/.test(String(c2.avatar)) && evo.some((x) => /fetchProfilePictureUrl\/shop1/.test(x.url) && x.body.number === '8801811222333') && files.list().some((k) => k.endsWith('/inbox/' + String(c2.avatar).slice(5))), c2 && c2.avatar);
+{ const lr = await owner('erpInbox', [{ pile: 'open' }]); const row = lr.result && lr.result.list.find((x) => x.name === 'Sadia');
+  check('the chat list shows the stored photo', row && /^https:\/\/files\.test\/.*avatar-/.test(row.avatar), row); }
 evo.length = 0;
 script = [[{ functionCall: { name: 'find_products', args: { q: 'printer' } } }], (body) => { const fr = body.contents[body.contents.length - 1].parts[0].functionResponse; return [{ functionCall: { name: 'show_products', args: { codes: fr.response.products.slice(0, 1).map((p) => p.code) } } }]; }, [{ text: 'জি আছে।' }]];
 await sql`update inbox_conversations set reply_due_at = now() - interval '1 second' where id = ${conv2}`;

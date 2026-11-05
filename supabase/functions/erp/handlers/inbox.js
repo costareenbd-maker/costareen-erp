@@ -17,12 +17,13 @@
 // demand for a person, repeated abuse -> the chat goes to the team with the reason.
 
 import { num, formatDate } from '../lib/time.js';
+import { pushTeam } from './phonealerts.js';
 import { getConfig, setConfig, saveFile, fileUrl, readFile } from '../lib/ext.js';
 import { custKey } from '../lib/phone.js';
 import { roleAtLeast } from '../allow.js';
 import { gemini, geminiTools, textOf, jsonOf, b64 } from '../lib/gemini.js';
 import { sendOut, mediaBytes, readHook, metaSignatureOk, metaProfile, chSecret, CAN, KIND_NAME,
-         commentReply, commentPrivate, commentModerate, fetchBytes, metaPicUrl, metaMsgFileUrl } from './inboxch.js';
+         commentReply, commentPrivate, commentModerate, fetchBytes, metaPicUrl, metaMsgFileUrl, evoAvatar } from './inboxch.js';
 import { products } from './dashboard.js';
 import { feat, needFeat, budget, KIND_FEATURE } from '../lib/inboxplan.js';
 import { orderLink, billLink, itemLink } from './inboxpub.js';
@@ -135,6 +136,17 @@ export async function deliver(ctx, ch, conv, contact, msg, who) {
 }
 
 // ------------------------------------------------------------------ in: a message from a channel
+/** wa-avatar-1: keep a WhatsApp customer's profile photo in our storage; the contact's avatar becomes 'file:<name>'. */
+async function waAvatar(ctx, ch, c) {
+  if (ch.kind !== 'wa_evo' || !c || /^(file:|data:)/.test(str(c.avatar))) return c;
+  try {
+    const f = await evoAvatar(ctx, ch, c.external_id);
+    if (!f) return c;
+    const name = 'avatar-' + c.id + (/png/.test(f.mime) ? '.png' : '.jpg');
+    await saveFile(ctx, 'inbox', name, f.bytes, f.mime);
+    return (await ctx.tx`update inbox_contacts set avatar = ${'file:' + name} where id = ${c.id} returning *`)[0] || c;
+  } catch (_) { return c; }
+}
 async function upsertContact(ctx, ch, ev) {
   let c = (await ctx.tx`select * from inbox_contacts where channel_id = ${ch.id} and external_id = ${ev.from}`)[0];
   if (!c) {
@@ -144,6 +156,7 @@ async function upsertContact(ctx, ch, ev) {
     c = (await ctx.tx`insert into inbox_contacts (business_id, channel_id, external_id, name, avatar, phone, customer_key)
            values (${ctx.biz}, ${ch.id}, ${ev.from}, ${name || null}, ${avatar || null}, ${phone || null}, ${phoneOk(phone) ? custKey(phoneOk(phone), name) : null})
            on conflict (channel_id, external_id) do update set name = coalesce(inbox_contacts.name, excluded.name) returning *`)[0];
+    c = await waAvatar(ctx, ch, c);
   } else if (ev.name && !c.name) {
     c = (await ctx.tx`update inbox_contacts set name = ${str(ev.name)} where id = ${c.id} returning *`)[0];
   }
@@ -219,6 +232,8 @@ export async function ingest(ctx, ch, ev) {
   }
   const answerable = (ch.status === 'live' || conv.is_test) && conv.mode === 'ai' && await aiAllowed(ctx, ch);
   if (!answerable) {
+    // alerts-1: the team holds this chat - the customer's new message goes to the phones
+    if (conv.mode === 'human' && ch.status === 'live') await pushTeam(ctx, { title: (str(contact.name) || 'A customer') + ' wrote', body: text || (kind === 'audio' ? 'A voice note' : kind === 'image' ? 'A photo' : 'A message'), url: '/#/inbox', tag: 'conv-' + String(conv.id).slice(0, 24) });
     // a live channel with the AI switched off: the message must not be lost - one open task per chat for the team
     if (ch.status === 'live' && conv.mode === 'ai' && ch.kind !== 'webchat' &&
         !(await ctx.tx`select 1 from inbox_tasks where conversation_id = ${conv.id} and status = 'open' and kind = 'enquiry' limit 1`).length) {
@@ -468,7 +483,10 @@ export async function orderEvent(ctx, orderId, what, by) {
 }
 export async function task(ctx, convId, kind, reason, text) {
   await ctx.tx`insert into inbox_tasks (business_id, conversation_id, kind, reason, text) values (${ctx.biz}, ${convId || null}, ${kind}, ${reason || null}, ${text || null})`;
+  // alerts-1: every task waits for a person - tell the phones that switched alerts on
+  await pushTeam(ctx, { title: TASK_TITLE[kind] || 'Inbox: something needs you', body: str(text) || str(reason), url: '/#/inbox', tag: convId ? 'conv-' + String(convId).slice(0, 24) : 'inbox' });
 }
+const TASK_TITLE = { handover: 'A customer needs a person', enquiry: 'A customer wrote (the AI is off)', booking: 'New booking request', payment: 'A payment to check' };
 export async function leadUpsert(ctx, conv, contact, a, source) {
   const open = (await ctx.tx`select * from inbox_leads where business_id = ${ctx.biz} and conversation_id = ${conv.id} and stage < 5 order by created_at desc limit 1`)[0];
   const ph = phoneOk(a.phone) || str(a.phone);
@@ -1120,6 +1138,7 @@ async function mirrorLink(ctx, kind, id, chId) {
 async function avatarOut(ctx, a, contactId, chId) {
   a = str(a);
   if (/^data:/.test(a)) return a;
+  if (/^file:/.test(a)) { try { return await fileUrl(ctx, 'inbox', a.slice(5)); } catch (_) { return ''; } }
   if (a !== 'meta' || !contactId || !chId) return '';
   return mirrorLink(ctx, 'avatar', contactId, chId);
 }
@@ -1205,6 +1224,11 @@ export async function erpInboxOpen(ctx, payload) {
   if (ch && (ch.kind === 'messenger' || ch.kind === 'instagram') && !/^(data|meta)$|^data:/.test(str(c.avatar)) && Date.now() - (AVATAR_TRIED.get(c.id) || 0) > 3600e3) {
     AVATAR_TRIED.set(c.id, Date.now()); if (AVATAR_TRIED.size > 5000) AVATAR_TRIED.clear();
     try { const pr = await metaProfile(ctx, ch, c.external_id); if (pr.avatar) { await ctx.tx`update inbox_contacts set avatar = ${pr.avatar} where id = ${c.id}`; c.avatar = pr.avatar; } } catch (_) { /* fine */ }
+  }
+  // wa-avatar-1: a WhatsApp customer with no photo yet - ask Evolution again at most once an hour
+  if (ch && ch.kind === 'wa_evo' && !/^(file:|data:)/.test(str(c.avatar)) && Date.now() - (AVATAR_TRIED.get(c.id) || 0) > 3600e3) {
+    AVATAR_TRIED.set(c.id, Date.now()); if (AVATAR_TRIED.size > 5000) AVATAR_TRIED.clear();
+    c.avatar = (await waAvatar(ctx, ch, c)).avatar;
   }
   return {
     id: v.id, mode: v.mode, until: v.human_until ? formatDate(new Date(v.human_until), 'h:mm a') : (v.mode === 'human' ? 'for good' : ''), claimed: str(v.claimed_name),

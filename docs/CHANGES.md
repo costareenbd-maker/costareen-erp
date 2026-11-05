@@ -3587,3 +3587,26 @@ Tools page: Chatwoot card removed. Page only: no migration, handler or test touc
 Checked on the local ERP with made-up chats (removed after): desktop 1440, dark mode, phone 375 (no sideways scroll).
 NOT done: strings written in capitals in fd-46 ("HUMAN", "LIVE", "PRACTICE") stay capitals; WhatsApp channel and phone
 notifications not tested yet; live deploy waits for the owner.
+
+## alerts-1 — Phone alerts when the app is closed (6 Nov 2026)
+Owner: "build it" - a notification on the phone even when the ERP app is closed. Web Push with no outside service:
+`lib/webpush.js` (RFC 8291 aes128gcm encryption + RFC 8292 VAPID, WebCrypto only; the RFC's own example reproduced byte
+for byte in the test), `handlers/phonealerts.js` (erpPhoneAlerts = server key + this person's device count,
+erpPhoneAlertsOn / Off / Test; pushTeam() alerts every device of the business, after the call's commit, never throws),
+`155_phone_alerts.sql` (server-only erp_push_vapid with the one key pair made on first use, erp_push_subs per device per
+business; a 404/410 from the push service deletes the row). Alerts go out from Inbox tasks (handover "A customer needs a
+person", AI-off enquiries, bookings, payments) and when a customer writes in a chat the team holds. `sw.js` shows the
+alert and opens the Inbox on tap (VERSION cz-shell-v4). Page: "Phone alerts: off/on" + "Test alert" beside On duty.
+Tests: phonealerts_test.mjs (24) - the RFC vector, VAPID signature verified with the public key, the alert opened again
+with node:crypto (a separate implementation), a hand-over alerting, another business untouched, gone subscriptions
+removed. Note: handlers/push.js is the older "What to push next" (Campaigns) and is unrelated.
+NOT done: no per-person channel filter yet (every device of the business hears every alert); iPhone needs the ERP added
+to the Home Screen (iOS 16.4+); not yet checked on a real phone.
+
+## wa-avatar-1 — WhatsApp customers' photos (6 Nov 2026)
+Owner: "you said WhatsApp loads photos by itself - it did not". It was possible but not built: only Messenger and
+Instagram asked for a photo. Now a WhatsApp (Evolution) contact's profile photo is asked for by number
+(`/chat/fetchProfilePictureUrl/<instance>`, inboxch.js evoAvatar), downloaded once and kept in our storage (inbox/avatar-
+<contact>.jpg, avatar = 'file:<name>', because WhatsApp's own address expires); new contacts get it at once, existing ones
+when their chat is opened (at most one try an hour). People who hide their photo keep the letter avatar.
+Tests: inbox_test.mjs +2 (photo asked by number and stored; the chat list shows it).

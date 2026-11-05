@@ -5,7 +5,7 @@
 // always comes live from Supabase and is never cached here.
 //
 // Bump VERSION when the shell files change, so phones drop the old copy.
-var VERSION = 'cz-shell-v3';
+var VERSION = 'cz-shell-v4';
 var SHELL = [
   '/',
   '/manifest.webmanifest',
@@ -52,4 +52,28 @@ self.addEventListener('fetch', function (e) {
   if (isShell) {
     e.respondWith(caches.match(req).then(function (hit) { return hit || fetch(req); }));
   }
+});
+
+// alerts-1 (6 Nov 2026): phone alerts from the ERP server (Web Push) - shown even when the app is closed.
+self.addEventListener('push', function (e) {
+  var d = {};
+  try { d = e.data ? e.data.json() : {}; } catch (x) { d = { body: e.data ? e.data.text() : '' }; }
+  var title = d.title || 'ERP';
+  e.waitUntil(self.registration.showNotification(title, {
+    body: d.body || '', tag: d.tag || 'erp', renotify: true,
+    icon: '/icons/icon-192.png', badge: '/icons/favicon-32.png',
+    data: { url: d.url || '/#/inbox' }
+  }));
+});
+
+self.addEventListener('notificationclick', function (e) {
+  e.notification.close();
+  var url = new URL((e.notification.data && e.notification.data.url) || '/#/inbox', self.location.origin).href;
+  e.waitUntil(self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(function (list) {
+    for (var i = 0; i < list.length; i++) {
+      var c = list[i];
+      if (new URL(c.url).origin === self.location.origin) { return c.focus().then(function (w) { return w && w.navigate ? w.navigate(url) : w; }).catch(function () {}); }
+    }
+    return self.clients.openWindow(url);
+  }));
 });
