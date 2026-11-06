@@ -94,4 +94,33 @@ check('B5 a sale of 2 no-cost units (500 each) and 3 costed (250, cost 100)', r.
   check('B5 System check has the "kept out of profit" line, as a warning', sc && sc.status === 'warn' && sc.count >= 1 && /kept out/.test(sc.detail), sc);
 }
 
+// ---- B6 (D2 = A): this month so far against the same days of last month, on the server
+{
+  const dh = new Date(Date.now() + 6 * 3600e3);                       // Dhaka wall clock
+  const today = dh.getUTCDate();
+  const lm = new Date(Date.UTC(dh.getUTCFullYear(), dh.getUTCMonth() - 1, 1));
+  const at = (day) => new Date(Date.UTC(lm.getUTCFullYear(), lm.getUTCMonth(), day, 6));   // 12:00 in Dhaka
+  const before = (await owner('erpFdDash', [{ months: 1 }])).result;
+  const hb = await head(owner, 'sales');
+  const put = async (no, day, amount) => {
+    const iv = (await sql`insert into invoices (business_id, invoice_no, customer_name, customer_phone, subtotal, grand_total, payment_status, created_at)
+              values (${B}, ${no}, 'Night Old', '01712340002', ${amount}, ${amount}, 'Paid', ${at(day)}) returning id`)[0];
+    await sql`insert into invoice_lines (business_id, invoice_id, sku, name, qty, unit_price, line_total, line_no) values (${B}, ${iv.id}, 'NB-A', 'Night costed', 1, ${amount}, ${amount}, 1)`;
+  };
+  await put('INV-NB-D1', 1, 2000);                                     // day 1: always inside the same days
+  if (today < 28) await put('INV-NB-D28', 28, 5000);                   // day 28: after today's day, outside
+  await sql`delete from erp_dash_cache where business_id = ${B}`.catch(() => {});
+  const d = (await owner('erpFdDash', [{ months: 1 }])).result;
+  check('B6 dashboard compares the same days', d.compare === 'sameDays' && d.sameDay === today && new RegExp('^1–' + today + ' ').test(d.prevLabel), [d.compare, d.sameDay, d.prevLabel]);
+  check('B6 last month\'s revenue counts its 1st to day ' + today + ' only (+2000, not +7000)', d.kpi.revenue.prev - before.kpi.revenue.prev === 2000, [before.kpi.revenue, d.kpi.revenue]);
+  check('B6 orders compared the same way (+1)', d.kpi.orders.prev - before.kpi.orders.prev === 1, [before.kpi.orders, d.kpi.orders]);
+  check('B6 net profit and expenses: no part-month trend, last month in full apart', d.kpi.net.prev === null && typeof d.kpi.net.prevWhole === 'number' && d.kpi.expenses.prev === null, [d.kpi.net, d.kpi.expenses]);
+  const past = (await owner('erpFdDash', [{ months: 1, to: lm.toISOString().slice(0, 7) }])).result;
+  check('B6 a finished month is still compared with the whole month before it', past.compare === 'months' && past.kpi.net.prev !== null, [past.compare, past.prevLabel]);
+  const h = await head(owner, 'sales');
+  check('B6 list head (Sales): revenue card compares the same days too (+2000)', h.revenue.prev - hb.revenue.prev === 2000, [hb.revenue, h.revenue]);
+  const hr = (await owner('erpFdHead', [{ view: 'sales' }])).result;
+  check('B6 list head says which days it compares', new RegExp('^1–' + today + ' ').test(hr.prevMonth) && hr.compare === 'sameDays', hr.prevMonth);
+}
+
 await done();

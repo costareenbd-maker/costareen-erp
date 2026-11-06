@@ -121,8 +121,11 @@ export async function erpFdDash(ctx, payload) {
 
   const allMonths = Array.from(new Set(prevMonths.concat(chartMonths, months))).sort();
   const L = (await lines(ctx, allMonths)).filter(inGroup);
+  // night-books B6 (owner D2 = A): while the range ends in this month, the comparison is the same days - 1st to
+  // today of this month against 1st to the same day of the month it is compared with (not that whole month)
+  const same = sameDays(ctx, to, prevMonths);
   const cur = sumUp(L.filter((x) => months.includes(x.month)));
-  const prev = sumUp(L.filter((x) => prevMonths.includes(x.month)));
+  const prev = sumUp(L.filter((x) => prevMonths.includes(x.month) && same.keep(x.month, x.at)));
 
   // the business's own P&L for the same months (whole business only)
   let pnl = null, pnlPrev = null, series;
@@ -142,10 +145,12 @@ export async function erpFdDash(ctx, payload) {
   }
 
   // revenue / cost / gross: the P&L's figure for the whole business, the lines' for a group
-  const rev = group ? cur.revenue : pnl.netSales, revPrev = group ? prev.revenue : pnlPrev.netSales;
-  const cost = group ? cur.cost : pnl.cost, costPrev = group ? prev.cost : pnlPrev.cost;
+  // (B6: a same-days comparison reads the earlier part-month from the sales lines - pnlFor works in whole months)
+  const linesPrev = group || same.on;
+  const rev = group ? cur.revenue : pnl.netSales, revPrev = linesPrev ? prev.revenue : pnlPrev.netSales;
+  const cost = group ? cur.cost : pnl.cost, costPrev = linesPrev ? prev.cost : pnlPrev.cost;
   // night-books B5: sales with no known cost are kept out of gross profit (the P&L's own gross for the whole business)
-  const unknown = group ? cur.unknown : pnl.uncostedOut, unknownPrev = group ? prev.unknown : pnlPrev.uncostedOut;
+  const unknown = group ? cur.unknown : pnl.uncostedOut, unknownPrev = linesPrev ? prev.unknown : pnlPrev.uncostedOut;
   const unknownN = group ? cur.unknownN : pnl.uncostedN;
   const gross = rev - cost - unknown, grossPrev = revPrev - costPrev - unknownPrev;
 
@@ -199,7 +204,8 @@ export async function erpFdDash(ctx, payload) {
 
   const out = {
     currency: 'BDT', months: n, to, from: months[0], rangeLabel: n === 1 ? monthLabel(to) + (to === now ? ' to date' : '') : monthLabel(months[0]) + ' – ' + monthLabel(to),
-    prevLabel: n === 1 ? monthLabel(prevMonths[0]) : monthLabel(prevMonths[0]) + ' – ' + monthLabel(prevMonths[prevMonths.length - 1]),
+    prevLabel: same.on ? same.label : n === 1 ? monthLabel(prevMonths[0]) : monthLabel(prevMonths[0]) + ' – ' + monthLabel(prevMonths[prevMonths.length - 1]),
+    compare: same.on ? 'sameDays' : 'months', sameDay: same.on ? same.day : null,
     groups, group, groupLabel: group ? groupsMap[group].label : '', full,
     series, topProducts, recent, reorder: reorder.slice(0, 8),
     attention: { outOfStock, reorder: atReorder },
@@ -233,8 +239,10 @@ export async function erpFdDash(ctx, payload) {
     out.calc.stockValue = [['What is left in each stock lot × that lot’s landed cost (FIFO); stock from before lots at the product’s cost', R(stockValue)]].concat(uncosted ? [[uncosted + ' product(s) in stock have no cost yet - not counted', 0]] : []);
   }
   if (!group && full) {
-    out.kpi.net = { v: R(pnl.net), prev: R(pnlPrev.net) };
-    out.kpi.expenses = { v: R(pnl.expenses), prev: R(pnlPrev.expenses) };
+    // B6: net profit and expenses are whole-month figures (rent, salaries, courier payouts by month), so a part
+    // month has no honest same-days figure: no trend for them while the month runs, the whole earlier month apart
+    out.kpi.net = same.on ? { v: R(pnl.net), prev: null, prevWhole: R(pnlPrev.net) } : { v: R(pnl.net), prev: R(pnlPrev.net) };
+    out.kpi.expenses = same.on ? { v: R(pnl.expenses), prev: null, prevWhole: R(pnlPrev.expenses) } : { v: R(pnl.expenses), prev: R(pnlPrev.expenses) };
     out.calc.net = [['Gross profit', R(pnl.gross)], ['+ Delivery charged to customers', R(pnl.delivery)],
       ['+ Courier paid more than expected', R(pnl.courierExtra)], ['− Courier paid less (written off)', -R(pnl.courierShort)],
       ['− Courier delivery + COD fees', -R(pnl.courier)], ['+ Repairs income − parts', R(pnl.serviceIncome - pnl.serviceParts)],
@@ -245,7 +253,7 @@ export async function erpFdDash(ctx, payload) {
   if (!group) {
     // money in and dues: the whole business
     const inRange = (d) => { const m = d && monthKey(d); return m && months.includes(m); };
-    const inPrev = (d) => { const m = d && monthKey(d); return m && prevMonths.includes(m); };
+    const inPrev = (d) => { const m = d && monthKey(d); return m && prevMonths.includes(m) && same.keep(m, d); };
     let cashIn = 0, cashPrev = 0;
     const byMethod = {};
     for (const p of await paymentsTab(ctx)) {
@@ -313,18 +321,35 @@ export async function erpFdDash(ctx, payload) {
 // this month against last month. Anyone who may open the screen may ask; money only reaches the people the
 // matching ability allows (dues: "dues", stock value: "costs", expenses: "expenses", money: shareholder).
 
+/**
+ * night-books B6 (owner D2 = A, 6 Nov 2026): same-days comparison. When the range ends in the month now running,
+ * the last compared month counts only its 1st to the same day of the month as today (a shorter month: all of it).
+ * keep(month, date) says whether a dated row of a compared month is inside that cut.
+ */
+export function sameDays(ctx, to, prevMonths) {
+  const now = monthKey(ctx.now);
+  const day = Number(formatDate(ctx.now, 'd'));
+  const last = prevMonths[prevMonths.length - 1];
+  const on = to === now && !!last;
+  const p = last ? last.split('-') : ['', '1'];
+  const label = on ? (prevMonths.length > 1 ? monthLabel(prevMonths[0]) + ' – ' : '') + '1–' + day + ' ' + MON3[Number(p[1]) - 1] + " '" + String(p[0]).slice(2) : '';
+  return { on, day, last, label, keep: (m, d) => !on || m !== last || (d && Number(formatDate(d, 'd')) <= day) };
+}
+
 function card(key, title, icon, v, o) { return Object.assign({ key, title, icon, v: R(v) }, o || {}); }
 
 export async function erpFdHead(ctx, payload) {
   const view = String((payload && payload.view) || '');
   const now = monthKey(ctx.now), prev = shiftMonth(now, -1);
+  const same = sameDays(ctx, now, [prev]);          // night-books B6: this month so far vs the same days of last month
+  const prevSame = (col) => ctx.tx`(to_char(public.dhaka_date(${ctx.tx(col)}), 'YYYY-MM') = ${prev} and extract(day from public.dhaka_date(${ctx.tx(col)})) <= ${same.day})`;
   const cards = [];
   const canDues = powerOn(ctx.s, 'dues'), canCost = powerOn(ctx.s, 'costs');
   const owedTotal = async () => { let t = 0, n = 0; for (const v of Object.values(await owedMap(ctx))) if (v > 0.5) { t += v; n++; } return { t, n }; };
 
   if (view === 'sales' || view === 'orders') {
     const L = await lines(ctx, [prev, now]);
-    const cur = sumUp(L.filter((x) => x.month === now)), last = sumUp(L.filter((x) => x.month === prev));
+    const cur = sumUp(L.filter((x) => x.month === now)), last = sumUp(L.filter((x) => x.month === prev && same.keep(x.month, x.at)));
     if (canDues) cards.push(card('revenue', 'Revenue this month', 'taka', cur.revenue, { prev: R(last.revenue), money: true, hero: true }));
     cards.push(card('orders', 'Orders this month', 'cart', cur.orders, { prev: last.orders, hero: !canDues }));
     const o = await owedTotal();
@@ -334,7 +359,7 @@ export async function erpFdHead(ctx, payload) {
   } else if (view === 'customers') {
     const c = (await ctx.tx`select count(*)::int as n,
                  count(*) filter (where to_char(public.dhaka_date(created_at), 'YYYY-MM') = ${now})::int as fresh,
-                 count(*) filter (where to_char(public.dhaka_date(created_at), 'YYYY-MM') = ${prev})::int as fresh_prev
+                 count(*) filter (where ${prevSame('created_at')})::int as fresh_prev
                from customers where business_id = ${ctx.biz}`)[0];
     const b = (await ctx.tx`select count(*) filter (where n >= 1)::int as buyers, count(*) filter (where n >= 2)::int as repeat
                from (select right(regexp_replace(coalesce(customer_phone, ''), '[^0-9]', '', 'g'), 10) as k, count(*) as n
@@ -363,7 +388,8 @@ export async function erpFdHead(ctx, payload) {
     const { expByCat, expenseUnpaid } = await import('./dashboard.js');
     const a = await expByCat(ctx, now), b = await expByCat(ctx, prev);
     const top = Object.entries(a.byCat).sort((x, y) => y[1] - x[1])[0];
-    cards.push(card('expenses', 'Expenses this month', 'receipt', a.total, { prev: R(b.total), money: true, hero: true, flip: true }));
+    // B6: expenses are whole-month items - no part-month trend; last month in full has its own card
+    cards.push(card('expenses', 'Expenses this month', 'receipt', a.total, { prev: null, prevWhole: R(b.total), money: true, hero: true, flip: true }));
     cards.push(card('unpaid', 'Fixed costs not yet paid', 'clock', await expenseUnpaid(ctx, now), { money: true, tone: 'warn', note: 'this month’s fixed items' }));
     cards.push(card('top', top ? top[0] : 'Biggest category', 'layers', top ? top[1] : 0, { money: true, note: 'biggest category this month' }));
     cards.push(card('last', 'Last month', 'calendar', b.total, { money: true, note: monthLabel(prev) }));
@@ -371,10 +397,13 @@ export async function erpFdHead(ctx, payload) {
     const p = (await pnlFor(ctx, [prev, now]));
     const [pm, cm] = p;
     if (view === 'profit') {
-      cards.push(card('net', 'Net profit this month', 'target', cm.net, { prev: pm.net, money: true, hero: true }));
-      cards.push(card('revenue', 'Revenue', 'taka', cm.netSales, { prev: pm.netSales, money: true }));
-      cards.push(card('gross', 'Gross profit', 'trend', cm.gross, { prev: pm.gross, money: true, note: cm.grossMargin + '% margin' }));
-      cards.push(card('expenses', 'Expenses', 'receipt', cm.expenses, { prev: pm.expenses, money: true, flip: true }));
+      // B6: revenue and gross against the same days of last month (from the sales lines); net profit and expenses
+      // are whole-month figures, so no part-month trend for them - last month in full rides along as prevWhole
+      const LL = (await lines(ctx, [prev])).filter((x) => same.keep(x.month, x.at)), lp = sumUp(LL);
+      cards.push(card('net', 'Net profit this month', 'target', cm.net, { prev: null, prevWhole: pm.net, money: true, hero: true }));
+      cards.push(card('revenue', 'Revenue', 'taka', cm.netSales, { prev: R(lp.revenue), money: true }));
+      cards.push(card('gross', 'Gross profit', 'trend', cm.gross, { prev: R(lp.gross), money: true, note: cm.grossMargin + '% margin' }));
+      cards.push(card('expenses', 'Expenses', 'receipt', cm.expenses, { prev: null, prevWhole: pm.expenses, money: true, flip: true }));
     } else {
       const { erpCashBook } = await import('./cash.js');
       const cb = await erpCashBook(ctx, {});
@@ -382,7 +411,7 @@ export async function erpFdHead(ctx, payload) {
       for (const r of await paymentsTab(ctx)) {
         const amt = num(r[PAY.amount]), meth = str(r[PAY.method]), d = asDate(r[PAY.timestamp]);
         if (!(amt > 0) || NOT_MONEY.test(meth) || !d) continue;
-        if (monthKey(d) === now) cin += amt; else if (monthKey(d) === prev) cprev += amt;
+        if (monthKey(d) === now) cin += amt; else if (monthKey(d) === prev && same.keep(prev, d)) cprev += amt;
       }
       cards.push(card('inHand', 'Money in hand', 'wallet', cb.inHand || 0, { money: true, hero: true, note: (cb.accounts || []).length + ' account(s), courier balance apart' }));
       cards.push(card('cashIn', 'Received this month', 'taka', cin, { prev: R(cprev), money: true }));
@@ -403,7 +432,7 @@ export async function erpFdHead(ctx, payload) {
     const w = (await ctx.tx`select count(*) filter (where not entered and invoice_id is null)::int as waiting,
                               coalesce(sum(order_total) filter (where not entered and invoice_id is null), 0) as waiting_value,
                               count(*) filter (where ${inMonth('order_date', now)})::int as this_m,
-                              count(*) filter (where ${inMonth('order_date', prev)})::int as last_m,
+                              count(*) filter (where ${prevSame('order_date')})::int as last_m,
                               coalesce(sum(order_total) filter (where ${inMonth('order_date', now)}), 0) as value_m,
                               max(pulled_at) as pulled
                             from web_orders where business_id = ${ctx.biz}`)[0];
@@ -413,7 +442,7 @@ export async function erpFdHead(ctx, payload) {
     if (mgr) cards.push(card('value', 'Ordered online this month', 'trend', w.value_m, { money: true, note: w.pulled ? 'last fetched ' + formatDate(new Date(w.pulled), 'd MMM, h:mm a') : '' }));
   } else if (view === 'quotes') {
     const q = (await ctx.tx`select count(*) filter (where ${inMonth('created_at', now)})::int as this_m,
-                              count(*) filter (where ${inMonth('created_at', prev)})::int as last_m,
+                              count(*) filter (where ${prevSame('created_at')})::int as last_m,
                               coalesce(sum(total) filter (where ${inMonth('created_at', now)}), 0) as value_m,
                               count(*) filter (where status = 'Draft')::int as drafts,
                               count(*) filter (where status = 'Ready' and ${inMonth('created_at', now)})::int as ready_m
@@ -446,7 +475,7 @@ export async function erpFdHead(ctx, payload) {
     cards.push(card('failed', 'Failed prints this month', 'x', p.failed_m, { tone: p.failed_m ? 'bad' : '' }));
   } else if (view === 'campaigns' && powerOn(ctx.s, 'campaigns')) {
     const c = (await ctx.tx`select (select count(*)::int from campaigns where business_id = ${ctx.biz} and ${inMonth('created_at', now)}) as this_m,
-                              (select count(*)::int from campaigns where business_id = ${ctx.biz} and ${inMonth('created_at', prev)}) as last_m,
+                              (select count(*)::int from campaigns where business_id = ${ctx.biz} and ${prevSame('created_at')}) as last_m,
                               (select count(*)::int from campaign_sends where business_id = ${ctx.biz} and status = 'sent' and ${inMonth('updated_at', now)}) as sent_m,
                               (select count(*)::int from campaign_leads where business_id = ${ctx.biz} and ${inMonth('added_at', now)}) as leads_m,
                               (select count(*)::int from campaign_optouts where business_id = ${ctx.biz}) as optouts`)[0];
@@ -493,7 +522,7 @@ export async function erpFdHead(ctx, payload) {
     cards.push(card('due', 'Returns still owed', 'bell', num(t.returnDue) - num(t.returnPaid), { money: true, tone: num(t.returnDue) - num(t.returnPaid) > 0 ? 'warn' : '', note: num(t.returnBuilding) ? R(t.returnBuilding) + ' building this month' : '' }));
     cards.push(card('pct', 'Shares given out', 'percent', t.pctGiven, { pct: true, note: R(t.pctFree) + '% free' }));
   }
-  return { view, cards, month: monthLabel(now), prevMonth: monthLabel(prev), currency: 'BDT' };
+  return { view, cards, month: monthLabel(now), prevMonth: same.label || monthLabel(prev), prevMonthWhole: monthLabel(prev), compare: 'sameDays', currency: 'BDT' };
 }
 
 export const HANDLERS = { erpFdDash, erpFdHead };

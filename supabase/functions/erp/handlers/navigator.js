@@ -208,7 +208,9 @@ export async function erpNavigator(ctx, payload) {
                                note: R(LS.units).toLocaleString('en-US') + ' units on hand' + (LS.uncosted ? ' · ' + LS.uncosted + ' without a cost' : ''),
                                calc: [['What is left in each stock lot × that lot’s landed cost (FIFO); stock from before lots at the cost book’s price', R(LS.value)]] }
     : { key: 'stockValue', label: 'Total stock value', icon: 'box', locked: 'cost' });
-  kpis.push(can.profit && P ? { key: 'net', label: 'Net profit · ' + RG.label, icon: 'target', v: R(P.net), prev: R(P.netPrev), money: true, go: 'profit',
+  // night-books B6 (D2): net profit is a whole-month figure - while the range runs into today there is no part-month
+  // trend for it (as the dashboard), the earlier period in full rides along as prevWhole
+  kpis.push(can.profit && P ? { key: 'net', label: 'Net profit · ' + RG.label, icon: 'target', v: R(P.net), prev: isNowRange ? null : R(P.netPrev), prevWhole: R(P.netPrev), money: true, go: 'profit',
                                 calc: [['Gross profit', R(P.gross)], ['+ Delivery charged to customers', R(P.delivery)], ['+ Courier paid more than expected', R(P.courierExtra)],
                                        ['− Courier paid less (written off)', -R(P.courierShort)], ['− Courier delivery + COD fees', -R(P.courier)], ['+ Repairs income − parts', R(P.service)],
                                        ['+ Pre-order deposits kept on cancelling', R(P.forfeited)], ['− Expenses', -R(P.exp)], ['= Net profit (same as Profit & loss)', R(P.net)]] }

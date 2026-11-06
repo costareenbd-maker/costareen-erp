@@ -42784,5 +42784,21 @@ html[data-look="clean"][data-skin="fd"]:root .t2line span { color:var(--fd-text-
   }
 })();
 </script>
+<!-- night-books B6 (owner D2 = A, 6 Nov 2026): the server compares this month so far with the same days of last month
+     (prevLabel "1–6 Oct '26"). Net profit and expenses are whole-month figures, so while the month runs they come
+     with prev: null and prevWhole (last month in full): show that quietly instead of a misleading ▼ 92%. -->
+<script>
+(function () {
+  if (typeof fddTrend !== 'function') return;
+  var fddTrendNb = fddTrend;
+  fddTrend = function (k, flip) {
+    if (k && (k.prev === null || k.prev === undefined) && k.prevWhole !== undefined && k.prevWhole !== null) {
+      var bn = typeof LANG !== 'undefined' && LANG === 'bn';
+      return '<span class="fdd-trend flat" title="' + esc((bn ? 'গত মাস পুরো: ৳' : 'Last month in full: ৳') + fmt(k.prevWhole)) + '">' + (bn ? 'মাস চলছে' : 'month running') + '</span>';
+    }
+    return fddTrendNb.apply(this, arguments);
+  };
+})();
+</script>
 </body>
 </html>
