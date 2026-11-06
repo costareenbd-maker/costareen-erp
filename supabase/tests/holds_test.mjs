@@ -19,11 +19,14 @@ const order = (hold, qty = 2) => [{ customer: { name: 'Karim', phone: '017123456
   payMode: 'cod', paidNow: 0, deliveryCharge: 120, hold }];
 
 const s0 = await stock(), i0 = await invCount();
+const nextNo = async () => Number((await sql`select next_number from invoice_counters where business_id = ${FIX.B}`)[0]?.next_number || 1001);
+const n0 = await nextNo();
 
 // ---- 1. made and kept: nothing in the books
 let r = await sales('erpCreateInvoice', order({ send: 'link', courier: true }));
-check('sales staff can send an order for confirmation', r.ok && r.result.held && r.result.holdNo === 'ORD-0001' && /hold\.html\?h=[0-9a-f]{32}/.test(r.result.link), r);
-const h1 = r.result.id;
+check('sales staff can send an order for confirmation', r.ok && r.result.held && /^INV-\d{8}-\d{3,}$/.test(r.result.holdNo) && /hold\.html\?h=[0-9a-f]{32}/.test(r.result.link), r);
+const h1 = r.result.id, no1 = r.result.holdNo;
+check('it carries a real invoice number, kept for it (the counter moved on)', (await nextNo()) === n0 + 1 && no1.endsWith('-' + String(n0).padStart(3, '0')), [no1, n0, await nextNo()]);
 check('the stock has not moved', (await stock()) === s0, await stock());
 check('no invoice was made', (await invCount()) === i0);
 const row1 = await holdRow(h1);
@@ -36,12 +39,12 @@ check('a customer name is needed, as on an invoice', !r.ok && /name is required/
 
 // ---- 2. the list
 r = await sales('erpHolds', []);
-check('the waiting list shows it, nothing short', r.ok && r.result.waiting === 1 && r.result.list[0].no === 'ORD-0001' && r.result.list[0].short.length === 0 && r.result.list[0].courier, r);
+check('the waiting list shows it, nothing short', r.ok && r.result.waiting === 1 && r.result.list[0].no === no1 && r.result.list[0].short.length === 0 && r.result.list[0].courier, r);
 
 // ---- 3. the customer's page
 const tok = row1.token;
 let p = await asB((ctx) => hd.holdPage(ctx, tok));
-check('the page shows the order, the phone half hidden', p.status === 200 && p.body.order.no === 'ORD-0001' && p.body.order.canAnswer && /•/.test(p.body.order.phone) && p.body.order.grand === 2820, p.body);
+check('the page shows the order, the phone half hidden', p.status === 200 && p.body.order.no === no1 && p.body.order.canAnswer && /•/.test(p.body.order.phone) && p.body.order.grand === 2820, p.body);
 p = await asB((ctx) => hd.holdPage(ctx, '0'.repeat(32)));
 check('a wrong link shows nothing', p.status === 404);
 p = await asB((ctx) => hd.holdAct(ctx, tok, { a: 'yes' }));
@@ -52,11 +55,12 @@ check('still nothing in the books after the customer\'s OK', (await stock()) ===
 
 // ---- 4. Confirm makes the invoice
 r = await sales('erpHoldConfirm', [{ id: h1 }]);
-check('Confirm makes the invoice', r.ok && /\S/.test(r.result.invoiceNo) && r.result.holdNo === 'ORD-0001' && r.result.bookCourier === true, r);
+check('Confirm puts the same invoice (same number) in the books', r.ok && /\S/.test(r.result.invoiceNo) && r.result.invoiceNo === no1 && r.result.bookCourier === true, r);
 const invNo = r.result.invoiceNo;
 check('the stock goes down only now', (await stock()) === s0 - 2, await stock());
 const inv = (await sql`select * from invoices where business_id = ${FIX.B} and invoice_no = ${invNo}`)[0];
-check('the invoice says which order and how it was confirmed', inv && /Order ORD-0001 - the customer confirmed on the page/.test(inv.note) && Number(inv.grand_total) === 2820 && inv.payment_method === 'COD', inv && inv.note);
+check('the invoice is as it was sent: nothing added to its note, same total', inv && !/ORD-|confirmed/i.test(String(inv.note)) && Number(inv.grand_total) === 2820 && inv.payment_method === 'COD', inv && inv.note);
+check('confirming used no new number', (await nextNo()) === n0 + 1);
 check('the order is closed with its invoice', (await holdRow(h1)).status === 'confirmed' && (await holdRow(h1)).invoice_no === invNo);
 r = await sales('erpHoldConfirm', [{ id: h1 }]);
 check('it cannot be confirmed twice', !r.ok && /already invoice/.test(r.error), r);
@@ -64,13 +68,15 @@ check('it cannot be confirmed twice', !r.ok && /already invoice/.test(r.error), 
 // ---- 5. cancel
 r = await sales('erpCreateInvoice', order({ send: 'link' }, 1));
 const h2 = r.result.id;
-check('numbers go on', r.result.holdNo === 'ORD-0002');
+const no2 = r.result.holdNo;
+check('the next one gets the next invoice number', no2.endsWith('-' + String(n0 + 1).padStart(3, '0')), no2);
 r = await sales('erpHoldCancel', [{ id: h2, reason: 'Customer changed mind' }]);
 check('a waiting order can be cancelled', r.ok && (await holdRow(h2)).status === 'cancelled' && /Customer changed mind/.test((await holdRow(h2)).closed_reason), r);
 r = await sales('erpHoldConfirm', [{ id: h2 }]);
 check('a cancelled order cannot be confirmed', !r.ok && /no longer waiting/.test(r.error), r);
 const tok2 = (await holdRow(h2)).token;
 p = await asB((ctx) => hd.holdAct(ctx, tok2, { a: 'yes' }));
+check('a declined invoice leaves nothing in the books', !(await sql`select 1 from invoices where business_id = ${FIX.B} and invoice_no = ${no2}`).length);
 check('its page says cancelled and takes no answer', p.body.order.state === 'cancelled' && !(await holdRow(h2)).customer_ok_at, p.body);
 
 // ---- 6. WhatsApp: sent from the "Sending only" number, and the customer's "confirm" reply
@@ -83,16 +89,16 @@ const mk = async (name, purpose) => {
 };
 const chat = await mk('Support', 'chat'), bills = await mk('Bills', 'send');
 r = await sales('erpCreateInvoice', order({ send: 'wa' }, 1));
-const h3 = r.result.id;
+const h3 = r.result.id, no3 = r.result.holdNo;
 check('sent on WhatsApp from the Sending-only number', r.ok && r.result.sent && r.result.via === 'Bills' && evo.some((x) => /inst-Bills/.test(x.url) && x.body.number === '8801712345678' && /hold\.html\?h=/.test(JSON.stringify(x.body))), r.result.sendError || evo.map((x) => x.url));
 const sentDoc = evo.find((x) => /sendMedia\/inst-Bills/.test(x.url));
-check('the customer gets the PDF (a document, not a picture)', sentDoc && sentDoc.body.mediatype === 'document' && sentDoc.body.mimetype === 'application/pdf' && sentDoc.body.fileName === 'Order_ORD-0003.pdf' && sentDoc.body.media.length > 4 && /hold\.html\?h=/.test(sentDoc.body.caption), sentDoc && { ...sentDoc.body, media: '…' });
+check('the customer gets the PDF (a document, not a picture)', sentDoc && sentDoc.body.mediatype === 'document' && sentDoc.body.mimetype === 'application/pdf' && sentDoc.body.fileName === 'Invoice_' + no3 + '.pdf' && sentDoc.body.media.length > 4 && /hold\.html\?h=/.test(sentDoc.body.caption), sentDoc && { ...sentDoc.body, media: '…' });
 const ph = pdfs[pdfs.length - 1];
-check('the PDF is the invoice design, titled as an order to confirm', ph && /ORD-0003/.test(ph.html) && /Order no\./.test(ph.html) && /(CONFIRM|কনফার্ম)/.test(ph.html) && !/Invoice no\./.test(ph.html), ph && ph.html.slice(0, 300));
-const pg = await asB(async (ctx) => hd.holdPage(ctx, (await sql`select token from order_holds where hold_no = 'ORD-0003' and business_id = ${FIX.B}`)[0].token));
+check('the PDF is the real invoice: its number, the invoice design, nothing about an order', ph && ph.html.includes(no3) && /INVOICE/.test(ph.html) && !/ORDER|Order no\./.test(ph.html), ph && ph.html.slice(0, 300));
+const pg = await asB(async (ctx) => hd.holdPage(ctx, (await sql`select token from order_holds where hold_no = ${no3} and business_id = ${FIX.B}`)[0].token));
 check('the page has a Download the PDF link', /inbox=holdpdf&h=[0-9a-f]{32}/.test(pg.body.pdf), pg.body.pdf);
-const pf = await asB(async (ctx) => hd.holdPdf(ctx, (await sql`select token from order_holds where hold_no = 'ORD-0003' and business_id = ${FIX.B}`)[0].token));
-check('the PDF link gives the file', pf && pf.bytes && pf.name === 'Order_ORD-0003.pdf', pf && pf.name);
+const pf = await asB(async (ctx) => hd.holdPdf(ctx, (await sql`select token from order_holds where hold_no = ${no3} and business_id = ${FIX.B}`)[0].token));
+check('the PDF link gives the file', pf && pf.length > 0, pf && pf.length);
 check('the message is in the Inbox and the order marked sent', (await sql`select count(*)::int n from inbox_messages m join inbox_conversations v on v.id = m.conversation_id where v.channel_id = ${bills.id} and m.direction = 'out'`)[0].n === 1 && (await holdRow(h3)).sent_via === 'Bills');
 r = await sales('erpHoldSend', [{ id: h3, channelId: chat.id }]);
 check('sent again from another number', r.ok && r.result.via === 'Support', r);
@@ -103,12 +109,12 @@ await asB(async (ctx) => ib.hookPost(ctx, bills, msg('IN2', '8801999000111', 'co
 check('someone else\'s "confirm" does not confirm it', !(await holdRow(h3)).customer_ok_at);
 await asB(async (ctx) => ib.hookPost(ctx, bills, msg('IN3', '8801712345678', 'Confirm ✅'), {}));
 check('the customer\'s "Confirm" on WhatsApp marks it (even on the Sending-only number)', (await holdRow(h3)).customer_ok_how === 'whatsapp');
-check('a note says so in the chat', (await sql`select count(*)::int n from inbox_messages m join inbox_conversations v on v.id = m.conversation_id where v.channel_id = ${bills.id} and m.direction = 'note' and m.text like 'Customer confirmed order ORD-0003%'`)[0].n === 1);
+check('a note says so in the chat', (await sql`select count(*)::int n from inbox_messages m join inbox_conversations v on v.id = m.conversation_id where v.channel_id = ${bills.id} and m.direction = 'note' and m.text like ${'Customer confirmed invoice ' + no3 + '%'}`)[0].n === 1);
 check('and the stock is still untouched', (await stock()) === s0 - 2);
 r = await sales('erpHolds', []);
 check('a "said yes" order comes first in the list', r.ok && r.result.list[0].id === h3 && r.result.list[0].customerOkHow === 'whatsapp' && r.result.saidYes === 1, r.result.list.map((x) => x.no));
 r = await mgr('erpHoldConfirm', [{ id: h3 }]);
-check('a manager confirms it; the note says WhatsApp', r.ok && /confirmed on WhatsApp/.test((await sql`select note from invoices where business_id = ${FIX.B} and invoice_no = ${r.result.invoiceNo}`)[0].note), r);
+check('a manager confirms it, under the number it was sent with', r.ok && r.result.invoiceNo === no3 && (await holdRow(h3)).customer_ok_how === 'whatsapp', r);
 
 // ---- 7. stock gone before Confirm; expiry
 r = await sales('erpCreateInvoice', order({ send: 'link' }, 4));
@@ -123,7 +129,7 @@ const ex = await asB((ctx) => hd.expireHolds(ctx));
 check('the nightly job closes it', ex.expired === 1 && (await holdRow(h4)).status === 'expired', ex);
 
 // ---- 8. the other business sees none of it
-check('owner of B sees B\'s orders only', (await owner('erpHolds', [{ pile: 'closed' }])).result.list.every((x) => /^ORD-/.test(x.no)));
+check('owner of B sees B\'s orders only', (await owner('erpHolds', [{ pile: 'closed' }])).result.list.every((x) => /^INV-/.test(x.no)));
 check('the YES words', hd.YES.test('ok') && hd.YES.test('হ্যাঁ') && hd.YES.test('ঠিক আছে') && !hd.YES.test('ok but change the colour') && !hd.YES.test('confirm korbo kal'));
 
 done();

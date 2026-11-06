@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="robots" content="noindex, nofollow">
 <meta name="referrer" content="no-referrer">
-<title>Your order</title>
+<title>Your invoice</title>
 <link rel="icon" href="icons/favicon-32.png">
 <style>
 /* hold-1: an order waiting for the customer's OK (handlers/holds.js holdPage / holdAct). Opened from the link the shop
@@ -50,8 +50,8 @@ button.b:disabled{opacity:.6;cursor:wait}
   try { L = localStorage.getItem('orderLang'); } catch (e) {}
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
   function tk(n) { return '৳' + Math.round(Number(n) || 0).toLocaleString('en-IN'); }
-  var T = { bn: { lang: 'English', order: 'অর্ডার', to: 'যেখানে যাবে', none: 'এই পাতাটি পাওয়া যাচ্ছে না।', fail: 'পাঠানো গেল না - আবার চেষ্টা করুন।' },
-            en: { lang: 'বাংলা', order: 'Order', to: 'Delivering to', none: 'This page is not available.', fail: 'Could not send - try again.' } };
+  var T = { bn: { lang: 'English', order: 'ইনভয়েস', to: 'যেখানে যাবে', none: 'এই পাতাটি পাওয়া যাচ্ছে না।', fail: 'পাঠানো গেল না - আবার চেষ্টা করুন।' },
+            en: { lang: 'বাংলা', order: 'Invoice', to: 'Delivering to', none: 'This page is not available.', fail: 'Could not send - try again.' } };
   function paint() {
     var m = document.getElementById('m'); if (!D) return;
     var lg = L || D.lang || 'bn', t = T[lg], W = D.words[lg], o = D.order;

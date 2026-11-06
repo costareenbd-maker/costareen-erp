@@ -1180,28 +1180,30 @@ export async function makeInvoicePdf(ctx, invoiceNo, opts = {}) {
   return { id: f.id, url: f.url, name };
 }
 
-/** hold-1b (owner 6 Nov 2026: "the customer gets the PDF, not a picture"): a waiting order as a PDF, drawn exactly like
- *  the invoice (Settings > Invoice design) but titled as an order to confirm, with the order number. Nothing is written
- *  to the invoices; the file is kept under invoices/Order_<no>.pdf. -> { url, name, bytes } */
+/** hold-1c (owner 6 Nov 2026: "not a demo invoice - the real invoice goes; once confirmed it is not issued again; that PDF
+ *  is the invoice; nothing changes"): the invoice of a waiting order, drawn exactly as makeInvoicePdf draws a saved one -
+ *  its own number (kept for it), date, design, previous dues - from what was checked when it was made. Saved under the
+ *  same name a saved invoice gets (Invoice_<no>.pdf). -> { url, id, name, bytes } */
 export async function makeHoldPdf(ctx, h) {
-  const sn = h.snap || {}, when = new Date(h.created_at);
+  const sn = h.snap || {}, when = new Date(h.created_at), invoiceNo = String(h.hold_no);
   const lines = (sn.lines || []).map((l) => ({ sku: str(l.sku), product: str(l.name), qty: num(l.qty), price: num(l.unit), total: num(l.total), gross: num(l.qty) * num(l.unit), serials: [] }));
   const gross = round2(lines.reduce((a, l) => a + l.gross, 0)), totalDisc = round2(num(sn.discount));
-  const d = { invoiceNo: h.hold_no, head: { customer: str(h.customer_name), phone: str(h.customer_phone), address: str(sn.address), when, method: str(sn.method), source: str(sn.source) },
+  const d = { invoiceNo, head: { customer: str(h.customer_name), phone: str(h.customer_phone), address: str(sn.address), when, method: str(sn.method), source: str(sn.source) },
              lines, gross, itemDisc: round2(num(sn.itemDisc) || totalDisc), invDisc: round2(num(sn.invDisc)), totalDisc, delivery: round2(num(sn.delivery)), grand: round2(num(sn.grand)),
-             paid: round2(num(sn.took)), due: round2(Math.max(0, num(sn.grand) - num(sn.took))), perLine: false, prevDue: 0, prevCount: 0, prevAt: '' };
+             paid: round2(num(sn.took)), due: round2(Math.max(0, num(sn.grand) - num(sn.took))), perLine: totalDisc > 0.5 && !(num(sn.invDisc) > 0) };
+  await addPrevDue(ctx, d, invoiceNo);
   const p = await qProfile(ctx), s = await qSettings(ctx);
   if (!String(p.name || '').trim()) p.name = (ctx.s && ctx.s.businessName) || '';
   const { invoiceDesign, invoiceDoc } = await import('./invoicedesign.js');
-  const D0 = await invoiceDesign(ctx), bn = (await docLang(ctx)) === 'bn';
-  const D = { ...D0, title: bn ? 'অর্ডার - কনফার্ম করুন' : 'ORDER - PLEASE CONFIRM', show: { ...D0.show, prevdue: false, myqr: false, signature: false } };
-  const img = { logo: (await docImg(ctx, p.logoTrimId)) || (await docImg(ctx, p.logoId)), qr: await docImg(ctx, D.qrId || p.qrId), sig: '', my: '' };
+  const D = await invoiceDesign(ctx);
+  const img = { logo: (await docImg(ctx, p.logoTrimId)) || (await docImg(ctx, p.logoId)),
+                qr: await docImg(ctx, D.qrId || p.qrId), sig: D.show.signature ? await docImg(ctx, p.signatureId) : '' };
+  img.my = D.show.myqr === false ? '' : await (await import('./passport.js')).myQrFor(ctx, d.head.phone, d.head.customer);
   const parts = await invoiceDoc(d, p, s, {}, img, when, D, invoiceArtParts);
-  parts.html = parts.html.replace(/Invoice no\./g, 'Order no.').replace(/>INVOICE</g, '>' + D.title + '<');
-  if (bn) { parts.html = docBangla(parts.html); parts.footer = docBangla(parts.footer); }
+  if ((await docLang(ctx)) === 'bn') { parts.html = docBangla(parts.html); parts.footer = docBangla(parts.footer); }
   const bytes = await renderPdf(ctx, parts.html, { footer: parts.footer });
-  const name = 'Order_' + h.hold_no + '.pdf';
   const keep = new Uint8Array(bytes);   // the storage upload may take the buffer; the copy goes to WhatsApp / the page
+  const name = 'Invoice_' + invoiceNo + '.pdf';
   const f = await saveFile(ctx, 'invoices', name, bytes, 'application/pdf');
   return { url: f.url, id: f.id, name, bytes: keep };
 }

@@ -49,7 +49,7 @@ function txnId(now) {
 }
 
 /** freshInvoiceNo_: INV-<save date>-<counter, 3+ digits>, bumped past any number already used. */
-async function freshInvoiceNo(ctx, now) {
+export async function freshInvoiceNo(ctx, now) {
   await ctx.tx`insert into invoice_counters (business_id, next_number, prefix)
                values (${ctx.biz}, 1001, 'INV') on conflict (business_id) do nothing`;
   const c = await ctx.tx`select next_number from invoice_counters
@@ -298,7 +298,8 @@ export async function createInvoice(ctx, payload, opts = {}) {
       ' + invoice ' + Math.round(DSC.invDisc) + ']';
   }
 
-  const { no: invoiceNo, n } = await freshInvoiceNo(ctx, now);
+  // hold-1c: an invoice that waited for the customer's OK keeps the number it was sent with
+  const { no: invoiceNo, n } = opts.invoiceNo ? { no: String(opts.invoiceNo), n: null } : await freshInvoiceNo(ctx, now);
   const key = custKey(phoneIn, name);
 
   const inv = await ctx.tx`
@@ -355,7 +356,7 @@ export async function createInvoice(ctx, payload, opts = {}) {
     lines.map((l) => l.name).join(', '), source);
   if (customerId) await ctx.tx`update invoices set customer_id = ${customerId} where id = ${invoiceId}`;
 
-  await ctx.tx`update invoice_counters set next_number = ${n + 1} where business_id = ${ctx.biz}`;
+  if (n !== null) await ctx.tx`update invoice_counters set next_number = ${n + 1} where business_id = ${ctx.biz}`;
   forget(ctx, 'SALES_LOG', 'CUSTOMERS', 'TXN_LOG');
 
   // the pool's side of the joint lines - before any money is written, so the money finds it

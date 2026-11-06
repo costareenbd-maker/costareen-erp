@@ -16,10 +16,10 @@
 //   erpHoldCancel({id, reason})
 //   public (index.ts ?inbox=hold|holdbill&h=<token>): holdPage, holdAct ('yes' | 'no'), holdBill (PNG)
 
-import { createInvoice, erpCreateInvoice } from './invoice.js';
+import { createInvoice, freshInvoiceNo } from './invoice.js';
 import { erpCatalog } from './catalog.js';
 import { lock } from './money.js';
-import { num, formatDate } from '../lib/time.js';
+import { num, formatDate, todayStr } from '../lib/time.js';
 import { billSvg } from '../lib/billsvg.js';
 import { profile, deliver, upsertContact, upsertConv, writeMsgNote } from './inbox.js';
 import { purposeOf } from './wanumbers.js';
@@ -58,8 +58,10 @@ export async function makeHold(ctx, payload) {
   if (pv.lines.some((l) => l.joint)) throw new Error('Joint-stock lines are sold at once: save this one as an invoice.');
   const days = Math.max(1, Math.min(30, Math.round(num(opt.days) || 7)));
   await lock(ctx, 'hold');
-  const n = num((await ctx.tx`select count(*)::int n from order_holds where business_id = ${ctx.biz}`)[0].n) + 1;
-  const no = 'ORD-' + String(n).padStart(4, '0');
+  // hold-1c: the invoice's own number is kept for it now (the counter moves on); the PDF the customer gets carries it,
+  // and Confirm saves the invoice under it. Declined / expired: that number is simply never used.
+  const { no, n } = await freshInvoiceNo(ctx, ctx.now);
+  await ctx.tx`update invoice_counters set next_number = ${n + 1} where business_id = ${ctx.biz}`;
   const snap = { lines: pv.lines, sub: pv.sub, discount: pv.discount, delivery: pv.delivery, grand: pv.grand, took: pv.took, mode: pv.mode,
                  method: pv.method, name: pv.name, phone: pv.phone, address: pv.address, source: pv.source };
   const h = (await ctx.tx`insert into order_holds (business_id, hold_no, payload, snap, customer_name, customer_phone, grand_total, token, book_courier,
@@ -81,8 +83,8 @@ async function senders(ctx) {
 function message(ctx, h, lang) {
   const s = h.snap || {}, link = holdLink(ctx, h), tk = '৳' + Math.round(num(s.grand)).toLocaleString('en-IN');
   return lang === 'en'
-    ? 'Hello ' + str(h.customer_name) + ', here is your order ' + h.hold_no + ' - total ' + tk + '.\nIf everything is right, press Confirm here: ' + link + '\nor simply reply CONFIRM.'
-    : 'আসসালামু আলাইকুম ' + str(h.customer_name) + ', আপনার অর্ডার ' + h.hold_no + ' - মোট ' + tk + '।\nসব ঠিক থাকলে এই লিংকে Confirm চাপুন: ' + link + '\nঅথবা এখানে শুধু CONFIRM লিখে উত্তর দিন।';
+    ? 'Hello ' + str(h.customer_name) + ', here is your invoice ' + h.hold_no + ' - total ' + tk + '.\nIf everything is right, press Confirm here: ' + link + '\nor simply reply CONFIRM.'
+    : 'আসসালামু আলাইকুম ' + str(h.customer_name) + ', আপনার ইনভয়েস ' + h.hold_no + ' - মোট ' + tk + '।\nসব ঠিক থাকলে এই লিংকে Confirm চাপুন: ' + link + '\nঅথবা এখানে শুধু CONFIRM লিখে উত্তর দিন।';
 }
 async function sendWa(ctx, h, channelId) {
   const digits = waDigits(h.customer_phone);
@@ -156,11 +158,13 @@ export async function erpHoldConfirm(ctx, payload) {
   const h = await holdOf(ctx, payload && payload.id);
   if (h.status === 'confirmed') throw new Error(h.hold_no + ' is already invoice ' + h.invoice_no + '.');
   if (!live(h, ctx.now)) throw new Error(h.hold_no + ' is no longer waiting (' + (h.status === 'waiting' ? 'expired' : h.status) + '). Make it again from New invoice.');
+  // hold-1c: the invoice the customer was sent, unchanged - same number, same day, same lines; nothing added to it
   const p = { ...(h.payload || {}) };
-  const how = h.customer_ok_at ? 'the customer confirmed ' + (h.customer_ok_how === 'whatsapp' ? 'on WhatsApp' : 'on the page') : 'confirmed by ' + str(ctx.s.name || 'the team');
-  p.note = [str(p.note), 'Order ' + h.hold_no + ' - ' + how].filter(Boolean).join('; ');
-  delete p.date;   // the sale is today's: the day it was confirmed
-  const res = await erpCreateInvoice(ctx, p);
+  const day = todayStr(new Date(h.created_at));
+  if (!str(p.date) && day !== todayStr(ctx.now)) p.date = day;
+  if ((await ctx.tx`select is_pool from businesses where id = ${ctx.biz}`)[0]?.is_pool) throw new Error('A joint stock does not sell by itself.');
+  const res = await createInvoice(ctx, p, { invoiceNo: h.hold_no });
+  delete res.invoiceId;
   await ctx.tx`update order_holds set status = 'confirmed', confirmed_at = now(), confirmed_name = ${ctx.s.name || null}, invoice_no = ${res.invoiceNo} where id = ${h.id}`;
   return { ...res, holdNo: h.hold_no, bookCourier: !!h.book_courier };
 }
@@ -190,18 +194,18 @@ export async function holdReply(ctx, ch, contact, conv, text) {
   const h = rows.find((x) => last10(x.customer_phone) === ph);
   if (!h) return false;
   await ctx.tx`update order_holds set customer_ok_at = now(), customer_ok_how = 'whatsapp' where id = ${h.id}`;
-  try { await writeMsgNote(ctx, conv, 'Customer confirmed order ' + h.hold_no + ' (' + '৳' + Math.round(num(h.grand_total)) + '). Waiting for the team\'s Confirm.'); } catch (_) { /* the note is a nicety */ }
-  await pushTeam(ctx, { title: 'Order ' + h.hold_no + ' confirmed by the customer', body: str(h.customer_name) + ' said yes on WhatsApp. Press Confirm to make the invoice.', url: '/#/holds', tag: 'hold-' + h.id });
+  try { await writeMsgNote(ctx, conv, 'Customer confirmed invoice ' + h.hold_no + ' (' + '৳' + Math.round(num(h.grand_total)) + '). Waiting for the team\'s Confirm.'); } catch (_) { /* the note is a nicety */ }
+  await pushTeam(ctx, { title: 'Invoice ' + h.hold_no + ' confirmed by the customer', body: str(h.customer_name) + ' said yes on WhatsApp. Press Confirm to put it in the books.', url: '/#/holds', tag: 'hold-' + h.id });
   return h.hold_no;
 }
 
 // ------------------------------------------------------------------ the customer's page
 const WORDS = {
-  en: { title: 'Your order', waiting: 'Waiting for your confirmation', yes: 'Confirm the order', no: 'Not now', okDone: 'Thank you - you confirmed. We will send it soon.',
-        noDone: 'Noted - we will not send it. Call us if you change your mind.', confirmed: 'Confirmed - the invoice is made', cancelled: 'This order was cancelled', expired: 'This order has expired - ask us again',
+  en: { title: 'Your invoice', waiting: 'Waiting for your confirmation', yes: 'Confirm', no: 'Not now', okDone: 'Thank you - you confirmed. We will send it soon.',
+        noDone: 'Noted - we will not send it. Call us if you change your mind.', confirmed: 'Confirmed', cancelled: 'This invoice was cancelled', expired: 'This invoice has expired - ask us again',
         sub: 'Subtotal', disc: 'Discount', del: 'Delivery', total: 'Total', paid: 'Paid already', cod: 'Pay on delivery', call: 'Call the shop', pdf: 'Download the PDF' },
-  bn: { title: 'আপনার অর্ডার', waiting: 'আপনার নিশ্চিতকরণের অপেক্ষায়', yes: 'অর্ডার কনফার্ম করুন', no: 'এখন না', okDone: 'ধন্যবাদ - আপনি কনফার্ম করেছেন। শিগগিরই পাঠানো হবে।',
-        noDone: 'লেখা হলো - পাঠানো হবে না। মত বদলালে ফোন করুন।', confirmed: 'কনফার্ম হয়েছে - ইনভয়েস তৈরি', cancelled: 'এই অর্ডার বাতিল হয়েছে', expired: 'এই অর্ডারের সময় শেষ - আবার জানান',
+  bn: { title: 'আপনার ইনভয়েস', waiting: 'আপনার নিশ্চিতকরণের অপেক্ষায়', yes: 'কনফার্ম করুন', no: 'এখন না', okDone: 'ধন্যবাদ - আপনি কনফার্ম করেছেন। শিগগিরই পাঠানো হবে।',
+        noDone: 'লেখা হলো - পাঠানো হবে না। মত বদলালে ফোন করুন।', confirmed: 'কনফার্ম হয়েছে', cancelled: 'এই ইনভয়েস বাতিল হয়েছে', expired: 'এই ইনভয়েসের সময় শেষ - আবার জানান',
         sub: 'মোট পণ্য', disc: 'ছাড়', del: 'ডেলিভারি', total: 'সর্বমোট', paid: 'আগে দেওয়া', cod: 'ডেলিভারিতে দিতে হবে', call: 'দোকানে কল', pdf: 'PDF ডাউনলোড' },
 };
 async function byToken(ctx, tok) {
@@ -227,8 +231,8 @@ export async function holdAct(ctx, tok, b) {
   if (live(h, ctx.now) && !h.customer_ok_at && !h.customer_no_at && (a === 'yes' || a === 'no')) {
     if (a === 'yes') await ctx.tx`update order_holds set customer_ok_at = now(), customer_ok_how = 'page' where id = ${h.id}`;
     else await ctx.tx`update order_holds set customer_no_at = now() where id = ${h.id}`;
-    await pushTeam(ctx, { title: 'Order ' + h.hold_no + (a === 'yes' ? ' confirmed by the customer' : ': the customer said no'),
-      body: str(h.customer_name) + (a === 'yes' ? ' pressed Confirm. Press Confirm to make the invoice.' : ' pressed "Not now".'), url: '/#/holds', tag: 'hold-' + h.id });
+    await pushTeam(ctx, { title: 'Invoice ' + h.hold_no + (a === 'yes' ? ' confirmed by the customer' : ': the customer said no'),
+      body: str(h.customer_name) + (a === 'yes' ? ' pressed Confirm. Press Confirm to put it in the books.' : ' pressed "Not now".'), url: '/#/holds', tag: 'hold-' + h.id });
   }
   return pageBody(ctx, (await byToken(ctx, tok)));
 }
@@ -237,14 +241,14 @@ export async function holdPdf(ctx, tok) {
   const h = await byToken(ctx, tok);
   if (!h) return null;
   const f = await (await import('./sales.js')).makeHoldPdf(ctx, h);
-  return f && f.bytes ? { bytes: f.bytes, name: f.name } : null;
+  return f && f.bytes && f.bytes.length ? f.bytes : null;
 }
 export async function holdBill(ctx, tok) {
   const h = await byToken(ctx, tok);
   if (!h || !ctx.deps.svgPng) return null;
   const sh = await shop(ctx), s = h.snap || {};
   const svg = billSvg({ name: sh.name, phone: sh.phone, address: sh.address, colour: sh.colour },
-    { no: h.hold_no, label: sh.lang === 'en' ? 'ORDER - PLEASE CONFIRM' : 'অর্ডার - কনফার্ম করুন', date: formatDate(new Date(h.created_at), 'd MMM yyyy'),
+    { no: h.hold_no, label: 'INVOICE', date: formatDate(new Date(h.created_at), 'd MMM yyyy'),
       name: h.customer_name, phone: h.customer_phone, address: s.address,
       items: (s.lines || []).map((l) => ({ name: l.name, qty: l.qty, price: l.unit })), discount: num(s.discount), delivery: num(s.delivery),
       payNote: s.mode === 'cod' ? (sh.lang === 'en' ? 'Pay on delivery: ' : 'ডেলিভারিতে দিতে হবে: ') + '৳' + Math.round(num(s.grand) - num(s.took)).toLocaleString('en-IN')

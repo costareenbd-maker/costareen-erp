@@ -635,7 +635,7 @@ async function inboxRoute(deps: any, req: Request, q0: URLSearchParams, headers:
     if (what === 'holdpdf') {
       const f: any = await asOwner(row.business_id, 'inbox:holdpdf', (ctx) => hd.holdPdf(ctx, tok));
       if (!f) return nf;
-      return new Response(f.bytes, { status: 200, headers: { 'Content-Type': 'application/pdf', 'Content-Disposition': 'inline; filename="' + f.name + '"', 'Cache-Control': 'private, max-age=300', 'Access-Control-Allow-Origin': '*' } });
+      return new Response(f, { status: 200, headers: { 'Content-Type': 'application/pdf', 'Content-Disposition': 'inline; filename="invoice.pdf"', 'Cache-Control': 'private, max-age=300', 'Access-Control-Allow-Origin': '*' } });
     }
     if (what === 'holdbill') {
       const png: any = await asOwner(row.business_id, 'inbox:holdbill', (ctx) => hd.holdBill(ctx, tok));

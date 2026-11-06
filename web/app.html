@@ -42408,7 +42408,7 @@ html[data-look="clean"][data-skin="fd"]:root .t2line span { color:var(--fd-text-
       '<option value="link">Only make the link (I will send it myself)</option></select>' + (!phone ? '<div class="sub">No phone on this invoice, so it cannot go on WhatsApp.</div>' : !chans.length ? '<div class="sub">No WhatsApp number is connected yet (Inbox › Chat settings).</div>' : '') + '</div>' +
       '<div><label class="f" for="hd_days">Wait for the answer</label><select class="i" id="hd_days"><option value="3">3 days</option><option value="7" selected>7 days</option><option value="14">14 days</option></select></div></div>' +
       '<label class="chk"><input type="checkbox" id="hd_sf"' + (courierGuess ? ' checked' : '') + '> Book the parcel on Steadfast as soon as it is confirmed</label>' +
-      '<div class="sub" style="margin-top:10px">Nothing is taken from stock and no invoice number is used until you press Confirm.</div>';
+      '<div class="sub" style="margin-top:10px">The customer gets the real invoice PDF. Nothing goes into the books or stock until you press Confirm; declined, it leaves no trace there.</div>';
     dlg('Send for confirmation', body, 'Continue', function (back, close) {
       var via = back.querySelector('#hd_via').value;
       HOLD_PENDING = { send: via === 'link' ? 'link' : 'wa', channelId: via.indexOf('wa:') === 0 ? via.slice(3) : '', courier: back.querySelector('#hd_sf').checked, days: Number(back.querySelector('#hd_days').value) || 7 };
@@ -42421,7 +42421,7 @@ html[data-look="clean"][data-skin="fd"]:root .t2line span { color:var(--fd-text-
   var uiConfirmHold = uiConfirm;
   uiConfirm = function (text) {
     if (HOLD_NEXT && /^Save this invoice\?/.test(String(text))) {
-      text = String(text).replace(/^Save this invoice\?/, 'Send this order for the customer’s confirmation?').replace(/Stock will be deducted and the invoice PDF made\.$/, 'Nothing is taken from stock until it is confirmed.');
+      text = String(text).replace(/^Save this invoice\?/, 'Send this invoice for the customer’s confirmation?').replace(/Stock will be deducted and the invoice PDF made\.$/, 'Its number is kept for it. Nothing goes into the books or stock until it is confirmed.');
       return uiConfirmHold(text).then(function (yes) { if (!yes) HOLD_NEXT = null; return yes; });
     }
     return uiConfirmHold.apply(this, arguments);
@@ -42446,7 +42446,7 @@ html[data-look="clean"][data-skin="fd"]:root .t2line span { color:var(--fd-text-
     var text = 'Your order ' + r.holdNo + ' - total ' + money(r.grandTotal) + '. Please confirm here: ' + r.link;
     var head = r.sent ? '✅ Sent on WhatsApp (' + esc(r.via) + ').' : r.sendError ? '⚠️ Not sent: ' + esc(r.sendError) : 'The link is ready — send it to the customer.';
     dlg(r.holdNo + ' is waiting for ' + (r.customer || name || 'the customer'),
-      '<div>' + head + '</div><div class="sub" style="margin-top:6px">' + money(r.grandTotal) + ' · waits until ' + esc(r.expires) + '. It becomes an invoice when you press Confirm in Waiting orders.</div>' +
+      '<div>' + head + '</div><div class="sub" style="margin-top:6px">' + money(r.grandTotal) + ' · waits until ' + esc(r.expires) + '. It goes into the books when you press Confirm in Waiting orders.</div>' +
       '<div class="hd-link" data-noi18n="1">' + esc(r.link) + '</div>' +
       '<div class="row" style="gap:8px;margin-top:10px;flex-wrap:wrap"><button class="btn small" type="button" data-copy="' + esc(r.link) + '">Copy link</button>' +
       (phone && !r.sent ? '<a class="btn small" target="_blank" rel="noopener" href="' + esc(waMe(phone, text)) + '">Open WhatsApp</a>' : '') + '</div>', '', null);
@@ -42492,18 +42492,18 @@ html[data-look="clean"][data-skin="fd"]:root .t2line span { color:var(--fd-text-
   function find(id) { return ((HD.data && HD.data.list) || []).filter(function (x) { return x.id === id; })[0]; }
   async function confirmOne(id) {
     var x = find(id); if (!x) return;
-    var msg = 'Make the invoice for ' + x.no + ' now?\n\n' + x.customer + ' · ' + money(x.grand) + '\n' + (x.customerOk ? 'The customer said yes.' : 'The customer has NOT said yes yet.') +
-      '\n\nStock will be deducted' + (x.courier ? ' and the parcel booked on Steadfast.' : '.');
+    var msg = 'Confirm invoice ' + x.no + ' now?\n\n' + x.customer + ' · ' + money(x.grand) + '\n' + (x.customerOk ? 'The customer said yes.' : 'The customer has NOT said yes yet.') +
+      '\n\nIt goes into the books as it was sent, stock is deducted' + (x.courier ? ' and the parcel booked on Steadfast.' : '.');
     if (!(await uiConfirmHold(msg))) return;
-    toast('Making the invoice…');
+    toast('Confirming…');
     srv('erpHoldConfirm', [{ id: id }], function (r) {
       HD.data = null; load(true);
       D = null; ORDERS = null; HIST = null;
       try { srv('erpBundle', [['catalog']], applyBundle, function () {}); } catch (e) {}
-      if (!r.bookCourier) { toast('Invoice ' + esc(r.invoiceNo) + ' made from ' + esc(r.holdNo) + '.', false, 8000); return; }
+      if (!r.bookCourier) { toast('Invoice ' + esc(r.invoiceNo) + ' confirmed and in the books.', false, 8000); return; }
       srv('erpBookParcel', [{ invoiceNo: r.invoiceNo }], function (b) {
-        toast('Invoice ' + esc(r.invoiceNo) + ' made and booked on Steadfast' + (b && b.consignment ? ' (' + esc(b.consignment) + ')' : '') + '.', false, 9000);
-      }, function (e) { uiAlert('Invoice ' + r.invoiceNo + ' is made, but Steadfast did not take the parcel:\n\n' + errText(e) + '\n\nBook it from the invoice’s page.'); });
+        toast('Invoice ' + esc(r.invoiceNo) + ' confirmed and booked on Steadfast' + (b && b.consignment ? ' (' + esc(b.consignment) + ')' : '') + '.', false, 9000);
+      }, function (e) { uiAlert('Invoice ' + r.invoiceNo + ' is confirmed, but Steadfast did not take the parcel:\n\n' + errText(e) + '\n\nBook it from the invoice’s page.'); });
     }, function (e) { uiAlert('Not confirmed:\n\n' + errText(e)); });
   }
   function editOne(id) {
