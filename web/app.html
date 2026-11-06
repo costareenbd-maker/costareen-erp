@@ -43553,6 +43553,34 @@ details.nt-fold.nt-pnlfold > .nt-fold-in { padding:0 4px 6px; }
     };
   } catch (e) {}
 
+  /* -------------------------------------------------------------------- stock */
+  // Count & adjust (inv-stock.md): the one-product adjustment is a short card; on a phone it sat under a ~10,000px count
+  // list. It comes first on a phone, and its 50+ product drop-down gets a type-to-find box (the select stays the field
+  // the Save handler reads; only its options are narrowed).
+  AFTER_PAINT.push(function nightStockAdjust() {
+    if (VIEW !== 'stock') return;
+    var v = el('view'), sel = v && v.querySelector('#aj_sku'); if (!sel) return;
+    var adj = sel.closest('#view > *'), cnt = v.querySelector('#ct_cat'), cntBox = cnt && cnt.closest('#view > *');
+    if (phone() && adj && cntBox && adj !== cntBox && (adj.compareDocumentPosition(cntBox) & Node.DOCUMENT_POSITION_PRECEDING)) v.insertBefore(adj, cntBox);
+    if (sel.getAttribute('data-nt-find')) return;
+    sel.setAttribute('data-nt-find', '1');
+    var all = [].map.call(sel.options, function (o) { return { v: o.value, t: o.text, s: o.selected }; });
+    var f = document.createElement('input'); f.type = 'search'; f.className = 'i'; f.autocomplete = 'off'; f.style.marginBottom = '6px';
+    f.placeholder = bn() ? 'প্রোডাক্টের নাম বা SKU লিখুন' : 'Type a product name or SKU';
+    f.setAttribute('aria-label', f.placeholder);
+    sel.parentNode.insertBefore(f, sel);
+    f.addEventListener('input', function () {
+      var q = f.value.trim().toLowerCase(), keep = sel.value, n = 0;
+      sel.innerHTML = '';
+      all.forEach(function (o) {
+        if (o.v && q && (o.t + ' ' + o.v).toLowerCase().indexOf(q) < 0 && o.v !== keep) return;
+        var op = document.createElement('option'); op.value = o.v; op.textContent = o.t; sel.appendChild(op); if (o.v) n++;
+      });
+      if (q && n === 1) { sel.value = sel.options[sel.options.length - 1].value; sel.dispatchEvent(new Event('change', { bubbles: true })); }
+      else sel.value = keep;
+    });
+  });
+
   /* ----------------------------------------------------------------- products */
   AFTER_PAINT.push(function nightProductsCount() {
     if (VIEW !== 'products') return;
