@@ -236,15 +236,16 @@ r = await mgr('erpFixInvoice', [{ invoiceNo: A, phone: '0181' }]);
 check('bad phone refused', !r.ok && r.error === 'A Bangladeshi mobile number is 11 digits starting 013-019, like 01712345678 - "0181" has 4. Correct it, or leave it empty.', r);
 const nPdf = pdfs.length;
 r = await mgr('erpFixInvoice', [{ invoiceNo: A, name: 'Rahim Uddin', phone: '1811111112', address: 'Mirpur', delivery: 'Pathao Instant' }]);
-check('fixed: customer, phone, delivery; corrected PDF', r.ok && r.result.changed === 3 && r.result.fields.join() === 'customer,phone,delivery' &&
-  r.result.warning === '' && /Invoice_.*_corrected_\d{6}-\d{4}\.pdf$/.test(decodeURIComponent(r.result.pdfUrl)), r);
+// invedit-1 (owner 6 Nov 2026: "keep one copy, not two"): the corrected PDF is the invoice's one PDF, drawn again under its own name
+check('fixed: customer, phone, delivery; the one PDF drawn again', r.ok && r.result.changed === 3 && r.result.fields.join() === 'customer,phone,delivery' &&
+  r.result.warning === '' && /Invoice_INV-[0-9-]+\.pdf$/.test(decodeURIComponent(r.result.pdfUrl)), r);
 row = await inv(A);
 check('invoice row rewritten, phone tidied, key follows', row.customer_name === 'Rahim Uddin' && row.customer_phone === '01811111112' &&
   row.source === 'Pathao Instant' && row.customer_key === '1811111112', row);
 const fx = await sql`select * from invoice_fixes where business_id = ${B} and invoice_no = ${A} order by field`;
 check('INVOICE_FIXES: 3 rows with was/now/by', fx.length === 3 && fx.find((x) => x.field === 'phone').was === '01811111111' &&
   fx.find((x) => x.field === 'phone').now === '01811111112' && fx[0].fixed_by === 'Mehedi', fx);
-check('corrected copy carries the stamp', pdfs.length === nPdf + 1 && lastPdf().html.includes('CORRECTED COPY · ') && lastPdf().html.includes('Rahim Uddin'));
+check('the redrawn PDF has the new details, no separate corrected copy', pdfs.length === nPdf + 1 && lastPdf().html.includes('Rahim Uddin') && !lastPdf().html.includes('CORRECTED COPY'));
 r = await mgr('erpFixInvoice', [{ invoiceNo: E, delivery: 'Pathao Instant' }]);
 check('booked parcel: delivery cannot change', !r.ok && r.error === 'A parcel (CID-777) is already booked for this sale, so how it is delivered can no longer be changed.', r);
 r = await mgr('erpFixInvoice', [{ invoiceNo: E, address: 'Uttara 7' }]);
@@ -330,8 +331,8 @@ check('website down: list loads, no number', r.ok && rowOf(r.result, 'INV-WEB').
 await deps.storage.save(B, 'invoices', 'Invoice_' + E + '_corrected_260101-1010.pdf', new Uint8Array([1]), 'application/pdf');
 await sql`update invoices set pdf_designed = false where invoice_no = ${E}`;
 r = await sales('erpInvoicePdf', [{ invoiceNo: E }]);
-check('plain copy redrawn in the design, corrected flag kept, old one removed', r.ok && r.result.made === true &&
-  /^Invoice_.*_corrected_\d{6}-\d{4}\.pdf$/.test(r.result.name) && !files.list().includes(B + '/invoices/Invoice_' + E + '_corrected_260101-1010.pdf'), r);
+check('plain copy redrawn in the design under the invoice own name, the old corrected one removed', r.ok && r.result.made === true &&
+  r.result.name === 'Invoice_' + E + '.pdf' && !files.list().includes(B + '/invoices/Invoice_' + E + '_corrected_260101-1010.pdf'), r);
 
 // ------------------------------------------------------------ makeInvoicePdf export (walk-in, paid, per-line discount)
 r = await owner('erpCreateInvoice', [{ customer: { name: 'Shop' }, items: [{ sku: PLA, qty: 2, discEach: 50 }], payMode: 'full', paymentMethod: 'Cash' }]);

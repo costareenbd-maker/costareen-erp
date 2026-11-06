@@ -759,8 +759,9 @@ export async function erpFixInvoice(ctx, payload) {
   }
   forget(ctx, 'SALES_LOG');
 
+  // invedit-1: one PDF per invoice - drawn again under the same name (owner: "keep one copy, not two")
   let copy = null;
-  try { copy = await makeInvoicePdf(ctx, invoiceNo, { corrected: true }); } catch (_) { /* as original */ }
+  if (!payload.noPdf) { try { copy = await makeInvoicePdf(ctx, invoiceNo, {}); } catch (_) { /* as original */ } }
   return { ok: true, invoiceNo, changed: changes.length, warning: warn,
            pdfUrl: copy ? copy.url : '',
            fields: changes.map((x) => x.label) };
@@ -830,7 +831,8 @@ export async function erpInvoicePdf(ctx, payload) {
   if (!invoiceNo) throw new Error('Which invoice?');
   if (!ctx.deps || !ctx.deps.storage) return { found: false, why: 'No invoice folder is set up for this business.' };
 
-  const f = (await findFiles(ctx, 'invoices', 'Invoice_' + invoiceNo))[0] || null;
+  const all = await findFiles(ctx, 'invoices', 'Invoice_' + invoiceNo);
+  const f = all.find((x) => x.name === 'Invoice_' + invoiceNo + '.pdf') || all[0] || null;
   const notes = (await findFiles(ctx, 'invoices', invoiceNo))
     .filter((n) => n.name.indexOf('Return_') >= 0)
     .map((n) => ({ name: n.name, url: n.url, id: n.id }));
@@ -848,9 +850,17 @@ export async function erpInvoicePdf(ctx, payload) {
                            and invoice_no = ${invoiceNo} limit 1`;
     plain = !!(r[0] && !r[0].pdf_designed);
   } catch (_) { /* as original */ }
+  // paidpdf-1: paid more (or less) since the PDF was drawn - draw it again, same name, so it says Paid / what was paid
+  if (!plain) {
+    try {
+      const r = (await ctx.tx`select pdf_paid from invoices where business_id = ${ctx.biz} and invoice_no = ${invoiceNo} limit 1`)[0];
+      const now = (await outstanding(ctx, invoiceNo)) || { paid: 0 };
+      if (r && (r.pdf_paid === null ? num(now.paid) > 0 : Math.abs(num(r.pdf_paid) - num(now.paid)) > 0.5)) plain = true;
+    } catch (_) { /* as it is */ }
+  }
   if (plain) {
     let again = null;
-    try { again = await makeInvoicePdf(ctx, invoiceNo, { corrected: /_corrected_/.test(f.name) }); } catch (_) { /* as original */ }
+    try { again = await makeInvoicePdf(ctx, invoiceNo, {}); } catch (_) { /* as original */ }
     if (again) {
       if (again.name !== f.name) { try { await deleteFile(ctx, 'invoices', f.name); } catch (_) { /* bin */ } }
       return { found: true, url: again.url, id: again.id, name: again.name, notes, made: true };
@@ -1178,8 +1188,10 @@ export async function makeInvoicePdf(ctx, invoiceNo, opts = {}) {
   if (opts.b64) { const u = new Uint8Array(bytes); let bin = ''; for (let i = 0; i < u.length; i += 0x8000) bin += String.fromCharCode.apply(null, Array.from(u.subarray(i, i + 0x8000))); b64 = btoa(bin); }
   const f = await saveFile(ctx, 'invoices', name, bytes, 'application/pdf');
   await quietly(ctx, () => ctx.tx`update invoices set pdf_path = ${f.id || name}, pdf_url = ${f.url},
-                                   pdf_designed = true
+                                   pdf_designed = true, pdf_paid = ${round2(num(d.paid))}
                                    where business_id = ${ctx.biz} and invoice_no = ${invoiceNo}`);
+  // one copy: an older "corrected" file of this invoice goes
+  if (!opts.corrected) { try { for (const o of await findFiles(ctx, 'invoices', 'Invoice_' + invoiceNo + '_corrected_')) await deleteFile(ctx, 'invoices', o.name); } catch (_) { /* never fatal */ } }
   return { id: f.id, url: f.url, name, ...(b64 ? { b64 } : {}) };
 }
 

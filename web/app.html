@@ -42583,5 +42583,119 @@ html[data-look="clean"][data-skin="fd"]:root .t2line span { color:var(--fd-text-
   navSync();
 })();
 </script>
+<!-- invedit-1 (owner 6 Nov 2026): Edit a saved invoice. "Edit invoice" on the invoice's page puts it on the New invoice
+     screen (its own prices, its units counted back on the shelf); "Save changes" sends the same fields as Save to
+     erpInvoiceEdit: same number, same day; stock, money and the one PDF follow; one line per change is kept. A manager or
+     the owner. "Send invoice on WhatsApp" sends the current PDF (Paid / Due) to the customer. -->
+<style>
+.ie-bar{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap;background:color-mix(in srgb,var(--fd-accent,#7c6bb1) 12%,transparent);border-radius:14px;padding:10px 14px;margin-bottom:12px;font-size:14px}
+.ie-bar b{font-size:15px}
+</style>
+<script>
+(function () {
+  var EDIT = null, EDIT_NEXT = null, EDIT_PENDING = null;
+  try {
+    var BN = { 'Edit invoice': 'ইনভয়েস এডিট', 'Save changes': 'পরিবর্তন সেভ', 'Cancel the edit': 'এডিট বাতিল', 'Send invoice on WhatsApp': 'WhatsApp-এ ইনভয়েস পাঠাও' };
+    Object.keys(BN).forEach(function (k) { if (!I18N_BN[k]) I18N_BN[k] = BN[k]; });
+  } catch (e) {}
+  function errText(e) { return String(e && e.message ? e.message : e); }
+  function isMgr() { return typeof pageIsManager === 'function' ? pageIsManager() : !!(ME && ME.role !== 'sales'); }
+
+  // the invoice page: two more buttons
+  var invoicePageHtmlEdit = invoicePageHtml;
+  invoicePageHtml = function () {
+    var h = invoicePageHtmlEdit.apply(this, arguments), d = INVP && INVP.data;
+    if (!d || d.cancelled) return h;
+    var add = '';
+    if (isMgr()) add += '<button class="btn" type="button" data-iedit="' + esc(d.id) + '">Edit invoice</button>';
+    if (d.phone) add += '<button class="btn" type="button" data-iwa="' + esc(d.id) + '">Send invoice on WhatsApp</button>';
+    return add ? h.replace('<button class="btn" type="button" data-sfix=', add + '<button class="btn" type="button" data-sfix=') : h;
+  };
+  function start(d) {
+    if (!CAT || !OPT) { toast('The product list is still loading — try again in a moment.', true); return; }
+    if ((d.returnedQty || 0) > 0) { uiAlert(d.id + ' has a return on it, so its products cannot be edited here. Use Fix details for who / where.'); return; }
+    var by = {}; CAT.forEach(function (c) { by[String(c.sku).toLowerCase()] = c; });
+    var gross = 0; (d.lines || []).forEach(function (l) { gross += l.qty * l.price; });
+    var inv = Number(d.invoiceDiscount) || 0, cart = [], miss = [];
+    (d.lines || []).forEach(function (l) {
+      var c = by[String(l.sku).toLowerCase()];
+      if (!c) { miss.push(l.product || l.sku); return; }
+      var share = inv > 0 && gross > 0 ? inv * (l.qty * l.price) / gross : 0;
+      var each = l.qty > 0 ? Math.max(0, Math.round((l.discount - share) / l.qty * 100) / 100) : 0;
+      cart.push({ sku: c.sku, name: l.product || c.name, price: l.price, qty: l.qty, discEach: each, stock: (Number(c.stock) || 0) + l.qty, cat: c.cat, serials: l.serials || [] });
+    });
+    if (miss.length) { uiAlert('These products are no longer in the list, so this invoice cannot be edited here: ' + miss.join(', ')); return; }
+    CART = cart; iSearch = ''; ACCT = null;
+    FORM = { payMode: /^cod$/i.test(d.method) ? 'cod' : 'none', paidNow: 0, phone: d.phone || '', name: d.customer || '', address: d.address || '', source: d.delivery || (OPT.sources[0] || ''),
+             touched: true, method: (FORM && FORM.method) || 'Cash', status: FORM && FORM.status, delivery: Number(d.deliveryCharge) || 0, delTouched: true, delAuto: false,
+             advance: 0, date: '', invDisc: inv };
+    EDIT = { no: d.id, paid: Number(d.paid) || 0, wasCod: /^cod$/i.test(d.method) };
+    try { updateCounts(); } catch (e) {}
+    go('invoice');
+    toast('Editing ' + esc(d.id) + ': change what is wrong, then press Save changes.', false, 8000);
+  }
+  var viewInvoiceEdit = viewInvoice;
+  viewInvoice = function () {
+    var h = viewInvoiceEdit.apply(this, arguments);
+    if (!EDIT) return h;
+    h = h.replace(/<button class="btn" type="button" id="c3hold"[^>]*>[^<]*<\/button>/, '')
+         .replace(/(<button class="btn primary" type="button" id="c3save"[^>]*>)[^<]*(<\/button>)/, '$1' + (SAVING ? 'Saving…' : 'Save changes') + '$2');
+    return '<div class="ie-bar"><span>✏️ Editing <b data-noi18n="1">' + esc(EDIT.no) + '</b> — same number, same day. Already paid: ' + fmt(EDIT.paid) + '. Choose “Paid now” only for money taken now.</span>' +
+      '<button class="btn small" type="button" data-iecancel="1">Cancel the edit</button></div>' + h;
+  };
+  var saveInvoiceEdit = saveInvoice;
+  saveInvoice = function () { EDIT_NEXT = EDIT; return saveInvoiceEdit.apply(this, arguments); };
+  var uiConfirmEdit = uiConfirm;
+  uiConfirm = function (text) {
+    if (EDIT_NEXT && /^(Save this invoice\?|Send this)/.test(String(text))) {
+      var t = cartTotals();
+      text = 'Save the changes to ' + EDIT_NEXT.no + '?\n\n' + FORM.name.trim() + '\nNew total: ' + OPT.currency + ' ' + fmt(t.grand) +
+        '\nAlready paid: ' + OPT.currency + ' ' + fmt(EDIT_NEXT.paid) +
+        (FORM.payMode === 'full' ? '\nPaid now: the rest' : FORM.payMode === 'part' && Number(FORM.paidNow) > 0 ? '\nPaid now: ' + OPT.currency + ' ' + fmt(FORM.paidNow) : '') +
+        '\n\nSame invoice number and day. Stock follows the change; the PDF is drawn again (one copy).';
+      return uiConfirmEdit(text).then(function (yes) { if (!yes) EDIT_NEXT = null; return yes; });
+    }
+    return uiConfirmEdit.apply(this, arguments);
+  };
+  var srvEdit = srv;
+  srv = function (name, args, ok, bad) {
+    if (name !== 'erpCreateInvoice' || !EDIT_NEXT || !args || !args[0]) return srvEdit.apply(this, arguments);
+    var ed = EDIT_NEXT; EDIT_NEXT = null;
+    var a = args[0];
+    var p = { invoiceNo: ed.no, customer: a.customer, items: a.items, invoiceDiscount: a.invoiceDiscount, deliveryCharge: a.deliveryCharge,
+              payMode: a.payMode, paidNow: a.paidNow, paymentMethod: a.paymentMethod || a.advanceMethod || '' };
+    return srvEdit.call(this, 'erpInvoiceEdit', [p], function (r) {
+      SAVING = false; EDIT = null;
+      CART = []; ACCT = null;
+      FORM = { payMode: 'full', paidNow: 0, phone: '', name: '', address: '', source: (OPT.sources[0] || 'Customer pickup'), touched: false, method: FORM.method, status: FORM.status, delivery: 0, advance: 0, date: '' };
+      iSearch = ''; try { updateCounts(); } catch (e) {}
+      D = null; ORDERS = null; HIST = null;
+      try { srv('erpBundle', [['catalog']], applyBundle, function () {}); } catch (e) {}
+      if (!r.changed) toast('Nothing was different on ' + esc(r.invoiceNo) + '.');
+      else toast(esc(r.invoiceNo) + ' edited: ' + esc((r.fields || []).join(', ')) + '. Total ' + fmt(r.grandTotal) + ', paid ' + fmt(r.paid) + (r.due > 0 ? ', due ' + fmt(r.due) : '') + '.' +
+                 (r.warning ? '<br><strong>' + esc(r.warning) + '</strong>' : ''), !!r.warning, r.warning ? 20000 : 9000);
+      if (typeof INVP === 'object') { INVP.data = null; }
+      openInvoicePage(r.invoiceNo);
+    }, function (e) { SAVING = false; repaint(); uiAlert('Not saved:\n\n' + errText(e)); });
+  };
+  document.addEventListener('click', function (e) {
+    var t = e.target; if (!t || !t.closest) return;
+    var b;
+    if ((b = t.closest('[data-iedit]'))) { var d = INVP && INVP.data; if (d && d.id === b.getAttribute('data-iedit')) start(d); return; }
+    if ((b = t.closest('[data-iecancel]'))) {
+      EDIT = null; CART = []; FORM = { payMode: 'full', paidNow: 0, phone: '', name: '', address: '', source: (OPT.sources[0] || 'Customer pickup'), touched: false, method: FORM.method, status: FORM.status, delivery: 0, advance: 0, date: '' };
+      repaint(); toast('Edit cancelled. Nothing was changed.'); return;
+    }
+    if ((b = t.closest('[data-iwa]'))) {
+      var no = b.getAttribute('data-iwa'); b.disabled = true;
+      srv('erpInvoiceWaSend', [{ invoiceNo: no }], function (x) {
+        b.disabled = false;
+        if (x && x.sent) toast(esc(no) + ' sent to the customer’s WhatsApp (' + esc(x.via) + (x.paid ? ', paid' : ', due ' + fmt(x.due)) + ').', false, 8000);
+        else uiAlert('Not sent: ' + ((x && (x.error || x.skipped)) || 'unknown'));
+      }, function (er) { b.disabled = false; uiAlert('Not sent:\n\n' + errText(er)); });
+    }
+  });
+})();
+</script>
 </body>
 </html>

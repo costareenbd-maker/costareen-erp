@@ -78,7 +78,7 @@ export async function erpInvoice(ctx, payload) {
     note: plainNote(inv.note), webOrder: str(inv.web_order_no),
     lines: outLines, units,
     subtotal: Math.round(gross), discount: Math.round(num(inv.discount)),
-    deliveryCharge: Math.round(num(inv.delivery_charge)), grand: Math.round(grand),
+    deliveryCharge: Math.round(num(inv.delivery_charge)), grand: Math.round(grand), invoiceDiscount: num(inv.invoice_discount), itemDiscount: num(inv.item_discount),
     paid: owe ? owe.paid : 0, owed: owe ? Math.round(owe.owed) : 0,
     returnedQty: backQty, returnedValue: Math.round(backValue),
     allBack: units > 0 && backQty >= units, cancelled,

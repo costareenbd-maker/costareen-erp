@@ -137,6 +137,8 @@ export async function createInvoice(ctx, payload, opts = {}) {
                     where p.business_id = ${ctx.biz}`).map((r) => ({ sku: String(r.sku || '').trim(), name: String(r.name || ''), stock: num(r.stock), sell: num(r.sell_price) }))
     : await erpCatalog(ctx);
   for (const p of shelfNow) bySku[p.sku.toLowerCase()] = p;
+  // invedit-1: an edit counts the invoice's own units as on the shelf again
+  if (opts.giveBack) for (const k of Object.keys(opts.giveBack)) if (bySku[k]) bySku[k] = { ...bySku[k], stock: num(bySku[k].stock) + num(opts.giveBack[k]) };
   // joint stock: lines that come from a pool this company co-owns (their code carries the pool).
   // The pools are locked and their shelves read here; the pool's own copy of the sale is made below.
   const J = await import('./joint.js');
@@ -158,7 +160,7 @@ export async function createInvoice(ctx, payload, opts = {}) {
   }
   // 115: units held for a pre-order go to that customer (a website order is never refused; the pool's copy is not checked)
   let holdNote = '';
-  if (!opts.mirror && !opts.webEntry) {
+  if (!opts.mirror && !opts.webEntry && !opts.edit) {
     const held = await (await import('./preorders.js')).heldMap(ctx, opts.preorderNo || '');
     for (const k of Object.keys(seen)) {
       const h = held[k], rec = bySku[k];
