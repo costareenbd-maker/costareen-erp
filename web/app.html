@@ -42993,5 +42993,51 @@ function phoneListOrder(v) {
 AFTER_PAINT.push(function nightListOrder() { if (NIGHT_LIST_VIEWS[VIEW]) phoneListOrder(VIEW); });
 try { if (!I18N_BN['Summary']) I18N_BN['Summary'] = 'সারাংশ'; } catch (e) {}
 </script>
+<!-- night-f7 (6 Nov 2026, eval-adapt.md: Settings > Security was 53,111px tall on a phone, Backups at 51,317px): long tables
+     on Settings > Security show 20 rows (10 on a phone) and a "Show more" button (with how many are left). The activity log keeps its own figures
+     and filters; only the rows are paged. ntPageTable(tbody, key) is reusable for any long table. -->
+<style>
+tr.nt-pgh { display:none !important; }
+.nt-pgbar { display:flex; flex-wrap:wrap; gap:8px; align-items:center; justify-content:center; padding:12px 0 4px; }
+.nt-pgbar .nt-pgn { color:var(--fd-text-3, var(--muted)); font-size:13px; }
+</style>
+<script>
+var NT_PG = {};   // rows shown per table, kept while the page is open
+var NT_PG_STEP = 20;
+/** Shows the first rows of a long table and a button for the next ones. Safe to call again after every paint. */
+function ntPageTable(tb, key) {
+  if (!tb) return;
+  var rows = [].filter.call(tb.children, function (r) { return r.tagName === 'TR'; });
+  var table = tb.closest('table'), wrap = (table && table.closest('.scroll')) || table; if (!wrap) return;
+  var bar = wrap.nextElementSibling && wrap.nextElementSibling.classList.contains('nt-pgbar') ? wrap.nextElementSibling : null;
+  var step = ntPhone() ? 10 : NT_PG_STEP;   // a phone row is a tall card
+  if (rows.length <= step + 5) { rows.forEach(function (r) { r.classList.remove('nt-pgh'); }); if (bar) bar.remove(); return; }
+  var lim = NT_PG[key] || step;
+  rows.forEach(function (r, i) { r.classList.toggle('nt-pgh', i >= lim); });
+  var left = rows.length - Math.min(lim, rows.length);
+  if (!left) { if (bar) bar.remove(); return; }
+  if (!bar) { bar = document.createElement('div'); bar.className = 'nt-pgbar'; wrap.parentNode.insertBefore(bar, wrap.nextSibling); }
+  var bn = typeof LANG !== 'undefined' && LANG === 'bn', more = Math.min(step, left);
+  bar.setAttribute('data-noi18n', '1');
+  bar.innerHTML = '<span class="nt-pgn">' + (bn ? rows.length + 'টির মধ্যে ' + (rows.length - left) + 'টি দেখানো হচ্ছে' : 'Showing ' + (rows.length - left) + ' of ' + rows.length) + '</span>' +
+    '<button type="button" class="btn small" data-ntpg="' + esc(key) + '" data-ntpgn="' + more + '">' + (bn ? 'আরও ' + more + 'টি দেখুন' : 'Show ' + more + ' more') + '</button>' +
+    '<button type="button" class="btn small" data-ntpg="' + esc(key) + '" data-ntpgn="all">' + (bn ? 'সব দেখুন' : 'Show all') + '</button>';
+}
+document.addEventListener('click', function (e) {
+  var b = e.target.closest && e.target.closest('[data-ntpg]'); if (!b) return;
+  var k = b.getAttribute('data-ntpg'), n = b.getAttribute('data-ntpgn');
+  NT_PG[k] = n === 'all' ? 1e9 : (NT_PG[k] || (ntPhone() ? 10 : NT_PG_STEP)) + Number(n);
+  ntSettingsPaging();
+});
+function ntSettingsPaging() {
+  if (VIEW !== 'settings' || SET_TAB !== 'security') return;
+  var v = el('view'); if (!v) return;
+  [].forEach.call(v.querySelectorAll('table > tbody'), function (tb, i) {
+    var box = tb.closest('[id]'), key = 'set:' + SET_TAB + ':' + (box && box.id !== 'view' ? box.id : 't' + i);
+    ntPageTable(tb, key);
+  });
+}
+AFTER_PAINT.push(ntSettingsPaging);
+</script>
 </body>
 </html>
