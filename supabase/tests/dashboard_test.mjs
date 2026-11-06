@@ -140,8 +140,9 @@ check('previous month (full month): 52000, 1 order', k.revenuePrev === 52000 && 
 check('customers 1, new 1', k.customers === 1 && k.newCustomers === 1, k);
 // PLA 900 (own cost), PETG 925 (book), MISC 100 (book via blank key), nozzle uncosted, return -900
 check('today gross: cogs 1925, gross 1425, margin 42.5', D.profit.todayCost === 1925 && D.profit.todayGross === 1425 && D.profit.todayMargin === 42.5, D.profit);
-check('month gross (invoice discount shared): revenue 3150, cost 1925, gross 1225, margin 38.9',
-  D.profit.monthRevenue === 3150 && D.profit.monthCost === 1925 && D.profit.monthGross === 1225 && D.profit.monthMargin === 38.9, D.profit);
+// night-books B5 (owner D1 = A, 6 Nov 2026): the uncosted nozzle sale (300) is kept out of gross profit, not counted as 100% profit
+check('month gross (invoice discount shared): revenue 3150, cost 1925, gross 925 (300 with no cost kept out), margin 29.4',
+  D.profit.monthRevenue === 3150 && D.profit.monthCost === 1925 && D.profit.monthGross === 925 && D.profit.monthMargin === 29.4, D.profit);
 check('uncosted revenue 300', D.profit.uncosted === 300, D.profit);
 check('expenses: 11500 paid (voided left out), 20000 fixed still to pay', D.profit.monthExpenses === 11500 && D.profit.monthUnpaid === 20000, D.profit);
 check('stock: 2 in, 2 at reorder, 3 out (discontinued counts)', D.stock.inStock === 2 && D.stock.reorder === 2 && D.stock.outOfStock === 3, D.stock);
@@ -178,7 +179,7 @@ r = await mgr('erpBundle', [['dash', 'costs']]);
 check('manager: same, and the cost book opens to them', r.ok && !('profit' in r.result.dash) && !('cash' in r.result.dash) && !!r.result.costs, r.result && Object.keys(r.result));
 await makeShareholder();
 r = await shareholder('erpBundle', [['dash', 'costs']]);
-check('shareholder sees everything through the bundle', r.ok && r.result.dash.profit.monthGross === 1225 && r.result.dash.cash &&
+check('shareholder sees everything through the bundle', r.ok && r.result.dash.profit.monthGross === 925 && r.result.dash.cash &&
   r.result.costs && r.result.costs.rows.length === 5 && !r.result.dash.hideProfit, r.result && r.result.errors);
 
 // ---- day picker -----------------------------------------------------------------
@@ -203,12 +204,12 @@ r = await owner('erpPnl', [{ months: 6 }]);
 const P = r.result;
 const cur = P.months[5], prev = P.months[4];
 check('6 months, current last', r.ok && P.months.length === 6 && cur.current && cur.month === thisMonth && !prev.current, P.months.map((m) => m.month));
-check('P&L current: sales 4500, returns 1350, net 3150, cost 1925, gross 1225 (38.9%)',
-  cur.sales === 4500 && cur.returns === 1350 && cur.netSales === 3150 && cur.cost === 1925 && cur.gross === 1225 && cur.grossMargin === 38.9, cur);
+check('P&L current: sales 4500, returns 1350, net 3150, cost 1925, 300 with no cost kept out (B5), gross 925 (32.5% of the costed sales)',
+  cur.sales === 4500 && cur.returns === 1350 && cur.netSales === 3150 && cur.cost === 1925 && cur.uncostedOut === 300 && cur.gross === 925 && cur.grossMargin === 32.5, cur);
 check('P&L delivery 60, courier 130, extra 15, short 40, uncosted 300', cur.delivery === 60 && cur.courier === 130 &&
   cur.courierExtra === 15 && cur.courierShort === 40 && cur.uncosted === 300, cur);
-check('P&L expenses 11500 by category, net -10370 (-329.2%)', cur.expenses === 11500 && cur.byCat.Rent === 10000 && cur.byCat.Utilities === 1500 &&
-  cur.net === -10370 && cur.netMargin === -329.2, cur);
+check('P&L expenses 11500 by category, net -10670 (-338.7%)', cur.expenses === 11500 && cur.byCat.Rent === 10000 && cur.byCat.Utilities === 1500 &&
+  cur.net === -10670 && cur.netMargin === -338.7, cur);
 check('P&L previous month: 52000 sales, cost 40000', prev.sales === 52000 && prev.cost === 40000 && prev.gross === 12000, prev);
 check('P&L categories', JSON.stringify(P.categories) === '["Rent","Utilities"]', P.categories);
 r = await owner('erpPnl', [{ months: 40 }]);
@@ -222,8 +223,8 @@ check('manager cannot see product profit', !r.ok, r);
 r = await owner('erpMoney', [{ days: 9999 }]);
 const M = r.result;
 // fix 2: PLA costs its own 900, not the book's 750
-check('money: revenue 55150, cost 41925 (own cost first), profit 13225, margin 24',
-  r.ok && M.revenue === 55150 && M.cost === 41925 && M.profit === 13225 && M.margin === 24, M);
+check('money: revenue 55150, cost 41925 (own cost first), profit 12925 (300 with no cost kept out, B5), margin 23.6',
+  r.ok && M.revenue === 55150 && M.cost === 41925 && M.profit === 12925 && M.margin === 23.6, M);
 check('money: unknown revenue 300, 1 unit', M.unknownRevenue === 300 && M.unknownUnits === 1, M);
 const mPla = M.products.find((p) => p.sku === 'FIL-SUN-PLA-BLA-001');
 check('money: PLA nets its return, cost 900', mPla.units === 1 && mPla.cost === 900 && near(mPla.revenue, Math.round(2700 - 200 * 2700 / 4200 - 1350)), mPla);

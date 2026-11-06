@@ -22,6 +22,7 @@ import { returnsFor } from './returns.js';
 import { serviceFor } from './repairs.js';
 import { poolExpenses } from '../lib/pool.js';
 import { commissionDue } from './commission.js';
+import { lockedThrough } from '../lib/period.js';
 
 // ------------------------------------------------------------------ months
 
@@ -253,17 +254,21 @@ export async function monthGross(ctx, month) {
     o.lines += ln.total;
     o.discount = Math.max(o.discount, ln.discount);
   }
-  let revenue = 0, cogs = 0;
+  let revenue = 0, cogs = 0, unk = 0;
   for (const L of lines) {
     const I = inv[L.id];
     const leftI = discLeft(I.discount, I.gross, I.lines);
     const share = (I.lines > 0 && leftI > 0) ? leftI * (L.total / I.lines) : 0;
-    revenue += L.total < 0 ? L.total : Math.max(0, L.total - share);
+    const v = L.total < 0 ? L.total : Math.max(0, L.total - share);
+    revenue += v;
     cogs += L.cost * L.qty;
+    if (!(L.cost > 0)) unk += v;                       // night-books B5: no known cost, kept out of profit (as pnlFor)
   }
+  const locked = await lockedThrough(ctx);
+  if (locked && month <= locked) unk = 0;              // a closed month keeps the figures it was closed with
   // 111: a late shipment bill's part for units already sold is cost of the month it was entered in (as pnlFor)
   cogs += await soft(ctx, async () => num((await ctx.tx`select coalesce(sum(sold_part), 0) as s from late_costs where business_id = ${ctx.biz} and month = ${month}`)[0].s), 0);
-  return { revenue: Math.round(revenue), cost: Math.round(cogs), gross: Math.round(revenue - cogs) };
+  return { revenue: Math.round(revenue), cost: Math.round(cogs), gross: Math.round(revenue - cogs - unk), uncostedOut: Math.round(unk) };
 }
 
 // ----------------------------------------------------------------- courier
@@ -735,7 +740,7 @@ export async function pnlFor(ctx, months) {
 async function pnlForRaw(ctx, months) {
   const now = monthKey(ctx.now);
   const want = {};
-  for (const m of months) want[m] = { month: m, sales: 0, returns: 0, cost: 0, delivery: 0, uncosted: 0 };
+  for (const m of months) want[m] = { month: m, sales: 0, returns: 0, cost: 0, delivery: 0, uncosted: 0, uncostedRet: 0, uncostedInv: new Set() };
 
   const { bySku } = await products(ctx);
   const inv = {}, invOrder = [];
@@ -765,12 +770,13 @@ async function pnlForRaw(ctx, months) {
       if (L.total < 0 || isReturn) {
         M.returns += -L.total;
         M.cost += unit * L.qty;
+        if (!(unit > 0)) M.uncostedRet += -L.total;          // night-books B5: a return of a no-cost sale is kept out too
         continue;
       }
       const share = (I.sum > 0 && leftD > 0) ? leftD * (L.total / I.sum) : 0;
       const net = Math.max(0, L.total - share);
       M.sales += net;
-      if (unit > 0) M.cost += unit * L.qty; else M.uncosted += net;
+      if (unit > 0) M.cost += unit * L.qty; else if (net > 0) { M.uncosted += net; M.uncostedInv.add(id); }
     }
     // Fix (docs/fixes/dashboard.md): a sale whose lines were logged without
     // prices (everything before July 2026) says nothing about delivery - the
@@ -836,11 +842,17 @@ async function pnlForRaw(ctx, months) {
     return c;
   }, {});
 
+  // a closed month keeps the figures it was closed with (its net profit and shares are frozen), so the D1 rule
+  // below only applies to the months still open
+  const locked = await lockedThrough(ctx);
   const out = [];
   for (const m of months) {
     const x = want[m];
     const net = x.sales - x.returns;
-    const gross = net - x.cost;
+    // night-books B5 (owner D1 = A, 6 Nov 2026): a sale with no known cost is kept OUT of profit and shown apart -
+    // it stays in sales (it was sold), but its value is not gross profit (it used to count as 100% profit).
+    const keptOut = locked && m <= locked ? 0 : x.uncosted - x.uncostedRet;
+    const gross = net - x.cost - keptOut;
     const exp = await soft(ctx, () => expByCat(ctx, m), { total: 0, byCat: {} });
     const cour = Math.round(courier[m] || 0);
     const cx = chkM[m] || { extra: 0, short: 0 };
@@ -850,12 +862,12 @@ async function pnlForRaw(ctx, months) {
     const profit = gross + x.delivery + cx.extra - cx.short - cour - exp.total + svc.income - svc.parts + forfeited + jointShare;
     out.push({ month: m, sales: Math.round(x.sales), returns: Math.round(x.returns), netSales: Math.round(net),
                cost: Math.round(x.cost), gross: Math.round(gross),
-               grossMargin: net > 0 ? Math.round(gross / net * 1000) / 10 : 0,
+               grossMargin: net - keptOut > 0 ? Math.round(gross / (net - keptOut) * 1000) / 10 : 0,   // on the sales whose cost is known
                expenses: Math.round(exp.total), byCat: exp.byCat,
                net: Math.round(profit), netMargin: net > 0 ? Math.round(profit / net * 1000) / 10 : 0,
                delivery: Math.round(x.delivery), courier: cour,
                courierExtra: Math.round(cx.extra), courierShort: Math.round(cx.short),
-               uncosted: Math.round(x.uncosted), current: m === now,
+               uncosted: Math.round(x.uncosted), uncostedReturns: Math.round(x.uncostedRet), uncostedOut: Math.round(keptOut), uncostedN: x.uncostedInv.size, current: m === now,
                serviceIncome: svc.income, serviceParts: svc.parts, serviceJobs: svc.jobs, joint: Math.round(jointM[m] || 0), jointShare, forfeited });
   }
   return out;
@@ -982,7 +994,7 @@ export async function erpMoney(ctx, payload) {
   const skuOrder = [], brandOrder = [], catOrder = [];
   let revenue = 0, cost = 0, unknownRevenue = 0, unknownUnits = 0;
   function bucket(map, order, name) {
-    if (!map[name]) { map[name] = { name, units: 0, revenue: 0, cost: 0, profit: 0, unknown: false }; order.push(name); }
+    if (!map[name]) { map[name] = { name, units: 0, revenue: 0, cost: 0, profit: 0, unknown: false, unknownRevenue: 0 }; order.push(name); }
     return map[name];
   }
   for (const ln of lines) {
@@ -1003,24 +1015,26 @@ export async function erpMoney(ctx, payload) {
     if (!s) {
       s = bySku[k] = { sku: p ? p.sku : ln.sku, name: p ? p.name : ln.sku,
                        brand: p ? p.brand : '', cat: p ? p.cat : '', type: p ? p.type : '',
-                       units: 0, revenue: 0, cost: 0, profit: 0, unknown: !known };
+                       units: 0, revenue: 0, cost: 0, profit: 0, unknown: !known, unknownRevenue: 0 };
       skuOrder.push(k);
     }
     s.units += ln.qty; s.revenue += net; s.cost += lineCost;
-    if (!known) s.unknown = true;
+    if (!known) { s.unknown = true; s.unknownRevenue += net; }
     const b = bucket(byBrand, brandOrder, (p && p.brand) || 'Unknown');
     b.units += ln.qty; b.revenue += net; b.cost += lineCost;
-    if (!known) b.unknown = true;
+    if (!known) { b.unknown = true; b.unknownRevenue += net; }
     const c = bucket(byCat, catOrder, (p && p.cat) || 'Unknown');
     c.units += ln.qty; c.revenue += net; c.cost += lineCost;
-    if (!known) c.unknown = true;
+    if (!known) { c.unknown = true; c.unknownRevenue += net; }
   }
   function finish(o) {
     o.units = Math.round(o.units * 100) / 100;
     o.revenue = Math.round(o.revenue);
     o.cost = Math.round(o.cost);
-    o.profit = o.revenue - o.cost;
-    o.margin = o.revenue > 0 ? Math.round((o.profit / o.revenue) * 1000) / 10 : 0;
+    // night-books B5 (D1 = A): sales with no known cost are kept out of the profit, shown apart (unknownRevenue)
+    o.unknownRevenue = Math.round(o.unknownRevenue || 0);
+    o.profit = o.revenue - o.unknownRevenue - o.cost;
+    o.margin = o.revenue - o.unknownRevenue > 0 ? Math.round((o.profit / (o.revenue - o.unknownRevenue)) * 1000) / 10 : 0;
     return o;
   }
   function list(map, order) {
@@ -1058,10 +1072,11 @@ export async function erpMoney(ctx, payload) {
   dead.sort((a, b) => b.tied - a.tied);
 
   revenue = Math.round(revenue); cost = Math.round(cost);
+  const unk = Math.round(unknownRevenue);                // night-books B5: kept out of the profit (D1 = A)
   return {
     days, deadAfter,
-    revenue, cost, profit: revenue - cost,
-    margin: revenue > 0 ? Math.round(((revenue - cost) / revenue) * 1000) / 10 : 0,
+    revenue, cost, profit: revenue - unk - cost,
+    margin: revenue - unk > 0 ? Math.round(((revenue - unk - cost) / (revenue - unk)) * 1000) / 10 : 0,
     unknownRevenue: Math.round(unknownRevenue), unknownUnits: Math.round(unknownUnits),
     products: productsOut.slice(0, 200),
     brands: list(byBrand, brandOrder), categories: list(byCat, catOrder),

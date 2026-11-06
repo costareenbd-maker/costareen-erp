@@ -65,4 +65,33 @@ await sql`insert into shipment_costs (business_id, reference, label, amount, voi
   check('B4 the struck-out 999 is not in the shipment\'s other costs (300 only)', s && s.extraCosts === 300, s);
 }
 
+// ---- B5 (D1 = A): sales with no known cost are kept out of profit and shown apart
+const pnl0 = (await owner('erpPnl', [{ months: 1 }])).result.months.find((m) => m.month === thisMonth);
+const uid = (await sql`select id from products where business_id = ${B} and sku = 'NB-U'`)[0].id;
+await sql`insert into stock_movements (business_id, product_id, kind, direction, qty, unit_price, reference) values (${B}, ${uid}, 'RECEIVE', 'IN', 5, 0, 'NB-S2')`;
+r = await mgr('erpCreateInvoice', [{ customer: { name: 'Night Buyer', phone: '01712340001' }, items: [{ sku: 'NB-U', qty: 2 }, { sku: 'NB-A', qty: 3 }], payMode: 'full' }]);
+check('B5 a sale of 2 no-cost units (500 each) and 3 costed (250, cost 100)', r.ok, r);
+{
+  const p = (await owner('erpPnl', [{ months: 1 }])).result.months.find((m) => m.month === thisMonth);
+  check('B5 P&L: the 1000 of no-cost sales is still in sales', p.netSales - pnl0.netSales === 1750, [p.netSales, pnl0.netSales]);
+  check('B5 P&L: ...but kept out of gross profit and shown apart (1 sale, 1000)', p.uncostedOut - (pnl0.uncostedOut || 0) === 1000 && p.uncostedN - (pnl0.uncostedN || 0) === 1, p);
+  check('B5 P&L: gross profit grew by the costed part only (750 - 300 = 450)', p.gross - pnl0.gross === 450, [p.gross, pnl0.gross]);
+  check('B5 P&L adds up: net sales - cost - kept out = gross', p.netSales - p.cost - p.uncostedOut === p.gross, p);
+  const d = (await owner('erpFdDash', [{ months: 1 }])).result;
+  check('B5 dashboard gross = P&L gross, with the no-cost sales apart', d.kpi.gross.v === p.gross && d.kpi.uncosted.v === p.uncostedOut && d.kpi.net.v === p.net, [d.kpi.gross, d.kpi.uncosted, p.gross]);
+  const e = (await owner('erpExpenses', [{ month: thisMonth }])).result;
+  check('B5 Expenses still the one net profit', e.net === p.net, [e.net, p.net]);
+  const sh = (await owner('erpShipments', [{}])).result;
+  const s2 = sh.shipments.find((x) => x.reference === 'NB-S2'), s1 = sh.shipments.find((x) => x.reference === 'NB-S1');
+  check('B5 shipment with no cost: 1000 sold, profit 0 (not 1000), shown apart', s2 && s2.revenue === 1000 && s2.profit === 0 && s2.unknownRevenue === 1000 && s2.unknownSold === 2 && !s2.costKnown, s2);
+  check('B5 costed shipment: profit 450', s1 && s1.profit === 450 && s1.unknownRevenue === 0, s1);
+  check('B5 shipment totals carry the no-cost sales apart', sh.totals.unknownRevenue >= 1000 && sh.totals.uncostedShipments >= 1, sh.totals);
+  const m = (await owner('erpMoney', [{ days: 30 }])).result;
+  check('B5 product profitability: profit = sold - no-cost sales - cost', m.profit === m.revenue - m.unknownRevenue - m.cost && m.unknownRevenue >= 1000, [m.revenue, m.cost, m.unknownRevenue, m.profit]);
+  const nu = m.products.find((x) => String(x.sku).toUpperCase() === 'NB-U');
+  check('B5 the no-cost product shows no profit', nu && nu.profit === 0 && nu.unknownRevenue === 1000, nu);
+  const sc = (await owner('erpSystemCheck', [])).result.checks.find((c) => c.id === 'P3');
+  check('B5 System check has the "kept out of profit" line, as a warning', sc && sc.status === 'warn' && sc.count >= 1 && /kept out/.test(sc.detail), sc);
+}
+
 await done();

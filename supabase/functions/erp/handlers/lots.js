@@ -82,10 +82,12 @@ async function drawRows(ctx, refFilter) {
 }
 
 function sums(lot, draws) {
-  const s = { sold: 0, revenue: 0, cost: 0, other: 0 };
+  const s = { sold: 0, revenue: 0, cost: 0, other: 0, unknownSold: 0, unknownRevenue: 0 };
   for (const d of draws) {
     if (d.kind === 'SALE' || d.kind === 'RETURN') {
       s.sold += num(d.qty); s.revenue += num(d.qty) * num(d.price); s.cost += num(d.qty) * num(d.unit_cost);
+      // night-books B5 (D1 = A): units whose cost is not known earn no profit here - their sales are shown apart
+      if (d.nocost) { s.unknownSold += num(d.qty); s.unknownRevenue += num(d.qty) * num(d.price); }
     } else if (num(d.qty) > 0) s.other += num(d.qty);               // counted out, damaged, used in a repair
   }
   return s;
@@ -121,7 +123,7 @@ async function erpShipmentsRaw(ctx) {
     let s = by[key];
     if (!s) {
       s = by[key] = { reference: l.source === 'opening' ? 'Stock before lots began' : key, opening: l.source === 'opening', supplier: str(l.supplier),
-                      at: l.received_at, products: 0, unitsIn: 0, unitsLeft: 0, landed: 0, leftValue: 0, sold: 0, revenue: 0, cost: 0, other: 0, uncosted: 0 };
+                      at: l.received_at, products: 0, unitsIn: 0, unitsLeft: 0, landed: 0, leftValue: 0, sold: 0, revenue: 0, cost: 0, other: 0, uncosted: 0, unknownSold: 0, unknownRevenue: 0 };
       order.push(key);
     }
     if (l.received_at < s.at) s.at = l.received_at;
@@ -130,27 +132,33 @@ async function erpShipmentsRaw(ctx) {
     if (l.unit_cost === null) s.uncosted++;
     s.landed += num(l.qty_in) * num(l.unit_cost); s.leftValue += num(l.qty_left) * num(l.unit_cost);
     s.sold += x.sold; s.revenue += x.revenue; s.cost += x.cost; s.other += x.other;
+    s.unknownSold += x.unknownSold; s.unknownRevenue += x.unknownRevenue;
   }
   const list = order.map((k) => {
     const s = by[k];
     return { reference: s.reference, opening: s.opening, supplier: s.supplier, date: formatDate(s.at, 'd MMM yyyy'), products: s.products,
              unitsIn: R(s.unitsIn), unitsLeft: R(s.unitsLeft), soldPct: s.unitsIn > 0 ? Math.round(s.sold / s.unitsIn * 100) : 0,
              landed: R(s.landed), extraCosts: R(costs[s.reference] || 0), leftValue: R(s.leftValue), sold: R(s.sold), revenue: R(s.revenue),
-             cost: R(s.cost), profit: R(s.revenue - s.cost), margin: s.revenue > 0 ? Math.round((s.revenue - s.cost) / s.revenue * 1000) / 10 : 0,
+             cost: R(s.cost), profit: R(s.revenue - s.unknownRevenue - s.cost),
+             margin: s.revenue - s.unknownRevenue > 0 ? Math.round((s.revenue - s.unknownRevenue - s.cost) / (s.revenue - s.unknownRevenue) * 1000) / 10 : 0,
+             unknownSold: R(s.unknownSold), unknownRevenue: R(s.unknownRevenue),
              costKnown: s.uncosted === 0, status: s.unitsLeft <= 0 ? 'Sold out' : s.sold > 0 ? 'Selling' : 'In stock' };
   });
   const hold = await holdingFor(ctx, await lotMonths(ctx));
   const late = await lateSold(ctx);
   list.forEach((x) => {
     // a cost that came after the goods: the part for units already sold is a cost of these sales (111)
-    if (late[x.reference]) { x.cost += R(late[x.reference]); x.profit -= R(late[x.reference]); x.margin = x.revenue > 0 ? Math.round(x.profit / x.revenue * 1000) / 10 : 0; }
+    if (late[x.reference]) { x.cost += R(late[x.reference]); x.profit -= R(late[x.reference]); x.margin = x.revenue - x.unknownRevenue > 0 ? Math.round(x.profit / (x.revenue - x.unknownRevenue) * 1000) / 10 : 0; }
     x.holding = R(sumM(hold.byRef[x.reference])); x.net = x.profit - x.holding;
   });
   const t = list.filter((x) => !x.opening);
   return { currency: 'BDT', shipments: list, holdingOn: hold.on, holdingCategories: hold.categories, noWeight: hold.noWeight,
            totals: { count: t.length, landed: t.reduce((a, x) => a + x.landed, 0), leftValue: t.reduce((a, x) => a + x.leftValue, 0),
                      profit: t.reduce((a, x) => a + x.profit, 0), revenue: t.reduce((a, x) => a + x.revenue, 0),
-                     holding: t.reduce((a, x) => a + x.holding, 0), net: t.reduce((a, x) => a + x.net, 0) } };
+                     holding: t.reduce((a, x) => a + x.holding, 0), net: t.reduce((a, x) => a + x.net, 0),
+                     // B5: what was sold from lots with no cost, kept out of the profit above
+                     unknownRevenue: t.reduce((a, x) => a + x.unknownRevenue, 0), unknownSold: t.reduce((a, x) => a + x.unknownSold, 0),
+                     uncostedShipments: t.filter((x) => !x.costKnown).length } };
 }
 
 export async function erpShipment(ctx, payload) {
@@ -181,8 +189,9 @@ export async function erpShipment(ctx, payload) {
     const book = bySku[str(l.sku).toLowerCase()];
     const holding = R(sumM(hold.byLot[l.id]));
     return { sku: str(l.sku), name: str(l.name), unitCost: l.unit_cost === null ? null : num(l.unit_cost), bookCost: book ? R(book.cost) : 0,
-             unitsIn: num(l.qty_in), unitsLeft: num(l.qty_left), sold: x.sold, other: x.other, revenue: R(x.revenue), cost: R(x.cost), profit: R(x.revenue - x.cost),
-             holding, net: R(x.revenue - x.cost) - holding };
+             unitsIn: num(l.qty_in), unitsLeft: num(l.qty_left), sold: x.sold, other: x.other, revenue: R(x.revenue), cost: R(x.cost), profit: R(x.revenue - x.unknownRevenue - x.cost),
+             unknownSold: R(x.unknownSold), unknownRevenue: R(x.unknownRevenue),
+             holding, net: R(x.revenue - x.unknownRevenue - x.cost) - holding };
   });
   const extra = opening ? [] : (await ctx.tx`select id, label, amount, at, voided from shipment_costs where business_id = ${ctx.biz} and reference = ${ref} order by at`)
     .map((c) => ({ id: c.id, label: str(c.label), amount: R(c.amount), voided: str(c.voided) }));
@@ -228,9 +237,12 @@ export async function erpLotFunding(ctx, payload) {
   for (const f of rows) {
     if (f.private && !owner) continue;
     const ds = await drawRows(ctx, str(f.reference));
-    let sold = 0, revenue = 0, cost = 0, unitsIn = 0, landed = 0;
+    let sold = 0, revenue = 0, cost = 0, unitsIn = 0, landed = 0, unkSold = 0, unkRev = 0;
     const since = new Date(f.at).getTime();
-    for (const d of ds) if ((d.kind === 'SALE' || d.kind === 'RETURN') && !(d.at && new Date(d.at).getTime() < since)) { sold += num(d.qty); revenue += num(d.qty) * num(d.price); cost += num(d.qty) * num(d.unit_cost); }
+    for (const d of ds) if ((d.kind === 'SALE' || d.kind === 'RETURN') && !(d.at && new Date(d.at).getTime() < since)) {
+      sold += num(d.qty); revenue += num(d.qty) * num(d.price); cost += num(d.qty) * num(d.unit_cost);
+      if (d.nocost) { unkSold += num(d.qty); unkRev += num(d.qty) * num(d.price); }   // B5: no cost, no profit for the investor
+    }
     for (const l of await ctx.tx`select qty_in, unit_cost from stock_lots where business_id = ${ctx.biz} and reference = ${str(f.reference)} and source = 'receive'`) {
       unitsIn += num(l.qty_in); landed += num(l.qty_in) * num(l.unit_cost);
     }
@@ -240,7 +252,8 @@ export async function erpLotFunding(ctx, payload) {
     const earnedM = ret.byFunding[f.id] || {};
     out.push({ id: f.id, holder: str(f.holder_no), name: str(f.name) || str(f.holder_no), reference: str(f.reference), pct: num(f.pct), profitShare: num(f.return_value),
                funded: R(num(f.amount) > 0 ? num(f.amount) : landed * p), unitsFunded: Math.round(unitsIn * p * 100) / 100, soldUnits: Math.round(sold * p * 100) / 100,
-               recovered: R(cost * p), profit: R((revenue - cost - late) * p), holding: R(held * p),
+               recovered: R(cost * p), profit: R((revenue - unkRev - cost - late) * p), holding: R(held * p),
+               unknownSold: Math.round(unkSold * p * 100) / 100, unknownRevenue: R(unkRev * p),
                earned: R(Object.values(earnedM).reduce((t, v) => t + num(v), 0)),
                since: formatDate(f.at, 'd MMM yyyy'), note: str(f.note) });
   }

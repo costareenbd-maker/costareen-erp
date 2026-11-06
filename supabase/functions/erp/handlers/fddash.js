@@ -75,11 +75,15 @@ async function lines(ctx, months) {
 }
 
 function sumUp(rows) {
-  const t = { revenue: 0, cost: 0, units: 0, orders: 0 };
-  const inv = new Set();
-  for (const x of rows) { t.revenue += x.revenue; t.cost += x.cost; t.units += x.qty; if (x.revenue > 0) inv.add(x.inv); }
-  t.orders = inv.size;
-  t.gross = t.revenue - t.cost;
+  const t = { revenue: 0, cost: 0, units: 0, orders: 0, unknown: 0 };
+  const inv = new Set(), unk = new Set();
+  for (const x of rows) {
+    t.revenue += x.revenue; t.cost += x.cost; t.units += x.qty; if (x.revenue > 0) inv.add(x.inv);
+    if (!x.costed && x.revenue) { t.unknown += x.revenue; if (x.revenue > 0) unk.add(x.inv); }
+  }
+  t.orders = inv.size; t.unknownN = unk.size;
+  // night-books B5 (D1 = A): a sale with no known cost is kept out of the profit, shown apart (unknown)
+  t.gross = t.revenue - t.cost - t.unknown;
   return t;
 }
 
@@ -128,7 +132,7 @@ export async function erpFdDash(ctx, payload) {
     for (const x of all) by[x.month] = x;
     const add = (ms) => ms.reduce((t, m) => {
       const x = by[m] || {};
-      for (const k of ['sales', 'returns', 'netSales', 'cost', 'gross', 'expenses', 'net', 'delivery', 'courier', 'courierExtra', 'courierShort', 'serviceIncome', 'serviceParts', 'forfeited', 'jointShare']) t[k] = (t[k] || 0) + num(x[k]);
+      for (const k of ['sales', 'returns', 'netSales', 'cost', 'gross', 'expenses', 'net', 'delivery', 'courier', 'courierExtra', 'courierShort', 'serviceIncome', 'serviceParts', 'forfeited', 'jointShare', 'uncostedOut', 'uncostedN']) t[k] = (t[k] || 0) + num(x[k]);
       return t;
     }, {});
     pnl = add(months); pnlPrev = add(prevMonths);
@@ -140,7 +144,10 @@ export async function erpFdDash(ctx, payload) {
   // revenue / cost / gross: the P&L's figure for the whole business, the lines' for a group
   const rev = group ? cur.revenue : pnl.netSales, revPrev = group ? prev.revenue : pnlPrev.netSales;
   const cost = group ? cur.cost : pnl.cost, costPrev = group ? prev.cost : pnlPrev.cost;
-  const gross = rev - cost, grossPrev = revPrev - costPrev;
+  // night-books B5: sales with no known cost are kept out of gross profit (the P&L's own gross for the whole business)
+  const unknown = group ? cur.unknown : pnl.uncostedOut, unknownPrev = group ? prev.unknown : pnlPrev.uncostedOut;
+  const unknownN = group ? cur.unknownN : pnl.uncostedN;
+  const gross = rev - cost - unknown, grossPrev = revPrev - costPrev - unknownPrev;
 
   // stock now
   // stock value at FIFO: what is left in each lot x that lot's landed cost (107)
@@ -170,7 +177,7 @@ export async function erpFdDash(ctx, payload) {
     const cc = byColour[col] || (byColour[col] = { label: col, units: 0, value: 0 });
     cc.units += x.qty; cc.value += x.revenue;
     const p = byProduct[x.sku] || (byProduct[x.sku] = { sku: x.sku, name: x.name, units: 0, revenue: 0, gross: 0 });
-    p.units += x.qty; p.revenue += x.revenue; p.gross += x.revenue - x.cost;
+    p.units += x.qty; p.revenue += x.revenue; if (x.costed) p.gross += x.revenue - x.cost;   // B5: no cost, no profit
   }
   const topProducts = Object.values(byProduct).sort((a, b) => b.revenue - a.revenue).slice(0, 8)
     .map((p) => ({ sku: p.sku.toUpperCase(), name: p.name, units: R(p.units), revenue: R(p.revenue), gross: full ? R(p.gross) : undefined }));
@@ -217,9 +224,12 @@ export async function erpFdDash(ctx, payload) {
   };
   if (full) {
     out.kpi.gross = { v: R(gross), prev: R(grossPrev) };
-    out.kpi.margin = { v: pct(gross, rev), prev: pct(grossPrev, revPrev) };
+    out.kpi.margin = { v: pct(gross, rev - unknown), prev: pct(grossPrev, revPrev - unknownPrev) };
+    out.kpi.uncosted = { v: R(unknown), n: unknownN };
     out.kpi.stockValue = { v: R(stockValue), uncosted };
-    out.calc.gross = [['Revenue', R(rev)], ['− Cost of the goods sold (fixed on each invoice line the day it was sold)', -R(cost)], ['= Gross profit', R(gross)]];
+    out.calc.gross = [['Revenue', R(rev)], ['− Cost of the goods sold (fixed on each invoice line the day it was sold)', -R(cost)]]
+      .concat(unknown ? [['− Sales with no cost price, kept out of profit (' + unknownN + ' sale(s))', -R(unknown)]] : [])
+      .concat([['= Gross profit', R(gross)]]);
     out.calc.stockValue = [['What is left in each stock lot × that lot’s landed cost (FIFO); stock from before lots at the product’s cost', R(stockValue)]].concat(uncosted ? [[uncosted + ' product(s) in stock have no cost yet - not counted', 0]] : []);
   }
   if (!group && full) {
