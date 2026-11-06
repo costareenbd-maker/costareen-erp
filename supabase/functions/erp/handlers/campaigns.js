@@ -84,14 +84,34 @@ async function sendsAll(ctx) {
                 from campaign_sends where business_id = ${ctx.biz} order by seq`;
 }
 
-/** erpLeadMap_: key -> lead (the last row wins, as the sheet's loop did). */
+/** erpLeadMap_: key -> lead (the last row wins, as the sheet's loop did).
+ *  night-stock D19 (one lead list, migration 158): the Leads page's customer leads with a usable phone join the
+ *  campaign list too (not won / lost, not already made a customer). A campaign row wins over its own mirror. */
 async function leadMap(ctx) {
-  const rows = await ctx.tx`select id, lead_key, name, phone, source, note from campaign_leads
+  const rows = await ctx.tx`select id, lead_key, name, phone, source, note, inbox_lead_id from campaign_leads
                             where business_id = ${ctx.biz} order by seq`;
-  const map = {};
+  const map = {}, linked = {};
   for (const r of rows) {
     const k = String(r.lead_key || '');
-    if (k) map[k] = { id: r.id, key: k, name: str0(r.name), phone: str0(r.phone), source: str0(r.source), note: str0(r.note) };
+    if (r.inbox_lead_id) linked[String(r.inbox_lead_id)] = true;
+    if (k) map[k] = { id: r.id, key: k, name: str0(r.name), phone: str0(r.phone), source: str0(r.source), note: str0(r.note),
+                      inboxId: r.inbox_lead_id ? String(r.inbox_lead_id) : '' };
+  }
+  const inbox = await ctx.tx`select id, name, phone, source, note, stage, source_ref from inbox_leads
+                             where business_id = ${ctx.biz} and kind = 'customer' and customer_id is null
+                               and coalesce(phone, '') <> '' order by created_at, id`;
+  for (const l of inbox) {
+    const lid = String(l.id);
+    if (linked[lid]) {   // a campaign lead's own row: won / lost on the Leads page = off the campaign list too
+      if (Number(l.stage) >= 5) Object.keys(map).forEach((k) => { if (map[k].inboxId === lid) delete map[k]; });
+      continue;
+    }
+    if (Number(l.stage) >= 5 || String(l.source_ref || '').indexOf('campaign:') === 0) continue;
+    let phone = '';
+    try { phone = anyPhone(l.phone, ''); } catch (_) { continue; }
+    const k = leadKey(phone, str0(l.name));
+    if (!k || k.indexOf('n:') === 0 || map[k]) continue;
+    map[k] = { id: '', key: k, name: str0(l.name), phone, source: 'Leads page', note: str0(l.note), inboxId: lid, fromLeads: true };
   }
   return map;
 }
@@ -463,6 +483,15 @@ export async function erpLeadsAdd(ctx, payload) {
   }
   if (add.length) {
     await ctx.tx`insert into campaign_leads ${ctx.tx(add, 'business_id', 'lead_key', 'name', 'phone', 'source', 'note', 'added_at', 'by')}`;
+    // D19: the same people show on the Leads page (one lead list); linked back by inbox_lead_id
+    const mirror = add.map((a) => ({ business_id: ctx.biz, kind: 'customer', name: a.name || null, phone: a.phone,
+      note: [a.source, a.note].filter((x) => x).join(' · ') || null, source: 'campaign', stage: 1,
+      source_ref: 'campaign:' + a.lead_key, added_by: by || null, created_at: ctx.now, updated_at: ctx.now }));
+    await ctx.tx`insert into inbox_leads ${ctx.tx(mirror, 'business_id', 'kind', 'name', 'phone', 'note', 'source', 'stage', 'source_ref', 'added_by', 'created_at', 'updated_at')}
+                 on conflict (business_id, source_ref) where source_ref is not null do nothing`;
+    await ctx.tx`update campaign_leads cl set inbox_lead_id = il.id from inbox_leads il
+                 where cl.business_id = ${ctx.biz} and cl.inbox_lead_id is null and il.business_id = cl.business_id
+                   and il.source_ref = 'campaign:' || cl.lead_key`;
   }
   if (one && skipped.length) throw new Error(String(one.phone) + ' is ' + skipped[0].why + '.');
   return { added: add.length, skipped };
@@ -473,9 +502,16 @@ export async function erpLeadSave(ctx, payload) {
   payload = payload || {};
   const hit = (await leadMap(ctx))[String(payload.key || '')];
   if (!hit) throw new Error('That lead is no longer on the list.');
-  await ctx.tx`update campaign_leads set name = ${String(payload.name || '').trim().slice(0, 80)},
-                 source = ${String(payload.source || '').trim().slice(0, 60)}, note = ${String(payload.note || '').trim().slice(0, 200)}
-               where id = ${hit.id}`;
+  const nm = String(payload.name || '').trim().slice(0, 80), src = String(payload.source || '').trim().slice(0, 60),
+        nt = String(payload.note || '').trim().slice(0, 200);
+  if (hit.id) {
+    await ctx.tx`update campaign_leads set name = ${nm}, source = ${src}, note = ${nt} where id = ${hit.id}`;
+  }
+  if (hit.inboxId) {   // D19: one lead, one name - the Leads page row follows (its note keeps where it came from)
+    await ctx.tx`update inbox_leads set name = ${nm || null}, note = ${(hit.id ? [src, nt].filter((x) => x).join(' · ') : nt) || null},
+                   updated_at = ${ctx.now} where id = ${hit.inboxId} and business_id = ${ctx.biz}`;
+    await ctx.tx`insert into inbox_lead_events (business_id, lead_id, what, by_name) values (${ctx.biz}, ${hit.inboxId}, 'Details changed from Campaigns', ${ctx.s.name || null})`;
+  }
   return { ok: true };
 }
 
@@ -483,7 +519,11 @@ export async function erpLeadSave(ctx, payload) {
 export async function erpLeadRemove(ctx, payload) {
   const key = String((payload && payload.key) || ''), hit = (await leadMap(ctx))[key];
   if (!hit) throw new Error('That lead is no longer on the list.');
-  await ctx.tx`delete from campaign_leads where id = ${hit.id}`;
+  if (hit.id) await ctx.tx`delete from campaign_leads where id = ${hit.id}`;
+  if (hit.inboxId) {   // D19: the Leads page keeps the person (nothing is deleted there), marked Lost with the reason
+    await ctx.tx`update inbox_leads set stage = 6, updated_at = ${ctx.now} where id = ${hit.inboxId} and business_id = ${ctx.biz} and stage < 5`;
+    await ctx.tx`insert into inbox_lead_events (business_id, lead_id, what, by_name) values (${ctx.biz}, ${hit.inboxId}, 'Removed from the campaign list (marked Lost)', ${ctx.s.name || null})`;
+  }
   return { ok: true };
 }
 
