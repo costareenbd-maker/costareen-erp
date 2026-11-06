@@ -10525,7 +10525,7 @@ function switchBusiness(id) {
     loadAll();
     // the menu (screens set to Off / Only owners), the apps and the role belong to the business: ask again
     // (29 Oct 2026: after a switch the previous business's menu stayed - hidden screens came back)
-    APPS = null;
+    AP_DATA = null;
     srv('erpHello', [], function (me) { if (me && me.ok) { ME = me; try { applyRole(); } catch (e) {} try { if (typeof tabbarSync === 'function') tabbarSync(); } catch (e) {} repaint(); } }, function () {});
   }, function (e) {
     toast(esc(e && e.message ? e.message : e), true, 12000);
@@ -11833,7 +11833,7 @@ function wirePhase5() {
     if (!(await uiConfirm('Switch the second step off?\n\nSigning in as owner will need only the password again. This makes the account easier to break into.'))) return;
     mfaOff();
   });
-  var sp = el('sec_people'); if (sp) sp.addEventListener('click', function () { SET_TAB = 'people'; repaint(); window.scrollTo(0, 0); });
+  var sp = el('sec_people'); if (sp) sp.addEventListener('click', function () { SET_TAB = 'users'; repaint(); window.scrollTo(0, 0); });
   var sr = el('sec_reload'); if (sr) sr.addEventListener('click', function () { SEC = null; repaint(); loadSecurity(); });
   var fs = v.querySelectorAll('button[data-secf]');
   for (var j = 0; j < fs.length; j++) fs[j].addEventListener('click', function () { SEC_F = this.getAttribute('data-secf'); repaint(); });
@@ -21801,7 +21801,7 @@ tr.rv-red td{background:var(--critical-soft)}
 #fbBtn{margin-left:auto}
 </style>
 <script>
-var APPS = null, APPS_ERR = '', APP_KEY = '', AP_QR = {}, FB = null, FB_ERR = '', FB_FORM = { kind: 'problem', text: '', contact: '' };
+var AP_DATA = null, APPS_ERR = '', APP_KEY = '', AP_QR = {}, FB = null, FB_ERR = '', FB_FORM = { kind: 'problem', text: '', contact: '' };
 var APPS_CORE = { dash: 1, apps: 1, app: 1, chat: 1, invoice: 1, sales: 1, customers: 1, products: 1, stock: 1, cash: 1, settings: 1, platform: 1, orders: 1, home: 1 };
 // icon and colour per app, in the ERP's own palette (the menu's --app colours)
 var AP_LOOK = {
@@ -21826,7 +21826,7 @@ function apSyncMe(r) {
   (r.menu || []).forEach(function (m) { if (m.mode === 'owner') hid[m.key] = 1; if (m.mode === 'off') gone[m.key] = 1; });
   ME.apps = { off: r.apps.filter(function (a) { return !(a.on || a.openHere); }).map(function (a) { return a.key; }).concat((r.menu || []).filter(function (m) { return m.forced; }).map(function (m) { return m.key; })), hidden: Object.keys(hid), gone: Object.keys(gone) };
 }
-function apOf(key) { return APPS ? APPS.apps.filter(function (a) { return a.key === key; })[0] : null; }
+function apOf(key) { return AP_DATA ? AP_DATA.apps.filter(function (a) { return a.key === key; })[0] : null; }
 function apIcon(key) { var l = AP_LOOK[key] || { c: '#5f6b7a', i: '<circle cx="12" cy="12" r="9"/>' }; return '<svg viewBox="0 0 24 24">' + l.i + '</svg>'; }
 function apStyle(key) { var c = (AP_LOOK[key] || { c: '#5f6b7a' }).c; return 'style="--c:' + c + ';--c-soft:' + c + '1f"'; }
 // the menu: an app the provider switched off, or a screen the owner set to Off, is gone for everyone here; one set to
@@ -21868,7 +21868,7 @@ var goApps = go;
 go = function (view, param) {
   if (view === 'app') APP_KEY = String(param || APP_KEY || '');
   goApps.apply(this, arguments);
-  if ((view === 'apps' || view === 'app' || view === 'settings') && !APPS) apLoad();
+  if ((view === 'apps' || view === 'app' || view === 'settings') && !AP_DATA) apLoad();
   if (view === 'app') {
     var a = apOf(APP_KEY), pt = el('pageTitle'); if (pt) pt.textContent = a ? a.name : 'Apps';
     var tb = el('tabbar'); if (tb) { var t = tb.querySelector('button[data-tab="apps"]'); if (t) t.setAttribute('aria-current', 'page'); }
@@ -21876,14 +21876,14 @@ go = function (view, param) {
   }
 };
 function apLoad() {
-  srv('erpApps', [], function (r) { APPS = r; APPS_ERR = ''; apSyncMe(r); applyRole(); tabbarSync(); if (VIEW === 'apps' || VIEW === 'app' || VIEW === 'settings') repaint(); if (VIEW === 'app') apScreenLoad(); },
+  srv('erpApps', [], function (r) { AP_DATA = r; APPS_ERR = ''; apSyncMe(r); applyRole(); tabbarSync(); if (VIEW === 'apps' || VIEW === 'app' || VIEW === 'settings') repaint(); if (VIEW === 'app') apScreenLoad(); },
       function (e) { APPS_ERR = (e && e.message) || String(e); if (VIEW === 'apps' || VIEW === 'app') repaint(); });
 }
 function apScreenLoad() {
   var a = apOf(APP_KEY); if (!a) return;
   if (a.url && !AP_QR[a.key]) srv('erpAppQr', [{ key: a.key }], function (r) { AP_QR[a.key] = r; if (VIEW === 'app') repaint(); }, function () {});
   if (a.key === 'feedback' && !FB) fbLoad();
-  if (APPS.admin && AP_PANEL[a.key]) {
+  if (AP_DATA.admin && AP_PANEL[a.key]) {
     var p = AP_PANEL[a.key];
     if (p === 'preg' && !PREG && !PREG_ERR) pregLoad();
     if (p === 'pdoc' && !PDOC && !PDOC_ERR) pdocLoad();
@@ -21895,12 +21895,12 @@ function apScreenLoad() {
 function viewApps() {
   var h = '<section><div class="card"><h2 style="margin:0 0 2px">Apps</h2><div class="sub" data-c5x="1" style="display:block">The special features customers reach from outside. Tap one to see what it does, share its page, and set it up.</div>';
   if (APPS_ERR) return h + '<div class="note err"><div class="ico">!</div><div>' + esc(APPS_ERR) + '</div></div></div></section>';
-  if (!APPS) return h + '<div class="loading">Loading\u2026</div></div></section>';
-  var list = APPS.apps.filter(function (a) { return a.on || APPS.admin; });
+  if (!AP_DATA) return h + '<div class="loading">Loading\u2026</div></div></section>';
+  var list = AP_DATA.apps.filter(function (a) { return a.on || AP_DATA.admin; });
   var byGroup = function (g) { return list.filter(function (a) { return (a.group || 'For customers') === g; }); };
   h += ['For customers', 'Only me'].map(function (g) { var L = byGroup(g); if (!L.length) return ''; return (g === 'Only me' ? '<h3 style="margin:14px 0 2px;font-size:14px">Only me</h3><div class="sub" data-c5x="1" style="display:block">New things. Yours alone until you switch one on for everyone.</div>' : '') + '<div class="ap-home">' + L.map(function (a) {
     return '<button type="button" class="ap-app' + (a.on || a.labs ? '' : ' off') + '" data-apopen="' + esc(a.key) + '" ' + apStyle(a.key) + '>' +
-           '<span class="ap-ico">' + apIcon(a.key) + (a.on || (a.labs && APPS.admin) ? '' : '<span class="ap-dot" title="Off for everyone"></span>') + '</span>' +
+           '<span class="ap-ico">' + apIcon(a.key) + (a.on || (a.labs && AP_DATA.admin) ? '' : '<span class="ap-dot" title="Off for everyone"></span>') + '</span>' +
            '<span class="ap-lbl">' + esc(a.name) + '</span></button>';
   }).join('') + '</div>'; }).join('');
   return h + '</div></section>';
@@ -21908,10 +21908,10 @@ function viewApps() {
 // ---- one app's screen
 function viewApp() {
   if (APPS_ERR) return '<section><div class="note err"><div class="ico">!</div><div>' + esc(APPS_ERR) + '</div></div></section>';
-  if (!APPS) return '<div class="loading">Loading\u2026</div>';
+  if (!AP_DATA) return '<div class="loading">Loading\u2026</div>';
   var a = apOf(APP_KEY);
   if (!a) return '<section><div class="empty">No such app. <a href="#" data-apback="1">Back to Apps</a></div></section>';
-  var admin = APPS.admin;
+  var admin = AP_DATA.admin;
   var h = '<section><div class="card"><div class="ap-head" ' + apStyle(a.key) + '><span class="ap-ico">' + apIcon(a.key) + '</span><div><h2>' + esc(a.name) + '</h2>' +
           (a.on ? '' : a.labs && admin ? '<span class="ap-pill" style="background:var(--good-soft,#e6f4f1);color:var(--good,#0f766e)">On for you \u00b7 off for everyone else</span>' : '<span class="ap-pill">Off for everyone</span>') + '</div></div>' +
           '<div class="ap-what">' + esc(a.what) + '</div>' + (a.where && a.key !== 'feedback' ? '<div class="ap-where">Settings: ' + esc(a.where) + '</div>' : '') +
@@ -21995,15 +21995,15 @@ function apModeSeg(key, mode) {
 }
 function menuCardHtml() {
   if (!pageTop()) return '';
-  if (!APPS) { apLoad(); return '<section><div class="card"><h2>Menu</h2><div class="loading">Loading…</div></div></section>'; }
+  if (!AP_DATA) { apLoad(); return '<section><div class="card"><h2>Menu</h2><div class="loading">Loading…</div></div></section>'; }
   // one card (owner 14 Oct 2026): who sees each screen here, and - for the provider only - a switch that takes the
   // screen out of EVERY company's menu (their owners cannot switch it back)
-  var admin = !!APPS.admin;
+  var admin = !!AP_DATA.admin;
   var h = '<section><div class="card"><h2>Menu</h2><div class="sub" data-c5x="1" style="display:block">Who sees each screen in this business. <b>Everyone</b>: you and your staff. <b>Only owners</b>: you use it, staff do not see it. <b>Off</b>: nobody here, until you switch it back. The main screens always stay; nothing is deleted. (What a person may DO on a screen is set under Users.)' +
           (admin ? ' <b>All companies</b> (only you see this, as the provider): switched off, the screen leaves every company’s menu, yours too, and their owners cannot bring it back.' : '') + '</div>' +
           '<div class="ap-mrows' + (admin ? ' adm' : '') + '">';
   var lastGrp = '';
-  APPS.menu.forEach(function (m0) {
+  AP_DATA.menu.forEach(function (m0) {
     if (m0.group && m0.group !== lastGrp) { lastGrp = m0.group; h += '<div class="ap-mgrp">' + esc(m0.group) + '</div>'; }   // the menu's own groups
     var w = AP_WANT[m0.key], m = m0;
     if (w) { m = Object.assign({}, m0); if (w.mode) m.mode = w.mode; if (w.on !== undefined) m.forced = !w.on; }
@@ -22023,7 +22023,7 @@ brandCardHtml = function () { return brandCardHtmlMenu.apply(this, arguments) + 
 var AP_PEND = 0, AP_WANT = {};   // AP_WANT[key] = {mode|on, seq}: a click still waiting for its answer wins over older data
 var AP_SEQ = 0;
 function apAfterSet(r, msg) {
-  APPS = r; apSyncMe(r); applyRole(); tabbarSync();
+  AP_DATA = r; apSyncMe(r); applyRole(); tabbarSync();
   if (!(AP_PEND > 0)) repaint();
   if (msg) toast(msg);
 }
@@ -22600,7 +22600,7 @@ function chSend(text) {
 </style>
 <script>
 var PU = null, PU_ERR = '', PU_BUSY = '', PU_PICK = {}, PU_RULES = false;
-function puOn() { if (!ME) return false; if (ME.platform) return true; var off = (ME.apps && ME.apps.off) || []; return off.indexOf('push') < 0 && typeof APPS !== 'undefined' && APPS && APPS.apps.some(function (a) { return a.key === 'push' && (a.on || a.openHere); }); }
+function puOn() { if (!ME) return false; if (ME.platform) return true; var off = (ME.apps && ME.apps.off) || []; return off.indexOf('push') < 0 && typeof AP_DATA !== 'undefined' && AP_DATA && AP_DATA.apps.some(function (a) { return a.key === 'push' && (a.on || a.openHere); }); }
 function puLoad() { srv('erpPushList', [], function (r) { PU = r; PU_ERR = ''; if (VIEW === 'campaigns') repaint(); }, function (e) { PU_ERR = (e && e.message) || String(e); if (VIEW === 'campaigns') repaint(); }); }
 function puRow(r, kind) {
   var id = kind + ':' + r.sku;
@@ -22612,7 +22612,7 @@ function puCardHtml() {
   if (!puOn()) return '';
   var h = '<section><div class="card"><div class="row" style="justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px"><h2 style="margin:0">What to push next</h2>' +
           '<span class="row" style="gap:6px"><button class="btn small" type="button" id="pu_rules">Rules</button><button class="btn small" type="button" id="pu_go">Send the ticked ones to customers</button></span></div>' +
-          '<div class="sub" data-c5x="1" style="display:block">From your own sales and stock, no guesswork: what sells and has stock to spare, what sits unsold with money in it (with an offer that still keeps a margin), what is picking up, and what would sell out if advertised.' + (ME && ME.platform && !(APPS && APPS.apps.some(function (a) { return a.key === 'push' && a.on; })) ? ' <span class="rf-conf mid">Only you see this</span>' : '') + '</div>';
+          '<div class="sub" data-c5x="1" style="display:block">From your own sales and stock, no guesswork: what sells and has stock to spare, what sits unsold with money in it (with an offer that still keeps a margin), what is picking up, and what would sell out if advertised.' + (ME && ME.platform && !(AP_DATA && AP_DATA.apps.some(function (a) { return a.key === 'push' && a.on; })) ? ' <span class="rf-conf mid">Only you see this</span>' : '') + '</div>';
   if (PU_ERR) return h + '<div class="note err"><div class="ico">!</div><div>' + esc(PU_ERR) + '</div></div></div></section>';
   if (!PU) { puLoad(); return h + '<div class="loading">Working it out\u2026</div></div></section>'; }
   var R = PU.rules;
@@ -22844,7 +22844,7 @@ function crLinkHtml(kind, key) {
   return '<div class="ap-share" style="margin-top:8px"><img src="' + esc(l.qr) + '" alt="QR" style="width:148px;height:148px"><div><div class="ap-url">' + esc(l.url) + '</div><div class="ap-row" style="margin-top:8px"><button class="btn small" type="button" data-apcopy="' + esc(l.url) + '">Copy the link</button><a class="btn small" href="' + esc(l.url) + '" target="_blank" rel="noopener">Open</a></div><div class="sub" style="display:block;margin-top:6px">' + (kind === 'creator' ? 'Permanent. Send it once on WhatsApp; the creator requests filament and pastes links there.' : 'Permanent, read-only. Send it once to the brand; it always shows the latest.') + '</div></div></div>';
 }
 function crLinkLoad(kind, key) { var k = kind + ':' + key; if (CR.link[k]) return; CR.link[k] = { loading: true }; srv(kind === 'creator' ? 'erpCreatorPortalLink' : 'erpSponsorLink', [kind === 'creator' ? { creator_id: key } : { brand: key }], function (r) { CR.link[k] = r; repaint(); }, function (e) { CR.link[k] = { error: (e && e.message) || String(e) }; repaint(); }); }
-function crOn() { if (!ME) return false; if (ME.platform) return true; return typeof APPS !== 'undefined' && APPS && APPS.apps.some(function (a) { return a.key === 'creators' && (a.on || a.openHere); }); }
+function crOn() { if (!ME) return false; if (ME.platform) return true; return typeof AP_DATA !== 'undefined' && AP_DATA && AP_DATA.apps.some(function (a) { return a.key === 'creators' && (a.on || a.openHere); }); }
 function crLoad() { srv('erpCreators', [{ month: CR.month }], function (r) { CR.data = r; CR.err = ''; CR.month = r.month; if (VIEW === 'campaigns' || VIEW === 'app') repaint(); }, function (e) { CR.err = (e && e.message) || String(e); if (VIEW === 'campaigns') repaint(); }); }
 function crCall(name, p, okMsg) {
   if (CR.busy) return; CR.busy = true; p.month = CR.month; repaint();
@@ -42706,6 +42706,82 @@ html[data-look="clean"][data-skin="fd"]:root .t2line span { color:var(--fd-text-
       }, function (er) { b.disabled = false; uiAlert('Not sent:\n\n' + errText(er)); });
     }
   });
+})();
+</script>
+<!-- night-f1 (6 Nov 2026, acct-shell.md P0-1): the shell knows where you are on every screen.
+     - The Apps feature's list is AP_DATA now: it shared the global name APPS with the look-2 Home tiles, so the Apps
+       load wiped the tile list (Home crashed with "reading 'forEach'") and appOf() threw inside shellSync, which left
+       the crumb row showing the previous screen.
+     - afterPaint(): ONE hook list that runs after every repaint branch (this wrapper is the outermost one) and, through
+       an observer on #view, after the screens that paint on their own (shipments, commission, analytics, inbox, ...).
+       The crumb row is redrawn there: group / screen / record.
+     - Every screen has a name in VIEW_NAMES; the phone top bar has a solid background (Clean look made it transparent,
+       so lists scrolled under it). -->
+<style>
+@media (max-width:760px) {
+  html[data-look="clean"][data-skin="fd"]:root .topbar { background:var(--fd-bg, #F6F7FB); box-shadow:0 1px 0 var(--fd-border, rgba(0,0,0,.08)); }
+}
+#o_cp .crumbs .nt-grp { color:var(--fd-text-3, var(--muted)); font-weight:500; }
+</style>
+<script>
+/* the seven menu groups (D10): id, English, Bangla, the screens in it (menu order) */
+var NIGHT_GROUPS = [
+  ['today', 'Today', 'আজ', ['dash', 'mindmap', 'home']],
+  ['sell', 'Sell', 'বিক্রি', ['invoice', 'holds', 'sales', 'weborders', 'quotes', 'preorders', 'repairs', 'printjobs', 'resell']],
+  ['cust', 'Customers', 'কাস্টমার', ['inbox', 'customers', 'leads', 'campaigns']],
+  ['goods', 'Goods', 'মাল', ['products', 'costs', 'stock', 'shipments', 'suppliers', 'market', 'joint']],
+  ['money', 'Money', 'টাকা', ['cash', 'expenses', 'profit', 'analytics', 'commission', 'capital']],
+  ['ai', 'AI', 'এআই', ['ai', 'brief', 'engine', 'watch', 'skills', 'seo', 'brain', 'chat', 'branddesk']],
+  ['system', 'System', 'সিস্টেম', ['settings', 'tools', 'syscheck', 'platform', 'apps', 'app', 'opentools', 'guide']]
+];
+function nightGroupOf(v) { for (var i = 0; i < NIGHT_GROUPS.length; i++) if (NIGHT_GROUPS[i][3].indexOf(v) >= 0) return NIGHT_GROUPS[i]; return null; }
+function nightGroupName(g) { return (typeof LANG !== 'undefined' && LANG === 'bn') ? g[2] : g[1]; }
+(function () {
+  var add = { shipments: 'Shipments', commission: 'Commission', analytics: 'Analytics', syscheck: 'System check', preorders: 'Pre-orders',
+    guide: 'Help', mindmap: 'Navigator', holds: 'Waiting orders', inbox: 'Inbox', leads: 'Leads', engine: 'Command Center', skills: 'Skills',
+    watch: 'Watchdog', brain: 'Business Brain', brief: 'Daily brief', ai: 'AI', seo: 'SEO', branddesk: 'Brand desk', opentools: 'Mac tools',
+    chat: 'Ask your ERP', orders: 'Orders' };
+  for (var k in add) if (!VIEW_NAMES[k]) VIEW_NAMES[k] = add[k];
+  var bn = { 'Waiting orders': 'অপেক্ষার অর্ডার', 'Leads': 'লিড', 'Help': 'সাহায্য', 'Mac tools': 'ম্যাকের টুলস', 'Navigator': 'নেভিগেটর',
+    'Command Center': 'কমান্ড সেন্টার', 'Skills': 'স্কিল', 'Watchdog': 'ওয়াচডগ', 'Business Brain': 'বিজনেস ব্রেইন', 'Daily brief': 'আজকের ব্রিফ',
+    'AI': 'এআই', 'SEO': 'এসইও', 'Brand desk': 'ব্র্যান্ড ডেস্ক', 'Ask your ERP': 'ERP-কে জিজ্ঞেস করুন', 'Orders': 'অর্ডার', 'Joint stock': 'যৌথ পুল' };
+  try { for (var b in bn) if (!I18N_BN[b]) I18N_BN[b] = bn[b]; } catch (e) {}
+})();
+
+/* group first: "Money / Expenses / November 2026" */
+var crumbsN1 = crumbs;
+crumbs = function () {
+  var c = crumbsN1.apply(this, arguments), g = nightGroupOf(VIEW);
+  if (g && VIEW !== 'dash' && VIEW !== 'home' && c.length) c.unshift({ t: nightGroupName(g), grp: g[0] });
+  return c;
+};
+
+/* one after-paint hook list; push a function to run after every paint */
+var AFTER_PAINT = [];
+function afterPaint() {
+  for (var i = 0; i < AFTER_PAINT.length; i++) {
+    try { AFTER_PAINT[i](); } catch (e) { if (window.console) console.error('afterPaint', e); }
+  }
+}
+AFTER_PAINT.push(function nightCrumbs() {
+  if (!ME || typeof shellSync !== 'function') return;
+  shellSync();
+  // the group part is a label, not a link (it has no screen of its own)
+  var row = document.querySelector('#o_cp .crumbs'); if (!row) return;
+  [].forEach.call(row.querySelectorAll('button[data-ocrumb]'), function (b) {
+    var go = b.getAttribute('data-ocrumb');
+    if (go && go !== 'undefined' && go !== 'null') return;
+    var s = document.createElement('span'); s.className = 'nt-grp'; s.setAttribute('data-noi18n', '1'); s.textContent = b.textContent;
+    b.parentNode.replaceChild(s, b);
+  });
+});
+var repaintN1 = repaint;
+repaint = function () { var r = repaintN1.apply(this, arguments); afterPaint(); return r; };
+(function () {
+  var v = el('view'); if (!v || !window.MutationObserver) return;
+  var t = null;
+  // screens that paint #view by themselves (outside repaint) still get the hook
+  new MutationObserver(function () { clearTimeout(t); t = setTimeout(afterPaint, 40); }).observe(v, { childList: true });
 })();
 </script>
 </body>
