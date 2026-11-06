@@ -62,7 +62,7 @@ async function ensureSchedule(ctx) {
  *  OWNER (the brief, the Watchdog's night report); texts for customers keep the customers' language. */
 export const LANGS = { bn: 'Bangla (বাংলা)', en: 'English' };
 export async function ownerLang(ctx) { const v = str(await getConfig(ctx, 'ai_lang', '')); return LANGS[v] ? v : 'bn'; }   // owner: Bangla by default
-export function langLine(l) { return l === 'bn' ? '\nWrite everything for the owner in Bangla (বাংলা script, plain words; product names and figures as they are). Texts meant for customers (ads, posts, messages) stay in the language the customers use.' : ''; }
+export function langLine(l) { return l === 'bn' ? '\nWrite everything for the owner in Bangla (বাংলা script, plain words; product names and figures as they are). Address the owner as আপনি (polite forms: করুন, দিন, দেখুন), never the familiar form. Say প্রোডাক্ট for product. Texts meant for customers (ads, posts, messages) stay in the language the customers use.' : ''; }
 export async function adCap(ctx) { const v = num(await getConfig(ctx, 'brief_ad_cap', '')); return v > 0 ? v : 3000; }
 
 /** The day in the ERP's own figures (the AI never makes these up). */

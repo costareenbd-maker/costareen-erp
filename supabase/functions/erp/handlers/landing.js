@@ -164,7 +164,7 @@ function autoPoints(x, p) {
   const bn = p.lang !== 'en';   // the page speaks the shop's language
   if (x.brand) out.push((x.brand + (bn ? ' — ১০০% অরিজিনাল' : ' — 100% original')).slice(0, 120));
   for (const [k, v] of Object.entries(x.details || {}).slice(0, 3)) out.push((k + ': ' + v).slice(0, 120));
-  if (p.delivery_in || p.delivery_out) out.push(bn ? 'সারা বাংলাদেশে ক্যাশ অন ডেলিভারি — পণ্য হাতে পেয়ে টাকা দিন' : 'Cash on delivery all over Bangladesh - pay when you get it');
+  if (p.delivery_in || p.delivery_out) out.push(bn ? 'সারা বাংলাদেশে ক্যাশ অন ডেলিভারি — প্রোডাক্ট হাতে পেয়ে টাকা দিন' : 'Cash on delivery all over Bangladesh - pay when you get it');
   if (str(p.returns)) out.push(str(p.returns).split(/[.\n]/)[0].slice(0, 120));
   return out.slice(0, 6);
 }

@@ -23,7 +23,8 @@ web.on(/^https:\/\/shop\.test\/sitemap(_index)?\.xml$/, () => ({ status: 404, bo
 web.on(/pagespeedonline/, () => ({ status: 200, body: { lighthouseResult: { categories: { performance: { score: 0.42 }, seo: { score: 0.9 } }, audits: { 'largest-contentful-paint': { numericValue: 4200 }, 'cumulative-layout-shift': { numericValue: 0.05 } } } } }));
 web.on(/^https:\/\/dead\.test/, () => { throw new Error('ECONNREFUSED'); });
 let aiText = '';
-web.on(/generativelanguage\.googleapis\.com/, () => ({ status: 200, body: { candidates: [{ content: { parts: [{ text: aiText }] } }] } }));
+let aiAsked = '';
+web.on(/generativelanguage\.googleapis\.com/, (url, o) => { aiAsked = String((o && o.body) || ''); return { status: 200, body: { candidates: [{ content: { parts: [{ text: aiText }] } }] } }; });
 
 // ---- pure parts
 const f = readPage(HOME, 'https://shop.test');
@@ -77,6 +78,8 @@ aiText = JSON.stringify({ summary: 'সাইট মোটামুটি, descr
 r = await owner('erpSeoAdvise', [{ site: 'shop.test' }]);
 const A = r.ok && r.result.sites[0].latest.advice;
 check('the AI writes the fixes in Bangla and they are kept on the latest check', r.ok && A && A.fixes.length === 2 && /description/.test(A.fixes[0].title) && A.lang === 'bn' && r.result.sites[0].latest.advisedAt, r.ok ? A : r);
+// night-bangla (F5): the owner is addressed as আপনি, never the familiar তুমি form
+check('the Bangla prompt asks for আপনি forms, not তুমি', /আপনি/.test(aiAsked) && !/তুমি/.test(aiAsked), aiAsked.slice(0, 400));
 r = await owner('erpSeoAdvise', [{ site: 'never.test' }]);
 check('fixes for a site never checked: refused', !r.ok && /Check the site first/.test(r.error), r);
 r = await mgr('erpSeoRun', [{}]);

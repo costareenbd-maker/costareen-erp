@@ -24,7 +24,7 @@ DEFAULT = ['web/*.html', 'web/*.js', 'supabase/functions/erp/*.js', 'supabase/fu
 SKIP = re.compile(r'(^|[\\/])(index|index-local|index-dev)\.html$|[\\/]legacy[\\/]|\.min\.')
 
 BN = 'ঀ-৿'
-HAS_BN = re.compile('[' + BN + ']')
+HAS_BN = re.compile('[অ-হড়-য়]')   # Bangla letters (not ৳ or digits alone)
 # a Bangla "word" boundary: not preceded / followed by another Bangla letter or sign
 def W(word):
     return re.compile('(?<![' + BN + '])' + word + '(?![' + BN + '])')
@@ -62,10 +62,10 @@ esc enter tab ctrl shift alt cmd del costareen filadash bambu bambulab creality 
 petg abs tpu asa resin oliareen postiz immich shlink umami kanboard memos karakeep miniflux listmonk authentik twenty
 scriberr opencut openshorts n8n matrix pagespeed lighthouse alt meta title sitemap robots h1 www http https com bd
 gpt luna terra sol mcp vps mac windows android iphone ios chrome edge firefox safari zernio uploadpost cloudflare
-supabase github ssh ip dns otp tk kg mm cm ml gb mb kb
+supabase github ssh ip dns otp tk kg mm cm ml gb mb kb linkedin vaultwarden
 '''.split())
 LATIN = re.compile(r"(?<![A-Za-z0-9_./@-])[A-Za-z][A-Za-z']{2,}(?![A-Za-z0-9_@-])")
-STRIP = [re.compile(p) for p in [r'<[^>]*>', r'\$\{[^}]*\}', r'https?://\S+', r'&[a-z]+;', r'\$\d', r'\{[a-z_]+\}',
+STRIP = [re.compile(p) for p in [r'<[^>]*>', r'^[^<>]*>', r'<[^<>]*$', r'[\w-]+="[^"]*"?', r'\$\{[^}]*\}', r'https?://\S+', r'&[a-z]+;', r'\$\d', r'\{[a-z_]+\}',
                                  r'[\w.-]+@[\w.-]+', r'[A-Za-z_]+\.[A-Za-z_.]+', r'#[A-Za-z_-]+']]
 
 LIT = re.compile(r"'(?:[^'\\\n]|\\.)*'|\"(?:[^\"\\\n]|\\.)*\"|`(?:[^`\\]|\\.)*`")
@@ -80,6 +80,9 @@ def literals(line):
 
 
 def english_words(s):
+    # an English sentence that quotes Bangla (an AI prompt, a code comment) is English copy, not a Bangla string
+    if len(re.findall('[A-Za-z]', s)) > len(HAS_BN.findall(s)):
+        return []
     for rx in STRIP:
         s = rx.sub(' ', s)
     out = []

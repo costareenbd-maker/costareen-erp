@@ -409,7 +409,7 @@ async function notifyOrder(ctx, o, what, extra) {
     failed: bn ? 'আপনার পার্সেল ডেলিভারি করা যায়নি। আমরা যোগাযোগ করব।' : 'Your parcel could not be delivered. We will get in touch.',
     delivered: bn ? 'আপনার পার্সেল পৌঁছে গেছে। ধন্যবাদ!' : 'Your parcel has been delivered. Thank you!',
     cancelled: bn ? 'আপনার অর্ডার ' + o.no + ' বাতিল করা হয়েছে।' : 'Your order ' + o.no + ' has been cancelled.',
-    review: (bn ? 'পণ্যটি কেমন লাগলো? আমাদের পেজে একটি রিভিউ দিলে খুব খুশি হবো: ' : 'How did you like it? A review on our page would mean a lot: ') + str(pr.review_link),
+    review: (bn ? 'প্রোডাক্টটি কেমন লাগলো? আমাদের পেজে একটি রিভিউ দিলে খুব খুশি হবো: ' : 'How did you like it? A review on our page would mean a lot: ') + str(pr.review_link),
   };
   if (!T[what]) return false;
   if (CAN[ch.kind].window24 && !inWindow(ch, v, ctx.now)) {

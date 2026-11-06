@@ -55,7 +55,7 @@ a.btn.pri{background:var(--acc);border-color:var(--acc);color:#fff}
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
   function tk(n) { return '৳' + Math.round(Number(n) || 0).toLocaleString('en-IN'); }
   var T = {
-    bn: { lang: 'English', order: 'অর্ডার', items: 'যা অর্ডার করেছেন', sub: 'পণ্য', del: 'ডেলিভারি', total: 'মোট (ক্যাশ অন ডেলিভারি)', to: 'যেখানে যাবে', track: 'কুরিয়ারে ট্র্যাক করুন', call: 'কল করুন', bill: 'বিল', none: 'এই পেজটি পাওয়া যাচ্ছে না।' },
+    bn: { lang: 'English', order: 'অর্ডার', items: 'যা অর্ডার করেছেন', sub: 'প্রোডাক্ট', del: 'ডেলিভারি', total: 'মোট (ক্যাশ অন ডেলিভারি)', to: 'যেখানে যাবে', track: 'কুরিয়ারে ট্র্যাক করুন', call: 'কল করুন', bill: 'বিল', none: 'এই পেজটি পাওয়া যাচ্ছে না।' },
     en: { lang: 'বাংলা', order: 'Order', items: 'What you ordered', sub: 'Products', del: 'Delivery', total: 'Total (cash on delivery)', to: 'Delivering to', track: 'Track with the courier', call: 'Call us', bill: 'Bill', none: 'This page is not available.' } };
   function paint() {
     var m = document.getElementById('m');
