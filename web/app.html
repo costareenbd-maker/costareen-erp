@@ -42929,5 +42929,69 @@ function abCloseAll(except) {
   try { if (!I18N_BN['More']) I18N_BN['More'] = 'আরও'; } catch (e) {}
 })();
 </script>
+<!-- night-f4 (6 Nov 2026, D13, eval-adapt.md "phone list order"): on a phone the work comes first. On Invoices, Customers,
+     Products, Suppliers, Stock, Web orders and Quotations the order is: the screen's pills -> the list with its own search
+     and chips -> one folded "Summary" line holding what used to sit above the list (KPI tiles, the "Unpaid and at risk"
+     and "Waiting for Steadfast" cards, "Customers who owe", Excel / tool rows). Nothing is removed: a tap opens the
+     summary, and the choice is kept per screen on this device. Desktop is untouched; record pages are untouched.
+     phoneListOrder(view) is the reusable helper; NIGHT_LIST_VIEWS says where it runs. Screens without a list block of
+     their own (Suppliers, Stock, Web orders, Quotations) only get their head tiles folded - their search is Wave 4 work. -->
+<style>
+details.nt-fold { margin:12px 0 0; border-radius:16px; background:var(--fd-card, var(--surface, #fff)); box-shadow:var(--fd-shadow-card, none); border:1px solid var(--fd-border, var(--ring, #e6e8ef)); }
+details.nt-fold > summary { list-style:none; display:flex; align-items:center; gap:10px; min-height:48px; padding:0 16px; cursor:pointer; font-weight:600; color:var(--fd-text, var(--ink)); }
+details.nt-fold > summary::-webkit-details-marker { display:none; }
+details.nt-fold > summary::after { content:'\25BE'; margin-left:auto; opacity:.6; transition:transform .15s; }
+details.nt-fold:not([open]) > summary::after { transform:rotate(-90deg); }
+details.nt-fold > summary .nt-n { font-weight:500; color:var(--fd-text-3, var(--muted)); font-size:13px; }
+details.nt-fold > .nt-fold-in { padding:0 8px 8px; display:flex; flex-direction:column; gap:12px; }
+@media (prefers-reduced-motion:reduce) { details.nt-fold > summary::after { transition:none; } }
+</style>
+<script>
+var NIGHT_LIST_VIEWS = { sales: 1, customers: 1, products: 1, suppliers: 1, stock: 1, weborders: 1, quotes: 1 };
+var NT_PILLS = '.tabs, .fd19-seg, .fd43-tabs, .ai-strip, .fd20-ch, [role="tablist"]';
+function ntPhone() { return !!(window.matchMedia && window.matchMedia('(max-width:640px)').matches); }
+function ntFoldOpen(v) { try { return localStorage.getItem('nt_fold_' + v) === '1'; } catch (e) { return false; } }
+/** Search + list first, the summary folded under the list (phone only). Safe to call again and again. */
+function phoneListOrder(v) {
+  var view = el('view'); if (!view || !ntPhone()) return;
+  try { if (typeof fdhIsSub === 'function' && fdhIsSub()) return; } catch (e) {}
+  var kids = [].slice.call(view.children), list = null;
+  for (var i = 0; i < kids.length; i++) if (kids[i].classList.contains('o_lv')) { list = kids[i]; break; }
+  var fold = view.querySelector(':scope > details.nt-fold');
+  var made = !fold;
+  if (made) {
+    fold = document.createElement('details'); fold.className = 'nt-fold'; fold.setAttribute('data-for', v);
+    fold.innerHTML = '<summary><span>Summary</span><span class="nt-n"></span></summary><div class="nt-fold-in"></div>';
+    if (ntFoldOpen(v)) fold.open = true;
+    fold.addEventListener('toggle', function () { try { localStorage.setItem('nt_fold_' + v, fold.open ? '1' : '0'); } catch (e) {} });
+  }
+  var box = fold.querySelector('.nt-fold-in'), moved = 0;
+  kids.forEach(function (c) {
+    if (c === fold || c === list) return;
+    if (list && !(c.compareDocumentPosition(list) & Node.DOCUMENT_POSITION_FOLLOWING)) return;   // only what sits above the list
+    if (c.id === 'fdHead') {
+      // the page title stays on top; its tiles go into the summary
+      var g = c.querySelector('.fdd-grid'); if (g) { box.appendChild(g); moved++; }
+      return;
+    }
+    if (!list) return;   // no list block of its own: only the head tiles fold
+    if (c.matches(NT_PILLS) || c.classList.contains('loading')) return;
+    if (c.children.length === 1 && c.firstElementChild.classList.contains('chips')) return;   // filter chips stay with the list
+    box.appendChild(c); moved++;
+  });
+  if (!box.children.length) { if (fold.parentNode) fold.parentNode.removeChild(fold); return; }
+  var after = list || view.querySelector(':scope > #fdHead');
+  if (after && after.nextSibling !== fold) view.insertBefore(fold, after.nextSibling);
+  else if (!after && fold.parentNode !== view) view.appendChild(fold);
+  if (moved || made) {
+    // how much is inside, so a closed fold still says what it holds
+    var tiles = box.querySelectorAll('.fdd-c').length, cards = box.querySelectorAll(':scope > section, :scope > .card').length, n = fold.querySelector('.nt-n');
+    var bn = typeof LANG !== 'undefined' && LANG === 'bn';
+    if (n) { n.setAttribute('data-noi18n', '1'); n.textContent = [tiles ? tiles + (bn ? 'টি সংখ্যা' : (tiles === 1 ? ' figure' : ' figures')) : '', cards ? cards + (bn ? 'টি কার্ড' : (cards === 1 ? ' card' : ' cards')) : ''].filter(Boolean).join(' · '); }
+  }
+}
+AFTER_PAINT.push(function nightListOrder() { if (NIGHT_LIST_VIEWS[VIEW]) phoneListOrder(VIEW); });
+try { if (!I18N_BN['Summary']) I18N_BN['Summary'] = 'সারাংশ'; } catch (e) {}
+</script>
 </body>
 </html>
