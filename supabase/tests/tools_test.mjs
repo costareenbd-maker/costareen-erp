@@ -62,8 +62,12 @@ r = await owner('erpToolSet', [{ tool: 'shlink', url: 'http://user:pw@x.test' }]
 check('an address with a password inside is refused', !r.ok, r);
 r = await owner('erpToolSet', [{ tool: 'nope', url: SH }]);
 check('an unknown app is refused', !r.ok, r);
-r = await owner('erpToolSet', [{ tool: 'shlink', url: SH + '/', open: 'https://go.example.test' }]);
+r = await owner('erpToolSet', [{ tool: 'shlink', url: SH + '/', open: 'https://links.example.test', short: 'https://go.example.test/' }]);
 check('the address is saved without the last slash', r.ok && r.result.tools.find((t) => t.key === 'shlink').url === SH, r);
+const shortCfg = await sql`select value from business_config where business_id = ${B} and key = 'tool_short_shlink'`;
+check('the short-link domain is kept as a plain name', shortCfg[0] && shortCfg[0].value === 'go.example.test', shortCfg);
+r = await owner('erpToolSet', [{ tool: 'shlink', short: 'not a domain' }]);
+check('a bad short-link domain is refused', !r.ok, r);
 r = await owner('erpShortLink', [{ url: 'https://shop.example.test/p/silk' }]);
 check('no key: says to paste it', !r.ok && /needs its key/.test(r.error), r);
 

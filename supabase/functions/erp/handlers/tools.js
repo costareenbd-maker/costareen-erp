@@ -3,7 +3,7 @@
 //
 //   erpTools()                                   owner: every app the ERP talks to, set up or not (nothing secret)
 //   erpToolsStatus()                             owner: the same plus a live health check per set-up app (Tools page)
-//   erpToolSet({tool, url, open, key, clearKey}) owner, "Only me" app `tooldoor`: an app's address, its full-app
+//   erpToolSet({tool, url, open, short?, key, clearKey}) owner, "Only me" app `tooldoor`: an app's address, its full-app
 //                                                link and its key (sealed in business_secrets, never shown again)
 //   erpToolTest({tool})                          owner, tooldoor: one health call; nothing is changed
 //   erpShortLink({url, slug?, network?, post?, sku?})        manager+, tooldoor: one Shlink short link (UTM added)
@@ -58,6 +58,11 @@ export async function erpToolSet(ctx, payload) {
     if (o && !okToolUrl(o)) throw new Error('The full-app link is not a web address.');
     await setConfig(ctx, 'tool_open_' + t, o);
   }
+  if (p.short !== undefined && t === 'shlink') {
+    const d = str(p.short).replace(/^https?:\/\//, '').replace(/\/+$/, '').toLowerCase();
+    if (d && !/^[a-z0-9.-]+\.[a-z]{2,}$/.test(d)) throw new Error('The short-link domain is a plain name like go.example.com.');
+    await setConfig(ctx, 'tool_short_shlink', d);
+  }
   if (TOOLS[t].key) {
     if (p.clearKey) await setSecret(ctx, 'TOOL_' + t.toUpperCase() + '_KEY', '');
     else if (str(p.key)) {
@@ -87,16 +92,14 @@ function withUtm(long, network, post) {
   return u.toString();
 }
 async function shlinkHost(ctx) {
-  // the short links' own host: the full-app link when it is set (go.costareen.com), so a link never looks internal
-  return str(await getConfig(ctx, 'tool_open_shlink', ''));
+  // the short links' own domain (go.costareen.com): links on it are already short. Shlink itself puts it in shortUrl.
+  return str(await getConfig(ctx, 'tool_short_shlink', ''));
 }
-function shapeLink(x, host) {
+function shapeLink(x) {
   const tags = (x && x.tags) || [];
   const tag = (p) => { const t = tags.find((y) => String(y).startsWith(p)); return t ? String(t).slice(p.length) : ''; };
-  let short = str(x && x.shortUrl);
-  if (host && x && x.shortCode && /^https?:\/\/[^/]*brand-|^http:\/\//.test(short)) short = host.replace(/\/+$/, '') + '/' + x.shortCode;
   const v = (x && x.visitsSummary) || {};
-  return { code: str(x && x.shortCode), short, long: str(x && x.longUrl), clicks: Number(v.nonBots != null ? v.nonBots : v.total) || 0,
+  return { code: str(x && x.shortCode), short: str(x && x.shortUrl), long: str(x && x.longUrl), clicks: Number(v.nonBots != null ? v.nonBots : v.total) || 0,
            post: tag('post:'), sku: tag('sku:'), network: tag('net:'), at: str(x && x.dateCreated) };
 }
 async function makeShort(ctx, p) {
@@ -114,7 +117,7 @@ async function makeShort(ctx, p) {
   let j;
   try { j = await toolCall(ctx, 'shlink', '/rest/v3/short-urls', { body }); }
   catch (e) { if (/non-unique|already in use|slug/i.test(String(e.message)) && slug) throw new Error('The short name "' + slug + '" is taken. Pick another.'); throw e; }
-  return shapeLink(j, await shlinkHost(ctx));
+  return shapeLink(j);
 }
 
 export async function erpShortLink(ctx, payload) {
@@ -151,8 +154,7 @@ export async function erpShortLinks(ctx, payload) {
   const post = str(payload && payload.post);
   const tags = [bizTag(ctx)].concat(/^[0-9a-f-]{8,40}$/i.test(post) ? ['post:' + post] : []);
   const j = await toolCall(ctx, 'shlink', '/rest/v3/short-urls', { query: { 'tags[]': tags, tagsMode: 'all', itemsPerPage: 200, orderBy: 'dateCreated-DESC' } });
-  const host = await shlinkHost(ctx);
-  const rows = ((j && j.shortUrls && j.shortUrls.data) || []).map((x) => shapeLink(x, host));
+  const rows = ((j && j.shortUrls && j.shortUrls.data) || []).map((x) => shapeLink(x));
   return { links: rows };
 }
 

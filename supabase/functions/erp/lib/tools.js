@@ -4,7 +4,8 @@
 //
 // Every app is set up PER BUSINESS, so a sold ERP works with the app absent or with its own copy:
 //   business_config  tool_url_<tool>    where the function reaches the app (e.g. http://brand-shlink:8080)
-//   business_config  tool_open_<tool>   the app's own full screen for the owner (e.g. https://go.costareen.com)
+//   business_config  tool_open_<tool>   the app's own full screen for the owner (e.g. https://links.costareen.com)
+//   business_config  tool_short_shlink  Shlink only: the short links' domain (e.g. go.costareen.com)
 //   business_secrets TOOL_<TOOL>_KEY    the app's key (never read back to the page)
 //
 //   TOOLS                                 the apps the ERP can talk to, with their health path and key header
