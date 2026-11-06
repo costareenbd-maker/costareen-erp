@@ -1201,8 +1201,9 @@ export async function makeHoldPdf(ctx, h) {
   if (bn) { parts.html = docBangla(parts.html); parts.footer = docBangla(parts.footer); }
   const bytes = await renderPdf(ctx, parts.html, { footer: parts.footer });
   const name = 'Order_' + h.hold_no + '.pdf';
+  const keep = new Uint8Array(bytes);   // the storage upload may take the buffer; the copy goes to WhatsApp / the page
   const f = await saveFile(ctx, 'invoices', name, bytes, 'application/pdf');
-  return { url: f.url, id: f.id, name, bytes };
+  return { url: f.url, id: f.id, name, bytes: keep };
 }
 
 export const HANDLERS = {
