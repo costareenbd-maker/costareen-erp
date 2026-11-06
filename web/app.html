@@ -42825,5 +42825,275 @@ html[data-look="clean"][data-skin="fd"]:root .t2line span { color:var(--fd-text-
   };
 })();
 </script>
+<!-- night-tools (tooldoor-1, 6 Nov 2026; apps-_index.md T1/T3, B5a, B8a; owner D21/D22/D23): the app door on the page.
+     1. Tools page (opentools, tools-1 left as it was and wrapped): now a status page - one line "N of M joined apps
+        working", a dot per app joined to the ERP (Shlink, OpenShorts, OpenCut; the rest say "not joined to the ERP yet"),
+        a Bangla line of what each is for, and "Open full app" (D21). Twenty is gone (D23). Applies to everyone who sees
+        the page (owners), like tools-1.
+     2. Settings > Connections > Tools (owner, "Only me" app tooldoor): per app the address the server uses, the full-app
+        link, Shlink's short-link domain, the sealed key, Save and Test.
+     3. Posts (manager+, tooldoor): "Make short link" and "Shorten every link" in the post form (UTM per network, tags per
+        post), clicks per post on the post card; OpenCut "Edit by hand" link (owner, computer only).
+     4. Tools page, OpenShorts (owner, tooldoor): a long video's link -> "Make shorts" -> jobs with their clips. -->
+<style>
+.td-dot{display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--muted,#98a2b3);margin-right:6px;vertical-align:middle}
+.td-dot.on{background:var(--good,#12b76a)} .td-dot.down{background:var(--critical,#d92d20)} .td-dot.set{background:var(--warning,#f79009)}
+.td-state{font-size:12.5px;color:var(--fd-muted,#667085);margin-top:4px}
+.td-card{display:flex;flex-direction:column;gap:6px;background:var(--fd-card,#fff);border-radius:14px;padding:12px 14px;border:1px solid var(--fd-border,#eaecf0)}
+.td-card .hd{display:flex;gap:10px;align-items:center}
+.td-card .ic{flex:0 0 36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700}
+.td-card .nm{font-weight:600;font-size:14.5px}
+.td-card .ds{font-size:12.5px;color:var(--fd-muted,#667085);line-height:1.35}
+.td-card .ft{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:auto}
+.td-top{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:14px}
+.td-top b{font-size:15px}
+.td-conn{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(min(300px,100%),1fr));margin-top:10px}
+.td-conn > div{border:1px solid var(--ring);border-radius:8px;padding:10px 12px}
+.td-links{margin-top:6px;font-size:12.5px}
+.td-links a{margin-right:4px}
+.td-sl{display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;margin-top:8px;padding-top:8px;border-top:1px dashed var(--ring)}
+.td-job{border:1px solid var(--ring);border-radius:8px;padding:8px 10px;margin-top:8px;font-size:13px}
+@media (max-width:600px){.td-wide{display:none!important}}
+@media (min-width:601px){.td-narrow{display:none!important}}
+</style>
+<script>
+(function () {
+  var TD = { st: null, stBusy: false, tools: null, test: {}, links: null, linksErr: '', jobs: null, busy: false };
+  var OFF = function () { return (ME && ME.apps && ME.apps.off) || []; };
+  function tdDoor() { return !!(ME && (ME.platform || OFF().indexOf('tooldoor') < 0)); }
+  function tdOwner() { return !!(ME && ME.role === 'owner' && tdDoor()); }
+  function tdMgr() { return !!(ME && /^(manager|shareholder|owner)$/.test(ME.role || '') && tdDoor()); }
+  window.tdOn = tdOwner;
+  var fail = function (e) { TD.busy = false; toast(esc((e && e.message) || e), true, 9000); repaint(); };
+  try { ['erpTools', 'erpToolsStatus', 'erpToolTest', 'erpShortLinks', 'erpShortsJobs'].forEach(function (n) { if (!SRV_READS.test(n)) SRV_READS = new RegExp(SRV_READS.source.replace('^(', '^(' + n + '|')); }); } catch (e) {}
+
+  // ---- the apps on the Tools page (names stay English; the line under each is translated)
+  var JOINED = { shlink: 1, openshorts: 1, opencut: 1 };
+  var GROUPS = [
+    { t: 'Posting and content', items: [
+      ['Postiz', 'postiz', 'social', '#e4572e', 'Posts and their times on YouTube, TikTok, LinkedIn and more'],
+      ['Kanboard', 'kanboard', 'board', '#3a86c8', 'A board for every piece of content: idea, writing, video, ready'],
+      ['Memos', 'memos', 'memos', '#2a9d8f', 'Ideas caught on the phone, by text or voice'],
+      ['Karakeep', 'karakeep', 'saves', '#c8553d', 'Good posts and links saved; AI adds the tags'],
+      ['Miniflux', 'miniflux', 'feeds', '#5f6b7a', 'Brands, suppliers and competitors in one feed']] },
+    { t: 'People and messages', items: [
+      ['Listmonk', 'listmonk', 'list', '#0055d4', 'Your own e-mail list (later: needs a sending service)']] },
+    { t: 'Video', items: [
+      ['Immich', 'immich', 'media', '#4250af', 'All footage in one place, found by words'],
+      ['OpenShorts', 'openshorts', 'shorts', '#e39a2d', 'A long video becomes shorts and reels'],
+      ['OpenCut', 'opencut', 'cut', '#7c6bb1', 'Video edited by hand in the browser (on a computer)'],
+      ['Scriberr', 'scriberr', 'transcribe', '#2b7a78', 'Text from a video']] },
+    { t: 'Links and visitors', items: [
+      ['Shlink', 'shlink', 'links', '#4696e5', 'A short link for every post, with its clicks'],
+      ['Umami', 'umami', 'stats', '#111827', 'How many people visit the websites']] },
+    { t: 'Glue and safety', items: [
+      ['n8n', 'n8n', 'flow', '#ea4b71', 'Joins the apps together'],
+      ['Authentik', 'authentik', 'sso', '#fd4b2d', 'One login for every app'],
+      ['Vaultwarden', 'vaultwarden', 'vault', '#175ddc', 'Passwords and secret notes, locked with your key']] }
+  ];
+  var INSIDE = { shlink: 'Inside the ERP: Campaigns → Advertisement → Posts', openshorts: 'Inside the ERP: on this page, below', opencut: 'Inside the ERP: the post form' };
+  try {
+    var BN = {
+      'Posts and their times on YouTube, TikTok, LinkedIn and more': 'YouTube, TikTok, LinkedIn আর অন্যগুলোতে পোস্ট ও সময় ঠিক করা',
+      'A board for every piece of content: idea, writing, video, ready': 'প্রতিটা কনটেন্টের বোর্ড: আইডিয়া, লেখা, ভিডিও, তৈরি',
+      'Ideas caught on the phone, by text or voice': 'ফোনে লিখে বা বলে আইডিয়া রাখা',
+      'Good posts and links saved; AI adds the tags': 'ভালো পোস্ট আর লিংক জমা রাখা; AI ট্যাগ বসায়',
+      'Brands, suppliers and competitors in one feed': 'ব্র্যান্ড, সাপ্লায়ার আর প্রতিযোগীদের খবর এক জায়গায়',
+      'Your own e-mail list (later: needs a sending service)': 'আপনার নিজের ই-মেইল তালিকা (পরে: পাঠানোর সার্ভিস লাগবে)',
+      'All footage in one place, found by words': 'সব ভিডিও এক জায়গায়, কথা লিখে খোঁজা',
+      'A long video becomes shorts and reels': 'লম্বা ভিডিও থেকে শর্টস আর রিল',
+      'Video edited by hand in the browser (on a computer)': 'ব্রাউজারে হাতে ভিডিও এডিট (কম্পিউটারে)',
+      'Text from a video': 'ভিডিও থেকে লেখা',
+      'A short link for every post, with its clicks': 'প্রতিটা পোস্টের ছোট লিংক, কয়টা ক্লিক হলো সহ',
+      'How many people visit the websites': 'ওয়েবসাইটে কতজন আসছে',
+      'Joins the apps together': 'অ্যাপগুলোকে একসাথে জোড়া দেয়',
+      'One login for every app': 'সব অ্যাপে এক লগইন',
+      'Passwords and secret notes, locked with your key': 'পাসওয়ার্ড আর গোপন নোট, আপনার চাবিতে তালা দেওয়া',
+      'Open full app': 'পুরো অ্যাপ খুলুন', 'Working': 'চালু', 'Not answering': 'সাড়া দিচ্ছে না', 'Not joined to the ERP yet': 'এখনো ERP-র সাথে জোড়া হয়নি',
+      'Joined, not checked yet': 'জোড়া হয়েছে, এখনো দেখা হয়নি', 'Not set up in the ERP': 'ERP-তে সেট আপ করা হয়নি', 'Check again': 'আবার দেখুন', 'Checking the apps…': 'অ্যাপগুলো দেখা হচ্ছে…',
+      'Records stay in the ERP: customers, leads, money and stock never move into an app.': 'রেকর্ড ERP-তেই থাকে: কাস্টমার, লিড, টাকা আর স্টক কোনো অ্যাপে যায় না।',
+      'Inside the ERP: Campaigns → Advertisement → Posts': 'ERP-র ভেতরে: ক্যাম্পেইন → বিজ্ঞাপন → পোস্ট',
+      'Inside the ERP: on this page, below': 'ERP-র ভেতরে: এই পাতায়, নিচে', 'Inside the ERP: the post form': 'ERP-র ভেতরে: পোস্টের ফর্মে',
+      'Shorts from a long video': 'লম্বা ভিডিও থেকে শর্টস', 'Long video link': 'লম্বা ভিডিওর লিংক', 'Clips': 'ক্লিপ', 'Make shorts': 'শর্টস বানান', 'Working…': 'কাজ চলছে…',
+      'No shorts made yet.': 'এখনো কোনো শর্টস বানানো হয়নি।', 'Refresh': 'রিফ্রেশ', 'queued': 'লাইনে আছে', 'processing': 'বানানো হচ্ছে', 'completed': 'শেষ', 'failed': 'হয়নি',
+      'Tools': 'টুলস', 'Address the server uses': 'সার্ভার যে ঠিকানায় যায়', 'Full app link': 'পুরো অ্যাপের লিংক', 'Short-link domain': 'ছোট লিংকের ডোমেইন', 'Key': 'চাবি (key)',
+      'Gemini key (optional)': 'Gemini key (না দিলেও চলে)', 'Save': 'সেভ করুন', 'Test': 'পরীক্ষা করুন', 'Remove the key': 'চাবি মুছুন', 'saved': 'সেভ করা আছে',
+      'The open-source apps on your server, joined to the ERP. The ERP talks to them from the server; the key never comes back to this page.': 'আপনার সার্ভারের ওপেন সোর্স অ্যাপ, ERP-র সাথে জোড়া। ERP সার্ভার থেকেই এদের সাথে কথা বলে; চাবি আর কখনো এই পাতায় ফেরে না।',
+      'Short links': 'ছোট লিংক', 'Link to shorten': 'যে লিংক ছোট করবেন', 'Short name': 'ছোট নাম', 'Make short link': 'ছোট লিংক বানান', 'Shorten every link in the captions': 'ক্যাপশনের সব লিংক ছোট করুন',
+      'Edit by hand (OpenCut, new tab)': 'হাতে এডিট করুন (OpenCut, নতুন ট্যাবে)', 'Open on a computer to edit by hand.': 'হাতে এডিট করতে কম্পিউটারে খুলুন।',
+      'Copied.': 'কপি হয়েছে।', 'Saved.': 'সেভ হয়েছে।', 'Key removed.': 'চাবি মুছে ফেলা হয়েছে।'
+    };
+    Object.keys(BN).forEach(function (k) { if (!I18N_BN[k]) I18N_BN[k] = BN[k]; });
+    I18N_PAT.push(['^(\\d+) of (\\d+) joined apps working$', '$2টা জোড়া অ্যাপের মধ্যে $1টা চালু']);
+    I18N_PAT.push(['^(\\d+) clicks?$', '$1 ক্লিক']);
+    I18N_PAT.push(['^(\\d+) short links? made\\.$', '$1টা ছোট লিংক বানানো হয়েছে।']);
+    I18N_PAT.push(['^No long link in the captions\\.$', 'ক্যাপশনে কোনো লম্বা লিংক নেই।']);
+    I18N_PAT.push(['^(.+) is working\\.$', '$1 চালু আছে।']);
+    I18N_PAT.push(['^(.+) is not connected to the ERP yet\\.$', '$1 এখনো ERP-র সাথে জোড়া হয়নি।']);
+    I18N_PAT.push(['^(.+) did not answer in (\\d+) seconds\\. Check that the server is on, then try again\\.$', '$1 $2 সেকেন্ডে সাড়া দেয়নি। সার্ভার চালু আছে কিনা দেখে আবার চেষ্টা করুন।']);
+    I18N_PAT.push(['^(.+) could not be reached\\. (.+)$', '$1-এ পৌঁছানো গেল না। সার্ভার চালু আছে কিনা আর Settings → Connections → Tools-এর ঠিকানা ঠিক কিনা দেখুন।']);
+    I18N_PAT.push(['^(.+) refused the key: (.+)$', '$1 চাবি নেয়নি: Settings → Connections → Tools-এ নতুন চাবি দিন।']);
+    I18N_PAT.push(['^Shorts job (.+) started\\.$', 'শর্টসের কাজ শুরু হয়েছে ($1)।']);
+  } catch (e) {}
+
+  function stLoad() {
+    if (TD.stBusy) return; TD.stBusy = true;
+    srv('erpToolsStatus', [], function (r) { TD.stBusy = false; TD.st = {}; (r.tools || []).forEach(function (t) { TD.st[t.key] = t; }); if (VIEW === 'opentools') repaint(); },
+        function (e) { TD.stBusy = false; TD.st = { _err: (e && e.message) || String(e) }; if (VIEW === 'opentools') repaint(); });
+  }
+  function jobsLoad() {
+    srv('erpShortsJobs', [], function (r) { TD.jobs = r.jobs || []; if (VIEW === 'opentools') repaint(); }, function (e) { TD.jobs = []; TD.jobsErr = (e && e.message) || String(e); if (VIEW === 'opentools') repaint(); });
+  }
+  function stateOf(key) {
+    if (!JOINED[key]) return ['', 'Not joined to the ERP yet'];
+    var s = TD.st && TD.st[key];
+    if (!s) return ['', TD.st ? 'Not set up in the ERP' : 'Checking the apps…'];
+    if (s.state === 'on') return ['on', 'Working'];
+    if (s.state === 'down') return ['down', 'Not answering'];
+    if (s.state === 'set') return ['set', 'Joined, not checked yet'];
+    return ['', 'Not set up in the ERP'];
+  }
+  function openUrl(key, sub) { var s = TD.st && TD.st[key]; return (s && s.open) || ('https://' + sub + '.costareen.com/'); }
+  function on() { if (!ME || ME.role !== 'owner') return false; return !!ME.platform || OFF().indexOf('opentools') < 0; }
+
+  function shortsHtml() {
+    if (!tdOwner()) return '';
+    if (TD.jobs === null) { TD.jobs = []; jobsLoad(); }
+    var h = '<section><div class="card"><div class="row" style="justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px"><h2 style="margin:0">Shorts from a long video</h2>' +
+      '<button class="btn small" type="button" data-td="jobs">Refresh</button></div>' +
+      '<div class="row" style="gap:8px;flex-wrap:wrap;align-items:flex-end;margin-top:8px"><div style="flex:3 1 260px"><label class="f" for="td_vurl">Long video link</label><input class="i" id="td_vurl" placeholder="https://www.youtube.com/watch?v=..."></div>' +
+      '<div style="flex:0 1 90px"><label class="f" for="td_clips">Clips</label><input class="i" id="td_clips" type="number" min="1" max="10" value="5"></div>' +
+      '<button class="btn primary" type="button" data-td="make"' + (TD.busy ? ' disabled' : '') + '>' + (TD.busy ? 'Working…' : 'Make shorts') + '</button></div>';
+    if (TD.jobsErr) h += '<div class="note err" style="margin-top:8px"><div class="ico">!</div><div>' + esc(TD.jobsErr) + '</div></div>';
+    h += (TD.jobs || []).length ? TD.jobs.map(function (j) {
+      return '<div class="td-job"><b>' + esc(j.status) + '</b> <span class="sku" data-noi18n="1">' + esc(j.url) + '</span>' + (j.error ? '<div style="color:var(--critical)">' + esc(j.error) + '</div>' : '') +
+        (j.clips.length ? '<div class="td-links">' + j.clips.map(function (c, i) { return c.link ? '<a href="' + esc(c.link) + '" target="_blank" rel="noopener noreferrer" data-noi18n="1">' + esc(c.title || ('#' + (i + 1))) + ' ↗</a>' : '<span data-noi18n="1">' + esc(c.title || ('#' + (i + 1))) + '</span>'; }).join(' · ') + '</div>' : '') + '</div>';
+    }).join('') : '<div class="sku" style="margin-top:8px">No shorts made yet.</div>';
+    return h + '</div></section>';
+  }
+  function toolsView() {
+    if (!on()) return '<div class="note"><div class="ico">i</div><div>Tools are for the owner only.</div></div>';
+    if (!TD.st) stLoad();
+    var joined = Object.keys(JOINED), working = joined.filter(function (k) { return TD.st && TD.st[k] && TD.st[k].state === 'on'; }).length;
+    var h = '<section><div class="td-top"><b>' + working + ' of ' + joined.length + ' joined apps working</b><button class="btn small" type="button" data-td="recheck">Check again</button></div>' +
+      (TD.st && TD.st._err ? '<div class="note err" style="margin-bottom:12px"><div class="ico">!</div><div>' + esc(TD.st._err) + '</div></div>' : '') +
+      '<div class="note" style="margin-bottom:14px"><div class="ico">i</div><div>Records stay in the ERP: customers, leads, money and stock never move into an app.</div></div>';
+    GROUPS.forEach(function (g) {
+      h += '<div class="ot-grp">' + esc(g.t) + '</div><div class="ot-grid">';
+      g.items.forEach(function (x) {
+        var s = stateOf(x[1]);
+        h += '<div class="td-card"><div class="hd"><span class="ic" style="background:' + x[3] + '">' + esc(x[0].charAt(0)) + '</span><div style="min-width:0"><div class="nm" data-noi18n="1">' + esc(x[0]) + '</div>' +
+          '<div class="td-state"><span class="td-dot ' + s[0] + '"></span>' + esc(s[1]) + '</div></div></div>' +
+          '<div class="ds">' + esc(x[4]) + '</div>' + (INSIDE[x[1]] && tdOwner() ? '<div class="ds">' + esc(INSIDE[x[1]]) + '</div>' : '') +
+          '<div class="ft"><a class="btn small" href="' + esc(openUrl(x[1], x[2])) + '" target="_blank" rel="noopener noreferrer">Open full app</a></div></div>';
+      });
+      h += '</div>';
+    });
+    return h + '</section>' + shortsHtml();
+  }
+  var rpT = repaint;
+  repaint = function () { var r = rpT.apply(this, arguments); if (VIEW === 'opentools' && on()) { var v = el('view'); if (v) v.innerHTML = toolsView(); } return r; };
+
+  // ---- Settings > Connections > Tools
+  function toolsLoad() { srv('erpTools', [], function (r) { TD.tools = r.tools || []; if (VIEW === 'settings') repaint(); }, function (e) { TD.tools = []; TD.toolsErr = (e && e.message) || String(e); if (VIEW === 'settings') repaint(); }); }
+  function connToolsHtml() {
+    if (!tdOwner()) return '';
+    if (TD.tools === null) { TD.tools = false; toolsLoad(); }
+    var h = '<section><div class="card"><h2>Tools</h2><div class="sub">The open-source apps on your server, joined to the ERP. The ERP talks to them from the server; the key never comes back to this page.</div>';
+    if (!TD.tools) return h + '<div class="loading">Reading…</div></div></section>';
+    h += '<div class="td-conn">' + TD.tools.map(function (t) {
+      var tr = TD.test[t.key], dot = tr ? (tr.ok ? 'on' : 'down') : (t.url ? 'set' : '');
+      return '<div><div><span class="td-dot ' + dot + '"></span><b data-noi18n="1">' + esc(t.name) + '</b>' + (tr ? ' <span class="sku">' + esc(tr.say) + (tr.version ? ' (' + esc(tr.version) + ')' : '') + '</span>' : '') + '</div>' +
+        '<div class="fields" style="margin-top:6px"><div style="grid-column:1/-1"><label class="f" for="td_u_' + t.key + '">Address the server uses</label><input class="i" id="td_u_' + t.key + '" value="' + esc(t.url) + '" placeholder="http://brand-' + esc(t.key) + ':8080" data-noi18n="1"></div>' +
+        '<div style="grid-column:1/-1"><label class="f" for="td_o_' + t.key + '">Full app link</label><input class="i" id="td_o_' + t.key + '" value="' + esc(t.open) + '" placeholder="https://..." data-noi18n="1"></div>' +
+        (t.key === 'shlink' ? '<div style="grid-column:1/-1"><label class="f" for="td_s_shlink">Short-link domain</label><input class="i" id="td_s_shlink" placeholder="go.example.com" data-noi18n="1"></div>' : '') +
+        (t.takesKey ? '<div style="grid-column:1/-1"><label class="f" for="td_k_' + t.key + '">' + (t.needsKey ? 'Key' : 'Gemini key (optional)') + '</label><input class="i" id="td_k_' + t.key + '" type="password" autocomplete="off" placeholder="' + (t.keySet ? '••••••••' : '') + '"></div>' : '') +
+        '</div><div class="row" style="gap:8px;margin-top:8px;flex-wrap:wrap"><button class="btn small primary" type="button" data-td="save" data-k="' + t.key + '">Save</button><button class="btn small" type="button" data-td="test" data-k="' + t.key + '">Test</button>' +
+        (t.keySet ? '<button class="btn small" type="button" data-td="nokey" data-k="' + t.key + '">Remove the key</button>' : '') + '</div></div>';
+    }).join('') + '</div>';
+    return h + '</div></section>';
+  }
+  if (typeof connHtml === 'function') { var connHtmlTd = connHtml; connHtml = function () { var h = connHtmlTd.apply(this, arguments); if (!h) return h; try { h += connToolsHtml(); } catch (e) {} return h; }; }
+
+  // ---- Posts: short links and the OpenCut link
+  function linksLoad() {
+    if (TD.linksBusy) return; TD.linksBusy = true;
+    srv('erpShortLinks', [{}], function (r) { TD.linksBusy = false; TD.links = r.links || []; TD.linksErr = ''; repaint(); }, function (e) { TD.linksBusy = false; TD.links = []; TD.linksErr = (e && e.message) || String(e); });
+  }
+  if (typeof spPostHtml === 'function') {
+    var spPostHtmlTd = spPostHtml;
+    spPostHtml = function (p) {
+      var h = spPostHtmlTd.apply(this, arguments);
+      if (!tdMgr() || !p || !p.id) return h;
+      if (TD.links === null) { TD.links = []; linksLoad(); }
+      var mine = (TD.links || []).filter(function (l) { return l.post === p.id; });
+      if (!mine.length) return h;
+      var row = '<div class="td-links">' + mine.map(function (l) { return '<a href="' + esc(l.short) + '" target="_blank" rel="noopener noreferrer" data-noi18n="1">' + esc(l.short.replace(/^https?:\/\//, '')) + '</a>' + (l.network ? '<span class="sku" data-noi18n="1"> ' + esc(l.network) + '</span>' : '') + ' · <b>' + esc(String(l.clicks)) + '</b> <span>' + (l.clicks === 1 ? 'click' : 'clicks') + '</span> <button class="btn small" type="button" data-td="copy" data-u="' + esc(l.short) + '">Copy</button>'; }).join(' &nbsp; ') + '</div>';
+      return h.replace(/<\/div>$/, row + '</div>');
+    };
+  }
+  if (typeof spFormHtml === 'function') {
+    var spFormHtmlTd = spFormHtml;
+    spFormHtml = function () {
+      var h = spFormHtmlTd.apply(this, arguments);
+      if (!tdMgr()) return h;
+      var cut = TD.st && TD.st.opencut, cutUrl = (cut && cut.open) || 'https://cut.costareen.com/projects';
+      var add = '<div class="td-sl"><div style="flex:3 1 240px"><label class="f" for="td_long">Link to shorten</label><input class="i" id="td_long" placeholder="https://..." data-noi18n="1"></div>' +
+        '<div style="flex:1 1 140px"><label class="f" for="td_slug">Short name</label><input class="i" id="td_slug" placeholder="silk-pla" data-noi18n="1"></div>' +
+        '<button class="btn small" type="button" data-td="short"' + (TD.busy ? ' disabled' : '') + '>Make short link</button>' +
+        '<button class="btn small" type="button" data-td="shorten"' + (TD.busy ? ' disabled' : '') + '>Shorten every link in the captions</button>' +
+        (tdOwner() ? '<a class="btn small td-wide" href="' + esc(cutUrl) + '" target="_blank" rel="noopener noreferrer">Edit by hand (OpenCut, new tab)</a><span class="sku td-narrow">Open on a computer to edit by hand.</span>' : '') + '</div>';
+      return h.replace(/<\/div><\/div>$/, '</div>' + add + '</div>');
+    };
+  }
+
+  document.addEventListener('click', async function (ev) {
+    var t = ev.target && ev.target.closest ? ev.target.closest('[data-td]') : null; if (!t) return;
+    var a = t.getAttribute('data-td'), k = t.getAttribute('data-k');
+    if (a === 'recheck') { TD.st = null; repaint(); return; }
+    if (a === 'jobs') { TD.jobsErr = ''; jobsLoad(); return; }
+    if (a === 'copy') { try { await navigator.clipboard.writeText(t.getAttribute('data-u')); toast('Copied.'); } catch (e) { toast(esc(t.getAttribute('data-u'))); } return; }
+    if (a === 'make') {
+      var u = (el('td_vurl') || {}).value || '', n = Number((el('td_clips') || {}).value) || 5;
+      TD.busy = true; repaint();
+      srv('erpShortsMake', [{ url: u.trim(), clips: n }], function (r) { TD.busy = false; toast('Shorts job ' + r.job.id + ' started.'); jobsLoad(); repaint(); }, fail);
+      return;
+    }
+    if (a === 'save') {
+      var args = { tool: k, url: (el('td_u_' + k) || {}).value, open: (el('td_o_' + k) || {}).value };
+      var kv = el('td_k_' + k); if (kv && kv.value.trim()) args.key = kv.value.trim();
+      var sv = el('td_s_' + k); if (sv && sv.value.trim()) args.short = sv.value.trim();
+      srv('erpToolSet', [args], function (r) { TD.tools = r.tools || []; delete TD.test[k]; TD.st = null; toast('Saved.'); repaint(); }, fail);
+      return;
+    }
+    if (a === 'nokey') {
+      if (!(await uiConfirm('Remove the key?'))) return;
+      srv('erpToolSet', [{ tool: k, clearKey: true }], function (r) { TD.tools = r.tools || []; toast('Key removed.'); repaint(); }, fail);
+      return;
+    }
+    if (a === 'test') { srv('erpToolTest', [{ tool: k }], function (r) { TD.test[k] = r; toast(esc(r.say), !r.ok, 9000); repaint(); }, fail); return; }
+    if (a === 'short' || a === 'shorten') {
+      if (typeof spKeep === 'function') spKeep();
+      var f = SP && SP.form; if (!f) return;
+      if (a === 'short') {
+        var lu = ((el('td_long') || {}).value || '').trim(), sl = ((el('td_slug') || {}).value || '').trim();
+        TD.busy = true; repaint();
+        srv('erpShortLink', [{ url: lu, slug: sl, network: SP.tab, post: f.id, sku: f.sku }], function (r) {
+          TD.busy = false; var cap = f.captions[SP.tab] || ''; f.captions[SP.tab] = (cap ? cap.replace(/\s*$/, '') + '\n' : '') + r.link.short;
+          TD.links = null; toast('1 short link made.'); repaint();
+        }, fail);
+      } else {
+        TD.busy = true; repaint();
+        srv('erpShortenText', [{ captions: f.captions, post: f.id, sku: f.sku }], function (r) {
+          TD.busy = false; Object.keys(r.captions || {}).forEach(function (x) { f.captions[x] = r.captions[x]; });
+          TD.links = null; toast(r.made.length ? r.made.length + ' short link' + (r.made.length === 1 ? '' : 's') + ' made.' : 'No long link in the captions.'); repaint();
+        }, fail);
+      }
+    }
+  });
+  // a new business or a reload forgets what was read
+  if (typeof go === 'function') { var goTd = go; go = function (v) { if (v === 'opentools') TD.st = null; if (v === 'settings') TD.tools = null; return goTd.apply(this, arguments); }; }
+})();
+</script>
 </body>
 </html>
