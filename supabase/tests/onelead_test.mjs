@@ -52,6 +52,9 @@ r = await mgr('erpLeadSave', [{ key: '1933000333', name: 'Test Shapla Rani', not
 const s1 = (await sql`select name, note from inbox_leads where id = ${shapla}`)[0];
 check('editing a Leads-page lead from Campaigns writes its own row (no campaign row made)', ok(r) && s1.name === 'Test Shapla Rani' && s1.note === 'call after 5' &&
   !(await sql`select 1 from campaign_leads where business_id = ${B} and lead_key = '1933000333'`).length, s1);
+r = await mgr('erpLeadSave', [{ key: '1933000333', name: 'Test Shapla R', source: '' }]);   // the Campaigns edit row sends no note
+const s2 = (await sql`select name, note from inbox_leads where id = ${shapla}`)[0];
+check('an edit without a note keeps the Leads-page note', ok(r) && s2.name === 'Test Shapla R' && s2.note === 'call after 5', s2);
 
 // ---- 4. removing from the campaign list keeps the person on the Leads page
 r = await mgr('erpLeadRemove', [{ key: '1822000222' }]);

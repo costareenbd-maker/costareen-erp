@@ -508,8 +508,14 @@ export async function erpLeadSave(ctx, payload) {
     await ctx.tx`update campaign_leads set name = ${nm}, source = ${src}, note = ${nt} where id = ${hit.id}`;
   }
   if (hit.inboxId) {   // D19: one lead, one name - the Leads page row follows (its note keeps where it came from)
-    await ctx.tx`update inbox_leads set name = ${nm || null}, note = ${(hit.id ? [src, nt].filter((x) => x).join(' · ') : nt) || null},
-                   updated_at = ${ctx.now} where id = ${hit.inboxId} and business_id = ${ctx.biz}`;
+    // the Campaigns edit row has no note box: a note on the Leads page is kept unless a note was sent
+    const hasNote = Object.prototype.hasOwnProperty.call(payload, 'note');
+    if (hasNote) {
+      await ctx.tx`update inbox_leads set name = ${nm || null}, note = ${(hit.id ? [src, nt].filter((x) => x).join(' · ') : nt) || null},
+                     updated_at = ${ctx.now} where id = ${hit.inboxId} and business_id = ${ctx.biz}`;
+    } else {
+      await ctx.tx`update inbox_leads set name = ${nm || null}, updated_at = ${ctx.now} where id = ${hit.inboxId} and business_id = ${ctx.biz}`;
+    }
     await ctx.tx`insert into inbox_lead_events (business_id, lead_id, what, by_name) values (${ctx.biz}, ${hit.inboxId}, 'Details changed from Campaigns', ${ctx.s.name || null})`;
   }
   return { ok: true };
