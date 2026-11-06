@@ -1202,10 +1202,13 @@ export async function makeHoldPdf(ctx, h) {
   const parts = await invoiceDoc(d, p, s, {}, img, when, D, invoiceArtParts);
   if ((await docLang(ctx)) === 'bn') { parts.html = docBangla(parts.html); parts.footer = docBangla(parts.footer); }
   const bytes = await renderPdf(ctx, parts.html, { footer: parts.footer });
-  const keep = new Uint8Array(bytes);   // the storage upload may take the buffer; the copy goes to WhatsApp / the page
+  // as text at once: the storage upload may take the buffer, and bytes do not always survive the way back
+  const u = new Uint8Array(bytes);
+  let bin = ''; for (let i = 0; i < u.length; i += 0x8000) bin += String.fromCharCode.apply(null, Array.from(u.subarray(i, i + 0x8000)));
+  const b64 = btoa(bin);
   const name = 'Invoice_' + invoiceNo + '.pdf';
   const f = await saveFile(ctx, 'invoices', name, bytes, 'application/pdf');
-  return { url: f.url, id: f.id, name, bytes: keep };
+  return { url: f.url, id: f.id, name, b64, size: u.length };
 }
 
 export const HANDLERS = {

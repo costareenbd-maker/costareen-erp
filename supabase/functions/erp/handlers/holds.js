@@ -100,7 +100,7 @@ async function sendWa(ctx, h, channelId) {
   let msg = null;
   try {
     const pdf = await (await import('./sales.js')).makeHoldPdf(ctx, h);
-    if (pdf && pdf.bytes) msg = { kind: 'document', mime: 'application/pdf', fileName: pdf.name, url: holdPdfLink(ctx, h) || pdf.url, base64: b64(pdf.bytes), caption: text, store: 'text', text: '📄 ' + pdf.name + '\n' + text };
+    if (pdf && pdf.b64) msg = { kind: 'document', mime: 'application/pdf', fileName: pdf.name, url: holdPdfLink(ctx, h) || pdf.url, base64: pdf.b64, caption: text, store: 'text', text: '📄 ' + pdf.name + '\n' + text };
   } catch (e) { console.error('hold pdf', e && e.message); }
   if (!msg) msg = bill && ctx.deps && ctx.deps.svgPng ? { kind: 'image', url: bill, caption: text } : { kind: 'text', text };
   let r;
@@ -241,7 +241,7 @@ export async function holdPdf(ctx, tok) {
   const h = await byToken(ctx, tok);
   if (!h) return null;
   const f = await (await import('./sales.js')).makeHoldPdf(ctx, h);
-  return f && f.bytes && f.bytes.length ? f.bytes : null;
+  return f && f.b64 ? f.b64 : null;   // base64 text; index.ts turns it back into the file
 }
 export async function holdBill(ctx, tok) {
   const h = await byToken(ctx, tok);

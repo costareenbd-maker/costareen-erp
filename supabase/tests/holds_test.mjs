@@ -98,7 +98,7 @@ check('the PDF is the real invoice: its number, the invoice design, nothing abou
 const pg = await asB(async (ctx) => hd.holdPage(ctx, (await sql`select token from order_holds where hold_no = ${no3} and business_id = ${FIX.B}`)[0].token));
 check('the page has a Download the PDF link', /inbox=holdpdf&h=[0-9a-f]{32}/.test(pg.body.pdf), pg.body.pdf);
 const pf = await asB(async (ctx) => hd.holdPdf(ctx, (await sql`select token from order_holds where hold_no = ${no3} and business_id = ${FIX.B}`)[0].token));
-check('the PDF link gives the file', pf && pf.length > 0, pf && pf.length);
+check('the PDF link gives the file', typeof pf === 'string' && pf.length > 4 && pf === sentDoc.body.media, pf && pf.slice(0, 20));
 check('the message is in the Inbox and the order marked sent', (await sql`select count(*)::int n from inbox_messages m join inbox_conversations v on v.id = m.conversation_id where v.channel_id = ${bills.id} and m.direction = 'out'`)[0].n === 1 && (await holdRow(h3)).sent_via === 'Bills');
 r = await sales('erpHoldSend', [{ id: h3, channelId: chat.id }]);
 check('sent again from another number', r.ok && r.result.via === 'Support', r);
