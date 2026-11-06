@@ -47,6 +47,18 @@ check('B7 still balanced after the sale', Math.abs(rep.balance_check) < 0.01, re
 check('B7 Costareen pays the partner 2000 (its share of the cash), not a 50/50 figure',
   rep.transfers.length === 1 && rep.transfers[0].from === A && rep.transfers[0].to === B3 && Math.abs(rep.transfers[0].amount - 2000) < 0.01, rep.transfers);
 
+// review fix: a month already closed keeps the split it was closed on ('equal' before 158), the stock_paid basis is for open months only
+const core = async (month) => (await sql.begin(async (t) => { await t`select set_config('erp.system', 'on', true)`; return t`select public.pool_settlement_core(${POOL}, ${month}::date) as r`; }))[0].r;
+const thisM = (await sql`select date_trunc('month', public.dhaka_date(now()))::date::text as m`)[0].m;
+const nextM = (await sql`select (date_trunc('month', public.dhaka_date(now())) + interval '1 month')::date::text as m`)[0].m;
+let nx = await core(nextM);
+check('the view of next month, this month still open: this month splits 2000 / 1000 by stock money', Math.abs(part(nx, A).profit_share - 2000) < 0.01 && Math.abs(part(nx, B3).profit_share - 1000) < 0.01, nx.partners);
+await sql`insert into pool_settlements (pool_id, month, report) values (${POOL}, ${thisM}::date, ${sql.json({ test: true })})`;
+nx = await core(nextM);
+check('this month closed: a later view keeps it on the old equal split (1500 / 1500), never re-split by stock money', Math.abs(part(nx, A).profit_share - 1500) < 0.01 && Math.abs(part(nx, B3).profit_share - 1500) < 0.01, nx.partners);
+check('next month itself (open) still splits by stock money', nx.ratio_basis === 'stock_paid', nx.ratio_basis);
+await sql`delete from pool_settlements where pool_id = ${POOL} and month = ${thisM}::date`;
+
 // once capital is written, the written capital rules again
 r = await owner('erpJointBook', [{ pool: POOL, kind: 'capital_in', partner: A, amount: 5000 }]);
 check('capital written for Costareen', r.ok, r);

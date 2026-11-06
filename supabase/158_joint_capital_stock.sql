@@ -85,17 +85,21 @@ begin
   buy_tot as (
     select m, sum(paid) as tot from buy group by m
   ),
+  -- review fix: a month already closed (pool_settlements) keeps the split it was closed on - the 'stock_paid' basis
+  -- is only for months still open, so a settled month is never re-split by this migration.
   ratio as (
     select c.m, c.pid,
       case when t.tot_start > 0 then c.at_start / t.tot_start
            when t.tot_end   > 0 then c.at_end   / t.tot_end
-           when bt.tot      > 0 then b.paid / bt.tot
+           when bt.tot      > 0 and not c.closed then b.paid / bt.tot
            else 1 / (select cnt from n) end as r,
       case when t.tot_start > 0 then 'month_start'
            when t.tot_end   > 0 then 'month_end'
-           when bt.tot      > 0 then 'stock_paid'
+           when bt.tot      > 0 and not c.closed then 'stock_paid'
            else 'equal' end as basis
-    from cap c join cap_tot t using (m)
+    from (select cap.*, exists (select 1 from public.pool_settlements ps where ps.pool_id = p_pool and ps.month = cap.m) as closed
+          from cap) c
+    join cap_tot t using (m)
     join buy b on b.m = c.m and b.pid = c.pid
     join buy_tot bt on bt.m = c.m
   ),

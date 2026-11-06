@@ -40,5 +40,5 @@ update public.campaign_leads cl
 
 create index if not exists campaign_leads_inbox_idx on public.campaign_leads (inbox_lead_id) where inbox_lead_id is not null;
 
-grant select, insert, update, delete on all tables in schema public to authenticated;
-grant usage, select on all sequences in schema public to authenticated;
+-- review fix: no blanket grant here - it would hand authenticated back the server-only tables earlier migrations
+-- revoked (business_secrets, erp_access_keys, ...). Nothing new needs one: campaign_leads and inbox_leads have theirs.

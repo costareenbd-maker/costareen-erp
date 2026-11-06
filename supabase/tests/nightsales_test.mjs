@@ -99,9 +99,16 @@ const msg = (id, from, text) => JSON.stringify({ event: 'messages.upsert', data:
 await asB(async (ctx) => ib.hookPost(ctx, ch, msg('NS1', '8801712345670', 'no problem, when will it come?'), {}));
 check('a sentence that only mentions "no" changes nothing', (await holdRow(h3)).status === 'waiting');
 
+// review fix: a send that fails puts the saved row back (the link-backed PDF / picture had shown the new lines meanwhile)
+web.on(/wa\.test/, () => ({ status: 500, body: { error: 'down' } }));
+r = await sales('erpCreateInvoice', order({ send: 'wa' }, 2, { holdReplaces: h3 }));
+check('changed, WhatsApp failed: refused, and the saved row is back to the old lines', !r.ok && /Nothing changed/.test(r.error) && Number((await holdRow(h3)).grand_total) === 1350 + 100 && (await holdRow(h3)).snap.lines[0].qty === 1, [r, await holdRow(h3)]);
 // D17 by WhatsApp: changed and sent again - same number, the new PDF went out, then the order took the change
 evo.length = 0;
+const seen = [];   // what the invoice link (inbox=holdpdf / holdbill, another connection) would read while the send is under way
+web.on(/wa\.test/, async (url, opts) => { const row = (await sql`select grand_total, snap from order_holds where id = ${h3}`)[0]; seen.push(Number(row.grand_total)); evo.push({ url, body: opts.body ? JSON.parse(opts.body) : null }); return { status: 201, body: { key: { id: 'OUT' + evo.length } } }; });
 r = await sales('erpCreateInvoice', order({ send: 'wa' }, 3, { holdReplaces: h3 }));
+check('while it is being sent, the saved row (what the PDF / picture link shows) already holds the NEW lines', seen.length > 0 && seen.every((g) => g === 1350 * 3 + 100), seen);
 const doc = evo.find((x) => /sendMedia/.test(x.url));
 check('changed and sent on WhatsApp under the same number', r.ok && r.result.replaced && r.result.sent && r.result.holdNo === (await holdRow(h3)).hold_no && doc && doc.body.fileName === 'Invoice_' + r.result.holdNo + '.pdf', r);
 check('it waits with the new total, marked sent', Number((await holdRow(h3)).grand_total) === 1350 * 3 + 100 && !!(await holdRow(h3)).sent_at && (await holdRow(h3)).sent_via === 'Bills test');

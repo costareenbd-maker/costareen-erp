@@ -15576,14 +15576,15 @@ function riskBoxHtml() {
   var r = RISK, cur = OPT ? OPT.currency : 'BDT';
   if (!r) { loadRisks(); return ''; }
   var t = r.totals;
+  var mo = function (v) { return typeof tk === 'function' ? tk(v) : fmt(v); };   // night-f2 review fix: money reads ৳ (South-Asian grouping)
   var calm = !t.over7 && !r.payoutLate.length && !r.returnWaiting.length && !r.webWaiting.length;
   var tabs = [['overdue', 'Unpaid', r.overdueCount], ['payout', 'Courier not paid', r.payoutLate.length], ['back', 'Came back', r.returnWaiting.length], ['web', 'Website orders', r.webWaiting.length]];
   var h = '<section><div class="card risk" style="border-color:var(' + (calm ? '--good' : '--critical') + ')"><div class="row" style="justify-content:space-between;align-items:center"><h2 style="margin:0">Unpaid and at risk' +
     (calm ? ' <span class="pill ok">nothing at risk</span>' : '') + '</h2>' +
     '<button class="btn small" type="button" id="rk_toggle">' + (RISK_OPEN ? 'Hide' : 'Show') + '</button></div>' +
-    '<div class="rk"><div><b>' + fmt(t.owed) + '</b><span>owed in all</span></div><div class="warn"><b>' + fmt(t.over30) + '</b><span>over 30 days</span></div>' +
-    '<div class="bad"><b>' + fmt(t.over60) + '</b><span>over 60 days</span></div><div class="warn"><b>' + fmt(t.payoutLate) + '</b><span>delivered, Steadfast has not paid (' + fmt(r.rules.payoutDays) + '+ days)</span></div>' +
-    (t.returnWaiting ? '<div class="bad"><b>' + fmt(t.returnWaiting) + '</b><span>came back, goods not taken back</span></div>' : '') + '</div>';
+    '<div class="rk"><div><b>' + mo(t.owed) + '</b><span>owed in all</span></div><div class="warn"><b>' + mo(t.over30) + '</b><span>over 30 days</span></div>' +
+    '<div class="bad"><b>' + mo(t.over60) + '</b><span>over 60 days</span></div><div class="warn"><b>' + mo(t.payoutLate) + '</b><span>delivered, Steadfast has not paid (' + fmt(r.rules.payoutDays) + '+ days)</span></div>' +
+    (t.returnWaiting ? '<div class="bad"><b>' + mo(t.returnWaiting) + '</b><span>came back, goods not taken back</span></div>' : '') + '</div>';
   if (!RISK_OPEN) return h + '</div></section>';
   h += '<div class="chips" style="margin:0 0 8px">' + tabs.map(function (x) { return '<button class="chip' + (RISK_TAB === x[0] ? ' on' : '') + '" type="button" data-rktab="' + x[0] + '">' + esc(x[1]) + ' <span class="sku">' + fmt(x[2]) + '</span></button>'; }).join('') + '</div>';
   var rows = '', empty = '';
@@ -15592,7 +15593,7 @@ function riskBoxHtml() {
     rows = r.overdue.map(function (i) {
       var wa = (typeof waLink === 'function' && typeof dueMessage === 'function' && i.phone) ? waLink(i.phone, dueMessage({ name: i.customer, due: i.due, oldest: i.days, invoices: 1 }, cur)) : '';
       return '<tr><td class="nm"><button class="linkbtn" type="button" data-openinv="' + esc(i.invoice) + '">' + esc(i.invoice) + '</button><br><span class="sku">' + esc(i.when) + '</span></td>' +
-        '<td>' + esc(i.customer) + (i.phone ? '<br><span class="sku">' + esc(i.phone) + '</span>' : '') + '</td><td class="num"><strong>' + fmt(i.due) + '</strong></td>' +
+        '<td>' + esc(i.customer) + (i.phone ? '<br><span class="sku">' + esc(i.phone) + '</span>' : '') + '</td><td class="num"><strong>' + mo(i.due) + '</strong></td>' +
         '<td class="num">' + (typeof dueAge === 'function' ? dueAge(i.days) : fmt(i.days) + 'd') + '</td><td class="num" style="white-space:nowrap">' +
         (wa ? '<a class="btn small primary" href="' + esc(wa) + '" target="_blank" rel="noopener" data-rkwa="1" data-rphone="' + esc(i.phone) + '" data-rname="' + esc(i.customer) + '" data-rdue="' + esc(i.due) + '">WhatsApp</a> ' : '') +
         '<button class="btn small" type="button" data-cdue="1" data-cphone="' + esc(i.phone) + '" data-cname="' + esc(i.customer) + '">Receive / adjust due</button></td></tr>'; }).join('');
@@ -15600,14 +15601,14 @@ function riskBoxHtml() {
   } else if (RISK_TAB === 'payout') {
     empty = 'Every delivered parcel has been paid out.';
     rows = r.payoutLate.map(function (p) { return '<tr><td class="nm"><button class="linkbtn" type="button" data-openinv="' + esc(p.invoice) + '">' + esc(p.invoice) + '</button></td><td>' + esc(p.customer) + '<br><span class="sku">consignment ' + esc(p.consignment) + '</span></td>' +
-      '<td class="num"><strong>' + fmt(p.amount) + '</strong></td><td class="num">' + fmt(p.days) + 'd</td><td><span class="sku">delivered ' + esc(p.since) + ' \u2014 ask Steadfast</span></td></tr>'; }).join('');
+      '<td class="num"><strong>' + mo(p.amount) + '</strong></td><td class="num">' + fmt(p.days) + 'd</td><td><span class="sku">delivered ' + esc(p.since) + ' \u2014 ask Steadfast</span></td></tr>'; }).join('');
   } else if (RISK_TAB === 'back') {
     empty = 'No parcel waiting to be taken back.';
     rows = r.returnWaiting.map(function (p) { return '<tr><td class="nm"><button class="linkbtn" type="button" data-openinv="' + esc(p.invoice) + '">' + esc(p.invoice) + '</button></td><td>' + esc(p.customer) + '</td>' +
-      '<td class="num"><strong>' + fmt(p.amount) + '</strong></td><td class="num">' + fmt(p.days) + 'd</td><td><span class="sku">courier said it came back ' + esc(p.since) + ' \u2014 open the invoice and press Return when it is on the shelf</span></td></tr>'; }).join('');
+      '<td class="num"><strong>' + mo(p.amount) + '</strong></td><td class="num">' + fmt(p.days) + 'd</td><td><span class="sku">courier said it came back ' + esc(p.since) + ' \u2014 open the invoice and press Return when it is on the shelf</span></td></tr>'; }).join('');
   } else {
     empty = 'No website order waiting.';
-    rows = r.webWaiting.map(function (w) { return '<tr><td class="nm">' + esc(w.order) + '</td><td>' + esc(w.customer) + '</td><td class="num"><strong>' + fmt(w.amount) + '</strong></td><td class="num">' + fmt(w.hours) + 'h</td>' +
+    rows = r.webWaiting.map(function (w) { return '<tr><td class="nm">' + esc(w.order) + '</td><td>' + esc(w.customer) + '</td><td class="num"><strong>' + mo(w.amount) + '</strong></td><td class="num">' + fmt(w.hours) + 'h</td>' +
       '<td><button class="btn small" type="button" data-rkgo="weborders">Open Web orders</button></td></tr>'; }).join('');
   }
   h += rows ? '<div class="scroll"><table><thead><tr><th>Invoice</th><th>Customer</th><th class="num">Amount</th><th class="num">Age</th><th></th></tr></thead><tbody>' + rows + '</tbody></table></div>' : '<div class="empty">' + esc(empty) + '</div>';
@@ -16069,13 +16070,13 @@ riskBoxHtml = function () {
   var h = riskBoxHtmlT1();
   var r = RISK; if (!r || !r.withCourier) return h;
   var late = r.withCourier.filter(function (x) { return x.late; }).length;
-  h = h.replace('<span>owed in all</span></div>', '<span>owed in all</span></div><div' + (late ? ' class="warn"' : '') + '><b>' + fmt(r.totals.withCourier) + '</b><span>cash on delivery, not collected yet' + (late ? ' (' + late + ' late)' : '') + '</span></div>');
+  h = h.replace('<span>owed in all</span></div>', '<span>owed in all</span></div><div' + (late ? ' class="warn"' : '') + '><b>' + tk(r.totals.withCourier) + '</b><span>cash on delivery, not collected yet' + (late ? ' (' + late + ' late)' : '') + '</span></div>');
   if (!RISK_OPEN) return h;
   h = h.replace('data-rktab="web">', 'data-rktab="web">').replace(/(<button class="chip[^"]*" type="button" data-rktab="web">)/, '<button class="chip' + (RISK_TAB === 'cod' ? ' on' : '') + '" type="button" data-rktab="cod">With the courier <span class="sku">' + fmt(r.withCourier.length) + '</span></button>$1');
   if (RISK_TAB === 'cod') {
     var rows = r.withCourier.map(function (i) {
       return '<tr><td class="nm"><button class="linkbtn" type="button" data-openinv="' + esc(i.invoice) + '">' + esc(i.invoice) + '</button><br><span class="sku">' + esc(i.when) + '</span></td><td>' + esc(i.customer) + (i.phone ? '<br><span class="sku">' + esc(i.phone) + '</span>' : '') + '</td>' +
-        '<td class="num"><strong>' + fmt(i.due) + '</strong></td><td class="num"' + (i.late ? ' style="color:var(--critical)"' : '') + '>' + fmt(i.days) + 'd</td><td class="num" style="white-space:nowrap">' + codButtons(i.invoice) + '</td></tr>'; }).join('');
+        '<td class="num"><strong>' + tk(i.due) + '</strong></td><td class="num"' + (i.late ? ' style="color:var(--critical)"' : '') + '>' + fmt(i.days) + 'd</td><td class="num" style="white-space:nowrap">' + codButtons(i.invoice) + '</td></tr>'; }).join('');
     var tbl = rows ? '<div class="scroll"><table><thead><tr><th>Invoice</th><th>Customer</th><th class="num">To collect</th><th class="num">Age</th><th></th></tr></thead><tbody>' + rows + '</tbody></table></div>' : '<div class="empty">No cash on delivery waiting.</div>';
     var a = h.lastIndexOf('<div class="scroll"><table>'), b2 = h.lastIndexOf('<div class="empty">');
     var at = Math.max(a, b2);
@@ -18143,6 +18144,8 @@ document.addEventListener('change', function (ev) {
   // ---- join this business's room while signed in (and allowed to play)
   function arStart() {
     if (AR.room || AR.loading || !window.erpDesk() || typeof ME === 'undefined' || !ME || typeof SB === 'undefined' || !SB || typeof GAMEP === 'undefined' || !GAMEP || !GAMEP.on) return;
+    // review fix: the local build (API on this computer) never opens realtime channels to the live Supabase project
+    if (/^https?:\/\/(localhost|127\.|\[::1\])/i.test(String(ERP_API || ''))) return;
     AR.loading = true;
     srv('erpArena', [], function (r) {
       AR.loading = false; AR.room = r.room; AR.me = r.me; AR.board = r.board || []; AR.recent = r.recent || [];
@@ -31409,6 +31412,9 @@ try { fd19After(); } catch (e) {}
     var on = document.documentElement.getAttribute('data-skin') === 'fd', c = el('o_cp');
     if (!on || !c) { document.body.classList.remove('fd-nocp'); return; }
     var useful = c.querySelector('.crumbs button, .crumbs a');   // fd-37: a back link only (actions live in each screen's head)
+    // night-f1 review fix: the "group / screen" crumbs (nightCrumbs turns the group into span.nt-grp) are shown too -
+    // except where fd-35's rule hides the crumbs anyway (Settings, Tools, Syscheck, Platform)
+    if (!useful && !/^(settings|tools|syscheck|platform)$/.test(document.body.getAttribute('data-fdview') || '')) useful = c.querySelector('.crumbs .nt-grp');
     document.body.classList.toggle('fd-nocp', !useful); document.body.classList.toggle('fd-cp-on', !!useful);
   }
   var t = null, v = el('view');
@@ -44959,6 +44965,35 @@ details.nt-fold.nt-pnlfold > .nt-fold-in { padding:0 4px 6px; }
     // the generic words, only where they still said তুমি
     if (I18N_BN['Send again'] === 'আবার পাঠাও') I18N_BN['Send again'] = 'আবার পাঠান';   // bangla-lint: ok (matches the old তুমি word to replace it)
     if (I18N_BN['Edit'] === 'বদলাও') I18N_BN['Edit'] = 'বদলান';   // bangla-lint: ok
+  } catch (e) {}
+})();
+</script>
+<!-- night-f2 review fix (7 Nov 2026): the invoice drawer's sub-texts in Bangla (they were left in English while the labels
+     around them were Bangla). Consignment IDs are not touched (Bangla digits would break copying them). -->
+<script>
+(function () {
+  var W = {
+    'Parcel not sent yet': 'পার্সেল এখনো পাঠানো হয়নি',
+    'still owed': 'বাকি আছে',
+    'nothing owed': 'কোনো বাকি নেই',
+    'Sale date': 'বিক্রির তারিখ',
+    'with the cost fixed on the day it was sold': 'বিক্রির দিনের কেনা দামসহ',
+    'as sold': 'যেভাবে বিক্রি হয়েছে'
+  };
+  var P = [
+    [/^Margin (-?[\d.]+)%$/, 'মার্জিন $1%'],
+    [/^([\d,]+) units? · (\d+) lines?$/, '$1 ইউনিট · $2 লাইন']
+  ];
+  try {
+    for (var k in W) {
+      if (typeof I18N_BN !== 'undefined' && I18N_BN[k] === undefined) I18N_BN[k] = W[k];
+      if (typeof BN_BASE !== 'undefined' && BN_BASE && BN_BASE.s[k] === undefined) BN_BASE.s[k] = W[k];
+    }
+    P.forEach(function (x) {
+      if (typeof I18N_PAT !== 'undefined') I18N_PAT.push([x[0], x[1]]);
+      if (typeof BN_BASE !== 'undefined' && BN_BASE && BN_BASE.p) BN_BASE.p.push([String(x[0].source), x[1], x[0]]);
+    });
+    if (typeof BN_OWN !== 'undefined' && BN_OWN && typeof bnApplyOwn === 'function') bnApplyOwn(BN_OWN);
   } catch (e) {}
 })();
 </script>

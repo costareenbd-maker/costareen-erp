@@ -98,7 +98,20 @@ async function changeHold(ctx, id, clean, pv, opt, days) {
   const next = { ...old, payload: clean, snap, customer_name: pv.name, customer_phone: pv.phone || null, grand_total: pv.grand };
   let sent = { ok: false, error: '' };
   if (opt.send === 'wa') {
-    sent = await sendWa(ctx, next, str(opt.channelId));
+    // review fix: WhatsApp Cloud / WaSender (and the picture fallback) fetch the invoice by its link (inbox=holdpdf /
+    // holdbill), which reads the saved row from another connection. So the new lines are saved first, outside this
+    // call's transaction (ctx.sql), and put back if the send fails or this call is undone before the send went out.
+    const put = (r) => ctx.sql`update order_holds set payload = ${ctx.sql.json(r.payload)}, snap = ${ctx.sql.json(r.snap)}, customer_name = ${r.customer_name},
+                                 customer_phone = ${r.customer_phone || null}, grand_total = ${r.grand_total}
+                               where business_id = ${ctx.biz} and id = ${old.id} and status = 'waiting'`;
+    let gone = false;
+    const back = async () => { if (!gone) { gone = true; await put(old); } };
+    if (typeof ctx.onRollback === 'function') ctx.onRollback(back);
+    await put(next);
+    try { sent = await sendWa(ctx, next, str(opt.channelId)); }
+    catch (e) { await back(); throw e; }
+    if (sent.ok) gone = true;   // the customer has the new invoice: the saved row keeps it whatever happens next
+    else await back();
     if (!sent.ok) throw new Error('Not sent: ' + (str(sent.error) || 'WhatsApp did not take it.') + ' Nothing changed: the customer\'s ' + old.hold_no + ' stays as it was.');
   }
   const h = (await ctx.tx`update order_holds set payload = ${ctx.tx.json(clean)}, snap = ${ctx.tx.json(snap)}, customer_name = ${pv.name}, customer_phone = ${pv.phone || null},
