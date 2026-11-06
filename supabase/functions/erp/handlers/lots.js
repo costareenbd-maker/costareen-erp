@@ -96,7 +96,7 @@ export async function erpShipments(ctx, payload) {
   if (str(payload && payload.pool)) {
     const r = await poolShipments(ctx, payload.pool, (pctx) => erpShipmentsRaw(pctx));
     const costs = {};
-    for (const c of await ctx.tx`select reference, sum(amount) as amount from shipment_costs where business_id = ${ctx.biz} and voided is null group by reference`) costs[str(c.reference)] = num(c.amount);
+    for (const c of await ctx.tx`select reference, sum(amount) as amount from shipment_costs where business_id = ${ctx.biz} and coalesce(btrim(voided), '') = '' group by reference`) costs[str(c.reference)] = num(c.amount);
     r.shipments.forEach((x) => { x.extraCosts = R(costs[x.reference] || 0); });
     return { ...r, pool: str(payload.pool) };
   }
@@ -114,7 +114,7 @@ async function erpShipmentsRaw(ctx) {
   const draws = {};
   for (const d of await drawRows(ctx, null)) (draws[d.lot] = draws[d.lot] || []).push(d);
   const costs = {};
-  for (const c of await ctx.tx`select reference, sum(amount) as amount from shipment_costs where business_id = ${ctx.biz} group by reference`) costs[str(c.reference)] = num(c.amount);
+  for (const c of await ctx.tx`select reference, sum(amount) as amount from shipment_costs where business_id = ${ctx.biz} and coalesce(btrim(voided), '') = '' group by reference`) costs[str(c.reference)] = num(c.amount);   // night-books B4: a struck-out bill is not summed
   const by = {}, order = [];
   for (const l of lots) {
     const key = l.source === 'opening' ? '~opening' : str(l.reference) || '(no reference)';

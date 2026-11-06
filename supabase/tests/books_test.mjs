@@ -52,4 +52,17 @@ await sql`insert into preorders (business_id, no, customer, customer_key, status
   check('B3 netAfterUnpaid = that net less fixed costs not paid', e.netAfterUnpaid === pnl.net - e.fixedUnpaid, [e.netAfterUnpaid, e.fixedUnpaid]);
 }
 
+// ---- B4: a struck-out shipment bill is not summed
+await sql`insert into products (business_id, sku, name, category, brand, type, cost_price, sell_price, status) values
+  (${B}, 'NB-A', 'Night costed', 'NightKnown', 'NB', 'K', 0, 250, 'Active'),
+  (${B}, 'NB-U', 'Night no cost', 'NightNone', 'NB', 'U', 0, 500, 'Active')`;
+let r = await mgr('erpReceiveShipment', [{ reference: 'NB-S1', supplier: 'Night Sup A', mode: 'none', lines: [{ sku: 'NB-A', qty: 10, unitBdt: 100 }] }]);
+check('B4 shipment NB-S1 received (10 at 100)', r.ok, r);
+await sql`insert into shipment_costs (business_id, reference, label, amount) values (${B}, 'NB-S1', 'Freight', 300)`;
+await sql`insert into shipment_costs (business_id, reference, label, amount, voided) values (${B}, 'NB-S1', 'Wrong freight', 999, 'typed twice')`;
+{
+  const s = (await owner('erpShipments', [{}])).result.shipments.find((x) => x.reference === 'NB-S1');
+  check('B4 the struck-out 999 is not in the shipment\'s other costs (300 only)', s && s.extraCosts === 300, s);
+}
+
 await done();
