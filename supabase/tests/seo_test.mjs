@@ -80,6 +80,7 @@ const A = r.ok && r.result.sites[0].latest.advice;
 check('the AI writes the fixes in Bangla and they are kept on the latest check', r.ok && A && A.fixes.length === 2 && /description/.test(A.fixes[0].title) && A.lang === 'bn' && r.result.sites[0].latest.advisedAt, r.ok ? A : r);
 // night-bangla (F5): the owner is addressed as আপনি, never the familiar তুমি form
 check('the Bangla prompt asks for আপনি forms, not তুমি', /আপনি/.test(aiAsked) && !/তুমি/.test(aiAsked), aiAsked.slice(0, 400));
+check('night-ai: the Bangla prompt asks for আপনি, never the তুমি form', /আপনি/.test(aiAsked) && !/তুমি form/.test(aiAsked), aiAsked.slice(0, 300));
 r = await owner('erpSeoAdvise', [{ site: 'never.test' }]);
 check('fixes for a site never checked: refused', !r.ok && /Check the site first/.test(r.error), r);
 r = await mgr('erpSeoRun', [{}]);

@@ -134,5 +134,13 @@ check('the other business has no briefs', (await sql`select count(*)::int n from
   const { langLine } = await import(pathToFileURL(path.join(fnDir, 'handlers', 'brief.js')));
   check('the Bangla language line asks for আপনি and প্রোডাক্ট, never তুমি', /আপনি/.test(langLine('bn')) && /প্রোডাক্ট/.test(langLine('bn')) && !/তুমি/.test(langLine('bn')) && langLine('en') === '', langLine('bn'));
 }
+// night-ai (6 Nov 2026): the AI-written Bangla speaks to the owner as আপনি
+// (integrate: night-bangla removed the word তুমি from the line itself, so "forbids" is checked by its words)
+{
+  const { langLine } = await import(pathToFileURL(path.join(fnDir, 'handlers', 'brief.js')));
+  check('night-ai: the Bangla brief asks for আপনি and forbids the familiar form; English adds nothing', /আপনি/.test(langLine('bn')) && /never the familiar form|never তুমি/.test(langLine('bn')) && langLine('en') === '', langLine('bn'));
+  const JL = (await sql`select ask from engine_jobs where business_id = ${B} and agent = 'briefing' order by created_at desc limit 1`)[0];
+  check('night-ai: ...and that line is in the job the Engine gets', JL && /আপনি/.test(JL.ask), JL && JL.ask.slice(-300));
+}
 
 await done();
