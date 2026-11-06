@@ -215,8 +215,11 @@ export async function erpExpenses(ctx, payload) {
     oneoffTotal: Math.round(sums.oneoff), total, investorReturns, commission, poolBook: await isPool(ctx), poolExpenses: Math.round(poolTotal), lockedThrough: await lockedThrough(ctx),
     revenue: g.netSales, goodsCost: g.cost, gross: g.gross,
     delivery: g.delivery, courier: g.courier, courierExtra: g.courierExtra, courierShort: g.courierShort, other,
-    net: g.gross + other - total,
-    netAfterUnpaid: g.gross + other - total - Math.round(fixedUnpaid),
+    // night-books B3: the one net profit (pnlFor's, as Profitability and the dashboard show it) - it also has
+    // pre-order deposits kept and the share of joint stock profit, which a sum built here left out
+    net: g.net,
+    netAfterUnpaid: g.net - Math.round(fixedUnpaid),
+    forfeited: g.forfeited || 0, jointShare: g.jointShare || 0, pnlExpenses: g.expenses,
   };
 }
 

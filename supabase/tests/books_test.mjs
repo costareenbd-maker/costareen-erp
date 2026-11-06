@@ -40,4 +40,16 @@ await sql`insert into cost_book (business_id, sort_order, category, brand, type,
   check('B2 once RMB has a rate nothing waits', !Object.keys(cb2.noRate).length && cb2.rows.find((r) => r.type === 'Yuan row').landed > 0, cb2.noRate);
 }
 
+// ---- B3: Expenses shows the one net profit (with a kept pre-order deposit, which its own sum left out)
+const thisMonth = new Date(Date.now() + 6 * 3600e3).toISOString().slice(0, 7);
+await sql`insert into preorders (business_id, no, customer, customer_key, status, forfeited, forfeit_month)
+          values (${B}, 'PO-NIGHT-1', 'Night Buyer', 'night', 'cancelled', 700, ${thisMonth})`;
+{
+  const pnl = (await owner('erpPnl', [{ months: 1 }])).result.months.find((m) => m.month === thisMonth);
+  const e = (await owner('erpExpenses', [{ month: thisMonth }])).result;
+  check('B3 the P&L counts the kept deposit', pnl.forfeited === 700, pnl);
+  check('B3 Expenses net profit = Profitability net profit', e.net === pnl.net, [e.net, pnl.net]);
+  check('B3 netAfterUnpaid = that net less fixed costs not paid', e.netAfterUnpaid === pnl.net - e.fixedUnpaid, [e.netAfterUnpaid, e.fixedUnpaid]);
+}
+
 await done();
