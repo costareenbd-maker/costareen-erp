@@ -34908,9 +34908,9 @@ viewJoint = function () {
 (function () {
   var G = [
     { host: 'dash', tabs: [['dash', 'Overview', '<rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/>'],
-                           ['analytics', 'Analytics', '<path d="M4 20V10M10 20V4M16 20v-8M22 20H2"/>'],
-                           ['profit', 'Profitability', '<path d="M3 17l6-6 4 4 8-8"/><path d="M14 7h7v7"/>'],
                            ['mindmap', 'Navigator', '<circle cx="12" cy="12" r="3"/><circle cx="4" cy="5" r="2"/><circle cx="20" cy="5" r="2"/><circle cx="4" cy="19" r="2"/><circle cx="20" cy="19" r="2"/><path d="M6 6l4 4M18 6l-4 4M6 18l4-4M18 18l-4-4"/>']] },
+    { host: 'profit', tabs: [['profit', 'Profitability', '<path d="M3 17l6-6 4 4 8-8"/><path d="M14 7h7v7"/>'],   // night-w2 (D10): Profitability under Money, Analytics its tab
+                             ['analytics', 'Analytics', '<path d="M4 20V10M10 20V4M16 20v-8M22 20H2"/>']] },
     { host: 'settings', tabs: [['settings', 'Settings', '<path d="M4 6h9M18 6h2M4 12h2M11 12h9M4 18h11"/><circle cx="15.5" cy="6" r="2"/><circle cx="8.5" cy="12" r="2"/><circle cx="17.5" cy="18" r="2"/>'],
                                ['tools', 'Maintenance', '<path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.8-3.8a6 6 0 0 1-7.9 7.9l-7 7a2.1 2.1 0 0 1-3-3l7-7a6 6 0 0 1 7.9-7.9z"/>'],
                                ['syscheck', 'System check', '<path d="M12 3l8 4v5c0 5-3.5 8-8 9-4.5-1-8-4-8-9V7z"/><path d="M8.5 12l2.5 2.5 4.5-5"/>'],
@@ -34953,6 +34953,7 @@ viewJoint = function () {
     if (g.host === 'dash') return VIEW === 'dash' || !shown('dash') ? '' : '<button type="button" data-fd43go="dash"><svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg><span>' + esc(tr('Dashboard')) + '</span></button>';
     var list = g.tabs.filter(function (t) { return shown(t[0]); });
     if (list.length < 2 || !shown(g.host)) return '';
+    if (g.host === 'settings' && VIEW === 'settings') return '';   // night-w2: Settings has one navigation - these are in its section list
     return list.map(function (t) {
       return '<button type="button" class="' + (t[0] === VIEW ? 'on' : '') + '" data-fd43go="' + t[0] + '"><svg viewBox="0 0 24 24">' + t[2] + '</svg><span>' + esc(tr(t[1])) + '</span></button>';
     }).join('');
@@ -43038,6 +43039,215 @@ function ntSettingsPaging() {
   });
 }
 AFTER_PAINT.push(ntSettingsPaging);
+</script>
+<!-- night-w2 (6 Nov 2026, acct-shell.md + acct-settings.md; owner accepted D8-D12): the shell and menu.
+     - Menu in 7 groups (D10): আজ / বিক্রি / কাস্টমার / মাল / টাকা / এআই / সিস্টেম. The existing buttons are re-ordered
+       under new group titles (nothing is removed; role, Edit-menu and joint-stock switches still hide what they hid).
+       Profitability is back in the menu under টাকা ("লাভ") with Analytics as its tab (fd-43 G changed in place); Leads
+       moves from the AI tabs to কাস্টমার; "Tools" is called Mac tools. A screen nobody placed lands in সিস্টেম.
+     - Group titles always show; at 761-1279px (shop laptops) the menu is 196px with names beside the icons (D11).
+     - A visible বাং / EN switch in the top bar (D9); staff (sales, manager) open in Bangla until they choose (D8).
+     - Phone bottom bar: Inbox instead of Apps (D12; Apps stays in "More").
+     - Settings: one navigation - Maintenance, System check and Platform are rows of the Settings section list (the fd-43
+       strip no longer shows on Settings itself); the AI models card shows only under Connections and ERP updates only
+       under Business (they were drawn on every tab). -->
+<style>
+#nav .navgrp.nt-empty, #nav button.nt-off { display:none !important; }
+html:root #nav button[data-view="leads"]:not([style*="display: none"]):not(.c5hide):not(.fd43-in) { display:flex !important; }
+.ai-strip [data-aitab="leads"] { display:none !important; }
+/* group titles: always readable (the FilaDash skin had made them 1px lines) */
+:root[data-skin="fd"] nav#nav .navgrp, :root[data-skin="fd"] nav#nav .navgrp:first-child { display:block; height:auto; background:none; overflow:visible;
+  font-size:11px !important; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:var(--fd-text-3, var(--muted)); margin:14px 0 4px; padding:0 14px 0 24px !important; }
+@media (max-width:640px) { :root[data-skin="fd"] nav#nav .navgrp, :root[data-skin="fd"] nav#nav .navgrp:first-child { display:flex; padding-top:10px !important; padding-bottom:6px !important; } }
+/* shop laptops: names beside the icons, not an icon rail (D11) */
+@media (min-width:761px) and (max-width:1279px) {
+  :root[data-skin="fd"] body:not(.side-mini) { --side-w:196px; }
+  :root[data-skin="fd"] body:not(.side-mini) nav#nav button, :root[data-skin="fd"][data-theme="dark"] body:not(.side-mini) nav#nav button {
+    margin:0 8px; width:calc(100% - 16px); padding:0 10px 0 12px; justify-content:flex-start; gap:10px; font-size:14px; min-height:40px; height:40px; }
+  :root[data-skin="fd"] body:not(.side-mini) nav#nav button .count { position:static; width:auto; min-width:18px; height:18px; padding:0 5px; font-size:11px; margin-left:auto; }
+  :root[data-skin="fd"] body:not(.side-mini) nav#nav .navgrp { margin:12px 0 2px; padding:0 12px 0 18px !important; }
+  :root[data-skin="fd"] body:not(.side-mini) .brand { justify-content:flex-start; padding:0 12px 0 16px; }
+  :root[data-skin="fd"] body:not(.side-mini) .brand > div:not(.logo) { display:block !important; min-width:0; }
+}
+/* the language switch */
+#ntLang { min-width:44px; height:40px; padding:0 10px; border-radius:999px; font:inherit; font-size:13px; font-weight:700; cursor:pointer;
+  background:var(--fd-card, var(--surface, #fff)); color:var(--fd-text-2, var(--ink)); border:1px solid var(--fd-border, var(--ring, #e3e5ea)); }
+html[data-look="clean"] #ntLang { border:0; box-shadow:var(--fd-shadow-card, none); }
+#ntLang:hover { color:var(--fd-text, var(--ink)); }
+@media (max-width:640px) { #ntLang { min-width:36px; width:36px; padding:0; font-size:12px; } }
+/* bug seen on the phone: in Bangla the "+" kept its word "নতুন" below 900px (the [lang=bn] rule outranked the one that empties
+   it), so the top bar was wider than the screen */
+@media (max-width:900px) { html[data-look="clean"][data-skin="fd"]:root[lang="bn"] .topbar #fdplus::after { content:''; } }
+/* the wider laptop menu must not squeeze the business switcher to one letter */
+@media (min-width:641px) { #fd39biz { flex-shrink:0; min-width:min(170px, 20vw); } #clGreet { min-width:0; } }
+</style>
+<script>
+(function () {
+  var CSS_OFF = { weborders: 1, quotes: 1, preorders: 1, costs: 1, engine: 1, watch: 1, skills: 1, brain: 1, brief: 1, home: 1 };
+  var BN_LABEL = { dash: 'ড্যাশবোর্ড', invoice: 'নতুন ইনভয়েস', holds: 'অপেক্ষার অর্ডার', sales: 'বিক্রি', repairs: 'মেরামত', printjobs: 'প্রিন্টের কাজ',
+    resell: 'রিসেল', inbox: 'ইনবক্স', customers: 'কাস্টমার', leads: 'লিড', campaigns: 'ক্যাম্পেইন', products: 'প্রোডাক্ট', stock: 'স্টক এন্ট্রি',
+    shipments: 'শিপমেন্ট', suppliers: 'সাপ্লায়ার', market: 'মার্কেট', joint: 'যৌথ পুল', cash: 'টাকা', expenses: 'খরচ', profit: 'লাভ',
+    commission: 'কমিশন', capital: 'মূলধন', ai: 'এআই', settings: 'সেটিংস', apps: 'অ্যাপস', opentools: 'ম্যাকের টুলস', guide: 'সাহায্য' };
+  var EN_LABEL = { opentools: 'Mac tools' };
+  try { VIEW_NAMES.opentools = 'Mac tools'; VIEW_NAMES.profit = 'Profitability'; } catch (e) {}
+  function labelNode(b) {
+    for (var i = b.childNodes.length - 1; i >= 0; i--) { var n = b.childNodes[i]; if (n.nodeType === 3 && n.nodeValue.trim()) return n; }
+    return null;
+  }
+  function label(b) {
+    var v = b.getAttribute('data-view'), n = labelNode(b); if (!n) return;
+    var want = (typeof LANG !== 'undefined' && LANG === 'bn' && BN_LABEL[v]) || EN_LABEL[v];
+    if (want && n.nodeValue.trim() !== want) n.nodeValue = want;
+  }
+  function seen(b) {
+    var v = b.getAttribute('data-view');
+    return b.style.display !== 'none' && !b.classList.contains('fd43-in') && !b.classList.contains('nt-off') && !CSS_OFF[v];
+  }
+  var busy = false;
+  function ntMenu() {
+    var nav = el('nav'); if (!nav || busy) return;
+    busy = true;
+    try {
+      var btns = {}, order = [];
+      [].forEach.call(nav.querySelectorAll(':scope > button[data-view]'), function (b) { btns[b.getAttribute('data-view')] = b; order.push(b); });
+      var used = {}, want = [];
+      if (btns.home) { want.push(btns.home); used.home = 1; }
+      NIGHT_GROUPS.forEach(function (g) {
+        var h = nav.querySelector(':scope > .navgrp[data-ntg="' + g[0] + '"]');
+        if (!h) { h = document.createElement('div'); h.className = 'navgrp'; h.setAttribute('data-ntg', g[0]); h.setAttribute('data-noi18n', '1'); }
+        var nm = nightGroupName(g); if (h.textContent !== nm) h.textContent = nm;
+        want.push(h);
+        g[3].forEach(function (v) { if (btns[v] && !used[v]) { want.push(btns[v]); used[v] = 1; } });
+        if (g[0] === 'system') order.forEach(function (b) { var v = b.getAttribute('data-view'); if (!used[v]) { want.push(b); used[v] = 1; } });
+      });
+      // the old group titles go; anything else someone put in the menu stays at its end
+      [].forEach.call(nav.querySelectorAll(':scope > .navgrp:not([data-ntg])'), function (x) { x.parentNode.removeChild(x); });
+      var kids = [].slice.call(nav.children), same = true;
+      for (var i = 0; i < want.length; i++) if (kids[i] !== want[i]) { same = false; break; }
+      if (!same) {
+        var rest = kids.filter(function (k) { return want.indexOf(k) < 0; });
+        want.concat(rest).forEach(function (k) { nav.appendChild(k); });
+      }
+      // AI with no engine only held Leads, which now has its own entry
+      var ai = btns.ai; if (ai) ai.classList.toggle('nt-off', typeof enOn === 'function' && !enOn() && !!btns.leads);
+      order.forEach(label);
+      titles();
+      // phone: Today and Sell start open (c5 keys its memory by the title text)
+      try {
+        if (typeof C5_NAV !== 'undefined') ['today', 'sell'].forEach(function (id) { var g = NIGHT_GROUPS.filter(function (x) { return x[0] === id; })[0]; var nm = nightGroupName(g); if (C5_NAV[nm] === undefined) C5_NAV[nm] = true; });
+        if (!same && typeof c5Nav === 'function') c5Nav();
+      } catch (e) {}
+    } finally { busy = false; }
+  }
+  function titles() {
+    var nav = el('nav'); if (!nav) return;
+    [].forEach.call(nav.querySelectorAll(':scope > .navgrp[data-ntg]'), function (h) {
+      var n = h.nextElementSibling, any = false;
+      while (n && !n.classList.contains('navgrp')) { if (n.matches('button[data-view]') && seen(n)) { any = true; break; } n = n.nextElementSibling; }
+      h.classList.toggle('nt-empty', !any);
+    });
+  }
+  window.ntMenu = ntMenu;
+  var nav = el('nav');
+  if (nav && window.MutationObserver) {
+    var t = null;
+    new MutationObserver(function (recs) {
+      if (busy) return;
+      var kids = recs.some(function (r) { return r.type === 'childList' && r.target === nav; });
+      clearTimeout(t); t = setTimeout(kids ? ntMenu : titles, 0);
+    }).observe(nav, { childList: true, subtree: true, attributes: true, attributeFilter: ['style', 'class'] });
+  }
+  ntMenu();
+  AFTER_PAINT.push(titles);
+
+  /* ---- the language switch in the top bar (D9) */
+  function langPaint() {
+    var bar = document.querySelector('.topbar'); if (!bar) return;
+    var b = el('ntLang');
+    if (!b) {
+      b = document.createElement('button'); b.type = 'button'; b.id = 'ntLang'; b.setAttribute('data-noi18n', '1');
+      var at = el('o_user'); if (at && at.parentNode === bar) bar.insertBefore(b, at); else bar.appendChild(b);
+      b.addEventListener('click', function () { var to = LANG === 'bn' ? 'en' : 'bn'; try { if (BIZ) BIZ.lang = to; } catch (e) {} setLang(to, true); langPaint(); });
+    }
+    var bn = LANG === 'bn';
+    b.textContent = bn ? 'EN' : 'বাং';
+    b.title = bn ? 'Show the screens in English' : 'স্ক্রিন বাংলায় দেখুন';
+    b.setAttribute('aria-label', b.title);
+    b.style.display = ME ? '' : 'none';
+  }
+  window.ntLangPaint = langPaint;
+  var setLangN = setLang;
+  setLang = function (v) {
+    var r = setLangN.apply(this, arguments);
+    try { langPaint(); ntMenu(); if (ME) repaint(); } catch (e) {}
+    return r;
+  };
+
+  /* ---- staff open in Bangla until they choose (D8): sales and managers with no saved language */
+  function staffLang() {
+    if (!ME || typeof BIZ === 'undefined' || !BIZ || BIZ.lang === 'en' || BIZ.lang === 'bn') return;
+    if (ME.platform || (ME.role !== 'sales' && ME.role !== 'manager')) return;
+    if (LANG !== 'bn') setLang('bn', false);
+  }
+  var applyBusinessesW2 = applyBusinesses;
+  applyBusinesses = function () { var r = applyBusinessesW2.apply(this, arguments); try { staffLang(); langPaint(); } catch (e) {} return r; };
+  var startAppW2 = startApp;
+  startApp = function () { var r = startAppW2.apply(this, arguments); try { staffLang(); langPaint(); ntMenu(); } catch (e) {} return r; };
+  AFTER_PAINT.push(langPaint);
+
+  /* ---- phone bottom bar: Inbox instead of Apps (D12) */
+  (function () {
+    var tb = el('tabbar'); if (!tb || tb.querySelector('button[data-tab="inbox"]')) return;
+    var apps = tb.querySelector('button[data-tab="apps"]');
+    var b = document.createElement('button'); b.type = 'button'; b.setAttribute('data-tab', 'inbox');
+    b.innerHTML = '<svg viewBox="0 0 24 24"><path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg><span>Inbox</span><i class="tb-n" id="tbInbox"></i>';
+    tb.insertBefore(b, apps || tb.lastElementChild);
+  })();
+  var tabbarSyncW2 = tabbarSync;
+  tabbarSync = function () {
+    var r = tabbarSyncW2.apply(this, arguments);
+    try {
+      var tb = el('tabbar'); if (!tb) return r;
+      var ib = tb.querySelector('button[data-tab="inbox"]'), ap = tb.querySelector('button[data-tab="apps"]');
+      var brand = document.documentElement.getAttribute('data-bizkind') === 'brand';
+      var inboxOn = !!ME && !brand && routeAllowed('inbox');
+      if (ib) ib.style.display = inboxOn ? '' : 'none';
+      if (ap) ap.style.display = inboxOn ? 'none' : (routeAllowed('apps') ? '' : 'none');
+      // the inbox badge: what the menu entry shows
+      var mc = document.querySelector('#nav button[data-view="inbox"] .count'), tn = el('tbInbox');
+      if (tn) tn.textContent = mc && mc.style.display !== 'none' ? mc.textContent : '';
+    } catch (e) {}
+    return r;
+  };
+  try { tabbarSync(); } catch (e) {}
+  setInterval(function () { try { if (ME) tabbarSync(); } catch (e) {} }, 5000);
+
+  /* ---- Settings: one navigation; cards on their own tab */
+  var viewSettingsW2 = viewSettings;
+  viewSettings = function () {
+    var h = viewSettingsW2.apply(this, arguments);
+    try { var c = typeof window.aibCardHtml === 'function' ? window.aibCardHtml() : ''; if (c && SET_TAB !== 'connections' && h.indexOf(c) >= 0) h = h.replace(c, ''); } catch (e) {}
+    try { var u = typeof myUpdCardHtml === 'function' ? myUpdCardHtml() : ''; if (u && SET_TAB !== 'business' && h.indexOf(u) >= 0) h = h.replace(u, ''); } catch (e) {}
+    return h;
+  };
+  var SYS = [['tools', 'Maintenance', 'wrench'], ['syscheck', 'System check', 'shield'], ['platform', 'Platform', 'layers']];
+  AFTER_PAINT.push(function nightSettingsNav() {
+    if (VIEW !== 'settings') return;
+    var nav = document.querySelector('#view .fd22-stnav'); if (!nav || nav.querySelector('[data-ntset]')) return;
+    var list = SYS.filter(function (s) { return navOn(s[0]); }); if (!list.length) return;
+    var sep = document.createElement('div'); sep.className = 'fd22-stsep'; sep.setAttribute('data-ntset', '1'); nav.appendChild(sep);
+    list.forEach(function (s) {
+      var b = document.createElement('button'); b.type = 'button'; b.className = 'fd22-sti'; b.setAttribute('data-fd43go', s[0]); b.setAttribute('data-ntset', s[0]);
+      b.innerHTML = (typeof fd22Ic === 'function' ? fd22Ic(s[2], 18) : '') + '<span>' + esc(s[1]) + '</span>';
+      nav.appendChild(b);
+    });
+    var sel = el('fd22_stsel');
+    if (sel && !sel.querySelector('[data-ntset]')) {
+      list.forEach(function (s) { var o = document.createElement('option'); o.value = 'go:' + s[0]; o.textContent = s[1]; o.setAttribute('data-ntset', '1'); sel.appendChild(o); });
+      sel.addEventListener('change', function () { if (sel.value.indexOf('go:') === 0) go(sel.value.slice(3)); });
+    }
+  });
+})();
 </script>
 </body>
 </html>
