@@ -42846,5 +42846,88 @@ function tkNormalize(root) {
 }
 AFTER_PAINT.push(function nightMoney() { tkNormalize(el('view')); });
 </script>
+<!-- night-f3 (6 Nov 2026, sales-_index.md "one primary per state"): one action-bar helper for record pages, drawers and
+     cards. actionBar({ primary, secondary: [..], more: [..] }) gives ONE primary button, up to two secondaries, and a
+     "More" menu for the rest; destructive actions (danger:true) always sit last in More, under a line, and ask first
+     (confirm: 'question'). Each action is { label, attr: 'data-x="1"' | id, icon (svg path), danger, confirm, title }.
+     The buttons keep the caller's own attributes, so the existing delegated click handlers run unchanged. Used by the
+     Wave 3 screens (invoice page, drawer, waiting orders, pre-orders, repairs); nothing on screen changes by itself. -->
+<style>
+.nt-ab { display:flex; flex-wrap:wrap; gap:8px; align-items:center; position:relative; }
+.nt-ab .nt-ab-m { position:relative; }
+.nt-ab .nt-ab-menu { position:absolute; right:0; top:calc(100% + 6px); z-index:60; min-width:220px; max-width:min(320px, calc(100vw - 32px)); padding:6px;
+  background:var(--fd-card, var(--surface, #fff)); border:1px solid var(--fd-border, var(--ring, #e3e5ea)); border-radius:14px; box-shadow:var(--fd-shadow-pop, 0 10px 30px rgba(0,0,0,.14)); }
+.nt-ab .nt-ab-menu[hidden] { display:none; }
+.nt-ab .nt-ab-menu button { display:flex; width:100%; align-items:center; gap:10px; min-height:44px; padding:0 12px; border:0; border-radius:10px; background:none;
+  color:var(--fd-text, var(--ink)); font:inherit; font-size:14.5px; text-align:left; cursor:pointer; }
+.nt-ab .nt-ab-menu button:hover, .nt-ab .nt-ab-menu button:focus-visible { background:var(--fd-surface-2, var(--grid, #f2f3f5)); }
+.nt-ab .nt-ab-menu button.danger { color:var(--fd-danger, var(--critical, #c62828)); }
+.nt-ab .nt-ab-menu hr { border:0; border-top:1px solid var(--fd-border, var(--ring, #e3e5ea)); margin:6px 4px; }
+.nt-ab svg { width:16px; height:16px; fill:none; stroke:currentColor; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; flex:0 0 16px; }
+@media (max-width:640px) { .nt-ab > .btn { min-height:44px; } .nt-ab > .btn.primary { flex:1 1 100%; justify-content:center; } }
+</style>
+<script>
+var AB_N = 0;
+/** One primary, up to two secondaries, the rest (and every destructive action, last) under "More". Returns HTML. */
+function actionBar(o) {
+  o = o || {};
+  var sec = (o.secondary || []).filter(Boolean), more = (o.more || []).filter(Boolean);
+  // a destructive action never sits in the open row; neither does a third secondary
+  var keep = sec.filter(function (a) { return !a.danger; }).slice(0, 2);
+  more = sec.filter(function (a) { return keep.indexOf(a) < 0; }).concat(more);
+  var safe = more.filter(function (a) { return !a.danger; }), bad = more.filter(function (a) { return a.danger; });
+  var ic = function (p) { return p ? '<svg viewBox="0 0 24 24" aria-hidden="true">' + p + '</svg>' : ''; };
+  var at = function (a) { return (a.attr ? ' ' + a.attr : '') + (a.title ? ' title="' + esc(a.title) + '"' : '') + (a.confirm || a.danger ? ' data-ab-confirm="' + esc(a.confirm || ('Sure? ' + a.label)) + '"' : ''); };
+  var btn = function (a, cls) { return '<button type="button" class="btn' + (cls ? ' ' + cls : '') + (a.danger ? ' danger' : '') + '"' + at(a) + (a.disabled ? ' disabled' : '') + '>' + ic(a.icon) + '<span>' + esc(a.label) + '</span></button>'; };
+  var h = '<div class="nt-ab"' + (o.id ? ' id="' + esc(o.id) + '"' : '') + '>';
+  if (o.primary) h += btn(o.primary, 'primary');
+  keep.forEach(function (a) { h += btn(a); });
+  if (safe.length || bad.length) {
+    var id = 'ntab' + (++AB_N);
+    h += '<span class="nt-ab-m"><button type="button" class="btn" data-ab-more="' + id + '" aria-haspopup="menu" aria-expanded="false">' + ic('<circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/>') + '<span>More</span></button>' +
+      '<div class="nt-ab-menu" id="' + id + '" role="menu" hidden>' +
+      safe.map(function (a) { return '<button type="button" role="menuitem"' + at(a) + (a.disabled ? ' disabled' : '') + '>' + ic(a.icon) + '<span>' + esc(a.label) + '</span></button>'; }).join('') +
+      (safe.length && bad.length ? '<hr>' : '') +
+      bad.map(function (a) { return '<button type="button" role="menuitem" class="danger"' + at(a) + (a.disabled ? ' disabled' : '') + '>' + ic(a.icon) + '<span>' + esc(a.label) + '</span></button>'; }).join('') +
+      '</div></span>';
+  }
+  return h + '</div>';
+}
+function abCloseAll(except) {
+  [].forEach.call(document.querySelectorAll('.nt-ab-menu:not([hidden])'), function (m) {
+    if (m === except) return; m.hidden = true;
+    var b = document.querySelector('[data-ab-more="' + m.id + '"]'); if (b) b.setAttribute('aria-expanded', 'false');
+  });
+}
+(function () {
+  var passing = null;   // the button whose confirmed click is being let through
+  document.addEventListener('click', function (e) {
+    var t = e.target && e.target.closest ? e.target : null; if (!t) return;
+    var m = t.closest('[data-ab-more]');
+    if (m) {
+      e.preventDefault(); e.stopPropagation();
+      var menu = el(m.getAttribute('data-ab-more')); if (!menu) return;
+      abCloseAll(menu); menu.hidden = !menu.hidden; m.setAttribute('aria-expanded', String(!menu.hidden));
+      if (!menu.hidden) { var f = menu.querySelector('button:not([disabled])'); if (f) f.focus(); }
+      return;
+    }
+    var c = t.closest('[data-ab-confirm]');
+    if (c && c !== passing) {
+      // ask first; the caller's own handler runs only after "yes"
+      e.preventDefault(); e.stopImmediatePropagation();
+      abCloseAll();
+      uiConfirm(c.getAttribute('data-ab-confirm')).then(function (yes) {
+        if (!yes || !document.body.contains(c)) return;
+        passing = c; try { c.click(); } finally { passing = null; }
+      });
+      return;
+    }
+    if (!t.closest('.nt-ab-menu')) abCloseAll();
+    else if (t.closest('.nt-ab-menu button')) setTimeout(abCloseAll, 0);
+  }, true);
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') abCloseAll(); });
+  try { if (!I18N_BN['More']) I18N_BN['More'] = 'আরও'; } catch (e) {}
+})();
+</script>
 </body>
 </html>
