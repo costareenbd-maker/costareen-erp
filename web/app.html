@@ -746,7 +746,7 @@ var LISTS_ERR = null;    // why the dropdown lists could not load
 // =====================================================================
 // helpers
 // =====================================================================
-function fmt(n) { return (Math.round(n || 0)).toLocaleString('en-US'); }
+function fmt(n) { return (Math.round(n || 0)).toLocaleString('en-IN'); }
 /* a percentage keeps its halves: 37.5% is not 38% (owner 19 Oct 2026: 40 + 38 + 23 looked like 101) */
 function fmtPct(n) { var v = Math.round((Number(n) || 0) * 100) / 100; return v.toLocaleString('en-US', { maximumFractionDigits: 2 }); }
 function compact(n) {
@@ -42783,6 +42783,68 @@ repaint = function () { var r = repaintN1.apply(this, arguments); afterPaint(); 
   // screens that paint #view by themselves (outside repaint) still get the hook
   new MutationObserver(function () { clearTimeout(t); t = setTimeout(afterPaint, 40); }).observe(v, { childList: true });
 })();
+</script>
+<!-- night-f2 (6 Nov 2026, inv-_index.md §1, D4 + D5): ONE money format. tk(v) = ৳12,500 with South-Asian grouping
+     (৳11,25,764); tk(v, {short:1}) = ৳11.26L (Bangla: ৳11.26 লাখ / কোটি) - used only on the Dashboard cards (D4);
+     tkExport(v) = "BDT 11,25,764" for Excel and English documents only. fmt() groups the South-Asian way too (one-line
+     change at the top). The FilaDash formatter fdTk (75 callers), the head cards (fdhCard, "BDT 1,125,764"), nvMoney and
+     fd20Tk0/Tk2 now go through tk, so Money / Suppliers / Expenses and every list head show full taka; and any
+     "BDT 8,000" still built by older screens is rewritten to ৳8,000 after paint (not inside people's own words, inputs
+     or other currencies). -->
+<style>
+/* full taka is longer than ৳11.26L: let a tile's figure shrink instead of spilling out of the tile on a phone */
+@media (max-width:640px) { .fdd-c .fdd-num, .fd22-kpi .v { font-size:clamp(17px, 5.6vw, 26px); overflow-wrap:anywhere; } }
+</style>
+<script>
+function tkGroup(a, dp) {
+  return dp ? a.toLocaleString('en-IN', { minimumFractionDigits: dp, maximumFractionDigits: dp }) : Math.round(a).toLocaleString('en-IN');
+}
+/** Money for the screen. o.short: lakh / crore form (Dashboard cards only). o.cur: another currency (RMB 1,000). o.dp: decimals. */
+function tk(v, o) {
+  o = o || {};
+  var n = Number(v) || 0, a = Math.abs(n), sg = n < 0 ? '−' : '', cur = o.cur || 'BDT';
+  if (cur !== 'BDT' && cur !== '৳') return sg + esc(cur) + ' ' + tkGroup(a, o.dp);
+  if (o.short && a >= 1e5) {
+    var bn = typeof LANG !== 'undefined' && LANG === 'bn', cr = a >= 1e7;
+    var x = (a / (cr ? 1e7 : 1e5)).toFixed(2).replace(/\.?0+$/, '');
+    return sg + '৳' + x + (cr ? (bn ? ' কোটি' : 'Cr') : (bn ? ' লাখ' : 'L'));
+  }
+  return sg + '৳' + tkGroup(a, o.dp);
+}
+/** Money for an export or an English document: BDT, never ৳. */
+function tkExport(v, cur) { var n = Number(v) || 0; return (n < 0 ? '-' : '') + (cur || 'BDT') + ' ' + tkGroup(Math.abs(n)); }
+
+/* lakh only on the Dashboard (D4); full taka everywhere else */
+fdTk = function (v, cur) { return tk(v, { cur: cur, short: VIEW === 'dash' || VIEW === 'home' }); };
+fddMoney = function (v, cur) { return fdTk(v, cur); };
+nvMoney = function (v) { return tk(v); };
+fd20Tk0 = function (v) { return tk(v); };
+fd20Tk2 = function (v) { return tk(v, { dp: 2 }); };
+var fdhCardN2 = fdhCard;
+fdhCard = function (c, cur) {
+  var h = fdhCardN2.apply(this, arguments);
+  if (c && c.money && (cur || 'BDT') === 'BDT') h = h.replace('<small>' + esc(cur || 'BDT') + '</small>' + fmt(c.v), fdTk(c.v, 'BDT'));
+  return h;
+};
+
+/* older screens still write "BDT 8,000": the same figure in the one format, after paint */
+function tkNormalize(root) {
+  if (!root || !document.createTreeWalker) return;
+  var rx = /(^|[^A-Za-z])BDT\s?(−|-)?(\d[\d,]*(?:\.\d+)?)/g;
+  var w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, { acceptNode: function (n) { return n.nodeValue.indexOf('BDT') >= 0 ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_SKIP; } });
+  var list = [], x;
+  while ((x = w.nextNode())) list.push(x);
+  list.forEach(function (n) {
+    var p = n.parentNode;
+    if (!p || /^(SCRIPT|STYLE|TEXTAREA|OPTION|CODE|PRE)$/.test(p.nodeName) || (p.closest && p.closest('[contenteditable],[data-noi18n],.nt-keep'))) return;
+    var t = n.nodeValue.replace(rx, function (m, lead, neg, num) {
+      var dp = (num.split('.')[1] || '').length, v = Number(num.replace(/,/g, ''));
+      return lead + tk(neg ? -v : v, { dp: dp });
+    });
+    if (t !== n.nodeValue) n.nodeValue = t;
+  });
+}
+AFTER_PAINT.push(function nightMoney() { tkNormalize(el('view')); });
 </script>
 </body>
 </html>
