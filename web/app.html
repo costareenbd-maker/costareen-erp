@@ -42391,6 +42391,11 @@ html[data-look="clean"][data-skin="fd"]:root .t2line span { color:var(--fd-text-
   viewInvoice = function () {
     var h = viewInvoiceHold.apply(this, arguments);
     if (!can()) return h;
+    // walkin-1: a walk-in / pickup customer takes the goods now - no confirmation; Save sends the invoice to their WhatsApp
+    if (typeof t1Type === 'function' && t1Type(FORM.source) === 'pickup') {
+      if (CART.length && String(FORM.phone || '').replace(/[^0-9]/g, '').length >= 11) h = h.replace('<button class="btn primary" type="button" id="c3save"', '<span class="sub" style="margin-right:8px">The invoice goes to the customer\u2019s WhatsApp</span><button class="btn primary" type="button" id="c3save"');
+      return h;
+    }
     h = h.replace('<button class="btn primary" type="button" id="c3save"',
       '<button class="btn" type="button" id="c3hold"' + (SAVING || !CART.length ? ' disabled' : '') + ' title="The customer gets the bill on WhatsApp; stock goes down only when it is confirmed">Send for confirmation</button>' +
       '<button class="btn primary" type="button" id="c3save"');
@@ -42559,6 +42564,20 @@ html[data-look="clean"][data-skin="fd"]:root .t2line span { color:var(--fd-text-
       srv('erpHoldCancel', [{ id: b.getAttribute('data-hdx'), reason: String(why).trim() || 'Cancelled' }], function () { toast('Cancelled.'); HD.data = null; load(true); }, function (er) { toast(esc(errText(er)), true); });
     }
   });
+  // walkin-1: right after Save of a walk-in / pickup sale, the invoice PDF goes to the customer's WhatsApp (Paid / Due)
+  var invoiceDoneWalk = invoiceDone;
+  invoiceDone = function (res) {
+    var out = invoiceDoneWalk.apply(this, arguments);
+    try {
+      if (res && res.invoiceNo && typeof t1Type === 'function' && t1Type(res.source) === 'pickup') {
+        srv('erpInvoiceWaSend', [{ invoiceNo: res.invoiceNo, onlyPickup: true }], function (x) {
+          if (x && x.sent) toast('Invoice ' + esc(res.invoiceNo) + ' sent to the customer\u2019s WhatsApp (' + esc(x.via) + (x.paid ? ', paid' : ', due ' + fmt(x.due)) + ').', false, 7000);
+          else if (x && x.error) toast('Not sent on WhatsApp: ' + esc(x.error), true, 9000);
+        }, function (e) { toast('Not sent on WhatsApp: ' + esc(errText(e)), true, 9000); });
+      }
+    } catch (e) {}
+    return out;
+  };
   var rpHold = repaint;
   repaint = function () { navSync(); if (VIEW !== 'holds') return rpHold.apply(this, arguments); var v = el('view'); if (v) v.innerHTML = view(); };
   navSync();

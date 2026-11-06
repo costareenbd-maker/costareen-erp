@@ -132,4 +132,28 @@ check('the nightly job closes it', ex.expired === 1 && (await holdRow(h4)).statu
 check('owner of B sees B\'s orders only', (await owner('erpHolds', [{ pile: 'closed' }])).result.list.every((x) => /^INV-/.test(x.no)));
 check('the YES words', hd.YES.test('ok') && hd.YES.test('হ্যাঁ') && hd.YES.test('ঠিক আছে') && !hd.YES.test('ok but change the colour') && !hd.YES.test('confirm korbo kal'));
 
+// ---- 9. walkin-1: a walk-in / pickup sale needs no confirmation; Save, then the invoice PDF goes to WhatsApp (Paid / Due)
+const PRT = 'PRT-BAM-A1-001';
+r = await sales('erpCreateInvoice', [{ customer: { name: 'Karim', phone: '01712345678', source: 'Customer pickup' }, items: [{ sku: PRT, qty: 1 }], payMode: 'full', hold: { send: 'link' } }]);
+check('a walk-in sale cannot be sent for confirmation', !r.ok && /needs no confirmation/.test(r.error), r);
+r = await sales('erpCreateInvoice', [{ customer: { name: 'Karim', phone: '01712345678', source: 'Customer pickup' }, items: [{ sku: PRT, qty: 1 }], payMode: 'full', paymentMethod: 'Cash' }]);
+const wNo = r.result.invoiceNo;
+evo.length = 0;
+r = await sales('erpInvoiceWaSend', [{ invoiceNo: wNo, onlyPickup: true }]);
+const wDoc = evo.find((x) => /sendMedia\/inst-Bills/.test(x.url));
+check('after Save the walk-in invoice PDF goes to the customer\'s WhatsApp, marked paid', r.ok && r.result.sent && r.result.paid && wDoc && wDoc.body.mediatype === 'document' && wDoc.body.fileName === 'Invoice_' + wNo + '.pdf' && /(Paid|পরিশোধিত)/.test(wDoc.body.caption) && wDoc.body.number === '8801712345678', r.result);
+check('the walk-in PDF is the saved invoice itself', pdfs.length && pdfs[pdfs.length - 1].html.includes(wNo));
+r = await sales('erpCreateInvoice', [{ customer: { name: 'Karim', phone: '01712345678', source: 'Customer pickup' }, items: [{ sku: PRT, qty: 1 }], payMode: 'none' }]);
+const dNo = r.result.invoiceNo;
+evo.length = 0;
+r = await sales('erpInvoiceWaSend', [{ invoiceNo: dNo, onlyPickup: true }]);
+const dDoc = evo.find((x) => /sendMedia/.test(x.url));
+check('a walk-in sale on due goes as due, with the amount', r.ok && r.result.sent && !r.result.paid && r.result.due === 52000 && /(Due|বাকি)/.test(dDoc.body.caption), r.result);
+r = await sales('erpInvoiceWaSend', [{ invoiceNo: invNo, onlyPickup: true }]);
+check('a courier invoice is not sent by the walk-in rule', r.ok && !r.result.sent && r.result.skipped === 'not a walk-in', r.result);
+r = await sales('erpCreateInvoice', [{ customer: { name: 'No phone', source: 'Customer pickup' }, items: [{ sku: PLA, qty: 1 }], payMode: 'full', paymentMethod: 'Cash' }]);
+const nNo = r.ok && r.result.invoiceNo;
+r = await sales('erpInvoiceWaSend', [{ invoiceNo: nNo, onlyPickup: true }]);
+check('a walk-in with no phone is simply not sent', r.ok && !r.result.sent && r.result.skipped === 'no phone', r);
+
 done();

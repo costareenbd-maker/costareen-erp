@@ -24,6 +24,7 @@ import { billSvg } from '../lib/billsvg.js';
 import { profile, deliver, upsertContact, upsertConv, writeMsgNote } from './inbox.js';
 import { purposeOf } from './wanumbers.js';
 import { pushTeam } from './phonealerts.js';
+import { deliveryType } from '../lib/delivery.js';
 
 const str = (v) => String(v == null ? '' : v).trim();
 const DAY = 86400000;
@@ -54,6 +55,8 @@ export async function makeHold(ctx, payload) {
   const opt = payload.hold && typeof payload.hold === 'object' ? payload.hold : {};
   const clean = { ...payload }; delete clean.hold;
   if (str(clean.restockId)) throw new Error('An order from the waiting list is saved as an invoice straight away.');
+  // walkin-1: a walk-in / pickup customer takes the goods there and then - no confirmation; Save sends the invoice instead
+  if ((await deliveryType(ctx, str(clean.customer && clean.customer.source))) === 'pickup') throw new Error('A walk-in / pickup sale needs no confirmation: press Save invoice - the invoice goes to the customer\'s WhatsApp by itself.');
   const pv = await createInvoice(ctx, clean, { preview: true });
   if (pv.lines.some((l) => l.joint)) throw new Error('Joint-stock lines are sold at once: save this one as an invoice.');
   const days = Math.max(1, Math.min(30, Math.round(num(opt.days) || 7)));
@@ -86,28 +89,56 @@ function message(ctx, h, lang) {
     ? 'Hello ' + str(h.customer_name) + ', here is your invoice ' + h.hold_no + ' - total ' + tk + '.\nIf everything is right, press Confirm here: ' + link + '\nor simply reply CONFIRM.'
     : 'আসসালামু আলাইকুম ' + str(h.customer_name) + ', আপনার ইনভয়েস ' + h.hold_no + ' - মোট ' + tk + '।\nসব ঠিক থাকলে এই লিংকে Confirm চাপুন: ' + link + '\nঅথবা এখানে শুধু CONFIRM লিখে উত্তর দিন।';
 }
-async function sendWa(ctx, h, channelId) {
-  const digits = waDigits(h.customer_phone);
-  if (!/^8801[3-9][0-9]{8}$/.test(digits)) return { ok: false, error: 'This order has no customer phone, so it cannot go on WhatsApp. Send the link by hand.' };
+/** A PDF (or, failing that, a picture / text) to a customer's WhatsApp from one of the business's numbers, written in the Inbox. */
+async function sendDocWa(ctx, phone, name, channelId, text, pdf, fallback) {
+  const digits = waDigits(phone);
+  if (!/^8801[3-9][0-9]{8}$/.test(digits)) return { ok: false, error: 'There is no customer phone, so it cannot go on WhatsApp. Send the link by hand.' };
   const list = await senders(ctx);
   const ch = channelId ? list.find((c) => c.id === channelId) : list[0];
   if (!ch) return { ok: false, error: channelId ? 'That WhatsApp number is not live.' : 'No WhatsApp number is connected yet (Inbox > Chat settings).' };
-  const sh = await shop(ctx);
-  const contact = await upsertContact(ctx, ch, { from: digits, name: str(h.customer_name) });
+  const contact = await upsertContact(ctx, ch, { from: digits, name: str(name) });
   const conv = await upsertConv(ctx, ch, contact);
-  const text = message(ctx, h, sh.lang), bill = holdBillLink(ctx, h);
-  // hold-1b: the customer gets the PDF (the invoice's own design); a picture only if the PDF cannot be made
-  let msg = null;
-  try {
-    const pdf = await (await import('./sales.js')).makeHoldPdf(ctx, h);
-    if (pdf && pdf.b64) msg = { kind: 'document', mime: 'application/pdf', fileName: pdf.name, url: holdPdfLink(ctx, h) || pdf.url, base64: pdf.b64, caption: text, store: 'text', text: '📄 ' + pdf.name + '\n' + text };
-  } catch (e) { console.error('hold pdf', e && e.message); }
-  if (!msg) msg = bill && ctx.deps && ctx.deps.svgPng ? { kind: 'image', url: bill, caption: text } : { kind: 'text', text };
+  const msg = pdf && pdf.b64 ? { kind: 'document', mime: 'application/pdf', fileName: pdf.name, url: pdf.url || '', base64: pdf.b64, caption: text, store: 'text', text: '📄 ' + pdf.name + '\n' + text }
+            : fallback || { kind: 'text', text };
   let r;
   try { r = await deliver(ctx, ch, conv, contact, msg, { author: 'team', userId: ctx.s.userId || null, userName: ctx.s.name || 'ERP' }); }
   catch (e) { r = { ok: false, error: str(e && e.message ? e.message : e) }; }
-  if (r.ok) await ctx.tx`update order_holds set sent_at = now(), sent_via = ${ch.name} where id = ${h.id}`;
-  return { ok: !!r.ok, error: r.ok ? '' : (str(r.error) || 'WhatsApp did not take the message.'), via: ch.name };
+  return { ok: !!r.ok, error: r.ok ? '' : (str(r.error) || 'WhatsApp did not take the message.'), via: ch.name, pdf: msg.kind === 'document' };
+}
+async function sendWa(ctx, h, channelId) {
+  const sh = await shop(ctx);
+  const text = message(ctx, h, sh.lang), bill = holdBillLink(ctx, h);
+  // hold-1c: the customer gets the invoice PDF; a picture only if the PDF cannot be made
+  let pdf = null;
+  try { const f = await (await import('./sales.js')).makeHoldPdf(ctx, h); if (f && f.b64) pdf = { ...f, url: holdPdfLink(ctx, h) || f.url }; } catch (e) { console.error('hold pdf', e && e.message); }
+  const r = await sendDocWa(ctx, h.customer_phone, h.customer_name, channelId, text, pdf,
+    bill && ctx.deps && ctx.deps.svgPng ? { kind: 'image', url: bill, caption: text } : null);
+  if (r.ok) await ctx.tx`update order_holds set sent_at = now(), sent_via = ${r.via} where id = ${h.id}`;
+  return r;
+}
+
+/** walkin-1 (owner 6 Nov 2026): "a walk-in customer takes it there - no confirmation; after the purchase the invoice goes
+ *  to the customer's WhatsApp, as Paid if it is paid, as Due if it is due". The page calls this right after Save for a
+ *  pickup / walk-in sale (onlyPickup); it can also be called for any invoice. Nothing in the books changes. */
+export async function erpInvoiceWaSend(ctx, payload) {
+  const p = payload || {}, no = str(p.invoiceNo);
+  const inv = (await ctx.tx`select invoice_no, customer_name, customer_phone, source from invoices where business_id = ${ctx.biz} and invoice_no = ${no}`)[0];
+  if (!inv) throw new Error('No such invoice.');
+  if (p.onlyPickup && (await deliveryType(ctx, str(inv.source))) !== 'pickup') return { sent: false, skipped: 'not a walk-in' };
+  if (!/^8801[3-9][0-9]{8}$/.test(waDigits(inv.customer_phone))) return { sent: false, skipped: 'no phone' };
+  if (!(await senders(ctx)).length) return { sent: false, skipped: 'no WhatsApp number' };
+  const S = await import('./sales.js');
+  const d = await S.invoiceDocData(ctx, no);
+  const due = Math.max(0, num(d && d.due)), grand = num(d && d.grand);
+  const sh = await shop(ctx), tk = (n) => '৳' + Math.round(n).toLocaleString('en-IN');
+  const text = sh.lang === 'en'
+    ? 'Hello ' + str(inv.customer_name) + ', thank you for your purchase. Your invoice ' + no + ' - total ' + tk(grand) + '. ' + (due > 0.5 ? 'Due: ' + tk(due) + '.' : 'Paid ✅')
+    : 'আসসালামু আলাইকুম ' + str(inv.customer_name) + ', কেনাকাটার জন্য ধন্যবাদ। আপনার ইনভয়েস ' + no + ' - মোট ' + tk(grand) + '। ' + (due > 0.5 ? 'বাকি: ' + tk(due) + '।' : 'পরিশোধিত ✅');
+  let pdf = null;
+  try { pdf = await S.makeInvoicePdf(ctx, no, { b64: true }); } catch (e) { console.error('invoice pdf', e && e.message); }
+  if (!pdf || !pdf.b64) return { sent: false, error: 'The invoice PDF could not be made, so nothing was sent. Send it from the invoice\'s page.' };
+  const r = await sendDocWa(ctx, inv.customer_phone, inv.customer_name, str(p.channelId), text, pdf, null);
+  return { sent: r.ok, via: r.via || '', error: r.ok ? '' : r.error, paid: due <= 0.5, due };
 }
 
 async function holdOf(ctx, id) {
@@ -256,4 +287,4 @@ export async function holdBill(ctx, tok) {
   return await ctx.deps.svgPng(svg);
 }
 
-export const HANDLERS = { erpHolds, erpHoldGet, erpHoldSend, erpHoldConfirm, erpHoldCancel };
+export const HANDLERS = { erpHolds, erpHoldGet, erpHoldSend, erpHoldConfirm, erpHoldCancel, erpInvoiceWaSend };

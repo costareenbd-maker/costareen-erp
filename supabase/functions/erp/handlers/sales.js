@@ -1173,11 +1173,14 @@ export async function makeInvoicePdf(ctx, invoiceNo, opts = {}) {
   // the customer's language for what they receive (Settings > Business)
   if ((await docLang(ctx)) === 'bn') { parts.html = docBangla(parts.html); parts.footer = docBangla(parts.footer); }
   const bytes = await renderPdf(ctx, parts.html, { footer: parts.footer });
+  // walkin-1: the file as base64 for WhatsApp, taken before the upload (which may take the buffer)
+  let b64 = '';
+  if (opts.b64) { const u = new Uint8Array(bytes); let bin = ''; for (let i = 0; i < u.length; i += 0x8000) bin += String.fromCharCode.apply(null, Array.from(u.subarray(i, i + 0x8000))); b64 = btoa(bin); }
   const f = await saveFile(ctx, 'invoices', name, bytes, 'application/pdf');
   await quietly(ctx, () => ctx.tx`update invoices set pdf_path = ${f.id || name}, pdf_url = ${f.url},
                                    pdf_designed = true
                                    where business_id = ${ctx.biz} and invoice_no = ${invoiceNo}`);
-  return { id: f.id, url: f.url, name };
+  return { id: f.id, url: f.url, name, ...(b64 ? { b64 } : {}) };
 }
 
 /** hold-1c (owner 6 Nov 2026: "not a demo invoice - the real invoice goes; once confirmed it is not issued again; that PDF

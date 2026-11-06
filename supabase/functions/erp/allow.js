@@ -26,7 +26,7 @@ export function roleAtLeast(role, needed) {
 export const ERP_ALLOW = {
   // everyone who is signed in at all
   erpBundle: 'sales', erpCatalog: 'sales', erpFormOptions: 'sales',
-  erpLookupCustomer: 'sales', erpCreateInvoice: 'sales', erpHolds: 'sales', erpHoldGet: 'sales', erpHoldSend: 'sales', erpHoldConfirm: 'sales', erpHoldCancel: 'sales',
+  erpLookupCustomer: 'sales', erpCreateInvoice: 'sales', erpHolds: 'sales', erpHoldGet: 'sales', erpHoldSend: 'sales', erpHoldConfirm: 'sales', erpHoldCancel: 'sales', erpInvoiceWaSend: 'sales',
   erpRecentInvoices: 'sales', erpCustomers: 'sales', erpSaveCustomer: 'sales',
   erpDaySales: 'sales', erpProduct: 'sales', erpGetTheme: 'sales',
   erpSetTheme: 'sales', erpToday: 'sales', erpDiscontinued: 'sales',
