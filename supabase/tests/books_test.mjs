@@ -123,4 +123,22 @@ check('B5 a sale of 2 no-cost units (500 each) and 3 costed (250, cost 100)', r.
   check('B6 list head says which days it compares', new RegExp('^1–' + today + ' ').test(hr.prevMonth) && hr.compare === 'sameDays', hr.prevMonth);
 }
 
+// ---- B8 (D6): products.cost_price no longer overrides the cost book
+await sql`insert into products (business_id, sku, name, category, brand, type, cost_price, sell_price, status) values
+  (${B}, 'NB-B8', 'Night book wins', 'NightB8', 'NB', 'Book', 999, 1500, 'Active'),
+  (${B}, 'NB-B8O', 'Night own only', 'NightB8', 'NB', 'Own', 400, 1500, 'Active')`;
+await sql`insert into cost_book (business_id, sort_order, category, brand, type, buy_amount, buy_cur) values (${B}, 950, 'NightB8', 'NB', 'Book', 600, 'BDT')`;
+for (const sku of ['NB-B8', 'NB-B8O']) {
+  const id = (await sql`select id from products where business_id = ${B} and sku = ${sku}`)[0].id;
+  await sql`insert into stock_movements (business_id, product_id, kind, direction, qty, reference) values (${B}, ${id}, 'RECEIVE', 'IN', 3, 'NB-B8-IN')`;
+}
+{
+  const r8 = await mgr('erpCreateInvoice', [{ customer: { name: 'Night Buyer', phone: '01712340004' }, items: [{ sku: 'NB-B8', qty: 1 }, { sku: 'NB-B8O', qty: 1 }], payMode: 'full' }]);
+  check('B8 a sale of both', r8.ok, r8);
+  const ln = await sql`select l.sku, l.unit_cost::float as c from invoice_lines l join invoices i on i.id = l.invoice_id where i.business_id = ${B} and i.invoice_no = ${r8.result.invoiceNo}`;
+  const c = (sku) => (ln.find((x) => x.sku.toUpperCase() === sku) || {}).c;
+  check('B8 a priced cost book row wins over the product\'s own cost_price (600, not 999)', c('NB-B8') === 600, ln);
+  check('B8 no priced book row: the product\'s own cost is still the fallback (400)', c('NB-B8O') === 400, ln);
+}
+
 await done();
