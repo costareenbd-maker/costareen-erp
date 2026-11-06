@@ -746,7 +746,7 @@ var LISTS_ERR = null;    // why the dropdown lists could not load
 // =====================================================================
 // helpers
 // =====================================================================
-function fmt(n) { return (Math.round(n || 0)).toLocaleString('en-US'); }
+function fmt(n) { return (Math.round(n || 0)).toLocaleString('en-IN'); }
 /* a percentage keeps its halves: 37.5% is not 38% (owner 19 Oct 2026: 40 + 38 + 23 looked like 101) */
 function fmtPct(n) { var v = Math.round((Number(n) || 0) * 100) / 100; return v.toLocaleString('en-US', { maximumFractionDigits: 2 }); }
 function compact(n) {
@@ -10541,7 +10541,7 @@ function switchBusiness(id) {
     loadAll();
     // the menu (screens set to Off / Only owners), the apps and the role belong to the business: ask again
     // (29 Oct 2026: after a switch the previous business's menu stayed - hidden screens came back)
-    APPS = null;
+    AP_DATA = null;
     srv('erpHello', [], function (me) { if (me && me.ok) { ME = me; try { applyRole(); } catch (e) {} try { if (typeof tabbarSync === 'function') tabbarSync(); } catch (e) {} repaint(); } }, function () {});
   }, function (e) {
     toast(esc(e && e.message ? e.message : e), true, 12000);
@@ -11849,7 +11849,7 @@ function wirePhase5() {
     if (!(await uiConfirm('Switch the second step off?\n\nSigning in as owner will need only the password again. This makes the account easier to break into.'))) return;
     mfaOff();
   });
-  var sp = el('sec_people'); if (sp) sp.addEventListener('click', function () { SET_TAB = 'people'; repaint(); window.scrollTo(0, 0); });
+  var sp = el('sec_people'); if (sp) sp.addEventListener('click', function () { SET_TAB = 'users'; repaint(); window.scrollTo(0, 0); });
   var sr = el('sec_reload'); if (sr) sr.addEventListener('click', function () { SEC = null; repaint(); loadSecurity(); });
   var fs = v.querySelectorAll('button[data-secf]');
   for (var j = 0; j < fs.length; j++) fs[j].addEventListener('click', function () { SEC_F = this.getAttribute('data-secf'); repaint(); });
@@ -21817,7 +21817,7 @@ tr.rv-red td{background:var(--critical-soft)}
 #fbBtn{margin-left:auto}
 </style>
 <script>
-var APPS = null, APPS_ERR = '', APP_KEY = '', AP_QR = {}, FB = null, FB_ERR = '', FB_FORM = { kind: 'problem', text: '', contact: '' };
+var AP_DATA = null, APPS_ERR = '', APP_KEY = '', AP_QR = {}, FB = null, FB_ERR = '', FB_FORM = { kind: 'problem', text: '', contact: '' };
 var APPS_CORE = { dash: 1, apps: 1, app: 1, chat: 1, invoice: 1, sales: 1, customers: 1, products: 1, stock: 1, cash: 1, settings: 1, platform: 1, orders: 1, home: 1 };
 // icon and colour per app, in the ERP's own palette (the menu's --app colours)
 var AP_LOOK = {
@@ -21842,7 +21842,7 @@ function apSyncMe(r) {
   (r.menu || []).forEach(function (m) { if (m.mode === 'owner') hid[m.key] = 1; if (m.mode === 'off') gone[m.key] = 1; });
   ME.apps = { off: r.apps.filter(function (a) { return !(a.on || a.openHere); }).map(function (a) { return a.key; }).concat((r.menu || []).filter(function (m) { return m.forced; }).map(function (m) { return m.key; })), hidden: Object.keys(hid), gone: Object.keys(gone) };
 }
-function apOf(key) { return APPS ? APPS.apps.filter(function (a) { return a.key === key; })[0] : null; }
+function apOf(key) { return AP_DATA ? AP_DATA.apps.filter(function (a) { return a.key === key; })[0] : null; }
 function apIcon(key) { var l = AP_LOOK[key] || { c: '#5f6b7a', i: '<circle cx="12" cy="12" r="9"/>' }; return '<svg viewBox="0 0 24 24">' + l.i + '</svg>'; }
 function apStyle(key) { var c = (AP_LOOK[key] || { c: '#5f6b7a' }).c; return 'style="--c:' + c + ';--c-soft:' + c + '1f"'; }
 // the menu: an app the provider switched off, or a screen the owner set to Off, is gone for everyone here; one set to
@@ -21884,7 +21884,7 @@ var goApps = go;
 go = function (view, param) {
   if (view === 'app') APP_KEY = String(param || APP_KEY || '');
   goApps.apply(this, arguments);
-  if ((view === 'apps' || view === 'app' || view === 'settings') && !APPS) apLoad();
+  if ((view === 'apps' || view === 'app' || view === 'settings') && !AP_DATA) apLoad();
   if (view === 'app') {
     var a = apOf(APP_KEY), pt = el('pageTitle'); if (pt) pt.textContent = a ? a.name : 'Apps';
     var tb = el('tabbar'); if (tb) { var t = tb.querySelector('button[data-tab="apps"]'); if (t) t.setAttribute('aria-current', 'page'); }
@@ -21892,14 +21892,14 @@ go = function (view, param) {
   }
 };
 function apLoad() {
-  srv('erpApps', [], function (r) { APPS = r; APPS_ERR = ''; apSyncMe(r); applyRole(); tabbarSync(); if (VIEW === 'apps' || VIEW === 'app' || VIEW === 'settings') repaint(); if (VIEW === 'app') apScreenLoad(); },
+  srv('erpApps', [], function (r) { AP_DATA = r; APPS_ERR = ''; apSyncMe(r); applyRole(); tabbarSync(); if (VIEW === 'apps' || VIEW === 'app' || VIEW === 'settings') repaint(); if (VIEW === 'app') apScreenLoad(); },
       function (e) { APPS_ERR = (e && e.message) || String(e); if (VIEW === 'apps' || VIEW === 'app') repaint(); });
 }
 function apScreenLoad() {
   var a = apOf(APP_KEY); if (!a) return;
   if (a.url && !AP_QR[a.key]) srv('erpAppQr', [{ key: a.key }], function (r) { AP_QR[a.key] = r; if (VIEW === 'app') repaint(); }, function () {});
   if (a.key === 'feedback' && !FB) fbLoad();
-  if (APPS.admin && AP_PANEL[a.key]) {
+  if (AP_DATA.admin && AP_PANEL[a.key]) {
     var p = AP_PANEL[a.key];
     if (p === 'preg' && !PREG && !PREG_ERR) pregLoad();
     if (p === 'pdoc' && !PDOC && !PDOC_ERR) pdocLoad();
@@ -21911,12 +21911,12 @@ function apScreenLoad() {
 function viewApps() {
   var h = '<section><div class="card"><h2 style="margin:0 0 2px">Apps</h2><div class="sub" data-c5x="1" style="display:block">The special features customers reach from outside. Tap one to see what it does, share its page, and set it up.</div>';
   if (APPS_ERR) return h + '<div class="note err"><div class="ico">!</div><div>' + esc(APPS_ERR) + '</div></div></div></section>';
-  if (!APPS) return h + '<div class="loading">Loading\u2026</div></div></section>';
-  var list = APPS.apps.filter(function (a) { return a.on || APPS.admin; });
+  if (!AP_DATA) return h + '<div class="loading">Loading\u2026</div></div></section>';
+  var list = AP_DATA.apps.filter(function (a) { return a.on || AP_DATA.admin; });
   var byGroup = function (g) { return list.filter(function (a) { return (a.group || 'For customers') === g; }); };
   h += ['For customers', 'Only me'].map(function (g) { var L = byGroup(g); if (!L.length) return ''; return (g === 'Only me' ? '<h3 style="margin:14px 0 2px;font-size:14px">Only me</h3><div class="sub" data-c5x="1" style="display:block">New things. Yours alone until you switch one on for everyone.</div>' : '') + '<div class="ap-home">' + L.map(function (a) {
     return '<button type="button" class="ap-app' + (a.on || a.labs ? '' : ' off') + '" data-apopen="' + esc(a.key) + '" ' + apStyle(a.key) + '>' +
-           '<span class="ap-ico">' + apIcon(a.key) + (a.on || (a.labs && APPS.admin) ? '' : '<span class="ap-dot" title="Off for everyone"></span>') + '</span>' +
+           '<span class="ap-ico">' + apIcon(a.key) + (a.on || (a.labs && AP_DATA.admin) ? '' : '<span class="ap-dot" title="Off for everyone"></span>') + '</span>' +
            '<span class="ap-lbl">' + esc(a.name) + '</span></button>';
   }).join('') + '</div>'; }).join('');
   return h + '</div></section>';
@@ -21924,10 +21924,10 @@ function viewApps() {
 // ---- one app's screen
 function viewApp() {
   if (APPS_ERR) return '<section><div class="note err"><div class="ico">!</div><div>' + esc(APPS_ERR) + '</div></div></section>';
-  if (!APPS) return '<div class="loading">Loading\u2026</div>';
+  if (!AP_DATA) return '<div class="loading">Loading\u2026</div>';
   var a = apOf(APP_KEY);
   if (!a) return '<section><div class="empty">No such app. <a href="#" data-apback="1">Back to Apps</a></div></section>';
-  var admin = APPS.admin;
+  var admin = AP_DATA.admin;
   var h = '<section><div class="card"><div class="ap-head" ' + apStyle(a.key) + '><span class="ap-ico">' + apIcon(a.key) + '</span><div><h2>' + esc(a.name) + '</h2>' +
           (a.on ? '' : a.labs && admin ? '<span class="ap-pill" style="background:var(--good-soft,#e6f4f1);color:var(--good,#0f766e)">On for you \u00b7 off for everyone else</span>' : '<span class="ap-pill">Off for everyone</span>') + '</div></div>' +
           '<div class="ap-what">' + esc(a.what) + '</div>' + (a.where && a.key !== 'feedback' ? '<div class="ap-where">Settings: ' + esc(a.where) + '</div>' : '') +
@@ -22011,15 +22011,15 @@ function apModeSeg(key, mode) {
 }
 function menuCardHtml() {
   if (!pageTop()) return '';
-  if (!APPS) { apLoad(); return '<section><div class="card"><h2>Menu</h2><div class="loading">Loading…</div></div></section>'; }
+  if (!AP_DATA) { apLoad(); return '<section><div class="card"><h2>Menu</h2><div class="loading">Loading…</div></div></section>'; }
   // one card (owner 14 Oct 2026): who sees each screen here, and - for the provider only - a switch that takes the
   // screen out of EVERY company's menu (their owners cannot switch it back)
-  var admin = !!APPS.admin;
+  var admin = !!AP_DATA.admin;
   var h = '<section><div class="card"><h2>Menu</h2><div class="sub" data-c5x="1" style="display:block">Who sees each screen in this business. <b>Everyone</b>: you and your staff. <b>Only owners</b>: you use it, staff do not see it. <b>Off</b>: nobody here, until you switch it back. The main screens always stay; nothing is deleted. (What a person may DO on a screen is set under Users.)' +
           (admin ? ' <b>All companies</b> (only you see this, as the provider): switched off, the screen leaves every company’s menu, yours too, and their owners cannot bring it back.' : '') + '</div>' +
           '<div class="ap-mrows' + (admin ? ' adm' : '') + '">';
   var lastGrp = '';
-  APPS.menu.forEach(function (m0) {
+  AP_DATA.menu.forEach(function (m0) {
     if (m0.group && m0.group !== lastGrp) { lastGrp = m0.group; h += '<div class="ap-mgrp">' + esc(m0.group) + '</div>'; }   // the menu's own groups
     var w = AP_WANT[m0.key], m = m0;
     if (w) { m = Object.assign({}, m0); if (w.mode) m.mode = w.mode; if (w.on !== undefined) m.forced = !w.on; }
@@ -22039,7 +22039,7 @@ brandCardHtml = function () { return brandCardHtmlMenu.apply(this, arguments) + 
 var AP_PEND = 0, AP_WANT = {};   // AP_WANT[key] = {mode|on, seq}: a click still waiting for its answer wins over older data
 var AP_SEQ = 0;
 function apAfterSet(r, msg) {
-  APPS = r; apSyncMe(r); applyRole(); tabbarSync();
+  AP_DATA = r; apSyncMe(r); applyRole(); tabbarSync();
   if (!(AP_PEND > 0)) repaint();
   if (msg) toast(msg);
 }
@@ -22616,7 +22616,7 @@ function chSend(text) {
 </style>
 <script>
 var PU = null, PU_ERR = '', PU_BUSY = '', PU_PICK = {}, PU_RULES = false;
-function puOn() { if (!ME) return false; if (ME.platform) return true; var off = (ME.apps && ME.apps.off) || []; return off.indexOf('push') < 0 && typeof APPS !== 'undefined' && APPS && APPS.apps.some(function (a) { return a.key === 'push' && (a.on || a.openHere); }); }
+function puOn() { if (!ME) return false; if (ME.platform) return true; var off = (ME.apps && ME.apps.off) || []; return off.indexOf('push') < 0 && typeof AP_DATA !== 'undefined' && AP_DATA && AP_DATA.apps.some(function (a) { return a.key === 'push' && (a.on || a.openHere); }); }
 function puLoad() { srv('erpPushList', [], function (r) { PU = r; PU_ERR = ''; if (VIEW === 'campaigns') repaint(); }, function (e) { PU_ERR = (e && e.message) || String(e); if (VIEW === 'campaigns') repaint(); }); }
 function puRow(r, kind) {
   var id = kind + ':' + r.sku;
@@ -22628,7 +22628,7 @@ function puCardHtml() {
   if (!puOn()) return '';
   var h = '<section><div class="card"><div class="row" style="justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px"><h2 style="margin:0">What to push next</h2>' +
           '<span class="row" style="gap:6px"><button class="btn small" type="button" id="pu_rules">Rules</button><button class="btn small" type="button" id="pu_go">Send the ticked ones to customers</button></span></div>' +
-          '<div class="sub" data-c5x="1" style="display:block">From your own sales and stock, no guesswork: what sells and has stock to spare, what sits unsold with money in it (with an offer that still keeps a margin), what is picking up, and what would sell out if advertised.' + (ME && ME.platform && !(APPS && APPS.apps.some(function (a) { return a.key === 'push' && a.on; })) ? ' <span class="rf-conf mid">Only you see this</span>' : '') + '</div>';
+          '<div class="sub" data-c5x="1" style="display:block">From your own sales and stock, no guesswork: what sells and has stock to spare, what sits unsold with money in it (with an offer that still keeps a margin), what is picking up, and what would sell out if advertised.' + (ME && ME.platform && !(AP_DATA && AP_DATA.apps.some(function (a) { return a.key === 'push' && a.on; })) ? ' <span class="rf-conf mid">Only you see this</span>' : '') + '</div>';
   if (PU_ERR) return h + '<div class="note err"><div class="ico">!</div><div>' + esc(PU_ERR) + '</div></div></div></section>';
   if (!PU) { puLoad(); return h + '<div class="loading">Working it out\u2026</div></div></section>'; }
   var R = PU.rules;
@@ -22860,7 +22860,7 @@ function crLinkHtml(kind, key) {
   return '<div class="ap-share" style="margin-top:8px"><img src="' + esc(l.qr) + '" alt="QR" style="width:148px;height:148px"><div><div class="ap-url">' + esc(l.url) + '</div><div class="ap-row" style="margin-top:8px"><button class="btn small" type="button" data-apcopy="' + esc(l.url) + '">Copy the link</button><a class="btn small" href="' + esc(l.url) + '" target="_blank" rel="noopener">Open</a></div><div class="sub" style="display:block;margin-top:6px">' + (kind === 'creator' ? 'Permanent. Send it once on WhatsApp; the creator requests filament and pastes links there.' : 'Permanent, read-only. Send it once to the brand; it always shows the latest.') + '</div></div></div>';
 }
 function crLinkLoad(kind, key) { var k = kind + ':' + key; if (CR.link[k]) return; CR.link[k] = { loading: true }; srv(kind === 'creator' ? 'erpCreatorPortalLink' : 'erpSponsorLink', [kind === 'creator' ? { creator_id: key } : { brand: key }], function (r) { CR.link[k] = r; repaint(); }, function (e) { CR.link[k] = { error: (e && e.message) || String(e) }; repaint(); }); }
-function crOn() { if (!ME) return false; if (ME.platform) return true; return typeof APPS !== 'undefined' && APPS && APPS.apps.some(function (a) { return a.key === 'creators' && (a.on || a.openHere); }); }
+function crOn() { if (!ME) return false; if (ME.platform) return true; return typeof AP_DATA !== 'undefined' && AP_DATA && AP_DATA.apps.some(function (a) { return a.key === 'creators' && (a.on || a.openHere); }); }
 function crLoad() { srv('erpCreators', [{ month: CR.month }], function (r) { CR.data = r; CR.err = ''; CR.month = r.month; if (VIEW === 'campaigns' || VIEW === 'app') repaint(); }, function (e) { CR.err = (e && e.message) || String(e); if (VIEW === 'campaigns') repaint(); }); }
 function crCall(name, p, okMsg) {
   if (CR.busy) return; CR.busy = true; p.month = CR.month; repaint();
@@ -34931,9 +34931,9 @@ viewJoint = function () {
 (function () {
   var G = [
     { host: 'dash', tabs: [['dash', 'Overview', '<rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/>'],
-                           ['analytics', 'Analytics', '<path d="M4 20V10M10 20V4M16 20v-8M22 20H2"/>'],
-                           ['profit', 'Profitability', '<path d="M3 17l6-6 4 4 8-8"/><path d="M14 7h7v7"/>'],
                            ['mindmap', 'Navigator', '<circle cx="12" cy="12" r="3"/><circle cx="4" cy="5" r="2"/><circle cx="20" cy="5" r="2"/><circle cx="4" cy="19" r="2"/><circle cx="20" cy="19" r="2"/><path d="M6 6l4 4M18 6l-4 4M6 18l4-4M18 18l-4-4"/>']] },
+    { host: 'profit', tabs: [['profit', 'Profitability', '<path d="M3 17l6-6 4 4 8-8"/><path d="M14 7h7v7"/>'],   // night-w2 (D10): Profitability under Money, Analytics its tab
+                             ['analytics', 'Analytics', '<path d="M4 20V10M10 20V4M16 20v-8M22 20H2"/>']] },
     { host: 'settings', tabs: [['settings', 'Settings', '<path d="M4 6h9M18 6h2M4 12h2M11 12h9M4 18h11"/><circle cx="15.5" cy="6" r="2"/><circle cx="8.5" cy="12" r="2"/><circle cx="17.5" cy="18" r="2"/>'],
                                ['tools', 'Maintenance', '<path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.8-3.8a6 6 0 0 1-7.9 7.9l-7 7a2.1 2.1 0 0 1-3-3l7-7a6 6 0 0 1 7.9-7.9z"/>'],
                                ['syscheck', 'System check', '<path d="M12 3l8 4v5c0 5-3.5 8-8 9-4.5-1-8-4-8-9V7z"/><path d="M8.5 12l2.5 2.5 4.5-5"/>'],
@@ -34976,6 +34976,7 @@ viewJoint = function () {
     if (g.host === 'dash') return VIEW === 'dash' || !shown('dash') ? '' : '<button type="button" data-fd43go="dash"><svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg><span>' + esc(tr('Dashboard')) + '</span></button>';
     var list = g.tabs.filter(function (t) { return shown(t[0]); });
     if (list.length < 2 || !shown(g.host)) return '';
+    if (g.host === 'settings' && VIEW === 'settings') return '';   // night-w2: Settings has one navigation - these are in its section list
     return list.map(function (t) {
       return '<button type="button" class="' + (t[0] === VIEW ? 'on' : '') + '" data-fd43go="' + t[0] + '"><svg viewBox="0 0 24 24">' + t[2] + '</svg><span>' + esc(tr(t[1])) + '</span></button>';
     }).join('');
@@ -43093,6 +43094,546 @@ html[data-look="clean"][data-skin="fd"]:root .t2line span { color:var(--fd-text-
   });
   // a new business or a reload forgets what was read
   if (typeof go === 'function') { var goTd = go; go = function (v) { if (v === 'opentools') TD.st = null; if (v === 'settings') TD.tools = null; return goTd.apply(this, arguments); }; }
+})();
+</script>
+<!-- night-f1 (6 Nov 2026, acct-shell.md P0-1): the shell knows where you are on every screen.
+     - The Apps feature's list is AP_DATA now: it shared the global name APPS with the look-2 Home tiles, so the Apps
+       load wiped the tile list (Home crashed with "reading 'forEach'") and appOf() threw inside shellSync, which left
+       the crumb row showing the previous screen.
+     - afterPaint(): ONE hook list that runs after every repaint branch (this wrapper is the outermost one) and, through
+       an observer on #view, after the screens that paint on their own (shipments, commission, analytics, inbox, ...).
+       The crumb row is redrawn there: group / screen / record.
+     - Every screen has a name in VIEW_NAMES; the phone top bar has a solid background (Clean look made it transparent,
+       so lists scrolled under it). -->
+<style>
+@media (max-width:760px) {
+  html[data-look="clean"][data-skin="fd"]:root .topbar { background:var(--fd-bg, #F6F7FB); box-shadow:0 1px 0 var(--fd-border, rgba(0,0,0,.08)); }
+}
+#o_cp .crumbs .nt-grp { color:var(--fd-text-3, var(--muted)); font-weight:500; }
+</style>
+<script>
+/* the seven menu groups (D10): id, English, Bangla, the screens in it (menu order) */
+var NIGHT_GROUPS = [
+  ['today', 'Today', 'আজ', ['dash', 'mindmap', 'home']],
+  ['sell', 'Sell', 'বিক্রি', ['invoice', 'holds', 'sales', 'weborders', 'quotes', 'preorders', 'repairs', 'printjobs', 'resell']],
+  ['cust', 'Customers', 'কাস্টমার', ['inbox', 'customers', 'leads', 'campaigns']],
+  ['goods', 'Goods', 'মাল', ['products', 'costs', 'stock', 'shipments', 'suppliers', 'market', 'joint']],
+  ['money', 'Money', 'টাকা', ['cash', 'expenses', 'profit', 'analytics', 'commission', 'capital']],
+  ['ai', 'AI', 'এআই', ['ai', 'brief', 'engine', 'watch', 'skills', 'seo', 'brain', 'chat', 'branddesk']],
+  ['system', 'System', 'সিস্টেম', ['settings', 'tools', 'syscheck', 'platform', 'apps', 'app', 'opentools', 'guide']]
+];
+function nightGroupOf(v) { for (var i = 0; i < NIGHT_GROUPS.length; i++) if (NIGHT_GROUPS[i][3].indexOf(v) >= 0) return NIGHT_GROUPS[i]; return null; }
+function nightGroupName(g) { return (typeof LANG !== 'undefined' && LANG === 'bn') ? g[2] : g[1]; }
+(function () {
+  var add = { shipments: 'Shipments', commission: 'Commission', analytics: 'Analytics', syscheck: 'System check', preorders: 'Pre-orders',
+    guide: 'Help', mindmap: 'Navigator', holds: 'Waiting orders', inbox: 'Inbox', leads: 'Leads', engine: 'Command Center', skills: 'Skills',
+    watch: 'Watchdog', brain: 'Business Brain', brief: 'Daily brief', ai: 'AI', seo: 'SEO', branddesk: 'Brand desk', opentools: 'Mac tools',
+    chat: 'Ask your ERP', orders: 'Orders' };
+  for (var k in add) if (!VIEW_NAMES[k]) VIEW_NAMES[k] = add[k];
+  var bn = { 'Waiting orders': 'অপেক্ষার অর্ডার', 'Leads': 'লিড', 'Help': 'সাহায্য', 'Mac tools': 'ম্যাকের টুলস', 'Navigator': 'নেভিগেটর',
+    'Command Center': 'কমান্ড সেন্টার', 'Skills': 'স্কিল', 'Watchdog': 'ওয়াচডগ', 'Business Brain': 'বিজনেস ব্রেইন', 'Daily brief': 'আজকের ব্রিফ',
+    'AI': 'এআই', 'SEO': 'এসইও', 'Brand desk': 'ব্র্যান্ড ডেস্ক', 'Ask your ERP': 'ERP-কে জিজ্ঞেস করুন', 'Orders': 'অর্ডার', 'Joint stock': 'যৌথ পুল' };
+  try { for (var b in bn) if (!I18N_BN[b]) I18N_BN[b] = bn[b]; } catch (e) {}
+})();
+
+/* group first: "Money / Expenses / November 2026" */
+var crumbsN1 = crumbs;
+crumbs = function () {
+  var c = crumbsN1.apply(this, arguments), g = nightGroupOf(VIEW);
+  if (g && VIEW !== 'dash' && VIEW !== 'home' && c.length) c.unshift({ t: nightGroupName(g), grp: g[0] });
+  return c;
+};
+
+/* one after-paint hook list; push a function to run after every paint */
+var AFTER_PAINT = [];
+function afterPaint() {
+  for (var i = 0; i < AFTER_PAINT.length; i++) {
+    try { AFTER_PAINT[i](); } catch (e) { if (window.console) console.error('afterPaint', e); }
+  }
+}
+AFTER_PAINT.push(function nightCrumbs() {
+  if (!ME || typeof shellSync !== 'function') return;
+  shellSync();
+  // the group part is a label, not a link (it has no screen of its own)
+  var row = document.querySelector('#o_cp .crumbs'); if (!row) return;
+  [].forEach.call(row.querySelectorAll('button[data-ocrumb]'), function (b) {
+    var go = b.getAttribute('data-ocrumb');
+    if (go && go !== 'undefined' && go !== 'null') return;
+    var s = document.createElement('span'); s.className = 'nt-grp'; s.setAttribute('data-noi18n', '1'); s.textContent = b.textContent;
+    b.parentNode.replaceChild(s, b);
+  });
+});
+var repaintN1 = repaint;
+repaint = function () { var r = repaintN1.apply(this, arguments); afterPaint(); return r; };
+(function () {
+  var v = el('view'); if (!v || !window.MutationObserver) return;
+  var t = null;
+  // screens that paint #view by themselves (outside repaint) still get the hook
+  new MutationObserver(function () { clearTimeout(t); t = setTimeout(afterPaint, 40); }).observe(v, { childList: true });
+})();
+</script>
+<!-- night-f2 (6 Nov 2026, inv-_index.md §1, D4 + D5): ONE money format. tk(v) = ৳12,500 with South-Asian grouping
+     (৳11,25,764); tk(v, {short:1}) = ৳11.26L (Bangla: ৳11.26 লাখ / কোটি) - used only on the Dashboard cards (D4);
+     tkExport(v) = "BDT 11,25,764" for Excel and English documents only. fmt() groups the South-Asian way too (one-line
+     change at the top). The FilaDash formatter fdTk (75 callers), the head cards (fdhCard, "BDT 1,125,764"), nvMoney and
+     fd20Tk0/Tk2 now go through tk, so Money / Suppliers / Expenses and every list head show full taka; and any
+     "BDT 8,000" still built by older screens is rewritten to ৳8,000 after paint (not inside people's own words, inputs
+     or other currencies). -->
+<style>
+/* full taka is longer than ৳11.26L: let a tile's figure shrink instead of spilling out of the tile on a phone */
+@media (max-width:640px) { .fdd-c .fdd-num, .fd22-kpi .v { font-size:clamp(17px, 5.6vw, 26px); overflow-wrap:anywhere; } }
+</style>
+<script>
+function tkGroup(a, dp) {
+  return dp ? a.toLocaleString('en-IN', { minimumFractionDigits: dp, maximumFractionDigits: dp }) : Math.round(a).toLocaleString('en-IN');
+}
+/** Money for the screen. o.short: lakh / crore form (Dashboard cards only). o.cur: another currency (RMB 1,000). o.dp: decimals. */
+function tk(v, o) {
+  o = o || {};
+  var n = Number(v) || 0, a = Math.abs(n), sg = n < 0 ? '−' : '', cur = o.cur || 'BDT';
+  if (cur !== 'BDT' && cur !== '৳') return sg + esc(cur) + ' ' + tkGroup(a, o.dp);
+  if (o.short && a >= 1e5) {
+    var bn = typeof LANG !== 'undefined' && LANG === 'bn', cr = a >= 1e7;
+    var x = (a / (cr ? 1e7 : 1e5)).toFixed(2).replace(/\.?0+$/, '');
+    return sg + '৳' + x + (cr ? (bn ? ' কোটি' : 'Cr') : (bn ? ' লাখ' : 'L'));
+  }
+  return sg + '৳' + tkGroup(a, o.dp);
+}
+/** Money for an export or an English document: BDT, never ৳. */
+function tkExport(v, cur) { var n = Number(v) || 0; return (n < 0 ? '-' : '') + (cur || 'BDT') + ' ' + tkGroup(Math.abs(n)); }
+
+/* lakh only on the Dashboard (D4); full taka everywhere else */
+fdTk = function (v, cur) { return tk(v, { cur: cur, short: VIEW === 'dash' || VIEW === 'home' }); };
+fddMoney = function (v, cur) { return fdTk(v, cur); };
+nvMoney = function (v) { return tk(v); };
+fd20Tk0 = function (v) { return tk(v); };
+fd20Tk2 = function (v) { return tk(v, { dp: 2 }); };
+var fdhCardN2 = fdhCard;
+fdhCard = function (c, cur) {
+  var h = fdhCardN2.apply(this, arguments);
+  if (c && c.money && (cur || 'BDT') === 'BDT') h = h.replace('<small>' + esc(cur || 'BDT') + '</small>' + fmt(c.v), fdTk(c.v, 'BDT'));
+  return h;
+};
+
+/* older screens still write "BDT 8,000": the same figure in the one format, after paint */
+function tkNormalize(root) {
+  if (!root || !document.createTreeWalker) return;
+  var rx = /(^|[^A-Za-z])BDT\s?(−|-)?(\d[\d,]*(?:\.\d+)?)/g;
+  var w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, { acceptNode: function (n) { return n.nodeValue.indexOf('BDT') >= 0 ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_SKIP; } });
+  var list = [], x;
+  while ((x = w.nextNode())) list.push(x);
+  list.forEach(function (n) {
+    var p = n.parentNode;
+    if (!p || /^(SCRIPT|STYLE|TEXTAREA|OPTION|CODE|PRE)$/.test(p.nodeName) || (p.closest && p.closest('[contenteditable],[data-noi18n],.nt-keep'))) return;
+    var t = n.nodeValue.replace(rx, function (m, lead, neg, num) {
+      var dp = (num.split('.')[1] || '').length, v = Number(num.replace(/,/g, ''));
+      return lead + tk(neg ? -v : v, { dp: dp });
+    });
+    if (t !== n.nodeValue) n.nodeValue = t;
+  });
+}
+AFTER_PAINT.push(function nightMoney() { tkNormalize(el('view')); });
+</script>
+<!-- night-f3 (6 Nov 2026, sales-_index.md "one primary per state"): one action-bar helper for record pages, drawers and
+     cards. actionBar({ primary, secondary: [..], more: [..] }) gives ONE primary button, up to two secondaries, and a
+     "More" menu for the rest; destructive actions (danger:true) always sit last in More, under a line, and ask first
+     (confirm: 'question'). Each action is { label, attr: 'data-x="1"' | id, icon (svg path), danger, confirm, title }.
+     The buttons keep the caller's own attributes, so the existing delegated click handlers run unchanged. Used by the
+     Wave 3 screens (invoice page, drawer, waiting orders, pre-orders, repairs); nothing on screen changes by itself. -->
+<style>
+.nt-ab { display:flex; flex-wrap:wrap; gap:8px; align-items:center; position:relative; }
+.nt-ab .nt-ab-m { position:relative; }
+.nt-ab .nt-ab-menu { position:absolute; right:0; top:calc(100% + 6px); z-index:60; min-width:220px; max-width:min(320px, calc(100vw - 32px)); padding:6px;
+  background:var(--fd-card, var(--surface, #fff)); border:1px solid var(--fd-border, var(--ring, #e3e5ea)); border-radius:14px; box-shadow:var(--fd-shadow-pop, 0 10px 30px rgba(0,0,0,.14)); }
+.nt-ab .nt-ab-menu[hidden] { display:none; }
+.nt-ab .nt-ab-menu button { display:flex; width:100%; align-items:center; gap:10px; min-height:44px; padding:0 12px; border:0; border-radius:10px; background:none;
+  color:var(--fd-text, var(--ink)); font:inherit; font-size:14.5px; text-align:left; cursor:pointer; }
+.nt-ab .nt-ab-menu button:hover, .nt-ab .nt-ab-menu button:focus-visible { background:var(--fd-surface-2, var(--grid, #f2f3f5)); }
+.nt-ab .nt-ab-menu button.danger { color:var(--fd-danger, var(--critical, #c62828)); }
+.nt-ab .nt-ab-menu hr { border:0; border-top:1px solid var(--fd-border, var(--ring, #e3e5ea)); margin:6px 4px; }
+.nt-ab svg { width:16px; height:16px; fill:none; stroke:currentColor; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; flex:0 0 16px; }
+@media (max-width:640px) { .nt-ab > .btn { min-height:44px; } .nt-ab > .btn.primary { flex:1 1 100%; justify-content:center; } }
+</style>
+<script>
+var AB_N = 0;
+/** One primary, up to two secondaries, the rest (and every destructive action, last) under "More". Returns HTML. */
+function actionBar(o) {
+  o = o || {};
+  var sec = (o.secondary || []).filter(Boolean), more = (o.more || []).filter(Boolean);
+  // a destructive action never sits in the open row; neither does a third secondary
+  var keep = sec.filter(function (a) { return !a.danger; }).slice(0, 2);
+  more = sec.filter(function (a) { return keep.indexOf(a) < 0; }).concat(more);
+  var safe = more.filter(function (a) { return !a.danger; }), bad = more.filter(function (a) { return a.danger; });
+  var ic = function (p) { return p ? '<svg viewBox="0 0 24 24" aria-hidden="true">' + p + '</svg>' : ''; };
+  var at = function (a) { return (a.attr ? ' ' + a.attr : '') + (a.title ? ' title="' + esc(a.title) + '"' : '') + (a.confirm || a.danger ? ' data-ab-confirm="' + esc(a.confirm || ('Sure? ' + a.label)) + '"' : ''); };
+  var btn = function (a, cls) { return '<button type="button" class="btn' + (cls ? ' ' + cls : '') + (a.danger ? ' danger' : '') + '"' + at(a) + (a.disabled ? ' disabled' : '') + '>' + ic(a.icon) + '<span>' + esc(a.label) + '</span></button>'; };
+  var h = '<div class="nt-ab"' + (o.id ? ' id="' + esc(o.id) + '"' : '') + '>';
+  if (o.primary) h += btn(o.primary, 'primary');
+  keep.forEach(function (a) { h += btn(a); });
+  if (safe.length || bad.length) {
+    var id = 'ntab' + (++AB_N);
+    h += '<span class="nt-ab-m"><button type="button" class="btn" data-ab-more="' + id + '" aria-haspopup="menu" aria-expanded="false">' + ic('<circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/>') + '<span>More</span></button>' +
+      '<div class="nt-ab-menu" id="' + id + '" role="menu" hidden>' +
+      safe.map(function (a) { return '<button type="button" role="menuitem"' + at(a) + (a.disabled ? ' disabled' : '') + '>' + ic(a.icon) + '<span>' + esc(a.label) + '</span></button>'; }).join('') +
+      (safe.length && bad.length ? '<hr>' : '') +
+      bad.map(function (a) { return '<button type="button" role="menuitem" class="danger"' + at(a) + (a.disabled ? ' disabled' : '') + '>' + ic(a.icon) + '<span>' + esc(a.label) + '</span></button>'; }).join('') +
+      '</div></span>';
+  }
+  return h + '</div>';
+}
+function abCloseAll(except) {
+  [].forEach.call(document.querySelectorAll('.nt-ab-menu:not([hidden])'), function (m) {
+    if (m === except) return; m.hidden = true;
+    var b = document.querySelector('[data-ab-more="' + m.id + '"]'); if (b) b.setAttribute('aria-expanded', 'false');
+  });
+}
+(function () {
+  var passing = null;   // the button whose confirmed click is being let through
+  document.addEventListener('click', function (e) {
+    var t = e.target && e.target.closest ? e.target : null; if (!t) return;
+    var m = t.closest('[data-ab-more]');
+    if (m) {
+      e.preventDefault(); e.stopPropagation();
+      var menu = el(m.getAttribute('data-ab-more')); if (!menu) return;
+      abCloseAll(menu); menu.hidden = !menu.hidden; m.setAttribute('aria-expanded', String(!menu.hidden));
+      if (!menu.hidden) { var f = menu.querySelector('button:not([disabled])'); if (f) f.focus(); }
+      return;
+    }
+    var c = t.closest('[data-ab-confirm]');
+    if (c && c !== passing) {
+      // ask first; the caller's own handler runs only after "yes"
+      e.preventDefault(); e.stopImmediatePropagation();
+      abCloseAll();
+      uiConfirm(c.getAttribute('data-ab-confirm')).then(function (yes) {
+        if (!yes || !document.body.contains(c)) return;
+        passing = c; try { c.click(); } finally { passing = null; }
+      });
+      return;
+    }
+    if (!t.closest('.nt-ab-menu')) abCloseAll();
+    else if (t.closest('.nt-ab-menu button')) setTimeout(abCloseAll, 0);
+  }, true);
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') abCloseAll(); });
+  try { if (!I18N_BN['More']) I18N_BN['More'] = 'আরও'; } catch (e) {}
+})();
+</script>
+<!-- night-f4 (6 Nov 2026, D13, eval-adapt.md "phone list order"): on a phone the work comes first. On Invoices, Customers,
+     Products, Suppliers, Stock, Web orders and Quotations the order is: the screen's pills -> the list with its own search
+     and chips -> one folded "Summary" line holding what used to sit above the list (KPI tiles, the "Unpaid and at risk"
+     and "Waiting for Steadfast" cards, "Customers who owe", Excel / tool rows). Nothing is removed: a tap opens the
+     summary, and the choice is kept per screen on this device. Desktop is untouched; record pages are untouched.
+     phoneListOrder(view) is the reusable helper; NIGHT_LIST_VIEWS says where it runs. Screens without a list block of
+     their own (Suppliers, Stock, Web orders, Quotations) only get their head tiles folded - their search is Wave 4 work. -->
+<style>
+details.nt-fold { margin:12px 0 0; border-radius:16px; background:var(--fd-card, var(--surface, #fff)); box-shadow:var(--fd-shadow-card, none); border:1px solid var(--fd-border, var(--ring, #e6e8ef)); }
+details.nt-fold > summary { list-style:none; display:flex; align-items:center; gap:10px; min-height:48px; padding:0 16px; cursor:pointer; font-weight:600; color:var(--fd-text, var(--ink)); }
+details.nt-fold > summary::-webkit-details-marker { display:none; }
+details.nt-fold > summary::after { content:'\25BE'; margin-left:auto; opacity:.6; transition:transform .15s; }
+details.nt-fold:not([open]) > summary::after { transform:rotate(-90deg); }
+details.nt-fold > summary .nt-n { font-weight:500; color:var(--fd-text-3, var(--muted)); font-size:13px; }
+details.nt-fold > .nt-fold-in { padding:0 8px 8px; display:flex; flex-direction:column; gap:12px; }
+@media (prefers-reduced-motion:reduce) { details.nt-fold > summary::after { transition:none; } }
+</style>
+<script>
+var NIGHT_LIST_VIEWS = { sales: 1, customers: 1, products: 1, suppliers: 1, stock: 1, weborders: 1, quotes: 1 };
+var NT_PILLS = '.tabs, .fd19-seg, .fd43-tabs, .ai-strip, .fd20-ch, [role="tablist"]';
+function ntPhone() { return !!(window.matchMedia && window.matchMedia('(max-width:640px)').matches); }
+function ntFoldOpen(v) { try { return localStorage.getItem('nt_fold_' + v) === '1'; } catch (e) { return false; } }
+/** Search + list first, the summary folded under the list (phone only). Safe to call again and again. */
+function phoneListOrder(v) {
+  var view = el('view'); if (!view || !ntPhone()) return;
+  try { if (typeof fdhIsSub === 'function' && fdhIsSub()) return; } catch (e) {}
+  var kids = [].slice.call(view.children), list = null;
+  for (var i = 0; i < kids.length; i++) if (kids[i].classList.contains('o_lv')) { list = kids[i]; break; }
+  var fold = view.querySelector(':scope > details.nt-fold');
+  var made = !fold;
+  if (made) {
+    fold = document.createElement('details'); fold.className = 'nt-fold'; fold.setAttribute('data-for', v);
+    fold.innerHTML = '<summary><span>Summary</span><span class="nt-n"></span></summary><div class="nt-fold-in"></div>';
+    if (ntFoldOpen(v)) fold.open = true;
+    fold.addEventListener('toggle', function () { try { localStorage.setItem('nt_fold_' + v, fold.open ? '1' : '0'); } catch (e) {} });
+  }
+  var box = fold.querySelector('.nt-fold-in'), moved = 0;
+  kids.forEach(function (c) {
+    if (c === fold || c === list) return;
+    if (list && !(c.compareDocumentPosition(list) & Node.DOCUMENT_POSITION_FOLLOWING)) return;   // only what sits above the list
+    if (c.id === 'fdHead') {
+      // the page title stays on top; its tiles go into the summary
+      var g = c.querySelector('.fdd-grid'); if (g) { box.appendChild(g); moved++; }
+      return;
+    }
+    if (!list) return;   // no list block of its own: only the head tiles fold
+    if (c.matches(NT_PILLS) || c.classList.contains('loading')) return;
+    if (c.children.length === 1 && c.firstElementChild.classList.contains('chips')) return;   // filter chips stay with the list
+    box.appendChild(c); moved++;
+  });
+  if (!box.children.length) { if (fold.parentNode) fold.parentNode.removeChild(fold); return; }
+  var after = list || view.querySelector(':scope > #fdHead');
+  if (after && after.nextSibling !== fold) view.insertBefore(fold, after.nextSibling);
+  else if (!after && fold.parentNode !== view) view.appendChild(fold);
+  if (moved || made) {
+    // how much is inside, so a closed fold still says what it holds
+    var tiles = box.querySelectorAll('.fdd-c').length, cards = box.querySelectorAll(':scope > section, :scope > .card').length, n = fold.querySelector('.nt-n');
+    var bn = typeof LANG !== 'undefined' && LANG === 'bn';
+    if (n) { n.setAttribute('data-noi18n', '1'); n.textContent = [tiles ? tiles + (bn ? 'টি সংখ্যা' : (tiles === 1 ? ' figure' : ' figures')) : '', cards ? cards + (bn ? 'টি কার্ড' : (cards === 1 ? ' card' : ' cards')) : ''].filter(Boolean).join(' · '); }
+  }
+}
+AFTER_PAINT.push(function nightListOrder() { if (NIGHT_LIST_VIEWS[VIEW]) phoneListOrder(VIEW); });
+try { if (!I18N_BN['Summary']) I18N_BN['Summary'] = 'সারাংশ'; } catch (e) {}
+</script>
+<!-- night-f7 (6 Nov 2026, eval-adapt.md: Settings > Security was 53,111px tall on a phone, Backups at 51,317px): long tables
+     on Settings > Security show 20 rows (10 on a phone) and a "Show more" button (with how many are left). The activity log keeps its own figures
+     and filters; only the rows are paged. ntPageTable(tbody, key) is reusable for any long table. -->
+<style>
+tr.nt-pgh { display:none !important; }
+.nt-pgbar { display:flex; flex-wrap:wrap; gap:8px; align-items:center; justify-content:center; padding:12px 0 4px; }
+.nt-pgbar .nt-pgn { color:var(--fd-text-3, var(--muted)); font-size:13px; }
+</style>
+<script>
+var NT_PG = {};   // rows shown per table, kept while the page is open
+var NT_PG_STEP = 20;
+/** Shows the first rows of a long table and a button for the next ones. Safe to call again after every paint. */
+function ntPageTable(tb, key) {
+  if (!tb) return;
+  var rows = [].filter.call(tb.children, function (r) { return r.tagName === 'TR'; });
+  var table = tb.closest('table'), wrap = (table && table.closest('.scroll')) || table; if (!wrap) return;
+  var bar = wrap.nextElementSibling && wrap.nextElementSibling.classList.contains('nt-pgbar') ? wrap.nextElementSibling : null;
+  var step = ntPhone() ? 10 : NT_PG_STEP;   // a phone row is a tall card
+  if (rows.length <= step + 5) { rows.forEach(function (r) { r.classList.remove('nt-pgh'); }); if (bar) bar.remove(); return; }
+  var lim = NT_PG[key] || step;
+  rows.forEach(function (r, i) { r.classList.toggle('nt-pgh', i >= lim); });
+  var left = rows.length - Math.min(lim, rows.length);
+  if (!left) { if (bar) bar.remove(); return; }
+  if (!bar) { bar = document.createElement('div'); bar.className = 'nt-pgbar'; wrap.parentNode.insertBefore(bar, wrap.nextSibling); }
+  var bn = typeof LANG !== 'undefined' && LANG === 'bn', more = Math.min(step, left);
+  bar.setAttribute('data-noi18n', '1');
+  bar.innerHTML = '<span class="nt-pgn">' + (bn ? rows.length + 'টির মধ্যে ' + (rows.length - left) + 'টি দেখানো হচ্ছে' : 'Showing ' + (rows.length - left) + ' of ' + rows.length) + '</span>' +
+    '<button type="button" class="btn small" data-ntpg="' + esc(key) + '" data-ntpgn="' + more + '">' + (bn ? 'আরও ' + more + 'টি দেখুন' : 'Show ' + more + ' more') + '</button>' +
+    '<button type="button" class="btn small" data-ntpg="' + esc(key) + '" data-ntpgn="all">' + (bn ? 'সব দেখুন' : 'Show all') + '</button>';
+}
+document.addEventListener('click', function (e) {
+  var b = e.target.closest && e.target.closest('[data-ntpg]'); if (!b) return;
+  var k = b.getAttribute('data-ntpg'), n = b.getAttribute('data-ntpgn');
+  NT_PG[k] = n === 'all' ? 1e9 : (NT_PG[k] || (ntPhone() ? 10 : NT_PG_STEP)) + Number(n);
+  ntSettingsPaging();
+});
+function ntSettingsPaging() {
+  if (VIEW !== 'settings' || SET_TAB !== 'security') return;
+  var v = el('view'); if (!v) return;
+  [].forEach.call(v.querySelectorAll('table > tbody'), function (tb, i) {
+    var box = tb.closest('[id]'), key = 'set:' + SET_TAB + ':' + (box && box.id !== 'view' ? box.id : 't' + i);
+    ntPageTable(tb, key);
+  });
+}
+AFTER_PAINT.push(ntSettingsPaging);
+</script>
+<!-- night-w2 (6 Nov 2026, acct-shell.md + acct-settings.md; owner accepted D8-D12): the shell and menu.
+     - Menu in 7 groups (D10): আজ / বিক্রি / কাস্টমার / মাল / টাকা / এআই / সিস্টেম. The existing buttons are re-ordered
+       under new group titles (nothing is removed; role, Edit-menu and joint-stock switches still hide what they hid).
+       Profitability is back in the menu under টাকা ("লাভ") with Analytics as its tab (fd-43 G changed in place); Leads
+       moves from the AI tabs to কাস্টমার; "Tools" is called Mac tools. A screen nobody placed lands in সিস্টেম.
+     - Group titles always show; at 761-1279px (shop laptops) the menu is 196px with names beside the icons (D11).
+     - A visible বাং / EN switch in the top bar (D9); staff (sales, manager) open in Bangla until they choose (D8).
+     - Phone bottom bar: Inbox instead of Apps (D12; Apps stays in "More").
+     - Settings: one navigation - Maintenance, System check and Platform are rows of the Settings section list (the fd-43
+       strip no longer shows on Settings itself); the AI models card shows only under Connections and ERP updates only
+       under Business (they were drawn on every tab). -->
+<style>
+#nav .navgrp.nt-empty, #nav button.nt-off { display:none !important; }
+html:root #nav button[data-view="leads"]:not([style*="display: none"]):not(.c5hide):not(.fd43-in) { display:flex !important; }
+.ai-strip [data-aitab="leads"] { display:none !important; }
+/* group titles: always readable (the FilaDash skin had made them 1px lines) */
+:root[data-skin="fd"] nav#nav .navgrp, :root[data-skin="fd"] nav#nav .navgrp:first-child { display:block; height:auto; background:none; overflow:visible;
+  font-size:11px !important; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:var(--fd-text-3, var(--muted)); margin:14px 0 4px; padding:0 14px 0 24px !important; }
+@media (max-width:640px) { :root[data-skin="fd"] nav#nav .navgrp, :root[data-skin="fd"] nav#nav .navgrp:first-child { display:flex; padding-top:10px !important; padding-bottom:6px !important; } }
+/* shop laptops: names beside the icons, not an icon rail (D11) */
+@media (min-width:761px) and (max-width:1279px) {
+  :root[data-skin="fd"] body:not(.side-mini) { --side-w:196px; }
+  :root[data-skin="fd"] body:not(.side-mini) nav#nav button, :root[data-skin="fd"][data-theme="dark"] body:not(.side-mini) nav#nav button {
+    margin:0 8px; width:calc(100% - 16px); padding:0 10px 0 12px; justify-content:flex-start; gap:10px; font-size:14px; min-height:40px; height:40px; }
+  :root[data-skin="fd"] body:not(.side-mini) nav#nav button .count { position:static; width:auto; min-width:18px; height:18px; padding:0 5px; font-size:11px; margin-left:auto; }
+  :root[data-skin="fd"] body:not(.side-mini) nav#nav .navgrp { margin:12px 0 2px; padding:0 12px 0 18px !important; }
+  :root[data-skin="fd"] body:not(.side-mini) .brand { justify-content:flex-start; padding:0 12px 0 16px; }
+  :root[data-skin="fd"] body:not(.side-mini) .brand > div:not(.logo) { display:block !important; min-width:0; }
+}
+/* the language switch */
+#ntLang { min-width:44px; height:40px; padding:0 10px; border-radius:999px; font:inherit; font-size:13px; font-weight:700; cursor:pointer;
+  background:var(--fd-card, var(--surface, #fff)); color:var(--fd-text-2, var(--ink)); border:1px solid var(--fd-border, var(--ring, #e3e5ea)); }
+html[data-look="clean"] #ntLang { border:0; box-shadow:var(--fd-shadow-card, none); }
+#ntLang:hover { color:var(--fd-text, var(--ink)); }
+@media (max-width:640px) { #ntLang { min-width:36px; width:36px; padding:0; font-size:12px; } }
+/* bug seen on the phone: in Bangla the "+" kept its word "নতুন" below 900px (the [lang=bn] rule outranked the one that empties
+   it), so the top bar was wider than the screen */
+@media (max-width:900px) { html[data-look="clean"][data-skin="fd"]:root[lang="bn"] .topbar #fdplus::after { content:''; } }
+/* the wider laptop menu must not squeeze the business switcher to one letter */
+@media (min-width:641px) { #fd39biz { flex-shrink:0; min-width:min(170px, 20vw); } #clGreet { min-width:0; } }
+</style>
+<script>
+(function () {
+  var CSS_OFF = { weborders: 1, quotes: 1, preorders: 1, costs: 1, engine: 1, watch: 1, skills: 1, brain: 1, brief: 1, home: 1 };
+  var BN_LABEL = { dash: 'ড্যাশবোর্ড', invoice: 'নতুন ইনভয়েস', holds: 'অপেক্ষার অর্ডার', sales: 'বিক্রি', repairs: 'মেরামত', printjobs: 'প্রিন্টের কাজ',
+    resell: 'রিসেল', inbox: 'ইনবক্স', customers: 'কাস্টমার', leads: 'লিড', campaigns: 'ক্যাম্পেইন', products: 'প্রোডাক্ট', stock: 'স্টক এন্ট্রি',
+    shipments: 'শিপমেন্ট', suppliers: 'সাপ্লায়ার', market: 'মার্কেট', joint: 'যৌথ পুল', cash: 'টাকা', expenses: 'খরচ', profit: 'লাভ',
+    commission: 'কমিশন', capital: 'মূলধন', ai: 'এআই', settings: 'সেটিংস', apps: 'অ্যাপস', opentools: 'ম্যাকের টুলস', guide: 'সাহায্য' };
+  var EN_LABEL = { opentools: 'Mac tools' };
+  try { VIEW_NAMES.opentools = 'Mac tools'; VIEW_NAMES.profit = 'Profitability'; } catch (e) {}
+  function labelNode(b) {
+    for (var i = b.childNodes.length - 1; i >= 0; i--) { var n = b.childNodes[i]; if (n.nodeType === 3 && n.nodeValue.trim()) return n; }
+    return null;
+  }
+  function label(b) {
+    var v = b.getAttribute('data-view'), n = labelNode(b); if (!n) return;
+    var want = (typeof LANG !== 'undefined' && LANG === 'bn' && BN_LABEL[v]) || EN_LABEL[v];
+    if (want && n.nodeValue.trim() !== want) n.nodeValue = want;
+  }
+  function seen(b) {
+    var v = b.getAttribute('data-view');
+    return b.style.display !== 'none' && !b.classList.contains('fd43-in') && !b.classList.contains('nt-off') && !CSS_OFF[v];
+  }
+  var busy = false;
+  function ntMenu() {
+    var nav = el('nav'); if (!nav || busy) return;
+    busy = true;
+    try {
+      var btns = {}, order = [];
+      [].forEach.call(nav.querySelectorAll(':scope > button[data-view]'), function (b) { btns[b.getAttribute('data-view')] = b; order.push(b); });
+      var used = {}, want = [];
+      if (btns.home) { want.push(btns.home); used.home = 1; }
+      NIGHT_GROUPS.forEach(function (g) {
+        var h = nav.querySelector(':scope > .navgrp[data-ntg="' + g[0] + '"]');
+        if (!h) { h = document.createElement('div'); h.className = 'navgrp'; h.setAttribute('data-ntg', g[0]); h.setAttribute('data-noi18n', '1'); }
+        var nm = nightGroupName(g); if (h.textContent !== nm) h.textContent = nm;
+        want.push(h);
+        g[3].forEach(function (v) { if (btns[v] && !used[v]) { want.push(btns[v]); used[v] = 1; } });
+        if (g[0] === 'system') order.forEach(function (b) { var v = b.getAttribute('data-view'); if (!used[v]) { want.push(b); used[v] = 1; } });
+      });
+      // the old group titles go; anything else someone put in the menu stays at its end
+      [].forEach.call(nav.querySelectorAll(':scope > .navgrp:not([data-ntg])'), function (x) { x.parentNode.removeChild(x); });
+      var kids = [].slice.call(nav.children), same = true;
+      for (var i = 0; i < want.length; i++) if (kids[i] !== want[i]) { same = false; break; }
+      if (!same) {
+        var rest = kids.filter(function (k) { return want.indexOf(k) < 0; });
+        want.concat(rest).forEach(function (k) { nav.appendChild(k); });
+      }
+      // AI with no engine only held Leads, which now has its own entry
+      var ai = btns.ai; if (ai) ai.classList.toggle('nt-off', typeof enOn === 'function' && !enOn() && !!btns.leads);
+      order.forEach(label);
+      titles();
+      // phone: Today and Sell start open (c5 keys its memory by the title text)
+      try {
+        if (typeof C5_NAV !== 'undefined') ['today', 'sell'].forEach(function (id) { var g = NIGHT_GROUPS.filter(function (x) { return x[0] === id; })[0]; var nm = nightGroupName(g); if (C5_NAV[nm] === undefined) C5_NAV[nm] = true; });
+        if (!same && typeof c5Nav === 'function') c5Nav();
+      } catch (e) {}
+    } finally { busy = false; }
+  }
+  function titles() {
+    var nav = el('nav'); if (!nav) return;
+    [].forEach.call(nav.querySelectorAll(':scope > .navgrp[data-ntg]'), function (h) {
+      var n = h.nextElementSibling, any = false;
+      while (n && !n.classList.contains('navgrp')) { if (n.matches('button[data-view]') && seen(n)) { any = true; break; } n = n.nextElementSibling; }
+      h.classList.toggle('nt-empty', !any);
+    });
+  }
+  window.ntMenu = ntMenu;
+  var nav = el('nav');
+  if (nav && window.MutationObserver) {
+    var t = null;
+    new MutationObserver(function (recs) {
+      if (busy) return;
+      var kids = recs.some(function (r) { return r.type === 'childList' && r.target === nav; });
+      clearTimeout(t); t = setTimeout(kids ? ntMenu : titles, 0);
+    }).observe(nav, { childList: true, subtree: true, attributes: true, attributeFilter: ['style', 'class'] });
+  }
+  ntMenu();
+  AFTER_PAINT.push(titles);
+
+  /* ---- the language switch in the top bar (D9) */
+  function langPaint() {
+    var bar = document.querySelector('.topbar'); if (!bar) return;
+    var b = el('ntLang');
+    if (!b) {
+      b = document.createElement('button'); b.type = 'button'; b.id = 'ntLang'; b.setAttribute('data-noi18n', '1');
+      var at = el('o_user'); if (at && at.parentNode === bar) bar.insertBefore(b, at); else bar.appendChild(b);
+      b.addEventListener('click', function () { var to = LANG === 'bn' ? 'en' : 'bn'; try { if (BIZ) BIZ.lang = to; } catch (e) {} setLang(to, true); langPaint(); });
+    }
+    var bn = LANG === 'bn';
+    b.textContent = bn ? 'EN' : 'বাং';
+    b.title = bn ? 'Show the screens in English' : 'স্ক্রিন বাংলায় দেখুন';
+    b.setAttribute('aria-label', b.title);
+    b.style.display = ME ? '' : 'none';
+  }
+  window.ntLangPaint = langPaint;
+  var setLangN = setLang;
+  setLang = function (v) {
+    var r = setLangN.apply(this, arguments);
+    try { langPaint(); ntMenu(); if (ME) repaint(); } catch (e) {}
+    return r;
+  };
+
+  /* ---- staff open in Bangla until they choose (D8): sales and managers with no saved language */
+  function staffLang() {
+    if (!ME || typeof BIZ === 'undefined' || !BIZ || BIZ.lang === 'en' || BIZ.lang === 'bn') return;
+    if (ME.platform || (ME.role !== 'sales' && ME.role !== 'manager')) return;
+    if (LANG !== 'bn') setLang('bn', false);
+  }
+  var applyBusinessesW2 = applyBusinesses;
+  applyBusinesses = function () { var r = applyBusinessesW2.apply(this, arguments); try { staffLang(); langPaint(); } catch (e) {} return r; };
+  var startAppW2 = startApp;
+  startApp = function () { var r = startAppW2.apply(this, arguments); try { staffLang(); langPaint(); ntMenu(); } catch (e) {} return r; };
+  AFTER_PAINT.push(langPaint);
+
+  /* ---- phone bottom bar: Inbox instead of Apps (D12) */
+  (function () {
+    var tb = el('tabbar'); if (!tb || tb.querySelector('button[data-tab="inbox"]')) return;
+    var apps = tb.querySelector('button[data-tab="apps"]');
+    var b = document.createElement('button'); b.type = 'button'; b.setAttribute('data-tab', 'inbox');
+    b.innerHTML = '<svg viewBox="0 0 24 24"><path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg><span>Inbox</span><i class="tb-n" id="tbInbox"></i>';
+    tb.insertBefore(b, apps || tb.lastElementChild);
+  })();
+  var tabbarSyncW2 = tabbarSync;
+  tabbarSync = function () {
+    var r = tabbarSyncW2.apply(this, arguments);
+    try {
+      var tb = el('tabbar'); if (!tb) return r;
+      var ib = tb.querySelector('button[data-tab="inbox"]'), ap = tb.querySelector('button[data-tab="apps"]');
+      var brand = document.documentElement.getAttribute('data-bizkind') === 'brand';
+      var inboxOn = !!ME && !brand && routeAllowed('inbox');
+      if (ib) ib.style.display = inboxOn ? '' : 'none';
+      if (ap) ap.style.display = inboxOn ? 'none' : (routeAllowed('apps') ? '' : 'none');
+      // the inbox badge: what the menu entry shows
+      var mc = document.querySelector('#nav button[data-view="inbox"] .count'), tn = el('tbInbox');
+      if (tn) tn.textContent = mc && mc.style.display !== 'none' ? mc.textContent : '';
+    } catch (e) {}
+    return r;
+  };
+  try { tabbarSync(); } catch (e) {}
+  setInterval(function () { try { if (ME) tabbarSync(); } catch (e) {} }, 5000);
+
+  /* ---- Settings: one navigation; cards on their own tab */
+  var viewSettingsW2 = viewSettings;
+  viewSettings = function () {
+    var h = viewSettingsW2.apply(this, arguments);
+    try { var c = typeof window.aibCardHtml === 'function' ? window.aibCardHtml() : ''; if (c && SET_TAB !== 'connections' && h.indexOf(c) >= 0) h = h.replace(c, ''); } catch (e) {}
+    try { var u = typeof myUpdCardHtml === 'function' ? myUpdCardHtml() : ''; if (u && SET_TAB !== 'business' && h.indexOf(u) >= 0) h = h.replace(u, ''); } catch (e) {}
+    return h;
+  };
+  var SYS = [['tools', 'Maintenance', 'wrench'], ['syscheck', 'System check', 'shield'], ['platform', 'Platform', 'layers']];
+  AFTER_PAINT.push(function nightSettingsNav() {
+    if (VIEW !== 'settings') return;
+    var nav = document.querySelector('#view .fd22-stnav'); if (!nav || nav.querySelector('[data-ntset]')) return;
+    var list = SYS.filter(function (s) { return navOn(s[0]); }); if (!list.length) return;
+    var sep = document.createElement('div'); sep.className = 'fd22-stsep'; sep.setAttribute('data-ntset', '1'); nav.appendChild(sep);
+    list.forEach(function (s) {
+      var b = document.createElement('button'); b.type = 'button'; b.className = 'fd22-sti'; b.setAttribute('data-fd43go', s[0]); b.setAttribute('data-ntset', s[0]);
+      b.innerHTML = (typeof fd22Ic === 'function' ? fd22Ic(s[2], 18) : '') + '<span>' + esc(s[1]) + '</span>';
+      nav.appendChild(b);
+    });
+    var sel = el('fd22_stsel');
+    if (sel && !sel.querySelector('[data-ntset]')) {
+      list.forEach(function (s) { var o = document.createElement('option'); o.value = 'go:' + s[0]; o.textContent = s[1]; o.setAttribute('data-ntset', '1'); sel.appendChild(o); });
+      sel.addEventListener('change', function () { if (sel.value.indexOf('go:') === 0) go(sel.value.slice(3)); });
+    }
+  });
 })();
 </script>
 </body>
