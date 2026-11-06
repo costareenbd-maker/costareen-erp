@@ -446,11 +446,15 @@ export async function erpFdHead(ctx, payload) {
     cards.push(card('optouts', 'Asked to stop', 'x', c.optouts, { note: 'never messaged again' }));
   } else if (view === 'suppliers' && powerOn(ctx.s, 'suppliers')) {
     const s = (await ctx.tx`select (select count(*)::int from suppliers where business_id = ${ctx.biz}) as n,
-                              (select coalesce(sum(amount), 0) from supplier_bills where business_id = ${ctx.biz} and coalesce(btrim(voided), '') = '') as billed,
-                              (select coalesce(sum(amount), 0) from supplier_payments where business_id = ${ctx.biz} and coalesce(btrim(voided), '') = '') as paid,
                               (select count(distinct po_no)::int from po_lines where business_id = ${ctx.biz} and status = 'open') as open_po,
                               (select count(*)::int from po_stages where business_id = ${ctx.biz} and stage = 'in_transit') as transit`)[0];
-    cards.push(card('owed', 'We owe suppliers', 'taka', num(s.billed) - num(s.paid), { money: true, hero: true, tone: 'warn' }));
+    // night-books B1: the same sum as the list below it (erpSuppliers): per supplier opening + bills - payments,
+    // only what is owed counted; money paid ahead to one supplier never lowers what is owed to another.
+    const { erpSuppliers } = await import('./suppliers.js');
+    const sl = await erpSuppliers(ctx);
+    const owedN = (sl.suppliers || []).filter((x) => x.owed > 0).length;
+    cards.push(card('owed', 'We owe suppliers', 'taka', sl.owedTotal, { money: true, hero: true, tone: sl.owedTotal > 0 ? 'warn' : '',
+      ahead: R(sl.aheadTotal), note: owedN + ' supplier(s)' + (sl.aheadTotal > 0 ? ' · paid ahead ' + R(sl.aheadTotal) : '') }));
     cards.push(card('suppliers', 'Suppliers', 'list', s.n));
     cards.push(card('open', 'Open orders', 'cart', s.open_po, { go: 'shipments' }));
     cards.push(card('transit', 'On the way', 'truck', s.transit, { go: 'shipments' }));
