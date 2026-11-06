@@ -55,6 +55,16 @@ business brings its own name, logo and colours.
   beside form labels (use a "?" help button); plain refusals; people's own words (messages, comments) are never
   translated; no flashes on reload.
 - Terms in Bangla follow `docs/research/bangla-audit.md` (কাস্টমার, সাপ্লায়ার, প্রোডাক্ট, ইনভয়েস, স্টক ...).
+- Bangla voice (F5, 6 Nov 2026; glossary `docs/bangla/GLOSSARY.md`, section 0 is the short list):
+  - always **আপনি** forms (করুন, দিন, পাঠান, বদলান), never তুমি - in screens, toasts, PDFs and in what the AI writes
+    for the owner (the AI prompts say so);
+  - **প্রোডাক্ট** everywhere, never পণ্য (owner decision D7);
+  - one word per idea (বাকি = due, অপেক্ষায় = pending, ইনভয়েস, স্টক, সাপ্লায়ার, কেনা দাম, এ মাসের বিক্রি not আয়);
+  - banned bookish words: ভারসাম্য, বকেয়া, সংরক্ষণ (say সেভ), অনুসন্ধান (say খুঁজুন), -সমূহ, ঋণাত্মক and the rest
+    of the glossary list;
+  - no English left inside Bangla copy except brand / product / code names; people's own words are never translated
+    (`data-noi18n`);
+  - check with `python tools/bangla_lint.py` (errors: তুমি forms, banned words; warnings: English left in Bangla).
 
 ## Brand Commitments
 

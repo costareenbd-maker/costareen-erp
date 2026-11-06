@@ -25,6 +25,25 @@ Odoo ships no Bangla file for accounting: `addons/account/i18n` has no bn.po.
 
 ---
 
+## 0. Voice rules in one place (F5, 6 Nov 2026) - checked by `tools/bangla_lint.py`
+
+Run `python tools/bangla_lint.py` before committing Bangla copy (no arguments = every page, help file and server
+handler). It reads only string literals that hold Bangla letters, so people's own words (messages, names, comments,
+kept with `data-noi18n`) are never checked or changed.
+
+| Rule | Error or warning | What to write |
+|---|---|---|
+| Address everyone as **আপনি**: করুন, দিন, পাঠান, লিখুন, বদলান, দেখুন | error on তুমি / তোমার / তুই and তুমি-imperatives (পাঠাও, বদলাও, লেখো, করো, দাও ...) | the আপনি form; AI prompts say "address the owner as আপনি" |
+| **প্রোডাক্ট**, never পণ্য (D7) | error | প্রোডাক্ট, প্রোডাক্টের, প্রোডাক্টটি |
+| Banned bookish / wrong-sense words | error: ভারসাম্য, অবৈতনিক, ছাঁকনি, বকেয়া, প্রদত্ত, উদ্ধৃতি, পুনর্বিন্যাস, প্রচারাভিযান, ঋণাত্মক, বিক্রিত/বিক্রীত, -সমূহ, পরিচালন খরচ, মিটমাট, অনুসন্ধান, মাসিক আয় / এ মাসের আয় (the figure is sales), সংরক্ষণ (as "save"), ত্যাগ করুন | the house word from section 2 (ব্যালেন্স, বাকি, ফিল্টার, সেভ, খুঁজুন, এ মাসের বিক্রি ...) |
+| No English left inside a Bangla string | warning (error with `--strict`) | say it in Bangla; brand, product and code names stay Latin (rule 4) and are in the lint's ALLOW list |
+| No grey hint text beside a label | (not linted) | the ? help button |
+
+A line that must keep a flagged word (for example a prompt quoting a word to avoid) ends with the comment
+`bangla-lint: ok`.
+
+---
+
 ## 1. Style rules
 
 1. **Address the user as আপনি** and use polite verb forms: করুন, দিন, লিখুন, বেছে নিন [MOZ][JOOM]. Write in Cholito (spoken standard) Bangla, never Sadhu [MOZ].
@@ -105,7 +124,7 @@ Odoo ships no Bangla file for accounting: `addons/account/i18n` has no bn.po.
 | supplier | **সাপ্লায়ার** | সরবরাহকারী (formal, NBR) | Loanword, as TallyKhata uses. | [TK] [NBR] |
 | purchase order | **সাপ্লায়ার অর্ডার** | ক্রয় আদেশ (formal) | | [ERPN] |
 | customer | **গ্রাহক** | কাস্টমার | Kept গ্রাহক because it is already used consistently 30+ times and bKash/banks use it. কাস্টমার is equally fine. | [TK] (কাস্টমার) |
-| product | **পণ্য** | প্রোডাক্ট, মাল (spoken) | NBR uses পণ্য. | [NBR] |
+| product | **প্রোডাক্ট** | মাল (spoken) | Owner decision D7 (6 Nov 2026): প্রোডাক্ট everywhere, it is what staff say. পণ্য (NBR) is banned in the UI; the lint flags it. | [NBR] (পণ্য) |
 | item (line on a list) | **আইটেম** | | | [ERPN] |
 | SKU / code | **SKU / কোড** | — | Keep "SKU" in Latin. | [MOZ] abbreviations |
 | category | **ক্যাটাগরি** | শ্রেণি | | |

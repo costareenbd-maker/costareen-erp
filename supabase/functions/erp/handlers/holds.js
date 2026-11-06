@@ -237,7 +237,7 @@ const WORDS = {
         sub: 'Subtotal', disc: 'Discount', del: 'Delivery', total: 'Total', paid: 'Paid already', cod: 'Pay on delivery', call: 'Call the shop', pdf: 'Download the PDF' },
   bn: { title: 'আপনার ইনভয়েস', waiting: 'আপনার নিশ্চিতকরণের অপেক্ষায়', yes: 'কনফার্ম করুন', no: 'এখন না', okDone: 'ধন্যবাদ - আপনি কনফার্ম করেছেন। শিগগিরই পাঠানো হবে।',
         noDone: 'লেখা হলো - পাঠানো হবে না। মত বদলালে ফোন করুন।', confirmed: 'কনফার্ম হয়েছে', cancelled: 'এই ইনভয়েস বাতিল হয়েছে', expired: 'এই ইনভয়েসের সময় শেষ - আবার জানান',
-        sub: 'মোট পণ্য', disc: 'ছাড়', del: 'ডেলিভারি', total: 'সর্বমোট', paid: 'আগে দেওয়া', cod: 'ডেলিভারিতে দিতে হবে', call: 'দোকানে কল', pdf: 'PDF ডাউনলোড' },
+        sub: 'মোট প্রোডাক্ট', disc: 'ছাড়', del: 'ডেলিভারি', total: 'সর্বমোট', paid: 'আগে দেওয়া', cod: 'ডেলিভারিতে দিতে হবে', call: 'দোকানে কল', pdf: 'PDF ডাউনলোড' },
 };
 async function byToken(ctx, tok) {
   if (!/^[0-9a-f]{32}$/.test(str(tok))) return null;
