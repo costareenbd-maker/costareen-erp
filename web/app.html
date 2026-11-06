@@ -35817,8 +35817,12 @@ body[data-fdview="settings"] #o_cp .crumbs, body[data-fdview="tools"] #o_cp .cru
   // ibmorph-1: bring the old screen in line with the new one node by node; chat rows are matched by their id (data-ibopen)
   function ibMorphEl(a, b) {
     var i, at;
-    for (i = 0; i < b.attributes.length; i++) { at = b.attributes[i]; if (a.getAttribute(at.name) !== at.value) a.setAttribute(at.name, at.value); }
-    for (i = a.attributes.length - 1; i >= 0; i--) { at = a.attributes[i]; if (!b.hasAttribute(at.name) && at.name !== 'data-tint') a.removeAttribute(at.name); }
+    // a stored picture comes as a freshly signed link on every refresh: the same file keeps its old link (no reload)
+    // for up to 20 minutes, well inside the link's life
+    var sameImg = a.nodeName === 'IMG' && String(a.getAttribute('src') || '').split('?')[0] === String(b.getAttribute('src') || '').split('?')[0] && Date.now() - Number(a.getAttribute('data-ibat') || Date.now()) < 1200000;
+    for (i = 0; i < b.attributes.length; i++) { at = b.attributes[i]; if (sameImg && at.name === 'src') continue; if (a.getAttribute(at.name) !== at.value) a.setAttribute(at.name, at.value); }
+    if (a.nodeName === 'IMG' && (!sameImg || !a.hasAttribute('data-ibat'))) a.setAttribute('data-ibat', String(Date.now()));
+    for (i = a.attributes.length - 1; i >= 0; i--) { at = a.attributes[i]; if (!b.hasAttribute(at.name) && at.name !== 'data-tint' && at.name !== 'data-ibat') a.removeAttribute(at.name); }
     ibMorphKids(a, b);
   }
   function ibMorphKids(a, b) {
