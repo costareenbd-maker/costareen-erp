@@ -634,7 +634,7 @@ async function inboxRoute(deps: any, req: Request, q0: URLSearchParams, headers:
     if (!row) return nf;
     if (what === 'holdpdf') {
       const f: any = await asOwner(row.business_id, 'inbox:holdpdf', (ctx) => hd.holdPdf(ctx, tok));
-      if (!f) return nf;
+      if (!f || typeof f !== 'string') return nf;   // no PDF service, or it failed
       const raw = atob(String(f)), out = new Uint8Array(raw.length);
       for (let i = 0; i < raw.length; i++) out[i] = raw.charCodeAt(i);
       return new Response(out, { status: 200, headers: { 'Content-Type': 'application/pdf', 'Content-Disposition': 'inline; filename="invoice.pdf"', 'Cache-Control': 'private, max-age=300', 'Access-Control-Allow-Origin': '*' } });
