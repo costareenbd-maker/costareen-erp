@@ -536,6 +536,15 @@ svg { display:block; width:100%; overflow:visible; }
 .wa-att{margin-top:8px;padding:8px 10px;background:rgba(0,0,0,.06);border-radius:8px;font-size:12.5px}
 .bar{height:8px;background:var(--grid);border-radius:4px;margin:10px 0;overflow:hidden}.bar>div{height:100%;background:var(--good)}
 </style>
+<!-- login-1 (owner 6 Nov 2026: "on the phone the app shows first, then the sign-in moves in - a weak sign"): until the
+     server has said who this is, nothing of the app is drawn - only a plain "Opening" card. paintGate / startApp lift it. -->
+<style>
+html.erp-boot #nav,html.erp-boot #side,html.erp-boot .topbar,html.erp-boot #tabbar,html.erp-boot #view{visibility:hidden!important}
+html.erp-boot body::after{content:"";position:fixed;left:50%;top:46%;width:34px;height:34px;margin:-17px 0 0 -17px;border-radius:50%;border:3px solid rgba(127,127,127,.25);border-top-color:#7c6bb1;animation:erpBootSpin .8s linear infinite}
+@keyframes erpBootSpin{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){html.erp-boot body::after{animation:none}}
+</style>
+<script>document.documentElement.classList.add('erp-boot');setTimeout(function(){document.documentElement.classList.remove('erp-boot');},25000);</script>
 </head>
 <body>
 <script>
@@ -10394,6 +10403,7 @@ async function signOut() {
 }
 
 function paintGate() {
+  document.documentElement.classList.remove('erp-boot');   // login-1
   tabbarSync();
   var v = el('view');
   if (v) { v.innerHTML = gateScreen(); wireGate(); }
@@ -10413,6 +10423,7 @@ function signIn() {
 }
 
 function startApp() {
+  document.documentElement.classList.remove('erp-boot');   // login-1
   try { el('nav').style.display = ''; el('side').style.display = ''; document.querySelector('.topbar').style.display = ''; } catch (e) {}
   var so = el('signoutBtn');
   if (so && !so.__wired) { so.__wired = true; so.addEventListener('click', signOut); }
