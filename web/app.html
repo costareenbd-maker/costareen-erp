@@ -43367,9 +43367,9 @@ html[data-look="clean"] #ntLang { border:0; box-shadow:var(--fd-shadow-card, non
         '<button class="btn primary" type="button" data-naisend="' + esc(k) + '">' + (F.mode === 'change' ? L('Send', 'পাঠান') : L('No', 'না')) + '</button><button class="btn" type="button" data-naix="1">' + L('Cancel', 'বাতিল') + '</button></div></div>';
     }
     h += '<div class="bf-btns">';
-    if (it.src === 'watch' && it.manual) h += '<button class="btn ok" type="button" data-naiok="' + esc(k) + '">' + L('I did it', 'আমি করেছি') + '</button><button class="btn" type="button" data-naino="' + esc(k) + '">' + L('Not now', 'এখন না') + '</button>';
+    if (it.src === 'watch' && it.manual) h += '<button class="btn primary" type="button" data-naiok="' + esc(k) + '">' + L('I did it', 'আমি করেছি') + '</button><button class="btn" type="button" data-naino="' + esc(k) + '">' + L('Not now', 'এখন না') + '</button>';
     else {
-      h += '<button class="btn ok" type="button" data-naiok="' + esc(k) + '">' + L('Approve', 'অনুমোদন দিন') + '</button>';
+      h += '<button class="btn primary" type="button" data-naiok="' + esc(k) + '">' + L('Approve', 'অনুমোদন দিন') + '</button>';
       if (it.src !== 'engine') h += '<button class="btn" type="button" data-naich="' + esc(k) + '">' + L('Ask to change', 'বদলাতে বলুন') + '</button>';
       h += '<button class="btn" type="button" data-naino="' + esc(k) + '">' + L('No', 'না') + '</button>';
     }
@@ -43411,8 +43411,8 @@ html[data-look="clean"] #ntLang { border:0; box-shadow:var(--fd-shadow-card, non
     h += '</section>';
     // one ask box: quick questions in the Ask panel, long work to the Engine
     h += '<section><div class="card nai-ask"><label class="f" for="nai_q">' + L('Ask, or give a job', 'কিছু জানতে চান, বা কাজ দিন') +
-      '<span class="sku">' + L('"Ask now" answers at once from your own figures. "Give it to the Engine" is for research and long work (suppliers, plans, SEO): the answer comes in a few minutes, in Command Center and in the Ask chat.',
-        '"এখনই জিজ্ঞেস করুন" আপনার নিজের হিসাব থেকে সাথে সাথে উত্তর দেয়। গবেষণা বা বড় কাজ (সাপ্লায়ার, পরিকল্পনা, SEO) হলে "ইঞ্জিনকে দিন": কয়েক মিনিটে উত্তর আসবে, কমান্ড সেন্টারে আর চ্যাটে।') + '</span></label>' +
+      (function (hint) { return '<button type="button" class="fhelp" aria-expanded="false" aria-label="' + esc(hint) + '" data-hint="' + esc(hint) + '">?</button>'; })(L('"Ask now" answers at once from your own figures. "Give it to the Engine" is for research and long work (suppliers, plans, SEO): the answer comes in a few minutes, in Command Center and in the Ask chat.',
+        '"এখনই জিজ্ঞেস করুন" আপনার নিজের হিসাব থেকে সাথে সাথে উত্তর দেয়। গবেষণা বা বড় কাজ (সাপ্লায়ার, পরিকল্পনা, SEO) হলে "ইঞ্জিনকে দিন": কয়েক মিনিটে উত্তর আসবে, কমান্ড সেন্টারে আর চ্যাটে।')) + '</label>' +
       '<textarea class="i" id="nai_q" rows="2" data-noi18n="1">' + esc(NAI.draft) + '</textarea>' +
       '<div class="bf-btns"><button class="btn primary" type="button" data-nai="ask">' + L('Ask now', 'এখনই জিজ্ঞেস করুন') + '</button><button class="btn" type="button" data-nai="eng">' + L('Give it to the Engine', 'ইঞ্জিনকে দিন') + '</button></div></div></section>';
     // today's brief
