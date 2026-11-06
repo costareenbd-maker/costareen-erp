@@ -9,7 +9,9 @@
 //   advance    = what was taken now          due = grand - advance
 
 import { lotLineCost } from './lots.js';
-import { codAllowed } from '../lib/delivery.js';
+import { codAllowed, deliveryType } from '../lib/delivery.js';
+/** night-sales D15: the name a walk-in sale without a phone is saved under. */
+export const WALK_IN = 'Walk-in';
 import { erpCatalog } from './catalog.js';
 import { forget } from '../lib/tabs.js';
 import { formatDate, num, round2, dhakaDayStart, todayStr, DAY_MS, byMeasure, QTY_MAX } from '../lib/time.js';
@@ -119,6 +121,12 @@ async function upsertCustomer(ctx, name, contact, address, amount, productSummar
 export async function createInvoice(ctx, payload, opts = {}) {
   if (!payload || !payload.customer) throw new Error('Nothing to save.');
   let name = String(payload.customer.name || '').trim();
+  // night-sales D15: a walk-in / pickup customer who gives no phone (and no name) is saved as "Walk-in" - no customer
+  // record is made for it, nothing is sent on WhatsApp, and it must be paid in full (a due needs someone to ask)
+  const rawPhone = String(payload.customer.phone || '').trim();
+  let walkIn = false;
+  if (!rawPhone && (!name || name.toLowerCase() === WALK_IN.toLowerCase()) && !opts.webEntry && !opts.mirror && !opts.partnerDeal && !opts.resale &&
+      (await deliveryType(ctx, String(payload.customer.source || '').trim() || 'Walk-in')) === 'pickup') { name = WALK_IN; walkIn = true; }
   if (!name) throw new Error('Customer name is required.');
   const items = (payload.items || []).filter((it) => it && String(it.sku || '').trim() && num(it.qty) > 0);
   if (!items.length) throw new Error('Add at least one product.');
@@ -281,6 +289,7 @@ export async function createInvoice(ctx, payload, opts = {}) {
   } else {
     method = '';   // nothing paid: no method
   }
+  if (walkIn && took < grand - 0.5) throw new Error('A walk-in with no phone number pays in full. Choose "Paid now", or add the customer\'s phone to leave a due.');
   const advance = took;
   const status = took >= grand - 0.5 ? 'Paid' : took > 0 ? 'Partial' : 'Pending';
   // hold-1: an order waiting for the customer's OK is checked by exactly these rules, then stops here (nothing written)
@@ -354,7 +363,7 @@ export async function createInvoice(ctx, payload, opts = {}) {
   // plan D1: which units went out, and the warranty each one carries from today
   const soldSerials = opts.mirror ? [] : await sellSerials(ctx, invoiceNo, name, key, ts instanceof Date ? ts : now, items.filter((it) => !J.JOINT_MARK.test(String(it.sku).trim())), bySku, opts);
 
-  const customerId = opts.mirror ? null : await upsertCustomer(ctx, name, phoneIn, address, grand,
+  const customerId = opts.mirror || walkIn ? null : await upsertCustomer(ctx, name, phoneIn, address, grand,
     lines.map((l) => l.name).join(', '), source);
   if (customerId) await ctx.tx`update invoices set customer_id = ${customerId} where id = ${invoiceId}`;
 
@@ -414,7 +423,11 @@ export async function erpCreateInvoice(ctx, payload) {
   if (from && from !== ctx.biz) throw new Error('Joint goods are sold on your own invoice: add them from the product search (they carry the Joint tag).');
   if ((await ctx.tx`select is_pool from businesses where id = ${ctx.biz}`)[0]?.is_pool) throw new Error('A joint stock does not sell by itself: sell its goods on your own company\'s invoice.');
   // hold-1: "Send for confirmation" - checked like this invoice, kept until the customer's OK; nothing written to the books
-  if (payload && payload.hold) return (await import('./holds.js')).makeHold(ctx, payload);
+  // night-sales D17: a waiting order being changed on New invoice - sent again under its own number, or booked now
+  const repl = String((payload && payload.holdReplaces) || '').trim();
+  if (payload && 'holdReplaces' in payload) { payload = { ...payload }; delete payload.holdReplaces; }
+  if (payload && payload.hold) return (await import('./holds.js')).makeHold(ctx, payload, repl);
+  if (repl) return (await import('./holds.js')).saveHoldNow(ctx, payload, repl);
   const res = await createInvoice(ctx, payload);
   delete res.invoiceId;
   return res;

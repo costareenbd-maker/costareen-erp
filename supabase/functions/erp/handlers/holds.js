@@ -15,6 +15,14 @@
 //   erpHoldConfirm({id})      make the invoice
 //   erpHoldCancel({id, reason})
 //   public (index.ts ?inbox=hold|holdbill&h=<token>): holdPage, holdAct ('yes' | 'no'), holdBill (PNG)
+//
+//   night-sales (6 Nov 2026, owner D17 + D18):
+//   - Change a waiting order (D17): New invoice sends `holdReplaces: <id>` with the changed order. With "Send for
+//     confirmation" the SAME number is kept: the changed invoice is sent first, and only when it went out (or the link is
+//     made by hand) does the waiting order take the new lines - the customer's old one is never voided before the new one
+//     exists. With plain Save the changed order is booked at once under the same number (saveHoldNow).
+//   - The customer says no (D18): "no" / "না" / "lagbe na" on WhatsApp, or "Not now" on the page, closes the order by
+//     itself (status cancelled, the reason kept); the team gets one alert.
 
 import { createInvoice, freshInvoiceNo } from './invoice.js';
 import { erpCatalog } from './catalog.js';
@@ -33,6 +41,7 @@ const round2 = (n) => Math.round((Number(n) || 0) * 100) / 100;
 const last10 = (p) => str(p).replace(/[^0-9]/g, '').slice(-10);
 const waDigits = (p) => { const d = str(p).replace(/[^0-9]/g, ''); return d.length === 11 && d.startsWith('0') ? '88' + d : d.startsWith('880') ? d : d; };
 /** "confirm", "ok", "yes", "হ্যাঁ", "ঠিক আছে", "কনফার্ম" ... on its own (a short answer, not a sentence that mentions it). */
+export const NO = /^\s*(no|nope|nah|na|not now|no thanks|cancel|cancel it|lagbe na|chai na|nibo na|না|নাহ|জি না|লাগবে না|চাই না|নেব না|নিব না|বাতিল|বাতিল করুন|অর্ডার বাতিল|এখন না)\s*[.!।❌👎]*\s*$/i;
 export const YES = /^\s*(confirm(ed)?|ok(ay)?|yes|yep|done|thik ache|thik|hya|ha|haa|জি|জ্বি|হ্যাঁ|হা|হ্যা|ঠিক আছে|ঠিক|কনফার্ম|কনফার্ম করলাম|কনফার্ম করুন|ওকে|অর্ডার কনফার্ম)\s*[.!।✅👍]*\s*$/i;
 
 function pageBase(ctx) { return String((ctx.deps && ctx.deps.google && ctx.deps.google.appUrl) || 'https://erp.costareen.com/').replace(/#.*$/, '').replace(/\/+$/, ''); }
@@ -51,9 +60,9 @@ async function shop(ctx) {
 const live = (h, now) => h.status === 'waiting' && !(h.expires_at && new Date(h.expires_at) <= now);
 
 /** erpCreateInvoice with `hold`: checked like the invoice, then kept (nothing written to the books). */
-export async function makeHold(ctx, payload) {
+export async function makeHold(ctx, payload, replacesId) {
   const opt = payload.hold && typeof payload.hold === 'object' ? payload.hold : {};
-  const clean = { ...payload }; delete clean.hold;
+  const clean = { ...payload }; delete clean.hold; delete clean.holdReplaces;
   if (str(clean.restockId)) throw new Error('An order from the waiting list is saved as an invoice straight away.');
   // walkin-1: a walk-in / pickup customer takes the goods there and then - no confirmation; Save sends the invoice instead
   if ((await deliveryType(ctx, str(clean.customer && clean.customer.source))) === 'pickup') throw new Error('A walk-in / pickup sale needs no confirmation: press Save invoice - the invoice goes to the customer\'s WhatsApp by itself.');
@@ -61,6 +70,7 @@ export async function makeHold(ctx, payload) {
   if (pv.lines.some((l) => l.joint)) throw new Error('Joint-stock lines are sold at once: save this one as an invoice.');
   const days = Math.max(1, Math.min(30, Math.round(num(opt.days) || 7)));
   await lock(ctx, 'hold');
+  if (str(replacesId)) return changeHold(ctx, str(replacesId), clean, pv, opt, days);
   // hold-1c: the invoice's own number is kept for it now (the counter moves on); the PDF the customer gets carries it,
   // and Confirm saves the invoice under it. Declined / expired: that number is simply never used.
   const { no, n } = await freshInvoiceNo(ctx, ctx.now);
@@ -75,6 +85,47 @@ export async function makeHold(ctx, payload) {
   if (opt.send === 'wa') sent = await sendWa(ctx, h, str(opt.channelId));
   return { held: true, id: h.id, holdNo: no, grandTotal: pv.grand, link: holdLink(ctx, h), sent: !!sent.ok, sendError: sent.ok ? '' : str(sent.error),
            via: sent.via || '', customer: pv.name, phone: pv.phone, expires: formatDate(new Date(h.expires_at), 'd MMM yyyy') };
+}
+
+/** night-sales D17: the changed order goes to the customer under the SAME number; the waiting order takes the new lines
+ *  only once the new invoice went out (WhatsApp) or its link was made (by hand). Sending failed: nothing changes. */
+async function changeHold(ctx, id, clean, pv, opt, days) {
+  const old = await holdOf(ctx, id);
+  if (!live(old, ctx.now)) throw new Error(old.hold_no + ' is no longer waiting (' + (old.status === 'waiting' ? 'expired' : old.status) + '), so it cannot be changed. Make a new one.');
+  const snap = { lines: pv.lines, sub: pv.sub, discount: pv.discount, delivery: pv.delivery, grand: pv.grand, took: pv.took, mode: pv.mode,
+                 method: pv.method, name: pv.name, phone: pv.phone, address: pv.address, source: pv.source,
+                 changes: [].concat((old.snap && old.snap.changes) || [], [{ at: ctx.now.toISOString(), by: str(ctx.s.name || 'team'), grand: num(old.grand_total), items: ((old.snap && old.snap.lines) || []).length }]).slice(-20) };
+  const next = { ...old, payload: clean, snap, customer_name: pv.name, customer_phone: pv.phone || null, grand_total: pv.grand };
+  let sent = { ok: false, error: '' };
+  if (opt.send === 'wa') {
+    sent = await sendWa(ctx, next, str(opt.channelId));
+    if (!sent.ok) throw new Error('Not sent: ' + (str(sent.error) || 'WhatsApp did not take it.') + ' Nothing changed: the customer\'s ' + old.hold_no + ' stays as it was.');
+  }
+  const h = (await ctx.tx`update order_holds set payload = ${ctx.tx.json(clean)}, snap = ${ctx.tx.json(snap)}, customer_name = ${pv.name}, customer_phone = ${pv.phone || null},
+                            grand_total = ${pv.grand}, book_courier = ${!!opt.courier}, expires_at = ${new Date(ctx.now.getTime() + days * DAY)},
+                            customer_ok_at = null, customer_ok_how = null, customer_no_at = null,
+                            sent_at = ${sent.ok ? ctx.now : null}, sent_via = ${sent.ok ? sent.via : 'link'}
+                          where id = ${old.id} and status = 'waiting' returning *`)[0];
+  if (!h) throw new Error(old.hold_no + ' changed while you were editing it. Open Waiting orders again.');
+  return { held: true, replaced: true, id: h.id, holdNo: h.hold_no, grandTotal: pv.grand, link: holdLink(ctx, h), sent: !!sent.ok, sendError: '',
+           via: sent.via || '', customer: pv.name, phone: pv.phone, expires: formatDate(new Date(h.expires_at), 'd MMM yyyy'), was: num(old.grand_total) };
+}
+
+/** night-sales D17: a changed waiting order saved with plain Save - booked now, under the number the customer has. */
+export async function saveHoldNow(ctx, payload, id) {
+  await lock(ctx, 'hold');
+  const h = await holdOf(ctx, id);
+  if (!live(h, ctx.now)) throw new Error(h.hold_no + ' is no longer waiting (' + (h.status === 'waiting' ? 'expired' : h.status) + '). Stop changing it and save a new invoice.');
+  const clean = { ...payload }; delete clean.hold; delete clean.holdReplaces;
+  if (str(clean.restockId)) throw new Error('An order from the waiting list is saved as an invoice straight away.');
+  if ((await ctx.tx`select is_pool from businesses where id = ${ctx.biz}`)[0]?.is_pool) throw new Error('A joint stock does not sell by itself.');
+  const day = todayStr(new Date(h.created_at));
+  if (!str(clean.date) && day !== todayStr(ctx.now)) clean.date = day;
+  const res = await createInvoice(ctx, clean, { invoiceNo: h.hold_no });
+  delete res.invoiceId;
+  await ctx.tx`update order_holds set status = 'confirmed', confirmed_at = now(), confirmed_name = ${ctx.s.name || null}, invoice_no = ${res.invoiceNo},
+                 closed_reason = ${'Changed and saved as the invoice (' + str(ctx.s.name || 'team') + ')'} where id = ${h.id}`;
+  return { ...res, holdNo: h.hold_no, fromHold: true };
 }
 
 /** The WhatsApp numbers that can send it: live ones, the "Sending only" number first. */
@@ -156,7 +207,7 @@ function out(ctx, h, stock) {
     expires: h.expires_at ? formatDate(new Date(h.expires_at), 'd MMM') : '', sentVia: str(h.sent_via), sent: !!h.sent_at,
     customerOk: !!h.customer_ok_at, customerOkHow: str(h.customer_ok_how), customerOkAt: h.customer_ok_at ? formatDate(new Date(h.customer_ok_at), 'd MMM, h:mm a') : '',
     customerNo: !!h.customer_no_at, courier: !!h.book_courier, invoiceNo: str(h.invoice_no), reason: str(h.closed_reason),
-    confirmedBy: str(h.confirmed_name), link: holdLink(ctx, h), short };
+    confirmedBy: str(h.confirmed_name), link: holdLink(ctx, h), short, changed: (s.changes || []).length };
 }
 
 export async function erpHolds(ctx, payload) {
@@ -217,13 +268,21 @@ export async function expireHolds(ctx) {
 
 /** A customer's short "confirm" / "ok" on WhatsApp, while one of their orders waits: marked, and the team is told. */
 export async function holdReply(ctx, ch, contact, conv, text) {
-  if (!/^wa_/.test(str(ch && ch.kind)) || !YES.test(str(text))) return false;
+  const no = NO.test(str(text));
+  if (!/^wa_/.test(str(ch && ch.kind)) || !(YES.test(str(text)) || no)) return false;
   const ph = last10(contact && (contact.phone || contact.external_id));
   if (ph.length !== 10) return false;
   const rows = await ctx.tx`select * from order_holds where business_id = ${ctx.biz} and status = 'waiting' and customer_ok_at is null and sent_at is not null
                             and expires_at > ${ctx.now} order by sent_at desc limit 20`;
   const h = rows.find((x) => last10(x.customer_phone) === ph);
   if (!h) return false;
+  if (no) {
+    // D18: the customer said no - the order closes by itself (nothing was in the books), the reason is kept
+    await ctx.tx`update order_holds set customer_no_at = now(), status = 'cancelled', closed_reason = 'The customer said no on WhatsApp' where id = ${h.id} and status = 'waiting'`;
+    try { await writeMsgNote(ctx, conv, 'Customer said no to invoice ' + h.hold_no + '. It is closed; nothing went into the books.'); } catch (_) { /* the note is a nicety */ }
+    await pushTeam(ctx, { title: 'Invoice ' + h.hold_no + ': the customer said no', body: str(h.customer_name) + ' said no on WhatsApp. The order is closed by itself.', url: '/#/holds', tag: 'hold-' + h.id });
+    return h.hold_no;
+  }
   await ctx.tx`update order_holds set customer_ok_at = now(), customer_ok_how = 'whatsapp' where id = ${h.id}`;
   try { await writeMsgNote(ctx, conv, 'Customer confirmed invoice ' + h.hold_no + ' (' + '৳' + Math.round(num(h.grand_total)) + '). Waiting for the team\'s Confirm.'); } catch (_) { /* the note is a nicety */ }
   await pushTeam(ctx, { title: 'Invoice ' + h.hold_no + ' confirmed by the customer', body: str(h.customer_name) + ' said yes on WhatsApp. Press Confirm to put it in the books.', url: '/#/holds', tag: 'hold-' + h.id });
@@ -246,7 +305,7 @@ async function byToken(ctx, tok) {
 function maskPhone(ph) { ph = str(ph); return ph.length > 6 ? ph.slice(0, 3) + '•••••' + ph.slice(-3) : ph; }
 async function pageBody(ctx, h) {
   const sh = await shop(ctx), s = h.snap || {};
-  const state = h.status === 'confirmed' ? 'confirmed' : h.status === 'cancelled' ? 'cancelled' : !live(h, ctx.now) ? 'expired'
+  const state = h.status === 'confirmed' ? 'confirmed' : h.status === 'cancelled' && h.customer_no_at ? 'said_no' : h.status === 'cancelled' ? 'cancelled' : !live(h, ctx.now) ? 'expired'
               : h.customer_no_at ? 'said_no' : h.customer_ok_at ? 'said_yes' : 'waiting';
   return { status: 200, body: { ok: true, lang: sh.lang, words: WORDS, shop: { name: sh.name, phone: sh.phone }, bill: holdBillLink(ctx, h), pdf: holdPdfLink(ctx, h),
     order: { no: h.hold_no, date: formatDate(new Date(h.created_at), 'd MMM yyyy'), name: str(h.customer_name), phone: maskPhone(h.customer_phone), address: str(s.address),
@@ -261,9 +320,9 @@ export async function holdAct(ctx, tok, b) {
   const a = str(b && b.a);
   if (live(h, ctx.now) && !h.customer_ok_at && !h.customer_no_at && (a === 'yes' || a === 'no')) {
     if (a === 'yes') await ctx.tx`update order_holds set customer_ok_at = now(), customer_ok_how = 'page' where id = ${h.id}`;
-    else await ctx.tx`update order_holds set customer_no_at = now() where id = ${h.id}`;
+    else await ctx.tx`update order_holds set customer_no_at = now(), status = 'cancelled', closed_reason = 'The customer pressed Not now' where id = ${h.id}`;   // D18: closes by itself
     await pushTeam(ctx, { title: 'Invoice ' + h.hold_no + (a === 'yes' ? ' confirmed by the customer' : ': the customer said no'),
-      body: str(h.customer_name) + (a === 'yes' ? ' pressed Confirm. Press Confirm to put it in the books.' : ' pressed "Not now".'), url: '/#/holds', tag: 'hold-' + h.id });
+      body: str(h.customer_name) + (a === 'yes' ? ' pressed Confirm. Press Confirm to put it in the books.' : ' pressed "Not now". The order is closed by itself.'), url: '/#/holds', tag: 'hold-' + h.id });
   }
   return pageBody(ctx, (await byToken(ctx, tok)));
 }

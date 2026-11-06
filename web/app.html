@@ -34139,8 +34139,8 @@ function invSaveState() {
   if (ok && hint) hint.remove();
 }
 // the red marks show as soon as the form is being filled in (before that, a fresh form is not shouted at)
-document.addEventListener('input', function (e) { if (VIEW === 'invoice' && e.target.closest && e.target.closest('#view')) INV_TRIED = true; }, true);
-document.addEventListener('click', function (e) { if (VIEW === 'invoice' && e.target.closest && e.target.closest('#view [data-pick], #view [data-paymode], #view #iresults')) INV_TRIED = true; }, true);
+// night-sales (6 Nov 2026, sales-invoice.md P0-2): red only after a Save press - typing or tapping no longer sets INV_TRIED
+// (it made the phone box red from its first digit and put "Phone number is required" in the bar after the first product)
 var invChkPaint34 = invChkPaint;
 invChkPaint = function () { var r = invChkPaint34.apply(this, arguments); invSaveState(); invMarginPaint(); return r; };
 var repaintInv34 = repaint;
@@ -43634,6 +43634,518 @@ html[data-look="clean"] #ntLang { border:0; box-shadow:var(--fd-shadow-card, non
       sel.addEventListener('change', function () { if (sel.value.indexOf('go:') === 0) go(sel.value.slice(3)); });
     }
   });
+})();
+</script>
+<!-- night-sales (6 Nov 2026, Wave 3, sales-*.md; owner accepted every star default: D14-D18, the files' own questions on
+     their recommended answer). Page side of the sales screens, built on the shell's tk(), actionBar() and afterPaint():
+     s1 New invoice: red only after Save (a phone box shows a neutral "7/11" while typing, red on leaving it or on Save),
+        ONE Save (the sticky bar; the Summary keeps the totals), "N things to fix" in the bar only after a Save, the due
+        in plain ink (amber when part paid), an honest walk-in WhatsApp line ("not sent" when no number is connected,
+        a toast when Save skipped it), products first on a phone (D14), walk-in without a phone = "Walk-in", paid in
+        full, nothing sent (D15, server: invoice.js).
+     s2 Invoice page + drawer through actionBar (D16): one state-based primary, "Edit invoice" (name / address included),
+        Cancel sale last in More; the drawer gets Edit invoice and the real WhatsApp PDF send. One "New invoice" button.
+     s3 Waiting orders: page head + Sales pill, pills Said yes / Waiting / Said no / Closed, one primary per state, empty
+        text without a button name that can be hidden, Change it = same number, the customer's invoice replaced only
+        after the changed one is sent (D17, server: holds.js changeHold / saveHoldNow), "no" closes by itself (D18).
+     s4 Dashboard: "Needs you now" first (customers who said yes, market orders on the shelf added), + New invoice and
+        Waiting orders on top; a saved Customise layout is respected. -->
+<style>
+/* s1 */
+.c3bar .c3d { color:var(--fd-text, var(--ink)) !important; }
+.c3bar .c3d.part { color:var(--fd-warning-text, #9A5B00) !important; }
+.c3bar button.c3p { background:none; border:0; padding:0; font:inherit; font-size:12.5px; font-weight:600; color:var(--fd-danger, var(--critical)); text-decoration:underline; cursor:pointer; text-align:left; }
+.c3bar .nt-wa { font-size:12.5px; color:var(--fd-text-3, var(--muted)); margin-right:8px; }
+.c3bar .nt-wa.no { color:var(--fd-warning-text, #9A5B00); }
+#saveInv, #invSaveHint { display:none !important; }
+.inv-ph-msg.nt-count { color:var(--fd-text-3, var(--muted)) !important; }
+.nt-hbar { display:flex; gap:10px; align-items:center; justify-content:space-between; flex-wrap:wrap; border-radius:14px; padding:10px 14px; margin-bottom:12px; font-size:14px;
+  background:color-mix(in srgb, var(--fd-warning, #f79009) 14%, transparent); }
+@media (max-width:760px) {
+  .inv2 { display:flex; flex-direction:column; }
+  .inv2 > .inv2-l { display:contents; }
+}
+/* s3 */
+.nt-hd-card { background:var(--fd-card, #fff); border:1px solid var(--fd-border, var(--fd-line, #e6e8ec)); border-radius:16px; padding:14px 16px; display:flex; flex-direction:column; gap:8px; }
+.nt-hd-card.yes { border-color:color-mix(in srgb, var(--fd-positive, #12b76a) 55%, transparent); box-shadow:0 0 0 3px color-mix(in srgb, var(--fd-positive, #12b76a) 12%, transparent); }
+.nt-hd-top { display:flex; justify-content:space-between; gap:12px; align-items:baseline; }
+.nt-hd-name { font-weight:700; font-size:15.5px; }
+.nt-hd-amt { font-weight:700; font-size:19px; white-space:nowrap; font-variant-numeric:tabular-nums; }
+.nt-hd-meta { font-size:13px; color:var(--fd-text-3, var(--fd-muted, #667085)); }
+.nt-hd-st { font-size:13.5px; }
+.nt-hd-st.ok { color:var(--fd-positive-text, #067647); font-weight:600; }
+.nt-hd-st.warn { color:var(--fd-warning-text, #9A5B00); font-weight:600; }
+.nt-hd-st.bad { color:var(--fd-negative-text, #b42318); font-weight:600; }
+.nt-hd-list { display:flex; flex-direction:column; gap:12px; margin-top:12px; }
+.nt-hd-empty { padding:28px 16px; text-align:center; color:var(--fd-text-3, var(--fd-muted, #667085)); }
+/* s4 */
+.nt-dash-acts { display:flex; gap:10px; flex-wrap:wrap; margin:0 0 14px; }
+@media (max-width:640px) { .nt-dash-acts .btn.primary { flex:1 1 100%; justify-content:center; min-height:44px; } }
+</style>
+<script>
+(function () {
+  var bn = function () { return typeof LANG !== 'undefined' && LANG === 'bn'; };
+  var L = function (en, b) { return bn() ? b : en; };
+  function errText(e) { return String(e && e.message ? e.message : e); }
+  try {
+    var BN = {
+      // আপনি forms over hold-1 / invedit-1's তুমি forms
+      'Send for confirmation': 'কনফার্মের জন্য পাঠান', 'Send again': 'আবার পাঠান', 'Edit': 'বদলান', 'Copy link': 'লিংক কপি করুন', 'Cancel order': 'অর্ডার বাতিল করুন',
+      'Send invoice on WhatsApp': 'WhatsApp-এ ইনভয়েস পাঠান', 'Edit invoice': 'ইনভয়েস এডিট', 'Save changes': 'পরিবর্তন সেভ করুন', 'Cancel the edit': 'এডিট বাতিল করুন',
+      'Confirm': 'কনফার্ম করুন', 'Waiting orders': 'কনফার্মের অপেক্ষায়', 'Customer said no': 'কাস্টমার না বলেছেন',
+      // s1
+      'Save invoice': 'ইনভয়েস সেভ করুন', 'Save and send': 'সেভ করে পাঠান', 'Clear invoice': 'ইনভয়েস খালি করুন', 'Stop changing': 'বদলানো থামান',
+      'Not saved: fix the boxes marked red.': 'সেভ হয়নি। লাল ঘরগুলো ঠিক করুন।', 'Add at least one product': 'অন্তত একটা প্রোডাক্ট যোগ করুন',
+      'Customer name is required': 'কাস্টমারের নাম লিখুন', 'Search a product and press Enter, or tap it, to start.': 'শুরু করতে প্রোডাক্ট খুঁজুন।',
+      'The invoice goes to the customer’s WhatsApp': 'ইনভয়েস কাস্টমারের WhatsApp-এ যাবে',
+      // s2
+      'Receive payment': 'টাকা নিন', 'Send parcel': 'পার্সেল পাঠান', 'Open PDF': 'PDF খুলুন', 'Return': 'ফেরত', 'Fix name and address': 'নাম-ঠিকানা ঠিক করুন',
+      'Cancel sale': 'বিক্রি বাতিল', 'New invoice': 'নতুন ইনভয়েস', 'Send on WhatsApp': 'WhatsApp-এ পাঠান',
+      // s3
+      'Said yes': 'রাজি', 'Waiting': 'অপেক্ষায়', 'Said no': 'না বলেছেন', 'Closed': 'বন্ধ', 'Close this order': 'অর্ডার বন্ধ করুন', 'Change it': 'বদলান',
+      'Open the invoice': 'ইনভয়েস খুলুন', 'Try again': 'আবার চেষ্টা করুন',
+      // s4
+      'Needs you now': 'এখন যা দেখতে হবে', '✓ Nothing needs you now.': '✓ এখন কিছু করার নেই।', '+ New invoice': '+ নতুন ইনভয়েস'
+    };
+    Object.keys(BN).forEach(function (k) { I18N_BN[k] = BN[k]; });
+  } catch (e) {}
+
+  /* ===================================================================== s1 New invoice */
+  var PH_LEFT = false;     // the phone box was left once: from then on a wrong number shows red
+  var HD_ASKED = 0;
+  function pickup() { return typeof t1Type === 'function' && t1Type(FORM.source) === 'pickup'; }
+  function walkNoPhone() { return pickup() && !String(FORM.phone || '').trim(); }
+  window.ntWalkNoPhone = walkNoPhone;
+  function tried() { return typeof INV_TRIED !== 'undefined' && INV_TRIED; }
+  function hdChannels() {
+    var H = window.HD_STATE;
+    if (H && !H.data && !H.busy && window.hdReload && Date.now() - HD_ASKED > 60000) { HD_ASKED = Date.now(); window.hdReload(); }
+    return H && H.data ? (H.data.channels || []) : null;
+  }
+
+  // D15: a walk-in with no phone needs neither phone nor name, and pays in full
+  var cartProblemsNt = cartProblems;
+  cartProblems = function () {
+    var p = cartProblemsNt.apply(this, arguments);
+    if (!walkNoPhone()) return p;
+    p = p.filter(function (x) { return !/^Phone number is required|^Customer name is required/.test(x); });
+    if ((FORM.payMode || 'full') !== 'full') p.unshift('A walk-in with no phone pays in full. Choose "Paid now", or type the phone to leave a due.');
+    return p;
+  };
+  var invChecksNt = invChecks;
+  invChecks = function () {
+    var c = invChecksNt.apply(this, arguments);
+    if (!walkNoPhone()) return c;
+    c = c.map(function (x) { return /^Phone|^Customer name/.test(x.t) ? { ok: true, t: x.t } : x; });
+    c.push({ ok: (FORM.payMode || 'full') === 'full', t: 'A walk-in with no phone pays in full' });
+    return c;
+  };
+  // the phone box: a neutral count while typing; red only once it was left, or after a Save
+  var invPhoneMarkNt = invPhoneMark;
+  invPhoneMark = function () {
+    var n = el('cphone'), m = el('invPhMsg'); if (!n) return invPhoneMarkNt.apply(this, arguments);
+    var v = n.value.trim(), good = /^01[3-9]\d{8}$/.test(v);
+    if ((!v && walkNoPhone()) || (!tried() && !PH_LEFT) || (!v && !tried())) {
+      n.classList.remove('bad'); n.classList.toggle('good', good); n.style.borderColor = '';
+      if (m) { m.classList.toggle('nt-count', !!v && !good); m.textContent = v && !good ? L(v.length + '/11 digits', '১১-র মধ্যে ' + v.length + 'টা ডিজিট') : !v && walkNoPhone() && CART.length ? L('No phone: saved as Walk-in, paid in full', 'ফোন নেই: Walk-in হিসেবে সেভ হবে, পুরো টাকা দিতে হবে') : ''; }
+      return;
+    }
+    if (m) m.classList.remove('nt-count');
+    invPhoneMarkNt.apply(this, arguments);
+    if (m && v && !good) m.textContent = L('Phone needs 11 digits, starting 01', 'ফোন নম্বর ১১ ডিজিটের হবে, শুরু ০১ দিয়ে');
+  };
+  document.addEventListener('focusout', function (e) { if (VIEW === 'invoice' && e.target && e.target.id === 'cphone') { PH_LEFT = !!e.target.value.trim(); try { invPhoneMark(); } catch (x) {} } });
+  document.addEventListener('input', function (e) { if (VIEW === 'invoice' && e.target && e.target.id === 'cphone' && !PH_LEFT && !tried()) e.target.style.borderColor = ''; });
+  // a walk-in name box left empty is not "wrong"
+  var invMarksNt = invMarks;
+  invMarks = function () {
+    var first = invMarksNt.apply(this, arguments);
+    if (walkNoPhone() && el('cname')) {
+      invErr(el('cname'), '');
+      if (first === el('cname') || first === el('cphone')) first = document.querySelector('#view .inv-bad') || null;
+    }
+    return first;
+  };
+  // Save is pressable whenever there is a product: pressing it is what shows what is wrong
+  invSaveState = function () {
+    if (VIEW !== 'invoice') return;
+    var b = el('c3save'); if (b && !SAVING) { b.disabled = !CART.length; b.title = ''; }
+    var hint = el('invSaveHint'); if (hint) hint.remove();
+    barProblems();
+  };
+  function badCount() { try { return invChecks().filter(function (x) { return !x.ok; }).length; } catch (e) { return 0; } }
+  function barProblems() {
+    var bar = document.querySelector('#view .c3bar'); if (!bar) return;
+    var old = bar.querySelector('.c3p'), n = tried() && CART.length ? badCount() : 0;
+    if (!n) { if (old) old.remove(); return; }
+    var txt = L(n === 1 ? '1 thing to fix' : n + ' things to fix', n + 'টা জিনিস ঠিক করতে হবে');
+    if (old && old.tagName === 'BUTTON') { old.textContent = txt; return; }
+    var b = document.createElement('button'); b.type = 'button'; b.className = 'c3p'; b.setAttribute('data-ntfix', '1'); b.textContent = txt;
+    if (old) old.replaceWith(b); else { var s = bar.querySelector('#c3hold') || bar.querySelector('#c3save'); if (s) bar.insertBefore(b, s); }
+  }
+  document.addEventListener('click', function (e) {
+    if (VIEW !== 'invoice' || !e.target.closest) return;
+    if (e.target.closest('[data-ntfix]')) { var f = invMarks() || document.querySelector('#view .inv-bad'); if (f) { f.scrollIntoView({ block: 'center', behavior: 'smooth' }); try { f.focus({ preventScroll: true }); } catch (x) {} } }
+    if (e.target.closest('[data-ntclear]')) { var c = el('clearInv'); if (c) c.click(); }
+  });
+  var saveInvoiceNt = saveInvoice;
+  saveInvoice = function () {
+    if (VIEW === 'invoice' && walkNoPhone() && !String(FORM.name || '').trim()) { FORM.name = 'Walk-in'; var n = el('cname'); if (n) n.value = 'Walk-in'; }
+    var r = saveInvoiceNt.apply(this, arguments);
+    setTimeout(barProblems, 0);
+    return r;
+  };
+  var invoiceDoneNt = invoiceDone;
+  invoiceDone = function () { PH_LEFT = false; return invoiceDoneNt.apply(this, arguments); };
+
+  var viewInvoiceNt = viewInvoice;
+  viewInvoice = function () {
+    var h = viewInvoiceNt.apply(this, arguments);
+    if (!CAT || !OPT || h.indexOf('class="c3bar"') < 0) return h;
+    // the problem text in the bar only after a Save (painted by barProblems)
+    h = h.replace(/<span class="c3p">[\s\S]*?<\/span>(?=<(?:span class="sub"|button))/, '');
+    // the due is information: plain ink, amber when part paid
+    if (FORM.payMode === 'part') h = h.replace('<span class="c3d">', '<span class="c3d part">');
+    h = h.replace(/<span class="c3t"><small>[^<]*<\/small>([\d,.]+)<\/span>/, function (m, v) { return '<span class="c3t">' + tk(Number(v.replace(/,/g, ''))) + '</span>'; });
+    // the walk-in line says what will really happen
+    if (pickup() && CART.length) {
+      var ph = String(FORM.phone || '').replace(/[^0-9]/g, ''), ch = hdChannels();
+      var said = '<span class="sub" style="margin-right:8px">The invoice goes to the customer’s WhatsApp</span>';
+      var line = !ph ? '<span class="nt-wa">' + esc(L('No phone, so nothing is sent on WhatsApp', 'ফোন নেই, তাই WhatsApp-এ কিছু যাবে না')) + '</span>'
+        : ph.length < 11 ? ''
+        : ch && !ch.length ? '<span class="nt-wa no">' + esc(L('No WhatsApp number is connected, so the invoice will not be sent', 'কোনো WhatsApp নম্বর যুক্ত নেই, তাই ইনভয়েস যাবে না')) + '</span>'
+        : '<span class="nt-wa">' + esc(L('The invoice goes to the customer’s WhatsApp', 'ইনভয়েস কাস্টমারের WhatsApp-এ যাবে')) + '</span>';
+      h = h.indexOf(said) >= 0 ? h.replace(said, line) : h.replace('<button class="btn primary" type="button" id="c3save"', line + '<button class="btn primary" type="button" id="c3save"');
+      if (ph.length >= 11 && ch && ch.length && !SAVING) h = h.replace(/(id="c3save"[^>]*>)Save invoice(<\/button>)/, '$1Save and send$2');
+    }
+    // the Summary keeps the totals; Clear becomes a quiet link there (one Save: the bar)
+    h = h.replace('<button class="btn" type="button" id="clearInv">Clear</button>', '<button class="btn" type="button" id="clearInv">Clear invoice</button>');
+    if (walkNoPhone()) h = h.replace('placeholder="Customer name"', 'placeholder="' + esc(L('Customer name (empty = Walk-in)', 'কাস্টমারের নাম (খালি = Walk-in)')) + '"');
+    // D17: changing a waiting order
+    if (REPL) h = '<div class="nt-hbar"><span>' + esc(L('Changing ' + REPL.no + ' for ' + REPL.name + '. The customer keeps the old invoice until you send this one (same number).',
+        REPL.no + ' বদলানো হচ্ছে (' + REPL.name + ')। নতুনটা পাঠানো পর্যন্ত কাস্টমারের কাছে পুরোনোটাই থাকবে (নম্বর একই)।')) + '</span>' +
+      '<button class="btn small" type="button" data-ntrepl-stop="1">Stop changing</button></div>' + h;
+    return h;
+  };
+  // D14: on a phone the products come first: search, lines, then the customer, then the summary
+  function invPhoneOrder() {
+    if (VIEW !== 'invoice') return;
+    var box = document.querySelector('#view .inv2'); if (!box) return;
+    var phone = window.matchMedia && window.matchMedia('(max-width:760px)').matches;
+    var left = box.querySelector(':scope > .inv2-l'), right = box.querySelector(':scope > .inv2-r'), sum = box.querySelector(':scope > .inv3-sum');
+    if (!left) return;
+    var kids = [].slice.call(left.children), seen = false;
+    kids.forEach(function (k) {
+      var o = '';
+      if (phone) {
+        if (k.querySelector('#isearch')) { o = '1'; seen = true; }
+        else if (k.querySelector('#cphone')) o = '3';
+        else o = seen ? '1' : '0';
+      }
+      k.style.order = o;
+    });
+    if (right) right.style.order = phone ? '2' : '';
+    if (sum) sum.style.order = phone ? '5' : '';
+  }
+  AFTER_PAINT.push(function nightInvoice() { if (VIEW !== 'invoice') return; invPhoneOrder(); try { invSaveState(); invPhoneMark(); } catch (e) {} });
+  window.addEventListener('resize', function () { if (VIEW === 'invoice') invPhoneOrder(); });
+
+  /* ---------- D17: Change a waiting order (same number; the old one replaced only once the new one is sent) */
+  var REPL = null;
+  function emptyForm() { return { payMode: 'full', paidNow: 0, phone: '', name: '', address: '', source: (OPT.sources[0] || 'Customer pickup'), touched: false, method: FORM.method, status: FORM.status, delivery: 0, advance: 0, date: '' }; }
+  function changeOne(id) {
+    srv('erpHoldGet', [{ id: id }], async function (r) {
+      if (!CAT || !OPT) { toast(L('The product list is still loading. Try again in a moment.', 'প্রোডাক্টের তালিকা আসছে। একটু পরে আবার চেষ্টা করুন।'), true); return; }
+      var ok = await uiConfirm(L('The customer already has invoice ' + r.no + '. Change it and send the new one?\n\nSame number. The old one stays with the customer until the changed one is sent.',
+        'কাস্টমারের কাছে ' + r.no + ' ইনভয়েস আছে। বদলে নতুনটা পাঠাবেন?\n\nনম্বর একই থাকবে। বদলানোটা পাঠানো পর্যন্ত পুরোনোটাই থাকবে।'));
+      if (!ok) return;
+      if (CART.length && !(await uiConfirm(L('New invoice already holds ' + CART.length + ' product(s). Replace them with ' + r.no + '?', 'নতুন ইনভয়েসে আগে থেকে ' + CART.length + 'টা প্রোডাক্ট আছে। ' + r.no + ' দিয়ে বদলাবেন?')))) return;
+      var p = r.payload || {}, by = {}, miss = [], cart = [];
+      CAT.forEach(function (c) { by[String(c.sku).toLowerCase()] = c; });
+      (p.items || []).forEach(function (it) {
+        var c = by[String(it.sku).toLowerCase()]; if (!c) { miss.push(it.sku); return; }
+        cart.push({ sku: c.sku, name: c.name, price: c.sell, qty: Number(it.qty) || 1, discEach: Number(it.discEach) || 0, stock: c.stock, cat: c.cat, serials: it.serials || [] });
+      });
+      CART = cart; iSearch = ''; ACCT = null;
+      var cu = p.customer || {};
+      FORM = emptyForm();
+      FORM.name = cu.name || ''; FORM.phone = cu.phone || ''; FORM.address = cu.address || ''; if (cu.source) FORM.source = cu.source;
+      FORM.delivery = Number(p.deliveryCharge) || 0; FORM.delTouched = true; FORM.delAuto = false; FORM.touched = true;
+      FORM.invDisc = Number(p.invoiceDiscount) || 0; FORM.payMode = p.payMode || 'full'; FORM.paidNow = Number(p.paidNow) || 0; FORM.advance = Number(p.advancePaid) || 0;
+      if (p.paymentMethod) FORM.method = p.paymentMethod; if (p.advanceMethod) FORM.advMethod = p.advanceMethod;
+      REPL = { id: id, no: r.no, name: r.customer || cu.name || '' };
+      try { updateCounts(); } catch (e) {}
+      go('invoice');
+      toast(L(r.no + ' is on New invoice. Change it, then press Send for confirmation.', r.no + ' নতুন ইনভয়েসে আছে। বদলে "কনফার্মের জন্য পাঠান" চাপুন।') + (miss.length ? ' ' + esc(L('Not found: ', 'পাওয়া যায়নি: ') + miss.join(', ')) : ''), false, 9000);
+    }, function (e) { toast(esc(errText(e)), true); });
+  }
+  var uiConfirmNt = uiConfirm;
+  uiConfirm = function (text) {
+    if (REPL && VIEW === 'invoice' && /^Save this invoice\?/.test(String(text))) {
+      text = String(text).replace('\n\nStock will be deducted', '\n\nThis is the changed ' + REPL.no + ': it keeps that number.\n\nStock will be deducted');
+      return uiConfirmNt.call(this, text);
+    }
+    return uiConfirmNt.apply(this, arguments);
+  };
+  var srvNt = srv;
+  srv = function (name, args, ok, bad) {
+    if (name !== 'erpCreateInvoice' || !REPL || VIEW !== 'invoice' || !args || !args[0]) return srvNt.apply(this, arguments);
+    var rp = REPL, a = args.slice(); a[0] = Object.assign({}, a[0], { holdReplaces: rp.id });
+    return srvNt.call(this, name, a, function (res) {
+      REPL = null;
+      try { if (window.hdReload) window.hdReload(); } catch (e) {}
+      if (res && res.replaced) setTimeout(function () { toast(L(rp.no + ' changed: the customer now has the new invoice (same number).', rp.no + ' বদলানো হয়েছে: কাস্টমারের কাছে এখন নতুন ইনভয়েস (নম্বর একই)।'), false, 9000); }, 400);
+      return ok.apply(this, arguments);
+    }, function (e) { if (bad) return bad.apply(this, arguments); });
+  };
+  document.addEventListener('click', function (e) {
+    var t = e.target; if (!t || !t.closest) return;
+    if (t.closest('[data-ntrepl-stop]')) {
+      var no = REPL && REPL.no; REPL = null; CART = []; ACCT = null; FORM = emptyForm(); iSearch = '';
+      try { updateCounts(); } catch (x) {}
+      repaint(); toast(L('Nothing changed. ' + no + ' still waits as it was.', 'কিছু বদলায়নি। ' + no + ' আগের মতোই অপেক্ষায় আছে।'));
+      return;
+    }
+    var b = t.closest('[data-ntedit]'); if (b) { changeOne(b.getAttribute('data-ntedit')); return; }
+  });
+
+  /* ===================================================================== s2 Invoices list + invoice page + drawer */
+  // one "New invoice" (the "New sale" address opens the same screen)
+  var fd19ToolsNt = fd19Tools;
+  fd19Tools = function (v) {
+    if (v === 'sales' && !(typeof INVP !== 'undefined' && INVP.no) && fd19Nav('invoice')) return fd19Btn({ label: 'New invoice', icon: 'plus', kind: 'primary', attrs: ' data-fd19tool="invoice"' });
+    return fd19ToolsNt.apply(this, arguments);
+  };
+  // Waiting orders is one of the Sales pills
+  var fd19SegNt = fd19SegHtml;
+  fd19SegHtml = function () {
+    var h = fd19SegNt.apply(this, arguments);
+    if (!h || !(typeof navOn === 'function' && navOn('holds')) || h.indexOf('data-fd19go="holds"') >= 0) return h;
+    var on = VIEW === 'holds';
+    if (on) h = h.replace(/aria-pressed="true" aria-selected="true"/g, 'aria-pressed="false" aria-selected="false"');
+    return h.replace(/<\/div>$/, '<button type="button" class="fd19-pill" role="tab" aria-pressed="' + on + '" aria-selected="' + on + '" data-fd19go="holds">' + fd19I('calendar', 16) + esc('Waiting orders') + '</button></div>');
+  };
+  function attrsOf(node) {
+    return [].filter.call(node.attributes, function (a) { return a.name !== 'class' && a.name !== 'type' && a.name !== 'style'; })
+      .map(function (a) { return a.name + '="' + esc(a.value) + '"'; }).join(' ');
+  }
+  // the invoice page: up to 8 equal buttons become one primary, two secondaries, More (Cancel sale last)
+  var invoicePageHtmlNt = invoicePageHtml;
+  invoicePageHtml = function () {
+    var h = invoicePageHtmlNt.apply(this, arguments), d = INVP && INVP.data;
+    if (!d || h.indexOf('<div class="acts">') < 0 || typeof actionBar !== 'function') return h;
+    var tpl = document.createElement('template'); tpl.innerHTML = h;
+    var acts = tpl.content.querySelector('.pagehead .acts'); if (!acts) return h;
+    var pick = function (sel) { var n = acts.querySelector(sel); return n ? attrsOf(n) : ''; };
+    var A = { pdf: pick('[data-spdf]'), pay: pick('[data-spay]'), send: pick('[data-send]'), ret: pick('[data-sret]'), fix: pick('[data-sfix]'), edit: pick('[data-iedit]'), wa: pick('[data-iwa]'), cancel: pick('[data-scancel]') };
+    var known = '[data-spdf],[data-spay],[data-send],[data-sret],[data-sfix],[data-iedit],[data-iwa],[data-scancel]';
+    var extra = [].filter.call(acts.children, function (n) { return !n.matches(known); });
+    var I = { pay: '<rect x="2" y="6" width="20" height="13" rx="2"/><path d="M16 12h2"/>', send: '<path d="M3 7h11v9H3z"/><path d="M14 10h4l3 3v3h-7"/><circle cx="7" cy="18" r="1.6"/><circle cx="17" cy="18" r="1.6"/>',
+      wa: '<path d="M21 12a8.5 8.5 0 0 1-12.6 7.4L3 21l1.7-5.2A8.5 8.5 0 1 1 21 12z"/>', pdf: '<path d="M6 3h9l4 4v14H6z"/><path d="M14 3v5h5"/>', edit: '<path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/>',
+      ret: '<path d="M9 14 4 9l5-5"/><path d="M4 9h11a5 5 0 0 1 0 10h-3"/>', x: '<path d="M18 6 6 18M6 6l12 12"/>' };
+    var act = { pay: A.pay && { label: 'Receive payment', attr: A.pay, icon: I.pay }, send: A.send && { label: 'Send parcel', attr: A.send, icon: I.send },
+      wa: A.wa && { label: 'Send invoice on WhatsApp', attr: A.wa, icon: I.wa }, pdf: A.pdf && { label: 'Open PDF', attr: A.pdf, icon: I.pdf },
+      edit: A.edit && { label: 'Edit invoice', attr: A.edit, icon: I.edit, title: L('Products, prices, payment, name and address', 'প্রোডাক্ট, দাম, টাকা, নাম আর ঠিকানা') },
+      ret: A.ret && { label: 'Return', attr: A.ret, icon: I.ret },
+      // D16: one Edit invoice (name and address included); "Fix details" stays only where Edit cannot go (a return on it)
+      fix: A.fix && (!A.edit || (d.returnedQty || 0) > 0) && { label: 'Fix name and address', attr: A.fix, icon: I.edit },
+      cancel: A.cancel && { label: 'Cancel sale', attr: A.cancel, icon: I.x, danger: true } };
+    var primary = act.pay || act.send || act.wa || act.pdf;
+    var rest = ['edit', 'pdf', 'wa', 'ret', 'send', 'fix'].map(function (k) { return act[k]; }).filter(function (a) { return a && a !== primary; });
+    var bar = actionBar({ primary: primary, secondary: rest.slice(0, 2), more: rest.slice(2).concat(act.cancel ? [act.cancel] : []) });
+    // Cancel sale opens its own dialog (reason, goods, money): no second "Sure?" in front of it
+    bar = bar.replace(/(data-scancel="[^"]*"[^>]*?) data-ab-confirm="[^"]*"/, '$1');
+    acts.innerHTML = bar + extra.map(function (n) { return n.outerHTML; }).join('');
+    if (d.cancelled) acts.insertAdjacentHTML('beforeend', '<div class="sub" style="flex-basis:100%;margin-top:6px">' + esc(L('This sale is cancelled. Nothing was deleted.', 'এই বিক্রি বাতিল হয়েছে। কিছু মোছা হয়নি।')) + '</div>');
+    return tpl.innerHTML;
+  };
+  // the drawer: the same actions as the page (Edit invoice, the real WhatsApp PDF, Cancel last)
+  var AUTO_EDIT = null;
+  var fd19InvPaintNt = fd19InvPaint;
+  fd19InvPaint = function (d) {
+    var r = fd19InvPaintNt.apply(this, arguments);
+    try {
+      var dr = FD19.dr; if (!dr || !dr.el || !d) return r;
+      var foot = dr.el.querySelector('.fd19-df'), mgr = fd19Can('returns') || fd19Can('dues'), canEdit = typeof pageIsManager === 'function' && pageIsManager();
+      var wa = foot && foot.querySelector('a[href*="wa.me"], a[href*="whatsapp"]');
+      if (wa && d.phone && !d.cancelled) wa.outerHTML = fd19Btn({ label: 'Send on WhatsApp', icon: 'chat', attrs: ' data-iwa="' + esc(d.id) + '"', title: L('Sends the invoice PDF to the customer’s WhatsApp', 'ইনভয়েসের PDF কাস্টমারের WhatsApp-এ পাঠায়') });
+      var acts = dr.acts || {};
+      acts.more = function (btn) {
+        var it = [{ section: d.id }];
+        if (canEdit && !d.cancelled && !d.returnedQty) it.push({ label: 'Edit invoice', help: L('Products, prices, payment, name and address', 'প্রোডাক্ট, দাম, টাকা, নাম আর ঠিকানা'), icon: 'edit', onClick: function () { fd19Close(); AUTO_EDIT = d.id; openInvoicePage(d.id); } });
+        if (mgr && !d.cancelled && (!canEdit || d.returnedQty)) it.push({ label: 'Fix name and address', help: L('Who it is for, where it goes', 'কার জন্য, কোথায় যাবে'), icon: 'edit', onClick: function () { fd19Close(); fd19Fix(d.id); } });
+        if (mgr && !d.cancelled && d.courier && !d.parcel && !d.webOrder) it.push({ label: 'Send parcel', help: L('Book it with the courier (on the full page)', 'কুরিয়ারে বুক করুন (পুরো পাতায়)'), icon: 'ship', onClick: function () { fd19Close(); openInvoicePage(d.id); } });
+        it.push({ label: 'Open the full page', help: L('Notes, files, serials, customer link', 'নোট, ফাইল, সিরিয়াল, কাস্টমারের লিংক'), icon: 'search', onClick: function () { fd19Close(); openInvoicePage(d.id); } });
+        if (d.phone || d.customer) it.push({ label: 'Customer', help: d.customer || d.phone, icon: 'inv', onClick: function () { fd19Cust(d.phone, d.customer, null); } });
+        if (mgr && !d.cancelled && !d.returnedQty && !(d.parcel && d.parcel.consignment)) {
+          it.push({ sep: true });
+          it.push({ label: 'Cancel sale…', help: L('Everything comes back; nothing is deleted', 'সব ফেরত আসে; কিছু মোছা হয় না'), icon: 'x', onClick: function () { fd19Close(); openCancel(d.id, d.customer, Number(d.paid) || 0); } });
+        }
+        fdPop(btn, it, { end: true });
+      };
+      dr.acts = acts;
+    } catch (e) { if (window.console) console.error('night drawer', e); }
+    return r;
+  };
+  AFTER_PAINT.push(function nightAutoEdit() {
+    if (!AUTO_EDIT || VIEW !== 'sales' || !INVP || !INVP.data || INVP.data.id !== AUTO_EDIT) return;
+    AUTO_EDIT = null;
+    var b = document.querySelector('#view [data-iedit]'); if (b) setTimeout(function () { b.click(); }, 0);
+  });
+  // walk-in after Save: the "skipped" answer is said too (hold-1's block only spoke on sent / error)
+  var srvNtWa = srv;
+  srv = function (name, args, ok, bad) {
+    if (name === 'erpInvoiceWaSend' && args && args[0] && args[0].onlyPickup) {
+      var o = ok;
+      ok = function (x) {
+        if (x && !x.sent && x.skipped === 'no WhatsApp number') toast(L('Saved, but not sent on WhatsApp: no WhatsApp number is connected.', 'সেভ হয়েছে, কিন্তু WhatsApp-এ যায়নি: কোনো WhatsApp নম্বর যুক্ত নেই।'), true, 8000);
+        return o.apply(this, arguments);
+      };
+    }
+    return srvNtWa.call(this, name, args, ok, bad);
+  };
+
+  /* ===================================================================== s3 Waiting orders */
+  var PILE = '';   // yes | wait | no | closed
+  function canHolds() { return !!ME && (typeof pageCan !== 'function' || pageCan('invoice')); }
+  function holdList() {
+    var H = window.HD_STATE, d = H && H.data, all = (d && d.list) || [];
+    var w = all.filter(function (x) { return x.status === 'waiting'; });
+    return { yes: w.filter(function (x) { return x.customerOk; }), no: w.filter(function (x) { return !x.customerOk && x.customerNo; }),
+             wait: w.filter(function (x) { return !x.customerOk && !x.customerNo; }), other: all.filter(function (x) { return x.status !== 'waiting'; }) };
+  }
+  function holdCard(x) {
+    var money = tk(x.grand), st = '', cls = '';
+    if (x.status === 'waiting') {
+      if (x.customerOk) { cls = 'ok'; st = L('Said yes on ' + (x.customerOkHow === 'whatsapp' ? 'WhatsApp' : 'the page') + ', ' + x.customerOkAt, (x.customerOkHow === 'whatsapp' ? 'WhatsApp-এ' : 'পাতায়') + ' রাজি, ' + x.customerOkAt); }
+      else if (x.customerNo) { cls = 'bad'; st = L('The customer said no.', 'কাস্টমার না বলেছেন।'); }
+      else if (x.sent) st = L('Sent on WhatsApp (' + x.sentVia + '). Waits until ' + x.expires + '.', 'WhatsApp-এ পাঠানো হয়েছে (' + x.sentVia + ')। ' + x.expires + ' পর্যন্ত অপেক্ষা।');
+      else st = L('Not sent yet. Copy the link and send it. Waits until ' + x.expires + '.', 'এখনো পাঠানো হয়নি। লিংক কপি করে পাঠান। ' + x.expires + ' পর্যন্ত অপেক্ষা।');
+    } else {
+      st = x.status === 'confirmed' ? L('In the books as ' + x.invoiceNo + (x.confirmedBy ? ' · ' + x.confirmedBy : ''), x.invoiceNo + ' হিসেবে হিসাবে উঠেছে' + (x.confirmedBy ? ' · ' + x.confirmedBy : ''))
+        : x.status === 'expired' ? L('Expired: not confirmed in time.', 'সময় শেষ: সময়মতো কনফার্ম হয়নি।') : L('Closed', 'বন্ধ') + (x.reason ? ': ' + x.reason : '');
+      if (x.status === 'confirmed') cls = 'ok';
+    }
+    var sub = [];
+    if (x.short && x.short.length) sub.push('<div class="nt-hd-st warn">' + esc(L('Stock short: ', 'স্টক কম: ') + x.short.join(', ')) + '</div>');
+    if (x.courier && x.status === 'waiting') sub.push('<div class="nt-hd-meta">' + esc(L('Booked on Steadfast when you confirm', 'কনফার্ম করলে Steadfast-এ বুক হবে')) + '</div>');
+    if (x.changed) sub.push('<div class="nt-hd-meta">' + esc(L('Changed ' + x.changed + '× (same number)', x.changed + ' বার বদলানো (নম্বর একই)')) + '</div>');
+    var A = {
+      ok: { label: 'Confirm', attr: 'data-hdok="' + esc(x.id) + '"' },
+      again: x.phone ? { label: x.sent ? 'Send again' : 'Send on WhatsApp', attr: 'data-hdsend="' + esc(x.id) + '"' } : null,
+      copy: { label: 'Copy link', attr: 'data-copy-hd="' + esc(x.link) + '"' },
+      change: { label: 'Change it', attr: 'data-ntedit="' + esc(x.id) + '"' },
+      cancel: { label: 'Cancel order', attr: 'data-hdx="' + esc(x.id) + '"', danger: true }
+    };
+    var bar = '';
+    if (x.status === 'waiting') {
+      if (x.customerOk) bar = actionBar({ primary: A.ok, secondary: [A.copy], more: [A.again, A.change, A.cancel] });
+      else if (x.customerNo) bar = actionBar({ primary: { label: 'Close this order', attr: A.cancel.attr }, more: [A.ok, A.copy] });
+      else bar = actionBar({ primary: A.again || A.copy, secondary: A.again ? [A.copy] : [], more: [A.ok, A.change, A.cancel] });
+      // Cancel asks its own question (why); Close this order too
+      bar = bar.replace(/(data-hdx="[^"]*"[^>]*?) data-ab-confirm="[^"]*"/g, '$1');
+    } else if (x.status === 'confirmed' && x.invoiceNo) bar = actionBar({ secondary: [{ label: 'Open the invoice', attr: 'data-hdinv="' + esc(x.invoiceNo) + '"' }] });
+    var items = x.items === 1 ? L('1 product', '১টা প্রোডাক্ট') : L(x.items + ' products', x.items + 'টা প্রোডাক্ট');
+    return '<div class="nt-hd-card' + (x.status === 'waiting' && x.customerOk ? ' yes' : '') + '">' +
+      '<div class="nt-hd-top"><div class="nt-hd-name" data-noi18n="1">' + esc(x.customer || '—') + '</div><div class="nt-hd-amt">' + money + '</div></div>' +
+      '<div class="nt-hd-meta"><span data-noi18n="1">' + esc([x.phone, x.no].filter(Boolean).join(' · ')) + '</span> · ' + esc(items) + ' · ' + esc(x.made) + (x.madeBy ? ' · <span data-noi18n="1">' + esc(x.madeBy) + '</span>' : '') + '</div>' +
+      '<div class="nt-hd-meta" data-noi18n="1">' + esc((x.lines || []).map(function (l) { return l.name + ' × ' + fmt(l.qty); }).join(', ')) + '</div>' +
+      '<div class="nt-hd-st ' + cls + '">' + esc(st) + '</div>' + sub.join('') + bar + '</div>';
+  }
+  function holdsView() {
+    if (!canHolds()) return '<div class="note"><div class="ico">i</div><div>' + esc(L('Not for this account.', 'এই অ্যাকাউন্টের জন্য নয়।')) + '</div></div>';
+    var H = window.HD_STATE || {}, d = H.data, g = holdList();
+    if (!PILE) PILE = g.yes.length ? 'yes' : 'wait';
+    if (H.pile === 'closed') PILE = 'closed';
+    var biz = (el('bizName') && el('bizName').textContent) || '';
+    var head = '<div class="fdd-head fd19-head"><div style="min-width:0"><div class="fdd-eyebrow">' + esc(biz) + '</div><h1 class="fdd-title">' + esc(L('Waiting orders', 'কনফার্মের অপেক্ষায়')) + '</h1>' +
+      '<div class="fd19-sub">' + esc(L('Invoices sent to the customer. They go into the books only when you confirm.', 'কাস্টমারকে পাঠানো ইনভয়েস। আপনি কনফার্ম করলে তবেই হিসাবে উঠবে।')) + '</div></div>' +
+      '<div class="fdd-tools fd19-tools">' + (navOn('invoice') ? fd19Btn({ label: 'New invoice', icon: 'plus', kind: 'primary', attrs: ' data-hdnew="1"' }) : '') + '</div></div>';
+    var seg = typeof fd19SegHtml === 'function' ? fd19SegHtml() : '';
+    var n = function (k) { return d && H.pile !== 'closed' ? ' (' + g[k].length + ')' : ''; };
+    var pills = '<div class="fd19-seg" role="tablist" aria-label="' + esc(L('Waiting orders', 'কনফার্মের অপেক্ষায়')) + '">' +
+      [['yes', L('Said yes', 'রাজি') + n('yes')], ['wait', L('Waiting', 'অপেক্ষায়') + n('wait')], ['no', L('Said no', 'না বলেছেন') + n('no')], ['closed', L('Closed', 'বন্ধ')]].map(function (p) {
+        return '<button type="button" class="fd19-pill" role="tab" aria-pressed="' + (PILE === p[0]) + '" aria-selected="' + (PILE === p[0]) + '" data-ntpile="' + p[0] + '">' + esc(p[1]) + '</button>'; }).join('') + '</div>';
+    var body;
+    if (H.err) body = '<div class="note err"><div class="ico">✕</div><div>' + esc(L('Could not load the waiting orders. Try again.', 'অপেক্ষার অর্ডার আনা যায়নি। আবার চেষ্টা করুন।')) + '<br><span class="nt-hd-meta">' + esc(H.err) + '</span> <button class="btn small" type="button" data-ntretry="1">Try again</button></div></div>';
+    else if (!d) body = '<div class="nt-hd-list">' + [1, 2, 3].map(function () { return '<div class="fdh-sk" style="height:120px;border-radius:16px"></div>'; }).join('') + '</div>';
+    else {
+      var list = PILE === 'closed' ? g.other : g[PILE] || [];
+      body = list.length ? '<div class="nt-hd-list">' + list.map(holdCard).join('') + '</div>'
+        : '<div class="card"><div class="nt-hd-empty">' + (PILE === 'closed' ? esc(L('No closed orders in the last 60 days.', 'গত ৬০ দিনে কোনো বন্ধ অর্ডার নেই।'))
+          : PILE === 'no' ? esc(L('No customer has said no.', 'কোনো কাস্টমার না বলেননি।'))
+          : PILE === 'yes' ? esc(L('Nobody has said yes yet.', 'এখনো কেউ রাজি হননি।'))
+          : esc(L('Nothing is waiting. When you send an invoice to a customer for a yes, it shows here.', 'এখন কিছু অপেক্ষায় নেই। কাস্টমারের হ্যাঁ-এর জন্য ইনভয়েস পাঠালে এখানে দেখাবে।')) +
+            '<div class="nt-hd-meta" style="margin-top:6px">' + esc(L('Walk-in sales do not need this: just Save.', 'দোকানে এসে নিলে এটা লাগে না: শুধু সেভ করুন।')) + '</div>') + '</div></div>';
+    }
+    return head + seg + pills + body;
+  }
+  var repaintNtHd = repaint, LAST_VIEW = '';
+  repaint = function () {
+    // coming into Waiting orders: always the fresh list (the customer may have answered meanwhile)
+    if (VIEW === 'holds' && LAST_VIEW !== 'holds' && window.HD_STATE && !window.HD_STATE.busy) { window.HD_STATE.data = null; PILE = ''; }
+    LAST_VIEW = VIEW;
+    var r = repaintNtHd.apply(this, arguments);
+    if (VIEW === 'holds') { var v = el('view'); if (v) { v.innerHTML = holdsView(); try { afterPaint(); } catch (e) {} } }
+    return r;
+  };
+  document.addEventListener('click', function (e) {
+    if (VIEW !== 'holds' || !e.target.closest) return;
+    var b = e.target.closest('[data-ntpile]'), H = window.HD_STATE;
+    if (b && H) {
+      var p = b.getAttribute('data-ntpile'), want = p === 'closed' ? 'closed' : 'waiting';
+      PILE = p;
+      if (H.pile !== want) { H.pile = want; if (window.hdReload) window.hdReload(); }
+      repaint(); return;
+    }
+    if (e.target.closest('[data-ntretry]') && window.hdReload) { window.hdReload(); repaint(); }
+  });
+
+  /* ===================================================================== s4 Dashboard: what needs you first */
+  var DH = { yes: 0, at: 0 };
+  function dashHolds() {
+    if (!canHolds() || !navOn('holds') || Date.now() - DH.at < 120000) return;
+    DH.at = Date.now();
+    srv('erpHolds', [{}], function (r) { var y = (r && r.saidYes) || 0; var ch = y !== DH.yes; DH.yes = y; if (ch && VIEW === 'dash') repaint(); }, function () {});
+  }
+  var fddWidgetsNt = fddWidgets;
+  fddWidgets = function (d) {
+    var W = fddWidgetsNt.apply(this, arguments);
+    if (typeof RS !== 'undefined' && !RS.list && ME && typeof rsLoad === 'function' && navOn('invoice')) { RS.list = { orders: [], ready: 0, loading: 1 }; rsLoad(); }
+    dashHolds();
+    var rows = [];
+    if (DH.yes) rows.push(['ok', 'check', DH.yes === 1 ? L('1 customer said yes. Make the invoice.', '১ জন কাস্টমার রাজি হয়েছেন। ইনভয়েস করে ফেলুন।') : L(DH.yes + ' customers said yes. Make the invoices.', DH.yes + ' জন কাস্টমার রাজি হয়েছেন। ইনভয়েস করে ফেলুন।'), L('Waiting orders', 'কনফার্মের অপেক্ষায়'), 'holds']);
+    var ready = typeof RS !== 'undefined' && RS.list ? Number(RS.list.ready) || 0 : 0;
+    if (ready) rows.push(['ok', 'box', L(ready + ' market order(s) are on your shelf. Send them.', ready + 'টা মার্কেট অর্ডারের মাল তাকে এসেছে। পাঠিয়ে দিন।'), L('Make the invoice on New invoice', 'নতুন ইনভয়েসে ইনভয়েস করুন'), 'invoice']);
+    W.forEach(function (w) {
+      if (w.id !== 'attention') return;
+      w.title = 'Needs you now';
+      var li = rows.map(function (x) { return '<li' + (navOn(x[4]) ? ' data-go="' + x[4] + '"' : '') + '><span class="fdd-badge t-' + x[0] + '">' + fddIc(x[1]) + '</span><span class="t"><b>' + esc(x[2]) + '</b><span>' + esc(x[3]) + '</span></span><span class="chv">›</span></li>'; }).join('');
+      var h = String(w.html).replace('>Needs Attention<', '>Needs you now<');
+      if (li) h = h.indexOf('<ul class="fdd-att2">') >= 0 ? h.replace('<ul class="fdd-att2">', '<ul class="fdd-att2">' + li) : h.replace('<div class="fdd-empty">✓ Nothing needs you.</div>', '<ul class="fdd-att2">' + li + '</ul>');
+      else h = h.replace('✓ Nothing needs you.', '✓ Nothing needs you now.');
+      w.html = h;
+    });
+    return W;
+  };
+  var fddOrderedNt = fddOrdered;
+  fddOrdered = function (W) {
+    var out = fddOrderedNt.apply(this, arguments);
+    if (fdwLayout()) return out;   // the person's own Customise order is kept
+    var ids = out.map(function (w) { return w.id; });
+    var i = ids.indexOf('attention'); if (i > 0) out.unshift(out.splice(i, 1)[0]);
+    ids = out.map(function (w) { return w.id; });
+    var s = ids.indexOf('shortcuts'); if (s >= 0 && s < out.length - 1) out.push(out.splice(s, 1)[0]);
+    return out;
+  };
+  var fddViewNt = fddView;
+  fddView = function () {
+    var h = String(fddViewNt.apply(this, arguments));
+    if (!navOn('invoice') || h.indexOf('<div class="fdd-grid fdd-one">') < 0) return h;
+    var row = '<div class="nt-dash-acts"><button class="btn primary" type="button" data-go="invoice">+ New invoice</button>' +
+      (DH.yes && navOn('holds') ? '<button class="btn" type="button" data-go="holds">' + esc(L('Waiting orders', 'কনফার্মের অপেক্ষায়')) + ' (' + DH.yes + ')</button>' : '') + '</div>';
+    return h.replace('<div class="fdd-grid fdd-one">', row + '<div class="fdd-grid fdd-one">');
+  };
 })();
 </script>
 </body>
