@@ -3665,3 +3665,10 @@ alerts); the live business needs WA_SERVER_URL / WA_SERVER_KEY set on the server
 - Facebook (found while here, not fixed): no Messenger message since 19 Oct. The page token lost its permissions (Graph
   code 190) and Meta's webhook still points at the old Cloud host. The new route ?meta=hook on erp-api.costareen.com
   answers Meta's check. Needs the owner in the Meta dashboard (callback URL, redirect URI ?meta=back) and Connect again.
+
+2026-11-07 — walid-1, ibmorph-1/2 — LIVE
+- walid-1: WhatsApp (Evolution) sends many people as a LID (digits@lid). The hook kept only the digits and replies went to
+  them as a phone number: 400 Bad Request (39 AI replies in two days). Now the phone JID wins, a LID alone is kept whole,
+  and an old LID-digits contact is retried as @lid. Not done: the 39 lost replies are not re-sent.
+- ibmorph-1/2: Inbox refreshes change only what changed; a stored picture keeps its signed link while it is the same
+  file (20 min), so avatars no longer reload every 3 s.
