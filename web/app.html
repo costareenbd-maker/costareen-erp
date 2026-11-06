@@ -34518,11 +34518,18 @@ function fdJtOverview(d, pool) {
     '<button type="button" class="go" data-jttab="month">Month end →</button></div>';
   // partners and their capital
   var capTot = ps.reduce(function (a, x) { return a + num(x.capital); }, 0) || num(td.capital) || 0;
-  var pcard = '<div class="jt-card"><h3><span class="b">' + jtI('people', 18) + '</span>Partners</h3><div class="s">Profit is shared by the capital each had in at the start of the month.</div>';
+  // night-books B7 (owner D3 = A): say which rule made the split (pool_settlement ratio_basis / capital_basis)
+  var bn7 = typeof LANG !== 'undefined' && LANG === 'bn', basis = String(r.ratio_basis || ''), byStock = r.capital_basis === 'stock_paid';
+  var why = basis === 'month_start' ? (bn7 ? 'লাভ ভাগ হচ্ছে মাসের শুরুর মূলধন অনুযায়ী।' : 'Profit is shared by the capital each had in at the start of the month.')
+    : basis === 'month_end' ? (bn7 ? 'মাসের শুরুতে মূলধন ছিল না, তাই লাভ ভাগ হচ্ছে মাসের শেষের মূলধন অনুযায়ী।' : 'No capital at the start of the month, so profit is shared by the capital each had at its end.')
+    : basis === 'stock_paid' ? (bn7 ? 'মূলধন লেখা হয়নি, তাই যে যত টাকার স্টক কিনেছেন সেটাই তার মূলধন, আর লাভ সেই অনুপাতে ভাগ হচ্ছে।' : 'No capital is written, so what each paid for the stock counts as its capital, and profit is shared in that proportion.')
+    : basis === 'equal' ? (bn7 ? 'মূলধন লেখা হয়নি, কেউ স্টকের টাকাও দেননি, তাই লাভ সমান ভাগে ভাগ হচ্ছে।' : 'No capital is written and nobody has paid for stock yet, so profit is shared equally.')
+    : (bn7 ? 'লাভ ভাগ হয় মূলধন অনুযায়ী।' : 'Profit is shared by the capital each had in.');
+  var pcard = '<div class="jt-card"><h3><span class="b">' + jtI('people', 18) + '</span>Partners</h3><div class="s" data-jtbasis="' + esc(basis) + '">' + why + '</div>';
   if (ps.length && capTot > 0) pcard += '<div class="jt-bar">' + ps.map(function (x, i) { return '<i style="width:' + (num(x.capital) / capTot * 100).toFixed(2) + '%;background:' + JT_COL[i % JT_COL.length] + '" title="' + esc(names[x.business_id] || x.name || '') + '"></i>'; }).join('') + '</div>';
   pcard += (ps.length ? ps : (b.partners || []).map(function (x) { return { business_id: x.id }; })).map(function (x, i) {
     return '<div class="jt-pt"><span class="sw" style="background:' + JT_COL[i % JT_COL.length] + '"></span><span class="n">' + esc(names[x.business_id] || x.name || '?') + (x.business_id === me ? ' <span class="jt-chip">You</span>' : '') +
-      '<small>' + (x.ratio !== undefined ? (Math.round(x.ratio * 1000) / 10) + '% share' : '') + '</small></span><span class="v">' + fdTk(x.capital || 0, cur) + '<small>capital in</small></span></div>'; }).join('') + '</div>';
+      '<small>' + (x.ratio !== undefined ? (Math.round(x.ratio * 1000) / 10) + '% share' : '') + '</small></span><span class="v">' + fdTk(x.capital || 0, cur) + '<small>' + (byStock ? (bn7 ? 'স্টক কেনার টাকা (মূলধন ধরা হয়েছে)' : 'paid for stock (counted as capital)') : 'capital in') + '</small></span></div>'; }).join('') + '</div>';
   // the stock: what there is, what is out
   var st = (d.stock || []).filter(function (s) { return s.status !== 'Discontinued'; }).slice().sort(function (a, c) { return num(a.stock) - num(c.stock); });
   var scard = '<div class="jt-card"><h3><span class="b">' + jtI('stock', 18) + '</span>Joint stock</h3><div class="s">' + fmt(st.length) + ' product(s) · sold by both companies under their own names</div>';
