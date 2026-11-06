@@ -1159,10 +1159,37 @@ export async function erpCostBook(ctx) {
       note: str(r.note),
     });
   });
-  let priced = 0;
-  for (const r of rows) if (r.landed > 0) priced++;
+  const c = bookCounts(rows, cfg);
   return { ok: true, rows, rate: cfg.rate, rates: cfg.rates, handling: cfg.handling, minMargin: cfg.minMargin,
-           priced, missing: rows.length - priced, added: sync.added || 0 };
+           priced: c.priced, missing: rows.length - c.priced, noRate: c.noRate, added: sync.added || 0 };
+}
+
+/**
+ * night-books B2: how many book rows are priced, and the rows that truly cannot be costed because their currency
+ * has no rate, per currency (a missing RMB rate does not stop BDT or USD rows from being costed).
+ */
+function bookCounts(rows, cfg) {
+  let priced = 0;
+  const noRate = {};
+  for (const r of rows) {
+    if (r.landed > 0) { priced++; continue; }
+    if (!(num(r.amount) > 0) || !r.cur || r.cur === 'BDT') continue;
+    if (!(num((cfg.rates || {})[r.cur]) > 0)) noRate[r.cur] = (noRate[r.cur] || 0) + 1;
+  }
+  return { priced, noRate };
+}
+
+/** The same counts as erpCostBook, read only (no sync of new rows) - for the screen head cards. */
+export async function costBookCounts(ctx) {
+  const cfg = await costConfig(ctx);
+  const rows = [];
+  for (const r of await bookRows(ctx)) {
+    if (!str(r.category) && !str(r.type)) continue;
+    const amount = num(r.buy_amount) > 0 ? num(r.buy_amount) : (num(r.buy_rmb) > 0 ? num(r.buy_rmb) : num(r.buy_bdt));
+    const cur = str(r.buy_cur).toUpperCase() || (num(r.buy_rmb) > 0 ? 'RMB' : num(r.buy_bdt) > 0 ? 'BDT' : '');
+    rows.push({ landed: num(landedOf(r, cfg)), amount, cur });
+  }
+  return Object.assign({ rows: rows.length }, bookCounts(rows, cfg));
 }
 
 /** erpSaveCostSettings (ERP.js:2896). Blank leaves that one alone. */

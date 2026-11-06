@@ -8653,11 +8653,25 @@ function viewCosts() {
     '<button class="btn primary" type="button" id="ck_saveset">Save</button></div>' +
     '</div></div></section>';
 
-  if (!(rate > 0)) {
-    h += '<section><div class="note err"><div class="ico">✕</div><div>' +
-      '<strong>Set your rate first.</strong> Nothing can be costed until the ' +
-      'TK-per-RMB rate above is filled in.</div></div></section>';
+  // night-books B2: warn only about the rows that truly cannot be costed - a currency in use with no rate -
+  // counted from the book itself (server noRate, else the rows on the page). BDT rows are always costed.
+  var noRate = COSTS.noRate || null;
+  if (!noRate) {
+    noRate = {};
+    for (var nr = 0; nr < rows.length; nr++) {
+      var rr = rows[nr], rc = String(rr.cur || '').toUpperCase();
+      if (!(Number(rr.landed) > 0) && Number(rr.amount) > 0 && rc && rc !== 'BDT' && !(Number((COSTS.rates || {})[rc]) > 0)) noRate[rc] = (noRate[rc] || 0) + 1;
+    }
   }
+  Object.keys(noRate).forEach(function (c) {
+    var n = Number(noRate[c]) || 0;
+    if (!n) return;
+    h += '<section><div class="note warn" data-norate="' + esc(c) + '"><div class="ico">!</div><div>' + (LANG === 'bn'
+      ? '<strong>' + esc(c) + '-এর রেট দেওয়া নেই।</strong> তাই ' + esc(c) + '-তে কেনা ' + fmt(n) + 'টি সারির কেনা দাম বের হচ্ছে না। ' +
+        'Currencies-এ ' + esc(c) + ' রেট লিখুন; তার আগ পর্যন্ত এগুলোর বিক্রিতে লাভ দেখাবে না।'
+      : '<strong>' + esc(c) + ' has no rate.</strong> ' + fmt(n) + ' row' + (n === 1 ? '' : 's') + ' bought in ' + esc(c) +
+        ' cannot be costed until the ' + esc(c) + ' rate under Currencies is filled in. Their sales show no profit until then.') + '</div></div></section>';
+  });
 
   var priced = Number(COSTS.priced || 0);
   var under = 0, losing = 0;

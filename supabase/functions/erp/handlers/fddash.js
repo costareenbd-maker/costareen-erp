@@ -465,11 +465,15 @@ export async function erpFdHead(ctx, payload) {
       if (/discontinued/i.test(p.status)) continue;
       if (p.cost > 0) { withCost++; if (p.sell > 0) { margin += (p.sell - p.cost) / p.sell * 100; mN++; } } else without++;
     }
-    const rows = (await ctx.tx`select count(*)::int as n from cost_book where business_id = ${ctx.biz}`)[0].n;
-    cards.push(card('withCost', 'Products with a cost', 'box', withCost, { hero: true }));
-    cards.push(card('without', 'Without a cost', 'warn', without, { tone: without ? 'warn' : '', note: 'their sales show no profit' }));
-    cards.push(card('margin', 'Average margin', 'percent', mN ? margin / mN : 0, { pct: true, note: 'on the selling price' }));
-    cards.push(card('rows', 'Cost book rows', 'list', rows));
+    // night-books B2: say what each count counts - products here, cost book rows in the last card (priced / all,
+    // the same figure the "Rows priced" tile below shows), so "52" and "N / M" no longer look like one number.
+    const { costBookCounts } = await import('./dashboard.js');
+    const cb = await costBookCounts(ctx);
+    const noRate = Object.values(cb.noRate || {}).reduce((t, n) => t + n, 0);
+    cards.push(card('withCost', 'Products with a cost', 'box', withCost, { hero: true, note: 'products, from the cost book' }));
+    cards.push(card('without', 'Products without a cost', 'warn', without, { tone: without ? 'warn' : '', note: 'their sales show no profit' }));
+    cards.push(card('margin', 'Average margin', 'percent', mN ? margin / mN : 0, { pct: true, note: 'per product, on the selling price' }));
+    cards.push(card('rows', 'Cost book rows priced', 'list', cb.priced, { note: cb.priced + ' of ' + cb.rows + ' rows' + (noRate ? ' · ' + noRate + ' wait for a rate' : ''), of: cb.rows, noRate }));
   } else if (view === 'capital' && roleAtLeast(ctx.s.role, 'shareholder')) {
     const { erpCapital } = await import('./capital.js');
     const c = await erpCapital(ctx);

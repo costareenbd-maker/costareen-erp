@@ -18,4 +18,26 @@ await sql`insert into supplier_payments (business_id, supplier, amount) values (
   check('B1 head card carries what was paid ahead apart', h.owed.ahead === 2000, h.owed);
 }
 
+// ---- B2: the "cannot be costed" warning counts only rows whose currency has no rate
+await sql`delete from currencies where business_id = ${B} and code = 'RMB'`.catch(() => {});
+await sql`delete from business_config where business_id = ${B} and key = 'cost_rate'`.catch(() => {});
+await sql`insert into currencies (business_id, code, name, rate) values (${B}, 'USD', 'US dollar', 120)
+          on conflict do nothing`.catch((e) => console.log('usd:', e.message));
+await sql`insert into cost_book (business_id, sort_order, category, brand, type, buy_amount, buy_cur) values
+  (${B}, 901, 'NightCat', 'NB', 'Taka row', 500, 'BDT'),
+  (${B}, 902, 'NightCat', 'NB', 'Yuan row', 10, 'RMB'),
+  (${B}, 903, 'NightCat', 'NB', 'Yuan row 2', 12, 'RMB'),
+  (${B}, 904, 'NightCat', 'NB', 'Dollar row', 2, 'USD')`;
+{
+  const cb = (await owner('erpCostBook', [])).result;
+  const row = (t) => cb.rows.find((r) => r.type === t);
+  check('B2 a BDT row and a USD row are costed with no RMB rate', row('Taka row').landed > 0 && row('Dollar row').landed > 0, cb.rows.filter((r) => r.category === 'NightCat'));
+  check('B2 noRate names RMB with exactly its 2 rows (not "nothing can be costed")', cb.noRate && cb.noRate.RMB === 2 && !cb.noRate.BDT && !cb.noRate.USD, cb.noRate);
+  const h = await head(owner, 'costs');
+  check('B2 head "Cost book rows priced" = the book\'s own priced count, and says how many wait for a rate', h.rows.v === cb.priced && h.rows.of === cb.rows.length && h.rows.noRate === 2, [h.rows, cb.priced, cb.rows.length]);
+  await sql`insert into currencies (business_id, code, name, rate) values (${B}, 'RMB', 'Chinese yuan', 17)`;
+  const cb2 = (await owner('erpCostBook', [])).result;
+  check('B2 once RMB has a rate nothing waits', !Object.keys(cb2.noRate).length && cb2.rows.find((r) => r.type === 'Yuan row').landed > 0, cb2.noRate);
+}
+
 await done();
