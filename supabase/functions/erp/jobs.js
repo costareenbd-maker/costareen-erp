@@ -78,6 +78,7 @@ export async function runJob(deps, job) {
         steadfast: sfNightly ? await asBusiness(deps, row, 'nightly:steadfast', (ctx) => sfNightly(ctx)) : 'skipped',
         backup: backupNow ? await asBusiness(deps, row, 'nightly:backup', (ctx) => backupNow(ctx, 'night')) : 'skipped',
         seo: await asBusiness(deps, row, 'nightly:seo', async (ctx) => { try { return await (await import('./handlers/seo.js')).seoNightly(ctx); } catch (e) { return 'failed: ' + String((e && e.message) || e).slice(0, 120); } }),
+        holds: await asBusiness(deps, row, 'nightly:holds', async (ctx) => { try { return await (await import('./handlers/holds.js')).expireHolds(ctx); } catch (e) { return 'failed: ' + String((e && e.message) || e).slice(0, 120); } }),
         youtube: await asBusiness(deps, row, 'nightly:youtube', async (ctx) => { try { return await (await import('./handlers/creatorportal.js')).ytRefresh(ctx, {}); } catch (e) { return 'failed: ' + String((e && e.message) || e).slice(0, 120); } }),
       };
     }

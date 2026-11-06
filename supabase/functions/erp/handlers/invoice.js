@@ -281,6 +281,10 @@ export async function createInvoice(ctx, payload, opts = {}) {
   }
   const advance = took;
   const status = took >= grand - 0.5 ? 'Paid' : took > 0 ? 'Partial' : 'Pending';
+  // hold-1: an order waiting for the customer's OK is checked by exactly these rules, then stops here (nothing written)
+  if (opts.preview) return { name, phone: phoneIn, address, source, mode, method, took: round2(took), status, sub: round2(sub), discount: round2(discount),
+    itemDisc: round2(DSC.itemDisc), invDisc: round2(DSC.invDisc), delivery, grand,
+    lines: lines.map((l) => ({ sku: l.sku, name: l.name, qty: l.qty, unit: round2(l.unit), disc: round2(l.disc), total: round2(l.total), joint: !!l.poolId })) };
 
   // what they owed before this sale, read before it exists
   let priorBalance = 0;
@@ -406,6 +410,8 @@ export async function erpCreateInvoice(ctx, payload) {
   const from = String((payload && payload.from) || '').trim();
   if (from && from !== ctx.biz) throw new Error('Joint goods are sold on your own invoice: add them from the product search (they carry the Joint tag).');
   if ((await ctx.tx`select is_pool from businesses where id = ${ctx.biz}`)[0]?.is_pool) throw new Error('A joint stock does not sell by itself: sell its goods on your own company\'s invoice.');
+  // hold-1: "Send for confirmation" - checked like this invoice, kept until the customer's OK; nothing written to the books
+  if (payload && payload.hold) return (await import('./holds.js')).makeHold(ctx, payload);
   const res = await createInvoice(ctx, payload);
   delete res.invoiceId;
   return res;

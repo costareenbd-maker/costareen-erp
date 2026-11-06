@@ -9,7 +9,7 @@ function cut(s, n) { s = str(s); return s.length > n ? s.slice(0, n - 1) + '…'
 /** shop: {name, phone, address, colour}; o: {no, date, name, phone, address, items: [{name, qty, price}], delivery, status}. */
 export function billSvg(shop, o) {
   const W = 640, P = 36, items = (o.items || []).slice(0, 30);
-  const sub = items.reduce((t, x) => t + Number(x.qty || 0) * Number(x.price || 0), 0), total = sub + Number(o.delivery || 0);
+  const sub = items.reduce((t, x) => t + Number(x.qty || 0) * Number(x.price || 0), 0), disc = Math.max(0, Number(o.discount) || 0), total = sub - disc + Number(o.delivery || 0);
   const col = /^#[0-9a-f]{6}$/i.test(str(shop.colour)) ? shop.colour : '#5B5BD6';
   const F = 'font-family="Inter, Noto Sans Bengali, sans-serif"';
   let y = 0;
@@ -20,7 +20,7 @@ export function billSvg(shop, o) {
   parts.push(`<text x="${P}" y="54" ${F} font-size="28" font-weight="700" fill="#fff">${esc(cut(shop.name, 34))}</text>`);
   if (contact) parts.push(`<text x="${P}" y="86" ${F} font-size="16" fill="#fff" fill-opacity=".85">${esc(contact)}</text>`);
   y = band + 42;
-  parts.push(`<text x="${P}" y="${y}" ${F} font-size="15" fill="#6b7280">BILL</text>`);
+  parts.push(`<text x="${P}" y="${y}" ${F} font-size="15" fill="#6b7280">${esc(o.label || 'BILL')}</text>`);
   parts.push(`<text x="${W - P}" y="${y}" ${F} font-size="15" fill="#6b7280" text-anchor="end">${esc(o.date)}</text>`);
   y += 32;
   parts.push(`<text x="${P}" y="${y}" ${F} font-size="24" font-weight="700" fill="#111827">${esc(o.no)}</text>`);
@@ -46,6 +46,7 @@ export function billSvg(shop, o) {
     parts.push(`<text x="${W - P}" y="${y}" ${F} font-size="${big ? 22 : 16}" font-weight="700" fill="${big ? col : '#111827'}" text-anchor="end">${esc(val)}</text>`);
   };
   row('Subtotal', tk(sub));
+  if (disc > 0) row('Discount', '-' + tk(disc));
   row('Delivery', tk(o.delivery));
   row('Total', tk(total), true);
   y += 34;

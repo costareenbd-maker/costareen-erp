@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="bn">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<meta name="referrer" content="no-referrer">
+<title>Your order</title>
+<link rel="icon" href="icons/favicon-32.png">
+<style>
+/* hold-1: an order waiting for the customer's OK (handlers/holds.js holdPage / holdAct). Opened from the link the shop
+   sends on WhatsApp. The token in the address is the only key; the page shows that one order and two buttons:
+   Confirm the order / Not now. Nothing is taken from stock until the shop confirms it in the ERP. */
+@font-face{font-family:"Noto Sans Bengali";src:url(fonts/NotoSansBengali-Regular.ttf) format("truetype");font-weight:400;font-display:swap}
+@font-face{font-family:"Noto Sans Bengali";src:url(fonts/NotoSansBengali-Bold.ttf) format("truetype");font-weight:700;font-display:swap}
+:root{--bg:#f5f6fa;--card:#fff;--ink:#14172a;--mute:#5f6476;--line:#e3e5ee;--acc:#5b5bd6;--accbg:#eeeefc;--ok:#1d8a5c;--okbg:#e5f5ed;--bad:#c2332d;--badbg:#fdecea}
+@media (prefers-color-scheme:dark){:root{--bg:#0f1117;--card:#171a23;--ink:#eef0f6;--mute:#9aa0b2;--line:#2a2f3c;--acc:#8b8cf2;--accbg:#22233c;--ok:#4cc38a;--okbg:#14291f;--bad:#f2706a;--badbg:#341a19}}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans Bengali",sans-serif}
+body{padding:calc(16px + env(safe-area-inset-top,0px)) 16px calc(28px + env(safe-area-inset-bottom,0px))}
+main{max-width:560px;margin:0 auto}
+.top{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:14px}
+.top h1{font-size:19px;margin:0}
+.lang{border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:999px;padding:6px 12px;font:inherit;font-size:14px;cursor:pointer}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;margin-bottom:12px}
+.no{display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap}.no b{font-size:20px}.no span{color:var(--mute);font-size:13px}
+.state{display:inline-block;margin-top:8px;font-weight:700;padding:5px 12px;border-radius:999px;background:var(--accbg);color:var(--acc)}
+.state.done{background:var(--okbg);color:var(--ok)}.state.bad{background:var(--badbg);color:var(--bad)}
+.items{margin:0;padding:0;list-style:none}.items li{display:flex;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:1px solid var(--line);font-size:15px}
+.items li span{color:var(--mute);font-size:13px;display:block}
+.tot{display:flex;justify-content:space-between;padding:6px 0;font-size:15px;color:var(--mute)}.tot.big{font-size:19px;color:var(--ink);font-weight:700}
+.who{font-size:14px;color:var(--mute)}.who b{color:var(--ink)}
+.acts{display:grid;gap:10px;margin-top:4px}
+button.b,a.b{font:inherit;font-size:17px;padding:14px 16px;border-radius:14px;border:1px solid var(--line);background:var(--card);color:var(--ink);text-decoration:none;display:flex;align-items:center;justify-content:center;gap:6px;font-weight:700;cursor:pointer;width:100%}
+button.b.pri{background:var(--ok);border-color:var(--ok);color:#fff}
+button.b:disabled{opacity:.6;cursor:wait}
+.done-msg{font-size:16px;font-weight:600;text-align:center;padding:6px 0}
+.msg{text-align:center;color:var(--mute);padding:40px 10px}
+</style>
+</head>
+<body>
+<main id="m"><p class="msg">…</p></main>
+<script>
+(function () {
+  var q = new URLSearchParams(location.search);
+  var API = (q.get('api') || 'https://erp-api.costareen.com/functions/v1/erp').replace(/\/+$/, '');
+  var tok = q.get('h') || '';
+  var URL0 = API + (API.indexOf('?') >= 0 ? '&' : '?') + 'inbox=hold&h=' + encodeURIComponent(tok);
+  var L = null, D = null, busy = false;
+  try { L = localStorage.getItem('orderLang'); } catch (e) {}
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+  function tk(n) { return '৳' + Math.round(Number(n) || 0).toLocaleString('en-IN'); }
+  var T = { bn: { lang: 'English', order: 'অর্ডার', to: 'যেখানে যাবে', none: 'এই পাতাটি পাওয়া যাচ্ছে না।', fail: 'পাঠানো গেল না - আবার চেষ্টা করুন।' },
+            en: { lang: 'বাংলা', order: 'Order', to: 'Delivering to', none: 'This page is not available.', fail: 'Could not send - try again.' } };
+  function paint() {
+    var m = document.getElementById('m'); if (!D) return;
+    var lg = L || D.lang || 'bn', t = T[lg], W = D.words[lg], o = D.order;
+    document.documentElement.lang = lg;
+    var st = { waiting: [W.waiting, ''], said_yes: [W.okDone, ' done'], said_no: [W.noDone, ' bad'], confirmed: [W.confirmed, ' done'], cancelled: [W.cancelled, ' bad'], expired: [W.expired, ' bad'] }[o.state] || [o.state, ''];
+    var h = '<div class="top"><h1>' + esc(D.shop.name) + '</h1><button class="lang" id="lg" type="button">' + t.lang + '</button></div>';
+    h += '<div class="card"><div class="no"><b>' + t.order + ' ' + esc(o.no) + '</b><span>' + esc(o.date) + '</span></div><span class="state' + st[1] + '">' + esc(st[0]) + '</span></div>';
+    h += '<div class="card"><ul class="items">' + o.lines.map(function (x) { return '<li><div>' + esc(x.name) + '<span>' + x.qty + ' × ' + tk(x.unit) + '</span></div><b>' + tk(x.qty * x.unit) + '</b></li>'; }).join('') + '</ul>' +
+      '<div class="tot"><span>' + W.sub + '</span><span>' + tk(o.sub) + '</span></div>' +
+      (o.discount > 0 ? '<div class="tot"><span>' + W.disc + '</span><span>-' + tk(o.discount) + '</span></div>' : '') +
+      '<div class="tot"><span>' + W.del + '</span><span>' + tk(o.delivery) + '</span></div>' +
+      '<div class="tot big"><span>' + W.total + '</span><span>' + tk(o.grand) + '</span></div>' +
+      (o.paid > 0 ? '<div class="tot"><span>' + W.paid + '</span><span>' + tk(o.paid) + '</span></div>' : '') +
+      (o.cod && o.grand - o.paid > 0 ? '<div class="tot"><span>' + W.cod + '</span><span>' + tk(o.grand - o.paid) + '</span></div>' : '') + '</div>';
+    h += '<div class="card who">' + t.to + ':<br><b>' + esc(o.name) + '</b> · ' + esc(o.phone) + (o.address ? '<br>' + esc(o.address) : '') + '</div>';
+    if (o.canAnswer) h += '<div class="acts"><button class="b pri" type="button" data-a="yes"' + (busy ? ' disabled' : '') + '>✅ ' + esc(W.yes) + '</button><button class="b" type="button" data-a="no"' + (busy ? ' disabled' : '') + '>' + esc(W.no) + '</button></div>';
+    if (D.shop.phone) h += '<div class="acts" style="margin-top:10px"><a class="b" href="tel:' + esc(D.shop.phone) + '">📞 ' + esc(W.call) + '</a></div>';
+    m.innerHTML = h;
+    document.getElementById('lg').onclick = function () { L = (L || D.lang || 'bn') === 'bn' ? 'en' : 'bn'; try { localStorage.setItem('orderLang', L); } catch (e) {} paint(); };
+    [].forEach.call(m.querySelectorAll('[data-a]'), function (b) { b.onclick = function () { answer(b.getAttribute('data-a')); }; });
+  }
+  function answer(a) {
+    if (busy) return; busy = true; paint();
+    fetch(URL0, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ a: a }) }).then(function (r) { return r.json(); }).then(function (r) {
+      busy = false; if (r && r.ok) { D = r; } else alert(T[L || 'bn'].fail); paint();
+    }).catch(function () { busy = false; alert(T[L || 'bn'].fail); paint(); });
+  }
+  fetch(URL0).then(function (r) { return r.json(); }).then(function (r) {
+    if (!r || !r.ok) { document.getElementById('m').innerHTML = '<p class="msg">' + T[L || 'bn'].none + '</p>'; return; }
+    D = r; document.title = r.shop.name + ' — ' + r.order.no; paint();
+  }).catch(function () { document.getElementById('m').innerHTML = '<p class="msg">' + T[L || 'bn'].none + '</p>'; });
+})();
+</script>
+</body>
+</html>

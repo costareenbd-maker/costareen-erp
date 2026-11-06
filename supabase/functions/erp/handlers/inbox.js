@@ -107,6 +107,8 @@ function extOf(mime, kind) {
 }
 
 /** A message written to the conversation (and the conversation's summary columns kept right). */
+/** hold-1: a note in a conversation (the customer confirmed an order). */
+export async function writeMsgNote(ctx, conv, text) { return writeMsg(ctx, conv, { direction: 'note', author: 'system', kind: 'event', text }); }
 async function writeMsg(ctx, conv, m) {
   const r = (await ctx.tx`insert into inbox_messages (business_id, conversation_id, direction, author, user_id, user_name, kind, text, media, transcript, seen_as, payload, external_id, status, error)
     values (${ctx.biz}, ${conv.id}, ${m.direction}, ${m.author}, ${m.userId || null}, ${m.userName || null}, ${m.kind || 'text'}, ${m.text || null}, ${m.media || null},
@@ -158,7 +160,7 @@ async function waAvatar(ctx, ch, c) {
     return (await ctx.tx`update inbox_contacts set avatar = ${'file:' + name} where id = ${c.id} returning *`)[0] || c;
   } catch (_) { return c; }
 }
-async function upsertContact(ctx, ch, ev) {
+export async function upsertContact(ctx, ch, ev) {
   let c = (await ctx.tx`select * from inbox_contacts where channel_id = ${ch.id} and external_id = ${ev.from}`)[0];
   if (!c) {
     let name = str(ev.name), avatar = '';
@@ -173,7 +175,7 @@ async function upsertContact(ctx, ch, ev) {
   }
   return c;
 }
-async function upsertConv(ctx, ch, contact) {
+export async function upsertConv(ctx, ch, contact) {
   let v = (await ctx.tx`select * from inbox_conversations where contact_id = ${contact.id}`)[0];
   if (!v) v = (await ctx.tx`insert into inbox_conversations (business_id, channel_id, contact_id) values (${ctx.biz}, ${ch.id}, ${contact.id})
                             on conflict (contact_id) do update set channel_id = excluded.channel_id returning *`)[0];
@@ -241,6 +243,8 @@ export async function ingest(ctx, ch, ev) {
     await ctx.tx`update chat_orders set rating = ${n} where business_id = ${ctx.biz} and conversation_id = ${conv.id} and rating is null and created_at > ${new Date(ctx.now.getTime() - 7 * H24)}`;
     await writeMsg(ctx, conv, { direction: 'note', author: 'system', kind: 'rating', text: 'Rated ' + '⭐'.repeat(n) });
   }
+  // hold-1: "confirm" / "ok" while one of this customer's orders waits for their OK (any WhatsApp number)
+  try { await ctx.tx.savepoint(async () => (await import('./holds.js')).holdReply(ctx, ch, contact, conv, text)); } catch (e) { console.error('holdReply', e && e.message); }
   // multi-wa-1: a number kept for sending or collecting data keeps what comes in, answers nobody, alerts nobody
   if (purposeOf(ch) !== 'chat') return { conversationId: conv.id };
   const answerable = (ch.status === 'live' || conv.is_test) && conv.mode === 'ai' && await aiAllowed(ctx, ch);

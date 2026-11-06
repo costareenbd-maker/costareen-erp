@@ -8503,7 +8503,7 @@ function srv(name, args, ok, bad) {
 
 var SRV_ACTIVE = 0, SRV_WRITING = false, SRV_TIMED = {};
 // the same list the server uses to know a call changes nothing (ERP_READS)
-var SRV_READS = /^(erpPhoneAlerts|erpWaNumbers|erpBrandDesk|erpBrandDeskShorts|erpBrandDeskVideos|erpBrandDeskPeople|erpBrandDeskIdeas|erpBrandDeskBoard|erpShipmentRepriceCheck|erpReceivePreview|erpSeo|erpReceipts|erpBrief|erpBrain|erpWatch|erpEngine|erpEngineJob|erpSkills|erpAiBrain|erpAiBrainModels|erpLeadForms|erpLeads|erpLeadFind|erpLeadCapture|erpMyUpdates|erpSocialBridges|erpAds|erpAdsInterests|erpSocialNet|erpSocialLearn|erpSocialAssets|erpSocialPosts|erpSocialPhotos|erpInboxDigest|erpJointRecvCatalog|erpSitePages|erpBalanceSheet|erpProductFields|erpProductAi|erpMetaConnect|erpInboxFeatureMap|erpBookings|erpInbox|erpInboxOpen|erpInboxChannels|erpChatOrders|erpInboxStats|erpAiWork|erpCommissionSales|erpFdCards|erpLineMargins|erpFd19Profit|erpFdInventory|erpFd22Analytics|erpNavigator|erpSellers|erpFollowups|erpCustomerInsight|erpPreorders|erpCashUps|erpAskingPrices|erpSystemCheck|erpAnalytics|erpCommission|erpHolding|erpLotFunding|erpShipments|erpShipment|erpLots|erpFdHead|erpFdDash|erpReceiveMatch|erpAiReader|erpProductSuggest|erpCatalogue|erpPushList|erpCreators|erpCreatorPortalLink|erpSponsorLink|erpCreatorRequests|erpCreatorEvents|erpCreatorProgramme|erpCreatorPreview|erpCreatorCatalog|erpCreatorSources|erpCreatorClaims|erpApps|erpAppQr|erpFeedback|erpRestockOffers|erpRestockList|erpWarrantyRules|erpWarrantyCard|erpMyLink|erpPlatformRegister|erpPlatformDoctor|erpPlatformCommunity|erpMarketWaiting|erpBoard|erpPlatformDesign|erpResell|erpResellerProgramme|erpLoyalty|erpCustomerPoints|erpRefillDue|erpDeliveryHistory|erpDeliveryHistoryMany|erpPrintKit|erpPrintJobs|erpPrintJob|erpPrintCost|erpSpools|erpPrintRequests|erpJoint|erpJointCatalog|erpJointCard|erpInvoiceDesign|erpInvoicePreview|erpMarket|erpMarketMine|erpMarketRequests|erpMarketHints|erpMarketNames|erpWanted|erpBrand|erpComplianceLog|erpProviderKey|erpNews|erpAccessKeys|erpAccessWarning|erpAdmin|erpAiKeys|erpAlertRules|erpAlerts|erpArena|erpBackupStatus|erpBg|erpBnWords|erpBookedParcels|erpBrandLogo|erpBundle|erpBusinessLinks|erpBusinesses|erpBusinessesDeleted|erpCampaignAudience|erpCampaignGet|erpCampaignList|erpCapital|erpCashBook|erpCatalog|erpConnStatus|erpConnections|erpCostBook|erpCourier|erpCourierKeyStatus|erpCurrencies|erpCustomerAccount|erpCustomerCredit|erpCustomerList|erpCustomerPage|erpCustomerStatement|erpCustomers|erpDashboardData|erpDaySales|erpDeliveryOptions|erpDevices|erpDiscontinued|erpDues|erpEvoQr|erpEvoStatus|erpExpenseExport|erpExpenseReceiptUrl|erpExpenses|erpFamilies|erpFighters|erpFormOptions|erpGame|erpGetTheme|erpGoogle|erpHello|erpInstalls|erpInvoice|erpInvoicePdf|erpJob|erpJobs|erpListView|erpLookupCustomer|erpLookupUsage|erpMe|erpMoney|erpNoteFileUrl|erpNotes|erpOwnerChange|erpOwnerChanges|erpParcelLabels|erpParcelPreview|erpPartnerStock|erpPartnership|erpPayReasons|erpPeople|erpPlatform|erpPlatformErrors|erpPnl|erpPnlMonth|erpPoList|erpPoolCatalog|erpProduct|erpProductListShare|erpProductPage|erpProductPhotoUrl|erpProductThumbs|erpProfile|erpQuoteAsset|erpQuoteBoot|erpQuoteGet|erpQuoteList|erpRecentInvoices|erpRecovery|erpReorderPlan|erpRestorePreview|erpReturnPreview|erpRisks|erpSales|erpSearch|erpSecurity|erpSelfTest|erpSerialLookup|erpSerialsFor|erpSessions|erpSetTheme|erpSettingsFull|erpSettingsLists|erpSfPayoutLines|erpSfPayouts|erpShareFile|erpSharedStock|erpSheet|erpStatementPdf|erpStockHistory|erpSupplierPage|erpSuppliers|erpToday|erpUsers|erpWaProductPdf|erpWebMatches|erpWebOrderInvoices|erpWebOrders|erpWebsiteTest)$/;
+var SRV_READS = /^(erpHolds|erpHoldGet|erpPhoneAlerts|erpWaNumbers|erpBrandDesk|erpBrandDeskShorts|erpBrandDeskVideos|erpBrandDeskPeople|erpBrandDeskIdeas|erpBrandDeskBoard|erpShipmentRepriceCheck|erpReceivePreview|erpSeo|erpReceipts|erpBrief|erpBrain|erpWatch|erpEngine|erpEngineJob|erpSkills|erpAiBrain|erpAiBrainModels|erpLeadForms|erpLeads|erpLeadFind|erpLeadCapture|erpMyUpdates|erpSocialBridges|erpAds|erpAdsInterests|erpSocialNet|erpSocialLearn|erpSocialAssets|erpSocialPosts|erpSocialPhotos|erpInboxDigest|erpJointRecvCatalog|erpSitePages|erpBalanceSheet|erpProductFields|erpProductAi|erpMetaConnect|erpInboxFeatureMap|erpBookings|erpInbox|erpInboxOpen|erpInboxChannels|erpChatOrders|erpInboxStats|erpAiWork|erpCommissionSales|erpFdCards|erpLineMargins|erpFd19Profit|erpFdInventory|erpFd22Analytics|erpNavigator|erpSellers|erpFollowups|erpCustomerInsight|erpPreorders|erpCashUps|erpAskingPrices|erpSystemCheck|erpAnalytics|erpCommission|erpHolding|erpLotFunding|erpShipments|erpShipment|erpLots|erpFdHead|erpFdDash|erpReceiveMatch|erpAiReader|erpProductSuggest|erpCatalogue|erpPushList|erpCreators|erpCreatorPortalLink|erpSponsorLink|erpCreatorRequests|erpCreatorEvents|erpCreatorProgramme|erpCreatorPreview|erpCreatorCatalog|erpCreatorSources|erpCreatorClaims|erpApps|erpAppQr|erpFeedback|erpRestockOffers|erpRestockList|erpWarrantyRules|erpWarrantyCard|erpMyLink|erpPlatformRegister|erpPlatformDoctor|erpPlatformCommunity|erpMarketWaiting|erpBoard|erpPlatformDesign|erpResell|erpResellerProgramme|erpLoyalty|erpCustomerPoints|erpRefillDue|erpDeliveryHistory|erpDeliveryHistoryMany|erpPrintKit|erpPrintJobs|erpPrintJob|erpPrintCost|erpSpools|erpPrintRequests|erpJoint|erpJointCatalog|erpJointCard|erpInvoiceDesign|erpInvoicePreview|erpMarket|erpMarketMine|erpMarketRequests|erpMarketHints|erpMarketNames|erpWanted|erpBrand|erpComplianceLog|erpProviderKey|erpNews|erpAccessKeys|erpAccessWarning|erpAdmin|erpAiKeys|erpAlertRules|erpAlerts|erpArena|erpBackupStatus|erpBg|erpBnWords|erpBookedParcels|erpBrandLogo|erpBundle|erpBusinessLinks|erpBusinesses|erpBusinessesDeleted|erpCampaignAudience|erpCampaignGet|erpCampaignList|erpCapital|erpCashBook|erpCatalog|erpConnStatus|erpConnections|erpCostBook|erpCourier|erpCourierKeyStatus|erpCurrencies|erpCustomerAccount|erpCustomerCredit|erpCustomerList|erpCustomerPage|erpCustomerStatement|erpCustomers|erpDashboardData|erpDaySales|erpDeliveryOptions|erpDevices|erpDiscontinued|erpDues|erpEvoQr|erpEvoStatus|erpExpenseExport|erpExpenseReceiptUrl|erpExpenses|erpFamilies|erpFighters|erpFormOptions|erpGame|erpGetTheme|erpGoogle|erpHello|erpInstalls|erpInvoice|erpInvoicePdf|erpJob|erpJobs|erpListView|erpLookupCustomer|erpLookupUsage|erpMe|erpMoney|erpNoteFileUrl|erpNotes|erpOwnerChange|erpOwnerChanges|erpParcelLabels|erpParcelPreview|erpPartnerStock|erpPartnership|erpPayReasons|erpPeople|erpPlatform|erpPlatformErrors|erpPnl|erpPnlMonth|erpPoList|erpPoolCatalog|erpProduct|erpProductListShare|erpProductPage|erpProductPhotoUrl|erpProductThumbs|erpProfile|erpQuoteAsset|erpQuoteBoot|erpQuoteGet|erpQuoteList|erpRecentInvoices|erpRecovery|erpReorderPlan|erpRestorePreview|erpReturnPreview|erpRisks|erpSales|erpSearch|erpSecurity|erpSelfTest|erpSerialLookup|erpSerialsFor|erpSessions|erpSetTheme|erpSettingsFull|erpSettingsLists|erpSfPayoutLines|erpSfPayouts|erpShareFile|erpSharedStock|erpSheet|erpStatementPdf|erpStockHistory|erpSupplierPage|erpSuppliers|erpToday|erpUsers|erpWaProductPdf|erpWebMatches|erpWebOrderInvoices|erpWebOrders|erpWebsiteTest)$/;
 function srvPump() {
   if (!SRV_Q.length) return;
   var isRead = SRV_READS.test(SRV_Q[0].name);
@@ -42307,6 +42307,260 @@ html[data-look="clean"][data-skin="fd"]:root .t2line span { color:var(--fd-text-
   }
   var rp = repaint;
   repaint = function () { navSync(); if (VIEW !== 'opentools') return rp.apply(this, arguments); var v = el('view'); if (v) v.innerHTML = view(); };
+  navSync();
+})();
+</script>
+<!-- hold-1 (owner 6 Nov 2026): "Send for confirmation" - an invoice that waits for the customer's OK. The New invoice
+     screen's second button sends exactly what Save sends (every check of Save runs: the checklist, prices, held stock)
+     with `hold`; the server keeps it (handlers/holds.js) - no stock, no money, no invoice number. The customer gets the
+     bill and a link on WhatsApp (or the link by hand), presses Confirm or replies "confirm". "Waiting orders" lists them;
+     Confirm makes the invoice (stock goes down) and books Steadfast when it was ticked. Edit puts it back on New invoice. -->
+<style>
+.hd-wrap{display:flex;flex-direction:column;gap:12px}
+.hd-tabs{display:flex;gap:8px;margin-bottom:4px;flex-wrap:wrap}
+.hd-card{background:var(--fd-card,#fff);border:1px solid var(--fd-line,#e6e8ec);border-radius:16px;padding:14px 16px;display:grid;grid-template-columns:1fr auto;gap:10px 16px;align-items:start}
+.hd-card.yes{border-color:color-mix(in srgb,var(--fd-positive,#12b76a) 55%,transparent);box-shadow:0 0 0 3px color-mix(in srgb,var(--fd-positive,#12b76a) 12%,transparent)}
+.hd-no{font-weight:700;font-size:15px}
+.hd-who{font-size:14px;margin-top:2px}
+.hd-lines{font-size:13px;color:var(--fd-muted,#667085);margin-top:4px;line-height:1.45}
+.hd-amt{font-weight:700;font-size:18px;text-align:right;white-space:nowrap}
+.hd-pills{grid-column:1/-1;display:flex;gap:6px;flex-wrap:wrap}
+.hd-pill{font-size:12px;border-radius:999px;padding:3px 10px;background:var(--fd-soft,#f2f4f7);color:var(--fd-ink,#344054)}
+.hd-pill.ok{background:color-mix(in srgb,var(--fd-positive,#12b76a) 16%,transparent);color:var(--fd-positive-ink,#067647);font-weight:600}
+.hd-pill.bad{background:color-mix(in srgb,var(--fd-negative,#f04438) 14%,transparent);color:var(--fd-negative-ink,#b42318);font-weight:600}
+.hd-acts{grid-column:1/-1;display:flex;gap:8px;flex-wrap:wrap}
+.hd-empty{padding:28px;text-align:center;color:var(--fd-muted,#667085)}
+.hd-dlg label.chk{display:flex;gap:8px;align-items:center;margin-top:10px;font-size:14px}
+.hd-link{font-size:12.5px;word-break:break-all;background:var(--fd-soft,#f2f4f7);border-radius:10px;padding:8px 10px;margin-top:8px}
+.hd-banner{display:flex;gap:10px;align-items:center;justify-content:space-between;background:color-mix(in srgb,var(--fd-positive,#12b76a) 12%,transparent);border-radius:14px;padding:10px 14px;margin-bottom:12px;font-size:14px}
+@media (max-width:600px){.hd-card{grid-template-columns:1fr}.hd-amt{text-align:left}}
+</style>
+<script>
+(function () {
+  var HD = { pile: 'waiting', data: null, busy: false, err: '' };
+  var HOLD_PENDING = null, HOLD_NEXT = null;
+  window.HD_STATE = HD;
+  var ICON = '<path d="M6 3h9l3 3v15H6z"/><path d="M9 12l2 2 4-4"/><path d="M9 17h6"/>';
+  try {
+    var BN = { 'Waiting orders': 'কনফার্মের অপেক্ষায়', 'Send for confirmation': 'কনফার্মের জন্য পাঠাও',
+      'Orders sent to the customer: they become invoices only when confirmed': 'কাস্টমারকে পাঠানো অর্ডার: কনফার্ম হলেই ইনভয়েস হবে',
+      'Waiting': 'অপেক্ষায়', 'Done / closed': 'শেষ / বন্ধ', 'Confirm': 'কনফার্ম', 'Send again': 'আবার পাঠাও', 'Copy link': 'লিংক কপি', 'Edit': 'বদলাও', 'Cancel order': 'বাতিল',
+      'Customer said yes': 'কাস্টমার রাজি', 'Not sent yet': 'এখনো পাঠানো হয়নি', 'Steadfast on confirm': 'কনফার্মে Steadfast', 'Stock short': 'স্টক কম',
+      'Nothing is waiting.': 'কিছু অপেক্ষায় নেই।', 'Customer said no': 'কাস্টমার না বলেছেন' };
+    Object.keys(BN).forEach(function (k) { if (!I18N_BN[k]) I18N_BN[k] = BN[k]; });
+  } catch (e) {}
+  if (typeof fdxNav === 'function') fdxNav('holds', 'Waiting orders', ICON, 'invoice');
+  try { VIEW_NAMES.holds = 'Waiting orders'; FDH_SUB.holds = 'Orders sent to the customer: they become invoices only when confirmed'; } catch (e) {}
+  function can() { return !!ME && (typeof pageCan !== 'function' || pageCan('invoice')); }
+  function navSync() { var b = document.querySelector('#nav button[data-view="holds"]'); if (b) b.style.display = can() ? 'flex' : 'none'; }
+  function money(n) { return (OPT ? OPT.currency + ' ' : '') + fmt(n); }
+  function errText(e) { return String(e && e.message ? e.message : e); }
+  function load(force) {
+    if (HD.busy || (HD.data && !force)) return;
+    HD.busy = true;
+    srv('erpHolds', [{ pile: HD.pile }], function (r) { HD.busy = false; HD.data = r; HD.err = ''; if (VIEW === 'holds' || VIEW === 'invoice') repaint(); },
+      function (e) { HD.busy = false; HD.err = errText(e); if (VIEW === 'holds') repaint(); });
+  }
+  window.hdReload = function () { HD.data = null; load(true); };
+
+  // ---------- a small dialog of our own (two buttons with our words)
+  function dlg(title, body, okText, onOk) {
+    var back = document.createElement('div'); back.className = 'dlg-back';
+    back.innerHTML = '<div class="dlg fdw-form hd-dlg" role="dialog" aria-modal="true" style="max-width:520px"><div class="dlg-t">' + esc(title) + '</div>' + body +
+      '<div class="dlg-f"><button class="btn" type="button" data-x="1">Close</button>' + (okText ? '<button class="btn primary" type="button" data-ok="1">' + esc(okText) + '</button>' : '') + '</div></div>';
+    document.body.appendChild(back);
+    var close = function () { if (back.parentNode) back.parentNode.removeChild(back); };
+    back.addEventListener('click', function (e) {
+      if (e.target === back || e.target.closest('[data-x]')) close();
+      if (e.target.closest('[data-ok]') && onOk) onOk(back, close);
+      var c = e.target.closest('[data-copy]'); if (c) copy(c.getAttribute('data-copy'));
+    });
+    return back;
+  }
+  function copy(t) {
+    try { navigator.clipboard.writeText(t).then(function () { toast('Link copied.'); }, function () { uiPrompt('Copy the link:', t); }); }
+    catch (e) { uiPrompt('Copy the link:', t); }
+  }
+  function waMe(phone, text) {
+    var d = String(phone || '').replace(/[^0-9]/g, ''); if (d.length === 11 && d.charAt(0) === '0') d = '88' + d;
+    return 'https://wa.me/' + d + '?text=' + encodeURIComponent(text);
+  }
+
+  // ---------- the New invoice screen: the second button
+  var viewInvoiceHold = viewInvoice;
+  viewInvoice = function () {
+    var h = viewInvoiceHold.apply(this, arguments);
+    if (!can()) return h;
+    h = h.replace('<button class="btn primary" type="button" id="c3save"',
+      '<button class="btn" type="button" id="c3hold"' + (SAVING || !CART.length ? ' disabled' : '') + ' title="The customer gets the bill on WhatsApp; stock goes down only when it is confirmed">Send for confirmation</button>' +
+      '<button class="btn primary" type="button" id="c3save"');
+    var d = HD.data; if (!d) load(false);
+    if (d && d.saidYes > 0) h = '<div class="hd-banner"><span>✅ ' + fmt(d.saidYes) + ' customer' + (d.saidYes === 1 ? '' : 's') + ' confirmed an order. Make the invoice' + (d.saidYes === 1 ? '' : 's') + ' now.</span><button class="btn small primary" type="button" data-hdgo="1">Open</button></div>' + h;
+    return h;
+  };
+  function holdAsk() {
+    if (!CART.length) return;
+    var chans = (HD.data && HD.data.channels) || [];
+    var phone = String(FORM.phone || '').trim();
+    var opts = chans.map(function (c) { return '<option value="wa:' + esc(c.id) + '">WhatsApp: ' + esc(c.name) + (c.purpose === 'send' ? ' (sending number)' : '') + '</option>'; }).join('');
+    var courierGuess = /steadfast|courier|pathao|redx/i.test(String(FORM.source || ''));
+    var body = '<div class="fields"><div><label class="f" for="hd_via">Send it by</label><select class="i" id="hd_via">' + (phone ? opts : '') +
+      '<option value="link">Only make the link (I will send it myself)</option></select>' + (!phone ? '<div class="sub">No phone on this invoice, so it cannot go on WhatsApp.</div>' : !chans.length ? '<div class="sub">No WhatsApp number is connected yet (Inbox › Chat settings).</div>' : '') + '</div>' +
+      '<div><label class="f" for="hd_days">Wait for the answer</label><select class="i" id="hd_days"><option value="3">3 days</option><option value="7" selected>7 days</option><option value="14">14 days</option></select></div></div>' +
+      '<label class="chk"><input type="checkbox" id="hd_sf"' + (courierGuess ? ' checked' : '') + '> Book the parcel on Steadfast as soon as it is confirmed</label>' +
+      '<div class="sub" style="margin-top:10px">Nothing is taken from stock and no invoice number is used until you press Confirm.</div>';
+    dlg('Send for confirmation', body, 'Continue', function (back, close) {
+      var via = back.querySelector('#hd_via').value;
+      HOLD_PENDING = { send: via === 'link' ? 'link' : 'wa', channelId: via.indexOf('wa:') === 0 ? via.slice(3) : '', courier: back.querySelector('#hd_sf').checked, days: Number(back.querySelector('#hd_days').value) || 7 };
+      close(); saveInvoice();
+    });
+  }
+  // every save goes through here: only the press of our button makes it a waiting order
+  var saveInvoiceHold = saveInvoice;
+  saveInvoice = function () { HOLD_NEXT = HOLD_PENDING; HOLD_PENDING = null; return saveInvoiceHold.apply(this, arguments); };
+  var uiConfirmHold = uiConfirm;
+  uiConfirm = function (text) {
+    if (HOLD_NEXT && /^Save this invoice\?/.test(String(text))) {
+      text = String(text).replace(/^Save this invoice\?/, 'Send this order for the customer’s confirmation?').replace(/Stock will be deducted and the invoice PDF made\.$/, 'Nothing is taken from stock until it is confirmed.');
+      return uiConfirmHold(text).then(function (yes) { if (!yes) HOLD_NEXT = null; return yes; });
+    }
+    return uiConfirmHold.apply(this, arguments);
+  };
+  var srvHoldOut = srv;
+  srv = function (name, args, ok, bad) {
+    if (name !== 'erpCreateInvoice' || !HOLD_NEXT || !args || !args[0]) return srvHoldOut.apply(this, arguments);
+    var hold = HOLD_NEXT; HOLD_NEXT = null;
+    var a = args.slice(); a[0] = Object.assign({}, a[0], { hold: hold });
+    return srvHoldOut.call(this, name, a, function (res) {
+      if (!res || !res.held) return ok.apply(this, arguments);
+      SAVING = false;
+      var keepPhone = FORM.phone, keepName = FORM.name;
+      CART = []; ACCT = null;
+      FORM = { payMode: 'full', paidNow: 0, phone: '', name: '', address: '', source: (OPT.sources[0] || 'Customer pickup'), touched: false, method: FORM.method, status: FORM.status, delivery: 0, advance: 0, date: '' };
+      iSearch = ''; try { updateCounts(); } catch (e) {}
+      HD.data = null; load(true); repaint();
+      held(res, keepPhone, keepName);
+    }, bad);
+  };
+  function held(r, phone, name) {
+    var text = 'Your order ' + r.holdNo + ' - total ' + money(r.grandTotal) + '. Please confirm here: ' + r.link;
+    var head = r.sent ? '✅ Sent on WhatsApp (' + esc(r.via) + ').' : r.sendError ? '⚠️ Not sent: ' + esc(r.sendError) : 'The link is ready — send it to the customer.';
+    dlg(r.holdNo + ' is waiting for ' + (r.customer || name || 'the customer'),
+      '<div>' + head + '</div><div class="sub" style="margin-top:6px">' + money(r.grandTotal) + ' · waits until ' + esc(r.expires) + '. It becomes an invoice when you press Confirm in Waiting orders.</div>' +
+      '<div class="hd-link" data-noi18n="1">' + esc(r.link) + '</div>' +
+      '<div class="row" style="gap:8px;margin-top:10px;flex-wrap:wrap"><button class="btn small" type="button" data-copy="' + esc(r.link) + '">Copy link</button>' +
+      (phone && !r.sent ? '<a class="btn small" target="_blank" rel="noopener" href="' + esc(waMe(phone, text)) + '">Open WhatsApp</a>' : '') + '</div>', '', null);
+  }
+
+  // ---------- Waiting orders
+  function card(x) {
+    var p = [];
+    if (x.status === 'waiting') {
+      if (x.customerOk) p.push('<span class="hd-pill ok">✓ Customer said yes ' + (x.customerOkHow === 'whatsapp' ? '(WhatsApp)' : '(page)') + ' · ' + esc(x.customerOkAt) + '</span>');
+      else if (x.customerNo) p.push('<span class="hd-pill bad">Customer said no</span>');
+      p.push(x.sent ? '<span class="hd-pill">Sent · ' + esc(x.sentVia) + '</span>' : '<span class="hd-pill">Not sent yet</span>');
+      if (x.short.length) p.push('<span class="hd-pill bad">Stock short: ' + esc(x.short.join(', ')) + '</span>');
+      if (x.courier) p.push('<span class="hd-pill">Steadfast on confirm</span>');
+      p.push('<span class="hd-pill">Waits until ' + esc(x.expires) + '</span>');
+    } else {
+      p.push('<span class="hd-pill' + (x.status === 'confirmed' ? ' ok' : '') + '">' + esc(x.status === 'confirmed' ? 'Invoice ' + x.invoiceNo + (x.confirmedBy ? ' · ' + x.confirmedBy : '') : x.status === 'expired' ? 'Expired' : 'Cancelled') + '</span>');
+      if (x.reason) p.push('<span class="hd-pill">' + esc(x.reason) + '</span>');
+    }
+    var acts = x.status === 'waiting'
+      ? '<button class="btn small primary" type="button" data-hdok="' + esc(x.id) + '">Confirm</button>' +
+        (x.phone ? '<button class="btn small" type="button" data-hdsend="' + esc(x.id) + '">Send again</button>' : '') +
+        '<button class="btn small" type="button" data-copy-hd="' + esc(x.link) + '">Copy link</button>' +
+        '<button class="btn small" type="button" data-hdedit="' + esc(x.id) + '">Edit</button>' +
+        '<button class="btn small danger" type="button" data-hdx="' + esc(x.id) + '">Cancel order</button>'
+      : x.status === 'confirmed' ? '<button class="btn small" type="button" data-hdinv="' + esc(x.invoiceNo) + '">Open invoice</button>' : '';
+    return '<div class="hd-card' + (x.status === 'waiting' && x.customerOk ? ' yes' : '') + '"><div><div class="hd-no" data-noi18n="1">' + esc(x.no) + '</div>' +
+      '<div class="hd-who">' + esc(x.customer) + (x.phone ? ' · ' + esc(x.phone) : '') + '</div>' +
+      '<div class="hd-lines">' + x.lines.map(function (l) { return esc(l.name) + ' × ' + fmt(l.qty); }).join(', ') + '<br>' + esc(x.made) + (x.madeBy ? ' · ' + esc(x.madeBy) : '') + '</div></div>' +
+      '<div class="hd-amt">' + money(x.grand) + '</div><div class="hd-pills">' + p.join('') + '</div>' + (acts ? '<div class="hd-acts">' + acts + '</div>' : '') + '</div>';
+  }
+  function view() {
+    if (!can()) return '<div class="note"><div class="ico">i</div><div>Not for this account.</div></div>';
+    load(false);
+    var tabs = '<div class="hd-tabs"><button class="btn small' + (HD.pile === 'waiting' ? ' primary' : '') + '" type="button" data-hdpile="waiting">Waiting' + (HD.data && HD.pile === 'waiting' ? ' (' + fmt(HD.data.waiting) + ')' : '') + '</button>' +
+      '<button class="btn small' + (HD.pile === 'closed' ? ' primary' : '') + '" type="button" data-hdpile="closed">Done / closed</button>' +
+      '<button class="btn small" type="button" data-hdnew="1" style="margin-left:auto">+ New order (New invoice)</button></div>';
+    if (HD.err) return '<section>' + tabs + '<div class="note err"><div class="ico">✕</div><div>' + esc(HD.err) + '</div></div></section>';
+    if (!HD.data) return '<section>' + tabs + '<div class="loading">Loading…</div></section>';
+    var list = HD.data.list || [];
+    return '<section>' + tabs + '<div class="hd-wrap">' + (list.length ? list.map(card).join('') : '<div class="hd-empty">Nothing is waiting.<br><span class="sub">On New invoice press “Send for confirmation” instead of Save.</span></div>') + '</div></section>';
+  }
+  function find(id) { return ((HD.data && HD.data.list) || []).filter(function (x) { return x.id === id; })[0]; }
+  async function confirmOne(id) {
+    var x = find(id); if (!x) return;
+    var msg = 'Make the invoice for ' + x.no + ' now?\n\n' + x.customer + ' · ' + money(x.grand) + '\n' + (x.customerOk ? 'The customer said yes.' : 'The customer has NOT said yes yet.') +
+      '\n\nStock will be deducted' + (x.courier ? ' and the parcel booked on Steadfast.' : '.');
+    if (!(await uiConfirmHold(msg))) return;
+    toast('Making the invoice…');
+    srv('erpHoldConfirm', [{ id: id }], function (r) {
+      HD.data = null; load(true);
+      D = null; ORDERS = null; HIST = null;
+      try { srv('erpBundle', [['catalog']], applyBundle, function () {}); } catch (e) {}
+      if (!r.bookCourier) { toast('Invoice ' + esc(r.invoiceNo) + ' made from ' + esc(r.holdNo) + '.', false, 8000); return; }
+      srv('erpBookParcel', [{ invoiceNo: r.invoiceNo }], function (b) {
+        toast('Invoice ' + esc(r.invoiceNo) + ' made and booked on Steadfast' + (b && b.consignment ? ' (' + esc(b.consignment) + ')' : '') + '.', false, 9000);
+      }, function (e) { uiAlert('Invoice ' + r.invoiceNo + ' is made, but Steadfast did not take the parcel:\n\n' + errText(e) + '\n\nBook it from the invoice’s page.'); });
+    }, function (e) { uiAlert('Not confirmed:\n\n' + errText(e)); });
+  }
+  function editOne(id) {
+    srv('erpHoldGet', [{ id: id }], async function (r) {
+      if (!CAT || !OPT) { toast('The product list is still loading — try again in a moment.', true); return; }
+      if (CART.length && !(await uiConfirmHold('The New invoice screen already holds ' + CART.length + ' product(s). Replace them with ' + r.no + '?'))) return;
+      var p = r.payload || {}, by = {}, miss = [];
+      CAT.forEach(function (c) { by[String(c.sku).toLowerCase()] = c; });
+      var cart = [];
+      (p.items || []).forEach(function (it) {
+        var c = by[String(it.sku).toLowerCase()]; if (!c) { miss.push(it.sku); return; }
+        cart.push({ sku: c.sku, name: c.name, price: c.sell, qty: Number(it.qty) || 1, discEach: Number(it.discEach) || 0, stock: c.stock, cat: c.cat, serials: it.serials || [] });
+      });
+      srv('erpHoldCancel', [{ id: id, reason: 'Changed - made again' }], function () {
+        CART = cart; iSearch = '';
+        var cu = p.customer || {};
+        FORM.name = cu.name || ''; FORM.phone = cu.phone || ''; FORM.address = cu.address || ''; if (cu.source) FORM.source = cu.source;
+        FORM.delivery = Number(p.deliveryCharge) || 0; FORM.delTouched = true; FORM.delAuto = false;
+        FORM.invDisc = Number(p.invoiceDiscount) || 0; FORM.payMode = p.payMode || 'full'; FORM.paidNow = Number(p.paidNow) || 0; FORM.advance = Number(p.advancePaid) || 0;
+        if (p.paymentMethod) FORM.method = p.paymentMethod; if (p.advanceMethod) FORM.advMethod = p.advanceMethod;
+        HD.data = null; try { updateCounts(); } catch (e) {}
+        go('invoice');
+        toast(r.no + ' is back on New invoice (the old one is cancelled). Change it, then Send for confirmation again.' + (miss.length ? ' Not found: ' + esc(miss.join(', ')) : ''), false, 10000);
+      }, function (e) { toast(esc(errText(e)), true); });
+    }, function (e) { toast(esc(errText(e)), true); });
+  }
+  document.addEventListener('click', async function (e) {
+    var t = e.target; if (!t || !t.closest) return;
+    if (t.closest('#c3hold')) { if (!HD.data) { load(true); } holdAsk(); return; }
+    if (t.closest('[data-hdgo]')) { HD.pile = 'waiting'; go('holds'); return; }
+    if (VIEW !== 'holds') return;
+    var b;
+    if ((b = t.closest('[data-hdpile]'))) { HD.pile = b.getAttribute('data-hdpile'); HD.data = null; load(true); repaint(); return; }
+    if (t.closest('[data-hdnew]')) { go('invoice'); return; }
+    if ((b = t.closest('[data-hdok]'))) { confirmOne(b.getAttribute('data-hdok')); return; }
+    if ((b = t.closest('[data-copy-hd]'))) { copy(b.getAttribute('data-copy-hd')); return; }
+    if ((b = t.closest('[data-hdedit]'))) { editOne(b.getAttribute('data-hdedit')); return; }
+    if ((b = t.closest('[data-hdinv]'))) { if (typeof openInvoicePage === 'function') openInvoicePage(b.getAttribute('data-hdinv')); return; }
+    if ((b = t.closest('[data-hdsend]'))) {
+      var id = b.getAttribute('data-hdsend'), chans = (HD.data && HD.data.channels) || [];
+      if (!chans.length) { uiAlert('No WhatsApp number is connected yet (Inbox › Chat settings). Copy the link instead.'); return; }
+      dlg('Send again', '<div class="fields"><div><label class="f" for="hd_ch">From</label><select class="i" id="hd_ch">' +
+        chans.map(function (c) { return '<option value="' + esc(c.id) + '">' + esc(c.name) + '</option>'; }).join('') + '</select></div></div>', 'Send', function (back, close) {
+        var ch = back.querySelector('#hd_ch').value; close();
+        srv('erpHoldSend', [{ id: id, channelId: ch }], function (r) { toast('Sent on WhatsApp (' + esc(r.via) + ').'); HD.data = null; load(true); }, function (er) { uiAlert('Not sent:\n\n' + errText(er)); });
+      });
+      return;
+    }
+    if ((b = t.closest('[data-hdx]'))) {
+      var x = find(b.getAttribute('data-hdx'));
+      var why = await uiPrompt('Cancel ' + (x ? x.no : 'this order') + '? Why (kept with it):', '');
+      if (why === null || why === undefined) return;
+      srv('erpHoldCancel', [{ id: b.getAttribute('data-hdx'), reason: String(why).trim() || 'Cancelled' }], function () { toast('Cancelled.'); HD.data = null; load(true); }, function (er) { toast(esc(errText(er)), true); });
+    }
+  });
+  var rpHold = repaint;
+  repaint = function () { navSync(); if (VIEW !== 'holds') return rpHold.apply(this, arguments); var v = el('view'); if (v) v.innerHTML = view(); };
   navSync();
 })();
 </script>
