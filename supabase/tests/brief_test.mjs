@@ -129,4 +129,10 @@ r = await eng('erpEngineTool', { id: JS, tool: 'brief_save', args: { headline: '
 check('only the briefing agent files briefs', r.ok && /No such function/.test(r.result.error), r.result);
 check('the other business has no briefs', (await sql`select count(*)::int n from engine_briefs where business_id = ${FIX.B2}`)[0].n === 0, '');
 
+// night-ai (6 Nov 2026): the AI-written Bangla speaks to the owner as আপনি
+const { langLine } = await import(pathToFileURL(path.join(fnDir, 'handlers', 'brief.js')));
+check('night-ai: the Bangla brief asks for আপনি and forbids তুমি; English adds nothing', /আপনি/.test(langLine('bn')) && /never তুমি/.test(langLine('bn')) && langLine('en') === '', langLine('bn'));
+const JL = (await sql`select ask from engine_jobs where business_id = ${B} and agent = 'briefing' order by created_at desc limit 1`)[0];
+check('night-ai: ...and that line is in the job the Engine gets', JL && /আপনি/.test(JL.ask), JL && JL.ask.slice(-300));
+
 await done();

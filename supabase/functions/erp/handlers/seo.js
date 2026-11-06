@@ -249,7 +249,7 @@ export async function erpSeoAdvise(ctx, payload) {
   const biz = str((await ctx.tx`select name from businesses where id = ${ctx.biz}`)[0]?.name);
   const sys = 'You are a senior SEO consultant for a small online business in Bangladesh' + (biz ? ' (' + biz + ')' : '') + '. You get the facts of one home page and the problems found by an automatic check. ' +
     'Write the fixes an owner who is not a programmer can hand to his web person: concrete, in order of effect on Google ranking and sales, no theory. ' +
-    (lang === 'bn' ? 'Write in simple Bangla (তুমি form); keep technical words (title, meta description, H1, sitemap, alt) in English letters.' : 'Write in plain English.') +
+    (lang === 'bn' ? 'Write in simple Bangla and address the owner as আপনি (আপনার, করুন), never তুমি; keep technical words (title, meta description, H1, sitemap, alt) in English letters.' : 'Write in plain English.') +
     ' Answer as JSON only: {"summary": "two sentences on where the site stands", "fixes": [{"title": "...", "why": "what it changes for Google / customers", "how": "exactly what to write or change, with the suggested text when it is text", "where": "which file / setting / page", "effort": "minutes|hour|day"}]} with at most 8 fixes.';
   const user = 'Site: ' + site + '\nScore: ' + row.score + '/100 (' + row.light + ')\nFacts: ' + JSON.stringify(row.facts).slice(0, 6000) + '\nIssues: ' + JSON.stringify(row.issues).slice(0, 4000);
   const r = await ai(ctx, { task: 'analyze', purpose: 'seo', json: true, maxTokens: 3000, temperature: 0.3, system: sys, messages: [{ role: 'user', content: [{ type: 'text', text: user }] }] });
