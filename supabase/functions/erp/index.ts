@@ -403,7 +403,7 @@ Deno.serve(async (req) => {
   const q0 = new URL(req.url).searchParams;
   const tid = tenantOf(req, q0);
   // public routes, a company on the bridge, and every company copy (calls carry their own sign-in, never a cookie) answer any page
-  const headers = { ...cors(req.headers.get('origin'), !!(tid || q0.get('install') || q0.get('control') || q0.get('signin') || q0.get('pub') || q0.get('chat') || /^(order|bill|item|avatar|media|land|join|hold|holdbill)$/.test(q0.get('inbox') || '') || (INSTALL && INSTALL.id))), 'Content-Type': 'application/json' };
+  const headers = { ...cors(req.headers.get('origin'), !!(tid || q0.get('install') || q0.get('control') || q0.get('signin') || q0.get('pub') || q0.get('chat') || /^(order|bill|item|avatar|media|land|join|hold|holdbill|holdpdf)$/.test(q0.get('inbox') || '') || (INSTALL && INSTALL.id))), 'Content-Type': 'application/json' };
   if (req.method === 'OPTIONS') return new Response('ok', { headers });
   if (tid && !(q0.get('install') || q0.get('control'))) {
     if (!tenantDeps) return new Response(JSON.stringify({ ok: false, error: 'This server does not run company ERPs.' }), { status: 200, headers });
@@ -497,7 +497,7 @@ async function serveWith(deps: any, req: Request, q0: URLSearchParams, headers: 
   }
   // the Inbox (handlers/inbox.js): channel webhooks ?inbox=hook&ch=<id>&k=<key> (GET = Meta's check, POST = events),
   // and the website chat ?chat=<channel id>&a=info|start|send|poll (public; the visitor carries a signed id)
-  if (q0.get('inbox') === 'hook' || q0.get('meta') === 'hook' || q0.get('chat') || /^(order|bill|item|avatar|media|land|join|hold|holdbill)$/.test(q0.get('inbox') || '')) {
+  if (q0.get('inbox') === 'hook' || q0.get('meta') === 'hook' || q0.get('chat') || /^(order|bill|item|avatar|media|land|join|hold|holdbill|holdpdf)$/.test(q0.get('inbox') || '')) {
     try { return await inboxRoute(deps, req, q0, headers); }
     catch (e) { console.error('inbox', e); return new Response('{"ok":false}', { status: 200, headers }); }
   }
@@ -625,13 +625,18 @@ async function inboxRoute(deps: any, req: Request, q0: URLSearchParams, headers:
     return new Response(JSON.stringify((r && r.body) || { ok: false }), { status: (r && r.status) || 200, headers });
   }
   // hold-1: an order waiting for the customer's OK (handlers/holds.js; web/hold.html): the page, Confirm / Not now, the bill picture
-  if (what === 'hold' || what === 'holdbill') {
+  if (what === 'hold' || what === 'holdbill' || what === 'holdpdf') {
     const hd: any = await import('./handlers/holds.js');
     const tok = String(q0.get('h') || '');
     const nf = new Response('{"ok":false,"error":"This page is not available."}', { status: 404, headers });
     if (!/^[0-9a-f]{32}$/.test(tok)) return nf;
     const row = (await deps.sql`select business_id from order_holds where token = ${tok}`)[0];
     if (!row) return nf;
+    if (what === 'holdpdf') {
+      const f: any = await asOwner(row.business_id, 'inbox:holdpdf', (ctx) => hd.holdPdf(ctx, tok));
+      if (!f) return nf;
+      return new Response(f.bytes, { status: 200, headers: { 'Content-Type': 'application/pdf', 'Content-Disposition': 'inline; filename="' + f.name + '"', 'Cache-Control': 'private, max-age=300', 'Access-Control-Allow-Origin': '*' } });
+    }
     if (what === 'holdbill') {
       const png: any = await asOwner(row.business_id, 'inbox:holdbill', (ctx) => hd.holdBill(ctx, tok));
       if (!png) return nf;

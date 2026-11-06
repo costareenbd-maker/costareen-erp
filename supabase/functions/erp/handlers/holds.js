@@ -39,6 +39,8 @@ function api(ctx) { return String((ctx.deps && ctx.deps.hookBase) || ''); }
 const withQ = (url, q) => url + (url.includes('?') ? '&' : '?') + q;
 export function holdLink(ctx, h) { return pageBase(ctx) + '/hold.html?h=' + h.token + (api(ctx) ? '&api=' + encodeURIComponent(api(ctx)) : ''); }
 export function holdBillLink(ctx, h) { return api(ctx) ? withQ(api(ctx), 'inbox=holdbill&h=' + h.token) : ''; }
+export function holdPdfLink(ctx, h) { return api(ctx) ? withQ(api(ctx), 'inbox=holdpdf&h=' + h.token) : ''; }
+function b64(bytes) { let s = ''; const u = bytes instanceof Uint8Array ? bytes : new Uint8Array(bytes); for (let i = 0; i < u.length; i += 0x8000) s += String.fromCharCode.apply(null, u.subarray(i, i + 0x8000)); return btoa(s); }
 function token() { const b = new Uint8Array(16); globalThis.crypto.getRandomValues(b); return Array.from(b, (x) => x.toString(16).padStart(2, '0')).join(''); }
 async function shop(ctx) {
   let p = {}; try { p = await profile(ctx, false); } catch (_) { p = {}; }
@@ -92,7 +94,13 @@ async function sendWa(ctx, h, channelId) {
   const contact = await upsertContact(ctx, ch, { from: digits, name: str(h.customer_name) });
   const conv = await upsertConv(ctx, ch, contact);
   const text = message(ctx, h, sh.lang), bill = holdBillLink(ctx, h);
-  const msg = bill && ctx.deps && ctx.deps.svgPng ? { kind: 'image', url: bill, caption: text } : { kind: 'text', text };
+  // hold-1b: the customer gets the PDF (the invoice's own design); a picture only if the PDF cannot be made
+  let msg = null;
+  try {
+    const pdf = await (await import('./sales.js')).makeHoldPdf(ctx, h);
+    if (pdf && pdf.bytes) msg = { kind: 'document', mime: 'application/pdf', fileName: pdf.name, url: holdPdfLink(ctx, h) || pdf.url, base64: b64(pdf.bytes), caption: text, store: 'text', text: '📄 ' + pdf.name + '\n' + text };
+  } catch (e) { console.error('hold pdf', e && e.message); }
+  if (!msg) msg = bill && ctx.deps && ctx.deps.svgPng ? { kind: 'image', url: bill, caption: text } : { kind: 'text', text };
   let r;
   try { r = await deliver(ctx, ch, conv, contact, msg, { author: 'team', userId: ctx.s.userId || null, userName: ctx.s.name || 'ERP' }); }
   catch (e) { r = { ok: false, error: str(e && e.message ? e.message : e) }; }
@@ -191,10 +199,10 @@ export async function holdReply(ctx, ch, contact, conv, text) {
 const WORDS = {
   en: { title: 'Your order', waiting: 'Waiting for your confirmation', yes: 'Confirm the order', no: 'Not now', okDone: 'Thank you - you confirmed. We will send it soon.',
         noDone: 'Noted - we will not send it. Call us if you change your mind.', confirmed: 'Confirmed - the invoice is made', cancelled: 'This order was cancelled', expired: 'This order has expired - ask us again',
-        sub: 'Subtotal', disc: 'Discount', del: 'Delivery', total: 'Total', paid: 'Paid already', cod: 'Pay on delivery', call: 'Call the shop' },
+        sub: 'Subtotal', disc: 'Discount', del: 'Delivery', total: 'Total', paid: 'Paid already', cod: 'Pay on delivery', call: 'Call the shop', pdf: 'Download the PDF' },
   bn: { title: 'আপনার অর্ডার', waiting: 'আপনার নিশ্চিতকরণের অপেক্ষায়', yes: 'অর্ডার কনফার্ম করুন', no: 'এখন না', okDone: 'ধন্যবাদ - আপনি কনফার্ম করেছেন। শিগগিরই পাঠানো হবে।',
         noDone: 'লেখা হলো - পাঠানো হবে না। মত বদলালে ফোন করুন।', confirmed: 'কনফার্ম হয়েছে - ইনভয়েস তৈরি', cancelled: 'এই অর্ডার বাতিল হয়েছে', expired: 'এই অর্ডারের সময় শেষ - আবার জানান',
-        sub: 'মোট পণ্য', disc: 'ছাড়', del: 'ডেলিভারি', total: 'সর্বমোট', paid: 'আগে দেওয়া', cod: 'ডেলিভারিতে দিতে হবে', call: 'দোকানে কল' },
+        sub: 'মোট পণ্য', disc: 'ছাড়', del: 'ডেলিভারি', total: 'সর্বমোট', paid: 'আগে দেওয়া', cod: 'ডেলিভারিতে দিতে হবে', call: 'দোকানে কল', pdf: 'PDF ডাউনলোড' },
 };
 async function byToken(ctx, tok) {
   if (!/^[0-9a-f]{32}$/.test(str(tok))) return null;
@@ -205,7 +213,7 @@ async function pageBody(ctx, h) {
   const sh = await shop(ctx), s = h.snap || {};
   const state = h.status === 'confirmed' ? 'confirmed' : h.status === 'cancelled' ? 'cancelled' : !live(h, ctx.now) ? 'expired'
               : h.customer_no_at ? 'said_no' : h.customer_ok_at ? 'said_yes' : 'waiting';
-  return { status: 200, body: { ok: true, lang: sh.lang, words: WORDS, shop: { name: sh.name, phone: sh.phone }, bill: holdBillLink(ctx, h),
+  return { status: 200, body: { ok: true, lang: sh.lang, words: WORDS, shop: { name: sh.name, phone: sh.phone }, bill: holdBillLink(ctx, h), pdf: holdPdfLink(ctx, h),
     order: { no: h.hold_no, date: formatDate(new Date(h.created_at), 'd MMM yyyy'), name: str(h.customer_name), phone: maskPhone(h.customer_phone), address: str(s.address),
       lines: (s.lines || []).map((l) => ({ name: l.name, qty: l.qty, unit: l.unit, total: l.total })),
       sub: num(s.sub), discount: num(s.discount), delivery: num(s.delivery), grand: num(s.grand), paid: num(s.took), cod: s.mode === 'cod',
@@ -223,6 +231,13 @@ export async function holdAct(ctx, tok, b) {
       body: str(h.customer_name) + (a === 'yes' ? ' pressed Confirm. Press Confirm to make the invoice.' : ' pressed "Not now".'), url: '/#/holds', tag: 'hold-' + h.id });
   }
   return pageBody(ctx, (await byToken(ctx, tok)));
+}
+/** hold-1b: the order's PDF for the page's Download button (drawn fresh: the order never changes). */
+export async function holdPdf(ctx, tok) {
+  const h = await byToken(ctx, tok);
+  if (!h) return null;
+  const f = await (await import('./sales.js')).makeHoldPdf(ctx, h);
+  return f && f.bytes ? { bytes: f.bytes, name: f.name } : null;
 }
 export async function holdBill(ctx, tok) {
   const h = await byToken(ctx, tok);

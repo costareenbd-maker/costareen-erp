@@ -3,7 +3,7 @@
 // reply; Confirm makes the invoice through erpCreateInvoice; cancel; expiry; refusals.
 import { pathToFileURL } from 'node:url';
 import path from 'node:path';
-import { sql, FIX, owner, mgr, sales, check, done, deps, web, fnDir } from './harness.mjs';
+import { sql, FIX, owner, mgr, sales, check, done, deps, web, fnDir, pdfs } from './harness.mjs';
 
 const hd = await import(pathToFileURL(path.join(fnDir, 'handlers', 'holds.js')));
 const ib = await import(pathToFileURL(path.join(fnDir, 'handlers', 'inbox.js')));
@@ -85,6 +85,14 @@ const chat = await mk('Support', 'chat'), bills = await mk('Bills', 'send');
 r = await sales('erpCreateInvoice', order({ send: 'wa' }, 1));
 const h3 = r.result.id;
 check('sent on WhatsApp from the Sending-only number', r.ok && r.result.sent && r.result.via === 'Bills' && evo.some((x) => /inst-Bills/.test(x.url) && x.body.number === '8801712345678' && /hold\.html\?h=/.test(JSON.stringify(x.body))), r.result.sendError || evo.map((x) => x.url));
+const sentDoc = evo.find((x) => /sendMedia\/inst-Bills/.test(x.url));
+check('the customer gets the PDF (a document, not a picture)', sentDoc && sentDoc.body.mediatype === 'document' && sentDoc.body.mimetype === 'application/pdf' && sentDoc.body.fileName === 'Order_ORD-0003.pdf' && sentDoc.body.media.length > 4 && /hold\.html\?h=/.test(sentDoc.body.caption), sentDoc && { ...sentDoc.body, media: '…' });
+const ph = pdfs[pdfs.length - 1];
+check('the PDF is the invoice design, titled as an order to confirm', ph && /ORD-0003/.test(ph.html) && /Order no\./.test(ph.html) && /(CONFIRM|কনফার্ম)/.test(ph.html) && !/Invoice no\./.test(ph.html), ph && ph.html.slice(0, 300));
+const pg = await asB(async (ctx) => hd.holdPage(ctx, (await sql`select token from order_holds where hold_no = 'ORD-0003' and business_id = ${FIX.B}`)[0].token));
+check('the page has a Download the PDF link', /inbox=holdpdf&h=[0-9a-f]{32}/.test(pg.body.pdf), pg.body.pdf);
+const pf = await asB(async (ctx) => hd.holdPdf(ctx, (await sql`select token from order_holds where hold_no = 'ORD-0003' and business_id = ${FIX.B}`)[0].token));
+check('the PDF link gives the file', pf && pf.bytes && pf.name === 'Order_ORD-0003.pdf', pf && pf.name);
 check('the message is in the Inbox and the order marked sent', (await sql`select count(*)::int n from inbox_messages m join inbox_conversations v on v.id = m.conversation_id where v.channel_id = ${bills.id} and m.direction = 'out'`)[0].n === 1 && (await holdRow(h3)).sent_via === 'Bills');
 r = await sales('erpHoldSend', [{ id: h3, channelId: chat.id }]);
 check('sent again from another number', r.ok && r.result.via === 'Support', r);

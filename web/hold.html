@@ -68,6 +68,7 @@ button.b:disabled{opacity:.6;cursor:wait}
       (o.cod && o.grand - o.paid > 0 ? '<div class="tot"><span>' + W.cod + '</span><span>' + tk(o.grand - o.paid) + '</span></div>' : '') + '</div>';
     h += '<div class="card who">' + t.to + ':<br><b>' + esc(o.name) + '</b> · ' + esc(o.phone) + (o.address ? '<br>' + esc(o.address) : '') + '</div>';
     if (o.canAnswer) h += '<div class="acts"><button class="b pri" type="button" data-a="yes"' + (busy ? ' disabled' : '') + '>✅ ' + esc(W.yes) + '</button><button class="b" type="button" data-a="no"' + (busy ? ' disabled' : '') + '>' + esc(W.no) + '</button></div>';
+    if (D.pdf) h += '<div class="acts" style="margin-top:10px"><a class="b" href="' + esc(D.pdf) + '" target="_blank" rel="noopener">📄 ' + esc(W.pdf) + '</a></div>';
     if (D.shop.phone) h += '<div class="acts" style="margin-top:10px"><a class="b" href="tel:' + esc(D.shop.phone) + '">📞 ' + esc(W.call) + '</a></div>';
     m.innerHTML = h;
     document.getElementById('lg').onclick = function () { L = (L || D.lang || 'bn') === 'bn' ? 'en' : 'bn'; try { localStorage.setItem('orderLang', L); } catch (e) {} paint(); };
