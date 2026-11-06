@@ -80,6 +80,12 @@ export async function erpSystemCheck(ctx) {
   const d = await erpFdDash(ctx, { months: 1 });
   const same = !d.kpi.net || d.kpi.net.v === p.net;
   add('P1', 'Profit', 'The dashboard’s net profit is the P&L’s', same ? 0 : 1, 'dashboard ' + (d.kpi.net && d.kpi.net.v) + ', P&L ' + p.net, false, 'profit');
+  // night-books B5 (owner D1 = A): sales with no known cost are kept out of profit and shown apart - say how many
+  const sh = await erpShipments(ctx);
+  const shUnk = num(sh.totals && sh.totals.unknownRevenue);
+  add('P3', 'Profit', 'Every sale this month has a known cost (none kept out of profit)', num(p.uncostedN),
+    'No cost price: ' + num(p.uncostedN) + ' sale(s), ' + R(p.uncostedOut) + ' kept out of this month’s profit' +
+    (shUnk ? '; shipments: ' + R(shUnk) + ' of sales from lots with no cost kept out' : '') + ' - fill in Product cost', true, 'costs');
   // a closed month keeps the net profit it was closed with (investor and shareholder shares were worked out on it):
   // the books must still give the same figure
   const closed = await ctx.tx`select month, net_profit from capital_closed where business_id = ${ctx.biz} order by month`;

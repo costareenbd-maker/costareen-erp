@@ -74,7 +74,7 @@ async function purchasesSince(ctx, name, since) {
     for (const r of await ctx.tx`select reference, coalesce(sum(qty), 0) q from stock_movements where business_id = ${ctx.biz} and kind = 'RECEIVE'
                                  and reference = any(${refs}) group by reference`) units[str(r.reference)] = num(r.q);
     for (const r of await ctx.tx`select reference, coalesce(sum(amount), 0) a from shipment_costs where business_id = ${ctx.biz}
-                                 and reference = any(${refs}) group by reference`) extras[str(r.reference)] = num(r.a);
+                                 and reference = any(${refs}) and coalesce(btrim(voided), '') = '' group by reference`) extras[str(r.reference)] = num(r.a);   // night-books B4
   }
   const paid = num((await ctx.tx`select coalesce(sum(amount), 0) s from supplier_payments where business_id = ${ctx.biz} and lower(btrim(supplier)) = ${k}
                                   and coalesce(voided, '') = '' and at >= ${from}`)[0].s);

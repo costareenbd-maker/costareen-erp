@@ -7281,6 +7281,7 @@ function pnlHtml() {
     row('Returns', 'returns', { minus: true, indent: true }) +
     row('Net sales', 'netSales', { strong: true }) +
     row('Cost of goods sold', 'cost', { minus: true, indent: true }) +
+    (M.some(function (m) { return m.uncostedOut; }) ? row('Sales with no cost price, kept out of profit', 'uncostedOut', { minus: true, indent: true }) : '') +   // night-books B5 (D1)
     row('Gross profit', 'gross', { strong: true, color: true }) +
     row('Gross margin', 'grossMargin', { pct: true, indent: true }) +
     row('Delivery charged to customers', 'delivery', { indent: true }) +
@@ -7296,9 +7297,10 @@ function pnlHtml() {
     row('Net margin', 'netMargin', { pct: true, indent: true }) +
     '</tbody></table></div>' +
     '<div class="sub" style="margin-top:8px">Courier cost is what Steadfast kept from its payouts, in the month it paid out.' +
-    (M.some(function (m) { return m.uncosted; })
-      ? '<br>Some sales have no cost price, so their goods count as free: ' +
-        M.map(function (m) { return fmt(m.uncosted); }).join(' · ') + '. Fill them in on Product cost.' : '') +
+    (M.some(function (m) { return m.uncostedOut; })
+      ? '<br>' + (LANG === 'bn' ? 'দাম লেখা নেই: ' : 'No cost price: ') + M.filter(function (m) { return m.uncostedOut; }).map(function (m) {
+          return esc(m.month) + ' — ' + fmt(m.uncostedN || 0) + (LANG === 'bn' ? ' বিক্রি, ৳' : ' sale(s), ৳') + fmt(m.uncostedOut); }).join(' · ') +
+        (LANG === 'bn' ? '। এই বিক্রিগুলো লাভে ধরা হয়নি; Product cost-এ কেনা দাম লিখুন।' : '. These sales are kept out of the profit until their cost is filled in on Product cost.') : '') +
     '</div></div></section>' + pnlMonthHtml();
   return h;
 }
@@ -7340,7 +7342,7 @@ function viewProfit() {
   if (MONEY.unknownRevenue > 0) {
     h += '<div class="note warn" style="margin-bottom:12px"><div class="ico">!</div><div>' +
       '<strong>' + esc(cur) + ' ' + fmt(MONEY.unknownRevenue) + ' of these sales have no ' +
-      'buying price on record</strong>, so their margin is left out rather than guessed. ' +
+      'buying price on record</strong>, so they are kept out of the gross profit above rather than counted as free. ' +
       'Fill the gap in the Costs screen and the figure above becomes complete.</div></div>';
   }
 
@@ -8653,11 +8655,25 @@ function viewCosts() {
     '<button class="btn primary" type="button" id="ck_saveset">Save</button></div>' +
     '</div></div></section>';
 
-  if (!(rate > 0)) {
-    h += '<section><div class="note err"><div class="ico">✕</div><div>' +
-      '<strong>Set your rate first.</strong> Nothing can be costed until the ' +
-      'TK-per-RMB rate above is filled in.</div></div></section>';
+  // night-books B2: warn only about the rows that truly cannot be costed - a currency in use with no rate -
+  // counted from the book itself (server noRate, else the rows on the page). BDT rows are always costed.
+  var noRate = COSTS.noRate || null;
+  if (!noRate) {
+    noRate = {};
+    for (var nr = 0; nr < rows.length; nr++) {
+      var rr = rows[nr], rc = String(rr.cur || '').toUpperCase();
+      if (!(Number(rr.landed) > 0) && Number(rr.amount) > 0 && rc && rc !== 'BDT' && !(Number((COSTS.rates || {})[rc]) > 0)) noRate[rc] = (noRate[rc] || 0) + 1;
+    }
   }
+  Object.keys(noRate).forEach(function (c) {
+    var n = Number(noRate[c]) || 0;
+    if (!n) return;
+    h += '<section><div class="note warn" data-norate="' + esc(c) + '"><div class="ico">!</div><div>' + (LANG === 'bn'
+      ? '<strong>' + esc(c) + '-এর রেট দেওয়া নেই।</strong> তাই ' + esc(c) + '-তে কেনা ' + fmt(n) + 'টি সারির কেনা দাম বের হচ্ছে না। ' +
+        'Currencies-এ ' + esc(c) + ' রেট লিখুন; তার আগ পর্যন্ত এগুলোর বিক্রিতে লাভ দেখাবে না।'
+      : '<strong>' + esc(c) + ' has no rate.</strong> ' + fmt(n) + ' row' + (n === 1 ? '' : 's') + ' bought in ' + esc(c) +
+        ' cannot be costed until the ' + esc(c) + ' rate under Currencies is filled in. Their sales show no profit until then.') + '</div></div></section>';
+  });
 
   var priced = Number(COSTS.priced || 0);
   var under = 0, losing = 0;
@@ -34502,11 +34518,18 @@ function fdJtOverview(d, pool) {
     '<button type="button" class="go" data-jttab="month">Month end →</button></div>';
   // partners and their capital
   var capTot = ps.reduce(function (a, x) { return a + num(x.capital); }, 0) || num(td.capital) || 0;
-  var pcard = '<div class="jt-card"><h3><span class="b">' + jtI('people', 18) + '</span>Partners</h3><div class="s">Profit is shared by the capital each had in at the start of the month.</div>';
+  // night-books B7 (owner D3 = A): say which rule made the split (pool_settlement ratio_basis / capital_basis)
+  var bn7 = typeof LANG !== 'undefined' && LANG === 'bn', basis = String(r.ratio_basis || ''), byStock = r.capital_basis === 'stock_paid';
+  var why = basis === 'month_start' ? (bn7 ? 'লাভ ভাগ হচ্ছে মাসের শুরুর মূলধন অনুযায়ী।' : 'Profit is shared by the capital each had in at the start of the month.')
+    : basis === 'month_end' ? (bn7 ? 'মাসের শুরুতে মূলধন ছিল না, তাই লাভ ভাগ হচ্ছে মাসের শেষের মূলধন অনুযায়ী।' : 'No capital at the start of the month, so profit is shared by the capital each had at its end.')
+    : basis === 'stock_paid' ? (bn7 ? 'মূলধন লেখা হয়নি, তাই যে যত টাকার স্টক কিনেছেন সেটাই তার মূলধন, আর লাভ সেই অনুপাতে ভাগ হচ্ছে।' : 'No capital is written, so what each paid for the stock counts as its capital, and profit is shared in that proportion.')
+    : basis === 'equal' ? (bn7 ? 'মূলধন লেখা হয়নি, কেউ স্টকের টাকাও দেননি, তাই লাভ সমান ভাগে ভাগ হচ্ছে।' : 'No capital is written and nobody has paid for stock yet, so profit is shared equally.')
+    : (bn7 ? 'লাভ ভাগ হয় মূলধন অনুযায়ী।' : 'Profit is shared by the capital each had in.');
+  var pcard = '<div class="jt-card"><h3><span class="b">' + jtI('people', 18) + '</span>Partners</h3><div class="s" data-jtbasis="' + esc(basis) + '">' + why + '</div>';
   if (ps.length && capTot > 0) pcard += '<div class="jt-bar">' + ps.map(function (x, i) { return '<i style="width:' + (num(x.capital) / capTot * 100).toFixed(2) + '%;background:' + JT_COL[i % JT_COL.length] + '" title="' + esc(names[x.business_id] || x.name || '') + '"></i>'; }).join('') + '</div>';
   pcard += (ps.length ? ps : (b.partners || []).map(function (x) { return { business_id: x.id }; })).map(function (x, i) {
     return '<div class="jt-pt"><span class="sw" style="background:' + JT_COL[i % JT_COL.length] + '"></span><span class="n">' + esc(names[x.business_id] || x.name || '?') + (x.business_id === me ? ' <span class="jt-chip">You</span>' : '') +
-      '<small>' + (x.ratio !== undefined ? (Math.round(x.ratio * 1000) / 10) + '% share' : '') + '</small></span><span class="v">' + fdTk(x.capital || 0, cur) + '<small>capital in</small></span></div>'; }).join('') + '</div>';
+      '<small>' + (x.ratio !== undefined ? (Math.round(x.ratio * 1000) / 10) + '% share' : '') + '</small></span><span class="v">' + fdTk(x.capital || 0, cur) + '<small>' + (byStock ? (bn7 ? 'স্টক কেনার টাকা (মূলধন ধরা হয়েছে)' : 'paid for stock (counted as capital)') : 'capital in') + '</small></span></div>'; }).join('') + '</div>';
   // the stock: what there is, what is out
   var st = (d.stock || []).filter(function (s) { return s.status !== 'Discontinued'; }).slice().sort(function (a, c) { return num(a.stock) - num(c.stock); });
   var scard = '<div class="jt-card"><h3><span class="b">' + jtI('stock', 18) + '</span>Joint stock</h3><div class="s">' + fmt(st.length) + ' product(s) · sold by both companies under their own names</div>';
@@ -42706,6 +42729,82 @@ html[data-look="clean"][data-skin="fd"]:root .t2line span { color:var(--fd-text-
       }, function (er) { b.disabled = false; uiAlert('Not sent:\n\n' + errText(er)); });
     }
   });
+})();
+</script>
+<!-- night-books B5 (owner D1 = A, 6 Nov 2026): sales with no known cost are kept OUT of profit and shown apart -
+     "দাম লেখা নেই: N বিক্রি, ৳x" on Shipments (list and one shipment) and on a shipment's investor card. The server
+     figures (lots.js unknownSold / unknownRevenue, totals.uncostedShipments) already leave them out of profit. -->
+<style>
+.nb-unk{margin:0 0 12px}
+.nb-unk .btn{margin-top:6px}
+</style>
+<script>
+(function () {
+  var bn = function () { return typeof LANG !== 'undefined' && LANG === 'bn'; };
+  var tk = function (v) { return '৳' + fmt(Math.round(Number(v) || 0)); };
+  function strip(n, units, value, ships) {
+    var t = bn()
+      ? '<strong>দাম লেখা নেই: ' + fmt(units) + ' ইউনিট বিক্রি, ' + tk(value) + '</strong>' +
+        (ships ? ' (' + fmt(ships) + 'টা শিপমেন্টে কেনা দাম লেখা নেই)' : '') + '। এই বিক্রি লাভে ধরা হয়নি — কেনা দাম লিখলে লাভে আসবে।'
+      : '<strong>No cost price: ' + fmt(units) + ' unit(s) sold, ' + tk(value) + '</strong>' +
+        (ships ? ' (' + fmt(ships) + ' shipment(s) have lines with no cost)' : '') + '. These sales are kept out of the profit until the cost is filled in.';
+    return '<div class="note warn nb-unk" data-nbunk="1"><div class="ico">!</div><div>' + t +
+      (typeof navOn === 'function' && navOn('costs') ? '<div><button class="btn small" type="button" data-go="costs">' + (bn() ? 'কেনা দাম লিখুন' : 'Fill in the cost') + '</button></div>' : '') + '</div></div>';
+  }
+  if (typeof viewShipments === 'function') {
+    var vsNb = viewShipments;
+    viewShipments = function () {
+      var h = vsNb.apply(this, arguments);
+      try {
+        if (SHP.ref || !SHP.list || !SHP.list.totals) return h;
+        var t = SHP.list.totals;
+        if (!(t.unknownRevenue > 0) && !(t.uncostedShipments > 0)) return h;
+        if (h.indexOf('data-nbunk') >= 0) return h;
+        return strip(0, t.unknownSold || 0, t.unknownRevenue || 0, t.uncostedShipments || 0) + h;
+      } catch (e) { return h; }
+    };
+  }
+  if (typeof viewShipment === 'function') {
+    var v1Nb = viewShipment;
+    viewShipment = function () {
+      var h = v1Nb.apply(this, arguments);
+      try {
+        var d = SHP.one;
+        if (!d || d.reference !== SHP.ref || !d.lines) return h;
+        var u = 0, v = 0;
+        d.lines.forEach(function (l) { u += Number(l.unknownSold) || 0; v += Number(l.unknownRevenue) || 0; });
+        var out = h;
+        if (v > 0 && out.indexOf('data-nbunk') < 0) {
+          var at = out.indexOf('<div class="fdd-grid">');
+          out = at < 0 ? strip(0, u, v, 0) + out : out.slice(0, at) + strip(0, u, v, 0) + out.slice(at);
+        }
+        // the investor card: their share of the profit does not count sales with no cost (capital lot returns)
+        var x = typeof FDI === 'object' && FDI.ref === d.reference ? FDI.data : null;
+        if (x && x.funding && x.funding.some(function (f) { return f.unknownRevenue > 0; }) && out.indexOf('data-nbunkf') < 0) {
+          out += '<div class="note warn nb-unk" data-nbunkf="1" style="margin-top:10px"><div class="ico">!</div><div>' + (bn()
+            ? 'এই শিপমেন্টের কিছু মালের কেনা দাম লেখা নেই। দাম না লেখা পর্যন্ত এর লাভ ইনভেস্টরের ভাগে ধরা হবে না।'
+            : 'Some goods of this shipment have no cost price. Until it is filled in, their sales are not counted in the investor’s profit.') + '</div></div>';
+        }
+        return out;
+      } catch (e) { return h; }
+    };
+  }
+})();
+</script>
+<!-- night-books B6 (owner D2 = A, 6 Nov 2026): the server compares this month so far with the same days of last month
+     (prevLabel "1–6 Oct '26"). Net profit and expenses are whole-month figures, so while the month runs they come
+     with prev: null and prevWhole (last month in full): show that quietly instead of a misleading ▼ 92%. -->
+<script>
+(function () {
+  if (typeof fddTrend !== 'function') return;
+  var fddTrendNb = fddTrend;
+  fddTrend = function (k, flip) {
+    if (k && (k.prev === null || k.prev === undefined) && k.prevWhole !== undefined && k.prevWhole !== null) {
+      var bn = typeof LANG !== 'undefined' && LANG === 'bn';
+      return '<span class="fdd-trend flat" title="' + esc((bn ? 'গত মাস পুরো: ৳' : 'Last month in full: ৳') + fmt(k.prevWhole)) + '">' + (bn ? 'মাস চলছে' : 'month running') + '</span>';
+    }
+    return fddTrendNb.apply(this, arguments);
+  };
 })();
 </script>
 </body>

@@ -139,18 +139,20 @@ check('month: revenue 3350, orders 2, aov 1675, units 4', k.revenueMTD === 3350 
 check('previous month (full month): 52000, 1 order', k.revenuePrev === 52000 && k.ordersPrev === 1, k);
 check('customers 1, new 1', k.customers === 1 && k.newCustomers === 1, k);
 // PLA 900 (own cost), PETG 925 (book), MISC 100 (book via blank key), nozzle uncosted, return -900
-check('today gross: cogs 1925, gross 1425, margin 42.5', D.profit.todayCost === 1925 && D.profit.todayGross === 1425 && D.profit.todayMargin === 42.5, D.profit);
-check('month gross (invoice discount shared): revenue 3150, cost 1925, gross 1225, margin 38.9',
-  D.profit.monthRevenue === 3150 && D.profit.monthCost === 1925 && D.profit.monthGross === 1225 && D.profit.monthMargin === 38.9, D.profit);
+// night-books B8 (D6): PLA's cost is the cost book's 750 now, not its own cost_price 900 - every PLA figure below moves by 150 a unit
+check('today gross: cogs 1775, gross 1575, margin 47', D.profit.todayCost === 1775 && D.profit.todayGross === 1575 && D.profit.todayMargin === 47, D.profit);
+// night-books B5 (owner D1 = A, 6 Nov 2026): the uncosted nozzle sale (300) is kept out of gross profit, not counted as 100% profit
+check('month gross (invoice discount shared): revenue 3150, cost 1775, gross 1075 (300 with no cost kept out), margin 34.1',
+  D.profit.monthRevenue === 3150 && D.profit.monthCost === 1775 && D.profit.monthGross === 1075 && D.profit.monthMargin === 34.1, D.profit);
 check('uncosted revenue 300', D.profit.uncosted === 300, D.profit);
 check('expenses: 11500 paid (voided left out), 20000 fixed still to pay', D.profit.monthExpenses === 11500 && D.profit.monthUnpaid === 20000, D.profit);
 check('stock: 2 in, 2 at reorder, 3 out (discontinued counts)', D.stock.inStock === 2 && D.stock.reorder === 2 && D.stock.outOfStock === 3, D.stock);
 check('retail stock value 171450 in 14 units', k.stockValue === 171450 && k.stockUnits === 14, k);
-check('cover: stock at cost 130000, 466/day, 279 days, lead 60', D.cover.stockAtCost === 130000 && D.cover.dailyCost === 466 &&
-  D.cover.days === 279 && D.cover.leadDays === 60 && D.cover.reorderNow === 2 && D.cover.outOfStock === 3, D.cover);
+check('cover: stock at cost 128950, 464/day, 278 days, lead 60', D.cover.stockAtCost === 128950 && D.cover.dailyCost === 464 &&
+  D.cover.days === 278 && D.cover.leadDays === 60 && D.cover.reorderNow === 2 && D.cover.outOfStock === 3, D.cover);
 const fil = D.stockByCat.find((c) => c.cat === 'Filaments');
 check('stock by category, cost first', D.stockByCat[0].cat === 'Printers' && D.stockByCat[0].cost === 120000 &&
-  fil.cost === 10000 && fil.units === 11 && fil.skus === 4 && fil.value === 15450, D.stockByCat);
+  fil.cost === 8950 && fil.units === 11 && fil.skus === 4 && fil.value === 15450, D.stockByCat);
 check('cash: owed 3060, courier 1000 (30 days), advances 700', D.cash.owedByCustomers === 3060 && D.cash.withCourier === 1000 && D.cash.advancesHeld === 700, D.cash);
 check('courier balance: null while courier.js has no sfBalance (or a number)', D.cash.courierBalance === null || typeof D.cash.courierBalance === 'number', D.cash);
 check('courier alerts: 1 review, 1 to match, last night\'s error', D.alerts.courier.review === 1 && D.alerts.courier.pending === 1 &&
@@ -178,7 +180,7 @@ r = await mgr('erpBundle', [['dash', 'costs']]);
 check('manager: same, and the cost book opens to them', r.ok && !('profit' in r.result.dash) && !('cash' in r.result.dash) && !!r.result.costs, r.result && Object.keys(r.result));
 await makeShareholder();
 r = await shareholder('erpBundle', [['dash', 'costs']]);
-check('shareholder sees everything through the bundle', r.ok && r.result.dash.profit.monthGross === 1225 && r.result.dash.cash &&
+check('shareholder sees everything through the bundle', r.ok && r.result.dash.profit.monthGross === 1075 && r.result.dash.cash &&
   r.result.costs && r.result.costs.rows.length === 5 && !r.result.dash.hideProfit, r.result && r.result.errors);
 
 // ---- day picker -----------------------------------------------------------------
@@ -203,12 +205,12 @@ r = await owner('erpPnl', [{ months: 6 }]);
 const P = r.result;
 const cur = P.months[5], prev = P.months[4];
 check('6 months, current last', r.ok && P.months.length === 6 && cur.current && cur.month === thisMonth && !prev.current, P.months.map((m) => m.month));
-check('P&L current: sales 4500, returns 1350, net 3150, cost 1925, gross 1225 (38.9%)',
-  cur.sales === 4500 && cur.returns === 1350 && cur.netSales === 3150 && cur.cost === 1925 && cur.gross === 1225 && cur.grossMargin === 38.9, cur);
+check('P&L current: sales 4500, returns 1350, net 3150, cost 1775 (B8), 300 with no cost kept out (B5), gross 1075 (37.7% of the costed sales)',
+  cur.sales === 4500 && cur.returns === 1350 && cur.netSales === 3150 && cur.cost === 1775 && cur.uncostedOut === 300 && cur.gross === 1075 && cur.grossMargin === 37.7, cur);
 check('P&L delivery 60, courier 130, extra 15, short 40, uncosted 300', cur.delivery === 60 && cur.courier === 130 &&
   cur.courierExtra === 15 && cur.courierShort === 40 && cur.uncosted === 300, cur);
-check('P&L expenses 11500 by category, net -10370 (-329.2%)', cur.expenses === 11500 && cur.byCat.Rent === 10000 && cur.byCat.Utilities === 1500 &&
-  cur.net === -10370 && cur.netMargin === -329.2, cur);
+check('P&L expenses 11500 by category, net -10520 (-334%)', cur.expenses === 11500 && cur.byCat.Rent === 10000 && cur.byCat.Utilities === 1500 &&
+  cur.net === -10520 && cur.netMargin === -334, cur);
 check('P&L previous month: 52000 sales, cost 40000', prev.sales === 52000 && prev.cost === 40000 && prev.gross === 12000, prev);
 check('P&L categories', JSON.stringify(P.categories) === '["Rent","Utilities"]', P.categories);
 r = await owner('erpPnl', [{ months: 40 }]);
@@ -221,16 +223,16 @@ r = await mgr('erpMoney', [{ days: 90 }]);
 check('manager cannot see product profit', !r.ok, r);
 r = await owner('erpMoney', [{ days: 9999 }]);
 const M = r.result;
-// fix 2: PLA costs its own 900, not the book's 750
-check('money: revenue 55150, cost 41925 (own cost first), profit 13225, margin 24',
-  r.ok && M.revenue === 55150 && M.cost === 41925 && M.profit === 13225 && M.margin === 24, M);
+// night-books B8 (D6): the cost book wins - PLA costs the book's 750 now, not its own 900 (fix 2 had it the other way)
+check('money: revenue 55150, cost 41775 (cost book first, B8), profit 13075 (300 with no cost kept out, B5), margin 23.8',
+  r.ok && M.revenue === 55150 && M.cost === 41775 && M.profit === 13075 && M.margin === 23.8, M);
 check('money: unknown revenue 300, 1 unit', M.unknownRevenue === 300 && M.unknownUnits === 1, M);
 const mPla = M.products.find((p) => p.sku === 'FIL-SUN-PLA-BLA-001');
-check('money: PLA nets its return, cost 900', mPla.units === 1 && mPla.cost === 900 && near(mPla.revenue, Math.round(2700 - 200 * 2700 / 4200 - 1350)), mPla);
+check('money: PLA nets its return, cost 750 (the book, B8)', mPla.units === 1 && mPla.cost === 750 && near(mPla.revenue, Math.round(2700 - 200 * 2700 / 4200 - 1350)), mPla);
 check('money: best earner first', M.products[0].sku === 'PRT-BAM-A1-001' && M.products.find((p) => p.sku === 'ACC-NOZ-001').unknown === true, M.products);
 check('money: brand Unknown for a blank brand', !!M.brands.find((b) => b.name === 'Unknown') && M.brands[0].name === 'Bambulab', M.brands);
 check('money: dead stock = old PETG never sold, 1850', M.deadCount === 1 && M.dead[0].sku === 'FIL-OLD-001' && M.dead[0].tied === 1850 &&
-  M.dead[0].lastSoldDays === null && M.deadCash === 1850 && M.stockCash === 130000 && M.deadAfter === 90 && M.days === 9999, M);
+  M.dead[0].lastSoldDays === null && M.deadCash === 1850 && M.stockCash === 128950 && M.deadAfter === 90 && M.days === 9999, M);
 r = await owner('erpMoney', [{}]);
 check('money: default window 90', r.ok && r.result.days === 90);
 
