@@ -35814,6 +35814,26 @@ body[data-fdview="settings"] #o_cp .crumbs, body[data-fdview="tools"] #o_cp .cru
       ((MENU_TABS[VIEW] || TABS).length < 2 ? '<div style="height:4px"></div>' : '<div class="ib-tabs" role="tablist">' + (MENU_TABS[VIEW] || TABS).filter(function (t) { return t[0] !== 'leads' && !(t[0] === 'cost' && ME && !pageTop()) && !(t[0] === 'day' && ME && !pageTop() && ME.role !== 'manager') && !(t[0] === 'team' && ME && !pageTop() && ME.role !== 'manager') && (!TAB_FEAT[t[0]] || fon(TAB_FEAT[t[0]])); }).map(function (t) {
         return '<button type="button" data-ibtab="' + t[0] + '" class="' + (IB.tab === t[0] ? 'on' : '') + '">' + esc(t[1]) + (n[t[0]] ? '<span class="n">' + n[t[0]] + '</span>' : '') + '</button>'; }).join('') + '</div>') + inner;
   }
+  // ibmorph-1: bring the old screen in line with the new one node by node; chat rows are matched by their id (data-ibopen)
+  function ibMorphEl(a, b) {
+    var i, at;
+    for (i = 0; i < b.attributes.length; i++) { at = b.attributes[i]; if (a.getAttribute(at.name) !== at.value) a.setAttribute(at.name, at.value); }
+    for (i = a.attributes.length - 1; i >= 0; i--) { at = a.attributes[i]; if (!b.hasAttribute(at.name) && at.name !== 'data-tint') a.removeAttribute(at.name); }
+    ibMorphKids(a, b);
+  }
+  function ibMorphKids(a, b) {
+    var nk = [].slice.call(b.childNodes), keyed = {};
+    [].forEach.call(a.childNodes, function (n) { var k = n.nodeType === 1 && n.getAttribute('data-ibopen'); if (k) keyed[k] = n; });
+    for (var i = 0; i < nk.length; i++) {
+      var nn = nk[i], cur = a.childNodes[i], k = nn.nodeType === 1 && nn.getAttribute('data-ibopen');
+      if (k && keyed[k] && keyed[k] !== cur) { a.insertBefore(keyed[k], cur || null); cur = keyed[k]; }
+      if (!cur) { a.appendChild(nn); continue; }
+      if (cur.nodeType !== nn.nodeType || cur.nodeName !== nn.nodeName) { a.replaceChild(nn, cur); continue; }
+      if (cur.nodeType === 1) ibMorphEl(cur, nn);
+      else if (cur.nodeValue !== nn.nodeValue) cur.nodeValue = nn.nodeValue;
+    }
+    while (a.childNodes.length > nk.length) a.removeChild(a.lastChild);
+  }
   function paint(keepScroll) {
     var v = el('view'); if (!v) return;
     var box = v.querySelector('.ib-msgs'), atBottom = box ? box.scrollHeight - box.scrollTop - box.clientHeight < 60 : true, ta = el('ibReply'), draft = ta ? ta.value : null, focus = document.activeElement && document.activeElement.id;
@@ -35821,7 +35841,9 @@ body[data-fdview="settings"] #o_cp .crumbs, body[data-fdview="tools"] #o_cp .cru
     // message only when it was already at the bottom or another chat was opened
     var keep = {}, sameConv = IB._paintedConv === IB.convId, pageY = scrollY;
     ['.ib-list', '.ib-side', '.ib-rail', '.ib-msgs'].forEach(function (s) { var b = v.querySelector(s); if (b) keep[s] = b.scrollTop; });
-    v.innerHTML = view();
+    // ibmorph-1: a refresh while the chat screen is up changes only what changed (pictures are not drawn again, so they do not blink)
+    if (keepScroll && v.querySelector('.ib-wrap')) { var tmp = document.createElement('div'); tmp.innerHTML = view(); ibMorphKids(v, tmp); }
+    else v.innerHTML = view();
     Object.keys(keep).forEach(function (s) { var b = v.querySelector(s); if (b && s !== '.ib-msgs' && !(s === '.ib-list' && IB._listReset)) b.scrollTop = keep[s]; });
     IB._listReset = false;
     var nb = v.querySelector('.ib-msgs'); if (nb) { if (atBottom || !sameConv || (!keepScroll && keep['.ib-msgs'] === undefined)) nb.scrollTop = nb.scrollHeight; else nb.scrollTop = keep['.ib-msgs']; }

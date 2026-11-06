@@ -222,6 +222,26 @@ await asB(async (ctx) => ib.hookPost(ctx, await chRow(E.id), fromMe, {}));
 check('a reply from the business\'s phone is written as the team\'s, the AI keeps the chat', (await sql`select count(*)::int n from inbox_messages where conversation_id = ${conv2} and author = 'team'`)[0].n === 1 &&
   (await sql`select mode from inbox_conversations where id = ${conv2}`)[0].mode === 'ai');
 
+// walid-1: WhatsApp's hidden-number ids (LID): the phone in remoteJidAlt wins; a LID alone is kept whole and answered as a LID;
+// an old contact kept as the LID's digits gets WhatsApp's 400 as a phone and is tried again as a LID
+{ const ch1 = await asB(async (ctx) => (await import(pathToFileURL(path.join(fnDir, 'handlers', 'inboxch.js')))));
+  const ev1 = ch1.readHook('wa_evo', { event: 'messages.upsert', data: { key: { remoteJid: '123456789012345@lid', remoteJidAlt: '8801711000999@s.whatsapp.net', fromMe: false, id: 'L1' }, message: { conversation: 'hi' } } });
+  check('a LID message with the phone beside it is read by the phone', ev1[0] && ev1[0].from === '8801711000999', ev1);
+  const ev2 = ch1.readHook('wa_evo', { event: 'messages.upsert', data: { key: { remoteJid: '123456789012345@lid', fromMe: false, id: 'L2' }, message: { conversation: 'hi' } } });
+  check('a LID message alone keeps the whole LID', ev2[0] && ev2[0].from === '123456789012345@lid', ev2);
+  const chE = await chRow(E.id);
+  evo.length = 0;
+  let r1 = await asB((ctx) => ch1.sendOut(ctx, chE, { external_id: '123456789012345@lid' }, { kind: 'text', text: 'ok' }));
+  check('a LID contact is answered as the LID', r1.ok && evo.some((x) => /sendText/.test(x.url) && x.body.number === '123456789012345@lid'), evo);
+  web.on(/evo\.test\/message\/sendText/, (url, opts) => { const b = JSON.parse(opts.body); evo.push({ url, body: b }); return /@lid$/.test(b.number) ? { status: 200, body: { key: { id: 'LX' } } } : { status: 400, body: { message: 'Bad Request' } }; });
+  evo.length = 0;
+  r1 = await asB((ctx) => ch1.sendOut(ctx, chE, { external_id: '123456789012345' }, { kind: 'text', text: 'ok' }));
+  check('an old LID-digits contact: 400 as a phone, sent again as a LID', r1.ok && evo.length === 2 && evo[1].body.number === '123456789012345@lid', evo);
+  evo.length = 0;
+  r1 = await asB((ctx) => ch1.sendOut(ctx, chE, { external_id: '8801811222333' }, { kind: 'text', text: 'ok' }));
+  check('a real phone that WhatsApp refuses is not tried as a LID', !r1.ok && evo.length === 1, evo);
+  web.on(/evo\.test\/message\/sendText/, (url, opts) => { evo.push({ url, body: JSON.parse(opts.body) }); return { status: 200, body: { key: { id: 'E' + evo.length } } }; }); }
+
 // ---- 10. the website chat: start with a name and a mobile, send, poll; a forged visitor gets nothing
 await sql`update inbox_channels set status = 'live' where id = ${W.id}`;
 let wc = await asB((ctx) => ib.webchat(ctx, W.id, 'start', { name: 'Tanvir', phone: '0171' }, '1.1.1.1'));

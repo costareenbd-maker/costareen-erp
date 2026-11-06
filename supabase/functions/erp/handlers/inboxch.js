@@ -57,6 +57,9 @@ export async function fetchBytes(ctx, url, headers) {
 }
 
 function waTo(n) { return str(n).replace(/[^0-9]/g, ''); }
+// walid-1: WhatsApp now hides many people's phone behind a 'LID' (123...@lid). Evolution takes a full JID as the number,
+// so a contact kept as a JID is sent to as it is; a plain number stays digits only.
+function evoTo(n) { const t = str(n).trim(); return /@(lid|s\.whatsapp\.net)$/.test(t) ? t : waTo(t); }
 function numbered(text, buttons) {   // WhatsApp without buttons: the choice as a numbered list (as AiPraktor does)
   return (text ? text + '\n' : '') + buttons.map((b, i) => (i + 1) + '. ' + b.title).join('\n');
 }
@@ -121,20 +124,24 @@ export async function sendOut(ctx, ch, contact, msg) {
   if (ch.kind === 'wa_evo') {
     const base = (await chSecret(ctx, ch, 'URL')).replace(/\/+$/, ''), key = await chSecret(ctx, ch, 'KEY'), inst = ch.external_id;
     if (!base || !key || !inst) return { ok: false, error: 'The Evolution API server is not set on this channel.' };
-    const headers = { apikey: key }, number = waTo(to);
+    const headers = { apikey: key }, number = evoTo(to);
     if (msg.kind === 'seen') {
       if (!msg.replyTo) return { ok: true };
-      const r = await call(ctx, base + '/chat/markMessageAsRead/' + encodeURIComponent(inst), { headers, body: { readMessages: [{ remoteJid: number + '@s.whatsapp.net', fromMe: false, id: msg.replyTo }] } });
+      const r = await call(ctx, base + '/chat/markMessageAsRead/' + encodeURIComponent(inst), { headers, body: { readMessages: [{ remoteJid: /@/.test(number) ? number : number + '@s.whatsapp.net', fromMe: false, id: msg.replyTo }] } });
       return { ok: r.ok };
     }
     if (msg.kind === 'typing') {
       const r = await call(ctx, base + '/chat/sendPresence/' + encodeURIComponent(inst), { headers, body: { number, delay: 1500, presence: 'composing' } });
       return { ok: r.ok };
     }
-    let r;
+    // walid-1: a contact saved before the fix as the LID's digits only: WhatsApp answers 400 to it as a phone - try it as a LID
+    const sendTo = async (number) => { let r;
     if (msg.kind === 'document') r = await call(ctx, base + '/message/sendMedia/' + encodeURIComponent(inst), { headers, body: { number, mediatype: 'document', mimetype: str(msg.mime) || 'application/pdf', media: msg.base64 || msg.url, fileName: str(msg.fileName) || 'file.pdf', caption: str(msg.caption) } });
     else if (msg.kind === 'image') r = await call(ctx, base + '/message/sendMedia/' + encodeURIComponent(inst), { headers, body: { number, mediatype: 'image', media: msg.url, caption: str(msg.caption) } });
     else r = await call(ctx, base + '/message/sendText/' + encodeURIComponent(inst), { headers, body: { number, text: str(msg.kind === 'buttons' ? numbered(msg.text, msg.buttons || []) : msg.text) } });
+      return r; };
+    let r = await sendTo(number);
+    if (!r.ok && r.code === 400 && !/@/.test(number) && number.length >= 14) { const r2 = await sendTo(number + '@lid'); if (r2.ok) r = r2; }
     return { ok: r.ok, externalId: str(r.json.key && r.json.key.id), error: r.ok ? '' : why(r) };
   }
   if (ch.kind === 'wa_sender') {
@@ -241,10 +248,12 @@ export function readHook(kind, body) {
     let list = b.data && (b.data.messages || b.data);
     if (!Array.isArray(list)) list = list ? [list] : [];
     for (const d of list) {
-      const key = d.key || {}, jid = str(key.remoteJid || key.remoteJidAlt);
+      // walid-1: the phone JID first (remoteJidAlt / senderPn carry it when remoteJid is a LID); a LID alone is kept whole
+      const key = d.key || {}, alts = [key.remoteJid, key.remoteJidAlt, key.senderPn, d.senderPn].map(str).filter(Boolean);
+      const jid = alts.find((j) => /@s\.whatsapp\.net$/.test(j)) || str(key.remoteJid || key.remoteJidAlt);
       if (!jid || /@g\.us$|status@broadcast/.test(jid)) continue;      // no groups, no statuses
       const m = d.message || {};
-      const ev = { type: 'message', from: jid.replace(/@.*$/, ''), name: str(d.pushName), id: str(key.id), echo: !!key.fromMe, text: '' };
+      const ev = { type: 'message', from: /@lid$/.test(jid) ? jid : jid.replace(/@.*$/, ''), name: str(d.pushName), id: str(key.id), echo: !!key.fromMe, text: '' };
       ev.text = str(m.conversation || (m.extendedTextMessage && m.extendedTextMessage.text) || (m.imageMessage && m.imageMessage.caption) || '');
       if (m.imageMessage) ev.media = { kind: 'image', base64: str(m.base64 || d.base64 || ''), mime: str(m.imageMessage.mimetype) || 'image/jpeg', url: str(m.imageMessage.url), raw: d };
       else if (m.audioMessage) ev.media = { kind: 'audio', base64: str(m.base64 || d.base64 || ''), mime: str(m.audioMessage.mimetype) || 'audio/ogg', url: str(m.audioMessage.url), raw: d };
