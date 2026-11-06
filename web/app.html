@@ -27556,7 +27556,7 @@ viewCash = function () {
   var tabs = [['ledger', 'Ledger', 'wallet'], ['accounts', 'Accounts', 'bank'], ['match', 'Unmatched', 'search', nWait ? String(nWait) : ''], ['cashup', 'Cash-up', 'taka']];
   if (held.length) tabs.push(['held', 'Courier & agent', 'truck']);
   if (ME && (pageTop())) tabs.push(['balance', 'Balance sheet', 'chart']);
-  f21TabInit('cash', 'ledger', tabs.map(function (t) { return t[0]; }));
+  f21TabInit('cash', (window.matchMedia && window.matchMedia('(max-width:640px)').matches) ? 'accounts' : 'ledger', tabs.map(function (t) { return t[0]; }));   // night-stock (acct-cash.md): a phone opens on the account cards
   if (CASH_FORM) FD21.tab.cash = 'accounts';
   var out = f21Tabs('cash', tabs);
 
@@ -44146,6 +44146,420 @@ html[data-look="clean"] #ntLang { border:0; box-shadow:var(--fd-shadow-card, non
       (DH.yes && navOn('holds') ? '<button class="btn" type="button" data-go="holds">' + esc(L('Waiting orders', 'কনফার্মের অপেক্ষায়')) + ' (' + DH.yes + ')</button>' : '') + '</div>';
     return h.replace('<div class="fdd-grid fdd-one">', row + '<div class="fdd-grid fdd-one">');
   };
+})();
+</script>
+<!-- night-stock (6 Nov 2026, Wave 4: inv-*.md + acct-*.md shapes; owner accepted every star default, 03-ANSWERS.md).
+     Display only: no money formula changes (another builder fixes those). Uses the shell's tk(), afterPaint() and ntPhone().
+     - Suppliers: a search box over the list (name, phone, country; no server call) + owed in one money format.
+     - Product cost: on a phone each price row is one short card (name + margin, three figures, three inputs in one row)
+       instead of nine stacked lines; handling / margin / currencies fold under the list (the rate warning stays on top).
+     - Joint stock > Month end: per-partner cards on a phone with the result ("pays / receives") first and big; money in ৳.
+     - Expenses (phone): "Add expense" as the first button, the figures fold under the list, one line to Profitability.
+     - Profitability: one line on top - this month's net profit, last month beside it, sales / gross / expenses - and a
+       note when sales have no buying price; on a phone the wide statement folds under it.
+     - Capital: one tab row (the "Partner's own stock" tab joins the Investors / Book / Month close pills).
+     - Money: a phone opens on the account cards (one-line hook in viewCash).
+     - Customers: the WhatsApp due reminder is in Bangla (shape copy); missing Bangla labels added.
+     - Products: "Count" and "Adjust stock" were two buttons for one screen - now one "Count / adjust".
+     - Leads (simple view): today's follow-ups strip, a search box, stage chips with counts, a "today / late" tag on due
+       rows, heat words in plain words. Campaigns > Contacts > Leads says it is the same list as the Leads page (D19). -->
+<style>
+/* suppliers search */
+.nt-sq { display:flex; gap:8px; align-items:center; margin:12px 0 4px; }
+.nt-sq input { flex:1 1 auto; max-width:420px; min-height:44px; }
+.nt-sq .nt-cnt { color:var(--fd-text-3, var(--muted)); font-size:13px; white-space:nowrap; }
+.nt-empty { padding:14px 4px; color:var(--fd-text-2, var(--muted)); }
+/* a supplier card on a phone: name, owed, country and last shipment (Products / Bought / Paid stay on the desktop table) */
+@media (max-width:640px) { :root #view table.m-cards tr[data-supopen] > td:nth-child(3), :root #view table.m-cards tr[data-supopen] > td:nth-child(4), :root #view table.m-cards tr[data-supopen] > td:nth-child(5) { display:none !important; } }
+/* product cost: one short card per row on a phone */
+@media (max-width:640px) {
+  :root #view table.m-cards.nt-ckc > tbody > tr:not(.grp) { display:grid !important; grid-template-columns:1fr 1fr 1fr; gap:6px 10px; padding:12px 14px !important; }
+  :root #view table.m-cards.nt-ckc > tbody > tr:not(.grp) > td { display:block !important; text-align:left !important; padding:0 !important; margin:0 !important; border:0 !important; min-width:0; }
+  :root #view table.m-cards.nt-ckc > tbody > tr:not(.grp) > td::before { float:none !important; display:block; margin:0 0 2px !important; max-width:none !important; font-size:11px; }
+  :root #view table.m-cards.nt-ckc > tbody > tr:not(.grp) > td::after { content:none !important; }
+  :root #view table.m-cards.nt-ckc > tbody > tr:not(.grp) > td:nth-child(1) { grid-column:1; grid-row:1; font-weight:700; }
+  :root #view table.m-cards.nt-ckc > tbody > tr:not(.grp) > td:nth-child(2) { grid-column:2; grid-row:1; font-weight:600; }
+  :root #view table.m-cards.nt-ckc > tbody > tr:not(.grp) > td:nth-child(1)::before,
+  :root #view table.m-cards.nt-ckc > tbody > tr:not(.grp) > td:nth-child(2)::before,
+  :root #view table.m-cards.nt-ckc > tbody > tr:not(.grp) > td:nth-child(9)::before { content:none !important; }
+  :root #view table.m-cards.nt-ckc > tbody > tr:not(.grp) > td:nth-child(9) { grid-column:3; grid-row:1; text-align:right !important; }
+  :root #view table.m-cards.nt-ckc > tbody > tr:not(.grp) > td:nth-child(3) { grid-column:1; grid-row:2; }
+  :root #view table.m-cards.nt-ckc > tbody > tr:not(.grp) > td:nth-child(7) { grid-column:2; grid-row:2; }
+  :root #view table.m-cards.nt-ckc > tbody > tr:not(.grp) > td:nth-child(8) { grid-column:3; grid-row:2; }
+  :root #view table.m-cards.nt-ckc > tbody > tr:not(.grp) > td:nth-child(4) { grid-column:1; grid-row:3; }
+  :root #view table.m-cards.nt-ckc > tbody > tr:not(.grp) > td:nth-child(5) { grid-column:2; grid-row:3; }
+  :root #view table.m-cards.nt-ckc > tbody > tr:not(.grp) > td:nth-child(6) { grid-column:3; grid-row:3; }
+  :root #view table.m-cards.nt-ckc > tbody > tr:not(.grp) > td:nth-child(n+10) { grid-column:1 / -1; }
+  :root #view table.m-cards.nt-ckc input.i, :root #view table.m-cards.nt-ckc select.i { width:100% !important; min-width:0 !important; min-height:40px; }
+  /* joint month end: the result first, the figures two by two */
+  :root #view table.m-cards.nt-jtc > tbody > tr { display:grid !important; grid-template-columns:1fr 1fr; gap:6px 12px; }
+  :root #view table.m-cards.nt-jtc > tbody > tr > td { display:block !important; text-align:left !important; padding:0 !important; margin:0 !important; border:0 !important; min-width:0; }
+  :root #view table.m-cards.nt-jtc > tbody > tr > td::before { float:none !important; display:block; margin:0 0 2px !important; max-width:none !important; font-size:11px; }
+  :root #view table.m-cards.nt-jtc > tbody > tr > td::after { content:none !important; }
+  :root #view table.m-cards.nt-jtc > tbody > tr > td:first-child { grid-column:1 / -1; order:-2; font-size:15px; }
+  :root #view table.m-cards.nt-jtc > tbody > tr > td.nt-jt-res { grid-column:1 / -1; order:-1; font-size:18px; padding:4px 0 8px !important; border-bottom:1px solid var(--fd-border, var(--ring)) !important; margin-bottom:4px !important; }
+  :root #view table.m-cards.nt-jtc > tbody > tr > td.nt-jt-res::before { font-size:11px; }
+  /* expenses: the one button */
+  .nt-exadd { display:flex; width:100%; justify-content:center; min-height:48px; margin:4px 0 12px; font-size:15px; }
+}
+.nt-line { display:flex; flex-wrap:wrap; gap:6px 10px; align-items:center; margin:12px 0 0; padding:12px 16px; border-radius:14px;
+  background:var(--fd-card, var(--surface, #fff)); border:1px solid var(--fd-border, var(--ring, #e6e8ef)); color:var(--fd-text-2, var(--ink)); }
+.nt-line b { color:var(--fd-text, var(--ink)); }
+.nt-line .linkbtn { margin-left:auto; }
+/* profitability: the one line on top */
+.nt-pl { margin:0 0 14px; padding:16px 18px; border-radius:16px; background:var(--fd-card, var(--surface, #fff)); border:1px solid var(--fd-border, var(--ring, #e6e8ef)); }
+.nt-pl .nt-pl-h { display:flex; flex-wrap:wrap; align-items:baseline; gap:4px 14px; }
+.nt-pl .nt-pl-v { font-size:clamp(22px, 6vw, 30px); font-weight:700; color:var(--fd-text, var(--ink)); }
+.nt-pl .nt-pl-v.neg { color:var(--fd-danger, var(--critical, #c62828)); }
+.nt-pl .nt-pl-l { color:var(--fd-text-2, var(--muted)); font-size:14px; }
+.nt-pl .nt-pl-3 { display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:8px; margin-top:12px; }
+.nt-pl .nt-pl-3 div { min-width:0; }
+.nt-pl .nt-pl-3 b { display:block; font-size:15px; overflow-wrap:anywhere; color:var(--fd-text, var(--ink)); }
+.nt-pl .nt-pl-3 span { font-size:12px; color:var(--fd-text-3, var(--muted)); }
+.nt-pl .note { margin:12px 0 0; }
+details.nt-fold.nt-pnlfold > .nt-fold-in { padding:0 4px 6px; }
+/* leads: today strip, search, stage chips, due tag */
+.nt-ld { display:flex; flex-direction:column; gap:8px; margin:10px 0 0; }
+.nt-ld .nt-today { display:flex; align-items:center; gap:8px; min-height:44px; padding:0 14px; border-radius:12px; border:0; cursor:pointer; font:inherit; font-weight:600; text-align:left;
+  background:var(--fd-warn-bg, #fff4d6); color:var(--fd-text, #3a2a00); }
+.nt-ld .nt-today[aria-pressed="true"] { outline:2px solid var(--fd-text, var(--ink)); }
+.nt-ld input { min-height:44px; }
+.nt-ld .chips { display:flex; gap:6px; overflow-x:auto; flex-wrap:nowrap; padding-bottom:2px; margin:0; }
+.nt-ld .chips .chip { white-space:nowrap; flex:0 0 auto; }
+.nt-due { display:inline-block; margin-right:6px; padding:1px 8px; border-radius:999px; font-size:11.5px; font-weight:700; background:var(--fd-danger, var(--critical, #c62828)); color:#fff; }
+</style>
+<script>
+(function () {
+  var bn = function () { return typeof LANG !== 'undefined' && LANG === 'bn'; };
+  var phone = function () { return typeof ntPhone === 'function' ? ntPhone() : !!(window.matchMedia && window.matchMedia('(max-width:640px)').matches); };
+  var I = {
+    'Supplier name, phone or country': 'সাপ্লায়ারের নাম, ফোন বা দেশ',
+    'Count / adjust': 'গুনুন / ঠিক করুন',
+    'Handling, margin and currencies': 'হ্যান্ডলিং, মার্জিন ও মুদ্রা',
+    'Add expense': 'খরচ লিখুন',
+    'Net profit this month': 'এ মাসে নিট লাভ',
+    'Profitability': 'লাভের হিসাব',
+    'See the full statement': 'পুরো হিসাবটা দেখুন',
+    'last month (whole month)': 'গত মাসে (পুরো মাস)',
+    'Net sales': 'নিট বিক্রি',
+    'Gross profit': 'মোট লাভ',
+    'Expenses': 'খরচ',
+    'Fill in Product cost': 'কেনা দাম লিখুন',
+    'Search leads: name, shop, phone or city': 'নাম, দোকান, ফোন বা শহর লিখুন',
+    'All': 'সব',
+    'today': 'আজ',
+    'late': 'দেরি হয়েছে',
+    'very interested': 'আগ্রহ বেশি',
+    'somewhat interested': 'মাঝারি',
+    'little interest': 'কম',
+    'Owes you': 'আপনার পাওনা',
+    'Held in advance': 'অগ্রিম রাখা আছে',
+    'At a glance': 'এক নজরে',
+    'Follow-ups': 'ফলো-আপ',
+    'New this month': 'এ মাসে নতুন',
+    'Owed by customers': 'কাস্টমারের কাছে বাকি',
+    'Retail': 'খুচরা', 'Wholesale': 'পাইকারি', 'Corporate': 'প্রতিষ্ঠান', 'Walk-in': 'ওয়াক-ইন',
+    'Returning': 'পুরোনো কাস্টমার', 'VIP': 'ভিআইপি', 'Inactive': 'নিষ্ক্রিয়'
+  };
+  try { for (var k in I) if (!I18N_BN[k]) I18N_BN[k] = I[k]; } catch (e) {}
+  var T = function (s) { return bn() && I[s] ? I[s] : s; };
+
+  /* ---------------------------------------------------------------- suppliers */
+  var SUPQ = '';
+  try { owedCell = function (n) {
+    return n > 0 ? '<strong style="color:var(--critical)">' + tk(n) + '</strong>' : n < 0 ? '<span style="color:var(--good)">' + tk(-n) + ' paid ahead</span>' : '<span style="color:var(--muted)">' + tk(0) + '</span>';
+  }; } catch (e) {}
+  function supFilter() {
+    var box = el('view'); if (!box) return;
+    var q = SUPQ.trim().toLowerCase(), rows = box.querySelectorAll('tr[data-supopen]'), n = 0;
+    [].forEach.call(rows, function (tr) { var hit = !q || tr.textContent.toLowerCase().indexOf(q) >= 0; tr.style.display = hit ? '' : 'none'; if (hit) n++; });
+    var c = box.querySelector('.nt-sq .nt-cnt'); if (c) c.textContent = q ? n + ' / ' + rows.length : '';
+    var em = box.querySelector('.nt-sq-empty');
+    if (q && !n) {
+      if (!em) { em = document.createElement('div'); em.className = 'nt-empty nt-sq-empty'; var tb = box.querySelector('tr[data-supopen]'); var wrap = tb && tb.closest('.o_tbl'); if (wrap) wrap.parentNode.insertBefore(em, wrap.nextSibling); }
+      if (em) em.textContent = bn() ? '“' + SUPQ.trim() + '” নামে কোনো সাপ্লায়ার নেই।' : 'No supplier called “' + SUPQ.trim() + '”.';
+    } else if (em) em.parentNode.removeChild(em);
+  }
+  AFTER_PAINT.push(function nightSupSearch() {
+    if (VIEW !== 'suppliers' || (typeof SUPP !== 'undefined' && SUPP && SUPP.name)) return;
+    var v = el('view'), first = v && v.querySelector('tr[data-supopen]'); if (!first) return;
+    var wrap = first.closest('.o_tbl'); if (!wrap) return;
+    if (!v.querySelector('.nt-sq')) {
+      var d = document.createElement('div'); d.className = 'nt-sq';
+      d.innerHTML = '<input class="i" type="search" id="nt_supq" autocomplete="off" aria-label="' + esc(T('Supplier name, phone or country')) + '" placeholder="' + esc(T('Supplier name, phone or country')) + '"><span class="nt-cnt" data-noi18n="1"></span>';
+      wrap.parentNode.insertBefore(d, wrap);
+      var inp = d.querySelector('input'); inp.value = SUPQ;
+      inp.addEventListener('input', function () { SUPQ = inp.value; supFilter(); });
+    }
+    // Bought / Paid in the one money format
+    [].forEach.call(v.querySelectorAll('tr[data-supopen]'), function (tr) {
+      [3, 4].forEach(function (i) { var td = tr.cells[i]; if (td && isNum(td.textContent)) td.textContent = tk(numOf(td.textContent)); });
+    });
+    supFilter();
+  });
+
+  /* ------------------------------------------------------------- product cost */
+  var isNum = function (s) { return /^\s*−?-?\d[\d,]*(\.\d+)?\s*$/.test(s); };
+  var numOf = function (s) { var neg = /[−-]/.test(s); var v = Number(String(s).replace(/[^\d.]/g, '')); return neg ? -v : v; };
+  AFTER_PAINT.push(function nightCostCards() {
+    if (VIEW !== 'costs') return;
+    var v = el('view'); if (!v) return;
+    var inp = v.querySelector('table.m-cards input[data-ck="amount"]'), t = inp && inp.closest('table');
+    if (t && !t.classList.contains('nt-ckc')) {
+      t.classList.add('nt-ckc');
+      [].forEach.call(t.querySelectorAll('td[data-label="Lands at"], td[data-label="Sells at"]'), function (td) { if (isNum(td.textContent)) td.textContent = tk(numOf(td.textContent)); });
+    }
+    if (!phone()) return;
+    // the settings that are set once go under the list (the rate warning stays on top)
+    var hand = v.querySelector('#ck_handling'), fx = v.querySelector('[data-fxrate]');
+    var secs = [hand && hand.closest('#view > section'), fx && fx.closest('#view > section')].filter(function (s, i, a) { return s && a.indexOf(s) === i; });
+    if (!secs.length || !t) return;
+    var last = t.closest('#view > section'); if (!last) return;
+    var fold = v.querySelector(':scope > details.nt-ckfold');
+    if (!fold) {
+      fold = document.createElement('details'); fold.className = 'nt-fold nt-ckfold';
+      fold.innerHTML = '<summary><span>' + esc(T('Handling, margin and currencies')) + '</span></summary><div class="nt-fold-in"></div>';
+    }
+    var inBox = fold.querySelector('.nt-fold-in');
+    secs.forEach(function (s) { if (s.parentNode !== inBox) inBox.appendChild(s); });
+    if (last.nextSibling !== fold) v.insertBefore(fold, last.nextSibling);
+    // a missing rate opens the fold, so the box to fill is right there
+    if (v.querySelector('.note.err') && !fold.hasAttribute('data-nt-seen')) { fold.open = true; fold.setAttribute('data-nt-seen', '1'); }
+  });
+
+  /* the old kpi() boxes write <span class="cur">BDT</span>6,14,500: the one money format there too */
+  AFTER_PAINT.push(function nightKpiTaka() {
+    var v = el('view'); if (!v) return;
+    [].forEach.call(v.querySelectorAll('.kpi .val > span.cur'), function (c) {
+      if (c.textContent.trim() !== 'BDT') return;
+      var n = c.nextSibling; if (!n || n.nodeType !== 3 || !isNum(n.nodeValue)) return;
+      n.nodeValue = tk(numOf(n.nodeValue)); c.parentNode.removeChild(c);
+    });
+    // customer balances ("Customers who owe", "Paid in advance") were bare numbers
+    [].forEach.call(v.querySelectorAll('span.bal'), function (b) { if (b.children.length === 0 && isNum(b.textContent)) b.textContent = tk(numOf(b.textContent)); });
+    // Money > Accounts: each account card's balance (in the business currency)
+    var cc = (typeof CASH !== 'undefined' && CASH && CASH.currency) || 'BDT';
+    [].forEach.call(v.querySelectorAll('.cash_card > .b'), function (b) { if (isNum(b.textContent)) b.textContent = tk(numOf(b.textContent), { cur: cc }); });
+  });
+
+  /* ---------------------------------------------------------- joint month end */
+  AFTER_PAINT.push(function nightJointCards() {
+    if (VIEW !== 'joint') return;
+    var v = el('view'); if (!v) return;
+    [].forEach.call(v.querySelectorAll('table.m-cards'), function (t) {
+      if (t.classList.contains('nt-jtc') || !t.querySelector('td[data-label="To settle"]')) return;
+      t.classList.add('nt-jtc');
+      [].forEach.call(t.querySelectorAll('tbody td'), function (td) {
+        var l = td.getAttribute('data-label') || '';
+        if (l === 'To settle') {
+          td.classList.add('nt-jt-res');
+          var w = document.createTreeWalker(td, NodeFilter.SHOW_TEXT), n;
+          while ((n = w.nextNode())) n.nodeValue = n.nodeValue.replace(/(−|-)?\d[\d,]*(\.\d+)?/g, function (m) { return tk(numOf(m)); });
+        } else if (/^(Capital|Sold this month|Profit share|Holds|Should hold)$/.test(l) && isNum(td.textContent)) {
+          td.textContent = tk(numOf(td.textContent));
+        }
+      });
+    });
+  });
+
+  /* ---------------------------------------------------------------- expenses */
+  AFTER_PAINT.push(function nightExpensesPhone() {
+    if (VIEW !== 'expenses' || !phone()) return;
+    var v = el('view'), k = v && v.querySelector(':scope > .fd21-kpis'); if (!k) return;
+    // the button first, under the month bar (the head with "Add expense" is not shown on a phone)
+    if (typeof EXP !== 'undefined' && EXP && !EXP.isFuture && !v.querySelector('.nt-exadd') && v.querySelector('[data-f21ivopen="expenses:add"], .fd21-ivd')) {
+      var b = document.createElement('button'); b.type = 'button'; b.className = 'btn primary nt-exadd'; b.setAttribute('data-f21ivopen', 'expenses:add');
+      b.textContent = '+ ' + T('Add expense');
+      v.insertBefore(b, k);
+    }
+    // the figures under the list
+    var list = k.nextElementSibling; if (!list) return;
+    var fold = document.createElement('details'); fold.className = 'nt-fold';
+    fold.innerHTML = '<summary><span>' + esc(bn() ? 'সারাংশ' : 'Summary') + '</span><span class="nt-n" data-noi18n="1"></span></summary><div class="nt-fold-in"></div>';
+    var tot = k.querySelector('.fdd-num'); if (tot) fold.querySelector('.nt-n').textContent = tot.textContent;
+    fold.querySelector('.nt-fold-in').appendChild(k);
+    v.insertBefore(fold, list.nextSibling);
+    if (typeof EXP !== 'undefined' && EXP && typeof EXP.net === 'number' && typeof navOn === 'function' && navOn('profit')) {
+      var ln = document.createElement('div'); ln.className = 'nt-line';
+      ln.innerHTML = '<span>' + esc(T('Net profit this month')) + ' <b data-noi18n="1">' + tk(EXP.net) + '</b></span><button type="button" class="linkbtn" data-nt-go="profit">' + esc(T('Profitability')) + ' →</button>';
+      v.insertBefore(ln, fold.nextSibling);
+    }
+  });
+  document.addEventListener('click', function (e) {
+    var t = e.target && e.target.closest && e.target.closest('[data-nt-go]'); if (!t) return;
+    e.preventDefault(); go(t.getAttribute('data-nt-go'));
+  });
+
+  /* ----------------------------------------------------------- profitability */
+  AFTER_PAINT.push(function nightProfitLine() {
+    if (VIEW !== 'profit' || typeof PNL === 'undefined' || !PNL || !PNL.months || !PNL.months.length) return;
+    var v = el('view'); if (!v || v.querySelector('.nt-pl')) return;
+    var card = null;
+    [].forEach.call(v.querySelectorAll(':scope > div > section, :scope > section'), function (s) { if (!card && s.querySelector('[data-pnlm]')) card = s; });
+    if (!card) return;
+    var M = PNL.months, cur = null, idx = -1;
+    for (var i = M.length - 1; i >= 0; i--) if (M[i].current) { cur = M[i]; idx = i; break; }
+    if (!cur) return;   // an earlier range is on screen: there is no "this month" in it
+    var prev = idx > 0 ? M[idx - 1] : null;
+    var h = '<div class="nt-pl"><div class="nt-pl-h"><span class="nt-pl-l">' + esc(T('Net profit this month')) + '</span>' +
+      '<span class="nt-pl-v' + (Number(cur.net) < 0 ? ' neg' : '') + '" data-noi18n="1">' + tk(cur.net) + '</span>' +
+      (prev ? '<span class="nt-pl-l">' + esc(T('last month (whole month)')) + ' <b data-noi18n="1">' + tk(prev.net) + '</b></span>' : '') + '</div>' +
+      '<div class="nt-pl-3"><div><span>' + esc(T('Net sales')) + '</span><b data-noi18n="1">' + tk(cur.netSales) + '</b></div>' +
+      '<div><span>' + esc(T('Gross profit')) + '</span><b data-noi18n="1">' + tk(cur.gross) + '</b></div>' +
+      '<div><span>' + esc(T('Expenses')) + '</span><b data-noi18n="1">' + tk(cur.expenses) + '</b></div></div>';
+    if (Number(cur.uncosted) > 0) {
+      h += '<div class="note warn"><div class="ico">!</div><div>' +
+        (bn() ? 'এ মাসের <b data-noi18n="1">' + tk(cur.uncosted) + '</b> বিক্রির কেনা দাম লেখা নেই, তাই এর লাভ ঠিকমতো বের হচ্ছে না।'
+              : '<b data-noi18n="1">' + tk(cur.uncosted) + '</b> of this month’s sales have no buying price on record, so their profit cannot be worked out properly.') +
+        ' <button type="button" class="linkbtn" data-nt-go="costs">' + esc(T('Fill in Product cost')) + ' →</button></div></div>';
+    }
+    h += '</div>';
+    var host = card.parentNode;
+    var wrap = document.createElement('div'); wrap.innerHTML = h;
+    var line = wrap.firstChild;
+    host.insertBefore(line, card);
+    if (phone()) {
+      var fold = document.createElement('details'); fold.className = 'nt-fold nt-pnlfold';
+      fold.innerHTML = '<summary><span>' + esc(T('See the full statement')) + '</span></summary><div class="nt-fold-in"></div>';
+      try { if (localStorage.getItem('nt_fold_pnl') === '1') fold.open = true; } catch (e) {}
+      fold.addEventListener('toggle', function () { try { localStorage.setItem('nt_fold_pnl', fold.open ? '1' : '0'); } catch (e) {} });
+      host.insertBefore(fold, card); fold.querySelector('.nt-fold-in').appendChild(card);
+    }
+  });
+
+  /* ------------------------------------------------------------------ capital */
+  AFTER_PAINT.push(function nightCapitalTabs() {
+    if (VIEW !== 'capital') return;
+    var v = el('view'); if (!v) return;
+    var old = v.querySelector(':scope > .tabs[role="tablist"]'), pills = v.querySelector(':scope > .fd21-tabs');
+    if (!old || !pills || !old.querySelector('[data-captab="partner"]')) return;
+    var b = old.querySelector('[data-captab="partner"]');
+    b.className = 'fd21-pill'; b.setAttribute('aria-pressed', 'false');
+    pills.appendChild(b);
+    old.parentNode.removeChild(old);
+  });
+
+  /* ---------------------------------------------------------------- customers */
+  try {
+    var dueMessageN = dueMessage;
+    dueMessage = function (w, cur) {
+      if (cur && cur !== 'BDT' && cur !== '৳') return dueMessageN.apply(this, arguments);
+      var biz = (BIZ && BIZ.businesses && BIZ.businesses[0] && BIZ.businesses[0].name) || '';
+      return 'আসসালামু আলাইকুম' + (w.name ? ' ' + w.name : '') + ', ' + (biz ? biz + ' থেকে বলছি' : 'আমরা বলছি') + '। ' +
+        'আপনার বাকি ' + tk(w.due) + (w.invoices > 1 ? ' (' + w.invoices + 'টি ইনভয়েসে)' : '') +
+        (w.oldest ? ', সবচেয়ে পুরোনোটা ' + w.oldest + ' দিন আগের' : '') + '। ' +
+        'সুবিধামতো বিকাশ, বাংলা QR বা ক্যাশে পরিশোধ করে দিলে ভালো হয়। আগেই দিয়ে থাকলে আমাদের জানাবেন, হিসাব ঠিক করে নেব। ধন্যবাদ।';
+    };
+  } catch (e) {}
+
+  /* -------------------------------------------------------------------- stock */
+  // Count & adjust (inv-stock.md): the one-product adjustment is a short card; on a phone it sat under a ~10,000px count
+  // list. It comes first on a phone, and its 50+ product drop-down gets a type-to-find box (the select stays the field
+  // the Save handler reads; only its options are narrowed).
+  AFTER_PAINT.push(function nightStockAdjust() {
+    if (VIEW !== 'stock') return;
+    var v = el('view'), sel = v && v.querySelector('#aj_sku'); if (!sel) return;
+    var adj = sel.closest('#view > *'), cnt = v.querySelector('#ct_cat'), cntBox = cnt && cnt.closest('#view > *');
+    if (phone() && adj && cntBox && adj !== cntBox && (adj.compareDocumentPosition(cntBox) & Node.DOCUMENT_POSITION_PRECEDING)) v.insertBefore(adj, cntBox);
+    if (sel.getAttribute('data-nt-find')) return;
+    sel.setAttribute('data-nt-find', '1');
+    var all = [].map.call(sel.options, function (o) { return { v: o.value, t: o.text, s: o.selected }; });
+    var f = document.createElement('input'); f.type = 'search'; f.className = 'i'; f.autocomplete = 'off'; f.style.marginBottom = '6px';
+    f.placeholder = bn() ? 'প্রোডাক্টের নাম বা SKU লিখুন' : 'Type a product name or SKU';
+    f.setAttribute('aria-label', f.placeholder);
+    sel.parentNode.insertBefore(f, sel);
+    f.addEventListener('input', function () {
+      var q = f.value.trim().toLowerCase(), keep = sel.value, n = 0;
+      sel.innerHTML = '';
+      all.forEach(function (o) {
+        if (o.v && q && (o.t + ' ' + o.v).toLowerCase().indexOf(q) < 0 && o.v !== keep) return;
+        var op = document.createElement('option'); op.value = o.v; op.textContent = o.t; sel.appendChild(op); if (o.v) n++;
+      });
+      if (q && n === 1) { sel.value = sel.options[sel.options.length - 1].value; sel.dispatchEvent(new Event('change', { bubbles: true })); }
+      else sel.value = keep;
+    });
+  });
+
+  /* ----------------------------------------------------------------- products */
+  AFTER_PAINT.push(function nightProductsCount() {
+    if (VIEW !== 'products') return;
+    var h = el('fdHead'); if (!h) return;
+    var cs = h.querySelectorAll('button[data-fd20stock="count"]');
+    if (cs.length < 2) return;
+    // two buttons opened the same Count & adjust tab: keep one, named for both jobs
+    var keep = cs[cs.length - 1];
+    for (var i = 0; i < cs.length - 1; i++) cs[i].parentNode.removeChild(cs[i]);
+    var sv = keep.querySelector('svg'); keep.textContent = T('Count / adjust'); if (sv) keep.insertBefore(sv, keep.firstChild);
+  });
+
+  /* -------------------------------------------------------------------- leads */
+  var LDN = { q: '', stage: 0, today: false };
+  var HEAT = { hot: 'very interested', warm: 'somewhat interested', cold: 'little interest' };
+  var LD_STAGE_BN = { New: 'নতুন', Contacted: 'কথা হয়েছে', Interested: 'আগ্রহী', Quoted: 'দাম পাঠানো', Won: 'কাস্টমার হয়েছে', Lost: 'হয়নি' };
+  function ldApply(v) {
+    var d = LD.data, q = LDN.q.trim().toLowerCase(), today = (function () { var x = new Date(); return x.getFullYear() + '-' + ('0' + (x.getMonth() + 1)).slice(-2) + '-' + ('0' + x.getDate()).slice(-2); })();
+    var byId = {}; (d.leads || []).forEach(function (l) { byId[l.id] = l; });
+    var n = 0;
+    [].forEach.call(v.querySelectorAll('.l2-row'), function (row) {
+      var nm = row.querySelector('[data-l2open]'), l = nm && byId[nm.getAttribute('data-l2open')]; if (!l) return;
+      var hay = [l.name, l.company, l.phone, l.city, l.want, l.why].join(' ').toLowerCase();
+      var hit = (!q || hay.indexOf(q) >= 0) && (!LDN.stage || l.stage === LDN.stage) && (!LDN.today || l.due);
+      row.style.display = hit ? '' : 'none'; if (hit) n++;
+    });
+    var em = v.querySelector('.nt-ld-empty');
+    if (!n && (q || LDN.stage || LDN.today)) {
+      if (!em) { em = document.createElement('div'); em.className = 'nt-empty nt-ld-empty'; var c = v.querySelector('.l2-row'); c = c && c.parentNode; if (c) c.parentNode.insertBefore(em, c.nextSibling); }
+      if (em) em.textContent = q ? (bn() ? '“' + LDN.q.trim() + '” পাওয়া যায়নি।' : 'Nobody found for “' + LDN.q.trim() + '”.') : (bn() ? 'এখানে কেউ নেই।' : 'Nobody here.');
+    } else if (em) em.parentNode.removeChild(em);
+    return today;
+  }
+  AFTER_PAINT.push(function nightLeads() {
+    if (VIEW !== 'leads' || typeof LD === 'undefined' || LD.classic || !LD.data || !LD.data.leads) return;
+    var v = el('view'), d = LD.data; if (!v) return;
+    var first = v.querySelector('.l2-row'); if (!first || v.querySelector('.nt-ld')) { if (first) ldApply(v); return; }
+    var today = ldApply(v);
+    // tags on the rows: due today / late, heat in words
+    var byId = {}; d.leads.forEach(function (l) { byId[l.id] = l; });
+    [].forEach.call(v.querySelectorAll('.l2-row'), function (row) {
+      var nm = row.querySelector('[data-l2open]'), l = nm && byId[nm.getAttribute('data-l2open')]; if (!l) return;
+      var ht = row.querySelector('.l2-heat'); if (ht && HEAT[l.heat]) ht.textContent = T(HEAT[l.heat]);
+      if (l.due) { var s = document.createElement('span'); s.className = 'nt-due'; s.textContent = T(l.followUp && l.followUp < today ? 'late' : 'today'); nm.parentNode.insertBefore(s, ht || nm); }
+    });
+    var box = document.createElement('div'); box.className = 'nt-ld';
+    var stages = d.byStage || [];
+    box.innerHTML = (d.due ? '<button type="button" class="nt-today" data-ntld="today" aria-pressed="' + LDN.today + '">' +
+        esc(bn() ? 'আজ ফোন করবেন: ' + d.due + ' জন' : 'Call back today: ' + d.due) + '</button>' : '') +
+      '<input class="i" type="search" data-ntld="q" autocomplete="off" aria-label="' + esc(T('Search leads: name, shop, phone or city')) + '" placeholder="' + esc(T('Search leads: name, shop, phone or city')) + '">' +
+      '<div class="chips" role="group">' + [{ stage: 0, name: 'All', n: d.total }].concat(stages).map(function (s) {
+        return '<button type="button" class="chip' + (LDN.stage === s.stage ? ' on' : '') + '" data-ntld="stage" data-st="' + s.stage + '">' + esc(bn() && LD_STAGE_BN[s.name] ? (s.name === 'Won' && LD.kind === 'supplier' ? 'সাপ্লায়ার হয়েছে' : LD_STAGE_BN[s.name]) : T(s.name)) + (s.n != null ? ' <span data-noi18n="1">' + fmt(s.n) + '</span>' : '') + '</button>';
+      }).join('') + '</div>';
+    var list = first.parentNode, sec = list.closest('section') || list.parentNode;
+    sec.insertBefore(box, sec.firstChild);
+    var inp = box.querySelector('input'); inp.value = LDN.q;
+    inp.addEventListener('input', function () { LDN.q = inp.value; ldApply(v); });
+  });
+  document.addEventListener('click', function (e) {
+    if (VIEW !== 'leads') return;
+    var t = e.target && e.target.closest && e.target.closest('[data-ntld]'); if (!t) return;
+    var a = t.getAttribute('data-ntld'), v = el('view');
+    if (a === 'today') { LDN.today = !LDN.today; t.setAttribute('aria-pressed', String(LDN.today)); ldApply(v); }
+    if (a === 'stage') {
+      LDN.stage = Number(t.getAttribute('data-st')) || 0;
+      [].forEach.call(v.querySelectorAll('.nt-ld [data-ntld="stage"]'), function (c) { c.classList.toggle('on', c === t); });
+      ldApply(v);
+    }
+  });
+
+  /* campaigns > contacts > leads: the same list as the Leads page (D19) */
+  try {
+    var cpContactsN = cpContactsHtml;
+    cpContactsHtml = function () {
+      var h = cpContactsN.apply(this, arguments);
+      return h.replace('When a lead buys, they become a customer by themselves.</div>',
+        'When a lead buys, they become a customer by themselves.</div>' +
+        '<div class="note" style="margin-top:8px"><div class="ico">i</div><div>This is the same list as the <button type="button" class="linkbtn" data-nt-go="leads">Leads</button> page: a number added here shows there, and a customer lead with a phone added there can be messaged here. <b>Remove</b> only takes someone off campaigns; the Leads page keeps them, marked Lost.</div></div>');
+    };
+  } catch (e) {}
 })();
 </script>
 </body>

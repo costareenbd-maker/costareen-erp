@@ -60,6 +60,8 @@ export const SOURCES = [
   { key: 'walk_in', name: 'Walk-in or phone call', kind: 'customer', how: 'hand', note: 'Came to the shop or called' },
   { key: 'import', name: 'Excel / CSV list', kind: 'both', how: 'import', note: 'A list from anywhere' },
   { key: 'team', name: 'Added by hand', kind: 'both', how: 'hand', note: '' },
+  // night-stock D19: one lead list - numbers added under Campaigns > Contacts land here too (migration 158)
+  { key: 'campaign', name: 'Campaign phone list', kind: 'customer', how: 'hand', note: 'Added under Campaigns; a WhatsApp campaign can message every customer lead with a phone' },
 ];
 const SRC = Object.fromEntries(SOURCES.map((s) => [s.key, s]));
 const CH_SOURCE = { messenger: 'messenger', instagram: 'instagram', wa_cloud: 'whatsapp', wa_evo: 'whatsapp', wa_sender: 'whatsapp', webchat: 'webchat', email: 'email' };
