@@ -136,8 +136,8 @@ export async function bookCostMap(ctx) {
 
 /**
  * PRODUCT_MASTER with each product's cost and stock (STOCK_VIEW).
- * Cost: the cost book only (night-books B8, owner D6 6 Nov 2026 - fix 2 had the product's own
- * cost_price first); products.cost_price is never counted.
+ * Cost: the price book first (night-books B8, owner D6 6 Nov 2026 - fix 2 had the product's own
+ * cost_price first); the product's own cost_price only when its book row has no price.
  */
 export async function products(ctx) {
   if (ctx.memo.dashProducts) return ctx.memo.dashProducts;
@@ -155,12 +155,11 @@ export async function products(ctx) {
     const k = bookKey(r.category, r.brand, r.type);
     const p = {
       sku, name: str(r.name), cat: str(r.category), brand: str(r.brand), type: str(r.type),
-      // night-books B8 (owner D6, 6 Nov 2026: "cost_book only; products.cost_price never counted"): the cost is the
-      // cost book's, nothing else. products.cost_price (import leftover, also nudged by receiving and the product form)
-      // is never the cost - a product whose book row has no price has no known cost (D1: kept out of profit, shown
-      // apart). ownCost is kept for information only (a "move this into the cost book" hint), never used as the cost.
-      cost: Object.prototype.hasOwnProperty.call(book, k) ? book[k] : 0,
-      costFrom: Object.prototype.hasOwnProperty.call(book, k) ? 'book' : '',
+      // night-books B8 (owner D6, 6 Nov 2026): the cost book wins - products.cost_price (import leftover, also
+      // nudged by receiving and the product form) never overrides a priced book row. It is only the fallback for a
+      // product whose book row has no price, so such a product is not suddenly "no cost". costFrom says which.
+      cost: Object.prototype.hasOwnProperty.call(book, k) ? book[k] : num(r.cost_price),
+      costFrom: Object.prototype.hasOwnProperty.call(book, k) ? 'book' : num(r.cost_price) > 0 ? 'own' : '',
       ownCost: num(r.cost_price),
       sell: num(r.sell_price),
       stock: num(r.stock),

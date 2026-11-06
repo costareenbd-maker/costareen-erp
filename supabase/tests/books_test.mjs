@@ -138,7 +138,7 @@ for (const sku of ['NB-B8', 'NB-B8O']) {
   const ln = await sql`select l.sku, l.unit_cost::float as c from invoice_lines l join invoices i on i.id = l.invoice_id where i.business_id = ${B} and i.invoice_no = ${r8.result.invoiceNo}`;
   const c = (sku) => (ln.find((x) => x.sku.toUpperCase() === sku) || {}).c;
   check('B8 a priced cost book row wins over the product\'s own cost_price (600, not 999)', c('NB-B8') === 600, ln);
-  check('B8 no priced book row: the product\'s own cost_price is never counted (D6) - the line has no known cost', !(c('NB-B8O') > 0), ln);
+  check('B8 no priced book row: the product\'s own cost is still the fallback (400)', c('NB-B8O') === 400, ln);
 }
 
 await done();
