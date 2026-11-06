@@ -3654,3 +3654,14 @@ alerts); the live business needs WA_SERVER_URL / WA_SERVER_KEY set on the server
 2026-11-06 — login-1 (password reset link; no app flash before sign-in)
 - The reset e-mail's link was broken since the move to the Mac: the native Auth had MAILER_URLPATHS_* = "\"/auth/v1/verify\"" (quotes inside the value), so the link became https://erp-api.costareen.com/auth/"/auth/v1/verify"?... (404). Fixed on the Mac in /opt/erp-migration/supabase/.env and selfhost.env (backups *.before-mailer-fix-*), auth recreated; /auth/v1/verify now answers. Server password minimum is 10 (GOTRUE_PASSWORD_MIN_LENGTH in docker-compose.override.yml), matching the page. Server-only changes, nothing in this repo.
 - Page: until the server has said who this is, nothing of the app is drawn (html.erp-boot: a plain spinner; paintGate / startApp lift it; a 25 s fail-safe).
+
+2026-11-07 — ibscroll-1 (Inbox keeps the reader's place) — LIVE (web only)
+- The Inbox refreshed its list every 3 s and repainted the whole screen with keepScroll off: the chat list and page jumped
+  to the top and an open chat jumped to the newest message. Now the refresh repaints only when the list changed, and the
+  list / side panes / page keep their scroll; the chat goes to the bottom only when it was at the bottom or another chat
+  was opened; a new filter or search starts the list at the top.
+- Live: page only (build of 3f1664d on top of live c8f7ea7; the night build on main is not live). Not done: watched on a
+  phone with a real chat.
+- Facebook (found while here, not fixed): no Messenger message since 19 Oct. The page token lost its permissions (Graph
+  code 190) and Meta's webhook still points at the old Cloud host. The new route ?meta=hook on erp-api.costareen.com
+  answers Meta's check. Needs the owner in the Meta dashboard (callback URL, redirect URI ?meta=back) and Connect again.
