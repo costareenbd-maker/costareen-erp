@@ -26591,7 +26591,7 @@ function navDetails(container, api, id) {
   }
   fill();
   var acts = nvH('div', { class: 'nvg-actions' });
-  var view = n.level >= 2 && n.view ? n.view : M ? M.view : 'syscheck';
+  var view = n.level >= 2 && n.view ? n.view : M ? M.view : (typeof enOn === 'function' && enOn() && navOn('watch') ? 'watch' : 'syscheck');   // night-ai: health lives in the Watchdog
   var open = nvH('button', { type: 'button', class: 'nvg-btn primary', 'data-closes': '1', disabled: !navOn(view) }, nvIcon('arrowRight', 15), n.level >= 2 ? 'Open screen' : 'Open module');
   open.addEventListener('click', function () { nvGo(view); });
   var calc = nvH('button', { type: 'button', class: 'nvg-btn' }, nvIcon('bars', 15), 'Show calculation');
@@ -40252,16 +40252,16 @@ saveProduct = function () {
   var ST = { proposed: '', running: ['Doing it…', 'low', 'করা হচ্ছে…'], done: ['Done', 'ok', 'হয়ে গেছে'], failed: ['Could not be done', 'out', 'করা যায়নি'], rejected: ['You said no', 'out', 'আপনি না বলেছেন'], changing: ['Being changed…', 'low', 'বদলানো হচ্ছে…'] };
   function moveHtml(a) {
     var st = ST[a.status];
-    var h = '<div class="bf-move' + (a.bigBet ? ' big' : '') + '">' + (a.bigBet ? '<span class="pill ok">' + L('The big bet of the week', 'এই সপ্তাহের বড় বাজি') + '</span> ' : '<span class="en-meta">#' + a.no + '</span> ') + '<span class="en-sk">' + esc(L(a.typeName, TYPE_BN[a.type] || a.typeName)) + '</span>' +
+    var h = '<div class="bf-move' + (a.bigBet ? ' big' : '') + '">' + (a.bigBet ? '<span class="pill ok">' + L('The big bet of the week', 'এই সপ্তাহের বড় সুযোগ') + '</span> ' : '<span class="en-meta">#' + a.no + '</span> ') + '<span class="en-sk">' + esc(L(a.typeName, TYPE_BN[a.type] || a.typeName)) + '</span>' +
       (st ? ' <span class="pill ' + st[1] + '">' + L(st[0], st[2]) + '</span>' : '') +
       '<div class="t" data-noi18n="1">' + esc(a.title) + '</div><div style="font-size:13.5px;white-space:pre-wrap" data-noi18n="1">' + esc(a.why) + '</div>' +
       '<div class="bf-nums"><span>' + L('Expected gain', 'সম্ভাব্য লাভ') + ' <b class="bf-up">' + tk(a.impact) + '</b></span><span>' + L('Cost', 'খরচ') + ' <b>' + tk(a.cost) + '</b></span><span>' + L('Risk', 'ঝুঁকি') + ' <b>' + esc(L(a.risk, { low: 'কম', medium: 'মাঝারি', high: 'বেশি' }[a.risk] || a.risk)) + '</b></span><span>' + L('Confidence', 'নিশ্চয়তা') + ' <b>' + a.confidence + '%</b></span></div>' +
       (a.figures.length ? '<div class="bf-figs">' + a.figures.map(function (f) { return esc(f.label) + ': <b>' + esc(f.value) + '</b> <i>(' + esc(f.source) + ')</i>'; }).join(' · ') + '</div>' : '') +
       '<div class="bf-pay" data-noi18n="1">' + payloadHtml(a) + '</div>';
     if (a.status === 'proposed') {
-      if (BF.change === a.id) h += '<div class="row" style="gap:8px;flex-wrap:wrap;align-items:flex-end"><div style="flex:1 1 260px"><label class="f" for="bf_note">' + L('What should change?', 'কী বদলাতে হবে?') + '</label><input class="i" id="bf_note" data-noi18n="1" placeholder="e.g. smaller budget, target Chattogram, use Bangla"></div><button class="btn primary" type="button" data-bfch="' + a.id + '">' + L('Send to the AI', 'AI-কে পাঠাও') + '</button><button class="btn" type="button" data-bfx="1">' + L('Cancel', 'বাতিল') + '</button></div>';
+      if (BF.change === a.id) h += '<div class="row" style="gap:8px;flex-wrap:wrap;align-items:flex-end"><div style="flex:1 1 260px"><label class="f" for="bf_note">' + L('What should change?', 'কী বদলাতে হবে?') + '</label><input class="i" id="bf_note" data-noi18n="1" placeholder="e.g. smaller budget, target Chattogram, use Bangla"></div><button class="btn primary" type="button" data-bfch="' + a.id + '">' + L('Send to the AI', 'AI-কে পাঠান') + '</button><button class="btn" type="button" data-bfx="1">' + L('Cancel', 'বাতিল') + '</button></div>';
       else if (BF.no === a.id) h += '<div class="row" style="gap:8px;flex-wrap:wrap;align-items:flex-end"><div style="flex:1 1 260px"><label class="f" for="bf_why">' + L('Why not? (it learns from this)', 'কেন না? (AI এটা থেকে শেখে)') + '</label><input class="i" id="bf_why" data-noi18n="1" placeholder="optional"></div><button class="btn" type="button" data-bfno2="' + a.id + '">' + L('No', 'না') + '</button><button class="btn" type="button" data-bfx="1">' + L('Cancel', 'বাতিল') + '</button></div>';
-      else h += '<div class="bf-btns"><button class="btn ok" type="button" data-bfok="' + a.id + '">' + L('Approve - do it', 'অনুমোদন - করে দাও') + '</button><button class="btn" type="button" data-bfchange="' + a.id + '">' + L('Change', 'বদলাও') + '</button><button class="btn" type="button" data-bfno="' + a.id + '">' + L('No', 'না') + '</button></div>';
+      else h += '<div class="bf-btns"><button class="btn ok" type="button" data-bfok="' + a.id + '">' + L('Approve - do it', 'অনুমোদন দিন') + '</button><button class="btn" type="button" data-bfchange="' + a.id + '">' + L('Change', 'বদলাতে বলুন') + '</button><button class="btn" type="button" data-bfno="' + a.id + '">' + L('No', 'না') + '</button></div>';
     } else {
       h += (a.result ? '<div class="en-meta" style="margin-top:6px" data-noi18n="1">' + esc(a.result) + '</div>' : '') + (a.note ? '<div class="en-meta">' + L('You said', 'আপনি বলেছেন') + ': <span data-noi18n="1">' + esc(a.note) + '</span></div>' : '') +
         (a.outcome && a.outcome.verdict ? '<div style="margin-top:4px;font-size:13px"><b>' + L('Result', 'ফলাফল') + ':</b> ' + esc(a.outcome.metric || '') + ' ' + tk(a.outcome.baseline) + ' → ' + tk(a.outcome.observed) + ' ' + L('in ' + a.outcome.days + ' days', a.outcome.days + ' দিনে') + ' - <b>' + esc(L({ worked: 'it worked', no_effect: 'no difference', hurt: 'it hurt', unclear: 'unclear' }[a.outcome.verdict], { worked: 'কাজে লেগেছে', no_effect: 'কোনো পার্থক্য নেই', hurt: 'ক্ষতি হয়েছে', unclear: 'বোঝা যায়নি' }[a.outcome.verdict]) || a.outcome.verdict) + '</b></div>' : '') +
@@ -40275,8 +40275,8 @@ saveProduct = function () {
     var b = d.brief, sch = d.schedule || {}, st = d.stats || {};
     var h = '<section><div class="card"><div class="en-top"><div>' + (b ? '<b>' + esc(b.day) + '</b> <span class="en-meta">' + L('written ', 'লেখা হয়েছে ') + esc(b.made) + '</span>' : '<b>' + L('No brief yet', 'এখনো কোনো ব্রিফ নেই') + '</b>') + '</div>' +
       '<div class="ap-row">' + (d.briefs.length > 1 ? '<select class="i" id="bf_pick" style="max-width:220px">' + d.briefs.map(function (x) { return '<option value="' + x.id + '"' + (b && b.id === x.id ? ' selected' : '') + '>' + esc(x.label) + (x.waiting ? ' (' + x.waiting + ' waiting)' : '') + '</option>'; }).join('') + '</select>' : '') +
-      '<button class="btn" type="button" data-bf="now">' + L('Write it now', 'এখনই লেখো') + '</button></div></div>' +
-      (b ? '<div style="font-size:16px;font-weight:600;margin-top:8px" data-noi18n="1">' + esc(b.headline) + '</div>' : '<div class="sub" style="display:block;margin-top:6px">' + L('The AI writes it every evening at ' + esc(sch.at || '20:00') + '. Or press "Write it now".', 'প্রতি সন্ধ্যা ' + esc(sch.at || '20:00') + '-এ AI এটা লিখে দেয়। অথবা "এখনই লেখো" চাপুন।') + '</div>') +
+      '<button class="btn" type="button" data-bf="now">' + L('Write it now', 'এখনই লিখুন') + '</button></div></div>' +
+      (b ? '<div style="font-size:16px;font-weight:600;margin-top:8px" data-noi18n="1">' + esc(b.headline) + '</div>' : '<div class="sub" style="display:block;margin-top:6px">' + L('The AI writes it every evening at ' + esc(sch.at || '20:00') + '. Or press "Write it now".', 'প্রতি সন্ধ্যা ' + esc(sch.at || '20:00') + '-এ AI এটা লিখে দেয়। অথবা "এখনই লিখুন" চাপুন।') + '</div>') +
       '<details style="margin-top:8px"><summary class="en-meta" style="cursor:pointer">' + L('Settings · last 30 days: ' + st.done + ' moves done, ' + st.worked + ' worked' + (st.gained ? ' (+' + tk(st.gained) + ' sales)' : ''), 'সেটিংস · গত ৩০ দিন: ' + st.done + 'টি পদক্ষেপ করা, ' + st.worked + 'টি কাজে লেগেছে' + (st.gained ? ' (+' + tk(st.gained) + ' বিক্রি)' : '')) + '</summary>' +
       '<div class="row" style="gap:10px;flex-wrap:wrap;align-items:center;margin-top:8px;font-size:13px"><label><input type="checkbox" data-bf="on"' + (sch.enabled ? ' checked' : '') + '> Every evening at</label><input class="i" type="time" id="bf_at" value="' + esc(sch.at || '20:00') + '" style="max-width:120px">' +
       '<label for="bf_lang">Language</label><select class="i" id="bf_lang" style="max-width:140px"><option value="bn"' + (d.lang === 'bn' ? ' selected' : '') + '>বাংলা</option><option value="en"' + (d.lang !== 'bn' ? ' selected' : '') + '>English</option></select>' +
@@ -40439,7 +40439,7 @@ saveProduct = function () {
 <script>
 (function () {
   var TABS = [['brief', 'Daily brief'], ['engine', 'Command Center'], ['leads', 'Leads'], ['watch', 'Watchdog'], ['skills', 'Skills'], ['seo', 'SEO']];   // seo-1: the SEO tab shows only when the seo app is on
-  var IN = { brief: 1, engine: 1, leads: 1, watch: 1, skills: 1, brain: 1, seo: 1 };
+  var IN = { ai: 1, brief: 1, engine: 1, leads: 1, watch: 1, skills: 1, brain: 1, seo: 1 };   // night-ai: ai = the approvals page
   var ICON = '<path d="M12 3l1.8 4.6L18 9l-4.2 1.4L12 15l-1.8-4.6L6 9l4.2-1.4z"/><path d="M18 15l.9 2.1L21 18l-2.1.9L18 21l-.9-2.1L15 18l2.1-.9z"/>';
   var on = function () { return typeof enOn === 'function' && enOn(); };
   if (typeof fdxNav === 'function') fdxNav('ai', 'AI', ICON, 'dash');
@@ -40467,6 +40467,7 @@ saveProduct = function () {
     return '<span class="en-dot' + (R.alive ? ' on' : '') + '"></span>' + (R.alive ? 'AI on' : 'AI not running');
   }
   function strip() {
+    if (typeof window.naiStrip === 'function') return window.naiStrip();   // night-ai: tabs in words, Skills inside Command Center
     var w = waiting(), tabs = (on() ? TABS : TABS.filter(function (t) { return t[0] === 'leads'; })).filter(function (t) { return t[0] !== 'seo' || (typeof seoOn === 'function' && seoOn()); });
     return '<div class="ai-strip">' + tabs.map(function (t) { var n = w[t[0]] || 0; return '<button type="button" class="ai-t" data-aitab="' + t[0] + '" aria-selected="' + (VIEW === t[0]) + '">' + t[1] + (n ? '<b>' + n + '</b>' : '') + '</button>'; }).join('') +
       (on() ? '<span class="ai-brain" style="text-decoration:none;cursor:default">' + engineState() + '</span><button type="button" class="ai-brain" style="margin-left:12px" data-aitab="brain">' + (VIEW === 'brain' ? '● ' : '') + 'Business Brain</button>' : '') + '</div>';
@@ -40483,7 +40484,7 @@ saveProduct = function () {
   var view = el('view');
   if (view && typeof MutationObserver === 'function') new MutationObserver(function () { put(); }).observe(view, { childList: true });
   var rp = repaint;
-  repaint = function () { if (VIEW === 'ai') { go(on() ? last() : 'leads'); return; } var r = rp.apply(this, arguments); put(); return r; };
+  repaint = function () { if (VIEW === 'ai') { if (on() && typeof window.naiHubPaint === 'function') { window.naiHubPaint(); put(); return; } go(on() ? last() : 'leads'); return; } var r = rp.apply(this, arguments); put(); return r; };   // night-ai: AI opens on the approvals page
   document.addEventListener('click', function (e) {
     var t = e.target.closest && e.target.closest('[data-aitab]'); if (!t) return;
     e.preventDefault(); go(t.getAttribute('data-aitab'));
@@ -43247,6 +43248,405 @@ html[data-look="clean"] #ntLang { border:0; box-shadow:var(--fd-shadow-card, non
       sel.addEventListener('change', function () { if (sel.value.indexOf('go:') === 0) go(sel.value.slice(3)); });
     }
   });
+})();
+</script>
+<!-- night-ai (6 Nov 2026, Wave 5; ai-_index.md, ai-ai.md, ai-engine.md, ai-skills.md, ai-watch.md, ai-brief.md, ai-chat.md;
+     owner accepted D20 and every star default): the AI hub.
+     - AI opens on "আপনার OK-র অপেক্ষায়" (Waiting for your OK): ONE list of every Daily brief move, Watchdog fix and
+       Command Center proposal, biggest taka first, each with ONE approve button (plus Change / No where the source has
+       them), then one ask box, then today's brief card. Nothing new on the server: the same calls the three screens use.
+     - One ask door: the hub's box answers quick questions in the Ask panel or gives long work to the Engine; the Ask panel
+       offers the owner "give it to the Engine", and the Engine's answer comes back into the chat.
+     - Skills is a tab inside Command Center (no top-level tab); "Who answers" folds under "More" (the Engine's own
+       Command Center agent stays the default).
+     - Health lives in the Watchdog: the books check (System check) summary + "Full check now"; the Navigator's ERP Core
+       opens the Watchdog for the owner (one-line hook there).
+     - The Engine's state in words on every AI tab ("AI worker on" / "AI worker off · last seen ..." and what that means
+       on this screen), not only a dot.
+     - Bangla: আপনি forms in the Daily brief (edited in place) and in the Waiting orders / Edit invoice words (overridden here).
+     The Inbox code is not touched (ai-inbox-baseline.md). -->
+<style>
+.ai-strip .nai-w{display:inline-flex;align-items:center;gap:6px;margin-left:auto;font-size:12.5px;color:var(--fd-text-3,var(--muted,#667));white-space:nowrap}
+.ai-strip .nai-w::before{content:'';width:8px;height:8px;border-radius:50%;background:var(--critical,#d33)}
+.ai-strip .nai-w.on::before{background:var(--good,#1a9e5b)}
+.ai-strip .nai-w + .ai-brain{margin-left:12px}
+.nai-off{display:flex;gap:10px;align-items:flex-start;margin:0 0 12px;padding:10px 12px;border-radius:10px;border:1px solid var(--fd-border,var(--ring,#e6e8ef));border-left:4px solid var(--warning,#d97706);background:var(--fd-card,var(--surface,#fff));font-size:14px;line-height:1.5}
+.nai-off b{display:block}
+.nai-sub{display:flex;gap:6px;margin:0 0 12px}
+.nai-sub button{border:1px solid var(--fd-border,var(--ring,#e6e8ef));background:transparent;color:inherit;border-radius:8px;padding:5px 12px;font:inherit;font-size:13px;cursor:pointer}
+.nai-sub button[aria-selected="true"]{border-color:var(--fd-accent,var(--series-1,#5b4ff0));color:var(--fd-accent,var(--series-1,#5b4ff0));font-weight:600}
+.nai-sub button b{font-weight:600;margin-left:4px;opacity:.75}
+.nai-head{display:flex;gap:10px;align-items:baseline;justify-content:space-between;flex-wrap:wrap;margin:0 0 6px}
+.nai-head h2{margin:0}
+.nai-item{border:1px solid var(--fd-border,var(--ring,#e6e8ef));border-radius:12px;padding:10px 12px;margin:8px 0;background:var(--fd-card,var(--surface,#fff))}
+.nai-item .t{font-weight:600;margin-top:4px;overflow-wrap:anywhere}
+.nai-item .why{font-size:13.5px;margin-top:2px;overflow-wrap:anywhere;color:var(--fd-text-2,inherit)}
+.nai-item .nums{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:13px;margin-top:6px}
+.nai-item .bf-btns .btn{min-height:40px}
+.nai-src{display:inline-block;font-size:11.5px;font-weight:600;border-radius:6px;padding:1px 7px;margin-right:6px;background:var(--fd-surface-2,var(--plane,#f4f6f9));color:var(--fd-accent,var(--series-1,#5b4ff0))}
+.nai-empty{padding:14px 12px;border-radius:12px;border:1px dashed var(--fd-border,var(--ring,#e6e8ef));text-align:center;font-size:15px}
+.nai-ask textarea{width:100%;min-height:64px;resize:vertical}
+.nai-more{margin-top:8px}
+.nai-more summary{cursor:pointer;font-size:12.5px;color:var(--fd-text-3,var(--muted,#667))}
+.nai-door{padding:6px 12px 0;display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:13px}
+.nai-door button{border:1px solid var(--fd-accent,var(--series-1,#5b4ff0));background:transparent;color:var(--fd-accent,var(--series-1,#5b4ff0));border-radius:999px;padding:4px 12px;font:inherit;font-size:13px;cursor:pointer}
+.nai-door.big button{background:var(--fd-accent,var(--series-1,#5b4ff0));color:#fff}
+#nai_health .nai-cnt{display:flex;flex-wrap:wrap;gap:8px 16px;font-size:14px;margin:4px 0 8px}
+#nai_health .nai-cnt .bad{color:var(--critical,#d33);font-weight:600}
+#nai_health .nai-cnt .warn{color:var(--warning,#d97706);font-weight:600}
+#nai_health ul{margin:4px 0 8px 18px;padding:0;font-size:13.5px}
+@media (max-width:760px){
+  .ai-strip{flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+  .ai-strip::-webkit-scrollbar{display:none}
+  .ai-strip .ai-t,.ai-strip .ai-brain,.ai-strip .nai-w{flex:0 0 auto;white-space:nowrap}
+  .nai-item .bf-btns .btn{flex:1 1 auto}
+}
+</style>
+<script>
+(function () {
+  var bn = function () { return typeof LANG !== 'undefined' && LANG === 'bn'; };
+  var L = function (en, b) { return bn() ? b : en; };
+  var on = function () { return typeof enOn === 'function' && enOn(); };
+  var money = function (v) { return typeof tk === 'function' ? tk(v) : '৳' + fmt(Math.round(v || 0)); };
+  var NAI = { at: 0, pend: 0, jobs: {}, form: null, draft: '', err: {}, moreOpen: false, chkBusy: false };
+  window.NAI = NAI;
+  try { VIEW_NAMES.ai = 'AI'; FDH_SUB.ai = 'Everything that waits for your OK, one box to ask, and today\'s brief'; } catch (e) {}
+
+  // ---------------------------------------------------------------------------------------- the Engine's state, in words
+  function runner() { var R = null; try { R = EN.data && EN.data.runner; } catch (e) {} return R; }
+  function stateWords() {
+    var R = runner(); if (!R) return '';
+    if (R.alive) return '<span class="nai-w on">' + L('AI worker on', 'AI কর্মী চালু') + '</span>';
+    return '<span class="nai-w">' + (R.seen ? L('AI worker off · last seen ' + esc(R.seen), 'AI কর্মী বন্ধ · শেষ দেখা ' + esc(R.seen)) : L('AI worker off', 'AI কর্মী বন্ধ')) + '</span>';
+  }
+  function offText(V) {
+    var R = runner(); if (!R || R.alive) return '';
+    var seen = R.seen ? L('Last seen ' + esc(R.seen) + '. ', 'শেষ দেখা গেছে ' + esc(R.seen) + '। ') : L('It has not checked in yet. ', 'এখনো একবারও চালু হয়নি। ');
+    var what = {
+      skills: L('Skills install, but they are only used once the worker is back.', 'স্কিল ইনস্টল হবে, কিন্তু কর্মী চালু হলে তবেই কাজে লাগবে।'),
+      watch: L('The pages are not being opened right now; the ERP\'s own checks still run.', 'তাই পেজগুলো এখন দেখা হচ্ছে না; ERP-এর নিজের চেক চলছে।'),
+      brief: L('No new brief comes until it is back.', 'তাই চালু না হওয়া পর্যন্ত নতুন ব্রিফ আসবে না।'),
+      brain: L('No draft will be written; you can write the answers yourself.', 'তাই খসড়া হবে না। আপনি নিজে লিখতে পারেন।'),
+      leads: L('The lead search waits until it is back.', 'লিড খোঁজা চালু হলে তবেই হবে।')
+    }[V] || L('Jobs stay in line and start when it is back.', 'কাজগুলো লাইনে থাকবে, চালু হলে শুরু হবে।');
+    return '<div class="nai-off" role="status"><div><b>' + L('The AI worker is off right now.', 'AI কর্মী এখন বন্ধ।') + '</b>' + seen + what + '</div></div>';
+  }
+
+  // ---------------------------------------------------------------------------------------------- the waiting list
+  function items() {
+    var out = [];
+    try { (BF.data && BF.data.actions || []).forEach(function (a) { if (a.status === 'proposed') out.push({ src: 'brief', id: a.id, title: a.title, why: a.why, taka: Number(a.impact) || 0, cost: a.cost, risk: a.risk, type: a.typeName }); }); } catch (e) {}
+    try { (WD.data && WD.data.waiting || []).forEach(function (a) { if (a.status === 'proposed') out.push({ src: 'watch', id: a.id, title: a.title, why: a.why, taka: 0, manual: a.type === 'manual', type: a.typeName }); }); } catch (e) {}
+    var E = NAI.en || null;
+    (E && E.jobs || []).forEach(function (j) {
+      if (!j.waiting) return;
+      var J = NAI.jobs[j.id];
+      if (!J) { out.push({ src: 'engine', loading: true, job: j.id, title: j.title, taka: 0 }); return; }
+      (J.proposals || []).forEach(function (p) { if (p.state === 'waiting') out.push({ src: 'engine', id: p.id, job: j.id, title: p.summary, why: L('From the job: ', 'এই কাজ থেকে: ') + (J.title || ''), warnings: p.warnings || [], taka: 0 }); });
+    });
+    var ORD = { brief: 0, watch: 1, engine: 2 };
+    return out.sort(function (a, b) { return (b.taka - a.taka) || (ORD[a.src] - ORD[b.src]); });
+  }
+  window.naiWaiting = function () { return items().length; };
+  var SRC = { brief: ['Daily brief', 'ব্রিফ', 'brief'], watch: ['Watchdog', 'ওয়াচডগ', 'watch'], engine: ['Command Center', 'কমান্ড সেন্টার', 'engine'] };
+  var RISK = { low: ['low', 'কম'], medium: ['medium', 'মাঝারি'], high: ['high', 'বেশি'] };
+  function key(it) { return it.src + ':' + (it.job ? it.job + ':' : '') + it.id; }
+  function itemHtml(it) {
+    var s = SRC[it.src], k = key(it);
+    var h = '<div class="nai-item"><span class="nai-src">' + L(s[0], s[1]) + '</span>' + (it.type ? '<span class="en-meta">' + esc(it.type) + '</span>' : '') +
+      '<div class="t" data-noi18n="1">' + esc(it.title || '') + '</div>';
+    if (it.loading) return h + '<div class="loading">' + L('Loading…', 'লোড হচ্ছে…') + '</div></div>';
+    if (it.why) h += '<div class="why" data-noi18n="1">' + esc(String(it.why).slice(0, 260)) + (String(it.why).length > 260 ? '…' : '') + '</div>';
+    if (it.src === 'brief') h += '<div class="nums"><span>' + L('Expected gain', 'সম্ভাব্য লাভ') + ' <b>' + money(it.taka) + '</b></span><span>' + L('Cost', 'খরচ') + ' <b>' + money(it.cost || 0) + '</b></span>' +
+      (it.risk ? '<span>' + L('Risk', 'ঝুঁকি') + ' <b>' + esc(RISK[it.risk] ? L(RISK[it.risk][0], RISK[it.risk][1]) : it.risk) + '</b></span>' : '') + '</div>';
+    if (it.warnings && it.warnings.length) h += '<div style="margin-top:4px"><span class="pill out" data-noi18n="1">' + esc(it.warnings.join(' · ')) + '</span></div>';
+    var F = NAI.form && NAI.form.k === k ? NAI.form : null;
+    if (F) {
+      var lab = F.mode === 'change' ? L('What should change?', 'কী বদলাতে হবে?') : L('Why not? (it learns from this)', 'কেন না? (AI এটা থেকে শেখে)');
+      return h + '<div class="row" style="gap:8px;flex-wrap:wrap;align-items:flex-end;margin-top:8px"><div style="flex:1 1 240px"><label class="f" for="nai_note">' + lab + '</label><input class="i" id="nai_note" data-noi18n="1"></div>' +
+        '<button class="btn primary" type="button" data-naisend="' + esc(k) + '">' + (F.mode === 'change' ? L('Send', 'পাঠান') : L('No', 'না')) + '</button><button class="btn" type="button" data-naix="1">' + L('Cancel', 'বাতিল') + '</button></div></div>';
+    }
+    h += '<div class="bf-btns">';
+    if (it.src === 'watch' && it.manual) h += '<button class="btn ok" type="button" data-naiok="' + esc(k) + '">' + L('I did it', 'আমি করেছি') + '</button><button class="btn" type="button" data-naino="' + esc(k) + '">' + L('Not now', 'এখন না') + '</button>';
+    else {
+      h += '<button class="btn ok" type="button" data-naiok="' + esc(k) + '">' + L('Approve', 'অনুমোদন দিন') + '</button>';
+      if (it.src !== 'engine') h += '<button class="btn" type="button" data-naich="' + esc(k) + '">' + L('Ask to change', 'বদলাতে বলুন') + '</button>';
+      h += '<button class="btn" type="button" data-naino="' + esc(k) + '">' + L('No', 'না') + '</button>';
+    }
+    h += '<button class="btn" type="button" data-aitab="' + s[2] + '" style="margin-left:auto">' + L('Open', 'খুলুন') + '</button>';
+    return h + '</div></div>';
+  }
+
+  // ---------------------------------------------------------------------------------------------- loading
+  function done() { NAI.pend = Math.max(0, NAI.pend - 1); if (VIEW === 'ai') naiHubPaint(); naiSync(); }
+  function fail(src) { return function (e) { NAI.err[src] = (e && e.message) || String(e); done(); }; }
+  function load(force) {
+    if (!on() || NAI.pend) return;
+    if (!force && Date.now() - NAI.at < 20000) return;
+    NAI.at = Date.now(); NAI.err = {}; NAI.pend = 3;
+    srv('erpBrief', [{}], function (r) { try { BF.data = r; } catch (e) {} done(); }, fail('brief'));
+    srv('erpWatch', [], function (r) { try { WD.data = r; } catch (e) {} done(); }, fail('watch'));
+    srv('erpEngine', [{ status: '' }], function (r) {
+      NAI.en = r; try { if (!EN.st) EN.data = r; else if (EN.data) EN.data.runner = r.runner; } catch (e) {}
+      var want = (r.jobs || []).filter(function (j) { return j.waiting; }).slice(0, 10);
+      NAI.pend += want.length;
+      want.forEach(function (j) { srv('erpEngineJob', [{ id: j.id }], function (J) { NAI.jobs[j.id] = J; done(); }, function () { done(); }); });
+      done();
+    }, fail('engine'));
+  }
+  window.naiLoad = load;
+
+  // ---------------------------------------------------------------------------------------------- the hub page
+  function hubHtml() {
+    var list = items(), b = null, older = 0;
+    try { b = BF.data && BF.data.brief; (BF.data && BF.data.briefs || []).forEach(function (x) { if (!b || x.id !== b.id) older += x.waiting || 0; }); } catch (e) {}
+    var loading = NAI.pend > 0 || (!NAI.at);
+    var h = '<section><div class="nai-head"><h2>' + L('Waiting for your OK', 'আপনার OK-র অপেক্ষায়') + (list.length ? ' <span class="pill low">' + list.length + '</span>' : '') + '</h2>' +
+      (loading ? '<span class="en-meta">' + L('Checking…', 'দেখা হচ্ছে…') + '</span>' : '') + '</div>';
+    Object.keys(NAI.err).forEach(function (s) { h += '<div class="note err"><div class="ico">!</div><div>' + L(SRC[s][0], SRC[s][1]) + ': ' + esc(NAI.err[s]) + '</div></div>'; });
+    if (list.length) h += list.map(itemHtml).join('');
+    else if (!loading) h += '<div class="nai-empty">' + L('Nothing needs you right now. ✓', 'এখন আপনার কিছু করার নেই। ✓') + '</div>';
+    else h += '<div class="loading">' + L('Loading…', 'লোড হচ্ছে…') + '</div>';
+    if (older) h += '<div class="en-meta" style="margin-top:6px">' + L(older + ' more in earlier briefs - ', 'আগের ব্রিফে আরও ' + older + 'টা - ') + '<a href="#" data-aitab="brief">' + L('open the Daily brief', 'ব্রিফ খুলুন') + '</a></div>';
+    h += '</section>';
+    // one ask box: quick questions in the Ask panel, long work to the Engine
+    h += '<section><div class="card nai-ask"><label class="f" for="nai_q">' + L('Ask, or give a job', 'কিছু জানতে চান, বা কাজ দিন') +
+      '<span class="sku">' + L('"Ask now" answers at once from your own figures. "Give it to the Engine" is for research and long work (suppliers, plans, SEO): the answer comes in a few minutes, in Command Center and in the Ask chat.',
+        '"এখনই জিজ্ঞেস করুন" আপনার নিজের হিসাব থেকে সাথে সাথে উত্তর দেয়। গবেষণা বা বড় কাজ (সাপ্লায়ার, পরিকল্পনা, SEO) হলে "ইঞ্জিনকে দিন": কয়েক মিনিটে উত্তর আসবে, কমান্ড সেন্টারে আর চ্যাটে।') + '</span></label>' +
+      '<textarea class="i" id="nai_q" rows="2" data-noi18n="1">' + esc(NAI.draft) + '</textarea>' +
+      '<div class="bf-btns"><button class="btn primary" type="button" data-nai="ask">' + L('Ask now', 'এখনই জিজ্ঞেস করুন') + '</button><button class="btn" type="button" data-nai="eng">' + L('Give it to the Engine', 'ইঞ্জিনকে দিন') + '</button></div></div></section>';
+    // today's brief
+    h += '<section><div class="card"><div class="nai-head"><h2>' + L('Daily brief', 'আজকের ব্রিফ') + '</h2><button class="btn small" type="button" data-aitab="brief">' + L('Open the brief', 'ব্রিফ খুলুন') + '</button></div>' +
+      (b ? '<div class="en-meta">' + esc(b.day) + '</div><div style="font-size:15.5px;font-weight:600;margin-top:4px" data-noi18n="1">' + esc(b.headline || '') + '</div>'
+        : '<div class="en-meta">' + L('No brief yet. The AI writes it every evening, or press "Write it now" on the brief.', 'এখনো কোনো ব্রিফ নেই। প্রতি সন্ধ্যায় AI লিখে দেয়, অথবা ব্রিফে "এখনই লিখুন" চাপুন।') + '</div>') + '</div></section>';
+    return h;
+  }
+  function naiHubPaint() {
+    var v = el('view'); if (!v || VIEW !== 'ai') return;
+    var q = el('nai_q'); if (q) NAI.draft = q.value;
+    var had = document.activeElement && document.activeElement.id;
+    var nv = document.activeElement && document.activeElement.id === 'nai_note' ? document.activeElement.value : null;
+    v.innerHTML = hubHtml();
+    if (had === 'nai_q' && el('nai_q')) el('nai_q').focus();
+    if (nv !== null && el('nai_note')) { el('nai_note').value = nv; el('nai_note').focus(); }
+    load(false);
+  }
+  window.naiHubPaint = naiHubPaint;
+
+  // ---------------------------------------------------------------------------------------------- the strip
+  var TABS = [['ai', 'Waiting for you', 'অপেক্ষায়'], ['brief', 'Daily brief', 'ব্রিফ'], ['engine', 'Command Center', 'কমান্ড সেন্টার'], ['leads', 'Leads', 'লিড'], ['watch', 'Watchdog', 'ওয়াচডগ'], ['seo', 'SEO', 'এসইও']];
+  function counts() {
+    var n = { brief: 0, watch: 0, engine: 0 };
+    items().forEach(function (it) { n[it.src]++; });
+    try { if (!NAI.en && EN.data) n.engine = (EN.data.jobs || []).reduce(function (s, j) { return s + (j.waiting || 0); }, 0); } catch (e) {}
+    n.ai = n.brief + n.watch + n.engine; return n;
+  }
+  window.naiStrip = function () {
+    var sel = VIEW === 'skills' ? 'engine' : VIEW, w = counts(), O = on();
+    var tabs = (O ? TABS : TABS.filter(function (t) { return t[0] === 'leads'; })).filter(function (t) { return t[0] !== 'seo' || (typeof seoOn === 'function' && seoOn()); });
+    if (O && !runner()) { try { if (typeof enLoad === 'function' && !EN.data) enLoad(naiSync); } catch (e) {} }
+    return '<div class="ai-strip">' + tabs.map(function (t) { var c = w[t[0]] || 0;
+      return '<button type="button" class="ai-t" data-aitab="' + t[0] + '" aria-selected="' + (sel === t[0]) + '">' + L(t[1], t[2]) + (c ? '<b>' + c + '</b>' : '') + '</button>'; }).join('') +
+      (O ? stateWords() + '<button type="button" class="ai-brain" data-aitab="brain">' + (VIEW === 'brain' ? '● ' : '') + L('Business Brain', 'বিজনেস ব্রেইন') + '</button>' : '') + '</div>';
+  };
+  // the state words and counts change without a repaint: redraw the strip in place
+  function naiSync() {
+    var v = el('view'); if (!v) return;
+    var s = v.querySelector(':scope > .ai-strip'); if (!s) return;
+    var t = document.createElement('div'); t.innerHTML = window.naiStrip();
+    var n = t.firstElementChild; if (!n) return;
+    if (n.innerHTML !== s.innerHTML) { s.innerHTML = n.innerHTML; }
+    extras();
+  }
+  window.naiSync = naiSync;
+
+  // ---------------------------------------------------------------------------------------------- after each paint
+  var AIV = { ai: 1, brief: 1, engine: 1, leads: 1, watch: 1, skills: 1, brain: 1, seo: 1 };
+  function extras() {
+    if (!AIV[VIEW] || !on()) return;
+    var v = el('view'); if (!v) return;
+    var s = v.querySelector(':scope > .ai-strip'); if (!s) return;
+    var anchor = s;
+    // the "worker is off" line, under the strip
+    var off = offText(VIEW), cur = v.querySelector(':scope > .nai-off');
+    if (off) { if (!cur || cur.getAttribute('data-for') !== VIEW + '|' + ((runner() || {}).seen || '')) { if (cur) cur.remove(); s.insertAdjacentHTML('afterend', off); cur = s.nextElementSibling; cur.setAttribute('data-for', VIEW + '|' + ((runner() || {}).seen || '')); } anchor = cur; }
+    else if (cur) cur.remove();
+    // Command Center: Jobs | Skills
+    var sub = v.querySelector(':scope > .nai-sub');
+    if (VIEW === 'engine' || VIEW === 'skills') {
+      var nOn = 0; try { nOn = (EN.data && EN.data.skillsOn) || 0; } catch (e) {}
+      var html = '<div class="nai-sub" role="tablist" data-for="' + VIEW + '|' + nOn + '"><button type="button" role="tab" data-aitab="engine" aria-selected="' + (VIEW === 'engine') + '">' + L('Jobs', 'কাজ') + '</button>' +
+        '<button type="button" role="tab" data-aitab="skills" aria-selected="' + (VIEW === 'skills') + '">' + L('Skills', 'স্কিল') + (nOn ? '<b>' + nOn + '</b>' : '') + '</button></div>';
+      if (!sub || sub.getAttribute('data-for') !== VIEW + '|' + nOn) { if (sub) sub.remove(); anchor.insertAdjacentHTML('afterend', html); }
+    } else if (sub) sub.remove();
+    if (VIEW === 'engine') foldAgent();
+    if (VIEW === 'watch') health(v);
+  }
+  // "Who answers" under "More" - the Command Center agent stays the default
+  function foldAgent() {
+    var sel = el('en_agent'); if (!sel || sel.closest('.nai-more')) return;
+    var row = sel.parentNode, lab = row.querySelector('label[for="en_agent"]');
+    var d = document.createElement('details'); d.className = 'nai-more'; if (NAI.moreOpen) d.open = true;
+    d.innerHTML = '<summary>' + L('More: who answers', 'আরও: কে উত্তর দেবে') + '</summary><div class="ap-row" style="margin-top:6px"></div>';
+    d.addEventListener('toggle', function () { NAI.moreOpen = d.open; });
+    var box = d.querySelector('.ap-row'); if (lab) box.appendChild(lab); box.appendChild(sel);
+    row.parentNode.insertBefore(d, row.nextSibling);
+  }
+  // health in one place: the books check summary inside the Watchdog
+  function health(v) {
+    var d = typeof FDX !== 'undefined' ? FDX.chk : null;
+    if (!d && !NAI.chkBusy) { NAI.chkBusy = true; srv('erpSystemCheck', [], function (r) { NAI.chkBusy = false; FDX.chk = r; var o = el('nai_health'); if (o) o.remove(); if (VIEW === 'watch') extras(); }, function (e) { NAI.chkBusy = false; NAI.chkErr = (e && e.message) || String(e); var o = el('nai_health'); if (o) o.remove(); if (VIEW === 'watch') extras(); }); }
+    var stamp = d ? String(d.at) + '|' + (d.counts ? d.counts.fail + '|' + d.counts.warn : '') : NAI.chkErr ? 'err' : 'wait';
+    var o = el('nai_health'); if (o && o.getAttribute('data-for') === stamp) return; if (o) o.remove();
+    var h = '<section id="nai_health" data-for="' + esc(stamp) + '"><div class="card"><div class="nai-head"><h2>' + L('The books check', 'হিসাবের চেক') + '</h2>' +
+      '<button class="btn" type="button" data-nai="fullcheck">' + L('Full check now', 'এখনই পুরো চেক') + '</button></div>';
+    if (!d) h += NAI.chkErr ? '<div class="note err"><div class="ico">!</div><div>' + esc(NAI.chkErr) + '</div></div>' : '<div class="loading">' + L('Checking the books…', 'হিসাব দেখা হচ্ছে…') + '</div>';
+    else if (d.error) h += '<div class="note err"><div class="ico">!</div><div>' + esc(d.error) + '</div></div>';
+    else {
+      var c = d.counts || {}, bad = (d.checks || []).filter(function (x) { return x.status !== 'pass'; }).sort(function (a, b) { return (a.status === 'fail' ? 0 : 1) - (b.status === 'fail' ? 0 : 1); });
+      h += '<div class="nai-cnt"><span>✓ ' + L(c.pass + ' passed', c.pass + 'টা ঠিক') + '</span><span class="' + (c.warn ? 'warn' : '') + '">! ' + L(c.warn + ' to look at', c.warn + 'টা দেখার মতো') + '</span><span class="' + (c.fail ? 'bad' : '') + '">✕ ' + L(c.fail + ' failed', c.fail + 'টা ভুল') + '</span>' +
+        (d.at ? '<span class="en-meta">' + L('as of ', 'সময়: ') + esc(d.at) + '</span>' : '') + '</div>' +
+        (bad.length ? '<ul>' + bad.slice(0, 3).map(function (x) { return '<li><b>' + esc(x.title) + '</b>' + (x.detail ? ' - ' + esc(String(x.detail).slice(0, 140)) : '') + '</li>'; }).join('') + '</ul>' : '');
+    }
+    h += '</div></section>';
+    var first = null; [].forEach.call(v.children, function (x) { if (!first && x.tagName === 'SECTION' && x.id !== 'nai_health') first = x; });
+    if (first) first.insertAdjacentHTML('afterend', h); else v.insertAdjacentHTML('beforeend', h);
+  }
+  if (typeof AFTER_PAINT !== 'undefined') AFTER_PAINT.push(function nightAi() { extras(); });
+  // fresh state on the AI screens (the runner checks in every few seconds; alive = seen in the last 2 minutes)
+  setInterval(function () {
+    if (!ME || !on() || document.hidden || !AIV[VIEW]) return;
+    if (VIEW === 'ai') { load(true); return; }
+    if (typeof enLoad === 'function') enLoad(naiSync);
+  }, 60000);
+
+  // ---------------------------------------------------------------------------------------------- the buttons
+  function find(k) { return items().filter(function (it) { return key(it) === k; })[0]; }
+  function decide(it, act, note, btn) {
+    if (btn) { btn.disabled = true; btn.textContent = act === 'approve' ? L('Doing it…', 'করা হচ্ছে…') : '…'; }
+    var back = function (msg, bad) { NAI.form = null; if (msg) toast(msg, bad, 9000); naiHubPaint(); naiSync(); };
+    var err = function (e) { toast(esc((e && e.message) || e), true, 9000); if (btn) btn.disabled = false; naiHubPaint(); };
+    if (it.src === 'brief') srv('erpBriefDecide', [{ id: it.id, act: act, note: note || '' }], function (r) {
+      try { BF.data = r; } catch (e) {} var a = (r.actions || []).filter(function (x) { return x.id === it.id; })[0];
+      back(act === 'approve' ? (a && a.status === 'done' ? L('Done: ', 'হয়ে গেছে: ') + esc(a.result || '') : a && a.status === 'running' ? L('Approved. The AI is doing it and reports on the brief.', 'অনুমোদিত। AI কাজটা করছে, শেষ হলে ব্রিফে জানাবে।') : L('Could not be done: ', 'করা যায়নি: ') + esc(a ? a.result || '' : ''))
+        : act === 'change' ? L('Sent back - the new version appears here.', 'ফেরত পাঠানো হয়েছে - নতুন রূপ এখানে আসবে।') : L('Noted - it learns from this.', 'মনে রাখা হলো - AI এটা থেকে শেখে।'), act === 'approve' && a && a.status === 'failed');
+    }, err);
+    else if (it.src === 'watch') srv('erpWatchFixDecide', [{ id: it.id, act: act, note: note || '' }], function (r) {
+      try { WD.data = r; } catch (e) {} var a = (r.fixed || []).concat(r.waiting || []).filter(function (x) { return x.id === it.id; })[0];
+      back(act === 'approve' ? (a && a.status === 'done' ? L('Fixed: ', 'ঠিক হয়েছে: ') + esc(a.result || '') : L('Could not be fixed: ', 'ঠিক করা যায়নি: ') + esc(a ? a.result || '' : '')) : act === 'change' ? L('Sent back to the Watchdog.', 'ওয়াচডগকে ফেরত পাঠানো হয়েছে।') : L('Noted.', 'মনে রাখা হলো।'), act === 'approve' && !(a && a.status === 'done'));
+    }, err);
+    else srv('erpEngineDecide', [{ id: it.job, proposal: it.id, yes: act === 'approve' }], function (J) {
+      NAI.jobs[it.job] = J; try { if (EN.job && EN.job.id === J.id) EN.job = J; } catch (e) {}
+      if (NAI.en) NAI.en.jobs.forEach(function (j) { if (j.id === J.id) j.waiting = J.waiting; });
+      var p = (J.proposals || []).filter(function (x) { return x.id === it.id; })[0];
+      back(act === 'approve' ? L('Done: ', 'হয়ে গেছে: ') + esc(p && p.outcome || '') : L('Not done.', 'করা হয়নি।'));
+      try { D = null; if (typeof pagesAfterWrite === 'function') pagesAfterWrite(); } catch (e) {}
+    }, err);
+  }
+  function toEngine(text, then) {
+    text = String(text || '').trim();
+    if (text.length < 3) { toast(L('Write what the Engine should do.', 'ইঞ্জিন কী করবে লিখুন।'), true); return; }
+    srv('erpEngineAsk', [{ ask: text, agent: 'command' }], function (r) {
+      try { EN.data = r; EN.st = ''; EN.open = r.created; EN.job = null; } catch (e) {}
+      NAI.en = r;
+      srv('erpEngineJob', [{ id: r.created }], function (J) { try { if (EN.open === J.id) { EN.job = J; if (VIEW === 'engine' && typeof enPaint === 'function') enPaint(); } } catch (e) {} }, function () {});
+      if (then) then(r);
+    }, function (e) { toast(esc((e && e.message) || e), true, 8000); });
+  }
+  document.addEventListener('click', function (e) {
+    var t = e.target.closest && e.target.closest('[data-nai],[data-naiok],[data-naino],[data-naich],[data-naisend],[data-naix]'); if (!t) return;
+    var a = t.getAttribute('data-nai');
+    if (a === 'fullcheck') { try { FDX.chk = null; } catch (er) {} go('syscheck'); return; }
+    if (VIEW !== 'ai') return;
+    if (a === 'ask') { var q = el('nai_q'), v = q ? q.value.trim() : ''; if (!v) { if (q) q.focus(); return; } NAI.draft = ''; if (q) q.value = ''; if (typeof awToggle === 'function') awToggle(true); if (typeof chSend === 'function') chSend(v); return; }
+    if (a === 'eng') { var q2 = el('nai_q'); t.disabled = true; toEngine(q2 ? q2.value : '', function () { NAI.draft = ''; toast(L('Given to the Engine - the answer comes in Command Center.', 'ইঞ্জিনকে দেওয়া হয়েছে - উত্তর আসবে কমান্ড সেন্টারে।')); go('engine'); }); setTimeout(function () { t.disabled = false; }, 3000); return; }
+    if (t.hasAttribute('data-naix')) { NAI.form = null; naiHubPaint(); return; }
+    if (t.hasAttribute('data-naich')) { NAI.form = { k: t.getAttribute('data-naich'), mode: 'change' }; naiHubPaint(); var n1 = el('nai_note'); if (n1) n1.focus(); return; }
+    var k = t.getAttribute('data-naiok') || t.getAttribute('data-naino') || t.getAttribute('data-naisend'), it = find(k);
+    if (!it) { toast(L('That was already answered.', 'এটার উত্তর আগেই দেওয়া হয়েছে।')); load(true); return; }
+    if (t.hasAttribute('data-naiok')) { decide(it, 'approve', '', t); return; }
+    if (t.hasAttribute('data-naino')) { if (it.src === 'engine') { decide(it, 'reject', '', t); return; } NAI.form = { k: k, mode: 'no' }; naiHubPaint(); var n2 = el('nai_note'); if (n2) n2.focus(); return; }
+    if (t.hasAttribute('data-naisend')) { var F = NAI.form || {}; decide(it, F.mode === 'change' ? 'change' : 'reject', (el('nai_note') || {}).value, t); }
+  });
+  document.addEventListener('keydown', function (e) {
+    if (VIEW !== 'ai' || !e.target) return;
+    if (e.target.id === 'nai_q' && e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); var b = document.querySelector('[data-nai="ask"]'); if (b) b.click(); }
+    if (e.target.id === 'nai_note' && e.key === 'Enter') { e.preventDefault(); var s = document.querySelector('[data-naisend]'); if (s) s.click(); }
+  });
+
+  // ---------------------------------------------------------------------------------------------- one ask door
+  // the Ask panel offers the owner "give it to the Engine"; the Engine's answer comes back into this chat
+  var BIG = /(খুঁজ|খোঁজ|গবেষণা|পরিকল্পনা|প্ল্যান|কেন|তুলনা|সাপ্লায়ার|বিজ্ঞাপন|পোস্ট|আইডিয়া|কৌশল|research|find |search|plan|why|compare|supplier|seo|post|caption|\bads?\b|idea|strateg|competitor)/i;
+  var PEND = (function () { try { var x = JSON.parse(localStorage.getItem('nai_eng') || '[]'); return Array.isArray(x) ? x : []; } catch (e) { return []; } })();
+  function pendSave() { try { localStorage.setItem('nai_eng', JSON.stringify(PEND.slice(-10))); } catch (e) {} }
+  function lastUser() { var m = (typeof CH !== 'undefined' && CH.msgs) || []; for (var i = m.length - 1; i >= 0; i--) if (m[i].role === 'user') return { text: m[i].text, i: i }; return null; }
+  if (typeof awHtml === 'function') {
+    var awHtmlNai = awHtml;
+    awHtml = function () {
+      var h = awHtmlNai.apply(this, arguments);
+      try {
+        if (!on() || CH.busy) return h;
+        var u = lastUser(); if (!u || u.i === CH.msgs.length - 1) return h;
+        if (CH.msgs.slice(u.i + 1).some(function (m) { return m.eng; })) return h;
+        var big = BIG.test(u.text) || u.text.length > 140;
+        var door = '<div class="nai-door' + (big ? ' big' : '') + '">' + (big ? '<span>' + L('This is a big job. The Engine can answer it in a few minutes.', 'এটা বড় কাজ। ইঞ্জিনকে দিলে কয়েক মিনিটে উত্তর আসবে।') + '</span>' : '') +
+          '<button type="button" id="nai_toeng">' + (big ? L('Give it to the Engine', 'ইঞ্জিনকে দিন') : L('Give this to the Engine instead', 'এটা ইঞ্জিনকে দিন')) + '</button></div>';
+        var at = h.indexOf('<div class="aw-in">');
+        return at >= 0 ? h.slice(0, at) + door + h.slice(at) : h + door;
+      } catch (e) { return h; }
+    };
+  }
+  document.addEventListener('click', function (e) {
+    var t = e.target.closest && e.target.closest('#nai_toeng'); if (!t) return;
+    var u = lastUser(); if (!u) return; t.disabled = true;
+    toEngine(u.text, function (r) {
+      PEND.push({ id: r.created, at: Date.now() }); pendSave();
+      CH.msgs.push({ role: 'assistant', eng: 1, text: L('Given to the Engine. Its answer comes here and in AI › Command Center.', 'ইঞ্জিনকে দেওয়া হয়েছে। উত্তর এখানে আর এআই › কমান্ড সেন্টারে আসবে।') });
+      try { chSave(); awPaint(); } catch (er) {}
+    });
+  });
+  setInterval(function () {
+    if (!ME || !PEND.length || document.hidden || !on()) return;
+    PEND = PEND.filter(function (p) { return Date.now() - p.at < 24 * 3600 * 1000; }); pendSave();
+    PEND.slice(0, 3).forEach(function (p) {
+      srv('erpEngineJob', [{ id: p.id }], function (J) {
+        if (!/done|failed|cancelled/.test(J.status)) return;
+        PEND = PEND.filter(function (x) { return x.id !== p.id; }); pendSave();
+        var txt = J.status === 'done' ? L('The Engine answered: ', 'ইঞ্জিনের উত্তর: ') + String(J.result || '').slice(0, 1500) + (String(J.result || '').length > 1500 ? L(' … the rest is in AI › Command Center.', ' … বাকিটা এআই › কমান্ড সেন্টারে।') : '')
+          : L('The Engine could not do it: ', 'ইঞ্জিন কাজটা করতে পারেনি: ') + (J.error || J.status);
+        try { CH.msgs.push({ role: 'assistant', eng: 1, text: txt }); chSave(); awPaint(); } catch (er) {}
+      }, function (er) { if (/not there/i.test((er && er.message) || '')) { PEND = PEND.filter(function (x) { return x.id !== p.id; }); pendSave(); } });
+    });
+  }, 30000);
+
+  // ---------------------------------------------------------------------------------------------- Bangla words
+  try {
+    var W = {
+      // আপনি forms (Waiting orders / Edit invoice said তুমি)
+      'Send for confirmation': 'কনফার্মের জন্য পাঠান', 'Send invoice on WhatsApp': 'WhatsApp-এ ইনভয়েস পাঠান',
+      // Command Center
+      'Ask the AI anything about your business': 'আপনার ব্যবসা নিয়ে যেকোনো কাজ দিন', 'Send to the Engine': 'ইঞ্জিনকে দিন', 'Who answers': 'কে উত্তর দেবে',
+      'Working…': 'কাজ চলছে…', 'The Engine is working on it…': 'ইঞ্জিন কাজ করছে…', 'Copy the answer': 'উত্তর কপি করুন', 'Ask again': 'আবার জিজ্ঞেস করুন', 'Yes, do it': 'হ্যাঁ, করুন',
+      'Was this useful?': 'কাজে লেগেছে?', 'Loading the Command Center…': 'কমান্ড সেন্টার লোড হচ্ছে…', 'Repeat a question on a schedule': 'নির্দিষ্ট সময়ে একই প্রশ্ন বারবার',
+      'The Engine is not switched on for this business.': 'এই ব্যবসার জন্য ইঞ্জিন চালু নেই।',
+      // Watchdog
+      'All good': 'সব ঠিক আছে ✓', 'Waiting for your OK': 'আপনার OK-র অপেক্ষায়', 'Not fixed yet': 'এখনো ঠিক হয়নি', 'What happened in the last 7 days': 'গত ৭ দিনে যা হয়েছে',
+      'Approve - fix it': 'অনুমোদন দিন', 'I did it': 'আমি করেছি', 'Not now': 'এখন না', 'Check now': 'এখনই দেখুন', 'Run the night check now': 'রাতের চেক এখনই চালান',
+      'Send to the Watchdog': 'ওয়াচডগকে পাঠান', 'Add the page': 'পেজ যোগ করুন', 'Loading the Watchdog…': 'ওয়াচডগ লোড হচ্ছে…', 'Checking and fixing now…': 'এখন দেখছে আর ঠিক করছে…',
+      // Skills
+      'Paste a GitHub link': 'GitHub লিংকটা দিন', 'Look inside': 'ভেতরে দেখুন', 'Install': 'ইনস্টল করুন', 'Uninstall': 'সরিয়ে দিন', 'Update': 'আপডেট করুন',
+      'Check for updates': 'আপডেট আছে কিনা দেখুন', 'Built-in library': 'তৈরি তালিকা', 'Trending on GitHub': 'GitHub-এ এখন জনপ্রিয়', 'Loading the skills…': 'স্কিল লোড হচ্ছে…',
+      'Useful': 'কাজে লাগছে', 'Weak': 'দুর্বল', 'Not used': 'ব্যবহার হয়নি',
+      'No skills yet. Start with the built-in library, or paste a GitHub link.': 'এখনো কোনো স্কিল নেই। তৈরি তালিকা থেকে নিন, অথবা GitHub লিংক দিন।',
+      // Ask panel suggestions
+      'How is the business this month?': 'এ মাসে ব্যবসা কেমন?', 'Who owes money?': 'কার কাছে টাকা পাওনা?', 'What is low on stock?': 'কোন মাল কম আছে?', 'Sales today?': 'আজকের বিক্রি?'
+    };
+    var FORCE = { 'Send for confirmation': 1, 'Send invoice on WhatsApp': 1, 'Approve - fix it': 1, 'All good': 1, 'Waiting for your OK': 1 };
+    Object.keys(W).forEach(function (k) { if (FORCE[k] || !I18N_BN[k]) I18N_BN[k] = W[k]; });
+    // the generic words, only where they still said তুমি
+    if (I18N_BN['Send again'] === 'আবার পাঠাও') I18N_BN['Send again'] = 'আবার পাঠান';
+    if (I18N_BN['Edit'] === 'বদলাও') I18N_BN['Edit'] = 'বদলান';
+  } catch (e) {}
 })();
 </script>
 </body>
