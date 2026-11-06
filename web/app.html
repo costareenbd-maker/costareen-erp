@@ -35733,7 +35733,11 @@ body[data-fdview="settings"] #o_cp .crumbs, body[data-fdview="tools"] #o_cp .cru
   // ---------------------------------------------------------------- loading
   function load(name, args, key, after) {
     if (IB.busy[key]) return; IB.busy[key] = true;
-    srv(name, [args || {}], function (r) { IB.busy[key] = false; IB[key] = r; if (after) after(r); if (isIbView()) paint(); else if (VIEW === 'settings') repaint(); }, function (e) { IB.busy[key] = false; IB[key] = { error: (e && e.message) || String(e) }; if (isIbView()) paint(); else if (VIEW === 'settings') repaint(); });
+    srv(name, [args || {}], function (r) { IB.busy[key] = false;
+      // ibscroll-1: the 3-second refresh of the list redraws only when something changed (a redraw lost the reader's place)
+      var same = key === 'list' && IB[key] && !IB[key].error && JSON.stringify(IB[key]) === JSON.stringify(r);
+      if (key === 'list') { var aj = JSON.stringify(args || {}); if (IB._listArgs !== undefined && IB._listArgs !== aj) IB._listReset = true; IB._listArgs = aj; }
+      IB[key] = r; if (after) after(r); if (same) return; if (isIbView()) paint(true); else if (VIEW === 'settings') repaint(); }, function (e) { IB.busy[key] = false; IB[key] = { error: (e && e.message) || String(e) }; if (isIbView()) paint(); else if (VIEW === 'settings') repaint(); });
   }
   function ding() {
     if (!IB.duty) return;
@@ -35783,8 +35787,16 @@ body[data-fdview="settings"] #o_cp .crumbs, body[data-fdview="tools"] #o_cp .cru
   function paint(keepScroll) {
     var v = el('view'); if (!v) return;
     var box = v.querySelector('.ib-msgs'), atBottom = box ? box.scrollHeight - box.scrollTop - box.clientHeight < 60 : true, ta = el('ibReply'), draft = ta ? ta.value : null, focus = document.activeElement && document.activeElement.id;
+    // ibscroll-1: keep where the reader is in the chat list, the side panes and the page; the chat jumps to the newest
+    // message only when it was already at the bottom or another chat was opened
+    var keep = {}, sameConv = IB._paintedConv === IB.convId, pageY = scrollY;
+    ['.ib-list', '.ib-side', '.ib-rail', '.ib-msgs'].forEach(function (s) { var b = v.querySelector(s); if (b) keep[s] = b.scrollTop; });
     v.innerHTML = view();
-    var nb = v.querySelector('.ib-msgs'); if (nb && (atBottom || !keepScroll)) nb.scrollTop = nb.scrollHeight;
+    Object.keys(keep).forEach(function (s) { var b = v.querySelector(s); if (b && s !== '.ib-msgs' && !(s === '.ib-list' && IB._listReset)) b.scrollTop = keep[s]; });
+    IB._listReset = false;
+    var nb = v.querySelector('.ib-msgs'); if (nb) { if (atBottom || !sameConv || (!keepScroll && keep['.ib-msgs'] === undefined)) nb.scrollTop = nb.scrollHeight; else nb.scrollTop = keep['.ib-msgs']; }
+    IB._paintedConv = IB.convId;
+    if (Math.abs(scrollY - pageY) > 1) scrollTo(0, pageY);
     var nta = el('ibReply'); if (nta && draft !== null) { nta.value = draft; if (focus === 'ibReply') { nta.focus(); } }
     fit();
   }
