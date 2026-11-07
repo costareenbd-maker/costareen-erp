@@ -3672,3 +3672,6 @@ alerts); the live business needs WA_SERVER_URL / WA_SERVER_KEY set on the server
   and an old LID-digits contact is retried as @lid. Not done: the 39 lost replies are not re-sent.
 - ibmorph-1/2: Inbox refreshes change only what changed; a stored picture keeps its signed link while it is the same
   file (20 min), so avatars no longer reload every 3 s.
+
+## wanum-1 — one Inbox button per WhatsApp number (LIVE 7 Nov 2026)
+- With two or more WhatsApp numbers the Inbox rail shows one button per number (last 4 digits), each listing only that number's chats; erpInbox returns waNumbers. Commit baf5c6f.
