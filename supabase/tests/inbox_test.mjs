@@ -383,6 +383,16 @@ check('WhatsApp shows only WhatsApp chats', r.ok && r.result.list.length >= 1 &&
 r = await sales('erpInbox', [{ pile: 'all', platform: 'fb' }]);
 check('Facebook shows only Messenger chats; the connected platforms are listed', r.ok && r.result.list.every((x) => x.channel === 'messenger') && r.result.platforms.fb.connected && r.result.platforms.wa.connected && !r.result.platforms.ig, r.result && r.result.platforms);
 
+// wanum-1: one WhatsApp number → no per-number buttons; two → each number listed, and a number's button shows only its chats
+{ const wa = r.result.waNumbers || [];
+  const w2 = (await sql`insert into inbox_channels (business_id, kind, name, external_id, status, ai_on, settings) values (${FIX.B}, 'wa_evo', 'Second number', 'wanum1-test', 'live', true, ${sql.json({ number: '8801700000659', purpose: 'chat' })}) returning id`)[0].id;
+  const r2 = await sales('erpInbox', [{ pile: 'all', platform: 'wa' }]);
+  const ns = (r2.result && r2.result.waNumbers) || [];
+  check('wanum-1: every WhatsApp number is listed with its phone', r2.ok && ns.length === wa.length + 1 && ns.some((x) => x.id === w2 && x.number === '+8801700000659' && x.aiOn && x.chats === 0), ns);
+  const r3 = await sales('erpInbox', [{ pile: 'all', platform: 'wa', channel: w2 }]);
+  check('wanum-1: a number by itself shows only its chats', r3.ok && r3.result.list.length === 0, r3.result && r3.result.list.length);
+  await sql`update inbox_channels set status = 'removed' where id = ${w2}`; }
+
 // ---- 19. the subscription: features in a plan, the owner's switches, the monthly AI budget
 r = await owner('erpPlatformInboxPlan', [{}]);
 check('only the provider sets plans', !r.ok, r);

@@ -1116,9 +1116,16 @@ export async function erpInbox(ctx, payload) {
     platforms[k] = platforms[k] || { connected: true, unread: 0, chats: 0 };
     platforms[k].unread += r.unread; platforms[k].chats += r.chats;
   }
+  // wanum-1: each WhatsApp number has its own inbox button once there are two or more
+  const waNumbers = (await ctx.tx`select ch.id, ch.name, ch.settings, ch.ai_on, count(v.id)::int chats, coalesce(sum(v.unread), 0)::int unread from inbox_channels ch
+      left join inbox_conversations v on v.channel_id = ch.id where ch.business_id = ${ctx.biz} and ch.status <> 'removed' and ch.kind = any(${PLAT.wa})
+      and (${!sc.channels} or ch.id::text = any(${CH})) group by ch.id order by min(ch.created_at)`).map((r) => {
+    const n = str(r.settings && r.settings.number).replace(/^\+/, '');
+    return { id: r.id, name: str(r.name), number: n ? '+' + n : '', purpose: str(r.settings && r.settings.purpose) || 'chat', aiOn: !!r.ai_on, chats: r.chats, unread: r.unread };
+  });
   const avs = await Promise.all(rows.map((r) => avatarOut(ctx, r.avatar, r.contact_id, r.channel_id)));
   return {
-    platforms,
+    platforms, waNumbers,
     counts: { ...counts, tasks },
     list: rows.map((r, i) => ({ id: r.id, name: str(r.name) || 'Customer', phone: str(r.phone), avatar: avs[i], channel: r.kind, channelName: r.ch_name, mode: r.mode,
       reason: r.handover_reason ? REASONS[r.handover_reason] : '', claimed: str(r.claimed_name), waiting: r.mode === 'human' && r.handover_at ? ago(r.handover_at, ctx.now) : '',

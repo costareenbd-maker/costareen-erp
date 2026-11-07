@@ -35774,7 +35774,7 @@ body[data-fdview="settings"] #o_cp .crumbs, body[data-fdview="tools"] #o_cp .cru
     try { var A = window.AudioContext || window.webkitAudioContext, ac = new A(); [0, 0.22].forEach(function (t, i) { var o = ac.createOscillator(), g = ac.createGain(); o.frequency.value = i ? 1046 : 784; g.gain.setValueAtTime(0.0001, ac.currentTime + t);
       g.gain.exponentialRampToValueAtTime(0.25, ac.currentTime + t + 0.02); g.gain.exponentialRampToValueAtTime(0.0001, ac.currentTime + t + 0.2); o.connect(g); g.connect(ac.destination); o.start(ac.currentTime + t); o.stop(ac.currentTime + t + 0.22); }); } catch (e) {}
   }
-  function loadList() { load('erpInbox', { pile: IB.pile, q: IB.q, platform: IB.plat }, 'list', function (r) { var before = IB.counts.waiting || 0; IB.counts = r.counts || {}; if ((IB.counts.waiting || 0) > before && IB.list) ding(); }); }
+  function loadList() { load('erpInbox', { pile: IB.pile, q: IB.q, platform: IB.plat, channel: IB.chan || '' }, 'list', function (r) { var before = IB.counts.waiting || 0; IB.counts = r.counts || {}; if ((IB.counts.waiting || 0) > before && IB.list) ding(); }); }
   function saveFile(name, text, type) { var b = new Blob([(type === 'text/csv' ? '\ufeff' : '') + text], { type: (type || 'text/plain') + ';charset=utf-8' }), a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = name; document.body.appendChild(a); a.click(); setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 500); }
   function csvOf(head, rows) { var q = function (v) { v = v === null || v === undefined ? '' : String(v); return /[",\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; }; return [head].concat(rows).map(function (r) { return r.map(q).join(','); }).join('\r\n'); }
   function exportIt(what, id) { srv('erpInboxExport', [{ what: what, id: id }], function (r) { if (r.text !== undefined) saveFile(r.name, r.text); else saveFile(r.name, csvOf(r.head, r.rows), 'text/csv'); }, fail); }
@@ -35904,9 +35904,16 @@ body[data-fdview="settings"] #o_cp .crumbs, body[data-fdview="tools"] #o_cp .cru
     { k: 'th', name: 'Threads', bg: '#000', ic: '<path d="M16.3 11.2c-.3-2.4-1.9-3.6-4.2-3.6-2.6 0-4.3 1.9-4.3 4.6s1.6 4.7 4.6 4.7c2.3 0 3.9-1.2 3.9-3 0-2.6-4.4-2.9-5.2-1.3-.6 1.2.4 2.2 1.6 2.2 1.8 0 2.6-1.4 2.6-3.6v-.9" fill="none" stroke="#fff" stroke-width="1.9" stroke-linecap="round"/>', soon: 'Threads has no direct messages for other apps. Replies under your Threads posts can come in and be answered here once your Threads account is connected through your Meta app.' }];
   function railHtml(L) {
     var pl = (L && L.platforms) || {};
+    // wanum-1: two or more WhatsApp numbers → one button per number, each its own inbox
+    var wan = (L && L.waNumbers) || [];
     return '<div class="ib-rail" role="tablist" aria-label="Platforms">' + PLATS.map(function (x) {
+      if (x.k === 'wa' && wan.length > 1) return wan.map(function (w) {
+        var on1 = IB.plat === 'wa' && IB.chan === w.id, lab = w.number ? '…' + w.number.slice(-4) : w.name.split(' ')[0];
+        return '<button type="button" data-ibplat="wa" data-ibchan="' + esc(w.id) + '" class="' + (on1 ? 'on' : '') + '" title="' + esc('WhatsApp ' + w.name + (w.number ? ' ' + w.number : '') + (w.aiOn ? ' — AI answers' : ' — AI off')) + '">' +
+          '<i style="background:' + x.bg + '"><svg viewBox="0 0 24 24" width="20" height="20">' + x.ic + '</svg></i>' + (w.unread ? '<span class="n">' + (w.unread > 99 ? '99+' : w.unread) + '</span>' : '') +
+          '<em>' + esc(lab) + '</em></button>'; }).join('');
       var st = pl[x.k] || {}, on = x.k === '' || st.connected, n = x.k === '' ? (IB.counts.unread || 0) : (st.unread || 0);
-      return '<button type="button" data-ibplat="' + x.k + '" class="' + (IB.plat === x.k ? 'on' : '') + (on ? '' : ' off') + '" title="' + esc(x.name + (on ? '' : ' — not connected')) + '">' +
+      return '<button type="button" data-ibplat="' + x.k + '" class="' + (IB.plat === x.k && !IB.chan ? 'on' : '') + (on ? '' : ' off') + '" title="' + esc(x.name + (on ? '' : ' — not connected')) + '">' +
         '<i style="background:' + x.bg + '"><svg viewBox="0 0 24 24" width="20" height="20">' + x.ic + '</svg></i>' + (n ? '<span class="n">' + (n > 99 ? '99+' : n) + '</span>' : '') + (on ? '' : '<span class="plus">+</span>') +
         '<em>' + esc(x.k === 'x' ? 'X' : x.name.split(' ')[0]) + '</em></button>'; }).join('') + '</div>';
   }
@@ -36632,7 +36639,7 @@ body[data-fdview="settings"] #o_cp .crumbs, body[data-fdview="tools"] #o_cp .cru
     if (t.hasAttribute('data-ibplat')) {
       var px = PLATS.find(function (x) { return x.k === d.ibplat; }), ps = (IB.list && IB.list.platforms && IB.list.platforms[d.ibplat]) || null;
       if (px && px.k && !ps) { platDialog(px); return; }
-      IB.plat = d.ibplat; IB.list = null; paint(); return;
+      IB.plat = d.ibplat; IB.chan = d.ibchan || ''; IB.list = null; paint(); return;
     }
     if (d.tpl) { var tl = document.querySelector('[data-tpllang="' + d.id + '"]'); t.disabled = true;
       srv('erpInboxTemplates', [{ id: d.id, action: d.tpl, lang: tl ? tl.value : 'bn' }], function (r) { IB.chans = r; paint(); toast(r.errors && r.errors.length ? 'Meta refused some: ' + esc(r.errors.join(' | ')).slice(0, 300) : d.tpl === 'create' ? 'Asked Meta. Approval usually takes seconds to a few hours — press Check.' : 'Checked.', !!(r.errors && r.errors.length), 9000); }, function (er) { t.disabled = false; fail(er); }); return; }
