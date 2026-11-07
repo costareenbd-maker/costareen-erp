@@ -3675,3 +3675,29 @@ alerts); the live business needs WA_SERVER_URL / WA_SERVER_KEY set on the server
 
 ## wanum-1 — one Inbox button per WhatsApp number (LIVE 7 Nov 2026)
 - With two or more WhatsApp numbers the Inbox rail shows one button per number (last 4 digits), each listing only that number's chats; erpInbox returns waNumbers. Commit baf5c6f.
+
+## crm-1 — customer tools G1-G12 from docs/CRM-GAP-VS-TWENTY.md (DEV, owner-only, 7 Nov 2026)
+Owner: "G1 theke suru kore ekdom shesh porjonto banaw". Migration 160_crm.sql (additive), handlers/crm.js, page block
+"crm-1" before </body>, tests supabase/tests/crm_test.mjs (81 checks). Owner-only ("Only me" app `crm`) until the provider
+opens it; staff see nothing new.
+- G1 Customer page › Timeline: invoices, payments, money on account, returns, parcels, held orders, notes, follow-ups,
+  chats (per day per channel), e-mails (Inbox e-mail matched by the customer's e-mail), leads; filter chips; Older.
+- G2 Leads › Board: a column per stage, drag a card or choose its stage; Move to the bin (manager).
+- G3 Customers › Views and conditions: field / is / value rows, all or any, own fields too; views saved on the server
+  (own, or for the whole team by a manager); Leads views keep kind, source, stage, search. listview.js applies `conds`.
+- G4 Companies (Customer tools › Companies): a company with its people, orders, spent, owes (manager); a customer's
+  company is set on their page; the customer list searches and groups by company.
+- G5 Own fields (owner): text, number, date, choice, yes/no on customers and leads, optional "hide from salespeople".
+- G6 Duplicates: a warning while typing a new customer (same name / phone / e-mail); a manager's list of same-name and
+  same-e-mail customers with "Not the same". NOT done: merging two customers with different phones (the books key
+  invoices by phone; left alone on purpose).
+- G7 Events: customer saved, invoice made, lead added / moved / converted, follow-up done, bin moves are written to
+  crm_events; addresses (n8n webhooks) get them within a minute from the 'inbox' timer, signed (x-erp-signature
+  sha256 HMAC, secret shown once, sealed in business_secrets), retried until they answer; owner pull: erpCrmEvents.
+  NOT done: parcel delivered / returned events (the courier timer is not wrapped yet).
+- G8 Rules: when <event> [if field op value] → plan a follow-up / note on the customer / move a lead / set its follow-up.
+- G9 Bin: a customer with no sales or money on account, or a lead (with its history), goes to crm_bin and comes back.
+- G10 What sales sees (owner): phone / address / e-mail blurred for salespeople on the customer list, page and Leads.
+- G11 Calendar: follow-ups and lead follow-ups by month (week from Saturday).
+- G12 A private calendar link (?crmcal=<token>, only its hash kept) that Google Calendar subscribes to; e-mails on
+  the timeline. NOT done: two-way Gmail / Google Calendar sync.

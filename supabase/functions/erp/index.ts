@@ -482,6 +482,13 @@ async function serveWith(deps: any, req: Request, q0: URLSearchParams, headers: 
     }
   }
   // the public pages (handlers/passport.js): ?pub=check&s=<serial> (the register), ?pub=my&t=<token> (a customer's page)
+  // crm-1: the private follow-up calendar (Google Calendar subscribes): GET ?crmcal=<token>
+  if (q0.get('crmcal')) {
+    try {
+      const r: any = await (await import('./handlers/crm.js')).calFeed(deps, q0, { asBusiness, owners });
+      return new Response(r.body, { status: r.status, headers: { ...headers, 'content-type': r.status === 200 ? 'text/calendar; charset=utf-8' : 'text/plain' } });
+    } catch (e) { console.error('crmcal', e); return new Response('Not found', { status: 404, headers: { ...headers, 'content-type': 'text/plain' } }); }
+  }
   if (q0.get('pub')) {
     const r: any = await pubRoute(deps, req, { asBusiness, owners, tenantDeps });
     return new Response(JSON.stringify(r.body), { status: r.status, headers });

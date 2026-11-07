@@ -37,6 +37,10 @@ Workflows) with our code.
 | G11 | **Calendar view** of follow-ups | Calendar view | Low | S |
 | G12 | Gmail / calendar sync per person | Email + calendar sync | Low: 0 of 329 customers have an e-mail | M |
 
+## Status (7 Nov 2026)
+All twelve built on dev as crm-1 (see docs/CHANGES.md), owner-only. Not done inside them: merging customers with
+different phones (G6), parcel delivered/returned events (G7), two-way Gmail/Calendar sync (G12: a subscribe link instead).
+
 ## Suggested order
 G1 → G6 → G2 → G3 → G7 → G4 → G9 → G5 → G8 → G10 → G11 → G12.
 Every one: dev first, tests, owner says "live koro". New features ship owner-only first (Only me flag).

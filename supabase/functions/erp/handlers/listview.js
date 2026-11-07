@@ -19,6 +19,7 @@ import { erpSales } from './sales.js';
 import { erpCatalog } from './catalog.js';
 import { erpCustomers } from './customers.js';
 import { erpDues } from './money.js';
+import { applyConds, crmDecorate } from './crm.js';
 
 const MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 const monthLabel = (m) => (/^\d{4}-\d{2}$/.test(m) ? MON[Number(m.slice(5, 7)) - 1] + ' ' + m.slice(0, 4) : m);
@@ -158,7 +159,7 @@ const MODELS = {
       const money = roleAtLeast(ctx.s.role, 'manager');
       let byKey = {};
       if (money) { try { byKey = (await erpDues(ctx)).byKey || {}; } catch (_) { byKey = {}; } }
-      return (await erpCustomers(ctx)).map((c) => {
+      return crmDecorate(ctx, (await erpCustomers(ctx)).map((c) => {
         const k = custKey(c.phone, c.name), d = byKey[k] || {};
         const mobile = /^01\d{9}$/.test(String(c.phone || '').replace(/\D/g, '').replace(/^88(?=01)/, '').replace(/^(?=1\d{9}$)/, '0'));
         const lastMonth = c.daysSince === null ? '' : formatDate(new Date(ctx.now.getTime() - c.daysSince * 86400e3), 'yyyy-MM');
@@ -173,11 +174,12 @@ const MODELS = {
         };
         if (money) { row.owes = d.due || 0; row.advance = d.credit || 0; row.act.owes = d.due || 0; }
         return row;
-      });
+      }));
     },
     search: [
       { field: 'customer', label: 'Customer', of: (r) => r.name + ' ' + r.phone },
       { field: 'address', label: 'Address', of: (r) => r.address },
+      { field: 'company', label: 'Company', of: (r) => r.company || '' },
     ],
     filters: [
       { name: 'phone', label: 'Has a mobile number', set: 'contact', test: (r) => r.mobile },
@@ -193,6 +195,7 @@ const MODELS = {
     groups: [
       { field: 'lastMonth', label: 'Last purchase', of: (r) => [r.lastMonth || '0000', r.lastMonth ? monthLabel(r.lastMonth) : 'Never bought'], newestFirst: true },
       { field: 'type', label: 'Type', of: (r) => [r.type, r.type] },
+      { field: 'company', label: 'Company', of: (r) => [r.company || '', r.company || 'No company'] },
       { field: 'source', label: 'Came from', of: (r) => [r.source, r.source] },
       { field: 'status', label: 'Status', of: (r) => [r.status, r.status] },
     ],
@@ -263,6 +266,8 @@ export async function erpListView(ctx, payload) {
     if (f) (sets[f.set] = sets[f.set] || []).push(f);
   }
   for (const k of Object.keys(sets)) rows = rows.filter((r) => sets[k].some((f) => f.test(r, c)));
+  // crm-1 (G3): the person's own conditions (field / op / value), all of them or any of them
+  rows = applyConds(rows, payload.conds, payload.match);
 
   // order
   const ord = payload.order && payload.order.field ? payload.order : m.order;
@@ -273,7 +278,7 @@ export async function erpListView(ctx, payload) {
 
   const sumCols = spec.columns.filter((x) => x.sum).map((x) => x.key);
   const sumOf = (list) => { const o = {}; for (const k of sumCols) { let t = 0; for (const r of list) t += num(r[k]); o[k] = Math.round(t); } return o; };
-  const strip = (r) => { const o = { key: r.key, open: r.open, act: r.act }; for (const x of spec.columns) { o[x.key] = r[x.key]; if (x.sub) o[x.sub] = r[x.sub]; if (x.badge) o[x.badge] = r[x.badge]; } return o; };
+  const strip = (r) => { const o = { key: r.key, open: r.open, act: r.act }; for (const x of spec.columns) { o[x.key] = r[x.key]; if (x.sub) o[x.sub] = r[x.sub]; if (x.badge) o[x.badge] = r[x.badge]; } if (r.company) o.company = r.company; return o; };
   const total = rows.length, sums = sumOf(rows);
 
   // grouped: the groups, or the rows of one of them
