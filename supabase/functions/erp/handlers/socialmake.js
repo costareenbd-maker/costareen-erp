@@ -16,6 +16,7 @@
 // Costs: a photo card and a template reel cost nothing (our own server). An AI photo ~৳5, a voice-over ~৳1, a script
 // ~free; each is written to ai_work. The day's AI allowance (300 a day per business) counts them too.
 
+import { tasteText } from './taste.js';
 import { getConfig, setConfig, getSecret, setSecret, saveFile, fileUrl, readFile } from '../lib/ext.js';
 import { formatDate, num } from '../lib/time.js';
 import { roleAtLeast } from '../allow.js';
@@ -344,6 +345,8 @@ async function gptImager(ctx) {
 async function gptPhotoJob(ctx, g, { src, prompt, scene, sku, title, meta, size }) {
   if (!(ctx.deps.storage && ctx.deps.storage.signUpload)) throw new Error('File uploads are not available on this server.');
   const fname = 'ai-' + scene + '-' + stamp(ctx) + '.jpg';
+  const taste = await tasteText(ctx, 'photo');                      // taste-1: the owner's likes and dislikes
+  if (taste) prompt = prompt + '\n' + taste;
   const up = await ctx.deps.storage.signUpload(ctx.biz, 'social', fname);
   const res = await (ctx.deps.fetch || fetch)(g.base + '/images/jobs', { method: 'POST', headers: { 'content-type': 'application/json', authorization: 'Bearer ' + g.key },
     body: JSON.stringify({ prompt, image: src || undefined, size: size || '1024x1024', quality: 'medium', upload: { url: up.url, contentType: 'image/jpeg' } }) });
@@ -355,6 +358,17 @@ async function gptPhotoJob(ctx, g, { src, prompt, scene, sku, title, meta, size 
                                   ${ctx.tx.json({ scene, model: 'gpt-image-2', engine: 'chatgpt', width: 1024, height: 1024, ...(meta || {}) })}, 0, ${ctx.s.name}) returning *`)[0];
   return view(r);
 }
+/** factory-1: one ad picture for the weekly ad factory (ChatGPT from the product's own photo). Returns the asset, or
+ *  null when there is no ChatGPT server or no product photo (the factory then uses the product's photo as it is). */
+export async function factoryPhoto(ctx, { sku, scene, direction, title, meta }) {
+  const g = await gptImager(ctx);
+  if (!g) return null;
+  const x = await productWithPhoto(ctx, sku);
+  if (!x.photo) return null;
+  const sc = SCENES[str(scene)] ? str(scene) : 'minimal';
+  return gptPhotoJob(ctx, g, { src: x.photo, prompt: photoPrompt(sc, direction, true), scene: sc, sku: x.sku, title, meta });
+}
+export const SCENE_KEYS = Object.keys(SCENES);
 /** Where a ChatGPT picture stands on the gateway. */
 async function gptPhotoState(ctx, g, id) {
   const res = await (ctx.deps.fetch || fetch)(g.base + '/images/jobs/' + encodeURIComponent(id), { method: 'GET', headers: { authorization: 'Bearer ' + g.key } });
@@ -387,12 +401,14 @@ export async function erpSocialAiPhoto(ctx, payload) {
   if (!g) await allowance(ctx, 1);
   const mime = (/^data:([^;]+)/.exec(src) || [])[1] || 'image/jpeg', data = src.replace(/^data:[^,]*,/, '');
   const prompt = 'Place this exact product ' + SCENES[scene] + '. Keep the product exactly as photographed: same shape, colours, label and text on it; do not add any text, logos or watermarks; photorealistic, sharp, square framing, the product fills about half of the frame.' + (str(p.notes) ? ' ' + str(p.notes).slice(0, 300) : '');
+  const tasteG = await tasteText(ctx, 'photo');
+  const promptT = tasteG ? prompt + '\n' + tasteG : prompt;
   let last = '';
   for (const model of IMAGE_MODELS) {
     let res, txt;
     try {
       res = await (ctx.deps.fetch || fetch)('https://generativelanguage.googleapis.com/v1beta/models/' + model + ':generateContent?key=' + encodeURIComponent(key),
-        { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ contents: [{ parts: [{ inline_data: { mime_type: mime, data } }, { text: prompt }] }], generationConfig: { responseModalities: ['IMAGE', 'TEXT'] } }) });
+        { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ contents: [{ parts: [{ inline_data: { mime_type: mime, data } }, { text: promptT }] }], generationConfig: { responseModalities: ['IMAGE', 'TEXT'] } }) });
       txt = await res.text();
     } catch (_) { last = 'timeout'; continue; }
     if (!res.ok) { last += ' | ' + model + ': ' + res.status + ' ' + txt.replace(/\s+/g, ' ').slice(0, 140); if ([400, 404, 429, 503].includes(res.status)) continue; throw new Error('The image model could not answer (' + res.status + ').'); }
@@ -427,7 +443,7 @@ export async function erpSocialScript(ctx, payload) {
   if (str(p.sku)) { try { const r0 = (await ctx.tx`select coalesce(meta #>> '{script,hookType}', '') as h from social_assets where business_id = ${ctx.biz} and kind = 'video' and sku = ${str(p.sku)} order by created_at desc limit 1`)[0]; lastHook = str(r0 && r0.h); } catch (_) { /* fine */ } }
   const hooks = HOOKS.filter((h) => h[0] !== lastHook);
   const hookLine = 'Choose ONE hook type from this list and name it in hookType: ' + hooks.map((h) => h[0] + ' = ' + h[1]).join('; ') + '.';
-  const extra = [await rulesText(ctx), await learnText(ctx), await styleText(ctx, p.style)].filter(Boolean).join('\n');
+  const extra = [await tasteText(ctx, 'video'), await rulesText(ctx), await learnText(ctx), await styleText(ctx, p.style)].filter(Boolean).join('\n');
   const langLine = lang === 'bn' ? 'All text and the voice in Bangla written in BENGALI SCRIPT (never Bangla in Latin letters); only brand and product names stay in Latin letters.' : lang === 'mix' ? 'Text in Banglish (Bangla in Latin letters), product names as given; the voice in natural spoken Bangla (Bengali script).' : 'All in simple English.';
   const sys = 'You write 12-20 second vertical product reels for a small 3D-printing supplies shop in Bangladesh. Only the facts given; never invent prices, specs, discounts or deadlines. Each text line fits on a phone screen: at most 7 words. The hook is the first 2 seconds and decides everything: ' + hookLine + ' Never start with the product name or "welcome". The voice-over is 35-55 words, spoken naturally like a friend, says the price once, ends with how to order (inbox / website). ' + langLine + '\n' + extra + '\nAlso give "broll": 2-4 English words for a stock clip that fits the hook (e.g. "3d printer printing closeup"), or "" if none. Return JSON only: ' + shape.replace('{', '{"broll": "", ');
   await allowance(ctx, 1);
@@ -603,7 +619,7 @@ async function adDailyMake(ctx, s) {
   let plan = {};
   try {
     const r = await ai(ctx, { purpose: 'ad-daily', json: true, temperature: 0.8, maxTokens: 900,
-      system: 'You are the ad maker of ' + shop + ', a shop in Bangladesh. You plan ONE minimal, human-looking ad photo for a product and write its post. ' +
+      system: (await tasteText(ctx, 'photo') ? (await tasteText(ctx, 'photo')) + '\n\n' : '') + 'You are the ad maker of ' + shop + ', a shop in Bangladesh. You plan ONE minimal, human-looking ad photo for a product and write its post. ' +
         'The picture must look like a real person photographed it - never AI-looking, never busy. The post sounds like a real shop owner talking to a customer: plain, warm, specific, ' +
         'no hype words, no "unleash/elevate/game-changer", at most one emoji, the price in taka, one clear action (inbox / WhatsApp / order).',
       messages: [{ role: 'user', content: [{ type: 'text', text: 'Product: ' + x.name + (x.brand ? ' (' + x.brand + ')' : '') + (x.cat ? ', ' + x.cat : '') + '. Price: ৳' + Math.round(x.sell) + '. (In stock - never state how many.)\n' +

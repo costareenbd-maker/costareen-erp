@@ -3848,3 +3848,18 @@ Owner: "the ERP already knows the bank account, the Bangla QR, everything - pull
 ## adsrc-4 (9 Nov 2026): courier in profit per ad
 - erpAdProfit: courier = Steadfast payout-line charges (delivery + COD, returned parcels too) minus the delivery charge the
   customer paid on delivered invoices; profit = gross - courier - spend. Page: Courier column. Test adsrc 28. Dev only.
+
+## factory-1 + taste-1 (9 Nov 2026): weekly ad factory (autopilot B3) and the owner's taste memory
+- 162_ad_factory.sql: ad_factory_weeks (one per ISO week, Dhaka), ad_factory_items (angles). handlers/factory.js:
+  Monday at the hour the week is planned (What to push: rising, advertise, one clear-out; 2 AI angles each with hook, text,
+  photo direction; one ChatGPT picture per angle via socialmake factoryPhoto). ONE owner button "Approve the week" schedules
+  the angles as Facebook posts Tue-Thu 11:00/19:00 (pictures still rendering are posted by the timer when done). Friday:
+  posts scored (engagement per reach), the best two made PAUSED paid ads (messages, factory budget) via erpAdsPlan when an
+  ad account is set; "Start the winners" (owner) starts them. Timer: jobs.js 'inbox' for businesses with ad_factory on.
+- handlers/taste.js: per kind (photo | video) the owner's formula + 👎/👍 notes with his reason (40 kept; 👎 hides the
+  asset). tasteText() goes into every ChatGPT and Gemini picture prompt, the daily ad plan, the factory's angle writer and
+  the video script writer. Reset = forget the notes, start from a new formula.
+- Page: Advertisement > "Weekly ad factory" and "What I like" cards; 👎/👍 under every ready picture/video in Content.
+- Tests: factory_test 25, taste_test 15; socialmake/adsrc/apps green; ads_test keeps its 4 old failures. Dev only.
+- NOT in this first version (autopilot artifact B3): reels cut from phone video, Trial Reels, a Shlink link per post,
+  the hook-rate auto-stop rule, Postiz (posts go through the ERP's own Meta connection).

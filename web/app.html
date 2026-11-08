@@ -8514,7 +8514,7 @@ function srv(name, args, ok, bad) {
 
 var SRV_ACTIVE = 0, SRV_WRITING = false, SRV_TIMED = {};
 // the same list the server uses to know a call changes nothing (ERP_READS)
-var SRV_READS = /^(erpHolds|erpHoldGet|erpPhoneAlerts|erpWaNumbers|erpBrandDesk|erpBrandDeskShorts|erpBrandDeskVideos|erpBrandDeskPeople|erpBrandDeskIdeas|erpBrandDeskBoard|erpShipmentRepriceCheck|erpReceivePreview|erpSeo|erpReceipts|erpBrief|erpBrain|erpWatch|erpEngine|erpEngineJob|erpSkills|erpAiBrain|erpAiBrainModels|erpLeadForms|erpLeads|erpLeadFind|erpLeadCapture|erpMyUpdates|erpSocialBridges|erpAds|erpAdProfit|erpAdsInterests|erpSocialNet|erpSocialLearn|erpSocialAssets|erpSocialPosts|erpSocialPhotos|erpInboxDigest|erpJointRecvCatalog|erpSitePages|erpBalanceSheet|erpProductFields|erpProductAi|erpMetaConnect|erpInboxFeatureMap|erpBookings|erpInbox|erpInboxOpen|erpInboxChannels|erpChatOrders|erpInboxStats|erpAiWork|erpCommissionSales|erpFdCards|erpLineMargins|erpFd19Profit|erpFdInventory|erpFd22Analytics|erpNavigator|erpSellers|erpFollowups|erpCustomerInsight|erpPreorders|erpCashUps|erpAskingPrices|erpSystemCheck|erpAnalytics|erpCommission|erpHolding|erpLotFunding|erpShipments|erpShipment|erpLots|erpFdHead|erpFdDash|erpReceiveMatch|erpAiReader|erpProductSuggest|erpCatalogue|erpPushList|erpCreators|erpCreatorPortalLink|erpSponsorLink|erpCreatorRequests|erpCreatorEvents|erpCreatorProgramme|erpCreatorPreview|erpCreatorCatalog|erpCreatorSources|erpCreatorClaims|erpApps|erpAppQr|erpFeedback|erpRestockOffers|erpRestockList|erpWarrantyRules|erpWarrantyCard|erpMyLink|erpPlatformRegister|erpPlatformDoctor|erpPlatformCommunity|erpMarketWaiting|erpBoard|erpPlatformDesign|erpResell|erpResellerProgramme|erpLoyalty|erpCustomerPoints|erpRefillDue|erpDeliveryHistory|erpDeliveryHistoryMany|erpPrintKit|erpPrintJobs|erpPrintJob|erpPrintCost|erpSpools|erpPrintRequests|erpJoint|erpJointCatalog|erpJointCard|erpInvoiceDesign|erpInvoicePreview|erpMarket|erpMarketMine|erpMarketRequests|erpMarketHints|erpMarketNames|erpWanted|erpBrand|erpComplianceLog|erpProviderKey|erpNews|erpAccessKeys|erpAccessWarning|erpAdmin|erpAiKeys|erpAlertRules|erpAlerts|erpArena|erpBackupStatus|erpBg|erpBnWords|erpBookedParcels|erpBrandLogo|erpBundle|erpBusinessLinks|erpBusinesses|erpBusinessesDeleted|erpCampaignAudience|erpCampaignGet|erpCampaignList|erpCapital|erpCashBook|erpCatalog|erpConnStatus|erpConnections|erpCostBook|erpCourier|erpCourierKeyStatus|erpCurrencies|erpCustomerAccount|erpCustomerCredit|erpCustomerList|erpCustomerPage|erpCustomerStatement|erpCustomers|erpDashboardData|erpDaySales|erpDeliveryOptions|erpDevices|erpDiscontinued|erpDues|erpEvoQr|erpEvoStatus|erpExpenseExport|erpExpenseReceiptUrl|erpExpenses|erpFamilies|erpFighters|erpFormOptions|erpGame|erpGetTheme|erpGoogle|erpHello|erpInstalls|erpInvoice|erpInvoicePdf|erpJob|erpJobs|erpListView|erpLookupCustomer|erpLookupUsage|erpMe|erpMoney|erpNoteFileUrl|erpNotes|erpOwnerChange|erpOwnerChanges|erpParcelLabels|erpParcelPreview|erpPartnerStock|erpPartnership|erpPayReasons|erpPeople|erpPlatform|erpPlatformErrors|erpPnl|erpPnlMonth|erpPoList|erpPoolCatalog|erpProduct|erpProductListShare|erpProductPage|erpProductPhotoUrl|erpProductThumbs|erpProfile|erpQuoteAsset|erpQuoteBoot|erpQuoteGet|erpQuoteList|erpRecentInvoices|erpRecovery|erpReorderPlan|erpRestorePreview|erpReturnPreview|erpRisks|erpSales|erpSearch|erpSecurity|erpSelfTest|erpSerialLookup|erpSerialsFor|erpSessions|erpSetTheme|erpSettingsFull|erpSettingsLists|erpSfPayoutLines|erpSfPayouts|erpShareFile|erpSharedStock|erpSheet|erpStatementPdf|erpStockHistory|erpSupplierPage|erpSuppliers|erpToday|erpUsers|erpWaProductPdf|erpWebMatches|erpWebOrderInvoices|erpWebOrders|erpWebsiteTest)$/;
+var SRV_READS = /^(erpHolds|erpHoldGet|erpPhoneAlerts|erpWaNumbers|erpBrandDesk|erpBrandDeskShorts|erpBrandDeskVideos|erpBrandDeskPeople|erpBrandDeskIdeas|erpBrandDeskBoard|erpShipmentRepriceCheck|erpReceivePreview|erpSeo|erpReceipts|erpBrief|erpBrain|erpWatch|erpEngine|erpEngineJob|erpSkills|erpAiBrain|erpAiBrainModels|erpLeadForms|erpLeads|erpLeadFind|erpLeadCapture|erpMyUpdates|erpSocialBridges|erpAds|erpAdProfit|erpFactory|erpTaste|erpAdsInterests|erpSocialNet|erpSocialLearn|erpSocialAssets|erpSocialPosts|erpSocialPhotos|erpInboxDigest|erpJointRecvCatalog|erpSitePages|erpBalanceSheet|erpProductFields|erpProductAi|erpMetaConnect|erpInboxFeatureMap|erpBookings|erpInbox|erpInboxOpen|erpInboxChannels|erpChatOrders|erpInboxStats|erpAiWork|erpCommissionSales|erpFdCards|erpLineMargins|erpFd19Profit|erpFdInventory|erpFd22Analytics|erpNavigator|erpSellers|erpFollowups|erpCustomerInsight|erpPreorders|erpCashUps|erpAskingPrices|erpSystemCheck|erpAnalytics|erpCommission|erpHolding|erpLotFunding|erpShipments|erpShipment|erpLots|erpFdHead|erpFdDash|erpReceiveMatch|erpAiReader|erpProductSuggest|erpCatalogue|erpPushList|erpCreators|erpCreatorPortalLink|erpSponsorLink|erpCreatorRequests|erpCreatorEvents|erpCreatorProgramme|erpCreatorPreview|erpCreatorCatalog|erpCreatorSources|erpCreatorClaims|erpApps|erpAppQr|erpFeedback|erpRestockOffers|erpRestockList|erpWarrantyRules|erpWarrantyCard|erpMyLink|erpPlatformRegister|erpPlatformDoctor|erpPlatformCommunity|erpMarketWaiting|erpBoard|erpPlatformDesign|erpResell|erpResellerProgramme|erpLoyalty|erpCustomerPoints|erpRefillDue|erpDeliveryHistory|erpDeliveryHistoryMany|erpPrintKit|erpPrintJobs|erpPrintJob|erpPrintCost|erpSpools|erpPrintRequests|erpJoint|erpJointCatalog|erpJointCard|erpInvoiceDesign|erpInvoicePreview|erpMarket|erpMarketMine|erpMarketRequests|erpMarketHints|erpMarketNames|erpWanted|erpBrand|erpComplianceLog|erpProviderKey|erpNews|erpAccessKeys|erpAccessWarning|erpAdmin|erpAiKeys|erpAlertRules|erpAlerts|erpArena|erpBackupStatus|erpBg|erpBnWords|erpBookedParcels|erpBrandLogo|erpBundle|erpBusinessLinks|erpBusinesses|erpBusinessesDeleted|erpCampaignAudience|erpCampaignGet|erpCampaignList|erpCapital|erpCashBook|erpCatalog|erpConnStatus|erpConnections|erpCostBook|erpCourier|erpCourierKeyStatus|erpCurrencies|erpCustomerAccount|erpCustomerCredit|erpCustomerList|erpCustomerPage|erpCustomerStatement|erpCustomers|erpDashboardData|erpDaySales|erpDeliveryOptions|erpDevices|erpDiscontinued|erpDues|erpEvoQr|erpEvoStatus|erpExpenseExport|erpExpenseReceiptUrl|erpExpenses|erpFamilies|erpFighters|erpFormOptions|erpGame|erpGetTheme|erpGoogle|erpHello|erpInstalls|erpInvoice|erpInvoicePdf|erpJob|erpJobs|erpListView|erpLookupCustomer|erpLookupUsage|erpMe|erpMoney|erpNoteFileUrl|erpNotes|erpOwnerChange|erpOwnerChanges|erpParcelLabels|erpParcelPreview|erpPartnerStock|erpPartnership|erpPayReasons|erpPeople|erpPlatform|erpPlatformErrors|erpPnl|erpPnlMonth|erpPoList|erpPoolCatalog|erpProduct|erpProductListShare|erpProductPage|erpProductPhotoUrl|erpProductThumbs|erpProfile|erpQuoteAsset|erpQuoteBoot|erpQuoteGet|erpQuoteList|erpRecentInvoices|erpRecovery|erpReorderPlan|erpRestorePreview|erpReturnPreview|erpRisks|erpSales|erpSearch|erpSecurity|erpSelfTest|erpSerialLookup|erpSerialsFor|erpSessions|erpSetTheme|erpSettingsFull|erpSettingsLists|erpSfPayoutLines|erpSfPayouts|erpShareFile|erpSharedStock|erpSheet|erpStatementPdf|erpStockHistory|erpSupplierPage|erpSuppliers|erpToday|erpUsers|erpWaProductPdf|erpWebMatches|erpWebOrderInvoices|erpWebOrders|erpWebsiteTest)$/;
 function srvPump() {
   if (!SRV_Q.length) return;
   var isRead = SRV_READS.test(SRV_Q[0].name);
@@ -45699,6 +45699,112 @@ document.addEventListener('click', async function (ev) {
       out.length > 1 ? 'Sent ' + out.length + ' products in one parcel.' : 'Sent.', function () { JT.form = null; JCAT = null; });
   }
 });
+</script>
+<!-- factory-1 + taste-1: the weekly ad factory and the owner's taste (handlers/factory.js, taste.js), under Advertisement -->
+<style>
+.fx-it{display:grid;grid-template-columns:72px 1fr;gap:10px;padding:8px 0;border-top:1px solid var(--line,#e5e5e5)}
+.fx-it img{width:72px;height:72px;object-fit:cover;border-radius:8px;background:#eee}
+.fx-it .ph{width:72px;height:72px;border-radius:8px;background:#f1f1f1;display:flex;align-items:center;justify-content:center;font-size:11px;color:#888;text-align:center}
+.fx-cap{white-space:pre-wrap;font-size:13px;margin:3px 0;color:var(--fg,#222)}
+.fx-st{display:inline-block;font-size:11px;padding:0 7px;border-radius:9px;background:#eef2f7;margin-left:4px}
+.fx-st.winner{background:#e3f6ea;color:#067647}.fx-st.skipped{background:#f4f4f4;color:#999}.fx-st.posted{background:#e7efff;color:#1d4ed8}
+.ts-note{display:flex;justify-content:space-between;gap:8px;padding:5px 0;border-top:1px solid var(--line,#eee);font-size:13px}
+.ts-no{color:#b42318}.ts-yes{color:#067647}
+.ts-box{margin-top:6px;display:flex;gap:6px;flex-wrap:wrap}.ts-box input{flex:1;min-width:160px}
+</style>
+<script>
+(function () {
+  var FX = { data: null, err: '', busy: false }, TS = { kind: 'photo', data: {}, err: '', open: null, sure: false };
+  function fxLoad() { FX.busy = true; srv('erpFactory', [{}], function (r) { FX.busy = false; FX.data = r; FX.err = ''; repaint(); }, function (e) { FX.busy = false; FX.err = (e && e.message) || String(e); repaint(); }); }
+  function tsLoad(k) { srv('erpTaste', [{ kind: k }], function (r) { TS.data[k] = r; repaint(); }, function (e) { TS.err = (e && e.message) || String(e); repaint(); }); }
+  function assetUrl(id) { var l = (CF.data && CF.data.assets) || []; for (var i = 0; i < l.length; i++) if (l[i].id === id) return l[i].url; return ''; }
+  var ST = { photo: 'picture coming', ready: 'ready', posted: 'posted', skipped: 'skipped', tested: 'tested', winner: 'winner' };
+  var WS = { planning: 'planning…', ready: 'ready for your approval', empty: 'nothing to push', approving: 'approved — posting as pictures finish', testing: 'testing (posts going out)', reviewed: 'reviewed' };
+  var own = function () { return ME && /^(owner|shareholder)$/.test(ME.role); };
+
+  function weekHtml(w) {
+    var h = '<div style="margin-top:12px"><b>Week ' + esc(w.week) + '</b> <span class="fx-st">' + esc(WS[w.status] || w.status) + '</span>' + (w.approvedBy ? ' <span class="sku">approved by ' + esc(w.approvedBy) + '</span>' : '') +
+      (w.error ? '<div class="sku">' + esc(w.error) + '</div>' : '');
+    h += (w.items || []).map(function (it) {
+      var url = it.photo && it.photo.status === 'ready' ? assetUrl(it.photo.id) : '';
+      return '<div class="fx-it">' + (url ? '<img src="' + esc(url) + '" alt="">' : '<div class="ph">' + (it.photo ? (it.photo.status === 'failed' ? 'picture failed' : 'picture coming') : 'product photo') + '</div>') +
+        '<div><b data-noi18n="1">' + esc(it.name) + '</b> · ' + esc(it.angle) + ' <span class="fx-st ' + esc(it.state) + '">' + esc(ST[it.state] || it.state) + '</span>' +
+        (it.post ? ' <span class="sku">' + esc(it.post.state) + ' · ' + esc(it.post.at) + '</span>' : '') +
+        '<div class="fx-cap" data-noi18n="1">' + esc(it.caption) + '</div>' +
+        (it.why ? '<div class="sku">Why: ' + esc(it.why) + '</div>' : '') + (it.score ? '<div class="sku">Score ' + it.score.rate + ' (reactions ' + it.score.acts + ' on reach ' + it.score.reach + ')</div>' : '') +
+        (it.error ? '<div class="sku" style="color:var(--critical)">' + esc(it.error) + '</div>' : '') +
+        (own() && (it.state === 'photo' || it.state === 'ready') ? '<button class="btn small" type="button" data-fx="skip" data-w="' + esc(w.id) + '" data-i="' + esc(it.id) + '">Skip this one</button>' : '') + '</div></div>';
+    }).join('');
+    if (own()) {
+      if (w.status === 'ready' || w.status === 'approving') h += '<div style="margin-top:8px"><button class="btn primary" type="button" data-fx="approve" data-w="' + esc(w.id) + '"' + (FX.busy ? ' disabled' : '') + '>Approve the week</button> <span class="sku">The posts go out Tue–Thu, 11:00 and 19:00. No money is spent.</span></div>';
+      if (w.status === 'testing') h += '<div style="margin-top:8px"><button class="btn small" type="button" data-fx="review" data-w="' + esc(w.id) + '">Choose the winners now</button> <span class="sku">Done by itself on Friday.</span></div>';
+      if (w.status === 'reviewed' && (w.items || []).some(function (i) { return i.state === 'winner' && i.campaignId; })) h += '<div style="margin-top:8px"><button class="btn primary" type="button" data-fx="start" data-w="' + esc(w.id) + '">Start the winners (spends money)</button> <span class="sku">The paid ads are ready and paused.</span></div>';
+    }
+    return h + '</div>';
+  }
+  function factoryHtml() {
+    var h = '<section><div class="card"><div class="row" style="justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px"><h2 style="margin:0">Weekly ad factory</h2>' +
+      (own() ? '<button class="btn small" type="button" data-fx="make">Plan this week now</button>' : '') + '</div>' +
+      '<div class="sub" style="display:block">Every Monday the AI picks the products to push, writes 2 different ideas for each and makes the pictures. You press one button; the posts go out over the week. On Friday the best two become paid ads, made paused — you start them.</div>';
+    if (FX.err) return h + '<div class="note err"><div class="ico">!</div><div>' + esc(FX.err) + '</div></div></div></section>';
+    if (!FX.data) { if (!FX.busy) fxLoad(); return h + '<div class="loading">Reading…</div></div></section>'; }
+    var d = FX.data;
+    if (!d.ai) h += '<div class="note"><div class="ico">!</div><div>It needs the AI writer: Settings › AI brain.</div></div>';
+    if (!d.adAccount) h += '<div class="note"><div class="ico">i</div><div>No ad account yet (Paid ads › Settings): the winners are named, but no paid ad is made.</div></div>';
+    if (own()) h += '<div class="ib-form" style="margin-top:8px"><label style="display:flex;gap:6px;align-items:center"><input type="checkbox" id="fxOn"' + (d.on ? ' checked' : '') + '> On every Monday</label>' +
+      '<label>Hour<input class="i" id="fxHour" inputmode="numeric" value="' + d.hour + '"></label><label>Products a week<input class="i" id="fxN" inputmode="numeric" value="' + d.products + '"></label>' +
+      '<label>Winner budget a day (৳)<input class="i" id="fxB" inputmode="numeric" value="' + d.budget + '"></label><label>Winner days<input class="i" id="fxD" inputmode="numeric" value="' + d.days + '"></label>' +
+      '<button class="btn small primary" type="button" data-fx="save">Save</button></div>';
+    h += (d.weeks || []).length ? d.weeks.map(weekHtml).join('') : '<div class="sku" style="margin-top:8px">No week planned yet.</div>';
+    return h + '</div></section>';
+  }
+  function tasteHtml() {
+    var k = TS.kind, t = TS.data[k];
+    var h = '<section><div class="card"><div class="row" style="justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px"><h2 style="margin:0">What I like</h2><div class="row" style="gap:6px">' +
+      ['photo', 'video'].map(function (x) { return '<button class="btn small' + (x === k ? ' primary' : '') + '" type="button" data-ts="kind" data-k="' + x + '">' + (x === 'photo' ? 'Pictures' : 'Videos') + '</button>'; }).join('') + '</div></div>' +
+      '<div class="sub" style="display:block">The AI reads this before every ' + (k === 'photo' ? 'picture' : 'video') + '. Press 👎 or 👍 under a ' + (k === 'photo' ? 'picture' : 'video') + ' in Content and say why — it is added here. Reset to start again with a new formula.</div>';
+    if (!t) { tsLoad(k); return h + '<div class="loading">Reading…</div></div></section>'; }
+    h += '<label style="display:block;margin-top:8px"><b>My formula</b><textarea class="i" id="tsF" rows="3" style="width:100%" placeholder="e.g. Bright daylight, a wooden desk, never black backgrounds, the brand logo visible"' + (own() ? '' : ' disabled') + '>' + esc(t.formula) + '</textarea></label>';
+    if (own()) h += '<div class="row" style="gap:6px;margin-top:6px"><button class="btn small primary" type="button" data-ts="save">Save the formula</button><button class="btn small" type="button" data-ts="reset">' + (TS.sure ? 'Forget all notes and use this formula? Press again' : 'Reset (start again)') + '</button></div>';
+    h += (t.notes || []).length ? '<div style="margin-top:8px">' + t.notes.map(function (n) {
+      return '<div class="ts-note"><span><span class="' + (n.verdict === 'no' ? 'ts-no' : 'ts-yes') + '">' + (n.verdict === 'no' ? '👎' : '👍') + '</span> <span data-noi18n="1">' + esc(n.why) + '</span>' + (n.what ? ' <span class="sku">on ' + esc(n.what) + '</span>' : '') + ' <span class="sku">' + esc(n.when) + '</span></span>' +
+        (own() ? '<button class="btn small" type="button" data-ts="forget" data-at="' + esc(n.at) + '">✕</button>' : '') + '</div>';
+    }).join('') + '</div>' : '<div class="sku" style="margin-top:8px">No notes yet' + (t.resetAt ? ' (reset ' + esc(String(t.resetAt).slice(0, 10)) + ')' : '') + '.</div>';
+    return h + '</div></section>';
+  }
+  // 👎 / 👍 with the reason under every ready picture and video in Content
+  var cfItemTs = cfItemHtml;
+  cfItemHtml = function (a) {
+    var h = cfItemTs(a);
+    if (a.status !== 'ready' || !own()) return h;
+    var kind = a.kind === 'video' ? 'video' : 'photo', open = TS.open && TS.open.id === a.id;
+    var x = open ? '<div class="ts-box"><input class="i" id="tsWhy" placeholder="' + (TS.open.verdict === 'no' ? 'Why not? e.g. too dark, looks fake' : 'What do you like? e.g. the wooden desk') + '"><button class="btn small primary" type="button" data-ts="note" data-id="' + esc(a.id) + '" data-k="' + kind + '">Teach the AI</button><button class="btn small" type="button" data-ts="close">Cancel</button></div>'
+      : '<button class="btn small" type="button" data-ts="open" data-v="no" data-id="' + esc(a.id) + '" title="Not like this - say why">👎</button><button class="btn small" type="button" data-ts="open" data-v="yes" data-id="' + esc(a.id) + '" title="Like this - say why">👍</button>';
+    var k = h.lastIndexOf('</div></div>');
+    return k > 0 ? h.slice(0, k) + x + h.slice(k) : h + x;
+  };
+  var cfHtmlFx = cfHtml;
+  cfHtml = function () { return cfHtmlFx() + factoryHtml() + tasteHtml(); };
+  var cfLoadFx = cfLoad;
+  cfLoad = function () { FX.data = null; TS.data = {}; return cfLoadFx.apply(this, arguments); };
+
+  document.addEventListener('click', function (ev) {
+    var b = ev.target && ev.target.closest ? ev.target.closest('[data-fx],[data-ts]') : null; if (!b) return;
+    var fail = function (e) { FX.busy = false; repaint(); toast(esc((e && e.message) || e), true, 9000); };
+    var fx = b.getAttribute('data-fx'), ts = b.getAttribute('data-ts'), v = function (id) { var x = el(id); return x ? x.value : ''; };
+    if (fx === 'save') { srv('erpFactorySet', [{ on: !!(el('fxOn') && el('fxOn').checked), hour: v('fxHour'), products: v('fxN'), budget: v('fxB'), days: v('fxD') }], function (r) { FX.data = r; toast('Saved.'); repaint(); }, fail); return; }
+    if (fx === 'make') { FX.busy = true; repaint(); toast('Planning the week - the AI writes and the pictures start (a minute)…'); srv('erpFactoryAct', [{ action: 'make' }], function (r) { FX.busy = false; FX.data = r; repaint(); }, fail); return; }
+    if (fx) { FX.busy = true; repaint(); srv('erpFactoryAct', [{ action: fx, week: b.getAttribute('data-w'), item: b.getAttribute('data-i') }], function (r) { FX.busy = false; FX.data = r;
+      var d = r.done || {}; toast(fx === 'approve' ? (d.made + ' post(s) scheduled' + (d.waiting ? ', ' + d.waiting + ' wait for their picture' : '') + '.') : fx === 'review' ? (d.winners + ' winner(s).') : fx === 'start' ? (d.started + ' started.' + (d.errors && d.errors.length ? ' ' + d.errors.join(' ') : '')) : 'Done.'); repaint(); }, fail); return; }
+    if (ts === 'kind') { TS.kind = b.getAttribute('data-k'); TS.sure = false; repaint(); return; }
+    if (ts === 'open') { TS.open = { id: b.getAttribute('data-id'), verdict: b.getAttribute('data-v') }; repaint(); setTimeout(function () { var x = el('tsWhy'); if (x) x.focus(); }, 30); return; }
+    if (ts === 'close') { TS.open = null; repaint(); return; }
+    if (ts === 'note') { var k = b.getAttribute('data-k'); srv('erpTasteNote', [{ kind: k, verdict: TS.open.verdict, why: v('tsWhy'), assetId: b.getAttribute('data-id') }], function (r) { var no = TS.open.verdict === 'no'; TS.open = null; TS.data[k] = r; toast(no ? 'Learnt. The picture is hidden; the next ones avoid it.' : 'Learnt. More like this.'); if (no) { CF.data = null; } repaint(); }, fail); return; }
+    if (ts === 'save') { srv('erpTasteSet', [{ kind: TS.kind, formula: v('tsF') }], function (r) { TS.data[TS.kind] = r; toast('Formula saved. The next ' + (TS.kind === 'photo' ? 'pictures' : 'videos') + ' follow it.'); repaint(); }, fail); return; }
+    if (ts === 'reset') { if (!TS.sure) { TS.sure = true; repaint(); return; } TS.sure = false; srv('erpTasteReset', [{ kind: TS.kind, formula: v('tsF') }], function (r) { TS.data[TS.kind] = r; toast('Reset. Only the new formula is used now.'); repaint(); }, fail); return; }
+    if (ts === 'forget') { srv('erpTasteForget', [{ kind: TS.kind, at: b.getAttribute('data-at') }], function (r) { TS.data[TS.kind] = r; repaint(); }, fail); return; }
+  });
+})();
 </script>
 </body>
 </html>
