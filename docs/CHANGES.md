@@ -3713,3 +3713,13 @@ opens it; staff see nothing new.
 - jobs.js: new job `crm` = only the event delivery (no inbox/social/ads). Test: 2 events delivered, n8n run #1 success.
 - NOT done: the every-minute dev timer (systemd erp-dev-crm.timer) was refused by the safety check; until it exists, dev
   events reach n8n only when the `crm` job is called by hand. n8n owner account not made (owner's own; the page needs his gate link).
+
+## adsrc-1 (8 Nov 2026): the ad a chat came from (autopilot B2, first piece)
+- 161_ad_source.sql: `inbox_conversations.ad`, `inbox_leads.ad` (jsonb {id, title, url, post, ref, clid}).
+- inboxch.js `adOf` + readHook: Messenger/Instagram `referral` (also a bare "opened from an ad" event, kept, not answered),
+  WhatsApp Cloud API `referral` (ctwa_clid), Evolution/Baileys `contextInfo.externalAdReply` (ctwaClid). Own messages never.
+- inbox.js `keepAd`: first ad wins, a note in the chat says which ad, an open lead gets it; new leads copy it.
+- Leads: "Ad" chip beside the source, "From ad" line in the detail. Tests adsrc_test.mjs (14); inbox/leads/crm/apps green.
+- On dev (devsync applied 161). NOT done: sending ctwa_clid back to Meta with the Purchase (needs the pixel set up on live
+  first), profit per ad report. Live needs "live koro".
+- Dev timer erp-dev-crm.timer now exists (owner OK 8 Nov): dev events reach n8n every minute.
