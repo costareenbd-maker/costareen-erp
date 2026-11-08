@@ -179,9 +179,14 @@ async function mediaOf(ctx, it) {
 async function approve(ctx, w) {
   if (!['ready', 'planning', 'approving'].includes(w.status)) throw new Error('This week is ' + w.status + '.');
   const items = await ctx.tx`select * from ad_factory_items where week_id = ${w.id} and state in ('photo', 'ready') order by created_at, id`;
+  // the week's six slots from its approval (or now), minus the ones its posts already took
+  const from = w.approved_at ? new Date(Math.min(new Date(w.approved_at).getTime(), ctx.now.getTime())) : ctx.now;
+  const taken = new Set((await ctx.tx`select p.scheduled_at from ad_factory_items i join social_posts p on p.id = i.post_id where i.week_id = ${w.id} and p.scheduled_at is not null`)
+    .map((r) => new Date(r.scheduled_at).getTime()));
   const slots = [];
-  for (const day of [2, 3, 4]) for (const h of [11, 19]) slots.push(nextAt(ctx.now, day, h));
+  for (const day of [2, 3, 4]) for (const h of [11, 19]) slots.push(nextAt(from, day, h));
   slots.sort((a, b) => a - b);
+  for (let i = slots.length - 1; i >= 0; i--) if (taken.has(slots[i].getTime()) || slots[i].getTime() < ctx.now.getTime() + 10 * 60e3) slots.splice(i, 1);
   let k = 0, made = 0, waiting = 0;
   for (const it of items) {
     const media = await mediaOf(ctx, it);

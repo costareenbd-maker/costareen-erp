@@ -95,6 +95,8 @@ check('once the pictures are done the timer posts them as scheduled Facebook pos
 const hrs = posts.map((p) => new Date(new Date(p.scheduled_at).getTime() + 6 * 3600e3).toISOString().slice(0, 13));
 check('...from Tuesday 11:00, then 19:00, then Wednesday 11:00 (Dhaka), two a day', JSON.stringify(hrs) === JSON.stringify(['2026-11-10T11', '2026-11-10T19', '2026-11-11T11'].slice(0, nItems - 1)), hrs);
 check('...the week is testing', (await sql`select status from ad_factory_weeks where id = ${wk.id}`)[0].status === 'testing');
+const allAt = (await sql`select p.scheduled_at from ad_factory_items i join social_posts p on p.id = i.post_id where i.week_id = ${wk.id}`).map((x) => new Date(x.scheduled_at).getTime());
+check('no two posts of the week share a slot (late pictures take the free ones)', new Set(allAt).size === allAt.length, allAt);
 
 // ---- 4. Friday review: scores; without an ad account the winners are named only
 await sql`update social_posts set state = 'published', published_at = now(), stats = case when id = (select post_id from ad_factory_items where id = ${items[0].id}) then '{"facebook":{"reach":100,"reactions":10,"comments":4,"shares":1}}'::jsonb
