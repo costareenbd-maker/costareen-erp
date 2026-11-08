@@ -3787,3 +3787,6 @@ Owner's complaint: the AI did not know what we sell and did not keep context - M
   normal price answers untouched, retry + one alert + answer once the AI is back. inbox_test 172 still green.
 - NOT done: real-model check against live chats (tests script the model); live release waits for the owner's "live koro"
   (only handlers/inbox.js changes on live).
+- sales-1b (9 Nov): owner tested "instant delivery ache?" - the AI said no, but we send by Pathao/Uber. New rule
+  UNKNOWN IS NOT NO: a service / delivery option / payment way not written is never denied; search the documents, else
+  "checking now" + ask_team. The facts themselves must be written by the owner (Agent Desk delivery rule or knowledge).
