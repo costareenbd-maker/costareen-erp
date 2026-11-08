@@ -210,8 +210,8 @@ async function ensureHeld(pctx, pool, productId, name, seller, qty, note) {
   }
   return moved;
 }
-async function moveRows(pctx, pool, productId, name, from, to, qty, cost, at, note) {
-  const op = who(pctx), tn = txnNo(at);
+async function moveRows(pctx, pool, productId, name, from, to, qty, cost, at, note, txn) {
+  const op = who(pctx), tn = txn || txnNo(at);
   await pctx.tx`
     insert into stock_movements (business_id, product_id, kind, direction, qty, unit_price, total, reference, supplier, note, created_by, created_at, txn_no, operator, product_name, held_by)
     values (${pool.id}, ${productId}, 'MOVE', 'OUT', ${qty}, ${cost}, ${round2(qty * cost)}, 'Moved between partners', '', ${note}, ${pctx.s.userId}, ${at}, ${tn}, ${op}, ${name}, ${from}),
@@ -655,49 +655,66 @@ async function movesOf(ctx, pool) {
   return rows.map((r) => ({ name: str(r.product_name), qty: num(r.qty), from: names[r.src] || '?', to: names[r.dst] || '?', note: str(r.note), by: str(r.operator),
                             when: formatDate(new Date(r.created_at), 'd MMM yyyy') }));
 }
+/** joint-multi-1 (owner 8 Nov 2026: "we send many products at once"): a payload may carry lines [{sku, qty, request}];
+ *  without lines it is the old single product (sku, qty, request). Blank lines are skipped. */
+function linesOf(payload) {
+  const raw = Array.isArray(payload.lines) && payload.lines.length ? payload.lines : [{ sku: payload.sku, qty: payload.qty, request: payload.request }];
+  const out = raw.map((l) => ({ sku: str(l && l.sku), qty: num(l && l.qty), request: str(l && l.request) })).filter((l) => l.sku || l.request);
+  if (!out.length) throw new Error('Which product? Add at least one.');
+  if (out.length > 100) throw new Error('At most 100 products at once.');
+  return out;
+}
 export async function erpJointAsk(ctx, payload) {
   payload = payload || {};
   await needOn(ctx);
   const pool = await poolOf(ctx, payload.pool);
-  const me = await sellerId(ctx), qty = num(payload.qty);
-  if (!(qty > 0) || qty !== Math.round(qty)) throw new Error('How many do you need? A whole number above 0.');
+  const me = await sellerId(ctx), lines = linesOf(payload);
+  for (const l of lines) if (!(l.qty > 0) || l.qty !== Math.round(l.qty)) throw new Error('How many do you need' + (lines.length > 1 ? ' of each product' : '') + '? A whole number above 0.');
   const asker = poolOwner(ctx, pool) && str(payload.for) ? str(payload.for) : me;
   if (!pool.partners.some((p) => p.id === asker)) throw new Error('For which partner?');
   await withPool(ctx, pool, async (pctx) => {
-    const p = await poolProduct(pctx, pool, payload.sku);
-    let holder = str(payload.from);
-    if (!holder) {   // the partner holding most of it
-      let best = -Infinity;
-      for (const x of pool.partners) if (x.id !== asker) { const n = await heldBy(pctx, pool, p.id, x.id); if (n > best) { best = n; holder = x.id; } }
+    for (const l of lines) {
+      const p = await poolProduct(pctx, pool, l.sku);
+      let holder = str(payload.from);
+      if (!holder) {   // the partner holding most of it
+        let best = -Infinity;
+        for (const x of pool.partners) if (x.id !== asker) { const n = await heldBy(pctx, pool, p.id, x.id); if (n > best) { best = n; holder = x.id; } }
+      }
+      if (!pool.partners.some((x) => x.id === holder) || holder === asker) throw new Error('Ask which partner? Not your own company.');
+      await pctx.tx`insert into pool_requests (pool_id, sku, product_name, qty, asked_by, asked_name, holder, note)
+                    values (${pool.id}, ${str(p.sku)}, ${str(p.name)}, ${l.qty}, ${asker}, ${who(ctx) + ' (' + str(ctx.s.businessName) + ')'}, ${holder}, ${str(payload.note).slice(0, 300) || null})`;
     }
-    if (!pool.partners.some((x) => x.id === holder) || holder === asker) throw new Error('Ask which partner? Not your own company.');
-    await pctx.tx`insert into pool_requests (pool_id, sku, product_name, qty, asked_by, asked_name, holder, note)
-                  values (${pool.id}, ${str(p.sku)}, ${str(p.name)}, ${qty}, ${asker}, ${who(ctx) + ' (' + str(ctx.s.businessName) + ')'}, ${holder}, ${str(payload.note).slice(0, 300) || null})`;
   });
-  return erpJoint(ctx, { pool: pool.id });
+  return { ...(await erpJoint(ctx, { pool: pool.id })), asked: lines.length };
 }
-/** Send goods to the other partner - for a request, or on its own. Stock moves shelf to shelf at once; a delivery's
- *  cost is written in the joint book as an expense of the one who paid it (shared by the profit rule at month end). */
+/** Send goods to the other partner - for requests, or on their own; one product or many (lines). Stock moves shelf to
+ *  shelf at once, all lines or none; a delivery's cost (one for the whole parcel) is written in the joint book as an
+ *  expense of the one who paid it (shared by the profit rule at month end). */
 export async function erpJointSend(ctx, payload) {
   payload = payload || {};
   await needOn(ctx);
   const pool = await poolOf(ctx, payload.pool);
   const me = await sellerId(ctx);
   const names = {}; pool.partners.forEach((p) => { names[p.id] = p.name; });
-  let req = null;
-  if (str(payload.request)) {
-    req = (await poolRead(ctx, (t) => t`select * from pool_requests where pool_id = ${pool.id} and id = ${str(payload.request)}`))[0];
-    if (!req) throw new Error('That request is not here.');
-    if (req.status !== 'asked') throw new Error('That request is already ' + (REQ_WORDS[req.status] || req.status).toLowerCase() + '.');
+  const lines = linesOf(payload);
+  const seen = {};
+  for (const l of lines) {
+    if (!l.request) continue;
+    if (seen[l.request]) throw new Error('The same request is in the list twice.');
+    seen[l.request] = 1;
+    l.req = (await poolRead(ctx, (t) => t`select * from pool_requests where pool_id = ${pool.id} and id = ${l.request}`))[0];
+    if (!l.req) throw new Error('That request is not here.');
+    if (l.req.status !== 'asked') throw new Error((lines.length > 1 ? 'The request for ' + str(l.req.product_name) : 'That request') + ' is already ' + (REQ_WORDS[l.req.status] || l.req.status).toLowerCase() + '.');
+    l.sku = l.req.sku; if (!l.qty) l.qty = num(l.req.qty);
   }
-  const sku = req ? req.sku : str(payload.sku);
-  const to = req ? req.asked_by : str(payload.to);
-  const from = str(payload.from) || (req && req.holder) || me;
-  const qty = num(payload.qty) || (req ? num(req.qty) : 0);
+  const first = lines.find((l) => l.req);
+  const to = first ? first.req.asked_by : str(payload.to);
+  const from = str(payload.from) || (first && first.req.holder) || me;
+  for (const l of lines) if (l.req && (l.req.asked_by !== to || l.req.holder !== from)) throw new Error('Those requests are for different partners. Send them one partner at a time.');
   const how = str(payload.how) === 'delivered' ? 'delivered' : 'collected';
   const cost = how === 'delivered' ? round2(num(payload.cost)) : 0;
   const paidBy = str(payload.paidBy) || me;
-  if (!(qty > 0) || qty !== Math.round(qty)) throw new Error('How many are sent? A whole number above 0.');
+  for (const l of lines) if (!(l.qty > 0) || l.qty !== Math.round(l.qty)) throw new Error('How many are sent' + (lines.length > 1 ? ' of each product' : '') + '? A whole number above 0.');
   if (!pool.partners.some((p) => p.id === from) || !pool.partners.some((p) => p.id === to) || from === to) throw new Error('From which partner to which? Two different ones.');
   await ownSide(ctx, pool, from, 'Goods are sent from your own shelf');
   if (cost < 0) throw new Error('The transport cost cannot be negative.');
@@ -709,24 +726,34 @@ export async function erpJointSend(ctx, payload) {
   await poolOpenOn(ctx, pool, today, 'its stock cannot be moved');
   const got = await withPool(ctx, pool, async (pctx) => {
     await lock(pctx, 'stock');
-    const p = await poolProduct(pctx, pool, sku);
-    const have = await heldBy(pctx, pool, p.id, from);
-    if (qty > have) throw new Error(names[from] + ' holds only ' + have + ' of ' + str(p.name) + '. Send fewer, or count first.');
+    const at = new Date(), base = txnNo(at), sent = [];
     const note = (how === 'delivered' ? 'Delivered' : 'Collected') + ' - sent by ' + who(ctx) + ' (' + str(ctx.s.businessName) + ')' +
-                 (cost > 0 ? ', transport ' + cost + ' paid by ' + names[paidBy] : '') + (str(payload.note) ? ' - ' + str(payload.note).slice(0, 150) : '');
-    await moveRows(pctx, pool, p.id, str(p.name), from, to, qty, num(p.cost_price), new Date(), note);
+                 (cost > 0 ? ', transport ' + cost + ' paid by ' + names[paidBy] : '') + (lines.length > 1 ? ', parcel of ' + lines.length + ' products' : '') +
+                 (str(payload.note) ? ' - ' + str(payload.note).slice(0, 150) : '');
+    let costOn = first || null;   // the parcel's transport is shown on one request only
+    for (let i = 0; i < lines.length; i++) {
+      const l = lines[i];
+      const p = await poolProduct(pctx, pool, l.sku);
+      const have = await heldBy(pctx, pool, p.id, from);   // re-read each line: the same product twice adds up
+      if (l.qty > have) throw new Error(names[from] + ' holds only ' + have + ' of ' + str(p.name) + '. Send fewer, or count first.');
+      await moveRows(pctx, pool, p.id, str(p.name), from, to, l.qty, num(p.cost_price), at, note, lines.length > 1 ? base + '-' + (i + 1) : base);
+      if (l.req) {
+        const c = l === costOn ? cost : 0;
+        await pctx.tx`update pool_requests set status = 'sent', sent_qty = ${l.qty}, sent_name = ${who(ctx) + ' (' + str(ctx.s.businessName) + ')'}, sent_at = now(),
+                        how = ${how}, cost = ${c}, cost_paid_by = ${c > 0 ? paidBy : null}, answer = ${str(payload.note).slice(0, 300) || null}
+                      where id = ${l.req.id}`;
+      }
+      sent.push({ sku: str(p.sku), name: str(p.name), qty: l.qty });
+    }
     if (cost > 0) {
+      const what = sent.length === 1 ? sent[0].qty + ' x ' + sent[0].name : sent.length + ' products (' + sent.map((x) => x.qty + ' x ' + x.name).join(', ') + ')';
       await pctx.tx`insert into pool_ledger (pool_id, kind, partner_business_id, amount, entry_date, category, note)
                     values (${pool.id}, 'EXPENSE'::pool_entry_kind, ${paidBy}, ${cost}, ${today}::date, 'Transport',
-                            ${('Moving ' + qty + ' x ' + str(p.name) + ' from ' + names[from] + ' to ' + names[to]).slice(0, 300)})`;
-    }
-    if (req) {
-      await pctx.tx`update pool_requests set status = 'sent', sent_qty = ${qty}, sent_name = ${who(ctx) + ' (' + str(ctx.s.businessName) + ')'}, sent_at = now(),
-                      how = ${how}, cost = ${cost}, cost_paid_by = ${cost > 0 ? paidBy : null}, answer = ${str(payload.note).slice(0, 300) || null}
-                    where id = ${req.id}`;
+                            ${('Moving ' + what + ' from ' + names[from] + ' to ' + names[to]).slice(0, 300)})`;
     }
     forget(pctx, 'TXN_LOG');
-    return { sku: str(p.sku), name: str(p.name), qty, from: names[from], to: names[to], how, cost };
+    const one = sent[0];
+    return { sku: one.sku, name: one.name, qty: sent.reduce((a, x) => a + x.qty, 0), lines: sent, from: names[from], to: names[to], how, cost };
   });
   return { ...(await erpJoint(ctx, { pool: pool.id })), moved: got };
 }

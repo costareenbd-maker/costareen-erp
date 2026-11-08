@@ -3723,3 +3723,15 @@ opens it; staff see nothing new.
 - On dev (devsync applied 161). NOT done: sending ctwa_clid back to Meta with the Purchase (needs the pixel set up on live
   first), profit per ad report. Live needs "live koro".
 - Dev timer erp-dev-crm.timer now exists (owner OK 8 Nov): dev events reach n8n every minute.
+
+## joint-multi-1 (8 Nov 2026): Ask for stock / Send stock take many products at once
+- Owner: "Send stock / Ask for stock let us add only one product, but we send many together."
+- Joint stock > Stock: both forms now hold a list of products (+ Add another product, x drops a line, blank lines are
+  skipped). The product list shows how many sit on the From shelf. One Send = one parcel: every line moves or none does
+  (a short line refuses the whole parcel), one transport cost for the whole parcel written once in the joint book.
+- Send on a request now lists every open request the same partner asked of you, so a 5-product ask is answered with one
+  Send (x leaves a request open for later). The transport is shown on one request only.
+- Server: erpJointAsk / erpJointSend take lines [{sku, qty, request}]; the old single-product calls are unchanged. Each
+  line gets its own move number. Tests: jointmulti_test.mjs 17; joint1/2/4/6 green. joint3 has 4 month-close failures
+  that fail the same on the code before this change (not caused by it, not fixed here).
+- NOT done: live. On dev only; live needs "live koro".
