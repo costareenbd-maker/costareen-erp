@@ -3746,7 +3746,11 @@ opens it; staff see nothing new.
 - Server: erpJointAsk / erpJointSend take lines [{sku, qty, request}]; the old single-product calls are unchanged. Each
   line gets its own move number. Tests: jointmulti_test.mjs 17; joint1/2/4/6 green. joint3 has 4 month-close failures
   that fail the same on the code before this change (not caused by it, not fixed here).
-- NOT done: live. On dev only; live needs "live koro".
+- LIVE 8 Nov 2026 (owner: "Live koro"), after adsrc-1/2/3 went live the same evening. Function: only handlers/joint.js
+  (live copy matched 0bd2a42^; backup /data/backups/live-function/erp-20261108T143236Z.tgz + joint-20261108T143236Z.js),
+  edge restarted, smoke-public + a read-only erpJoint pass. Web: the live page plus the minified joint-multi-1 block only,
+  sw cz-shell-v4-native-2c0f45f-0bd2a42-web, costareen-erp + office-erp (2 files changed). Previous page:
+  private/live-web-backup-20261108-before-jointmulti. Not yet clicked through signed in on live.
 
 ## adsrc-1/2/3 LIVE (8 Nov 2026, owner "live koro")
 - Live function (Mac /opt/erp-migration/.../functions/erp): only the adsrc diffs applied to the live files (allow.js,
