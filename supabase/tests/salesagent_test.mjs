@@ -135,11 +135,12 @@ await owner('erpQuoteProfileSave', [{ profile: { ...qp, name: 'Costareen', phone
   banks: [{ bank: 'Test Bank Ltd', name: 'TEST SHOP', number: '9990001112223', branch: 'Test Branch' }] } }]);
 await sql`update quote_settings set value = jsonb_set(value, '{qrId}', '"assets/test-qr.png"') where business_id = ${FIX.B} and key = 'profile'`;
 bodies.length = 0;
-script = [[{ functionCall: { name: 'payment_details', args: { amount: 1290 } } }], [{ text: 'টাকা পাঠিয়ে ট্রানজেকশন আইডি দিন স্যার।' }]];
+script = [[{ functionCall: { name: 'payment_details', args: { amount: 1290 } } }], [{ functionCall: { name: 'payment_details', args: {} } }], [{ text: 'টাকা পাঠিয়ে ট্রানজেকশন আইডি দিন স্যার।' }]];
 out = await reply([{ direction: 'in', kind: 'text', text: 'instant delivery chai, kothay taka pathabo?' }]);
 const payText = out.replies.map((q) => q.text || '').join('\n');
 check('the bank account from the ERP\'s invoice settings goes to the customer', /Test Bank Ltd/.test(payText) && /9990001112223/.test(payText) && /TEST SHOP/.test(payText), out.replies);
 check('the Bangla QR from the ERP goes as a picture', out.replies.some((q) => q.kind === 'image' && /test-qr\.png/.test(q.url || '')), out.replies);
+check('the bank details go only once even when the model asks twice', out.replies.filter((q) => q.kind === 'image').length === 1 && out.replies.filter((q) => /Test Bank Ltd/.test(q.text || '')).length === 1, out.replies);
 check('a bank account is not mistaken for a leak', out.guarded === 0, out.guarded);
 check('the business phone, address and website come from the ERP when the Agent Desk leaves them empty', /Phone: \+880 1700-000000/.test(sysOf(bodies[0])) && /Website: www\.example\.test/.test(sysOf(bodies[0])), sysOf(bodies[0]).slice(0, 900));
 

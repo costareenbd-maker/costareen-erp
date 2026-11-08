@@ -3831,3 +3831,16 @@ Owner: "the ERP already knows the bank account, the Bangla QR, everything - pull
 - NOT done: live (needs "live koro": handlers/inbox.js + the Agent Desk PF line in the page; then set per_kg 20/20 on
   live). 91 in-stock products on live have no weight - filament is covered by the 1.3 kg rule, printers etc. need it.
   Agent Desk form not clicked through in the browser.
+- sales-2b: payment_details sends the bank account + QR only once per reply (live 9 Nov the model called it twice).
+
+## sales-1 + sales-2 LIVE (9 Nov 2026, owner "live koro")
+- Function: only handlers/inbox.js (live matched 2606f7a for that file). Tested first: the live function tree from the
+  Mac + the new inbox.js ran salesagent 30, inbox 172, landing 27, inboxmail 21, adsrc 27, wanumbers 26, leads 37 green.
+  Backup /data/backups/live-function/erp-20261108T154928Z.tgz + inbox-20261108T154928Z.js; edge restarted; smoke-public OK.
+- Web: the live page (downloaded, byte-equal) + the Agent Desk field list line only; sw cz-shell-v4-native-2c0f45f-0bd2a42-sales2-web;
+  costareen-erp + office-erp (2 files). Previous page: private/live-web-backup-20261109-before-sales2. No DB change.
+- Live Agent Desk: per_kg_in/out 20, filament_g 1300, delivery/payment rules point at the tools (backup
+  private/inbox-profile-backup-20261109-before-sales2.json).
+- Live AI checks (test mode): "lal ache kina" -> red filaments with prices + which one; 2 red PLA to Chittagong ৳170;
+  instant delivery -> BRAC account + Bangla QR once + asks the transaction id; owner/jailbreak cost question refused.
+  Not watched on a real customer chat yet; Agent Desk new boxes not clicked through signed in.

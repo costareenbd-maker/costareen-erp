@@ -778,11 +778,13 @@ export async function agentReply(ctx, conv, opts) {
     }
     if (name === 'delivery') return deliveryFor(p, a.address, Array.isArray(a.items) && a.items.length ? kgOf(p, cat, a.items) : null);
     if (name === 'payment_details') {
+      if (effects.paySent) return { sent: true, note: 'already sent in this reply - do not send again' };   // live 9 Nov: the model called it twice
       const pay = await payInfo(ctx);
       if (!pay.banks.length && !pay.qr) return { error: 'no bank account or QR is kept in the ERP - say the team will send the payment details (ask_team)' };
       const lines = pay.banks.map((b) => b.bank + '\nA/C name: ' + b.name + '\nA/C no: ' + b.number + (b.branch ? '\nBranch: ' + b.branch : ''));
       queue.push({ kind: 'text', text: (num(a.amount) > 0 ? '৳' + Math.round(num(a.amount)).toLocaleString('en-IN') + '\n' : '') + lines.join('\n\n') + (pay.qr ? (lines.length ? '\n\n' : '') + 'Bangla QR: any bank app, bKash, Nagad or Rocket' : '') });
       if (pay.qr) queue.push({ kind: 'image', url: pay.qr, caption: 'Bangla QR' });
+      effects.paySent = true;
       return { sent: true, banks: pay.banks.length, qr: !!pay.qr, note: 'ask for the transaction id or a screenshot; never say the money was received' };
     }
     if (name === 'offers') {
