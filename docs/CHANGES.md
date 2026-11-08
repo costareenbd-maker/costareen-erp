@@ -3790,3 +3790,9 @@ Owner's complaint: the AI did not know what we sell and did not keep context - M
 - sales-1b (9 Nov): owner tested "instant delivery ache?" - the AI said no, but we send by Pathao/Uber. New rule
   UNKNOWN IS NOT NO: a service / delivery option / payment way not written is never denied; search the documents, else
   "checking now" + ask_team. The facts themselves must be written by the owner (Agent Desk delivery rule or knowledge).
+- 9 Nov, owner "live-e lekho": LIVE Agent Desk details written (sells, phone, address, instant delivery rule, payment,
+  returns/warranty from costareen.com); previous details in private/inbox-profile-backup-20261109-before-sales1.json.
+  14 website pages (policies, FAQ, contact, about, print service, 9 guides) added to the live Knowledge; 230 product pages
+  and nav pages left as drafts. Live test: instant delivery + returns answered right; "lal ache kina" still asks
+  categories on live because the sales-1 code is not live yet. Open with the owner: delivery ৳70/130 vs website ৳125,
+  opening hours, instant-delivery area/cut-off, warranty months, bulk discount, print-service pricing, setup visits, VAT.
