@@ -3816,3 +3816,18 @@ Owner's complaint: the AI did not know what we sell and did not keep context - M
 - Pixel: Costareen Import LTD. (business 400502489824164) has no dataset; the owner's Facebook "Rahman Nazir" is not a full
   admin there ("Admin permissions needed"), so no Pixel could be made. Waiting for full control.
 - Seen, not fixed: most older thumbnails in Campaigns > Advertisement > Content show blank.
+
+## sales-2: the Inbox AI uses what the ERP already knows (9 Nov 2026)
+Owner: "the ERP already knows the bank account, the Bangla QR, everything - pull it from the ERP".
+- Bank accounts + payment QR: read from the invoice/quotation settings (qProfile banks, invoice design / profile qrId).
+  New tool payment_details sends the account(s) as text and the Bangla QR as a picture when the customer must pay in
+  advance (instant delivery); the AI then asks for the transaction id, never says money was received.
+- Business phone / address / website / email: from the same settings when the Agent Desk leaves them empty.
+- Delivery by weight from products.weight_g (or box size / 6000): first kg delivery_in / delivery_out, each more kg
+  (rounded up) per_kg_in / per_kg_out, a filament spool counts at least filament_g (1300 g). The delivery tool takes the
+  items; place_order and change_order book that charge. A product with no weight is named so the AI says the team
+  confirms. Agent Desk form got the three boxes (0 = old flat charge). Landing / item pages still use the flat charge.
+- Tests: salesagent_test 29 (made-up bank, weights). inbox 172, landing 27, inboxmail 21, adsrc 27, wanumbers 26 green.
+- NOT done: live (needs "live koro": handlers/inbox.js + the Agent Desk PF line in the page; then set per_kg 20/20 on
+  live). 91 in-stock products on live have no weight - filament is covered by the 1.3 kg rule, printers etc. need it.
+  Agent Desk form not clicked through in the browser.

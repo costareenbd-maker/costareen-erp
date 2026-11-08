@@ -111,4 +111,36 @@ c = (await sql`select reply_due_at from inbox_conversations where id = ${conv}`)
 const sent = (await sql`select count(*)::int n from inbox_messages where conversation_id = ${conv} and direction = 'out' and author = 'ai'`)[0].n;
 check('once the AI is back the customer gets the answer', sent >= 1 && !c.reply_due_at, [sent, c]);
 
+// ---- 5. sales-2: what the ERP already knows - delivery by the products' weights, the invoice bank account and Bangla QR
+await owner('erpInboxProfile', [{ save: { delivery_in: 70, delivery_out: 130, per_kg_in: 20, per_kg_out: 20, filament_g: 1300 } }]);
+await sql`update products set weight_g = 12000 where business_id = ${FIX.B} and sku = 'PRT-BAM-A1-001'`;
+const dlv = async (args) => { let res = null; script = [[{ functionCall: { name: 'delivery', args } }], (b) => { res = lastFr(b); return [{ text: 'ok' }]; }]; await reply([{ direction: 'in', kind: 'text', text: 'delivery koto?' }]); return res; };
+let d1 = await dlv({ address: 'Mirpur 10, Dhaka', items: [{ code: 'FIL-TST-PLA-RED-001', qty: 1 }] });
+check('one filament spool (1.3 kg packed = 2 kg) inside Dhaka: 70 + 20 = 90', d1 && d1.charge === 90 && d1.weight_kg === 2, d1);
+d1 = await dlv({ address: 'Agrabad, Chittagong', items: [{ code: 'FIL-TST-PLA-RED-001', qty: 1 }, { code: 'FIL-SUN-PLA-BLA-001', qty: 1 }] });
+check('two spools (2.6 kg = 3 kg) outside Dhaka: 130 + 40 = 170', d1 && d1.charge === 170 && d1.weight_kg === 3, d1);
+d1 = await dlv({ address: 'Uttara, Dhaka', items: [{ code: 'PRT-BAM-A1-001', qty: 1 }] });
+check('a printer by its weight in the ERP (12 kg): 70 + 11 x 20 = 290', d1 && d1.charge === 290, d1);
+await sql`update products set weight_g = null where business_id = ${FIX.B} and sku = 'PRT-BAM-A1-001'`;
+d1 = await dlv({ address: 'Uttara, Dhaka', items: [{ code: 'PRT-BAM-A1-001', qty: 1 }] });
+check('a product with no weight in the ERP: named, so the AI says the team confirms', d1 && (d1.weight_not_known_for || []).includes('Bambu A1'), d1);
+let ordD = null;
+script = [[{ functionCall: { name: 'place_order', args: { name: 'Manoranjan', phone: '01712345678', address: 'House 3, Road 5, Mirpur 2, Dhaka', items: [{ code: 'FIL-TST-PLA-RED-001', qty: 1 }] } } }],
+  (b) => { ordD = lastFr(b); return [{ text: 'ok' }]; }];
+await reply([{ direction: 'in', kind: 'text', text: 'order korbo' }]);
+check('the order itself books the weight charge (1 spool inside Dhaka = 90)', ordD && ordD.placed && ordD.delivery === 90 && ordD.total === 1290 + 90, ordD);
+
+const qp = (await owner('erpQuoteBoot', [])).result.profile;
+await owner('erpQuoteProfileSave', [{ profile: { ...qp, name: 'Costareen', phone: '+880 1700-000000', address: 'Test Road 1, Dhaka', website: 'www.example.test',
+  banks: [{ bank: 'Test Bank Ltd', name: 'TEST SHOP', number: '9990001112223', branch: 'Test Branch' }] } }]);
+await sql`update quote_settings set value = jsonb_set(value, '{qrId}', '"assets/test-qr.png"') where business_id = ${FIX.B} and key = 'profile'`;
+bodies.length = 0;
+script = [[{ functionCall: { name: 'payment_details', args: { amount: 1290 } } }], [{ text: 'টাকা পাঠিয়ে ট্রানজেকশন আইডি দিন স্যার।' }]];
+out = await reply([{ direction: 'in', kind: 'text', text: 'instant delivery chai, kothay taka pathabo?' }]);
+const payText = out.replies.map((q) => q.text || '').join('\n');
+check('the bank account from the ERP\'s invoice settings goes to the customer', /Test Bank Ltd/.test(payText) && /9990001112223/.test(payText) && /TEST SHOP/.test(payText), out.replies);
+check('the Bangla QR from the ERP goes as a picture', out.replies.some((q) => q.kind === 'image' && /test-qr\.png/.test(q.url || '')), out.replies);
+check('a bank account is not mistaken for a leak', out.guarded === 0, out.guarded);
+check('the business phone, address and website come from the ERP when the Agent Desk leaves them empty', /Phone: \+880 1700-000000/.test(sysOf(bodies[0])) && /Website: www\.example\.test/.test(sysOf(bodies[0])), sysOf(bodies[0]).slice(0, 900));
+
 await done();
