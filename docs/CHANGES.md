@@ -3806,3 +3806,13 @@ Owner's complaint: the AI did not know what we sell and did not keep context - M
   NOT done: the order itself still books the flat 70/130 - the AI's told charge is kept as delivery_said for the team;
   weight-based charge in code (products.weight_g) is the next code step. Website conflicts left for the owner: the site
   still offers a print service, FAQ says ৳125 delivery, and its checkout adds a 1% cash handling charge on COD.
+
+## 9 Nov 2026: Messenger LIVE, daily ad photo fixed, Pixel blocked on Meta rights
+- Inbox: Costareen 3D Facebook page switched from practice to LIVE (owner asked). Go live first refused "what you sell":
+  filled the Agent Desk business details (what you sell, phone from the Facebook page).
+- Daily ad photo: failed since the move to the Mac with "400 nowhere to upload" - the AI gateway (Mac, /opt/erp-ai-gateway/
+  gateway.mjs, erp-ai-gateway.service) only accepted *.supabase.co upload addresses. STORE_RE now also allows
+  erp-api.costareen.com (backup gateway.mjs.bak-20261109-store; repo deploy/vps/erp-ai-gateway.mjs). Test: one made.
+- Pixel: Costareen Import LTD. (business 400502489824164) has no dataset; the owner's Facebook "Rahman Nazir" is not a full
+  admin there ("Admin permissions needed"), so no Pixel could be made. Waiting for full control.
+- Seen, not fixed: most older thumbnails in Campaigns > Advertisement > Content show blank.
