@@ -167,7 +167,7 @@ async function openclawChat(body, res) {
 // GET /v1/images/jobs/<id> -> {state: queued|working|done|failed, error, bytes, revisedPrompt}. One picture at a time.
 const OPENCLAW = process.env.OPENCLAW_BIN || '/home/admin/.npm-global/bin/openclaw';
 const IMG_DIR = '/tmp/erp-img';
-const STORE_RE = /^https:\/\/[a-z0-9-]+\.supabase\.co\/storage\/v1\//;
+const STORE_RE = /^https:\/\/([a-z0-9-]+\.supabase\.co|erp-api\.costareen\.com)\/storage\/v1\//;   // 9 Nov 2026: the ERP files moved to the Mac (erp-api.costareen.com)
 const imgJobs = new Map(); const imgQueue = []; let imgBusy = false;
 const SIZES = ['1024x1024', '1024x1536', '1536x1024'];
 
