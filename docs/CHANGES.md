@@ -3747,3 +3747,13 @@ opens it; staff see nothing new.
   line gets its own move number. Tests: jointmulti_test.mjs 17; joint1/2/4/6 green. joint3 has 4 month-close failures
   that fail the same on the code before this change (not caused by it, not fixed here).
 - NOT done: live. On dev only; live needs "live koro".
+
+## adsrc-1/2/3 LIVE (8 Nov 2026, owner "live koro")
+- Live function (Mac /opt/erp-migration/.../functions/erp): only the adsrc diffs applied to the live files (allow.js,
+  handlers/index.js list lines by hand; inbox.js, inboxch.js, leads.js, pixel.js; new adprofit.js). crm-1 / n8n-1 NOT on live.
+  Backup /data/backups/live-function/erp-20261108T142611Z.tgz. Tested first: live code + patch ran adsrc 27, inbox 172,
+  leads 37, shield2 29 - all green. Smoke test OK, no errors in the log after the timers ran.
+- Migration 161 applied to postgres (Costareen) and the tenant DBs (tenant_suefx..., tenant_suefx..._native,
+  tenant_aycts..._native; supabase_admin where postgres is not the owner).
+- Web: live source (b-wanum) + adsrc page diffs; the two end blocks added by hand; sw cz-shell-v4-native-2c0f45f-web; both
+  Pages projects; previous page in private/live-web-backup-20261108-before-adsrc.
