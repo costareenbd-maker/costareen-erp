@@ -45751,7 +45751,7 @@ document.addEventListener('click', async function (ev) {
     var d = FX.data;
     if (!d.ai) h += '<div class="note"><div class="ico">!</div><div>It needs the AI writer: Settings › AI brain.</div></div>';
     if (!d.adAccount) h += '<div class="note"><div class="ico">i</div><div>No ad account yet (Paid ads › Settings): the winners are named, but no paid ad is made.</div></div>';
-    if (own()) h += '<div class="ib-form" style="margin-top:8px"><label style="display:flex;gap:6px;align-items:center"><input type="checkbox" id="fxOn"' + (d.on ? ' checked' : '') + '> On every Monday</label>' +
+    if (own()) h += '<div class="ib-form" style="margin-top:8px"><label style="display:flex;flex-direction:row;gap:6px;align-items:center;align-self:end;padding-bottom:10px"><input type="checkbox" id="fxOn"' + (d.on ? ' checked' : '') + '> On every Monday</label>' +
       '<label>Hour<input class="i" id="fxHour" inputmode="numeric" value="' + d.hour + '"></label><label>Products a week<input class="i" id="fxN" inputmode="numeric" value="' + d.products + '"></label>' +
       '<label>Winner budget a day (৳)<input class="i" id="fxB" inputmode="numeric" value="' + d.budget + '"></label><label>Winner days<input class="i" id="fxD" inputmode="numeric" value="' + d.days + '"></label>' +
       '<button class="btn small primary" type="button" data-fx="save">Save</button></div>';
