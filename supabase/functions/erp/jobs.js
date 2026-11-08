@@ -66,6 +66,12 @@ async function jointCheck(deps) {
   try { return await rec(deps); } catch (e) { return { error: String((e && e.message) || e) }; }
 }
 
+async function crmJob(deps, sql, out) {
+  const crmT = await maybe('./handlers/crm.js', 'crmTick');
+  let cids = [];
+  try { cids = (await sql`select distinct business_id from crm_hooks where on_`).map((r) => r.business_id); } catch (_) { cids = []; }
+  if (crmT && cids.length) for (const row of await owners(sql, cids)) { try { out['crm:' + row.name] = await asBusiness(deps, row, 'crm:tick', (ctx) => crmT(ctx)); } catch (e) { out['crm:' + row.name] = String((e && e.message) || e); } }
+}
 export async function runJob(deps, job) {
   const sql = deps.sql;
   const out = {};
@@ -137,10 +143,10 @@ export async function runJob(deps, job) {
     try { aids = (await sql`select distinct business_id from ad_campaigns where status in ('running', 'paused', 'ready') and campaign_id is not null and (stats_at is null or stats_at < now() - interval '1 hour')`).map((r) => r.business_id); } catch (_) { aids = []; }
     if (adsTick && aids.length) for (const row of await owners(sql, aids)) { try { out['ads:' + row.name] = await asBusiness(deps, row, 'ads:tick', (ctx) => adsTick(ctx)); } catch (e) { out['ads:' + row.name] = String((e && e.message) || e); } }
     // crm-1 (handlers/crm.js): events to the addresses (n8n ...) that have not had them yet
-    const crmT = await maybe('./handlers/crm.js', 'crmTick');
-    let cids = [];
-    try { cids = (await sql`select distinct business_id from crm_hooks where on_`).map((r) => r.business_id); } catch (_) { cids = []; }
-    if (crmT && cids.length) for (const row of await owners(sql, cids)) { try { out['crm:' + row.name] = await asBusiness(deps, row, 'crm:tick', (ctx) => crmT(ctx)); } catch (e) { out['crm:' + row.name] = String((e && e.message) || e); } }
+    await crmJob(deps, sql, out);
+  } else if (job === 'crm') {
+    // the same event delivery alone (n8n-1: the dev ERP's timer runs only this, no inbox/social/ads)
+    await crmJob(deps, sql, out);
   } else if (job === 'drive') {
     // copies of new files into each connected owner's Google Drive
     const tick = await maybe('./handlers/google.js', 'driveTick');
