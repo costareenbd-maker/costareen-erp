@@ -126,6 +126,12 @@ const m2 = r.ok && r.result.rows.find((x) => x.id === 'AD-M1');
 check('delivered: sales 1500, goods 1000, gross 500, spend 300, profit 200, spend per order 300',
   m2 && m2.delivered === 1 && m2.sales === 1500 && m2.gross === 500 && m2.spend === 300 && m2.profit === 200 && m2.perOrder === 300, m2 || r);
 check('the best ad is first', r.result.rows[0].id === 'AD-M1', r.result.rows.map((x) => x.id));
+// adsrc-4: the courier charged 130 + 15 COD, the customer paid 70 delivery -> courier 75, profit 125
+await sql`update invoices set delivery_charge = 70 where id = ${invId}`;
+await sql`insert into courier_payout_lines (business_id, payout_id, consignment_id, invoice_no, cod_amount, status, delivery_charge, cod_charge) values (${FIX.B}, 'P1', 'C1', 'INV-AD-1', 1570, 'delivered', 130, 15)`;
+r = await owner('erpAdProfit', [{ days: 30 }]);
+const m3 = r.ok && r.result.rows.find((x) => x.id === 'AD-M1');
+check('courier after the customer\'s delivery charge: 75, profit 500 - 75 - 300 = 125', m3 && m3.courier === 75 && m3.profit === 125 && r.result.total.courier >= 75, m3 || r);
 r = await (await import('./harness.mjs')).sales('erpAdProfit', [{}]);
 check('sales staff cannot see profit per ad', !r.ok, r);
 

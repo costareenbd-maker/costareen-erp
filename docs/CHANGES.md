@@ -3844,3 +3844,7 @@ Owner: "the ERP already knows the bank account, the Bangla QR, everything - pull
 - Live AI checks (test mode): "lal ache kina" -> red filaments with prices + which one; 2 red PLA to Chittagong ৳170;
   instant delivery -> BRAC account + Bangla QR once + asks the transaction id; owner/jailbreak cost question refused.
   Not watched on a real customer chat yet; Agent Desk new boxes not clicked through signed in.
+
+## adsrc-4 (9 Nov 2026): courier in profit per ad
+- erpAdProfit: courier = Steadfast payout-line charges (delivery + COD, returned parcels too) minus the delivery charge the
+  customer paid on delivered invoices; profit = gross - courier - spend. Page: Courier column. Test adsrc 28. Dev only.

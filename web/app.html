@@ -45566,11 +45566,11 @@ details.nt-fold.nt-pnlfold > .nt-fold-in { padding:0 4px 6px; }
     if (!rows.length) return h + '<div class="sku" style="margin-top:8px">No chat has come from an ad yet. When someone taps a Messenger or WhatsApp ad and writes, the ad is kept on the chat and shows here with its orders and profit.</div></div></section>';
     var t = d.total;
     h += '<div style="margin-top:6px"><span class="pa-kpi">chats <b>' + fmt(t.chats) + '</b></span><span class="pa-kpi">delivered <b>' + fmt(t.delivered) + '</b> of ' + fmt(t.orders) + '</span><span class="pa-kpi">spend <b>' + fmt(t.spend) + '</b></span><span class="pa-kpi">profit <b class="' + (t.profit < 0 ? 'neg' : 'pos') + '">' + money(t.profit) + '</b></span></div>';
-    h += '<div class="apf-wrap"><table class="apf-t"><thead><tr><th>Ad</th><th>Chats</th><th>Leads</th><th>Orders</th><th>Delivered</th><th>Lost</th><th>Sales</th><th>Gross</th><th>Spend</th><th>Profit</th><th>Spend / order</th></tr></thead><tbody>' +
+    h += '<div class="apf-wrap"><table class="apf-t"><thead><tr><th>Ad</th><th>Chats</th><th>Leads</th><th>Orders</th><th>Delivered</th><th>Lost</th><th>Sales</th><th>Gross</th><th>Courier</th><th>Spend</th><th>Profit</th><th>Spend / order</th></tr></thead><tbody>' +
       rows.map(function (r) {
         return '<tr><td><span data-noi18n="1">' + esc(r.title) + '</span>' + (r.id ? '<div class="sku">ad ' + esc(r.id) + '</div>' : '') + (r.costKnown ? '' : '<div class="sku">some costs missing</div>') + '</td>' +
           '<td>' + fmt(r.chats) + '</td><td>' + fmt(r.leads) + '</td><td>' + fmt(r.orders) + '</td><td>' + fmt(r.delivered) + '</td><td>' + fmt(r.lost) + '</td>' +
-          '<td>' + fmt(r.sales) + '</td><td>' + money(r.gross) + '</td><td>' + fmt(r.spend) + '</td><td class="' + (r.profit < 0 ? 'neg' : 'pos') + '"><b>' + money(r.profit) + '</b></td><td>' + (r.perOrder == null ? '–' : fmt(r.perOrder)) + '</td></tr>';
+          '<td>' + fmt(r.sales) + '</td><td>' + money(r.gross) + '</td><td>' + money(r.courier || 0) + '</td><td>' + fmt(r.spend) + '</td><td class="' + (r.profit < 0 ? 'neg' : 'pos') + '"><b>' + money(r.profit) + '</b></td><td>' + (r.perOrder == null ? '–' : fmt(r.perOrder)) + '</td></tr>';
       }).join('') + '</tbody></table></div>';
     return h + '<div class="sku" style="margin-top:6px">' + esc(d.note) + '</div></div></section>';
   }
