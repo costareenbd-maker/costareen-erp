@@ -39015,7 +39015,7 @@ document.addEventListener('keydown', function (e) {
     var h = '<tr class="ld-row' + (open ? ' ld-open' : '') + '"><td><a href="#" data-ldopen="' + l.id + '"><b>' + esc(l.company && l.name ? l.name + ' · ' + l.company : (l.company || l.name || 'No name')) + '</b></a>' +
       (l.want ? '<br><span class="ld-src" data-noi18n="1">' + esc(l.want.length > 140 ? l.want.slice(0, 140) + '…' : l.want) + '</span>' : '') +
       (l.city || l.country ? '<br><span class="ld-src">' + esc([l.city, l.country].filter(Boolean).join(', ')) + '</span>' : '') + '</td>' +
-      '<td class="ld-reach">' + reach(l) + '</td><td class="hide-sm"><span class="ld-src">' + esc(l.sourceName) + '<br>' + esc(l.added) + '</span></td>' +
+      '<td class="ld-reach">' + reach(l) + '</td><td class="hide-sm"><span class="ld-src">' + esc(l.sourceName) + (l.ad ? ' <span class="ld-ad" title="' + esc('Came from an ad' + (l.ad.title ? ': ' + l.ad.title : '') + (l.ad.id ? ' (ad ' + l.ad.id + ')' : '')) + '">Ad</span>' : '') + '<br>' + esc(l.added) + '</span></td>' +
       '<td><select class="i" data-ldstage="' + l.id + '" style="min-width:120px">' + st.map(function (n, i) { return '<option value="' + (i + 1) + '"' + (l.stage === i + 1 ? ' selected' : '') + '>' + esc(n) + '</option>'; }).join('') + '</select></td>' +
       '<td><input class="i" type="date" data-ldfu="' + l.id + '" value="' + esc(l.followUp) + '" style="min-width:140px">' + (l.due ? '<br><span class="ld-due">due</span>' : '') + '</td></tr>';
     if (open) {
@@ -40438,7 +40438,7 @@ saveProduct = function () {
       '<div class="l2-act">' + reach(l) + '<select class="i" data-ldstage="' + l.id + '" style="min-width:110px;padding:3px 6px">' + stages.map(function (n, i) { return '<option value="' + (i + 1) + '"' + (l.stage === i + 1 ? ' selected' : '') + '>' + esc(n) + '</option>'; }).join('') + '</select></div></div>';
     if (open) {
       var fm = /^First message \(draft\): ([\s\S]*)$/.exec(l.note || '');
-      h += '<div class="l2-det">' + [['Wants / makes', l.want], ['Phone', l.phone], ['E-mail', l.email], ['Website', l.website], ['Found on', l.link], ['Where', [l.city, l.country].filter(Boolean).join(', ')], ['Source', l.sourceName], ['Added', l.added + (l.addedBy ? ' by ' + l.addedBy : '')], ['Follow up', l.followUp]]
+      h += '<div class="l2-det">' + [['Wants / makes', l.want], ['Phone', l.phone], ['E-mail', l.email], ['Website', l.website], ['Found on', l.link], ['Where', [l.city, l.country].filter(Boolean).join(', ')], ['Source', l.sourceName], ['From ad', l.ad ? (l.ad.title || 'An ad') + (l.ad.id ? ' (ad ' + l.ad.id + ')' : '') : ''], ['Added', l.added + (l.addedBy ? ' by ' + l.addedBy : '')], ['Follow up', l.followUp]]
         .filter(function (x) { return x[1]; }).map(function (x) { return '<div><b>' + x[0] + ':</b> <span data-noi18n="1">' + esc(x[1]) + '</span></div>'; }).join('') +
         (fm ? '<div style="margin-top:6px"><b>First message:</b><div data-noi18n="1" style="white-space:pre-wrap">' + esc(fm[1]) + '</div><button class="btn small" type="button" data-l2copy="' + l.id + '">Copy</button></div>'
           : l.note ? '<div style="white-space:pre-wrap" data-noi18n="1"><b>Note:</b> ' + esc(l.note) + '</div>' : '') +
@@ -45548,5 +45548,6 @@ details.nt-fold.nt-pnlfold > .nt-fold-in { padding:0 4px 6px; }
 })();
 </script>
 
+<!-- adsrc-1: the ad a lead came from --><style>.ld-ad{display:inline-block;margin-left:4px;padding:0 6px;border-radius:9px;font-size:11px;font-weight:600;background:#fde7d6;color:#9a4a12}</style>
 </body>
 </html>

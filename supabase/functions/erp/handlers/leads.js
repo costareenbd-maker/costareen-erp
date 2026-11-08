@@ -113,6 +113,7 @@ function view(l, today, ev) {
     city: str(l.city), country: str(l.country), want: str(l.want), stage: l.stage, stageName: STAGES[l.stage], value: l.value === null ? null : num(l.value), priority: str(l.priority),
     why: str(l.intent), heat: l.priority === 'high' ? 'hot' : l.priority === 'low' ? 'cold' : l.priority === 'normal' ? 'warm' : '',
     source: src, sourceName: SRC[src] ? SRC[src].name : src, conv: l.conversation_id, assigned: str(l.assigned_name), followUp: f, due: !!(f && f <= today && l.stage < 5),
+    ad: l.ad ? { id: str(l.ad.id), title: str(l.ad.title), clid: !!str(l.ad.clid) } : null,
     note: str(l.note), tags: l.tags || [], customerId: l.customer_id, supplierId: l.supplier_id, addedBy: str(l.added_by),
     added: formatDate(new Date(l.created_at), 'd MMM yyyy'), updated: formatDate(new Date(l.updated_at), 'd MMM'),
     history: (ev || []).map((e) => ({ what: e.what, by: str(e.by_name), at: formatDate(new Date(e.at), 'd MMM h:mm a') })) };

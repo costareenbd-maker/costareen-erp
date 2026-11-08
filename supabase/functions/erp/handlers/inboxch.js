@@ -204,6 +204,30 @@ export async function metaSignatureOk(appSecret, raw, header) {
  *   { type: 'message', from, name, id, text, media: {kind, url|id|base64, mime}, payload, echo, at }
  *   { type: 'comment', commentId, postId, from, name, text, parentId }
  */
+/** adsrc-1: the ad a message came from, or null. Same shape for every platform. */
+export function adOf(kind, x) {
+  if (!x) return null;
+  let a = null;
+  if (kind === 'messenger' || kind === 'instagram') {
+    const r = x.referral || (x.message && x.message.referral) || (x.postback && x.postback.referral);
+    if (r && (r.ad_id || str(r.source).toUpperCase() === 'ADS')) {
+      const c = r.ads_context_data || {};
+      a = { id: str(r.ad_id), title: str(c.ad_title), url: str(c.photo_url || c.video_url), post: str(c.post_id), ref: str(r.ref), clid: '' };
+    }
+  } else if (kind === 'wa_cloud') {
+    const r = x.referral;
+    if (r && (r.source_id || r.ctwa_clid)) a = { id: str(r.source_id), title: str(r.headline), url: str(r.source_url), post: '', ref: str(r.source_type), clid: str(r.ctwa_clid) };
+  } else {
+    const m = x.message || {};
+    let e = null;
+    for (const k of Object.keys(m)) { const v = m[k]; if (v && typeof v === 'object' && v.contextInfo && v.contextInfo.externalAdReply) { e = v.contextInfo.externalAdReply; break; } }
+    if (!e && x.contextInfo && x.contextInfo.externalAdReply) e = x.contextInfo.externalAdReply;
+    if (e && (e.sourceId || e.ctwaClid || e.sourceUrl)) a = { id: str(e.sourceId), title: str(e.title), url: str(e.sourceUrl), post: '', ref: str(e.sourceType), clid: str(e.ctwaClid) };
+  }
+  if (!a) return null;
+  for (const k of Object.keys(a)) a[k] = a[k].slice(0, 300);
+  return a;
+}
 export function readHook(kind, body) {
   const out = [];
   const b = body || {};
@@ -213,11 +237,12 @@ export function readHook(kind, body) {
         const echo = !!(m.message && m.message.is_echo);
         const from = str(echo ? (m.recipient && m.recipient.id) : (m.sender && m.sender.id));
         if (!from) continue;
-        if (m.postback) { out.push({ type: 'message', from, id: str(m.postback.mid), text: str(m.postback.title), payload: str(m.postback.payload), at: m.timestamp }); continue; }
+        if (m.postback) { out.push({ type: 'message', from, id: str(m.postback.mid), text: str(m.postback.title), payload: str(m.postback.payload), at: m.timestamp, ad: adOf(kind, m) }); continue; }
+        if (m.referral && !m.message && !echo) { out.push({ type: 'referral', from, ad: adOf(kind, m), at: m.timestamp }); continue; }   // opened from an ad, nothing typed yet
         if (m.read || m.delivery || m.reaction) continue;
         if (!m.message) continue;
         const msg = m.message, att = (msg.attachments || [])[0];
-        const ev = { type: 'message', from, id: str(msg.mid), text: str(msg.text), echo, app: str(msg.app_id), at: m.timestamp, payload: str(msg.quick_reply && msg.quick_reply.payload) };
+        const ev = { type: 'message', from, id: str(msg.mid), text: str(msg.text), echo, app: str(msg.app_id), at: m.timestamp, payload: str(msg.quick_reply && msg.quick_reply.payload), ad: echo ? null : adOf(kind, m) };
         if (att && att.payload && att.payload.url) ev.media = { kind: att.type === 'audio' ? 'audio' : att.type === 'image' ? 'image' : att.type === 'video' ? 'video' : 'file', url: att.payload.url };
         out.push(ev);
       }
@@ -232,7 +257,7 @@ export function readHook(kind, body) {
       const v = c.value || {}, names = {};
       for (const k of v.contacts || []) names[str(k.wa_id)] = str(k.profile && k.profile.name);
       for (const m of v.messages || []) {
-        const ev = { type: 'message', from: str(m.from), name: names[str(m.from)] || '', id: str(m.id), text: '', at: Number(m.timestamp) * 1000 };
+        const ev = { type: 'message', from: str(m.from), name: names[str(m.from)] || '', id: str(m.id), text: '', at: Number(m.timestamp) * 1000, ad: adOf(kind, m) };
         if (m.type === 'text') ev.text = str(m.text && m.text.body);
         else if (m.type === 'image') { ev.media = { kind: 'image', id: str(m.image.id), mime: str(m.image.mime_type) }; ev.text = str(m.image.caption); }
         else if (m.type === 'audio') ev.media = { kind: 'audio', id: str(m.audio.id), mime: str(m.audio.mime_type) };
@@ -253,7 +278,7 @@ export function readHook(kind, body) {
       const jid = alts.find((j) => /@s\.whatsapp\.net$/.test(j)) || str(key.remoteJid || key.remoteJidAlt);
       if (!jid || /@g\.us$|status@broadcast/.test(jid)) continue;      // no groups, no statuses
       const m = d.message || {};
-      const ev = { type: 'message', from: /@lid$/.test(jid) ? jid : jid.replace(/@.*$/, ''), name: str(d.pushName), id: str(key.id), echo: !!key.fromMe, text: '' };
+      const ev = { type: 'message', from: /@lid$/.test(jid) ? jid : jid.replace(/@.*$/, ''), name: str(d.pushName), id: str(key.id), echo: !!key.fromMe, text: '', ad: key.fromMe ? null : adOf(kind, d) };
       ev.text = str(m.conversation || (m.extendedTextMessage && m.extendedTextMessage.text) || (m.imageMessage && m.imageMessage.caption) || '');
       if (m.imageMessage) ev.media = { kind: 'image', base64: str(m.base64 || d.base64 || ''), mime: str(m.imageMessage.mimetype) || 'image/jpeg', url: str(m.imageMessage.url), raw: d };
       else if (m.audioMessage) ev.media = { kind: 'audio', base64: str(m.base64 || d.base64 || ''), mime: str(m.audioMessage.mimetype) || 'audio/ogg', url: str(m.audioMessage.url), raw: d };

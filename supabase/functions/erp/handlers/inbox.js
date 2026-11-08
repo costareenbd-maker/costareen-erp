@@ -194,6 +194,15 @@ async function revertIfDue(ctx, conv) {
 /**
  * One event from a channel. Returns { conversationId, dueInMs } when the AI should answer after the wait.
  */
+/** adsrc-1: the first ad a chat came from stays on it (a later ad does not overwrite it); a note says so in the chat. */
+async function keepAd(ctx, conv, ad) {
+  if (conv.ad) return conv;
+  const c = (await ctx.tx`update inbox_conversations set ad = ${ad} where id = ${conv.id} and ad is null returning *`)[0];
+  if (!c) return conv;
+  await writeMsg(ctx, c, { direction: 'note', author: 'system', kind: 'event', text: 'Came from an ad' + (ad.title ? ': ' + ad.title : '') + (ad.id ? ' (ad ' + ad.id + ')' : '') });
+  await ctx.tx`update inbox_leads set ad = ${ad} where conversation_id = ${conv.id} and ad is null`;
+  return c;
+}
 export async function ingest(ctx, ch, ev) {
   if (ev.type === 'comment') return handleComment(ctx, ch, ev);
   if (!ev.from) return {};
@@ -217,6 +226,8 @@ export async function ingest(ctx, ch, ev) {
   if (ev.id && (await ctx.tx`select 1 from inbox_messages where business_id = ${ctx.biz} and external_id = ${ev.id} limit 1`).length) return {};   // sent twice by the platform
   const contact = await upsertContact(ctx, ch, ev);
   let conv = await upsertConv(ctx, ch, contact);
+  if (ev.ad) conv = await keepAd(ctx, conv, ev.ad);
+  if (ev.type === 'referral') return { conversationId: conv.id };   // opened from an ad: kept, nothing to answer yet
   conv = await revertIfDue(ctx, conv);
   // a photo / voice note is kept with the conversation
   let mediaName = null, kind = 'text';
@@ -514,9 +525,9 @@ export async function leadUpsert(ctx, conv, contact, a, source) {
     return open.id;
   }
   const ch = await chOf(ctx, conv.channel_id);
-  const r = (await ctx.tx`insert into inbox_leads (business_id, contact_id, conversation_id, name, phone, want, stage, source, channel, intent)
+  const r = (await ctx.tx`insert into inbox_leads (business_id, contact_id, conversation_id, name, phone, want, stage, source, channel, intent, ad)
             values (${ctx.biz}, ${contact.id}, ${conv.id}, ${str(a.name) || contact.name || null}, ${ph || contact.phone || null}, ${str(a.want) || null}, ${a.stage || 1},
-                    ${source || 'ai'}, ${ch ? ch.kind : null}, ${str(a.interest) || null}) returning id`)[0];
+                    ${source || 'ai'}, ${ch ? ch.kind : null}, ${str(a.interest) || null}, (select ad from inbox_conversations where id = ${conv.id})) returning id`)[0];
   await ctx.tx`insert into inbox_lead_events (business_id, lead_id, what, by_name) values (${ctx.biz}, ${r.id}, 'Lead made', ${source === 'ai' ? 'AI' : source})`;
   return r.id;
 }
