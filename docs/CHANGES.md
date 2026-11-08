@@ -3701,3 +3701,15 @@ opens it; staff see nothing new.
 - G11 Calendar: follow-ups and lead follow-ups by month (week from Saturday).
 - G12 A private calendar link (?crmcal=<token>, only its hash kept) that Google Calendar subscribes to; e-mails on
   the timeline. NOT done: two-way Gmail / Google Calendar sync.
+
+## n8n-1 (8 Nov 2026): first n8n workflow, dev ERP events
+- n8n (Mac, brand-n8n-n8n-1, flow.costareen.com) got workflow `ERP events (dev)` (id erpEvents0001), imported and
+  activated by CLI: Webhook `/webhook/erp-events` -> one line per event -> sort by kind (sale / lead / customer / other).
+  The four end boxes are placeholders until the owner picks where messages go (WhatsApp / Telegram / e-mail).
+- Dev ERP: crm_hooks row for Demo 3D Shop -> `http://n8n:5678/webhook/erp-events` (no signing secret: inside the Mac only).
+  erp-dev-edge joined docker network brand-n8n_default; CRON_KEY added (runtime-extra.env.json + docker-compose.json,
+  backup docker-compose.json.bak-n8n1; key in /etc/erp-dev-cron.key). Note: re-running start.py keeps CRON_KEY but drops the
+  n8n network.
+- jobs.js: new job `crm` = only the event delivery (no inbox/social/ads). Test: 2 events delivered, n8n run #1 success.
+- NOT done: the every-minute dev timer (systemd erp-dev-crm.timer) was refused by the safety check; until it exists, dev
+  events reach n8n only when the `crm` job is called by hand. n8n owner account not made (owner's own; the page needs his gate link).
