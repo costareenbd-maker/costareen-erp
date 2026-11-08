@@ -165,9 +165,11 @@ async function photoPump(ctx) {
 async function mediaOf(ctx, it) {
   if (it.state === 'photo' && !it.asset_id) return null;          // its picture is not started yet (one at a time)
   if (it.asset_id) {
-    const a = (await ctx.tx`select status, file from social_assets where id = ${it.asset_id}`)[0];
+    const a = (await ctx.tx`select status, file, error from social_assets where id = ${it.asset_id}`)[0];
     if (a && a.status === 'ready') return [{ kind: 'image', file: a.file, name: it.name }];
     if (a && a.status === 'rendering') return null;            // not yet
+    // failed only because its upload address expired, and not asked for again yet: the pump will - wait for it
+    if (a && a.status === 'failed' && !/retried/.test(str(it.error)) && /InvalidJWT|exp|expired|upload 4/i.test(str(a.error))) return null;
   }
   const p = (await ctx.tx`select photo, image_link from products where business_id = ${ctx.biz} and lower(sku) = ${str(it.sku).toLowerCase()}`)[0] || {};
   if (str(p.photo)) return [{ kind: 'image', file: 'products/' + str(p.photo), name: it.name }];
