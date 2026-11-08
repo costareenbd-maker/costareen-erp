@@ -11,10 +11,13 @@ const jobs = await import(pathToFileURL(path.join(fnDir, 'jobs.js')));
 const asB = async (fn) => { const rows = await jobs.owners(sql, [FIX.B]); return jobs.asBusiness(deps, rows[0], 'test', fn); };
 
 // the outside world: the own-server gateway (ChatGPT writing + pictures) and Meta
-let chat = 0, jobsMade = 0, gwState = 'working';
+let chat = 0, jobsMade = 0, gwState = 'working', expireNext = false;
 web.on(/gw\.test\/v1/, (url, opts) => {
   if (/\/images\/jobs$/.test(url)) { jobsMade++; return { status: 200, body: { id: String(jobsMade).padStart(32, 'a'), state: 'queued' } }; }
-  if (/\/images\/jobs\//.test(url)) return { status: 200, body: { state: gwState, bytes: 1000, width: 1024, height: 1024, revisedPrompt: 'p' } };
+  if (/\/images\/jobs\//.test(url)) {
+    if (expireNext && /a{31}1$/.test(url)) return { status: 200, body: { state: 'failed', error: 'upload 400 {"error":"InvalidJWT","message":"\\"exp\\" claim timestamp check failed"}' } };
+    return { status: 200, body: { state: gwState, bytes: 1000, width: 1024, height: 1024, revisedPrompt: 'p' } };
+  }
   if (/chat\/completions$/.test(url)) {
     chat++;
     const angles = [{ angle: 'Demo', hook: 'এক রোলে কতগুলো প্রিন্ট?', caption: 'এক রোলে কতগুলো প্রিন্ট?\nদাম ৳১৬০০। ইনবক্স করুন।', scene: 'desk', direction: 'morning light', why: 'shows use' },
@@ -61,10 +64,11 @@ const items = await sql`select * from ad_factory_items where week_id = ${wk && w
 check('Monday 11:00: the week 2026-W46 is planned and ready', /planned 2026-W46/.test(r) && wk && wk.week === '2026-W46' && wk.status === 'ready', { r, wk });
 const uniq = new Set([...push.result.rising, ...push.result.advertise, ...push.result.clear].map((x) => String(x.sku).toLowerCase())).size;
 const nProd = Math.min(2, uniq), nItems = 2 * nProd;
-check('...each product (up to 2) x 2 different angles, each with its own ChatGPT picture started', items.length === nItems && items.every((i) => i.state === 'photo' && i.asset_id) && new Set(items.map((i) => i.angle)).size === 2 && jobsMade === nItems, items.map((i) => [i.sku, i.angle, i.state]));
+check('...each product (up to 2) x 2 different angles, waiting for their pictures', items.length === nItems && items.every((i) => i.state === 'photo') && new Set(items.map((i) => i.angle)).size === 2, items.map((i) => [i.sku, i.angle, i.state]));
+check('...ONE ChatGPT picture is asked for at a time (its upload address expires within minutes)', jobsMade === 1 && items.filter((i) => i.asset_id).length === 1, { jobsMade, withAsset: items.filter((i) => i.asset_id).length });
 check('...the hook, the post text and why are kept', items[0].hook && /দাম/.test(items[0].caption) && items[0].why, items[0]);
 r = await asB((ctx) => { ctx.now = mon11; return fac.factoryTick(ctx); });
-check('the next minute does not plan it again', (await sql`select count(*)::int n from ad_factory_weeks`)[0].n === 1 && jobsMade === nItems, r);
+check('the next minute does not plan it again, nor ask for a second picture while the first is being made', (await sql`select count(*)::int n from ad_factory_weeks`)[0].n === 1 && jobsMade === 1, { r, jobsMade });
 let refused = ''; try { const x = await asB((ctx) => { ctx.now = mon11; return fac.erpFactoryAct(ctx, { action: 'make' }); }); refused = JSON.stringify(x && (x.error || x)).slice(0, 200); } catch (e) { refused = String(e.message); }
 check('"make" again in the same week is refused', /planned already/.test(refused), refused);
 
@@ -76,8 +80,15 @@ r = await owner('erpFactoryAct', [{ action: 'skip', week: wk.id, item: last.id }
 check('the owner can drop one angle', r.ok && (await sql`select state from ad_factory_items where id = ${last.id}`)[0].state === 'skipped', r);
 r = await asB((ctx) => { ctx.now = mon11; return fac.erpFactoryAct(ctx, { action: 'approve', week: wk.id }); });
 check('approved while the pictures are still being made: nothing posted yet, the week waits', r.done.made === 0 && r.done.waiting === nItems - 1 && (await sql`select status from ad_factory_weeks where id = ${wk.id}`)[0].status === 'approving', r.done);
+// the first picture fails because its upload address expired: it is asked for once more; then the rest, one by one
+expireNext = true;
+await asB((ctx) => { ctx.now = mon11; return sm.assetsTick(ctx); });
+expireNext = false;
+await asB((ctx) => { ctx.now = mon11; return fac.factoryTick(ctx); });
+const retried = (await sql`select count(*)::int n from ad_factory_items where week_id = ${wk.id} and error like '%retried%'`)[0];
+check('a picture whose upload address expired is asked for once more', jobsMade === 2 && retried.n === 1, { jobsMade, retried });
 gwState = 'done';
-const at = await asB((ctx) => { ctx.now = mon11; return sm.assetsTick(ctx); });
+for (let k = 0; k < 8; k++) { await asB((ctx) => { ctx.now = mon11; return sm.assetsTick(ctx); }); await asB((ctx) => { ctx.now = mon11; return fac.factoryTick(ctx); }); }
 r = await asB((ctx) => { ctx.now = mon11; return fac.factoryTick(ctx); });
 const posts = await sql`select p.state, p.scheduled_at, p.media, p.captions, p.targets from ad_factory_items i join social_posts p on p.id = i.post_id where i.week_id = ${wk.id} order by p.scheduled_at`;
 check('once the pictures are done the timer posts them as scheduled Facebook posts with the ChatGPT picture and the text', posts.length === nItems - 1 && posts.every((p) => p.state === 'scheduled' && p.targets.facebook && /^social\/ai-/.test(p.media[0].file) && /দাম/.test(p.captions.facebook)), posts);
@@ -102,7 +113,7 @@ await sql`insert into business_config (business_id, key, value) values (${FIX.B}
 await sql`insert into business_secrets (business_id, key, value) values (${FIX.B}, 'META_USER_TOKEN', 'tok') on conflict (business_id, key) do update set value = excluded.value`;
 r = await asB((ctx) => { ctx.now = mon11; return fac.erpFactoryAct(ctx, { action: 'make' }); });
 const wk2 = (await sql`select * from ad_factory_weeks where business_id = ${FIX.B}`)[0];
-await asB((ctx) => { ctx.now = mon11; return sm.assetsTick(ctx); });
+for (let k = 0; k < 8; k++) { await asB((ctx) => { ctx.now = mon11; return sm.assetsTick(ctx); }); await asB((ctx) => { ctx.now = mon11; return fac.factoryTick(ctx); }); }
 r = await asB((ctx) => { ctx.now = mon11; return fac.erpFactoryAct(ctx, { action: 'approve', week: wk2.id }); });
 check('a new week whose pictures are done is approved straight into posts', r.done.made === nItems && r.done.waiting === 0, r.done);
 await sql`update social_posts set state = 'published', published_at = now(), results = jsonb_build_object('facebook', jsonb_build_object('id', 'PAGE_' || substr(id::text, 1, 6))), stats = '{"facebook":{"reach":50,"reactions":5}}'::jsonb

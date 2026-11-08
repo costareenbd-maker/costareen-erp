@@ -3873,3 +3873,8 @@ Owner: "the ERP already knows the bank account, the Bangla QR, everything - pull
   minified alone before </body>; sw cz-shell-v4-native-2c0f45f-0bd2a42-sales2-a8c6121-web; both Pages projects. Previous page
   in private/live-web-backup-20261109-before-factory. Seen live: both cards, 👎/👍 under the 8 existing pictures.
 - The factory is OFF until the owner ticks "On every Monday".
+
+## factory-2 (9 Nov 2026): one ChatGPT picture at a time
+- First live week: 3 of 6 pictures failed "upload 400 InvalidJWT exp" - the upload address the ERP gives expires within
+  minutes and the picture server makes them one after another. photoPump asks for ONE picture at a time (the next when the
+  previous is done, every minute); a picture that failed on an expired address is asked for once more. factory_test 27.

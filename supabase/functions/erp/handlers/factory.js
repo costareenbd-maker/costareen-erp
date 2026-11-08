@@ -130,20 +130,40 @@ async function makeWeek(ctx, s, week) {
     let angles = [];
     try { angles = await anglesFor(ctx, p, shop); } catch (e) { angles = []; }
     for (const a of angles) {
-      let asset = null, err = '';
-      try { asset = await factoryPhoto(ctx, { sku: p.sku, scene: a.scene, direction: a.direction, title: p.name + ' · ' + str(a.angle).slice(0, 40), meta: { factory: week, caption: str(a.caption).slice(0, 1200), hook: str(a.hook).slice(0, 200) } }); }
-      catch (e) { err = str(e && e.message).slice(0, 200); }
       await ctx.tx`insert into ad_factory_items (business_id, week_id, sku, name, kind, angle, hook, caption, scene, why, asset_id, state, error)
                    values (${ctx.biz}, ${w.id}, ${p.sku}, ${p.name}, ${p.kind}, ${str(a.angle).slice(0, 60)}, ${str(a.hook).slice(0, 200)}, ${str(a.caption).slice(0, 1500)},
-                           ${SCENE_KEYS.includes(str(a.scene)) ? str(a.scene) : 'minimal'}, ${str(a.why).slice(0, 300)}, ${asset ? asset.id : null}, ${asset ? 'photo' : 'ready'}, ${err || null})`;
+                           ${SCENE_KEYS.includes(str(a.scene)) ? str(a.scene) : 'minimal'}, ${str(a.why).slice(0, 300)}, ${null}, 'photo', ${null})`;
       n++;
     }
   }
   await ctx.tx`update ad_factory_weeks set status = ${n ? 'ready' : 'empty'}, error = ${n ? null : 'No product to push this week (What to push is empty) or the AI gave no ideas.'}, updated_at = now() where id = ${w.id}`;
+  await photoPump(ctx);
   return w.id;
+}
+/** factory-2: ONE ChatGPT picture at a time. The picture server makes them one after another and the upload address it is
+ *  given expires within minutes, so a picture is asked for only when the previous one is done. A picture that failed
+ *  because its address expired is asked for once more. No ChatGPT / no product photo: the angle uses the product's photo. */
+async function photoPump(ctx) {
+  const busy = (await ctx.tx`select count(*)::int n from ad_factory_items i join social_assets a on a.id = i.asset_id where i.business_id = ${ctx.biz} and i.state = 'photo' and a.status = 'rendering'`)[0].n;
+  if (busy) return 'busy';
+  // a picture whose upload address expired: once more
+  for (const it of await ctx.tx`select i.* from ad_factory_items i join social_assets a on a.id = i.asset_id where i.business_id = ${ctx.biz} and i.state = 'photo' and a.status = 'failed'
+                                 and coalesce(i.error, '') not like '%retried%' and coalesce(a.error, '') ~* 'InvalidJWT|exp|expired|upload 4' order by i.created_at limit 1`) {
+    await ctx.tx`update ad_factory_items set asset_id = null, error = 'picture retried' where id = ${it.id}`;
+  }
+  const next = (await ctx.tx`select i.* from ad_factory_items i join ad_factory_weeks w on w.id = i.week_id where i.business_id = ${ctx.biz} and i.state = 'photo' and i.asset_id is null
+                              and w.status in ('ready', 'approving') order by i.created_at, i.id limit 1`)[0];
+  if (!next) return 'none';
+  let asset = null, err = '';
+  try { asset = await factoryPhoto(ctx, { sku: next.sku, scene: next.scene, direction: next.why, title: next.name + ' · ' + str(next.angle).slice(0, 40), meta: { factory: true, caption: str(next.caption).slice(0, 1200), hook: str(next.hook).slice(0, 200) } }); }
+  catch (e) { err = str(e && e.message).slice(0, 200); }
+  if (asset) await ctx.tx`update ad_factory_items set asset_id = ${asset.id} where id = ${next.id}`;
+  else await ctx.tx`update ad_factory_items set state = 'ready', error = ${err || null} where id = ${next.id}`;   // the product's own photo will do
+  return asset ? 'started' : 'own photo';
 }
 /** The media of an angle: its ChatGPT picture when ready, else the product's own photo. */
 async function mediaOf(ctx, it) {
+  if (it.state === 'photo' && !it.asset_id) return null;          // its picture is not started yet (one at a time)
   if (it.asset_id) {
     const a = (await ctx.tx`select status, file from social_assets where id = ${it.asset_id}`)[0];
     if (a && a.status === 'ready') return [{ kind: 'image', file: a.file, name: it.name }];
@@ -232,6 +252,7 @@ export async function factoryTick(ctx) {
   const s = await settings(ctx);
   if (!s.on) return 'off';
   const d = dhaka(ctx.now), out = [];
+  try { const pm = await photoPump(ctx); if (pm === 'started' || pm === 'own photo') out.push('picture ' + pm); } catch (e) { out.push('picture: ' + str(e && e.message)); }
   // the approved week: angles whose picture finished after the approval are scheduled now
   for (const w of await ctx.tx`select * from ad_factory_weeks where business_id = ${ctx.biz} and status = 'approving'`) { const r = await approve(ctx, w); out.push('approved+' + r.made); }
   if (d.hour < s.hour) return out.join(' ') || 'waiting';
