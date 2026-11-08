@@ -3796,3 +3796,13 @@ Owner's complaint: the AI did not know what we sell and did not keep context - M
   and nav pages left as drafts. Live test: instant delivery + returns answered right; "lal ache kina" still asks
   categories on live because the sales-1 code is not live yet. Open with the owner: delivery ৳70/130 vs website ৳125,
   opening hours, instant-delivery area/cut-off, warranty months, bulk discount, print-service pricing, setup visits, VAT.
+- 9 Nov (owner's facts): LIVE Agent Desk - delivery by weight (no extra charge; 70 / 130 first kg + 20 per kg; filament
+  spool = 1.3 kg = 2 kg -> 90 / 150), Steadfast before 8 pm -> next day or the day after, instant delivery Dhaka only,
+  advance by bank / Bangla QR (team sends - account number and QR not given yet, not on the website), no fixed hours,
+  1-year warranty, home setup on conditions via the team, invoice + VAT/challan, discount only for bulk up to 10%
+  (disc_mode limit, margin floor 15% kept), no print service (the website print-service doc archived in Knowledge).
+  Backup private/inbox-profile-backup-20261109-before-sales1c.json. Live test: 5/5 right (Chittagong 2 spools ৳170,
+  instant Sylhet no, no print service, single-item discount refused -> asks quantity, warranty 1 year).
+  NOT done: the order itself still books the flat 70/130 - the AI's told charge is kept as delivery_said for the team;
+  weight-based charge in code (products.weight_g) is the next code step. Website conflicts left for the owner: the site
+  still offers a print service, FAQ says ৳125 delivery, and its checkout adds a 1% cash handling charge on COD.
