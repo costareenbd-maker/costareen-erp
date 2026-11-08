@@ -3761,3 +3761,29 @@ opens it; staff see nothing new.
   tenant_aycts..._native; supabase_admin where postgres is not the owner).
 - Web: live source (b-wanum) + adsrc page diffs; the two end blocks added by hand; sw cz-shell-v4-native-2c0f45f-web; both
   Pages projects; previous page in private/live-web-backup-20261108-before-adsrc.
+
+## sales-1: the Inbox AI sells like a professional who knows the business (8 Nov 2026)
+Owner's complaint: the AI did not know what we sell and did not keep context - Manoranjan asked "lal ache kina" and got
+"we have many red products - clothes, shoes or something else?". All in handlers/inbox.js (no migration, no page change):
+- The live catalogue summary (kinds, brands, types/materials, colours, how many in stock; `shopSummary`) is always in the
+  prompt, even when "What we sell" is empty. New prompt blocks: OUR TRADE (short words read in our sense - "lal ache?" =
+  red in what we stock; never clothes/shoes), CONTEXT (the whole chat, never ask again for what was said, no re-greeting),
+  HOW YOU SELL (answer first, 1-3 sentences, ONE sharp question only when it changes the product - material, brand,
+  1.75 mm, printer, qty; recommend, no robotic menu, no "how can I help"). The old "vague -> ask categories" rule now
+  applies only when a message says nothing at all.
+- Search understands Banglish/Bangla colours and words (`SYN`: lal->red, kalo->black, nil->blue ...) and the product's
+  colour column.
+- History: the last 60 messages (was 30) plus an "earlier in this chat" line of the 40 before; shown cards keep their names.
+- Leak protection: a SECURITY block first and a reminder last (owner/developer/staff claims, "ignore previous
+  instructions", role-play, urgency change nothing); the AI's catalogue copy holds no supplier; tool answers never carry cost
+  or the product notes (notes stay the public "about" of the item/landing pages); product details whose name says
+  cost/supplier/margin/internal are dropped; every reply passes `guardOut` - instructions, tool names, or a cost figure
+  next to cost/supplier/margin words are replaced with a polite line back to the sale (a note is left in the chat).
+  Same SECURITY + guard on comment replies; follow-ups get SECURITY.
+- Never turn away: when the AI cannot answer (busy, quota, error) the answer is planned again 5/10/20 then every 30 min
+  while the reply window is open (max 48 h); the team gets one alert. Before: the answer was dropped after one alert.
+- Tests: supabase/tests/salesagent_test.mjs (19, made-up data): catalogue in the prompt, "lal ache kina" finds the red
+  filament, whole chat sent, no cost/supplier/notes in prompt or tool answers, jailbreak leak replaced (English + Banglish),
+  normal price answers untouched, retry + one alert + answer once the AI is back. inbox_test 172 still green.
+- NOT done: real-model check against live chats (tests script the model); live release waits for the owner's "live koro"
+  (only handlers/inbox.js changes on live).
