@@ -61,6 +61,74 @@ await asB((ctx) => ib.hookEvents(ctx, { id: wid2 }, b2('Y2', { title: 'Late ad',
 lead = (await sql`select * from inbox_leads where id = ${l2}`)[0];
 check('an ad seen later reaches the open lead too', lead.ad && lead.ad.id === 'AD-9', lead.ad);
 
+// ---- 3. adsrc-2: orders from a Messenger chat go to Meta the business-messaging way (page dataset, PSID); never twice
+const px = await import(pathToFileURL(path.join(fnDir, 'handlers', 'pixel.js')));
+const chm = await import(pathToFileURL(path.join(fnDir, 'handlers', 'inboxch.js')));
+const sent = [];   // {to, events}
+web.on(/graph\.facebook\.com\/v21\.0\/[^/]+\/events/, (url, opts) => { const b = JSON.parse(opts.body); sent.push({ to: url.split('/')[4], token: (url.match(/access_token=([^&]+)/) || [])[1], body: b }); return { status: 200, body: { events_received: b.data.length } }; });
+const dsCalls = [];
+web.on(/\/dataset\?/, (url, opts) => {
+  dsCalls.push({ url, method: opts.method });
+  if (/PAGE-NO/.test(url)) return { status: 403, body: { error: { message: '(#200) Requires page_events permission' } } };
+  return opts.method === 'GET' ? { status: 200, body: { data: [] } } : { status: 200, body: { id: 'DS-777' } };
+});
+r = await owner('erpPixelSet', [{ pixel: '1234567890123456', token: 'PIXEL-TOKEN', when: 'approved' }]);
+check('the pixel is set', r.ok, r);
+const mkMsgr = async (ext, name) => {
+  const id = (await sql`insert into inbox_channels (business_id, kind, name, external_id, status, ai_on, settings) values (${FIX.B}, 'messenger', ${name}, ${ext}, 'practice', false, '{}'::jsonb) returning id`)[0].id;
+  await asB((ctx) => chm.chSecretSet(ctx, { id }, 'TOKEN', 'PAGE-TOKEN-' + ext));
+  return id;
+};
+const pageCh = await mkMsgr('PAGE-77', 'Ads page'), noCh = await mkMsgr('PAGE-NO', 'Page without permission');
+const msgrHook = (page, psid, mid, ad) => ({ entry: [{ id: page, messaging: [{ sender: { id: psid }, recipient: { id: page }, timestamp: 1, message: { mid, text: 'order please' }, ...(ad ? { referral: { source: 'ADS', ad_id: ad } } : {}) }] }] });
+await asB((ctx) => ib.hookEvents(ctx, { id: pageCh }, msgrHook('PAGE-77', 'PSID-A', 'mid-A', 'AD-M1')));
+await asB((ctx) => ib.hookEvents(ctx, { id: noCh }, msgrHook('PAGE-NO', 'PSID-B', 'mid-B')));
+const cA = (await sql`select id from inbox_conversations where channel_id = ${pageCh}`)[0].id, cB = (await sql`select id from inbox_conversations where channel_id = ${noCh}`)[0].id;
+await sql`update chat_orders set meta = jsonb_build_object('sent', jsonb_build_object('skipLead', 'x', 'skipPurchase', 'x')) where business_id = ${FIX.B}`;
+const order = async (no, conv, phone) => (await sql`insert into chat_orders (business_id, no, conversation_id, name, phone, address, items, status) values (${FIX.B}, ${no}, ${conv}, 'Mim', ${phone}, 'Dhaka', ${sql.json([{ sku: 'X', qty: 2, price: 750 }])}, 'pending') returning id`)[0].id;
+const oA = await order('CO-BM-A', cA, '01711000555'), oB = await order('CO-BM-B', cB, '01711000666'), oW = await order('CO-BM-W', conv.id, '01711000333');
+let t = await asB((ctx) => px.pixelTick(ctx));
+const toDs = sent.filter((x) => x.to === 'DS-777'), toPx = sent.filter((x) => x.to === '1234567890123456');
+const evA = toDs.flatMap((x) => x.body.data).find((e) => e.custom_data.order_id === 'CO-BM-A');
+check('Messenger order: LeadSubmitted to the page\'s dataset, business_messaging, page_id + PSID, the page token',
+  evA && evA.event_name === 'LeadSubmitted' && evA.action_source === 'business_messaging' && evA.messaging_channel === 'messenger' &&
+  evA.user_data.page_id === 'PAGE-77' && evA.user_data.page_scoped_user_id === 'PSID-A' && toDs[0].token === 'PAGE-TOKEN-PAGE-77' && toDs[0].body.partner_agent, { evA, toDs });
+check('the dataset was asked for (GET, then made with POST) and kept', dsCalls.some((d) => /PAGE-77/.test(d.url) && d.method === 'POST') &&
+  (await sql`select value from business_config where business_id = ${FIX.B} and key = 'bm_dataset_PAGE-77'`)[0].value === 'DS-777', dsCalls);
+const pxNos = toPx.flatMap((x) => x.body.data).map((e) => e.custom_data.order_id);
+check('the Evolution (WhatsApp) order went the pixel way as before', pxNos.includes('CO-BM-W') && !pxNos.includes('CO-BM-A'), pxNos);
+check('a page Meta refuses: nothing sent that way, the order is moved to the pixel way', (await sql`select meta->>'way' w from chat_orders where id = ${oB}`)[0].w === 'pixel' && t.errors >= 1, t);
+sent.length = 0; t = await asB((ctx) => px.pixelTick(ctx));
+check('...and its Lead goes through the pixel the next minute (once, as "Lead")', sent.flatMap((x) => x.body.data).filter((e) => e.custom_data.order_id === 'CO-BM-B' && e.event_name === 'Lead').length === 1 && sent.every((x) => x.to !== 'DS-777' || !x.body.data.some((e) => e.custom_data.order_id === 'CO-BM-B')), sent);
+await sql`update chat_orders set status = 'approved' where id = ${oA}`;
+sent.length = 0; dsCalls.length = 0; t = await asB((ctx) => px.pixelTick(ctx));
+const purA = sent.filter((x) => x.to === 'DS-777').flatMap((x) => x.body.data).find((e) => e.event_name === 'Purchase');
+check('approved: Purchase to the same dataset (value 1500 BDT), the dataset not asked again, nothing to the pixel for it',
+  purA && purA.custom_data.value === 1500 && purA.custom_data.currency === 'BDT' && dsCalls.length === 0 &&
+  !sent.some((x) => x.to === '1234567890123456' && x.body.data.some((e) => e.custom_data.order_id === 'CO-BM-A')), { purA, dsCalls });
+sent.length = 0; await asB((ctx) => px.pixelTick(ctx));
+check('nothing is sent twice', !sent.some((x) => x.body.data.some((e) => e.custom_data.order_id === 'CO-BM-A')), sent);
+check('the way stays on the order', (await sql`select meta->>'way' w from chat_orders where id = ${oA}`)[0].w === 'bm', null);
+
+// ---- 4. adsrc-3: profit per ad
+r = await owner('erpAdProfit', [{}]);
+const m1 = r.ok && r.result.rows.find((x) => x.id === 'AD-M1');
+check('profit per ad lists each ad with its chats and orders', r.ok && m1 && m1.chats === 1 && m1.orders === 1 && r.result.rows.some((x) => x.id === 'AD-1' && x.chats === 1 && x.leads === 1), r);
+// the AD-M1 order becomes a delivered invoice that cost 500 a piece; the ad spent 300 through the ERP
+const prod = (await sql`select id, sku from products where business_id = ${FIX.B} limit 1`)[0];
+const invId = (await sql`insert into invoices (business_id, invoice_no, customer_name, subtotal, grand_total, delivery_status) values (${FIX.B}, 'INV-AD-1', 'Mim', 1500, 1500, 'Delivered') returning id`)[0].id;
+await sql`insert into invoice_lines (business_id, invoice_id, product_id, sku, name, qty, unit_price, line_total, unit_cost) values (${FIX.B}, ${invId}, ${prod.id}, ${prod.sku}, 'X', 2, 750, 1500, 500)`;
+await sql`update chat_orders set invoice_no = 'INV-AD-1' where id = ${oA}`;
+await sql`insert into ad_campaigns (business_id, name, objective, account, ad_id, daily_budget, spend, status) values (${FIX.B}, 'M1', 'messages', 'act_1', 'AD-M1', 100, 300, 'running')`;
+r = await asB(async (ctx) => { const { forget } = await import(pathToFileURL(path.join(fnDir, 'lib', 'tabs.js'))); try { forget(ctx, 'SALES_LOG'); } catch (_) { /* */ } return null; });
+r = await owner('erpAdProfit', [{ days: 30 }]);
+const m2 = r.ok && r.result.rows.find((x) => x.id === 'AD-M1');
+check('delivered: sales 1500, goods 1000, gross 500, spend 300, profit 200, spend per order 300',
+  m2 && m2.delivered === 1 && m2.sales === 1500 && m2.gross === 500 && m2.spend === 300 && m2.profit === 200 && m2.perOrder === 300, m2 || r);
+check('the best ad is first', r.result.rows[0].id === 'AD-M1', r.result.rows.map((x) => x.id));
+r = await (await import('./harness.mjs')).sales('erpAdProfit', [{}]);
+check('sales staff cannot see profit per ad', !r.ok, r);
+
 // another business never sees it
 const other = (await sql`select count(*)::int n from inbox_conversations where business_id <> ${FIX.B} and ad is not null`)[0].n;
 check('no other business got an ad', other === 0, other);

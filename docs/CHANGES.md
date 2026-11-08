@@ -3724,6 +3724,18 @@ opens it; staff see nothing new.
   first), profit per ad report. Live needs "live koro".
 - Dev timer erp-dev-crm.timer now exists (owner OK 8 Nov): dev events reach n8n every minute.
 
+## adsrc-2 + adsrc-3 (8 Nov 2026): sales back to Meta per chat channel, profit per ad
+- pixel.js: an order from a Messenger / Instagram / WhatsApp Cloud chat goes to Meta as a Conversions API for Business
+  Messaging event (action_source business_messaging, messaging_channel, page_id + PSID / IG account + IGSID / WABA +
+  ctwa_clid) to the dataset linked to the Page (asked once with GET/POST {asset}/dataset, kept in bm_dataset_<asset>),
+  with the channel's own token. Meta does not dedupe these, so each order goes ONE way (chat_orders.meta.way bm|pixel);
+  a channel Meta refuses (e.g. no page_events permission yet) moves the order to the pixel way next minute.
+  Evolution (WhatsApp Web) and website orders stay on the pixel as before.
+- handlers/adprofit.js erpAdProfit (manager): per ad - chats, leads, orders, delivered, lost, sales, gross (cost fixed at
+  sale), spend from ad_campaigns, profit, spend per delivered order. Page: "Profit per ad" card under Paid ads.
+  Not counted: courier charges, cost of returns, ads made outside the ERP.
+- Tests: adsrc_test.mjs 27. On dev. Live needs "live koro" + the owner's Meta steps (pixel id, page_events permission).
+
 ## joint-multi-1 (8 Nov 2026): Ask for stock / Send stock take many products at once
 - Owner: "Send stock / Ask for stock let us add only one product, but we send many together."
 - Joint stock > Stock: both forms now hold a list of products (+ Add another product, x drops a line, blank lines are

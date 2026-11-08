@@ -19,6 +19,7 @@ import { formatDate, num } from '../lib/time.js';
 import { roleAtLeast } from '../allow.js';
 import { phoneOk } from './inbox.js';
 import { paymentsTab, PAY } from '../lib/tabs.js';
+import { chSecret } from './inboxch.js';
 
 const str = (v) => String(v == null ? '' : v).trim();
 const GRAPH = 'https://graph.facebook.com/v21.0';
@@ -66,14 +67,61 @@ async function event(name, o, id) {
            custom_data: { currency: 'BDT', value: Math.round(value(o)), order_id: o.no, content_type: 'product', content_ids: (o.items || []).map((x) => str(x.sku)),
                           num_items: (o.items || []).reduce((t, x) => t + num(x.qty), 0) } };
 }
-async function send(ctx, S, tok, events) {
+// adsrc-2: an order taken in a Messenger / Instagram / WhatsApp Cloud chat goes to Meta as a business-messaging event
+// (Conversions API for Business Messaging): the dataset linked to the Page / IG account / WABA, the person's id in that
+// channel and, from a click-to-WhatsApp ad, the ctwa_clid - so Meta ties the sale to the ad. Meta does NOT dedupe these,
+// so an order goes ONE way: this, or (when the channel cannot - Evolution, website, no permission yet) the pixel as before.
+async function bmEvent(name, o, id) {
+  const ud = { ...(await userData({ ...o, meta: {} })) };
+  delete ud.external_id;
+  let ch = '';
+  if (o.ch_kind === 'messenger') { ch = 'messenger'; ud.page_id = str(o.ch_ext); ud.page_scoped_user_id = str(o.ct_ext); }
+  else if (o.ch_kind === 'instagram') { ch = 'instagram'; ud.instagram_business_account_id = str(o.ch_ext); ud.ig_sid = str(o.ct_ext); }
+  else if (o.ch_kind === 'wa_cloud') {
+    ch = 'whatsapp'; ud.whatsapp_business_account_id = str(o.ch_waba);
+    if (o.ad && str(o.ad.clid)) ud.ctwa_clid = str(o.ad.clid);
+    else if (str(o.ch_page)) ud.page_id = str(o.ch_page);
+  }
+  const e = await event(name, o, id);
+  delete e.event_source_url;
+  return { ...e, action_source: 'business_messaging', messaging_channel: ch, user_data: ud };
+}
+/** The channel's asset for the dataset call, or '' when this order cannot go the business-messaging way. */
+function bmAsset(o) {
+  if ((o.ch_kind === 'messenger' || o.ch_kind === 'instagram') && str(o.ch_ext) && str(o.ct_ext)) return str(o.ch_ext);
+  if (o.ch_kind === 'wa_cloud' && str(o.ch_waba) && ((o.ad && str(o.ad.clid)) || str(o.ch_page))) return str(o.ch_waba);
+  return '';
+}
+/** The dataset linked to a Page / IG account / WABA: asked once (GET, then POST makes it), kept in the config. */
+async function datasetOf(ctx, o) {
+  const asset = bmAsset(o), key = 'bm_dataset_' + asset;
+  const token = await chSecret(ctx, { id: o.ch_id }, 'TOKEN');
+  if (!token) throw new Error('The channel has no token.');
+  const known = str(await getConfig(ctx, key, ''));
+  if (known) return { id: known, token };
   const f = ctx.deps.fetch || fetch;
-  const body = { data: events, ...(S.test ? { test_event_code: S.test } : {}) };
-  const res = await f(GRAPH + '/' + encodeURIComponent(S.pixel) + '/events?access_token=' + encodeURIComponent(tok.token),
+  for (const method of ['GET', 'POST']) {
+    const res = await f(GRAPH + '/' + encodeURIComponent(asset) + '/dataset?access_token=' + encodeURIComponent(token), { method });
+    const t = await res.text(); let j = {}; try { j = JSON.parse(t); } catch (_) { j = {}; }
+    const id = str(j.id || (j.data && j.data[0] && j.data[0].id));
+    if (res.status >= 200 && res.status < 300 && id) { await setConfig(ctx, key, id); return { id, token }; }
+    if (method === 'POST') throw new Error('Meta gave no dataset: ' + str((j.error && j.error.message) || t).slice(0, 160));
+  }
+  throw new Error('Meta gave no dataset.');
+}
+async function send(ctx, S, tok, events, dataset) {
+  const f = ctx.deps.fetch || fetch;
+  const body = { data: events, ...(S.test ? { test_event_code: S.test } : {}), ...(dataset ? { partner_agent: 'costareen-erp' } : {}) };
+  const res = await f(GRAPH + '/' + encodeURIComponent(dataset ? dataset.id : S.pixel) + '/events?access_token=' + encodeURIComponent(dataset ? dataset.token : tok.token),
                       { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) });
   const t = await res.text(); let j = {}; try { j = JSON.parse(t); } catch (_) { j = {}; }
   if (res.status < 200 || res.status >= 300) throw new Error('Meta said ' + res.status + ': ' + str((j.error && (j.error.error_user_msg || j.error.message)) || t).slice(0, 200));
   return j;
+}
+async function setWay(ctx, o, way) {
+  const m = { ...(o.meta || {}), way };
+  await ctx.tx`update chat_orders set meta = ${ctx.tx.json(m)} where id = ${o.id}`;
+  o.meta = m;
 }
 async function mark(ctx, o, key, patch) {
   const m = { ...(o.meta || {}) }; m.sent = { ...(m.sent || {}), [key]: new Date().toISOString(), ...(patch || {}) };
@@ -89,8 +137,12 @@ export async function pixelTick(ctx) {
   const tok = await tokenOf(ctx);
   if (!tok.token) return out;
   const fresh = new Date(ctx.now.getTime() - 6 * 864e5);   // Meta takes events up to 7 days old
-  const rows = await ctx.tx`select o.*, i.delivery_status, i.cancelled_at as inv_cancelled from chat_orders o
+  const rows = await ctx.tx`select o.*, i.delivery_status, i.cancelled_at as inv_cancelled, c.ad, ch.id as ch_id, ch.kind as ch_kind, ch.external_id as ch_ext,
+      ch.settings->>'waba' as ch_waba, ch.settings->>'page' as ch_page, ct.external_id as ct_ext from chat_orders o
     left join invoices i on i.business_id = o.business_id and i.invoice_no = o.invoice_no
+    left join inbox_conversations c on c.id = o.conversation_id
+    left join inbox_channels ch on ch.id = c.channel_id
+    left join inbox_contacts ct on ct.id = c.contact_id
     where o.business_id = ${ctx.biz} and o.created_at > now() - interval '60 days'
       and (coalesce(o.meta->'sent'->>'lead', '') = '' or coalesce(o.meta->'sent'->>'purchase', '') = '' or (coalesce(o.meta->'sent'->>'purchase', '') <> '' and coalesce(o.meta->'sent'->>'returned', '') = ''))
     order by o.created_at desc limit 200`;
@@ -100,6 +152,12 @@ export async function pixelTick(ctx) {
     return codPaid.has(no);
   };
   const batch = [];
+  // which way this order goes (decided once, kept): business messaging when the channel can, else the pixel
+  const ev = async (name, o, id) => {
+    const way = str(o.meta && o.meta.way) || (bmAsset(o) && S.bm !== false ? 'bm' : 'pixel');
+    if (way === 'bm') return { bm: true, ev: await bmEvent(name === 'Lead' ? 'LeadSubmitted' : name, o, id) };
+    return { bm: false, ev: await event(name, o, id) };
+  };
   for (const o of rows) {
     if (batch.length >= 30) break;
     const sent = (o.meta && o.meta.sent) || {}, level = str(o.risk && o.risk.level);
@@ -108,28 +166,45 @@ export async function pixelTick(ctx) {
     // Lead: a real-looking order, while it is fresh
     if (!sent.lead && !sent.skipLead) {
       if (/risky|blocked/.test(level) || o.status === 'cancelled' || new Date(o.created_at) < fresh) await mark(ctx, o, 'skipLead');
-      else batch.push({ o, key: 'lead', ev: await event('Lead', o, 'lead-' + o.no) });
+      else batch.push({ o, key: 'lead', ...(await ev('Lead', o, 'lead-' + o.no)) });
       continue;
     }
     // Purchase: approved / delivered, never cancelled or returned
     if (!sent.purchase && !sent.skipPurchase) {
       if (gone) { await mark(ctx, o, 'skipPurchase'); continue; }
       const ready = S.when === 'approved' ? o.status === 'approved' : (o.status === 'approved' && (/deliver/.test(ds) || (o.invoice_no && await paidByCourier(o.invoice_no))));
-      if (ready) batch.push({ o, key: 'purchase', ev: await event('Purchase', o, 'purchase-' + o.no) });
+      if (ready) batch.push({ o, key: 'purchase', ...(await ev('Purchase', o, 'purchase-' + o.no)) });
       continue;
     }
     // counted as a Purchase, then came back: the returner can be left out of audiences
-    if (sent.purchase && !sent.returned && gone) batch.push({ o, key: 'returned', ev: await event('OrderReturned', o, 'returned-' + o.no) });
+    if (sent.purchase && !sent.returned && gone) batch.push({ o, key: 'returned', ...(await ev('OrderReturned', o, 'returned-' + o.no)) });
   }
   if (!batch.length) return out;
-  try {
-    await send(ctx, S, tok, batch.map((b) => b.ev));
-    for (const b of batch) { await mark(ctx, b.o, b.key); out[b.key === 'lead' ? 'lead' : b.key === 'purchase' ? 'purchase' : 'returned']++; }
-    await setConfig(ctx, 'pixel_last', JSON.stringify({ at: ctx.now.toISOString(), sent: batch.length, error: '' }));
-  } catch (e) {
-    out.errors++;
-    await setConfig(ctx, 'pixel_last', JSON.stringify({ at: ctx.now.toISOString(), sent: 0, error: str(e && e.message || e).slice(0, 300) }));
+  const count = (b) => { out[b.key === 'lead' ? 'lead' : b.key === 'purchase' ? 'purchase' : 'returned']++; };
+  let sentN = 0, err = '';
+  const px = batch.filter((b) => !b.bm);
+  if (px.length) {
+    try { await send(ctx, S, tok, px.map((b) => b.ev)); for (const b of px) { await mark(ctx, b.o, b.key); count(b); } sentN += px.length; }
+    catch (e) { out.errors++; err = str(e && e.message || e); }
   }
+  // the business-messaging way, one call per dataset; a channel Meta refuses (no permission yet) falls back to the pixel
+  const groups = {};
+  for (const b of batch.filter((x) => x.bm)) (groups[bmAsset(b.o)] = groups[bmAsset(b.o)] || []).push(b);
+  for (const k of Object.keys(groups)) {
+    const g = groups[k];
+    try {
+      const ds = await datasetOf(ctx, g[0].o);
+      await send(ctx, S, tok, g.map((b) => b.ev), ds);
+      for (const b of g) { if (!(b.o.meta && b.o.meta.way)) await setWay(ctx, b.o, 'bm'); await mark(ctx, b.o, b.key); count(b); }
+      sentN += g.length;
+      out.bm = (out.bm || 0) + g.length;
+    } catch (e) {
+      out.errors++; err = 'Business messaging (' + k + '): ' + str(e && e.message || e);
+      // nothing sent yet that way: this order goes through the pixel from the next minute (never both ways)
+      for (const b of g) if (!(b.o.meta && b.o.meta.way)) await setWay(ctx, b.o, 'pixel');
+    }
+  }
+  await setConfig(ctx, 'pixel_last', JSON.stringify({ at: ctx.now.toISOString(), sent: sentN, error: err.slice(0, 300) }));
   return out;
 }
 
