@@ -3863,3 +3863,13 @@ Owner: "the ERP already knows the bank account, the Bangla QR, everything - pull
 - Tests: factory_test 25, taste_test 15; socialmake/adsrc/apps green; ads_test keeps its 4 old failures. Dev only.
 - NOT in this first version (autopilot artifact B3): reels cut from phone video, Trial Reels, a Shlink link per post,
   the hook-rate auto-stop rule, Postiz (posts go through the ERP's own Meta connection).
+
+## factory-1 + taste-1 + adsrc-4 LIVE (9 Nov 2026, owner "live koro")
+- Function: diffs of a2fc349 + a238ffa onto the live files (allow.js / index.js list lines by hand); live tree + patch
+  tested: factory 25, taste 15, adsrc 28, socialmake 49, inbox 172, shield2 29, leads 37 green (apps fails only on the
+  dev-only 'crm' tile). Backup erp-20261108T180005Z.tgz. Smoke OK, no log errors after the timers.
+- DB: 162_ad_factory.sql on postgres + tenant DBs (supabase_admin).
+- Web: the live page itself patched (it now carries sales-2's hand patch): Courier column strings + the factory/taste block
+  minified alone before </body>; sw cz-shell-v4-native-2c0f45f-0bd2a42-sales2-a8c6121-web; both Pages projects. Previous page
+  in private/live-web-backup-20261109-before-factory. Seen live: both cards, 👎/👍 under the 8 existing pictures.
+- The factory is OFF until the owner ticks "On every Monday".
