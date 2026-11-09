@@ -4083,3 +4083,9 @@ WhatsApp number ("WhatsApp") to its own chat.
 - Checked on the Mac: the Bangla Facebook draft -> 6 slides + quote card, conjuncts right (প্রথমে, চিহ্ন, নিশ্চিত).
 - Calls (owner only): erpBrandDeskMakeCards, erpBrandDeskCards (read). Tests: branddesk green.
 - NOT done: pictures are not yet attached to the queued post (Postiz media upload) - save and attach by hand for now.
+
+## hotfix-2 (10 Nov 2026): figure-tile "i" buttons still stole clicks on 8 desktop screens
+Critique 4's click-reach probe (all 44 views x 2 sizes, elementFromPoint grid): on desktop sales 147, weborders 258, quotes 259,
+customers 111, products 149, shipments 144, analytics 209, syscheck 35 points opened "How ... is worked out". `.fdd-k .fdd-i`
+is `position:static !important` outside the dashboard, so hotfix-1's inline position lost. The guard now sets it with
+!important (relative, no offsets: nothing moves). After: 0 stolen points on all 88 view x size.

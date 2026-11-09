@@ -52770,7 +52770,7 @@ html[lang="en"] #view table.m-cards > tbody > tr > td::before { text-transform:n
       var el = list[i];
       if (el.__hfx) continue;
       el.__hfx = 1;
-      try { if (getComputedStyle(el).position === 'static') el.style.position = 'relative'; } catch (e) {}
+      try { if (getComputedStyle(el).position === 'static') el.style.setProperty('position', 'relative', 'important'); } catch (e) {}   // hotfix-2: beats .fdd-k .fdd-i { position:static !important } (no offsets, so nothing moves)
     }
   }
   var T = 0;
