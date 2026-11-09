@@ -8514,7 +8514,7 @@ function srv(name, args, ok, bad) {
 
 var SRV_ACTIVE = 0, SRV_WRITING = false, SRV_TIMED = {};
 // the same list the server uses to know a call changes nothing (ERP_READS)
-var SRV_READS = /^(erpBrandDeskListen|erpBrandDeskCards|erpBrandDeskDrafts|erpBrandDeskSettings|erpBrandDeskLint|erpHolds|erpHoldGet|erpPhoneAlerts|erpWaNumbers|erpBrandDesk|erpBrandDeskShorts|erpBrandDeskVideos|erpBrandDeskPeople|erpBrandDeskIdeas|erpBrandDeskBoard|erpShipmentRepriceCheck|erpReceivePreview|erpSeo|erpReceipts|erpBrief|erpBrain|erpWatch|erpEngine|erpEngineJob|erpSkills|erpAiBrain|erpAiBrainModels|erpLeadForms|erpLeads|erpLeadFind|erpLeadCapture|erpMyUpdates|erpSocialBridges|erpAds|erpAdProfit|erpFactory|erpTaste|erpAdsInterests|erpSocialNet|erpSocialLearn|erpSocialAssets|erpSocialPosts|erpSocialPhotos|erpInboxDigest|erpJointRecvCatalog|erpSitePages|erpBalanceSheet|erpProductFields|erpProductAi|erpMetaConnect|erpInboxFeatureMap|erpBookings|erpInbox|erpInboxOpen|erpInboxChannels|erpChatOrders|erpInboxStats|erpAiWork|erpCommissionSales|erpFdCards|erpLineMargins|erpFd19Profit|erpFdInventory|erpFd22Analytics|erpNavigator|erpSellers|erpFollowups|erpCustomerInsight|erpPreorders|erpCashUps|erpAskingPrices|erpSystemCheck|erpAnalytics|erpCommission|erpHolding|erpLotFunding|erpShipments|erpShipment|erpLots|erpFdHead|erpFdDash|erpReceiveMatch|erpAiReader|erpProductSuggest|erpCatalogue|erpPushList|erpCreators|erpCreatorPortalLink|erpSponsorLink|erpCreatorRequests|erpCreatorEvents|erpCreatorProgramme|erpCreatorPreview|erpCreatorCatalog|erpCreatorSources|erpCreatorClaims|erpApps|erpAppQr|erpFeedback|erpRestockOffers|erpRestockList|erpWarrantyRules|erpWarrantyCard|erpMyLink|erpPlatformRegister|erpPlatformDoctor|erpPlatformCommunity|erpMarketWaiting|erpBoard|erpPlatformDesign|erpResell|erpResellerProgramme|erpLoyalty|erpCustomerPoints|erpRefillDue|erpDeliveryHistory|erpDeliveryHistoryMany|erpPrintKit|erpPrintJobs|erpPrintJob|erpPrintCost|erpSpools|erpPrintRequests|erpJoint|erpJointCatalog|erpJointCard|erpInvoiceDesign|erpInvoicePreview|erpMarket|erpMarketMine|erpMarketRequests|erpMarketHints|erpMarketNames|erpWanted|erpBrand|erpComplianceLog|erpProviderKey|erpNews|erpAccessKeys|erpAccessWarning|erpAdmin|erpAiKeys|erpAlertRules|erpAlerts|erpArena|erpBackupStatus|erpBg|erpBnWords|erpBookedParcels|erpBrandLogo|erpBundle|erpBusinessLinks|erpBusinesses|erpBusinessesDeleted|erpCampaignAudience|erpCampaignGet|erpCampaignList|erpCapital|erpCashBook|erpCatalog|erpConnStatus|erpConnections|erpCostBook|erpCourier|erpCourierKeyStatus|erpCurrencies|erpCustomerAccount|erpCustomerCredit|erpCustomerList|erpCustomerPage|erpCustomerStatement|erpCustomers|erpDashboardData|erpDaySales|erpDeliveryOptions|erpDevices|erpDiscontinued|erpDues|erpEvoQr|erpEvoStatus|erpExpenseExport|erpExpenseReceiptUrl|erpExpenses|erpFamilies|erpFighters|erpFormOptions|erpGame|erpGetTheme|erpGoogle|erpHello|erpInstalls|erpInvoice|erpInvoicePdf|erpJob|erpJobs|erpListView|erpLookupCustomer|erpLookupUsage|erpMe|erpMoney|erpNoteFileUrl|erpNotes|erpOwnerChange|erpOwnerChanges|erpParcelLabels|erpParcelPreview|erpPartnerStock|erpPartnership|erpPayReasons|erpPeople|erpPlatform|erpPlatformErrors|erpPnl|erpPnlMonth|erpPoList|erpPoolCatalog|erpProduct|erpProductListShare|erpProductPage|erpProductPhotoUrl|erpProductThumbs|erpProfile|erpQuoteAsset|erpQuoteBoot|erpQuoteGet|erpQuoteList|erpRecentInvoices|erpRecovery|erpReorderPlan|erpRestorePreview|erpReturnPreview|erpRisks|erpSales|erpSearch|erpSecurity|erpSelfTest|erpSerialLookup|erpSerialsFor|erpSessions|erpSetTheme|erpSettingsFull|erpSettingsLists|erpSfPayoutLines|erpSfPayouts|erpShareFile|erpSharedStock|erpSheet|erpStatementPdf|erpStockHistory|erpSupplierPage|erpSuppliers|erpToday|erpUsers|erpWaProductPdf|erpWebMatches|erpWebOrderInvoices|erpWebOrders|erpWebsiteTest)$/;
+var SRV_READS = /^(erpBrandDeskListen|erpBrandDeskCards|erpBrandDeskDrafts|erpBrandDeskSettings|erpBrandDeskLint|erpHolds|erpHoldGet|erpPhoneAlerts|erpWaNumbers|erpBrandDesk|erpBrandDeskShorts|erpBrandDeskVideos|erpBrandDeskPeople|erpBrandDeskIdeas|erpBrandDeskBoard|erpShipmentRepriceCheck|erpReceivePreview|erpSeo|erpReceipts|erpBrief|erpBrain|erpWatch|erpEngine|erpEngineJob|erpSkills|erpAiBrain|erpAiBrainModels|erpLeadForms|erpLeads|erpLeadFind|erpLeadCapture|erpMyUpdates|erpSocialBridges|erpAds|erpAdProfit|erpFactory|erpTaste|erpAdsInterests|erpSocialNet|erpSocialLearn|erpSocialAssets|erpSocialPosts|erpSocialPhotos|erpInboxDigest|erpJointRecvCatalog|erpSitePages|erpBalanceSheet|erpProductFields|erpProductAi|erpMetaConnect|erpInboxFeatureMap|erpBookings|erpInbox|erpInboxOpen|erpInboxChannels|erpChatOrders|erpInboxStats|erpAiWork|erpCommissionSales|erpFdCards|erpLineMargins|erpFd19Profit|erpFdInventory|erpFd22Analytics|erpNavigator|erpSellers|erpFollowups|erpCustomerInsight|erpPreorders|erpCashUps|erpAskingPrices|erpSystemCheck|erpAnalytics|erpCommission|erpHolding|erpLotFunding|erpShipments|erpShipment|erpLots|erpFdHead|erpFdDash|erpReceiveMatch|erpAiReader|erpProductSuggest|erpCatalogue|erpPushList|erpCreators|erpCreatorPortalLink|erpSponsorLink|erpCreatorRequests|erpCreatorEvents|erpCreatorProgramme|erpCreatorPreview|erpCreatorCatalog|erpCreatorSources|erpCreatorClaims|erpApps|erpAppQr|erpFeedback|erpRestockOffers|erpRestockList|erpWarrantyRules|erpWarrantyCard|erpMyLink|erpPlatformRegister|erpPlatformDoctor|erpPlatformCommunity|erpMarketWaiting|erpBoard|erpPlatformDesign|erpResell|erpResellerProgramme|erpLoyalty|erpCustomerPoints|erpRefillDue|erpDeliveryHistory|erpDeliveryHistoryMany|erpPrintKit|erpPrintJobs|erpPrintJob|erpPrintCost|erpSpools|erpPrintRequests|erpJoint|erpJointCatalog|erpJointCard|erpInvoiceDesign|erpInvoicePreview|erpMarket|erpMarketMine|erpMarketRequests|erpMarketHints|erpMarketNames|erpWanted|erpBrand|erpComplianceLog|erpProviderKey|erpNews|erpAccessKeys|erpAccessWarning|erpAdmin|erpAiKeys|erpAlertRules|erpAlerts|erpArena|erpBackupStatus|erpBg|erpBnWords|erpBookedParcels|erpBrandLogo|erpBundle|erpBusinessLinks|erpBusinesses|erpBusinessesDeleted|erpCampaignAudience|erpCampaignGet|erpCampaignList|erpCapital|erpCashBook|erpPayMethods|erpCatalog|erpConnStatus|erpConnections|erpCostBook|erpCourier|erpCourierKeyStatus|erpCurrencies|erpCustomerAccount|erpCustomerCredit|erpCustomerList|erpCustomerPage|erpCustomerStatement|erpCustomers|erpDashboardData|erpDaySales|erpDeliveryOptions|erpDevices|erpDiscontinued|erpDues|erpEvoQr|erpEvoStatus|erpExpenseExport|erpExpenseReceiptUrl|erpExpenses|erpFamilies|erpFighters|erpFormOptions|erpGame|erpGetTheme|erpGoogle|erpHello|erpInstalls|erpInvoice|erpInvoicePdf|erpJob|erpJobs|erpListView|erpLookupCustomer|erpLookupUsage|erpMe|erpMoney|erpNoteFileUrl|erpNotes|erpOwnerChange|erpOwnerChanges|erpParcelLabels|erpParcelPreview|erpPartnerStock|erpPartnership|erpPayReasons|erpPeople|erpPlatform|erpPlatformErrors|erpPnl|erpPnlMonth|erpPoList|erpPoolCatalog|erpProduct|erpProductListShare|erpProductPage|erpProductPhotoUrl|erpProductThumbs|erpProfile|erpQuoteAsset|erpQuoteBoot|erpQuoteGet|erpQuoteList|erpRecentInvoices|erpRecovery|erpReorderPlan|erpRestorePreview|erpReturnPreview|erpRisks|erpSales|erpSearch|erpSecurity|erpSelfTest|erpSerialLookup|erpSerialsFor|erpSessions|erpSetTheme|erpSettingsFull|erpSettingsLists|erpSfPayoutLines|erpSfPayouts|erpShareFile|erpSharedStock|erpSheet|erpStatementPdf|erpStockHistory|erpSupplierPage|erpSuppliers|erpToday|erpUsers|erpWaProductPdf|erpWebMatches|erpWebOrderInvoices|erpWebOrders|erpWebsiteTest)$/;
 function srvPump() {
   if (!SRV_Q.length) return;
   var isRead = SRV_READS.test(SRV_Q[0].name);
@@ -13289,7 +13289,7 @@ function viewCash() {
     else h += '<div class="scroll tall"><table><thead><tr><th>When</th><th>What</th><th class="num">In</th><th class="num">Out</th><th class="num">Balance</th><th></th></tr></thead><tbody>' + c.entries.map(function (e) {
         var act = '';
         if (ed && e.src === 'move') act = '<button class="btn small" type="button" data-cvoid="' + esc(e.id) + '">Strike out</button>';
-        else if (ed && (e.src === 'payment' || e.src === 'expense' || e.src === 'capital' || e.src === 'payout')) act = '<button class="btn small" type="button" data-cmove="' + esc(e.src) + '" data-id="' + esc(e.id) + '">Wrong account</button>';
+        else if (ed && (e.src === 'payment' || e.src === 'expense' || e.src === 'capital' || e.src === 'payout')) act = '<button class="btn small" type="button" data-cmove="' + esc(e.src) + '" data-id="' + esc(e.id) + '">Move to another account</button>';
         return '<tr><td style="white-space:nowrap">' + esc(e.when) + '</td><td class="nm">' + esc(e.what) +
           ((e.ref || e.by) ? '<br><span class="sku">' + (e.invoice ? '<button class="linkbtn" type="button" data-openinv="' + esc(e.invoice) + '">' + esc(e.invoice) + '</button>' : esc(e.ref)) + (e.method && e.invoice ? ' · ' + esc(e.method) : '') + (e.by ? ' · ' + esc(e.by) : '') + '</span>' : '') + '</td>' +
           '<td class="num">' + (e.amount > 0 ? '<span style="color:var(--good)">' + fmt(e.amount) + '</span>' : '') + '</td><td class="num">' + (e.amount < 0 ? fmt(-e.amount) : '') + '</td>' +
@@ -13312,7 +13312,7 @@ function viewCash() {
       '<div style="flex:1 1 140px"><label class="f" for="ca_date">On date</label><input class="i" id="ca_date" type="date" max="' + esc(c.today) + '" value="' + esc(E.openingDate || '') + '"></div>' +
       (E.id ? '<label class="chk" style="padding-bottom:9px"><input type="checkbox" id="ca_arch"' + (E.archived ? ' checked' : '') + '> Retired</label>' : '') +
       '<button class="btn primary" type="button" id="ca_save"' + (CASH_BUSY ? ' disabled' : '') + '>' + (E.id ? 'Save' : 'Add') + '</button>' + (E.id ? '<button class="btn" type="button" id="ca_new">New instead</button>' : '') + '</div>' +
-      '<h2 style="margin-top:18px">Where money goes by itself</h2><div class="sub">A customer payment lands in the account of its payment method. Changing this affects new entries only; one line that went elsewhere is moved with “Wrong account” on the statement.</div>' +
+      '<h2 style="margin-top:18px">Where money goes by itself</h2><div class="sub">A customer payment lands in the account of its payment method. Changing this affects new entries only; one line that went elsewhere is moved with “Move to another account” on the statement.</div>' +
       '<div class="fields">' + c.methods.map(function (m) {
         return '<div><label class="f">' + esc(m) + ' lands in</label><select class="i" data-cmap="' + esc(m.toLowerCase()) + '"><option value="">— no account: ask each time —</option>' + cashOpts(c.rules.map[m.toLowerCase()] || '') + '</select></div>'; }).join('') +
       '<div><label class="f">Expenses are paid from</label><select class="i" id="cm_exp"><option value="">— none —</option>' + cashOpts(c.rules.expense) + '</select></div>' +
@@ -27519,7 +27519,7 @@ function f21LedDrawer(r) {
     };
   }
   if (r.acc && ed && (e.src === 'payment' || e.src === 'expense' || e.src === 'capital' || e.src === 'payout')) {
-    foot += f21Btn('move', 'Wrong account…', '', 'swap');
+    foot += f21Btn('move', 'Move to another account…', '', 'swap');
     acts.move = function () {
       var others = c.accounts.filter(function (a) { return !a.archived && a.id !== r.acc.id; });
       uiPrompt('Which account did this really go through?\n\n' + others.map(function (a, i) { return (i + 1) + '. ' + a.name; }).join('\n') + '\n\nType the number:', '').then(function (pick) {
@@ -31092,7 +31092,8 @@ function fd19InvPaint(d, prof) {
         (showCost ? '<td class="n">' + (x && x.unitCost > 0 ? fd19Cp(fd19Tk(cost)) + fd19Cs('@ ' + fd19Tk(x.unitCost)) : fd19Badge('No cost', 'negative')) + '</td><td class="n">' +
           (pr === null || l.returned ? '<span class="fd19-faint">—</span>' : '<span class="' + (pr < 0 ? 'fd19-neg' : '') + '">' + fd19Tk(Math.round(pr)) + '</span>') + '</td>' : '') +
         '<td class="n">' + (l.returned ? fd19Badge(fmt(l.returned) + ' back', 'warning') : '<span class="fd19-faint">—</span>') + '</td></tr>';
-    }).join('') + '</tbody></table></div>';
+    }).join('') + '</tbody></table></div>' +
+    (showCost && Number(d.discount) > 0.5 ? '<div class="fd19-cs bk-spread" style="margin-top:6px">' + esc('Profit on each line is after its share of the ' + fd19Tk(d.discount) + ' invoice discount (shared by line amount), so it is less than Amount − Cost.') + '</div>' : '');
   // totals
   b += '<div style="margin-top:14px">' + fd19Kv([
     ['Goods (qty × price)', esc(fd19Tk(d.subtotal))],
@@ -41542,7 +41543,7 @@ html[data-bizkind="brand"] #tabbar button[data-tab="invoice"],html[data-bizkind=
 .bd11-c{display:flex;gap:10px;align-items:flex-start;padding:9px 0;border-top:1px solid var(--fd-border,#eef)}
 .bd11-c .c{flex:1;min-width:0;overflow-wrap:anywhere}
 .bd11-c .t{white-space:pre-wrap;font-size:13px;color:var(--fd-text-2,#444)}
-.bd-tag.lead{background:#e6f8ec;color:#15803d}
+.bd-tag.lead{background:var(--fd-positive-soft,#E6F8EC);color:var(--fd-positive-text,#15803D)}
 </style>
 <script>
 (function () {
@@ -46443,7 +46444,7 @@ html[data-look="clean"] #view .rz-tabs .btn.primary { background:var(--fd-lime, 
       'Goods': 'মাল', 'Total': 'মোট', 'Received': 'পাওয়া গেছে', 'Still owed': 'এখনো বাকি', 'Nothing': 'কিছু না', 'Paid by': 'যেভাবে দিয়েছেন', 'Delivery': 'ডেলিভারি', 'Qty': 'পরিমাণ', 'Price': 'দাম', 'Discount': 'ছাড়', 'Returned': 'ফেরত',
       'Customer’s page link': 'কাস্টমারের পাতার লিংক', 'Could not open': 'খোলা যায়নি',
       // New invoice
-      'This invoice due': 'এই ইনভয়েসে বাকি', 'Grand total': 'সর্বমোট', 'Subtotal': 'মোট দাম', 'Paid now': 'এখন দেওয়া', 'Start typing to find a product.': 'প্রোডাক্ট খুঁজতে লিখতে শুরু করুন।',
+      'This invoice due': 'এই ইনভয়েসে বাকি', 'Grand total': 'মোট', 'Subtotal': 'উপমোট', 'Paid now': 'এখনই পেমেন্ট', 'Start typing to find a product.': 'প্রোডাক্ট খুঁজতে লিখতে শুরু করুন।',
       'No products yet. Add one above, or from the Products screen.': 'এখনো কোনো প্রোডাক্ট নেই। উপরে খুঁজে যোগ করুন, বা প্রোডাক্ট পাতা থেকে।',
       // Web orders
       'Website: not connected': 'ওয়েবসাইট: যুক্ত নেই', 'Check the website for new orders': 'ওয়েবসাইটে নতুন অর্ডার দেখুন', 'No website orders pulled yet.': 'এখনো ওয়েবসাইট থেকে কোনো অর্ডার আনা হয়নি।',
@@ -50938,13 +50939,13 @@ html[lang="bn"][data-look="clean"][data-skin="fd"] #view :is(label.f, .fdd-lbl, 
       var amt = typeof tk === 'function' ? tk(sum, { cur: CASH.currency }) : String(sum);
       t.innerHTML = isBn() ? '<b>' + String(n).replace(/\d/g, function (d) { return '০১২৩৪৫৬৭৮৯'.charAt(+d); }) + 'টা পেমেন্ট</b> অ্যাকাউন্টে বসানো বাকি · ' + amt : '<b>' + n + ' payment' + (n > 1 ? 's' : '') + '</b> to place in an account · ' + amt;
     }
-    s.classList.add('lk-calm');
+    s.classList.add('lk-calm'); s.classList.add('bk-warn');
     var b = s.querySelector('.btn.primary'); if (b) b.classList.remove('primary');
     var phone = window.matchMedia ? window.matchMedia('(max-width:760px)').matches : window.innerWidth <= 760;
     var pane = v.querySelector('[data-f21pane="accounts"]');
     var cards = pane && pane.querySelector('.cash_card');
     var shown = pane && getComputedStyle(pane).display !== 'none';
-    if (phone && cards && shown) {
+    if (cards && shown) {   // crit5-books: on every width (it dominated the balance on a computer)
       var box = cards.parentNode;
       if (box.nextSibling !== s) box.parentNode.insertBefore(s, box.nextSibling);
     } else if (s.parentNode !== v) {
@@ -51972,7 +51973,7 @@ html[lang="bn"][data-look="clean"][data-skin="fd"] #side .brand span.tag, html[l
     var after = Math.round(Number(net) || 0) - Math.round(Number(due.total) || 0);
     FIG.last = { net: Number(net) || 0, due: due };
     var lbl = L('Which fixed costs are not paid yet', 'কোন স্থায়ী খরচ এখনো দেওয়া হয়নি');
-    return '<div class="fig-due" data-figdue="1"><span>' + esc(L('If this month\u2019s fixed costs are paid:', 'এ মাসের স্থায়ী খরচ দিলে:')) + '</span>' +
+    return '<div class="fig-due" data-figdue="1"><span>' + esc(L('After this month\u2019s fixed costs:', 'এ মাসের স্থায়ী খরচ বাদে:')) + '</span>' +
       '<b data-noi18n="1" class="' + (after < 0 ? 'neg' : '') + '">' + money(after) + '</b>' +
       (withI ? '<button type="button" class="fig-i" data-figduei="1" data-net="' + esc(String(Number(net) || 0)) + '" aria-label="' + esc(lbl) + '" title="' + esc(lbl) + '">i</button>' : '') + '</div>';
   }
@@ -51984,7 +51985,7 @@ html[lang="bn"][data-look="clean"][data-skin="fd"] #side .brand span.tag, html[l
             'খরচ যেদিন দেওয়া হয়েছে বলে মার্ক করা হয়, নিট লাভে সেদিনই ধরা হয়। ' + monthName(due.month) + '-এর এই স্থায়ী খরচগুলো এখনো দেওয়া হয়নি:')) + '</div>' +
       '<ul>' + due.items.map(function (x) { return '<li><span data-noi18n="1">' + esc(x.name) + '</span><b data-noi18n="1">' + money(x.amount) + '</b></li>'; }).join('') +
       '<li class="tot"><span>' + esc(L('Still to pay', 'দেওয়া বাকি')) + '</span><b data-noi18n="1">' + money(due.total) + '</b></li></ul>' +
-      '<div class="fig-sum">' + esc(L('Net profit now', 'এখনকার নিট লাভ')) + ' <b data-noi18n="1">' + money(net) + '</b> · ' + esc(L('if they are paid', 'এগুলো দিলে')) +
+      '<div class="fig-sum">' + esc(L('Net profit now', 'এখনকার নিট লাভ')) + ' <b data-noi18n="1">' + money(net) + '</b> · ' + esc(L('after paying them', 'এগুলো দেওয়ার পর')) +
       ' <b data-noi18n="1" class="' + (after < 0 ? 'neg' : '') + '">' + money(after) + '</b><br><span style="color:var(--fd-text-3,#667085)">' +
       esc(L('This is a forecast, not a second profit: the net profit changes only when you press Paid under Expenses \u203a Expected monthly.',
             'এটি একটা আন্দাজ, দ্বিতীয় কোনো লাভ নয়: খরচ › প্রতি মাসে যা দিতে হয় — সেখানে "দেওয়া হয়েছে" চাপলেই নিট লাভ বদলাবে।')) + '</span></div></div>';
@@ -51992,7 +51993,7 @@ html[lang="bn"][data-look="clean"][data-skin="fd"] #side .brand span.tag, html[l
   function dueDialog(net, due) {
     var back = document.createElement('div'); back.className = 'dlg-back';
     var canGo = typeof navOn === 'function' && navOn('expenses');
-    back.innerHTML = '<div class="dlg" role="dialog" aria-modal="true" style="max-width:520px"><div class="dlg-t">' + esc(L('If this month\u2019s fixed costs are paid', 'এ মাসের স্থায়ী খরচ দিলে')) + '</div>' +
+    back.innerHTML = '<div class="dlg" role="dialog" aria-modal="true" style="max-width:520px"><div class="dlg-t">' + esc(L('After this month\u2019s fixed costs', 'এ মাসের স্থায়ী খরচ বাদে')) + '</div>' +
       '<div class="dlg-b" style="white-space:normal">' + dueBody(net, due) + '</div><div class="dlg-f">' +
       (canGo ? '<button class="btn" type="button" data-figgo="1">' + esc(L('Open Expected monthly', 'প্রতি মাসে যা দিতে হয় — খুলুন')) + '</button>' : '') +
       '<button class="btn primary" type="button" data-figclose="1">' + esc(L('Close', 'বন্ধ করুন')) + '</button></div></div>';
@@ -52054,7 +52055,7 @@ html[lang="bn"][data-look="clean"][data-skin="fd"] #side .brand span.tag, html[l
       if (!d || d.querySelector('.fig-dlg')) return;
       var f = d.querySelector('.dlg-f'), box = document.createElement('div');
       box.style.cssText = 'margin-top:14px';
-      box.innerHTML = '<div style="font-weight:700;font-size:15px;margin-bottom:2px">' + esc(L('If this month\u2019s fixed costs are paid', 'এ মাসের স্থায়ী খরচ দিলে')) + '</div>' + dueBody(k.v, due);
+      box.innerHTML = '<div style="font-weight:700;font-size:15px;margin-bottom:2px">' + esc(L('After this month\u2019s fixed costs', 'এ মাসের স্থায়ী খরচ বাদে')) + '</div>' + dueBody(k.v, due);
       if (f) f.parentNode.insertBefore(box, f); else d.appendChild(box);
     }, 0);
   }, true);
@@ -52156,7 +52157,7 @@ html[lang="bn"][data-look="clean"][data-skin="fd"] #side .brand span.tag, html[l
     var W = {
       // glossary §2: the customer's due is বাকি (the invoice page said "এখনও পাওনা"); the figure called Revenue is sales
       'Still owed': 'বাকি', 'Revenue': 'বিক্রি', 'Revenue this month': 'এ মাসের বিক্রি',
-      'If this month\u2019s fixed costs are paid:': 'এ মাসের স্থায়ী খরচ দিলে:', 'If this month\u2019s fixed costs are paid': 'এ মাসের স্থায়ী খরচ দিলে',
+      'After this month\u2019s fixed costs:': 'এ মাসের স্থায়ী খরচ বাদে:', 'After this month\u2019s fixed costs': 'এ মাসের স্থায়ী খরচ বাদে',
       'Which fixed costs are not paid yet': 'কোন স্থায়ী খরচ এখনো দেওয়া হয়নি', 'Open Expected monthly': 'প্রতি মাসে যা দিতে হয় — খুলুন', 'Still to pay': 'দেওয়া বাকি',
       'Net profit now': 'এখনকার নিট লাভ', 'if they are paid': 'এগুলো দিলে',
       'Write a note\u2026': 'একটা নোট লিখুন\u2026', 'Attach a photo or PDF': 'ছবি বা PDF যোগ করুন',
@@ -52221,7 +52222,7 @@ html[lang="bn"][data-look="clean"][data-skin="fd"] #side .brand span.tag, html[l
     };
     for (var k in W) I18N_BN[k] = W[k];
     // in front: the more exact pattern must win over '^Paid now: (.+?)$' (the confirm sheet showed "(Cash)" in English)
-    I18N_PAT.unshift(['^Paid now: (.+?) \\((.+?)\\)$', 'এখন পরিশোধ: $1 ($2)']);
+    I18N_PAT.unshift(['^Paid now: (.+?) \\((.+?)\\)$', 'এখনই পেমেন্ট: $1 ($2)']);
     I18N_PAT.push(
       ['^\u09f3([\\d,.]+) due$', '\u09f3$1 বাকি'], ['^([\\d,.]+) due$', '$1 বাকি'],
       ['^(\\d+) item\\(s\\)$', '$1টি'], ['^(\\d+) payment\\(s\\)$', '$1টি পেমেন্ট'], ['^- (.+)$', '- $1'], ['^: (.+)$', ': $1'],
@@ -53105,8 +53106,8 @@ html[lang="en"] #view table.m-cards > tbody > tr > td::before { text-transform:n
 
   /* ===================================================================== 5. payment ways: Cash, bKash, Nagad, then the rest */
   var MKEY = 'erp.inv.lastMethod';
-  function lsGet() { try { return localStorage.getItem(MKEY) || ''; } catch (e) { return ''; } }
-  function lsSet(v) { try { if (v) localStorage.setItem(MKEY, v); } catch (e) {} }
+  function lsGet() { return ''; }   // crit5-books: every new sale starts on Cash; the last sale's way is no longer carried over
+  function lsSet(v) { try { localStorage.removeItem(MKEY); } catch (e) {} }
   function rank(m) { var s = String(m).trim().toLowerCase(); return s === 'cash' ? 0 : s === 'bkash' ? 1 : s === 'nagad' ? 2 : 3; }
   if (typeof t1Methods === 'function') {
     var t1MethodsInv4 = t1Methods;
@@ -53482,11 +53483,11 @@ tr[data-payowe]:focus-visible { outline:2px solid var(--fd-accent, #5b4fe9); out
 .pay-duebox { scroll-margin-top:90px; }
 /* ---- 4. Money: the chosen account, and the tiles coloured by meaning */
 html[data-look="clean"][data-skin="fd"]:root .cash_card[aria-pressed="true"], .cash_card[aria-pressed="true"] { box-shadow:0 0 0 2px var(--fd-text, #17181c) !important; }
-html[data-look="clean"][data-skin="fd"]:root[data-theme="dark"] .cash_card[aria-pressed="true"] { box-shadow:0 0 0 2px var(--fd-lime, #d9f99d) !important; }
+html[data-look="clean"][data-skin="fd"]:root[data-theme="dark"] .cash_card[aria-pressed="true"] { box-shadow:0 0 0 2px var(--fd-lime, #E4FF5A) !important; }
 .pay-stmt { scroll-margin-top:90px; }
 html[data-look="clean"][data-skin="fd"]:root .fdd-grid > .fdd-k.pay-warn, .fdd-grid > .fdd-k.pay-warn { background:var(--fd-warning-soft, #fff3dc) !important; }
 html[data-look="clean"][data-skin="fd"]:root .fdd-grid > .fdd-k.pay-warn .fdd-num { color:var(--fd-warning-text, #9a5b00); }
-html[data-look="clean"][data-skin="fd"]:root[data-theme="dark"] .fdd-grid > .fdd-k.pay-warn .fdd-num { color:var(--fd-warning, #facc15); }
+html[data-look="clean"][data-skin="fd"]:root[data-theme="dark"] .fdd-grid > .fdd-k.pay-warn .fdd-num { color:var(--fd-warning, #FBBF24); }
 .fdd-k.pay-warn[data-paygo] { cursor:pointer; }
 /* ---- 5. Stock entry */
 .pay-where { display:flex; align-items:center; gap:10px; flex-wrap:wrap; max-width:520px; margin:0 auto 12px; padding:8px 12px; border-radius:12px;
@@ -53986,6 +53987,830 @@ html[data-look="clean"][data-skin="fd"]:root[data-theme="dark"] .fdd-grid > .fdd
     };
     for (var k in BN) if (!I18N_BN[k]) I18N_BN[k] = BN[k];
   } catch (e) {}
+})();
+</script>
+<!-- CRIT5-MERGE 2026-11-10 -->
+<!-- crit5:books -->
+<!-- crit5-books (10 Nov 2026): a payment method with no money account is said before the money is taken (and where the money went after);
+     every new sale starts on Cash; Settings asks each loader once and paints once; the saved-invoice window closes (✕ / Esc / backdrop) and
+     opens the invoice; the drawer's Receive form names the amount + account on its button; stock Clear clears the whole draft; toasts clear
+     the chat button. Server side: erpPayMethods (handlers/cash.js) for every member; a rule to a retired account is skipped. -->
+<style>
+/* ---- 1. the note under a payment method that has no money account */
+.bk-pmn { display:flex; align-items:flex-start; gap:8px 12px; flex-wrap:wrap; margin:6px 0 0; padding:8px 10px; border-radius:10px;
+  background:var(--fd-warning-soft, #fff3dc); color:var(--fd-warning-text, #8a5300); font-size:13.5px; line-height:1.45; }
+.bk-pmn.is-courier { background:var(--fd-surface-2, var(--plane, #f4f5f8)); color:var(--fd-text-2, inherit); }
+.bk-pmn .tx { flex:1 1 180px; min-width:0; }
+.bk-pmn button { flex:0 0 auto; min-height:36px; padding:0 12px; border-radius:10px; border:1px solid currentColor; background:transparent; color:inherit;
+  font:inherit; font-weight:600; cursor:pointer; }
+.bk-pmn button:hover { background:rgba(127,127,127,.12); }
+html[lang="bn"] .bk-pmn { font-size:14.5px; }
+:root[data-theme="dark"] .bk-pmn { background:rgba(250,204,21,.12); color:var(--fd-warning, #facc15); }
+:root[data-theme="dark"] .bk-pmn.is-courier { background:var(--fd-surface-2, rgba(255,255,255,.06)); color:var(--fd-text-2, #cbd5e1); }
+/* ---- 4. the saved-invoice window */
+#invdone .card { position:relative; }
+#invdone .bk-x { position:absolute; top:10px; right:10px; width:40px; height:40px; display:flex; align-items:center; justify-content:center; border:0; border-radius:12px;
+  background:transparent; color:var(--fd-text-2, inherit); cursor:pointer; }
+#invdone .bk-x:hover { background:var(--fd-surface-2, rgba(127,127,127,.12)); }
+#invdone .bk-x svg { width:20px; height:20px; }
+#invdone .bk-ok { width:48px; height:48px; margin:2px auto 0; border-radius:50%; display:flex; align-items:center; justify-content:center;
+  background:var(--fd-positive-soft, #e7f7ee); color:var(--fd-positive-text, var(--fd-positive, #137a3a)); }
+#invdone .bk-ok svg { width:26px; height:26px; }
+#invdone .bk-where { margin:2px 0 10px; font-size:14px; color:var(--fd-text-2, inherit); }
+#invdone .bk-where.is-wait { color:var(--fd-warning-text, #8a5300); }
+#invdone .bk-wa { display:flex; align-items:flex-start; gap:8px; text-align:left; margin:0 0 12px; padding:8px 12px; border-radius:10px;
+  background:var(--fd-warning-soft, #fff3dc); color:var(--fd-warning-text, #8a5300); font-size:13.5px; line-height:1.45; }
+#invdone .bk-wa svg { flex:0 0 18px; width:18px; height:18px; margin-top:1px; }
+:root[data-theme="dark"] #invdone .bk-wa, :root[data-theme="dark"] #invdone .bk-where.is-wait { color:var(--fd-warning, #facc15); }
+:root[data-theme="dark"] #invdone .bk-wa { background:rgba(250,204,21,.12); }
+html[lang="bn"] #invdone .bk-wa, html[lang="bn"] #invdone .bk-where { font-size:14.5px; }
+/* ---- 5. the drawer's Receive form: the amount box has an edge; while the form is open the footer button steps back */
+#pay_f input.i, #pay_f select.i { background:var(--fd-card, #fff) !important; border:1px solid var(--fd-border, #e3e5ea) !important; }
+#pay_f input.i:focus, #pay_f select.i:focus { border-color:var(--fd-text, #17181c) !important; }
+.bk-payon .fd19-df [data-fd19a="pay"] { display:none !important; }
+#pay_f [data-pay-save] .lb { white-space:normal; text-align:center; }
+/* ---- 6. Money: the "no account" strip under the balances, in a warning tone */
+#view .dm-unm.lk-calm.bk-warn { background:var(--fd-warning-soft, #fff3dc) !important; border:1px solid transparent !important; }
+#view .dm-unm.lk-calm.bk-warn .t { color:var(--fd-warning-text, #8a5300); }
+:root[data-theme="dark"] #view .dm-unm.lk-calm.bk-warn { background:rgba(250,204,21,.10) !important; }
+:root[data-theme="dark"] #view .dm-unm.lk-calm.bk-warn .t { color:var(--fd-warning, #facc15); }
+#view [data-f21pane="accounts"] .dm-unm.bk-warn { margin:12px 0 16px; }
+/* ---- 7. stock entry: the step buttons never break onto two lines */
+#view .rvw-nav button, #view .rvw-nav .btn { white-space:nowrap; }
+/* a phone: both buttons share the row when they fit; a long one ("Next: Review & receive into lots →") takes its own row */
+@media (max-width:640px) { #view .rvw-nav { flex-wrap:wrap; row-gap:8px; } #view .rvw-nav .btn { flex:1 1 auto; } }
+/* ---- settings: a loader that failed says so, with one way to try again */
+.bk-lderr { display:flex; align-items:center; gap:10px 14px; flex-wrap:wrap; }
+.bk-lderr .tx { flex:1 1 220px; min-width:0; }
+</style>
+<script>
+(function () {
+  var bn = function () { return typeof LANG !== 'undefined' && LANG === 'bn'; };
+  var T = function (en, b) { return bn() ? b : en; };
+  var E = function (s) { return typeof esc === 'function' ? esc(s) : String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); };
+  var M = function (v) { var n = Math.round((Number(v) || 0) * 100) / 100; return typeof tk === 'function' ? tk(n) : '৳' + n; };
+  var RANK = { sales: 1, staff: 1, manager: 2, shareholder: 3, owner: 4 };
+  function rankOf() { return (typeof ME !== 'undefined' && ME && RANK[ME.role]) || 0; }
+  var ICON_X = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>';
+  var ICON_OK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg>';
+  var ICON_WARN = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 9v4M12 17h.01"/><path d="M10.3 3.9L1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg>';
+
+  /* ================================================================ 1. where each payment method lands */
+  // the same order the server uses (handlers/cash.js accountForMethod): the owner's rule (to an open account), then the open
+  // account whose name IS the method, else none. Staff read it from erpPayMethods (names only); an owner / shareholder
+  // already may read the money book, so the page works it out from erpCashBook (also on a server without erpPayMethods).
+  var NOT_MONEY = { '': 1, adjusted: 1, returned: 1, advance: 1, undone: 1, 'return / refund': 1 };
+  var COURIER_RE = /^cod\b|cash on delivery|courier|steadfast|pathao|redx/i;
+  var PM = { map: null, busy: false, ver: 0, canAdd: false, accounts: 0, failed: 0 };
+  window.BOOKS_PM = PM;
+  function mkey(m) { return String(m == null ? '' : m).trim().toLowerCase().replace(/\s+/g, ' '); }
+  function allMethods() {
+    var out = [], seen = {};
+    var add = function (m) { m = String(m || '').trim(); var k = mkey(m); if (k && !seen[k]) { seen[k] = 1; out.push(m); } };
+    try { ((typeof OPT !== 'undefined' && OPT && OPT.paymentMethods) || []).forEach(add); } catch (e) {}
+    add('Cash');
+    return out.slice(0, 50);
+  }
+  function fromBook(c, list) {
+    var open = {}, byName = {}, map = {};
+    (c.accounts || []).forEach(function (a) { if (a.archived) return; open[a.id] = a.name; var k = mkey(a.name); if (k && !byName[k]) byName[k] = a.id; });
+    var rules = (c.rules && c.rules.map) || {};
+    list.forEach(function (m) {
+      var raw = String(m).trim().toLowerCase(), k = mkey(m), nm = !!NOT_MONEY[k];
+      var id = rules[raw] && open[rules[raw]] ? rules[raw] : rules[k] && open[rules[k]] ? rules[k] : nm ? '' : (byName[k] || '');
+      map[k] = { method: m, account: id, accountName: id ? open[id] : '', courier: COURIER_RE.test(m), notMoney: nm };
+    });
+    return { map: map, accounts: Object.keys(open).length };
+  }
+  function pmSet(map, accounts, canAdd) { PM.map = map; PM.accounts = accounts; PM.canAdd = canAdd; PM.busy = false; PM.ver++; PM.failed = 0; schedule(); }
+  function pmLoad(force) {
+    if (typeof ME === 'undefined' || !ME || typeof srv !== 'function') return;
+    if (PM.busy || (PM.map && !force) || PM.failed > 2) return;
+    PM.busy = true;
+    var list = allMethods();
+    if (rankOf() >= 3) {
+      srv('erpCashBook', [{}], function (c) { PM.book = c || {}; var r = fromBook(PM.book, list); pmSet(r.map, r.accounts, !!(c && c.canEdit)); },
+        function () { PM.busy = false; PM.failed++; });
+    } else {
+      srv('erpPayMethods', [{ methods: list }], function (r) {
+        var map = {}; ((r && r.methods) || []).forEach(function (x) { map[mkey(x.method)] = x; });
+        pmSet(map, (r && r.accounts) || 0, !!(r && r.canAdd));
+      }, function () { PM.busy = false; PM.failed++; });
+    }
+  }
+  window.booksPmLoad = pmLoad;
+  function info(m) { return PM.map ? PM.map[mkey(m)] || null : null; }
+  /** "in Cash" / "with the courier" / "waiting in “no account”" */
+  function whereOf(m) {
+    var x = info(m); if (!x) return null;
+    if (x.notMoney) return null;
+    if (x.account) return { ok: true, text: T('in ' + x.accountName, x.accountName + '-এ') };
+    if (x.courier) return { ok: true, courier: true, text: T('with the courier', 'কুরিয়ারের কাছে') };
+    return { ok: false, text: T('waiting in “no account”', '“কোনো অ্যাকাউন্টে নেই”-তে অপেক্ষায়') };
+  }
+  var SUF_NO = function () { return T(' · no account yet', ' · এখনো অ্যাকাউন্ট নেই'); };
+  var SUF_CR = function () { return T(' · courier holds it', ' · কুরিয়ারের কাছে থাকে'); };
+  function isMethodSelect(s) {
+    if (!PM.map || s.multiple || !s.options.length || s.hasAttribute('data-cmap')) return false;
+    for (var i = 0; i < s.options.length; i++) { var o = s.options[i]; if (!PM.map[mkey(o.value)]) return false; }
+    return true;
+  }
+  function kindFor(m) { return /kash|nagad|rocket|upay|wallet|tap\b/i.test(m) ? 'wallet' : /^cash$/i.test(String(m).trim()) ? 'cash' : 'bank'; }
+  function dressSelect(s) {
+    var sigv = PM.ver + '|' + s.value + '|' + (bn() ? 'bn' : 'en') + '|' + PM.canAdd;
+    if (s.getAttribute('data-bkpm') === sigv && (!!noteOf(s) === needNote(s.value))) return;
+    s.setAttribute('data-bkpm', sigv);
+    for (var i = 0; i < s.options.length; i++) {
+      var o = s.options[i], base = o.getAttribute('data-bkt');
+      if (base == null) { base = o.value || o.text; o.setAttribute('data-bkt', base); }
+      var x = info(o.value), t = base;
+      if (x && !x.account && !x.notMoney) t = base + (x.courier ? SUF_CR() : SUF_NO());
+      if (o.text !== t) o.text = t;
+    }
+    var host = hostOf(s); if (!host || !host.parentNode) return;
+    var old = noteOf(s);
+    var x = info(s.value), want = needNote(s.value);
+    if (!want) { if (old) old.remove(); return; }
+    var n = old || document.createElement('div');
+    n.className = 'bk-pmn' + (x.courier ? ' is-courier' : ''); n.setAttribute('role', 'status'); n.setAttribute('data-noi18n', '1');
+    var m = String(s.value).trim();
+    n.innerHTML = x.courier
+      ? '<span class="tx">' + E(T('The courier holds this money until it pays out; the payout places it.', 'কুরিয়ার টাকা দেওয়া পর্যন্ত এটা তাদের কাছে থাকে; পেআউটের সময় অ্যাকাউন্টে যায়।')) + '</span>'
+      : '<span class="tx">' + E(PM.canAdd
+          ? T('This money will wait in “no account” until you add a ' + m + ' account.', m + '-এর অ্যাকাউন্ট যোগ না করা পর্যন্ত এই টাকা “কোনো অ্যাকাউন্টে নেই”-তে অপেক্ষা করবে।')
+          : T('This money will wait in “no account” until the owner adds a ' + m + ' account. You can still take it.', 'মালিক ' + m + '-এর অ্যাকাউন্ট যোগ না করা পর্যন্ত এই টাকা “কোনো অ্যাকাউন্টে নেই”-তে অপেক্ষা করবে। টাকা নিতে পারবেন।')) + '</span>' +
+        (PM.canAdd ? '<button type="button" data-bkaddacc="' + E(m) + '">' + E(T('Add a ' + m + ' account', m + ' অ্যাকাউন্ট যোগ করুন')) + '</button>' : '');
+    if (!old) { if (host === s) host.parentNode.insertBefore(n, s.nextSibling); else host.parentNode.insertBefore(n, host.nextSibling); }
+  }
+  // a method box inside a row of boxes (the drawer's Receive rows, the split-payment rows): the note goes under the whole row
+  function hostOf(s) { return s.closest('.pay-row, .nt-sprow') || s; }
+  function noteOf(s) { var h = hostOf(s), n = h.nextElementSibling; return n && n.classList.contains('bk-pmn') ? n : null; }
+  function needNote(v) { var x = info(v); return !!(x && !x.account && !x.notMoney); }
+  // a method the map has not heard of yet (the lists arrived after it, or a method was added): the owner's page works it out
+  // from the money book it already has; a staff page asks once more for the new names
+  function topUp() {
+    var miss = allMethods().filter(function (m) { return !PM.map[mkey(m)]; });
+    if (!miss.length) return;
+    if (PM.book) { var r = fromBook(PM.book, miss); for (var k in r.map) PM.map[k] = r.map[k]; PM.ver++; return; }
+    var sig = miss.map(mkey).sort().join('|');
+    if (PM.asked !== sig && !PM.busy) { PM.asked = sig; pmLoad(true); }
+  }
+  function dressAll() {
+    if (!PM.map) return;
+    topUp();
+    var sels = document.querySelectorAll('#view select, #pay_f select, .fd19-dr select, .dlg select, #o_cp select');
+    for (var i = 0; i < sels.length; i++) if (isMethodSelect(sels[i])) dressSelect(sels[i]);
+    // a note whose row was removed (a split row taken away) goes with it
+    [].forEach.call(document.querySelectorAll('.bk-pmn'), function (n) {
+      var prev = n.previousElementSibling, sel = prev && (prev.tagName === 'SELECT' ? prev : prev.querySelector('select'));
+      if (!sel || !needNote(sel.value)) n.remove();
+    });
+    payonState(); payLabel();
+  }
+  var RAF = 0;
+  function schedule() { if (RAF) return; RAF = (window.requestAnimationFrame || setTimeout)(function () { RAF = 0; try { dressAll(); } catch (e) { if (window.console) console.error('crit5-books', e); } }); }
+  window.booksDress = schedule;
+  try { new MutationObserver(function () { schedule(); }).observe(document.body, { childList: true, subtree: true }); } catch (e) {}
+  document.addEventListener('change', function (e) { if (e.target && e.target.tagName === 'SELECT') schedule(); });
+  if (typeof AFTER_PAINT !== 'undefined') AFTER_PAINT.push(function booksPm() { if (!PM.map) pmLoad(); schedule(); });
+  // after anything that changes the accounts, the rules or the list of methods: ask again
+  var PM_WRITES = /^(erpCashSetup|erpCashAccountSave|erpCashMapSave|erpSettingsListsSave|erpLookupSave|erpLookupAdd|erpLookupRemove|erpListSave|erpSetBusiness)$/;
+
+  // "Add a Nagad account": the Money screen's own set-up form, the name already in it
+  var ADD_FOCUS = false;
+  document.addEventListener('click', function (e) {
+    var b = e.target && e.target.closest && e.target.closest('[data-bkaddacc]'); if (!b) return;
+    e.preventDefault(); e.stopPropagation();
+    var m = b.getAttribute('data-bkaddacc') || '';
+    try { if (typeof invSaveState === 'function') invSaveState(); } catch (x) {}
+    try { if (typeof FD19 !== 'undefined' && FD19.dr && typeof fd19Close === 'function') fd19Close(); } catch (x) {}
+    try { if (typeof FD21 !== 'undefined' && FD21.tab) FD21.tab.cash = 'accounts'; } catch (x) {}
+    CASH_FORM = 'setup'; CASH_EDIT = { id: '', name: m, kind: kindFor(m), opening: '', openingDate: '', archived: false };
+    ADD_FOCUS = true;
+    go('cash');
+    toast(E(T('Add the ' + m + ' account, then go back to the sale: it is kept.', m + ' অ্যাকাউন্ট যোগ করে বিক্রিতে ফিরে যান: ওটা রাখা আছে।')));
+  }, true);
+  if (typeof AFTER_PAINT !== 'undefined') AFTER_PAINT.push(function booksAddFocus() {
+    if (!ADD_FOCUS || VIEW !== 'cash') return;
+    var n = document.getElementById('ca_name'); if (!n) return;
+    ADD_FOCUS = false;
+    setTimeout(function () { try { n.scrollIntoView({ block: 'center' }); n.focus({ preventScroll: true }); } catch (x) {} }, 30);
+  });
+
+  // an edit given up: the next new sale starts on Cash, not on the method of the invoice that was being edited
+  document.addEventListener('click', function (e) {
+    if (e.target && e.target.closest && e.target.closest('[data-iecancel]')) { try { if (typeof FORM !== 'undefined' && FORM) FORM.method = ''; } catch (x) {} }
+  }, true);
+
+  /* ================================================================ 5. the drawer's Receive form */
+  function amt(v) {
+    var s = String(v == null ? '' : v).replace(/[০-৯]/g, function (c) { return String('০১২৩৪৫৬৭৮৯'.indexOf(c)); }).replace(/[,\s৳]/g, '');
+    if (!/^\d*\.?\d+$/.test(s)) return NaN;
+    return Math.round(Number(s) * 100) / 100;
+  }
+  function payonState() {
+    if (typeof FD19 === 'undefined' || !FD19.dr || !FD19.dr.el) return;
+    var on = !!FD19.dr.el.querySelector('#pay_f');
+    if (FD19.dr.el.classList.contains('bk-payon') !== on) FD19.dr.el.classList.toggle('bk-payon', on);
+  }
+  function payLabel() {
+    var f = document.getElementById('pay_f'); if (!f) return;
+    var b = f.querySelector('[data-pay-save]'); if (!b || b.disabled) return;
+    var lb = b.querySelector('.lb') || b;
+    var rows = [].map.call(f.querySelectorAll('.pay-row'), function (r) { var a = r.querySelector('[data-pay-amt]'), m = r.querySelector('[data-pay-m]'); return { a: amt(a && a.value), m: m ? m.value : '' }; });
+    var tot = 0, okAll = rows.length > 0;
+    rows.forEach(function (r) { if (r.a > 0) tot += r.a; else okAll = false; });
+    var t = T('Save payment', 'পেমেন্ট সেভ করুন');
+    if (okAll && rows.length === 1) {
+      var w = whereOf(rows[0].m), x = info(rows[0].m);
+      t = !w ? T('Save ' + M(tot), M(tot) + ' সেভ করুন')
+        : w.ok && !w.courier ? T('Save ' + M(tot) + ' in ' + x.accountName, M(tot) + ' ' + x.accountName + '-এ সেভ করুন')
+        : w.courier ? T('Save ' + M(tot) + ' · courier holds it', M(tot) + ' সেভ করুন · কুরিয়ারের কাছে')
+        : T('Save ' + M(tot) + ' · no account yet', M(tot) + ' সেভ করুন · এখনো অ্যাকাউন্ট নেই');
+    } else if (okAll && rows.length > 1) t = T('Save ' + M(tot) + ' in ' + rows.length + ' ways', rows.length + ' ভাবে ' + M(tot) + ' সেভ করুন');
+    if (lb.textContent !== t) { lb.textContent = t; lb.setAttribute('data-noi18n', '1'); }
+  }
+  document.addEventListener('input', function (e) { if (e.target && e.target.closest && e.target.closest('#pay_f')) payLabel(); });
+  document.addEventListener('change', function (e) { if (e.target && e.target.closest && e.target.closest('#pay_f')) payLabel(); });
+
+  /* ================================================================ 3. reads: one request per loader at a time; replies paint once */
+  var INF = {}, WSEQ = 0, REPLY = 0, FAILED = {}, CUR_WHERE = null;
+  function reads(name) { try { return typeof SRV_READS !== 'undefined' && SRV_READS.test(name); } catch (e) { return false; } }
+  function inReply(fn, arg, self) {
+    if (!fn) return;
+    REPLY++;
+    try { fn.call(self, arg); } catch (err) { try { toast('Display error: ' + E(err && err.message ? err.message : err), true); } catch (x) {} }
+    finally { REPLY--; }
+  }
+  function payParts(a) {
+    if (!a) return [];
+    if (Array.isArray(a.parts) && a.parts.length) return a.parts.map(function (p) { return { amount: Number(p.amount) || 0, method: p.method }; });
+    if (a.method && Number(a.amount) > 0) return [{ amount: Number(a.amount), method: a.method }];
+    return [];
+  }
+  function whereSentence(parts) {
+    var w = parts.map(function (p) { return { p: p, w: whereOf(p.method) }; }).filter(function (x) { return x.w; });
+    if (!w.length) return null;
+    var wait = w.some(function (x) { return !x.w.ok; });
+    var text = w.length === 1
+      ? (w[0].w.ok ? T('Now ' + w[0].w.text + '.', 'এখন ' + w[0].w.text + '।')
+        : PM.canAdd ? T('It is ' + w[0].w.text + ': add a ' + String(w[0].p.method).trim() + ' account to place it.', 'এটা ' + w[0].w.text + ': রাখতে ' + String(w[0].p.method).trim() + ' অ্যাকাউন্ট যোগ করুন।')
+        : T('It is ' + w[0].w.text + ' until the owner adds a ' + String(w[0].p.method).trim() + ' account.', 'মালিক ' + String(w[0].p.method).trim() + ' অ্যাকাউন্ট যোগ না করা পর্যন্ত এটা ' + w[0].w.text + '।'))
+      : w.map(function (x) { return M(x.p.amount) + ' ' + x.w.text; }).join(', ') + T('.', '।');
+    return { text: text, wait: wait };
+  }
+  var LAST_PAY = null;
+  if (typeof srv === 'function') {
+    var srvBooks = srv;
+    srv = function (name, args, ok, bad) {
+      var self = this;
+      // a call made while Settings is being drawn is that screen's loader (some reads are not on the read list: erpDocLang, the
+      // Inbox cards): it is treated as a read here - one at a time, and its answer's redraw waits for the others
+      if (!reads(name) && !PAINTING) {
+        WSEQ++;
+        var a0 = args && args[0] && typeof args[0] === 'object' ? args[0] : null;
+        // every new sale starts on Cash: whatever the last sale, hold or edit was paid by is not carried into the next one
+        if ((name === 'erpCreateInvoice' || name === 'erpInvoiceEdit') && a0) {
+          LAST_PAY = { args: a0 };
+          var okI = ok;
+          ok = function (res) { try { if (typeof FORM !== 'undefined' && FORM) { FORM.method = ''; } } catch (e) {} LAST_PAY = { args: a0, res: res }; return okI ? okI.apply(this, arguments) : undefined; };
+        }
+        if (name === 'erpSettleDue' && a0 && (!a0.reason || a0.reason === 'payment')) {
+          var parts = payParts(a0), okS = ok, badS = bad;
+          ok = function () { CUR_WHERE = whereSentence(parts); try { return okS ? okS.apply(this, arguments) : undefined; } finally { CUR_WHERE = null; setTimeout(payLabel, 0); } };
+          bad = function () { try { return badS ? badS.apply(this, arguments) : undefined; } finally { setTimeout(payLabel, 0); } };
+        }
+        if (PM_WRITES.test(name)) {
+          var okW = ok;
+          ok = function () { var r = okW ? okW.apply(this, arguments) : undefined; PM.map = null; PM.failed = 0; setTimeout(function () { pmLoad(true); }, 0); return r; };
+        }
+        return srvBooks.call(self, name, args, ok, bad);
+      }
+      var key = null; try { key = name + ':' + JSON.stringify(args || []); } catch (e) { key = null; }
+      if (!key) return srvBooks.call(self, name, args, ok, bad);
+      var ent = INF[key];
+      // the same read already on its way, and nothing written since it left: this caller gets that answer too
+      if (ent && ent.seq === WSEQ && Date.now() - ent.at < 30000) { ent.oks.push(ok); ent.bads.push(bad); ent.n++; return; }
+      // the same read failed a moment ago and is asked again by a redraw: not again for 8 s (no loop of failures)
+      var f = FAILED[key];
+      if (f && Date.now() - f.at < 8000 && PAINTING) return;
+      ent = INF[key] = { seq: WSEQ, at: Date.now(), oks: [ok], bads: [bad], n: 1 };
+      return srvBooks.call(self, name, args, function (r) {
+        if (INF[key] === ent) delete INF[key];
+        delete FAILED[key];
+        ent.oks.forEach(function (fn) { inReply(fn, r, self); });
+      }, function (e) {
+        if (INF[key] === ent) delete INF[key];
+        FAILED[key] = { at: Date.now(), msg: (e && e.message) || String(e || '') };
+        ent.bads.forEach(function (fn) { inReply(fn, e, self); });
+      });
+    };
+  }
+  function inFlight() { for (var k in INF) if (Object.prototype.hasOwnProperty.call(INF, k)) return true; return false; }
+
+  // a redraw on Settings: what was typed (and not changed by the redraw) stays, with its focus and caret
+  var DIRTY = {};
+  function sigOf(n) {
+    if (!n || !n.tagName) return '';
+    if (n.id) return '#' + (window.CSS && CSS.escape ? CSS.escape(n.id) : n.id);
+    var s = n.tagName.toLowerCase();
+    if (n.name) s += '[name="' + n.name.replace(/"/g, '\\"') + '"]';
+    for (var i = 0; i < n.attributes.length; i++) { var at = n.attributes[i]; if (/^data-/.test(at.name)) s += '[' + at.name + '="' + String(at.value).replace(/"/g, '\\"') + '"]'; }
+    return s === n.tagName.toLowerCase() ? '' : s;
+  }
+  function isText(n) { return n && ((n.tagName === 'INPUT' && !/^(checkbox|radio|button|submit|file|hidden|range|color)$/i.test(n.type)) || n.tagName === 'TEXTAREA'); }
+  document.addEventListener('input', function (e) {
+    var t = e.target; if (typeof VIEW === 'undefined' || VIEW !== 'settings' || !isText(t) || !t.closest || !t.closest('#view')) return;
+    var s = sigOf(t); if (s) DIRTY[s] = { v: t.value, dv: t.defaultValue };
+  }, true);
+  var PAINTING = false;
+  function keepPaint(fn, self, args, all) {
+    var v = document.getElementById('view');
+    var a = document.activeElement, keep = null;
+    if (a && v && v.contains(a) && isText(a)) { keep = { sig: sigOf(a), node: a, v: a.value, dv: a.defaultValue }; try { keep.s = a.selectionStart; keep.e = a.selectionEnd; } catch (e) {} }
+    var sy = window.scrollY;
+    PAINTING = true;
+    var r;
+    try { r = fn.apply(self, args); } finally { PAINTING = false; }
+    v = document.getElementById('view');
+    if (v) {
+      // a redraw from a server answer: every box typed in on this visit (a press of the owner's own redraws the boxes as it means to)
+      if (all) for (var s in DIRTY) {
+        if (!Object.prototype.hasOwnProperty.call(DIRTY, s)) continue;
+        var n = null; try { var l = v.querySelectorAll(s); n = l.length === 1 ? l[0] : null; } catch (e) {}
+        // the redraw did not change that box (the same starting value): the typed text comes back
+        if (n && isText(n) && n.defaultValue === DIRTY[s].dv && n.value !== DIRTY[s].v) n.value = DIRTY[s].v;
+        else if (n && n.defaultValue !== DIRTY[s].dv) delete DIRTY[s];
+      }
+      if (keep && keep.sig && !document.contains(keep.node)) {
+        var m = null; try { var l2 = v.querySelectorAll(keep.sig); m = l2.length === 1 ? l2[0] : null; } catch (e) {}
+        if (m && m !== document.activeElement) {
+          if (isText(m) && m.defaultValue === keep.dv && m.value !== keep.v) m.value = keep.v;
+          try { m.focus({ preventScroll: true }); } catch (e) { try { m.focus(); } catch (x) {} }
+          if (keep.s != null) { try { m.setSelectionRange(keep.s, keep.e); } catch (e) {} }
+          if (Math.abs(window.scrollY - sy) > 2) window.scrollTo(window.scrollX, sy);
+        }
+      }
+    }
+    return r;
+  }
+  var PEND = false, PEND_AT = 0, FLUSH = false;
+  function flushLater() {
+    if (inFlight() && Date.now() - PEND_AT < 900) { setTimeout(flushLater, 60); return; }
+    (window.requestAnimationFrame || setTimeout)(function () {
+      if (!PEND) return; PEND = false;
+      if (typeof VIEW !== 'undefined' && VIEW === 'settings') { try { FLUSH = true; repaint(); } catch (e) {} finally { FLUSH = false; } }
+    });
+  }
+  if (typeof repaint === 'function') {
+    var repaintBooks = repaint;
+    repaint = function () {
+      if (typeof VIEW === 'undefined' || VIEW !== 'settings') return repaintBooks.apply(this, arguments);
+      // an answer from the server on Settings: the redraws wait for the other loaders and come as one
+      if (REPLY > 0) { if (!PEND) { PEND = true; PEND_AT = Date.now(); setTimeout(flushLater, 0); } return; }
+      PEND = false;
+      return keepPaint(repaintBooks, this, arguments, FLUSH);
+    };
+  }
+  if (typeof go === 'function') {
+    var goBooks = go;
+    go = function () { DIRTY = {}; PEND = false; return goBooks.apply(this, arguments); };
+  }
+  // the Settings loaders that kept their cache empty on a failure (and so asked again on every redraw): an error with Try again
+  function errCard(title, key) {
+    var f = FAILED[key];
+    return '<section><div class="card"><h2>' + E(title) + '</h2><div class="note err bk-lderr"><span class="tx">' + E(T('Could not read it: ', 'পড়া গেল না: ') + ((f && f.msg) || '')) + '</span>' +
+      '<button class="btn small" type="button" data-bkretry="' + E(key) + '">' + E(T('Try again', 'আবার চেষ্টা করুন')) + '</button></div></div></section>';
+  }
+  if (typeof aRulesHtml === 'function') {
+    var aRulesHtmlB = aRulesHtml;
+    aRulesHtml = function () { if (typeof ARULES !== 'undefined' && !ARULES && FAILED['erpAlertRules:[]'] && ME && typeof pageTop === 'function' && pageTop()) return errCard(T('Money alerts', 'টাকার সতর্কতা'), 'erpAlertRules:[]'); return aRulesHtmlB.apply(this, arguments); };
+  }
+  if (typeof connHtml === 'function') {
+    var connHtmlB = connHtml;
+    connHtml = function () { if (typeof CONN !== 'undefined' && !CONN && FAILED['erpConnections:[]'] && typeof pageTop === 'function' && pageTop()) return errCard(T('Connections', 'সংযোগ'), 'erpConnections:[]'); return connHtmlB.apply(this, arguments); };
+  }
+  document.addEventListener('click', function (e) {
+    var b = e.target && e.target.closest && e.target.closest('[data-bkretry]'); if (!b) return;
+    e.preventDefault(); delete FAILED[b.getAttribute('data-bkretry')]; repaint();
+  });
+
+  /* ================================================================ 4. the saved-invoice window */
+  var WARN_RE = /^(Saved, but not sent on WhatsApp|Not sent on WhatsApp|সেভ হয়েছে, কিন্তু WhatsApp-এ যায়নি)/;
+  function doneClose() {
+    var w = document.getElementById('invdone'); if (!w) return;
+    var next = document.getElementById('invnext');
+    if (next) next.click(); else if (w.parentNode) w.parentNode.removeChild(w);
+    var w2 = document.getElementById('invdone'); if (w2 && w2.parentNode) w2.parentNode.removeChild(w2);
+  }
+  function donePaid(a, res) {
+    if (!a || !res) return [];
+    if (Array.isArray(a.payments) && a.payments.length) return a.payments.map(function (p) { return { amount: Number(p.amount) || 0, method: p.method }; }).filter(function (p) { return p.amount > 0; });
+    var mode = a.payMode || 'full', got = Math.max(0, (Number(res.grandTotal) || 0) - (Number(res.thisDue) || 0));
+    if (mode === 'full' || mode === 'part') return got > 0 && a.paymentMethod ? [{ amount: got, method: a.paymentMethod }] : [];
+    if (mode === 'cod') return Number(a.paidNow) > 0 ? [{ amount: Number(a.paidNow), method: a.advanceMethod || a.paymentMethod || '' }] : [];
+    return [];
+  }
+  function dress(res) {
+    var w = document.getElementById('invdone'); if (!w || w.getAttribute('data-bk5')) return;
+    var card = w.querySelector('.card'); if (!card) return;
+    w.setAttribute('data-bk5', '1');
+    // the tick: the app's own check icon, not a "√" letter
+    var first = card.firstElementChild;
+    if (first && /^[✓√✔]$/.test(first.textContent.trim())) { first.className = 'bk-ok'; first.removeAttribute('style'); first.innerHTML = ICON_OK; first.setAttribute('aria-hidden', 'true'); }
+    var h2 = card.querySelector('h2'); if (h2 && !h2.id) h2.id = 'invdone_t';
+    card.setAttribute('aria-labelledby', h2 ? h2.id : '');
+    var x = document.createElement('button'); x.type = 'button'; x.className = 'bk-x'; x.setAttribute('aria-label', T('Close', 'বন্ধ করুন')); x.title = T('Close (Esc)', 'বন্ধ করুন (Esc)'); x.innerHTML = ICON_X;
+    x.addEventListener('click', function (e) { e.preventDefault(); doneClose(); });
+    card.insertBefore(x, card.firstChild);
+    // where the money went
+    var a = LAST_PAY && LAST_PAY.args, ws = whereSentence(donePaid(a, res));
+    var sub = card.querySelector('.sub');
+    if (ws && sub) { var wl = document.createElement('div'); wl.className = 'bk-where' + (ws.wait ? ' is-wait' : ''); wl.setAttribute('data-noi18n', '1'); wl.textContent = ws.text; sub.parentNode.insertBefore(wl, sub.nextSibling); }
+    // Open invoice: the saved invoice in its drawer
+    var row = card.querySelector('.inv4-acts'), next = document.getElementById('invnext');
+    if (res && res.invoiceNo && typeof fd19Inv === 'function') {
+      var op = document.createElement('button'); op.type = 'button'; op.className = 'btn'; op.setAttribute('data-bkopen', res.invoiceNo); op.setAttribute('data-noi18n', '1');
+      op.textContent = T('Open invoice', 'ইনভয়েস খুলুন');
+      op.addEventListener('click', function (e) { e.preventDefault(); var no = op.getAttribute('data-bkopen'); doneClose(); setTimeout(function () { try { fd19Inv(no); } catch (x) {} }, 30); });
+      if (row && next && next.parentNode === row) row.insertBefore(op, next.nextSibling); else if (row) row.appendChild(op); else card.appendChild(op);
+    }
+    w.addEventListener('click', function (e) { if (e.target === w) doneClose(); });
+    if (DONE_WA) { addWa(DONE_WA); DONE_WA = ''; }
+  }
+  var DONE_WA = '';
+  function addWa(text) {
+    var w = document.getElementById('invdone'), card = w && w.querySelector('.card'); if (!card || card.querySelector('.bk-wa')) return;
+    var n = document.createElement('div'); n.className = 'bk-wa'; n.setAttribute('role', 'status'); n.setAttribute('data-noi18n', '1');
+    n.innerHTML = ICON_WARN + '<span>' + E(text) + '</span>';
+    var row = card.querySelector('.inv4-acts'); if (row) card.insertBefore(n, row); else card.appendChild(n);
+  }
+  if (typeof invoiceDone === 'function') {
+    var invoiceDoneB = invoiceDone;
+    invoiceDone = function (res) { var r = invoiceDoneB.apply(this, arguments); try { dress(res || {}); } catch (e) { if (window.console) console.error('crit5-books done', e); } return r; };
+  }
+  document.addEventListener('keydown', function (e) {
+    if (e.key !== 'Escape' || !document.getElementById('invdone')) return;
+    if (document.querySelector('.dlg')) return;   // a question above the window answers its own Esc
+    e.preventDefault(); e.stopPropagation(); doneClose();
+  }, true);
+
+  /* ================================================================ 8. toasts: where the money went; clear of the chat button */
+  function fitToast(t) {
+    t.style.removeProperty('right'); t.style.removeProperty('bottom'); t.style.removeProperty('max-width');
+    if (!/\bshow\b/.test(t.className)) return;
+    var fab = document.getElementById('aw_fab'); if (!fab) return;
+    var fr = fab.getBoundingClientRect(), cs = getComputedStyle(fab);
+    if (fr.width < 1 || cs.display === 'none' || cs.visibility === 'hidden') return;
+    var tr = t.getBoundingClientRect();
+    var hit = !(tr.right <= fr.left - 4 || tr.left >= fr.right + 4 || tr.bottom <= fr.top - 4 || tr.top >= fr.bottom + 4);
+    if (!hit) return;
+    var room = fr.left - 12 - Math.max(12, tr.left);
+    if (room >= 240) {   // pull the toast's end in to the left of the button
+      t.style.setProperty('right', Math.ceil(window.innerWidth - fr.left + 8) + 'px', 'important');
+      t.style.setProperty('max-width', Math.floor(Math.min(tr.width, fr.left - 8 - 12)) + 'px', 'important');
+    } else {             // no room beside it (a phone): above it
+      t.style.setProperty('bottom', Math.ceil(window.innerHeight - fr.top + 8) + 'px', 'important');
+    }
+  }
+  if (typeof toast === 'function') {
+    var toastBooks = toast;
+    toast = function (html, bad, ms) {
+      var plain = String(html == null ? '' : html).replace(/<[^>]*>/g, '').trim();
+      // the "not sent on WhatsApp" note while the saved-invoice window is open: a short amber line inside it, not a second voice
+      if (bad && WARN_RE.test(plain)) {
+        if (document.getElementById('invdone')) { addWa(plain); return; }
+      }
+      if (CUR_WHERE && !bad) {
+        html = String(html) + ' <span data-noi18n="1">' + E(CUR_WHERE.text) + '</span>';
+        if (CUR_WHERE.wait) ms = Math.max(ms || 0, 9000);
+      }
+      var r = toastBooks.call(this, html, bad, ms);
+      var t = document.getElementById('toast');
+      if (t) { try { fitToast(t); } catch (e) {} (window.requestAnimationFrame || setTimeout)(function () { try { fitToast(t); } catch (e) {} }); setTimeout(function () { try { fitToast(t); } catch (e) {} }, 260); }
+      return r;
+    };
+  }
+  window.addEventListener('resize', function () { var t = document.getElementById('toast'); if (t) try { fitToast(t); } catch (e) {} });
+
+  /* ================================================================ 7. stock entry: Clear clears the whole draft */
+  document.addEventListener('click', async function (e) {
+    var b = e.target && e.target.closest && e.target.closest('#rv_clear'); if (!b || typeof RECV === 'undefined') return;
+    e.preventDefault(); e.stopImmediatePropagation();
+    var n = (RECV.lines || []).length, bits = [];
+    if (String(RECV.supplier || '').trim()) bits.push(T('supplier', 'সাপ্লায়ার'));
+    if (String(RECV.reference || '').trim()) bits.push(T('reference', 'রেফারেন্স'));
+    bits.push(T(n + ' line' + (n === 1 ? '' : 's'), n + 'টি লাইন'));
+    var q = T('Clear this receiving: ' + bits.join(', ') + '? Products already created stay on the list.', 'এই রিসিভ মুছবেন: ' + bits.join(', ') + '? আগে বানানো প্রোডাক্ট তালিকায় থাকবে।');
+    if (!(await uiConfirm(q))) return;
+    RECV = { supplier: '', reference: '', notes: '', lines: [], mode: 'none', totalRmb: '', rate: '', totalBdt: '', saveRate: true, where: 'here' };
+    try { if (typeof RVW !== 'undefined') { RVW.step = 0; RVW.recv = null; } } catch (x) {}
+    repaint();
+    try { window.scrollTo(0, 0); } catch (x) {}
+    toast(E(T('Cleared. Start again from the supplier.', 'মুছে দেওয়া হলো। সাপ্লায়ার থেকে আবার শুরু করুন।')));
+  }, true);
+
+  try {
+    var BN = { 'Open invoice': 'ইনভয়েস খুলুন', 'Move to another account': 'অন্য অ্যাকাউন্টে নিন', 'Move to another account…': 'অন্য অ্যাকাউন্টে নিন…',
+      'Try again': 'আবার চেষ্টা করুন', 'Close (Esc)': 'বন্ধ করুন (Esc)' };
+    for (var k in BN) if (!I18N_BN[k]) I18N_BN[k] = BN[k];
+    I18N_PAT.push(['^(.+) · no account yet$', '$1 · এখনো অ্যাকাউন্ট নেই']);
+    I18N_PAT.push(['^(.+) · courier holds it$', '$1 · কুরিয়ারের কাছে থাকে']);
+    I18N_PAT.push(['^Profit on each line is after its share of the (.+) invoice discount \\(shared by line amount\\), so it is less than Amount − Cost\\.$',
+      'প্রতিটি লাইনের লাভ ইনভয়েসের $1 ছাড়ের ভাগ বাদ দিয়ে (লাইনের টাকার অনুপাতে), তাই তা টাকা − খরচের চেয়ে কম।']);
+  } catch (e) {}
+})();
+</script>
+<!-- crit5:face -->
+<!-- crit5-face (10 Nov 2026): fifth critique, the face of the page - Hind Siliguri really used in Bangla (the --fd-font token
+     itself), the Bangla 14px floor, one Bangla word per idea, ONE map of who may open which screen (menu, phone bar, tiles,
+     Navigator, buttons and go()), customer page money first + one name, phone drawer lines as cards, the invoice search
+     closing after a pick, 40px pay chips, token drift. -->
+<style>
+/* ---------- 1. Bangla face: Hind Siliguri for every Bangla glyph, Inter keeps Latin letters and the digits of money.
+   The token is redefined under lang=bn, so every rule that says var(--fd-font) - body, buttons, fields, charts, drawers -
+   gets it (the fd body rule out-ranked html[lang=bn] body, so Hind Siliguri was downloaded and never used).
+   Inter comes first because its faces only cover Latin (unicode-range): Bangla falls through to Hind Siliguri, while
+   ৳1,23,456 keeps Inter's tabular digits; Hind Siliguri's own Latin subset would otherwise take the digits. */
+:root[data-skin][lang="bn"], html[lang="bn"] {
+  --fd-font:"Inter", "Hind Siliguri", "Noto Sans Bengali", "Nirmala UI", "Segoe UI", system-ui, -apple-system, Roboto, Arial, sans-serif;
+}
+html[lang="bn"] .fd22-drw [lang="bn"], html[lang="bn"] .fd22-drw .bn { font-family:var(--fd-font); }
+
+/* ---------- 2. Bangla size floor: anything a person reads is 14px (DESIGN.md, The Bangla Size Rule); a badge of one or
+   two words may stay 12.5-13px. Same selectors as crit2-bn / crit3-fig, later = wins. (BN_FLOOR_RULES) */
+html[lang="bn"][data-look="clean"][data-skin="fd"] :is(#view, .fd19-dr, .fd-drawer, [role=dialog]) :is(.sku, .sub, .fd20-mr-s, .fd20-s, .fd20-hint, .fd20-note, .fd20-colx, .fd20-sc-mode, .an, .fdc-sub, .fd22-s, .fd22-foot, .delta, .meta, .empty, .c3n, .rvw-of, .sb2, .en-meta, .fdd-trend, .fdrev-vs, .crm-chip, .fd19-dts, .fd19-cs, .hint, .muted, label.chk,
+  .ci-grid > div, .crm-k-invoice .w, .fd20-qm span, .fd20-sc-meta span, .nb-unk, .nb-unk *, .fd20-colh .n, .jt-head-sub, .fd21-tile span, .tt .sb,
+  .fd19-stat .l, .fd19-stat .s, .fd19-st .m, .fd22-legend span, .fd20-stp .tx, .kpi .lbl, .nt-hd-meta, .wo_acts .btn, .fd43-tabs button, .fd43-tabs button span,
+  .aw-chips button, .td-card .ds, .td-state, .fd22-mono, .se-meta, .bd-meta, .nvg-card-sub, .nvg-knote, .nvg-step .ss, .nvg .as,
+  [class*="crm-k-"] .w, .nt-pl-3 span, .fd19-dr th) { font-size:14px !important; }
+html[lang="bn"][data-look="clean"][data-skin="fd"] :is(#view, .fd19-dr, .fd-drawer, [role=dialog]) span.bal { font-size:14px !important; }
+html[lang="bn"][data-look="clean"][data-skin="fd"] nav#nav .navgrp { font-size:14px !important; }
+html[lang="bn"] .fig-due { font-size:14px; }
+html[lang="bn"] .fdrev-tip span { font-size:14px; }
+html[lang="bn"][data-look="clean"][data-skin="fd"] :is(#view, .fd19-dr, .fd-drawer, [role=dialog]) :is(.pill, .fd19-badge, .fd20-b, .fd21-b, .fdd-chip, .jt-chip, .jt-st, .nai-w, .cchip, .fd22-chip, .fd22-st, .bal).c2-long { font-size:14px !important; }
+html[lang="bn"][data-look="clean"][data-skin="fd"] nav#tabbar button span:not(.tb-n) { font-size:14px !important; letter-spacing:0; }
+/* New invoice totals (Subtotal, Discount, Delivery, Paid now, This invoice due) were 13.5px in Bangla */
+html[lang="bn"][data-look="clean"][data-skin="fd"] #view .totals > div:not(.grand) > span { font-size:14px !important; }
+/* Settings > Menu: the group names of the screen list */
+html[lang="bn"][data-look="clean"][data-skin="fd"] #view .ap-mrows .ap-mgrp { font-size:14px !important; }
+/* a long badge anywhere on the page (tagged .c2-long, 3+ words) - some lists set their pill size with a longer selector */
+html[lang="bn"][data-look="clean"][data-skin="fd"] body :is(#view, .fd19-dr, .fd-drawer, [role=dialog]) :is(td, div, li, span) > :is(.pill, .fd19-badge, .fd20-b, .fdd-chip, .jt-st).c2-long { font-size:14px !important; }
+
+
+/* ---------- 4. screens a person may not open are not offered anywhere (menu, phone bar, tiles, Navigator, buttons) */
+[data-face-off] { display:none !important; }
+
+/* ---------- 5. customer page: one name (the heading), the crumb trail is the back button only */
+body.face-cusp #o_cp .crumbs > :not(.pay-back) { display:none !important; }
+
+/* phone: the invoice drawer's lines (and the other drawer tables) as card rows - no sideways scroll, Cost not cut */
+@media (max-width:640px) {
+  .fd19-dr .fd19-mscroll:has(> table.face-cards) { overflow:visible !important; max-height:none !important; }
+  .fd19-dr table.face-cards, .fd19-dr table.face-cards > tbody { display:block; width:100% !important; min-width:0 !important; }
+  .fd19-dr table.face-cards > thead { display:none; }
+  .fd19-dr table.face-cards > tbody > tr { display:block; padding:10px 14px !important; margin:0 0 10px !important; border:1px solid var(--fd-border) !important;
+    border-radius:16px !important; background:var(--fd-card); }
+  .fd19-dr table.face-cards > tbody > tr > td { display:block !important; text-align:right !important; padding:5px 0 !important; height:auto !important; border:0 !important;
+    white-space:normal !important; overflow-wrap:anywhere; font-size:14px; line-height:1.4; }
+  .fd19-dr table.face-cards > tbody > tr > td::before { content:attr(data-face-l); float:left; margin:0 14px 0 0; max-width:48%; text-align:left; font-size:13px;
+    font-weight:600; color:var(--fd-text-3); line-height:1.6; }
+  .fd19-dr table.face-cards > tbody > tr > td::after { content:""; display:block; clear:both; }
+  html[lang="bn"] .fd19-dr table.face-cards > tbody > tr > td::before { font-size:14px; }
+  .fd19-dr table.face-cards > tbody > tr > td > * { text-align:right; }
+  .fd19-dr table.face-cards > tbody > tr > td:first-child > * { text-align:left; }
+  .fd19-dr table.face-cards > tbody > tr > td:first-child { display:block !important; text-align:left !important; font-weight:600; padding:2px 0 8px !important;
+    margin-bottom:4px; border-bottom:1px solid var(--fd-border) !important; }
+  .fd19-dr table.face-cards > tbody > tr > td:first-child::before, .fd19-dr table.face-cards > tbody > tr > td[colspan]::before { content:none; }
+  .fd19-dr table.face-cards > tbody > tr > td[colspan] { display:block !important; text-align:left !important; }
+}
+
+/* desktop New invoice: the "How was this paid?" chips are full buttons (Part paid was 28px tall) */
+@media (min-width:641px) {
+  html[data-skin] #view button.chip[data-paymode] { min-height:40px; padding:0 16px; display:inline-flex; align-items:center; font-size:14px; }
+}
+
+/* ---------- 6. token drift: brand-11's lead tag in the shared tokens (the raw hexes are replaced in place too) */
+.bd-tag.lead { background:var(--fd-positive-soft, #E6F8EC); color:var(--fd-positive-text, #15803D); }
+</style>
+<script>
+(function () {
+  var isBn = function () { return typeof LANG !== 'undefined' && LANG === 'bn'; };
+  var LL = function (en, bn) { return isBn() ? bn : en; };
+  var E = function (s) { return typeof esc === 'function' ? esc(s) : String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); };
+  var phone = function () { return !!(window.matchMedia && window.matchMedia('(max-width:640px)').matches); };
+  var hasMe = function () { return typeof ME !== 'undefined' && !!ME; };
+
+  /* =========================================================== 3. Bangla: one word per idea (docs/bangla/GLOSSARY.md)
+     paid now = এখনই পেমেন্ট (পরিশোধ is bookish); total = মোট, and উপমোট for the subtotal beside it; a customer's due = বাকি
+     (পাওনা was used for it too); what the business owes = দেনা; revenue = বিক্রি (আয় is not sales). */
+  var WORDS = {
+    'Paid now': 'এখনই পেমেন্ট', 'Grand total': 'মোট', 'Total': 'মোট', 'Subtotal': 'উপমোট',
+    'Owes you': 'বাকি', 'Still to collect': 'এখনো বাকি', 'Still owed': 'এখনো বাকি', 'Customers owe you': 'কাস্টমারদের কাছে বাকি',
+    'Customers owe': 'কাস্টমারদের কাছে বাকি', 'Dues receivable': 'কাস্টমারের বাকি', 'Owed > 0': 'বাকি > ০', 'Dues': 'বাকি',
+    'A due paid by bKash, Nagad, cash…': 'bKash, Nagad, ক্যাশে বাকি শোধ…',
+    'We owe suppliers': 'সাপ্লায়ারদের কাছে দেনা', 'Look at we owe suppliers': 'সাপ্লায়ারদের কাছে দেনা দেখুন',
+    'Owed to investors': 'বিনিয়োগকারীদের কাছে দেনা',
+    'Revenue today': 'আজকের বিক্রি', 'Sales revenue': 'বিক্রি', 'Revenue with no cost': 'কেনা দাম ছাড়া বিক্রি',
+    'Best earners first. Margin is blank where no buying price is known.': 'বেশি লাভের প্রোডাক্ট আগে। কেনা দাম জানা না থাকলে মার্জিন ফাঁকা।',
+    'After this month’s fixed costs:': 'এ মাসের স্থায়ী খরচ বাদে:', 'After this month’s fixed costs': 'এ মাসের স্থায়ী খরচ বাদে', 'after paying them': 'এগুলো দেওয়ার পর',
+    'This screen is for the owner and shareholders.': 'এই স্ক্রিনটা মালিক আর শেয়ারহোল্ডারদের জন্য।',
+    'This screen is not open for your account. If you need it, ask the owner to open it for you (Settings > Users).': 'এই স্ক্রিনটা আপনার অ্যাকাউন্টে খোলা নেই। দরকার হলে মালিককে বলুন খুলে দিতে (সেটিংস > ইউজার)।'
+  };
+  // the same idea said a second way inside longer sentences and patterns
+  var SWAP = [[/এখন পরিশোধ/g, 'এখনই পেমেন্ট'], [/সর্বমোট/g, 'মোট'], [/বিক্রির আয়/g, 'বিক্রি'],
+              [/কাস্টমারদের কাছে পাওনা/g, 'কাস্টমারদের কাছে বাকি'], [/ইনভয়েসে এখনো পাওনা/g, 'ইনভয়েসে এখনো বাকি'], [/^(.+)-এর সাথে আয়$/, '$1-এর সাথে বিক্রি']];
+  function swap(s) { if (typeof s !== 'string') return s; for (var i = 0; i < SWAP.length; i++) s = s.replace(SWAP[i][0], SWAP[i][1]); return s; }
+  var TERMS_N = 0;
+  function terms() {
+    if (typeof I18N_BN === 'undefined') return;
+    var n = 0;
+    for (var k in WORDS) if (I18N_BN[k] !== WORDS[k]) { I18N_BN[k] = WORDS[k]; n++; }
+    for (var j in I18N_BN) { var v = I18N_BN[j], w = swap(v); if (w !== v) { I18N_BN[j] = w; n++; } }
+    if (typeof I18N_PAT !== 'undefined' && I18N_PAT && I18N_PAT.length !== TERMS_N) {
+      for (var i = 0; i < I18N_PAT.length; i++) { var p = I18N_PAT[i]; if (p && typeof p[1] === 'string') { var q = swap(p[1]); if (q !== p[1]) { p[1] = q; n++; } } }
+      TERMS_N = I18N_PAT.length;
+    }
+    return n;
+  }
+  try { terms(); } catch (e) {}
+  // blocks that add their words on first use: once more after the first screens
+  setTimeout(function () { try { terms(); } catch (e) {} }, 1500); setTimeout(function () { try { terms(); } catch (e) {} }, 6000);
+  if (typeof setLang === 'function') { var slFace = setLang; setLang = function () { try { terms(); } catch (e) {} return slFace.apply(this, arguments); }; }
+
+  /* =========================================================== 4. who may open which screen - ONE map
+     It follows the server's gates (allow.js: the calls each screen makes) and the abilities the owner sets per person
+     (ME.powers, read by pageCan). A shareholder keeps every screen (owner rule 27 Oct 2026); the 'act' switch opens the
+     owner's actions but never the figures (cash, capital, analytics). Applied to the side menu, the phone bar, tiles,
+     Navigator nodes and screen buttons, and to go(): a screen that is not the person's bounces to their home screen. */
+  function rank() { return hasMe() ? ({ sales: 1, manager: 2, shareholder: 3, owner: 4 }[ME.role] || 0) : 4; }
+  function can(id) { try { return typeof pageCan === 'function' ? pageCan(id) : rank() >= 3; } catch (e) { return false; } }
+  function acts() { try { return typeof pageActs === 'function' && pageActs(); } catch (e) { return false; } }
+  var NEED = {   // screen -> who may open it
+    dash: function () { return can('dash'); }, profit: function () { return can('profit'); }, expenses: function () { return can('expenses'); },
+    cash: function () { return rank() >= 3; }, capital: function () { return rank() >= 3; }, analytics: function () { return rank() >= 3; },
+    syscheck: function () { return rank() >= 3 || acts(); }, seo: function () { return rank() >= 3 || acts(); }, tools: function () { return rank() >= 3 || acts(); },
+    platform: function () { return !!ME.platform; }, opentools: function () { return !!ME.platform; }, branddesk: function () { return !!ME.platform; },
+    costs: function () { return can('costs'); }, shipments: function () { return can('costs'); }, stock: function () { return can('stock'); },
+    suppliers: function () { return can('suppliers'); }, weborders: function () { return can('weborders'); }, campaigns: function () { return can('campaigns'); },
+    settings: function () { return rank() >= 3 || can('lists') || acts(); }
+  };
+  var TOP_ONLY = { dash: 1, profit: 1, expenses: 1, cash: 1, capital: 1, analytics: 1, syscheck: 1, seo: 1, tools: 1 };
+  var PROV = { platform: 1, opentools: 1, branddesk: 1 };
+  function faceCan(v) { if (!hasMe() || !NEED[v]) return true; try { return !!NEED[v](); } catch (e) { return true; } }
+  function faceHome() {
+    var r = rank();
+    if (r <= 1) return 'invoice';
+    if (r === 2) return faceCan('dash') ? 'dash' : 'sales';
+    return faceCan('dash') ? 'dash' : 'sales';
+  }
+  window.faceCan = faceCan; window.faceHome = faceHome;
+  function why(v) {
+    if (PROV[v]) return LL('That screen is only for the people who run this ERP service.', 'এই স্ক্রিনটা শুধু এই ERP সার্ভিস যাঁরা চালান তাঁদের জন্য।');
+    if (TOP_ONLY[v] && !hasPower(v)) return LL('This screen is for the owner and shareholders.', WORDS['This screen is for the owner and shareholders.']);
+    return LL('This screen is not open for your account. If you need it, ask the owner to open it for you (Settings > Users).', WORDS['This screen is not open for your account. If you need it, ask the owner to open it for you (Settings > Users).']);
+  }
+  function hasPower(v) { return !!(hasMe() && ME.powers && v in ME.powers); }   // the owner can switch dash/profit/expenses on for one person
+  function skip() { return !hasMe() || (ME.role === 'owner' && ME.platform); }   // the owner who runs the service sees everything
+
+  var LAST = 0;
+  if (typeof go === 'function') {
+    var goFace = go;
+    go = function (v) {
+      if (v && hasMe() && !faceCan(v)) {
+        var home = faceHome();
+        if (Date.now() - LAST > 2500) { LAST = Date.now(); try { toast(E(why(v)), true, 6000); } catch (e) {} }
+        if (home === v) return;
+        return goFace.call(this, home);
+      }
+      return goFace.apply(this, arguments);
+    };
+  }
+  if (typeof routeAllowed === 'function') { var raFace = routeAllowed; routeAllowed = function (v) { return raFace.apply(this, arguments) && faceCan(v); }; }
+
+  function markNav() {
+    if (!hasMe()) return;
+    var bs = document.querySelectorAll('#nav button[data-view], #tabbar button[data-tab]');
+    for (var i = 0; i < bs.length; i++) {
+      var b = bs[i], v = b.getAttribute('data-view') || b.getAttribute('data-tab');
+      if (!v || !NEED[v]) continue;
+      if (!faceCan(v)) {
+        if (b.style.display !== 'none') b.style.display = 'none';
+        if (!b.hasAttribute('data-face-off')) b.setAttribute('data-face-off', '1');
+      } else if (b.hasAttribute('data-face-off')) b.removeAttribute('data-face-off');
+    }
+  }
+  var LINK = ['data-go', 'data-fd45go', 'data-fd43go', 'data-nvgo', 'data-apgo', 'data-mmgo', 'data-node', 'data-oview', 'data-apopen', 'data-app'];
+  var LINK_SEL = LINK.map(function (a) { return '[' + a + ']'; }).join(',');
+  function markLinks(root) {
+    if (skip()) return;
+    var ns = (root || document).querySelectorAll(LINK_SEL);
+    for (var i = 0; i < ns.length; i++) {
+      var n = ns[i]; if (n.tagName === 'TR' || n.tagName === 'TD' || n.closest('#nav, #tabbar')) continue;
+      var v = '';
+      for (var j = 0; j < LINK.length && !v; j++) v = n.getAttribute(LINK[j]) || '';
+      v = String(v).split(/[:\/]/).pop();
+      if (!NEED[v]) continue;
+      var off = !faceCan(v);
+      if (off !== n.hasAttribute('data-face-off')) { if (off) n.setAttribute('data-face-off', '1'); else n.removeAttribute('data-face-off'); }
+    }
+  }
+  function faceAll() { try { markNav(); markLinks(); } catch (e) {} }
+  if (typeof applyRole === 'function') {
+    var arFace = applyRole;
+    applyRole = function () {
+      var before = typeof VIEW !== 'undefined' ? VIEW : '';
+      var r = arFace.apply(this, arguments);
+      try {
+        if (hasMe() && (!faceCan(before) || !faceCan(VIEW))) VIEW = faceHome();
+        faceAll();
+      } catch (e) {}
+      return r;
+    };
+  }
+  // other blocks show their menu items again later (fdxSync, seo, joint...): keep the map's answer
+  try {
+    var nav = document.getElementById('nav');
+    if (nav && window.MutationObserver) new MutationObserver(function () { if (hasMe() && !skip()) markNav(); }).observe(nav, { subtree: true, attributes: true, attributeFilter: ['style'] });
+  } catch (e) {}
+  var MT = 0;
+  try { new MutationObserver(function () { if (MT || skip()) return; MT = setTimeout(function () { MT = 0; markLinks(); }, 120); }).observe(document.body, { childList: true, subtree: true }); } catch (e) {}
+  if (typeof AFTER_PAINT !== 'undefined') AFTER_PAINT.push(function facePaint() {
+    faceAll();
+    // a screen drawn without go() (an old address, a direct repaint) that is not this person's
+    if (hasMe() && typeof VIEW !== 'undefined' && !faceCan(VIEW)) setTimeout(function () { if (!faceCan(VIEW)) go(VIEW); }, 0);
+  });
+  try { faceAll(); } catch (e) {}
+
+  /* =========================================================== 5. small consistency */
+  // customer page: the name once (the heading); the crumb trail is the back button
+  // and money + invoices come first, points and reminders after them
+  function cusp() { return typeof VIEW !== 'undefined' && VIEW === 'customers' && typeof CUSP !== 'undefined' && !!CUSP.key; }
+  function movePoints() {
+    var lp = document.getElementById('lp_card'); if (!lp || !cusp()) return;
+    var v = document.getElementById('view'); if (!v) return;
+    var head = lp.closest('#view > section'); if (!head) return;
+    var after = null, n = head.nextElementSibling;
+    while (n) { var h = n.querySelector && n.querySelector('h2'); var t = h ? h.textContent.trim() : ''; if (/^(Invoices|Payments|ইনভয়েস|পেমেন্ট)/.test(t)) after = n; n = n.nextElementSibling; }
+    if (!after) return;
+    if (after.nextElementSibling !== lp) after.parentNode.insertBefore(lp, after.nextSibling);
+  }
+  if (typeof lpPaint === 'function') { var lpFace = lpPaint; lpPaint = function () { var r = lpFace.apply(this, arguments); try { movePoints(); } catch (e) {} return r; }; }
+  if (typeof AFTER_PAINT !== 'undefined') AFTER_PAINT.push(function faceCust() {
+    var on = cusp();
+    if (document.body.classList.contains('face-cusp') !== on) document.body.classList.toggle('face-cusp', on);
+    if (on) { movePoints(); setTimeout(movePoints, 200); }
+  });
+
+  // phone drawer tables as card rows: each cell carries its column's name
+  function cards() {
+    var ts = document.querySelectorAll('.fd19-dr table.fd19-mt:not(.face-cards)');
+    for (var i = 0; i < ts.length; i++) {
+      var t = ts[i], hs = t.querySelectorAll('thead th'); if (hs.length < 3) continue;
+      var names = [].map.call(hs, function (h) { return h.textContent.trim(); });
+      [].forEach.call(t.querySelectorAll('tbody > tr'), function (tr) {
+        [].forEach.call(tr.children, function (td, j) { if (!td.hasAttribute('data-face-l')) td.setAttribute('data-face-l', names[j] || ''); });
+      });
+      t.classList.add('face-cards');
+    }
+  }
+  var CT = 0;
+  try { new MutationObserver(function () { if (CT) return; CT = setTimeout(function () { CT = 0; try { cards(); } catch (e) {} }, 60); }).observe(document.body, { childList: true, subtree: true }); } catch (e) {}
+
+  // New invoice: after a product is picked from the list (click or tap), the list closes and the search is empty again;
+  // the keyboard flow (Enter) already does this and keeps the focus in the search
+  document.addEventListener('click', function (e) {
+    var p = e.target && e.target.closest && e.target.closest('#iresults [data-pick]'); if (!p) return;
+    if (p.matches('.r.fam')) return;   // a family row opens its colours, it is not a pick
+    var after = function () {
+      var s = document.getElementById('isearch'), box = document.getElementById('iresults');
+      if (s && s.value) { s.value = ''; try { iSearch = ''; } catch (er) {} try { paintResults(); } catch (er) {} }
+      box = document.getElementById('iresults');
+      if (box) { box.classList.add('fl-closed'); if (s) s.setAttribute('aria-expanded', 'false'); }
+      if (s && !phone() && document.activeElement !== s) try { s.focus({ preventScroll: true }); } catch (er) {}
+    };
+    setTimeout(after, 0); setTimeout(after, 150);
+  }, true);
+  // an empty search with lines already on the invoice shows no "Start typing" box above them (typing opens the list again)
+  function closeEmpty() {
+    if (typeof VIEW === 'undefined' || VIEW !== 'invoice') return;
+    var s = document.getElementById('isearch'), box = document.getElementById('iresults');
+    if (s && box && !s.value.trim() && typeof CART !== 'undefined' && CART && CART.length) { box.classList.add('fl-closed'); s.setAttribute('aria-expanded', 'false'); }
+  }
+  if (typeof paintResults === 'function') { var prFace = paintResults; paintResults = window.paintResults = function () { var r = prFace.apply(this, arguments); try { closeEmpty(); } catch (e) {} return r; }; }
+  if (typeof AFTER_PAINT !== 'undefined') AFTER_PAINT.push(function faceInv() { closeEmpty(); });
+
+  // phone menu: opening a screen from a group keeps that group open; a tap on a group's title folds or opens that one only
+  document.addEventListener('click', function (e) {
+    if (!phone() || typeof C5_NAV !== 'object' || !C5_NAV) return;
+    var b = e.target && e.target.closest && e.target.closest('#nav button[data-view]'); if (!b) return;
+    var g = b.previousElementSibling; while (g && !g.classList.contains('navgrp')) g = g.previousElementSibling;
+    if (!g) return;
+    var name = g.textContent.trim(); if (!name || C5_NAV[name] === true) return;
+    C5_NAV[name] = true; try { localStorage.setItem('cz_nav_open', JSON.stringify(C5_NAV)); } catch (er) {}
+  }, true);
+
+  try { for (var k in WORDS) if (!I18N_BN[k]) I18N_BN[k] = WORDS[k]; } catch (e) {}
 })();
 </script>
 </body>

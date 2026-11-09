@@ -50,22 +50,30 @@ const methodKey = (m) => str(m).toLowerCase().replace(/\s+/g, ' ');
 export async function accountForMethod(ctx, method) {
   const r = await cashRules(ctx);
   const raw = str(method).toLowerCase(), m = methodKey(method);
-  if (r.map[raw]) return r.map[raw];
-  if (r.map[m]) return r.map[m];
+  await cashNames(ctx);
+  // crit5-books: a rule that points at a retired (archived) or removed account is skipped - "a retired account takes
+  // no new money" - so the payment falls to the same-name account or to "no account" where the owner sees it
+  if (r.map[raw] && ctx.memo.cashOpen[r.map[raw]]) return r.map[raw];
+  if (r.map[m] && ctx.memo.cashOpen[r.map[m]]) return r.map[m];
   if (NOT_MONEY[m]) return null;
+  return ctx.memo.cashByName[m] || null;
+}
+async function cashNames(ctx) {
   if (!ctx.memo.cashByName) {
     // row security hides money_accounts below shareholder: 168_pay_account_by_name.sql hands members the ids + names only
-    const byName = {};
+    const byName = {}, open = {};
     const fn = (await ctx.tx`select to_regprocedure('public.money_account_names(uuid)') is not null as ok`)[0].ok;
     const rows = fn ? await ctx.tx`select id, name from public.money_account_names(${ctx.biz})`
       : await ctx.tx`select id, name from money_accounts where business_id = ${ctx.biz} and not coalesce(archived, false) order by sort_order, created_at`;
     for (const a of rows) {
+      open[a.id] = str(a.name);
       const k = methodKey(a.name);
       if (k && !byName[k]) byName[k] = a.id;
     }
     ctx.memo.cashByName = byName;
+    ctx.memo.cashOpen = open;   // id -> name of every open account
   }
-  return ctx.memo.cashByName[m] || null;
+  return ctx.memo.cashOpen;
 }
 /** The account expenses are paid from unless one is named. */
 export async function expenseAccount(ctx, wanted) {
@@ -477,4 +485,28 @@ export async function erpCashPlaceMany(ctx, payload) {
   return book;
 }
 
-export const HANDLERS = { erpCashBook, erpCashSetup, erpCashAccountSave, erpCashMapSave, erpCashTransfer, erpCashAdjust, erpCashMoveVoid, erpCashReassign, erpCashPlaceMany };
+// crit5-books (10 Nov 2026): where each payment method lands, readable by every member, so the sale and payment forms
+// can say "Nagad · no account yet" BEFORE the money is taken (the server's own rule above decides; nothing new is
+// invented here). Ids and names only - no balance, no statement (those stay shareholder-only in erpCashBook).
+//   erpPayMethods({methods?: [names]}) -> { methods: [{method, account, accountName, courier, notMoney}], canAdd }
+const COURIER_RE = /^cod\b|cash on delivery|courier|steadfast|pathao|redx/i;
+export async function erpPayMethods(ctx, payload) {
+  payload = payload || {};
+  const listed = (await ctx.tx`select value from lookups where business_id = ${ctx.biz} and kind = 'payment_methods' order by sort_order, value`)
+    .map((r) => str(r.value)).filter(Boolean);
+  const extra = Array.isArray(payload.methods) ? payload.methods.slice(0, 50).map((m) => str(m).slice(0, 60)).filter(Boolean) : [];
+  const seen = {}, all = [];
+  for (const m of listed.concat(extra)) { const k = methodKey(m); if (k && !seen[k]) { seen[k] = 1; all.push(m); } }
+  if (!all.length) all.push('Cash');
+  const names = await cashNames(ctx);   // the security-definer list: members see open account ids + names only
+  const out = [];
+  for (const m of all) {
+    const notMoney = !!NOT_MONEY[methodKey(m)];
+    let id = notMoney ? null : await accountForMethod(ctx, m);
+    if (id && !names[id]) id = null;            // a rule that points at an archived / removed account: the money would be lost
+    out.push({ method: m, account: id || '', accountName: id ? names[id] : '', courier: COURIER_RE.test(m), notMoney });
+  }
+  return { methods: out, canAdd: roleAtLeast(ctx.s.role, 'shareholder'), accounts: Object.keys(names).length };
+}
+
+export const HANDLERS = { erpPayMethods, erpCashBook, erpCashSetup, erpCashAccountSave, erpCashMapSave, erpCashTransfer, erpCashAdjust, erpCashMoveVoid, erpCashReassign, erpCashPlaceMany };

@@ -236,7 +236,7 @@ business pill, "+ New", one white tool pill with chat, search, light/dark and be
 a card grid below. Cards sit 16-20px apart; inside a card the padding is 22px by 24px. Tables span their card and keep
 12px by 14px cells.
 
-Phone (760px and below): bottom tab bar (Invoice, Sales, Customers, Apps, More) plus a folding menu; the top bar shows
+Phone (760px and below): bottom tab bar (Invoice, Sales, Customers, Inbox, More) plus a folding menu; the top bar shows
 the business pill, "+", the tool pill and the avatar, tightened to 12px side padding; greeting and the light/dark button
 hide there (light/dark stays in the account menu). Nothing scrolls sideways at 375px.
 

@@ -133,7 +133,8 @@ export async function myPools(ctx) {
     partners: (r.partners || []).map((p) => ({ id: p.id, name: str(p.name), tier: str(p.tier) })),
     // a company on its own database has no login in the provider's: its owner counts as the pool's owner for it
     // joint-fix-4: every owner of a partner company is the pool's owner for it (not only the login that joined it)
-    member: remote || ctx.s.role === 'owner' || mine.some((m) => m.business_id === r.id && m.is_pool),
+    // crit5-face (10 Nov 2026): a shareholder is the owner's equal (owner rule 27 Oct) - the pool's owner for it too
+    member: remote || roleAtLeast(ctx.s.role, 'shareholder') || mine.some((m) => m.business_id === r.id && m.is_pool),
   }));
   return ctx.memo.myPools;
 }
@@ -148,7 +149,7 @@ export function inPool(ctx, pool) {
   return { ...ctx, biz: pool.id, memo: {}, s: { ...ctx.s, businessName: pool.name } };
 }
 /** An owner of one of the partner companies (may act for either side of the pool). */
-const poolOwner = (ctx, pool) => ctx.s.role === 'owner' && !!pool.member;
+const poolOwner = (ctx, pool) => roleAtLeast(ctx.s.role, 'shareholder') && !!pool.member;
 /** Staff act for their own company only: its shelf, its money. */
 async function ownSide(ctx, pool, partner, what) {
   if (poolOwner(ctx, pool)) return;
@@ -245,7 +246,7 @@ export async function erpJointCatalog(ctx) {
 /** The Joint stock page. */
 export async function erpJoint(ctx, payload) {
   payload = payload || {};
-  const owner = ctx.s.role === 'owner';
+  const owner = roleAtLeast(ctx.s.role, 'shareholder');   // crit5-face: owner or shareholder - the book and the money
   if (!(await jointOn(ctx))) return { on: false };
   const pools = await myPools(ctx);
   const out = { on: true, owner, company: str(ctx.s.businessName), pools: pools.map((p) => ({ id: p.id, name: p.name, tier: p.tier, partners: p.partners, member: p.member })),
@@ -1333,7 +1334,7 @@ export async function poolReceiveTarget(ctx, poolId, receivedAt) {
         const avg = r.unit > 0 ? (had > 0 && old > 0 ? round2((had * old + r.qty * r.unit) / (had + r.qty)) : r.unit) : old;
         if (avg !== old) await pctx.tx`update products set cost_price = ${avg}, updated_at = now() where id = ${p.id}`;
         // joint-fix-4: the pool's cost (before and after) is for the owners; staff see what they typed
-        out.push({ sku: r.sku, product: str(p.name), qty: r.qty, unitCost: r.unit, ...(ctx.s.role === 'owner' ? { wasCost: old, nowCost: avg, hadStock: had } : {}) });
+        out.push({ sku: r.sku, product: str(p.name), qty: r.qty, unitCost: r.unit, ...(roleAtLeast(ctx.s.role, 'shareholder') ? { wasCost: old, nowCost: avg, hadStock: had } : {}) });
       }
       forget(pctx, 'TXN_LOG');
       return out;

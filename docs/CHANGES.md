@@ -4123,3 +4123,26 @@ The fourth critique used the ERP with real clicks and taps (desktop + phone) and
 - First run: 702 comments, 167 questions, 27 problems, 21 price, 8 idea topics (biggest: routines/safety 32, hair removal 31, price 20).
 - Calls (owner only): erpBrandDeskListen (read), ListenPull, ListenPaste, ListenIdeas, ListenChannel, ListenToLead. Tests green.
 - NOT done: screens not clicked in a browser; own-post comments (needs connected accounts) come with Stage 2b.
+
+## crit-5 (10 Nov 2026): fixes from the fifth critique (27/40, real clicks)
+Owner's standing brief: raise the score, decide yourself. Blocks `<!-- crit5:books -->`, `<!-- crit5:face -->` after
+`<!-- CRIT5-MERGE 2026-11-10 -->`. Snapshot .impeccable/critique/2026-11-09T20-44-47Z.
+- Payment methods without a money account are marked "· no account yet" (courier ones "· courier holds it") in every picker;
+  picking one shows a note, owners get "Add a Nagad account"; toasts/success say where the money went. New erpPayMethods (members,
+  names only). accountForMethod skips a rule that points at a retired account. booksfinal_test 23.
+- Every new sale starts on Cash (per-device carry-over removed; reset after hold/edit too).
+- Settings repaint storm: 95 rebuilds + 106 requests in 6 s -> 3 + 26; identical in-flight reads shared page-wide; a failed read
+  is not re-asked by a redraw for 8 s; focus/caret/typed text kept across Settings redraws; "Could not read it" + Try again.
+- Saved-invoice window: ✕ / Esc / backdrop close, "Open invoice", SVG check, WhatsApp warning inside the window.
+  Drawer Receive: white amount box, one primary "Save ৳500 in Cash". Money: balance first, calm no-account strip;
+  "Wrong account" -> "Move to another account"; drawer explains discount share in line profit. Stock Clear resets the whole
+  draft after a confirm; toast clear of the chat button.
+- Bangla: --fd-font redefined under lang=bn (Inter then Hind Siliguri) so Hind Siliguri finally renders; 14px floor (779 -> 307
+  small nodes, rest are 1-2 word badges/chart labels); one word per idea (এখনই পেমেন্ট, মোট/উপমোট, বাকি, দেনা, বিক্রি).
+- One screen-access map (menu, phone bar, tiles, Navigator, go()): staff no longer offered or shown owner/shareholder screens
+  (sales 13 -> 0, manager 6 -> 0); shareholders keep everything; joint.js book/money/cost now for shareholder+ (was owner only).
+  facefinal_test 8.
+- Customer page: name once, money before points; phone drawer lines as cards; desktop search closes after a pick; payment chips
+  40px; net-profit line "After this month's fixed costs:"; phone menu groups toggle one at a time; token drift fixed.
+- Checks: real-click invoice + receive flows desktop/phone, field battery 25/25, click reach 0 stolen on 44 x 2, crawl EN+BN 0
+  errors, full suite: only ads 4, factory (date, fails on older code too), golive (IMPORT_DIR).

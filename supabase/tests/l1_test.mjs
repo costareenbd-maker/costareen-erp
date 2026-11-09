@@ -20,7 +20,7 @@ check('Bangla documents set', r.ok && r.result.lang === 'bn', r);
 const before = pdfs.length;
 r = await owner('erpCreateInvoice', [{ customer: { name: 'Doc Buyer', phone: '01711000777' }, items: [{ sku: 'FIL-SUN-PLA-BLA-001', qty: 1 }], payMode: 'full', paymentMethod: 'Cash' }]);
 const html = pdfs.length > before ? String(pdfs[pdfs.length - 1].html || pdfs[pdfs.length - 1]) : '';
-check('the invoice PDF prints Bangla labels, the product name as typed', r.ok && html.includes('>ইনভয়েস<') && html.includes('সাবটোটাল') && html.includes('Sunlu'), html.slice(0, 200));
+check('the invoice PDF prints Bangla labels, the product name as typed', r.ok && html.includes('>ইনভয়েস<') && html.includes('উপমোট') && html.includes('Sunlu'), html.slice(0, 200));
 await owner('erpDocLang', ['en']);
 
 // the business's own Bangla words

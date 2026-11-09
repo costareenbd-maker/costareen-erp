@@ -8,7 +8,7 @@ const BN = {
   'INVOICE': 'ইনভয়েস', 'Paid in full': 'সম্পূর্ণ পরিশোধিত', 'Total due': 'মোট বাকি', 'Invoice no.': 'ইনভয়েস নং', 'Date': 'তারিখ',
   'Payment': 'পেমেন্ট', 'Delivery': 'ডেলিভারি', 'From': 'প্রেরক', 'Bill To': 'ক্রেতা', 'Deliver To': 'ডেলিভারির ঠিকানা',
   'Item Description': 'প্রোডাক্টের বিবরণ', 'Qty': 'পরিমাণ', 'Price': 'দাম', 'Discount': 'ছাড়', 'Total': 'মোট', 'Payment Details': 'পেমেন্টের তথ্য',
-  'A/C name': 'হিসাবের নাম', 'A/C number': 'হিসাব নম্বর', 'Branch': 'শাখা', 'Note': 'নোট', 'Subtotal': 'সাবটোটাল', 'Item discounts': 'প্রোডাক্টে ছাড়',
+  'A/C name': 'হিসাবের নাম', 'A/C number': 'হিসাব নম্বর', 'Branch': 'শাখা', 'Note': 'নোট', 'Subtotal': 'উপমোট', 'Item discounts': 'প্রোডাক্টে ছাড়',
   'Invoice discount': 'ইনভয়েস ছাড়', 'Paid': 'পরিশোধিত', 'Due': 'বাকি', 'Nothing due': 'কোনো বাকি নেই',
   'Thank you for your order.': 'আপনার অর্ডারের জন্য ধন্যবাদ।', 'Walk-in customer': 'সরাসরি ক্রেতা',
 };
