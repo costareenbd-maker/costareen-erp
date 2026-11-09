@@ -10,7 +10,7 @@ import { asDate, str } from '../lib/tabs.js';
 import { formatDate, num, money2 } from '../lib/time.js';
 import { getConfig, setConfig, saveFile, deleteFile, fileUrl } from '../lib/ext.js';
 import { who } from './money.js';
-import { monthGross, monthNet } from './dashboard.js';
+import { monthGross, monthNet, fixedDue } from './dashboard.js';
 import { expenseAccount, cashRules } from './cash.js';
 import { returnsFor, isReturnPaid } from './returns.js';
 import { commissionDue, isCommissionPaid } from './commission.js';
@@ -221,6 +221,8 @@ export async function erpExpenses(ctx, payload) {
     // pre-order deposits kept and the share of joint stock profit, which a sum built here left out
     net: g.net,
     netAfterUnpaid: g.net - Math.round(fixedUnpaid),
+    // crit3-fig: the running month's fixed costs not paid yet (0 for any other month or a closed one) - the forecast line
+    fixedDue: await fixedDue(ctx, month),
     forfeited: g.forfeited || 0, jointShare: g.jointShare || 0, pnlExpenses: g.expenses,
   };
 }

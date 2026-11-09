@@ -219,6 +219,40 @@ export async function expenseUnpaid(ctx, month) {
   return Math.round(sum);
 }
 
+/**
+ * crit3-fig (10 Nov 2026): this month's fixed costs not marked paid yet, item by item - the forecast line under net
+ * profit ("If this month's fixed costs are paid: ..."). Net profit itself is untouched (an expense counts the day it is
+ * paid). Only the running month: a past or future month, or a closed one, has none. An item stopped before the month
+ * is out; a paid entry that was struck out counts as not paid (the same rule as Expenses' "Still to pay this month").
+ */
+export async function fixedDue(ctx, month) {
+  const none = { month: String(month || ''), total: 0, items: [] };
+  const now = monthKey(ctx.now);
+  if (!month || month !== now) return none;
+  const lt = await lockedThrough(ctx);
+  if (lt && month <= lt) return none;
+  const paid = {};
+  for (const r of await expRows(ctx, month)) {
+    if (str(r.kind) === 'fixed' && str(r.item_no) && !r.voided) paid[str(r.item_no)] = true;
+  }
+  const rows = await ctx.tx`
+    select item_no, kind, name, amount, from_month, to_month from expense_items
+    where business_id = ${ctx.biz} order by seq`;
+  const items = [];
+  let total = 0;
+  for (const it of rows) {
+    const id = str(it.item_no);
+    if (!id || (str(it.kind) || 'fixed') !== 'fixed') continue;
+    const from = str(it.from_month), to = str(it.to_month);
+    if ((from && month < from) || (to && month > to) || paid[id]) continue;
+    const amount = Math.round(num(it.amount));
+    if (!(amount > 0)) continue;
+    items.push({ id, name: str(it.name) || 'Fixed cost', amount });
+    total += amount;
+  }
+  return { month, total, items };
+}
+
 /** erpExpByCat_: the month's expenses by category. */
 export async function expByCat(ctx, month) {
   const by = {};
@@ -638,6 +672,8 @@ export async function erpDashboardData(ctx) {
     monthNet: await soft(ctx, async () => (await monthNet(ctx, thisKey)).net, null),
     monthOther: await soft(ctx, async () => { const m = await monthNet(ctx, thisKey); return m.delivery + m.courierExtra - m.courierShort - m.courier; }, 0),
     monthUnpaid: await soft(ctx, () => expenseUnpaid(ctx, thisKey), 0),
+    // crit3-fig: the forecast line under net profit - this month's fixed costs not paid yet, item by item
+    fixedDue: await soft(ctx, () => fixedDue(ctx, thisKey), { month: thisKey, total: 0, items: [] }),
   };
 
   const perDay = cogs90 / 90;
@@ -908,6 +944,7 @@ export async function erpPnl(ctx, payload) {
   const cats = {};
   for (const x of out) for (const c of Object.keys(x.byCat)) cats[c] = 1;
   return { months: out, categories: Object.keys(cats).sort(), to, thisMonth: now,
+           fixedDue: await soft(ctx, () => fixedDue(ctx, now), { month: now, total: 0, items: [] }),   // crit3-fig
            generatedAt: formatDate(ctx.now, 'd MMM yyyy, h:mm a') };
 }
 

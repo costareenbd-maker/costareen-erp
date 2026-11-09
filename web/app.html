@@ -7759,7 +7759,7 @@ function custMoneyBoxes() {
         '<td class="num"><span class="bal owed">' + fmt(w.due) + '</span></td><td class="num">' + fmt(w.invoices) + '</td>' +
         '<td class="num">' + (w.oldest ? fmt(w.oldest) + ' days' : 'today') + '</td>' +
         '<td>' + (w.reminded ? '<span class="pill' + (w.reminded.days < 3 ? ' ok' : '') + '">' + esc(w.reminded.at) +
-          (w.reminded.days === 0 ? ' · today' : ' · ' + fmt(w.reminded.days) + 'd ago') + '</span>' : '<span class="pill low">never</span>') + '</td>' +
+          (w.reminded.days === 0 ? (String(w.reminded.at) === 'today' ? '' : ' · today') : ' · ' + fmt(w.reminded.days) + 'd ago') + '</span>' : '<span class="pill low">never</span>') + '</td>' +
         '<td class="num" style="white-space:nowrap">' +
         (wa ? '<a class="btn small primary" href="' + esc(wa) + '" target="_blank" rel="noopener" data-remind="' + esc(w.key) +
           '" data-rphone="' + esc(w.phone) + '" data-rname="' + esc(w.name) + '" data-rdue="' + esc(w.due) + '">WhatsApp</a> ' : '') +
@@ -27570,7 +27570,7 @@ viewCash = function () {
   var tabs = [['ledger', 'Ledger', 'wallet'], ['accounts', 'Accounts', 'bank'], ['match', 'Unmatched', 'search', nWait ? String(nWait) : ''], ['cashup', 'Cash-up', 'taka']];
   if (held.length) tabs.push(['held', 'Courier & agent', 'truck']);
   if (ME && (pageTop())) tabs.push(['balance', 'Balance sheet', 'chart']);
-  f21TabInit('cash', (window.matchMedia && window.matchMedia('(max-width:640px)').matches) ? 'accounts' : 'ledger', tabs.map(function (t) { return t[0]; }));   // night-stock (acct-cash.md): a phone opens on the account cards
+  f21TabInit('cash', 'accounts', tabs.map(function (t) { return t[0]; }));   // night-stock (acct-cash.md): a phone opens on the account cards
   if (CASH_FORM) FD21.tab.cash = 'accounts';
   var out = f21Tabs('cash', tabs);
 
@@ -41628,8 +41628,8 @@ html[data-look="clean"][data-skin="fd"]:root[data-theme="dark"] #aw_fab { backgr
     var g = el('clGreet'), t = el('clTheme');
     var who = ME && ME.name ? String(ME.name).split(' ')[0] : (typeof FD_SHELL !== 'undefined' && FD_SHELL.user ? String(FD_SHELL.user).split(' ')[0] : '');
     var bizEl = document.querySelector('.brand h1'), biz = bizEl ? bizEl.textContent.trim() : '';
-    var d = new Date(), dayKey = (bn() ? 'bn' : 'en') + d.toDateString();   // final-shell: Intl once per day and language
-    if (paint.__dk !== dayKey) { paint.__dk = dayKey; paint.__day = d.toLocaleDateString(bn() ? 'bn-BD' : 'en-GB', { weekday: 'long', day: 'numeric', month: 'long' }); }
+    var d = new Date(), TZB = 'Asia/Dhaka', dayKey; try { dayKey = (bn() ? 'bn' : 'en') + d.toLocaleDateString('en-CA', { timeZone: TZB }); } catch (e) { TZB = undefined; dayKey = (bn() ? 'bn' : 'en') + d.toDateString(); }   // crit3-flow: the shop's day   // final-shell: Intl once per day and language
+    if (paint.__dk !== dayKey) { paint.__dk = dayKey; paint.__day = d.toLocaleDateString(bn() ? 'bn-BD' : 'en-GB', TZB ? { weekday: 'long', day: 'numeric', month: 'long', timeZone: TZB } : { weekday: 'long', day: 'numeric', month: 'long' }); }
     var day = paint.__day;
     var home = typeof VIEW === 'undefined' || VIEW === 'dash';
     // crit-look 8: no emoji; the business name is already in the menu brand and the switch pill - the greeting is the date
@@ -51657,6 +51657,953 @@ html[data-look="clean"][data-skin="fd"]:root[data-theme="dark"] body .jt-settle 
     I18N_PAT.push(['^(.+) compared with (.+)$', '$1 · $2-এর তুলনায়']);
     I18N_PAT.push(['^1st to today · compared with (.+)$', '১ তারিখ থেকে আজ পর্যন্ত · $1-এর তুলনায়']);
   } catch (e) {}
+})();
+</script>
+<!-- CRIT3-MERGE 2026-11-10 -->
+<!-- crit3:fig -->
+<!-- crit3-fig (10 Nov 2026): third critique, figures + Bangla. (1) a forecast line under this month's net profit on the
+     Dashboard tile, Profitability (head card + the big figure) and Expenses: "If this month's fixed costs are paid: ৳..."
+     from the server's fixedDue (expected fixed items not paid yet, struck-out payments count as unpaid, closed month = none);
+     net profit itself is unchanged (one net profit), the line is a forecast beside it and its "i" lists the unpaid items.
+     (2) Bangla numeral rule finished: a number the English calls money ("due 1,450", "4,050 to collect") keeps Latin digits
+     after a pattern translated it (bnKeepLatin); dates and counts inside data-noi18n lines (the phone Sales card's
+     "Name · 6 Nov 2026 · ...", "22 জন কাস্টমার") follow the rule; the last English words; 13.5px floor for owed amounts,
+     the phone tab bar and the brand tag. (3) New invoice date reads "9 Nov 2026" / "৯ নভেম্বর ২০২৬", not 11/09/2026.
+     (4) Money: one Move money button, the waiting list's fold no longer repeats the count; Expenses: zero tiles hidden. -->
+<style>
+/* (1) the forecast line: quiet, one size below the figure, the amount strong */
+.fig-due { display:flex; align-items:center; flex-wrap:wrap; gap:4px 6px; margin-top:8px; font-size:13px; line-height:1.35;
+  color:var(--fd-text-2, #4B5068); padding-right:26px; }
+.fig-due b { font-weight:700; color:var(--fd-text, #111827); white-space:nowrap; }
+.fig-due b.neg { color:var(--fd-negative-text, #B42318); }
+html[lang="bn"] .fig-due { font-size:13.5px; }
+.fig-due .fig-i { flex:none; width:22px; height:22px; border-radius:999px; border:1px solid var(--fd-border, #E4E7EC); background:var(--fd-card, #fff);
+  color:var(--fd-text-2, #4B5068); font:600 12px/1 var(--fd-font, inherit); cursor:pointer; padding:0; position:relative; }
+.fig-due .fig-i::after { content:''; position:absolute; inset:-10px; }     /* 42px hit area */
+.fig-due .fig-i:hover { border-color:var(--fd-accent, #5B4FE9); color:var(--fd-accent-text, #3B2FC9); }
+.fdd-k .fig-due { padding-right:30px; }
+.fdd-lbl > .fig-due { margin-top:6px; padding-right:0; white-space:normal; font-weight:400; }
+.nt-pl .fig-due { margin:6px 0 2px; padding-right:0; }
+.nt-line .fig-due { flex-basis:100%; margin-top:4px; padding-right:0; }
+.fig-dlg ul { list-style:none; margin:10px 0 0; padding:0; border-top:1px solid var(--fd-border, #E4E7EC); }
+.fig-dlg li { display:flex; justify-content:space-between; gap:12px; padding:9px 0; border-bottom:1px solid var(--fd-border, #E4E7EC); font-size:14px; }
+.fig-dlg li b { white-space:nowrap; }
+.fig-dlg li.tot { font-weight:700; border-bottom:0; }
+.fig-dlg .fig-sum { margin-top:12px; padding:10px 12px; border-radius:12px; background:var(--fd-surface-2, #F4F5F8); font-size:14px; line-height:1.5; }
+.fig-dlg .fig-sum b.neg { color:var(--fd-negative-text, #B42318); }
+html[lang="bn"] .fig-dlg li, html[lang="bn"] .fig-dlg .fig-sum { font-size:14.5px; }
+
+/* (2) Bangla type floor: owed amounts on Customers, the phone tab bar, the brand tag (same prefix as crit2-bn, later = wins) */
+html[lang="bn"][data-look="clean"][data-skin="fd"] :is(#view, .fd19-dr, .fd-drawer, [role=dialog]) span.bal { font-size:13.5px !important; }
+html[lang="bn"][data-look="clean"][data-skin="fd"] nav#tabbar button span:not(.tb-n) { font-size:13.5px !important; letter-spacing:0; }
+html[lang="bn"][data-look="clean"][data-skin="fd"] #side .brand span.tag, html[lang="bn"][data-look="clean"][data-skin="fd"] .brand span.tag { font-size:13.5px !important; }
+
+/* (3) New invoice date: the native picker stays for input; its US-ordered text is covered by the readable date */
+.fig-dw { position:relative; display:block; }
+.fig-dw > input[type=date] { width:100%; }
+.fig-dw > .fig-dl { position:absolute; left:1px; top:1px; bottom:1px; right:44px; display:flex; align-items:center; padding-left:13px;
+  pointer-events:none; border-radius:inherit; font:inherit; font-size:15px; color:var(--fd-text, #111827); white-space:nowrap; overflow:hidden; }
+.fig-dw.on > input[type=date]:not(:focus) { color:transparent; }
+.fig-dw.on > input[type=date]:not(:focus)::-webkit-datetime-edit { color:transparent; }
+.fig-dw > input[type=date]:focus + .fig-dl { display:none; }
+.fig-dw:not(.on) > .fig-dl { display:none; }
+</style>
+<script>
+(function () {
+  var isBn = function () { return typeof LANG !== 'undefined' && LANG === 'bn'; };
+  var L = function (en, bn) { return isBn() ? bn : en; };
+  var BND = '০১২৩৪৫৬৭৮৯';
+  var toBn = function (s) { return String(s).replace(/\d/g, function (d) { return BND.charAt(+d); }); };
+  var money = function (v) { return typeof tk === 'function' ? tk(v) : '৳' + (typeof fmt === 'function' ? fmt(v) : String(v)); };
+  var MONS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+  var monthName = function (m) {
+    var p = String(m || '').split('-'); if (p.length < 2) return '';
+    var en = MONS[+p[1] - 1] + ' ' + p[0];
+    return isBn() && typeof window.bnFixText === 'function' ? window.bnFixText(en) : en;
+  };
+
+  // =================================================================== (1) the forecast line under net profit
+  /** the server's fixedDue when there is something to pay this month, else null */
+  function dueOf(d) { return d && typeof d === 'object' && Number(d.total) > 0 && d.items && d.items.length ? d : null; }
+  var FIG = { last: null };
+  function dueLine(net, due, withI) {
+    var after = Math.round(Number(net) || 0) - Math.round(Number(due.total) || 0);
+    FIG.last = { net: Number(net) || 0, due: due };
+    var lbl = L('Which fixed costs are not paid yet', 'কোন স্থায়ী খরচ এখনো দেওয়া হয়নি');
+    return '<div class="fig-due" data-figdue="1"><span>' + esc(L('If this month\u2019s fixed costs are paid:', 'এ মাসের স্থায়ী খরচ দিলে:')) + '</span>' +
+      '<b data-noi18n="1" class="' + (after < 0 ? 'neg' : '') + '">' + money(after) + '</b>' +
+      (withI ? '<button type="button" class="fig-i" data-figduei="1" data-net="' + esc(String(Number(net) || 0)) + '" aria-label="' + esc(lbl) + '" title="' + esc(lbl) + '">i</button>' : '') + '</div>';
+  }
+  /** the list of what is still to pay, for a dialog */
+  function dueBody(net, due) {
+    var after = Math.round(Number(net) || 0) - Math.round(Number(due.total) || 0);
+    return '<div class="fig-dlg"><div style="font-size:14px;line-height:1.5;color:var(--fd-text-2,#4B5068)">' +
+      esc(L('Net profit counts an expense on the day it is marked paid. These fixed costs of ' + monthName(due.month) + ' are not marked paid yet:',
+            'খরচ যেদিন দেওয়া হয়েছে বলে মার্ক করা হয়, নিট লাভে সেদিনই ধরা হয়। ' + monthName(due.month) + '-এর এই স্থায়ী খরচগুলো এখনো দেওয়া হয়নি:')) + '</div>' +
+      '<ul>' + due.items.map(function (x) { return '<li><span data-noi18n="1">' + esc(x.name) + '</span><b data-noi18n="1">' + money(x.amount) + '</b></li>'; }).join('') +
+      '<li class="tot"><span>' + esc(L('Still to pay', 'দেওয়া বাকি')) + '</span><b data-noi18n="1">' + money(due.total) + '</b></li></ul>' +
+      '<div class="fig-sum">' + esc(L('Net profit now', 'এখনকার নিট লাভ')) + ' <b data-noi18n="1">' + money(net) + '</b> · ' + esc(L('if they are paid', 'এগুলো দিলে')) +
+      ' <b data-noi18n="1" class="' + (after < 0 ? 'neg' : '') + '">' + money(after) + '</b><br><span style="color:var(--fd-text-3,#667085)">' +
+      esc(L('This is a forecast, not a second profit: the net profit changes only when you press Paid under Expenses \u203a Expected monthly.',
+            'এটি একটা আন্দাজ, দ্বিতীয় কোনো লাভ নয়: খরচ › প্রতি মাসে যা দিতে হয় — সেখানে "দেওয়া হয়েছে" চাপলেই নিট লাভ বদলাবে।')) + '</span></div></div>';
+  }
+  function dueDialog(net, due) {
+    var back = document.createElement('div'); back.className = 'dlg-back';
+    var canGo = typeof navOn === 'function' && navOn('expenses');
+    back.innerHTML = '<div class="dlg" role="dialog" aria-modal="true" style="max-width:520px"><div class="dlg-t">' + esc(L('If this month\u2019s fixed costs are paid', 'এ মাসের স্থায়ী খরচ দিলে')) + '</div>' +
+      '<div class="dlg-b" style="white-space:normal">' + dueBody(net, due) + '</div><div class="dlg-f">' +
+      (canGo ? '<button class="btn" type="button" data-figgo="1">' + esc(L('Open Expected monthly', 'প্রতি মাসে যা দিতে হয় — খুলুন')) + '</button>' : '') +
+      '<button class="btn primary" type="button" data-figclose="1">' + esc(L('Close', 'বন্ধ করুন')) + '</button></div></div>';
+    document.body.appendChild(back);
+    var close = function () { if (back.parentNode) back.parentNode.removeChild(back); document.removeEventListener('keydown', kd, true); };
+    var kd = function (e) { if (e.key === 'Escape') close(); };
+    back.addEventListener('mousedown', function (e) { if (e.target === back) close(); });
+    back.querySelector('[data-figclose]').addEventListener('click', close);
+    var g = back.querySelector('[data-figgo]');
+    if (g) g.addEventListener('click', function () {
+      close();
+      try { if (typeof FD21 !== 'undefined' && FD21.tab) FD21.tab.expenses = 'expected'; localStorage.setItem('fd21tab:expenses', 'expected'); } catch (e) {}
+      if (VIEW === 'expenses') repaint(); else go('expenses');
+    });
+    document.addEventListener('keydown', kd, true);
+    back.querySelector('[data-figclose]').focus();
+  }
+  /** which figures a line's "i" belongs to: read again from the payload of the screen it sits on */
+  function dueFor(b) {
+    var net = Number(b.getAttribute('data-net')) || 0, due = null;
+    if (VIEW === 'expenses' && typeof EXP !== 'undefined' && EXP) due = dueOf(EXP.fixedDue);
+    else if (VIEW === 'profit') {
+      due = dueOf(typeof PNL !== 'undefined' && PNL && PNL.fixedDue);
+      if (!due && typeof FDH !== 'undefined' && FDH.data && FDH.data.profit) (FDH.data.profit.cards || []).forEach(function (c) { if (c.key === 'net' && !due) due = dueOf(c.fixedDue); });
+    }
+    if (!due && FIG.last) due = FIG.last.due;
+    return due ? { net: net, due: due } : null;
+  }
+  document.addEventListener('click', function (e) {
+    var b = e.target && e.target.closest && e.target.closest('[data-figduei]'); if (!b) return;
+    e.preventDefault(); e.stopPropagation();
+    var l = dueFor(b);
+    if (l) dueDialog(l.net, l.due);
+  }, true);
+
+  // the Dashboard tile (fddKpi, key 'net'): the line under the label; its own "i" shows the calculation + the unpaid items
+  if (typeof fddKpi === 'function' && !fddKpi.__fig) {
+    var fddKpiFig = fddKpi;
+    fddKpi = function (o) {
+      var h = fddKpiFig.apply(this, arguments);
+      try {
+        var due = o && o.key === 'net' && o.k ? dueOf(o.k.fixedDue) : null;
+        if (due) {
+          var line = dueLine(o.k.v, due, false), at = h.indexOf('<button type="button" class="fdd-i"');
+          h = at > 0 ? h.slice(0, at) + line + h.slice(at) : h.replace(/<\/div>$/, line + '</div>');
+        }
+      } catch (e) {}
+      return h;
+    };
+    fddKpi.__fig = 1;
+  }
+  // its "i" (fddCalc 'net'): the unpaid items under the calculation
+  document.addEventListener('click', function (e) {
+    var c = e.target && e.target.closest && e.target.closest('[data-fdcalc="net"]'); if (!c) return;
+    var k = typeof FDD !== 'undefined' && FDD.data && FDD.data.kpi && FDD.data.kpi.net, due = k ? dueOf(k.fixedDue) : null;
+    if (!due) return;
+    setTimeout(function () {
+      var ds = document.querySelectorAll('.dlg-back .dlg'), d = ds[ds.length - 1];
+      if (!d || d.querySelector('.fig-dlg')) return;
+      var f = d.querySelector('.dlg-f'), box = document.createElement('div');
+      box.style.cssText = 'margin-top:14px';
+      box.innerHTML = '<div style="font-weight:700;font-size:15px;margin-bottom:2px">' + esc(L('If this month\u2019s fixed costs are paid', 'এ মাসের স্থায়ী খরচ দিলে')) + '</div>' + dueBody(k.v, due);
+      if (f) f.parentNode.insertBefore(box, f); else d.appendChild(box);
+    }, 0);
+  }, true);
+
+  // Profitability's head card and Expenses' net card (fdhCard, key 'net'); on Expenses a tile of 0 is left out
+  if (typeof fdhCard === 'function' && !fdhCard.__fig) {
+    var fdhCardFig = fdhCard;
+    fdhCard = function (c, cur) {
+      try {
+        if (VIEW === 'expenses' && c && c.key !== 'net' && c.money && Math.round(Number(c.v) || 0) === 0 && /^(tot|exp|cat|expenses|unpaid|top|last)$/.test(String(c.key))) return '';
+      } catch (e) {}
+      var h = fdhCardFig.apply(this, arguments);
+      try {
+        if (c && c.key === 'net') {
+          var due = dueOf(c.fixedDue);
+          if (!due && VIEW === 'expenses' && typeof EXP !== 'undefined' && EXP && EXP.isCurrent) due = dueOf(EXP.fixedDue);
+          // inside the label block: the head cards are a grid that differs by screen size, the label cell is always there
+          if (due) h = /<div class="fdd-lbl">[^<]*<\/div>/.test(h) ? h.replace(/(<div class="fdd-lbl">[^<]*)(<\/div>)/, function (m, a, z) { return a + dueLine(c.v, due, true) + z; })
+                                                                : h.replace(/<\/div>$/, dueLine(c.v, due, true) + '</div>');
+        }
+      } catch (e) {}
+      return h;
+    };
+    fdhCard.__fig = 1;
+  }
+  // Profitability's big figure (night-books .nt-pl) and the phone Expenses line (.nt-line)
+  AFTER_PAINT.push(function figDueAfter() {
+    var v = el('view'); if (!v) return;
+    if (VIEW === 'profit' && typeof PNL !== 'undefined' && PNL && PNL.months) {
+      var due = dueOf(PNL.fixedDue), hd = v.querySelector('.nt-pl .nt-pl-h'), cur = null;
+      PNL.months.forEach(function (m) { if (m.current || m.month === PNL.thisMonth) cur = m; });
+      if (due && hd && cur && !v.querySelector('.nt-pl .fig-due')) hd.insertAdjacentHTML('afterend', dueLine(cur.net, due, true));
+    }
+    if (VIEW === 'expenses' && typeof EXP !== 'undefined' && EXP && EXP.isCurrent && typeof EXP.net === 'number') {
+      var d2 = dueOf(EXP.fixedDue), ln = v.querySelector('.nt-line');
+      if (d2 && ln && !ln.querySelector('.fig-due')) ln.insertAdjacentHTML('beforeend', dueLine(EXP.net, d2, true));
+    }
+  });
+
+  // =================================================================== (2) Bangla: the numeral rule, the last English
+  /** numbers the English calls money keep Latin digits in the Bangla (a pattern's capture became ১,৪৫০ in "due 1,450") */
+  var NUM = '(\\d{1,3}(?:,\\d{2,3})+(?:\\.\\d+)?|\\d+(?:\\.\\d+)?)';
+  var RX_MB = new RegExp('\\b(?:due|owes?|owed|balance|refund(?:ed)?|price|cost|paid|deposit|advance|collect(?:ed)?|COD|cash on delivery|on delivery|BDT|Tk|taka)\\b[\\s:\u2014\u2013-]*\u09f3?\\s?' + NUM, 'gi');
+  var RX_MA = new RegExp(NUM + '(?=\\s?(?:due|to collect|owed|outstanding|advance|paid|still to pay|taka)\\b)', 'gi');
+  var RX_CNT = /^\s?(products?|units?|items?|invoices?|days?|lines?|orders?|customers?|payments?|times|pcs|pieces|rows?|people|months?|weeks?|hours?|minutes?|parcels?|%)/i;
+  function bnKeepLatin(en, out) {
+    if (!/[০-৯]/.test(out) || !/\d/.test(en)) return out;
+    var nums = {}, m;
+    var take = function (n, end) { if (!RX_CNT.test(en.slice(end))) nums[n] = 1; };
+    RX_MB.lastIndex = 0; while ((m = RX_MB.exec(en))) take(m[1], m.index + m[0].length);
+    RX_MA.lastIndex = 0; while ((m = RX_MA.exec(en))) take(m[1], m.index + m[0].length);
+    for (var n in nums) {
+      var b = toBn(n); if (b === n) continue;
+      out = out.split(b).join(n);
+    }
+    return out;
+  }
+  window.bnKeepLatin = bnKeepLatin;
+  if (typeof trText === 'function' && !trText.__fig) {
+    var trTextFig = trText;
+    trText = function (t, depth) {
+      var r = trTextFig.apply(this, arguments);
+      try { if (r !== null && isBn() && typeof t === 'string') r = bnKeepLatin(t, r); } catch (e) {}
+      return r;
+    };
+    trText.__fig = 1;
+  }
+
+  /** text the translator never touches (data-noi18n lines that mix a name with screen words): dates and counts by the rule */
+  var DATE_SEG = /^\s*\d{1,2} (Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\.?(,? \d{4})?(,? \d{1,2}:\d{2}(\s?[AaPp]\.?[Mm]\.?)?)?\s*$/;
+  var CNT = /(^|[^\w৳.,\-\/#:+–\d])(\d{1,3}(?:,\d{2,3})+|\d+)(?=\s?(?:টি|টা|জন|দিন|বার|ইউনিট|মাস|সপ্তাহ|ঘণ্টা|মিনিট|বছর|পিস|লাইন|সারি))/g;
+  function fixLeaf(n) {
+    var s = n.nodeValue; if (!s || !/\d/.test(s)) return;
+    var o = s;
+    if (o.indexOf(' · ') >= 0) {
+      o = o.split(' · ').map(function (p) { return DATE_SEG.test(p) && typeof window.bnFixText === 'function' ? window.bnFixText(p) : p; }).join(' · ');
+    } else if (DATE_SEG.test(o) && typeof window.bnFixText === 'function') o = window.bnFixText(o);
+    if (/[ঀ-৿]/.test(o) && !/[A-Za-z]/.test(o)) o = o.replace(CNT, function (mm, a, d) { return a + toBn(d); });
+    if (o !== s) n.nodeValue = o;
+  }
+  var leafQ = 0;
+  function fixLeaves() {
+    leafQ = 0; if (!isBn()) return;
+    var roots = [el('view')].concat([].slice.call(document.querySelectorAll('.dlg-back, .fd19-dr, .fd-drawer')));
+    roots.forEach(function (root) {
+      if (!root) return;
+      [].forEach.call(root.querySelectorAll('[data-noi18n]'), function (e) {
+        if (e.closest('input, textarea, [contenteditable], .door_code, [data-latin]')) return;
+        var w = document.createTreeWalker(e, NodeFilter.SHOW_TEXT), x;
+        while ((x = w.nextNode())) fixLeaf(x);
+      });
+    });
+  }
+  var leafSoon = function () { if (!leafQ && isBn()) leafQ = (window.requestAnimationFrame || setTimeout)(fixLeaves); };
+  try { AFTER_PAINT.push(leafSoon); } catch (e) {}
+  try { new MutationObserver(function () { leafSoon(); }).observe(document.body, { childList: true, subtree: true }); } catch (e) {}
+
+  try {
+    var W = {
+      // glossary §2: the customer's due is বাকি (the invoice page said "এখনও পাওনা"); the figure called Revenue is sales
+      'Still owed': 'বাকি', 'Revenue': 'বিক্রি', 'Revenue this month': 'এ মাসের বিক্রি',
+      'If this month\u2019s fixed costs are paid:': 'এ মাসের স্থায়ী খরচ দিলে:', 'If this month\u2019s fixed costs are paid': 'এ মাসের স্থায়ী খরচ দিলে',
+      'Which fixed costs are not paid yet': 'কোন স্থায়ী খরচ এখনো দেওয়া হয়নি', 'Open Expected monthly': 'প্রতি মাসে যা দিতে হয় — খুলুন', 'Still to pay': 'দেওয়া বাকি',
+      'Net profit now': 'এখনকার নিট লাভ', 'if they are paid': 'এগুলো দিলে',
+      'Write a note\u2026': 'একটা নোট লিখুন\u2026', 'Attach a photo or PDF': 'ছবি বা PDF যোগ করুন',
+      'Already booked in the Steadfast panel? With the number, the due clears by itself when the parcel is delivered.': 'Steadfast প্যানেলে আগেই বুক করেছেন? নম্বরটা দিলে পার্সেল ডেলিভারি হলেই বাকি নিজে থেকে মিটে যাবে।',
+      '\u2014 no consignment number on this invoice yet. With the number, the due clears by itself when the parcel is delivered.': '\u2014 এই ইনভয়েসে এখনো কনসাইনমেন্ট নম্বর নেই। নম্বরটা দিলে পার্সেল ডেলিভারি হলেই বাকি নিজে থেকে মিটে যাবে।',
+      'Add consignment number': 'কনসাইনমেন্ট নম্বর দিন',
+      'Invoice or shipment no. \u2014 leave empty for a local buy': 'ইনভয়েস বা শিপমেন্ট নম্বর \u2014 লোকাল কেনায় খালি রাখুন',
+      'Received this month': 'এ মাসে পাওয়া',
+      // the four cards on top of each screen (handlers/fddash.js erpFdHead)
+      'Campaigns this month': 'এ মাসের ক্যাম্পেইন', 'Messages sent': 'পাঠানো মেসেজ', 'New leads': 'নতুন লিড',
+      'Failed prints this month': 'এ মাসে নষ্ট প্রিন্ট', 'Printed this month': 'এ মাসে প্রিন্ট হয়েছে', 'Jobs on the printers': 'প্রিন্টারে চলা কাজ',
+      'Handed back this month': 'এ মাসে ফেরত দেওয়া', 'Repair charges this month': 'এ মাসের রিপেয়ার চার্জ', 'Repaired, to collect': 'রিপেয়ার শেষ, নিতে আসেননি',
+      'Quotations this month': 'এ মাসের কোটেশন', 'Quoted this month': 'এ মাসে কোটেশনের দাম', 'Finished and sent': 'শেষ ও পাঠানো',
+      'Website orders this month': 'এ মাসের ওয়েবসাইট অর্ডার', 'Waiting to be entered': 'এন্ট্রির অপেক্ষায়', 'Their value': 'এগুলোর দাম',
+      'Ordered online this month': 'এ মাসে অনলাইনে অর্ডার',
+      // Settings > Lists, Platform, Inbox, the map
+      'Product groups, e.g. Filaments': 'প্রোডাক্টের গ্রুপ, যেমন ফিলামেন্ট', 'Manufacturers you stock': 'যে ব্র্যান্ডের মাল রাখেন',
+      'Material or model, e.g. PLA+': 'ম্যাটেরিয়াল বা মডেল, যেমন PLA+', 'Used in product names and SKUs': 'প্রোডাক্টের নাম ও SKU-তে ব্যবহার হয়',
+      'Company copies': 'কোম্পানির কপি', 'Not set': 'সেট করা হয়নি', 'Email': 'ই-মেইল',
+      'No chats yet \u2014 connect a channel on the': 'এখনো কোনো চ্যাট নেই \u2014 চ্যানেল যুক্ত করুন এখানে:',
+      'Tree': 'গাছের মতো', '2D map': '2D ম্যাপ', '3D view': '3D ভিউ',
+      'Audit ready, traceable': 'অডিটের জন্য তৈরি, সব খুঁজে পাওয়া যায়', 'Controls keep the system safe': 'নিয়ন্ত্রণে সিস্টেম নিরাপদ',
+      'Costs linked to shipments': 'খরচ শিপমেন্টের সাথে যুক্ত', 'Demand sets reorders': 'চাহিদা থেকে রিঅর্ডার', 'Funding mapped to sales': 'ফান্ডিং বিক্রির সাথে মেলানো',
+      'Landed cost feeds ROI': 'আনার খরচ থেকে ROI', 'Orders create demand': 'অর্ডার থেকে চাহিদা', 'Roles decide who sees figures': 'রোল ঠিক করে কে হিসাব দেখবেন',
+      'Shipment updates inventory': 'শিপমেন্টে স্টক বাড়ে', 'Stock sold to customers': 'কাস্টমারের কাছে বিক্রি হওয়া স্টক',
+      'See each payment': 'প্রতিটি পেমেন্ট দেখুন',
+      // the dashboard cards' "how it is worked out" (fddCalc; rows from handlers/fddash.js calc)
+      'how it is worked out': 'কীভাবে হিসাব করা হয়', 'the whole business': 'পুরো ব্যবসা',
+      '+ Delivery charged to customers': '+ কাস্টমারের কাছ থেকে নেওয়া ডেলিভারি চার্জ', '+ Courier paid more than expected': '+ কুরিয়ার যা ধরা ছিল তার চেয়ে বেশি দিয়েছে',
+      '− Courier paid less (written off)': '− কুরিয়ার কম দিয়েছে (বাদ দেওয়া)', '− Courier delivery + COD fees': '− কুরিয়ারের ডেলিভারি + COD ফি',
+      '+ Repairs income − parts': '+ রিপেয়ারের আয় − পার্টস', '+ Pre-order deposits kept on cancelling': '+ প্রি-অর্ডার বাতিলে রেখে দেওয়া অগ্রিম',
+      '− Expenses': '− খরচ', '+ Share of joint stock profit': '+ জয়েন্ট স্টকের লাভের ভাগ', '= Net profit (same as Profit & loss)': '= নিট লাভ (লাভ-ক্ষতির সাথে একই)',
+      // Settings > Alerts
+      'Tell me when…': 'কখন জানাব…', 'A due turns 7, 30 or 60 days old': 'কোনো বাকি ৭, ৩০ বা ৬০ দিন পুরোনো হলে',
+      'A due reduced or increased by hand': 'কেউ হাতে বাকি কমালে বা বাড়ালে', 'An invoice cancelled or deleted': 'কোনো ইনভয়েস বাতিল বা মুছে ফেলা হলে',
+      'A sale below cost': 'কেনা দামের নিচে বিক্রি হলে', 'A sale with a big discount': 'বড় ডিসকাউন্টে বিক্রি হলে', '% of the goods or more': '% বা তার বেশি ডিসকাউন্ট',
+      'A money account found short when counted': 'গোনার সময় কোনো অ্যাকাউন্টে টাকা কম পাওয়া গেলে', 'taka or more short': 'টাকা বা তার বেশি কম',
+      'A parcel delivered but Steadfast has not paid it out': 'পার্সেল ডেলিভারি হয়েছে কিন্তু Steadfast টাকা দেয়নি', 'days after delivery': 'দিন পর (ডেলিভারির পর)',
+      'A parcel came back but its goods are not back on the shelf': 'পার্সেল ফেরত এসেছে কিন্তু মাল আবার স্টকে তোলা হয়নি',
+      'Stock written off (damage, loss, a count that came out short)': 'স্টক বাদ দেওয়া হলে (নষ্ট, হারানো, গোনায় কম)', 'taka or more': 'টাকা বা তার বেশি',
+      'A website order not entered as an invoice': 'ওয়েবসাইটের অর্ডার ইনভয়েসে তোলা হয়নি', 'A cash-on-delivery sale still not collected': 'ক্যাশ অন ডেলিভারির টাকা এখনো আদায় হয়নি',
+      'days after the sale': 'দিন পর (বিক্রির পর)',
+      // Settings > Security (backups, audit log, recovery)
+      'Link for': 'লিংক:', 'New link for': 'নতুন লিংক:', 'Events today': 'আজকের ঘটনা', 'Settings & access': 'সেটিংস ও অ্যাক্সেস', 'Struck out or undone': 'কেটে দেওয়া বা ফিরিয়ে নেওয়া',
+      'Audit log': 'অডিট লগ',
+      'Who opened the app and who changed what, newest first. Kept for 90 days. Looking at a screen is not recorded - only sign-ins and changes.': 'কে অ্যাপ খুলেছেন আর কে কী বদলেছেন, নতুনগুলো আগে। ৯০ দিন রাখা হয়। শুধু দেখা লেখা হয় না - শুধু সাইন-ইন আর পরিবর্তন।',
+      'Set a company’s Inbox plan (platform admin)': 'কোম্পানির ইনবক্স প্ল্যান ঠিক করা হয়েছে (প্ল্যাটফর্ম অ্যাডমিন)', 'Access link': 'অ্যাক্সেস লিংক', 'Browser': 'ব্রাউজার',
+      'Switched Inbox features': 'ইনবক্সের ফিচার চালু বা বন্ধ করা হয়েছে', 'Changed the saved replies': 'সেভ করা উত্তর বদলানো হয়েছে', 'None yet': 'এখনো নেই',
+      'Last copy': 'শেষ কপি', 'Copies kept': 'রাখা কপি', 'Missing': 'নেই', 'Nightly timer': 'রাতের টাইমার', 'Google Drive copy': 'Google Drive-এ কপি',
+      'A full copy of the business every night at 3 AM and whenever you press Back up now; the newest 14 are kept.': 'প্রতি রাত ৩টায় আর যখনই "এখনই ব্যাকআপ" চাপবেন, পুরো ব্যবসার একটা কপি হয়; নতুন ১৪টি রাখা হয়।',
+      'The nightly copy did not run in the last 36 hours': 'গত ৩৬ ঘণ্টায় রাতের কপি চলেনি', 'No copy kept yet.': 'এখনো কোনো কপি রাখা হয়নি।',
+      'Warnings, explained': 'সতর্কতা, বুঝিয়ে বলা', 'Going back is not undo.': 'আগের কপিতে ফেরা মানে আনডু নয়।',
+      '“Go back to this copy” puts the whole business back as it was in that copy. A single mistake is corrected the usual way (struck out with a reason).': '“এই কপিতে ফিরে যান” পুরো ব্যবসাকে সেই কপির অবস্থায় ফিরিয়ে দেয়। একটা ভুল ঠিক করতে সাধারণ নিয়মই চলে (কারণসহ কেটে দেওয়া)।',
+      'Today is copied first.': 'আগে আজকেরটা কপি করা হয়।', 'Going back can itself be undone from the copy made just before it.': 'ফিরে যাওয়াটাও ঠিক আগের কপি থেকে উল্টানো যায়।',
+      'Users and sign-in are never changed by it.': 'এতে ইউজার আর সাইন-ইন কখনো বদলায় না।', 'Nobody loses access because of a restore.': 'রিস্টোরের কারণে কেউ অ্যাক্সেস হারান না।',
+      'A copy holds everything.': 'একটা কপিতে সব থাকে।', 'Costs, capital and customer phones are inside; only the owner sees this card.': 'খরচ, ক্যাপিটাল আর কাস্টমারের ফোন এর ভেতরে থাকে; এই কার্ড শুধু মালিক দেখেন।',
+      'Invite another e-mail of yours (another provider) as Owner': 'আপনার আরেকটা ই-মেইল (অন্য কোম্পানির) মালিক হিসেবে যোগ করুন',
+      'An app on your phone asks for a code at sign-in': 'সাইন-ইনের সময় ফোনের একটা অ্যাপ কোড চাইবে', 'Opens the ERP as owner if every e-mail fails': 'সব ই-মেইল কাজ না করলে মালিক হিসেবে ERP খোলে',
+      'Your backups also outside the ERP': 'আপনার ব্যাকআপ ERP-এর বাইরেও',
+      'The last resort is your Supabase account (where the ERP lives): give it its own 2-step sign-in too.': 'শেষ ভরসা আপনার Supabase অ্যাকাউন্ট (যেখানে ERP চলে): সেখানেও ২-ধাপে সাইন-ইন চালু রাখুন।',
+      '= Gross profit': '= মোট লাভ', '= Revenue': '= বিক্রি', 'Sales after discounts': 'ডিসকাউন্টের পরে বিক্রি', '− Goods returned': '− ফেরত আসা মাল'
+    };
+    for (var k in W) I18N_BN[k] = W[k];
+    // in front: the more exact pattern must win over '^Paid now: (.+?)$' (the confirm sheet showed "(Cash)" in English)
+    I18N_PAT.unshift(['^Paid now: (.+?) \\((.+?)\\)$', 'এখন পরিশোধ: $1 ($2)']);
+    I18N_PAT.push(
+      ['^\u09f3([\\d,.]+) due$', '\u09f3$1 বাকি'], ['^([\\d,.]+) due$', '$1 বাকি'],
+      ['^(\\d+) item\\(s\\)$', '$1টি'], ['^(\\d+) payment\\(s\\)$', '$1টি পেমেন্ট'], ['^- (.+)$', '- $1'], ['^: (.+)$', ': $1'],
+      ['^(\\d+) checks? failing$', '$1টি চেক ফেল'], ['^(\\d+) changes? logged$', '$1টি পরিবর্তন লেখা আছে'], ['^(\\d+) shipment cost rows?$', 'শিপমেন্ট খরচের $1টি সারি'],
+      ['^(\\d+) products? to reorder$', '$1টি প্রোডাক্ট রিঅর্ডার করতে হবে'], ['^(\\d+) funding rows?$', 'ফান্ডিংয়ের $1টি সারি'], ['^(\\d+) shipments? received$', '$1টি শিপমেন্ট এসেছে'],
+      ['^(\\d+) invoice lines?$', '$1টি ইনভয়েস লাইন'], ['^(\\d+) abilities off for you$', 'আপনার জন্য $1টি সুবিধা বন্ধ'], ['^(\\d+) lots? received$', '$1টি লট এসেছে'],
+      ['^(\\d+) products? linked$', '$1টি প্রোডাক্ট লিংক করা'],
+      ['^\u09f3([\\d,.]+) capital$', '\u09f3$1 ক্যাপিটাল'], ['^\u09f3([\\d,.]+) customer dues$', '\u09f3$1 কাস্টমারের বাকি'], ['^\u09f3([\\d,.]+) still due$', '\u09f3$1 এখনো বাকি'],
+      ['^\u09f3([\\d,.]+) invoiced$', '\u09f3$1 ইনভয়েস হয়েছে'], ['^\u09f3([\\d,.]+) to place$', '\u09f3$1 অ্যাকাউন্টে রাখতে হবে'],
+      ['^\\(next (.+)\\)$', '(পরের বার $1)'], ['^next (.+)$', 'পরের বার $1'],
+      ['^(.+) to date$', '$1 (আজ পর্যন্ত)'], ['^(\\d+) d$', '$1 দিন'], ['^last (\\d.+)$', 'শেষ $1'], ['^BDT ([\\d,.]+)$', '৳$1'], ['^BDT [−-]([\\d,.]+)$', '−৳$1']
+    );
+  } catch (e) {}
+
+  // =================================================================== (3) New invoice: the date as people read it
+  function dateLabel(inp) {
+    var w = inp.parentNode, lab = w.querySelector('.fig-dl'), v = inp.value;
+    if (!lab) return;
+    if (!v || !/^\d{4}-\d{2}-\d{2}$/.test(v)) { w.classList.remove('on'); return; }
+    var d = new Date(v + 'T00:00:00');
+    lab.textContent = typeof window.bnDate === 'function' ? window.bnDate(v)
+      : d.getDate() + ' ' + ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][d.getMonth()] + ' ' + d.getFullYear();
+    w.classList.add('on');
+  }
+  AFTER_PAINT.push(function figDate() {
+    if (VIEW !== 'invoice') return;
+    var inp = document.getElementById('cdate'); if (!inp) return;
+    if (inp.parentNode.classList.contains('fig-dw')) { dateLabel(inp); return; }
+    var w = document.createElement('span'); w.className = 'fig-dw';
+    inp.parentNode.insertBefore(w, inp); w.appendChild(inp);
+    var lab = document.createElement('span'); lab.className = 'fig-dl'; lab.setAttribute('data-noi18n', '1'); lab.setAttribute('aria-hidden', 'true');
+    w.appendChild(lab);
+    dateLabel(inp);
+  });
+  var onDate = function (e) { var t = e.target; if (t && t.id === 'cdate' && t.parentNode && t.parentNode.classList.contains('fig-dw')) dateLabel(t); };
+  document.addEventListener('input', onDate);
+  document.addEventListener('change', onDate);
+
+  // =================================================================== (4) Money
+  AFTER_PAINT.push(function figMoney() {
+    if (VIEW !== 'cash') return;
+    var v = el('view'); if (!v) return;
+    // one "Move money": the head button (it opens the same form) - the second one under the account cards goes
+    if (v.querySelector('[data-f21proxy*="transfer"]')) [].forEach.call(v.querySelectorAll('#cash_tot [data-cform="transfer"], .cash_tot [data-cform="transfer"]'), function (b) { b.style.display = 'none'; b.setAttribute('aria-hidden', 'true'); b.tabIndex = -1; });
+    // the waiting list's fold: the strip above already says how many and holds the button; the fold only opens the list
+    var s = v.querySelector('.dm-waitin > summary > span:first-child');
+    if (s && !s.hasAttribute('data-fig')) { s.setAttribute('data-fig', '1'); s.textContent = L('See each payment', 'প্রতিটি পেমেন্ট দেখুন'); }
+  });
+})();
+</script>
+<!-- crit3:flow -->
+<!-- crit3-flow (10 Nov 2026): third Impeccable critique, flow findings. Invoice record page: who + what is owed first, then
+     ONE button chosen by the invoice's state (COD out = "Delivered - money came", due = "Receive payment", paid = send /
+     PDF), everything else under More (Cancel last, behind its own dialog); the Steadfast "add consignment number" lives in
+     the Parcel card. Dashboard: one source per figure (no Analytics/Profitability teaser cards repeating the tiles, no
+     second gross-margin tile), zero tiles hidden unless the person placed them in Customise, phone ends with Recent sales +
+     "More reports"; the revenue tooltip shows on hover / tap only. Invoice search: a highlighted row, Up/Down, Enter adds
+     it, Esc closes (listbox roles). Mac tools + Brand desk: the platform admin only (menu, phone menu, Apps, search,
+     Navigator; the screens bounce). Small ones: one name "Sales", the screen's own help is the Help button, Profitability
+     tabs without violet, row WhatsApp ghost + asks first, "No parcels yet" for a buying customer, readable disabled
+     buttons, the toast above a save bar that grows, nowrap pills, a warning before lowering the next invoice number, the
+     phone invoice line in two rows with the discount folded, sentence-case labels. -->
+<style>
+/* ---------- 1. invoice record page */
+#view .pagehead.fl-head { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:14px 24px; align-items:start; }
+#view .pagehead.fl-head > .fl-id { min-width:0; }
+#view .pagehead.fl-head > .fl-id h2 { margin:0; overflow-wrap:anywhere; }
+#view .fl-who { display:flex; flex-wrap:wrap; align-items:center; gap:4px 10px; margin-top:6px; font-size:15px; }
+#view .fl-who .linkbtn { font-size:15px; font-weight:700; }
+#view .fl-who a { color:inherit; }
+#view .fl-who .fl-dot { color:var(--fd-text-3, var(--muted, #7A7E8A)); }
+#view .fl-id .meta { margin-top:4px; }
+#view .fl-fig { text-align:right; min-width:0; }
+#view .fl-fig .fl-fl { font-size:13px; font-weight:600; color:var(--fd-text-2, var(--ink-2, #4A4D57)); }
+#view .fl-fig .fl-fn { font-size:30px; font-weight:800; letter-spacing:-.02em; line-height:1.15; font-variant-numeric:tabular-nums; white-space:nowrap; }
+#view .fl-fig[data-state="due"] .fl-fn, #view .fl-fig[data-state="cod"] .fl-fn { color:var(--fd-negative-text, var(--critical, #DC2626)); }
+#view .fl-fig[data-state="paid"] .fl-fn { color:var(--fd-text, var(--ink, #17181C)); }
+#view .fl-fig[data-state="cancel"] .fl-fn { color:var(--fd-text-3, #7A7E8A); text-decoration:line-through; }
+#view .fl-fig .fl-fs { margin-top:4px; font-size:13px; color:var(--fd-text-2, var(--ink-2, #4A4D57)); }
+#view .pagehead.fl-head > .acts { grid-column:1 / -1; justify-content:flex-start; margin:0; }
+#view .pagehead.fl-head > .acts > .nt-ab { justify-content:flex-start; }
+#view .fl-parcel-note { margin-top:12px; padding-top:12px; border-top:1px solid var(--fd-border, var(--ring, #E6E7EB)); display:flex; flex-wrap:wrap; gap:10px; align-items:center; }
+#view .fl-ab [data-invrisk], #view .nt-ab-menu [data-invrisk] { display:none !important; }
+#view .fl-parcel-note p { margin:0; flex:1 1 220px; font-size:14px; color:var(--fd-text-2, var(--ink-2, #4A4D57)); }
+@media (max-width:640px) {
+  #view .pagehead.fl-head { grid-template-columns:minmax(0,1fr); gap:12px; }
+  #view .fl-fig { text-align:left; padding:12px 14px; border-radius:16px; background:var(--fd-surface-2, var(--surface-2, #F3F4F6)); }
+  #view .fl-fig .fl-fn { font-size:28px; }
+  #view .pagehead.fl-head > .acts > .nt-ab { width:100%; }
+  #view .pagehead.fl-head > .acts > .nt-ab > .btn.primary { flex:1 1 auto; min-height:48px; }
+}
+
+/* ---------- 2. dashboard: tooltip on hover / tap only; the "More reports" row */
+#view .fdrev-plot:not(.fl-tip) .fdrev-tip { visibility:hidden; }
+#view .fl-morerep { display:flex; flex-wrap:wrap; align-items:center; gap:10px; margin:16px 0 8px; }
+#view .fl-morerep > span { font-size:14px; font-weight:600; color:var(--fd-text-2, var(--ink-2, #4A4D57)); margin-right:4px; }
+#view .fl-morerep .btn { min-height:40px; }
+
+/* ---------- 3. invoice search: the highlighted row */
+#iresults .fl-hl, #iresults .famc button.fl-hl { outline:2px solid var(--fd-text, var(--ink, #17181C)); outline-offset:-2px; background:var(--fd-surface-2, var(--surface-2, #F3F4F6)); }
+#iresults.fl-closed { display:none; }
+
+/* ---------- 4. Mac tools + Brand desk: the platform admin only */
+html.fl-noprov [data-view="opentools"], html.fl-noprov [data-view="branddesk"], html.fl-noprov [data-go="opentools"], html.fl-noprov [data-go="branddesk"],
+html.fl-noprov [data-oview="opentools"], html.fl-noprov [data-oview="branddesk"], html.fl-noprov [data-app="opentools"], html.fl-noprov [data-app="branddesk"],
+html.fl-noprov [data-apopen="opentools"], html.fl-noprov [data-apopen="branddesk"], html.fl-noprov [data-fl-provonly] { display:none !important; }
+
+/* ---------- 5. small ones */
+/* the screen's own help: one "Help" button (the "i" stays on figure tiles) */
+#view .fdd-title > .fdd-ti.fl-help { width:auto; min-width:0; height:32px; padding:0 12px; border-radius:999px; font-size:13px; font-weight:600; line-height:32px;
+  background:var(--fd-surface-2, var(--surface-2, #F3F4F6)); color:var(--fd-text, var(--ink, #17181C)); vertical-align:middle; margin-left:8px; letter-spacing:0; }
+#view .fl-hidedup { display:none !important; }
+/* Profitability / Analytics tabs: the selected one in ink, never violet */
+.fd43-tabs button.on, .fd43-tabs button.on svg { color:var(--fd-text, var(--ink, #17181C)) !important; stroke:currentColor; }
+.fd43-tabs button.on { font-weight:700; }
+/* a disabled button reads (text >= 3:1); the reason stays in the bar */
+html[data-skin="fd"] .btn:disabled, html[data-skin="fd"] .btn[disabled], html[data-skin="fd"] .btn.primary:disabled {
+  opacity:1 !important; background:var(--fd-surface-3, #E7E8EC) !important; color:var(--fd-text-2, #4A4D57) !important; border-color:transparent !important; box-shadow:none !important; cursor:not-allowed; }
+html[data-skin="fd"]:root #saveInv:disabled, html[data-skin="fd"]:root #c3save:disabled, html[data-skin="fd"]:root .fd19-btn[disabled] {
+  opacity:1 !important; filter:none !important; background:var(--fd-surface-3, #E7E8EC) !important; color:var(--fd-text-2, #4A4D57) !important; box-shadow:none !important; }
+html[data-skin="fd"][data-theme="dark"]:root #saveInv:disabled, html[data-skin="fd"][data-theme="dark"]:root #c3save:disabled, html[data-skin="fd"][data-theme="dark"]:root .fd19-btn[disabled],
+html[data-skin="fd"][data-theme="dark"] .btn:disabled, html[data-skin="fd"][data-theme="dark"] .btn[disabled], html[data-skin="fd"][data-theme="dark"] .btn.primary:disabled {
+  background:var(--fd-surface-2, #23262C) !important; color:#B4B8C2 !important; }
+/* joint stock and other phone pills stay on one line */
+body[data-fdview="joint"] #view .pill, body[data-fdview="joint"] #view [class*="-pill"], #view .pill.ok, #view .pill.low, #view .pill.out { white-space:nowrap; }
+/* phone card labels in sentence case (English) */
+html[lang="en"] #view table.m-cards > tbody > tr > td::before { text-transform:none !important; letter-spacing:0 !important; }
+/* phone invoice line: name + line total + remove on one row, price + quantity on the next, discount folded */
+@media (max-width:640px) {
+  html #view .inv2 tbody > tr.sell-line { display:grid !important; grid-template-columns:minmax(0,1fr) auto auto; gap:8px 10px; align-items:center; padding:12px !important; }
+  html #view .inv2 tbody > tr.sell-line > td { padding:0 !important; margin:0 !important; border:0 !important; min-width:0 !important; width:auto !important; }
+  html #view .inv2 tbody > tr.sell-line > td:nth-child(1) { grid-column:1; grid-row:1; display:block !important; line-height:1.3; padding:0 !important; }
+  html #view .inv2 tbody > tr.sell-line > td:nth-child(5) { grid-column:2; grid-row:1; display:block !important; font-weight:700; font-size:16px; font-variant-numeric:tabular-nums; text-align:right; }
+  html #view .inv2 tbody > tr.sell-line > td:nth-child(5)::before { content:none !important; display:none !important; }
+  html #view .inv2 tbody > tr.sell-line > td.sell-deltd { grid-column:3; grid-row:1; position:static !important; display:block !important; }
+  html[data-look] #view .inv2 tbody > tr.sell-line > td.nm { border:0 !important; padding:0 !important; }
+  html #view .inv2 tbody > tr.sell-line > td:nth-child(2) { grid-column:1 / -1; grid-row:2; justify-self:start; display:flex !important; align-items:center; justify-content:flex-start !important; flex-wrap:nowrap !important; gap:8px; }
+  html #view .inv2 tbody > tr.sell-line > td:nth-child(2)::before { margin:0 !important; }
+  html #view .inv2 tbody > tr.sell-line > td:nth-child(2) input { width:88px !important; min-width:0 !important; padding-left:8px !important; padding-right:8px !important; min-height:40px; }
+  html #view .inv2 tbody > tr.sell-line > td:nth-child(3) { grid-column:1 / -1; grid-row:2; justify-self:end; display:flex !important; align-items:center; justify-content:flex-end !important; flex-wrap:nowrap !important; }
+  html #view .inv2 tbody > tr.sell-line > td:nth-child(3)::before { content:none !important; display:none !important; }
+  html #view .inv2 tbody > tr.sell-line > td:nth-child(3) .qst { display:inline-flex; align-items:center; gap:4px; }
+  html #view .inv2 tbody > tr.sell-line > td:nth-child(3) .qst button { min-width:40px; min-height:40px; }
+  html #view .inv2 tbody > tr.sell-line > td:nth-child(3) .qst input { width:46px !important; min-width:0 !important; min-height:40px; text-align:center; }
+  html #view .inv2 tbody > tr.sell-line > td:nth-child(4) { grid-column:1 / -1; grid-row:3; display:flex !important; align-items:center; justify-content:flex-start !important; flex-wrap:nowrap !important; gap:8px; }
+  html #view .inv2 tbody > tr.sell-line > td:nth-child(4)::before { margin:0 !important; }
+  html #view .inv2 tbody > tr.sell-line > td:nth-child(4) input { width:88px !important; min-width:0 !important; min-height:40px; }
+  html #view .inv2 tbody > tr.sell-line.fl-nodisc > td:nth-child(4) { display:none !important; }
+  html #view .inv2 tbody > tr.sell-line > td:nth-child(n+7) { grid-column:1 / -1; }
+  html #view .inv2 tbody > tr.sell-line .fl-dbtn { display:inline-flex; align-items:center; min-height:40px; padding:0 2px; border:0; background:none; font:inherit; font-size:13.5px; font-weight:600;
+    color:var(--fd-accent-text, var(--accent-2, #5748E6)); cursor:pointer; }
+}
+@media (min-width:641px) { #view tr.sell-line .fl-dbtn { display:none; } }
+</style>
+<script>
+(function () {
+  var LL = function (en, bn) { return typeof LANG !== 'undefined' && LANG === 'bn' ? bn : en; };
+  var E = function (s) { return typeof esc === 'function' ? esc(s) : String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); };
+  var phone = function () { return !!(window.matchMedia && window.matchMedia('(max-width:640px)').matches); };
+  var money = function (v) { var cur = (typeof OPT !== 'undefined' && OPT && OPT.currency) || 'BDT'; return typeof tk === 'function' ? tk(v, { cur: cur }) : String(v); };
+  var bnNow = function () { return typeof LANG !== 'undefined' && LANG === 'bn'; };
+
+  try {
+    var BN = {
+      'Delivered — money came': 'ডেলিভারি হয়েছে — টাকা এসেছে', 'Delivered — courier holds the money': 'ডেলিভারি হয়েছে — টাকা কুরিয়ারের কাছে',
+      'Still to collect': 'এখনও পাওনা', 'Paid': 'পেমেন্ট হয়েছে', 'Cancelled': 'বাতিল', 'Paid in full': 'পুরো টাকা পাওয়া গেছে',
+      'More reports': 'আরও রিপোর্ট', 'Analytics': 'অ্যানালিটিক্স', 'Profitability': 'লাভ-ক্ষতি', 'Sales': 'বিক্রি', 'Help': 'সাহায্য',
+      'Add consignment number': 'কনসাইনমেন্ট নম্বর দিন', 'Print parcel label': 'পার্সেল লেবেল প্রিন্ট করুন', '+ Discount': '+ ছাড়',
+      'The rider brought the cash to the shop (Cash).': 'রাইডার টাকা দোকানে দিয়ে গেছেন (ক্যাশ)।', 'The courier holds the cash until it pays out.': 'পেআউট পর্যন্ত টাকা কুরিয়ারের কাছে থাকবে।'
+    };
+    for (var k in BN) if (!I18N_BN[k]) I18N_BN[k] = BN[k];
+  } catch (e) {}
+
+  /* ============================================================ 4. Mac tools + Brand desk: the platform admin only */
+  var PROV_ONLY = { opentools: 1, branddesk: 1 };
+  function provMark() {
+    var root = document.documentElement;
+    var off = typeof ME !== 'undefined' && !!ME && !ME.platform;
+    if (root.classList.contains('fl-noprov') !== off) root.classList.toggle('fl-noprov', off);
+    if (!off) return;
+    // anything else that opens those screens (Apps tiles, Navigator nodes, search rows)
+    [].forEach.call(document.querySelectorAll('[data-fd45go], [data-nvgo], [data-gs], [data-apgo], [data-mmgo], [data-node]'), function (n) {
+      var a = (n.getAttribute('data-fd45go') || n.getAttribute('data-nvgo') || n.getAttribute('data-gs') || n.getAttribute('data-apgo') || n.getAttribute('data-mmgo') || n.getAttribute('data-node') || '');
+      if (PROV_ONLY[a] || /(^|[:\/])(opentools|branddesk)$/.test(a)) n.setAttribute('data-fl-provonly', '1');
+    });
+  }
+  var LAST_BOUNCE = 0;
+  if (typeof go === 'function') {
+    var goFl = go;
+    go = function (v) {
+      if (PROV_ONLY[v] && typeof ME !== 'undefined' && ME && !ME.platform) {
+        if (Date.now() - LAST_BOUNCE > 3000) { LAST_BOUNCE = Date.now(); try { toast(E(LL('That screen is only for the people who run this ERP service.', 'এই স্ক্রিনটা শুধু এই ERP সার্ভিস যাঁরা চালান তাঁদের জন্য।')), true, 6000); } catch (e) {} }
+        var to = document.documentElement.getAttribute('data-bizkind') === 'brand' ? 'settings' : 'dash';
+        if (typeof VIEW !== 'undefined' && VIEW === to) return;
+        return goFl.call(this, to);
+      }
+      return goFl.apply(this, arguments);
+    };
+  }
+  AFTER_PAINT.push(function flProv() {
+    provMark();
+    if (typeof VIEW !== 'undefined' && PROV_ONLY[VIEW] && typeof ME !== 'undefined' && ME && !ME.platform) setTimeout(function () { if (PROV_ONLY[VIEW]) go(VIEW); }, 0);
+  });
+  try { provMark(); } catch (e) {}
+
+  /* ============================================================ 5a. one name for the Sales screen */
+  try { VIEW_NAMES.sales = 'Sales'; } catch (e) {}
+
+  /* ============================================================ 1. the invoice record page */
+  function svg(p) { return '<svg viewBox="0 0 24 24" aria-hidden="true">' + p + '</svg>'; }
+  var IC_OK = '<path d="M5 12.5l4.5 4.5L19 7.5"/>', IC_MORE = '<circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/>';
+  var FLM = 0;
+  function isCod(d) { return /^(cod|cash on delivery)/i.test(String(d.method || '')); }
+  function isCourierSafe(x) { try { return typeof isCourier === 'function' ? !!isCourier(x) : /courier|steadfast|pathao|redx/i.test(String(x || '')); } catch (e) { return false; } }
+  function codBtn(no, by, primary) {
+    var b = document.createElement('button'); b.type = 'button';
+    b.className = primary ? 'btn primary' : '';
+    b.setAttribute('data-codc', no); b.setAttribute('data-codby', by); b.setAttribute('data-noi18n', '1');
+    b.innerHTML = (primary ? svg(IC_OK) : '') + '<span>' + E(by === 'shop' ? LL('Delivered — money came', 'ডেলিভারি হয়েছে — টাকা এসেছে') : LL('Delivered — courier holds the money', 'ডেলিভারি হয়েছে — টাকা কুরিয়ারের কাছে')) + '</span>';
+    b.title = by === 'shop' ? LL('The rider brought the cash to the shop', 'রাইডার টাকা দোকানে দিয়ে গেছেন') : LL('The courier holds the cash until its payout', 'পেআউট পর্যন্ত টাকা কুরিয়ারের কাছে');
+    return b;
+  }
+  function parcelCard(v) {
+    var cards = v.querySelectorAll('.card');
+    for (var i = 0; i < cards.length; i++) { var h = cards[i].querySelector(':scope > h2'); if (h && /^(Parcel|পার্সেল)/.test(h.textContent.trim())) return cards[i]; }
+    return null;
+  }
+  function invBuild() {
+    if (typeof VIEW === 'undefined' || VIEW !== 'sales' || typeof INVP === 'undefined' || !INVP || !INVP.no || !INVP.data) return;
+    var v = el('view'); if (!v) return;
+    var d = INVP.data, no = INVP.no;
+    var head = v.querySelector('.pagehead'); if (!head) return;
+    var acts = head.querySelector(':scope > .acts');
+    if (!head.classList.contains('fl-head')) {
+      head.classList.add('fl-head');
+      var follows = !!(!d.cancelled && d.owed > 0 && isCourierSafe(d.delivery) && d.parcel && d.parcel.consignment);
+      var cod = !d.cancelled && d.owed > 0 && isCod(d) && !follows;
+      // the COD note and the Steadfast note above the page go: their buttons move to the bar and the Parcel card
+      var pc = parcelCard(v);
+      [].slice.call(v.querySelectorAll(':scope > section')).forEach(function (s) {
+        if (s.querySelector('.pagehead')) return;
+        var ex = s.querySelector('[data-explink]');
+        if (pc && s.contains(pc)) {
+          // another block already put the Steadfast line in the Parcel card: only the button's weight changes
+          if (ex) ex.classList.remove('primary');
+          return;
+        }
+        if (s.querySelector('[data-codc]') && !s.querySelector('.card') && s.querySelectorAll('button').length <= 3) { s.remove(); return; }
+        if (ex && s.querySelectorAll('button').length === 1 && !s.querySelector('.card')) {
+          var express = ex.getAttribute('data-reg') !== '1';
+          if (!pc) { var sec = document.createElement('section'); sec.innerHTML = '<div class="card"><h2>' + E(LL('Parcel', 'পার্সেল')) + '</h2></div>'; var after = head.closest('#view > section'); if (after && after.parentNode === v) v.insertBefore(sec, after.nextSibling); else v.appendChild(sec); pc = sec.querySelector('.card'); }
+          var box = document.createElement('div'); box.className = 'fl-parcel-note';
+          box.innerHTML = '<p data-noi18n="1">' + E(express ? LL('Steadfast Express: no consignment number on this invoice yet. With the number, the due clears by itself when the parcel is delivered.', 'স্টেডফাস্ট এক্সপ্রেস: এই ইনভয়েসে এখনো কনসাইনমেন্ট নম্বর নেই। নম্বর দিলে পার্সেল ডেলিভারি হলে বাকি নিজে থেকেই মিটে যাবে।')
+            : LL('Already booked in the Steadfast panel? Add its consignment number: the due then clears by itself when the parcel is delivered.', 'স্টেডফাস্ট প্যানেলে আগেই বুক করেছেন? কনসাইনমেন্ট নম্বর দিন: পার্সেল ডেলিভারি হলে বাকি নিজে থেকেই মিটে যাবে।')) + '</p>';
+          ex.classList.remove('primary'); ex.setAttribute('data-noi18n', '1'); ex.textContent = LL('Add consignment number', 'কনসাইনমেন্ট নম্বর দিন');
+          box.appendChild(ex); pc.appendChild(box); s.remove();
+        }
+      });
+      var lab = v.querySelector(':scope > .row [data-plabel]');
+      if (lab) { var row = lab.closest('.row'); var pc2 = parcelCard(v); if (pc2) { var bx = document.createElement('div'); bx.className = 'fl-parcel-note'; bx.appendChild(lab); pc2.appendChild(bx); if (row && !row.querySelector('button')) row.remove(); } }
+
+      // identity: number, who (name + phone), when
+      var idb = head.firstElementChild;
+      if (idb && idb !== acts) {
+        idb.classList.add('fl-id');
+        var meta = idb.querySelector('.meta');
+        if (meta) { [].forEach.call(meta.querySelectorAll('.pill.out, .pill.ok'), function (p) { p.remove(); }); meta.innerHTML = meta.innerHTML.replace(/(&nbsp;|\s)+$/, ''); }
+        var who = document.createElement('div'); who.className = 'fl-who';
+        var nm = (d.customer || d.phone) ? '<button class="linkbtn" type="button" data-flcust="' + E(d.phone) + '" data-flcustname="' + E(d.customer) + '" data-noi18n="1">' + E(d.customer || LL('Walk-in', 'দোকানে')) + '</button>' : '<span>' + E(LL('Walk-in', 'দোকানে')) + '</span>';
+        who.innerHTML = nm + (d.phone ? '<span class="fl-dot">·</span><a href="tel:' + E(d.phone) + '" data-noi18n="1">' + E(d.phone) + '</a>' : '');
+        var h2 = idb.querySelector('h2'); if (h2) h2.insertAdjacentElement('afterend', who); else idb.insertBefore(who, idb.firstChild);
+      }
+      // the figure: what is owed (or paid), and the state in words
+      var st = d.cancelled ? 'cancel' : d.owed > 0 ? (cod ? 'cod' : 'due') : 'paid';
+      var got = Math.max(0, (Number(d.paid) || 0) - (Number(d.returnedValue) || 0));
+      var fig = document.createElement('div'); fig.className = 'fl-fig'; fig.setAttribute('data-state', st); fig.setAttribute('data-noi18n', '1');
+      var lbl = st === 'cancel' ? LL('Cancelled', 'বাতিল') : st === 'paid' ? LL('Paid', 'পেমেন্ট হয়েছে') : LL('Still to collect', 'এখনও পাওনা');
+      var num = st === 'cancel' || st === 'paid' ? money(d.grand) : money(d.owed);
+      var sub = st === 'cancel' ? LL('Nothing was deleted.', 'কিছু মোছা হয়নি।')
+        : st === 'paid' ? LL('Paid in full', 'পুরো টাকা পাওয়া গেছে')
+        : st === 'cod' && d.courier && !d.parcel && !d.webOrder ? LL('Cash on delivery · parcel not sent yet', 'ক্যাশ অন ডেলিভারি · পার্সেল এখনো পাঠানো হয়নি')
+        : st === 'cod' ? LL('Cash on delivery · not collected yet', 'ক্যাশ অন ডেলিভারি · এখনো আদায় হয়নি')
+        : follows ? LL('With Steadfast · clears by itself when delivered', 'স্টেডফাস্টের কাছে · ডেলিভারি হলে নিজে থেকেই মিটবে')
+        : got > 0 ? LL('of ' + money(d.grand) + ' · ' + money(got) + ' received', money(d.grand) + '-এর মধ্যে · ' + money(got) + ' পাওয়া গেছে')
+        : LL('of ' + money(d.grand) + ' · nothing received yet', money(d.grand) + '-এর মধ্যে · এখনো কিছু আসেনি');
+      fig.innerHTML = '<div class="fl-fl">' + E(lbl) + '</div><div class="fl-fn">' + E(num) + '</div><div class="fl-fs">' + E(sub) + '</div>';
+      if (acts) head.insertBefore(fig, acts); else head.appendChild(fig);
+
+      // the actions: one primary by state, two secondaries on a computer, the rest under More (destructive last)
+      if (acts) {
+        var all = [].slice.call(acts.querySelectorAll('button, a.btn')).filter(function (b) { return !b.hasAttribute('data-ab-more'); });
+        var find = function (sel) { for (var i = 0; i < all.length; i++) if (all[i].matches(sel)) return all[i]; return null; };
+        var N = { pay: find('[data-spay]'), send: find('[data-send]'), wa: find('[data-iwa]'), pdf: find('[data-spdf]'), edit: find('[data-iedit]') };
+        var needSend = !!(!d.cancelled && N.send && d.courier && !d.parcel && !d.webOrder);
+        var extra = [], primary = null;
+        if (!d.cancelled) {
+          if (needSend) primary = N.send;
+          else if (st === 'cod') primary = codBtn(no, 'shop', true);
+          else if (st === 'due') primary = N.pay || N.send;
+          else primary = N.wa || N.pdf;
+          if (st === 'cod') { if (needSend) extra.push(codBtn(no, 'shop', false)); extra.push(codBtn(no, 'courier', false)); }
+        }
+        var secs = [];
+        if (!phone()) ['edit', 'pdf', 'wa', 'pay'].forEach(function (k) { var n = N[k]; if (n && n !== primary && secs.length < 2 && !n.classList.contains('danger')) secs.push(n); });
+        var rest = all.filter(function (b) { return b !== primary && secs.indexOf(b) < 0; }).concat(extra);
+        var safe = rest.filter(function (b) { return !b.classList.contains('danger'); }), bad = rest.filter(function (b) { return b.classList.contains('danger'); });
+        var bar = document.createElement('div'); bar.className = 'nt-ab fl-ab';
+        if (primary) { primary.classList.add('btn', 'primary'); primary.classList.remove('small'); primary.removeAttribute('role'); bar.appendChild(primary); }
+        secs.forEach(function (b) { b.classList.add('btn'); b.classList.remove('primary', 'small'); b.removeAttribute('role'); bar.appendChild(b); });
+        if (safe.length || bad.length) {
+          var id = 'flab' + (++FLM);
+          var wrap = document.createElement('span'); wrap.className = 'nt-ab-m';
+          wrap.innerHTML = '<button type="button" class="btn" data-ab-more="' + id + '" aria-haspopup="menu" aria-expanded="false">' + svg(IC_MORE) + '<span>' + E(LL('More', 'আরও')) + '</span></button><div class="nt-ab-menu" id="' + id + '" role="menu" hidden></div>';
+          var menu = wrap.querySelector('.nt-ab-menu');
+          var asItem = function (b) { b.classList.remove('btn', 'primary', 'small'); b.setAttribute('role', 'menuitem'); menu.appendChild(b); };
+          safe.forEach(asItem);
+          if (safe.length && bad.length) menu.appendChild(document.createElement('hr'));
+          bad.forEach(asItem);
+          bar.appendChild(wrap);
+        }
+        var keepSub = acts.querySelector(':scope > .sub');
+        acts.innerHTML = ''; acts.appendChild(bar);
+        if (keepSub && !d.cancelled) acts.appendChild(keepSub);
+      }
+    }
+    invSweep();
+  }
+  // other blocks add buttons and the delivery-history pill to the head after paint: tidy them into the bar / the who line
+  function invSweep() {
+    if (typeof VIEW === 'undefined' || VIEW !== 'sales' || typeof INVP === 'undefined' || !INVP || !INVP.no) return;
+    var v = el('view'); if (!v) return;
+    var head = v.querySelector('.pagehead.fl-head'); if (!head) return;
+    var acts = head.querySelector(':scope > .acts'), bar = acts && acts.querySelector('.fl-ab'), who = head.querySelector('.fl-who');
+    if (!acts || !bar) return;
+    var menu = bar.querySelector('.nt-ab-menu');
+    var toMenu = function (n) { n.classList.remove('btn', 'primary', 'small'); n.setAttribute('role', 'menuitem'); menu.insertBefore(n, menu.querySelector('hr') || menu.querySelector('.danger') || null); };
+    [].slice.call(head.querySelectorAll('[data-invrisk]')).forEach(function (r) {
+      if (!who || r.parentNode === who) return;
+      if (who.querySelector('[data-invrisk]')) { r.remove(); return; }
+      r.style.marginLeft = ''; who.appendChild(r);
+    });
+    [].slice.call(acts.children).forEach(function (n) {
+      if (n === bar || n.classList.contains('sub') || n.id === 'mylink_box' || n.classList.contains('mylink')) return;
+      if (n.matches('button, a.btn')) {
+        var key = n.getAttribute('data-mylink') !== null ? '[data-mylink]' : n.getAttribute('data-wcard') ? '[data-wcard="' + n.getAttribute('data-wcard') + '"]' : '';
+        if ((key && bar.querySelector(key)) || !menu) { n.remove(); return; }
+        toMenu(n); return;
+      }
+      if (n.matches('.pill, span') && who) who.appendChild(n);
+    });
+    // a button the other blocks put into the bar's open row after paint goes to More too
+    [].slice.call(bar.children).forEach(function (n) {
+      if (!menu || n.classList.contains('nt-ab-m') || n.classList.contains('primary')) return;
+      if (n.getAttribute('data-mylink') !== null || n.getAttribute('data-wcard')) toMenu(n);
+    });
+    if (menu) [].slice.call(menu.querySelectorAll('[data-mylink]')).slice(1).forEach(function (n) { n.remove(); });
+  }
+  AFTER_PAINT.push(function flInvoicePage() {
+    try { invBuild(); } catch (e) { if (window.console) console.error('crit3-flow invoice', e); }
+    setTimeout(function () { try { invSweep(); } catch (e) {} }, 80);
+    setTimeout(function () { try { invSweep(); } catch (e) {} }, 700);
+    setTimeout(function () { try { invSweep(); } catch (e) {} }, 2500);
+  });
+  document.addEventListener('click', function (e) {
+    var t = e.target && e.target.closest ? e.target : null; if (!t) return;
+    var c = t.closest('[data-flcust]');
+    if (c) { e.preventDefault(); if (typeof openCustomerPage === 'function') openCustomerPage(c.getAttribute('data-flcust'), c.getAttribute('data-flcustname')); return; }
+    // the customer's page link opens under the bar, not inside the More menu
+    var m = t.closest('.fl-ab [data-mylink]');
+    if (m && typeof myLinkBox === 'function') {
+      e.preventDefault(); e.stopImmediatePropagation();
+      try { abCloseAll(); } catch (x) {}
+      myLinkBox(m.getAttribute('data-mylink'), m.getAttribute('data-myname'), m.closest('.fl-ab'));
+    }
+  }, true);
+
+  /* ---- "New customer: no parcels yet" only for a customer who has not bought before */
+  if (typeof riskPill === 'function') {
+    var riskPillFl = riskPill;
+    riskPill = function (d) {
+      if (d && d.risk === 'new' && (Number(d.orders) || 0) >= 2) {
+        var w = LL('No parcels with us yet · ' + d.orders + ' orders', 'আমাদের মাধ্যমে এখনো পার্সেল নেই · ' + d.orders + 'টি অর্ডার');
+        return '<span class="pill risk-new" data-noi18n="1" title="' + E(d.advice || '') + '">' + E(w) + '</span>';
+      }
+      return riskPillFl.apply(this, arguments);
+    };
+  }
+
+  /* ============================================================ 2. the dashboard */
+  var DASH_HIDE = {};
+  if (typeof fddWidgets === 'function') {
+    var fddWidgetsFl = fddWidgets;
+    fddWidgets = function (d) {
+      var W = fddWidgetsFl.apply(this, arguments);
+      DASH_HIDE = {};
+      try {
+        var lay = typeof fdwLayout === 'function' ? fdwLayout() : null;
+        var placed = function (id) { return !!(lay && lay.order && lay.order.indexOf(id) >= 0 && !((lay.hidden || {})[id])); };
+        var k = (d && d.kpi) || {}, ids = W.map(function (w) { return w.id; });
+        W.forEach(function (w) {
+          if (placed(w.id)) return;
+          // the teaser cards repeat the tiles (gross margin, net profit): the "More reports" row opens those screens instead
+          if (w.id === 'shortcuts') w.flHide = true;
+          // gross margin is already on the gross profit tile (or on the hero in a group view)
+          if (w.id === 'margin' && (ids.indexOf('gross') >= 0 || (d && d.group && ids.indexOf('net') >= 0))) w.flHide = true;
+          // a zero tile says nothing until the person puts it on the board
+          var z = { capital: k.capital, expenses: k.expenses, unmatched: k.unmatched, avgOrder: k.avgOrder }[w.id];
+          if (z && !(Number(z.v) || 0)) w.flHide = true;
+          // a one-slice breakdown ("All sales: Nova · ৳7,250") only repeats the revenue figure
+          if (/class="fdd-c[^"]*lk-onec[" ]/.test(String(w.html || ''))) w.flHide = true;
+          if (w.flHide) DASH_HIDE[w.id] = 1;
+        });
+      } catch (e) {}
+      return W;
+    };
+  }
+  if (typeof fddOrdered === 'function') {
+    var fddOrderedFl = fddOrdered;
+    fddOrdered = function (W) { return fddOrderedFl.apply(this, arguments).filter(function (w) { return !w.flHide && !DASH_HIDE[w.id]; }); };
+  }
+  AFTER_PAINT.push(function flDash() {
+    if (typeof VIEW === 'undefined' || VIEW !== 'dash') return;
+    var v = el('view'), grid = v && v.querySelector('.fdd-grid'); if (!grid || grid.classList.contains('editing')) return;
+    var lay = null; try { lay = fdwLayout(); } catch (e) {}
+    if (phone()) {
+      var rec = grid.querySelector(':scope > [data-fdw="recent"]');
+      var placedRec = lay && lay.order && lay.order.indexOf('recent') >= 0;
+      if (rec && !placedRec && rec !== grid.lastElementChild) grid.appendChild(rec);
+    }
+    if (!v.querySelector('.fl-morerep')) {
+      var b = [];
+      if (typeof navOn !== 'function' || navOn('analytics')) b.push('<button type="button" class="btn" data-go="analytics">' + E(LL('Analytics', 'অ্যানালিটিক্স')) + ' →</button>');
+      if (typeof navOn !== 'function' || navOn('profit')) b.push('<button type="button" class="btn" data-go="profit">' + E(LL('Profitability', 'লাভ-ক্ষতি')) + ' →</button>');
+      if (b.length) grid.insertAdjacentHTML('afterend', '<div class="fl-morerep" data-noi18n="1"><span>' + E(LL('More reports', 'আরও রিপোর্ট')) + '</span>' + b.join('') + '</div>');
+    }
+  });
+  // revenue tooltip: on hover or tap only
+  document.addEventListener('mouseover', function (e) {
+    var t = e.target && e.target.closest ? e.target : null; if (!t) return;
+    var p = t.closest('.fdrev-plot');
+    [].forEach.call(document.querySelectorAll('.fdrev-plot.fl-tip'), function (x) { if (x !== p) x.classList.remove('fl-tip'); });
+    if (p && t.closest('[data-fdrev]')) p.classList.add('fl-tip');
+  });
+  document.addEventListener('click', function (e) {
+    var t = e.target && e.target.closest ? e.target : null; if (!t) return;
+    var d = t.closest('[data-fdrev]'), p = t.closest('.fdrev-plot');
+    if (d && p) {
+      try { var old = p.querySelector('.fdrev-tip'); if (old && typeof FDD !== 'undefined' && FDD._tip) old.outerHTML = FDD._tip(+d.getAttribute('data-fdrev')); } catch (x) {}
+      p.classList.add('fl-tip'); return;
+    }
+    [].forEach.call(document.querySelectorAll('.fdrev-plot.fl-tip'), function (x) { if (x !== p) x.classList.remove('fl-tip'); });
+  });
+
+  /* ============================================================ 3. invoice search: keyboard */
+  var HL = { i: -1, fam: '' };
+  function opts(box) { return [].filter.call(box.querySelectorAll('.r[data-pick], .r.fam, .famc button[data-pick]'), function (n) { return n.getClientRects().length > 0; }); }
+  function setHl(box, list, i) {
+    var q = el('isearch');
+    list.forEach(function (n, j) { n.classList.toggle('fl-hl', j === i); n.setAttribute('aria-selected', j === i ? 'true' : 'false'); });
+    HL.i = i;
+    if (q) { if (i >= 0 && list[i]) q.setAttribute('aria-activedescendant', list[i].id); else q.removeAttribute('aria-activedescendant'); }
+    if (i >= 0 && list[i] && list[i].scrollIntoView) { try { list[i].scrollIntoView({ block: 'nearest' }); } catch (e) {} }
+  }
+  function decorate() {
+    var box = el('iresults'), q = el('isearch'); if (!box || !q) return;
+    box.setAttribute('role', 'listbox'); box.setAttribute('aria-label', LL('Products found', 'পাওয়া প্রোডাক্ট'));
+    q.setAttribute('role', 'combobox'); q.setAttribute('aria-controls', 'iresults'); q.setAttribute('aria-autocomplete', 'list');
+    var list = opts(box);
+    list.forEach(function (n, j) { n.setAttribute('role', 'option'); n.id = 'flopt' + j; });
+    q.setAttribute('aria-expanded', list.length ? 'true' : 'false');
+    if (!list.length) { HL.i = -1; q.removeAttribute('aria-activedescendant'); return; }
+    var coarse = window.matchMedia && window.matchMedia('(pointer:coarse)').matches;
+    var start = -1;
+    if (HL.fam) { for (var j = 0; j < list.length; j++) if (list[j].matches('.famc button[data-pick]')) { start = j; break; } HL.fam = ''; }
+    if (start < 0) { for (var k = 0; k < list.length; k++) if (list[k].matches('.r[data-pick]')) { start = k; break; } }
+    if (start < 0) start = 0;
+    // a touch phone keeps tap: no row is marked until a key is pressed
+    setHl(box, list, coarse ? -1 : start);
+  }
+  if (typeof paintResults === 'function') {
+    var paintResultsFl = paintResults;
+    paintResults = window.paintResults = function () {
+      var r = paintResultsFl.apply(this, arguments);
+      try { var b = el('iresults'); if (b) b.classList.remove('fl-closed'); decorate(); } catch (e) {}
+      return r;
+    };
+  }
+  document.addEventListener('input', function (e) { if (e.target && e.target.id === 'isearch') { var b = el('iresults'); if (b) b.classList.remove('fl-closed'); } }, true);
+  document.addEventListener('keydown', function (ev) {
+    var q = ev.target; if (!q || q.id !== 'isearch') return;
+    var box = el('iresults'); if (!box) return;
+    var list = opts(box);
+    if (ev.key === 'ArrowDown' || ev.key === 'ArrowUp') {
+      if (!list.length || box.classList.contains('fl-closed')) return;
+      ev.preventDefault();
+      var i = HL.i < 0 ? (ev.key === 'ArrowDown' ? 0 : list.length - 1) : (HL.i + (ev.key === 'ArrowDown' ? 1 : -1) + list.length) % list.length;
+      setHl(box, list, i); return;
+    }
+    if (ev.key === 'Escape') {
+      if (box.classList.contains('fl-closed') || !q.value.trim()) return;
+      ev.preventDefault(); ev.stopImmediatePropagation(); box.classList.add('fl-closed'); q.setAttribute('aria-expanded', 'false'); return;
+    }
+    if (ev.key !== 'Enter') return;
+    var text = q.value.trim().toLowerCase(); if (!text || box.classList.contains('fl-closed')) return;
+    // an exact SKU, or the only match: the old Enter puts it on the invoice as before
+    try {
+      var cat = ((typeof INV_FROM !== 'undefined' && INV_FROM && POOLCAT[INV_FROM]) || CAT || []).filter(function (p) { return String(p.status).toLowerCase() !== 'discontinued'; });
+      if (cat.some(function (p) { return String(p.sku).toLowerCase() === text; })) return;
+      if (cat.filter(function (p) { return (p.name + ' ' + p.sku + ' ' + p.brand + ' ' + p.color).toLowerCase().indexOf(text) >= 0; }).length === 1) return;
+    } catch (e) {}
+    var n = HL.i >= 0 ? list[HL.i] : null;
+    if (!n) return;
+    ev.preventDefault(); ev.stopImmediatePropagation();
+    if (n.matches('.r.fam')) { HL.fam = n.getAttribute('data-fam'); n.click(); return; }
+    var sku = n.getAttribute('data-pick'); if (!sku) return;
+    addToCart(sku); repaint();
+    var back = function () { var s = el('isearch'); if (!s) return; if (s.value) { s.value = ''; try { iSearch = ''; } catch (e) {} try { paintResults(); } catch (e) {} } if (document.activeElement !== s) try { s.focus(); } catch (e) {} };
+    setTimeout(back, 0); setTimeout(back, 150); setTimeout(back, 500);
+  }, true);
+
+  /* ============================================================ 5. help: the screen's own help is the Help button */
+  AFTER_PAINT.push(function flHelp() {
+    var v = el('view'); if (!v) return;
+    var lang = bnNow() ? 'bn' : 'en';
+    [].forEach.call(v.querySelectorAll('.fdd-title > .fdd-ti[data-hghelp], .fdd-title > .fdd-ti[data-fd22info]'), function (b) {
+      if (b.getAttribute('data-flh') === lang) return;
+      b.setAttribute('data-flh', lang); b.setAttribute('data-noi18n', '1'); b.classList.add('fl-help');
+      b.textContent = LL('Help', 'সাহায্য');
+    });
+    // two help buttons side by side for the same thing: keep one
+    [].forEach.call(v.querySelectorAll('.fdh-help'), function (h) {
+      var head = h.closest('.fdd-head, .fd19-head, .pagehead') || h.parentNode;
+      [].forEach.call(head.querySelectorAll('.fdd-ti[data-hghelp]'), function (i) { if (i !== h) i.classList.add('fl-hidedup'); });
+    });
+    [].forEach.call(v.querySelectorAll('.t2q + .fhelp, .fhelp + .t2q, .fhelp + .fhelp, .t2q + .t2q'), function (x) { x.classList.add('fl-hidedup'); });
+  });
+
+  /* ============================================================ 5. Customers: the WhatsApp reminder is a ghost button that asks first */
+  var PASS = null;
+  function ghostWa() { [].forEach.call(document.querySelectorAll('#view a[data-remind].primary'), function (a) { a.classList.remove('primary'); }); }
+  AFTER_PAINT.push(function flRemind() {
+    if (typeof VIEW === 'undefined' || VIEW !== 'customers') return;
+    ghostWa(); setTimeout(ghostWa, 100);
+  });
+  document.addEventListener('click', function (e) {
+    var a = e.target && e.target.closest ? e.target.closest('a[data-remind], [data-rkwa]') : null;
+    if (!a || a === PASS) return;
+    e.preventDefault(); e.stopImmediatePropagation();
+    var nm = a.getAttribute('data-rname') || a.getAttribute('data-rphone') || LL('this customer', 'এই কাস্টমার');
+    var due = Number(a.getAttribute('data-rdue')) || 0;
+    var msg = LL('Send a due reminder to ' + nm + ' on WhatsApp?' + (due ? '\n\nOwes ' + money(due) + '.' : '') + '\n\nThe ERP then marks them "reminded today".',
+      nm + '-কে WhatsApp-এ বাকির রিমাইন্ডার পাঠাবেন?' + (due ? '\n\nবাকি ' + money(due) + '।' : '') + '\n\nতারপর ERP লিখে রাখবে "আজ মনে করানো হয়েছে"।');
+    uiConfirm(msg).then(function (yes) {
+      if (!yes || !document.body.contains(a)) return;
+      PASS = a; try { a.click(); } finally { PASS = null; }
+    });
+  }, true);
+
+  /* ============================================================ 5. Settings: lowering the next invoice number asks first */
+  var PASS2 = null;
+  document.addEventListener('click', function (e) {
+    var b = e.target && e.target.closest ? e.target.closest('[data-uicfgsave]') : null;
+    if (!b || b === PASS2 || typeof SETTINGS === 'undefined' || !SETTINGS || !SETTINGS.config) return;
+    var warn = '';
+    SETTINGS.config.forEach(function (row, idx) {
+      if (!row || row.key !== 'next_invoice_num') return;
+      var inp = el('cfg_' + idx); if (!inp) return;
+      var nv = Number(String(inp.value).trim()), cur = Number(row.value);
+      if (String(inp.value).trim() === String(row.value) || !(nv > 0) || !(cur > 0) || nv >= cur) return;
+      warn = LL('The next invoice number goes down from ' + cur + ' to ' + nv + ', at or below numbers already given (the last one was ' + (cur - 1) + ').\n\nA number already used that day is skipped, so nothing is overwritten - but invoices will no longer count up in order. Change it anyway?',
+        'পরের ইনভয়েস নম্বর ' + cur + ' থেকে কমে ' + nv + ' হবে - আগে দেওয়া নম্বরের সমান বা কম (শেষটা ছিল ' + (cur - 1) + ')।\n\nসেদিন আগে ব্যবহার হওয়া নম্বর বাদ যাবে, তাই কিছু মুছে যাবে না - কিন্তু ইনভয়েস আর ক্রমানুসারে বাড়বে না। তবুও বদলাবেন?');
+    });
+    if (!warn) return;
+    e.preventDefault(); e.stopImmediatePropagation();
+    uiConfirm(warn).then(function (yes) { if (!yes || !document.body.contains(b)) return; PASS2 = b; try { b.click(); } finally { PASS2 = null; } });
+  }, true);
+
+  /* ============================================================ 5. phone: the toast sits above a save bar, even one that grew */
+  function lift() {
+    var root = document.documentElement, need = 0;
+    var bars = document.querySelectorAll('#view .c3bar, #view .fd-sticky, #view .fd-savebar, #view [data-sticky-bar]');
+    for (var i = 0; i < bars.length; i++) {
+      var r = bars[i].getBoundingClientRect();
+      if (!r.height || r.top >= innerHeight || r.bottom < innerHeight - 120) continue;
+      need = Math.max(need, Math.round(innerHeight - r.top + 12));
+    }
+    if (need > 22) { root.classList.add('sell-lift'); root.style.setProperty('--sell-lift', need + 'px'); }
+  }
+  (function watchToast() {
+    var t = document.getElementById('toast');
+    if (!t) { setTimeout(watchToast, 1000); return; }
+    try { new MutationObserver(function () { if (/\bshow\b/.test(t.className)) try { lift(); } catch (e) {} }).observe(t, { attributes: true, attributeFilter: ['class'] }); } catch (e) {}
+  })();
+  if (window.ResizeObserver) {
+    var RO = new ResizeObserver(function () { try { lift(); } catch (e) {} }), seen = null;
+    AFTER_PAINT.push(function flBarWatch() {
+      var b = document.querySelector('#view .c3bar');
+      if (b && b !== seen) { if (seen) try { RO.unobserve(seen); } catch (e) {} seen = b; RO.observe(b); }
+    });
+  }
+
+  /* ============================================================ 5. phone invoice line: discount folded until it is set */
+  var DOPEN = {};
+  AFTER_PAINT.push(function flLines() {
+    if (typeof VIEW === 'undefined' || VIEW !== 'invoice') return;
+    [].forEach.call(document.querySelectorAll('#view tr.sell-line'), function (tr) {
+      var inp = tr.querySelector('input[data-disc]'); if (!inp) return;
+      var i = inp.getAttribute('data-disc'), sku = (typeof CART !== 'undefined' && CART[+i] && CART[+i].sku) || i;
+      var set = (Number(inp.value) || 0) !== 0 || DOPEN[sku];
+      tr.classList.toggle('fl-nodisc', !set);
+      var nm = tr.firstElementChild, btn = tr.querySelector('.fl-dbtn');
+      if (!set && nm && !btn) nm.insertAdjacentHTML('beforeend', '<br><button type="button" class="fl-dbtn" data-fldisc="' + E(sku) + '" data-noi18n="1">' + E(LL('+ Discount', '+ ছাড়')) + '</button>');
+      if (set && btn) { var br = btn.previousSibling; if (br && br.nodeName === 'BR') br.remove(); btn.remove(); }
+    });
+  });
+  document.addEventListener('click', function (e) {
+    var b = e.target && e.target.closest ? e.target.closest('[data-fldisc]') : null; if (!b) return;
+    e.preventDefault(); e.stopPropagation();
+    DOPEN[b.getAttribute('data-fldisc')] = true;
+    var tr = b.closest('tr'); if (!tr) return;
+    tr.classList.remove('fl-nodisc');
+    var br = b.previousSibling; if (br && br.nodeName === 'BR') br.remove(); b.remove();
+    var inp = tr.querySelector('input[data-disc]'); if (inp) { try { inp.focus(); inp.select(); } catch (x) {} }
+  }, true);
 })();
 </script>
 </body>

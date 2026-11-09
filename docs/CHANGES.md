@@ -3985,3 +3985,22 @@ to the dev ERP every minute, so the desk is open around the clock. Settings live
   start|scale only, manager refused). ads_test has 4 failures that are also on main without this change.
 - NOT done: the Rules screen was not clicked through in a browser (the local copy fakes every network call, so it cannot
   reach the bridge); the n8n content flows (idea -> draft -> check -> approval -> Postiz) and the voice guide are next.
+
+## crit-3 (10 Nov 2026): fixes from the third critique (27/40)
+Owner answers: unpaid fixed costs on a second line, Mac tools/Brand desk for the platform admin only, fix everything + live.
+Blocks `<!-- crit3:fig -->`, `<!-- crit3:flow -->` after `<!-- CRIT3-MERGE 2026-11-10 -->`. Snapshot .impeccable/critique/2026-11-09T15-25-08Z.
+- Net profit stays one figure; under it (running month only, when something is unpaid) "If this month's fixed costs are paid:
+  −৳12,400" on Dashboard, Profitability and Expenses; the "i" lists the unpaid items. Server fixedDue(ctx, month) in dashboard.js
+  (expected monthly items not paid this month; struck-out payments count as unpaid; stopped items out) exposed on erpExpenses,
+  erpPnl, erpDashboardData, erpFdDash, erpFdHead. figfinal_test 33.
+- Bangla: money keeps Latin digits after pattern translation (bnKeepLatin), dates in Bangla digits inside data-noi18n lines too
+  (phone Sales cards), counts in Bangla digits, আয় -> বিক্রি, এখনও পাওনা -> বাকি, remaining strings translated, 13.5px floor
+  on owed amounts / tab bar / brand tag. Invoice date reads "৯ নভেম্বর ২০২৬" beside the native picker.
+- Phone invoice page: number, customer, date first; big due/paid figure; ONE main button by state (Send parcel / Delivered -
+  money came / Receive payment / Send on WhatsApp); the rest under More; Steadfast note in the Parcel card.
+- Dashboard: duplicates and ৳0 tiles hidden unless pinned in Customise; phone ends with Recent sales + More reports; tooltip on
+  hover/tap only (phone 4,253 -> ~3,900 px). Invoice search: first in-stock match highlighted, Up/Down, Enter adds, Esc closes.
+- Mac tools + Brand desk only for the platform admin (menu, Apps, Navigator, go() bounce). Sales one name; help forms: Help per
+  screen, i on figures, ? on fields; Profitability tabs ink; WhatsApp due reminder asks first; "New customer" label fixed;
+  disabled buttons 6.9:1; toast above the save bar; pills nowrap; next invoice number lowered asks first; top-bar date in Dhaka
+  time; phone invoice line 268 -> 156 px; Money opens on Accounts on both; "Move money" once; 103 payments once.

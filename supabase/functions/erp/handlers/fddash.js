@@ -12,7 +12,7 @@ import { salesLog, paymentsTab, asDate, str, SL, PAY } from '../lib/tabs.js';
 import { formatDate, num } from '../lib/time.js';
 import { powerOn, roleAtLeast } from '../allow.js';
 import { discLeft } from './money.js';
-import { products, pnlFor, soldCost, duesMap as owedMap } from './dashboard.js';   // dues counted as the dues list counts them
+import { products, pnlFor, soldCost, duesMap as owedMap, fixedDue } from './dashboard.js';   // dues counted as the dues list counts them
 import { lotStock } from './lots.js';
 
 const MON3 = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -249,6 +249,8 @@ export async function erpFdDash(ctx, payload) {
       ['+ Pre-order deposits kept on cancelling', R(pnl.forfeited)],
       ['− Expenses', -R(pnl.expenses)], ['+ Share of joint stock profit', R(pnl.jointShare)], ['= Net profit (same as Profit & loss)', R(pnl.net)]];
     out.calc.expenses = [['Expenses entered for these months, not struck out, + investor returns due + joint-stock share', R(pnl.expenses)]];
+    // crit3-fig: the forecast line under the net profit tile - only for "This month" (the running month), never a closed one
+    if (n === 1 && to === now) out.kpi.net.fixedDue = await fixedDue(ctx, now);
   }
   if (!group) {
     // money in and dues: the whole business
@@ -400,7 +402,7 @@ export async function erpFdHead(ctx, payload) {
       // B6: revenue and gross against the same days of last month (from the sales lines); net profit and expenses
       // are whole-month figures, so no part-month trend for them - last month in full rides along as prevWhole
       const LL = (await lines(ctx, [prev])).filter((x) => same.keep(x.month, x.at)), lp = sumUp(LL);
-      cards.push(card('net', 'Net profit this month', 'target', cm.net, { prev: null, prevWhole: pm.net, money: true, hero: true }));
+      cards.push(card('net', 'Net profit this month', 'target', cm.net, { prev: null, prevWhole: pm.net, money: true, hero: true, fixedDue: await fixedDue(ctx, now) }));
       cards.push(card('revenue', 'Revenue', 'taka', cm.netSales, { prev: R(lp.revenue), money: true }));
       cards.push(card('gross', 'Gross profit', 'trend', cm.gross, { prev: R(lp.gross), money: true, note: cm.grossMargin + '% margin' }));
       cards.push(card('expenses', 'Expenses', 'receipt', cm.expenses, { prev: null, prevWhole: pm.expenses, money: true, flip: true }));
