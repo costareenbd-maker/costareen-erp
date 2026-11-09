@@ -170,6 +170,17 @@ export async function erpBrandDeskDraftDecide(ctx, payload) {
   return bridge(ctx, '/drafts/decide', out);
 }
 
+// brand-10: picture cards from a draft (the AI only splits the draft's own words into slides)
+const draftId = (v) => { const n = parseInt(v, 10); if (!(n > 0)) throw new Error('Pick a draft.'); return n; };
+export async function erpBrandDeskMakeCards(ctx, payload) {
+  await gate(ctx);
+  return bridge(ctx, '/cards/make', { draft_id: draftId(payload && payload.draft_id) });
+}
+export async function erpBrandDeskCards(ctx, payload) {
+  await gate(ctx);
+  return bridge(ctx, '/cards/' + draftId(payload && payload.draft_id));
+}
+
 export const PILLARS = ['story', 'lesson', 'behind the scenes', 'market', 'announcement'];
 export const AUDIENCES = ['customer', 'supplier', 'brand'];
 const num = (v) => { const n = parseInt(v, 10); if (!(n > 0)) throw new Error('Pick a card.'); return n; };
@@ -288,4 +299,4 @@ export async function erpBrandDeskHello(ctx, payload) {
   return { ok: true };
 }
 
-export const HANDLERS = { erpBrandDesk, erpBrandDeskDrafts, erpBrandDeskMakeDrafts, erpBrandDeskDraftDecide, erpBrandDeskSettings, erpBrandDeskWeights, erpBrandDeskCadence, erpBrandDeskLint, erpBrandDeskShorts, erpBrandDeskMakeShorts, erpBrandDeskVideos, erpBrandDeskPeople, erpBrandDeskPerson, erpBrandDeskToLeads, erpBrandDeskIdeas, erpBrandDeskIdea, erpBrandDeskIdeaToBoard, erpBrandDeskBoard, erpBrandDeskCard, erpBrandDeskMove, erpBrandDeskDone, erpBrandDeskPost, erpBrandDeskDecide, erpBrandDeskSetup, erpBrandDeskHello };
+export const HANDLERS = { erpBrandDesk, erpBrandDeskMakeCards, erpBrandDeskCards, erpBrandDeskDrafts, erpBrandDeskMakeDrafts, erpBrandDeskDraftDecide, erpBrandDeskSettings, erpBrandDeskWeights, erpBrandDeskCadence, erpBrandDeskLint, erpBrandDeskShorts, erpBrandDeskMakeShorts, erpBrandDeskVideos, erpBrandDeskPeople, erpBrandDeskPerson, erpBrandDeskToLeads, erpBrandDeskIdeas, erpBrandDeskIdea, erpBrandDeskIdeaToBoard, erpBrandDeskBoard, erpBrandDeskCard, erpBrandDeskMove, erpBrandDeskDone, erpBrandDeskPost, erpBrandDeskDecide, erpBrandDeskSetup, erpBrandDeskHello };

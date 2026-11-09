@@ -8515,7 +8515,7 @@ function srv(name, args, ok, bad) {
 
 var SRV_ACTIVE = 0, SRV_WRITING = false, SRV_TIMED = {};
 // the same list the server uses to know a call changes nothing (ERP_READS)
-var SRV_READS = /^(erpBrandDeskDrafts|erpBrandDeskSettings|erpBrandDeskLint|erpHolds|erpHoldGet|erpPhoneAlerts|erpWaNumbers|erpBrandDesk|erpBrandDeskShorts|erpBrandDeskVideos|erpBrandDeskPeople|erpBrandDeskIdeas|erpBrandDeskBoard|erpShipmentRepriceCheck|erpReceivePreview|erpSeo|erpReceipts|erpBrief|erpBrain|erpWatch|erpEngine|erpEngineJob|erpSkills|erpAiBrain|erpAiBrainModels|erpLeadForms|erpLeads|erpLeadFind|erpLeadCapture|erpMyUpdates|erpSocialBridges|erpAds|erpAdProfit|erpFactory|erpTaste|erpAdsInterests|erpSocialNet|erpSocialLearn|erpSocialAssets|erpSocialPosts|erpSocialPhotos|erpInboxDigest|erpJointRecvCatalog|erpSitePages|erpBalanceSheet|erpProductFields|erpProductAi|erpMetaConnect|erpInboxFeatureMap|erpBookings|erpInbox|erpInboxOpen|erpInboxChannels|erpChatOrders|erpInboxStats|erpAiWork|erpCommissionSales|erpFdCards|erpLineMargins|erpFd19Profit|erpFdInventory|erpFd22Analytics|erpNavigator|erpSellers|erpFollowups|erpCustomerInsight|erpPreorders|erpCashUps|erpAskingPrices|erpSystemCheck|erpAnalytics|erpCommission|erpHolding|erpLotFunding|erpShipments|erpShipment|erpLots|erpFdHead|erpFdDash|erpReceiveMatch|erpAiReader|erpProductSuggest|erpCatalogue|erpPushList|erpCreators|erpCreatorPortalLink|erpSponsorLink|erpCreatorRequests|erpCreatorEvents|erpCreatorProgramme|erpCreatorPreview|erpCreatorCatalog|erpCreatorSources|erpCreatorClaims|erpApps|erpAppQr|erpFeedback|erpRestockOffers|erpRestockList|erpWarrantyRules|erpWarrantyCard|erpMyLink|erpPlatformRegister|erpPlatformDoctor|erpPlatformCommunity|erpMarketWaiting|erpBoard|erpPlatformDesign|erpResell|erpResellerProgramme|erpLoyalty|erpCustomerPoints|erpRefillDue|erpDeliveryHistory|erpDeliveryHistoryMany|erpPrintKit|erpPrintJobs|erpPrintJob|erpPrintCost|erpSpools|erpPrintRequests|erpJoint|erpJointCatalog|erpJointCard|erpInvoiceDesign|erpInvoicePreview|erpMarket|erpMarketMine|erpMarketRequests|erpMarketHints|erpMarketNames|erpWanted|erpBrand|erpComplianceLog|erpProviderKey|erpNews|erpAccessKeys|erpAccessWarning|erpAdmin|erpAiKeys|erpAlertRules|erpAlerts|erpArena|erpBackupStatus|erpBg|erpBnWords|erpBookedParcels|erpBrandLogo|erpBundle|erpBusinessLinks|erpBusinesses|erpBusinessesDeleted|erpCampaignAudience|erpCampaignGet|erpCampaignList|erpCapital|erpCashBook|erpCatalog|erpConnStatus|erpConnections|erpCostBook|erpCourier|erpCourierKeyStatus|erpCurrencies|erpCustomerAccount|erpCustomerCredit|erpCustomerList|erpCustomerPage|erpCustomerStatement|erpCustomers|erpDashboardData|erpDaySales|erpDeliveryOptions|erpDevices|erpDiscontinued|erpDues|erpEvoQr|erpEvoStatus|erpExpenseExport|erpExpenseReceiptUrl|erpExpenses|erpFamilies|erpFighters|erpFormOptions|erpGame|erpGetTheme|erpGoogle|erpHello|erpInstalls|erpInvoice|erpInvoicePdf|erpJob|erpJobs|erpListView|erpLookupCustomer|erpLookupUsage|erpMe|erpMoney|erpNoteFileUrl|erpNotes|erpOwnerChange|erpOwnerChanges|erpParcelLabels|erpParcelPreview|erpPartnerStock|erpPartnership|erpPayReasons|erpPeople|erpPlatform|erpPlatformErrors|erpPnl|erpPnlMonth|erpPoList|erpPoolCatalog|erpProduct|erpProductListShare|erpProductPage|erpProductPhotoUrl|erpProductThumbs|erpProfile|erpQuoteAsset|erpQuoteBoot|erpQuoteGet|erpQuoteList|erpRecentInvoices|erpRecovery|erpReorderPlan|erpRestorePreview|erpReturnPreview|erpRisks|erpSales|erpSearch|erpSecurity|erpSelfTest|erpSerialLookup|erpSerialsFor|erpSessions|erpSetTheme|erpSettingsFull|erpSettingsLists|erpSfPayoutLines|erpSfPayouts|erpShareFile|erpSharedStock|erpSheet|erpStatementPdf|erpStockHistory|erpSupplierPage|erpSuppliers|erpToday|erpUsers|erpWaProductPdf|erpWebMatches|erpWebOrderInvoices|erpWebOrders|erpWebsiteTest)$/;
+var SRV_READS = /^(erpBrandDeskCards|erpBrandDeskDrafts|erpBrandDeskSettings|erpBrandDeskLint|erpHolds|erpHoldGet|erpPhoneAlerts|erpWaNumbers|erpBrandDesk|erpBrandDeskShorts|erpBrandDeskVideos|erpBrandDeskPeople|erpBrandDeskIdeas|erpBrandDeskBoard|erpShipmentRepriceCheck|erpReceivePreview|erpSeo|erpReceipts|erpBrief|erpBrain|erpWatch|erpEngine|erpEngineJob|erpSkills|erpAiBrain|erpAiBrainModels|erpLeadForms|erpLeads|erpLeadFind|erpLeadCapture|erpMyUpdates|erpSocialBridges|erpAds|erpAdProfit|erpFactory|erpTaste|erpAdsInterests|erpSocialNet|erpSocialLearn|erpSocialAssets|erpSocialPosts|erpSocialPhotos|erpInboxDigest|erpJointRecvCatalog|erpSitePages|erpBalanceSheet|erpProductFields|erpProductAi|erpMetaConnect|erpInboxFeatureMap|erpBookings|erpInbox|erpInboxOpen|erpInboxChannels|erpChatOrders|erpInboxStats|erpAiWork|erpCommissionSales|erpFdCards|erpLineMargins|erpFd19Profit|erpFdInventory|erpFd22Analytics|erpNavigator|erpSellers|erpFollowups|erpCustomerInsight|erpPreorders|erpCashUps|erpAskingPrices|erpSystemCheck|erpAnalytics|erpCommission|erpHolding|erpLotFunding|erpShipments|erpShipment|erpLots|erpFdHead|erpFdDash|erpReceiveMatch|erpAiReader|erpProductSuggest|erpCatalogue|erpPushList|erpCreators|erpCreatorPortalLink|erpSponsorLink|erpCreatorRequests|erpCreatorEvents|erpCreatorProgramme|erpCreatorPreview|erpCreatorCatalog|erpCreatorSources|erpCreatorClaims|erpApps|erpAppQr|erpFeedback|erpRestockOffers|erpRestockList|erpWarrantyRules|erpWarrantyCard|erpMyLink|erpPlatformRegister|erpPlatformDoctor|erpPlatformCommunity|erpMarketWaiting|erpBoard|erpPlatformDesign|erpResell|erpResellerProgramme|erpLoyalty|erpCustomerPoints|erpRefillDue|erpDeliveryHistory|erpDeliveryHistoryMany|erpPrintKit|erpPrintJobs|erpPrintJob|erpPrintCost|erpSpools|erpPrintRequests|erpJoint|erpJointCatalog|erpJointCard|erpInvoiceDesign|erpInvoicePreview|erpMarket|erpMarketMine|erpMarketRequests|erpMarketHints|erpMarketNames|erpWanted|erpBrand|erpComplianceLog|erpProviderKey|erpNews|erpAccessKeys|erpAccessWarning|erpAdmin|erpAiKeys|erpAlertRules|erpAlerts|erpArena|erpBackupStatus|erpBg|erpBnWords|erpBookedParcels|erpBrandLogo|erpBundle|erpBusinessLinks|erpBusinesses|erpBusinessesDeleted|erpCampaignAudience|erpCampaignGet|erpCampaignList|erpCapital|erpCashBook|erpCatalog|erpConnStatus|erpConnections|erpCostBook|erpCourier|erpCourierKeyStatus|erpCurrencies|erpCustomerAccount|erpCustomerCredit|erpCustomerList|erpCustomerPage|erpCustomerStatement|erpCustomers|erpDashboardData|erpDaySales|erpDeliveryOptions|erpDevices|erpDiscontinued|erpDues|erpEvoQr|erpEvoStatus|erpExpenseExport|erpExpenseReceiptUrl|erpExpenses|erpFamilies|erpFighters|erpFormOptions|erpGame|erpGetTheme|erpGoogle|erpHello|erpInstalls|erpInvoice|erpInvoicePdf|erpJob|erpJobs|erpListView|erpLookupCustomer|erpLookupUsage|erpMe|erpMoney|erpNoteFileUrl|erpNotes|erpOwnerChange|erpOwnerChanges|erpParcelLabels|erpParcelPreview|erpPartnerStock|erpPartnership|erpPayReasons|erpPeople|erpPlatform|erpPlatformErrors|erpPnl|erpPnlMonth|erpPoList|erpPoolCatalog|erpProduct|erpProductListShare|erpProductPage|erpProductPhotoUrl|erpProductThumbs|erpProfile|erpQuoteAsset|erpQuoteBoot|erpQuoteGet|erpQuoteList|erpRecentInvoices|erpRecovery|erpReorderPlan|erpRestorePreview|erpReturnPreview|erpRisks|erpSales|erpSearch|erpSecurity|erpSelfTest|erpSerialLookup|erpSerialsFor|erpSessions|erpSetTheme|erpSettingsFull|erpSettingsLists|erpSfPayoutLines|erpSfPayouts|erpShareFile|erpSharedStock|erpSheet|erpStatementPdf|erpStockHistory|erpSupplierPage|erpSuppliers|erpToday|erpUsers|erpWaProductPdf|erpWebMatches|erpWebOrderInvoices|erpWebOrders|erpWebsiteTest)$/;
 function srvPump() {
   if (!SRV_Q.length) return;
   var isRead = SRV_READS.test(SRV_Q[0].name);
@@ -41387,6 +41387,8 @@ html[data-bizkind="brand"] #tabbar button[data-tab="invoice"],html[data-bizkind=
   });
 })();
 </script>
+<!-- brand-10 (10 Nov 2026): Make pictures on a draft - carousel slides (1080x1350) + a quote card (1080x1080), drawn on
+     the Mac (czrender, Noto Sans Bengali), shown under the draft with a Save link each. -->
 <!-- brand-9 (10 Nov 2026): every draft also has Copy the text + I posted it myself (Facebook profile, accounts not
      connected) - the post is kept in the brand database with its link. -->
 <!-- brand-8 (10 Nov 2026): Brand desk drafts. Plan > Idea bank: pick an idea (or write one), tick platforms, "Write
@@ -41399,10 +41401,12 @@ html[data-bizkind="brand"] #tabbar button[data-tab="invoice"],html[data-bizkind=
 .bd8-head{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-bottom:6px}
 .bd8-idea{display:flex;gap:8px;align-items:center;padding:7px 0;border-top:1px solid var(--fd-border,#eef)}
 .bd8-idea .c{flex:1;min-width:0;overflow-wrap:anywhere}
+.bd8-pics{display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:6px;margin-top:8px}
+.bd8-pics img{width:100%;display:block;border-radius:8px;box-shadow:0 1px 2px rgba(0,0,0,.08)}
 </style>
 <script>
 (function () {
-  var D = { data: null, busy: '', plats: { linkedin: 1, facebook: 1 }, nets: {}, poll: 0 };
+  var D = { data: null, busy: '', plats: { linkedin: 1, facebook: 1 }, nets: {}, poll: 0, cards: {} };
   var PLATS = ['linkedin', 'facebook', 'instagram', 'youtube', 'threads', 'tiktok'];
   function msg(e) { return esc((e && e.message) || String(e)); }
   function tabNow() { var v = el('view'); var on = v && v.querySelector('.bd-tabs .bd-chip.on'); return on ? (on.getAttribute('data-id') || (on.getAttribute('data-bd7') ? 'rules' : '')) : 'today'; }
@@ -41437,10 +41441,25 @@ html[data-bizkind="brand"] #tabbar button[data-tab="invoice"],html[data-bizkind=
         '<button class="btn small" type="button" data-bd8="approve" data-id="' + x.id + '"' + (D.busy || !mine.length ? ' disabled' : '') + '>' + (D.busy === 'ap' + x.id ? '<span class="wd-spin"></span>' : '') + 'Approve and queue</button>' +
         '<button class="btn small ghost" type="button" data-bd8="reject" data-id="' + x.id + '"' + (D.busy ? ' disabled' : '') + '>Reject</button></div>' +
         '<div class="ap-row" style="gap:8px;flex-wrap:wrap;align-items:center;margin-top:6px"><button class="btn small ghost" type="button" data-bd8="copy" data-id="' + x.id + '">Copy the text</button>' +
+        '<button class="btn small ghost" type="button" data-bd8="cards" data-id="' + x.id + '">' + (D.cards[x.id] && D.cards[x.id].state === 'making' ? '<span class="wd-spin"></span>Making pictures…' : 'Make pictures') + '</button>' +
         '<input class="i" id="bd8_url_' + x.id + '" data-noi18n="1" style="flex:1;min-width:180px" placeholder="Link of the post (optional)">' +
-        '<button class="btn small ghost" type="button" data-bd8="manual" data-id="' + x.id + '"' + (D.busy ? ' disabled' : '') + '>I posted it myself</button></div></div>';
+        '<button class="btn small ghost" type="button" data-bd8="manual" data-id="' + x.id + '"' + (D.busy ? ' disabled' : '') + '>I posted it myself</button></div>' + cardsHtml(x.id) + '</div>';
     });
     return h + '</div>';
+  }
+  // brand-10: the pictures of one draft (carousel slides + quote card), each with a Save link
+  function cardsHtml(id) {
+    var c = D.cards[id]; if (!c) return '';
+    if (c.state === 'failed') return '<div class="note" style="margin-top:6px"><div class="ico">!</div><div>' + esc(c.error || 'Could not make the pictures.') + '</div></div>';
+    var pics = c.pictures || []; if (!pics.length) return c.state === 'making' ? '<div class="bd-meta" style="margin-top:6px">Drawing the pictures… (about a minute)</div>' : '';
+    return '<div class="bd8-pics">' + pics.map(function (p) { return '<a href="' + p.src + '" download="draft' + id + '-' + esc(p.name) + '" title="Save ' + esc(p.name) + '"><img alt="' + esc(p.name) + '" src="' + p.src + '"></a>'; }).join('') + '</div>' +
+      ((c.hits || []).filter(function (h) { return h.severity === 'block'; }).length ? '<div class="bd-meta" style="color:#9b1c1c">The claim check found a problem in the pictures\' words - check before using.</div>' : '<div class="bd-meta">Tap a picture to save it. Carousel 1080×1350, quote card 1080×1080.</div>');
+  }
+  function loadCards(id) {
+    srv('erpBrandDeskCards', [{ draft_id: id }], function (r) {
+      var j = r.job || {}; D.cards[id] = { state: (j.state === 'making') ? 'making' : (j.state === 'failed' ? 'failed' : 'done'), error: j.error, pictures: r.pictures || [], hits: r.hits || [] };
+      draw(); if (D.cards[id].state === 'making') setTimeout(function () { loadCards(id); }, 10000);
+    }, function (e) { D.cards[id] = { state: 'failed', error: (e && e.message) || String(e) }; draw(); });
   }
   function bankHtml() {
     var d = D.data;
@@ -41492,6 +41511,10 @@ html[data-bizkind="brand"] #tabbar button[data-tab="invoice"],html[data-bizkind=
       var cb = el('bd8_body_' + id), txt = cb ? cb.value : '';
       var done = function () { toast('Copied. Paste it on Facebook, then press I posted it myself.'); };
       try { navigator.clipboard.writeText(txt).then(done, function () { if (cb) { cb.focus(); cb.select(); } toast('Select all and copy (the phone did not allow it).', true); }); } catch (e5) { if (cb) { cb.focus(); cb.select(); } }
+    }
+    else if (what === 'cards') {
+      var cid = Number(id); D.cards[cid] = { state: 'making', pictures: (D.cards[cid] && D.cards[cid].pictures) || [] }; draw();
+      srv('erpBrandDeskMakeCards', [{ draft_id: cid }], function () { setTimeout(function () { loadCards(cid); }, 15000); }, function (e7) { D.cards[cid] = { state: 'failed', error: (e7 && e7.message) || String(e7) }; draw(); });
     }
     else if (what === 'manual') {
       var mb = el('bd8_body_' + id), mu = el('bd8_url_' + id); D.busy = 'ap' + id; draw();

@@ -4074,3 +4074,12 @@ Live Agent Desk style set to ভাই / আপু (backup private/inbox-profile
 the real model in test mode: Banglish -> Banglish, Bangla -> Bangla, English -> English, "apu" for a woman, cards
 shown, an order taken from phone + address and confirmed in the chat's script. A real test alert went from the first
 WhatsApp number ("WhatsApp") to its own chat.
+
+## brand-10 (10 Nov 2026) - Brand desk: picture cards from a draft
+- "Make pictures" on every draft waiting on Today: the AI (gpt-5.6-luna, cheap) splits only the draft's own words into
+  carousel slides; the Mac renderer (czrender, Chromium, Noto Sans Bengali; own key for the bridge) draws 5-7 slides
+  1080x1350 + a quote card 1080x1080, kept in /data/brand/cards/<draft>. They show under the draft, each with Save.
+  The claim check also runs on the pictures' words.
+- Checked on the Mac: the Bangla Facebook draft -> 6 slides + quote card, conjuncts right (প্রথমে, চিহ্ন, নিশ্চিত).
+- Calls (owner only): erpBrandDeskMakeCards, erpBrandDeskCards (read). Tests: branddesk green.
+- NOT done: pictures are not yet attached to the queued post (Postiz media upload) - save and attach by hand for now.

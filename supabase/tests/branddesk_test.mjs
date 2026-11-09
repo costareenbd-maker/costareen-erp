@@ -13,6 +13,8 @@ web.on(/^https:\/\/desk-test\.trycloudflare\.com\//, (url, opts) => {
   if (url.endsWith('/today')) return { body: { pacer: { lines: { linkedin: { waiting: 1 } } }, posts: { posts: [] }, networks: [{ id: 'n1', platform: 'linkedin', name: 'Rahman' }] } };
   if (url.endsWith('/post')) return { body: { queued: ['a', 'b'] } };
   // brand-7: the claim check and the settings in the brand core database
+  if (url.endsWith('/cards/make')) return { body: { job: 'c1', draft: 5, state: 'making' } };
+  if (/\/cards\/\d+$/.test(url)) return { body: { draft: 5, pictures: [{ name: 'slide-01.png', src: 'data:image/png;base64,AAAA' }], hits: [], job: { state: 'done' } } };
   if (url.endsWith('/drafts') || url.endsWith('/drafts/make') || url.endsWith('/drafts/decide')) return { body: { waiting: [{ id: 5, platform: 'linkedin', lang: 'en', body: 'Draft', legal_flags: [] }], ideas: [{ id: 3, title_working: 'How to tell a genuine product' }], jobs: {}, networks: [], queued: url.endsWith('/decide') ? ['q1'] : undefined } };
   if (url.endsWith('/lint')) { const t = (opts.body && JSON.parse(opts.body).text) || ''; return { body: { hits: /treats acne/i.test(t) ? [{ rule_id: 3, severity: 'block', reason: 'Health claim', match: 'treats' }] : (/#a #b #c #d/.test(t) ? [{ rule_id: 15, severity: 'warn', reason: 'More than 3 hashtags', match: '#a' }] : []) } }; }
   if (url.endsWith('/settings') || url.endsWith('/settings/weights') || url.endsWith('/settings/cadence')) return { body: { topics: [{ key: 'beauty_wholesale', label_en: 'Wholesale' }, { key: 'printing_3d', label_en: '3D' }], weights: { linkedin: { beauty_wholesale: 100 } }, cadence: [], settings: { cadence_level: 'start' }, connectors: [] } };
@@ -113,6 +115,14 @@ check('posted by hand: a strange link is refused', !r.ok && /https/.test(r.error
 r = await owner('erpBrandDeskDraftDecide', [{ id: 5, action: 'manual', url: 'https://facebook.com/rahman/posts/1', body: 'As posted' }]);
 const man = seen.filter((x) => x.url.endsWith('/drafts/decide')).pop();
 check('posted by hand needs no account and keeps the link', r.ok && man.body.action === 'manual' && !man.body.networks && man.body.url.includes('facebook.com'), man && man.body);
+r = await owner('erpBrandDeskMakeCards', [{ draft_id: 'x' }]);
+check('pictures need a draft', !r.ok, r);
+r = await owner('erpBrandDeskMakeCards', [{ draft_id: 5 }]);
+check('pictures are asked for a draft', r.ok && seen.filter((x) => x.url.endsWith('/cards/make')).pop().body.draft_id === 5, r);
+r = await owner('erpBrandDeskCards', [{ draft_id: 5 }]);
+check('the pictures come back', r.ok && r.result.pictures[0].name === 'slide-01.png' && /\/cards\/5$/.test(seen[seen.length - 1].url), r);
+r = await mgr('erpBrandDeskMakeCards', [{ draft_id: 5 }]);
+check('a manager cannot make pictures', !r.ok, r);
 r = await mgr('erpBrandDeskMakeDrafts', [{ idea_id: 3 }]);
 check('a manager cannot ask for drafts', !r.ok, r);
 
