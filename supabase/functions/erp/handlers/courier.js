@@ -107,7 +107,7 @@ async function czFetch(ctx, path) {
   if (!base) throw new Error('No website is connected yet (Settings \u2192 Connections \u2192 Website).');
   const res = await httpFetch(ctx, base + path, { method: 'GET', headers: { 'x-cz-key': key } });
   if (res.code !== 200) throw new Error('Website returned HTTP ' + res.code + ': ' + String(res.text).substring(0, 300));
-  return JSON.parse(res.text);
+  try { return JSON.parse(res.text); } catch (_) { throw new Error('The website answered, but not with data the ERP understands (is the sync plugin switched on?). First words: ' + String(res.text || '').replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 120)); }
 }
 
 /**

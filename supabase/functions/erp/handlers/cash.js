@@ -175,12 +175,13 @@ export async function erpCashBook(ctx, payload) {
     account: pick, entries, more,
     unassigned: un.map((p) => ({ id: p.id, payout: str(p.payout_id), when: when(looseDate(p.paid_at) || looseDate(p.created_src)), amount: Math.round(num(p.paid_to_bank)) })),
     today: formatDate(ctx.now, 'yyyy-MM-dd'),
+    lockedThrough: await lockedThrough(ctx),   // distill-money (9 Nov 2026): the month-lock chip on the Money screen
   };
 }
 
 // ------------------------------------------------------------ writing
 
-function needOwner(ctx) { if (!roleAtLeast(ctx.s.role, 'shareholder')) throw new Error('Only the owner or a shareholder or a shareholder can change the money accounts.'); }
+function needOwner(ctx) { if (!roleAtLeast(ctx.s.role, 'shareholder')) throw new Error('Only the owner or a shareholder can change the money accounts.'); }
 
 /**
  * First time: the usual accounts and where each payment method lands. Rows
@@ -349,12 +350,10 @@ export async function erpCashMoveVoid(ctx, payload) {
   return erpCashBook(ctx, { account: m.account_id });
 }
 
-/** A line was put on the wrong account (the payment went to the other bank): move that one line. */
-export async function erpCashReassign(ctx, payload) {
-  needOwner(ctx);
-  payload = payload || {};
-  const to = await liveAccount(ctx, payload.account), id = isId(payload.id) ? payload.id : null, src = str(payload.src);
+/** One line of money moved to another account (shared by erpCashReassign and erpCashPlaceMany). */
+async function moveLine(ctx, src, id, to) {
   let n = [];
+  if (!isId(id)) throw new Error('That line was not found.');
   if (src === 'payment') n = await ctx.tx`update payments set account_id = ${to.id} where id = ${id} and business_id = ${ctx.biz} returning id, paid_at as at`;
   else if (src === 'expense') n = await ctx.tx`update expenses set account_id = ${to.id} where id = ${id} and business_id = ${ctx.biz} returning id, recorded_at as at`;
   else if (src === 'capital') n = await ctx.tx`update capital_book set account_id = ${to.id} where id = ${id} and business_id = ${ctx.biz} returning id, on_date as at`;
@@ -364,7 +363,36 @@ export async function erpCashReassign(ctx, payload) {
   else throw new Error('That line cannot be moved.');
   if (!n.length) throw new Error('That line was not found.');
   if (n[0].at) await assertOpen(ctx, new Date(n[0].at), 'its lines cannot be moved to another account');   // fix-2 M11 (the move is undone)
+}
+
+/** A line was put on the wrong account (the payment went to the other bank): move that one line. */
+export async function erpCashReassign(ctx, payload) {
+  needOwner(ctx);
+  payload = payload || {};
+  const to = await liveAccount(ctx, payload.account);
+  await moveLine(ctx, str(payload.src), payload.id, to);
   return erpCashBook(ctx, { account: payload.show || to.id });
 }
 
-export const HANDLERS = { erpCashBook, erpCashSetup, erpCashAccountSave, erpCashMapSave, erpCashTransfer, erpCashAdjust, erpCashMoveVoid, erpCashReassign };
+/** distill-money (9 Nov 2026): many payments / courier payouts in no account placed into one account in one go
+ *  ({ account, items: [{src, id}] }, up to 500). The whole batch is one transaction: a line in a closed month
+ *  refuses the batch, nothing half-done. Returns the book plus how many lines were placed. */
+export async function erpCashPlaceMany(ctx, payload) {
+  needOwner(ctx);
+  payload = payload || {};
+  const to = await liveAccount(ctx, payload.account);
+  const items = Array.isArray(payload.items) ? payload.items.slice(0, 500) : [];
+  if (!items.length) throw new Error('Nothing to place: pick the payments first.');
+  let placed = 0;
+  for (const it of items) {
+    const src = str(it && it.src);
+    if (src !== 'payment' && src !== 'payout') throw new Error('Only payments and courier payouts are placed this way.');
+    await moveLine(ctx, src, it && it.id, to);
+    placed++;
+  }
+  const book = await erpCashBook(ctx, { account: payload.show || to.id });
+  book.placed = placed;
+  return book;
+}
+
+export const HANDLERS = { erpCashBook, erpCashSetup, erpCashAccountSave, erpCashMapSave, erpCashTransfer, erpCashAdjust, erpCashMoveVoid, erpCashReassign, erpCashPlaceMany };

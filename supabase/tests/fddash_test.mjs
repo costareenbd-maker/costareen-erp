@@ -33,7 +33,8 @@ check('gross profit is the P&L gross', d.kpi.gross.v === m.gross, [d.kpi.gross, 
 check('net profit is the P&L net profit (one net profit everywhere)', d.kpi.net.v === m.net, [d.kpi.net, m.net]);
 check('expenses are the P&L expenses', d.kpi.expenses.v === m.expenses, [d.kpi.expenses, m.expenses]);
 check('every money figure shows its calculation, ending on the figure', d.calc.net[d.calc.net.length - 1][1] === d.kpi.net.v && d.calc.gross[2][1] === d.kpi.gross.v, d.calc);
-check('two orders, five units this month (at least)', d.kpi.orders.v >= 2 && d.kpi.units.v >= 5, d.kpi);
+// distill 9 Nov 2026: units are net of returns; the fixture's RTN-1 (2 rolls back, dated 5 days ago) falls in this month most days
+check('two orders, three to five units this month (net of the fixture return)', d.kpi.orders.v >= 2 && d.kpi.units.v >= 3 && d.kpi.units.v <= 5, d.kpi);
 check('a 6-month curve even for one month', d.series.length === 6 && d.series[5].revenue === m.netSales, d.series);
 check('groups from the product categories', d.groups.some((g) => g.label === 'Filaments') && d.groups.some((g) => g.label === 'Accessories'), d.groups);
 check('dues include the unpaid invoice', d.kpi.dues.v >= 600 && d.duesByAge[0].count >= 1, [d.kpi.dues, d.duesByAge]);

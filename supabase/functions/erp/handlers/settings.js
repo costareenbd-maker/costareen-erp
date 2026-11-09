@@ -152,7 +152,7 @@ export async function erpConfigSet(ctx, key, value) {
   if (k === 'next_invoice_num') {
     // the counter the invoice screen numbers from (invoice_counters)
     const n = Number(String(value ?? '').trim());
-    if (!Number.isInteger(n) || n < 1) throw new Error('next_invoice_num must be a whole number, e.g. 1001.');
+    if (!Number.isInteger(n) || n < 1) throw new Error('The next invoice number must be a whole number, e.g. 1001.');
     await ctx.tx`insert into invoice_counters (business_id, next_number) values (${ctx.biz}, ${n})
                  on conflict (business_id) do update set next_number = excluded.next_number`;
   }

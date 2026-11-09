@@ -27,8 +27,11 @@ await owner('erpJointReceive', [{ pool: POOL, sku: 'PM-PLA-BLK', qty: 20, unitCo
 await owner('erpJointBook', [{ pool: POOL, kind: 'capital_in', partner: A, amount: 14000 }]);
 await other('erpJointBook', [{ pool: POOL, kind: 'capital_in', partner: B3, amount: 14000 }]);
 // everything so far happened two months ago
-await sql`update stock_movements set created_at = created_at - interval '70 days' where business_id = ${POOL}`;
-await sql`update pool_ledger set entry_date = entry_date - 70 where pool_id = ${POOL}`;
+// distill 9 Nov 2026: the opening stock is backdated into prev2 (the month the test agrees), not a fixed 70 days -
+// 70 days from the 1st-10th of a month lands in the month before prev2 and 'months are closed in order' refuses
+const BACK = Math.round((now.getTime() - new Date(prev2 + '-15T00:00:00Z').getTime()) / 86400000);
+await sql`update stock_movements set created_at = created_at - make_interval(days => ${BACK}) where business_id = ${POOL}`;
+await sql`update pool_ledger set entry_date = entry_date - ${BACK}::int where pool_id = ${POOL}`;
 await sql`update businesses set created_at = created_at - interval '80 days' where id = ${POOL}`;
 const JS = (await sales('erpJointCatalog', [])).result.products[0].sku;
 const report = async (m) => (await owner('erpJoint', [{ pool: POOL, month: m }])).result.book.report;

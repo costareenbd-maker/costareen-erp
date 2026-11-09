@@ -63,7 +63,7 @@ function anyPhone(text, code) {
   else if (raw.indexOf('00') === 0 && d.length > 11) { d = d.slice(2); raw = '+' + d; cc = ''; }
   else if (cc && cc !== '880') { d = cc + d.replace(/^0+/, ''); raw = '+' + d; }
   if (raw.charAt(0) === '+' && d.indexOf('880') !== 0) {
-    if (!/^[1-9]\d{7,14}$/.test(d)) throw new Error('not a full number with its country code');
+    if (!/^[1-9]\d{7,14}$/.test(d)) throw new Error('That is not a full phone number. Type it with the country code, e.g. +8801712345678.');
     return '+' + d;
   }
   return phone11(d);

@@ -27,3 +27,4 @@ tools/autosync.log
 tools/autosync-run.vbs
 web/index.html
 web/index-local.html
+web/index-local-*.html

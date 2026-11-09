@@ -873,7 +873,8 @@ async function pnlForRaw(ctx, months) {
                delivery: Math.round(x.delivery), courier: cour,
                courierExtra: Math.round(cx.extra), courierShort: Math.round(cx.short),
                uncosted: Math.round(x.uncosted), uncostedReturns: Math.round(x.uncostedRet), uncostedOut: Math.round(keptOut), uncostedN: x.uncostedInv.size, current: m === now,
-               serviceIncome: svc.income, serviceParts: svc.parts, serviceJobs: svc.jobs, joint: Math.round(jointM[m] || 0), jointShare, forfeited });
+               serviceIncome: svc.income, serviceParts: svc.parts, serviceJobs: svc.jobs, joint: Math.round(jointM[m] || 0), jointShare, forfeited,
+               locked: !!(locked && m <= locked) });   // distill-money (9 Nov 2026): the month-lock chip on the money screens
   }
   return out;
 }

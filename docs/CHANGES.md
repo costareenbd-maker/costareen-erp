@@ -3878,3 +3878,31 @@ Owner: "the ERP already knows the bank account, the Bangla QR, everything - pull
 - First live week: 3 of 6 pictures failed "upload 400 InvalidJWT exp" - the upload address the ERP gives expires within
   minutes and the picture server makes them one after another. photoPump asks for ONE picture at a time (the next when the
   previous is done, every minute); a picture that failed on an expired address is asked for once more. factory_test 27.
+
+## distill-1 (9 Nov 2026): every screen distilled, full audit, main released LIVE
+- Owner's brief: distill every page, audit every function, fix every bug, ship live without asking. Impeccable distill +
+  audit over all 44 screens, phone (375) and desktop (1366), English and Bangla, by seven area agents (shell, sales,
+  contacts, goods, money, AI, server). Fragments appended before </body> (`<!-- DISTILL-MERGE 2026-11-09 -->`, one block
+  per area, wrapper pattern, idempotent); reports in the session scratchpad (frag/*-REPORT.md).
+- Shell: Bangla boot reload loop fixed (I18N_HOLD: the overlay waits for the login's saved language), html lang, focus
+  ring, stick fight off by default, Navigator sideways scroll fixed, Settings phone 4,505→2,646 px, syscheck FDX/fdxLoad
+  shadowing fixed.
+- Sales: Invoices desktop search 1,773→392 px; holds/quotes/preorders/repairs/printjobs/resell rows and action bars tidied.
+- Contacts: Customers phone search 657→268 px; leads/campaigns/inbox tidy.
+- Goods: Products phone 29,630→6,135 px; costs/stock/shipments/suppliers/market/joint.
+- Money: "Put them in an account" primary path (erpCashPlaceMany, new), closed-month chip + hiding, lockedThrough,
+  moveLine; capital/commission/profit/analytics tidy. moneydistill_test 14.
+- AI: Ask panel closes on go() on phones; Business Brain 2,744→1,785 px; SEO 1,499→892; Command Center/Watchdog tables →
+  card rows on phone; Brand desk no-key wording; 94 Bangla leftovers removed; assistant.js speaks আপনি in Bangla.
+  aidistill_test 10.
+- Server audit: 30 reads moved to ERP_READS (allow.js), SRV_READS list +24 on the page, plainError 15 cases, 110 WORDS in
+  security.js, courier non-JSON website answer, campaigns/settings/weborders error wording.
+- Bangla top-up block (distill:bn-topup): System check, Navigator, Shipments, Joint stock, Platform, Dashboard words and
+  number patterns. Full crawl after merge: 88/88 screen×size 0 console errors, 0 failed requests, EN and BN.
+- Tests: stale dates fixed in creators/fddash/joint3; local/alltests-distill.sh runs every suite serially (parallel runs
+  OOM). Known: ads 4 (unchanged), golive needs IMPORT_DIR.
+- LIVE release (first release of main since the 6-7 Nov night build): migrations 158-162 recorded on postgres, 155-162 on
+  both tenant _native DBs (mac-migrate.sh, pg_dump first); function = devsync checkout at this commit (tgz backup);
+  web = site-fx + new index.html/sw.js on both Pages projects, previous page in private/live-web-backup-20261109-before-distill.
+- Not done / owner's call: Brand desk tabs, Search Console, Maintenance toast results, Platform tab wording; see the
+  area reports.

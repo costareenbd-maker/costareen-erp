@@ -215,9 +215,9 @@ async function hello(sql, deps, token, authHeader, ip) {
 // the server's own connection, after the call has succeeded. Only a few safe
 // words of what was touched are kept - never a whole payload, which may hold
 // a key or a code.
-const QUIET = /^(erpSetTheme|erpSetLook|erpSetBusiness|erpHello|erpMe|erpEvo\w*|erpCampaignTick|erpEngineClaim|erpEngineStep|erpEngineTool|erpEngineDone|erpWatchReport|erpWatchSiteAction)$/;
+const QUIET = /^(erpSetTheme|erpSetLook|erpSetFdPrefs|erpSetLang|erpDocLang|erpBgSave|erpBgOff|erpGameSet|erpSetBusiness|erpHello|erpMe|erpEvo\w*|erpCampaignTick|erpEngineClaim|erpEngineStep|erpEngineTool|erpEngineDone|erpWatchReport|erpWatchSiteAction)$/;
 // engine-1: the Engine's own bookkeeping and the skills never touch the books - the kept dashboard stays
-const NO_DASH = /^(erpEngine(Claim|Step|Tool|Done|Ask|Cancel|Retry|Rate|ScheduleSave|ScheduleRun|Switch)|erpSkill\w*|erpWatch(?!FixDecide)\w*|erpBrain\w*|erpBrief(RunNow|Settings))$/;
+const NO_DASH = /^(erpSet(Theme|Look|FdPrefs|Lang)|erpDocLang|erpBg(Save|Off)|erpGameSet|erpProfileSave|erpEngine(Claim|Step|Tool|Done|Ask|Cancel|Retry|Rate|ScheduleSave|ScheduleRun|Switch)|erpSkill\w*|erpWatch(?!FixDecide)\w*|erpBrain\w*|erpBrief(RunNow|Settings))$/;
 const DETAIL_KEYS = ['invoiceNo', 'invoice', 'sku', 'month', 'kind', 'business'];
 function activityDetail(args) {
   const a = Array.isArray(args) ? args[0] : null;
@@ -344,5 +344,19 @@ export async function erpCall(deps, { name, args, token, authHeader, ip }) {
 function plainError(m) {
   if (/numeric field overflow|out of range for type|value too long for type/i.test(m)) return 'A number or a text is far too big. Check what was typed.';
   if (/invalid input syntax for type (uuid|integer|numeric|bigint|date|timestamp)/i.test(m)) return 'Something typed is not in the right form (a number, a date or an id). Check it and try again.';
+  // distill (9 Nov 2026): the rest of what Postgres, Deno and a failed fetch say, in plain words
+  if (/relation "[^"]+" does not exist|column "?[\w.]+"? does not exist|function [\w.]+\(.*\) does not exist/i.test(m)) return 'This part of the server is newer than its database. Ask the provider to run the latest update, then try again.';
+  if (/duplicate key value violates/i.test(m)) return 'This already exists. Reload the page to see it.';
+  if (/violates foreign key constraint/i.test(m)) return 'This points at a record that is no longer there. Reload the page and try again.';
+  if (/null value in column .*violates not-null/i.test(m)) return 'Something needed is missing: ' + String((/null value in column "?([\w]+)"?/i.exec(m) || [])[1] || 'a value').replace(/_/g, ' ') + '. Fill it in and try again.';
+  if (/violates check constraint/i.test(m)) return 'One of the values is not allowed here. Check what was typed and try again.';
+  if (/permission denied for|row-level security/i.test(m)) return 'Your account may not touch this record. If you need it, ask the owner (Settings > Users).';
+  if (/division by zero/i.test(m)) return 'A figure needed for this is zero, so it cannot be worked out yet.';
+  if (/deadlock detected|could not serialize access|canceling statement due to (statement|lock) timeout/i.test(m)) return 'The server was busy with the same records. Wait a moment and try again.';
+  if (/remaining connection slots|too many clients|connection (refused|terminated|timed out)|ECONNREFUSED|CONNECT_TIMEOUT/i.test(m)) return 'The database is not answering right now. Wait a minute and try again.';
+  if (/syntax error at or near/i.test(m)) return 'The server could not run this request (a fault in the request itself). It has been logged; tell the provider.';
+  if (/is not valid JSON|Unexpected (token|end of JSON)|JSON\.parse|Unexpected non-whitespace/i.test(m)) return 'An answer from outside (website, courier or AI) was not in the form expected. Try again; if it keeps happening, tell the provider.';
+  if (/Cannot read propert|is not a function|is not iterable|is not defined|Cannot convert undefined|Assignment to constant|Maximum call stack/i.test(m)) return 'A fault in the server stopped this. It has been logged; tell the provider what you were doing.';
+  if (/fetch failed|Failed to fetch|getaddrinfo|ENOTFOUND|ETIMEDOUT|Connection reset|error sending request/i.test(m)) return 'Could not reach an outside service (website, courier or AI). Check the connection and try again.';
   return m;
 }

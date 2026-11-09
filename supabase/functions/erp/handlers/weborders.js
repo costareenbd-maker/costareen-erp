@@ -69,9 +69,9 @@ async function czFetch(ctx, method, path, payload) {
   const headers = { 'x-cz-key': key };
   if (payload) headers['Content-Type'] = 'application/json';
   const r = await httpFetch(ctx, base + path, { method, headers, body: payload ? JSON.stringify(payload) : undefined });
-  if (r.code === 0) throw new Error(r.text);
+  if (r.code === 0) throw new Error('Could not reach the website (' + String(r.text || '').slice(0, 80) + '). Check the address under Settings \u2192 Connections \u2192 Website.');
   if (r.code !== 200) throw new Error('Website returned HTTP ' + r.code + ': ' + r.text.substring(0, 300));
-  return JSON.parse(r.text);
+  try { return JSON.parse(r.text); } catch (_) { throw new Error('The website answered, but not with data the ERP understands (is the sync plugin switched on?). First words: ' + String(r.text || '').replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 120)); }
 }
 
 /**

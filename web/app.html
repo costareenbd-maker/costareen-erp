@@ -17959,7 +17959,7 @@ function setLang(v, save) {
   if (v === LANG) return;
   var was = LANG; LANG = v;
   try { localStorage.setItem('erp_lang', v); } catch (e) {}
-  var after = function () { if (v === 'bn') i18nStart(); else if (was === 'bn') location.reload(); };
+  var after = function () { if (v === 'bn') i18nStart(); else if (was === 'bn' && I18N_ON) location.reload(); };   // distill-shell: nothing translated yet = nothing to undo, no reload
   if (save) srv('erpSetLang', [v], after, after); else after();
 }
 // the language saved with this login wins over this device's last choice
@@ -17970,7 +17970,8 @@ applyBusinesses = function (b) {
 };
 langBtnPaint();
 // after every block has loaded (the business's own words are laid on first)
-setTimeout(i18nStart, 0);
+var I18N_HOLD = true;   // distill-shell: the overlay waits for the login's saved language (the business list) or the sign-in gate - a device on Bangla with a login saved as English used to translate the page and then reload it, again and again; the distill-shell block releases the hold
+setTimeout(function () { if (!I18N_HOLD) i18nStart(); }, 0);
 </script>
 
 <!-- lang-3: the business's own Bangla words, laid over the built-in ones -->
@@ -42918,7 +42919,7 @@ html[data-look="clean"][data-skin="fd"]:root .t2line span { color:var(--fd-text-
   function tdMgr() { return !!(ME && /^(manager|shareholder|owner)$/.test(ME.role || '') && tdDoor()); }
   window.tdOn = tdOwner;
   var fail = function (e) { TD.busy = false; toast(esc((e && e.message) || e), true, 9000); repaint(); };
-  try { ['erpTools', 'erpToolsStatus', 'erpToolTest', 'erpShortLinks', 'erpShortsJobs'].forEach(function (n) { if (!SRV_READS.test(n)) SRV_READS = new RegExp(SRV_READS.source.replace('^(', '^(' + n + '|')); }); } catch (e) {}
+  try { ['erpTools', 'erpToolsStatus', 'erpToolTest', 'erpShortLinks', 'erpShortsJobs', 'erpCrm', 'erpCrmTimeline', 'erpCrmViews', 'erpCrmFields', 'erpCrmCompanies', 'erpCrmCompany', 'erpCrmDupes', 'erpCrmDupCheck', 'erpCrmEvents', 'erpCrmHooks', 'erpCrmRules', 'erpCrmBin', 'erpCrmCalendar', 'erpInboxExport', 'erpLandingDrafts', 'erpLandingPages', 'erpOrderShield', 'erpPixel', 'erpSocialAiModels', 'erpResellerSlip', 'erpInvoiceSamplePdf', 'erpJointStatementPdf', 'erpCheckBusinessSheet', 'erpCourierTest'].forEach(function (n) { if (!SRV_READS.test(n)) SRV_READS = new RegExp(SRV_READS.source.replace('^(', '^(' + n + '|')); }); } catch (e) {}
 
   // ---- the apps on the Tools page (names stay English; the line under each is translated)
   var JOINED = { shlink: 1, openshorts: 1, opencut: 1 };
@@ -45804,6 +45805,1944 @@ document.addEventListener('click', async function (ev) {
     if (ts === 'reset') { if (!TS.sure) { TS.sure = true; repaint(); return; } TS.sure = false; srv('erpTasteReset', [{ kind: TS.kind, formula: v('tsF') }], function (r) { TS.data[TS.kind] = r; toast('Reset. Only the new formula is used now.'); repaint(); }, fail); return; }
     if (ts === 'forget') { srv('erpTasteForget', [{ kind: TS.kind, at: b.getAttribute('data-at') }], function (r) { TS.data[TS.kind] = r; repaint(); }, fail); return; }
   });
+})();
+</script>
+
+<!-- DISTILL-MERGE 2026-11-09: area fragments (shell, sales, contacts, goods, money, ai) -->
+
+<!-- distill:shell -->
+<!-- distill-shell (9 Nov 2026): the app shell distilled. System check (and Analytics) load again - fd-38 re-declared FDX and
+     fdxLoad(force), so the earlier fdxLoad(name, key) that fetched erpSystemCheck / erpAnalytics was never called and the
+     screens stayed on "Checking the books…"; the stick fight is OFF unless this person switched it on; <html lang="en"> in
+     English; the phone top bar keeps the business name readable; one 3px focus ring (ink / lime) on every control incl. a.btn;
+     Settings: one navigation row, no duplicate Backup button, no sub-head that repeats the title, the long Menu card folded on a
+     phone; leftovers out (Platform "Moved to Apps", Help "~N min", Maintenance "imports"); Help follows the app language. -->
+<style>
+/* ---- focus: one ring (DESIGN.md: 3px ink at 18% light / lime at 30% dark); the old look keeps its own outline but a.btn gets it too */
+a.btn:focus-visible { outline:2px solid var(--series-1, #6D5BFF); outline-offset:2px; }
+html[data-look="clean"][data-skin="fd"]:root :is(button, a.btn, [role="button"], select, summary, [role="tab"], .navgrp, #nav button):focus-visible { outline:0 !important; box-shadow:var(--fd-focus-ring) !important; }
+html[data-look="clean"][data-skin="fd"]:root .topbar #fdplus:focus-visible, html[data-look="clean"][data-skin="fd"]:root .topbar #ntLang:focus-visible,
+html[data-look="clean"][data-skin="fd"]:root .cl-tools > button:focus-visible, html[data-look="clean"][data-skin="fd"]:root .topbar > #fd39biz:focus-visible,
+html[data-look="clean"][data-skin="fd"]:root .topbar #fdu:focus-visible { outline:0 !important; box-shadow:var(--fd-focus-ring) !important; }
+/* ---- "View all →" links on the Dashboard cards: a 32px tap row, same look */
+html[data-look="clean"][data-skin="fd"]:root #view .fdd-more { display:inline-flex; align-items:center; min-height:32px; padding:0 6px; margin:-6px -6px -6px auto; border-radius:8px; }
+/* ---- phone top bar: the business name is the brand - it keeps its room; the rest is icons */
+@media (max-width:760px) {
+  html[data-look="clean"][data-skin="fd"]:root .topbar { gap:4px !important; }
+  html[data-look="clean"][data-skin="fd"]:root .topbar > #fd39biz { flex:1 1 auto !important; min-width:104px !important; max-width:none !important; padding:0 4px 0 2px; }
+  html[data-look="clean"][data-skin="fd"]:root .topbar > #fd39biz .nm { font-size:14px; }
+  html[data-look="clean"][data-skin="fd"]:root .topbar > #fd39biz { gap:4px; }
+  html[data-look="clean"][data-skin="fd"]:root .topbar > #fd39biz .cv { width:14px; height:14px; flex-basis:14px; margin-left:-2px; }
+  html[data-look="clean"][data-skin="fd"]:root .topbar #fdu { width:36px; min-width:36px; }
+  html[data-look="clean"][data-skin="fd"]:root .topbar #ntLang { min-width:30px !important; width:30px !important; height:36px; font-size:12px; }
+  html[data-look="clean"][data-skin="fd"]:root .topbar #fdplus { width:38px !important; min-width:38px; height:38px; padding:0 !important; justify-content:center; }
+  html[data-look="clean"][data-skin="fd"]:root .cl-tools { padding:2px; gap:0; }
+  html[data-look="clean"][data-skin="fd"]:root .cl-tools > button, html[data-look="clean"][data-skin="fd"]:root .cl-tools > button.act { width:32px !important; height:34px !important; min-width:32px !important; }
+  html[data-look="clean"][data-skin="fd"]:root .cl-tools svg { width:18px; height:18px; }
+  html[data-look="clean"][data-skin="fd"]:root .topbar #fdu { height:42px; padding:2px; }
+}
+@media (max-width:360px) { html[data-look="clean"][data-skin="fd"]:root .topbar > #fd39biz .lg { display:none; } }
+/* ---- Settings: one navigation. The head's Backup button is already a row of the section list; the sub-head repeated the title */
+body[data-fdview="settings"] #fd22Head [data-fd22bkgo], body[data-fdview="settings"] #view .fd22-sth { display:none !important; }
+body[data-fdview="settings"] #view .fd22-stnav button.fd22-sti { min-height:40px; height:40px; }
+/* Defaults rows showed two "?" per label (the t2q help and the fd-48 label help say the same): one is enough */
+body[data-fdview="settings"] #view .t2q + .fhelp, body[data-fdview="settings"] #view .t2q ~ .fhelp { display:none !important; }
+details.nt-fold.nt-setmenu { margin:10px 0 0; border:0; box-shadow:none; background:var(--fd-surface-2, #f3f4f6); }
+details.nt-fold.nt-setmenu > .nt-fold-in { padding:0 8px 8px; }
+/* ---- Navigator on a phone scrolled sideways by 11px: the title's "i" button gets a ::after hit area (inset:-11px) but was
+        position:relative only on wide screens, so the pseudo-element hung off the page's right edge */
+.nvg-i { position:relative !important; }
+.nvg-kpi .nvg-i { position:absolute !important; }
+</style>
+<script>
+(function () {
+  /* ---- 1. System check / Analytics: the two fdxLoad functions share one name. First arg a string = the insight loader. */
+  if (typeof fdxLoad === 'function' && typeof FDX !== 'undefined') {
+    var fdxLoadFd38 = fdxLoad;
+    fdxLoad = function (name, key) {
+      if (typeof name !== 'string') return fdxLoadFd38.apply(this, arguments);
+      FDX.bz = FDX.bz || {};
+      if (FDX.bz[key]) return;
+      FDX.bz[key] = true;
+      srv(name, [], function (r) { FDX.bz[key] = false; FDX[key] = r; if (VIEW === (key === 'an' ? 'analytics' : 'syscheck')) repaint(); },
+        function (e) { FDX.bz[key] = false; FDX[key] = { error: e && e.message ? e.message : String(e) }; if (VIEW === (key === 'an' ? 'analytics' : 'syscheck')) repaint(); });
+    };
+  }
+
+  /* ---- 2. stick fight: off until this person switches it on (the ⚔ button, or Maintenance › Stick fight on this device) */
+  if (typeof skMode === 'function' && typeof skPref === 'function') {
+    skMode = function () { return skPref('mode') || 'off'; };
+    if (typeof gameSetHtml === 'function') {
+      var gameSetHtmlD = gameSetHtml;
+      gameSetHtml = function () {
+        var h = gameSetHtmlD.apply(this, arguments);
+        if (h && !skPref('mode')) h = h.replace('class="btn small primary" data-skm="on"', 'class="btn small" data-skm="on"').replace('class="btn small" data-skm="off"', 'class="btn small primary" data-skm="off"');
+        return h;
+      };
+    }
+  }
+
+  /* ---- 3. <html lang>: "en" when the screens are English (was ""), "bn" is set by i18nStart */
+  function htmlLang() { try { if (typeof LANG === 'undefined' || LANG !== 'bn') document.documentElement.setAttribute('lang', 'en'); } catch (e) {} }
+  htmlLang();
+  if (typeof setLang === 'function') {
+    var setLangD = setLang;
+    setLang = function (v, save) {
+      // back to English before anything was translated (the login's saved language arriving at boot): no reload needed
+      if (v === 'en' && LANG === 'bn' && typeof I18N_ON !== 'undefined' && !I18N_ON) {
+        LANG = 'en'; try { localStorage.setItem('erp_lang', 'en'); } catch (e) {}
+        htmlLang();
+        if (save) srv('erpSetLang', ['en'], function () {}, function () {});
+        try { if (typeof ntLangPaint === 'function') ntLangPaint(); if (typeof ntMenu === 'function') ntMenu(); if (ME) repaint(); } catch (e2) {}
+        return;
+      }
+      var r = setLangD.apply(this, arguments);
+      htmlLang();
+      return r;
+    };
+  }
+  AFTER_PAINT.push(htmlLang);
+  /* Bangla boot without a reload: the login's saved language arrives with the business list; the overlay used to start
+     at once (setTimeout 0), so a device on Bangla with a login saved as English translated the page and then reloaded it.
+     Now the overlay waits for that answer (the page is hidden behind html.erp-boot anyway), or for the sign-in gate, or 6 s. */
+  if (typeof i18nStart === 'function' && typeof I18N_ON !== 'undefined') {
+    // the hold itself is the one-line change at setTimeout(i18nStart, 0) (shell-inplace.json: I18N_HOLD); without it this is a no-op
+    function i18nRelease() {
+      if (typeof I18N_HOLD === 'undefined' || !I18N_HOLD) return;
+      I18N_HOLD = false;
+      if (LANG === 'bn' && !I18N_ON) { try { i18nStart(); } catch (e) {} }
+    }
+    if (typeof BIZ !== 'undefined' && BIZ) i18nRelease();   // the business list came before this block ran
+    if (typeof applyBusinesses === 'function') {
+      var applyBusinessesD = applyBusinesses;
+      applyBusinesses = function () { var r = applyBusinessesD.apply(this, arguments); i18nRelease(); return r; };
+    }
+    if (typeof paintGate === 'function') {   // the sign-in screen: nobody's saved language to wait for
+      var paintGateD = paintGate;
+      paintGate = function () { var r = paintGateD.apply(this, arguments); if (!ME) i18nRelease(); return r; };
+    }
+    setTimeout(i18nRelease, 6000);
+  }
+
+  /* ---- 4. Settings: the open section is in view on a phone; the long Menu card (who sees each screen) folds there */
+  AFTER_PAINT.push(function distillSettings() {
+    if (VIEW !== 'settings') return;
+    var v = el('view'); if (!v) return;
+    var on = v.querySelector('.fd22-stnav button.fd22-sti[aria-selected="true"]');
+    if (on && typeof ntPhone === 'function' && ntPhone() && !on.hasAttribute('data-ntseen')) { on.setAttribute('data-ntseen', '1'); try { on.scrollIntoView({ block: 'nearest', inline: 'center' }); } catch (e) {} }
+    if (typeof ntPhone !== 'function' || !ntPhone()) return;
+    var rows = v.querySelector('.ap-mrows'); if (!rows || rows.closest('details.nt-setmenu')) return;
+    var n = rows.querySelectorAll('.ap-mrow').length, bn = typeof LANG !== 'undefined' && LANG === 'bn';
+    var d = document.createElement('details'); d.className = 'nt-fold nt-setmenu'; d.setAttribute('data-noi18n', '1');
+    d.innerHTML = '<summary><span>' + (bn ? 'কে কোন স্ক্রিন দেখবে' : 'Who sees each screen') + '</span><span class="nt-n">' + n + (bn ? 'টি স্ক্রিন' : ' screens') + '</span></summary><div class="nt-fold-in"></div>';
+    try { d.open = localStorage.getItem('nt_fold_setmenu') === '1'; } catch (e) {}
+    d.addEventListener('toggle', function () { try { localStorage.setItem('nt_fold_setmenu', d.open ? '1' : '0'); } catch (e) {} });
+    rows.parentNode.insertBefore(d, rows); d.querySelector('.nt-fold-in').appendChild(rows);
+  });
+
+  /* ---- 5. Maintenance: the subtitle said "imports and repairs" - there are none */
+  var TOOLS_SUB_OLD = 'Checks, imports and repairs. Each job says what it does before it runs.', TOOLS_SUB = 'Occasional jobs. Each one says what it does before it runs.';
+  try { if (typeof FDH_SUB !== 'undefined') FDH_SUB.tools = TOOLS_SUB; } catch (e) {}
+  if (typeof fd22Head === 'function') {
+    var fd22HeadD = fd22Head;
+    fd22Head = function (v) { var h = fd22HeadD.apply(this, arguments); return typeof h === 'string' ? h.split(TOOLS_SUB_OLD).join(TOOLS_SUB) : h; };
+  }
+
+  /* ---- 6. Apps: the sub-line said every tile is a customer page; half are "Only me" screens */
+  var APPS_SUB_OLD = 'The special features customers reach from outside. Tap one to see what it does, share its page, and set it up.';
+  var APPS_SUB = 'Extra features: pages your customers reach from outside, and new things you try alone first. Tap one to see what it does, share its page, and set it up.';
+  if (typeof viewApps === 'function') {
+    var viewAppsD = viewApps;
+    viewApps = function () { var h = viewAppsD.apply(this, arguments); return typeof h === 'string' ? h.split(APPS_SUB_OLD).join(APPS_SUB) : h; };
+  }
+
+  /* ---- 7. Platform: the "Moved to Apps" notice card is a leftover */
+  if (typeof viewPlatform === 'function') {
+    var viewPlatformD = viewPlatform;
+    viewPlatform = function () {
+      var h = viewPlatformD.apply(this, arguments);
+      if (typeof h !== 'string') return h;
+      var i = h.indexOf('<section><div class="card"><h2>Moved to Apps</h2>');
+      if (i >= 0) { var j = h.indexOf('</section>', i); if (j > i) h = h.slice(0, i) + h.slice(j + 10); }
+      return h;
+    };
+  }
+
+  /* ---- 8. Help: no invented "~N min"; the guides follow the app language unless the person picked one on the Help screen */
+  if (typeof hgLang === 'function') {
+    hgLang = function () { return (typeof HG !== 'undefined' && HG.lang) || ((typeof LANG !== 'undefined' && LANG === 'bn') ? 'bn' : 'en'); };
+  }
+  function stripMinutes(h) {
+    if (typeof h !== 'string') return h;
+    return h.replace(/ · ~\d+ (?:মিনিট|min)(?=<)/g, '').replace(/<span class="fd22-chip">~\d+ (?:মিনিট|min)<\/span>/g, '');
+  }
+  if (typeof viewGuide === 'function') { var viewGuideD = viewGuide; viewGuide = function () { return stripMinutes(viewGuideD.apply(this, arguments)); }; }
+  if (typeof fd22Guide === 'function') { var fd22GuideD = fd22Guide; fd22Guide = function () { return stripMinutes(fd22GuideD.apply(this, arguments)); }; }
+
+  /* ---- Bangla for the new words, and for the Dashboard / System check words the crawler found left in English */
+  var BN_WORDS = {
+    'Who sees each screen': 'কে কোন স্ক্রিন দেখবে',
+    // Dashboard cards
+    'Monthly Revenue': 'মাসের বিক্রি', '3 months': '৩ মাস', 'All products': 'সব প্রোডাক্ট', 'Sales by Product Group': 'প্রোডাক্ট গ্রুপ অনুযায়ী বিক্রি',
+    'Sales Channel': 'কোথা থেকে বিক্রি', 'Group': 'গ্রুপ', 'Channel': 'চ্যানেল', 'Brand': 'ব্র্যান্ড', 'Cash received': 'টাকা এসেছে',
+    'Unmatched payments': 'কোনো অ্যাকাউন্টে না রাখা পেমেন্ট', 'Investor capital at work': 'খাটছে এমন ইনভেস্টরের টাকা', 'Top Colours': 'বেশি বিক্রি হওয়া রং',
+    'Recent Sales': 'সাম্প্রতিক বিক্রি', 'View details →': 'বিস্তারিত দেখুন →', 'View all →': 'সব দেখুন →', 'Setup Checklist': 'সেটআপের তালিকা',
+    'Reorder Suggestions': 'রিঅর্ডারের পরামর্শ', 'Payments by Method': 'কীভাবে টাকা এসেছে', 'Sales by Brand': 'ব্র্যান্ড অনুযায়ী বিক্রি',
+    'Top Products': 'বেশি বিক্রি হওয়া প্রোডাক্ট', 'Dues by Age': 'কত দিনের বাকি', 'Units on hand': 'হাতে থাকা ইউনিট',
+    'Book them with the courier': 'কুরিয়ারে বুক করুন', 'Order more or mark discontinued': 'আরও অর্ডার করুন বা বন্ধ করে দিন',
+    'See Reorder Suggestions': 'রিঅর্ডারের পরামর্শ দেখুন', 'Follow up the oldest first': 'সবচেয়ে পুরনোটা আগে তাগাদা দিন',
+    'Money accounts set up': 'টাকার অ্যাকাউন্ট সেট করা হয়েছে', 'Every payment in an account': 'প্রতিটা পেমেন্ট কোনো অ্যাকাউন্টে আছে',
+    'Everything in stock has a cost': 'স্টকের সব কিছুর দাম লেখা আছে', 'Products in stock have a weight': 'স্টকের প্রোডাক্টের ওজন লেখা আছে',
+    'Staff added': 'স্টাফ যোগ করা হয়েছে', 'only you so far': 'এখনো শুধু আপনি',
+    // System check
+    'No failures': 'কোনোটা ফেল করেনি', 'Warnings': 'সতর্কতা', 'Passing': 'ঠিক আছে', 'Health': 'স্বাস্থ্য', 'Live signals the checks depend on': 'চেকগুলো যেসব সংকেতের উপর দাঁড়িয়ে',
+    'Last backup': 'শেষ ব্যাকআপ', 'none yet': 'এখনো হয়নি', 'no nightly copy in 36 h': '৩৬ ঘণ্টায় রাতের কপি হয়নি', 'no month closed yet': 'এখনো কোনো মাস বন্ধ হয়নি',
+    'close months under Capital': 'মূলধন স্ক্রিনে মাস বন্ধ করুন', 'Stock without cost': 'দাম লেখা নেই এমন স্টক', 'product(s) in stock': 'প্রোডাক্ট স্টকে আছে',
+    'Sales with unknown cost': 'দাম জানা নেই এমন বিক্রি', 'this month · profit overstated until fixed': 'এ মাসে · ঠিক না করা পর্যন্ত লাভ বেশি দেখাচ্ছে',
+    'Last change': 'শেষ পরিবর্তন', 'every time this screen opens': 'এই স্ক্রিন খুললেই', 'Warn': 'সতর্ক', 'Fail': 'ফেল', 'How to fix': 'কীভাবে ঠিক করবেন',
+    'Check again': 'আবার চেক করুন', 'Nothing found.': 'কিছু পাওয়া যায়নি।', 'Search checks, codes, records…': 'চেক, কোড, রেকর্ড খুঁজুন…',
+    'Search checks': 'চেক খুঁজুন', 'Filter by status': 'অবস্থা দিয়ে বাছুন', 'No check matches with this status.': 'এই অবস্থায় কোনো চেক নেই।', 'Show all': 'সব দেখুন'
+  };
+  BN_WORDS[TOOLS_SUB] = 'মাঝে মাঝের কাজ। প্রতিটা কাজ চালানোর আগে বলে দেয় কী করবে।';
+  BN_WORDS[APPS_SUB] = 'বাড়তি ফিচার: যে পাতাগুলো কাস্টমাররা বাইরে থেকে খোলেন, আর নতুন যা আগে শুধু আপনি দেখে নেন। একটাতে চাপুন - কী করে দেখুন, পাতাটা শেয়ার করুন, সেট করুন।';
+  var BN_PATS = [
+    [/^(\d+) parcel\(s\) to send$/, '$1টা পার্সেল পাঠানো বাকি'], [/^(\d+) products out of stock$/, '$1টা প্রোডাক্ট স্টকে নেই'],
+    [/^(\d+) at or below reorder level$/, '$1টা রিঅর্ডার লেভেলে বা তার নিচে'], [/^(.+) owed by customers$/, 'কাস্টমারদের কাছে পাওনা $1'],
+    [/^(\d+) payment\(s\) to place in an account$/, '$1টা পেমেন্ট কোনো অ্যাকাউন্টে রাখা হয়নি'], [/^(.+) · Money screen$/, '$1 · টাকা স্ক্রিন'],
+    [/^(\d+)% healthy · (\d+) to look at$/, '$1% ঠিক · $2টা দেখার আছে'], [/^(\d+) failing$/, '$1টা ফেল'], [/^All (\d+) pass$/, 'সব $1টা ঠিক'],
+    [/^Last run · (.+)$/, 'শেষ চেক · $1'], [/^Checked (.+)$/, 'চেক $1'], [/^Area: (.+)$/, 'জায়গা: $1'], [/^(\d+) affected$/, '$1টা জড়িত'],
+    [/^All (\d+)$/, 'সব $1'], [/^Fail \((\d+)\)$/, 'ফেল ($1)'], [/^Warn \((\d+)\)$/, 'সতর্ক ($1)'], [/^Pass \((\d+)\)$/, 'ঠিক ($1)'],
+    [/^by (.+)$/, '$1 করেছেন'], [/^Open (.+)$/, '$1 খুলুন'],
+    [/^(\d+) of (\d+) done$/, '$2টার মধ্যে $1টা হয়েছে'], [/^(\d+) account\(s\)$/, '$1টা অ্যাকাউন্ট'], [/^(\d+) payment\(s\) to place$/, '$1টা পেমেন্ট রাখা বাকি'],
+    [/^(\d+) product\(s\) without weight$/, '$1টা প্রোডাক্টের ওজন নেই']
+  ];
+  function bnWords() {
+    try {
+      for (var k in BN_WORDS) if (!I18N_BN[k]) I18N_BN[k] = BN_WORDS[k];
+      if (typeof I18N_PAT !== 'undefined' && I18N_PAT && I18N_PAT.indexOf(BN_PATS[0]) < 0) for (var i = BN_PATS.length - 1; i >= 0; i--) I18N_PAT.unshift(BN_PATS[i]);
+    } catch (e) {}
+  }
+  bnWords();
+  // the business's own words rebuild the pattern list: put ours back after
+  if (typeof bnApplyOwn === 'function') { var bnApplyOwnD = bnApplyOwn; bnApplyOwn = function () { var r = bnApplyOwnD.apply(this, arguments); bnWords(); return r; }; }
+})();
+</script>
+
+<!-- distill:sales -->
+<!-- distill-sales (9 Nov 2026): the sales screens stripped to the work. Invoices: the list first on every device (20 rows a
+     page on a phone), the risk card one calm line (closed) and the Steadfast queue under the list, one queue strip above it;
+     one sibling pill row on every sales screen. Invoice page / New invoice: one money format (no "BDT"), the due in plain ink
+     when it is 0, products as two-line rows on a phone. Waiting orders / Pre-orders: no title repeated under the breadcrumb,
+     one primary per row. Web orders / Quotations / Repairs / Print jobs / Resell: one primary, honest empty states, no
+     duplicate buttons, pills look like pills, tables that scrolled sideways on a phone become card rows. Bangla for every
+     English leftover found on these screens (আপনি forms, প্রোডাক্ট). -->
+<style>
+/* small "?" / "i" help buttons keep their look and get a 30px hit area */
+html[data-look="clean"] .t2q::after, html[data-look="clean"] .fdd-i::after, html[data-look="clean"] .fdd-ti::after { content:''; position:absolute; inset:-6px 0 -6px -6px; }
+html[data-look="clean"] .fhelp::after { content:''; position:absolute; inset:-8px 0 -8px -8px; }
+html[data-look="clean"] .fdd-ti { position:relative; }
+/* Invoices: the queue strip above the list */
+.nt-q { display:flex; flex-wrap:wrap; gap:8px; margin:0 0 12px; }
+.nt-q button { display:inline-flex; align-items:center; gap:8px; min-height:40px; padding:0 14px; border:0; border-radius:999px; background:var(--fd-card, #fff); color:var(--fd-text, var(--ink)); font:inherit; font-size:14px; font-weight:600; cursor:pointer; box-shadow:var(--fd-shadow-card, 0 1px 2px rgba(0,0,0,.04)); }
+.nt-q button b { font-weight:700; font-variant-numeric:tabular-nums; }
+.nt-q button.warn { color:var(--fd-warning-text, #9A5B00); }
+.nt-q button.bad { color:var(--fd-negative-text, #DC2626); }
+.nt-q button:hover { background:var(--fd-surface-2, #F3F4F6); }
+/* the risk card and the Steadfast queue: no coloured frame (tone, not border); closed = one line of figures */
+html[data-look="clean"] #view .card.risk, html[data-look="clean"] #view .card[style*="--serious"] { border-color:transparent !important; }
+.nt-rkline { display:flex; flex-wrap:wrap; gap:6px 18px; margin-top:8px; font-size:14px; color:var(--fd-text-2, var(--ink-2, #4A4D57)); }
+.nt-rkline b { font-weight:700; font-variant-numeric:tabular-nums; color:var(--fd-text, var(--ink)); margin-right:4px; }
+.nt-rkline .warn b { color:var(--fd-warning-text, #9A5B00); }
+.nt-rkline .bad b { color:var(--fd-negative-text, #DC2626); }
+.nt-waitmore td { text-align:center; }
+.nt-q .btn.primary { border-radius:999px; min-height:40px; }
+/* on a phone the breadcrumb is the title: the list card's own head (icon, title, sub-line) only pushes the search down */
+@media (max-width:640px) { body[data-fdview="sales"] #view .fd19-lv .fd19-chead { display:none; } }
+/* New invoice: a 0 due is information, not a warning */
+#view .totals .due.nt-zero, #view .totals .due.nt-zero span { color:var(--fd-text, var(--ink)) !important; }
+/* Waiting orders / Pre-orders: the breadcrumb is the title; the head keeps its sub-line and its button */
+body[data-fdview="holds"] #view .fd19-head .fdd-eyebrow, body[data-fdview="holds"] #view .fd19-head .fdd-title,
+body[data-fdview="preorders"] #view #fdHead .fdd-eyebrow, body[data-fdview="preorders"] #view #fdHead .fdd-title { display:none !important; }
+body[data-fdview="preorders"] #view #fdHead .fdd-head { margin-bottom:8px; }
+/* Resell: tabs are pills, selected = lime */
+html[data-look="clean"] #view .rz-tabs .btn { border-radius:999px; height:36px; min-height:36px; background:var(--fd-surface-2, #F3F4F6); color:var(--fd-text-2, #4A4D57); font-weight:600; }
+html[data-look="clean"] #view .rz-tabs .btn.primary { background:var(--fd-lime, #E4FF5A); color:var(--fd-lime-text, #17181C); }
+/* Print jobs: the explanation only while there is nothing on the board */
+#view .nt-pk-quiet { display:none !important; }
+/* tables that scrolled sideways at 375px: card rows */
+@media (max-width:640px) {
+  #view table.nt-stack, #view table.nt-stack tbody, #view table.nt-stack tr, #view table.nt-stack td { display:block; width:auto; }
+  #view table.nt-stack thead { display:none; }
+  #view table.nt-stack tr { padding:10px 0; border-bottom:1px solid var(--fd-border, #E6E7EB); }
+  #view table.nt-stack tr:last-child { border-bottom:0; }
+  #view table.nt-stack td { display:flex; justify-content:space-between; align-items:baseline; gap:12px; padding:3px 0 !important; border:0 !important; text-align:right; white-space:normal !important; height:auto !important; }
+  #view table.nt-stack td[data-l]::before { content:attr(data-l); flex:0 0 38%; text-align:left; color:var(--fd-text-3, #7A7E8A); font-size:12.5px; font-weight:600; }
+  #view table.nt-stack td.nt-empty { display:none; }
+  #view table.nt-stack td.nt-stack-main { font-weight:600; text-align:left; justify-content:flex-start; }
+  #view table.nt-stack td.nt-stack-main::before { display:none; }
+  #view .scroll.nt-unscroll { overflow:visible !important; }
+}
+</style>
+<script>
+(function () {
+  var bn = function () { return typeof LANG !== 'undefined' && LANG === 'bn'; };
+  var L = function (en, b) { return bn() ? b : en; };
+  function phone() { return !!(window.matchMedia && window.matchMedia('(max-width:640px)').matches); }
+  function money(v) { return typeof tk === 'function' ? tk(v) : fmt(v); }
+  // "BDT 1,234" between tags -> the one money format
+  function tkFix(h) {
+    var cur = (typeof OPT !== 'undefined' && OPT && OPT.currency) || 'BDT';
+    if (typeof tk !== 'function' || typeof h !== 'string') return h;
+    var rx = new RegExp('>(−?-?\\s?)' + cur.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\s(−?-?)([\\d,]+(?:\\.\\d+)?)( due)?<', 'g');
+    return h.replace(rx, function (m, s1, s2, v, due) { var n = Number(v.replace(/,/g, '')) || 0; return '>' + (s1.trim() || s2 ? '− ' : '') + tk(n) + (due || '') + '<'; });
+  }
+  try {
+    var BN = {
+      // Invoices list: queue strip, risk card, Steadfast queue
+      'Unpaid and at risk': 'বাকি আর ঝুঁকি', 'Hide': 'লুকান', 'Show': 'দেখুন', 'owed in all': 'মোট বাকি', 'over 30 days': '৩০ দিনের বেশি', 'over 60 days': '৬০ দিনের বেশি',
+      'nothing at risk': 'কোনো ঝুঁকি নেই', 'Unpaid': 'বাকি', 'Courier not paid': 'কুরিয়ার দেয়নি', 'Came back': 'ফেরত এসেছে', 'With the courier': 'কুরিয়ারে আছে', 'Website orders': 'ওয়েবসাইট অর্ডার',
+      'Every invoice is paid.': 'সব ইনভয়েসের টাকা পাওয়া গেছে।', 'Every delivered parcel has been paid out.': 'ডেলিভারি হওয়া সব পার্সেলের টাকা এসে গেছে।', 'No parcel waiting to be taken back.': 'ফেরত নেওয়ার মতো কোনো পার্সেল নেই।',
+      'No website order waiting.': 'কোনো ওয়েবসাইট অর্ডার অপেক্ষায় নেই।', 'Open Web orders': 'ওয়েব অর্ডার খুলুন', 'Receive / adjust due': 'বাকি নিন / ঠিক করুন', 'Invoice': 'ইনভয়েস', 'Customer': 'কাস্টমার', 'Amount': 'টাকা', 'Age': 'কত দিন',
+      'Waiting for Steadfast': 'Steadfast-এর অপেক্ষায়', 'These orders go by courier and have not been entered with Steadfast yet. Oldest first. Once sent, an order leaves this box and stays in the list below.': 'এই অর্ডারগুলো কুরিয়ারে যাবে, এখনো Steadfast-এ তোলা হয়নি। পুরোনোটা আগে। পাঠালে এখান থেকে সরে নিচের তালিকায় থাকবে।',
+      'Date': 'তারিখ', 'Address': 'ঠিকানা', 'Rider collects': 'রাইডার নেবে', 'Send parcel': 'পার্সেল পাঠান', 'Already handled': 'আগেই করা হয়েছে', 'no address': 'ঠিকানা নেই', 'nothing — paid': 'কিছু না — টাকা দেওয়া',
+      'Steadfast money': 'Steadfast-এর টাকা', 'Print today’s labels': 'আজকের লেবেল প্রিন্ট করুন', 'Check deliveries now': 'ডেলিভারি এখন দেখুন', 'Open': 'খুলুন',
+      // Invoice page
+      'All sales': 'সব বিক্রি', '← All sales': '← সব বিক্রি', 'Money': 'টাকা', 'Products': 'প্রোডাক্ট', 'Payments': 'পেমেন্ট', 'Nothing received yet.': 'এখনো কোনো টাকা আসেনি।', 'Changes': 'বদল', 'Parcel': 'পার্সেল', 'Not sent yet.': 'এখনো পাঠানো হয়নি।',
+      'Goods': 'মাল', 'Total': 'মোট', 'Received': 'পাওয়া গেছে', 'Still owed': 'এখনো বাকি', 'Nothing': 'কিছু না', 'Paid by': 'যেভাবে দিয়েছেন', 'Delivery': 'ডেলিভারি', 'Qty': 'পরিমাণ', 'Price': 'দাম', 'Discount': 'ছাড়', 'Returned': 'ফেরত',
+      'Customer’s page link': 'কাস্টমারের পাতার লিংক', 'Could not open': 'খোলা যায়নি',
+      // New invoice
+      'This invoice due': 'এই ইনভয়েসে বাকি', 'Grand total': 'সর্বমোট', 'Subtotal': 'মোট দাম', 'Paid now': 'এখন দেওয়া', 'Start typing to find a product.': 'প্রোডাক্ট খুঁজতে লিখতে শুরু করুন।',
+      'No products yet. Add one above, or from the Products screen.': 'এখনো কোনো প্রোডাক্ট নেই। উপরে খুঁজে যোগ করুন, বা প্রোডাক্ট পাতা থেকে।',
+      // Web orders
+      'Website: not connected': 'ওয়েবসাইট: যুক্ত নেই', 'Check the website for new orders': 'ওয়েবসাইটে নতুন অর্ডার দেখুন', 'No website orders pulled yet.': 'এখনো ওয়েবসাইট থেকে কোনো অর্ডার আনা হয়নি।',
+      'Website prices': 'ওয়েবসাইটের দাম', 'Compare with the ERP': 'ERP-র সাথে মেলান', 'Enter as invoice': 'ইনভয়েস করুন', 'Already entered': 'আগেই তোলা হয়েছে', 'Order': 'অর্ডার', 'Items': 'প্রোডাক্ট', 'Order total': 'অর্ডারের মোট', 'Payment': 'পেমেন্ট', 'State': 'অবস্থা',
+      // Quotations
+      'Quotations': 'কোটেশন', 'Draft': 'খসড়া', 'Ready': 'তৈরি', 'Search': 'খুঁজুন', 'Status': 'অবস্থা', 'All': 'সব', 'Refresh': 'আবার আনুন', '+ New quotation': '+ নতুন কোটেশন', 'New quotation': 'নতুন কোটেশন',
+      'No quotations yet.': 'এখনো কোনো কোটেশন নেই।', 'No quotation matches.': 'কোনো কোটেশন মেলেনি।', 'Dashboard': 'ড্যাশবোর্ড', 'Conditions library': 'শর্তের তালিকা', 'Letterhead documents': 'লেটারহেড ডকুমেন্ট', 'Settings': 'সেটিংস',
+      'Reference, customer or title': 'রেফারেন্স, কাস্টমার বা শিরোনাম',
+      // Pre-orders
+      'Open pre-orders': 'চালু প্রি-অর্ডার', 'Ready to hand over': 'দেওয়ার জন্য তৈরি', 'Deposits held': 'জমা রাখা টাকা', 'Take a pre-order': 'প্রি-অর্ডার নিন', 'Agreed price and a deposit, for goods not in stock yet.': 'যে মাল এখনো স্টকে নেই, তার ঠিক করা দাম আর জমা।',
+      '+ New pre-order': '+ নতুন প্রি-অর্ডার', 'No pre-orders yet.': 'এখনো কোনো প্রি-অর্ডার নেই।', 'All pre-orders': 'সব প্রি-অর্ডার', 'Help': 'সাহায্য', 'Hand over': 'মাল দিন', '+ Deposit': '+ জমা', 'Give product': 'প্রোডাক্ট বাঁধুন', 'Cancel': 'বাতিল',
+      'The oldest pre-orders get the stock first. A deposit is the customer’s money until the goods are handed over; then it pays the invoice.': 'পুরোনো প্রি-অর্ডার আগে স্টক পায়। মাল দেওয়ার আগ পর্যন্ত জমা কাস্টমারের টাকা; তারপর তা ইনভয়েসে লাগে।',
+      // Repairs
+      'Excel': 'Excel', 'Returned and cancelled': 'ফেরত ও বাতিল', '+ New job': '+ নতুন কাজ', 'Machines in the shop': 'দোকানে থাকা মেশিন', 'Finished jobs': 'শেষ হওয়া কাজ',
+      'Nothing in the shop. Press + New job when a machine comes in.': 'দোকানে কিছু নেই। মেশিন এলে "+ নতুন কাজ" চাপুন।', 'Nothing finished yet.': 'এখনো কিছু শেষ হয়নি।', 'Reading the jobs…': 'কাজের তালিকা আসছে…',
+      'Job': 'কাজ', 'Machine': 'মেশিন', 'Problem': 'সমস্যা', 'Charge': 'চার্জ', 'Due': 'বাকি', 'Days': 'দিন', 'Returned to customer': 'কাস্টমারকে ফেরত দেওয়া', 'Cancel job': 'কাজ বাতিল', 'Reopen': 'আবার খুলুন', 'Receive payment': 'টাকা নিন', 'Save': 'সেভ করুন',
+      // Print jobs
+      'Print jobs': 'প্রিন্টের কাজ', 'Jobs': 'কাজ', 'Jobs board': 'কাজের বোর্ড', 'Printers': 'প্রিন্টার', 'Spools': 'স্পুল', 'Requests': 'অনুরোধ', 'Rates': 'রেট', 'Queued': 'লাইনে', 'Printing': 'প্রিন্ট হচ্ছে', 'Finishing': 'ফিনিশিং',
+      'No print jobs yet. Press + New job when a customer orders a print.': 'এখনো কোনো প্রিন্টের কাজ নেই। কাস্টমার প্রিন্ট চাইলে "+ নতুন কাজ" চাপুন।',
+      'For a business that prints for customers: every job on a board, the true cost of each (filament by the gram from the opened spool, machine hours, labour, packaging), a calculator for the price, and your own quote link for customers.': 'যারা কাস্টমারের জন্য প্রিন্ট করেন: প্রতিটা কাজ একটা বোর্ডে, প্রতিটার আসল খরচ (খোলা স্পুল থেকে গ্রাম হিসেবে ফিলামেন্ট, মেশিনের ঘণ্টা, শ্রম, প্যাকিং), দামের হিসাব, আর কাস্টমারের জন্য আপনার নিজের কোট লিংক।',
+      // Resell
+      'Resell — sell without stock': 'রিসেল — স্টক ছাড়া বিক্রি', 'Suppliers': 'সাপ্লায়ার', 'Sell': 'বিক্রি করুন', 'Orders': 'অর্ডার', 'My commission': 'আমার কমিশন',
+      'Sell a supplier’s products to your own customers at your own price. The supplier packs with a slip in your name and sends the parcel; its courier collects cash on delivery. Your margin is paid to you by the supplier at month end. The platform holds no money.': 'সাপ্লায়ারের প্রোডাক্ট নিজের দামে নিজের কাস্টমারকে বিক্রি করুন। সাপ্লায়ার আপনার নামের স্লিপসহ প্যাক করে পার্সেল পাঠায়; তার কুরিয়ার ক্যাশ অন ডেলিভারি নেয়। মাস শেষে সাপ্লায়ার আপনার মার্জিন দেয়। প্ল্যাটফর্ম কোনো টাকা রাখে না।',
+      'No supplier sells through resellers yet. Suppliers switch it on under Market > What I share.': 'এখনো কোনো সাপ্লায়ার রিসেলারের মাধ্যমে বিক্রি করে না। সাপ্লায়ার এটা চালু করে মার্কেট > "আমি যা শেয়ার করি"-তে।',
+      'No approved supplier yet - ask one under Suppliers.': 'এখনো কোনো সাপ্লায়ার অনুমোদন দেয়নি - সাপ্লায়ার ট্যাবে একজনকে বলুন।', 'No orders yet.': 'এখনো কোনো অর্ডার নেই।', 'Nothing earned yet.': 'এখনো কিছু আয় হয়নি।', 'Ask to join': 'যুক্ত হতে বলুন', 'Sell their products': 'তাদের প্রোডাক্ট বিক্রি করুন',
+      // shared
+      'Show all': 'সব দেখুন', 'Showing': 'দেখানো হচ্ছে', 'More': 'আরও', 'Own delivery': 'নিজেদের ডেলিভারি', 'Walk-in': 'দোকানে এসে',
+      'Website products to match': 'ওয়েবসাইটের প্রোডাক্ট মেলান', 'Website products to match ✓': 'ওয়েবসাইটের প্রোডাক্ট মেলান ✓', 'Hide website products': 'ওয়েবসাইটের প্রোডাক্ট লুকান'
+    };
+    Object.keys(BN).forEach(function (k) { if (!I18N_BN[k]) I18N_BN[k] = BN[k]; });
+  } catch (e) {}
+
+  /* ------------------------------------------------------------ tables -> card rows on a phone */
+  function stackTables(root, force) {
+    if (!phone() || !root) return;
+    [].forEach.call(root.querySelectorAll('table'), function (t) {
+      if (t.classList.contains('nt-stack') || t.closest('.fd19-table, .fd19-scroll, .fd22-tcard, .nvg, .o_lv, .fd19-dr')) return;
+      var ths = [].map.call(t.querySelectorAll('thead th'), function (x) { return x.textContent.trim(); });
+      if (!ths.length || !t.querySelector('tbody tr td')) return;
+      var wrap = t.parentNode, width = wrap && wrap.clientWidth ? wrap.clientWidth : root.clientWidth;
+      if (!force && !(t.scrollWidth > width + 4)) return;
+      t.classList.add('nt-stack');
+      if (wrap && wrap.classList.contains('scroll')) wrap.classList.add('nt-unscroll');
+      [].forEach.call(t.querySelectorAll('tbody tr'), function (tr) {
+        [].forEach.call(tr.children, function (td, i) {
+          if (td.colSpan > 1) return;
+          if (i === 0) { td.classList.add('nt-stack-main'); return; }
+          if (!td.textContent.trim() && !td.querySelector('button, a, input, select')) { td.classList.add('nt-empty'); return; }
+          if (ths[i] && !td.hasAttribute('data-l')) td.setAttribute('data-l', ths[i]);
+        });
+      });
+    });
+  }
+
+  /* ------------------------------------------------------------ Invoices (sales) */
+  if (typeof RISK_OPEN !== 'undefined') RISK_OPEN = false;   // closed = one calm line; "Show" opens the tables
+  // the risk card closed: one line of figures instead of five boxes
+  if (typeof riskBoxHtml === 'function') {
+    var riskBoxHtmlD = riskBoxHtml;
+    riskBoxHtml = function () {
+      var h = riskBoxHtmlD.apply(this, arguments);
+      if (!h || (typeof RISK_OPEN !== 'undefined' && RISK_OPEN)) return h;
+      return h.replace(/<div class="rk">([\s\S]*?)<\/div><\/div><\/section>$/, function (m, inner) {
+        var line = inner.replace(/<div( class="(warn|bad)")?><b>([\s\S]*?)<\/b><span>([\s\S]*?)<\/span><\/div>/g, function (x, c, tone, v, lab) { return '<span' + (tone ? ' class="' + tone + '"' : '') + '><b>' + v + '</b>' + lab + '</span>'; });
+        return '<div class="nt-rkline">' + line + '</div></div></section>';
+      });
+    };
+  }
+  // the Steadfast queue and the invoice page: one money format
+  if (typeof salesWaitingHtml === 'function') { var salesWaitingHtmlD = salesWaitingHtml; salesWaitingHtml = function () { return tkFix(salesWaitingHtmlD.apply(this, arguments)); }; }
+  if (typeof invoicePageHtml === 'function') { var invoicePageHtmlD = invoicePageHtml; invoicePageHtml = function () { return tkFix(invoicePageHtmlD.apply(this, arguments)); }; }
+  // phone card rows: the delivery word and "due" read in Bangla too (the name and the date are left as they are)
+  if (typeof fd19Cards === 'function') {
+    var fd19CardsD = fd19Cards;
+    fd19Cards = function (m) {
+      var h = fd19CardsD.apply(this, arguments);
+      if (!bn() || m !== 'invoices' || typeof h !== 'string') return h;
+      return h.replace(/<div class="sb2">([^<]*)<\/div>/g, function (x, s) {
+        return '<div class="sb2" data-noi18n="1">' + s.split(' · ').map(function (p) { return I18N_BN[p] || p; }).join(' · ') + '</div>';
+      }).replace(/<small>due /g, '<small>বাকি ');
+    };
+  }
+  // 20 invoices a page on a phone (80 on a desk)
+  if (typeof lvArgs === 'function') {
+    var lvArgsD = lvArgs;
+    lvArgs = function (st, m, extra) { var a = lvArgsD.apply(this, arguments); if (m === 'invoices' && phone() && !(extra && extra.limit)) a.limit = 20; return a; };
+  }
+  function scrollToCard(node) {
+    if (!node) return;
+    var fold = node.closest('details.nt-fold'); if (fold) fold.open = true;
+    node.scrollIntoView({ block: 'start', behavior: 'smooth' });
+  }
+  function salesOrder() {
+    if (VIEW !== 'sales' || (typeof INVP !== 'undefined' && INVP && INVP.no)) return;
+    var view = el('view'); if (!view) return;
+    var list = view.querySelector(':scope > .o_lv'); if (!list) return;
+    // the sibling pills on this screen too (fd19After skips it when the list paints by itself)
+    if (!view.querySelector('.fd19-seg') && typeof fd19SegHtml === 'function') {
+      var tabs = view.querySelector('.tabs [data-salestab]'), seg = fd19SegHtml();
+      if (tabs && seg) { tabs = tabs.closest('.tabs'); var w = document.createElement('div'); w.innerHTML = seg; tabs.parentNode.insertBefore(w.firstChild, tabs); tabs.style.display = 'none'; }
+    }
+    var riskCard = view.querySelector('.card.risk'), handled = view.querySelector('[data-handled]');
+    var waitCard = view.querySelector('.card[style*="--serious"]') || (handled ? handled.closest('.card') : null);
+    var riskSec = riskCard ? riskCard.closest('section') : null, waitSec = waitCard ? waitCard.closest('section') : null;
+    // desktop: the work (the list) first; the queues follow it. (The phone fold already does this.)
+    if (!phone()) {
+      var anchor = list.nextSibling;
+      [waitSec, riskSec].forEach(function (s) { if (s && s.parentNode === view && (s.compareDocumentPosition(list) & Node.DOCUMENT_POSITION_FOLLOWING)) view.insertBefore(s, anchor); });
+    }
+    // the Steadfast queue shows 5, the rest behind "Show all"
+    if (waitSec) {
+      var tb = waitSec.querySelector('tbody');
+      if (tb && !tb.classList.contains('nt-capped')) {
+        tb.classList.add('nt-capped');
+        var rows = [].slice.call(tb.children), extra = rows.length - 5;
+        if (extra > 0) {
+          rows.slice(5).forEach(function (r) { r.hidden = true; });
+          var tr = document.createElement('tr'); tr.className = 'nt-waitmore';
+          tr.innerHTML = '<td colspan="6"><button class="btn small" type="button" data-ntwaitall="1">' + esc(L('Show all ' + rows.length, 'সব ' + rows.length + 'টা দেখুন')) + '</button></td>';
+          tb.appendChild(tr);
+        }
+      }
+    }
+    // one queue strip above the list: what needs a hand, with the figure
+    var items = [];
+    var toSend = (typeof SALES !== 'undefined' && SALES && SALES.toSend) ? SALES.toSend.length : 0;
+    if (toSend && waitSec) items.push(['warn', 'wait', L(toSend === 1 ? '1 parcel to send' : toSend + ' parcels to send', toSend + 'টা পার্সেল পাঠাতে হবে')]);
+    var r = typeof RISK !== 'undefined' ? RISK : null;
+    if (r && r.totals && riskSec) {
+      if (r.overdueCount) items.push([r.totals.over60 > 0 ? 'bad' : 'warn', 'risk', L(r.overdueCount === 1 ? '1 invoice with a due · ' : r.overdueCount + ' invoices with a due · ', r.overdueCount + 'টা ইনভয়েসে বাকি · ') + money(r.totals.owed)]);
+      if (r.returnWaiting && r.returnWaiting.length) items.push(['bad', 'risk', L(r.returnWaiting.length + ' came back, not taken back yet', r.returnWaiting.length + 'টা ফেরত এসেছে, এখনো নেওয়া হয়নি')]);
+      if (r.webWaiting && r.webWaiting.length && typeof navOn === 'function' && navOn('weborders')) items.push(['warn', 'web', L(r.webWaiting.length + ' website orders to enter', r.webWaiting.length + 'টা ওয়েবসাইট অর্ডার তুলতে হবে')]);
+    }
+    // the lone "Excel" row joins the tool row under the pills (one row of tools, not two)
+    var rows = [].filter.call(view.children, function (c) { return c.classList.contains('row') && (c.compareDocumentPosition(list) & Node.DOCUMENT_POSITION_FOLLOWING); });
+    if (rows.length > 1 && rows[0].children.length === 1 && /Excel/i.test(rows[0].textContent)) { rows[1].appendChild(rows[0].firstElementChild); view.removeChild(rows[0]); }
+    // idempotent: nothing is touched when the strip already says this, so the paint observers settle
+    var want = (typeof navOn === 'function' && navOn('invoice') && typeof fd19Btn === 'function' ? fd19Btn({ label: 'New invoice', icon: 'plus', kind: 'primary', attrs: ' data-fd19tool="invoice"' }) : '') + items.map(function (it) { return '<button type="button" class="' + it[0] + '" data-ntq="' + it[1] + '" data-noi18n="1">' + esc(it[2]) + ' ›</button>'; }).join('');
+    var old = view.querySelector('.nt-qw');
+    if (!want) { if (old) old.parentNode.removeChild(old); }
+    else if (!old) { var q = document.createElement('div'); q.className = 'nt-qw'; q.innerHTML = '<div class="nt-q chips">' + want + '</div>'; view.insertBefore(q, list); }
+    else if (old.firstChild.innerHTML !== want) old.firstChild.innerHTML = want;
+    stackTables(view);
+  }
+  document.addEventListener('click', function (e) {
+    var t = e.target && e.target.closest ? e.target : null; if (!t) return;
+    var b = t.closest('[data-ntq]');
+    if (b) {
+      var view = el('view'), k = b.getAttribute('data-ntq');
+      if (k === 'web') { go('weborders'); return; }
+      var hd = view.querySelector('[data-handled]'), card = k === 'wait' ? (hd && hd.closest('.card')) : view.querySelector('.card.risk');
+      if (k === 'risk' && typeof RISK_OPEN !== 'undefined' && !RISK_OPEN) { RISK_OPEN = true; repaint(); card = el('view').querySelector('.card.risk'); }
+      scrollToCard(card && (card.closest('section') || card));
+      return;
+    }
+    if (t.closest('[data-ntwaitall]')) {
+      var tr = t.closest('tr'), tb = tr && tr.parentNode; if (!tb) return;
+      [].forEach.call(tb.children, function (r) { r.hidden = false; }); tb.removeChild(tr);
+    }
+  });
+  AFTER_PAINT.push(function distillSales() { if (VIEW === 'sales') { try { salesOrder(); } catch (e) { if (window.console) console.error('distill sales', e); } } });
+  // the risk box and the Steadfast queue arrive after the list painted: lay the order out again then
+  (function () {
+    var v = el('view'); if (!v || !window.MutationObserver) return;
+    var t = null;
+    new MutationObserver(function () { if (VIEW !== 'sales') return; clearTimeout(t); t = setTimeout(function () { try { salesOrder(); } catch (e) {} }, 60); }).observe(v, { childList: true, subtree: false });
+  })();
+
+  /* ------------------------------------------------------------ New invoice */
+  if (typeof viewInvoice === 'function') {
+    var viewInvoiceD = viewInvoice;
+    viewInvoice = function () {
+      var h = viewInvoiceD.apply(this, arguments);
+      if (typeof h !== 'string') return h;
+      // a 0 due is not a warning
+      h = h.replace(/<div class="due"><span>This invoice due<\/span><span>[A-Z]{3} 0<\/span>/, '<div class="due nt-zero"><span>This invoice due</span><span>$CUR 0</span>'.replace('$CUR', (OPT && OPT.currency) || 'BDT'));
+      return tkFix(h);
+    };
+  }
+
+  /* ------------------------------------------------------------ Web orders */
+  if (typeof viewWebOrders === 'function') {
+    var viewWebOrdersD = viewWebOrders;
+    viewWebOrders = function () {
+      var h = viewWebOrdersD.apply(this, arguments);
+      if (typeof h !== 'string') return h;
+      // one primary: checking the website is the job of this screen
+      return tkFix(h.replace('<button class="btn" type="button" id="wo_pull"', '<button class="btn primary" type="button" id="wo_pull"'));
+    };
+  }
+
+  /* ------------------------------------------------------------ Quotations */
+  if (typeof qzDashHtml === 'function') {
+    var qzDashHtmlD = qzDashHtml;
+    qzDashHtml = function () {
+      var h = qzDashHtmlD.apply(this, arguments);
+      if (typeof h !== 'string') return h;
+      // one "+ New quotation" (the toolbar's); the empty state says what to do
+      if (h.indexOf('id="qz_newbtn"') >= 0) h = h.replace(/<br><button class="btn primary" type="button" id="qz_newbtn2"[^>]*>\+ New quotation<\/button>/, '');
+      return h;
+    };
+  }
+  function quotesOrder() {
+    if (VIEW !== 'quotes' || !phone()) return;
+    var view = el('view'), grid = view && view.querySelector('.qz .g-kpi'), card = view && view.querySelector('.qz section');
+    if (grid && card && card.nextSibling !== grid) card.parentNode.insertBefore(grid, card.nextSibling);
+    stackTables(view);
+  }
+  AFTER_PAINT.push(function distillQuotes() { if (VIEW === 'quotes') quotesOrder(); });
+
+  /* ------------------------------------------------------------ Pre-orders */
+  if (typeof viewPreorders === 'function') {
+    var viewPreordersD = viewPreorders;
+    viewPreorders = function () {
+      var h = viewPreordersD.apply(this, arguments);
+      if (typeof h !== 'string' || h.indexOf('<div class="chead"><h2>Pre-orders</h2></div>') < 0) return h;
+      h = h.replace('<div class="chead"><h2>Pre-orders</h2></div>', '<div class="chead"><h2>All pre-orders</h2></div>');
+      if (typeof actionBar !== 'function') return h;
+      // one primary per row: Hand over when ready, else + Deposit; Cancel last behind More
+      var tpl = document.createElement('template'); tpl.innerHTML = h;
+      [].forEach.call(tpl.content.querySelectorAll('td'), function (td) {
+        var x = td.querySelector('[data-precancel]'); if (!x) return;
+        var pick = function (sel) { var n = td.querySelector(sel); return n ? { label: n.textContent.trim(), attr: [].filter.call(n.attributes, function (a) { return a.name.indexOf('data-') === 0; }).map(function (a) { return a.name + '="' + esc(a.value) + '"'; }).join(' ') } : null; };
+        var go = pick('[data-prego]'), pay = pick('[data-prepay]'), link = pick('[data-prelink]'), cancel = pick('[data-precancel]');
+        if (cancel) cancel.danger = true;
+        var bar = actionBar({ primary: go || pay, secondary: [go ? pay : null, link].filter(Boolean), more: [cancel] });
+        bar = bar.replace(/(data-precancel="[^"]*"[^>]*?) data-ab-confirm="[^"]*"/, '$1');   // Cancel asks its own question (why, the deposit)
+        td.innerHTML = bar; td.style.whiteSpace = 'normal';
+      });
+      return tpl.innerHTML;
+    };
+  }
+  AFTER_PAINT.push(function distillPreorders() { if (VIEW === 'preorders') stackTables(el('view')); });
+
+  /* ------------------------------------------------------------ Repairs */
+  if (typeof jobPageHtml === 'function') {
+    var jobPageHtmlD = jobPageHtml;
+    jobPageHtml = function () {
+      var h = jobPageHtmlD.apply(this, arguments);
+      if (typeof h !== 'string' || typeof actionBar !== 'function') return h;
+      // "Returned to customer" is the step; "Cancel job" sits last behind More (its own question stays)
+      h = h.replace(/<button class="btn primary" type="button" data-jst="returned">Returned to customer<\/button>(<button class="btn danger" type="button" data-jst="cancelled">Cancel job<\/button>)?/, function (m, cancel) {
+        var bar = actionBar({ primary: { label: 'Returned to customer', attr: 'data-jst="returned"' }, more: cancel ? [{ label: 'Cancel job', attr: 'data-jst="cancelled"', danger: true }] : [] });
+        return bar.replace(/(data-jst="cancelled"[^>]*?) data-ab-confirm="[^"]*"/, '$1');
+      });
+      return tkFix(h);
+    };
+  }
+  // the "Open" tab means open jobs, not the verb (the dictionary's খুলুন): চালু
+  if (typeof viewRepairs === 'function') {
+    var viewRepairsD = viewRepairs;
+    viewRepairs = function () {
+      var h = viewRepairsD.apply(this, arguments);
+      if (typeof h !== 'string') return h;
+      return h.replace(/(data-jtab="open"[^>]*>)Open(<| )/, '$1' + (bn() ? 'চালু' : 'Open') + '$2');
+    };
+  }
+  function repairsOrder() {
+    if (VIEW !== 'repairs') return;
+    var view = el('view'); if (!view) return;
+    if (typeof JOBP !== 'undefined' && JOBP && JOBP.no) { stackTables(view); return; }
+    // the Excel button joins the tabs row instead of sitting alone on a row of its own
+    var first = view.firstElementChild, newBtn = el('job_new');
+    if (first && newBtn && first.classList.contains('row') && !first.querySelector('[role="tab"]')) {
+      var ex = [].filter.call(first.querySelectorAll('button, a'), function (b) { return /Excel/i.test(b.textContent); })[0];
+      if (ex) { ex.classList.add('btn', 'small'); newBtn.parentNode.insertBefore(ex, newBtn); if (!first.textContent.trim() && !first.querySelector('button, a, input')) first.parentNode.removeChild(first); }
+    }
+    stackTables(view);
+  }
+  AFTER_PAINT.push(function distillRepairs() { if (VIEW === 'repairs') repairsOrder(); });
+
+  /* ------------------------------------------------------------ Print jobs */
+  if (typeof viewPrintJobs === 'function') {
+    var viewPrintJobsD = viewPrintJobs;
+    viewPrintJobs = function () {
+      var h = viewPrintJobsD.apply(this, arguments);
+      if (typeof h !== 'string' || typeof PK === 'undefined' || !PK) return h;
+      var any = PK.jobs && PK.jobs.length;
+      // the explanation only while the board is empty
+      if (any) h = h.replace('<div class="sub" data-c5x="1" style="display:block">For a business that prints', '<div class="sub nt-pk-quiet" data-c5x="1" style="display:block">For a business that prints');
+      // the breadcrumb already says "Print jobs"
+      h = h.replace('<h2 style="margin:0">Print jobs</h2>', '');
+      // four empty columns -> one honest empty state
+      if (!any && PK_TAB === 'jobs' && !PK_FORM) h = h.replace(/<section><div class="pkboard">[\s\S]*?<\/div><\/section>/, '<section><div class="card"><div class="empty">' + esc('No print jobs yet. Press + New job when a customer orders a print.') + '</div></div></section>');
+      return h;
+    };
+  }
+  AFTER_PAINT.push(function distillPrint() { if (VIEW === 'printjobs') stackTables(el('view')); });
+
+  /* ------------------------------------------------------------ Resell, Web orders, Waiting orders: card rows on a phone */
+  AFTER_PAINT.push(function distillStack() { if (VIEW === 'resell' || VIEW === 'weborders' || VIEW === 'holds') stackTables(el('view')); });
+})();
+</script>
+
+<!-- distill:contacts -->
+<!-- distill-contacts (9 Nov 2026): Customers / Leads / Campaigns / Customer tools - the list and its search come first,
+     the "Customers who owe" table is paged (10 + Show more) with ONE primary button per row and no red border, the empty
+     Follow-ups card becomes the Follow-ups button, the customer page shows each figure once and its five buttons become
+     primary + two + More, the Customer-tools view bars fold their save form, Campaigns loses the duplicate "+ New
+     campaign" chip and folds its tiles on a phone, long grey card paragraphs on Advertisement sit behind a "?" button.
+     Every function stays reachable; nothing is removed. Inbox: Bangla text-size floors only. -->
+<style>
+/* cards never carry a coloured border; red is for figures */
+#view .card[data-dcon="owe"], #view .card[data-dcon="adv"] { border:0 !important; }
+/* the list card title says Customers already; the sentence under it restated it */
+body[data-fdview="customers"] #view .fd19-chead .fd19-cs { display:none; }
+/* small "?" / "i" buttons keep their look, get a 24px+ hit area */
+body[data-fdview="customers"] #view .t2q, body[data-fdview="leads"] #view .t2q, body[data-fdview="campaigns"] #view .t2q, body[data-fdview="crm"] #view .t2q, #view .dcon-q { position:relative; }
+body[data-fdview="customers"] #view .t2q::after, body[data-fdview="leads"] #view .t2q::after, body[data-fdview="campaigns"] #view .t2q::after, body[data-fdview="crm"] #view .t2q::after, #view .dcon-q::after { content:""; position:absolute; inset:-7px; border-radius:50%; }
+/* one primary + More on each owing row (the More menu reuses the action-bar menu styles) */
+.dcon-acts { display:inline-flex; gap:6px; align-items:center; white-space:nowrap; position:relative; }
+.dcon-acts .nt-ab-m { position:relative; }
+.dcon-acts > .btn, .dcon-acts .nt-ab-m > .btn { min-height:36px; }
+#view .dcon-pg { display:flex; align-items:center; gap:10px; margin-top:10px; flex-wrap:wrap; }
+#view .dcon-pg .dcon-n { color:var(--fd-text-3, var(--muted)); font-size:13px; }
+#view .card[data-dcon="owe"] .sub.dcon-sub { margin-top:2px; }
+/* the empty Follow-ups card is a button now (fd-33's intent) */
+#view .card.dcon-fu-hide { display:none !important; }
+/* customer page: five buttons -> primary + two + More */
+.pagehead .acts.nt-ab { justify-content:flex-end; }
+@media (max-width:640px) { .pagehead .acts.nt-ab { justify-content:flex-start; } .pagehead .acts.nt-ab > .btn { flex:1 1 auto; } .pagehead .acts.nt-ab .nt-ab-m { flex:0 0 auto; } }
+/* Customer tools: the "save this as a view" form waits behind a button */
+#view .dcon-vform[hidden] { display:none !important; }
+#view .dcon-vbtn { margin-left:auto; }
+/* Campaigns: places only in the tab row - the card holds the New campaign button */
+body[data-fdview="campaigns"] #view .chips .chip[data-cptab="new"] { display:none; }
+/* Advertisement: the long grey paragraph under a card title folds behind its "?" */
+#view .dcon-q { display:inline-flex; align-items:center; justify-content:center; width:18px; height:18px; margin:0 0 0 6px; border-radius:50%; vertical-align:middle; font-size:11px; font-weight:700; line-height:1; border:1px solid var(--fd-border-strong, var(--ring, #d7d9df)); color:var(--fd-text-3, var(--muted)); background:var(--fd-card, var(--surface, #fff)); cursor:pointer; padding:0; }
+#view .dcon-q[aria-expanded="true"], #view .dcon-q:hover { color:var(--fd-accent-text, var(--series-1, #5748e6)); border-color:var(--fd-accent, var(--series-1, #6d5bff)); }
+#view .sub.dcon-folded { display:none !important; }
+/* Inbox: Bangla never below a readable size (structure untouched) */
+html[lang="bn"] #view .ib-tag { font-size:12px; }
+html[lang="bn"] #view .ib-hint, html[lang="bn"] #view .ib-ev, html[lang="bn"] #view .ib-card, html[lang="bn"] #view .ib-code { font-size:13px; }
+html[lang="bn"] #view .ib-unread { font-size:12px; min-width:20px; height:20px; }
+</style>
+<script>
+(function () {
+  var DCON = { oweLim: 10, advLim: 10, n: 0 };
+  var bn = function () { return typeof LANG !== 'undefined' && LANG === 'bn'; };
+  var L = function (en, b) { return bn() ? b : en; };
+  var isPhone = function () { return typeof ntPhone === 'function' ? ntPhone() : !!(window.matchMedia && window.matchMedia('(max-width:640px)').matches); };
+  var E = function (s) { return typeof esc === 'function' ? esc(s) : String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); };
+  var DOTS = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></svg>';
+  /** A "More" button + menu (the action-bar look) that takes existing buttons, handlers and all. */
+  function moreMenu(buttons) {
+    var id = 'dconm' + (++DCON.n);
+    var wrap = document.createElement('span'); wrap.className = 'nt-ab-m';
+    wrap.innerHTML = '<button type="button" class="btn small" data-ab-more="' + id + '" aria-haspopup="menu" aria-expanded="false">' + DOTS + '<span>' + L('More', 'আরও') + '</span></button><div class="nt-ab-menu" id="' + id + '" role="menu" hidden></div>';
+    var menu = wrap.lastChild;
+    buttons.forEach(function (b) { b.setAttribute('role', 'menuitem'); b.classList.remove('small', 'primary'); menu.appendChild(b); });
+    return wrap;
+  }
+
+  /* ------------------------------------------------------------------ Customers who owe / Paid in advance (strings) */
+  if (typeof custMoneyBoxes === 'function') {
+    var custMoneyBoxesD = custMoneyBoxes;
+    custMoneyBoxes = function () {
+      var h = custMoneyBoxesD.apply(this, arguments);
+      if (!h) return h;
+      h = h.replace('<div class="card" style="border:2px solid var(--critical)">', '<div class="card" data-dcon="owe">')
+           .replace('<div class="card" style="border:2px solid var(--good)">', '<div class="card" data-dcon="adv">');
+      // "22 customer(s). Remind, then record the payment when it comes." -> "22 customers" (the heading says the rest)
+      h = h.replace(/<div class="sub">([\d,]+) customer\(s\)\. Remind, then record the payment when it comes\.<\/div>/, function (m, n) {
+        return '<div class="sub dcon-sub" data-noi18n="1">' + n + (bn() ? ' জন কাস্টমার' : (n === '1' ? ' customer' : ' customers')) + '</div>';
+      });
+      h = h.replace(/<div class="sub">([\d,]+) customer\(s\) · money held for goods not yet delivered<\/div>/, function (m, n) {
+        return '<div class="sub dcon-sub" data-noi18n="1">' + n + (bn() ? ' জন কাস্টমার · মাল দেওয়ার আগে নেওয়া টাকা' : (n === '1' ? ' customer' : ' customers') + ' · money held for goods not yet delivered') + '</div>';
+      });
+      return h;
+    };
+  }
+
+  /* ---------------------------------------------------------------- Customers list: owe table paged, one primary per row */
+  function pageRows(card, key, lim) {
+    var tb = card.querySelector('tbody'); if (!tb) return;
+    var rows = [].filter.call(tb.children, function (r) { return r.tagName === 'TR'; });
+    var bar = card.querySelector('.dcon-pg');
+    if (rows.length <= 12) { rows.forEach(function (r) { r.classList.remove('nt-pgh'); }); if (bar) bar.remove(); return; }
+    rows.forEach(function (r, i) { r.classList.toggle('nt-pgh', i >= lim); });
+    var left = Math.max(0, rows.length - lim);
+    if (!left) { if (bar) bar.remove(); return; }
+    if (!bar) { bar = document.createElement('div'); bar.className = 'dcon-pg'; bar.setAttribute('data-noi18n', '1'); var tbl = tb.closest('.scroll, .fd19-scroll, table'); (tbl && tbl.parentNode === card ? tbl : card.lastElementChild).insertAdjacentElement('afterend', bar); }
+    var more = Math.min(10, left);
+    bar.innerHTML = '<span class="dcon-n">' + (bn() ? rows.length + 'টির মধ্যে ' + (rows.length - left) + 'টি দেখানো হচ্ছে' : 'Showing ' + (rows.length - left) + ' of ' + rows.length) + '</span>' +
+      '<button type="button" class="btn small" data-dcon="' + key + 'more" data-n="' + more + '">' + (bn() ? 'আরও ' + more + 'টি দেখুন' : 'Show ' + more + ' more') + '</button>' +
+      '<button type="button" class="btn small" data-dcon="' + key + 'more" data-n="all">' + (bn() ? 'সব দেখুন' : 'Show all') + '</button>';
+  }
+  function rowActions(card) {
+    [].forEach.call(card.querySelectorAll('tbody tr'), function (tr) {
+      var td = tr.lastElementChild; if (!td || td.classList.contains('dcon-done')) return;
+      var acts = [].slice.call(td.querySelectorAll('a.btn, button.btn'));
+      if (acts.length < 2) return;
+      td.classList.add('dcon-done');
+      var primary = acts.filter(function (a) { return a.classList.contains('primary'); })[0] || acts[0];
+      var rest = acts.filter(function (a) { return a !== primary; });
+      var box = document.createElement('span'); box.className = 'dcon-acts nt-ab';
+      box.appendChild(primary); box.appendChild(moreMenu(rest));
+      td.innerHTML = ''; td.appendChild(box);
+    });
+  }
+  function fuButton(view) {
+    // fd-33 meant the Follow-ups card to be a button beside the tools; the card stayed because its mover never ran
+    var cards = [].filter.call(view.querySelectorAll('.card'), function (c) { var h2 = c.querySelector('h2'); return h2 && c.querySelector('[data-fuadd]') && /^(Follow-ups|ফলো-আপ)/.test(h2.textContent.trim()); });
+    cards.forEach(function (c) { c.classList.add('dcon-fu-hide'); var s = c.closest('#view > section, #view > .nt-fold .nt-fold-in > section'); if (s && s.children.length === 1) s.style.display = 'none'; });
+    if (document.getElementById('fuBtn') || typeof fuBtnHtml !== 'function') return;
+    var html; try { html = fuBtnHtml(); } catch (e) { return; }
+    var tools = view.querySelector('.fd19-ctools'), xl = view.querySelector('[data-xlopen="customers"]');
+    if (!isPhone() && xl) xl.insertAdjacentHTML('beforebegin', html + ' ');
+    else if (tools) tools.insertAdjacentHTML('afterbegin', html);
+    else if (xl) xl.insertAdjacentHTML('beforebegin', html + ' ');
+    var b = document.getElementById('fuBtn'); if (b && tools && b.parentNode === tools) b.classList.add('small');
+  }
+  function viewSaveFold(bar, target) {
+    // the "Name this view / for the whole team / Save what is shown as a view" row waits behind one button
+    var save = bar.querySelector('[data-crmvsave="' + target + '"]'); if (!save) return;
+    var row = save.closest('.row'); if (!row || row.classList.contains('dcon-vform')) return;
+    row.classList.add('dcon-vform'); row.hidden = true;
+    var head = bar.querySelector('.row') || bar;
+    var btn = document.createElement('button'); btn.type = 'button'; btn.className = 'btn small dcon-vbtn'; btn.setAttribute('data-dcon', 'vform'); btn.setAttribute('aria-expanded', 'false');
+    btn.textContent = L('Save as a view', 'ভিউ হিসেবে সেভ করুন');
+    var tools = head.querySelector('.row'); (tools || head).appendChild(btn);
+  }
+  AFTER_PAINT.push(function dconCustomers() {
+    if (VIEW !== 'customers') return;
+    var view = el('view'); if (!view) return;
+    var onPage = typeof CUSP !== 'undefined' && CUSP && CUSP.key;
+    if (onPage) return;
+    var owe = view.querySelector('.card[data-dcon="owe"]'), adv = view.querySelector('.card[data-dcon="adv"]');
+    if (owe) { pageRows(owe, 'owe', DCON.oweLim); rowActions(owe); }
+    if (adv) { pageRows(adv, 'adv', DCON.advLim); rowActions(adv); }
+    fuButton(view);
+    var bar = el('crm_lbar');
+    if (bar) {
+      viewSaveFold(bar, 'customers');
+      if (isPhone()) {
+        // phone: the list and its search first; the Views bar after the list (and after the folded summary)
+        var lv = view.querySelector('.o_lv'), host = lv && (lv.closest('#view > section') || lv), fold = view.querySelector(':scope > details.nt-fold');
+        var after = (fold && fold.parentNode === view) ? fold : host;
+        if (after && after.parentNode === view && after.nextElementSibling !== bar) view.insertBefore(bar, after.nextSibling);
+      }
+    }
+  });
+
+  /* ------------------------------------------------------------------------------ one customer's page */
+  function pageActs() {
+    // other blocks add buttons here after paint (Customer's page link): look again a moment later
+    if (VIEW !== 'customers' || !(typeof CUSP !== 'undefined' && CUSP && CUSP.key)) return;
+    var view = el('view'); if (!view) return;
+    var acts = view.querySelector('.pagehead .acts');
+    if (acts) {
+      acts.classList.add('nt-ab');
+      var btns = [].filter.call(acts.children, function (b) { return b.classList.contains('btn') && !b.classList.contains('nt-ab-m'); });
+      var menuWrap = acts.querySelector('.nt-ab-m'), menu = menuWrap && menuWrap.querySelector('.nt-ab-menu');
+      if (btns.length > 3) {
+        var extra = btns.slice(3);
+        if (!menu) { menuWrap = moreMenu(extra); acts.appendChild(menuWrap); }
+        else extra.forEach(function (b) { b.setAttribute('role', 'menuitem'); b.classList.remove('small', 'primary'); menu.appendChild(b); });
+      }
+      var mw = acts.querySelector('.nt-ab-m'); if (mw && mw !== acts.lastElementChild) acts.appendChild(mw);
+    }
+  }
+  AFTER_PAINT.push(function dconCustomerPage() {
+    if (VIEW !== 'customers' || !(typeof CUSP !== 'undefined' && CUSP && CUSP.key)) return;
+    var view = el('view'); if (!view) return;
+    pageActs(); setTimeout(pageActs, 60); setTimeout(pageActs, 500);
+    // "At a glance": Orders / Spent / Average order already sit in the figures above - once is enough
+    var grid = view.querySelector('.ci-grid');
+    if (grid && !grid.classList.contains('dcon-done')) {
+      grid.classList.add('dcon-done');
+      var cells = [].slice.call(grid.children);
+      if (cells.length >= 9) [3, 4, 5].forEach(function (i) { cells[i].style.display = 'none'; });
+    }
+  });
+
+  /* --------------------------------------------------------------------------------------------- Leads */
+  AFTER_PAINT.push(function dconLeads() {
+    if (VIEW !== 'leads') return;
+    var view = el('view'); if (!view) return;
+    var bar = el('crm_ldbar');
+    if (bar) {
+      viewSaveFold(bar, 'leads');
+      // the sentence beside List / Board restated the buttons
+      var sub = bar.querySelector('.row > .sub');
+      if (sub && !sub.classList.contains('dcon-folded') && !sub.classList.contains('dcon-open')) {
+        sub.classList.add('dcon-folded');
+        // the bar already carries a "?" (fd-48 help) in most builds; add one only when it does not
+        if (!bar.querySelector('.t2q') && !bar.querySelector('.dcon-q')) { var tabs = bar.querySelector('.tabs'); if (tabs) tabs.insertAdjacentHTML('afterend', '<button type="button" class="dcon-q" data-dcon="q" aria-expanded="false" aria-label="' + E(L('What this is', 'এটা কী')) + '" title="' + E(L('What this is', 'এটা কী')) + '">?</button>'); }
+      }
+    }
+    if (isPhone() && typeof LD !== 'undefined' && LD && !LD.classic) {
+      // phone: the list (with its search and chips) before the "Find new ..." card
+      var find = view.querySelector('[data-l2="find"]'), findSec = find && find.closest('#view > section, #view > .card, #view > div');
+      var row = view.querySelector('.l2-row'), listSec = row && row.closest('#view > section, #view > .card, #view > div');
+      if (findSec && listSec && findSec !== listSec && findSec.parentNode === view && listSec.parentNode === view &&
+          (findSec.compareDocumentPosition(listSec) & Node.DOCUMENT_POSITION_FOLLOWING)) view.insertBefore(findSec, listSec.nextSibling);
+    }
+  });
+
+  /* ----------------------------------------------------------------------------------------- Campaigns */
+  AFTER_PAINT.push(function dconCampaigns() {
+    if (VIEW !== 'campaigns') return;
+    var view = el('view'); if (!view) return;
+    // phone, Campaigns tab: the four tiles fold under the list (nothing removed; the choice is kept per device)
+    if (isPhone() && typeof CP !== 'undefined' && CP && !CP.camp && (!CP.tab || CP.tab === 'list')) {
+      var kp = view.querySelector(':scope > section > .g-kpi'), kpSec = kp && kp.parentNode;
+      var listCard = [].filter.call(view.querySelectorAll(':scope > section > .card'), function (c) { return c.querySelector('[data-cptab="new"]'); })[0];
+      var listSec = listCard && listCard.parentNode;
+      if (kpSec && listSec && kpSec !== listSec && !view.querySelector(':scope > details.dcon-fold')) {
+        var fold = document.createElement('details'); fold.className = 'nt-fold dcon-fold';
+        fold.innerHTML = '<summary><span>' + L('Summary', 'সারাংশ') + '</span><span class="nt-n" data-noi18n="1">' + kp.querySelectorAll('.kpi').length + (bn() ? 'টি সংখ্যা' : ' figures') + '</span></summary><div class="nt-fold-in"></div>';
+        try { if (localStorage.getItem('nt_fold_campaigns') === '1') fold.open = true; } catch (e) {}
+        fold.addEventListener('toggle', function () { try { localStorage.setItem('nt_fold_campaigns', fold.open ? '1' : '0'); } catch (e) {} });
+        fold.querySelector('.nt-fold-in').appendChild(kpSec);
+        view.insertBefore(fold, listSec.nextSibling);
+      }
+    }
+    // Advertisement and the other tabs: a long grey paragraph right under a card title folds behind "?"
+    [].forEach.call(view.querySelectorAll('.card'), function (card) {
+      var sub = null;
+      for (var i = 0; i < card.children.length && i < 3; i++) { var k = card.children[i]; if (k.classList.contains('sub') && !k.querySelector('button, input, select, a')) { sub = k; break; } }
+      if (!sub || sub.classList.contains('dcon-folded') || sub.classList.contains('dcon-sub') || sub.textContent.trim().length < 90) return;
+      var title = card.querySelector('h2, h3'); if (!title || title.querySelector('.dcon-q') || title.querySelector('.t2q')) return;
+      sub.classList.add('dcon-folded');
+      title.insertAdjacentHTML('beforeend', '<button type="button" class="dcon-q" data-dcon="q" aria-expanded="false" aria-label="' + E(L('What this is', 'এটা কী')) + '" title="' + E(L('What this is', 'এটা কী')) + '">?</button>');
+    });
+  });
+
+  /* ------------------------------------------------------------------------------------------- clicks */
+  document.addEventListener('click', function (e) {
+    var b = e.target && e.target.closest && e.target.closest('[data-dcon]'); if (!b) return;
+    var a = b.getAttribute('data-dcon');
+    if (a === 'owemore' || a === 'advmore') {
+      var n = b.getAttribute('data-n'), k = a === 'owemore' ? 'oweLim' : 'advLim';
+      DCON[k] = n === 'all' ? 1e9 : DCON[k] + Number(n);
+      var card = b.closest('.card'); if (card) pageRows(card, a === 'owemore' ? 'owe' : 'adv', DCON[k]);
+      return;
+    }
+    if (a === 'vform') {
+      var bar = b.closest('section, .card'), form = bar && bar.querySelector('.dcon-vform'); if (!form) return;
+      form.hidden = !form.hidden; b.setAttribute('aria-expanded', String(!form.hidden));
+      if (!form.hidden) { var inp = form.querySelector('input.i'); if (inp) inp.focus(); }
+      return;
+    }
+    if (a === 'q') {
+      var host = b.closest('.card, section'), sub = host && host.querySelector('.sub.dcon-folded, .sub.dcon-open');
+      if (!sub) return;
+      var open = sub.classList.contains('dcon-folded');
+      sub.classList.toggle('dcon-folded', !open); sub.classList.toggle('dcon-open', open);
+      b.setAttribute('aria-expanded', String(open));
+    }
+  });
+
+  /* ------------------------------------------------------------------------------------------- Bangla */
+  try {
+    var W = {
+      'Show more': 'আরও দেখুন', 'Show all': 'সব দেখুন', 'Save as a view': 'ভিউ হিসেবে সেভ করুন', 'What this is': 'এটা কী',
+      'Customers who owe': 'যাদের কাছে বাকি', 'Paid in advance': 'অগ্রিম দিয়েছেন', 'Oldest first': 'পুরোনো আগে', 'Largest first': 'বেশি বাকি আগে',
+      'Customer': 'কাস্টমার', 'Owes': 'বাকি', 'Invoices': 'ইনভয়েস', 'Oldest': 'সবচেয়ে পুরোনো', 'Last reminded': 'শেষ মনে করানো', 'never': 'কখনো না', 'today': 'আজ',
+      'WhatsApp': 'WhatsApp', 'Statement': 'স্টেটমেন্ট', 'Receive / adjust due': 'টাকা জমা / বাকি ঠিক করুন', 'Open account': 'হিসাব খুলুন', 'In advance': 'অগ্রিম',
+      'Views and conditions': 'ভিউ ও শর্ত', 'Possible duplicates': 'একই কাস্টমার দুবার?', 'Companies': 'প্রতিষ্ঠান', 'Calendar': 'ক্যালেন্ডার', 'Conditions': 'শর্ত',
+      'Name this view': 'ভিউয়ের নাম দিন', 'for the whole team': 'পুরো টিমের জন্য', 'Save what is shown as a view': 'যা দেখাচ্ছে তা ভিউ হিসেবে সেভ করুন',
+      'List': 'তালিকা', 'Board': 'বোর্ড', 'Saved views keep the kind, source, stage and search.': 'সেভ করা ভিউতে ধরন, সোর্স, স্টেজ আর খোঁজা থাকে।',
+      'Drag a card to another column, or choose its stage on the card.': 'কার্ড টেনে অন্য কলামে নিন, বা কার্ডেই স্টেজ বেছে নিন।',
+      'Owes you': 'আপনার পাওনা', 'Held in advance': 'অগ্রিম জমা', 'Bought': 'কিনেছেন', 'Average order': 'গড় অর্ডার', 'on unpaid invoices': 'না শোধ করা ইনভয়েসে', 'nothing outstanding': 'কোনো বাকি নেই',
+      'for goods not yet given': 'যে মাল এখনো দেওয়া হয়নি', 'has not bought yet': 'এখনো কেনেননি', 'No invoice yet.': 'এখনো কোনো ইনভয়েস নেই।', 'Nothing received yet.': 'এখনো কিছু জমা পড়েনি।',
+      'Payments': 'পেমেন্ট', 'Date': 'তারিখ', 'What': 'কী', 'Note': 'নোট', 'Amount': 'টাকা', 'Units': 'পিস', 'Total': 'মোট', 'Returned': 'ফেরত', 'Due': 'বাকি', 'Delivery': 'ডেলিভারি', 'paid': 'শোধ', 'on account': 'হিসাবে',
+      'Favourite colour': 'পছন্দের রং', 'Favourite brand': 'পছন্দের ব্র্যান্ড', 'Buys most': 'বেশি কেনেন', 'First purchase': 'প্রথম কেনা', 'Last purchase': 'শেষ কেনা', 'First came from': 'প্রথম এসেছেন',
+      'Remove personal data…': 'ব্যক্তিগত তথ্য মুছুন…', 'when the customer asks: name, phone and address go everywhere, the amounts stay': 'কাস্টমার চাইলে: নাম, ফোন আর ঠিকানা সব জায়গা থেকে মুছে যায়, টাকার হিসাব থাকে',
+      'Customer’s page link': 'কাস্টমারের পেজের লিংক', 'Edit': 'এডিট', 'Account': 'হিসাব', 'New invoice': 'নতুন ইনভয়েস', 'All customers': 'সব কাস্টমার', '← All customers': '← সব কাস্টমার',
+      'Sent this month': 'এ মাসে পাঠানো', 'Sending now': 'এখন যাচ্ছে', 'Failed this month': 'এ মাসে পৌঁছায়নি', 'Asked to stop': 'বন্ধ করতে বলেছেন', 'messages that went out': 'যে মেসেজগুলো গেছে',
+      'campaign(s) working by themselves': 'ক্যাম্পেইন নিজে নিজে চলছে', 'did not go through': 'যায়নি', 'never messaged again': 'আর কখনো মেসেজ নয়', 'Campaigns': 'ক্যাম্পেইন', '+ New campaign': '+ নতুন ক্যাম্পেইন',
+      'No campaign yet. Press + New campaign.': 'এখনো কোনো ক্যাম্পেইন নেই। + নতুন ক্যাম্পেইন চাপুন।', 'Contacts': 'কন্টাক্ট', 'Messages': 'মেসেজ', 'Advertisement': 'বিজ্ঞাপন', 'Creators': 'ক্রিয়েটর',
+      'WhatsApp: not set up': 'WhatsApp: সেটআপ করা নেই', 'WhatsApp: no number linked': 'WhatsApp: কোনো নম্বর লিংক করা নেই', 'WhatsApp: checking…': 'WhatsApp: দেখা হচ্ছে…', '✓ WhatsApp linked': '✓ WhatsApp লিংক করা',
+      'Find new customers': 'নতুন কাস্টমার খুঁজুন', 'Find new suppliers': 'নতুন সাপ্লায়ার খুঁজুন', 'Find leads': 'লিড খুঁজুন', 'Customers': 'কাস্টমার', 'Suppliers': 'সাপ্লায়ার',
+      'The Engine chooses the best sources itself and says why each lead fits.': 'ইঞ্জিন নিজেই সেরা সোর্স বেছে নেয় আর বলে কেন লিডটা মানানসই।',
+      'Find new leads by itself every day': 'প্রতিদিন নিজে নিজে নতুন লিড খুঁজুক', 'Call': 'ফোন', 'Website': 'ওয়েবসাইট', 'E-mail': 'ই-মেইল', 'Chat': 'চ্যাট',
+      'More ways to add (paste, import a list, map, public forms) and filters': 'যোগ করার আরও উপায় (পেস্ট, তালিকা ইমপোর্ট, ম্যাপ, পাবলিক ফর্ম) আর ফিল্টার',
+      'Points & reminders': 'পয়েন্ট ও রিমাইন্ডার', 'Points': 'পয়েন্ট', 'Level': 'লেভেল', '+ Bonus points': '+ বোনাস পয়েন্ট', 'Redeem points': 'পয়েন্ট ভাঙান',
+      'Company and your own fields': 'প্রতিষ্ঠান আর আপনার নিজের ফিল্ড', 'Company': 'প্রতিষ্ঠান', 'No company': 'কোনো প্রতিষ্ঠান নেই', 'Make your own fields': 'নিজের ফিল্ড বানান', 'Timeline': 'টাইমলাইন', 'Everything': 'সব', 'Sales and money': 'বিক্রি ও টাকা'
+    };
+    var W2 = {
+      'Both': 'দুটোই', 'Name, phone or source': 'নাম, ফোন বা সোর্স', 'Buying': 'কেনাকাটা', 'Skip messaged in': 'যাদের মেসেজ গেছে বাদ', 'Save these filters as a group': 'এই ফিল্টারগুলো গ্রুপ হিসেবে সেভ করুন',
+      'Choose at least one person.': 'অন্তত একজনকে বাছাই করুন।', 'Next: Message →': 'পরের ধাপ: মেসেজ →', 'Country code': 'কান্ট্রি কোড', 'Phone number': 'ফোন নম্বর', 'Where they came from': 'কোথা থেকে এসেছেন',
+      'Paste many at once': 'একসাথে অনেকগুলো পেস্ট করুন', 'Add all to leads': 'সবাইকে লিডে যোগ করুন', 'No leads yet. Paste numbers above.': 'এখনো কোনো লিড নেই। উপরে নম্বর পেস্ট করুন।',
+      'One per line: a number, or a name and a number. A number abroad starts with + and its country code. “Where they came from” above is used for all of them.': 'প্রতি লাইনে একজন: শুধু নম্বর, বা নাম আর নম্বর। বিদেশের নম্বর + আর কান্ট্রি কোড দিয়ে শুরু হবে। উপরের “কোথা থেকে এসেছেন” সবার জন্য ধরা হবে।',
+      '+ New message': '+ নতুন মেসেজ', 'Nothing saved yet.': 'এখনো কিছু সেভ করা নেই।', 'New customer: no parcels yet': 'নতুন কাস্টমার: এখনো কোনো পার্সেল নেই', 'Bronze': 'ব্রোঞ্জ', 'Silver': 'সিলভার', 'Gold': 'গোল্ড',
+      'No parcel history with us yet. Confirm the address on WhatsApp before booking; ask an advance on a big cash-on-delivery order.': 'আমাদের কাছে এখনো পার্সেলের ইতিহাস নেই। বুক করার আগে WhatsApp-এ ঠিকানা নিশ্চিত করুন; বড় ক্যাশ-অন-ডেলিভারি অর্ডারে অগ্রিম চান।',
+      '(ask first, then tick)': '(আগে জিজ্ঞেস করুন, তারপর টিক দিন)', 'Attach a photo or PDF': 'ছবি বা PDF যোগ করুন', 'no phone': 'ফোন নেই', 'owes': 'বাকি আছে',
+      'Duplicates': 'একই কাস্টমার দুবার', 'Own fields': 'নিজের ফিল্ড', 'Events (n8n)': 'ইভেন্ট (n8n)', 'What sales sees': 'সেলস যা দেখে', 'Make the link': 'লিংক বানান',
+      'Landing pages': 'ল্যান্ডিং পেজ', 'No chats here yet.': 'এখানে এখনো কোনো চ্যাট নেই।',
+      'Profit per ad': 'প্রতি বিজ্ঞাপনে লাভ', 'Plan this week now': 'এই সপ্তাহের প্ল্যান এখনই করুন', 'No week planned yet.': 'এখনো কোনো সপ্তাহের প্ল্যান নেই।', 'Pictures': 'ছবি', 'Videos': 'ভিডিও',
+      'My formula': 'আমার ফর্মুলা', 'Save the formula': 'ফর্মুলা সেভ করুন', 'Reset (start again)': 'রিসেট (আবার শুরু)', 'No notes yet.': 'এখনো কোনো নোট নেই।', 'Product post': 'প্রোডাক্ট পোস্ট', 'Write it': 'লিখে দিন',
+      'Reel / video': 'রিল / ভিডিও', 'Offer post': 'অফার পোস্ট', 'Customer prints': 'কাস্টমারের প্রিন্ট', 'Product list': 'প্রোডাক্টের তালিকা', 'Write a post': 'পোস্ট লিখুন', 'Send the ticked ones to customers': 'টিক দেওয়াগুলো কাস্টমারদের পাঠান'
+    };
+    for (var k2 in W2) if (W2.hasOwnProperty(k2) && !I18N_BN[k2]) I18N_BN[k2] = W2[k2];
+    for (var k in W) if (W.hasOwnProperty(k) && !I18N_BN[k]) I18N_BN[k] = W[k];
+    if (typeof I18N_PAT !== 'undefined' && I18N_PAT.push) {
+      [[/^(.+?) · (\d+) orders · last (.+)$/, '$1 · $2টি অর্ডার · শেষ $3'], [/^(.+?) · (\d+) orders$/, '$1 · $2টি অর্ডার'], [/^(\d+) d due$/, '$1 দিন ধরে বাকি'],
+       [/^(\d+) order\(s\) · (\d+) unit\(s\) · after returns$/, '$1টি অর্ডার · $2 পিস · ফেরত বাদে'], [/^last on (.+?) · (\d+) days ago$/, 'শেষ $1 · $2 দিন আগে'], [/^last on (.+?) · today$/, 'শেষ $1 · আজ'],
+       [/^(\d+) more to (Silver|Gold)$/, '$2 হতে আরও $1'], [/^Leads \((\d+)\)$/, 'লিড ($1)'], [/^Groups \((\d+)\)$/, 'গ্রুপ ($1)'], [/^Asked to stop \((\d+)\)$/, 'বন্ধ করতে বলেছেন ($1)'],
+       [/^(\d+) chosen$/, '$1 জন বাছাই'], [/^· (\d+) match the filters$/, '· $1 জন ফিল্টারে মিলেছে'], [/^Choose all (\d+)$/, 'সবাইকে বাছাই করুন ($1)'], [/^(\d+) open this month$/, 'এ মাসে $1টি খোলা'],
+       [/^(\d+) customers$/, '$1 জন কাস্টমার'], [/^Bought (.+)$/, '$1 কিনেছেন'], [/^Showing (\d+) of (\d+)$/, '$2টির মধ্যে $1টি দেখানো হচ্ছে']
+      ].forEach(function (p) { I18N_PAT.push(p); });
+    }
+  } catch (e) {}
+})();
+</script>
+
+<!-- distill:goods -->
+<!-- distill-goods (9 Nov 2026): Products / Product cost / Stock entry / Shipments / Suppliers / Market / Joint stock stripped to
+     the work. Products on a phone painted its list TWICE (the desktop table as 52 tall cards under the compact rows: 29,630px,
+     search at 922px) - the table is hidden on a phone; the category / view pills and the shared-stock chips fold behind one
+     "Filters" line; Count + Adjust (one screen) are one button in the head HTML itself (the DOM merge was undone when the
+     figures arrived); the Summary fold is rebuilt after every head repaint (no second set of tiles); 20 rows + Show more.
+     Desktop: Category/Brand columns hide under 1500px (the table scrolled sideways at 1366), tiles one short row.
+     Product cost phone: search first, chips behind Filters, the three KPIs under the list. Shipments phone: figures fold
+     under the board. Stock: step bar fits 375px; the split "currently has N in stock" line is one Bangla sentence.
+     Market: no "platform" wording. Small "i" / "?" buttons get a 24px hit area. Bangla patterns for "N on hand",
+     "N days of cover", "no sales", "N items · click…". -->
+<style>
+/* ---- small round helper buttons: same look, a hit area of at least 24px (craft floor) */
+html[data-look="clean"] #view .fdd-i, html[data-look="clean"] #view .fdd-ti, html[data-look="clean"] #view .t2q, html[data-look="clean"] #view .fhelp,
+#view .fdd-i, #view .fdd-ti, #view .t2q, #view .fhelp { min-width:24px; min-height:24px; box-sizing:border-box; }
+/* ---- Products */
+@media (max-width:767px) {
+  /* the desktop table was shown as cards UNDER the compact phone rows (fd-39's #view rule beat the fd20 hide rule) */
+  :root[data-skin="fd"] body[data-fd20v="products"] #view .o_lv[data-lv="products"] table.o_list.fd20-t,
+  :root[data-skin="fd"] body[data-fd20v="products"] #view .o_lv[data-lv="products"] table.o_list.fd20-t.m-cards { display:none !important; }
+  /* the list card's own head restates the page title */
+  :root[data-skin="fd"] body[data-fd20v="products"] #view .o_lv[data-lv="products"] > .fd20-ch { display:none; }
+  :root[data-skin="fd"] body[data-fd20v="products"] #view #fdHead .fdd-sub { display:none; }
+  :root[data-skin="fd"] body[data-fd20v="products"] #view #fdHead .fdd-head { margin-bottom:10px; }
+  :root[data-skin="fd"] #view .fd20-mr > input { width:24px !important; height:24px !important; min-height:24px; flex-basis:24px; }
+  details.dg-figs > .nt-fold-in { padding:4px 12px 12px; }
+  #view .dg-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  #view .dg-grid > .fdd-c { min-height:0; }
+  details.dg-filters .fd20-bar, details.dg-filters .chips { margin:0; }
+  :root[data-skin="fd"] #view .fd20-ml .fd20-mr.dg-hid { display:none; }
+  .dg-more { display:flex; width:100%; justify-content:center; min-height:48px; margin:6px 0 0; }
+  /* Filters fold: the pills keep their look inside it */
+  details.dg-filters > .nt-fold-in { padding:4px 12px 12px; gap:10px; }
+  :root[data-skin="fd"] #view details.dg-filters .fd20-bar { flex-wrap:wrap !important; overflow:visible !important; gap:8px; }
+  :root[data-skin="fd"] #view details.dg-filters .fd20-seg { flex-wrap:wrap; }
+  details.dg-filters .fd20-bar .sp { display:none; }
+  details.dg-filters > summary .nt-n { font-weight:600; color:var(--fd-text, var(--ink)); }
+  /* Stock entry: the 5-step bar was 426px wide in 305px */
+  :root[data-skin="fd"] #view .fd20-stp { flex-wrap:nowrap; overflow:hidden; }
+  :root[data-skin="fd"] #view .fd20-stp { gap:2px; }
+  :root[data-skin="fd"] #view .fd20-stp li.ln { display:none; }
+  :root[data-skin="fd"] #view .fd20-stp button { gap:6px; padding:0 2px; font-size:13px; min-width:32px; }
+  :root[data-skin="fd"] #view .fd20-stp .num { width:24px; height:24px; }
+  /* Shipments: the section pills scroll instead of being cut */
+  :root[data-skin="fd"] body[data-fd20v="shipments"] #view .fd20-bar { flex-wrap:nowrap; overflow-x:auto; scrollbar-width:none; -webkit-overflow-scrolling:touch; }
+  :root[data-skin="fd"] body[data-fd20v="shipments"] #view .fd20-bar::-webkit-scrollbar { display:none; }
+  /* Product cost: the filter chips sit behind one line; the search comes first */
+  details.dg-ckfilters .chips { margin:0; }
+  /* a fold inside a card is flat (no card in a card) */
+  #view .card > details.dg-ckfilters { border:0; box-shadow:none; background:var(--fd-surface-2, var(--field, #f3f4f6)); margin:8px 0 10px; }
+  #view .card > details.dg-ckfilters > summary { min-height:44px; }
+}
+@media (min-width:768px) and (max-width:1500px) {
+  /* Products table scrolled sideways at 1366px (1,220 in 1,038): Category and Brand hide (brand is in the item's sub-line,
+     the category is the pill above) */
+  :root[data-skin="fd"] #view table.o_list.fd20-t th:nth-child(3), :root[data-skin="fd"] #view table.o_list.fd20-t td:nth-child(3),
+  :root[data-skin="fd"] #view table.o_list.fd20-t th:nth-child(4), :root[data-skin="fd"] #view table.o_list.fd20-t td:nth-child(4) { display:none; }
+}
+@media (min-width:768px) {
+  /* the four tiles in one short row above the table */
+  :root[data-skin="fd"] body[data-fd20v="products"] #view #fdHead .fd20-kgrid .fdd-c { min-height:0; padding:14px 18px; }
+  :root[data-skin="fd"] body[data-fd20v="products"] #view #fdHead .fd20-kgrid .fdd-num { font-size:22px; }
+  :root[data-skin="fd"] body[data-fd20v="products"] #view #fdHead .fd20-kgrid .fdd-cube { display:none; }
+}
+</style>
+<script>
+(function () {
+  var bn = function () { return typeof LANG !== 'undefined' && LANG === 'bn'; };
+  var phone = function () { return typeof ntPhone === 'function' ? ntPhone() : !!(window.matchMedia && window.matchMedia('(max-width:640px)').matches); };
+  var I = {
+    'Filters': 'ফিল্টার', 'Show more': 'আরও দেখুন', 'Summary': 'সারাংশ', 'Figures': 'হিসাব', 'Count / adjust': 'গুনুন / ঠিক করুন',
+    'All stock': 'সব স্টক', 'Items': 'প্রোডাক্ট', 'Lots': 'লট', 'Grouped': 'দলে', 'Receive': 'রিসিভ', 'Help': 'সাহায্য',
+    'Mine': 'আমার', 'Joint pool': 'যৌথ পুল', 'Partner’s': 'পার্টনারের', 'All, side by side': 'সব, পাশাপাশি',
+    'Units on hand': 'স্টকে আছে (পিস)', 'Stock value at cost': 'স্টকের দাম (কেনা দামে)', 'Items low or out': 'কম বা নেই',
+    'Stock by lot: brand, type, colour and where it came from': 'লট ধরে স্টক: ব্র্যান্ড, ধরন, রং আর কোথা থেকে এল',
+    'landed cost, FIFO lots': 'আনার খরচসহ দাম, FIFO লট', 'no sales': 'বিক্রি নেই', 'Out': 'নেই', 'Low': 'কম', 'In stock': 'আছে',
+    'Discontinued': 'বন্ধ', 'New': 'নতুন', 'Warranty rules': 'ওয়ারেন্টির নিয়ম', 'Search…': 'খুঁজুন…', 'Sort by': 'সাজান',
+    'Count & adjust': 'গোনা ও ঠিক করা', 'Supplier orders': 'সাপ্লায়ার অর্ডার', 'To order': 'অর্ডার করতে হবে', 'Receive stock': 'স্টক রিসিভ',
+    'Where is this shipment?': 'এই চালানটা কোথায়?', 'Supplier': 'সাপ্লায়ার', 'Where from': 'কোথা থেকে', 'Reference': 'রেফারেন্স', 'Notes': 'নোট',
+    'Shipment / import': 'চালান / আমদানি', 'Bought locally': 'দেশে কেনা', 'Campaign exchange': 'ক্যাম্পেইনে বদল', 'Other': 'অন্য',
+    'Stock adjustment': 'স্টক ঠিক করা', 'Product': 'প্রোডাক্ট', 'Choose a product': 'একটা প্রোডাক্ট বেছে নিন', 'Direction': 'কোন দিকে',
+    'Stock IN (return / found)': 'স্টকে যোগ (ফেরত / পাওয়া গেছে)', 'Stock OUT (damage / loss)': 'স্টক থেকে বাদ (নষ্ট / হারানো)',
+    'Quantity': 'কতটি', 'Reason *': 'কারণ *', 'Record adjustment': 'ঠিক করা লিখুন', 'Saving…': 'সেভ হচ্ছে…', 'Receiving…': 'রিসিভ হচ্ছে…',
+    'Shipments': 'চালান', 'Product sizes': 'প্রোডাক্টের মাপ', 'Holding cost…': 'রাখার খরচ…', 'New order': 'নতুন অর্ডার',
+    'Find stock': 'স্টক খুঁজুন', 'Wanted board': 'যা দরকার', 'Requests': 'রিকোয়েস্ট', 'What I share': 'আমি যা দেখাই',
+    'Search': 'খুঁজুন', 'Category': 'ক্যাটাগরি', 'All': 'সব', 'Nothing on the market yet.': 'মার্কেটে এখনও কিছু নেই।',
+    'Product, brand or category': 'প্রোডাক্ট, ব্র্যান্ড বা ক্যাটাগরি', 'Suppliers are shown by city only until they give you a price.': 'দাম না দেওয়া পর্যন্ত সাপ্লায়ারের শুধু শহরের নাম দেখা যায়।',
+    'You see the stock other shops share with everyone.': 'অন্য দোকানগুলো সবার জন্য যে স্টক দেখায়, আপনি সেটা দেখছেন।',
+    'Share your stock': 'আপনার স্টক দেখান', 'to see every supplier’s too.': 'তাহলে সব সাপ্লায়ারের স্টকও দেখতে পাবেন।',
+    'Excel': 'Excel', 'New supplier': 'নতুন সাপ্লায়ার', 'You owe suppliers': 'সাপ্লায়ারদের কাছে আপনার দেনা',
+    'Rows priced': 'দাম লেখা সারি', 'Losing money': 'লোকসানে', 'all filled in': 'সব লেখা আছে', 'sold below what it costs': 'কেনা দামের চেয়ে কমে বিক্রি',
+    'thin, worth a look': 'কম মার্জিন, দেখে নিন', 'Buying prices': 'কেনা দাম', 'Brand': 'ব্র্যান্ড', 'Search type': 'ধরন খুঁজুন', 'Clear filters': 'ফিল্টার মুছুন',
+    'Save changes': 'বদলগুলো সেভ করুন', 'Undo my edits': 'আমার বদল ফিরিয়ে নিন', 'Type': 'ধরন', 'Buy price': 'কেনা দাম', 'In': 'মুদ্রা', 'Handling': 'হ্যান্ডলিং',
+    'Lands at': 'দোকানে এসে দাম', 'Sells at': 'বিক্রির দাম', 'Margin': 'মার্জিন', 'Nothing matches that filter.': 'এই ফিল্টারে কিছু নেই।',
+    'The price book has no rows yet.': 'কেনা দামের খাতায় এখনও কোনো সারি নেই।', 'Overview': 'সারসংক্ষেপ', 'Stock': 'স্টক', 'Sales': 'বিক্রি', 'Money': 'টাকার খাতা',
+    'Month end': 'মাস শেষ', 'Settings': 'সেটিংস', 'Partners': 'পার্টনার', 'Who pays whom, as of now': 'এখন পর্যন্ত কে কাকে দেবে',
+    'Nobody owes anything': 'কেউ কারো কাছে পাওনা নেই', 'The cash is where it should be.': 'টাকা যেখানে থাকার কথা সেখানেই আছে।'
+  };
+  try { for (var k in I) if (!I18N_BN[k]) I18N_BN[k] = I[k]; } catch (e) {}
+  var T = function (s) { return bn() && I[s] ? I[s] : s; };
+  // the shell's phone list order must not sweep the Filters fold into the Summary fold
+  try { if (typeof NT_PILLS === 'string' && NT_PILLS.indexOf('.dg-filters') < 0) NT_PILLS += ', .dg-filters'; } catch (e) {}
+  // strings built with a number (the dictionary cannot match them): patterns
+  try {
+    [['^(\\d[\\d,]*) on hand$', '$1টি আছে'], ['^(\\d[\\d,]*) days of cover$', 'আরও $1 দিন চলবে'], ['^(\\d[\\d,]*) in stock$', 'স্টকে $1টি'],
+     ['^(\\d[\\d,]*) items? · click one to see its lots$', '$1টি প্রোডাক্ট · একটায় চাপলে তার লট দেখা যাবে'],
+     ['^(\\d[\\d,]*) items?$', '$1টি প্রোডাক্ট'], ['^(\\d[\\d,]*) items? · (.+)$', '$1টি প্রোডাক্ট · $2'],
+     ['^(\\d[\\d,]*) open lot\\(s\\)$', '$1টি খোলা লট'], ['^Receive (\\d+) product\\(s\\)$', '$1টি প্রোডাক্ট রিসিভ করুন'],
+     ['^(\\d+) row\\(s\\) need a choice$', '$1টি লাইনে আপনার সিদ্ধান্ত লাগবে'], ['^(\\d+) shipment\\(s\\) on the way\\.', '$1টি চালান পথে আছে।'],
+     ['^(\\d[\\d,]*) counted · (\\d[\\d,]*) differ$', '$1টি গোনা হয়েছে · $2টিতে মিলছে না'], ['^Show more \\((\\d[\\d,]*)\\)$', 'আরও দেখুন ($1)'],
+     ['^Products · (.+)$', 'প্রোডাক্ট · $1'], ['^(\\d[\\d,]*) rows?$', '$1টি সারি'], ['^(\\d[\\d,]*) product\\(s\\)', '$1টি প্রোডাক্ট'],
+     ['^Step (\\d) of (\\d) · (.+)$', 'ধাপ $1/$2 · $3'], ['^Products · items$', 'প্রোডাক্ট · তালিকা'], ['^Products · grouped$', 'প্রোডাক্ট · দলে'],
+     ['^(.+?) · items$', '$1 · তালিকা'], ['^(.+?) · grouped$', '$1 · দলে'], ['^Totals are sums of the products in each group$', 'প্রতিটি দলের প্রোডাক্টগুলোর যোগফল']].forEach(function (p) {
+      var have = false; for (var i = 0; i < I18N_PAT.length; i++) if (I18N_PAT[i][0] === p[0]) { have = true; break; }
+      if (!have) I18N_PAT.unshift(p);
+    });
+  } catch (e) {}
+
+  /* ------------------------------------------------------------------ Products: everything in the head HTML itself
+     (the head is repainted by fdhPaint, fdhLoad and fd20Refresh after the figures arrive - DOM-only fixes were undone) */
+  var sharedChipsD = typeof sharedChips === 'function' ? sharedChips : null;
+  var dgFoldOpen = function (k) { try { return localStorage.getItem('dg_fold_' + k) === '1'; } catch (e) { return false; } };
+  document.addEventListener('toggle', function (e) {
+    var d = e.target; if (!d || !d.getAttribute || !d.getAttribute('data-dgfold')) return;
+    try { localStorage.setItem('dg_fold_' + d.getAttribute('data-dgfold'), d.open ? '1' : '0'); } catch (x) {}
+  }, true);
+  if (sharedChipsD) sharedChips = function () { if (VIEW === 'products' && phone() && typeof fd20On === 'function' && fd20On()) return ''; return sharedChipsD.apply(this, arguments); };
+  if (typeof fd20ProdHeadHtml === 'function') {
+    var fd20ProdHeadHtmlD = fd20ProdHeadHtml;
+    fd20ProdHeadHtml = function () {
+      var h = fd20ProdHeadHtmlD.apply(this, arguments);
+      // Count and Adjust stock opened the same tab: one button, named for both jobs, no filled "primary" in the head
+      // (the list's own New is the primary; search is the staff's first move)
+      h = h.replace(/<button type="button" class="fd20-btn" data-fd20stock="count">[\s\S]*?<\/button>/, '');
+      h = h.replace('<button type="button" class="fd20-btn pri" data-fd20stock="count">', '<button type="button" class="fd20-btn" data-fd20stock="count">');
+      h = h.replace(/(data-fd20stock="count">(?:<svg[\s\S]*?<\/svg>)?)Adjust stock<\/button>/, '$1' + esc(T('Count / adjust')) + '</button>');
+      if (!phone()) return h;
+      // phone: the category / view pills and the shared-stock chips behind one "Filters" line, the four tiles behind "Figures"
+      var i = h.indexOf('<div class="fd20-bar">'), j = h.indexOf('<div class="fdd-grid fd20-kgrid">');
+      if (i < 0 || j < i) return h;
+      var bar = h.slice(i, j), grid = h.slice(j).replace('class="fdd-grid fd20-kgrid"', 'class="dg-grid fd20-kgrid"');
+      var shared = ''; try { shared = sharedChipsD ? sharedChipsD() : ''; } catch (e) {}
+      var picked = []; try {
+        var sc = fd20Scope(); if (sc) picked.push(sc);
+        var st = lvSt('products'); if (FD20.view === 'lots') picked.push(T('Lots')); else if (st.groupBy) picked.push(T('Grouped'));
+        if (typeof PROD_SCOPE !== 'undefined' && PROD_SCOPE && PROD_SCOPE !== 'mine' && shared) picked.push(T({ pool: 'Joint pool', partner: 'Partner’s', all: 'All, side by side' }[PROD_SCOPE] || PROD_SCOPE));
+      } catch (e) {}
+      var tiles = (grid.match(/class="fdd-c /g) || []).length;
+      return h.slice(0, i) +
+        '<details class="nt-fold dg-filters" data-dgfold="filters"' + (dgFoldOpen('filters') ? ' open' : '') + '><summary><span>' + esc(T('Filters')) + '</span><span class="nt-n" data-noi18n="1">' + esc(picked.join(' · ')) + '</span></summary><div class="nt-fold-in">' + bar + shared + '</div></details>' +
+        '<details class="nt-fold dg-figs" data-dgfold="figs"' + (dgFoldOpen('figs') ? ' open' : '') + '><summary><span>' + esc(T('Figures')) + '</span><span class="nt-n" data-noi18n="1">' + (tiles ? tiles + (bn() ? 'টি সংখ্যা' : ' figures') : '') + '</span></summary><div class="nt-fold-in">' + grid + '</div></details>';
+    };
+  }
+  /** Phone: 20 rows, then "Show more (n)". Re-run after every list paint. */
+  var DG_SHOW = 20;
+  function dgProductsRows() {
+    if (VIEW !== 'products' || !phone()) return;
+    var ml = document.querySelector('#view .o_lv[data-lv="products"] .fd20-ml'); if (!ml) return;
+    var rows = ml.querySelectorAll(':scope > .fd20-mr[data-fd20open]');
+    // the price beside the stock (name, stock, price in one row - the counter question)
+    try {
+      var st = lvSt('products');
+      [].forEach.call(rows, function (r) {
+        var e = r.querySelector('.fd20-mr-e'); if (!e || e.querySelector('.dg-price')) return;
+        var d = st.rows && st.rows[r.getAttribute('data-fd20open')]; if (!d || !(Number(d.sell) > 0)) return;
+        var sp = document.createElement('span'); sp.className = 'fd20-mr-s dg-price'; sp.setAttribute('data-noi18n', '1'); sp.textContent = tk(d.sell); e.appendChild(sp);
+      });
+    } catch (e) {}
+    if (rows.length <= DG_SHOW) return;
+    var shown = Number(ml.getAttribute('data-dg-shown')) || DG_SHOW;
+    for (var i = 0; i < rows.length; i++) rows[i].classList.toggle('dg-hid', i >= shown);
+    var b = ml.querySelector(':scope > .dg-more');
+    if (shown >= rows.length) { if (b) b.parentNode.removeChild(b); return; }
+    if (!b) { b = document.createElement('button'); b.type = 'button'; b.className = 'fd20-btn dg-more'; b.setAttribute('data-dg-more', '1'); ml.appendChild(b); }
+    b.setAttribute('data-noi18n', '1');
+    b.textContent = (bn() ? 'আরও দেখুন' : 'Show more') + ' (' + fmt(Math.min(DG_SHOW, rows.length - shown)) + ')';
+  }
+  document.addEventListener('click', function (e) {
+    var b = e.target && e.target.closest && e.target.closest('[data-dg-more]'); if (!b) return;
+    e.preventDefault(); e.stopPropagation();
+    var ml = b.parentNode, shown = Number(ml.getAttribute('data-dg-shown')) || DG_SHOW;
+    ml.setAttribute('data-dg-shown', String(shown + DG_SHOW)); dgProductsRows();
+  }, true);
+  /** Desktop: "Excel" and "Colour families…" each took a full right-aligned row above the list - one row. */
+  function dgProductsTools() {
+    if (VIEW !== 'products' || phone()) return;
+    var v = el('view'); if (!v || v.querySelector(':scope > .dg-tools')) return;
+    var btns = [v.querySelector(':scope > .row > [data-xlopen="products"]'), v.querySelector(':scope > .row > #fam_open')].filter(Boolean);
+    if (btns.length < 2) return;
+    var wrap = document.createElement('div'); wrap.className = 'row dg-tools'; wrap.style.cssText = 'justify-content:flex-end;gap:8px;margin-bottom:8px';
+    var first = btns[0].parentNode;
+    first.parentNode.insertBefore(wrap, first);
+    btns.forEach(function (b) { var r = b.parentNode; wrap.appendChild(b); if (r.children.length === 0 && r.parentNode) r.parentNode.removeChild(r); });
+  }
+  AFTER_PAINT.push(function () { dgProductsRows(); dgProductsTools(); });
+  if (typeof lvPaint === 'function') { var lvPaintD = lvPaint; lvPaint = function (m) { var r = lvPaintD.apply(this, arguments); if (m === 'products') try { dgProductsRows(); } catch (e) {} return r; }; }
+  // the head redraws itself when the figures arrive (fdhLoad's own callback): watch #view for a fresh #fdHead
+  try {
+    new MutationObserver(function (recs) {
+      if (VIEW !== 'shipments' && VIEW !== 'costs') return;
+      for (var i = 0; i < recs.length; i++) for (var j = 0; j < recs[i].addedNodes.length; j++) {
+        var n = recs[i].addedNodes[j];
+        if (n.nodeType === 1 && (n.id === 'fdHead' || (n.querySelector && n.querySelector('.fdd-grid')))) { setTimeout(function () { try { dgShipments(); dgCosts(); } catch (e) {} }, 0); return; }
+      }
+    }).observe(el('view') || document.body, { childList: true, subtree: true });
+  } catch (e) {}
+
+  /* ------------------------------------------------------------------ Product cost (phone): search first, chips folded, KPIs under the list */
+  function dgCosts() {
+    if (VIEW !== 'costs') return;
+    var v = el('view'), q = v && v.querySelector('#ck_q'); if (!q) return;
+    if (!phone()) {
+      // desktop: the settings that are set once (handling / margin, currencies) go under the price list
+      var hand = v.querySelector('#ck_handling'), fx = v.querySelector('[data-fxrate]'), tsec = q.closest('#view > section');
+      [hand && hand.closest('#view > section'), fx && fx.closest('#view > section')].forEach(function (sec) {
+        if (sec && tsec && sec !== tsec && (sec.compareDocumentPosition(tsec) & Node.DOCUMENT_POSITION_FOLLOWING)) v.insertBefore(sec, tsec.nextSibling);
+      });
+      return;
+    }
+    var row = q.closest('.row'), card = q.closest('.card'); if (!row || !card || card.getAttribute('data-dg')) return;
+    card.setAttribute('data-dg', '1');
+    var h2 = card.querySelector(':scope > h2'), sub = h2 && h2.nextElementSibling && h2.nextElementSibling.classList.contains('sub') ? h2.nextElementSibling : h2;
+    if (sub) sub.parentNode.insertBefore(row, sub.nextSibling);
+    var chips = [].filter.call(card.children, function (c) { return c.querySelector && c.querySelector(':scope > .chips'); });
+    if (chips.length) {
+      var fold = document.createElement('details'); fold.className = 'nt-fold dg-ckfilters';
+      var onN = card.querySelectorAll('.chips .chip.on, .chips .ckcat.on, .chips [aria-pressed="true"]').length;
+      fold.innerHTML = '<summary><span>' + esc(T('Filters')) + '</span><span class="nt-n" data-noi18n="1">' + (onN ? onN : '') + '</span></summary><div class="nt-fold-in"></div>';
+      if (onN) fold.open = true;
+      row.parentNode.insertBefore(fold, row.nextSibling);
+      var box = fold.querySelector('.nt-fold-in'); chips.forEach(function (c) { box.appendChild(c); });
+    }
+    // the three figures under the list, folded
+    var kpi = v.querySelector(':scope > section > .g-kpi'), ksec = kpi && kpi.closest('#view > section'), lsec = card.closest('#view > section');
+    if (ksec && lsec && !v.querySelector(':scope > details.dg-ckkpi')) {
+      var f2 = document.createElement('details'); f2.className = 'nt-fold dg-ckkpi';
+      f2.innerHTML = '<summary><span>' + esc(T('Figures')) + '</span></summary><div class="nt-fold-in"></div>';
+      f2.querySelector('.nt-fold-in').appendChild(ksec);
+      v.insertBefore(f2, lsec.nextSibling);
+    }
+  }
+  AFTER_PAINT.push(dgCosts);
+
+  /* ------------------------------------------------------------------ Shipments (phone): the six figures + holding note fold under the board */
+  function dgShipments() {
+    if (VIEW !== 'shipments' || !phone() || (typeof SHP !== 'undefined' && SHP && SHP.ref)) return;
+    var v = el('view'); if (!v) return;
+    var grid = v.querySelector(':scope > .fdd-grid.fd20-kgrid'); if (!grid) return;
+    var fold = v.querySelector(':scope > details.dg-shpfold');
+    if (!fold) {
+      fold = document.createElement('details'); fold.className = 'nt-fold dg-shpfold';
+      fold.innerHTML = '<summary><span>' + esc(T('Summary')) + '</span><span class="nt-n" data-noi18n="1"></span></summary><div class="nt-fold-in"></div>';
+      try { if (localStorage.getItem('nt_fold_shipments') === '1') fold.open = true; } catch (e) {}
+      fold.addEventListener('toggle', function () { try { localStorage.setItem('nt_fold_shipments', fold.open ? '1' : '0'); } catch (e) {} });
+    }
+    var box = fold.querySelector('.nt-fold-in');
+    [].forEach.call(box.children, function (c) { if (c !== grid && c.classList.contains('fdd-grid')) c.parentNode.removeChild(c); });
+    var note = grid.nextElementSibling && grid.nextElementSibling.matches('p.fd20-note') ? grid.nextElementSibling : null;
+    box.appendChild(grid); if (note) box.appendChild(note);
+    var n = fold.querySelector('.nt-n'); if (n) { var t = grid.querySelectorAll('.fdd-c').length; n.textContent = t + (bn() ? 'টি সংখ্যা' : ' figures'); }
+    var card = v.querySelector(':scope > .fd20-card, :scope > .card');
+    if (card) { if (card.nextSibling !== fold) v.insertBefore(fold, card.nextSibling); } else if (fold.parentNode !== v) v.appendChild(fold);
+  }
+  AFTER_PAINT.push(dgShipments);
+
+  /* ------------------------------------------------------------------ Stock entry: one Bangla sentence where markup split it */
+  if (typeof viewStock === 'function') {
+    var viewStockD = viewStock;
+    viewStock = function () {
+      var h = viewStockD.apply(this, arguments);
+      if (!bn()) return h;
+      h = h.replace(/([^<>]+?) currently has <strong>([\d,]+)<\/strong> in stock((?: — <span style="color:var\(--critical\)">cannot remove ([\d,]+)<\/span>)?)\./,
+        function (m, name, n, tail, more) { return name + ' এখন স্টকে আছে <strong>' + n + '</strong>টি' + (more ? ' — <span style="color:var(--critical)">' + more + 'টি কমানো যাবে না</span>' : '') + '।'; });
+      h = h.replace('Reference <span class="sku">optional</span>', 'রেফারেন্স (ইচ্ছা হলে)');
+      return h;
+    };
+  }
+
+  /* ------------------------------------------------------------------ Market: a shop does not know what "the platform" is */
+  if (typeof viewMarket === 'function') {
+    var viewMarketD = viewMarket;
+    viewMarket = function () {
+      var h = viewMarketD.apply(this, arguments);
+      return h.replace('You see the platform’s own stock. <b>Share your stock</b> to see every supplier’s too.',
+        esc(T('You see the stock other shops share with everyone.')) + ' <b>' + esc(T('Share your stock')) + '</b> ' + esc(T('to see every supplier’s too.')));
+    };
+  }
+})();
+</script>
+
+<!-- distill:money -->
+<!-- distill-money (9 Nov 2026, acct-cash/expenses/profit/capital.md + ai-analytics.md): the money screens stripped to the job.
+     Money: "N payments in no account" is the first thing on the screen with ONE primary button that places them by payment
+     method in one go (erpCashPlaceMany; falls back to one-by-one on an older server); "Wrong account…" is a pick list, not a
+     typed number; every figure on the account cards, the waiting table and a statement is tk(). Every money screen shows a
+     "Closed up to <month>" chip when the books are closed (from whichever call carried lockedThrough) and Expenses hides its
+     write buttons in a closed month with a plain banner. Profit: the P&L note no longer names a courier brand, the BDT column
+     head is ৳, the small month buttons and "?" / "i" buttons get a 24px+ hit area. Analytics (phone): the long "Month by
+     month" table folds, the restating grey sub line goes, the pill strips scroll with a fade cue. Capital: "Net profit as the
+     Expenses screen shows it" says what the code does (Profitability's). All strips that scroll sideways on a phone fade at
+     the edge so the hidden tabs are visible as such. -->
+<style>
+/* the month-lock chip on every money screen */
+.dm-lock { display:inline-flex; align-items:center; gap:8px; min-height:32px; padding:0 12px 0 10px; border-radius:999px; margin:0 0 12px;
+  background:var(--fd-warning-soft, #FFF4E0); color:var(--fd-text, #1A1A1A); font-size:13.5px; font-weight:600; line-height:1.3; }
+.dm-lock svg { width:14px; height:14px; flex:0 0 14px; color:var(--fd-warning, #B45309); }
+.dm-lock .linkbtn { font-size:13.5px; font-weight:600; min-height:24px; padding:0 2px; }
+html[data-look="clean"] .dm-lock { border:1px solid var(--fd-border, transparent); }
+/* payments in no account: the strip and its one button */
+.dm-unm { display:flex; align-items:center; gap:12px 16px; flex-wrap:wrap; padding:14px 16px; border-radius:16px; margin:0 0 16px;
+  background:var(--fd-warning-soft, #FFF4E0); border:1px solid var(--fd-warning, #F59E0B); }
+.dm-unm .t { flex:1 1 220px; min-width:0; font-size:14.5px; line-height:1.45; color:var(--fd-text, #1A1A1A); }
+.dm-unm .t b { font-size:16px; }
+.dm-unm .btn { min-height:44px; }
+/* the place dialog (reuses the page's .dlg) */
+.dlg.dm-dlg { max-width:560px; }
+.dm-grp { display:flex; gap:10px; align-items:center; flex-wrap:wrap; padding:12px 0; border-top:1px solid var(--fd-border, #E5E5E5); }
+.dm-grp:first-of-type { margin-top:12px; }
+.dm-grp .w { flex:1 1 140px; min-width:0; }
+.dm-grp .w b { display:block; font-size:15px; }
+.dm-grp .w small { color:var(--fd-text-3, var(--muted)); font-size:13px; }
+.dm-grp select { flex:1 1 120px; min-width:0; min-height:42px; }
+.dm-grp .btn { flex:0 0 auto; min-height:42px; }
+@media (max-width:640px) { .dm-grp .w { flex-basis:100%; } }
+.dm-pick { display:flex; flex-direction:column; gap:8px; margin-top:14px; }
+.dm-pick .btn { justify-content:flex-start; min-height:44px; }
+/* a closed month on Expenses: no write buttons */
+#view.dm-closed [data-f21ivopen="expenses:add"], #view.dm-closed .nt-exadd, #view.dm-closed #ex_add, #view.dm-closed [data-exvoid],
+#view.dm-closed [data-fxpay], #view.dm-closed [data-fxunpay], #view.dm-closed [data-fxchange], #view.dm-closed [data-rcsave], #view.dm-closed [data-itend] { display:none !important; }
+/* small "?" / "i" / month buttons keep their look, get a 24px+ hit area (craft floor) */
+.fdd-ti, #view .t2q, .fdd-ct .fdd-i { position:relative; }
+.fdd-ti::after, .fdd-i::after, #view .t2q::after { content:""; position:absolute; inset:-6px 0 -6px -6px; }
+#view .linkbtn[data-pnlm] { min-height:28px; padding:4px 6px; display:inline-flex; align-items:center; }
+/* phone: a strip that scrolls sideways fades at its right edge until it is scrolled to the end */
+@media (max-width:767px) {
+  .fd21-tabs, .fd21-tb .fd21-chips, .fd22-antabs, #view .fd22-row2 .fd22-pills { -webkit-mask-image:linear-gradient(to right, #000 calc(100% - 36px), transparent); mask-image:linear-gradient(to right, #000 calc(100% - 36px), transparent); }
+  .fd21-tabs.dm-end, .fd21-tb .fd21-chips.dm-end, .fd22-antabs.dm-end, #view .fd22-row2 .fd22-pills.dm-end { -webkit-mask-image:none; mask-image:none; }
+  #view .fd22-row2 .fd22-pills { flex-wrap:nowrap; overflow-x:auto; scrollbar-width:none; padding-bottom:4px; }
+  #view .fd22-row2 .fd22-pills::-webkit-scrollbar { display:none; }
+  #view .fd22-row2 .fd22-pills .fd22-pill { flex:0 0 auto; }
+  #view.dm-an .fd22-head .fd22-sub { display:none; }
+}
+</style>
+<script>
+(function () {
+  var bn = function () { return typeof LANG !== 'undefined' && LANG === 'bn'; };
+  var L = function (en, b) { return bn() ? b : en; };
+  var ph = function () { return typeof ntPhone === 'function' ? ntPhone() : !!(window.matchMedia && window.matchMedia('(max-width:640px)').matches); };
+  var MONEY = { cash: 1, expenses: 1, profit: 1, analytics: 1, commission: 1, capital: 1 };
+  var EN_M = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+  var BN_M = ['জানুয়ারি', 'ফেব্রুয়ারি', 'মার্চ', 'এপ্রিল', 'মে', 'জুন', 'জুলাই', 'আগস্ট', 'সেপ্টেম্বর', 'অক্টোবর', 'নভেম্বর', 'ডিসেম্বর'];
+  function monthName(m) { var p = String(m || '').split('-'), i = Number(p[1]) - 1; if (!(i >= 0 && i < 12)) return String(m || ''); return (bn() ? BN_M[i] : EN_M[i]) + ' ' + p[0]; }
+  function numOf(s) { return Number(String(s).replace(/−/g, '-').replace(/[^\d.-]/g, '')) || 0; }
+  function isNum(s) { return /^\s*(−|-)?\d[\d,]*(\.\d+)?\s*$/.test(String(s)); }
+  var ICON_LOCK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>';
+
+  /* ------------------------------------------------ the month lock, learnt from whichever call carried it */
+  var LOCK = null;   // '' = nothing closed; 'YYYY-MM' = closed up to; null = not known yet
+  function learnLock() {
+    try {
+      if (typeof CASH !== 'undefined' && CASH && CASH.lockedThrough !== undefined && VIEW === 'cash') LOCK = CASH.lockedThrough || '';
+      if (typeof EXP !== 'undefined' && EXP && EXP.lockedThrough !== undefined && VIEW === 'expenses') LOCK = EXP.lockedThrough || '';
+      if (typeof CAPD !== 'undefined' && CAPD && CAPD.lockedThrough !== undefined && VIEW === 'capital') LOCK = CAPD.lockedThrough || '';
+      if (typeof PNL !== 'undefined' && PNL && PNL.months && PNL.months.length && PNL.months[0].locked !== undefined) {
+        var last = ''; PNL.months.forEach(function (m) { if (m.locked && m.month > last) last = m.month; });
+        if (last) LOCK = last; else if (LOCK === null && PNL.months[0].month <= (PNL.thisMonth || '')) LOCK = LOCK || '';
+      }
+      if (typeof fd22Months === 'function') { var X = fd22Months(); if (X && X.health && X.health.monthClose && X.health.monthClose.lockedThrough !== undefined) LOCK = X.health.monthClose.lockedThrough || ''; }
+      // the other sources, when the screen's own call did not say
+      if (LOCK === null) {
+        if (typeof CASH !== 'undefined' && CASH && CASH.lockedThrough !== undefined) LOCK = CASH.lockedThrough || '';
+        else if (typeof EXP !== 'undefined' && EXP && EXP.lockedThrough !== undefined) LOCK = EXP.lockedThrough || '';
+        else if (typeof CAPD !== 'undefined' && CAPD && CAPD.lockedThrough !== undefined) LOCK = CAPD.lockedThrough || '';
+      }
+    } catch (e) {}
+  }
+  AFTER_PAINT.push(function dmLockChip() {
+    if (!MONEY[VIEW]) return;
+    var v = el('view'); if (!v) return;
+    learnLock();
+    var old = v.querySelector(':scope > .dm-lock'); if (old) old.parentNode.removeChild(old);
+    if (!LOCK) return;
+    var chip = document.createElement('div'); chip.className = 'dm-lock'; chip.setAttribute('data-noi18n', '1');
+    chip.innerHTML = ICON_LOCK + '<span>' + esc(bn() ? monthName(LOCK) + ' পর্যন্ত বন্ধ' : 'Closed up to ' + monthName(LOCK)) + '</span>' +
+      (VIEW !== 'capital' && typeof navOn === 'function' && navOn('capital') ? '<button type="button" class="linkbtn" data-dm-go="capital">' + esc(L('Month close', 'মাস বন্ধ')) + ' →</button>' : '');
+    v.insertBefore(chip, v.firstChild);
+  });
+  document.addEventListener('click', function (e) {
+    var b = e.target && e.target.closest && e.target.closest('[data-dm-go]'); if (!b) return;
+    e.preventDefault(); var t = b.getAttribute('data-dm-go');
+    if (t === 'capital' && typeof FD21 !== 'undefined' && FD21.tab) FD21.tab.capital = 'month';
+    go(t); window.scrollTo(0, 0);
+  });
+
+  /* ------------------------------------------------ Expenses: a closed month is said, and nothing can be written */
+  AFTER_PAINT.push(function dmExpensesClosed() {
+    if (VIEW !== 'expenses') return;
+    var v = el('view'); if (!v) return;
+    var closed = typeof EXP !== 'undefined' && EXP && EXP.month && EXP.lockedThrough && EXP.month <= EXP.lockedThrough;
+    v.classList.toggle('dm-closed', !!closed);
+    if (!closed || v.querySelector('.dm-closedban')) return;
+    var b = document.createElement('div'); b.className = 'note warn dm-closedban'; b.setAttribute('data-noi18n', '1');
+    b.innerHTML = '<div class="ico">!</div><div>' + esc(bn()
+      ? monthName(EXP.month) + ' বন্ধ করা আছে। এখানে নতুন খরচ লেখা যাবে না। দরকার হলে মালিক মাসটা আবার খুলবেন (মূলধন › মাস বন্ধ)।'
+      : monthName(EXP.month) + ' is closed. Nothing new can be written here; if it must change, the owner reopens the month under Capital › Month close.') + '</div>';
+    var tabs = v.querySelector(':scope > .fd21-tabs');
+    if (tabs) tabs.parentNode.insertBefore(b, tabs.nextSibling); else v.insertBefore(b, v.firstChild);
+  });
+
+  /* ------------------------------------------------ Money: the payments in no account are the job */
+  /* no rule for the method: an account of the same name (Cash -> Cash, bKash -> bKash), else the only bank for a bank transfer */
+  function guessAccount(method) {
+    var m = String(method || '').toLowerCase().trim(), live = (CASH.accounts || []).filter(function (a) { return !a.archived; });
+    var same = live.filter(function (a) { return String(a.name).toLowerCase() === m; })[0]; if (same) return same.id;
+    if (/bank/.test(m)) { var banks = live.filter(function (a) { return a.kind === 'bank'; }); if (banks.length === 1) return banks[0].id; }
+    if (/^cash$/.test(m)) { var cash = live.filter(function (a) { return a.kind === 'cash'; }); if (cash.length === 1) return cash[0].id; }
+    return '';
+  }
+  function groups() {
+    var g = [], by = {}, rules = (CASH && CASH.rules) || { map: {} };
+    (CASH.loose || []).forEach(function (p) {
+      var k = 'm:' + String(p.method || '').toLowerCase();
+      if (!by[k]) { by[k] = { label: p.method || L('No method written', 'পদ্ধতি লেখা নেই'), src: 'payment', items: [], sum: 0, def: (rules.map && rules.map[String(p.method || '').toLowerCase()]) || guessAccount(p.method) }; g.push(by[k]); }
+      by[k].items.push(p); by[k].sum += Number(p.amount) || 0;
+    });
+    if ((CASH.unassigned || []).length) {
+      var u = { label: L('Courier payouts', 'কুরিয়ারের পেআউট'), src: 'payout', items: CASH.unassigned.slice(), sum: 0, def: rules.payout || '' };
+      u.items.forEach(function (p) { u.sum += Number(p.amount) || 0; }); g.push(u);
+    }
+    return g;
+  }
+  function afterPlaced(r, msg) {
+    CASH = r; if (r && r.account) CASH_ACC = r.account;
+    try { EXP = null; CAPD = null; } catch (e) {}
+    if (typeof FD21 !== 'undefined') FD21.led = null;
+    toast(msg, false, 8000);
+    if (VIEW === 'cash') repaint();
+  }
+  function placeGroup(g, acc, done) {
+    var items = g.items.map(function (p) { return { src: g.src, id: p.id }; });
+    var name = ((CASH.accounts || []).filter(function (a) { return a.id === acc; })[0] || {}).name || '';
+    var msg = bn() ? items.length + 'টা পেমেন্ট ' + name + '-এ বসানো হলো।' : items.length + ' payment(s) placed in ' + name + '.';
+    srv('erpCashPlaceMany', [{ account: acc, items: items, show: CASH_ACC }], function (r) { done(true); afterPlaced(r, msg); },
+      function (e) {
+        var m = (e && e.message) || String(e);
+        if (!/Unknown action/.test(m)) { toast(esc(m), true, 14000); done(false); return; }
+        // an older server without the batch call: one line at a time, then read the book once
+        var i = 0;
+        (function next() {
+          if (i >= items.length) { srv('erpCashBook', [{ account: CASH_ACC }], function (r) { done(true); afterPlaced(r, msg); }, function () { done(true); if (typeof loadCash === 'function') loadCash(); }); return; }
+          var it = items[i++];
+          srv('erpCashReassign', [{ src: it.src, id: it.id, account: acc, show: CASH_ACC }], function () { next(); }, function (e2) { toast(esc((e2 && e2.message) || String(e2)), true, 14000); done(false); if (typeof loadCash === 'function') loadCash(); });
+        })();
+      });
+  }
+  function openPlace() {
+    if (typeof CASH === 'undefined' || !CASH || !CASH.canEdit) return;
+    var G = groups(); if (!G.length) { toast(L('Every payment is in an account.', 'সব পেমেন্ট কোনো না কোনো অ্যাকাউন্টে আছে।'), false, 6000); return; }
+    var back = document.createElement('div'); back.className = 'dlg-back';
+    back.innerHTML = '<div class="dlg dm-dlg" role="dialog" aria-modal="true" aria-labelledby="dm_t"><div class="dlg-t" id="dm_t">' + esc(L('Put these payments in an account', 'এই পেমেন্টগুলো অ্যাকাউন্টে বসান')) + '</div>' +
+      '<div class="dlg-b">' + esc(L('Grouped by how the customer paid. Choose the account each group really went to and press Place. Nothing changes until you do.',
+        'কাস্টমার যেভাবে দিয়েছেন সেভাবে ভাগ করা। প্রতিটা ভাগ আসলে কোন অ্যাকাউন্টে গেছে বেছে নিয়ে "বসান" চাপুন। তার আগে কিছু বদলায় না।')) + '</div>' +
+      G.map(function (g, i) {
+        return '<div class="dm-grp"><div class="w"><b data-noi18n="1">' + esc(g.label) + '</b><small data-noi18n="1">' + g.items.length + (bn() ? 'টা · ' : ' · ') + tk(g.sum, { cur: CASH.currency }) + '</small></div>' +
+          '<select class="i" data-dm-acc="' + i + '" aria-label="' + esc(L('Account', 'অ্যাকাউন্ট')) + '"><option value="">' + esc(L('Choose the account…', 'অ্যাকাউন্ট বেছে নিন…')) + '</option>' + cashOpts(g.def) + '</select>' +
+          '<button type="button" class="btn primary" data-dm-place-go="' + i + '">' + esc(L('Place', 'বসান')) + '</button></div>';
+      }).join('') +
+      '<div class="dlg-f"><button class="btn" type="button" data-dm-close="1">' + esc(L('Close', 'বন্ধ করুন')) + '</button></div></div>';
+    document.body.appendChild(back);
+    var fin = function () { document.removeEventListener('keydown', key, true); if (back.parentNode) back.parentNode.removeChild(back); };
+    var key = function (ev) { if (ev.key === 'Escape') { ev.preventDefault(); ev.stopPropagation(); fin(); } };
+    document.addEventListener('keydown', key, true);
+    back.addEventListener('click', function (e) {
+      if (e.target === back || (e.target.closest && e.target.closest('[data-dm-close]'))) { fin(); return; }
+      var b = e.target.closest && e.target.closest('[data-dm-place-go]'); if (!b) return;
+      var i = Number(b.getAttribute('data-dm-place-go')), sel = back.querySelector('[data-dm-acc="' + i + '"]');
+      if (!sel || !sel.value) { toast(L('Choose the account first.', 'আগে অ্যাকাউন্ট বেছে নিন।'), true); return; }
+      b.disabled = true;
+      placeGroup(G[i], sel.value, function (ok) { if (ok) fin(); else b.disabled = false; });
+    });
+    var s0 = back.querySelector('select'); if (s0) try { s0.focus(); } catch (e) {}
+  }
+  document.addEventListener('click', function (e) {
+    var b = e.target && e.target.closest && e.target.closest('[data-dm-place]'); if (!b) return;
+    e.preventDefault(); openPlace();
+  });
+  AFTER_PAINT.push(function dmUnmatchedStrip() {
+    if (VIEW !== 'cash' || typeof CASH === 'undefined' || !CASH || CASH.setup || !CASH.canEdit) return;
+    var v = el('view'); if (!v || v.querySelector('.dm-unm')) return;
+    var n = (CASH.loose || []).length + (CASH.unassigned || []).length; if (!n) return;
+    var sum = 0; (CASH.loose || []).concat(CASH.unassigned || []).forEach(function (p) { sum += Number(p.amount) || 0; });
+    var s = document.createElement('div'); s.className = 'dm-unm';
+    s.innerHTML = '<div class="t" data-noi18n="1">' + (bn()
+      ? '<b>' + n + 'টা পেমেন্ট</b> কোন অ্যাকাউন্টে গেছে বলা নেই — ' + tk(sum, { cur: CASH.currency }) + ' এখনো কোনো ব্যালেন্সে নেই।'
+      : '<b>' + n + ' payment' + (n > 1 ? 's' : '') + '</b> in no account — ' + tk(sum, { cur: CASH.currency }) + ' is in no balance yet.') + '</div>' +
+      '<button type="button" class="btn primary" data-dm-place="1">' + esc(L('Put them in an account', 'অ্যাকাউন্টে বসান')) + '</button>';
+    // one primary action on the screen: while payments wait, the account set-up button is a plain one
+    [].forEach.call(v.querySelectorAll('[data-cform="setup"].primary'), function (b) { b.classList.remove('primary'); });
+    var tabs = v.querySelector(':scope > .fd21-tabs');
+    if (tabs) v.insertBefore(s, tabs); else { var lk = v.querySelector(':scope > .dm-lock'); v.insertBefore(s, lk ? lk.nextSibling : v.firstChild); }
+  });
+
+  /* "Wrong account…": the numbered-list prompt becomes a pick list (both the statement button and the ledger drawer call uiPrompt) */
+  if (typeof uiPrompt === 'function') {
+    var uiPromptDm = uiPrompt;
+    uiPrompt = function (text, value) {
+      if (typeof text === 'string' && text.indexOf('Which account did this really go through?') === 0) return pickAccount(text);
+      return uiPromptDm.apply(this, arguments);
+    };
+  }
+  function pickAccount(text) {
+    var lines = text.split('\n').filter(function (l) { return /^\d+\. /.test(l); });
+    return new Promise(function (resolve) {
+      var back = document.createElement('div'); back.className = 'dlg-back';
+      back.innerHTML = '<div class="dlg" role="dialog" aria-modal="true" aria-labelledby="dm_pt"><div class="dlg-t" id="dm_pt">' + esc(L('Which account did this really go through?', 'এটা আসলে কোন অ্যাকাউন্ট দিয়ে গেছে?')) + '</div>' +
+        '<div class="dm-pick">' + lines.map(function (l) { var m = l.match(/^(\d+)\. (.*)$/); return '<button type="button" class="btn" data-dm-pick="' + m[1] + '" data-noi18n="1">' + esc(m[2]) + '</button>'; }).join('') + '</div>' +
+        '<div class="dlg-f"><button class="btn" type="button" data-dm-close="1">' + esc(L('Cancel', 'বাতিল')) + '</button></div></div>';
+      document.body.appendChild(back);
+      var fin = function (v) { document.removeEventListener('keydown', key, true); if (back.parentNode) back.parentNode.removeChild(back); resolve(v); };
+      var key = function (ev) { if (ev.key === 'Escape') { ev.preventDefault(); ev.stopPropagation(); fin(null); } };
+      document.addEventListener('keydown', key, true);
+      back.addEventListener('click', function (e) {
+        var p = e.target.closest && e.target.closest('[data-dm-pick]'); if (p) { fin(p.getAttribute('data-dm-pick')); return; }
+        if (e.target === back || (e.target.closest && e.target.closest('[data-dm-close]'))) fin(null);
+      });
+      var b0 = back.querySelector('[data-dm-pick]'); if (b0) try { b0.focus(); } catch (e) {}
+    });
+  }
+
+  /* the one money format on the base Money parts (courier line, waiting table, a statement, the balance sheet) */
+  AFTER_PAINT.push(function dmCashTaka() {
+    if (VIEW !== 'cash') return;
+    var v = el('view'); if (!v) return;
+    var cc = (typeof CASH !== 'undefined' && CASH && CASH.currency) || 'BDT';
+    [].forEach.call(v.querySelectorAll('.cash_tot .sub'), function (s) {
+      if (s.getAttribute('data-dm')) return; s.setAttribute('data-dm', '1');
+      s.innerHTML = s.innerHTML.replace(/(−|-)?\d[\d,]*(\.\d+)?\s*$/, function (m) { return tk(numOf(m), { cur: cc }); });
+    });
+    [].forEach.call(v.querySelectorAll('.card table td.num'), function (td) {
+      if (td.getAttribute('data-dm')) return; td.setAttribute('data-dm', '1');
+      var w = document.createTreeWalker(td, NodeFilter.SHOW_TEXT), n, list = [];
+      while ((n = w.nextNode())) list.push(n);
+      list.forEach(function (t) { if (isNum(t.nodeValue) && !(t.parentNode.closest && t.parentNode.closest('button, input, select'))) t.nodeValue = tk(numOf(t.nodeValue), { cur: cc }); });
+    });
+  });
+
+  /* ------------------------------------------------ Profit: plain words, no brand, ৳ head, hit areas */
+  if (typeof viewProfit === 'function') {
+    var viewProfitDm = viewProfit;
+    viewProfit = function () {
+      var h = viewProfitDm.apply(this, arguments);
+      try {
+        h = h.split('Courier cost is what Steadfast kept from its payouts, in the month it paid out.').join('Courier cost is what the courier kept from its payouts, in the month it paid out.');
+        h = h.replace('<div class="scroll"><table><thead><tr><th>BDT</th>', '<div class="scroll"><table><thead><tr><th>৳</th>');
+      } catch (e) {}
+      return h;
+    };
+  }
+
+  /* ------------------------------------------------ Capital: say what the code does */
+  if (typeof viewCapital === 'function') {
+    var viewCapitalDm = viewCapital;
+    viewCapital = function () {
+      var h = viewCapitalDm.apply(this, arguments);
+      try { h = h.split('Net profit as the Expenses screen shows it.').join('The same net profit as the Profitability screen.'); } catch (e) {}
+      return h;
+    };
+  }
+
+  /* ------------------------------------------------ Analytics (phone): the long table folds; the restating sub line goes */
+  AFTER_PAINT.push(function dmAnalyticsPhone() {
+    var v = el('view'); if (!v) return;
+    v.classList.toggle('dm-an', VIEW === 'analytics');
+    if (VIEW !== 'analytics' || !ph() || typeof FD22 === 'undefined' || FD22.tab !== 'growth') return;
+    [].forEach.call(v.querySelectorAll('.fd22-card, .fd22-tcard'), function (card) {
+      if (card.classList.contains('dm-folded') || !card.querySelector('table') || card.closest('details')) return;
+      var t = card.querySelector('.fd22-ct'); if (!t) return;
+      card.classList.add('dm-folded');
+      var fold = document.createElement('details'); fold.className = 'nt-fold dm-fold';
+      fold.innerHTML = '<summary><span>' + esc((t.textContent || '').replace(/\s*i\s*$/, '').trim()) + '</span></summary><div class="nt-fold-in"></div>';
+      try { if (localStorage.getItem('dm_fold_an') === '1') fold.open = true; } catch (e) {}
+      fold.addEventListener('toggle', function () { try { localStorage.setItem('dm_fold_an', fold.open ? '1' : '0'); } catch (e) {} });
+      card.parentNode.insertBefore(fold, card); fold.querySelector('.nt-fold-in').appendChild(card);
+    });
+  });
+
+  /* ------------------------------------------------ strips that scroll sideways on a phone: fade until scrolled to the end */
+  var STRIPS = '.fd21-tabs, .fd21-tb .fd21-chips, .fd22-antabs, .fd22-row2 .fd22-pills';
+  function stripState(s) { s.classList.toggle('dm-end', s.scrollLeft + s.clientWidth >= s.scrollWidth - 6); }
+  AFTER_PAINT.push(function dmStrips() {
+    var v = el('view'); if (!v) return;
+    [].forEach.call(v.querySelectorAll(STRIPS), stripState);
+  });
+  document.addEventListener('scroll', function (e) { var t = e.target; if (t && t.nodeType === 1 && t.matches && t.matches(STRIPS)) stripState(t); }, true);
+  window.addEventListener('resize', function () { var v = el('view'); if (v) [].forEach.call(v.querySelectorAll(STRIPS), stripState); });
+
+  /* ------------------------------------------------ Bangla for the strings the page paints */
+  try {
+    var D = {
+      'Courier cost is what the courier kept from its payouts, in the month it paid out.': 'কুরিয়ার খরচ হলো কুরিয়ার তার পেআউট থেকে যা রেখে দিয়েছে, যে মাসে পেআউট দিয়েছে সেই মাসে।',
+      'The same net profit as the Profitability screen.': 'লাভের হিসাব স্ক্রিনের নিট লাভই এখানে।',
+      'Put them in an account': 'অ্যাকাউন্টে বসান',
+      'Put these payments in an account': 'এই পেমেন্টগুলো অ্যাকাউন্টে বসান',
+      'Which account did this really go through?': 'এটা আসলে কোন অ্যাকাউন্ট দিয়ে গেছে?',
+      'Courier payouts': 'কুরিয়ারের পেআউট',
+      'Choose the account…': 'অ্যাকাউন্ট বেছে নিন…',
+      'Choose the account first.': 'আগে অ্যাকাউন্ট বেছে নিন।',
+      'Place': 'বসান',
+      'Month close': 'মাস বন্ধ',
+      'Reading every account…': 'সব অ্যাকাউন্ট পড়া হচ্ছে…',
+      'Biggest category': 'সবচেয়ে বড় ক্যাটাগরি',
+      'Mobile wallet': 'মোবাইল ওয়ালেট',
+      '3 months': '৩ মাস',
+      'Add a rule': 'নিয়ম যোগ করুন',
+      'Add a rule: then each seller earns on what they sell.': 'একটা নিয়ম যোগ করুন: তারপর প্রতিটি বিক্রেতা যা বিক্রি করেন তার ওপর কমিশন পাবেন।',
+      'A fixed expense appears here on the day it is marked paid; one-off costs as you add them.': 'স্থায়ী খরচ যেদিন "দেওয়া হয়েছে" চাপবেন সেদিন এখানে আসবে; একবারের খরচ লেখার সাথে সাথে।'
+    };
+    for (var k in D) if (I18N_BN[k] === undefined) I18N_BN[k] = D[k];
+    if (typeof I18N_PAT !== 'undefined' && I18N_PAT.push) I18N_PAT.push(['^Nothing recorded for (.+) yet$', '$1-এ এখনো কোনো খরচ লেখা হয়নি'], ['^No commission earned in (.+)$', '$1-এ কোনো কমিশন হয়নি'], ['^Received from (.+)$', '$1 থেকে পাওয়া'], ['^Refund to (.+)$', '$1-কে ফেরত']);
+    // "November 2026" (a server month label) in Bangla - the dictionary takes string patterns only
+    if (typeof I18N_PAT !== 'undefined' && I18N_PAT.push) EN_M.forEach(function (en, k) { I18N_PAT.push(['^' + en + ' ([0-9]{4})$', BN_M[k] + ' $1']); });
+    if (typeof I18N_PAT !== 'undefined' && I18N_PAT.push) I18N_PAT.push(['^The ledger joins the statements of (.+) account[(]s[)] and the payments in no account[.]$','$1টা অ্যাকাউন্টের স্টেটমেন্ট আর কোনো অ্যাকাউন্টে না থাকা পেমেন্টগুলো মিলিয়ে এই খাতা।']);
+  } catch (e) {}
+})();
+</script>
+
+<!-- distill:ai -->
+<!-- distill-ai (9 Nov 2026): the AI screens stripped to their essence, every ability kept. The Ask panel closes when you
+     move to another screen on a phone (it used to stay over Settings, Brand desk...); Business Brain becomes ten folded
+     rows with a state chip and one status line; Daily brief moves fold their why/budget under the title and the three
+     buttons; SEO shows the worst problem per site first and folds the list; Command Center timed jobs and Watchdog pages
+     become card rows on a phone; "?" buttons get a 24px hit box (same 16px look); checkboxes 24px; the AI strip scrolls
+     the selected tab into view; Brand desk says honestly that it is not set up instead of "your PC is off"; Bangla for
+     every English leftover on these screens (the crawl's list), আপনি forms. Server: assistant.js speaks the person's
+     language in its refusals and tells the model to say আপনি (tests/aidistill_test.mjs). -->
+<style>
+/* the "?" help buttons already carry a 40px invisible hit box (::after inset -11px, fd-39 / clean-1): their look stays.
+   Checkboxes on these screens: 24px (the clean look sets 22px). */
+html[data-look="clean"][data-skin="fd"]:root #view.dai input[type="checkbox"],#view.dai input[type="checkbox"]{width:24px;height:24px;min-width:24px;vertical-align:middle}
+#view.dai .ai-strip .ai-brain{min-height:28px;padding:2px 6px}
+#view.dai .ai-strip .ai-t{min-height:36px}
+#view.dai .nai-sub button{min-height:36px}
+#view.dai .en-idea,#view.dai .en-chip,#view.dai .en-ag{min-height:30px}
+#view.dai .nai-door button,#view.dai .aw-chips button{min-height:30px}
+/* Business Brain: ten folded rows */
+.dai-brow{border:1px solid var(--fd-border,#e6e8ef);border-radius:12px;margin:8px 0;background:var(--fd-card,#fff)}
+.dai-brow>summary{list-style:none;cursor:pointer;display:flex;gap:8px;align-items:center;padding:11px 14px;min-height:44px}
+.dai-brow>summary::-webkit-details-marker{display:none}
+.dai-brow>summary h3{margin:0;flex:1 1 auto;font-size:15px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.dai-brow>summary::after{content:'';width:8px;height:8px;border-right:2px solid currentColor;border-bottom:2px solid currentColor;transform:rotate(45deg);opacity:.5;flex:none;margin:0 6px 4px 0}
+.dai-brow[open]>summary::after{transform:rotate(-135deg);margin:4px 6px 0 0}
+.dai-brow .br-blk{border:0;margin:0;padding:0 14px 12px;border-radius:0;background:transparent}
+.dai-brow .br-blk h3{display:none}
+.dai-brow .br-q{font-size:14.5px;color:var(--fd-text-2,inherit);margin:0 0 8px}
+.dai-stat{font-size:15px;font-weight:600;margin-top:8px}
+html[lang=bn] #view.ai-view .dai-brow .br-q{font-size:16px}
+/* Daily brief: a move folds its why, budget and what the AI will do */
+.dai-more{margin:6px 0}
+.dai-more>summary{cursor:pointer;font-size:13.5px;color:var(--fd-text-3,var(--muted,#667));min-height:28px;display:flex;align-items:center}
+.dai-more[open]>summary{margin-bottom:4px}
+/* SEO: the worst problem in one line under the site */
+.dai-worst{display:flex;gap:8px;align-items:flex-start;margin:8px 0 0;font-size:14px}
+.dai-worst .wd-sev{margin-top:2px}
+.dai-worst b{font-weight:600}
+@media (max-width:760px){
+  /* timed jobs and watched pages: card rows instead of a squeezed table */
+  .tj-tbl,.tj-tbl tbody,.tj-tbl tr,.tj-tbl td,.wd-pages,.wd-pages tbody,.wd-pages tr,.wd-pages td{display:block;width:auto!important;text-align:left!important;white-space:normal!important}
+  .wd-pages thead{display:none}
+  .tj-tbl tr,.wd-pages tr{padding:8px 0;border-bottom:1px solid var(--fd-border,#e6e8ef)}
+  .tj-tbl tr:last-child,.wd-pages tr:last-child{border-bottom:0}
+  .tj-tbl td,.wd-pages td{border:0!important;padding:3px 0!important}
+  .tj-tbl td:last-child,.wd-pages td:last-child{display:flex!important;gap:8px;flex-wrap:wrap;align-items:center;padding-top:6px!important}
+  .tj-tbl td:last-child .btn,.wd-pages td:last-child .btn{margin:0!important}
+  .wd-pages td:not(:first-child)::before{content:attr(data-dai-l);font-size:12px;color:var(--fd-text-3,var(--muted,#667));margin-right:6px}
+  /* a skill's one-line summary may wrap to two lines instead of being cut */
+  #view.dai .br-fact .en-meta[style*="nowrap"]{white-space:normal!important;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;text-overflow:clip}
+  .dai-more>summary{min-height:40px}
+}
+</style>
+<script>
+(function () {
+  var bn = function () { return typeof LANG !== 'undefined' && LANG === 'bn'; };
+  var L = function (en, b) { return bn() ? b : en; };
+  var AIV = { ai: 1, brief: 1, engine: 1, leads: 1, watch: 1, skills: 1, brain: 1, seo: 1, branddesk: 1 };
+  var BD = function (s) { return bn() ? String(s).replace(/\d/g, function (d) { return '\u09e6\u09e7\u09e8\u09e9\u09ea\u09eb\u09ec\u09ed\u09ee\u09ef'[+d]; }) : String(s); };
+
+  // ------------------------------------------------------------------ the Ask panel: never left open over another screen on a phone
+  if (typeof go === 'function') {
+    var goDai = go;
+    go = function (v) {
+      try { if (v !== 'chat' && typeof AW !== 'undefined' && AW.open && innerWidth <= 640 && typeof awToggle === 'function') awToggle(false); } catch (e) {}
+      return goDai.apply(this, arguments);
+    };
+  }
+
+  // ------------------------------------------------------------------ the strip: the selected tab is in view
+  function strip(v) {
+    var s = v.querySelector(':scope > .ai-strip'); if (!s) return;
+    var sel = s.querySelector('.ai-t[aria-selected="true"]'); if (!sel) return;
+    var r = sel.offsetLeft + sel.offsetWidth;
+    if (r > s.clientWidth + s.scrollLeft || sel.offsetLeft < s.scrollLeft) s.scrollLeft = Math.max(0, sel.offsetLeft - 12);
+  }
+
+  // ------------------------------------------------------------------ Business Brain: folded rows + one status line
+  function brain(v) {
+    var blks = v.querySelectorAll('.br-blk'); if (!blks.length) return;
+    var total = 0, ok = 0, firstOpen = false;
+    [].forEach.call(blks, function (b) {
+      total++;
+      var h3 = b.querySelector(':scope > h3'); if (!h3) return;
+      if (h3.querySelector('.pill.ok')) ok++;
+      if (b.closest('.dai-brow')) return;
+      var d = document.createElement('details'); d.className = 'dai-brow';
+      var sum = document.createElement('summary');
+      var t = h3.cloneNode(true);
+      // the lock emoji becomes words
+      [].forEach.call(t.childNodes, function (n) { if (n.nodeType === 3 && /🔒/.test(n.nodeValue)) n.nodeValue = n.nodeValue.replace(/\s*🔒/, ''); });
+      if (/🔒/.test(h3.textContent)) { var lk = document.createElement('span'); lk.className = 'pill'; lk.textContent = L('yours only', 'শুধু আপনার'); t.appendChild(lk); }
+      if (!t.querySelector('.pill.ok, .pill.low')) { var em = document.createElement('span'); em.className = 'pill'; em.textContent = L('empty', 'খালি'); t.appendChild(em); }
+      sum.appendChild(t); d.appendChild(sum);
+      var draft = !!h3.querySelector('.pill.low') || !!b.querySelector('.br-draft');
+      if (draft && !firstOpen) { d.open = true; firstOpen = true; }
+      b.parentNode.insertBefore(d, b); d.appendChild(b);
+    });
+    var top = v.querySelector('section .card .en-top');
+    if (top && !top.parentNode.querySelector('.dai-stat')) {
+      var st = document.createElement('div'); st.className = 'dai-stat';
+      st.textContent = L(ok + ' of ' + total + ' answers approved', BD(total) + 'টার মধ্যে ' + BD(ok) + 'টা অনুমোদিত') + (ok < total ? L(' - open a row, write, then Approve.', ' - একটা সারি খুলে লিখুন, তারপর অনুমোদন দিন।') : '');
+      top.insertAdjacentElement('afterend', st);
+    }
+  }
+
+  // ------------------------------------------------------------------ Daily brief: the move card folds its long parts
+  function brief(v) {
+    [].forEach.call(v.querySelectorAll('.bf-move:not([data-dai])'), function (m) {
+      m.setAttribute('data-dai', '1');
+      var nums = m.querySelector(':scope > .bf-nums'); if (!nums) return;
+      var parts = [];
+      [].forEach.call(m.children, function (c) { if (c.classList.contains('bf-figs') || c.classList.contains('bf-pay') || (c.tagName === 'DIV' && /pre-wrap/.test(c.getAttribute('style') || '') && !c.classList.contains('t'))) parts.push(c); });
+      if (!parts.length) return;
+      var d = document.createElement('details'); d.className = 'dai-more';
+      d.innerHTML = '<summary>' + L('Why, the budget and what the AI will do', 'কেন, বাজেট আর AI যা করবে') + '</summary>';
+      nums.insertAdjacentElement('afterend', d);
+      parts.forEach(function (p) { d.appendChild(p); });
+    });
+    try { if (window.BF && BF.data && !BF.data.brief) { var w = v.querySelector('[data-bf="now"]'); if (w) w.classList.add('primary'); } } catch (e) {}
+  }
+
+  // ------------------------------------------------------------------ SEO: the worst problem first, the list folded
+  function seo(v) {
+    [].forEach.call(v.querySelectorAll('.se-site:not([data-dai])'), function (s) {
+      s.setAttribute('data-dai', '1');
+      var det = null; [].forEach.call(s.children, function (c) { if (!det && c.tagName === 'DETAILS') det = c; });
+      if (!det) return;
+      var first = det.querySelector('.se-iss'); if (!first) return;
+      det.removeAttribute('open');
+      var sev = first.querySelector('.wd-sev'), t = first.querySelector('.t');
+      var w = document.createElement('div'); w.className = 'dai-worst';
+      w.innerHTML = (sev ? sev.outerHTML : '') + '<div><b>' + (t ? t.innerHTML : '') + '</b></div>';
+      var head = s.querySelector(':scope > .se-head'); (head || s.firstElementChild).insertAdjacentElement('afterend', w);
+    });
+  }
+
+  // ------------------------------------------------------------------ Watchdog: the pages table rows carry their labels on a phone
+  function watch(v) {
+    var tb = v.querySelector('table.wd-pages'); if (!tb || tb.getAttribute('data-dai')) return;
+    tb.setAttribute('data-dai', '1');
+    var heads = [].map.call(tb.querySelectorAll('thead th'), function (th) { return th.textContent.trim(); });
+    [].forEach.call(tb.querySelectorAll('tbody tr'), function (tr) { [].forEach.call(tr.children, function (td, i) { if (i && heads[i]) td.setAttribute('data-dai-l', heads[i]); }); });
+  }
+
+  // ------------------------------------------------------------------ Brand desk: honest when nothing is set up
+  function brand(v) {
+    var big = v.querySelector('.bd-big'); if (!big || big.getAttribute('data-dai')) return;
+    if (!v.querySelector('#bd_key')) return;   // set up already: the real state shows
+    big.setAttribute('data-dai', '1');
+    big.textContent = L('The brand desk is not set up yet', 'ব্র্যান্ড ডেস্ক এখনো চালু হয়নি');
+    var m = big.nextElementSibling;
+    if (m && m.classList.contains('bd-meta')) m.textContent = L('It runs your personal brand: one post to every network through the tools on your own computer. Paste the bridge key below to start.', 'এটা আপনার নিজের ব্র্যান্ড চালায়: নিজের কম্পিউটারের টুল দিয়ে এক পোস্ট সব নেটওয়ার্কে। শুরু করতে নিচে ব্রিজ কী দিন।');
+    var dot = v.querySelector('.bd-dot'); if (dot) dot.style.background = 'var(--fd-border-strong,#ccd)';
+  }
+
+  // ------------------------------------------------------------------ after every paint of an AI screen (idempotent)
+  function touch() {
+    var v = typeof el === 'function' ? el('view') : document.getElementById('view'); if (!v) return;
+    var on = !!AIV[VIEW] || VIEW === 'syscheck';
+    v.classList.toggle('dai', !!AIV[VIEW]);
+    if (!on) return;
+    try { strip(v); setTimeout(function () { try { strip(v); } catch (e) {} }, 160); } catch (e) {}
+    try { if (VIEW === 'brain') brain(v); } catch (e) {}
+    try { if (VIEW === 'brief') brief(v); } catch (e) {}
+    try { if (VIEW === 'seo') seo(v); } catch (e) {}
+    try { if (VIEW === 'watch') watch(v); } catch (e) {}
+    try { if (VIEW === 'branddesk') brand(v); } catch (e) {}
+  }
+  if (typeof AFTER_PAINT !== 'undefined') AFTER_PAINT.push(function distillAi() { touch(); });
+  // the screens paint themselves after a server answer without repaint(): follow the view's own changes too
+  (function () {
+    var v = document.getElementById('view'); if (!v || typeof MutationObserver !== 'function') return;
+    var t = null;
+    new MutationObserver(function () { clearTimeout(t); t = setTimeout(touch, 60); }).observe(v, { childList: true });
+  })();
+
+  // ------------------------------------------------------------------ Bangla for every English left on these screens
+  try {
+    var W = {
+      // Command Center
+      'Which 5 products should I bring in next, and why?': 'পরের বার কোন ৫টা প্রোডাক্ট আনব, আর কেন?',
+      'Check my website\'s SEO and give me the fixes': 'আমার ওয়েবসাইটের SEO দেখে সমাধান দিন',
+      'What should I post this week? Make a plan with captions': 'এই সপ্তাহে কী পোস্ট করব? ক্যাপশনসহ পরিকল্পনা দিন',
+      'Ask anything: research, numbers, ads, suppliers, content, SEO…': 'যেকোনো কাজ: গবেষণা, হিসাব, বিজ্ঞাপন, সাপ্লায়ার, কনটেন্ট, SEO…',
+      'e.g. every Friday: suggest 3 ads. The brief, the night check and the lead search have their own times on their own screens.': 'যেমন প্রতি শুক্রবার: ৩টা বিজ্ঞাপনের আইডিয়া। ব্রিফ, রাতের চেক আর লিড খোঁজার সময় তাদের নিজের স্ক্রিনে ঠিক করা হয়।',
+      'No jobs yet. Write what you need above and press Send to the Engine.': 'এখনো কোনো কাজ নেই। ওপরে লিখে "ইঞ্জিনকে দিন" চাপুন।',
+      'No jobs here. Write what you need above and press Send to the Engine.': 'এখানে কোনো কাজ নেই। ওপরে লিখে "ইঞ্জিনকে দিন" চাপুন।',
+      'Waiting for the Engine - it picks jobs up within about 20 seconds.': 'ইঞ্জিনের অপেক্ষায় - ২০ সেকেন্ডের মধ্যে কাজ তুলে নেয়।',
+      'Waiting for the Engine - the Engine is not running right now, so nothing will happen until it is back.': 'ইঞ্জিনের অপেক্ষায় - ইঞ্জিন এখন বন্ধ, চালু না হওয়া পর্যন্ত কিছু হবে না।',
+      'You asked:': 'আপনি বলেছিলেন:', 'Prepared:': 'তৈরি:', 'Stop': 'থামান', '👍 Yes': '👍 হ্যাঁ', '👎 No': '👎 না',
+      'Thanks - it counts for the skills it used.': 'ধন্যবাদ - যে স্কিলগুলো ব্যবহার হয়েছে তাদের হিসাবে যোগ হলো।', 'Copied.': 'কপি হয়েছে।', 'Could not copy.': 'কপি করা যায়নি।', 'Sent to the Engine.': 'ইঞ্জিনকে পাঠানো হয়েছে।',
+      '+ Add one': '+ একটা যোগ করুন', 'Run now': 'এখনই চালান', 'next': 'পরের', 'last': 'শেষ', 'not run yet': 'এখনো চলেনি', 'On': 'চালু', 'Agent': 'এজেন্ট', 'How often': 'কতবার', 'At': 'কখন', 'Day (weekly)': 'দিন (সাপ্তাহিক)',
+      'What to do each time': 'প্রতিবার কী করবে', 'Every day': 'প্রতিদিন', 'Every week': 'প্রতি সপ্তাহে', 'Every hour': 'প্রতি ঘণ্টায়', 'Weekly ad ideas': 'সাপ্তাহিক বিজ্ঞাপনের আইডিয়া',
+      'Sunday': 'রবিবার', 'Monday': 'সোমবার', 'Tuesday': 'মঙ্গলবার', 'Wednesday': 'বুধবার', 'Thursday': 'বৃহস্পতিবার', 'Friday': 'শুক্রবার', 'Saturday': 'শনিবার',
+      // Skills
+      'Suggested skills': 'AI-এর পরামর্শ: স্কিল', 'Suggest now': 'এখনই পরামর্শ দিন', 'Looking…': 'খুঁজছে…', 'The AI is looking for skills…': 'AI স্কিল খুঁজছে…',
+      'New and growing skills on GitHub, picked for your business and agents - every Monday.': 'GitHub-এর নতুন আর জনপ্রিয় স্কিল, আপনার ব্যবসা আর এজেন্টদের জন্য বাছাই - প্রতি সোমবার।',
+      'Press "Suggest now".': '"এখনই পরামর্শ দিন" চাপুন।', 'Looking now - this takes a few minutes.': 'এখন খুঁজছে - কয়েক মিনিট লাগবে।', 'Nothing new - the good ones are installed.': 'নতুন কিছু নেই - ভালোগুলো ইনস্টল করা আছে।',
+      '+ Add a skill': '+ স্কিল যোগ করুন', '(GitHub link, library, trending, updates)': '(GitHub লিংক, তৈরি তালিকা, জনপ্রিয়, আপডেট)', 'Read it': 'পড়ুন', 'Reading…': 'পড়ছে…',
+      'Browse all trending': 'সব জনপ্রিয় দেখুন', 'Command Center only': 'শুধু কমান্ড সেন্টার', 'More': 'আরও', 'Close': 'বন্ধ করুন',
+      'installed ·': 'ইনস্টল ·', 'on ·': 'চালু ·', 'useful ·': 'কাজে লাগছে ·', 'weak ·': 'দুর্বল ·', 'not used': 'ব্যবহার হয়নি',
+      'The Command Center can use every switched-on skill; the other agents use the skills given to them. Every job lists the skills it used, and your 👍 / 👎 on a job counts for those skills.': 'কমান্ড সেন্টার চালু থাকা সব স্কিল ব্যবহার করতে পারে; অন্য এজেন্টরা তাদের দেওয়া স্কিলই ব্যবহার করে। প্রতিটা কাজে কোন স্কিল লেগেছে তা লেখা থাকে, আর কাজে আপনার 👍 / 👎 সেই স্কিলগুলোর হিসাবে যোগ হয়।',
+      'Low risk': 'ঝুঁকি কম', 'Medium risk': 'ঝুঁকি মাঝারি', 'High risk': 'ঝুঁকি বেশি', 'New': 'নতুন', 'Used': 'ব্যবহার হচ্ছে', 'Agents:': 'এজেন্ট:', 'Uninstall': 'সরিয়ে দিন',
+      'The results it helped were rejected or failed. Remove it or find a better one.': 'এটা যে কাজে লেগেছে সেগুলো বাতিল হয়েছে বা হয়নি। সরিয়ে দিন, বা ভালো একটা খুঁজুন।',
+      'Not picked by any job in 30 days. Give it to more agents, or remove it.': '৩০ দিনে কোনো কাজে লাগেনি। আরও এজেন্টকে দিন, বা সরিয়ে দিন।',
+      // Watchdog
+      'Nothing open.': 'কিছু খোলা নেই।', 'Pages checked every 5 minutes': 'প্রতি ৫ মিনিটে দেখা পেজ', 'Last check': 'শেষ চেক', 'Page': 'পেজ', 'Must contain': 'যা থাকতেই হবে',
+      'not checked yet': 'এখনো দেখা হয়নি', 'fine': 'ঠিক আছে', 'problem': 'সমস্যা', 'Page address': 'পেজের ঠিকানা', 'No pages yet.': 'এখনো কোনো পেজ নেই।', 'Remove': 'সরান',
+      'Add your most important pages: the home page, a best-selling product, the cart and the checkout. "Must contain" catches a page that opens but is broken (e.g. no "Add to cart").': 'সবচেয়ে দরকারি পেজগুলো দিন: হোম পেজ, সবচেয়ে বিক্রি হওয়া প্রোডাক্ট, কার্ট আর চেকআউট। "যা থাকতেই হবে" ধরে ফেলে এমন পেজ যা খোলে কিন্তু ভাঙা (যেমন "Add to cart" নেই)।',
+      'It checks that your website, the ERP, the courier and WhatsApp work and talk to each other - every 5 minutes, and a full check with fixes every night.': 'এটা দেখে আপনার ওয়েবসাইট, ERP, কুরিয়ার আর WhatsApp কাজ করছে আর একে অপরের সাথে কথা বলছে কিনা - প্রতি ৫ মিনিটে, আর প্রতি রাতে পুরো চেক আর সমাধান।',
+      'Night check at': 'রাতের চেক', 'Starting…': 'শুরু হচ্ছে…', 'Only you can do this - the steps:': 'এটা শুধু আপনি পারবেন - ধাপগুলো:', 'The fix:': 'সমাধান:',
+      'Website repair is on: when the website is down for 10 minutes the Watchdog restarts it and clears its cache by itself (at most once every 30 minutes).': 'ওয়েবসাইট মেরামত চালু: ওয়েবসাইট ১০ মিনিট বন্ধ থাকলে ওয়াচডগ নিজেই আবার চালু করে আর ক্যাশ পরিষ্কার করে (৩০ মিনিটে সর্বোচ্চ একবার)।',
+      'Waits for your OK - see below': 'আপনার OK-র অপেক্ষায় - নিচে দেখুন', 'Needs you - the steps are below': 'আপনাকে লাগবে - ধাপগুলো নিচে', 'Being looked at now': 'এখন দেখা হচ্ছে',
+      '✓ Fixed': '✓ ঠিক হয়েছে', '✓ Fixed itself': '✓ নিজেই ঠিক হয়েছে', '✓ Done by you': '✓ আপনি করেছেন', '✓ Done - see the answer': '✓ হয়ে গেছে - উত্তর দেখুন', '! Tried - still not working': '! চেষ্টা হয়েছে - এখনো কাজ করছে না',
+      '✕ Could not be done': '✕ করা যায়নি', '✕ You said no': '✕ আপনি না বলেছেন', 'by itself': 'নিজে থেকে', 'you approved': 'আপনি অনুমোদন দিয়েছেন', 'Show the answer': 'উত্তর দেখুন', 'Checking…': 'দেখছে…',
+      'Stop checking this page?': 'এই পেজ আর দেখা হবে না?', 'Removed.': 'সরানো হয়েছে।', 'Added - it is checked within a minute.': 'যোগ হয়েছে - এক মিনিটের মধ্যে দেখা হবে।',
+      // SEO
+      'Check all now': 'সবগুলো এখনই দেখুন', 'does not answer': 'সাড়া দিচ্ছে না', 'AI fixes': 'AI দিয়ে সমাধান লিখুন', 'AI fixes again': 'AI দিয়ে আবার লিখুন', 'Writing…': 'লিখছে…',
+      'PageSpeed: no answer': 'PageSpeed: সাড়া নেই', 'PageSpeed: today\'s quota is used up': 'PageSpeed: আজকের কোটা শেষ', 'PageSpeed: needs a Google API key (free) - paste it under Sites': 'PageSpeed: Google API কী লাগবে (ফ্রি) - নিচে সাইটের ঘরে দিন',
+      'No problems found': 'কোনো সমস্যা পাওয়া যায়নি ✓', 'urgent': 'জরুরি', 'high': 'বেশি', 'medium': 'মাঝারি', 'low': 'কম',
+      'The site does not answer': 'সাইট সাড়া দিচ্ছে না', 'Not on https': 'https নেই', 'No page title': 'পেজের টাইটেল নেই', 'No meta description': 'meta description নেই', 'No H1 heading': 'H1 হেডিং নেই',
+      'The page tells Google not to index it': 'পেজটা Google-কে ইনডেক্স করতে মানা করছে', 'No mobile viewport tag': 'মোবাইল viewport ট্যাগ নেই', 'No canonical link': 'canonical লিংক নেই',
+      'No share image (og:image)': 'শেয়ারের ছবি নেই (og:image)', 'No language on <html>': '<html>-এ ভাষা দেওয়া নেই', 'No sitemap.xml': 'sitemap.xml নেই', 'No robots.txt': 'robots.txt নেই',
+      'What the page says': 'পেজে যা লেখা আছে', 'One address per line (at most 8)': 'প্রতি লাইনে একটা ঠিকানা (সর্বোচ্চ ৮টা)', 'Google PageSpeed API key': 'Google PageSpeed API কী', 'Google PageSpeed API key (set)': 'Google PageSpeed API কী (দেওয়া আছে)',
+      'Free: console.cloud.google.com → APIs → enable "PageSpeed Insights API" → Credentials → API key. Without it the mobile speed stays empty.': 'ফ্রি: console.cloud.google.com → APIs → "PageSpeed Insights API" চালু করুন → Credentials → API key। এটা ছাড়া মোবাইল স্পিড খালি থাকবে।',
+      'leave empty to keep the key': 'কী রাখতে খালি রাখুন', 'Not checked yet': 'এখনো দেখা হয়নি', 'Mobile speed': 'মোবাইল স্পিড', 'Home page': 'হোম পেজ', 'Issues': 'সমস্যা', 'Links checked': 'লিংক দেখা হয়েছে', 'broken': 'ভাঙা',
+      'What to fix, in order': 'কী ঠিক করবেন, ক্রম অনুযায়ী', 'No website yet - add one below.': 'এখনো কোনো ওয়েবসাইট নেই - নিচে যোগ করুন।',
+      'Every night each site is read the way Google reads it: title, description, headings, broken links, sitemap, mobile speed (PageSpeed Insights). The AI writes what to fix. Google Search Console (clicks and rankings) is not connected yet.': 'প্রতি রাতে প্রতিটা সাইট Google যেভাবে পড়ে সেভাবে পড়া হয়: টাইটেল, description, হেডিং, ভাঙা লিংক, sitemap, মোবাইল স্পিড (PageSpeed Insights)। কী ঠিক করতে হবে AI লিখে দেয়। Google Search Console (ক্লিক আর র‍্যাংকিং) এখনো যুক্ত হয়নি।',
+      'SEO is not switched on for this business.': 'এই ব্যবসার জন্য SEO চালু নেই।', 'Loading the SEO checks…': 'SEO চেক লোড হচ্ছে…',
+      // Business Brain
+      'What you sell, and to whom': 'কী বেচেন, কাকে', 'Where you sell': 'কোথায় বেচেন', 'Price position': 'দামের অবস্থান', 'Competitors': 'প্রতিযোগী', 'Goals': 'লক্ষ্য', 'Voice and languages': 'কথার ধরন আর ভাষা',
+      'What failed, what is planned': 'কী ব্যর্থ হয়েছে, কী পরিকল্পনা', 'Limits for the AI': 'AI-এর সীমা', 'Never do': 'কখনো করবে না', 'Limits for the AI 🔒': 'AI-এর সীমা 🔒', 'Never do 🔒': 'কখনো করবে না 🔒',
+      'In one sentence: what do you sell, and to whom?': 'এক বাক্যে: আপনি কী বেচেন, আর কাকে?',
+      'Your top 3 kinds of customers - and which one brings the most profit?': 'আপনার প্রধান ৩ ধরনের কাস্টমার - আর কোনটা থেকে সবচেয়ে বেশি লাভ?',
+      'Where do you sell (cities, countries, shops, online channels) - and where do you want to grow?': 'কোথায় বেচেন (শহর, দেশ, দোকান, অনলাইন) - আর কোথায় বাড়াতে চান?',
+      'Are you the cheapest, in the middle, or premium - and why?': 'আপনি সবচেয়ে সস্তা, মাঝামাঝি, না প্রিমিয়াম - আর কেন?',
+      'Your 3 main competitors - and why customers choose you over them?': 'আপনার প্রধান ৩ প্রতিযোগী - আর কাস্টমার তাদের বদলে আপনাকে কেন বেছে নেয়?',
+      'Three goals with numbers for the next 90 days, and one for the year.': 'পরের ৯০ দিনের জন্য সংখ্যাসহ তিনটা লক্ষ্য, আর বছরের জন্য একটা।',
+      'How should you sound to customers? A line you like, one you hate, and which languages.': 'কাস্টমারের কাছে আপনার কথার ধরন কেমন হবে? একটা পছন্দের লাইন, একটা অপছন্দের, আর কোন কোন ভাষা।',
+      'What has failed before, and what are you already planning?': 'আগে কী ব্যর্থ হয়েছে, আর এখন কী পরিকল্পনা করছেন?',
+      'Your monthly marketing budget, the most one ad may spend, and the biggest discount the AI may offer - before it must ask you twice.': 'মাসিক মার্কেটিং বাজেট, একটা বিজ্ঞাপনে সর্বোচ্চ খরচ, আর AI সর্বোচ্চ কত ছাড় দিতে পারবে - এর বেশি হলে আপনাকে দুবার জিজ্ঞেস করবে।',
+      'Things the AI must never do or say for this business.': 'এই ব্যবসার জন্য AI যা কখনো করবে না বা বলবে না।',
+      'Redraft from the latest data': 'নতুন তথ্য থেকে আবার খসড়া', 'Let the Engine draft it': 'ইঞ্জিন দিয়ে খসড়া বানান', 'confirmed': 'অনুমোদিত', 'AI draft': 'AI-এর খসড়া',
+      'Approve - this is my business': 'অনুমোদন দিন - এটাই আমার ব্যবসা', 'Save without approving': 'অনুমোদন ছাড়া সেভ করুন', 'fact': 'তথ্য', 'lesson': 'শিক্ষা', 'event': 'ঘটনা',
+      'Out of date': 'পুরোনো হয়ে গেছে', 'Advanced': 'আরও সেটিংস', 'Real records start on': 'আসল হিসাব শুরু', 'older data is ignored by the AI': 'এর আগের তথ্য AI দেখে না',
+      'Tell the Engine something lasting': 'ইঞ্জিনকে একটা স্থায়ী কথা বলুন', 'e.g. Schools buy in January and July': 'যেমন: স্কুলগুলো জানুয়ারি আর জুলাইয়ে কেনে', 'Kind': 'ধরন', 'Fact': 'তথ্য', 'Lesson (what works)': 'শিক্ষা (যা কাজ করে)', 'Event': 'ঘটনা',
+      'The AI works for this business': 'AI এই ব্যবসার জন্য কাজ করে', 'What the Engine has learned about this business': 'ইঞ্জিন এই ব্যবসা সম্পর্কে যা শিখেছে', 'Nothing yet.': 'এখনো কিছু নেই।',
+      'Approved': 'অনুমোদিত', 'Not set yet': 'এখনো লেখা হয়নি', 'The Engine is drafting it…': 'ইঞ্জিন খসড়া লিখছে…', 'Draft - check each answer, then Approve': 'খসড়া - প্রতিটা উত্তর দেখে অনুমোদন দিন',
+      'the Engine is drafting…': 'ইঞ্জিন খসড়া লিখছে…', 'The Engine suggests:': 'ইঞ্জিনের পরামর্শ:', 'Use this': 'এটা নিন', 'See the drafting job': 'খসড়ার কাজটা দেখুন', 'Loading the Business Brain…': 'বিজনেস ব্রেইন লোড হচ্ছে…',
+      'Every agent reads this before working for this business, and nothing of any other business. The Engine drafts each answer from your own sales, products and website; you correct it and press Approve. "Limits" and "Never do" are yours only - the AI can never change them.': 'প্রতিটা এজেন্ট এই ব্যবসার কাজ করার আগে এটা পড়ে, অন্য কোনো ব্যবসার কিছু না। ইঞ্জিন আপনার নিজের বিক্রি, প্রোডাক্ট আর ওয়েবসাইট থেকে প্রতিটা উত্তরের খসড়া লেখে; আপনি ঠিক করে অনুমোদন দিন। "সীমা" আর "কখনো করবে না" শুধু আপনার - AI কখনো বদলাতে পারে না।',
+      'Lasting facts, events and lessons - kept by the Engine as it works, by your notes and by your 👍 / 👎. A fact that changes is marked out of date (kept, never deleted).': 'স্থায়ী তথ্য, ঘটনা আর শিক্ষা - ইঞ্জিন কাজ করতে করতে, আপনার নোট আর 👍 / 👎 থেকে রাখে। বদলে যাওয়া তথ্য পুরোনো বলে চিহ্নিত হয় (রাখা থাকে, মোছা হয় না)।',
+      'Marked out of date.': 'পুরোনো বলে চিহ্নিত হয়েছে।', 'Kept.': 'রাখা হয়েছে।', 'Approved - every agent now works from this.': 'অনুমোদিত - এখন থেকে সব এজেন্ট এটা দেখে কাজ করে।',
+      'The Engine is drafting it - this takes a few minutes. The answers appear here.': 'ইঞ্জিন খসড়া লিখছে - কয়েক মিনিট লাগবে। উত্তরগুলো এখানে আসবে।',
+      // Daily brief settings
+      'Every evening at': 'প্রতি সন্ধ্যা', 'Language': 'ভাষা', 'Most one ad may spend ৳': 'একটা বিজ্ঞাপনে সর্বোচ্চ ৳', 'The Engine is writing the brief - it takes a few minutes.': 'ইঞ্জিন ব্রিফ লিখছে - কয়েক মিনিট লাগবে।',
+      'e.g. smaller budget, target Chattogram, use Bangla': 'যেমন: কম বাজেট, চট্টগ্রামে দেখান, বাংলায় লিখুন', 'optional': 'না দিলেও চলে',
+      // Brand desk
+      'Your PC is off - the office is closed': 'কম্পিউটারের সাথে সংযোগ নেই - পোস্ট লাইনে অপেক্ষা করবে', 'Your PC is on - the office is open': 'কম্পিউটার চালু - টুলগুলো কাজ করছে',
+      'The PC has not checked in yet · Posts wait and go out one by one when it is on again': 'কম্পিউটার এখনো একবারও যুক্ত হয়নি · পোস্টগুলো অপেক্ষায় থাকবে, চালু হলে একে একে যাবে',
+      'Paste the bridge key from your PC (G:\\bendar-brand\\bridge\\.env, the line BRIDGE_KEY). It is sealed and never shown again.': 'আপনার কম্পিউটার থেকে ব্রিজ কী-টা দিন (G:\\bendar-brand\\bridge\\.env ফাইলের BRIDGE_KEY লাইন)। এটা সিল করা থাকে, আর কখনো দেখানো হয় না।',
+      'Bridge key': 'ব্রিজ কী', 'Bridge key (set)': 'ব্রিজ কী (দেওয়া আছে)', 'Set up': 'সেটআপ', 'Refresh': 'আবার দেখুন', 'leave empty to keep it': 'রাখতে খালি রাখুন', 'Asking your PC…': 'কম্পিউটারকে জিজ্ঞেস করা হচ্ছে…',
+      'The brand desk is for the owner only.': 'ব্র্যান্ড ডেস্ক শুধু মালিকের জন্য।',
+      // Ask panel
+      'Not done.': 'করা হয়নি।', 'Confirm?': 'করব?', 'Open the PDF': 'PDF খুলুন'
+    };
+    Object.keys(W).forEach(function (k) { if (I18N_BN[k] === undefined) I18N_BN[k] = W[k]; });
+    var P = [
+      ['^Command Center · (.+)$', 'কমান্ড সেন্টার · $1'],
+      ['^(.+?) · (Every .+?) · next (.+)$', '$1 · $2 · পরের $3'],
+      ['^(.+?) · (Every .+?)$', '$1 · $2'],
+      ['^Every (Sunday|Monday|Tuesday|Wednesday|Thursday|Friday|Saturday) at ([\\d:]+)$', 'প্রতি $1 $2-এ'],
+      ['^Every day at ([\\d:]+)$', 'প্রতিদিন $1-এ'],
+      ['^last (.+) \\((.+)\\)$', 'শেষ $1 ($2)'],
+      ['^What it did \\((\\d+)\\)$', 'যা করেছে ($1)'],
+      ['^skill: (.+)$', 'স্কিল: $1'],
+      ['^(\\d+) waiting for your Yes$', '$1টা আপনার হ্যাঁ-র অপেক্ষায়'],
+      ['^Built-in library \\((\\d+)\\)$', 'তৈরি তালিকা ($1)'],
+      ['^For: (.+?) · used (\\d+)× in 30 days(.*)$', 'জন্য: $1 · ৩০ দিনে $2 বার$3'],
+      ['^Command Center only · used (\\d+)× in 30 days(.*)$', 'শুধু কমান্ড সেন্টার · ৩০ দিনে $1 বার$2'],
+      ['^(\\d+) skills? suggested for your business$', 'আপনার ব্যবসার জন্য $1টা স্কিলের পরামর্শ'],
+      ['^Nothing yet - the first night check runs at (.+)\\.$', 'এখনো কিছু নেই - প্রথম রাতের চেক $1-এ।'],
+      ['^What the Watchdog is watching \\((\\d+) open\\)$', 'ওয়াচডগ যা দেখছে ($1টা খোলা)'],
+      ['^Pages it opens every 5 minutes \\((\\d+)\\)$', 'যে পেজগুলো প্রতি ৫ মিনিটে খোলে ($1)'],
+      ['^(\\d+) fixed by itself this week$', 'এই সপ্তাহে $1টা নিজে থেকে ঠিক হয়েছে'],
+      ['^last check (.+)$', 'শেষ চেক $1'],
+      ['^Last check (.+)$', 'শেষ চেক $1'],
+      ['^Read the last night report \\((.+)\\)$', 'গত রাতের রিপোর্ট পড়ুন ($1)'],
+      ['^Tried - still not working\\. Next try at (.+)$', 'চেষ্টা হয়েছে - এখনো কাজ করছে না। পরের চেষ্টা $1-এ'],
+      ['^Will be fixed at the night check \\((.+)\\)$', 'রাতের চেকে ঠিক হবে ($1)'],
+      ['^(\\d+) fix(es)? waits? for your OK$', '$1টা সমাধান আপনার OK-র অপেক্ষায়'],
+      ['^(\\d+) problems? not fixed yet$', '$1টা সমস্যা এখনো ঠিক হয়নি'],
+      ['^(\\d+) problems? found$', '$1টা সমস্যা পাওয়া গেছে'],
+      ['^(\\d+) good$', '$1টা ভালো'], ['^(\\d+) needs work$', '$1টা কাজ লাগবে'], ['^(\\d+) bad$', '$1টা খারাপ'], ['^(\\d+) not checked yet$', '$1টা এখনো দেখা হয়নি'],
+      ['^Sites checked every night \\((\\d+)\\)$', 'প্রতি রাতে যে সাইটগুলো দেখা হয় ($1)'],
+      ['^Written (.+)$', 'লেখা হয়েছে $1'],
+      ['^The home page answers HTTP (\\d+)$', 'হোম পেজ HTTP $1 দেখাচ্ছে'],
+      ['^The title is long \\((\\d+) characters\\)$', 'টাইটেল লম্বা ($1 অক্ষর)'], ['^The title is short \\((\\d+) characters\\)$', 'টাইটেল ছোট ($1 অক্ষর)'],
+      ['^The meta description is (\\d+) characters$', 'meta description $1 অক্ষরের'], ['^(\\d+) H1 headings$', '$1টা H1 হেডিং'],
+      ['^(\\d+) of (\\d+) images have no alt text$', '$2টা ছবির $1টায় alt লেখা নেই'],
+      ['^Very little text on the home page \\((\\d+) words\\)$', 'হোম পেজে লেখা খুব কম ($1 শব্দ)'],
+      ['^(\\d+) broken links? on the home page$', 'হোম পেজে $1টা ভাঙা লিংক'],
+      ['^The home page took (.+) s$', 'হোম পেজ খুলতে $1 সেকেন্ড'],
+      ['^Mobile speed score (\\d+)/100$', 'মোবাইল স্পিড স্কোর $1/100'], ['^Lighthouse SEO score (\\d+)/100$', 'Lighthouse SEO স্কোর $1/100'],
+      ['^The page jumps while loading \\(CLS (.+)\\)$', 'লোড হওয়ার সময় পেজ লাফায় (CLS $1)'],
+      ['^version (\\d+)$', 'সংস্করণ $1'], ['^owner · (.+)$', 'মালিক · $1'], ['^engine · (.+)$', 'ইঞ্জিন · $1'],
+      ['^(\\d+) out-of-date fact\\(s\\) kept in the history\\.$', '$1টা পুরোনো তথ্য ইতিহাসে রাখা আছে।'],
+      ['^Last check-in (.+)$', 'শেষ সংযোগ $1'],
+      ['^Sorry — (.*)$', 'দুঃখিত — $1'], ['^Could not do it: (.*)$', 'করা যায়নি: $1']
+    ];
+    if (typeof I18N_PAT !== 'undefined') P.forEach(function (x) { I18N_PAT.push([x[0], x[1]]); });
+  } catch (e) {}
+})();
+</script>
+
+<!-- distill:bn-topup -->
+<script>
+/* distill-bn: Bangla for the static words the full crawl still showed in English (System check, Navigator, Shipments, Joint stock, Platform, Dashboard). Data stays as typed. */
+(function () {
+  if (typeof I18N_BN === 'undefined') return;
+  var D = {
+    'System check': 'সিস্টেম চেক', 'Run the check again.': 'চেকটি আবার চালান।', 'Checking the books…': 'হিসাব মেলানো হচ্ছে…',
+    'Stock lots hold exactly the stock of each product': 'স্টক লটগুলোতে প্রতিটি প্রোডাক্টের ঠিক স্টকই আছে',
+    'Every lot: what came in − what was taken = what is left': 'প্রতিটি লট: যা এসেছে − যা নেওয়া হয়েছে = যা বাকি',
+    'No product below zero': 'কোনো প্রোডাক্ট শূন্যের নিচে নেই',
+    'Everything in stock has a cost': 'স্টকের সবকিছুর কস্ট আছে',
+    'Products in stock have a weight (holding cost shares by kg)': 'স্টকের প্রোডাক্টের ওজন আছে (হোল্ডিং কস্ট কেজি অনুযায়ী ভাগ হয়)',
+    'Every invoice: products − discount + delivery = total': 'প্রতিটি ইনভয়েস: প্রোডাক্ট − ডিসকাউন্ট + ডেলিভারি = মোট',
+    'Nobody paid more than their invoice': 'কেউ ইনভয়েসের চেয়ে বেশি দেয়নি',
+    'Every payment is in a money account': 'প্রতিটি পেমেন্ট কোনো না কোনো টাকার অ্যাকাউন্টে আছে',
+    'This month’s sold lines all carry a cost': 'এ মাসের বিক্রি হওয়া সব লাইনে কস্ট আছে',
+    'Shareholders hold 100% or less': 'শেয়ারহোল্ডারদের মোট শেয়ার ১০০% বা কম',
+    'No shipment funded more than 100%': 'কোনো শিপমেন্টে ১০০%-এর বেশি বিনিয়োগ নেই',
+    'The dashboard’s net profit is the P&L’s': 'ড্যাশবোর্ডের নিট লাভ আর লাভ-ক্ষতির হিসাব এক',
+    'Every sale this month has a known cost (none kept out of profit)': 'এ মাসের প্রতিটি বিক্রির কস্ট জানা (কোনোটি লাভের হিসাবের বাইরে নেই)',
+    'Closed months still give the net profit they were closed with': 'বন্ধ করা মাসগুলো যে নিট লাভে বন্ধ হয়েছিল, এখনো সেটাই দেখায়',
+    'The units in the stock lots add up to each product’s stock. If they differ, cost of goods and stock value are worked out on the wrong units.': 'স্টক লটের ইউনিট যোগ করলে প্রতিটি প্রোডাক্টের স্টক হয়। না মিললে বিক্রির কস্ট আর স্টক ভ্যালু ভুল ইউনিটে হিসাব হয়।',
+    'Open the product named here and look at its stock history.': 'এখানে নাম থাকা প্রোডাক্টটি খুলে তার স্টক ইতিহাস দেখুন।',
+    'A count or an adjustment made outside a lot is the usual cause: save a stock count for the product.': 'লটের বাইরে গণনা বা সংশোধনই সাধারণ কারণ: প্রোডাক্টটির একটি স্টক গণনা সেভ করুন।',
+    'For every lot: what came in − what was taken out = what is left. A lot that does not add up gives the wrong FIFO cost.': 'প্রতিটি লটে: যা এসেছে − যা বের হয়েছে = যা বাকি। না মিললে FIFO কস্ট ভুল হয়।',
+    'Open Shipments and find the lot named here.': 'শিপমেন্ট খুলে এখানে নাম থাকা লটটি খুঁজুন।',
+    'Compare its received units with the sales and returns drawn from it.': 'এর রিসিভ করা ইউনিট আর এখান থেকে যাওয়া বিক্রি ও রিটার্ন মিলিয়ে দেখুন।',
+    'Report it if the numbers cannot be explained: lots are never edited by hand.': 'সংখ্যার ব্যাখ্যা না মিললে জানান: লট কখনো হাতে বদলানো হয় না।',
+    'No product shows less than zero in stock. Selling below zero means a sale had no unit (and no cost) behind it.': 'কোনো প্রোডাক্টের স্টক শূন্যের নিচে নেই। শূন্যের নিচে বিক্রি মানে সেই বিক্রির পেছনে কোনো ইউনিট (আর কস্ট) ছিল না।',
+    'Receive the goods that were sold, or save a stock count.': 'যে মাল বিক্রি হয়েছে তা রিসিভ করুন, অথবা একটি স্টক গণনা সেভ করুন।',
+    'Pre-orders are the right way to sell what is not on the shelf.': 'যা হাতে নেই তা বিক্রির সঠিক পথ প্রি-অর্ডার।',
+    'Everything in stock has a cost, so stock value and profit are right.': 'স্টকের সবকিছুর কস্ট আছে, তাই স্টক ভ্যালু আর লাভ ঠিক।',
+    'Open Product cost.': 'প্রোডাক্ট কস্ট খুলুন।',
+    'Fill in the cost for the products named here (by category, brand and type).': 'এখানে নাম থাকা প্রোডাক্টগুলোর কস্ট দিন (ক্যাটাগরি, ব্র্যান্ড ও ধরন অনুযায়ী)।',
+    'Products in stock have a weight, because holding cost (rent) is shared out by kg.': 'স্টকের প্রোডাক্টের ওজন আছে, কারণ হোল্ডিং কস্ট (ভাড়া) কেজি অনুযায়ী ভাগ হয়।',
+    'Open the product and type its weight in grams (or its box size).': 'প্রোডাক্টটি খুলে গ্রামে ওজন লিখুন (বা বাক্সের মাপ)।',
+    'Every invoice: products − discount + delivery = total.': 'প্রতিটি ইনভয়েস: প্রোডাক্ট − ডিসকাউন্ট + ডেলিভারি = মোট।',
+    'Open the invoice named here.': 'এখানে নাম থাকা ইনভয়েসটি খুলুন।',
+    'If a line or the discount is wrong, return or correct it the usual way - invoices are never edited in place.': 'কোনো লাইন বা ডিসকাউন্ট ভুল হলে স্বাভাবিক পথে রিটার্ন বা সংশোধন করুন - ইনভয়েস কখনো সরাসরি বদলানো হয় না।',
+    'Nobody paid more than their invoice. Extra money belongs on the customer’s account as an advance.': 'কেউ ইনভয়েসের চেয়ে বেশি দেয়নি। বাড়তি টাকা কাস্টমারের অ্যাকাউন্টে অ্যাডভান্স হিসেবে থাকবে।',
+    'Open the invoice.': 'ইনভয়েসটি খুলুন।',
+    'Move the extra to the customer’s advance or refund it.': 'বাড়তি টাকা কাস্টমারের অ্যাডভান্সে নিন বা ফেরত দিন।',
+    'Every payment is in a money account (cash, bank, bKash…), so each account’s balance is right.': 'প্রতিটি পেমেন্ট কোনো টাকার অ্যাকাউন্টে আছে (ক্যাশ, ব্যাংক, bKash…), তাই প্রতিটি অ্যাকাউন্টের ব্যালেন্স ঠিক।',
+    'Open Money.': 'টাকা খুলুন।',
+    'Give each payment in no account its account.': 'অ্যাকাউন্টবিহীন প্রতিটি পেমেন্টকে তার অ্যাকাউন্ট দিন।',
+    'This month’s sold lines all carry a cost. A line with no cost makes the month’s profit look bigger than it is.': 'এ মাসের বিক্রি হওয়া সব লাইনে কস্ট আছে। কস্টবিহীন লাইন মাসের লাভ আসলের চেয়ে বড় দেখায়।',
+    'Fill in the cost of the products sold without one.': 'কস্ট ছাড়া বিক্রি হওয়া প্রোডাক্টগুলোর কস্ট দিন।',
+    'Analytics → Cost unknown lists each sale.': 'অ্যানালিটিক্স → কস্ট অজানা-তে প্রতিটি বিক্রি আছে।',
+    'Shareholders together hold 100% or less.': 'শেয়ারহোল্ডারদের মোট শেয়ার ১০০% বা তার কম।',
+    'Open Capital.': 'ক্যাপিটাল খুলুন।',
+    'Correct the share of the holders named.': 'নাম থাকা হোল্ডারদের শেয়ার ঠিক করুন।',
+    'No shipment is funded more than 100% by investors.': 'কোনো শিপমেন্টে বিনিয়োগকারীদের অংশ ১০০%-এর বেশি নেই।',
+    'Open the shipment.': 'শিপমেন্টটি খুলুন।',
+    'Correct the investors’ shares on it.': 'এতে বিনিয়োগকারীদের অংশ ঠিক করুন।',
+    'The dashboard’s net profit is exactly the Profitability screen’s: one net profit everywhere.': 'ড্যাশবোর্ডের নিট লাভ ঠিক লাভজনকতা স্ক্রিনেরটাই: সব জায়গায় একটাই নিট লাভ।',
+    'Run the check again after a minute (figures are kept for a short while).': 'এক মিনিট পরে চেকটি আবার চালান (সংখ্যা অল্প সময় ধরে রাখা হয়)।',
+    'If it still differs, report it: the two must always agree.': 'তবুও আলাদা হলে জানান: দুটো সবসময় এক হতে হবে।',
+    'Last run': 'শেষ চালানো', 'Warnings': 'সতর্কতা', 'every time this screen opens': 'এই স্ক্রিন খুললেই', 'No failures': 'কোনো ব্যর্থতা নেই', 'Checks': 'চেক', 'Passed': 'পাস', 'To look at': 'দেখতে হবে', 'Failed': 'ব্যর্থ',
+    'money': 'টাকা', 'stock': 'স্টক', 'sales': 'বিক্রি', 'capital': 'ক্যাপিটাল', 'profit': 'লাভ',
+    'ERP Navigator': 'ERP নেভিগেটর', 'Total stock value': 'মোট স্টক ভ্যালু', 'Pending shipments': 'অপেক্ষমাণ শিপমেন্ট', 'Low-stock alerts': 'কম স্টকের অ্যালার্ট', 'at or below the reorder level': 'রিঅর্ডার লেভেলে বা তার নিচে',
+    'Investor payout due': 'বিনিয়োগকারীর পাওনা', 'Connected business logic — nothing is deleted': 'সংযুক্ত ব্যবসার যুক্তি — কিছুই মুছে যায় না', 'Connected business logic · nothing is deleted': 'সংযুক্ত ব্যবসার যুক্তি · কিছুই মুছে যায় না',
+    'Inventory & Catalog': 'ইনভেন্টরি ও ক্যাটালগ', 'Customers & CRM': 'কাস্টমার ও CRM', 'Procurement & Shipments': 'ক্রয় ও শিপমেন্ট', 'Analytics & Forecasting': 'অ্যানালিটিক্স ও পূর্বাভাস',
+    'Roles, Settings & Controls': 'রোল, সেটিংস ও নিয়ন্ত্রণ', 'Audit, Backup & System Check': 'অডিট, ব্যাকআপ ও সিস্টেম চেক', 'Expenses & Accounting': 'খরচ ও হিসাব', 'Investors & Funding': 'বিনিয়োগকারী ও তহবিল', 'Orders, Invoice & Sales': 'অর্ডার, ইনভয়েস ও বিক্রি',
+    'This month': 'এ মাস', 'healthy': 'সুস্থ',
+    'In transit': 'পথে আছে', 'In transit…': 'পথে আছে…', 'Cost not known': 'কস্ট জানা নেই', 'You sell at retail prices': 'আপনি খুচরা দামে বিক্রি করেন',
+    'never signed in': 'কখনো সাইন ইন করেননি', 'Joint stock: on': 'জয়েন্ট স্টক: চালু', 'Joint stock: off': 'জয়েন্ট স্টক: বন্ধ', 'joint pool': 'জয়েন্ট পুল', 'all linked': 'সব লিংক করা',
+    '+ Install link for a company': '+ কোনো কোম্পানির ইনস্টল লিংক', 'No company copy yet.': 'এখনো কোনো কোম্পানি কপি নেই।', 'Photos are read on the device only.': 'ছবি শুধু ডিভাইসেই পড়া হয়।', 'Get your free 3D Owala ERP': 'আপনার ফ্রি 3D Owala ERP নিন',
+    'Analysis': 'বিশ্লেষণ', 'Find anything': 'যা খুশি খুঁজুন', 'Suggested qty': 'প্রস্তাবিত পরিমাণ', 'Gross': 'গ্রস', 'Channels': 'চ্যানেল',
+    'Marketing': 'মার্কেটিং', 'Miscellaneous': 'বিবিধ', 'Utilities': 'ইউটিলিটি', 'Chinese yuan': 'চীনা ইউয়ান', 'US dollar': 'মার্কিন ডলার', 'Accessories': 'অ্যাক্সেসরিজ'
+  };
+  for (var k in D) if (I18N_BN[k] === undefined) I18N_BN[k] = D[k];
+  if (typeof I18N_PAT !== 'undefined' && I18N_PAT.push) I18N_PAT.push(
+    ['^([0-9,]+) shipments?$', '$1টি শিপমেন্ট'], ['^([0-9,]+) units on hand$', 'হাতে $1 ইউনিট'], ['^([0-9,]+) in transit$', '$1টি পথে'],
+    ['^([0-9,]+) investor\\(s\\)$', '$1 জন বিনিয়োগকারী'], ['^([0-9,]+) investor\\(s\\) · months that are over$', '$1 জন বিনিয়োগকারী · শেষ হওয়া মাস'],
+    ['^([0-9,]+) payment\\(s\\) in no account$', '$1টি পেমেন্ট কোনো অ্যাকাউন্টে নেই'], ['^([0-9.,]+)% share$', '$1% শেয়ার'], ['^([0-9.,]+)% given out$', '$1% দেওয়া হয়েছে'],
+    ['^([0-9.,]+)% gross margin$', '$1% গ্রস মার্জিন'], ['^([0-9.,]+)% margin$', '$1% মার্জিন'], ['^([0-9,]+) screens$', '$1টি স্ক্রিন'],
+    ['^Ordered (.+)$', 'অর্ডার $1'], ['^([0-9,]+) u in · ([0-9,]+) left$', '$1 ইউনিট এসেছে · $2 বাকি'], ['^([0-9,]+) open · ([0-9,]+) received$', '$1টি খোলা · $2টি রিসিভ'],
+    ['^([0-9,]+) bought · (.+)$', '$1 জন কিনেছেন · $2'], ['^([0-9,]+) of ([0-9,]+) abilities on for you$', 'আপনার জন্য $2-এর $1টি সুবিধা চালু'], ['^([0-9,]+)/([0-9,]+) healthy$', '$1/$2 সুস্থ'],
+    ['^([0-9,]+)% healthy · ([0-9,]+) to look at$', '$1% সুস্থ · $2টি দেখতে হবে'], ['^([0-9,]+) failing$', '$1টি ব্যর্থ'], ['^All ([0-9,]+) pass$', 'সব $1টি পাস'], ['^since (.+)$', '$1 থেকে'],
+    ['^Revenue vs (.+)$', '$1-এর সাথে আয়'], ['^([A-Z][0-9]) · (money|stock|sales|capital|profit)$', '$1 · $2'], ['^(.+) · never signed in$', '$1 · কখনো সাইন ইন করেননি'], ['^([0-9,]+) invoice\(s\) still owe$', '$1টি ইনভয়েসে এখনো বাকি']);
+  var D2 = { 'Nothing to do': 'করার কিছু নেই', 'Look at low or out': 'কম বা শেষ স্টক দেখুন', 'Look at customers with dues': 'বাকি থাকা কাস্টমার দেখুন', 'Look at we owe suppliers': 'সাপ্লায়ারকে আমাদের দেনা দেখুন', 'Look at reorder & dead stock': 'রিঅর্ডার ও পড়ে থাকা স্টক দেখুন', 'Look at system check, backups': 'সিস্টেম চেক, ব্যাকআপ দেখুন', 'Look at payments': 'পেমেন্ট দেখুন', 'Order them or mark them discontinued': 'অর্ডার দিন বা বন্ধ বলে চিহ্নিত করুন' };
+  for (var k2 in D2) if (I18N_BN[k2] === undefined) I18N_BN[k2] = D2[k2];
 })();
 </script>
 </body>
