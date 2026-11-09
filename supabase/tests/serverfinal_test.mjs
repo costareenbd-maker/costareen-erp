@@ -57,7 +57,8 @@ await sql`insert into erp_errors (business_id, who, role, action, message, build
   (${B}, 'x', 'owner', 'old', 'old error', 't', now() - interval '200 days'), (${B}, 'x', 'owner', 'new', 'fresh error', 't', now() - interval '2 days')`;
 await sql`insert into erp_activity (business_id, user_id, who, role, action, at) values (${B}, ${FIX.U.owner}, 'x', 'owner', 'old', now() - interval '100 days')`;
 r = await pruneLogs(sql);
-check('pruneLogs removes the old error row and the old activity row', r.erp_errors >= 1 && r.erp_activity >= 1 && typeof r.erp_op_keys === 'number', r);
+check('pruneLogs removes the old error row but never the activity log', r.erp_errors >= 1 && r.erp_activity === undefined && typeof r.erp_op_keys === 'number', r);
+check('the 100-day-old activity row is still there', (await sql`select count(*)::int as n from erp_activity where business_id = ${B} and action = 'old'`)[0].n === 1);
 const left = await sql`select action from erp_errors where business_id = ${B} and action in ('old', 'new')`;
 check('...and keeps the recent one', left.length === 1 && left[0].action === 'new', left);
 r = await runJob(deps, 'nightly');

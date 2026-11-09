@@ -78,7 +78,9 @@ async function crmJob(deps, sql, out) {
  *  stops the others. Returns {table: rows removed}. */
 export async function pruneLogs(sql) {
   const out = {};
-  for (const [t, keep] of [['erp_errors', '180 days'], ['erp_ai_log', '180 days'], ['erp_speed', '30 days'], ['erp_activity', '90 days'],
+  // the activity log (who did what) and the AI log (spend, what the AI wrote) are history and are NEVER pruned - nothing
+  // traceable is deleted; only technical logs and short-lived helper rows go
+  for (const [t, keep] of [['erp_errors', '180 days'], ['erp_speed', '30 days'],
                            ['erp_pub_hits', '1 day'], ['engine_skill_previews', '7 days'], ['erp_op_keys', '3 days']]) {
     try { out[t] = (await sql`delete from ${sql(t)} where at < now() - ${keep}::interval`).count; } catch (e) { out[t] = 'skipped: ' + String((e && e.message) || e).slice(0, 80); }
   }
