@@ -75,6 +75,10 @@ export async function erpBrandDeskPost(ctx, payload) {
   if (str(p.content).length > 63000) throw new Error('The post is too long.');
   let at = null;
   if (p.at) { const d = new Date(p.at); if (isNaN(d)) throw new Error('The time is not a date.'); at = d.toISOString(); }
+  // brand-7: the claim check runs before anything is queued; a 'block' stops the post (warnings only show)
+  const hits = ((await bridge(ctx, '/lint', { text: str(p.content) })).hits) || [];
+  const blocks = hits.filter((h) => h && h.severity === 'block');
+  if (blocks.length) throw new Error('Not sent - the claim check stopped it: ' + blocks.map((h) => str(h.reason) + (h.match ? ' ("' + str(h.match) + '")' : '')).join(' · '));
   const r = await bridge(ctx, '/post', { networks: nets.map((n) => ({ id: str(n.id), platform: str(n.platform) })), content: str(p.content), at, urgent: !!p.urgent });
   return { queued: (r.queued || []).length, desk: await erpBrandDesk(ctx) };
 }
@@ -85,6 +89,42 @@ export async function erpBrandDeskDecide(ctx, payload) {
   if (!['send', 'drop'].includes(a)) throw new Error('Choose send or drop.');
   await bridge(ctx, '/decide', { id: str(payload.id), action: a });
   return erpBrandDesk(ctx);
+}
+
+// brand-7: settings live in the brand core database on the Mac; the ERP is the screen and checks every number first
+export async function erpBrandDeskSettings(ctx) {
+  await gate(ctx);
+  return bridge(ctx, '/settings');
+}
+export async function erpBrandDeskWeights(ctx, payload) {
+  await gate(ctx);
+  const p = payload || {}, platform = str(p.platform).toLowerCase();
+  if (!/^[a-z_]{2,20}$/.test(platform)) throw new Error('Pick a platform.');
+  const w = p.weights && typeof p.weights === 'object' ? p.weights : null;
+  if (!w || !Object.keys(w).length) throw new Error('Give each topic a share.');
+  const clean = {};
+  for (const [k, v] of Object.entries(w)) {
+    if (!/^[a-z0-9_]{2,40}$/.test(k)) throw new Error('A topic name is not right.');
+    const n = Number(v);
+    if (!Number.isInteger(n) || n < 0 || n > 100) throw new Error('Each share is a whole number from 0 to 100.');
+    clean[k] = n;
+  }
+  const sum = Object.values(clean).reduce((a, b) => a + b, 0);
+  if (sum !== 100) throw new Error('The shares of ' + platform + ' add up to ' + sum + ', not 100.');
+  return bridge(ctx, '/settings/weights', { platform, weights: clean });
+}
+export async function erpBrandDeskCadence(ctx, payload) {
+  await gate(ctx);
+  const level = str(payload && payload.level);
+  if (!['start', 'scale'].includes(level)) throw new Error('Choose start or scale.');
+  return bridge(ctx, '/settings/cadence', { level });
+}
+export async function erpBrandDeskLint(ctx, payload) {
+  await gate(ctx);
+  const text = str(payload && payload.text);
+  if (!text) return { hits: [] };
+  if (text.length > 63000) throw new Error('The text is too long.');
+  return bridge(ctx, '/lint', { text });
 }
 
 export const PILLARS = ['story', 'lesson', 'behind the scenes', 'market', 'announcement'];
@@ -205,4 +245,4 @@ export async function erpBrandDeskHello(ctx, payload) {
   return { ok: true };
 }
 
-export const HANDLERS = { erpBrandDesk, erpBrandDeskShorts, erpBrandDeskMakeShorts, erpBrandDeskVideos, erpBrandDeskPeople, erpBrandDeskPerson, erpBrandDeskToLeads, erpBrandDeskIdeas, erpBrandDeskIdea, erpBrandDeskIdeaToBoard, erpBrandDeskBoard, erpBrandDeskCard, erpBrandDeskMove, erpBrandDeskDone, erpBrandDeskPost, erpBrandDeskDecide, erpBrandDeskSetup, erpBrandDeskHello };
+export const HANDLERS = { erpBrandDesk, erpBrandDeskSettings, erpBrandDeskWeights, erpBrandDeskCadence, erpBrandDeskLint, erpBrandDeskShorts, erpBrandDeskMakeShorts, erpBrandDeskVideos, erpBrandDeskPeople, erpBrandDeskPerson, erpBrandDeskToLeads, erpBrandDeskIdeas, erpBrandDeskIdea, erpBrandDeskIdeaToBoard, erpBrandDeskBoard, erpBrandDeskCard, erpBrandDeskMove, erpBrandDeskDone, erpBrandDeskPost, erpBrandDeskDecide, erpBrandDeskSetup, erpBrandDeskHello };

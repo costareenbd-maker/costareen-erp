@@ -8515,7 +8515,7 @@ function srv(name, args, ok, bad) {
 
 var SRV_ACTIVE = 0, SRV_WRITING = false, SRV_TIMED = {};
 // the same list the server uses to know a call changes nothing (ERP_READS)
-var SRV_READS = /^(erpHolds|erpHoldGet|erpPhoneAlerts|erpWaNumbers|erpBrandDesk|erpBrandDeskShorts|erpBrandDeskVideos|erpBrandDeskPeople|erpBrandDeskIdeas|erpBrandDeskBoard|erpShipmentRepriceCheck|erpReceivePreview|erpSeo|erpReceipts|erpBrief|erpBrain|erpWatch|erpEngine|erpEngineJob|erpSkills|erpAiBrain|erpAiBrainModels|erpLeadForms|erpLeads|erpLeadFind|erpLeadCapture|erpMyUpdates|erpSocialBridges|erpAds|erpAdProfit|erpFactory|erpTaste|erpAdsInterests|erpSocialNet|erpSocialLearn|erpSocialAssets|erpSocialPosts|erpSocialPhotos|erpInboxDigest|erpJointRecvCatalog|erpSitePages|erpBalanceSheet|erpProductFields|erpProductAi|erpMetaConnect|erpInboxFeatureMap|erpBookings|erpInbox|erpInboxOpen|erpInboxChannels|erpChatOrders|erpInboxStats|erpAiWork|erpCommissionSales|erpFdCards|erpLineMargins|erpFd19Profit|erpFdInventory|erpFd22Analytics|erpNavigator|erpSellers|erpFollowups|erpCustomerInsight|erpPreorders|erpCashUps|erpAskingPrices|erpSystemCheck|erpAnalytics|erpCommission|erpHolding|erpLotFunding|erpShipments|erpShipment|erpLots|erpFdHead|erpFdDash|erpReceiveMatch|erpAiReader|erpProductSuggest|erpCatalogue|erpPushList|erpCreators|erpCreatorPortalLink|erpSponsorLink|erpCreatorRequests|erpCreatorEvents|erpCreatorProgramme|erpCreatorPreview|erpCreatorCatalog|erpCreatorSources|erpCreatorClaims|erpApps|erpAppQr|erpFeedback|erpRestockOffers|erpRestockList|erpWarrantyRules|erpWarrantyCard|erpMyLink|erpPlatformRegister|erpPlatformDoctor|erpPlatformCommunity|erpMarketWaiting|erpBoard|erpPlatformDesign|erpResell|erpResellerProgramme|erpLoyalty|erpCustomerPoints|erpRefillDue|erpDeliveryHistory|erpDeliveryHistoryMany|erpPrintKit|erpPrintJobs|erpPrintJob|erpPrintCost|erpSpools|erpPrintRequests|erpJoint|erpJointCatalog|erpJointCard|erpInvoiceDesign|erpInvoicePreview|erpMarket|erpMarketMine|erpMarketRequests|erpMarketHints|erpMarketNames|erpWanted|erpBrand|erpComplianceLog|erpProviderKey|erpNews|erpAccessKeys|erpAccessWarning|erpAdmin|erpAiKeys|erpAlertRules|erpAlerts|erpArena|erpBackupStatus|erpBg|erpBnWords|erpBookedParcels|erpBrandLogo|erpBundle|erpBusinessLinks|erpBusinesses|erpBusinessesDeleted|erpCampaignAudience|erpCampaignGet|erpCampaignList|erpCapital|erpCashBook|erpCatalog|erpConnStatus|erpConnections|erpCostBook|erpCourier|erpCourierKeyStatus|erpCurrencies|erpCustomerAccount|erpCustomerCredit|erpCustomerList|erpCustomerPage|erpCustomerStatement|erpCustomers|erpDashboardData|erpDaySales|erpDeliveryOptions|erpDevices|erpDiscontinued|erpDues|erpEvoQr|erpEvoStatus|erpExpenseExport|erpExpenseReceiptUrl|erpExpenses|erpFamilies|erpFighters|erpFormOptions|erpGame|erpGetTheme|erpGoogle|erpHello|erpInstalls|erpInvoice|erpInvoicePdf|erpJob|erpJobs|erpListView|erpLookupCustomer|erpLookupUsage|erpMe|erpMoney|erpNoteFileUrl|erpNotes|erpOwnerChange|erpOwnerChanges|erpParcelLabels|erpParcelPreview|erpPartnerStock|erpPartnership|erpPayReasons|erpPeople|erpPlatform|erpPlatformErrors|erpPnl|erpPnlMonth|erpPoList|erpPoolCatalog|erpProduct|erpProductListShare|erpProductPage|erpProductPhotoUrl|erpProductThumbs|erpProfile|erpQuoteAsset|erpQuoteBoot|erpQuoteGet|erpQuoteList|erpRecentInvoices|erpRecovery|erpReorderPlan|erpRestorePreview|erpReturnPreview|erpRisks|erpSales|erpSearch|erpSecurity|erpSelfTest|erpSerialLookup|erpSerialsFor|erpSessions|erpSetTheme|erpSettingsFull|erpSettingsLists|erpSfPayoutLines|erpSfPayouts|erpShareFile|erpSharedStock|erpSheet|erpStatementPdf|erpStockHistory|erpSupplierPage|erpSuppliers|erpToday|erpUsers|erpWaProductPdf|erpWebMatches|erpWebOrderInvoices|erpWebOrders|erpWebsiteTest)$/;
+var SRV_READS = /^(erpBrandDeskSettings|erpBrandDeskLint|erpHolds|erpHoldGet|erpPhoneAlerts|erpWaNumbers|erpBrandDesk|erpBrandDeskShorts|erpBrandDeskVideos|erpBrandDeskPeople|erpBrandDeskIdeas|erpBrandDeskBoard|erpShipmentRepriceCheck|erpReceivePreview|erpSeo|erpReceipts|erpBrief|erpBrain|erpWatch|erpEngine|erpEngineJob|erpSkills|erpAiBrain|erpAiBrainModels|erpLeadForms|erpLeads|erpLeadFind|erpLeadCapture|erpMyUpdates|erpSocialBridges|erpAds|erpAdProfit|erpFactory|erpTaste|erpAdsInterests|erpSocialNet|erpSocialLearn|erpSocialAssets|erpSocialPosts|erpSocialPhotos|erpInboxDigest|erpJointRecvCatalog|erpSitePages|erpBalanceSheet|erpProductFields|erpProductAi|erpMetaConnect|erpInboxFeatureMap|erpBookings|erpInbox|erpInboxOpen|erpInboxChannels|erpChatOrders|erpInboxStats|erpAiWork|erpCommissionSales|erpFdCards|erpLineMargins|erpFd19Profit|erpFdInventory|erpFd22Analytics|erpNavigator|erpSellers|erpFollowups|erpCustomerInsight|erpPreorders|erpCashUps|erpAskingPrices|erpSystemCheck|erpAnalytics|erpCommission|erpHolding|erpLotFunding|erpShipments|erpShipment|erpLots|erpFdHead|erpFdDash|erpReceiveMatch|erpAiReader|erpProductSuggest|erpCatalogue|erpPushList|erpCreators|erpCreatorPortalLink|erpSponsorLink|erpCreatorRequests|erpCreatorEvents|erpCreatorProgramme|erpCreatorPreview|erpCreatorCatalog|erpCreatorSources|erpCreatorClaims|erpApps|erpAppQr|erpFeedback|erpRestockOffers|erpRestockList|erpWarrantyRules|erpWarrantyCard|erpMyLink|erpPlatformRegister|erpPlatformDoctor|erpPlatformCommunity|erpMarketWaiting|erpBoard|erpPlatformDesign|erpResell|erpResellerProgramme|erpLoyalty|erpCustomerPoints|erpRefillDue|erpDeliveryHistory|erpDeliveryHistoryMany|erpPrintKit|erpPrintJobs|erpPrintJob|erpPrintCost|erpSpools|erpPrintRequests|erpJoint|erpJointCatalog|erpJointCard|erpInvoiceDesign|erpInvoicePreview|erpMarket|erpMarketMine|erpMarketRequests|erpMarketHints|erpMarketNames|erpWanted|erpBrand|erpComplianceLog|erpProviderKey|erpNews|erpAccessKeys|erpAccessWarning|erpAdmin|erpAiKeys|erpAlertRules|erpAlerts|erpArena|erpBackupStatus|erpBg|erpBnWords|erpBookedParcels|erpBrandLogo|erpBundle|erpBusinessLinks|erpBusinesses|erpBusinessesDeleted|erpCampaignAudience|erpCampaignGet|erpCampaignList|erpCapital|erpCashBook|erpCatalog|erpConnStatus|erpConnections|erpCostBook|erpCourier|erpCourierKeyStatus|erpCurrencies|erpCustomerAccount|erpCustomerCredit|erpCustomerList|erpCustomerPage|erpCustomerStatement|erpCustomers|erpDashboardData|erpDaySales|erpDeliveryOptions|erpDevices|erpDiscontinued|erpDues|erpEvoQr|erpEvoStatus|erpExpenseExport|erpExpenseReceiptUrl|erpExpenses|erpFamilies|erpFighters|erpFormOptions|erpGame|erpGetTheme|erpGoogle|erpHello|erpInstalls|erpInvoice|erpInvoicePdf|erpJob|erpJobs|erpListView|erpLookupCustomer|erpLookupUsage|erpMe|erpMoney|erpNoteFileUrl|erpNotes|erpOwnerChange|erpOwnerChanges|erpParcelLabels|erpParcelPreview|erpPartnerStock|erpPartnership|erpPayReasons|erpPeople|erpPlatform|erpPlatformErrors|erpPnl|erpPnlMonth|erpPoList|erpPoolCatalog|erpProduct|erpProductListShare|erpProductPage|erpProductPhotoUrl|erpProductThumbs|erpProfile|erpQuoteAsset|erpQuoteBoot|erpQuoteGet|erpQuoteList|erpRecentInvoices|erpRecovery|erpReorderPlan|erpRestorePreview|erpReturnPreview|erpRisks|erpSales|erpSearch|erpSecurity|erpSelfTest|erpSerialLookup|erpSerialsFor|erpSessions|erpSetTheme|erpSettingsFull|erpSettingsLists|erpSfPayoutLines|erpSfPayouts|erpShareFile|erpSharedStock|erpSheet|erpStatementPdf|erpStockHistory|erpSupplierPage|erpSuppliers|erpToday|erpUsers|erpWaProductPdf|erpWebMatches|erpWebOrderInvoices|erpWebOrders|erpWebsiteTest)$/;
 function srvPump() {
   if (!SRV_Q.length) return;
   var isRead = SRV_READS.test(SRV_Q[0].name);
@@ -41278,6 +41278,113 @@ html[data-bizkind="brand"] #tabbar button[data-tab="invoice"],html[data-bizkind=
     }
   });
   navSync();
+})();
+</script>
+<!-- brand-7 (9 Nov 2026): Brand desk > Rules. The owner sets the topic mix per platform (beauty first: LinkedIn 100%
+     beauty, Facebook 75/25 ...), how often to post (start | scale), and sees his public name/line and the connectors.
+     Write a post gets a "Check the claims" button; the server refuses a post the claim check blocks. Tools: Mac mini. -->
+<style>
+.bd7-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px}
+.bd7-row{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:5px 0}
+.bd7-row input{width:72px;text-align:right}
+.bd7-sum{font-size:12.5px;font-variant-numeric:tabular-nums}
+.bd7-sum.bad{color:var(--fd-negative-text,#b91c1c);font-weight:600}
+.bd7-hit{display:flex;gap:8px;align-items:flex-start;padding:6px 0;border-top:1px solid var(--fd-border,#eef)}
+.bd7-hit .bd-tag.block{background:#fde8e8;color:#9b1c1c}
+.bd7-hit .bd-tag.warn{background:#fef3c7;color:#92400e}
+</style>
+<script>
+(function () {
+  var R = { data: null, busy: '', lint: null };
+  function msg(e) { return esc((e && e.message) || String(e)); }
+  function load() {
+    if (R.busy === 'load') return; R.busy = 'load';
+    srv('erpBrandDeskSettings', [], function (r) { R.busy = ''; R.data = r; again(); }, function (e) { R.busy = ''; R.data = { error: (e && e.message) || String(e) }; again(); });
+  }
+  function rulesHtml() {
+    var d = R.data;
+    if (!d) { load(); return '<div class="loading">Reading your rules…</div>'; }
+    if (d.error) return '<div class="note"><div class="ico">!</div><div>' + esc(d.error) + '</div></div>';
+    var topics = d.topics || [], w = d.weights || {}, cad = d.cadence || [], st = d.settings || {}, level = st.cadence_level || 'start';
+    var lbl = {}; topics.forEach(function (t) { lbl[t.key] = t.label_en; });
+    var plats = Object.keys(w).sort();
+    var h = '<section><div class="card"><h3 style="margin:0 0 6px">You, in one line</h3>' +
+      '<div data-noi18n="1"><b>' + esc((st.public_name && st.public_name.en) || '') + '</b> · ' + esc((st.public_name && st.public_name.ko) || '') + '</div>' +
+      '<div class="bd-meta" data-noi18n="1" style="margin-top:4px">' + esc(st.positioning_en || '') + '</div>' +
+      '<div class="bd-meta" data-noi18n="1">' + esc(st.positioning_bn || '') + '</div></div></section>';
+    h += '<section><div class="card"><h3 style="margin:0 0 6px">How often</h3><div class="bd-chips">' +
+      ['start', 'scale'].map(function (v) { return '<button type="button" class="bd-chip' + (level === v ? ' on' : '') + '" data-bd7="level" data-id="' + v + '">' + (v === 'start' ? 'Start (~6 h a week)' : 'Scale (~10 h a week)') + '</button>'; }).join('') + '</div>' +
+      '<div class="bd-lines">' + cad.filter(function (c) { return c.level === level; }).map(function (c) {
+        return '<div class="bd-line"><b data-noi18n="1">' + esc(c.platform) + '</b><span class="bd-meta">' + esc(c.format.replace(/_/g, ' ')) + ': ' + c.per_week_min + (c.per_week_max !== c.per_week_min ? '–' + c.per_week_max : '') + ' a week</span></div>';
+      }).join('') + '</div><div class="bd-meta" style="margin-top:6px">Move to Scale when the enquiries keep coming (the scorecard shows it).</div></div></section>';
+    h += '<section><h3 style="margin:0 0 8px">Topic mix per platform</h3><div class="bd7-grid">' + plats.map(function (p) {
+      var row = w[p] || {}, sum = 0;
+      var rows = topics.map(function (t) { var v = Number(row[t.key] || 0); sum += v; return '<div class="bd7-row"><span>' + esc(t.label_en) + '</span><input class="i" type="number" min="0" max="100" step="5" id="bd7_' + esc(p) + '_' + esc(t.key) + '" value="' + v + '" data-bd7p="' + esc(p) + '"></div>'; }).join('');
+      return '<div class="card"><h4 style="margin:0 0 4px;text-transform:capitalize" data-noi18n="1">' + esc(p) + '</h4>' + rows +
+        '<div class="ap-row" style="justify-content:space-between;align-items:center;margin-top:6px"><span class="bd7-sum' + (sum === 100 ? '' : ' bad') + '" id="bd7_sum_' + esc(p) + '">' + sum + ' / 100</span>' +
+        '<button class="btn small" type="button" data-bd7="save" data-id="' + esc(p) + '"' + (R.busy ? ' disabled' : '') + '>' + (R.busy === 'save:' + p ? '<span class="wd-spin"></span>' : '') + 'Save</button></div></div>';
+    }).join('') + '</div></section>';
+    var con = d.connectors || [];
+    h += '<section><div class="card"><h3 style="margin:0 0 6px">Connections</h3>' + con.map(function (c) {
+      return '<div class="bd-item"><span class="bd-tag">' + (c.kill_switch ? 'stopped' : (c.enabled ? 'on' : 'off')) + '</span><div class="c"><b data-noi18n="1">' + esc(c.key) + '</b> <span class="bd-meta">' + esc(c.platform) + ' · ' + (c.official ? 'official' : 'unofficial - risk ' + esc(c.risk)) + '</span>' +
+        '<div class="bd-meta" data-noi18n="1">' + esc(c.note || '') + '</div></div></div>';
+    }).join('') + '<div class="bd-meta" style="margin-top:6px">Unofficial connections start off. They are switched on from the Mac, one at a time.</div></div></section>';
+    return h;
+  }
+  function lintHtml() {
+    var l = R.lint; if (!l) return '';
+    if (l.error) return '<div class="note" style="margin-top:8px"><div class="ico">!</div><div>' + esc(l.error) + '</div></div>';
+    if (!(l.hits || []).length) return '<div class="bd-meta" style="margin-top:8px">Claim check: nothing found.</div>';
+    return '<div style="margin-top:8px">' + l.hits.map(function (x) { return '<div class="bd7-hit"><span class="bd-tag ' + esc(x.severity) + '">' + (x.severity === 'block' ? 'stops the post' : 'check') + '</span><div class="c"><span data-noi18n="1">' + esc(x.reason) + '</span>' + (x.match ? ' <span class="bd-meta" data-noi18n="1">"' + esc(x.match) + '"</span>' : '') + '</div></div>'; }).join('') + '</div>';
+  }
+  // the desk paints its own screen (paint()), so the Rules tab and the claim check are put back after every paint
+  function inject() {
+    if (typeof VIEW === 'undefined' || VIEW !== 'branddesk') return;
+    var v = el('view'); if (!v) return;
+    var tabs = v.querySelector('.bd-tabs');
+    if (tabs && !tabs.querySelector('[data-bd7="tab"]')) {
+      var b = document.createElement('button'); b.type = 'button'; b.className = 'bd-chip' + (R.on ? ' on' : ''); b.setAttribute('data-bd7', 'tab'); b.textContent = 'Rules'; tabs.appendChild(b);
+      if (R.on) {
+        [].forEach.call(tabs.querySelectorAll('[data-bd]'), function (x) { x.classList.remove('on'); });
+        var n = tabs.nextSibling; while (n) { var nx = n.nextSibling; n.parentNode.removeChild(n); n = nx; }
+        tabs.insertAdjacentHTML('afterend', '<div id="bd7_rules">' + rulesHtml() + '</div>');
+      }
+    }
+    var tx = el('bd_text');
+    if (tx && !el('bd7_check')) {
+      var row = tx.parentNode.querySelector('.ap-row');
+      if (row) { row.insertAdjacentHTML('beforeend', '<button class="btn small ghost" type="button" id="bd7_check" data-bd7="check">Check the claims</button>'); row.insertAdjacentHTML('afterend', '<div id="bd7_lint">' + lintHtml() + '</div>'); }
+    }
+  }
+  function again() {
+    var box = el('bd7_rules');
+    if (R.on && box) { box.innerHTML = rulesHtml(); return; }
+    if (typeof repaint === 'function') repaint();
+  }
+  var rp = repaint;
+  repaint = function () { var r = rp.apply(this, arguments); inject(); return r; };
+  try { new MutationObserver(function () { inject(); }).observe(el('view') || document.body, { childList: true }); } catch (e) {}
+  document.addEventListener('click', function (e) {
+    var t = e.target.closest && e.target.closest('[data-bd7],[data-bd="tab"]'); if (!t || typeof VIEW === 'undefined' || VIEW !== 'branddesk') return;
+    if (t.getAttribute('data-bd') === 'tab') { if (R.on) { R.on = false; if (typeof repaint === 'function') repaint(); } return; }   // the desk's own tabs close Rules
+    var what = t.getAttribute('data-bd7'), id = t.getAttribute('data-id');
+    if (what === 'tab') { R.on = true; R.data = null; if (typeof repaint === 'function') repaint(); }
+    else if (what === 'level') { R.busy = 'level'; srv('erpBrandDeskCadence', [{ level: id }], function (r) { R.busy = ''; R.data = r; toast(id === 'scale' ? 'Scale level on.' : 'Start level on.'); again(); }, function (e2) { R.busy = ''; toast(msg(e2), true, 9000); again(); }); }
+    else if (what === 'save') {
+      var ws = {}; [].forEach.call(document.querySelectorAll('input[data-bd7p="' + id + '"]'), function (x) { ws[x.id.slice(('bd7_' + id + '_').length)] = Number(x.value || 0); });
+      R.busy = 'save:' + id; again();
+      srv('erpBrandDeskWeights', [{ platform: id, weights: ws }], function (r) { R.busy = ''; R.data = r; toast('Saved the mix for ' + id + '.'); again(); }, function (e3) { R.busy = ''; toast(msg(e3), true, 9000); again(); });
+    }
+    else if (what === 'check') {
+      var tx = el('bd_text'); R.busy = 'check'; R.lint = null; again();
+      srv('erpBrandDeskLint', [{ text: tx ? tx.value : '' }], function (r) { R.busy = ''; R.lint = r; var box = el('bd7_lint'); if (box) box.innerHTML = lintHtml(); var b = el('bd7_check'); if (b) b.textContent = 'Check the claims'; }, function (e4) { R.busy = ''; R.lint = { error: (e4 && e4.message) || String(e4) }; var box = el('bd7_lint'); if (box) box.innerHTML = lintHtml(); });
+    }
+  });
+  document.addEventListener('input', function (e) {
+    var x = e.target; if (!x || !x.getAttribute || !x.getAttribute('data-bd7p')) return;
+    var p = x.getAttribute('data-bd7p'), sum = 0; [].forEach.call(document.querySelectorAll('input[data-bd7p="' + p + '"]'), function (y) { sum += Number(y.value || 0); });
+    var s = el('bd7_sum_' + p); if (s) { s.textContent = sum + ' / 100'; s.classList.toggle('bad', sum !== 100); }
+  });
 })();
 </script>
 <!-- clean-1 (owner 28 Oct 2026, Pinterest reference "ERP/POS System - Yeakub Rahaman" / Starline dashboard): "keep every

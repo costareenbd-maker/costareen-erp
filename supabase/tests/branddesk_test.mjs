@@ -12,6 +12,9 @@ web.on(/^https:\/\/desk-test\.trycloudflare\.com\//, (url, opts) => {
   if (opts.headers['X-Bridge-Key'] !== KEY) return { status: 401, body: { error: 'wrong key' } };
   if (url.endsWith('/today')) return { body: { pacer: { lines: { linkedin: { waiting: 1 } } }, posts: { posts: [] }, networks: [{ id: 'n1', platform: 'linkedin', name: 'Rahman' }] } };
   if (url.endsWith('/post')) return { body: { queued: ['a', 'b'] } };
+  // brand-7: the claim check and the settings in the brand core database
+  if (url.endsWith('/lint')) { const t = (opts.body && JSON.parse(opts.body).text) || ''; return { body: { hits: /treats acne/i.test(t) ? [{ rule_id: 3, severity: 'block', reason: 'Health claim', match: 'treats' }] : (/#a #b #c #d/.test(t) ? [{ rule_id: 15, severity: 'warn', reason: 'More than 3 hashtags', match: '#a' }] : []) } }; }
+  if (url.endsWith('/settings') || url.endsWith('/settings/weights') || url.endsWith('/settings/cadence')) return { body: { topics: [{ key: 'beauty_wholesale', label_en: 'Wholesale' }, { key: 'printing_3d', label_en: '3D' }], weights: { linkedin: { beauty_wholesale: 100 } }, cadence: [], settings: { cadence_level: 'start' }, connectors: [] } };
   if (url.endsWith('/decide')) return { body: { ok: true } };
   if (url.endsWith('/shorts')) return { body: { jobs: { '18181596-5276-4153-9412-2f441efac82b': { state: 'making' } } } };
   if (/\/videos(\?q=.*)?$/.test(url)) return { body: { videos: [{ id: 'v1', name: 'clip01.mp4', duration: 2800, thumb: 'data:image/webp;base64,AAAA' }], q: decodeURIComponent((url.split('q=')[1] || '')) } };
@@ -57,6 +60,36 @@ check('an empty post is refused', !r.ok, r);
 r = await owner('erpBrandDeskPost', [{ networks: [{ id: 'n1', platform: 'linkedin' }, { id: 'n2', platform: 'x' }], content: 'Hello', urgent: true }]);
 const sent = seen.filter((s) => s.url.endsWith('/post')).pop();
 check('the post is queued on the PC', r.ok && r.result.queued === 2 && sent.body.networks.length === 2 && sent.body.urgent === true, r);
+// 4a. brand-7: the claim check stops a blocked post before it is queued; warnings do not stop it
+const before = seen.filter((x) => x.url.endsWith('/post')).length;
+r = await owner('erpBrandDeskPost', [{ networks: [{ id: 'n1', platform: 'linkedin' }], content: 'This serum treats acne fast' }]);
+check('a post the claim check blocks is refused and not queued', !r.ok && /claim check/.test(r.error) && seen.filter((x) => x.url.endsWith('/post')).length === before, r);
+r = await owner('erpBrandDeskPost', [{ networks: [{ id: 'n1', platform: 'linkedin' }], content: 'Sourcing day #a #b #c #d' }]);
+check('a warning alone does not stop the post', r.ok && r.result.queued === 2, r);
+r = await owner('erpBrandDeskLint', [{ text: 'treats acne' }]);
+check('the claim check answers on its own', r.ok && r.result.hits[0].severity === 'block', r);
+r = await owner('erpBrandDeskLint', [{ text: '' }]);
+check('an empty text has nothing to check', r.ok && r.result.hits.length === 0, r);
+r = await owner('erpBrandDeskSettings', []);
+check('the rules come from the brand database', r.ok && r.result.weights.linkedin.beauty_wholesale === 100, r);
+r = await owner('erpBrandDeskWeights', [{ platform: 'facebook', weights: { beauty_wholesale: 70, printing_3d: 20 } }]);
+check('a mix that does not add up to 100 is refused', !r.ok && /add up to 90/.test(r.error), r);
+r = await owner('erpBrandDeskWeights', [{ platform: 'facebook', weights: { beauty_wholesale: 75.5, printing_3d: 24.5 } }]);
+check('shares must be whole numbers', !r.ok, r);
+r = await owner('erpBrandDeskWeights', [{ platform: 'facebook', weights: { 'bad key!': 100 } }]);
+check('a strange topic name is refused', !r.ok, r);
+r = await owner('erpBrandDeskWeights', [{ platform: 'facebook', weights: { beauty_wholesale: 75, printing_3d: 25 } }]);
+const wsent = seen.filter((x) => x.url.endsWith('/settings/weights')).pop();
+check('a good mix goes to the brand database', r.ok && wsent && wsent.body.platform === 'facebook' && wsent.body.weights.printing_3d === 25, wsent);
+r = await owner('erpBrandDeskCadence', [{ level: 'max' }]);
+check('only start or scale', !r.ok, r);
+r = await owner('erpBrandDeskCadence', [{ level: 'scale' }]);
+check('the posting level changes', r.ok && seen.filter((x) => x.url.endsWith('/settings/cadence')).pop().body.level === 'scale', r);
+r = await mgr('erpBrandDeskSettings', []);
+check('a manager does not see the rules', !r.ok, r);
+r = await mgr('erpBrandDeskWeights', [{ platform: 'facebook', weights: { beauty_wholesale: 100 } }]);
+check('a manager cannot change the mix', !r.ok, r);
+
 r = await owner('erpBrandDeskDecide', [{ id: 'a', action: 'fire' }]);
 check('a strange answer is refused', !r.ok, r);
 r = await owner('erpBrandDeskDecide', [{ id: 'a', action: 'drop' }]);

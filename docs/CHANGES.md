@@ -3968,3 +3968,20 @@ Owner answers: money and phone numbers in Latin digits, games off by default, fi
   after a pick; revenue figure ink; consent hint behind "?"; Stock "Still coming" a real choice; one icon on empty Expenses.
 - Tests: uifinal 13, g1 15 (games default), arena, fdprefs, l1, u6, shellfinal, settings, serverfinal, access, erp_server, mgr_access,
   powers green. Crawl 44 views x 2 sizes EN + BN: 0 errors.
+
+## brand-7 (9-10 Nov 2026) - Brand desk: Rules (topic mix, how often) and the claim check
+Owner decisions 9 Nov (G:/bendar-brand/docs/DECISIONS-FINAL.md): beauty first, a topic mix he can change per platform, posting
+level start/scale from the research, and a guard against risky claims. The tools moved from his PC to the Mac mini; the
+bridge now answers at https://social.costareen.com/__brand-bridge (key header, outside the tools' single login) and checks in
+to the dev ERP every minute, so the desk is open around the clock. Settings live in a new "brand core" Postgres on the Mac.
+- New calls (owner only): erpBrandDeskSettings (read), erpBrandDeskWeights {platform, weights} (whole numbers, must add up
+  to 100), erpBrandDeskCadence {level: start|scale}, erpBrandDeskLint {text} (read).
+- erpBrandDeskPost runs the claim check first: a "block" hit (health/drug claim on a cosmetic, "official/authorised
+  distributor" unless the brand's letter is on file, the visa, engagement bait, "everyone sells fake", hundi) refuses the
+  post with the reason; "warn" hits (more than 3 hashtags, sponsored without disclosure, public prices) do not stop it.
+- Page: Brand desk gets a "Rules" tab (your name/line, how often, the topic mix per platform with a live sum, connections)
+  and "Check the claims" under Write a post.
+- Tests: branddesk 58 green (blocked post not queued, warning passes, mix must sum to 100, whole numbers, bad topic names,
+  start|scale only, manager refused). ads_test has 4 failures that are also on main without this change.
+- NOT done: the Rules screen was not clicked through in a browser (the local copy fakes every network call, so it cannot
+  reach the bridge); the n8n content flows (idea -> draft -> check -> approval -> Postiz) and the voice guide are next.
