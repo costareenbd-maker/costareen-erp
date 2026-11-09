@@ -41387,6 +41387,8 @@ html[data-bizkind="brand"] #tabbar button[data-tab="invoice"],html[data-bizkind=
   });
 })();
 </script>
+<!-- brand-9 (10 Nov 2026): every draft also has Copy the text + I posted it myself (Facebook profile, accounts not
+     connected) - the post is kept in the brand database with its link. -->
 <!-- brand-8 (10 Nov 2026): Brand desk drafts. Plan > Idea bank: pick an idea (or write one), tick platforms, "Write
      drafts" - the AI on the owner's ChatGPT plan writes one draft per platform in that platform's language, the claim
      check runs, and the drafts wait on Today under "Waiting for you": edit, pick the account, Approve (queued through the
@@ -41433,7 +41435,10 @@ html[data-bizkind="brand"] #tabbar button[data-tab="invoice"],html[data-bizkind=
         '<div class="bd-chips">' + (mine.length ? mine.map(function (n) { var k = x.id + ':' + n.id; return '<button type="button" class="bd-chip' + (D.nets[k] ? ' on' : '') + '" data-bd8="net" data-id="' + esc(k) + '" data-noi18n="1">' + esc((n.platform || '') + ' · ' + (n.name || '')) + '</button>'; }).join('') : '<span class="bd-meta">No ' + esc(x.platform) + ' account connected in Postiz yet - connect it at social.costareen.com, then approve.</span>') + '</div>' +
         '<div class="ap-row" style="gap:8px;flex-wrap:wrap;align-items:center"><label class="bd-meta" style="display:flex;gap:6px;align-items:center">Time <input class="i" type="datetime-local" id="bd8_at_' + x.id + '" style="width:auto"></label>' +
         '<button class="btn small" type="button" data-bd8="approve" data-id="' + x.id + '"' + (D.busy || !mine.length ? ' disabled' : '') + '>' + (D.busy === 'ap' + x.id ? '<span class="wd-spin"></span>' : '') + 'Approve and queue</button>' +
-        '<button class="btn small ghost" type="button" data-bd8="reject" data-id="' + x.id + '"' + (D.busy ? ' disabled' : '') + '>Reject</button></div></div>';
+        '<button class="btn small ghost" type="button" data-bd8="reject" data-id="' + x.id + '"' + (D.busy ? ' disabled' : '') + '>Reject</button></div>' +
+        '<div class="ap-row" style="gap:8px;flex-wrap:wrap;align-items:center;margin-top:6px"><button class="btn small ghost" type="button" data-bd8="copy" data-id="' + x.id + '">Copy the text</button>' +
+        '<input class="i" id="bd8_url_' + x.id + '" data-noi18n="1" style="flex:1;min-width:180px" placeholder="Link of the post (optional)">' +
+        '<button class="btn small ghost" type="button" data-bd8="manual" data-id="' + x.id + '"' + (D.busy ? ' disabled' : '') + '>I posted it myself</button></div></div>';
     });
     return h + '</div>';
   }
@@ -41482,6 +41487,15 @@ html[data-bizkind="brand"] #tabbar button[data-tab="invoice"],html[data-bizkind=
       var args = { platforms: plats }; if (id) args.idea_id = Number(id); else { var nw = el('bd8_new'); args.text = nw ? nw.value.trim() : ''; if (!args.text) return toast('Write the idea first.', true); }
       D.busy = 'write'; draw();
       srv('erpBrandDeskMakeDrafts', [args], function (r) { D.busy = ''; D.data = r; toast('The AI is writing. Drafts appear on Today in a minute or two.'); draw(); watch(); }, function (e2) { D.busy = ''; toast(msg(e2), true, 9000); draw(); });
+    }
+    else if (what === 'copy') {
+      var cb = el('bd8_body_' + id), txt = cb ? cb.value : '';
+      var done = function () { toast('Copied. Paste it on Facebook, then press I posted it myself.'); };
+      try { navigator.clipboard.writeText(txt).then(done, function () { if (cb) { cb.focus(); cb.select(); } toast('Select all and copy (the phone did not allow it).', true); }); } catch (e5) { if (cb) { cb.focus(); cb.select(); } }
+    }
+    else if (what === 'manual') {
+      var mb = el('bd8_body_' + id), mu = el('bd8_url_' + id); D.busy = 'ap' + id; draw();
+      srv('erpBrandDeskDraftDecide', [{ id: Number(id), action: 'manual', body: mb ? mb.value : '', url: mu ? mu.value.trim() : '' }], function (r) { D.busy = ''; D.data = r; toast('Kept as posted by hand.'); draw(); }, function (e6) { D.busy = ''; toast(msg(e6), true, 9000); draw(); });
     }
     else if (what === 'approve' || what === 'reject') {
       var did = Number(id), x = ((D.data && D.data.waiting) || []).filter(function (w) { return w.id === did; })[0]; if (!x) return;

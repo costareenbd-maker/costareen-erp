@@ -4017,3 +4017,11 @@ Blocks `<!-- crit3:fig -->`, `<!-- crit3:flow -->` after `<!-- CRIT3-MERGE 2026-
 - Tests: branddesk 66 green. Checked on the Mac: one idea -> a LinkedIn (EN) and a Facebook (BN) draft, no claim hits.
 - NOT done: no Postiz account is connected yet (owner's login), so Approve has nothing to queue to; the screens were not
   clicked in a browser; voice_score is not computed yet (needs his own posts first).
+
+## brand-9 (10 Nov 2026) - Brand desk: post by hand, one idea bank
+- Every draft waiting on Today also has "Copy the text" and "I posted it myself" (optional link). For the Facebook profile
+  (a profile cannot be posted to by software) or any account not connected yet: he pastes it himself, the post is kept in
+  the brand database (posts, format manual, link), the draft is closed and the idea marked published. Claim check still runs.
+- An idea caught under Plan (Memos) is also put in the idea bank, so "Write drafts" sees it; older memos join once.
+- Tests: branddesk green (manual needs no account, keeps the link, refuses a non-https link).
+- NOT done: screens not clicked in a browser.

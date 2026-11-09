@@ -108,6 +108,11 @@ check('only approve or reject', !r.ok, r);
 r = await owner('erpBrandDeskDraftDecide', [{ id: 5, action: 'approve', networks: [{ id: 'n1', platform: 'linkedin' }], body: 'Edited text' }]);
 const dc = seen.filter((x) => x.url.endsWith('/drafts/decide')).pop();
 check('an approval carries the account and the edited text', r.ok && dc.body.networks[0].id === 'n1' && dc.body.body === 'Edited text', dc && dc.body);
+r = await owner('erpBrandDeskDraftDecide', [{ id: 5, action: 'manual', url: 'ftp://x' }]);
+check('posted by hand: a strange link is refused', !r.ok && /https/.test(r.error), r);
+r = await owner('erpBrandDeskDraftDecide', [{ id: 5, action: 'manual', url: 'https://facebook.com/rahman/posts/1', body: 'As posted' }]);
+const man = seen.filter((x) => x.url.endsWith('/drafts/decide')).pop();
+check('posted by hand needs no account and keeps the link', r.ok && man.body.action === 'manual' && !man.body.networks && man.body.url.includes('facebook.com'), man && man.body);
 r = await mgr('erpBrandDeskMakeDrafts', [{ idea_id: 3 }]);
 check('a manager cannot ask for drafts', !r.ok, r);
 

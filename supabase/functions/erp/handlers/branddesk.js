@@ -148,8 +148,17 @@ export async function erpBrandDeskDraftDecide(ctx, payload) {
   await gate(ctx);
   const p = payload || {}, id = parseInt(p.id, 10), action = str(p.action);
   if (!(id > 0)) throw new Error('Pick a draft.');
-  if (!['approve', 'reject'].includes(action)) throw new Error('Approve or reject.');
+  if (!['approve', 'reject', 'manual'].includes(action)) throw new Error('Approve or reject.');
   if (action === 'reject') return bridge(ctx, '/drafts/decide', { id, action, note: str(p.note).slice(0, 500) });
+  // brand-9: posted by hand (Facebook profile, or an account not connected): no account, the record is kept
+  if (action === 'manual') {
+    const link = str(p.url);
+    if (link && !/^https:\/\/[^\s]{4,490}$/i.test(link)) throw new Error('The link must start with https://');
+    const m = { id, action };
+    if (str(p.body)) m.body = str(p.body).slice(0, 63000);
+    if (link) m.url = link;
+    return bridge(ctx, '/drafts/decide', m);
+  }
   const nets = Array.isArray(p.networks) ? p.networks.filter((n) => n && str(n.id) && str(n.platform)).map((n) => ({ id: str(n.id), platform: str(n.platform) })) : [];
   if (!nets.length) throw new Error('Pick the account it goes to.');
   const text = str(p.body);
