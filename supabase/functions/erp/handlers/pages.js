@@ -75,6 +75,9 @@ export async function erpInvoice(ctx, payload) {
     id: no, date: day(inv.created_at), when: dayTime(inv.created_at),
     customer: str(inv.customer_name), phone: str(inv.customer_phone), address: str(inv.customer_address),
     delivery: str(inv.source), method: str(inv.payment_method), status: str(inv.payment_status),
+    // crit4-pay (10 Nov 2026): every way the money actually came ("Nagad + Cash"), not only the method typed at the sale
+    paidBy: pays.filter((p) => num(p.amount) > 0 && !/^(adjusted|returned|advance|undone|return \/ refund)?$/i.test(str(p.method)))
+      .map((p) => str(p.method).replace(/\s+/g, ' ')).filter((m, i, all) => all.findIndex((x) => x.toLowerCase() === m.toLowerCase()) === i).join(' + '),
     note: plainNote(inv.note), webOrder: str(inv.web_order_no),
     lines: outLines, units,
     subtotal: Math.round(gross), discount: Math.round(num(inv.discount)),
@@ -83,7 +86,7 @@ export async function erpInvoice(ctx, payload) {
     returnedQty: backQty, returnedValue: Math.round(backValue),
     allBack: units > 0 && backQty >= units, cancelled,
     payments: pays.map((p) => ({ id: str(p.payment_no), when: dayTime(p.paid_at), amount: num(p.amount),
-                                 label: paymentLabel(p), note: plainNote(p.note), by: str(p.recorded_by) })),
+                                 label: paymentLabel(p), method: str(p.method), note: plainNote(p.note), by: str(p.recorded_by) })),
     returns: rets.map((r) => ({ id: str(r.return_no), when: dayTime(r.returned_at), product: str(r.product),
                                 qty: num(r.qty), condition: str(r.condition), value: Math.round(num(r.value)),
                                 money: str(r.money), reason: str(r.reason), by: str(r.recorded_by) })),

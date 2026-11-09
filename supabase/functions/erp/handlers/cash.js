@@ -41,9 +41,31 @@ export async function cashRules(ctx) {
 }
 
 /** The account a customer payment by this method lands in; null for what is not money (Adjusted, Returned, Advance…). */
+// crit4-pay (10 Nov 2026): the order is the owner's - the business's own method -> account rule (Settings / Money),
+// then the account whose name IS the method ("Cash" -> the Cash account, bKash / Bkash / BKASH -> the bKash account),
+// then none (the payment stays in "Payments in no account" as before, for the owner to place). What is not money
+// (Adjusted, Returned, Advance, Undone...) never lands in an account. Rows already written are never moved here.
+const NOT_MONEY = { '': 1, adjusted: 1, returned: 1, advance: 1, undone: 1, 'return / refund': 1 };
+const methodKey = (m) => str(m).toLowerCase().replace(/\s+/g, ' ');
 export async function accountForMethod(ctx, method) {
   const r = await cashRules(ctx);
-  return r.map[str(method).toLowerCase()] || null;
+  const raw = str(method).toLowerCase(), m = methodKey(method);
+  if (r.map[raw]) return r.map[raw];
+  if (r.map[m]) return r.map[m];
+  if (NOT_MONEY[m]) return null;
+  if (!ctx.memo.cashByName) {
+    // row security hides money_accounts below shareholder: 168_pay_account_by_name.sql hands members the ids + names only
+    const byName = {};
+    const fn = (await ctx.tx`select to_regprocedure('public.money_account_names(uuid)') is not null as ok`)[0].ok;
+    const rows = fn ? await ctx.tx`select id, name from public.money_account_names(${ctx.biz})`
+      : await ctx.tx`select id, name from money_accounts where business_id = ${ctx.biz} and not coalesce(archived, false) order by sort_order, created_at`;
+    for (const a of rows) {
+      const k = methodKey(a.name);
+      if (k && !byName[k]) byName[k] = a.id;
+    }
+    ctx.memo.cashByName = byName;
+  }
+  return ctx.memo.cashByName[m] || null;
 }
 /** The account expenses are paid from unless one is named. */
 export async function expenseAccount(ctx, wanted) {
@@ -232,7 +254,7 @@ export async function erpCashSetup(ctx, payload) {
   }
   if (courier) { map['cod (steadfast)'] = courier; map.cod = courier; }
   await setConfig(ctx, 'money_rules', JSON.stringify({ map, expense: cash, payout: bank }));
-  delete ctx.memo.cashRules;
+  delete ctx.memo.cashRules; delete ctx.memo.cashByName;
   await stampOld(ctx);
   return erpCashBook(ctx, {});
 }
@@ -302,7 +324,7 @@ export async function erpCashMapSave(ctx, payload) {
   }
   for (const k of ['expense', 'payout']) if (payload[k] && !ok[payload[k]]) throw new Error('One of the chosen accounts is not in use.');
   await setConfig(ctx, 'money_rules', JSON.stringify({ map, expense: payload.expense || '', payout: payload.payout || '' }));
-  delete ctx.memo.cashRules;
+  delete ctx.memo.cashRules; delete ctx.memo.cashByName;
   return erpCashBook(ctx, {});
 }
 

@@ -4089,3 +4089,24 @@ Critique 4's click-reach probe (all 44 views x 2 sizes, elementFromPoint grid): 
 customers 111, products 149, shipments 144, analytics 209, syscheck 35 points opened "How ... is worked out". `.fdd-k .fdd-i`
 is `position:static !important` outside the dashboard, so hotfix-1's inline position lost. The guard now sets it with
 !important (relative, no offsets: nothing moves). After: 0 stolen points on all 88 view x size.
+
+## crit-4 (10 Nov 2026): fixes from the real-click critique (23/40)
+The fourth critique used the ERP with real clicks and taps (desktop + phone) and found live bugs screenshots missed. Blocks
+`<!-- crit4:inv -->`, `<!-- crit4:pay -->` after `<!-- CRIT4-MERGE 2026-11-10 -->`. Snapshot .impeccable/critique/2026-11-09T18-50-55Z.
+- New invoice: leaving Name no longer repaints (in-place update); money/qty/address boxes repaint only after the press that
+  left them has landed, with focus/caret restored and a redrawn target re-clicked - typed phones are kept, Part paid sticks
+  (field-switch battery 0/13 -> 13/13 desktop, 0/12 -> 12/12 phone). Line boxes wide enough (price 92px, qty 58px), Down+Enter
+  adds the FIRST result, Stock entry search has keys, success window primary "New invoice", WhatsApp toast amber + auto-close,
+  methods Cash, bKash, Nagad first + last used per device, one order Products -> lines -> Customer -> Payment.
+- Receive payment opens inside the invoice drawer on phone and desktop (amount = due, Cash first, split ways); the due box
+  belongs to one customer and is cleared on route change (no foreign due on another customer's page).
+- Payments post to the account of the same name (explicit > business rule > same-name open account > none) for invoice save,
+  parts, receive due, advance, COD, courier, repairs, refunds; 168_pay_account_by_name.sql gives members ids + names of open
+  accounts only (no balances). "Paid by" lists every method. payfinal_test 29.
+- Customers desktop: list first, owe rows open the customer, Back on customer/invoice pages. Money: statement scrolls into view,
+  warning tone for "no account" / "Out of stock" tiles. Stock wizard: shipment box on step 1 only, review sentence with real ৳
+  figures, Receive below the table. Chat FAB moves clear of row buttons. ৳ everywhere on screen.
+- Click reach after merge: 0 stolen points on 44 views x 2 sizes. Real-click flows desktop + phone: invoice saved with part
+  payment (paid 2,000 / due 2,700 read back), receive due lands in the Cash statement, no foreign due box, Back works.
+- Known, not from this work: factory_test "upload address expired is asked for once more" fails today on this and on the
+  final-1 code (date-dependent); ads_test 4 (old); golive needs IMPORT_DIR.

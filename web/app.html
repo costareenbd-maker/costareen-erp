@@ -2017,7 +2017,7 @@ function wireInvoice() {
 
   // name is required, so re-render on change to clear the blocking message
   var nm = el('cname');
-  if (nm) nm.addEventListener('blur', repaint);
+  if (nm) nm.addEventListener('blur', function () { if (typeof window.invSoft === 'function') window.invSoft(); else repaint(); });   // crit4-inv: no full redraw on leaving the name
 
   var ph = el('cphone');
   if (ph) ph.addEventListener('blur', function () {
@@ -7680,8 +7680,7 @@ function wireDueBox() {
     function done(res) {
       go.disabled = false; go.textContent = 'Save';
       if (res && res.dues) { DUES = res.dues; updateDueCount(); }
-      openDueBox(DUEBOX.phone, DUEBOX.name);
-      toast('Saved.');
+      if (typeof payDueSaved === 'function') payDueSaved(res); else { openDueBox(DUEBOX.phone, DUEBOX.name); toast('Saved.'); }   // crit4-pay
     }
     function failed(e) {
       go.disabled = false; go.textContent = 'Save';
@@ -42229,17 +42228,21 @@ html[data-look="clean"][data-skin="fd"]:root .t2line span { color:var(--fd-text-
   function previewHtml() {
     if (PE.err) return '<div class="note err pe-prev"><div class="ico">!</div><div><strong>Check the prices before receiving.</strong><br>' + esc(PE.err) + '</div></div>';
     var r = PE.res; if (!r) return '<div class="sub pe-prev">' + (PE.busy ? 'Working out what each line costs…' : '') + '</div>';
+    // crit4-pay: with the price book the server leaves goodsBdt at 0 - the goods are what the lines say (goods each x qty)
+    var pT = function (v) { return typeof tk === 'function' ? tk(Math.round(Number(v) || 0)) : fmt(Math.round(Number(v) || 0)) + ' TK'; };
+    var pG = Number(r.goodsBdt) > 0 ? Number(r.goodsBdt) : r.lines.reduce(function (t, l) { return t + (Number(l.goods) || 0) * (Number(l.qty) || 0); }, 0);
+    var pS = Number(r.shippingBdt) > 0 ? Number(r.shippingBdt) : Math.max(0, (Number(r.totalBdt) || 0) - pG);
     var rows = r.lines.map(function (l) {
       return '<tr><td class="nm">' + esc(l.name || l.sku) + (l.sku ? '<br><span class="sku">' + esc(l.sku) + '</span>' : '') + '</td><td class="num">' + fmt(l.qty) + '</td>' +
         '<td class="num">' + (l.priceBdt > 0 ? fmt(l.priceBdt) : '—') + '</td><td class="num">' + fmt(l.goods) + '</td><td class="num">' + fmt(l.shipping) + '</td>' +
         '<td class="num' + (l.noCost ? ' pe-bad' : '') + '"><b>' + fmt(l.unitCost) + '</b></td><td class="num">' + fmt(l.total) + '</td></tr>';
     }).join('');
     return '<div class="pe-prev"><h3 style="margin:0 0 6px">What each line will cost</h3><div class="scroll"><table><thead><tr><th>Product</th><th class="num">Qty</th>' +
-      '<th class="num">Price each (TK)</th><th class="num">Goods each</th><th class="num">Shipping each</th><th class="num">Cost each</th><th class="num">Line total</th></tr></thead><tbody>' + rows +
+      '<th class="num">Price each (৳)</th><th class="num">Goods each</th><th class="num">Shipping each</th><th class="num">Cost each</th><th class="num">Line total</th></tr></thead><tbody>' + rows +
       '<tr class="pe-total"><td>Total</td><td class="num">' + fmt(r.lines.reduce(function (t, l) { return t + l.qty; }, 0)) + '</td><td></td>' +
-      '<td class="num">' + fmt(r.goodsBdt) + '</td><td class="num">' + fmt(r.shippingBdt) + '</td><td></td><td class="num">' + fmt(r.totalBdt) + '</td></tr></tbody></table></div>' +
-      '<div class="sub" style="margin-top:6px">Goods ' + fmt(r.goodsBdt) + ' TK + shipping and costs ' + fmt(r.shippingBdt) + ' TK' + (r.freightNote ? ' (' + esc(r.freightNote) + ')' : '') +
-      ' = <b>' + fmt(r.totalBdt) + ' TK</b>. ' + (r.priced ? 'Shared by each line’s price.' : 'Shared by the price book / the products’ cost.') + '</div></div>';
+      '<td class="num">' + fmt(Math.round(pG)) + '</td><td class="num">' + fmt(Math.round(pS)) + '</td><td></td><td class="num">' + fmt(r.totalBdt) + '</td></tr></tbody></table></div>' +
+      '<div class="sub" style="margin-top:6px">' + bnL('Goods ', 'মাল ') + pT(pG) + bnL(' + shipping and costs ', ' + শিপিং ও খরচ ') + pT(pS) + (r.freightNote ? ' (' + esc(r.freightNote) + ')' : '') +
+      ' = <b>' + pT(r.totalBdt) + '</b>. ' + (r.priced ? bnL('Shared by each line’s price.', 'প্রতিটা লাইনের দাম অনুযায়ী ভাগ করা।') : bnL('Shared by the price book / the products’ cost.', 'প্রাইস বুক / প্রোডাক্টের খরচ অনুযায়ী ভাগ করা।')) + '</div></div>';
   }
   function peFetch() {
     if (!RECV.lines.length || (typeof rvOpenCount === 'function' && rvOpenCount())) { PE.res = null; PE.err = ''; peBox(); return; }
@@ -43647,6 +43650,7 @@ function phoneListOrder(v) {
   var box = fold.querySelector('.nt-fold-in'), moved = 0;
   kids.forEach(function (c) {
     if (c === fold || c === list) return;
+    if (c.hasAttribute && c.hasAttribute('data-pay-duebox')) return;   // crit4-pay: the due box the person just opened stays on top
     if (list && !(c.compareDocumentPosition(list) & Node.DOCUMENT_POSITION_FOLLOWING)) return;   // only what sits above the list
     if (c.id === 'fdHead') {
       // the page title stays on top; its tiles go into the summary
@@ -49509,7 +49513,7 @@ html[data-look="clean"] .dm-crow { box-shadow:none; }
     srv('erpSettleDue', [{ phone: DUEBOX.phone, name: DUEBOX.name, reason: 'payment', parts: list, note: note }], function (res) {
       go.disabled = false; go.textContent = L('Save', 'সেভ করুন');
       if (res && res.dues) { DUES = res.dues; if (typeof updateDueCount === 'function') updateDueCount(); }
-      if (typeof openDueBox === 'function') openDueBox(DUEBOX.phone, DUEBOX.name);
+      if (typeof payDueSaved === 'function') payDueSaved(res, true); else if (typeof openDueBox === 'function') openDueBox(DUEBOX.phone, DUEBOX.name);   // crit4-pay
       toast(bn() ? list.length + ' ভাবে ' + TK(res && res.amount) + ' পাওয়া গেল, এক পেমেন্ট হিসেবে লেখা হলো।' : TK(res && res.amount) + ' received in ' + list.length + ' ways, recorded as one payment.');
     }, function (err) { go.disabled = false; go.textContent = L('Save', 'সেভ করুন'); toast(esc((err && err.message) || err), true, 15000); });
   }, true);
@@ -52585,7 +52589,7 @@ html[lang="en"] #view table.m-cards > tbody > tr > td::before { text-transform:n
   });
 
   /* ============================================================ 3. invoice search: keyboard */
-  var HL = { i: -1, fam: '' };
+  var HL = { i: -1, fam: '', user: false };   // crit4-inv: user = an arrow key has moved the highlight
   function opts(box) { return [].filter.call(box.querySelectorAll('.r[data-pick], .r.fam, .famc button[data-pick]'), function (n) { return n.getClientRects().length > 0; }); }
   function setHl(box, list, i) {
     var q = el('isearch');
@@ -52608,7 +52612,7 @@ html[lang="en"] #view table.m-cards > tbody > tr > td::before { text-transform:n
     if (start < 0) { for (var k = 0; k < list.length; k++) if (list[k].matches('.r[data-pick]')) { start = k; break; } }
     if (start < 0) start = 0;
     // a touch phone keeps tap: no row is marked until a key is pressed
-    setHl(box, list, coarse ? -1 : start);
+    HL.user = false; setHl(box, list, coarse ? -1 : start);
   }
   if (typeof paintResults === 'function') {
     var paintResultsFl = paintResults;
@@ -52626,7 +52630,8 @@ html[lang="en"] #view table.m-cards > tbody > tr > td::before { text-transform:n
     if (ev.key === 'ArrowDown' || ev.key === 'ArrowUp') {
       if (!list.length || box.classList.contains('fl-closed')) return;
       ev.preventDefault();
-      var i = HL.i < 0 ? (ev.key === 'ArrowDown' ? 0 : list.length - 1) : (HL.i + (ev.key === 'ArrowDown' ? 1 : -1) + list.length) % list.length;
+      var i = HL.i < 0 ? (ev.key === 'ArrowDown' ? 0 : list.length - 1) : (!HL.user && ev.key === 'ArrowDown') ? HL.i : (HL.i + (ev.key === 'ArrowDown' ? 1 : -1) + list.length) % list.length;
+      HL.user = true;   // crit4-inv
       setHl(box, list, i); return;
     }
     if (ev.key === 'Escape') {
@@ -52779,6 +52784,1121 @@ html[lang="en"] #view table.m-cards > tbody > tr > td::before { text-transform:n
   try { if (typeof AFTER_PAINT !== 'undefined') AFTER_PAINT.push(anchor); } catch (e) {}
   window.addEventListener('resize', function () { var l = document.querySelectorAll(SEL); for (var i = 0; i < l.length; i++) l[i].__hfx = 0; soon(); });
   anchor();
+})();
+</script>
+<!-- CRIT4-MERGE 2026-11-10 -->
+<!-- crit4:inv -->
+<!-- crit4-inv (10 Nov 2026): New invoice after the fourth (real-click) critique. (1) Leaving a box never takes the next
+     tap or the typed text with it: the name box no longer redraws the invoice on blur (the bar and the red marks update
+     in place); a redraw that a money / quantity box needs when it is left waits until the press that left it has landed
+     (the chip, box or button pressed gets it), then the focus, caret and typed value come back to the same box; a press
+     whose target was redrawn anyway is replayed on the new one. (2) Desktop line boxes wide enough for a 7-digit price
+     and a 4-digit quantity, tabular figures. (3) Search: the first Down stays on the first product (inplace json); the
+     Stock entry search gets the same Up / Down / Enter / Esc. (4) After Save: "New invoice" is the one primary, then
+     Save PDF / Print / WhatsApp, ৳ amounts; the WhatsApp "not sent" note is an amber warning that closes by itself after
+     8 s and on the next screen. (5) Payment ways: Cash, bKash, Nagad, then the rest; the way this counter used last is
+     the default (this device; Cash when nothing yet). (6) One order on every width: Products, lines, Customer, Payment
+     (the Summary at the side on a wide screen); label rows of one height; one title on a phone; the invoice discount on
+     the sale's drawer is one line, not spread over the lines. (7) Phone: while a box is typed in, the Save bar is one
+     line and the tab bar steps away; a message never sits over the box being typed in. -->
+<style>
+/* ---------- 2. desktop invoice lines: the whole figure shows */
+@media (min-width:768px) {
+  #view tr.sell-line input[data-sellat], #view tr.sell-line input[data-qty], #view tr.sell-line input[data-disc] {
+    padding-left:8px !important; padding-right:8px !important; font-variant-numeric:tabular-nums; text-align:right; -moz-appearance:textfield; appearance:textfield; }
+  #view tr.sell-line input[data-sellat]::-webkit-inner-spin-button, #view tr.sell-line input[data-qty]::-webkit-inner-spin-button, #view tr.sell-line input[data-disc]::-webkit-inner-spin-button,
+  #view tr.sell-line input[data-sellat]::-webkit-outer-spin-button, #view tr.sell-line input[data-qty]::-webkit-outer-spin-button, #view tr.sell-line input[data-disc]::-webkit-outer-spin-button { -webkit-appearance:none; margin:0; }
+  #view tr.sell-line > td:nth-child(2) input[data-sellat] { width:92px !important; }
+  #view tr.sell-line > td:nth-child(4) input[data-disc] { width:76px !important; }
+  #view tr.sell-line > td:nth-child(3) input[data-qty] { width:58px !important; text-align:center; }
+  #view tr.sell-line > td.nm, #view tr.sell-line ~ tr > td.nm, #view table:has(> tbody > tr.sell-line) > thead th:first-child { min-width:168px !important; }
+  #view tr.sell-line > td:nth-child(5) { font-variant-numeric:tabular-nums; white-space:nowrap; }
+  #view table:has(> tbody > tr.sell-line) th, #view tr.sell-line > td { padding-left:6px !important; padding-right:6px !important; }
+  #view tr.sell-line .qst { gap:3px; }
+  #view tr.sell-line .qst button { width:28px; }
+}
+/* a computer narrower than 1440px: the Summary column gives the lines the room (it holds only short figures) */
+@media (min-width:1180px) and (max-width:1439px) {
+  #view .inv2.inv3 { grid-template-columns:minmax(0, 1fr) minmax(280px, 300px) !important; }
+  #view tr.sell-line > td.nm, #view tr.sell-line ~ tr > td.nm, #view table:has(> tbody > tr.sell-line) > thead th:first-child { min-width:148px !important; }
+}
+/* ---------- 6. one order on every width: Products, lines, Customer, Payment; the Summary at the side on a wide screen */
+@media (min-width:1180px) {
+  #view .inv2.inv3.inv4 > .inv2-l { grid-column:1; grid-row:1; }
+  #view .inv2.inv3.inv4 > .inv2-r:not(.sell-payr) { grid-column:1; grid-row:2; }
+  #view .inv2.inv3.inv4 > .inv4-cust { grid-column:1; grid-row:3; }
+  #view .inv2.inv3.inv4 > .sell-payr { grid-column:1; grid-row:4; }
+  #view .inv2.inv3.inv4 > .inv3-sum { grid-column:2; grid-row:1 / span 4; }
+}
+@media (min-width:761px) and (max-width:1179px) {
+  #view .inv2.inv4 { display:flex; flex-direction:column; }
+  #view .inv2.inv4 > .inv2-l { order:1; }
+  #view .inv2.inv4 > .inv2-r:not(.sell-payr) { order:2; }
+  #view .inv2.inv4 > .inv4-cust { order:3; }
+  #view .inv2.inv4 > .sell-payr { order:4; }
+  #view .inv2.inv4 > .inv3-sum { order:5; }
+}
+@media (max-width:760px) {
+  #view .inv2.inv4 > .inv4-cust { order:3; }
+  #view .inv2 [data-paymode] { min-height:40px; }
+}
+/* the customer card keeps its two columns after it moved out of the left column */
+#view .inv2 > .inv4-cust .fields { grid-template-columns:1fr 1fr; }
+/* the label row above each box is one height, with or without its "?" */
+#view .inv2 .fields > div > label.f { display:flex; align-items:center; flex-wrap:wrap; gap:0 4px; min-height:24px; line-height:1.25; }
+/* a phone shows one "New invoice": the page title (the breadcrumb above it said the same) */
+@media (max-width:640px) { :root[data-skin] body[data-fdview="invoice"] #o_cp, :root[data-skin] body.fd-cp-on[data-fdview="invoice"] #o_cp, body[data-fdview="invoice"] #o_cp { display:none !important; } }
+
+/* ---------- 4. after Save */
+#toast.inv4-warn { border-left-color:var(--fd-warning, #F59E0B) !important; }
+#toast.inv4-warn .fdt-ic, #toast.inv4-warn .fdt-ic svg { color:var(--fd-warning-text, #9A5B00) !important; stroke:currentColor; }
+#invdone .inv4-acts { display:flex; flex-wrap:wrap; gap:8px; justify-content:center; margin-top:4px; }
+#invdone .inv4-acts .btn { min-height:40px; margin:0; }
+@media (max-width:640px) { #invdone .inv4-acts .btn.primary { flex:1 1 100%; justify-content:center; } }
+
+/* ---------- 7. phone: the Save bar in two rows (figure + Save, then the WhatsApp line), one row while typing */
+@media (max-width:640px) {
+  #view .c3bar > .nt-wa, #view .c3bar > .sub { order:9; flex:1 1 100%; margin:0 !important; }
+}
+@media (max-width:760px) {
+  html.inv4-typing #tabbar { display:none !important; }
+  html.inv4-typing body.has-tabbar #view .c3bar, html.inv4-typing #view .c3bar { bottom:env(safe-area-inset-bottom) !important; flex-wrap:nowrap !important; gap:8px !important; padding:6px 10px !important; }
+  html.inv4-typing #view .c3bar > *:not(.c3t):not(.c3d):not(#c3save) { display:none !important; }
+  html.inv4-typing #view .c3bar .c3t { font-size:16px; }
+  html.inv4-typing #view .c3bar #c3save { min-height:40px; padding:6px 14px; margin-left:auto; }
+}
+/* ---------- 3. stock entry search: the row the keys are on */
+#rv_results .inv4-hl { outline:2px solid var(--fd-text, var(--ink, #17181C)); outline-offset:-2px; background:var(--fd-surface-2, var(--surface-2, #F3F4F6)); }
+#rv_results.inv4-closed { display:none; }
+</style>
+<script>
+(function () {
+  var LL = function (en, bn) { return typeof LANG !== 'undefined' && LANG === 'bn' ? bn : en; };
+  var E = function (s) { return typeof esc === 'function' ? esc(s) : String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); };
+  var money = function (v) { return typeof tk === 'function' ? tk(v) : String(v); };
+  var num0 = function (v) { return typeof fmt === 'function' ? fmt(v) : String(v); };
+  var narrow = function (w) { return !!(window.matchMedia && window.matchMedia('(max-width:' + (w || 760) + 'px)').matches); };
+  var onInv = function () { return typeof VIEW !== 'undefined' && VIEW === 'invoice'; };
+  var V = function () { return document.getElementById('view'); };
+  function inView(n) { var v = V(); return !!(n && v && n !== v && v.contains(n)); }
+  function isField(n) { return !!(n && /^(INPUT|TEXTAREA|SELECT)$/.test(n.tagName) && !/^(button|submit|reset|checkbox|radio|file|hidden|image)$/i.test(n.type || '')); }
+  try {
+    var BN = {
+      'New invoice': 'নতুন ইনভয়েস', 'Save PDF': 'PDF সেভ করুন', 'Print': 'প্রিন্ট', 'Send on WhatsApp': 'WhatsApp-এ পাঠান', 'Payment': 'পেমেন্ট',
+      'Invoice discount': 'ইনভয়েসে ছাড়', 'Discount per piece': 'প্রতি পিসে ছাড়', 'Opens the invoice PDF to print': 'প্রিন্টের জন্য ইনভয়েসের PDF খোলে',
+      'Products found': 'পাওয়া প্রোডাক্ট', 'paid': 'পেমেন্ট হয়েছে'
+    };
+    for (var k in BN) if (!I18N_BN[k]) I18N_BN[k] = BN[k];
+  } catch (e) {}
+
+  /* ===================================================================== 1. a box that is left keeps the next tap */
+  // what a node is, so the same one is found again after a redraw: its id, or its tag and data-* attributes
+  function sig(n) {
+    if (!n || n.nodeType !== 1) return '';
+    if (n.id && !/^(flopt|inv4rv)\d+$/.test(n.id)) return '#' + (window.CSS && CSS.escape ? CSS.escape(n.id) : n.id);
+    var s = n.tagName.toLowerCase(), any = false;
+    for (var i = 0; i < n.attributes.length; i++) {
+      var a = n.attributes[i];
+      if (/^data-/.test(a.name) && !/^data-(t2|noi18n|tip|hint|fl|inv4)/.test(a.name)) { s += '[' + a.name + '="' + String(a.value).replace(/["\\]/g, '\\$&') + '"]'; any = true; }
+    }
+    return any ? s : '';
+  }
+  function findSig(s) {
+    var v = V(); if (!s || !v) return null;
+    try { var l = v.querySelectorAll(s); return l.length === 1 ? l[0] : null; } catch (e) { return null; }
+  }
+  var PTR = null;        // what the finger / mouse went down on, until its click has landed
+  var TRANS = 0;         // inside the change / blur that leaving a box sends
+  var CHG = null;        // the box whose change is being sent
+  var PEND = false, BYPASS = false, PTR_T = 0;
+  document.addEventListener('pointerdown', function (e) {
+    if (!onInv()) { PTR = null; return; }
+    var t = e.target && e.target.closest ? e.target.closest('button, a, input, select, textarea, label, [data-pick], [data-paymode], [role="option"], [tabindex]') : null;
+    PTR = inView(t) ? { node: t, sig: sig(t), lost: false, landed: false, replayed: false } : null;
+  }, true);
+  ['change', 'blur', 'focusout'].forEach(function (type) {
+    document.addEventListener(type, function (e) {
+      if (!onInv() || !inView(e.target)) return;
+      TRANS++; if (type === 'change') CHG = e.target;
+      setTimeout(function () { TRANS = Math.max(0, TRANS - 1); if (!TRANS) CHG = null; }, 0);
+    }, true);
+  });
+  function flush() {
+    clearTimeout(PTR_T);
+    if (!PEND) return;
+    PEND = false; BYPASS = true;
+    try { repaint(); } finally { BYPASS = false; }
+  }
+  function replay() {
+    var p = PTR; if (!p || !p.lost || p.landed || p.replayed) return;
+    var n = findSig(p.sig); if (!n) return;
+    p.replayed = true;
+    if (isField(n)) { try { n.focus(); } catch (e) {} } else { try { n.click(); } catch (e) {} }
+  }
+  document.addEventListener('click', function (e) {
+    var p = PTR;
+    if (p) {
+      var n = p.lost ? findSig(p.sig) : p.node;
+      if (n && n.contains && n.contains(e.target)) p.landed = true;
+    }
+    // a handler that stops the click before it reaches the document still gets the waiting redraw
+    setTimeout(function () { if (PEND) flush(); replay(); if (PTR === p) PTR = null; }, 0);
+  }, true);
+  // after every handler of the click (still inside the tap, so a phone keeps its keyboard): the redraw that waited for it
+  document.addEventListener('click', function () { if (PEND) flush(); });
+  document.addEventListener('mouseup', function () { setTimeout(replay, 0); }, true);
+  document.addEventListener('pointerup', function () {
+    clearTimeout(PTR_T);
+    PTR_T = setTimeout(function () { if (PEND) flush(); replay(); PTR = null; }, 700);   // a press with no click (a scroll, a drag)
+  }, true);
+  document.addEventListener('pointercancel', function () { clearTimeout(PTR_T); PTR_T = setTimeout(function () { if (PEND) flush(); PTR = null; }, 50); }, true);
+
+  // the redraw itself: the box being typed in comes back with its text and caret; a pressed target that was redrawn is replayed
+  function paintKeep(fn, self, args) {
+    var a = document.activeElement, keep = null;
+    if (inView(a)) {
+      keep = { node: a, sig: sig(a), field: isField(a), v: a.value, dv: a.defaultValue, changed: a === CHG };
+      try { keep.s = a.selectionStart; keep.e = a.selectionEnd; } catch (e) {}
+    }
+    PEND = false;
+    var r = fn.apply(self, args);
+    if (keep && keep.sig && !document.contains(keep.node)) {
+      var n = findSig(keep.sig);
+      if (n && n !== document.activeElement) {
+        // what was typed and not yet taken in (the redraw did not change that box) stays; a value the redraw changed wins
+        if (keep.field && !keep.changed && n.tagName !== 'SELECT' && n.defaultValue === keep.dv && n.value !== keep.v) n.value = keep.v;
+        try { n.focus({ preventScroll: true }); } catch (e) { try { n.focus(); } catch (x) {} }
+        if (keep.field && n.value === keep.v && keep.s != null) { try { n.setSelectionRange(keep.s, keep.e); } catch (e) {} }
+        else if (keep.field && n.tagName === 'INPUT') { var v0 = n.value; n.value = ''; n.value = v0; }   // a number box has no caret to set: it goes to the end
+      }
+    }
+    if (PTR && PTR.node && !document.contains(PTR.node)) PTR.lost = true;
+    return r;
+  }
+  if (typeof repaint === 'function') {
+    var repaintInv4 = repaint;
+    repaint = function () {
+      if (!onInv()) return repaintInv4.apply(this, arguments);
+      // a box is being left: wait until the press that left it has landed (or, from the keyboard, until the focus moved)
+      if (!BYPASS && TRANS) {
+        PEND = true;
+        var own = PTR && PTR.node && PTR.node === CHG;   // a select changed by its own press: no click to wait for
+        if (!PTR || own) setTimeout(flush, 0);
+        return;
+      }
+      return paintKeep(repaintInv4, this, arguments);
+    };
+  }
+
+  // the name box: nothing on the invoice is drawn from the name, so leaving it updates only the bar and the red marks
+  function barRefresh() {
+    if (!onInv() || typeof viewInvoice !== 'function') return;
+    var bar = document.querySelector('#view .c3bar'); if (!bar || bar.contains(document.activeElement)) return;
+    var tmp = document.createElement('div');
+    try { tmp.innerHTML = viewInvoice(); } catch (e) { return; }
+    var fresh = tmp.querySelector('.c3bar'); if (!fresh) return;
+    if (fresh.innerHTML !== bar.innerHTML) bar.innerHTML = fresh.innerHTML;
+  }
+  window.invSoft = function () {
+    if (!onInv()) return;
+    try { barRefresh(); } catch (e) {}
+    try { if (typeof invSaveState === 'function') invSaveState(); } catch (e) {}
+    try { if (typeof invMarks === 'function') invMarks(); } catch (e) {}
+  };
+  var SOFT_T = 0;
+  document.addEventListener('input', function (e) {
+    if (!onInv() || !e.target || !/^(cname|cphone)$/.test(e.target.id)) return;
+    clearTimeout(SOFT_T); SOFT_T = setTimeout(function () { try { if (typeof invSaveState === 'function') invSaveState(); } catch (x) {} }, 150);
+  });
+  // the phone box: what the bar says about WhatsApp follows the number once it is left (a new customer is not redrawn)
+  document.addEventListener('focusout', function (e) {
+    if (!onInv() || !e.target || e.target.id !== 'cphone') return;
+    setTimeout(window.invSoft, 0);
+  });
+
+  /* ===================================================================== 5. payment ways: Cash, bKash, Nagad, then the rest */
+  var MKEY = 'erp.inv.lastMethod';
+  function lsGet() { try { return localStorage.getItem(MKEY) || ''; } catch (e) { return ''; } }
+  function lsSet(v) { try { if (v) localStorage.setItem(MKEY, v); } catch (e) {} }
+  function rank(m) { var s = String(m).trim().toLowerCase(); return s === 'cash' ? 0 : s === 'bkash' ? 1 : s === 'nagad' ? 2 : 3; }
+  if (typeof t1Methods === 'function') {
+    var t1MethodsInv4 = t1Methods;
+    t1Methods = function () {
+      var ms = t1MethodsInv4.apply(this, arguments);
+      if (!onInv() || !ms || !ms.map) return ms;
+      return ms.map(function (m, i) { return { m: m, i: i }; }).sort(function (a, b) { return rank(a.m) - rank(b.m) || a.i - b.i; }).map(function (x) { return x.m; });
+    };
+  }
+  var FIRST_PAY = true;   // the page start fills in Cash before the invoice is drawn: the first empty sale still gets the remembered way
+  document.addEventListener('change', function (e) { if (e.target && e.target.id === 'fmethod') FIRST_PAY = false; }, true);
+  if (typeof payBlockHtml === 'function') {
+    var payBlockHtmlInv4 = payBlockHtml;
+    payBlockHtml = function () {
+      try {
+        var fresh = !FORM.method || (FIRST_PAY && !CART.length);
+        FIRST_PAY = false;
+        if (fresh && FORM.payMode !== 'split') {
+          var last = lsGet(), ms = typeof t1Methods === 'function' ? t1Methods() : [];
+          if (last && ms.indexOf(last) >= 0) FORM.method = last;
+        }
+      } catch (e) {}
+      return payBlockHtmlInv4.apply(this, arguments);
+    };
+  }
+  var LAST_SALE = null;
+  if (typeof srv === 'function') {
+    var srvInv4 = srv;
+    srv = function (name, args, ok, bad) {
+      if (name === 'erpCreateInvoice' && onInv() && args && args[0] && typeof args[0] === 'object' && !args[0].hold) {
+        var a = args[0], way = a.payMode === 'split' || (a.payments && a.payments.length > 1) ? '' : (a.paymentMethod || '');
+        var cust = a.customer || {};
+        LAST_SALE = { phone: String(cust.phone || '').trim(), pickup: typeof t1Type === 'function' && t1Type(cust.source) === 'pickup' };
+        var okI = ok;
+        var args2 = Array.prototype.slice.call(arguments);
+        args2[2] = function () { if (way) lsSet(way); return okI ? okI.apply(this, arguments) : undefined; };
+        return srvInv4.apply(this, args2);
+      }
+      return srvInv4.apply(this, arguments);
+    };
+  }
+
+  /* ===================================================================== 4. after Save: the next sale first */
+  if (typeof invoiceDone === 'function') {
+    var invoiceDoneInv4 = invoiceDone;
+    invoiceDone = function (res) {
+      var r = invoiceDoneInv4.apply(this, arguments);
+      try { dressDone(res || {}); } catch (e) { if (window.console) console.error('crit4-inv done', e); }
+      return r;
+    };
+  }
+  function dressDone(res) {
+    var w = document.getElementById('invdone'); if (!w || w.getAttribute('data-inv4')) return;
+    var card = w.querySelector('.card'); if (!card) return;
+    var next = document.getElementById('invnext'); if (!next) return;
+    w.setAttribute('data-inv4', '1');
+    card.setAttribute('role', 'dialog'); card.setAttribute('aria-modal', 'true');
+    var sub = card.querySelector('.sub');
+    if (sub && res.grandTotal != null) {
+      sub.setAttribute('data-noi18n', '1');
+      sub.innerHTML = E(money(res.grandTotal)) + (Number(res.thisDue) > 0 ? ' · <strong>' + E(LL(money(res.thisDue) + ' still due', money(res.thisDue) + ' বাকি')) + '</strong>' : ' · ' + E(LL('paid', 'পেমেন্ট হয়েছে')));
+    }
+    var dl = document.getElementById('invdl'), parcel = document.getElementById('invparcel');
+    var open = [].filter.call(card.querySelectorAll('a.btn'), function (a) { return a !== dl; })[0] || null;
+    var row = document.createElement('div'); row.className = 'inv4-acts';
+    next.className = 'btn primary'; next.textContent = LL('New invoice', 'নতুন ইনভয়েস'); next.setAttribute('data-noi18n', '1');
+    row.appendChild(next);
+    if (dl) { dl.className = 'btn'; dl.textContent = LL('Save PDF', 'PDF সেভ করুন'); dl.setAttribute('data-noi18n', '1'); dl.setAttribute('download', ''); row.appendChild(dl); }
+    if (open) { open.className = 'btn'; open.textContent = LL('Print', 'প্রিন্ট'); open.title = LL('Opens the invoice PDF to print', 'প্রিন্টের জন্য ইনভয়েসের PDF খোলে'); open.setAttribute('data-noi18n', '1'); row.appendChild(open); }
+    // WhatsApp: a sale with a phone that is not sent by itself (a walk-in pickup goes on its own), when a number is connected
+    var S = LAST_SALE || {}, H = window.HD_STATE, chans = H && H.data ? (H.data.channels || []) : null;
+    if (res.invoiceNo && S.phone && !S.pickup && !(chans && !chans.length)) {
+      var wa = document.createElement('button'); wa.type = 'button'; wa.className = 'btn'; wa.setAttribute('data-iwa', res.invoiceNo); wa.setAttribute('data-noi18n', '1');
+      wa.textContent = LL('Send on WhatsApp', 'WhatsApp-এ পাঠান'); row.appendChild(wa);
+    }
+    if (parcel) { parcel.className = 'btn'; row.appendChild(parcel); }
+    [].slice.call(card.childNodes).forEach(function (n) { if (n.nodeType === 3 && !n.textContent.trim()) n.remove(); });
+    card.appendChild(row);
+    // the next sale: the button or Enter; a computer goes straight back to the product search
+    next.addEventListener('click', function () {
+      if (!narrow(760)) setTimeout(function () { var s = document.getElementById('isearch'); if (s) try { s.focus(); } catch (e) {} }, 60);
+    });
+    w.addEventListener('keydown', function (e) { if (e.key === 'Escape') { e.preventDefault(); next.click(); } });
+    try { next.focus({ preventScroll: true }); } catch (e) {}
+  }
+  // the "save the changes" question of an edited invoice spoke in "BDT 4,650": one money format (৳4,650) like every other figure
+  // (the edit block builds that text inside, so the dialog's own words are put right once it is on screen)
+  var EDIT_BN = [[/^Save the changes to (\S+)\?$/, '$1-এর পরিবর্তন সেভ করবেন?'], [/^New total: /, 'নতুন মোট: '], [/^Already paid: /, 'আগে পেমেন্ট হয়েছে: '],
+    [/^Paid now: the rest$/, 'এখন পেমেন্ট: বাকিটা'], [/^Paid now: /, 'এখন পেমেন্ট: '],
+    [/^Same invoice number and day\. Stock follows the change; the PDF is drawn again \(one copy\)\.$/, 'ইনভয়েস নম্বর ও দিন একই থাকবে। স্টক বদলের সাথে মিলবে; PDF আবার তৈরি হবে (একটি কপি)।']];
+  function dlgFix() {
+    var d = document.querySelector('.dlg'); if (!d || typeof tk !== 'function') return;
+    var cur = String((typeof OPT !== 'undefined' && OPT && OPT.currency) || 'BDT').replace(/[^A-Za-z]/g, '');
+    var re = cur ? new RegExp('\\b' + cur + ' (\\d[\\d,]*(?:\\.\\d+)?)', 'g') : null;
+    var w = document.createTreeWalker(d, NodeFilter.SHOW_TEXT), n, list = [];
+    while ((n = w.nextNode())) list.push(n);
+    list.forEach(function (t) {
+      var s = t.nodeValue, o = s;
+      if (re) s = s.replace(re, function (m, v) { return tk(Number(v.replace(/,/g, ''))); });
+      if (typeof LANG !== 'undefined' && LANG === 'bn') s = s.split('\n').map(function (line) { EDIT_BN.forEach(function (p) { line = line.replace(p[0], p[1]); }); return line; }).join('\n');
+      if (s !== o) t.nodeValue = s;
+    });
+  }
+  if (typeof uiConfirm === 'function') {
+    var uiConfirmInv4 = uiConfirm;
+    uiConfirm = function () {
+      var r = uiConfirmInv4.apply(this, arguments);
+      if (onInv()) { try { dlgFix(); } catch (e) {} setTimeout(function () { try { dlgFix(); } catch (e) {} }, 0); }
+      return r;
+    };
+  }
+  // the "not sent on WhatsApp" note: amber, closes by itself after 8 s, and on the next screen
+  var WARN_RE = /^(Saved, but not sent on WhatsApp|Not sent on WhatsApp|সেভ হয়েছে, কিন্তু WhatsApp-এ যায়নি)/;
+  if (typeof toast === 'function') {
+    var toastInv4 = toast;
+    toast = function (html, bad, ms) {
+      var plain = String(html == null ? '' : html).replace(/<[^>]*>/g, '').trim();
+      if (bad && WARN_RE.test(plain)) {
+        var r = toastInv4.call(this, html, false, 8000);
+        var t = document.getElementById('toast');
+        if (t) {
+          t.classList.add('inv4-warn'); t.setAttribute('role', 'status');
+          var ic = t.querySelector('.fdt-ic');
+          if (ic) ic.innerHTML = '<svg viewBox="0 0 24 24"><path d="M12 9v4M12 17h.01"/><path d="M10.3 3.9L1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg>';
+        }
+        return r;
+      }
+      return toastInv4.apply(this, arguments);
+    };
+  }
+  if (typeof go === 'function') {
+    var goInv4 = go;
+    go = function () {
+      try { var t = document.getElementById('toast'); if (t && t.classList.contains('inv4-warn')) t.className = ''; } catch (e) {}
+      return goInv4.apply(this, arguments);
+    };
+  }
+
+  /* ===================================================================== 6. one order on every width */
+  function invOrder() {
+    if (!onInv()) return;
+    var box = document.querySelector('#view .inv2'); if (!box) return;
+    var left = box.querySelector(':scope > .inv2-l'), lines = box.querySelector(':scope > .inv2-r:not(.sell-payr)');
+    if (!left || !lines) return;
+    // the payment block in its own card (a phone already does this: crit-sell payMove)
+    if (!box.querySelector(':scope > .sell-payr')) {
+      var row = lines.querySelector(':scope > section > .card > .row');
+      if (row && row.querySelector('[data-paymode]') && !row.contains(document.activeElement)) {
+        var w = document.createElement('div'); w.className = 'inv2-r sell-payr';
+        w.innerHTML = '<section><div class="card"><h2>' + E(LL('Payment', 'পেমেন্ট')) + '</h2></div></section>';
+        var card = w.querySelector('.card'), why = document.getElementById('invWhy');
+        if (why && why.parentNode === row.parentNode) card.appendChild(why);
+        card.appendChild(row);
+        box.appendChild(w);
+      }
+    }
+    var pay = box.querySelector(':scope > .sell-payr'), sum = box.querySelector(':scope > .inv3-sum');
+    // the customer card after the lines (moved, never while one of its boxes is being typed in)
+    var cust = null;
+    [].forEach.call(left.children, function (s) { if (s.querySelector('#cphone')) cust = s; });
+    if (cust && !cust.contains(document.activeElement)) {
+      cust.classList.add('inv4-cust'); cust.style.order = '';
+      box.insertBefore(cust, pay || sum || null);
+    }
+    if (pay && sum && (pay.compareDocumentPosition(sum) & Node.DOCUMENT_POSITION_PRECEDING) && !pay.contains(document.activeElement)) box.insertBefore(pay, sum);
+    if (box.querySelector(':scope > .inv4-cust')) box.classList.add('inv4');
+  }
+  if (typeof AFTER_PAINT !== 'undefined' && AFTER_PAINT.push) AFTER_PAINT.push(function crit4InvOrder() { try { invOrder(); } catch (e) { if (window.console) console.error('crit4-inv order', e); } });
+
+  /* ---------- 6. the sale's drawer: the invoice discount is one line, not spread over the lines */
+  // the sale with each line's own (per-piece) discount only: a line's discount less its share of the invoice discount
+  // (the server shares the invoice discount over the goods left after their own discounts, money.js invoiceDiscounts)
+  function ownLines(d, ownAsDiscount) {
+    var inv = Number(d.invoiceDiscount) || 0, item = Number(d.itemDiscount) || 0, sub = Number(d.subtotal) || 0, net = sub - item;
+    var d2 = {}; for (var k in d) d2[k] = d[k];
+    d2.lines = d.lines.map(function (l) {
+      var x = {}; for (var j in l) x[j] = l[j];
+      var q = Number(l.qty) || 0, gross = q * (Number(l.price) || 0), disc = Number(l.discount) || 0, own = 0;
+      if (item > 0 && net > 0 && inv < net) own = Math.max(0, (disc - inv * gross / net) / (1 - inv / net));
+      var each = q > 0 && item > 0 ? Math.round(own / q) : 0;
+      x.discount = ownAsDiscount ? each * q : 0; x.total = Math.max(0, gross - each * q); x.inv4Each = each;
+      return x;
+    });
+    return d2;
+  }
+  function splitOn(d) { return !!(d && Number(d.invoiceDiscount) > 0 && d.lines && d.lines.length); }
+  if (typeof fd19InvPaint === 'function') {
+    var fd19InvPaintInv4 = fd19InvPaint;
+    fd19InvPaint = function (d, prof) {
+      if (!splitOn(d)) return fd19InvPaintInv4.apply(this, arguments);
+      var d2 = ownLines(d, false);
+      var r = fd19InvPaintInv4.call(this, d2, prof);
+      try { drawerDisc(d2, Number(d.invoiceDiscount) || 0, Number(d.itemDiscount) || 0); } catch (e) {}
+      return r;
+    };
+  }
+  // the invoice's own page: the same (its Products table and its Money card)
+  if (typeof invoicePageHtml === 'function') {
+    var invoicePageHtmlInv4 = invoicePageHtml;
+    invoicePageHtml = function () {
+      var d = typeof INVP !== 'undefined' && INVP ? INVP.data : null;
+      if (!splitOn(d)) return invoicePageHtmlInv4.apply(this, arguments);
+      var h;
+      INVP.data = ownLines(d, true);
+      try { h = invoicePageHtmlInv4.apply(this, arguments); } finally { INVP.data = d; }
+      var inv = Number(d.invoiceDiscount) || 0, item = Number(d.itemDiscount) || 0;
+      return String(h).replace(/<dt>Discount<\/dt><dd>[^<]*<\/dd>/, function () {
+        var row = function (lab, v) { return '<dt>' + E(lab) + '</dt><dd>− ' + E(typeof fmt === 'function' ? fmt(v) : v) + '</dd>'; };
+        return (item > 0 ? row(LL('Discount per piece', 'প্রতি পিসে ছাড়'), item) : '') + row(LL('Invoice discount', 'ইনভয়েসে ছাড়'), inv);
+      });
+    };
+  }
+  function drawerDisc(d, inv, item) {
+    var lineRows = document.querySelectorAll('.fd19-mt tbody tr');
+    d.lines.forEach(function (l, i) {
+      if (!l.inv4Each || !lineRows[i]) return;
+      var cell = lineRows[i].querySelectorAll('td')[2], s = cell && cell.querySelector('.fd19-cs');
+      if (s) { s.textContent = s.textContent + ' · ' + LL('৳' + num0(l.inv4Each) + ' off each', 'প্রতিটিতে ৳' + num0(l.inv4Each) + ' ছাড়'); s.setAttribute('data-noi18n', '1'); }
+    });
+    var rows = document.querySelectorAll('.fd19-kv tr');
+    for (var i = 0; i < rows.length; i++) {
+      var c = rows[i].cells; if (!c || c.length < 2) continue;
+      if (!/^(Discount|ছাড়)$/.test(c[0].textContent.trim())) continue;
+      if (item > 0) {
+        c[0].textContent = LL('Discount per piece', 'প্রতি পিসে ছাড়'); c[1].textContent = '− ' + money(item);
+        var tr = document.createElement('tr'); tr.innerHTML = '<td></td><td></td>'; tr.setAttribute('data-noi18n', '1');
+        tr.cells[0].textContent = LL('Invoice discount', 'ইনভয়েসে ছাড়'); tr.cells[1].textContent = '− ' + money(inv);
+        rows[i].parentNode.insertBefore(tr, rows[i].nextSibling);
+      } else c[0].textContent = LL('Invoice discount', 'ইনভয়েসে ছাড়');
+      rows[i].setAttribute('data-noi18n', '1');
+      break;
+    }
+  }
+
+  /* ===================================================================== 7. phone: typing in a box */
+  function typing() {
+    var a = document.activeElement;
+    var on = onInv() && narrow(760) && isField(a) && inView(a);
+    var root = document.documentElement;
+    if (root.classList.contains('inv4-typing') !== on) root.classList.toggle('inv4-typing', on);
+    if (on) setTimeout(clearOfToast, 260);
+  }
+  // the box being typed in is never under the message
+  function clearOfToast() {
+    var a = document.activeElement, t = document.getElementById('toast');
+    if (!isField(a) || !inView(a) || !t || !/\bshow\b/.test(t.className)) return;
+    var r = a.getBoundingClientRect(), tr = t.getBoundingClientRect();
+    if (!tr.height || r.bottom <= tr.top - 8 || r.top >= tr.bottom) return;
+    try { window.scrollBy({ top: r.bottom - tr.top + 12, behavior: 'smooth' }); } catch (e) { window.scrollBy(0, r.bottom - tr.top + 12); }
+  }
+  document.addEventListener('focusin', function () { setTimeout(typing, 0); });
+  document.addEventListener('focusout', function () { setTimeout(typing, 120); });
+  if (typeof AFTER_PAINT !== 'undefined' && AFTER_PAINT.push) AFTER_PAINT.push(function crit4InvTyping() { typing(); });
+  (function watchToast() {
+    var t = document.getElementById('toast'); if (!t) { setTimeout(watchToast, 1000); return; }
+    try { new MutationObserver(function () { if (/\bshow\b/.test(t.className)) setTimeout(clearOfToast, 60); }).observe(t, { attributes: true, attributeFilter: ['class'] }); } catch (e) {}
+  })();
+
+  /* ===================================================================== 3. stock entry search: Up / Down / Enter / Esc */
+  var RV = { i: -1, user: false };
+  function rvOpts(box) { return [].filter.call(box.querySelectorAll(':scope > .r[data-rvpick], :scope > .r[data-newr]'), function (n) { return n.getClientRects().length > 0; }); }
+  function rvSet(box, list, i) {
+    var q = document.getElementById('rv_search');
+    list.forEach(function (n, j) { n.classList.toggle('inv4-hl', j === i); n.setAttribute('aria-selected', j === i ? 'true' : 'false'); });
+    RV.i = i;
+    if (q) { if (i >= 0 && list[i]) q.setAttribute('aria-activedescendant', list[i].id); else q.removeAttribute('aria-activedescendant'); }
+    if (i >= 0 && list[i]) try { list[i].scrollIntoView({ block: 'nearest' }); } catch (e) {}
+  }
+  function rvDecorate() {
+    var box = document.getElementById('rv_results'), q = document.getElementById('rv_search'); if (!box || !q) return;
+    box.setAttribute('role', 'listbox'); box.setAttribute('aria-label', LL('Products found', 'পাওয়া প্রোডাক্ট'));
+    q.setAttribute('role', 'combobox'); q.setAttribute('aria-controls', 'rv_results'); q.setAttribute('aria-autocomplete', 'list');
+    var list = rvOpts(box);
+    list.forEach(function (n, j) { n.setAttribute('role', 'option'); n.id = 'inv4rv' + j; });
+    q.setAttribute('aria-expanded', list.length ? 'true' : 'false');
+    RV.user = false;
+    var coarse = window.matchMedia && window.matchMedia('(pointer:coarse)').matches;
+    var first = -1; for (var k = 0; k < list.length; k++) if (list[k].hasAttribute('data-rvpick')) { first = k; break; }
+    rvSet(box, list, coarse || !q.value.trim() ? -1 : first);
+  }
+  if (typeof paintRecvResults === 'function') {
+    var paintRecvResultsInv4 = paintRecvResults;
+    paintRecvResults = function () {
+      var r = paintRecvResultsInv4.apply(this, arguments);
+      try { var b = document.getElementById('rv_results'); if (b) b.classList.remove('inv4-closed'); rvDecorate(); } catch (e) {}
+      return r;
+    };
+  }
+  document.addEventListener('keydown', function (ev) {
+    var q = ev.target; if (!q || q.id !== 'rv_search') return;
+    var box = document.getElementById('rv_results'); if (!box) return;
+    var list = rvOpts(box);
+    if (ev.key === 'ArrowDown' || ev.key === 'ArrowUp') {
+      if (!list.length || box.classList.contains('inv4-closed')) return;
+      ev.preventDefault();
+      var down = ev.key === 'ArrowDown';
+      var i = RV.i < 0 ? (down ? 0 : list.length - 1) : (!RV.user && down) ? RV.i : (RV.i + (down ? 1 : -1) + list.length) % list.length;
+      RV.user = true; rvSet(box, list, i); return;
+    }
+    if (ev.key === 'Escape') {
+      if (box.classList.contains('inv4-closed') || !q.value.trim()) return;
+      ev.preventDefault(); ev.stopPropagation(); box.classList.add('inv4-closed'); q.setAttribute('aria-expanded', 'false'); return;
+    }
+    if (ev.key !== 'Enter') return;
+    if (!q.value.trim() || box.classList.contains('inv4-closed')) return;
+    var n = RV.i >= 0 ? list[RV.i] : null; if (!n) return;
+    ev.preventDefault(); ev.stopPropagation();
+    n.click();
+    // back to the search box for the next product
+    var back = function () { var s = document.getElementById('rv_search'); if (s && document.activeElement !== s) try { s.focus({ preventScroll: true }); } catch (e) {} };
+    setTimeout(back, 0); setTimeout(back, 200);
+  }, true);
+  document.addEventListener('input', function (e) { if (e.target && e.target.id === 'rv_search') { var b = document.getElementById('rv_results'); if (b) b.classList.remove('inv4-closed'); } }, true);
+})();
+</script>
+<!-- crit4:pay -->
+<!-- crit4-pay (10 Nov 2026): real-click critique fixes for payments, customers, money and stock entry.
+     1. "Receive payment" on an invoice opens INSIDE the invoice drawer, on the phone and on the desktop (it used to close the
+        drawer and draw the form on the Sales page, where the phone folded it into "Summary" under the list): amount = the due,
+        Cash first, several ways in one payment, Save -> the drawer shows the new paid / due in place. The same from the list's
+        row button and the invoice page.
+     2. The customer due box belongs to one customer on one page: never shown on another page or another customer, cleared when
+        the page changes and after a save (one toast with the new balance); on the phone it is never folded away.
+     3. Customers (desktop): search + list first, "Customers who owe" under it with a chip above the list; its rows open the
+        customer. Customer page and invoice page: a visible Back. The drawer's "full page" links are real buttons.
+     4. Money: an account card scrolls its statement into view and shows as chosen; "Payments in no account" / "Out of stock"
+        tiles are warning-coloured when above 0 (colour by meaning, not by position).
+     5. Stock entry: "Where is this shipment?" only on step 1 (a chip after it); the Receive button below the cost table.
+     6. Desktop list pages: room under the last row, and the chat button moves left of the row buttons while a list is in view.
+     7. ৳ on screen (tk). -->
+<style>
+/* ---- 1. the payment form inside the drawer */
+.pay-f { margin:0 0 18px; padding:16px; border-radius:16px; background:var(--fd-surface-2, var(--plane, #f4f5f8)); border:1px solid var(--fd-border, var(--ring, #e6e8ef)); scroll-margin-top:12px; }
+.pay-fh { display:flex; align-items:baseline; justify-content:space-between; gap:10px; flex-wrap:wrap; margin-bottom:12px; }
+.pay-fh h3 { margin:0; font-size:16px; font-weight:700; color:var(--fd-text, inherit); }
+.pay-due { font-weight:700; color:var(--fd-negative-text, var(--critical, #b42318)); font-variant-numeric:tabular-nums; }
+.pay-row { display:grid; grid-template-columns:minmax(0, 1fr) minmax(0, 1fr) auto; gap:10px; align-items:end; margin-bottom:10px; }
+.pay-row .i { width:100%; min-height:44px; font-size:16px; }
+.pay-row input.i { font-variant-numeric:tabular-nums; font-weight:600; }
+.pay-rm { min-width:44px; min-height:44px; border-radius:12px; border:1px solid var(--fd-border, var(--ring, #e6e8ef)); background:var(--fd-card, #fff); color:var(--fd-text-2, inherit); cursor:pointer; display:grid; place-items:center; }
+.pay-rm svg { width:18px; height:18px; }
+.pay-row .pay-rmsp { width:44px; }
+.pay-add { border:0; background:none; padding:8px 0; min-height:40px; color:var(--fd-accent-text, var(--accent, #4c41d6)); font:inherit; font-weight:600; cursor:pointer; }
+.pay-fl { margin-top:6px; }
+.pay-fl .i { width:100%; min-height:44px; font-size:16px; }
+.pay-sum { margin:10px 0 0; font-size:13.5px; color:var(--fd-text-2, var(--muted, #555)); min-height:1.4em; font-variant-numeric:tabular-nums; }
+.pay-sum.bad { color:var(--fd-negative-text, var(--critical, #b42318)); font-weight:600; }
+.pay-act { display:flex; gap:8px; margin-top:14px; flex-wrap:wrap; }
+.pay-act .fd19-btn { min-height:44px; }
+.pay-act .fd19-btn.is-primary { flex:1 1 auto; justify-content:center; }
+.fd19-stat.pay-flash { animation:payFlash 1.2s ease-out 1; }
+@keyframes payFlash { 0% { box-shadow:0 0 0 3px var(--fd-positive, #22c55e); } 100% { box-shadow:0 0 0 0 transparent; } }
+@media (prefers-reduced-motion: reduce) { .fd19-stat.pay-flash { animation:none; } }
+@media (max-width:640px) {
+  .pay-f { padding:14px; }
+  .pay-row { gap:8px; }
+}
+/* ---- 3. a real button instead of the 53x17 "full page" link in the drawer notes */
+.fd19-dr .fd19-note .fd19-link[data-fd19a="full"], .fd19-dr .fd19-cs .fd19-link[data-fd19a="full"] { display:inline-flex; align-items:center; min-height:40px; padding:0 14px; margin:4px 2px; border-radius:12px;
+  border:1px solid var(--fd-border-strong, var(--fd-border, #d8dbe4)); background:var(--fd-card, #fff); color:var(--fd-text, inherit); font-weight:600; text-decoration:none; vertical-align:middle; }
+.fd19-dr .fd19-note .fd19-link[data-fd19a="full"]:hover { border-color:var(--fd-accent, #5b4fe9); }
+/* the Back button on a customer / invoice page */
+#o_cp .crumbs .pay-back { display:inline-flex; align-items:center; gap:6px; min-height:40px; padding:0 14px 0 10px; margin-right:12px; border-radius:12px;
+  border:1px solid var(--fd-border, var(--ring, #e6e8ef)); background:var(--fd-card, #fff); color:var(--fd-text, inherit); font:inherit; font-weight:600; font-size:14px; cursor:pointer; }
+#o_cp .crumbs .pay-back svg { width:18px; height:18px; }
+#o_cp .crumbs .pay-back:hover { border-color:var(--fd-accent, #5b4fe9); }
+#o_cp .crumbs { display:flex; align-items:center; flex-wrap:wrap; }
+/* "Customers who owe": a row is a way into the customer */
+tr[data-payowe] { cursor:pointer; }
+tr[data-payowe]:focus-visible { outline:2px solid var(--fd-accent, #5b4fe9); outline-offset:-2px; }
+.pay-owechip { display:inline-flex; align-items:center; gap:6px; min-height:40px; padding:0 14px; margin:0 0 12px; border-radius:999px; border:0; cursor:pointer;
+  background:var(--fd-negative-soft, #fde8e8); color:var(--fd-negative-text, var(--critical, #b42318)); font:inherit; font-weight:600; font-size:14px; }
+.pay-duebox { scroll-margin-top:90px; }
+/* ---- 4. Money: the chosen account, and the tiles coloured by meaning */
+html[data-look="clean"][data-skin="fd"]:root .cash_card[aria-pressed="true"], .cash_card[aria-pressed="true"] { box-shadow:0 0 0 2px var(--fd-text, #17181c) !important; }
+html[data-look="clean"][data-skin="fd"]:root[data-theme="dark"] .cash_card[aria-pressed="true"] { box-shadow:0 0 0 2px var(--fd-lime, #d9f99d) !important; }
+.pay-stmt { scroll-margin-top:90px; }
+html[data-look="clean"][data-skin="fd"]:root .fdd-grid > .fdd-k.pay-warn, .fdd-grid > .fdd-k.pay-warn { background:var(--fd-warning-soft, #fff3dc) !important; }
+html[data-look="clean"][data-skin="fd"]:root .fdd-grid > .fdd-k.pay-warn .fdd-num { color:var(--fd-warning-text, #9a5b00); }
+html[data-look="clean"][data-skin="fd"]:root[data-theme="dark"] .fdd-grid > .fdd-k.pay-warn .fdd-num { color:var(--fd-warning, #facc15); }
+.fdd-k.pay-warn[data-paygo] { cursor:pointer; }
+/* ---- 5. Stock entry */
+.pay-where { display:flex; align-items:center; gap:10px; flex-wrap:wrap; max-width:520px; margin:0 auto 12px; padding:8px 12px; border-radius:12px;
+  background:var(--fd-surface-2, var(--plane, #f4f5f8)); font-size:13.5px; color:var(--fd-text-2, inherit); }
+.pay-where b { color:var(--fd-text, inherit); font-weight:600; }
+.pay-where button { border:0; background:none; padding:6px 4px; min-height:36px; color:var(--fd-accent-text, var(--accent, #4c41d6)); font:inherit; font-weight:600; cursor:pointer; }
+.rvw table .btn, .rvw table button { white-space:nowrap; }
+/* ---- 6. desktop list pages: room under the last row; the chat button clear of the row buttons */
+@media (min-width:641px) {
+  html.pay-list #view { padding-bottom:96px !important; }
+  html.pay-fabdock #aw_fab { width:44px !important; height:44px !important; right:var(--pay-fab-right, 22px) !important; bottom:18px !important; transition:right .18s ease-out, width .18s, height .18s; }
+  html.pay-fabdock #aw_fab svg { width:20px; height:20px; }
+  html.pay-fabdock #aw_fab .dot { top:3px; right:3px; width:10px; height:10px; }
+}
+@media (prefers-reduced-motion: reduce) { html.pay-fabdock #aw_fab { transition:none; } }
+</style>
+<script>
+(function () {
+  var bn = function () { return typeof LANG !== 'undefined' && LANG === 'bn'; };
+  var T = function (en, b) { return bn() ? b : en; };
+  var M = function (v) { var n = Math.round(Number(v) || 0); return typeof tk === 'function' ? tk(n) : '৳' + fmt(n); };
+  var E = function (s) { return typeof esc === 'function' ? esc(s) : String(s == null ? '' : s); };
+  var calm = function () { return !!(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches); };
+  var phone = function () { return typeof ntPhone === 'function' ? ntPhone() : window.innerWidth <= 640; };
+  var ICON_X = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>';
+  var ICON_BACK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>';
+  /** "1,500", "১৫০০", " 1500.50 " -> 1500.5 ; anything else -> NaN */
+  function amt(v) {
+    var s = String(v == null ? '' : v).replace(/[০-৯]/g, function (c) { return String('০১২৩৪৫৬৭৮৯'.indexOf(c)); }).replace(/[,\s৳]/g, '');
+    if (!/^\d*\.?\d+$/.test(s)) return NaN;
+    return Math.round(Number(s) * 100) / 100;
+  }
+  function methods() {
+    var all = ((typeof OPT !== 'undefined' && OPT && OPT.paymentMethods) || []).map(function (m) { return String(m || '').trim(); }).filter(Boolean);
+    if (!all.length) all = ['Cash'];
+    var isCash = function (m) { return /^cash$/i.test(m); }, isCod = function (m) { return /^cod\b|cash on delivery/i.test(m); };
+    return all.filter(isCash).concat(all.filter(function (m) { return !isCash(m) && !isCod(m); })).concat(all.filter(isCod));
+  }
+  /** Cash when the business has it; else the invoice's own method; else the first. */
+  function defMethod(own) {
+    var ms = methods(), c = ms.filter(function (m) { return /^cash$/i.test(m); })[0];
+    if (c) return c;
+    var o = ms.filter(function (m) { return own && m.toLowerCase() === String(own).trim().toLowerCase(); })[0];
+    return o || ms[0];
+  }
+  function methodOpts(sel) { return methods().map(function (m) { return '<option value="' + E(m) + '"' + (m === sel ? ' selected' : '') + '>' + E(m) + '</option>'; }).join(''); }
+  /** every way the money came for this invoice ("Nagad + Cash"), from the server or from the payment rows */
+  function paidByOf(d) {
+    if (d && d.paidBy) return d.paidBy;
+    var seen = {}, out = [];
+    ((d && d.payments) || []).forEach(function (p) {
+      var m = String(p.method || ((/^Payment · (.+)$/.exec(String(p.label || '')) || [])[1]) || '').trim(); if (!m || !(Number(p.amount) > 0) || /^(adjusted|returned|advance|undone|return \/ refund)$/i.test(m)) return;
+      if (!seen[m.toLowerCase()]) { seen[m.toLowerCase()] = 1; out.push(m); }
+    });
+    return out.join(' + ');
+  }
+
+  /* ================================================================ 1. Receive payment inside the invoice drawer */
+  var PAY_AUTO = '';
+  function rowHtml(i, value, m) {
+    return '<div class="pay-row" data-pay-row="' + i + '">' +
+      '<div><label class="f" for="pay_a' + i + '">' + T('Amount', 'টাকার অঙ্ক') + (i ? ' ' + (i + 1) : '') + '</label>' +
+        '<input class="i" id="pay_a' + i + '" inputmode="decimal" autocomplete="off" enterkeyhint="done" data-pay-amt value="' + E(value) + '"></div>' +
+      '<div><label class="f" for="pay_m' + i + '">' + T('Method', 'কীভাবে') + '</label><select class="i" id="pay_m' + i + '" data-pay-m>' + methodOpts(m) + '</select></div>' +
+      (i ? '<button type="button" class="pay-rm" data-pay-rm aria-label="' + E(T('Remove this way of paying', 'এই লাইন বাদ দিন')) + '">' + ICON_X + '</button>' : '<span class="pay-rmsp" aria-hidden="true"></span>') +
+      '</div>';
+  }
+  function formHtml(d) {
+    var due = Math.round(Number(d.owed) || 0);
+    return '<section class="pay-f" id="pay_f" aria-labelledby="pay_ft">' +
+      '<div class="pay-fh"><h3 id="pay_ft">' + T('Receive payment', 'টাকা নিন') + '</h3><span class="pay-due">' + T('Still owed ', 'এখনো বাকি ') + M(due) + '</span></div>' +
+      '<div data-pay-rows>' + rowHtml(0, due, defMethod(d.method)) + '</div>' +
+      '<button type="button" class="pay-add" data-pay-add>' + T('+ Another way to pay', '+ আরেকভাবে পেমেন্ট') + '</button>' +
+      '<div class="pay-fl"><label class="f" for="pay_note">' + T('Note', 'নোট') + ' <span class="sku">' + T('optional: who brought it, a transaction number', 'ঐচ্ছিক: কে দিলেন, লেনদেন নম্বর') + '</span></label>' +
+        '<input class="i" id="pay_note" maxlength="200" autocomplete="off" placeholder="' + E(T('Optional', 'ঐচ্ছিক')) + '"></div>' +
+      '<div class="pay-sum" data-pay-sum aria-live="polite"></div>' +
+      '<div class="pay-act"><button type="button" class="fd19-btn is-primary" data-pay-save><span class="lb">' + T('Save payment', 'পেমেন্ট সেভ করুন') + '</span></button>' +
+        '<button type="button" class="fd19-btn is-secondary" data-pay-cancel><span class="lb">' + T('Cancel', 'বাতিল') + '</span></button></div>' +
+      '</section>';
+  }
+  function form() { return typeof FD19 !== 'undefined' && FD19.dr && FD19.dr.el ? FD19.dr.el.querySelector('#pay_f') : null; }
+  function parts(f) {
+    return [].map.call(f.querySelectorAll('.pay-row'), function (r) { return { amount: amt(r.querySelector('[data-pay-amt]').value), method: r.querySelector('[data-pay-m]').value, el: r }; });
+  }
+  function sumLine() {
+    var f = form(), dr = FD19.dr; if (!f || !dr || !dr.payD) return;
+    var ps = parts(f), owed = Number(dr.payD.owed) || 0, s = f.querySelector('[data-pay-sum]');
+    var tot = ps.reduce(function (t, p) { return t + (p.amount > 0 ? p.amount : 0); }, 0);
+    s.classList.remove('bad');
+    if (tot > owed + 0.5) { s.classList.add('bad'); s.textContent = T('That is more than is owed (' + M(owed) + ').', 'এটা বাকির চেয়ে বেশি (' + M(owed) + ')।'); return; }
+    var left = Math.max(0, owed - tot);
+    s.textContent = ps.length > 1
+      ? T(M(tot) + ' in ' + ps.length + ' ways · ' + (left > 0.5 ? M(left) + ' still owed after this' : 'paid in full'), ps.length + ' ভাবে ' + M(tot) + ' · ' + (left > 0.5 ? 'এরপর বাকি থাকবে ' + M(left) : 'পুরো পরিশোধ'))
+      : (tot > 0 ? (left > 0.5 ? T('After this ' + M(left) + ' is still owed.', 'এরপর বাকি থাকবে ' + M(left) + '।') : T('This pays it in full.', 'এতে পুরো পরিশোধ হবে।')) : '');
+  }
+  function payOpen(dr) {
+    if (!dr || FD19.dr !== dr || !dr.payD) return;
+    var d = dr.payD, f = form();
+    if (!(Number(d.owed) > 0.5)) { toast(T('Nothing is owed on this invoice.', 'এই ইনভয়েসে কোনো বাকি নেই।')); return; }
+    if (!f) {
+      var body = dr.el.querySelector('.fd19-db'); if (!body) return;
+      body.insertAdjacentHTML('afterbegin', formHtml(d));
+      f = form(); sumLine();
+    }
+    try { f.scrollIntoView({ block: 'start', behavior: calm() ? 'auto' : 'smooth' }); } catch (e) { f.scrollIntoView(); }
+    var a = f.querySelector('[data-pay-amt]');
+    if (a) { try { a.focus({ preventScroll: true }); a.select(); } catch (e) {} }
+  }
+  function payClose() { var f = form(); if (f && f.parentNode) f.parentNode.removeChild(f); }
+  function paySave(btn) {
+    var dr = FD19.dr, f = form(); if (!dr || !f || !dr.payD || dr.payBusy) return;
+    var d = dr.payD, ps = parts(f), owed = Number(d.owed) || 0;
+    for (var i = 0; i < ps.length; i++) {
+      if (!(ps[i].amount > 0)) { toast(T('Type the amount received' + (ps.length > 1 ? ' on every line' : '') + '.', 'পাওয়া টাকার অঙ্ক লিখুন' + (ps.length > 1 ? ' (প্রতিটা লাইনে)' : '') + '।'), true); try { ps[i].el.querySelector('[data-pay-amt]').focus(); } catch (e) {} return; }
+    }
+    var tot = Math.round(ps.reduce(function (t, p) { return t + p.amount; }, 0) * 100) / 100;
+    if (tot > owed + 0.5) { toast(T('That is more than is owed (' + M(owed) + '). Take an advance on the customer’s page for the rest.', 'এটা বাকির চেয়ে বেশি (' + M(owed) + ')। বাড়তি টাকা কাস্টমারের পাতায় অগ্রিম হিসেবে নিন।'), true); return; }
+    var args = { orderId: d.id, phone: d.phone, name: d.customer, reason: 'payment', note: String((f.querySelector('#pay_note') || {}).value || '').trim() };
+    if (ps.length > 1) args.parts = ps.map(function (p) { return { amount: p.amount, method: p.method }; });
+    else { args.amount = ps[0].amount; args.method = ps[0].method; }
+    dr.payBusy = true;
+    var lb = btn.querySelector('.lb') || btn; btn.disabled = true; lb.textContent = T('Saving…', 'সেভ হচ্ছে…');
+    srv('erpSettleDue', [args], function (res) {
+      dr.payBusy = false;
+      if (res && res.dues) { try { DUES = res.dues; if (typeof updateDueCount === 'function') updateDueCount(); } catch (e) {} }
+      var got = (res && res.amount) || tot, left = Math.max(0, owed - got);
+      toast(T('Received ' + M(got) + ' for ' + d.id + '. ' + (left > 0.5 ? M(left) + ' still owed.' : 'Paid in full.'), d.id + '-এর জন্য ' + M(got) + ' পাওয়া গেল। ' + (left > 0.5 ? 'বাকি ' + M(left) + '।' : 'পুরো পরিশোধ।')));
+      refreshAfter(d.id, dr);
+    }, function (e) {
+      dr.payBusy = false; btn.disabled = false; lb.textContent = T('Save payment', 'পেমেন্ট সেভ করুন');
+      toast(T('The payment was not saved: ', 'পেমেন্ট সেভ হয়নি: ') + E((e && e.message) || e || T('no answer from the server - check the internet and press Save again.', 'সার্ভার থেকে উত্তর আসেনি - ইন্টারনেট দেখে আবার সেভ চাপুন।')), true, 15000);
+    });
+  }
+  /** the drawer shows the new paid / due in place; the lists and pages under it follow */
+  function refreshAfter(no, dr) {
+    srv('erpInvoice', [{ invoiceNo: no }], function (r) {
+      if (FD19.dr !== dr) return;
+      try { fd19InvPaint(r, dr.payProf); } catch (e) {}
+      [].forEach.call(dr.el.querySelectorAll('.fd19-stat'), function (s, i) { if (i === 1 || i === 2) s.classList.add('pay-flash'); });
+      var body = dr.el.querySelector('.fd19-db'); if (body) body.scrollTop = 0;
+    }, function () { if (FD19.dr === dr) payClose(); });
+    try { if (typeof LVS !== 'undefined' && LVS.invoices && LVS.invoices.data) lvLoad('invoices', true); } catch (e) {}
+    try { if (typeof LVS !== 'undefined' && LVS.customers && LVS.customers.data) lvLoad('customers', true); } catch (e) {}
+    try { if (typeof INVP !== 'undefined' && INVP.no === no && typeof loadInvoicePage === 'function') loadInvoicePage(true); } catch (e) {}
+    try { if (VIEW === 'customers' && typeof CUSP !== 'undefined' && CUSP.key && typeof loadCustomerPage === 'function') loadCustomerPage(true); } catch (e) {}
+    try { if (typeof CASH !== 'undefined') CASH = null; if (typeof MONEY !== 'undefined') MONEY = null; } catch (e) {}
+    if (VIEW === 'sales' || VIEW === 'customers' || VIEW === 'dash') { try { repaint(); } catch (e) {} }
+  }
+
+  if (typeof fd19InvPaint === 'function') {
+    var fd19InvPaintPay = fd19InvPaint;
+    fd19InvPaint = function (d, prof) {
+      var d2 = d, pb = d ? paidByOf(d) : '';
+      if (d && pb) { d2 = {}; for (var k in d) if (Object.prototype.hasOwnProperty.call(d, k)) d2[k] = d[k]; d2.method = pb; }
+      var out = fd19InvPaintPay.call(this, d2, prof);
+      var dr = typeof FD19 !== 'undefined' ? FD19.dr : null;
+      if (dr && d) {
+        dr.payD = d; dr.payProf = prof;
+        if (dr.acts && dr.acts.pay) dr.acts.pay = function () { payOpen(dr); };
+        // one name on both sizes (the phone's short label under the icon said only "Receive")
+        [].forEach.call(dr.el.querySelectorAll('.fd19-df [data-fd19a="pay"] .lb, .fd19-df [data-fd19a="pay"] .sell-sl'), function (x) { x.textContent = T('Receive payment', 'টাকা নিন'); });
+        var pb2 = dr.el.querySelector('.fd19-df [data-fd19a="pay"]'); if (pb2) pb2.setAttribute('aria-label', T('Receive payment', 'টাকা নিন'));
+        if (PAY_AUTO && PAY_AUTO === d.id) { PAY_AUTO = ''; setTimeout(function () { payOpen(dr); }, 0); }
+      }
+      return out;
+    };
+  }
+  // the list's row button ("Receive due") and its row menu: the same form, inside that invoice's drawer
+  if (typeof lvRowAct === 'function') {
+    var lvRowActPay = lvRowAct;
+    lvRowAct = function (m, act, key) {
+      if (m === 'invoices' && act === 'pay' && typeof fd19Inv === 'function') {
+        var r = null; try { r = lvSt(m).rows[key]; } catch (e) {}
+        var no = (r && r.key) || key;
+        if (no) { PAY_AUTO = String(no); fd19Inv(String(no)); return; }
+      }
+      return lvRowActPay.apply(this, arguments);
+    };
+  }
+  if (typeof lvRowActs === 'function') {
+    var lvRowActsPay = lvRowActs;
+    lvRowActs = function (m) { var h = lvRowActsPay.apply(this, arguments); return m === 'invoices' ? String(h).replace('>Receive due<', '>' + T('Receive payment', 'টাকা নিন') + '<') : h; };
+  }
+  document.addEventListener('click', function (e) {
+    var t = e.target && e.target.closest ? e.target : null; if (!t) return;
+    // the invoice page's own button: the drawer form too (one component everywhere)
+    var sp = t.closest('button[data-spay]');
+    if (sp && VIEW === 'sales' && typeof INVP !== 'undefined' && INVP.no && typeof fd19Inv === 'function') {
+      e.preventDefault(); e.stopImmediatePropagation(); PAY_AUTO = INVP.no; fd19Inv(INVP.no); return;
+    }
+    if (!form() || !FD19.dr.el.contains(t)) return;
+    if (t.closest('[data-pay-save]')) { e.preventDefault(); paySave(t.closest('[data-pay-save]')); return; }
+    if (t.closest('[data-pay-cancel]')) { e.preventDefault(); payClose(); return; }
+    if (t.closest('[data-pay-add]')) {
+      e.preventDefault();
+      var f = form(), rows = f.querySelector('[data-pay-rows]'), ps = parts(f), n = ps.length;
+      if (n >= 8) { toast(T('Eight ways is the most for one payment.', 'এক পেমেন্টে সর্বোচ্চ আট ভাবে।'), true); return; }
+      var owed = Number(FD19.dr.payD.owed) || 0, given = ps.reduce(function (s, p) { return s + (p.amount > 0 ? p.amount : 0); }, 0);
+      var used = ps.map(function (p) { return p.method; }), next = methods().filter(function (m) { return used.indexOf(m) < 0; })[0] || methods()[0];
+      rows.insertAdjacentHTML('beforeend', rowHtml(n, given < owed - 0.5 ? Math.round((owed - given) * 100) / 100 : '', next));
+      var ni = rows.querySelector('[data-pay-row="' + n + '"] [data-pay-amt]'); if (ni) { try { ni.focus(); ni.select(); } catch (x) {} }
+      sumLine(); return;
+    }
+    var rm = t.closest('[data-pay-rm]');
+    if (rm) { e.preventDefault(); var row = rm.closest('.pay-row'); if (row) row.remove(); sumLine(); }
+  }, true);
+  // the invoices list's row button says the same name (an icon with a tooltip on the desktop; the rows are drawn by lvPaint)
+  function rowName(e) {
+    var b = e.target && e.target.closest && e.target.closest('#lv_invoices [data-lva="pay"]'); if (!b) return;
+    var w = T('Receive payment', 'টাকা নিন'); if (b.title !== w) b.title = w; b.setAttribute('aria-label', w);
+  }
+  document.addEventListener('mouseover', rowName, true);
+  document.addEventListener('focusin', rowName, true);
+  document.addEventListener('input', function (e) { if (e.target && e.target.closest && e.target.closest('#pay_f')) sumLine(); });
+  document.addEventListener('change', function (e) { if (e.target && e.target.closest && e.target.closest('#pay_f')) sumLine(); });
+  document.addEventListener('keydown', function (e) {
+    var f = e.target && e.target.closest && e.target.closest('#pay_f'); if (!f) return;
+    if (e.key === 'Enter' && e.target.tagName === 'INPUT') { e.preventDefault(); var b = f.querySelector('[data-pay-save]'); if (b && !b.disabled) paySave(b); }
+    else if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); payClose(); }
+  }, true);
+  // phone: the field being typed in scrolls to the middle (clear of the keyboard and the drawer's own bar)
+  document.addEventListener('focusin', function (e) {
+    var t = e.target; if (!phone() || !t || !t.closest || !t.closest('#pay_f') || !/^(INPUT|SELECT)$/.test(t.tagName)) return;
+    setTimeout(function () { try { t.scrollIntoView({ block: 'center', behavior: calm() ? 'auto' : 'smooth' }); } catch (x) {} }, 250);
+  });
+
+  /* ================================================================ 2. the customer due box belongs to one customer on one page */
+  var PAY_DUE_W = '', PAY_DUE_SCROLL = false;
+  function where() {
+    var v = typeof VIEW !== 'undefined' ? VIEW : '';
+    return v + '|' + (v === 'customers' && typeof CUSP !== 'undefined' ? (CUSP.key || '') : '') + '|' + (v === 'sales' && typeof INVP !== 'undefined' ? (INVP.no || '') : '');
+  }
+  if (typeof openDueBox === 'function') {
+    var openDueBoxPay = openDueBox;
+    openDueBox = function () {
+      PAY_DUE_W = where(); PAY_DUE_SCROLL = true;
+      var r = openDueBoxPay.apply(this, arguments);
+      if (typeof DUEBOX !== 'undefined' && DUEBOX) DUEBOX.where = PAY_DUE_W;
+      return r;
+    };
+  }
+  if (typeof dueBoxHtml === 'function') {
+    var dueBoxHtmlPay = dueBoxHtml;
+    dueBoxHtml = function () {
+      if (typeof DUEBOX === 'undefined' || !DUEBOX) return '';
+      if (!DUEBOX.where) DUEBOX.where = PAY_DUE_W || where();
+      if (DUEBOX.where !== where()) return '';            // another page, another customer: not theirs to show
+      var h = String(dueBoxHtmlPay.apply(this, arguments) || '');
+      if (!h) return h;
+      h = h.replace('<section>', '<section class="pay-duebox" data-pay-duebox="1">');
+      // Cash first in the method list; a short note hint behind a "?" instead of a cut-off placeholder
+      h = h.replace(/(<select class="i" id="db_method">)([\s\S]*?)(<\/select>)/, function (all, a, opts, z) {
+        var ms = opts.match(/<option[\s\S]*?<\/option>/g) || [];
+        var cash = ms.filter(function (o) { return /value="cash"/i.test(o); });
+        if (!cash.length) return all;
+        var rest = ms.filter(function (o) { return cash.indexOf(o) < 0; });
+        return a + cash[0].replace('<option ', '<option selected ') + rest.join('') + z;
+      });
+      h = h.replace('<label class="f" for="db_note">Note</label>', '<label class="f" for="db_note">' + T('Note', 'নোট') + ' <span class="sku">' + T('needed when no money came in: say why', 'টাকা না এলে লাগবে: কেন, লিখুন') + '</span></label>')
+           .replace('placeholder="why — required unless money came in"', 'placeholder="' + E(T('Why? (optional for money in)', 'কেন? (টাকা এলে ঐচ্ছিক)')) + '"');
+      // ৳, never BDT / TK, on screen
+      h = h.replace(/<span class="cur">(BDT|TK|৳)<\/span>/g, '<span class="cur">৳</span>');
+      return h;
+    };
+  }
+  /** after a save the box closes: it belonged to that one moment. One plain sentence says what is owed now. */
+  window.payDueSaved = function (res, quiet) {
+    var who = (typeof DUEBOX !== 'undefined' && DUEBOX) ? (DUEBOX.name || DUEBOX.phone || '') : '';
+    try { DUEBOX = null; } catch (e) {}
+    if (!quiet) {
+      var bal = res && res.balance !== null && res.balance !== undefined ? res.balance : (res && res.account ? res.account.balance : null);
+      var cred = res && res.credit !== undefined ? res.credit : null;
+      toast(bal !== null && bal !== undefined
+        ? T('Saved. ' + (who ? who + ' now owes ' : 'Now owed: ') + M(bal) + '.', 'সেভ হয়েছে। ' + (who ? who + '-এর এখন বাকি ' : 'এখন বাকি ') + M(bal) + '।')
+        : cred !== null ? T('Saved. Held in advance: ' + M(cred) + '.', 'সেভ হয়েছে। অগ্রিম জমা: ' + M(cred) + '।') : T('Saved.', 'সেভ হয়েছে।'));
+    }
+    try { if (VIEW === 'customers' && typeof CUSP !== 'undefined' && CUSP.key && typeof loadCustomerPage === 'function') loadCustomerPage(true); } catch (e) {}
+    try { if (VIEW === 'sales' && typeof INVP !== 'undefined' && INVP.no && typeof loadInvoicePage === 'function') loadInvoicePage(true); } catch (e) {}
+    try { if (typeof LVS !== 'undefined' && LVS.invoices && LVS.invoices.data) lvLoad('invoices', true); } catch (e) {}
+    try { if (typeof LVS !== 'undefined' && LVS.customers && LVS.customers.data) lvLoad('customers', true); } catch (e) {}
+    try { if (typeof CASH !== 'undefined') CASH = null; } catch (e) {}
+    repaint();
+  };
+  // a page change clears it (go, the back button, a link: every way)
+  if (typeof go === 'function') {
+    var goPay = go;
+    go = function () {
+      var r = goPay.apply(this, arguments);
+      if (typeof DUEBOX !== 'undefined' && DUEBOX && DUEBOX.where && DUEBOX.where !== where()) DUEBOX = null;
+      return r;
+    };
+  }
+  AFTER_PAINT.push(function payDueBox() {
+    if (typeof DUEBOX !== 'undefined' && DUEBOX && DUEBOX.where && DUEBOX.where !== where()) { DUEBOX = null; return; }
+    var v = el('view'), box = v && v.querySelector('[data-pay-duebox]'); if (!box) return;
+    // the phone's "Summary" fold must never hold it: it is what the person just asked for
+    var fold = box.closest('details.nt-fold');
+    // (phoneListOrder skips it - pay-inplace.json; this is the one-time fallback, never a tug of war)
+    if (fold && !box.hasAttribute('data-pay-moved')) { box.setAttribute('data-pay-moved', '1'); var head = v.querySelector(':scope > #fdHead'); v.insertBefore(box, head ? head.nextSibling : v.firstChild); }
+    if (PAY_DUE_SCROLL && DUEBOX && DUEBOX.account) {
+      PAY_DUE_SCROLL = false;
+      setTimeout(function () { try { box.scrollIntoView({ block: 'start', behavior: calm() ? 'auto' : 'smooth' }); } catch (e) {} var a = el('db_amt'); if (a && !phone()) try { a.focus({ preventScroll: true }); } catch (e) {} }, 30);
+    }
+  });
+  // the customer drawer's "Receive / adjust due": on that customer's own page, where the box belongs
+  if (typeof fd19CustPaint === 'function') {
+    var fd19CustPaintPay = fd19CustPaint;
+    fd19CustPaint = function (c) {
+      var out = fd19CustPaintPay.apply(this, arguments);
+      var dr = typeof FD19 !== 'undefined' ? FD19.dr : null;
+      if (dr && dr.acts && dr.acts.due && c) dr.acts.due = function () {
+        fd19Close();
+        if (typeof openCustomerPage === 'function') openCustomerPage(c.phone, c.name);
+        openDueBox(c.phone, c.name);
+      };
+      return out;
+    };
+  }
+
+  /* ================================================================ 3. Customers: list first; "who owe" rows open the customer; Back */
+  var CUST_SCROLL = null;
+  AFTER_PAINT.push(function payCustomers() {
+    var v = el('view'); if (!v) return;
+    if (VIEW === 'customers' && !(typeof CUSP !== 'undefined' && CUSP.key)) {
+      var owe = [].filter.call(v.querySelectorAll(':scope > section'), function (s) { return s.querySelector('[data-owesort]'); })[0];
+      // rows of "Customers who owe": a click opens that customer (they lit up on hover and did nothing)
+      if (owe) [].forEach.call(owe.querySelectorAll('tbody tr'), function (tr) {
+        if (tr.hasAttribute('data-payowe')) return;
+        var nm = tr.querySelector('td.nm'); if (!nm) return;
+        var ph = nm.querySelector('.sku'), phoneTx = ph ? ph.textContent.trim() : '', name = '';
+        [].forEach.call(nm.childNodes, function (n) { if (n.nodeType === 3) name += n.textContent; });
+        name = name.trim(); if (name === '—') name = '';
+        if (!name && !phoneTx) return;
+        tr.setAttribute('data-payowe', '1'); tr.setAttribute('data-payphone', phoneTx); tr.setAttribute('data-payname', name); tr.tabIndex = 0;
+        tr.setAttribute('aria-label', T('Open ', 'খুলুন: ') + (name || phoneTx));
+      });
+      // desktop: search + list on the first screen, the chase list under it (a chip above the list says it is there)
+      var list = v.querySelector(':scope > .o_lv');
+      if (owe && list && !phone() && (owe.compareDocumentPosition(list) & Node.DOCUMENT_POSITION_FOLLOWING)) {
+        v.insertBefore(owe, list.nextSibling);
+        if (!v.querySelector('[data-payowechip]')) {
+          var chip = document.createElement('button'); chip.type = 'button'; chip.className = 'pay-owechip'; chip.setAttribute('data-payowechip', '1');
+          chip.setAttribute('data-noi18n', '1');
+          var bar = v.querySelector(':scope > #crm_lbar') || list; v.insertBefore(chip, bar);
+        }
+      }
+      var ch = v.querySelector('[data-payowechip]');
+      if (ch && owe) {
+        var tt = owe.querySelector('h2 .bal'), nn = owe.querySelectorAll('tbody tr').length, tv = tt ? tt.textContent.trim() : '';
+        var want = T(nn + ' customer' + (nn === 1 ? '' : 's') + ' owe ' + tv + ' ›', nn + ' জন কাস্টমারের বাকি ' + tv + ' ›');
+        if (ch.textContent !== want) ch.textContent = want;
+      }
+    }
+    // a visible Back on a customer page and on an invoice page (keeps the list where it was)
+    var sub = (VIEW === 'customers' && typeof CUSP !== 'undefined' && CUSP.key) ? 'customers' : (VIEW === 'sales' && typeof INVP !== 'undefined' && INVP.no) ? 'sales' : '';
+    var crumbs = document.querySelector('#o_cp .crumbs');
+    if (sub && crumbs && !crumbs.querySelector('.pay-back')) {
+      var b = document.createElement('button'); b.type = 'button'; b.className = 'pay-back'; b.setAttribute('data-payback', sub);
+      b.innerHTML = ICON_BACK + '<span>' + E(sub === 'customers' ? T('All customers', 'সব কাস্টমার') : T('All sales', 'সব বিক্রি')) + '</span>';
+      crumbs.insertBefore(b, crumbs.firstChild);
+    }
+    if (!sub && crumbs) { var ob = crumbs.querySelector('.pay-back'); if (ob) ob.remove(); }
+    if (VIEW === 'customers' && !(typeof CUSP !== 'undefined' && CUSP.key) && CUST_SCROLL !== null) {
+      var y = CUST_SCROLL; CUST_SCROLL = null; setTimeout(function () { window.scrollTo(0, y); }, 60);
+    }
+  });
+  function openOwe(tr) {
+    var ph = tr.getAttribute('data-payphone'), nm = tr.getAttribute('data-payname');
+    if (typeof fd19Cust === 'function') fd19Cust(ph, nm, null); else if (typeof openCustomerPage === 'function') openCustomerPage(ph, nm);
+  }
+  var LIST_Y = 0;
+  document.addEventListener('click', function (e) {
+    var t = e.target && e.target.closest ? e.target : null; if (!t) return;
+    var tr = t.closest('tr[data-payowe]');
+    if (tr && !t.closest('a, button, input, select, label')) { openOwe(tr); return; }
+    var chip = t.closest('[data-payowechip]');
+    if (chip) { var o = [].filter.call(el('view').querySelectorAll(':scope > section'), function (s) { return s.querySelector('[data-owesort]'); })[0]; if (o) o.scrollIntoView({ block: 'start', behavior: calm() ? 'auto' : 'smooth' }); return; }
+    var bk = t.closest('[data-payback]');
+    if (bk) { e.preventDefault(); var to = bk.getAttribute('data-payback'); if (to === 'customers') CUST_SCROLL = LIST_Y; go(to); return; }
+  });
+  // remember where the customer list was when a customer was opened from it
+  document.addEventListener('click', function () {
+    if (VIEW === 'customers' && !(typeof CUSP !== 'undefined' && CUSP.key)) LIST_Y = window.scrollY;
+  }, true);
+  document.addEventListener('keydown', function (e) {
+    var tr = e.target && e.target.closest && e.target.closest('tr[data-payowe]');
+    if (tr && (e.key === 'Enter' || e.key === ' ') && e.target === tr) { e.preventDefault(); openOwe(tr); }
+  });
+
+  /* ================================================================ 4. Money: statement into view; tiles by meaning */
+  var CASH_SCROLL = '';
+  document.addEventListener('click', function (e) {
+    var c = e.target && e.target.closest && e.target.closest('[data-cacc]');
+    if (c && VIEW === 'cash') CASH_SCROLL = c.getAttribute('data-cacc');
+  }, true);
+  AFTER_PAINT.push(function payCash() {
+    if (VIEW !== 'cash' || typeof CASH_ACC === 'undefined' || !CASH_ACC || typeof CASH === 'undefined' || !CASH || !CASH.accounts) return;
+    var acc = CASH.accounts.filter(function (a) { return a.id === CASH_ACC; })[0]; if (!acc) return;
+    var v = el('view'), grid = v.querySelector('.cash_grid');
+    var h = [].filter.call(v.querySelectorAll('section .card > h2'), function (x) { var tx = ''; [].forEach.call(x.childNodes, function (n) { if (n.nodeType === 3) tx += n.textContent; }); return tx.trim() === String(acc.name).trim() && (!grid || (grid.compareDocumentPosition(x) & Node.DOCUMENT_POSITION_FOLLOWING)); })[0];
+    if (!h) return;
+    var sec = h.closest('section') || h; sec.classList.add('pay-stmt');
+    // scroll once, when the card was just pressed and its statement has come (the "Reading…" paint comes first)
+    if (!CASH_SCROLL || CASH_SCROLL !== CASH_ACC || CASH.account !== CASH_ACC) return;
+    CASH_SCROLL = '';
+    setTimeout(function () {
+      var r = sec.getBoundingClientRect();
+      if (r.top > window.innerHeight * 0.6 || r.top < 0) { try { sec.scrollIntoView({ block: 'start', behavior: calm() ? 'auto' : 'smooth' }); } catch (x) { sec.scrollIntoView(); } }
+    }, 40);
+  });
+  var WARN_TILES = ['Payments in no account', 'Out of stock'];
+  AFTER_PAINT.push(function payTiles() {
+    var g = document.querySelector('#view .fdd-grid'); if (!g) return;
+    var names = WARN_TILES.concat(WARN_TILES.map(function (t) { return (typeof I18N_BN !== 'undefined' && I18N_BN[t]) || ''; }).filter(Boolean));
+    [].forEach.call(document.querySelectorAll('#view .fdd-grid > .fdd-k'), function (k) {
+      var l = k.querySelector('.fdd-lbl'), n = k.querySelector('.fdd-num'); if (!l || !n) return;
+      var lab = l.textContent.trim(), isW = names.indexOf(lab) >= 0;
+      if (!isW) { k.classList.remove('pay-warn'); return; }
+      var val = Number(String(n.textContent).replace(/[০-৯]/g, function (c) { return String('০১২৩৪৫৬৭৮৯'.indexOf(c)); }).replace(/[^0-9.]/g, '')) || 0;
+      k.classList.toggle('pay-warn', val > 0);
+      if (val > 0 && VIEW === 'cash' && !k.hasAttribute('data-paygo')) { k.setAttribute('data-paygo', 'place'); k.setAttribute('role', 'button'); k.tabIndex = 0; k.title = T('Show the payments to place', 'যেগুলো অ্যাকাউন্টে রাখতে হবে দেখান'); }
+    });
+  });
+  document.addEventListener('click', function (e) {
+    var k = e.target && e.target.closest && e.target.closest('[data-paygo="place"]'); if (!k || VIEW !== 'cash') return;
+    var strip = document.querySelector('#view .dm-unm'); if (strip) { strip.scrollIntoView({ block: 'center', behavior: calm() ? 'auto' : 'smooth' }); var b = strip.querySelector('button'); if (b) try { b.focus({ preventScroll: true }); } catch (x) {} }
+  });
+
+  /* ================================================================ 5. Stock entry: the shipment box on step 1 only; Receive after the costs */
+  if (typeof repaint === 'function') {
+    var repaintPay = repaint;
+    repaint = function () {
+      var r = repaintPay.apply(this, arguments);
+      try { payWizard(); } catch (e) { if (window.console) console.error('pay-wizard', e); }
+      try { payFabSoon(); } catch (e) {}
+      return r;
+    };
+  }
+  function payWizard() {
+    var v = el('view'), card = v && v.querySelector('.card.rvw'); if (!card || typeof RVW === 'undefined') return;
+    var w = card.querySelector('.ow-where');
+    if (w && RVW.step > 0) {
+      w.classList.add('rvw-off');
+      if (!card.querySelector('.pay-where')) {
+        var coming = typeof RECV !== 'undefined' && RECV && RECV.where === 'coming';
+        var s = document.createElement('div'); s.className = 'pay-where';
+        s.innerHTML = '<span>' + T('Shipment', 'শিপমেন্ট') + ': <b>' + (coming ? T('Still coming — bought, not here yet', 'আসছে — কেনা হয়েছে, এখনো আসেনি') : T('It is here — I have the goods', 'এসে গেছে — মাল হাতে আছে')) + '</b></span>' +
+          '<button type="button" data-rvwgo="0">' + T('Change', 'বদলান') + '</button>';
+        w.parentNode.insertBefore(s, w);
+      }
+    }
+    if (RVW.step === 4) {
+      var sv = el('rv_save'), cs = el('rv_costsum');
+      var top = function (n) { while (n && n.parentNode !== card) n = n.parentNode; return n; };
+      var row = top(sv), csTop = top(cs);
+      if (row && csTop && row !== csTop && (row.compareDocumentPosition(csTop) & Node.DOCUMENT_POSITION_FOLLOWING)) card.insertBefore(row, csTop.nextSibling);
+    }
+  }
+
+  // the review recap said "7,600 TK": ৳ on screen like everywhere else
+  if (typeof rvwRecap === 'function') {
+    var rvwRecapPay = rvwRecap;
+    rvwRecap = function () { return String(rvwRecapPay.apply(this, arguments)).replace(/(\d[\d,]*(?:\.\d+)?) TK/g, '৳$1'); };
+  }
+
+  /* ================================================================ 6. desktop list pages: the chat button clear of the row buttons */
+  var LISTS = { sales: 1, customers: 1, products: 1, suppliers: 1, stock: 1, weborders: 1, quotes: 1, leads: 1, preorders: 1, repairs: 1 };
+  var fabT = 0;
+  function payFab() {
+    var html = document.documentElement, on = !phone() && LISTS[VIEW] && !(VIEW === 'customers' && typeof CUSP !== 'undefined' && CUSP.key) && !(VIEW === 'sales' && typeof INVP !== 'undefined' && INVP.no);
+    var lv = on ? document.querySelector('#view .o_lv') : null;
+    html.classList.toggle('pay-list', !!lv);
+    if (!lv) { html.classList.remove('pay-fabdock'); return; }
+    var r = lv.getBoundingClientRect(), H = window.innerHeight;
+    var inView = r.top < H - 40 && r.bottom > H - 90;               // the list's rows pass under the bottom corner
+    var acts = lv.querySelector('thead th.o_acts') || lv.querySelector('thead th:last-child');
+    if (inView && acts && acts.getBoundingClientRect().width > 0) {
+      var left = acts.getBoundingClientRect().left;
+      var right = Math.max(22, Math.round(window.innerWidth - left + 10));
+      html.style.setProperty('--pay-fab-right', right + 'px');
+      html.classList.add('pay-fabdock');
+    } else html.classList.remove('pay-fabdock');
+  }
+  function payFabSoon() { cancelAnimationFrame(fabT); fabT = requestAnimationFrame(function () { try { payFab(); } catch (e) {} }); }
+  window.addEventListener('scroll', payFabSoon, { passive: true });
+  window.addEventListener('resize', payFabSoon);
+  AFTER_PAINT.push(payFabSoon);
+
+  /* ================================================================ Bangla */
+  try {
+    var BN = {
+      'Receive payment': 'টাকা নিন', 'Save payment': 'পেমেন্ট সেভ করুন', 'Still owed ': 'এখনো বাকি ', '+ Another way to pay': '+ আরেকভাবে পেমেন্ট',
+      'optional: who brought it, a transaction number': 'ঐচ্ছিক: কে দিলেন, লেনদেন নম্বর', 'Optional': 'ঐচ্ছিক', 'All customers': 'সব কাস্টমার', 'All sales': 'সব বিক্রি',
+      'needed when no money came in: say why': 'টাকা না এলে লাগবে: কেন, লিখুন', 'Why? (optional for money in)': 'কেন? (টাকা এলে ঐচ্ছিক)',
+      'Shipment': 'শিপমেন্ট', 'Change': 'বদলান', 'Show the payments to place': 'যেগুলো অ্যাকাউন্টে রাখতে হবে দেখান', 'Remove this way of paying': 'এই লাইন বাদ দিন',
+      'Price each (৳)': 'প্রতিটার দাম (৳)', 'What each line will cost': 'প্রতিটা লাইনের খরচ কত হবে'
+    };
+    for (var k in BN) if (!I18N_BN[k]) I18N_BN[k] = BN[k];
+  } catch (e) {}
 })();
 </script>
 </body>
