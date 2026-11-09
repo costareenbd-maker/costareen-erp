@@ -3985,3 +3985,16 @@ to the dev ERP every minute, so the desk is open around the clock. Settings live
   start|scale only, manager refused). ads_test has 4 failures that are also on main without this change.
 - NOT done: the Rules screen was not clicked through in a browser (the local copy fakes every network call, so it cannot
   reach the bridge); the n8n content flows (idea -> draft -> check -> approval -> Postiz) and the voice guide are next.
+
+## brand-8 (10 Nov 2026) - Brand desk: AI drafts from the idea bank, approved on Today
+- Plan > "Write drafts with AI": pick platforms, press Write drafts on an idea from the idea bank (30 starting suggestions in
+  the brand core database, marked "suggestion") or write a new one. The bridge on the Mac asks the AI (owner's ChatGPT plan
+  through the ERP AI gateway, gpt-5.6-sol; rule 4 Nov: automatic jobs run on ChatGPT) with the voice guide
+  (G:/bendar-brand/core/voice/voice-guide.md, example draft) for one draft per platform in its language (LinkedIn/Threads
+  English, Facebook/Instagram/YouTube/TikTok Bangla), then runs the claim check on each.
+- Today > "Waiting for you": each draft with its claim-check result, editable text, the matching Postiz accounts, a time,
+  Approve and queue (through the pacer, claim check again, a posts row per account) or Reject.
+- Calls (owner only): erpBrandDeskDrafts (read), erpBrandDeskMakeDrafts, erpBrandDeskDraftDecide.
+- Tests: branddesk 66 green. Checked on the Mac: one idea -> a LinkedIn (EN) and a Facebook (BN) draft, no claim hits.
+- NOT done: no Postiz account is connected yet (owner's login), so Approve has nothing to queue to; the screens were not
+  clicked in a browser; voice_score is not computed yet (needs his own posts first).

@@ -127,6 +127,40 @@ export async function erpBrandDeskLint(ctx, payload) {
   return bridge(ctx, '/lint', { text });
 }
 
+// brand-8: nothing is posted from a draft until the owner approves it here; the bridge checks the claims again
+const DRAFT_PLATFORMS = ['linkedin', 'facebook', 'instagram', 'youtube', 'threads', 'tiktok'];
+export async function erpBrandDeskDrafts(ctx) {
+  await gate(ctx);
+  return bridge(ctx, '/drafts');
+}
+export async function erpBrandDeskMakeDrafts(ctx, payload) {
+  await gate(ctx);
+  const p = payload || {}, id = p.idea_id == null || p.idea_id === '' ? null : parseInt(p.idea_id, 10), text = str(p.text);
+  if (id === null && !text) throw new Error('Pick an idea or write one.');
+  if (id !== null && !(id > 0)) throw new Error('Pick an idea.');
+  if (text.length > 2000) throw new Error('Keep the idea under 2000 letters; the AI writes the rest.');
+  const plats = (Array.isArray(p.platforms) ? p.platforms : []).map((x) => str(x).toLowerCase()).filter((x) => DRAFT_PLATFORMS.includes(x));
+  const body = { platforms: [...new Set(plats)].slice(0, 4) };
+  if (id !== null) body.idea_id = id; else { body.text = text; if (/^[a-z0-9_]{2,40}$/.test(str(p.topic))) body.topic = str(p.topic); }
+  return bridge(ctx, '/drafts/make', body);
+}
+export async function erpBrandDeskDraftDecide(ctx, payload) {
+  await gate(ctx);
+  const p = payload || {}, id = parseInt(p.id, 10), action = str(p.action);
+  if (!(id > 0)) throw new Error('Pick a draft.');
+  if (!['approve', 'reject'].includes(action)) throw new Error('Approve or reject.');
+  if (action === 'reject') return bridge(ctx, '/drafts/decide', { id, action, note: str(p.note).slice(0, 500) });
+  const nets = Array.isArray(p.networks) ? p.networks.filter((n) => n && str(n.id) && str(n.platform)).map((n) => ({ id: str(n.id), platform: str(n.platform) })) : [];
+  if (!nets.length) throw new Error('Pick the account it goes to.');
+  const text = str(p.body);
+  if (text.length > 63000) throw new Error('The post is too long.');
+  let at = null;
+  if (p.at) { const d = new Date(p.at); if (isNaN(d)) throw new Error('The time is not a date.'); at = d.toISOString(); }
+  const out = { id, action, networks: nets, at };
+  if (text) out.body = text;
+  return bridge(ctx, '/drafts/decide', out);
+}
+
 export const PILLARS = ['story', 'lesson', 'behind the scenes', 'market', 'announcement'];
 export const AUDIENCES = ['customer', 'supplier', 'brand'];
 const num = (v) => { const n = parseInt(v, 10); if (!(n > 0)) throw new Error('Pick a card.'); return n; };
@@ -245,4 +279,4 @@ export async function erpBrandDeskHello(ctx, payload) {
   return { ok: true };
 }
 
-export const HANDLERS = { erpBrandDesk, erpBrandDeskSettings, erpBrandDeskWeights, erpBrandDeskCadence, erpBrandDeskLint, erpBrandDeskShorts, erpBrandDeskMakeShorts, erpBrandDeskVideos, erpBrandDeskPeople, erpBrandDeskPerson, erpBrandDeskToLeads, erpBrandDeskIdeas, erpBrandDeskIdea, erpBrandDeskIdeaToBoard, erpBrandDeskBoard, erpBrandDeskCard, erpBrandDeskMove, erpBrandDeskDone, erpBrandDeskPost, erpBrandDeskDecide, erpBrandDeskSetup, erpBrandDeskHello };
+export const HANDLERS = { erpBrandDesk, erpBrandDeskDrafts, erpBrandDeskMakeDrafts, erpBrandDeskDraftDecide, erpBrandDeskSettings, erpBrandDeskWeights, erpBrandDeskCadence, erpBrandDeskLint, erpBrandDeskShorts, erpBrandDeskMakeShorts, erpBrandDeskVideos, erpBrandDeskPeople, erpBrandDeskPerson, erpBrandDeskToLeads, erpBrandDeskIdeas, erpBrandDeskIdea, erpBrandDeskIdeaToBoard, erpBrandDeskBoard, erpBrandDeskCard, erpBrandDeskMove, erpBrandDeskDone, erpBrandDeskPost, erpBrandDeskDecide, erpBrandDeskSetup, erpBrandDeskHello };
