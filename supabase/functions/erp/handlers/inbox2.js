@@ -164,7 +164,7 @@ export async function erpInboxProfile(ctx, payload) {
       next[k] = typeof d === 'number' ? Math.max(0, num(p.save[k])) : typeof d === 'boolean' ? !!p.save[k] : typeof d === 'object' ? { ...d, ...(p.save[k] || {}) } : str(p.save[k]).slice(0, 2000);
     }
     if (!['bn', 'en', 'both'].includes(next.lang)) next.lang = 'both';
-    if (!['sir', 'bhai'].includes(next.style)) next.style = 'sir';
+    if (!['sir', 'bhai', 'vai'].includes(next.style)) next.style = 'sir';
     if (!['shop', 'services', 'both'].includes(next.biz_type)) next.biz_type = 'shop';
     if (!['fixed', 'limit'].includes(next.disc_mode)) next.disc_mode = 'fixed';
     next.disc_max_pct = Math.min(50, next.disc_max_pct); next.disc_min_margin = Math.min(500, next.disc_min_margin);

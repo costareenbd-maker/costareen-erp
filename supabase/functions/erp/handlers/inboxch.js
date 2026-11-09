@@ -31,7 +31,7 @@ export const CAN = {
 export async function chSecret(ctx, ch, name) { return str(await getSecret(ctx, 'INBOX_' + ch.id + '_' + name)); }
 export async function chSecretSet(ctx, ch, name, value) { await setSecret(ctx, 'INBOX_' + ch.id + '_' + name, value === undefined ? '' : value); }
 
-async function call(ctx, url, opts) {
+export async function call(ctx, url, opts) {
   const f = ctx.deps.fetch || fetch;
   try {
     const res = await f(url, { method: opts.method || 'POST', headers: { 'content-type': 'application/json', ...(opts.headers || {}) },
@@ -59,7 +59,7 @@ export async function fetchBytes(ctx, url, headers) {
 function waTo(n) { return str(n).replace(/[^0-9]/g, ''); }
 // walid-1: WhatsApp now hides many people's phone behind a 'LID' (123...@lid). Evolution takes a full JID as the number,
 // so a contact kept as a JID is sent to as it is; a plain number stays digits only.
-function evoTo(n) { const t = str(n).trim(); return /@(lid|s\.whatsapp\.net)$/.test(t) ? t : waTo(t); }
+function evoTo(n) { const t = str(n).trim(); return /@(lid|s\.whatsapp\.net|g\.us)$/.test(t) ? t : waTo(t); }
 function numbered(text, buttons) {   // WhatsApp without buttons: the choice as a numbered list (as AiPraktor does)
   return (text ? text + '\n' : '') + buttons.map((b, i) => (i + 1) + '. ' + b.title).join('\n');
 }

@@ -4034,3 +4034,30 @@ desktop New invoice screen landed on the Invoice discount "?" (help "off the who
 the buttons). Fix: a guard script anchors every static help/info button (.t2q .fhelp .fdd-i .fdd-ti .nvg-i .uihelp .fcon-tg
 .fig-i, chip buttons) as position:relative; buttons already absolute/relative keep their place. After: 0 of 1,620. No invoice
 was saved on live between the distill-1 release and this fix.
+
+## sales-3: the Inbox AI sounds like a person and tells the team about each order on WhatsApp (10 Nov 2026, dev)
+
+Owner: "it feels like an AI, it calls customers sir. A man is bhai, a woman apu. Bangla in Bangla, Banglish in Banglish,
+English in English. Show the product (cards / photos / choices), ask if they want it, take phone + address, say the
+order is confirmed, then tell our first WhatsApp number (or a group, with the invoice): call to confirm, send the parcel."
+Checked against AiPraktor (docs/INBOX-VS-AIPRAKTOR.md - cards, Order button, COD order, bill picture were already the
+same) and open-source WhatsApp sales agents (bibinprathap/whatsapp-chatbot: natural-language order straight to a cart -
+we already do that with place_order; "human-like" agents: short bubbles, no bot phrases - adopted).
+- Agent Desk "Calls the customer" has a third choice **ভাই / আপু** (style `vai`). The AI decides man / woman from the
+  name, the chat or how they speak, saves it (remember_customer), and uses no address word until it knows. A ভাই/আপু
+  shop never sends স্যার/ম্যাম/sir/madam: `addressFix` swaps a slipped one for the right word, or drops it.
+- Language: the reply follows the script of the customer's LATEST message - Bengali script, Banglish in English letters
+  (was: Banglish answered in Bengali script), or English. Also for comment replies, follow-ups and the safe line.
+- SOUND HUMAN block (bans "অবশ্যই!", "আমি আপনাকে কীভাবে সাহায্য করতে পারি", lists, bold, repeated apologies; every
+  reply moves one step nearer the order). A reply with a blank line goes as two short messages (`splitHuman`).
+- ORDER FLOW block: show cards / choices straight away -> "অর্ডার করবেন?" -> phone + full address in one message (the
+  chat name is used when the name was not given; place_order no longer needs it) -> place -> "আপনার অর্ডারটি কনফার্ম
+  করা হয়েছে" with number and day.
+- New handlers/orderalert.js: after a chat order, the first WhatsApp number (Evolution, `wa_evo`) sends the order -
+  name, phone, address, items, delivery, total, "ফোন দিয়ে কনফার্ম করে পার্সেল পাঠিয়ে দিন" - plus the bill picture.
+  Agent Desk: "WhatsApp alert for each new order" (blank = that number's own chat, phone numbers, or `off`) and "Or ...
+  this WhatsApp group" (found by name, or made with those phone numbers). A failure never stops the order: it is a note
+  in the chat. The Agent Desk test shows the alert text.
+- Tests: salesagent_test.mjs 48 (18 new).
+NOT done: no "send a test alert" button; alerts only for orders the AI takes in a chat (not website / landing orders);
+the group needs at least one phone number to be made; real Evolution group calls not yet tried on the live server.
