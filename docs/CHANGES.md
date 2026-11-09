@@ -4025,3 +4025,12 @@ Blocks `<!-- crit3:fig -->`, `<!-- crit3:flow -->` after `<!-- CRIT3-MERGE 2026-
 - An idea caught under Plan (Memos) is also put in the idea bank, so "Write drafts" sees it; older memos join once.
 - Tests: branddesk green (manual needs no account, keeps the link, refuses a non-https link).
 - NOT done: screens not clicked in a browser.
+
+## hotfix-1 (10 Nov 2026): clicks on New invoice opened "off the whole invoice" instead of working (desktop)
+Owner: "the ERP is not working, invoices cannot be made; pressing anywhere shows 'off the whole invoice'". Cause: distill-sales
+(9 Nov) gave the small help buttons an invisible ::after tap area with position:absolute, but on desktop the buttons were not
+positioned, so the layer stretched over the nearest positioned ancestor - whole cards. Probe: 1,275 of 1,620 points on the
+desktop New invoice screen landed on the Invoice discount "?" (help "off the whole invoice"); phone was fine (its rule anchored
+the buttons). Fix: a guard script anchors every static help/info button (.t2q .fhelp .fdd-i .fdd-ti .nvg-i .uihelp .fcon-tg
+.fig-i, chip buttons) as position:relative; buttons already absolute/relative keep their place. After: 0 of 1,620. No invoice
+was saved on live between the distill-1 release and this fix.

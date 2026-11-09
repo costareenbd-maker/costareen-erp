@@ -46256,6 +46256,9 @@ details.nt-fold.nt-setmenu > .nt-fold-in { padding:0 8px 8px; }
 html[data-look="clean"] .t2q::after, html[data-look="clean"] .fdd-i::after, html[data-look="clean"] .fdd-ti::after { content:''; position:absolute; inset:-6px 0 -6px -6px; }
 html[data-look="clean"] .fhelp::after { content:''; position:absolute; inset:-8px 0 -8px -8px; }
 html[data-look="clean"] .fdd-ti { position:relative; }
+/* hotfix-1 (10 Nov 2026): every button that carries a ::after tap area is its own positioned box - without this the layer
+   covered whole cards on desktop and every click on New invoice opened the "off the whole invoice" help */
+/* (anchoring done by the hotfix-1 script at the end of the page, only where the button is static) */
 /* Invoices: the queue strip above the list */
 .nt-q { display:flex; flex-wrap:wrap; gap:8px; margin:0 0 12px; }
 .nt-q button { display:inline-flex; align-items:center; gap:8px; min-height:40px; padding:0 14px; border:0; border-radius:999px; background:var(--fd-card, #fff); color:var(--fd-text, var(--ink)); font:inherit; font-size:14px; font-weight:600; cursor:pointer; box-shadow:var(--fd-shadow-card, 0 1px 2px rgba(0,0,0,.04)); }
@@ -52729,6 +52732,30 @@ html[lang="en"] #view table.m-cards > tbody > tr > td::before { text-transform:n
     var br = b.previousSibling; if (br && br.nodeName === 'BR') br.remove(); b.remove();
     var inp = tr.querySelector('input[data-disc]'); if (inp) { try { inp.focus(); inp.select(); } catch (x) {} }
   }, true);
+})();
+</script>
+<!-- hotfix-1 (10 Nov 2026): a small help/info button that carries an invisible ::after tap area must be its own positioned
+     box. Where it was static (desktop), the layer stretched over the nearest positioned ancestor - whole cards - and every
+     click on New invoice opened the "off the whole invoice" help instead of reaching the field or button. Only static
+     buttons are anchored; ones already absolute/relative/fixed keep their place. -->
+<script>
+(function () {
+  var SEL = '.t2q, .fhelp, .fdd-i, .fdd-ti, .nvg-i, .uihelp, .fcon-tg, .fig-i, .chip button, .o_facet button';
+  function anchor() {
+    var list = document.querySelectorAll(SEL);
+    for (var i = 0; i < list.length; i++) {
+      var el = list[i];
+      if (el.__hfx) continue;
+      el.__hfx = 1;
+      try { if (getComputedStyle(el).position === 'static') el.style.position = 'relative'; } catch (e) {}
+    }
+  }
+  var T = 0;
+  function soon() { if (T) return; T = setTimeout(function () { T = 0; anchor(); }, 40); }
+  try { new MutationObserver(soon).observe(document.documentElement, { childList: true, subtree: true }); } catch (e) {}
+  try { if (typeof AFTER_PAINT !== 'undefined') AFTER_PAINT.push(anchor); } catch (e) {}
+  window.addEventListener('resize', function () { var l = document.querySelectorAll(SEL); for (var i = 0; i < l.length; i++) l[i].__hfx = 0; soon(); });
+  anchor();
 })();
 </script>
 </body>
