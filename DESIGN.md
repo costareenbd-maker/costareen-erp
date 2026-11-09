@@ -30,6 +30,10 @@ colors:
   dark-card: "#1B1D22"
   dark-surface-2: "#23262C"
   dark-ink: "#F2F3F5"
+  placeholder: "#686C77"
+  dark-placeholder: "#9A9EA8"
+  tile-positive-text: "#14703A"
+  tile-negative-text: "#B91C1C"
 typography:
   page-title:
     fontFamily: "Inter, Noto Sans Bengali, Segoe UI, Nirmala UI, system-ui, sans-serif"
@@ -62,6 +66,18 @@ typography:
     fontFamily: "Inter, Noto Sans Bengali, system-ui, sans-serif"
     fontSize: "12.5px"
     fontWeight: 600
+  bangla-body:
+    fontFamily: "Hind Siliguri, Noto Sans Bengali, Nirmala UI, system-ui, sans-serif"
+    fontSize: "14px"
+    lineHeight: 1.55
+  bangla-label:
+    fontFamily: "Hind Siliguri, Noto Sans Bengali, Nirmala UI, system-ui, sans-serif"
+    fontSize: "14px"
+    fontWeight: 600
+    lineHeight: 1.4
+  code:
+    fontFamily: "ui-monospace, JetBrains Mono, Cascadia Mono, Menlo, Consolas, monospace"
+    fontSize: "12.5px"
 rounded:
   input: "12px"
   button-small: "10px"
@@ -143,7 +159,7 @@ and logo lead in the top bar and menu; the palette below is the product's, not o
 **Key Characteristics:**
 - Pale grey canvas, white borderless cards, 20px corners.
 - Lime marks "you are here / this is on" and nothing else.
-- Dark primary button in light mode; lime primary button in dark mode.
+- Dark (Ink) primary button in light mode; near-white primary button with Ink text in dark mode.
 - Pastel KPI tiles that cycle peach, lavender, mint, lemon, sky.
 - Flat tables with a muted head and hairline rows.
 - Pills everywhere a choice is made (tabs, chips, segments, the business switch).
@@ -153,8 +169,8 @@ and logo lead in the top bar and menu; the palette below is the product's, not o
 A quiet near-neutral grey system with one loud signal colour (lime) and soft pastel tiles for figures.
 
 ### Primary
-- **Counter Lime** (counter-lime): the selected state - active menu pill, selected tab, chip and segment, the dark-mode
-  primary button. Always carries Ink text, never white.
+- **Counter Lime** (counter-lime): the selected state - active menu pill, selected tab, chip and segment, a switch that
+  is on. Always carries Ink text, never white. Not a button fill in either theme (since crit-look, 10 Nov 2026).
 - **Counter Ink** (ink): text, and the light-mode primary button fill. The strongest mark on a light screen.
 
 ### Secondary
@@ -171,21 +187,27 @@ A quiet near-neutral grey system with one loud signal colour (lime) and soft pas
 - **Shelf Grey** (surface-2) and **Deep Shelf** (surface-3): input fills, secondary buttons, table hover, hover states.
 - **Hairline** (border) and **Firm Hairline** (border-strong): table rows, dividers, scrollbars.
 - **Ink 2 / Ink 3 / Faint** (ink-2, ink-3, ink-faint): secondary text, sub-lines and table heads, placeholders.
-- **Status**: positive / positive-text (money in, trends up), negative / negative-text (dues, refusals, danger),
-  warning / warning-text (attention).
+- **Status**: positive / positive-text (money in, a change for the better), negative / negative-text (dues, refusals,
+  danger, a change for the worse), warning / warning-text (attention). A trend is coloured by meaning, not direction: an
+  expense falling is green. On pastel tiles the trend text darkens to tile-positive-text / tile-negative-text (4.5:1).
+- **Placeholders**: placeholder (light) / dark-placeholder (dark), at least 4.5:1 on Shelf Grey.
 
 ### Named Rules
 **The One Lime Rule.** Lime means "selected" or "on". It is never decoration, never a background for a whole section,
 and its text is always Ink.
-**The Accent Is Ink Rule.** The shared accent (`--fd-accent`) is Ink (light) / Lime (dark); a new widget that needs a
-filled "main" state uses it, and a selected state uses Lime directly.
+**The Accent Is Ink Rule.** The shared accent (`--fd-accent`) is Ink (light) / near-white #ECEDF0 with Ink text (dark);
+a new widget that needs a filled "main" state uses it, and a selected state uses Lime directly. Icon squares, avatars and
+count badges stay neutral in both themes.
 **The Dark-Text-on-Light-Fill Rule.** Any fill lighter than mid-grey (lime, pastel, soft status) carries Ink text. In
 dark mode the accent fill is lime, so white text on it is a bug (fixed 29 Oct 2026, clean-contrast-1).
 
 ## Typography
 
 **Body Font:** Inter (latin, variable) with Noto Sans Bengali for Bangla, then Segoe UI / Nirmala UI / system-ui.
-Bangla pages switch the stack to Hind Siliguri / Noto Sans Bengali first.
+**Bangla Font:** Hind Siliguri (Google Fonts, 400/500/600/700, loaded when the page turns Bangla), then Noto Sans Bengali,
+Nirmala UI, system-ui. Under `html[lang=bn]` it is the face of body, buttons and fields.
+**Code Font:** ui-monospace, JetBrains Mono, Cascadia Mono, Menlo, Consolas, monospace - only for codes, serials, keys,
+links and checks' ids (12-12.5px), never as decoration.
 
 **Character:** One family, weight does the work: heavy titles and figures, semibold labels and buttons, regular body.
 Numbers use tabular figures so columns of money line up.
@@ -197,6 +219,9 @@ Numbers use tabular figures so columns of money line up.
 - **Figure** (700, 22-32px fluid, 1.1, -0.025em, tabular): KPI values and money totals.
 - **Body** (400, 14.5px, 1.5): everything else.
 - **Label** (600, 12.5px): form labels, table heads, small notes.
+- **Bangla body / label** (Hind Siliguri, 14px; line height 1.55 for text, 1.4 for labels, buttons and pills): Bangla
+  never goes under 14px; tiny badges and chips 12.5px.
+- **Code** (monospace, 12.5px): invoice codes in tables, serials, access keys.
 
 ### Named Rules
 **The Bangla Size Rule.** Bangla text never goes below the body size for anything a person must read; Bangla glyphs need
@@ -235,10 +260,11 @@ pill. No square corners on interactive things.
 
 ### Buttons
 - **Shape:** gently rounded (12px; small 10px), 38px tall (small 32px), no border.
-- **Primary:** Ink fill with white text in light mode; Lime fill with Ink text in dark mode. One per area.
+- **Primary:** Ink fill with white text in light mode; near-white fill with Ink text in dark mode. One per area.
 - **Secondary:** Shelf Grey fill, Ink text; hover to Deep Shelf.
 - **Danger:** soft red fill with red text; solid red only for the final, irreversible step.
 - **Focus:** a 3px ring (ink at 18% light, lime at 30% dark). Disabled at 45% opacity.
+- **Top bar:** sticky, on a solid canvas ground; once the page scrolls it gets a hairline and a soft shadow.
 
 ### Chips, tabs and segments
 - **Style:** pills on Shelf Grey (chips) or Card White (tabs), semibold Ink-2 text.
@@ -261,7 +287,7 @@ pill. No square corners on interactive things.
 - **Labels:** 12.5px semibold Ink-2 above the field. No grey hint text beside a label; help goes behind a "?" button.
 
 ### Navigation
-- **Side menu:** white pills (46px tall, 14px corners) on the grey canvas, small group labels in caps-free 11px; hover to
+- **Side menu:** white pills (46px tall, 14px corners) on the grey canvas, group labels in caps-free 12.5px semibold; hover to
   Shelf Grey; the current screen is a Lime pill with bold Ink text and an inverted count badge.
 - **Phone:** bottom tab bar; the business pill shows the name, shrinking with an ellipsis.
 

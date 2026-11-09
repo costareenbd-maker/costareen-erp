@@ -3933,3 +3933,19 @@ every screen by seven area agents (shell, sales, contacts, goods, money, ai, ser
 - Tests: shellfinal 29, salesfinal 31, contactsfinal 31, goodsfinal 62, moneyfinal 115, aifinal 54, serverfinal 32; every
   suite green except ads 4 (unchanged) and golive (needs IMPORT_DIR). Crawl 44 views x phone/desktop x EN/BN: 0 errors.
 - Not done: lazy-loading screens (a build change); the classic viewDash body (~15 KB, unreachable) left in.
+
+## crit-1 (10 Nov 2026): fixes from the Impeccable critique (26/40)
+Owner answers: wrong numbers first, keep the New invoice form, fix everything + live. Blocks `<!-- crit:sell -->`,
+`<!-- crit:look -->`, `<!-- crit:lead -->` after `<!-- CRIT-MERGE 2026-11-10 -->`. Snapshot .impeccable/critique/2026-11-09T09-24-05Z.
+- P0 Customers phone list: the figure is always what the list is sorted by (spent / owes); the due is a badge "৳x due · N days".
+- P1 Dashboard Recent Sales said "Partial" for unpaid invoices; now the same Paid / Unpaid / Partial rule as Sales.
+- P1 Bangla on the selling path: line labels follow the language (data-label re-translated), "স্টকে ২১টি", drawer in Bangla.
+- P1 Phone dashboard 8,071 -> 4,253 px: + New invoice, Needs you now (3 + Show more), 2x2 Net profit / Cash / Dues / Stock,
+  then the chart; 100% donuts become one line; Navigator promo + figure-less shortcut cards gone; one-line rows x3.
+- New invoice (form kept): Cash default, required star only when needed, walk-in note neutral not red, out-of-stock sinks,
+  Customer above Payment on phone, compact remove + Undo (6 s), price box wider, confirm in ৳, drawer buttons labelled.
+- Chat button lifts above save bars and hides while a drawer is open; sticky top bar solid; dark mode: lime only for selected,
+  primary buttons near-white; placeholders 4.77:1; trends coloured by meaning (SVG arrows); Bangla text >= 14px, line height 1.55.
+- Settings: one "?" per label, Menu one sentence; greeting without emoji; AI screens one plain line each; Joint month-end
+  preview + sums in the confirm; Money phone balance first, calm placement strip; English plurals everywhere ("2 parcels").
+- DESIGN.md: Hind Siliguri + mono stack + dark primary rule. No server change, no migration.

@@ -2215,7 +2215,7 @@ async function saveInvoice() {
       // set the date for every sale after it
       ACCT = null;
       FORM = { payMode:'full', paidNow:0, phone:'', name:'', address:'', source:(OPT.sources[0] || 'Customer pickup'),
-               touched:false, method:FORM.method,
+               touched:false, method:'',   // crit-sell: every new sale starts on the default (Cash); a bKash sale does not make the next one bKash
                status:FORM.status, delivery:0, advance:0, date:'' };
       iSearch = '';
       invoiceDone(res);
@@ -10117,7 +10117,7 @@ function srvOpt() {
   srv('erpFormOptions', [], function (o) {
       OPT = o;
       if (!FORM.source && o.sources.length) FORM.source = o.sources[0];
-      if (!FORM.method && o.paymentMethods.length) FORM.method = o.paymentMethods[0];
+      if (!FORM.method && o.paymentMethods.length) FORM.method = o.paymentMethods.filter(function (m) { return /^cash$/i.test(String(m).trim()); })[0] || o.paymentMethods[0];   // crit-sell: Cash first, never the alphabetical first
       if (!FORM.status && o.paymentStatuses.length) FORM.status = o.paymentStatuses[0];
       if (VIEW === 'invoice') repaint();
   }, function (e) {
@@ -10222,7 +10222,7 @@ function applyBundle(b) {
     OPT = b.options;
     if (OPT) {
       if (!FORM.source && OPT.sources && OPT.sources.length) FORM.source = OPT.sources[0];
-      if (!FORM.method && OPT.paymentMethods && OPT.paymentMethods.length) FORM.method = OPT.paymentMethods[0];
+      if (!FORM.method && OPT.paymentMethods && OPT.paymentMethods.length) FORM.method = OPT.paymentMethods.filter(function (m) { return /^cash$/i.test(String(m).trim()); })[0] || OPT.paymentMethods[0];   // crit-sell: Cash first
       if (!FORM.status && OPT.paymentStatuses && OPT.paymentStatuses.length) FORM.status = OPT.paymentStatuses[0];
     }
   }
@@ -20609,7 +20609,8 @@ document.addEventListener('click', async function (ev) {
   var b = ev.target.closest('[data-jt]'); if (!b || !JT.data) return;
   var a = b.getAttribute('data-jt'), d = JT.data;
   if (a === 'agree') {
-    if (!(await uiConfirm('Agree with the sums of ' + d.book.label + '?\n\nWhen your partner has agreed too, the month is closed: its sales, stock entries and book lines can no longer be changed. This cannot be undone.'))) return;
+    var lkTm = (d.book.report || {}).this_month || {};
+    if (!(await uiConfirm('Agree with the sums of ' + d.book.label + '?\n\nSold ' + fdTk(lkTm.revenue || 0, d.currency) + ' · goods cost ' + fdTk(lkTm.cogs || 0, d.currency) + ' · profit ' + fdTk(lkTm.profit || 0, d.currency) + '.\n\nWhen your partner has agreed too, the month is closed: its sales, stock entries and book lines can no longer be changed. This cannot be undone.'))) return;
     jtSave('erpJointAgree', { pool: JT.pool, month: JT.month }, '', function (r) { toast(r.book && r.book.report && r.book.report.closed ? esc(r.book.label) + ' is closed.' : 'Your yes is written down. Waiting for your partner.', false, 8000); });
   } else if (a === 'unagree') {
     jtSave('erpJointAgree', { pool: JT.pool, month: JT.month, withdraw: true }, 'Taken back.');
@@ -31683,7 +31684,7 @@ function fddWidgets(d) {
     (navOn('sales') ? '<button type="button" class="fdd-more" data-go="sales">View all →</button>' : '') + '</div>' +
     (d.recent.length ? '<div class="fdd-scroll"><table class="fdd-t"><thead><tr><th>Sale</th><th>Customer</th><th class="n">Total</th><th>Status</th></tr></thead><tbody>' +
       d.recent.map(function (x) { return '<tr data-inv="' + esc(x.id) + '"><td><b>' + esc(x.id) + '</b><div class="sku">' + esc(x.date) + '</div></td><td class="nm">' + esc(x.customer) + '</td><td class="n">' + fdTk(x.total, cur) + '</td><td>' +
-        (x.owed > 0 ? '<span class="fdd-chip due">Partial · ' + fdTk(x.owed, cur) + ' due</span>' : '<span class="fdd-chip paid">Paid</span>') + '</td></tr>'; }).join('') + '</tbody></table></div>' : '<div class="fdd-empty">No invoices yet.</div>') + '</div>');
+        (typeof lkInvChip === 'function' ? lkInvChip(x, cur) : x.owed > 0.5 ? (x.owed >= (Number(x.total) || 0) - 0.5 ? '<span class="fdd-chip due lk-unpaid">Unpaid</span>' : '<span class="fdd-chip due">Partial · ' + fdTk(x.owed, cur) + ' due</span>') : '<span class="fdd-chip paid">Paid</span>') + '</td></tr>'; }).join('') + '</tbody></table></div>' : '<div class="fdd-empty">No invoices yet.</div>') + '</div>');
   // Setup checklist
   if (d.setup) {
     var done = d.setup.filter(function (x) { return x.done; }).length, pcs = Math.round(done / d.setup.length * 100);
@@ -41519,9 +41520,10 @@ html[data-look="clean"][data-skin="fd"]:root[data-theme="dark"] #aw_fab { backgr
     if (paint.__dk !== dayKey) { paint.__dk = dayKey; paint.__day = d.toLocaleDateString(bn() ? 'bn-BD' : 'en-GB', { weekday: 'long', day: 'numeric', month: 'long' }); }
     var day = paint.__day;
     var home = typeof VIEW === 'undefined' || VIEW === 'dash';
-    var title = home ? (bn() ? 'স্বাগতম' + (who ? ', ' + who : '') + ' 👋' : 'Welcome' + (who ? ', ' + who : '') + ' 👋') : (biz || '');
-    var sub = home ? (bn() ? biz + '-এ আজ কী হচ্ছে দেখুন · ' + day : 'Here’s what’s happening in ' + (biz || 'your business') + ' · ' + day) : day;
-    var html = '<b>' + esc(title) + '</b><span>' + esc(sub) + '</span>';
+    // crit-look 8: no emoji; the business name is already in the menu brand and the switch pill - the greeting is the date
+    var title = home ? (bn() ? 'স্বাগতম' + (who ? ', ' + who : '') : 'Welcome' + (who ? ', ' + who : '')) : day;
+    var sub = home ? day : '';
+    var html = '<b>' + esc(title) + '</b>' + (sub ? '<span>' + esc(sub) + '</span>' : '');
     if (g.innerHTML !== html) g.innerHTML = html;
     var ic = dark() ? SUN : MOON; if (t.getAttribute('data-ic') !== (dark() ? 's' : 'm')) { t.innerHTML = ic; t.setAttribute('data-ic', dark() ? 's' : 'm'); }
     t.title = dark() ? (bn() ? 'আলো' : 'Light') : (bn() ? 'অন্ধকার' : 'Dark'); t.setAttribute('aria-label', t.title);
@@ -49837,6 +49839,816 @@ html[data-look="clean"] .dm-crow { box-shadow:none; }
     for (var k in W) { if (I18N_BN[k] === undefined) I18N_BN[k] = W[k]; if (I18N_BN['Next: ' + k + ' →'] === undefined) I18N_BN['Next: ' + k + ' →'] = 'পরের ধাপ: ' + W[k] + ' →'; }
     I18N_PAT.push(['^([0-9]{1,2} [A-Z][a-z]{2} [0-9]{4}) by (.+)$', '$1 · $2']);
   } catch (e) {}
+})();
+</script>
+<!-- CRIT-MERGE 2026-11-10 -->
+<!-- crit:sell -->
+<!-- crit-sell (10 Nov 2026): the selling path after the Impeccable critique. Customers phone list: the figure on the right is
+     always the one the list is sorted by (Spent, or Owes when sorted by Owes); what is owed moves into the badge with its
+     age. New invoice: Cash is the default way paid (never the alphabetical first), the name/phone star only when they are
+     really needed, the walk-in line in plain ink, out-of-stock products under the ones that can be sold, a small remove
+     button per line with Undo, Customer before Payment on a phone, the price box wide enough, ৳ and real plurals in the
+     confirm. Bangla: phone line labels follow the language, "N in stock" and the drawer's payment count in Bangla, Bangla
+     digits for counts and Latin for ৳ amounts (the rule trText already uses). The chat button steps above a save bar and
+     hides while a drawer is open. Drawer on a phone: short labels under the round buttons. Empty lists say what goes there. -->
+<style>
+/* 1. customer card: the due badge under the phone line */
+.fd19-crow .sell-cdue { margin-top:4px; }
+/* 3. walk-in information is not an error */
+#view .inv-ph-msg.sell-info { color:var(--fd-text-2, var(--ink-2, #4A4D57)) !important; }
+/* 3. a star only when the field is really needed */
+#view .inv2.sell-walkin label[for="cname"] .req, #view .inv2.sell-walkin label[for="cphone"] .req { display:none; }
+/* 3. desktop: the price box shows the whole price */
+#view .inv2 td input[data-sellat] { min-width:calc(9ch + 28px); }
+/* 3. phone: Customer comes before Payment (the payment block in its own card after the customer) */
+@media (max-width:760px) {
+  #view .inv2 > .sell-payr { order:4; }
+  /* the remove button: a compact icon at the line's top-right, not a full-width pink row */
+  #view .inv2-r tbody tr.sell-line { position:relative; }
+  #view .inv2-r tbody tr.sell-line > td.nm { padding-right:52px !important; }
+  #view .inv2-r tbody tr.sell-line > td.sell-deltd { position:absolute !important; top:6px; right:6px; width:auto !important; padding:0 !important; border:0 !important; background:none !important; display:block !important; }
+  #view .inv2-r tbody tr.sell-line > td.sell-deltd::before { content:none !important; display:none !important; }
+  #view .inv2-r tbody tr.sell-line > td.sell-deltd .btn { width:40px !important; min-width:40px !important; height:40px !important; min-height:40px !important; padding:0 !important; border-radius:12px !important;
+    display:grid !important; place-items:center; background:transparent !important; color:var(--fd-text-3, var(--muted, #667085)) !important; border:1px solid var(--fd-border, var(--ring, #e6e8ec)) !important; font-size:16px; }
+  #view .inv2-r tbody tr.sell-line > td.sell-deltd .btn:hover, #view .inv2-r tbody tr.sell-line > td.sell-deltd .btn:focus-visible { color:var(--fd-negative-text, #b42318) !important; border-color:currentColor !important; }
+}
+/* 4. the chat button never sits on a save bar, and steps aside while a drawer is open */
+html.sell-lift #aw_fab { bottom:var(--sell-lift, 22px) !important; transition:bottom .18s ease-out; }
+html.sell-lift #skBtn { bottom:calc(var(--sell-lift, 22px) + 66px) !important; }
+html.sell-lift #toast { bottom:var(--sell-lift, 26px) !important; }
+body:has(.fd19-dr) #aw_fab, body:has(.fd21-drw) #aw_fab, body:has(.fd19-dr) #skBtn, body:has(.fd21-drw) #skBtn { display:none !important; }
+/* 3. drawer on a phone: a short word under each round button */
+@media (max-width:640px) {
+  .fd19-dr .fd19-df .fd19-btn.sell-lbtn { flex-direction:column !important; width:auto !important; min-width:52px; height:auto !important; min-height:52px; padding:5px 6px !important; gap:2px !important; border-radius:14px !important; }
+  .fd19-dr .fd19-df .fd19-btn.sell-lbtn > .lb { display:none !important; }
+  .fd19-dr .fd19-df .fd19-btn.sell-lbtn > .sell-sl { display:block; font-size:11.5px; line-height:1.2; font-weight:600; white-space:nowrap; }
+  html[lang="bn"] .fd19-dr .fd19-df .fd19-btn.sell-lbtn > .sell-sl { font-size:12px; }
+}
+.fd19-dr .fd19-df .sell-sl { display:none; }
+/* 5. an empty list says what goes there */
+#view .sell-empty-x { margin-top:6px; font-size:13.5px; line-height:1.5; color:var(--fd-text-2, var(--ink-2, #4A4D57)); max-width:52ch; margin-left:auto; margin-right:auto; }
+</style>
+<script>
+(function () {
+  var bn = function () { return typeof LANG !== 'undefined' && LANG === 'bn'; };
+  var L = function (en, b) { return bn() ? b : en; };
+  var BD = function (s) { return String(s).replace(/\d/g, function (d) { return '০১২৩৪৫৬৭৮৯'.charAt(+d); }); };
+  var cnt = function (n) { return bn() ? BD(typeof fmt === 'function' ? fmt(n) : n) : (typeof fmt === 'function' ? fmt(n) : String(n)); };   // counts: Bangla digits in Bangla
+  var money = function (v) { return typeof tk === 'function' ? tk(v) : String(v); };                                                       // ৳ amounts: Latin digits (tk)
+  var phone = function () { return !!(window.matchMedia && window.matchMedia('(max-width:760px)').matches); };
+  var coarse = function () { return !!(window.matchMedia && window.matchMedia('(pointer:coarse)').matches); };
+  var SELL_VIEWS = { invoice: 1, sales: 1, customers: 1, holds: 1, quotes: 1, weborders: 1, preorders: 1, expenses: 1, cash: 1, repairs: 1, home: 1 };
+  var onSell = function () { return typeof VIEW !== 'undefined' && !!SELL_VIEWS[VIEW]; };
+
+  try {
+    var W = {
+      'Line removed.': 'লাইন বাদ দেওয়া হয়েছে।', 'Undo': 'ফেরত আনুন', 'Payment': 'পেমেন্ট',
+      'Tap an account to see its statement.': 'স্টেটমেন্ট দেখতে অ্যাকাউন্টে চাপুন।',
+      'Tap an account above to change or retire it, or add a new one here. A retired account keeps its history and takes no new money.':
+        'বদলাতে বা বন্ধ করতে উপরের অ্যাকাউন্টে চাপুন, অথবা এখানে নতুন যোগ করুন। বন্ধ অ্যাকাউন্টের হিসাব থেকে যায়, নতুন টাকা নেয় না।'
+    };
+    var W2 = {   // the invoice drawer in Bangla (only where nothing is there yet)
+      'Goods (qty × price)': 'মাল (পরিমাণ × দাম)', 'nothing is deleted; a mistake is put right with another row': 'কিছু মোছা হয় না; ভুল হলে আরেকটি সারি দিয়ে ঠিক করা হয়',
+      'paid when the invoice was edited': 'ইনভয়েস এডিটের সময় পেমেন্ট হয়েছে', 'History': 'ইতিহাস', 'Return…': 'ফেরত…', 'Full page': 'পুরো পেজ',
+      'Nothing was changed after the sale was saved.': 'বিক্রি সেভ হওয়ার পর কিছু বদলানো হয়নি।', 'Payments': 'পেমেন্ট', 'Still owed': 'এখনো বাকি', 'Received': 'পাওয়া গেছে'
+    };
+    for (var k2 in W2) if (W2.hasOwnProperty(k2) && !I18N_BN[k2]) I18N_BN[k2] = W2[k2];
+    for (var k in W) if (W.hasOwnProperty(k)) I18N_BN[k] = W[k];
+    // most specific first: trText takes the first pattern that matches; a pure-number part becomes Bangla digits, a ৳ amount stays as it is
+    [['^([\\d,]+) colours · ([\\d,]+) in stock$', '$1টি রং · স্টকে $2টি'],
+     ['^(.+?) · ([\\d,]+) in stock$', '$1 · স্টকে $2টি'],
+     ['^([\\d,]+) in stock$', 'স্টকে $1টি'],
+     ['^Only ([\\d,]+) in stock$', 'স্টকে আছে মাত্র $1টি'],
+     ['^(৳[\\d,.]+) due · ([\\d,]+) days?$', '$1 বাকি · $2 দিন'],
+     ['^([\\d,]+) payments?$', '$1টি পেমেন্ট'],
+     ['^([\\d,]+) changes?$', '$1টি পরিবর্তন'],
+     ['^Payment · (.+)$', 'পেমেন্ট · $1'],
+     ['^address: (.+)$', 'ঠিকানা: $1'], ['^delivery: (.+)$', 'ডেলিভারি: $1'], ['^delivery charge: (.+)$', 'ডেলিভারি চার্জ: $1'],
+     ['^products: (.+)$', 'প্রোডাক্ট: $1'], ['^total: (.+)$', 'মোট: $1'], ['^payment: (.+)$', 'পেমেন্ট: $1'], ['^paid: (.+)$', 'পেমেন্ট হয়েছে: $1'],
+     ['^name: (.+)$', 'নাম: $1'], ['^phone: (.+)$', 'ফোন: $1'], ['^discount: (.+)$', 'ছাড়: $1'], ['^date: (.+)$', 'তারিখ: $1']
+    ].forEach(function (p) { I18N_PAT.push(p); });
+  } catch (e) {}
+
+  /* ===================================================================== 1. Customers phone list: one meaning per column */
+  if (typeof fd19Cards === 'function') {
+    var fd19CardsS = fd19Cards;
+    fd19Cards = function (m) {
+      if (m !== 'customers') return fd19CardsS.apply(this, arguments);
+      var st = lvSt(m), d = st.data || {}, rows = d.rows || [];
+      if (st.groupBy && d.groups) { rows = []; d.groups.forEach(function (g) { var gr = st.grows[g.key]; if (st.open[g.key] && gr) rows = rows.concat(gr.rows); }); }
+      if (!rows.length) return '';
+      var ord = st.order || (st.spec && st.spec.order) || {}, byOwes = ord.field === 'owes';
+      return rows.map(function (r) {
+        var owesN = Number(r.owes) || 0, owes = owesN > 0.5, n = Number(r.orders) || 0;
+        var t = esc(r.name || r.phone || '—');
+        // English: "1 order" / "3 orders"; Bangla: the "N orders" form the Bangla patterns already translate
+        var ordW = bn() || n !== 1 ? fmt(n) + ' orders' : '1 order';
+        var s = esc([r.phone || 'no phone', ordW, r.lastOrder ? 'last ' + r.lastOrder : ''].filter(Boolean).join(' · '));
+        var val = byOwes ? (owes ? '<span class="fd19-neg">' + esc(fd19Tk(owesN)) + '</span>' : esc(fd19Tk(0))) : esc(fd19Tk(r.spent));
+        var badge = '';
+        if (owes) {
+          var dk = typeof DUES !== 'undefined' && DUES && DUES.byKey && typeof custKey === 'function' ? DUES.byKey[custKey(r.phone, r.name)] : null;
+          var days = dk && dk.oldest ? Number(dk.oldest) : 0;
+          var amt = money(owesN);
+          var txt = byOwes
+            ? (days ? L(fmt(days) + (days === 1 ? ' day' : ' days'), BD(fmt(days)) + ' দিন') : L('due', 'বাকি'))
+            : (days ? L(amt + ' due · ' + fmt(days) + (days === 1 ? ' day' : ' days'), amt + ' বাকি · ' + BD(fmt(days)) + ' দিন') : L(amt + ' due', amt + ' বাকি'));
+          badge = fd19Badge(txt, days > 60 ? 'negative' : 'warning');
+        }
+        // sorted by Spent the due badge ("৳8,400 due · 101 days") sits under the phone line, so the name and phone keep their width;
+        // sorted by Owes only the short age stays beside the figure
+        var under = badge && !byOwes;
+        return '<div class="fd19-crow" data-fd19open="' + esc(r.key) + '" role="button" tabindex="0"><div class="mn"><div class="tt">' + t + '</div><div class="sb2">' + s + '</div>' +
+          (under ? '<div class="sell-cdue">' + badge + '</div>' : '') + '</div>' +
+          '<div class="sd"><div class="vl">' + val + '</div>' + (under ? '' : badge) + '</div>' + fd19I('chevR') + '</div>';
+      }).join('');
+    };
+  }
+
+  /* ===================================================================== 3. New invoice */
+  // Cash first: the business's list is sorted by name when nobody set an order, so the first is often "Bank Transfer"
+  function cashDefault(ms) {
+    for (var i = 0; i < ms.length; i++) if (/^cash$/i.test(String(ms[i]).trim())) return ms[i];
+    for (var j = 0; j < ms.length; j++) if (/^cash\b/i.test(String(ms[j]).trim())) return ms[j];
+    return ms[0] || 'Cash';
+  }
+  if (typeof payBlockHtml === 'function') {
+    var payBlockHtmlS = payBlockHtml;
+    payBlockHtml = function () {
+      try {
+        var ms = typeof t1Methods === 'function' ? t1Methods() : ['Cash'];
+        if (FORM.payMode !== 'split' && (!FORM.method || ms.indexOf(FORM.method) < 0)) FORM.method = cashDefault(ms);
+        if (FORM.payMode === 'split' && (!FORM.splits || !FORM.splits.length)) {
+          var c = cashDefault(ms), other = ms.filter(function (x) { return x !== c; })[0] || c, g = 0;
+          try { g = cartTotals().grand; } catch (e) {}
+          FORM.splits = [{ method: c, amount: g }, { method: other, amount: 0 }];
+        }
+      } catch (e) {}
+      return payBlockHtmlS.apply(this, arguments);
+    };
+  }
+  // the walk-in line ("No phone: saved as Walk-in, paid in full") is information, in plain ink
+  if (typeof invPhoneMark === 'function') {
+    var invPhoneMarkS = invPhoneMark;
+    invPhoneMark = function () {
+      var r = invPhoneMarkS.apply(this, arguments);
+      try {
+        var m = el('invPhMsg'), p = el('cphone');
+        if (m) m.classList.toggle('sell-info', !!(p && !p.value.trim() && window.ntWalkNoPhone && window.ntWalkNoPhone()));
+      } catch (e) {}
+      return r;
+    };
+  }
+  function starPaint() {
+    var box = document.querySelector('#view .inv2'); if (!box) return;
+    var p = el('cphone'), walk = !!(window.ntWalkNoPhone && window.ntWalkNoPhone() && !(p && p.value.trim()));
+    box.classList.toggle('sell-walkin', walk);
+  }
+  document.addEventListener('input', function (e) { if (typeof VIEW !== 'undefined' && VIEW === 'invoice' && e.target && e.target.id === 'cphone') starPaint(); });
+  // out-of-stock products under the ones that can be sold (the "+ Create new product" row stays last)
+  if (typeof paintResults === 'function') {
+    var paintResultsS = paintResults;
+    paintResults = window.paintResults = function () {
+      var r = paintResultsS.apply(this, arguments);
+      try {
+        var box = el('iresults'); if (!box) return r;
+        var dis = box.querySelectorAll(':scope > .r.dis'); if (!dis.length) return r;
+        var tail = box.querySelector(':scope > [data-newp]');
+        for (var i = 0; i < dis.length; i++) box.insertBefore(dis[i], tail || null);
+      } catch (e) {}
+      return r;
+    };
+  }
+  // phone: Customer before Payment. The discount / delivery / payment block moves into its own card after the customer;
+  // the box keeps the .inv2-r class so every look-up that reads it (the "why lower" note, the lines) still finds it.
+  var WAS_PHONE = phone();
+  function payMove() {
+    var box = document.querySelector('#view .inv2'); if (!box || !phone()) return;
+    if (box.querySelector(':scope > .sell-payr')) return;
+    var right = box.querySelector(':scope > .inv2-r'); if (!right) return;
+    var row = right.querySelector(':scope > section > .card > .row'); if (!row || !row.querySelector('[data-paymode]')) return;
+    var w = document.createElement('div'); w.className = 'inv2-r sell-payr';
+    w.innerHTML = '<section><div class="card"><h2>' + esc(L('Payment', 'পেমেন্ট')) + '</h2></div></section>';
+    var card = w.querySelector('.card'), why = el('invWhy');
+    if (why && why.parentNode === row.parentNode) card.appendChild(why);
+    card.appendChild(row);
+    box.appendChild(w);
+  }
+  window.addEventListener('resize', function () {
+    var now = phone(); if (now === WAS_PHONE) return; WAS_PHONE = now;
+    if (typeof VIEW !== 'undefined' && VIEW === 'invoice') { try { repaint(); } catch (e) {} }
+  });
+  function linesPaint() {
+    var bs = document.querySelectorAll('#view .inv2-r tbody tr > td > [data-del]');
+    for (var i = 0; i < bs.length; i++) {
+      var td = bs[i].parentNode, tr = td.parentNode;
+      td.classList.add('sell-deltd'); tr.classList.add('sell-line');
+      if (!bs[i].getAttribute('aria-label')) bs[i].setAttribute('aria-label', L('Remove this line', 'এই লাইন বাদ দিন'));
+    }
+  }
+  AFTER_PAINT.push(function critSellInvoice() {
+    if (typeof VIEW === 'undefined' || VIEW !== 'invoice') return;
+    try { payMove(); } catch (e) {}
+    try { linesPaint(); } catch (e) {}
+    try { starPaint(); } catch (e) {}
+    try { invPhoneMark(); } catch (e) {}
+  });
+  // remove a line -> "Line removed · Undo" for 6 s; Undo puts it back where it was (qty, price, discount, serials)
+  var UNDO = null;
+  document.addEventListener('click', function (e) {
+    var b = e.target && e.target.closest ? e.target.closest('#view [data-del]') : null;
+    if (!b || typeof VIEW === 'undefined' || VIEW !== 'invoice') return;
+    var i = Number(b.getAttribute('data-del')), l = CART[i]; if (!l) return;
+    var copy; try { copy = JSON.parse(JSON.stringify(l)); } catch (x) { return; }
+    setTimeout(function () {
+      if (CART.indexOf(l) >= 0) return;   // nothing was removed
+      UNDO = { i: i, l: copy, at: Date.now() };
+      toast(esc(L('Line removed.', 'লাইন বাদ দেওয়া হয়েছে।')) + ' <button class="btn small" type="button" data-sellundo="1">' + esc(L('Undo', 'ফেরত আনুন')) + '</button>', false, 6000);
+    }, 0);
+  }, true);
+  document.addEventListener('click', function (e) {
+    var b = e.target && e.target.closest ? e.target.closest('[data-sellundo]') : null; if (!b) return;
+    var t = el('toast'); if (t) t.className = '';
+    if (!UNDO || Date.now() - UNDO.at > 30000) return;
+    var u = UNDO; UNDO = null;
+    var same = CART.filter(function (x) { return x.sku === u.l.sku; })[0];
+    if (same) same.qty = (Number(same.qty) || 0) + (Number(u.l.qty) || 0);   // added again meanwhile: one line, the pieces added up
+    else CART.splice(Math.min(u.i, CART.length), 0, u.l);
+    try { updateCounts(); } catch (x) {}
+    if (VIEW === 'invoice') repaint();
+  });
+  // the confirm: ৳ (one money format) and real plurals
+  function plural(w, n) {
+    if (n === 1) return w;
+    var irr = { person: 'people', child: 'children' };
+    if (irr[w.toLowerCase()]) return irr[w.toLowerCase()];
+    if (/[^aeiou]y$/i.test(w)) return w.slice(0, -1) + 'ies';
+    if (/(s|x|z|ch|sh)$/i.test(w)) return w + 'es';
+    return w + 's';
+  }
+  function pluralText(s) {
+    return String(s).replace(/(\d[\d,]*)(\s+(?:[A-Za-z]+\s+)?)([A-Za-z]+)\(s\)/g, function (m, n, mid, w) { return n + mid + plural(w, Number(n.replace(/,/g, ''))); });
+  }
+  if (typeof uiConfirm === 'function') {
+    var uiConfirmS = uiConfirm;
+    uiConfirm = function (text) {
+      if (typeof text === 'string' && onSell()) {
+        if (/^(Save this invoice\?|Send this invoice)/.test(text) && (!OPT || !OPT.currency || OPT.currency === 'BDT'))
+          text = text.replace(/\bBDT ([\d,]+(?:\.\d+)?)/g, function (m, v) { return money(Number(v.replace(/,/g, ''))); });
+        if (!bn()) text = pluralText(text);   // Bangla has no plural and its patterns read the "(s)" forms
+        var a = [].slice.call(arguments); a[0] = text;
+        return uiConfirmS.apply(this, a);
+      }
+      return uiConfirmS.apply(this, arguments);
+    };
+  }
+
+  /* ===================================================================== 3. invoice drawer: counts and phone labels */
+  if (typeof fd19DrSet === 'function') {
+    var fd19DrSetS = fd19DrSet;
+    fd19DrSet = function (title, sub, body, foot, acts) {
+      if (typeof body === 'string') body = body.replace(/(>)(\d+) payment rows?(<)/g, function (m, a, n, b) { var k = Number(n); return a + (bn() ? BD(n) + 'টি পেমেন্ট' : n + (k === 1 ? ' payment' : ' payments')) + b; });
+      if (typeof body === 'string' && bn()) body = body.replace(/Notes, files, serial numbers and the customer’s page link are on the (<button[^>]*>)full page(<\/button>)\./,
+        'নোট, ফাইল, সিরিয়াল নম্বর আর কাস্টমারের পেজের লিংক আছে $1পুরো পেজে$2।');
+      var r = fd19DrSetS.call(this, title, sub, body, foot, acts);
+      try { if (foot !== undefined) drawerLabels(); } catch (e) {}
+      return r;
+    };
+  }
+  function drawerLabels() {
+    var f = document.querySelector('.fd19-dr .fd19-df'); if (!f) return;
+    var bs = f.querySelectorAll('.fd19-btn');
+    for (var i = 0; i < bs.length; i++) {
+      var b = bs[i]; if (b.querySelector('.sell-sl')) continue;
+      var a = b.getAttribute('data-fd19a') || '', lb = b.querySelector('.lb'), txt = '';
+      if (b.hasAttribute('data-invpdf')) txt = 'PDF';
+      else if (b.hasAttribute('data-iwa') || /wa\.me|whatsapp/i.test(b.getAttribute('href') || '')) txt = 'WhatsApp';
+      else if (a === 'ret') txt = L('Return', 'ফেরত');
+      else if (a === 'more') txt = L('More', 'আরও');
+      else if (a === 'full') txt = L('Full page', 'পুরো পেজ');
+      else if (a === 'pay') txt = L('Receive', 'টাকা নিন');
+      else if (a === 'close') txt = L('Close', 'বন্ধ');
+      else txt = lb ? lb.textContent.trim() : (b.getAttribute('aria-label') || '');
+      if (!txt) continue;
+      var s = document.createElement('span'); s.className = 'sell-sl'; s.setAttribute('aria-hidden', 'true'); s.setAttribute('data-noi18n', '1'); s.textContent = txt;
+      b.appendChild(s); b.classList.add('sell-lbtn');
+      if (!b.getAttribute('aria-label')) b.setAttribute('aria-label', lb ? lb.textContent.trim() : txt);
+    }
+  }
+
+  /* ===================================================================== 4. the chat button above a save bar */
+  var LIFT_RAF = 0;
+  function liftCheck() {
+    LIFT_RAF = 0;
+    var root = document.documentElement, need = 0;
+    if (typeof VIEW !== 'undefined') {
+      var bars = document.querySelectorAll('#view .c3bar, #view .fd-sticky, #view .fd-savebar, #view [data-sticky-bar]');
+      for (var i = 0; i < bars.length; i++) {
+        var r = bars[i].getBoundingClientRect();
+        if (!r.height || r.top >= innerHeight || r.bottom < innerHeight - 120) continue;   // only a bar that sits at the bottom of the screen
+        need = Math.max(need, Math.round(innerHeight - r.top + 12));
+      }
+    }
+    if (need > 22) { root.classList.add('sell-lift'); root.style.setProperty('--sell-lift', need + 'px'); }
+    else if (root.classList.contains('sell-lift')) { root.classList.remove('sell-lift'); root.style.removeProperty('--sell-lift'); }
+  }
+  function liftSoon() { if (!LIFT_RAF) LIFT_RAF = requestAnimationFrame(liftCheck); }
+  window.addEventListener('scroll', liftSoon, { passive: true });
+  window.addEventListener('resize', liftSoon);
+  AFTER_PAINT.push(function critSellLift() { liftSoon(); setTimeout(liftSoon, 400); });
+
+  /* ===================================================================== 2 + 5. words that follow the language */
+  // phone list cards take their labels from the column heads once; in Bangla they are read again after the heads are translated
+  function labelsBn(root) {
+    if (!bn() || typeof trText !== 'function') return;
+    var cells = (root.querySelectorAll ? root : document).querySelectorAll('.scroll > table td[data-label]');
+    for (var i = 0; i < cells.length; i++) {
+      var l = cells[i].getAttribute('data-label');
+      if (!l || !/[A-Za-z]/.test(l)) continue;
+      var t = trText(l); if (t !== null && t !== l) cells[i].setAttribute('data-label', t);
+    }
+  }
+  // English: "3 payment(s)" -> "3 payments", "1 line(s)" -> "1 line"; on a touch screen "Click" -> "Tap"
+  function wordsEn(root) {
+    if (bn() || !onSell()) return;
+    var w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT), n, list = [];
+    while ((n = w.nextNode())) if (/\(s\)|^Click an account/.test(n.nodeValue)) list.push(n);
+    list.forEach(function (x) {
+      var p = x.parentNode; if (!p || (p.closest && p.closest('[contenteditable],textarea,[data-noi18n]'))) return;
+      var v = pluralText(x.nodeValue);
+      if (coarse()) v = v.replace(/^(\s*)Click an account/, '$1Tap an account');
+      if (v !== x.nodeValue) x.nodeValue = v;
+    });
+  }
+  function wordsBn(root) {
+    if (!bn() || !coarse() || !onSell()) return;
+    var w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT), n;
+    while ((n = w.nextNode())) if (n.nodeValue.indexOf('অ্যাকাউন্টে ক্লিক করুন') >= 0) n.nodeValue = n.nodeValue.replace('অ্যাকাউন্টে ক্লিক করুন', 'অ্যাকাউন্টে চাপুন');
+  }
+  var PEND = [], PT = 0;
+  function flush() {
+    PT = 0; var roots = PEND; PEND = [];
+    var seen = [];
+    roots.forEach(function (r) { if (!r || !r.isConnected || seen.indexOf(r) >= 0) return; seen.push(r); });
+    seen.forEach(function (r) { try { labelsBn(r); } catch (e) {} try { wordsEn(r); } catch (e) {} try { wordsBn(r); } catch (e) {} });
+    try { if (document.querySelector('.fd19-dr .fd19-df .fd19-btn:not(.sell-lbtn)')) drawerLabels(); } catch (e) {}   // a button swapped in after the drawer was drawn
+  }
+  try {
+    new MutationObserver(function (recs) {
+      for (var i = 0; i < recs.length; i++) {
+        var t = recs[i].type === 'characterData' ? recs[i].target.parentNode : recs[i].target;
+        if (t && t.nodeType === 1 && PEND.length < 200) PEND.push(t);
+      }
+      // after the Bangla overlay has translated this batch (its observer runs in the same turn)
+      if (!PT && PEND.length) PT = setTimeout(flush, 0);
+    }).observe(document.body, { childList: true, subtree: true, characterData: true });
+  } catch (e) {}
+  if (typeof setLang === 'function') {
+    var setLangS = setLang;
+    setLang = function () { var r = setLangS.apply(this, arguments); setTimeout(function () { PEND.push(document.body); flush(); }, 50); return r; };
+  }
+
+  /* ===================================================================== 5. Expenses: one "Add expense"; empty lists say what goes there */
+  AFTER_PAINT.push(function critSellEmpty() {
+    if (typeof VIEW === 'undefined') return;
+    var v = el('view'); if (!v) return;
+    if (VIEW === 'expenses') {
+      // the button at the top stays; the empty list's own copy of it goes (one Add expense on the screen)
+      var all = v.querySelectorAll('[data-f21ivopen="expenses:add"]'), topSeen = false, inEmpty = [];
+      for (var i = 0; i < all.length; i++) {
+        if (all[i].closest('.fd21-row-wrap')) inEmpty.push(all[i]);
+        else if (all[i].offsetParent !== null || all[i].getClientRects().length) topSeen = true;
+      }
+      if (topSeen) inEmpty.forEach(function (b) { b.parentNode.remove(); });
+    }
+    var EMPTY = {
+      weborders: [['No website orders pulled yet.'], L('Orders placed on your website arrive here. Press "Check the website for new orders" to bring in new ones.',
+        'আপনার ওয়েবসাইটে দেওয়া অর্ডার এখানে আসে। নতুনগুলো আনতে "ওয়েবসাইটে নতুন অর্ডার দেখুন" চাপুন।')],
+      preorders: [['No pre-orders yet.'], L('A pre-order is a sale agreed before the goods are in stock: the price is fixed and a deposit taken. It waits here until you hand it over.',
+        'প্রি-অর্ডার মানে মাল স্টকে আসার আগেই ঠিক করা বিক্রি: দাম ঠিক, কিছু অগ্রিম নেওয়া। মাল দেওয়া পর্যন্ত এখানে থাকে।')],
+      quotes: [['No quotations yet.'], L('A quotation is a price offer sent before the sale. When the customer agrees it becomes an invoice.',
+        'কোটেশন হলো বিক্রির আগে পাঠানো দামের প্রস্তাব। কাস্টমার রাজি হলে এটি ইনভয়েস হয়ে যায়।')]
+    }[VIEW];
+    if (!EMPTY) return;
+    var keys = EMPTY[0].concat(EMPTY[0].map(function (k) { return I18N_BN[k]; }).filter(Boolean));
+    var es = v.querySelectorAll('.empty');
+    for (var j = 0; j < es.length; j++) {
+      var e = es[j]; if (e.querySelector('.sell-empty-x')) continue;
+      var first = e.firstChild ? String(e.firstChild.nodeValue || e.firstChild.textContent || '').trim() : '';
+      if (keys.indexOf(first) < 0) continue;
+      var d = document.createElement('div'); d.className = 'sell-empty-x'; d.setAttribute('data-noi18n', '1'); d.textContent = EMPTY[1];
+      if (e.firstChild && e.firstChild.nextSibling) e.insertBefore(d, e.firstChild.nextSibling); else e.appendChild(d);
+    }
+  });
+})();
+</script>
+<!-- crit:look -->
+<!-- crit-look (10 Nov 2026): the Impeccable critique of 9 Nov, look findings. Dashboard: one payment state everywhere
+     (Unpaid when nothing came in), phone order = New invoice > Needs you now > 2x2 figures > revenue > the rest, a 100%
+     donut becomes one line, Recent sales / Reorder as one-line rows on a phone, no Navigator promo or ANALYSIS eyebrow;
+     trend colour by meaning with drawn arrows; the sticky top bar gets a solid ground; dark mode keeps lime for "on" only
+     (primary = near-white with ink); placeholders and tile trends reach 4.5:1; Bangla floor 14px / badges 12.5px and
+     roomier line height; off-scale base sizes that still paint snapped; Settings one "?" per label, short Menu text,
+     70ch lines; AI hub plain words; Joint stock month-end preview; Money balance first on a phone. -->
+<style>
+/* ---------- 3. sticky top bar: solid ground, hairline + soft shadow once the page moves */
+html[data-look="clean"][data-skin="fd"]:root header.topbar { background:var(--fd-bg) !important; }
+html[data-look="clean"][data-skin="fd"]:root.lk-scr header.topbar { box-shadow:0 1px 0 var(--fd-border), 0 8px 18px -14px rgba(23,24,28,.35) !important; }
+html[data-look="clean"][data-skin="fd"]:root[data-theme="dark"].lk-scr header.topbar { box-shadow:0 1px 0 var(--fd-border), 0 8px 18px -12px rgba(0,0,0,.7) !important; }
+
+/* ---------- 4. dark: lime is "selected / on" only; the main button is near-white with ink, the avatar neutral */
+html[data-look="clean"][data-skin="fd"]:root[data-theme="dark"] {
+  --fd-accent:#ECEDF0 !important; --fd-accent-hover:#FFFFFF !important; --fd-text-on-accent:#17181C !important;
+  --fd-accent-border:rgba(236,237,240,.40) !important;
+}
+html[data-look="clean"][data-skin="fd"]:root[data-theme="dark"] header.topbar .fdplus { background:var(--fd-text) !important; color:#17181C !important; }
+html[data-look="clean"][data-skin="fd"]:root[data-theme="dark"] .topbar #fdplus, html[data-look="clean"][data-skin="fd"]:root[data-theme="dark"] #aw_fab, html[data-look="clean"][data-skin="fd"]:root[data-theme="dark"] .btn.primary, html[data-look="clean"][data-skin="fd"]:root[data-theme="dark"] #view.ib-skin .btn.primary, html[data-look="clean"][data-skin="fd"]:root[data-theme="dark"] .fd19-btn.is-primary, html[data-look="clean"][data-skin="fd"]:root[data-theme="dark"] .fd20-btn.pri { background:var(--fd-text) !important; color:#17181C !important; }
+html[data-look="clean"][data-skin="fd"]:root[data-theme="dark"] .btn.primary:hover, html[data-look="clean"][data-skin="fd"]:root[data-theme="dark"] .fd19-btn.is-primary:hover, html[data-look="clean"][data-skin="fd"]:root[data-theme="dark"] .fd20-btn.pri:hover { background:#FFFFFF !important; }
+html[data-look="clean"][data-skin="fd"]:root[data-theme="dark"] .fdu-av { background:rgba(255,255,255,.12) !important; color:var(--fd-text) !important; }
+html[data-look="clean"][data-skin="fd"]:root[data-theme="dark"] .fdd-badge:not([class*=" t-"]), html[data-look="clean"][data-skin="fd"]:root[data-theme="dark"] .fd19-ib,
+html[data-look="clean"][data-skin="fd"]:root[data-theme="dark"] .fd20-ib, html[data-look="clean"][data-skin="fd"]:root[data-theme="dark"] .fd21-ib,
+html[data-look="clean"][data-skin="fd"]:root[data-theme="dark"] .fd22-ib { color:var(--fd-text) !important; }
+html[data-look="clean"][data-skin="fd"]:root[data-theme="dark"] #cSend .count { color:var(--fd-text) !important; }
+html[data-look="clean"][data-skin="fd"]:root[data-theme="dark"] .fdd-c.fdhero .fdd-trend:not(.bad):not(.flat) { color:var(--fd-positive-text) !important; }
+html[data-look="clean"][data-skin="fd"]:root[data-theme="dark"] .fdd-c.fdhero .fdd-trend.flat { color:var(--fd-text-3) !important; } html[data-look="clean"][data-skin="fd"]:root[data-theme="dark"] .fdd-c.fdhero .fdd-trend.bad { color:var(--fd-negative-text) !important; }
+
+/* ---------- 5. contrast: placeholders 4.5:1+, trend colour by meaning (green good, red bad, grey neutral), darker on tiles */
+html[data-look="clean"][data-skin="fd"]:root ::placeholder { color:#686C77 !important; opacity:1 !important; }
+html[data-look="clean"][data-skin="fd"]:root[data-theme="dark"] ::placeholder { color:#9A9EA8 !important; }
+html[data-look="clean"][data-skin="fd"]:root .fdd-trend.bad { color:var(--fd-negative-text) !important; }
+html[data-look="clean"][data-skin="fd"]:root .fdd-trend.flat { color:var(--fd-text-3) !important; }
+html[data-look="clean"][data-skin="fd"]:root:not([data-theme="dark"]) .fdd-k .fdd-trend:not(.bad):not(.flat) { color:#14703A !important; }
+html[data-look="clean"][data-skin="fd"]:root:not([data-theme="dark"]) .fdd-k .fdd-trend.bad { color:#B91C1C !important; }
+html[data-look="clean"][data-skin="fd"]:root:not([data-theme="dark"]) .fdd-k .fdd-trend.flat { color:#4A4D57 !important; }
+.fdd-trend .lk-ar, .fdrev-up .lk-ar { width:12px; height:12px; flex:none; vertical-align:-1px; margin-right:2px; }
+.fdrev-up { display:inline-flex; align-items:center; gap:2px; }
+.fdd-att2 .chv svg { width:18px; height:18px; display:block; }
+.fdd-setup li .d svg { width:12px; height:12px; display:block; }
+.fdd-setup li:not(.ok) .d svg { visibility:hidden; }
+.lk-ok { width:16px; height:16px; vertical-align:-3px; margin-right:6px; color:var(--fd-positive-text, #15803D); }
+
+/* ---------- 2. dashboard: one-line 100% donut, phone order and compact figures, one-line rows */
+html[data-look="clean"][data-skin="fd"]:root .fdsc .tag { display:none !important; }
+.fdsc-row.lk-n2 { grid-template-columns:repeat(2, minmax(0, 1fr)); }
+.fdsc-row.lk-n1 { grid-template-columns:minmax(0, 1fr); }
+.lk-one { font-size:15px; color:var(--fd-text-2); padding:4px 0 2px; line-height:1.5; }
+.lk-one b { color:var(--fd-text); font-weight:700; }
+.lk-one .v { color:var(--fd-text-3); font-variant-numeric:tabular-nums; }
+.fdd-c.lk-onec { align-self:start; }
+.lk-rows { display:none; list-style:none; margin:4px 0 0; padding:0; }
+@media (max-width:760px) {
+  #view .fdd-c.lk-hasrows .fdd-scroll { display:none; }
+  #view .lk-rows { display:block; }
+  .lk-rows li { display:flex; align-items:center; gap:8px; min-height:48px; padding:8px 0; border-top:1px solid var(--fd-border); cursor:pointer; }
+  .lk-rows li:first-child { border-top:0; }
+  .lk-rows .a { flex:1 1 auto; min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-size:14px; color:var(--fd-text-2); }
+  .lk-rows .a b { color:var(--fd-text); font-weight:700; }
+  .lk-rows .b { flex:none; font-size:14px; font-weight:700; font-variant-numeric:tabular-nums; color:var(--fd-text); }
+  .lk-rows .b.neg { color:var(--fd-negative-text); }
+  .lk-rows .fdd-chip { flex:none; }
+  #view .fdd-grid > .fdd-k.lk-fig { padding:14px 14px 12px; min-height:0; }
+  #view .fdd-grid > .fdd-k.lk-fig .fdd-badge { display:none; }
+  #view .fdd-grid > .fdd-k.lk-fig .fdd-ktop { min-height:18px; justify-content:flex-end; }
+  #view .fdd-grid > .fdd-k.lk-fig .fdd-num { font-size:22px; }
+  #view .fdd-grid > .fdd-k.lk-fig .fdd-kn, #view .fdd-grid > .fdd-k.lk-fig .fdd-cube { display:none; }
+  #view .fdd-grid > .fdd-k.lk-fig .fdd-i { right:10px; bottom:10px; }
+}
+@media (max-width:760px) {
+  .fdd-att2:not(.lk-open) > li.lk-x { display:none; }
+  .lk-attmore { display:block; width:100%; min-height:44px; margin-top:8px; border:0; border-radius:12px; background:var(--fd-surface-2); color:var(--fd-text); font:inherit; font-size:14px; font-weight:600; cursor:pointer; }
+}
+@media (min-width:761px) { .lk-attmore { display:none; } }
+.fdd-chip.lk-unpaid { background:var(--fd-negative-soft, #FDECEC) !important; color:var(--fd-negative-text, #DC2626) !important; }
+
+/* ---------- 7. base sizes that still paint in the Clean look, onto the DESIGN.md scale */
+html[data-look="clean"][data-skin="fd"]:root nav#nav .navgrp { font-size:12.5px !important; font-weight:600 !important; text-transform:none !important; letter-spacing:0 !important; }
+html[data-look="clean"][data-skin="fd"]:root nav#nav .count { font-size:12px !important; }
+html[data-look="clean"][data-skin="fd"]:root .dlg-t { font-size:18px; letter-spacing:-.01em; }
+html[data-look="clean"][data-skin="fd"]:root .t2q, html[data-look="clean"][data-skin="fd"]:root .fhelp { font-size:12px !important; }
+
+/* ---------- 8. Settings and long explanations: one "?" per label, lines no wider than ~70 characters */
+label.f:has(> .fhelp) > .t2q { display:none !important; }
+@media (min-width:761px) {
+  #view .card > .sub, #view section > .sub, #view .fd22-cs, #view .fd21-cs, #view .fd20-cs, #view .fd19-cs, #view .fdc-sub, #view .card > p, #view .en-meta { max-width:72ch; }
+}
+.lk-aiexp { margin:-4px 0 14px; font-size:14px; line-height:1.5; color:var(--fd-text-2); max-width:72ch; }
+.lk-btncap { margin-top:8px; font-size:13.5px; line-height:1.5; color:var(--fd-text-3); }
+.lk-btncap b { color:var(--fd-text-2); font-weight:600; }
+.lk-jtnext { flex:1 1 100%; font-size:13.5px; line-height:1.5; opacity:.9; }
+/* Money: the placement strip as a calm line under the balances (phone) */
+#view .dm-unm.lk-calm { background:var(--fd-card) !important; border:1px solid var(--fd-border) !important; }
+#view .dm-unm.lk-calm .t b { font-size:inherit; }
+@media (max-width:760px) { #view [data-f21pane="accounts"] .dm-unm.lk-calm { margin:12px 0 16px; } }
+
+/* ---------- 6. Bangla: nothing a person reads under 14px; tiny badges 12.5px; roomier lines */
+html[lang="bn"][data-look="clean"][data-skin="fd"] #view :is(label.f, .sub, small, .sku, .fd19-cs, .fd20-cs, .fd21-cs, .fd21-s, .fd22-cs, .fdd-lbl, .fdd-kn, .fdd-more,
+  .fdd-empty, .an, .go, em, p, .det, .en-meta, .fd20-note, .fd21-small, .dcon-n, .fdt-count, .nt-n, .s, .k, .sb2, .fd19-foot span, .lk-one, .lk-aiexp, .lk-btncap, .lk-jtnext, .fd20-mr-s, .pg span),
+html[lang="bn"][data-look="clean"][data-skin="fd"] #view span.t > span, html[lang="bn"][data-look="clean"][data-skin="fd"] #view .hd > span,
+html[lang="bn"][data-look="clean"][data-skin="fd"] #view .fd21-totby span, html[lang="bn"][data-look="clean"][data-skin="fd"] #view span.c > b {
+  font-size:14px !important; }
+html[lang="bn"][data-look="clean"][data-skin="fd"] #view :is(.btn.small, .chip, .fdd-pill, .fd19-pill, .fd20-btn, .fd21-pill, .fd22-pill, .fd22-btn, .fdt-btn, button.sb, .o_facet span, .o_sort label, th, .fd19-btn .lb) {
+  font-size:14px !important; line-height:1.4 !important; }
+html[lang="bn"][data-look="clean"][data-skin="fd"] #view :is(.fd19-badge, .fd20-b, .fd21-b, .fdd-chip, .bal, .pill, .jt-st, .jt-chip, .fd22-chip, .fd22-st, .fd22-mono, .fdd-trend, .nai-w, .ap-sw span, .ap-mgrp) {
+  font-size:12.5px !important; line-height:1.4 !important; }
+html[lang="bn"][data-look="clean"][data-skin="fd"] nav#nav .navgrp { font-size:13px !important; }
+html[lang="bn"][data-look="clean"][data-skin="fd"] #tabbar button span:not(.tb-n) { font-size:13px !important; }
+html[lang="bn"][data-look="clean"][data-skin="fd"] #clGreet span { font-size:14px !important; }
+html[lang="bn"][data-look="clean"][data-skin="fd"] :is(.t2q, .fhelp) { font-size:12.5px !important; }
+html[lang="bn"][data-look="clean"][data-skin="fd"] #view :is(p, .sub, .s, .det, .en-meta, .fd21-s, .fd19-cs, .fd20-cs, .fd21-cs, .fd22-cs, .fd20-note, .fd21-small, .an, em, span.t > span, .fdd-empty, .lk-aiexp, .lk-btncap, .lk-one) { line-height:1.55 !important; }
+html[lang="bn"][data-look="clean"][data-skin="fd"] #view :is(label.f, .fdd-lbl, .fdd-more, .chip, .fd20-ct, .fd21-ct, .fd22-ct, h2, h3, span.t > b, .fdd-num.txt, .fig) { line-height:1.4 !important; }
+</style>
+<script>
+(function () {
+  function isBn() { try { return (typeof LANG !== 'undefined' && LANG === 'bn') || document.documentElement.getAttribute('lang') === 'bn'; } catch (e) { return false; } }
+  function LL(en, bn) { return isBn() ? bn : en; }
+  function money(v, cur) { try { return typeof fdTk === 'function' ? fdTk(v, cur) : String(v); } catch (e) { return String(v); } }
+  function e_(s) { return typeof esc === 'function' ? esc(s) : String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+  var SVG = function (d, cls) { return '<svg class="' + (cls || '') + '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + d + '</svg>'; };
+  var AR_UP = SVG('<path d="M12 19V5"/><path d="M6 11l6-6 6 6"/>', 'lk-ar'), AR_DN = SVG('<path d="M12 5v14"/><path d="M6 13l6 6 6-6"/>', 'lk-ar');
+  var CHEV = SVG('<path d="M9 6l6 6-6 6"/>'), CHECK = SVG('<path d="M5 12.5l4.5 4.5L19 7.5"/>'), OK = SVG('<circle cx="12" cy="12" r="9"/><path d="M8 12.3l2.8 2.8L16.2 9.6"/>', 'lk-ok');
+
+  // ---- 1. one payment state: owed nothing = Paid; owed the whole total = Unpaid; else Partial · ৳x due (as Sales and the drawer)
+  function invChip(x, cur) {
+    var owed = Number(x.owed) || 0, total = Number(x.total) || 0;
+    if (owed <= 0.5) return '<span class="fdd-chip paid">' + LL('Paid', 'পেমেন্ট হয়েছে') + '</span>';
+    if (owed >= total - 0.5) return '<span class="fdd-chip due lk-unpaid">' + LL('Unpaid', 'পেমেন্ট হয়নি') + '</span>';
+    return '<span class="fdd-chip due">' + LL('Partial · ' + money(owed, cur) + ' due', 'আংশিক · ' + money(owed, cur) + ' বাকি') + '</span>';
+  }
+  window.lkInvChip = invChip;
+
+  // ---- 2. the dashboard's cards
+  function oneLine(lead, label, tail) { return '<div class="lk-one">' + lead + ' <b data-noi18n="1">' + e_(label) + '</b>' + (tail ? ' <span class="v">· ' + tail + '</span>' : '') + '</div>'; }
+  function lkWidgets(W, d) {
+    if (!d) return;
+    var cur = d.currency, grp = !!d.group, dn = d.donuts || {};
+    var single = {
+      groupDonut: [grp ? dn.byBrand : dn.byGroup, 'sales'], channelDonut: [dn.byChannel, 'sales'], brandDonut: [dn.byBrand, 'sales'],
+      methodDonut: [dn.byMethod, 'pay'], colours: [(d.topColours || []), 'colour']
+    };
+    for (var i = W.length - 1; i >= 0; i--) {
+      var w = W[i], h = String(w.html || '');
+      // the Navigator promo goes (the Navigator stays in the menu); a shortcut with no figure goes too
+      if (w.id === 'shortcuts') {
+        h = h.replace(/<button type="button" class="fdsc" data-fd45go="mindmap">[\s\S]*?<\/button>/, '');
+        h = h.replace(/<button type="button" class="fdsc" data-fd45go="[a-z]+">(?:(?!<\/button>)[\s\S])*?<span class="fig">—<\/span>[\s\S]*?<\/button>/g, '');
+        var n = (h.match(/class="fdsc"/g) || []).length;
+        if (!n) { W.splice(i, 1); continue; }
+        w.html = h.replace('class="fdsc-row"', 'class="fdsc-row lk-n' + n + '"');
+        continue;
+      }
+      // a donut with one slice says nothing a circle can add: one line instead
+      var s = single[w.id];
+      if (s && h.indexOf('<div class="fdd-dn">') > 0) {
+        var sl = (s[0] || []).filter(function (x) { return (Number(x.value) || 0) > 0; });
+        if (sl.length === 1) {
+          var x = sl[0], body;
+          if (s[1] === 'colour') body = oneLine(LL('Everything sold:', 'যা বিক্রি হয়েছে সব:'), x.label, (Number(x.units) || 0).toLocaleString('en-IN') + LL(' units', ' ইউনিট'));
+          else if (s[1] === 'pay') body = oneLine(LL('All payments:', 'সব পেমেন্ট:'), x.label, money(x.value, cur));
+          else body = oneLine(LL('All sales:', 'সব বিক্রি:'), x.label, money(x.value, cur));
+          var at = h.indexOf('<div class="fdd-dn">');
+          w.html = h.slice(0, at).replace(/class="fdd-c s2"/, 'class="fdd-c s2 lk-onec"') + body + '</div>';
+        }
+        continue;
+      }
+      if (w.id === 'recent' && (d.recent || []).length) {
+        var rows = '<ul class="lk-rows">' + d.recent.slice(0, 3).map(function (x) {
+          return '<li data-lkinv="' + e_(x.id) + '"><span class="a"><b data-noi18n="1">' + e_(x.id) + '</b> · <span data-noi18n="1">' + e_(x.customer || LL('Walk-in', 'দোকানে')) + '</span></span><span class="b">' + money(x.total, cur) + '</span>' + invChip(x, cur) + '</li>';
+        }).join('') + '</ul>';
+        w.html = addRows(h, rows);
+        continue;
+      }
+      if (w.id === 'reorder' && (d.reorder || []).length) {
+        var rr = '<ul class="lk-rows">' + d.reorder.slice(0, 3).map(function (p) {
+          var sug = Math.max(0, (Number(p.reorder) || 0) * 2 - (Number(p.stock) || 0));
+          return '<li' + (typeof navOn === 'function' && navOn('stock') ? ' data-go="stock" data-f="plan"' : '') + '><span class="a"><b data-noi18n="1">' + e_(p.name) + '</b></span>' +
+            '<span class="b' + ((Number(p.stock) || 0) <= 0 ? ' neg' : '') + '">' + (Number(p.stock) || 0).toLocaleString('en-IN') + '</span>' +
+            '<span class="b" aria-label="' + e_(LL('suggested', 'পরামর্শ')) + '">→ ' + sug.toLocaleString('en-IN') + '</span></li>';
+        }).join('') + '</ul>';
+        w.html = addRows(h, rr);
+      }
+    }
+  }
+  function addRows(h, rows) {
+    var j = h.lastIndexOf('</div>');
+    if (j < 0) return h;
+    return h.slice(0, j).replace(/class="fdd-c ([^"]*)"/, 'class="fdd-c $1 lk-hasrows"') + rows + h.slice(j);
+  }
+  if (typeof fddWidgets === 'function') {
+    var fddWidgetsLk = fddWidgets;
+    fddWidgets = function (d) { var W = fddWidgetsLk.apply(this, arguments); try { lkWidgets(W, d); } catch (e) {} return W; };
+  }
+  document.addEventListener('click', function (e) {
+    var r = e.target && e.target.closest && e.target.closest('.lk-rows li[data-lkinv]'); if (!r) return;
+    if (typeof openInvoicePage === 'function' && (typeof navOn !== 'function' || navOn('sales'))) openInvoicePage(r.getAttribute('data-lkinv'));
+  });
+
+  // phone: whatever the saved layout, + New invoice > Needs you now > the four figures; the default layout then
+  // has the revenue curve, reorder and recent sales (extends final-shell C's "Needs you now" pin)
+  function lkArrange() {
+    if (typeof VIEW === 'undefined' || VIEW !== 'dash') return;
+    var grid = document.querySelector('#view .fdd-grid'); if (!grid || grid.classList.contains('editing')) return;
+    var phone = window.matchMedia ? window.matchMedia('(max-width:760px)').matches : window.innerWidth <= 760;
+    var by = {};
+    for (var i = 0; i < grid.children.length; i++) { var c = grid.children[i], id = c.getAttribute('data-w') || c.getAttribute('data-fdw'); if (id) by[id] = c; }
+    ['net', 'cashIn', 'dues', 'stock'].forEach(function (id) { if (by[id] && by[id].classList.contains('lk-fig') !== phone) by[id].classList.toggle('lk-fig', phone); });
+    if (!phone) return;
+    var pin = ['attention', 'net', 'cashIn', 'dues', 'stock'];
+    var saved = false; try { saved = typeof fdwLayout === 'function' && !!fdwLayout(); } catch (e) {}
+    if (!saved) pin = pin.concat(['revenue', 'reorder', 'recent']);
+    var at = 0;
+    pin.forEach(function (id) { var c = by[id]; if (!c) return; var here = grid.children[at]; if (here !== c) grid.insertBefore(c, here || null); at++; });
+  }
+
+  // phone: "Needs you now" shows its first three rows; the rest one tap away (the figures then reach the first screen)
+  function lkAttCap() {
+    if (typeof VIEW === 'undefined' || VIEW !== 'dash') return;
+    var ul = document.querySelector('#view .fdd-att2'); if (!ul || ul.getAttribute('data-lkcap')) return;
+    ul.setAttribute('data-lkcap', '1');
+    var li = ul.querySelectorAll(':scope > li'); if (li.length <= 3) return;
+    for (var i = 3; i < li.length; i++) li[i].classList.add('lk-x');
+    var b = document.createElement('button'); b.type = 'button'; b.className = 'lk-attmore'; b.setAttribute('data-noi18n', '1');
+    var more = li.length - 3, txt = function (open) { return open ? LL('Show fewer', 'কম দেখান') : LL('Show ' + more + ' more', 'আরও ' + more + 'টা দেখান'); };
+    b.textContent = txt(false); b.setAttribute('aria-expanded', 'false');
+    b.addEventListener('click', function () { var o = !ul.classList.contains('lk-open'); ul.classList.toggle('lk-open', o); b.textContent = txt(o); b.setAttribute('aria-expanded', String(o)); });
+    ul.parentNode.insertBefore(b, ul.nextSibling);
+  }
+
+  // drawn arrows and checks instead of text glyphs
+  function lkGlyphs() {
+    var v = document.getElementById('view'); if (!v) return;
+    [].forEach.call(v.querySelectorAll('.fdd-trend:not([data-lkar]), .fdrev-up:not([data-lkar])'), function (t) {
+      var s = t.textContent, m = /^\s*([▲▼↑↓])\s*/.exec(s);
+      t.setAttribute('data-lkar', '1'); if (!m) return;
+      var up = m[1] === '▲' || m[1] === '↑';
+      t.innerHTML = (up ? AR_UP : AR_DN) + e_(s.slice(m[0].length));
+      t.setAttribute('data-dir', up ? 'up' : 'down');
+    });
+    [].forEach.call(v.querySelectorAll('.fdd-att2 .chv:not([data-lk])'), function (c) { c.setAttribute('data-lk', '1'); if (c.textContent.trim() === '›') c.innerHTML = CHEV; });
+    [].forEach.call(v.querySelectorAll('.fdd-setup li .d:not([data-lk])'), function (c) { c.setAttribute('data-lk', '1'); if (c.textContent.trim() === '✓') c.innerHTML = CHECK; });
+    [].forEach.call(v.querySelectorAll('.fdd-empty:not([data-lk]), .nai-empty:not([data-lk])'), function (c) {
+      c.setAttribute('data-lk', '1');
+      var t = c.textContent; if (t.indexOf('✓') < 0 || c.children.length) return;
+      c.innerHTML = '<span>' + OK + e_(t.replace(/\s*✓\s*/g, ' ').trim()) + '</span>';
+    });
+  }
+
+  // ---- 3. the top bar shadow once the page has moved
+  var lkScr = false;
+  function onScroll() { var s = (window.scrollY || 0) > 4; if (s !== lkScr) { lkScr = s; document.documentElement.classList.toggle('lk-scr', s); } }
+  window.addEventListener('scroll', onScroll, { passive: true });
+
+  // ---- 8. one "?" per label: the label's own help keeps the words of the second one
+  function lkOneHelp() {
+    var v = document.getElementById('view'); if (!v) return;
+    [].forEach.call(v.querySelectorAll('label.f'), function (lab) {
+      var fh = lab.querySelector(':scope > .fhelp'), q = lab.querySelector(':scope > .t2q');
+      if (!fh || !q || q.getAttribute('data-lkm')) return;
+      q.setAttribute('data-lkm', '1');
+      var n = document.querySelector('[data-t2="' + q.getAttribute('data-t2for') + '"]');
+      var more = n ? (n.textContent || '').replace(/\s+/g, ' ').trim() : '', hint = fh.getAttribute('data-hint') || '';
+      if (more && hint.indexOf(more) < 0 && more.indexOf(hint) < 0) { hint = hint + ' ' + more; fh.setAttribute('data-hint', hint); fh.setAttribute('aria-label', hint); }
+      else if (more.length > hint.length) { fh.setAttribute('data-hint', more); fh.setAttribute('aria-label', more); }
+    });
+  }
+  // Settings > Menu: one sentence, the rest behind the "?"
+  function lkMenuText() {
+    if (VIEW !== 'settings') return;
+    var subs = document.querySelectorAll('#view .sub[data-c5x]:not([data-lkx])');
+    [].forEach.call(subs, function (s) {
+      s.setAttribute('data-lkx', '1');
+      var card = s.closest('.card'), h2 = card && card.querySelector('h2'); if (!h2) return;
+      var html = s.innerHTML, m = /^([^<]*?[.।])\s+/.exec(html);
+      if (!m || html.length < 160) return;
+      var rest = document.createElement('div'); rest.className = 'sub'; rest.innerHTML = html.slice(m[0].length);
+      s.innerHTML = m[1];
+      s.parentNode.insertBefore(rest, s.nextSibling);
+      if (typeof t2Wire === 'function' && !h2.querySelector('.t2q')) t2Wire(rest, h2, 'hide');
+      else if (typeof t2Wire === 'function') t2Wire(rest, null, 'hide');
+    });
+  }
+
+  // ---- AI: one plain line per AI screen; what the two buttons do, in a few words
+  var AIEXP = {
+    ai: ['Jobs the AI has prepared. Nothing happens until you say OK.', 'AI যে কাজগুলো তৈরি করেছে। আপনি OK না বললে কিছুই হয় না।'],
+    engine: ['Command Center: give the Engine a job; it researches and drafts, you approve before anything is done.', 'কমান্ড সেন্টার: ইঞ্জিনকে একটা কাজ দিন; সে খুঁজে দেখে খসড়া করে, আপনি রাজি হলে তবেই কাজ হয়।'],
+    watch: ['Watchdog: checks your figures every day and tells you when something looks wrong.', 'ওয়াচডগ: প্রতিদিন আপনার হিসাব দেখে, কিছু ভুল মনে হলে জানায়।'],
+    skills: ['Skills: ready-made jobs the Engine knows how to do, such as finding suppliers.', 'স্কিল: ইঞ্জিন যেসব তৈরি কাজ করতে জানে, যেমন সাপ্লায়ার খোঁজা।']
+  };
+  function lkAi() {
+    if (typeof VIEW === 'undefined' || !AIEXP[VIEW]) return;
+    var v = document.getElementById('view'); if (!v) return;
+    var strip = v.querySelector(':scope > .ai-strip'), t = LL(AIEXP[VIEW][0], AIEXP[VIEW][1]);
+    if (strip) {
+      var all = v.querySelectorAll('.lk-aiexp'), p = all[0];
+      for (var i = 1; i < all.length; i++) all[i].parentNode.removeChild(all[i]);
+      if (!p) { p = document.createElement('p'); p.className = 'lk-aiexp'; p.setAttribute('data-noi18n', '1'); strip.parentNode.insertBefore(p, strip.nextSibling); }
+      if (p.textContent !== t) p.textContent = t;
+    }
+    var btns = v.querySelector('.nai-ask .bf-btns');
+    if (btns && !(btns.nextElementSibling && btns.nextElementSibling.classList.contains('lk-btncap'))) {
+      var c = document.createElement('div'); c.className = 'lk-btncap'; c.setAttribute('data-noi18n', '1');
+      c.innerHTML = LL('<b>Ask now</b>: a quick answer, right here. <b>Engine</b>: longer research, ready in minutes.',
+        '<b>এখনই জিজ্ঞেস করুন</b>: এখানেই দ্রুত উত্তর। <b>ইঞ্জিন</b>: বড় গবেষণা, কয়েক মিনিটে তৈরি।');
+      btns.parentNode.insertBefore(c, btns.nextSibling);
+    }
+  }
+  try { new MutationObserver(function () { try { lkAi(); lkGlyphs(); } catch (e) {} }).observe(document.getElementById('view') || document.body, { childList: true }); } catch (e) {}
+
+  // ---- Joint stock: what "Month end" will lock, before you go there
+  function monthName(ym) {
+    var m = /^(\d{4})-(\d{2})$/.exec(String(ym || '')); if (!m) return '';
+    try { return new Date(+m[1], +m[2] - 1, 1).toLocaleDateString(isBn() ? 'bn-BD' : 'en-GB', { month: 'long', year: 'numeric' }); } catch (e) { return ym; }
+  }
+  function lkJoint() {
+    if (VIEW !== 'joint' || typeof JT === 'undefined' || !JT.data || !JT.data.book) return;
+    var st = document.querySelector('#view .jt-settle'); if (!st || st.querySelector('.lk-jtnext')) return;
+    var r = JT.data.book.report || {}, open = r.first_open || (JT.data.book.isCurrent ? '' : r.month);
+    var d = document.createElement('div'); d.className = 'lk-jtnext'; d.setAttribute('data-noi18n', '1');
+    var n = (JT.data.book.partners || []).length;
+    d.textContent = open
+      ? LL('Next to close: ' + monthName(open) + '. When ' + (n > 2 ? 'every company agrees' : 'both companies agree') + ', its sales, stock entries and book lines lock.',
+           'পরের বন্ধ হবে: ' + monthName(open) + '। ' + (n > 2 ? 'সব কোম্পানি' : 'দুই কোম্পানি') + ' রাজি হলে ওই মাসের বিক্রি, স্টক আর খাতার লাইন আর বদলানো যাবে না।')
+      : LL('Every finished month is closed. This month closes after it ends.', 'শেষ হওয়া সব মাস বন্ধ। এই মাস শেষ হলে বন্ধ করা যাবে।');
+    st.appendChild(d);
+  }
+
+  // ---- Money on a phone: the balances first, the placement strip right under them, in calm words
+  function lkMoney() {
+    if (VIEW !== 'cash' || typeof CASH === 'undefined' || !CASH) return;
+    var v = document.getElementById('view'), s = v && v.querySelector('.dm-unm'); if (!s) return;
+    var n = (CASH.loose || []).length + (CASH.unassigned || []).length, sum = 0;
+    (CASH.loose || []).concat(CASH.unassigned || []).forEach(function (p) { sum += Number(p.amount) || 0; });
+    var t = s.querySelector('.t');
+    if (t && n && !t.getAttribute('data-lk')) {
+      t.setAttribute('data-lk', '1');
+      var amt = typeof tk === 'function' ? tk(sum, { cur: CASH.currency }) : String(sum);
+      t.innerHTML = isBn() ? '<b>' + n + 'টা পেমেন্ট</b> অ্যাকাউন্টে বসানো বাকি · ' + amt : '<b>' + n + ' payment' + (n > 1 ? 's' : '') + '</b> to place in an account · ' + amt;
+    }
+    s.classList.add('lk-calm');
+    var b = s.querySelector('.btn.primary'); if (b) b.classList.remove('primary');
+    var phone = window.matchMedia ? window.matchMedia('(max-width:760px)').matches : window.innerWidth <= 760;
+    var pane = v.querySelector('[data-f21pane="accounts"]');
+    var cards = pane && pane.querySelector('.cash_card');
+    var shown = pane && getComputedStyle(pane).display !== 'none';
+    if (phone && cards && shown) {
+      var box = cards.parentNode;
+      if (box.nextSibling !== s) box.parentNode.insertBefore(s, box.nextSibling);
+    } else if (s.parentNode !== v) {
+      var tabs = v.querySelector(':scope > .fd21-tabs'); v.insertBefore(s, tabs || v.firstChild);
+    }
+  }
+  document.addEventListener('click', function (e) { if (e.target && e.target.closest && e.target.closest('.fd21-tabs')) setTimeout(function () { try { lkMoney(); } catch (x) {} }, 30); });
+
+  if (typeof AFTER_PAINT !== 'undefined') {
+    AFTER_PAINT.push(function lkAfter() {
+      try { lkArrange(); lkAttCap(); } catch (e) {}
+      try { lkGlyphs(); } catch (e) {}
+      try { lkOneHelp(); lkMenuText(); } catch (e) {}
+      try { lkAi(); } catch (e) {}
+      try { lkJoint(); } catch (e) {}
+      try { lkMoney(); } catch (e) {}
+      try { onScroll(); } catch (e) {}
+    });
+  }
+  window.addEventListener('resize', function () { try { lkArrange(); lkMoney(); } catch (e) {} });
+
+  try {
+    var BN = { 'All sales:': 'সব বিক্রি:', 'All payments:': 'সব পেমেন্ট:', 'Everything sold:': 'যা বিক্রি হয়েছে সব:', 'Unpaid': 'পেমেন্ট হয়নি', 'Partial': 'আংশিক' };
+    for (var k in BN) if (!I18N_BN[k]) I18N_BN[k] = BN[k];
+    I18N_PAT.push(['^Partial · (.+) due$', 'আংশিক · $1 বাকি']);
+    I18N_PAT.push(['^(\\d+) payments? to place in an account · (.+)$', '$1টা পেমেন্ট অ্যাকাউন্টে বসানো বাকি · $2']);
+  } catch (e) {}
+})();
+</script>
+<!-- crit:lead (10 Nov 2026): English plurals on every screen ("2 parcel(s)" -> "2 parcels"); Bangla untouched (its patterns read the "(s)" forms) -->
+<script>
+(function () {
+  function bn() { try { return LANG === 'bn'; } catch (e) { return false; } }
+  function plural(w, n) {
+    if (n === 1) return w;
+    var irr = { person: 'people', child: 'children' };
+    if (irr[w.toLowerCase()]) return irr[w.toLowerCase()];
+    if (/[^aeiou]y$/i.test(w)) return w.slice(0, -1) + 'ies';
+    if (/(s|x|z|ch|sh)$/i.test(w)) return w + 'es';
+    return w + 's';
+  }
+  function fix(v) {
+    v = v.replace(/(\d[\d,]*)(\s+(?:[A-Za-z]+\s+)?)([A-Za-z]+)\(s\)/g, function (m, n, mid, w) { return n + mid + plural(w, Number(n.replace(/,/g, ''))); });
+    return v.replace(/\b([A-Za-z]+)\(s\)/g, function (m, w) { return plural(w, 2); });   // no number beside it: the plural reads right
+  }
+  function walk(root) {
+    if (bn() || !root) return;
+    var w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT), n, list = [];
+    while ((n = w.nextNode())) if (n.nodeValue.indexOf('(s)') >= 0) list.push(n);
+    list.forEach(function (x) {
+      var p = x.parentNode; if (!p || (p.closest && p.closest('[contenteditable],textarea,input,[data-noi18n]'))) return;
+      var v = fix(x.nodeValue); if (v !== x.nodeValue) x.nodeValue = v;
+    });
+  }
+  var T = 0;
+  function soon() { if (T) return; T = setTimeout(function () { T = 0; walk(document.getElementById('view')); walk(document.querySelector('.fd19-dr')); }, 60); }
+  try { new MutationObserver(soon).observe(document.body, { childList: true, subtree: true, characterData: true }); } catch (e) {}
+  try { if (typeof AFTER_PAINT !== 'undefined') AFTER_PAINT.push(soon); } catch (e) {}
 })();
 </script>
 </body>
