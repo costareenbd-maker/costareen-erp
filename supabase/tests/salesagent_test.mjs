@@ -5,7 +5,7 @@
 import { createHmac } from 'node:crypto';
 import { pathToFileURL } from 'node:url';
 import path from 'node:path';
-import { sql, FIX, owner, check, done, deps, web, fnDir } from './harness.mjs';
+import { sql, FIX, owner, mgr, check, done, deps, web, fnDir } from './harness.mjs';
 
 const ib = await import(pathToFileURL(path.join(fnDir, 'handlers', 'inbox.js')));
 const jobs = await import(pathToFileURL(path.join(fnDir, 'jobs.js')));
@@ -163,6 +163,9 @@ out = await reply([{ direction: 'in', kind: 'text', text: 'lal ache?' }]);
 check('sales-3: a স্যার that slips through is taken out when the gender is not known', out.replies[0].text === 'জি, লাল আছে।', out.replies);
 check('sales-3: স্যার becomes ভাই / আপু once the gender is known (Bangla and Banglish)', ib.addressFix('জি স্যার, আছে।', { style: 'vai' }, { gender: 'm' }) === 'জি ভাই, আছে।' &&
   ib.addressFix('ok sir, ache', { style: 'vai' }, { gender: 'f' }) === 'ok apu, ache' && ib.addressFix('জি স্যার', { style: 'sir' }, {}) === 'জি স্যার');
+check('sales-3b: the ERP tells the model the script of the latest message, in so many words', /WRITE EVERY MESSAGE OF THIS REPLY .* IN BANGLISH/.test(sys3), sys3.slice(-700));
+check('sales-3b: "I want to order" is English, not Banglish', ib.scriptOf('I want to order this') === 'en');
+check('sales-3c: a bare phone + address keeps the chat\'s Banglish', ib.chatScript([{ direction: 'in', text: 'ha 1 ta nibo' }, { direction: 'out', text: 'phone?' }, { direction: 'in', text: '01712345678, House 3, Road 5, Mirpur 2, Dhaka' }]) === 'banglish');
 check('sales-3: the customer\'s script is read right', ib.scriptOf('lal ache?') === 'banglish' && ib.scriptOf('লাল আছে?') === 'bn' && ib.scriptOf('Do you have red PLA?') === 'en' && ib.scriptOf('dam koto bhai') === 'banglish');
 
 let ord3 = null;
@@ -205,6 +208,11 @@ waSent.length = 0;
 ar = await asB((ctx) => al.orderAlert(ctx, { order_wa_to: 'off' }, order, null));
 check('sales-3: "off" sends nothing', ar.off && waSent.length === 0, ar);
 check('sales-3: the other business is never alerted from this one\'s number', (await sql`select count(*)::int as n from inbox_channels where business_id = ${FIX.B2} and kind = 'wa_evo'`)[0].n === 0);
+waSent.length = 0;
+await owner('erpInboxProfile', [{ save: { order_wa_to: '', order_wa_group: '' } }]);
+r = await owner('erpOrderAlertTest', [{}]);
+check('sales-3c: the owner can send a test alert (made-up order, to the first number)', r.result && r.result.sent && waSent.length === 1 && /TEST/.test(waSent[0].text), [r, waSent]);
+check('sales-3c: a manager cannot send a test alert', !!(await mgr('erpOrderAlertTest', [{}])).error);
 check('sales-3: phone forms are read right', al.alertPhones('01712-345678; +880 1812 000111, 12').join() === '8801712345678,8801812000111');
 
 await done();

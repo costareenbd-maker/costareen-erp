@@ -93,3 +93,17 @@ export async function orderAlert(ctx, p, o, fromCh) {
   }
   return { ok: false, error: last };
 }
+
+/** Agent Desk: send a made-up order alert now, to check the number / group (owner only). */
+export async function erpOrderAlertTest(ctx) {
+  if (ctx.s.role !== 'owner') throw new Error('Only the owner sends a test order alert.');
+  const { profile } = await import('./inbox.js');
+  const p = await profile(ctx, false);
+  if (str(p.order_wa_to).toLowerCase() === 'off') throw new Error('Order alerts are off in the Agent Desk (the WhatsApp alert box says off).');
+  const r = await orderAlert(ctx, p, { no: 'TEST', name: 'Test customer', phone: '01700000000', address: 'Test address (this is a test alert)',
+    items: [{ name: 'Test product', qty: 1, price: 100 }], delivery_charge: 70 }, { name: 'test' });
+  if (!r.ok) throw new Error('The test alert was not sent: ' + r.error);
+  return { sent: true, to: r.to, from: r.from };
+}
+
+export const HANDLERS = { erpOrderAlertTest };

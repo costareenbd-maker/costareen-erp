@@ -4061,3 +4061,16 @@ we already do that with place_order; "human-like" agents: short bubbles, no bot 
 - Tests: salesagent_test.mjs 48 (18 new).
 NOT done: no "send a test alert" button; alerts only for orders the AI takes in a chat (not website / landing orders);
 the group needs at least one phone number to be made; real Evolution group calls not yet tried on the live server.
+sales-3b/3c (same day): the real model mixed scripts in one reply, and answered a bare "phone, address" message in
+English. Now the ERP works out the chat's script itself (`chatScript`: the latest customer message that shows one - a
+phone + address keeps the chat's) and tells the model in so many words, last in the prompt; the order-flow examples are
+in all three scripts. New owner-only `erpOrderAlertTest` sends a made-up order alert (no page button yet). Tests 53.
+
+**sales-3 LIVE (10 Nov 2026, owner "live koro"):** live function files copied one by one on the Mac mini (inbox.js,
+inbox2.js, inboxch.js, new orderalert.js, handlers/index.js, allow.js, handlers/security.js - each live copy was equal
+to the base first; backups in /data/backups/live-function/20261110-before-sales3/). Live page = the hotfix-1 folder +
+the two Agent Desk boxes and the ভাই / আপু choice (sw cz-shell-v4-native-hotfix1-9b5ad34-sales3), both Pages projects.
+Live Agent Desk style set to ভাই / আপু (backup private/inbox-profile-backup-20261110-before-sales3.json). Checked with
+the real model in test mode: Banglish -> Banglish, Bangla -> Bangla, English -> English, "apu" for a woman, cards
+shown, an order taken from phone + address and confirmed in the chat's script. A real test alert went from the first
+WhatsApp number ("WhatsApp") to its own chat.
