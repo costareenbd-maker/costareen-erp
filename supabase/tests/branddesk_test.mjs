@@ -13,6 +13,7 @@ web.on(/^https:\/\/desk-test\.trycloudflare\.com\//, (url, opts) => {
   if (url.endsWith('/today')) return { body: { pacer: { lines: { linkedin: { waiting: 1 } } }, posts: { posts: [] }, networks: [{ id: 'n1', platform: 'linkedin', name: 'Rahman' }] } };
   if (url.endsWith('/post')) return { body: { queued: ['a', 'b'] } };
   // brand-7: the claim check and the settings in the brand core database
+  if (url.endsWith('/drafts') || url.endsWith('/drafts/make') || url.endsWith('/drafts/decide')) return { body: { waiting: [{ id: 5, platform: 'linkedin', lang: 'en', body: 'Draft', legal_flags: [] }], ideas: [{ id: 3, title_working: 'How to tell a genuine product' }], jobs: {}, networks: [], queued: url.endsWith('/decide') ? ['q1'] : undefined } };
   if (url.endsWith('/lint')) { const t = (opts.body && JSON.parse(opts.body).text) || ''; return { body: { hits: /treats acne/i.test(t) ? [{ rule_id: 3, severity: 'block', reason: 'Health claim', match: 'treats' }] : (/#a #b #c #d/.test(t) ? [{ rule_id: 15, severity: 'warn', reason: 'More than 3 hashtags', match: '#a' }] : []) } }; }
   if (url.endsWith('/settings') || url.endsWith('/settings/weights') || url.endsWith('/settings/cadence')) return { body: { topics: [{ key: 'beauty_wholesale', label_en: 'Wholesale' }, { key: 'printing_3d', label_en: '3D' }], weights: { linkedin: { beauty_wholesale: 100 } }, cadence: [], settings: { cadence_level: 'start' }, connectors: [] } };
   if (url.endsWith('/decide')) return { body: { ok: true } };
@@ -89,6 +90,26 @@ r = await mgr('erpBrandDeskSettings', []);
 check('a manager does not see the rules', !r.ok, r);
 r = await mgr('erpBrandDeskWeights', [{ platform: 'facebook', weights: { beauty_wholesale: 100 } }]);
 check('a manager cannot change the mix', !r.ok, r);
+
+// 4a2. brand-8: drafts from the idea bank; nothing goes out without an approval naming the account
+r = await owner('erpBrandDeskDrafts', []);
+check('drafts waiting come from the brand database', r.ok && r.result.waiting[0].id === 5, r);
+r = await owner('erpBrandDeskMakeDrafts', [{}]);
+check('no idea and no text is refused', !r.ok, r);
+r = await owner('erpBrandDeskMakeDrafts', [{ idea_id: 3, platforms: ['LinkedIn', 'facebook', 'myspace', 'facebook'] }]);
+const mk = seen.filter((x) => x.url.endsWith('/drafts/make')).pop();
+check('drafts are asked for known platforms only, once each', r.ok && mk.body.idea_id === 3 && mk.body.platforms.join() === 'linkedin,facebook', mk && mk.body);
+r = await owner('erpBrandDeskMakeDrafts', [{ text: 'Why I ask for the purchase invoice', topic: 'beauty_proof' }]);
+check('a new idea in words goes with its topic', r.ok && seen.filter((x) => x.url.endsWith('/drafts/make')).pop().body.topic === 'beauty_proof', r);
+r = await owner('erpBrandDeskDraftDecide', [{ id: 5, action: 'approve', networks: [] }]);
+check('approve without an account is refused', !r.ok && /account/.test(r.error), r);
+r = await owner('erpBrandDeskDraftDecide', [{ id: 5, action: 'publish' }]);
+check('only approve or reject', !r.ok, r);
+r = await owner('erpBrandDeskDraftDecide', [{ id: 5, action: 'approve', networks: [{ id: 'n1', platform: 'linkedin' }], body: 'Edited text' }]);
+const dc = seen.filter((x) => x.url.endsWith('/drafts/decide')).pop();
+check('an approval carries the account and the edited text', r.ok && dc.body.networks[0].id === 'n1' && dc.body.body === 'Edited text', dc && dc.body);
+r = await mgr('erpBrandDeskMakeDrafts', [{ idea_id: 3 }]);
+check('a manager cannot ask for drafts', !r.ok, r);
 
 r = await owner('erpBrandDeskDecide', [{ id: 'a', action: 'fire' }]);
 check('a strange answer is refused', !r.ok, r);

@@ -8515,7 +8515,7 @@ function srv(name, args, ok, bad) {
 
 var SRV_ACTIVE = 0, SRV_WRITING = false, SRV_TIMED = {};
 // the same list the server uses to know a call changes nothing (ERP_READS)
-var SRV_READS = /^(erpBrandDeskSettings|erpBrandDeskLint|erpHolds|erpHoldGet|erpPhoneAlerts|erpWaNumbers|erpBrandDesk|erpBrandDeskShorts|erpBrandDeskVideos|erpBrandDeskPeople|erpBrandDeskIdeas|erpBrandDeskBoard|erpShipmentRepriceCheck|erpReceivePreview|erpSeo|erpReceipts|erpBrief|erpBrain|erpWatch|erpEngine|erpEngineJob|erpSkills|erpAiBrain|erpAiBrainModels|erpLeadForms|erpLeads|erpLeadFind|erpLeadCapture|erpMyUpdates|erpSocialBridges|erpAds|erpAdProfit|erpFactory|erpTaste|erpAdsInterests|erpSocialNet|erpSocialLearn|erpSocialAssets|erpSocialPosts|erpSocialPhotos|erpInboxDigest|erpJointRecvCatalog|erpSitePages|erpBalanceSheet|erpProductFields|erpProductAi|erpMetaConnect|erpInboxFeatureMap|erpBookings|erpInbox|erpInboxOpen|erpInboxChannels|erpChatOrders|erpInboxStats|erpAiWork|erpCommissionSales|erpFdCards|erpLineMargins|erpFd19Profit|erpFdInventory|erpFd22Analytics|erpNavigator|erpSellers|erpFollowups|erpCustomerInsight|erpPreorders|erpCashUps|erpAskingPrices|erpSystemCheck|erpAnalytics|erpCommission|erpHolding|erpLotFunding|erpShipments|erpShipment|erpLots|erpFdHead|erpFdDash|erpReceiveMatch|erpAiReader|erpProductSuggest|erpCatalogue|erpPushList|erpCreators|erpCreatorPortalLink|erpSponsorLink|erpCreatorRequests|erpCreatorEvents|erpCreatorProgramme|erpCreatorPreview|erpCreatorCatalog|erpCreatorSources|erpCreatorClaims|erpApps|erpAppQr|erpFeedback|erpRestockOffers|erpRestockList|erpWarrantyRules|erpWarrantyCard|erpMyLink|erpPlatformRegister|erpPlatformDoctor|erpPlatformCommunity|erpMarketWaiting|erpBoard|erpPlatformDesign|erpResell|erpResellerProgramme|erpLoyalty|erpCustomerPoints|erpRefillDue|erpDeliveryHistory|erpDeliveryHistoryMany|erpPrintKit|erpPrintJobs|erpPrintJob|erpPrintCost|erpSpools|erpPrintRequests|erpJoint|erpJointCatalog|erpJointCard|erpInvoiceDesign|erpInvoicePreview|erpMarket|erpMarketMine|erpMarketRequests|erpMarketHints|erpMarketNames|erpWanted|erpBrand|erpComplianceLog|erpProviderKey|erpNews|erpAccessKeys|erpAccessWarning|erpAdmin|erpAiKeys|erpAlertRules|erpAlerts|erpArena|erpBackupStatus|erpBg|erpBnWords|erpBookedParcels|erpBrandLogo|erpBundle|erpBusinessLinks|erpBusinesses|erpBusinessesDeleted|erpCampaignAudience|erpCampaignGet|erpCampaignList|erpCapital|erpCashBook|erpCatalog|erpConnStatus|erpConnections|erpCostBook|erpCourier|erpCourierKeyStatus|erpCurrencies|erpCustomerAccount|erpCustomerCredit|erpCustomerList|erpCustomerPage|erpCustomerStatement|erpCustomers|erpDashboardData|erpDaySales|erpDeliveryOptions|erpDevices|erpDiscontinued|erpDues|erpEvoQr|erpEvoStatus|erpExpenseExport|erpExpenseReceiptUrl|erpExpenses|erpFamilies|erpFighters|erpFormOptions|erpGame|erpGetTheme|erpGoogle|erpHello|erpInstalls|erpInvoice|erpInvoicePdf|erpJob|erpJobs|erpListView|erpLookupCustomer|erpLookupUsage|erpMe|erpMoney|erpNoteFileUrl|erpNotes|erpOwnerChange|erpOwnerChanges|erpParcelLabels|erpParcelPreview|erpPartnerStock|erpPartnership|erpPayReasons|erpPeople|erpPlatform|erpPlatformErrors|erpPnl|erpPnlMonth|erpPoList|erpPoolCatalog|erpProduct|erpProductListShare|erpProductPage|erpProductPhotoUrl|erpProductThumbs|erpProfile|erpQuoteAsset|erpQuoteBoot|erpQuoteGet|erpQuoteList|erpRecentInvoices|erpRecovery|erpReorderPlan|erpRestorePreview|erpReturnPreview|erpRisks|erpSales|erpSearch|erpSecurity|erpSelfTest|erpSerialLookup|erpSerialsFor|erpSessions|erpSetTheme|erpSettingsFull|erpSettingsLists|erpSfPayoutLines|erpSfPayouts|erpShareFile|erpSharedStock|erpSheet|erpStatementPdf|erpStockHistory|erpSupplierPage|erpSuppliers|erpToday|erpUsers|erpWaProductPdf|erpWebMatches|erpWebOrderInvoices|erpWebOrders|erpWebsiteTest)$/;
+var SRV_READS = /^(erpBrandDeskDrafts|erpBrandDeskSettings|erpBrandDeskLint|erpHolds|erpHoldGet|erpPhoneAlerts|erpWaNumbers|erpBrandDesk|erpBrandDeskShorts|erpBrandDeskVideos|erpBrandDeskPeople|erpBrandDeskIdeas|erpBrandDeskBoard|erpShipmentRepriceCheck|erpReceivePreview|erpSeo|erpReceipts|erpBrief|erpBrain|erpWatch|erpEngine|erpEngineJob|erpSkills|erpAiBrain|erpAiBrainModels|erpLeadForms|erpLeads|erpLeadFind|erpLeadCapture|erpMyUpdates|erpSocialBridges|erpAds|erpAdProfit|erpFactory|erpTaste|erpAdsInterests|erpSocialNet|erpSocialLearn|erpSocialAssets|erpSocialPosts|erpSocialPhotos|erpInboxDigest|erpJointRecvCatalog|erpSitePages|erpBalanceSheet|erpProductFields|erpProductAi|erpMetaConnect|erpInboxFeatureMap|erpBookings|erpInbox|erpInboxOpen|erpInboxChannels|erpChatOrders|erpInboxStats|erpAiWork|erpCommissionSales|erpFdCards|erpLineMargins|erpFd19Profit|erpFdInventory|erpFd22Analytics|erpNavigator|erpSellers|erpFollowups|erpCustomerInsight|erpPreorders|erpCashUps|erpAskingPrices|erpSystemCheck|erpAnalytics|erpCommission|erpHolding|erpLotFunding|erpShipments|erpShipment|erpLots|erpFdHead|erpFdDash|erpReceiveMatch|erpAiReader|erpProductSuggest|erpCatalogue|erpPushList|erpCreators|erpCreatorPortalLink|erpSponsorLink|erpCreatorRequests|erpCreatorEvents|erpCreatorProgramme|erpCreatorPreview|erpCreatorCatalog|erpCreatorSources|erpCreatorClaims|erpApps|erpAppQr|erpFeedback|erpRestockOffers|erpRestockList|erpWarrantyRules|erpWarrantyCard|erpMyLink|erpPlatformRegister|erpPlatformDoctor|erpPlatformCommunity|erpMarketWaiting|erpBoard|erpPlatformDesign|erpResell|erpResellerProgramme|erpLoyalty|erpCustomerPoints|erpRefillDue|erpDeliveryHistory|erpDeliveryHistoryMany|erpPrintKit|erpPrintJobs|erpPrintJob|erpPrintCost|erpSpools|erpPrintRequests|erpJoint|erpJointCatalog|erpJointCard|erpInvoiceDesign|erpInvoicePreview|erpMarket|erpMarketMine|erpMarketRequests|erpMarketHints|erpMarketNames|erpWanted|erpBrand|erpComplianceLog|erpProviderKey|erpNews|erpAccessKeys|erpAccessWarning|erpAdmin|erpAiKeys|erpAlertRules|erpAlerts|erpArena|erpBackupStatus|erpBg|erpBnWords|erpBookedParcels|erpBrandLogo|erpBundle|erpBusinessLinks|erpBusinesses|erpBusinessesDeleted|erpCampaignAudience|erpCampaignGet|erpCampaignList|erpCapital|erpCashBook|erpCatalog|erpConnStatus|erpConnections|erpCostBook|erpCourier|erpCourierKeyStatus|erpCurrencies|erpCustomerAccount|erpCustomerCredit|erpCustomerList|erpCustomerPage|erpCustomerStatement|erpCustomers|erpDashboardData|erpDaySales|erpDeliveryOptions|erpDevices|erpDiscontinued|erpDues|erpEvoQr|erpEvoStatus|erpExpenseExport|erpExpenseReceiptUrl|erpExpenses|erpFamilies|erpFighters|erpFormOptions|erpGame|erpGetTheme|erpGoogle|erpHello|erpInstalls|erpInvoice|erpInvoicePdf|erpJob|erpJobs|erpListView|erpLookupCustomer|erpLookupUsage|erpMe|erpMoney|erpNoteFileUrl|erpNotes|erpOwnerChange|erpOwnerChanges|erpParcelLabels|erpParcelPreview|erpPartnerStock|erpPartnership|erpPayReasons|erpPeople|erpPlatform|erpPlatformErrors|erpPnl|erpPnlMonth|erpPoList|erpPoolCatalog|erpProduct|erpProductListShare|erpProductPage|erpProductPhotoUrl|erpProductThumbs|erpProfile|erpQuoteAsset|erpQuoteBoot|erpQuoteGet|erpQuoteList|erpRecentInvoices|erpRecovery|erpReorderPlan|erpRestorePreview|erpReturnPreview|erpRisks|erpSales|erpSearch|erpSecurity|erpSelfTest|erpSerialLookup|erpSerialsFor|erpSessions|erpSetTheme|erpSettingsFull|erpSettingsLists|erpSfPayoutLines|erpSfPayouts|erpShareFile|erpSharedStock|erpSheet|erpStatementPdf|erpStockHistory|erpSupplierPage|erpSuppliers|erpToday|erpUsers|erpWaProductPdf|erpWebMatches|erpWebOrderInvoices|erpWebOrders|erpWebsiteTest)$/;
 function srvPump() {
   if (!SRV_Q.length) return;
   var isRead = SRV_READS.test(SRV_Q[0].name);
@@ -41384,6 +41384,117 @@ html[data-bizkind="brand"] #tabbar button[data-tab="invoice"],html[data-bizkind=
     var x = e.target; if (!x || !x.getAttribute || !x.getAttribute('data-bd7p')) return;
     var p = x.getAttribute('data-bd7p'), sum = 0; [].forEach.call(document.querySelectorAll('input[data-bd7p="' + p + '"]'), function (y) { sum += Number(y.value || 0); });
     var s = el('bd7_sum_' + p); if (s) { s.textContent = sum + ' / 100'; s.classList.toggle('bad', sum !== 100); }
+  });
+})();
+</script>
+<!-- brand-8 (10 Nov 2026): Brand desk drafts. Plan > Idea bank: pick an idea (or write one), tick platforms, "Write
+     drafts" - the AI on the owner's ChatGPT plan writes one draft per platform in that platform's language, the claim
+     check runs, and the drafts wait on Today under "Waiting for you": edit, pick the account, Approve (queued through the
+     pacer) or Reject. Nothing is posted without that click. Server: erpBrandDeskDrafts / MakeDrafts / DraftDecide. -->
+<style>
+.bd8-draft{border-top:1px solid var(--fd-border,#eef);padding:10px 0}
+.bd8-draft textarea{width:100%;min-height:140px}
+.bd8-head{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-bottom:6px}
+.bd8-idea{display:flex;gap:8px;align-items:center;padding:7px 0;border-top:1px solid var(--fd-border,#eef)}
+.bd8-idea .c{flex:1;min-width:0;overflow-wrap:anywhere}
+</style>
+<script>
+(function () {
+  var D = { data: null, busy: '', plats: { linkedin: 1, facebook: 1 }, nets: {}, poll: 0 };
+  var PLATS = ['linkedin', 'facebook', 'instagram', 'youtube', 'threads', 'tiktok'];
+  function msg(e) { return esc((e && e.message) || String(e)); }
+  function tabNow() { var v = el('view'); var on = v && v.querySelector('.bd-tabs .bd-chip.on'); return on ? (on.getAttribute('data-id') || (on.getAttribute('data-bd7') ? 'rules' : '')) : 'today'; }
+  function load(force) {
+    if (D.busy === 'load' || (D.data && !force)) return; D.busy = 'load';
+    srv('erpBrandDeskDrafts', [], function (r) { D.busy = ''; D.data = r; draw(); watch(); }, function (e) { D.busy = ''; D.data = { error: (e && e.message) || String(e) }; draw(); });
+  }
+  function watch() {
+    var jobs = (D.data && D.data.jobs) || {}, writing = Object.keys(jobs).some(function (k) { return jobs[k].state === 'writing'; });
+    clearTimeout(D.poll); if (writing) D.poll = setTimeout(function () { load(true); }, 12000);
+  }
+  function jobsLine() {
+    var jobs = (D.data && D.data.jobs) || {}, ks = Object.keys(jobs).sort().reverse().slice(0, 3);
+    return ks.map(function (k) { var j = jobs[k]; return '<div class="bd-meta">' + (j.state === 'writing' ? '<span class="wd-spin"></span>The AI is writing drafts…' : j.state === 'done' ? 'Drafts ready (' + (j.made || 0) + ') - see Today' : 'Could not write: ' + esc(j.error || '')) + '</div>'; }).join('');
+  }
+  function waitingHtml() {
+    var d = D.data;
+    if (!d) { load(); return '<div class="loading">Reading drafts…</div>'; }
+    if (d.error) return '<div class="note"><div class="ico">!</div><div>' + esc(d.error) + '</div></div>';
+    var list = d.waiting || [], nets = d.networks || [];
+    var h = '<div class="card"><h3 style="margin:0 0 4px">Waiting for you (' + list.length + ')</h3>' + jobsLine();
+    if (!list.length) h += '<div class="bd-meta">No draft waiting. Write drafts from an idea under Plan.</div>';
+    list.forEach(function (x) {
+      var mine = nets.filter(function (n) { return String(n.platform || '').toLowerCase().indexOf(x.platform) === 0 || (x.platform === 'youtube' && /youtube/i.test(n.platform || '')); });
+      var flags = x.legal_flags || [];
+      h += '<div class="bd8-draft"><div class="bd8-head"><span class="bd-tag">' + esc(x.platform) + '</span><span class="bd-tag">' + esc(x.lang) + '</span><b data-noi18n="1" style="flex:1;min-width:160px">' + esc(x.title_working || '') + '</b></div>' +
+        (flags.length ? flags.map(function (f) { return '<div class="bd7-hit"><span class="bd-tag ' + esc(f.severity) + '">' + (f.severity === 'block' ? 'stops the post' : 'check') + '</span><div class="c" data-noi18n="1">' + esc(f.reason) + '</div></div>'; }).join('') : '<div class="bd-meta">Claim check: nothing found.</div>') +
+        '<textarea class="i" id="bd8_body_' + x.id + '" data-noi18n="1">' + esc(x.body || '') + '</textarea>' +
+        ((x.title_options || []).length ? '<div class="bd-meta" data-noi18n="1">Titles: ' + x.title_options.map(esc).join(' · ') + '</div>' : '') +
+        '<div class="bd-chips">' + (mine.length ? mine.map(function (n) { var k = x.id + ':' + n.id; return '<button type="button" class="bd-chip' + (D.nets[k] ? ' on' : '') + '" data-bd8="net" data-id="' + esc(k) + '" data-noi18n="1">' + esc((n.platform || '') + ' · ' + (n.name || '')) + '</button>'; }).join('') : '<span class="bd-meta">No ' + esc(x.platform) + ' account connected in Postiz yet - connect it at social.costareen.com, then approve.</span>') + '</div>' +
+        '<div class="ap-row" style="gap:8px;flex-wrap:wrap;align-items:center"><label class="bd-meta" style="display:flex;gap:6px;align-items:center">Time <input class="i" type="datetime-local" id="bd8_at_' + x.id + '" style="width:auto"></label>' +
+        '<button class="btn small" type="button" data-bd8="approve" data-id="' + x.id + '"' + (D.busy || !mine.length ? ' disabled' : '') + '>' + (D.busy === 'ap' + x.id ? '<span class="wd-spin"></span>' : '') + 'Approve and queue</button>' +
+        '<button class="btn small ghost" type="button" data-bd8="reject" data-id="' + x.id + '"' + (D.busy ? ' disabled' : '') + '>Reject</button></div></div>';
+    });
+    return h + '</div>';
+  }
+  function bankHtml() {
+    var d = D.data;
+    if (!d) { load(); return '<div class="loading">Reading the idea bank…</div>'; }
+    if (d.error) return '<div class="note"><div class="ico">!</div><div>' + esc(d.error) + '</div></div>';
+    var ideas = d.ideas || [];
+    var h = '<div class="card"><h3 style="margin:0 0 4px">Write drafts with AI</h3><div class="bd-meta">Pick the platforms, then press Write drafts on an idea (or write a new one). Each platform gets its own draft in its own language; you approve every one on Today.</div>' +
+      '<div class="bd-chips">' + PLATS.map(function (x) { return '<button type="button" class="bd-chip' + (D.plats[x] ? ' on' : '') + '" data-bd8="plat" data-id="' + x + '">' + x + '</button>'; }).join('') + '</div>' +
+      '<div class="ap-row" style="gap:8px;flex-wrap:wrap"><input class="i" id="bd8_new" data-noi18n="1" style="flex:1;min-width:220px" placeholder="A new idea in one line - e.g. Why I ask every supplier for the purchase invoice">' +
+      '<button class="btn small" type="button" data-bd8="write" data-id=""' + (D.busy ? ' disabled' : '') + '>Write drafts</button></div>' + jobsLine() +
+      '<h4 style="margin:12px 0 4px">Idea bank (' + ideas.length + ')</h4>' + ideas.map(function (i) {
+        return '<div class="bd8-idea"><div class="c" data-noi18n="1">' + esc(i.title_working) + ' <span class="bd-tag">' + esc(String(i.topic || '').replace(/_/g, ' ')) + '</span>' + (i.is_example ? ' <span class="bd-meta">suggestion</span>' : '') + '</div>' +
+          '<button class="btn small" type="button" data-bd8="write" data-id="' + i.id + '"' + (D.busy ? ' disabled' : '') + '>Write drafts</button></div>';
+      }).join('') + '</div>';
+    return h;
+  }
+  function draw() {
+    var a = el('bd8_today'); if (a) a.innerHTML = waitingHtml();
+    var b = el('bd8_bank'); if (b) b.innerHTML = bankHtml();
+  }
+  function inject() {
+    if (typeof VIEW === 'undefined' || VIEW !== 'branddesk') return;
+    var v = el('view'); if (!v || !v.querySelector('.bd-tabs')) return;
+    var t = tabNow();
+    if (t === 'today' && !el('bd8_today')) {
+      var first = v.querySelector('.bd-tabs'); if (first) first.insertAdjacentHTML('afterend', '<section id="bd8_today">' + waitingHtml() + '</section>');
+    }
+    if (t === 'ideas' && !el('bd8_bank')) {
+      var tabs = v.querySelector('.bd-tabs'); if (tabs) tabs.insertAdjacentHTML('afterend', '<section id="bd8_bank">' + bankHtml() + '</section>');
+    }
+  }
+  var rp = repaint;
+  repaint = function () { var r = rp.apply(this, arguments); inject(); return r; };
+  try { new MutationObserver(function () { inject(); }).observe(el('view') || document.body, { childList: true }); } catch (e) {}
+  document.addEventListener('click', function (e) {
+    if (e.target.closest && e.target.closest('[data-bd="reload"]')) { D.data = null; return; }   // the desk's Refresh reloads the drafts too
+    var t = e.target.closest && e.target.closest('[data-bd8]'); if (!t || typeof VIEW === 'undefined' || VIEW !== 'branddesk') return;
+    var what = t.getAttribute('data-bd8'), id = t.getAttribute('data-id');
+    if (what === 'plat') { D.plats[id] = !D.plats[id]; t.classList.toggle('on', !!D.plats[id]); }
+    else if (what === 'net') { D.nets[id] = !D.nets[id]; t.classList.toggle('on', !!D.nets[id]); }
+    else if (what === 'write') {
+      var plats = PLATS.filter(function (x) { return D.plats[x]; });
+      if (!plats.length) return toast('Pick at least one platform.', true);
+      var args = { platforms: plats }; if (id) args.idea_id = Number(id); else { var nw = el('bd8_new'); args.text = nw ? nw.value.trim() : ''; if (!args.text) return toast('Write the idea first.', true); }
+      D.busy = 'write'; draw();
+      srv('erpBrandDeskMakeDrafts', [args], function (r) { D.busy = ''; D.data = r; toast('The AI is writing. Drafts appear on Today in a minute or two.'); draw(); watch(); }, function (e2) { D.busy = ''; toast(msg(e2), true, 9000); draw(); });
+    }
+    else if (what === 'approve' || what === 'reject') {
+      var did = Number(id), x = ((D.data && D.data.waiting) || []).filter(function (w) { return w.id === did; })[0]; if (!x) return;
+      var args2 = { id: did, action: what };
+      if (what === 'approve') {
+        var nets = ((D.data && D.data.networks) || []).filter(function (n) { return D.nets[did + ':' + n.id]; }).map(function (n) { return { id: n.id, platform: n.platform }; });
+        if (!nets.length) return toast('Pick the account it goes to.', true);
+        var bx = el('bd8_body_' + did), at = el('bd8_at_' + did);
+        args2.networks = nets; args2.body = bx ? bx.value : ''; args2.at = at && at.value ? new Date(at.value).toISOString() : null;
+      }
+      D.busy = 'ap' + did; draw();
+      srv('erpBrandDeskDraftDecide', [args2], function (r) { D.busy = ''; D.data = r; toast(what === 'approve' ? 'Approved - queued for ' + ((r.queued || []).length) + ' account(s).' : 'Rejected.'); draw(); }, function (e3) { D.busy = ''; toast(msg(e3), true, 9000); draw(); });
+    }
   });
 })();
 </script>
